@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Simulation, groundY } from "../src";
-import { BRIDGE_DECKS, bridgeDeckAt, flightDeckAt } from "../src/content/lublin/decks";
+import { BRIDGE_DECKS, bridgeDeckAt, deckGroundAt, flightDeckAt } from "../src/content/lublin/decks";
 import { chunkScenery } from "../src/content/lublin/city";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { SHAPED_TERRAIN } from "../src/content/lublin/terrain";
@@ -111,5 +111,35 @@ describe("bridges' decks (ADR-0053)", () => {
       }
     }
     expect(both).toEqual([]);
+  });
+
+  it("are the ground on the seams of chunks as off them, whichever chunk the seam is looked up in (G-278)", () => {
+    const ground = Simulation.create({ seed: 1 }).streamer.ground;
+    // On the viaduct of Zamkowa on z = 160 and on Mełgiewska's bridges on z = 270: the deck, not the terrain under it.
+    expect(ground.heightAt(735, 160)).toBeCloseTo(-13.54, 2);
+    expect(ground.heightAt(2410, 270)).toBeCloseTo(-25.52, 2);
+    const seams = { x: new Set<number>(), z: new Set<number>() };
+    for (const c of MAP_CHUNKS) {
+      if ((BRIDGE_DECKS.get(c.id) ?? []).length === 0) continue;
+      for (const v of [c.bounds.minX, c.bounds.maxX]) seams.x.add(v);
+      for (const v of [c.bounds.minZ, c.bounds.maxZ]) seams.z.add(v);
+    }
+    const off: string[] = [];
+    let on = 0;
+    const at = (x: number, z: number, dx: number, dz: number): void => {
+      if (bridgeDeckAt(x, z) === null) return;
+      on++;
+      const here = ground.heightAt(x, z);
+      const want = [deckGroundAt(x, z, terrainHeightAt(ground.gridAt(x, z)!, x, z))];
+      // Each side of the seam a hair off it where the deck goes on there: a deck may end on a seam.
+      for (const s of [-1, 1]) if (bridgeDeckAt(x + s * dx, z + s * dz) !== null) want.push(ground.heightAt(x + s * dx, z + s * dz));
+      for (const y of want) if (Math.abs(here - y) > 1e-3) off.push(`(${x}, ${z}): ${here.toFixed(2)} for ${y.toFixed(2)}`);
+    };
+    for (const c of MAP_CHUNKS) {
+      for (const z of seams.z) if (z >= c.bounds.minZ && z <= c.bounds.maxZ) for (let x = c.bounds.minX; x <= c.bounds.maxX; x += 0.25) at(x, z, 0, 1e-6);
+      for (const x of seams.x) if (x >= c.bounds.minX && x <= c.bounds.maxX) for (let z = c.bounds.minZ; z <= c.bounds.maxZ; z += 0.25) at(x, z, 1e-6, 0);
+    }
+    expect(on).toBeGreaterThan(100);
+    expect(off).toEqual([]);
   });
 });
