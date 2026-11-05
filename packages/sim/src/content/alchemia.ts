@@ -2,7 +2,7 @@ import type { GroundPoint, ViewDescriptor } from "@seki/core";
 import type { StaticProp } from "./builders";
 import type { PrismDef } from "../world/prism";
 import { surfaceY } from "./lublin/terrain";
-import { type AlchemiaFlight, type AlchemiaPart, HALL_STAIR_FOOT, HALL_STAIR_PARTS, HALL_WALL_X, flightSteps, rectPart } from "./alchemia-stairs";
+import { type AlchemiaFlight, type AlchemiaPart, HALL_CORNER, HALL_STAIR_FOOT, HALL_STAIR_PARTS, HALL_UPPER_X, HALL_WALL_X, flightSteps, rectPart } from "./alchemia-stairs";
 
 export type { AlchemiaFlight, AlchemiaPart } from "./alchemia-stairs";
 
@@ -62,17 +62,47 @@ export interface PlacedAlchemiaModule extends AlchemiaModule {
 const HALL = { width: 11.03, depth: 12.21, height: 12.92 } as const;
 const STALL = { width: 8.79, depth: 8.79, height: 8.96 } as const;
 /**
- * The hall's solid (tools/city_alchemia.py, `HALL_ROOF`): its body up to the flat roof at 11.51 m
- * (16.44 units of the source × 0.7; the parapets, the box on the roof and the name over it are not
- * solid) out to the wall of its ground storey over the stair, the roof's bevel over the front of
- * the upper storey a step lower, and the outside stair on its east side as drawn, up to its
- * landing (G-288, `HALL_STAIR_PARTS`).
+ * The hall's solid as alchemia-props.glb draws it (`alchemia-hall`, measured off its upright faces;
+ * G-297, G-298): the plinth at its floor out to the footprint, the podium (1.23 m) the building
+ * stands on, and inside the podium's edges its walls, set back from them: the ground storey between
+ * the west wall (x -4.80), the back wall (z -4.60), the wall over the stair (x 2.24) and its front
+ * (z 2.80), its east corner cut at 45° (x + z = 3.35), up to the flat roof at 11.51
+ * m (`HALL_ROOF` of tools/city_alchemia.py, 16.44 units × 0.7; the parapets, the box on the roof
+ * and the name over it are not solid); the upper storey over the porch out to z 4.80 and x 0.40
+ * from the porch's ceiling (6.03 m) to the roof's bevel a step lower (9.9 m), its windows' sills
+ * (7.9 m) 0.3 m deep, so the porch under it and the balcony east of it are open; the fixtures on
+ * its walls; and the outside stair on its east side, up to its landing (G-288, `HALL_STAIR_PARTS`).
  */
 export const ALCHEMIA_HALL_ROOF = 11.51;
-const BEVEL_Z = 2.9;
+const WALL = { west: -4.8, back: -4.6, front: 2.8, corner: HALL_CORNER } as const;
+const UPPER = { front: 4.8, east: HALL_UPPER_X, bottom: 6.03, sill: 7.9, window: 4.5, top: 9.9 } as const;
+/**
+ * What stands out of its walls (x0, x1, z0, z1, bottom, top): the upper storey's west wall over
+ * the ground storey's, two bands along the back, a sign at the front's west corner, a lamp over the
+ * back's east corner and a sign on the east wall over the balcony.
+ */
+const HALL_FIXTURES: readonly (readonly [number, number, number, number, number, number])[] = [
+  [-5.11, WALL.west, WALL.back, 3.25, 5.04, ALCHEMIA_HALL_ROOF],
+  [-4.89, -0.09, -4.81, WALL.back, 5.04, 5.98],
+  [-4.92, HALL_WALL_X, -4.98, WALL.back, 8.7, 9.91],
+  [-4.7, -4.5, UPPER.front, 6.1, 5.36, 9.89],
+  [1.75, HALL_WALL_X, -HALL.depth / 2, WALL.back, 6.06, 6.27],
+  [UPPER.east, 0.88, 3.0, 3.55, 10.1, 10.43],
+];
+/** The roof over the ground storey round its edge from its back west corner: the roof the next stages stand on. */
+const HALL_ROOF_OUTLINE: readonly (readonly [number, number])[] = [
+  [WALL.west, WALL.back],
+  [WALL.west, WALL.front],
+  [WALL.corner - WALL.front, WALL.front],
+  [HALL_WALL_X, WALL.corner - HALL_WALL_X],
+  [HALL_WALL_X, WALL.back],
+];
 const HALL_PARTS: readonly AlchemiaPart[] = [
-  rectPart(-HALL.width / 2, HALL_WALL_X, -HALL.depth / 2, BEVEL_Z, ALCHEMIA_HALL_ROOF),
-  rectPart(-HALL.width / 2, HALL_WALL_X, BEVEL_Z, HALL.depth / 2, 9.9),
+  { points: HALL_ROOF_OUTLINE, top: ALCHEMIA_HALL_ROOF },
+  rectPart(WALL.west, UPPER.east, WALL.front, UPPER.front, UPPER.sill, UPPER.bottom),
+  rectPart(WALL.west, UPPER.east, WALL.front, UPPER.window, UPPER.top, UPPER.sill),
+  ...HALL_FIXTURES.map(([x0, x1, z0, z1, bottom, top]) => rectPart(x0, x1, z0, z1, top, bottom)),
+  rectPart(-HALL.width / 2, HALL.width / 2, -HALL.depth / 2, HALL.depth / 2, 0),
   ...HALL_STAIR_PARTS,
 ];
 
@@ -179,7 +209,7 @@ const HALL_MODULE = ALCHEMIA_MODULES[0] as PlacedAlchemiaModule;
  */
 export const ALCHEMIA_ROOF: { readonly y: number; readonly corners: readonly GroundPoint[] } = {
   y: HALL_MODULE.floor + ALCHEMIA_HALL_ROOF,
-  corners: [alchemiaPoint(HALL_MODULE, -HALL.width / 2, -HALL.depth / 2), alchemiaPoint(HALL_MODULE, -HALL.width / 2, BEVEL_Z), alchemiaPoint(HALL_MODULE, HALL_WALL_X, BEVEL_Z), alchemiaPoint(HALL_MODULE, HALL_WALL_X, -HALL.depth / 2)],
+  corners: HALL_ROOF_OUTLINE.map(([x, z]) => alchemiaPoint(HALL_MODULE, x, z)),
 };
 
 /**

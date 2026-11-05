@@ -90,35 +90,49 @@ export const flightSteps = (f: AlchemiaFlight, ground: (x: number, z: number) =>
  * 0.69 m climb from the podium at the back (z -5.26) towards the front to a landing at 6.64 m,
  * which runs on from z 0.96 to a railing at 45° (x + z = 6.8) and along its open side (x
  * 4.15..4.5) to 7.35 m. The roof (11.51 m) is no further up: the landing is the door of the upper
- * storey. Over the foot of the run the upper storey overhangs the wall (to x 2.7) from 8.6 m up,
- * and a lamp hangs at 6.1 m.
+ * storey, and runs on west of the wall as a balcony round the storey's cut corner (x + z = 3.35)
+ * to its east wall (x 0.40), with a railing along its front (z 4.4..4.8; G-297). Over the foot of
+ * the run the upper storey overhangs the wall (to x 2.7) from 8.6 m up, and a lamp hangs at 6.1 m.
+ * Under the run (its soffit 0.9 m under its line) and the landing (a slab from 6.03 m) the podium
+ * is open to the front, between the wall and the outer stringer.
  */
 export const HALL_WALL_X = 2.24;
+/** The cut east corner of the hall's storeys (x + z) and the east wall of its upper storey over the porch. */
+export const HALL_CORNER = 3.35;
+export const HALL_UPPER_X = 0.4;
 const STRINGER_X = 4.15;
 const RAIL_X = 4.5;
 const PODIUM = { top: 1.23, x1: 5.51, z0: -5.54, z1: 5.49 } as const;
-const RUN = { z0: -5.26, rise: 0.601, going: 0.691 } as const;
-const LANDING = { top: 6.64, z: 0.96, diagonal: 6.8, rail: 7.35, side: 2.65 } as const;
+const RUN = { z0: -5.26, rise: 0.601, going: 0.691, soffit: 0.9 } as const;
+const LANDING = { top: 6.64, z: 0.96, diagonal: 6.8, rail: 7.35, side: 2.65, bottom: 6.03 } as const;
+const BALCONY = { rail: 4.4, edge: 4.8 } as const;
 const OVERHANG = { x1: 2.7, z0: -4.7, z1: -2.6, step: -3.8, low: 9.9, high: 11.51, bottom: 8.6 } as const;
 const LAMP = { x0: 3.15, x1: 3.75, z0: -4.47, z1: -4.0, bottom: 6.06, top: 6.27 } as const;
 
 /** The walkable line of the run: through the middle of each drawn tread. */
 const runLine = (z: number): number => PODIUM.top + RUN.rise / 2 + ((z - RUN.z0) * RUN.rise) / RUN.going;
 
-/** The run as steps of about 0.2 m (two of them stay within a step), from the podium's edge to the landing, their tops on its line. */
+/**
+ * The run as steps of about 0.2 m (two of them stay within a step), from the podium's edge to the
+ * landing, their tops on its line, their bottoms on its soffit where that is over the podium.
+ */
 const RUN_STEPS = 28;
 const runSteps = (): AlchemiaPart[] => {
   const going = (LANDING.z - PODIUM.z0) / RUN_STEPS;
   return Array.from({ length: RUN_STEPS }, (_, i) => {
     const z0 = PODIUM.z0 + i * going;
     const z1 = z0 + going;
-    return rectPart(HALL_WALL_X, STRINGER_X, z0, z1, Math.min(LANDING.top, runLine((z0 + z1) / 2)));
+    const soffit = runLine(z0) - RUN.soffit;
+    return rectPart(HALL_WALL_X, STRINGER_X, z0, z1, Math.min(LANDING.top, runLine((z0 + z1) / 2)), soffit > PODIUM.top ? Math.min(soffit, LANDING.bottom) : undefined);
   });
 };
 
-/** The stair's solid: the podium on its side, the run, the landing and its railings, and the overhang and the lamp over the run's foot. */
+/**
+ * The stair's solid: the podium (the hall's, across its width), the run, the landing and its
+ * railings, the balcony on from it and its railing, and the overhang and the lamp over the run's foot.
+ */
 export const HALL_STAIR_PARTS: readonly AlchemiaPart[] = [
-  rectPart(HALL_WALL_X, PODIUM.x1, PODIUM.z0, PODIUM.z1, PODIUM.top),
+  rectPart(-PODIUM.x1, PODIUM.x1, PODIUM.z0, PODIUM.z1, PODIUM.top),
   ...runSteps(),
   {
     points: [
@@ -128,8 +142,9 @@ export const HALL_STAIR_PARTS: readonly AlchemiaPart[] = [
       [STRINGER_X, LANDING.z],
     ],
     top: LANDING.top,
+    bottom: LANDING.bottom,
   },
-  rectPart(STRINGER_X, RAIL_X, LANDING.z, LANDING.side, LANDING.rail),
+  rectPart(STRINGER_X, RAIL_X, LANDING.z, LANDING.side, LANDING.rail, LANDING.bottom),
   {
     points: [
       [HALL_WALL_X, LANDING.diagonal - HALL_WALL_X],
@@ -138,7 +153,19 @@ export const HALL_STAIR_PARTS: readonly AlchemiaPart[] = [
       [STRINGER_X, LANDING.side],
     ],
     top: LANDING.rail,
+    bottom: LANDING.bottom,
   },
+  {
+    points: [
+      [HALL_UPPER_X, HALL_CORNER - HALL_UPPER_X],
+      [HALL_UPPER_X, BALCONY.rail],
+      [HALL_WALL_X, BALCONY.rail],
+      [HALL_WALL_X, HALL_CORNER - HALL_WALL_X],
+    ],
+    top: LANDING.top,
+    bottom: LANDING.bottom,
+  },
+  rectPart(HALL_UPPER_X, HALL_WALL_X, BALCONY.rail, BALCONY.edge, LANDING.rail, LANDING.bottom),
   rectPart(HALL_WALL_X, OVERHANG.x1, OVERHANG.z0, OVERHANG.step, OVERHANG.low, OVERHANG.bottom),
   rectPart(HALL_WALL_X, OVERHANG.x1, OVERHANG.step, OVERHANG.z1, OVERHANG.high, OVERHANG.bottom),
   rectPart(LAMP.x0, LAMP.x1, LAMP.z0, LAMP.z1, LAMP.top, LAMP.bottom),

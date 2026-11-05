@@ -1,0 +1,1 @@
+Hala Alchemii zatrzymuje na swoich narysowanych ścianach: po cokole da się obejść halę dookoła, wejść pod daszek przed frontem i pod podest schodów, a z podestu przejść na balkon piętra (G-297, G-298).

@@ -4,7 +4,7 @@ import { CROWD_LANES } from "../src/content/crowd";
 import { LUBLIN_PROP_TABLE } from "../src/content/lublin/props.generated";
 import { surfaceY } from "../src/content/lublin/terrain";
 import { STEP_HEIGHT } from "../src/systems/movement-system";
-import { teleportPlayer } from "./helpers";
+import { input, teleportPlayer } from "./helpers";
 
 /**
  * The ways up of Alchemia (G-287, G-288): every stall has a flight of steps from the paving to
@@ -81,6 +81,28 @@ const chase = (from: Pt, to: Pt, seconds: number): number | null => {
     if (Math.hypot(g.position.x - p.position.x, g.position.z - p.position.z) < 2 && Math.abs(g.position.y - p.position.y) < 1) return i / 60;
   }
   return null;
+};
+
+/** A player set down at a point of the hall's frame on `y` over its floor, walking through `way` (points of its frame): where it ends, over the floor. */
+const walk = (y: number, way: readonly (readonly [number, number])[]): { x: number; y: number; z: number } => {
+  const sim = Simulation.create({ seed: 7 });
+  const [sx, sz] = way[0]!;
+  const start = alchemiaPoint(hall, sx, sz);
+  teleportPlayer(sim, { x: start.x, y: hall.floor + y, z: start.z });
+  for (let i = 0; i < 10; i++) sim.step();
+  const p = sim.player()!;
+  for (const [x, z] of way.slice(1)) {
+    const to = alchemiaPoint(hall, x, z);
+    for (let i = 0; i < 240 && Math.hypot(to.x - p.position.x, to.z - p.position.z) > 0.15; i++) {
+      p.yaw = Math.atan2(to.x - p.position.x, to.z - p.position.z);
+      sim.step(input({ moveZ: 1 }));
+    }
+  }
+  const fx = Math.sin(hall.yaw);
+  const fz = Math.cos(hall.yaw);
+  const dx = p.position.x - hall.x;
+  const dz = p.position.z - hall.z;
+  return { x: -dx * fz + dz * fx, y: p.position.y - hall.floor, z: dx * fx + dz * fz };
 };
 
 const stalls = ALCHEMIA_MODULES.filter((m) => m.key.startsWith("alchemia-stall"));
@@ -162,4 +184,10 @@ describe("the ways up of Alchemia (G-287, G-288)", () => {
     expect(chase(c, d, 40), "round the hall's stair").not.toBeNull();
     expect(chase(d, c, 40), "back round the hall's stair").not.toBeNull();
   }, 120_000);
+
+  it("takes a body from the stair's landing onto the balcony of the upper storey, as drawn (G-297)", () => {
+    const end = walk(6.64, [[3.2, 1.6], [1.4, 3.2], [0.9, 4]]);
+    expect(Math.hypot(end.x - 0.9, end.z - 4)).toBeLessThan(0.3);
+    expect(end.y).toBeCloseTo(6.64, 1);
+  });
 });
