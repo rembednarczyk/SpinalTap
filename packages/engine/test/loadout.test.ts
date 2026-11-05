@@ -77,9 +77,12 @@ describe("Loadouts", () => {
     expect(enabled(scene, "hip")).toEqual([]);
     expect(enabled(scene, "back")).toEqual(["hero-back-rifle"]);
 
+    // A long gun hangs on the body, where the rig puts both hands on it (G-282).
     loadouts.set(rig, look({ active: "primary" }), "hero");
     loadouts.update(rig);
-    expect(enabled(scene, "hand")).toEqual(["hero-hand-rifle"]);
+    expect(enabled(scene, "hand")).toEqual([]);
+    expect(enabled(scene, "long")).toEqual(["hero-long-rifle"]);
+    expect(scene.getTransformNodeByName("hero-long-rifle")!.parent).toBe(rig.gunHold);
     // The holster is its own node: the rig folds its gunHip bone away while drawn.
     expect(enabled(scene, "hip")).toEqual(["hero-hip-pistol"]);
     expect(scene.getTransformNodeByName("hero-hip-pistol")!.parent).not.toBe(rig.gunHip);
@@ -87,8 +90,14 @@ describe("Loadouts", () => {
 
     loadouts.setModel(rig, model(scene, materials, rig).dressed);
     loadouts.update(rig);
-    expect(enabled(scene, "hand")).toEqual([]);
-    expect(enabled(scene, "model")).toEqual(["hero-model-rifle"]);
+    expect(enabled(scene, "model")).toEqual([]);
+    expect(enabled(scene, "long")).toEqual(["hero-long-rifle"]);
+    // A one-handed gun goes into the model's closed hand.
+    loadouts.set(rig, look(), "hero");
+    loadouts.update(rig);
+    expect(enabled(scene, "long")).toEqual([]);
+    expect(enabled(scene, "model")).toEqual(["hero-model-pistol"]);
+    expect(scene.getTransformNodeByName("hero-model-pistol")!.parent!.name).toBe("hero-bone-fist");
   });
 
   it("carries the melee weapon on the left hip until it is drawn", () => {

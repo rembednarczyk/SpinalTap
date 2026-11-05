@@ -31,8 +31,8 @@ export const applyActivityPose = (rig: CharacterRig, j: ActivityJoints, w: numbe
   if (w <= 0) return;
   const mix = (from: number, to: number): number => from + (to - from) * w;
   const armed = rig.aiming && rig.drawn > 0.5;
-  // A hand holding an umbrella keeps holding it up (ADR-0041).
-  if (!rig.leftHold) {
+  // A hand holding an umbrella keeps holding it up (ADR-0041), and one on a long gun's fore-end stays there.
+  if (!rig.leftHold && !(armed && rig.grip)) {
     rig.armL.rotation.x = mix(rig.armL.rotation.x, j.armLX - j.lean);
     rig.armL.rotation.z = mix(rig.armL.rotation.z, j.armLZ);
     rig.elbowL.rotation.x = mix(rig.elbowL.rotation.x, j.elbowL);

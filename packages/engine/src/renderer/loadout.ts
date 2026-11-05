@@ -7,9 +7,16 @@ import type { CharacterRig } from "./characters";
 import { recolorSkin } from "./character-skin";
 import { toonSourceOf } from "./model-library";
 import type { AnchorBone, HumanoidRetarget } from "./model-rig";
-import { WEAPON_MODEL, type WeaponMounts } from "./weapon-mount";
+import { LONG_GUN, WEAPON_MODEL, type WeaponMounts } from "./weapon-mount";
 
-type Place = "hand" | "hip" | "hipL" | "back" | "model";
+type Place = "hand" | "hip" | "hipL" | "back" | "model" | "long";
+
+/**
+ * Where a one-handed gun's mount point (the front of its grip, under the trigger guard) sits on
+ * a model's hand, in the forearm's axes from the wrist (G-282): ahead of the wrist by the palm,
+ * to the palm side, and up, so that the closed fingers go round the middle of the grip.
+ */
+const IN_FIST = { side: -0.018, ahead: 0.035, up: 0.01 };
 
 interface Mounted {
   readonly look: WeaponLook;
@@ -27,6 +34,8 @@ export interface DressedModel {
 interface OnModel {
   readonly model: DressedModel;
   readonly hand: TransformNode | null;
+  /** Under the hand, in the closed fist: a one-handed gun hangs here. */
+  readonly fist: TransformNode | null;
   readonly anchors: Partial<Record<AnchorBone, TransformNode>>;
   /** Model size against the rig's (head heights), for the add-ons. */
   readonly fit: number;
@@ -257,6 +266,7 @@ export class Loadouts {
     this.show(s.mounted.hip, stowed("secondary"));
     this.show(s.mounted.hipL, stowed("melee"));
     this.show(s.mounted.back, stowed("primary"));
+    this.show(s.mounted.long, drawn);
   }
 
   dispose(rig: CharacterRig): void {
@@ -288,6 +298,12 @@ export class Loadouts {
     const hand = new TransformNode(`${name}-bone-hand`, this.scene);
     const held = model.retarget.holdInRightHand(hand, Vector3.Zero());
     if (!held) hand.dispose();
+    const fist = held ? new TransformNode(`${name}-bone-fist`, this.scene) : null;
+    if (fist) {
+      fist.parent = hand;
+      const palm = model.retarget.reach.palm;
+      fist.position.set(palm.x + IN_FIST.side, palm.y - IN_FIST.ahead, palm.z + IN_FIST.up);
+    }
     const anchors: Partial<Record<AnchorBone, TransformNode>> = {};
     for (const bone of ["head", "chest"] as const) {
       const node = model.retarget.anchor(bone, `${name}-bone-${bone}`);
@@ -296,7 +312,7 @@ export class Loadouts {
     // A smaller or taller model gets smaller or bigger add-ons, within reason.
     const ratio = model.retarget.headHeight / (rig.head.position.y || 1);
     const fit = Number.isFinite(ratio) && ratio > 0 ? Math.min(1.25, Math.max(0.8, ratio)) : 1;
-    return { model, hand: held ? hand : null, anchors, fit, tinted: new Map() };
+    return { model, hand: held ? hand : null, fist, anchors, fit, tinted: new Map() };
   }
 
   /** Takes everything off the model's bones and gives its cloth its own colours back. */
@@ -318,11 +334,17 @@ export class Loadouts {
 
   private arm(rig: CharacterRig, s: State): void {
     const w = s.look.weapons;
-    this.place(s, "hand", rig.gunHand, w[w.active]);
+    const active = w[w.active];
+    const kind = active ? WEAPON_MODEL[active].kind : null;
+    // A long gun hangs on the body and both hands go to it; the rig poses them (G-282).
+    rig.grip = rig.aiming && kind ? (LONG_GUN[kind] ?? null) : null;
+    const long = rig.grip !== null;
+    this.place(s, "hand", long ? null : rig.gunHand, active);
+    this.place(s, "long", long ? rig.gunHold : null, active);
     this.place(s, "hip", s.holsterR, w.secondary);
     this.place(s, "hipL", s.holsterL, w.melee);
     this.place(s, "back", s.back, w.primary);
-    this.place(s, "model", s.model?.hand ?? null, w[w.active]);
+    this.place(s, "model", long ? null : (s.model?.fist ?? null), active);
   }
 
   private show(m: Mounted | undefined, on: boolean): void {

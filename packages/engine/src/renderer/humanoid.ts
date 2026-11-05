@@ -36,6 +36,8 @@ export interface Joints {
   armR: TransformNode;
   elbowL: TransformNode;
   elbowR: TransformNode;
+  wristL: TransformNode;
+  wristR: TransformNode;
   /** Scale factor relative to the 1.74 m reference build. */
   s: number;
 }
@@ -48,6 +50,7 @@ interface Leg {
 interface Arm {
   readonly arm: TransformNode;
   readonly elbow: TransformNode;
+  readonly wrist: TransformNode;
 }
 
 /** Legs: thigh on the hip pivot, shin on the knee pivot. */
@@ -152,7 +155,7 @@ const buildHead = (b: RigBuilder, body: TransformNode, look: Look, s: number): T
 };
 
 /** Ivory plates, copper joints, dark mechanical hands (see the clinic reference). */
-const buildCyberArm = (b: RigBuilder, arm: TransformNode, elbow: TransformNode, upper: number, fore: number, lr: number, s: number): void => {
+const buildCyberArm = (b: RigBuilder, arm: TransformNode, elbow: TransformNode, wrist: TransformNode, upper: number, fore: number, lr: number, s: number): void => {
   b.sphere(0.1 * s, "cyberCopper", arm, 0, 0, 0);
   b.lathe([[0.001, -upper], [0.034 * lr, -upper], [0.043 * lr, -upper * 0.4], [0.047 * lr, -0.03], [0.001, 0]], "cyberIvory", arm);
   b.torus(0.075 * lr, 0.012, "cyberDark", arm, 0, -upper * 0.55, 0);
@@ -160,7 +163,7 @@ const buildCyberArm = (b: RigBuilder, arm: TransformNode, elbow: TransformNode, 
   b.lathe([[0.001, -fore], [0.028 * lr, -fore], [0.038 * lr, -fore * 0.35], [0.034 * lr, -0.02], [0.001, 0]], "cyberIvory", elbow);
   b.torus(0.06 * lr, 0.01, "cyberDark", elbow, 0, -fore * 0.5, 0);
   b.torus(0.058 * lr, 0.014, "cyberCopper", elbow, 0, -fore, 0);
-  b.box(0.05 * lr, 0.085 * s, 0.03, "cyberDark", elbow, 0, -fore - 0.05 * s, 0);
+  b.box(0.05 * lr, 0.085 * s, 0.03, "cyberDark", wrist, 0, -0.05 * s, 0);
 };
 
 /** Arms: upper arm on the shoulder, forearm on the elbow. */
@@ -171,14 +174,16 @@ const buildArms = (b: RigBuilder, body: TransformNode, build: Build, look: Look,
   return ([-1, 1] as const).map((side) => {
     const arm = b.node(side < 0 ? "armL" : "armR", body, side * build.shoulder * 1.02, 1.42 * s, 0);
     const elbow = b.node(side < 0 ? "elbowL" : "elbowR", arm, 0, -upper, 0);
+    // The hand turns at the wrist (a long gun's grip, G-282).
+    const wrist = b.node(side < 0 ? "wristL" : "wristR", elbow, 0, -fore, 0);
     if (look.arms === "cyber") {
-      buildCyberArm(b, arm, elbow, upper, fore, lr, s);
+      buildCyberArm(b, arm, elbow, wrist, upper, fore, lr, s);
     } else {
       b.lathe([[0.001, -upper], [0.034 * lr, -upper], [0.042 * lr, -upper * 0.4], [0.048 * lr, -0.02], [0.001, 0.02]], look.arms, arm);
       b.lathe([[0.001, -fore], [0.028 * lr, -fore], [0.036 * lr, -fore * 0.4], [0.036 * lr, 0], [0.001, 0.01]], look.arms, elbow);
-      b.box(0.048 * lr, 0.08 * s, 0.028, look.skin, elbow, 0, -fore - 0.045 * s, 0);
+      b.box(0.048 * lr, 0.08 * s, 0.028, look.skin, wrist, 0, -0.045 * s, 0);
     }
-    return { arm, elbow };
+    return { arm, elbow, wrist };
   });
 };
 
@@ -193,5 +198,5 @@ export const humanoid = (b: RigBuilder, root: TransformNode, build: Build, look:
   buildTorso(b, body, build, look, s);
   const head = buildHead(b, body, look, s);
   const [al, ar] = buildArms(b, body, build, look, s) as [Arm, Arm];
-  return { body, head, legL: l.leg, legR: r.leg, kneeL: l.knee, kneeR: r.knee, armL: al.arm, armR: ar.arm, elbowL: al.elbow, elbowR: ar.elbow, s };
+  return { body, head, legL: l.leg, legR: r.leg, kneeL: l.knee, kneeR: r.knee, armL: al.arm, armR: ar.arm, elbowL: al.elbow, elbowR: ar.elbow, wristL: al.wrist, wristR: ar.wrist, s };
 };

@@ -1,6 +1,7 @@
 import { Quaternion, TransformNode, Vector3 } from "../babylon";
 import type { WeaponLook } from "@seki/core";
 import type { ModelInstance, ModelLibrary } from "./model-library";
+import type { TwoHandGrip } from "./two-hand-grip";
 
 export type WeaponKind = "pistol" | "revolver" | "smg" | "shotgun" | "rifle";
 
@@ -50,6 +51,18 @@ export const GRIP: Readonly<Record<WeaponKind, { readonly x: number; readonly y:
   smg: { x: -0.115, y: -0.02 },
   shotgun: { x: -0.205, y: -0.03 },
   rifle: { x: -0.115, y: -0.015 },
+};
+
+/**
+ * Long guns go in both hands (G-282): the right fist round the middle of the grip, the left palm
+ * under the fore-end, the butt at the shoulder when aimed. Points read off each file's
+ * cross-sections. The shotgun's grip is the wrist of its stock, so the hand comes up to it from
+ * below; the SMG has no stock and is held out in front.
+ */
+export const LONG_GUN: Readonly<Partial<Record<WeaponKind, TwoHandGrip>>> = {
+  smg: { grip: GRIP.smg, fist: { x: -0.15, y: -0.04 }, fore: { x: 0.07, y: 0.057 }, butt: { x: -0.2, y: 0.1 }, shouldered: false, pitch: 0.15, yaw: 0.25 },
+  shotgun: { grip: GRIP.shotgun, fist: { x: -0.19, y: -0.005 }, fore: { x: 0.17, y: 0.003 }, butt: { x: -0.37, y: -0.05 }, shouldered: true, pitch: -0.6, yaw: 0.75 },
+  rifle: { grip: GRIP.rifle, fist: { x: -0.15, y: -0.045 }, fore: { x: 0.085, y: 0.048 }, butt: { x: -0.4, y: 0.03 }, shouldered: true, pitch: 0.2, yaw: 0.3 },
 };
 
 /** The grip sits this much further back and lower in the viewmodel (file frame), where the hand is a ball. */
