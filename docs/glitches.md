@@ -998,6 +998,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`content/metro.ts`)
 - Test przyjęcia: Ogród Saski (−630; −84) poza obrysem parku i ≤ 30 m od Alej Racławickich; Lublin Główny (590; −1840) ≤ 80 m od w171203532; odgałęzienie z Placu Łokietka ulicami Kozią i Bernardyńską, poza obrysami zabytków
 
+### G-316 Luki w testach martwej strefy ADR-0070: trzy mutacje przeżywają
+- Status: zgłoszone (5.11, weryfikator PR #267)
+- Ważność: S4 (test, nie gra) · Zasięg: `SEATED` bez „sleep” (brak testu leżącego w pasie), `StayFacingPlayer` obracający siedzącego stałego mieszkańca przy −60 (brak testu), `holdLanePlace` bez `waypoint = null` (nic nie sprawdza)
+- Pakiet właściciela: packages/sim (testy `flee-dead-zone`, `reputation-tiers`)
+
+### G-317 Ucieczka cywila pod ścianą drga: kąt skacze o ±0,8 rad co klatkę
+- Status: zgłoszone (5.11, weryfikator PR #267; stary kod `runFrom`)
+- Ważność: S3 · Zasięg: ucieczka przy ścianie; ziarno 3, −60, przechodzień 1002004, gracz w 2 m: ok. 0,4 s, 24 skoki, bo przełącza się kierunek sondy wolnej drogi
+- Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
