@@ -58,7 +58,7 @@ export const METRO_STATIONS: readonly MetroStationDef[] = [
   // east-west, so the station's garden keeps 1.5 m; the opening east, to the crossing of the square's paths.
   station("shinsekai", "Plac Litewski", "shinsekai-7", { x: 74, z: 16.9 }, [entrance("A", "Plac Litewski", { x: 74, z: 16.9, along: "x", opens: 1 })]),
   // Brama Krakowska: the node on Lubartowska's axis between its two entrances. A on Plac Łokietka west of the
-  // carriageway as drawn (Królewska and Lubartowska meet 11 m wide there), along it, open north to the deptak;
+  // carriageway as drawn (Królewska is 6.5 m wide there, x 440.3–446.8), along it, open north to the deptak;
   // B on the car park before Alchemia, 3 m off the archaeological site (w1559354344), open east to Lubartowska.
   station("kanal", "Brama Krakowska", "kanal", { x: 442, z: -40 }, [
     entrance("A", "Plac Łokietka", { x: 433, z: -107, along: "z", opens: 1 }),
@@ -125,7 +125,7 @@ export interface MetroTunnelDef {
  * topography curator's review of ADR-0071 (T-150).
  */
 export const METRO_TUNNEL: readonly MetroTunnelDef[] = [
-  { from: "shinsekai", to: "kanal", via: [{ x: 78, z: -15 }, { x: 88, z: -60 }, { x: 240, z: -66 }, { x: 342, z: -89 }, { x: 443, z: -94 }] },
+  { from: "shinsekai", to: "kanal", via: [{ x: 78, z: -15 }, { x: 88, z: -57 }, { x: 130, z: -55 }, { x: 156, z: -47 }, { x: 188, z: -54 }, { x: 240, z: -66 }, { x: 342, z: -89 }, { x: 443, z: -94 }] },
   {
     from: "kanal",
     to: "targ",
