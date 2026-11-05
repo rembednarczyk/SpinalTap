@@ -131,6 +131,7 @@
   "drone-low-pop": 0,
   "drone-low-canyon": 0,
   "drone-low-pool": 0,
+  "drone-low-pool-sunk": 0,
   "figure-in-building": 0,
   "figure-on-road": 0,
   "figure-in-piece": 0,

@@ -15,6 +15,7 @@ import { PROP_BLOCK } from "../mapcity/prop-shapes";
 import { POLE_REACH, isPoleLamp, poleCables, polePairs } from "../mapcity/utility-poles";
 import { DRONE_SURFACES, streetAxes, worldRing } from "./drone-world";
 import { type AirPost, type AirPrism, PatrolAir, boxRing, runPosts } from "./patrol-air";
+import { drawnPavingOf } from "./patrol-paving";
 import type { PatrolWorld } from "./patrol-lanes";
 
 /**
@@ -196,5 +197,9 @@ export const quietAt = (x: number, z: number): boolean => chunkAt(x, z)?.distric
 
 let city: PatrolWorld | null = null;
 
-/** Lublin as the low patrols see it, once: the whole scenery, the pedestrian streets' axes and the terrain. */
-export const cityPatrolWorld = (): PatrolWorld => (city ??= patrolWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS, PATROL_STREETS), groundY, quietAt, surfaceY));
+/**
+ * Lublin as the low patrols see it, once: the whole scenery, the pedestrian streets' axes, the
+ * terrain and the paving as the map city drapes it (G-293), the searchlight's pool laid on that.
+ */
+export const cityPatrolWorld = (): PatrolWorld =>
+  (city ??= patrolWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS, PATROL_STREETS), groundY, quietAt, drawnPavingOf(WORLD_SCENERY, groundY, surfaceY)));

@@ -1,4 +1,5 @@
 import type { Mesh, TransformNode } from "../babylon";
+import type { ArmReach, TwoHandGrip } from "./two-hand-grip";
 
 /** A procedurally built character with a jointed skeleton for procedural animation. */
 export interface CharacterRig {
@@ -14,6 +15,17 @@ export interface CharacterRig {
   readonly armR: TransformNode;
   readonly elbowL: TransformNode;
   readonly elbowR: TransformNode;
+  /** Wrists at the forearms' ends: the hands turn here (the procedural box hands and a dressed model's). */
+  readonly wristL: TransformNode;
+  readonly wristR: TransformNode;
+  /** A long gun held in both hands hangs here, on the body, placed every frame (G-282). */
+  readonly gunHold: TransformNode;
+  /** The long gun in hand while one is the active weapon, or null (set by the loadout). */
+  grip: TwoHandGrip | null;
+  /** The arms the hold is solved for while an imported model is dressed over the rig; null: the rig's own. */
+  reach: ArmReach | null;
+  /** How far the fingers of the left and the right hand close, 0 open .. 1 a fist (imported models). */
+  readonly fist: [number, number];
   readonly meshes: Mesh[];
   /** Carries a pistol: holster at the right hip, drawn into the right hand. */
   readonly aiming: boolean;

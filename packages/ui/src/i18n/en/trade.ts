@@ -72,6 +72,7 @@ export const enTrade = {
   "inventory.stat.armor-leg": "Leg armor",
   "inventory.stat.speed": "Speed",
   "inventory.stat.heal": "Heals",
+  "inventory.health.gain": "+{hp} HP",
   "inventory.stats.armor": "Armor",
   "inventory.stats.armorHint": "Armor: head, torso, arms, legs",
   "inventory.stats.armorValue": "H{head} T{torso} A{arm} L{leg}",

@@ -1,5 +1,6 @@
 import type { CharacterRig } from "./character-rig";
-import { AIM_HOLD, applyStagger, applySwingBody, poseMeleeArms, poseWeaponArms, smooth } from "./character-poses";
+import { AIM_HOLD, applyStagger, applySwingBody, poseMeleeArms, poseWeaponArms, reloadPhase, smooth } from "./character-poses";
+import { bladeOf, holdLongGun, holdWeight } from "./two-hand-hold";
 
 const DEATH_FALL = 0.65;
 const DEATH_LINGER = 5.5;
@@ -102,8 +103,20 @@ const climbPose = (rig: CharacterRig, w: number): void => {
   rig.kneeR.rotation.x = mix(rig.kneeR.rotation.x, 0.9 + 0.7 * Math.max(0, -s));
 };
 
+/** Turns only the long-gun hold gives back to rest: the arms' twist, the wrists, the fingers. */
+const relaxHands = (rig: CharacterRig): void => {
+  rig.armL.rotation.y = 0;
+  rig.armR.rotation.y = 0;
+  rig.wristL.rotationQuaternion?.set(0, 0, 0, 1);
+  rig.wristR.rotationQuaternion?.set(0, 0, 0, 1);
+  rig.fist[0] = 0;
+  rig.fist[1] = 0;
+};
+
+
 /** Knees give, then the body drops backwards onto the street; after lying still it sinks out of view. */
 const animateDeath = (rig: CharacterRig, dying: number): void => {
+  relaxHands(rig);
   const t = Math.min(1, dying / DEATH_FALL);
   const ease = t * t * (3 - 2 * t);
   rig.kneeL.rotation.x = rig.kneeR.rotation.x = 1.1 * ease;
@@ -173,6 +186,7 @@ const poseLegs = (rig: CharacterRig, { swing, thigh, lean, run, knee }: Gait): v
 };
 
 const poseArms = (rig: CharacterRig, { swing, run, amount, lean }: Gait, dt: number, combat: RigCombat): void => {
+  relaxHands(rig);
   if (rig.leftHold) {
     rig.armL.rotation.x = rig.leftHold[0];
     rig.elbowL.rotation.x = rig.leftHold[1];
@@ -192,6 +206,17 @@ const poseArms = (rig: CharacterRig, { swing, run, amount, lean }: Gait, dt: num
   // Arms hang and aim in world terms, so the lean is taken out of them too.
   rig.armL.rotation.x -= lean;
   rig.armR.rotation.x -= lean;
+  if (rig.aiming && rig.drawn >= 0.5) {
+    rig.fist[1] = 1;
+    // The support hand under a raised pistol half closes round the other.
+    if (!rig.melee && !rig.leftHold) rig.fist[0] = 0.5 * smooth(Math.min(1, Math.max(0, rig.aim)));
+  }
+  const w = holdWeight(rig);
+  if (w > 0) {
+    const left = rig.leftHold ? 0 : w;
+    holdLongGun(rig, rig.grip!, rig.stoop + lean, w, left, reloadPhase(rig));
+    rig.fist[0] = 0.6 * left;
+  }
 };
 
 /** One knee leads: the jump reads as a step into the air, not a hop on both feet. */
@@ -203,8 +228,10 @@ const applyAirPose = (rig: CharacterRig, air: number | undefined): void => {
   rig.kneeL.rotation.x += w * legs.knee;
   rig.kneeR.rotation.x += w * legs.knee * 0.7;
   // Arms out for balance; a weapon arm stays where it aims.
-  rig.armL.rotation.x -= w * 0.45;
-  rig.armL.rotation.z += w * 0.35;
+  if (holdWeight(rig) <= 0) {
+    rig.armL.rotation.x -= w * 0.45;
+    rig.armL.rotation.z += w * 0.35;
+  }
   if (!rig.aiming) {
     rig.armR.rotation.x -= w * 0.45;
     rig.armR.rotation.z -= w * 0.35;
@@ -224,7 +251,13 @@ const poseBody = (rig: CharacterRig, { c, thigh, knee, lean, run, amount }: Gait
   rig.body.rotation.z = Math.sin(rig.time * 30) * 0.05 * rig.flinch;
   // The head keeps looking ahead over the lean.
   rig.head.rotation.x = -0.25 * rig.flinch - lean * 0.8;
-  rig.body.rotation.y = 0;
+  // With a long gun the body stands bladed; the head looks ahead past it and the legs keep
+  // stepping the way the character goes (they turn back under the hips).
+  const blade = bladeOf(rig, holdWeight(rig));
+  rig.body.rotation.y = blade;
+  rig.head.rotation.y = -blade;
+  rig.legL.rotation.y = -blade;
+  rig.legR.rotation.y = -blade;
 };
 
 /**
