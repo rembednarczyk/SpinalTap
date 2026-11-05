@@ -211,6 +211,31 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(748, 400)).toBe("footway");
   });
 
+  // The strips around the Dworzec Autobusowy (T-168): north, between its north wall and the footway
+  // w227698418; east, between its east wall and the stands' asphalt w66323033.
+  const AROUND: readonly (readonly [string, number, number, number, number])[] = [
+    ["north", 785, 797, 422, 430],
+    ["east", 793, 808, 376, 428],
+  ];
+  it("paves the strips north and east of the Dworzec Autobusowy, and leaves the stands' asphalt and the footways on top (G-341)", () => {
+    const buildings = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z)));
+    const bare: string[] = [];
+    for (const [name, x0, x1, z0, z1] of AROUND)
+      for (let x = x0; x <= x1; x += 0.5)
+        for (let z = z0; z <= z1; z += 0.5) {
+          if (buildings.some((o) => inside(x, z, o))) continue;
+          if (surfaceAt(x, z) === null) bare.push(`${name} ${x},${z}`);
+        }
+    expect(bare.join(" ")).toEqual("");
+    expect(surfaceAt(805, 400)).toBe("road");
+    expect(surfaceAt(801.5, 415)).toBe("footway");
+    expect(surfaceAt(797, 410)).toBe("square");
+    expect(surfaceAt(797, 435)).toBe("square");
+    // The north footway w227698418 and the kiosk's east footway w227698421 stay on top of the pavement.
+    expect(surfaceAt(794, 427.7)).toBe("footway");
+    expect(surfaceAt(804.6, 430)).toBe("footway");
+  });
+
   const OSM_DIR = join(__dirname, "../../../data/osm");
   const osm = mergeOsm(readdirSync(OSM_DIR).filter((f) => f.endsWith(".json")).map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))));
   const PAVED = new Set(["square", "cobble", "footway", "road"]);
