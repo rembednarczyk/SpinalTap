@@ -4,7 +4,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 ## Następne
 
-- **Oszczędzanie limitów (decyzja użytkownika 4.11):** raporty orkiestratora tylko przy scaleniu, odrzuceniu albo potrzebie decyzji, 2–4 zdania; bez subskrypcji zdarzeń PR (CI sprawdzane raz, przy raporcie weryfikatora); przebudzenie co godzinę; wolnych slotów nie dopełniać automatycznie: nowe zadania tylko z kolejki priorytetów użytkownika albo na jego prośbę.
+- **Oszczędzanie limitów (decyzja użytkownika 4.11):** raporty orkiestratora tylko przy scaleniu, odrzuceniu albo potrzebie decyzji, 2–4 zdania; bez subskrypcji zdarzeń PR (CI sprawdzane raz, przy raporcie weryfikatora); przebudzenie co godzinę; praca idzie sama: zawsze co najmniej 3 agenty w toku (najwyżej 4), kolejne pozycje z planu: priorytety użytkownika, potem slot assetów, glitche, ADR-y (korekta użytkownika 5.11).
 - **Uwagi użytkownika z testowego przebiegu (4.11).** Błędy trafiły do rejestru jako G-279–G-285, reszta czeka tutaj na triage, ADR albo decyzję. Kolejność (decyzja użytkownika 4.11): najpierw G-281, potem G-279, dalej G-285 ze skradaniem i G-280; reputacja i metro jako ADR-y do akceptacji.
   - **Reputacja i reakcje mieszkańców (do ADR, decyzja użytkownika).**
     - Przy złej reputacji uciekają wszyscy, także sprzedawcy, co psuje immersję. Propozycja użytkownika: u sprzedawców wystarczy kara (gorsze ceny, odmowa części oferty) zamiast paniki. Lawina powiadomień to osobny błąd G-281.
