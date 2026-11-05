@@ -37,6 +37,8 @@ const EAVES = 0.6;
 const ROOF = 0.2;
 /** The lintel over the opening starts this high over the street. */
 const LINTEL = 2.5;
+/** How far short of a wall beside the pavilion its eaves stop (T-160). */
+const WALL_CLEAR = 0.05;
 /** The ticket machine: across the hall, deep, tall. */
 export const MACHINE_SIZE: Vec3 = v(0.8, 1.6, 0.45);
 
@@ -47,11 +49,18 @@ export interface PavilionSpot {
   readonly along: "x" | "z";
   /** The opening is at the end of the long side towards +along (1) or -along (-1). */
   readonly opens: 1 | -1;
+  /**
+   * A wall of the map this close beside the pavilion, on the side towards +across (1) or
+   * -across (-1): the eaves stop short of it (T-160).
+   */
+  readonly wall?: { readonly side: 1 | -1; readonly gap: number };
 }
 
 /** A pavilion built: its outline, the dug ground, the street and hall levels, its blocks, the machine and where a rider comes up. */
 export interface Pavilion {
   readonly outline: Rect;
+  /** The roof with its eaves, as drawn and as solid. */
+  readonly roof: Rect;
   readonly cut: GroundCut;
   /** The street at the opening: the head of the stairs. */
   readonly street: number;
@@ -105,6 +114,8 @@ export const pavilion = (spot: PavilionSpot): Pavilion => {
   const hallEnd = L - END_WALL;
   const foot = STAIRS.landing + STAIRS.run;
   const stairs = rect(STAIRS.landing, foot, -inner, inner);
+  const eaves = (side: 1 | -1): number => (spot.wall?.side === side ? Math.max(0, Math.min(EAVES, spot.wall.gap - WALL_CLEAR)) : EAVES);
+  const roof = rect(-EAVES, L + EAVES, -half - eaves(-1), half + eaves(1));
   const props: StaticProp[] = [
     // The landing inside the opening, and the stairs rising to it: one slope, drawn as its steps.
     box(0, STAIRS.landing, -inner, inner, base, street + SILL, "concrete"),
@@ -122,7 +133,7 @@ export const pavilion = (spot: PavilionSpot): Pavilion => {
     box(hallEnd, L, -inner, inner, street + PLINTH, top, "glass"),
     // The lintel over the opening and the roof with its eaves.
     box(0, END_WALL, -inner, inner, street + LINTEL, top, "glass"),
-    box(-EAVES, L + EAVES, -half - EAVES, half + EAVES, top, top + ROOF, "concrete"),
+    { center: v((roof.minX + roof.maxX) / 2, top + ROOF / 2, (roof.minZ + roof.maxZ) / 2), view: { kind: "block", size: v(roof.maxX - roof.minX, ROOF, roof.maxZ - roof.minZ), material: "concrete" }, solid: true, scenery: true },
     // Two gates by the machine, towards the second flight of stage 4: drawn, not in the way.
     ...[0.2, 0.85].map((w) => box(foot + 0.4, foot + 1.3, w, w + 0.15, floor, floor + 1, "metal", false)),
   ];
@@ -131,6 +142,7 @@ export const pavilion = (spot: PavilionSpot): Pavilion => {
   const door = point(-1, 0);
   return {
     outline: rect(0, L, -half, half),
+    roof,
     cut: { bounds: rect(0, hallEnd, -inner, inner), floor: floor - 1 },
     street,
     floor,

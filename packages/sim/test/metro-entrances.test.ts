@@ -136,6 +136,22 @@ describe("metro entrances on the map (ADR-0071 stage 2)", () => {
     }
   });
 
+  it.each(ENTRANCES)("%s: the roof's eaves clear every solid round it (T-160: Tessen's wall at Nabrzeże)", (_n, e) => {
+    const sim = Simulation.create({ seed: 5 });
+    teleportPlayer(sim, e.door);
+    run(sim, 2);
+    const props = new Set(e.props.map((p) => `${p.center.x},${p.center.y},${p.center.z}`));
+    const top = e.street + 3.1;
+    const r = e.roof;
+    for (const x of sim.world) {
+      if (!x.solid || props.has(`${x.position.x},${x.position.y},${x.position.z}`) || x.interactable?.kind === "metro") continue;
+      const b = x.solid;
+      const over = b.min.x < r.maxX && b.max.x > r.minX && b.min.z < r.maxZ && b.max.z > r.minZ && b.max.y > top && b.min.y < top + 0.2;
+      const hit = !x.prisms || x.prisms.some((p) => p.bottom < top + 0.2 && p.top > top && circleTouchesPrism(p, (r.minX + r.maxX) / 2, (r.minZ + r.maxZ) / 2, Math.hypot(r.maxX - r.minX, r.maxZ - r.minZ) / 2));
+      expect(over && hit, `${x.id} under the eaves`).toBe(false);
+    }
+  });
+
   it("lists every pavilion's outline for the crowd, the traffic and the furniture", () => {
     expect(METRO_FOOTPRINTS).toEqual(METRO_ENTRANCES.map((e) => e.outline));
   });
