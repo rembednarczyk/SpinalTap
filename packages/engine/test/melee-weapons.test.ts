@@ -153,7 +153,9 @@ describe("melee weapon put away (ADR-0019)", () => {
     play(0.3);
     const p = pose();
     expect(p.grip.z).toBeLessThan(-0.15);
-    expect(p.grip.y).toBeGreaterThan(1.1);
+    // The fist's place on the handle by the shoulder, the tip at the hip (before the lift: at 0.64 m, the knee).
+    expect(p.grip.y).toBeGreaterThan(1.35);
+    expect(p.tip.y).toBeGreaterThan(0.72);
     // Tip down to the left, so the handle stands up to the right.
     expect(p.dir.y).toBeLessThan(-0.7);
     expect(p.dir.x).toBeLessThan(-0.2);

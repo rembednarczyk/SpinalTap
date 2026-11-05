@@ -24,9 +24,11 @@ const IN_FIST = { side: -0.018, ahead: 0.035, up: 0.01 };
 /**
  * The blade is carried on the back (the baton hangs in the left hip holster): its holder sits
  * on the sling, turned against the long gun's diagonal so the two cross, the handle over the
- * right shoulder for the right hand, the blade flat on the back and a little off it, clear of the gun.
+ * right shoulder for the right hand, the blade flat on the back and a little off it, clear of the
+ * gun. It rides `lift` metres up its own line, so the handle stands over the shoulder and the
+ * tip ends at the hip, not at the knee.
  */
-const BLADE_ON_BACK = { z: -0.035, turn: -1.4 } as const;
+const BLADE_ON_BACK = { z: -0.035, turn: -1.4, lift: 0.12 } as const;
 
 interface Mounted {
   readonly look: WeaponLook;
@@ -311,9 +313,12 @@ export class Loadouts {
     const holder = new TransformNode(`${s.name}-${place}-${look}`, this.scene);
     holder.parent = parent;
     if (place === "hipL" && look === "blade") {
+      const turn = Quaternion.RotationAxis(new Vector3(0, 0, 1), BLADE_ON_BACK.turn);
+      // Up its own line (the handle is +Y of a hand mount), then off the back.
+      holder.position.copyFrom(new Vector3(0, BLADE_ON_BACK.lift, 0).applyRotationQuaternion(turn));
       holder.position.z = BLADE_ON_BACK.z;
       // Turned on the back first, then laid flat about its own length.
-      holder.rotationQuaternion = Quaternion.RotationAxis(new Vector3(0, 0, 1), BLADE_ON_BACK.turn).multiply(Quaternion.RotationAxis(new Vector3(0, 1, 0), Math.PI / 2));
+      holder.rotationQuaternion = turn.multiply(Quaternion.RotationAxis(new Vector3(0, 1, 0), Math.PI / 2));
     }
     holder.setEnabled(false);
     const mounted: Mounted = { look, node: holder };
