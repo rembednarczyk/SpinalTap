@@ -927,12 +927,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (pomosty mostów)
 
 ### G-300 Rysowany bruk odbiega od `surfaceY` o kilka cm na wygiętym terenie
-- Status: zgłoszone (5.11, naprawiacz G-293)
+- Status: zgłoszone (5.11, naprawiacz G-293); po #275 na deptaku (127; −55) do 2,5 cm; pełna naprawa wymaga, żeby drapowanie znało siatkę chunka (2,5 / 5 / 4 m) albo żeby sim czytał `drapeY`
 - Ważność: S4 · Zasięg: wszędzie, gdzie `drape` (trójkąty do 5 m) odstaje od terenu; dotyczy aut (G-130), postaci i kontroli skanu; na deptaku (127; −55) do 4,5 cm
 - Pakiet właściciela: packages/engine (mapcity/ground-plan) i sim
 
 ### G-301 Nakładające się kawałki bruku mają różne drapowania (stopnie 1–3 cm, migotanie głębi)
-- Status: zgłoszone (5.11, naprawiacz G-293)
+- Status: w PR #275 (5.11; wspólna siatka drapowania 2,5 m, `drapeY`, kontrola `paving-overlap-step` 2842 → 0)
 - Ważność: S4 · Zasięg: np. dwa `square`; jaśniejsze i ciemniejsze łaty o prostych krawędziach; drzazga 8 cm przy (435,3; −94,6)
 - Pakiet właściciela: packages/engine (mapcity/ground-plan)
 
@@ -1012,6 +1012,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, kurator, ponowny przegląd PR #270)
 - Ważność: S4 · Zasięg: róg Kozia/Bernardyńska ścina narożnik przez w67498752 (ok. 17 m; wierne punkty (390; −144), (362; −149), (368; −172)); w luce T-022 odcinek (1580; 232) → (1738; 386) pod 5 budynkami, a (1738; 386) → (2084; 384) ok. 19 m na północ od łuku ulicy (lepiej (1803; 377), (1891; 368), (1962; 367), (2044; 378)); odcinek (506; −389) → (590; −1840) 5 m od Pałacu Sobieskich w181283749 (wierniej Bernardyńską (583; −528), (639; −627) i Zamojską (662; −728)). Kontrola `metro-line-protected` poza prostokątami importu widzi tylko `PROTECTED_AREAS`: dodać listę zabytków poza importem (punkt i promień, m.in. kościół św. Agnieszki w171014937, Pałac Sobieskich), baza 0
 - Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan
+
+### G-320 Nakładające się nawierzchnie `square` i `cobble` leżą w jednej płaszczyźnie: kropkowane spoiny z zaokrąglenia głębi
+- Status: zgłoszone (5.11, naprawiacz G-301)
+- Ważność: S4 · Zasięg: 69 par różnych nawierzchni z tym samym `SURFACE_LIFT` 0,08; dwa nakładające się `square` z różnym wzorem spoin dają słabe kropkowane linie (zrzut `shots/g301/after/g301-c.png`); trwale: rysować jeden kawałek z pary (przycięcie nakładek w imporcie)
+- Pakiet właściciela: tools/osm-import i packages/engine (mapcity/ground-plan)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
