@@ -167,7 +167,13 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   });
   // A takedown's grip is not in the save (G-253): the save waits for its end.
   const canSave = () => sim().session.takedown === null && !dialogue.isOpen && !shop.isOpen && !loot.isOpen && !travel.metro.isOpen && !travel.metro.riding && s.screen() !== "dead" && s.screen() !== "title" && s.screen() !== "loading";
-  const saves = new SaveController({ persistence: deps.persistence, ui, audio, narrative: s.narrative, sim, now: deps.now, canSave, restore: s.restore, ...(deps.download ? { download: deps.download } : {}) });
+  // A flight is not in the save (G-335): no fall speed, peak or mantle, so it would load standing
+  // still in mid-air. A ladder is resumed on load (the ladder system, `resumeOnLadderTop`).
+  const airborne = () => {
+    const p = sim().player();
+    return p !== undefined && (p.fall !== undefined || p.mantle !== undefined);
+  };
+  const saves = new SaveController({ persistence: deps.persistence, ui, audio, narrative: s.narrative, sim, now: deps.now, canSave, airborne, restore: s.restore, ...(deps.download ? { download: deps.download } : {}) });
   const autosave = new AutosaveController({
     bus,
     sim,
@@ -175,6 +181,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     // In control (no panel, menu, breach or kiosk) or paused from there, out of combat, alive,
     // the story not over. A phone player often pauses before switching apps.
     safe: () => (s.inControl() || s.screen() === "paused") && canSave() && !hud.inCombat && !sim().session.gameOver && (sim().player()?.health?.current ?? 0) > 0,
+    airborne,
     write: (slot) => saves.write(slot),
     view: autosaveView(ui, audio),
     ...(deps.autosaveIntervalTicks ? { intervalTicks: deps.autosaveIntervalTicks } : {}),

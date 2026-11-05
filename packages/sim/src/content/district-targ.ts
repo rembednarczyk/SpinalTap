@@ -138,6 +138,12 @@ const southBlock = (x: number): { x0: number; x1: number; top: number } => {
 
 /** Height of the fire escape balcony on the market face of the south row, above the market's floor. */
 export const BALCONY_TOP = 4.5;
+/**
+ * How far the balcony stands out of the wall, its rail included (G-318): a walk off the low roof
+ * above it (4.2 m/s, the stick held) lands on it, 2.8 m out, instead of flying over the rail
+ * onto the market 9 m below. A faster walk with buffs lands on the rail.
+ */
+const BALCONY_DEPTH = 3.4;
 /** North face of the south row (the market side). */
 const ROW_FACE = 64;
 /** Climber's centre in front of a wall. */
@@ -161,8 +167,8 @@ const fireEscape = (): StaticProp[] => {
   const mid = ROOF_MID.top;
   const midX0 = ROOF_MID.x0;
   return [
-    deck(68.2, 72.6, ROW_FACE, ROW_FACE + 1.3, BALCONY_TOP, 0.2, "metal"),
-    rail(68.2, 72.6, ROW_FACE + 1.1, ROW_FACE + 1.3, BALCONY_TOP),
+    deck(68.2, 72.6, ROW_FACE, ROW_FACE + BALCONY_DEPTH, BALCONY_TOP, 0.2, "metal"),
+    rail(68.2, 72.6, ROW_FACE + BALCONY_DEPTH - 0.2, ROW_FACE + BALCONY_DEPTH, BALCONY_TOP),
     ...ladderParts({ key: "targ-escape-1", x: 73.2, z: ROW_FACE + HANG, yaw: Math.PI, bottom: 0, top: BALCONY_TOP, exit: v(72, BALCONY_TOP, ROW_FACE + 0.65) }),
     ...ladderParts({ key: "targ-escape-2", x: 69.2, z: ROW_FACE + HANG, yaw: Math.PI, bottom: BALCONY_TOP, top: west, exit: v(69.2, west, ROW_FACE - 0.7) }),
     ...ladderParts({ key: "targ-escape-3", x: midX0 - HANG, z: 60.5, yaw: Math.PI / 2, bottom: west, top: mid, exit: v(midX0 + 0.8, mid, 60.5) }),

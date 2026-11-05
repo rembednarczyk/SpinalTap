@@ -131,7 +131,8 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     expect(session.sim.domain.reputation.hebi).toBe(-19);
 
     // 4. Save, keep playing, load: state matches the save point, narrative included.
-    expect(await session.saves.saveAsync("slot-1")).toBe(true);
+    // The teleport above put her a little over the bar's floor: no save before she lands on it (G-335).
+    for (let i = 0; i < 60 && session.sim.player()!.fall !== undefined; i++) steps(session, 1);    expect(await session.saves.saveAsync("slot-1")).toBe(true);
     const saved = session.saves.snapshot();
     // The autosave lists first (`auto`); the manual slot keeps its own objective.
     expect(ui.getState().slots.find((s) => s.slot === "slot-1")).toMatchObject({ objective: expect.stringContaining("Take a contract from Kaito") });

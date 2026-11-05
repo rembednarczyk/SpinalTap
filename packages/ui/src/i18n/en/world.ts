@@ -132,6 +132,7 @@ export const enWorld = {
   "dialogue.tone.lifepath": "from the past",
   // Saving and loading.
   "save.unavailable": "Can't save right now",
+  "save.airborne": "Can't save in mid-air",
   "save.saved": "Game saved",
   "save.autosaved": "Autosaved",
   "save.failed": "Save failed",
