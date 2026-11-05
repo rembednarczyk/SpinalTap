@@ -54,6 +54,55 @@ const FLEE_LOOKAHEAD = 6;
 /** Turns tried, in order, when the way straight away is blocked; the probe is this long. */
 const FLEE_TURNS = [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2, (3 * Math.PI) / 4, (-3 * Math.PI) / 4];
 const FLEE_PROBE = 2.5;
+/**
+ * Hysteresis of the turn (G-317): the way it runs on (read from its heading) is kept while it is
+ * open this much further than the probe, and a way closer to straight away takes over only once
+ * it is open as far. Along a wall the probe of the next way in opened and closed every step, and
+ * the heading swung by 0.8 rad 24 times. Half a metre already lets it run up and down a blind
+ * alley closer to the player; 1.5 m keeps others swinging (flee-wall.test.ts).
+ */
+const FLEE_SWITCH_MARGIN = 1;
+/** How close its heading has to be to a turn to count as running on it (radians). */
+const FLEE_HELD_TURN = Math.PI / 8;
+
+/**
+ * Does the walk along `turn` off `away`, round its obstacle as `steerPoint` takes it, bend back
+ * across the line straight away from the danger or nearer to it (straight away itself: back
+ * towards the danger)? Then the probe of that way was cut by a corner the walk goes round, not
+ * by the wall alongside, and keeping the way it ran on led a chased walker off the way out of an
+ * alley into a corner, where it swung at the player's feet (G-317, flee-wall.test.ts).
+ */
+const bendsBack = (ctx: SimContext, from: Vec3, away: number, turn: number): boolean => {
+  const heading = away + turn;
+  const p = steerPoint(ctx.world, from, { x: from.x + Math.sin(heading) * FLEE_LOOKAHEAD, y: from.y, z: from.z + Math.cos(heading) * FLEE_LOOKAHEAD });
+  const off = Math.atan2(p.x - from.x, p.z - from.z) - away;
+  const bend = Math.atan2(Math.sin(off), Math.cos(off));
+  if (Math.abs(bend - turn) <= FLEE_HELD_TURN) return false;
+  if (turn === 0) return Math.abs(bend) > Math.PI / 2;
+  return Math.sign(bend) !== Math.sign(turn) || Math.abs(bend) < Math.abs(turn);
+};
+
+/**
+ * The turn off `away` to run on: straight away when the way is open, else the open way closest
+ * to it (a wall at its back), with the hysteresis above. A way back towards the danger is never
+ * kept, so it does not run up and down a blind alley closer to the player. Nor is a heading it
+ * only walked on (`running` false): kept for its first step, it turned 1.5 rad on the next. Nor
+ * is any heading kept past a way closer to straight away that `bendsBack`. Null when every way
+ * is blocked.
+ */
+const fleeTurn = (ctx: SimContext, from: Vec3, away: number, yaw: number, running: boolean): number | null => {
+  const open = (turn: number, reach: number): boolean => {
+    const probe = { x: from.x + Math.sin(away + turn) * reach, y: from.y, z: from.z + Math.cos(away + turn) * reach };
+    return straightWalk(ctx.world, from, probe);
+  };
+  const best = FLEE_TURNS.find((t) => open(t, FLEE_PROBE));
+  if (best === undefined || !running) return best ?? null;
+  const runsOn = (t: number): boolean => Math.abs(Math.atan2(Math.sin(yaw - away - t), Math.cos(yaw - away - t))) <= FLEE_HELD_TURN;
+  const held = FLEE_TURNS.find((t) => Math.abs(t) <= Math.PI / 2 && runsOn(t));
+  const far = FLEE_PROBE + FLEE_SWITCH_MARGIN;
+  if (held === undefined || held === best || open(best, far) || !open(held, far)) return best;
+  return bendsBack(ctx, from, away, best) ? best : held;
+};
 
 const FEAR: Readonly<Record<CrowdState, number>> = { calm: 0, alarmed: 1, fleeing: 2, cowering: 3 };
 
@@ -247,19 +296,10 @@ class CivilianAgent {
     const d = Math.hypot(dx, dz);
     // Standing exactly on top of it: run along the street, away from the player's facing.
     const away = d < 1e-6 ? fallbackYaw : Math.atan2(dx, dz);
-    // Straight away when the way is open, else the open way closest to it (a wall at its back).
-    let ux = Math.sin(away);
-    let uz = Math.cos(away);
-    for (const turn of FLEE_TURNS) {
-      const tx = Math.sin(away + turn);
-      const tz = Math.cos(away + turn);
-      const probe = { x: self.position.x + tx * FLEE_PROBE, y: self.position.y, z: self.position.z + tz * FLEE_PROBE };
-      if (straightWalk(ctx.world, self.position, probe)) {
-        ux = tx;
-        uz = tz;
-        break;
-      }
-    }
+    const running = Math.hypot(self.velocity.x, self.velocity.z) > 0.9 * speed;
+    const turn = fleeTurn(ctx, self.position, away, self.yaw, running) ?? 0;
+    const ux = Math.sin(away + turn);
+    const uz = Math.cos(away + turn);
     const ahead = { x: self.position.x + ux * FLEE_LOOKAHEAD, y: self.position.y, z: self.position.z + uz * FLEE_LOOKAHEAD };
     const p = steerPoint(ctx.world, self.position, ahead);
     const sx = p.x - self.position.x;
