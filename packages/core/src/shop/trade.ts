@@ -22,8 +22,8 @@ import {
 import { RARITY } from "../items/rarity";
 import type { ItemDefId, ItemRef, Rarity } from "../items/types";
 import type { ReputationTier } from "../reputation/reputation";
-import { type PurchaseFailure, type ShopTerms, STANDARD_TERMS, priceWithTerms } from "./ripperdoc";
-import { SHOPS, type ShopId, type ShopItemId, stockEntry, stockListPrice } from "./shops";
+import { type PurchaseFailure, type ShopTerms, STANDARD_TERMS, fullService, priceWithTerms } from "./ripperdoc";
+import { SHOPS, type ShopId, type ShopItemId, type StockEntry, stockEntry, stockListPrice } from "./shops";
 
 /**
  * Selling, repairs, the backpack and implants from the bag (plan §6, ADR-0015). Pure functions
@@ -46,9 +46,9 @@ export const INSTALL_RATE = 0.25;
 export const BACKPACK_STEP = 6;
 export const BACKPACK_PRICES: readonly number[] = [600, 1200];
 
-const SELL_FACTOR: Readonly<Record<ReputationTier, number>> = { hostile: 0, wary: 0.75, neutral: 1, friendly: 1.1, trusted: 1.2 };
+const SELL_FACTOR: Readonly<Record<ReputationTier, number>> = { hostile: 0.5, wary: 0.75, neutral: 1, friendly: 1.1, trusted: 1.2 };
 
-/** What standing with the trader does to a sale: a wary one pays less, a regular more. */
+/** What standing with the trader does to a sale: a wary one pays less, a hostile one half, a regular more. */
 export const sellFactor = (tier: ReputationTier): number => SELL_FACTOR[tier];
 
 /** A piece as the trader sees it: kind, tier and wear. */
@@ -92,9 +92,9 @@ export type SaleResult =
 /**
  * Sells `qty` of a stack, or one loose piece. Equipped, mounted and modded pieces are refused
  * ("in-use"); rounds still in a sold gun go back to the pouch first.
+ * Traders buy on any terms (ADR-0070); a hostile one pays half.
  */
 export const sell = (state: TradeState, shop: ShopId, ref: ItemRef, qty: number, terms: ShopTerms = STANDARD_TERMS): SaleResult => {
-  if (!terms.open) return { ok: false, reason: "refused" };
   const { inventory, equipment } = state;
   if ("stack" in ref) {
     const n = Math.floor(qty);
@@ -145,7 +145,7 @@ export type RepairResult =
 
 /** Mends a garment (worn or in the bag) back to 100. */
 export const repair = (wallet: Wallet, inventory: InventoryState, uid: string, useParts = 0, terms: ShopTerms = STANDARD_TERMS): RepairResult => {
-  if (!terms.open) return { ok: false, reason: "refused" };
+  if (!fullService(terms)) return { ok: false, reason: "refused" };
   const item = findItem(inventory, uid);
   if (!item) return { ok: false, reason: "not-found" };
   if (!isGarmentId(item.def) || (item.condition ?? 100) >= 100) return { ok: false, reason: "not-damaged" };
@@ -166,7 +166,7 @@ export type BackpackResult =
 
 /** +6 cells, twice: 600 €$, then 1200 €$ (24 → 30 → 36). */
 export const upgradeBackpack = (wallet: Wallet, inventory: InventoryState, terms: ShopTerms = STANDARD_TERMS): BackpackResult => {
-  if (!terms.open) return { ok: false, reason: "refused" };
+  if (!fullService(terms)) return { ok: false, reason: "refused" };
   const price = backpackPrice(inventory);
   if (price === null) return { ok: false, reason: "max-capacity" };
   const pay = debit(wallet, price);
@@ -178,14 +178,17 @@ export type StockPurchase =
   | (TradeState & { readonly ok: true; readonly price: number; readonly added: ItemInstance | null; readonly qty: number })
   | { readonly ok: false; readonly reason: TradeFailure };
 
+/** Whether the terms let this entry be sold: ammo and stacks always, pieces only on full terms (ADR-0070). */
+export const offersEntry = (entry: StockEntry, terms: ShopTerms): boolean => entry.kind !== "item" || fullService(terms);
+
 /**
  * Buys one entry of a shop's stock: a piece into a free cell, one of a stack, or a whole box of
  * rounds into the pouch (refused when the box does not fit, so nobody pays for lost rounds).
  */
 export const buyStock = (state: TradeState, shop: ShopId, itemId: ShopItemId, terms: ShopTerms = STANDARD_TERMS): StockPurchase => {
-  if (!terms.open) return { ok: false, reason: "refused" };
   const entry = stockEntry(shop, itemId);
   if (!entry) return { ok: false, reason: "not-sold-here" };
+  if (!offersEntry(entry, terms)) return { ok: false, reason: "refused" };
   const price = priceWithTerms(stockListPrice(entry), terms);
   let next: TradeState;
   let added: ItemInstance | null = null;
@@ -246,7 +249,7 @@ export const installCyberwareItem = (
   terms: ShopTerms = STANDARD_TERMS,
   capacity = Infinity,
 ): ImplantFitting => {
-  if (!terms.open) return { ok: false, reason: "refused" };
+  if (!fullService(terms)) return { ok: false, reason: "refused" };
   const item = findItem(inventory, uid);
   if (!item) return { ok: false, reason: "not-found" };
   const id = item.def;
@@ -267,8 +270,15 @@ export type ImplantRemoval =
   | { readonly ok: true; readonly character: CharacterState; readonly inventory: InventoryState; readonly cyberwareId: CyberwareId; readonly item: ItemInstance }
   | { readonly ok: false; readonly reason: TradeFailure };
 
-/** Takes an implant out, free of charge, into the bag. Needs a free cell. */
-export const removeCyberware = (character: CharacterState, inventory: InventoryState, equipment: Equipment, slot: CyberwareSlot): ImplantRemoval => {
+/** Takes an implant out, free of charge, into the bag. Needs a free cell; surgery, so not on basic terms. */
+export const removeCyberware = (
+  character: CharacterState,
+  inventory: InventoryState,
+  equipment: Equipment,
+  slot: CyberwareSlot,
+  terms: ShopTerms = STANDARD_TERMS,
+): ImplantRemoval => {
+  if (!fullService(terms)) return { ok: false, reason: "refused" };
   const id = character.cyberware[slot];
   if (id === undefined) return { ok: false, reason: "empty-slot" };
   const stowed = stowImplant(inventory, equipment, id);

@@ -110,8 +110,8 @@ const installImplantFromBag = (ctx: SimContext, cmd: Command<"install-cyberware-
   raiseProgress(ctx, "cyberware_installed");
 };
 
-const removeImplant = (ctx: SimContext, cmd: Command<"remove-cyberware">, { domain, fail }: Counter): void => {
-  const r = removeCyberware(domain.character, domain.inventory, domain.equipment, cmd.slot);
+const removeImplant = (ctx: SimContext, cmd: Command<"remove-cyberware">, { domain, terms, fail }: Counter): void => {
+  const r = removeCyberware(domain.character, domain.inventory, domain.equipment, cmd.slot, terms);
   if (!r.ok) return fail(r.reason);
   ctx.state.domain = { ...domain, character: r.character, inventory: r.inventory };
   ctx.bus.emit("ItemAdded", { ref: { uid: r.item.uid }, defId: r.item.def, qty: 1, source: "clinic" });

@@ -76,21 +76,32 @@ describe("the ripperdoc", () => {
     expect(installed[0]?.price).toBe(Math.round(CYBERWARE_CATALOG.steady_grip.price * 1.25));
   });
 
-  it("refuses to sell to, or even see, a hostile customer", () => {
+  it("opens the clinic to a hostile customer, with the basics only and half again the price (ADR-0070)", () => {
     const sim = simWith({ clinic: -60 });
     const failed = collect(sim, "PurchaseFailed");
+    const bought = collect<{ price: number }>(sim, "ItemBought");
     const refused = collect(sim, "InteractionRefused");
     const started = collect(sim, "InteractionStarted");
     sim.enqueue({ type: "buy-item", itemId: "medkit" });
+    sim.enqueue({ type: "buy-cyberware", cyberwareId: "steady_grip" });
+    sim.enqueue({ type: "remove-cyberware", slot: "optics" });
     const mori = byKey(sim, "mori")!;
     teleportPlayer(sim, { x: mori.position.x + 1.2, y: mori.position.y, z: mori.position.z });
     sim.step();
     sim.step(input({ interact: true }));
-    expect(failed).toEqual([{ reason: "refused", shopId: "clinic" }]);
-    expect(sim.domain.wallet.eddies).toBe(5000);
-    expect(refused).toEqual([{ targetId: mori.id, dialogueId: "mori", faction: "clinic" }]);
-    expect(started).toHaveLength(0);
-    expect(sim.session.dialogueActive).toBe(false);
+    const price = priceWithTerms(STACKABLE_CATALOG.medkit.value, shopTerms(-60));
+    expect(price).toBe(Math.round(STACKABLE_CATALOG.medkit.value * 1.5));
+    expect(bought.map((e) => e.price)).toEqual([price]);
+    expect(failed).toEqual([
+      { reason: "refused", shopId: "clinic" },
+      { reason: "refused", shopId: "clinic" },
+    ]);
+    expect(sim.domain.wallet.eddies).toBe(5000 - price);
+    expect(sim.domain.character.cyberware.arms).toBeUndefined();
+    expect(sim.domain.character.cyberware.optics).toBe("hitomi_optics_mk1");
+    expect(refused).toHaveLength(0);
+    expect(started).toEqual([{ targetId: mori.id, dialogueId: "mori", kind: "shop", shopId: "clinic" }]);
+    expect(sim.session.dialogueActive).toBe(true);
   });
 
   it("opens the shop as usual for a neutral customer", () => {
