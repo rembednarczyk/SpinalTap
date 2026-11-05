@@ -7,7 +7,7 @@ import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-par
 import { smallAlone } from "./building-alone.ts";
 import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
 import { makeBuilding } from "./buildings.ts";
-import { corrected, correctedLine } from "./corrections.ts";
+import { addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
@@ -257,8 +257,8 @@ const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
 
 export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS): Generated => {
   const features = extractFeatures(data);
-  // The explicit corrections of estimated tags (corrections.ts), before anything reads them.
-  const areas = features.areas.map((a) => corrected(a));
+  // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), before anything reads them.
+  const areas = [...features.areas.map((a) => corrected(a)), ...addedAreas()];
   const mapLines = features.lines.map((l) => correctedLine(l));
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
   const sidewalks = sidewalkIndex(mapLines);
