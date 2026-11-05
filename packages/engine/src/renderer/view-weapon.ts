@@ -44,12 +44,10 @@ export class ViewWeapon {
     const melee = kind !== null && isMeleeKind(kind);
     if (kind && pivot) {
       pivot.scaling.setAll(model.scale);
-      this.camera.setPlaceholderGun(melee);
-      this.camera.setPlaceholderMelee(!melee);
+      this.camera.setPlaceholders({ gun: melee, melee: !melee });
       return;
     }
-    this.camera.setPlaceholderGun(true);
-    this.camera.setPlaceholderMelee(true);
+    this.camera.setPlaceholders({ gun: true, melee: true });
     if (kind && pivot === undefined && this.mounts.has(kind)) this.load(kind);
   }
 

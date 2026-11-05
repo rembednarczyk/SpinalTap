@@ -228,15 +228,14 @@ export class CameraRig {
     this.swing = { strike, windup, recovery, elapsed: 0 };
   }
 
-  /** The box pistol, shown while the weapon in hand has no model mounted (G-282). */
-  setPlaceholderGun(visible: boolean): void {
-    this.placeholderGun.setEnabled(visible);
-  }
-
-  /** The stand-in baton or blade, shown while the melee weapon in hand has no model mounted. */
-  setPlaceholderMelee(visible: boolean): void {
-    this.meleePlaceholder = visible;
-    this.meleeMesh?.setEnabled(visible);
+  /**
+   * Stand-ins shown while the weapon in hand has no model mounted: the box pistol (G-282) and
+   * the baton or blade shape.
+   */
+  setPlaceholders(shown: { readonly gun: boolean; readonly melee: boolean }): void {
+    this.placeholderGun.setEnabled(shown.gun);
+    this.meleePlaceholder = shown.melee;
+    this.meleeMesh?.setEnabled(shown.melee);
   }
 
   /** What else stops the TPP camera besides the scene's blockers (null: the blockers alone). */
