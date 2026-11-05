@@ -1666,9 +1666,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   // low patrols of stage 7b through theirs (`drone-pieces.ts`, `patrol-pieces.ts`).
   ...droneChecks(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY, planDroneLanes, PATROL_LANES),
   ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones), surfaceY),
-  /** A low patrol coming into sight or going 2 px large or more from anywhere on a street (`patrol-sight.ts`). */
   /** A low patrol's searchlight pool, laid where the views lay it (`cityPatrolWorld`), sinking into the drawn paving: a dark middle (G-293). */
   "drone-low-pool-sunk": () => poolSunk(PATROL_LANES(), cityPatrolWorld().surfaceAt, DRAWN_PAVING()),
+  /** A low patrol coming into sight or going 2 px large or more from anywhere on a street (`patrol-sight.ts`). */
   "drone-low-pop": () => popSight(PATROL_LANES(), streetEyes(WORLD_SCENERY, surfaceY), patrolModelSpan()),
   // The still crowd of ADR-0058 stage 8 against the game's buildings, roads, paving, kept furniture and moving crowd (`figure-pieces.ts`).
   ...figureChecks(Object.values(WORLD_STREET_PROPS).flat(), {

@@ -26,8 +26,11 @@ type Tri = readonly [Vec3, Vec3, Vec3];
  * nearer than half the lift loses the depth test to the paving far off, one under it goes dark.
  */
 export const POOL_SINK = POOL_LIFT / 2;
-/** The cells of the pool's way it is checked once in (m), as `drone-low-pool` does. */
-const POOL_STEP = 1;
+/**
+ * The cells of the pool's way it is checked once in (m), with the widest pool laid there: the pool
+ * (up to 2.8 m) overlaps the next cell's, and a narrower one in the cell lies on the same paving.
+ */
+const POOL_STEP = 2;
 /** Points along each side of a triangle of the pool checked against the paving. */
 const SAMPLES = 3;
 /** The paving runs on even under a triangle of the pool when it lies within this of the plane through the paving under its corners (m). */
@@ -35,11 +38,12 @@ const EVEN = 0.005;
 
 /** The cells the drawn triangles of a piece of paving are sorted into for point queries (m). */
 const CELL = 2;
-const cellOf = (x: number, z: number): string => `${Math.floor(x / CELL)},${Math.floor(z / CELL)}`;
+/** A number for a cell of up to ten thousand either way: a map's key without a string. */
+const cellOf = (x: number, z: number): number => (Math.floor(x / CELL) + 1e4) * 4e4 + (Math.floor(z / CELL) + 1e4);
 
 /** The top of the paving drawn at (x, z) by the ground surfaces of `items`, null where none is drawn. */
 export const drawnPaving = (items: readonly Item[], groundAt: (x: number, z: number) => number): ((x: number, z: number) => number | null) => {
-  const pieces: { ring: P2[]; lift: number; cells: Map<string, Tri[]> | null }[] = [];
+  const pieces: { ring: P2[]; lift: number; cells: Map<number, Tri[]> | null }[] = [];
   const index = new BinIndex();
   for (const { view, at } of items) {
     if (view.kind !== "ground") continue;
@@ -47,35 +51,45 @@ export const drawnPaving = (items: readonly Item[], groundAt: (x: number, z: num
     if (ring.length >= 3) index.add(pieces.push({ ring, lift: SURFACE_LIFT[view.surface], cells: null }) - 1, boundsOf(ring));
   }
   // A piece's triangles as `drape` lays them, by the cells their boxes touch.
-  const lay = (p: (typeof pieces)[number]): Map<string, Tri[]> => {
+  const lay = (p: (typeof pieces)[number]): Map<number, Tri[]> => {
     if (p.cells) return p.cells;
-    const cells = new Map<string, Tri[]>();
+    const cells = new Map<number, Tri[]>();
     for (const t of drapeTriangles(p.ring)) {
       const tri = t.map((q) => ({ x: q.x, y: groundAt(q.x, q.z) + p.lift, z: q.z })) as unknown as Tri;
       const b = boundsOf(t);
       for (let i = Math.floor(b.minX / CELL); i <= Math.floor(b.maxX / CELL); i++) {
         for (let k = Math.floor(b.minZ / CELL); k <= Math.floor(b.maxZ / CELL); k++) {
-          const list = cells.get(`${i},${k}`);
+          const list = cells.get(cellOf(i * CELL, k * CELL));
           if (list) list.push(tri);
-          else cells.set(`${i},${k}`, [tri]);
+          else cells.set(cellOf(i * CELL, k * CELL), [tri]);
         }
       }
     }
     return (p.cells = cells);
   };
+  // Every piece's triangles in a cell, gathered when the cell is first read.
+  const byCell = new Map<number, Tri[]>();
+  const trianglesAt = (x: number, z: number): Tri[] => {
+    const key = cellOf(x, z);
+    let tris = byCell.get(key);
+    if (!tris) {
+      const minX = Math.floor(x / CELL) * CELL;
+      const minZ = Math.floor(z / CELL) * CELL;
+      tris = [...index.within({ minX, maxX: minX + CELL, minZ, maxZ: minZ + CELL })].flatMap((i) => lay(pieces[i]!).get(key) ?? []);
+      byCell.set(key, tris);
+    }
+    return tris;
+  };
   return (x, z) => {
     let top: number | null = null;
-    const key = cellOf(x, z);
-    for (const i of index.at(x, z)) {
-      for (const [a, b, c] of lay(pieces[i]!).get(key) ?? []) {
-        const d = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
-        if (Math.abs(d) < 1e-12) continue;
-        const wa = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (z - c.z)) / d;
-        const wb = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (z - c.z)) / d;
-        if (wa < -1e-9 || wb < -1e-9 || wa + wb > 1 + 1e-9) continue;
-        const y = wa * a.y + wb * b.y + (1 - wa - wb) * c.y;
-        top = top === null ? y : Math.max(top, y);
-      }
+    for (const [a, b, c] of trianglesAt(x, z)) {
+      const d = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+      if (Math.abs(d) < 1e-12) continue;
+      const wa = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (z - c.z)) / d;
+      const wb = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (z - c.z)) / d;
+      if (wa < -1e-9 || wb < -1e-9 || wa + wb > 1 + 1e-9) continue;
+      const y = wa * a.y + wb * b.y + (1 - wa - wb) * c.y;
+      top = top === null ? y : Math.max(top, y);
     }
     return top;
   };
@@ -149,14 +163,16 @@ export const poolSink = (
  */
 export const poolSunk = (lanes: readonly PatrolLane[], lay: (x: number, z: number) => number, drawn: (x: number, z: number) => number | null): Finding[] =>
   lanes.flatMap((lane) => {
-    const seen = new Set<string>();
+    const widest = new Map<string, { pose: Parameters<typeof poolDrop>[0]; r: number }>();
     for (const f of patrolPoints(lane)) {
       const drop = poolDrop(f.pose);
       if (drop === null) continue;
-      const key = `${Math.round(f.pose.x / POOL_STEP)},${Math.round(f.pose.z / POOL_STEP)},${Math.round(poolRadius(drop) * 10)}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const w = poolSink(f.pose, lay, drawn);
+      const key = `${Math.round(f.pose.x / POOL_STEP)},${Math.round(f.pose.z / POOL_STEP)}`;
+      const r = poolRadius(drop);
+      if (r > (widest.get(key)?.r ?? 0)) widest.set(key, { pose: f.pose, r });
+    }
+    for (const { pose } of widest.values()) {
+      const w = poolSink(pose, lay, drawn);
       if (w && w.sink > POOL_SINK) return [{ at: `patrol lane from ${lane.points[0]!.x.toFixed(0)},${lane.points[0]!.z.toFixed(0)} at ${w.x.toFixed(1)},${w.z.toFixed(1)}`, what: `pool ${(w.sink * 100).toFixed(1)} cm under the paving` }];
     }
     return [];
