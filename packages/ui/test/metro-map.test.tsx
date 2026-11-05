@@ -41,6 +41,14 @@ describe("the metro layer on the maps", () => {
     expect(saski.querySelector(".metro-layer__dash")).toBeTruthy();
     expect(saski.textContent).toContain("under construction · 1.0 km");
     expect(saski.querySelector("title")?.textContent).toBe("Ogród Saski: under construction, 1.0 km from Plac Litewski");
+    // A station on the line: its hollow ring only, no branch of its own.
+    const kalinowszczyzna = screen.getByTestId("metro-planned-kalinowszczyzna");
+    expect(kalinowszczyzna.querySelector(".metro-layer__ring--planned")).toBeTruthy();
+    expect(kalinowszczyzna.querySelector(".metro-layer__dash")).toBeNull();
+    // The dashes are in map units, as wide as they are long whatever the zoom (no non-scaling stroke).
+    const dash = saski.querySelector(".metro-layer__dash")!;
+    expect(dash.getAttribute("stroke-width")).toBe("2");
+    expect(dash.getAttribute("stroke-dasharray")).toBe("7.0 4.0");
     const toggle = screen.getByRole("button", { name: "Metro line on the map" });
     expect(toggle.getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(toggle);
@@ -129,7 +137,11 @@ describe("the kiosk", () => {
   it("lists the possible stations without a ticket", () => {
     mount(<MetroMap />, { metroMap: kioskVm("kanal", "targ"), eddies: 1000 });
     const planned = screen.getByTestId("metro-planned");
-    expect(within(planned).getAllByRole("listitem").map((li) => li.getAttribute("aria-label"))).toEqual(["Ogród Saski: No ticket: the station isn't open yet", "Lublin Główny: No ticket: the station isn't open yet"]);
+    expect(within(planned).getAllByRole("listitem").map((li) => li.getAttribute("aria-label"))).toEqual([
+      "Ogród Saski: No ticket: the station isn't open yet",
+      "Lublin Główny: No ticket: the station isn't open yet",
+      "Kalinowszczyzna: No ticket: the station isn't open yet",
+    ]);
     expect(within(planned).queryByRole("button")).toBeNull();
     expect(screen.queryByRole("button", { name: /Ogród Saski|Lublin Główny/ })).toBeNull();
   });

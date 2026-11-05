@@ -16,7 +16,8 @@ export const METRO_LAYER: MapMetroVm = {
   ],
   planned: [
     { id: "ogrod-saski", name: "Ogród Saski", from: "shinsekai", x: -810, z: 180, path: [158, -58, -810, 180], distance: 1010 },
-    { id: "lublin-glowny", name: "Lublin Główny", from: "kanal", x: 560, z: -2030, path: [490, -76, 560, -2030], distance: 1960 },
+    { id: "lublin-glowny", name: "Lublin Główny", from: "kanal", x: 590, z: -1840, path: [490, -76, 590, -1840], distance: 1960 },
+    { id: "kalinowszczyzna", name: "Kalinowszczyzna", from: "targ", x: 1700, z: 380, path: [], distance: 1120 },
   ],
 };
 

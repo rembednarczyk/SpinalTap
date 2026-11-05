@@ -135,9 +135,32 @@ test("phone: the settings in the pause menu scroll to their last control", async
 
 /**
  * The metro kiosk on a phone held sideways (ADR-0071): the line map, then the list of stops under
- * it; a tap chooses the destination and its card, and the ticket button stays a 44 px target the
- * panel scrolls to, inside the screen.
+ * it; a tap chooses the destination and brings its card into view, and the ticket button stays a
+ * 44 px target inside the screen. Whatever is scrolled, nothing of the panel's content shows under
+ * or below its buttons.
  */
+/** Points under the kiosk's buttons and below them to the panel's edge that show its scrolled content, at the top, the middle and the end of the scroll. */
+const contentUnderButtons = (page: Page) =>
+  page.evaluate(() => {
+    const panel = document.querySelector<HTMLElement>("[data-testid=metro-map]")!;
+    const actions = document.querySelector<HTMLElement>("[data-testid=metro-actions]") ?? panel.querySelector<HTMLElement>(".metro__actions")!;
+    const scrollers = [panel, ...panel.querySelectorAll<HTMLElement>("*")].filter((el) => el.scrollHeight > el.clientHeight + 1 && getComputedStyle(el).overflowY !== "visible");
+    const hits: string[] = [];
+    for (const at of [0, 0.5, 1]) {
+      for (const el of scrollers) el.scrollTop = (el.scrollHeight - el.clientHeight) * at;
+      const a = actions.getBoundingClientRect();
+      const p = panel.getBoundingClientRect();
+      for (let y = a.top + 1; y < p.bottom - 0.5; y += 3) {
+        for (let i = 1; i < 12; i++) {
+          const x = p.left + (p.width * i) / 12;
+          const hit = document.elementFromPoint(x, y);
+          if (hit && hit !== panel && panel.contains(hit) && !actions.contains(hit)) hits.push(`${at}: ${hit.className || hit.tagName} at ${x.toFixed(0)},${y.toFixed(0)}`);
+        }
+      }
+    }
+    return hits;
+  });
+
 test.describe("phone 800x370 metro kiosk", () => {
   test.use({ viewport: { width: 800, height: 370 }, isMobile: true, hasTouch: true });
 
@@ -157,6 +180,11 @@ test.describe("phone 800x370 metro kiosk", () => {
     expect(list.y).toBeGreaterThanOrEqual(chart.y + chart.height - 0.5);
     await page.getByRole("button", { name: /Destination: Plac Zamkowy/ }).tap();
     await expect(page.getByTestId("metro-preview")).toBeVisible();
+    // The card comes into view by itself: its top is on screen above the buttons.
+    const card = (await page.getByTestId("metro-preview").boundingBox())!;
+    const bar = (await page.getByTestId("metro-actions").boundingBox())!;
+    expect(card.y >= 0 && card.y < bar.y, "card in view").toBe(true);
+    expect(await contentUnderButtons(page)).toEqual([]);
     const buy = page.getByTestId("metro-buy");
     await buy.scrollIntoViewIfNeeded();
     const b = (await buy.boundingBox())!;
@@ -165,6 +193,25 @@ test.describe("phone 800x370 metro kiosk", () => {
     const panel = (await kiosk.boundingBox())!;
     expect(panel.x >= 0 && panel.x + panel.width <= 800.5).toBe(true);
     await expect(buy).toBeEnabled();
+  });
+});
+
+test.describe("desktop 1280x720 metro kiosk", () => {
+  test.use({ viewport: { width: 1280, height: 720 } });
+
+  test("desktop: the kiosk's content never shows under its buttons", async ({ page }) => {
+    test.setTimeout(180_000);
+    await page.goto("/?seed=7&models=off&audio=off");
+    await waitForGame(page);
+    await newGame(page);
+    await waitForPlay(page);
+    await freeze(page);
+    await page.evaluate(() => window.__seki!.metro("kanal"));
+    await page.getByRole("button", { name: /Destination: Plac Zamkowy/ }).click();
+    await expect(page.getByTestId("metro-preview")).toBeVisible();
+    expect(await contentUnderButtons(page)).toEqual([]);
+    const panel = (await page.getByTestId("metro-map").boundingBox())!;
+    expect(panel.y >= 0 && panel.y + panel.height <= 720.5, "panel on screen").toBe(true);
   });
 });
 

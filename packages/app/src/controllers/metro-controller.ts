@@ -1,4 +1,4 @@
-import type { AudioPort, DomainEvents, EventBus, MetroStationId } from "@seki/core";
+import { type AudioPort, type DomainEvents, type EventBus, type MetroStationId, isMetroStationId } from "@seki/core";
 import { type MetroIntents, type MetroRideVm, type PhoneLineVm, type UiStore, patchUi, translate } from "@seki/ui";
 import { METRO_STATION_NAMES, metroFare, metroLine, metroMapVm, metroRefusalText } from "../metro";
 import type { KnotPool } from "../phone";
@@ -79,7 +79,8 @@ export class MetroController implements MetroIntents {
   /** First step: the route to `to` and its card; the platform the player stands on chooses nothing. */
   selectMetroStop(to: MetroStationId): void {
     const kiosk = this.kiosk;
-    if (!kiosk || to === kiosk.from || to === kiosk.selected) return;
+    // An id from outside the line (a stale UI, the debug console) chooses nothing.
+    if (!kiosk || !isMetroStationId(to) || to === kiosk.from || to === kiosk.selected) return;
     kiosk.selected = to;
     patchUi(this.deps.ui, { metroMap: this.mapVm(kiosk) });
   }

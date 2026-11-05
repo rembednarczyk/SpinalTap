@@ -10,7 +10,8 @@
 }
 .metro-layer__leg { fill: none; stroke: var(--amber); stroke-width: 4px; stroke-linejoin: round; stroke-linecap: round; opacity: 0.75; vector-effect: non-scaling-stroke; }
 .metro-layer__leg--route { stroke: #fff2c8; stroke-width: 7px; opacity: 1; filter: drop-shadow(0 0 4px rgba(255, 191, 74, 0.9)); }
-.metro-layer__dash { fill: none; stroke: var(--amber); stroke-width: 2px; opacity: 0.6; vector-effect: non-scaling-stroke; }
+/* In map units on purpose (the layer sets the width and the dashes from `k`): a non-scaling stroke would keep the dashes in metres and the width in px. */
+.metro-layer__dash { fill: none; stroke: var(--amber); opacity: 0.7; }
 .metro-layer__ring { fill: #0b1016; stroke: var(--amber); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
 .metro-layer__ring--planned { fill: none; stroke-dasharray: 3 2; }
 .metro-layer__m { fill: var(--amber); font-weight: 700; stroke-width: 0; }
@@ -31,9 +32,11 @@
 .minimap__metro-entrance text { fill: #0b1016; font-family: var(--font-mono); font-weight: 700; text-anchor: middle; dominant-baseline: central; }
 
 /* The kiosk: the map beside the list (under it on a phone), the card of the destination. */
-.metro--map { box-sizing: border-box; width: min(980px, calc(100vw - 24px)); max-height: calc(100vh - 24px); }
+/* The head and the buttons stay put; only the part between them scrolls, so nothing runs under the buttons. */
+.metro--map { box-sizing: border-box; display: flex; flex-direction: column; width: min(980px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow: hidden; }
+.metro__scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .metro__body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; gap: 14px; margin-top: 12px; }
-.metro__chart { position: relative; aspect-ratio: 4 / 3; background: rgba(6, 10, 15, 0.92); border: 1px solid var(--panel-edge); }
+.metro__chart { position: relative; aspect-ratio: 16 / 10; background: rgba(6, 10, 15, 0.92); border: 1px solid var(--panel-edge); }
 .metro__chart svg { display: block; width: 100%; height: 100%; }
 .metro__side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .metro__body .metro__stops { margin: 0; }
@@ -75,7 +78,7 @@
 .metro__card-near--hideout circle { fill: var(--magenta); }
 .metro__card-near text { fill: #0b1016; font-family: var(--font-mono); font-weight: 700; text-anchor: middle; dominant-baseline: central; }
 .metro__card-watch { margin: 6px 0 0; color: var(--danger); font-size: 13px; }
-.metro__actions { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin: 12px -4px 0; padding: 8px 4px; background: rgba(6, 10, 16, 0.97); }
+.metro__actions { flex: none; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--panel-edge); }
 .metro__buy { min-width: 180px; font-weight: 700; }
 
 .citymap__btn[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); }
@@ -83,5 +86,7 @@
 @media (max-width: 760px), (max-height: 500px) {
   .metro__body { grid-template-columns: 1fr; }
   .metro__chart { aspect-ratio: auto; height: 220px; }
-  .metro--map { padding: 14px 14px; }
+  .metro--map { padding: 10px 14px; }
+  .metro--map .metro__line { font-size: 20px; }
+  .metro--map .metro__eyebrow { font-size: 11px; }
 }

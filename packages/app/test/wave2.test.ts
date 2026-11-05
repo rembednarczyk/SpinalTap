@@ -94,6 +94,9 @@ describe("MetroController without a session", () => {
     expect(ui.getState().metroMap?.selected).toBeNull();
     metro.buyMetroTicket();
     expect(commands).toEqual([]);
+    // An id from outside the line chooses nothing, whatever the caller's types said.
+    metro.selectMetroStop("alchemia" as never);
+    expect(ui.getState().metroMap?.selected).toBeNull();
     metro.selectMetroStop("doki");
     expect(ui.getState().metroMap?.selected).toBe("doki");
     expect(ui.getState().metroMap?.preview?.route).toEqual(["kanal", "targ", "doki"]);

@@ -6,6 +6,7 @@ import type { MapLabelKind } from "../store/map-vm";
 import type { MapMarkerVm, MapPlayerVm, MapRectVm, MapVm } from "../store/ui-store";
 import { useUi } from "../use-ui";
 import { MetroLayer } from "../metro/metro-layer";
+import { liftDistricts } from "../metro/metro-labels";
 import { type CityMapView, useMapView } from "./use-map-view";
 
 /** Names on the map tab by zoom: streets and landmarks only close enough to read them; the metro layer names its own stations. */
@@ -68,14 +69,16 @@ export const CityMapPanel = () => {
   const metro = metroOn ? (map?.metro ?? null) : null;
   const kinds = useMemo(() => kindsAt(view.span, metro !== null), [view.span, metro]);
   const size = useMemo(() => sizeAt(view.span), [view.span]);
-  if (!map) return <p className="sheet__empty">{t("map.none")}</p>;
   // Icons keep their size on screen: 1 at a 420 m view.
   const k = view.span / 420;
+  // With the metro on, the district names make room for its stations.
+  const named = useMemo(() => (metro ? { ...city, labels: liftDistricts(city.labels, metro.stations, k, size("district")) } : city), [city, metro, k, size]);
+  if (!map) return <p className="sheet__empty">{t("map.none")}</p>;
   return (
     <div className="citymap" data-testid="city-map">
       <svg className="citymap__svg" viewBox={viewBox(view)} preserveAspectRatio="xMidYMid meet" role="img" aria-label={t("map.label")} {...handlers}>
         <Base map={map} city={city} />
-        <CityLabels city={city} window={null} prefix="citymap" kinds={kinds} size={size} />
+        <CityLabels city={named} window={null} prefix="citymap" kinds={kinds} size={size} />
         {metro && <MetroLayer metro={metro} k={k} />}
         {showMarkers && markers.map((m) => <Marker key={m.id} m={m} k={k} />)}
         {player && <Player p={player} k={k} />}
