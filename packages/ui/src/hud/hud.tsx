@@ -1,6 +1,7 @@
 import { type CSSProperties, useEffect, useState } from "react";
 import { keyLabel } from "../menus/key-label";
 import { type ControlBindingVm, DEFAULT_HORIZONTAL_FOV, hipVerticalFov } from "../store/ui-store";
+import { type Translate } from "../i18n/t";
 import { useT } from "../i18n/use-t";
 import { useUi } from "../use-ui";
 import { AbilityWidget } from "./ability-widget";
@@ -107,19 +108,20 @@ const Clock = () => {
 };
 
 /** The first key bound to a control, as a label, or `fallback` before the bindings arrive. */
-const keyOf = (controls: readonly ControlBindingVm[], action: string, fallback: string): string => {
+const keyOf = (controls: readonly ControlBindingVm[], action: string, fallback: string, t: Translate): string => {
   const code = controls.find((c) => c.action === action)?.codes[0];
-  return code ? keyLabel(code) : fallback;
+  return code ? keyLabel(code, t) : fallback;
 };
 
 /** A first-run hint: the keys to press and what they do, low in the middle of the screen. */
 const Hint = () => {
+  const t = useT();
   const hint = useUi((s) => s.hint);
   if (!hint) return null;
   return (
     <div className="hud__hint" data-testid="hint" key={hint.id}>
       {hint.keys.map((k) => (
-        <kbd key={k}>{keyLabel(k)}</kbd>
+        <kbd key={k}>{keyLabel(k, t)}</kbd>
       ))}
       <span className="hud__hint-text">{hint.text}</span>
     </div>
@@ -184,16 +186,16 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
       <WeaponStrip pad={touch} />
       <Minimap />
       <div className="hud__camera">
-        {cameraMode} · [{keyOf(controls, "toggleCamera", "V")}]
+        {cameraMode} · [{keyOf(controls, "toggleCamera", "V", t)}]
       </div>
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
-          {!touch && <kbd>{keyOf(controls, "interact", "E")}</kbd>} {prompt}
+          {!touch && <kbd>{keyOf(controls, "interact", "E", t)}</kbd>} {prompt}
           {promptHold && (
             // A second action on the same target (ADR-0065): the attack button held, on touch too.
             <span className="hud__prompt-hold" data-testid="prompt-hold">
               {" · "}
-              {!touch && <kbd>{keyOf(controls, "fire", "LMB")}</kbd>} {promptHold}
+              {!touch && <kbd>{keyOf(controls, "fire", "LMB", t)}</kbd>} {promptHold}
             </span>
           )}
         </div>

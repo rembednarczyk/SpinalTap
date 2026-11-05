@@ -51,7 +51,7 @@ export const DashIcon = () => {
         <circle className="dash__ring" cx="18" cy="18" r="15" pathLength={100} strokeDasharray={`${Math.round(share * 100)} 100`} />
         <path className="dash__glyph" d="M9 18 H21 M17 13 L22 18 L17 23 M12 13 L17 18 L12 23" />
       </svg>
-      <span className="dash__state">{ready ? keyLabel(code ?? "AltLeft") : `${dash.cooldown.toFixed(1)} s`}</span>
+      <span className="dash__state">{ready ? keyLabel(code ?? "AltLeft", t) : `${dash.cooldown.toFixed(1)} s`}</span>
     </div>
   );
 };
