@@ -6,7 +6,7 @@ import { laneGeom, lanePoint, nearestArc, wrapArc } from "../../world/crowd-lane
 import { LANE_HALF_GAP, crowdLane, laneTarget, realSeconds } from "../../world/crowd";
 import { steerPoint } from "./steering";
 
-type Walker = Entity & { velocity: Vec3; passerby: NonNullable<Entity["passerby"]> & { lane: LaneWalk } };
+export type Walker = Entity & { velocity: Vec3; passerby: NonNullable<Entity["passerby"]> & { lane: LaneWalk } };
 
 /** Further than this from its place on the route, a walker heads back to the nearest point of it (m). */
 const REJOIN_DISTANCE = 3;
@@ -96,6 +96,39 @@ const walkBack = (ctx: SimContext, self: Walker, dt: number, back: Vec3): void =
   if (d >= 1e-6) self.yaw = Math.atan2(dx, dz);
 };
 
+/** The point of the route a walker heads back to (`w.rejoin`), on its own side of the line. */
+const rejoinPoint = (g: ReturnType<typeof laneGeom>, w: LaneWalk, rejoin: number, y: number): Vec3 => {
+  const p = lanePoint(g, rejoin);
+  const off = LANE_HALF_GAP * w.dir;
+  return { x: p.x - p.tz * off, y, z: p.z + p.tx * off };
+};
+
+/**
+ * Where a walker of a route is headed this step: back to the route after running off, or its
+ * place on it. The spot it waits for in the dead zone of a feared player (ADR-0070).
+ */
+export const laneSpot = (ctx: SimContext, self: Walker): Vec3 | null => {
+  const w = self.passerby.lane;
+  const lane = crowdLane(w.lane);
+  if (!lane) return null;
+  if (w.rejoin !== null) return rejoinPoint(laneGeom(lane), w, w.rejoin, self.position.y);
+  const t = laneTarget(lane, w, ctx.state.domain.clock, w.avoid);
+  return { x: t.x, y: self.position.y, z: t.z };
+};
+
+/**
+ * Holds a walker's way round its route where it stands (ADR-0070): its place stops moving on
+ * with the clock and it picks the walk up from the nearest point of the route once it goes on.
+ * Kept in `rejoin`, which the walk already has, so nothing new is hidden.
+ */
+export const holdLanePlace = (self: Walker): void => {
+  const w = self.passerby.lane;
+  const lane = crowdLane(w.lane);
+  if (!lane || w.rejoin !== null) return;
+  w.rejoin = nearestArc(laneGeom(lane), self.position.x, self.position.z);
+  self.passerby.waypoint = null;
+};
+
 /**
  * One step of a resident's walk round its route (ADR-0041): to where the clock says it is, on
  * its own side of the line, stepping aside for anyone in the way. Off the route (it ran from a
@@ -116,9 +149,7 @@ export const walkLane = (ctx: SimContext, self: Walker, dt: number): void => {
     if (Math.hypot(t.x - self.position.x, t.z - self.position.z) > REJOIN_DISTANCE) w.rejoin = nearestArc(g, self.position.x, self.position.z);
   }
   if (w.rejoin !== null) {
-    const p = lanePoint(g, w.rejoin);
-    const off = LANE_HALF_GAP * w.dir;
-    const back = { x: p.x - p.tz * off, y: self.position.y, z: p.z + p.tx * off };
+    const back = rejoinPoint(g, w, w.rejoin, self.position.y);
     if (Math.hypot(back.x - self.position.x, back.z - self.position.z) > REJOINED) {
       walkBack(ctx, self, dt, back);
       return;
