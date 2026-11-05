@@ -17,7 +17,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
     - Stacje w stylu warszawskiego metra zamiast niewidocznych, nieintuicyjnych skrzynek; wejście może dalej działać jak skrzynka.
     - Mapa linii metra jako nakładka na obecną mapę, z zaplanowanymi przystankami, podglądem i możliwymi stacjami. Przegląd kuratora topografii.
   - **Targowisko na al. Tysiąclecia do likwidacji (decyzja użytkownika).** Stoi na środku jezdni i składa się z kilku ścian bez planu. Postacie i setting przenieść do Alchemii (ADR-0063 etap 4 i dalsze), Rin może stać na dachu Alchemii. Wymaga gotowej Alchemii.
-  - **Drabiny:** dopracować wspinanie (wejście, zejście, animacja, kamera).
+  - **Drabiny:** płynne wejście, wyjście i broń w kaburze w #269 (5.11); reszta w G-308–G-313.
   - **Winda:** dziś nie działa albo jej nie ma (G-284). Poprawnie zamodelować ją w Alchemii.
   - **Ekwipunek:** pasek zdrowia zrobiony w #262 (5.11).
 
