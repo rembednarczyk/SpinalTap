@@ -982,13 +982,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`ladder-system.ts`, `resumeOnLadderTop`)
 
 ### G-314 Linia metra na mapie przechodzi pod Starym cmentarzem żydowskim
-- Status: w PR #270 (5.11, kurator topografii; T-150)
+- Status: naprawione w PR #270 (462f13f, kontrola `metro-line-protected`; T-150), do archiwum po scaleniu
 - Ważność: S3 · Zasięg: lokalny, odcinek `METRO_TUNNEL` (1120; 310) → (1700; 380), ok. 75 m pod w40049437 · Koszt: mały
 - Pakiet właściciela: packages/sim (`content/metro.ts`)
 - Test przyjęcia: każdy punkt `METRO_TUNNEL` co 5 m poza `PROTECTED_AREAS` i obrysami `historic`/`heritage`/`place_of_worship`; przebieg al. Tysiąclecia – Kalinowszczyzna – most Lutosławskiego (ADR-0071, przegląd kuratora)
 
 ### G-315 Możliwe stacje Ogród Saski i Lublin Główny w złym miejscu
-- Status: w PR #270 (5.11, kurator topografii; T-151, T-152)
+- Status: naprawione w PR #270 (462f13f; T-151, T-152), do archiwum po scaleniu
 - Ważność: S4 · Zasięg: mapa metra · Koszt: mały
 - Pakiet właściciela: packages/sim (`content/metro.ts`)
 - Test przyjęcia: Ogród Saski (−630; −84) poza obrysem parku i ≤ 30 m od Alej Racławickich; Lublin Główny (590; −1840) ≤ 80 m od w171203532; odgałęzienie z Placu Łokietka ulicami Kozią i Bernardyńską, poza obrysami zabytków
@@ -1007,6 +1007,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, naprawiacz G-308)
 - Ważność: S3 · Zasięg: `targ-escape-2`, balkon z 64–65,3; przy 4,1 m/s graczka mija balkon i ląduje na posadzce targu; do oceny, czy balkon ma łapać, czy krawędź ma być dalej
 - Pakiet właściciela: packages/sim (treść targu, ruch)
+
+### G-319 Łamane linii metra na mapie przechodzą pod zwykłymi budynkami, a skan nie widzi zabytków poza importem
+- Status: zgłoszone (5.11, kurator, ponowny przegląd PR #270)
+- Ważność: S4 · Zasięg: róg Kozia/Bernardyńska ścina narożnik przez w67498752 (ok. 17 m; wierne punkty (390; −144), (362; −149), (368; −172)); w luce T-022 odcinek (1580; 232) → (1738; 386) pod 5 budynkami, a (1738; 386) → (2084; 384) ok. 19 m na północ od łuku ulicy (lepiej (1803; 377), (1891; 368), (1962; 367), (2044; 378)); odcinek (506; −389) → (590; −1840) 5 m od Pałacu Sobieskich w181283749 (wierniej Bernardyńską (583; −528), (639; −627) i Zamojską (662; −728)). Kontrola `metro-line-protected` poza prostokątami importu widzi tylko `PROTECTED_AREAS`: dodać listę zabytków poza importem (punkt i promień, m.in. kościół św. Agnieszki w171014937, Pałac Sobieskich), baza 0
+- Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
