@@ -24,6 +24,7 @@ import { doorChecks } from "./door-pieces";
 import { droneChecks } from "./drone-pieces";
 import { airMesh } from "./patrol-mesh";
 import { patrolChecks } from "./patrol-pieces";
+import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { drawnPaving, poolSunk } from "./pool-paving";
 import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
 import { doorsFacingUnderground } from "./door-streets";
@@ -1668,6 +1669,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones), surfaceY),
   /** A low patrol's searchlight pool, laid where the views lay it (`cityPatrolWorld`), sinking into the drawn paving: a dark middle (G-293). */
   "drone-low-pool-sunk": () => poolSunk(PATROL_LANES(), cityPatrolWorld().surfaceAt, DRAWN_PAVING()),
+  /** Two overlapping pieces of the drawn paving at different heights over the ground where they meet: a step, patches and the depth flickering (G-301, `paving-overlap.ts`). */
+  "paving-overlap-step": () => pavingOverlapSteps(drawnPieces(WORLD_SCENERY, groundY)),
   /** A low patrol coming into sight or going 2 px large or more from anywhere on a street (`patrol-sight.ts`). */
   "drone-low-pop": () => popSight(PATROL_LANES(), streetEyes(WORLD_SCENERY, surfaceY), patrolModelSpan()),
   // The still crowd of ADR-0058 stage 8 against the game's buildings, roads, paving, kept furniture and moving crowd (`figure-pieces.ts`).
