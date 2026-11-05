@@ -54,6 +54,31 @@ const FLEE_LOOKAHEAD = 6;
 /** Turns tried, in order, when the way straight away is blocked; the probe is this long. */
 const FLEE_TURNS = [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2, (3 * Math.PI) / 4, (-3 * Math.PI) / 4];
 const FLEE_PROBE = 2.5;
+/**
+ * Hysteresis of the turn (G-317): a turn closer to straight away than the one it runs on (read
+ * from its heading, which is saved) has to be open this much further to switch to. Along a wall
+ * the probe of the next turn in opened and closed every step, and the heading swung by 0.8 rad.
+ */
+const FLEE_SWITCH_MARGIN = 1.5;
+/** How close its heading has to be to a turn to count as running on it (radians). */
+const FLEE_HELD_TURN = Math.PI / 8;
+
+/**
+ * The turn off `away` to run on: straight away when the way is open, else the open way closest
+ * to it (a wall at its back), keeping the one it runs on (`yaw`) unless one closer to straight
+ * away is clearly open. Null when every way is blocked.
+ */
+const fleeTurn = (ctx: SimContext, from: Vec3, away: number, yaw: number): number | null => {
+  const open = (turn: number, reach: number): boolean => {
+    const probe = { x: from.x + Math.sin(away + turn) * reach, y: from.y, z: from.z + Math.cos(away + turn) * reach };
+    return straightWalk(ctx.world, from, probe);
+  };
+  const held = FLEE_TURNS.findIndex((turn) => Math.abs(Math.atan2(Math.sin(yaw - away - turn), Math.cos(yaw - away - turn))) <= FLEE_HELD_TURN);
+  if (held >= 0 && open(FLEE_TURNS[held], FLEE_PROBE)) {
+    return FLEE_TURNS.slice(0, held).find((turn) => open(turn, FLEE_PROBE + FLEE_SWITCH_MARGIN)) ?? FLEE_TURNS[held];
+  }
+  return FLEE_TURNS.find((turn) => open(turn, FLEE_PROBE)) ?? null;
+};
 
 const FEAR: Readonly<Record<CrowdState, number>> = { calm: 0, alarmed: 1, fleeing: 2, cowering: 3 };
 
@@ -247,19 +272,9 @@ class CivilianAgent {
     const d = Math.hypot(dx, dz);
     // Standing exactly on top of it: run along the street, away from the player's facing.
     const away = d < 1e-6 ? fallbackYaw : Math.atan2(dx, dz);
-    // Straight away when the way is open, else the open way closest to it (a wall at its back).
-    let ux = Math.sin(away);
-    let uz = Math.cos(away);
-    for (const turn of FLEE_TURNS) {
-      const tx = Math.sin(away + turn);
-      const tz = Math.cos(away + turn);
-      const probe = { x: self.position.x + tx * FLEE_PROBE, y: self.position.y, z: self.position.z + tz * FLEE_PROBE };
-      if (straightWalk(ctx.world, self.position, probe)) {
-        ux = tx;
-        uz = tz;
-        break;
-      }
-    }
+    const turn = fleeTurn(ctx, self.position, away, self.yaw) ?? 0;
+    const ux = Math.sin(away + turn);
+    const uz = Math.cos(away + turn);
     const ahead = { x: self.position.x + ux * FLEE_LOOKAHEAD, y: self.position.y, z: self.position.z + uz * FLEE_LOOKAHEAD };
     const p = steerPoint(ctx.world, self.position, ahead);
     const sx = p.x - self.position.x;
