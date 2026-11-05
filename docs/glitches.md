@@ -896,7 +896,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (world/deck)
 
 ### G-285 Przeciwnicy wykrywają gracza natychmiast, takedown niemożliwy
-- Status: etap 1 ADR-0069 w main #252 (4.11, 75eda14: stożek, kucanie i licznik dla wszystkich wrogów; kucanie od tyłu kończy się obezwładnieniem); etap 2 (słuch kroków) w kolejce
+- Status: naprawione przez ADR-0069 etap 1 (#252) i 2 (#254, 5.11, słuch kroków); balans w etapie 3 (trop co krok za ścianą, sprint przed Kagami i Tessen 0,6–0,7 s)
 - Ważność: S2 (proponowana: blokuje mechanikę) · Zasięg: walka z gangerami; czujność NPC i kamer (`AWARENESS_STEP`, `GUARD_CONE`, `ganger-perception.ts`)
 - Do ustalenia: błąd w czujności czy brak trybu skradania (backlog, skradanie)
 - Pakiet właściciela: packages/sim/src/systems/ai
@@ -945,11 +945,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna (przypuszczalna): nie widać wewnętrznego wachlarza plamy (`withBeam` w `packages/engine/src/renderer/drones/patrol-models.ts`: 32 trójkąty od środka do pierścienia 0,5 z jednym narożnikiem zdublowanym) albo części pasa. Nawinięcie obu części jest zgodne (`GeometrySink.quad` układa je według normalnej UP), cienia drona nie ma (ADR-0058). Do sprawdzenia: głębia lub kolejność rysowania wnętrza względem bruku (`layPool`, `pavingAt`, `POOL_LIFT` 0,02 m), przebieg G-bufora i obrysu w miejscu plamy oraz zostawianie plamy po `POOL_RELAY` przy zmianie slotu
 - Pakiet właściciela: packages/engine (renderer/drones, npr)
 - Test przyjęcia: zrzut FPP z tego samego oka i czasu (`r4-plama-b-4.7m.json`, t 127,12) pokazuje jednolity jasny krąg bez ciemnego środka i wcięć na wysokościach 4,7–7,7 m; test bez renderera: po `placePool` każdy niezdegenerowany trójkąt plamy leży nad brukiem (y ≥ bruk + `POOL_LIFT` − 1 mm) i ma normalną skierowaną w górę; migawka NPR i budżety bez zmian
-
-### G-294 Wróg z podejrzeniem obraca się do gracza, którego nie widzi
-- Status: zgłoszone (4.11, weryfikator ADR-0069 etap 1)
-- Ważność: S3 · Zasięg: każdy niezaalarmowany wróg z podejrzeniem > 0 (`HoldPosition`, `ganger-ai-system.ts:135`, `faceTowards(this, this.seen.player)`); gracz 25 m w bok za ścianą: obrót 1,47 → 0 rad w 0,25 s; powinien patrzeć na ostatnie widziane miejsce
-- Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-295 Po alarmie licznik podejrzeń zostaje na 1 i pierwsze ok. 2 s przeszukania alarmuje w jednym kroku
 - Status: zgłoszone (4.11, weryfikator ADR-0069 etap 1)

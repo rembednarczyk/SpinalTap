@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-294 Wróg z podejrzeniem obraca się do gracza, którego nie widzi
+- Status: naprawione w #254 (5.11, d695c0e; podejrzliwy wróg obraca się tylko do widzianego gracza)
+- Ważność: S3 · Zasięg: każdy niezaalarmowany wróg z podejrzeniem > 0 (`HoldPosition`, `ganger-ai-system.ts:135`, `faceTowards(this, this.seen.player)`); gracz 25 m w bok za ścianą: obrót 1,47 → 0 rad w 0,25 s; powinien patrzeć na ostatnie widziane miejsce
+- Pakiet właściciela: packages/sim/src/systems/ai
+
 ### G-284 Winda nie działa albo jej nie ma
 - Status: nie odtwarza się (4.11; winda targu działa; winda w Alchemii w backlogu)
 - Ważność: S3 · Zasięg: winda z treści (estakada, ADR windy z bramkami); do ustalenia, która i gdzie
