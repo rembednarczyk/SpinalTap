@@ -970,6 +970,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: reputacja −11..−49; w praktyce sklep zamknięty przed progiem odmowy
 - Pakiet właściciela: packages/sim (civilian-ai-system)
 
+### G-306 Blokada kursora zostaje na canvasie po otwarciu menu klawiszem I zaraz po starcie
+- Status: zgłoszone (5.11, autor paska zdrowia w ekwipunku; odtworzone w Playwrighcie)
+- Ważność: S3 · Zasięg: desktop; zgoda na blokadę przychodzi po naciśnięciu I, `releasePointerLock` nic nie robi, bo flaga `locked` jest jeszcze fałszywa; kliknięcia w ekwipunek trafiają w canvas
+- Pakiet właściciela: packages/engine/src/input (browser-input) i packages/app (pointer-focus)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
