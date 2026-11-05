@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { ALCHEMIA_CENTRE, ALCHEMIA_MODULES, FLIGHT_GOING, FLIGHT_MAX_RISE, MAP_CHUNKS, PARKED_CARS, Simulation, WORLD_STREET_PROPS, alchemiaPoint, gangerEntity, type AlchemiaPart, type PlacedAlchemiaModule } from "../src";
 import { CROWD_LANES } from "../src/content/crowd";
 import { LUBLIN_PROP_TABLE } from "../src/content/lublin/props.generated";
+import { flightSteps } from "../src/content/alchemia-stairs";
 import { surfaceY } from "../src/content/lublin/terrain";
 import { STEP_HEIGHT } from "../src/systems/movement-system";
-import { teleportPlayer } from "./helpers";
+import { input, teleportPlayer } from "./helpers";
 
 /**
  * The ways up of Alchemia (G-287, G-288): every stall has a flight of steps from the paving to
@@ -83,37 +84,65 @@ const chase = (from: Pt, to: Pt, seconds: number): number | null => {
   return null;
 };
 
+/** A player set down at a point of the hall's frame on `y` over its floor, walking through `way` (points of its frame): where it ends, over the floor. */
+const walk = (y: number, way: readonly (readonly [number, number])[]): { x: number; y: number; z: number } => {
+  const sim = Simulation.create({ seed: 7 });
+  const [sx, sz] = way[0]!;
+  const start = alchemiaPoint(hall, sx, sz);
+  teleportPlayer(sim, { x: start.x, y: hall.floor + y, z: start.z });
+  for (let i = 0; i < 10; i++) sim.step();
+  const p = sim.player()!;
+  for (const [x, z] of way.slice(1)) {
+    const to = alchemiaPoint(hall, x, z);
+    for (let i = 0; i < 240 && Math.hypot(to.x - p.position.x, to.z - p.position.z) > 0.15; i++) {
+      p.yaw = Math.atan2(to.x - p.position.x, to.z - p.position.z);
+      sim.step(input({ moveZ: 1 }));
+    }
+  }
+  const fx = Math.sin(hall.yaw);
+  const fz = Math.cos(hall.yaw);
+  const dx = p.position.x - hall.x;
+  const dz = p.position.z - hall.z;
+  return { x: -dx * fz + dz * fx, y: p.position.y - hall.floor, z: dx * fx + dz * fz };
+};
+
 const stalls = ALCHEMIA_MODULES.filter((m) => m.key.startsWith("alchemia-stall"));
 const hall = ALCHEMIA_MODULES[0]!;
 
 describe("the ways up of Alchemia (G-287, G-288)", () => {
   it("comes down from each stall's door and from the hall's podium to the paving in steps a body walks", () => {
     for (const m of ALCHEMIA_MODULES) {
-      expect(m.flights, m.key).toHaveLength(1);
-      const f = m.flights![0]!;
-      expect(m.steps.length, m.key).toBeGreaterThan(0);
-      // The threshold at the door (or the podium) and then down, a riser at most `FLIGHT_MAX_RISE` each.
-      expect(m.steps[0]!.top, m.key).toBeCloseTo(f.top, 9);
-      for (let i = 1; i < m.steps.length; i++) {
-        const rise = m.steps[i - 1]!.top - m.steps[i]!.top;
-        expect(rise, `${m.key} step ${i}`).toBeGreaterThan(0);
-        expect(rise, `${m.key} step ${i}`).toBeLessThanOrEqual(FLIGHT_MAX_RISE + 1e-9);
-        const [, , z0, z1] = span(m.steps[i]!);
-        expect(z1 - z0).toBeCloseTo(FLIGHT_GOING, 9);
+      // A stall's flight from its door, the hall's at its stair's foot and before its front (G-299).
+      expect(m.flights, m.key).toHaveLength(m === hall ? 2 : 1);
+      const flights = m.flights!.map((f) => ({ f, steps: flightSteps(f, (x, z) => paving(m, x, z)) }));
+      expect(m.steps, m.key).toEqual(flights.flatMap((q) => q.steps));
+      for (const { f, steps } of flights) {
+        expect(steps.length, m.key).toBeGreaterThan(0);
+        // The threshold at the door (or the podium) and then down, a riser at most `FLIGHT_MAX_RISE` each.
+        expect(steps[0]!.top, m.key).toBeCloseTo(f.top, 9);
+        for (let i = 1; i < steps.length; i++) {
+          const rise = steps[i - 1]!.top - steps[i]!.top;
+          expect(rise, `${m.key} step ${i}`).toBeGreaterThan(0);
+          expect(rise, `${m.key} step ${i}`).toBeLessThanOrEqual(FLIGHT_MAX_RISE + 1e-9);
+          const [, , z0, z1] = span(steps[i]!);
+          expect(z1 - z0).toBeCloseTo(FLIGHT_GOING, 9);
+        }
+        // From the last step down to the paving along its outer edge no more than a riser.
+        const last = steps[steps.length - 1]!;
+        const [x0, x1, z0, z1] = span(last);
+        const edge = f.dir > 0 ? z1 : z0;
+        let low = Infinity;
+        for (let x = x0; x <= x1 + 1e-9; x += (x1 - x0) / 16) low = Math.min(low, paving(m, x, edge));
+        expect(last.top - low, m.key).toBeLessThanOrEqual(FLIGHT_MAX_RISE + 1e-6);
+        expect(last.top - low, m.key).toBeLessThan(STEP_HEIGHT);
       }
-      // From the last step down to the paving along its outer edge no more than a riser.
-      const last = m.steps[m.steps.length - 1]!;
-      const [x0, x1, z0, z1] = span(last);
-      const edge = f.dir > 0 ? z1 : z0;
-      let low = Infinity;
-      for (let x = x0; x <= x1 + 1e-9; x += (x1 - x0) / 16) low = Math.min(low, paving(m, x, edge));
-      expect(last.top - low, m.key).toBeLessThanOrEqual(FLIGHT_MAX_RISE + 1e-6);
-      expect(last.top - low, m.key).toBeLessThan(STEP_HEIGHT);
       // Each step's block reaches under the paving it stands on.
       for (const q of m.steps) for (const p of stepSamples(m, q)) expect(m.floor + q.bottom!).toBeLessThan(surfaceY(p.x, p.z));
     }
-    // The stalls' steps run across their whole front, the hall's to the podium at its stair's foot.
+    // The stalls' steps run across their whole front, the hall's to the podium at its stair's foot and across its front.
     for (const m of stalls) for (const q of m.steps) expect(span(q)[1] - span(q)[0]).toBeCloseTo(m.width, 9);
+    const front = hall.flights!.find((f) => f.dir > 0)!;
+    expect(front.x1 - front.x0).toBeGreaterThan(hall.width - 0.05);
   });
 
   it("keeps the steps off the paths and streets, the furniture, the parked cars and the residents' loops", () => {
@@ -162,4 +191,23 @@ describe("the ways up of Alchemia (G-287, G-288)", () => {
     expect(chase(c, d, 40), "round the hall's stair").not.toBeNull();
     expect(chase(d, c, 40), "back round the hall's stair").not.toBeNull();
   }, 120_000);
+
+  it("takes a body from the stair's landing onto the balcony of the upper storey, as drawn (G-297)", () => {
+    const end = walk(6.64, [[3.2, 1.6], [1.4, 3.2], [0.9, 4]]);
+    expect(Math.hypot(end.x - 0.9, end.z - 4)).toBeLessThan(0.3);
+    expect(end.y).toBeCloseTo(6.64, 1);
+  });
+
+  it("takes a body from the paving in front of the hall up its steps onto the podium, under the porch to the shut doors (G-299)", () => {
+    for (const x of [-3, 0, 3.2]) {
+      // Round the counter and the stand under the porch, to the doors east of them.
+      const end = walk(paving(hall, x, 9), [[x, 9], [x, 4.6], [-0.5, 4.6], [-0.5, 3.4]]);
+      expect(Math.hypot(end.x + 0.5, end.z - 3.4), `from x ${x}`).toBeLessThan(0.3);
+      expect(end.y, `from x ${x}`).toBeCloseTo(1.23, 1);
+    }
+  });
+
+  it("stops a body under the porch at the counter and the stand drawn there (G-298)", () => {
+    for (const x of [-4.5, -4, -3.5, -2.5]) expect(walk(1.23, [[x, 5.2], [x, 3.3]]).z, `at x ${x}`).toBeGreaterThan(4.2);
+  });
 });

@@ -9,9 +9,9 @@ import { FakeRender, steps, teleport } from "./story-helpers";
 
 /**
  * Alchemia on Plac Ofiar Getta (ADR-0063 stage 4), headless: the hall and its stalls are solid.
- * Seki walking at the hall's front from the square, at a stall's window from Świętoduska's side
- * and at the stalls' backs from the open square stops at their walls; she climbs from the paving
- * to each stall's door (G-287) and up the hall's outside stair to its landing (G-288); the hall's
+ * Seki walking at the hall's front from the square (up its steps, G-299), at a stall's window from
+ * Świętoduska's side and at the stalls' backs from the open square stops at their walls; she climbs
+ * from the paving to each stall's door (G-287) and up the hall's outside stair to its landing (G-288); the hall's
  * flat roof holds her up (for the stages to come: a character up there, a lift); their solids
  * stream in with the plot's chunk, without views (the engine draws the models).
  */
@@ -52,17 +52,21 @@ const ahead = (session: GameSession, m: (typeof ALCHEMIA_MODULES)[number]): numb
 
 /** Body radius and a margin: she stops this far out of the wall or more. */
 const CLEAR = 0.2;
+/** The hall's front wall behind its porch, off its middle (alchemia-props.glb). */
+const HALL_FRONT_WALL = 2.8;
 
 describe("Alchemia on Plac Ofiar Getta (ADR-0063 stage 4)", () => {
-  it("stops her at the hall's front, walking at it from the square by the car park", () => {
+  it("lets her up the steps before the hall's front from the square by the car park and stops her at its shut doors (G-299)", () => {
     const { session } = start();
     const hall = module("alchemia-hall");
     const from = off(hall, hall.depth / 2 + 4);
     teleport(session, from.x, from.z, hall.yaw + Math.PI);
     steps(session, 2);
     walkAt(session, hall.x, hall.z, 160);
-    expect(ahead(session, hall)).toBeGreaterThan(hall.depth / 2 + CLEAR);
-    expect(ahead(session, hall)).toBeLessThan(hall.depth / 2 + 1);
+    // On the podium under the porch, at the ground storey's front wall (z 2.8 of the model's frame, G-298).
+    expect(session.sim.player()!.position.y).toBeCloseTo(hall.floor + 1.23, 1);
+    expect(ahead(session, hall)).toBeGreaterThan(HALL_FRONT_WALL + CLEAR);
+    expect(ahead(session, hall)).toBeLessThan(HALL_FRONT_WALL + 1);
   });
 
   it("stops her at a stall's window from Świętoduska's side and at the stalls' backs from the open square", () => {
