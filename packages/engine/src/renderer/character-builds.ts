@@ -80,6 +80,7 @@ const finish = (
     landing: 0,
     climbBlend: 0,
     climbPhase: 0,
+    ladder: null,
     ...joints,
   };
 };
