@@ -13,12 +13,13 @@ EXTERNAL offer_contract(kind)
 EXTERNAL deliver_contract()
 
 === hana ===
+// G-304, ADR-0070: Hana is always the way back, so Kaito's run is taken before any refusal.
+{ contract_kind == "delivery" && contract_state == "active": -> delivery }
 { civilians_stance == "hostile":
     HANA: I won't sell you so much as a screw. Everyone at the market knows what you do on the street.
     -> END
 }
 {
-- contract_kind == "delivery" && contract_state == "active": -> delivery
 - contract_giver == "hana" && contract_state == "cleared": -> payday
 - contract_giver == "hana": -> running
 - contract_kind == "delivery": -> delivered
@@ -61,7 +62,11 @@ EXTERNAL deliver_contract()
     -> END
 
 = delivery
-HANA: From Kaito? Hand it over before it warms up.
+{ civilians_stance == "hostile":
+    HANA: It's Kaito's run, so I'll take it. Don't count on anything more.
+- else:
+    HANA: From Kaito? Hand it over before it warms up.
+}
 ~ deliver_contract()
 Hana checks the seals and slides the box under the tarp.
 HANA: Cold, all good. I'll let Kaito know, collect your pay from him.

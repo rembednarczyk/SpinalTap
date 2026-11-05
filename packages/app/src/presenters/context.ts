@@ -1,5 +1,5 @@
 import type { AudioPort, DomainEvents, EntityId, EventBus, MetroStationId, RenderPort, ShopId } from "@seki/core";
-import { type Toast, type UiStore, dismissToast, pushToast } from "@seki/ui";
+import { type Toast, type UiStore, dismissToast, expireToast, pushToast } from "@seki/ui";
 
 export const TOAST_MS = 4500;
 
@@ -49,7 +49,7 @@ export const presenterContext = (bus: EventBus<DomainEvents>, render: RenderPort
   hooks,
   toast(kind, title, text = "", keep = false) {
     const id = pushToast(ui, { kind, title, text, ...(keep ? { keep } : {}) });
-    setTimeout(() => dismissToast(ui, id), TOAST_MS);
+    setTimeout(() => expireToast(ui, id), TOAST_MS);
     return id;
   },
   dismiss: (id) => dismissToast(ui, id),

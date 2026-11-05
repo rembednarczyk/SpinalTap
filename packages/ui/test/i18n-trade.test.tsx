@@ -90,7 +90,7 @@ describe("inventory and character screen in both languages", () => {
     expect(within(screen.getByTestId("item-compare")).getByText("Obrażenia")).toBeTruthy();
     expect(screen.getByTestId("delta-damage").textContent).toBe("▲ +33,7");
     expect(screen.getByRole("button", { name: /Załóż/ })).toBeTruthy();
-    expect(screen.getByTestId("stats-panel").textContent).toBe("HP86/100PancerzG2 T3 R3 N3Kryt8% ×1,8Rozrzut1,1°");
+    expect(screen.getByTestId("stats-panel").textContent).toBe("PancerzG2 T3 R3 N3Kryt8% ×1,8Rozrzut1,1°");
     fireEvent.click(cell("hebi_smg"), { timeStamp: 3000 });
     expect(screen.getByTestId("item-detail").textContent).toContain("(slot główny pusty)");
     fireEvent.click(cell("scrap"), { timeStamp: 5000 });

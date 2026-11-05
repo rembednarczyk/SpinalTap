@@ -1,0 +1,1 @@
+Strzelba, karabin i SMG w TPP są trzymane oburącz: prawa dłoń zaciska się na rękojeści, lewa podtrzymuje łoże, przy celowaniu kolba opiera się o bark, a przy biodrze broń leży skośnie przed ciałem. Postać z bronią w dłoni zamyka palce na rękojeści, również przy pistolecie i rewolwerze. Tak samo wygląda to u gracza i u NPC (G-282).

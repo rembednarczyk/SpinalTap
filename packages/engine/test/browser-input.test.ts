@@ -183,3 +183,62 @@ describe("BrowserInput entering pointer lock (G-046)", () => {
     expect(input.mouseActive).toBe(true);
   });
 });
+
+describe("BrowserInput releasing a lock still in flight (G-306)", () => {
+  const lockTo = (el: Element | null) => Object.defineProperty(document, "pointerLockElement", { configurable: true, get: () => el });
+  const change = (el: Element | null) => {
+    lockTo(el);
+    document.dispatchEvent(new Event("pointerlockchange"));
+  };
+  // The browser grants the lock only when the test says so, as after the loading screen in Chromium.
+  const setup = () => {
+    const canvas = document.createElement("canvas");
+    let asked = 0;
+    canvas.requestPointerLock = (() => (asked++, Promise.resolve())) as HTMLCanvasElement["requestPointerLock"];
+    let exits = 0;
+    document.exitPointerLock = () => {
+      exits++;
+      change(null);
+    };
+    input = new BrowserInput(canvas);
+    return { i: input, grant: () => change(canvas), exits: () => exits, asked: () => asked, canvas };
+  };
+  afterEach(() => lockTo(null));
+
+  it("lets go of a lock the browser grants after the release was asked for", () => {
+    const { i, grant, exits } = setup();
+    i.requestPointerLock();
+    i.releasePointerLock();
+    grant();
+    expect(exits()).toBe(1);
+    expect(i.locked).toBe(false);
+  });
+
+  it("keeps a lock granted while it is still wanted", () => {
+    const { i, grant, exits } = setup();
+    i.requestPointerLock();
+    grant();
+    expect(exits()).toBe(0);
+    expect(i.locked).toBe(true);
+  });
+
+  it("keeps a lock asked for again after the release", () => {
+    const { i, grant, exits } = setup();
+    i.requestPointerLock();
+    i.releasePointerLock();
+    i.requestPointerLock();
+    grant();
+    expect(exits()).toBe(0);
+    expect(i.locked).toBe(true);
+  });
+
+  it("does not retry without raw input once the release was asked for", async () => {
+    const { i, canvas } = setup();
+    let plain = 0;
+    canvas.requestPointerLock = ((o?: unknown) => (o ? Promise.reject(new DOMException("raw", "NotSupportedError")) : (plain++, Promise.resolve()))) as HTMLCanvasElement["requestPointerLock"];
+    i.requestPointerLock();
+    i.releasePointerLock();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(plain).toBe(0);
+  });
+});

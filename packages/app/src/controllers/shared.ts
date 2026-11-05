@@ -1,5 +1,5 @@
 import type { Simulation } from "@seki/sim";
-import { type Toast, type UiStore, dismissToast, pushToast } from "@seki/ui";
+import { type Toast, type UiStore, expireToast, pushToast } from "@seki/ui";
 
 /** How long a system toast stays on screen, ms. */
 export const TOAST_MS = 4500;
@@ -26,5 +26,5 @@ export const focusOf = (onFocusChange: ((wantsPointer: boolean) => void) | undef
 /** A system toast that goes away on its own. */
 export const pushToastTimed = (ui: UiStore, kind: Toast["kind"], title: string, text = "", keep = false): void => {
   const id = pushToast(ui, { kind, title, text, ...(keep ? { keep } : {}) });
-  setTimeout(() => dismissToast(ui, id), TOAST_MS);
+  setTimeout(() => expireToast(ui, id), TOAST_MS);
 };
