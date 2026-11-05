@@ -1,6 +1,6 @@
 import type { CharacterRig } from "./character-rig";
 import { AIM_HOLD, applyStagger, applySwingBody, poseMeleeArms, poseWeaponArms, reloadPhase, smooth } from "./character-poses";
-import { bladeOf, holdLongGun } from "./two-hand-hold";
+import { bladeOf, holdLongGun, holdWeight } from "./two-hand-hold";
 
 const DEATH_FALL = 0.65;
 const DEATH_LINGER = 5.5;
@@ -113,11 +113,6 @@ const relaxHands = (rig: CharacterRig): void => {
   rig.fist[1] = 0;
 };
 
-/** A drawn long gun in both hands (G-282): the rig carries one and has it out of the sling. */
-const holdsLongGun = (rig: CharacterRig): boolean => rig.aiming && !rig.melee && rig.grip !== null && rig.drawn >= 0.5;
-
-/** The long gun comes out of the sling into both hands over the second half of the draw. */
-const holdWeight = (rig: CharacterRig): number => (holdsLongGun(rig) ? smooth(Math.min(1, (rig.drawn - 0.5) / 0.5)) : 0);
 
 /** Knees give, then the body drops backwards onto the street; after lying still it sinks out of view. */
 const animateDeath = (rig: CharacterRig, dying: number): void => {
@@ -216,11 +211,10 @@ const poseArms = (rig: CharacterRig, { swing, run, amount, lean }: Gait, dt: num
     // The support hand under a raised pistol half closes round the other.
     if (!rig.melee && !rig.leftHold) rig.fist[0] = 0.5 * smooth(Math.min(1, Math.max(0, rig.aim)));
   }
-  if (holdsLongGun(rig)) {
-    // The left hand lets go to reload.
-    const w = holdWeight(rig);
-    const left = rig.leftHold ? 0 : w * (1 - reloadPhase(rig));
-    holdLongGun(rig, rig.grip!, rig.stoop + lean, w, left);
+  const w = holdWeight(rig);
+  if (w > 0) {
+    const left = rig.leftHold ? 0 : w;
+    holdLongGun(rig, rig.grip!, rig.stoop + lean, w, left, reloadPhase(rig));
     rig.fist[0] = 0.6 * left;
   }
 };
@@ -234,7 +228,7 @@ const applyAirPose = (rig: CharacterRig, air: number | undefined): void => {
   rig.kneeL.rotation.x += w * legs.knee;
   rig.kneeR.rotation.x += w * legs.knee * 0.7;
   // Arms out for balance; a weapon arm stays where it aims.
-  if (!holdsLongGun(rig)) {
+  if (holdWeight(rig) <= 0) {
     rig.armL.rotation.x -= w * 0.45;
     rig.armL.rotation.z += w * 0.35;
   }
@@ -257,10 +251,13 @@ const poseBody = (rig: CharacterRig, { c, thigh, knee, lean, run, amount }: Gait
   rig.body.rotation.z = Math.sin(rig.time * 30) * 0.05 * rig.flinch;
   // The head keeps looking ahead over the lean.
   rig.head.rotation.x = -0.25 * rig.flinch - lean * 0.8;
-  // Aiming a long gun, the body stands bladed and the head looks ahead past it.
+  // With a long gun the body stands bladed; the head looks ahead past it and the legs keep
+  // stepping the way the character goes (they turn back under the hips).
   const blade = bladeOf(rig, holdWeight(rig));
   rig.body.rotation.y = blade;
   rig.head.rotation.y = -blade;
+  rig.legL.rotation.y = -blade;
+  rig.legR.rotation.y = -blade;
 };
 
 /**

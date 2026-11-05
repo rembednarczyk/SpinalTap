@@ -34,6 +34,8 @@ export interface TwoHandGrip {
   readonly fist: GunPoint;
   /** Bottom of the fore-end, on the left palm. */
   readonly fore: GunPoint;
+  /** Where the left hand takes the magazine out and puts the next one in (the shotgun's loading port). */
+  readonly mag: GunPoint;
   /** Middle of the butt plate (the rear end of a gun without a stock). */
   readonly butt: GunPoint;
   /** The butt goes to the shoulder when aimed; an SMG is held out in front instead. */

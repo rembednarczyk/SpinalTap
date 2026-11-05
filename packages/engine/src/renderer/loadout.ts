@@ -7,6 +7,7 @@ import type { CharacterRig } from "./characters";
 import { recolorSkin } from "./character-skin";
 import { toonSourceOf } from "./model-library";
 import type { AnchorBone, HumanoidRetarget } from "./model-rig";
+import { longGunInHands } from "./two-hand-hold";
 import { LONG_GUN, WEAPON_MODEL, type WeaponMounts } from "./weapon-mount";
 
 type Place = "hand" | "hip" | "hipL" | "back" | "model" | "long";
@@ -265,8 +266,10 @@ export class Loadouts {
     this.show(s.mounted.model, drawn && dressed);
     this.show(s.mounted.hip, stowed("secondary"));
     this.show(s.mounted.hipL, stowed("melee"));
-    this.show(s.mounted.back, stowed("primary"));
-    this.show(s.mounted.long, drawn);
+    // On a ladder the long gun goes on the back, where the climbing hands leave it (G-282).
+    const inHands = longGunInHands(rig);
+    this.show(s.mounted.back, stowed("primary") || (rig.grip !== null && w.active === "primary" && !inHands));
+    this.show(s.mounted.long, inHands);
   }
 
   dispose(rig: CharacterRig): void {

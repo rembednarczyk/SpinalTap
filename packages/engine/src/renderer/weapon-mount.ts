@@ -63,9 +63,9 @@ const VIEW_SHIFT = { x: -0.015, y: -0.005 };
  * below; the SMG has no stock and is held out in front.
  */
 export const LONG_GUN: Readonly<Partial<Record<WeaponKind, TwoHandGrip>>> = {
-  smg: { grip: GRIP.smg, fist: { x: -0.15, y: -0.04 }, fore: { x: 0.07, y: 0.057 }, butt: { x: -0.2, y: 0.1 }, shouldered: false, pitch: 0.15, yaw: 0.25 },
-  shotgun: { grip: GRIP.shotgun, fist: { x: -0.19, y: -0.005 }, fore: { x: 0.17, y: 0.003 }, butt: { x: -0.37, y: -0.05 }, shouldered: true, pitch: -0.6, yaw: 0.75 },
-  rifle: { grip: GRIP.rifle, fist: { x: -0.15, y: -0.045 }, fore: { x: 0.085, y: 0.048 }, butt: { x: -0.4, y: 0.03 }, shouldered: true, pitch: 0.2, yaw: 0.3 },
+  smg: { grip: GRIP.smg, fist: { x: -0.15, y: -0.04 }, fore: { x: 0.07, y: 0.057 }, mag: { x: 0.01, y: -0.11 }, butt: { x: -0.2, y: 0.1 }, shouldered: false, pitch: 0.15, yaw: 0.25 },
+  shotgun: { grip: GRIP.shotgun, fist: { x: -0.19, y: -0.005 }, fore: { x: 0.17, y: 0.003 }, mag: { x: -0.03, y: -0.01 }, butt: { x: -0.37, y: -0.05 }, shouldered: true, pitch: -0.6, yaw: 0.9 },
+  rifle: { grip: GRIP.rifle, fist: { x: -0.15, y: -0.045 }, fore: { x: 0.085, y: 0.048 }, mag: { x: 0.01, y: -0.13 }, butt: { x: -0.4, y: 0.03 }, shouldered: true, pitch: 0.2, yaw: 0.3 },
 };
 
 /**

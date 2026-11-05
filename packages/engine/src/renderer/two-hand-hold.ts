@@ -26,12 +26,42 @@ interface Carry {
 /**
  * Aimed: the butt in the pocket in front of the shoulder, the barrel level ahead. From the hip
  * (low ready): the butt under the shoulder at the chest, the gun across the body, the muzzle
- * down and to the left. An SMG, without a stock, is held out in front on bent arms.
+ * down and to the left. An SMG, without a stock, is held out in front on bent arms. Drawn: as
+ * it comes out of the sling, upright before the right shoulder, muzzle up and to the left.
  */
 const CARRY = {
-  shouldered: { hip: { butt: [-0.03, -0.09, 0.15], barrel: [-0.7, -0.35, 0.62] }, aimed: { butt: [-0.025, -0.01, 0.13], barrel: [0, 0, 1] } },
-  out: { hip: { butt: [-0.06, -0.2, 0.2], barrel: [-0.55, -0.35, 0.75] }, aimed: { butt: [-0.1, -0.04, 0.25], barrel: [0, 0, 1] } },
-} as const satisfies Record<string, { hip: Carry; aimed: Carry }>;
+  shouldered: {
+    hip: { butt: [-0.03, -0.09, 0.15], barrel: [-0.7, -0.35, 0.62] },
+    aimed: { butt: [-0.025, -0.01, 0.13], barrel: [0, 0, 1] },
+    drawn: { butt: [0, -0.12, 0.2], barrel: [-0.65, -0.42, 0.63] },
+  },
+  out: {
+    hip: { butt: [-0.06, -0.2, 0.2], barrel: [-0.55, -0.35, 0.75] },
+    aimed: { butt: [-0.1, -0.04, 0.25], barrel: [0, 0, 1] },
+    drawn: { butt: [-0.03, -0.22, 0.24], barrel: [-0.55, -0.3, 0.75] },
+  },
+} as const satisfies Record<string, { hip: Carry; aimed: Carry; drawn: Carry }>;
+
+/** How far the butt swings forward (and three quarters of it in) half way between the hip and the shoulder (reference-arm units). */
+const BUTT_ARC = 0.04;
+
+/** Past this blend of the ladder pose the long gun is on the back, where the climbing hands leave it. */
+export const CLIMB_SLING = 0.02;
+
+/** The long gun is out of the sling and shows in the hands: past half the draw and off a ladder. */
+export const longGunInHands = (rig: CharacterRig): boolean => rig.aiming && !rig.melee && rig.grip !== null && rig.drawn >= 0.5 && rig.climbBlend < CLIMB_SLING;
+
+/**
+ * How far the arms take the two-handed hold (0..1): the hands go to the gun over the draw just
+ * before it leaves the sling (0.3..0.5), so it never shows in the air; none on a ladder.
+ */
+export const holdWeight = (rig: CharacterRig): number => {
+  if (!rig.aiming || rig.melee || rig.grip === null || rig.climbBlend >= CLIMB_SLING) return 0;
+  return smoothstep(Math.min(1, Math.max(0, (rig.drawn - 0.3) / 0.2)));
+};
+
+/** 0 the gun upright as it leaves the sling .. 1 carried (second half of the draw). */
+const carried = (rig: CharacterRig): number => smoothstep(Math.min(1, Math.max(0, (rig.drawn - 0.5) / 0.5)));
 
 /**
  * A long gun in both hands turns the body to the right (radians; 11° from the hip, 37° aimed),
@@ -41,7 +71,7 @@ const CARRY = {
 export const BLADE = { hip: 0.2, aimed: 0.65 } as const;
 
 /** Elbow hints: the right elbow out and down, the left under the gun. */
-const POLE_R = new Vector3(0.8, -0.6, -0.15).normalize();
+const POLE_R = new Vector3(0.45, -0.9, 0.1).normalize();
 const POLE_L = new Vector3(-0.35, -1, 0.1).normalize();
 
 /** How far the left hand's fingers turn from across the gun towards the muzzle (radians). */
@@ -56,6 +86,7 @@ export interface GunPose {
   readonly top: Vector3;
 }
 
+const v3 = (a: Vec): Vector3 => new Vector3(a[0], a[1], a[2]);
 const lerp3 = (a: Vec, b: Vec, t: number): Vector3 => new Vector3(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t);
 
 /**
@@ -81,11 +112,14 @@ export const gunPoint = (pose: GunPose, g: TwoHandGrip, p: GunPoint): Vector3 =>
  * and turned `blade` to the right: the butt at the chest or in the shoulder, the barrel level
  * ahead when aimed whatever the body does.
  */
-export const longGunPose = (g: TwoHandGrip, reach: ArmReach, aim: number, tilt: number, blade: number): GunPose => {
+export const longGunPose = (g: TwoHandGrip, reach: ArmReach, aim: number, tilt: number, blade: number, out = 1): GunPose => {
   const k = (reach.upper + reach.fore) / REF_ARM;
   const carry = g.shouldered ? CARRY.shouldered : CARRY.out;
-  const butt = reach.shoulderR.add(lerp3(carry.hip.butt, carry.aimed.butt, aim).scale(k));
-  const barrel = intoBody(lerp3(carry.hip.barrel, carry.aimed.barrel, aim).normalize(), tilt, blade);
+  // Between the hip and the shoulder the butt swings out in front and in, clear of the upper arm.
+  const at = lerp3(carry.hip.butt, carry.aimed.butt, aim).addInPlaceFromFloats(-0.75 * BUTT_ARC * 4 * aim * (1 - aim), 0, BUTT_ARC * 4 * aim * (1 - aim));
+  const to = lerp3(carry.hip.barrel, carry.aimed.barrel, aim).normalize();
+  const butt = reach.shoulderR.add(Vector3.Lerp(v3(carry.drawn.butt), at, out).scale(k));
+  const barrel = intoBody(Vector3.Lerp(v3(carry.drawn.barrel).normalize(), to, out).normalize(), tilt, blade);
   const up = intoBody(Vector3.Up(), tilt, blade);
   const top = up.subtract(barrel.scale(Vector3.Dot(up, barrel))).normalize();
   const origin = butt.subtract(barrel.scale(g.butt.x - g.grip.x)).subtract(top.scale(g.butt.y - g.grip.y));
@@ -177,14 +211,30 @@ export interface TwoHandTargets {
   readonly left: { readonly wrist: Vector3; readonly hand: HandFrame };
 }
 
-export const twoHandTargets = (g: TwoHandGrip, reach: ArmReach, aim: number, tilt: number, blade: number): TwoHandTargets => {
-  const pose = longGunPose(g, reach, aim, tilt, blade);
+/** A magazine pouch on the left hip, from the left shoulder joint (reference-arm units). */
+const POUCH: Vec = [0.02, -0.52, 0.1];
+
+/**
+ * Where the left hand is at `reload` (0..1..0 over a reload): from the fore-end to the magazine
+ * (or the shotgun's loading port) and on down to the pouch, then back the same way.
+ */
+const leftHandAt = (pose: GunPose, g: TwoHandGrip, reach: ArmReach, reload: number): Vector3 => {
+  const fore = gunPoint(pose, g, g.fore);
+  if (reload <= 0) return fore;
+  const mag = gunPoint(pose, g, g.mag);
+  if (reload < 0.35) return Vector3.Lerp(fore, mag, smoothstep(reload / 0.35));
+  const pouch = reach.shoulderL.add(v3(POUCH).scale((reach.upper + reach.fore) / REF_ARM));
+  return Vector3.Lerp(mag, pouch, smoothstep((reload - 0.35) / 0.65));
+};
+
+export const twoHandTargets = (g: TwoHandGrip, reach: ArmReach, aim: number, tilt: number, blade: number, out = 1, reload = 0): TwoHandTargets => {
+  const pose = longGunPose(g, reach, aim, tilt, blade, out);
   const right = rightHand(pose, g);
   const left = leftHand(pose);
   return {
     pose,
     right: { wrist: wristFor(gunPoint(pose, g, g.fist), right, reach.palm, -1), hand: right },
-    left: { wrist: wristFor(gunPoint(pose, g, g.fore), left, reach.palm, 1), hand: left },
+    left: { wrist: wristFor(leftHandAt(pose, g, reach, reload), left, reach.palm, 1), hand: left },
   };
 };
 
@@ -198,10 +248,12 @@ export const bladeOf = (rig: CharacterRig, w: number): number => (BLADE.hip + (B
  * aim, lean and bladed stance, and turns both arms so that the right hand closes on the grip
  * and the left holds the fore-end, by `w` and `leftW` (0 leaves an arm as it is). Call after
  * the arm poses and the lean are set; the body takes the `bladeOf` turn after its own pose.
+ * While the gun comes out of the sling it stands upright before the right shoulder; over a
+ * reload (`reload` 0..1..0) the left hand fetches a magazine from the pouch on the left hip.
  */
-export const holdLongGun = (rig: CharacterRig, g: TwoHandGrip, tilt: number, w: number, leftW: number): void => {
+export const holdLongGun = (rig: CharacterRig, g: TwoHandGrip, tilt: number, w: number, leftW: number, reload = 0): void => {
   const reach = rig.reach ?? rigReach(rig);
-  const t = twoHandTargets(g, reach, smoothstep(Math.min(1, Math.max(0, rig.aim))), tilt, bladeOf(rig, w));
+  const t = twoHandTargets(g, reach, smoothstep(Math.min(1, Math.max(0, rig.aim))), tilt, bladeOf(rig, w), carried(rig), reload);
   const hold = rig.gunHold;
   hold.position.copyFrom(t.pose.origin);
   // The mount's frame: barrel along -Y, top along +Z.
