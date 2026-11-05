@@ -22,13 +22,13 @@ type Chase = { speed: number; stop: number };
 /**
  * Runs the escape of the walker `id` from the player `dx`, `dz` metres off it for five seconds:
  * how many times its heading jumped while it ran and its sharpest turn, in how many steps it ran
- * back towards the player, how close to the player it came after `SETTLE` and where it ended up.
- * With `chase` the player runs after it.
+ * back towards the player, how close to the player it came after `SETTLE`, where it ended up
+ * and how far from where it set off (`gone`). With `chase` the player runs after it.
  */
 const watchEscape = (seed: number, id: number, dx: number, dz = 0, chase?: Chase) => {
   const sim = hostileCrowd(seed);
   const walker = passerbyOnDeptak(sim, 2, (e) => e.id === id);
-  const at = byId(sim, walker.id).position;
+  const at = { ...byId(sim, walker.id).position };
   teleportPlayer(sim, { x: at.x + dx, y: at.y, z: at.z + dz });
   let p = sim.player()!.position;
   let jumps = 0;
@@ -56,7 +56,7 @@ const watchEscape = (seed: number, id: number, dx: number, dz = 0, chase?: Chase
     last = e.yaw;
   }
   const e = byId(sim, walker.id);
-  return { jumps, towards, closest, sharpest, distance: Math.hypot(e.position.x - p.x, e.position.z - p.z) };
+  return { jumps, towards, closest, sharpest, distance: Math.hypot(e.position.x - p.x, e.position.z - p.z), gone: Math.hypot(e.position.x - at.x, e.position.z - at.z) };
 };
 
 // Walkers of the deptak's crowd routes whose way away from the player runs into a wall.
@@ -151,5 +151,17 @@ describe("an escape past a corner (G-326)", () => {
   // (since withdrawn) pinned it against a wall 2.69 m off the player, running on the spot.
   it("takes the way round even when it leads back past the player (seed 43, walker 1002008)", () => {
     expect(watchEscape(43, 1002008, 2).distance).toBeGreaterThanOrEqual(FLEE_RADIUS);
+  });
+});
+
+describe("an escape through a gap narrower than the body (G-338)", () => {
+  // Seed 17, walker 1002008 by (248.2; -65), chased from the south at 4 m/s up to 2 m: the way
+  // straight away runs between a lamp post and a planter 0.2 m apart. The knee-high line went
+  // through, the body did not: 242 jumps of a quarter turn on the spot, 0.1 m from where it was.
+  it("does not take a way its body does not fit through (seed 17, walker 1002008, 242 jumps before)", () => {
+    const w = watchEscape(17, 1002008, 0, -2, { speed: 4, stop: 2 });
+    expect(w.jumps).toBeLessThanOrEqual(4);
+    expect(w.towards).toBe(0);
+    expect(w.gone).toBeGreaterThanOrEqual(FLEE_RADIUS);
   });
 });
