@@ -4,6 +4,12 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 ## Następne
 
+- **Priorytety slotów (decyzja użytkownika 5.11, wieczór).** Wolne sloty dobierane w tej kolejności:
+  1. Rozgrywka, łańcuch krytyczny: ADR-0059 etap 2 (atrybuty i efekty bierne), potem etap 3 (perki) i 7 (interfejs Rozwoju); równolegle ADR celowania na telefonie (P0 z audytu luk).
+  2. Stały slot assetów: metro etap 4 (peron), potem Alchemia (G-287–G-289, winda, targ z al. Tysiąclecia i Rin na dachu), ubrania i ikony przedmiotów, zabytki ADR-0062 i Zamek.
+  3. Glitche rozgrywki S3 i uwagi z przebiegu: reputacja (sprzedawcy przy złej reputacji nie uciekają, tylko dają gorsze ceny i odmawiają części oferty, decyzja użytkownika; likwidowanie gangerów podnosi reputację; bilans zleceń Kaito), G-334, ucieczki cywili (G-328, G-343, G-329), drabiny (G-309, G-311, G-312), G-291, G-071.
+  4. Mapa: najpierw S3, które gracz widzi (G-088, G-081, G-339). Gołe pasy nawierzchni S4 (T-170, T-172–T-176 i podobne) idą paczkami, jeden PR na okolicę z jednym przeglądem kuratora; pierwsza paczka dodaje kontrolę skanu `landuse-bare` z bazą dla całego miasta.
+  Bez zmian odłożone: ruch aut, sieć trakcyjna, holograficzna fara, fasady z danych.
 - **Oszczędzanie limitów (decyzja użytkownika 4.11):** raporty orkiestratora tylko przy scaleniu, odrzuceniu albo potrzebie decyzji, 2–4 zdania; bez subskrypcji zdarzeń PR (CI sprawdzane raz, przy raporcie weryfikatora); przebudzenie co godzinę; praca idzie sama: zawsze co najmniej 3 agenty w toku (najwyżej 4), kolejne pozycje z planu: priorytety użytkownika, potem slot assetów, glitche, ADR-y (korekta użytkownika 5.11).
 - **Uwagi użytkownika z testowego przebiegu (4.11).** Błędy trafiły do rejestru jako G-279–G-285, reszta czeka tutaj na triage, ADR albo decyzję. Kolejność (decyzja użytkownika 4.11): najpierw G-281, potem G-279, dalej G-285 ze skradaniem i G-280; reputacja i metro jako ADR-y do akceptacji.
   - **Reputacja i reakcje mieszkańców (do ADR, decyzja użytkownika).** ADR-0070 przyjęty; etapy 1–2 w main (#267), wszystkie 5 etapów w main (5.11: #267, #274, #278, #283). Do decyzji z etapów zapisane wyżej. Do decyzji: wroga klinika sprzedaje `capacity_shard` (stos, dosłownie zgodne z ADR), choć nota mówi, że Mori nie operuje. Do decyzji: gracz wrogi ulicy stojący przy trasie tłumu zostawia pierścień nieruchomych przechodniów w 7–9 m (7 osób po 3 min); ruszają, gdy odejdzie, ale go nie obchodzą.
