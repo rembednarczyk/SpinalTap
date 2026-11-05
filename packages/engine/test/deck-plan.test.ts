@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { Decks, deckHeight, planDeckEdges, planDeckUnderside } from "../src/renderer/mapcity/deck-plan";
+import { MapEntries } from "../src/renderer/mapcity/map-entries";
+import { MARKING_LIFT, planMarking } from "../src/renderer/mapcity/marking-plan";
+import { boundsOf } from "../src/renderer/mapcity/polygon";
 
 /** A 40 m bridge running east, 10 m wide, its deck from 2 m at the west abutment to 4 m at the east one. */
 const axis = { a: { x: 0, y: 2, z: 0 }, b: { x: 40, y: 4, z: 0 } };
@@ -59,6 +62,24 @@ describe("bridges' decks (ADR-0053)", () => {
       }
       expect(headroom).toBeGreaterThan(1.8);
       expect(headroom).toBeLessThan(2.2);
+    }
+  });
+
+  it("paint the lines by a deck's edge on its carriageway, and those beside it on the terrain (G-301)", () => {
+    const entries = new MapEntries();
+    const heights = Array.from({ length: 21 * 9 }, () => 0);
+    entries.terrains.set(1, { grid: { originX: -20, originZ: -20, cell: 5, cols: 21, rows: 9, heights }, open: undefined, bounds: { minX: -20, maxX: 80, minZ: -20, maxZ: 20 }, mesh: null });
+    // The deck 2-4 m over the level valley to z 4.7 either way: the drape's grid has corners at 2.5 on it and 5 off it.
+    entries.addGround(2, { surface: "road", ring: road.map((p) => ({ x: p.x, z: p.z * 0.94 })), y: 0, bounds: { minX: 0, maxX: 40, minZ: -4.7, maxZ: 4.7 }, cell: "", deck: axis });
+    for (const [z, on] of [[4, true], [-4, true], [4.9, false], [-6, false]] as const) {
+      const line = [{ x: 3, z }, { x: 37, z }];
+      const g = { surface: "road" as const, marking: "edge" as const, ring: line, y: 0, bounds: boundsOf(line), cell: "" };
+      const sink = new MeshSink();
+      planMarking(sink, "edge", line, entries.groundHeight(g));
+      for (let i = 0; i < sink.vertexCount; i++) {
+        const [x, y, vz] = [sink.positions[i * 3]!, sink.positions[i * 3 + 1]!, sink.positions[i * 3 + 2]!];
+        expect(y, `${x}, ${vz}`).toBeCloseTo((on ? deckHeight(axis, x, vz) : 0) + MARKING_LIFT, 6);
+      }
     }
   });
 });
