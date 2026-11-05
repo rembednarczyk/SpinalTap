@@ -130,6 +130,7 @@ export const plWorld = {
   "dialogue.tone.lifepath": "z przeszłości",
   // Saving and loading.
   "save.unavailable": "Nie można teraz zapisać",
+  "save.airborne": "Nie można zapisać w powietrzu",
   "save.saved": "Zapisano grę",
   "save.autosaved": "Zapisano automatycznie",
   "save.failed": "Zapis nieudany",
