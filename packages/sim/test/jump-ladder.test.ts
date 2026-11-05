@@ -210,6 +210,32 @@ describe("fire escape ladders (ADR-0021)", () => {
     expect(pos(sim).y).toBeCloseTo(ROOF_WEST_TOP, 5);
   });
 
+  it("from the top she swings over the edge onto the rungs, not a jump onto them", () => {
+    const sim = at(69.2, ROOF_WEST_TOP, 63.3, 0);
+    run(sim, 2);
+    const from = { ...player(sim).position };
+    sim.step(input({ interact: true }));
+    expect(player(sim).climb?.ladder).toBe("targ-escape-2");
+    // Before: the key put her 1.1 m out and 0.8 m down in one step.
+    const moved = Math.hypot(player(sim).position.x - from.x, player(sim).position.y - from.y, player(sim).position.z - from.z);
+    const settling = () => player(sim).climb?.settle !== undefined;
+    expect(Math.max(moved, longestStep(sim, input(), settling))).toBeLessThan(0.2);
+    // On the rungs, facing the wall, a little below the top.
+    expect(pos(sim).z).toBeCloseTo(64.4, 5);
+    expect(pos(sim).y).toBeCloseTo(ROOF_WEST_TOP - 0.8, 5);
+    expect(player(sim).yaw).toBeCloseTo(SOUTH, 5);
+    // Over the roof first, then down: never inside the wall below the roof's edge.
+    const edge = 64;
+    const back = at(69.2, ROOF_WEST_TOP, 63.3, 0);
+    run(back, 2);
+    back.step(input({ interact: true }));
+    for (let i = 0; i < 60 && back.player()!.climb?.settle; i++) {
+      const p = back.player()!.position;
+      if (p.z - MARKET_PLACE.z < edge + 0.3) expect(p.y - MARKET_PLACE.y).toBeCloseTo(ROOF_WEST_TOP, 5);
+      back.step(input());
+    }
+  });
+
   it("the interact key climbs down from the top; back steps down, and jump lets go", () => {
     const sim = at(69.2, ROOF_WEST_TOP, 63.3, 0);
     run(sim, 2);
@@ -218,6 +244,7 @@ describe("fire escape ladders (ADR-0021)", () => {
     expect(player(sim).climb?.ladder).toBe("targ-escape-2");
     run(sim, 1);
     expect(sim.session.focusPrompt).toBeNull();
+    for (let i = 0; i < 60 && player(sim).climb?.settle; i++) sim.step(input());
     const y0 = pos(sim).y;
     run(sim, 30, input({ moveZ: -1 }));
     expect(pos(sim).y).toBeLessThan(y0 - 0.9);

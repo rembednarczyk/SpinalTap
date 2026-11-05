@@ -1,4 +1,4 @@
-import type { Entity, LadderDef } from "../world/components";
+import type { Entity, LadderDef, LadderSettle } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
 import { playerHeld } from "../world/takedown";
@@ -11,6 +11,12 @@ const GRAB_REACH = 0.6;
 const GRAB_FACING = 0.9;
 /** A grab from the top starts this far below the top, so the climber is on the rungs. */
 const TOP_GRAB_DROP = 0.8;
+/**
+ * A grab from the top swings her over the edge in this long (seconds), the first `TOP_GRAB_ACROSS`
+ * of it across onto the ladder's line at the roof's height, the rest down onto the rungs.
+ */
+const TOP_GRAB_TIME = 0.6;
+const TOP_GRAB_ACROSS = 0.45;
 /** Letting go with the jump button pushes off the wall at this speed, m/s. */
 const PUSH_OFF = 1.6;
 /**
@@ -31,15 +37,45 @@ const angleBetween = (a: number, b: number): number => {
   return Math.abs(d);
 };
 
-/** Puts `e` on the ladder at feet height `y`, facing it. */
-const hangOn = (ctx: SimContext, e: Entity, l: LadderDef, y: number): void => {
-  e.climb = { ladder: l.key, speed: 0 };
-  e.position = { x: l.x, y, z: l.z };
-  e.yaw = l.yaw;
+/** The way onto the rungs: how long it takes, and whether it swings over the edge first. */
+type Settle = Pick<LadderSettle, "over" | "duration">;
+
+/**
+ * Puts `e` on the ladder at feet height `y`, facing it: at once (a game saved on the ladder), or
+ * eased onto the rungs from where she stands over `settle`.
+ */
+const hangOn = (ctx: SimContext, e: Entity, l: LadderDef, y: number, settle?: Settle): void => {
+  if (settle) {
+    e.climb = { ladder: l.key, speed: 0, settle: { from: e.position, fromYaw: e.yaw, y, t: 0, ...settle } };
+  } else {
+    e.climb = { ladder: l.key, speed: 0 };
+    e.position = { x: l.x, y, z: l.z };
+    e.yaw = l.yaw;
+  }
   delete e.fall;
   delete e.airPeak;
   if (e.velocity) e.velocity = { x: 0, y: 0, z: 0 };
   ctx.bus.emit("LadderClimb", { entityId: e.id, ladder: l.key, on: true });
+};
+
+const ease = (v: number): number => v * v * (3 - 2 * v);
+
+/** Shortest signed turn from `a` to `b`, radians. */
+const turn = (a: number, b: number): number => Math.atan2(Math.sin(b - a), Math.cos(b - a));
+
+/** Moves the way onto the rungs on; at its end she hangs on the ladder's line, facing it. */
+const stepSettle = (e: Entity, l: LadderDef, s: LadderSettle, dt: number): void => {
+  s.t = Math.min(s.duration, s.t + dt);
+  const f = s.t / s.duration;
+  const across = ease(s.over ? Math.min(1, f / TOP_GRAB_ACROSS) : f);
+  const down = ease(s.over ? Math.max(0, (f - TOP_GRAB_ACROSS) / (1 - TOP_GRAB_ACROSS)) : f);
+  e.position = { x: s.from.x + (l.x - s.from.x) * across, y: s.from.y + (s.y - s.from.y) * down, z: s.from.z + (l.z - s.from.z) * across };
+  e.yaw = s.fromYaw + turn(s.fromYaw, l.yaw) * ease(f);
+  if (s.t >= s.duration) {
+    e.position = { x: l.x, y: s.y, z: l.z };
+    e.yaw = l.yaw;
+    if (e.climb) delete e.climb.settle;
+  }
 };
 
 const letGo = (ctx: SimContext, e: Entity, key: string): void => {
@@ -52,7 +88,8 @@ export const grabLadder = (ctx: SimContext, e: Entity, key: string, end: "bottom
   if (e.climb) return;
   const l = ladders(ctx).find((x) => x.ladder.key === key)?.ladder;
   if (!l) return;
-  hangOn(ctx, e, l, end === "bottom" ? l.bottom : l.top - TOP_GRAB_DROP);
+  if (end === "top") hangOn(ctx, e, l, l.top - TOP_GRAB_DROP, { over: true, duration: TOP_GRAB_TIME });
+  else hangOn(ctx, e, l, l.bottom);
 };
 
 /** A climber standing in a ladder's line between its ends (a game saved mid-climb). */
@@ -102,6 +139,10 @@ export const ladderSystem: System = {
       p.velocity = { x: 0, y: 0, z: 0 };
       if (frozen) {
         p.climb.speed = 0;
+        continue;
+      }
+      if (p.climb.settle) {
+        stepSettle(p, l, p.climb.settle, ctx.dt);
         continue;
       }
       if (input.jump) {
