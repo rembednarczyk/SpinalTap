@@ -173,3 +173,6 @@ export const HALL_STAIR_PARTS: readonly AlchemiaPart[] = [
 
 /** The flight from the paving up to the podium at the run's foot, out of the hall's back. */
 export const HALL_STAIR_FOOT: AlchemiaFlight = { x0: HALL_WALL_X, x1: STRINGER_X, z: PODIUM.z0, dir: -1, top: PODIUM.top };
+
+/** The flight from the paving up to the podium before the hall's front, across its whole width, as the stalls' (G-299). */
+export const HALL_FRONT_FLIGHT: AlchemiaFlight = { x0: -PODIUM.x1, x1: PODIUM.x1, z: PODIUM.z1, dir: 1, top: PODIUM.top };

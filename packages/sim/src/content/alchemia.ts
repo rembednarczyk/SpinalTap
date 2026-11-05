@@ -2,7 +2,7 @@ import type { GroundPoint, ViewDescriptor } from "@seki/core";
 import type { StaticProp } from "./builders";
 import type { PrismDef } from "../world/prism";
 import { surfaceY } from "./lublin/terrain";
-import { type AlchemiaFlight, type AlchemiaPart, HALL_CORNER, HALL_STAIR_FOOT, HALL_STAIR_PARTS, HALL_UPPER_X, HALL_WALL_X, flightSteps, rectPart } from "./alchemia-stairs";
+import { type AlchemiaFlight, type AlchemiaPart, HALL_CORNER, HALL_FRONT_FLIGHT, HALL_STAIR_FOOT, HALL_STAIR_PARTS, HALL_UPPER_X, HALL_WALL_X, flightSteps, rectPart } from "./alchemia-stairs";
 
 export type { AlchemiaFlight, AlchemiaPart } from "./alchemia-stairs";
 
@@ -22,8 +22,8 @@ export type { AlchemiaFlight, AlchemiaPart } from "./alchemia-stairs";
  * the plan, with the outbuilding and the shed of the map where they are.
  *
  * Each module stands on the highest paving under its footprint; a plinth under it reaches the
- * lowest, and flights of steps come down from its doors to the paving (G-287). The
- * simulation has each one as solid prisms from the ground up (`ALCHEMIA_PROPS`, scenery: the
+ * lowest, and flights of steps come down from its doors to the paving (G-287; the hall's from its
+ * podium, behind and in front, G-299). The simulation has each one as solid prisms from the ground up (`ALCHEMIA_PROPS`, scenery: the
  * engine draws the models, their plinths and steps, `renderer/alchemia`): a stall as its box and
  * its steps, the hall as its body up to its flat roof and its outside stair as drawn, step by step
  * up to the landing (G-288, `alchemia-stairs.ts`), so the roof is a floor a body can stand on (the
@@ -131,7 +131,7 @@ const stall = (i: number): AlchemiaModule => {
 };
 
 /** The hall and the five stalls, south to north. */
-export const ALCHEMIA_LAYOUT: readonly AlchemiaModule[] = [{ key: "alchemia-hall", x: 421, z: 45, yaw: HALL_YAW, ...HALL, parts: HALL_PARTS, flights: [HALL_STAIR_FOOT] }, ...[0, 1, 2, 3, 4].map(stall)];
+export const ALCHEMIA_LAYOUT: readonly AlchemiaModule[] = [{ key: "alchemia-hall", x: 421, z: 45, yaw: HALL_YAW, ...HALL, parts: HALL_PARTS, flights: [HALL_STAIR_FOOT, HALL_FRONT_FLIGHT] }, ...[0, 1, 2, 3, 4].map(stall)];
 
 /**
  * A point of the model's frame (glTF x and z) in the world: its +Z is the module's front and,
