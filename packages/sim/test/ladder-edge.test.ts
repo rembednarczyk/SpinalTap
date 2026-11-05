@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { InputFrame, Vec3 } from "@seki/core";
-import { Simulation, docks, market } from "../src";
+import type { CyberwareLoadout, InputFrame, Vec3 } from "@seki/core";
+import { Simulation, docks, gangerEntity, market } from "../src";
 import type { LadderDef } from "../src/world/components";
 import { collect, input, run, teleportPlayer } from "./helpers";
 
@@ -13,12 +13,22 @@ const LADDERS: readonly { readonly key: string; readonly near: Vec3 }[] = [
   { key: "doki-stack-2", near: docks(4, 0, 98) },
 ];
 
-/** A new game with the player standing at `position`, facing `yaw`, nobody around to shoot her. */
-const standing = (near: Vec3, position: Vec3, yaw: number): Simulation => {
-  const sim = Simulation.create({ seed: 1 });
+/**
+ * A new game with the player standing at `position`, facing `yaw`, nobody around to shoot her
+ * (with these implants, when given).
+ */
+const standing = (near: Vec3, position: Vec3, yaw: number, cyberware?: CyberwareLoadout): Simulation => {
+  let sim = Simulation.create({ seed: 1 });
   teleportPlayer(sim, near);
   run(sim, 2);
+  if (cyberware) {
+    const snap = sim.snapshot(null, "t", "");
+    sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, character: { ...snap.domain.character, cyberware } } });
+  }
   teleportPlayer(sim, position, yaw);
+  // Not falling from wherever `near` put her.
+  delete sim.player()!.fall;
+  delete sim.player()!.airPeak;
   for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
   run(sim, 2);
   return sim;
@@ -128,5 +138,102 @@ describe("stepping off a roof over a ladder's top (G-308)", () => {
     run(jump, 8, input({ moveZ: 1 }));
     jump.step(input({ moveZ: 1, jump: true }));
     expect(walk(jump, input({ moveZ: 1 }))).toMatchObject({ caught: false, landed: 1 });
+  });
+});
+
+/** A knocked-out Tessen guard on her shoulder (ADR-0065), picked up where she stands. */
+const shoulder = (sim: Simulation): void => {
+  const p = sim.player()!;
+  const g = sim.world.add(gangerEntity(4000, { key: "carried", position: { ...p.position }, yaw: 0 }, null, 80, p.chunk ?? "", undefined, "tessen_guard"));
+  sim.world.addComponent(g, "unconscious", true);
+  sim.world.addComponent(g, "downed", {
+    playerAt: { ...p.position },
+    fought: false,
+    found: false,
+    reported: false,
+    finder: null,
+    wake: 0,
+    dead: false,
+    lookedBy: [],
+    carried: false,
+    hidden: false,
+    frame: null,
+  });
+  sim.step(input());
+  sim.enqueue({ type: "carry-body" });
+  sim.step(input());
+  expect(sim.session.carrying).toBe(g.id);
+};
+
+describe("what does not catch the top of a ladder (G-308)", () => {
+  const LEGS: CyberwareLoadout = { optics: "hitomi_optics_mk1", skeleton: "kitsune_tendons" };
+  /** Where she stands `side` metres along the edge from the exit, facing the way over it. */
+  const beside = (l: LadderDef, side: number): { at: Vec3; yaw: number } => {
+    const yaw = heading(l.exit, l);
+    return { at: { x: l.exit.x + Math.cos(yaw) * side, y: l.exit.y, z: l.exit.z - Math.sin(yaw) * side }, yaw };
+  };
+
+  for (const { key, near } of LADDERS) {
+    const l = ladderOf(key, near);
+    const { at, yaw } = beside(l, 0);
+
+    it(`${key}: a dash over the edge flies past the rungs`, () => {
+      const sim = standing(near, at, yaw, LEGS);
+      sim.step(input({ moveZ: 1, dash: true }));
+      expect(sim.player()!.perks?.dash ?? 0).toBeGreaterThan(0);
+      expect(walk(sim, input({ moveZ: 1 }))).toMatchObject({ caught: false, landed: 1 });
+    });
+
+    it(`${key}: a sprint let go of in the air keeps its momentum past the rungs`, () => {
+      const sim = standing(near, at, yaw);
+      const p = sim.player()!;
+      for (let i = 0; i < 60 && p.fall === undefined; i++) sim.step(input({ moveZ: 1, sprint: true }));
+      expect(p.fall).toBeDefined();
+      expect(walk(sim, input({ moveZ: 1 }))).toMatchObject({ caught: false, landed: 1 });
+    });
+  }
+
+  it("catches a step off the edge 0.6 m to the side of the ladder, not 0.8 m", () => {
+    for (const { key, near } of [LADDERS[1]!, LADDERS[3]!]) {
+      const l = ladderOf(key, near);
+      for (const side of [0.6, -0.6]) {
+        const { at, yaw } = beside(l, side);
+        expect(walk(standing(near, at, yaw), input({ moveZ: 1 })), `${key} ${side}`).toMatchObject({ caught: true, landed: 0 });
+      }
+      for (const side of [0.8, -0.8]) {
+        const { at, yaw } = beside(l, side);
+        expect(walk(standing(near, at, yaw), input({ moveZ: 1 })), `${key} ${side}`).toMatchObject({ caught: false, landed: 1 });
+      }
+    }
+  });
+
+  it("a fall from higher up past the top is no catch", () => {
+    const { key, near } = LADDERS[1]!;
+    const l = ladderOf(key, near);
+    const sim = standing(near, l.exit, 0);
+    // Half a metre over the top, between the edge and the rungs.
+    teleportPlayer(sim, { x: l.x + (l.exit.x - l.x) * 0.2, y: l.top + 0.5, z: l.z + (l.exit.z - l.z) * 0.2 }, 0);
+    expect(walk(sim, input())).toMatchObject({ caught: false, landed: 1 });
+  });
+
+  it("with a body on her shoulder she steps off and falls", () => {
+    const { key, near } = LADDERS[3]!;
+    const l = ladderOf(key, near);
+    const sim = standing(near, l.exit, heading(l.exit, l));
+    shoulder(sim);
+    teleportPlayer(sim, l.exit, heading(l.exit, l));
+    expect(walk(sim, input({ moveZ: 1 }))).toMatchObject({ caught: false, landed: 1 });
+  });
+
+  it("jumping off the rungs at the very top is a push-off, not a catch", () => {
+    for (const { key, near } of LADDERS) {
+      const l = ladderOf(key, near);
+      // A game loaded with her on the rungs at the top (G-313).
+      const sim = standing(near, { x: l.x, y: l.top, z: l.z }, l.yaw);
+      expect(sim.player()!.climb?.ladder).toBe(key);
+      sim.step(input({ jump: true }));
+      expect(sim.player()!.climb).toBeUndefined();
+      expect(walk(sim, input()), key).toMatchObject({ caught: false, landed: 1 });
+    }
   });
 });

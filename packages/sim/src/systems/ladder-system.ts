@@ -2,6 +2,7 @@ import type { Entity, LadderDef, LadderSettle } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
 import { playerHeld } from "../world/takedown";
+import { playerStatsOf } from "./player-control-system";
 
 /** Climbing speed on a ladder, m/s. */
 export const CLIMB_SPEED = 2.2;
@@ -27,13 +28,12 @@ const PUSH_OFF = 1.6;
  */
 const STEP_OFF_LIFT = 0.6;
 const STEP_OFF_TIME = 0.6;
-/**
- * A walk over the edge by a ladder's top catches the rungs within this drop below the top
- * (metres, about the first fifth of a second of the fall)...
- */
-const TOP_CATCH_DROP = 0.3;
-/** ...this close to the ladder's line (metres, horizontally: the edge is 0.4-0.6 m from it). */
+/** A walk over the edge by a ladder's top catches the rungs this close to its line (metres, horizontally: the edge is 0.4-0.6 m from it)... */
 const TOP_CATCH_REACH = 0.7;
+/** ...at up to this many times her walking speed (a little over it: a buff, rounding). */
+const TOP_CATCH_PACE = 1.1;
+/** Her feet left the floor within this of the ladder's top (metres). */
+const TOP_CATCH_LEVEL = 0.05;
 
 type Ladder = Entity & { ladder: LadderDef };
 
@@ -102,18 +102,20 @@ export const grabLadder = (ctx: SimContext, e: Entity, key: string, end: "bottom
 };
 
 /**
- * The ladder whose top she has just walked off, forward, backwards or sideways: falling from the
- * height of its top, not rising from a jump, and close to its line. Her hands catch it as the
- * interact key would, instead of the fall. A sprint carries on: running off a roof is a leap,
- * and at that speed she would be past the rungs before her hands reached them.
+ * The ladder whose top she has just walked off, forward, backwards or sideways, close to its
+ * line: her hands catch it as the interact key would, instead of the fall. Only a step off the
+ * floor at the top's height, within the coyote time (the jump's window after leaving the floor
+ * without one, so the drop is a few centimetres): not a jump, a push-off from the rungs or a fall
+ * from higher up. Only at a walk: a sprint (or its momentum kept in the air) or a dash (always at
+ * its burst speed while it lasts) carries her past the rungs before her hands reach them, and
+ * running off a roof is a leap.
  */
-const caughtAtTop = (p: Entity, all: readonly Ladder[]): LadderDef | undefined => {
-  if (p.fall === undefined || p.fall > 0 || p.posture?.sprinting) return undefined;
+const caughtAtTop = (ctx: SimContext, p: Entity, all: readonly Ladder[]): LadderDef | undefined => {
+  if (p.fall === undefined || (p.jump?.coyote ?? 0) <= 0) return undefined;
+  const pace = Math.hypot(p.velocity?.x ?? 0, p.velocity?.z ?? 0);
+  if (pace > playerStatsOf(ctx.state.domain).moveSpeed * TOP_CATCH_PACE) return undefined;
   const peak = p.airPeak ?? p.position.y;
-  return all.find(
-    ({ ladder: l }) =>
-      Math.abs(peak - l.top) < 0.05 && l.top - p.position.y < TOP_CATCH_DROP && Math.hypot(p.position.x - l.x, p.position.z - l.z) <= TOP_CATCH_REACH,
-  )?.ladder;
+  return all.find(({ ladder: l }) => Math.abs(peak - l.top) < TOP_CATCH_LEVEL && Math.hypot(p.position.x - l.x, p.position.z - l.z) <= TOP_CATCH_REACH)?.ladder;
 };
 
 /**
@@ -165,7 +167,7 @@ export const ladderSystem: System = {
       if (!p.climb) {
         // No ladder with a body on her shoulder (ADR-0065): both hands are full.
         if (frozen || p.mantle || ctx.session.carrying !== null) continue;
-        const top = caughtAtTop(p, all);
+        const top = caughtAtTop(ctx, p, all);
         if (top) {
           hangOn(ctx, p, top, top.top - TOP_GRAB_DROP, { over: true, duration: TOP_GRAB_TIME });
           continue;
@@ -208,7 +210,11 @@ export const ladderSystem: System = {
         p.fall = 0;
         p.airPeak = p.position.y;
         p.velocity = { x: -Math.sin(l.yaw) * PUSH_OFF, y: 0, z: -Math.cos(l.yaw) * PUSH_OFF };
-        if (p.jump) p.jump.buffer = 0;
+        // Letting go is no step off a floor: no jump in the air after it, and no catch at the top.
+        if (p.jump) {
+          p.jump.buffer = 0;
+          p.jump.coyote = 0;
+        }
         continue;
       }
       const speed = Math.max(-1, Math.min(1, input.moveZ)) * CLIMB_SPEED;
