@@ -1026,7 +1026,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `deck-end-step` (różnica `groundY` 0,15 m przed i za krawędzią > 0,15 m, poza drogą pod mostem) = 0
 
 ### G-340 Szczelina 1–2 m między jezdnią a chodnikiem obu mostów Mełgiewskiej (T-167)
-- Status: w PR #293, runda 2 (5.11; most północny naprawiony, południowy razem z G-344)
+- Status: w PR #293, runda 2 (5.11, be5fc9e; `bridge-ends.ts`: koniec drogi mostowej przedłużony do krawędzi obrysu, jezdnia i chodnik w jednym poziomie; razem z G-344), w weryfikacji
 - Ważność: S2 (spadek 2,5–5 m z mostu) · Zasięg: 2 mosty Nabrzeża, trasa aut · Koszt: mały–średni
 - Gdzie: x 2407–2446, z 243–269 oraz x 2423–2457, z 310–324; ok. 148 m²
 - Przyczyna (przypuszczalna): pomosty z szerokości jezdni i chodnika z osobnych dróg OSM, bez wypełnienia obrysem mostu (`man_made=bridge` w1123148473/474)
@@ -1034,7 +1034,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `deck-slot` (punkt poza pomostami z pomostem po obu stronach do 2 m i ziemią ≥ 0,5 m niżej) = 0 poza wnęką T-147
 
 ### G-342 Zaplecze Novy bez nawierzchni (T-169)
-- Status: zgłoszone (5.11, kurator, przegląd G-336)
+- Status: w PR #296; kurator PRZYJĘTE (5.11), czeka na CI
 - Ważność: S4 · Zasięg: x 726–756, z 428–441, ok. 270 m² · Koszt: mały
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS`; nawierzchnia utwardzona, nie trawa)
 - Test przyjęcia: 0 gołych próbek 0,5 m poza budynkami w prostokącie; parking w227698438 i jezdnia w40050943 na wierzchu
@@ -1058,6 +1058,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #293)
 - Ważność: S4 (skan) · Zasięg: `deck-slot` porównuje z `groundY`, a postać stoi na ziemi z `reach` = stopa + `STEP_HEIGHT`; upadek pod pomost przy stopniu wyższym niż `STEP_HEIGHT` daje 0; próg 15° w `bridge-fill.ts` (`SIDE_BY_SIDE`) bez testu
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
+
+### G-347 Gołe podłoże wzdłuż parkingu w227698441 przy ul. Nowy Plac Targowy (T-172)
+- Status: zgłoszone (5.11, kurator, przegląd G-342)
+- Ważność: S4 · Zasięg: x 672–726, z 436–448, ok. 100 m² (pas 1,2–1,9 m od jezdni w40050943, klin przy chodniku w227698428, szczelina ok. 5 m² przy (725,4; 437)) · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`; pas (a) asfalt jak jezdnia albo parking, nie kostka; klin (b) kostka chodnika)
+- Test przyjęcia: gołe próbki 0,1 m poza budynkami w x 672–727, z 434–449 ≤ 0,5 m² (szwy); parking w227698441, chodnik i jezdnia na wierzchu
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
