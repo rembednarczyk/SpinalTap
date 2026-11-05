@@ -1034,7 +1034,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `deck-slot` (punkt poza pomostami z pomostem po obu stronach do 2 m i ziemią ≥ 0,5 m niżej) = 0 poza wnęką T-147
 
 ### G-341 Gołe pasy wokół Dworca Autobusowego od północy i wschodu (T-168)
-- Status: zgłoszone (5.11, kurator, przegląd G-336)
+- Status: w PR #294 (2832816); przegląd kuratora 5.11: PRZYJĘTE, czeka na CI
 - Ważność: S4 · Zasięg: x 785–797, z 422–430 (ok. 42 m²) i x 793–808, z 376–428 (ok. 325 m²) · Koszt: mały
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
 - Test przyjęcia: 0 gołych próbek 0,5 m poza budynkami w obu prostokątach; asfalt stanowisk w66323033 i chodniki zostają na wierzchu
@@ -1057,7 +1057,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-345 Gołe podłoże wokół stanowisk Dworca Autobusowego (x 808–870)
 - Status: zgłoszone (5.11, naprawiacz G-341)
-- Ważność: S4 · Zasięg: ok. 1000 m² w x 808–870, z 366–395 (pas między ścieżką w227698420, chodnikiem w227698409 i stanowiskami, z gruntem pod zadaszeniem w458862470); też pas na północ od kiosku w73833929 (z 434–442, x 780–816)
+- Ważność: S4 · Zasięg: ok. 1000 m² w x 808–870, z 366–395 (pas między ścieżką w227698420, chodnikiem w227698409 i stanowiskami, z gruntem pod zadaszeniem w458862470); też pas na północ od kiosku w73833929 (z 434–442, x 780–816) · Topografia: T-170 (kurator: pod zadaszeniem ok. 453 m², przed pawilonami ok. 535 m², na północ od kiosku ok. 160 m²)
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS`), przegląd kuratora
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
