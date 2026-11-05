@@ -173,30 +173,37 @@ export interface AddedArea {
   readonly id: string;
   readonly tags: Tags;
   readonly ring: readonly Pt[];
+  /** Per vertex of `ring`, the OSM way it is a node of (`null`: laid off the map's nodes), so a new extract that moves the node shows. */
+  readonly nodesOf: readonly (string | null)[];
   readonly reason: string;
   readonly ref: string;
 }
 
 export const ADDED_AREAS: readonly AddedArea[] = [
   {
-    // The square before the Dworzec Autobusowy, paved on the orthophoto (PZGiK), where OSM has only
-    // the north tip of `landuse=retail` w291844839: bare terrain between the path w1435832520 (its
-    // 2 m band's south edge), the footway w227698423 (its 2.5 m band's west edge), the car park
-    // w175995587 and Nova w66264174, with the metro's `targ` B opening onto it (T-159). The car
-    // park's and Nova's corners are the map's; the north side on the path's axis, the east side
-    // 0.1-0.7 m in from the footway's edge, the west side at x 740 as the curator measured it.
+    // The square before the Dworzec Autobusowy and Nova, paved on the orthophoto (PZGiK), where OSM
+    // has only the north tip of `landuse=retail` w291844839: bare terrain from the footway
+    // w227698428 in the west to the footway w227698423 in the east, between the paths w227698424
+    // and w1435832520 and the car park w175995587 and Nova w66264174, with the metro's `targ` B
+    // opening onto it (T-159). Its corners are the map's nodes: the paths' and the west footway's
+    // on their axes, the car park's and Nova's on their edges. Only the east side is laid off
+    // them, 0.1-0.7 m in from the footway's edge.
     id: "T-162/plac-dworca",
     tags: { "area:highway": "pedestrian", surface: "paving_stones" },
     ring: [
-      { x: 740, z: 370 },
+      { x: 718.1, z: 371.2 },
+      { x: 732.9, z: 370.4 },
       { x: 761.4, z: 368.8 },
       { x: 763.7, z: 376.3 },
       { x: 760.3, z: 376.3 },
       { x: 746.7, z: 378.1 },
       { x: 744.7, z: 379.8 },
       { x: 741.7, z: 380.2 },
-      { x: 740, z: 380.5 },
+      { x: 733.0, z: 381.5 },
+      { x: 720.7, z: 383.2 },
+      { x: 719.7, z: 380.8 },
     ],
+    nodesOf: ["w227698424", "w1435832520", null, null, "w175995587", "w175995587", "w66264174", "w66264174", "w66264174", "w66264174", "w227698428"],
     reason: "plac pieszy przed Dworcem Autobusowym, wybrukowany na ortofoto PZGiK, w OSM tylko landuse=retail",
     ref: "T-162",
   },
