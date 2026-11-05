@@ -37,6 +37,9 @@
 
 /* The rest of the HUD steps back while the wheel is up (it stays readable, as in CP2077). */
 #ui-root:has(.dialogue) .hud { opacity: 0.35; transition: opacity 150ms ease-out; }
+/* The subtitles take the bottom left, where the name, the minimap and the weapon strip sit;
+   these are of no use mid-talk, so they go away instead of showing through the text (G-283). */
+#ui-root:has(.dialogue) :is(.hud__identity, .minimap, .weapon-strip) { visibility: hidden; }
 
 /* The hub is the person Seki talks to: right of the screen centre, a little above it. Slots
    sit --step apart; never under 44 px on screen, never more than the screen can hold. */

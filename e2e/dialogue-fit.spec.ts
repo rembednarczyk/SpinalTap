@@ -114,12 +114,47 @@ const check = async (page: Page, view: string) => {
   expect(tooLong?.more, "overflow without a sign").toBe(true);
 };
 
+/**
+ * Rectangles of the visible HUD pieces and wheel options that cross the subtitle box. A piece is
+ * visible when it is laid out, not hidden and not faded out by itself or an ancestor.
+ */
+const overlaps = (page: Page) =>
+  page.evaluate(() => {
+    const box = document.querySelector<HTMLElement>(".subs");
+    if (!box) throw new Error("no subtitles");
+    const r = box.getBoundingClientRect();
+    const shown = (el: Element) => {
+      if (el.getClientRects().length === 0 || getComputedStyle(el).visibility === "hidden") return false;
+      let alpha = 1;
+      for (let e: Element | null = el; e; e = e.parentElement) alpha *= Number(getComputedStyle(e).opacity);
+      return alpha > 0.01;
+    };
+    const pieces = [...document.querySelectorAll(".hud > :not(.gear), .hud .gear > *, .wheel__opt")];
+    return pieces
+      .filter((el) => {
+        const o = el.getBoundingClientRect();
+        return o.width > 0 && o.height > 0 && shown(el) && o.left < r.right && o.right > r.left && o.top < r.bottom && o.bottom > r.top;
+      })
+      .map((el) => el.className.toString().split(" ")[0] ?? el.tagName);
+  });
+
+/** Nothing of the HUD or the wheel shows under the subtitles, with the opening lines and with a box grown to its full height. */
+const clearOfHud = async (page: Page) => {
+  await openTalk(page);
+  expect(await overlaps(page), "under the opening lines").toEqual([]);
+  const longest = STEPS.en.reduce((a, b) => (chars(b) > chars(a) ? b : a));
+  await measure(page, [{ at: "three finales", lines: [...longest.lines, ...longest.lines, ...longest.lines] }]);
+  expect(await overlaps(page), "under a full box").toEqual([]);
+};
+
 test.describe("desktop", () => {
   test.use({ viewport: { width: 1280, height: 720 } });
   test("dialogue steps fit the subtitles on a desktop", async ({ page }) => check(page, "desktop"));
+  test("nothing of the HUD shows under the subtitles on a desktop", async ({ page }) => clearOfHud(page));
 });
 
 test.describe("phone", () => {
   test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   test("dialogue steps fit the subtitles on a phone", async ({ page }) => check(page, "phone"));
+  test("nothing of the HUD shows under the subtitles on a phone", async ({ page }) => clearOfHud(page));
 });
