@@ -211,6 +211,50 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(748, 400)).toBe("footway");
   });
 
+  // Nova's back yard (T-169): between its north wall, the car park w175995587 and Nowy Plac Targowy
+  // w40050943, from the footway w227698428 by its west wall. West of x 726.5 the strip between the
+  // car park w227698441 and the street is another gap.
+  it("paves Nova's back yard up to the street, and leaves the car park, the footway and the street on top (G-342)", () => {
+    const buildings = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z)));
+    const bare: string[] = [];
+    for (let x = 726.5; x <= 756; x += 0.5)
+      for (let z = 428; z <= 441; z += 0.5) {
+        if (buildings.some((o) => inside(x, z, o))) continue;
+        if (surfaceAt(x, z) === null) bare.push(`${x},${z}`);
+      }
+    expect(bare.join(" ")).toEqual("");
+    expect(surfaceAt(740, 434)).toBe("square");
+    expect(surfaceAt(735, 443.5)).toBe("road");
+    expect(surfaceAt(760, 438)).toBe("road");
+    expect(surfaceAt(755.5, 431)).toBe("road");
+    expect(surfaceAt(726.5, 432)).toBe("footway");
+  });
+
+  // The strips around the Dworzec Autobusowy (T-168): north, between its north wall and the footway
+  // w227698418; east, between its east wall and the stands' asphalt w66323033.
+  const AROUND: readonly (readonly [string, number, number, number, number])[] = [
+    ["north", 785, 797, 422, 430],
+    ["east", 793, 808, 376, 428],
+  ];
+  it("paves the strips north and east of the Dworzec Autobusowy, and leaves the stands' asphalt and the footways on top (G-341)", () => {
+    const buildings = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z)));
+    const bare: string[] = [];
+    for (const [name, x0, x1, z0, z1] of AROUND)
+      for (let x = x0; x <= x1; x += 0.5)
+        for (let z = z0; z <= z1; z += 0.5) {
+          if (buildings.some((o) => inside(x, z, o))) continue;
+          if (surfaceAt(x, z) === null) bare.push(`${name} ${x},${z}`);
+        }
+    expect(bare.join(" ")).toEqual("");
+    expect(surfaceAt(805, 400)).toBe("road");
+    expect(surfaceAt(801.5, 415)).toBe("footway");
+    expect(surfaceAt(797, 410)).toBe("square");
+    expect(surfaceAt(797, 435)).toBe("square");
+    // The north footway w227698418 and the kiosk's east footway w227698421 stay on top of the pavement.
+    expect(surfaceAt(794, 427.7)).toBe("footway");
+    expect(surfaceAt(804.6, 430)).toBe("footway");
+  });
+
   const OSM_DIR = join(__dirname, "../../../data/osm");
   const osm = mergeOsm(readdirSync(OSM_DIR).filter((f) => f.endsWith(".json")).map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))));
   const PAVED = new Set(["square", "cobble", "footway", "road"]);
