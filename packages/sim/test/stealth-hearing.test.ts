@@ -139,3 +139,15 @@ describe("hearing the player's steps (ADR-0069, stage 2)", () => {
     expect(hard.alarm).toBeLessThan(normal.alarm);
   });
 });
+
+describe("a suspicious enemy does not look after her through its back (G-294)", () => {
+  it("out of its sight, it keeps its facing instead of turning to her", () => {
+    const sim = emptySquare(false);
+    const g = enemyAt(sim, "hebi_ganger", 5);
+    g.ai!.suspicion = 0.6;
+    const yaw0 = g.yaw;
+    run(sim, 30);
+    expect(g.ai!.alerted).toBe(false);
+    expect(g.yaw).toBeCloseTo(yaw0, 6);
+  });
+});

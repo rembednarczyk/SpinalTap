@@ -46,7 +46,7 @@ class GangerAgent {
   self: Ganger | null = null;
   /** Local time scale (the player's overdrive slows gangers down). */
   timeScale = 1;
-  seen: Perception = { player: null, distance: Infinity, visible: false };
+  seen: Perception = { player: null, distance: Infinity, visible: false, glimpsed: false };
   target: VictimPerception = NO_VICTIM;
   /** Presentation memory only: the warning cue fires once per ganger, it never feeds back into the state. */
   warned = false;
@@ -128,14 +128,15 @@ class GangerAgent {
   /**
    * Holds its post, or walks its daily plan (a night patrol) when it has one. A guard on watch
    * looks around its post. One that half saw something stops and turns towards it instead
-   * (ADR-0069), so it is no longer unaware of her.
+   * (ADR-0069), so it is no longer unaware of her; out of its sight it keeps looking the way it
+   * saw her last, not after her through the wall (G-294).
    */
   HoldPosition = (): State => {
     const { self, ctx } = this;
     if (!self) return State.FAILED;
     if ((self.ai.suspicion ?? 0) > 0 && this.seen.player) {
       self.velocity = { x: 0, y: 0, z: 0 };
-      faceTowards(this, this.seen.player);
+      if (this.seen.glimpsed) faceTowards(this, this.seen.player);
       return State.SUCCEEDED;
     }
     const pose = self.schedule?.pose;

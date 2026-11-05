@@ -98,6 +98,8 @@ export interface Perception {
   player: Entity | null;
   distance: number;
   visible: boolean;
+  /** It has her in sight this step, though maybe not sure yet (its suspicion still filling). */
+  glimpsed: boolean;
 }
 
 /** What a ganger sent after an NPC knows about its victim. */
@@ -212,8 +214,10 @@ export const perceivePlayer = (
   const inSight = !blind && !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
   const lenient = watchesOnly(ctx, g, stance, heat);
   let visible = inSight;
+  let glimpsed = false;
   if (player) {
     const sees = enemySees(g, player, distance, inSight, aggro);
+    glimpsed = sees;
     if (coveredFrom(ctx, g.faction)) visible = disguisedSight(ctx, g, player, sees, distance, aggro, timeScale);
     else if (g.ai.alerted) visible = sees;
     else if (lenient) {
@@ -224,5 +228,5 @@ export const perceivePlayer = (
   }
   if (visible && !lenient) g.ai.alerted = true;
   g.ai.sees = visible;
-  return { player, distance, visible };
+  return { player, distance, visible, glimpsed };
 };
