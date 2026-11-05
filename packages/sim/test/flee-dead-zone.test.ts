@@ -43,14 +43,31 @@ describe("the flee radius's dead zone (ADR-0070)", () => {
     expect(watchStandOff(sim, walker.id, 1800).flips).toBeLessThanOrEqual(2);
   });
 
-  it("keeps no hidden state: a load while it stands goes on the same", () => {
+  // A passer-by has no key, so neither the save nor `stateHash` holds it (G-327): a load puts it
+  // back at its spot, calm. What carries over is the player, and from there the stand-off itself,
+  // so the passer-by is compared field by field, not by the hash.
+  it("a load while it stands brings it back to its spot, and it runs off to the same stand-off", () => {
     const sim = simWith(HOSTILE, 11);
-    passerbyOnDeptak(sim);
+    const walker = passerbyOnDeptak(sim);
+    const spot = { ...walker.position };
     run(sim, 400);
+    expect(walker.key).toBeUndefined();
     const restored = Simulation.fromSnapshot(sim.snapshot(null, "x", ""));
+    const reactions = collect(restored, "NpcReacted");
+    run(restored, 1);
+    // Spawned at its spot in this step, and already one step into its run.
+    const back = byId(restored, walker.id).position;
+    expect(Math.hypot(back.x - spot.x, back.z - spot.z)).toBeLessThan(0.1);
     run(sim, 300);
-    run(restored, 300);
+    run(restored, 299);
     expect(hash(restored)).toBe(hash(sim));
+    const [was, is] = [byId(sim, walker.id), byId(restored, walker.id)];
+    expect(is.position).toEqual(was.position);
+    expect(is.yaw).toBe(was.yaw);
+    expect(is.velocity).toEqual({ x: 0, y: 0, z: 0 });
+    expect(is.passerby).toEqual(was.passerby);
+    // The loaded game does not know it ran: it cues its escape again, once.
+    expect(reactions).toHaveLength(1);
   });
 
   it("walks back to its spot once the player is far enough", () => {

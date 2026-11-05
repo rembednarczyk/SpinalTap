@@ -242,14 +242,29 @@ describe("civilians and the street's opinion", () => {
     expect(byKey(sim, "mori")!.position).toEqual(home);
   });
 
-  it("a load mid-escape continues exactly like the original", () => {
+  // A passer-by has no key, so neither the save nor `stateHash` holds it (G-327): mid-escape, a
+  // load cannot carry on its run. The save carries the player and the street's standing; the
+  // passer-by comes back at its spot and, the street still hostile, runs from the player again.
+  it("a load mid-escape keeps the player's game; the passer-by is back at its spot and runs again", () => {
     const sim = simWith({ civilians: -60 }, 11);
-    passerbyOnDeptak(sim);
+    const walker = passerbyOnDeptak(sim);
+    const spot = { ...walker.position };
     run(sim, 20);
+    expect(walker.key).toBeUndefined();
     const restored = Simulation.fromSnapshot(sim.snapshot(null, "x", ""));
+    const reactions = collect<{ entityId: number; reaction: string }>(restored, "NpcReacted");
     const frame = input({ moveX: -1 });
-    run(sim, 90, frame);
-    run(restored, 90, frame);
+    run(sim, 1, frame);
+    run(restored, 1, frame);
+    expect(walkerDistance(restored, walker.id)).toBeLessThan(walkerDistance(sim, walker.id));
+    // Spawned at its spot in this step, and already one step into its run.
+    const back = [...restored.world].find((e) => e.id === walker.id)!.position;
+    expect(Math.hypot(back.x - spot.x, back.z - spot.z)).toBeLessThan(0.1);
+    run(sim, 89, frame);
+    run(restored, 89, frame);
     expect(stateHash(restored.snapshot(null, "x", ""))).toBe(stateHash(sim.snapshot(null, "x", "")));
+    expect(reactions.map((r) => [r.entityId, r.reaction])).toEqual([[walker.id, "flee"]]);
+    const now = [...restored.world].find((e) => e.id === walker.id)!.position;
+    expect(Math.hypot(now.x - spot.x, now.z - spot.z)).toBeGreaterThan(2.5);
   });
 });
