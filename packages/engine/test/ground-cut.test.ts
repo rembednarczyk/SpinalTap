@@ -5,6 +5,43 @@ import { cutGround } from "../src/renderer/mapcity/ground-cut";
 import { planTerrain, planSurface } from "../src/renderer/mapcity/ground-plan";
 import { MeshSink } from "../src/renderer/mesh-sink";
 
+/** The sink's every number, bit for bit (FNV-1a over their shortest round-trip texts). */
+const digest = (sink: MeshSink): string => {
+  let h = 0x811c9dc5;
+  for (const k of ["positions", "normals", "colors", "uvs", "uvs2", "indices"] as const) {
+    const text = `${k}:${sink[k].join(",")};`;
+    for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
+};
+const terrainOf = (id: string) => () => {
+  const sink = new MeshSink();
+  planTerrain(sink, SHAPED_TERRAIN.get(id)!);
+  return sink;
+};
+/** Chunks with a shaft (the first three) and without, and a square of paving with two holes, one over its corner. */
+const CASES: Readonly<Record<string, () => MeshSink>> = {
+  "krakowskie-2-0": terrainOf("krakowskie-2-0"),
+  "podzamcze-1-0": terrainOf("podzamcze-1-0"),
+  "nabrzeze-1-1": terrainOf("nabrzeze-1-1"),
+  "stare-miasto-0-0": terrainOf("stare-miasto-0-0"),
+  "krakowskie-0-0": terrainOf("krakowskie-0-0"),
+  square: () => {
+    const sink = new MeshSink();
+    planSurface(sink, "square", [{ x: 0, z: 0 }, { x: 10, z: 0 }, { x: 10, z: 10 }, { x: 0, z: 10 }], (x, z) => 0.1 * x + 0.05 * z, null);
+    return sink;
+  },
+};
+/** What cutting each triangle of the sink in turn gave, before the boxes skipped any (G-333). */
+const CUT_BEFORE: Readonly<Record<string, string>> = {
+  "krakowskie-2-0": "6 408ae390",
+  "podzamcze-1-0": "12 8ba57a44",
+  "nabrzeze-1-1": "6 bd68b5c7",
+  "stare-miasto-0-0": "0 58512eb9",
+  "krakowskie-0-0": "0 0825c6ea",
+  square: "13 fac3b230",
+};
+
 /** XZ area of the sink's triangles that face up, and whether any lies over (x, z). */
 const upArea = (sink: MeshSink): number => {
   let s = 0;
@@ -103,5 +140,24 @@ describe("the ground cut under the metro's pavilions (ADR-0071 stage 2)", () => 
         expect(Math.abs(groundY(x, z) - terrainHeightAt(grid, x, z))).toBeLessThan(0.05);
       }
     }
+  });
+
+  it("cuts the chunks to the same numbers as before the boxes skipped any (G-333)", () => {
+    const holes = [...METRO_CUTS.map((c) => c.bounds), { minX: 3, maxX: 6, minZ: 4, maxZ: 7 }, { minX: 8, maxX: 12, minZ: -2, maxZ: 1 }];
+    const got = Object.fromEntries(
+      Object.entries(CASES).map(([id, make]) => {
+        const sink = make();
+        return [id, `${cutGround(sink, holes)} ${digest(sink)}`];
+      }),
+    );
+    expect(got).toEqual(CUT_BEFORE);
+  });
+
+  it("leaves the ground of a chunk without a shaft untouched (G-333)", () => {
+    const sink = new MeshSink();
+    planSurface(sink, "square", [{ x: 0, z: 0 }, { x: 4, z: 0 }, { x: 4, z: 4 }, { x: 0, z: 4 }], () => 0, null);
+    // Rebuilding its triangles would write to the frozen list.
+    Object.freeze(sink.indices);
+    expect(cutGround(sink, [{ minX: 10, maxX: 12, minZ: 1, maxZ: 3 }, { minX: 1, maxX: 3, minZ: 4.5, maxZ: 6 }])).toBe(0);
   });
 });
