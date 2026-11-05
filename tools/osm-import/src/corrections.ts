@@ -182,7 +182,7 @@ export interface AddedArea {
 export const ADDED_AREAS: readonly AddedArea[] = [
   {
     // The square before the Dworzec Autobusowy and Nova, paved on the orthophoto (PZGiK), where OSM
-    // has only the north tip of `landuse=retail` w291844839: bare terrain from the footway
+    // has only the south tip of `landuse=retail` w291844839: bare terrain from the footway
     // w227698428 in the west to the footway w227698423 in the east, between the paths w227698424
     // and w1435832520 and the car park w175995587 and Nova w66264174, with the metro's `targ` B
     // opening onto it (T-159). Its corners are the map's nodes: the paths' and the west footway's
@@ -211,10 +211,10 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     // The paving on both sides of the footway w227698423 by the Dworzec Autobusowy w66264171, bare in
     // OSM: the strip along the car park w175995587's edge (dark red setts on the orthophoto) and the
     // square of market stalls up to the station's west wall. Its west side is the car park's edge, its
-    // east the station's walls down to their south-west corner, where the footway w227698410 meets
-    // the car park; the north follows the path w227698420's axis along the station's front to its
-    // north-east corner, so no seam is left at the stalls' corner, and joins T-162/plac-dworca. Off the
-    // nodes: T-162's east corner, the path's axis abreast of the station's north-east corner and the
+    // east the station's walls up to their north-west corner, where the footway w227698410 meets
+    // the car park; the south follows the path w227698420's axis along the station's front to its
+    // south-east corner, so no seam is left at the stalls' corner, and joins T-162/plac-dworca. Off the
+    // nodes: T-162's east corner, the path's axis abreast of the station's south-east corner and the
     // car park's edge abreast of the footway's node.
     id: "T-164/plac-przy-dworcu",
     tags: { "area:highway": "pedestrian", surface: "paving_stones" },
@@ -244,7 +244,7 @@ export const ADDED_AREAS: readonly AddedArea[] = [
   },
   {
     // The pavement along Nova w66264174's east wall, between it and the car park w175995587: setts on
-    // the orthophoto, bare in OSM. From T-162/plac-dworca down to Nova's south wall, whose line
+    // the orthophoto, bare in OSM. From T-162/plac-dworca up to Nova's north wall, whose line
     // closes it at the car park's edge.
     id: "T-164/chodnik-novy",
     tags: { "area:highway": "footway", surface: "paving_stones" },
