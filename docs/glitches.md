@@ -1027,7 +1027,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine/src/effects (deszcz)
 
 ### G-332 Plac przed Dworcem Autobusowym bez nawierzchni: wyjście pawilonu metra na gołe podłoże
-- Status: w PR #285 (5.11; `ADDED_AREAS` w `tools/osm-import`, `metro-exit-bare` 57 → 27), czeka na kuratora
+- Status: w PR #285, do poprawki zachodniego boku obrysu (kurator 5.11: plac sięga w227698428)
 - Ważność: S4 · Zasięg: Podzamcze, x ok. 740–764, z ok. 370–377 (ok. 170 m²), wyjście `targ` B (T-162, T-159)
 - Pakiet właściciela: packages/sim (treść `lublin`, ręczna nawierzchnia) albo tools/osm-import
 
@@ -1045,6 +1045,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #281)
 - Ważność: S4 · Zasięg: zapis nie trzyma `fall`, `velocity`, `airPeak`, a `compose.ts:169` nie blokuje zapisu w powietrzu, więc każdy zapis w locie wczytuje się z zerową prędkością; do decyzji: blokować zapis w powietrzu (autozapis „w bezpiecznej chwili”) czy zapisywać stan lotu (zmiana schematu)
 - Pakiet właściciela: packages/app (compose, autozapis) albo packages/sim i persistence
+
+### G-336 Pasy gołego podłoża przy Dworcu Autobusowym (T-164)
+- Status: zgłoszone (5.11, kurator, przegląd #285)
+- Ważność: S4 · Zasięg: pas między parkingiem w175995587 a chodnikiem w227698423 (ok. 70 m²), plac między chodnikiem a ścianą Dworca w66264171 (ok. 250 m²), pas przy ścianie Novy (ok. 105 m²)
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: 0 gołych próbek 0,5 m w prostokątach T-164 poza rabatami
+
+### G-337 Północny chodnik al. Tysiąclecia bez nawierzchni (T-165)
+- Status: zgłoszone (5.11, kurator, przegląd #285)
+- Ważność: S4 · Zasięg: x ok. 640–790, z ok. 362–383, ok. 670 m² na samym x 705–790; przed halami Bazaru rabaty (nie brukować)
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: 0 gołych próbek 0,5 m w obszarze T-165 poza rabatami; propozycja kontroli `paving-sliver` dla całego miasta
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
