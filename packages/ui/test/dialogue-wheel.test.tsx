@@ -181,6 +181,27 @@ describe("dialogue wheel", () => {
     expect(screen.queryByRole("button", { name: "Earlier lines" })).toBeNull();
   });
 
+  it("a step too long for the box shows an arrow until it is read to the end (G-283)", () => {
+    const box = { scrollHeight: 500, clientHeight: 200, scrollTop: 0 };
+    const props = ["scrollHeight", "clientHeight", "scrollTop"] as const;
+    for (const k of props) Object.defineProperty(HTMLElement.prototype, k, { configurable: true, get: () => box[k], set: () => undefined });
+    try {
+      mount();
+      const log = screen.getByRole("log", { name: "Conversation" });
+      const arrow = () => document.querySelector(".subs__more");
+      expect(arrow()).not.toBeNull();
+      box.scrollTop = 300;
+      fireEvent.scroll(log);
+      expect(arrow()).toBeNull();
+      box.scrollTop = 0;
+      box.scrollHeight = 200;
+      fireEvent.scroll(log);
+      expect(arrow()).toBeNull();
+    } finally {
+      for (const k of props) delete (HTMLElement.prototype as Partial<Record<(typeof props)[number], number>>)[k];
+    }
+  });
+
   it("leaves the screen with the talk", () => {
     const { store } = mount();
     act(() => patchUi(store, { dialogue: null }));
