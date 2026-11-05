@@ -68,9 +68,6 @@ export const LONG_GUN: Readonly<Partial<Record<WeaponKind, TwoHandGrip>>> = {
   rifle: { grip: GRIP.rifle, fist: { x: -0.15, y: -0.045 }, fore: { x: 0.085, y: 0.048 }, butt: { x: -0.4, y: 0.03 }, shouldered: true, pitch: 0.2, yaw: 0.3 },
 };
 
-/** The grip sits this much further back and lower in the viewmodel (file frame), where the hand is a ball. */
-const VIEW_SHIFT = { x: -0.015, y: -0.005 };
-
 /**
  * Loads weapon models once and mounts instances under hands, holsters and the viewmodel. The
  * caller keeps the procedural placeholder until the mount resolves, so a missing or broken
