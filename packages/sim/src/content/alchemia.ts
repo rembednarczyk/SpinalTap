@@ -79,7 +79,7 @@ const UPPER = { front: 4.8, east: HALL_UPPER_X, bottom: 6.03, sill: 7.9, window:
 /**
  * What stands out of its walls (x0, x1, z0, z1, bottom, top): the upper storey's west wall over
  * the ground storey's, two bands along the back, a sign at the front's west corner, a lamp over the
- * back's east corner and a sign on the east wall over the balcony.
+ * back's east corner, a sign on the east wall over the balcony and one under the landing.
  */
 const HALL_FIXTURES: readonly (readonly [number, number, number, number, number, number])[] = [
   [-5.11, WALL.west, WALL.back, 3.25, 5.04, ALCHEMIA_HALL_ROOF],
@@ -88,6 +88,13 @@ const HALL_FIXTURES: readonly (readonly [number, number, number, number, number,
   [-4.7, -4.5, UPPER.front, 6.1, 5.36, 9.89],
   [1.75, HALL_WALL_X, -HALL.depth / 2, WALL.back, 6.06, 6.27],
   [UPPER.east, 0.88, 3.0, 3.55, 10.1, 10.43],
+  [2.28, 3.4, 0.59, 0.8, 2.84, 5.21],
+];
+/** What stands on the podium under the porch (x0, x1, z0, z1, top), solid from the podium: a counter, its rounded front a little lower, and a stand by it. */
+const PORCH_FURNITURE: readonly (readonly [number, number, number, number, number])[] = [
+  [-4.73, -3.16, WALL.front, 3.6, 2.63],
+  [-4.73, -3.16, 3.6, 3.93, 2.45],
+  [-2.98, -2.15, 3.04, 3.87, 2.83],
 ];
 /** The roof over the ground storey round its edge from its back west corner: the roof the next stages stand on. */
 const HALL_ROOF_OUTLINE: readonly (readonly [number, number])[] = [
@@ -102,6 +109,7 @@ const HALL_PARTS: readonly AlchemiaPart[] = [
   rectPart(WALL.west, UPPER.east, WALL.front, UPPER.front, UPPER.sill, UPPER.bottom),
   rectPart(WALL.west, UPPER.east, WALL.front, UPPER.window, UPPER.top, UPPER.sill),
   ...HALL_FIXTURES.map(([x0, x1, z0, z1, bottom, top]) => rectPart(x0, x1, z0, z1, top, bottom)),
+  ...PORCH_FURNITURE.map(([x0, x1, z0, z1, top]) => rectPart(x0, x1, z0, z1, top)),
   rectPart(-HALL.width / 2, HALL.width / 2, -HALL.depth / 2, HALL.depth / 2, 0),
   ...HALL_STAIR_PARTS,
 ];

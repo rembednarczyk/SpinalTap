@@ -88,7 +88,7 @@ export const flightSteps = (f: AlchemiaFlight, ground: (x: number, z: number) =>
  * faces): the building stands on a podium 1.23 m high; on its east side, between the ground
  * storey's wall (x 2.24) and the outer stringer (x 4.15), nine risers of 0.60 m and treads of
  * 0.69 m climb from the podium at the back (z -5.26) towards the front to a landing at 6.64 m,
- * which runs on from z 0.96 to a railing at 45° (x + z = 6.8) and along its open side (x
+ * which runs on from z 0.96 to a railing at 45° (x + z = 6.55) and along its open side (x
  * 4.15..4.5) to 7.35 m. The roof (11.51 m) is no further up: the landing is the door of the upper
  * storey, and runs on west of the wall as a balcony round the storey's cut corner (x + z = 3.35)
  * to its east wall (x 0.40), with a railing along its front (z 4.4..4.8; G-297). Over the foot of
@@ -103,8 +103,8 @@ export const HALL_UPPER_X = 0.4;
 const STRINGER_X = 4.15;
 const RAIL_X = 4.5;
 const PODIUM = { top: 1.23, x1: 5.51, z0: -5.54, z1: 5.49 } as const;
-const RUN = { z0: -5.26, rise: 0.601, going: 0.691, soffit: 0.9 } as const;
-const LANDING = { top: 6.64, z: 0.96, diagonal: 6.8, rail: 7.35, side: 2.65, bottom: 6.03 } as const;
+const RUN = { z0: -5.26, rise: 0.601, going: 0.691, soffit: 0.9, stringer: 0.41 } as const;
+const LANDING = { top: 6.64, z: 0.96, diagonal: 6.55, rail: 7.35, side: 6.55 - STRINGER_X, bottom: 6.03 } as const;
 const BALCONY = { rail: 4.4, edge: 4.8 } as const;
 const OVERHANG = { x1: 2.7, z0: -4.7, z1: -2.6, step: -3.8, low: 9.9, high: 11.51, bottom: 8.6 } as const;
 const LAMP = { x0: 3.15, x1: 3.75, z0: -4.47, z1: -4.0, bottom: 6.06, top: 6.27 } as const;
@@ -122,18 +122,35 @@ const runSteps = (): AlchemiaPart[] => {
   return Array.from({ length: RUN_STEPS }, (_, i) => {
     const z0 = PODIUM.z0 + i * going;
     const z1 = z0 + going;
-    const soffit = runLine(z0) - RUN.soffit;
-    return rectPart(HALL_WALL_X, STRINGER_X, z0, z1, Math.min(LANDING.top, runLine((z0 + z1) / 2)), soffit > PODIUM.top ? Math.min(soffit, LANDING.bottom) : undefined);
+    return rectPart(HALL_WALL_X, STRINGER_X, z0, z1, Math.min(LANDING.top, runLine((z0 + z1) / 2)), soffitAt(z0));
+  });
+};
+
+/** The run's soffit at `z`, where it is over the podium (the bottom of a block of the run there). */
+const soffitAt = (z: number): number | undefined => {
+  const soffit = runLine(z) - RUN.soffit;
+  return soffit > PODIUM.top ? Math.min(soffit, LANDING.bottom) : undefined;
+};
+
+/** The outer stringer along the run (x 4.15..4.5), from the run's foot to the landing, 0.41 m over its line as drawn: no stepping off the run sideways. */
+const stringer = (): AlchemiaPart[] => {
+  const going = (LANDING.z - RUN.z0) / RUN_STEPS;
+  return Array.from({ length: RUN_STEPS }, (_, i) => {
+    const z0 = RUN.z0 + i * going;
+    const z1 = z0 + going;
+    return rectPart(STRINGER_X, RAIL_X, z0, z1, Math.min(LANDING.rail, runLine(z1) + RUN.stringer), soffitAt(z0));
   });
 };
 
 /**
  * The stair's solid: the podium (the hall's, across its width), the run, the landing and its
- * railings, the balcony on from it and its railing, and the overhang and the lamp over the run's foot.
+ * railings, the run's outer stringer, the balcony on from the landing and its railing, and the
+ * overhang and the lamp over the run's foot.
  */
 export const HALL_STAIR_PARTS: readonly AlchemiaPart[] = [
   rectPart(-PODIUM.x1, PODIUM.x1, PODIUM.z0, PODIUM.z1, PODIUM.top),
   ...runSteps(),
+  ...stringer(),
   {
     points: [
       [HALL_WALL_X, LANDING.z],

@@ -200,9 +200,14 @@ describe("the ways up of Alchemia (G-287, G-288)", () => {
 
   it("takes a body from the paving in front of the hall up its steps onto the podium, under the porch to the shut doors (G-299)", () => {
     for (const x of [-3, 0, 3.2]) {
-      const end = walk(paving(hall, x, 9), [[x, 9], [x, 4.6], [Math.min(x, 0), 3.4]]);
-      expect(Math.hypot(end.x - Math.min(x, 0), end.z - 3.4), `from x ${x}`).toBeLessThan(0.3);
+      // Round the counter and the stand under the porch, to the doors east of them.
+      const end = walk(paving(hall, x, 9), [[x, 9], [x, 4.6], [-0.5, 4.6], [-0.5, 3.4]]);
+      expect(Math.hypot(end.x + 0.5, end.z - 3.4), `from x ${x}`).toBeLessThan(0.3);
       expect(end.y, `from x ${x}`).toBeCloseTo(1.23, 1);
     }
+  });
+
+  it("stops a body under the porch at the counter and the stand drawn there (G-298)", () => {
+    for (const x of [-4.5, -4, -3.5, -2.5]) expect(walk(1.23, [[x, 5.2], [x, 3.3]]).z, `at x ${x}`).toBeGreaterThan(4.2);
   });
 });
