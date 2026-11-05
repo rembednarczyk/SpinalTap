@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-310 Dłonie nie trafiają w szczeble: faza rąk 3,4 rad/m (cykl na 1,85 m) przy szczeblach co 0,3 m
+- Status: naprawione w #289 (5.11, 2b87fc7; dłonie trzymają szczeble, faza z wysokości, `CLIMB_SPEED` 1,5 m/s)
+- Ważność: S3 · Zasięg: ręce zostają za ciałem i ślizgają się; faza niezwiązana z wysokością; przy 2,2 m/s pełne tempo dałoby ok. 3,7 cyklu/s, więc trzeba zmienić tempo albo prędkość wspinania
+- Pakiet właściciela: packages/engine/src/renderer (pozy postaci)
+
 ### G-326 Uciekający cywil drga przy objeździe: `steerPoint` przełącza się między drogą prosto a objazdem
 - Status: naprawione w #286 (5.11, 9899e16; histereza objazdu `fleeStep`; róg w pościgu zostaje w G-328)
 - Ważność: S3 · Zasięg: ziarno 17, −60, przechodzień 1002005, gracz 2 m (25 skoków kąta ok. 0,42 rad) i 1 m (42); `straightWalk` do punktu 6 m przed cywilem raz jest wolny, raz nie; także: w rogu (316; −95) `steerPoint` zawraca „prosto od gracza” niemal wprost na gracza (−1,25 rad), na main przy zatrzymaniu gracza ≥ 2 m ok. 465 skoków; drganie ±0,5 rad w miejscu przy stałym wyborze kierunku (ziarno 23, ok. (262; −81))

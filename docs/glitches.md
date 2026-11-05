@@ -946,11 +946,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: oko ok. 0,3 m za szczeblami; wymaga decyzji o widoku FPP na drabinie
 - Pakiet właściciela: packages/engine/src/camera
 
-### G-310 Dłonie nie trafiają w szczeble: faza rąk 3,4 rad/m (cykl na 1,85 m) przy szczeblach co 0,3 m
-- Status: w PR #289 (5.11; faza dłoni z wysokości, `CLIMB_SPEED` 2,2 → 1,5 m/s), w weryfikacji
-- Ważność: S3 · Zasięg: ręce zostają za ciałem i ślizgają się; faza niezwiązana z wysokością; przy 2,2 m/s pełne tempo dałoby ok. 3,7 cyklu/s, więc trzeba zmienić tempo albo prędkość wspinania
-- Pakiet właściciela: packages/engine/src/renderer (pozy postaci)
-
 ### G-311 Rozglądanie się na drabinie obraca ciało dowolnie, także plecami do szczebli
 - Status: zgłoszone (5.11, autor poprawek drabin, PR #269)
 - Ważność: S3 · Zasięg: każda drabina; poprawka wymaga osobnego obrotu ciała w `Transform` (zmiana kontraktu, ADR)
@@ -1002,7 +997,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-330 Pozostałości farby przy pomostach po #275
-- Status: zgłoszone (5.11, weryfikator PR #275)
+- Status: w PR #290 (5.11), u kuratora
 - Ważność: S4 · Zasięg: przy (2446; 245,8) linia krawędzi przechodzi przez obrys pomostu (3 trójkąty, uskok 0,51 m na 0,38 m, niewidoczne); schody przy (732–735; 151–161) przy moście Zamkowej wchodzą pod pomost do 2,54 m pod jezdnią (tak samo na main; `paint-under-deck` pomija trójkąty przecinające obrys, być może celowo)
 - Pakiet właściciela: packages/engine (mapcity), tools/glitch-scan
 
