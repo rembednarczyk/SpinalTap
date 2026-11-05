@@ -42,6 +42,7 @@
   "deck-drawn-over-flight": 0,
   "deck-slot": 0,
   "deck-step-face": 0,
+  "deck-abutment-step": 12,
   "steps-narrower-than-walls": 0,
   "steps-across-run": 1,
   "steps-run-bare": 0,

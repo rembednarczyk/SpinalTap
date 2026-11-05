@@ -31,6 +31,11 @@ export interface Ramp {
   readonly yb: number;
   readonly width: number;
   readonly blend: number;
+  /**
+   * Its ends cut square across it, blending over `blend` past them, not rounded: a wide ramp's
+   * round end reaches half its width past it (G-349, a bridge's abutment 13 m wide).
+   */
+  readonly square?: boolean;
 }
 
 /** 1 inside, 0 beyond `blend`, smooth between. */
@@ -89,8 +94,13 @@ export const shapeHeight = (x: number, z: number, h: number, pads: readonly Pad[
     const dx = r.b.x - r.a.x;
     const dz = r.b.z - r.a.z;
     const len2 = dx * dx + dz * dz || 1;
-    const t = Math.max(0, Math.min(1, ((x - r.a.x) * dx + (z - r.a.z) * dz) / len2));
-    const d = Math.hypot(x - r.a.x - t * dx, z - r.a.z - t * dz) - r.width / 2;
+    const along = ((x - r.a.x) * dx + (z - r.a.z) * dz) / len2;
+    const t = Math.max(0, Math.min(1, along));
+    // Square: past an end along the axis, and off its side across it.
+    const across = Math.abs((x - r.a.x) * dz - (z - r.a.z) * dx) / Math.sqrt(len2);
+    const d = r.square
+      ? Math.hypot((along - t) * Math.sqrt(len2), Math.max(0, across - r.width / 2))
+      : Math.hypot(x - r.a.x - t * dx, z - r.a.z - t * dz) - r.width / 2;
     const w = weight(d, r.blend);
     if (w > 0) out += (r.ya + (r.yb - r.ya) * t - out) * w;
   }
