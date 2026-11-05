@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-332 Plac przed Dworcem Autobusowym bez nawierzchni: wyjście pawilonu metra na gołe podłoże
+- Status: naprawione w #285 (5.11, 662209b; `ADDED_AREAS` `T-162/plac-dworca`, obrys kuratora 428,8 m², testy wycofania i węzłów)
+- Ważność: S4 · Zasięg: Podzamcze, x ok. 740–764, z ok. 370–377 (ok. 170 m²), wyjście `targ` B (T-162, T-159)
+- Pakiet właściciela: packages/sim (treść `lublin`, ręczna nawierzchnia) albo tools/osm-import
+
+### G-318 Zejście chodem z zachodniego dachu przy `targ-escape-2` przelatuje nad balkonem: upadek 9,1 m na posadzkę targu
+- Status: naprawione w #288 (5.11, 375456d; balkon `BALCONY_DEPTH` 3,4 m, zejście chodem ląduje na balkonie)
+- Ważność: S3 · Zasięg: `targ-escape-2`, balkon z 64–65,3; przy 4,1 m/s graczka mija balkon i ląduje na posadzce targu; do oceny, czy balkon ma łapać, czy krawędź ma być dalej
+- Pakiet właściciela: packages/sim (treść targu, ruch)
+
 ### G-335 Zapis w locie gubi prędkość: wczytanie zmienia tor lotu
 - Status: naprawione w #287 (5.11, 296ab1d; autozapis czeka na podłogę, ręczny zapis w powietrzu z komunikatem; bez zmiany schematu)
 - Ważność: S4 · Zasięg: zapis nie trzyma `fall`, `velocity`, `airPeak`, a `compose.ts:169` nie blokuje zapisu w powietrzu, więc każdy zapis w locie wczytuje się z zerową prędkością; do decyzji: blokować zapis w powietrzu (autozapis „w bezpiecznej chwili”) czy zapisywać stan lotu (zmiana schematu)

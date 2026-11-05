@@ -966,11 +966,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (test, nie gra) · Zasięg: `SEATED` bez „sleep” (brak testu leżącego w pasie), `StayFacingPlayer` obracający siedzącego stałego mieszkańca przy −60 (brak testu), `holdLanePlace` bez `waypoint = null` (nic nie sprawdza)
 - Pakiet właściciela: packages/sim (testy `flee-dead-zone`, `reputation-tiers`)
 
-### G-318 Zejście chodem z zachodniego dachu przy `targ-escape-2` przelatuje nad balkonem: upadek 9,1 m na posadzkę targu
-- Status: w PR #288 (5.11; balkon `BALCONY_DEPTH` 3,4 m)
-- Ważność: S3 · Zasięg: `targ-escape-2`, balkon z 64–65,3; przy 4,1 m/s graczka mija balkon i ląduje na posadzce targu; do oceny, czy balkon ma łapać, czy krawędź ma być dalej
-- Pakiet właściciela: packages/sim (treść targu, ruch)
-
 ### G-319 Łamane linii metra na mapie przechodzą pod zwykłymi budynkami, a skan nie widzi zabytków poza importem
 - Status: zgłoszone (5.11, kurator, ponowny przegląd PR #270)
 - Ważność: S4 · Zasięg: róg Kozia/Bernardyńska ścina narożnik przez w67498752 (ok. 17 m; wierne punkty (390; −144), (362; −149), (368; −172)); w luce T-022 odcinek (1580; 232) → (1738; 386) pod 5 budynkami, a (1738; 386) → (2084; 384) ok. 19 m na północ od łuku ulicy (lepiej (1803; 377), (1891; 368), (1962; 367), (2044; 378)); odcinek (506; −389) → (590; −1840) 5 m od Pałacu Sobieskich w181283749 (wierniej Bernardyńską (583; −528), (639; −627) i Zamojską (662; −728)). Kontrola `metro-line-protected` poza prostokątami importu widzi tylko `PROTECTED_AREAS`: dodać listę zabytków poza importem (punkt i promień, m.in. kościół św. Agnieszki w171014937, Pałac Sobieskich), baza 0; od PR #279 też odcinek Plac Litewski (88; −60) → (240; −66) pod w67504389 i w67504391 (34 m), punkty w T-163
@@ -1020,11 +1015,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, autor ADR-0071 etap 2, PR #279)
 - Ważność: S4 · Zasięg: wszystkie wejścia metra (widać na zrzutach schodów `shots/metro2/`); do etapu 3 ADR-0071 albo osobno
 - Pakiet właściciela: packages/engine/src/effects (deszcz)
-
-### G-332 Plac przed Dworcem Autobusowym bez nawierzchni: wyjście pawilonu metra na gołe podłoże
-- Status: w PR #285, przyjęte (5.11, baf0e4b; obrys kuratora), czeka na CI
-- Ważność: S4 · Zasięg: Podzamcze, x ok. 740–764, z ok. 370–377 (ok. 170 m²), wyjście `targ` B (T-162, T-159)
-- Pakiet właściciela: packages/sim (treść `lublin`, ręczna nawierzchnia) albo tools/osm-import
 
 ### G-333 Drobne usterki po etapie 2 metra (#279)
 - Status: częściowo naprawione w #284 (5.11, bd0958d; `metro-shaft-open` z tolerancją, `cutGround` 81 → 13 ms); okap Nabrzeża i stopień przy Alchemii do etapu 3 metra, wróg w hali niesprawdzony
