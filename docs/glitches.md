@@ -962,7 +962,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (ruch, drabiny)
 
 ### G-313 Wczytanie zapisu z paska dachu przy drabinie stawia graczkę na szczycie drabiny
-- Status: zgłoszone (5.11, weryfikator PR #269)
+- Status: w PR #281 (5.11; miejsce po podłodze pod graczką)
 - Ważność: S4 · Zasięg: pasek ok. 0,2 × 0,1 m przy krawędzi nad drabiną (t < 0,5 odcinka linia–wyjście, np. `targ-escape-2` (69,2; 9,1; 63,85–64,05)); bez upadku i straty zdrowia. Teoretycznie z ciałem na ramieniu (ADR-0065) system drabin ją pominie i spadnie. Przesunięcie `resumeOnLadderTop` sięga 0,61 m (`targ-escape-1`), a stały test obejmuje tylko `targ-escape-2`
 - Pakiet właściciela: packages/sim (`ladder-system.ts`, `resumeOnLadderTop`)
 
@@ -1007,7 +1007,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (mapcity/ground-plan, cell-builder)
 
 ### G-325 Każda `GameSession` w testach kompiluje ink od nowa (ok. 150 ms)
-- Status: zgłoszone (5.11, naprawiacz G-323)
+- Status: w PR #282 (5.11; `loadInk`, kompilacja raz na źródło)
 - Ważność: S4 (czas testów) · Zasięg: prawie każdy test app; pamięć podręczna skompilowanej historii (`compileInk`) przyspieszyłaby cały zestaw
 - Pakiet właściciela: packages/narrative
 
