@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-293 Plama reflektora niskiego patrolu ma ciemny środek: widać tylko jasny pierścień, miejscami przerwany
+- Status: naprawione w #260 (5.11, fbfac59; plama na rysowanym bruku, `drapeHeightAt`)
+- Ważność: S3 (proponowana; każdy zawis każdego patrolu, plama ma być jednolitym kręgiem światła) · Zasięg: wszystkie patrole na `high` i `medium` przy zawisie 4,6–7,7 m nad brukiem · Koszt: do ustalenia
+- Gdzie: deptak (127,1; −55,0), oko (136; −54) 9,5 m od drona; to samo na zrzutach z drugiego miejsca (`r4-plama-a-*`)
+- Dowód: zrzuty `/tmp/claude-0/-home-user-SpinalTap/ddc6f520-6741-5c4a-a4fb-ad093091508f/scratchpad/shots/drony-niskie/r4-plama-b-4.7m.png` (pierścień z ciemnym wnętrzem i wcięciem po prawej), `r4-plama-a-6.0m.png`, kolaże `r4-plama-a-kolaz.png` i `r4-plama-b-kolaz.png` (ciemny środek na każdej wysokości 4,7–7,7 m). Jasny pas jest węższy niż zewnętrzna połowa promienia, a wnętrze ma kolor bruku albo ciemniejszy
+- Przyczyna (przypuszczalna): nie widać wewnętrznego wachlarza plamy (`withBeam` w `packages/engine/src/renderer/drones/patrol-models.ts`: 32 trójkąty od środka do pierścienia 0,5 z jednym narożnikiem zdublowanym) albo części pasa. Nawinięcie obu części jest zgodne (`GeometrySink.quad` układa je według normalnej UP), cienia drona nie ma (ADR-0058). Do sprawdzenia: głębia lub kolejność rysowania wnętrza względem bruku (`layPool`, `pavingAt`, `POOL_LIFT` 0,02 m), przebieg G-bufora i obrysu w miejscu plamy oraz zostawianie plamy po `POOL_RELAY` przy zmianie slotu
+- Pakiet właściciela: packages/engine (renderer/drones, npr)
+- Test przyjęcia: zrzut FPP z tego samego oka i czasu (`r4-plama-b-4.7m.json`, t 127,12) pokazuje jednolity jasny krąg bez ciemnego środka i wcięć na wysokościach 4,7–7,7 m; test bez renderera: po `placePool` każdy niezdegenerowany trójkąt plamy leży nad brukiem (y ≥ bruk + `POOL_LIFT` − 1 mm) i ma normalną skierowaną w górę; migawka NPR i budżety bez zmian
+
 ### G-299 Wejście frontowe hali Alchemii na cokole 1,23 m bez stopni
 - Status: naprawione w #259 (5.11, 5470042; bryła hali w narysowanych ścianach, lada, stojak, policzek biegu, balkon, stopnie frontu)
 - Ważność: S4 · Zasięg: front zasłonięty bryłą (G-298); model nie rysuje stopni
