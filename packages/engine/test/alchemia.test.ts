@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_CENTRE, ALCHEMIA_MODULES, ALCHEMIA_ROOF, alchemiaParts, alchemiaPoint, type PlacedAlchemiaModule } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_MODULES, ALCHEMIA_ROOF, type AlchemiaPart, alchemiaParts, alchemiaPoint, type PlacedAlchemiaModule } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { CityKit } from "../src/renderer/city-kit";
@@ -31,7 +31,35 @@ const local = (m: PlacedAlchemiaModule, p: Pt): Pt => {
   return { x: -dx * fz + dz * fx, z: dx * fx + dz * fz };
 };
 
-/** The world vertices of the module's model in the geometry (they follow its plinth's 24). */
+/** The box of a part's outline in the model's frame: x0, x1, z0, z1. */
+const bounds = (p: AlchemiaPart): readonly [number, number, number, number] => {
+  const xs = p.points.map((q) => q[0]);
+  const zs = p.points.map((q) => q[1]);
+  return [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
+};
+
+/** True when a point of the model's frame lies within `pad` of the part's box. */
+const near = (p: AlchemiaPart, q: Pt, pad: number): boolean => {
+  const [x0, x1, z0, z1] = bounds(p);
+  return q.x >= x0 - pad && q.x <= x1 + pad && q.z >= z0 - pad && q.z <= z1 + pad;
+};
+
+type Pt3 = { readonly x: number; readonly y: number; readonly z: number };
+
+/** True when a point of the model's frame lies in the part's (convex) outline. */
+const insidePart = (p: AlchemiaPart, x: number, z: number): boolean => {
+  let sign = 0;
+  for (let i = 0; i < p.points.length; i++) {
+    const [ax, az] = p.points[i]!;
+    const [bx, bz] = p.points[(i + 1) % p.points.length]!;
+    const s = Math.sign((bx - ax) * (z - az) - (bz - az) * (x - ax));
+    if (s !== 0 && sign !== 0 && s !== sign) return false;
+    if (s !== 0) sign = s;
+  }
+  return true;
+};
+
+/** The world vertices of the module's model in the geometry (they follow its plinth's and its steps' 24 each). */
 const modelVertices = (positions: readonly number[], start: number, count: number): { x: number; y: number; z: number }[] =>
   Array.from({ length: count }, (_, i) => ({ x: positions[3 * (start + i)]!, y: positions[3 * (start + i) + 1]!, z: positions[3 * (start + i) + 2]! }));
 
@@ -75,7 +103,7 @@ describe("Alchemia's geometry (ADR-0063 stage 4)", () => {
     for (const g of [withFile, without]) for (const i of g.sink.indices) expect(i).toBeLessThan(g.sink.vertexCount);
     let at = 0;
     for (const m of ALCHEMIA_MODULES) {
-      at += 24; // the plinth
+      at += 24 * (1 + m.steps.length); // the plinth and the steps
       const n = alchemia.models.get(m.key)!.positions.length / 3;
       const vs = modelVertices(withFile.sink.positions, at, n);
       at += n;
@@ -88,17 +116,62 @@ describe("Alchemia's geometry (ADR-0063 stage 4)", () => {
         expect(Math.abs(q.z), m.key).toBeLessThanOrEqual(m.depth / 2 + 1e-3);
         // Above a part's top only over a taller part, by the parapets and the name (1.5 m) at most:
         // the hall's upper storey stands over its body, not over its stair.
-        const under = parts.filter((p) => q.x >= p.x0 - 0.3 && q.x <= p.x1 + 0.3 && q.z >= p.z0 - 0.3 && q.z <= p.z1 + 0.3);
+        const under = parts.filter((p) => near(p, q, 0.3));
         expect(v.y - m.floor, `${m.key} at (${q.x.toFixed(2)}, ${q.z.toFixed(2)})`).toBeLessThanOrEqual(Math.max(...under.map((p) => p.top)) + 1.5);
       }
       expect(lowest).toBeCloseTo(m.floor, 2);
     }
     // The roof the next stages use is the hall's body top.
     const hall = ALCHEMIA_MODULES[0]!;
-    expect(ALCHEMIA_ROOF.corners.map((c) => local(hall, c)).every((q) => q.x <= alchemiaParts(hall)[0]!.x1 + 1e-6)).toBe(true);
+    expect(ALCHEMIA_ROOF.corners.map((c) => local(hall, c)).every((q) => q.x <= bounds(alchemiaParts(hall)[0]!)[1] + 1e-6)).toBe(true);
     // The model's +X lies left of its front, as `alchemiaPoint` puts it.
     const p = alchemiaPoint(hall, 1, 0);
     expect(local(hall, p).x).toBeCloseTo(1, 6);
+  });
+
+  it("makes the hall's outside stair no higher than it is drawn: no wall over its podium, its run or its landing (G-288)", () => {
+    const { sink } = alchemiaGeometry(kitData, props);
+    const hall = ALCHEMIA_MODULES[0]!;
+    const from = 24 * (1 + hall.steps.length);
+    const to = from + alchemia.models.get(hall.key)!.positions.length / 3;
+    const at = (k: number) => {
+      const w = { x: sink.positions[3 * k]!, y: sink.positions[3 * k + 1]!, z: sink.positions[3 * k + 2]! };
+      const q = local(hall, w);
+      return { x: q.x, y: w.y - hall.floor, z: q.z };
+    };
+    const tris: { x: number; y: number; z: number }[][] = [];
+    for (let i = 0; i < sink.indices.length; i += 3) {
+      const ids = [sink.indices[i]!, sink.indices[i + 1]!, sink.indices[i + 2]!];
+      if (ids.every((k) => k >= from && k < to)) tris.push(ids.map(at));
+    }
+    // The model's highest face over a point of its frame (0: the foot).
+    const drawn = (x: number, z: number): number => {
+      let top = 0;
+      for (const [a, b, c] of tris as [Pt3, Pt3, Pt3][]) {
+        const d = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+        if (Math.abs(d) < 1e-9) continue;
+        const u = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (z - c.z)) / d;
+        const v = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (z - c.z)) / d;
+        if (u < 0 || v < 0 || u + v > 1) continue;
+        top = Math.max(top, u * a.y + v * b.y + (1 - u - v) * c.y);
+      }
+      return top;
+    };
+    let checked = 0;
+    // Over the stair's side of the hall, from the wall of its ground storey out to the podium's edge.
+    for (let x = 2.35; x < 5.45; x += 0.25) {
+      for (let z = -5.4; z < 5.5; z += 0.25) {
+        // Within a few centimetres of a riser either tread may be the one drawn there.
+        const top = Math.max(...[0, 0.15, -0.15].flatMap((dx) => [0, 0.15, -0.15].map((dz) => drawn(x + dx, z + dz))));
+        for (const p of alchemiaParts(hall)) {
+          // A part a body standing on the drawn top would meet: over the point, under its head.
+          if (!insidePart(p, x, z) || (p.bottom ?? -Infinity) >= top + 1.8) continue;
+          expect(p.top, `(${x.toFixed(2)}, ${z.toFixed(2)}) drawn ${top.toFixed(2)}`).toBeLessThanOrEqual(top + 0.45);
+          checked++;
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(400);
   });
 });
 
