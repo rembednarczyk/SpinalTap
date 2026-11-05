@@ -2,6 +2,7 @@ import { DEFAULT_LOCALE, type ItemCategory, type PrepareStage, type ItemDefId, t
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
 import type { MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon } from "./map-vm";
 import type { RadioStationId } from "./wave2-vm";
+import type { MapMetroVm } from "./metro-vm";
 
 // View models of the UI store: what the areas of `UiState` hold (ADR-0031).
 
@@ -128,6 +129,8 @@ export interface MapVm {
   readonly links?: readonly MapLinkVm[];
   /** Open water (the docks, ADR-0024), under everything else. */
   readonly water?: readonly MapRectVm[];
+  /** The metro line as a layer (ADR-0071): tunnel, stations, entrances, possible stations. */
+  readonly metro?: MapMetroVm;
 }
 
 /** "enforcer": someone who sees through the player's disguise (ADR-0032); "quest": whom the shown step of a quest sends the player to. */

@@ -1,15 +1,18 @@
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import "./citymap.css";
 import { CityLabels, type CityIndex, CityShapes, EMPTY_CITY, indexCity } from "../hud/city-layer";
 import { useT } from "../i18n/use-t";
 import type { MapLabelKind } from "../store/map-vm";
 import type { MapMarkerVm, MapPlayerVm, MapRectVm, MapVm } from "../store/ui-store";
 import { useUi } from "../use-ui";
+import { MetroLayer } from "../metro/metro-layer";
 import { type CityMapView, useMapView } from "./use-map-view";
 
-/** Names on the map tab by zoom: streets and landmarks only close enough to read them. */
-const kindsAt = (span: number): ReadonlySet<MapLabelKind> =>
-  new Set<MapLabelKind>(span <= 900 ? ["street", "district", "landmark", "station"] : span <= 1500 ? ["district", "landmark", "station"] : ["district", "station"]);
+/** Names on the map tab by zoom: streets and landmarks only close enough to read them; the metro layer names its own stations. */
+const kindsAt = (span: number, metro: boolean): ReadonlySet<MapLabelKind> => {
+  const kinds: MapLabelKind[] = span <= 900 ? ["street", "district", "landmark", "station"] : span <= 1500 ? ["district", "landmark", "station"] : ["district", "station"];
+  return new Set(metro ? kinds.filter((k) => k !== "station") : kinds);
+};
 
 /** Text heights in metres, growing with the view so they stay about the same size on screen. */
 const sizeAt =
@@ -48,7 +51,8 @@ const viewBox = (v: CityMapView) => `${(v.x - v.span / 2).toFixed(1)} ${(-v.z - 
 
 /**
  * The map tab of the character screen (M, ADR-0045): Lublin from the map data with its street
- * names, the districts, landmarks and metro stations, the player and what is worth finding.
+ * names, the districts, landmarks and metro stations, the metro line as a layer (ADR-0071), the
+ * player and what is worth finding.
  * Drag to move, the wheel or the buttons to zoom; the district buttons jump there.
  */
 export const CityMapPanel = () => {
@@ -59,7 +63,10 @@ export const CityMapPanel = () => {
   const t = useT();
   const city = useMemo(() => (map ? indexCity(map) : EMPTY_CITY), [map]);
   const { view, zoomIn, zoomOut, centre, handlers } = useMapView({ x: player?.x ?? 0, z: player?.z ?? 0, span: 420 });
-  const kinds = useMemo(() => kindsAt(view.span), [view.span]);
+  // The metro layer (ADR-0071), on until the tool button turns it off.
+  const [metroOn, setMetroOn] = useState(true);
+  const metro = metroOn ? (map?.metro ?? null) : null;
+  const kinds = useMemo(() => kindsAt(view.span, metro !== null), [view.span, metro]);
   const size = useMemo(() => sizeAt(view.span), [view.span]);
   if (!map) return <p className="sheet__empty">{t("map.none")}</p>;
   // Icons keep their size on screen: 1 at a 420 m view.
@@ -69,6 +76,7 @@ export const CityMapPanel = () => {
       <svg className="citymap__svg" viewBox={viewBox(view)} preserveAspectRatio="xMidYMid meet" role="img" aria-label={t("map.label")} {...handlers}>
         <Base map={map} city={city} />
         <CityLabels city={city} window={null} prefix="citymap" kinds={kinds} size={size} />
+        {metro && <MetroLayer metro={metro} k={k} />}
         {showMarkers && markers.map((m) => <Marker key={m.id} m={m} k={k} />)}
         {player && <Player p={player} k={k} />}
       </svg>
@@ -79,6 +87,11 @@ export const CityMapPanel = () => {
         <button type="button" className="citymap__btn" onClick={zoomOut} aria-label={t("map.zoomOut")}>
           −
         </button>
+        {map.metro && (
+          <button type="button" className="citymap__btn citymap__btn--wide" aria-pressed={metroOn} aria-label={t("metro.layer.toggle")} onClick={() => setMetroOn((on) => !on)} data-testid="citymap-metro">
+            {t("metro.layer")}
+          </button>
+        )}
         {player && (
           <button type="button" className="citymap__btn citymap__btn--wide" onClick={() => centre(player.x, player.z)}>
             {t("map.me")}

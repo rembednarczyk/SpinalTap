@@ -55,13 +55,15 @@ import {
   type TradeVm,
   type WeaponStripVm,
 } from "./ui-vm";
-import type { BuffVm, CapacityVm, ContractHookVm, DashVm, DisguiseVm, MetroMapVm, MetroRideVm } from "./wave2-vm";
+import type { BuffVm, CapacityVm, ContractHookVm, DashVm, DisguiseVm, MetroRideVm } from "./wave2-vm";
+import type { MetroMapVm } from "./metro-vm";
 import { type DifficultyVm, NO_DIFFICULTY_CHANGE, type SlotVm } from "./difficulty-vm";
 
 export * from "./hud-vm";
 export * from "./ui-vm";
 export * from "./map-vm";
 export * from "./wave2-vm";
+export * from "./metro-vm";
 export * from "./difficulty-vm";
 
 // ---- Areas of the UI state (ADR-0031) ----

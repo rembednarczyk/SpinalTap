@@ -82,15 +82,23 @@ describe("MetroController without a session", () => {
     return { bus, ui, metro, commands, cues, calls };
   };
 
-  it("opens the line map at a kiosk and buys a ticket with travel-metro, then frees the player", () => {
+  it("opens the line map at a kiosk, chooses a stop and buys the ticket with travel-metro, then frees the player", () => {
     const { ui, metro, commands, calls } = setup();
     metro.open("kanal");
     expect(metro.isOpen).toBe(true);
     expect(ui.getState().metroMap?.from).toBe("kanal");
     expect(ui.getState().prompt).toBeNull();
-    metro.travelMetro("kanal");
+    // No ticket without a destination, and the platform itself is none (ADR-0071).
+    metro.buyMetroTicket();
+    metro.selectMetroStop("kanal");
+    expect(ui.getState().metroMap?.selected).toBeNull();
+    metro.buyMetroTicket();
     expect(commands).toEqual([]);
-    metro.travelMetro("doki");
+    metro.selectMetroStop("doki");
+    expect(ui.getState().metroMap?.selected).toBe("doki");
+    expect(ui.getState().metroMap?.preview?.route).toEqual(["kanal", "targ", "doki"]);
+    expect(commands).toEqual([]);
+    metro.buyMetroTicket();
     expect(commands).toEqual([{ type: "travel-metro", to: "doki" }, { type: "end-dialogue" }]);
     expect(ui.getState().metroMap).toBeNull();
     expect(calls).toEqual(["panel", "settle"]);
@@ -99,13 +107,15 @@ describe("MetroController without a session", () => {
   it("refuses a ticket without money or with the platform watched", () => {
     const poor = setup({ eddies: 10 });
     poor.metro.open("kanal");
-    poor.metro.travelMetro("doki");
+    poor.metro.selectMetroStop("doki");
+    poor.metro.buyMetroTicket();
     expect(poor.commands).toEqual([]);
     expect(poor.cues).toEqual(["denied"]);
     const hot = setup({ guarded: true });
     hot.metro.open("kanal");
     expect(hot.ui.getState().metroMap?.refusal).toBe(GUARDED);
-    hot.metro.travelMetro("doki");
+    hot.metro.selectMetroStop("doki");
+    hot.metro.buyMetroTicket();
     expect(hot.commands).toEqual([]);
     hot.metro.closeMetro();
     expect(hot.commands).toEqual([{ type: "end-dialogue" }]);

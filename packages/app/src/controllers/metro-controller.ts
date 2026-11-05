@@ -27,6 +27,8 @@ interface Kiosk {
   readonly from: MetroStationId;
   /** Opened by an interaction: the simulation holds the player until `end-dialogue`. */
   readonly interaction: boolean;
+  /** The destination of the first step (ADR-0071); the ticket is the second. */
+  selected: MetroStationId | null;
 }
 
 interface Ride {
@@ -38,7 +40,8 @@ interface Ride {
 }
 
 /**
- * The metro (ADR-0035): the line map at the ticket kiosk, which sends `travel-metro`, and the
+ * The metro (ADR-0035, ADR-0071): the line map at the ticket kiosk, where a destination is chosen
+ * first (the route and its preview show) and the ticket bought second, which sends `travel-metro`; and the
  * ride screen between `MetroDeparted` and `MetroArrived` with the ride's ink lines as subtitles.
  * The simulation charges the fare and streams the destination; the engine draws the car.
  */
@@ -68,14 +71,24 @@ export class MetroController implements MetroIntents {
   /** Shows the line map at the kiosk of `from`. */
   open(from: MetroStationId, interaction = true): void {
     if (this.kiosk || this.ride || !this.deps.canOpen()) return;
-    this.kiosk = { from, interaction };
-    patchUi(this.deps.ui, { metroMap: metroMapVm(from, this.deps.guarded(), this.deps.ui.getState().settings.locale), prompt: null });
+    this.kiosk = { from, interaction, selected: null };
+    patchUi(this.deps.ui, { metroMap: this.mapVm(this.kiosk), prompt: null });
     this.deps.focus.panel();
   }
 
-  travelMetro(to: MetroStationId): void {
+  /** First step: the route to `to` and its card; the platform the player stands on chooses nothing. */
+  selectMetroStop(to: MetroStationId): void {
     const kiosk = this.kiosk;
-    if (!kiosk || to === kiosk.from) return;
+    if (!kiosk || to === kiosk.from || to === kiosk.selected) return;
+    kiosk.selected = to;
+    patchUi(this.deps.ui, { metroMap: this.mapVm(kiosk) });
+  }
+
+  /** Second step: the ticket to the chosen stop. */
+  buyMetroTicket(): void {
+    const kiosk = this.kiosk;
+    const to = kiosk?.selected ?? null;
+    if (!kiosk || to === null) return;
     const eddies = this.deps.sim().domain.wallet.eddies;
     if (this.deps.guarded() || eddies < metroFare(kiosk.from, to)) {
       this.deps.audio.play("denied");
@@ -110,6 +123,10 @@ export class MetroController implements MetroIntents {
     this.ride = null;
     this.lastRide = null;
     patchUi(this.deps.ui, { metroRide: null });
+  }
+
+  private mapVm(kiosk: Kiosk) {
+    return metroMapVm(kiosk.from, this.deps.guarded(), this.deps.ui.getState().settings.locale, kiosk.selected);
   }
 
   private leave(): void {

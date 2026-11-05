@@ -13,6 +13,7 @@ import { PhonePanel } from "../src/phone/phone";
 import { TouchControls } from "../src/touch/touch-controls";
 import type { TouchPadSink } from "../src/touch/touch-pad-sink";
 import { UiContext } from "../src/use-ui";
+import { kioskVm } from "./metro-fixture";
 
 /**
  * The world panels in both languages (ADR-0056, stage 2b): English by default, Polish word for
@@ -87,31 +88,25 @@ describe("map tab", () => {
 });
 
 describe("metro", () => {
-  const metroMap: UiState["metroMap"] = {
-    line: "Kanjō Line",
-    from: "kanal",
-    refusal: null,
-    stops: [
-      { id: "kanal", name: "Brama Krakowska", fare: 0, here: true },
-      { id: "doki", name: "Nabrzeże Bystrzycy", fare: 1250, here: false },
-      { id: "targ", name: "Plac Zamkowy", fare: 25, here: false },
-    ],
-  };
+  // A ticket in two steps (ADR-0071): Nabrzeże chosen, more than the wallet holds.
+  const metroMap: UiState["metroMap"] = kioskVm("kanal", "doki", null, (n) => (n === 2 ? 1250 : 25));
 
   it("sells tickets in English with en-GB amounts, in Polish as before; the station names stay", () => {
     const store = mount(<MetroMap />, { metroMap, eddies: 30 });
     expect(screen.getByRole("dialog", { name: "Metro map" })).toBeTruthy();
     expect(screen.getByText("Ticket kiosk")).toBeTruthy();
     expect(screen.getByTestId("metro-stop-kanal").textContent).toBe("Brama KrakowskaYou are here");
-    expect(screen.getByRole("button", { name: "Ticket to: Plac Zamkowy, 25 €$" }).textContent).toBe("Ticket · 25 €$");
+    expect(screen.getByRole("button", { name: "Destination: Plac Zamkowy, 25 €$, 7 s" }).textContent).toBe("Plac ZamkowyTicket · 25 €$ · 7 s");
     expect(screen.getByRole("button", { name: "Ticket to: Nabrzeże Bystrzycy, 1,250 €$" }).textContent).toBe("Not enough money · 1,250 €$");
+    expect(screen.getByTestId("metro-via").textContent).toBe("On the way: Plac Zamkowy");
     expect(screen.getByText("Leave the kiosk")).toBeTruthy();
     speak(store, "pl");
     expect(screen.getByRole("dialog", { name: "Mapa metra" })).toBeTruthy();
     expect(screen.getByTestId("metro-stop-kanal").textContent).toBe("Brama KrakowskaJesteś tutaj");
     const fare = (1250).toLocaleString("pl-PL");
     expect(screen.getByRole("button", { name: `Bilet do: Nabrzeże Bystrzycy, ${fare} €$` }).textContent).toBe(`Brak środków · ${fare} €$`);
-    expect(screen.getByRole("button", { name: "Bilet do: Plac Zamkowy, 25 €$" }).textContent).toBe("Bilet · 25 €$");
+    expect(screen.getByRole("button", { name: "Cel: Plac Zamkowy, 25 €$, 7 s" }).textContent).toBe("Plac ZamkowyBilet · 25 €$ · 7 s");
+    expect(screen.getByTestId("metro-via").textContent).toBe("Po drodze: Plac Zamkowy");
     expect(screen.getByText("Odejdź od kiosku")).toBeTruthy();
   });
 
