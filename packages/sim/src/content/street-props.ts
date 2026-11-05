@@ -4,7 +4,7 @@ import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_ACTORS, KANAL_PROPS } from "./district-kanal";
 import { TARG_NORTH_ACTORS, TARG_NORTH_PROPS, TARG_SOUTH_ACTORS, TARG_SOUTH_PROPS } from "./district-targ";
 import { DOKI_QUAY_ACTORS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_PROPS } from "./district-doki";
-import { METRO_STATIONS } from "./metro";
+import { METRO_FOOTPRINTS } from "./metro";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { inBuilding } from "./lublin/places";
 import { groundY } from "./lublin/terrain";
@@ -27,9 +27,9 @@ export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL
 /** A set piece's or a game block's clearance from the map's furniture (m). */
 const FURNITURE_CLEARANCE = 1.2;
 
-const gameBlocks: readonly Rect[] = [...GAME_PROPS, ...METRO_STATIONS.flatMap((m) => m.props)].flatMap((p) =>
+const gameBlocks: readonly Rect[] = GAME_PROPS.flatMap((p) =>
   p.view.kind === "block" ? [{ minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2 }] : [],
-).concat(METRO_STATIONS.map((m) => ({ minX: m.kiosk.x - 0.6, maxX: m.kiosk.x + 0.6, minZ: m.kiosk.z - 0.6, maxZ: m.kiosk.z + 0.6 })));
+).concat(METRO_FOOTPRINTS);
 
 type Pt = { readonly x: number; readonly z: number };
 

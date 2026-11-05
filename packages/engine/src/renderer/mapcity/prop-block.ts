@@ -4,6 +4,7 @@ import type { RenderQuality } from "../../npr/quality";
 import type { ToonMaterials } from "../../npr/toon-material";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
+import { bakePavilion, bakePavilionFar, pavilionsIn } from "../metro/pavilion-bake";
 import { FINE_DECALS, bakeDecal } from "./decal-models";
 import { bakeDoor } from "./door-models";
 import { bakeFigure } from "./figure-models";
@@ -72,6 +73,7 @@ export const buildFar = (deps: PropBakeDeps, block: PropBlock): void => {
     const f = deps.poles.isPole(p) ? deps.poles.far : farModel(p.prop, p.shape);
     if (f) bake(far, f, p);
   }
+  for (const e of pavilionsIn(block.bounds)) bakePavilionFar(far, e);
   block.far = blockMesh(deps, `props-far-${block.key}`, far);
 };
 
@@ -124,6 +126,8 @@ export const nearSink = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: P
   }
   if (pole && poles.props) bakePoles(sink, poles.props, pole, pieces.filter((p) => poles.isPole(p)));
   bakeBlockDogs(deps, sink, block, pieces);
+  // The metro's pavilions standing in the block (ADR-0071 stage 2): no mesh of their own.
+  for (const e of pavilionsIn(block.bounds)) bakePavilion(sink, e);
   return sink;
 };
 

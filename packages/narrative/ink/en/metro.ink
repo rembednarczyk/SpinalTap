@@ -8,12 +8,12 @@ PASAZER: Krakowskie. I'm telling you, there's a bar by the promenade where nobod
 -> END
 
 === metro_ride_2 ===
-GLOSNIK: Tsugi wa Brama Krakowska desu. Next stop: Brama Krakowska, Stare Miasto. Please mind the gap between the car and the platform.
+GLOSNIK: Tsugi wa Brama Krakowska desu. Next stop: Brama Krakowska, Stare Miasto. Exit A for Plac Łokietka, exit B for Alchemia. Please mind the gap between the car and the platform.
 PASAZERKA: The gap between the car and the platform has been the same for ten years. They should list it as a monument.
 -> END
 
 === metro_ride_3 ===
-GLOSNIK: Tsugi wa Plac Zamkowy desu. Next stop: Plac Zamkowy, Podzamcze. Change here for the bus station and night lines.
+GLOSNIK: Tsugi wa Plac Zamkowy desu. Next stop: Plac Zamkowy, Podzamcze. Exit B for the Dworzec Autobusowy bus station and night lines.
 DZIECKO: Mom, why is that man sleeping standing up?
 PASAZERKA: Because he works for Tessen, sweetie. That's how they rest.
 -> END
