@@ -152,6 +152,22 @@ describe("metro entrances on the map (ADR-0071 stage 2)", () => {
     }
   });
 
+  it.each(ENTRANCES)("%s: from the street before the opening to the sill no rise is over 0.25 m (G-333)", (_n, e) => {
+    const sim = Simulation.create({ seed: 5 });
+    const { along, opens } = e.spot;
+    const o = e.outline;
+    const mouth = along === "x" ? (opens > 0 ? o.maxX : o.minX) : opens > 0 ? o.maxZ : o.minZ;
+    // The landing's sill stands 0.05 m over the street at the opening (`metro-pavilion.ts`).
+    const sill = e.street + 0.05;
+    for (let w = -1.2; w <= 1.2 + 1e-9; w += 0.1) {
+      const x = along === "x" ? mouth + opens * 0.5 : e.spot.x + w;
+      const z = along === "x" ? e.spot.z + w : mouth + opens * 0.5;
+      const ground = sim.streamer.ground.heightAt(x, z);
+      const steps = e.threshold && e.threshold.top > ground ? [ground, e.threshold.top, sill] : [ground, sill];
+      for (let i = 1; i < steps.length; i++) expect(steps[i]! - steps[i - 1]!, `across ${w.toFixed(1)}`).toBeLessThan(0.25);
+    }
+  });
+
   it("lists every pavilion's outline for the crowd, the traffic and the furniture", () => {
     expect(METRO_FOOTPRINTS).toEqual(METRO_ENTRANCES.map((e) => e.outline));
   });
