@@ -1052,7 +1052,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: e2e (QA), packages/app (`GpuPacer`)
 
 ### G-349 Próg 0,3–0,4 m na zachodnim przyczółku mostu południowego Mełgiewskiej po G-340
-- Status: zgłoszone (5.11, weryfikator PR #293)
+- Status: w PR #300 (5.11, 5820de7; teren przyczółków na wysokości pomostu, kontrola `deck-abutment-step` 21 → 12; w weryfikacji, potem kurator)
 - Ważność: S3 · Zasięg: pomost w50733068 przedłużony przez `bridge-ends.ts` jest poziomy na NMT końca osi (−25,72), a teren wzdłuż 13-metrowej krawędzi przyczółka opada na południe do −26,0…−26,14; na próbkach 0,5 m to skarpa (`MAX_WALK_SLOPE`, ADR-0043): postać idąca z Andersa na wschód 4,75–6,0 m na południe od osi staje w (2414,2–2414,7; 323,3–324,4); pas aut Andersa#126:0 schodzi z pomostu bokiem ze skokiem 0,17 m. Skan nie ma kontroli progu pomost–teren na przyczółkach; `bridge-ends.test.ts` nie pilnuje warunku węzła wspólnego (przypadek ze wspólnym węzłem bliżej niż 15 m od krawędzi)
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`), packages/sim (terrain/decks), tools/glitch-scan
 - Test przyjęcia: postać przechodzi z Andersa na most na całej szerokości jezdni; kontrola progu pomost–teren na przyczółkach (> 0,25 m) = 0
@@ -1114,6 +1114,17 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #299)
 - Ważność: S4 (tekst) · Zasięg: komunikat odmowy wspólny dla sklepów; klinika potrzebuje własnego wariantu (en i pl) · Koszt: mały
 - Pakiet właściciela: packages/ui (i18n `trade`), packages/core (klucz odmowy per sklep)
+
+### G-360 Nawigacja AI przepuszcza krawędź pomostu ze stopniem 0,25–0,45 m, a ruch postaci na niej staje
+- Status: zgłoszone (5.11, naprawiacz G-349)
+- Ważność: S3 · Zasięg: rampa na wschodnim końcu Zamkowej psuła pościgi (`flight-chase`, `under-deck-ai`); pozostałe stopnie przyczółków z `deck-abutment-step` (wiadukt Zamkowej 9, kładka podzamcze-2-0 3) · Koszt: średni
+- Pakiet właściciela: packages/sim (nawigacja, `systems/ai`)
+- Test przyjęcia: pole nawigacji nie prowadzi przez krawędź wyższą niż `STEP_HEIGHT`; pościgi pod mostami bez zmian
+
+### G-361 Latarnia na wschodnim końcu mostu północnego Mełgiewskiej stoi 0,66 m pod pomostem
+- Status: zgłoszone (5.11, naprawiacz G-349)
+- Ważność: S4 · Zasięg: `lamp-road` (2445,6; 246,4), −25,89 przy pomoście −25,23; blokuje przejście ok. 6 m od osi · Koszt: mały
+- Pakiet właściciela: tools/osm-import (rozstawienie latarni przy pomostach)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
