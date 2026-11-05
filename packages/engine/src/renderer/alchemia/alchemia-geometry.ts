@@ -8,7 +8,7 @@ import { type CityProps, addPropToKit, facing, kitUvs } from "../city-props";
  * texture, in the world: each module of `ALCHEMIA_MODULES` (the simulation's layout) as its model
  * from `alchemia-props.glb` (tools/city_alchemia.py) standing on its floor, its front to its
  * yaw, on a concrete plinth down to the lowest paving under it, its flights' steps down to the
- * paving in the same concrete (G-287). Without the file the modules are drawn as boxes of
+ * paving in the same concrete (G-287, G-288). Without the file the modules are drawn as boxes of
  * their size instead. Pure data, no Babylon.
  */
 

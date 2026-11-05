@@ -156,6 +156,13 @@ describe("Alchemia on Plac Ofiar Getta (ADR-0063 stage 4)", () => {
     });
   });
 
+  it("keeps every part of the hall under its flat roof (G-288)", () => {
+    const hall = ALCHEMIA_MODULES[0]!;
+    for (const q of alchemiaParts(hall)) {
+      expect(q.top).toBeLessThanOrEqual(ALCHEMIA_HALL_ROOF);
+      expect(q.bottom ?? 0).toBeLessThan(q.top);
+    }
+  });
 
   it("keeps the hall's flat roof a floor to stand on and the lift's site clear, for the stages to come", () => {
     const hall = ALCHEMIA_MODULES[0]!;

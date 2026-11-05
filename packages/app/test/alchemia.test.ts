@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type EntityId, type InputFrame, type ViewDescriptor } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { ALCHEMIA_CHUNK, ALCHEMIA_MODULES, ALCHEMIA_PROPS, ALCHEMIA_ROOF, ROOM_ID_BASE } from "@seki/sim";
+import { ALCHEMIA_CHUNK, ALCHEMIA_MODULES, ALCHEMIA_PROPS, ALCHEMIA_ROOF, ROOM_ID_BASE, alchemiaPoint } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 import { FakeRender, steps, teleport } from "./story-helpers";
@@ -11,9 +11,9 @@ import { FakeRender, steps, teleport } from "./story-helpers";
  * Alchemia on Plac Ofiar Getta (ADR-0063 stage 4), headless: the hall and its stalls are solid.
  * Seki walking at the hall's front from the square, at a stall's window from Świętoduska's side
  * and at the stalls' backs from the open square stops at their walls; she climbs from the paving
- * to each stall's door (G-287); the hall's flat roof holds her up (for the stages to come: a
- * character up there, a lift); their solids stream in with the plot's chunk, without views (the
- * engine draws the models).
+ * to each stall's door (G-287) and up the hall's outside stair to its landing (G-288); the hall's
+ * flat roof holds her up (for the stages to come: a character up there, a lift); their solids
+ * stream in with the plot's chunk, without views (the engine draws the models).
  */
 
 const start = () => {
@@ -96,6 +96,31 @@ describe("Alchemia on Plac Ofiar Getta (ADR-0063 stage 4)", () => {
     }
   });
 
+  it("lets her up the hall's outside stair from the paving to its landing, and down again (G-288)", () => {
+    const { session } = start();
+    const hall = module("alchemia-hall");
+    const at = (x: number, z: number) => alchemiaPoint(hall, x, z);
+    // Its foot is at the back of the hall, its landing over the front.
+    const from = at(3.2, -9.5);
+    teleport(session, from.x, from.z, hall.yaw);
+    steps(session, 2);
+    for (const [x, z, n] of [
+      [3.2, -5.2, 120],
+      [3.2, 1.6, 200],
+      [2.9, 2.4, 60],
+    ] as const) {
+      const p = at(x, z);
+      walkAt(session, p.x, p.z, n);
+    }
+    const top = session.sim.player()!.position;
+    expect(top.y).toBeCloseTo(hall.floor + 6.64, 1);
+    expect(Math.hypot(top.x - at(2.9, 2.4).x, top.z - at(2.9, 2.4).z)).toBeLessThan(0.6);
+    const hp = session.sim.player()!.health!.current;
+    walkAt(session, from.x, from.z, 300);
+    const back = session.sim.player()!.position;
+    expect(Math.hypot(back.x - from.x, back.z - from.z)).toBeLessThan(0.6);
+    expect(session.sim.player()!.health!.current).toBe(hp);
+  });
 
   it("holds her up on the hall's flat roof, the floor the next stages put a character on", () => {
     const { session } = start();

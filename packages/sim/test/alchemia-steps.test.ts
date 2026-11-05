@@ -7,10 +7,11 @@ import { STEP_HEIGHT } from "../src/systems/movement-system";
 import { teleportPlayer } from "./helpers";
 
 /**
- * The ways up of Alchemia (G-287): every stall has a flight of steps from the paving to its door,
- * each step within a step of the next and the last within one of the paving, all of them off the
- * paths, the furniture and the residents' loops; and an NPC passing by along their fronts does not
- * get stuck on them.
+ * The ways up of Alchemia (G-287, G-288): every stall has a flight of steps from the paving to
+ * its door, the hall one to the podium at the foot of its outside stair, each step within a step
+ * of the next and the last within one of the paving, all of them off the paths, the furniture
+ * and the residents' loops; and an NPC passing by along their fronts and the hall's stair does
+ * not get stuck on them.
  */
 
 type Pt = { readonly x: number; readonly z: number };
@@ -83,10 +84,11 @@ const chase = (from: Pt, to: Pt, seconds: number): number | null => {
 };
 
 const stalls = ALCHEMIA_MODULES.filter((m) => m.key.startsWith("alchemia-stall"));
+const hall = ALCHEMIA_MODULES[0]!;
 
-describe("the ways up of Alchemia (G-287)", () => {
-  it("comes down from each stall's door to the paving in steps a body walks", () => {
-    for (const m of stalls) {
+describe("the ways up of Alchemia (G-287, G-288)", () => {
+  it("comes down from each stall's door and from the hall's podium to the paving in steps a body walks", () => {
+    for (const m of ALCHEMIA_MODULES) {
       expect(m.flights, m.key).toHaveLength(1);
       const f = m.flights![0]!;
       expect(m.steps.length, m.key).toBeGreaterThan(0);
@@ -110,7 +112,7 @@ describe("the ways up of Alchemia (G-287)", () => {
       // Each step's block reaches under the paving it stands on.
       for (const q of m.steps) for (const p of stepSamples(m, q)) expect(m.floor + q.bottom!).toBeLessThan(surfaceY(p.x, p.z));
     }
-    // The stalls' steps run across their whole front.
+    // The stalls' steps run across their whole front, the hall's to the podium at its stair's foot.
     for (const m of stalls) for (const q of m.steps) expect(span(q)[1] - span(q)[0]).toBeCloseTo(m.width, 9);
   });
 
@@ -140,7 +142,7 @@ describe("the ways up of Alchemia (G-287)", () => {
     }
   });
 
-  it("lets an NPC pass along the stalls' fronts without getting stuck on the steps", () => {
+  it("lets an NPC pass along the stalls' fronts and the hall's stair without getting stuck on the steps", () => {
     const at = (m: PlacedAlchemiaModule, x: number, z: number) => alchemiaPoint(m, x, z);
     const first = stalls[0]!;
     const fifth = stalls[4]!;
@@ -154,5 +156,10 @@ describe("the ways up of Alchemia (G-287)", () => {
       expect(chase(a, b, 20), name).not.toBeNull();
       expect(chase(b, a, 20), `${name}, back`).not.toBeNull();
     }
+    // Along the hall's stair side, past the foot of its steps at the back.
+    const c = at(hall, 6.8, 4);
+    const d = at(hall, 1, -9.5);
+    expect(chase(c, d, 40), "round the hall's stair").not.toBeNull();
+    expect(chase(d, c, 40), "back round the hall's stair").not.toBeNull();
   }, 120_000);
 });

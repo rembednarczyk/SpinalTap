@@ -2,7 +2,7 @@ import type { GroundPoint, ViewDescriptor } from "@seki/core";
 import type { StaticProp } from "./builders";
 import type { PrismDef } from "../world/prism";
 import { surfaceY } from "./lublin/terrain";
-import { type AlchemiaFlight, type AlchemiaPart, flightSteps, rectPart } from "./alchemia-stairs";
+import { type AlchemiaFlight, type AlchemiaPart, HALL_STAIR_FOOT, HALL_STAIR_PARTS, HALL_WALL_X, flightSteps, rectPart } from "./alchemia-stairs";
 
 export type { AlchemiaFlight, AlchemiaPart } from "./alchemia-stairs";
 
@@ -25,10 +25,10 @@ export type { AlchemiaFlight, AlchemiaPart } from "./alchemia-stairs";
  * lowest, and flights of steps come down from its doors to the paving (G-287). The
  * simulation has each one as solid prisms from the ground up (`ALCHEMIA_PROPS`, scenery: the
  * engine draws the models, their plinths and steps, `renderer/alchemia`): a stall as its box and
- * its steps (`alchemia-stairs.ts`), the hall as its body up to its flat roof and its outside stair
- * up to the stair's top, so the roof is a floor a body can stand on (the next stages put a
- * character up there and a working lift next to the hall: `ALCHEMIA_ROOF` and `ALCHEMIA_LIFT_SITE`
- * keep their places, nothing stands on them yet).
+ * its steps, the hall as its body up to its flat roof and its outside stair as drawn, step by step
+ * up to the landing (G-288, `alchemia-stairs.ts`), so the roof is a floor a body can stand on (the
+ * next stages put a character up there and a working lift next to the hall: `ALCHEMIA_ROOF` and
+ * `ALCHEMIA_LIFT_SITE` keep their places, nothing stands on them yet).
  */
 
 /** A module of the hall: its model's key, the middle of its footprint, its front and its box. */
@@ -47,7 +47,7 @@ export interface AlchemiaModule {
    * front of it, z to its front, the top over its foot); without them, its whole box.
    */
   readonly parts?: readonly AlchemiaPart[];
-  /** The flights of steps out of it down to the paving (G-287). */
+  /** The flights of steps out of it down to the paving (G-287, G-288). */
   readonly flights?: readonly AlchemiaFlight[];
 }
 
@@ -64,16 +64,16 @@ const STALL = { width: 8.79, depth: 8.79, height: 8.96 } as const;
 /**
  * The hall's solid (tools/city_alchemia.py, `HALL_ROOF`): its body up to the flat roof at 11.51 m
  * (16.44 units of the source × 0.7; the parapets, the box on the roof and the name over it are not
- * solid), the roof's bevel over the front of the upper storey a step lower, and the outside stair
- * on its east side up to the top of its landing (7.35 m).
+ * solid) out to the wall of its ground storey over the stair, the roof's bevel over the front of
+ * the upper storey a step lower, and the outside stair on its east side as drawn, up to its
+ * landing (G-288, `HALL_STAIR_PARTS`).
  */
 export const ALCHEMIA_HALL_ROOF = 11.51;
-const BODY_X1 = 2.9;
 const BEVEL_Z = 2.9;
 const HALL_PARTS: readonly AlchemiaPart[] = [
-  rectPart(-HALL.width / 2, BODY_X1, -HALL.depth / 2, BEVEL_Z, ALCHEMIA_HALL_ROOF),
-  rectPart(-HALL.width / 2, BODY_X1, BEVEL_Z, HALL.depth / 2, 9.9),
-  rectPart(BODY_X1, HALL.width / 2, -HALL.depth / 2, HALL.depth / 2, 7.35),
+  rectPart(-HALL.width / 2, HALL_WALL_X, -HALL.depth / 2, BEVEL_Z, ALCHEMIA_HALL_ROOF),
+  rectPart(-HALL.width / 2, HALL_WALL_X, BEVEL_Z, HALL.depth / 2, 9.9),
+  ...HALL_STAIR_PARTS,
 ];
 
 /** The plot's west fence from (406.1, 65.3) north to (435.4, 125.6): its direction and the inward normal. */
@@ -101,7 +101,7 @@ const stall = (i: number): AlchemiaModule => {
 };
 
 /** The hall and the five stalls, south to north. */
-export const ALCHEMIA_LAYOUT: readonly AlchemiaModule[] = [{ key: "alchemia-hall", x: 421, z: 45, yaw: HALL_YAW, ...HALL, parts: HALL_PARTS }, ...[0, 1, 2, 3, 4].map(stall)];
+export const ALCHEMIA_LAYOUT: readonly AlchemiaModule[] = [{ key: "alchemia-hall", x: 421, z: 45, yaw: HALL_YAW, ...HALL, parts: HALL_PARTS, flights: [HALL_STAIR_FOOT] }, ...[0, 1, 2, 3, 4].map(stall)];
 
 /**
  * A point of the model's frame (glTF x and z) in the world: its +Z is the module's front and,
@@ -179,7 +179,7 @@ const HALL_MODULE = ALCHEMIA_MODULES[0] as PlacedAlchemiaModule;
  */
 export const ALCHEMIA_ROOF: { readonly y: number; readonly corners: readonly GroundPoint[] } = {
   y: HALL_MODULE.floor + ALCHEMIA_HALL_ROOF,
-  corners: [alchemiaPoint(HALL_MODULE, -HALL.width / 2, -HALL.depth / 2), alchemiaPoint(HALL_MODULE, -HALL.width / 2, BEVEL_Z), alchemiaPoint(HALL_MODULE, BODY_X1, BEVEL_Z), alchemiaPoint(HALL_MODULE, BODY_X1, -HALL.depth / 2)],
+  corners: [alchemiaPoint(HALL_MODULE, -HALL.width / 2, -HALL.depth / 2), alchemiaPoint(HALL_MODULE, -HALL.width / 2, BEVEL_Z), alchemiaPoint(HALL_MODULE, HALL_WALL_X, BEVEL_Z), alchemiaPoint(HALL_MODULE, HALL_WALL_X, -HALL.depth / 2)],
 };
 
 /**
