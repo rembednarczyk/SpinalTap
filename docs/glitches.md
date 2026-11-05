@@ -955,6 +955,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (luka w testach) · Zasięg: „makes solid what a body walking round the hall would bump into” liczy tylko powierzchnie niepionowe; przesunięcie zachodniej ściany bryły o 0,3 m do środka przechodzi przez cały zestaw
 - Pakiet właściciela: packages/engine (test alchemii)
 
+### G-303 Chwyt oburęczny: płytkie przenikania w przysiadzie i skoki przy drabinie
+- Status: zgłoszone (5.11, weryfikator #258 runda 2)
+- Ważność: S4 · Zasięg: dobycie i chowanie w przysiadzie (`drawn` 0,50–0,67) przedramię w kolbie 1–2 cm; heroine z rifle w przysiadzie z celowaniem kolba w ramieniu < 1 cm; przy `drawn` 0,5 broń przeskakuje z pleców do rąk w jednej klatce; wejście i wyjście z drabiny lub mantle obraca tors skokowo do 37°; ślizg stopy w przysiadzie z celowaniem 0,07
+- Pakiet właściciela: packages/engine (renderer, two-hand-hold)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
