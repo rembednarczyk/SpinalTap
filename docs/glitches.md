@@ -1026,6 +1026,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: ziarno 17, −60, przechodzień 1002005, gracz 2 m (25 skoków kąta ok. 0,42 rad) i 1 m (42); `straightWalk` do punktu 6 m przed cywilem raz jest wolny, raz nie
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `steerPoint`)
 
+### G-327 Testy „zapis bez ukrytego stanu” na przechodniach z tłumu nic nie dowodzą
+- Status: zgłoszone (5.11, weryfikator PR #277)
+- Ważność: S3 (test) · Zasięg: przechodnie z tłumu (bez `key`) nie są w zapisie ani w `stateHash`, więc hash po wczytaniu zgadza się przy dowolnym ukrytym stanie; przejrzeć testy wczytania w `flee-dead-zone`, `flee-wall`, `reputation-tiers` i podobne; porównywać `yaw` i pozycję konkretnego cywila albo używać cywila z `key`
+- Pakiet właściciela: packages/sim (testy)
+
+### G-328 Cywil uciekający w ślepy zaułek biega w miejscu w promieniu ucieczki
+- Status: zgłoszone (5.11, weryfikator PR #277; było przed G-317)
+- Ważność: S3 · Zasięg: zaułek ok. (308,4; −101,5), ziarno 11, przechodzień 1002001, gracz o (0,2): przez 10 s nie wychodzi z promienia
+- Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
+
+### G-329 Cywil 294 (koi-regular-2) drga w miejscu podczas paniki po strzałach
+- Status: zgłoszone (5.11, weryfikator PR #277)
+- Ważność: S4 · Zasięg: nagrany przebieg `determinism.test.ts`, ticki ok. 1060–1159
+- Pakiet właściciela: packages/sim/src/systems/ai
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
