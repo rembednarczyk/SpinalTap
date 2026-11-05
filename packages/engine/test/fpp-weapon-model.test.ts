@@ -8,7 +8,7 @@ import { ToonMaterials } from "../src/npr/toon-material";
 import { CharacterKit } from "../src/renderer/character-kit";
 import { buildHeroine } from "../src/renderer/characters";
 import { ModelLibrary } from "../src/renderer/model-library";
-import { weaponUrl } from "./weapon-files";
+import { allWeaponUrls, weaponUrl } from "./weapon-files";
 
 const armed = (active: WeaponLook): AppearanceDescriptor => ({
   weapons: { primary: active, secondary: "pistol", melee: "baton", active: "primary" },
@@ -16,8 +16,8 @@ const armed = (active: WeaponLook): AppearanceDescriptor => ({
   implants: [],
 });
 
-/** Length of the model each gun shows in the viewmodel, as in the hands in TPP: the file's length times the look's size. */
-const LENGTH: Readonly<Record<string, number>> = { pistol: 0.22, revolver: 0.22 * 1.08, smg: 0.42, shotgun: 0.42 * 1.35, rifle: 0.42 * 1.5 };
+/** Length of the model each gun shows in the viewmodel, as in the hands in TPP: each gun its own file (public/weapons/README.md). */
+const LENGTH: Readonly<Record<string, number>> = { pistol: 0.22, revolver: 0.27, smg: 0.42, shotgun: 0.75, rifle: 0.8 };
 
 describe("FPP viewmodel carries the weapon in hand (G-282)", () => {
   const setup = () => {
@@ -33,7 +33,7 @@ describe("FPP viewmodel carries the weapon in hand (G-282)", () => {
       cameraTarget: () => player,
       library: new ModelLibrary(scene, materials),
     });
-    kit.setWeaponModels({ pistol: weaponUrl("pistol"), smg: weaponUrl("smg") });
+    kit.setWeaponModels(allWeaponUrls());
     return { camera, kit, player, rig: buildHeroine(scene, materials, "hero") };
   };
   /** Shown meshes with geometry under the viewmodel's gun holder. */
@@ -54,6 +54,11 @@ describe("FPP viewmodel carries the weapon in hand (G-282)", () => {
     }
     return max - min;
   };
+  /** Name of the mount pivot a mesh hangs under. */
+  const pivotOf = (m: AbstractMesh): string | undefined => {
+    for (let n = m.parent; n; n = n.parent) if (n.name.endsWith("-pivot")) return n.name;
+    return undefined;
+  };
   const placeholder = (camera: CameraRig): boolean => shown(camera).some((m) => m.name === "vm-gun");
 
   it.each(["rifle", "smg", "shotgun", "revolver", "pistol"] as const)("%s: the viewmodel shows its model, sized as in TPP", async (look) => {
@@ -63,6 +68,8 @@ describe("FPP viewmodel carries the weapon in hand (G-282)", () => {
       expect(placeholder(camera)).toBe(false);
       expect(length(camera)).toBeCloseTo(LENGTH[look]!, 2);
     });
+    // Its own file, not another gun's model resized (G-282).
+    expect(new Set(shown(camera).map(pivotOf))).toEqual(new Set([`vm-${look}-pivot`]));
   });
 
   it("switches the model with the weapon, one model shown at a time", async () => {
@@ -73,7 +80,7 @@ describe("FPP viewmodel carries the weapon in hand (G-282)", () => {
       expect(placeholder(camera)).toBe(false);
     }
     // Shown meshes all hang under one model's pivot.
-    const pivots = new Set(shown(camera).map((m) => m.parent?.parent?.name));
+    const pivots = new Set(shown(camera).map(pivotOf));
     expect(pivots.size).toBe(1);
   });
 

@@ -12,6 +12,7 @@ import {
   makePrism,
   terrainSeamGap,
 } from "../src";
+import { makeDeck } from "../src/world/deck";
 import { propEntity } from "../src/world/factory";
 import { NAV_CELL, followDetour, planDetour, straightWalk } from "../src/systems/ai/steering";
 import { BOUNDS, gridOf, hill, testChunks } from "./terrain-world";
@@ -46,6 +47,20 @@ describe("the ground of chunks (ADR-0043)", () => {
     expect(terrainSeamGap(west, { bounds: east.bounds })).toBe(0);
     expect(terrainSeamGap(west, { ...east, bounds: { ...BOUNDS, minX: 10 } })).toBe(0);
     for (let z = -50; z <= 250; z += 3.7) expect(field.heightAt(-1e-9, z)).toBeCloseTo(field.heightAt(1e-9, z), 6);
+  });
+
+  it("finds a deck on the seam of two chunks, the one it belongs to second in the table (G-278)", () => {
+    const flat = gridOf(-10, 0, 10, 3, 2, () => 0);
+    // A deck at y 1 in the east chunk, from the seam x = 0 east; the west chunk comes first.
+    const deck = makeDeck([0, 2, 10, 2, 10, 8, 0, 8], [0, 5, 10, 5], () => 1);
+    const seam = new GroundField([
+      { bounds: { minX: -10, maxX: 0, minZ: 0, maxZ: 10 }, terrain: flat },
+      { bounds: { minX: 0, maxX: 10, minZ: 0, maxZ: 10 }, terrain: flat, decks: [deck] },
+    ]);
+    expect([seam.heightAt(-1e-6, 5), seam.heightAt(0, 5), seam.heightAt(1e-6, 5)]).toEqual([0, 1, 1]);
+    expect(seam.ceilingAt(0, 5, -1)).toBe(seam.ceilingAt(1e-6, 5, -1));
+    expect(seam.ceilingAt(0, 5, -1)).toBeLessThan(1);
+    expect(seam.onLowDeck(0, 5)).toBe(true);
   });
 
   it("measures the slope over half a metre: the hill is walkable, the bank and the ridge are not", () => {
