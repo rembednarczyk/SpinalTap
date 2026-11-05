@@ -2,6 +2,19 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-340 Szczelina 1–2 m między jezdnią a chodnikiem obu mostów Mełgiewskiej (T-167)
+- Status: naprawione w #293 (5.11, b7bc879; `bridge-fill.ts` wypełnia obrys mostu, `bridge-ends.ts` przedłuża koniec drogi mostowej do krawędzi obrysu; `deck-slot` i `deck-step-face` 0; próg przy przyczółku w G-349)
+- Ważność: S2 (spadek 2,5–5 m z mostu) · Zasięg: 2 mosty Nabrzeża, trasa aut · Koszt: mały–średni
+- Gdzie: x 2407–2446, z 243–269 oraz x 2423–2457, z 310–324; ok. 148 m²
+- Przyczyna (przypuszczalna): pomosty z szerokości jezdni i chodnika z osobnych dróg OSM, bez wypełnienia obrysem mostu (`man_made=bridge` w1123148473/474)
+- Pakiet właściciela: tools/osm-import (pomosty z obrysu `man_made=bridge`)
+- Test przyjęcia: kontrola `deck-slot` (punkt poza pomostami z pomostem po obu stronach do 2 m i ziemią ≥ 0,5 m niżej) = 0 poza wnęką T-147
+
+### G-344 Most południowy Mełgiewskiej (w50733068): z jezdni na chodnik postać spada 2,6–4,5 m pod pomost (stopień do 2,05 m)
+- Status: naprawione w #293 razem z G-340 (5.11, b7bc879; jezdnia i chodnik mostu południowego w jednym poziomie, 0,09–0,17 m)
+- Ważność: S2 · Zasięg: jezdnia opada wzdłuż mostu o ok. 2,2 m, pomost chodnika prawie poziomy; z jezdni na chodnik nie da się wejść, po G-340 w rysowaniu stoi tam szara ściana; w Lublinie oba na jednym poziomie. Docelowo wspólny pomost dla obu dróg mostu (por. G-339, T-166) (T-171). Przyczyna: zachodni węzeł w50733068 ok. 8 m przed przyczółkiem, wysokość z NMT na skarpie. Test przyjęcia: kontrola `deck-step-face` (krawędź pomostu z innym pomostem 0,3 m dalej niższym o > 0,3 m, próbki co 0,5 m) = 0 poza T-147
+- Pakiet właściciela: tools/osm-import (pomosty mostów), packages/sim (content/lublin decks)
+
 ### G-342 Zaplecze Novy bez nawierzchni (T-169)
 - Status: naprawione w #296 (5.11, 31f56ed; `T-169/zaplecze-novy`, kurator PRZYJĘTE)
 - Ważność: S4 · Zasięg: x 726–756, z 428–441, ok. 270 m² · Koszt: mały

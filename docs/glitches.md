@@ -1025,23 +1025,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin decks, terrain PADS/RAMPS)
 - Test przyjęcia: kontrola `deck-end-step` (różnica `groundY` 0,15 m przed i za krawędzią > 0,15 m, poza drogą pod mostem) = 0
 
-### G-340 Szczelina 1–2 m między jezdnią a chodnikiem obu mostów Mełgiewskiej (T-167)
-- Status: w PR #293, przyjęte przez orkiestratora po rundzie 2 (5.11, be5fc9e; upadki usunięte na obu mostach, nowy próg przy przyczółku w G-349), czeka na CI
-- Ważność: S2 (spadek 2,5–5 m z mostu) · Zasięg: 2 mosty Nabrzeża, trasa aut · Koszt: mały–średni
-- Gdzie: x 2407–2446, z 243–269 oraz x 2423–2457, z 310–324; ok. 148 m²
-- Przyczyna (przypuszczalna): pomosty z szerokości jezdni i chodnika z osobnych dróg OSM, bez wypełnienia obrysem mostu (`man_made=bridge` w1123148473/474)
-- Pakiet właściciela: tools/osm-import (pomosty z obrysu `man_made=bridge`)
-- Test przyjęcia: kontrola `deck-slot` (punkt poza pomostami z pomostem po obu stronach do 2 m i ziemią ≥ 0,5 m niżej) = 0 poza wnęką T-147
-
 ### G-343 Uciekający cywil przełącza się co krok między dwoma kierunkami przy ścianie (ziarna 3 i 7)
 - Status: zgłoszone (5.11, naprawiacz G-338)
 - Ważność: S4 · Zasięg: ziarno 7, 1002001, gracz 2 m, ok. (309; −99,5): ściana tuż przy końcu sondy 2,5 m, a objazd „na wprost” prowadzi z powrotem obok gracza (242 skoki); ziarno 3, 1002001/1002003, gracz 1 m, ok. (326; −29): `fleeStep` biegnie na zablokowany punkt 6 m dalej (`steerPoint` oddaje cel, objazd pusty), na zmianę z objazdem przy +π/2 (183/186 skoków)
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `fleeStep`, `bendsBack`)
-
-### G-344 Most południowy Mełgiewskiej (w50733068): z jezdni na chodnik postać spada 2,6–4,5 m pod pomost (stopień do 2,05 m)
-- Status: w PR #293 razem z G-340 (decyzja orkiestratora 5.11, weryfikator: wypełnienie na wysokości chodnika jest dla jezdni stropem, G-062)
-- Ważność: S2 · Zasięg: jezdnia opada wzdłuż mostu o ok. 2,2 m, pomost chodnika prawie poziomy; z jezdni na chodnik nie da się wejść, po G-340 w rysowaniu stoi tam szara ściana; w Lublinie oba na jednym poziomie. Docelowo wspólny pomost dla obu dróg mostu (por. G-339, T-166) (T-171). Przyczyna: zachodni węzeł w50733068 ok. 8 m przed przyczółkiem, wysokość z NMT na skarpie. Test przyjęcia: kontrola `deck-step-face` (krawędź pomostu z innym pomostem 0,3 m dalej niższym o > 0,3 m, próbki co 0,5 m) = 0 poza T-147
-- Pakiet właściciela: tools/osm-import (pomosty mostów), packages/sim (content/lublin decks)
 
 ### G-345 Gołe podłoże wokół stanowisk Dworca Autobusowego (x 808–870)
 - Status: zgłoszone (5.11, naprawiacz G-341)
