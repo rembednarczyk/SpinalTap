@@ -83,8 +83,12 @@ export type ReputationCause =
    * the targets (`ContractTally`, ADR-0029).
    */
   | { readonly type: "contract-completed"; readonly kind?: ContractKind; readonly clean?: boolean }
-  /** A crime of the player's reached the security (`CrimeReported`): the street judges what it sees. */
-  | { readonly type: "crime-reported"; readonly crime: CrimeKind }
+  /**
+   * A crime of the player's reached the security (`CrimeReported`): the street judges what it
+   * sees. `charged`: what the same victim's crimes already cost the street (0 or less), so one
+   * deed counts once: an assault reported, then the murder of its victim, cost a murder.
+   */
+  | { readonly type: "crime-reported"; readonly crime: CrimeKind; readonly charged?: number }
   | { readonly type: "contract-failed"; readonly kind: ContractKind }
   | { readonly type: "clinic-purchase"; readonly kind: "cyberware" | "item" };
 
@@ -202,7 +206,8 @@ export const reputationEffects = (cause: ReputationCause, standing: ReputationSt
     case "contract-completed":
       return completed(cause.kind ?? "eliminate", cause.clean ?? false);
     case "crime-reported": {
-      const delta = CRIME_REPORTED_COST[cause.crime] ?? 0;
+      // Only the worse of a victim's crimes counts: the rest of it, if it is worse than what was charged.
+      const delta = Math.min(0, (CRIME_REPORTED_COST[cause.crime] ?? 0) - (cause.charged ?? 0));
       return delta === 0 ? [] : [{ faction: "civilians", delta }];
     }
     case "contract-failed":

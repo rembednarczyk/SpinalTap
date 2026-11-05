@@ -119,15 +119,36 @@ const setHeat = (ctx: SimContext, heat: HeatState, force = false): void => {
 };
 
 /** A crime reached the security: CrimeReported, the heat, and its people nearby go to look. */
-export const report = (ctx: SimContext, crime: CrimeKind, channel: WitnessChannel, witnessId: EntityId, offenderId: EntityId, at: Vec3): void => {
+export const report = (
+  ctx: SimContext,
+  crime: CrimeKind,
+  channel: WitnessChannel,
+  witnessId: EntityId,
+  offenderId: EntityId,
+  at: Vec3,
+  victim?: EntityId,
+): void => {
   ctx.bus.emit("CrimeReported", { crime, channel, witnessId, offenderId, at: { ...at } });
-  // One report per incident (ADR-0029), so the street counts it once (ADR-0070).
-  applyReputationCause(ctx, { type: "crime-reported", crime });
+  chargeStreet(ctx, crime, victim);
   const faction = securityAt(ctx, at);
   setHeat(ctx, reportCrime(ctx.state.domain.heat, crime, faction, at), true);
   noteAlarm(ctx);
   const hunting = ctx.state.domain.heat.faction;
   if (hunting) sendSecurity(ctx, hunting, at);
+};
+
+/**
+ * What a report costs the street (ADR-0070): one per incident (ADR-0029), and one deed once: the
+ * murder of a victim whose assault was reported costs only the rest of a murder, an assault
+ * reported after its victim's murder nothing.
+ */
+const chargeStreet = (ctx: SimContext, crime: CrimeKind, victim: EntityId | undefined): void => {
+  const charged = ctx.session.street.charged;
+  const before = victim === undefined ? 0 : (charged.get(victim) ?? 0);
+  const civilians = ctx.state.domain.reputation.civilians;
+  applyReputationCause(ctx, { type: "crime-reported", crime, charged: before });
+  const cost = ctx.state.domain.reputation.civilians - civilians;
+  if (victim !== undefined && cost !== 0) charged.set(victim, before + cost);
 };
 
 /** The security of `faction` within `REPORT_LEAD_RADIUS` of `at` goes to look there. */
@@ -200,14 +221,14 @@ const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
   for (const cam of inCreationOrder(ctx.world.with("device"))) {
     if (!cameraSees(ctx, cam, player)) continue;
     noteDetected(ctx);
-    report(ctx, o.crime, "camera", cam.id, player.id, o.at);
+    report(ctx, o.crime, "camera", cam.id, player.id, o.at, o.victim);
     bodyReported(ctx, o.body);
     return;
   }
   const security = securityAt(ctx, o.at);
   for (const g of inCreationOrder(ctx.world.with("ai"))) {
     if (!patrolWitness(ctx, g, player, security)) continue;
-    report(ctx, o.crime, "patrol", g.id, player.id, o.at);
+    report(ctx, o.crime, "patrol", g.id, player.id, o.at, o.victim);
     bodyReported(ctx, o.body);
     return;
   }
@@ -216,7 +237,14 @@ const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
     scare(ctx, c, "fleeing", player.position);
     const m = c.civilian.crowd;
     if (!m) continue;
-    m.call = { crime: o.crime, at: { ...o.at }, incident: o.incident, left: WITNESS_CALL_SECONDS, ...(o.body === undefined ? {} : { body: o.body }) };
+    m.call = {
+      crime: o.crime,
+      at: { ...o.at },
+      incident: o.incident,
+      left: WITNESS_CALL_SECONDS,
+      ...(o.body === undefined ? {} : { body: o.body }),
+      ...(o.victim === undefined ? {} : { victim: o.victim }),
+    };
     ctx.bus.emit("WitnessCalling", { witnessId: c.id, crime: o.crime, duration: WITNESS_CALL_SECONDS });
   }
 };
@@ -259,7 +287,7 @@ const runCalls = (ctx: SimContext, player: Entity | null, dt: number): void => {
 
 const callThrough = (ctx: SimContext, witnessId: EntityId, call: WitnessCall, player: Entity | null): void => {
   dropCalls(ctx, call.incident);
-  report(ctx, call.crime, "civilian", witnessId, player?.id ?? 0, call.at);
+  report(ctx, call.crime, "civilian", witnessId, player?.id ?? 0, call.at, call.victim);
   bodyReported(ctx, call.body);
 };
 

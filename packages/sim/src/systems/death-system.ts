@@ -67,7 +67,7 @@ export const deathSystem: System = {
       if (e.key) raiseFlag(ctx, deadFlag(e.key));
       const byPlayer = playerId !== undefined && e.lastHitBy === playerId;
       // Killing someone who was not fighting is a murder once someone sees it (ADR-0029).
-      if (byPlayer && e.wronged) offend(ctx, "murder", e.position);
+      if (byPlayer && e.wronged) offend(ctx, "murder", e.position, undefined, e.id);
       if (byPlayer && !isContractTarget(ctx, e)) noteTally(ctx, (t) => ({ ...t, extraKills: t.extraKills + 1 }));
       disturb(ctx, "body", e.position, BODY_NOISE, e.id);
       if (e.tag) raiseFlag(ctx, killedFlag(e.tag));

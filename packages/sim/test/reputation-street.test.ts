@@ -65,7 +65,7 @@ describe("a dead Hebi ganger and the street (ADR-0070)", () => {
     expect(sim.domain.reputation).toMatchObject({ hebi: -4, civilians: 0 });
   });
 
-  it("from behind, unseen: nothing with the street; seen, the reports cost it (assault −1, murder −2)", () => {
+  it("from behind, unseen: nothing with the street; seen, one deed costs once: a murder, −2", () => {
     const unseen = streetWith({});
     ganger(unseen, 4000);
     takeDown(unseen, true);
@@ -78,8 +78,59 @@ describe("a dead Hebi ganger and the street (ADR-0070)", () => {
     patrol(seen, 4100, offset(seen, 7, 0), -Math.PI / 2);
     const reports = collect<DomainEvents["CrimeReported"]>(seen, "CrimeReported");
     takeDown(seen, true);
+    // Two reports of one deed (the blow, the death): the street counts the murder, not both.
     expect(reports.map((r) => r.crime)).toEqual(["assault", "murder"]);
-    expect(seen.domain.reputation).toMatchObject({ hebi: -4, civilians: -3 });
+    expect(seen.domain.reputation).toMatchObject({ hebi: -4, civilians: -2 });
+  });
+});
+
+describe("witnesses: one deed costs the street once (ADR-0070)", () => {
+  /** A Hebi ganger knocked out from behind with a patrol watching: a reported assault. */
+  const assaulted = () => {
+    const sim = streetWith({});
+    const g = ganger(sim, 4000);
+    const w = patrol(sim, 4100, offset(sim, 7, 0), -Math.PI / 2);
+    const reports = collect<DomainEvents["CrimeReported"]>(sim, "CrimeReported");
+    takeDown(sim);
+    expect(reports.map((r) => r.crime)).toEqual(["assault"]);
+    return { sim, g, w, reports };
+  };
+
+  /** The player finishes the one she knocked out (it was not fighting: a murder). */
+  const finish = (sim: Simulation, g: Entity): void => {
+    g.lastHitBy = sim.player()!.id;
+    g.health = { current: 0, max: g.health!.max };
+    sim.step(CROUCH);
+  };
+
+  it("the victim lives: the assault costs −1", () => {
+    const { sim } = assaulted();
+    run(sim, ticks(2), CROUCH);
+    expect(sim.domain.reputation.civilians).toBe(-1);
+  });
+
+  it("the victim dies later in sight of the witness: the murder costs only the rest, −2 in all", () => {
+    const { sim, g, reports } = assaulted();
+    finish(sim, g);
+    expect(reports.map((r) => r.crime)).toEqual(["assault", "murder"]);
+    expect(sim.domain.reputation).toMatchObject({ hebi: -4, civilians: -2 });
+  });
+
+  it("the victim dies unseen: the reported assault stays −1", () => {
+    const { sim, g, w, reports } = assaulted();
+    sim.world.remove(w);
+    finish(sim, g);
+    run(sim, ticks(2), CROUCH);
+    expect(reports.map((r) => r.crime)).toEqual(["assault"]);
+    expect(sim.domain.reputation.civilians).toBe(-1);
+  });
+
+  it("another victim's murder costs its own −2", () => {
+    const { sim } = assaulted();
+    const other = ganger(sim, 4001, 3);
+    other.wronged = true;
+    finish(sim, other);
+    expect(sim.domain.reputation.civilians).toBe(-3);
   });
 });
 

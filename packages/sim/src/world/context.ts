@@ -107,6 +107,8 @@ export interface Offence {
   readonly incident: number;
   /** Someone knocked out by it (ADR-0065): once reported, its body brings no second call. */
   readonly body?: EntityId;
+  /** Whom it was done to (an assault, a murder): one deed costs the street once (ADR-0070). */
+  readonly victim?: EntityId;
 }
 
 export interface StreetLog {
@@ -114,6 +116,11 @@ export interface StreetLog {
   offences: Offence[];
   /** Incidents so far (ids of offences); transient, a loaded game counts from 0 again. */
   incidents: number;
+  /**
+   * What the reported crimes against each victim have cost the street so far (ADR-0070).
+   * Transient like `wronged`: a loaded game knows no wronged victims, so nothing to count twice.
+   */
+  charged: Map<EntityId, number>;
 }
 
 export interface SessionWatch {
@@ -142,7 +149,7 @@ export const freshSession = (): SessionState => ({
   focusId: null,
   focusPrompt: null,
   lastThreat: null,
-  street: { disturbances: [], offences: [], incidents: 0 },
+  street: { disturbances: [], offences: [], incidents: 0, charged: new Map() },
   watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0, sent: 0, uploadId: null },
   passenger: null,
   street2: { encounter: null, npcs: {}, micro: null, district: null },
