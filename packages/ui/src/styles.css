@@ -979,6 +979,14 @@ kbd {
 .inv__stat { display: flex; gap: 6px; align-items: baseline; }
 .inv__stat dt { color: var(--ink-dim); }
 .inv__stat dd { margin: 0; font-family: var(--font-mono); }
+/* The HUD's health bar, with the part a selected medkit or meal would fill. */
+.inv__health { display: flex; flex-direction: column; gap: 3px; }
+.inv__hp { position: relative; height: 8px; background: rgba(255, 255, 255, 0.08); }
+.inv__hp-fill { height: 100%; background: linear-gradient(90deg, var(--cyan), #a8fff6); transition: width 150ms; }
+.inv__hp-fill--low { background: linear-gradient(90deg, var(--danger), var(--amber)); }
+.inv__hp-gain { position: absolute; top: 0; bottom: 0; background: rgba(109, 255, 176, 0.4); box-shadow: inset 0 0 0 1px var(--ok); }
+.inv__hp-label { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 13px; color: var(--ink-dim); }
+.inv__hp-plus { color: var(--ok); }
 
 .inv__mid { width: calc(var(--cell) * 6 + var(--gap) * 5); }
 .inv__filters { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }

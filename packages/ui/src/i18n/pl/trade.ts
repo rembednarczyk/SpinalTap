@@ -69,6 +69,7 @@ export const plTrade = {
   "inventory.stat.armor-leg": "Pancerz nóg",
   "inventory.stat.speed": "Szybkość",
   "inventory.stat.heal": "Leczy",
+  "inventory.health.gain": "+{hp} HP",
   "inventory.stats.armor": "Pancerz",
   "inventory.stats.armorHint": "Pancerz: głowa, tors, ręce, nogi",
   "inventory.stats.armorValue": "G{head} T{torso} R{arm} N{leg}",
