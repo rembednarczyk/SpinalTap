@@ -74,8 +74,8 @@ describe("micro-events (ADR-0034)", () => {
     run(sim, 2);
     expect(ended).toEqual([{ encounterId: run0.id, outcome: "won" }]);
     expect(sim.domain.wallet.eddies).toBeGreaterThanOrEqual(eddies + MICRO_EVENT_REWARD.mugging.eddies);
-    // The thanks of the street, less what the kills themselves cost with the civilians.
-    expect(sim.domain.reputation.civilians).toBeGreaterThan(civ);
+    // The thanks of the street: the muggers are the event's own, they do not count on their own (ADR-0070).
+    expect(sim.domain.reputation.civilians).toBe(civ + MICRO_EVENT_REWARD.mugging.civilians);
     expect(sim.domain.flags.filter((f) => f.includes("micro:"))).toEqual([]);
   });
 

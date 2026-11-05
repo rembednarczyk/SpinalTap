@@ -30,6 +30,7 @@ import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { codeKnown } from "../world/hook-tracker";
 import { disturb, noteAlarm, noteDetected } from "../world/street";
+import { applyReputationCause } from "../world/domain-ops";
 import { incapacitated } from "../world/takedown";
 import { coveredFrom } from "../world/disguise";
 import { difficultyOf } from "../world/difficulty";
@@ -120,6 +121,8 @@ const setHeat = (ctx: SimContext, heat: HeatState, force = false): void => {
 /** A crime reached the security: CrimeReported, the heat, and its people nearby go to look. */
 export const report = (ctx: SimContext, crime: CrimeKind, channel: WitnessChannel, witnessId: EntityId, offenderId: EntityId, at: Vec3): void => {
   ctx.bus.emit("CrimeReported", { crime, channel, witnessId, offenderId, at: { ...at } });
+  // One report per incident (ADR-0029), so the street counts it once (ADR-0070).
+  applyReputationCause(ctx, { type: "crime-reported", crime });
   const faction = securityAt(ctx, at);
   setHeat(ctx, reportCrime(ctx.state.domain.heat, crime, faction, at), true);
   noteAlarm(ctx);
