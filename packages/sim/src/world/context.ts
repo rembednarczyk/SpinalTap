@@ -119,8 +119,11 @@ export interface StreetLog {
   /**
    * What the reported assaults on each victim have cost the street so far (ADR-0070), until
    * its murder is reported. Not saved, like `wronged`: after a load the bodies get new ids, so
-   * the murder of a victim whose assault was reported before the save costs a whole murder
-   * (−3 instead of −2 in all). Accepted, limited to −1 (ADR-0070, „Zapis”).
+   * a reported murder costs a whole −2 without the assaults reported before the save, up to −2
+   * more (two camera knockouts, it wakes, killed unseen and found: −2 in a run, −4 after a
+   * load). The other way, as `wronged` is not saved either: knocked out in sight of a patrol,
+   * saved, finished in sight of one costs −1 and no heat instead of −2 and heat 1→2.
+   * Both accepted (ADR-0070, „Zapis”).
    */
   charged: Map<EntityId, number>;
 }
