@@ -1104,6 +1104,17 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (test)
 - Test przyjęcia: najdłuższy test pliku lokalnie ≤ 1,5 s
 
+### G-358 O 23:00 sprzedawcy północnego targu uciekają na każdym progu reputacji
+- Status: zgłoszone (5.11, weryfikator PR #299, do potwierdzenia)
+- Ważność: S3 · Zasięg: sonda sesji, druga doba 23:00, gracz 1,5 m od straganu Fumiko: Fumiko (sklep otwarty) i Kenta w stanie tłumu „fleeing”, Goro się przesuwa; tak samo przy reputacji 0, +50, −30, −60, −100. Możliwy niezidentyfikowany alarm na targu albo artefakt przeskoku zegara w sondzie · Koszt: nieznany
+- Pakiet właściciela: packages/sim (`systems/ai`, tłum)
+- Test przyjęcia: sesja bez renderera o 23:00 przy straganie Fumiko bez strzałów i walki: żaden sprzedawca nie ucieka
+
+### G-359 Odmowa wrogiej kliniki: „Ammo and basics, nothing more.”, choć Mori nie sprzedaje amunicji
+- Status: zgłoszone (5.11, weryfikator PR #299)
+- Ważność: S4 (tekst) · Zasięg: komunikat odmowy wspólny dla sklepów; klinika potrzebuje własnego wariantu (en i pl) · Koszt: mały
+- Pakiet właściciela: packages/ui (i18n `trade`), packages/core (klucz odmowy per sklep)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
