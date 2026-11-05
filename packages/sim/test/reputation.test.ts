@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CYBERWARE_CATALOG, STACKABLE_CATALOG, type ReputationState, priceWithTerms, shopTerms } from "@seki/core";
 import { FLEE_RADIUS, HOSTILE_AGGRO_MULTIPLIER, KRAKOWSKIE_SITE_POINTS, Simulation, effectiveAggroRange, ground, stateHash } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { byKey, collect, input, passerbyOnDeptak, run, teleportPlayer } from "./helpers";
 
 /** A fresh game whose standings are patched in, built the way a load would build it. */
 const simWith = (reputation: Partial<ReputationState>, seed = 3): Simulation => {
@@ -163,12 +163,6 @@ describe("gangers and Hebi's stance", () => {
 });
 
 describe("civilians and the street's opinion", () => {
-  const umeDistance = (sim: Simulation) => {
-    const ume = byKey(sim, "ume")!;
-    const p = sim.player()!;
-    return Math.hypot(ume.position.x - p.position.x, ume.position.z - p.position.z);
-  };
-
   it("stay put while the street is neutral", () => {
     const sim = simWith({});
     const ume = byKey(sim, "ume")!;
@@ -178,45 +172,53 @@ describe("civilians and the street's opinion", () => {
     expect(byKey(sim, "ume")!.position).toEqual(home);
   });
 
-  it("run from a feared player, then walk back home", () => {
-    const sim = simWith({ civilians: -30 });
+  // ADR-0070: only passers-by run, and only from a street hostile to the player (≤ -50); Ume, with
+  // her conversation, keeps to her spot (reputation-tiers.test.ts).
+  const walkerDistance = (sim: Simulation, id: number) => {
+    const w = [...sim.world].find((e) => e.id === id)!;
+    const p = sim.player()!;
+    return Math.hypot(w.position.x - p.position.x, w.position.z - p.position.z);
+  };
+
+  it("run from a player the street is hostile to, then walk back to their spot", () => {
+    const sim = simWith({ civilians: -60 });
     const reactions = collect<{ reaction: string; faction: string }>(sim, "NpcReacted");
-    const home = byKey(sim, "ume")!.position;
-    teleportPlayer(sim, { x: home.x + 2, y: home.y, z: home.z });
+    const walker = passerbyOnDeptak(sim);
+    const spot = { ...walker.position };
     run(sim, 60);
-    expect(umeDistance(sim)).toBeGreaterThan(2.5);
-    expect(reactions).toEqual([{ entityId: byKey(sim, "ume")!.id, faction: "civilians", reaction: "flee" }]);
-    // The player walks away; once out of range she returns to her spot.
-    teleportPlayer(sim, ground(290, -88));
+    expect(walkerDistance(sim, walker.id)).toBeGreaterThan(2.5);
+    expect(reactions).toEqual([{ entityId: walker.id, faction: "civilians", reaction: "flee" }]);
+    // The player walks away; once out of range it returns to its spot.
+    teleportPlayer(sim, ground(290, -60));
     run(sim, 900);
-    const ume = byKey(sim, "ume")!;
-    expect(Math.hypot(ume.position.x - home.x, ume.position.z - home.z)).toBeLessThanOrEqual(0.3);
-    expect(ume.velocity).toEqual({ x: 0, y: 0, z: 0 });
+    const now = [...sim.world].find((e) => e.id === walker.id)!;
+    expect(Math.hypot(now.position.x - spot.x, now.position.z - spot.z)).toBeLessThanOrEqual(0.5);
   });
 
-  it("cue one escape however long they hover at the flee radius, a new one after a real break (G-281)", () => {
-    const sim = simWith({ civilians: -30 });
+  it("cue one escape however long they stand off past the flee radius, a new one after a real break (G-281)", () => {
+    const sim = simWith({ civilians: -60 });
     const reactions = collect<{ reaction: string }>(sim, "NpcReacted");
-    const home = byKey(sim, "ume")!.position;
-    teleportPlayer(sim, { x: home.x + 2, y: home.y, z: home.z });
-    // Run off, then step back towards her spot and off again at the edge of the radius.
+    const walker = passerbyOnDeptak(sim);
+    const spot = { ...walker.position };
+    // Runs off and stands past the radius, its spot within it (the dead zone, ADR-0070).
     run(sim, 1200);
-    expect(umeDistance(sim)).toBeGreaterThan(FLEE_RADIUS - 0.5);
-    expect(umeDistance(sim)).toBeLessThan(FLEE_RADIUS + 0.5);
+    expect(walkerDistance(sim, walker.id)).toBeGreaterThanOrEqual(FLEE_RADIUS);
+    expect(walkerDistance(sim, walker.id)).toBeLessThanOrEqual(FLEE_RADIUS + 2);
     expect(reactions).toHaveLength(1);
-    teleportPlayer(sim, ground(290, -88));
+    teleportPlayer(sim, ground(290, -60));
     run(sim, 900);
-    teleportPlayer(sim, { x: home.x + 2, y: home.y, z: home.z });
+    teleportPlayer(sim, { x: spot.x + 2, y: spot.y, z: spot.z });
     run(sim, 60);
     expect(reactions).toHaveLength(2);
   });
 
   it("only flee within the flee radius", () => {
-    const sim = simWith({ civilians: -30 });
-    const home = byKey(sim, "ume")!.position;
-    teleportPlayer(sim, { x: home.x + FLEE_RADIUS + 1.5, y: home.y, z: home.z });
+    const sim = simWith({ civilians: -60 });
+    const walker = passerbyOnDeptak(sim, FLEE_RADIUS + 1.5);
+    const spot = { ...walker.position };
     run(sim, 60);
-    expect(byKey(sim, "ume")!.position).toEqual(home);
+    const now = [...sim.world].find((e) => e.id === walker.id)!;
+    expect(Math.hypot(now.position.x - spot.x, now.position.z - spot.z)).toBeLessThan(0.05);
   });
 
   it("the ripperdoc does not run: the clinic is a faction of its own", () => {
@@ -230,9 +232,8 @@ describe("civilians and the street's opinion", () => {
   });
 
   it("a load mid-escape continues exactly like the original", () => {
-    const sim = simWith({ civilians: -30 }, 11);
-    const home = byKey(sim, "ume")!.position;
-    teleportPlayer(sim, { x: home.x + 2, y: home.y, z: home.z });
+    const sim = simWith({ civilians: -60 }, 11);
+    passerbyOnDeptak(sim);
     run(sim, 20);
     const restored = Simulation.fromSnapshot(sim.snapshot(null, "x", ""));
     const frame = input({ moveX: -1 });

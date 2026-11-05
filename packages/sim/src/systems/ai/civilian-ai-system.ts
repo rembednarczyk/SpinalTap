@@ -1,5 +1,5 @@
 import { BehaviourTree, State } from "mistreevous";
-import { type CrowdState, type EntityId, type Vec3, factionStance } from "@seki/core";
+import { type CrowdState, type EntityId, type Vec3, reputationTier } from "@seki/core";
 import type { CrowdMind, Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
@@ -12,8 +12,13 @@ import { steerPoint, straightWalk } from "./steering";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
 
-/** Civilians run from a feared player closer than this (metres). */
+/** Passers-by run from a player the street is hostile to (ADR-0070) closer than this (metres). */
 export const FLEE_RADIUS = 7;
+/**
+ * A wary street (ADR-0070) only makes way: a passer-by steps back at a walk from a player
+ * closer than this (metres), watching them, and says nothing.
+ */
+export const YIELD_RADIUS = 3.5;
 /**
  * An escape from the player ends (and the next one gets its own cue) only this far from them or
  * once the street stops fearing them: a passer-by going back to its spot steps over FLEE_RADIUS
@@ -21,7 +26,7 @@ export const FLEE_RADIUS = 7;
  */
 const FLEE_CUE_RESET = 2 * FLEE_RADIUS;
 /**
- * A civilian that fears the player and whose spot is within the flee radius plus this (metres)
+ * A civilian that fears the player and whose spot is within its flee radius plus this (metres)
  * does not go back to it, only stands past the radius and watches the player (ADR-0070): going
  * back stepped it over the radius again, and it turned in and out of it 36 times a second. The
  * rule reads only positions and reputation, so a load mid-stand-off goes on the same.
@@ -96,6 +101,15 @@ const spotOf = (c: Civilian): Vec3 | null => {
   return c.schedule?.pose?.position ?? c.civilian.home;
 };
 
+/**
+ * A resident with a shop or a conversation (ADR-0070): the street's opinion changes its prices
+ * and its words, it does not chase it off its spot. A shot still does (ADR-0029).
+ */
+const isResident = (c: Entity): boolean => c.interactable?.kind === "shop" || c.interactable?.kind === "dialogue";
+
+/** How a passer-by keeps away from the player: runs (hostile street), makes way (wary) or not at all. */
+type PlayerFear = "flee" | "yield" | null;
+
 const hasRoutine = (c: Civilian): c is Civilian & { passerby: NonNullable<Entity["passerby"]> } => c.passerby !== undefined;
 
 class CivilianAgent {
@@ -111,15 +125,41 @@ class CivilianAgent {
   IsFleeing = (): boolean => this.crowd() === "fleeing";
   IsAlarmed = (): boolean => this.crowd() === "alarmed";
 
-  FearsPlayer = (): boolean => !!this.ctx && !!this.self && factionStance(this.ctx.state.domain.reputation, this.self.faction ?? "civilians") === "hostile";
-  PlayerNearby = (): boolean => this.player !== null && this.distance <= FLEE_RADIUS;
+  /** The street's opinion of the player by tiers (ADR-0070); residents are never chased off. */
+  private playerFear = (): PlayerFear => {
+    const { ctx, self } = this;
+    if (!ctx || !self || isResident(self)) return null;
+    const tier = reputationTier(ctx.state.domain.reputation[self.faction ?? "civilians"]);
+    return tier === "hostile" ? "flee" : tier === "wary" ? "yield" : null;
+  };
+  private fearRadius = (): number => (this.playerFear() === "yield" ? YIELD_RADIUS : FLEE_RADIUS);
+
+  FearsPlayer = (): boolean => this.playerFear() !== null;
+  PlayerNearby = (): boolean => this.player !== null && this.distance <= this.fearRadius();
 
   /** Past the flee radius, in the dead zone, with its spot in it too: going back would step it in. */
   SpotNearPlayer = (): boolean => {
     const { self, player } = this;
-    if (!self || !player || this.distance > FLEE_RADIUS + FLEE_DEAD_ZONE) return false;
+    const reach = this.fearRadius() + FLEE_DEAD_ZONE;
+    if (!self || !player || this.distance > reach) return false;
     const spot = spotOf(self);
-    return spot !== null && Math.hypot(spot.x - player.position.x, spot.z - player.position.z) <= FLEE_RADIUS + FLEE_DEAD_ZONE;
+    return spot !== null && Math.hypot(spot.x - player.position.x, spot.z - player.position.z) <= reach;
+  };
+
+  /** A resident of a street hostile to the player (ADR-0070), with the player close. */
+  ResentsPlayer = (): boolean => {
+    const { ctx, self } = this;
+    if (!ctx || !self || !isResident(self) || this.player === null || this.distance > FLEE_RADIUS) return false;
+    return reputationTier(ctx.state.domain.reputation[self.faction ?? "civilians"]) === "hostile";
+  };
+
+  /** Keeps to its spot and its plan, and turns to the player while it stands. */
+  StayFacingPlayer = (): State => {
+    const state = this.ReturnHome();
+    const { self, player } = this;
+    if (!self || !player || self.velocity.x !== 0 || self.velocity.z !== 0) return state;
+    self.yaw = Math.atan2(player.position.x - self.position.x, player.position.z - self.position.z);
+    return state;
   };
 
   /** Stands where it is and keeps an eye on the player. */
@@ -143,7 +183,7 @@ class CivilianAgent {
     const { ctx, self } = this;
     const from = self?.civilian.crowd?.from;
     if (!ctx || !self || !from) return State.FAILED;
-    this.runFrom(ctx, self, from, this.player?.yaw ?? 0);
+    this.runFrom(ctx, self, from, this.player?.yaw ?? 0, CIVILIAN_FLEE_SPEED);
     return State.SUCCEEDED;
   };
 
@@ -159,7 +199,13 @@ class CivilianAgent {
   FleeFromPlayer = (): State => {
     const { ctx, self, player } = this;
     if (!ctx || !self || !player) return State.FAILED;
-    this.runFrom(ctx, self, player.position, player.yaw);
+    if (this.playerFear() === "yield") {
+      // Makes way: a step back at a walk, an eye on the player, no word (no NpcReacted).
+      this.runFrom(ctx, self, player.position, player.yaw, CIVILIAN_WALK_SPEED);
+      self.yaw = Math.atan2(player.position.x - self.position.x, player.position.z - self.position.z);
+      return State.SUCCEEDED;
+    }
+    this.runFrom(ctx, self, player.position, player.yaw, CIVILIAN_FLEE_SPEED);
     if (!this.fleeing) {
       this.fleeing = true;
       ctx.bus.emit("NpcReacted", { entityId: self.id, faction: self.faction ?? "civilians", reaction: "flee" });
@@ -167,7 +213,7 @@ class CivilianAgent {
     return State.SUCCEEDED;
   };
 
-  private runFrom(ctx: SimContext, self: Civilian, from: Vec3, fallbackYaw: number): void {
+  private runFrom(ctx: SimContext, self: Civilian, from: Vec3, fallbackYaw: number, speed: number): void {
     const dx = self.position.x - from.x;
     const dz = self.position.z - from.z;
     const d = Math.hypot(dx, dz);
@@ -192,7 +238,7 @@ class CivilianAgent {
     const sz = p.z - self.position.z;
     const s = Math.hypot(sx, sz);
     const [vx, vz] = s < 1e-6 ? [ux, uz] : [sx / s, sz / s];
-    self.velocity = { x: vx * CIVILIAN_FLEE_SPEED, y: 0, z: vz * CIVILIAN_FLEE_SPEED };
+    self.velocity = { x: vx * speed, y: 0, z: vz * speed };
     self.yaw = Math.atan2(vx, vz);
   }
 
@@ -200,7 +246,7 @@ class CivilianAgent {
   ReturnHome = (): State => {
     const { self, ctx } = this;
     if (!self) return State.FAILED;
-    if (this.distance > FLEE_CUE_RESET || !this.FearsPlayer()) this.fleeing = false;
+    if (this.distance > FLEE_CUE_RESET || this.playerFear() !== "flee") this.fleeing = false;
     // A background passer-by goes on with its routine (ADR-0040).
     if (ctx && hasRoutine(self)) {
       walkRoutine(ctx, self, ctx.dt);
@@ -240,10 +286,10 @@ const calmDown = (ctx: SimContext, c: Civilian, dt: number): void => {
 
 /**
  * Bystanders react to the street (ADR-0029) and to its opinion of the player: scared by a
- * disturbance they cower, run or watch, and calm down after a while; when the civilians'
- * stance is hostile they keep their distance from the player; otherwise they stay at (or walk
- * back to) their spot or follow their daily plan. Uses no randomness, so it cannot shift the
- * RNG stream of the combat systems.
+ * disturbance they cower, run or watch, and calm down after a while; when the civilians think
+ * badly of the player, passers-by keep their distance (ADR-0070); otherwise they stay at (or
+ * walk back to) their spot or follow their daily plan. Uses no randomness, so it cannot shift
+ * the RNG stream of the combat systems.
  */
 export const createCivilianAiSystem = (): System => {
   const brains = new Map<EntityId, { tree: BehaviourTree; agent: CivilianAgent }>();
