@@ -69,12 +69,18 @@ describe("M2: NPCs react to reputation", () => {
     expect(refusal?.text).toBe("Not for you. Ammo and basics, nothing more.");
   });
 
-  it("the street runs from a feared Seki", async () => {
-    const { session, ui } = await sessionWith({ civilians: -40 });
-    standNextTo(session, "ume");
+  // ADR-0070: the street runs only when it is hostile (≤ -50), and only its passers-by; Ume, who
+  // talks to Seki, keeps to her spot (reputation-tiers-session.test.ts covers the wary street).
+  it("the street runs from a Seki it is hostile to", async () => {
+    const { session, ui } = await sessionWith({ civilians: -70 });
+    steps(session, 5);
+    const walker = session.sim.world.with("civilian", "passerby").entities.find((e) => !e.interactable)!;
+    const p = session.sim.player()!;
+    p.position = { ...walker.position, x: walker.position.x + 1.5 };
+    p.prevPosition = p.position;
     steps(session, 45);
     expect(ui.getState().toasts.map((t) => t.title)).toContain("Passers-by run away");
-    expect(ui.getState().reputation.civilians).toBe(-40);
+    expect(ui.getState().reputation.civilians).toBe(-70);
   });
 
   it("a friendly gang lets Seki walk into the alley", async () => {
