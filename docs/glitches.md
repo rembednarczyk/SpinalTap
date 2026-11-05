@@ -967,7 +967,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (testy `flee-dead-zone`, `reputation-tiers`)
 
 ### G-318 Zejście chodem z zachodniego dachu przy `targ-escape-2` przelatuje nad balkonem: upadek 9,1 m na posadzkę targu
-- Status: zgłoszone (5.11, naprawiacz G-308)
+- Status: w PR #288 (5.11; balkon `BALCONY_DEPTH` 3,4 m)
 - Ważność: S3 · Zasięg: `targ-escape-2`, balkon z 64–65,3; przy 4,1 m/s graczka mija balkon i ląduje na posadzce targu; do oceny, czy balkon ma łapać, czy krawędź ma być dalej
 - Pakiet właściciela: packages/sim (treść targu, ruch)
 
@@ -997,7 +997,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (mapcity/ground-plan, cell-builder)
 
 ### G-326 Uciekający cywil drga przy objeździe: `steerPoint` przełącza się między drogą prosto a objazdem
-- Status: w PR #286 (5.11; histereza objazdu `fleeStep`, `wayRound`; złote hashe zmienione)
+- Status: w PR #286, runda 2 (5.11; histereza przyjęta, `wayRound` przypinał cywila do ściany przed stojącym graczem: ziarno 43, 1002008)
 - Ważność: S3 · Zasięg: ziarno 17, −60, przechodzień 1002005, gracz 2 m (25 skoków kąta ok. 0,42 rad) i 1 m (42); `straightWalk` do punktu 6 m przed cywilem raz jest wolny, raz nie; także: w rogu (316; −95) `steerPoint` zawraca „prosto od gracza” niemal wprost na gracza (−1,25 rad), na main przy zatrzymaniu gracza ≥ 2 m ok. 465 skoków; drganie ±0,5 rad w miejscu przy stałym wyborze kierunku (ziarno 23, ok. (262; −81))
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `steerPoint`)
 
@@ -1035,11 +1035,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #278; sprzed tego PR, ADR-0065)
 - Ważność: S3 · Zasięg: `corpseOf` przenosi na zwłoki `reported` z nokautu (`bodies.ts:75`), więc patrol, który znajdzie świeże ciało, go nie zgłasza; po wczytaniu dobicie ogłuszonego na oczach patrolu też nie jest przestępstwem, bo `wronged` jest przejściowe, a `offend` w `death-system.ts:72` nie czyta `downed.fought`
 - Pakiet właściciela: packages/sim (bodies, death-system, crime-system)
-
-### G-335 Zapis w locie gubi prędkość: wczytanie zmienia tor lotu
-- Status: w PR #287 (5.11; decyzja orkiestratora: bez zmiany schematu, autozapis czeka na podłogę, ręczny zapis w powietrzu z komunikatem)
-- Ważność: S4 · Zasięg: zapis nie trzyma `fall`, `velocity`, `airPeak`, a `compose.ts:169` nie blokuje zapisu w powietrzu, więc każdy zapis w locie wczytuje się z zerową prędkością; do decyzji: blokować zapis w powietrzu (autozapis „w bezpiecznej chwili”) czy zapisywać stan lotu (zmiana schematu)
-- Pakiet właściciela: packages/app (compose, autozapis) albo packages/sim i persistence
 
 ### G-336 Pasy gołego podłoża przy Dworcu Autobusowym (T-164)
 - Status: zgłoszone (5.11, kurator, przegląd #285)

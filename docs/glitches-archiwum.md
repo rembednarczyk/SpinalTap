@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-335 Zapis w locie gubi prędkość: wczytanie zmienia tor lotu
+- Status: naprawione w #287 (5.11, 296ab1d; autozapis czeka na podłogę, ręczny zapis w powietrzu z komunikatem; bez zmiany schematu)
+- Ważność: S4 · Zasięg: zapis nie trzyma `fall`, `velocity`, `airPeak`, a `compose.ts:169` nie blokuje zapisu w powietrzu, więc każdy zapis w locie wczytuje się z zerową prędkością; do decyzji: blokować zapis w powietrzu (autozapis „w bezpiecznej chwili”) czy zapisywać stan lotu (zmiana schematu)
+- Pakiet właściciela: packages/app (compose, autozapis) albo packages/sim i persistence
+
 ### G-313 Wczytanie zapisu z paska dachu przy drabinie stawia graczkę na szczycie drabiny
 - Status: naprawione w #281 (5.11, d0d30d7; miejsce po podłodze pod graczką, zasięg `TOP_CATCH_REACH` 0,7 m)
 - Ważność: S4 · Zasięg: pasek ok. 0,2 × 0,1 m przy krawędzi nad drabiną (t < 0,5 odcinka linia–wyjście, np. `targ-escape-2` (69,2; 9,1; 63,85–64,05)); bez upadku i straty zdrowia. Teoretycznie z ciałem na ramieniu (ADR-0065) system drabin ją pominie i spadnie. Przesunięcie `resumeOnLadderTop` sięga 0,61 m (`targ-escape-1`), a stały test obejmuje tylko `targ-escape-2`
