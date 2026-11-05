@@ -57,17 +57,19 @@ export const layPool = (x: number, z: number, r: number, points: Float32Array, s
   }
 };
 
-/** How far round a point the paving is read (m): a seam narrower than this between two pieces of paving is not the paving. */
+/** How far round a point the paving is read (m): a seam narrower than this between two pieces of paving is not the paving, a step this near is. */
 export const PAVING_READ = 0.15;
 
 /**
- * The paving's height at (x, z): the middle of nine readings on a 3 x 3 grid `PAVING_READ` apart round
- * the point, so a seam between two pieces (where the terrain shows a few centimetres lower), crossing
- * at most a row or a column of them, does not pull a point of the pool down, while a slope or a kerb
- * still does.
+ * The paving's height at (x, z): the highest of nine readings on a 3 x 3 grid `PAVING_READ` apart
+ * round the point. A seam between two pieces (where the terrain shows a few centimetres lower) does
+ * not pull a point of the pool down, and next to a step between two pieces of paving drawn at
+ * different heights the point rises to the upper one, so the pool's straight triangles do not dip
+ * into it (G-293): a pool the slope's centimetre or a step over the paving still reads as lying on it,
+ * one in it goes dark.
  */
 export const pavingAt = (surfaceAt: (x: number, z: number) => number, x: number, z: number): number => {
-  const h: number[] = [];
-  for (const dx of [-PAVING_READ, 0, PAVING_READ]) for (const dz of [-PAVING_READ, 0, PAVING_READ]) h.push(surfaceAt(x + dx, z + dz));
-  return h.sort((a, b) => a - b)[4] as number;
+  let top = -Infinity;
+  for (const dx of [-PAVING_READ, 0, PAVING_READ]) for (const dz of [-PAVING_READ, 0, PAVING_READ]) top = Math.max(top, surfaceAt(x + dx, z + dz));
+  return top;
 };

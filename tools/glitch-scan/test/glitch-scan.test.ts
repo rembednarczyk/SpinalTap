@@ -17,13 +17,14 @@ import { planDroneLanes } from "../../../packages/engine/src/renderer/drones/dro
 import { droneWorldOf } from "../../../packages/engine/src/renderer/drones/drone-world";
 import type { PatrolLane } from "../../../packages/engine/src/renderer/drones/patrol-flight";
 import { planPatrolLanes } from "../../../packages/engine/src/renderer/drones/patrol-lanes";
-import { PATROL_STREETS, patrolWorldOf, quietAt } from "../../../packages/engine/src/renderer/drones/patrol-world";
+import { PATROL_STREETS, cityPatrolWorld, patrolWorldOf, quietAt } from "../../../packages/engine/src/renderer/drones/patrol-world";
 import { decalChecks } from "./decal-pieces";
 import { lublinDecalWorld } from "./decal-world";
 import { doorChecks } from "./door-pieces";
 import { droneChecks } from "./drone-pieces";
 import { airMesh } from "./patrol-mesh";
 import { patrolChecks } from "./patrol-pieces";
+import { drawnPaving, poolSunk } from "./pool-paving";
 import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
 import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
@@ -445,6 +446,12 @@ const PATROL_LANES = (() => {
   let memo: readonly PatrolLane[] | null = null;
   // Under the canyon drones' lanes, as the renderer plans them.
   return () => (memo ??= planPatrolLanes(patrolWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS, PATROL_STREETS), groundY, quietAt, surfaceY), planDroneLanes(droneWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY))));
+})();
+
+/** The paving as the renderer drapes it over the terrain (`pool-paving.ts`), once. */
+const DRAWN_PAVING = (() => {
+  let memo: ((x: number, z: number) => number | null) | null = null;
+  return () => (memo ??= drawnPaving(WORLD_SCENERY, groundY));
 })();
 
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
@@ -1660,6 +1667,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   ...droneChecks(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY, planDroneLanes, PATROL_LANES),
   ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones), surfaceY),
   /** A low patrol coming into sight or going 2 px large or more from anywhere on a street (`patrol-sight.ts`). */
+  /** A low patrol's searchlight pool, laid where the views lay it (`cityPatrolWorld`), sinking into the drawn paving: a dark middle (G-293). */
+  "drone-low-pool-sunk": () => poolSunk(PATROL_LANES(), cityPatrolWorld().surfaceAt, DRAWN_PAVING()),
   "drone-low-pop": () => popSight(PATROL_LANES(), streetEyes(WORLD_SCENERY, surfaceY), patrolModelSpan()),
   // The still crowd of ADR-0058 stage 8 against the game's buildings, roads, paving, kept furniture and moving crowd (`figure-pieces.ts`).
   ...figureChecks(Object.values(WORLD_STREET_PROPS).flat(), {

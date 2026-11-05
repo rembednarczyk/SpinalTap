@@ -117,6 +117,12 @@ export const planTerrain = (sink: MeshSink, grid: TerrainGrid, open?: TerrainOpe
   if (open.east) apron(nx - 1, 0, 0, 1, nz, { x: 1, y: 0, z: 0 });
 };
 
+/** How many parts `drapeTriangles` cuts each edge of the triangle a, b, c into. */
+const drapeCuts = (a: P2, b: P2, c: P2, step: number): number => {
+  const longest = Math.max(Math.hypot(b.x - a.x, b.z - a.z), Math.hypot(c.x - b.x, c.z - b.z), Math.hypot(a.x - c.x, a.z - c.z));
+  return Math.min(Math.max(1, Math.ceil(longest / step)), 48);
+};
+
 /** Triangles of a ring, each cut into an n x n barycentric grid so no edge is longer than `step`. */
 export const drapeTriangles = (ring: readonly P2[], step = DRAPE_STEP): P2[][] => {
   const tris = triangulate(ring);
@@ -125,8 +131,7 @@ export const drapeTriangles = (ring: readonly P2[], step = DRAPE_STEP): P2[][] =
     const a = ring[tris[t] as number] as P2;
     const b = ring[tris[t + 1] as number] as P2;
     const c = ring[tris[t + 2] as number] as P2;
-    const longest = Math.max(Math.hypot(b.x - a.x, b.z - a.z), Math.hypot(c.x - b.x, c.z - b.z), Math.hypot(a.x - c.x, a.z - c.z));
-    const n = Math.min(Math.max(1, Math.ceil(longest / step)), 48);
+    const n = drapeCuts(a, b, c, step);
     const p = (i: number, j: number): P2 => ({ x: a.x + ((b.x - a.x) * i + (c.x - a.x) * j) / n, z: a.z + ((b.z - a.z) * i + (c.z - a.z) * j) / n });
     for (let j = 0; j < n; j++) {
       for (let i = 0; i + j < n; i++) {
@@ -136,6 +141,35 @@ export const drapeTriangles = (ring: readonly P2[], step = DRAPE_STEP): P2[][] =
     }
   }
   return out;
+};
+
+/**
+ * The height `drape` draws `ring` at over (x, z), null off it (`tris`: the ring's `triangulate`):
+ * straight across the sub-triangle of `drapeTriangles` under the point, between its corners at `h`
+ * plus `lift`. Not `h` + `lift` at the point: the terrain bends between corners up to 5 m apart,
+ * and the paving runs a few centimetres over it in a hollow (G-293).
+ */
+export const drapeHeightAt = (ring: readonly P2[], tris: readonly number[], h: HeightAt, lift: number, x: number, z: number, step = DRAPE_STEP): number | null => {
+  for (let t = 0; t + 2 < tris.length; t += 3) {
+    const a = ring[tris[t] as number] as P2;
+    const b = ring[tris[t + 1] as number] as P2;
+    const c = ring[tris[t + 2] as number] as P2;
+    const det = (b.x - a.x) * (c.z - a.z) - (c.x - a.x) * (b.z - a.z);
+    if (Math.abs(det) < 1e-12) continue;
+    const u = ((x - a.x) * (c.z - a.z) - (c.x - a.x) * (z - a.z)) / det;
+    const v = ((b.x - a.x) * (z - a.z) - (x - a.x) * (b.z - a.z)) / det;
+    if (u < -1e-9 || v < -1e-9 || u + v > 1 + 1e-9) continue;
+    const n = drapeCuts(a, b, c, step);
+    const i = Math.min(Math.max(Math.floor(u * n), 0), n - 1);
+    const j = Math.min(Math.max(Math.floor(v * n), 0), n - 1 - i);
+    const s = u * n - i;
+    const r = v * n - j;
+    // The corners as `drapeTriangles` places them, read as `drape` reads them.
+    const at = (di: number, dj: number): number => h(a.x + ((b.x - a.x) * (i + di) + (c.x - a.x) * (j + dj)) / n, a.z + ((b.z - a.z) * (i + di) + (c.z - a.z) * (j + dj)) / n);
+    const y = s + r <= 1 || i + j + 1 >= n ? (1 - s - r) * at(0, 0) + s * at(1, 0) + r * at(0, 1) : (1 - r) * at(1, 0) + (s + r - 1) * at(1, 1) + (1 - s) * at(0, 1);
+    return y + lift;
+  }
+  return null;
 };
 
 /** Lays `ring` on the ground at `lift` above it: shared vertices per sub-triangle grid point. */

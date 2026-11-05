@@ -30,7 +30,7 @@ import {
 } from "../src/renderer/drones/patrol-flight";
 import { MIN_LANE, type PatrolWorld, ROOF_ROOM, planPatrolLanes } from "../src/renderer/drones/patrol-lanes";
 import { POOL_SEGMENTS, patrolTemplates } from "../src/renderer/drones/patrol-models";
-import { BEAM_SPREAD, POOL_LIFT, poolDrop, poolRadius } from "../src/renderer/drones/patrol-pool";
+import { BEAM_SPREAD, PAVING_READ, POOL_LIFT, poolDrop, poolRadius } from "../src/renderer/drones/patrol-pool";
 import type { P2 } from "../src/renderer/mapcity/polygon";
 
 const file = (name: string): ArrayBuffer => {
@@ -300,7 +300,8 @@ describe("low patrol views (ADR-0058 stage 7b)", () => {
     for (let i = 0; i < pos.length; i += 3) {
       if (Math.hypot(pos[i]! - pose!.x, pos[i + 2]! - pose!.z) > 4 || pos[i + 1]! > pose!.y - 2) continue;
       pool++;
-      expect(pos[i + 1]!).toBeCloseTo(2 + (pos[i]! - 40) * 0.01 + POOL_LIFT, 4);
+      // Read the highest round it (`pavingAt`): on this slope, the paving `PAVING_READ` uphill.
+      expect(pos[i + 1]!).toBeCloseTo(2 + (pos[i]! + PAVING_READ - 40) * 0.01 + POOL_LIFT, 4);
     }
     expect(pool).toBeGreaterThan(POOL_SEGMENTS);
     // Frozen, it holds still.
