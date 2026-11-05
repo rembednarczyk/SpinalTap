@@ -63,7 +63,8 @@ export const createStatsCache = () => {
   let key: readonly unknown[] = [];
   let last: CharacterStatsVm | null = null;
   return (domain: DomainState, hp: number, maxHp: number): CharacterStatsVm => {
-    const next = [domain.character, domain.equipment, domain.inventory.items, hp, maxHp];
+    // The attributes change the crits, the armor and the aim (ADR-0059).
+    const next = [domain.character, domain.equipment, domain.inventory.items, domain.progression.attributes, hp, maxHp];
     if (last && next.every((v, i) => v === key[i])) return last;
     key = next;
     last = characterStats(domain, hp, maxHp);

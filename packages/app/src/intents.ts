@@ -9,6 +9,7 @@ import type {
   LootIntents,
   MetroIntents,
   PhoneIntents,
+  ProgressionIntents,
   RadioIntents,
   SessionIntents,
   SettingsIntents,
@@ -65,6 +66,7 @@ const CHARACTER: Keys<CharacterIntents> = {
   installMod: true,
   removeMod: true,
 };
+const PROGRESSION: Keys<ProgressionIntents> = { spendAttributePoint: true };
 const SETTINGS: Keys<SettingsIntents> = { changeSettings: true, bindKey: true, resetControls: true, reload: true };
 const DIFFICULTY: Keys<DifficultyIntents> = { setDifficulty: true };
 const CAMERA: Keys<CameraIntents> = { setFieldOfView: true };
@@ -85,6 +87,7 @@ export const controllerIntents = (c: Controllers, sim: SimRef): ControllerIntent
   ...part<ShopIntents>(c.shop, SHOP),
   ...part<LootIntents>(c.loot, LOOT),
   ...part<CharacterIntents>(c.character, CHARACTER),
+  ...part<ProgressionIntents>(c.progression, PROGRESSION),
   ...part<SettingsIntents>(c.settings, SETTINGS),
   ...part<CameraIntents>(c.settings, CAMERA),
   ...part<DifficultyIntents>(c.difficulty, DIFFICULTY),
