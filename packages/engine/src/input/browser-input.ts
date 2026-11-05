@@ -29,6 +29,11 @@ export class BrowserInput implements InputPort {
    * retry takes the lock (G-139).
    */
   private lockByPromise = false;
+  /**
+   * The game wants the lock: a release asked for while a request is still in flight (I pressed
+   * just after the loading screen) is carried out when the browser grants it late (G-306).
+   */
+  private wantsLock = false;
   private readonly held = new Set<string>();
   private readonly pressed = new Set<string>();
   private yaw = 0;
@@ -67,6 +72,11 @@ export class BrowserInput implements InputPort {
     };
     document.addEventListener("pointerlockerror", onLockError);
     this.disposers.push(() => document.removeEventListener("pointerlockerror", onLockError));
+    const onLockChange = () => {
+      if (this.locked && !this.wantsLock) document.exitPointerLock();
+    };
+    document.addEventListener("pointerlockchange", onLockChange);
+    this.disposers.push(() => document.removeEventListener("pointerlockchange", onLockChange));
     on("touchstart", () => {
       this.lastTouchAt = performance.now();
     });
@@ -145,6 +155,7 @@ export class BrowserInput implements InputPort {
   }
 
   requestPointerLock(): void {
+    this.wantsLock = true;
     if (this.locked) return;
     try {
       // Some browsers return a promise that rejects when the request is refused.
@@ -153,7 +164,9 @@ export class BrowserInput implements InputPort {
       if (r instanceof Promise) {
         this.lockByPromise = true;
         r.catch(() => {
-          // Refused with the option (older Chromium, Linux without raw input): try without it.
+          // Refused with the option (older Chromium, Linux without raw input): try without it,
+          // unless a menu let go of the lock in the meantime.
+          if (!this.wantsLock) return;
           try {
             const plain = this.target.requestPointerLock() as unknown;
             // Refused for want of a user gesture (a panel closed with Esc before the first click,
@@ -170,6 +183,7 @@ export class BrowserInput implements InputPort {
   }
 
   releasePointerLock(): void {
+    this.wantsLock = false;
     if (this.locked) document.exitPointerLock();
   }
 
