@@ -1,0 +1,1 @@
+Przy nieufności przechodnie ustępują Seki krokiem na 3,5 m bez komunikatu, uciekają dopiero przy wrogości, a sprzedawcy i postacie z rozmową zostają na miejscu, więc stragan Oyajiego działa (ADR-0070 etap 2, G-305).
