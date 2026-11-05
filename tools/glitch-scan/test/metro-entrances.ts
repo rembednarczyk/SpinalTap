@@ -25,6 +25,8 @@ const POINT_GAP = 10;
 const DIG_GAP = 3;
 const FRONT = 3;
 const LANE_GAP = 1.5 + 2;
+/** How far off a wall's edge a sample still counts as on it: far under any gap a wall left out makes. */
+const EDGE = 1e-6;
 
 const toRect = (r: Rect, x: number, z: number): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
 const segToRect = (a: P2, b: P2, r: Rect): number => {
@@ -128,7 +130,8 @@ export const metroShaftOpen = (entrances: readonly Entrance[] = METRO_ENTRANCES)
       const s = (p.view as { size: { x: number; y: number; z: number } }).size;
       return { minX: p.center.x - s.x / 2, maxX: p.center.x + s.x / 2, minZ: p.center.z - s.z / 2, maxZ: p.center.z + s.z / 2, minY: p.center.y - s.y / 2, maxY: p.center.y + s.y / 2 };
     });
-    const walled = (x: number, z: number) => walls.some((w) => x >= w.minX && x <= w.maxX && z >= w.minZ && z <= w.maxZ && w.minY <= e.floor && w.maxY >= e.street);
+    // The samples at a side's ends lie on the walls' edges, where the rounding of the pavilion's sums decides (G-333).
+    const walled = (x: number, z: number) => walls.some((w) => x >= w.minX - EDGE && x <= w.maxX + EDGE && z >= w.minZ - EDGE && z <= w.maxZ + EDGE && w.minY <= e.floor && w.maxY >= e.street);
     const { along, opens } = e.spot;
     const sides: { readonly x: (t: number) => number; readonly z: (t: number) => number; readonly side: string }[] = [
       { side: "x-", x: () => c.minX - 0.1, z: (t) => c.minZ + (c.maxZ - c.minZ) * t },

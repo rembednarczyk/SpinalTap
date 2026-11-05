@@ -74,6 +74,18 @@ const blend = (sink: MeshSink, tri: readonly [number, number, number], w: readon
   return index;
 };
 
+const overlaps = (h: GroundHole, b: GroundHole): boolean => h.minX < b.maxX && h.maxX > b.minX && h.minZ < b.maxZ && h.maxZ > b.minZ;
+
+/** The XZ box of a sink's vertices. */
+const boxOf = (p: readonly number[]): GroundHole => {
+  let [minX, maxX, minZ, maxZ] = [Infinity, -Infinity, Infinity, -Infinity];
+  for (let i = 0; i + 2 < p.length; i += 3) {
+    const [x, z] = [p[i] as number, p[i + 2] as number];
+    [minX, maxX, minZ, maxZ] = [Math.min(minX, x), Math.max(maxX, x), Math.min(minZ, z), Math.max(maxZ, z)];
+  }
+  return { minX, maxX, minZ, maxZ };
+};
+
 /**
  * Cuts the rectangles out of a sink's ground (ADR-0071 stage 2: the shafts of the metro's
  * pavilions): every triangle lying over one is replaced by its pieces outside it, their corners
@@ -84,17 +96,30 @@ const blend = (sink: MeshSink, tri: readonly [number, number, number], w: readon
 export const cutGround = (sink: MeshSink, holes: readonly GroundHole[]): number => {
   if (holes.length === 0 || sink.empty) return 0;
   const p = sink.positions;
+  // Every chunk's ground is cut and few hold a shaft: the box of the sink, then of each triangle,
+  // passes over the rest without building its corners (G-333).
+  const all = boxOf(p);
+  const near = holes.filter((h) => overlaps(h, all));
+  if (near.length === 0) return 0;
   const old = sink.indices.splice(0);
   let cut = 0;
   for (let t = 0; t + 2 < old.length; t += 3) {
     const tri = [old[t] as number, old[t + 1] as number, old[t + 2] as number] as const;
-    const xs = tri.map((i) => p[i * 3] ?? 0);
-    const zs = tri.map((i) => p[i * 3 + 2] ?? 0);
-    const [minX, maxX, minZ, maxZ] = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
-    const over = holes.filter((h) => h.minX < maxX && h.maxX > minX && h.minZ < maxZ && h.maxZ > minZ);
-    const whole: Corner[] = tri.map((_, k) => ({ x: xs[k] as number, z: zs[k] as number, w: [k === 0 ? 1 : 0, k === 1 ? 1 : 0, k === 2 ? 1 : 0] as const }));
+    const [x0, x1, x2] = [p[tri[0] * 3] ?? 0, p[tri[1] * 3] ?? 0, p[tri[2] * 3] ?? 0];
+    const [z0, z1, z2] = [p[tri[0] * 3 + 2] ?? 0, p[tri[1] * 3 + 2] ?? 0, p[tri[2] * 3 + 2] ?? 0];
+    const box = { minX: Math.min(x0, x1, x2), maxX: Math.max(x0, x1, x2), minZ: Math.min(z0, z1, z2), maxZ: Math.max(z0, z1, z2) };
+    const over = near.filter((h) => overlaps(h, box));
+    if (over.length === 0) {
+      sink.indices.push(...tri);
+      continue;
+    }
+    const whole: Corner[] = [
+      { x: x0, z: z0, w: [1, 0, 0] },
+      { x: x1, z: z1, w: [0, 1, 0] },
+      { x: x2, z: z2, w: [0, 0, 1] },
+    ];
     const sign = area(whole);
-    if (over.length === 0 || Math.abs(sign) < 1e-6) {
+    if (Math.abs(sign) < 1e-6) {
       sink.indices.push(...tri);
       continue;
     }
