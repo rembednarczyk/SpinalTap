@@ -176,6 +176,7 @@ describe("fire escape ladders (ADR-0021)", () => {
     const climbs = collect<{ on: boolean }>(sim, "LadderClimb");
     for (let i = 0; i < 60 && !player(sim).climb; i++) sim.step(input({ moveZ: 1 }));
     expect(player(sim).climb?.ladder).toBe("targ-escape-1");
+    for (let i = 0; i < 60 && player(sim).climb?.settle; i++) sim.step(input({ moveZ: 1 }));
     // On the ladder: no fire, no gravity, forward climbs.
     run(sim, 30, input({ moveZ: 1, fire: true }));
     expect(pos(sim).y).toBeGreaterThan(0.9);
@@ -194,6 +195,28 @@ describe("fire escape ladders (ADR-0021)", () => {
     expect(pos(sim).y).toBeCloseTo(ROOF_WEST_TOP, 5);
     expect(pos(sim).z).toBeLessThan(64);
     expect(climbs.map((c) => c.on)).toEqual([true, false, true, false]);
+  });
+
+  it("walking into the foot from an angle eases her onto the rungs, the view turning with her", () => {
+    // 30 degrees off the ladder and a hand's width to its side.
+    const a = SOUTH + 0.52;
+    const sim = at(73.2 - Math.sin(a) * 1.2 + 0.2, 0, 64.4 - Math.cos(a) * 1.2, a);
+    let longestTurn = 0;
+    const turnOf = () => player(sim).yaw;
+    const onTheWay = () => !player(sim).climb || player(sim).climb?.settle !== undefined;
+    let longest = 0;
+    for (let i = 0; i < 90 && onTheWay(); i++) {
+      const yaw = turnOf();
+      longest = Math.max(longest, longestStep(sim, input({ moveZ: 1 }), () => true, 1));
+      longestTurn = Math.max(longestTurn, Math.abs(Math.atan2(Math.sin(turnOf() - yaw), Math.cos(turnOf() - yaw))));
+    }
+    expect(player(sim).climb?.ladder).toBe("targ-escape-1");
+    // Before: 0.57 m sideways and the whole 30 degrees in the step she caught it.
+    expect(longest).toBeLessThan(0.12);
+    expect(longestTurn).toBeLessThan(0.1);
+    expect(pos(sim).x).toBeCloseTo(73.2, 5);
+    expect(pos(sim).z).toBeCloseTo(64.4, 5);
+    expect(player(sim).yaw).toBeCloseTo(SOUTH, 5);
   });
 
   it("steps off at the top in a pull-over, not a jump onto the roof", () => {

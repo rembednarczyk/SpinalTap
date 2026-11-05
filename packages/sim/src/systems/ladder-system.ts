@@ -9,6 +9,8 @@ export const CLIMB_SPEED = 2.2;
 const GRAB_REACH = 0.6;
 /** ...facing it within this angle (radians). */
 const GRAB_FACING = 0.9;
+/** A grab at the foot eases her onto the rungs and turns her to the wall in this long (seconds). */
+const GRAB_TIME = 0.3;
 /** A grab from the top starts this far below the top, so the climber is on the rungs. */
 const TOP_GRAB_DROP = 0.8;
 /**
@@ -89,7 +91,7 @@ export const grabLadder = (ctx: SimContext, e: Entity, key: string, end: "bottom
   const l = ladders(ctx).find((x) => x.ladder.key === key)?.ladder;
   if (!l) return;
   if (end === "top") hangOn(ctx, e, l, l.top - TOP_GRAB_DROP, { over: true, duration: TOP_GRAB_TIME });
-  else hangOn(ctx, e, l, l.bottom);
+  else hangOn(ctx, e, l, l.bottom, { over: false, duration: GRAB_TIME });
 };
 
 /** A climber standing in a ladder's line between its ends (a game saved mid-climb). */
@@ -124,7 +126,7 @@ export const ladderSystem: System = {
         for (const { ladder: l } of all) {
           const near = Math.hypot(p.position.x - l.x, p.position.z - l.z) <= GRAB_REACH;
           if (near && Math.abs(p.position.y - l.bottom) < 0.3 && angleBetween(p.yaw, l.yaw) <= GRAB_FACING) {
-            hangOn(ctx, p, l, l.bottom);
+            hangOn(ctx, p, l, l.bottom, { over: false, duration: GRAB_TIME });
             break;
           }
         }
