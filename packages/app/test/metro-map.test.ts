@@ -12,7 +12,7 @@ import { frame, setup, steps, teleport } from "./story-helpers";
  * at a real kiosk.
  */
 describe("the metro layer", () => {
-  it("goes out with the city map: four stations on the tunnel, today's kiosks as entrances, two possible stations", () => {
+  it("goes out with the city map: four stations on the tunnel, today's kiosks as entrances, three possible stations", () => {
     const metro = buildCityMap().metro!;
     expect(metro.stations.map((s) => s.id)).toEqual([...METRO_STATION_IDS]);
     expect(metro.stations.map((s) => s.district)).toEqual(["Krakowskie Przedmieście", "Stare Miasto", "Podzamcze", "Nabrzeże Bystrzycy"]);
