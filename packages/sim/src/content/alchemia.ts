@@ -2,6 +2,9 @@ import type { GroundPoint, ViewDescriptor } from "@seki/core";
 import type { StaticProp } from "./builders";
 import type { PrismDef } from "../world/prism";
 import { surfaceY } from "./lublin/terrain";
+import { type AlchemiaFlight, type AlchemiaPart, flightSteps, rectPart } from "./alchemia-stairs";
+
+export type { AlchemiaFlight, AlchemiaPart } from "./alchemia-stairs";
 
 /**
  * Alchemia 2077 (ADR-0063 stage 4): the food hall of the Arkady company's real plan, built by
@@ -19,11 +22,13 @@ import { surfaceY } from "./lublin/terrain";
  * the plan, with the outbuilding and the shed of the map where they are.
  *
  * Each module stands on the highest paving under its footprint; a plinth under it reaches the
- * lowest. The simulation has each one as solid prisms from the ground up (`ALCHEMIA_PROPS`,
- * scenery: the engine draws the models, `renderer/alchemia`): a stall as its box, the hall as its
- * body up to its flat roof and its outside stair up to the stair's top, so the roof is a floor a
- * body can stand on (the next stages put a character up there and a working lift next to the hall:
- * `ALCHEMIA_ROOF` and `ALCHEMIA_LIFT_SITE` keep their places, nothing stands on them yet).
+ * lowest, and flights of steps come down from its doors to the paving (G-287). The
+ * simulation has each one as solid prisms from the ground up (`ALCHEMIA_PROPS`, scenery: the
+ * engine draws the models, their plinths and steps, `renderer/alchemia`): a stall as its box and
+ * its steps (`alchemia-stairs.ts`), the hall as its body up to its flat roof and its outside stair
+ * up to the stair's top, so the roof is a floor a body can stand on (the next stages put a
+ * character up there and a working lift next to the hall: `ALCHEMIA_ROOF` and `ALCHEMIA_LIFT_SITE`
+ * keep their places, nothing stands on them yet).
  */
 
 /** A module of the hall: its model's key, the middle of its footprint, its front and its box. */
@@ -42,21 +47,15 @@ export interface AlchemiaModule {
    * front of it, z to its front, the top over its foot); without them, its whole box.
    */
   readonly parts?: readonly AlchemiaPart[];
+  /** The flights of steps out of it down to the paving (G-287). */
+  readonly flights?: readonly AlchemiaFlight[];
 }
 
-/** A block of a module's solid in the model's frame (glTF metres from the middle of its foot). */
-export interface AlchemiaPart {
-  readonly x0: number;
-  readonly x1: number;
-  readonly z0: number;
-  readonly z1: number;
-  readonly top: number;
-}
-
-/** A module set on the ground: its floor (the model's foot, world y) and the bottom of its plinth. */
+/** A module set on the ground: its floor (the model's foot, world y), the bottom of its plinth and its flights' steps there. */
 export interface PlacedAlchemiaModule extends AlchemiaModule {
   readonly floor: number;
   readonly base: number;
+  readonly steps: readonly AlchemiaPart[];
 }
 
 /** The models' sizes (`extras.size` of alchemia-props.glb; a test holds them to the file). */
@@ -72,9 +71,9 @@ export const ALCHEMIA_HALL_ROOF = 11.51;
 const BODY_X1 = 2.9;
 const BEVEL_Z = 2.9;
 const HALL_PARTS: readonly AlchemiaPart[] = [
-  { x0: -HALL.width / 2, x1: BODY_X1, z0: -HALL.depth / 2, z1: BEVEL_Z, top: ALCHEMIA_HALL_ROOF },
-  { x0: -HALL.width / 2, x1: BODY_X1, z0: BEVEL_Z, z1: HALL.depth / 2, top: 9.9 },
-  { x0: BODY_X1, x1: HALL.width / 2, z0: -HALL.depth / 2, z1: HALL.depth / 2, top: 7.35 },
+  rectPart(-HALL.width / 2, BODY_X1, -HALL.depth / 2, BEVEL_Z, ALCHEMIA_HALL_ROOF),
+  rectPart(-HALL.width / 2, BODY_X1, BEVEL_Z, HALL.depth / 2, 9.9),
+  rectPart(BODY_X1, HALL.width / 2, -HALL.depth / 2, HALL.depth / 2, 7.35),
 ];
 
 /** The plot's west fence from (406.1, 65.3) north to (435.4, 125.6): its direction and the inward normal. */
@@ -97,6 +96,7 @@ const stall = (i: number): AlchemiaModule => {
     z: FENCE.z + ALONG.z * s + INWARD.z * STALL_IN,
     yaw: STALL_YAW,
     ...STALL,
+    flights: [{ x0: -STALL.width / 2, x1: STALL.width / 2, z: STALL.depth / 2, dir: 1, top: 0 }],
   };
 };
 
@@ -135,10 +135,15 @@ const footprintSamples = (m: AlchemiaModule): GroundPoint[] => {
 /** How far the plinth reaches under the lowest ground of the footprint (m). */
 const PLINTH_SINK = 0.3;
 
-/** The module on the paving: its floor on the highest point under it, its plinth down past the lowest. */
+/** The module on the paving: its floor on the highest point under it, its plinth down past the lowest, its steps down to the paving. */
 export const placeAlchemiaModule = (m: AlchemiaModule): PlacedAlchemiaModule => {
   const ys = footprintSamples(m).map((p) => surfaceY(p.x, p.z));
-  return { ...m, floor: Math.max(...ys), base: Math.min(...ys) - PLINTH_SINK };
+  const floor = Math.max(...ys);
+  const ground = (x: number, z: number) => {
+    const p = alchemiaPoint(m, x, z);
+    return surfaceY(p.x, p.z) - floor;
+  };
+  return { ...m, floor, base: Math.min(...ys) - PLINTH_SINK, steps: (m.flights ?? []).flatMap((f) => flightSteps(f, ground)) };
 };
 
 /** The modules set on the ground, in the layout's order. */
@@ -148,16 +153,19 @@ export const ALCHEMIA_MODULES: readonly PlacedAlchemiaModule[] = ALCHEMIA_LAYOUT
 const NO_VIEW: ViewDescriptor = { kind: "street-props", items: [] };
 
 /** The blocks of a module's solid: its parts, or its whole box. */
-export const alchemiaParts = (m: AlchemiaModule): readonly AlchemiaPart[] => m.parts ?? [{ x0: -m.width / 2, x1: m.width / 2, z0: -m.depth / 2, z1: m.depth / 2, top: m.height }];
+export const alchemiaParts = (m: AlchemiaModule): readonly AlchemiaPart[] => m.parts ?? [rectPart(-m.width / 2, m.width / 2, -m.depth / 2, m.depth / 2, m.height)];
 
-/** A module as a solid: a prism per part from the plinth's bottom to the part's top. */
+/** A module as a solid: a prism per part and step from its bottom (the plinth's, if it has none) to its top. */
 const moduleProp = (m: PlacedAlchemiaModule): StaticProp => {
-  const rel = (x: number, z: number) => {
-    const p = alchemiaPoint(m, x, z);
-    return { x: p.x - m.x, z: p.z - m.z };
-  };
-  const prisms: PrismDef[] = alchemiaParts(m).map((q) => ({ points: [rel(q.x0, q.z0), rel(q.x0, q.z1), rel(q.x1, q.z1), rel(q.x1, q.z0)], bottom: 0, top: m.floor + q.top - m.base }));
-  return { center: { x: m.x, y: m.base, z: m.z }, view: NO_VIEW, solid: true, prisms, scenery: true };
+  const prism = (q: AlchemiaPart): PrismDef => ({
+    points: q.points.map(([x, z]) => {
+      const p = alchemiaPoint(m, x, z);
+      return { x: p.x - m.x, z: p.z - m.z };
+    }),
+    bottom: q.bottom === undefined ? 0 : m.floor + q.bottom - m.base,
+    top: m.floor + q.top - m.base,
+  });
+  return { center: { x: m.x, y: m.base, z: m.z }, view: NO_VIEW, solid: true, prisms: [...alchemiaParts(m), ...m.steps].map(prism), scenery: true };
 };
 
 /** Every solid of Alchemia, in the layout's order (the order their ids are given). */

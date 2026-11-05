@@ -13,6 +13,7 @@ export * from "./interiors";
 export * from "./interior-areas";
 export * from "./capsule-room";
 export * from "./alchemia";
+export { FLIGHT_GOING, FLIGHT_MAX_RISE } from "./alchemia-stairs";
 export * from "./metro";
 export * from "./encounters";
 export * from "./contract-hooks";

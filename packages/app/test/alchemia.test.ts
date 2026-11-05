@@ -10,9 +10,10 @@ import { FakeRender, steps, teleport } from "./story-helpers";
 /**
  * Alchemia on Plac Ofiar Getta (ADR-0063 stage 4), headless: the hall and its stalls are solid.
  * Seki walking at the hall's front from the square, at a stall's window from Świętoduska's side
- * and at the stalls' backs from the open square stops at their walls, the hall's flat roof holds
- * her up (for the stages to come: a character up there, a lift); their solids stream in
- * with the plot's chunk, without views (the engine draws the models).
+ * and at the stalls' backs from the open square stops at their walls; she climbs from the paving
+ * to each stall's door (G-287); the hall's flat roof holds her up (for the stages to come: a
+ * character up there, a lift); their solids stream in with the plot's chunk, without views (the
+ * engine draws the models).
  */
 
 const start = () => {
@@ -78,6 +79,23 @@ describe("Alchemia on Plac Ofiar Getta (ADR-0063 stage 4)", () => {
     walkAt(session, stall.x, stall.z, 160);
     expect(ahead(session, stall)).toBeLessThan(-stall.depth / 2 - CLEAR);
   });
+
+  it("lets her up the steps from the paving to the door of each stall, at its middle and by its corners (G-287)", () => {
+    const { session } = start();
+    for (const m of ALCHEMIA_MODULES.filter((q) => q.key.startsWith("alchemia-stall"))) {
+      for (const side of [-3.2, 0, 3.2]) {
+        const from = off(m, m.depth / 2 + 4.5, side);
+        teleport(session, from.x, from.z, m.yaw + Math.PI);
+        steps(session, 2);
+        const door = off(m, m.depth / 2 + 0.2, side);
+        walkAt(session, door.x, door.z, 150);
+        const p = session.sim.player()!.position;
+        expect(p.y, `${m.key} at ${side}`).toBeCloseTo(m.floor, 1);
+        expect(ahead(session, m), `${m.key} at ${side}`).toBeLessThan(m.depth / 2 + 0.9);
+      }
+    }
+  });
+
 
   it("holds her up on the hall's flat roof, the floor the next stages put a character on", () => {
     const { session } = start();

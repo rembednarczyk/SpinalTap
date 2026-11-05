@@ -145,15 +145,17 @@ describe("Alchemia on Plac Ofiar Getta (ADR-0063 stage 4)", () => {
       const m = ALCHEMIA_MODULES[i]!;
       expect(p.solid && p.scenery).toBe(true);
       expect(p.center.y).toBe(m.base);
-      expect(p.prisms).toHaveLength(m.key === "alchemia-hall" ? 3 : 1);
+      // Its parts, then its flights' steps (alchemia-steps.test.ts).
+      const parts = alchemiaParts(m);
+      expect(p.prisms).toHaveLength(parts.length + m.steps.length);
       const tops = p.prisms!.map((q) => q.top + m.base - m.floor);
       expect(Math.max(...tops)).toBeLessThanOrEqual(m.height);
-      for (const q of p.prisms!) for (const c of q.points) expect(inModule({ x: c.x + p.center.x, z: c.z + p.center.z }, m, 1e-6)).toBe(true);
-      // The parts tile the footprint: their areas add up to the module's.
-      const area = alchemiaParts(m).reduce((a, q) => a + (q.x1 - q.x0) * (q.z1 - q.z0), 0);
-      expect(area).toBeCloseTo(m.width * m.depth, 6);
+      for (const q of p.prisms!.slice(0, parts.length)) for (const c of q.points) expect(inModule({ x: c.x + p.center.x, z: c.z + p.center.z }, m, 1e-6)).toBe(true);
+      // A stall is its box.
+      if (m.key !== "alchemia-hall") expect(parts).toEqual([{ points: [[-m.width / 2, -m.depth / 2], [-m.width / 2, m.depth / 2], [m.width / 2, m.depth / 2], [m.width / 2, -m.depth / 2]], top: m.height }]);
     });
   });
+
 
   it("keeps the hall's flat roof a floor to stand on and the lift's site clear, for the stages to come", () => {
     const hall = ALCHEMIA_MODULES[0]!;
