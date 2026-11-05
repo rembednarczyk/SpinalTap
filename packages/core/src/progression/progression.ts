@@ -1,5 +1,6 @@
 import type { StatModifiers } from "../character/stats";
 import { type AttributeId, ATTRIBUTE_MAX, ATTRIBUTE_START, type Attributes, START_ATTRIBUTES } from "./attributes";
+import { attributeModifiers } from "./attribute-effects";
 import { MAX_LEVEL, MIN_LEVEL, levelForXp } from "./curve";
 
 /**
@@ -117,5 +118,8 @@ export const progressionFromXp = (xp: number): ProgressionState => gainXp(INITIA
 /** Maximum health each level above 1 adds. */
 export const HP_PER_LEVEL = 3;
 
-/** What the level itself does to the stats: more health. The attributes add theirs in stage 2. */
+/** What the level itself does to the stats: more health. */
 export const levelModifiers = (state: ProgressionState): StatModifiers => ({ maxHp: (Math.min(MAX_LEVEL, state.level) - MIN_LEVEL) * HP_PER_LEVEL });
+
+/** What the progression does to the stats: the level's health and the attributes' passive effects (stage 2). */
+export const progressionModifiers = (state: ProgressionState): StatModifiers[] => [levelModifiers(state), attributeModifiers(state.attributes)];

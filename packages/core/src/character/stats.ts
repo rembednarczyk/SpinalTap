@@ -1,4 +1,4 @@
-/** Additive modifiers contributed by cyberware and recovered memories. */
+/** Additive modifiers contributed by cyberware, recovered memories, clothes, buffs, the level and the attributes. */
 export interface StatModifiers {
   readonly critChance?: number;
   readonly critMultiplier?: number;
@@ -10,6 +10,10 @@ export interface StatModifiers {
   readonly aimStability?: number;
   /** Extra armor on head hits only. */
   readonly headArmor?: number;
+  /** Share added to melee damage (Might, ADR-0059). */
+  readonly meleeDamage?: number;
+  /** Extra armor on every zone a worn garment protects (Tech, ADR-0059). */
+  readonly garmentArmor?: number;
 }
 
 export interface DerivedStats {
@@ -22,6 +26,8 @@ export interface DerivedStats {
   readonly maxHp: number;
   readonly aimStability: number;
   readonly headArmor: number;
+  readonly meleeDamage: number;
+  readonly garmentArmor: number;
 }
 
 /** Cap on aim stability: implants steady the hand, they never make a weapon a laser. */
@@ -36,6 +42,8 @@ export const BASE_STATS: DerivedStats = {
   maxHp: 100,
   aimStability: 0,
   headArmor: 0,
+  meleeDamage: 0,
+  garmentArmor: 0,
 };
 
 export const combineModifiers = (base: DerivedStats, mods: readonly StatModifiers[]): DerivedStats =>
@@ -49,6 +57,8 @@ export const combineModifiers = (base: DerivedStats, mods: readonly StatModifier
       maxHp: acc.maxHp + (m.maxHp ?? 0),
       aimStability: Math.min(MAX_AIM_STABILITY, acc.aimStability + (m.aimStability ?? 0)),
       headArmor: acc.headArmor + (m.headArmor ?? 0),
+      meleeDamage: acc.meleeDamage + (m.meleeDamage ?? 0),
+      garmentArmor: acc.garmentArmor + (m.garmentArmor ?? 0),
     }),
     base,
   );
