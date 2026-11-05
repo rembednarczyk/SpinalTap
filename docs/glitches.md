@@ -955,6 +955,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: front zasłonięty bryłą (G-298); model nie rysuje stopni
 - Pakiet właściciela: packages/sim (content/alchemia.ts)
 
+### G-300 Rysowany bruk odbiega od `surfaceY` o kilka cm na wygiętym terenie
+- Status: zgłoszone (5.11, naprawiacz G-293)
+- Ważność: S4 · Zasięg: wszędzie, gdzie `drape` (trójkąty do 5 m) odstaje od terenu; dotyczy aut (G-130), postaci i kontroli skanu; na deptaku (127; −55) do 4,5 cm
+- Pakiet właściciela: packages/engine (mapcity/ground-plan) i sim
+
+### G-301 Nakładające się kawałki bruku mają różne drapowania (stopnie 1–3 cm, migotanie głębi)
+- Status: zgłoszone (5.11, naprawiacz G-293)
+- Ważność: S4 · Zasięg: np. dwa `square`; jaśniejsze i ciemniejsze łaty o prostych krawędziach; drzazga 8 cm przy (435,3; −94,6)
+- Pakiet właściciela: packages/engine (mapcity/ground-plan)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
