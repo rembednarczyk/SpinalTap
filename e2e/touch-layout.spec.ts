@@ -134,6 +134,41 @@ test("phone: the settings in the pause menu scroll to their last control", async
 });
 
 /**
+ * The metro kiosk on a phone held sideways (ADR-0071): the line map, then the list of stops under
+ * it; a tap chooses the destination and its card, and the ticket button stays a 44 px target the
+ * panel scrolls to, inside the screen.
+ */
+test.describe("phone 800x370 metro kiosk", () => {
+  test.use({ viewport: { width: 800, height: 370 }, isMobile: true, hasTouch: true });
+
+  test("phone: the kiosk's map, list, card and ticket fit and take taps", async ({ page }) => {
+    test.setTimeout(180_000);
+    await page.goto("/?seed=7&models=off&audio=off&touch");
+    await waitForGame(page);
+    await newGame(page, "tap");
+    await waitForPlay(page);
+    await freeze(page);
+    await page.evaluate(() => window.__seki!.metro("kanal"));
+    const kiosk = page.getByTestId("metro-map");
+    await expect(kiosk).toBeVisible();
+    const chart = (await page.getByTestId("metro-chart").boundingBox())!;
+    const list = (await page.getByTestId("metro-stop-targ").boundingBox())!;
+    // On a phone the list goes under the map.
+    expect(list.y).toBeGreaterThanOrEqual(chart.y + chart.height - 0.5);
+    await page.getByRole("button", { name: /Destination: Plac Zamkowy/ }).tap();
+    await expect(page.getByTestId("metro-preview")).toBeVisible();
+    const buy = page.getByTestId("metro-buy");
+    await buy.scrollIntoViewIfNeeded();
+    const b = (await buy.boundingBox())!;
+    expect(b.height).toBeGreaterThanOrEqual(43.5);
+    expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= 800.5 && b.y + b.height <= 370.5, "ticket on screen").toBe(true);
+    const panel = (await kiosk.boundingBox())!;
+    expect(panel.x >= 0 && panel.x + panel.width <= 800.5).toBe(true);
+    await expect(buy).toBeEnabled();
+  });
+});
+
+/**
  * The map credit (ODbL) stays legible and over nothing: on the title's screens taller than a
  * phone held sideways (the new game's Custom sliders, Settings) it ends the content instead of
  * riding over the buttons when the screen scrolls.
