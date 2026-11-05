@@ -1027,12 +1027,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine/src/effects (deszcz)
 
 ### G-332 Plac przed Dworcem Autobusowym bez nawierzchni: wyjście pawilonu metra na gołe podłoże
-- Status: zgłoszone (5.11, kurator, przegląd PR #279)
+- Status: w PR #285 (5.11; `ADDED_AREAS` w `tools/osm-import`, `metro-exit-bare` 57 → 27), czeka na kuratora
 - Ważność: S4 · Zasięg: Podzamcze, x ok. 740–764, z ok. 370–377 (ok. 170 m²), wyjście `targ` B (T-162, T-159)
 - Pakiet właściciela: packages/sim (treść `lublin`, ręczna nawierzchnia) albo tools/osm-import
 
 ### G-333 Drobne usterki po etapie 2 metra (#279)
-- Status: częściowo w PR #284 (5.11; kontrola `metro-shaft-open` i `cutGround`); okap Nabrzeża i stopień przy Alchemii do etapu 3, wróg w hali niesprawdzony
+- Status: częściowo naprawione w #284 (5.11, bd0958d; `metro-shaft-open` z tolerancją, `cutGround` 81 → 13 ms); okap Nabrzeża i stopień przy Alchemii do etapu 3 metra, wróg w hali niesprawdzony
 - Ważność: S4 · Zasięg: kontrola `metro-shaft-open` (`tools/glitch-scan/test/metro-entrances.ts:131-135`) krucha na zaokrąglenie przy próbce na krawędzi (`z <= w.maxZ`), potrzebny epsilon; `cutGround` (`engine/.../ground-cut.ts:94-95`) liczy każdy trójkąt każdej siatki gruntu (106 ms CPU na 20 chunków), wystarczy wcześniej pominąć siatki bez otworu; Alchemia B: przy rogu otworu bruk 0,32 m pod progiem podestu; Nabrzeże A: okap 0,4 m w murze placu Tessen (T-160); niesprawdzone: wróg w pościgu schodzący za graczem do hali
 - Pakiet właściciela: tools/glitch-scan, packages/engine (mapcity), packages/sim
 
