@@ -957,7 +957,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (treść `lublin`, stacje metra), przegląd `topography-curator`
 
 ### G-308 Zejście z dachu na drabinę tylko klawiszem: wejście za krawędź przy drabinie kończy się upadkiem
-- Status: zgłoszone (5.11, autor poprawek drabin, PR #269)
+- Status: w PR #273 (5.11; `caughtAtTop`, łapie przy zejściu chodem i w kucki, sprint i skok dalej spadają)
 - Ważność: S3 · Zasięg: `targ-escape-2` i `targ-escape-3`; upadek z 3,6–4,6 m bez obrażeń, drabina nie łapie
 - Pakiet właściciela: packages/sim (ruch, drabiny)
 
@@ -1007,6 +1007,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #267; stary kod `runFrom`)
 - Ważność: S3 · Zasięg: ucieczka przy ścianie; ziarno 3, −60, przechodzień 1002004, gracz w 2 m: ok. 0,4 s, 24 skoki, bo przełącza się kierunek sondy wolnej drogi
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
+
+### G-318 Zejście chodem z zachodniego dachu przy `targ-escape-2` przelatuje nad balkonem: upadek 9,1 m na posadzkę targu
+- Status: zgłoszone (5.11, naprawiacz G-308)
+- Ważność: S3 · Zasięg: `targ-escape-2`, balkon z 64–65,3; przy 4,1 m/s graczka mija balkon i ląduje na posadzce targu; do oceny, czy balkon ma łapać, czy krawędź ma być dalej
+- Pakiet właściciela: packages/sim (treść targu, ruch)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
