@@ -972,7 +972,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (testy `flee-dead-zone`, `reputation-tiers`)
 
 ### G-317 Ucieczka cywila pod ścianą drga: kąt skacze o ±0,8 rad co klatkę
-- Status: w PR #277, runda 3 (5.11; reguła przyjęta przy stojącym graczu, poprawiana regresja w pościgu: utknięcie w rogu (316,3; −95,2)). Nieobjęte: `FleeFromDanger` bez testu, przy −30 histereza nie działa (`yaw` na gracza)
+- Status: w PR #277, runda 3 przyjęta przez orkiestratora na podstawie pomiarów (5.11, 9f71e9d; `bendsBack`, pościg w 27 wariantach jak na main, ściana 3/3/3/3)
 - Ważność: S3 · Zasięg: ucieczka przy ścianie; ziarno 3, −60, przechodzień 1002004, gracz w 2 m: ok. 0,4 s, 24 skoki, bo przełącza się kierunek sondy wolnej drogi
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
 
@@ -1013,7 +1013,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-326 Uciekający cywil drga przy objeździe: `steerPoint` przełącza się między drogą prosto a objazdem
 - Status: zgłoszone (5.11, naprawiacz G-317)
-- Ważność: S3 · Zasięg: ziarno 17, −60, przechodzień 1002005, gracz 2 m (25 skoków kąta ok. 0,42 rad) i 1 m (42); `straightWalk` do punktu 6 m przed cywilem raz jest wolny, raz nie
+- Ważność: S3 · Zasięg: ziarno 17, −60, przechodzień 1002005, gracz 2 m (25 skoków kąta ok. 0,42 rad) i 1 m (42); `straightWalk` do punktu 6 m przed cywilem raz jest wolny, raz nie; także: w rogu (316; −95) `steerPoint` zawraca „prosto od gracza” niemal wprost na gracza (−1,25 rad), na main przy zatrzymaniu gracza ≥ 2 m ok. 465 skoków; drganie ±0,5 rad w miejscu przy stałym wyborze kierunku (ziarno 23, ok. (262; −81))
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `steerPoint`)
 
 ### G-327 Testy „zapis bez ukrytego stanu” na przechodniach z tłumu nic nie dowodzą
