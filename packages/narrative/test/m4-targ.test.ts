@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Contract, type DomainState, type GameCommand, createDomainState } from "@seki/core";
-import { type DialogueView, NarrativeRuntime, STORY_SOURCE } from "../src";
+import { type DialogueView, NarrativeRuntime, STORY_SOURCE, storySource } from "../src";
 
 const setup = () => {
   const commands: GameCommand[] = [];
@@ -55,6 +55,24 @@ describe("Hana (M4, market)", () => {
     expect(text(view)).toContain("Nie sprzedam ci nawet śrubki");
     expect(view.ended).toBe(true);
     expect(commands).toEqual([]);
+  });
+
+  // G-304, ADR-0070: Hana is always the way back, so she takes Kaito's run whatever the street thinks.
+  it("takes Kaito's package even when the street fears Seki", () => {
+    for (const [source, refusal, coldWelcome] of [
+      [storySource("pl"), "Nie sprzedam ci", "Na nic więcej nie licz"],
+      [storySource("en"), "I won't sell you", "Don't count on anything more"],
+    ] as const) {
+      const commands: GameCommand[] = [];
+      const runtime = new NarrativeRuntime(source, (c) => commands.push(c));
+      const view = runtime.start("hana", domain({ active: delivery("active"), ...rep({ civilians: -30 }) }));
+      expect(commands).toEqual([{ type: "deliver-contract" }]);
+      expect(text(view)).not.toContain(refusal);
+      expect(text(view)).toContain(coldWelcome);
+      expect(view.ended).toBe(true);
+      runtime.start("hana", domain({ active: delivery("cleared"), ...rep({ civilians: -30 }) }));
+      expect(commands).toHaveLength(1);
+    }
   });
 
   it("accepting a job asks the domain for that kind", () => {
