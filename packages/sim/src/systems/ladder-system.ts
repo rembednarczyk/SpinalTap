@@ -106,12 +106,12 @@ export const grabLadder = (ctx: SimContext, e: Entity, key: string, end: "bottom
  * line: her hands catch it as the interact key would, instead of the fall. Only a step off the
  * floor at the top's height, within the coyote time (the jump's window after leaving the floor
  * without one, so the drop is a few centimetres): not a jump, a push-off from the rungs or a fall
- * from higher up. Only at a walk: a sprint (or its momentum kept in the air) or a dash (always at
- * its burst speed while it lasts) carries her past the rungs before her hands reach them, and
- * running off a roof is a leap.
+ * from higher up. Only at a walk: a sprint (or its momentum kept in the air) carries her past the
+ * rungs before her hands reach them, and running off a roof is a leap. Never in a dash's flight:
+ * its tail in the air (DASH_EXIT_SPEED) is under the pace of a walk with buffs.
  */
 const caughtAtTop = (ctx: SimContext, p: Entity, all: readonly Ladder[]): LadderDef | undefined => {
-  if (p.fall === undefined || (p.jump?.coyote ?? 0) <= 0) return undefined;
+  if (p.fall === undefined || (p.jump?.coyote ?? 0) <= 0 || p.perks?.dashFlight) return undefined;
   const pace = Math.hypot(p.velocity?.x ?? 0, p.velocity?.z ?? 0);
   if (pace > playerStatsOf(ctx.state.domain).moveSpeed * TOP_CATCH_PACE) return undefined;
   const peak = p.airPeak ?? p.position.y;

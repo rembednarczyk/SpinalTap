@@ -11,6 +11,11 @@ export interface PerkState {
   dashCooldown: number;
   /** The one dash of this time in the air is used; resets on the ground. */
   airDash: boolean;
+  /**
+   * A dash ran since the last step she stood on the floor: this time in the air (if any) is a
+   * dash's flight, whatever its speed by now, not a step off an edge.
+   */
+  dashFlight: boolean;
   /** Seconds left in which shots pass the player by. */
   iframes: number;
   /** 0..1; deflecting a bullet takes some, it comes back over time. */
