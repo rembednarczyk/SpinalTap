@@ -1056,6 +1056,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: kontrola `metro-shaft-open` (`tools/glitch-scan/test/metro-entrances.ts:131-135`) krucha na zaokrąglenie przy próbce na krawędzi (`z <= w.maxZ`), potrzebny epsilon; `cutGround` (`engine/.../ground-cut.ts:94-95`) liczy każdy trójkąt każdej siatki gruntu (106 ms CPU na 20 chunków), wystarczy wcześniej pominąć siatki bez otworu; Alchemia B: przy rogu otworu bruk 0,32 m pod progiem podestu; Nabrzeże A: okap 0,4 m w murze placu Tessen (T-160); niesprawdzone: wróg w pościgu schodzący za graczem do hali
 - Pakiet właściciela: tools/glitch-scan, packages/engine (mapcity), packages/sim
 
+### G-334 Zabójstwo ogłuszonego gangera po nokaucie zgłoszonym wcześniej nigdy nie jest zgłaszane jako zabójstwo
+- Status: zgłoszone (5.11, weryfikator PR #278; sprzed tego PR, ADR-0065)
+- Ważność: S3 · Zasięg: `corpseOf` przenosi na zwłoki `reported` z nokautu (`bodies.ts:75`), więc patrol, który znajdzie świeże ciało, go nie zgłasza; po wczytaniu dobicie ogłuszonego na oczach patrolu też nie jest przestępstwem, bo `wronged` jest przejściowe, a `offend` w `death-system.ts:72` nie czyta `downed.fought`
+- Pakiet właściciela: packages/sim (bodies, death-system, crime-system)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
