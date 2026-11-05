@@ -1022,7 +1022,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `steerPoint`)
 
 ### G-327 Testy „zapis bez ukrytego stanu” na przechodniach z tłumu nic nie dowodzą
-- Status: zgłoszone (5.11, weryfikator PR #277)
+- Status: poprawka na gałęzi `ccr-ec2c4269-ilh8k8-g327` (009e308, 5.11), PR do otwarcia (GitHub zwracał 500); po scaleniu #277 przejrzeć test `flee-wall`
 - Ważność: S3 (test) · Zasięg: przechodnie z tłumu (bez `key`) nie są w zapisie ani w `stateHash`, więc hash po wczytaniu zgadza się przy dowolnym ukrytym stanie; przejrzeć testy wczytania w `flee-dead-zone`, `flee-wall`, `reputation-tiers` i podobne; porównywać `yaw` i pozycję konkretnego cywila albo używać cywila z `key`
 - Pakiet właściciela: packages/sim (testy)
 
