@@ -25,6 +25,7 @@ import {
   track,
   victimsOf,
 } from "./ganger-perception";
+import { footstepNoise, hearNoise } from "./ganger-hearing";
 
 export { GANGER_SPEED, MELEE_CHASE_SPEED, STUCK_TIME } from "./ganger-walk";
 export { MELEE_REST } from "./ganger-fight";
@@ -222,6 +223,8 @@ export const createGangerAiSystem = (): System => {
       const timeScale = worldTimeScale(ctx);
       const { reputation, heat } = ctx.state.domain;
       const victims = victimsOf(ctx);
+      // Her steps this step (ADR-0069): heard before anyone looks.
+      if (player) hearNoise(ctx, player.position, footstepNoise(player));
       for (const g of inCreationOrder(ctx.world.with("ai", "velocity"))) {
         alive.add(g.id);
         // Knocked out or held in a takedown (ADR-0065): it sees, hears and does nothing.

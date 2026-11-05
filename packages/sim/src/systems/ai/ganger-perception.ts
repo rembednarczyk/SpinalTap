@@ -176,6 +176,21 @@ const tolerates = (ctx: SimContext, g: Ganger, stance: FactionStance, hunted: bo
 };
 
 /**
+ * Whether `g` would only watch the player, not go for her: friendly, or a tolerant patrol. The
+ * district's security hunting her (ADR-0029) goes for her whatever the stance.
+ */
+const watchesOnly = (ctx: SimContext, g: Ganger, stance: FactionStance, heat: DomainState["heat"]): boolean => {
+  const hunted = heat.level > 0 && heat.faction === (g.faction ?? "hebi");
+  return (stance === "friendly" && !hunted) || tolerates(ctx, g, stance, hunted);
+};
+
+/** Whether `g` lets the player be: it only watches her, or she wears its faction's disguise (ADR-0033). */
+export const lenientTo = (ctx: SimContext, g: Ganger): boolean => {
+  const { reputation, heat } = ctx.state.domain;
+  return coveredFrom(ctx, g.faction) || watchesOnly(ctx, g, factionStance(reputation, g.faction ?? "hebi"), heat);
+};
+
+/**
  * What a ganger makes of the player this step: how far they are and whether it sees them. An
  * unalerted one fills its suspicion first and believes its eyes only at 1 (ADR-0069); one that
  * would not attack her anyway (friendly, a tolerant patrol) just watches what it sees. Seeing a
@@ -195,9 +210,7 @@ export const perceivePlayer = (
   const aggro = effectiveAggroRange(g.ai.aggroRange, stance);
   const blind = (g.hackFx?.blind ?? 0) > 0;
   const inSight = !blind && !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
-  // The district's security hunting the player (ADR-0029) attacks on sight whatever the stance.
-  const hunted = heat.level > 0 && heat.faction === (g.faction ?? "hebi");
-  const lenient = (stance === "friendly" && !hunted) || tolerates(ctx, g, stance, hunted);
+  const lenient = watchesOnly(ctx, g, stance, heat);
   let visible = inSight;
   if (player) {
     const sees = enemySees(g, player, distance, inSight, aggro);
