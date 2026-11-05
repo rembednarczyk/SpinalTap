@@ -1017,14 +1017,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (bodies, death-system, crime-system)
 
 ### G-336 Pasy gołego podłoża przy Dworcu Autobusowym (T-164)
-- Status: zgłoszone (5.11, kurator, przegląd #285)
+- Status: w PR #291 (d9c0742); przegląd kuratora 5.11: PRZYJĘTE, czeka na CI
 - Ważność: S4 · Zasięg: pas między parkingiem w175995587 a chodnikiem w227698423 (ok. 70 m²), plac między chodnikiem a ścianą Dworca w66264171 (ok. 250 m²), pas przy ścianie Novy (ok. 105 m²)
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
 - Test przyjęcia: 0 gołych próbek 0,5 m w prostokątach T-164 poza rabatami
 
 ### G-337 Północny chodnik al. Tysiąclecia bez nawierzchni (T-165)
 - Status: zgłoszone (5.11, kurator, przegląd #285)
-- Ważność: S4 · Zasięg: x ok. 640–790, z ok. 362–383, ok. 670 m² na samym x 705–790; przed halami Bazaru rabaty (nie brukować)
+- Ważność: S4 · Zasięg: x ok. 640–790, z ok. 362–383, ok. 670 m² na samym x 705–790; przed halami Bazaru rabaty (nie brukować); także x 764–806 przed frontem Dworca (T-165 pkt 1–2): ok. 136 m² między drogą rowerową w1435832523 a ścieżką w227698420 (x 773–803 rabata, nie brukować) i ok. 50 m² między chodnikiem w1435832518 a drogą rowerową (kostka z wiatami)
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
 - Test przyjęcia: 0 gołych próbek 0,5 m w obszarze T-165 poza rabatami; propozycja kontroli `paving-sliver` dla całego miasta
 
@@ -1048,6 +1048,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna (przypuszczalna): pomosty z szerokości jezdni i chodnika z osobnych dróg OSM, bez wypełnienia obrysem mostu (`man_made=bridge` w1123148473/474)
 - Pakiet właściciela: tools/osm-import (pomosty z obrysu `man_made=bridge`)
 - Test przyjęcia: kontrola `deck-slot` (punkt poza pomostami z pomostem po obu stronach do 2 m i ziemią ≥ 0,5 m niżej) = 0 poza wnęką T-147
+
+### G-341 Gołe pasy wokół Dworca Autobusowego od północy i wschodu (T-168)
+- Status: zgłoszone (5.11, kurator, przegląd G-336)
+- Ważność: S4 · Zasięg: x 785–797, z 422–430 (ok. 42 m²) i x 793–808, z 376–428 (ok. 325 m²) · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: 0 gołych próbek 0,5 m poza budynkami w obu prostokątach; asfalt stanowisk w66323033 i chodniki zostają na wierzchu
+
+### G-342 Zaplecze Novy bez nawierzchni (T-169)
+- Status: zgłoszone (5.11, kurator, przegląd G-336)
+- Ważność: S4 · Zasięg: x 726–756, z 428–441, ok. 270 m² · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`; nawierzchnia utwardzona, nie trawa)
+- Test przyjęcia: 0 gołych próbek 0,5 m poza budynkami w prostokącie; parking w227698438 i jezdnia w40050943 na wierzchu
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
