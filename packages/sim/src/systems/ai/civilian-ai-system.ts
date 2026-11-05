@@ -55,29 +55,34 @@ const FLEE_LOOKAHEAD = 6;
 const FLEE_TURNS = [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2, (3 * Math.PI) / 4, (-3 * Math.PI) / 4];
 const FLEE_PROBE = 2.5;
 /**
- * Hysteresis of the turn (G-317): a turn closer to straight away than the one it runs on (read
- * from its heading, which is saved) has to be open this much further to switch to. Along a wall
- * the probe of the next turn in opened and closed every step, and the heading swung by 0.8 rad.
+ * Hysteresis of the turn (G-317): the way it runs on (read from its heading) is kept while it is
+ * open this much further than the probe, and a way closer to straight away takes over only once
+ * it is open as far. Along a wall the probe of the next way in opened and closed every step, and
+ * the heading swung by 0.8 rad 24 times. Half a metre already lets it run up and down a blind
+ * alley closer to the player; 1.5 m keeps others swinging (flee-wall.test.ts).
  */
-const FLEE_SWITCH_MARGIN = 1.5;
+const FLEE_SWITCH_MARGIN = 1;
 /** How close its heading has to be to a turn to count as running on it (radians). */
 const FLEE_HELD_TURN = Math.PI / 8;
 
 /**
  * The turn off `away` to run on: straight away when the way is open, else the open way closest
- * to it (a wall at its back), keeping the one it runs on (`yaw`) unless one closer to straight
- * away is clearly open. Null when every way is blocked.
+ * to it (a wall at its back), with the hysteresis above. A way back towards the danger is never
+ * kept, so it does not run up and down a blind alley closer to the player. Null when every way
+ * is blocked.
  */
 const fleeTurn = (ctx: SimContext, from: Vec3, away: number, yaw: number): number | null => {
   const open = (turn: number, reach: number): boolean => {
     const probe = { x: from.x + Math.sin(away + turn) * reach, y: from.y, z: from.z + Math.cos(away + turn) * reach };
     return straightWalk(ctx.world, from, probe);
   };
-  const held = FLEE_TURNS.findIndex((turn) => Math.abs(Math.atan2(Math.sin(yaw - away - turn), Math.cos(yaw - away - turn))) <= FLEE_HELD_TURN);
-  if (held >= 0 && open(FLEE_TURNS[held], FLEE_PROBE)) {
-    return FLEE_TURNS.slice(0, held).find((turn) => open(turn, FLEE_PROBE + FLEE_SWITCH_MARGIN)) ?? FLEE_TURNS[held];
-  }
-  return FLEE_TURNS.find((turn) => open(turn, FLEE_PROBE)) ?? null;
+  const best = FLEE_TURNS.find((t) => open(t, FLEE_PROBE));
+  if (best === undefined) return null;
+  const runsOn = (t: number): boolean => Math.abs(Math.atan2(Math.sin(yaw - away - t), Math.cos(yaw - away - t))) <= FLEE_HELD_TURN;
+  const held = FLEE_TURNS.find((t) => Math.abs(t) <= Math.PI / 2 && runsOn(t));
+  const far = FLEE_PROBE + FLEE_SWITCH_MARGIN;
+  if (held === undefined || held === best || open(best, far) || !open(held, far)) return best;
+  return held;
 };
 
 const FEAR: Readonly<Record<CrowdState, number>> = { calm: 0, alarmed: 1, fleeing: 2, cowering: 3 };
