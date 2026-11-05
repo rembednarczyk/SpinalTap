@@ -7,18 +7,7 @@ import type { CharacterRig } from "./characters";
 import { recolorSkin } from "./character-skin";
 import { toonSourceOf } from "./model-library";
 import type { AnchorBone, HumanoidRetarget } from "./model-rig";
-import type { WeaponKind, WeaponMounts } from "./weapon-mount";
-
-/** Weapon model and size for a look; melee weapons are simple shapes for now. */
-const MODEL: Readonly<Record<WeaponLook, { kind: WeaponKind | null; scale: number }>> = {
-  pistol: { kind: "pistol", scale: 1 },
-  revolver: { kind: "pistol", scale: 1.08 },
-  smg: { kind: "smg", scale: 1 },
-  shotgun: { kind: "smg", scale: 1.35 },
-  rifle: { kind: "smg", scale: 1.5 },
-  baton: { kind: null, scale: 1 },
-  blade: { kind: null, scale: 1 },
-};
+import { WEAPON_MODEL, type WeaponMounts } from "./weapon-mount";
 
 type Place = "hand" | "hip" | "hipL" | "back" | "model";
 
@@ -352,7 +341,7 @@ export class Loadouts {
     holder.setEnabled(false);
     const mounted: Mounted = { look, node: holder };
     s.mounted[place] = mounted;
-    const model = MODEL[look];
+    const model = WEAPON_MODEL[look];
     if (!model.kind || !this.mounts.has(model.kind)) {
       // Melee weapons and missing models: a plain shape along the forearm axis.
       const box = MeshBuilder.CreateBox(`${holder.name}-box`, { width: 0.03, height: look === "blade" ? 0.62 : look === "baton" ? 0.5 : 0.2, depth: 0.04 }, this.scene);
