@@ -1,4 +1,4 @@
-import type { MetroStationId, Vec3, ViewDescriptor } from "@seki/core";
+import { METRO_STATION_IDS, type MetroStationId, type Vec3, type ViewDescriptor } from "@seki/core";
 import { type StaticProp, placeAt, v } from "./builders";
 import { againstWall } from "./lublin/places";
 import { DOCKS_PLACE } from "./lublin/sites";
@@ -96,3 +96,81 @@ export const metroStation = (id: MetroStationId): MetroStationDef => {
 /** The station whose kiosk is within reach of `p` (and on its level), or null. */
 export const kioskAt = (p: Vec3, stations: readonly MetroStationDef[] = METRO_STATIONS): MetroStationDef | null =>
   stations.find((s) => Math.hypot(p.x - s.kiosk.x, p.z - s.kiosk.z) <= KIOSK_REACH && Math.abs(p.y - s.kiosk.y) <= 1.6) ?? null;
+
+// ---- the line on the map (ADR-0071 stage 1) ----
+
+/**
+ * The metro line as the map draws it (ADR-0071 stage 1): the tunnel between the stations and the
+ * stations the city may get later. Map data only, no geometry and no rules: the simulation never
+ * reads it, so it changes neither the state hash nor the save. Points are world metres (x east,
+ * z north), the stations themselves come from `METRO_STATIONS`.
+ */
+export interface MetroMapPoint {
+  readonly x: number;
+  readonly z: number;
+}
+
+/** The tunnel between two neighbouring stations of the line, without the stations themselves. */
+export interface MetroTunnelDef {
+  readonly from: MetroStationId;
+  readonly to: MetroStationId;
+  readonly via: readonly MetroMapPoint[];
+}
+
+/**
+ * The tunnel (ADR-0071, "Przebieg tunelu"): under Krakowskie Przedmieście to the Bramowa kiosk,
+ * back to Plac Łokietka and north under Lubartowska past Alchemia, down the valley of the
+ * Czechówka under Aleja Tysiąclecia to Plac Zamkowy, then east along the avenue and the Bystrzyca
+ * to Nabrzeże. It keeps off the Old Town's hill with its cellars and off the castle hill. The
+ * points follow the streets of the map data (OSM).
+ */
+export const METRO_TUNNEL: readonly MetroTunnelDef[] = [
+  { from: "shinsekai", to: "kanal", via: [{ x: 240, z: -66 }, { x: 342, z: -89 }, { x: 443, z: -94 }] },
+  {
+    from: "kanal",
+    to: "targ",
+    via: [{ x: 443, z: -90 }, { x: 442, z: -20 }, { x: 447, z: 16 }, { x: 460, z: 56 }, { x: 502, z: 160 }, { x: 550, z: 281 }, { x: 585, z: 362 }, { x: 680, z: 352 }],
+  },
+  {
+    from: "targ",
+    to: "doki",
+    via: [{ x: 743, z: 345 }, { x: 904, z: 322 }, { x: 1120, z: 310 }, { x: 1700, z: 380 }, { x: 2300, z: 300 }, { x: 2450, z: 330 }],
+  },
+];
+
+/**
+ * A station the line may get (ADR-0071, "możliwe stacje"): dashed on the map, without a ticket,
+ * "under construction". Not a `MetroStationId`, so neither the contract nor the save knows it;
+ * it becomes a station with the ADR of its district.
+ */
+export interface MetroPlannedDef {
+  readonly id: string;
+  /** Lublin's own name, the same in every language. */
+  readonly name: string;
+  /** The working station the extension starts from. */
+  readonly from: MetroStationId;
+  readonly at: MetroMapPoint;
+  /** The dashed line between `from` and `at`. */
+  readonly via: readonly MetroMapPoint[];
+}
+
+/**
+ * The possible stations the ADR names with a place. The third one, in the gap of T-022 between
+ * Podzamcze and Nabrzeże (about (1700; 380)), waits for the topography curator's name and place.
+ */
+export const METRO_PLANNED: readonly MetroPlannedDef[] = [
+  // Ogród Saski: the line carried on west, about 0.9 km from Plac Litewski, along Krakowskie.
+  { id: "ogrod-saski", name: "Ogród Saski", from: "shinsekai", at: { x: -810, z: 180 }, via: [{ x: 20, z: -59 }, { x: -200, z: -64 }] },
+  // Lublin Główny: the railway and the Dworzec Metropolitalny, a branch south of Brama Krakowska.
+  { id: "lublin-glowny", name: "Lublin Główny", from: "kanal", at: { x: 560, z: -2030 }, via: [{ x: 460, z: -155 }] },
+];
+
+/** The line's stations between `from` and `to` in the order of the ride, both ends included. */
+export const metroRoute = (from: MetroStationId, to: MetroStationId): MetroStationId[] => {
+  const a = METRO_STATION_IDS.indexOf(from);
+  const b = METRO_STATION_IDS.indexOf(to);
+  const step = b >= a ? 1 : -1;
+  const out: MetroStationId[] = [];
+  for (let i = a; i !== b + step; i += step) out.push(METRO_STATION_IDS[i] as MetroStationId);
+  return out;
+};
