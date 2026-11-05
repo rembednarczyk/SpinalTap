@@ -1,6 +1,6 @@
 // @ts-expect-error The engine is typed for the browser; the tests read the files off disk.
 import { readFileSync } from "node:fs";
-import { type AbstractMesh, type Matrix, type Mesh, type TransformNode, Vector3, VertexBuffer } from "../src/babylon";
+import { type AbstractMesh, Matrix, type Mesh, type TransformNode, Vector3, VertexBuffer } from "../src/babylon";
 import { worldMatrixOf } from "./t-pose";
 
 /** A character model of `packages/app/public/models` as a data URL, as the game would load it. */
@@ -17,31 +17,89 @@ export interface BodyVertex {
   readonly bone: string;
 }
 
+/** The vertices a body mesh draws (its own indices) whose dominant bone passes a filter, read once per mesh. */
+interface SkinSet {
+  /** Bind positions, mesh-local, three per vertex. */
+  readonly bind: Float32Array;
+  /** Four bone indices and weights per vertex. */
+  readonly index: Float32Array;
+  readonly weight: Float32Array;
+  readonly bone: readonly string[];
+}
+
+const SKIN_SETS = new WeakMap<AbstractMesh, Map<string, SkinSet>>();
+
+const skinSet = (mesh: AbstractMesh, bones: RegExp): SkinSet | null => {
+  const sets = SKIN_SETS.get(mesh) ?? new Map<string, SkinSet>();
+  SKIN_SETS.set(mesh, sets);
+  const cached = sets.get(bones.source);
+  if (cached) return cached;
+  const skeleton = mesh.skeleton;
+  const positions = mesh.getVerticesData(VertexBuffer.PositionKind);
+  const index = mesh.getVerticesData(VertexBuffer.MatricesIndicesKind);
+  const weight = mesh.getVerticesData(VertexBuffer.MatricesWeightsKind);
+  const indices = mesh.getIndices();
+  if (!skeleton || !positions || !index || !weight || !indices) return null;
+  const used = [...new Set(indices)].sort((a, b) => a - b);
+  const keep: number[] = [];
+  const names: string[] = [];
+  for (const v of used) {
+    let best = 0;
+    for (let k = 1; k < 4; k++) if (weight[v * 4 + k]! > weight[v * 4 + best]!) best = k;
+    const name = skeleton.bones[index[v * 4 + best]!]?.name ?? "";
+    if (!bones.test(name)) continue;
+    keep.push(v);
+    names.push(name);
+  }
+  const set: SkinSet = {
+    bind: Float32Array.from(keep.flatMap((v) => [positions[v * 3]!, positions[v * 3 + 1]!, positions[v * 3 + 2]!])),
+    index: Float32Array.from(keep.flatMap((v) => [0, 1, 2, 3].map((k) => index[v * 4 + k]!))),
+    weight: Float32Array.from(keep.flatMap((v) => [0, 1, 2, 3].map((k) => weight[v * 4 + k]!))),
+    bone: names,
+  };
+  sets.set(bones.source, set);
+  return set;
+};
+
 /**
  * The model's body meshes as the GPU would skin them in the current pose (CPU skinning of the
- * same bone matrices), one entry per vertex, each with its dominant bone. Meshes that share a
- * geometry (VRoid primitives) are read once.
+ * same bone matrices), one entry per vertex the meshes draw, each with its dominant bone. Only
+ * vertices whose dominant bone matches `bones` are skinned (the rest of the body costs nothing).
+ * VRoid primitives that share a geometry are read once.
  */
-export const skinnedBody = (meshes: readonly AbstractMesh[], match: RegExp = /body/i): BodyVertex[] => {
+export const skinnedBody = (meshes: readonly AbstractMesh[], match: RegExp = /body/i, bones: RegExp = /./): BodyVertex[] => {
   const out: BodyVertex[] = [];
   const seen = new Set<unknown>();
+  const p = new Vector3();
+  const q = new Vector3();
+  const sum = new Vector3();
   for (const mesh of meshes) {
     const skeleton = mesh.skeleton;
     const geometry = (mesh as Mesh).geometry;
-    if (!skeleton || !geometry || !match.test(mesh.name) || seen.has(geometry)) continue;
-    seen.add(geometry);
-    for (const b of skeleton.bones) b.getTransformNode()?.computeWorldMatrix(true);
-    skeleton.prepare(true);
-    const local = (mesh as Mesh).getPositionData(true, true);
-    const index = mesh.getVerticesData(VertexBuffer.MatricesIndicesKind);
-    const weight = mesh.getVerticesData(VertexBuffer.MatricesWeightsKind);
-    if (!local || !index || !weight) continue;
+    if (!skeleton || !geometry || !match.test(mesh.name) || seen.has(mesh)) continue;
+    seen.add(mesh);
+    const set = skinSet(mesh, bones);
+    if (!set) continue;
+    if (!seen.has(skeleton)) {
+      // The primitives of one model share a skeleton: bring it up to date once.
+      seen.add(skeleton);
+      for (const b of skeleton.bones) b.getTransformNode()?.computeWorldMatrix(true);
+      skeleton.prepare(true);
+    }
+    const matrices = skeleton.getTransformMatrices(mesh);
     const world = worldMatrixOf(mesh as unknown as TransformNode);
-    for (let v = 0; v < local.length / 3; v++) {
-      let best = 0;
-      for (let k = 1; k < 4; k++) if (weight[v * 4 + k]! > weight[v * 4 + best]!) best = k;
-      const bone = skeleton.bones[index[v * 4 + best]!]?.name ?? "";
-      out.push({ at: Vector3.TransformCoordinates(new Vector3(local[v * 3]!, local[v * 3 + 1]!, local[v * 3 + 2]!), world), bone });
+    const m = new Matrix();
+    for (let v = 0; v < set.bone.length; v++) {
+      p.set(set.bind[v * 3]!, set.bind[v * 3 + 1]!, set.bind[v * 3 + 2]!);
+      sum.setAll(0);
+      for (let k = 0; k < 4; k++) {
+        const w = set.weight[v * 4 + k]!;
+        if (w <= 0) continue;
+        Matrix.FromArrayToRef(matrices, set.index[v * 4 + k]! * 16, m);
+        Vector3.TransformCoordinatesToRef(p, m, q);
+        sum.addInPlace(q.scaleInPlace(w));
+      }
+      out.push({ at: Vector3.TransformCoordinates(sum, world), bone: set.bone[v]! });
     }
   }
   return out;

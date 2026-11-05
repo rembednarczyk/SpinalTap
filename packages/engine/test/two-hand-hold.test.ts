@@ -62,7 +62,7 @@ describe.each([["heroine"], ["ganger"], [null]] as const)("long guns held in bot
       pose(c, st.aim, st.crouch, st.speed);
       const gun = gunShape(heldGun(c, kind)!);
       const inverse = Matrix.Invert(gun.world);
-      const body = skinnedBody(c.meshes!, /body|face/i).filter((v) => BODY.test(v.bone));
+      const body = skinnedBody(c.meshes!, /body|face/i, BODY);
       const inside: BodyVertex[] = body.filter((v) => insideGun(gun, v.at, inverse, 0.004));
       expect(body.length).toBeGreaterThan(1000);
       const where = inside.slice(0, 8).map((v) => {

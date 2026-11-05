@@ -22,8 +22,8 @@ const onHands = (c: Cast, kind: Long, body = false): { l: number; r: number; ins
     l: Vector3.Distance(palmOf(c, "L"), onGun(gun, ...POINTS[kind].fore)),
     r: Vector3.Distance(palmOf(c, "R"), onGun(gun, ...POINTS[kind].grip)),
     inside: body
-      ? skinnedBody(c.meshes!, /body|face/i)
-          .filter((v) => BODY.test(v.bone) && insideGun(gun, v.at, inverse, 0.004))
+      ? skinnedBody(c.meshes!, /body|face/i, BODY)
+          .filter((v) => insideGun(gun, v.at, inverse, 0.004))
           .map((v) => {
             const q = Vector3.TransformCoordinates(v.at, inverse);
             return `${v.bone}@${q.x.toFixed(2)},${q.y.toFixed(2)},${q.z.toFixed(2)}`;
@@ -76,6 +76,7 @@ describe.each([["heroine"], ["ganger"]] as const)("a long gun through the moves 
     ] as const) {
       for (let i = 0; i < 90; i++) {
         animateRig(c.rig, crouch ? 0.8 : 1.6, 1 / 60, crouch, { aim });
+        // Every frame: the sleeves' spring bones need the whole motion.
         c.models.update(1 / 60, c.rig.time);
         c.loadouts.update(c.rig);
         if (i % 5 !== 0) continue;
