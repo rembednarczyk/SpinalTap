@@ -106,7 +106,9 @@ const fleeTurn = (ctx: SimContext, from: Vec3, away: number, yaw: number, runnin
 
 /**
  * How close its heading has to be to a way for that to be the way it ran on its last step
- * (radians, G-326): one step turns the heading towards a moving point by hundredths of a radian.
+ * (radians, G-326): one step turns the heading towards a moving point by hundredths of a radian,
+ * round a corner by up to a tenth. With 0.05 a walker let go of its way round on such a bend and
+ * swung again (flee-wall.test.ts, seed 29).
  */
 const FLEE_HELD_STEP = 0.15;
 
@@ -117,28 +119,14 @@ const offHeading = (from: Vec3, to: Vec3, heading: number): number => {
 };
 
 /**
- * The way round to `ahead`, unless it turns back (G-326): in a corner the way round to a point
- * behind its wall led back past the danger, and the runner swung at the player's feet (465
- * jumps in a chase). Then it runs to the point a probe ahead, when that walk is free.
- */
-const wayRound = (ctx: SimContext, from: Vec3, ahead: Vec3): Vec3 => {
-  const p = steerPoint(ctx.world, from, ahead, true);
-  const [ax, az] = [ahead.x - from.x, ahead.z - from.z];
-  if ((p.x - from.x) * ax + (p.z - from.z) * az >= 0) return p;
-  const k = FLEE_PROBE / Math.hypot(ax, az);
-  const near = { x: from.x + ax * k, y: from.y, z: from.z + az * k };
-  return straightWalk(ctx.world, from, near) ? near : p;
-};
-
-/**
  * The point to run towards this step, `steerPoint` with hysteresis (G-326): a runner that took
  * the way round on its last step (`heading`, the way its velocity points) keeps it while the
- * straight walk is free again. Not its yaw: making way, it faces the player. The knee-high line grazed a corner that the way round, in cells
- * with room for a body, keeps clear of: the line opened and closed every step, and the heading
- * swung by 0.42 rad 25 times.
+ * straight walk is free again. Not its yaw: making way, it faces the player. The knee-high
+ * line grazed a corner that the way round, in cells with room for a body, keeps clear of: the
+ * line opened and closed every step, and the heading swung by 0.42 rad 25 times.
  */
 const fleeStep = (ctx: SimContext, from: Vec3, ahead: Vec3, heading: number, running: boolean): Vec3 => {
-  if (!straightWalk(ctx.world, from, ahead)) return wayRound(ctx, from, ahead);
+  if (!straightWalk(ctx.world, from, ahead)) return steerPoint(ctx.world, from, ahead, true);
   if (!running || offHeading(from, ahead, heading) <= FLEE_HELD_STEP) return ahead;
   const round = detourStep(ctx.world, from, ahead);
   return round && offHeading(from, round, heading) <= FLEE_HELD_STEP ? round : ahead;
@@ -341,8 +329,7 @@ class CivilianAgent {
     const ux = Math.sin(away + turn);
     const uz = Math.cos(away + turn);
     const ahead = { x: self.position.x + ux * FLEE_LOOKAHEAD, y: self.position.y, z: self.position.z + uz * FLEE_LOOKAHEAD };
-    const p = fleeStep(ctx, self.position, ahead, Math.atan2(self.velocity.x, self.velocity.z), running);
-    const sx = p.x - self.position.x;
+    const p = fleeStep(ctx, self.position, ahead, Math.atan2(self.velocity.x, self.velocity.z), running);    const sx = p.x - self.position.x;
     const sz = p.z - self.position.z;
     const s = Math.hypot(sx, sz);
     const [vx, vz] = s < 1e-6 ? [ux, uz] : [sx / s, sz / s];

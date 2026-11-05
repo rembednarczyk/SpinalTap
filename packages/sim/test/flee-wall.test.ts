@@ -132,6 +132,9 @@ const PAST_A_CORNER = [
   { seed: 17, id: 1002005, dx: 1, dz: 0, was: 43 },
   // Seed 23, walker 1002006 by (262; -81), on the same way away all along: 6 jumps of 0.5 rad.
   { seed: 23, id: 1002006, dx: 0, dz: 1, was: 6 },
+  // Seed 29, walker 1002006: 258 jumps, stuck 2.46 m off. Its way round bends by more than
+  // 0.05 rad a step: with that tolerance it lets go of it again (67 jumps, 2.45 m off).
+  { seed: 29, id: 1002006, dx: 0, dz: 2, was: 258 },
 ] as const;
 
 describe("an escape past a corner (G-326)", () => {
@@ -143,12 +146,10 @@ describe("an escape past a corner (G-326)", () => {
     });
   }
 
-  // Seed 11, walker 1002001 chased into the corner by (316; -95), the player stopping 2 m off:
-  // the way round to the point ahead, behind the corner's wall, led back past the player, and it
-  // ran at the player's feet (77 steps towards it, 1.18 m off; 465 jumps in ten seconds).
-  it("chased into a corner it does not run back past the player", () => {
-    const w = watchEscape(11, 1002001, 0, -2, { speed: 4, stop: 2 });
-    expect(w.towards).toBe(0);
-    expect(w.closest).toBeGreaterThanOrEqual(2 - 0.05);
+  // Seed 43, walker 1002008, player 2 m off by (309; -99): its way out leads round past the
+  // player. A rule that ran it on to the point a probe ahead when the way round turned back
+  // (since withdrawn) pinned it against a wall 2.69 m off the player, running on the spot.
+  it("takes the way round even when it leads back past the player (seed 43, walker 1002008)", () => {
+    expect(watchEscape(43, 1002008, 2).distance).toBeGreaterThanOrEqual(FLEE_RADIUS);
   });
 });
