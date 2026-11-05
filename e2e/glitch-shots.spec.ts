@@ -1,15 +1,17 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { freeze, step, teleport, newGame, waitForGame, waitForPlay } from "./helpers";
 
 /**
  * Shots of places for the glitch hunters (ADR-0054): `SHOTS` is the directory the PNGs go to,
- * `GLITCH_SPOTS` a JSON list of [name, x, z, yaw, pitch]. Skipped without them, so the full suite
- * in CI passes over it. Next to each `<name>.png` goes `<name>.json` with the player and the
- * camera at the moment of the shot.
+ * `GLITCH_SPOTS` a JSON list of [name, x, z, yaw, pitch, y?] (y: a floor over or under the ground,
+ * the stairs of a metro pavilion; without it the ground), or the path of a .json file holding it.
+ * Skipped without them, so the full suite in CI passes over it. Next to each `<name>.png` goes
+ * `<name>.json` with the player and the camera at the moment of the shot.
  */
-const spots = JSON.parse(process.env.GLITCH_SPOTS ?? "[]") as [string, number, number, number, number][];
+const listed = process.env.GLITCH_SPOTS ?? "[]";
+const spots = JSON.parse(listed.endsWith(".json") ? readFileSync(listed, "utf8") : listed) as [string, number, number, number, number, number?][];
 
 /** The camera stands at the player's eye, or this far behind it in TPP (2.2 m and the shoulder). */
 const NEAR = 3;
@@ -27,8 +29,8 @@ test("shots of the hunters' places", async ({ page }) => {
   await newGame(page);
   await waitForPlay(page);
   await freeze(page);
-  for (const [name, x, z, yaw, pitch] of spots) {
-    await teleport(page, x, z, yaw, pitch);
+  for (const [name, x, z, yaw, pitch, y] of spots) {
+    await teleport(page, x, z, yaw, pitch, y);
     await step(page, 5);
     // `citySettled()` and the camera are the renderer's last frame, which may still be the
     // previous view (G-013): wait for a frame drawn after the step, with the city round it built.

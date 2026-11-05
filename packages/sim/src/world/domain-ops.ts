@@ -67,7 +67,7 @@ export const adjustReputation = (ctx: SimContext, faction: FactionId, delta: num
 
 /** Applies every faction's reaction to something the player did, in the order the rule table lists them. */
 export const applyReputationCause = (ctx: SimContext, cause: ReputationCause): void => {
-  for (const { faction, delta } of reputationEffects(cause)) adjustReputation(ctx, faction, delta);
+  for (const { faction, delta } of reputationEffects(cause, ctx.state.domain.reputation)) adjustReputation(ctx, faction, delta);
 };
 
 export const grantMemory = (ctx: SimContext, id: MemoryId): void => {

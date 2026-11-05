@@ -96,7 +96,8 @@ export const completeContract = (ctx: SimContext): void => {
   };
   ctx.streamer.clearSite();
   if (paid.ok) ctx.bus.emit("EddiesChanged", { balance: paid.wallet.eddies, delta: total });
-  applyReputationCause(ctx, { type: "contract-completed", kind });
+  // A clean job (ADR-0070): no alarm, nobody killed besides the targets.
+  applyReputationCause(ctx, { type: "contract-completed", kind, clean: !tally.alarm && tally.extraKills === 0 });
   ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });
   ctx.bus.emit("ContractDebrief", { contractId: contract.id, reward: contract.reward, ...card, ...(contract.variation ? { variation: contract.variation } : {}) });
   phoneFromFixer(ctx, giverOfContract(contract), "paid");

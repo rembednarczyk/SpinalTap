@@ -75,10 +75,10 @@ describe("reputation", () => {
     expect(factionStance({ ...createReputation(), hebi: 30 }, "hebi")).toBe("friendly");
   });
 
-  it("killing a ganger angers the gang and unsettles the street", () => {
+  it("killing a ganger in a fight angers the gang and pleases the street (ADR-0070)", () => {
     expect(reputationEffects({ type: "member-killed", faction: "hebi" })).toEqual([
       { faction: "hebi", delta: -4 },
-      { faction: "civilians", delta: -1 },
+      { faction: "civilians", delta: 1 },
     ]);
   });
 
@@ -94,7 +94,7 @@ describe("reputation", () => {
     expect(reputationEffects({ type: "contract-completed" })).toEqual([
       { faction: "fixers", delta: 3 },
       { faction: "hebi", delta: -5 },
-      { faction: "civilians", delta: 1 },
+      { faction: "civilians", delta: 2 },
     ]);
   });
 

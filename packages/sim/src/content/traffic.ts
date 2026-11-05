@@ -3,7 +3,7 @@ import { type Pt, ROAD_CHAINS, type RoadChain, onRoad, polylineLength } from "./
 import { inBuilding } from "./lublin/places";
 import { MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
-import { METRO_STATIONS } from "./metro";
+import { METRO_FOOTPRINTS } from "./metro";
 import { groundY } from "./lublin/terrain";
 import { type RouteUse, type TrafficRoute, pointAt, slice } from "./traffic-lane";
 import { joinAtJunctions } from "./traffic-junctions";
@@ -325,11 +325,11 @@ const VEHICLE_HEADROOM = 3;
  * The game's solid blocks standing on the roads (the market's halls and the viaduct's pillars on
  * Aleja Tysiąclecia, ADR-0045), grown by `BLOCK_REACH`: lanes stop short of them.
  */
-const ROAD_BLOCKS: readonly { minX: number; maxX: number; minZ: number; maxZ: number }[] = [...GAME_PROPS, ...METRO_STATIONS.flatMap((m) => m.props)].flatMap((p) =>
+const ROAD_BLOCKS: readonly { minX: number; maxX: number; minZ: number; maxZ: number }[] = GAME_PROPS.flatMap((p) =>
   p.solid && p.view.kind === "block" && p.center.y - p.view.size.y / 2 < groundY(p.center.x, p.center.z) + VEHICLE_HEADROOM
     ? [{ minX: p.center.x - p.view.size.x / 2 - BLOCK_REACH, maxX: p.center.x + p.view.size.x / 2 + BLOCK_REACH, minZ: p.center.z - p.view.size.z / 2 - BLOCK_REACH, maxZ: p.center.z + p.view.size.z / 2 + BLOCK_REACH }]
     : [],
-);
+).concat(METRO_FOOTPRINTS.map((r) => ({ minX: r.minX - BLOCK_REACH, maxX: r.maxX + BLOCK_REACH, minZ: r.minZ - BLOCK_REACH, maxZ: r.maxZ + BLOCK_REACH })));
 
 /** Arc lengths along a lane where it runs into one of the game's blocks, every half metre. */
 const blockedAlong = (r: TrafficRoute): number[] => {

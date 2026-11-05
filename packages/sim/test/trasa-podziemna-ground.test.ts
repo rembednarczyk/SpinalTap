@@ -8,9 +8,10 @@ import { topAt } from "../src/world/collision";
 
 /**
  * The ground under Trasa Podziemna's stairs (G-252): the dig of `PADS` must keep the terrain a
- * metre or more under the stairs' collision ramp, and the Rynek's paving, draped on it in
- * triangles of up to 5 m (the renderer's `DRAPE_STEP`), under the treads. On the import's grid
- * and on any other of up to 5 m: the pad is laid out in metres, not on the grid's points.
+ * metre or more under the stairs' collision ramp, and the Rynek's paving, draped on it in the
+ * triangles of a 2.5 m grid (the renderer's `DRAPE_GRID`, edges of up to 3.5 m; checked here for
+ * any of up to 5 m), under the treads. On the import's grid and on any other of up to 5 m: the
+ * pad is laid out in metres, not on the grid's points.
  */
 
 type HeightAt = (x: number, z: number) => number;

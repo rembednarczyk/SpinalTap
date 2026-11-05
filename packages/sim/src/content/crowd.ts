@@ -3,7 +3,7 @@ import { placeAt, v } from "./builders";
 import { DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_PROPS } from "./district-kanal";
 import { KOI_CROWD_SPOTS } from "./interiors";
-import { METRO_STATIONS } from "./metro";
+import { METRO_FOOTPRINTS } from "./metro";
 import { againstWall, inBuilding, nearestWall } from "./lublin/places";
 import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
 import { furnitureClearance, furnitureNear } from "./furniture-index";
@@ -80,10 +80,10 @@ const loopAround = (line: readonly Pt[], half: number): Pt[] => {
   return [...side(1), ...side(-1).reverse()];
 };
 
-/** The game's own solid blocks on the streets (the wreck, the van, kiosks, crates): routes keep off them too. */
-const BLOCKS: readonly { minX: number; maxX: number; minZ: number; maxZ: number }[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...METRO_STATIONS.flatMap((m) => m.props)]
+/** The game's own solid blocks on the streets (the wreck, the van, crates, the metro pavilions): routes keep off them too. */
+const BLOCKS: readonly { minX: number; maxX: number; minZ: number; maxZ: number }[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS]
   .flatMap((p) => (p.solid && p.view.kind === "block" ? [{ minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2 }] : []))
-  .concat(METRO_STATIONS.map((m) => ({ minX: m.kiosk.x - 0.5, maxX: m.kiosk.x + 0.5, minZ: m.kiosk.z - 0.5, maxZ: m.kiosk.z + 0.5 })));
+  .concat(METRO_FOOTPRINTS);
 
 /** Clearance a route keeps from the game's blocks (the walkers' own offset and a body included). */
 const BLOCK_CLEARANCE = 0.9;

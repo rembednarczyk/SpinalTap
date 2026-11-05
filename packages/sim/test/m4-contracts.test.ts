@@ -162,7 +162,8 @@ describe("retrieval (Hana's crate from the Hebi stash)", () => {
     const rep = sim.domain.reputation;
     complete(sim);
     expect(sim.domain.wallet.eddies).toBe(before + c.reward + extra());
-    expect(sim.domain.reputation).toEqual({ ...rep, civilians: rep.civilians + 3, hebi: rep.hebi - 4, fixers: rep.fixers + 1 });
+    // A clean job (no alarm, nobody killed besides the guards): +3 and +2 with the street (ADR-0070).
+    expect(sim.domain.reputation).toEqual({ ...rep, civilians: rep.civilians + 5, hebi: rep.hebi - 4, fixers: rep.fixers + 1 });
   });
 
   it("killing the guards alone does not clear it", () => {
@@ -237,7 +238,8 @@ describe("protection (Hebi come for Oyaji)", () => {
     expect(sim.domain.reputation).toEqual({
       ...rep,
       hebi: rep.hebi - 4 * c.targets - 3,
-      civilians: rep.civilians - c.targets + 6,
+      // The wave is the job's crew: the street judges the job, not each body (ADR-0070).
+      civilians: rep.civilians + 6,
     });
   });
 

@@ -107,6 +107,8 @@ export interface Offence {
   readonly incident: number;
   /** Someone knocked out by it (ADR-0065): once reported, its body brings no second call. */
   readonly body?: EntityId;
+  /** Whom it was done to (an assault, a murder): one deed costs the street once (ADR-0070). */
+  readonly victim?: EntityId;
 }
 
 export interface StreetLog {
@@ -114,6 +116,16 @@ export interface StreetLog {
   offences: Offence[];
   /** Incidents so far (ids of offences); transient, a loaded game counts from 0 again. */
   incidents: number;
+  /**
+   * What the reported assaults on each victim have cost the street so far (ADR-0070), until
+   * its murder is reported. Not saved, like `wronged`: after a load the bodies get new ids, so
+   * a reported murder costs a whole −2 without the assaults reported before the save, up to −2
+   * more (two camera knockouts, it wakes, killed unseen and found: −2 in a run, −4 after a
+   * load). The other way, as `wronged` is not saved either: knocked out in sight of a patrol,
+   * saved, finished in sight of one costs −1 and no heat instead of −2 and heat 1→2.
+   * Both accepted (ADR-0070, „Zapis”).
+   */
+  charged: Map<EntityId, number>;
 }
 
 export interface SessionWatch {
@@ -142,7 +154,7 @@ export const freshSession = (): SessionState => ({
   focusId: null,
   focusPrompt: null,
   lastThreat: null,
-  street: { disturbances: [], offences: [], incidents: 0 },
+  street: { disturbances: [], offences: [], incidents: 0, charged: new Map() },
   watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0, sent: 0, uploadId: null },
   passenger: null,
   street2: { encounter: null, npcs: {}, micro: null, district: null },

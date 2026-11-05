@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, LOOT_TABLES, contractKind, killXp, killedFlag, rollLoot } from "@seki/core";
+import { ENEMY_TYPES, type KillContext, LOOT_TABLES, contractKind, killXp, killedFlag, rollLoot } from "@seki/core";
 import { deriveRandom } from "../rng/derive-random";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
@@ -24,6 +24,14 @@ const dropEnemyLoot = (ctx: Ctx, e: Entity): void => {
   const key = `loot:${e.key}`;
   dropLoot(ctx, key, e.position, rollLoot(LOOT_TABLES[ENEMY_TYPES[e.enemy.type].loot], deriveRandom(ctx.seed, key)));
 };
+
+/** How the street sees this death (ADR-0070): from behind, of the heat's people, of a job's crew. */
+const killContext = (ctx: Ctx, e: Entity): KillContext => ({
+  // A body knocked out with no fight (ADR-0065) is saved with that, `wronged` is not.
+  wronged: !!e.wronged || (!!e.downed && !e.downed.fought),
+  security: !!e.security,
+  crew: isContractTarget(ctx, e) || (ctx.session.street2.micro?.attackers.includes(e.id) ?? false),
+});
 
 const checkContractCleared = (ctx: Parameters<System["run"]>[0]): void => {
   const contract = ctx.state.domain.contracts.active;
@@ -59,13 +67,14 @@ export const deathSystem: System = {
       }
       if (e.key) raiseFlag(ctx, deadFlag(e.key));
       const byPlayer = playerId !== undefined && e.lastHitBy === playerId;
-      // Killing someone who was not fighting is a murder once someone sees it (ADR-0029).
-      if (byPlayer && e.wronged) offend(ctx, "murder", e.position);
+      // Killing someone who was not fighting is a murder once someone sees it (ADR-0029). A body
+      // left lying (below) is that murder's: once reported, it brings no second report.
+      if (byPlayer && e.wronged) offend(ctx, "murder", e.position, e.downed ? e.id : undefined, e.id);
       if (byPlayer && !isContractTarget(ctx, e)) noteTally(ctx, (t) => ({ ...t, extraKills: t.extraKills + 1 }));
       disturb(ctx, "body", e.position, BODY_NOISE, e.id);
       if (e.tag) raiseFlag(ctx, killedFlag(e.tag));
       // A death the player did not cause (Hebi shooting Oyaji) is not held against them.
-      if (e.faction && (e.lastHitBy === undefined || e.lastHitBy === playerId)) applyReputationCause(ctx, { type: "member-killed", faction: e.faction });
+      if (e.faction && (e.lastHitBy === undefined || e.lastHitBy === playerId)) applyReputationCause(ctx, { type: "member-killed", faction: e.faction, how: killContext(ctx, e) });
       dropEnemyLoot(ctx, e);
       // An enemy the player took down (ADR-0059); its level against the player's comes in stage 5.
       if (byPlayer && e.enemy) grantXp(ctx, killXp(e.enemy.type), "kill");

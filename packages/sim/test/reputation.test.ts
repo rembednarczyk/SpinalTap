@@ -35,15 +35,15 @@ const intoAlley = (sim: Simulation) => {
 };
 
 describe("reputation from deeds", () => {
-  it("killing a ganger costs standing with Hebi and the street", () => {
+  it("killing a ganger costs standing with Hebi and earns some with the street (ADR-0070)", () => {
     const sim = Simulation.create({ seed: 1 });
     const changes = collect(sim, "ReputationChanged");
     byKey(sim, "guard")!.health = { current: 0, max: 80 };
     sim.step();
-    expect(sim.domain.reputation).toEqual({ fixers: 0, hebi: -4, civilians: -1, clinic: 0, kagami: 0, tessen: 0 });
+    expect(sim.domain.reputation).toEqual({ fixers: 0, hebi: -4, civilians: 1, clinic: 0, kagami: 0, tessen: 0 });
     expect(changes).toEqual([
       { faction: "hebi", value: -4, delta: -4 },
-      { faction: "civilians", value: -1, delta: -1 },
+      { faction: "civilians", value: 1, delta: 1 },
     ]);
   });
 

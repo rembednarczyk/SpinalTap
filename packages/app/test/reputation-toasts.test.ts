@@ -74,12 +74,13 @@ describe("a feared player in a crowd (G-281)", () => {
     const toasts = watchToasts(ui);
     const cues: EntityId[] = [];
     session.bus.on("NpcReacted", (e) => cues.push(e.entityId));
-    paceBy(session, 40);
+    // Shorter than the quiet gap (30 s), yet long after the first toast went (4.5 s): on this
+    // street another passer-by runs at 13 s, and a passer-by hovering at the flee radius cues
+    // again every 2 s. A walk past the gap would only step the whole city on (G-323).
+    paceBy(session, 20);
     const fled = [...toasts.shown.values()].filter((t) => t.title === "Passers-by run away");
-    // Somebody did run: the reaction is still there, only not repeated.
-    expect(fled.length).toBeGreaterThan(0);
-    // Once per quiet gap, however many run and however often.
-    expect(fled.length).toBeLessThanOrEqual(2);
+    // Somebody did run, and once in the gap: however many run and however often.
+    expect(fled).toHaveLength(1);
     expect(toasts.most()).toBeLessThanOrEqual(VISIBLE);
     // The sim gives one cue per escape: a passer-by hovering at the flee radius does not repeat
     // it (it did, step after step); one that walked off on its routine and came back may run again.

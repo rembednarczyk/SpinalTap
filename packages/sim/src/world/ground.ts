@@ -19,6 +19,22 @@ const SLOPE_HALF_SPAN = 0.25;
 /** Edge of a bucket of the chunk index, metres. */
 const BUCKET = 64;
 
+/**
+ * A shaft dug into the ground (ADR-0071: the stairs and the hall under a metro pavilion): inside
+ * `bounds` the ground lies at `floor`, under what stands in it, and the terrain around is the
+ * shaft's wall. Axis-aligned like a chunk; the solids in it are what feet walk on.
+ */
+export interface GroundCut {
+  readonly bounds: Rect;
+  readonly floor: number;
+}
+
+/** A cut as a chunk of its own: a level grid at its floor over its bounds. */
+const cutChunk = (c: GroundCut): GroundChunk => {
+  const cell = Math.max(c.bounds.maxX - c.bounds.minX, c.bounds.maxZ - c.bounds.minZ, 2);
+  return { bounds: c.bounds, terrain: { originX: c.bounds.minX, originZ: c.bounds.minZ, cell, cols: 2, rows: 2, heights: [c.floor, c.floor, c.floor, c.floor] } };
+};
+
 const inside = (r: Rect, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
 const distanceTo = (r: Rect, x: number, z: number): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
 
@@ -67,6 +83,8 @@ export class GroundField {
   /** Ray marching step: half the finest terrain cell, so no ridge is stepped over. */
   readonly rayStep: number;
   private readonly chunks: readonly GroundChunk[];
+  /** The first `cuts` of `chunks` are the shafts (`GroundCut`): they win where they are and never stand in for a far chunk. */
+  private readonly cuts: number;
   private readonly x0: number;
   private readonly z0: number;
   private readonly cols: number;
@@ -85,8 +103,10 @@ export class GroundField {
    */
   private readonly chunkDecks: readonly (readonly GroundDeck[] | undefined)[];
 
-  constructor(chunks: readonly GroundChunk[]) {
+  constructor(world: readonly GroundChunk[], cuts: readonly GroundCut[] = []) {
+    const chunks = cuts.length > 0 ? [...cuts.map(cutChunk), ...world] : world;
     this.chunks = chunks;
+    this.cuts = cuts.length;
     const grids = chunks.flatMap((c) => (c.terrain ? [c.terrain] : []));
     this.hasTerrain = grids.length > 0;
     this.maxHeight = grids.reduce((m, g) => g.heights.reduce((a, h) => Math.max(a, h), m), 0);
@@ -137,7 +157,7 @@ export class GroundField {
     }
     let best = -1;
     let bestD = Infinity;
-    for (let i = 0; i < this.chunks.length; i++) {
+    for (let i = this.cuts; i < this.chunks.length; i++) {
       const d = distanceTo((this.chunks[i] as GroundChunk).bounds, x, z);
       if (d < bestD) {
         bestD = d;
@@ -193,6 +213,7 @@ export class GroundField {
     const h = SLOPE_HALF_SPAN;
     const decks = this.nearFlight(x, z, h) ? this.chunkDecks[this.chunkIndex(x, z)] : undefined;
     if (decks && flightGradientAt(decks, x, z, reach, out)) return out;
+    if (this.cuts > 0 && this.nearCut(x, z, h)) return this.besideCut(x, z, h, reach, out);
     const east = this.heightAt(x + h, z, reach);
     const west = this.heightAt(x - h, z, reach);
     const north = this.heightAt(x, z + h, reach);
@@ -204,6 +225,32 @@ export class GroundField {
     }
     out.x = (east - west) / (2 * h);
     out.z = (north - south) / (2 * h);
+    return out;
+  }
+
+  /** Index of the cut holding (x, z), or -1 (they come first among the chunks). */
+  private cutAt(x: number, z: number): number {
+    for (let i = 0; i < this.cuts; i++) if (inside((this.chunks[i] as GroundChunk).bounds, x, z)) return i;
+    return -1;
+  }
+
+  private nearCut(x: number, z: number, margin: number): boolean {
+    for (let i = 0; i < this.cuts; i++) if (distanceTo((this.chunks[i] as GroundChunk).bounds, x, z) <= margin) return true;
+    return false;
+  }
+
+  /**
+   * The gradient by a cut's edge: the samples on the other side of the edge left out (one-sided
+   * differences), so the shaft's drop is no bank to feet walking out of it onto the street, nor
+   * to feet on the street beside it. The shaft's walls are solids.
+   */
+  private besideCut(x: number, z: number, h: number, reach: number, out: { x: number; z: number }): { x: number; z: number } {
+    const own = this.cutAt(x, z);
+    const here = this.heightAt(x, z, reach);
+    const side = (dx: number, dz: number): number | null => (this.cutAt(x + dx, z + dz) === own ? this.heightAt(x + dx, z + dz, reach) : null);
+    const axis = (plus: number | null, minus: number | null): number => (plus !== null && minus !== null ? (plus - minus) / (2 * h) : plus !== null ? (plus - here) / h : minus !== null ? (here - minus) / h : 0);
+    out.x = axis(side(h, 0), side(-h, 0));
+    out.z = axis(side(0, h), side(0, -h));
     return out;
   }
 

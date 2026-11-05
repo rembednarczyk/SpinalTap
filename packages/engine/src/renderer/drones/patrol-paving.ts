@@ -34,8 +34,8 @@ const trianglesByCell = (ring: readonly P2[]): Map<number, number[]> => {
 
 /**
  * The paving's height as the map city draws it (G-293): each ground surface of the scenery draped
- * as `drape` lays it, straight between corners up to 5 m apart at the ground's height and the
- * surface's lift, the highest where several overlap; `off` where none is drawn. Not the ground at
+ * as `drape` lays it, straight across the triangles of its 2.5 m grid (`drapeY`) at the ground's
+ * height and the surface's lift, the highest where several overlap; `off` where none is drawn. Not the ground at
  * the point and the lift (`surfaceY`): in a hollow of the terrain the drawn paving runs a few
  * centimetres over that, and the low patrol's pool laid on it sank into the paving, its middle dark.
  */

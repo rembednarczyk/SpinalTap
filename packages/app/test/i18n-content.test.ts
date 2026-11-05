@@ -71,7 +71,7 @@ describe("interaction prompts", () => {
     session.newGame();
     speak(ui, "pl");
     const kiosk = METRO_STATIONS.find((s) => s.id === "targ")!;
-    teleport(session, kiosk.kiosk.x + Math.sin(kiosk.yaw), kiosk.kiosk.z + Math.cos(kiosk.yaw), kiosk.yaw + Math.PI);
+    teleport(session, kiosk.arrival.x, kiosk.arrival.z, kiosk.arrivalYaw, 0, kiosk.arrival.y);
     steps(session, 1);
     expect(ui.getState().prompt).toBe("Bilet");
     speak(ui, "en");

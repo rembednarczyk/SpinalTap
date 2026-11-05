@@ -24,6 +24,8 @@ import { doorChecks } from "./door-pieces";
 import { droneChecks } from "./drone-pieces";
 import { airMesh } from "./patrol-mesh";
 import { patrolChecks } from "./patrol-pieces";
+import { deckPaint, mapGround } from "./deck-paint";
+import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { drawnPaving, poolSunk } from "./pool-paving";
 import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
 import { doorsFacingUnderground } from "./door-streets";
@@ -33,6 +35,7 @@ import { figureChecks } from "./figure-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
+import { metroBlocked, metroInBuilding, metroNearHeritage, metroShaftOpen } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
@@ -453,6 +456,12 @@ const PATROL_LANES = (() => {
 const DRAWN_PAVING = (() => {
   let memo: ((x: number, z: number) => number | null) | null = null;
   return () => (memo ??= drawnPaving(WORLD_SCENERY, groundY));
+})();
+
+/** The paint on and by the decks as the cell builder lays it (`deck-paint.ts`), once. */
+const DECK_PAINT = (() => {
+  let memo: ReturnType<typeof deckPaint> | null = null;
+  return () => (memo ??= deckPaint(mapGround(WORLD_SCENERY)));
 })();
 
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
@@ -1654,6 +1663,14 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "cable-low": () => lowCables().low.map((l) => ({ at: near(l.x, l.z), what: `${l.building}: ${l.clearance.toFixed(2)} m over the paving` })),
   /** The metro line on the map (ADR-0071) under a protected area or a historic building or church, sampled every 5 m (G-314, G-315). */
   "metro-line-protected": () => metroLineProtected().map((f) => ({ at: near(f.x, f.z), what: `${f.line}: under ${f.what}` })),
+  /** A metro pavilion (ADR-0071 stage 2) standing in a building of the map. */
+  "metro-entrance-in-building": () => metroInBuilding(),
+  /** A metro pavilion under 15 m from a monument, church or public building, 10 m from a memorial, artwork or fountain, its dig 3 m from an archaeological site. */
+  "metro-entrance-near-heritage": () => metroNearHeritage(SOURCE_OSM, (id) => { const t = osmTags(id); return t.historic !== undefined || t.heritage !== undefined || t.amenity === "place_of_worship"; }),
+  /** A metro pavilion's opening without 3 m free in front, furniture in it, a walkers' lane through it or a car's lane closer than a pavement. */
+  "metro-entrance-blocked": () => metroBlocked(Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES, cars),
+  /** A metro pavilion's shaft dug beyond its outline or without a wall on a side other than the opening. */
+  "metro-shaft-open": () => metroShaftOpen(),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
   // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).
@@ -1671,6 +1688,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones), surfaceY),
   /** A low patrol's searchlight pool, laid where the views lay it (`cityPatrolWorld`), sinking into the drawn paving: a dark middle (G-293). */
   "drone-low-pool-sunk": () => poolSunk(PATROL_LANES(), cityPatrolWorld().surfaceAt, DRAWN_PAVING()),
+  /** Two overlapping pieces of the drawn paving at different heights over the ground where they meet: a step, patches and the depth flickering (G-301, `paving-overlap.ts`). */
+  "paving-overlap-step": () => pavingOverlapSteps(drawnPieces(WORLD_SCENERY, groundY)),
+  /** Road markings, zebras and flights on a bridge's deck drawn under its carriageway (G-301, `deck-paint.ts`). */
+  "paint-under-deck": () => DECK_PAINT().under,
+  /** Road markings and zebras beside a deck pulled up off the terrain towards it (G-301, `deck-paint.ts`). */
+  "paint-lifted-by-deck": () => DECK_PAINT().lifted,
   /** A low patrol coming into sight or going 2 px large or more from anywhere on a street (`patrol-sight.ts`). */
   "drone-low-pop": () => popSight(PATROL_LANES(), streetEyes(WORLD_SCENERY, surfaceY), patrolModelSpan()),
   // The still crowd of ADR-0058 stage 8 against the game's buildings, roads, paving, kept furniture and moving crowd (`figure-pieces.ts`).
