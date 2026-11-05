@@ -78,19 +78,22 @@ describe("Hana (M4, market)", () => {
   });
 
   // G-304, ADR-0070: Hana is always the way back, so she takes Kaito's run whatever the street thinks.
+  // Both cold tiers: wary (-30) and hostile (-60), where the greeting refuses to sell.
   it("takes Kaito's package even when the street fears Seki", () => {
-    for (const [source, refusal, coldWelcome] of [
-      [storySource("pl"), "Nie sprzedam ci", "Przyjdź popracować dla mnie"],
-      [storySource("en"), "I won't sell you", "Come and work for me"],
+    for (const [source, refusal, coldWelcome, civilians] of [
+      [storySource("pl"), "Nie sprzedam ci", "Przyjdź popracować dla mnie", -30],
+      [storySource("en"), "I won't sell you", "Come and work for me", -30],
+      [storySource("pl"), "Nie sprzedam ci", "Przyjdź popracować dla mnie", -60],
+      [storySource("en"), "I won't sell you", "Come and work for me", -60],
     ] as const) {
       const commands: GameCommand[] = [];
       const runtime = new NarrativeRuntime(source, (c) => commands.push(c));
-      const view = runtime.start("hana", domain({ active: delivery("active"), ...rep({ civilians: -30 }) }));
+      const view = runtime.start("hana", domain({ active: delivery("active"), ...rep({ civilians }) }));
       expect(commands).toEqual([{ type: "deliver-contract" }]);
       expect(text(view)).not.toContain(refusal);
       expect(text(view)).toContain(coldWelcome);
       expect(view.ended).toBe(true);
-      runtime.start("hana", domain({ active: delivery("cleared"), ...rep({ civilians: -30 }) }));
+      runtime.start("hana", domain({ active: delivery("cleared"), ...rep({ civilians }) }));
       expect(commands).toHaveLength(1);
     }
   });
