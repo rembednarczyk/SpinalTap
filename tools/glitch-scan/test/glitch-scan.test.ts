@@ -32,6 +32,7 @@ import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
+import { metroLineProtected } from "./metro-line";
 import { lanternsByPassages } from "./passage-lanterns";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
@@ -1651,6 +1652,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "tube-in-neighbour": () => signsIn([MAP_SIGN_KIND.tube]),
   /** A span's cable or lantern over the street (ADR-0051) under 2.5 m over the paving drawn under it, or in it (G-268). */
   "cable-low": () => lowCables().low.map((l) => ({ at: near(l.x, l.z), what: `${l.building}: ${l.clearance.toFixed(2)} m over the paving` })),
+  /** The metro line on the map (ADR-0071) under a protected area or a historic building or church, sampled every 5 m (G-314, G-315). */
+  "metro-line-protected": () => metroLineProtected().map((f) => ({ at: near(f.x, f.z), what: `${f.line}: under ${f.what}` })),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
   // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).
