@@ -28,14 +28,23 @@ describe("the metro layer", () => {
     expect(metro.planned.map((p) => [p.name, p.from])).toEqual([
       ["Ogród Saski", "shinsekai"],
       ["Lublin Główny", "kanal"],
+      ["Kalinowszczyzna", "targ"],
     ]);
-    // About 1 km west of Plac Litewski, about 2 km south of Brama Krakowska.
-    expect(metro.planned[0]!.distance).toBeGreaterThan(900);
-    expect(metro.planned[0]!.distance).toBeLessThan(1200);
-    expect(metro.planned[1]!.distance).toBeGreaterThan(1900);
-    expect(metro.planned[1]!.distance).toBeLessThan(2200);
+    // The curator's places (T-151…T-153): about 0.8 km west along Krakowskie and Racławickie, about
+    // 1.9 km south to Plac Dworcowy, about 1.1 km along the tunnel east of Plac Zamkowy.
+    const [saski, glowny, kalinowszczyzna] = metro.planned;
+    expect(saski!.distance).toBeGreaterThan(700);
+    expect(saski!.distance).toBeLessThan(900);
+    expect(glowny!.distance).toBeGreaterThan(1800);
+    expect(glowny!.distance).toBeLessThan(2000);
+    expect(kalinowszczyzna).toMatchObject({ x: 1738, z: 386, path: [] });
+    expect(kalinowszczyzna!.distance).toBeGreaterThan(1050);
+    expect(kalinowszczyzna!.distance).toBeLessThan(1200);
+    // A station on the line sits on a point of its leg.
+    const leg = metro.legs[2]!;
+    expect(leg.some((v, i) => i % 2 === 0 && v === 1738 && leg[i + 1] === 386)).toBe(true);
     expect(metroLayerVm()).toEqual(metro);
-    expect(METRO_PLANNED).toHaveLength(2);
+    expect(METRO_PLANNED).toHaveLength(3);
   });
 
   it("finds up to four marked things within 150 m of a station, the nearest first", () => {

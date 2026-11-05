@@ -17,11 +17,19 @@ describe("metro line on the map", () => {
   });
 
   it("names possible stations that are no station of the rules and lie outside the imported city", () => {
-    expect(METRO_PLANNED.map((p) => p.name)).toEqual(["Ogród Saski", "Lublin Główny"]);
+    expect(METRO_PLANNED.map((p) => p.name)).toEqual(["Ogród Saski", "Lublin Główny", "Kalinowszczyzna"]);
     for (const p of METRO_PLANNED) {
       expect(isMetroStationId(p.id)).toBe(false);
       const inside = MAP_CHUNKS.some((c) => p.at.x >= c.bounds.minX && p.at.x <= c.bounds.maxX && p.at.z >= c.bounds.minZ && p.at.z <= c.bounds.maxZ);
       expect(inside).toBe(false);
+    }
+  });
+
+  it("puts a possible station on the line on a point of its tunnel", () => {
+    for (const p of METRO_PLANNED.filter((x) => x.onLine)) {
+      expect(p.via).toEqual([]);
+      const leg = METRO_TUNNEL.find((t) => t.from === p.from)!;
+      expect(leg.via).toContainEqual(p.at);
     }
   });
 

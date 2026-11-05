@@ -39,9 +39,9 @@ export interface MapMetroPlannedVm {
   readonly from: MetroStationId;
   readonly x: number;
   readonly z: number;
-  /** The dashed line from `from`, flat `[x0, z0, …]`. */
+  /** The dashed line from `from`, flat `[x0, z0, …]`; empty for a station on the line itself. */
   readonly path: MapPolygon;
-  /** Metres from `from` along `path`. */
+  /** Metres from `from` along `path`, or along the tunnel for a station on the line. */
   readonly distance: number;
 }
 

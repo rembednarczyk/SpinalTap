@@ -120,9 +120,11 @@ export interface MetroTunnelDef {
 /**
  * The tunnel (ADR-0071, "Przebieg tunelu"): under Krakowskie Przedmieście to the Bramowa kiosk,
  * back to Plac Łokietka and north under Lubartowska past Alchemia, down the valley of the
- * Czechówka under Aleja Tysiąclecia to Plac Zamkowy, then east along the avenue and the Bystrzyca
- * to Nabrzeże. It keeps off the Old Town's hill with its cellars and off the castle hill. The
- * points follow the streets of the map data (OSM).
+ * Czechówka under Aleja Tysiąclecia to Plac Zamkowy, then east under the avenue and
+ * ul. Kalinowszczyzna, over the Bystrzyca by the Lutosławski bridge (w834402001) to Nabrzeże. It
+ * keeps off the Old Town's hill with its cellars, off the castle hill and at least 39 m off the Old
+ * Jewish Cemetery (w40049437, G-314). The points follow the streets of the map data (OSM) and the
+ * topography curator's review of ADR-0071 (T-150).
  */
 export const METRO_TUNNEL: readonly MetroTunnelDef[] = [
   { from: "shinsekai", to: "kanal", via: [{ x: 240, z: -66 }, { x: 342, z: -89 }, { x: 443, z: -94 }] },
@@ -134,7 +136,19 @@ export const METRO_TUNNEL: readonly MetroTunnelDef[] = [
   {
     from: "targ",
     to: "doki",
-    via: [{ x: 743, z: 345 }, { x: 904, z: 322 }, { x: 1120, z: 310 }, { x: 1700, z: 380 }, { x: 2300, z: 300 }, { x: 2450, z: 330 }],
+    via: [
+      { x: 743, z: 345 },
+      { x: 904, z: 325 },
+      { x: 1060, z: 300 },
+      { x: 1250, z: 290 },
+      { x: 1395, z: 270 },
+      { x: 1580, z: 232 },
+      { x: 1738, z: 386 },
+      { x: 2084, z: 384 },
+      { x: 2340, z: 428 },
+      { x: 2386, z: 414 },
+      { x: 2462, z: 420 },
+    ],
   },
 ];
 
@@ -150,19 +164,28 @@ export interface MetroPlannedDef {
   /** The working station the extension starts from. */
   readonly from: MetroStationId;
   readonly at: MetroMapPoint;
-  /** The dashed line between `from` and `at`. */
+  /** The dashed line between `from` and `at`; empty for a station on the line itself (`onLine`). */
   readonly via: readonly MetroMapPoint[];
+  /** A station on the tunnel between `from` and the next one: no branch, only its hollow ring. */
+  readonly onLine?: true;
 }
 
-/**
- * The possible stations the ADR names with a place. The third one, in the gap of T-022 between
- * Podzamcze and Nabrzeże (about (1700; 380)), waits for the topography curator's name and place.
- */
+/** The possible stations of ADR-0071, with the places of the topography curator's review (T-151…T-153). */
 export const METRO_PLANNED: readonly MetroPlannedDef[] = [
-  // Ogród Saski: the line carried on west, about 0.9 km from Plac Litewski, along Krakowskie.
-  { id: "ogrod-saski", name: "Ogród Saski", from: "shinsekai", at: { x: -810, z: 180 }, via: [{ x: 20, z: -59 }, { x: -200, z: -64 }] },
-  // Lublin Główny: the railway and the Dworzec Metropolitalny, a branch south of Brama Krakowska.
-  { id: "lublin-glowny", name: "Lublin Główny", from: "kanal", at: { x: 560, z: -2030 }, via: [{ x: 460, z: -155 }] },
+  // Ogród Saski: the line carried on west along Krakowskie and Aleje Racławickie, under the avenue on the park's south edge (G-315).
+  { id: "ogrod-saski", name: "Ogród Saski", from: "shinsekai", at: { x: -630, z: -84 }, via: [{ x: 20, z: -59 }, { x: -242, z: -67 }, { x: -480, z: -88 }] },
+  // Lublin Główny: Plac Dworcowy between the railway station and the Dworzec Metropolitalny, a branch out through the gate as the
+  // tunnel runs, then from Plac Łokietka by Kozia and
+  // Bernardyńska, clear of St Peter's church (G-315); schematic south of the imported city.
+  {
+    id: "lublin-glowny",
+    name: "Lublin Główny",
+    from: "kanal",
+    at: { x: 590, z: -1840 },
+    via: [{ x: 443, z: -94 }, { x: 440, z: -110 }, { x: 420, z: -128 }, { x: 390, z: -144 }, { x: 368, z: -170 }, { x: 380, z: -210 }, { x: 413, z: -256 }, { x: 492, z: -370 }, { x: 506, z: -389 }],
+  },
+  // Kalinowszczyzna: on the line in the gap of T-022, under ul. Kalinowszczyzna by the stops "Tatarska" (T-153).
+  { id: "kalinowszczyzna", name: "Kalinowszczyzna", from: "targ", at: { x: 1738, z: 386 }, via: [], onLine: true },
 ];
 
 /** The line's stations between `from` and `to` in the order of the ride, both ends included. */

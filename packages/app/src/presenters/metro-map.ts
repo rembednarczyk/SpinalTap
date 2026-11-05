@@ -36,10 +36,17 @@ const stationVm = (id: MetroStationId): MapMetroStationVm => {
   return { id, name: s.name, district: DISTRICTS[s.district].name, x: round(s.kiosk.x), z: round(s.kiosk.z), entrances: entrances(id) };
 };
 
+/** The tunnel from `from` up to `at`, for a possible station on the line itself. */
+const alongTunnel = (p: (typeof METRO_PLANNED)[number]): MetroMapPoint[] => {
+  const via = METRO_TUNNEL.find((t) => t.from === p.from)?.via ?? [];
+  const end = via.findIndex((v) => v.x === p.at.x && v.z === p.at.z);
+  return [metroStation(p.from).kiosk, ...(end < 0 ? [] : via.slice(0, end)), p.at];
+};
+
 const plannedVm = (p: (typeof METRO_PLANNED)[number]): MapMetroPlannedVm => {
-  const from = metroStation(p.from).kiosk;
-  const path = [from, ...p.via, p.at];
-  return { id: p.id, name: p.name, from: p.from, x: p.at.x, z: p.at.z, path: flat(path), distance: Math.round(length(path) / 10) * 10 };
+  const path = p.onLine ? alongTunnel(p) : [metroStation(p.from).kiosk, ...p.via, p.at];
+  // A station on the line has no branch of its own: only the hollow ring on the tunnel.
+  return { id: p.id, name: p.name, from: p.from, x: p.at.x, z: p.at.z, path: p.onLine ? [] : flat(path), distance: Math.round(length(path) / 10) * 10 };
 };
 
 /** The layer of the city map, the minimap and the kiosk. */
