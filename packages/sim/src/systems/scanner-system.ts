@@ -1,5 +1,4 @@
 import {
-  BASE_RAM,
   COMBAT_RADIUS,
   DISTRACT_RADIUS,
   type DomainState,
@@ -21,12 +20,13 @@ import {
   hackInSlot,
   refundOf,
   regenRam,
+  uploadTimeScale,
 } from "@seki/core";
 import type { DeviceKind, Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
-import { grantQuickhackXp } from "../world/progression-ops";
+import { grantQuickhackXp, ramMaxOf } from "../world/progression-ops";
 import { securityKey } from "../world/reinforcements";
 import { alertedNear, disturb, hackFxOf, isEngaged, noteDetected, noteHacked, noteViolence } from "../world/street";
 import { scanning, worldTimeScale } from "./ability-system";
@@ -138,7 +138,7 @@ const reportRam = (ctx: SimContext): void => {
   if (ctx.session.watch.ram === current) return;
   const first = ctx.session.watch.ram === null;
   ctx.session.watch.ram = current;
-  if (!first) ctx.bus.emit("RamChanged", { current, max: BASE_RAM });
+  if (!first) ctx.bus.emit("RamChanged", { current, max: ramMaxOf(ctx.state.domain) });
 };
 
 /** The breached network's ICEpick (ADR-0029): hacks cost 1 RAM less while the hack job runs. */
@@ -298,7 +298,8 @@ const start = (ctx: SimContext, focus: Entity, slot: number): void => {
   if ((focus.device?.broken ?? 0) > 0) return fail("wrong-target");
   const ram = hackCost(hackId, icepick(ctx));
   if (netrun.ram + 1e-9 < ram) return fail("no-ram");
-  const upload = QUICKHACKS[hackId].upload;
+  // Net uploads faster (ADR-0059).
+  const upload = QUICKHACKS[hackId].upload * uploadTimeScale(ctx.state.domain.progression.attributes);
   ctx.state.domain = { ...ctx.state.domain, netrun: { ram: netrun.ram - ram, upload: { hackId, target: targetRef(focus), left: upload, ram } } };
   ctx.session.watch.uploadId = focus.id;
   ctx.bus.emit("QuickhackStarted", { hackId, targetId: focus.id, upload, ram });
@@ -311,7 +312,7 @@ const runUpload = (ctx: SimContext, player: Entity, focus: Entity | null): void 
   if (!upload) return;
   const target = findTarget(ctx, upload.target);
   if (!target || target !== focus) {
-    ctx.state.domain = { ...ctx.state.domain, netrun: { ram: Math.min(BASE_RAM, netrun.ram + refundOf(upload)), upload: null } };
+    ctx.state.domain = { ...ctx.state.domain, netrun: { ram: Math.min(ramMaxOf(ctx.state.domain), netrun.ram + refundOf(upload)), upload: null } };
     ctx.bus.emit("QuickhackFailed", { hackId: upload.hackId, targetId: target?.id ?? focus?.id ?? player.id, reason: "lost-target" });
     return;
   }
@@ -347,7 +348,8 @@ export const scannerSystem: System = {
       runUpload(ctx, player, focus);
       if (focus && ctx.input.quickhack > 0) start(ctx, focus, ctx.input.quickhack);
       const netrun = ctx.state.domain.netrun;
-      if (!netrun.upload && netrun.ram < BASE_RAM && !inCombat(ctx, player)) setRam(ctx, regenRam(netrun.ram, BASE_RAM, ctx.dt));
+      const max = ramMaxOf(ctx.state.domain);
+      if (!netrun.upload && netrun.ram < max && !inCombat(ctx, player)) setRam(ctx, regenRam(netrun.ram, max, ctx.dt));
     }
     reportRam(ctx);
   },
