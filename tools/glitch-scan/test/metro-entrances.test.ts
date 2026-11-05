@@ -48,4 +48,9 @@ describe("the metro entrances' checks (ADR-0071 stage 2)", () => {
     const paved = [{ x: 700, z: 360 }, { x: 800, z: 360 }, { x: 800, z: 400 }, { x: 700, z: 400 }];
     expect(metroExitBare([dworzec], [paved])).toEqual([]);
   });
+
+  it("finds every side walled where the shaft's edge and the wall's meet off by a rounding (G-333)", () => {
+    // Along z at (489.7; -76.3) the shaft's end, at the opening, lands a rounding past the side walls' ends.
+    expect(metroShaftOpen([at(489.7, -76.3, "z"), at(333.3, 77.7, "z")])).toEqual([]);
+  });
 });
