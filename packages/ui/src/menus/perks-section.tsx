@@ -1,4 +1,4 @@
-import { ATTRIBUTE_IDS, type AttributeId, PERK_IDS, PERK_TIERS, type PerkId, perkDef, perkPathMet, perkRank, perkRequirement, perkUnlocked, previousTier } from "@seki/core";
+import { ATTRIBUTE_IDS, type AttributeId, PERK_IDS, PERK_TIERS, type PerkId, missingTier, perkDef, perkRank, perkRequirement, perkUnlocked } from "@seki/core";
 import { useT } from "../i18n/use-t";
 import { useProgressionIntents, useUi } from "../use-ui";
 
@@ -7,7 +7,7 @@ const treeOf = (tree: AttributeId): readonly PerkId[] => PERK_IDS.filter((id) =>
 
 /**
  * The sheet's perk trees (ADR-0059, stages 3 and 3b): every perk with its rank and what it does,
- * what its tier needs while it is shut (the attribute, a perk of the tier below), and a button to
+ * what its tier needs while it is shut (the attribute, a perk on every tier below), and a button to
  * buy a rank while perk points are left. The bare minimum to spend a point; the Progress tab with
  * the trees comes in stage 7.
  */
@@ -32,9 +32,9 @@ export const PerksSection = () => {
             const name = t(`perk.${id}.name`);
             const rank = perkRank(perks, id);
             const attributeOk = perkUnlocked(attributes, id);
-            const pathOk = perkPathMet(perks, id);
-            const below = previousTier(id);
-            const open = attributeOk && pathOk;
+            // The lowest empty tier below; a stage 3 save's perk over empty tiers shows it for its next rank too (stage 3c).
+            const missing = missingTier(perks, id);
+            const open = attributeOk && missing === null;
             return (
               <div key={id} className="sheet__row" data-testid={`perk-${id}`}>
                 <dt>
@@ -42,7 +42,7 @@ export const PerksSection = () => {
                   {def.key && <span className="sheet__effect"> · {t("perk.key")}</span>}
                   <div className="sheet__effect">{t(`perk.${id}.desc`)}</div>
                   {!attributeOk && <div className="sheet__effect">{t("perk.requires", { attribute: t(`attribute.${tree}.name`), value: perkRequirement(id) })}</div>}
-                  {!pathOk && below !== null && <div className="sheet__effect">{t("perk.requiresPath", { value: PERK_TIERS[below] })}</div>}
+                  {missing !== null && <div className="sheet__effect">{t("perk.requiresPath", { value: PERK_TIERS[missing] })}</div>}
                 </dt>
                 <dd>
                   {t("perk.rank", { rank, ranks: def.ranks })}

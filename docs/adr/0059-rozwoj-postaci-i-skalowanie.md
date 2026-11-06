@@ -203,3 +203,17 @@ Etap 3b wykonuje decyzje użytkownika z 6.11. Zastępuje trzy punkty z opisu eta
   - `QuickhackChained { hackId, fromId, targetId }` przychodzi przy drugim celu Łańcucha, po jego `QuickhackApplied`. Notatka skanera brzmi „{hack}: przeskok na drugi cel”.
   - Komend nie zmieniono.
 - **Determinizm:** bez perków każda skala to dokładnie 1, a każdy dodatek 0, więc złote hashe się nie zmieniły.
+
+## Z budowy etapu 3c (6.11)
+
+Weryfikator etapu 3b (#313) pokazał obejście: Technika i Podkręcenie, pełny montaż wszczepów, respec i punkty w inne drzewka, a wszczepy zostawały ponad pulą z pełnym działaniem. Etap 3c wykonuje decyzje użytkownika z 6.11. Zastępuje zdanie z etapu 3b „Kolejna ranga już kupionego perka nie wymaga ciągu”.
+
+- **Wszczepy ponad pulą nie działają.** Pula jest rozdzielana w stałej kolejności gniazd: optyka, układ nerwowy, szkielet, ramiona (`CAPACITY_ORDER` w `core/cyberware/active.ts`). Wszczep działa, jeśli mieści się w tym, co zostało z puli. Jeśli się nie mieści, jest nieaktywny, a liczenie idzie dalej, więc mniejszy wszczep po nim może jeszcze działać. Nieaktywny wszczep nie daje statystyk, perka (`hasPerk`: zryw, odbicie) ani aktywnej zdolności. Wraca od razu, gdy zwolni się miejsce: po wyjęciu wszczepu, punkcie Techniki, randze Podkręcenia, odłamku albo awansie.
+  - Kolejność gniazd zamiast kolejności montażu, bo stan wynika wtedy wyłącznie z zamontowanych wszczepów i puli. Zapis nie dostaje nowego pola, więc `SAVE_SCHEMA_VERSION` się nie zmienia i nie ma migracji.
+  - Optyka startowa (2) zawsze mieści się w najmniejszej puli (12), a z nią każdy wszczep układu nerwowego (do 7). Dlatego w praktyce wyłączają się szkielet i ramiona, czyli zryw, Splot podskórny i Odruch Tsubame.
+  - Symulacja czyta działające wszczepy przez `workingCyberware(domain)`: statystyki (`playerStatsOf`), perki wszczepów (`perk`, `deflect`) i zdolność (`ability`). Wygląd postaci i limit montażu liczą wszystkie zamontowane wszczepy. Pulę liczy `cyberPoolOf` w `core`, a `cyberCapacityOf` w `sim` ją przekazuje.
+  - Kontrakty portów, zdarzeń i komend się nie zmieniają. `CyberwareCapacityChanged` dalej niesie `{ used, max }`.
+- **Ciąg progów dla każdej rangi.** `perkPathMet` wymaga perka na każdym progu poniżej perka w tym samym drzewku, także dla kolejnej rangi perka już kupionego. Dla zapisów kupionych zasadami etapu 3b to to samo co „perk z progu niżej”. Zapis z etapu 3 bez ciągu (np. Zahartowana przy pustych progach 4 i 8) zostaje ważny i zachowuje perki, ale w tym drzewku nie dokupi rang powyżej pustego progu, dopóki gracz nie uzupełni ciągu. Walidacja zapisu dalej nie sprawdza ciągu. Wiersz perka pokazuje „Wymaga: perk z progu N” z najniższym pustym progiem (`missingTier`).
+- **HUD:** przy pasku zdrowia jest mały znacznik „Ponad pulą 21 / 16” (en: „Over the pool”), tylko gdy pula jest przekroczona. Podpowiedź (`title` i `aria-label`) wymienia nieaktywne wszczepy i mówi, co zrobić. Znacznik trzyma blok zdrowia na ekranie także poza walką, tak jak przebranie. `CapacityVm` dostał opcjonalne pole `inactive`.
+- **Komunikat `respec.overPool`** mówi teraz, że wszczepy ponad pulą nie działają, dopóki się nie zmieszczą, i że wystarczy wyjąć wszczep albo zamienić go na mniejszy. Zamiana na mniejszy przechodzi bez wyjmowania, bo `fitsCapacity` zawsze ją przepuszcza.
+- **Determinizm:** nowa gra mieści się w puli, więc złote hashe się nie zmieniły.

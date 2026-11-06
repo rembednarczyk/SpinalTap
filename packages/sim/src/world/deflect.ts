@@ -1,4 +1,4 @@
-import { type DefenderProfile, type RandomPort, type Vec3, type WeaponStats, applyDamage, deflectCostScale, directionFromAngles, hasPerk, hasProgressionPerk, resolveAttack } from "@seki/core";
+import { type DefenderProfile, type RandomPort, type Vec3, type WeaponStats, applyDamage, deflectCostScale, directionFromAngles, hasPerk, hasProgressionPerk, resolveAttack, workingCyberware } from "@seki/core";
 import type { Entity } from "./components";
 import type { SimContext } from "./context";
 import { aimOrigin, hitscan } from "./hitscan";
@@ -23,7 +23,7 @@ export const deflects = (ctx: SimContext, target: Entity): boolean =>
   !!target.combatant?.stats?.melee &&
   (target.melee?.guard ?? false) &&
   (target.perks?.stamina ?? 1) > DEFLECT_THRESHOLD &&
-  hasPerk(ctx.state.domain.character.cyberware, "deflect");
+  hasPerk(workingCyberware(ctx.state.domain), "deflect");
 
 /** Does a bullet that meets the player's dash fly back (the Bullet Dance perk, ADR-0059)? No implant or guard needed. */
 export const dancesBullet = (ctx: SimContext, target: Entity): boolean => !!target.player && hasProgressionPerk(ctx.state.domain.progression.perks, "reflex_bullet_dance");

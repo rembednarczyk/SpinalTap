@@ -101,7 +101,7 @@ describe("character progression in the save (v16 to v17, ADR-0059)", () => {
     expect(bad({ ...base, perks: { might_tough: 1 }, unspent: { attribute: 2, perk: 1 } })).toBe("progression perks");
   });
 
-  it("a stage 3 save with a perk above an empty tier still loads with its perks; the next tier goes on from it (stage 3b)", () => {
+  it("a stage 3 save with a perk above an empty tier still loads with its perks; no new rank until the path is filled (stage 3c)", () => {
     const s = snapshot();
     // Level 12: stage 3 let Might 12 buy Hardened (tier 12) with nothing on the tiers below.
     const base = progressionFromXp(xpForLevel(12));
@@ -112,6 +112,14 @@ describe("character progression in the save (v16 to v17, ADR-0059)", () => {
     expect(loaded.domain.progression.perks).toEqual({ might_hardened: 1 });
     // New ranks follow the rule: Second Wind (tier 8) needs a perk of tier 4 first.
     expect(spendPerkPoint(loaded.domain.progression, "might_second_wind")).toEqual({ ok: false, reason: "locked" });
-    expect(spendPerkPoint(loaded.domain.progression, "might_hardened").ok).toBe(true);
+    // Its own next rank too (stage 3c): the tiers below it come first.
+    expect(spendPerkPoint(loaded.domain.progression, "might_hardened")).toEqual({ ok: false, reason: "locked" });
+    let s3 = loaded.domain.progression;
+    for (const id of ["might_tough", "might_second_wind", "might_hardened"]) {
+      const r = spendPerkPoint(s3, id);
+      if (!r.ok) throw new Error(`${id}: ${r.reason}`);
+      s3 = r.state;
+    }
+    expect(s3.perks).toEqual({ might_hardened: 2, might_tough: 1, might_second_wind: 1 });
   });
 });

@@ -16,6 +16,7 @@ import {
   progressionModifiers,
   carrySpeedBonus,
   crouchSpeedBonus,
+  workingCyberware,
 } from "@seki/core";
 import type { Entity } from "../world/components";
 import { playerHeld } from "../world/takedown";
@@ -51,6 +52,7 @@ let cachedFor: {
   level: number;
   attributes: DomainState["progression"]["attributes"];
   perks: DomainState["progression"]["perks"];
+  shards: number;
 } | null = null;
 let cachedPlayer: DerivedStats | null = null;
 
@@ -61,9 +63,10 @@ const statBuffKey = (domain: DomainState): string =>
 /**
  * The player's stats with worn garments (a ballistic vest slows her down), running buffs (the
  * stim steadies the aim, ADR-0033), the character's level (health), attributes and perks
- * (ADR-0059). Memoised on the character, the equipment, the stat buffs, the level, the attributes
- * and the perks, which only change on install, memory, equip, a buff starting or ending, a level
- * up, a point spent or a respec.
+ * (ADR-0059); implants over the cyberware pool count for nothing (stage 3c). Memoised on the
+ * character, the equipment, the stat buffs, the level, the attributes, the perks and the capacity
+ * shards, which only change on install, memory, equip, a buff starting or ending, a level up, a
+ * point spent, a shard or a respec.
  */
 export const playerStatsOf = (domain: DomainState): DerivedStats => {
   const buffs = statBuffKey(domain);
@@ -74,11 +77,14 @@ export const playerStatsOf = (domain: DomainState): DerivedStats => {
     cachedFor.buffs !== buffs ||
     cachedFor.level !== level ||
     cachedFor.attributes !== attributes ||
-    cachedFor.perks !== perks;
+    cachedFor.perks !== perks ||
+    cachedFor.shards !== domain.capacityShards;
   if (!cachedPlayer || stale) {
-    cachedFor = { character: domain.character, equipment: domain.equipment, buffs, level, attributes, perks };
+    cachedFor = { character: domain.character, equipment: domain.equipment, buffs, level, attributes, perks, shards: domain.capacityShards };
     const worn = garmentModifiers(wornGarments(domain.inventory, domain.equipment));
-    cachedPlayer = deriveStats(domain.character, [...worn, ...buffModifiers(domain.buffs), ...progressionModifiers(domain.progression)]);
+    // Implants over the pool give nothing (stage 3c): the pool follows the level, Tech, Overclock and the shards.
+    const character = { ...domain.character, cyberware: workingCyberware(domain) };
+    cachedPlayer = deriveStats(character, [...worn, ...buffModifiers(domain.buffs), ...progressionModifiers(domain.progression)]);
   }
   return cachedPlayer;
 };

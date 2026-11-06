@@ -1,4 +1,4 @@
-import { ABILITY_CATALOG, type DomainState, type RenderPort, dayOf, dayPhase, daylight, formatClock, loadoutAbility, secondOfDay, stackRoom } from "@seki/core";
+import { ABILITY_CATALOG, type DomainState, type RenderPort, dayOf, dayPhase, daylight, formatClock, loadoutAbility, secondOfDay, stackRoom, workingCyberware } from "@seki/core";
 import { DISTRICTS, type DistrictId, type Entity, SIM_HZ, type Simulation, ground } from "@seki/sim";
 import { type AbilityVm, type ContractIntents, type LootVm, type Screen, type TradeVm, type UiStore, patchUi } from "@seki/ui";
 import { createStatsCache } from "../character-view";
@@ -177,7 +177,7 @@ export class HudSync implements ContractIntents {
   }
 
   private abilityVm(sim: Simulation): AbilityVm | null {
-    const id = loadoutAbility(sim.domain.character.cyberware);
+    const id = loadoutAbility(workingCyberware(sim.domain));
     if (!id) return null;
     const def = ABILITY_CATALOG[id];
     const s = sim.domain.ability;

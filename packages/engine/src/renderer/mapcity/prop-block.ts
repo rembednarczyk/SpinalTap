@@ -2,6 +2,7 @@ import { DECAL_KINDS, type EntityId } from "@seki/core";
 import type { Mesh, Scene } from "../../babylon";
 import type { RenderQuality } from "../../npr/quality";
 import type { ToonMaterials } from "../../npr/toon-material";
+import { alchemiaLiftIn, bakeAlchemiaLift, bakeAlchemiaLiftFar } from "../alchemia/lift-bake";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { bakePavilion, bakePavilionFar, pavilionsIn } from "../metro/pavilion-bake";
@@ -74,6 +75,7 @@ export const buildFar = (deps: PropBakeDeps, block: PropBlock): void => {
     if (f) bake(far, f, p);
   }
   for (const e of pavilionsIn(block.bounds)) bakePavilionFar(far, e);
+  if (alchemiaLiftIn(block.bounds)) bakeAlchemiaLiftFar(far);
   block.far = blockMesh(deps, `props-far-${block.key}`, far);
 };
 
@@ -128,6 +130,8 @@ export const nearSink = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: P
   bakeBlockDogs(deps, sink, block, pieces);
   // The metro's pavilions standing in the block (ADR-0071 stages 2 and 3): no mesh of their own.
   for (const e of pavilionsIn(block.bounds)) bakePavilion(sink, e, deps.quality);
+  // Alchemia's lift to the hall's roof (G-284, G-289): no mesh of its own either.
+  if (alchemiaLiftIn(block.bounds)) bakeAlchemiaLift(sink, deps.quality);
   return sink;
 };
 

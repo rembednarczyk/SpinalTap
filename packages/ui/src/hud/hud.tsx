@@ -14,7 +14,7 @@ import { DamageNumbers } from "./damage-numbers";
 import { ScannerHud } from "./scanner";
 import { DetectionRing, HeatStars } from "./stealth";
 import { PhoneNotice } from "../phone/phone";
-import { BuffIcons, DashIcon, DisguiseBadge, HookList } from "./body-hud";
+import { BuffIcons, DashIcon, DisguiseBadge, HookList, OverPoolBadge } from "./body-hud";
 import { useViewportAspect } from "./use-viewport-aspect";
 
 /** Default vertical field of view of the game camera at 16:9 in radians (engine CameraRig, ADR-0049; the settings and the screen change it). */
@@ -149,7 +149,9 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   // Contextual HUD (Cyberpunk 2.1): out of combat and at full health the bar steps aside.
   // A disguise keeps the bar up: the role badge sits next to it (ADR-0035).
   const disguised = useUi((s) => s.disguise !== null);
-  const calm = !always && !combat && hp >= maxHp && !disguised;
+  // So does cyberware over the pool (ADR-0059, stage 3c): the mark says implants are off.
+  const overPool = useUi((s) => s.capacity !== null && s.capacity.used > s.capacity.max);
+  const calm = !always && !combat && hp >= maxHp && !disguised && !overPool;
 
   return (
     <div className="hud" data-testid="hud">
@@ -166,6 +168,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
           {Math.ceil(hp)} / {maxHp}
         </div>
         <DisguiseBadge />
+        <OverPoolBadge />
       </div>
       <BuffIcons />
       <div className="hud__wallet" data-testid="eddies">
