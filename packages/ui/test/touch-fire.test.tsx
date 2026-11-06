@@ -61,6 +61,33 @@ describe("touch fire button in the settings (ADR-0072)", () => {
   });
 });
 
+describe("aim assist in the settings (ADR-0072, stage 3)", () => {
+  const openTouchTab = (patch: Partial<SettingsVm> = {}, tab = "Touch & Gamepad") => {
+    const r = mount({ screen: "paused", settings: settings(patch) });
+    fireEvent.click(screen.getByText(patch.locale === "pl" ? "Ustawienia" : "Settings"));
+    fireEvent.click(screen.getByRole("tab", { name: tab }));
+    return r;
+  };
+
+  it("is standard by default in the touch tab, and a choice changes the setting", () => {
+    const { i } = openTouchTab();
+    const assist = screen.getByRole("radiogroup", { name: "Aim assist" });
+    expect(within(assist).getByRole("radio", { name: "Standard" }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(within(assist).getByRole("radio", { name: "Off" }));
+    expect(i.changeSettings).toHaveBeenCalledWith({ aimAssist: "off" });
+    fireEvent.click(within(assist).getByRole("radio", { name: "Light" }));
+    expect(i.changeSettings).toHaveBeenCalledWith({ aimAssist: "light" });
+  });
+
+  it("speaks Polish with the Polish setting", () => {
+    openTouchTab({ locale: "pl", aimAssist: "light" }, "Dotyk i pad");
+    const assist = screen.getByRole("radiogroup", { name: "Wspomaganie celowania" });
+    expect(within(assist).getByRole("radio", { name: "Lekkie" }).getAttribute("aria-checked")).toBe("true");
+    expect(within(assist).getByRole("radio", { name: "Wyłączone" })).toBeTruthy();
+    expect(within(assist).getByRole("radio", { name: "Standardowe" })).toBeTruthy();
+  });
+});
+
 describe("sights ring at the crosshair (ADR-0072, variant B)", () => {
   const ring = () => screen.queryByTestId("ads-ring");
 

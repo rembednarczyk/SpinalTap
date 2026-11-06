@@ -4,7 +4,7 @@ import type { MessageKey } from "../i18n/en";
 import { type Translate, isMessageKey } from "../i18n/t";
 import { useT } from "../i18n/use-t";
 import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE, SUBTITLE_SCALE_RANGE } from "../store/hud-vm";
-import { type AimMode, type CameraShoulder, type ControlBindingVm, type GraphicsQuality, PAD_DEADZONE_SETTING_RANGE, PAD_SENSITIVITY_RANGE, type PadCurveMode, type SettingsVm, type TouchFireMode } from "../store/ui-store";
+import { type AimAssistMode, type AimMode, type CameraShoulder, type ControlBindingVm, type GraphicsQuality, PAD_DEADZONE_SETTING_RANGE, PAD_SENSITIVITY_RANGE, type PadCurveMode, type SettingsVm, type TouchFireMode } from "../store/ui-store";
 import { TOKENS } from "../hud/tokens";
 import { useSettingsIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
@@ -33,6 +33,12 @@ const PAD_CURVES: Options<PadCurveMode> = [
   ["linear", "settings.padCurve.linear"],
   ["classic", "settings.padCurve.classic"],
   ["precise", "settings.padCurve.precise"],
+];
+
+const AIM_ASSIST: Options<AimAssistMode> = [
+  ["off", "settings.aimAssist.off"],
+  ["light", "settings.aimAssist.light"],
+  ["standard", "settings.aimAssist.standard"],
 ];
 
 /** Each language under its own name, so a player can find theirs whatever is set now. */
@@ -221,6 +227,7 @@ const TouchAndGamepad = ({ settings, set }: SectionProps) => (
   <>
     <Choice label="settings.touchFire" value={settings.touchFire} options={TOUCH_FIRE} onChange={(touchFire) => set(touchFire === "separate" ? { touchFire, aimMode: "toggle" } : { touchFire })} />
     <Choice label="settings.aimMode" value={settings.aimMode} options={AIM_MODES} onChange={(aimMode) => set({ aimMode })} />
+    <Choice label="settings.aimAssist" value={settings.aimAssist} options={AIM_ASSIST} onChange={(aimAssist) => set({ aimAssist })} />
     <Gamepad settings={settings} set={set} />
   </>
 );

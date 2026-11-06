@@ -1,0 +1,1 @@
+Wspomaganie celowania na dotyku (domyślnie standardowe, w opcjach lekkie i wyłączone, zakładka „Dotyk i pad”): obrót zwalnia nad wrogiem w walce, a wejście w przyrządy dociąga celownik o 60% drogi do klatki piersiowej (najwyżej 4°, w stożku 6°, w 0,15 s); ruch w przeciwną stronę przerywa dociąganie. Mysz nie dostaje wspomagania (ADR-0072 etap 3).
