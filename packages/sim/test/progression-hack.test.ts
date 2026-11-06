@@ -49,6 +49,8 @@ describe("quickhack XP (ADR-0059)", () => {
     expect(applied).toHaveLength(3);
     expect(xp.filter((e) => e.source === "hack")).toEqual([{ amount: QUICKHACK_XP, source: "hack" }]);
     expect(sim.domain.progression.hacked).toEqual(["dev:doki-speaker"]);
+    // One fight of the quickhack path in the style (ADR-0059, stage 6), as for the XP: once a target.
+    expect(sim.domain.progression.style).toEqual(["quickhack"]);
     // Another target: a guard of Tessen put beside the yard.
     const guard = gangerEntity(90010, { key: "test-guard", position: docks(2, 0, 96), yaw: -Math.PI / 2 }, null, 110, DOCKS_CHUNK, undefined, "tessen_guard");
     sim.world.add(guard);
@@ -58,6 +60,7 @@ describe("quickhack XP (ADR-0059)", () => {
     expect(applied).toHaveLength(4);
     expect(xp.filter((e) => e.source === "hack")).toHaveLength(2);
     expect(sim.domain.progression.hacked).toEqual(["dev:doki-speaker", "test-guard"]);
+    expect(sim.domain.progression.style).toEqual(["quickhack", "quickhack"]);
   });
 });
 

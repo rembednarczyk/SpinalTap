@@ -254,6 +254,7 @@ const shortCircuit = (ctx: SimContext, player: Entity, target: Entity): void => 
     const damage = Math.round(SHORT_CIRCUIT_DAMAGE * shortCircuitScale(ctx.state.domain.progression.perks));
     target.health = applyDamage(target.health, damage);
     target.lastHitBy = player.id;
+    target.lastHitStyle = "quickhack";
     const ai = target.ai;
     if (ai && !ai.alerted) {
       // Hurt by something it cannot see: it looks around where it stands (seeing the player alerts it).

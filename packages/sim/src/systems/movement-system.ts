@@ -223,6 +223,7 @@ const land = (ctx: SimContext, e: Entity, ground: number): void => {
     e.health = applyDamage(e.health, damage);
     // Nobody pushed: a fatal fall is not held against the player (death system).
     e.lastHitBy = e.id;
+    e.lastHitStyle = undefined;
     ctx.bus.emit("DamageDealt", { sourceId: e.id, targetId: e.id, amount: damage, critical: false, zone: "leg", at });
   }
   ctx.bus.emit("Landed", { entityId: e.id, drop, hard, damage, at });

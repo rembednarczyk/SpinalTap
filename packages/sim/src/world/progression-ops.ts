@@ -4,6 +4,7 @@ import {
   type GameCommand,
   type PerkRanks,
   QUICKHACK_XP,
+  type StyleKind,
   type XpSource,
   attributeRam,
   detectionScale,
@@ -11,6 +12,7 @@ import {
   isAttributeId,
   perkDetectionScale,
   perkRam,
+  recordStyle,
   rememberHack,
   spendAttributePoint,
   spendPerkPoint,
@@ -46,7 +48,17 @@ export const grantQuickhackXp = (ctx: SimContext, key: string | undefined): void
   const remembered = rememberHack(ctx.state.domain.progression, key, goneReinforcement(ctx.world));
   if (!remembered) return;
   ctx.state.domain = { ...ctx.state.domain, progression: remembered };
+  noteFight(ctx, "quickhack");
   grantXp(ctx, QUICKHACK_XP, "hack");
+};
+
+/**
+ * One fight more in the player's style (ADR-0059, stage 6): an enemy she defeated with `kind`, or
+ * the first quickhack on a target. The loot leans towards the last STYLE_WINDOW of them.
+ */
+export const noteFight = (ctx: SimContext, kind: StyleKind): void => {
+  const progression = ctx.state.domain.progression;
+  ctx.state.domain = { ...ctx.state.domain, progression: { ...progression, style: recordStyle(progression.style, kind) } };
 };
 
 /** The cyberdeck's RAM pool: the base, what Net adds and the Buffer perk (ADR-0059). */
