@@ -9,7 +9,7 @@ import { STOREY } from "../src/building-tags.ts";
 import { partTier } from "../src/building-parts.ts";
 import { ADDED_AREAS, TAG_CORRECTIONS, addedAreas, corrected, correctedLine } from "../src/corrections.ts";
 import { type Area, type Line, extractFeatures } from "../src/features.ts";
-import { pointInRing } from "../src/geometry.ts";
+import { type Pt, pointInRing } from "../src/geometry.ts";
 import { areaSurface } from "../src/ground.ts";
 import { mergeOsm, parseExtract } from "../src/osm.ts";
 import { geoToWorld } from "../src/project.ts";
@@ -253,6 +253,48 @@ describe("tag corrections (ADR-0042)", () => {
     // The north footway w227698418 and the kiosk's east footway w227698421 stay on top of the pavement.
     expect(surfaceAt(794, 427.7)).toBe("footway");
     expect(surfaceAt(804.6, 430)).toBe("footway");
+  });
+
+  // The north pavement of al. Tysiąclecia (T-165): from the carriageway's axis to z 383, x 640-806,
+  // short of the beds the orthophoto shows (shrubs before the Bazar's halls 1-3.75 m south of
+  // w67502759, broken at x 684-687 by the footway w227698415 into the halls; before the Dworzec
+  // between the cycleway w1435832523 and the path w227698420, x 773-803). A bed may stay bare; the
+  // pavement may not. The strip under the halls' eaves, from the bed to the Bazar's edge, is paved too.
+  // The beds are taken 0.1 m wider for their edges' seams.
+  const T165: readonly Pt[] = [
+    { x: 640, z: 370.6 },
+    { x: 741, z: 356.4 },
+    { x: 761.8, z: 353.5 },
+    { x: 804.6, z: 347.6 },
+    { x: 804.6, z: 370.4 },
+    { x: 806, z: 370.2 },
+    { x: 806, z: 383 },
+    { x: 640, z: 383 },
+  ];
+  const BEDS: readonly (readonly Pt[])[] = [
+    [{ x: 659.02, z: 382.62 }, { x: 684.1, z: 378.69 }, { x: 684.53, z: 381.6 }, { x: 659.45, z: 385.53 }],
+    [{ x: 686.9, z: 378.21 }, { x: 715.18, z: 373.77 }, { x: 715.61, z: 376.68 }, { x: 687.33, z: 381.12 }],
+    [{ x: 773, z: 374.55 }, { x: 773.7, z: 368.9 }, { x: 803.6, z: 364.8 }, { x: 803.6, z: 370.5 }],
+  ];
+  it("paves the north pavement of al. Tysiąclecia from the carriageway to the paths and the beds, and leaves the beds and the paths on top (G-337)", () => {
+    const buildings = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z)));
+    const bare: string[] = [];
+    for (let x = 640; x <= 806; x += 0.5)
+      for (let z = 347.5; z <= 383; z += 0.5) {
+        if (!pointInRing({ x, z }, T165) || BEDS.some((b) => pointInRing({ x, z }, b)) || buildings.some((o) => inside(x, z, o))) continue;
+        if (surfaceAt(x, z) === null) bare.push(`${x},${z}`);
+      }
+    // Under the eaves, 0.25 m in from the bed and the Bazar's edge for their seams.
+    for (let x = 660; x <= 715; x += 0.5) {
+      const bed = 385.43 - (x - 659.55) * 0.15815;
+      for (let z = bed + 0.25; z <= bed + 3.04 - 0.25; z += 0.25) if (surfaceAt(x, z) === null) bare.push(`eaves ${x},${z.toFixed(2)}`);
+    }
+    expect(bare.join(" ")).toEqual("");
+    expect(surfaceAt(690, 382.2)).toBe("square");
+    // The bed stays bare; the break for the footway into the halls is paved.
+    expect(surfaceAt(670, 382.3)).toBeNull();
+    expect(surfaceAt(705, 377.5)).toBeNull();
+    expect(surfaceAt(686.7, 380)).toBe("square");
   });
 
   const OSM_DIR = join(__dirname, "../../../data/osm");
