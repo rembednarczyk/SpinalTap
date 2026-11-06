@@ -1113,18 +1113,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (kod) · Zasięg: `packages/sim/src/systems/player-control-system.ts:40`, eksportowany, nieużywany w src; pułapka dla przyszłych odczytów po etapie 3c · Koszt: mały (usunąć albo przejść na `workingCyberware`)
 - Pakiet właściciela: packages/sim
 
-### G-382 Gołe podłoże przy wiacie przystanku w672635871 (T-184)
-- Status: zgłoszone (6.11, kurator, przegląd #318)
-- Ważność: S4 · Zasięg: ok. 98 m² · Koszt: mały
-- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
-- Test przyjęcia: gołe próbki 0,1 m w klinie ≤ 0,5 m²
-
-### G-383 Gołe podłoże na wschód od stanowisk Dworca, x 870–915 (T-185)
-- Status: zgłoszone (6.11, kurator, przegląd #318)
-- Ważność: S4 · Zasięg: ok. 630 m² · Koszt: mały (najpierw ortofoto x 870–920)
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: ≤ 0,5 m² gołego poza rabatą
-
 ### G-384 Winda Alchemii: z północnej połowy klatki na górze żaden przycisk nie jest w zasięgu
 - Status: zgłoszone (6.11, weryfikator #312)
 - Ważność: S4 · Zasięg: górny przycisk (−1,0; −1,8 od środka) dalej niż `BUTTON_REACH` 3 m z (0; 1,05) i (0,95; 1,0); trzeba podejść pół metra na południe. Przy okazji: `lift-bake.ts` kopiuje wymiar `BUTTON` z sim zamiast brać go z planu · Koszt: mały

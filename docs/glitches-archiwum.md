@@ -2,6 +2,18 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-383 Gołe podłoże na wschód od stanowisk Dworca, x 870–915 (T-185)
+- Status: naprawione (PR #339, 6.11)
+- Ważność: S4 · Zasięg: ok. 630 m² · Koszt: mały (najpierw ortofoto x 870–920)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: ≤ 0,5 m² gołego poza rabatą
+
+### G-382 Gołe podłoże przy wiacie przystanku w672635871 (T-184)
+- Status: naprawione (PR #339, 6.11)
+- Ważność: S4 · Zasięg: ok. 98 m² · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: gołe próbki 0,1 m w klinie ≤ 0,5 m²
+
 ### G-409 Kontrole skanu glitchy blisko limitu 20 s w CI z pokryciem
 - Status: naprawione (PR #336, 6.11; sześć kontroli 2–70× szybciej, raport skanu identyczny bajt w bajt)
 - Ważność: S3 (CI) · Zasięg: pod obciążeniem z `VITEST_COVERAGE_SHARD=1`: building-in-set-piece 21,2 s, cable-low 29,7 s (ponad limit), market-piece-on-crowd-lane 15,2 s, lamp-style-change-on-way 13,8 s, paving-overlap-step 6–8 s; na runnerze CI grożą jak `paving-coplanar` w #328; poprawka: przyspieszyć kontrole (pomiar, indeksy), nie podnosić limitu
