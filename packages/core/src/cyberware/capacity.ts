@@ -2,7 +2,7 @@ import { CYBERWARE_CATALOG, type CyberwareDefinition, type CyberwareId, type Cyb
 
 /**
  * Cyberware capacity (ADR-0033): every implant takes 2 to 8 points of a pool that grows with
- * the character's level (ADR-0059: every third level) and with capacity shards. Installing past
+ * the character's level (ADR-0059: every third level), with Tech and with capacity shards. Installing past
  * the pool is refused, which turns buying everything into a choice of build. Pure numbers; the
  * simulation reads the level and the shards from the domain.
  */
@@ -33,11 +33,12 @@ export const capacityUsed = (loadout: CyberwareLoadout): number => {
   return used;
 };
 
-/** The pool at character level `level` with `shards` capacity shards used. */
-export const capacityMax = (level: number, shards: number): number =>
+/** The pool at character level `level` with `shards` capacity shards used and `extra` points from Tech (ADR-0059). */
+export const capacityMax = (level: number, shards: number, extra = 0): number =>
   BASE_CYBER_CAPACITY +
   Math.floor(Math.max(0, level) / LEVEL_CYBER_CAPACITY_EVERY) * LEVEL_CYBER_CAPACITY +
-  Math.max(0, Math.floor(shards)) * SHARD_CYBER_CAPACITY;
+  Math.max(0, Math.floor(shards)) * SHARD_CYBER_CAPACITY +
+  Math.max(0, Math.floor(extra));
 
 /** Points in use once `id` takes its slot (the implant there now comes out). */
 export const capacityAfter = (loadout: CyberwareLoadout, id: CyberwareId): number => {

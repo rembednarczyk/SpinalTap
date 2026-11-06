@@ -26,6 +26,7 @@ import { ShopController } from "./shop-controller";
 import { TakedownController } from "./takedown-controller";
 import { CarryController } from "./carry-controller";
 import { DifficultyController } from "./difficulty-controller";
+import { ProgressionController } from "./progression-controller";
 
 /** What the controllers need from the session that composes them. */
 export interface SessionHooks {
@@ -64,6 +65,8 @@ export interface Controllers {
   readonly carry: CarryController;
   // Difficulty (ADR-0066).
   readonly difficulty: DifficultyController;
+  // Character progression (ADR-0059).
+  readonly progression: ProgressionController;
 }
 
 /** The metro and the radio: their ink pools come from one knot renderer shared with the phone. */
@@ -189,5 +192,6 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   const takedown = new TakedownController(sim);
   const carry = new CarryController(sim);
   const difficulty = new DifficultyController({ sim, ui, screen: s.screen });
-  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, autosave, wave1, hud, wave2, takedown, carry, difficulty, ...travel };
+  const progression = new ProgressionController({ sim, menuOpen: () => character.isOpen, syncHud: () => hud.sync() });
+  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, autosave, wave1, hud, wave2, takedown, carry, difficulty, progression, ...travel };
 };

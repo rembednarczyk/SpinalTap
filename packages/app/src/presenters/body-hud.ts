@@ -1,5 +1,5 @@
-import { BUFF_CATALOG, type DomainState, capacityMax, capacityUsed, cooldownRateOf } from "@seki/core";
-import { DASH_COOLDOWN } from "@seki/sim";
+import { BUFF_CATALOG, type DomainState, cooldownRateOf } from "@seki/core";
+import { DASH_COOLDOWN, cyberCapacityOf } from "@seki/sim";
 import { type BuffVm, type CapacityVm, type DashVm, translate, translateText } from "@seki/ui";
 import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part";
 
@@ -9,10 +9,8 @@ export const DASH_ZOOM_SECONDS = 0.8;
 /** Seconds of the dash cooldown with the buffs that run now (synthetic coffee shortens it). */
 export const dashCooldownSeconds = (domain: DomainState): number => DASH_COOLDOWN / cooldownRateOf(domain.buffs);
 
-export const capacityVm = (domain: DomainState): CapacityVm => ({
-  used: capacityUsed(domain.character.cyberware),
-  max: capacityMax(domain.progression.level, domain.capacityShards),
-});
+/** The pool as the simulation counts it (level, shards and Tech). */
+export const capacityVm = (domain: DomainState): CapacityVm => cyberCapacityOf(domain);
 
 /**
  * The wave 2 body (ADR-0035): implant capacity, buffs and the dash icon, read from the domain

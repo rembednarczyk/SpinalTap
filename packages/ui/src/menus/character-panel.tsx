@@ -9,10 +9,11 @@ import {
 } from "@seki/core";
 import { useT, useText } from "../i18n/use-t";
 import { useUi } from "../use-ui";
+import { AttributesSection } from "./attributes-section";
 
 const SLOTS = ["optics", "nervous", "skeleton", "arms"] as const;
 
-/** Sheet tab of the character screen (Tab): implants, recovered memories, standing with factions. */
+/** Sheet tab of the character screen (Tab): attributes, implants, recovered memories, standing with factions. */
 export const CharacterPanel = () => {
   const t = useT();
   const tx = useText();
@@ -26,6 +27,7 @@ export const CharacterPanel = () => {
     <div className="sheet" data-testid="character-panel">
       <h2 className="sheet__name">{alias ?? t("character.unknown")}</h2>
       <div className="sheet__sub">{t("character.contracts", { count: contractsDone })}</div>
+      <AttributesSection />
       <section>
         <h3 className="sheet__h">{t("character.cyberware")}</h3>
         <dl className="sheet__list">
