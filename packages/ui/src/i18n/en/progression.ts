@@ -2,8 +2,8 @@ import type { Message } from "../message";
 
 /**
  * English texts of the attributes (ADR-0059, stage 2) and the perk trees (stages 3 and 3b): their names,
- * what a point or a rank does, the sheet's sections to spend the points in, and the respec at
- * Mori's. The full Progress tab comes in stage 7.
+ * what a point or a rank does, the Progress tab (stage 7) where the points are spent, the XP bar,
+ * and the respec at Mori's.
  */
 export const enProgression = {
   "attribute.section": "Attributes",
@@ -109,6 +109,24 @@ export const enProgression = {
   "perk.shadow_assassin.desc": "+4% crit chance per rank",
   "perk.shadow_ghost_reload.name": "Ghost Reload",
   "perk.shadow_ghost_reload.desc": "A takedown with no alarm and no witness reloads the weapon in hand",
+  // The Progress tab (stage 7): XP, the trees tier by tier, the respec's price and the HUD.
+  "character.tab.progress": "Progress",
+  "progress.xp": "Experience",
+  "progress.xpValue": "{xp} / {next} XP",
+  "progress.xpMax": "Top level",
+  "progress.unspent": "Points to spend: {count}",
+  "progress.trees": "Perk trees",
+  "progress.showTree": "Show the {attribute} tree",
+  "progress.tree": "{attribute} tree",
+  "progress.tier": "Tier {value}",
+  "progress.tierShut": "Opens at {attribute} {value}",
+  "progress.respec": "Rewire at Mori's clinic: {price}. Every point comes back.",
+  "progress.respecTerms": "Mori rewires only clients she trusts.",
+  "progress.open": "Spend in Progress",
+  "perk.rankCount": "Ranks bought: {count}",
+  "hud.level": "Lv {level}",
+  "character.implantOff": "off: over the pool",
+  "inventory.detail.wornTraits": "Equipped piece's traits: {traits}",
   // The respec at Mori's clinic.
   "respec.heading": "Rewire",
   "respec.note": "Mori resets your attributes and perks: every point comes back to spend again.",

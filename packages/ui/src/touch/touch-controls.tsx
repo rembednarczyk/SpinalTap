@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useT } from "../i18n/use-t";
 import { useHackIntents, usePhoneIntents, useSessionIntents, useUi } from "../use-ui";
+import { useUnspentPoints } from "../hud/xp-hud";
 import { ActionArc, MoreActions, UseButton } from "./action-arc";
 import { PadButtonView, useLookDrag } from "./pad-button";
 import type { TouchPadSink } from "./touch-pad-sink";
@@ -66,11 +67,18 @@ const TopBar = () => {
   const session = useSessionIntents();
   const toggleCharacter = useUi((s) => s.toggleCharacter);
   const unread = useUi((s) => s.phone.unread);
+  // Points left to spend (ADR-0059, stage 7) wear a badge, like the phone's unread messages.
+  const points = useUnspentPoints();
   return (
     <div className="touch__top">
       {/* One button for the whole character screen instead of separate sheet and journal ones (plan §7). */}
       <button type="button" className="touch__btn touch__btn--small touch__btn--menu" aria-label={t("touch.character")} data-testid="touch-character" onClick={() => toggleCharacter("inventory")}>
         ☰
+        {points > 0 && (
+          <span className="touch__badge" data-testid="touch-character-points" title={t("progress.unspent", { count: points })}>
+            {points}
+          </span>
+        )}
       </button>
       <button type="button" className="touch__btn touch__btn--small touch__btn--phone" aria-label={t("touch.phone")} data-testid="touch-phone" onClick={() => phone.openPhone()}>
         ☏{unread > 0 && <span className="touch__badge">{unread}</span>}

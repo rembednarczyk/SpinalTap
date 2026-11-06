@@ -110,7 +110,8 @@ export interface PlayerHudUiState {
   /** Tier and level of the installed cyberdeck, by slot (decision of 6.11 after ADR-0059 stage 6). */
   readonly implantGrades: ImplantGrades;
   readonly reputation: ReputationState;
-  /** The character's level and attributes (ADR-0059), and the attribute points left to spend. */
+  /** The character's total XP, level and attributes (ADR-0059), and the attribute points left to spend. */
+  readonly xp: number;
   readonly level: number;
   readonly attributes: Attributes;
   readonly attributePoints: number;
@@ -320,6 +321,7 @@ export const initialUiState: UiState = {
   cyberware: {},
   implantGrades: {},
   reputation: createReputation(),
+  xp: 0,
   level: 1,
   attributes: START_ATTRIBUTES,
   attributePoints: 0,

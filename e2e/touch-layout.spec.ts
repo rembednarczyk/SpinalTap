@@ -107,6 +107,70 @@ for (const [w, h] of [
   });
 }
 
+/**
+ * The Progress tab on a phone held sideways (ADR-0059, stage 7): after a real level up the menu
+ * button wears the points, the tab's columns sit side by side on the screen, and every button in
+ * it is a 44 px target that spends by tap. The pad and the HUD stay clear while the menu is open.
+ */
+for (const [w, h] of [
+  [844, 390],
+  [800, 370],
+] as const) {
+  test.describe(`phone ${w}x${h} progress`, () => {
+    test.use({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+
+    test(`phone: the Progress tab fits and spends by tap at ${w}x${h}`, async ({ page }) => {
+      test.setTimeout(180_000);
+      await page.goto("/?seed=7&models=off&audio=off&touch");
+      await waitForGame(page);
+      await newGame(page, "tap");
+      await waitForPlay(page);
+      await freeze(page);
+      await teleport(page, 321.4, -80);
+      await step(page, 1);
+      // The fixer met, the courier down and the pay collected: three levels, six points.
+      await page.evaluate(() => {
+        for (const flag of ["met_fixer", "killed:hebi_courier", "reported_back"]) window.__seki!.session.sim.enqueue({ type: "set-flag", flag } as never);
+      });
+      await step(page, 2);
+      await expect(page.getByTestId("touch-character-points")).toHaveText("6");
+      // The HUD with the XP row and the badge: nothing overlaps.
+      await check(page, w, h);
+      await page.getByRole("button", { name: "Character" }).tap();
+      await page.getByRole("tab", { name: /Progress/ }).tap();
+      await expect(page.getByTestId("progress-tab")).toBeVisible();
+      await expect(page.getByTestId("touch-controls")).toBeHidden();
+      for (const tab of await page.getByRole("tab").all()) {
+        const b = (await tab.boundingBox())!;
+        expect(b.x >= -0.5 && b.x + b.width <= w + 0.5 && b.height >= 43.5, `tab ${await tab.textContent()} on screen`).toBe(true);
+      }
+      const left = (await page.locator(".progress__left").boundingBox())!;
+      const tree = (await page.locator(".progress__tree").boundingBox())!;
+      for (const b of [left, tree]) expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= w + 0.5 && b.y + b.height <= h + 0.5, "column on screen").toBe(true);
+      expect(overlap({ name: "left", ...left }, { name: "tree", ...tree })).toBe(false);
+      // Every button of the tab is a touch target, inside the screen once scrolled to.
+      const buttons = page.getByTestId("progress-tab").getByRole("button");
+      expect(await buttons.count()).toBeGreaterThan(5);
+      for (const button of await buttons.all()) {
+        await button.scrollIntoViewIfNeeded();
+        const b = (await button.boundingBox())!;
+        const name = (await button.getAttribute("aria-label")) ?? "";
+        expect(Math.min(b.width, b.height), `${name} at least 44 px`).toBeGreaterThanOrEqual(43.5);
+        expect(b.x >= -0.5 && b.y >= -0.5 && b.x + b.width <= w + 0.5 && b.y + b.height <= h + 0.5, `${name} on screen`).toBe(true);
+      }
+      // A point into Might opens its first tier; a rank bought by tap.
+      await page.getByRole("button", { name: "Raise Might" }).tap();
+      await page.getByTestId("attribute-tree-might").tap();
+      const buy = page.getByRole("button", { name: "Buy Thick Skin" });
+      await buy.scrollIntoViewIfNeeded();
+      await buy.tap();
+      await expect(page.getByTestId("perk-might_tough")).toContainText("Rank 1/3");
+      await expect(page.getByTestId("progress-tab-points")).toHaveText("4");
+      if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, `touch-progress-${w}x${h}.png`) });
+    });
+  });
+}
+
 test.describe("phone 844x390 settings", () => {
   test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
 

@@ -4,16 +4,16 @@ import type { SimRef } from "./shared";
 
 export interface ProgressionControllerDeps {
   readonly sim: SimRef;
-  /** The character menu is open: the sheet is where the points are spent. */
+  /** The character menu is open: its Progress tab is where the points are spent. */
   readonly menuOpen: () => boolean;
   /** Pushes the HUD (and the sheet's numbers) after the command. */
   readonly syncHud: () => void;
 }
 
 /**
- * Character progression from the sheet (ADR-0059, stages 2 and 3): a point spent on an attribute
+ * Character progression from the Progress tab (ADR-0059, stages 2, 3 and 7): a point spent on an attribute
  * is the `spend-attribute-point` command, a perk rank the `spend-perk-point` one. The clock stands while the menu is open, so its command phase
- * runs now and the sheet shows the new value in this frame, like the menu's own actions.
+ * runs now and the tab shows the new value in this frame, like the menu's own actions.
  */
 export class ProgressionController implements ProgressionIntents {
   constructor(private readonly deps: ProgressionControllerDeps) {}

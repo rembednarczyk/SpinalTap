@@ -136,6 +136,7 @@ export class HudSync implements ContractIntents {
       cyberware: sim.domain.character.cyberware,
       implantGrades: sim.domain.character.implantGrades ?? NO_GRADES,
       reputation: sim.domain.reputation,
+      xp: sim.domain.progression.xp,
       level: sim.domain.progression.level,
       attributes: sim.domain.progression.attributes,
       attributePoints: sim.domain.progression.unspent.attribute,

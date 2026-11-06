@@ -80,7 +80,7 @@ export interface CharacterIntents {
   removeMod(weaponUid: string, slot: ModSlot): void;
 }
 
-/** Character progression (ADR-0059): the sheet's attribute and perk points. */
+/** Character progression (ADR-0059): the Progress tab's attribute and perk points (stage 7). */
 export interface ProgressionIntents {
   /** Puts one unspent point into `attribute`; the game refuses it without a point or at 15. */
   spendAttributePoint(attribute: AttributeId): void;

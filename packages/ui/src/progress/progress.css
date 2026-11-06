@@ -1,0 +1,134 @@
+/* ADR-0059, stage 7: the Progress tab, the XP bar on the HUD and the sheet, the points badges. */
+
+/* ---- The Progress tab ---- */
+.progress {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  /* Opaque: the panel over the menu colour, so a game frame the canvas still holds never shows through. */
+  background: linear-gradient(var(--panel), var(--panel)), rgb(7, 11, 16);
+  pointer-events: auto;
+}
+.progress__head { display: flex; align-items: center; gap: 16px; }
+.progress__level { font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; }
+.progress__xp { flex: 1; display: flex; align-items: center; gap: 10px; max-width: 560px; }
+.progress__xp-bar { flex: 1; height: 8px; background: rgba(255, 255, 255, 0.08); }
+.progress__xp-fill { height: 100%; background: linear-gradient(90deg, var(--magenta), #ffb3d1); transition: width 300ms; }
+.progress__xp-value { font-family: var(--font-mono); font-size: 13px; color: var(--ink-dim); white-space: nowrap; }
+.progress__body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 16px; }
+.progress__left, .progress__tree { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.progress__left { display: flex; flex-direction: column; gap: 12px; }
+.progress__points { margin-bottom: 4px; font-size: 13px; color: var(--amber); }
+
+.progress__attr-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.progress__attr { display: flex; align-items: center; gap: 8px; border-left: 2px solid transparent; }
+.progress__attr--on { border-left-color: var(--magenta); background: rgba(255, 61, 139, 0.08); }
+.progress__attr-pick {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 4px 8px;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.progress__attr-name { font-size: 15px; }
+.progress__attr-effect { font-size: 12px; color: var(--ink-dim); }
+.progress__attr-ranks { font-size: 11px; color: var(--cyan); }
+.progress__attr-value { min-width: 2ch; font-family: var(--font-mono); font-size: 18px; text-align: right; }
+.progress__raise {
+  flex: 0 0 auto;
+  min-width: 36px;
+  min-height: 36px;
+  font: inherit;
+  font-size: 18px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--magenta);
+  cursor: pointer;
+}
+.progress__raise-gap { flex: 0 0 36px; }
+.touch-mode .progress__raise { min-width: 44px; min-height: 44px; }
+.touch-mode .progress__raise-gap { flex-basis: 44px; }
+
+.progress__tier { margin-bottom: 10px; }
+.progress__tier-h { margin: 0 0 4px; font-size: 12px; font-weight: 400; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-dim); }
+.progress__tier-need { letter-spacing: 0.05em; text-transform: none; color: var(--magenta); }
+.progress__perks { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
+.perk { display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border: 1px solid var(--panel-edge); background: rgba(255, 255, 255, 0.02); }
+.perk--open { border-color: rgba(255, 61, 139, 0.55); }
+.perk--owned { border-color: var(--cyan); background: rgba(0, 240, 255, 0.05); }
+.perk--shut { opacity: 0.62; }
+.perk__name { font-size: 14px; }
+.perk--key .perk__name { color: var(--amber); }
+.perk__desc { font-size: 12px; color: var(--ink-dim); }
+.perk__need { font-size: 12px; color: var(--magenta); }
+.perk__side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.perk__rank { display: flex; align-items: center; gap: 4px; }
+.perk__pip { width: 7px; height: 7px; border: 1px solid var(--cyan); transform: rotate(45deg); }
+.perk__pip--on { background: var(--cyan); }
+.perk__rank-text { margin-left: 2px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim); }
+.progress__respec-text { margin: 0; font-size: 13px; color: var(--ink-dim); }
+
+/* Phones in landscape: tighter, the trees still beside the attributes. */
+@media (max-height: 500px) {
+  .progress { gap: 4px; padding: 6px 8px; }
+  .progress__head { gap: 10px; }
+  .progress__level { font-size: 14px; }
+  .progress__body { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 8px; }
+  .progress__attr-name { font-size: 14px; }
+  .progress__attr-effect { font-size: 11px; }
+  .progress__perks { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 4px; }
+  .perk { padding: 4px 6px; }
+  .perk__name { font-size: 13px; }
+  .perk__desc, .perk__need { font-size: 11px; }
+}
+
+/* ---- The sheet's level line ---- */
+.sheet__level { display: flex; flex-direction: column; gap: 6px; }
+.sheet__level .sheet__sub { margin-top: 0; }
+.sheet__to-progress {
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: rgba(255, 61, 139, 0.1);
+  border: 1px solid var(--magenta);
+  cursor: pointer;
+}
+.touch-mode .sheet__to-progress { min-height: 44px; }
+
+/* ---- Badges: the Progress tab and the touch menu button ---- */
+.cscreen__badge { min-width: 18px; padding: 0 4px; font-size: 12px; line-height: 18px; text-align: center; color: #05080c; background: var(--amber); border-radius: 9px; }
+.touch__btn--menu { position: relative; }
+
+/* ---- HUD: level, XP bar and the points under the health bar ---- */
+.hud__progress { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.hud__level { font-family: var(--font-mono); font-size: 12px; color: var(--ink-dim); white-space: nowrap; }
+.hud__xp { flex: 1; }
+.hud__xp-bar { height: 3px; background: rgba(255, 255, 255, 0.08); }
+.hud__xp-fill { height: 100%; background: var(--magenta); transition: width 300ms; }
+.hud__points { font-family: var(--font-mono); font-size: 12px; color: var(--amber); white-space: nowrap; }
+.hud__points kbd { font-size: 10px; }
+.hud__level, .hud__xp { transition: opacity 400ms ease-out; }
+.hud__identity--calm .hud__level, .hud__identity--calm .hud__xp { opacity: 0; }
+.hud__progress--up .hud__xp-fill { animation: hud-xp-up 2.4s ease-out; }
+.reduce-flashes .hud__progress--up .hud__xp-fill { animation: none; }
+@keyframes hud-xp-up {
+  0%, 40% { background: #fff; box-shadow: 0 0 8px var(--magenta); }
+  100% { background: var(--magenta); box-shadow: none; }
+}
+/* On touch the menu button wears the points instead. */
+.touch-mode .hud__points { display: none; }
+.touch-mode .hud__progress { margin-top: 2px; }

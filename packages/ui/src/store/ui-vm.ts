@@ -230,8 +230,8 @@ export interface TradeVm {
 
 export const EMPTY_TRADE: TradeVm = { items: [], capacity: 24, freeCells: 24, weaponParts: 0 };
 
-/** Tabs of the character screen (plan §7): I, Tab, J and M open it on theirs. */
-export type CharacterTab = "inventory" | "sheet" | "journal" | "map";
+/** Tabs of the character screen (plan §7): I, Tab, J, M and K (Progress, ADR-0059) open it on theirs. */
+export type CharacterTab = "inventory" | "sheet" | "progress" | "journal" | "map";
 
 /** Numbers of the stats panel, worked out by the app from the domain and the player. */
 export interface CharacterStatsVm {

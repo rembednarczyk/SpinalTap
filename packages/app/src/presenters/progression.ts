@@ -5,7 +5,7 @@ import { uiText } from "./trade";
  * Character progression (ADR-0059, stages 1 and 3b): the level-up toast and the respec's, in
  * the language of the moment they appear (ADR-0056). A new level replaces the toast of the one
  * before, so a big reward that gives several levels at once takes one place in the stack. The XP
- * bar and the Progress tab come in stage 7.
+ * bar, the points' marks and the Progress tab (stage 7) read the HUD sync's `xp`, `level` and points.
  */
 export const presentProgression: Presenter = ({ bus, audio, toast, dismiss, ui }) => {
   let shown: number | null = null;

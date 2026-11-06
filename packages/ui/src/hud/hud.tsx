@@ -16,6 +16,8 @@ import { DetectionRing, HeatStars } from "./stealth";
 import { PhoneNotice } from "../phone/phone";
 import { BuffIcons, DashIcon, DisguiseBadge, HookList, OverPoolBadge } from "./body-hud";
 import { useViewportAspect } from "./use-viewport-aspect";
+import { useRecentChange } from "./use-recent-change";
+import { XpHud } from "./xp-hud";
 
 /** Default vertical field of view of the game camera at 16:9 in radians (engine CameraRig, ADR-0049; the settings and the screen change it). */
 export const HUD_CAMERA_FOV = hipVerticalFov(DEFAULT_HORIZONTAL_FOV, 16 / 9);
@@ -154,7 +156,10 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const disguised = useUi((s) => s.disguise !== null);
   // So does cyberware over the pool (ADR-0059, stage 3c): the mark says implants are off.
   const overPool = useUi((s) => s.capacity !== null && s.capacity.used > s.capacity.max);
-  const calm = !always && !combat && hp >= maxHp && !disguised && !overPool;
+  // XP that just came in shows its bar a moment (ADR-0059, stage 7); a level up flashes it.
+  const gained = useRecentChange(useUi((s) => s.xp), 4000);
+  const levelUp = useRecentChange(useUi((s) => s.level), 2500);
+  const calm = !always && !combat && hp >= maxHp && !disguised && !overPool && !gained;
 
   return (
     <div className="hud" data-testid="hud">
@@ -170,6 +175,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
         <div className="hud__hp-label">
           {Math.ceil(hp)} / {maxHp}
         </div>
+        <XpHud up={levelUp} />
         <DisguiseBadge />
         <OverPoolBadge />
       </div>
