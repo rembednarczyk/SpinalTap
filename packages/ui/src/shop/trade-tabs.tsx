@@ -4,16 +4,20 @@ import {
   type CyberwareId,
   type CyberwareSlot,
   type ItemCategory,
+  type ItemIconKey,
   type Locale,
+  type Rarity,
   SHOPS,
   STACKABLE_CATALOG,
   type ShopId,
   type ShopTerms,
   type StockEntry,
+  ammoIcon,
   backpackPrice,
   fullService,
   installFee,
   isCyberwareId,
+  itemIcon,
   itemSummary,
   offersEntry,
   priceWithTerms,
@@ -28,6 +32,7 @@ import {
 import { formatNumber, useLocale } from "../i18n/number";
 import type { Translate } from "../i18n/t";
 import { useT, useText } from "../i18n/use-t";
+import { ItemDefIcon, ItemIcon } from "../icons/item-icon";
 import { rarityLabel } from "../inventory/item-text";
 import { RespecSection } from "./respec-section";
 import type { TradeItemVm } from "../store/ui-store";
@@ -62,6 +67,9 @@ const LockedWhy = () => {
 };
 
 const lockedClass = (locked: boolean) => (locked ? " shop__item--locked" : "");
+
+/** The icon of an offer (ADR-0073): weapons and ammo boxes; null for the kinds still drawn as text. */
+const offerIcon = (entry: StockEntry): ItemIconKey | null => (entry.kind === "ammo" ? ammoIcon(entry.item) : entry.kind === "item" ? itemIcon(entry.item) : null);
 
 /** What the counter sells; at the clinic the implants first (bought and installed on the spot). */
 export const BuyTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly terms: ShopTerms }) => {
@@ -129,7 +137,9 @@ const StockOffer = ({ entry, terms }: { readonly entry: StockEntry; readonly ter
   const intents = useShopIntents();
   const price = stockPrice(entry, terms, level);
   const locked = !offersEntry(entry, terms);
+  const icon = offerIcon(entry);
   let slot: string;
+  let rarity: Rarity = "common";
   let room = trade.freeCells > 0;
   if (entry.kind === "stack") {
     const have = entry.item === "medkit" ? medkits : (trade.items.find((i) => i.key === entry.item)?.qty ?? 0);
@@ -141,12 +151,14 @@ const StockOffer = ({ entry, terms }: { readonly entry: StockEntry; readonly ter
   } else {
     // The tier the standing brings out and the player's level (ADR-0059).
     const grade = stockGrade(entry, terms.tier, level);
+    rarity = grade.rarity;
     const lvl = grade.level === undefined ? "" : ` · ${t("inventory.detail.level", { level: grade.level })}`;
     slot = `${categoryLabel(t, itemSummary(entry.item).category)} · ${rarityLabel(t, grade.rarity)}${lvl}`;
   }
   const description = entry.kind === "stack" && entry.item === "medkit" ? `${tx(shopItemDescription(entry.item))} ${t("shop.medkitUse")}` : tx(shopItemDescription(entry.item));
   return (
-    <article className={`shop__item${entry.kind === "item" ? rarityClass(stockGrade(entry, terms.tier, level)) : ""}${lockedClass(locked)}`} data-testid={`stock-${entry.item}`}>
+    <article className={`shop__item${icon ? " shop__item--icon" : ""}${rarityClass({ rarity })}${lockedClass(locked)}`} data-testid={`stock-${entry.item}`}>
+      {icon && <ItemIcon icon={icon} rarity={rarity} framed />}
       <div className="shop__slot">{slot}</div>
       <h3 className="shop__name">{tx(stockName(entry))}</h3>
       <p className="shop__desc">{description}</p>
@@ -194,6 +206,7 @@ export const SellTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly t
         const blocked = item.inUse ? t("shop.inUse") : unit === 0 ? t("shop.worthless") : null;
         return (
           <li key={item.key} className={`shop__line${rarityClass(item)}`} data-testid="shop-sell-line">
+            <ItemDefIcon def={item.defId} rarity={item.rarity ?? "common"} className="shop__line-icon" />
             <span className="shop__line-name">
               {tx(item.name)}
               {item.qty > 1 && ` × ${item.qty}`}
