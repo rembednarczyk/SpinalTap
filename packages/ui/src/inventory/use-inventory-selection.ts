@@ -1,4 +1,4 @@
-import { type Equipment, type InventoryState, type ItemRef, findItem, isPlaced } from "@seki/core";
+import { type Equipment, type InventoryState, type ItemRef, findItem, isPlaced, rarityAtLeast } from "@seki/core";
 import { useEffect, useState } from "react";
 import type { CharacterIntents } from "../intents";
 import { type ActionContext, type ActionId, type ItemAction, defaultAction, itemActions, slotHolding } from "./actions";
@@ -74,7 +74,7 @@ export const useInventorySelection = (intents: CharacterIntents, inventory: Inve
         setSheet({ kind: "mods", uid: item.uid });
         break;
       case "drop":
-        if (item.rarity === "rare" || item.rarity === "unique") setSheet({ kind: "confirm", ref: target });
+        if (rarityAtLeast(item.rarity, "rare")) setSheet({ kind: "confirm", ref: target });
         else intents.dropItem(target, 1);
         break;
       case "use":

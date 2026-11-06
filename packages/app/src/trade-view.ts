@@ -1,20 +1,24 @@
-import { type DomainState, type StackableId, STACKABLE_CATALOG, freeCells, isPlaced, itemSummary, stackCount } from "@seki/core";
+import { type DomainState, type StackableId, STACKABLE_CATALOG, freeCells, isPlaced, itemLevelOf, itemSummary, stackCount } from "@seki/core";
 import { EMPTY_TRADE, type TradeItemVm, type TradeVm } from "@seki/ui";
 
 /** The bag as a shop counter shows it: loose and worn pieces (in pick-up order), then stacks. */
 export const tradeVm = (domain: DomainState): TradeVm => {
   const { inventory, equipment } = domain;
-  const items: TradeItemVm[] = inventory.items.map((i) => ({
-    key: i.uid,
-    ref: { uid: i.uid },
-    defId: i.def,
-    name: itemSummary(i.def).name,
-    category: itemSummary(i.def).category,
-    rarity: i.rarity,
-    qty: 1,
-    condition: i.condition ?? null,
-    inUse: isPlaced(inventory, equipment, i.uid) || Object.keys(i.mods ?? {}).length > 0,
-  }));
+  const items: TradeItemVm[] = inventory.items.map((i) => {
+    const level = itemLevelOf(i);
+    return {
+      key: i.uid,
+      ref: { uid: i.uid },
+      defId: i.def,
+      name: itemSummary(i.def).name,
+      category: itemSummary(i.def).category,
+      rarity: i.rarity,
+      ...(level === null ? {} : { level }),
+      qty: 1,
+      condition: i.condition ?? null,
+      inUse: isPlaced(inventory, equipment, i.uid) || Object.keys(i.mods ?? {}).length > 0,
+    };
+  });
   for (const id of Object.keys(inventory.stacks) as StackableId[]) {
     const qty = stackCount(inventory, id);
     if (qty <= 0) continue;

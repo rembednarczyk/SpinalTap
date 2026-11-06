@@ -8,7 +8,9 @@ import type { EnemyTypeId } from "../items/enemies";
  * v30: the market moved from Aleja Tysiąclecia to Alchemia (ADR-0063 stage 6): no new fields, but an
  * older save may have the player, the market's people and its stashes where the market stood; the
  * migration wakes her on the avenue and sends them to their places in Alchemia.
- * v29: the step ADR-0059 stage 4 (#323) takes; until it is merged, the same as v28.
+ * v29: item level and traits (ADR-0059): every weapon and garment, in the bag and in a loot bag,
+ * has a level 1..30, an epic or legendary one its traits; an older save's pieces get the level of
+ * their tier (common 1, uncommon 3, rare 5, unique the player's level).
  * v28: the bodies of a won mugging's muggers (G-233), who are in no content table and none of the
  * heat's; an older save has none, they were gone on loading as before.
  * v27: a walking NPC's stuck check (ADR-0025, G-208): where its current stretch began, until when

@@ -6,6 +6,7 @@ import {
   type ItemDefId,
   type LootLine,
   addAmmo,
+  itemLine,
   isAmmoId,
   removeInstance,
   removeStack,
@@ -127,7 +128,7 @@ const takeOutForDrop = (domain: Domain, cmd: Command<"drop-item">): { line: Loot
   }
   const r = removeInstance(inventory, equipment, cmd.ref.uid);
   if (!r.ok) return null;
-  const line: LootLine = { kind: "item", item: r.item.def, rarity: r.item.rarity, qty: 1 };
+  const line: LootLine = itemLine(r.item);
   // Rounds in a dropped gun go back to the pouch first.
   const ammoId = weaponStatsOf(inventory, r.item.uid)?.ammo;
   const ammo = ammoId && (r.item.loaded ?? 0) > 0 ? addAmmo(domain.ammo, ammoId, r.item.loaded ?? 0).ammo : domain.ammo;
