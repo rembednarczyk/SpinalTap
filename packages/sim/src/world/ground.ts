@@ -206,6 +206,11 @@ export class GroundField {
     return !this.vaults.empty && this.vaults.holding(p.x, p.y + ON_DECK, p.z, this.heightAt(p.x, p.z)) !== null;
   }
 
+  /** Which shaft dug under a metro pavilion (`GroundCut`) holds (x, z): its index, or -1. */
+  shaftAt(x: number, z: number): number {
+    return this.cuts > 0 ? this.cutAt(x, z) : -1;
+  }
+
   /** The lowest underside of a bridge's deck over (x, z) at or above `head`, or Infinity (G-062). */
   ceilingAt(x: number, z: number, head: number): number {
     if (!this.hasTerrain) return Infinity;
@@ -447,10 +452,17 @@ export const aboveGround = (world: World<Entity>, p: Vec3): number => p.y - grou
  * from the ground under it, so two people on one hillside stand on the same floor. Without
  * terrain it is the plain difference of y, as before; so it is with either point in a vault under
  * the street (ADR-0071 stage 4): its floor is under the walked solids, not a floor of the levels.
+ * The shaft under a metro pavilion is the same (G-371: its dug floor lies a metre under the hall's,
+ * so the hall was the street's floor), and walled: a point in it and one on the street share no
+ * floor at any height, the stairs from the street being the level graph's (G-368), even on the
+ * landing. The vault behind the hall's end wall goes on from the hall's floor.
  */
 export const heightApart = (world: World<Entity>, a: Vec3, b: Vec3): number => {
   const g = groundOf(world);
   if (!g.hasTerrain || g.underStreet(a) || g.underStreet(b)) return Math.abs(a.y - b.y);
+  const shaft = g.shaftAt(a.x, a.z);
+  if (shaft !== g.shaftAt(b.x, b.z)) return Infinity;
+  if (shaft >= 0) return Math.abs(a.y - b.y);
   return Math.abs(a.y - g.heightAt(a.x, a.z, a.y + ON_DECK) - (b.y - g.heightAt(b.x, b.z, b.y + ON_DECK)));
 };
 

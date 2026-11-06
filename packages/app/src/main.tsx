@@ -15,6 +15,7 @@ import { pushToastTimed } from "./controllers/shared";
 import { bindCrashWatch } from "./crash-watch";
 import { bindPageHidden } from "./page-lifecycle";
 import { pointerFocus } from "./pointer-focus";
+import { feedTouchFire } from "./touch-fire";
 import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
 
 declare global {
@@ -166,6 +167,7 @@ const loop = new FixedStepLoop(browserClock, {
     // Zoomed in, the look slows with the field of view (ADR-0019); the ADS setting on top.
     const zoom = renderer.rig.lookScale;
     const ads = zoom < 0.999 ? s.adsSensitivity : 1;
+    feedTouchFire(input.virtualPad, s, session.sim.player());
     const frame = input.poll();
     // The camera takes the shoulder of the frame the shots start from, in the same step (G-275).
     renderer.rig.leftShoulder = frame.leftShoulder === true;
