@@ -199,8 +199,21 @@ type Rect = (typeof CLEARED_BUILDINGS)[number];
 
 /** Square metres of a rectangle covered by a building's outline, sampled every 0.5 m. */
 const coveredArea = (r: Rect, flat: readonly number[], ox: number, oz: number) => {
+  // A point off the outline's bounds is outside it (G-409): only those within them are tested,
+  // and a rectangle clear of them covers nothing. A hair over, past any rounding of the test.
+  const b = { minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity };
+  for (let i = 0; i + 1 < flat.length; i += 2) {
+    b.minX = Math.min(b.minX, flat[i]! + ox - 1e-6);
+    b.maxX = Math.max(b.maxX, flat[i]! + ox + 1e-6);
+    b.minZ = Math.min(b.minZ, flat[i + 1]! + oz - 1e-6);
+    b.maxZ = Math.max(b.maxZ, flat[i + 1]! + oz + 1e-6);
+  }
+  if (r.maxX < b.minX || r.minX > b.maxX || r.maxZ < b.minZ || r.minZ > b.maxZ) return 0;
   let n = 0;
-  for (let x = r.minX + 0.25; x < r.maxX; x += 0.5) for (let z = r.minZ + 0.25; z < r.maxZ; z += 0.5) if (inOutline(x, z, flat, ox, oz)) n++;
+  for (let x = r.minX + 0.25; x < r.maxX; x += 0.5) {
+    if (x < b.minX || x > b.maxX) continue;
+    for (let z = r.minZ + 0.25; z < r.maxZ; z += 0.5) if (z >= b.minZ && z <= b.maxZ && inOutline(x, z, flat, ox, oz)) n++;
+  }
   return n * 0.25;
 };
 
