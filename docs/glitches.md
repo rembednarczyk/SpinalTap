@@ -1325,6 +1325,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: jezdnia w230503896, chodnik w232464426, pas postojowy w1514058885 przy x 393–402, z 56–84; poprawka: przyciąć T1, przejście od ulicy ≤ 2 m; kontrola `pad-on-road`
 - Pakiet właściciela: packages/sim (content Alchemii), tools/glitch-scan
 
+### G-435 Zapisane ustawienia z K przypisanym do sterowania zostają (`sanitizeBindings` nie odrzuca `RESERVED_KEYS`)
+- Status: zgłoszone (6.11, weryfikator PR #346)
+- Ważność: S4 · Zasięg: K otwiera Rozwój i jednocześnie wykonuje przypisaną akcję; tak samo T i B; poprawka: `sanitizeBindings` odrzuca klucze zarezerwowane z ostrzeżeniem
+- Pakiet właściciela: packages/app (settings), packages/engine (input)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
