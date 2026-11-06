@@ -15,6 +15,7 @@ export * from "./capsule-room";
 export * from "./alchemia";
 export { FLIGHT_GOING, FLIGHT_MAX_RISE } from "./alchemia-stairs";
 export * from "./metro";
+export { FLIGHT, FLIGHT_HEADROOM, PLATFORM, PLATFORM_CAR, PLATFORM_DEPTH, type PlatformDef } from "./metro-platform";
 export * from "./encounters";
 export * from "./contract-hooks";
 export * from "./contract-plans";

@@ -71,7 +71,9 @@ describe("Lublin in the session (ADR-0045)", () => {
     session.newGame();
     // Plac Zamkowy below the castle: the docks are reached by the metro only.
     const from = METRO_STATIONS.find((s) => s.id === "targ")!;
-    teleport(session, from.arrival.x, from.arrival.z, from.arrivalYaw, 0, from.arrival.y);
+    // At the ticket machine on the platform under its entrance A (ADR-0071 stage 4).
+    const machine = from.entrances[0];
+    teleport(session, machine.ticket.x, machine.ticket.z, machine.ticketYaw, 0, machine.ticket.y);
     steps(session, 1);
     expect(session.sim.district).toBe("targ");
     expect(ui.getState().prompt).toContain("Ticket");

@@ -15,5 +15,6 @@ export * from "./crowd-lanes";
 export * from "./prism";
 export * from "./ground";
 export { DECK_DEPTH, DECK_HEADROOM, deckDepth } from "./deck";
+export { type GroundVault, VAULT_COVER } from "./vault";
 export * from "./solids";
 export * from "./placement";

@@ -46,16 +46,20 @@ describe("Net", () => {
     const applied = (bought: boolean) => {
       const { sim, first, other } = hackScene({ net_chain: 1 }, bought, true);
       const hits = collect<DomainEvents["QuickhackApplied"]>(sim, "QuickhackApplied");
+      const chains = collect<DomainEvents["QuickhackChained"]>(sim, "QuickhackChained");
       const xp = collect(sim, "ExperienceGained");
       sim.step(input({ scan: true }));
       sim.step(input({ scan: true, quickhack: 1 }));
       run(sim, ticks(3), input({ scan: true }));
-      return { targets: hits.map((h) => h.targetId), first: first.id, other: other!.id, xp: xp.length };
+      return { targets: hits.map((h) => h.targetId), chains, first: first.id, other: other!.id, xp: xp.length };
     };
     const plain = applied(false);
     expect(plain.targets).toEqual([plain.first]);
+    expect(plain.chains).toEqual([]);
     const chained = applied(true);
     expect(chained.targets).toEqual([chained.first, chained.other]);
+    // The second target has its own event (stage 3b), for the HUD's note.
+    expect(chained.chains).toEqual([{ hackId: "ping", fromId: chained.first, targetId: chained.other }]);
     expect(chained.xp).toBe(plain.xp);
   });
 

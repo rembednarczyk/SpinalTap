@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Simulation } from "../src";
 import { BRIDGE_DECKS } from "../src/content/lublin/decks";
 import { SHAPED_TERRAIN } from "../src/content/lublin/terrain";
-import { deckHeight } from "../src/world/deck";
+import { deckAt, deckHeight } from "../src/world/deck";
 import { input, teleportPlayer } from "./helpers";
 
 type P = { readonly x: number; readonly z: number };
@@ -23,6 +23,20 @@ const BULWAR: readonly P[] = [
 const ZAMKOWA: readonly P[] = [
   { x: 758.5, z: 183.1 },
   { x: 732.6, z: 157 },
+];
+
+/** Zamkowa w154962966 (OSM) from the bend below the Castle's square down past the footway under it (G-088). */
+const OVER_TUNNEL: readonly P[] = [
+  { x: 803.8, z: 213.0 },
+  { x: 789.3, z: 204.0 },
+  { x: 761.0, z: 185.6 },
+];
+/** Where Zamkowa's axis crosses the footway w66258159 in its tunnel (OSM `tunnel=yes`, `layer=-1`). */
+const CROSSING: P = { x: 781.2, z: 198.8 };
+/** The footway w66258159 under Zamkowa, 1.5 m on past each end. */
+const TUNNEL: readonly P[] = [
+  { x: 784.6, z: 195.6 },
+  { x: 777.5, z: 202.1 },
 ];
 
 const terrain = (chunk: string, p: P) => terrainHeightAt(SHAPED_TERRAIN.get(chunk)!, p.x, p.z);
@@ -92,7 +106,8 @@ describe("ways under a bridge's deck (G-062, ADR-0053)", () => {
   });
 
   it("the viaduct still carries Zamkowa: walking it, the feet stay on the deck over Podwale", () => {
-    const deck = BRIDGE_DECKS.get("podzamcze-1-0")![0]!;
+    // The viaduct's deck, not the one over the footway's tunnel further up Zamkowa (G-088).
+    const deck = BRIDGE_DECKS.get("podzamcze-1-0")!.find((d) => deckAt([d], 745, 170) !== null)!;
     let worst = 0;
     const { left } = walk(ZAMKOWA, deckHeight(deck, ZAMKOWA[0]!.x, ZAMKOWA[0]!.z), (p) => {
       if (Math.hypot(p.x - 745, p.z - 170) < 4) worst = Math.max(worst, Math.abs(p.y - deckHeight(deck, p.x, p.z)));
@@ -100,5 +115,27 @@ describe("ways under a bridge's deck (G-062, ADR-0053)", () => {
     expect(left).toBeLessThan(1);
     expect(worst).toBeLessThan(0.3);
     expect(deckHeight(deck, 745, 170) - terrain("podzamcze-1-0", { x: 745, z: 170 })).toBeGreaterThan(4);
+  });
+
+  it("Zamkowa runs on over the footway in its tunnel before the Castle, no dip into the NMT's cut (G-088)", () => {
+    const near: { s: number; y: number }[] = [];
+    const { left } = walk(OVER_TUNNEL, terrain("podzamcze-1-0", OVER_TUNNEL[0]!), (p) => {
+      const d = Math.hypot(p.x - CROSSING.x, p.z - CROSSING.z);
+      if (d <= 8) near.push({ s: near.length, y: p.y });
+    });
+    expect(left).toBeLessThan(1);
+    const [a, b] = [near[0]!, near[near.length - 1]!];
+    const dip = Math.max(...near.map((q) => a.y + ((b.y - a.y) * q.s) / (b.s || 1) - q.y));
+    expect(dip).toBeLessThan(0.3);
+  });
+
+  it("the footway runs on under Zamkowa in its tunnel, on the terrain under the street (G-088, G-062)", () => {
+    let over = Infinity;
+    const { jump, left } = walk(TUNNEL, terrain("podzamcze-1-0", TUNNEL[0]!), (p) => {
+      if (Math.hypot(p.x - CROSSING.x, p.z - CROSSING.z) < 1) over = Math.min(over, terrain("podzamcze-1-0", CROSSING) + 1 - p.y);
+    });
+    expect(jump).toBeLessThan(0.5);
+    expect(left).toBeLessThan(1);
+    expect(over).toBeGreaterThan(0);
   });
 });

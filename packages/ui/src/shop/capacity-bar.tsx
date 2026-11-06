@@ -3,14 +3,30 @@ import { useT } from "../i18n/use-t";
 import { useUi } from "../use-ui";
 import { type CapacityFit, capacityFit, overCapacityText } from "./capacity";
 
+/**
+ * Implants over the pool (ADR-0059, stage 3b: a respec that took Tech and Overclock leaves them
+ * in): what to do about it, on the clinic's bar and the sheet.
+ */
+export const OverPool = () => {
+  const t = useT();
+  const capacity = useUi((s) => s.capacity);
+  if (!capacity || capacity.used <= capacity.max) return null;
+  return (
+    <p className="shop__warn" data-testid="capacity-over-pool" role="status">
+      {t("respec.overPool")}
+    </p>
+  );
+};
+
 /** Cyberware capacity in use against the limit (ADR-0032), at the top of the ripperdoc's lists. */
 export const CapacityBar = () => {
   const t = useT();
   const capacity = useUi((s) => s.capacity);
   if (!capacity) return null;
   const pct = capacity.max > 0 ? Math.min(100, Math.round((capacity.used / capacity.max) * 100)) : 100;
+  const over = capacity.used > capacity.max;
   return (
-    <div className={`capacity${capacity.used >= capacity.max ? " capacity--full" : ""}`} data-testid="capacity">
+    <div className={`capacity${capacity.used >= capacity.max ? " capacity--full" : ""}${over ? " capacity--over" : ""}`} data-testid="capacity">
       <span className="capacity__label">{t("shop.capacity.label")}</span>
       <div className="capacity__bar" role="meter" aria-valuemin={0} aria-valuemax={capacity.max} aria-valuenow={capacity.used} aria-label={t("shop.capacity.label")}>
         <div className="capacity__fill" style={{ width: `${pct}%` }} />
@@ -18,6 +34,7 @@ export const CapacityBar = () => {
       <span className="capacity__value" data-testid="capacity-value">
         {capacity.used} / {capacity.max}
       </span>
+      <OverPool />
     </div>
   );
 };

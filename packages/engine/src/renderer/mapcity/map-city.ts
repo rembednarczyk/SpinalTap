@@ -1,5 +1,5 @@
 import type { EntityId, Vec3, ViewDescriptor } from "@seki/core";
-import type { BaseTexture, Mesh, Scene } from "../../babylon";
+import type { BaseTexture, Mesh, Scene, ShaderMaterial } from "../../babylon";
 import type { MoonShadow } from "../../npr/moon-shadow";
 import type { RenderQuality } from "../../npr/quality";
 import type { ToonMaterials } from "../../npr/toon-material";
@@ -168,6 +168,11 @@ export class MapCity {
   }
 
   /** Ground height at (x, z) from the terrain of the chunk there, or null outside every terrain. */
+  /** The signs' material: the metro platforms' letters are drawn on it too (ADR-0071 stage 4). */
+  get signMaterial(): ShaderMaterial {
+    return this.look.signs.material;
+  }
+
   heightAt(x: number, z: number): number | null {
     return this.entries.heightAt(x, z);
   }

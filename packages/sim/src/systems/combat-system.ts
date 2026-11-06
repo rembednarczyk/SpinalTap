@@ -5,6 +5,8 @@ import {
   type HitZone,
   defenseOf,
   outfitDefense,
+  WEAR_PER_HIT,
+  garmentWearScale,
   wearGarments,
   wornGarments,
   type DerivedStats,
@@ -83,10 +85,10 @@ export const landedDamage = (ctx: SimContext, target: Entity, amount: number): n
  */
 export const npcSpreadOf = (ctx: SimContext, e: Entity): number => aimSpreadOf(e, null) / difficultyOf(ctx).npcAccuracy;
 
-/** A hit on the player wears the clothes covering that zone. */
+/** A hit on the player wears the clothes covering that zone (half as much with Reinforced Seams, ADR-0059). */
 export const wearPlayerClothes = (ctx: SimContext, zone: HitZone): void => {
   const domain = ctx.state.domain;
-  const inventory = wearGarments(domain.inventory, domain.equipment, zone);
+  const inventory = wearGarments(domain.inventory, domain.equipment, zone, WEAR_PER_HIT * garmentWearScale(domain.progression.perks));
   if (inventory !== domain.inventory) ctx.state.domain = { ...domain, inventory };
 };
 

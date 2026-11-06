@@ -48,6 +48,7 @@
   "steps-run-bare": 0,
   "steps-band-hidden": 1,
   "steps-incline-against": 0,
+  "road-dip-over-tunnel": 0,
   "flight-ramp-lift": 0,
   "lamp-on-steps": 0,
   "lamp-plain-by-styled": 0,

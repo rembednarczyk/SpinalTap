@@ -2,6 +2,7 @@ import { METRO_STATION_IDS, type MetroStationId, type Vec3 } from "@seki/core";
 import type { GroundCut } from "../world/ground";
 import type { Rect } from "./builders";
 import { type Pavilion, type PavilionSpot, pavilion, pavilionChunk } from "./metro-pavilion";
+import { type PlatformDef, type PlatformSpan, platform } from "./metro-platform";
 
 export { HALL_DEPTH, PAVILION, STAIRS } from "./metro-pavilion";
 
@@ -11,17 +12,30 @@ type DistrictId = "shinsekai-7" | "kanal" | "targ" | "doki";
 /**
  * The metro's stations (ADR-0034, moved into Lublin by ADR-0045, entrances by ADR-0071 stage 2):
  * one per district, each with one or two entrances. An entrance is a pavilion on the street with
- * stairs down to a hall 2.7 m lower and the ticket machine there (`metro-pavilion.ts`); a ride
- * ends in the hall of the destination's first entrance. Kept apart from the district tables (one
- * entry in world-map.ts hooks them up), like the devices of wave 1.
+ * stairs down to a hall 2.7 m lower (`metro-pavilion.ts`). Under an entrance A a second flight
+ * goes on down to the station's platform, with the ticket machine and the car (stage 4,
+ * `metro-platform.ts`); an entrance B keeps the machine in its hall. A ride starts at a machine
+ * and ends on the platform of the destination's entrance A. Kept apart from the district tables
+ * (one entry in world-map.ts hooks them up), like the devices of wave 1.
  */
 export interface MetroEntranceDef extends Pavilion {
   readonly label: "A" | "B";
   /** Lublin's name of the place, the same in every language. */
   readonly name: string;
   readonly spot: PavilionSpot;
-  /** The map chunk the pavilion stands in: its blocks stream in with it. */
+  /** The map chunk the pavilion stands in: its blocks stream in with it (and its platform's). */
   readonly chunk: string;
+  /**
+   * The platform down the second flight (ADR-0071 stage 4), or null: the entrances A have one,
+   * and their ticket machine (`machine`) stands on it; an entrance B keeps its machine in the hall.
+   */
+  readonly platform: PlatformDef | null;
+  /** Where a ticket is bought: in front of the machine, facing it. */
+  readonly ticket: Vec3;
+  readonly ticketYaw: number;
+  /** In the hall at the foot of the stairs, facing them up (`arrival` is the platform's where there is one). */
+  readonly hallSpot: Vec3;
+  readonly hallYaw: number;
 }
 
 export interface MetroStationDef {
@@ -31,7 +45,7 @@ export interface MetroStationDef {
   /** The station on the map and the line: between its entrances, over the platform-to-be. */
   readonly node: { readonly x: number; readonly z: number };
   readonly entrances: readonly [MetroEntranceDef, ...MetroEntranceDef[]];
-  /** Where a rider comes up (entrance A's hall), and the way they face. */
+  /** Where a rider gets off (entrance A's platform), and the way they face. */
   readonly arrival: Vec3;
   readonly arrivalYaw: number;
 }
@@ -39,7 +53,18 @@ export interface MetroStationDef {
 /** The ticket can be bought this close to the machine (horizontally). */
 export const KIOSK_REACH = 2.2;
 
-const entrance = (label: "A" | "B", name: string, spot: PavilionSpot): MetroEntranceDef => ({ label, name, spot, chunk: pavilionChunk(spot.x, spot.z), ...pavilion(spot) });
+const entrance = (label: "A" | "B", name: string, spot: PavilionSpot, span?: PlatformSpan): MetroEntranceDef => {
+  const chunk = pavilionChunk(spot.x, spot.z);
+  if (!span) {
+    const p = pavilion(spot);
+    return { label, name, spot, chunk, ...p, platform: null, ticket: p.arrival, ticketYaw: p.arrivalYaw, hallSpot: p.arrival, hallYaw: p.arrivalYaw };
+  }
+  const deck = platform(spot, span);
+  const p = pavilion(spot, { head: deck.doorwayHead });
+  const { machine, machineSize, machineYaw, arrival, arrivalYaw, ticket, ticketYaw } = deck;
+  const hall = { hallSpot: p.arrival, hallYaw: p.arrivalYaw };
+  return { label, name, spot, chunk, ...p, props: [...p.props, ...deck.props], machine, machineSize, machineYaw, arrival, arrivalYaw, platform: deck, ticket, ticketYaw, ...hall };
+};
 
 const station = (id: MetroStationId, name: string, district: DistrictId, node: { x: number; z: number }, entrances: readonly [MetroEntranceDef, ...MetroEntranceDef[]]): MetroStationDef => ({
   id,
@@ -51,6 +76,9 @@ const station = (id: MetroStationId, name: string, district: DistrictId, node: {
   arrivalYaw: entrances[0].arrivalYaw,
 });
 
+/** Where a platform runs across its flight (ADR-0071 stage 4): 26 m, the car's 16 and room at both ends. */
+const SPAN: PlatformSpan = { w0: -13, w1: 13 };
+
 /**
  * The entrances of ADR-0071 variant A with the places of the topography curator's review (5.11),
  * moved where the drawn map asks for it (stage 2): each one's long side, its opening and why.
@@ -58,24 +86,26 @@ const station = (id: MetroStationId, name: string, district: DistrictId, node: {
 export const METRO_STATIONS: readonly MetroStationDef[] = [
   // Plac Litewski: the square's east part, on the lawn south of the UMCS weather station (w633015047): the long side
   // east-west, so the station's garden keeps 1.5 m; the opening east, to the crossing of the square's paths.
-  station("shinsekai", "Plac Litewski", "shinsekai-7", { x: 74, z: 16.9 }, [entrance("A", "Plac Litewski", { x: 74, z: 16.9, along: "x", opens: 1 })]),
+  station("shinsekai", "Plac Litewski", "shinsekai-7", { x: 74, z: 16.9 }, [entrance("A", "Plac Litewski", { x: 74, z: 16.9, along: "x", opens: 1 }, SPAN)]),
   // Brama Krakowska: the node on Lubartowska's axis between its two entrances. A on Plac Łokietka west of the
   // carriageway as drawn (Królewska is 6.5 m wide there, x 440.3–446.8), along it, open north to the deptak;
   // B on the car park before Alchemia, 3 m off the archaeological site (w1559354344), open east to Lubartowska.
   station("kanal", "Brama Krakowska", "kanal", { x: 442, z: -40 }, [
-    entrance("A", "Plac Łokietka", { x: 433, z: -107, along: "z", opens: 1 }),
+    // Its platform runs east under Królewska, off the houses west of the square (w -14 and on):
+    // the track's tunnel reaches about 4.3 m past w0, so w0 -9.5 keeps it off w67498758 (G-373).
+    entrance("A", "Plac Łokietka", { x: 433, z: -107, along: "z", opens: 1 }, { w0: -9.5, w1: 16 }),
     entrance("B", "Alchemia", { x: 428, z: 28, along: "x", opens: 1 }),
   ]),
   // Plac Zamkowy: the node on Aleja Tysiąclecia. A on the square's car park by the west houses, open north to
   // their pavement; B between the Dworzec Autobusowy and the avenue, open south to the avenue's path.
   station("targ", "Plac Zamkowy", "targ", { x: 740, z: 335 }, [
-    entrance("A", "Plac Zamkowy", { x: 722, z: 286, along: "z", opens: 1 }),
+    entrance("A", "Plac Zamkowy", { x: 722, z: 286, along: "z", opens: 1 }, SPAN),
     entrance("B", "Dworzec Autobusowy", { x: 754, z: 379, along: "z", opens: -1 }),
   ]),
   // Nabrzeże Bystrzycy: outside the Tessen yard, its back to the yard's south wall (the old kiosk stood in the
   // 2.8 m between that wall and the warehouse), open east to the yard's gate. The wall stands 0.2 m off its north
   // side (z 390.0): the eaves stop short of it there (T-160).
-  station("doki", "Nabrzeże Bystrzycy", "doki", { x: 2527, z: 388 }, [entrance("A", "Nabrzeże", { x: 2527, z: 388, along: "x", opens: 1, wall: { side: 1, gap: 0.2 } })]),
+  station("doki", "Nabrzeże Bystrzycy", "doki", { x: 2527, z: 388 }, [entrance("A", "Nabrzeże", { x: 2527, z: 388, along: "x", opens: 1, wall: { side: 1, gap: 0.2 } }, SPAN)]),
 ];
 
 export const metroStation = (id: MetroStationId): MetroStationDef => {
@@ -92,6 +122,11 @@ export const METRO_FOOTPRINTS: readonly Rect[] = METRO_ENTRANCES.map((e) => e.ou
 
 /** The ground dug out under the pavilions' stairs and halls (`GroundField`, and the renderer's terrain and paving). */
 export const METRO_CUTS: readonly GroundCut[] = METRO_ENTRANCES.map((e) => e.cut);
+
+/** The entrances with a platform (ADR-0071 stage 4), each with its station. */
+export const METRO_PLATFORMS: readonly (MetroEntranceDef & { readonly station: MetroStationId; readonly platform: PlatformDef })[] = METRO_ENTRANCES.flatMap((e) =>
+  e.platform ? [{ ...e, platform: e.platform }] : [],
+);
 
 /** The station whose ticket machine is within reach of `p` (and on its level), or null. */
 export const kioskAt = (p: Vec3, stations: readonly MetroStationDef[] = METRO_STATIONS): MetroStationDef | null =>

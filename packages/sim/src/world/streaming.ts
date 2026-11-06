@@ -97,8 +97,13 @@ export class WorldStreamer {
     metro: readonly MetroStationDef[] = WORLD_METRO,
   ) {
     // The shafts under the metro's pavilions (ADR-0071) that stand in these chunks.
-    const cuts = metro.flatMap((s) => s.entrances.filter((e) => chunks.some((c) => c.id === e.chunk)).map((e) => e.cut));
-    this.ground = new GroundField(chunks, cuts);
+    const here = metro.flatMap((s) => s.entrances.filter((e) => chunks.some((c) => c.id === e.chunk)));
+    // And the vaults of their platforms under the street (stage 4).
+    this.ground = new GroundField(
+      chunks,
+      here.map((e) => e.cut),
+      here.flatMap((e) => e.platform?.vaults ?? []),
+    );
     this.catalog = new StreamCatalog(ids, chunks, devices, metro);
     this.passerbyIds = this.catalog.passerbyIds;
     this.streamedOut = this.state.streamedOut;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { INITIAL_PROGRESSION, QUEST_DEFINITIONS, type QuestLog, SAVE_SCHEMA_VERSION, type SaveSnapshot, capacityMax, levelForXp, progressionFromXp, questLogXp, xpForLevel } from "@seki/core";
+import { INITIAL_PROGRESSION, QUEST_DEFINITIONS, type QuestLog, SAVE_SCHEMA_VERSION, type SaveSnapshot, capacityMax, levelForXp, progressionFromXp, questLogXp, spendPerkPoint, xpForLevel } from "@seki/core";
 import { MIGRATIONS, V17_CONTRACT_XP, checksum, compensatingShards, decodeSave, findSchemaError, retroactiveXp } from "../src";
 import { snapshot } from "./fixtures";
 
@@ -99,5 +99,19 @@ describe("character progression in the save (v16 to v17, ADR-0059)", () => {
     const five = progressionFromXp(xpForLevel(5));
     expect(bad({ ...five, attributes: { ...five.attributes, might: 4 }, perks: { might_tough: 4 }, unspent: { attribute: 3, perk: 0 } })).toBe("progression perks");
     expect(bad({ ...base, perks: { might_tough: 1 }, unspent: { attribute: 2, perk: 1 } })).toBe("progression perks");
+  });
+
+  it("a stage 3 save with a perk above an empty tier still loads with its perks; the next tier goes on from it (stage 3b)", () => {
+    const s = snapshot();
+    // Level 12: stage 3 let Might 12 buy Hardened (tier 12) with nothing on the tiers below.
+    const base = progressionFromXp(xpForLevel(12));
+    const old = { ...base, attributes: { ...base.attributes, might: 12 }, perks: { might_hardened: 1 }, unspent: { attribute: 2, perk: 10 } };
+    expect(findSchemaError({ ...s, domain: { ...s.domain, progression: old } } as unknown as Record<string, unknown>)).toBeNull();
+    const loaded = decodeSave("v", wrap({ ...s, domain: { ...s.domain, progression: old } }));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(loaded.domain.progression.perks).toEqual({ might_hardened: 1 });
+    // New ranks follow the rule: Second Wind (tier 8) needs a perk of tier 4 first.
+    expect(spendPerkPoint(loaded.domain.progression, "might_second_wind")).toEqual({ ok: false, reason: "locked" });
+    expect(spendPerkPoint(loaded.domain.progression, "might_hardened").ok).toBe(true);
   });
 });

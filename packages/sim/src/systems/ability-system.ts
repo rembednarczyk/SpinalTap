@@ -1,4 +1,4 @@
-import { ABILITY_CATALOG, type AbilityDefinition, SCAN_TIME_SCALE, abilityCooldownRate, activate, cooldownRateOf, enemyTimeScale, loadoutAbility, tickAbility } from "@seki/core";
+import { ABILITY_CATALOG, type AbilityDefinition, SCAN_TIME_SCALE, abilityCooldownRate, abilityDurationScale, activate, cooldownRateOf, enemyTimeScale, loadoutAbility, tickAbility } from "@seki/core";
 import type { SimContext, System } from "../world/context";
 import { playerHeld } from "../world/takedown";
 
@@ -19,7 +19,7 @@ export const worldTimeScale = (ctx: SimContext): number =>
 
 /**
  * Ticks the active ability (the cooldown faster with the quick_cooldown buff, ADR-0033, and the
- * Coolant perk, ADR-0059), ends it on time, and activates it on the input edge.
+ * Coolant perk, ADR-0059), ends it on time, and activates it on the input edge (longer with Capacitor).
  */
 export const abilitySystem: System = {
   name: "ability",
@@ -30,10 +30,11 @@ export const abilitySystem: System = {
     if (before.activeTime > 0 && next.activeTime <= 0) ctx.bus.emit("AbilityEnded", { abilityId: def?.id ?? "reflex_overdrive" });
     const blocked = playerHeld(ctx);
     if (ctx.input.ability && def && !blocked) {
-      const activated = activate(next, def);
+      const duration = def.duration * abilityDurationScale(ctx.state.domain.progression.perks);
+      const activated = activate(next, { ...def, duration });
       if (activated) {
         next = activated;
-        ctx.bus.emit("AbilityActivated", { abilityId: def.id, duration: def.duration });
+        ctx.bus.emit("AbilityActivated", { abilityId: def.id, duration });
       }
     }
     if (next !== before) ctx.state.domain = { ...ctx.state.domain, ability: next };

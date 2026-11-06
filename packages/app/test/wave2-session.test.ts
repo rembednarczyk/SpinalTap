@@ -33,7 +33,9 @@ describe("wave 2 in the session", () => {
     const { session, ui } = setup();
     session.newGame();
     const from = METRO_STATIONS.find((s) => s.id === "shinsekai")!;
-    teleport(session, from.arrival.x, from.arrival.z, from.arrivalYaw, 0, from.arrival.y);
+    // At the ticket machine on the platform under its entrance A (ADR-0071 stage 4).
+    const machine = from.entrances[0];
+    teleport(session, machine.ticket.x, machine.ticket.z, machine.ticketYaw, 0, machine.ticket.y);
     session.debug.openMetro("shinsekai");
     session.intents.selectMetroStop("kanal");
     session.intents.buyMetroTicket();
