@@ -297,6 +297,32 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(686.7, 380)).toBe("square");
   });
 
+  // The Dworzec Autobusowy east of T-168's line x 810.6 (T-170): (a) the platform under the roof
+  // w458862470, from the footway w227698409 to the stands' asphalt w66323033; (b) the pavilions'
+  // block between the path w227698420 and that footway, to x 870; (c) north of the kiosk w73833929
+  // to Nowy Plac Targowy and the stands' entry (asphalt). The bed south of the path stays bare.
+  const pathAxis = (x: number) => (x <= 834.75 ? 370.14 - ((x - 806.22) * 3.88) / 28.53 : 366.26 - ((x - 834.75) * 10.14) / 74.4);
+  it("paves the Dworzec Autobusowy's platform, the pavilions' block and north of the kiosk, and leaves the asphalt, the footways and the bed on top (G-345)", () => {
+    const buildings = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z)));
+    const bare: string[] = [];
+    const look = (name: string, x: number, z: number) => {
+      if (!buildings.some((o) => inside(x, z, o)) && surfaceAt(x, z) === null) bare.push(`${name} ${x},${z}`);
+    };
+    for (let x = 806.5; x <= 869.5; x += 0.5) for (let z = Math.ceil(pathAxis(x) * 2) / 2 + 0.5; z <= 396; z += 0.5) look("ab", x, z);
+    // North of the kiosk up to the streets: the corner across Nowy Plac Targowy (x < 784) is not this block's.
+    for (let x = 784; x <= 822; x += 0.5) for (let z = 433; z <= 445; z += 0.5) look("c", x, z);
+    expect(bare.join(" ")).toEqual("");
+    expect(surfaceAt(840, 384)).toBe("square");
+    expect(surfaceAt(850, 372)).toBe("square");
+    expect(surfaceAt(800, 443)).toBe("square");
+    expect(surfaceAt(850, 395)).toBe("road");
+    expect(surfaceAt(816, 437)).toBe("road");
+    expect(surfaceAt(845, 361.3)).toBeNull();
+    // The footways stay on top of the paving.
+    expect(surfaceAt(850, 377.5)).toBe("footway");
+    expect(surfaceAt(816, 438.8)).toBe("footway");
+  });
+
   const OSM_DIR = join(__dirname, "../../../data/osm");
   const osm = mergeOsm(readdirSync(OSM_DIR).filter((f) => f.endsWith(".json")).map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))));
   const PAVED = new Set(["square", "cobble", "footway", "road"]);

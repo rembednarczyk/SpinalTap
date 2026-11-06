@@ -427,6 +427,124 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     reason: "pas kostki pod okapem hal Bazaru, od krawędzi targu do rabaty przed nim, na ortofoto PZGiK, w OSM bez obszaru",
     ref: "T-165",
   },
+  {
+    // The Dworzec Autobusowy's roofed platform w458862470 east of T-168's line x 810.6, light setts
+    // under the roof on the orthophoto (PZGiK), bare in OSM: from the footway w227698409's axis
+    // north to the stands' asphalt w66323033, whose edge is the roof's north zigzag, east to x 870
+    // (off the nodes there). In the west it takes T-168's tooth again up to the asphalt's node
+    // (805.8, 388.56): one edge along the asphalt's from node to node, so no seam is left at
+    // T-168's point (810.6, 392.04) on it.
+    id: "T-170/peron-pod-zadaszeniem",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 808.0, z: 382.4 },
+      { x: 831.46, z: 379.68 },
+      { x: 870.0, z: 375.23 },
+      { x: 869.82, z: 386.47 },
+      { x: 867.58, z: 384.59 },
+      { x: 864.77, z: 387.83 },
+      { x: 861.76, z: 385.1 },
+      { x: 859.43, z: 387.94 },
+      { x: 856.31, z: 385.24 },
+      { x: 853.64, z: 388.63 },
+      { x: 850.47, z: 386.05 },
+      { x: 847.95, z: 389.4 },
+      { x: 845.06, z: 387.18 },
+      { x: 842.7, z: 390.29 },
+      { x: 839.01, z: 387.64 },
+      { x: 836.63, z: 391.0 },
+      { x: 832.99, z: 388.42 },
+      { x: 830.52, z: 391.87 },
+      { x: 827.14, z: 389.49 },
+      { x: 824.64, z: 392.96 },
+      { x: 821.0, z: 390.33 },
+      { x: 818.78, z: 393.42 },
+      { x: 815.27, z: 390.82 },
+      { x: 813.12, z: 393.88 },
+      { x: 805.8, z: 388.56 },
+    ],
+    nodesOf: ["w227698409", "w227698409", null, ...Array<string>(22).fill("w66323033")],
+    reason: "kostka peronu pod zadaszeniem Dworca Autobusowego na ortofoto PZGiK, w OSM tylko obrys dachu",
+    ref: "T-170",
+  },
+  {
+    // The block of the pavilions w458298766…w458298772 before the Dworzec, setts round them on the
+    // orthophoto (PZGiK), bare in OSM: from the path w227698420 in the south to the footway
+    // w227698409's axis in the west and north, east to x 870. The south side runs 0.5 m south of the
+    // path's axis, under its band, so the chunks' edge z 370 leaves no seam at it; the bed between
+    // the path and the cycleway w1435832523 stays bare. Off the nodes: the south side and the east side.
+    id: "T-170/plac-pawilonow",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 806.13, z: 369.6 },
+      { x: 834.75, z: 365.76 },
+      { x: 870.0, z: 360.96 },
+      { x: 870.0, z: 375.23 },
+      { x: 831.46, z: 379.68 },
+      { x: 808.0, z: 382.4 },
+    ],
+    nodesOf: [null, null, null, null, "w227698409", "w227698409"],
+    reason: "kostka wokół pawilonów przed Dworcem Autobusowym na ortofoto PZGiK, w OSM tylko linie chodników",
+    ref: "T-170",
+  },
+  {
+    // North of the kiosk w73833929 (T-168/chodnik-przy-dworcu): setts with the crossing w227698417 on
+    // the orthophoto (PZGiK), bare in OSM, from the car park w175995587's north-east edge (from T-164's
+    // corner) to Nadstawna w40049600 and Nowy Plac Targowy w40050943 (both drawn over it from their
+    // axes), east to the footway w227698430 and north to the shop w73833931's walls; the kiosk
+    // w73833930 stands on it. It joins T-169/zaplecze-novy on the street's axis and stops in the north
+    // at the footway w227698410's node by the shop. The stands' entry south of the footway w227698430
+    // is asphalt: T-170/wjazd-stanowisk. Off the nodes: T-164's corner on the car park's edge.
+    id: "T-170/plac-przy-kiosku",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 771.34, z: 433.88 },
+      { x: 788.55, z: 436.84 },
+      { x: 785.01, z: 429.26 },
+      { x: 785.8, z: 429.26 },
+      { x: 790.83, z: 434.97 },
+      { x: 796.18, z: 438.06 },
+      { x: 806.78, z: 433.99 },
+      { x: 811.29, z: 440.68 },
+      { x: 822.9, z: 437.28 },
+      { x: 823.95, z: 439.32 },
+      { x: 828.67, z: 448.44 },
+      { x: 819.61, z: 450.73 },
+      { x: 817.27, z: 445.12 },
+      { x: 814.83, z: 446.06 },
+      { x: 813.72, z: 443.63 },
+      { x: 806.78, z: 446.71 },
+      { x: 808.0, z: 449.97 },
+      { x: 805.57, z: 451.2 },
+      { x: 800.81, z: 448.63 },
+      { x: 789.51, z: 448.0 },
+      { x: 787.02, z: 443.72 },
+      { x: 783.78, z: 440.7 },
+      { x: 780.7, z: 439.32 },
+      { x: 777.16, z: 438.28 },
+      { x: 772.74, z: 437.81 },
+    ],
+    nodesOf: ["w175995587", "w175995587", null, "w227698410", "w227698410", "w227698421", "w227698421", "w227698430", "w227698430", "w227698430", "w227698430", ...Array<string>(7).fill("w73833931"), "w227698410", "w40049600", "w40049600", ...Array<string>(4).fill("w40050943")],
+    reason: "kostka na północ od kiosku przy Dworcu Autobusowym, z przejściem przez Nadstawną, na ortofoto PZGiK, w OSM tylko linie chodników",
+    ref: "T-170",
+  },
+  {
+    // The stands' entry between the asphalt w66323033's north edge and the footway w227698430, asphalt on
+    // the orthophoto (PZGiK) up to the footway's zebra: a carriageway's area, not setts. Its west side is
+    // T-168/peron-przy-dworcu's edge; every corner is the map's node.
+    id: "T-170/wjazd-stanowisk",
+    tags: { "area:highway": "service", surface: "asphalt" },
+    ring: [
+      { x: 806.78, z: 433.99 },
+      { x: 814.02, z: 435.29 },
+      { x: 822.82, z: 433.42 },
+      { x: 822.9, z: 437.28 },
+      { x: 811.29, z: 440.68 },
+    ],
+    nodesOf: ["w227698421", "w66323033", "w66323033", "w227698430", "w227698430"],
+    reason: "asfalt wjazdu na stanowiska Dworca Autobusowego do przejścia przez chodnik, na ortofoto PZGiK, w OSM bez obszaru",
+    ref: "T-170",
+  },
 ];
 
 /** The added areas as the import reads the map's. */
