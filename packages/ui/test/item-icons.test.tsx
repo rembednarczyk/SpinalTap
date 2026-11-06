@@ -33,9 +33,12 @@ const AMMO = Object.keys(AMMO_CATALOG) as AmmoId[];
 /** Every catalog item that is not a weapon: still drawn as text in stage 1. */
 const OTHERS = [...Object.keys(GARMENT_CATALOG), ...Object.keys(MOD_CATALOG), ...Object.keys(CYBERWARE_CATALOG), ...Object.keys(STACKABLE_CATALOG)] as ItemDefId[];
 
-/** Size budget of the drawings, in characters of path data (ADR-0073): all icons, and the largest one. */
-const BUDGET_TOTAL = 4096;
-const BUDGET_ICON = 600;
+/**
+ * Size budget of the drawings, in characters of path data (ADR-0073): on average per icon, so new
+ * icons bring their own share, and for the largest one. Stage 1: 1790 for 12 icons, at most 248.
+ */
+const BUDGET_AVERAGE = 200;
+const BUDGET_ICON = 320;
 
 const intents = (): UiIntents => {
   const spies = new Map<PropertyKey, unknown>();
@@ -97,7 +100,7 @@ describe("the icon table", () => {
   it("stays within its size budget", () => {
     const sizes = Object.entries(ICON_PATHS).map(([key, d]) => [key, [...d.body, ...(d.line ?? [])].join("").length] as const);
     const total = sizes.reduce((s, [, n]) => s + n, 0);
-    expect(total).toBeLessThanOrEqual(BUDGET_TOTAL);
+    expect(total / sizes.length).toBeLessThanOrEqual(BUDGET_AVERAGE);
     for (const [key, n] of sizes) expect(n, key).toBeLessThanOrEqual(BUDGET_ICON);
   });
 

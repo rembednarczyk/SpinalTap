@@ -58,7 +58,7 @@ Stan na `origin/main` aca80ad.
 
 ## Testy
 - **Komponent UI** (`packages/ui/test/item-icons.test.tsx`): każda broń i amunicja z katalogu ma ikonę z narysowaną ścieżką; każdy inny przedmiot ma jawny zamiennik (`null`) i komórkę z nazwą bez ikony; ramka i kolor dla każdej rzadkości, w tym epickiej i legendarnej; ikona na ladzie dla broni i pudełek nabojów; ikona jest ukryta przed czytnikiem, a etykieta komórki bez zmian.
-- **Rozmiar paczki:** budżet danych ścieżek (wszystkie ikony razem i każda osobno) w tym samym teście; wzrost to czerwony test, a podniesienie budżetu wymaga uzasadnienia jak w ADR-0046.
+- **Rozmiar paczki:** budżet danych ścieżek w tym samym teście: średnio do 200 znaków na ikonę (nowe ikony przynoszą swój udział) i do 320 na jedną; etap 1 ma 1790 znaków na 12 ikon, najwięcej 248; wzrost to czerwony test, a podniesienie budżetu wymaga uzasadnienia jak w ADR-0046.
 - **Kontrast na telefonie:** każdy kolor rzadkości ma co najmniej 3:1 (WCAG 1.4.11, elementy graficzne) na tle komórki i na tle zaznaczonej komórki; liczone w teście z tych samych stałych, których używa komponent.
 - **Zrzuty:** ekwipunek i lada na telefonie (800 × 370) i desktopie (1280 × 720) przed i po, przez `pnpm e2e` (ADR-0046: przeglądarka tylko do układu).
 - **Złote hashe `sim` i schemat zapisu** bez zmian w etapach 1 i 2.
