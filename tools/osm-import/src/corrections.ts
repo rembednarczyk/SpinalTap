@@ -179,6 +179,22 @@ export interface AddedArea {
   readonly ref: string;
 }
 
+/**
+ * The lawn before the pavilions by the Dworzec Autobusowy (T-170, the curator's review of PR #318):
+ * from the path w227698420 (0.5 m south of its axis, under its band) at x 840 up to 0.5 m before the
+ * pavilions' south walls, east to x 870. West to east along the walls, then down to the path.
+ */
+const PAVILION_LAWN_EDGE: readonly Pt[] = [
+  { x: 840.0, z: 365.04 },
+  { x: 840.0, z: 368.93 },
+  { x: 845.78, z: 368.37 },
+  { x: 846.89, z: 366.92 },
+  { x: 855.45, z: 365.98 },
+  { x: 857.81, z: 364.67 },
+  { x: 862.09, z: 364.15 },
+  { x: 870.0, z: 363.19 },
+];
+
 export const ADDED_AREAS: readonly AddedArea[] = [
   {
     // The square before the Dworzec Autobusowy and Nova, paved on the orthophoto (PZGiK), where OSM
@@ -472,18 +488,20 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     // orthophoto (PZGiK), bare in OSM: from the path w227698420 in the south to the footway
     // w227698409's axis in the west and north, east to x 870. The south side runs 0.5 m south of the
     // path's axis, under its band, so the chunks' edge z 370 leaves no seam at it; the bed between
-    // the path and the cycleway w1435832523 stays bare. Off the nodes: the south side and the east side.
+    // the path and the cycleway w1435832523 stays bare. East of x 840 it stops 0.5 m before the
+    // pavilions' south walls: the lawn in front of them is T-170/trawnik-pawilonow. Off the nodes:
+    // all but the footway's.
     id: "T-170/plac-pawilonow",
     tags: { "area:highway": "pedestrian", surface: "paving_stones" },
     ring: [
       { x: 806.13, z: 369.6 },
       { x: 834.75, z: 365.76 },
-      { x: 870.0, z: 360.96 },
+      ...PAVILION_LAWN_EDGE,
       { x: 870.0, z: 375.23 },
       { x: 831.46, z: 379.68 },
       { x: 808.0, z: 382.4 },
     ],
-    nodesOf: [null, null, null, null, "w227698409", "w227698409"],
+    nodesOf: [null, null, ...PAVILION_LAWN_EDGE.map(() => null), null, "w227698409", "w227698409"],
     reason: "kostka wokół pawilonów przed Dworcem Autobusowym na ortofoto PZGiK, w OSM tylko linie chodników",
     ref: "T-170",
   },
@@ -633,6 +651,17 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     nodesOf: ["w67502759", "w67502759", "w67502759", "w227698428", "w227698428", "w227698428", "w227698428", "w227698428"],
     reason: "czerwona kostka między wschodnią ścianą hal Bazaru a Novą na ortofoto PZGiK, w OSM tylko linia chodnika",
     ref: "T-175",
+  },
+  {
+    // The lawn between the pavilions' south walls and the path w227698420 (x 840-870), green on the
+    // orthophoto (PZGiK) where T-170/plac-pawilonow had laid setts: grass, as a bed of the map. The path
+    // is drawn over its south edge.
+    id: "T-170/trawnik-pawilonow",
+    tags: { landuse: "flowerbed" },
+    ring: [{ x: 870.0, z: 360.96 }, ...[...PAVILION_LAWN_EDGE].reverse()],
+    nodesOf: [null, ...PAVILION_LAWN_EDGE.map(() => null)],
+    reason: "trawnik przed pawilonami przy Dworcu Autobusowym na ortofoto PZGiK, w OSM bez obszaru",
+    ref: "T-170",
   },
 ];
 

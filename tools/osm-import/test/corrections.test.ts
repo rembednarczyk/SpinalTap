@@ -362,6 +362,29 @@ describe("tag corrections (ADR-0042)", () => {
     }
   });
 
+  // The lawn before the pavilions by the Dworzec (T-170, the curator's review of PR #318): green on the
+  // orthophoto between the pavilions' south walls and the path w227698420, x 840-870, not setts.
+  it("leaves the lawn before the Dworzec's pavilions green, not paved (G-345)", () => {
+    const buildings = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z)));
+    // Before each pavilion's south wall (x from, x to, the wall's lowest z), 0.6 m short of it.
+    const fronts: readonly (readonly [number, number, number])[] = [
+      [841.25, 845.5, 368.87],
+      [847.25, 855.25, 366.48],
+      [858.25, 861.75, 364.65],
+    ];
+    const paved: string[] = [];
+    for (const [x0, x1, wall] of fronts)
+      for (let x = x0; x <= x1; x += 0.5)
+        for (let z = pathAxis(x) + 1.5; z < wall - 0.6; z += 0.25) {
+          if (buildings.some((o) => inside(x, z, o))) continue;
+          if (surfaceAt(x, z) !== "grass") paved.push(`${x},${z.toFixed(2)} ${surfaceAt(x, z)}`);
+        }
+    expect(paved.join(" ")).toEqual("");
+    // Before the walls, between the pavilions and in front of the kiosk the setts go on.
+    expect(surfaceAt(846.6, 368)).toBe("square");
+    expect(surfaceAt(837, 368)).toBe("square");
+  });
+
   // The north pavement of al. Tysiąclecia east of x 806 (T-173): from the carriageway to the footway
   // w1435832518 and the path w1435832524, x 806-870, where the lawn w804709934 begins. The register's test: 0.5 m samples, at most
   // 0.5 m² bare (seams). North of the footway lies the bed of T-170, not this pavement.
