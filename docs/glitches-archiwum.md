@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-088 Zamkowa zapada się o 3,5 m nad tunelem pieszym przed Zamkiem
+- Status: naprawione w #306 (6.11, eb33598; pomost Zamkowej nad tunelem w66258159 z `tunnel-decks.ts`, `road-dip-over-tunnel` 1 → 0; AI: pomost z prześwitem > 2 m jest sufitem, gdy prosta NPC→cel przechodzi pod nim; kurator PRZYJĘTE, kształt: T-178)
+- Ważność: S3 (proponowana; dojście do Zamku, obejście 6 m od osi) · Zasięg: lokalny · Koszt: średni
+- Gdzie: (781.2, 198.8), Zamkowa w154962966 nad w66258159; T-053
+- Dowód: GroundField wzdłuż osi: −12,5 → −15,6 → −12,8 m; steepAt prawda na pasie od −8 do +5 m od osi
+- Przyczyna (przypuszczalna): NMT bez konstrukcji nad tunelem; ulica bez pomostu (jak BRIDGE_DECKS), a tunel pomija `underground()`
+- Pakiet właściciela: tools/osm-import / packages/sim (pomosty)
+- Test przyjęcia: kontrola `road-dip-over-tunnel` 1 → 0 (droga z OSM przecina tunel bez wspólnego węzła, a grunt w ±8 m od przecięcia leży > 1 m pod cięciwą; w mieście 34 przecięcia, następne 0,35 m); pod pomostem przejście w66258159 drożne (G-062)
+
 ### G-343 Uciekający cywil przełącza się co krok między dwoma kierunkami przy ścianie (ziarna 3 i 7)
 - Status: naprawione w #310 (6.11, c9b13d1; trzymana droga po kursie objazdu, próg zawrotu 5π/6, sonda ciała na `STEP_HEIGHT + 0.05`; skoki w przeglądzie 144 przypadków 1414 → 212; złote hashe zmienione świadomie). Resztki: G-369
 - Ważność: S4 · Zasięg: ziarno 7, 1002001, gracz 2 m, ok. (309; −99,5): ściana tuż przy końcu sondy 2,5 m, a objazd „na wprost” prowadzi z powrotem obok gracza (242 skoki); ziarno 3, 1002001/1002003, gracz 1 m, ok. (326; −29): `fleeStep` biegnie na zablokowany punkt 6 m dalej (`steerPoint` oddaje cel, objazd pusty), na zmianę z objazdem przy +π/2 (183/186 skoków). Dopisek 6.11 (weryfikacja #305): także warianty z G-328 w zaułku (ok. 309,5; −97,7): ziarno 43, 1002008, gracz (3; 0): 431 skoków, 1,18 m od gracza; ziarno 11 i 7, 1002001, gracz (2; 0): 352 i 417 skoków; ziarna 3 i 29, 1002002, gracz (0; −2): 380 i 129 skoków. Ślad `fleeTurn`: co krok 0 ↔ −π/4, `null` nie pada. Test przyjęcia: w każdym z tych przypadków po 4 s cywil stoi albo ucieka bez przeskoków co krok

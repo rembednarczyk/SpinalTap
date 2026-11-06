@@ -260,15 +260,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-086 Nawierzchnie: kostka na jezdni jako asfalt, ścieżki gruntowe jako utwardzone
 - Status: zgłoszone (audyt dróg) (T-052) · Ważność: S4 · Koszt: średni (kontrakt `GroundSurface` w core, ADR)
 
-### G-088 Zamkowa zapada się o 3,5 m nad tunelem pieszym przed Zamkiem
-- Status: w PR #306, runda 2 (6.11, b4ba7f4: pomost z prześwitem > 2 m jest sufitem dla AI, gdy prosta NPC→cel przechodzi pod nim; pościgi przez tunel 3,35 s jak przed zmianą; ponowna weryfikacja w toku)
-- Ważność: S3 (proponowana; dojście do Zamku, obejście 6 m od osi) · Zasięg: lokalny · Koszt: średni
-- Gdzie: (781.2, 198.8), Zamkowa w154962966 nad w66258159; T-053
-- Dowód: GroundField wzdłuż osi: −12,5 → −15,6 → −12,8 m; steepAt prawda na pasie od −8 do +5 m od osi
-- Przyczyna (przypuszczalna): NMT bez konstrukcji nad tunelem; ulica bez pomostu (jak BRIDGE_DECKS), a tunel pomija `underground()`
-- Pakiet właściciela: tools/osm-import / packages/sim (pomosty)
-- Test przyjęcia: kontrola `road-dip-over-tunnel` 1 → 0 (droga z OSM przecina tunel bez wspólnego węzła, a grunt w ±8 m od przecięcia leży > 1 m pod cięciwą; w mieście 34 przecięcia, następne 0,35 m); pod pomostem przejście w66258159 drożne (G-062)
-
 ### G-091 Długie przytrzymanie „Use” wybiera kwestię pod palcem w kole dialogu
 - Status: zgłoszone (z badania G-058; do potwierdzenia na prawdziwym telefonie przez glitch-huntera)
 - Ważność: S3 (proponowana; przypadkowy wybór kwestii w rozmowie) · Zasięg: dotyk · Koszt: mały
@@ -1133,6 +1124,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: ucieczka przy graczu 1 m: 3/1002001 (0; −1) 35 skoków w drugiej połowie, 11/1002001 (1; 0) 44 (okres ok. 0,5 s); pościg 4 m/s: 43/1002008 115–163, 11/1002001 (0; −2) 239, 19/1002002 (0; 2) 29; 11/1002001 przy (310; −96) napiera na róg skrzyni 274 (sonda ±0,5 promienia ciała nie widzi rogu, pas z G-338) · Koszt: średni
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, steering)
 - Test przyjęcia: w tych przypadkach skoki w drugiej połowie ≤ 4, bez biegu w miejscu
+
+### G-370 Skan `metro-shaft-open` nie sprawdza ścian pawilonu powyżej ulicy (szkło nad cokołem)
+- Status: zgłoszone (6.11, weryfikator #309; luka sprzed etapu 4)
+- Ważność: S4 (skan) · Zasięg: wszystkie wejścia metra · Koszt: mały
+- Pakiet właściciela: tools/glitch-scan (`metro-entrances.ts`)
+
+### G-371 Hala w otwartym wykopie i ulica wychodzą w `heightApart` 1,0 m od siebie, poniżej `LEVEL_GAP`
+- Status: zgłoszone (6.11, weryfikator #309; z etapu 2 metra)
+- Ważność: S4 · Zasięg: AI (sniper, steering, ganger-walk) może brać halę i ulicę za jedno piętro · Koszt: mały
+- Pakiet właściciela: packages/sim (`world/ground.ts`)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
