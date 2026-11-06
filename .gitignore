@@ -11,3 +11,5 @@ artifact/
 .claude/worktrees/
 data/osm/cache/
 __pycache__/
+# vitest blob reports of the CI shards (G-376)
+.vitest/

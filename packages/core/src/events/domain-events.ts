@@ -154,6 +154,8 @@ export interface DomainEvents {
   QuickhackFailed: { hackId: QuickhackId; targetId: EntityId; reason: QuickhackFailure };
   /** The upload was noticed: the target's network knows where the player is. */
   QuickhackTraced: { hackId: QuickhackId; targetId: EntityId };
+  /** Chain (ADR-0059): the hack applied on `fromId` also landed on `targetId`, after that one's QuickhackApplied. */
+  QuickhackChained: { hackId: QuickhackId; fromId: EntityId; targetId: EntityId };
   RamChanged: { current: number; max: number };
   /** A terminal breach ended (the UI minigame sends the result as a command). */
   BreachCompleted: { terminalKey: string; daemons: readonly BreachDaemonId[] };
@@ -208,6 +210,11 @@ export interface DomainEvents {
   ExperienceGained: { amount: number; source: XpSource };
   /** The character reached `level`; one per level gained, after its ExperienceGained. */
   LevelUp: { level: number };
+  /**
+   * Mori's respec went through for `price` (ADR-0059, stage 3b): every attribute and perk back
+   * at the start, `attribute` and `perk` points now to spend.
+   */
+  ProgressionReset: { price: number; attribute: number; perk: number };
   // Interiors (ADR-0061).
   /**
    * The player stepped into an interior (`interiorId` of the sim's `INTERIORS`). Not sent when a

@@ -91,8 +91,9 @@ export const METRO_STATIONS: readonly MetroStationDef[] = [
   // carriageway as drawn (Królewska is 6.5 m wide there, x 440.3–446.8), along it, open north to the deptak;
   // B on the car park before Alchemia, 3 m off the archaeological site (w1559354344), open east to Lubartowska.
   station("kanal", "Brama Krakowska", "kanal", { x: 442, z: -40 }, [
-    // Its platform runs east under Królewska, off the houses west of the square (w -14 and on).
-    entrance("A", "Plac Łokietka", { x: 433, z: -107, along: "z", opens: 1 }, { w0: -10, w1: 16 }),
+    // Its platform runs east under Królewska, off the houses west of the square (w -14 and on):
+    // the track's tunnel reaches about 4.3 m past w0, so w0 -9.5 keeps it off w67498758 (G-373).
+    entrance("A", "Plac Łokietka", { x: 433, z: -107, along: "z", opens: 1 }, { w0: -9.5, w1: 16 }),
     entrance("B", "Alchemia", { x: 428, z: 28, along: "x", opens: 1 }),
   ]),
   // Plac Zamkowy: the node on Aleja Tysiąclecia. A on the square's car park by the west houses, open north to

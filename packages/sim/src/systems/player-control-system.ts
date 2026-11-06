@@ -12,6 +12,7 @@ import {
   buffModifiers,
   BUFF_CATALOG,
   adsTimeScale,
+  perkAdsTimeScale,
   progressionModifiers,
   carrySpeedBonus,
   crouchSpeedBonus,
@@ -259,7 +260,7 @@ export const playerControlSystem: System = {
       if (p.health) p.health = { current: Math.min(p.health.current, stats.maxHp), max: stats.maxHp };
       const frozen = playerHeld(ctx);
       if (p.posture) updateCrouch(p.posture, input.crouch, frozen, ctx.dt);
-      updateAimAndGuard(p, input.aim, frozen, ctx.dt, adsTimeScale(ctx.state.domain.progression.attributes));
+      updateAimAndGuard(p, input.aim, frozen, ctx.dt, adsTimeScale(ctx.state.domain.progression.attributes) * perkAdsTimeScale(ctx.state.domain.progression.perks));
       updateJump(ctx, p, frozen);
       const landingSlow = tickLanding(p, ctx.dt);
       if (frozen) {
