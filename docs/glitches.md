@@ -1127,6 +1127,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: ściana przejścia pod stropem; prawdopodobnie światło księżyca między kawałkami stropu · Koszt: mały
 - Pakiet właściciela: packages/engine (`renderer/metro`, cienie/światło)
 
+### G-368 AI nie ściga gracza w metrze (hala, zejście, peron, wejścia A i B)
+- Status: zgłoszone (6.11, weryfikator PR #309; nie regresja etapu 4)
+- Ważność: S3 · Zasięg: ganger zaalarmowany z ulicy, z hali albo z peronu nie dochodzi do gracza w żadnym z 14 sprawdzonych przypadków · Koszt: średni
+- Pakiet właściciela: packages/sim (`systems/ai`, nawigacja przez schody i sklepienia)
+- Test przyjęcia: pościg z ulicy do hali i z hali na peron dochodzi do gracza w rozsądnym czasie
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
