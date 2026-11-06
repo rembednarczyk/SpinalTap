@@ -4,6 +4,7 @@ import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 import { BodyFade, bodyFadeTarget } from "./body-fade";
+import { moveOf, swingEnd, swingPhase } from "../renderer/melee-timing";
 import { type ViewmodelPose, viewmodelPose } from "./viewmodel-poses";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
@@ -20,8 +21,6 @@ const SPRINT_WIDEN = 0.1;
 const TPP_ADS_PULL = 0.45;
 /** FPP melee guard: the weapon across the view, a little left of centre. */
 const VIEWMODEL_GUARD = { x: 0.08, y: -0.12, z: 0.5 } as const;
-/** Seconds from the end of a windup to the end of the follow-through (matches the rig). */
-const VIEW_STRIKE = 0.09;
 /** Height of the figure the TPP camera fades when it is in the way (G-275), standing and crouched. */
 const FIGURE_HEIGHT = 1.85;
 const FIGURE_CROUCHED = 1.3;
@@ -63,20 +62,14 @@ const VIEW_SWINGS: readonly { readonly cocked: ViewOffset; readonly through: Vie
   { cocked: { x: -0.06, y: 0.24, z: -0.12, rx: -1.1, ry: 0, rz: -0.1 }, through: { x: -0.1, y: -0.2, z: 0.08, rx: 1.0, ry: 0, rz: 0 } },
 ];
 
-/** Offset of the FPP melee viewmodel `elapsed` seconds into a swing (zero before and after). */
+/**
+ * Offset of the FPP melee viewmodel `elapsed` seconds into a swing (zero before and after), on
+ * the rig's timing: half way through the sweep when the simulation lands the blow.
+ */
 export const viewSwingOffset = (strike: number, elapsed: number, windup: number, recovery: number): ViewOffset => {
-  const poses = VIEW_SWINGS[((strike % VIEW_SWINGS.length) + VIEW_SWINGS.length) % VIEW_SWINGS.length] ?? VIEW_SWINGS[0]!;
-  let cock: number;
-  let through: number;
-  if (elapsed < windup) {
-    cock = smooth(elapsed / Math.max(1e-3, windup));
-    through = 0;
-  } else if (elapsed < windup + VIEW_STRIKE) {
-    cock = 1;
-    through = smooth((elapsed - windup) / VIEW_STRIKE);
-  } else {
-    cock = through = 1 - smooth(Math.min(1, (elapsed - windup - VIEW_STRIKE) / Math.max(1e-3, recovery - VIEW_STRIKE)));
-  }
+  // The light strikes alternate forehand and backhand; the heavy finisher is the overhead cut.
+  const poses = VIEW_SWINGS[moveOf(strike) === "heavy" ? 2 : ((strike % 2) + 2) % 2] ?? VIEW_SWINGS[0]!;
+  const { cock, through } = swingPhase(elapsed, windup, recovery);
   const mix = (k: keyof ViewOffset) => poses.cocked[k] * cock + (poses.through[k] - poses.cocked[k]) * through;
   return { x: mix("x"), y: mix("y"), z: mix("z"), rx: mix("rx"), ry: mix("ry"), rz: mix("rz") };
 };
@@ -113,6 +106,8 @@ export class CameraRig {
   private readonly meleeHolder: TransformNode;
   private meleeLook: WeaponLook | null = null;
   private meleeMesh: AbstractMesh | null = null;
+  /** The stand-in shape of the melee weapon shows until its model is mounted. */
+  private meleePlaceholder = true;
   /** Hip and aimed positions of the gun in hand (G-282). */
   private pose: ViewmodelPose = viewmodelPose(null);
   private readonly materials: ToonMaterials;
@@ -187,6 +182,11 @@ export class CameraRig {
     return this.gunHolder;
   }
 
+  /** Node a baton or blade model is mounted under in the FPP viewmodel: it swings and guards. */
+  get meleeMount(): TransformNode {
+    return this.meleeHolder;
+  }
+
   /** Current look speed multiplier from the aim zoom (ADR-0019); 1 from the hip. */
   get lookScale(): number {
     return lookScaleFor(this.camera.fov, this.hipFov);
@@ -219,6 +219,7 @@ export class CameraRig {
     mesh.rotation.x = 0.55;
     mesh.isPickable = false;
     applyOutline(mesh, 0.004);
+    mesh.setEnabled(this.meleePlaceholder);
     this.meleeMesh = mesh;
   }
 
@@ -227,9 +228,14 @@ export class CameraRig {
     this.swing = { strike, windup, recovery, elapsed: 0 };
   }
 
-  /** The box pistol, shown while the weapon in hand has no model mounted (G-282). */
-  setPlaceholderGun(visible: boolean): void {
-    this.placeholderGun.setEnabled(visible);
+  /**
+   * Stand-ins shown while the weapon in hand has no model mounted: the box pistol (G-282) and
+   * the baton or blade shape.
+   */
+  setPlaceholders(shown: { readonly gun: boolean; readonly melee: boolean }): void {
+    this.placeholderGun.setEnabled(shown.gun);
+    this.meleePlaceholder = shown.melee;
+    this.meleeMesh?.setEnabled(shown.melee);
   }
 
   /** What else stops the TPP camera besides the scene's blockers (null: the blockers alone). */
@@ -298,7 +304,7 @@ export class CameraRig {
       return { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 };
     }
     sw.elapsed += dt;
-    if (sw.elapsed >= sw.windup + Math.max(VIEW_STRIKE, sw.recovery)) this.swing = null;
+    if (sw.elapsed >= swingEnd(sw.windup, sw.recovery)) this.swing = null;
     return viewSwingOffset(sw.strike, sw.elapsed, sw.windup, sw.recovery);
   }
 

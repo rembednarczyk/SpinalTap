@@ -79,7 +79,7 @@ const modelsParam = params.get("models");
 if (modelsParam !== "off" && (modelsParam || !reference)) {
   // CC0 weapon models replace the box pistols (see public/weapons/README.md).
   const weapons = new URL("weapons/", document.baseURI);
-  const weaponModels = Object.fromEntries(["pistol", "revolver", "smg", "shotgun", "rifle"].map((k) => [k, new URL(`${k}.glb`, weapons).href]));
+  const weaponModels = Object.fromEntries(["pistol", "revolver", "smg", "shotgun", "rifle", "baton", "blade"].map((k) => [k, new URL(`${k}.glb`, weapons).href]));
   // The loading screen waits for the manifest and loads its files (ADR-0057).
   const manifest = loadModelManifest(modelsParam ?? "./models/manifest.json");
   renderer.loading.loadCharacterModels(manifest);
