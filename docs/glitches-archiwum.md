@@ -2,6 +2,47 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-345 Gołe podłoże wokół stanowisk Dworca Autobusowego (x 808–870)
+- Status: naprawione w #318 (6.11, 0fc0023; `T-170/*`, trawnik przed pawilonami jako `flowerbed`)
+- Ważność: S4 · Zasięg: ok. 1000 m² w x 808–870, z 366–395 (pas między ścieżką w227698420, chodnikiem w227698409 i stanowiskami, z gruntem pod zadaszeniem w458862470); też pas na północ od kiosku w73833929 (z 434–442, x 780–816) · Topografia: T-170 (kurator: pod zadaszeniem ok. 453 m², przed pawilonami ok. 535 m², na północ od kiosku ok. 160 m²)
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`), przegląd kuratora
+
+### G-347 Gołe podłoże wzdłuż parkingu w227698441 przy ul. Nowy Plac Targowy (T-172)
+- Status: naprawione w #318 (6.11, 0fc0023; `T-172/pas-parkingu` asfalt, latarnia przed autami, `T-172/chodnik-przy-hali`)
+- Ważność: S4 · Zasięg: x 672–726, z 436–448, ok. 100 m² (pas 1,2–1,9 m od jezdni w40050943, klin przy chodniku w227698428, szczelina ok. 5 m² przy (725,4; 437)) · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`; pas (a) asfalt jak jezdnia albo parking, nie kostka; klin (b) kostka chodnika)
+- Test przyjęcia: gołe próbki 0,1 m poza budynkami w x 672–727, z 434–449 ≤ 0,5 m² (szwy); parking w227698441, chodnik i jezdnia na wierzchu
+
+### G-350 Gołe podłoże przy al. Tysiąclecia na wschód od Dworca (T-173)
+- Status: naprawione w #318 (6.11, 0fc0023; `T-173/chodnik-tysiaclecia-wschod`)
+- Ważność: S4 · Zasięg: x 806–872, z ok. 343–360, ok. 470 m² · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: gołe próbki 0,5 m w obszarze ≤ 0,5 m² (szwy)
+
+### G-352 Chodnik przy wschodniej ścianie Bazaru za wąski (T-175)
+- Status: naprawione w #318 (6.11, 0fc0023; `T-175/chodnik-przy-bazarze`)
+- Ważność: S4 · Zasięg: x 716–721, z 389–413, ok. 30–35 m² · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: kostka od ściany hal ok. 5 m, gołe próbki 0
+
+### G-368 AI nie ściga gracza w metrze (hala, zejście, peron, wejścia A i B)
+- Status: naprawione w #316 (6.11, 58f3036; graf poziomów przez wejścia metra, `shaftAt` w `heightApart`, `attach()` z wysokością biegu, strzelec wchodzi na węzeł bez strzału z miejsca postoju; siatka 264 pościgów: 176 → 4 bez wyniku)
+- Ważność: S3 · Zasięg: ganger zaalarmowany z ulicy, z hali albo z peronu nie dochodzi do gracza w żadnym z 14 sprawdzonych przypadków · Koszt: średni
+- Pakiet właściciela: packages/sim (`systems/ai`, nawigacja przez schody i sklepienia)
+- Test przyjęcia: pościg z ulicy do hali i z hali na peron dochodzi do gracza w rozsądnym czasie
+
+### G-371 Hala w otwartym wykopie i ulica wychodzą w `heightApart` 1,0 m od siebie, poniżej `LEVEL_GAP`
+- Status: naprawione w #316 (6.11, 58f3036; razem z G-368)
+- Ważność: S4 · Zasięg: AI (sniper, steering, ganger-walk) może brać halę i ulicę za jedno piętro · Koszt: mały
+- Pakiet właściciela: packages/sim (`world/ground.ts`)
+
+### G-387 Shard e2e (1) na granicy `timeout-minutes: 25`: przygotowanie ok. 11 min, testy 13,6 min
+- Status: naprawione w #319 (6.11, 354a1cd; cache przeglądarek Playwright i `.deb` czcionek; do potwierdzenia przy drugim przebiegu: „.deb cache hit: true”)
+- Ważność: S2 (blokuje scalanie PR-ów z kodem) · Zasięg: `.github/workflows/ci.yml`, job e2e; instalacja, build i pobranie przeglądarek przed testami (10:40 → 10:51), potem 21 testów jednym workerem · Koszt: średni. Przyczyna z logu #317: `pnpm exec playwright install --with-deps chromium` pobiera przez apt 9 pakietów czcionek (fonts-ipafont-gothic, fonts-wqy-zenhei, fonts-unifont, xfonts-*; 22 MB) z lustra azure.archive.ubuntu.com, tym razem 31 kB/s → 10 min 59 s; biblioteki Chromium są już na runnerze. Propozycja: cache `.deb` czcionek albo `~/.cache/ms-playwright` (`actions/cache`, klucz z wersji Playwright) i `install-deps` tylko dla brakujących pakietów; migawka NPR może zależeć od czcionek, więc nie wyrzucać ich bez sprawdzenia
+- Pakiet właściciela: Infra/Build (`.github`), QA (`e2e`)
+- Poprawka bez podnoszenia limitu (ADR-0046): skrócić przygotowanie (cache przeglądarek Playwright i builda, build raz i artefakt dla shardów) albo trzeci shard
+- Test przyjęcia: oba shardy e2e kończą się z zapasem ≥ 5 min na obecnym main
+
 ### G-289 Z dachu Alchemii nie ma bezpiecznego zejścia
 - Status: naprawione w #312 (6.11, b65bd52; winda Alchemii na dach z mostkiem i tarasem, bramki do nadproża, podświetlone przyciski; weryfikator i kurator PRZYJĘTE)
 - Ważność: S4 · Zasięg: zeskok z 11–13 m kosztuje 48–96 HP; dziś dach nieosiągalny

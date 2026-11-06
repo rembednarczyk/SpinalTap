@@ -995,44 +995,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin decks, terrain PADS/RAMPS)
 - Test przyjęcia: kontrola `deck-end-step` (różnica `groundY` 0,15 m przed i za krawędzią > 0,15 m, poza drogą pod mostem) = 0
 
-### G-345 Gołe podłoże wokół stanowisk Dworca Autobusowego (x 808–870)
-- Status: zgłoszone (5.11, naprawiacz G-341)
-- Ważność: S4 · Zasięg: ok. 1000 m² w x 808–870, z 366–395 (pas między ścieżką w227698420, chodnikiem w227698409 i stanowiskami, z gruntem pod zadaszeniem w458862470); też pas na północ od kiosku w73833929 (z 434–442, x 780–816) · Topografia: T-170 (kurator: pod zadaszeniem ok. 453 m², przed pawilonami ok. 535 m², na północ od kiosku ok. 160 m²)
-- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`), przegląd kuratora
-
 ### G-346 Kontrola `deck-slot` nie widzi pomostu powyżej zasięgu stopy
 - Status: zgłoszone (5.11, weryfikator PR #293)
 - Ważność: S4 (skan) · Zasięg: `deck-slot` porównuje z `groundY`, a postać stoi na ziemi z `reach` = stopa + `STEP_HEIGHT`; upadek pod pomost przy stopniu wyższym niż `STEP_HEIGHT` daje 0; próg 15° w `bridge-fill.ts` (`SIDE_BY_SIDE`) bez testu
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
-
-### G-347 Gołe podłoże wzdłuż parkingu w227698441 przy ul. Nowy Plac Targowy (T-172)
-- Status: zgłoszone (5.11, kurator, przegląd G-342)
-- Ważność: S4 · Zasięg: x 672–726, z 436–448, ok. 100 m² (pas 1,2–1,9 m od jezdni w40050943, klin przy chodniku w227698428, szczelina ok. 5 m² przy (725,4; 437)) · Koszt: mały
-- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`; pas (a) asfalt jak jezdnia albo parking, nie kostka; klin (b) kostka chodnika)
-- Test przyjęcia: gołe próbki 0,1 m poza budynkami w x 672–727, z 434–449 ≤ 0,5 m² (szwy); parking w227698441, chodnik i jezdnia na wierzchu
 
 ### G-348 Długi przebieg e2e z modelami pod SwiftShaderem rośnie do 6–7 GB i kończy się OOM; zatrzymany zegar Playwrighta blokuje rysowanie
 - Status: zgłoszone (5.11, autor broni białej)
 - Ważność: S4 (narzędzia testowe) · Zasięg: przebieg ok. 20 min z modelami: RSS 6–7 GB, OOM-kill (nie wiadomo, czy wyciek w grze, czy `toDataURL` co klatkę); `page.clock.pauseAt` + `runFor` blokuje rysowanie, bo `GpuPacer` dostaje fence od Chrome tylko przy prawdziwych klatkach; zrzuty z dokładnym czasem wymagają innej drogi
 - Pakiet właściciela: e2e (QA), packages/app (`GpuPacer`)
 
-### G-350 Gołe podłoże przy al. Tysiąclecia na wschód od Dworca (T-173)
-- Status: zgłoszone (5.11, kurator, przegląd G-337)
-- Ważność: S4 · Zasięg: x 806–872, z ok. 343–360, ok. 470 m² · Koszt: mały
-- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
-- Test przyjęcia: gołe próbki 0,5 m w obszarze ≤ 0,5 m² (szwy)
-
 ### G-351 Pas dzielący al. Tysiąclecia za wąski i goły (T-174)
 - Status: zgłoszone (5.11, kurator, przegląd G-337)
 - Ważność: S4 · Zasięg: x 620–810 i dalej, ok. 250 m²; w grze 1,25–1,5 m, w rzeczywistości ok. 3 m z barierą · Koszt: średni (szerokość z geometrii jezdni)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: pas dzielący z nawierzchnią na całej długości, szerokość ok. 3 m
-
-### G-352 Chodnik przy wschodniej ścianie Bazaru za wąski (T-175)
-- Status: zgłoszone (5.11, kurator, przegląd G-337)
-- Ważność: S4 · Zasięg: x 716–721, z 389–413, ok. 30–35 m² · Koszt: mały
-- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
-- Test przyjęcia: kostka od ściany hal ok. 5 m, gołe próbki 0
 
 ### G-353 Plac `square` przy jezdni bez krawężnika i kratek (T-176)
 - Status: zgłoszone (5.11, kurator, przegląd G-337)
@@ -1103,12 +1080,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: ściana przejścia pod stropem; prawdopodobnie światło księżyca między kawałkami stropu · Koszt: mały
 - Pakiet właściciela: packages/engine (`renderer/metro`, cienie/światło)
 
-### G-368 AI nie ściga gracza w metrze (hala, zejście, peron, wejścia A i B)
-- Status: w PR #316 (6.11, 3e19c2c; `shaftAt` w `heightApart`, węzły metra w `WORLD_NAV`, `attach()` z wysokością biegu; w weryfikacji)
-- Ważność: S3 · Zasięg: ganger zaalarmowany z ulicy, z hali albo z peronu nie dochodzi do gracza w żadnym z 14 sprawdzonych przypadków · Koszt: średni
-- Pakiet właściciela: packages/sim (`systems/ai`, nawigacja przez schody i sklepienia)
-- Test przyjęcia: pościg z ulicy do hali i z hali na peron dochodzi do gracza w rozsądnym czasie
-
 ### G-369 Cywil biega w kieszeni ok. 0,9 m przy graczu 1 m i drga w miejscu w pościgu 4 m/s (resztki G-343, G-328, G-326)
 - Status: zgłoszone (6.11, weryfikator #310)
 - Ważność: S4 · Zasięg: ucieczka przy graczu 1 m: 3/1002001 (0; −1) 35 skoków w drugiej połowie, 11/1002001 (1; 0) 44 (okres ok. 0,5 s); pościg 4 m/s: 43/1002008 115–163, 11/1002001 (0; −2) 239, 19/1002002 (0; 2) 29; 11/1002001 przy (310; −96) napiera na róg skrzyni 274 (sonda ±0,5 promienia ciała nie widzi rogu, pas z G-338) · Koszt: średni
@@ -1119,11 +1090,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, weryfikator #309; luka sprzed etapu 4)
 - Ważność: S4 (skan) · Zasięg: wszystkie wejścia metra · Koszt: mały
 - Pakiet właściciela: tools/glitch-scan (`metro-entrances.ts`)
-
-### G-371 Hala w otwartym wykopie i ulica wychodzą w `heightApart` 1,0 m od siebie, poniżej `LEVEL_GAP`
-- Status: w PR #316 (6.11, 3e19c2c; `shaftAt` w `heightApart`, węzły metra w `WORLD_NAV`, `attach()` z wysokością biegu; w weryfikacji)
-- Ważność: S4 · Zasięg: AI (sniper, steering, ganger-walk) może brać halę i ulicę za jedno piętro · Koszt: mały
-- Pakiet właściciela: packages/sim (`world/ground.ts`)
 
 ### G-372 Podciąganie (`ledgeAhead`) sprawdza tylko punkt docelowy: na cienką barierkę da się wejść wzdłuż jej linii i chodzić po wierzchu
 - Status: w PR (6.11, a952549; `foothold()` w `movement-system`: cienki wierzch bez oparcia obok nie jest podłogą; w weryfikacji)
@@ -1197,13 +1163,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `packages/sim/src/systems/player-control-system.ts:74-81`, `wornGarments(domain.inventory, …)`; zmiana ubrania przy tym samym `equipment` może dać nieaktualne statystyki · Koszt: mały
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: zmiana zużycia albo sztuki odzieży w `inventory.items` zmienia wynik `playerStatsOf`
-
-### G-387 Shard e2e (1) na granicy `timeout-minutes: 25`: przygotowanie ok. 11 min, testy 13,6 min
-- Status: zgłoszone (6.11, orkiestrator; #317 anulowany po 25 min, 20/20 testów zielonych)
-- Ważność: S2 (blokuje scalanie PR-ów z kodem) · Zasięg: `.github/workflows/ci.yml`, job e2e; instalacja, build i pobranie przeglądarek przed testami (10:40 → 10:51), potem 21 testów jednym workerem · Koszt: średni. Przyczyna z logu #317: `pnpm exec playwright install --with-deps chromium` pobiera przez apt 9 pakietów czcionek (fonts-ipafont-gothic, fonts-wqy-zenhei, fonts-unifont, xfonts-*; 22 MB) z lustra azure.archive.ubuntu.com, tym razem 31 kB/s → 10 min 59 s; biblioteki Chromium są już na runnerze. Propozycja: cache `.deb` czcionek albo `~/.cache/ms-playwright` (`actions/cache`, klucz z wersji Playwright) i `install-deps` tylko dla brakujących pakietów; migawka NPR może zależeć od czcionek, więc nie wyrzucać ich bez sprawdzenia
-- Pakiet właściciela: Infra/Build (`.github`), QA (`e2e`)
-- Poprawka bez podnoszenia limitu (ADR-0046): skrócić przygotowanie (cache przeglądarek Playwright i builda, build raz i artefakt dla shardów) albo trzeci shard
-- Test przyjęcia: oba shardy e2e kończą się z zapasem ≥ 5 min na obecnym main
 
 ### G-388 `Site.byLot(p, 2)` obejmuje 44 z 62 parkingów; generator pomija tam `offRoad` dla latarni
 - Status: zgłoszone (6.11, weryfikator #318)
