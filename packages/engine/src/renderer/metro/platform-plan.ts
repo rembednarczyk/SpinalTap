@@ -70,7 +70,7 @@ const planFlight = (sink: MeshSink, f: PavilionFrame, p: PlatformDef, tile: Rgba
     railRod(sink, a, b);
   }
   for (const c of p.ceiling) {
-    frameBox(sink, f, [c.u0, c.u1], [-half - 0.3, half + 0.3], [c.bottom, p.top], C.ceiling, true);
+    frameBox(sink, f, [c.u0, c.u1], [-half - 0.3, half + 0.3], [c.bottom, p.top], C.wall, true);
     frameBox(sink, f, [c.u0 + 0.2, c.u1 - 0.2], [-STRIP / 2, STRIP / 2], [c.bottom - 0.02, c.bottom], C.strip, true);
   }
 };

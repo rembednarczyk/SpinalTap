@@ -16,8 +16,15 @@ import { planPlatformSigns } from "./platform-signs";
 export const PLATFORM_DRAW = 22;
 const PLATFORM_HOLD = 4;
 
-/** The platform's lamps: cool, under the ceiling, only inside its walls (the toon lights have no occlusion, G-263). */
+/**
+ * The platform's lamps: cool, under the ceiling, only inside its rooms' walls and only with the
+ * eye under the street (the toon lights have no occlusion, G-263: from the street they would
+ * light the square over the platform). The passage's lamp is the last, smaller one.
+ */
 const LAMP = { color: "#dceaff", range: 13, intensity: 1.05 } as const;
+const PASSAGE_LAMP = { color: "#dceaff", range: 7, intensity: 0.9 } as const;
+/** The eye this far under the street at the opening counts as under it. */
+const UNDER = 1;
 
 export interface PlatformViewsDeps {
   readonly scene: Scene;
@@ -34,6 +41,7 @@ interface Slot {
   mesh: Mesh | null;
   letters: Mesh | null;
   on: boolean;
+  lit: boolean;
 }
 
 const boxOf = (e: PlatformEntrance): Slot["box"] => {
@@ -60,7 +68,7 @@ export class PlatformViews {
     private readonly deps: PlatformViewsDeps,
     entrances: readonly PlatformEntrance[] = METRO_PLATFORMS,
   ) {
-    this.slots = entrances.map((e) => ({ e, box: boxOf(e), mesh: null, letters: null, on: false }));
+    this.slots = entrances.map((e) => ({ e, box: boxOf(e), mesh: null, letters: null, on: false, lit: false }));
   }
 
   /** The meshes drawn last frame and the triangles of the built ones (debug, tests). */
@@ -84,12 +92,16 @@ export class PlatformViews {
       const b = s.box;
       const d = Math.hypot(Math.max(b.minX - eye.x, 0, eye.x - b.maxX), Math.max(b.minZ - eye.z, 0, eye.z - b.maxZ));
       const want = d < PLATFORM_DRAW + (s.on ? PLATFORM_HOLD : 0) && eye.y < s.e.street + 12;
+      const lit = want && eye.y < s.e.street - UNDER;
+      if (lit !== s.lit) {
+        s.lit = lit;
+        this.lamps(s, i, lit);
+      }
       if (want === s.on) return;
       if (want && !s.mesh) this.build(s);
       s.on = want;
       s.mesh?.setEnabled(want);
       s.letters?.setEnabled(want);
-      this.lamps(s, i, want);
     });
   }
 
@@ -111,14 +123,16 @@ export class PlatformViews {
   }
 
   private lamps(s: Slot, i: number, on: boolean): void {
-    const room = s.e.platform.rooms[s.e.platform.rooms.length - 1];
-    s.e.platform.lamps.forEach((position, k) => {
+    const { rooms, lamps } = s.e.platform;
+    lamps.forEach((position, k) => {
       const key = `metro-platform-${i}-${k}`;
+      const room = rooms.find((r) => position.x >= r.minX && position.x <= r.maxX && position.z >= r.minZ && position.z <= r.maxZ);
       if (!on || !room) {
         this.deps.materials.removeLight(key);
         return;
       }
-      this.deps.materials.addLight(key, { ...LAMP, position, clip: { minX: room.minX - 0.05, maxX: room.maxX + 0.05, minZ: room.minZ - 0.05, maxZ: room.maxZ + 0.05 } });
+      const look = k === lamps.length - 1 ? PASSAGE_LAMP : LAMP;
+      this.deps.materials.addLight(key, { ...look, position, clip: { minX: room.minX - 0.05, maxX: room.maxX + 0.05, minZ: room.minZ - 0.05, maxZ: room.maxZ + 0.05 } });
     });
   }
 }

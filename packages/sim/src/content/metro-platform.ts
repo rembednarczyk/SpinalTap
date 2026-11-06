@@ -98,7 +98,7 @@ export interface PlatformDef {
   /** At the car's door nearest the stairs, facing them: where a rider gets off. */
   readonly arrival: Vec3;
   readonly arrivalYaw: number;
-  /** The lamps under the ceiling, for the renderer's lights. */
+  /** The lamps under the ceiling, the platform's two and the passage's one, for the renderer's lights. */
   readonly lamps: readonly Vec3[];
   /** The benches along the back wall: their middles along w. */
   readonly benches: readonly number[];
@@ -258,10 +258,18 @@ export const platform = (spot: PavilionSpot, span: PlatformSpan): PlatformDef =>
     ticketYaw: inwardYaw(spot, -1),
     arrival: v(off.x, floor, off.z),
     arrivalYaw: inwardYaw(spot, -1),
-    lamps: [w0 + (w1 - w0) / 4, w0 + (3 * (w1 - w0)) / 4].map((w) => {
-      const p = point((u.back + u.edge) / 2, w);
-      return v(p.x, roof - 0.4, p.z);
-    }),
+    lamps: [
+      ...[w0 + (w1 - w0) / 4, w0 + (3 * (w1 - w0)) / 4].map((w) => {
+        const p = point((u.back + u.edge) / 2, w);
+        return v(p.x, roof - 0.4, p.z);
+      }),
+      // Halfway down the second flight, under its ceiling.
+      (() => {
+        const mid = (u.stepsTop + u.back) / 2;
+        const p = point(mid, 0);
+        return v(p.x, stairTopAt(u, hall, floor, mid) + 1.9, p.z);
+      })(),
+    ],
     benches,
     doors,
   };

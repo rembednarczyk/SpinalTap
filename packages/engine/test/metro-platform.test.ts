@@ -72,8 +72,30 @@ describe("PlatformViews (ADR-0071 stage 4)", () => {
     const eye = { x: 0, y: 0, z: 0 };
     const signs = new ShaderMaterial("signs", scene, { vertexSource: "void main(){}", fragmentSource: "void main(){}" }, {});
     const views = new PlatformViews({ scene, materials, shadow, signs: () => signs, eye: () => eye });
-    return { views, eye, scene };
+    return { views, eye, scene, materials };
   };
+
+  it("lights its lamps only with the eye under the street, each clipped to its room", () => {
+    const { views, eye, materials } = setup();
+    const e = METRO_PLATFORMS[2]!;
+    const keys = e.platform.lamps.map((_, k) => `metro-platform-2-${k}`);
+    Object.assign(eye, { ...e.door, y: e.street + 1.6 });
+    views.update();
+    expect(views.stats.meshes).toBe(2);
+    expect(keys.map((k) => materials.light(k))).toEqual(keys.map(() => undefined));
+    Object.assign(eye, { ...e.platform.arrival, y: e.platform.floor + 1.6 });
+    views.update();
+    for (const [k, key] of keys.entries()) {
+      const lamp = materials.light(key)!;
+      const clip = lamp.clip!;
+      const p = e.platform.lamps[k]!;
+      expect(p.x >= clip.minX && p.x <= clip.maxX && p.z >= clip.minZ && p.z <= clip.maxZ).toBe(true);
+      expect(p.y).toBeLessThan(e.street - 3);
+    }
+    Object.assign(eye, { x: 274, y: 1.6, z: -81 });
+    views.update();
+    expect(keys.map((k) => materials.light(k))).toEqual(keys.map(() => undefined));
+  });
 
   it("draws nothing away from the platforms, and only the near one's two meshes beside it", () => {
     const { views, eye } = setup();
