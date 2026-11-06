@@ -18,6 +18,7 @@ import {
   removeMod,
   unequip,
   useConsumable,
+  healScale,
   weaponStatsOf,
   WEAPON_SLOTS,
   type EquipSlot,
@@ -65,7 +66,8 @@ const useItem = (ctx: SimContext, cmd: Command<"use-item">): void => {
   if (!("stack" in cmd.ref) || !isConsumableId(cmd.ref.stack)) return;
   const player = ctx.world.with("player", "health").first;
   if (!player) return;
-  const r = useConsumable(domain.inventory, cmd.ref.stack, player.health);
+  // Field Medic (ADR-0059) heals more.
+  const r = useConsumable(domain.inventory, cmd.ref.stack, player.health, healScale(domain.progression.perks));
   if (!r.ok) return;
   player.health = r.health;
   // Wave 2 (ADR-0033): a buff starts (or refreshes), a capacity shard counts for good. The body

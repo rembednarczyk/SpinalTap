@@ -1,4 +1,4 @@
-import { type EntityId, type MeleeProfile, applyDamage, meleeReach, nextStrike, resolveAttack, strikeAt, strikeZone } from "@seki/core";
+import { type EntityId, type MeleeProfile, applyDamage, meleeReach, nextStrike, parryStunScale, resolveAttack, strikeAt, strikeZone } from "@seki/core";
 import type { Entity, MeleeState } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { bodyHeightOf } from "../world/hitboxes";
@@ -102,7 +102,9 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
     const guard = guardAgainst(t, f.position, "melee");
     if (guard.parried) {
       ctx.bus.emit("AttackBlocked", { attackerId: f.id, defenderId: t.id, parried: true, kind: "melee", at: chest });
-      stagger(ctx, f, t.combatant?.stats?.melee?.block.parryStun ?? 0, "parry");
+      // Crushing Parry (ADR-0059): the player's parry stuns longer, so the takedown window stays open.
+      const stun = (t.combatant?.stats?.melee?.block.parryStun ?? 0) * (t.player ? parryStunScale(ctx.state.domain.progression.perks) : 1);
+      stagger(ctx, f, stun, "parry");
       parried = true;
       break;
     }

@@ -13,6 +13,8 @@ import {
   BUFF_CATALOG,
   adsTimeScale,
   progressionModifiers,
+  carrySpeedBonus,
+  crouchSpeedBonus,
 } from "@seki/core";
 import type { Entity } from "../world/components";
 import { playerHeld } from "../world/takedown";
@@ -41,7 +43,14 @@ export const statsFor = (c: CharacterState): DerivedStats => {
   return cachedStats;
 };
 
-let cachedFor: { character: CharacterState; equipment: DomainState["equipment"]; buffs: string; level: number; attributes: DomainState["progression"]["attributes"] } | null = null;
+let cachedFor: {
+  character: CharacterState;
+  equipment: DomainState["equipment"];
+  buffs: string;
+  level: number;
+  attributes: DomainState["progression"]["attributes"];
+  perks: DomainState["progression"]["perks"];
+} | null = null;
 let cachedPlayer: DerivedStats | null = null;
 
 /** The buffs that change stats, as a key: their seconds left tick every step, the stats do not. */
@@ -50,17 +59,23 @@ const statBuffKey = (domain: DomainState): string =>
 
 /**
  * The player's stats with worn garments (a ballistic vest slows her down), running buffs (the
- * stim steadies the aim, ADR-0033), the character's level (health) and attributes (ADR-0059).
- * Memoised on the character, the equipment, the stat buffs, the level and the attributes, which
- * only change on install, memory, equip, a buff starting or ending, a level up or a point spent.
+ * stim steadies the aim, ADR-0033), the character's level (health), attributes and perks
+ * (ADR-0059). Memoised on the character, the equipment, the stat buffs, the level, the attributes
+ * and the perks, which only change on install, memory, equip, a buff starting or ending, a level
+ * up, a point spent or a respec.
  */
 export const playerStatsOf = (domain: DomainState): DerivedStats => {
   const buffs = statBuffKey(domain);
-  const { level, attributes } = domain.progression;
+  const { level, attributes, perks } = domain.progression;
   const stale =
-    cachedFor?.character !== domain.character || cachedFor.equipment !== domain.equipment || cachedFor.buffs !== buffs || cachedFor.level !== level || cachedFor.attributes !== attributes;
+    cachedFor?.character !== domain.character ||
+    cachedFor.equipment !== domain.equipment ||
+    cachedFor.buffs !== buffs ||
+    cachedFor.level !== level ||
+    cachedFor.attributes !== attributes ||
+    cachedFor.perks !== perks;
   if (!cachedPlayer || stale) {
-    cachedFor = { character: domain.character, equipment: domain.equipment, buffs, level, attributes };
+    cachedFor = { character: domain.character, equipment: domain.equipment, buffs, level, attributes, perks };
     const worn = garmentModifiers(wornGarments(domain.inventory, domain.equipment));
     cachedPlayer = deriveStats(domain.character, [...worn, ...buffModifiers(domain.buffs), ...progressionModifiers(domain.progression)]);
   }
@@ -170,12 +185,28 @@ const tickLanding = (p: Entity, dt: number): boolean => {
   return landingSlow;
 };
 
+interface Gait {
+  /** Speed multiplier of the crouched walk. */
+  readonly crouch: number;
+  /** Speed multiplier with a body on the shoulder; 1 without one. */
+  readonly carry: number;
+}
+
+/** The crouch and carry speeds, with the Prowler and Mule perks (ADR-0059). */
+const gaitOf = (ctx: SimContext): Gait => {
+  const perks = ctx.state.domain.progression.perks;
+  return {
+    crouch: CROUCH_SPEED_MULTIPLIER + (1 - CROUCH_SPEED_MULTIPLIER) * crouchSpeedBonus(perks),
+    carry: ctx.session.carrying !== null ? CARRY_SPEED + carrySpeedBonus(perks) : 1,
+  };
+};
+
 /**
  * The velocity the stick asks for on the ground, along the player's facing: walk, crouch, aim,
  * guard or sprint speed, slowed by a stagger, a hard landing or a body on the shoulder
  * (`CARRY_SPEED`, ADR-0065), plus any knockback. Sets the sprint flag of the posture.
  */
-const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landingSlow: boolean, carrying: boolean): { x: number; z: number } => {
+const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landingSlow: boolean, gait: Gait): { x: number; z: number } => {
   const posture = p.posture;
   const len = Math.hypot(input.moveX, input.moveZ);
   const nx = len > 1 ? input.moveX / len : input.moveX;
@@ -188,7 +219,7 @@ const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landi
   const sprinting = input.sprint && nz > 0 && !crouched && !(posture?.aiming ?? false) && !guarding && !staggered;
   if (posture) posture.sprinting = sprinting;
   // Speed follows the eased crouch and aim, so getting down or aiming slows the step smoothly.
-  const crouchSlow = 1 + (CROUCH_SPEED_MULTIPLIER - 1) * (posture?.amount ?? 0);
+  const crouchSlow = 1 + (gait.crouch - 1) * (posture?.amount ?? 0);
   const aimSlow = 1 + ((weapon?.ads?.move ?? 1) - 1) * (posture?.aim ?? 0);
   const guardSlow = guarding && weapon?.melee ? weapon.melee.block.move : 1;
   const speed =
@@ -196,7 +227,7 @@ const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landi
     (sprinting ? SPRINT_MULTIPLIER : crouchSlow * aimSlow * guardSlow) *
     (staggered ? STAGGER_MOVE : 1) *
     (landingSlow ? LANDING_SLOW_MULTIPLIER : 1) *
-    (carrying ? CARRY_SPEED : 1);
+    gait.carry;
   const sin = Math.sin(p.yaw);
   const cos = Math.cos(p.yaw);
   // Forward = (sin, cos); right = (cos, -sin).
@@ -237,7 +268,7 @@ export const playerControlSystem: System = {
       }
       p.yaw += input.lookYaw;
       p.pitch = clamp(p.pitch + input.lookPitch, -PITCH_LIMIT, PITCH_LIMIT);
-      steer(p, wantedVelocity(p, input, stats, landingSlow, ctx.session.carrying !== null), ctx.dt);
+      steer(p, wantedVelocity(p, input, stats, landingSlow, gaitOf(ctx)), ctx.dt);
     }
   },
 };
