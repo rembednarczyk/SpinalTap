@@ -110,7 +110,8 @@ describe("item level in play (ADR-0059, stage 4)", () => {
         loot: { ...now.domain.loot, containers: now.domain.loot.containers.map((c) => ({ ...c, lines: c.lines.map(strip) })) },
       },
     };
-    // Through v29 to today's v30 (ADR-0063 stage 6: the market's move changes nothing of a save made elsewhere).
-    expect(JSON.stringify(MIGRATIONS[29]!(MIGRATIONS[28]!(JSON.parse(JSON.stringify(v28)))))).toBe(JSON.stringify(now));
+    // Through v29, v30 and v31 to today (ADR-0063 stage 6: the market's move changes nothing of a save made
+    // elsewhere; ADR-0059 stage 6: a run with no fight has an empty style and no bad luck, as the migration gives).
+    expect(JSON.stringify(MIGRATIONS[30]!(MIGRATIONS[29]!(MIGRATIONS[28]!(JSON.parse(JSON.stringify(v28))))))).toBe(JSON.stringify(now));
   });
 });

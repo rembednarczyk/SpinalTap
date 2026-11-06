@@ -21,6 +21,7 @@ import {
   sampleCone,
   spreadAngle,
   type RandomPort,
+  weaponStyle,
 } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -202,6 +203,7 @@ const hitWithPellet = (
   if (shot.shooter.player) noteViolence(ctx, target, isEngaged(target), point);
   target.health = applyDamage(health, outcome.damage);
   target.lastHitBy = shot.shooter.id;
+  target.lastHitStyle = shot.shooter.player ? weaponStyle(weapon.id) : undefined;
   if (target.player) wearPlayerClothes(ctx, outcome.zone);
   // Getting shot provokes any AI, whatever it thought of the shooter before; not one knocked out.
   if (target.ai && !target.unconscious) target.ai.alerted = true;

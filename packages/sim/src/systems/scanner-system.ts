@@ -254,6 +254,7 @@ const shortCircuit = (ctx: SimContext, player: Entity, target: Entity): void => 
     const damage = Math.round(SHORT_CIRCUIT_DAMAGE * shortCircuitScale(ctx.state.domain.progression.perks));
     target.health = applyDamage(target.health, damage);
     target.lastHitBy = player.id;
+    target.lastHitStyle = "quickhack";
     const ai = target.ai;
     if (ai && !ai.alerted) {
       // Hurt by something it cannot see: it looks around where it stands (seeing the player alerts it).
@@ -333,7 +334,7 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
     ctx.bus.emit("QuickhackApplied", { hackId, targetId: next.id, duration });
     ctx.bus.emit("QuickhackChained", { hackId, fromId: target.id, targetId: next.id });
   }
-  grantQuickhackXp(ctx, xpKey(target));
+  grantQuickhackXp(ctx, target, xpKey(target));
 };
 
 /** Starts the n-th hack of the focused target's list (ADR-0028: RAM is paid at the start). */
