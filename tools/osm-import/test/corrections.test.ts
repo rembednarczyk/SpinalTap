@@ -356,6 +356,20 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(880, 346)).toBe("grass");
   });
 
+  // Along the Bazar's east edge (T-175): red setts from the halls' wall to Nova, where the game had
+  // the footway w227698428's band and bare terrain beside it. The register's test: no bare sample.
+  it("paves along the Bazar's east edge from the halls to the footway, and leaves the footway and the paths into the halls on top (G-352)", () => {
+    const buildings = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z)));
+    const bare: string[] = [];
+    for (let x = 716.25; x < 721; x += 0.5)
+      for (let z = 389.25; z < 413; z += 0.5) if (!buildings.some((o) => inside(x, z, o)) && surfaceAt(x, z) === null) bare.push(`${x},${z}`);
+    expect(bare.join(" ")).toEqual("");
+    expect(surfaceAt(720.3, 400)).toBe("square");
+    expect(surfaceAt(722.3, 400)).toBe("footway");
+    expect(surfaceAt(722.3, 416)).toBe("square");
+    expect(surfaceAt(720.5, 412.9)).toBe("footway");
+  });
+
   const OSM_DIR = join(__dirname, "../../../data/osm");
   const osm = mergeOsm(readdirSync(OSM_DIR).filter((f) => f.endsWith(".json")).map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))));
   const PAVED = new Set(["square", "cobble", "footway", "road"]);

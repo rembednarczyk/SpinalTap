@@ -613,6 +613,27 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     reason: "chodnik z kostki po północnej stronie al. Tysiąclecia na wschód od Dworca (przystanek) na ortofoto PZGiK, w OSM tylko linie ścieżek",
     ref: "T-173",
   },
+  {
+    // The red setts along the Bazar w67502759's east edge, about 5 m from the halls' wall to Nova on
+    // the orthophoto (PZGiK), where the footway w227698428's band is 2.5 m and the rest bare in OSM:
+    // from the Bazar's edge to the footway's axis (drawn over it), from T-165's corner to
+    // T-172/chodnik-przy-hali's. Every corner is the map's node.
+    id: "T-175/chodnik-przy-bazarze",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 716.94, z: 385.65 },
+      { x: 721.38, z: 413.62 },
+      { x: 722.57, z: 421.07 },
+      { x: 725.01, z: 419.7 },
+      { x: 724.01, z: 412.43 },
+      { x: 722.95, z: 404.64 },
+      { x: 721.84, z: 396.58 },
+      { x: 720.84, z: 389.22 },
+    ],
+    nodesOf: ["w67502759", "w67502759", "w67502759", "w227698428", "w227698428", "w227698428", "w227698428", "w227698428"],
+    reason: "czerwona kostka między wschodnią ścianą hal Bazaru a Novą na ortofoto PZGiK, w OSM tylko linia chodnika",
+    ref: "T-175",
+  },
 ];
 
 /** The added areas as the import reads the map's. */
