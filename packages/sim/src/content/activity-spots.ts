@@ -1,8 +1,8 @@
 import type { ActivityId, Vec3 } from "@seki/core";
 import type { ActivitySpot, SpotKind } from "../world/activity-types";
 import { placeAt, v } from "./builders";
-import { STALL_FRONT_YAW, STALL_OF, atStall } from "./alchemia-market";
-import { ALCHEMIA_MODULES, alchemiaPoint } from "./alchemia";
+import { atUnit } from "./alchemia/units";
+import { HALL } from "./alchemia/plan";
 import { againstWall, spotNear } from "./lublin/places";
 import { DOCKS_PLACE, MAP_CHUNKS } from "./lublin/sites";
 import { seatGroups } from "./lublin/seats";
@@ -125,28 +125,27 @@ const KANAL: readonly ActivitySpot[] = [
   benchSpot("kanal-bench", 585, -88, WEST),
 ];
 
-/** Facing a stall's front from the path: the way back to its steps. */
-const TO_STALL = STALL_FRONT_YAW + Math.PI;
+/** A spot on T1, on the ground at (x, z). */
+const onT1 = (id: string, kind: SpotKind, x: number, z: number, yaw: number, only?: readonly [ActivityId, ...ActivityId[]]): ActivitySpot =>
+  spotAt(id, kind, { x, y: groundY(x, z), z }, yaw, only);
 
-/** A spot on the square against a stall's back wall, `across` along it, facing away from it. */
-const behindStall = (id: string, kind: SpotKind, i: number, across: number, only?: readonly [ActivityId, ...ActivityId[]]): ActivitySpot => {
-  const m = ALCHEMIA_MODULES[i + 1]!;
-  const p = alchemiaPoint(m, across, -m.depth / 2 - 0.55);
-  return spotAt(id, kind, { x: p.x, y: groundY(p.x, p.z), z: p.z }, STALL_FRONT_YAW + Math.PI, only);
+/** On Fumiko's stools before her hatch: `across` from its middle. */
+const stool = (id: string, across: number): ActivitySpot => {
+  const p = atUnit("fumiko", 1.2, across);
+  return onT1(id, "bar", p.x, p.z, SOUTH);
 };
 
 /**
- * The market in Alchemia (ADR-0063): customers at the stalls beside their keepers (facing the
- * stall), Kenta's okonomiyaki and Fumiko's ramen bars, and the stalls' backs on the square to lean on.
+ * The market in Alchemia (ADR-0074): Fumiko's stools on T1 before the hatch of her ramen bar, and
+ * the hall's front of glass to lean on either side of its way in. The units inside have their
+ * still crowd (`alchemia/crowd.ts`): passers-by keep to T1.
  */
 const TARG: readonly ActivitySpot[] = [
-  spotAt("targ-south-stall-0", "stall", atStall(STALL_OF.sachiko, 1.6, 0.9), TO_STALL),
-  spotAt("targ-south-stall-1", "stall", atStall(STALL_OF.goro, 1.6, 0.9), TO_STALL),
-  spotAt("targ-north-stall", "stall", atStall(STALL_OF.kenta, 1.6, 0.9), TO_STALL),
-  spotAt("targ-yatai-bar", "bar", atStall(STALL_OF.fumiko, 1.6, 0.9), TO_STALL),
-  behindStall("targ-tako-wall", "wall", STALL_OF.kenta, 2),
-  behindStall("targ-pachi-wall", "wall", STALL_OF.fumiko, -2.5),
-  behindStall("targ-pillar-wall", "wall", STALL_OF.goro, 1.5, ["smoke", "phone"]),
+  stool("targ-yatai-bar", -1.6),
+  stool("targ-yatai-bar-2", 0),
+  onT1("targ-front-wall", "wall", 410, HALL.maxZ + 0.55, NORTH),
+  onT1("targ-front-wall-2", "wall", 422.5, HALL.maxZ + 0.55, NORTH, ["smoke", "phone"]),
+  onT1("targ-front-wall-3", "wall", 427.5, HALL.maxZ + 0.55, NORTH, ["lean", "phone"]),
 ];
 
 /** The docks: the vending machine by the office, the open quay. Tessen's yard has no idlers. */

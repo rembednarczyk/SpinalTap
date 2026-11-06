@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { type AudioPort, EMPTY_INPUT, INITIAL_PROGRESSION, type InputFrame, type RenderPort, SHOPS, hasItemLevel, shopTerms, stockEntry, stockPrice, xpForLevel } from "@seki/core";
+import { type AudioPort, type Vec3, EMPTY_INPUT, INITIAL_PROGRESSION, type InputFrame, type RenderPort, SHOPS, hasItemLevel, shopTerms, stockEntry, stockPrice, xpForLevel } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MIGRATIONS, MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { STALL_FRONT_YAW, STALL_KEEPERS, ground } from "@seki/sim";
+import { FOODHALL, beforeKeeper, ground } from "@seki/sim";
 import { GameSession } from "../src/game-session";
 
-/** On the path in front of Alchemia's stalls (ADR-0063), a few metres from Oyaji's. */
-const OUT = { x: Math.sin(STALL_FRONT_YAW), z: Math.cos(STALL_FRONT_YAW) };
-const STALLS = ground(STALL_KEEPERS.oyaji.x + OUT.x * 4, STALL_KEEPERS.oyaji.z + OUT.z * 4);
+/** In the food hall a few metres before Oyaji's counter (ADR-0074), on its floor. */
+const STALLS = beforeKeeper("oyaji", 4);
+/** Where to stand to talk to Oyaji: before his counter by day, beside him on T1 outside his back door at night. */
+const byOyaji = (p: Vec3): Vec3 => (p.z > FOODHALL.maxZ ? ground(p.x, p.z + 1.4) : beforeKeeper("oyaji"));
 
 const render: RenderPort = {
   spawn() {},
@@ -29,9 +30,9 @@ const steps = (s: GameSession, n: number, input: InputFrame = EMPTY_INPUT) => {
   s.render(0);
 };
 
-const teleport = (s: GameSession, x: number, z: number) => {
+const teleport = (s: GameSession, x: number, z: number, y?: number) => {
   const p = s.sim.player()!;
-  p.position = ground(x, z);
+  p.position = { ...ground(x, z), ...(y === undefined ? {} : { y }) };
   p.prevPosition = p.position;
 };
 
@@ -53,9 +54,9 @@ describe("item level in play (ADR-0059, stage 4)", () => {
   it("Oyaji sells a gun of the player's level for the price the counter quotes", async () => {
     const { session, ui } = await atLevel(10);
     const oyaji = () => [...session.sim.world].find((e) => e.key === "oyaji");
-    teleport(session, STALLS.x, STALLS.z);
+    teleport(session, STALLS.x, STALLS.z, STALLS.y);
     steps(session, 2);
-    teleport(session, oyaji()!.position.x + OUT.x * 1.4, oyaji()!.position.z + OUT.z * 1.4);
+    teleport(session, byOyaji(oyaji()!.position).x, byOyaji(oyaji()!.position).z, byOyaji(oyaji()!.position).y);
     steps(session, 1);
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState()).toMatchObject({ shopOpen: true, shopId: "oyaji", level: 10 });
@@ -110,7 +111,7 @@ describe("item level in play (ADR-0059, stage 4)", () => {
         loot: { ...now.domain.loot, containers: now.domain.loot.containers.map((c) => ({ ...c, lines: c.lines.map(strip) })) },
       },
     };
-    // Through v29 to today's v30 (ADR-0063 stage 6: the market's move changes nothing of a save made elsewhere).
-    expect(JSON.stringify(MIGRATIONS[29]!(MIGRATIONS[28]!(JSON.parse(JSON.stringify(v28)))))).toBe(JSON.stringify(now));
+    // Through v29 and v30 to today's v31 (ADR-0063 stage 6, ADR-0074 stage 1: the market's moves change nothing of a save made elsewhere).
+    expect(JSON.stringify(MIGRATIONS[30]!(MIGRATIONS[29]!(MIGRATIONS[28]!(JSON.parse(JSON.stringify(v28))))))).toBe(JSON.stringify(now));
   });
 });

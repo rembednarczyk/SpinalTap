@@ -12,6 +12,7 @@ import { SEAT_SPOTS } from "./crowd-seats";
 import { offKerbParks, onKerbPark } from "./crowd-kerb-parks";
 import type { CrowdSpot } from "./crowd-spot";
 import { TRAFFIC_ROUTES } from "./traffic";
+import { FOODHALL_CROWD } from "./alchemia/crowd";
 
 /** The chunks of Lublin that hold the market (in Alchemia, ADR-0063) and the docks (ADR-0045). */
 const MARKET_CHUNK = "krakowskie-2-1";
@@ -339,14 +340,14 @@ const fenceOut = (along: number, out: number): Pt => [Math.round((406.1 + 0.437 
 
 /** The market's and the docks' own lanes (ADR-0041), placed with their set pieces. */
 const SET_PIECE_LANES: readonly CrowdLane[] = [
-  // The market in Alchemia (ADR-0063): round the square behind the stalls, clear of Hana's cart
-  // in its middle, and along the stalls' fronts on the path, past their keepers.
+  // The market in Alchemia (ADR-0074): round the east of T1 in front of the food hall, clear of
+  // Hana's cart and Oyaji's back door, and along the path to Świętoduska west of the plot.
   {
     id: "targ-square",
     chunk: MARKET_CHUNK,
     points: [
-      [432, 58.5],
-      [446.5, 58.5],
+      [430.5, 61],
+      [446.5, 61],
       [446.5, 80],
       [433, 80],
     ],
@@ -422,6 +423,8 @@ export const CROWD_SPOTS: readonly CrowdSpot[] = [
   spot(MARKET_CHUNK, ground(439.5, 78), SOUTH, ["talk"]),
   spot(MARKET_CHUNK, ground(433, 107), WEST, ["smoke"]),
   spot(MARKET_CHUNK, ground(436, 106), SOUTH, ["phone"]),
+  // In the food hall under the terrace (ADR-0074): at the counters and the shared tables.
+  ...FOODHALL_CROWD,
   spot(DOCKS_CHUNK, inDocks(12.6, 101.2), WEST, ["smoke", "lean"]),
   spot(DOCKS_CHUNK, inDocks(26, 104), NORTH, ["phone"]),
   spot(DOCKS_CHUNK, inDocks(12.6, 137.5), NORTH, ["lean", "smoke"]),

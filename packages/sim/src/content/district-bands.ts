@@ -33,12 +33,19 @@ export interface BandArea {
 }
 
 /**
- * The plot of Alchemia on Plac Ofiar Getta with the market (`alchemia-market.ts`): the hall and
- * its five stalls, the square with Hana's cart, Kurosawa and the cleaners, the hollow of the Hebi
- * stash, the lookout's post on the way in from Lubartowska and the bag behind the ruin. A test
- * checks every one of them inside it and nobody else of Krakowskie's.
+ * Alchemia by the investor's plan (ADR-0074 §9, the user's decision of 6.11: the whole complex,
+ * the car park and the pavilion on its corner in the market's band): the plot from Świętoduska to
+ * Lubartowska (x 379..456, z 30..140, the food hall, T1 with Hana's cart, the hollow of the Hebi
+ * stash, the lookout's post and the bag behind the ruin) and the car park south of the hall with
+ * Kurosawa and the cleaners by the lift's kiosk (x 379..441, z -16..30). The car park's piece stops
+ * short of Lubartowska's footway, the stop "Brama Krakowska 01" (447; 16) and metro B's pavilion
+ * stays in it, its hall under the street being the station's. A test checks every one of the
+ * market's people and places inside and nobody else of Krakowskie's.
  */
-export const BAND_AREAS: readonly BandArea[] = [{ id: "alchemia-market", within: "shinsekai-7", area: { minX: 400, maxX: 456, minZ: 32, maxZ: 124 }, band: "targ" }];
+export const BAND_AREAS: readonly BandArea[] = [
+  { id: "alchemia-market", within: "shinsekai-7", area: { minX: 379, maxX: 456, minZ: 30, maxZ: 140 }, band: "targ" },
+  { id: "alchemia-car-park", within: "shinsekai-7", area: { minX: 379, maxX: 441, minZ: -16, maxZ: 30 }, band: "targ" },
+];
 
 /** The district whose band holds at `p` in `district`: an area's of `BAND_AREAS`, or the district's own. */
 export const bandDistrictAt = (district: DistrictId | null, p: { readonly x: number; readonly z: number }): DistrictId | null => {

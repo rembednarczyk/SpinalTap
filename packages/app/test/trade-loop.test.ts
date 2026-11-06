@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { type AudioCue, type AudioPort, EMPTY_INPUT, type InputFrame, type LootLine, type RenderPort } from "@seki/core";
+import { type AudioCue, type AudioPort, type Vec3, EMPTY_INPUT, type InputFrame, type LootLine, type RenderPort } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { STALL_FRONT_YAW, STALL_KEEPERS, ground } from "@seki/sim";
+import { FOODHALL, beforeKeeper, ground } from "@seki/sim";
 import { GameSession } from "../src/game-session";
 
-/** On the path in front of the stalls of Alchemia (ADR-0063), a few metres from Oyaji's. */
-const OUT = { x: Math.sin(STALL_FRONT_YAW), z: Math.cos(STALL_FRONT_YAW) };
-const STALLS = ground(STALL_KEEPERS.oyaji.x + OUT.x * 4, STALL_KEEPERS.oyaji.z + OUT.z * 4);
+/** In the food hall a few metres before Oyaji's counter (ADR-0074), on its floor. */
+const STALLS = beforeKeeper("oyaji", 4);
+/** Where to stand to talk to Oyaji: before his counter by day, beside him on T1 outside his back door at night. */
+const byOyaji = (p: Vec3): Vec3 => (p.z > FOODHALL.maxZ ? ground(p.x, p.z + 1.4) : beforeKeeper("oyaji"));
 
 const render: RenderPort = {
   spawn() {},
@@ -45,9 +46,9 @@ const steps = (s: GameSession, n: number, input: InputFrame = EMPTY_INPUT) => {
   s.render(0);
 };
 
-const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 0) => {
+const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 0, y?: number) => {
   const p = s.sim.player()!;
-  p.position = ground(x, z);
+  p.position = { ...ground(x, z), ...(y === undefined ? {} : { y }) };
   p.prevPosition = p.position;
   p.yaw = yaw;
   p.pitch = pitch;
@@ -98,10 +99,10 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
 
     // 21:00: Oyaji is still at his stall on the market.
     const oyaji = () => [...session.sim.world].find((e) => e.key === "oyaji");
-    teleport(session, STALLS.x, STALLS.z);
+    teleport(session, STALLS.x, STALLS.z, 0, 0, STALLS.y);
     steps(session, 2);
     expect(oyaji()).toBeDefined();
-    teleport(session, oyaji()!.position.x + OUT.x * 1.4, oyaji()!.position.z + OUT.z * 1.4);
+    teleport(session, byOyaji(oyaji()!.position).x, byOyaji(oyaji()!.position).z, 0, 0, byOyaji(oyaji()!.position).y);
     steps(session, 1);
     expect(ui.getState().prompt).toBe("Oyaji's stall");
     steps(session, 1, frame({ interact: true }));
@@ -159,10 +160,14 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
   it("after 22:00 Oyaji's stall is shut and he only talks", () => {
     const { session, ui } = setup();
     session.sim.enqueue({ type: "wait", minutes: 61 });
-    teleport(session, STALLS.x, STALLS.z);
+    teleport(session, STALLS.x, STALLS.z, 0, 0, STALLS.y);
     steps(session, 2);
     const oyaji = [...session.sim.world].find((e) => e.key === "oyaji")!;
-    teleport(session, oyaji.position.x + OUT.x * 1.4, oyaji.position.z + OUT.z * 1.4);
+    teleport(session, byOyaji(oyaji.position).x, byOyaji(oyaji.position).z, 0, 0, byOyaji(oyaji.position).y);
+    steps(session, 2);
+    // He walks out through his back room to his back door on T1 at 22:00: there by now.
+    steps(session, 60 * 30);
+    teleport(session, byOyaji(oyaji.position).x, byOyaji(oyaji.position).z, 0, 0, byOyaji(oyaji.position).y);
     steps(session, 2);
     expect(ui.getState().prompt).toMatch(/closed/);
     steps(session, 1, frame({ interact: true }));

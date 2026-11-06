@@ -4,7 +4,7 @@ import { type Rect, placeAt, placeRect, v } from "./builders";
 import { DOCKS_PLACE } from "./lublin/sites";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
-import { HEBI_STASH_ZONE, RUIN_OUT_YAW, byRuin } from "./alchemia-market";
+import { HEBI_STASH_ZONE, RUIN_OUT_YAW, byRuin } from "./alchemia/market";
 
 /**
  * Cameras and hackable devices (ADR-0029), and the ways the district's security comes in when

@@ -21,6 +21,8 @@ export interface Pad {
   readonly rect: GroundRect;
   readonly y: number;
   readonly blend: number;
+  /** Its row in `docs/topografia.md` (T-NNN): the departure from the NMT written down (ADR-0042, the scan's `pad-unregistered`). */
+  readonly row?: string;
 }
 
 /** A corridor of even grade from `a` (height `ya`) to `b` (height `yb`), `width` wide, blending over `blend`. */

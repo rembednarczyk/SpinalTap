@@ -52,6 +52,7 @@ export const plContent = {
   "interior.metro-kanal": "Peron metra Brama Krakowska",
   "interior.metro-targ": "Peron metra Plac Zamkowy",
   "interior.metro-doki": "Peron metra Nabrzeże Bystrzycy",
+  "interior.alchemia-foodhall": "Food hall Alchemia",
   "prompt.loot": "Przeszukaj",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Szef ekipy co godzinę odchodzi sam na bok",
