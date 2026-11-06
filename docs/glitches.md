@@ -1179,6 +1179,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: jedno miejsce w mieście; trójkątny kawałek dachu 1,5 × 0,41 m przy (613,5–615; 333,9–334,4) liczy się jako wąska bryła; z 8 punktów czubka gracz zostaje na 2 (przed G-372 na 8), idąc w wierzchołek spada już 0,62 m od niego; przyczyna: `LEVEL_HOPS` = 3 i szukanie oparcia tylko w poprzek najwęższego kierunku (`foothold` w `movement-system.ts`); sondy `scratchpad/v-g372b-tip.test.ts.txt`
 - Pakiet właściciela: packages/sim (movement-system)
 
+### G-394 Epicki lub legendarny wpis o stałej rzadkości w sklepie albo tabeli łupu wypada bez cech
+- Status: zgłoszone (6.11, weryfikator PR #323); ukryte, dziś bez skutku
+- Ważność: S4 · Zasięg: `stockGrade` (`core/shop/shops.ts`) i tabele łupu nie losują cech dla wpisu epickiego lub legendarnego o stałej rzadkości, a walidacja zapisu przyjmuje brak pola `traits`; dziś żaden taki wpis nie istnieje; poprawka: test treści, że każdy wpis epicki lub legendarny przechodzi przez `rollTraits`, albo walidacja wymagająca cech od epickiego
+- Pakiet właściciela: packages/core (items, shop)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
