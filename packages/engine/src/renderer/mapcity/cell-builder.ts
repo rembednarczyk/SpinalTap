@@ -9,20 +9,17 @@ import { MeshSink } from "../mesh-sink";
 import { planPavilionSigns } from "../metro/pavilion-signs";
 import { findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
+import { planGround } from "./cell-ground";
 import { planFarFrames, planNearFrames } from "./cell-plan";
-import { planCrossing } from "./crossing-plan";
-import { planDeckEdges, planDeckUnderside } from "./deck-plan";
 import { facadeFrame } from "./facade-frame";
 import { type ObstacleQuery, type PropSlot, bakeSlots } from "./facade-props";
 import { cutGround } from "./ground-cut";
-import { SURFACE_LIFT, planBasin, planSurface, planTerrain, planWater } from "./ground-plan";
+import { planTerrain } from "./ground-plan";
 import { withLandmark } from "./landmarks";
 import type { Cell } from "./map-cells";
 import type { MapEntries, TerrainEntry } from "./map-entries";
 import type { MapSignMaterial } from "./map-signs";
 import type { MapWaterMaterial } from "./map-water";
-import { planMarking } from "./marking-plan";
-import { planSteps } from "./steps-plan";
 
 /** The ground dug out under the metro's pavilions (ADR-0071 stage 2): no terrain or paving over their stairs and halls. */
 const SHAFTS = METRO_CUTS.map((c) => c.bounds);
@@ -83,23 +80,7 @@ export class CellBuilder {
     const { entries } = this.deps;
     const ground = new MeshSink();
     const water = new MeshSink();
-    for (const id of [...cell.grounds].sort((a, b) => a - b)) {
-      const g = entries.grounds.get(id);
-      if (!g) continue;
-      const terrain = entries.terrainOf(g);
-      // On a bridge's deck where there is one (`groundHeight`); the river stays on the terrain.
-      const h = entries.groundHeight(g, terrain);
-      if (g.deck && g.surface !== "water") {
-        planDeckEdges(ground, g.ring, h, SURFACE_LIFT[g.surface], (x, z) => entries.decks.heightAt(x, z) !== null, terrain);
-        planDeckUnderside(ground, g.ring, h, SURFACE_LIFT[g.surface], terrain);
-      }
-      if (g.marking) planMarking(ground, g.marking, g.ring, h);
-      else if (g.surface === "water") planWater(water, g.ring, terrain);
-      else if (g.surface === "basin") planBasin(water, ground, g.ring, h);
-      else if (g.surface === "steps") planSteps(ground, g.ring, h);
-      else if (g.surface === "crossing") planCrossing(ground, g.ring, h);
-      else planSurface(ground, g.surface, g.ring, h, g.surface === "sidewalk" ? entries.roadAt : null);
-    }
+    for (const id of [...cell.grounds].sort((a, b) => a - b)) planGround(ground, water, entries, id);
     cutGround(ground, SHAFTS);
     cell.ground = ground.empty ? null : this.mesh(`map-ground-${cell.key}`, ground, "mapGround");
     if (!water.empty) {

@@ -36,9 +36,9 @@ export class DialogueController implements DialogueIntents {
     deps.bus.on("InteractionStarted", (e) => {
       if (e.kind === "dialogue" || e.kind === "shop") this.talkTarget = e.targetId;
     });
-    // A street encounter (ADR-0032) talks through its NPC the same way.
+    // A street encounter (ADR-0032) talks through its NPC the same way; a micro-event has no knot, so no talk (G-401).
     deps.bus.on("EncounterStarted", (e) => {
-      if (!this.dialogueOpen) this.talkTarget = e.npcId;
+      if (!this.dialogueOpen && e.knot) this.talkTarget = e.npcId;
     });
   }
 

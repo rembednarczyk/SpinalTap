@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
 import { EMPTY_INPUT } from "@seki/core";
-import { BrowserInput } from "../src/input/browser-input";
+import { BrowserInput, DEFAULT_LOOK_TUNING } from "../src/input/browser-input";
 
 const key = (type: "keydown" | "keyup", code: string, repeat = false) =>
   window.dispatchEvent(new KeyboardEvent(type, { code, repeat }));
@@ -312,5 +312,55 @@ describe("touch fire button and the aim latch (ADR-0072)", () => {
     i.virtualPad.adsWeapon = false;
     i.virtualPad.press("fire");
     expect(i.poll()).toMatchObject({ fire: true, aim: false });
+  });
+});
+
+describe("the aim assist in the adapter (ADR-0072, stage 3)", () => {
+  /** A mouse move the browser reports with movement deltas (jsdom has no `movementX`). */
+  const mouseMove = (x: number, y = 0) => {
+    const e = new MouseEvent("mousemove");
+    Object.defineProperties(e, { movementX: { value: x }, movementY: { value: y } });
+    window.dispatchEvent(e);
+  };
+  /** Mouse look without a lock (the frame refuses it), touch and a target on the crosshair 3° right. */
+  const assisted = () => {
+    const i = make();
+    document.dispatchEvent(new Event("pointerlockerror"));
+    i.aimAssist.adsWeapon = true;
+    i.aimAssist.targets = [{ yaw: 0.0524, pitch: 0, angle: 0.0524, radius: 0.04, distance: 12 }];
+    return i;
+  };
+
+  it("slows touch look over a target, after the touch sensitivity, and never the mouse", () => {
+    const i = assisted();
+    i.setLookTuning({ ...DEFAULT_LOOK_TUNING, touch: 2 });
+    const factor = 0.55 + 0.45 * (0.0524 / 0.06);
+    i.virtualPad.look(0.01, 0);
+    expect(i.poll().lookYaw).toBeCloseTo(0.02 * factor, 9);
+    mouseMove(10);
+    expect(i.poll().lookYaw).toBeCloseTo(10 * 0.0022, 9);
+  });
+
+  it("pulls when touch raises the sights, not when the right mouse button does", () => {
+    const touch = assisted();
+    touch.virtualPad.press("aim");
+    touch.poll();
+    expect(touch.aimAssist.pulling).toBe(true);
+    touch.dispose();
+    const mouse = assisted();
+    window.dispatchEvent(new MouseEvent("mousedown", { button: 2 }));
+    expect(mouse.poll().aim).toBe(true);
+    expect(mouse.aimAssist.pulling).toBe(false);
+    window.dispatchEvent(new MouseEvent("mouseup", { button: 2 }));
+  });
+
+  it("the fire button that aims pulls too, and a menu drops the pull", () => {
+    const i = assisted();
+    i.virtualPad.adsWeapon = true;
+    i.virtualPad.press("fire");
+    expect(i.poll().aim).toBe(true);
+    expect(i.aimAssist.pulling).toBe(true);
+    i.enabled = false;
+    expect(i.aimAssist.pulling).toBe(false);
   });
 });
