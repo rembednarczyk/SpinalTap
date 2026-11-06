@@ -209,6 +209,7 @@ export const enTrade = {
   // Buying.
   "shop.replaces": "Replaces: {name}",
   "shop.noRoomImplant": "No room: the old implant will be lost",
+  "shop.noRoomDeck": "No room in the backpack: free a cell first, or your current deck would be lost",
   "shop.installed": "Installed",
   "shop.overLimit": "Over the limit",
   "shop.locked": "Not for you",

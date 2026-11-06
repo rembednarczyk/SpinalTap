@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { createReputation, addInstance, implantOffer, itemIcon, priceWithTerms, shopTerms, starterKit } from "@seki/core";
+import { createCharacter, createReputation, addInstance, implantOffer, installCyberwareItem, itemIcon, priceWithTerms, shopTerms, starterKit } from "@seki/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GameUi, type UiIntents, type UiState, type UiStore, createUiStore, patchUi } from "../src";
+import { GameUi, type TradeItemVm, type UiIntents, type UiState, type UiStore, createUiStore, patchUi } from "../src";
 import { ICON_PATHS } from "../src/icons/icon-paths";
 
 /** The cyberdeck implant on the item card and at Mori's clinic (decision of 6.11 after ADR-0059 stage 6), in both languages. */
@@ -88,5 +88,82 @@ describe("the cyberdeck at the clinic", () => {
     expect(button().textContent).toBe("Installed");
     act(() => patchUi(store, { level: 4 }));
     expect(button().textContent).toMatch(/^Implant · /);
+  });
+});
+
+describe("a cyberdeck from the bag at the clinic", () => {
+  const LEGENDARY = { rarity: "legendary", level: 12 } as const;
+  const deckIn = (grade: { readonly rarity: TradeItemVm["rarity"] & string; readonly level: number }): TradeItemVm => ({
+    key: "i9",
+    ref: { uid: "i9" },
+    defId: DECK,
+    name: "cyberware.kumo_cyberdeck.name",
+    category: "cyberware",
+    rarity: grade.rarity,
+    level: grade.level,
+    qty: 1,
+    condition: null,
+    inUse: false,
+  });
+  const open = (state: Partial<UiState>, grade: Parameters<typeof deckIn>[0] = LEGENDARY) => {
+    mount({ shopOpen: true, shopId: "clinic", reputation: createReputation(), trade: { items: [deckIn(grade)], capacity: 24, freeCells: 10, weaponParts: 0 }, ...state });
+    fireEvent.click(screen.getByTestId("shop-tab-implants"));
+    return within(screen.getByTestId("shop-bag-implant")).getByRole("button");
+  };
+
+  it("asks the fee the simulation charges, with the deck's level", () => {
+    const kit = bag();
+    const looted = addInstance(kit.inventory, kit.equipment, DECK, LEGENDARY);
+    if (!looted.ok) throw new Error("full");
+    const fitted = installCyberwareItem({ eddies: 99999 }, createCharacter(), looted.inventory, kit.equipment, looted.item.uid, shopTerms(0));
+    if (!fitted.ok) throw new Error(fitted.reason);
+    const button = open({ eddies: fitted.fee });
+    expect(button.textContent).toBe(`Fit · ${fitted.fee.toLocaleString("en")} €$`);
+    expect(button.hasAttribute("disabled")).toBe(false);
+    cleanup();
+    expect(open({ eddies: fitted.fee - 1 }).hasAttribute("disabled")).toBe(true);
+  });
+
+  it("swaps for the installed deck of another grade, and says implanted for the same one", () => {
+    const cyberware = { nervous: DECK } as const;
+    const swap = open({ cyberware, implantGrades: { nervous: { rarity: "common", level: 1 } } });
+    expect(swap.textContent).toMatch(/^Fit · /);
+    expect(swap.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(swap);
+    expect(spies.installCyberwareItem).toHaveBeenCalledWith("i9");
+    cleanup();
+    const same = open({ cyberware, implantGrades: { nervous: LEGENDARY } });
+    expect(same.textContent).toBe("Already implanted");
+    expect(same.hasAttribute("disabled")).toBe(true);
+    cleanup();
+    // A deck saved without a grade counts as common level 1.
+    expect(open({ cyberware }, { rarity: "common", level: 1 }).textContent).toBe("Already implanted");
+  });
+});
+
+describe("a deck offered at the clinic with a full bag", () => {
+  const offer = (state: Partial<UiState>) =>
+    mount({ shopOpen: true, shopId: "clinic", reputation: createReputation(), level: 1, trade: { items: [], capacity: 24, freeCells: 0, weaponParts: 0 }, ...state });
+  const card = () => screen.getByTestId(`implant-${DECK}`);
+
+  it("waits for a free cell rather than lose a graded deck, in English and in Polish", () => {
+    const store = offer({ cyberware: { nervous: DECK }, implantGrades: { nervous: { rarity: "legendary", level: 20 } } });
+    const button = () => within(card()).getByRole("button");
+    expect(button().hasAttribute("disabled")).toBe(true);
+    expect(button().textContent).toBe("No room");
+    expect(card().textContent).toContain("free a cell first, or your current deck would be lost");
+    polish(store);
+    expect(button().textContent).toBe("Brak miejsca");
+    expect(card().textContent).toContain("najpierw zwolnij pole, bo obecny deck by przepadł");
+  });
+
+  it("still sells over a plain implant or a common level-1 deck, with the old warning", () => {
+    offer({ cyberware: { nervous: "synapse_booster" } });
+    expect(within(card()).getByRole("button").hasAttribute("disabled")).toBe(false);
+    expect(card().textContent).toContain("No room: the old implant will be lost");
+    cleanup();
+    offer({ cyberware: { nervous: DECK }, level: 2 });
+    expect(within(card()).getByRole("button").hasAttribute("disabled")).toBe(false);
+    expect(card().textContent).toContain("No room: the old implant will be lost");
   });
 });

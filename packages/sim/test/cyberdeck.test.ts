@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BASE_RAM, type DomainEvents, type DomainState, type ImplantGrade, QUICKHACKS, deckStats, fitImplant, implantOffer, priceWithTerms, shopTerms } from "@seki/core";
+import { BASE_RAM, type DomainEvents, type DomainState, type ImplantGrade, QUICKHACKS, deckStats, fitImplant, freeCells, implantOffer, priceWithTerms, shopTerms } from "@seki/core";
 import { SIM_DT, Simulation, docks, gangerEntity } from "../src";
 import { collect, input, run, streetSim, teleportPlayer } from "./helpers";
 
@@ -83,5 +83,35 @@ describe("the cyberdeck in the running game", () => {
     const decked = after(withDeck({ rarity: "rare", level: 10 }));
     expect(plain).toBeGreaterThan(0);
     expect(decked).toBeCloseTo(plain * deckStats(DECK, { rarity: "rare", level: 10 }).regenScale, 1);
+  });
+});
+
+/** The bag with no free cell left. */
+const fullBag = (d: DomainState): DomainState => ({ ...d, inventory: { ...d.inventory, capacity: d.inventory.capacity - freeCells(d.inventory, d.equipment) } });
+
+describe("a deck swapped at the clinic with a full bag", () => {
+  const swap = (grade: ImplantGrade) => {
+    const sim = simWith((d) => fullBag(withDeck(grade)(d)));
+    sim.step();
+    const failed = collect<DomainEvents["PurchaseFailed"]>(sim, "PurchaseFailed");
+    const installed = collect<DomainEvents["CyberwareInstalled"]>(sim, "CyberwareInstalled");
+    sim.enqueue({ type: "buy-cyberware", cyberwareId: DECK });
+    sim.step();
+    return { sim, failed, installed };
+  };
+
+  it("is refused, so a graded deck is never lost for a common one", () => {
+    const { sim, failed, installed } = swap({ rarity: "legendary", level: 20 });
+    expect(failed.map((f) => f.reason)).toEqual(["inventory-full"]);
+    expect(installed).toEqual([]);
+    expect(sim.domain.wallet.eddies).toBe(5000);
+    expect(sim.domain.character.cyberware.nervous).toBe(DECK);
+    expect(sim.domain.character.implantGrades).toEqual({ nervous: { rarity: "legendary", level: 20 } });
+  });
+
+  it("also keeps a common deck of a higher level", () => {
+    const { sim, failed } = swap({ rarity: "common", level: 5 });
+    expect(failed.map((f) => f.reason)).toEqual(["inventory-full"]);
+    expect(sim.domain.character.implantGrades).toEqual({ nervous: { rarity: "common", level: 5 } });
   });
 });

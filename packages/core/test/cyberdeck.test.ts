@@ -17,6 +17,7 @@ import {
   implantOffer,
   installCyberwareItem,
   installFee,
+  isPreciousGrade,
   itemIcon,
   lootStyleOf,
   removeCyberware,
@@ -25,6 +26,7 @@ import {
   starterKit,
   styledEntries,
   takeOutImplant,
+  usedCells,
   workingDeck,
 } from "../src";
 
@@ -124,6 +126,19 @@ describe("the cyberdeck at Mori's clinic", () => {
     if (!out.ok) throw new Error(out.reason);
     expect(findItem(out.inventory, out.item.uid)).toMatchObject({ def: DECK, rarity: "legendary", level: 12 });
     expect(out.character.implantGrades).toBeUndefined();
+  });
+
+  it("refuses a swap from an overfull bag rather than lose the graded deck it replaces", () => {
+    const kit = starterKit();
+    const added = addInstance(kit.inventory, kit.equipment, DECK, { rarity: "common", level: 1 });
+    if (!added.ok) throw new Error("bag full");
+    const character = fitImplant(createCharacter(), DECK, { rarity: "legendary", level: 20 }).character;
+    // A smaller backpack than what is carried: taking the new deck out still leaves no cell.
+    const overfull = { ...added.inventory, capacity: usedCells(added.inventory, kit.equipment) - 1 };
+    expect(isPreciousGrade({ rarity: "legendary", level: 20 })).toBe(true);
+    expect(isPreciousGrade({ rarity: "common", level: 1 })).toBe(false);
+    expect(isPreciousGrade(undefined)).toBe(false);
+    expect(installCyberwareItem({ eddies: 5000 }, character, overfull, kit.equipment, added.item.uid)).toEqual({ ok: false, reason: "inventory-full" });
   });
 });
 

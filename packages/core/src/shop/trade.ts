@@ -1,5 +1,5 @@
 import { type CharacterState } from "../character/character";
-import { fitImplant, isGradedImplant, isInstalled, takeOutImplant } from "../cyberware/cyberdeck";
+import { fitImplant, isGradedImplant, isInstalled, isPreciousGrade, takeOutImplant } from "../cyberware/cyberdeck";
 import type { ImplantGrade } from "../cyberware/implant-grade";
 import { CYBERWARE_CATALOG, type CyberwareId, type CyberwareSlot, isCyberwareId } from "../cyberware/cyberware";
 import { fitsCapacity } from "../cyberware/capacity";
@@ -256,7 +256,7 @@ export type ImplantFitting =
       readonly cyberwareId: CyberwareId;
       readonly fee: number;
       readonly replaced: CyberwareId | null;
-      /** The replaced implant, back in the bag (always fits: the fitted one freed its cell). */
+      /** The replaced implant, back in the bag (the fitted one freed its cell; a graded deck that still has no room refuses the fitting). */
       readonly returned: ItemInstance | null;
     }
   | { readonly ok: false; readonly reason: TradeFailure };
@@ -287,6 +287,7 @@ export const installCyberwareItem = (
   const fit = fitImplant(character, id, grade);
   const replaced = fit.replaced;
   const stowed = replaced ? stowImplant(removed.inventory, equipment, replaced, fit.replacedGrade) : { inventory: removed.inventory, item: null };
+  if (!stowed.item && isPreciousGrade(fit.replacedGrade)) return { ok: false, reason: "inventory-full" };
   return { ok: true, wallet: pay.wallet, character: fit.character, inventory: stowed.inventory, cyberwareId: id, fee, replaced, returned: stowed.item };
 };
 

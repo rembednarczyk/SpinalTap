@@ -63,6 +63,13 @@ export const installedGrade = (character: Pick<CharacterState, "cyberware" | "im
   return character.implantGrades?.[slot] ?? COMMON_GRADE;
 };
 
+/**
+ * A grade worth more than the common level-1 piece every other implant comes back as. Such a deck
+ * is never lost to a full bag: the clinic refuses the swap instead (ADR-0059).
+ */
+export const isPreciousGrade = (grade: ImplantGrade | undefined): boolean =>
+  grade !== undefined && (grade.rarity !== COMMON_GRADE.rarity || clampItemLevel(grade.level) > MIN_ITEM_LEVEL);
+
 /** The same implant of the same grade is already in its slot. */
 export const isInstalled = (character: Pick<CharacterState, "cyberware" | "implantGrades">, id: CyberwareId, grade?: ImplantGrade): boolean => {
   const slot = CYBERWARE_CATALOG[id].slot;

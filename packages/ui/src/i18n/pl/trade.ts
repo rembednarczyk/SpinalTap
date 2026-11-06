@@ -206,6 +206,7 @@ export const plTrade = {
   // Buying.
   "shop.replaces": "Zastąpi: {name}",
   "shop.noRoomImplant": "Brak miejsca: stary implant przepadnie",
+  "shop.noRoomDeck": "Brak miejsca w plecaku: najpierw zwolnij pole, bo obecny deck by przepadł",
   "shop.installed": "Zainstalowane",
   "shop.overLimit": "Ponad limit",
   "shop.locked": "Nie dla ciebie",

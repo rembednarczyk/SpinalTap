@@ -12,6 +12,7 @@ import {
   findItem,
   hasFlag,
   installCyberwareItem,
+  isPreciousGrade,
   removeCyberware,
   repair,
   sell,
@@ -92,6 +93,8 @@ const buyImplant = (ctx: SimContext, cmd: Command<"buy-cyberware">, { domain, te
   const r = buyCyberware(domain.wallet, domain.character, cmd.cyberwareId, terms, cyberCapacityOf(domain).max, domain.progression.level);
   if (!r.ok) return fail(r.reason);
   const stowed = r.replaced ? stowImplant(domain.inventory, domain.equipment, r.replaced, r.replacedGrade) : { inventory: domain.inventory, item: null };
+  // A plain implant may still be lost to a full bag (ADR-0015); a graded deck is refused instead (ADR-0059).
+  if (!stowed.item && isPreciousGrade(r.replacedGrade)) return fail("inventory-full");
   ctx.state.domain = { ...domain, wallet: r.wallet, character: r.character, inventory: stowed.inventory };
   charged(r.wallet, r.price);
   if (stowed.item) ctx.bus.emit("ItemAdded", { ref: { uid: stowed.item.uid }, defId: stowed.item.def, qty: 1, source: "clinic" });
