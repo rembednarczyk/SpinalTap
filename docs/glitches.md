@@ -1246,8 +1246,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-410 Ramki rzadkości w torbie i slotach ekwipunku niewidoczne (kolejność reguł CSS)
 - Status: zgłoszone (6.11, budowniczy ADR-0073 etap 1)
-- Ważność: S4 · Zasięg: w `styles.css` reguły `.inv__cell` i `.inv__slot` stoją za `.rarity--*` i nadpisują kolor ramki; od #334 komórki z ikoną mają kolor w stylu, komórki tekstowe (mody, wszczepy) i sloty ubrań nadal nie; zaznaczenie (magenta) wygląda jak kolor rzadkiego
+- Ważność: S3 (weryfikator #334: ramki niewidoczne od E4 4c23a7f; rzadkość tylko tekstem) · Zasięg: w `styles.css` reguły `.inv__cell` i `.inv__slot` stoją za `.rarity--*` i nadpisują kolor ramki; od #334 komórki z ikoną mają kolor w stylu, komórki tekstowe (mody, wszczepy) i sloty ubrań nadal nie; zaznaczenie (magenta) wygląda jak kolor rzadkiego
 - Pakiet właściciela: packages/ui (inventory)
+
+### G-411 Ikony 9 mm i 5.56 w ładownicy na telefonie prawie nieodróżnialne; linie „Sprzedaj” z ikoną i bez nie są wyrównane
+- Status: zgłoszone (6.11, weryfikator PR #334)
+- Ważność: S4 · Zasięg: ładownica 16 px w kolorze zwykłej rzadkości (`crop-844-pouch.png`), lada „Sprzedaj” na 844×390; do ADR-0073 etap 2
+- Pakiet właściciela: packages/ui (icons, trade)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
