@@ -1184,6 +1184,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `stockGrade` (`core/shop/shops.ts`) i tabele łupu nie losują cech dla wpisu epickiego lub legendarnego o stałej rzadkości, a walidacja zapisu przyjmuje brak pola `traits`; dziś żaden taki wpis nie istnieje; poprawka: test treści, że każdy wpis epicki lub legendarny przechodzi przez `rollTraits`, albo walidacja wymagająca cech od epickiego
 - Pakiet właściciela: packages/core (items, shop)
 
+### G-395 Wiaty przystankowe z OSM jako zamknięte garaże (T-187)
+- Status: zgłoszone (6.11, kurator, przegląd #327)
+- Ważność: S4 · Zasięg: 3 wiaty (w672635872, w672635873, w672635874), 2 widoczne od #327 · Koszt: mały; test przyjęcia: `shelter_type=public_transport` daje prop `bus-shelter` na obrysie zamiast budynku, budynków `use=garage` z `amenity=shelter` jest 0; kontrola skanu `shelter-as-building` (baza 3)
+- Pakiet właściciela: tools/osm-import (`building-tags.ts`, `props-gen.ts`)
+
+### G-396 Ruina `ruins=yes` rysowana jak cały budynek (T-188)
+- Status: zgłoszone (6.11, kurator, przegląd #327)
+- Ważność: S4 · Zasięg: 1 budynek (w66286396, skrytka Hebi) · Koszt: średni; test przyjęcia: budynek z `ruins=yes` nie ma okien ani dachu, a jego wysokość ≤ poziom × 3 m; pokrewne G-053
+- Pakiet właściciela: tools/osm-import
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
