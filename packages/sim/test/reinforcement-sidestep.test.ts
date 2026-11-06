@@ -77,7 +77,7 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
       const snap = sim.snapshot(null, "t", "");
       expect(stateHash({ ...snap, version: 31 } as unknown as SaveSnapshot)).toBe(v31);
       expect(stateHash(snap)).toBe(golden);
-      expect(stateHash({ ...snap, version: 31 } as unknown as SaveSnapshot)).toBe(v31);
+      expect(stateHash({ ...snap, version: 32 } as unknown as SaveSnapshot)).toBe(v32);
       expect(stateHash({ ...beforeV31(snap), version: 30 } as unknown as SaveSnapshot)).toBe(v30);
       const old = beforeV29(snap);
       expect(stateHash({ ...old, version: 28 } as unknown as SaveSnapshot)).toBe(v28);
