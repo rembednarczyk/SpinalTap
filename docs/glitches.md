@@ -1295,6 +1295,31 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `packages/ui/src/styles.css:981`, `equipment-slots.tsx:17`: uncommon i pasek aktywnej to ten sam cyjan #5ff2ff, różni je tylko grubość dolnej krawędzi; na 844×390 sloty broni bez ikon, „2 SECONDARY” wychodzi na sąsiedni slot (było przed #342)
 - Pakiet właściciela: packages/ui (inventory)
 
+### G-427 Plac Czechowicza i plac zabaw na Litewskim pod kostką (T-197, T-198)
+- Status: zgłoszone (6.11, kurator, przegląd G-421)
+- Ważność: S3 · Zasięg: trawnik `village_green` 308 m² z pomnikiem wychodzi poza obrysy obu placów, więc `openPavings` go nie wycina; plac zabaw 22 m² styka się z trawnikiem; poprawka: odejmowanie wielokątów albo `place=square` bez nawierzchni
+- Pakiet właściciela: tools/osm-import (ground)
+
+### G-428 Deptaki bez `width` buforowane na 8 m zachodzą na trawniki (T-199)
+- Status: zgłoszone (6.11, kurator)
+- Ważność: S4 · Zasięg: Karmelicka, Szambelańska, Zamkowa ×2; poprawka: `TAG_CORRECTIONS` `width` z ortofoto; trawnik w470555118 na brukowanym podwórzu
+- Pakiet właściciela: tools/osm-import
+
+### G-429 `place=square` rysuje drugą identyczną kostkę placu (T-200)
+- Status: zgłoszone (6.11, kurator)
+- Ważność: S4 · Zasięg: 7 par w mieście (28 144 m²), m.in. r10460232 na r7690183; kontrola `ground-duplicate` (baza 7)
+- Pakiet właściciela: tools/osm-import
+
+### G-430 Pierścienie kostki triangulowane jak pełna tarcza (T-201)
+- Status: zgłoszone (6.11, kurator)
+- Ważność: S4 · Zasięg: 14 kawałków, np. Plac Krąpca (163,3; 57,3): 159 m² trójkątów na 71 m² obrysu, przykrywa rabatę; kontrola `ground-tri-overdraw` (baza 14)
+- Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
+
+### G-431 Szew gołego terenu na granicach chunków przy trawnikach (poza placami)
+- Status: zgłoszone (6.11, kurator)
+- Ważność: S4 · Zasięg: trawnik upraszczany po przycięciu do chunku nie domyka sąsiedniej nawierzchni; kontrola `ground-chunk-gap` (sonda: 61,4 m próbek przed G-421)
+- Pakiet właściciela: tools/osm-import (ground)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
