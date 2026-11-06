@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-373 Odcinek tunelu peronu metra `kanal` A wchodzi 0,4 m w narożnik kamienicy w67498758 (T-181)
+- Status: naprawione w #314 (6.11; `w0` −10 → −9,5, test peronu sprawdza `vaults` co 0,25 m)
+- Ważność: S4 (niewidoczne) · Zasięg: 0,81 m² podziemia pod obrysem; test `metro-platform.test.ts` sprawdza tylko `rooms`, nie `vaults` · Koszt: mały (np. `w0` −10 → −9,5 albo krótszy odcinek po tej stronie)
+- Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan (kontrola `metro-vault-in-building`)
+- Test przyjęcia: każdy `vault` każdego peronu ma 0 próbek (co 0,25 m) w `inBuilding`; test rozszerzony na `vaults` pada przed poprawką
+
 ### G-376 Job CI „Typecheck, lint, architecture, unit tests” przekracza `timeout-minutes: 20`: same testy z pokryciem trwają 18,6 min
 - Status: naprawione w #315 (6.11, 63f2bbd; dwie części testów z raportami blob, progi na scalonym pokryciu; części 5 i 11 min, scalanie z typecheckiem 1,5 min)
 - Ważność: S2 (blokuje scalanie każdego PR-a z kodem) · Zasięg: `.github/workflows/ci.yml`, job unit (l. 45), `pnpm test:coverage` 1116 s (testy 57%, import 41%; 452 workery, vitest sugeruje `isolate: false`, ok. 31 s mniej) · Koszt: średni
