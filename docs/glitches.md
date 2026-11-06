@@ -1141,6 +1141,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`movement-system`)
 - Test przyjęcia: podciągnięcie na bryłę węższą niż ciało albo na krawędź barierki jest odrzucane; barierka 1,1 m nie daje się przejść
 
+### G-373 Odcinek tunelu peronu metra `kanal` A wchodzi 0,4 m w narożnik kamienicy w67498758 (T-181)
+- Status: zgłoszone (6.11, kurator, przegląd #309)
+- Ważność: S4 (niewidoczne) · Zasięg: 0,81 m² podziemia pod obrysem; test `metro-platform.test.ts` sprawdza tylko `rooms`, nie `vaults` · Koszt: mały (np. `w0` −10 → −9,5 albo krótszy odcinek po tej stronie)
+- Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan (kontrola `metro-vault-in-building`)
+- Test przyjęcia: każdy `vault` każdego peronu ma 0 próbek (co 0,25 m) w `inBuilding`; test rozszerzony na `vaults` pada przed poprawką
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
