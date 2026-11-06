@@ -26,6 +26,7 @@ import { airMesh } from "./patrol-mesh";
 import { patrolChecks } from "./patrol-pieces";
 import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
+import { pavingCoplanar } from "./paving-coplanar";
 import { drawnPaving, poolSunk } from "./pool-paving";
 import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
 import { doorsFacingUnderground } from "./door-streets";
@@ -1747,6 +1748,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "drone-low-pool-sunk": () => poolSunk(PATROL_LANES(), cityPatrolWorld().surfaceAt, DRAWN_PAVING()),
   /** Two overlapping pieces of the drawn paving at different heights over the ground where they meet: a step, patches and the depth flickering (G-301, `paving-overlap.ts`). */
   "paving-overlap-step": () => pavingOverlapSteps(drawnPieces(WORLD_SCENERY, groundY)),
+  /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */
+  "paving-coplanar": () => pavingCoplanar(mapGround(WORLD_SCENERY)),
   /** Road markings, zebras and flights on a bridge's deck drawn under its carriageway (G-301, `deck-paint.ts`). */
   "paint-under-deck": () => DECK_PAINT().under,
   /** Road markings and zebras beside a deck pulled up off the terrain towards it (G-301, `deck-paint.ts`). */

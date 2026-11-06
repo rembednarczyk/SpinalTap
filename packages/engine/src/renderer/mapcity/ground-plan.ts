@@ -1,6 +1,7 @@
 import { type GroundSurface, SURFACE_LIFT, type TerrainGrid, type TerrainOpenSides, terrainHeightAt } from "@seki/core";
 import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
-import { type P2, boundsOf, obbLocal, orientedBox, pointInRing, signedArea, triangulate } from "./polygon";
+import { type GroundCover, cutCovers } from "./ground-cut";
+import { type Box2, type P2, boundsOf, obbLocal, orientedBox, pointInRing, signedArea, triangulate } from "./polygon";
 import { face, quadUv, vertex } from "./sink-ops";
 
 /**
@@ -181,11 +182,21 @@ const area2 = (poly: readonly P2[]): number => {
   return Math.abs(s);
 };
 
+/** Which cells of the drape's grid to lay, by their indices along x and z (cell i spans i·grid to (i + 1)·grid). */
+export type DrapeCells = (i: number, k: number) => boolean;
+
+/** The cells of the drape's grid meeting `box`. */
+export const cellsMeeting =
+  (box: Box2, grid = DRAPE_GRID): DrapeCells =>
+  (i, k) =>
+    (i + 1) * grid >= box.minX && i * grid <= box.maxX && (k + 1) * grid >= box.minZ && k * grid <= box.maxZ;
+
 /**
  * Triangles of a ring cut on the world grid of side `grid` (`drapeY`): each lies in one triangle
- * of the grid, so drawn straight between its corners at `drapeY` it is that surface exactly.
+ * of the grid, so drawn straight between its corners at `drapeY` it is that surface exactly. Only
+ * in the cells `within` takes where it is given: the same triangles there as without it.
  */
-export const drapeTriangles = (ring: readonly P2[], grid = DRAPE_GRID): P2[][] => {
+export const drapeTriangles = (ring: readonly P2[], grid = DRAPE_GRID, within?: DrapeCells): P2[][] => {
   const tris = triangulate(ring);
   const out: P2[][] = [];
   const keep = (poly: readonly P2[]) => {
@@ -202,6 +213,7 @@ export const drapeTriangles = (ring: readonly P2[], grid = DRAPE_GRID): P2[][] =
       const strip = clipConvex(clipConvex(tri, (p) => p.x - x0, onX(x0)), (p) => x1 - p.x, onX(x1));
       if (strip.length < 3) continue;
       for (let k = Math.floor(b.minZ / grid); k * grid < b.maxZ; k++) {
+        if (within && !within(i, k)) continue;
         const z0 = k * grid;
         const z1 = z0 + grid;
         const onZ = (z: number) => (p: P2): P2 => ({ x: p.x, z });
@@ -236,11 +248,11 @@ export const drapeHeightAt = (ring: readonly P2[], tris: readonly number[], h: H
   return null;
 };
 
-/** Lays `ring` on the ground at `lift` above it, at `drapeY`: shared vertices per corner of the cut triangles. */
-export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, color: Rgba, uvOf: (p: P2) => readonly [number, number], meta: readonly [number, number]): void => {
-  const seen = new Map<number, Map<number, number>>();
-  const up = { x: 0, y: 1, z: 0 };
-  // The grid's corners are shared by the vertices round them: each surface under each is read once.
+/**
+ * The height `drape` lays a point at: `drapeY` of the surface under it plus `lift`. The grid's
+ * corners are shared by the vertices round them: each surface under each is read once.
+ */
+const drapeHeights = (h: HeightAt, lift: number): ((p: P2) => number) => {
   const read = new Map<HeightAt, HeightAt>();
   const corners = (surface: HeightAt): HeightAt => {
     let at = read.get(surface);
@@ -255,6 +267,17 @@ export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: nu
     read.set(surface, at);
     return at;
   };
+  return (p) => drapeY(corners(h.surfaceAt?.(p.x, p.z) ?? h), p.x, p.z) + lift;
+};
+
+/**
+ * Lays `ring` on the ground at `lift` above it, at `drapeY`: shared vertices per corner of the cut
+ * triangles; only in the grid's cells `within` takes where it is given.
+ */
+export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, color: Rgba, uvOf: (p: P2) => readonly [number, number], meta: readonly [number, number], within?: DrapeCells): void => {
+  const seen = new Map<number, Map<number, number>>();
+  const up = { x: 0, y: 1, z: 0 };
+  const y = drapeHeights(h, lift);
   const at = (p: P2): number => {
     // Hundredths of a millimetre: fine enough to keep the cut points apart on a corner of the grid.
     const kx = Math.round(p.x * 1e5);
@@ -263,11 +286,18 @@ export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: nu
     if (!row) seen.set(kx, (row = new Map()));
     const known = row.get(kz);
     if (known !== undefined) return known;
-    const i = vertex(sink, { x: p.x, y: drapeY(corners(h.surfaceAt?.(p.x, p.z) ?? h), p.x, p.z) + lift, z: p.z }, groundNormal(h, p.x, p.z), color, uvOf(p), meta);
+    const i = vertex(sink, { x: p.x, y: y(p), z: p.z }, groundNormal(h, p.x, p.z), color, uvOf(p), meta);
     row.set(kz, i);
     return i;
   };
-  for (const [a, b, c] of drapeTriangles(ring)) face(sink, at(a as P2), at(b as P2), at(c as P2), up);
+  for (const [a, b, c] of drapeTriangles(ring, DRAPE_GRID, within)) face(sink, at(a as P2), at(b as P2), at(c as P2), up);
+};
+
+/** The triangles `drape` lays `ring` as, in the cells `within` takes, without building a mesh. */
+export const drapedTriangles = (ring: readonly P2[], h: HeightAt, lift: number, within?: DrapeCells): [Vec, Vec, Vec][] => {
+  const y = drapeHeights(h, lift);
+  const v = (p: P2): Vec => ({ x: p.x, y: y(p), z: p.z });
+  return drapeTriangles(ring, DRAPE_GRID, within).map(([a, b, c]) => [v(a as P2), v(b as P2), v(c as P2)]);
 };
 
 /** Is (x, z) on a road? Used to find the sidewalk edges that get a kerb. */
@@ -304,22 +334,28 @@ const kerbs = (sink: MeshSink, ring: readonly P2[], h: HeightAt, roadAt: RoadAt)
   }
 };
 
-/** A ground surface (not water) draped on the terrain, with kerbs on sidewalks along roads. */
-export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water" | "basin" | "steps" | "crossing">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null): void => {
+/**
+ * A ground surface (not water) draped on the terrain, with kerbs on sidewalks along roads; less
+ * the areas of `under`, the pieces laid over it, where they lie in its plane (G-320); `within`
+ * as for `drape`.
+ */
+export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water" | "basin" | "steps" | "crossing">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null, under: readonly GroundCover[] = [], within?: DrapeCells): void => {
   const box = orientedBox(ring);
   // Rails get their sleepers along the strip; roads get their markings from the map (ADR-0052).
   const strip = surface === "rail" && box.halfLong > box.halfShort * 4 ? box.halfShort * 2 : 0;
   const code = SURFACE_CODE[surface];
+  const from = sink.indices.length;
   drape(sink, ring, h, SURFACE_LIFT[surface], SURFACE_COLOR[surface], (p) => {
     const l = obbLocal(box, p);
     return [l.u, l.v];
-  }, [code, strip]);
+  }, [code, strip], within);
+  cutCovers(sink, from, under);
   if (surface === "sidewalk" && roadAt) kerbs(sink, ring, h, roadAt);
 };
 
 /** Water (the Bystrzyca, fountain pools) draped just above the terrain: uv = world x, z. */
-export const planWater = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number = SURFACE_LIFT.water): void => {
-  drape(sink, ring, h, lift, WATER_COLOR, (p) => [p.x, p.z], [0, 0]);
+export const planWater = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number = SURFACE_LIFT.water, within?: DrapeCells): void => {
+  drape(sink, ring, h, lift, WATER_COLOR, (p) => [p.x, p.z], [0, 0], within);
 };
 
 const RIM = hexColor("#8f8a82", DRESS_FLAG.solid);
