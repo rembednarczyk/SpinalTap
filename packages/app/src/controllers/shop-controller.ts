@@ -1,6 +1,7 @@
 import { type CyberwareId, type CyberwareSlot, type ItemRef, type ShopId, type ShopItemId, isCyberwareId } from "@seki/core";
 import { type ShopIntents, type TradeVm, type UiStore, capacityFit, overCapacityText, patchUi, translator } from "@seki/ui";
 import { createTradeTracker } from "../trade-view";
+import { respecRefusalText } from "./respec-refusal";
 import { type Focus, type SimRef, pushToastTimed } from "./shared";
 
 export interface ShopControllerDeps {
@@ -69,9 +70,19 @@ export class ShopController implements ShopIntents {
     if (this.atCounter("clinic")) this.deps.sim().enqueue({ type: "remove-cyberware", slot });
   }
 
-  /** The respec (ADR-0059): Mori's service, so only at the clinic's counter. */
+  /**
+   * The respec (ADR-0059): Mori's service, so only at the clinic's counter. A refusal is told
+   * here with what to do about it (G-366), before the simulation would refuse it generically.
+   */
   respec(): void {
-    if (this.atCounter("clinic")) this.deps.sim().enqueue({ type: "respec" });
+    if (!this.atCounter("clinic")) return;
+    const locale = this.deps.ui.getState().settings.locale;
+    const refusal = respecRefusalText(this.deps.sim().domain, locale);
+    if (refusal) {
+      pushToastTimed(this.deps.ui, "system", translator(locale)("shop.refused.clinic"), refusal);
+      return;
+    }
+    this.deps.sim().enqueue({ type: "respec" });
   }
 
   /** From the counter straight into a conversation with its keeper. */

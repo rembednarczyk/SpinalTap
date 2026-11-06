@@ -1,4 +1,4 @@
-import { BUFF_CATALOG, type DomainState, cooldownRateOf, dashCooldownScale } from "@seki/core";
+import { BUFF_CATALOG, type DomainState, buffDurationScale, cooldownRateOf, dashCooldownScale } from "@seki/core";
 import { DASH_COOLDOWN, cyberCapacityOf } from "@seki/sim";
 import { type BuffVm, type CapacityVm, type DashVm, translate, translateText } from "@seki/ui";
 import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part";
@@ -56,7 +56,7 @@ export class BodyHud implements HudPart {
   private buffVm(domain: DomainState): BuffVm[] {
     return domain.buffs
       .filter((b) => b.left > 0)
-      .map((b) => ({ id: b.id, name: BUFF_CATALOG[b.id].name, left: Math.ceil(b.left), total: BUFF_CATALOG[b.id].duration }));
+      .map((b) => ({ id: b.id, name: BUFF_CATALOG[b.id].name, left: Math.ceil(b.left), total: BUFF_CATALOG[b.id].duration * buffDurationScale(domain.progression.perks) }));
   }
 
   private dashVm(domain: DomainState, tick: number): DashVm | null {
