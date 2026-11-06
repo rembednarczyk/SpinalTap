@@ -21,8 +21,9 @@ import {
   sellPrice,
   shopBuys,
   shopItemDescription,
-  stockListPrice,
+  stockGrade,
   stockName,
+  stockPrice,
 } from "@seki/core";
 import { formatNumber, useLocale } from "../i18n/number";
 import type { Translate } from "../i18n/t";
@@ -44,6 +45,9 @@ const categoryLabel = (t: Translate, c: ItemCategory): string => (hasLabel(c) ? 
 const IMPLANTS = (Object.keys(CYBERWARE_CATALOG) as CyberwareId[]).filter((id) => CYBERWARE_CATALOG[id].price > 0);
 
 const eur = (locale: Locale, n: number) => `${formatNumber(locale, n)} €$`;
+
+/** The level of a piece for the price functions, when it has one (ADR-0059). */
+const levelOf = (item: TradeItemVm): { level?: number } => (item.level === undefined ? {} : { level: item.level });
 
 const rarityClass = (item: { readonly rarity: TradeItemVm["rarity"] }) => (item.rarity && item.rarity !== "common" ? ` rarity--${item.rarity}` : "");
 
@@ -121,8 +125,9 @@ const StockOffer = ({ entry, terms }: { readonly entry: StockEntry; readonly ter
   const medkits = useUi((s) => s.medkits);
   const medkitRoom = useUi((s) => s.medkitRoom);
   const trade = useUi((s) => s.trade);
+  const level = useUi((s) => s.level);
   const intents = useShopIntents();
-  const price = priceWithTerms(stockListPrice(entry), terms);
+  const price = stockPrice(entry, terms, level);
   const locked = !offersEntry(entry, terms);
   let slot: string;
   let room = trade.freeCells > 0;
@@ -134,11 +139,14 @@ const StockOffer = ({ entry, terms }: { readonly entry: StockEntry; readonly ter
     slot = t("shop.ammo");
     room = true;
   } else {
-    slot = `${categoryLabel(t, itemSummary(entry.item).category)} · ${rarityLabel(t, entry.rarity)}`;
+    // The tier the standing brings out and the player's level (ADR-0059).
+    const grade = stockGrade(entry, terms.tier, level);
+    const lvl = grade.level === undefined ? "" : ` · ${t("inventory.detail.level", { level: grade.level })}`;
+    slot = `${categoryLabel(t, itemSummary(entry.item).category)} · ${rarityLabel(t, grade.rarity)}${lvl}`;
   }
   const description = entry.kind === "stack" && entry.item === "medkit" ? `${tx(shopItemDescription(entry.item))} ${t("shop.medkitUse")}` : tx(shopItemDescription(entry.item));
   return (
-    <article className={`shop__item${entry.kind === "item" ? rarityClass(entry) : ""}${lockedClass(locked)}`} data-testid={`stock-${entry.item}`}>
+    <article className={`shop__item${entry.kind === "item" ? rarityClass(stockGrade(entry, terms.tier, level)) : ""}${lockedClass(locked)}`} data-testid={`stock-${entry.item}`}>
       <div className="shop__slot">{slot}</div>
       <h3 className="shop__name">{tx(stockName(entry))}</h3>
       <p className="shop__desc">{description}</p>
@@ -182,7 +190,7 @@ export const SellTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly t
   return (
     <ul className="shop__lines" data-testid="shop-sell">
       {items.map((item) => {
-        const unit = sellPrice({ def: item.defId, rarity: item.rarity ?? "common", ...(item.condition === null ? {} : { condition: item.condition }) }, terms);
+        const unit = sellPrice({ def: item.defId, rarity: item.rarity ?? "common", ...(item.condition === null ? {} : { condition: item.condition }), ...levelOf(item) }, terms);
         const blocked = item.inUse ? t("shop.inUse") : unit === 0 ? t("shop.worthless") : null;
         return (
           <li key={item.key} className={`shop__line${rarityClass(item)}`} data-testid="shop-sell-line">
@@ -192,6 +200,7 @@ export const SellTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly t
             </span>
             <span className="shop__line-meta">
               {item.rarity ? rarityLabel(t, item.rarity) : categoryLabel(t, item.category)}
+              {item.level !== undefined && ` · ${t("inventory.detail.level", { level: item.level })}`}
               {item.condition !== null && ` · ${t("shop.condition", { pct: item.condition })}`}
             </span>
             <button type="button" className="shop__buy" disabled={blocked !== null} onClick={() => intents.sellItem(item.ref, 1)}>
@@ -231,7 +240,7 @@ export const RepairTab = ({ terms }: { readonly terms: ShopTerms }) => {
       <ul className="shop__lines" data-testid="shop-repair">
         {damaged.map((item) => {
           const parts = useParts ? trade.weaponParts : 0;
-          const quote = repairQuote({ def: item.defId, rarity: item.rarity ?? "common", condition: item.condition ?? 100 }, parts, parts);
+          const quote = repairQuote({ def: item.defId, rarity: item.rarity ?? "common", condition: item.condition ?? 100, ...levelOf(item) }, parts, parts);
           return (
             <li key={item.key} className={`shop__line${rarityClass(item)}`} data-testid="shop-repair-line">
               <span className="shop__line-name">{tx(item.name)}</span>
