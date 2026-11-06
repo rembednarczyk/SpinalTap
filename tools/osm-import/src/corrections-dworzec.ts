@@ -20,6 +20,21 @@ const EAST_LAWN_EDGE: readonly Pt[] = [
 ];
 const LAWN_EDGE_NODES: readonly (string | null)[] = [null, null, null, null, null, "w458298769"];
 
+/**
+ * The kerb between the setts and the asphalt in the stands' north-east corner (T-185), from the
+ * orthophoto (PZGiK), south to north: from Cerkiewna's carriageway round to the stall line that meets
+ * the asphalt w66323033's corner at x 901.69.
+ */
+const NE_KERB: readonly Pt[] = [
+  { x: 911.8, z: 362.0 },
+  { x: 912.0, z: 365.0 },
+  { x: 911.75, z: 368.25 },
+  { x: 910.75, z: 370.0 },
+  { x: 909.0, z: 372.0 },
+  { x: 906.25, z: 375.0 },
+  { x: 902.3, z: 379.6 },
+];
+
 export const DWORZEC_EAST_AREAS: readonly AddedArea[] = [
   {
     // The wedge between the sidewalk w1435832518 and the cycleway w1435832523 east of T-165, beige
@@ -42,7 +57,8 @@ export const DWORZEC_EAST_AREAS: readonly AddedArea[] = [
   {
     // The Dworzec's stands east of x 870 (T-170 ends there), setts on the orthophoto (PZGiK), bare in
     // OSM: from the pavilions' block (T-170's east side) north to the stands' asphalt w66323033, round
-    // its corner to Cerkiewna w739432830's axis (drawn over it), and down the sidewalk of the footway
+    // the kerb in its north-east corner (past it T-185/wjazd-stanowisk-wschod) to Cerkiewna
+    // w739432830's axis (drawn over it), and down the sidewalk of the footway
     // w227698409's bend to the crossing by the path w1435832524: below z 364.5 that is past the
     // register's box, but the same pavement. The concrete slab by the pavilions is laid as setts; the
     // lawn between it and the pavilion w458298769 is T-185/trawnik-wschod, whose edge, off the nodes,
@@ -60,9 +76,7 @@ export const DWORZEC_EAST_AREAS: readonly AddedArea[] = [
       { x: 904.19, z: 347.29 },
       { x: 913.63, z: 345.89 },
       { x: 915.61, z: 361.18 },
-      { x: 916.99, z: 373.15 },
-      { x: 913.36, z: 373.5 },
-      { x: 908.0, z: 380.55 },
+      ...NE_KERB,
       { x: 901.69, z: 383.75 },
       { x: 898.88, z: 380.53 },
       { x: 895.68, z: 383.61 },
@@ -82,11 +96,31 @@ export const DWORZEC_EAST_AREAS: readonly AddedArea[] = [
       ...LAWN_EDGE_NODES,
       "w458298769",
       ...Array<string>(5).fill("w227698409"),
-      ...Array<string>(3).fill("w739432830"),
-      ...Array<string>(15).fill("w66323033"),
+      ...Array<string>(2).fill("w739432830"),
+      ...NE_KERB.map(() => null),
+      ...Array<string>(13).fill("w66323033"),
       null,
     ],
     reason: "kostka placu i peronu na wschód od stanowisk Dworca Autobusowego, do asfaltu stanowisk i ul. Cerkiewnej, na ortofoto PZGiK, w OSM tylko linie chodników",
+    ref: "T-185",
+  },
+  {
+    // The stands' entry past the kerb in T-185's north-east corner, between the asphalt w66323033's
+    // corner and Cerkiewna w739432830's axis (drawn over it): on the orthophoto (PZGiK) the stands'
+    // asphalt, which OSM's area stops 6 m short of, so a carriageway's area, not setts (as
+    // T-170/wjazd-stanowisk). Off the nodes: the kerb.
+    id: "T-185/wjazd-stanowisk-wschod",
+    tags: { "area:highway": "service", surface: "asphalt" },
+    ring: [
+      { x: 915.61, z: 361.18 },
+      { x: 916.99, z: 373.15 },
+      { x: 913.36, z: 373.5 },
+      { x: 908.0, z: 380.55 },
+      { x: 901.69, z: 383.75 },
+      ...[...NE_KERB].reverse(),
+    ],
+    nodesOf: ["w739432830", "w739432830", "w66323033", "w66323033", "w66323033", ...NE_KERB.map(() => null)],
+    reason: "asfalt stanowisk Dworca Autobusowego za krawężnikiem w północno-wschodnim narożniku placu, do ul. Cerkiewnej, na ortofoto PZGiK, w OSM bez obszaru",
     ref: "T-185",
   },
   {

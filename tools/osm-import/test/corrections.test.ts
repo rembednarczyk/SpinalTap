@@ -440,6 +440,11 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(895, 371)).toBe("square");
     expect(surfaceAt(888, 366)).toBe("grass");
     expect(surfaceAt(908, 362)).toBe("grass");
+    // The setts end at the kerb in the north-east corner; past it the stands' entry is asphalt.
+    expect(surfaceAt(909, 377)).toBe("road");
+    expect(surfaceAt(912.3, 367)).toBe("road");
+    expect(surfaceAt(905, 374)).toBe("square");
+    expect(surfaceAt(907, 373.5)).toBe("square");
     // The asphalt, the footway and Cerkiewna stay on top; the bed south of the path stays bare.
     expect(surfaceAt(905, 385)).toBe("road");
     expect(surfaceAt(890, 372.6)).toBe("footway");
