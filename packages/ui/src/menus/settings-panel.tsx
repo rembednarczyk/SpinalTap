@@ -4,7 +4,7 @@ import type { MessageKey } from "../i18n/en";
 import { type Translate, isMessageKey } from "../i18n/t";
 import { useT } from "../i18n/use-t";
 import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE, SUBTITLE_SCALE_RANGE } from "../store/hud-vm";
-import type { AimMode, CameraShoulder, ControlBindingVm, GraphicsQuality, SettingsVm } from "../store/ui-store";
+import type { AimMode, CameraShoulder, ControlBindingVm, GraphicsQuality, SettingsVm, TouchFireMode } from "../store/ui-store";
 import { TOKENS } from "../hud/tokens";
 import { useSettingsIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
@@ -22,6 +22,11 @@ const QUALITY: Options<GraphicsQuality> = [
 const AIM_MODES: Options<AimMode> = [
   ["hold", "settings.mode.hold"],
   ["toggle", "settings.mode.toggle"],
+];
+
+const TOUCH_FIRE: Options<TouchFireMode> = [
+  ["aims", "settings.touchFire.aims"],
+  ["separate", "settings.touchFire.separate"],
 ];
 
 /** Each language under its own name, so a player can find theirs whatever is set now. */
@@ -105,10 +110,11 @@ const Toggle = ({ label, on, onChange }: { label: MessageKey; on: boolean; onCha
   <Choice label={label} value={on ? "on" : "off"} options={ON_OFF} onChange={(v) => onChange(v === "on")} />
 );
 
-type Section = "general" | "mouse" | "keys" | "access";
+type Section = "general" | "mouse" | "touch" | "keys" | "access";
 const SECTIONS: Options<Section> = [
   ["general", "settings.tab.general"],
   ["mouse", "settings.tab.mouse"],
+  ["touch", "settings.tab.touch"],
   ["keys", "settings.tab.keys"],
   ["access", "settings.tab.access"],
 ];
@@ -200,6 +206,17 @@ const MouseAndCamera = ({ settings, set }: SectionProps) => {
     </>
   );
 };
+
+/**
+ * The touch fire button and the aim button, where a phone player looks for them (ADR-0072). Fires
+ * only goes with a toggled aim button: a tap on it aims, then one thumb fires and steers.
+ */
+const TouchAndGamepad = ({ settings, set }: SectionProps) => (
+  <>
+    <Choice label="settings.touchFire" value={settings.touchFire} options={TOUCH_FIRE} onChange={(touchFire) => set(touchFire === "separate" ? { touchFire, aimMode: "toggle" } : { touchFire })} />
+    <Choice label="settings.aimMode" value={settings.aimMode} options={AIM_MODES} onChange={(aimMode) => set({ aimMode })} />
+  </>
+);
 
 /** A control's name in the chosen language; one the catalogs do not know keeps the app's label. */
 const controlName = (t: Translate, c: ControlBindingVm): string => {
@@ -295,6 +312,7 @@ export const SettingsPanel = () => {
       </div>
       {section === "general" && <General settings={settings} set={set} />}
       {section === "mouse" && <MouseAndCamera settings={settings} set={set} />}
+      {section === "touch" && <TouchAndGamepad settings={settings} set={set} />}
       {section === "keys" && <KeyBindings />}
       {section === "access" && <Accessibility settings={settings} set={set} />}
       {reloadNeeded && (

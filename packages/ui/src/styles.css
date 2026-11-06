@@ -72,6 +72,8 @@ kbd {
 /* Aimed down sights: the ticks pull in (the gap follows --spread) and turn bright. */
 .crosshair--aiming { opacity: 1; }
 .crosshair--aiming .crosshair__tick { background: var(--cyan); }
+/* Sights latched on touch (ADR-0072): a steady ring outside the ticks, visible at a glance. */
+.crosshair__ads { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; border: 2px solid var(--cyan); border-radius: 50%; opacity: 0.75; pointer-events: none; }
 /* Melee guard: short wide brackets left and right instead of a cone. */
 .crosshair--guard .crosshair__tick--top,
 .crosshair--guard .crosshair__tick--bottom { opacity: 0; }
