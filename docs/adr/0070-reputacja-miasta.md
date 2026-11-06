@@ -132,3 +132,7 @@ Decyzja użytkownika z 5.11: przy złej reputacji sprzedawca (stragan, sklep, kl
 - **i18n (ADR-0056):** nowe klucze UI dla zablokowanej pozycji i warunków sklepu w `i18n/{en,pl}`, nowe kwestie ink w `ink/en` i `ink/pl` (Hana przy wrogości, chłodne kwestie przy nieufności). Polski katalog zmienia się świadomie, bo dochodzą nowe teksty, a nie tłumaczenia. Skan `i18n-scan` bez wzrostu bazy.
 - ADR-0011 (ucieczka i odmowa sklepu), ADR-0018 (odmowa Hany, liczby zleceń) i ADR-0034 (nagroda za pomoc) zmieniają się w zakresie opisanym wyżej. Reszta zostaje.
 - Gra przy złej opinii robi się chłodniejsza, ale nie pusta. Ulica ustępuje, sprzedawcy liczą drożej, a powrót jest zawsze możliwy przez Hanę.
+
+## Uzupełnienie 6.11 (decyzja użytkownika)
+
+Stymulant Shizuka (`steady_stim`) to stymulant bojowy, nie podstawa: wroga klinika go nie sprzedaje (pole katalogu `combatStim`), nieufna sprzedaje drożej. Podstawy u wrogiej kliniki to apteczki i bandaże; jedzenie u Fumiko, także syntetyczna kawa, zostaje.
