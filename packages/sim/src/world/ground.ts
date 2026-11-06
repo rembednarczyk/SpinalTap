@@ -193,6 +193,11 @@ export class GroundField {
     return reach === Infinity || this.vaults.empty ? ground : this.vaults.groundAt(x, z, ground, reach);
   }
 
+  /** Are feet at `p` in a vault under the street (ADR-0071 stage 4)? */
+  underStreet(p: Vec3): boolean {
+    return !this.vaults.empty && this.vaults.holding(p.x, p.y + ON_DECK, p.z, this.heightAt(p.x, p.z)) !== null;
+  }
+
   /** The lowest underside of a bridge's deck over (x, z) at or above `head`, or Infinity (G-062). */
   ceilingAt(x: number, z: number, head: number): number {
     if (!this.hasTerrain) return Infinity;
@@ -432,11 +437,12 @@ export const aboveGround = (world: World<Entity>, p: Vec3): number => p.y - grou
 /**
  * How far apart in height two points are as floors go (ADR-0043): on terrain, each is measured
  * from the ground under it, so two people on one hillside stand on the same floor. Without
- * terrain it is the plain difference of y, as before.
+ * terrain it is the plain difference of y, as before; so it is with either point in a vault under
+ * the street (ADR-0071 stage 4): its floor is under the walked solids, not a floor of the levels.
  */
 export const heightApart = (world: World<Entity>, a: Vec3, b: Vec3): number => {
   const g = groundOf(world);
-  if (!g.hasTerrain) return Math.abs(a.y - b.y);
+  if (!g.hasTerrain || g.underStreet(a) || g.underStreet(b)) return Math.abs(a.y - b.y);
   return Math.abs(a.y - g.heightAt(a.x, a.z, a.y + ON_DECK) - (b.y - g.heightAt(b.x, b.z, b.y + ON_DECK)));
 };
 

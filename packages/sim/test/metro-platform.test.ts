@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { type DomainEvents, EMPTY_INPUT, type SaveSnapshot, type Vec3 } from "@seki/core";
-import { FLIGHT_HEADROOM, METRO_CUTS, METRO_PLATFORMS, SIM_HZ, Simulation, groundY, interiorAt, metroStation } from "../src";
+import { FLIGHT_HEADROOM, METRO_CUTS, METRO_PLATFORMS, SIM_HZ, Simulation, groundY, heightApart, interiorAt, metroStation } from "../src";
 import { inBuilding } from "../src/content/lublin/places";
 import { PADS } from "../src/content/lublin/sites";
 import { TRASA_PODZIEMNA_BOUNDS } from "../src/content/kanal-underground";
 import { spotFrame } from "../src/content/metro-pavilion";
 import { rayGeometry } from "../src/world/hitscan";
+import { LEVEL_GAP } from "../src/world/nav";
 import { collect, input, run, teleportPlayer } from "./helpers";
 
 /**
@@ -125,6 +126,16 @@ describe("metro platforms (ADR-0071 stage 4)", () => {
     const t = rayGeometry(sim.world, eye, { x: (along.x - eye.x) / d, y: 0, z: (along.z - eye.z) / d }, 40, true);
     expect(t).not.toBeNull();
     expect(t!).toBeGreaterThan((p.w1 - p.w0) / 2 - 0.5);
+  });
+
+  it.each(PLATFORMS)("%s: the platform is a floor of its own, apart from the hall and the street", (_name, e) => {
+    const sim = quiet();
+    const p = e.platform;
+    // From the platform's floor, not the vault's under it: 5.3 m under the hall, 8 m under the street.
+    expect(heightApart(sim.world, e.ticket, e.hallSpot)).toBeCloseTo(p.hall - p.floor, 2);
+    expect(heightApart(sim.world, e.ticket, e.door)).toBeGreaterThan(7.5);
+    expect(heightApart(sim.world, e.ticket, e.hallSpot)).toBeGreaterThan(LEVEL_GAP);
+    expect(heightApart(sim.world, e.ticket, e.arrival)).toBeLessThan(0.01);
   });
 
   it.each(PLATFORMS)("%s: a game saved on the platform loads on it", (_name, e) => {
