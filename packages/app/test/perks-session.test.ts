@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type DomainState, START_ATTRIBUTES, STANDARD_TERMS, respecPrice } from "@seki/core";
-import type { GameSession } from "../src";
+import type { GameSession } from "../src/game-session";
 import { openClinic, setup, steps } from "./story-helpers";
 
 /** Buying perks on the sheet and the respec at Mori's (ADR-0059, stage 3), in a session without a renderer. */
