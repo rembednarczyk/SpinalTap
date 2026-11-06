@@ -95,7 +95,7 @@ describe("item level in play (ADR-0059, stage 4)", () => {
     steps(session, 30);
     const now = session.saves.snapshot();
     const strip = <T extends object>(p: T): T => {
-      const { level: _l, traits: _t, ...rest } = p as T & { level?: number };
+      const { level: _l, traits: _t, ...rest } = p as T & { level?: number; traits?: unknown };
       return rest as T;
     };
     const v28 = {
