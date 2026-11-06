@@ -44,6 +44,17 @@ describe("a tier needs a perk of the tier below (stage 3b)", () => {
     expect(hardened).toContain("Needs a perk from tier 8");
   });
 
+  it("a stage 3 save's perk over an empty tier asks for the path before its next rank (stage 3c)", () => {
+    sheet({ perkPoints: 3, attributes: { ...START_ATTRIBUTES, might: 12 }, perks: { might_hardened: 1 }, settings: { ...DEFAULT_SETTINGS, locale: "pl" } });
+    const hardened = screen.getByTestId("perk-might_hardened");
+    expect(hardened.textContent).toContain("Wymaga: perk z progu 4");
+    expect(within(hardened).queryByRole("button")).toBeNull();
+    cleanup();
+    // Tier 4 bought, tier 8 still empty: the lowest missing tier is named.
+    sheet({ perkPoints: 3, attributes: { ...START_ATTRIBUTES, might: 12 }, perks: { might_hardened: 1, might_tough: 1 } });
+    expect(screen.getByTestId("perk-might_hardened").textContent).toContain("Needs a perk from tier 8");
+  });
+
   it("speaks Polish with the Polish setting", () => {
     sheet({ attributes: { ...START_ATTRIBUTES, net: 8 }, settings: { ...DEFAULT_SETTINGS, locale: "pl" } });
     expect(screen.getByTestId("perk-net_persistence").textContent).toContain("Uporczywy kod");

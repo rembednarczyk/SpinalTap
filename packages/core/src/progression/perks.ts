@@ -108,15 +108,23 @@ export const previousTier = (id: PerkId): PerkTier | null => {
 };
 
 /**
- * Is a perk of the tier below bought in the same tree (stage 3b)? Always on the first tier, and
- * for a perk already bought: its next rank goes on from it (a stage 3 save may lack the path).
+ * The lowest tier below the perk's in its tree with no perk bought, or null when every tier below
+ * has one (stage 3c). A save from stage 3 may hold a higher tier over empty ones: it keeps the
+ * perk, but no rank of that tree's higher tiers is bought until the path is filled in.
  */
-export const perkPathMet = (perks: PerkRanks, id: PerkId): boolean => {
-  const below = previousTier(id);
-  if (below === null || perkRank(perks, id) > 0) return true;
-  const { tree } = perkDef(id);
-  return PERK_IDS.some((other) => perkDef(other).tree === tree && perkDef(other).tier === below && perkRank(perks, other) > 0);
+export const missingTier = (perks: PerkRanks, id: PerkId): PerkTier | null => {
+  const { tree, tier } = perkDef(id);
+  for (let below = 0; below < tier; below++) {
+    if (!PERK_IDS.some((other) => perkDef(other).tree === tree && perkDef(other).tier === below && perkRank(perks, other) > 0)) return below as PerkTier;
+  }
+  return null;
 };
+
+/**
+ * Does every tier below the perk's in the same tree have a perk bought (stages 3b and 3c)? Always
+ * on the first tier. The next rank of a perk already bought needs it too (stage 3c).
+ */
+export const perkPathMet = (perks: PerkRanks, id: PerkId): boolean => missingTier(perks, id) === null;
 
 /** Can a rank of the perk be bought on what she has: the attribute opens the tier and the tier below has a perk? */
 export const perkOpen = (attributes: Attributes, perks: PerkRanks, id: PerkId): boolean => perkUnlocked(attributes, id) && perkPathMet(perks, id);
