@@ -987,7 +987,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (mapcity/ground-plan, cell-builder)
 
 ### G-328 Cywil uciekający w ślepy zaułek biega w miejscu w promieniu ucieczki
-- Status: zgłoszone (5.11, weryfikator PR #277; było przed G-317)
+- Status: w PR #305 (6.11, 396131c; osaczony cywil staje, bez dróg ±3π/4; w weryfikacji)
 - Ważność: S3 · Zasięg: zaułek ok. (308,4; −101,5), ziarno 11, przechodzień 1002001, gracz o (0,2): przez 10 s nie wychodzi z promienia; także w pościgu: zaułek przy (316; −95) zatrzymuje uciekającego na main (465 skoków kąta); pościg w róg (316; −95) dalej ok. 465 skoków (poprawka z G-326 wycofana, bo przypinała cywila do ściany); także ziarno 43, 1002008, gracz 3 m: cywil staje 1,18 m od gracza; gracz stojący w zaułku przy (308; −101): 213 skoków
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
 
@@ -997,12 +997,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-331 Deszcz pada pod dachem pawilonu metra i w hali biletowej
-- Status: zgłoszone (5.11, autor ADR-0071 etap 2, PR #279)
+- Status: w PR #303 (6.11; deszcz i rozbryzgi kończą się pod dachem pawilonu i w hali; weryfikator PRZYJĘTE, kurator w toku)
 - Ważność: S4 · Zasięg: wszystkie wejścia metra (widać na zrzutach schodów `shots/metro2/`); do etapu 3 ADR-0071 albo osobno
 - Pakiet właściciela: packages/engine/src/effects (deszcz)
 
 ### G-333 Drobne usterki po etapie 2 metra (#279)
-- Status: częściowo naprawione w #284 (5.11, bd0958d; `metro-shaft-open` z tolerancją, `cutGround` 81 → 13 ms); okap Nabrzeża i stopień przy Alchemii do etapu 3 metra, wróg w hali niesprawdzony
+- Status: w PR #303 (6.11; granitowy stopień 0,35 m przed otworem Alchemii B, próg 0,32 → 0,23 m; weryfikator PRZYJĘTE, kurator w toku)
 - Ważność: S4 · Zasięg: kontrola `metro-shaft-open` (`tools/glitch-scan/test/metro-entrances.ts:131-135`) krucha na zaokrąglenie przy próbce na krawędzi (`z <= w.maxZ`), potrzebny epsilon; `cutGround` (`engine/.../ground-cut.ts:94-95`) liczy każdy trójkąt każdej siatki gruntu (106 ms CPU na 20 chunków), wystarczy wcześniej pominąć siatki bez otworu; Alchemia B: przy rogu otworu bruk 0,32 m pod progiem podestu; Nabrzeże A: okap 0,4 m w murze placu Tessen (T-160); niesprawdzone: wróg w pościgu schodzący za graczem do hali
 - Pakiet właściciela: tools/glitch-scan, packages/engine (mapcity), packages/sim
 
@@ -1010,12 +1010,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #278; sprzed tego PR, ADR-0065)
 - Ważność: S3 · Zasięg: `corpseOf` przenosi na zwłoki `reported` z nokautu (`bodies.ts:75`), więc patrol, który znajdzie świeże ciało, go nie zgłasza; po wczytaniu dobicie ogłuszonego na oczach patrolu też nie jest przestępstwem, bo `wronged` jest przejściowe, a `offend` w `death-system.ts:72` nie czyta `downed.fought`
 - Pakiet właściciela: packages/sim (bodies, death-system, crime-system)
-
-### G-337 Północny chodnik al. Tysiąclecia bez nawierzchni (T-165)
-- Status: w PR #298, przyjęte przez kuratora po drugiej rundzie (c7b53db), czeka na CI (5.11; wcześniej przegląd e522164: NIE PRZYJĘTE, rabaty przed Bazarem 1–3,75 m dalej na południe, pas pod okapem do zabrukowania, T-165)
-- Ważność: S4 · Zasięg: x ok. 640–790, z ok. 362–383, ok. 670 m² na samym x 705–790; przed halami Bazaru rabaty (nie brukować); także x 764–806 przed frontem Dworca (T-165 pkt 1–2): ok. 136 m² między drogą rowerową w1435832523 a ścieżką w227698420 (x 773–803 rabata, nie brukować) i ok. 50 m² między chodnikiem w1435832518 a drogą rowerową (kostka z wiatami)
-- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
-- Test przyjęcia: 0 gołych próbek 0,5 m w obszarze T-165 poza rabatami; propozycja kontroli `paving-sliver` dla całego miasta
 
 ### G-339 Uskok na końcach pomostów: pomost poziomy w poprzek, droga obok na terenie (T-166)
 - Status: zgłoszone (5.11, kurator, przegląd G-330)
@@ -1050,12 +1044,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, autor broni białej)
 - Ważność: S4 (narzędzia testowe) · Zasięg: przebieg ok. 20 min z modelami: RSS 6–7 GB, OOM-kill (nie wiadomo, czy wyciek w grze, czy `toDataURL` co klatkę); `page.clock.pauseAt` + `runFor` blokuje rysowanie, bo `GpuPacer` dostaje fence od Chrome tylko przy prawdziwych klatkach; zrzuty z dokładnym czasem wymagają innej drogi
 - Pakiet właściciela: e2e (QA), packages/app (`GpuPacer`)
-
-### G-349 Próg 0,3–0,4 m na zachodnim przyczółku mostu południowego Mełgiewskiej po G-340
-- Status: naprawione w #300 (6.11, 5820de7; teren przyczółków na wysokości pomostu, kontrola `deck-abutment-step` 21 → 12; weryfikator i kurator PRZYJĘTE; reszta progów w G-360)
-- Ważność: S3 · Zasięg: pomost w50733068 przedłużony przez `bridge-ends.ts` jest poziomy na NMT końca osi (−25,72), a teren wzdłuż 13-metrowej krawędzi przyczółka opada na południe do −26,0…−26,14; na próbkach 0,5 m to skarpa (`MAX_WALK_SLOPE`, ADR-0043): postać idąca z Andersa na wschód 4,75–6,0 m na południe od osi staje w (2414,2–2414,7; 323,3–324,4); pas aut Andersa#126:0 schodzi z pomostu bokiem ze skokiem 0,17 m. Skan nie ma kontroli progu pomost–teren na przyczółkach; `bridge-ends.test.ts` nie pilnuje warunku węzła wspólnego (przypadek ze wspólnym węzłem bliżej niż 15 m od krawędzi)
-- Pakiet właściciela: tools/osm-import (`bridge-ends.ts`), packages/sim (terrain/decks), tools/glitch-scan
-- Test przyjęcia: postać przechodzi z Andersa na most na całej szerokości jezdni; kontrola progu pomost–teren na przyczółkach (> 0,25 m) = 0
 
 ### G-350 Gołe podłoże przy al. Tysiąclecia na wschód od Dworca (T-173)
 - Status: zgłoszone (5.11, kurator, przegląd G-337)
@@ -1098,12 +1086,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/app (debug API), e2e
 - Test przyjęcia: zrzut po `step` pokazuje stan po tym kroku
 
-### G-357 `pinned-far-sleep.test.ts` przekracza 20 s pod coverage w CI
-- Status: w PR #302 (6.11, 3502420; podział na przypadki ze wspólnym przebiegiem, najdłuższy pod coverage 9,2 → 2,9 s; przeniesione też do #298). Poboczne: krokowanie z przypiętym daleko strażnikiem ok. 10× droższe (60 vs 5 ms na sekundę symulacji), do zbadania jako wydajność sim
-- Ważność: S4 (narzędzia testowe) · Zasięg: „a calm guard whose chunk sleeps stays while he stands in a loaded one…” lokalnie ok. 3 s, plik ok. 30 s także na main; w CI pod coverage 20 s. Wzorzec jak #276 i #295: podzielić test albo zapamiętać wspólny przebieg, limitu nie podnosić
-- Pakiet właściciela: packages/sim (test)
-- Test przyjęcia: najdłuższy test pliku lokalnie ≤ 1,5 s
-
 ### G-358 O 23:00 sprzedawcy północnego targu uciekają na każdym progu reputacji
 - Status: zgłoszone (5.11, weryfikator PR #299, do potwierdzenia)
 - Ważność: S3 · Zasięg: sonda sesji, druga doba 23:00, gracz 1,5 m od straganu Fumiko: Fumiko (sklep otwarty) i Kenta w stanie tłumu „fleeing”, Goro się przesuwa; tak samo przy reputacji 0, +50, −30, −60, −100. Możliwy niezidentyfikowany alarm na targu albo artefakt przeskoku zegara w sondzie · Koszt: nieznany
@@ -1132,6 +1114,17 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`, wysokość końca pomostu), packages/sim (`abutments.ts`)
 - Propozycja: wysokość końca pomostu z NMT przed przyczółkiem (pas OUT), gdy wyższy niż na końcu osi; podnosić pomost zamiast obniżać plac. Kontrola skanu `abutment-cut` (teren w zasięgu ramp przyczółków poza pomostem > 0,3 m pod NMT; baza 7)
 - Test przyjęcia: na (2440; 437,5) teren nie niżej niż NMT − 0,3 m
+
+### G-363 Pawilon metra w komórce bez szyldów (Nabrzeże) bez nazwy stacji i litery wejścia
+- Status: zgłoszone (6.11, weryfikator PR #303)
+- Ważność: S4 · Zasięg: litery pawilonu trafiają tylko do komórki, która ma już siatkę szyldów (`cell-builder.ts:70`); pylon i „M” są · Koszt: mały
+- Pakiet właściciela: packages/engine (`renderer/metro`, `cell-builder`)
+- Test przyjęcia: każdy pawilon ma nazwę na blendzie i literę wejścia, bez nowego wywołania rysowania w komórce z szyldami
+
+### G-364 Cywil napiera w miejscu na stojącą postać, bo sonda ucieczki nie widzi postaci
+- Status: zgłoszone (6.11, naprawiacz G-328)
+- Ważność: S4 · Zasięg: ziarno 11, przechodzień 1002001, gracz (−2; 0): napiera na NPC `fixer` (id 287, ok. (317; −99,8)), prędkość 3,4 przy stałej pozycji · Koszt: średni
+- Pakiet właściciela: packages/sim (`systems/ai`)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

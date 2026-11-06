@@ -2,6 +2,24 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-337 Północny chodnik al. Tysiąclecia bez nawierzchni (T-165)
+- Status: naprawione w #298 (6.11, d0b3a6b; `T-165/chodnik-tysiaclecia` i `T-165/okap-bazaru`, kurator PRZYJĘTE po drugiej rundzie)
+- Ważność: S4 · Zasięg: x ok. 640–790, z ok. 362–383, ok. 670 m² na samym x 705–790; przed halami Bazaru rabaty (nie brukować); także x 764–806 przed frontem Dworca (T-165 pkt 1–2): ok. 136 m² między drogą rowerową w1435832523 a ścieżką w227698420 (x 773–803 rabata, nie brukować) i ok. 50 m² między chodnikiem w1435832518 a drogą rowerową (kostka z wiatami)
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: 0 gołych próbek 0,5 m w obszarze T-165 poza rabatami; propozycja kontroli `paving-sliver` dla całego miasta
+
+### G-357 `pinned-far-sleep.test.ts` przekracza 20 s pod coverage w CI
+- Status: naprawione w #302 (6.11, cf1e8fe; podział na przypadki ze wspólnym przebiegiem, najdłuższy pod coverage 9,2 → 2,9 s). Poboczne: krokowanie z przypiętym daleko strażnikiem ok. 10× droższe, do zbadania
+- Ważność: S4 (narzędzia testowe) · Zasięg: „a calm guard whose chunk sleeps stays while he stands in a loaded one…” lokalnie ok. 3 s, plik ok. 30 s także na main; w CI pod coverage 20 s. Wzorzec jak #276 i #295: podzielić test albo zapamiętać wspólny przebieg, limitu nie podnosić
+- Pakiet właściciela: packages/sim (test)
+- Test przyjęcia: najdłuższy test pliku lokalnie ≤ 1,5 s
+
+### G-349 Próg 0,3–0,4 m na zachodnim przyczółku mostu południowego Mełgiewskiej po G-340
+- Status: naprawione w #300 (6.11, 5820de7; teren przyczółków na wysokości pomostu, kontrola `deck-abutment-step` 21 → 12; weryfikator i kurator PRZYJĘTE; reszta progów w G-360)
+- Ważność: S3 · Zasięg: pomost w50733068 przedłużony przez `bridge-ends.ts` jest poziomy na NMT końca osi (−25,72), a teren wzdłuż 13-metrowej krawędzi przyczółka opada na południe do −26,0…−26,14; na próbkach 0,5 m to skarpa (`MAX_WALK_SLOPE`, ADR-0043): postać idąca z Andersa na wschód 4,75–6,0 m na południe od osi staje w (2414,2–2414,7; 323,3–324,4); pas aut Andersa#126:0 schodzi z pomostu bokiem ze skokiem 0,17 m. Skan nie ma kontroli progu pomost–teren na przyczółkach; `bridge-ends.test.ts` nie pilnuje warunku węzła wspólnego (przypadek ze wspólnym węzłem bliżej niż 15 m od krawędzi)
+- Pakiet właściciela: tools/osm-import (`bridge-ends.ts`), packages/sim (terrain/decks), tools/glitch-scan
+- Test przyjęcia: postać przechodzi z Andersa na most na całej szerokości jezdni; kontrola progu pomost–teren na przyczółkach (> 0,25 m) = 0
+
 ### G-340 Szczelina 1–2 m między jezdnią a chodnikiem obu mostów Mełgiewskiej (T-167)
 - Status: naprawione w #293 (5.11, b7bc879; `bridge-fill.ts` wypełnia obrys mostu, `bridge-ends.ts` przedłuża koniec drogi mostowej do krawędzi obrysu; `deck-slot` i `deck-step-face` 0; próg przy przyczółku w G-349)
 - Ważność: S2 (spadek 2,5–5 m z mostu) · Zasięg: 2 mosty Nabrzeża, trasa aut · Koszt: mały–średni
