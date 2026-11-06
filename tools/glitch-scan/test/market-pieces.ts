@@ -82,8 +82,8 @@ export const coverPoints = (i: StreetPropItem): Pt[] => {
 
 type Box = { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
 const boxOf = (pts: readonly Pt[]): Box => ({ minX: Math.min(...pts.map((p) => p.x)), maxX: Math.max(...pts.map((p) => p.x)), minZ: Math.min(...pts.map((p) => p.z)), maxZ: Math.max(...pts.map((p) => p.z)) });
-/** Do the boxes meet (a hair over, past any rounding)? */
-const boxesNear = (a: Box, b: Box): boolean => a.minX <= b.maxX + 1e-6 && b.minX <= a.maxX + 1e-6 && a.minZ <= b.maxZ + 1e-6 && b.minZ <= a.maxZ + 1e-6;
+/** Do the boxes come within `gap` of each other (a hair over, so a point past it is surely farther)? */
+const boxesNear = (a: Box, b: Box, gap = 0): boolean => a.minX <= b.maxX + gap + 1e-6 && b.minX <= a.maxX + gap + 1e-6 && a.minZ <= b.maxZ + gap + 1e-6 && b.minZ <= a.maxZ + gap + 1e-6;
 /** A function of a piece remembered by the piece: the checks walk the same pieces' points (G-409). */
 const byPiece = <T>(f: (i: StreetPropItem) => T): ((i: StreetPropItem) => T) => {
   const memo = new Map<StreetPropItem, T>();
@@ -121,7 +121,14 @@ export const marketChecks = (osm: OsmData, all: readonly StreetPropItem[], lanes
   const data = () => (memo ??= gather());
   const solid = byPiece(solidPoints);
   const cover = byPiece(coverPoints);
+  const solidBox = byPiece((i) => boxOf(solid(i)));
   const coverBox = byPiece((i) => boxOf(cover(i)));
+  let laneMemo: { id: string; line: Pt[]; box: Box }[] | null = null;
+  const crowdLanes = () =>
+    (laneMemo ??= lanes.map((l) => {
+      const line = l.points.map(([x, z]) => ({ x, z }));
+      return { id: l.id, line, box: boxOf(line) };
+    }));
   const each = (test: (i: StreetPropItem, d: ReturnType<typeof gather>) => string | null): Finding[] =>
     data().pieces.flatMap((i) => {
       const what = test(i, data());
@@ -168,10 +175,8 @@ export const marketChecks = (osm: OsmData, all: readonly StreetPropItem[], lanes
     "market-piece-on-crowd-lane": () =>
       each((i) => {
         const pts = solid(i);
-        const hit = lanes.find((l) => {
-          const line = l.points.map(([x, z]) => ({ x, z }));
-          return pts.some((q) => lineGap(q, line, true) < WALKER);
-        });
+        const box = solidBox(i);
+        const hit = crowdLanes().find((l) => boxesNear(box, l.box, WALKER) && pts.some((q) => lineGap(q, l.line, true) < WALKER));
         return hit ? `on ${hit.id}` : null;
       }),
     /**
