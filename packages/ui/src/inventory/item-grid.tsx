@@ -78,8 +78,10 @@ const label = (t: Translate, tx: TranslateText, cell: BagCell): string => {
  * in styles.css and would win: the rarity's colour on the 2 px border, and when selected a white
  * ring inside it instead of the magenta outline over it (a rare frame is magenta too).
  */
-export const iconCellStyle = (rarity: Rarity, selected: boolean): CSSProperties | undefined => {
-  const frame = rarity === "common" ? {} : { borderColor: RARITY_INK[rarity] };
+export const iconCellStyle = (rarity: Rarity, selected: boolean, icon = true): CSSProperties | undefined => {
+  // Text cells keep their frame from CSS (G-410) but take the same white ring when selected, so
+  // one grid has one sign of a selection and magenta only ever means rare.
+  const frame = !icon || rarity === "common" ? {} : { borderColor: RARITY_INK[rarity] };
   const ring = selected ? { outline: "none", boxShadow: `inset 0 0 0 2px ${SELECT_INK}` } : {};
   const style = { ...frame, ...ring };
   return Object.keys(style).length > 0 ? style : undefined;
@@ -106,7 +108,7 @@ export const ItemCell = ({ cell, index, selected, handlers }: { cell: BagCell; i
     <button
       type="button"
       className={`inv__cell${icon ? " inv__cell--icon" : ""}${selected ? " inv__cell--on" : ""}${rarity && rarity !== "common" ? ` rarity--${rarity}` : ""}`}
-      style={icon ? iconCellStyle(rarityOf(cell), selected) : undefined}
+      style={iconCellStyle(rarityOf(cell), selected, icon !== null)}
       data-testid="item-cell"
       data-def={defOf(cell)}
       aria-pressed={selected}

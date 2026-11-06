@@ -159,6 +159,20 @@ describe("the bag", () => {
     });
   });
 
+  it("selects a text cell with the same white ring, never the magenta of a rare frame", () => {
+    mount({ characterTab: "inventory" });
+    const ring = `inset 0 0 0 2px ${SELECT_INK}`;
+    OTHERS.forEach((id, i) => {
+      for (const cell of cells(id)) {
+        fireEvent.click(cell, { timeStamp: 10_000 * (i + 1) });
+        const now = cells(id)[0]!;
+        expect(now.getAttribute("aria-pressed"), id).toBe("true");
+        expect(now.style.boxShadow, id).toBe(ring);
+        expect(now.style.outline, id).toBe("none");
+      }
+    });
+  });
+
   it("keeps the text cell for the kinds without icons, and the same label everywhere", () => {
     mount({ characterTab: "inventory" });
     for (const id of OTHERS) {
