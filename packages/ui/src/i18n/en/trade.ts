@@ -172,7 +172,7 @@ export const enTrade = {
   "shop.clinic.leave": "Leave the clinic",
   "shop.clinic.surcharge": "The clinic doesn't trust you",
   "shop.clinic.hostile": "The clinic sees you as a threat",
-  "shop.clinic.basic": "Hostile reputation: medkits and supplies only. Mori won't put you on the table.",
+  "shop.clinic.basic": "Hostile reputation: medkits, bandages and stims only. Mori won't put you on the table or sell you a capacity shard.",
   "shop.oyaji.label": "Oyaji's stall",
   "shop.oyaji.eyebrow": "Stall · Podzamcze market",
   "shop.oyaji.title": "Oyaji",

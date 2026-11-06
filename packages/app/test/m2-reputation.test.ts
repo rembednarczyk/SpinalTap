@@ -67,6 +67,10 @@ describe("M2: NPCs react to reputation", () => {
     expect(ui.getState().cyberware.arms).toBeUndefined();
     const refusal = ui.getState().toasts.find((t) => t.title === "Mori shakes his head");
     expect(refusal?.text).toBe("Not for you. Ammo and basics, nothing more.");
+    // Decision 5.11: the capacity shard is cyberware work, so a hostile Mori does not sell it either.
+    session.intents.buyItem("capacity_shard");
+    steps(session, 1);
+    expect(ui.getState().eddies).toBe(eddies - 135);
   });
 
   // ADR-0070: the street runs only when it is hostile (≤ -50), and only its passers-by; Ume, who

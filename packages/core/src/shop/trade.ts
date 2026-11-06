@@ -22,7 +22,7 @@ import {
 import { RARITY } from "../items/rarity";
 import type { ItemDefId, ItemRef, Rarity } from "../items/types";
 import type { ReputationTier } from "../reputation/reputation";
-import { type PurchaseFailure, type ShopTerms, STANDARD_TERMS, fullService, priceWithTerms } from "./ripperdoc";
+import { type PurchaseFailure, type ShopTerms, STANDARD_TERMS, fullService, offersStack, priceWithTerms } from "./ripperdoc";
 import { SHOPS, type ShopId, type ShopItemId, type StockEntry, stockEntry, stockListPrice } from "./shops";
 
 /**
@@ -178,8 +178,12 @@ export type StockPurchase =
   | (TradeState & { readonly ok: true; readonly price: number; readonly added: ItemInstance | null; readonly qty: number })
   | { readonly ok: false; readonly reason: TradeFailure };
 
-/** Whether the terms let this entry be sold: ammo and stacks always, pieces only on full terms (ADR-0070). */
-export const offersEntry = (entry: StockEntry, terms: ShopTerms): boolean => entry.kind !== "item" || fullService(terms);
+/**
+ * Whether the terms let this entry be sold (ADR-0070): ammo and basic stacks always; pieces and
+ * the capacity shard only on full terms.
+ */
+export const offersEntry = (entry: StockEntry, terms: ShopTerms): boolean =>
+  entry.kind === "ammo" || (entry.kind === "stack" ? offersStack(entry.item, terms) : fullService(terms));
 
 /**
  * Buys one entry of a shop's stock: a piece into a free cell, one of a stack, or a whole box of

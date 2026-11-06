@@ -129,5 +129,6 @@ describe("shop terms", () => {
     expect(buyCyberware({ eddies: 99999 }, c, "subdermal_weave", shopTerms(-80))).toEqual({ ok: false, reason: "refused" });
     expect(buyItem({ eddies: 81 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "medkit", shopTerms(20))).toMatchObject({ ok: true, wallet: { eddies: 0 }, inventory: { stacks: { medkit: 1 } }, price: 81 });
     expect(buyItem({ eddies: 99999 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "medkit", shopTerms(-80))).toMatchObject({ ok: true, price: priceWithTerms(STACKABLE_CATALOG.medkit.value, shopTerms(-80)) });
+    expect(buyItem({ eddies: 99999 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "capacity_shard", shopTerms(-80))).toEqual({ ok: false, reason: "refused" });
   });
 });
