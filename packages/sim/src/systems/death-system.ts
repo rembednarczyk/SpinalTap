@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, type KillContext, LOOT_TABLES, contractKind, killXp, killedFlag, rollLoot } from "@seki/core";
+import { ENEMY_TYPES, type KillContext, LOOT_TABLES, SECOND_HEART_COOLDOWN, contractKind, killXp, killedFlag, rollLoot, secondHeartShare } from "@seki/core";
 import { deriveRandom } from "../rng/derive-random";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
@@ -7,6 +7,7 @@ import { corpseOf } from "../world/bodies";
 import { inCreationOrder } from "../world/ordering";
 import { grantXp } from "../world/progression-ops";
 import { disturb, isContractTarget, noteTally, offend } from "../world/street";
+import { perksOf } from "./perk-system";
 
 /** A body is noticed this far (ADR-0029). */
 export const BODY_NOISE = 12;
@@ -46,6 +47,20 @@ const checkContractCleared = (ctx: Parameters<System["run"]>[0]): void => {
 };
 
 /**
+ * Second Heart (ADR-0059): a blow that would kill the player leaves her a share of her health
+ * instead, once per SECOND_HEART_COOLDOWN seconds. True when it saved her.
+ */
+const secondHeart = (ctx: Ctx, player: Entity): boolean => {
+  const share = secondHeartShare(ctx.state.domain.progression.perks);
+  if (share <= 0 || !player.health) return false;
+  const s = perksOf(player);
+  if (s.secondHeart > 0) return false;
+  player.health = { ...player.health, current: Math.max(1, Math.round(player.health.max * share)) };
+  s.secondHeart = SECOND_HEART_COOLDOWN;
+  return true;
+};
+
+/**
  * Removes killed NPCs (recording it in flags and, when the player did it, in their faction's
  * standing; an enemy leaves its bag whoever killed it) and ends the run when the player flatlines.
  * A body (`downed`: killed in a takedown, or while knocked out) is left lying as a corpse with
@@ -59,6 +74,7 @@ export const deathSystem: System = {
     const playerId = ctx.world.with("player").first?.id;
     for (const e of dead) {
       if (e.player) {
+        if (!ctx.session.gameOver && secondHeart(ctx, e)) continue;
         if (!ctx.session.gameOver) {
           ctx.session.gameOver = true;
           ctx.bus.emit("PlayerDied", { entityId: e.id });

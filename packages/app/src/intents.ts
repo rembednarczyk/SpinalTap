@@ -49,6 +49,7 @@ const SHOP: Keys<ShopIntents> = {
   upgradeBackpack: true,
   installCyberwareItem: true,
   removeCyberware: true,
+  respec: true,
   closeShop: true,
   talkToShopkeeper: true,
 };
@@ -66,7 +67,7 @@ const CHARACTER: Keys<CharacterIntents> = {
   installMod: true,
   removeMod: true,
 };
-const PROGRESSION: Keys<ProgressionIntents> = { spendAttributePoint: true };
+const PROGRESSION: Keys<ProgressionIntents> = { spendAttributePoint: true, spendPerkPoint: true };
 const SETTINGS: Keys<SettingsIntents> = { changeSettings: true, bindKey: true, resetControls: true, reload: true };
 const DIFFICULTY: Keys<DifficultyIntents> = { setDifficulty: true };
 const CAMERA: Keys<CameraIntents> = { setFieldOfView: true };

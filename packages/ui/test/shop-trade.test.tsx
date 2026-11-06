@@ -44,6 +44,8 @@ const intents = (): UiIntents => ({
   installMod: vi.fn(),
   removeMod: vi.fn(),
   spendAttributePoint: vi.fn(),
+  spendPerkPoint: vi.fn(),
+  respec: vi.fn(),
   openPhone: vi.fn(),
   closePhone: vi.fn(),
   readThread: vi.fn(),

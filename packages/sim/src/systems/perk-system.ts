@@ -1,4 +1,4 @@
-import { cooldownRateOf, hasPerk } from "@seki/core";
+import { cooldownRateOf, dashCooldownScale, hasPerk, staminaRegenScale } from "@seki/core";
 import type { Entity, PerkState } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { playerHeld } from "../world/takedown";
@@ -17,7 +17,7 @@ export const DASH_EXIT_SPEED = 6;
 export const STAMINA_REGEN = 0.35;
 export const STAMINA_GUARD_REGEN = 0;
 
-export const freshPerks = (): PerkState => ({ dash: 0, dashDir: { x: 0, z: 1 }, dashCooldown: 0, airDash: false, dashFlight: false, iframes: 0, stamina: 1 });
+export const freshPerks = (): PerkState => ({ dash: 0, dashDir: { x: 0, z: 1 }, dashCooldown: 0, airDash: false, dashFlight: false, iframes: 0, stamina: 1, secondHeart: 0 });
 
 /** The perk state of the player, created on first use. */
 export const perksOf = (p: Entity): PerkState => (p.perks ??= freshPerks());
@@ -65,11 +65,15 @@ export const perkSystem: System = {
   name: "perk",
   run(ctx) {
     const rate = cooldownRateOf(ctx.state.domain.buffs);
+    // Second Wind and Slipstream (ADR-0059): the guard rests faster, the dash comes back sooner.
+    const perks = ctx.state.domain.progression.perks;
+    const regen = STAMINA_REGEN * staminaRegenScale(perks);
     for (const p of ctx.world.with("player", "velocity")) {
       const s = perksOf(p);
       s.dashCooldown = Math.max(0, s.dashCooldown - ctx.dt * rate);
       s.iframes = Math.max(0, s.iframes - ctx.dt);
-      s.stamina = Math.min(1, s.stamina + ctx.dt * (p.melee?.guard ? STAMINA_GUARD_REGEN : STAMINA_REGEN));
+      s.secondHeart = Math.max(0, s.secondHeart - ctx.dt);
+      s.stamina = Math.min(1, s.stamina + ctx.dt * (p.melee?.guard ? STAMINA_GUARD_REGEN : regen));
       const grounded = p.fall === undefined && !p.climb && !p.mantle;
       if (grounded) {
         s.airDash = false;
@@ -84,7 +88,7 @@ export const perkSystem: System = {
       if (!canDash(ctx, p, s, grounded)) continue;
       s.dashDir = dashDirection(p, ctx.input.moveX, ctx.input.moveZ);
       s.dash = DASH_TIME;
-      s.dashCooldown = DASH_COOLDOWN;
+      s.dashCooldown = DASH_COOLDOWN * dashCooldownScale(perks);
       s.iframes = DASH_IFRAMES;
       s.dashFlight = true;
       if (!grounded) {

@@ -1,4 +1,4 @@
-import { ATTRIBUTE_IDS, ATTRIBUTE_MAX, ATTRIBUTE_START, HACKED_MEMORY, MAX_LEVEL, MIN_LEVEL, type ProgressionState, isConsistentProgression } from "@seki/core";
+import { ATTRIBUTE_IDS, ATTRIBUTE_MAX, ATTRIBUTE_START, type Attributes, HACKED_MEMORY, MAX_LEVEL, MIN_LEVEL, type ProgressionState, isConsistentProgression, validPerks } from "@seki/core";
 
 type Json = Record<string, unknown>;
 
@@ -15,7 +15,8 @@ export const findProgressionError = (p: unknown): string | null => {
     const v = a[id];
     if (!Number.isInteger(v) || (v as number) < ATTRIBUTE_START || (v as number) > ATTRIBUTE_MAX) return "progression attributes";
   }
-  if (!isObject(p.perks) || !Object.values(p.perks).every(isCount)) return "progression perks";
+  // A perk that exists, within its ranks, on a tier its attribute opens (ADR-0059, stage 3).
+  if (!isObject(p.perks) || !Object.values(p.perks).every(isCount) || !validPerks(a as unknown as Attributes, p.perks as Readonly<Record<string, number>>)) return "progression perks";
   const u = p.unspent;
   if (!isObject(u) || !isCount(u.attribute) || !isCount(u.perk)) return "progression points";
   const h = p.hacked;

@@ -1,4 +1,4 @@
-import { BUFF_CATALOG, type DomainState, cooldownRateOf } from "@seki/core";
+import { BUFF_CATALOG, type DomainState, cooldownRateOf, dashCooldownScale } from "@seki/core";
 import { DASH_COOLDOWN, cyberCapacityOf } from "@seki/sim";
 import { type BuffVm, type CapacityVm, type DashVm, translate, translateText } from "@seki/ui";
 import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part";
@@ -6,8 +6,8 @@ import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part
 /** The minimap stays zoomed out this long after a dash (ADR-0035). */
 export const DASH_ZOOM_SECONDS = 0.8;
 
-/** Seconds of the dash cooldown with the buffs that run now (synthetic coffee shortens it). */
-export const dashCooldownSeconds = (domain: DomainState): number => DASH_COOLDOWN / cooldownRateOf(domain.buffs);
+/** Seconds of the dash cooldown with the buffs that run now (synthetic coffee shortens it) and the Slipstream perk (ADR-0059). */
+export const dashCooldownSeconds = (domain: DomainState): number => (DASH_COOLDOWN * dashCooldownScale(domain.progression.perks)) / cooldownRateOf(domain.buffs);
 
 /** The pool as the simulation counts it (level, shards and Tech). */
 export const capacityVm = (domain: DomainState): CapacityVm => cyberCapacityOf(domain);
