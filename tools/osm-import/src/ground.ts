@@ -9,6 +9,7 @@ import { type Area, type Line } from "./features.ts";
 import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, lineLength, offsetLine, pointAlong, pointInRing, r1, removeCollinear, signedArea, simplifyLine, simplifyRing, sliceLine, stripAlong } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
+import { cutHoles, holeFits, holesApart } from "./ring-holes.ts";
 
 const COBBLES = new Set(["sett", "cobblestone", "unhewn_cobblestone", "cobblestone:flattened"]);
 const cobbled = (t: Tags) => COBBLES.has(t.surface ?? "");
@@ -137,6 +138,8 @@ export interface Band {
   readonly along?: { readonly line: readonly Pt[]; readonly from: number; readonly width: number };
   /** A band of steps' run, end to end: what its pieces in a chunk are cut along (`flightStrips`). */
   readonly run?: readonly [Pt, Pt];
+  /** Paving with holes (`openPavings`), simplified already: simplifying it again would move its holes off the lawns drawn in them. */
+  readonly holed?: true;
 }
 
 /** Sidewalk sides a road gets: tagged ones, or both on city streets without tags and without mapped sidewalks nearby. */
@@ -250,6 +253,38 @@ export const areaBand = (a: Area): Band | null => {
   return { surface: s, ring: a.ring, bridge: false, source: a.id };
 };
 
+/** The pavings, and the surfaces drawn under them (`SURFACE_LIFT`) that a paving mapped round them is not to cover. */
+const PAVINGS = new Set<GroundSurface>(["square", "cobble"]);
+const UNDER_PAVING = new Set<GroundSurface>(["grass", "water"]);
+
+/**
+ * Areas of paving with the lawns and the water mapped inside them cut out (G-421): the paving lies
+ * over them, so Plac Litewski's lawns (inner rings of its multipolygon and the same ways tagged
+ * `landuse=grass`), the trees' beds along a pedestrian street and the like were drawn but never seen.
+ * Only what is drawn in a hole is cut, so the paving stays where an inner ring has nothing of its
+ * own (a fence, a building, an archaeological site). `whole(b)` says a band is its area's whole
+ * ground: a lawn with holes of its own would bare the paving mapped in them. The larger of two
+ * lawns that touch is cut, the other stays under the paving.
+ */
+export const openPavings = <B extends Band & { readonly box: Rect }>(bands: readonly B[], whole: (b: B) => boolean): B[] => {
+  const under = bands.filter((b) => UNDER_PAVING.has(b.surface) && !b.bridge && whole(b));
+  return bands.map((b) => {
+    if (!PAVINGS.has(b.surface) || b.bridge) return b;
+    const fits = under.filter((u) => u.box.minX > b.box.minX && u.box.maxX < b.box.maxX && u.box.minZ > b.box.minZ && u.box.maxZ < b.box.maxZ && holeFits(b.ring, u.ring));
+    fits.sort((p, q) => Math.abs(signedArea(q.ring)) - Math.abs(signedArea(p.ring)) || (p.source < q.source ? -1 : p.source > q.source ? 1 : 0));
+    // Simplified and rounded as `chunkGround` lays a lawn inside a chunk, so the hole is the lawn
+    // drawn in it and the chunk rounds no corner of a seam or a hole onto another.
+    const grid = (ring: readonly Pt[]) => removeCollinear(simplifyRing(ccw(ring), 0.3).map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02);
+    const ring = grid(b.ring);
+    const holes: Pt[][] = [];
+    for (const u of fits) {
+      const h = grid(u.ring);
+      if (holeFits(ring, h) && holes.every((o) => holesApart(o, h))) holes.push(h);
+    }
+    return holes.length > 0 ? { ...b, ring: cutHoles(ring, holes), holed: true } : b;
+  });
+};
+
 /** Stretches of a laid sidewalk shorter than this are dropped, metres. */
 const MIN_SIDEWALK = 1.5;
 
@@ -293,7 +328,7 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
   bands.forEach((b, k) => {
     const clipped = clipRingToRect(ccw(b.ring), rect);
     if (clipped.length < 3) return;
-    const simple = simplifyRing(clipped, 0.3);
+    const simple = b.holed ? clipped : simplifyRing(clipped, 0.3);
     if (Math.abs(signedArea(round(simple))) < 0.5) return;
     // Steps are cut into strips in the chunk, so a piece its edge cuts short is cut too; the
     // strips of a piece kept are all kept, however small, or the flight would have gaps.
