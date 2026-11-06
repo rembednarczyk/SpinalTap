@@ -95,6 +95,8 @@ const bakeShaft = (sink: MeshSink, p: AlchemiaLiftPlan, quality: RenderQuality):
   liftBox(sink, p, p.sill, C.granite);
   liftBox(sink, p, { ...p.sill, z0: p.sill.z1 - 0.04, y0: p.sill.y1 - 0.04 }, C.cyan, 0.005);
   liftBox(sink, p, p.pocket, C.steel);
+  // The heads over the gates, which shut their openings to the top (G-289).
+  for (const h of p.heads) liftBox(sink, p, h, C.steel);
   // A chevron over the door, pointing up: the way to the roof without a word.
   const cx = p.centre.x;
   const z = p.centre.z + out + 0.03;
