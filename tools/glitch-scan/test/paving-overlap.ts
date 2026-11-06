@@ -1,9 +1,8 @@
 import { type GroundSurface, SURFACE_LIFT, type Vec3, type ViewDescriptor } from "../../../packages/core/src";
 import { worldRing } from "../../../packages/engine/src/renderer/drones/drone-world";
-import { drape } from "../../../packages/engine/src/renderer/mapcity/ground-plan";
+import { drapedTriangles as drapeCorners } from "../../../packages/engine/src/renderer/mapcity/ground-plan";
 import { BinIndex } from "../../../packages/engine/src/renderer/mapcity/map-index";
 import { type P2, boundsOf } from "../../../packages/engine/src/renderer/mapcity/polygon";
-import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 
 /**
  * The ground surfaces of the scenery as the renderer drapes them (`drape`, ADR-0044), read off the
@@ -32,15 +31,31 @@ export interface DrawnPiece {
   readonly cells: () => ReadonlyMap<number, readonly Tri[]>;
 }
 
-/** The triangles `drape` lays `ring` as on `groundAt` at `lift`, read off its mesh. */
+/**
+ * The triangles `drape` lays `ring` as on `groundAt` at `lift`, as its mesh has them: the corners
+ * merged to hundredths of a millimetre (the first one kept), each triangle wound to face up. Built
+ * from the engine's `drapedTriangles`, not off a mesh (G-409): the mesh reads the ground four times
+ * round every vertex for its normal, most of the check's time under coverage, and the normal is
+ * not compared.
+ */
 export const drapedTriangles = (ring: readonly P2[], groundAt: (x: number, z: number) => number, lift: number): Tri[] => {
-  const sink = new MeshSink();
-  drape(sink, ring, groundAt, lift, [0, 0, 0, 1], () => [0, 0], [0, 0]);
-  const p = sink.positions;
-  const v = (i: number): Vec3 => ({ x: p[i * 3]!, y: p[i * 3 + 1]!, z: p[i * 3 + 2]! });
-  const out: Tri[] = [];
-  for (let t = 0; t + 2 < sink.indices.length; t += 3) out.push([v(sink.indices[t]!), v(sink.indices[t + 1]!), v(sink.indices[t + 2]!)]);
-  return out;
+  const seen = new Map<number, Map<number, Vec3>>();
+  const at = (p: Vec3): Vec3 => {
+    const kx = Math.round(p.x * 1e5);
+    const kz = Math.round(p.z * 1e5);
+    let row = seen.get(kx);
+    if (!row) seen.set(kx, (row = new Map()));
+    const known = row.get(kz);
+    if (known) return known;
+    row.set(kz, p);
+    return p;
+  };
+  return drapeCorners(ring, groundAt, lift).map(([p, q, r]): Tri => {
+    const [a, b, c] = [at(p), at(q), at(r)];
+    // `face`: the cross product of the edges against the up normal.
+    const up = (b.z - a.z) * (c.x - a.x) - (b.x - a.x) * (c.z - a.z);
+    return up > 0 ? [a, c, b] : [a, b, c];
+  });
 };
 
 const byCell = (tris: readonly Tri[]): Map<number, Tri[]> => {

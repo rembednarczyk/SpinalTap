@@ -9,6 +9,7 @@ import { clearedBuilding } from "../../../packages/sim/src/content/cleared-build
 import { buildingView } from "../../../packages/sim/src/content/lublin";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
+import { memoAt } from "./point-memo";
 
 /**
  * The cables of the spans over the streets (ADR-0051) that hang low over the paving drawn under
@@ -27,21 +28,27 @@ export interface LowCable {
 
 const STEP = 0.25;
 
+/** The drawn surface by the exact point: the ribbons' edges walk the same points (2.3 million samples, 0.5 million points, G-409). */
+const surfaceAt = memoAt(surfaceY);
+
 /** The lowest point of a sink's triangles' edges over the drawn surface, every `STEP` metres. */
 const lowest = (sink: MeshSink): { x: number; z: number; clearance: number } => {
   const p = sink.positions;
   let best = { x: 0, z: 0, clearance: Infinity };
   const edge = (i: number, j: number) => {
-    const [ax, ay, az, bx, by, bz] = [p[i * 3]!, p[i * 3 + 1]!, p[i * 3 + 2]!, p[j * 3]!, p[j * 3 + 1]!, p[j * 3 + 2]!];
+    const ax = p[i * 3]!, ay = p[i * 3 + 1]!, az = p[i * 3 + 2]!;
+    const bx = p[j * 3]!, by = p[j * 3 + 1]!, bz = p[j * 3 + 2]!;
     const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / STEP));
     for (let k = 0; k <= n; k++) {
-      const [x, y, z] = [ax + ((bx - ax) * k) / n, ay + ((by - ay) * k) / n, az + ((bz - az) * k) / n];
-      const clearance = y - surfaceY(x, z);
+      const x = ax + ((bx - ax) * k) / n;
+      const y = ay + ((by - ay) * k) / n;
+      const z = az + ((bz - az) * k) / n;
+      const clearance = y - surfaceAt(x, z);
       if (clearance < best.clearance) best = { x, z, clearance };
     }
   };
   for (let t = 0; t + 2 < sink.indices.length; t += 3) {
-    const [a, b, c] = [sink.indices[t]!, sink.indices[t + 1]!, sink.indices[t + 2]!];
+    const a = sink.indices[t]!, b = sink.indices[t + 1]!, c = sink.indices[t + 2]!;
     edge(a, b);
     edge(b, c);
     edge(c, a);
