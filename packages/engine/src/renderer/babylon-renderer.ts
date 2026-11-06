@@ -35,6 +35,7 @@ import { Signage } from "./signage";
 import { RendererLoading } from "./renderer-loading";
 import { warmUpMaterials } from "./start-prep";
 import { pavilionRoofOver } from "./metro/pavilion-roof";
+import { PlatformViews, platformRoofOver } from "./metro/platform-view";
 import { WetAsphalt } from "./wet-asphalt";
 import type { Stage } from "./stage";
 
@@ -124,6 +125,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly cityKit: CityKitLoader;
   /** The metro car between districts (ADR-0036). */
   private readonly metro: MetroRide;
+  /** The metro's platforms under the streets (ADR-0071 stage 4), on only near. */
+  private platforms: PlatformViews | null = null;
   /** Static reflection probe of the wet asphalt on medium and high quality (ADR-0036). */
   private readonly wet: WetAsphalt | null;
   /** Buildings, terrain and ground from map data (ADR-0044), created with the first of them. */
@@ -241,8 +244,7 @@ export class BabylonRenderer implements RenderPort {
       signage: this.signage,
       speedLines: this.speedLines,
       fogScale: options.fogScale ?? 1,
-      // The rain stops under the map's roofs and the metro pavilions' (G-331).
-      roofOver: (x, y, z) => (this.map.current?.roofOver(x, y, z) ?? false) || (this.map.current !== null && pavilionRoofOver(x, y, z)),
+      roofOver: (x, y, z) => this.roofOver(x, y, z),
       actors: this.characters,
       cameraTarget: () => this.cameraTarget,
       scanTargets: (visit) => {
@@ -343,6 +345,18 @@ export class BabylonRenderer implements RenderPort {
     this.fx.setIndoor(ride !== null);
   }
 
+  /** The platforms' views, made with the map city: their letters go on its sign material. */
+  private platformViews(): PlatformViews {
+    const eye = this.rig.camera.position;
+    return new PlatformViews({ scene: this.stage.scene, materials: this.materials, shadow: this.shadow, signs: () => this.map.current?.signMaterial ?? null, eye: () => eye });
+  }
+
+  /** The rain stops under the map's roofs, the metro pavilions' (G-331) and over the platforms under the street (ADR-0071 stage 4). */
+  private roofOver(x: number, y: number, z: number): boolean {
+    const city = this.map.current;
+    return city !== null && (city.roofOver(x, y, z) || pavilionRoofOver(x, y, z) || platformRoofOver(x, y, z));
+  }
+
   /** Per-frame presentation update: animation, camera, VFX, rain. Call before scene.render(). */
   frame(dt: number): void {
     this.fx.beginFrame(dt);
@@ -361,6 +375,7 @@ export class BabylonRenderer implements RenderPort {
     this.drones.update(dt, this.stage.options.reference);
     this.capsule.update();
     this.alchemia.update();
+    if (this.map.current) (this.platforms ??= this.platformViews()).update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();

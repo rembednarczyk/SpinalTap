@@ -7,34 +7,35 @@ const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s
 const hash = (sim: Simulation) => stateHash(sim.snapshot(null, "t", ""));
 const flat = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.hypot(a.x - b.x, a.z - b.z);
 
+/** In front of the ticket machine of the station's entrance A: on its platform (ADR-0071 stage 4). */
 const atKiosk = (sim: Simulation, id: Parameters<typeof metroStation>[0]) => {
-  const s = metroStation(id);
-  teleportPlayer(sim, s.arrival, s.arrivalYaw);
+  const a = metroStation(id).entrances[0];
+  teleportPlayer(sim, a.ticket, a.ticketYaw);
   run(sim, 2);
 };
 
 describe("metro entrances (ADR-0071 stage 2)", () => {
   it.each(METRO_ENTRANCES.map((e) => [`${e.station} ${e.label}`, e] as const))("%s: up the stairs from the hall to the street and back down", (_name, e) => {
     const sim = Simulation.create({ seed: 3 });
-    teleportPlayer(sim, e.arrival, e.arrivalYaw);
+    teleportPlayer(sim, e.hallSpot, e.hallYaw);
     run(sim, 2);
     // Walk out: forward up the stairs, through the opening, onto the street.
     for (let i = 0; i < 6 * SIM_HZ && flat(sim.player()!.position, e.door) > 0.6; i++) sim.step(input({ moveZ: 1 }));
     const out = sim.player()!.position;
     expect(flat(out, e.door), `${out.x},${out.y},${out.z}`).toBeLessThan(0.8);
     expect(Math.abs(out.y - e.door.y)).toBeLessThan(0.3);
-    // And back down to the machine's hall.
-    teleportPlayer(sim, e.door, e.arrivalYaw + Math.PI);
+    // And back down to the hall.
+    teleportPlayer(sim, e.door, e.hallYaw + Math.PI);
     run(sim, 2);
-    for (let i = 0; i < 6 * SIM_HZ && flat(sim.player()!.position, e.arrival) > 0.6; i++) sim.step(input({ moveZ: 1 }));
+    for (let i = 0; i < 6 * SIM_HZ && flat(sim.player()!.position, e.hallSpot) > 0.6; i++) sim.step(input({ moveZ: 1 }));
     const down = sim.player()!.position;
-    expect(flat(down, e.arrival), `${down.x},${down.y},${down.z}`).toBeLessThan(1.5);
+    expect(flat(down, e.hallSpot), `${down.x},${down.y},${down.z}`).toBeLessThan(1.5);
     expect(Math.abs(down.y - e.floor)).toBeLessThan(0.1);
   });
 });
 
 describe("riding the metro (ADR-0034)", () => {
-  it("the ticket machine in the hall opens the line map for its station", () => {
+  it("the ticket machine on the platform opens the line map for its station", () => {
     const sim = Simulation.create({ seed: 2 });
     const started = collect<{ kind: string; station?: string }>(sim, "InteractionStarted");
     atKiosk(sim, "shinsekai");
@@ -78,7 +79,7 @@ describe("riding the metro (ADR-0034)", () => {
     expect(refused.map((r) => r.reason)).toEqual(["not-at-kiosk"]);
   });
 
-  it("takes the player off the street, streams the destination in and brings them up in its hall", () => {
+  it("takes the player off the platform, streams the destination in and lets them off on its platform", () => {
     const sim = Simulation.create({ seed: 2 });
     atKiosk(sim, "shinsekai");
     const departed = collect<{ from: string; to: string; seconds: number }>(sim, "MetroDeparted");
@@ -97,14 +98,14 @@ describe("riding the metro (ADR-0034)", () => {
     expect(arrived).toEqual([{ station: "doki" }]);
     const p = sim.player()!;
     expect(flat(p.position, metroStation("doki").arrival)).toBeLessThan(0.5);
-    expect(Math.abs(p.position.y - metroStation("doki").entrances[0].floor)).toBeLessThan(0.1);
+    expect(Math.abs(p.position.y - metroStation("doki").entrances[0].platform!.floor)).toBeLessThan(0.1);
     expect(sim.district).toBe("doki");
     // The world went on meanwhile.
     expect(sim.clock.seconds).toBeGreaterThan(clock + 60 * metroRideSeconds("shinsekai", "doki") - 60);
     expect(sim.domain.metro.ride).toBeNull();
   });
 
-  it("buys at entrance B as at A and comes up in A's hall of the destination", () => {
+  it("buys in the hall of entrance B and gets off on the platform of the destination's A", () => {
     const sim = Simulation.create({ seed: 2 });
     const b = metroStation("kanal").entrances[1]!;
     teleportPlayer(sim, b.arrival, b.arrivalYaw);

@@ -36,11 +36,11 @@ const UV = [
 ] as const;
 
 /** A line of letters centred at `c` on a face looking along `n`, `h` high, squeezed to `room` metres wide. */
-const letters = (sink: MeshSink, text: string, c: Vec, n: Vec, h: number, room: number): void => {
+export const letters = (sink: MeshSink, text: string, c: Vec, n: Vec, h: number, room: number, tint: string = LINE_AMBER): void => {
   const right: Vec = { x: -n.z, y: 0, z: n.x };
   const natural = [...text].reduce((s, ch) => s + glyphAdvance(ch), 0) * h;
   const squeeze = Math.min(1, room / natural);
-  const color = signTint(LINE_AMBER, 1);
+  const color = signTint(tint, 1);
   let x = (-natural * squeeze) / 2;
   for (const ch of text) {
     const w = glyphAdvance(ch) * h * squeeze;

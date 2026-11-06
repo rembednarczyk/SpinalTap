@@ -109,9 +109,14 @@ const thresholdOf = (sill: number, across: readonly { x: number; z: number }[], 
   return { bounds, top: Math.round((sill - drop / 2) * 100) / 100, bottom: low - 0.3 };
 };
 
-export const pavilion = (spot: PavilionSpot): Pavilion => {
+/** A pavilion's frame: `u` metres from the opening inwards along the long side, `w` across it; a box of it is a box of the world. */
+export interface SpotFrame {
+  point(u: number, w: number): { x: number; z: number };
+  rect(u0: number, u1: number, w0: number, w1: number): Rect;
+}
+
+export const spotFrame = (spot: PavilionSpot): SpotFrame => {
   const { along, opens } = spot;
-  // u: from the opening inwards along the long side; w: across it.
   const mouth = (along === "x" ? spot.x : spot.z) + (opens * PAVILION.length) / 2;
   const across = along === "x" ? spot.z : spot.x;
   const point = (u: number, w: number): { x: number; z: number } => (along === "x" ? { x: mouth - opens * u, z: across + w } : { x: across + w, z: mouth - opens * u });
@@ -120,8 +125,27 @@ export const pavilion = (spot: PavilionSpot): Pavilion => {
     const b = point(u1, w1);
     return { minX: Math.min(a.x, b.x), maxX: Math.max(a.x, b.x), minZ: Math.min(a.z, b.z), maxZ: Math.max(a.z, b.z) };
   };
-  const at = point(0, 0);
-  const street = Math.round(groundY(at.x, at.z) * 100) / 100;
+  return { point, rect };
+};
+
+/** The yaw facing inwards (+u) or out of the opening (-u). */
+export const inwardYaw = (spot: PavilionSpot, sign: 1 | -1): number => yawOf(spot.along, (-spot.opens * sign) as 1 | -1);
+
+/** The end wall's doorway down to the platform of stage 4: as wide as the stairs, from the hall's floor up to `head` over it. */
+export interface EndDoorway {
+  readonly head: number;
+}
+
+/** The street at the opening: the head of the stairs, the level everything of the entrance counts from. */
+export const pavilionStreet = (spot: PavilionSpot): number => {
+  const at = spotFrame(spot).point(0, 0);
+  return Math.round(groundY(at.x, at.z) * 100) / 100;
+};
+
+export const pavilion = (spot: PavilionSpot, doorway: EndDoorway | null = null): Pavilion => {
+  const { along, opens } = spot;
+  const { point, rect } = spotFrame(spot);
+  const street = pavilionStreet(spot);
   const floor = street - HALL_DEPTH;
   const box = (u0: number, u1: number, w0: number, w1: number, y0: number, y1: number, material: BlockMaterial, solid = true): StaticProp => {
     const r = rect(u0, u1, w0, w1);
@@ -151,7 +175,8 @@ export const pavilion = (spot: PavilionSpot): Pavilion => {
     box(foot, hallEnd, -inner, inner, base, floor, "concrete"),
     // The side walls and the end wall: concrete up to the plinth's top, glass above.
     ...[-1, 1].flatMap((s) => [box(0, L, s * inner, s * half, base, street + PLINTH, "concrete"), box(0, L, s * inner, s * half, street + PLINTH, top, "glass")]),
-    box(hallEnd, L, -inner, inner, base, street + PLINTH, "concrete"),
+    // The end wall, with the doorway down to the platform where the entrance has one (stage 4).
+    ...(doorway ? [box(hallEnd, L, -inner, inner, base, floor, "concrete"), box(hallEnd, L, -inner, inner, floor + doorway.head, street + PLINTH, "concrete")] : [box(hallEnd, L, -inner, inner, base, street + PLINTH, "concrete")]),
     box(hallEnd, L, -inner, inner, street + PLINTH, top, "glass"),
     // The lintel over the opening and the roof with its eaves.
     box(0, END_WALL, -inner, inner, street + LINTEL, top, "glass"),

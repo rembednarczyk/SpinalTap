@@ -1,15 +1,42 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, METRO_STATION_IDS } from "@seki/core";
-import { METRO_PLANNED, METRO_STATIONS } from "@seki/sim";
+import { METRO_PLANNED, METRO_STATIONS, PAVILION } from "@seki/sim";
 import { NEAR_MAX, NEAR_RADIUS } from "@seki/ui";
 import { buildCityMap } from "../src/city-map";
 import { metroLayerVm, metroMapVm, metroNear } from "../src/presenters/metro-map";
 import { frame, setup, steps, teleport } from "./story-helpers";
 
+type Entrance = (typeof METRO_STATIONS)[number]["entrances"][number];
+const flat = (p: { x: number; z: number }, q: { x: number; z: number }) => Math.hypot(p.x - q.x, p.z - q.z);
+
+/** A point of an entrance's frame (u inwards from its opening, w across). */
+const frameAt = (e: Entrance, u: number, w: number): { x: number; z: number } => {
+  const mouth = (e.spot.along === "x" ? e.spot.x : e.spot.z) + (e.spot.opens * PAVILION.length) / 2;
+  const side = e.spot.along === "x" ? e.spot.z : e.spot.x;
+  return e.spot.along === "x" ? { x: mouth - e.spot.opens * u, z: side + w } : { x: side + w, z: mouth - e.spot.opens * u };
+};
+
+/** Sprints to (x, z), turning towards it every step, for up to `seconds`; the distance left. */
+const walkTo = (session: ReturnType<typeof setup>["session"], q: { x: number; z: number }, seconds = 8): number => {
+  for (let i = 0; i < seconds * 60; i++) {
+    const p = session.sim.player()!;
+    if (flat(p.position, q) < 0.4) break;
+    const want = Math.atan2(q.x - p.position.x, q.z - p.position.z);
+    steps(session, 1, frame({ moveZ: 1, lookYaw: Math.atan2(Math.sin(want - p.yaw), Math.cos(want - p.yaw)) }));
+  }
+  return flat(session.sim.player()!.position, q);
+};
+
+/** From the car's door on a platform to the stairs' foot, up both flights and out of the pavilion. */
+const walkUp = (session: ReturnType<typeof setup>["session"], e: Entrance): void => {
+  const p = e.platform!;
+  for (const q of [frameAt(e, p.u.back + 1, 0), frameAt(e, p.u.stepsTop - 0.6, 0), e.hallSpot, e.door]) walkTo(session, q);
+};
+
 /**
  * The metro line as a layer (ADR-0071 stages 1 and 2), without a renderer (ADR-0046): the layer
  * the app builds from the simulation's content, the ticket machine's route and preview, and a
- * ticket in two steps at a real machine in a pavilion's hall.
+ * ticket in two steps at a real machine, in a pavilion's hall (B) or on the platform under it (A, stage 4).
  */
 describe("the metro layer", () => {
   it("goes out with the city map: four stations on the tunnel, six pavilions as entrances, three possible stations", () => {
@@ -97,7 +124,9 @@ describe("the kiosk in the session", () => {
     session.newGame();
     expect(ui.getState().map?.metro?.stations).toHaveLength(4);
     const from = METRO_STATIONS.find((s) => s.id === "kanal")!;
-    teleport(session, from.arrival.x, from.arrival.z, from.arrivalYaw, 0, from.arrival.y);
+    // At the ticket machine on the platform under its entrance A (ADR-0071 stage 4).
+    const machine = from.entrances[0];
+    teleport(session, machine.ticket.x, machine.ticket.z, machine.ticketYaw, 0, machine.ticket.y);
     steps(session, 1);
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().metroMap?.from).toBe("kanal");
@@ -128,11 +157,10 @@ describe("the kiosk in the session", () => {
     const { session, ui } = setup();
     session.newGame();
     const from = METRO_STATIONS.find((s) => s.id === "kanal")!.entrances[1]!;
-    // From the car park before Alchemia, facing the opening, down the stairs into the hall.
+    // From the car park before Alchemia, facing the opening, down the stairs into the hall of B, which keeps its machine.
     teleport(session, from.door.x, from.door.z, from.arrivalYaw + Math.PI, 0, from.door.y);
     steps(session, 1);
     expect(ui.getState().prompt).toBeNull();
-    const flat = (p: { x: number; z: number }, q: { x: number; z: number }) => Math.hypot(p.x - q.x, p.z - q.z);
     for (let i = 0; i < 6 * 30 && !ui.getState().prompt; i++) steps(session, 1, frame({ moveZ: 1 }));
     expect(ui.getState().prompt).toContain("Ticket");
     expect(session.sim.player()!.position.y).toBeCloseTo(from.floor, 1);
@@ -143,14 +171,46 @@ describe("the kiosk in the session", () => {
     steps(session, 1);
     expect(session.sim.player()).toBeUndefined();
     for (let i = 0; i < 60 * 30 && session.sim.domain.metro.ride !== null; i++) steps(session, 1);
-    // Up in the hall of Plac Zamkowy A, then up its stairs and out through the opening.
+    // Off the train on the platform under Plac Zamkowy A, then up both flights and out through the opening.
     const to = METRO_STATIONS.find((s) => s.id === "targ")!.entrances[0];
     expect(flat(session.sim.player()!.position, to.arrival)).toBeLessThan(0.5);
-    for (let i = 0; i < 8 * 30 && flat(session.sim.player()!.position, to.door) > 0.6; i++) steps(session, 1, frame({ moveZ: 1 }));
+    expect(ui.getState().metroRide).toBeNull();
+    walkUp(session, to);
     const out = session.sim.player()!.position;
     expect(flat(out, to.door)).toBeLessThan(0.8);
     expect(out.y).toBeCloseTo(to.door.y, 0);
     expect(session.sim.district).toBe("targ");
+  });
+
+  it("walks down both flights to the platform's machine, rides from the platform and gets off on the destination's (ADR-0071 stage 4)", () => {
+    const { session, ui } = setup();
+    session.newGame();
+    const from = METRO_STATIONS.find((s) => s.id === "shinsekai")!.entrances[0];
+    const p = from.platform!;
+    teleport(session, from.door.x, from.door.z, from.hallYaw + Math.PI, 0, from.door.y);
+    steps(session, 1);
+    // Down into the hall: no machine there any more, the doorway in its end wall leads on down.
+    for (const q of [from.hallSpot, frameAt(from, p.u.wallEnd + 0.2, 0), frameAt(from, p.u.back + 0.8, 0)]) expect(walkTo(session, q)).toBeLessThan(0.6);
+    expect(ui.getState().prompt).toBeNull();
+    expect(session.sim.player()!.position.y).toBeCloseTo(p.floor, 1);
+    for (let i = 0; i < 4 * 30 && !ui.getState().prompt; i++) walkTo(session, from.ticket, 1 / 30);
+    expect(ui.getState().prompt).toContain("Ticket");
+    steps(session, 1, frame({ interact: true }));
+    expect(ui.getState().metroMap?.from).toBe("shinsekai");
+    session.intents.selectMetroStop("kanal");
+    session.intents.buyMetroTicket();
+    steps(session, 1);
+    expect(ui.getState().metroRide).not.toBeNull();
+    expect(session.sim.domain.metro.ride).toMatchObject({ from: "shinsekai", to: "kanal" });
+    for (let i = 0; i < 60 * 30 && session.sim.domain.metro.ride !== null; i++) steps(session, 1);
+    const to = METRO_STATIONS.find((s) => s.id === "kanal")!.entrances[0];
+    const at = session.sim.player()!.position;
+    expect(flat(at, to.arrival)).toBeLessThan(0.5);
+    expect(at.y).toBeCloseTo(to.platform!.floor, 1);
+    expect(session.sim.session.interior).toBe("metro-kanal");
+    walkUp(session, to);
+    expect(flat(session.sim.player()!.position, to.door)).toBeLessThan(0.8);
+    expect(session.sim.session.interior).toBeNull();
   });
 
   it("writes the kiosk in Polish once chosen, the names of Lublin stay", () => {
