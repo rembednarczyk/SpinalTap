@@ -22,6 +22,7 @@ import {
   levelScale,
   lootLevel,
   newInstance,
+  rarityAtLeast,
   rarityWeights,
   rollGrade,
   rollLoot,
@@ -117,6 +118,7 @@ describe("rarity by level", () => {
     for (const r of ["common", "uncommon", "rare", "unique"] as const) expect(RARITY[r].traits).toBe(0);
     expect(bestRarity(["rare", "legendary", "epic"])).toBe("legendary");
     expect(bestRarity(["legendary", "unique"])).toBe("unique");
+    expect([..."common uncommon rare epic legendary unique".split(" ")].map((r) => rarityAtLeast(r as Rarity, "rare"))).toEqual([false, false, true, true, true, true]);
   });
 
   it("weights the tiers by the rows at 1, 10, 20 and 30, linear in between, every row 100", () => {

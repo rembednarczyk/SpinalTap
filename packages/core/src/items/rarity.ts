@@ -77,3 +77,6 @@ export const isRarity = (v: unknown): v is Rarity => typeof v === "string" && (R
 /** Rarest of the given tiers, or null for none. */
 export const bestRarity = (tiers: readonly Rarity[]): Rarity | null =>
   tiers.reduce<Rarity | null>((best, r) => (best === null || RARITIES.indexOf(r) > RARITIES.indexOf(best) ? r : best), null);
+
+/** Whether a tier is `floor` or rarer, by the order of `RARITIES` (unique counts as the rarest). */
+export const rarityAtLeast = (rarity: Rarity, floor: Rarity): boolean => RARITIES.indexOf(rarity) >= RARITIES.indexOf(floor);

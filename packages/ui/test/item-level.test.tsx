@@ -11,21 +11,27 @@ const intents = (): UiIntents => {
   return new Proxy({}, { get: (_, key) => spies.get(key) ?? spies.set(key, vi.fn()).get(key) }) as UiIntents;
 };
 
-/** Starter kit plus a legendary SMG of level 12 with two traits and a plain holo sight. */
+/** Starter kit plus a legendary SMG of level 12 with two traits, an epic jacket and a plain holo sight. */
 const bag = () => {
   const { inventory, equipment, ammo } = starterKit();
   let inv: InventoryState = inventory;
   const smg = addInstance(inv, equipment, "hebi_smg", { rarity: "legendary", level: 12, traits: ["hot_loads", "silenced"] });
   if (!smg.ok) throw new Error("full");
   inv = smg.inventory;
+  const jacket = addInstance(inv, equipment, "hebi_jacket", { rarity: "epic", level: 3, traits: ["padded"] });
+  if (!jacket.ok) throw new Error("full");
+  inv = jacket.inventory;
   const sight = addInstance(inv, equipment, "holo_sight", "common");
   if (!sight.ok) throw new Error("full");
   return { inventory: sight.inventory, equipment, ammo };
 };
 
+let spies: UiIntents = intents();
+
 const mount = (state: Partial<UiState>) => {
   const store = createUiStore({ screen: "playing", ...bag(), eddies: 99999, ...state });
-  render(<GameUi store={store} intents={intents()} />);
+  spies = intents();
+  render(<GameUi store={store} intents={spies} />);
   return store;
 };
 
@@ -61,6 +67,25 @@ describe("the item card", () => {
     expect(screen.getByTestId("item-detail").textContent).toContain("Holo sight");
     expect(screen.queryByTestId("item-level")).toBeNull();
     expect(screen.queryByTestId("item-traits")).toBeNull();
+  });
+});
+
+describe("dropping a piece", () => {
+  it("asks first for an epic or legendary piece, as for a rare one, and drops a common one at once", () => {
+    mount({ characterTab: "inventory" });
+    for (const [def, at] of [
+      ["hebi_smg", 1000],
+      ["hebi_jacket", 3000],
+    ] as const) {
+      fireEvent.click(cell(def), { timeStamp: at });
+      fireEvent.click(screen.getByRole("button", { name: /Drop/ }));
+      expect(screen.getByTestId("confirm-drop").textContent).toContain("won't easily find one like it again");
+      fireEvent.click(within(screen.getByTestId("confirm-drop")).getByRole("button", { name: "Keep" }));
+    }
+    expect(spies.dropItem).not.toHaveBeenCalled();
+    fireEvent.click(cell("holo_sight"), { timeStamp: 5000 });
+    fireEvent.click(screen.getByRole("button", { name: /Drop/ }));
+    expect(spies.dropItem).toHaveBeenCalledTimes(1);
   });
 });
 
