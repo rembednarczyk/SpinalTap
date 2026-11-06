@@ -36,8 +36,9 @@ describe("stock in the player's band (ADR-0059)", () => {
     expect(stockGrade(entry("oni44"), "friendly", 4)).toEqual({ rarity: "uncommon", level: 4 });
     expect(stockGrade(entry("oni44"), "trusted", 4)).toEqual({ rarity: "rare", level: 4 });
     expect(stockGrade(entry("hebi_smg"), "trusted", 4)).toEqual({ rarity: "rare", level: 4 });
-    // Mods have no level.
-    expect(stockGrade(entry("suppressor"), "friendly", 9)).toEqual({ rarity: "uncommon" });
+    // A mod has no level and keeps its tier: its effect does not change with it.
+    expect(stockGrade(entry("suppressor"), "friendly", 9)).toEqual({ rarity: "common" });
+    expect(stockGrade(entry("suppressor"), "trusted", 9)).toEqual({ rarity: "common" });
     // A piece listed above the top keeps its tier.
     expect(stockGrade({ kind: "item", item: "oni44", rarity: "epic" }, "trusted", 2)).toEqual({ rarity: "epic", level: 2 });
   });
@@ -47,6 +48,11 @@ describe("stock in the player's band (ADR-0059)", () => {
     expect(stockListPrice(entry("oni44"), "neutral", 10)).toBe(Math.round(1300 * 1.36));
     expect(stockListPrice(entry("oni44"), "friendly", 1)).toBe(2080);
     expect(stockListPrice(entry("suppressor"), "neutral", 30)).toBe(350);
+    // A good standing makes a mod cheaper, never dearer (ADR-0011): 350, 315, 280.
+    const mod = entry("suppressor");
+    expect(stockPrice(mod, FRIENDLY, 9)).toBeLessThan(stockPrice(mod, NEUTRAL, 9));
+    expect(stockPrice(mod, TRUSTED, 9)).toBeLessThan(stockPrice(mod, FRIENDLY, 9));
+    expect([stockPrice(mod, NEUTRAL, 9), stockPrice(mod, FRIENDLY, 9), stockPrice(mod, TRUSTED, 9)]).toEqual([350, 315, 280]);
     expect(stockPrice(entry("oni44"))).toBe(1300);
     expect(stockPrice(entry("oni44"), FRIENDLY, 1)).toBe(Math.round(2080 * 0.9));
     expect(stockPrice(entry("oni44"), TRUSTED, 30)).toBe(Math.round(1300 * 2.6 * 2.16 * 0.8));

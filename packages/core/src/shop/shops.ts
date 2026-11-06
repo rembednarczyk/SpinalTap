@@ -134,14 +134,17 @@ export const SHOP_RARITY_STEPS: Readonly<Record<ReputationTier, number>> = { hos
 export const SHOP_TOP_RARITY: Rarity = "rare";
 
 /**
- * What a piece on the counter is: its tier raised by the standing, and for a weapon or garment the
- * player's level, so the stock keeps up with her (the level band of ADR-0059). No traits.
+ * What a piece on the counter is: for a weapon or garment its tier raised by the standing and the
+ * player's level, so the stock keeps up with her (the level band of ADR-0059). No traits. A mod
+ * keeps its listed tier: its effect is the catalog's whatever the tier, so a better tier would only
+ * raise the price and eat the discount of a good standing (ADR-0011).
  */
 export const stockGrade = (entry: ItemStockEntry, tier: ReputationTier = "neutral", level: number = MIN_ITEM_LEVEL): ItemGrade => {
+  if (!hasItemLevel(entry.item)) return { rarity: entry.rarity };
   const top = RARITIES.indexOf(SHOP_TOP_RARITY);
   const own = RARITIES.indexOf(entry.rarity);
   const rarity = own >= top ? entry.rarity : RARITIES[Math.min(top, own + SHOP_RARITY_STEPS[tier])]!;
-  return hasItemLevel(entry.item) ? { rarity, level: clampItemLevel(level) } : { rarity };
+  return { rarity, level: clampItemLevel(level) };
 };
 
 /**

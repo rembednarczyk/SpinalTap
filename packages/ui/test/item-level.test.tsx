@@ -99,7 +99,7 @@ describe("the counter", () => {
     const price = stockPrice(stockEntry("oyaji", "oni44")!, shopTerms(30), 10);
     expect(within(offer()).getByRole("button").textContent).toBe(`Buy · ${price.toLocaleString("en")} €$`);
     // A mod has no level.
-    expect(screen.getByTestId("stock-suppressor").querySelector(".shop__slot")?.textContent).toBe("Mod · uncommon");
+    expect(screen.getByTestId("stock-suppressor").querySelector(".shop__slot")?.textContent).toBe("Mod · common");
     polish(store);
     expect(offer().querySelector(".shop__slot")?.textContent).toBe("Broń · niezwykły · Poziom 10");
   });
