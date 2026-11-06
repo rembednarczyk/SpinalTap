@@ -27,10 +27,10 @@ const onTheRoof = (seed: number, level: HeatLevel): Simulation => {
 };
 
 describe("a reinforcement leans to the side of its number (G-208)", () => {
-  // With the hash of the run as schema v27 wrote it (G-233 changes only the version here).
+  // With the hash of the run as schema v27 wrote it (G-233 and the market's move, v29, change only the version here).
   for (const [seed, level, golden, v27] of [
-    [21, 2, "043d5219", "ecbb3d70"],
-    [5, 3, "651ff9cd", "ec6ecf8e"],
+    [21, 2, "c884dcea", "ecbb3d70"],
+    [5, 3, "4a70a230", "ec6ecf8e"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
       const sim = onTheRoof(seed, level);

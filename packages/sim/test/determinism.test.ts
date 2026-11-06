@@ -183,7 +183,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"07d841d4"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"6b8752e5"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -221,7 +221,7 @@ describe("determinism", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"4b52ca4d"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"29c8ccfc"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
     expect(v17HashOf(sim)).not.toBe("0b8693d0");
     expect(v19HashOf(sim)).toBe("426e148d");
@@ -303,7 +303,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"402f2952"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"e1ae38e9"`);
     expect(v17HashOf(sim)).toBe("3e78c5b2");
     expect(v19HashOf(sim)).toBe("6ebebd7e");
     expect(v20HashOf(sim)).toBe("116f9cfa");
