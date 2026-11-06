@@ -44,6 +44,17 @@ describe("a tier needs a perk of the tier below (stage 3b)", () => {
     expect(hardened).toContain("Needs a perk from tier 8");
   });
 
+  it("a stage 3 save's perk over an empty tier asks for the path before its next rank (stage 3c)", () => {
+    sheet({ perkPoints: 3, attributes: { ...START_ATTRIBUTES, might: 12 }, perks: { might_hardened: 1 }, settings: { ...DEFAULT_SETTINGS, locale: "pl" } });
+    const hardened = screen.getByTestId("perk-might_hardened");
+    expect(hardened.textContent).toContain("Wymaga: perk z progu 4");
+    expect(within(hardened).queryByRole("button")).toBeNull();
+    cleanup();
+    // Tier 4 bought, tier 8 still empty: the lowest missing tier is named.
+    sheet({ perkPoints: 3, attributes: { ...START_ATTRIBUTES, might: 12 }, perks: { might_hardened: 1, might_tough: 1 } });
+    expect(screen.getByTestId("perk-might_hardened").textContent).toContain("Needs a perk from tier 8");
+  });
+
   it("speaks Polish with the Polish setting", () => {
     sheet({ attributes: { ...START_ATTRIBUTES, net: 8 }, settings: { ...DEFAULT_SETTINGS, locale: "pl" } });
     expect(screen.getByTestId("perk-net_persistence").textContent).toContain("Uporczywy kod");
@@ -55,7 +66,7 @@ describe("implants over the pool after a respec (stage 3b)", () => {
   it("the sheet shows the pool and what to do while it is over", () => {
     sheet({ capacity: { used: 14, max: 12 } });
     expect(screen.getByTestId("sheet-capacity").textContent).toBe("Cyberware capacity14 / 12");
-    expect(screen.getByTestId("capacity-over-pool").textContent).toContain("take one out at Mori's");
+    expect(screen.getByTestId("capacity-over-pool").textContent).toContain("swap it for a smaller one");
     cleanup();
     sheet({ capacity: { used: 12, max: 12 } });
     expect(screen.queryByTestId("capacity-over-pool")).toBeNull();
@@ -67,6 +78,6 @@ describe("implants over the pool after a respec (stage 3b)", () => {
     fireEvent.click(screen.getByTestId("shop-tab-implants"));
     const bar = screen.getByTestId("capacity");
     expect(bar.className).toContain("capacity--over");
-    expect(within(bar).getByTestId("capacity-over-pool").textContent).toContain("wyjmij któryś u Mori");
+    expect(within(bar).getByTestId("capacity-over-pool").textContent).toContain("albo zamień na mniejszy");
   });
 });

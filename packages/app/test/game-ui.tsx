@@ -72,12 +72,14 @@ export interface GameOptions {
   readonly seed: number;
   /** The on-screen pad of a phone; the session then uses touch words too. */
   readonly touch?: boolean;
+  /** The pad the on-screen controls press, e.g. the engine's real VirtualPad; a dummy otherwise. */
+  readonly pad?: TouchPadSink;
 }
 
 export const touchPad = (): TouchPadSink => ({ setStick() {}, look() {}, press() {}, release() {}, reset() {}, selectWeaponSlot() {} });
 
 /** Mounts the title screen of a game with the given seed. Call `cleanup` (or `unmountGame`) after each test. */
-export const mountGame = ({ seed, touch = false }: GameOptions) => {
+export const mountGame = ({ seed, touch = false, pad }: GameOptions) => {
   const ui = createUiStore();
   const render = new FakeRender();
   const audio = new FakeAudio();
@@ -87,7 +89,7 @@ export const mountGame = ({ seed, touch = false }: GameOptions) => {
   // Never ticks: the clock stands still and nothing calls frame(); the test steps the session.
   const loop = new FixedStepLoop({ now: () => 0 }, { update() {}, render() {} });
   const seki: DebugApi = createDebugApi(session, ui, loop, () => ({ fps: 0, frameTimeMs: 0, drawCalls: 0, activeMeshes: 0, activeTriangles: 0, totalMeshes: 0, materials: 0, particles: 0, byName: {} }), () => {});
-  const view = mount(<GameUi store={ui} intents={session.intents} touch={touch ? touchPad() : undefined} />);
+  const view = mount(<GameUi store={ui} intents={session.intents} touch={touch ? (pad ?? touchPad()) : undefined} />);
   /** Steps the simulation as the debug API does, inside act() so React applies the store changes. */
   const step = (n: number, input: Partial<InputFrame> = {}) => act(() => seki.step(n, input));
   return { ui, render, audio, preview, persistence, session, seki, view, step };

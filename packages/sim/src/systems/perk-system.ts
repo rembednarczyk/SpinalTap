@@ -1,4 +1,4 @@
-import { cooldownRateOf, dashCooldownScale, hasPerk, staminaRegenScale } from "@seki/core";
+import { cooldownRateOf, dashCooldownScale, hasPerk, staminaRegenScale, workingCyberware } from "@seki/core";
 import type { Entity, PerkState } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { playerHeld } from "../world/takedown";
@@ -50,7 +50,7 @@ const carryDash = (p: Mover, s: PerkState, dt: number): void => {
 /** Can a dash start now? Legs implant, cooldown, not on a ladder or a ledge, not off balance, one in the air. */
 const canDash = (ctx: SimContext, p: Entity, s: PerkState, grounded: boolean): boolean => {
   if (!ctx.input.dash || playerHeld(ctx)) return false;
-  if (!hasPerk(ctx.state.domain.character.cyberware, "dash") || s.dashCooldown > 0) return false;
+  if (!hasPerk(workingCyberware(ctx.state.domain), "dash") || s.dashCooldown > 0) return false;
   if (p.climb || p.mantle || (p.melee?.stagger ?? 0) > 0) return false;
   return grounded || !s.airDash;
 };

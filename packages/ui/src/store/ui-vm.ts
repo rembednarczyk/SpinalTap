@@ -252,6 +252,9 @@ export type AimMode = "hold" | "toggle";
 /** The shoulder the TPP camera looks over (G-275). */
 export type CameraShoulder = "right" | "left";
 
+/** The touch fire button aims down sights while held, or only fires (ADR-0072). */
+export type TouchFireMode = "aims" | "separate";
+
 export interface SettingsVm {
   readonly quality: GraphicsQuality;
   readonly aimMode: AimMode;
@@ -268,6 +271,11 @@ export interface SettingsVm {
   /** Mouse up looks down. */
   readonly invertY: boolean;
   readonly touchSensitivity: number;
+  /**
+   * Touch fire button (ADR-0072): "aims" (default) fires from the sights with one thumb; with a
+   * melee weapon it only strikes. "separate" only fires, and the aim button aims on its own.
+   */
+  readonly touchFire: TouchFireMode;
   /**
    * Horizontal field of view from the hip, degrees (ADR-0049): the same width of the street on
    * any screen; the camera works out the vertical angle for the screen's proportions.
@@ -336,6 +344,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   adsSensitivity: 1,
   invertY: false,
   touchSensitivity: 1,
+  touchFire: "aims",
   horizontalFov: DEFAULT_HORIZONTAL_FOV,
   volume: 0.6,
   musicVolume: 0.55,

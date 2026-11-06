@@ -1,7 +1,7 @@
 import { applyDamage } from "@seki/core";
 import type { Entity } from "../world/components";
 import { type GroundField, MAX_WALK_SLOPE, groundOf } from "../world/ground";
-import { type Collider, circleTouches, collidersOf, colliderTop, overCollider, pushCircleOut } from "../world/solids";
+import { type Collider, circleTouches, closestXZ, collidersOf, colliderTop, overCollider, pushCircleOut } from "../world/solids";
 import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
 import { solidIndexOf } from "../world/solid-index";
@@ -32,11 +32,15 @@ export const HURT_LANDING_SLOW = 0.6;
 
 const near = { x: 0, z: 0 };
 
-/** Does the collider stop a character whose feet are at `feet` (ADR-0020)? Ledges low enough are stepped onto. */
-const blocks = (c: Collider, x: number, z: number, radius: number, feet: number, height: number): boolean => {
+/**
+ * Does the collider stop a character whose feet are at `feet` (ADR-0020)? Ledges low enough are
+ * stepped onto; a top with no foothold (a railing over a drop, G-372) stops her up to its top.
+ */
+const blocks = (solids: readonly Collider[], field: GroundField, c: Collider, x: number, z: number, radius: number, feet: number, height: number): boolean => {
   if (c.box.min.y >= feet + height) return false;
   if (!circleTouches(c, x, z, radius, near)) return false;
-  return colliderTop(c, near.x, near.z) > feet + STEP_HEIGHT;
+  const top = colliderTop(c, near.x, near.z);
+  return top > feet + STEP_HEIGHT || (top > feet && !foothold(solids, field, c, near.x, near.z, top));
 };
 
 /**
@@ -49,9 +53,86 @@ export const groundAt = (solids: readonly Collider[], field: GroundField, x: num
   for (const c of solids) {
     if (!overCollider(c, x, z, EDGE_MARGIN)) continue;
     const top = colliderTop(c, x, z);
-    if (top > ground && top <= feet + STEP_HEIGHT) ground = top;
+    if (top > ground && top <= feet + STEP_HEIGHT && foothold(solids, field, c, x, z, top)) ground = top;
   }
   return ground;
+};
+
+/**
+ * A top narrower than this holds no foot on its own (G-372): a railing (0.2 m), a lift's gate,
+ * a thin wall (0.4 m). A pull-up ends half a metre in, so it reaches nothing narrower head-on.
+ */
+const FOOTHOLD_WIDTH = 0.45;
+/** How far past a thin top's side its neighbour is felt for: beyond the margin a centre may hang over. */
+const FOOTHOLD_SIDE = 2 * EDGE_MARGIN;
+const footAt = { x: 0, z: 0 };
+/** Tops this close are one floor. */
+const LEVEL = 0.01;
+/** How many thin slivers of one floor in a row a foothold is felt through. */
+const LEVEL_HOPS = 3;
+
+/** The narrowest way across a footprint: its width and the direction, with the extent along it. */
+interface Across {
+  readonly width: number;
+  readonly nx: number;
+  readonly nz: number;
+  readonly lo: number;
+  readonly hi: number;
+}
+const acrossPrism = new WeakMap<NonNullable<Collider["prism"]>, Across>();
+
+/** A convex footprint is narrowest square to one of its edges. */
+const across = (c: Collider): Across => {
+  const b = c.box;
+  if (!c.prism) {
+    const alongZ = b.max.z - b.min.z < b.max.x - b.min.x;
+    return alongZ ? { width: b.max.z - b.min.z, nx: 0, nz: 1, lo: b.min.z, hi: b.max.z } : { width: b.max.x - b.min.x, nx: 1, nz: 0, lo: b.min.x, hi: b.max.x };
+  }
+  const known = acrossPrism.get(c.prism);
+  if (known) return known;
+  let best: Across = { width: Infinity, nx: 1, nz: 0, lo: 0, hi: 0 };
+  for (const n of c.prism.normals) {
+    let [lo, hi] = [Infinity, -Infinity];
+    for (const p of c.prism.points) [lo, hi] = [Math.min(lo, n.x * p.x + n.z * p.z), Math.max(hi, n.x * p.x + n.z * p.z)];
+    if (hi - lo < best.width) best = { width: hi - lo, nx: n.x, nz: n.z, lo, hi };
+  }
+  acrossPrism.set(c.prism, best);
+  return best;
+};
+
+/**
+ * Is there floor within a step of `top` at a point beside the thin top `self`, or a wall rising
+ * through that height? Another thin top only with a foothold of its own: level with it (the next
+ * sliver of a roof, LEVEL_HOPS of them at most) or lower (the next step down a flight, the
+ * heights only fall). Railings, a gate and a thin wall meeting at a corner, of one height or
+ * not, hold no foot together: the one met has a drop on both sides of it there too.
+ */
+const supported = (solids: readonly Collider[], field: GroundField, self: Collider, x: number, z: number, top: number, hops: number): boolean => {
+  if (field.heightAt(x, z, top + STEP_HEIGHT) >= top - STEP_HEIGHT) return true;
+  for (const c of solids) {
+    if (c === self || c.box.min.y > top + STEP_HEIGHT || !overCollider(c, x, z, EDGE_MARGIN)) continue;
+    const t = colliderTop(c, x, z);
+    if (t < top - STEP_HEIGHT) continue;
+    if (across(c).width >= FOOTHOLD_WIDTH) return true;
+    const level = Math.abs(t - top) < LEVEL;
+    if ((level ? hops > 0 : t < top) && foothold(solids, field, c, x, z, t, level ? hops - 1 : hops)) return true;
+  }
+  return false;
+};
+
+/**
+ * Can a body stand on the top of `c` at (x, z) (G-372)? Any top FOOTHOLD_WIDTH wide; a thinner
+ * one only with floor or a wall about its height on one side of it (a sliver of a roof between
+ * the others, a cornice against its house), not a railing or a gate with a drop on both sides.
+ */
+const foothold = (solids: readonly Collider[], field: GroundField, c: Collider, x: number, z: number, top: number, hops = LEVEL_HOPS): boolean => {
+  const a = across(c);
+  if (a.width >= FOOTHOLD_WIDTH) return true;
+  const q = closestXZ(c, x, z, footAt);
+  const [qx, qz] = [q.x, q.z];
+  const d = a.nx * qx + a.nz * qz;
+  const [out, back] = [a.hi - d + FOOTHOLD_SIDE, d - a.lo + FOOTHOLD_SIDE];
+  return supported(solids, field, c, qx + a.nx * out, qz + a.nz * out, top, hops) || supported(solids, field, c, qx - a.nx * back, qz - a.nz * back, top, hops);
 };
 
 /** Lowest underside above a head at `head` over the point, or Infinity: a jump stops there. */
@@ -82,7 +163,7 @@ const ledgeAhead = (solids: readonly Collider[], field: GroundField, e: Entity &
   const feet = e.position.y;
   const [dx, dz] = [vx / speed, vz / speed];
   for (const s of solids) {
-    if (!blocks(s, x, z, e.body.radius, feet, e.body.height)) continue;
+    if (!blocks(solids, field, s, x, z, e.body.radius, feet, e.body.height)) continue;
     // A point just over the edge, past the body's radius, in the direction of travel.
     const reach = e.body.radius + MANTLE_INSET;
     const tx = e.position.x + dx * (reach + e.body.radius);
@@ -195,11 +276,13 @@ const FAR = { x: NaN, z: NaN } as const;
  * Pushes a footprint at (x, z) out of the solids it bumps into and the bodies it overlaps.
  * Returns FAR when a push carried it out of `reach` (the colliders near the mover).
  */
-const pushOut = (solids: readonly Collider[], bodies: readonly Body[], e: Mover, x: number, z: number, feet: number, reach: Reach | null): { x: number; z: number } => {
+const pushOut = (solids: readonly Collider[], field: GroundField, bodies: readonly Body[], e: Mover, x: number, z: number, feet: number, reach: Reach | null): { x: number; z: number } => {
   for (let i = 0; i < ITERATIONS; i++) {
     for (const s of solids) {
-      if (!blocks(s, x, z, e.body.radius, feet, e.body.height)) continue;
-      ({ x, z } = pushCircleOut(s, x, z, e.body.radius));
+      if (!blocks(solids, field, s, x, z, e.body.radius, feet, e.body.height)) continue;
+      // Sunk onto a top with no foothold (G-372): off it the side she came from, not past its middle.
+      const back = colliderTop(s, near.x, near.z) <= feet + STEP_HEIGHT && overCollider(s, x, z);
+      ({ x, z } = pushCircleOut(s, back ? e.position.x : x, back ? e.position.z : z, e.body.radius));
       if (!within(reach, x, z)) return FAR;
     }
     for (const other of bodies) {
@@ -250,7 +333,7 @@ const moveAcross = (
         return null;
       }
     }
-    ({ x, z } = pushOut(solids, bodies, e, x, z, feet, reach));
+    ({ x, z } = pushOut(solids, field, bodies, e, x, z, feet, reach));
     if (Number.isNaN(x)) return FAR;
   }
   // The edge of the world is a wall: a jump over a parapet or an outer wall never lands

@@ -3,6 +3,7 @@ import type { Vec3 } from "@seki/core";
 import { CONTRACT_SITE_SPAWNS, CROWD_LANES, ENCOUNTERS, METRO_ENTRANCES, METRO_FOOTPRINTS, SCHEDULES, SECURITY_ENTRIES, Simulation, WORLD_NAV, WORLD_STASHES } from "../src";
 import { WORLD_STREET_PROPS } from "../src/content/street-props";
 import type { Rect } from "../src/content/builders";
+import { METRO_NAV } from "../src/content/metro-nav";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { TRAFFIC_ROUTES } from "../src/content/traffic";
 import { lineOfSight } from "../src/world/hitscan";
@@ -84,7 +85,8 @@ describe("metro entrances on the map (ADR-0071 stage 2)", () => {
     const busy: Vec3[] = [
       ...Object.values(CONTRACT_SITE_SPAWNS).flat(),
       ...SECURITY_ENTRIES,
-      ...WORLD_NAV.nodes.map((n) => n.at),
+      // The districts' nodes: the metro's own lead down its stairs (G-368).
+      ...WORLD_NAV.nodes.filter((n) => !METRO_NAV.nodes.includes(n)).map((n) => n.at),
       ...WORLD_STASHES.map((s) => s.at),
       ...ENCOUNTERS.map((x) => ({ x: x.at.x, y: 0, z: x.at.z })),
     ];

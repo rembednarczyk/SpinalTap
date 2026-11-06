@@ -83,6 +83,8 @@ export type SideMode = "kerb" | "facade" | "front" | "path";
 /** How far from a line's axis a facade or a road edge is looked for, metres. */
 const SIDE_REACH = 16;
 const FACADE_REACH = 36;
+/** How far before a car park's edge a kerb lamp stands when asphalt runs on into it (m): in front of the cars. */
+const LOT_GAP = 1.6;
 
 /**
  * The wall between the last open sample (`inside` − 0.5) and the first one in a building, to a
@@ -101,7 +103,7 @@ const facadeAt = (site: Site, at: (d: number) => Pt, inside: number): number => 
 };
 
 /** Where a thing beside the axis goes: the offset along the normal, or null when there is no place. */
-export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: number): number | null => {
+export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: number, byLots = false): number | null => {
   const at = (d: number): Pt => ({ x: p.x + n.x * d, z: p.z + n.z * d });
   if (mode === "path") {
     // Beside a path: the given side, else the other, else on the path itself. On a flight wider
@@ -128,6 +130,8 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
   let building: number | null = null;
   let walkFrom: number | null = null;
   let road: number | null = null;
+  // A car park reached over asphalt with no kerb before it (T-172): the lamp keeps to the street's side of it.
+  let lot: number | null = null;
   // A wall lantern looks for the facade across a whole square (the Rynek is some 60 m wide),
   // anything else only along a street's width.
   const reach = mode === "facade" ? FACADE_REACH : SIDE_REACH;
@@ -138,6 +142,7 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
       break;
     }
     if (axisRoad && walkFrom === null && s !== "road") walkFrom = d;
+    if (byLots && axisRoad && walkFrom === null && lot === null && site.inLot(at(d))) lot = d;
     if (!axisRoad && road === null && s === "road") road = d;
   }
   if (mode === "facade") return building === null ? null : facadeAt(site, at, building) - 0.3;
@@ -146,7 +151,10 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
   let d: number;
   if (axisRoad) {
     if (walkFrom === null) return null;
-    d = walkFrom + 0.4;
+    // In front of the lot's cars only past the street's own band (the road ground under its axis).
+    const front = lot === null || site.inLot(p) ? null : lot - LOT_GAP;
+    const band = site.roadsAt(p);
+    d = front !== null && front > 0.3 && !band.some((r) => pointInRing(at(front), r)) ? front : walkFrom + 0.4;
   } else {
     d = road === null ? fallback : Math.min(fallback, road - 0.6);
   }

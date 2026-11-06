@@ -14,7 +14,7 @@ import { DamageNumbers } from "./damage-numbers";
 import { ScannerHud } from "./scanner";
 import { DetectionRing, HeatStars } from "./stealth";
 import { PhoneNotice } from "../phone/phone";
-import { BuffIcons, DashIcon, DisguiseBadge, HookList } from "./body-hud";
+import { BuffIcons, DashIcon, DisguiseBadge, HookList, OverPoolBadge } from "./body-hud";
 import { useViewportAspect } from "./use-viewport-aspect";
 
 /** Default vertical field of view of the game camera at 16:9 in radians (engine CameraRig, ADR-0049; the settings and the screen change it). */
@@ -30,9 +30,10 @@ export const spreadToScreen = (spread: number, zoom = 1, fov = HUD_CAMERA_FOV): 
  * Four ticks that sit where the aim cone meets the screen: they spread apart while moving
  * and after shots, and pull in while crouched or aiming down sights. A melee guard turns them
  * into a bracket. A confirmed hit flashes them, a head hit red. A critical hit adds an amber
- * cross, a kill a larger white one with a ring (shape as well as colour).
+ * cross, a kill a larger white one with a ring (shape as well as colour). On touch with a fire
+ * button that only fires (ADR-0072), a ring round the ticks says the sights stay up after the tap.
  */
-const Crosshair = () => {
+const Crosshair = ({ touch }: { touch: boolean }) => {
   const hit = useUi((s) => s.hitMarker);
   const zone = useUi((s) => s.hitZone);
   const kind = useUi((s) => s.hitKind);
@@ -41,6 +42,7 @@ const Crosshair = () => {
   const aiming = useUi((s) => s.aiming);
   const zoom = useUi((s) => s.aimZoom);
   const blocking = useUi((s) => s.blocking);
+  const adsRing = useUi((s) => touch && s.aiming && s.settings.touchFire === "separate");
   // The camera's hip field of view follows the settings and the screen's proportions (ADR-0049).
   const fov = hipVerticalFov(
     useUi((s) => s.settings.horizontalFov),
@@ -82,6 +84,7 @@ const Crosshair = () => {
       <span className="crosshair__tick crosshair__tick--right" />
       {(flash === "head" || mark) && <span className="crosshair__x" data-testid={`hit-${mark ?? "head"}`} />}
       {mark === "kill" && <span className="crosshair__ring" />}
+      {adsRing && <span className="crosshair__ads" data-testid="ads-ring" />}
     </div>
   );
 };
@@ -149,12 +152,14 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   // Contextual HUD (Cyberpunk 2.1): out of combat and at full health the bar steps aside.
   // A disguise keeps the bar up: the role badge sits next to it (ADR-0035).
   const disguised = useUi((s) => s.disguise !== null);
-  const calm = !always && !combat && hp >= maxHp && !disguised;
+  // So does cyberware over the pool (ADR-0059, stage 3c): the mark says implants are off.
+  const overPool = useUi((s) => s.capacity !== null && s.capacity.used > s.capacity.max);
+  const calm = !always && !combat && hp >= maxHp && !disguised && !overPool;
 
   return (
     <div className="hud" data-testid="hud">
       <HurtVignette />
-      <Crosshair />
+      <Crosshair touch={!!touch} />
       <DetectionRing />
       <DamageNumbers />
       <div className={`hud__identity${calm ? " hud__identity--calm" : ""}`} data-testid="identity">
@@ -166,6 +171,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
           {Math.ceil(hp)} / {maxHp}
         </div>
         <DisguiseBadge />
+        <OverPoolBadge />
       </div>
       <BuffIcons />
       <div className="hud__wallet" data-testid="eddies">

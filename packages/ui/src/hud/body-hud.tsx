@@ -1,4 +1,4 @@
-import type { BuffId } from "@seki/core";
+import { type BuffId, CYBERWARE_CATALOG } from "@seki/core";
 import { keyLabel } from "../menus/key-label";
 import { useT, useText } from "../i18n/use-t";
 import { useUi } from "../use-ui";
@@ -67,6 +67,29 @@ export const DisguiseBadge = () => {
         {disguise.blown ? "!" : "◐"}
       </span>
       <span className="disguise__label">{disguise.blown ? t("disguise.blownBadge", { disguise: disguise.label }) : disguise.label}</span>
+    </div>
+  );
+};
+
+/**
+ * Cyberware over the pool (ADR-0059, stage 3c), next to the health bar: a small mark while the
+ * implants take more than the pool, with the ones that are off and what to do in its hint.
+ */
+export const OverPoolBadge = () => {
+  const t = useT();
+  const tx = useText();
+  const capacity = useUi((s) => s.capacity);
+  if (!capacity || capacity.used <= capacity.max) return null;
+  const implants = (capacity.inactive ?? []).map((id) => tx(CYBERWARE_CATALOG[id].name)).join(", ");
+  const hint = t("overPool.hint", { used: capacity.used, max: capacity.max, implants });
+  return (
+    <div className="over-pool" data-testid="hud-over-pool" title={hint} aria-label={hint} role="status">
+      <span className="over-pool__icon" aria-hidden="true">
+        ⊘
+      </span>
+      <span className="over-pool__label">
+        {t("overPool.badge")} {capacity.used} / {capacity.max}
+      </span>
     </div>
   );
 };

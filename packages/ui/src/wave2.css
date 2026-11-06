@@ -91,6 +91,8 @@
 .disguise { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; color: var(--amber); }
 .disguise__icon { display: grid; place-items: center; width: 18px; height: 18px; border: 1px solid currentColor; border-radius: 50%; font-size: 11px; }
 .disguise--blown { color: var(--danger); animation: buff-blink 0.6s steps(2) 4; }
+.over-pool { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; color: var(--danger); }
+.over-pool__icon { display: grid; place-items: center; width: 18px; height: 18px; font-size: 14px; }
 
 /* ---- contract hooks and the debrief's variation ---- */
 .hud__hooks { margin: 4px 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--cyan); }
