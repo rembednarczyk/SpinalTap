@@ -90,10 +90,11 @@ describe("the lift of Alchemia drawn (G-284, G-289)", () => {
 
   it("lights a cyan rim round each call button, on the face it hangs on, in front of that face and behind the button", () => {
     const west = L.centre.x - out;
+    const rims = new MeshSink();
+    bakeButtonRims(rims, L);
+    expect(rims.vertexCount).toBe(24 * L.buttons.length);
     for (const b of L.buttons) {
-      const sink = new MeshSink();
-      bakeButtonRims(sink, { ...L, buttons: [b] });
-      const vs = verts(sink);
+      const vs = verts(rims).filter((v) => Math.hypot(v.x - b.x, v.y - b.y, v.z - b.z) < 0.5);
       expect(vs).toHaveLength(24);
       expect(vs.every((v) => v.alpha === DRESS_FLAG.lit)).toBe(true);
       // Wider and taller than the button (0.22 x 0.32), round its middle.
