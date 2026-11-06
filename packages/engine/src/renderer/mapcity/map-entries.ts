@@ -137,6 +137,11 @@ export class MapEntries {
     });
   }
 
+  /** The surfaces (not water, fountains or markings) whose boxes meet `box`. */
+  surfacesWithin(box: Box2): Set<EntityId> {
+    return this.surfaceIndex.within(box);
+  }
+
   /** How far the picture lifts feet at (x, y, z) above the terrain: `surfaceLiftAt`. */
   surfaceLift(x: number, y: number, z: number): number {
     return surfaceLiftAt(x, y, z, this.decks.heightAt(x, z), () => this.heightAt(x, z), [...this.surfaceIndex.at(x, z)].map((id) => this.grounds.get(id)));

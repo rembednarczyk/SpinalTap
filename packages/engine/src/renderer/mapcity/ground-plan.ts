@@ -1,6 +1,7 @@
 import { type GroundSurface, SURFACE_LIFT, type TerrainGrid, type TerrainOpenSides, terrainHeightAt } from "@seki/core";
 import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
-import { type P2, boundsOf, obbLocal, orientedBox, pointInRing, signedArea, triangulate } from "./polygon";
+import { type GroundCover, cutCovers } from "./ground-cut";
+import { type Box2, type P2, boundsOf, obbLocal, orientedBox, pointInRing, signedArea, triangulate } from "./polygon";
 import { face, quadUv, vertex } from "./sink-ops";
 
 /**
@@ -185,7 +186,7 @@ const area2 = (poly: readonly P2[]): number => {
  * Triangles of a ring cut on the world grid of side `grid` (`drapeY`): each lies in one triangle
  * of the grid, so drawn straight between its corners at `drapeY` it is that surface exactly.
  */
-export const drapeTriangles = (ring: readonly P2[], grid = DRAPE_GRID): P2[][] => {
+export const drapeTriangles = (ring: readonly P2[], grid = DRAPE_GRID, within?: Box2): P2[][] => {
   const tris = triangulate(ring);
   const out: P2[][] = [];
   const keep = (poly: readonly P2[]) => {
@@ -194,7 +195,9 @@ export const drapeTriangles = (ring: readonly P2[], grid = DRAPE_GRID): P2[][] =
   };
   for (let t = 0; t + 2 < tris.length; t += 3) {
     const tri = [ring[tris[t] as number] as P2, ring[tris[t + 1] as number] as P2, ring[tris[t + 2] as number] as P2];
-    const b = boundsOf(tri);
+    const tb = boundsOf(tri);
+    // Only the grid's cells meeting `within`: the same triangles there as without it.
+    const b = within ? { minX: Math.max(tb.minX, Math.floor(within.minX / grid) * grid), maxX: Math.min(tb.maxX, within.maxX), minZ: Math.max(tb.minZ, Math.floor(within.minZ / grid) * grid), maxZ: Math.min(tb.maxZ, within.maxZ) } : tb;
     for (let i = Math.floor(b.minX / grid); i * grid < b.maxX; i++) {
       const x0 = i * grid;
       const x1 = x0 + grid;
@@ -236,11 +239,11 @@ export const drapeHeightAt = (ring: readonly P2[], tris: readonly number[], h: H
   return null;
 };
 
-/** Lays `ring` on the ground at `lift` above it, at `drapeY`: shared vertices per corner of the cut triangles. */
-export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, color: Rgba, uvOf: (p: P2) => readonly [number, number], meta: readonly [number, number]): void => {
-  const seen = new Map<number, Map<number, number>>();
-  const up = { x: 0, y: 1, z: 0 };
-  // The grid's corners are shared by the vertices round them: each surface under each is read once.
+/**
+ * The height `drape` lays a point at: `drapeY` of the surface under it plus `lift`. The grid's
+ * corners are shared by the vertices round them: each surface under each is read once.
+ */
+const drapeHeights = (h: HeightAt, lift: number): ((p: P2) => number) => {
   const read = new Map<HeightAt, HeightAt>();
   const corners = (surface: HeightAt): HeightAt => {
     let at = read.get(surface);
@@ -255,6 +258,14 @@ export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: nu
     read.set(surface, at);
     return at;
   };
+  return (p) => drapeY(corners(h.surfaceAt?.(p.x, p.z) ?? h), p.x, p.z) + lift;
+};
+
+/** Lays `ring` on the ground at `lift` above it, at `drapeY`: shared vertices per corner of the cut triangles. */
+export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, color: Rgba, uvOf: (p: P2) => readonly [number, number], meta: readonly [number, number]): void => {
+  const seen = new Map<number, Map<number, number>>();
+  const up = { x: 0, y: 1, z: 0 };
+  const y = drapeHeights(h, lift);
   const at = (p: P2): number => {
     // Hundredths of a millimetre: fine enough to keep the cut points apart on a corner of the grid.
     const kx = Math.round(p.x * 1e5);
@@ -263,11 +274,18 @@ export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: nu
     if (!row) seen.set(kx, (row = new Map()));
     const known = row.get(kz);
     if (known !== undefined) return known;
-    const i = vertex(sink, { x: p.x, y: drapeY(corners(h.surfaceAt?.(p.x, p.z) ?? h), p.x, p.z) + lift, z: p.z }, groundNormal(h, p.x, p.z), color, uvOf(p), meta);
+    const i = vertex(sink, { x: p.x, y: y(p), z: p.z }, groundNormal(h, p.x, p.z), color, uvOf(p), meta);
     row.set(kz, i);
     return i;
   };
   for (const [a, b, c] of drapeTriangles(ring)) face(sink, at(a as P2), at(b as P2), at(c as P2), up);
+};
+
+/** The triangles `drape` lays `ring` as, where they meet `within`, without building a mesh. */
+export const drapedTriangles = (ring: readonly P2[], h: HeightAt, lift: number, within?: Box2): [Vec, Vec, Vec][] => {
+  const y = drapeHeights(h, lift);
+  const v = (p: P2): Vec => ({ x: p.x, y: y(p), z: p.z });
+  return drapeTriangles(ring, DRAPE_GRID, within).map(([a, b, c]) => [v(a as P2), v(b as P2), v(c as P2)]);
 };
 
 /** Is (x, z) on a road? Used to find the sidewalk edges that get a kerb. */
@@ -304,16 +322,21 @@ const kerbs = (sink: MeshSink, ring: readonly P2[], h: HeightAt, roadAt: RoadAt)
   }
 };
 
-/** A ground surface (not water) draped on the terrain, with kerbs on sidewalks along roads. */
-export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water" | "basin" | "steps" | "crossing">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null): void => {
+/**
+ * A ground surface (not water) draped on the terrain, with kerbs on sidewalks along roads; less
+ * the areas of `under`, the pieces laid over it, where they lie in its plane (G-320).
+ */
+export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water" | "basin" | "steps" | "crossing">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null, under: readonly GroundCover[] = []): void => {
   const box = orientedBox(ring);
   // Rails get their sleepers along the strip; roads get their markings from the map (ADR-0052).
   const strip = surface === "rail" && box.halfLong > box.halfShort * 4 ? box.halfShort * 2 : 0;
   const code = SURFACE_CODE[surface];
+  const from = sink.indices.length;
   drape(sink, ring, h, SURFACE_LIFT[surface], SURFACE_COLOR[surface], (p) => {
     const l = obbLocal(box, p);
     return [l.u, l.v];
   }, [code, strip]);
+  cutCovers(sink, from, under);
   if (surface === "sidewalk" && roadAt) kerbs(sink, ring, h, roadAt);
 };
 
