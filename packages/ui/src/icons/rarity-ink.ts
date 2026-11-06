@@ -1,4 +1,5 @@
 import type { Rarity } from "@seki/core";
+import type { CSSProperties } from "react";
 
 /**
  * Colour of an icon's outline and frame per rarity (ADR-0073): the hues of the rarity frames in
@@ -13,6 +14,13 @@ export const RARITY_INK: Readonly<Record<Rarity, string>> = {
   legendary: "#ff8a1f",
   unique: "#ffbf4a",
 };
+
+/**
+ * Frame of a bag cell or an equipment slot in its rarity's ink; common keeps the panel's edge.
+ * Inline, because `.inv__cell` and `.inv__slot` come after `.rarity--*` in styles.css and set
+ * the border too: by the order of the rules the rarity's colour lost (G-410).
+ */
+export const rarityFrame = (rarity: Rarity): CSSProperties => (rarity === "common" ? {} : { borderColor: RARITY_INK[rarity] });
 
 /**
  * The ring of a selected cell with an icon: white, a colour no rarity has, drawn inside the

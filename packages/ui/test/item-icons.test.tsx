@@ -227,6 +227,37 @@ describe("the bag", () => {
   });
 });
 
+describe("the equipment slots", () => {
+  /** The starter kit's pieces, equipped, in rarities whose frames would otherwise be lost (G-410). */
+  const TIERS: Readonly<Record<string, Rarity>> = { i1: "epic", i2: "rare", i3: "legendary" };
+  const SLOTS = { i1: "slot-secondary", i2: "slot-torso", i3: "slot-legs" } as const;
+  const mountTiers = () => {
+    const bag = fullBag();
+    const items = bag.inventory.items.map((i) => (TIERS[i.uid] ? { ...i, rarity: TIERS[i.uid]! } : i));
+    mount({ characterTab: "inventory", ...bag, inventory: { ...bag.inventory, items } });
+  };
+
+  it("frames every equipped piece in its rarity's ink, garments and weapons, and an empty slot in none", () => {
+    mountTiers();
+    for (const [uid, testId] of Object.entries(SLOTS)) {
+      // Inline: `.inv__slot` comes after `.rarity--*` in styles.css and sets the border too.
+      expect(screen.getByTestId(testId).style.borderColor, testId).toBe(rgb(RARITY_INK[TIERS[uid]!]));
+    }
+    expect(screen.getByTestId("slot-melee").style.borderColor).toBe("");
+  });
+
+  it("selects a slot with the white ring inside its frame, never a magenta border", () => {
+    mountTiers();
+    for (const [uid, testId] of Object.entries(SLOTS)) {
+      fireEvent.click(screen.getByTestId(testId));
+      const slot = screen.getByTestId(testId);
+      expect(slot.className, testId).toContain("inv__slot--on");
+      expect(slot.style.borderColor, testId).toBe(rgb(RARITY_INK[TIERS[uid]!]));
+      expect(slot.style.boxShadow, testId).toContain(`inset 0 0 0 2px ${SELECT_INK}`);
+    }
+  });
+});
+
 describe("the HUD's weapon strip", () => {
   const strip = (slots: WeaponStripVm["slots"]): WeaponStripVm => ({ slots, active: "secondary", loaded: 7, magazine: 12, reserve: 36, ammoName: "item.9mm.name", reloading: false, holstered: false });
 

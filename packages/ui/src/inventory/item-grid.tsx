@@ -4,7 +4,7 @@ import { compareText } from "../i18n/number";
 import { type Translate, type TranslateText, textTranslator } from "../i18n/t";
 import { useT, useText } from "../i18n/use-t";
 import { ItemIcon } from "../icons/item-icon";
-import { RARITY_INK, SELECT_INK } from "../icons/rarity-ink";
+import { SELECT_INK, rarityFrame } from "../icons/rarity-ink";
 import { CATEGORY_ORDER, FILTERS, type GridFilter, categoryOf, itemName, matchesFilter, rarityLabel, shortName } from "./item-text";
 import { useWideCells } from "./use-wide-cells";
 
@@ -75,13 +75,13 @@ const label = (t: Translate, tx: TranslateText, cell: BagCell): string => {
 };
 
 /**
- * Frame of a cell with an icon (ADR-0073), inline because `.inv__cell` comes after `.rarity--*`
- * in styles.css and would win: the rarity's colour on the 2 px border, and when selected a white
- * ring inside it instead of the magenta outline over it (a rare frame is magenta too).
+ * Frame of a cell with an icon (ADR-0073), inline (`rarityFrame`): the rarity's colour on the 2 px
+ * border, and when selected a white ring inside it instead of the magenta outline over it (a rare
+ * frame is magenta too).
  */
 export const iconCellStyle = (rarity: Rarity, selected: boolean): CSSProperties | undefined => {
   // Every item has an icon since stage 2, so every bag cell takes this frame and this ring.
-  const frame = rarity === "common" ? {} : { borderColor: RARITY_INK[rarity] };
+  const frame = rarityFrame(rarity);
   const ring = selected ? { outline: "none", boxShadow: `inset 0 0 0 2px ${SELECT_INK}` } : {};
   const style = { ...frame, ...ring };
   return Object.keys(style).length > 0 ? style : undefined;
