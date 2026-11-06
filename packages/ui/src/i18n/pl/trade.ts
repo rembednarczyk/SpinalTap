@@ -87,6 +87,7 @@ export const plTrade = {
   "inventory.detail.condition": "Stan {pct}%",
   "inventory.detail.level": "Poziom {level}",
   "inventory.detail.traits": "Cechy",
+  "inventory.detail.deck": "RAM +{ram} · wgrywanie −{upload}% · odnowa RAM +{regen}%",
   "inventory.detail.mods": "Mody: {mods}",
   "inventory.detail.this": "ta",
   "inventory.detail.worn": "założona",
@@ -205,6 +206,7 @@ export const plTrade = {
   // Buying.
   "shop.replaces": "Zastąpi: {name}",
   "shop.noRoomImplant": "Brak miejsca: stary implant przepadnie",
+  "shop.noRoomDeck": "Brak miejsca w plecaku: najpierw zwolnij pole, bo obecny deck by przepadł",
   "shop.installed": "Zainstalowane",
   "shop.overLimit": "Ponad limit",
   "shop.locked": "Nie dla ciebie",

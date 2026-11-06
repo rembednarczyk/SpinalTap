@@ -1,3 +1,4 @@
+import { CYBERWARE_CATALOG, type CyberwareDefinition, isCyberwareId } from "../cyberware/cyberware";
 import { MAX_LEVEL, MIN_LEVEL } from "../progression/curve";
 import { isGarmentId, isWeaponId } from "./catalog";
 import { atLeast, rollRarityAt } from "./rarity";
@@ -6,7 +7,8 @@ import type { InstanceDefId, Rarity, TraitId } from "./types";
 
 /**
  * Item level (ADR-0059): 1 to 30, kept on every weapon and garment. Damage, armor and price grow
- * 4% a level above 1 (×2.16 at 30), on top of the rarity. Mods and implants have no level. The
+ * 4% a level above 1 (×2.16 at 30), on top of the rarity. Mods and implants have no level, but the
+ * cyberdeck has one (decision of 6.11 after stage 6). The
  * numbers are first guesses, to be tuned in stage 8.
  */
 export const MIN_ITEM_LEVEL = MIN_LEVEL;
@@ -20,8 +22,14 @@ export const ENEMY_LOOT_SPREAD = 1;
 /** A whole level within 1..30. */
 export const clampItemLevel = (level: number): number => Math.min(MAX_ITEM_LEVEL, Math.max(MIN_ITEM_LEVEL, Math.round(level)));
 
-/** Whether pieces of this kind have a level: weapons and garments. */
-export const hasItemLevel = (def: InstanceDefId): boolean => isWeaponId(def) || isGarmentId(def);
+const isDeck = (def: InstanceDefId): boolean => {
+  if (!isCyberwareId(def)) return false;
+  const implant: CyberwareDefinition = CYBERWARE_CATALOG[def];
+  return implant.deck !== undefined;
+};
+
+/** Whether pieces of this kind have a level: weapons, garments and the cyberdeck. */
+export const hasItemLevel = (def: InstanceDefId): boolean => isWeaponId(def) || isGarmentId(def) || isDeck(def);
 
 /** The level of a piece (1 when a weapon or garment has none saved), or null for mods and implants. */
 export const itemLevelOf = (item: { readonly def: InstanceDefId; readonly level?: number }): number | null =>

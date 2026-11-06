@@ -95,6 +95,9 @@ export const ICON_PATHS: Readonly<Record<ItemIconKey, IconDrawing>> = {
     line: ["M13 10.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 1 0 0-5z", "M19 25l2-4 2 6 2-6 2 6 2-4"],
   },
   datachip: { body: ["M8 4.5h12l4 4v19H8z"], line: ["M11 8.5h10v8H11z", "M11.5 20.5v4M14.5 20.5v4M17.5 20.5v4M20.5 20.5v4"] },
+  // The cyberdeck, drawn here (decision of 6.11 after ADR-0059 stage 6): a deck with a screen and
+  // two ports, its neural plug underneath.
+  deck: { body: ["M3.5 9.5h21l4 4v9h-25z"], line: ["M7 13h10v6H7z", "M20.5 14v5M24 15.5v3.5", "M11 22.5v3h6v-3", "M14 25.5v3"] },
   // Implants and consumables after game-icons.net (CC BY 3.0).
   ...GAME_ICON_PATHS,
 };

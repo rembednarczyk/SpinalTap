@@ -6,6 +6,7 @@ import {
   type ItemCategory,
   type ItemIconKey,
   type Locale,
+  MIN_ITEM_LEVEL,
   type Rarity,
   SHOPS,
   STACKABLE_CATALOG,
@@ -15,8 +16,13 @@ import {
   ammoIcon,
   backpackPrice,
   fullService,
+  implantOffer,
   installFee,
+  installedGrade,
   isCyberwareId,
+  isGradedImplant,
+  isInstalled,
+  isPreciousGrade,
   itemIcon,
   itemSummary,
   offersEntry,
@@ -33,6 +39,7 @@ import { formatNumber, useLocale } from "../i18n/number";
 import type { Translate } from "../i18n/t";
 import { useT, useText } from "../i18n/use-t";
 import { ItemDefIcon, ItemIcon } from "../icons/item-icon";
+import { DeckLine } from "../inventory/deck-line";
 import { rarityLabel } from "../inventory/item-text";
 import { RespecSection } from "./respec-section";
 import type { TradeItemVm } from "../store/ui-store";
@@ -94,33 +101,53 @@ const ImplantOffers = ({ terms }: { readonly terms: ShopTerms }) => (
   </>
 );
 
-/** One implant on offer, with its capacity cost; one over the limit cannot be bought (ADR-0032). */
+/**
+ * One implant on offer, with its capacity cost; one over the limit cannot be bought (ADR-0032). A
+ * cyberdeck comes in the tier of the standing and at the player's level, priced like the core does.
+ */
 const ImplantOffer = ({ id, terms }: { readonly id: CyberwareId; readonly terms: ShopTerms }) => {
   const t = useT();
   const tx = useText();
   const locale = useLocale();
   const eddies = useUi((s) => s.eddies);
   const loadout = useUi((s) => s.cyberware);
+  const implantGrades = useUi((s) => s.implantGrades);
+  const level = useUi((s) => s.level);
   const freeCells = useUi((s) => s.trade.freeCells);
   const intents = useShopIntents();
   const fit = useCapacityFit(id);
   const def = CYBERWARE_CATALOG[id];
-  const price = priceWithTerms(def.price, terms);
-  const installed = loadout[def.slot] === id;
+  const offer = implantOffer(id, terms.tier, level);
+  const price = priceWithTerms(offer.listPrice, terms);
+  const installed = isInstalled({ cyberware: loadout, implantGrades }, id, offer.grade);
   const replaces = !installed ? loadout[def.slot] : undefined;
+  // The simulation refuses to drop a graded deck for want of a cell (ADR-0059), so the offer waits.
+  const keepsDeck = replaces !== undefined && freeCells < 1 && isPreciousGrade(installedGrade({ cyberware: loadout, implantGrades }, def.slot));
   const locked = !installed && !fullService(terms);
   return (
     <article className={`shop__item shop__item--icon${installed ? " shop__item--installed" : ""}${lockedClass(locked)}`} data-testid={`implant-${id}`}>
       <ItemIcon icon={itemIcon(id)} framed />
-      <div className="shop__slot">{slotLabel(t, def.slot)}</div>
+      <div className="shop__slot">
+        {slotLabel(t, def.slot)}
+        {offer.grade && ` · ${rarityLabel(t, offer.grade.rarity)} · ${t("inventory.detail.level", { level: offer.grade.level })}`}
+      </div>
       <h3 className="shop__name">{tx(def.name)}</h3>
       <p className="shop__desc">{tx(def.description)}</p>
+      {offer.grade && <DeckLine id={id} grade={offer.grade} className="shop__desc" />}
       <CapacityCost fit={fit} />
       {replaces && <p className="shop__warn">{t("shop.replaces", { name: tx(CYBERWARE_CATALOG[replaces].name) })}</p>}
-      {replaces && freeCells < 1 && <p className="shop__warn">{t("shop.noRoomImplant")}</p>}
+      {replaces && freeCells < 1 && <p className="shop__warn">{t(keepsDeck ? "shop.noRoomDeck" : "shop.noRoomImplant")}</p>}
       {locked && <LockedWhy />}
-      <button type="button" className="shop__buy" disabled={installed || locked || eddies < price || fit.over} onClick={() => intents.buyCyberware(id)}>
-        {installed ? t("shop.installed") : locked ? t("shop.locked") : fit.over ? t("shop.overLimit") : t("shop.implant", { price: eur(locale, price) })}
+      <button type="button" className="shop__buy" disabled={installed || locked || eddies < price || fit.over || keepsDeck} onClick={() => intents.buyCyberware(id)}>
+        {installed
+          ? t("shop.installed")
+          : locked
+            ? t("shop.locked")
+            : fit.over
+              ? t("shop.overLimit")
+              : keepsDeck
+                ? t("shop.noRoom")
+                : t("shop.implant", { price: eur(locale, price) })}
       </button>
     </article>
   );
@@ -281,11 +308,14 @@ const BagImplant = ({ item, terms }: { readonly item: TradeItemVm & { defId: Cyb
   const locale = useLocale();
   const eddies = useUi((s) => s.eddies);
   const loadout = useUi((s) => s.cyberware);
+  const implantGrades = useUi((s) => s.implantGrades);
   const intents = useShopIntents();
   const fit = useCapacityFit(item.defId);
   const def = CYBERWARE_CATALOG[item.defId];
-  const fee = installFee({ def: item.defId, rarity: item.rarity ?? "common" }, terms);
-  const installed = loadout[def.slot] === item.defId;
+  const rarity = item.rarity ?? "common";
+  const fee = installFee({ def: item.defId, rarity, ...levelOf(item) }, terms);
+  const grade = isGradedImplant(item.defId) ? { rarity, level: item.level ?? MIN_ITEM_LEVEL } : undefined;
+  const installed = isInstalled({ cyberware: loadout, implantGrades }, item.defId, grade);
   const replaces = installed ? undefined : loadout[def.slot];
   const locked = !installed && !fullService(terms);
   return (

@@ -7,6 +7,10 @@ import {
   SAVE_SCHEMA_VERSION,
   type SaveSnapshot,
   isCyberwareId,
+  isGradedImplant,
+  isRarity,
+  MAX_ITEM_LEVEL,
+  MIN_ITEM_LEVEL,
   isMemoryId,
   isEndingId,
   isActTwoEndingId,
@@ -56,6 +60,7 @@ export const findSchemaError = (s: Json): string | null => {
   if (!isObject(c) || !(c.alias === null || typeof c.alias === "string")) return "character";
   if (!Array.isArray(c.memories) || !c.memories.every((m) => typeof m === "string" && isMemoryId(m))) return "memories";
   if (!isObject(c.cyberware) || !Object.values(c.cyberware).every((id) => typeof id === "string" && isCyberwareId(id))) return "cyberware";
+  if (c.implantGrades !== undefined && findImplantGradesError(c.cyberware, c.implantGrades)) return "implant grades";
   if (!isObject(d.wallet) || !Number.isInteger(d.wallet.eddies) || (d.wallet.eddies as number) < 0) return "wallet";
   if (!isObject(d.reputation) || !Object.keys(FACTIONS).every((f) => isNum((d.reputation as Json)[f]))) return "reputation";
   if (!isObject(d.quests)) return "quests";
@@ -101,6 +106,17 @@ const findTallyError = (t: unknown): string | null => {
   if (!isObject(t) || !Number.isInteger(t.startTick) || (t.clearedTick !== undefined && !Number.isInteger(t.clearedTick))) return "tally";
   if (!Number.isInteger(t.extraKills) || (t.extraKills as number) < 0) return "tally";
   for (const flag of ["detected", "alarm", "damaged", "hacked", "bonusLost"] as const) if (typeof t[flag] !== "boolean") return "tally";
+  return null;
+};
+
+/** Grades of installed implants (v32): only a graded implant (the cyberdeck) in its slot, a known tier and a level 1..30. */
+const findImplantGradesError = (cyberware: Json, grades: unknown): string | null => {
+  if (!isObject(grades)) return "implant grades";
+  for (const [slot, g] of Object.entries(grades)) {
+    const id = cyberware[slot];
+    if (typeof id !== "string" || !isCyberwareId(id) || !isGradedImplant(id)) return "implant grades";
+    if (!isObject(g) || !isRarity(g.rarity) || !Number.isInteger(g.level) || (g.level as number) < MIN_ITEM_LEVEL || (g.level as number) > MAX_ITEM_LEVEL) return "implant grades";
+  }
   return null;
 };
 
