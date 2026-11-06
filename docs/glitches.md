@@ -953,7 +953,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan
 
 ### G-320 Nakładające się nawierzchnie `square` i `cobble` leżą w jednej płaszczyźnie: migotanie głębi (z-fighting) bruku i płyt w całym mieście
-- Status: zgłoszone (5.11, naprawiacz G-301); 6.11 podniesione do S3 po nagraniu gracza z telefonu (okolice Ratusza i placu Trybunalskiego): bruk i płyty przeplatają się dużymi postrzępionymi trójkątami, które zmieniają się z każdym ruchem kamery; dotyczy całego miasta; następne w kolejce slotu mapy
+- Status: w PR #328 (6.11, weryfikator: PRZYJĘTE; przegląd kuratora w toku)
 - Ważność: S3 (było S4) · Zasięg: 69 par różnych nawierzchni z tym samym `SURFACE_LIFT` 0,08; dwa nakładające się `square` z różnym wzorem spoin dają słabe kropkowane linie (zrzut `shots/g301/after/g301-c.png`); trwale: rysować jeden kawałek z pary (przycięcie nakładek w imporcie)
 - Pakiet właściciela: tools/osm-import i packages/engine (mapcity/ground-plan)
 
@@ -1223,6 +1223,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, weryfikator PR #329)
 - Ważność: S4 (testy) · Zasięg: timer z `packages/ui/src/.../ghost-click.ts:18` daje „Errors 1” przy load ok. 30 mimo zielonych testów; osobno plik przechodzi
 - Pakiet właściciela: packages/ui
+
+### G-404 Końce pomostów: kawałek pomostu i kawałek terenu pokrywają się z różnicą ok. 0,1 mm
+- Status: zgłoszone (6.11, weryfikator PR #328)
+- Ważność: S4 · Zasięg: np. (731,9; 152,2) cobble/cobble, (761,9; 184,3) i (2446,2; 240,7) footway; cięcie G-320 i skan wymagają całego przekroju w 1 mm, więc ich nie łapią; możliwe resztkowe migotanie; także: skan `paving-coplanar` porównuje kod nawierzchni przez `!==` (`tools/glitch-scan/test/paving-coplanar.ts:41`), lepiej `Math.round`
+- Pakiet właściciela: packages/engine (mapcity), tools/glitch-scan
+
+### G-405 Krawężniki: pasek na `h()+0,164` zamiast przy płytach `drapeY+0,16`, bez kontroli w skanie
+- Status: zgłoszone (6.11, weryfikator PR #328)
+- Ważność: S4 · Zasięg: w 1808 z 6512 próbek pasek pod płytami chodnika (do −24 cm przy (−199,8; −50,4)), w 197 nad nimi o < 1 mm (ryzyko migotania); 2 pary krawężnik/krawężnik w jednej płaszczyźnie: (365,3; −152,0), (635,7; 252,0); przegrany kawałek G-320 zachowuje krawężniki pod zwycięzcą; nowa kontrola skanu potrzebna
+- Pakiet właściciela: packages/engine (mapcity), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
