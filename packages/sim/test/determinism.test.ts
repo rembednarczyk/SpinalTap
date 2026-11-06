@@ -45,9 +45,10 @@ const hashOf = (sim: Simulation) => stateHash(sim.snapshot(null, "test", ""));
 
 /**
  * The snapshot of a run as v28 wrote it, before item levels and traits (ADR-0059, stage 4): the
- * pieces in the bag and in the loot bags without them. The player of these runs stays at level 1,
- * where the weights of the tiers are those of before and the levels come from a stream of their
- * own, so without the fields the runs hash to the goldens of v28 and of the older schemas.
+ * pieces in the bag and in the loot bags without them. The player of these runs starts at level 1
+ * and ends at level 2 at most; the levels and traits come from a stream of their own and no tier
+ * of a piece in the runs differs from before, so without the fields the runs hash to the goldens
+ * of v28 and of the older schemas.
  */
 const beforeV29 = (sim: Simulation): SaveSnapshot => {
   const snap = sim.snapshot(null, "test", "");
@@ -226,7 +227,7 @@ describe("determinism", () => {
     // way whose walk round a corner it follows and does not turn back while it is open. Bystanders
     // 1082 and 294 (G-329) of the run swung back and forth in the panic: 283 and 84 jumps, now 40 and 10.
     // Re-recorded (all of them, "hard" and the duel too) for the v29 item levels (ADR-0059, stage 4),
-    // fields, no new rule in these runs: the starter kit is of level 1 and, as v28, the runs hash
+    // fields, no new rule shows in these runs: the starter kit is of level 1 and, as v28, the runs hash
     // to the goldens of before.
     expect(v17HashOf(sim)).toBe("0b8693d0");
     expect(v19HashOf(sim)).toBe("5b3bab6c");
