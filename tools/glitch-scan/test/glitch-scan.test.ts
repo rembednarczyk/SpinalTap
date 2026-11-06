@@ -42,6 +42,7 @@ import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAt
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
 import { stepsInclineAgainst } from "./steps-incline";
+import { roadDipsOverTunnels } from "./road-tunnel";
 import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
 import { deckSlots } from "./deck-slot";
 import { deckSteps } from "./deck-step";
@@ -1081,6 +1082,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const onMap = (p: Pt) => MAP_CHUNKS.some((c) => p.x >= c.bounds.minX && p.x <= c.bounds.maxX && p.z >= c.bounds.minZ && p.z <= c.bounds.maxZ);
     return stepsInclineAgainst(extractFeatures(SOURCE_OSM).lines.map((l) => correctedLine(l)), terrain, onMap);
   },
+  /** A street sinking more than 1 m over a tunnel it does not join, on the game's ground (`road-tunnel.ts`, G-088). */
+  "road-dip-over-tunnel": () =>
+    roadDipsOverTunnels(
+      extractFeatures(SOURCE_OSM).lines.map((l) => ({ ...l, nodes: SOURCE_OSM.ways.get(l.osmId)?.nodes ?? [] })),
+      (p) => groundY(p.x, p.z),
+      (p) => onChunk(p.x, p.z),
+    ),
   /**
    * A flight's ramp (G-236) lifting the terrain over 2 m above the map's at an end: a wrong
    * `incline` in a new extract (`osm:fetch`) would raise a mound up the flight unnoticed.
