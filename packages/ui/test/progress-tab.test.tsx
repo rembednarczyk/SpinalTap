@@ -145,15 +145,19 @@ describe("the XP bar on the HUD", () => {
     expect(within(identity).getByTestId("hud-points").getAttribute("aria-label")).toBe("3 points to spend");
   });
 
-  it("shows the calm block a moment after XP comes in, and flashes the bar on a level up", () => {
+  it("shows the calm block a moment after XP is earned, and flashes the bar on a level up", () => {
     vi.useFakeTimers();
     const { store } = mount({ level: 1, xp: 0 });
     const identity = () => screen.getByTestId("identity");
     expect(identity().classList.contains("hud__identity--calm")).toBe(true);
-    act(() => patchUi(store, { xp: 40 }));
+    // XP and a level set from outside play (a load) show nothing.
+    act(() => patchUi(store, { xp: 300, level: 3 }));
+    expect(identity().classList.contains("hud__identity--calm")).toBe(true);
+    expect(screen.getByTestId("hud-progress").classList.contains("hud__progress--up")).toBe(false);
+    act(() => patchUi(store, { xp: 340, xpGains: 1 }));
     expect(identity().classList.contains("hud__identity--calm")).toBe(false);
     expect(screen.getByTestId("hud-progress").classList.contains("hud__progress--up")).toBe(false);
-    act(() => patchUi(store, { xp: 120, level: 2 }));
+    act(() => patchUi(store, { xp: 420, level: 4, xpGains: 2, levelUps: 1 }));
     expect(screen.getByTestId("hud-progress").classList.contains("hud__progress--up")).toBe(true);
     act(() => vi.advanceTimersByTime(4100));
     expect(identity().classList.contains("hud__identity--calm")).toBe(true);

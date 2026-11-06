@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, within } from "@testing-library/react";
 import { xpForLevel } from "@seki/core";
-import { afterEach, describe, expect, it } from "vitest";
+import { act } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { type Game, mountGame, run, unmountGame } from "./game-ui";
 
 /**
@@ -27,7 +28,10 @@ const levelUp = (g: Game) => {
   g.step(2);
 };
 
-afterEach(unmountGame);
+afterEach(() => {
+  unmountGame();
+  vi.useRealTimers();
+});
 
 describe("level up and the Progress tab in the session", () => {
   it("a level up shows its toast, fills the HUD's bar from the new level's start and marks the points", () => {
@@ -45,6 +49,31 @@ describe("level up and the Progress tab in the session", () => {
     expect(screen.getByTestId("hud-points").textContent).toBe("▲ 2 K");
     // The XP that came in keeps the identity block up a moment, out of combat at full health.
     expect(screen.getByTestId("identity").classList.contains("hud__identity--calm")).toBe(false);
+  });
+
+  it("a load or a new game moves the level without a flash; only XP earned in play shows the bar", async () => {
+    vi.useFakeTimers();
+    const g = start();
+    const identity = () => screen.getByTestId("identity");
+    const flashed = () => screen.getByTestId("hud-progress").classList.contains("hud__progress--up");
+    expect(await g.session.saves.saveAsync("slot-1")).toBe(true);
+    levelUp(g);
+    expect(flashed()).toBe(true);
+    act(() => vi.advanceTimersByTime(5000));
+    expect(flashed()).toBe(false);
+    // Back to level 1 from the save: the XP and the level change, nothing was earned.
+    expect(await run(() => g.session.saves.loadAsync("slot-1"))).toBe(true);
+    g.step(1);
+    expect(g.ui.getState().level).toBe(1);
+    expect(flashed()).toBe(false);
+    expect(identity().classList.contains("hud__identity--calm")).toBe(true);
+    levelUp(g);
+    act(() => vi.advanceTimersByTime(5000));
+    run(() => g.session.newGame());
+    g.step(1);
+    expect(g.ui.getState().level).toBe(1);
+    expect(flashed()).toBe(false);
+    expect(identity().classList.contains("hud__identity--calm")).toBe(true);
   });
 
   it("K opens the tab; a point and a rank spent there reach the domain and the marks at once", () => {

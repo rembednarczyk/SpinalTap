@@ -157,8 +157,8 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   // So does cyberware over the pool (ADR-0059, stage 3c): the mark says implants are off.
   const overPool = useUi((s) => s.capacity !== null && s.capacity.used > s.capacity.max);
   // XP that just came in shows its bar a moment (ADR-0059, stage 7); a level up flashes it.
-  const gained = useRecentChange(useUi((s) => s.xp), 4000);
-  const levelUp = useRecentChange(useUi((s) => s.level), 2500);
+  const gained = useRecentChange(useUi((s) => s.xpGains), 4000);
+  const levelUp = useRecentChange(useUi((s) => s.levelUps), 2500);
   const calm = !always && !combat && hp >= maxHp && !disguised && !overPool && !gained;
 
   return (
