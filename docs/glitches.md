@@ -1209,11 +1209,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (balans) · Zasięg: trasa ma teraz ok. 200 m; limity za luźne, haki dostawy nie leżą na drodze
 - Pakiet właściciela: packages/sim (content kontraktów)
 
-### G-401 Napad z mikrozdarzenia otwiera pusty panel rozmowy i odbiera sterowanie
-- Status: w PR #332 (6.11, w weryfikacji)
-- Ważność: S3 · Zasięg: mikrozdarzenie napadu wysyła `EncounterStarted` z pustym knotem `""`; app (`packages/app/src/controllers/compose.ts`, `onEncounter`) otwiera pusty, zakończony panel rozmowy, który blokuje sterowanie, dopóki gracz go nie zamknie
-- Pakiet właściciela: packages/app (controllers), packages/sim (micro-events)
-
 ### G-402 `PAD_DEADZONE_RANGE` w engine to martwa kopia zakresu z ui, a `shapeStick` nie chroni się przed strefą ≥ 0,95
 - Status: zgłoszone (6.11, weryfikator PR #329)
 - Ważność: S4 · Zasięg: `packages/engine/src/input/keymap.ts:204` (nieużywany eksport) i `packages/ui/src/store/ui-vm.ts:265`; przy `deadzone >= PAD_OUTER_DEADZONE` dzielnik w `shapeStick` jest zerowy lub ujemny, dziś chroni tylko `sanitizeSettings`
@@ -1238,6 +1233,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, kurator, przegląd #328)
 - Ważność: S4 · Zasięg: Rynek r2082677 (pasy 8 m linii `sett` w obszarze `paving_stones`), 11 skrzyżowań 91 m²; poprawka: nawierzchnia Rynku ze zdjęcia jedną korektą w `corrections.ts`, przy dwóch liniach nawierzchnia bliższej osi (wymaga rodzaju źródła w `GroundEntry`); kontrola skanu `paving-specific-lost` (baza 11); pokrewne T-045
 - Pakiet właściciela: tools/osm-import
+
+### G-407 Wspomaganie pada bez testu sesji i bez opisu w ADR i changelogu
+- Status: zgłoszone (6.11, weryfikator PR #333)
+- Ważność: S4 · Zasięg: ADR-0072 etap 4 wymaga testu sesji bez renderera z syntetycznym `PadState` i tym samym celem co etap 3, jest tylko test adaptera (`packages/engine/test/browser-input-look.test.ts`); opis „Zbudowane” etapu 3 i `changelog.d/2026-11-06-wspomaganie-celowania.md` nie wspominają przyciągania z LT i spowolnienia pada
+- Pakiet właściciela: packages/app (testy), docs
+
+### G-408 Przyciski dotykowe nie filtrują `pointerType`; `aimTargets` liczone co krok także przy samej myszy
+- Status: zgłoszone (6.11, weryfikator PR #333)
+- Ważność: S4 · Zasięg: na urządzeniu hybrydowym klik myszą w ◎ albo przeciągnięcie myszą po strefie obrotu dostaje wspomaganie jak dotyk (`packages/ui/src/touch/pad-button.tsx`); `feedAimAssist` liczy cele (w TPP z podwójną linią wzroku) w każdym kroku także u gracza bez dotyku i pada, choć wynik nie jest używany
+- Pakiet właściciela: packages/ui (touch), packages/app
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

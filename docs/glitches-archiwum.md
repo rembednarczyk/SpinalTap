@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-401 Napad z mikrozdarzenia otwiera pusty panel rozmowy i odbiera sterowanie
+- Status: naprawione (PR #332, 6.11)
+- Ważność: S3 · Zasięg: mikrozdarzenie napadu wysyła `EncounterStarted` z pustym knotem `""`; app (`packages/app/src/controllers/compose.ts`, `onEncounter`) otwiera pusty, zakończony panel rozmowy, który blokuje sterowanie, dopóki gracz go nie zamknie
+- Pakiet właściciela: packages/app (controllers), packages/sim (micro-events)
+
 ### G-400 E2E w CI: przy trafieniu cache `.deb` apt i tak pobiera czcionki z mirrora (15 min)
 - Status: naprawione (PR #330, 6.11; setup e2e 887 s → 21 s)
 - Ważność: S3 (CI) · Zasięg: przebieg 42237620499 (#327): cache `playwright-debs` trafiony, ale `apt-get install ~/playwright-debs/*.deb` pobrał te same 9 paczek (21,9 MB) z mirrora Azure w 15 min, shard 1 przekroczył 25 min; regresja po G-387 (#319); poprawka: `dpkg -i` na lokalnych plikach

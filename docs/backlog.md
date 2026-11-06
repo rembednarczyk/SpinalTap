@@ -3,7 +3,7 @@
 Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowiązanie.
 
 ## Następne
-- **6.11:** w main: #327 (ADR-0063 etap 6, targ w Alchemii, zapis v30), #329 (ADR-0072 etap 4, pad), #330 (G-400). #331 (ADR-0059 etap 5) przyjęty, runda 2 po konfliktach z #327. Pytania do użytkownika z etapu 5: skład kontraktu od poziomu 20 czy wcześniej, szef +1 czy +2, poziom wroga w HUD (etap 7?).
+- **6.11:** w main: #327 (ADR-0063 etap 6, targ w Alchemii, zapis v30), #329 (ADR-0072 etap 4, pad), #330 (G-400), #332 (G-401), #333 (ADR-0072 etap 3, wspomaganie celowania; ADR-0072 zakończony). #331 (ADR-0059 etap 5) przyjęty, runda 2 po konfliktach z #327. Pytania do użytkownika z etapu 5: skład kontraktu od poziomu 20 czy wcześniej, szef +1 czy +2, poziom wroga w HUD (etap 7?).
 - **Otwarte pytania do użytkownika (6.11):** „Rin” to Ren Odagiri (potwierdzone przez użytkownika 6.11, #327); wspomaganie celowania działa też na celującego snajpera (decyzja 6.11, w etapie 3); suwak czułości dotyku przechodzi do zakładki „Touch & Gamepad” (decyzja 6.11, w etapie 3); otwarte: ganger wysłany po ofiarę przed alarmem (`ai.victim`); etap 2 (`aimTargets`) w main (#326).
 
 - **Priorytety slotów (decyzja użytkownika 5.11, wieczór).** Wolne sloty dobierane w tej kolejności:
