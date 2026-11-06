@@ -1170,6 +1170,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (treść windy targu), G-372 (`ledgeAhead`)
 - Test przyjęcia: test skoków w bramki jak w #312 (0–75° co 15°) dla windy targu: 0 wejść na bramkę i do szybu
 
+### G-380 Martwy eksport `statsFor` liczy statystyki z pełnego wyposażenia, z pominięciem puli wszczepów
+- Status: zgłoszone (6.11, weryfikator #317)
+- Ważność: S4 (kod) · Zasięg: `packages/sim/src/systems/player-control-system.ts:40`, eksportowany, nieużywany w src; pułapka dla przyszłych odczytów po etapie 3c · Koszt: mały (usunąć albo przejść na `workingCyberware`)
+- Pakiet właściciela: packages/sim
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
