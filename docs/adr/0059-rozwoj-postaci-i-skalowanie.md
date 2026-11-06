@@ -217,3 +217,40 @@ Weryfikator etapu 3b (#313) pokazał obejście: Technika i Podkręcenie, pełny 
 - **HUD:** przy pasku zdrowia jest mały znacznik „Ponad pulą 21 / 16” (en: „Over the pool”), tylko gdy pula jest przekroczona. Podpowiedź (`title` i `aria-label`) wymienia nieaktywne wszczepy i mówi, co zrobić. Znacznik trzyma blok zdrowia na ekranie także poza walką, tak jak przebranie. `CapacityVm` dostał opcjonalne pole `inactive`.
 - **Komunikat `respec.overPool`** mówi teraz, że wszczepy ponad pulą nie działają, dopóki się nie zmieszczą, i że wystarczy wyjąć wszczep albo zamienić go na mniejszy. Zamiana na mniejszy przechodzi bez wyjmowania, bo `fitsCapacity` zawsze ją przepuszcza.
 - **Determinizm:** nowa gra mieści się w puli, więc złote hashe się nie zmieniły.
+
+## Z budowy etapu 4 (6.11)
+
+Etap 4 wprowadza poziom przedmiotu, dwie nowe rzadkości z cechami, skalowanie statystyk i cen, poziom łupu i towaru. Pasma dzielnic i własny poziom wroga to dalej etap 5: do tego czasu wróg ma poziom gracza. Wszystkie liczby są wstępne i do strojenia w etapie 8.
+
+- **Poziom przedmiotu** (`core/items/grade.ts`) mają broń i odzież, w instancji (`ItemInstance.level`) i w linii łupu (`LootLine.level`). Mody i wszczepy nie mają poziomu. Przedmiot bez zapisanego poziomu ma poziom 1. Obrażenia, pancerz (także premia rzadkości i cech) i cena rosną o 4% na poziom ponad 1 (`levelScale`).
+- **Rzadkości** (`rarity.ts`):
+
+  | Rzadkość | Obrażenia | Rozrzut | Pancerz strefy głównej | Wartość | Cechy |
+  |---|---|---|---|---|---|
+  | epicka (`epic`) | ×1,24 | ×0,8 | +3 | ×4 | 1 |
+  | legendarna (`legendary`) | ×1,32 | ×0,75 | +4 | ×6 | 2 różne |
+
+  Unikat zostaje bez własnych liczb (w katalogu nie ma jeszcze unikatów) i skaluje się z poziomem.
+- **Wagi rzadkości od poziomu przedmiotu** (zwykły / niezwykły / rzadki / epicki / legendarny), liniowo między wierszami: poziom 1: 75 / 20 / 5 / 0 / 0 (jak dotąd), 10: 60 / 26 / 10 / 4 / 0, 20: 45 / 30 / 15 / 8 / 2, 30: 32 / 32 / 19 / 12 / 5. Epicki wypada od poziomu 2, legendarny od 11. Test sprawdza rozkład na poziomach 1, 10, 20 i 30 deterministycznie (równo rozłożone losowania i ziarno).
+- **Cechy** (`traits.ts`) to dane z tabelą dla rodzaju przedmiotu. Działają przez liczby `effectiveWeapon` i `armor.ts`, więc żaden system nie zna cechy po nazwie.
+
+  | Tabela | Cecha (klucz) | Efekt |
+  |---|---|---|
+  | broń palna | Wbudowany tłumik (`silenced`) | alarm strzału najwyżej 10 m, bez straty obrażeń |
+  | broń palna | Precyzyjna lufa (`match_barrel`) | rozrzut ×0,85 |
+  | broń palna | Mocna amunicja (`hot_loads`) | obrażenia ×1,1 |
+  | broń palna | Szybkie dobycie (`quick_draw`) | dobycie ×0,7 |
+  | broń palna | Lekki spust (`light_trigger`) | czas między strzałami ×0,92 |
+  | wręcz | Obciążona (`weighted`) | obrażenia ×1,12 |
+  | wręcz | Wyważona (`balanced`) | dobycie ×0,7 |
+  | wręcz | Długi zasięg (`long_reach`) | zasięg +0,25 m |
+  | odzież | Wyściółka (`padded`) | +1 pancerza na każdej chronionej strefie |
+  | odzież | Trwała (`durable`) | zużycie ×0,5 |
+  | odzież | Lekka (`lightweight`) | chód +0,1 m/s |
+
+  Przebicie pancerza i odporność na hack z przykładów ADR-u czekają na mechaniki, które je przeczytają (dziś obrona nie ma przebicia, a wrogowie nie hakują gracza).
+- **Poziom łupu:** `lootLevel = clamp(źródło, gracz ± 2)`, z wroga jego poziom −1, 0 albo +1 (`enemyLootLevel`). `rollLoot` dostaje `LootGrade { source, player, rng }`: poziom i dwie cechy losuje osobny strumień (`loot:<klucz>:grade`, 3 liczby na linię), więc główny strumień losuje to samo co przed etapem. Rzadkość zależy od poziomu linii. Skrzynie z treści (dach targu) mają stałe linie bez poziomu, czyli poziom 1, do etapu 5.
+- **Sklepy:** towar ma poziom gracza (`stockGrade`). Reputacja podnosi rzadkość: przyjazny handlarz o jeden stopień, zaufany o dwa, nigdy ponad rzadki (epicki i legendarny tylko z łupu, bez cech w sklepie). Cena to wartość × rzadkość × poziom, potem warunki (`stockPrice`), a lada liczy ją tą samą funkcją co symulacja. Komenda `buy-item` się nie zmienia: poziom gracza bierze `buyStock` z domeny.
+- **Zapis v29:** migracja daje broni i odzieży poziom z rzadkości (zwykły 1, niezwykły 3, rzadki 5, unikat równy poziomowi gracza), w torbie i w workach z łupem, zaraz po rzadkości jak w nowym przedmiocie. Walidacja przyjmuje poziom 1–30 tylko na broni i odzieży i cechy tylko z tabeli przedmiotu, znane i bez powtórzeń. Typ `LootLine` (słownik kontraktów w `core/items/types.ts`) dostał opcjonalne `level` i `traits`. Pliki kontraktów (`ports`, `events`, `commands`) się nie zmieniają.
+- **Interfejs:** karta przedmiotu pokazuje rzadkość, „Poziom N” i listę cech z opisem. Lada pokazuje rzadkość i poziom towaru oraz poziom przedmiotu na sprzedaż. Teksty są w `i18n/{en,pl}`. Pełna karta z porównaniem cech przychodzi w etapie 7.
+- **Determinizm:** nowa gra ma poziom 1, więc w zapisie przybywa pole i złote hashe nagrano na nowo. Bez pól poziomu, jako v28, przebiegi dają złote hashe sprzed etapu (`v28HashOf`), a migracja zapisu v28 daje ten sam zapis co gra dziś.
