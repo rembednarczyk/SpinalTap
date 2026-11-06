@@ -1197,6 +1197,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: oddaje wszystkie strzały, zero trafień; prawdopodobnie linia strzału przez strop przejścia albo kąt · Koszt: nieznany
 - Pakiet właściciela: packages/sim (walka, raycast)
 
+### G-386 Memo `playerStatsOf` nie ma w kluczu `inventory`, choć ubranie z `inventory.items` wpływa na wynik
+- Status: zgłoszone (6.11, weryfikator #317; sprzed etapu 3c)
+- Ważność: S4 · Zasięg: `packages/sim/src/systems/player-control-system.ts:74-81`, `wornGarments(domain.inventory, …)`; zmiana ubrania przy tym samym `equipment` może dać nieaktualne statystyki · Koszt: mały
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: zmiana zużycia albo sztuki odzieży w `inventory.items` zmienia wynik `playerStatsOf`
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
