@@ -19,7 +19,8 @@ import { surfaceY } from "./lublin/terrain";
  * outside stair on its east side and the low box in front of the name ALCHEMIA, about 3.6 × 4.2 m
  * (none of them is solid: all of them stay outside the screens). Its screens and the bridge's are glass to a
  * handrail and taut lit wires over it to 2.6 m over the slab: no step, jump or pull-up takes a body
- * over or onto them. The gates are 1.8 m, over a jump and a step, so nobody jumps into the shaft. The engine draws the shaft, the bridge and the screens (`renderer/alchemia/lift-bake`);
+ * over or onto them. The gates fill their openings to a head over them, so nobody gets into the
+ * shaft or onto a gate's top. The engine draws the shaft, the bridge and the screens (`renderer/alchemia/lift-bake`);
  * the platform, the gates and the buttons are entities with views of their own, as at the market.
  */
 
@@ -35,15 +36,17 @@ const HALF = 1.1;
 const WALL = 0.1;
 const SCREEN = 0.08;
 /**
- * The gates stand this high over their levels: a jump lifts the feet 1.23 m and a step takes them
- * 0.45 m more. The screens stand higher, out of a pull-up's reach from a jump (1.23 m and 1.3 m
- * more, `MANTLE_REACH`): a screen is thin, but along its line a pull-up would end on its top.
+ * The screens stand out of a pull-up's reach from a jump (1.23 m and 1.3 m more, `MANTLE_REACH`): a
+ * screen is thin, but along its line a pull-up would end on its top. The gates fill their openings
+ * up to a head over them (G-289, round 2: a 1.8 m gate gave a slanting pull-up a foothold on its
+ * top, and from there a jump cleared the screens).
  */
-const GATE = 1.8;
 const FENCE = 2.6;
 /** The doors' openings, the lintel over the top one and the cap over the shaft (its walls out of a pull-up's reach too). */
 const OPENING = 2.3;
 const LINTEL = 0.25;
+/** The head over the bottom gate: its top out of a pull-up's reach from the sill. */
+const HEAD = 0.3;
 const CAP = 0.15;
 /** The sill outside the bottom opening: how far it reaches out of the north wall, its rise over the paving. */
 const SILL = 0.65;
@@ -96,8 +99,10 @@ export interface AlchemiaLiftPlan {
   readonly deck: LiftBox;
   /** The bridge's deck as drawn: from the shaft's top opening to the roof's back edge (world, counter-clockwise). */
   readonly bridge: readonly GroundPoint[];
-  /** The gates at the bottom (north) and the top (south) openings, closed. */
+  /** The gates at the bottom (north) and the top (south) openings, closed: each fills its opening up to its head. */
   readonly gates: readonly [LiftBox, LiftBox];
+  /** The heads over the gates, outside the walls, so nothing stands on a gate's top (G-289). */
+  readonly heads: readonly [LiftBox, LiftBox];
   readonly buttons: readonly [Vec3, Vec3];
   /** The bridge's sides and the terrace's fence. */
   readonly screens: readonly AlchemiaScreen[];
@@ -162,10 +167,10 @@ const plan = (): AlchemiaLiftPlan => {
       box(-HALF, HALF, HALF, out, ground + OPENING, head),
       box(-HALF, HALF, -out, -HALF, base, top),
       box(-HALF, HALF, -out, -HALF, top + OPENING, head),
-      box(-out, out, -out, out, head, head + CAP),
+      box(-out, out, -out - WALL, out, head, head + CAP),
     ],
     sill: box(-HALF, HALF, HALF, sillOut, base, ground),
-    pocket: box(-HALF - 0.05, HALF + 0.05, -out - 0.13, -out + 0.02, top - GATE - 0.15, top - PLATFORM),
+    pocket: box(-HALF - 0.05, HALF + 0.05, -out - 0.13, -out + 0.02, top - OPENING - 0.15, top - PLATFORM),
     deck: box(-out, out, far, -HALF, top - PLATFORM, top),
     bridge: [
       { x: C.x - out, z: C.z - HALF },
@@ -173,7 +178,8 @@ const plan = (): AlchemiaLiftPlan => {
       { x: C.x + out, z: east },
       { x: C.x + out, z: C.z - HALF },
     ],
-    gates: [box(-HALF, HALF, out, out + WALL, ground, ground + GATE), box(-HALF, HALF, -out - WALL, -out, top, top + GATE)],
+    gates: [box(-HALF, HALF, out, out + WALL, ground, ground + OPENING), box(-HALF, HALF, -out - WALL, -out, top, top + OPENING)],
+    heads: [box(-HALF, HALF, out, out + WALL, ground + OPENING, ground + OPENING + HEAD), box(-HALF, HALF, -out - WALL, -out, top + OPENING, head)],
     buttons: [
       { x: C.x - out - BUTTON.x / 2, y: ground + BUTTON_Y, z: C.z + HALF - 0.3 },
       { x: C.x - out + WALL / 2 + SCREEN / 2 + BUTTON.x / 2, y: top + BUTTON_Y, z: C.z - out - 0.6 },
@@ -250,7 +256,7 @@ const structure = (p: AlchemiaLiftPlan): StaticProp => {
     view: NO_VIEW,
     solid: true,
     prisms: [
-      ...[...p.walls, p.sill, p.pocket, p.deck].map(boxPrism),
+      ...[...p.walls, ...p.heads, p.sill, p.pocket, p.deck].map(boxPrism),
       ...p.screens.map((s): PrismDef => ({ points: screenCorners(s).map(rel), bottom: s.floor - y, top: s.top - y })),
       { points: p.slab.corners.map(rel), bottom: p.slab.bottom - y, top: p.slab.top - y },
     ],
@@ -269,7 +275,7 @@ const mechanism = (p: AlchemiaLiftPlan): StaticProp[] => {
   const [ground] = p.levels;
   return [
     { ...block(box(-HALF, HALF, -HALF, HALF, ground - PLATFORM, ground), "metal"), mechanism: { kind: "platform", key: p.key, levels: p.levels, speed: LIFT_SPEED } },
-    ...p.gates.map((g, level): StaticProp => ({ ...block(g, "glass"), mechanism: { kind: "gate", elevator: p.key, level, travel: GATE } })),
+    ...p.gates.map((g, level): StaticProp => ({ ...block(g, "glass"), mechanism: { kind: "gate", elevator: p.key, level, travel: OPENING } })),
     ...p.buttons.map((at, level): StaticProp => ({ center: at, view: { kind: "block", size: BUTTON, material: "glass" }, solid: false, mechanism: { kind: "button", elevator: p.key, level } })),
   ];
 };

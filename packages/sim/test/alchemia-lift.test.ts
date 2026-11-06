@@ -53,6 +53,38 @@ const walkTo = (sim: Simulation, to: Pt, n: number, how: { sprint?: boolean; jum
   }
 };
 
+/**
+ * Jumps at a shut gate from `from` (on floor `y`), facing `yaw` turned 0..75° either way every 15°,
+ * from its middle and 0.6 m either side along it (`along`: the gate's direction), as a run at it
+ * would (G-289, round 2: a slanting jump pulled her up onto a gate's top, and from there over the
+ * screens). Returns the highest and the lowest feet seen over each try, over the floor.
+ */
+const jumpsAtGate = (sim: Simulation, from: Pt, y: number, yaw: number, along: Pt): { high: number; low: number; worst: string } => {
+  const p = sim.player()!;
+  let high = -Infinity;
+  let low = Infinity;
+  let worst = "";
+  for (const side of [-0.6, 0, 0.6]) {
+    for (let deg = 0; deg <= 75; deg += 15) {
+      for (const sign of deg === 0 ? [1] : [1, -1]) {
+        teleportPlayer(sim, { x: from.x + along.x * side, y, z: from.z + along.z * side }, yaw);
+        delete p.mantle;
+        delete p.fall;
+        p.velocity = { x: 0, y: 0, z: 0 };
+        run(sim, 2);
+        for (let i = 0; i < 60; i++) {
+          p.yaw = yaw + (sign * deg * Math.PI) / 180;
+          sim.step(input({ moveZ: 1, jump: i === 8 || i === 40 }));
+          if (p.position.y - y > high) worst = `side ${side}, ${sign * deg}°, step ${i}`;
+          high = Math.max(high, p.position.y - y);
+          low = Math.min(low, p.position.y - y);
+        }
+      }
+    }
+  }
+  return { high, low, worst };
+};
+
 const terraceMid = (): Pt => {
   const c = ALCHEMIA_TERRACE.corners;
   return { x: c.reduce((s, q) => s + q.x, 0) / c.length, z: c.reduce((s, q) => s + q.z, 0) / c.length };
@@ -153,6 +185,21 @@ describe("the lift of Alchemia to the hall's roof (G-284, G-289)", () => {
     cage.elevator.target = 0;
     run(low, RIDE);
     expect(cage.solid.max.y).toBeCloseTo(GROUND, 6);
+  });
+
+  it("gives no foothold on a shut gate: no pull-up onto either, so nobody gets over the screens from the bridge (G-289)", () => {
+    const out = L.half + L.wall;
+    // The top gate, the cage below: from the bridge, then on to a jump at the screens.
+    const top = at({ x: C.x, z: C.z - out - 0.9 }, TOP);
+    const up = jumpsAtGate(top, { x: C.x, z: C.z - out - 0.88 }, TOP, 0, { x: 1, z: 0 });
+    expect(up.high, `top gate: ${up.worst}`).toBeLessThan(1.5);
+    expect(up.low, "off the bridge").toBeGreaterThan(-0.05);
+    // The bottom gate, the cage up: from the sill and the paving before it.
+    const low = at({ x: C.x, z: C.z + out + 1 }, GROUND, Math.PI);
+    lift(low).elevator.target = 1;
+    run(low, RIDE);
+    const down = jumpsAtGate(low, { x: C.x, z: C.z + out + 0.88 }, GROUND, Math.PI, { x: 1, z: 0 });
+    expect(down.high, `bottom gate: ${down.worst}`).toBeLessThan(1.5);
   });
 
   it("lets nobody off the terrace or the bridge, walking, running or jumping at any edge", () => {
