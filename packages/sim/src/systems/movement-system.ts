@@ -68,6 +68,8 @@ const FOOTHOLD_SIDE = 2 * EDGE_MARGIN;
 const footAt = { x: 0, z: 0 };
 /** Tops this close are one floor. */
 const LEVEL = 0.01;
+/** How many thin slivers of one floor in a row a foothold is felt through. */
+const LEVEL_HOPS = 3;
 
 /** The narrowest way across a footprint: its width and the direction, with the extent along it. */
 interface Across {
@@ -99,19 +101,21 @@ const across = (c: Collider): Across => {
 };
 
 /**
- * Is there floor within a step of `top` at a point, or a wall rising through that height? Another
- * thin top only level with this one (two slivers of one roof), or lower with a foothold of its
- * own (the next step down a flight): a railing, a gate and a thin wall meeting at a corner hold no
- * foot together. The heights only fall, so the search ends.
+ * Is there floor within a step of `top` at a point beside the thin top `self`, or a wall rising
+ * through that height? Another thin top only with a foothold of its own: level with it (the next
+ * sliver of a roof, LEVEL_HOPS of them at most) or lower (the next step down a flight, the
+ * heights only fall). Railings, a gate and a thin wall meeting at a corner, of one height or
+ * not, hold no foot together: the one met has a drop on both sides of it there too.
  */
-const supported = (solids: readonly Collider[], field: GroundField, x: number, z: number, top: number): boolean => {
+const supported = (solids: readonly Collider[], field: GroundField, self: Collider, x: number, z: number, top: number, hops: number): boolean => {
   if (field.heightAt(x, z, top + STEP_HEIGHT) >= top - STEP_HEIGHT) return true;
   for (const c of solids) {
-    if (c.box.min.y > top + STEP_HEIGHT || !overCollider(c, x, z, EDGE_MARGIN)) continue;
+    if (c === self || c.box.min.y > top + STEP_HEIGHT || !overCollider(c, x, z, EDGE_MARGIN)) continue;
     const t = colliderTop(c, x, z);
     if (t < top - STEP_HEIGHT) continue;
-    if (Math.abs(t - top) < LEVEL || across(c).width >= FOOTHOLD_WIDTH) return true;
-    if (t < top && foothold(solids, field, c, x, z, t)) return true;
+    if (across(c).width >= FOOTHOLD_WIDTH) return true;
+    const level = Math.abs(t - top) < LEVEL;
+    if ((level ? hops > 0 : t < top) && foothold(solids, field, c, x, z, t, level ? hops - 1 : hops)) return true;
   }
   return false;
 };
@@ -121,14 +125,14 @@ const supported = (solids: readonly Collider[], field: GroundField, x: number, z
  * one only with floor or a wall about its height on one side of it (a sliver of a roof between
  * the others, a cornice against its house), not a railing or a gate with a drop on both sides.
  */
-const foothold = (solids: readonly Collider[], field: GroundField, c: Collider, x: number, z: number, top: number): boolean => {
+const foothold = (solids: readonly Collider[], field: GroundField, c: Collider, x: number, z: number, top: number, hops = LEVEL_HOPS): boolean => {
   const a = across(c);
   if (a.width >= FOOTHOLD_WIDTH) return true;
   const q = closestXZ(c, x, z, footAt);
   const [qx, qz] = [q.x, q.z];
   const d = a.nx * qx + a.nz * qz;
   const [out, back] = [a.hi - d + FOOTHOLD_SIDE, d - a.lo + FOOTHOLD_SIDE];
-  return supported(solids, field, qx + a.nx * out, qz + a.nz * out, top) || supported(solids, field, qx - a.nx * back, qz - a.nz * back, top);
+  return supported(solids, field, c, qx + a.nx * out, qz + a.nz * out, top, hops) || supported(solids, field, c, qx - a.nx * back, qz - a.nz * back, top, hops);
 };
 
 /** Lowest underside above a head at `head` over the point, or Infinity: a jump stops there. */
