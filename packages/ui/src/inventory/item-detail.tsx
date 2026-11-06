@@ -6,11 +6,14 @@ import {
   MOD_CATALOG,
   type ModSlot,
   type StatLine,
+  TRAIT_CATALOG,
+  type TraitId,
   compareItems,
   findItem,
   isGarmentId,
   isModId,
   isWeaponId,
+  itemLevelOf,
   stackCount,
   weaponStatsOf,
 } from "@seki/core";
@@ -32,7 +35,22 @@ export const StatDelta = ({ line }: { line: StatLine }) => {
   );
 };
 
-/** Name, kind, description, numbers beside the equipped piece, and the actions. */
+/** Traits of an epic or legendary piece (ADR-0059): name and what it does. */
+const ItemTraits = ({ traits }: { traits: readonly TraitId[] }) => {
+  const t = useT();
+  const tx = useText();
+  return (
+    <ul className="inv__traits" aria-label={t("inventory.detail.traits")} data-testid="item-traits">
+      {traits.map((id) => (
+        <li key={id}>
+          <strong>{tx(TRAIT_CATALOG[id].label)}</strong> {tx(TRAIT_CATALOG[id].description)}
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+/** Name, tier and level, kind, description, traits, numbers beside the equipped piece, and the actions. */
 export const ItemDetail = ({
   selected,
   inventory,
@@ -61,6 +79,7 @@ export const ItemDetail = ({
   const def = item ? item.def : "stack" in selected ? selected.stack : null;
   if (def === null) return null;
   const tier = item ? rarityLabel(t, item.rarity) : null;
+  const level = item ? itemLevelOf(item) : null;
   const against = compare.against ? findItem(inventory, compare.against) : undefined;
   const stats = item && isWeaponId(item.def) ? weaponStatsOf(inventory, item.uid) : null;
   const mods = item?.mods ? Object.entries(item.mods) : [];
@@ -69,12 +88,18 @@ export const ItemDetail = ({
       <header className="inv__detail-head">
         <h3 className="inv__detail-name">{itemName(tx, def)}</h3>
         {tier && <span className={`inv__tier inv__tier--${item!.rarity}`}>{tier}</span>}
+        {level !== null && (
+          <span className="inv__level" data-testid="item-level">
+            {t("inventory.detail.level", { level })}
+          </span>
+        )}
       </header>
       <div className="inv__kind">
         {kindLabel(t, def)}
         {"stack" in selected && ` · ${t("inventory.detail.have", { count: stackCount(inventory, selected.stack) })}`}
       </div>
       <p className="inv__desc">{description(tx, def)}</p>
+      {item?.traits && item.traits.length > 0 && <ItemTraits traits={item.traits} />}
       {stats?.ammo && (
         <div className="inv__meta">{t("inventory.detail.loaded", { loaded: item?.loaded ?? 0, magazine: stats.magazine, ammo: tx(AMMO_CATALOG[stats.ammo].name) })}</div>
       )}

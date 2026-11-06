@@ -297,9 +297,9 @@ describe("inventory migration (v7 to v8, ADR-0015)", () => {
     expect(loaded.domain.inventory).toEqual({
       stacks: { medkit: 3 },
       items: [
-        { uid: "i1", def: "unity9", rarity: "common", loaded: 12, mods: {} },
-        { uid: "i2", def: "seki_jacket", rarity: "common", condition: 100 },
-        { uid: "i3", def: "cargo_pants", rarity: "common", condition: 100 },
+        { uid: "i1", def: "unity9", rarity: "common", level: 1, loaded: 12, mods: {} },
+        { uid: "i2", def: "seki_jacket", rarity: "common", level: 1, condition: 100 },
+        { uid: "i3", def: "cargo_pants", rarity: "common", level: 1, condition: 100 },
       ],
       keyItems: [],
       capacity: 24,

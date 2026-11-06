@@ -1,4 +1,4 @@
-import { SAVE_SCHEMA_VERSION, SHARD_CYBER_CAPACITY, capacityMax, progressionFromXp } from "@seki/core";
+import { SAVE_SCHEMA_VERSION, SHARD_CYBER_CAPACITY, capacityMax, clampItemLevel, hasItemLevel, isInstanceDefId, progressionFromXp } from "@seki/core";
 
 type Json = Record<string, unknown>;
 
@@ -47,6 +47,28 @@ export const retroactiveXp = (domain: Json): number => {
   const contracts = isObject(domain.contracts) ? domain.contracts : {};
   const completed = Number.isInteger(contracts.completed) ? Math.max(0, contracts.completed as number) : 0;
   return xp + completed * V17_CONTRACT_XP;
+};
+
+/**
+ * The level an old piece gets from its tier (ADR-0059): common 1, uncommon 3, rare 5, a unique one
+ * the player's level. Spelled out, like the ids: a migration describes the content of its time.
+ */
+export const V28_LEVEL_OF_TIER: Readonly<Record<string, number>> = { common: 1, uncommon: 3, rare: 5 };
+
+/**
+ * A v28 weapon or garment (an instance by `def`, a loot line by `item`) with its v29 level, put
+ * right after the tier as a new piece has it. Anything else, or a piece that has one, as it was.
+ */
+export const withV28Level = (piece: unknown, idKey: "def" | "item", player: number): unknown => {
+  if (!isObject(piece) || piece.level !== undefined || !isInstanceDefId(piece[idKey]) || !hasItemLevel(piece[idKey])) return piece;
+  const tier = typeof piece.rarity === "string" ? piece.rarity : "common";
+  const level = clampItemLevel(tier === "unique" ? player : (V28_LEVEL_OF_TIER[tier] ?? 1));
+  const out: Json = {};
+  for (const [k, v] of Object.entries(piece)) {
+    out[k] = v;
+    if (k === "rarity") out.level = level;
+  }
+  return "level" in out ? out : { ...out, level };
 };
 
 /**
@@ -375,6 +397,27 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v27 -> v28 (G-233): the bodies of a won mugging's muggers are saved (`strayBodies`, optional).
   // An older save has none: they were gone on loading, and still are.
   27: (old) => ({ ...old, version: 28 }),
+  // v28 -> v29 (ADR-0059, stage 4): every weapon and garment has a level, in the bag and in the
+  // loot bags. An older save's pieces get the level of their tier (`V28_LEVEL_OF_TIER`); there
+  // were no epic or legendary ones, so no traits either.
+  28: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const progression = isObject(domain.progression) ? domain.progression : {};
+    const player = Number.isInteger(progression.level) ? (progression.level as number) : 1;
+    const inventory = isObject(domain.inventory) ? domain.inventory : null;
+    const loot = isObject(domain.loot) ? domain.loot : null;
+    const items = inventory && Array.isArray(inventory.items) ? { inventory: { ...inventory, items: inventory.items.map((i) => withV28Level(i, "def", player)) } } : {};
+    const containers =
+      loot && Array.isArray(loot.containers)
+        ? {
+            loot: {
+              ...loot,
+              containers: loot.containers.map((c) => (isObject(c) && Array.isArray(c.lines) ? { ...c, lines: c.lines.map((l) => withV28Level(l, "item", player)) } : c)),
+            },
+          }
+        : {};
+    return { ...old, version: 29, domain: { ...domain, ...items, ...containers } };
+  },
 };
 
 export class MigrationError extends Error {}
