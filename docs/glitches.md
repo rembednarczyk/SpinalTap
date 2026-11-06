@@ -953,7 +953,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan
 
 ### G-320 Nakładające się nawierzchnie `square` i `cobble` leżą w jednej płaszczyźnie: migotanie głębi (z-fighting) bruku i płyt w całym mieście
-- Status: w PR #328 (6.11, weryfikator: PRZYJĘTE; przegląd kuratora w toku)
+- Status: w PR #328 (6.11, weryfikator i kurator: PRZYJĘTE; runda 2: kontrola skanu za wolna w CI)
 - Ważność: S3 (było S4) · Zasięg: 69 par różnych nawierzchni z tym samym `SURFACE_LIFT` 0,08; dwa nakładające się `square` z różnym wzorem spoin dają słabe kropkowane linie (zrzut `shots/g301/after/g301-c.png`); trwale: rysować jeden kawałek z pary (przycięcie nakładek w imporcie)
 - Pakiet właściciela: tools/osm-import i packages/engine (mapcity/ground-plan)
 
@@ -1233,6 +1233,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, weryfikator PR #328)
 - Ważność: S4 · Zasięg: w 1808 z 6512 próbek pasek pod płytami chodnika (do −24 cm przy (−199,8; −50,4)), w 197 nad nimi o < 1 mm (ryzyko migotania); 2 pary krawężnik/krawężnik w jednej płaszczyźnie: (365,3; −152,0), (635,7; 252,0); przegrany kawałek G-320 zachowuje krawężniki pod zwycięzcą; nowa kontrola skanu potrzebna
 - Pakiet właściciela: packages/engine (mapcity), tools/glitch-scan
+
+### G-406 Rynek jako mozaika kostki i płyt; kostka na 11 skrzyżowaniach wbrew bliższej osi OSM (T-189, T-190)
+- Status: zgłoszone (6.11, kurator, przegląd #328)
+- Ważność: S4 · Zasięg: Rynek r2082677 (pasy 8 m linii `sett` w obszarze `paving_stones`), 11 skrzyżowań 91 m²; poprawka: nawierzchnia Rynku ze zdjęcia jedną korektą w `corrections.ts`, przy dwóch liniach nawierzchnia bliższej osi (wymaga rodzaju źródła w `GroundEntry`); kontrola skanu `paving-specific-lost` (baza 11); pokrewne T-045
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
