@@ -154,6 +154,10 @@ const minusTriangle = (poly: readonly Corner[], tri: readonly [P2, P2, P2], keep
     const len = Math.hypot(q.x - p.x, q.z - p.z) || 1;
     // Metres to the left of p → q (inside for a counter-clockwise triangle).
     const left = (k: Corner) => (wind * ((q.x - p.x) * (k.z - p.z) - (q.z - p.z) * (k.x - p.x))) / len;
+    const sides = rest.map(left);
+    // Wholly on one side, as a piece of a grid's cell mostly is: nothing to clip.
+    if (sides.every((d) => d <= 0)) return [[...poly]];
+    if (sides.every((d) => d >= 0)) continue;
     const past = clip(rest, (k) => -left(k));
     if (past.length >= 3) out.push(past);
     rest = clip(rest, left);
@@ -184,36 +188,44 @@ const coverY = (t: GroundCover, x: number, z: number): number => {
  * lie in one plane (G-320: paving another piece lays over at the same depth, which the depth
  * buffer would take either of pixel by pixel; a way under a bridge's deck keeps its own), as
  * `cutGround` takes the shafts out: a triangle under one is replaced by its pieces outside it,
- * their corners interpolated across it.
+ * their corners interpolated across it. Both are cut on the drape's grid (`drapeTriangles`): a
+ * cover overlapping a triangle lies in the triangle's cell of it.
  */
 export const cutCovers = (sink: MeshSink, from: number, covers: readonly GroundCover[]): void => {
   // By the cells of the drape's grid their boxes touch: a square's piece meets a few of thousands.
+  const key = (i: number, k: number): number => (i + 1e5) * 2e5 + k + 1e5;
   const bins = new Map<number, { t: GroundCover; box: GroundHole }[]>();
   const keys = (b: GroundHole): number[] => {
     const out: number[] = [];
-    for (let i = Math.floor(b.minX / BIN); i <= Math.floor(b.maxX / BIN); i++) for (let k = Math.floor(b.minZ / BIN); k <= Math.floor(b.maxZ / BIN); k++) out.push((i + 1e5) * 2e5 + k + 1e5);
+    for (let i = Math.floor(b.minX / BIN); i <= Math.floor(b.maxX / BIN); i++) for (let k = Math.floor(b.minZ / BIN); k <= Math.floor(b.maxZ / BIN); k++) out.push(key(i, k));
     return out;
   };
   for (const t of covers) {
     if (Math.abs((t[1].x - t[0].x) * (t[2].z - t[0].z) - (t[1].z - t[0].z) * (t[2].x - t[0].x)) <= 1e-9) continue;
     const hole = { t, box: boundsOf(t) };
-    for (const key of keys(hole.box)) {
-      const bin = bins.get(key);
+    for (const k of keys(hole.box)) {
+      const bin = bins.get(k);
       if (bin) bin.push(hole);
-      else bins.set(key, [hole]);
+      else bins.set(k, [hole]);
     }
   }
   if (bins.size === 0) return;
-  const all = boundsOf(covers.flat());
   const p = sink.positions;
   const old = sink.indices.splice(from);
   for (let t = 0; t + 2 < old.length; t += 3) {
     const tri = [old[t] as number, old[t + 1] as number, old[t + 2] as number] as const;
-    const whole: Corner[] = tri.map((v, k) => ({ x: p[v * 3] ?? 0, z: p[v * 3 + 2] ?? 0, w: [k === 0 ? 1 : 0, k === 1 ? 1 : 0, k === 2 ? 1 : 0] as const }));
-    const box = boundsOf(whole);
-    const sign = area(whole);
-    const near = Math.abs(sign) < 1e-6 || !overlaps(all, box) ? [] : [...new Set(keys(box).flatMap((key) => bins.get(key) ?? []))].filter((h) => overlaps(h.box, box));
-    if (near.length === 0) {
+    const [x0, x1, x2] = [p[tri[0] * 3] ?? 0, p[tri[1] * 3] ?? 0, p[tri[2] * 3] ?? 0];
+    const [z0, z1, z2] = [p[tri[0] * 3 + 2] ?? 0, p[tri[1] * 3 + 2] ?? 0, p[tri[2] * 3 + 2] ?? 0];
+    const bin = bins.get(key(Math.floor((x0 + x1 + x2) / 3 / BIN), Math.floor((z0 + z1 + z2) / 3 / BIN)));
+    const box = { minX: Math.min(x0, x1, x2), maxX: Math.max(x0, x1, x2), minZ: Math.min(z0, z1, z2), maxZ: Math.max(z0, z1, z2) };
+    const near = bin?.filter((h) => overlaps(h.box, box)) ?? [];
+    const whole: Corner[] = [
+      { x: x0, z: z0, w: [1, 0, 0] },
+      { x: x1, z: z1, w: [0, 1, 0] },
+      { x: x2, z: z2, w: [0, 0, 1] },
+    ];
+    const sign = near.length === 0 ? 0 : area(whole);
+    if (Math.abs(sign) < 1e-6) {
       sink.indices.push(...tri);
       continue;
     }

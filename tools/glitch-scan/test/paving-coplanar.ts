@@ -1,9 +1,9 @@
-import type { GroundSurface } from "../../../packages/core/src";
+import { type GroundSurface, SURFACE_LIFT } from "../../../packages/core/src";
 import { planGround } from "../../../packages/engine/src/renderer/mapcity/cell-ground";
-import { SURFACE_CODE } from "../../../packages/engine/src/renderer/mapcity/ground-plan";
+import { DRAPE_GRID, type DrapeCells, SURFACE_CODE } from "../../../packages/engine/src/renderer/mapcity/ground-plan";
 import type { MapEntries } from "../../../packages/engine/src/renderer/mapcity/map-entries";
 import { BinIndex } from "../../../packages/engine/src/renderer/mapcity/map-index";
-import { type Box2, type P2, boundsOf } from "../../../packages/engine/src/renderer/mapcity/polygon";
+import { type Box2, type P2, boundsOf, triangulate } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 
 /**
@@ -12,7 +12,9 @@ import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
  * two squares) lie at exactly the same height where they overlap, and the depth buffer picks
  * either, pixel by pixel and anew with every move of the camera: large ragged triangles of one
  * paving through the other, worst on a phone's coarser depth. Read off the triangles the cell
- * builder lays for each entry (`planGround`), whatever decides which of them it draws.
+ * builder lays for each entry (`planGround`), whatever decides which of them it draws. Only pairs
+ * of one lift whose outlines overlap are laid and compared: pieces of other lifts lie a lift's
+ * difference apart, and most pairs of boxes that meet are neighbours sharing an edge.
  */
 
 type Finding = { readonly at: string; readonly what: string };
@@ -28,17 +30,18 @@ const MIN_AREA = 0.01;
 const cross = (a: P2, b: P2, p: P2): number => (b.x - a.x) * (p.z - a.z) - (b.z - a.z) * (p.x - a.x);
 
 /** The triangles of the entry's own surface as laid (not its kerbs, deck's edges or underside). */
-const pieceTris = (entries: MapEntries, id: number, surface: GroundSurface): Tri[] => {
+const pieceTris = (entries: MapEntries, id: number, surface: GroundSurface, within: DrapeCells): Tri[] => {
   const ground = new MeshSink();
   const water = new MeshSink();
-  planGround(ground, water, entries, id);
+  planGround(ground, water, entries, id, within);
   const sink = surface === "water" ? water : ground;
   const code = surface === "water" ? null : SURFACE_CODE[surface as keyof typeof SURFACE_CODE];
   const out: Tri[] = [];
   const pos = sink.positions;
   for (let t = 0; t + 2 < sink.indices.length; t += 3) {
     const ids = [sink.indices[t]!, sink.indices[t + 1]!, sink.indices[t + 2]!] as const;
-    if (code !== null && ids.some((i) => sink.uvs2[i * 2] !== code)) continue;
+    // Rounded: a corner `cutCovers` interpolates carries the code as 2.9999999.
+    if (code !== null && ids.some((i) => Math.round(sink.uvs2[i * 2]!) !== code)) continue;
     const p = ids.map((i) => ({ x: pos[i * 3]!, z: pos[i * 3 + 2]! })) as unknown as [P2, P2, P2];
     if (Math.abs(cross(p[0], p[1], p[2])) < 1e-9) continue;
     out.push({ p, y: ids.map((i) => pos[i * 3 + 1]!) as unknown as [number, number, number], box: boundsOf(p) });
@@ -131,27 +134,69 @@ const overlapOf = (a: Piece, b: Piece): { area: number; at: P2 } => {
   return { area, at };
 };
 
+const cellKey = (i: number, k: number): number => (i + 1e5) * 2e5 + k + 1e5;
+
+/** The area two outlines overlap by and the boxes of where, from their triangulations (the plan's data, nothing laid). */
+const outlineOverlap = (a: readonly P2[], b: readonly P2[]): { area: number; boxes: Box2[] } => {
+  const tris = (ring: readonly P2[]) => {
+    const t = triangulate(ring);
+    const out: [P2, P2, P2][] = [];
+    for (let k = 0; k + 2 < t.length; k += 3) out.push([ring[t[k]!]!, ring[t[k + 1]!]!, ring[t[k + 2]!]!]);
+    return out.filter((tri) => Math.abs(cross(tri[0], tri[1], tri[2])) > 1e-9).map((p) => ({ p, box: boundsOf(p) }));
+  };
+  const tb = tris(b);
+  let area = 0;
+  const boxes: Box2[] = [];
+  for (const s of tris(a)) {
+    for (const t of tb) {
+      if (!meets(s.box, t.box)) continue;
+      const [p, q, r] = t.p;
+      const sign = Math.sign(cross(p, q, r));
+      const poly = clipLeft(clipLeft(clipLeft(s.p, p, q, sign), q, r, sign), r, p, sign);
+      if (poly.length < 3) continue;
+      area += areaOf(poly);
+      boxes.push(boundsOf(poly));
+    }
+  }
+  return { area, boxes };
+};
+
 /** `paving-coplanar`: one per pair of drawn pieces overlapping in one plane by `MIN_AREA` or more. */
 export const pavingCoplanar = (entries: MapEntries): Finding[] => {
   const ids = [...entries.grounds.entries()].filter(([, g]) => !g.marking && PAVED.has(g.surface)).map(([id]) => id);
   const index = new BinIndex();
   for (const id of ids) index.add(id, entries.grounds.get(id)!.bounds);
-  const pieces = new Map<number, Piece>();
-  const pieceAt = (id: number): Piece => {
-    let t = pieces.get(id);
-    if (!t) pieces.set(id, (t = pieceOf(pieceTris(entries, id, entries.grounds.get(id)!.surface))));
-    return t;
+  // The pairs of one lift whose outlines overlap, and the cells of the drape's grid each piece overlaps another in.
+  const pairs: [number, number][] = [];
+  const cells = new Map<number, Set<number>>();
+  const mark = (id: number, boxes: readonly Box2[]) => {
+    let set = cells.get(id);
+    if (!set) cells.set(id, (set = new Set()));
+    for (const b of boxes) for (let i = Math.floor(b.minX / DRAPE_GRID); i <= Math.floor(b.maxX / DRAPE_GRID); i++) for (let k = Math.floor(b.minZ / DRAPE_GRID); k <= Math.floor(b.maxZ / DRAPE_GRID); k++) set.add(cellKey(i, k));
   };
-  const out: Finding[] = [];
   for (const i of ids) {
     const gi = entries.grounds.get(i)!;
     for (const j of index.within(gi.bounds)) {
-      if (j <= i) continue;
       const gj = entries.grounds.get(j)!;
-      if (!meets(gi.bounds, gj.bounds)) continue;
-      const { area, at } = overlapOf(pieceAt(i), pieceAt(j));
-      if (area >= MIN_AREA) out.push({ at: `${at.x.toFixed(1)},${at.z.toFixed(1)}`, what: `${gi.surface} and ${gj.surface}: ${area.toFixed(2)} m² in one plane` });
+      if (j <= i || !meets(gi.bounds, gj.bounds) || SURFACE_LIFT[gi.surface] !== SURFACE_LIFT[gj.surface]) continue;
+      const { area, boxes } = outlineOverlap(gi.ring, gj.ring);
+      if (area < MIN_AREA) continue;
+      pairs.push([i, j]);
+      mark(i, boxes);
+      mark(j, boxes);
     }
+  }
+  // Each laid once, in those cells only: the same triangles there as the cell builder lays.
+  const pieces = new Map<number, Piece>();
+  const pieceAt = (id: number): Piece => {
+    let t = pieces.get(id);
+    if (!t) pieces.set(id, (t = pieceOf(pieceTris(entries, id, entries.grounds.get(id)!.surface, (ci, ck) => cells.get(id)!.has(cellKey(ci, ck))))));
+    return t;
+  };
+  const out: Finding[] = [];
+  for (const [i, j] of pairs) {
+    const { area, at } = overlapOf(pieceAt(i), pieceAt(j));
+    if (area >= MIN_AREA) out.push({ at: `${at.x.toFixed(1)},${at.z.toFixed(1)}`, what: `${entries.grounds.get(i)!.surface} and ${entries.grounds.get(j)!.surface}: ${area.toFixed(2)} m² in one plane` });
   }
   return out;
 };
