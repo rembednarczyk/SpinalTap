@@ -545,6 +545,51 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     reason: "asfalt wjazdu na stanowiska Dworca Autobusowego do przejścia przez chodnik, na ortofoto PZGiK, w OSM bez obszaru",
     ref: "T-170",
   },
+  {
+    // The strip between the car park w227698441 (by the Bazar) and Nowy Plac Targowy w40050943/w40049827,
+    // bare in OSM, 1.2-1.9 m: on the orthophoto (PZGiK) asphalt from the cars' fronts to the street, so
+    // a carriageway's area, not setts. From the car park's north edge to the street's axis (drawn
+    // over it), between the car park's corners. Off the nodes: T-169's point on the axis in the east,
+    // the axis abreast of the car park's north-west corner in the west.
+    id: "T-172/pas-parkingu",
+    tags: { "area:highway": "service", surface: "asphalt" },
+    ring: [
+      { x: 726.12, z: 440.8 },
+      { x: 726.12, z: 445.48 },
+      { x: 714.09, z: 447.88 },
+      { x: 695.46, z: 451.7 },
+      { x: 686.21, z: 452.6 },
+      { x: 676.34, z: 453.26 },
+      { x: 672.09, z: 453.78 },
+      { x: 672.09, z: 450.44 },
+    ],
+    nodesOf: ["w227698441", null, "w40050943", "w40050943", "w40049827", "w40049827", null, "w227698441"],
+    reason: "asfalt od przodów aut na parkingu przy Bazarze do jezdni Nowego Placu Targowego na ortofoto PZGiK, w OSM bez obszaru",
+    ref: "T-172",
+  },
+  {
+    // The red setts along the Bazar w67502759's north and east edges by the car park w227698441, bare
+    // in OSM on both sides of the footway w227698428's band: from the Bazar's edge to the car park's
+    // south edge, and round the car park's south-east corner up the Bazar's east edge to the
+    // footway's node (725.01, 419.7), past the building w73833938. The footway is drawn over it.
+    // It joins T-169/zaplecze-novy at the car park's corner; every corner is the map's node.
+    id: "T-172/chodnik-przy-hali",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 671.4, z: 446.57 },
+      { x: 725.42, z: 436.92 },
+      { x: 727.09, z: 434.91 },
+      { x: 725.01, z: 419.7 },
+      { x: 722.57, z: 421.07 },
+      { x: 724.62, z: 433.99 },
+      { x: 703.75, z: 437.28 },
+      { x: 693.91, z: 438.84 },
+      { x: 668.65, z: 442.82 },
+    ],
+    nodesOf: ["w227698441", "w227698441", "w227698428", "w227698428", "w67502759", "w67502759", "w67502759", "w67502759", "w67502759"],
+    reason: "czerwona kostka chodnika wzdłuż hal Bazaru przy parkingu na ortofoto PZGiK, w OSM tylko linia chodnika",
+    ref: "T-172",
+  },
 ];
 
 /** The added areas as the import reads the map's. */

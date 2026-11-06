@@ -323,6 +323,24 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(816, 438.8)).toBe("footway");
   });
 
+  // By the car park w227698441 at the Bazar (T-172): (a) asphalt between the car park and Nowy Plac
+  // Targowy, (b) the footway w227698428's setts between the car park and the Bazar, (c) the gap by
+  // the building w73833938. The register's test: on a 0.1 m grid at most 0.5 m² (seams).
+  it("paves round the car park by the Bazar up to the street and the halls, and leaves the car park, the footway and the street on top (G-347)", () => {
+    const box = (o: readonly number[]) => o.some((v, i) => (i % 2 === 0 ? v > 671 && v < 728 : v > 433 && v < 450));
+    const pieces = ground.filter((g) => box(g.outline)).map((g) => g.outline);
+    const walls = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z))).filter(box);
+    let bare = 0;
+    for (let x = 672.05; x < 727; x += 0.1)
+      for (let z = 434.05; z < 449; z += 0.1) if (![...walls, ...pieces].some((o) => inside(x, z, o))) bare++;
+    expect(bare * 0.01).toBeLessThanOrEqual(0.5);
+    expect(surfaceAt(700, 445)).toBe("road");
+    expect(surfaceAt(700, 448.2)).toBe("road");
+    expect(surfaceAt(700, 439.6)).toBe("footway");
+    expect(surfaceAt(700, 436)).toBe("square");
+    expect(surfaceAt(725.6, 428)).toBe("footway");
+  });
+
   const OSM_DIR = join(__dirname, "../../../data/osm");
   const osm = mergeOsm(readdirSync(OSM_DIR).filter((f) => f.endsWith(".json")).map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))));
   const PAVED = new Set(["square", "cobble", "footway", "road"]);
