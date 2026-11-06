@@ -166,7 +166,8 @@
 /* Left: the objective, the stick, health only when it matters, the active weapon. */
 .touch-mode .hud__objective { left: max(16px, env(safe-area-inset-left, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); max-width: calc(100vw - 380px); font-size: 13px; padding: 4px 10px; }
 .touch-mode .hud__quest-title { font-size: 10px; }
-.touch-mode .hud__identity { left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); width: 160px; padding: 4px 8px; }
+/* 160 px with its padding and border: the weapon strip starts 172 px in (it overlapped by 7 px as 160 px of content). */
+.touch-mode .hud__identity { box-sizing: border-box; left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); width: 160px; padding: 4px 8px; }
 .touch-mode .hud__identity--calm { display: none; }
 .touch-mode .hud__name { display: none; }
 .touch-mode .hud__hp { margin-top: 0; }
