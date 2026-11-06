@@ -1092,7 +1092,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan (`metro-entrances.ts`)
 
 ### G-372 Podciąganie (`ledgeAhead`) sprawdza tylko punkt docelowy: na cienką barierkę da się wejść wzdłuż jej linii i chodzić po wierzchu
-- Status: w PR (6.11, a952549; `foothold()` w `movement-system`: cienki wierzch bez oparcia obok nie jest podłogą; w weryfikacji)
+- Status: w PR #321, runda 2 (6.11; weryfikator NIE PRZYJĘTE: w narożniku barierek równej wysokości prostopadła barierka daje oparcie, stanie na wierzchu 27/108, przejście 16/36)
 - Ważność: S3 · Zasięg: prawdopodobnie barierki w całym mieście; przy windzie Alchemii wymusiło barierki 2,6 m zamiast 1,1 m · Koszt: średni
 - Pakiet właściciela: packages/sim (`movement-system`)
 - Test przyjęcia: podciągnięcie na bryłę węższą niż ciało albo na krawędź barierki jest odrzucane; barierka 1,1 m nie daje się przejść
