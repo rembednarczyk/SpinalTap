@@ -78,4 +78,16 @@ describe("NPCs and the way under a bridge's deck (G-068, ADR-0053)", () => {
       expect(drop).toBeLessThan(0.3);
     }
   });
+
+  // The tunnel's mouths, NE and SW of Zamkowa's deck 3.3 m over the footway: both ends off the deck.
+  const [ne, sw] = [{ x: 787, z: 193.5 }, { x: 775.5, z: 204 }];
+  for (const [way, from, to] of [
+    ["NE to SW", ne, sw],
+    ["SW to NE", sw, ne],
+    ["aslant", { x: 792, z: 190 }, { x: 772, z: 208 }],
+  ] as const) {
+    it(`a brawler chases the player through the footway's tunnel under Zamkowa's deck, ${way} (G-088)`, () => {
+      expect(chase(from, to, -Infinity).at).not.toBeNull();
+    });
+  }
 });
