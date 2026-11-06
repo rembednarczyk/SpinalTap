@@ -291,3 +291,19 @@ Etap 6 wprowadza łup dopasowany do stylu gracza i ochronę przed pechem. Wszyst
 - **Zapis v31:** `progression` dostał pola `style` i `unlucky`. Migracja daje staremu zapisowi pusty styl i licznik 0. Walidacja przyjmuje najwyżej 50 znanych rodzajów i licznik od 0 do 8. Respec ich nie zmienia.
 - **Kontrakty:** zdarzenia, komendy i porty się nie zmieniają. Nowe pola są w `ProgressionState` w `core/progression`, a nie w plikach kontraktów.
 - **Determinizm:** złote hashe nagrano na nowo, bo w zapisie są nowe pola. Bez tych pól, jako v30, wszystkie przebiegi (główny, na trudnym, pojedynek i posiłki w dokach) dają złote hashe sprzed etapu (`v30HashOf`), więc reguły w nich się nie zmieniły. Gracz głównego przebiegu nikogo nie pokonuje i nie hakuje, więc jego styl jest pusty, a licznik równy 0.
+
+## Decyzje użytkownika po etapie 6 (6.11)
+
+Te decyzje zastępują trzy zdania z „Z budowy etapu 6”: że w tabelach nie ma pistoletów ani broni wręcz, że strzelba jest osobnym rodzajem z wyboru budującego oraz że ścieżki przesuwają tylko tłumik, przebrania Tessenu i datachip. Liczby są wstępne i do strojenia w etapie 8.
+
+- **Pistolety i broń biała są w łupie wrogów.** To świadoma zmiana bazowego łupu. Wszystkie te wpisy mają losowaną rzadkość, poziom łupu z etapów 4 i 5 i liczą się do ochrony przed pechem.
+  - Hebi, tabela wspólna: Unity 9 i pałka, po 2 na 100. Ich wagę oddały złom (24 → 22) i części broni (8 → 6), więc tabela dalej sumuje się do 100.
+  - Egzekutor Hebi: do tabeli wspólnej dochodzą rewolwer Oni .44 i shirasaya, po 2.
+  - Tessen (strażnik i snajper): Unity 9 i pałka, po 2. Ich wagę oddała amunicja 5,56 (34 → 29), więc strażnik dalej ma 99.
+  - Worek gangera jest wart u Oyajiego średnio 53,6 €$ zamiast 50,6 €$. W przykładzie z planu łup trzech celów to 25,7% stawki zamiast 24,3%, nadal w paśmie 20–30% (test E10).
+  - Pałka i shirasaya z łupu mają ikonę i model jak z handlu (`look` z katalogu). Test sprawdza, że shirasaya z worka egzekutora trafia do torby, do gniazda broni białej i do ręki.
+- **Strzelba zostaje osobnym rodzajem stylu** (decyzja użytkownika).
+- **Ścieżki przesuwają więcej wpisów**, w tym samym limicie +60%:
+  - quickhacki: datachip, odłamek pojemności i wszczep Synapse booster (układ nerwowy, „szybsze przetwarzanie celów”). Wszczep dochodzi do tabeli Tessenu z wagą 1 i stałą rzadkością zwykłą, jak chwyt stabilizujący u Hebi. W grze nie ma jeszcze wszczepu samego cyberdecku ani przedmiotu z RAM, więc to najbliższy hakerski wpis z katalogu;
+  - skradanie: tłumik i przebrania, czyli kurtka Hebi oraz mundur i kombinezon Tessenu.
+- **Determinizm:** złote hashe się nie zmieniają. W przebiegach z `determinism.test.ts` i `reinforcement-sidestep.test.ts` nowe wagi nie zmieniają żadnego worka: hashe przed zmianą i po niej są takie same.
