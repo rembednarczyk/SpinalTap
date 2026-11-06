@@ -1,13 +1,19 @@
 import { describe, expect, it } from "vitest";
+import { enemyScale } from "@seki/core";
 import { DOKI_TERMINAL_SPOTS, GENZO_SPOT, type Simulation, ground } from "../src";
 import { AWAY, byKey, input, run, teleportPlayer } from "./helpers";
 import { hash, reload, taken } from "./contract-save-helpers";
+import { profile } from "./difficulty-scenes";
 
 /** Saving and loading while the hack's wave shoots at the player on the terminal (G-185 (a)). */
 
-/** On the quay terminal, connected, `steps` steps into the hack: the wave is at her. */
+/**
+ * On the quay terminal, connected, `steps` steps into the hack: the wave is at her. The wave is of
+ * the docks' lowest level, 16 (ADR-0059), and hits 1.6 times as hard as a level 1 one: the
+ * difficulty's `damageTaken` takes that back, so the fight lasts as long as these saves need.
+ */
 const hacking = (seed: number, steps: number): { sim: Simulation; id: string } => {
-  const { sim, c } = taken(seed, 0, ground(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), "hack");
+  const { sim, c } = taken(seed, 0, ground(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), "hack", profile({ damageTaken: 1 / enemyScale(16) }));
   const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
   teleportPlayer(sim, ground(t.x, t.z - 1.4), 0);
   sim.step(input({ interact: true }));

@@ -17,11 +17,14 @@ import { DOKI_CONTRACT_POSTS, DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, ESCORT_ROUTE
 import { type ChunkDef, chunkAt } from "../content/world-map";
 import { decorateTarget, planExtras, targetPresence, targetSpot, targetType } from "./contract-plan";
 import type { Entity } from "./components";
-import { type IdAllocator, contractGangerHp, escortEntity, gangerEntity, pickupEntity, sniperEntity, terminalEntity } from "./factory";
+import { GANGER_MAX_HP, type IdAllocator, escortEntity, gangerEntity, pickupEntity, sniperEntity, terminalEntity } from "./factory";
 import type { Template } from "./stream-catalog";
 
-/** Docks guards get tougher with experience, from their own type's health (ADR-0024). */
-const docksGuardHp = (type: EnemyTypeId, completed: number): number => ENEMY_TYPES[type].hp + Math.min(40, completed * 5);
+/**
+ * A docks guard has its type's health (ADR-0024). A crew no longer grows tougher with the jobs
+ * done: its level by the docks' band does that (ADR-0059, `toughen`).
+ */
+const docksGuardHp = (type: EnemyTypeId): number => ENEMY_TYPES[type].hp;
 
 /** The site's chunk: the one holding its first spawn point, else the first chunk. */
 const siteChunk = (contract: Contract, chunks: readonly ChunkDef[]): string => {
@@ -30,7 +33,7 @@ const siteChunk = (contract: Contract, chunks: readonly ChunkDef[]): string => {
 };
 
 /** The contract's targets, one per index; ids are taken in index order. */
-const targetTemplates = (ids: IdAllocator, chunk: string, completed: number, contract: Contract): Template[] => {
+const targetTemplates = (ids: IdAllocator, chunk: string, contract: Contract): Template[] => {
   const out: Template[] = [];
   const points = CONTRACT_SITE_SPAWNS[contract.siteId];
   const kind = contractKind(contract);
@@ -49,7 +52,7 @@ const targetTemplates = (ids: IdAllocator, chunk: string, completed: number, con
       // A docks post (ADR-0024): its own facing and type; an alarm post waits for the alarm.
       // The extra guard of a lockdown stands at the site's lookout, not on a copy of a post.
       const spawn = { key, position: posts && i >= posts.length ? position : post.at, yaw: post.yaw };
-      const hp = docksGuardHp(post.type, completed);
+      const hp = docksGuardHp(post.type);
       const make = (): Entity => {
         if (post.type === "tessen_sniper") return sniperEntity(id, spawn, tag, hp, chunk);
         const g = gangerEntity(id, spawn, tag, hp, chunk, victim, post.type);
@@ -66,7 +69,8 @@ const targetTemplates = (ids: IdAllocator, chunk: string, completed: number, con
     const spawn = { key, position, yaw: contractSpawnYaw(contract.siteId, position) };
     // Every third ganger of a wave fights hand to hand (ADR-0019).
     const type = targetType(contract, i, i % 3 === 2 ? "hebi_brawler" : "hebi_ganger");
-    const hp = type === "hebi_enforcer" ? ENEMY_TYPES.hebi_enforcer.hp : contractGangerHp(completed);
+    // A Hebi of a crew has a ganger's health whatever it fights with; its level makes it tougher (ADR-0059).
+    const hp = type === "hebi_enforcer" ? ENEMY_TYPES.hebi_enforcer.hp : GANGER_MAX_HP;
     const when = targetPresence(contract, i);
     const make = (): Entity => decorateTarget(gangerEntity(id, spawn, tag, hp, chunk, victim, type), contract, i);
     out.push(when ? { id, chunk, key, make, when } : { id, chunk, key, make });
@@ -99,11 +103,11 @@ const objectTemplates = (ids: IdAllocator, chunk: string, contract: Contract): T
 };
 
 /** The variation's extras (ADR-0034); each may stand in a neighbouring chunk and spawns with it. */
-const extraTemplates = (ids: IdAllocator, chunks: readonly ChunkDef[], chunk: string, completed: number, contract: Contract): Template[] => {
+const extraTemplates = (ids: IdAllocator, chunks: readonly ChunkDef[], chunk: string, contract: Contract): Template[] => {
   const docks = DOKI_CONTRACT_POSTS[contract.siteId] !== undefined;
   const extra = {
     chunk,
-    hp: docks ? docksGuardHp("tessen_guard", completed) : contractGangerHp(completed),
+    hp: docks ? docksGuardHp("tessen_guard") : GANGER_MAX_HP,
     type: docks ? "tessen_guard" : "hebi_ganger",
     yawAt: (p: Vec3) => contractSpawnYaw(contract.siteId, p),
   } as const;
@@ -118,9 +122,9 @@ const extraTemplates = (ids: IdAllocator, chunks: readonly ChunkDef[], chunk: st
  * Templates of a newly accepted (or loaded) contract's people and objects. Ids are reserved in a
  * fixed order: the targets by index, then the objects, then the variation's extras.
  */
-export const contractTemplates = (ids: IdAllocator, chunks: readonly ChunkDef[], completed: number, contract: Contract): Template[] => {
+export const contractTemplates = (ids: IdAllocator, chunks: readonly ChunkDef[], contract: Contract): Template[] => {
   const chunk = siteChunk(contract, chunks);
-  const targets = targetTemplates(ids, chunk, completed, contract);
+  const targets = targetTemplates(ids, chunk, contract);
   const objects = objectTemplates(ids, chunk, contract);
-  return [...targets, ...objects, ...extraTemplates(ids, chunks, chunk, completed, contract)];
+  return [...targets, ...objects, ...extraTemplates(ids, chunks, chunk, contract)];
 };

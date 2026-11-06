@@ -97,7 +97,9 @@ describe("act II in the simulation (ADR-0023)", () => {
     expect(has(sim, "kurosawa")).toBe(false);
     const cleaners = [...sim.world].filter((e) => e.tag === "kagami_cleaner").sort((a, b) => a.id - b.id);
     expect(cleaners.map((e) => e.key)).toEqual([...KAGAMI_CLEANER_KEYS]);
-    expect(cleaners.every((e) => e.faction === "kagami" && e.enemy?.type === "kagami_cleaner" && e.health?.max === 110)).toBe(true);
+    // Elites of Podzamcze (ADR-0059): a level above its band's 10 for a level 1 player, 4% a level tougher.
+    const max = Math.round(110 * (1 + 0.04 * 10));
+    expect(cleaners.every((e) => e.faction === "kagami" && e.enemy?.type === "kagami_cleaner" && e.enemy.level === 11 && e.health?.max === max)).toBe(true);
     // Neutral Kagami attacks on sight, like Hebi.
     run(sim, 120);
     expect(cleaners.some((e) => e.ai?.alerted)).toBe(true);

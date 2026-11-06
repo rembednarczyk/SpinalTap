@@ -18,6 +18,7 @@ import {
 import type { SimContext } from "./context";
 import { difficultyOf } from "./difficulty";
 import { goneReinforcement } from "./reinforcements";
+import { regradeEnemies } from "./enemy-grade";
 
 /**
  * Character progression in the simulation (ADR-0059, stages 1 to 3). Every source of experience goes
@@ -31,6 +32,8 @@ export const grantXp = (ctx: SimContext, amount: number, source: XpSource): void
   ctx.state.domain = { ...ctx.state.domain, progression: r.state };
   ctx.bus.emit("ExperienceGained", { amount: r.state.xp - before.xp, source });
   for (let level = before.level + 1; level <= r.state.level; level++) ctx.bus.emit("LevelUp", { level });
+  // Inside a district's band the city keeps up with her (ADR-0059).
+  if (r.state.level !== before.level) regradeEnemies(ctx.world, r.state.level);
 };
 
 /**

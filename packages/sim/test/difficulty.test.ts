@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { type Contract, type DifficultyProfile, type DomainEvents, type DomainState, type Vec3, ENEMY_TYPES, MICRO_EVENT_CHANCE, SECONDS_PER_HOUR, contractTag } from "@seki/core";
+import { type Contract, type DifficultyProfile, type DomainEvents, type DomainState, type Vec3, ENEMY_TYPES, MICRO_EVENT_CHANCE, SECONDS_PER_HOUR, contractTag, enemyScale } from "@seki/core";
 import {
   DOKI_TERMINAL_SPOTS,
   GANGER_MAX_HP,
@@ -10,7 +10,6 @@ import {
   SNIPER_PERCHES,
   Simulation,
   chestOf,
-  contractGangerHp,
   deriveRandom,
   gangerEntity,
   ground,
@@ -174,7 +173,7 @@ describe("npcHealth: hostile NPCs as they appear (ADR-0066)", () => {
     const normal = eliminate({});
     const tougher = eliminate({ npcHealth: 1.5 });
     expect(normal.crew.length).toBeGreaterThan(0);
-    expect(normal.crew.map((e) => e.health!.max)).toContain(contractGangerHp(0));
+    expect(normal.crew.map((e) => e.health!.max)).toContain(GANGER_MAX_HP);
     expect(tougher.crew.map((e) => e.health)).toEqual(normal.crew.map((e) => ({ current: Math.round(e.health!.max * 1.5), max: Math.round(e.health!.max * 1.5) })));
     expect(tougher.sim.player()!.health).toEqual(normal.sim.player()!.health);
     const civilians = (s: Simulation) => [...s.world].filter((e) => e.civilian && e.health).map((e) => e.health!.max);
@@ -189,7 +188,7 @@ describe("npcHealth: hostile NPCs as they appear (ADR-0066)", () => {
 
   it("an alerted enemy, pinned outside its chunk by the save, comes back with its tougher health", () => {
     const { sim, crew } = eliminate({ npcHealth: 1.5 });
-    const max = Math.round(contractGangerHp(0) * 1.5);
+    const max = Math.round(GANGER_MAX_HP * 1.5);
     const target = crew.find((e) => e.health?.max === max)!;
     target.ai!.alerted = true;
     // Far away in the Old Town: the crew's chunk unloads, the alerted one stays (pinned).
@@ -207,12 +206,12 @@ describe("npcHealth: hostile NPCs as they appear (ADR-0066)", () => {
 
   it("a profile changed since the save keeps an enemy's share of its health, within 1..max", () => {
     const { sim, crew } = eliminate({ npcHealth: 1.5 });
-    const max = Math.round(contractGangerHp(0) * 1.5);
+    const max = Math.round(GANGER_MAX_HP * 1.5);
     const [full, hurt, low] = crew.filter((e) => e.health?.max === max);
     hurt!.health = { current: 90, max };
     low!.health = { current: 1, max };
     const normal = reloadOn(sim, {});
-    const base = contractGangerHp(0);
+    const base = GANGER_MAX_HP;
     expect(byKey(normal, full!.key!)?.health).toEqual({ current: base, max: base });
     expect(byKey(normal, hurt!.key!)?.health).toEqual({ current: Math.round((base * 90) / max), max: base });
     expect(byKey(normal, low!.key!)?.health).toEqual({ current: 1, max: base });
@@ -228,7 +227,7 @@ describe("npcHealth: hostile NPCs as they appear (ADR-0066)", () => {
 
   it("so does an enemy asleep in an unloaded chunk when the player comes back", () => {
     const { sim, crew } = eliminate({ npcHealth: 1.5 });
-    const max = Math.round(contractGangerHp(0) * 1.5);
+    const max = Math.round(GANGER_MAX_HP * 1.5);
     const target = crew.find((e) => e.health?.max === max)!;
     const key = target.key!;
     target.health = { current: 90, max };
@@ -239,13 +238,13 @@ describe("npcHealth: hostile NPCs as they appear (ADR-0066)", () => {
     setProfile(sim, {});
     teleportPlayer(sim, back, 0);
     run(sim, 2);
-    const base = contractGangerHp(0);
+    const base = GANGER_MAX_HP;
     expect(byKey(sim, key)?.health).toEqual({ current: Math.round((base * 90) / max), max: base });
   });
 
   it("a hurt enemy keeps its saved health across a save, and its tougher maximum", () => {
     const { sim, crew } = eliminate({ npcHealth: 1.5 });
-    const max = Math.round(contractGangerHp(0) * 1.5);
+    const max = Math.round(GANGER_MAX_HP * 1.5);
     const target = crew.find((e) => e.health?.max === max)!;
     expect(target).toBeDefined();
     // Hurt below the content's own health (100): loaded, it is not toughened a second time.
@@ -357,8 +356,10 @@ describe("awareness and npcHealth off the beaten track (ADR-0066)", () => {
       const attackers = sim.session.street2.micro?.attackers ?? [];
       return [...sim.world].filter((e) => attackers.includes(e.id)).map((e) => e.health);
     };
-    const hp = Math.round(GANGER_MAX_HP * 1.5);
-    expect(muggers({})).toEqual([{ current: GANGER_MAX_HP, max: GANGER_MAX_HP }, { current: GANGER_MAX_HP, max: GANGER_MAX_HP }]);
+    // Stare Miasto's band (5-14) makes them of level 5 for a level 1 player (ADR-0059).
+    const base = Math.round(GANGER_MAX_HP * enemyScale(5));
+    const hp = Math.round(GANGER_MAX_HP * 1.5 * enemyScale(5));
+    expect(muggers({})).toEqual([{ current: base, max: base }, { current: base, max: base }]);
     expect(muggers({ npcHealth: 1.5 })).toEqual([{ current: hp, max: hp }, { current: hp, max: hp }]);
   });
 });

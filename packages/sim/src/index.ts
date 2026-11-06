@@ -111,8 +111,9 @@ export {
   WAKE_REACH,
   WAKE_TIME,
 } from "./systems/ai";
+export { CONTRACT_SITE_DISTRICTS, DISTRICT_BANDS, bandOf } from "./content/district-bands";
+export { contractLevelOf, enemyRankOf } from "./world/enemy-grade";
 export {
-  contractGangerHp,
   ESCORT_MAX_HP,
   escortEntity,
   gangerEntity,

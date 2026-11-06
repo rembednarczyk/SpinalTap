@@ -20,14 +20,14 @@ type Ctx = Parameters<System["run"]>[0];
  * An enemy's bag, rolled once at death from its own stream (seed + key), so it does not
  * depend on anything that happened before and the main stream is untouched. Levels and traits
  * (ADR-0059) come from a second stream of their own (key + ":grade"), so what the first one
- * draws stays as it was. The enemy is of the player's level until the district bands of stage 5
- * give it one of its own.
+ * draws stays as it was. The pieces are of the enemy's level ±1 by its district's band, kept
+ * within the player's ±2; one never graded (none in the game) counts as of the player's level.
  */
 const dropEnemyLoot = (ctx: Ctx, e: Entity): void => {
   if (!e.enemy || !e.key) return;
   const key = `loot:${e.key}`;
-  const level = ctx.state.domain.progression.level;
-  const grade: LootGrade = { source: level, player: level, rng: deriveRandom(ctx.seed, `${key}:grade`) };
+  const player = ctx.state.domain.progression.level;
+  const grade: LootGrade = { source: e.enemy.level ?? player, player, rng: deriveRandom(ctx.seed, `${key}:grade`) };
   dropLoot(ctx, key, e.position, rollLoot(LOOT_TABLES[ENEMY_TYPES[e.enemy.type].loot], deriveRandom(ctx.seed, key), grade));
 };
 
@@ -97,8 +97,11 @@ export const deathSystem: System = {
       // A death the player did not cause (Hebi shooting Oyaji) is not held against them.
       if (e.faction && (e.lastHitBy === undefined || e.lastHitBy === playerId)) applyReputationCause(ctx, { type: "member-killed", faction: e.faction, how: killContext(ctx, e) });
       dropEnemyLoot(ctx, e);
-      // An enemy the player took down (ADR-0059); its level against the player's comes in stage 5.
-      if (byPlayer && e.enemy) grantXp(ctx, killXp(e.enemy.type), "kill");
+      // An enemy the player took down (ADR-0059), by its level against hers.
+      if (byPlayer && e.enemy) {
+        const player = ctx.state.domain.progression.level;
+        grantXp(ctx, killXp(e.enemy.type, e.enemy.level ?? player, player), "kill");
+      }
       ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null, ...(e.lastHitBy === undefined ? {} : { killerId: e.lastHitBy }) });
       ctx.world.remove(e);
       // Killed in a takedown, or while knocked out (ADR-0065): its body stays to be found, carried, hidden.

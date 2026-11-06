@@ -47,8 +47,9 @@ const hashOf = (sim: Simulation) => stateHash(sim.snapshot(null, "test", ""));
  * The snapshot of a run as v28 wrote it, before item levels and traits (ADR-0059, stage 4): the
  * pieces in the bag and in the loot bags without them. The player of these runs starts at level 1
  * and ends at level 2 at most; the levels and traits come from a stream of their own and no tier
- * of a piece in the runs differs from before, so without the fields the runs hash to the goldens
- * of v28 and of the older schemas.
+ * of a piece in the runs differs from before, so without the fields the runs hash as v28 and the
+ * older schemas would hash them (since stage 5 the enemies' levels change the runs, and those
+ * goldens were re-recorded with it).
  */
 const beforeV29 = (sim: Simulation): SaveSnapshot => {
   const snap = sim.snapshot(null, "test", "");
@@ -204,7 +205,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"cb5d0920"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"0899fdf3"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -229,36 +230,39 @@ describe("determinism", () => {
     // Re-recorded (all of them, "hard" and the duel too) for the v29 item levels (ADR-0059, stage 4),
     // fields, no new rule shows in these runs: the starter kit is of level 1 and, as v28, the runs hash
     // to the goldens of before.
-    expect(v17HashOf(sim)).toBe("0b8693d0");
-    expect(v19HashOf(sim)).toBe("5b3bab6c");
-    expect(v20HashOf(sim)).toBe("b6fc8cc8");
-    expect(v21HashOf(sim)).toBe("6291c9c3");
-    expect(v22HashOf(sim)).toBe("53227402");
-    expect(v23HashOf(sim)).toBe("35865c8c");
-    expect(v24HashOf(sim)).toBe("c88d2625");
-    expect(v25HashOf(sim)).toBe("f856e6fe");
-    expect(v26HashOf(sim)).toBe("29f9cea1");
-    expect(v27HashOf(sim)).toBe("248eb173");
-    expect(v28HashOf(sim)).toBe("07d841d4");
+    // Re-recorded (all of them, "hard" too; the duel's brawler is made by hand, with no level) for
+    // the district bands of ADR-0059, stage 5, a new rule: the run's player reaches level 2 and,
+    // inside Krakowskie's band (1-8), the gangers about keep up with her (level 2, 83 of 80 health).
+    expect(v17HashOf(sim)).toBe("1ce01d19");
+    expect(v19HashOf(sim)).toBe("6c657123");
+    expect(v20HashOf(sim)).toBe("e3f6e797");
+    expect(v21HashOf(sim)).toBe("0b324838");
+    expect(v22HashOf(sim)).toBe("16a7e7d5");
+    expect(v23HashOf(sim)).toBe("ac734ccd");
+    expect(v24HashOf(sim)).toBe("90600c96");
+    expect(v25HashOf(sim)).toBe("94c21ad3");
+    expect(v26HashOf(sim)).toBe("b8d0ace2");
+    expect(v27HashOf(sim)).toBe("ef0f8c1e");
+    expect(v28HashOf(sim)).toBe("0dfb20ef");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"3fa22559"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"ef7f7d2a"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
-    expect(v17HashOf(sim)).not.toBe("0b8693d0");
-    expect(v19HashOf(sim)).toBe("426e148d");
-    expect(v20HashOf(sim)).toBe("e5972e59");
-    expect(v21HashOf(sim)).toBe("7a751e40");
-    expect(v22HashOf(sim)).toBe("4a74b00f");
-    expect(v23HashOf(sim)).toBe("4f823679");
-    expect(v24HashOf(sim)).toBe("564149b8");
-    expect(v25HashOf(sim)).toBe("3991a5f7");
-    expect(v26HashOf(sim)).toBe("eec79408");
-    expect(v27HashOf(sim)).toBe("d7d1e416");
-    expect(v28HashOf(sim)).toBe("4b52ca4d");
+    expect(v17HashOf(sim)).not.toBe("1ce01d19");
+    expect(v19HashOf(sim)).toBe("01e929be");
+    expect(v20HashOf(sim)).toBe("93e8e16a");
+    expect(v21HashOf(sim)).toBe("7e76b28b");
+    expect(v22HashOf(sim)).toBe("b3ca81f8");
+    expect(v23HashOf(sim)).toBe("3f2c0e82");
+    expect(v24HashOf(sim)).toBe("a995b57b");
+    expect(v25HashOf(sim)).toBe("76e283bc");
+    expect(v26HashOf(sim)).toBe("be1e9237");
+    expect(v27HashOf(sim)).toBe("3aa62e95");
+    expect(v28HashOf(sim)).toBe("5250f136");
   });
 
   // One case per density: three full replays in one case ran close to the 20 s limit under coverage.
@@ -284,8 +288,9 @@ describe("determinism", () => {
     // Krakowskie Przedmieście), and for the car wash moved off Plac Łokietka into the yard behind
     // it; the v14 door states are left out too. Re-recorded for ADR-0069: the gangers of the run see
     // in a cone and fill a suspicion before the alarm. Re-recorded for G-343: fleeing bystanders
-    // no longer turn back and forth.
-    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("95202d96");
+    // no longer turn back and forth. Re-recorded for ADR-0059, stage 5: the gangers keep up with
+    // the player's level 2 in Krakowskie's band.
+    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("d100771d");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {

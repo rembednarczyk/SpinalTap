@@ -10,6 +10,7 @@ import { type PrismDef, boundsOfPrisms, isConvex, prismsAt } from "./prism";
 import type { Combatant, Entity, MeleeState, WalkProgress } from "./components";
 import { isEnforcer } from "./enforcer";
 import { bodySnapshotOf } from "./bodies";
+import { type EnemyScaling, enemyMaxHp, gradeEnemy } from "./enemy-grade";
 
 export const BODY = { radius: 0.38, height: 1.8 } as const;
 
@@ -302,18 +303,17 @@ export const pickupEntity = (id: EntityId, key: string, position: Vec3, chunk: s
   interactable: { kind: "pickup", dialogueId: key, prompt: what === "crate" ? "prompt.pickup.crate" : "prompt.pickup.data", radius: 1.8 },
 });
 
-/** Contract targets get tougher as Seki completes more jobs. */
-export const contractGangerHp = (completed: number): number => GANGER_MAX_HP + Math.min(60, completed * 10);
-
 /**
- * A hostile NPC as it appears in the world (`npcHealth`): its health, full, scaled. Called on a
- * freshly built entity, before any saved state goes back onto it (that keeps its saved health).
+ * A hostile NPC as it appears in the world: its level by its district's band (ADR-0059) and its
+ * health, full, scaled by the difficulty's `npcHealth` (ADR-0066) and that level, its weapon's
+ * damage by the level. Called on a freshly built entity, before any saved state goes back onto it
+ * (that keeps its saved share of health).
  */
-export const toughen = (e: Entity, npcHealth: number): Entity => {
+export const toughen = (e: Entity, s: EnemyScaling): Entity => {
   if (e.view?.kind !== "enemy" || !e.health) return e;
   e.baseHp = e.health.max;
   // Whole points, as the content gives them (110 × 1.2 is not quite 132 in floating point).
-  const max = Math.max(1, Math.round(e.health.max * npcHealth));
+  const max = enemyMaxHp(e.health.max, s.npcHealth, gradeEnemy(e, s));
   e.health = { current: max, max };
   return e;
 };

@@ -28,16 +28,18 @@ const killGuard = (sim: Simulation): readonly LootLine[] => {
 const levels = (lines: readonly LootLine[]): number[] => lines.flatMap((l) => (l.kind === "item" && hasItemLevel(l.item) ? [l.level!] : []));
 
 describe("item level of an enemy's loot (ADR-0059)", () => {
-  it("lies within one level of the enemy, today of the player's level", () => {
+  it("lies within one level of the enemy, of the player's level inside the district's band", () => {
     const seen = new Set<number>();
     for (const seed of [3, 5, 8, 13, 21, 34]) {
-      const { sim } = enforcerAt(12, seed);
+      // Krakowskie (1-8): the guard is of the player's level 6.
+      const { sim, guard } = enforcerAt(6, seed);
+      expect(guard.enemy?.level).toBe(6);
       const lines = killGuard(sim);
       // The shotgun is always in the bag, so every bag has a levelled piece.
       expect(lines[1]).toMatchObject({ kind: "item", item: "raijin12" });
       for (const level of levels(lines)) {
-        expect(level).toBeGreaterThanOrEqual(11);
-        expect(level).toBeLessThanOrEqual(13);
+        expect(level).toBeGreaterThanOrEqual(5);
+        expect(level).toBeLessThanOrEqual(7);
         seen.add(level);
       }
     }
@@ -45,9 +47,12 @@ describe("item level of an enemy's loot (ADR-0059)", () => {
   });
 
   it("is drawn from a stream of its own: the bag's contents are those of the main stream as before", () => {
-    const { sim } = enforcerAt(20, 7);
+    // The guard is of Krakowskie's top level 8 (ADR-0059), its loot kept within the player's 18..22.
+    const { sim, guard } = enforcerAt(20, 7);
+    expect(guard.enemy?.level).toBe(8);
     const lines = killGuard(sim);
-    const grade = { source: 20, player: 20, rng: deriveRandom(7, "loot:guard:grade") };
+    const grade = { source: 8, player: 20, rng: deriveRandom(7, "loot:guard:grade") };
+    expect(levels(lines).every((l) => l === 18)).toBe(true);
     expect(lines).toEqual(rollLoot(LOOT_TABLES.hebi_enforcer, deriveRandom(7, "loot:guard"), grade));
     // The same draws without levels give the same kinds and quantities.
     const flat = rollLoot(LOOT_TABLES.hebi_enforcer, deriveRandom(7, "loot:guard"));

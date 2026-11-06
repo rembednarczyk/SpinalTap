@@ -1,10 +1,11 @@
-import type { Contract, ContractOnSite, EntityId, EntitySnapshot, GameClock, Vec3 } from "@seki/core";
+import { type Contract, type ContractOnSite, type EntityId, type EntitySnapshot, type GameClock, MIN_LEVEL, type Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import { type ChunkDef, type DistrictId, WORLD_CHUNKS, WORLD_DEVICES, WORLD_METRO, chunkAt, distanceToRect } from "../content/world-map";
 import type { DeviceDef } from "../content/devices";
 import type { MetroStationDef } from "../content/metro";
 import type { Entity } from "./components";
 import type { IdAllocator } from "./factory";
+import type { EnemyScaling } from "./enemy-grade";
 import { GroundField } from "./ground";
 import { ActorSpawner, type StreamState } from "./actor-spawner";
 import { type NearPlayer, sleepPinned, unloadChunks } from "./chunk-unload";
@@ -86,8 +87,11 @@ export class WorldStreamer {
   readonly passerbyIds: Map<string, readonly EntityId[]>;
   /** The ground of these chunks (ADR-0043): their terrain, or the street plane. */
   readonly ground: GroundField;
-  /** The difficulty's `npcHealth` (ADR-0066), read when a character appears; the simulation sets it. */
-  enemyHealth: () => number = () => 1;
+  /**
+   * The difficulty's `npcHealth` (ADR-0066) and the player's level (ADR-0059), read when a
+   * character appears; the simulation sets it. The districts are these chunks'.
+   */
+  enemyScaling: () => EnemyScaling = () => ({ npcHealth: 1, playerLevel: MIN_LEVEL, districtAt: (p) => this.districtAt(p) });
 
   constructor(
     private readonly ids: IdAllocator,
@@ -107,7 +111,7 @@ export class WorldStreamer {
     this.catalog = new StreamCatalog(ids, chunks, devices, metro);
     this.passerbyIds = this.catalog.passerbyIds;
     this.streamedOut = this.state.streamedOut;
-    this.spawner = new ActorSpawner(this.state, this.catalog, this.ground, (p) => this.chunkIdAt(p), () => this.enemyHealth());
+    this.spawner = new ActorSpawner(this.state, this.catalog, this.ground, (p) => this.chunkIdAt(p), () => this.enemyScaling());
   }
 
   /** A fresh entity id, for things spawned at run time (bags). */
@@ -160,7 +164,7 @@ export class WorldStreamer {
     if (this.contract) this.retire(world, { site: this.contract, keys: this.contractKeys });
     this.contract = { contract, completed };
     this.siteCleared = false;
-    const templates = contractTemplates(this.ids, this.chunks, completed, contract);
+    const templates = contractTemplates(this.ids, this.chunks, contract);
     this.contractKeys = keysOf(templates);
     this.catalog.setContract(templates);
     // Variation extras may stand in a neighbouring chunk (ADR-0034): each spawns with its own.
@@ -202,7 +206,7 @@ export class WorldStreamer {
 
   /** A replaced job of the save being loaded (G-178): its templates, so its saved people come back. */
   restoreFormer(site: ContractOnSite): void {
-    const templates = contractTemplates(this.ids, this.chunks, site.completed, site.contract);
+    const templates = contractTemplates(this.ids, this.chunks, site.contract);
     this.catalog.addFormer(templates);
     const keys = keysOf(templates);
     this.former.push({ site, keys });

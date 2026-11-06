@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type EnemyTypeId, type Vec3, contractTag } from "@seki/core";
+import { type EnemyTypeId, INITIAL_PROGRESSION, type Vec3, contractTag, xpForLevel } from "@seki/core";
 import { DOCKS_PLACE, MARKET_PLACE, OYAJI_MAX_HP, Simulation, docks, gangerEntity, market, stateHash } from "../src";
 import { chestOf, eyeOf, lineOfSight } from "../src/world/hitscan";
 import { detourStep, steerPoint, straightWalk } from "../src/systems/ai/steering";
@@ -51,10 +51,12 @@ const flat = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.z - b.z);
 
 describe("walking around obstacles on one floor (ADR-0025, audit W3)", () => {
   it("W3: after Oyaji dies, the raid wave gets Seki in sight from behind the overpass stairs", () => {
-    // Seed 2 with six jobs done: a raid of four (two gunners, a brawler, a gunner).
-    const base = Simulation.create({ seed: 2 });
+    // Seed 5 with six jobs done at level 20, the top of Podzamcze's band (ADR-0059): a raid of four
+    // (two gunners, a brawler, a gunner).
+    const base = Simulation.create({ seed: 5 });
     const snap = base.snapshot(null, "t", "");
-    const sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, contracts: { active: null, completed: 6 } } });
+    const progression = { ...INITIAL_PROGRESSION, level: 20, xp: xpForLevel(20) };
+    const sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, progression, contracts: { active: null, completed: 6 } } });
     teleportPlayer(sim, atM(90.5, 74), Math.PI / 2);
     sim.step();
     sim.enqueue({ type: "accept-contract", kind: "protect" });

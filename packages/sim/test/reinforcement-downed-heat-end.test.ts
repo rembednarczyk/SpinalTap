@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { HACKED_MEMORY, type HeatState, type SaveSnapshot, rememberHack } from "@seki/core";
 import { SIM_HZ, Simulation, stateHash } from "../src";
 import { goneReinforcement, reinforcementEntity, securityKey } from "../src/world/reinforcements";
+import { enemyScalingOf } from "../src/world/enemy-grade";
 import { run, teleportPlayer } from "./helpers";
 import { CROUCH, offset, quietStreet, takeDown } from "./takedown-scenes";
 
@@ -24,7 +25,7 @@ const knockedOut = (seed: number): Simulation => {
   p.posture!.crouched = true;
   p.posture!.amount = 1;
   p.posture!.prevAmount = 1;
-  const g = sim.world.add(reinforcementEntity(ID, 1, sim.tick, "hebi_ganger", offset(sim, 0, 1.2), sim.domain.difficulty.npcHealth));
+  const g = sim.world.add(reinforcementEntity(ID, 1, sim.tick, "hebi_ganger", offset(sim, 0, 1.2), enemyScalingOf(sim.domain)));
   g.hackFx = { pinged: 0, blind: 100, crippled: 0 };
   sim.session.watch.sent = 1;
   takeDown(sim, false);
