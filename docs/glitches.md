@@ -1214,6 +1214,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 (CI) · Zasięg: przebieg 42237620499 (#327): cache `playwright-debs` trafiony, ale `apt-get install ~/playwright-debs/*.deb` pobrał te same 9 paczek (21,9 MB) z mirrora Azure w 15 min, shard 1 przekroczył 25 min; regresja po G-387 (#319); poprawka: `dpkg -i` na lokalnych plikach
 - Pakiet właściciela: .github (Infra)
 
+### G-401 Napad z mikrozdarzenia otwiera pusty panel rozmowy i odbiera sterowanie
+- Status: zgłoszone (6.11, budowniczy ADR-0059 etap 5)
+- Ważność: S3 · Zasięg: mikrozdarzenie napadu wysyła `EncounterStarted` z pustym knotem `""`; app (`packages/app/src/controllers/compose.ts`, `onEncounter`) otwiera pusty, zakończony panel rozmowy, który blokuje sterowanie, dopóki gracz go nie zamknie
+- Pakiet właściciela: packages/app (controllers), packages/sim (micro-events)
+
+### G-402 `PAD_DEADZONE_RANGE` w engine to martwa kopia zakresu z ui, a `shapeStick` nie chroni się przed strefą ≥ 0,95
+- Status: zgłoszone (6.11, weryfikator PR #329)
+- Ważność: S4 · Zasięg: `packages/engine/src/input/keymap.ts:204` (nieużywany eksport) i `packages/ui/src/store/ui-vm.ts:265`; przy `deadzone >= PAD_OUTER_DEADZONE` dzielnik w `shapeStick` jest zerowy lub ujemny, dziś chroni tylko `sanitizeSettings`
+- Pakiet właściciela: packages/engine (input)
+
+### G-403 `ghost-click.test.tsx`: timer odpala się po rozebraniu jsdom pod obciążeniem
+- Status: zgłoszone (6.11, weryfikator PR #329)
+- Ważność: S4 (testy) · Zasięg: timer z `packages/ui/src/.../ghost-click.ts:18` daje „Errors 1” przy load ok. 30 mimo zielonych testów; osobno plik przechodzi
+- Pakiet właściciela: packages/ui
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
