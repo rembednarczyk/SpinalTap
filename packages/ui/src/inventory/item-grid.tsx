@@ -1,10 +1,10 @@
 import { type BagCell, type ItemRef, type Locale, RARITIES, type Rarity, itemIcon } from "@seki/core";
-import { type KeyboardEvent, type PointerEvent, useRef } from "react";
+import { type CSSProperties, type KeyboardEvent, type PointerEvent, useRef } from "react";
 import { compareText } from "../i18n/number";
 import { type Translate, type TranslateText, textTranslator } from "../i18n/t";
 import { useT, useText } from "../i18n/use-t";
 import { ItemIcon } from "../icons/item-icon";
-import { RARITY_INK } from "../icons/rarity-ink";
+import { RARITY_INK, SELECT_INK } from "../icons/rarity-ink";
 import { CATEGORY_ORDER, FILTERS, type GridFilter, categoryOf, itemName, matchesFilter, rarityLabel, shortName } from "./item-text";
 
 export type GridSort = "category" | "rarity" | "name";
@@ -74,6 +74,18 @@ const label = (t: Translate, tx: TranslateText, cell: BagCell): string => {
 };
 
 /**
+ * Frame of a cell with an icon (ADR-0073), inline because `.inv__cell` comes after `.rarity--*`
+ * in styles.css and would win: the rarity's colour on the 2 px border, and when selected a white
+ * ring inside it instead of the magenta outline over it (a rare frame is magenta too).
+ */
+export const iconCellStyle = (rarity: Rarity, selected: boolean): CSSProperties | undefined => {
+  const frame = rarity === "common" ? {} : { borderColor: RARITY_INK[rarity] };
+  const ring = selected ? { outline: "none", boxShadow: `inset 0 0 0 2px ${SELECT_INK}` } : {};
+  const style = { ...frame, ...ring };
+  return Object.keys(style).length > 0 ? style : undefined;
+};
+
+/**
  * One cell. A tap or click selects; a second one soon after on the same cell, a right click or
  * Enter does the default action; a held touch opens the details. No dragging.
  */
@@ -94,7 +106,7 @@ export const ItemCell = ({ cell, index, selected, handlers }: { cell: BagCell; i
     <button
       type="button"
       className={`inv__cell${icon ? " inv__cell--icon" : ""}${selected ? " inv__cell--on" : ""}${rarity && rarity !== "common" ? ` rarity--${rarity}` : ""}`}
-      style={icon && rarity && rarity !== "common" ? { borderColor: RARITY_INK[rarity] } : undefined}
+      style={icon ? iconCellStyle(rarityOf(cell), selected) : undefined}
       data-testid="item-cell"
       data-def={defOf(cell)}
       aria-pressed={selected}

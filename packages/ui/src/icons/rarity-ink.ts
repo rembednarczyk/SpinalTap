@@ -15,8 +15,16 @@ export const RARITY_INK: Readonly<Record<Rarity, string>> = {
 };
 
 /**
- * What an icon sits on, flattened over the menu's background (`PREVIEW_BACKGROUND`, #070b10):
- * a bag cell, a selected cell (`inv__cell--on`) and a card on the counter (`shop__item`).
+ * The ring of a selected cell with an icon: white, a colour no rarity has, drawn inside the
+ * rarity frame instead of over it, so the selection and the tier both stay readable.
+ */
+export const SELECT_INK = "#ffffff";
+
+/**
+ * What an icon sits on, for the contrast test: hand copies of the backgrounds in `styles.css`
+ * (`.inv__cell` rgba(8, 14, 20, 0.8), `.inv__cell--on` rgba(255, 61, 139, 0.16), `.shop__item`
+ * rgba(57, 255, 208, 0.04) over `.shop` rgba(6, 12, 14, 0.94)), flattened over the menu's
+ * background (`PREVIEW_BACKGROUND`, #070b10). A change there has to come here too.
  */
 export const ICON_BACKGROUNDS: Readonly<Record<"cell" | "selected" | "card", string>> = {
   cell: "#080d13",

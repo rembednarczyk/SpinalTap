@@ -24,7 +24,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GameUi, type UiIntents, type UiState, type UiStore, createUiStore, patchUi } from "../src";
 import { ICON_PATHS } from "../src/icons/icon-paths";
-import { ICON_BACKGROUNDS, RARITY_INK } from "../src/icons/rarity-ink";
+import { ICON_BACKGROUNDS, RARITY_INK, SELECT_INK } from "../src/icons/rarity-ink";
 
 /** Item icons in the bag, the slots, the pouch and on the counter (ADR-0073, stage 1). */
 
@@ -104,6 +104,14 @@ describe("the icon table", () => {
     for (const [key, n] of sizes) expect(n, key).toBeLessThanOrEqual(BUDGET_ICON);
   });
 
+  it("rings a selection in a colour far from every rarity's frame, readable on the selected cell", () => {
+    const channels = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    const distance = (a: string, b: string) => Math.hypot(...channels(a).map((c, i) => c - channels(b)[i]!));
+    // Common has no coloured frame (the panel's edge), so only the coloured tiers count.
+    for (const rarity of RARITIES.filter((r) => r !== "common")) expect(distance(SELECT_INK, RARITY_INK[rarity]), rarity).toBeGreaterThanOrEqual(100);
+    expect(contrast(SELECT_INK, ICON_BACKGROUNDS.selected)).toBeGreaterThanOrEqual(3);
+  });
+
   it("keeps every rarity's ink at 3:1 or more on a cell, a selected cell and a counter card", () => {
     for (const rarity of RARITIES) for (const [where, bg] of Object.entries(ICON_BACKGROUNDS)) expect(contrast(RARITY_INK[rarity], bg), `${rarity} on ${where}`).toBeGreaterThanOrEqual(3);
   });
@@ -131,6 +139,24 @@ describe("the bag", () => {
       }
     }
     expect([...seen]).toEqual(expect.arrayContaining(["common", "uncommon", "rare", "epic", "legendary"]));
+  });
+
+  it("selects a cell with a ring inside its rarity frame, so the frame keeps its colour", () => {
+    mount({ characterTab: "inventory" });
+    const ring = `inset 0 0 0 2px ${SELECT_INK}`;
+    WEAPONS.forEach((id, i) => {
+      for (const cell of cells(id)) {
+        const rarity = iconOf(cell)!.getAttribute("data-rarity") as Rarity;
+        fireEvent.click(cell, { timeStamp: 10_000 * (i + 1) });
+        const now = cells(id)[0]!;
+        expect(now.getAttribute("aria-pressed"), id).toBe("true");
+        expect(now.style.boxShadow, id).toBe(ring);
+        expect(now.style.outline, id).toBe("none");
+        expect(now.style.borderColor, id).toBe(rarity === "common" ? "" : rgb(RARITY_INK[rarity]));
+        // Every other icon cell is unselected: no ring.
+        for (const other of WEAPONS.filter((w) => w !== id)) for (const c of cells(other)) expect(c.style.boxShadow, other).toBe("");
+      }
+    });
   });
 
   it("keeps the text cell for the kinds without icons, and the same label everywhere", () => {
