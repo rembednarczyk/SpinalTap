@@ -138,7 +138,7 @@ export interface Band {
   readonly along?: { readonly line: readonly Pt[]; readonly from: number; readonly width: number };
   /** A band of steps' run, end to end: what its pieces in a chunk are cut along (`flightStrips`). */
   readonly run?: readonly [Pt, Pt];
-  /** Paving with holes (`openPavings`), simplified already: simplifying it again would move its holes off the lawns drawn in them. */
+  /** Paving with holes, or a lawn cut out of it (`openPavings`), simplified already: simplifying it again in a chunk would part the lawn from its hole. */
   readonly holed?: true;
 }
 
@@ -268,21 +268,26 @@ const UNDER_PAVING = new Set<GroundSurface>(["grass", "water"]);
  */
 export const openPavings = <B extends Band & { readonly box: Rect }>(bands: readonly B[], whole: (b: B) => boolean): B[] => {
   const under = bands.filter((b) => UNDER_PAVING.has(b.surface) && !b.bridge && whole(b));
-  return bands.map((b) => {
+  // Simplified and rounded once, before a chunk clips them, and not again in it (`holed`): a lawn
+  // simplified anew where a chunk's edge cuts it would leave a strip of the hole bare (T-202).
+  const grid = (ring: readonly Pt[]) => removeCollinear(simplifyRing(ccw(ring), 0.3).map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02);
+  const cut = new Set<B>();
+  const out = bands.map((b) => {
     if (!PAVINGS.has(b.surface) || b.bridge) return b;
     const fits = under.filter((u) => u.box.minX > b.box.minX && u.box.maxX < b.box.maxX && u.box.minZ > b.box.minZ && u.box.maxZ < b.box.maxZ && holeFits(b.ring, u.ring));
     fits.sort((p, q) => Math.abs(signedArea(q.ring)) - Math.abs(signedArea(p.ring)) || (p.source < q.source ? -1 : p.source > q.source ? 1 : 0));
-    // Simplified and rounded as `chunkGround` lays a lawn inside a chunk, so the hole is the lawn
-    // drawn in it and the chunk rounds no corner of a seam or a hole onto another.
-    const grid = (ring: readonly Pt[]) => removeCollinear(simplifyRing(ccw(ring), 0.3).map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02);
     const ring = grid(b.ring);
     const holes: Pt[][] = [];
     for (const u of fits) {
       const h = grid(u.ring);
-      if (holeFits(ring, h) && holes.every((o) => holesApart(o, h))) holes.push(h);
+      if (!holeFits(ring, h) || !holes.every((o) => holesApart(o, h))) continue;
+      holes.push(h);
+      cut.add(u);
     }
     return holes.length > 0 ? { ...b, ring: cutHoles(ring, holes), holed: true } : b;
   });
+  // The lawns cut out laid as their holes.
+  return out.map((b) => (cut.has(b) ? { ...b, ring: grid(b.ring), holed: true } : b));
 };
 
 /** Stretches of a laid sidewalk shorter than this are dropped, metres. */

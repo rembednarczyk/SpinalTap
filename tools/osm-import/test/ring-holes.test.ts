@@ -32,8 +32,10 @@ describe("holes in a ground ring (G-421)", () => {
     expect(out!.holed).toBe(true);
     expect(signedArea(out!.ring)).toBeCloseTo(6000 - 400 - 100, 6);
     for (const p of [{ x: 95, z: 45 }, { x: 45, z: 45 }, { x: 80, z: 10 }]) expect(pointInRing(p, out!.ring)).toBe(true);
-    // A street's band and the lawns themselves are left as they were.
-    expect(openPavings(bands, () => true).slice(1)).toEqual(bands.slice(1));
+    // The lawn and the water cut out are laid as their holes, not simplified again in a chunk (T-202); the rest as they were.
+    const all = openPavings(bands, (b) => b.source !== "w5");
+    expect(all.slice(1).map((b) => b.holed ?? false)).toEqual([true, true, false, false, false]);
+    expect(all.slice(3)).toEqual(bands.slice(3));
     expect(openPavings([band("road", rect(0, 0, 100, 60), "w7"), bands[1]!], () => true)[0]!.holed).toBeUndefined();
   });
 
@@ -42,10 +44,18 @@ describe("holes in a ground ring (G-421)", () => {
     expect(signedArea(out!.ring)).toBeCloseTo(6000 - 400, 6);
   });
 
-  it("keeps a chunk's piece of the paving open over a lawn on the chunk's edge", () => {
-    const [out] = openPavings([band("square", rect(0, 0, 100, 60), "r1"), band("grass", rect(40, 10, 60, 30), "w2")], () => true);
-    const pieces = [rect(0, -10, 50, 70), rect(50, -10, 110, 70)].flatMap((r) => chunkGround([out!], { minX: r[0]!.x, minZ: r[0]!.z, maxX: r[2]!.x, maxZ: r[2]!.z }));
-    expect(pieces.map((g) => Math.abs(signedArea(ringOf(g.outline)))).reduce((s, a) => s + a, 0)).toBeCloseTo(6000 - 400, 6);
-    expect(pieces.some((g) => pointInRing({ x: 45, z: 20 }, ringOf(g.outline)) || pointInRing({ x: 55, z: 20 }, ringOf(g.outline)))).toBe(false);
+  it("keeps a chunk's piece of the paving open over a lawn on the chunk's edge, and the lawn filling it", () => {
+    // A lawn with a corner the chunk's simplification would drop (0.2 m off its edge, T-202).
+    const lawn = [{ x: 40, z: 10 }, { x: 60, z: 10 }, { x: 60, z: 30 }, { x: 50.3, z: 30.2 }, { x: 40, z: 30 }];
+    const [out, grass] = openPavings([band("square", rect(0, 0, 100, 60), "r1"), band("grass", lawn, "w2")], () => true);
+    const chunks = [rect(0, -10, 50, 70), rect(50, -10, 110, 70)].map((r) => ({ minX: r[0]!.x, minZ: r[0]!.z, maxX: r[2]!.x, maxZ: r[2]!.z }));
+    const paving = chunks.flatMap((r) => chunkGround([out!], r)).map((g) => ringOf(g.outline));
+    const lawns = chunks.flatMap((r) => chunkGround([grass!], r)).map((g) => ringOf(g.outline));
+    expect(paving.map((r) => Math.abs(signedArea(r))).reduce((s, a) => s + a, 0)).toBeCloseTo(6000 - 400, 0);
+    expect(paving.some((r) => pointInRing({ x: 45, z: 20 }, r) || pointInRing({ x: 55, z: 20 }, r))).toBe(false);
+    // Every point by the chunk's edge off the paving lies on the lawn drawn in its hole.
+    const bare: string[] = [];
+    for (let x = 48.05; x < 52; x += 0.1) for (let z = 29.825; z < 30.3; z += 0.05) if (!paving.some((r) => pointInRing({ x, z }, r)) && !lawns.some((r) => pointInRing({ x, z }, r))) bare.push(`${x.toFixed(2)},${z.toFixed(3)}`);
+    expect(bare).toEqual([]);
   });
 });

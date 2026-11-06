@@ -19,11 +19,8 @@ const O: Vec3 = { x: 0, y: 0, z: 0 };
 const ground = (surface: GroundSurface, outline: P2[]): Item => ({ view: { kind: "ground", surface, outline }, at: O });
 const rect = (x0: number, z0: number, x1: number, z1: number): P2[] => [{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }];
 
-/** The drawn surface on top at each point of a 0.5 m grid inside `outline`: m² of each. */
-const topSurfaces = (items: readonly Item[], outline: readonly P2[]): Map<GroundSurface, number> => {
-  const xs = outline.map((p) => p.x);
-  const zs = outline.map((p) => p.z);
-  const box = { minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) };
+/** The drawn surface on top at a point within `box` (50 m round it read), null where none is. */
+const drawnAt = (items: readonly Item[], box: { minX: number; maxX: number; minZ: number; maxZ: number }): ((p: P2) => GroundSurface | null) => {
   // The drawn triangles by the 4 m cells their boxes touch.
   const CELL = 4;
   const cells = new Map<string, { surface: GroundSurface; tri: [P2, P2, P2] }[]>();
@@ -50,18 +47,32 @@ const topSurfaces = (items: readonly Item[], outline: readonly P2[]): Map<Ground
     const s = Math.sign(cross(a, b, c));
     return s !== 0 && cross(a, b, p) * s >= 0 && cross(b, c, p) * s >= 0 && cross(c, a, p) * s >= 0;
   };
+  return (p) => {
+    let top: GroundSurface | null = null;
+    for (const q of cells.get(`${Math.floor(p.x / CELL)},${Math.floor(p.z / CELL)}`) ?? []) if ((top === null || SURFACE_LIFT[q.surface] > SURFACE_LIFT[top]) && inTri(p, q.tri)) top = q.surface;
+    return top;
+  };
+};
+
+const boxOf = (ring: readonly P2[]) => ({ minX: Math.min(...ring.map((p) => p.x)), maxX: Math.max(...ring.map((p) => p.x)), minZ: Math.min(...ring.map((p) => p.z)), maxZ: Math.max(...ring.map((p) => p.z)) });
+
+/** The drawn surface on top at each point of a 0.5 m grid inside `outline`: m² of each. */
+const topSurfaces = (items: readonly Item[], outline: readonly P2[]): Map<GroundSurface, number> => {
+  const box = boxOf(outline);
+  const at = drawnAt(items, box);
   const out = new Map<GroundSurface, number>();
   for (let x = box.minX + 0.25; x < box.maxX; x += 0.5) {
     for (let z = box.minZ + 0.25; z < box.maxZ; z += 0.5) {
       const p = { x, z };
       if (!pointInRing(p, outline)) continue;
-      let top: GroundSurface | null = null;
-      for (const q of cells.get(`${Math.floor(x / CELL)},${Math.floor(z / CELL)}`) ?? []) if ((top === null || SURFACE_LIFT[q.surface] > SURFACE_LIFT[top]) && inTri(p, q.tri)) top = q.surface;
+      const top = at(p);
       if (top) out.set(top, (out.get(top) ?? 0) + 0.25);
     }
   }
   return out;
 };
+
+const PLAC = () => extractFeatures(parseExtract(readFileSync(join(__dirname, "../../../data/osm/krakowskie.json"), "utf8"))).areas.find((a) => a.id === "r7690183")!.ring;
 
 describe("grass-under-paving (G-421)", () => {
   it("measures the grass a square lays its paving over, and none it leaves open or a path crosses", () => {
@@ -80,10 +91,35 @@ describe("grass-under-paving (G-421)", () => {
   // OSM maps 8 900 m² of them inside it (T-194), 8 010 m² drawn on top: paths crossing them lie over them, and the
   // playgrounds and gardens that touch a lawn stay under the paving (`openPavings`).
   it("shows Plac Litewski's lawns, flowerbeds and heath: over 8 000 m² of grass on top", () => {
-    const osm = parseExtract(readFileSync(join(__dirname, "../../../data/osm/krakowskie.json"), "utf8"));
-    const plac = extractFeatures(osm).areas.find((a) => a.id === "r7690183")!;
-    const top = topSurfaces(WORLD_SCENERY, plac.ring);
+    const top = topSurfaces(WORLD_SCENERY, PLAC());
     expect(top.get("grass") ?? 0).toBeGreaterThan(7800);
+  });
+
+  // The chunks' edges x = 20 and z = -20 cross the square's lawns: a lawn laid otherwise than its
+  // hole where the edge cuts both left a strip of bare terrain across it (T-202).
+  it("leaves no bare strip in Plac Litewski's lawns where a chunk's edge crosses them", () => {
+    const areas = extractFeatures(parseExtract(readFileSync(join(__dirname, "../../../data/osm/krakowskie.json"), "utf8"))).areas;
+    const plac = areas.find((a) => a.id === "r7690183")!.ring;
+    // The lawns mapped in the square, and a point's distance to their edges.
+    const lawns = areas.filter((a) => a.tags.landuse === "grass" && a.ring.every((p) => pointInRing(p, plac))).map((a) => a.ring);
+    const gap = (p: P2, r: readonly P2[]) =>
+      Math.min(...r.map((a, i) => {
+        const b = r[(i + 1) % r.length]!;
+        const [dx, dz] = [b.x - a.x, b.z - a.z];
+        const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+        return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
+      }));
+    const inLawn = (p: P2) => lawns.some((r) => pointInRing(p, r) || gap(p, r) < 0.5);
+    const at = drawnAt(WORLD_SCENERY, boxOf(plac));
+    const box = boxOf(plac);
+    const bare: string[] = [];
+    const probe = (p: P2) => inLawn(p) && at(p) === null && bare.push(`${p.x.toFixed(2)},${p.z.toFixed(2)}`);
+    for (let d = -0.95; d < 1; d += 0.1) {
+      for (let s = box.minX; s < box.maxX; s += 0.1) probe({ x: s, z: -20 + d });
+      for (let s = box.minZ; s < box.maxZ; s += 0.1) probe({ x: 20 + d, z: s });
+    }
+    expect(lawns.length).toBeGreaterThan(30);
+    expect(bare).toEqual([]);
   });
 
   it("lays every piece of paving with holes as the triangles of its own area", () => {
