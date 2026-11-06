@@ -88,6 +88,7 @@ describe("perks in the session", () => {
     session.intents.respec();
     steps(session, 1);
     expect(session.sim.domain.progression.attributes.might).toBe(4);
-    expect(ui.getState().toasts.some((t) => t.text === "Not enough eddies.")).toBe(true);
+    // The counter says what to do about it (G-366) instead of the bare "Not enough eddies.".
+    expect(ui.getState().toasts.some((t) => t.text === `Rewiring costs ${respecPrice(4, STANDARD_TERMS).toLocaleString("en")} €$. Come back with the money.`)).toBe(true);
   });
 });

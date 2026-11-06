@@ -34,6 +34,7 @@ import {
   resetProgression,
   respecListPrice,
   respecPrice,
+  respecRefusal,
   secondHeartShare,
   shopTerms,
   spendAttributePoint,
@@ -59,12 +60,12 @@ const raise = (s: ProgressionState, attribute: (typeof ATTRIBUTE_IDS)[number], n
   return state;
 };
 
-describe("perk trees (ADR-0059, stage 3): the data", () => {
-  it("one tree per attribute, every tier filled, one key perk on the last tier", () => {
+describe("perk trees (ADR-0059, stages 3 and 3b): the data", () => {
+  it("one tree per attribute, eight perks on four tiers (3, 2, 2, 1), one key perk on the last tier", () => {
     for (const tree of ATTRIBUTE_IDS) {
       const perks = PERK_IDS.filter((id) => perkDef(id).tree === tree);
-      expect(perks.length).toBeGreaterThanOrEqual(5);
-      expect(new Set(perks.map((id) => perkDef(id).tier))).toEqual(new Set([0, 1, 2, 3]));
+      expect(perks).toHaveLength(8);
+      expect([0, 1, 2, 3].map((tier) => perks.filter((id) => perkDef(id).tier === tier).length)).toEqual([3, 2, 2, 1]);
       const keys = perks.filter((id) => perkDef(id).key);
       expect(keys).toHaveLength(1);
       expect(perkDef(keys[0]!).tier).toBe(3);
@@ -102,9 +103,9 @@ describe("buying perks", () => {
   });
 
   it("stops at the last rank; a key perk needs 15", () => {
-    let s = raise(at(16), "might", 12);
-    for (let i = 0; i < 3; i++) {
-      const r = spendPerkPoint(s, "might_tough");
+    let s = raise(at(19), "might", 12);
+    for (const id of ["might_tough", "might_tough", "might_tough", "might_second_wind", "might_hardened"]) {
+      const r = spendPerkPoint(s, id);
       if (!r.ok) throw new Error(r.reason);
       s = r.state;
     }
@@ -129,7 +130,7 @@ describe("buying perks", () => {
 describe("what the perks do", () => {
   it("stats through StatModifiers: health, melee, armor, aim, crit damage, clothes", () => {
     const m = perkModifiers({ might_tough: 3, might_brawler: 2, might_hardened: 1, reflex_steady: 2, reflex_deadeye: 1, tech_tailor: 2 });
-    expect(m).toEqual({ maxHp: 24, meleeDamage: 0.2, armor: 2, aimStability: 0.08, critMultiplier: 0.2, garmentArmor: 2 });
+    expect(m).toEqual({ maxHp: 24, meleeDamage: 0.2, armor: 2, headArmor: 0, aimStability: 0.08, critChance: 0, critMultiplier: 0.2, moveSpeed: 0, garmentArmor: 2 });
     const s = { ...INITIAL_PROGRESSION, perks: { might_tough: 1 } };
     expect(combineModifiers(BASE_STATS, progressionModifiers(s)).maxHp).toBe(BASE_STATS.maxHp + 8);
   });
@@ -187,14 +188,15 @@ describe("the respec at Mori's", () => {
     expect(respecPrice(6, shopTerms(80))).toBeLessThan(respecPrice(6, STANDARD_TERMS));
   });
 
-  it("is paid, and refused on basic terms, without the money, with nothing spent or with implants that would not fit", () => {
+  it("is paid, and refused on basic terms, without the money or with nothing spent; the counter asks the same", () => {
     const s = built();
     const price = respecPrice(6, STANDARD_TERMS);
-    const ok = buyRespec({ eddies: price + 5 }, s, STANDARD_TERMS, () => true);
+    const ok = buyRespec({ eddies: price + 5 }, s, STANDARD_TERMS);
     expect(ok.ok && [ok.wallet.eddies, ok.price]).toEqual([5, price]);
-    expect(buyRespec({ eddies: price - 1 }, s, STANDARD_TERMS, () => true)).toEqual({ ok: false, reason: "insufficient-funds" });
-    expect(buyRespec({ eddies: 1e6 }, s, shopTerms(-80), () => true)).toEqual({ ok: false, reason: "refused" });
-    expect(buyRespec({ eddies: 1e6 }, at(6), STANDARD_TERMS, () => true)).toEqual({ ok: false, reason: "empty-slot" });
-    expect(buyRespec({ eddies: 1e6 }, s, STANDARD_TERMS, () => false)).toEqual({ ok: false, reason: "over-capacity" });
+    expect(buyRespec({ eddies: price - 1 }, s, STANDARD_TERMS)).toEqual({ ok: false, reason: "insufficient-funds" });
+    expect(buyRespec({ eddies: 1e6 }, s, shopTerms(-80))).toEqual({ ok: false, reason: "refused" });
+    expect(buyRespec({ eddies: 1e6 }, at(6), STANDARD_TERMS)).toEqual({ ok: false, reason: "empty-slot" });
+    expect(respecRefusal({ eddies: price - 1 }, s, STANDARD_TERMS)).toBe("insufficient-funds");
+    expect(respecRefusal({ eddies: price }, s, STANDARD_TERMS)).toBeNull();
   });
 });

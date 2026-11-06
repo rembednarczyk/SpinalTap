@@ -121,19 +121,17 @@ const removeImplant = (ctx: SimContext, cmd: Command<"remove-cyberware">, { doma
 };
 
 /**
- * The respec (ADR-0059): every attribute point and perk rank back to spend, for a fee. The
- * implants have to fit the pool without Tech and Overclock; a RAM pool that shrinks is reported.
+ * The respec (ADR-0059): every attribute point and perk rank back to spend, for a fee. Implants
+ * over the pool without Tech and Overclock stay in (stage 3b); a RAM pool that shrinks is reported.
  */
 const respec = (ctx: SimContext, { domain, terms, fail, charged }: Counter): void => {
-  const r = buyRespec(domain.wallet, domain.progression, terms, (progression) => {
-    const capacity = cyberCapacityOf({ ...domain, progression });
-    return capacity.used <= capacity.max;
-  });
+  const r = buyRespec(domain.wallet, domain.progression, terms);
   if (!r.ok) return fail(r.reason);
   const ram = ramMaxOf(domain);
   ctx.state.domain = { ...domain, wallet: r.wallet, progression: r.progression };
   charged(r.wallet, r.price);
   reportRamPool(ctx, ram);
+  ctx.bus.emit("ProgressionReset", { price: r.price, ...r.progression.unspent });
 };
 
 const buyItem = (ctx: SimContext, cmd: Command<"buy-item">, { domain, shopId, terms, pockets, fail, charged }: Counter): void => {

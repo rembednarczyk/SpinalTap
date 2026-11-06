@@ -89,15 +89,15 @@ export const garmentModifiers = (worn: readonly WornGarment[]): StatModifiers[] 
   return mods;
 };
 
-/** A hit on `zone` wears the worn pieces covering it by WEAR_PER_HIT. Returns the same object when nothing changed. */
-export const wearGarments = (inv: InventoryState, eq: Equipment, zone: HitZone): InventoryState => {
+/** A hit on `zone` wears the worn pieces covering it by `wear` (WEAR_PER_HIT). Returns the same object when nothing changed. */
+export const wearGarments = (inv: InventoryState, eq: Equipment, zone: HitZone, wear = WEAR_PER_HIT): InventoryState => {
   let next = inv;
   for (const slot of GARMENT_SLOTS) {
     const uid = eq[slot];
     if (uid === null || !GARMENT_COVERAGE[slot].includes(zone)) continue;
     const item = findItem(next, uid);
     if (!item || item.condition === undefined || item.condition <= 0) continue;
-    const condition = Math.max(0, item.condition - WEAR_PER_HIT);
+    const condition = Math.max(0, item.condition - wear);
     next = updateItem(next, uid, (i) => ({ ...i, condition }));
   }
   return next;

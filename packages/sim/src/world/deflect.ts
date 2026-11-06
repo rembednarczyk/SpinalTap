@@ -1,4 +1,4 @@
-import { type DefenderProfile, type RandomPort, type Vec3, type WeaponStats, applyDamage, directionFromAngles, hasPerk, hasProgressionPerk, resolveAttack } from "@seki/core";
+import { type DefenderProfile, type RandomPort, type Vec3, type WeaponStats, applyDamage, deflectCostScale, directionFromAngles, hasPerk, hasProgressionPerk, resolveAttack } from "@seki/core";
 import type { Entity } from "./components";
 import type { SimContext } from "./context";
 import { aimOrigin, hitscan } from "./hitscan";
@@ -43,7 +43,9 @@ export interface DeflectedShot {
  */
 export const deflectShot = (ctx: SimContext, shot: DeflectedShot, defenderOf: (e: Entity) => DefenderProfile, rng: RandomPort): void => {
   const { defender, weapon } = shot;
-  if (defender.perks) defender.perks.stamina = Math.max(0, defender.perks.stamina - DEFLECT_COST / Math.max(1, weapon.pellets));
+  // Iron Guard (ADR-0059) makes a deflection cost less of the guard.
+  const cost = (DEFLECT_COST * deflectCostScale(ctx.state.domain.progression.perks)) / Math.max(1, weapon.pellets);
+  if (defender.perks) defender.perks.stamina = Math.max(0, defender.perks.stamina - cost);
   const origin = aimOrigin(defender, ctx.state.domain.preferences.cameraMode, ctx.input.leftShoulder === true);
   const result = hitscan(ctx.world, origin, directionFromAngles(defender.yaw, defender.pitch), weapon.range, defender.id);
   const target = result.entity;
