@@ -1267,6 +1267,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (testy) · Zasięg: pamięć `memoAt` na poziomie modułu (zwalniać po kontroli albo płaski klucz); nieruszane kontrole vehicle-outside-passage, paving-coplanar, drone-low-pool 4–7 s pod obciążeniem; `decksAt` w `packages/sim/src/world/deck.ts` przegląda liniowo pomosty chunka (indeks przestrzenny przyspieszyłby cable-low, drone-low-pool i kontrole rekwizytów)
 - Pakiet właściciela: tools/glitch-scan, packages/sim (world/deck)
 
+### G-418 Synapse booster (900 €$) w tabeli Tessenu podnosi wartość worka strażnika poza kontrolą E10
+- Status: zgłoszone (6.11, weryfikator PR #337)
+- Ważność: S4 (balans) · Zasięg: E10 sprawdza tylko worki Hebi; złote hashe nie przechodzą przez worek pokonany przez gracza, więc nie pilnują tabel łupu; do etapu 8 (test balansu)
+- Pakiet właściciela: packages/core (items/loot), testy balansu
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
