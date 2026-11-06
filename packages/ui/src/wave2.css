@@ -66,6 +66,9 @@
 .capacity__bar { flex: 1; height: 8px; background: rgba(255, 255, 255, 0.08); }
 .capacity__fill { height: 100%; background: #39ffd0; }
 .capacity--full .capacity__fill { background: var(--amber); }
+.capacity--over { flex-wrap: wrap; }
+.capacity--over .capacity__fill { background: var(--danger); }
+.capacity--over .shop__warn { flex-basis: 100%; }
 .shop__capacity { display: inline-block; margin: 2px 0; font-family: var(--font-mono); font-size: 12px; color: #39ffd0; }
 
 /* ---- buffs, the dash, the disguise ---- */

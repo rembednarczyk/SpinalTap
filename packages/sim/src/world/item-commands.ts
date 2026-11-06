@@ -19,6 +19,8 @@ import {
   unequip,
   useConsumable,
   healScale,
+  BUFF_CATALOG,
+  buffDurationScale,
   weaponStatsOf,
   WEAPON_SLOTS,
   type EquipSlot,
@@ -73,7 +75,8 @@ const useItem = (ctx: SimContext, cmd: Command<"use-item">): void => {
   // Wave 2 (ADR-0033): a buff starts (or refreshes), a capacity shard counts for good. The body
   // system reports both (BuffApplied, CyberwareCapacityChanged) at its turn in this step.
   const def: StackableDefinition = STACKABLE_CATALOG[cmd.ref.stack];
-  const buffs = def.buff ? applyBuff(domain.buffs, def.buff) : domain.buffs;
+  // Stim Tolerance (ADR-0059) makes a buff last longer.
+  const buffs = def.buff ? applyBuff(domain.buffs, def.buff, BUFF_CATALOG[def.buff].duration * buffDurationScale(domain.progression.perks)) : domain.buffs;
   const capacityShards = domain.capacityShards + (def.cyberCapacity ? 1 : 0);
   ctx.state.domain = { ...domain, inventory: r.inventory, buffs, capacityShards };
   ctx.bus.emit("ItemUsed", { itemId: cmd.ref.stack, healed: r.healed });

@@ -11,6 +11,7 @@ import { useT, useText } from "../i18n/use-t";
 import { useUi } from "../use-ui";
 import { AttributesSection } from "./attributes-section";
 import { PerksSection } from "./perks-section";
+import { OverPool } from "../shop/capacity-bar";
 
 const SLOTS = ["optics", "nervous", "skeleton", "arms"] as const;
 
@@ -20,6 +21,7 @@ export const CharacterPanel = () => {
   const tx = useText();
   const alias = useUi((s) => s.alias);
   const loadout = useUi((s) => s.cyberware);
+  const capacity = useUi((s) => s.capacity);
   const memories = useUi((s) => s.memories);
   const reputation = useUi((s) => s.reputation);
   const contractsDone = useUi((s) => s.contractsDone);
@@ -42,7 +44,16 @@ export const CharacterPanel = () => {
               </div>
             );
           })}
+          {capacity && (
+            <div className="sheet__row" data-testid="sheet-capacity">
+              <dt>{t("shop.capacity.label")}</dt>
+              <dd>
+                {capacity.used} / {capacity.max}
+              </dd>
+            </div>
+          )}
         </dl>
+        <OverPool />
       </section>
       <section>
         <h3 className="sheet__h">{t("character.memories")}</h3>

@@ -1,4 +1,4 @@
-import { ATTRIBUTE_IDS, type AttributeId, PERK_IDS, type PerkId, perkDef, perkRank, perkRequirement, perkUnlocked } from "@seki/core";
+import { ATTRIBUTE_IDS, type AttributeId, PERK_IDS, PERK_TIERS, type PerkId, perkDef, perkPathMet, perkRank, perkRequirement, perkUnlocked, previousTier } from "@seki/core";
 import { useT } from "../i18n/use-t";
 import { useProgressionIntents, useUi } from "../use-ui";
 
@@ -6,9 +6,10 @@ import { useProgressionIntents, useUi } from "../use-ui";
 const treeOf = (tree: AttributeId): readonly PerkId[] => PERK_IDS.filter((id) => perkDef(id).tree === tree);
 
 /**
- * The sheet's perk trees (ADR-0059, stage 3): every perk with its rank and what it does, the
- * attribute its tier needs while it is shut, and a button to buy a rank while perk points are
- * left. The bare minimum to spend a point; the Progress tab with the trees comes in stage 7.
+ * The sheet's perk trees (ADR-0059, stages 3 and 3b): every perk with its rank and what it does,
+ * what its tier needs while it is shut (the attribute, a perk of the tier below), and a button to
+ * buy a rank while perk points are left. The bare minimum to spend a point; the Progress tab with
+ * the trees comes in stage 7.
  */
 export const PerksSection = () => {
   const t = useT();
@@ -30,14 +31,18 @@ export const PerksSection = () => {
             const def = perkDef(id);
             const name = t(`perk.${id}.name`);
             const rank = perkRank(perks, id);
-            const open = perkUnlocked(attributes, id);
+            const attributeOk = perkUnlocked(attributes, id);
+            const pathOk = perkPathMet(perks, id);
+            const below = previousTier(id);
+            const open = attributeOk && pathOk;
             return (
               <div key={id} className="sheet__row" data-testid={`perk-${id}`}>
                 <dt>
                   {name}
                   {def.key && <span className="sheet__effect"> · {t("perk.key")}</span>}
                   <div className="sheet__effect">{t(`perk.${id}.desc`)}</div>
-                  {!open && <div className="sheet__effect">{t("perk.requires", { attribute: t(`attribute.${tree}.name`), value: perkRequirement(id) })}</div>}
+                  {!attributeOk && <div className="sheet__effect">{t("perk.requires", { attribute: t(`attribute.${tree}.name`), value: perkRequirement(id) })}</div>}
+                  {!pathOk && below !== null && <div className="sheet__effect">{t("perk.requiresPath", { value: PERK_TIERS[below] })}</div>}
                 </dt>
                 <dd>
                   {t("perk.rank", { rank, ranks: def.ranks })}

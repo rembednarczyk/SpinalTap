@@ -9,6 +9,7 @@ import {
   detectionScale,
   gainXp,
   isAttributeId,
+  perkDetectionScale,
   perkRam,
   rememberHack,
   spendAttributePoint,
@@ -53,9 +54,10 @@ export const playerPerks = (ctx: SimContext): PerkRanks => ctx.state.domain.prog
 
 /**
  * The pace at which enemies and cameras fill their suspicion of the player: the difficulty's
- * `awareness` (ADR-0066) slowed by Shadow (ADR-0059). Draining is not affected.
+ * `awareness` (ADR-0066) slowed by Shadow and Low Profile (ADR-0059). Draining is not affected.
  */
-export const detectionPaceOf = (ctx: SimContext): number => difficultyOf(ctx).awareness * detectionScale(ctx.state.domain.progression.attributes);
+export const detectionPaceOf = (ctx: SimContext): number =>
+  difficultyOf(ctx).awareness * detectionScale(ctx.state.domain.progression.attributes) * perkDetectionScale(ctx.state.domain.progression.perks);
 
 /**
  * The `spend-attribute-point` command: a refused spend (no point, attribute at 15) changes

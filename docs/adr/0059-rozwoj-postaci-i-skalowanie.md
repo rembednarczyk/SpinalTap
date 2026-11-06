@@ -169,3 +169,37 @@ Nieprzyjęte, do poprawy w etapie 3b:
 - drzewka mają mieć ok. 8 perków jak w ADR, nie 5;
 - respec nie odmawia przy wszczepach ponad pulą bez punktów: wszczepy zostają, a pula pokazuje przekroczenie, dopóki gracz ich nie wyjmie (alternatywa z etapu 3);
 - próg drzewka wymaga perka z niższego progu tego drzewka, nie samej wartości atrybutu.
+
+## Z budowy etapu 3b (6.11)
+
+Etap 3b wykonuje decyzje użytkownika z 6.11. Zastępuje trzy punkty z opisu etapu 3: 5 perków na drzewko, próg otwierany samą wartością atrybutu i odmowę respecu z powodem `over-capacity`, a także zdanie „Nie ma nowych zdarzeń”. Liczby nowych perków są wstępne i do strojenia w etapie 8.
+
+- **Drzewka:** każde ma 8 perków na progach 4, 8, 12 i 15 (3, 2, 2 i 1 perk). Razem jest 40 perków i 68 rang przy 29 punktach z poziomów. Nowe perki działają tylko na mechanikach, które już są. Granaty, przebrania jako osobna gałąź i reakcja grupowa dalej czekają na swoje mechaniki.
+
+  | Drzewko | Perk (klucz) | Próg | Rangi | Efekt na rangę | Gdzie działa |
+  |---|---|---|---|---|---|
+  | Krzepa | Twarda głowa (`might_thick_skull`) | 4 | 2 | +2 pancerza głowy | `StatModifiers.headArmor` |
+  | Krzepa | Żelazna garda (`might_iron_guard`) | 8 | 2 | odbicie pocisku kosztuje gardę −25% wytrzymałości (wymaga Odruchu Tsubame) | `deflect` |
+  | Krzepa | Taran (`might_battering_ram`) | 12 | 1 | odepchnięcie po nieosłoniętym ciosie gracza ×2 | `melee` |
+  | Refleks | Strzelec wyborowy (`reflex_sharpshooter`) | 4 | 2 | +3% szansy krytycznej | `StatModifiers.critChance` |
+  | Refleks | Lekki krok (`reflex_light_step`) | 8 | 2 | +0,2 m/s chodu | `StatModifiers.moveSpeed` |
+  | Refleks | Błyskawiczny celownik (`reflex_snap_aim`) | 12 | 2 | wejście w celowanie −15% (mnoży się z Refleksem) | `player-control` |
+  | Technika | Tolerancja stymulantów (`tech_stim_tolerance`) | 4 | 2 | buff z jedzenia i napojów +25% czasu | `use-item` |
+  | Technika | Kondensator (`tech_capacitor`) | 8 | 2 | aktywny wszczep działa +20% dłużej | `ability` |
+  | Technika | Wzmocnione szwy (`tech_reinforced_seams`) | 12 | 1 | zużycie odzieży ×0,5 (1 zamiast 2 na trafienie) | `combat`, `wearGarments` |
+  | Sieć | Daleki zasięg (`net_long_range`) | 4 | 2 | zasięg skanera +20% (25 → 35 m) | `scanner` |
+  | Sieć | Uporczywy kod (`net_persistence`) | 8 | 2 | czas efektu quickhacka +20% | `scanner` |
+  | Sieć | Przeciążenie (`net_overload`) | 12 | 2 | Zwarcie +25% obrażeń, w całych punktach | `scanner` |
+  | Cień | Niski profil (`shadow_low_profile`) | 4 | 2 | tempo wykrywania −5% (strażnicy, przebranie, kamery; mnoży się z Cieniem i trudnością) | `detectionPaceOf` |
+  | Cień | Długie ręce (`shadow_long_arms`) | 8 | 1 | zasięg obezwładnienia +0,4 m | `takedown` |
+  | Cień | Zabójca (`shadow_assassin`) | 12 | 2 | +4% szansy krytycznej | `StatModifiers.critChance` |
+
+- **Ciąg progów:** próg powyżej pierwszego wymaga wartości atrybutu i co najmniej jednej rangi perka z progu niżej w tym samym drzewku (`perkPathMet`, `perkOpen`). Perk innego drzewka się nie liczy. Odmowa `spend-perk-point` to dalej `locked`. Kolejna ranga już kupionego perka nie wymaga ciągu.
+- **Zapisy z etapu 3:** zapis, w którym próg otwierała sama wartość atrybutu, zostaje ważny i zachowuje perki. Przykład: Zahartowana przy Krzepie 12 bez perków z progów 4 i 8. Walidacja nie sprawdza ciągu, a nowe wydania już go wymagają. Schemat się nie zmienia, bo nowe perki to nowe klucze w `progression.perks`. Dlatego `SAVE_SCHEMA_VERSION` się nie zmienia i nie ma migracji.
+- **Respec ponad pulą:** `buyRespec` nie dostaje już `implantsFit`, a respec nie odmawia powodem `over-capacity`. Wszczepy zostają. Karta (wiersz pojemności w sekcji Wszczepy) i pasek pojemności u Mori pokazują przekroczenie i wskazówkę, dopóki gracz nie wyjmie wszczepu. Nowy montaż ponad pulą dalej dostaje `over-capacity`. Powód `over-capacity` zostaje w `PurchaseFailure` dla montażu.
+- **Odmowy respecu (G-366):** lada sprawdza przed komendą te same warunki co core (`respecRefusal`). Toast mówi, co zrobić: poprawić reputację u Mori, wrócić z pieniędzmi (z ceną) albo najpierw wydać punkt. `PurchaseFailed` z symulacji zostaje jako zabezpieczenie.
+- **Kontrakty zdarzeń (zgoda w briefie orkiestratora):**
+  - `ProgressionReset { price, attribute, perk }` przychodzi po udanym respecu. `attribute` i `perk` to punkty do rozdania po nim. Prezenter pokazuje toast „Przebudowa gotowa”.
+  - `QuickhackChained { hackId, fromId, targetId }` przychodzi przy drugim celu Łańcucha, po jego `QuickhackApplied`. Notatka skanera brzmi „{hack}: przeskok na drugi cel”.
+  - Komend nie zmieniono.
+- **Determinizm:** bez perków każda skala to dokładnie 1, a każdy dodatek 0, więc złote hashe się nie zmieniły.

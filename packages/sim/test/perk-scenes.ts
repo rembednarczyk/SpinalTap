@@ -1,12 +1,31 @@
-import { ATTRIBUTE_IDS, type DomainState, type PerkId, type ProgressionState, perkDef, perkRequirement, progressionFromXp, spendAttributePoint, spendPerkPoint, xpForLevel } from "@seki/core";
+import { ATTRIBUTE_IDS, type DomainState, PERK_IDS, type PerkId, type ProgressionState, perkDef, perkRequirement, progressionFromXp, spendAttributePoint, spendPerkPoint, xpForLevel } from "@seki/core";
 import type { Simulation } from "../src";
 
-/* Scenes of the perk tests (ADR-0059, stage 3): a character with perks bought the way the game buys them. */
+/* Scenes of the perk tests (ADR-0059, stages 3 and 3b): a character with perks bought the way the game buys them. */
+
+/**
+ * One rank of the first perk not asked for on each tier below the highest one asked for in a
+ * tree: the path a tier needs (stage 3b), bought in both scenes so the comparison keeps only the
+ * perks asked for.
+ */
+const pathOf = (perks: Partial<Record<PerkId, number>>): PerkId[] => {
+  const asked = (Object.keys(perks) as PerkId[]).filter((id) => (perks[id] ?? 0) > 0);
+  const path: PerkId[] = [];
+  for (const tree of ATTRIBUTE_IDS) {
+    const top = Math.max(-1, ...asked.filter((id) => perkDef(id).tree === tree).map((id) => perkDef(id).tier));
+    for (let tier = 0; tier < top; tier++) {
+      const filler = PERK_IDS.find((id) => perkDef(id).tree === tree && perkDef(id).tier === tier && !(id in perks));
+      if (filler) path.push(filler);
+    }
+  }
+  return path;
+};
 
 /**
  * A level-`level` character with `perks` bought by the rules: each tree raised just to the tier
- * its perks need, then the ranks bought one by one. Throws when the points do not reach. Without
- * `bought` the same attributes and no perk: the scene to compare with.
+ * its perks need, the path through the tiers below (`pathOf`), then the ranks bought one by one,
+ * lowest tier first. Throws when the points do not
+ * reach. Without `bought` the same attributes and path and none of `perks`: the scene to compare with.
  */
 export const perked = (perks: Partial<Record<PerkId, number>>, level = 30, bought = true): ProgressionState => {
   let s = progressionFromXp(xpForLevel(level));
@@ -18,14 +37,15 @@ export const perked = (perks: Partial<Record<PerkId, number>>, level = 30, bough
       s = r.state;
     }
   }
+  const buy = (id: PerkId): void => {
+    const r = spendPerkPoint(s, id);
+    if (!r.ok) throw new Error(`${id}: ${r.reason}`);
+    s = r.state;
+  };
+  pathOf(perks).forEach(buy);
   if (!bought) return s;
-  for (const [id, ranks] of Object.entries(perks) as [PerkId, number][]) {
-    for (let i = 0; i < ranks; i++) {
-      const r = spendPerkPoint(s, id);
-      if (!r.ok) throw new Error(`${id}: ${r.reason}`);
-      s = r.state;
-    }
-  }
+  const order = (Object.entries(perks) as [PerkId, number][]).sort(([a], [b]) => perkDef(a).tier - perkDef(b).tier);
+  for (const [id, ranks] of order) for (let i = 0; i < ranks; i++) buy(id);
   return s;
 };
 
