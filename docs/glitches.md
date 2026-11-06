@@ -1109,7 +1109,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (`renderer/metro`, cienie/światło)
 
 ### G-368 AI nie ściga gracza w metrze (hala, zejście, peron, wejścia A i B)
-- Status: zgłoszone (6.11, weryfikator PR #309; nie regresja etapu 4)
+- Status: w PR #316 (6.11, 3e19c2c; `shaftAt` w `heightApart`, węzły metra w `WORLD_NAV`, `attach()` z wysokością biegu; w weryfikacji)
 - Ważność: S3 · Zasięg: ganger zaalarmowany z ulicy, z hali albo z peronu nie dochodzi do gracza w żadnym z 14 sprawdzonych przypadków · Koszt: średni
 - Pakiet właściciela: packages/sim (`systems/ai`, nawigacja przez schody i sklepienia)
 - Test przyjęcia: pościg z ulicy do hali i z hali na peron dochodzi do gracza w rozsądnym czasie
@@ -1126,7 +1126,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan (`metro-entrances.ts`)
 
 ### G-371 Hala w otwartym wykopie i ulica wychodzą w `heightApart` 1,0 m od siebie, poniżej `LEVEL_GAP`
-- Status: zgłoszone (6.11, weryfikator #309; z etapu 2 metra)
+- Status: w PR #316 (6.11, 3e19c2c; `shaftAt` w `heightApart`, węzły metra w `WORLD_NAV`, `attach()` z wysokością biegu; w weryfikacji)
 - Ważność: S4 · Zasięg: AI (sniper, steering, ganger-walk) może brać halę i ulicę za jedno piętro · Koszt: mały
 - Pakiet właściciela: packages/sim (`world/ground.ts`)
 
@@ -1159,6 +1159,17 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: Infra/Build (`.github`, konfiguracja vitest w root), QA (najwolniejsze testy)
 - Poprawka bez podnoszenia limitu (CLAUDE.md, ADR-0046): podział przebiegu na części (sharding) albo przyspieszenie (izolacja, najwolniejsze pliki, import ciężkich modułów). Pokrycie łączone z części
 - Test przyjęcia: job unit kończy się z zapasem ≥ 5 min na obecnym main; progi pokrycia bez zmian
+
+### G-377 Promień z ulicy do szybu metra trafia w niewidzialny teren pod pawilonem
+- Status: zgłoszone (6.11, naprawiacz G-368)
+- Ważność: S3 · Zasięg: `GroundField.rayHit` maszeruje teren chunka ulicy w obszarze szybu do najbliższej linii siatki, więc trafia w dawną powierzchnię ulicy pod pawilonem; strzelec 0,5 m przed otworem Alchemii B nie widzi gracza w hali i przez 20 s nie strzela; prawdopodobnie też strzały gracza z zewnątrz do hali · Koszt: średni
+- Pakiet właściciela: packages/sim (`world/ground.ts`, raycast)
+- Test przyjęcia: linia wzroku i strzał z ulicy przed otworem do gracza w hali przechodzą (i odwrotnie)
+
+### G-378 Graf poziomów łączy węzły tylko prostą: ścigający bez prostej do drzwi albo narożnika wraca na posterunek
+- Status: zgłoszone (6.11, naprawiacz G-368)
+- Ważność: S4 · Zasięg: targ A 15 m na północ od otworu, za murem podwórza przy doki A, shinsekai A przy (u −6, w 6) · Koszt: średni
+- Pakiet właściciela: packages/sim (`world/nav.ts`, `steering`)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
