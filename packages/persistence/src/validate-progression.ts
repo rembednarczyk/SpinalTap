@@ -15,7 +15,8 @@ export const findProgressionError = (p: unknown): string | null => {
     const v = a[id];
     if (!Number.isInteger(v) || (v as number) < ATTRIBUTE_START || (v as number) > ATTRIBUTE_MAX) return "progression attributes";
   }
-  // A perk that exists, within its ranks, on a tier its attribute opens (ADR-0059, stage 3).
+  // A perk that exists, within its ranks, on a tier its attribute opens (ADR-0059, stage 3). The path
+  // through the tier below (stage 3b) is not checked: perks a stage 3 save bought without it stay.
   if (!isObject(p.perks) || !Object.values(p.perks).every(isCount) || !validPerks(a as unknown as Attributes, p.perks as Readonly<Record<string, number>>)) return "progression perks";
   const u = p.unspent;
   if (!isObject(u) || !isCount(u.attribute) || !isCount(u.perk)) return "progression points";

@@ -1,4 +1,4 @@
-import { type GameCommand, angleTo, hasProgressionPerk, takedownTimeScale } from "@seki/core";
+import { type GameCommand, type PerkRanks, angleTo, hasProgressionPerk, takedownReachBonus, takedownTimeScale } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { SimContext, System, TakedownRun } from "../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
@@ -44,18 +44,18 @@ const behind = (target: Entity, player: Entity): boolean =>
  * (reach, height, from behind or a target stunned or unaware of her), else null. A target is
  * someone with health and a weapon slot, or a civilian with health (stage 2: an assault once
  * seen), but nobody with a talk, a shop or a job to offer (`interactable`): those are left out
- * in this stage. Pure: the line of sight is the caller's.
+ * in this stage. Pure: the line of sight is the caller's. `reach` grows with Long Arms (ADR-0059).
  */
-export const takedownDistance = (player: Entity, e: Target): number | null => {
+export const takedownDistance = (player: Entity, e: Target, reach = TAKEDOWN_REACH): number | null => {
   if (e.player || e.unconscious || e.passerby || e.vehicle || e.interactable || e.health.current <= 0 || !(e.combatant || e.civilian)) return null;
   const distance = Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z);
-  if (distance > TAKEDOWN_REACH || Math.abs(e.position.y - player.position.y) > TAKEDOWN_REACH_Y) return null;
+  if (distance > reach || Math.abs(e.position.y - player.position.y) > TAKEDOWN_REACH_Y) return null;
   return behind(e, player) || stunned(e) || unaware(e) ? distance : null;
 };
 
 /** As `takedownDistance`, with nothing solid between the player's eyes and the target's chest. */
-const reachOf = (ctx: SimContext, player: Entity, e: Target): number | null => {
-  const distance = takedownDistance(player, e);
+const reachOf = (ctx: SimContext, player: Entity, e: Target, perks: PerkRanks): number | null => {
+  const distance = takedownDistance(player, e, TAKEDOWN_REACH + takedownReachBonus(perks));
   return distance !== null && lineOfSight(ctx.world, eyeOf(player), chestOf(e)) ? distance : null;
 };
 
@@ -69,8 +69,9 @@ export const takedownCandidate = (ctx: SimContext, player: Entity): { target: Ta
   // Not with a body on her shoulder either: both hands are full (stage 3).
   if (playerHeld(ctx) || ctx.session.carrying !== null || player.climb || player.mantle || player.fall !== undefined) return null;
   let best: { target: Target; distance: number } | null = null;
+  const perks = ctx.state.domain.progression.perks;
   for (const e of inCreationOrder(ctx.world.with("health"))) {
-    const distance = reachOf(ctx, player, e);
+    const distance = reachOf(ctx, player, e, perks);
     if (distance !== null && (!best || distance < best.distance)) best = { target: e, distance };
   }
   return best;

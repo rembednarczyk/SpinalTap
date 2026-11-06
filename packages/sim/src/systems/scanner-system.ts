@@ -18,11 +18,14 @@ import {
   directionFromAngles,
   factionStance,
   hackCost,
+  hackDurationScale,
   hackInSlot,
   perkUploadScale,
   ramRegenScale,
   refundOf,
   regenRam,
+  scanRangeScale,
+  shortCircuitScale,
   uploadTimeScale,
 } from "@seki/core";
 import type { DeviceKind, Entity } from "../world/components";
@@ -67,7 +70,8 @@ const scanPoint = (e: Entity): Vec3 => (e.device ? e.position : chestOf(e));
 
 /**
  * The scanner's focus (ADR-0029): the scannable thing closest to the centre of the view, within
- * `SCAN_RANGE` and `SCAN_CONE`, in plain sight. Ties go to the nearer one, then creation order.
+ * `SCAN_RANGE` (longer with Long Range, ADR-0059) and `SCAN_CONE`, in plain sight. Ties go to
+ * the nearer one, then creation order.
  */
 export const scanFocus = (ctx: SimContext, player: Entity): Entity | null => {
   const eye = eyeOf(player);
@@ -75,6 +79,7 @@ export const scanFocus = (ctx: SimContext, player: Entity): Entity | null => {
   let best: Entity | null = null;
   let bestAngle = Infinity;
   let bestDistance = Infinity;
+  const range = SCAN_RANGE * scanRangeScale(ctx.state.domain.progression.perks);
   for (const e of inCreationOrder([...ctx.world.with("device"), ...ctx.world.with("body")])) {
     if (e === player || !hackTargetKind(e) || (e.health && e.health.current <= 0)) continue;
     const p = scanPoint(e);
@@ -82,7 +87,7 @@ export const scanFocus = (ctx: SimContext, player: Entity): Entity | null => {
     const dy = p.y - eye.y;
     const dz = p.z - eye.z;
     const distance = Math.hypot(dx, dy, dz);
-    if (distance > SCAN_RANGE || distance < 1e-6) continue;
+    if (distance > range || distance < 1e-6) continue;
     const angle = Math.acos(Math.max(-1, Math.min(1, (dx * dir.x + dy * dir.y + dz * dir.z) / distance)));
     if (angle > SCAN_CONE || angle > bestAngle + 1e-9) continue;
     if (Math.abs(angle - bestAngle) <= 1e-9 && distance >= bestDistance) continue;
@@ -245,7 +250,9 @@ const shortCircuit = (ctx: SimContext, player: Entity, target: Entity): void => 
   } else if (target.health) {
     const at = chestOf(target);
     noteViolence(ctx, target, isEngaged(target), at);
-    target.health = applyDamage(target.health, SHORT_CIRCUIT_DAMAGE);
+    // Overload (ADR-0059): more damage, in whole points.
+    const damage = Math.round(SHORT_CIRCUIT_DAMAGE * shortCircuitScale(ctx.state.domain.progression.perks));
+    target.health = applyDamage(target.health, damage);
     target.lastHitBy = player.id;
     const ai = target.ai;
     if (ai && !ai.alerted) {
@@ -253,7 +260,7 @@ const shortCircuit = (ctx: SimContext, player: Entity, target: Entity): void => 
       ai.lastKnown = { ...target.position };
       ai.search = SEARCH_SECONDS;
     }
-    ctx.bus.emit("DamageDealt", { sourceId: player.id, targetId: target.id, amount: SHORT_CIRCUIT_DAMAGE, critical: false, zone: "torso", at });
+    ctx.bus.emit("DamageDealt", { sourceId: player.id, targetId: target.id, amount: damage, critical: false, zone: "torso", at });
   }
   disturb(ctx, "hack", target.position, HACK_NOISE, target.id);
 };
@@ -277,21 +284,24 @@ const chainTarget = (ctx: SimContext, player: Entity, first: Entity, radius: num
   return best;
 };
 
+/** How long the hack's effect lasts: the table's, longer with Persistence (ADR-0059). */
+const hackDuration = (ctx: SimContext, hackId: QuickhackId): number => QUICKHACKS[hackId].duration * hackDurationScale(ctx.state.domain.progression.perks);
+
 /** What the hack does to the target. */
 const applyEffect = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Entity): void => {
-  const def = QUICKHACKS[hackId];
+  const duration = hackDuration(ctx, hackId);
   switch (hackId) {
     case "ping":
-      ping(ctx, target, def.duration);
+      ping(ctx, target, duration);
       break;
     case "reboot_optics":
-      rebootOptics(ctx, target, def.duration);
+      rebootOptics(ctx, target, duration);
       break;
     case "distract":
-      distract(ctx, target, def.duration);
+      distract(ctx, target, duration);
       break;
     case "cripple_movement":
-      hackFxOf(ctx.world, target).crippled = def.duration;
+      hackFxOf(ctx.world, target).crippled = duration;
       break;
     case "short_circuit":
       shortCircuit(ctx, player, target);
@@ -301,7 +311,8 @@ const applyEffect = (ctx: SimContext, player: Entity, hackId: QuickhackId, targe
 
 /**
  * The upload is through: the effect, and maybe the trace. With Chain (ADR-0059) the effect also
- * jumps to the next target of the kind nearby, with no trace and no XP of its own.
+ * jumps to the next target of the kind nearby, with no trace and no XP of its own; its
+ * QuickhackChained follows that target's QuickhackApplied, for the HUD's note.
  */
 const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Entity): void => {
   const seen = watchers(ctx, player, hackId === "reboot_optics" ? target : null);
@@ -311,7 +322,7 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
     noteDetected(ctx);
     for (const w of seen) giveLead(w, player.position);
   }
-  const duration = QUICKHACKS[hackId].duration;
+  const duration = hackDuration(ctx, hackId);
   applyEffect(ctx, player, hackId, target);
   noteHacked(ctx);
   ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration });
@@ -320,6 +331,7 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
   if (next) {
     applyEffect(ctx, player, hackId, next);
     ctx.bus.emit("QuickhackApplied", { hackId, targetId: next.id, duration });
+    ctx.bus.emit("QuickhackChained", { hackId, fromId: target.id, targetId: next.id });
   }
   grantQuickhackXp(ctx, xpKey(target));
 };

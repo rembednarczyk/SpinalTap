@@ -1,4 +1,4 @@
-import { type EntityId, type MeleeProfile, applyDamage, meleeReach, nextStrike, parryStunScale, resolveAttack, strikeAt, strikeZone } from "@seki/core";
+import { type EntityId, type MeleeProfile, applyDamage, knockbackScale, meleeReach, nextStrike, parryStunScale, resolveAttack, strikeAt, strikeZone } from "@seki/core";
 import type { Entity, MeleeState } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { bodyHeightOf } from "../world/hitboxes";
@@ -134,7 +134,9 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
       // Shoved away from the attacker; movement keeps it out of walls.
       if (t.melee) {
         const d = Math.max(1e-6, reach.distance);
-        t.melee.knock = { x: ((t.position.x - f.position.x) / d) * KNOCKBACK_SPEED, z: ((t.position.z - f.position.z) / d) * KNOCKBACK_SPEED, time: KNOCKBACK_TIME };
+        // Battering Ram (ADR-0059): the player's hits shove harder.
+        const push = KNOCKBACK_SPEED * (f.player ? knockbackScale(ctx.state.domain.progression.perks) : 1);
+        t.melee.knock = { x: ((t.position.x - f.position.x) / d) * push, z: ((t.position.z - f.position.z) / d) * push, time: KNOCKBACK_TIME };
       }
     }
     if (t.player) threaten(ctx, "damage", f.id);
