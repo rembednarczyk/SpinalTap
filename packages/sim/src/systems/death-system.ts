@@ -102,8 +102,8 @@ export const deathSystem: System = {
       if (e.tag) raiseFlag(ctx, killedFlag(e.tag));
       // A death the player did not cause (Hebi shooting Oyaji) is not held against them.
       if (e.faction && (e.lastHitBy === undefined || e.lastHitBy === playerId)) applyReputationCause(ctx, { type: "member-killed", faction: e.faction, how: killContext(ctx, e) });
-      // A fight of her style (ADR-0059): what dealt the last blow. One knocked out first counted then.
-      if (byPlayer && e.enemy && !e.unconscious && e.lastHitStyle) noteFight(ctx, e.lastHitStyle);
+      // A fight of her style (ADR-0059): what dealt the last blow, unless hacked or knocked out first.
+      if (byPlayer && e.enemy && e.lastHitStyle) noteFight(ctx, e, e.lastHitStyle);
       dropEnemyLoot(ctx, e, byPlayer);
       // An enemy the player took down (ADR-0059), by its level against hers.
       if (byPlayer && e.enemy) {

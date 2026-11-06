@@ -87,6 +87,8 @@ export interface EntitySnapshot {
   readonly away?: number;
   /** Knocked out, or killed in a takedown and left lying (ADR-0065). Absent for everyone else. */
   readonly downed?: BodySnapshot;
+  /** Its fight is already in the player's style (ADR-0059, stage 6). Absent until then. */
+  readonly fought?: true;
   /** An NPC's gun not at rest with a full magazine (G-185). Absent for the player and at rest. */
   readonly gun?: GunSnapshot;
   /** A sniper's state (G-185): it may be about to fire. Absent for everyone else. */

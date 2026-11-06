@@ -15,7 +15,8 @@ export const isStyleKind = (v: unknown): v is StyleKind => typeof v === "string"
 /**
  * How many fights the style remembers. A fight is one use: an enemy the player defeated (killed
  * or knocked out) with what defeated it, or the first quickhack that landed on a target (the one
- * that pays XP, so a speaker hacked every second counts once).
+ * that pays XP, so a speaker hacked every second counts once). One target is one fight at most,
+ * its first use: a hack and then a kill, or a second takedown after it woke, add none.
  */
 export const STYLE_WINDOW = 50;
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { INITIAL_PROGRESSION, PITY_AFTER, SAVE_SCHEMA_VERSION, STYLE_WINDOW, type SaveSnapshot, type StyleKind } from "@seki/core";
-import { MIGRATIONS, checksum, decodeSave, findSchemaError } from "../src";
+import { type EntitySnapshot, INITIAL_PROGRESSION, PITY_AFTER, SAVE_SCHEMA_VERSION, STYLE_WINDOW, type SaveSnapshot, type StyleKind } from "@seki/core";
+import { MIGRATIONS, checksum, decodeSave, encodeSave, findSchemaError } from "../src";
 import { snapshot } from "./fixtures";
 
 const wrap = (payload: unknown) => {
@@ -54,5 +54,13 @@ describe("style and bad luck in the save (v30 to v31, ADR-0059 stage 6)", () => 
     expect(findSchemaError(withProgression({ unlucky: PITY_AFTER + 1 }))).toBe("progression luck");
     expect(findSchemaError(withProgression({ unlucky: -1 }))).toBe("progression luck");
     expect(findSchemaError(withProgression({ unlucky: 1.5 }))).toBe("progression luck");
+  });
+
+  it("keeps the mark of an enemy whose fight is counted, and refuses anything but true", () => {
+    const guard: EntitySnapshot = { key: "c3-g1", position: { x: 1, y: 0, z: 2 }, yaw: 0, pitch: 0, hp: 80, cooldown: 0, alerted: false, fought: true };
+    expect(decodeSave("x", encodeSave(snapshot({ entities: [guard] }))).entities[0]?.fought).toBe(true);
+    const bad = (fought: unknown) => findSchemaError(snapshot({ entities: [{ ...guard, fought } as EntitySnapshot] }) as unknown as Json);
+    expect(bad(undefined)).toBeNull();
+    for (const v of [false, 1, "yes", null]) expect(bad(v)).toBe("entity c3-g1 fought");
   });
 });

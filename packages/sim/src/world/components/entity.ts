@@ -79,6 +79,11 @@ export interface Entity {
    * her hits and cleared by anyone else's. Transient, like it.
    */
   lastHitStyle?: StyleKind;
+  /**
+   * Its fight is already in her style (ADR-0059 stage 6): one enemy is one fight, whether she
+   * hacks it, knocks it out again after it woke or kills it after that. Saved (`EntitySnapshot.fought`).
+   */
+  fought?: true;
   faction?: FactionId;
   combatant?: Combatant;
   melee?: MeleeState;

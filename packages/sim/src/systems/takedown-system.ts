@@ -120,8 +120,8 @@ const breakFree = (target: Target, player: Entity): void => {
  * contract's alarm read `alerted`). `fought`: it was fighting her, so its body is no crime.
  */
 const knockOut = (ctx: SimContext, target: Target, player: Entity, fought: boolean): void => {
-  // A fight of her style (ADR-0059 stage 6): an enemy defeated by stealth, counted once, here.
-  if (target.enemy) noteFight(ctx, "stealth");
+  // A fight of her style (ADR-0059 stage 6): an enemy defeated by stealth, unless it already was one.
+  if (target.enemy) noteFight(ctx, target, "stealth");
   ctx.world.addComponent(target, "unconscious", true);
   ctx.world.addComponent(target, "downed", freshDowned(player.position, fought));
   hold(target);

@@ -334,7 +334,7 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
     ctx.bus.emit("QuickhackApplied", { hackId, targetId: next.id, duration });
     ctx.bus.emit("QuickhackChained", { hackId, fromId: target.id, targetId: next.id });
   }
-  grantQuickhackXp(ctx, xpKey(target));
+  grantQuickhackXp(ctx, target, xpKey(target));
 };
 
 /** Starts the n-th hack of the focused target's list (ADR-0028: RAM is paid at the start). */
