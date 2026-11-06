@@ -1,4 +1,4 @@
-import type { BuffId, DisguiseRole, RadioStationId } from "@seki/core";
+import type { BuffId, CyberwareId, DisguiseRole, RadioStationId } from "@seki/core";
 
 export type { RadioStationId };
 
@@ -49,6 +49,8 @@ export const radioStationName = (id: RadioStationId): string => RADIO_STATIONS.f
 export interface CapacityVm {
   readonly used: number;
   readonly max: number;
+  /** Implants over the pool that are off (ADR-0059, stage 3c), in the order the pool goes out; absent or empty within it. */
+  readonly inactive?: readonly CyberwareId[];
 }
 
 export interface BuffVm {

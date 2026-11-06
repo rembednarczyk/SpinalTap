@@ -1,11 +1,8 @@
-import { type BuffId, attributeCyberCapacity, capacityMax, capacityUsed, disguiseOf, perkCyberCapacity, tickBuffs, type DomainState } from "@seki/core";
+import { type BuffId, cyberPoolOf, disguiseOf, tickBuffs, type DomainState } from "@seki/core";
 import type { SimContext, System } from "../world/context";
 
 /** Cyberware capacity in use and the pool, from the domain (ADR-0033): level, shards, Tech and Overclock (ADR-0059). */
-export const cyberCapacityOf = (domain: DomainState): { used: number; max: number } => ({
-  used: capacityUsed(domain.character.cyberware),
-  max: capacityMax(domain.progression.level, domain.capacityShards, attributeCyberCapacity(domain.progression.attributes) + perkCyberCapacity(domain.progression.perks)),
-});
+export const cyberCapacityOf = (domain: DomainState): { used: number; max: number } => cyberPoolOf(domain);
 
 /** A buff that is new since the last step, or got longer (eaten again), is reported with its seconds left. */
 const announceBuffs = (ctx: SimContext, seen: Map<BuffId, number>): void => {

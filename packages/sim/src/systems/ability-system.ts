@@ -1,9 +1,9 @@
-import { ABILITY_CATALOG, type AbilityDefinition, SCAN_TIME_SCALE, abilityCooldownRate, abilityDurationScale, activate, cooldownRateOf, enemyTimeScale, loadoutAbility, tickAbility } from "@seki/core";
+import { ABILITY_CATALOG, type AbilityDefinition, SCAN_TIME_SCALE, abilityCooldownRate, abilityDurationScale, activate, cooldownRateOf, enemyTimeScale, loadoutAbility, tickAbility, workingCyberware } from "@seki/core";
 import type { SimContext, System } from "../world/context";
 import { playerHeld } from "../world/takedown";
 
 export const equippedAbility = (ctx: SimContext): AbilityDefinition | null => {
-  const id = loadoutAbility(ctx.state.domain.character.cyberware);
+  const id = loadoutAbility(workingCyberware(ctx.state.domain));
   return id ? ABILITY_CATALOG[id] : null;
 };
 
