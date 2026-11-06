@@ -101,7 +101,7 @@ describe("validation of levels and traits (v29)", () => {
     expect(findSchemaError(withItem({ uid: "i9", def: "hebi_smg", rarity: "rare", loaded: 0, mods: {} }))).toBeNull();
   });
 
-  it("refuses a level out of range or on a mod, and traits of another table, unknown or repeated", () => {
+  it("refuses a level out of range or on a mod, and traits of another table, unknown, repeated or more or fewer than the tier gives", () => {
     for (const bad of [
       { uid: "i9", def: "hebi_smg", rarity: "rare", level: 0 },
       { uid: "i9", def: "hebi_smg", rarity: "rare", level: 31 },
@@ -110,6 +110,9 @@ describe("validation of levels and traits (v29)", () => {
       { uid: "i9", def: "hebi_smg", rarity: "epic", level: 3, traits: ["padded"] },
       { uid: "i9", def: "hebi_smg", rarity: "epic", level: 3, traits: ["silenced", "silenced"] },
       { uid: "i9", def: "hebi_smg", rarity: "epic", level: 3, traits: [] },
+      { uid: "i9", def: "hebi_smg", rarity: "common", level: 3, traits: ["silenced", "hot_loads"] },
+      { uid: "i9", def: "hebi_smg", rarity: "epic", level: 3, traits: ["silenced", "hot_loads"] },
+      { uid: "i9", def: "hebi_smg", rarity: "legendary", level: 3, traits: ["silenced"] },
       { uid: "i9", def: "hebi_smg", rarity: "epic", level: 3, traits: "silenced" },
     ]) {
       expect(findSchemaError(withItem(bad)), JSON.stringify(bad)).toBe("inventory items");

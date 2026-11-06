@@ -1,4 +1,4 @@
-import { EQUIP_SLOTS, type InstanceDefId, MAX_ITEM_LEVEL, MIN_ITEM_LEVEL, WEAPON_SLOTS, hasItemLevel, isAmmoId, isInstanceDefId, isRarity, isStackableId, traitsFit } from "@seki/core";
+import { EQUIP_SLOTS, type InstanceDefId, MAX_ITEM_LEVEL, MIN_ITEM_LEVEL, WEAPON_SLOTS, hasItemLevel, isAmmoId, isInstanceDefId, isRarity, isStackableId, RARITY, type Rarity, traitsFit } from "@seki/core";
 
 type Json = Record<string, unknown>;
 
@@ -10,18 +10,19 @@ const MOD_SLOTS = ["muzzle", "sight", "magazine"];
 
 /**
  * Level and traits of a piece (ADR-0059, v29): a level 1..30 only on weapons and garments, traits
- * only of the piece's own table, known and not repeated. Both optional: a piece without a level is
+ * only of the piece's own table, known, not repeated and as many as its tier gives (one for epic, two
+ * for legendary). Both optional: a piece without a level is
  * of level 1.
  */
-const validGrade = (def: InstanceDefId, piece: Json): boolean => {
+const validGrade = (def: InstanceDefId, rarity: Rarity, piece: Json): boolean => {
   const { level, traits } = piece;
   if (level !== undefined && !(hasItemLevel(def) && Number.isInteger(level) && (level as number) >= MIN_ITEM_LEVEL && (level as number) <= MAX_ITEM_LEVEL)) return false;
-  return traits === undefined || (Array.isArray(traits) && traits.length > 0 && traitsFit(def, traits));
+  return traits === undefined || (Array.isArray(traits) && traits.length > 0 && traits.length === RARITY[rarity].traits && traitsFit(def, traits));
 };
 
 const validInstance = (i: unknown): boolean => {
   if (!isObject(i) || typeof i.uid !== "string" || !isInstanceDefId(i.def) || !isRarity(i.rarity)) return false;
-  if (!validGrade(i.def, i)) return false;
+  if (!validGrade(i.def, i.rarity, i)) return false;
   if (i.loaded !== undefined && !isCount(i.loaded)) return false;
   if (i.condition !== undefined && !(isNum(i.condition) && i.condition >= 0 && i.condition <= 100)) return false;
   if (i.mods !== undefined && !(isObject(i.mods) && Object.entries(i.mods).every(([s, u]) => MOD_SLOTS.includes(s) && typeof u === "string"))) return false;
@@ -38,7 +39,7 @@ const validLine = (l: unknown): boolean => {
     case "stack":
       return isStackableId(l.item);
     case "item":
-      return isInstanceDefId(l.item) && isRarity(l.rarity) && l.qty === 1 && validGrade(l.item, l);
+      return isInstanceDefId(l.item) && isRarity(l.rarity) && l.qty === 1 && validGrade(l.item, l.rarity, l);
     default:
       return false;
   }
