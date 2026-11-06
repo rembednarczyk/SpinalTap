@@ -887,7 +887,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-289 Z dachu Alchemii nie ma bezpiecznego zejścia
-- Status: w PR #312, runda 2 (6.11; weryfikator NIE PRZYJĘTE: podciągnięcie na zamkniętą bramkę 1,8 m po skosie, potem skok ponad ekran 2,6 m i upadek ok. 13,5 m z mostka)
+- Status: w PR #312 (6.11, 05aaea0, runda 2 PRZYJĘTE przez weryfikatora; kurator w toku)
 - Ważność: S4 · Zasięg: zeskok z 11–13 m kosztuje 48–96 HP; dziś dach nieosiągalny
 - Pakiet właściciela: packages/sim (content/alchemia.ts)
 
@@ -1186,6 +1186,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: ok. 630 m² · Koszt: mały (najpierw ortofoto x 870–920)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: ≤ 0,5 m² gołego poza rabatą
+
+### G-384 Winda Alchemii: z północnej połowy klatki na górze żaden przycisk nie jest w zasięgu
+- Status: zgłoszone (6.11, weryfikator #312)
+- Ważność: S4 · Zasięg: górny przycisk (−1,0; −1,8 od środka) dalej niż `BUTTON_REACH` 3 m z (0; 1,05) i (0,95; 1,0); trzeba podejść pół metra na południe. Przy okazji: `lift-bake.ts` kopiuje wymiar `BUTTON` z sim zamiast brać go z planu · Koszt: mały
+- Pakiet właściciela: packages/sim (`content/alchemia-lift.ts`), packages/engine (`renderer/alchemia/lift-bake.ts`)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
