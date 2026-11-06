@@ -1097,12 +1097,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: windy ADR-0020 (targ, Alchemia); zgniatanie sprawdza tylko platforma przy zjeździe · Koszt: mały
 - Pakiet właściciela: packages/sim (`elevator-system`)
 
-### G-377 Promień z ulicy do szybu metra trafia w niewidzialny teren pod pawilonem
-- Status: w PR #335 (6.11, w weryfikacji)
-- Ważność: S3 · Zasięg: `GroundField.rayHit` maszeruje teren chunka ulicy w obszarze szybu do najbliższej linii siatki, więc trafia w dawną powierzchnię ulicy pod pawilonem; strzelec 0,5 m przed otworem Alchemii B nie widzi gracza w hali i przez 20 s nie strzela; prawdopodobnie też strzały gracza z zewnątrz do hali · Koszt: średni
-- Pakiet właściciela: packages/sim (`world/ground.ts`, raycast)
-- Test przyjęcia: linia wzroku i strzał z ulicy przed otworem do gracza w hali przechodzą (i odwrotnie)
-
 ### G-378 Graf poziomów łączy węzły tylko prostą: ścigający bez prostej do drzwi albo narożnika wraca na posterunek
 - Status: zgłoszone (6.11, naprawiacz G-368)
 - Ważność: S4 · Zasięg: targ A 15 m na północ od otworu, za murem podwórza przy doki A, shinsekai A przy (u −6, w 6) · Koszt: średni
@@ -1253,6 +1247,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, weryfikator PR #334)
 - Ważność: S4 · Zasięg: ładownica 16 px w kolorze zwykłej rzadkości (`crop-844-pouch.png`), lada „Sprzedaj” na 844×390; do ADR-0073 etap 2
 - Pakiet właściciela: packages/ui (icons, trade)
+
+### G-412 `rayHit`: koszt `cutEntry` także w chunkach bez szybów (+19%); promień z krypty w górę przeskakuje przykrycie
+- Status: zgłoszone (6.11, weryfikator PR #335)
+- Ważność: S4 · Zasięg: `packages/sim/src/world/ground.ts`: `cutEntry` przy każdym kroku (ok. 0,35 µs na promień, zdjąć warunkiem `chunkCuts[at].length > 0`); `vaultExit`/`rayHit`: promień z krypty w górę nie trafia w teren ulicy nad peronem, np. Kanal A (434.14; −0.72; −109.68) → (427.25; 1.23; −120.50), było przed #335, może przykrywa to strop-bryła
+- Pakiet właściciela: packages/sim (world/ground)
+
+### G-413 Resztki po ADR-0059 etap 5: nieaktualne komentarze testów, martwa stała, brak testu pasma skrytek i posiłków targu
+- Status: zgłoszone (6.11, weryfikator PR #331)
+- Ważność: S4 · Zasięg: komentarze `packages/sim/test/stealth-scenes.ts:82-84` i `save-load-hack-fight.test.ts:11-13` opisują stare reguły; `CONTRACT_CREW_LEVEL = 0` martwa w `packages/core/src/contracts/contracts.ts:173`; żaden test nie sprawdza poziomu skrytki ani posiłków w obszarze targu (`districtLevelAt`)
+- Pakiet właściciela: packages/sim, packages/core
+
+### G-414 Skrytka `stash:kanal-alley` (459,5; −99) leży w dzielnicy `shinsekai-7`, nie w `kanal`
+- Status: zgłoszone (6.11, weryfikator PR #331; było przed PR)
+- Ważność: S4 · Zasięg: nazwa i pasmo skrytki nie zgadzają się z dzielnicą; do sprawdzenia z kuratorem topografii
+- Pakiet właściciela: packages/sim (content)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
