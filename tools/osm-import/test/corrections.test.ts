@@ -436,7 +436,6 @@ describe("tag corrections (ADR-0042)", () => {
     expect(bare * 0.01).toBeLessThanOrEqual(0.5);
     expect(surfaceAt(876, 367)).toBe("square");
     expect(surfaceAt(890, 379)).toBe("square");
-    expect(surfaceAt(911.5, 360)).toBe("square");
     expect(surfaceAt(895, 371)).toBe("square");
     expect(surfaceAt(888, 366)).toBe("grass");
     expect(surfaceAt(908, 362)).toBe("grass");
@@ -445,6 +444,25 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(912.3, 367)).toBe("road");
     expect(surfaceAt(905, 374)).toBe("square");
     expect(surfaceAt(907, 373.5)).toBe("square");
+    // So along Cerkiewna down to the crossing: asphalt between the kerb and the street's band, none bare.
+    expect(surfaceAt(911.5, 360)).toBe("road");
+    expect(surfaceAt(909.5, 349.5)).toBe("road");
+    const strip: Pt[] = [
+      { x: 904.19, z: 347.29 },
+      { x: 906.0, z: 348.0 },
+      { x: 907.7, z: 350.0 },
+      { x: 908.8, z: 352.0 },
+      { x: 910.4, z: 356.0 },
+      { x: 910.7, z: 358.0 },
+      { x: 911.3, z: 362.0 },
+      { x: 912.0, z: 365.0 },
+      { x: 915.61, z: 361.18 },
+      { x: 913.63, z: 345.89 },
+    ];
+    let bareStrip = 0;
+    for (let x = 904.05; x < 916; x += 0.1)
+      for (let z = 345.85; z < 365; z += 0.1) if (pointInRing({ x, z }, strip) && surfaceAt(x, z) === null) bareStrip++;
+    expect(bareStrip * 0.01).toBeLessThanOrEqual(0.05);
     // The asphalt, the footway and Cerkiewna stay on top; the bed south of the path stays bare.
     expect(surfaceAt(905, 385)).toBe("road");
     expect(surfaceAt(890, 372.6)).toBe("footway");
