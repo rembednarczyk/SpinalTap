@@ -987,7 +987,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (mapcity/ground-plan, cell-builder)
 
 ### G-328 Cywil uciekający w ślepy zaułek biega w miejscu w promieniu ucieczki
-- Status: w PR #305 (6.11, 396131c; osaczony cywil staje, bez dróg ±3π/4; w weryfikacji)
+- Status: częściowo naprawione w #305 (6.11, 396131c; wariant z gracza (0; 2), ziarno 11, 1002001: osaczony cywil staje zamiast zawracać ku graczowi, drogi ±3π/4 usunięte). Pozostałe warianty z tego wpisu (43/1002008 gracz (3; 0), 11/1002001 i 7/1002001 gracz (2; 0), 3/1002002 i 29/1002002 gracz (0; −2)) mają inną przyczynę: migotanie skrętu 0 / −π/4 na granicy sondy; przeniesione do G-343 (weryfikator #305)
 - Ważność: S3 · Zasięg: zaułek ok. (308,4; −101,5), ziarno 11, przechodzień 1002001, gracz o (0,2): przez 10 s nie wychodzi z promienia; także w pościgu: zaułek przy (316; −95) zatrzymuje uciekającego na main (465 skoków kąta); pościg w róg (316; −95) dalej ok. 465 skoków (poprawka z G-326 wycofana, bo przypinała cywila do ściany); także ziarno 43, 1002008, gracz 3 m: cywil staje 1,18 m od gracza; gracz stojący w zaułku przy (308; −101): 213 skoków
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
 
@@ -1011,7 +1011,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-343 Uciekający cywil przełącza się co krok między dwoma kierunkami przy ścianie (ziarna 3 i 7)
 - Status: zgłoszone (5.11, naprawiacz G-338)
-- Ważność: S4 · Zasięg: ziarno 7, 1002001, gracz 2 m, ok. (309; −99,5): ściana tuż przy końcu sondy 2,5 m, a objazd „na wprost” prowadzi z powrotem obok gracza (242 skoki); ziarno 3, 1002001/1002003, gracz 1 m, ok. (326; −29): `fleeStep` biegnie na zablokowany punkt 6 m dalej (`steerPoint` oddaje cel, objazd pusty), na zmianę z objazdem przy +π/2 (183/186 skoków)
+- Ważność: S4 · Zasięg: ziarno 7, 1002001, gracz 2 m, ok. (309; −99,5): ściana tuż przy końcu sondy 2,5 m, a objazd „na wprost” prowadzi z powrotem obok gracza (242 skoki); ziarno 3, 1002001/1002003, gracz 1 m, ok. (326; −29): `fleeStep` biegnie na zablokowany punkt 6 m dalej (`steerPoint` oddaje cel, objazd pusty), na zmianę z objazdem przy +π/2 (183/186 skoków). Dopisek 6.11 (weryfikacja #305): także warianty z G-328 w zaułku (ok. 309,5; −97,7): ziarno 43, 1002008, gracz (3; 0): 431 skoków, 1,18 m od gracza; ziarno 11 i 7, 1002001, gracz (2; 0): 352 i 417 skoków; ziarna 3 i 29, 1002002, gracz (0; −2): 380 i 129 skoków. Ślad `fleeTurn`: co krok 0 ↔ −π/4, `null` nie pada. Test przyjęcia: w każdym z tych przypadków po 4 s cywil stoi albo ucieka bez przeskoków co krok
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `fleeStep`, `bendsBack`)
 
 ### G-345 Gołe podłoże wokół stanowisk Dworca Autobusowego (x 808–870)
