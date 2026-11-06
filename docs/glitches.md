@@ -1265,11 +1265,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: po wczytaniu oślepiony wróg od razu widzi gracza, przebieg rozjeżdża się z zapisanym (hash po wczytaniu inny niż w ciągłej grze); dotyczy każdego zapisu w trakcie walki z hackami
 - Pakiet właściciela: packages/sim, packages/core (save-snapshot), packages/persistence
 
-### G-422 Drzewa o ok. 1/3 za niskie i z wąskimi koronami (Plac Litewski)
-- Status: zgłoszone (6.11, kurator)
-- Ważność: S3 · Zasięg: w grze 6,7–12,2 m, w NMPT mediana 12,7 m, 43 drzewa ponad 15 m; poprawka: skala z NMPT (szczyt w promieniu 3 m minus teren) albo z tagu `height`, zakres skali ok. 0,7–2,2; test: mediana błędu ≤ 2 m; kontrola `tree-height-vs-nmpt`
-- Pakiet właściciela: tools/osm-import (props), packages/engine
-
 ### G-423 Pomniki przyrody bez swojego gatunku (dęby i topola „Baobab” jako lipy i klony)
 - Status: zgłoszone (6.11, kurator)
 - Ważność: S4 · Zasięg: 3 drzewa na Placu Litewskim; poprawka: `species`/`genus` z OSM (Quercus, Populus), model dębu; kontrola `tree-species-ignored`
