@@ -74,7 +74,7 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
       // The run with the rule (seed 21: by the ids it parts otherwise some 510 steps in).
       const snap = sim.snapshot(null, "t", "");
       expect(stateHash(snap)).toBe(golden);
-      expect(stateHash({ ...snap, version: 31 })).toBe(v31);
+      expect(stateHash({ ...snap, version: 31 } as unknown as SaveSnapshot)).toBe(v31);
       expect(stateHash({ ...beforeV31(snap), version: 30 } as unknown as SaveSnapshot)).toBe(v30);
       const old = beforeV29(snap);
       expect(stateHash({ ...old, version: 28 } as unknown as SaveSnapshot)).toBe(v28);

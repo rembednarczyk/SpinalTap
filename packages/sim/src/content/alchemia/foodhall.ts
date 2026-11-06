@@ -1,6 +1,5 @@
 import type { GroundCut } from "../../world/ground";
 import type { Rect } from "../builders";
-import type { InteriorRoom } from "../interior-areas";
 import { type Box, HALL, HALL_INNER, PARAPET, type Piece, SINK, box, piece } from "./plan";
 
 /**
@@ -78,7 +77,7 @@ export const FOODHALL_CUT: GroundCut = { bounds: { minX: HALL.minX, maxX: HALL.m
 export const FOODHALL_STAIR_CUT: GroundCut = { bounds: { minX: I.minX, maxX: STAIR.footX, minZ: I.minZ, maxZ: STAIR.maxZ }, floor: F };
 
 /** The hall as an interior of ADR-0061: inside its walls, from the floor to the ceiling. */
-export const FOODHALL_ROOM: InteriorRoom = { ...I, bottom: F, top: C };
+export const FOODHALL_ROOM: Rect & { readonly bottom: number; readonly top: number } = { ...I, bottom: F, top: C };
 
 /** The front wall: glass between the openings, a lintel of glass over each up to the ceiling. */
 const front = (): Piece[] => {
