@@ -5,6 +5,7 @@ import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krak
 import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
+import { LUBLIN_PROP_TABLE } from "../../../packages/sim/src/content/lublin/props.generated.ts";
 import { STOREY } from "../src/building-tags.ts";
 import { partTier } from "../src/building-parts.ts";
 import { ADDED_AREAS, TAG_CORRECTIONS, addedAreas, corrected, correctedLine } from "../src/corrections.ts";
@@ -339,6 +340,26 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(700, 439.6)).toBe("footway");
     expect(surfaceAt(700, 436)).toBe("square");
     expect(surfaceAt(725.6, 428)).toBe("footway");
+  });
+
+  // The road lamps of Nowy Plac Targowy by the car park w227698441 (T-172, curator's review of
+  // PR #318): on the orthophoto the poles stand on the line of the cars' fronts, 1.6-2 m north of the
+  // car park's edge, on the asphalt strip by the street, not past the car park by the halls.
+  it("keeps the street's lamps by the car park at the Bazar on the line of the cars' fronts (G-347)", () => {
+    const edge = (x: number) => 450.44 - ((x - 672.09) * 9.64) / 54.03;
+    const lamps: string[] = [];
+    for (const rows of Object.values(LUBLIN_PROP_TABLE)) {
+      const row = rows["lamp-road"] ?? [];
+      for (let k = 0; k < row.length; k += 5) {
+        const [x, z] = [row[k]!, row[k + 2]!];
+        if (x > 690 && x < 726 && z > 436 && z < 455) lamps.push(`${x},${z} ${(z - edge(x)).toFixed(2)}`);
+      }
+    }
+    expect(lamps.length).toBeGreaterThan(0);
+    for (const l of lamps) {
+      const off = Number(l.split(" ")[1]);
+      expect(off >= 1 && off <= 2.5, l).toBe(true);
+    }
   });
 
   // The north pavement of al. Tysiąclecia east of x 806 (T-173): from the carriageway to the footway

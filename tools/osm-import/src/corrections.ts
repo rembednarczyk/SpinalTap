@@ -548,22 +548,22 @@ export const ADDED_AREAS: readonly AddedArea[] = [
   {
     // The strip between the car park w227698441 (by the Bazar) and Nowy Plac Targowy w40050943/w40049827,
     // bare in OSM, 1.2-1.9 m: on the orthophoto (PZGiK) asphalt from the cars' fronts to the street, so
-    // a carriageway's area, not setts. From the car park's north edge to the street's axis (drawn
-    // over it), between the car park's corners. Off the nodes: T-169's point on the axis in the east,
-    // the axis abreast of the car park's north-west corner in the west.
+    // a carriageway's area, not setts, with the street's lamps on it by the cars. From the car park's
+    // north edge to 1 m short of the street's axis (under its band), so the axis lies on the street's
+    // band alone and a lamp finds the band's edge. Off the nodes: the north side.
     id: "T-172/pas-parkingu",
     tags: { "area:highway": "service", surface: "asphalt" },
     ring: [
       { x: 726.12, z: 440.8 },
-      { x: 726.12, z: 445.48 },
-      { x: 714.09, z: 447.88 },
-      { x: 695.46, z: 451.7 },
-      { x: 686.21, z: 452.6 },
-      { x: 676.34, z: 453.26 },
-      { x: 672.09, z: 453.78 },
+      { x: 726.12, z: 444.48 },
+      { x: 714.09, z: 446.88 },
+      { x: 695.46, z: 450.7 },
+      { x: 686.21, z: 451.6 },
+      { x: 676.34, z: 452.26 },
+      { x: 672.09, z: 452.78 },
       { x: 672.09, z: 450.44 },
     ],
-    nodesOf: ["w227698441", null, "w40050943", "w40050943", "w40049827", "w40049827", null, "w227698441"],
+    nodesOf: ["w227698441", null, null, null, null, null, null, "w227698441"],
     reason: "asfalt od przodów aut na parkingu przy Bazarze do jezdni Nowego Placu Targowego na ortofoto PZGiK, w OSM bez obszaru",
     ref: "T-172",
   },
