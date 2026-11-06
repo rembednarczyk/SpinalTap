@@ -1,6 +1,6 @@
 # ADR-0074: Przebudowa Alchemii według planu inwestora
 
-Status: proponowany (6.11). Decyzje użytkownika z 6.11 są wiążące (sekcja „Decyzje użytkownika”). Krok 2 backlogu „Alchemia według przetargu”. Wejście: plan kuratora topografii [`docs/plany/alchemia.md`](../plany/alchemia.md) (źródła S1–S14, D1–D3, tabela NMT w §2). Stan kodu: `origin/main` 948fe48, rejestr topografii z gałęzi sesji.
+Status: przyjęty (6.11, decyzje użytkownika do otwartych pytań 1, 3–6 w sekcji „Decyzje użytkownika”). Decyzje użytkownika z 6.11 są wiążące (sekcja „Decyzje użytkownika”). Krok 2 backlogu „Alchemia według przetargu”. Wejście: plan kuratora topografii [`docs/plany/alchemia.md`](../plany/alchemia.md) (źródła S1–S14, D1–D3, tabela NMT w §2). Stan kodu: `origin/main` 948fe48, rejestr topografii z gałęzi sesji.
 
 ## Kontekst
 Użytkownik (6.11): „Alchemia powinna wyglądać jak na przetargach (zbierz plan z internetu). W niej są sprzedawcy w swoich sklepach. Trzeba będzie całkowicie przebudować obecną i dodać podziemny parking.” Przetargu nie było: teren ma spółka Arkady w użytkowaniu wieczystym, a jedynym planem jest koncepcja inwestora opisana w prasie 2009–2026 (plan, §1). Wersja z 2026 roku to **układ tarasowy na spadku działki** z trzema obiektami nad dwupoziomowym parkingiem:
@@ -31,6 +31,7 @@ Hala, stoiska i winda nie odpowiadają żadnej bryle z planu. Teren spada ok. 10
 - Hana stoi z wózkiem na placu, a Ren na dachu trójkątnego pawilonu.
 - Kenta i Fumiko mają lokale w food hallu, Sachiko kiosk przy wejściu z parkingu, Goro sklep hybrydowy, a Oyaji sklep na narożu. Każdy sprzedawca stoi w swoim lokalu.
 - Kolejność: najpierw food hall ze sprzedawcami, potem Arkady, pawilon i parking.
+- Druga tura (6.11): model hali igor.tesV znika całkiem; Arkady i trójkątny pawilon to tło z restauracjami, bez nowej mechaniki; cały kompleks z parkingiem i pawilonem w paśmie targu 10–20; hala metra B dostaje zejście do P−1 (etap 4); tunel pod Lubartowską do kwartału Olejna–Szambelańska–Bramowa wchodzi do zakresu jako przejście z P−1 (osobny etap po etapie 5, z kuratorem topografii, bo to odstępstwo od planu 2026 wzięte z wersji 2009).
 
 ## Decyzja
 
@@ -165,12 +166,7 @@ Każdy etap ma test sesji bez renderera (`packages/app/test/alchemia-*.test.ts`,
 Do repo nie trafia nic z wizualizacji ani zdjęć prasowych (redakcje, „materiały prasowe Arkady sp. z o.o.”). Bryły opisujemy słowami i liczbami ze źródeł planu. Geometria jest własna albo z modeli CC0 lub CC-BY 4.0 z wpisem w README katalogu i na ekranie „Autorzy” (ADR-0063). Kopie artykułów zostają w scratchpadzie kuratora.
 
 ## Otwarte pytania
-1. **Model hali igor.tesV:** usunąć całkiem (propozycja) czy zostawić fragment, np. jako wieżę wentylacyjną parkingu na T0?
-2. **Godziny lokali:** propozycja to food hall 10:00–24:00 jak w realu (S13), Fumiko z własnymi drzwiami 16:00–4:00 jak dziś, Oyaji do 22:00 jak dziś, reszta według dzisiejszych harmonogramów. Czy tak?
-3. **Rola restauracji w Arkadach i pawilonu:** tło (propozycja na etapy 2–3) czy hub fixerów, frakcji albo spotkań Kagami z backlogu? Od tego zależy, czy dostaną wnętrza i węzły grafu.
-4. **Tunel pod Lubartowską** do kwartału Olejna–Szambelańska–Bramowa (wersja 2009): pomijamy (propozycja), czy dajemy zamkniętą bramę na P−1 jako dekorację bez nawigacji?
-5. **Pasmo parkingu i pawilonu:** całość w paśmie targu 10–20 (propozycja) czy parking i pawilon w paśmie Krakowskiego 1–8?
-6. **Metro ↔ P−1:** czy hala pawilonu B ma mieć zejście do parkingu (propozycja w etapie 4)?
+1. **Godziny lokali:** propozycja to food hall 10:00–24:00 jak w realu (S13), Fumiko z własnymi drzwiami 16:00–4:00 jak dziś, Oyaji do 22:00 jak dziś, reszta według dzisiejszych harmonogramów (bez decyzji; etap 1 przyjmuje propozycję).
 
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.
