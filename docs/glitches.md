@@ -1205,6 +1205,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka bez podnoszenia limitu (ADR-0046): skrócić przygotowanie (cache przeglądarek Playwright i builda, build raz i artefakt dla shardów) albo trzeci shard
 - Test przyjęcia: oba shardy e2e kończą się z zapasem ≥ 5 min na obecnym main
 
+### G-388 `Site.byLot(p, 2)` obejmuje 44 z 62 parkingów; generator pomija tam `offRoad` dla latarni
+- Status: zgłoszone (6.11, weryfikator #318)
+- Ważność: S4 (narzędzia/generator) · Zasięg: `lamp-road` i `lamp-modern-pole` w 2 m od parkingu `surface` nie są spychane z jezdni; przed latarnią w pasie ruchu chroni dziś tylko skan `furniture-in-car-lane` (0), `props.test.ts` jej nie złapie · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`props-gen`, `props-site`)
+- Test przyjęcia: test `props.test.ts` łapie latarnię w pasie ruchu także przy parkingu
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
