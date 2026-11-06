@@ -198,26 +198,65 @@ export class DoubleTap {
   }
 }
 
-export const PAD_DEADZONE = 0.16;
+/** Inner dead zone of both sticks, radial (ADR-0072): a deflection shorter than this is rest. */
+export const PAD_DEADZONE = 0.12;
+/** Range of the dead zone setting. */
+export const PAD_DEADZONE_RANGE: readonly [number, number] = [0.05, 0.3];
+/** Outer dead zone: a deflection past this is full travel, as worn sticks seldom reach 1. */
+export const PAD_OUTER_DEADZONE = 0.95;
+/** Full right stick turns the view this fast, radians per second, before the sensitivity. */
 export const PAD_LOOK_SPEED = 2.8;
 
-const dead = (v: number | undefined): number => {
-  const x = v ?? 0;
-  return Math.abs(x) < PAD_DEADZONE
-    ? 0
-    : (x - Math.sign(x) * PAD_DEADZONE) / (1 - PAD_DEADZONE);
+/** Look response of the right stick (ADR-0072): the stick's travel to the power of the exponent. */
+export type PadCurve = "linear" | "classic" | "precise";
+export const PAD_CURVE_EXPONENT: Readonly<Record<PadCurve, number>> = { linear: 1, classic: 1.8, precise: 2.6 };
+
+/** The pad's own look settings (ADR-0072): dead zone, response curve and sensitivity. */
+export interface PadTuning {
+  readonly deadzone: number;
+  readonly curve: PadCurve;
+  /** Look speed multiplier; 1 turns at `PAD_LOOK_SPEED`. */
+  readonly sensitivity: number;
+}
+
+export const DEFAULT_PAD_TUNING: PadTuning = { deadzone: PAD_DEADZONE, curve: "classic", sensitivity: 1 };
+
+export interface Stick {
+  readonly x: number;
+  readonly y: number;
+}
+
+/**
+ * Radial dead zone (ADR-0072): the length of the deflection decides rest, not each axis alone,
+ * so a small diagonal stays diagonal instead of snapping to an axis. Travel between the inner
+ * and the outer zone rescales to 0..1 and keeps its direction; `exponent` bends that travel.
+ */
+export const shapeStick = (x: number | undefined, y: number | undefined, deadzone: number, exponent = 1): Stick => {
+  const sx = x ?? 0;
+  const sy = y ?? 0;
+  const length = Math.hypot(sx, sy);
+  if (length <= deadzone) return { x: 0, y: 0 };
+  const travel = Math.min(1, (length - deadzone) / (PAD_OUTER_DEADZONE - deadzone)) ** exponent;
+  return { x: (sx / length) * travel, y: (sy / length) * travel };
 };
 
 /** D-pad: left primary, up secondary, right melee (down reloads). */
 const padSlot = (pressed: readonly boolean[]): WeaponSlotInput =>
   pressed[14] ? 1 : pressed[12] ? 2 : pressed[15] ? 3 : 0;
 
-/** Standard-mapping gamepad → InputFrame. Look speed scales with dt. */
-export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
-  moveX: dead(pad.axes[0]),
-  moveZ: -dead(pad.axes[1]),
-  lookYaw: dead(pad.axes[2]) * PAD_LOOK_SPEED * dt,
-  lookPitch: dead(pad.axes[3]) * PAD_LOOK_SPEED * dt,
+/**
+ * Standard-mapping gamepad → InputFrame. Both sticks have the radial dead zone; the right one
+ * also the response curve and the pad's own sensitivity, and its look speed scales with dt.
+ */
+export const mapGamepad = (pad: PadState, dt: number, tuning: PadTuning = DEFAULT_PAD_TUNING): InputFrame => {
+  const move = shapeStick(pad.axes[0], pad.axes[1], tuning.deadzone);
+  const look = shapeStick(pad.axes[2], pad.axes[3], tuning.deadzone, PAD_CURVE_EXPONENT[tuning.curve]);
+  const speed = PAD_LOOK_SPEED * tuning.sensitivity * dt;
+  return { ...padButtons(pad), moveX: move.x, moveZ: -move.y, lookYaw: look.x * speed, lookPitch: look.y * speed };
+};
+
+/** Everything but the sticks of a standard-mapping pad. */
+const padButtons = (pad: PadState): Omit<InputFrame, "moveX" | "moveZ" | "lookYaw" | "lookPitch"> => ({
   sprint: pad.buttons[10] ?? false,
   // B (east face button), held.
   crouch: pad.buttons[1] ?? false,

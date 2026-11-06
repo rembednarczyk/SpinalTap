@@ -5,15 +5,16 @@ import { KANAL_PROPS } from "./district-kanal";
 import { KOI_CROWD_SPOTS } from "./interiors";
 import { METRO_FOOTPRINTS } from "./metro";
 import { againstWall, inBuilding, nearestWall } from "./lublin/places";
-import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
+import { DOCKS_PLACE, MAP_CHUNKS } from "./lublin/sites";
+import { ground } from "./lublin/terrain";
 import { furnitureClearance, furnitureNear } from "./furniture-index";
 import { SEAT_SPOTS } from "./crowd-seats";
 import { offKerbParks, onKerbPark } from "./crowd-kerb-parks";
 import type { CrowdSpot } from "./crowd-spot";
 import { TRAFFIC_ROUTES } from "./traffic";
 
-/** The chunks of Lublin that hold the market and the docks (ADR-0045). */
-const MARKET_CHUNK = "podzamcze-1-0";
+/** The chunks of Lublin that hold the market (in Alchemia, ADR-0063) and the docks (ADR-0045). */
+const MARKET_CHUNK = "krakowskie-2-1";
 const DOCKS_CHUNK = "nabrzeze-1-1";
 
 /**
@@ -330,42 +331,27 @@ const squareLanes = (): CrowdLane[] =>
     return out;
   });
 
+/**
+ * A point `along` metres up Alchemia's west fence line (OSM way 783241007, from (406.1, 65.3)
+ * north-north-east) and `out` metres outside it, on the path along Świętoduska (ADR-0063).
+ */
+const fenceOut = (along: number, out: number): Pt => [Math.round((406.1 + 0.437 * along - 0.899 * out) * 100) / 100, Math.round((65.3 + 0.899 * along + 0.437 * out) * 100) / 100];
+
 /** The market's and the docks' own lanes (ADR-0041), placed with their set pieces. */
 const SET_PIECE_LANES: readonly CrowdLane[] = [
-  // The market: round the edge of the square (east of Sachiko's kiosk at the gate), and round
-  // the stalls in its middle.
-  placedLane(MARKET_PLACE, {
+  // The market in Alchemia (ADR-0063): round the square behind the stalls, clear of Hana's cart
+  // in its middle, and along the stalls' fronts on the path, past their keepers.
+  {
     id: "targ-square",
     chunk: MARKET_CHUNK,
     points: [
-      [77.65, 65.1],
-      [112.75, 65.1],
-      [112.75, 82.6],
-      [77.65, 82.6],
+      [432, 58.5],
+      [446.5, 58.5],
+      [446.5, 80],
+      [433, 80],
     ],
-  }),
-  placedLane(MARKET_PLACE, {
-    id: "targ-stalls",
-    chunk: MARKET_CHUNK,
-    points: [
-      [80.5, 70.6],
-      [109, 70.6],
-      [109, 77.8],
-      [80.5, 77.8],
-    ],
-  }),
-  // Under the viaduct: along the north stalls, down past the east pillars, back west between
-  // the pillar pairs and up past the stairs.
-  placedLane(MARKET_PLACE, {
-    id: "targ-deck",
-    chunk: MARKET_CHUNK,
-    points: [
-      [69.4, 104.75],
-      [117, 104.75],
-      [117, 90.8],
-      [69.4, 90.8],
-    ],
-  }),
+  },
+  { id: "targ-stalls", chunk: MARKET_CHUNK, points: [fenceOut(-5.5, 2.7), fenceOut(37.5, 2.7), fenceOut(37.5, 4.5), fenceOut(-5.5, 4.5)] },
   // The docks: the footpath along the east wall, west along the quay fence, back east past the
   // office and the vending machine, north up the yard.
   placedLane(DOCKS_PLACE, {
@@ -405,7 +391,6 @@ const wallSpot = (x: number, z: number, does: readonly [ActivityId, ...ActivityI
   return spot(chunkOf(w.at.x, w.at.z), w.at, w.yaw, does);
 };
 
-const inMarket = (x: number, z: number): Vec3 => placeAt(MARKET_PLACE, v(x, 0, z));
 const inDocks = (x: number, z: number): Vec3 => placeAt(DOCKS_PLACE, v(x, 0, z));
 
 /**
@@ -426,15 +411,17 @@ export const CROWD_SPOTS: readonly CrowdSpot[] = [
   wallSpot(604, -100, ["phone", "lean"]),
   wallSpot(520, -60, ["smoke"]),
   wallSpot(590, -42, ["talk", "phone"]),
-  spot(MARKET_CHUNK, inMarket(76, 64.45), SOUTH, ["phone"]),
-  spot(MARKET_CHUNK, inMarket(89.4, 64.45), EAST, ["talk"]),
-  spot(MARKET_CHUNK, inMarket(113.55, 76), WEST, ["smoke", "lean"]),
-  spot(MARKET_CHUNK, inMarket(90.5, 64.45), WEST, ["talk"]),
-  spot(MARKET_CHUNK, inMarket(100, 64.45), SOUTH, ["phone", "lean"]),
-  spot(MARKET_CHUNK, inMarket(88, 105.55), NORTH, ["phone"]),
-  spot(MARKET_CHUNK, inMarket(100, 105.55), NORTH, ["lean", "phone"]),
-  spot(MARKET_CHUNK, inMarket(96, 87.2), SOUTH, ["smoke", "lean"]),
-  spot(MARKET_CHUNK, inMarket(118, 105.55), NORTH, ["smoke"]),
+  // Alchemia's square (ADR-0063): two talking by Hana's cart, a smoker by the ruin, a few on the open square.
+  spot(MARKET_CHUNK, ground(441, 71.5), WEST, ["talk"]),
+  spot(MARKET_CHUNK, ground(442.2, 71.5), EAST, ["talk"]),
+  spot(MARKET_CHUNK, ground(441, 84), WEST, ["smoke", "lean"]),
+  spot(MARKET_CHUNK, ground(444, 64), NORTH, ["phone"]),
+  spot(MARKET_CHUNK, ground(435.5, 75.5), SOUTH, ["phone", "lean"]),
+  spot(MARKET_CHUNK, ground(445, 74.5), SOUTH, ["phone", "lean"]),
+  spot(MARKET_CHUNK, ground(439.5, 76.8), NORTH, ["talk"]),
+  spot(MARKET_CHUNK, ground(439.5, 78), SOUTH, ["talk"]),
+  spot(MARKET_CHUNK, ground(433, 107), WEST, ["smoke"]),
+  spot(MARKET_CHUNK, ground(436, 106), SOUTH, ["phone"]),
   spot(DOCKS_CHUNK, inDocks(12.6, 101.2), WEST, ["smoke", "lean"]),
   spot(DOCKS_CHUNK, inDocks(26, 104), NORTH, ["phone"]),
   spot(DOCKS_CHUNK, inDocks(12.6, 137.5), NORTH, ["lean", "smoke"]),

@@ -8,7 +8,7 @@ import {
   contractTag,
   takenFlag,
 } from "@seki/core";
-import { CONTRACT_ITEM_SPOTS, OYAJI_MAX_HP, SIM_HZ, Simulation, ground, market, stateHash } from "../src";
+import { CONTRACT_ITEM_SPOTS, HANA_SPOT, OYAJI_MAX_HP, SIM_HZ, STALL_KEEPERS, Simulation, ground, stateHash } from "../src";
 import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
 /** A point on the ground at (x, z) (the terrain of ADR-0045). */
@@ -28,7 +28,7 @@ const withDomain = (sim: Simulation, patch: (d: Simulation["domain"]) => Simulat
 
 /** Next to Hana's cart in the market; one step lets streaming load the market around the player. */
 const toMarket = (sim: Simulation) => {
-  teleportPlayer(sim, market(90.5, 0, 74), Math.PI / 2);
+  teleportPlayer(sim, ground(HANA_SPOT.x - 1.5, HANA_SPOT.z), Math.PI / 2);
   sim.step();
 };
 
@@ -249,9 +249,9 @@ describe("protection (Hebi come for Oyaji)", () => {
     const failed = collect<{ reason: string }>(sim, "ContractFailed");
     const c = accept(sim, "protect");
     const [g] = gangers(sim, c);
-    const start = Math.hypot(g!.position.x - 80, g!.position.z - 66.6);
+    const start = Math.hypot(g!.position.x - STALL_KEEPERS.oyaji.x, g!.position.z - STALL_KEEPERS.oyaji.z);
     run(sim, 120);
-    expect(Math.hypot(g!.position.x - 80, g!.position.z - 66.6)).toBeLessThan(start - 3);
+    expect(Math.hypot(g!.position.x - STALL_KEEPERS.oyaji.x, g!.position.z - STALL_KEEPERS.oyaji.z)).toBeLessThan(start - 3);
     const civilians = sim.domain.reputation.civilians;
     for (let i = 0; i < 60 * 90 && failed.length === 0; i++) sim.step();
     expect(failed).toEqual([{ contract: c, reason: "protectee-killed" }]);

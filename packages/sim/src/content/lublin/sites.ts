@@ -10,9 +10,10 @@ import type { LublinChunkData } from "./types";
 
 /**
  * Where the game's places stand in Lublin (ADR-0045): the hand-made set pieces moved into the
- * city (the market under the viaduct on Aleja Tysiąclecia, Tessen's docks on the Bystrzyca, the
- * car wash in a yard behind Plac Łokietka), the interiors cut into real tenements on Krakowskie Przedmieście,
- * and the terrain shaped under them. World metres around `LUBLIN_ANCHOR` (ADR-0042).
+ * city (Tessen's docks on the Bystrzyca, the car wash in a yard behind Plac Łokietka; the market
+ * that stood on Aleja Tysiąclecia is in Alchemia now, ADR-0063), the interiors cut into real
+ * tenements on Krakowskie Przedmieście, and the terrain shaped under them. World metres around
+ * `LUBLIN_ANCHOR` (ADR-0042).
  */
 
 /** The map's chunks in table order (the generated data, before the game's shaping). */
@@ -23,12 +24,6 @@ export const rawHeight = (x: number, z: number): number => mapHeight(MAP_CHUNKS,
 
 const round = (y: number): number => Math.round(y * 100) / 100;
 
-/**
- * The market of Podzamcze (ADR-0045): the old market under the elevated highway, now on Aleja
- * Tysiąclecia between Plac Zamkowy and the bus station; its deck is the viaduct over the
- * avenue. Its own coordinates (x 66..126, z 56..116) shift by this.
- */
-export const MARKET_PLACE: Vec3 = { x: 689, y: -20.6, z: 260 };
 /** Tessen's docks on the Bystrzyca (local x -40..34, z 90..218), reached by the metro only. */
 export const DOCKS_PLACE: Vec3 = { x: 2560, y: -28.6, z: 300 };
 /**
@@ -39,12 +34,12 @@ export const DOCKS_PLACE: Vec3 = { x: 2560, y: -28.6, z: 300 };
  */
 export const CAR_WASH_PLACE: Vec3 = { x: 395, y: round(rawHeight(403, -32)), z: -69 };
 
-/** The market's area in the world. */
-export const MARKET_AREA: GroundRect = { minX: 755, maxX: 815, minZ: 316, maxZ: 376 };
 /** The docks' yard and quay, and the basin dug in front of the quay. */
 export const DOCKS_AREA: GroundRect = { minX: 2520, maxX: 2594, minZ: 390, maxZ: 450 };
 export const DOCKS_BASIN: GroundRect = { minX: 2520, maxX: 2594, minZ: 452, maxZ: 500 };
 export const CAR_WASH_AREA: GroundRect = { minX: 389, maxX: 417, minZ: -44, maxZ: -20 };
+/** The hollow by the ruined outbuilding w66286396 on Alchemia's plot where the Hebi keep their stash (ADR-0063), levelled. */
+export const HEBI_HOLLOW: GroundRect = { minX: 436, maxX: 449, minZ: 86, maxZ: 101 };
 
 /**
  * A room cut into the ground floor of a tenement (ADR-0045). The front wall of the building is
@@ -136,8 +131,8 @@ export const BUILDING_CUTS: readonly BuildingCut[] = [
 
 /** Rectangles where the map's buildings and surfaces give way to a set piece. */
 export const CLEARED: readonly GroundRect[] = [DOCKS_AREA, DOCKS_BASIN];
-/** Rectangles where only the map's buildings give way (the surfaces stay under the market). */
-export const CLEARED_BUILDINGS: readonly GroundRect[] = [MARKET_AREA, DOCKS_AREA, DOCKS_BASIN, CAR_WASH_AREA];
+/** Rectangles where only the map's buildings give way (the surfaces stay under the car wash). */
+export const CLEARED_BUILDINGS: readonly GroundRect[] = [DOCKS_AREA, DOCKS_BASIN, CAR_WASH_AREA];
 
 /** A rectangle grown by `d` metres on every side (or by `d` and `north` on the north side). */
 const grow = (r: GroundRect, d: number, north = d): GroundRect => ({ minX: r.minX - d, maxX: r.maxX + d, minZ: r.minZ - d, maxZ: r.maxZ + north });
@@ -148,10 +143,12 @@ const grow = (r: GroundRect, d: number, north = d): GroundRect => ({ minX: r.min
  * what must be flat (the docks' quay ends at the basin instead, which starts 2 m out).
  */
 export const PADS: readonly Pad[] = [
-  { rect: grow(MARKET_AREA, 2.5), y: MARKET_PLACE.y, blend: 5 },
   { rect: grow(DOCKS_AREA, 5, 0), y: DOCKS_PLACE.y, blend: 6 },
   { rect: DOCKS_BASIN, y: DOCKS_PLACE.y - 3, blend: 1.5 },
   { rect: grow(CAR_WASH_AREA, 5), y: CAR_WASH_PLACE.y, blend: 3 },
+  // The Hebi stash in the hollow by the ruin behind Alchemia's stalls (ADR-0063 stage 6): its floor levelled,
+  // kept 1 m clear of the fifth stall (x <= 431.9), so no module's floor moves.
+  { rect: HEBI_HOLLOW, y: round(rawHeight(442, 93)), blend: 3 },
   ...ROOM_SITES.map((r): Pad => ({ rect: grow(r.rect, 5), y: r.floor, blend: 2 })),
   // Dug out under the Trybunał for Trasa Podziemna (ADR-0048): level over x 575..585, z -65..-55,
   // sloping up to the Rynek over 5 m, so the slope stays inside the Trybunał's walls. In metres,

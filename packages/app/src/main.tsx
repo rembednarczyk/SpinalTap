@@ -16,7 +16,8 @@ import { bindCrashWatch } from "./crash-watch";
 import { bindPageHidden } from "./page-lifecycle";
 import { pointerFocus } from "./pointer-focus";
 import { feedTouchFire } from "./touch-fire";
-import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
+import { feedLookTuning, viewLook } from "./look-tuning";
+import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings } from "./settings";
 
 declare global {
   interface Window {
@@ -146,6 +147,7 @@ const applyControls = (s: typeof settings) => {
   input.keymap = keymapFor(s.bindings);
   input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
   input.shoulder.left = s.shoulder === "left";
+  feedLookTuning(input, s);
   renderer.rig.horizontalFov = degToRad(s.horizontalFov);
   renderer.rig.cameraMotion = s.cameraMotion;
   applyEffects(renderer, s);
@@ -164,14 +166,12 @@ const loop = new FixedStepLoop(browserClock, {
   update: () => {
     const s = ui.getState().settings;
     applyControls(s);
-    // Zoomed in, the look slows with the field of view (ADR-0019); the ADS setting on top.
-    const zoom = renderer.rig.lookScale;
-    const ads = zoom < 0.999 ? s.adsSensitivity : 1;
     feedTouchFire(input.virtualPad, s, session.sim.player());
     const frame = input.poll();
     // The camera takes the shoulder of the frame the shots start from, in the same step (G-275).
     renderer.rig.leftShoulder = frame.leftShoulder === true;
-    session.step(scaleLook(frame, (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * zoom * ads, s.invertY));
+    // Each device's sensitivity is the adapter's (ADR-0072); the zoom and ADS slowdown stay here.
+    session.step(viewLook(frame, s, renderer.rig.lookScale));
   },
   render: (alpha) => {
     if (session.preparing !== loadingPainted) {

@@ -1,6 +1,6 @@
-// Seki Senshi, ADR-0026: the people of Stare Miasto (ex Ulica Kanałowa, ADR-0042) and the market stalls on Podzamcze.
+// Seki Senshi, ADR-0026: the people of Stare Miasto (ex Ulica Kanałowa, ADR-0042) and the market stalls in Alchemia (ADR-0063).
 // Small talk with a pinch of rumour: each knot has one question that points at a find or a job
-// (the bag behind the dumpster, the car on the al. Tysiąclecia viaduct, the Hebi under the Grodzka footbridge).
+// (the bag behind the dumpster, the bag behind the ruin at Alchemia, the Hebi under the Grodzka footbridge).
 // No knot pays or hands out items; trade goes through the shop panel, the rest through flags.
 
 // Hideo, a clerk from the Tessen office on the Bystrzyca. Over the Grodzka footbridge to work, back to SAKE at night.
@@ -105,7 +105,7 @@
     MEI: Dobranoc to się mówi rano. Ale niech będzie.
     -> END
 
-// Sachiko keeps the kiosk at the market gate. She sees everyone who comes in.
+// Sachiko keeps the first stall of Alchemia, by the car park. She sees everyone who comes in.
 === sachiko ===
 {
 - civilians_tier == "hostile":
@@ -125,7 +125,7 @@
 + [Co słychać na targu? #tone:optional]
     SEKI: Co słychać na targu?
     { hebi_stance == "hostile":
-        SACHIKO: Hebi o tobie mówią. Nie po imieniu, raczej przekleństwami. Uważaj pod wiaduktem.
+        SACHIKO: Hebi o tobie mówią. Nie po imieniu, raczej przekleństwami. Uważaj przy ruinie za straganami.
     - else:
         SACHIKO: Hana ma nowy towar, Oyaji stare ceny, a Hebi te same twarze. Nic się tu nie zmienia.
     }
@@ -133,7 +133,7 @@
 + { not has_flag("sachiko_car") } [Widziałaś tu coś dziwnego? #tone:optional]
     SEKI: Widziałaś tu coś dziwnego?
     ~ set_flag("sachiko_car")
-    SACHIKO: Na wiadukcie nad Tysiąclecia stoi auto. Ktoś je zostawił w noc blokady i już po nie nie wrócił.
+    SACHIKO: Za ruiną na końcu placu leży torba. Ktoś ją zostawił w noc blokady i już po nią nie wrócił.
     SACHIKO: Do środka nikt nie zaglądał. Przynajmniej nikt, kto by się przyznał.
     -> talk
 + [Dzięki za wszystko. #tone:leave]
@@ -165,13 +165,13 @@
 + { not has_flag("goro_oyaji") } [Długo znasz Oyajiego? #tone:optional]
     SEKI: Długo znasz Oyajiego?
     ~ set_flag("goro_oyaji")
-    GORO: Trzydzieści lat handlujemy na tym targu. On naprawia, ja sprzedaję, obaj płacimy Hebi. Sąsiedzka przyjaźń.
+    GORO: Trzydzieści lat handlujemy obok siebie, pod wiaduktem, a teraz tu, w Alchemii. On naprawia, ja sprzedaję, obaj płacimy Hebi. Sąsiedzka przyjaźń.
     -> talk
 + [Muszę lecieć. #tone:leave]
     GORO: Weź parasol następnym razem. Mówię poważnie.
     -> END
 
-// Kenta fries okonomiyaki in the north row, under the OKONOMI sign.
+// Kenta fries okonomiyaki at the second stall of Alchemia.
 === kenta ===
 {
 - civilians_tier == "hostile":
@@ -188,11 +188,11 @@ KENTA: Okonomiyaki! Kapusta, ciasto, sos i co tylko chcesz. Z mięsem drożej, b
     SEKI: Prawie prawdziwe?
     KENTA: Prawdziwie jakieś. Ja nie pytam dostawcy, dostawca nie pyta mnie.
     -> talk
-+ { not has_flag("kenta_overpass") } [Co jest na wiadukcie? #tone:optional]
-    SEKI: Co jest na wiadukcie?
++ { not has_flag("kenta_overpass") } [Co jest na dachu? #tone:optional]
+    SEKI: Co jest na dachu?
     ~ set_flag("kenta_overpass")
-    KENTA: Wiatr, pył i czujka Hebi, która w nocy krąży wokół filarów. Od blokady nikt tam nie jeździ.
-    KENTA: Ludzie wchodzą schodami od zachodu, żeby popatrzeć na Zamek i Stare Miasto. Albo żeby czegoś poszukać.
+    KENTA: Wiatr, szkło i taras, którego nikt nie wynajmuje. Winda za halą jeszcze jeździ, jak się mocno naciśnie.
+    KENTA: Ludzie wjeżdżają, żeby popatrzeć na Ratusz i Stare Miasto. Albo żeby czegoś poszukać.
     -> talk
 + [Innym razem. #tone:leave]
     KENTA: Płyta będzie gorąca. Zawsze jest.

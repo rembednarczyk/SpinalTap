@@ -257,6 +257,13 @@ export type CameraShoulder = "right" | "left";
 /** The touch fire button aims down sights while held, or only fires (ADR-0072). */
 export type TouchFireMode = "aims" | "separate";
 
+/** Response of the gamepad's look stick (ADR-0072): classic by default, linear as before. */
+export type PadCurveMode = "linear" | "classic" | "precise";
+
+/** Ranges of the gamepad settings (ADR-0072); the engine holds the same dead zone range. */
+export const PAD_SENSITIVITY_RANGE: readonly [number, number] = [0.2, 3];
+export const PAD_DEADZONE_SETTING_RANGE: readonly [number, number] = [0.05, 0.3];
+
 export interface SettingsVm {
   readonly quality: GraphicsQuality;
   readonly aimMode: AimMode;
@@ -278,6 +285,12 @@ export interface SettingsVm {
    * melee weapon it only strikes. "separate" only fires, and the aim button aims on its own.
    */
   readonly touchFire: TouchFireMode;
+  /** Gamepad look speed multiplier (ADR-0072), its own instead of the mouse's or the touch one. */
+  readonly padSensitivity: number;
+  /** Inner radial dead zone of both sticks, as a share of full deflection (`PAD_DEADZONE_SETTING_RANGE`). */
+  readonly padDeadzone: number;
+  /** How the right stick's travel maps to look speed (ADR-0072). */
+  readonly padCurve: PadCurveMode;
   /**
    * Horizontal field of view from the hip, degrees (ADR-0049): the same width of the street on
    * any screen; the camera works out the vertical angle for the screen's proportions.
@@ -347,6 +360,9 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   invertY: false,
   touchSensitivity: 1,
   touchFire: "aims",
+  padSensitivity: 1,
+  padDeadzone: 0.12,
+  padCurve: "classic",
   horizontalFov: DEFAULT_HORIZONTAL_FOV,
   volume: 0.6,
   musicVolume: 0.55,

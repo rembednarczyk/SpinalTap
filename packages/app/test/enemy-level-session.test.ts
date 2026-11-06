@@ -3,7 +3,7 @@ import { type AudioPort, EMPTY_INPUT, INITIAL_PROGRESSION, type RenderPort, enem
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { GANGER_MAX_HP, ground, market } from "@seki/sim";
+import { GANGER_MAX_HP, ground } from "@seki/sim";
 import { GameSession } from "../src/game-session";
 
 const render: RenderPort = {
@@ -45,15 +45,15 @@ const atLevel = async (level: number) => {
 const byKey = (s: GameSession, key: string) => [...s.sim.world].find((e) => e.key === key);
 
 describe("enemy level by district band in play (ADR-0059, stage 5)", () => {
-  it("a Hebi lookout on the market (Podzamcze, 10-20) is above a level 3 player, and as tough as its level", async () => {
-    const session = await atLevel(3);
-    const lookout = market(104, 0, 92);
-    teleport(session, lookout.x, lookout.z - 12);
+  it("a Hebi patrol in Stare Miasto (5-14) is above a level 1 player, and as tough as its level", async () => {
+    const session = await atLevel(1);
+    teleport(session, 500, -71);
     steps(session, 2);
-    const g = byKey(session, "hebi-lookout")!;
-    expect(g.enemy?.level).toBe(10);
+    const g = byKey(session, "hebi-bramowa")!;
+    expect(g.enemy?.level).toBe(5);
     expect(g.enemy!.level!).toBeGreaterThan(session.sim.domain.progression.level);
-    expect(g.health).toEqual({ current: Math.round(GANGER_MAX_HP * enemyScale(10)), max: Math.round(GANGER_MAX_HP * enemyScale(10)) });
+    const max = Math.round(GANGER_MAX_HP * enemyScale(5));
+    expect(g.health).toEqual({ current: max, max });
   });
 
   it("the car wash guard in Krakowskie (1-8) stays below a level 12 player", async () => {

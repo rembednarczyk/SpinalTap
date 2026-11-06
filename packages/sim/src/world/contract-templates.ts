@@ -12,7 +12,7 @@ import {
   contractTerminalKey,
 } from "@seki/core";
 import { CONTRACT_SITE_SPAWNS, contractSpawnYaw } from "../content/district-m0";
-import { CONTRACT_ITEM_SPOTS } from "../content/district-targ";
+import { CONTRACT_ITEM_SPOTS } from "../content/alchemia-market";
 import { DOKI_CONTRACT_POSTS, DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, ESCORT_ROUTE } from "../content/district-doki";
 import { type ChunkDef, chunkAt } from "../content/world-map";
 import { decorateTarget, planExtras, targetPresence, targetSpot, targetType } from "./contract-plan";

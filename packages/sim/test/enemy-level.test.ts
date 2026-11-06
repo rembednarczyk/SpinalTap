@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CONTRACT_SITE_IDS, INITIAL_PROGRESSION, type SaveSnapshot, contractPay, contractTag, enemyScale, npcWeapon, xpForLevel } from "@seki/core";
-import { CONTRACT_SITE_DISTRICTS, CONTRACT_SITE_SPAWNS, GANGER_MAX_HP, Simulation, contractLevelOf, enemyRankOf, gangerEntity, market } from "../src";
+import { CONTRACT_SITE_DISTRICTS, CONTRACT_SITE_SPAWNS, GANGER_MAX_HP, HANA_SPOT, Simulation, contractLevelOf, enemyRankOf, gangerEntity, ground } from "../src";
 import { alleySim, byKey, teleportPlayer } from "./helpers";
 
 /** A copy of `sim` with the player at `level` and `xp`, built the way a load builds it. */
@@ -31,7 +31,7 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
   });
 
   it("an elite type and Tessen's shift boss rank above a regular", () => {
-    const spawn = { key: "x", position: market(100, 0, 90), yaw: 0 };
+    const spawn = { key: "x", position: { x: 0, y: 0, z: 0 }, yaw: 0 };
     expect(enemyRankOf(gangerEntity(1, spawn, null, 80, ""))).toBe("regular");
     expect(enemyRankOf(gangerEntity(1, spawn, null, 140, "", undefined, "hebi_enforcer"))).toBe("elite");
     expect(enemyRankOf(gangerEntity(1, { ...spawn, key: "c4-g0" }, null, 110, "", undefined, "tessen_guard"))).toBe("boss");
@@ -59,17 +59,18 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
     expect(loaded.health).toEqual(byKey(sim, "guard")!.health);
   });
 
-  it("a job's level is its district's: Hana's stash at level 1 sends a crew of level 10 and pays by it", () => {
-    const sim = Simulation.create({ seed: 4 });
-    teleportPlayer(sim, market(90.5, 0, 74), Math.PI / 2);
+  it("a job's level is its district's: Hana's stash in Alchemia (Krakowskie, 1-8) for a level 12 player is of level 8", () => {
+    const sim = atLevel(Simulation.create({ seed: 4 }), 12);
+    teleportPlayer(sim, ground(HANA_SPOT.x - 1.5, HANA_SPOT.z), Math.PI / 2);
     sim.step();
-    expect(contractLevelOf(1, "hebi_stash")).toBe(10);
+    expect(contractLevelOf(12, "hebi_stash")).toBe(8);
+    expect(contractLevelOf(1, "tessen_office")).toBe(16);
     sim.enqueue({ type: "accept-contract", kind: "retrieve" });
     sim.step();
     const c = sim.domain.contracts.active!;
-    expect(c.reward).toBe(contractPay(250 + c.targets * 110, 10, sim.domain.reputation.civilians));
+    expect(c.reward).toBe(contractPay(250 + c.targets * 110, 8, sim.domain.reputation.civilians));
     const crew = [...sim.world].filter((e) => e.tag === contractTag(c.id));
     expect(crew.length).toBe(c.targets);
-    for (const g of crew) expect(g.enemy?.level).toBe(10);
+    for (const g of crew) expect(g.enemy?.level).toBe(8);
   });
 });

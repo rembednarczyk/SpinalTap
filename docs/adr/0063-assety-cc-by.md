@@ -49,6 +49,13 @@ Użytkownik zdecydował (31.10): dopuszczamy CC-BY 4.0.
 - **Rysowanie:** `renderer/alchemia/`: modele i cokoły w jednej siatce na materiale kitu (1 wywołanie, 2 z G-buforem), bez cienia księżyca i glow, włączona do 150 m od środka grupy. Sceny `npr-perf` stoją 166 m i dalej, więc ich budżety się nie zmieniają (test silnika liczy odległości); migawka NPR bez zmian.
 - **Dalej:** wnętrze z autozapisem (ADR-0061), parking podziemny, wydarzenia na placu, targowisko i Rin, winda; ewentualnie kolizja skrzynki i napisu na dachu (dziś tylko wizualne).
 
+## Wdrożenie (etap 6, 6.11): targ z al. Tysiąclecia w Alchemii, Ren na dachu
+- **Decyzja użytkownika (4.11):** targowisko na al. Tysiąclecia (bryła na jezdni bez planu) znika, jego postacie i setting przechodzą do Alchemii, „Rin” stoi na dachu. „Rin” czytamy jako Rena Odagiri, który sypiał na dachu nad targiem (zadanie `m3_lustro`).
+- **Treść:** `content/alchemia-market.ts` zamiast `district-targ.ts`. Stragany hali: Sachiko (1, przy parkingu), Kenta (2), Fumiko (3, ramen), Goro (4), Oyaji (5, północny koniec); każdy u stóp schodów swojego stoiska, frontem do ścieżki od Świętoduskiej. Hana z wózkiem na placu za straganami. Skrytka Hebi w zagłębieniu przy ruinie oficyny w66286396 (kamera, neon i głośnik na jej ścianie, wyrównany grunt `HEBI_HOLLOW`), czujka Hebi na północ od niej. Ren na tarasie dachu (winda z etapu 5), torba Hebi obok niego; Kurosawa i czyściciele Kagami na placu przy drzwiach windy. Klucze postaci, skrytek, urządzeń i kontraktów bez zmian.
+- **Al. Tysiąclecia:** bez placu `MARKET_PLACE`, wyrównania terenu i wycinki budynków; wracają wiaty przystanku w672635872, w672635873 (w grze dziś jako zamknięte bryły, G-395) i piekarnia „Hunek” w458298766 z OSM, meble ulicy i ruch przez dawny plac. Spotkania uliczne Podzamcza (`enc_targ_*`) zostają na Podzamczu (Plac Zamkowy, place przy Dworcu i halach Bazaru).
+- **Testy:** stary targ to podłoga testowa symulacji (`sim/test/fixtures/old-market.ts`, `ChunkDef.nav`) dla skoków, drabin, poziomów i nawigacji; sesja bez renderera (`app/test/alchemia-market.test.ts`) chodzi do sprzedawców, handluje, jedzie do Rena i wczytuje stary zapis.
+- **Zapis:** `SAVE_SCHEMA_VERSION` 30; migracja 29 -> 30 (`persistence/src/market-move.ts`, po kroku 28 -> 29 z ADR-0059 etap 4) budzi gracza z dawnego targu na jezdni (785; 350), usuwa zapisane stany ludzi targu (wracają na swoje miejsca), przenosi skrytki targu i torby leżące na dawnym targu.
+
 ## Konsekwencje
 - Więcej gotowych modeli w stylu cyberpunk, kosztem obowiązku podpisu; ekran „Autorzy” robi się stałym elementem menu.
 - Pliki źródłowe są duże (do 62 MB); do gry trafiają uproszczone wersje bez tekstur, więc rozmiar buildu i budżety (`tools/perf-budgets.json`) pilnują wyniku.

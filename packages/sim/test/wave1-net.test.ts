@@ -27,7 +27,7 @@ import {
   docks,
   gangerEntity,
   ground,
-  market,
+  HANA_SPOT,
   phoneKnot,
   stateHash,
   worldTimeScale,
@@ -41,7 +41,7 @@ const at = (x: number, z: number, y = 0): Vec3 => docks(x, y, z);
 const DOCKS_CHUNK = "nabrzeze-1-1";
 const onDocks = (x: number, z: number): Vec3 => ({ x, y: DOCKS_PLACE.y, z });
 /** The market's floor (Hana's district) and the Old Town just outside it. */
-const IN_MARKET = market(90.5, 0, 74);
+const IN_MARKET = ground(HANA_SPOT.x - 1.5, HANA_SPOT.z);
 const OLD_TOWN = ground(600, 0);
 /** Somebody on Plac Litewski, in the street start's chunk. */
 const BYSTANDER = ground(73, -40);

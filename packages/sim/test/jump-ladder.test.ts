@@ -1,30 +1,24 @@
 import { describe, expect, it } from "vitest";
 import {
-  BALCONY_TOP,
   COYOTE_TIME,
   FALL_SAFE_HEIGHT,
   JUMP_SPEED,
-  OVERPASS_TOP,
-  ROOF_MID_TOP,
-  ROOF_WEST_TOP,
-  MARKET_PLACE,
   Simulation,
-  TARG_ROOF_STASH,
   fallDamage,
-  market,
 } from "../src";
 import { collect, input, run, teleportPlayer } from "./helpers";
+import { BALCONY_TOP, MARKET_PLACE, OLD_MARKET_CHUNK, OVERPASS_TOP, ROOF_MID_TOP, ROOF_WEST_TOP, market } from "./fixtures/old-market";
 
 const SOUTH = Math.PI;
 const WEST = -Math.PI / 2;
 const EAST = Math.PI / 2;
 
 /**
- * The market keeps its own coordinates, moved onto Aleja Tysiąclecia by `MARKET_PLACE`
- * (ADR-0045): the player is put at a point of the market and read back in its coordinates.
+ * The old market as a test floor (`fixtures/old-market.ts`, its own coordinates moved by `MARKET_PLACE`;
+ * the game's market is in Alchemia since ADR-0063): the player is put at a point of it and read back in its coordinates.
  */
 const at = (x: number, y: number, z: number, yaw = 0): Simulation => {
-  const sim = Simulation.create({ seed: 1 });
+  const sim = Simulation.create({ seed: 1, chunks: [OLD_MARKET_CHUNK] });
   teleportPlayer(sim, market(x, y, z), yaw);
   run(sim, 2);
   teleportPlayer(sim, market(x, y, z), yaw);
@@ -283,7 +277,7 @@ describe("fire escape ladders (ADR-0021)", () => {
     expect(player(sim).climb).toBeDefined();
     run(sim, 40, input({ moveZ: 1 }));
     const y = pos(sim).y;
-    const loaded = Simulation.fromSnapshot(sim.snapshot(null, "ladder", ""));
+    const loaded = Simulation.fromSnapshot(sim.snapshot(null, "ladder", ""), undefined, "off", "off", [OLD_MARKET_CHUNK]);
     run(loaded, 30);
     expect(loaded.player()!.climb?.ladder).toBe("targ-escape-1");
     expect(loaded.player()!.position.y - MARKET_PLACE.y).toBeCloseTo(y, 5);
@@ -292,7 +286,7 @@ describe("fire escape ladders (ADR-0021)", () => {
   it("a game saved in any step of the swing onto the rungs or the pull-over loads without a fall", () => {
     /** Loads `sim` as saved now and lets it run: she is on the rungs or on the roof, unhurt. */
     const loadsSafely = (sim: Simulation, what: string) => {
-      const loaded = Simulation.fromSnapshot(sim.snapshot(null, "ladder", ""));
+      const loaded = Simulation.fromSnapshot(sim.snapshot(null, "ladder", ""), undefined, "off", "off", [OLD_MARKET_CHUNK]);
       const landed = collect<{ drop: number }>(loaded, "Landed");
       run(loaded, 60);
       const p = loaded.player()!;
@@ -325,19 +319,13 @@ describe("fire escape ladders (ADR-0021)", () => {
     }
   });
 
-  it("the third ladder leads to Hebi's roof stash, placed once when the player comes near", () => {
+  it("the third ladder leads from the low roof up onto the concrete roof next door (the stash moved to Alchemia, ADR-0063)", () => {
     const sim = at(79.6, ROOF_WEST_TOP, 60.5, EAST);
-    const bag = () => sim.world.with("lootBag").entities.find((e) => e.lootBag.key === TARG_ROOF_STASH.key);
     run(sim, 2);
-    expect(sim.domain.loot.containers.some((c) => c.key === TARG_ROOF_STASH.key)).toBe(true);
-    expect(bag()?.position.y).toBeCloseTo(ROOF_MID_TOP + MARKET_PLACE.y, 5);
     sim.step(input({ interact: true }));
     expect(player(sim).climb?.ladder).toBe("targ-escape-3");
     for (let i = 0; i < 300 && (player(sim).climb || player(sim).mantle); i++) sim.step(input({ moveZ: 1 }));
     expect(pos(sim).y).toBeCloseTo(ROOF_MID_TOP, 5);
-    // Placed once: walking about up here does not add another.
     run(sim, 30);
-    expect(sim.domain.flags).toContain(`placed:${TARG_ROOF_STASH.key}`);
-    expect(sim.domain.loot.containers.filter((c) => c.key === TARG_ROOF_STASH.key)).toHaveLength(1);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { KAGAMI_AMBUSH_FLAG, KAGAMI_JOB_FLAG } from "@seki/core";
-import { market } from "@seki/sim";
+import { KUROSAWA_SPOT } from "@seki/sim";
 import { setup, shootDown, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 
@@ -23,8 +23,8 @@ describe("G-033: leaving by the flags is not a death", () => {
   it("a conditional character that a flag sends away despawns as unloaded", () => {
     const { session, despawns } = start();
     session.sim.enqueue({ type: "set-flag", flag: KAGAMI_JOB_FLAG });
-    // Kurosawa waits on the overpass deck while the Kagami job is open (district-targ.ts).
-    const deck = market(98.5, 9.9, 92);
+    // Kurosawa waits on the square behind Alchemia while the Kagami job is open (alchemia-market.ts).
+    const deck = { ...KUROSAWA_SPOT, x: KUROSAWA_SPOT.x + 1.5 };
     teleport(session, deck.x, deck.z, Math.PI / 2, 0, deck.y);
     steps(session, 2);
     const kurosawa = idOf(session, "kurosawa");

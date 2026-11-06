@@ -41,6 +41,7 @@ export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./com
 export { meleeSystem, stagger, startSwing } from "./melee-system";
 export { equippedAbility, scanning, worldTimeScale } from "./ability-system";
 export { DEVICE_SHORT_SECONDS, hackTargetKind, scanFocus, scannerSystem } from "./scanner-system";
+export { AIM_ASSIST_RANGE, type AimCandidate, aimRangeOf, aimTargets } from "./aim-targets";
 export {
   CAMERA_ALARM_RADIUS,
   CAMERA_CONE,

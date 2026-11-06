@@ -1,6 +1,7 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import type { ViewDescriptor } from "@seki/core";
-import { MARKET_PLACE, type StaticProp, WORLD_CHUNKS, groundY } from "@seki/sim";
+import { type StaticProp, WORLD_CHUNKS, groundY } from "@seki/sim";
+import { MARKET_PLACE, OLD_MARKET_CHUNK } from "../../sim/test/fixtures/old-market";
 import { describe, expect, it } from "vitest";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
@@ -22,14 +23,14 @@ const blocksOf = (props: readonly StaticProp[]): DressBlock[] =>
     ...(p.view.slope ? { slope: p.view.slope } : {}),
   }));
 
-const chunk = (id: string) => WORLD_CHUNKS.find((c) => c.id === id)!;
-const world = WORLD_CHUNKS.flatMap((c) => blocksOf(c.props));
-/** Lublin's chunks (ADR-0045): the market under the viaduct, Grodzka with the footbridge, the deptak. */
-const MARKET = "podzamcze-1-0";
+const chunk = (id: string) => [...WORLD_CHUNKS, OLD_MARKET_CHUNK].find((c) => c.id === id)!;
+const world = [...WORLD_CHUNKS, OLD_MARKET_CHUNK].flatMap((c) => blocksOf(c.props));
+/** The old market as the sim's test floor (gone from Lublin with ADR-0063, its blocks still the dressing's best case), Grodzka with the footbridge, the deptak. */
+const MARKET = OLD_MARKET_CHUNK.id;
 const GRODZKA = "stare-miasto-1-1";
 const DEPTAK = "krakowskie-2-0";
 /** The map's buildings are drawn by the map city: only the game's own blocks are dressed. */
-const DRESSED = WORLD_CHUNKS.filter((c) => blocksOf(c.props).length >= 10);
+const DRESSED = [...WORLD_CHUNKS, OLD_MARKET_CHUNK].filter((c) => blocksOf(c.props).length >= 10);
 const dress = (blocks: readonly DressBlock[], kit = false) => planDressing({ blocks, world, signs: [], kit, ground: groundY });
 
 describe("procedural dressing (ADR-0027)", () => {
@@ -135,8 +136,9 @@ describe("WorldDressing", () => {
     expect(dressing.meshes).toHaveLength(0);
     dressing.setKit("bare");
     expect(dressing.flush()).toBe(true);
-    expect(built).toEqual([`dressing-${MARKET}`]);
-    expect([...dressing.residentChunks()]).toEqual([MARKET]);
+    // Grouped by the city's chunk the blocks stand in: the floor stands where the market stood.
+    expect(built).toEqual(["dressing-podzamcze-1-0"]);
+    expect([...dressing.residentChunks()]).toEqual(["podzamcze-1-0"]);
     const mesh = dressing.meshes[0]!;
     expect(mesh.material).toBe(materials.get("dressing"));
     expect(dressing.flush()).toBe(false);
