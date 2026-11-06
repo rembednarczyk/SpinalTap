@@ -41,18 +41,28 @@ export const garmentArmor = (g: WornGarment, zone: HitZone): number => {
   return (own + bonus) * conditionFactor(g.condition);
 };
 
+/** The stats zone armor reads; `garmentArmor` (Tech, ADR-0059) only the player has. */
+export type ArmorStats = Pick<DerivedStats, "armor" | "headArmor"> & { readonly garmentArmor?: number };
+
 /**
  * Armor on one zone: the global value from implants and memories (everywhere, it is under the
- * skin), head plating on the head, plus the clothes lying on that zone; capped.
+ * skin), head plating on the head, plus the clothes lying on that zone, and the Tech bonus once
+ * when any of them protects it; capped.
  */
-export const zoneArmor = (stats: Pick<DerivedStats, "armor" | "headArmor">, worn: readonly WornGarment[], zone: HitZone): number => {
+export const zoneArmor = (stats: ArmorStats, worn: readonly WornGarment[], zone: HitZone): number => {
   let total = stats.armor + (zone === "head" ? stats.headArmor : 0);
-  for (const g of worn) total += garmentArmor(g, zone);
+  let clothed = false;
+  for (const g of worn) {
+    const a = garmentArmor(g, zone);
+    total += a;
+    if (a > 0) clothed = true;
+  }
+  if (clothed) total += stats.garmentArmor ?? 0;
   return Math.min(ZONE_ARMOR_CAP, total);
 };
 
 /** Defender profile with every zone resolved, for `resolveAttack`. */
-export const defenseOf = (stats: Pick<DerivedStats, "armor" | "headArmor">, worn: readonly WornGarment[]): DefenderProfile => {
+export const defenseOf = (stats: ArmorStats, worn: readonly WornGarment[]): DefenderProfile => {
   const perZone: Partial<Record<HitZone, number>> = {};
   for (const z of HIT_ZONES) perZone[z] = zoneArmor(stats, worn, z);
   return { armor: 0, zoneArmor: perZone };

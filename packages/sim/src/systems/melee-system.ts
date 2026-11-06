@@ -86,6 +86,8 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
   if (!weapon) return false;
   const strike = strikeAt(profile, f.melee.strike);
   const crit = f.player ? playerStatsOf(ctx.state.domain) : NPC_CRIT;
+  // Might hits harder (ADR-0059): weapon damage and the implants' bonus alike.
+  const might = f.player ? 1 + playerStatsOf(ctx.state.domain).meleeDamage : 1;
   const eye = eyeOf(f);
   const facing = { x: f.position.x, z: f.position.z, yaw: f.yaw };
   let hits = 0;
@@ -107,11 +109,11 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
     const zone = strikeZone(strikeHeight(f, t, reach.distance), reach.angle / profile.arc);
     const resolved = resolveAttack(
       {
-        damage: weapon.damage * strike.damage * guard.multiplier,
+        damage: weapon.damage * strike.damage * guard.multiplier * might,
         zones: weapon.zones,
         critChance: crit.critChance,
         critMultiplier: crit.critMultiplier,
-        damageBonus: crit.damageBonus * guard.multiplier,
+        damageBonus: crit.damageBonus * guard.multiplier * might,
       },
       defenderOf(ctx, t),
       ctx.rng,

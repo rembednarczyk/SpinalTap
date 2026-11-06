@@ -113,3 +113,11 @@ Atrybutów jest pięć. Każdy ma wartość od 3 do 15. Na starcie są po 3, a n
 - Wartości liczbowe (krzywa, +4% na poziom, pasma, wagi) są wstępne. Ustala je test balansu z etapu 8, a ich zmiany nie wymagają nowego ADR-u.
 - **Zależność z audytu (31.10):** gra nie ma jeszcze obezwładnień (takedown, ogłuszenie). Źródło XP „skradanie” i perki drzewka Cień, które ich wymagają, czekają na osobny ADR obezwładnień. Etap 1 emituje tylko XP z tego, co istnieje.
 - **Z weryfikacji etapu 1 (31.10):** walidacja zapisu wymaga, żeby poziom był równy poziomowi z krzywej dla XP. Zmiana krzywej w etapie 8 musi więc mieć migrację albo przeliczenie poziomu przy wczytaniu. Liczenie wydanych perków (suma rang) aktualizuje etap 3. XP za quickhack przysługuje raz na cel, a pamięć celów ma 256 wpisów.
+- **Z budowy etapu 2 (5.11):**
+  - Efekt liczy się od punktów ponad startowe 3, więc nowa postać gra jak przed etapem, a złote hashe się nie zmieniły.
+  - Liczby bez wartości w tabeli są wstępne i do strojenia w etapie 8: czas celowania −2% na punkt Refleksu, upload −2% na punkt Sieci.
+  - Technika daje +1 pancerza na punkt tylko na strefach, które chroni założona odzież, i dalej obowiązuje limit 8 na strefę. Przy 15 Technice prawie każda ubrana strefa dochodzi do limitu, więc ta liczba jest pierwsza do strojenia.
+  - Cień spowalnia napełnianie licznika wzroku gangera, przebrania i kamer, mnożąc je razem z `awareness` trudności. Nie zmienia spadku licznika ani hałasu kroków. Mniejszy hałas daje drzewko w etapie 3.
+  - Typ `StatModifiers` dostał pola `meleeDamage` (udział) i `garmentArmor`. Pula RAM to `BASE_RAM` plus Sieć, a punkt, który ją powiększa, od razu wysyła `RamChanged`.
+  - Komenda `spend-attribute-point` i zapis atrybutów były już w etapie 1. Etap 2 nie zmienia kontraktów komend ani zdarzeń i nie podbija `SAVE_SCHEMA_VERSION`.
+  - Wydawanie punktów ma na razie tylko sekcję na zakładce Karta (`ProgressionIntents`). Pełna zakładka Rozwój przychodzi w etapie 7.

@@ -1,4 +1,4 @@
-import type { BreachDaemonId, CyberwareId, CyberwareSlot, DifficultyProfile, EquipSlot, ItemRef, MetroStationId, ModSlot, QuickhackSlotInput, ShopItemId } from "@seki/core";
+import type { AttributeId, BreachDaemonId, CyberwareId, CyberwareSlot, DifficultyProfile, EquipSlot, ItemRef, MetroStationId, ModSlot, QuickhackSlotInput, ShopItemId } from "@seki/core";
 import type { CharacterTab, RadioStationId, SettingsVm } from "./store/ui-store";
 
 /** Where the 3D preview of the character screen is drawn, in CSS pixels of the page. */
@@ -78,6 +78,12 @@ export interface CharacterIntents {
   removeMod(weaponUid: string, slot: ModSlot): void;
 }
 
+/** Character progression (ADR-0059): the sheet's attribute points. */
+export interface ProgressionIntents {
+  /** Puts one unspent point into `attribute`; the game refuses it without a point or at 15. */
+  spendAttributePoint(attribute: AttributeId): void;
+}
+
 /** Settings and key bindings. */
 export interface SettingsIntents {
   /** Saves the changed settings; look sensitivity applies at once. */
@@ -142,6 +148,7 @@ export type UiIntents = SessionIntents &
   ShopIntents &
   LootIntents &
   CharacterIntents &
+  ProgressionIntents &
   SettingsIntents &
   DifficultyIntents &
   CameraIntents &

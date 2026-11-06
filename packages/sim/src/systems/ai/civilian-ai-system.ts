@@ -51,8 +51,14 @@ export const FLEE_SECONDS = 8;
 export const ALARMED_SECONDS = 5;
 /** The running bystander heads for a point this far ahead, away from the danger, round obstacles. */
 const FLEE_LOOKAHEAD = 6;
-/** Turns tried, in order, when the way straight away is blocked; the probe is this long. */
-const FLEE_TURNS = [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2, (3 * Math.PI) / 4, (-3 * Math.PI) / 4];
+/**
+ * Turns tried, in order, when the way straight away is blocked; the probe is this long. None
+ * leads back towards the danger (G-328): at the end of a blind alley the ways on opened and shut
+ * as it shuffled along the wall, and whenever they all shut it took a way back towards the
+ * player and in again, so it never stood: it ran on the spot, its heading jumping 509 times in
+ * 10 s. With no way on open it is cornered and stands.
+ */
+const FLEE_TURNS = [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2];
 const FLEE_PROBE = 2.5;
 /**
  * Hysteresis of the turn (G-317): the way it runs on (read from its heading) is kept while it is
@@ -108,18 +114,16 @@ const bendsBack = (ctx: SimContext, from: Vec3, away: number, turn: number): boo
 
 /**
  * The turn off `away` to run on: straight away when the way is open, else the open way closest
- * to it (a wall at its back), with the hysteresis above. A way back towards the danger is never
- * kept, so it does not run up and down a blind alley closer to the player. Nor is a heading it
- * only walked on (`running` false): kept for its first step, it turned 1.5 rad on the next. Nor
- * is any heading kept past a way closer to straight away that `bendsBack`. Null when every way
- * is blocked.
+ * to it (a wall at its back), with the hysteresis above. A heading it only walked on (`running`
+ * false) is not kept: kept for its first step, it turned 1.5 rad on the next. Nor is any heading
+ * kept past a way closer to straight away that `bendsBack`. Null when every way is blocked.
  */
 const fleeTurn = (ctx: SimContext, from: Vec3, away: number, yaw: number, running: boolean, radius: number): number | null => {
   const open = (turn: number, reach: number): boolean => bodyWalk(ctx, from, away + turn, reach, radius);
   const best = FLEE_TURNS.find((t) => open(t, FLEE_PROBE));
   if (best === undefined || !running) return best ?? null;
   const runsOn = (t: number): boolean => Math.abs(Math.atan2(Math.sin(yaw - away - t), Math.cos(yaw - away - t))) <= FLEE_HELD_TURN;
-  const held = FLEE_TURNS.find((t) => Math.abs(t) <= Math.PI / 2 && runsOn(t));
+  const held = FLEE_TURNS.find(runsOn);
   const far = FLEE_PROBE + FLEE_SWITCH_MARGIN;
   if (held === undefined || held === best || open(best, far) || !open(held, far)) return best;
   return bendsBack(ctx, from, away, best) ? best : held;
@@ -346,11 +350,18 @@ class CivilianAgent {
     // Standing exactly on top of it: run along the street, away from the player's facing.
     const away = d < 1e-6 ? fallbackYaw : Math.atan2(dx, dz);
     const running = Math.hypot(self.velocity.x, self.velocity.z) > 0.9 * speed;
-    const turn = fleeTurn(ctx, self.position, away, self.yaw, running, self.body?.radius ?? 0) ?? 0;
+    const turn = fleeTurn(ctx, self.position, away, self.yaw, running, self.body?.radius ?? 0);
+    if (turn === null) {
+      // Cornered: it stands with its back to the wall and faces what it runs from.
+      self.velocity = { x: 0, y: 0, z: 0 };
+      self.yaw = Math.atan2(-Math.sin(away), -Math.cos(away));
+      return;
+    }
     const ux = Math.sin(away + turn);
     const uz = Math.cos(away + turn);
     const ahead = { x: self.position.x + ux * FLEE_LOOKAHEAD, y: self.position.y, z: self.position.z + uz * FLEE_LOOKAHEAD };
-    const p = fleeStep(ctx, self.position, ahead, Math.atan2(self.velocity.x, self.velocity.z), running);    const sx = p.x - self.position.x;
+    const p = fleeStep(ctx, self.position, ahead, Math.atan2(self.velocity.x, self.velocity.z), running);
+    const sx = p.x - self.position.x;
     const sz = p.z - self.position.z;
     const s = Math.hypot(sx, sz);
     const [vx, vz] = s < 1e-6 ? [ux, uz] : [sx / s, sz / s];

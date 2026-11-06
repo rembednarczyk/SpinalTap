@@ -1,5 +1,6 @@
 import {
   type AmmoPouch,
+  type Attributes,
   BASE_RAM,
   type CameraMode,
   EMPTY_EQUIPMENT,
@@ -11,6 +12,7 @@ import {
   type HitZone,
   type ReputationState,
   type ShopId,
+  START_ATTRIBUTES,
   createReputation,
 } from "@seki/core";
 import { createStore, type StoreApi } from "zustand/vanilla";
@@ -104,6 +106,10 @@ export interface PlayerHudUiState {
   readonly ability: AbilityVm | null;
   readonly cyberware: CyberwareLoadout;
   readonly reputation: ReputationState;
+  /** The character's level and attributes (ADR-0059), and the attribute points left to spend. */
+  readonly level: number;
+  readonly attributes: Attributes;
+  readonly attributePoints: number;
   /** Game time as "HH:MM"; null before a game runs. */
   readonly clock: string | null;
   readonly day: number;
@@ -306,6 +312,9 @@ export const initialUiState: UiState = {
   weapons: null,
   cyberware: {},
   reputation: createReputation(),
+  level: 1,
+  attributes: START_ATTRIBUTES,
+  attributePoints: 0,
   contractsDone: 0,
   shopOpen: false,
   shopId: "clinic",
