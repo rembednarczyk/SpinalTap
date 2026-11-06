@@ -94,6 +94,8 @@ export class GroundField {
   private readonly flightBoxes: readonly GroundDeck["box"][];
   /** All of them in one box: a query far from it (almost all) is answered by one test. */
   private readonly flightsBox: GroundDeck["box"];
+  /** The boxes of the bridges' own decks, not the flights' (a few dozen in the city). */
+  private readonly deckBoxes: readonly GroundDeck["box"][];
   /** The flights among each chunk's decks, found once: a height then costs what it did without them. */
   private readonly chunkFlights: readonly (readonly GroundDeck[])[];
   /**
@@ -130,6 +132,7 @@ export class GroundField {
     this.buckets = buckets;
     this.flightBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight === true)))].map((d) => d.box);
     this.chunkDecks = chunks.map((c) => decksReaching(chunks, c));
+    this.deckBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight !== true)))].map((d) => d.box);
     this.chunkFlights = this.chunkDecks.map((d) => flightsIn(d ?? []));
     const boxes = this.flightBoxes;
     this.flightsBox = {
@@ -146,6 +149,11 @@ export class GroundField {
     if (minX > all.maxX + margin || maxX < all.minX - margin || minZ > all.maxZ + margin || maxZ < all.minZ - margin) return false;
     for (const b of this.flightBoxes) if (minX <= b.maxX + margin && maxX >= b.minX - margin && minZ <= b.maxZ + margin && maxZ >= b.minZ - margin) return true;
     return false;
+  }
+
+  /** The boxes of the bridges' decks (not the flights') overlapping the box: almost everywhere none. */
+  decksNear(minX: number, minZ: number, maxX: number, maxZ: number): GroundDeck["box"][] {
+    return this.deckBoxes.filter((b) => minX <= b.maxX && maxX >= b.minX && minZ <= b.maxZ && maxZ >= b.minZ);
   }
 
   /** Index of the chunk whose ground is used at (x, z), or -1 with no chunks. */
