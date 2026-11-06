@@ -1170,6 +1170,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (`props-gen`, `props-site`)
 - Test przyjęcia: test `props.test.ts` łapie latarnię w pasie ruchu także przy parkingu
 
+### G-389 Wariant A strzału jednym kciukiem: celowanie z ● nie kasuje zatrzaśniętego sprintu, a po zmianie broni na białą jeden krok ma `aim`
+- Status: zgłoszone (6.11, weryfikator #322)
+- Ważność: S4 · Zasięg: `aim` z ● dochodzi po zatrzaskach (`InputLatches.apply` w `keymap.ts`), więc po puszczeniu ● gracz wraca do sprintu; przy zmianie palna → biała przez jeden krok `posture.aiming` = true (flaga broni spóźnia się o krok). Test sesji B nie obejmuje tapnięcia ◎ krótszego niż krok (tylko test jednostkowy) · Koszt: mały
+- Pakiet właściciela: packages/engine (`input`), packages/app (`touch-fire.ts`)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
