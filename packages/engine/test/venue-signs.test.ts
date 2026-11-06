@@ -1,5 +1,6 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { SIGN_GLYPHS, type ViewDescriptor } from "@seki/core";
+import { METRO_ENTRANCES } from "@seki/sim";
 import { LUBLIN_CHUNKS, buildingView } from "@seki/sim/lublin";
 import { describe, expect, it } from "vitest";
 import { RawTexture, Scene } from "../src/babylon";
@@ -139,13 +140,28 @@ describe("venue signs in the map city", () => {
       city.flush();
       city.update(1 / 60, { x: 280, y: 2, z: -70 }, false);
       const signs = city.meshes.filter((m) => m.name.startsWith("map-signs"));
-      const glyphs = signs.reduce((n, m) => n + Array.from(m.getVerticesData("uv2") ?? []).filter((v, i) => i % 2 === 1 && v === MAP_SIGN_KIND.glyph).length, 0);
-      return { meshes: city.meshes.length, glyphs };
+      // The letters of a metro pavilion (ADR-0071 stage 3) lie on its roof's fascia and its pylon.
+      const metro = (x: number, z: number) => METRO_ENTRANCES.some((e) => x > e.roof.minX - 0.1 && x < e.roof.maxX + 0.1 && z > e.roof.minZ - 0.1 && z < e.roof.maxZ + 0.1);
+      let glyphs = 0;
+      let pavilion = 0;
+      for (const m of signs) {
+        const uv2 = m.getVerticesData("uv2") ?? [];
+        const at = m.getVerticesData("position") ?? [];
+        for (let i = 0; i * 2 + 1 < uv2.length; i++) {
+          if (uv2[i * 2 + 1] !== MAP_SIGN_KIND.glyph) continue;
+          if (metro(at[i * 3]!, at[i * 3 + 2]!)) pavilion++;
+          else glyphs++;
+        }
+      }
+      return { meshes: city.meshes.length, glyphs, pavilion };
     };
     const without = meshesOf(false);
     const withVenues = meshesOf(true);
     expect(without.glyphs).toBe(0);
     expect(withVenues.glyphs).toBeGreaterThan(200);
     expect(withVenues.meshes).toBe(without.meshes);
+    // Plac Łokietka's pavilion: its name on both fascias and its letter, in the same meshes.
+    expect(without.pavilion).toBe(withVenues.pavilion);
+    expect(without.pavilion).toBe(4 * (2 * [..."BRAMA KRAKOWSKA · PLAC ŁOKIETKA"].filter((c) => c !== " ").length + 1));
   });
 });

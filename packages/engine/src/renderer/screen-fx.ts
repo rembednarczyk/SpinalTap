@@ -115,7 +115,7 @@ export class ScreenFx {
     this.lasers = new Lasers(scene, stage.glow);
     this.trailMeshes = new TrailMeshes(scene, stage.glow);
     this.rain = stage.options.reference ? null : createRain(scene, deps.roofOver);
-    this.splashes = stage.options.reference || !tier.splashes ? null : createSplashes(scene);
+    this.splashes = stage.options.reference || !tier.splashes ? null : createSplashes(scene, deps.roofOver);
     if (!stage.options.reference) {
       // The manhole on the deptak and the vent behind the car wash (ADR-0045).
       const [manhole, vent] = STEAM_VENTS;

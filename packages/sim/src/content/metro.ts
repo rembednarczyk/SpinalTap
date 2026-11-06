@@ -3,6 +3,8 @@ import type { GroundCut } from "../world/ground";
 import type { Rect } from "./builders";
 import { type Pavilion, type PavilionSpot, pavilion, pavilionChunk } from "./metro-pavilion";
 
+export { HALL_DEPTH, PAVILION, STAIRS } from "./metro-pavilion";
+
 /** District ids as world-map.ts names them (kept local: world-map imports this table). */
 type DistrictId = "shinsekai-7" | "kanal" | "targ" | "doki";
 
@@ -71,8 +73,9 @@ export const METRO_STATIONS: readonly MetroStationDef[] = [
     entrance("B", "Dworzec Autobusowy", { x: 754, z: 379, along: "z", opens: -1 }),
   ]),
   // Nabrzeże Bystrzycy: outside the Tessen yard, its back to the yard's south wall (the old kiosk stood in the
-  // 2.8 m between that wall and the warehouse), open east to the yard's gate.
-  station("doki", "Nabrzeże Bystrzycy", "doki", { x: 2527, z: 388 }, [entrance("A", "Nabrzeże", { x: 2527, z: 388, along: "x", opens: 1 })]),
+  // 2.8 m between that wall and the warehouse), open east to the yard's gate. The wall stands 0.2 m off its north
+  // side (z 390.0): the eaves stop short of it there (T-160).
+  station("doki", "Nabrzeże Bystrzycy", "doki", { x: 2527, z: 388 }, [entrance("A", "Nabrzeże", { x: 2527, z: 388, along: "x", opens: 1, wall: { side: 1, gap: 0.2 } })]),
 ];
 
 export const metroStation = (id: MetroStationId): MetroStationDef => {
