@@ -69,6 +69,11 @@ export class ShopController implements ShopIntents {
     if (this.atCounter("clinic")) this.deps.sim().enqueue({ type: "remove-cyberware", slot });
   }
 
+  /** The respec (ADR-0059): Mori's service, so only at the clinic's counter. */
+  respec(): void {
+    if (this.atCounter("clinic")) this.deps.sim().enqueue({ type: "respec" });
+  }
+
   /** From the counter straight into a conversation with its keeper. */
   talkToShopkeeper(): void {
     if (!this.shopOpen) return;
