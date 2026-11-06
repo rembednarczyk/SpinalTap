@@ -887,7 +887,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-289 Z dachu Alchemii nie ma bezpiecznego zejścia
-- Status: w PR #312 (6.11, 28c22ba; winda Alchemii na dach z mostkiem i tarasem; w weryfikacji, potem kurator)
+- Status: w PR #312, runda 2 (6.11; weryfikator NIE PRZYJĘTE: podciągnięcie na zamkniętą bramkę 1,8 m po skosie, potem skok ponad ekran 2,6 m i upadek ok. 13,5 m z mostka)
 - Ważność: S4 · Zasięg: zeskok z 11–13 m kosztuje 48–96 HP; dziś dach nieosiągalny
 - Pakiet właściciela: packages/sim (content/alchemia.ts)
 
@@ -1142,7 +1142,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: podciągnięcie na bryłę węższą niż ciało albo na krawędź barierki jest odrzucane; barierka 1,1 m nie daje się przejść
 
 ### G-373 Odcinek tunelu peronu metra `kanal` A wchodzi 0,4 m w narożnik kamienicy w67498758 (T-181)
-- Status: zgłoszone (6.11, kurator, przegląd #309)
+- Status: w PR #314 (6.11, 96e7e48; `w0` −10 → −9,5, test peronu sprawdza `vaults`; orkiestrator)
 - Ważność: S4 (niewidoczne) · Zasięg: 0,81 m² podziemia pod obrysem; test `metro-platform.test.ts` sprawdza tylko `rooms`, nie `vaults` · Koszt: mały (np. `w0` −10 → −9,5 albo krótszy odcinek po tej stronie)
 - Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan (kontrola `metro-vault-in-building`)
 - Test przyjęcia: każdy `vault` każdego peronu ma 0 próbek (co 0,25 m) w `inBuilding`; test rozszerzony na `vaults` pada przed poprawką
@@ -1152,6 +1152,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (UI) · Zasięg: `ui/hud/scanner.tsx` bierze koszt z tabeli, a symulacja liczy ze zniżką · Koszt: mały
 - Pakiet właściciela: packages/ui, packages/app (przekazanie kosztu z sim)
 - Test przyjęcia: test komponentu: przy ICEpick koszt na liście równa się kosztowi pobieranemu w symulacji
+
+### G-375 `elevatorSystem` przesuwa bramki windy bez sprawdzenia, czy ktoś stoi na ich linii
+- Status: zgłoszone (6.11, weryfikator #312)
+- Ważność: S4 · Zasięg: windy ADR-0020 (targ, Alchemia); zgniatanie sprawdza tylko platforma przy zjeździe · Koszt: mały
+- Pakiet właściciela: packages/sim (`elevator-system`)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
