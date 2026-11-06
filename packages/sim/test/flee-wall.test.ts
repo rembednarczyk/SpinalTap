@@ -20,12 +20,13 @@ const SETTLE = 120;
 type Chase = { speed: number; stop: number };
 
 /**
- * Runs the escape of the walker `id` from the player `dx`, `dz` metres off it for five seconds:
- * how many times its heading jumped while it ran and its sharpest turn, in how many steps it ran
- * back towards the player, how close to the player it came after `SETTLE`, where it ended up
- * and how far from where it set off (`gone`). With `chase` the player runs after it.
+ * Runs the escape of the walker `id` from the player `dx`, `dz` metres off it for `steps` steps
+ * (five seconds): how many times its heading jumped while it ran and its sharpest turn, in how
+ * many steps it ran back towards the player and in how many of the second half it ran at all
+ * (`late`), how close to the player it came after `SETTLE`, where it ended up and how far from
+ * where it set off (`gone`). With `chase` the player runs after it.
  */
-const watchEscape = (seed: number, id: number, dx: number, dz = 0, chase?: Chase) => {
+const watchEscape = (seed: number, id: number, dx: number, dz = 0, chase?: Chase, steps = 300) => {
   const sim = hostileCrowd(seed);
   const walker = passerbyOnDeptak(sim, 2, (e) => e.id === id);
   const at = { ...byId(sim, walker.id).position };
@@ -35,8 +36,9 @@ const watchEscape = (seed: number, id: number, dx: number, dz = 0, chase?: Chase
   let towards = 0;
   let closest = Infinity;
   let sharpest = 0;
+  let late = 0;
   let last: number | null = null;
-  for (let i = 0; i < 300; i++) {
+  for (let i = 0; i < steps; i++) {
     run(sim, 1);
     const e = byId(sim, walker.id);
     const ox = e.position.x - p.x;
@@ -49,6 +51,7 @@ const watchEscape = (seed: number, id: number, dx: number, dz = 0, chase?: Chase
       p = sim.player()!.position;
     }
     if (Math.hypot(e.velocity!.x, e.velocity!.z) < 0.05) continue;
+    if (i >= steps / 2) late++;
     if ((e.velocity!.x * ox + e.velocity!.z * oz) / d < -0.05) towards++;
     const turn = last === null ? 0 : Math.abs(Math.atan2(Math.sin(e.yaw - last), Math.cos(e.yaw - last)));
     sharpest = Math.max(sharpest, turn);
@@ -56,7 +59,7 @@ const watchEscape = (seed: number, id: number, dx: number, dz = 0, chase?: Chase
     last = e.yaw;
   }
   const e = byId(sim, walker.id);
-  return { jumps, towards, closest, sharpest, distance: Math.hypot(e.position.x - p.x, e.position.z - p.z), gone: Math.hypot(e.position.x - at.x, e.position.z - at.z) };
+  return { jumps, towards, late, closest, sharpest, distance: Math.hypot(e.position.x - p.x, e.position.z - p.z), gone: Math.hypot(e.position.x - at.x, e.position.z - at.z) };
 };
 
 // Walkers of the deptak's crowd routes whose way away from the player runs into a wall.
@@ -103,6 +106,16 @@ describe("an escape along a wall (G-317)", () => {
       expect(w.closest).toBeGreaterThanOrEqual(closest);
     });
   }
+
+  // At the end of the alley the ways on shut within the probe one after another, and whenever all
+  // of them did it took a way back towards the player and in again (G-328): it ran on the spot,
+  // 5.7 m off the player, for as long as the player stood there.
+  it("cornered at the end of the alley it stands instead of running on the spot (player 2 m off, 509 jumps in 10 s before)", () => {
+    const w = watchEscape(11, 1002001, 0, 2, undefined, 480);
+    expect(w.late).toBe(0);
+    expect(w.jumps).toBeLessThanOrEqual(20);
+    expect(w.closest).toBeGreaterThanOrEqual(5.6);
+  });
 
   // The same walker with the player running after it from behind: it gets out up the alley
   // towards (332; -74). Keeping the way it ran on while the way closer to straight away bent
