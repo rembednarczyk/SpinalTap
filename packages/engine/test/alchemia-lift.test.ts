@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ALCHEMIA_LIFT, ALCHEMIA_TERRACE, WORLD_SCENERY } from "@seki/sim";
-import { alchemiaLiftIn, bakeAlchemiaLift, bakeAlchemiaLiftFar } from "../src/renderer/alchemia/lift-bake";
+import { alchemiaLiftIn, bakeAlchemiaLift, bakeAlchemiaLiftFar, bakeButtonRims } from "../src/renderer/alchemia/lift-bake";
 import { cellBounds, cellKey } from "../src/renderer/mapcity/map-index";
 import { PROP_BLOCK } from "../src/renderer/mapcity/prop-shapes";
 import { DRESS_FLAG, MeshSink } from "../src/renderer/mesh-sink";
@@ -86,5 +86,28 @@ describe("the lift of Alchemia drawn (G-284, G-289)", () => {
     expect(panes.length).toBeGreaterThanOrEqual(8);
     for (const v of panes) expect(v.nx * (v.x - L.centre.x) + v.nz * (v.z - L.centre.z)).toBeGreaterThan(0);
     expect(verts(baked("low")).some((v) => v.alpha === DRESS_FLAG.wet)).toBe(false);
+  });
+
+  it("lights a cyan rim round each call button, on the face it hangs on, in front of that face and behind the button", () => {
+    const west = L.centre.x - out;
+    for (const b of L.buttons) {
+      const sink = new MeshSink();
+      bakeButtonRims(sink, { ...L, buttons: [b] });
+      const vs = verts(sink);
+      expect(vs).toHaveLength(24);
+      expect(vs.every((v) => v.alpha === DRESS_FLAG.lit)).toBe(true);
+      // Wider and taller than the button (0.22 x 0.32), round its middle.
+      const zs = vs.map((v) => v.z - b.z);
+      const ys = vs.map((v) => v.y - b.y);
+      expect(Math.min(...zs)).toBeLessThan(-0.11 - 0.03);
+      expect(Math.max(...ys)).toBeGreaterThan(0.16 + 0.03);
+      // Between the face (the shaft's west wall, or the bridge's west screen) and the button's middle.
+      const face = b.x < west ? west : b.x - 0.11;
+      for (const v of vs) expect(Math.abs(v.x - face)).toBeLessThanOrEqual(0.02 + 1e-6);
+      for (const v of vs) expect(Math.abs(v.x - face)).toBeLessThan(Math.abs(b.x - face));
+    }
+    // And in the lift's bake.
+    const all = verts(baked());
+    for (const b of L.buttons) expect(all.some((v) => v.alpha === DRESS_FLAG.lit && Math.hypot(v.x - b.x, v.y - b.y, v.z - b.z) < 0.4)).toBe(true);
   });
 });

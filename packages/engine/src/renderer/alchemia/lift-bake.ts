@@ -59,6 +59,23 @@ const pane = (sink: MeshSink, p: AlchemiaLiftPlan, b: LiftBox, color: Rgba): voi
   }
 };
 
+/** The call buttons' size (the simulation's `block` view) and the lit rim round each, mounted west of it. */
+const BUTTON = { x: 0.22, y: 0.32, z: 0.22 } as const;
+const RIM = 0.06;
+
+/**
+ * A lit cyan plate behind each call button, a rim of it showing round the button, on the face it
+ * hangs on: the bottom one outside the shaft's west wall (the wall east of it), the top one on the
+ * bridge's west screen (west of it). The buttons read at night as the shaft's neon does.
+ */
+export const bakeButtonRims = (sink: MeshSink, p: AlchemiaLiftPlan): void => {
+  const west = p.centre.x - p.half - p.wall;
+  for (const b of p.buttons) {
+    const toWall = b.x < west ? 1 : -1;
+    sink.box({ x: b.x + toWall * (BUTTON.x / 2 - 0.01), y: b.y, z: b.z }, 0.02, BUTTON.y + 2 * RIM, BUTTON.z + 2 * RIM, LIFT_COLORS.cyan);
+  }
+};
+
 /** The shaft: its panes facing out, the frame's corner posts and bands, the neon, the cap, the sill and the gate's pocket. */
 const bakeShaft = (sink: MeshSink, p: AlchemiaLiftPlan, quality: RenderQuality): void => {
   const C = LIFT_COLORS;
@@ -97,6 +114,7 @@ const bakeShaft = (sink: MeshSink, p: AlchemiaLiftPlan, quality: RenderQuality):
   liftBox(sink, p, p.pocket, C.steel);
   // The heads over the gates, which shut their openings to the top (G-289).
   for (const h of p.heads) liftBox(sink, p, h, C.steel);
+  bakeButtonRims(sink, p);
   // A chevron over the door, pointing up: the way to the roof without a word.
   const cx = p.centre.x;
   const z = p.centre.z + out + 0.03;
