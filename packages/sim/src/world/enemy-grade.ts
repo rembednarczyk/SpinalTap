@@ -11,7 +11,7 @@ import {
   npcWeapon,
 } from "@seki/core";
 import type { World } from "miniplex";
-import { CONTRACT_SITE_DISTRICTS, DISTRICT_BANDS, bandOf } from "../content/district-bands";
+import { CONTRACT_SITE_BANDS, DISTRICT_BANDS, bandAt } from "../content/district-bands";
 import type { DistrictId } from "../content/world-map";
 import type { Entity } from "./components";
 
@@ -60,7 +60,8 @@ const scaleDamage = (e: Entity, level: number): void => {
  */
 export const gradeEnemy = (e: Entity, s: EnemyScaling): number => {
   if (!e.enemy) return MIN_LEVEL;
-  const band = bandOf(s.districtAt?.(e.ai?.home ?? e.position) ?? null);
+  const home = e.ai?.home ?? e.position;
+  const band = bandAt(s.districtAt?.(home) ?? null, home);
   const level = enemyLevel(s.playerLevel, band, enemyRankOf(e));
   e.enemy = { ...e.enemy, level, band, npcHealth: s.npcHealth };
   if (level !== MIN_LEVEL) scaleDamage(e, level);
@@ -87,5 +88,5 @@ export const regradeEnemies = (world: World<Entity>, playerLevel: number): void 
   }
 };
 
-/** The level of a contract at `site` (ADR-0059): that of a regular enemy in its district. */
-export const contractLevelOf = (playerLevel: number, site: ContractSiteId): number => enemyLevel(playerLevel, DISTRICT_BANDS[CONTRACT_SITE_DISTRICTS[site]]);
+/** The level of a contract at `site` (ADR-0059): that of a regular enemy in its band. */
+export const contractLevelOf = (playerLevel: number, site: ContractSiteId): number => enemyLevel(playerLevel, DISTRICT_BANDS[CONTRACT_SITE_BANDS[site]]);

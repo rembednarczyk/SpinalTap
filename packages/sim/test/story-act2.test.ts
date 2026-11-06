@@ -98,9 +98,10 @@ describe("act II in the simulation (ADR-0023)", () => {
     expect(has(sim, "kurosawa")).toBe(false);
     const cleaners = [...sim.world].filter((e) => e.tag === "kagami_cleaner").sort((a, b) => a.id - b.id);
     expect(cleaners.map((e) => e.key)).toEqual([...KAGAMI_CLEANER_KEYS]);
-    // Elites (ADR-0059) by Alchemia, in Krakowskie's band (1-8): a level above a level 1 player's, 4% tougher.
-    const max = Math.round(110 * (1 + 0.04 * 1));
-    expect(cleaners.every((e) => e.faction === "kagami" && e.enemy?.type === "kagami_cleaner" && e.enemy.level === 2 && e.health?.max === max)).toBe(true);
+    // Elites (ADR-0059) in the market in Alchemia, of the market's band (10-20): a level above its floor
+    // for a level 1 player, 40% tougher.
+    const max = Math.round(110 * (1 + 0.04 * 10));
+    expect(cleaners.every((e) => e.faction === "kagami" && e.enemy?.type === "kagami_cleaner" && e.enemy.level === 11 && e.health?.max === max)).toBe(true);
     // Neutral Kagami attacks on sight, like Hebi.
     run(sim, 120);
     expect(cleaners.some((e) => e.ai?.alerted)).toBe(true);
