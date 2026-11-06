@@ -41,72 +41,181 @@ const parting = (a: Simulation, b: Simulation, id: string, steps: number): numbe
   return hash(a) === hash(b) ? null : steps / SIM_HZ;
 };
 
+/**
+ * Made on first use and kept: the long runs are split into one case per stretch, each asking for
+ * the stretches before it, as one case of the whole run went past the 20 s limit under coverage
+ * (G-357). The cases note what they check when the stretch is made, so their order does not matter.
+ */
+const once = <T>(make: () => T): (() => T) => {
+  let made: { value: T } | undefined;
+  return () => (made ??= { value: make() }).value;
+};
+
+/** `parting` of the two games `both` gives, a stretch of `lengths` (s) at a time: up to the `n`-th made once, its result. */
+const stretches = (both: () => { a: Simulation; b: Simulation; id: string }, lengths: readonly number[]) => {
+  const parted: (number | null)[] = [];
+  return (n: number): number | null => {
+    const { a, b, id } = both();
+    while (parted.length < n) parted.push(parting(a, b, id, seconds(lengths[parted.length]!)));
+    return parted[n - 1]!;
+  };
+};
+
 describe("an alerted guard far from the player falls asleep (G-188)", () => {
-  it("the guards of a lost infiltration give up, fall asleep and wait at their site", () => {
+  const lost = once(() => {
     const { sim, id } = alarmed(10);
     const guards = guardsOf(sim, id);
-    expect(guards.length).toBeGreaterThan(0);
     teleportPlayer(sim, AWAY);
     run(sim, seconds(5));
-    // Still after her: pinned, outside every loaded chunk.
-    expect(guardsOf(sim, id)).toEqual(guards);
-    for (const k of guards) expect(awake(sim, k)).toBe(true);
+    return { sim, id, guards, pinned: guardsOf(sim, id), awake: guards.map((k) => awake(sim, k)) };
+  });
+  const lostAway = once(() => {
+    const { sim, id } = lost();
     run(sim, seconds(PINNED_AWAY_SECONDS));
-    expect(peopleOf(sim, id)).toEqual([]);
-    expect(sim.snapshot(null, "t", "").formerContracts ?? []).toEqual([]);
+    return { people: peopleOf(sim, id), former: sim.snapshot(null, "t", "").formerContracts ?? [] };
+  });
+  const lostBack = once(() => {
+    const { sim, id, guards } = lost();
+    lostAway();
     backAtDocks(sim);
-    expect(guardsOf(sim, id)).toEqual(guards);
-    for (const k of guards) expect(awake(sim, k)).toBe(false);
+    return { guards: guardsOf(sim, id), awake: guards.map((k) => awake(sim, k)) };
   });
 
-  it("one that never gives up falls asleep after PINNED_AWAY_SECONDS outside the loaded chunks, calm", () => {
-    // The job lost, not paid: for the streaming it is as one still running (its site not cleared).
+  it("the guards of a lost infiltration, still after her, are pinned outside every loaded chunk", () => {
+    const { guards, pinned, awake: after } = lost();
+    expect(guards.length).toBeGreaterThan(0);
+    expect(pinned).toEqual(guards);
+    expect(after).toEqual(guards.map(() => true));
+  });
+
+  it("the guards of a lost infiltration give up and fall asleep", () => {
+    expect(lostAway()).toEqual({ people: [], former: [] });
+  });
+
+  it("the guards of a lost infiltration wait at their site, calm", () => {
+    const { guards } = lost();
+    expect(lostBack()).toEqual({ guards, awake: guards.map(() => false) });
+  });
+
+  // The job lost, not paid: for the streaming it is as one still running (its site not cleared).
+  const neverAway = once(() => {
     const { sim, id } = alarmed(10);
     const key = `${id}-g1`;
     neverGivesUp(sim, key);
     teleportPlayer(sim, AWAY);
-    run(sim, seconds(PINNED_AWAY_SECONDS) - SIM_HZ);
-    expect(awake(sim, key)).toBe(true);
+    run(sim, seconds(PINNED_AWAY_SECONDS / 2));
+    return { sim, key, awake: awake(sim, key) };
+  });
+  const neverAlmost = once(() => {
+    const { sim, key } = neverAway();
+    run(sim, seconds(PINNED_AWAY_SECONDS / 2) - SIM_HZ);
+    return awake(sim, key);
+  });
+  const neverAsleep = once(() => {
+    const { sim, key } = neverAway();
+    neverAlmost();
     run(sim, 2 * SIM_HZ);
-    expect(byKey(sim, key)).toBeUndefined();
+    const there = byKey(sim, key) !== undefined;
     const asleep = sim.streamer.dormantSnapshots().find((s) => s.key === key);
-    expect(asleep).toMatchObject({ alerted: false });
-    expect(asleep?.lastKnown).toBeUndefined();
     backAtDocks(sim);
-    expect(byKey(sim, key)).toBeDefined();
-    expect(awake(sim, key)).toBe(false);
+    return { there, asleep, back: byKey(sim, key) !== undefined, awake: awake(sim, key) };
   });
 
-  for (const at of [5, 24, 29]) {
+  it("one that never gives up is still after her half PINNED_AWAY_SECONDS outside the loaded chunks", () => {
+    expect(neverAway().awake).toBe(true);
+  });
+
+  it("one that never gives up is still after her a second before PINNED_AWAY_SECONDS", () => {
+    expect(neverAlmost()).toBe(true);
+  });
+
+  it("one that never gives up falls asleep after PINNED_AWAY_SECONDS outside the loaded chunks, calm", () => {
+    const { there, asleep, back, awake: after } = neverAsleep();
+    expect(there).toBe(false);
+    expect(asleep).toMatchObject({ alerted: false });
+    expect(asleep?.lastKnown).toBeUndefined();
+    expect(back).toBe(true);
+    expect(after).toBe(false);
+  });
+
+  // One game she left, saved on the way: each save goes on alone, compared to it second by second.
+  const SAVED_AT = [5, 24, 29];
+  const LEFT_FOR = 40;
+  const left = once(() => {
+    const { sim, id } = alarmed(10);
+    teleportPlayer(sim, AWAY);
+    const people: string[][] = [];
+    const saves = new Map<number, Simulation>();
+    for (let s = 1; s <= LEFT_FOR; s++) {
+      run(sim, SIM_HZ);
+      people[s] = peopleOf(sim, id);
+      if (SAVED_AT.includes(s)) saves.set(s, reload(sim));
+    }
+    return { id, people, saves, hash: hash(sim) };
+  });
+  /** Steps the game saved `at` s after she left to the end of `left`: the first second they part, or null. */
+  const partingFromLeft = (at: number): number | null => {
+    const { id, people, saves, hash: end } = left();
+    const loaded = saves.get(at)!;
+    for (let s = at + 1; s <= LEFT_FOR; s++) {
+      run(loaded, SIM_HZ);
+      if (peopleOf(loaded, id).join() !== people[s]!.join()) return s - at;
+    }
+    return hash(loaded) === end ? null : LEFT_FOR - at;
+  };
+
+  it(`the game she left has its guards asleep ${LEFT_FOR} s after`, () => {
+    expect(left().people[LEFT_FOR]).toEqual([]);
+  });
+
+  for (const at of SAVED_AT) {
     it(`saved ${at} s after she left, the loaded game puts the same guards to sleep at the same time`, () => {
-      const { sim, id } = alarmed(10);
-      teleportPlayer(sim, AWAY);
-      run(sim, seconds(at));
-      const loaded = reload(sim);
-      expect(peopleOf(loaded, id)).toEqual(peopleOf(sim, id));
-      expect(parting(sim, loaded, id, seconds(40 - at))).toBeNull();
-      expect(peopleOf(sim, id)).toEqual([]);
+      const { id, people, saves } = left();
+      expect(peopleOf(saves.get(at)!, id)).toEqual(people[at]);
+      expect(partingFromLeft(at)).toBeNull();
     });
   }
 
-  it("a calm guard whose chunk sleeps stays while he stands in a loaded one, after a load too, and sleeps once out of it", () => {
+  const calmWest = once(() => {
     const { sim, id } = alarmed(10);
     const key = `${id}-g1`;
     // Her in the west of the docks: the guards' chunk falls asleep with them pinned.
     teleportPlayer(sim, ground(2330, 300));
     sim.step();
-    expect(sim.streamer.isLoaded(sim.streamer.chunkIdAt(byKey(sim, key)!.position))).toBe(false);
+    const ownLoaded = sim.streamer.isLoaded(sim.streamer.chunkIdAt(byKey(sim, key)!.position));
     // He came after her into the loaded west and gave up there.
     const g = byKey(sim, key)!;
     g.position = ground(2450, 400);
     g.prevPosition = g.position;
     g.ai = { ...g.ai!, alerted: false, lastKnown: null, search: 0, lost: 0, suspicion: 0 };
     sim.step();
-    expect(sim.streamer.isLoaded(sim.streamer.chunkIdAt(byKey(sim, key)!.position))).toBe(true);
+    const standsLoaded = sim.streamer.isLoaded(sim.streamer.chunkIdAt(byKey(sim, key)!.position));
     const loaded = reload(sim);
-    expect(byKey(loaded, key)).toBeDefined();
-    expect(parting(sim, loaded, id, seconds(60))).toBeNull();
+    return { sim, id, key, loaded, ownLoaded, standsLoaded, loadedHasHim: byKey(loaded, key) !== undefined };
+  });
+  // 60 s of both games, most of it the first 20 s while he walks home: a stretch a case.
+  const CALM_WALK = [6, 7, 7, 40];
+  const calmWalk = stretches(() => {
+    const { sim, loaded, id } = calmWest();
+    return { a: sim, b: loaded, id };
+  }, CALM_WALK);
+
+  it("a calm guard whose chunk sleeps stays while he stands in a loaded one, after a load too", () => {
+    const { ownLoaded, standsLoaded, loadedHasHim } = calmWest();
+    expect({ ownLoaded, standsLoaded, loadedHasHim }).toEqual({ ownLoaded: false, standsLoaded: true, loadedHasHim: true });
+  });
+
+  for (const [i, length] of CALM_WALK.entries()) {
+    const after = CALM_WALK.slice(0, i).reduce((t, l) => t + l, length);
+    it(`a calm guard whose chunk sleeps walks home the same in both games, ${after} s after the load`, () => {
+      expect(calmWalk(i + 1)).toBeNull();
+    });
+  }
+
+  it("a calm guard whose chunk sleeps sleeps once out of the loaded chunks", () => {
+    calmWalk(CALM_WALK.length);
     // Walked home, out of the loaded chunks: asleep there in both.
+    const { sim, key } = calmWest();
     expect(byKey(sim, key)).toBeUndefined();
   });
 });
@@ -139,17 +248,31 @@ describe("a paid job's guard far from the player is gone (G-188 with G-195)", ()
     expect(peopleOf(sim, c.id)).toEqual([]);
   });
 
-  it("saved while he is pinned far away, the loaded game loses him at the same time", () => {
+  // Both games for 30 s after the save in two stretches, a stretch a case.
+  const paidSaved = once(() => {
     const { sim, c } = paidAlerted();
     teleportPlayer(sim, AWAY);
     run(sim, seconds(10));
-    const loaded = reload(sim);
-    expect(parting(sim, loaded, c.id, seconds(30))).toBeNull();
-    for (const s of [sim, loaded]) {
-      expect(peopleOf(s, c.id)).toEqual([]);
+    return { a: sim, b: reload(sim), id: c.id };
+  });
+  const paidStretch = stretches(paidSaved, [15, 15]);
+  const paidBack = once(() => {
+    paidStretch(2);
+    const { a, b, id } = paidSaved();
+    return [a, b].map((s) => {
+      const gone = peopleOf(s, id);
       backAtDocks(s);
-      expect(peopleOf(s, c.id)).toEqual([]);
-    }
+      return { gone, back: peopleOf(s, id) };
+    });
+  });
+
+  it("saved while he is pinned far away, the loaded game goes on the same for 15 s", () => {
+    expect(paidStretch(1)).toBeNull();
+  });
+
+  it("saved while he is pinned far away, the loaded game loses him at the same time", () => {
+    expect(paidStretch(2)).toBeNull();
+    expect(paidBack()).toEqual([0, 1].map(() => ({ gone: [], back: [] })));
   });
 
   it("calm in a loaded chunk not his own, he is still there after a load (not gone before her eyes)", () => {
