@@ -49,3 +49,22 @@ describe("the stats panel and the pool (stage 3c)", () => {
     expect(ui.getState().characterStats!.moveSpeed).toBe(playerStatsOf(session.sim.domain).moveSpeed);
   });
 });
+
+describe("the stats panel and the buffs", () => {
+  it("follows a stat buff starting and ending (the steady stim steadies the aim)", () => {
+    const { session, ui } = game((d) => ({ ...d, character: { ...d.character, cyberware: { optics: "hitomi_optics_mk1" } }, inventory: { ...d.inventory, stacks: { ...d.inventory.stacks, steady_stim: 1 } } }));
+    const before = ui.getState().characterStats!;
+    expect(before.spread).not.toBeNull();
+    session.intents.openCharacterScreen("inventory");
+    session.intents.useItem({ stack: "steady_stim" });
+    steps(session, 1);
+    expect(session.sim.domain.buffs.map((b) => b.id)).toEqual(["steady"]);
+    expect(ui.getState().characterStats!.spread!).toBeLessThan(before.spread!);
+    // The buff runs out in play: the panel goes back.
+    session.intents.closeCharacterScreen();
+    patchDomain(session, (d) => ({ ...d, buffs: d.buffs.map((b) => ({ ...b, left: 1e-3 })) }));
+    steps(session, 2);
+    expect(session.sim.domain.buffs).toEqual([]);
+    expect(ui.getState().characterStats!.spread).toBe(before.spread);
+  });
+});

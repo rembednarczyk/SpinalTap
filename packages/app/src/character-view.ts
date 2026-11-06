@@ -66,7 +66,8 @@ export const createStatsCache = () => {
     // The attributes and the perks change the crits, the armor and the aim (ADR-0059); the shards
     // and the level grow the cyberware pool, which brings implants over it back (stage 3c).
     const { level, attributes, perks } = domain.progression;
-    const next = [domain.character, domain.equipment, domain.inventory.items, attributes, perks, domain.capacityShards, level, hp, maxHp];
+    // The player's stats are memoised in sim and change object on a stat buff starting or ending too.
+    const next = [playerStatsOf(domain), domain.character, domain.equipment, domain.inventory.items, attributes, perks, domain.capacityShards, level, hp, maxHp];
     if (last && next.every((v, i) => v === key[i])) return last;
     key = next;
     last = characterStats(domain, hp, maxHp);
