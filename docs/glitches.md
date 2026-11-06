@@ -1175,6 +1175,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `aim` z ● dochodzi po zatrzaskach (`InputLatches.apply` w `keymap.ts`), więc po puszczeniu ● gracz wraca do sprintu; przy zmianie palna → biała przez jeden krok `posture.aiming` = true (flaga broni spóźnia się o krok). Test sesji B nie obejmuje tapnięcia ◎ krótszego niż krok (tylko test jednostkowy) · Koszt: mały
 - Pakiet właściciela: packages/engine (`input`), packages/app (`touch-fire.ts`)
 
+### G-390 `save-load-contract-ended.test.ts` przekracza 20 s w CI (przypięci daleko strażnicy)
+- Status: w naprawie (6.11, orkiestrator; CI #322, run 42215667667, część 2; prawdopodobnie też wcześniejsza porażka #316)
+- Ważność: S3 (zatrzymuje CI losowych PR-ów) · Zasięg: „saved away from the docks, the guards of the alarm wait at the office in both games”; ten sam wzorzec co G-357 (krokowanie z przypiętymi daleko strażnikami ok. 10× droższe) · Koszt: mały
+- Pakiet właściciela: packages/sim (test)
+- Test przyjęcia: najdłuższy przypadek pliku lokalnie ≤ 1,5 s, asercje bez zmian
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
