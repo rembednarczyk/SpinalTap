@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BASE_RAM, type DomainEvents, START_ATTRIBUTES, STANDARD_TERMS, respecPrice } from "@seki/core";
+import { BASE_RAM, type DomainEvents, type GameCommand, START_ATTRIBUTES, STANDARD_TERMS, respecPrice } from "@seki/core";
 import { type Simulation, cyberCapacityOf } from "../src";
 import { ramMaxOf } from "../src/world/progression-ops";
 import { collect, streetSim } from "./helpers";
@@ -38,6 +38,14 @@ describe("spend-perk-point", () => {
   });
 });
 
+/** Sends `cmd` (the respec by default) and returns the reasons of its refusals. */
+const failed = (sim: Simulation, cmd: GameCommand = { type: "respec" }): string[] => {
+  const out = collect<DomainEvents["PurchaseFailed"]>(sim, "PurchaseFailed");
+  sim.enqueue(cmd);
+  sim.step();
+  return out.map((f) => f.reason);
+};
+
 describe("respec at Mori's", () => {
   /** Level 7 with Tech 8, Overclock at two ranks and Buffer, and `eddies`. */
   const built = (eddies: number): Simulation => {
@@ -52,9 +60,11 @@ describe("respec at Mori's", () => {
     const price = respecPrice(7, STANDARD_TERMS);
     const ram = collect<DomainEvents["RamChanged"]>(sim, "RamChanged");
     const paid = collect<DomainEvents["EddiesChanged"]>(sim, "EddiesChanged");
+    const reset = collect<DomainEvents["ProgressionReset"]>(sim, "ProgressionReset");
     patchDomain(sim, (d) => ({ ...d, netrun: { ...d.netrun, ram: ramMaxOf(d) } }));
     sim.enqueue({ type: "respec" });
     sim.step();
+    expect(reset).toEqual([{ price, attribute: 6, perk: 6 }]);
     expect(sim.domain.progression).toMatchObject({ attributes: START_ATTRIBUTES, perks: {}, unspent: { attribute: 6, perk: 6 }, level: 7 });
     expect(sim.domain.wallet.eddies).toBe(5000 - price);
     expect(paid).toEqual([expect.objectContaining({ delta: -price })]);
@@ -62,22 +72,28 @@ describe("respec at Mori's", () => {
     expect(sim.domain.netrun.ram).toBe(BASE_RAM);
   });
 
-  it("is refused without the money, with nothing to give back, and with implants that only fit thanks to the points", () => {
-    const failed = (sim: Simulation) => {
-      const out = collect<DomainEvents["PurchaseFailed"]>(sim, "PurchaseFailed");
-      sim.enqueue({ type: "respec" });
-      sim.step();
-      return out.map((f) => f.reason);
-    };
+  it("is refused without the money and with nothing to give back", () => {
     const poor = built(10);
     expect(failed(poor)).toEqual(["insufficient-funds"]);
-    expect(poor.domain.progression.perks).toEqual({ tech_overclock: 2, net_buffer: 1 });
+    expect(poor.domain.progression.perks).toEqual(perked({ tech_overclock: 2, net_buffer: 1 }, 7).perks);
     expect(failed(street())).toEqual(["empty-slot"]);
+  });
+
+  it("leaves implants over the shrunk pool in (stage 3b); a new one does not go in over it", () => {
     const loaded = built(5000);
     patchDomain(loaded, (d) => ({ ...d, character: { ...d.character, cyberware: { optics: "hitomi_optics_mk1", skeleton: "kitsune_tendons", arms: "tsubame_reflex", nervous: "synapse_booster" } } }));
-    const pool = cyberCapacityOf(loaded.domain);
-    expect(pool.used).toBeLessThanOrEqual(pool.max);
-    expect(failed(loaded)).toEqual(["over-capacity"]);
-    expect(loaded.domain.wallet.eddies).toBe(5000);
+    const before = cyberCapacityOf(loaded.domain);
+    expect(before.used).toBeLessThanOrEqual(before.max);
+    const reset = collect<DomainEvents["ProgressionReset"]>(loaded, "ProgressionReset");
+    expect(failed(loaded)).toEqual([]);
+    expect(loaded.domain.character.cyberware).toMatchObject({ arms: "tsubame_reflex", nervous: "synapse_booster" });
+    const after = cyberCapacityOf(loaded.domain);
+    expect(after.used).toBe(before.used);
+    expect(after.used).toBeGreaterThan(after.max);
+    expect(reset).toEqual([{ price: respecPrice(7, STANDARD_TERMS), attribute: 6, perk: 6 }]);
+    // Taking the optics out is free; putting them back in over the pool is refused.
+    expect(failed(loaded, { type: "remove-cyberware", slot: "optics" })).toEqual([]);
+    expect(loaded.domain.character.cyberware.optics).toBeUndefined();
+    expect(failed(loaded, { type: "buy-cyberware", cyberwareId: "hitomi_optics_mk1" })).toEqual(["over-capacity"]);
   });
 });
