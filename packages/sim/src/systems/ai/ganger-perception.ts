@@ -6,7 +6,7 @@ import { LEVEL_GAP } from "../../world/nav";
 import { noteDetected } from "../../world/street";
 import { coveredFrom } from "../../world/disguise";
 import { disguisedSight } from "./disguise-sight";
-import { difficultyOf } from "../../world/difficulty";
+import { detectionPaceOf } from "../../world/progression-ops";
 
 /*
  * What a ganger knows (ADR-0024, ADR-0029): sight of the player and of a victim, a guard's
@@ -48,8 +48,8 @@ export const enemySees = (g: Entity, player: Entity, distance: number, inSight: 
 
 /** Fills or drains the suspicion of `g` for this step; returns whether it believes its eyes (full). */
 const suspect = (ctx: SimContext, g: Ganger, sees: boolean, distance: number, sight: number, timeScale: number): boolean => {
-  // It fills at the difficulty's pace (`awareness`, ADR-0066) and drains as ever.
-  const rate = sees ? visionOf(g).suspicionRate * difficultyOf(ctx).awareness * (1.5 - Math.min(1, distance / sight)) : -SUSPICION_DECAY;
+  // It fills at the difficulty's pace (`awareness`, ADR-0066), slowed by Shadow (ADR-0059), and drains as ever.
+  const rate = sees ? visionOf(g).suspicionRate * detectionPaceOf(ctx) * (1.5 - Math.min(1, distance / sight)) : -SUSPICION_DECAY;
   g.ai.suspicion = Math.max(0, Math.min(1, (g.ai.suspicion ?? 0) + rate * ctx.dt * timeScale));
   return g.ai.suspicion >= 1;
 };

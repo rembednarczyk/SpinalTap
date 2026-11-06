@@ -48,7 +48,10 @@ export const presentTrade: Presenter = ({ bus, audio, toast, ui }) => [
   }),
   bus.on("PurchaseFailed", (e) => {
     const t = uiText(ui);
-    toast("system", t(`shop.refused.${e.shopId ?? "clinic"}`), t(`shop.failure.${e.reason}`));
+    const clinic = (e.shopId ?? "clinic") === "clinic";
+    // The clinic sells no ammo, so its refusal names what it still offers (G-359).
+    const text = e.reason === "refused" && clinic ? t("shop.failure.refusedClinic") : t(`shop.failure.${e.reason}`);
+    toast("system", t(`shop.refused.${e.shopId ?? "clinic"}`), text);
     audio.play("denied");
   }),
 ];

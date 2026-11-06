@@ -1,4 +1,4 @@
-import type { Vec3 } from "@seki/core";
+import { type Vec3, noiseScale } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext } from "../../world/context";
 import { LEVEL_GAP } from "../../world/nav";
@@ -33,14 +33,16 @@ export const footstepNoise = (p: Entity): number => {
 };
 
 /**
- * A noise of the player's at `at`, heard `radius` m round on its level: every unalerted enemy
+ * A noise of the player's at `at`, heard `noise` m round on its level: every unalerted enemy
  * there that would go for her gets a lead to `at` and at least `NOISE_SUSPICION × awareness`.
  * One that only watches her (friendly, a tolerant patrol, her disguise of its faction) does not
  * come over for a step it hears. One that has her in sight gets the lead but not the floor of
  * suspicion (stage 3): its eyes already fill the meter, so a sprint it sees is seen no sooner for
- * being heard as well, and once she slips out of its sight it still goes to look.
+ * being heard as well, and once she slips out of its sight it still goes to look. Soft Steps
+ * (ADR-0059) shrinks every noise of hers.
  */
-export const hearNoise = (ctx: SimContext, at: Vec3, radius: number): void => {
+export const hearNoise = (ctx: SimContext, at: Vec3, noise: number): void => {
+  const radius = noise * noiseScale(ctx.state.domain.progression.perks);
   if (radius <= 0) return;
   const level = Math.min(1, NOISE_SUSPICION * difficultyOf(ctx).awareness);
   const player = ctx.world.with("player").first;

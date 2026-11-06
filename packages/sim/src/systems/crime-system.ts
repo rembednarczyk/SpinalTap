@@ -14,6 +14,7 @@ import {
   WITNESS_CALL_SECONDS,
   type WitnessChannel,
   angleTo,
+  cameraSpotScale,
   ZONE_ACCESS,
   contractKind,
   factionStance,
@@ -34,6 +35,7 @@ import { applyReputationCause } from "../world/domain-ops";
 import { incapacitated } from "../world/takedown";
 import { coveredFrom } from "../world/disguise";
 import { difficultyOf } from "../world/difficulty";
+import { detectionPaceOf } from "../world/progression-ops";
 import { worldTimeScale } from "./ability-system";
 import { COWER_RADIUS, scare } from "./ai/civilian-ai-system";
 import { effectiveAggroRange, enemySees, giveLead } from "./ai/ganger-perception";
@@ -330,8 +332,8 @@ const runCameras = (ctx: SimContext, player: Entity | null, dt: number, aware: M
       player.position.z >= zone.minZ &&
       player.position.z <= zone.maxZ;
     const sees = inside && !!player && cameraSees(ctx, cam, player);
-    // The spot meter fills at the difficulty's pace (`awareness`, ADR-0066); it drains as ever.
-    d.spot = Math.max(0, Math.min(1, d.spot + (sees ? (dt / CAMERA_SPOT_SECONDS) * difficultyOf(ctx).awareness : -dt * 0.5)));
+    // The spot meter fills at the difficulty's pace (`awareness`, ADR-0066), slowed by Shadow and Ghost Signal (ADR-0059); it drains as ever.
+    d.spot = Math.max(0, Math.min(1, d.spot + (sees ? (dt / CAMERA_SPOT_SECONDS) * detectionPaceOf(ctx) * cameraSpotScale(ctx.state.domain.progression.perks) : -dt * 0.5)));
     if (player && sees && d.spot >= 1 && d.cooldown === 0) {
       d.cooldown = CAMERA_REPORT_COOLDOWN;
       noteDetected(ctx);

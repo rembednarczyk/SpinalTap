@@ -136,6 +136,38 @@ describe("metro entrances on the map (ADR-0071 stage 2)", () => {
     }
   });
 
+  it.each(ENTRANCES)("%s: the roof's eaves clear every solid round it (T-160: Tessen's wall at Nabrzeże)", (_n, e) => {
+    const sim = Simulation.create({ seed: 5 });
+    teleportPlayer(sim, e.door);
+    run(sim, 2);
+    const props = new Set(e.props.map((p) => `${p.center.x},${p.center.y},${p.center.z}`));
+    const top = e.street + 3.1;
+    const r = e.roof;
+    for (const x of sim.world) {
+      if (!x.solid || props.has(`${x.position.x},${x.position.y},${x.position.z}`) || x.interactable?.kind === "metro") continue;
+      const b = x.solid;
+      const over = b.min.x < r.maxX && b.max.x > r.minX && b.min.z < r.maxZ && b.max.z > r.minZ && b.max.y > top && b.min.y < top + 0.2;
+      const hit = !x.prisms || x.prisms.some((p) => p.bottom < top + 0.2 && p.top > top && circleTouchesPrism(p, (r.minX + r.maxX) / 2, (r.minZ + r.maxZ) / 2, Math.hypot(r.maxX - r.minX, r.maxZ - r.minZ) / 2));
+      expect(over && hit, `${x.id} under the eaves`).toBe(false);
+    }
+  });
+
+  it.each(ENTRANCES)("%s: from the street before the opening to the sill no rise is over 0.25 m (G-333)", (_n, e) => {
+    const sim = Simulation.create({ seed: 5 });
+    const { along, opens } = e.spot;
+    const o = e.outline;
+    const mouth = along === "x" ? (opens > 0 ? o.maxX : o.minX) : opens > 0 ? o.maxZ : o.minZ;
+    // The landing's sill stands 0.05 m over the street at the opening (`metro-pavilion.ts`).
+    const sill = e.street + 0.05;
+    for (let w = -1.2; w <= 1.2 + 1e-9; w += 0.1) {
+      const x = along === "x" ? mouth + opens * 0.5 : e.spot.x + w;
+      const z = along === "x" ? e.spot.z + w : mouth + opens * 0.5;
+      const ground = sim.streamer.ground.heightAt(x, z);
+      const steps = e.threshold && e.threshold.top > ground ? [ground, e.threshold.top, sill] : [ground, sill];
+      for (let i = 1; i < steps.length; i++) expect(steps[i]! - steps[i - 1]!, `across ${w.toFixed(1)}`).toBeLessThan(0.25);
+    }
+  });
+
   it("lists every pavilion's outline for the crowd, the traffic and the furniture", () => {
     expect(METRO_FOOTPRINTS).toEqual(METRO_ENTRANCES.map((e) => e.outline));
   });

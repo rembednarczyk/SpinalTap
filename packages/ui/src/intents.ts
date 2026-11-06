@@ -1,4 +1,4 @@
-import type { BreachDaemonId, CyberwareId, CyberwareSlot, DifficultyProfile, EquipSlot, ItemRef, MetroStationId, ModSlot, QuickhackSlotInput, ShopItemId } from "@seki/core";
+import type { AttributeId, BreachDaemonId, CyberwareId, CyberwareSlot, DifficultyProfile, EquipSlot, ItemRef, MetroStationId, ModSlot, PerkId, QuickhackSlotInput, ShopItemId } from "@seki/core";
 import type { CharacterTab, RadioStationId, SettingsVm } from "./store/ui-store";
 
 /** Where the 3D preview of the character screen is drawn, in CSS pixels of the page. */
@@ -45,6 +45,8 @@ export interface ShopIntents {
   installCyberwareItem(uid: string): void;
   /** Doktor Mori takes an implant out into the bag. */
   removeCyberware(slot: CyberwareSlot): void;
+  /** Doktor Mori resets the attributes and perks for a fee (ADR-0059): every point comes back. */
+  respec(): void;
   closeShop(): void;
   /** Leaves the counter for a conversation with the shopkeeper (Mori or Oyaji). */
   talkToShopkeeper(): void;
@@ -76,6 +78,14 @@ export interface CharacterIntents {
   dropItem(ref: ItemRef, qty: number): void;
   installMod(weaponUid: string, modUid: string): void;
   removeMod(weaponUid: string, slot: ModSlot): void;
+}
+
+/** Character progression (ADR-0059): the sheet's attribute and perk points. */
+export interface ProgressionIntents {
+  /** Puts one unspent point into `attribute`; the game refuses it without a point or at 15. */
+  spendAttributePoint(attribute: AttributeId): void;
+  /** Buys one rank of `perk`; the game refuses it without a point, below its tier or at its last rank. */
+  spendPerkPoint(perk: PerkId): void;
 }
 
 /** Settings and key bindings. */
@@ -142,6 +152,7 @@ export type UiIntents = SessionIntents &
   ShopIntents &
   LootIntents &
   CharacterIntents &
+  ProgressionIntents &
   SettingsIntents &
   DifficultyIntents &
   CameraIntents &

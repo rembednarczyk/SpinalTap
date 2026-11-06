@@ -28,6 +28,7 @@ import { formatNumber, useLocale } from "../i18n/number";
 import type { Translate } from "../i18n/t";
 import { useT, useText } from "../i18n/use-t";
 import { rarityLabel } from "../inventory/item-text";
+import { RespecSection } from "./respec-section";
 import type { TradeItemVm } from "../store/ui-store";
 import { useShopIntents, useUi } from "../use-ui";
 import { CapacityBar, CapacityCost, useCapacityFit } from "./capacity-bar";
@@ -318,6 +319,7 @@ export const ImplantsTab = ({ terms }: { readonly terms: ShopTerms }) => {
           );
         })}
       </ul>
+      <RespecSection terms={terms} />
     </>
   );
 };

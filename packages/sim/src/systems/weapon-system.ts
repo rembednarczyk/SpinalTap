@@ -1,4 +1,4 @@
-import { holsterTime, recoverBloom, reloadPlan } from "@seki/core";
+import { holsterTime, recoverBloom, reloadPlan, reloadTimeScale } from "@seki/core";
 import type { Entity } from "../world/components";
 import { playerHeld } from "../world/takedown";
 import type { SimContext, System } from "../world/context";
@@ -20,8 +20,10 @@ const startReload = (ctx: SimContext, e: Armed): boolean => {
   if (!c.stats || c.reloading > 0 || c.holstered || c.drawing > 0) return false;
   const plan = reloadPlan(c.stats, loadedOf(ctx, e), reserveOf(ctx, e));
   if (!plan) return false;
-  c.reloading = plan.duration;
-  ctx.bus.emit("ReloadStarted", { entityId: e.id, duration: plan.duration });
+  // Quick Reload (ADR-0059) is the player's.
+  const duration = plan.duration * (e.player ? reloadTimeScale(ctx.state.domain.progression.perks) : 1);
+  c.reloading = duration;
+  ctx.bus.emit("ReloadStarted", { entityId: e.id, duration });
   return true;
 };
 

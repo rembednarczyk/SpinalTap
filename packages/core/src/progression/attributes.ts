@@ -1,6 +1,6 @@
 /**
  * The five attributes (ADR-0059). Each runs from 3 to 15; a new character has 3 in every one and
- * the levels 2..30 give 29 points, so no build maxes them all. Their effects come in stage 2; the
+ * the levels 2..30 give 29 points, so no build maxes them all. Their effects are in `attribute-effects`; the
  * names the player reads are keys of the UI catalogs (ADR-0056), not text here.
  */
 export const ATTRIBUTE_IDS = ["might", "reflex", "tech", "net", "shadow"] as const;

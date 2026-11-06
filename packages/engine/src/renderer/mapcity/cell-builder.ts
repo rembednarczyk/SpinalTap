@@ -6,6 +6,7 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import type { CityProps } from "../city-props";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
+import { planPavilionSigns } from "../metro/pavilion-signs";
 import { findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
 import { planFarFrames, planNearFrames } from "./cell-plan";
@@ -65,6 +66,8 @@ export class CellBuilder {
     planFarFrames(far, signs, cell.frames, (name) => this.deps.signs.slotFor(name), entries.drawnGround, lite);
     planFarCanyon(far, cell.spans);
     planCanyonSigns(signs, cell.frames, cell.spans, lite);
+    // The metro's names (ADR-0071 stage 3) join a cell's signs, never make a mesh of their own.
+    if (!signs.empty) planPavilionSigns(signs, cell.bounds);
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");
     if (!signs.empty) {
       const m = sinkToMesh(this.deps.scene, `map-signs-${cell.key}`, signs, true);

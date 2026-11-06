@@ -27,7 +27,7 @@ import { aimOrigin, chestOf, hitscan, type HitscanResult } from "../world/hitsca
 import { consumeRound, loadedOf, readyToFire } from "../world/player-weapon";
 import { playerStatsOf } from "./player-control-system";
 import { disturb, isEngaged, noteViolence, offend, playerEngaged } from "../world/street";
-import { deflectShot, deflects } from "../world/deflect";
+import { dancesBullet, deflectShot, deflects } from "../world/deflect";
 import { playerHeld } from "../world/takedown";
 import { difficultyOf } from "../world/difficulty";
 
@@ -169,7 +169,8 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
  * One pellet hits `target` in `zone`: a raised melee guard takes some of a shot from the front
  * (ADR-0019), `resolveAttack` draws the crit (one random number), the damage lands and any AI
  * hit is alerted. Returns whether the player was hurt. A dashing player is not there for the
- * bullet, and a guard with the Tsubame reflex sends it back instead (ADR-0033).
+ * bullet (with Bullet Dance it flies back, ADR-0059), and a guard with the Tsubame reflex sends
+ * it back instead (ADR-0033).
  */
 const hitWithPellet = (
   ctx: SimContext,
@@ -178,7 +179,11 @@ const hitWithPellet = (
   { target, health, point, zone }: { target: Entity; health: NonNullable<Entity["health"]>; point: Vec3; zone: HitZone },
   rng: RandomPort,
 ): boolean => {
-  if (target.player && (target.perks?.iframes ?? 0) > 0) return false;
+  if (target.player && (target.perks?.iframes ?? 0) > 0) {
+    // Bullet Dance (ADR-0059): the bullet that meets her dash flies back along her aim.
+    if (dancesBullet(ctx, target)) deflectShot(ctx, { shooter: shot.shooter, defender: target, at: point, weapon }, (e) => defenderOf(ctx, e), rng);
+    return false;
+  }
   const guard = guardAgainst(target, shot.origin, "projectile");
   if (guard.blocked && deflects(ctx, target)) {
     deflectShot(ctx, { shooter: shot.shooter, defender: target, at: point, weapon }, (e) => defenderOf(ctx, e), rng);

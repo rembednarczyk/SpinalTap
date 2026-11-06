@@ -1,5 +1,4 @@
 import {
-  BASE_RAM,
   COMBAT_RADIUS,
   DISTRACT_RADIUS,
   type DomainState,
@@ -14,19 +13,23 @@ import {
   SHORT_CIRCUIT_DAMAGE,
   type Vec3,
   applyDamage,
+  chainRadius,
   contractKind,
   directionFromAngles,
   factionStance,
   hackCost,
   hackInSlot,
+  perkUploadScale,
+  ramRegenScale,
   refundOf,
   regenRam,
+  uploadTimeScale,
 } from "@seki/core";
 import type { DeviceKind, Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
-import { grantQuickhackXp } from "../world/progression-ops";
+import { grantQuickhackXp, ramMaxOf } from "../world/progression-ops";
 import { securityKey } from "../world/reinforcements";
 import { alertedNear, disturb, hackFxOf, isEngaged, noteDetected, noteHacked, noteViolence } from "../world/street";
 import { scanning, worldTimeScale } from "./ability-system";
@@ -138,7 +141,7 @@ const reportRam = (ctx: SimContext): void => {
   if (ctx.session.watch.ram === current) return;
   const first = ctx.session.watch.ram === null;
   ctx.session.watch.ram = current;
-  if (!first) ctx.bus.emit("RamChanged", { current, max: BASE_RAM });
+  if (!first) ctx.bus.emit("RamChanged", { current, max: ramMaxOf(ctx.state.domain) });
 };
 
 /** The breached network's ICEpick (ADR-0029): hacks cost 1 RAM less while the hack job runs. */
@@ -255,16 +258,28 @@ const shortCircuit = (ctx: SimContext, player: Entity, target: Entity): void => 
   disturb(ctx, "hack", target.position, HACK_NOISE, target.id);
 };
 
-/** The upload is through: the effect, and maybe the trace. */
-const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Entity): void => {
-  const def = QUICKHACKS[hackId];
-  const seen = watchers(ctx, player, hackId === "reboot_optics" ? target : null);
-  if (seen.length > 0) {
-    // Traced (ADR-0028): the target's network knows where the player is.
-    ctx.bus.emit("QuickhackTraced", { hackId, targetId: target.id });
-    noteDetected(ctx);
-    for (const w of seen) giveLead(w, player.position);
+/**
+ * Chain (ADR-0059): the nearest other target of the same kind within `radius` of the first, in
+ * its plain sight, alive and not broken; ties go to creation order. Null when there is none.
+ */
+const chainTarget = (ctx: SimContext, player: Entity, first: Entity, radius: number): Entity | null => {
+  const kind = hackTargetKind(first);
+  const from = scanPoint(first);
+  let best: Entity | null = null;
+  let bestDistance = Infinity;
+  for (const e of inCreationOrder([...ctx.world.with("device"), ...ctx.world.with("body")])) {
+    if (e === first || e === player || hackTargetKind(e) !== kind || (e.health && e.health.current <= 0) || (e.device?.broken ?? 0) > 0) continue;
+    const distance = Math.hypot(e.position.x - first.position.x, e.position.z - first.position.z);
+    if (distance > radius || distance >= bestDistance || !lineOfSight(ctx.world, from, scanPoint(e))) continue;
+    best = e;
+    bestDistance = distance;
   }
+  return best;
+};
+
+/** What the hack does to the target. */
+const applyEffect = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Entity): void => {
+  const def = QUICKHACKS[hackId];
   switch (hackId) {
     case "ping":
       ping(ctx, target, def.duration);
@@ -282,8 +297,30 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
       shortCircuit(ctx, player, target);
       break;
   }
+};
+
+/**
+ * The upload is through: the effect, and maybe the trace. With Chain (ADR-0059) the effect also
+ * jumps to the next target of the kind nearby, with no trace and no XP of its own.
+ */
+const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Entity): void => {
+  const seen = watchers(ctx, player, hackId === "reboot_optics" ? target : null);
+  if (seen.length > 0) {
+    // Traced (ADR-0028): the target's network knows where the player is.
+    ctx.bus.emit("QuickhackTraced", { hackId, targetId: target.id });
+    noteDetected(ctx);
+    for (const w of seen) giveLead(w, player.position);
+  }
+  const duration = QUICKHACKS[hackId].duration;
+  applyEffect(ctx, player, hackId, target);
   noteHacked(ctx);
-  ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration: def.duration });
+  ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration });
+  const radius = chainRadius(ctx.state.domain.progression.perks);
+  const next = radius > 0 ? chainTarget(ctx, player, target, radius) : null;
+  if (next) {
+    applyEffect(ctx, player, hackId, next);
+    ctx.bus.emit("QuickhackApplied", { hackId, targetId: next.id, duration });
+  }
   grantQuickhackXp(ctx, xpKey(target));
 };
 
@@ -298,7 +335,8 @@ const start = (ctx: SimContext, focus: Entity, slot: number): void => {
   if ((focus.device?.broken ?? 0) > 0) return fail("wrong-target");
   const ram = hackCost(hackId, icepick(ctx));
   if (netrun.ram + 1e-9 < ram) return fail("no-ram");
-  const upload = QUICKHACKS[hackId].upload;
+  // Net and Fast Upload upload faster (ADR-0059).
+  const upload = QUICKHACKS[hackId].upload * uploadTimeScale(ctx.state.domain.progression.attributes) * perkUploadScale(ctx.state.domain.progression.perks);
   ctx.state.domain = { ...ctx.state.domain, netrun: { ram: netrun.ram - ram, upload: { hackId, target: targetRef(focus), left: upload, ram } } };
   ctx.session.watch.uploadId = focus.id;
   ctx.bus.emit("QuickhackStarted", { hackId, targetId: focus.id, upload, ram });
@@ -311,7 +349,7 @@ const runUpload = (ctx: SimContext, player: Entity, focus: Entity | null): void 
   if (!upload) return;
   const target = findTarget(ctx, upload.target);
   if (!target || target !== focus) {
-    ctx.state.domain = { ...ctx.state.domain, netrun: { ram: Math.min(BASE_RAM, netrun.ram + refundOf(upload)), upload: null } };
+    ctx.state.domain = { ...ctx.state.domain, netrun: { ram: Math.min(ramMaxOf(ctx.state.domain), netrun.ram + refundOf(upload)), upload: null } };
     ctx.bus.emit("QuickhackFailed", { hackId: upload.hackId, targetId: target?.id ?? focus?.id ?? player.id, reason: "lost-target" });
     return;
   }
@@ -347,7 +385,9 @@ export const scannerSystem: System = {
       runUpload(ctx, player, focus);
       if (focus && ctx.input.quickhack > 0) start(ctx, focus, ctx.input.quickhack);
       const netrun = ctx.state.domain.netrun;
-      if (!netrun.upload && netrun.ram < BASE_RAM && !inCombat(ctx, player)) setRam(ctx, regenRam(netrun.ram, BASE_RAM, ctx.dt));
+      const max = ramMaxOf(ctx.state.domain);
+      // Recycler (ADR-0059) brings it back faster.
+      if (!netrun.upload && netrun.ram < max && !inCombat(ctx, player)) setRam(ctx, regenRam(netrun.ram, max, ctx.dt * ramRegenScale(ctx.state.domain.progression.perks)));
     }
     reportRam(ctx);
   },

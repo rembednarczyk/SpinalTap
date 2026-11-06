@@ -342,8 +342,15 @@ export const createSteam = (scene: Scene, at: Vector3, tint: Color4, rate = 18):
   return ps;
 };
 
-/** Raindrops bouncing off the asphalt in a box around the camera. */
-export const createSplashes = (scene: Scene): { system: ParticleSystem; follow: (p: Vector3, ground?: number) => void } => {
+/** Half the side of the splashes' box round the camera, metres. */
+const SPLASH_REACH = 9;
+
+/**
+ * Raindrops bouncing off the asphalt in a box around the camera. None under a roof (`roofOver`:
+ * a gate's passage, a metro pavilion and its hall, G-331): a splash born there goes far under
+ * the ground, as the rain's drops end at a roof.
+ */
+export const createSplashes = (scene: Scene, roofOver?: (x: number, y: number, z: number) => boolean): { system: ParticleSystem; follow: (p: Vector3, ground?: number) => void } => {
   const tex = new DynamicTexture("splash-tex", { width: 16, height: 16 }, scene, false);
   const ctx = tex.getContext() as CanvasRenderingContext2D;
   ctx.fillStyle = "rgba(210,235,255,0.9)";
@@ -356,8 +363,15 @@ export const createSplashes = (scene: Scene): { system: ParticleSystem; follow: 
   ps.particleTexture = tex;
   const emitter = new Vector3(0, 0.02, 0);
   ps.emitter = emitter;
-  ps.minEmitBox = new Vector3(-9, 0, -9);
-  ps.maxEmitBox = new Vector3(9, 0, 9);
+  ps.minEmitBox = new Vector3(-SPLASH_REACH, 0, -SPLASH_REACH);
+  ps.maxEmitBox = new Vector3(SPLASH_REACH, 0, SPLASH_REACH);
+  if (roofOver) {
+    // The box's own start, then out of sight under a roof: a new splash is drawn before any update.
+    ps.startPositionFunction = (_world, at) => {
+      at.set(emitter.x + (Math.random() * 2 - 1) * SPLASH_REACH, emitter.y, emitter.z + (Math.random() * 2 - 1) * SPLASH_REACH);
+      if (roofOver(at.x, at.y + 0.1, at.z)) at.y = -1e4;
+    };
+  }
   ps.direction1 = new Vector3(-0.6, 1, -0.6);
   ps.direction2 = new Vector3(0.6, 1.4, 0.6);
   ps.minEmitPower = 0.8;

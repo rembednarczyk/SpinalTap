@@ -113,3 +113,59 @@ Atrybutów jest pięć. Każdy ma wartość od 3 do 15. Na starcie są po 3, a n
 - Wartości liczbowe (krzywa, +4% na poziom, pasma, wagi) są wstępne. Ustala je test balansu z etapu 8, a ich zmiany nie wymagają nowego ADR-u.
 - **Zależność z audytu (31.10):** gra nie ma jeszcze obezwładnień (takedown, ogłuszenie). Źródło XP „skradanie” i perki drzewka Cień, które ich wymagają, czekają na osobny ADR obezwładnień. Etap 1 emituje tylko XP z tego, co istnieje.
 - **Z weryfikacji etapu 1 (31.10):** walidacja zapisu wymaga, żeby poziom był równy poziomowi z krzywej dla XP. Zmiana krzywej w etapie 8 musi więc mieć migrację albo przeliczenie poziomu przy wczytaniu. Liczenie wydanych perków (suma rang) aktualizuje etap 3. XP za quickhack przysługuje raz na cel, a pamięć celów ma 256 wpisów.
+- **Z budowy etapu 2 (5.11):**
+  - Efekt liczy się od punktów ponad startowe 3, więc nowa postać gra jak przed etapem, a złote hashe się nie zmieniły.
+  - Liczby bez wartości w tabeli są wstępne i do strojenia w etapie 8: czas celowania −2% na punkt Refleksu, upload −2% na punkt Sieci.
+  - Technika daje +1 pancerza na punkt tylko na strefach, które chroni założona odzież, i dalej obowiązuje limit 8 na strefę. Przy 15 Technice prawie każda ubrana strefa dochodzi do limitu, więc ta liczba jest pierwsza do strojenia.
+  - Cień spowalnia napełnianie licznika wzroku gangera, przebrania i kamer, mnożąc je razem z `awareness` trudności. Nie zmienia spadku licznika ani hałasu kroków. Mniejszy hałas daje drzewko w etapie 3.
+  - Typ `StatModifiers` dostał pola `meleeDamage` (udział) i `garmentArmor`. Pula RAM to `BASE_RAM` plus Sieć, a punkt, który ją powiększa, od razu wysyła `RamChanged`.
+  - Komenda `spend-attribute-point` i zapis atrybutów były już w etapie 1. Etap 2 nie zmienia kontraktów komend ani zdarzeń i nie podbija `SAVE_SCHEMA_VERSION`.
+  - Wydawanie punktów ma na razie tylko sekcję na zakładce Karta (`ProgressionIntents`). Pełna zakładka Rozwój przychodzi w etapie 7.
+- **Z budowy etapu 3 (6.11):**
+  - Drzewka są w `core/progression/perks.ts`, efekty w `perk-effects.ts`. Każde drzewko ma na razie 5 perków (zamiast ok. 8): dwa na progu 4, po jednym na 8 i 12 oraz kluczowy na 15. Razem 41 rang przy 29 punktach z poziomów. Pozostałe perki dochodzą razem z mechanikami, których jeszcze nie ma (granaty, przebrania w drzewku Cień, reakcja grupowa).
+  - Ranga kosztuje 1 punkt perku. Próg otwiera wyłącznie wartość atrybutu, bez wymogu perka z niższego progu.
+  - Perki i ich wstępne liczby. Wszystkie są do strojenia w etapie 8:
+
+    | Drzewko | Perk (klucz) | Próg | Rangi | Efekt na rangę | Gdzie działa |
+    |---|---|---|---|---|---|
+    | Krzepa | Gruba skóra (`might_tough`) | 4 | 3 | +8 zdrowia | `StatModifiers.maxHp` |
+    | Krzepa | Zabijaka (`might_brawler`) | 4 | 2 | +10% obrażeń wręcz | `StatModifiers.meleeDamage` |
+    | Krzepa | Drugi oddech (`might_second_wind`) | 8 | 1 | regeneracja wytrzymałości gardy ×1,5 | system `perk` |
+    | Krzepa | Zahartowana (`might_hardened`) | 12 | 2 | +2 pancerza | `StatModifiers.armor` |
+    | Krzepa | Miażdżąca garda (`might_crushing_parry`), kluczowy | 15 | 1 | ogłuszenie po parowaniu gracza ×2, czyli dłuższe okno obezwładnienia (ADR-0065) | `melee` |
+    | Refleks | Pewna ręka (`reflex_steady`) | 4 | 3 | +4% stabilności celowania | `StatModifiers.aimStability` |
+    | Refleks | Szybkie dłonie (`reflex_quick_reload`) | 4 | 2 | przeładowanie −15% | `weapon` (tylko gracz) |
+    | Refleks | Ślizg (`reflex_slipstream`) | 8 | 1 | odnowienie zrywu −40% | `perk` |
+    | Refleks | Snajperskie oko (`reflex_deadeye`) | 12 | 2 | +0,2 mnożnika krytyka | `StatModifiers.critMultiplier` |
+    | Refleks | Taniec z kulami (`reflex_bullet_dance`), kluczowy | 15 | 1 | pocisk trafiający w zryw (czas nietykalności) wraca jak odbity Odruchem Tsubame | `combat`, `deflectShot` |
+    | Technika | Krawiec (`tech_tailor`) | 4 | 2 | +1 pancerza na strefach chronionych przez odzież | `StatModifiers.garmentArmor` |
+    | Technika | Polowy medyk (`tech_field_medic`) | 4 | 2 | leczenie przedmiotami +25% | `use-item` |
+    | Technika | Podkręcenie (`tech_overclock`) | 8 | 2 | +2 pojemności cyberware | `cyberCapacityOf` |
+    | Technika | Chłodziwo (`tech_coolant`) | 12 | 1 | odnowienie aktywnego wszczepu ×1,4 | `ability` |
+    | Technika | Drugie serce (`tech_second_heart`), kluczowy | 15 | 1 | śmiertelny cios zostawia 25% zdrowia, raz na 120 s (stan przejściowy jak zryw, po wczytaniu gotowy) | `death` |
+    | Sieć | Bufor (`net_buffer`) | 4 | 2 | +1 RAM | `ramMaxOf` |
+    | Sieć | Szybki upload (`net_fast_upload`) | 4 | 2 | upload −10% (mnoży się z Siecią) | `scanner` |
+    | Sieć | Odzysk (`net_recycler`) | 8 | 1 | regeneracja RAM ×1,5 | `scanner` |
+    | Sieć | Widmowy sygnał (`net_ghost_signal`) | 12 | 2 | licznik kamery −15% (mnoży się z Cieniem) | `crime` |
+    | Sieć | Łańcuch (`net_chain`), kluczowy | 15 | 1 | efekt quickhacka przeskakuje na najbliższy cel tego samego rodzaju do 8 m od pierwszego, w jego linii wzroku; bez osobnego śladu i bez XP | `scanner` |
+    | Cień | Ciche kroki (`shadow_soft_steps`) | 4 | 2 | hałas kroków i lądowania −25% (ADR-0069) | `hearNoise` |
+    | Cień | Szybki chwyt (`shadow_quick_takedown`) | 4 | 2 | `TAKEDOWN_TIME` −20% (ADR-0065) | `takedown` |
+    | Cień | Muł (`shadow_mule`) | 8 | 1 | niesienie ciała 0,85 chodu zamiast 0,6 | `player-control` |
+    | Cień | Skradacz (`shadow_prowler`) | 12 | 1 | chód w kucaniu 0,7 zamiast 0,5 | `player-control` |
+    | Cień | Widmowe przeładowanie (`shadow_ghost_reload`), kluczowy | 15 | 1 | obezwładnienie celu, który nie walczył z graczem, bez świadka napełnia magazynek broni w ręku z zapasu (ADR-0065) | `takedown` |
+
+  - Perki z drzewek nie dublują perków wszczepów (ADR-0033). `hasPerk` dalej czyta wszczepy, a `hasProgressionPerk` i skale z `perk-effects` czytają `progression.perks`. Taniec z kulami i Ślizg wymagają zrywu ze Ścięgien Kitsune, a perk drzewka tylko go wzmacnia.
+  - Bez perków każda skala to dokładnie 1, a każdy dodatek 0, więc złote hashe się nie zmieniły.
+  - **Kontrakty (zgoda w tym ADR-ze):** komenda `spend-perk-point { perk }` odmawia bez punktu, przy zamkniętym progu i na ostatniej randze. Komenda `respec` to usługa kliniki: przechodzi przez komendy handlowe i odmawia przez `PurchaseFailed` z istniejącymi powodami: `refused` na warunkach podstawowych (ADR-0070), `insufficient-funds`, `empty-slot`, gdy nic nie wydano, oraz `over-capacity`, gdy wszczepy nie zmieszczą się w puli bez Techniki i Podkręcenia (gracz najpierw wyjmuje wszczep, co u Mori nic nie kosztuje). Nie ma nowych zdarzeń. Pula RAM, która się zmienia, wysyła `RamChanged` i przycina RAM.
+  - **Zmiana rozdania:** cena to `300 + 150 × (poziom − 1)` €$ (poziom 30: 4650 €$) z mnożnikiem reputacji Mori. Zwraca wszystkie punkty atrybutów i perków, a XP, poziom i pamięć hacków zostają. Liczby są do strojenia w etapie 8.
+  - **Zapis:** rangi były w zapisie od etapu 1 (`progression.perks`), a suma rang liczy się już jako wydane punkty perków. Dlatego `SAVE_SCHEMA_VERSION` się nie zmienia i nie ma migracji. Walidacja odrzuca nieznany perk, rangę ponad ostatnią i próg, którego atrybut nie otwiera.
+  - **Interfejs:** na zakładce Karta jest sekcja Perki (ranga, opis, wymaganie progu, przycisk 32 px). U Mori na zakładce Wszczepy jest sekcja Przebudowa z ceną. Teksty są w `i18n/{en,pl}/progression.ts`. Pełna zakładka Rozwój przychodzi w etapie 7.
+
+## Decyzje użytkownika po etapie 3 (6.11)
+
+Przyjęte: udana zmiana rozdania (respec) i drugi cel Łańcucha dostają własne zdarzenie i komunikat (np. `ProgressionReset`).
+
+Nieprzyjęte, do poprawy w etapie 3b:
+- drzewka mają mieć ok. 8 perków jak w ADR, nie 5;
+- respec nie odmawia przy wszczepach ponad pulą bez punktów: wszczepy zostają, a pula pokazuje przekroczenie, dopóki gracz ich nie wyjmie (alternatywa z etapu 3);
+- próg drzewka wymaga perka z niższego progu tego drzewka, nie samej wartości atrybutu.

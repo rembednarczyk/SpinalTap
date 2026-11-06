@@ -1,4 +1,4 @@
-import { type GameCommand, angleTo } from "@seki/core";
+import { type GameCommand, angleTo, hasProgressionPerk, takedownTimeScale } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { SimContext, System, TakedownRun } from "../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
@@ -8,6 +8,7 @@ import { playerHeld } from "../world/takedown";
 import { freshDowned } from "../world/bodies";
 import { awarenessOf } from "./ai/ganger-perception";
 import { seenCommitting } from "./crime-system";
+import { fillMagazine } from "../world/player-weapon";
 
 /** How close the player has to be, metres between the centres on the ground (ADR-0065). */
 export const TAKEDOWN_REACH = 1.6;
@@ -96,10 +97,12 @@ export const startTakedown = (ctx: SimContext, cmd: Extract<GameCommand, { type:
   if (!found) return;
   // Only the takedown that holds the prompt (the interaction system's choice of the last step).
   if (ctx.session.takedownTarget?.id !== found.target.id) return;
-  ctx.session.takedown = { target: found.target.id, left: TAKEDOWN_TIME, lethal: cmd.lethal, health: player.health.current, steps: 0, held: 0 };
+  // Quick Takedown (ADR-0059) shortens the hold.
+  const duration = TAKEDOWN_TIME * takedownTimeScale(ctx.state.domain.progression.perks);
+  ctx.session.takedown = { target: found.target.id, left: duration, lethal: cmd.lethal, health: player.health.current, steps: 0, held: 0 };
   if (player.velocity) player.velocity = { ...ZERO };
   hold(found.target);
-  ctx.bus.emit("TakedownStarted", { target: found.target.id, duration: TAKEDOWN_TIME });
+  ctx.bus.emit("TakedownStarted", { target: found.target.id, duration });
 };
 
 /** The target broke free: it fights the player from where she stood. */
@@ -172,7 +175,10 @@ const advance = (ctx: SimContext, run: TakedownRun, player: Entity | null): void
   // kill's death is then a murder. The crime system finds the witnesses at the end of the step
   // and marks the body reported once the report is made (a civilian's call can be cut off).
   noteViolence(ctx, target, engaged, target.position, target.id);
-  ctx.bus.emit("TakedownDone", { target: target.id, lethal, witnessed: seenCommitting(ctx, player, target.position) });
+  const witnessed = seenCommitting(ctx, player, target.position);
+  ctx.bus.emit("TakedownDone", { target: target.id, lethal, witnessed });
+  // Ghost Reload (ADR-0059, ADR-0065): a takedown with no alarm (the target was not fighting her) and no witness reloads the weapon in hand.
+  if (!engaged && !witnessed && hasProgressionPerk(ctx.state.domain.progression.perks, "shadow_ghost_reload")) fillMagazine(ctx, player);
 };
 
 /**
