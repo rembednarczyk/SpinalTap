@@ -66,7 +66,7 @@ describe("implants over the pool after a respec (stage 3b)", () => {
   it("the sheet shows the pool and what to do while it is over", () => {
     sheet({ capacity: { used: 14, max: 12 } });
     expect(screen.getByTestId("sheet-capacity").textContent).toBe("Cyberware capacity14 / 12");
-    expect(screen.getByTestId("capacity-over-pool").textContent).toContain("take one out at Mori's");
+    expect(screen.getByTestId("capacity-over-pool").textContent).toContain("swap it for a smaller one");
     cleanup();
     sheet({ capacity: { used: 12, max: 12 } });
     expect(screen.queryByTestId("capacity-over-pool")).toBeNull();
@@ -78,6 +78,6 @@ describe("implants over the pool after a respec (stage 3b)", () => {
     fireEvent.click(screen.getByTestId("shop-tab-implants"));
     const bar = screen.getByTestId("capacity");
     expect(bar.className).toContain("capacity--over");
-    expect(within(bar).getByTestId("capacity-over-pool").textContent).toContain("wyjmij któryś u Mori");
+    expect(within(bar).getByTestId("capacity-over-pool").textContent).toContain("albo zamień na mniejszy");
   });
 });
