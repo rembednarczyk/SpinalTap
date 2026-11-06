@@ -41,6 +41,19 @@
       "used": ["Pistol_6", "Revolver_3", "SubmachineGun_1", "Shotgun_ShortStock", "AssaultRifle2_2"]
     },
     {
+      "id": "quaternius-medieval-weapons",
+      "title": "Low poly medieval weapons",
+      "author": "Quaternius (quaternius.com)",
+      "page": "https://opengameart.org/content/low-poly-medieval-weapons",
+      "license": "CC0",
+      "licenseQuote": "CC0 (strona paczki na OpenGameArt, pole License: CC0; https://quaternius.com/license.html); zip nie ma pliku licencji",
+      "url": "https://opengameart.org/sites/default/files/MedievalPack.zip",
+      "file": "medieval-pack.zip",
+      "sha256": "f3c46690903f7b489cdd7b3697bbc56a610872b657d6583604323cf4d80737fb",
+      "unzip": "x",
+      "used": ["Club", "Katana"]
+    },
+    {
       "id": "quaternius-cyberpunk-kit",
       "title": "Cyberpunk Game Kit",
       "author": "Quaternius (quaternius.com)",

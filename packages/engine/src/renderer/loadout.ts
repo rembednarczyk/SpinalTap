@@ -1,14 +1,16 @@
 import type { AppearanceDescriptor, GarmentMeshId, GarmentSlot, PaletteKey, WeaponLook, WeaponSlot } from "@seki/core";
-import { type AbstractMesh, type Mesh, MeshBuilder, MeshClass, type Scene, TransformNode, Vector3 } from "../babylon";
+import { type AbstractMesh, type Mesh, MeshBuilder, Quaternion, type Scene, TransformNode, Vector3 } from "../babylon";
 import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { CharacterRig } from "./characters";
+import { ADD_ONS } from "./garment-addons";
 import { recolorSkin } from "./character-skin";
 import { toonSourceOf } from "./model-library";
 import type { AnchorBone, HumanoidRetarget } from "./model-rig";
+import { meleeWrist } from "./melee-poses";
 import { longGunInHands } from "./two-hand-hold";
-import { LONG_GUN, WEAPON_MODEL, type WeaponMounts } from "./weapon-mount";
+import { LONG_GUN, MELEE_HOLD, WEAPON_MODEL, type WeaponMounts, isMeleeKind } from "./weapon-mount";
 
 type Place = "hand" | "hip" | "hipL" | "back" | "model" | "long";
 
@@ -18,6 +20,15 @@ type Place = "hand" | "hip" | "hipL" | "back" | "model" | "long";
  * to the palm side, and up, so that the closed fingers go round the middle of the grip.
  */
 const IN_FIST = { side: -0.018, ahead: 0.035, up: 0.01 };
+
+/**
+ * The blade is carried on the back (the baton hangs in the left hip holster): its holder sits
+ * on the sling, turned against the long gun's diagonal so the two cross, the handle over the
+ * right shoulder for the right hand, the blade flat on the back and a little off it, clear of the
+ * gun. It rides `lift` metres up its own line, so the handle stands over the shoulder and the
+ * tip ends at the hip, not at the knee.
+ */
+const BLADE_ON_BACK = { z: -0.035, turn: -1.4, lift: 0.12 } as const;
 
 interface Mounted {
   readonly look: WeaponLook;
@@ -58,73 +69,6 @@ interface State {
   attachments: { readonly id: GarmentMeshId; readonly mesh: Mesh; readonly onModel: boolean }[];
   model: OnModel | null;
 }
-
-/**
- * Garment add-ons (ADR-0015 `GarmentMeshId`): a shape, its preset, and where it sits on the
- * procedural rig (`rig`, relative to the head or the body) and on an imported model (`model`,
- * metres from the head or upper chest bone in the rig's axes, before the size fit). VRoid hair
- * is bulky, so the helmet on a model is bigger than on the rig's bald egg.
- */
-interface AddOn {
-  readonly preset: PresetName;
-  readonly build: (scene: Scene, name: string) => Mesh;
-  readonly rig: (rig: CharacterRig) => { parent: TransformNode; at: [number, number, number]; size: number };
-  readonly model: { bone: AnchorBone; at: [number, number, number]; size: number };
-}
-
-/** A dome: the top of a sphere, open below and seen from inside too, its front edge tilted up off the eyes. */
-const dome = (scene: Scene, name: string, w: number, h: number, d: number): Mesh => {
-  const m = MeshBuilder.CreateSphere(name, { diameterX: w, diameterY: h * 2, diameterZ: d, segments: 12, slice: 0.56, sideOrientation: MeshClass.DOUBLESIDE }, scene);
-  // Baked, so the mesh has no own transform and the rim sits near y = 0.
-  m.position.y = -h * 0.12;
-  m.rotation.x = -0.28;
-  m.bakeCurrentTransformIntoVertices();
-  return m;
-};
-
-/** A band in front of the eyes: an open arc of a cylinder, centred on +Z. */
-const arc = (scene: Scene, name: string, diameter: number, height: number, sweep: number): Mesh => {
-  const m = MeshBuilder.CreateCylinder(name, { diameter, height, arc: sweep, tessellation: 24, enclose: false, sideOrientation: MeshClass.DOUBLESIDE }, scene);
-  // The arc runs from +X through -Z; turn its middle to the front (+Z).
-  m.rotation.y = -Math.PI / 2 - Math.PI * sweep;
-  m.bakeCurrentTransformIntoVertices();
-  return m;
-};
-
-/** A chest plate: a flattened, slightly bent box (front panel and shoulder straps). */
-const plate = (scene: Scene, name: string): Mesh => {
-  const front = MeshBuilder.CreateBox(`${name}-front`, { width: 0.28, height: 0.26, depth: 0.05 }, scene);
-  const strapL = MeshBuilder.CreateBox(`${name}-strapL`, { width: 0.06, height: 0.03, depth: 0.2 }, scene);
-  const strapR = MeshBuilder.CreateBox(`${name}-strapR`, { width: 0.06, height: 0.03, depth: 0.2 }, scene);
-  strapL.position.set(-0.09, 0.13, -0.105);
-  strapR.position.set(0.09, 0.13, -0.105);
-  const back = MeshBuilder.CreateBox(`${name}-back`, { width: 0.28, height: 0.24, depth: 0.04 }, scene);
-  back.position.set(0, 0, -0.21);
-  const merged = MeshClass.MergeMeshes([front, strapL, strapR, back], true, true) ?? front;
-  merged.name = name;
-  return merged;
-};
-
-const ADD_ONS: Readonly<Record<GarmentMeshId, AddOn>> = {
-  visor: {
-    preset: "heroineVisor",
-    build: (scene, name) => arc(scene, name, 0.19, 0.035, 0.42),
-    rig: (r) => ({ parent: r.head, at: [0, 0.015, 0.005], size: 1 }),
-    model: { bone: "head", at: [0, 0.075, 0.0], size: 1.12 },
-  },
-  helmet: {
-    preset: "gangerHood",
-    build: (scene, name) => dome(scene, name, 0.2, 0.13, 0.23),
-    rig: (r) => ({ parent: r.head, at: [0, 0.07, -0.015], size: 1.3 }),
-    model: { bone: "head", at: [0, 0.115, -0.015], size: 1.25 },
-  },
-  "vest-plate": {
-    preset: "cyberDark",
-    build: plate,
-    rig: (r) => ({ parent: r.body, at: [0, r.head.position.y * 0.79, 0.095], size: 0.85 }),
-    model: { bone: "chest", at: [0, -0.05, 0.085], size: 0.78 },
-  },
-};
 
 /**
  * Garment tints on imported cloth (ADR-0015 E7), as the hue over the cloth's own shading.
@@ -270,6 +214,11 @@ export class Loadouts {
     const inHands = longGunInHands(rig);
     this.show(s.mounted.back, stowed("primary") || (rig.grip !== null && w.active === "primary" && !inHands));
     this.show(s.mounted.long, inHands);
+    // A baton or blade in hand is cocked across the fist by the pose's wrist (melee-poses.ts); the
+    // curved blade by its chord, as its handle leaves the blade's line at MELEE_HOLD's angle.
+    const kind = w.active === "melee" && w.melee ? WEAPON_MODEL[w.melee].kind : null;
+    const wrist = kind && isMeleeKind(kind) ? -meleeWrist(rig, MELEE_HOLD[kind].handle) : 0;
+    for (const m of [s.mounted.hand, s.mounted.model]) if (m) m.node.rotation.x = wrist;
   }
 
   dispose(rig: CharacterRig): void {
@@ -345,7 +294,7 @@ export class Loadouts {
     this.place(s, "hand", long ? null : rig.gunHand, active);
     this.place(s, "long", long ? rig.gunHold : null, active);
     this.place(s, "hip", s.holsterR, w.secondary);
-    this.place(s, "hipL", s.holsterL, w.melee);
+    this.place(s, "hipL", w.melee === "blade" ? (s.back.parent as TransformNode) : s.holsterL, w.melee);
     this.place(s, "back", s.back, w.primary);
     this.place(s, "model", long ? null : (s.model?.fist ?? null), active);
   }
@@ -363,6 +312,14 @@ export class Loadouts {
     if (!parent || !look) return;
     const holder = new TransformNode(`${s.name}-${place}-${look}`, this.scene);
     holder.parent = parent;
+    if (place === "hipL" && look === "blade") {
+      const turn = Quaternion.RotationAxis(new Vector3(0, 0, 1), BLADE_ON_BACK.turn);
+      // Up its own line (the handle is +Y of a hand mount), then off the back.
+      holder.position.copyFrom(new Vector3(0, BLADE_ON_BACK.lift, 0).applyRotationQuaternion(turn));
+      holder.position.z = BLADE_ON_BACK.z;
+      // Turned on the back first, then laid flat about its own length.
+      holder.rotationQuaternion = turn.multiply(Quaternion.RotationAxis(new Vector3(0, 1, 0), Math.PI / 2));
+    }
     holder.setEnabled(false);
     const mounted: Mounted = { look, node: holder };
     s.mounted[place] = mounted;

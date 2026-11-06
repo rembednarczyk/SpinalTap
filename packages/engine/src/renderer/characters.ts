@@ -23,4 +23,6 @@ export {
   startStagger,
   startSwing,
 } from "./character-animation";
-export { DRAW_SECONDS, SWING_STRIKE, meleePose, swingPhase } from "./character-poses";
+export { DRAW_SECONDS } from "./character-poses";
+export { meleePose } from "./melee-poses";
+export { SWING_STRIKE, swingPhase } from "./melee-timing";

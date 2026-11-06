@@ -2,7 +2,7 @@ import { type CharacterState } from "../character/character";
 import { CYBERWARE_CATALOG, type CyberwareId, installCyberware } from "../cyberware/cyberware";
 import { fitsCapacity } from "../cyberware/capacity";
 import { type Wallet, debit } from "../economy/wallet";
-import { STACKABLE_CATALOG } from "../items/catalog";
+import { STACKABLE_CATALOG, type StackableDefinition } from "../items/catalog";
 import { type Equipment, type InventoryState, addStack } from "../items/inventory";
 import type { StackableId } from "../items/types";
 import { type ReputationTier, reputationTier } from "../reputation/reputation";
@@ -31,7 +31,8 @@ export type PurchaseFailure =
 
 /**
  * What the counter offers (ADR-0070). "full": everything. "basic": only ammo and stacks (food,
- * medkits, bandages); weapons, clothes, mods, backpacks, repairs and implants are refused.
+ * medkits, bandages, stims); weapons, clothes, mods, backpacks, repairs, implants and the
+ * capacity shard (cyberware work, decision 5.11) are refused.
  */
 export type ShopStock = "full" | "basic";
 
@@ -56,6 +57,15 @@ export const shopTerms = (reputation: number): ShopTerms => {
 
 /** Whether the terms cover more than the basics: pieces, implants, repairs and backpacks. */
 export const fullService = (terms: ShopTerms): boolean => terms.stock === "full";
+
+/** A stack that changes the body's cyberware (the capacity shard) is clinic work, not a basic. */
+export const isBasicStack = (id: StackableId): boolean => {
+  const def: StackableDefinition = STACKABLE_CATALOG[id];
+  return def.cyberCapacity === undefined;
+};
+
+/** Whether the terms let this stack be sold: basics always, cyberware work only on full terms. */
+export const offersStack = (id: StackableId, terms: ShopTerms): boolean => fullService(terms) || isBasicStack(id);
 
 export const STANDARD_TERMS: ShopTerms = shopTerms(0);
 
@@ -94,7 +104,7 @@ export type ItemPurchase =
   | { readonly ok: true; readonly wallet: Wallet; readonly inventory: InventoryState; readonly price: number }
   | { readonly ok: false; readonly reason: PurchaseFailure };
 
-/** Buys one piece of a stackable item into the bag; stacks are basics, sold on any terms. */
+/** Buys one piece of a stackable item into the bag; basics sell on any terms (`offersStack`). */
 export const buyItem = (
   wallet: Wallet,
   inventory: InventoryState,
@@ -102,6 +112,7 @@ export const buyItem = (
   id: StackableId,
   terms: ShopTerms = STANDARD_TERMS,
 ): ItemPurchase => {
+  if (!offersStack(id, terms)) return { ok: false, reason: "refused" };
   const next = addStack(inventory, equipment, id, 1);
   if (next.added === 0) return { ok: false, reason: "inventory-full" };
   const price = priceWithTerms(STACKABLE_CATALOG[id].value, terms);

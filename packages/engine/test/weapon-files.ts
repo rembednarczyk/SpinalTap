@@ -17,4 +17,6 @@ export const allWeaponUrls = (): Record<WeaponKind, string> => ({
   smg: weaponUrl("smg"),
   shotgun: weaponUrl("shotgun"),
   rifle: weaponUrl("rifle"),
+  baton: weaponUrl("baton"),
+  blade: weaponUrl("blade"),
 });

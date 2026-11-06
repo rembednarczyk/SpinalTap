@@ -43,6 +43,9 @@ import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls"
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
 import { stepsInclineAgainst } from "./steps-incline";
 import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
+import { deckSlots } from "./deck-slot";
+import { deckSteps } from "./deck-step";
+import { abutmentSteps } from "./deck-abutment";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { cityBricks, plasteredWalls } from "./wall-materials";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
@@ -74,7 +77,7 @@ import { mapHeight } from "../../../packages/sim/src/content/lublin/shape";
 import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
-import { DECK_DEPTH, type GroundDeck, deckAt, deckHeight } from "../../../packages/sim/src/world/deck";
+import { DECK_DEPTH, DECK_HEADROOM, type GroundDeck, deckAt, deckHeight } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
 import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movement-system";
@@ -1006,6 +1009,47 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         }
       }
       return out;
+    }),
+  /**
+   * A point (grid 0.25 m) off the bridges' decks with a deck on both sides within 2 m along x or
+   * z and the ground at least 0.5 m under the lower one (G-340): a slot between the carriageway
+   * and the sidewalk of one bridge, the walker falling through to the valley. Not the niche of
+   * the steps by the viaduct of Zamkowa, cut on purpose (T-147).
+   */
+  "deck-slot": () =>
+    deckSlots(
+      BRIDGES.map((g) => ({ minX: Math.min(...g.map((d) => d.box.minX)), maxX: Math.max(...g.map((d) => d.box.maxX)), minZ: Math.min(...g.map((d) => d.box.minZ)), maxZ: Math.max(...g.map((d) => d.box.maxZ)) })),
+      bridgeDeckAt,
+      groundY,
+      (p) => p.x >= 728.5 && p.x <= 735.1 && p.z >= 157.5 && p.z <= 163.8,
+    ),
+  /**
+   * A point (every 0.5 m) on the edge of a bridge's piece with another piece 0.3 m beyond it more
+   * than 0.3 m lower (G-340, G-344): a face the renderer draws and nothing collides with, the
+   * walker from the lower piece going on under the higher one onto the terrain. Not the niche of
+   * the steps by the viaduct of Zamkowa (T-147).
+   */
+  "deck-step-face": () =>
+    deckSteps(
+      [...BRIDGE_DECKS.values()].flat(),
+      deckHeight,
+      bridgeDeckAt,
+      (p) => p.x >= 728.5 && p.x <= 735.1 && p.z >= 157.5 && p.z <= 163.8,
+    ),
+  /**
+   * A point (every 0.5 m) on the edge of a bridge's piece past which a street or a path runs on
+   * the terrain more than 0.25 m above or below the deck (G-349): the walker coming off the
+   * street stops at the abutment, a car jumps onto the deck. Not a way under the bridge (G-062),
+   * nor the niche of the steps by the viaduct of Zamkowa, which go down from its edge (T-147).
+   */
+  "deck-abutment-step": () =>
+    abutmentSteps([...BRIDGE_DECKS.values()].flat(), {
+      height: deckHeight,
+      deck: bridgeDeckAt,
+      ground: groundY,
+      paved: (x, z) => surfacesAt(x, z).some((s) => s === "road" || s === "crossing" || s === "cobble" || s === "sidewalk" || s === "footway" || s === "square"),
+      headroom: DECK_HEADROOM,
+      skip: (p) => p.x >= 728.5 && p.x <= 735.1 && p.z >= 157.5 && p.z <= 163.8,
     }),
   /** A run of map steps between two parallel walls further apart than the steps the game lays plus 1 m (G-203). */
   "steps-narrower-than-walls": () => {
