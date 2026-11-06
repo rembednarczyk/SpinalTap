@@ -1,6 +1,7 @@
 import type { Contract, ContractOnSite, EntityId, EntitySnapshot, GameClock, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
-import { type ChunkDef, type DistrictId, WORLD_CHUNKS, WORLD_DEVICES, WORLD_METRO, chunkAt, distanceToRect } from "../content/world-map";
+import { type ChunkDef, type DistrictId, WORLD_CHUNKS, WORLD_DEVICES, WORLD_METRO, WORLD_NAV, chunkAt, distanceToRect } from "../content/world-map";
+import { type NavGraph, mergeNav } from "../content/builders";
 import type { DeviceDef } from "../content/devices";
 import type { MetroStationDef } from "../content/metro";
 import type { Entity } from "./components";
@@ -86,6 +87,8 @@ export class WorldStreamer {
   readonly passerbyIds: Map<string, readonly EntityId[]>;
   /** The ground of these chunks (ADR-0043): their terrain, or the street plane. */
   readonly ground: GroundField;
+  /** The level graph NPCs take between floors (ADR-0021): the city's, or a world of its own's (`ChunkDef.nav`). */
+  readonly nav: NavGraph;
   /** The difficulty's `npcHealth` (ADR-0066), read when a character appears; the simulation sets it. */
   enemyHealth: () => number = () => 1;
 
@@ -104,6 +107,7 @@ export class WorldStreamer {
       here.map((e) => e.cut),
       here.flatMap((e) => e.platform?.vaults ?? []),
     );
+    this.nav = chunks === WORLD_CHUNKS ? WORLD_NAV : mergeNav(...chunks.flatMap((c) => (c.nav ? [c.nav] : [])));
     this.catalog = new StreamCatalog(ids, chunks, devices, metro);
     this.passerbyIds = this.catalog.passerbyIds;
     this.streamedOut = this.state.streamedOut;

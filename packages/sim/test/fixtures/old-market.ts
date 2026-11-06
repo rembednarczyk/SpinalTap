@@ -1,22 +1,9 @@
-import { SeededRandom } from "../rng/seeded-random";
+import type { BlockFront, BlockStyle, SaveSnapshot, Vec3 } from "@seki/core";
+import { SeededRandom } from "../../src/rng/seeded-random";
 import {
-  ACT_TWO_ENDING_FLAG,
-  type BlockFront,
-  type BlockStyle,
-  type ContractSiteId,
-  KAGAMI_AMBUSH_FLAG,
-  KAGAMI_CLEANER_KEYS,
-  KAGAMI_JOB_FLAG,
-  type LootLine,
-  REN_TRAIL_FLAG,
-  type Vec3,
-  endingFlag,
-} from "@seki/core";
-import {
-  type ActorDef,
   type BlockMaterial,
+  type ChunkDef,
   type NavGraph,
-  type Rect,
   type StaticProp,
   building,
   placeAt,
@@ -35,17 +22,20 @@ import {
   stairRail,
   stairs,
   v,
-} from "./builders";
-import { MARKET_PLACE } from "./lublin/sites";
+} from "../../src";
 
 /**
- * The market of Podzamcze (district `targ`, ADR-0045): the old Targ pod estakadą, moved onto
- * Aleja Tysiąclecia between Plac Zamkowy and the bus station. Its deck is the viaduct over the
- * avenue, its stalls stand on the avenue's closed lanes under it; the south row of houses with
- * the fire escape is the market hall. Drawn in its own coordinates (x 66..126, z 56..116, the
- * gate on the west side) and placed by `MARKET_PLACE`: everything exported here is in the world.
- * Facades, stalls and heights come from a fixed-seed generator: the same tables on every run.
+ * The old market of Podzamcze as a test floor (ADR-0063 stage 6 took it off Aleja Tysiąclecia and
+ * moved its people to Alchemia): the south row with the fire escape, its balcony and three ladders,
+ * the stalls, and the viaduct's deck with its stairs, railings and freight lift, on flat ground at
+ * y = 0 in a chunk of its own. The geometry is the removed `district-targ.ts`'s, drawn by the same
+ * generator from the same seed, so the tests of jumps, falls, ladders, levels and lifts (ADR-0020,
+ * ADR-0021, G-308, G-313, G-318) keep measuring the same shapes. Load it with
+ * `Simulation.create({ seed, chunks: [OLD_MARKET_CHUNK] })`.
  */
+
+/** Where the market's own coordinates (x 66..126, z 56..116) stand: as before, on flat ground at 0. */
+export const MARKET_PLACE: Vec3 = { x: 689, y: 0, z: 260 };
 
 /** Fixed content seed. Changing it reshuffles the districts (and the golden replay hash). */
 const CONTENT_SEED = 0x7a26;
@@ -107,9 +97,6 @@ export const market = (x: number, y: number, z: number): Vec3 => placeAt(MARKET_
 
 // ---------------------------------------------------------------- Targ pod estakadą
 
-/** The two halves of the market in the world: the square and the hall, the viaduct and the north stalls. */
-export const TARG_SOUTH_BOUNDS: Rect = placeRect(MARKET_PLACE, { minX: 66, maxX: 126, minZ: 56, maxZ: 84 });
-export const TARG_NORTH_BOUNDS: Rect = placeRect(MARKET_PLACE, { minX: 66, maxX: 126, minZ: 82, maxZ: 116 });
 
 /** Oyaji keeps the first stall of the southern row. */
 const OYAJI_STALL = { x: 80, z: 68 } as const;
@@ -178,24 +165,6 @@ const fireEscape = (): StaticProp[] => {
     // Hebi's rooftop stash: a crate to hide behind, the bag lies next to it (TARG_ROOF_STASH).
     deck(91.9, 93.1, 60, 60.8, mid + 0.9, 0.9, "metal"),
   ];
-};
-
-/** A stash on a roof (ADR-0021): a bag placed once, when the player first comes near. */
-export interface RoofStash {
-  readonly key: string;
-  readonly at: Vec3;
-  readonly lines: readonly LootLine[];
-}
-
-export const TARG_ROOF_STASH: RoofStash = {
-  key: "stash:targ-roof",
-  at: market(91.2, ROOF_MID_TOP, 60.4),
-  lines: [
-    { kind: "eddies", qty: 180 },
-    { kind: "ammo", ammo: "556", qty: 30 },
-    { kind: "stack", item: "medkit", qty: 1 },
-    { kind: "item", item: "holo_sight", rarity: "uncommon", qty: 1 },
-  ],
 };
 
 /** The market's square: the hall (south row), the east houses, the stalls, Sachiko's kiosk by the gate. */
@@ -312,6 +281,7 @@ const NORTH_PROPS: readonly StaticProp[] = [
 
 export const TARG_NORTH_PROPS: readonly StaticProp[] = placeProps(MARKET_PLACE, NORTH_PROPS);
 
+
 /**
  * Level graph of the market (ADR-0021): the floor between the stall rows, the west end under
  * the deck, the foot and the head of the stairs and two points on the deck. The lift is left
@@ -354,158 +324,25 @@ const LOCAL_NAV: NavGraph = {
 
 export const TARG_NAV: NavGraph = placeNav(MARKET_PLACE, LOCAL_NAV);
 
-/** What the car abandoned on the highway deck still holds (ADR-0026). */
-export const TARG_OVERPASS_STASH: RoofStash = {
-  key: "stash:targ-overpass",
-  at: market(75.2, OVERPASS_TOP, 91.6),
-  lines: [
-    { kind: "eddies", qty: 120 },
-    { kind: "ammo", ammo: "9mm", qty: 18 },
-    { kind: "stack", item: "bandage", qty: 2 },
-    { kind: "stack", item: "datachip", qty: 1 },
-  ],
+/** The test floor: both halves of the old market in one chunk with its level graph, nothing else in the world. */
+export const OLD_MARKET_CHUNK: ChunkDef = {
+  id: "old-market",
+  district: "targ",
+  bounds: placeRect(MARKET_PLACE, { minX: 60, maxX: 132, minZ: 50, maxZ: 122 }),
+  props: [...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS],
+  // A Hebi ganger under the deck where the market's lookout stood: a body to carry, kept by saves.
+  nav: TARG_NAV,
+  actors: [{ kind: "ganger", spawn: { key: "old-market-ganger", position: market(104, 0, 92), yaw: Math.PI, tag: null } }],
 };
 
-/**
- * Stall keepers of the north row (ADR-0026), behind their counters: Kenta fries okonomiyaki
- * under OKONOMI, Fumiko keeps the ramen stall (the market's food shop) and Goro sells umbrellas
- * at the east end. The south row stays Oyaji's alone: Hana's protection waves walk along it
- * to his stall, and a keeper there would stand in their way.
- */
-export const STALL_KEEPERS = {
-  kenta: market(77.2, 0, 103.4),
-  fumiko: market(93.6, 0, 103.4),
-  goro: market(103.1, 0, 103.4),
-} as const;
-
-/** Oyaji can be hurt: Hebi come for him in Hana's protection jobs. */
-export const OYAJI_MAX_HP = 120;
-
-/**
- * Ren Odagiri sleeps on the concrete roof of the south row, the one up the third fire escape
- * ladder, near Hebi's stash (act II, ADR-0023). He turns up once someone told Seki where he is
- * and is gone after the "kagami" ending, when Kagami takes him.
- */
-export const REN_SPOT: Vec3 = market(86, ROOF_MID_TOP, 59.6);
-
-/** Kurosawa of Kagami waits on the overpass deck, and his cleaners come from the lift side. */
-export const KUROSAWA_SPOT: Vec3 = market(100, OVERPASS_TOP, 92);
-const CLEANER_SPOTS: readonly Vec3[] = [market(105, OVERPASS_TOP, 89.5), market(107, OVERPASS_TOP, 94.5), market(111, OVERPASS_TOP, 92)];
-
-/** Tag of the cleaners (their deaths raise `killed:kagami_cleaner`). */
-export const KAGAMI_CLEANER_TAG = "kagami_cleaner";
-
-const REN: ActorDef = {
-  kind: "npc",
-  spawn: { key: "ren", position: REN_SPOT, yaw: 0 },
-  preset: "civilian",
-  faction: "hebi",
-  when: { all: [REN_TRAIL_FLAG], none: [endingFlag("kagami")] },
-  interactable: { kind: "dialogue", dialogueId: "ren_odagiri", prompt: "prompt.talk.ren", radius: 2.4 },
+/** The test floor of the player's position in a save, as `Simulation.fromSnapshot` takes it. */
+export const oldMarketFloorOf = (snap: SaveSnapshot): readonly ChunkDef[] | undefined => {
+  const p = snap.entities.find((e) => e.key === "player")?.position;
+  return p ? oldMarketFloor(p).chunks : undefined;
 };
 
-const KUROSAWA: ActorDef = {
-  kind: "npc",
-  spawn: { key: "kurosawa", position: KUROSAWA_SPOT, yaw: -Math.PI / 2 },
-  preset: "fixer",
-  faction: "kagami",
-  when: { all: [KAGAMI_JOB_FLAG], none: [KAGAMI_AMBUSH_FLAG, ACT_TWO_ENDING_FLAG] },
-  interactable: { kind: "dialogue", dialogueId: "kurosawa", prompt: "prompt.talk.kurosawa", radius: 2.4 },
-};
-
-const CLEANERS: readonly ActorDef[] = KAGAMI_CLEANER_KEYS.map(
-  (key, i): ActorDef => ({
-    kind: "ganger",
-    spawn: { key, position: CLEANER_SPOTS[i] ?? KUROSAWA_SPOT, yaw: -Math.PI / 2, tag: KAGAMI_CLEANER_TAG },
-    enemy: "kagami_cleaner",
-    when: { all: [KAGAMI_AMBUSH_FLAG] },
-  }),
-);
-
-export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
-  {
-    kind: "npc",
-    spawn: { key: "oyaji", position: market(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4), yaw: 0 },
-    preset: "civilian",
-    faction: "civilians",
-    bystander: true,
-    maxHp: OYAJI_MAX_HP,
-    // By day the stall (plan §6); from 22:00 the schedule swaps in `oyaji_closed`.
-    interactable: { kind: "shop", shopId: "oyaji", dialogueId: "oyaji", prompt: "prompt.shop.oyaji", radius: 3 },
-  },
-  {
-    kind: "npc",
-    spawn: { key: "hana", position: market(HANA_SPOT.x, 0, HANA_SPOT.z), yaw: -Math.PI / 2 },
-    preset: "civilian",
-    faction: "civilians",
-    interactable: { kind: "dialogue", dialogueId: "hana", prompt: "prompt.talk.hana", radius: 2.4 },
-  },
-  REN,
-  {
-    kind: "npc",
-    spawn: { key: "sachiko", position: market(70.4, 0, 79.6), yaw: -Math.PI / 2 },
-    preset: "civilian",
-    faction: "civilians",
-    bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "sachiko", prompt: "prompt.shop.sachiko", radius: 2.4 },
-  },
-];
-
-export const TARG_NORTH_ACTORS: readonly ActorDef[] = [
-  { kind: "ganger", spawn: { key: "hebi-lookout", position: market(104, 0, 92), yaw: Math.PI, tag: null } },
-  KUROSAWA,
-  ...CLEANERS,
-  {
-    kind: "npc",
-    spawn: { key: "kenta", position: STALL_KEEPERS.kenta, yaw: Math.PI },
-    preset: "civilian",
-    faction: "civilians",
-    bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "kenta", prompt: "prompt.shop.kenta", radius: 3 },
-  },
-  {
-    kind: "npc",
-    spawn: { key: "fumiko", position: STALL_KEEPERS.fumiko, yaw: Math.PI },
-    preset: "civilian",
-    faction: "civilians",
-    bystander: true,
-    // From 16:00 to 4:00 the stall (ADR-0026); the rest of the day the schedule swaps in `fumiko_closed`.
-    interactable: { kind: "shop", shopId: "yatai", dialogueId: "fumiko", prompt: "prompt.shop.fumiko", radius: 3 },
-  },
-  {
-    kind: "npc",
-    spawn: { key: "goro", position: STALL_KEEPERS.goro, yaw: Math.PI },
-    preset: "civilian",
-    faction: "civilians",
-    bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "goro", prompt: "prompt.shop.goro", radius: 3 },
-  },
-];
-
-/**
- * Spawn points of the market jobs, four per site like the M1 sites. A delivery spawns nobody;
- * its points are around Hana's cart, kept for symmetry.
- */
-export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<"hana_stall" | "hebi_stash" | "raid_north" | "raid_east", readonly Vec3[]>> = {
-  hana_stall: [market(90.5, 0, 74), market(90.5, 0, 75.5), market(90.5, 0, 72.5), market(89, 0, 74)],
-  hebi_stash: [market(118, 0, 89), market(119.5, 0, 95.5), market(116.5, 0, 92.5), market(121.5, 0, 88)],
-  raid_north: [market(90, 0, 91), market(94, 0, 93), market(98, 0, 90.5), market(86, 0, 92.5)],
-  raid_east: [market(110, 0, 74), market(111.5, 0, 78), market(108.5, 0, 71.5), market(112, 0, 81)],
-};
-
-/**
- * Which way each market crew looks when it turns up (audit W11): the raids at Oyaji's stall,
- * the stash guards west over the market floor they would be attacked from, the cart crew at
- * Hana. Their yaw is the direction from each spawn point to this point.
- */
-export const TARG_CONTRACT_SITE_FACING: Readonly<Record<"hana_stall" | "hebi_stash" | "raid_north" | "raid_east", Vec3>> = {
-  hana_stall: market(HANA_SPOT.x, 0, HANA_SPOT.z),
-  hebi_stash: market(100, 0, 90),
-  raid_north: market(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4),
-  raid_east: market(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4),
-};
-
-/** Where the crate of a retrieval job lies (centre of the box). */
-export const CONTRACT_ITEM_SPOTS: Readonly<Partial<Record<ContractSiteId, Vec3>>> = {
-  hebi_stash: market(122.2, 0.3, 92),
+/** The test floor for a point of it, as `Simulation.create`'s options take it; the city elsewhere. */
+export const oldMarketFloor = (p: Vec3): { readonly chunks?: readonly ChunkDef[] } => {
+  const b = OLD_MARKET_CHUNK.bounds;
+  return p.x >= b.minX && p.x <= b.maxX && p.z >= b.minZ && p.z <= b.maxZ ? { chunks: [OLD_MARKET_CHUNK] } : {};
 };

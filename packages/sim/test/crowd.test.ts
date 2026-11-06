@@ -35,8 +35,8 @@ import {
   nearestWall,
 } from "../src";
 
-/** The chunks of Lublin with the market and the docks (ADR-0045). */
-const MARKET = "podzamcze-1-0";
+/** The chunks of Lublin with the market (in Alchemia since ADR-0063) and the docks (ADR-0045). */
+const MARKET = "krakowskie-2-1";
 const DOCKS = "nabrzeze-1-1";
 import type { Entity } from "../src";
 import { asideFor } from "../src/systems/ai/crowd-walk";
@@ -224,8 +224,8 @@ describe("how many and who (ADR-0041)", () => {
     const roles = Array.from({ length: CROWD_CAP.high }, (_, i) => residentOf(3, MARKET, i)!.role);
     expect(roles.filter((r) => r.kind === "stander")).toHaveLength(Math.floor(CROWD_CAP.high / 5) * 2 + (CROWD_CAP.high % 5 > 1 ? 1 : 0) + (CROWD_CAP.high % 5 > 3 ? 1 : 0));
     const walkers = roles.flatMap((r) => (r.kind === "walker" ? [r] : []));
-    // Three routes in the market, both ways round each.
-    expect(new Set(walkers.map((w) => `${w.lane.id}:${w.dir}`)).size).toBe(6);
+    // The market chunk's routes (its own two and the streets' and squares' round Alchemia), both ways round each.
+    expect(new Set(walkers.map((w) => `${w.lane.id}:${w.dir}`)).size).toBe(2 * CROWD_LANES.filter((l) => l.chunk === MARKET).length);
     // A chunk without routes or spots has nobody.
     expect(residentOf(3, "nowhere", 0)).toBeNull();
   });

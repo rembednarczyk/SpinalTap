@@ -1,5 +1,6 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { WORLD_CHUNKS, chunkAt, groundY } from "@seki/sim";
+import { OLD_MARKET_CHUNK } from "../../sim/test/fixtures/old-market";
 import { describe, expect, it } from "vitest";
 import { RawTexture, Scene } from "../src/babylon";
 import { NIGHT_RIG } from "../src/npr/lighting";
@@ -34,16 +35,20 @@ describe("signage (ADR-0030)", () => {
 
   it("puts signs, holo-ads and reflections in the districts with buildings of the game's own", () => {
     // Krakowskie's and the Old Town's buildings are the map's: their shopfronts and the content's
-    // neon carry the signs (ADR-0045). The market and the docks are built by the game.
-    for (const district of ["targ", "doki"]) {
+    // neon carry the signs (ADR-0045). The docks are built by the game (the market was too, on
+    // Podzamcze, until ADR-0063 moved it into Alchemia's modules, which the engine draws).
+    for (const district of ["doki"]) {
       const mine = all.filter((q) => chunkAt(q.x, q.z)?.district === district);
       expect(mine.some((q) => q.kind === SIGNAGE_KIND.sign), district).toBe(true);
       expect(mine.some((q) => q.kind === SIGNAGE_KIND.reflection), district).toBe(true);
     }
-    const holos = all.filter((q) => q.kind === SIGNAGE_KIND.holo);
-    // Few of the game's own buildings are tall enough (the map city draws the rest).
+    // No game building of the city is tall enough for one since the market left Podzamcze (ADR-0063, the map
+    // city draws the rest): the market's old row, the sim's test floor, still gets them.
+    expect(all.filter((q) => q.kind === SIGNAGE_KIND.holo)).toHaveLength(0);
+    const holos = quads(planSignage([OLD_MARKET_CHUNK], () => 0)).filter((q) => q.kind === SIGNAGE_KIND.holo);
+    // Few of its buildings are tall enough.
     expect(holos.length).toBeGreaterThanOrEqual(1);
-    expect(holos.length).toBeLessThanOrEqual(HOLO_PER_CHUNK * WORLD_CHUNKS.length);
+    expect(holos.length).toBeLessThanOrEqual(HOLO_PER_CHUNK);
   });
 
   it("reads only cells that exist in the atlas", () => {

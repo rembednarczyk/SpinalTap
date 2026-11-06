@@ -11,11 +11,11 @@ import {
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { ground, market } from "@seki/sim";
+import { ground } from "@seki/sim";
 import { GameSession } from "../src/game-session";
 
-/** The market floor under the viaduct (ADR-0045). */
-const IN_MARKET = market(96, 0, 90);
+/** Aleja Tysiąclecia on Podzamcze, where the market stood until ADR-0063 moved it to Alchemia. */
+const IN_MARKET = ground(785, 350);
 
 class FakeRender implements RenderPort {
   readonly views = new Map<EntityId, ViewDescriptor>();
@@ -95,7 +95,7 @@ describe("M2: districts without a reload", () => {
     const { session, ui } = setup();
     session.newGame();
     goTo(session, 717.5, 296);
-    const stalls = market(92, 0, 70);
+    const stalls = ground(781, 330);
     goTo(session, stalls.x, stalls.z);
     expect(await session.saves.saveAsync("slot-1")).toBe(true);
     const saved = session.sim.player()!.position;

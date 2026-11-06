@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Vec3, contractTag } from "@seki/core";
-import { CONTRACT_SITE_SPAWNS, Simulation, contractSpawnYaw, market } from "../src";
+import { CONTRACT_SITE_SPAWNS, HANA_SPOT, Simulation, contractSpawnYaw } from "../src";
 import { byKey, teleportPlayer } from "./helpers";
 
 
@@ -12,7 +12,7 @@ describe("contract crews face the way trouble comes from (audit W11)", () => {
     const sites = new Set<string>();
     for (const seed of [2, 3, 5, 8, 13]) {
       const sim = Simulation.create({ seed });
-      teleportPlayer(sim, market(90.5, 0, 74), Math.PI / 2);
+      teleportPlayer(sim, { ...HANA_SPOT, x: HANA_SPOT.x - 1.5 }, Math.PI / 2);
       sim.step();
       sim.enqueue({ type: "accept-contract", kind: "protect" });
       sim.step();
@@ -34,8 +34,8 @@ describe("contract crews face the way trouble comes from (audit W11)", () => {
     for (const [site, points] of Object.entries(CONTRACT_SITE_SPAWNS) as [keyof typeof CONTRACT_SITE_SPAWNS, readonly Vec3[]][]) {
       for (const p of points) expect(Number.isFinite(contractSpawnYaw(site, p))).toBe(true);
     }
-    // West (yaw -π/2) is towards the market floor from the stash in the east corner.
-    for (const p of CONTRACT_SITE_SPAWNS.hebi_stash) expect(off(contractSpawnYaw("hebi_stash", p), -Math.PI / 2)).toBeLessThan(0.6);
+    // West, a little south of it, is over the square from the stash by the ruin behind Alchemia's stalls (ADR-0063).
+    for (const p of CONTRACT_SITE_SPAWNS.hebi_stash) expect(Math.sin(contractSpawnYaw("hebi_stash", p))).toBeLessThan(-0.8);
     for (const p of CONTRACT_SITE_SPAWNS.east_lot) expect(off(contractSpawnYaw("east_lot", p), -Math.PI / 2)).toBeLessThan(0.5);
     // A site without a facing point (the docks posts carry their own) faces the middle of its points.
     const [first] = CONTRACT_SITE_SPAWNS.tessen_office;

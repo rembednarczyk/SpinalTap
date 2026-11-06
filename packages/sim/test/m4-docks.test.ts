@@ -32,7 +32,7 @@ import {
   DOCKS_PLACE,
   docks,
   ground,
-  market,
+  HANA_SPOT,
 } from "../src";
 import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
@@ -411,7 +411,7 @@ describe("no sniper outside the docks", () => {
   it("market and Krakowskie jobs never bring Tessen", () => {
     for (const kind of ["eliminate", "retrieve", "protect"] as const) {
       const sim = Simulation.create({ seed: 4 });
-      teleportPlayer(sim, market(90.5, 0, 74), 0);
+      teleportPlayer(sim, { ...HANA_SPOT, x: HANA_SPOT.x - 1.5 }, 0);
       sim.step();
       const c = accept(sim, kind);
       const site = CONTRACT_SITE_SPAWNS[c.siteId][0]!;

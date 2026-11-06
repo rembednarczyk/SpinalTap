@@ -2,7 +2,6 @@ import { MOST_UNSTICK_STEPS, type Vec3 } from "@seki/core";
 import { aboveGround, heightApart } from "../../world/ground";
 import type { SimContext } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
-import { WORLD_NAV } from "../../content/world-map";
 import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
 import { type Detour, SAME_FLOOR, detourStep, followDetour, planDetour, straightWalk } from "./steering";
 import type { Ganger } from "./ganger-perception";
@@ -93,8 +92,8 @@ export class GangerWalk {
         return;
       }
     }
-    const route = routeAcrossLevels(ctx.world, WORLD_NAV, from, to);
-    const shot = self.combatant?.stats?.melee || !apart ? null : firingPosition(ctx.world, WORLD_NAV, from, to, self.ai.attackRange);
+    const route = routeAcrossLevels(ctx.world, ctx.streamer.nav, from, to);
+    const shot = self.combatant?.stats?.melee || !apart ? null : firingPosition(ctx.world, ctx.streamer.nav, from, to, self.ai.attackRange);
     const way = shot && (!route || shot.cost < route.cost) ? shot : route;
     if (way && Math.hypot(way.next.x - from.x, way.next.z - from.z) < 0.05) self.velocity = { x: 0, y: 0, z: 0 };
     else if (way) this.walkTo(way.next);

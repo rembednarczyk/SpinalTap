@@ -44,7 +44,7 @@ You told them to sell the module to someone who likes other people's lives. Some
 ~ set_flag("seen:act2_opening")
 -> END
 
-// Ren Odagiri on the low roof over the market on Podzamcze (present from ren_trail until the "kagami" ending).
+// Ren Odagiri on the roof terrace of Alchemia, over the market (present from ren_trail until the "kagami" ending; ADR-0063).
 === ren_odagiri ===
 {
 - act2_ending == "street": -> after_street
@@ -108,7 +108,7 @@ REN: The rest of the archive is with me. Kagami wants it back and put a contract
 { quest_step == "kaito_job":
     REN: Go see Kaito. I want to know how much I'm worth to them.
 - else:
-    REN: Kurosawa's waiting on the viaduct. Whatever you decide, I'll be here.
+    REN: Kurosawa's waiting on the square below, by the lift. Whatever you decide, I'll be here.
 }
 -> END
 
@@ -159,7 +159,7 @@ REN: The Hebi are already taking orders. You know what someone will pay for the 
 === function cleaners_down() ===
 ~ return has_flag("dead:kagami-cleaner-1") && has_flag("dead:kagami-cleaner-2") && has_flag("dead:kagami-cleaner-3")
 
-// Kurosawa of Kagami on the al. Tysiąclecia viaduct deck (present from kagami_job until the ambush or the ending).
+// Kurosawa of Kagami on the square behind Alchemia, by the lift (present from kagami_job until the ambush or the ending).
 === kurosawa ===
 { quest_step == "overpass" && choice_archive == "":
     -> deal

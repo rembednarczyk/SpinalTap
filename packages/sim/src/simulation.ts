@@ -121,8 +121,9 @@ export class Simulation {
     return sim;
   }
 
-  static fromSnapshot(snapshot: SaveSnapshot, bus?: EventBus<DomainEvents>, crowd: CrowdDensity = "off", traffic: TrafficDensity = crowd): Simulation {
-    const sim = new Simulation(snapshot.seed, snapshot.domain, bus ?? new EventBus<DomainEvents>(), snapshot);
+  /** A saved game; `chunks` replaces the city as `SimulationOptions.chunks` does (a test floor), the city by default. */
+  static fromSnapshot(snapshot: SaveSnapshot, bus?: EventBus<DomainEvents>, crowd: CrowdDensity = "off", traffic: TrafficDensity = crowd, chunks?: readonly ChunkDef[]): Simulation {
+    const sim = new Simulation(snapshot.seed, snapshot.domain, bus ?? new EventBus<DomainEvents>(), snapshot, chunks);
     sim.setCrowd(crowd);
     sim.setTraffic(traffic);
     sim.rng.setState(snapshot.rngState);

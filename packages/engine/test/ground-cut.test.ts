@@ -35,8 +35,9 @@ const CASES: Readonly<Record<string, () => MeshSink>> = {
 /** What cutting each triangle of the sink in turn gave, before the boxes skipped any (G-333). */
 const CUT_BEFORE: Readonly<Record<string, string>> = {
   "krakowskie-2-0": "6 408ae390",
-  // Its terrain levelled at the ends of Zamkowa's deck over the tunnel (G-088), cut as before G-333.
-  "podzamcze-1-0": "12 76d0a9e6",
+  // Its terrain levelled at the ends of Zamkowa's deck over the tunnel (G-088), cut as before G-333;
+  // the market's levelled square on Aleja Tysiąclecia gone (ADR-0063): the same cuts, its own ground.
+  "podzamcze-1-0": "12 7c7ab662",
   "nabrzeze-1-1": "6 bd68b5c7",
   "stare-miasto-0-0": "0 58512eb9",
   "krakowskie-0-0": "0 0825c6ea",

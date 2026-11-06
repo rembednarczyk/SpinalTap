@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { SCHEDULES, STALL_FRONT_YAW, ground } from "@seki/sim";
 import { type Game, mountGame, run, unmountGame } from "./game-ui";
+
+/** The car park in front of Alchemia's hall, the market's chunk loaded, and the path by Oyaji's door at night (his plan's last stop). */
+const CAR_PARK = { x: 410, z: 32 };
+const OYAJI_DOOR = SCHEDULES.oyaji!.stops[1]!.path.at(-1)!;
+const BY_OYAJI_DOOR = { x: OYAJI_DOOR.x + Math.sin(STALL_FRONT_YAW) * 1.4, z: OYAJI_DOOR.z + Math.cos(STALL_FRONT_YAW) * 1.4 };
 
 /**
  * The day clock and Oyaji's stall on the real UI (formerly e2e/day-cycle.spec.ts and
@@ -14,10 +20,10 @@ const start = () => {
   return game;
 };
 
-/** Teleports to a point of the market's own frame and lets one step stream it in. */
-const toMarket = (g: Game, x: number, z: number) => {
+/** Teleports to a point of the market in Alchemia (ADR-0063) and lets one step stream it in. */
+const toMarket = (g: Game, at: { readonly x: number; readonly z: number }) => {
   run(() => {
-    const p = g.seki.place("market", x, 0, z);
+    const p = ground(at.x, at.z);
     g.seki.teleport(p.x, p.z, 0, 0, p.y);
   });
   g.step(1);
@@ -36,11 +42,11 @@ describe("day clock in the game", () => {
     expect(clock()).toMatch(/21:0\d/);
 
     // Walk up to the market (streams it in), then let the evening pass to after closing time.
-    toMarket(g, 40, 78);
+    toMarket(g, CAR_PARK);
     wait(g, 90);
     g.step(60 * 5);
     expect(g.seki.state().clock).toMatch(/^22:3\d$/);
-    toMarket(g, 74.5, 65.4);
+    toMarket(g, BY_OYAJI_DOOR);
     g.step(1);
     expect(screen.getByTestId("prompt").textContent).toContain("closed");
 
@@ -57,12 +63,12 @@ describe("Oyaji's stall in the game", () => {
   it("by day Oyaji's stall buys a medkit through the Sell tab", () => {
     const g = start();
     // To the market, then on to noon of the next day: the stall is up and Oyaji stands behind it.
-    toMarket(g, 40, 78);
+    toMarket(g, CAR_PARK);
     wait(g, 15 * 60);
     g.step(2);
     expect(g.seki.state().clock).toMatch(/^12:0\d$/);
     const oyaji = [...g.session.sim.world].find((x) => x.key === "oyaji")!;
-    run(() => g.seki.teleport(oyaji.position.x, oyaji.position.z - 1.4));
+    run(() => g.seki.teleport(oyaji.position.x + Math.sin(oyaji.yaw) * 1.4, oyaji.position.z + Math.cos(oyaji.yaw) * 1.4));
     g.step(1);
     expect(screen.getByTestId("prompt").textContent).toContain("Oyaji's stall");
     g.step(1, { interact: true });

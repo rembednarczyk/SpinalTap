@@ -1,8 +1,10 @@
 import type { ContractKind, FactionId, Vec3, ViewDescriptor } from "@seki/core";
 import type { DeviceKind } from "../world/components";
 import { type Rect, placeAt, placeRect, v } from "./builders";
-import { DOCKS_PLACE, MARKET_PLACE } from "./lublin/sites";
+import { DOCKS_PLACE } from "./lublin/sites";
+import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
+import { HEBI_STASH_ZONE, RUIN_OUT_YAW, byRuin } from "./alchemia-market";
 
 /**
  * Cameras and hackable devices (ADR-0029), and the ways the district's security comes in when
@@ -36,14 +38,13 @@ export const deviceView = (kind: DeviceKind): ViewDescriptor => VIEWS[kind];
 
 /** Tessen's office on the quay, inside its walls (the infiltration's no-go zone). */
 const TESSEN_OFFICE: Rect = placeRect(DOCKS_PLACE, { minX: -29.7, maxX: -18.3, minZ: 128.3, maxZ: 137.7 });
-/** Hebi's stash under the overpass at the east end of the market (the retrieval's no-go zone). */
-const HEBI_STASH: Rect = placeRect(MARKET_PLACE, { minX: 114, maxX: 124, minZ: 86, maxZ: 98 });
+/** Hebi's stash in the hollow by the ruin behind Alchemia's stalls (the retrieval's no-go zone). */
+const HEBI_STASH: Rect = HEBI_STASH_ZONE;
 
-/** Chunks of the docks and the market in Lublin's table. */
+/** Chunks of the docks and of Alchemia (the market, ADR-0063) in Lublin's table. */
 const DOCKS_CHUNK = "nabrzeze-1-1";
-const MARKET_CHUNK = "podzamcze-1-0";
+const MARKET_CHUNK = "krakowskie-2-1";
 const docks = (x: number, y: number, z: number) => placeAt(DOCKS_PLACE, v(x, y, z));
-const market = (x: number, y: number, z: number) => placeAt(MARKET_PLACE, v(x, y, z));
 
 export const DEVICES: readonly DeviceDef[] = [
   // Doki: the office, its door onto the quay, the yard.
@@ -62,19 +63,19 @@ export const DEVICES: readonly DeviceDef[] = [
   { key: "dev:doki-yard-cam", chunk: DOCKS_CHUNK, kind: "camera", position: docks(-15.5, 3.5, 95.5), yaw: Math.PI / 2, network: "tessen-yard", faction: "tessen" },
   { key: "dev:doki-vending", chunk: DOCKS_CHUNK, kind: "vending", position: docks(-24, 0.95, 127.6), yaw: Math.PI, network: "tessen-office", faction: "tessen" },
   { key: "dev:doki-speaker", chunk: DOCKS_CHUNK, kind: "speaker", position: docks(12, 2.6, 95.8), yaw: 0, network: "tessen-yard", faction: "tessen" },
-  // The market: Hebi's stash.
+  // The market in Alchemia: Hebi's stash by the ruin, the camera on its wall looking back along it.
   {
     key: "dev:targ-stash-cam",
     chunk: MARKET_CHUNK,
     kind: "camera",
-    position: market(123.6, 3.2, 99.5),
-    yaw: -2.69,
+    position: byRuin(16.5, 0.4, 3.2),
+    yaw: -2.3,
     network: "hebi-stash",
     faction: "hebi",
     restricted: { ...HEBI_STASH, during: "retrieve" },
   },
-  { key: "dev:targ-neon", chunk: MARKET_CHUNK, kind: "neon", position: market(116.5, 3.4, 98.6), yaw: Math.PI, network: "hebi-stash", faction: "hebi" },
-  { key: "dev:targ-speaker", chunk: MARKET_CHUNK, kind: "speaker", position: market(118, 2.6, 97), yaw: Math.PI, network: "hebi-stash", faction: "hebi" },
+  { key: "dev:targ-neon", chunk: MARKET_CHUNK, kind: "neon", position: byRuin(10.5, 0.1, 3.4), yaw: RUIN_OUT_YAW, network: "hebi-stash", faction: "hebi" },
+  { key: "dev:targ-speaker", chunk: MARKET_CHUNK, kind: "speaker", position: byRuin(11.8, 0.25, 2.6), yaw: RUIN_OUT_YAW, network: "hebi-stash", faction: "hebi" },
 ];
 
 /**
@@ -96,12 +97,12 @@ export const SECURITY_ENTRIES: readonly Vec3[] = [
   ground(600, -8),
   ground(640, 50),
   ground(700, 125),
-  // The market.
-  market(110, 0, 74),
-  market(100, 0, 90),
-  market(80, 0, 100),
-  market(72, 0, 92),
-  market(118, 0, 100),
+  // Podzamcze round the old market's place on Aleja Tysiąclecia, and the ends of Alchemia's square.
+  spotNear(730, 295),
+  spotNear(775, 366),
+  spotNear(805, 360),
+  ground(431, 121),
+  ground(447, 58),
   // The docks.
   docks(27, 0, 94),
   docks(-12, 0, 96),

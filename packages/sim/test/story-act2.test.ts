@@ -10,7 +10,7 @@ import {
   endingFlag,
   recalledFlag,
 } from "@seki/core";
-import { Simulation, market, stateHash } from "../src";
+import { KUROSAWA_SPOT, REN_SPOT, Simulation, stateHash } from "../src";
 import { collect, run } from "./helpers";
 
 /** Act II at `stepIndex`, after the "aya" ending, built the way a load would build it. */
@@ -29,9 +29,9 @@ const inActTwo = (stepIndex: number, flags: string[] = [], at?: { x: number; y: 
   });
 };
 
-// On the roof of the market hall and on the viaduct (the market moved by ADR-0045).
-const ROOF = market(85, 12.7, 59.6);
-const DECK = market(98.5, 9.9, 92);
+// On Alchemia's roof terrace by Ren, and on the square behind the hall by Kurosawa (ADR-0063).
+const ROOF = { ...REN_SPOT, x: REN_SPOT.x + 0.8 };
+const DECK = { ...KUROSAWA_SPOT, x: KUROSAWA_SPOT.x + 1.5 };
 const has = (sim: Simulation, key: string) => [...sim.world].some((e) => e.key === key);
 
 describe("act II in the simulation (ADR-0023)", () => {
@@ -74,7 +74,8 @@ describe("act II in the simulation (ADR-0023)", () => {
   it("brings Ren onto the roof once someone said where he is, and lets Kagami take him", () => {
     const sim = inActTwo(0, [], ROOF);
     run(sim, 1);
-    expect(sim.district).toBe("targ");
+    // Alchemia stands on Krakowskie Przedmieście's side of the Old Town (ADR-0063).
+    expect(sim.district).toBe("shinsekai-7");
     expect(has(sim, "ren")).toBe(false);
     sim.enqueue({ type: "set-flag", flag: REN_TRAIL_FLAG });
     run(sim, 2);
