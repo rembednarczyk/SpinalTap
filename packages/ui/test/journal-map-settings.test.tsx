@@ -283,7 +283,7 @@ describe("settings", () => {
     expect(screen.getByLabelText(/Mouse sensitivity/)).toHaveProperty("value", "1.5");
     fireEvent.change(screen.getByLabelText(/Mouse sensitivity/), { target: { value: "2" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ mouseSensitivity: 2 });
-    const aim = screen.getByRole("radiogroup", { name: "Aim (RMB)" });
+    const aim = screen.getByRole("radiogroup", { name: "Aim button" });
     fireEvent.click(within(aim).getByRole("radio", { name: "Toggle" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ aimMode: "toggle" });
     fireEvent.click(within(screen.getByRole("radiogroup", { name: "Crouch" })).getByRole("radio", { name: "Hold" }));

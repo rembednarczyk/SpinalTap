@@ -10,6 +10,7 @@ import {
   HUD_SCALE_RANGE,
   SUBTITLE_SCALE_RANGE,
   type SettingsVm,
+  type TouchFireMode,
   isRadioStationId,
 } from "@seki/ui";
 
@@ -45,6 +46,7 @@ const isAimMode = (v: unknown): v is AimMode => v === "hold" || v === "toggle";
 const isShoulder = (v: unknown): v is CameraShoulder => v === "right" || v === "left";
 const isDamageMode = (v: unknown): v is DamageNumbersMode => v === "off" || v === "hit" || v === "total";
 const isColorblind = (v: unknown): v is ColorblindMode => v === "off" || v === "protan" || v === "deutan" || v === "tritan";
+const isTouchFire = (v: unknown): v is TouchFireMode => v === "aims" || v === "separate";
 const bool = (v: unknown, fallback: boolean): boolean => (typeof v === "boolean" ? v : fallback);
 
 /** The vertical field of view entries saved before ADR-0049 held by default, degrees. */
@@ -89,6 +91,8 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     adsSensitivity: clamp(r.adsSensitivity, 0.3, 2, defaults.adsSensitivity),
     invertY: typeof r.invertY === "boolean" ? r.invertY : defaults.invertY,
     touchSensitivity: clamp(r.touchSensitivity, 0.2, 3, defaults.touchSensitivity),
+    // ADR-0072: a new field with no default changed, so SETTINGS_REV stays; old entries aim with fire.
+    touchFire: isTouchFire(r.touchFire) ? r.touchFire : defaults.touchFire,
     horizontalFov: clampFieldOfView(horizontalFovOf16x9(r), defaults.horizontalFov),
     volume: clamp(r.volume, 0, 1, defaults.volume),
     musicVolume: clamp(r.musicVolume, 0, 1, defaults.musicVolume),
