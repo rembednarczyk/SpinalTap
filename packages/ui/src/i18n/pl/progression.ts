@@ -106,6 +106,7 @@ export const plProgression = {
   "perk.shadow_ghost_reload.name": "Widmowe przeładowanie",
   "perk.shadow_ghost_reload.desc": "Obezwładnienie bez alarmu i świadka przeładowuje broń w ręku",
   "character.tab.progress": "Rozwój",
+  "character.hint.progress": "rozwój",
   "progress.xp": "Doświadczenie",
   "progress.xpValue": "{xp} / {next} PD",
   "progress.xpMax": "Najwyższy poziom",

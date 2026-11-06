@@ -105,13 +105,14 @@ describe("inventory and character screen in both languages", () => {
     const sheet = () => screen.getByTestId("character-panel").textContent;
     expect(sheet()).toContain("UnknownContracts done: 0");
     expect(sheet()).toContain("-60 · hostilityThey hunt you");
+    expect(sheet()).toContain("Tab close · I inventory · K progress · J journal");
     polish(store);
     expect(sheet()).toContain("NieznanaWykonane kontrakty: 0");
     expect(sheet()).toContain("Optykapusty slotUkład nerwowypusty slot");
     expect(sheet()).toContain("Pustka. Na razie.");
     expect(sheet()).toContain("+20 · sympatiaKaito płaci więcej");
     expect(sheet()).toContain("-60 · wrogośćPolują na ciebie");
-    expect(sheet()).toContain("Tab zamknij · I ekwipunek · J dziennik");
+    expect(sheet()).toContain("Tab zamknij · I ekwipunek · K rozwój · J dziennik");
     expect(screen.getByRole("dialog", { name: "Postać" })).toBeTruthy();
   });
 });

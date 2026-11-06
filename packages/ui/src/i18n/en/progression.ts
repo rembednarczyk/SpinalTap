@@ -111,6 +111,7 @@ export const enProgression = {
   "perk.shadow_ghost_reload.desc": "A takedown with no alarm and no witness reloads the weapon in hand",
   // The Progress tab (stage 7): XP, the trees tier by tier, the respec's price and the HUD.
   "character.tab.progress": "Progress",
+  "character.hint.progress": "progress",
   "progress.xp": "Experience",
   "progress.xpValue": "{xp} / {next} XP",
   "progress.xpMax": "Top level",

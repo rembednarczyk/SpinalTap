@@ -112,7 +112,7 @@ export const CharacterPanel = () => {
         </dl>
       </section>
       <div className="sheet__hint">
-        <kbd>Tab</kbd> {t("character.hint.close")} · <kbd>I</kbd> {t("character.hint.inventory")} · <kbd>J</kbd> {t("character.hint.journal")}
+        <kbd>Tab</kbd> {t("character.hint.close")} · <kbd>I</kbd> {t("character.hint.inventory")} · <kbd>K</kbd> {t("character.hint.progress")} · <kbd>J</kbd> {t("character.hint.journal")}
       </div>
     </div>
   );
