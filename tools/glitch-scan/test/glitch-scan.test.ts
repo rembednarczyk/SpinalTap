@@ -1085,7 +1085,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A street sinking more than 1 m over a tunnel it does not join, on the game's ground (`road-tunnel.ts`, G-088). */
   "road-dip-over-tunnel": () =>
     roadDipsOverTunnels(
-      extractFeatures(SOURCE_OSM).lines.map((l) => ({ ...l, nodes: SOURCE_OSM.ways.get(l.osmId)?.nodes ?? [] })),
+      extractFeatures(SOURCE_OSM).lines.map((l) => ({ ...correctedLine(l), nodes: SOURCE_OSM.ways.get(l.osmId)?.nodes ?? [] })),
       (p) => groundY(p.x, p.z),
       (p) => onChunk(p.x, p.z),
     ),

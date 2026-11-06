@@ -46,24 +46,25 @@ const at = (line: readonly Pt[], s: number): Pt => {
 };
 
 /**
- * Each crossing of a street on the ground (`onTop`) over a highway's tunnel it shares no node with,
- * on the map (`onMap`), where the game's ground `h` within `REACH` m of it along the street lies
+ * Each crossing of a street on the ground (`onTop`) over a highway's tunnel, not at a node the two
+ * share, on the map (`onMap`), where the game's ground `h` within `REACH` m of it along the street lies
  * more than `DIP` under the chord between the two ends.
  */
 export const roadDipsOverTunnels = (ways: readonly NodeWay[], h: (p: Pt) => number, onMap: (p: Pt) => boolean): { readonly at: string; readonly what: string }[] => {
   const tunnels = ways.filter((w) => tunnel(w.tags));
   return ways.filter((w) => onTop(w.tags)).flatMap((road) => {
-    const nodes = new Set(road.nodes);
     const out: { at: string; what: string }[] = [];
     let start = 0;
     for (let i = 0; i + 1 < road.line.length; i++) {
       const [a, b] = [road.line[i]!, road.line[i + 1]!];
       const len = Math.hypot(b.x - a.x, b.z - a.z);
       for (const t of tunnels) {
-        if (t.nodes.some((n) => nodes.has(n))) continue;
         for (let j = 0; j + 1 < t.line.length; j++) {
           const k = crossing(a, b, t.line[j]!, t.line[j + 1]!);
           if (k === null) continue;
+          // At a node the two share the street leads into the tunnel: a ramp down, as the import has it.
+          const node = k < 1e-6 ? road.nodes[i] : k > 1 - 1e-6 ? road.nodes[i + 1] : undefined;
+          if (node !== undefined && t.nodes.includes(node)) continue;
           const p = { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k };
           if (!onMap(p)) continue;
           const s = start + len * k;
