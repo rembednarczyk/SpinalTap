@@ -26,6 +26,7 @@ import { airMesh } from "./patrol-mesh";
 import { patrolChecks } from "./patrol-pieces";
 import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
+import { grassUnderPavingFindings } from "./grass-under-paving";
 import { pavingCoplanar } from "./paving-coplanar";
 import { drawnPaving, poolSunk } from "./pool-paving";
 import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
@@ -1770,6 +1771,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "paving-overlap-step": () => pavingOverlapSteps(drawnPieces(WORLD_SCENERY, groundY)),
   /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */
   "paving-coplanar": () => pavingCoplanar(mapGround(WORLD_SCENERY)),
+  /** A drawn lawn with over 20 m² of it under a square's or a cobbled area's paving, which lies over it: Plac Litewski's lawns (G-421, `grass-under-paving.ts`). */
+  "grass-under-paving": () => grassUnderPavingFindings(WORLD_SCENERY),
   /** Road markings, zebras and flights on a bridge's deck drawn under its carriageway (G-301, `deck-paint.ts`). */
   "paint-under-deck": () => DECK_PAINT().under,
   /** Road markings and zebras beside a deck pulled up off the terrain towards it (G-301, `deck-paint.ts`). */

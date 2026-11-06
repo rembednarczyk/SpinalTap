@@ -148,6 +148,7 @@
   "drone-low-pool-sunk": 0,
   "paving-overlap-step": 0,
   "paving-coplanar": 0,
+  "grass-under-paving": 7,
   "paint-under-deck": 0,
   "paint-lifted-by-deck": 0,
   "figure-in-building": 0,
