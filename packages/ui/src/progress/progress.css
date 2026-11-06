@@ -114,7 +114,12 @@
 .touch__btn--menu { position: relative; }
 
 /* ---- HUD: level, XP bar and the points under the health bar ---- */
-.hud__progress { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+/* On a computer the row shares the health figures' line: the block keeps its height, so it stays
+   under the minimap, which is pinned above it. A narrower block (a small window) wraps the row to
+   a line of its own, as touch always does (160 px block). */
+.hud__stats { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; margin-top: 4px; }
+.hud__stats .hud__hp-label { margin-top: 0; white-space: nowrap; }
+.hud__progress { flex: 1 1 140px; display: flex; align-items: center; gap: 8px; }
 .hud__level { font-family: var(--font-mono); font-size: 12px; color: var(--ink-dim); white-space: nowrap; }
 .hud__xp { flex: 1; }
 .hud__xp-bar { height: 3px; background: rgba(255, 255, 255, 0.08); }
@@ -131,6 +136,7 @@
 }
 /* On touch the menu button wears the points instead. */
 .touch-mode .hud__points { display: none; }
+.touch-mode .hud__stats { display: block; }
 .touch-mode .hud__progress { margin-top: 2px; }
 
 /* The scanned enemy's level (ADR-0059, stage 7, decision of 6.11). */

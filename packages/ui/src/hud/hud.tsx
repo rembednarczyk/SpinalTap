@@ -172,10 +172,12 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
         <div className="hud__hp" aria-label={t("hud.health")}>
           <div className={`hud__hp-fill${hpPct < 30 ? " hud__hp-fill--low" : ""}`} style={{ width: `${hpPct}%` }} />
         </div>
-        <div className="hud__hp-label">
-          {Math.ceil(hp)} / {maxHp}
+        <div className="hud__stats">
+          <div className="hud__hp-label">
+            {Math.ceil(hp)} / {maxHp}
+          </div>
+          <XpHud up={levelUp} />
         </div>
-        <XpHud up={levelUp} />
         <DisguiseBadge />
         <OverPoolBadge />
       </div>
