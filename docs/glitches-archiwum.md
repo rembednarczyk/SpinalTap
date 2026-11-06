@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-331 Deszcz pada pod dachem pawilonu metra i w hali biletowej
+- Status: naprawione w #303 (6.11, fd4e7be; deszcz i rozbryzgi kończą się pod dachem pawilonu i w hali)
+- Ważność: S4 · Zasięg: wszystkie wejścia metra (widać na zrzutach schodów `shots/metro2/`); do etapu 3 ADR-0071 albo osobno
+- Pakiet właściciela: packages/engine/src/effects (deszcz)
+
+### G-333 Drobne usterki po etapie 2 metra (#279)
+- Status: naprawione w #303 (6.11, fd4e7be; granitowy stopień przed otworem Alchemii B, próg 0,32 → 0,23 m; reszta drobiazgów z #279 w #284)
+- Ważność: S4 · Zasięg: kontrola `metro-shaft-open` (`tools/glitch-scan/test/metro-entrances.ts:131-135`) krucha na zaokrąglenie przy próbce na krawędzi (`z <= w.maxZ`), potrzebny epsilon; `cutGround` (`engine/.../ground-cut.ts:94-95`) liczy każdy trójkąt każdej siatki gruntu (106 ms CPU na 20 chunków), wystarczy wcześniej pominąć siatki bez otworu; Alchemia B: przy rogu otworu bruk 0,32 m pod progiem podestu; Nabrzeże A: okap 0,4 m w murze placu Tessen (T-160); niesprawdzone: wróg w pościgu schodzący za graczem do hali
+- Pakiet właściciela: tools/glitch-scan, packages/engine (mapcity), packages/sim
+
 ### G-337 Północny chodnik al. Tysiąclecia bez nawierzchni (T-165)
 - Status: naprawione w #298 (6.11, d0b3a6b; `T-165/chodnik-tysiaclecia` i `T-165/okap-bazaru`, kurator PRZYJĘTE po drugiej rundzie)
 - Ważność: S4 · Zasięg: x ok. 640–790, z ok. 362–383, ok. 670 m² na samym x 705–790; przed halami Bazaru rabaty (nie brukować); także x 764–806 przed frontem Dworca (T-165 pkt 1–2): ok. 136 m² między drogą rowerową w1435832523 a ścieżką w227698420 (x 773–803 rabata, nie brukować) i ok. 50 m² między chodnikiem w1435832518 a drogą rowerową (kostka z wiatami)

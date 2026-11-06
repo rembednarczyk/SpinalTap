@@ -996,16 +996,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: nagrany przebieg `determinism.test.ts`, ticki ok. 1060–1159
 - Pakiet właściciela: packages/sim/src/systems/ai
 
-### G-331 Deszcz pada pod dachem pawilonu metra i w hali biletowej
-- Status: w PR #303 (6.11; deszcz i rozbryzgi kończą się pod dachem pawilonu i w hali; weryfikator PRZYJĘTE, kurator w toku)
-- Ważność: S4 · Zasięg: wszystkie wejścia metra (widać na zrzutach schodów `shots/metro2/`); do etapu 3 ADR-0071 albo osobno
-- Pakiet właściciela: packages/engine/src/effects (deszcz)
-
-### G-333 Drobne usterki po etapie 2 metra (#279)
-- Status: w PR #303 (6.11; granitowy stopień 0,35 m przed otworem Alchemii B, próg 0,32 → 0,23 m; weryfikator PRZYJĘTE, kurator w toku)
-- Ważność: S4 · Zasięg: kontrola `metro-shaft-open` (`tools/glitch-scan/test/metro-entrances.ts:131-135`) krucha na zaokrąglenie przy próbce na krawędzi (`z <= w.maxZ`), potrzebny epsilon; `cutGround` (`engine/.../ground-cut.ts:94-95`) liczy każdy trójkąt każdej siatki gruntu (106 ms CPU na 20 chunków), wystarczy wcześniej pominąć siatki bez otworu; Alchemia B: przy rogu otworu bruk 0,32 m pod progiem podestu; Nabrzeże A: okap 0,4 m w murze placu Tessen (T-160); niesprawdzone: wróg w pościgu schodzący za graczem do hali
-- Pakiet właściciela: tools/glitch-scan, packages/engine (mapcity), packages/sim
-
 ### G-334 Zabójstwo ogłuszonego gangera po nokaucie zgłoszonym wcześniej nigdy nie jest zgłaszane jako zabójstwo
 - Status: zgłoszone (5.11, weryfikator PR #278; sprzed tego PR, ADR-0065)
 - Ważność: S3 · Zasięg: `corpseOf` przenosi na zwłoki `reported` z nokautu (`bodies.ts:75`), więc patrol, który znajdzie świeże ciało, go nie zgłasza; po wczytaniu dobicie ogłuszonego na oczach patrolu też nie jest przestępstwem, bo `wronged` jest przejściowe, a `offend` w `death-system.ts:72` nie czyta `downed.fought`
@@ -1125,6 +1115,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, naprawiacz G-328)
 - Ważność: S4 · Zasięg: ziarno 11, przechodzień 1002001, gracz (−2; 0): napiera na NPC `fixer` (id 287, ok. (317; −99,8)), prędkość 3,4 przy stałej pozycji · Koszt: średni
 - Pakiet właściciela: packages/sim (`systems/ai`)
+
+### G-365 Wyjście pawilonu metra `targ` A prowadzi na rabatę zamiast na bruk (T-158)
+- Status: zgłoszone (6.11, kurator, przegląd #303; zaległość z T-158)
+- Ważność: S4 · Zasięg: otwór (722; 286) wychodzi na rabatę z 289,6–292,6; według T-158 otwór miał dostać stronę parkingu albo pawilon miał się przesunąć · Koszt: mały
+- Pakiet właściciela: packages/sim (`content/metro.ts`); przegląd kuratora
+- Test przyjęcia: wyjście pawilonu na nawierzchni `square`/`sidewalk`, nie na rabacie
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
