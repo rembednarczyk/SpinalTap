@@ -423,6 +423,30 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(825, 362)).toBe("footway");
   });
 
+  // The Dworzec's stands east of x 870 (T-185): setts from the pavilions' block up to the stands'
+  // asphalt w66323033 and round to Cerkiewna, a lawn between the slab and the pavilion w458298769.
+  // The register's test: on a 0.1 m grid at most 0.5 m² bare north of the bed (z 364.5) to x 915.
+  it("paves the Dworzec's stands east of x 870 up to the asphalt and Cerkiewna, with the lawn green and the bed bare (G-383)", () => {
+    const box = (o: readonly number[]) => o.some((v, i) => (i % 2 === 0 ? v > 868 && v < 920 : v > 362 && v < 390));
+    const pieces = ground.filter((g) => box(g.outline)).map((g) => g.outline);
+    const walls = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z))).filter(box);
+    let bare = 0;
+    for (let x = 870.05; x < 915; x += 0.1)
+      for (let z = 364.55; z < 386; z += 0.1) if (![...walls, ...pieces].some((o) => inside(x, z, o))) bare++;
+    expect(bare * 0.01).toBeLessThanOrEqual(0.5);
+    expect(surfaceAt(876, 367)).toBe("square");
+    expect(surfaceAt(890, 379)).toBe("square");
+    expect(surfaceAt(911.5, 360)).toBe("square");
+    expect(surfaceAt(895, 371)).toBe("square");
+    expect(surfaceAt(888, 366)).toBe("grass");
+    expect(surfaceAt(908, 362)).toBe("grass");
+    // The asphalt, the footway and Cerkiewna stay on top; the bed south of the path stays bare.
+    expect(surfaceAt(905, 385)).toBe("road");
+    expect(surfaceAt(890, 372.6)).toBe("footway");
+    expect(surfaceAt(915.5, 365)).toBe("road");
+    expect(surfaceAt(890, 356)).toBeNull();
+  });
+
   // Along the Bazar's east edge (T-175): red setts from the halls' wall to Nova, where the game had
   // the footway w227698428's band and bare terrain beside it. The register's test: no bare sample.
   it("paves along the Bazar's east edge from the halls to the footway, and leaves the footway and the paths into the halls on top (G-352)", () => {
