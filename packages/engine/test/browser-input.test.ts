@@ -242,3 +242,64 @@ describe("BrowserInput releasing a lock still in flight (G-306)", () => {
     expect(plain).toBe(0);
   });
 });
+
+describe("touch fire button and the aim latch (ADR-0072)", () => {
+  const touchInput = (touchFire: "aims" | "separate", aim: "hold" | "toggle") => {
+    const i = make();
+    i.setButtonModes({ aim, crouch: "hold", sprint: "hold" });
+    i.virtualPad.touchFire = touchFire;
+    i.virtualPad.adsWeapon = true;
+    return i;
+  };
+  /** A tap on ◎ that lasts one poll, as a finger's tap outlasts a frame. */
+  const tapAim = (i: BrowserInput) => {
+    i.virtualPad.press("aim");
+    i.poll();
+    i.virtualPad.release("aim");
+  };
+
+  it("A: holding fire aims and fires; letting go ends both", () => {
+    const i = touchInput("aims", "hold");
+    i.virtualPad.press("fire");
+    expect(i.poll()).toMatchObject({ fire: true, aim: true });
+    i.virtualPad.release("fire");
+    expect(i.poll()).toMatchObject({ fire: false, aim: false });
+  });
+
+  it("A with a toggled aim: fire does not flip the latch, and a latched aim outlasts the fire button", () => {
+    const i = touchInput("aims", "toggle");
+    i.virtualPad.press("fire");
+    expect(i.poll().aim).toBe(true);
+    i.virtualPad.release("fire");
+    expect(i.poll().aim).toBe(false);
+    tapAim(i);
+    expect(i.poll().aim).toBe(true);
+    i.virtualPad.press("fire");
+    i.poll();
+    i.virtualPad.release("fire");
+    expect(i.poll()).toMatchObject({ fire: false, aim: true });
+  });
+
+  it("B: a tap on aim latches the sights, fire then only fires and steers, a second tap lets go", () => {
+    const i = touchInput("separate", "toggle");
+    i.virtualPad.press("fire");
+    expect(i.poll()).toMatchObject({ fire: true, aim: false });
+    i.virtualPad.release("fire");
+    tapAim(i);
+    expect(i.poll().aim).toBe(true);
+    i.virtualPad.press("fire");
+    i.virtualPad.look(0.1, 0);
+    expect(i.poll()).toMatchObject({ fire: true, aim: true, lookYaw: 0.1 });
+    i.virtualPad.release("fire");
+    expect(i.poll().aim).toBe(true);
+    i.virtualPad.press("aim");
+    expect(i.poll().aim).toBe(false);
+  });
+
+  it("A with a melee weapon: fire strikes without raising the guard", () => {
+    const i = touchInput("aims", "hold");
+    i.virtualPad.adsWeapon = false;
+    i.virtualPad.press("fire");
+    expect(i.poll()).toMatchObject({ fire: true, aim: false });
+  });
+});

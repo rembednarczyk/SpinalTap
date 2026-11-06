@@ -202,7 +202,9 @@ export class BrowserInput implements InputPort {
     // The pad consumes its own edges and look deltas while polling.
     const withTouch = mergeFrames(km, this.virtualPad.poll());
     const pad = this.pollPad(dt);
-    return this.shoulder.apply(this.latches.apply(pad ? mergeFrames(withTouch, pad) : withTouch), swapKey, pad !== null && this.padStick);
+    // The touch fire button aims after the latches, so it never flips a toggled aim (ADR-0072).
+    const latched = this.virtualPad.withFireAim(this.latches.apply(pad ? mergeFrames(withTouch, pad) : withTouch));
+    return this.shoulder.apply(latched, swapKey, pad !== null && this.padStick);
   }
 
   dispose(): void {
