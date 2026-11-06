@@ -1175,6 +1175,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`world/nav.ts`, AI strzelca)
 - Test przyjęcia: strzelec dochodzi do gracza albo strzela we wszystkich przypadkach siatki z #316
 
+### G-382 Gołe podłoże przy wiacie przystanku w672635871 (T-184)
+- Status: zgłoszone (6.11, kurator, przegląd #318)
+- Ważność: S4 · Zasięg: ok. 98 m² · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: gołe próbki 0,1 m w klinie ≤ 0,5 m²
+
+### G-383 Gołe podłoże na wschód od stanowisk Dworca, x 870–915 (T-185)
+- Status: zgłoszone (6.11, kurator, przegląd #318)
+- Ważność: S4 · Zasięg: ok. 630 m² · Koszt: mały (najpierw ortofoto x 870–920)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: ≤ 0,5 m² gołego poza rabatą
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
