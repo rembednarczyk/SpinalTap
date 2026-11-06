@@ -1,10 +1,12 @@
 import type { ContractKind } from "../contracts/kinds";
 import type { EnemyTypeId } from "../items/enemies";
+import { MIN_LEVEL } from "./curve";
+import { enemyScale, killXpShare } from "./bands";
 
 /**
- * Where experience comes from (ADR-0059). Every amount here is the value at level 1: the level
- * of the enemy and of the contract scale it in stage 5. Quest steps carry their own XP in the
- * quest definitions. The numbers are tuned so that one district's main thread with its
+ * Where experience comes from (ADR-0059). Every amount here is the value at level 1: a contract's
+ * level scales it as it scales the pay, an enemy's level against the player's scales a kill.
+ * Quest steps carry their own XP in the quest definitions. The numbers are tuned so that one district's main thread with its
  * contracts gives 8 to 10 levels (the pace test in `core/test/progression.test.ts`).
  */
 export type XpSource = "quest" | "contract" | "kill" | "hack" | "stealth";
@@ -25,8 +27,12 @@ export const CONTRACT_XP_BASE: Readonly<Record<ContractKind, number>> = {
 /** What each man the contract sends against the player adds. */
 export const CONTRACT_XP_PER_TARGET = 150;
 
-/** XP of a finished contract, from its difficulty: the template and the number of targets. */
-export const contractXp = (kind: ContractKind, targets: number): number => CONTRACT_XP_BASE[kind] + Math.max(0, Math.floor(targets)) * CONTRACT_XP_PER_TARGET;
+/**
+ * XP of a finished contract, from its difficulty: the template and the number of targets, grown
+ * by the contract's level as its pay is (+4% a level above 1).
+ */
+export const contractXp = (kind: ContractKind, targets: number, level: number = MIN_LEVEL): number =>
+  Math.round((CONTRACT_XP_BASE[kind] + Math.max(0, Math.floor(targets)) * CONTRACT_XP_PER_TARGET) * enemyScale(level));
 
 /** An enemy the player took down, by type: tougher and better armed is worth more. */
 export const ENEMY_XP: Readonly<Record<EnemyTypeId, number>> = {
@@ -39,8 +45,8 @@ export const ENEMY_XP: Readonly<Record<EnemyTypeId, number>> = {
   tessen_sniper: 150,
 };
 
-/** XP of a kill. The level difference (ADR-0059: −5 levels 10%, +5 levels 150%) comes in stage 5. */
-export const killXp = (type: EnemyTypeId): number => ENEMY_XP[type];
+/** XP of a kill: the type's, by the enemy's level against the player's (−5 levels 10%, +5 levels 150%). */
+export const killXp = (type: EnemyTypeId, enemy: number = MIN_LEVEL, player: number = enemy): number => Math.round(ENEMY_XP[type] * killXpShare(enemy, player));
 
 /** A quickhack that landed. */
 export const QUICKHACK_XP = 25;

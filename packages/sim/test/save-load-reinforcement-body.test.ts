@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { DomainEvents, EntityId, HeatState, SaveSnapshot } from "@seki/core";
 import { SIM_HZ, Simulation, stateHash, type Entity } from "../src";
 import { reinforcementEntity } from "../src/world/reinforcements";
+import { enemyScalingOf } from "../src/world/enemy-grade";
 import { collect, run } from "./helpers";
 import { CROUCH, offset, patrol, quietStreet, takeDown, walkAway } from "./takedown-scenes";
 
@@ -13,7 +14,7 @@ const FINDER = 4100;
 
 /** The first reinforcement of the heat, 1.2 m north of the player with its back to her, blinded by a hack. */
 const reinforcement = (sim: Simulation): Entity => {
-  const g = sim.world.add(reinforcementEntity(4000, 1, sim.tick, "hebi_ganger", offset(sim, 0, 1.2), sim.domain.difficulty.npcHealth));
+  const g = sim.world.add(reinforcementEntity(4000, 1, sim.tick, "hebi_ganger", offset(sim, 0, 1.2), enemyScalingOf(sim.domain)));
   g.hackFx = { pinged: 0, blind: 100, crippled: 0 };
   sim.session.watch.sent = 1;
   return g;

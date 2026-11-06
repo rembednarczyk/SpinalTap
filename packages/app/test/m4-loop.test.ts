@@ -105,11 +105,16 @@ const talkToHana = (s: GameSession) => {
 
 const toasts = (ui: Ui) => ui.getState().toasts.map((t) => `${t.title}: ${t.text}`);
 
-/** Stands 4 m south of the target and fires until it drops. */
+/**
+ * Stands 4 m south of the target and fires until it drops. Her health is topped up, as in the
+ * story helpers: the raiders keep up with her level (ADR-0059) and would otherwise outlast her.
+ */
 const shootDown = (s: GameSession, key: string) => {
   for (let i = 0; i < 2000; i++) {
     const t = [...s.sim.world].find((e) => e.key === key);
     if (!t) return;
+    const p = s.sim.player()!;
+    if (p.health) p.health = { ...p.health, current: p.health.max };
     teleport(s, t.position.x, t.position.z - 4, 0, 0.1);
     s.step(frame({ fire: true }));
   }

@@ -39,6 +39,7 @@ import { resumeSession } from "./world/session-resume";
 import { reinforcementsSnapshot, restoreReinforcements } from "./world/reinforcements";
 import { restoreStrayBodies, strayBodiesSnapshot } from "./world/stray-bodies";
 import { calmStreet } from "./systems/ai/civilian-ai-system";
+import { type EnemyScaling, enemyScalingOf } from "./world/enemy-grade";
 import { settleCalls } from "./systems/crime-system";
 
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./world/contract-commands";
@@ -95,10 +96,10 @@ export class Simulation {
     const player = playerEntity(ids.take());
     this.streamer = chunks ? new WorldStreamer(ids, chunks) : new WorldStreamer(ids);
     bindGround(this.world, this.streamer.ground);
-    this.streamer.enemyHealth = () => this.holder.domain.difficulty.npcHealth;
+    this.streamer.enemyScaling = () => this.enemyScaling();
     // The people of a job stay in the world after it ends, done or lost, until the next is taken
     // (G-178): the guards of an alarm fight on, an ambush waits by the way out (ADR-0034).
-    // An ended one is made with the jobs done when it was taken: its pay counts one more since.
+    // Its people are of the level their district's band gives the player's level (ADR-0059).
     // Replaced jobs first, as they were taken: their saved people come back with them.
     for (const f of saved?.formerContracts ?? []) this.streamer.restoreFormer(f);
     const active = domain.contracts.active;
@@ -131,9 +132,9 @@ export class Simulation {
     sim.streamer.restoreEntities(sim.world, snapshot.domain.flags, snapshot.entities);
     restoreDoors(sim, snapshot.doors ?? []);
     // The heat's reinforcements (G-179), before the body on her shoulder: it may be one of them.
-    restoreReinforcements(sim.world, sim.session.watch, snapshot.reinforcements, () => sim.streamer.takeId(), sim.domain.difficulty.npcHealth);
+    restoreReinforcements(sim.world, sim.session.watch, snapshot.reinforcements, () => sim.streamer.takeId(), sim.enemyScaling());
     // And the bodies of a won mugging (G-233): one of them may be on her shoulder too.
-    restoreStrayBodies(sim.world, snapshot.strayBodies, () => sim.streamer.takeId(), sim.domain.difficulty.npcHealth);
+    restoreStrayBodies(sim.world, snapshot.strayBodies, () => sim.streamer.takeId(), sim.enemyScaling());
     // The body on her shoulder (ADR-0065) is saved on the body.
     sim.session.carrying = sim.world.with("downed").entities.find((b) => b.downed.carried)?.id ?? null;
     // A profile asked for in the fight still waits for its end (G-171).
@@ -192,6 +193,11 @@ export class Simulation {
   get district(): DistrictId | null {
     const p = this.player();
     return p ? this.streamer.districtAt(p.position) : null;
+  }
+
+  /** What an enemy appearing now is made with: the difficulty and the player's level, by these districts (ADR-0059). */
+  private enemyScaling(): EnemyScaling {
+    return enemyScalingOf(this.holder.domain, (p) => this.streamer.districtAt(p));
   }
 
   enqueue(command: GameCommand): void {

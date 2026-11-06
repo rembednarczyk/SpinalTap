@@ -75,13 +75,15 @@ describe("item level in play (ADR-0059, stage 4)", () => {
   it("an enemy's bag holds pieces in the player's band, and they keep their level in the bag", async () => {
     const { session } = await atLevel(14);
     const guard = [...session.sim.world].find((e) => e.key === "guard")!;
-    guard.enemy = { type: "hebi_enforcer" };
+    // Krakowskie's band (1-8, ADR-0059 stage 5) keeps the guard at 8: its pieces of 7..9 come up to 12.
+    expect(guard.enemy?.level).toBe(8);
+    guard.enemy = { ...guard.enemy!, type: "hebi_enforcer" };
     guard.health = { ...guard.health!, current: 0 };
     steps(session, 1);
     const bag = session.sim.domain.loot.containers.find((c) => c.key === "loot:guard")!;
     const pieces = bag.lines.filter((l) => l.kind === "item" && hasItemLevel(l.item));
     expect(pieces.length).toBeGreaterThan(0);
-    for (const l of pieces) expect(l.kind === "item" && l.level! >= 13 && l.level! <= 15).toBe(true);
+    for (const l of pieces) expect(l.kind === "item" && l.level).toBe(12);
     teleport(session, bag.position.x, bag.position.z - 1);
     steps(session, 1, frame({ interact: true }));
     session.intents.takeLoot("all");

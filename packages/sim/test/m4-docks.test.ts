@@ -204,6 +204,9 @@ describe("escort (Mika to the boat)", () => {
       sim.step();
     }
     run(sim, 30);
+    // The fourth man of the ambush (a job of the docks' level 16, ADR-0059) scares the docker off the
+    // quay: the crowd's fear is transient (G-240), so the save calms the street first, as the app's does.
+    sim.calmForSave();
     const restored = reload(sim);
     expect(crew(restored, c)).toHaveLength(c.targets);
     expect(byKey(restored, contractEscortKey(c.id))!.position).toEqual(byKey(sim, contractEscortKey(c.id))!.position);

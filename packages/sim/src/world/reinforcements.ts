@@ -5,20 +5,22 @@ import type { SessionWatch } from "./context";
 import { entitySnapshotOf, gangerEntity, toughen } from "./factory";
 import { revived } from "./actor-spawner";
 import { restoreDowned } from "./bodies";
+import type { EnemyScaling } from "./enemy-grade";
 
 /**
  * The `n`-th of the heat's reinforcements (ADR-0029), come in at tick `since`. Whether it is an
  * enforcer follows from `n`, not from its id (G-179): the ids of a loaded game are others, bags
  * taking new ones on loading.
  */
-export const reinforcementEntity = (id: EntityId, n: number, since: number, type: EnemyTypeId, at: Vec3, npcHealth: number): Entity => {
+export const reinforcementEntity = (id: EntityId, n: number, since: number, type: EnemyTypeId, at: Vec3, scaling: EnemyScaling): Entity => {
   const g: Entity = { ...gangerEntity(n, { key: "", position: at, yaw: 0 }, null, ENEMY_TYPES[type].hp, "", undefined, type), id };
   delete g.key;
   // No chunk either (G-219): sent across the city, it stays in the world as its body does, so one
   // knocked out alive does not fall asleep with the chunk it lies in, unkeyed, gone for good.
   delete g.chunk;
   g.security = { n, since };
-  return toughen(g, npcHealth);
+  // Of the level of the district it comes into (ADR-0059): its home is where it came in.
+  return toughen(g, scaling);
 };
 
 /**
@@ -61,13 +63,13 @@ export const restoreReinforcements = (
   watch: SessionWatch,
   saved: ReinforcementsSnapshot | undefined,
   takeId: () => EntityId,
-  npcHealth: number,
+  scaling: EnemyScaling,
 ): void => {
   if (!saved) return;
   watch.sent = saved.sent;
   watch.reinforce = saved.wait;
   for (const p of [...saved.people].sort((a, b) => a.n - b.n)) {
-    const e = world.add(revived(reinforcementEntity(takeId(), p.n, p.since, p.type, { ...p.home }, npcHealth), p.state));
+    const e = world.add(revived(reinforcementEntity(takeId(), p.n, p.since, p.type, { ...p.home }, scaling), p.state));
     if (p.state.downed) restoreDowned(world, e, p.state.downed);
   }
 };

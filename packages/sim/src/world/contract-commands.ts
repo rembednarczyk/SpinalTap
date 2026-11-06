@@ -27,6 +27,7 @@ import type { SimContext } from "./context";
 import { applyReputationCause, clearContract, raiseProgress } from "./domain-ops";
 import { BREACH_DAEMONS, giverOfContract, hackFxOf, noteHacked, phoneFromFixer } from "./street";
 import { grantXp } from "./progression-ops";
+import { contractLevelOf } from "./enemy-grade";
 
 /** Daemons of a terminal breach (ADR-0029): ICEpick cuts the hack short, Datamine pays, Mass Vulnerability marks the wave. */
 export const BREACH_ICEPICK_SECONDS = 10;
@@ -55,7 +56,15 @@ export const acceptContract = (ctx: SimContext, cmd: Command<"accept-contract">)
   if (kind === "protect" && (hasFlag(domain.flags, deadFlag(PROTECTEE_KEY)) || protecteeDown(ctx) || !oyajiStallOpen(domain.clock))) return;
   const plain = generateContractOfKind(
     kind,
-    { log: domain.contracts, reputation: domain.reputation, flags: domain.flags, tick: ctx.tick, ticksPerSecond: SIM_HZ },
+    {
+      log: domain.contracts,
+      reputation: domain.reputation,
+      flags: domain.flags,
+      tick: ctx.tick,
+      ticksPerSecond: SIM_HZ,
+      // The job's level is an enemy's in its site's district (ADR-0059): its crew and pay follow.
+      levelAt: (site) => contractLevelOf(domain.progression.level, site),
+    },
     ctx.rng,
   );
   // The variation (ADR-0034) from a stream of its own, so the job's other rolls stay as they were.
@@ -101,8 +110,9 @@ export const completeContract = (ctx: SimContext): void => {
   ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });
   ctx.bus.emit("ContractDebrief", { contractId: contract.id, reward: contract.reward, ...card, ...(contract.variation ? { variation: contract.variation } : {}) });
   phoneFromFixer(ctx, giverOfContract(contract), "paid");
-  // Experience by difficulty (ADR-0059), and a stealth bonus when nobody noticed the player.
-  grantXp(ctx, contractXp(kind, contract.targets), "contract");
+  // Experience by difficulty and the job's level (ADR-0059: its district's for her level now, which
+  // the contract does not keep), and a stealth bonus when nobody noticed the player.
+  grantXp(ctx, contractXp(kind, contract.targets, contractLevelOf(domain.progression.level, contract.siteId)), "contract");
   if (!tally.detected) grantXp(ctx, UNDETECTED_CONTRACT_XP, "stealth");
   raiseProgress(ctx, "contract_completed");
 };

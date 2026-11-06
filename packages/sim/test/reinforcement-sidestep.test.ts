@@ -38,10 +38,12 @@ const onTheRoof = (seed: number, level: HeatLevel): Simulation => {
 
 describe("a reinforcement leans to the side of its number (G-208)", () => {
   // With the hashes of the run as schemas v28 and v27 wrote it: the item levels of v29 (ADR-0059,
-  // stage 4) are fields of the starter kit here; G-233 and the market move (v30) change only the version.
+  // stage 4) are fields of the starter kit here; G-233 and the market move (v30) change only the version. Re-recorded for
+  // ADR-0059, stage 5, a new rule: the Tessen reinforcements are of the docks' level 16, tougher
+  // (and saved with their maximum health).
   for (const [seed, level, golden, v28, v27] of [
-    [21, 2, "774ee167", "043d5219", "ecbb3d70"],
-    [5, 3, "f41565fb", "651ff9cd", "ec6ecf8e"],
+    [21, 2, "86fb3887", "96f59679", "5b25c2ac"],
+    [5, 3, "4b807e73", "87e672a5", "ff83146a"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
       const sim = onTheRoof(seed, level);

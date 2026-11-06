@@ -42,13 +42,15 @@ export interface EnemyType {
   readonly loot: LootTableId;
   /** Its sight (ADR-0069); none for a sniper, which keeps its own (ADR-0024). */
   readonly vision?: SightProfile;
+  /** An elite is a level above its district's band (ADR-0059); the rest are regulars. */
+  readonly rank?: "elite";
 }
 
 export const ENEMY_TYPES = {
   // Today's ganger armor (3) became the Hebi jacket with no head cover, so a head hit skips it.
   hebi_ganger: { id: "hebi_ganger", faction: "hebi", hp: 80, weapon: "hebi_smg", outfit: ["hebi_jacket", "cargo_pants"], loot: "hebi_common", vision: HEBI_SIGHT },
   hebi_lookout: { id: "hebi_lookout", faction: "hebi", hp: 80, weapon: "unity9", outfit: ["hebi_jacket", "cargo_pants"], loot: "hebi_common", vision: HEBI_SIGHT },
-  hebi_enforcer: { id: "hebi_enforcer", faction: "hebi", hp: 140, weapon: "raijin12", outfit: ["hebi_jacket", "moto_helmet", "cargo_pants"], loot: "hebi_enforcer", vision: TRAINED_SIGHT },
+  hebi_enforcer: { id: "hebi_enforcer", faction: "hebi", hp: 140, weapon: "raijin12", outfit: ["hebi_jacket", "moto_helmet", "cargo_pants"], loot: "hebi_enforcer", vision: TRAINED_SIGHT, rank: "elite" },
   // Melee (ADR-0019): closes in with a telescopic baton and swings with a readable windup.
   hebi_brawler: { id: "hebi_brawler", faction: "hebi", hp: 90, weapon: "baton", outfit: ["hebi_jacket", "cargo_pants"], loot: "hebi_common", vision: HEBI_SIGHT },
   // Act II (ADR-0023): Kagami's recovery team on the overpass, vests and visors, no gang colours.
@@ -60,6 +62,7 @@ export const ENEMY_TYPES = {
     outfit: ["ballistic_vest", "tactical_visor", "kevlar_pants"],
     loot: "hebi_enforcer",
     vision: TRAINED_SIGHT,
+    rank: "elite",
   },
   // Doki (ADR-0024). The guard is armoured: an SMG barely scratches the vest, aim for the face.
   tessen_guard: {

@@ -4,6 +4,7 @@ import { isPresent } from "../content/builders";
 import type { Entity } from "./components";
 import { applyEntitySnapshot, isDead, toughen } from "./factory";
 import { corpseOf, freshDowned, restoreDowned } from "./bodies";
+import type { EnemyScaling } from "./enemy-grade";
 import { placeOnSchedule } from "./schedule";
 import type { GroundField } from "./ground";
 import { settle } from "./placement";
@@ -37,12 +38,15 @@ export class ActorSpawner {
     private readonly catalog: StreamCatalog,
     private readonly ground: GroundField,
     private readonly chunkIdAt: (p: Vec3) => string,
-    private readonly enemyHealth: () => number,
+    private readonly enemyScaling: () => EnemyScaling,
   ) {}
 
-  /** A character as it appears: hostile ones with the difficulty's health (ADR-0066), before any saved state. */
+  /**
+   * A character as it appears: hostile ones of their level (ADR-0059) with the difficulty's health
+   * (ADR-0066), before any saved state.
+   */
   build(t: Template): Entity {
-    return toughen(t.make(), this.enemyHealth());
+    return toughen(t.make(), this.enemyScaling());
   }
 
   spawnProps(world: World<Entity>, chunkId: string): void {

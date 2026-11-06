@@ -1,5 +1,6 @@
-import { type LootContainer, addContainer, bestLootRarity, expireContainers, hasFlag } from "@seki/core";
+import { type LootContainer, addContainer, bestLootRarity, expireContainers, hasFlag, stashLines } from "@seki/core";
 import { WORLD_STASHES } from "../content/world-map";
+import { districtLevelAt } from "../world/enemy-scaling";
 import { raiseFlag } from "../world/domain-ops";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -46,7 +47,8 @@ export const stashFlag = (key: string): string => `placed:${key}`;
 /**
  * Roof stashes (ADR-0021) are ordinary containers that never expire, put into the domain the
  * first time the player comes near. The flag records it, so a taken stash never comes back and
- * a saved game keeps both without a schema change.
+ * a saved game keeps both without a schema change. A weapon or garment in one is of the level of
+ * its district (ADR-0059), kept within the player's ± 2, fixed when the stash is put in place.
  */
 const placeStashes = (ctx: SimContext): void => {
   const player = ctx.world.with("player").first;
@@ -60,7 +62,7 @@ const placeStashes = (ctx: SimContext): void => {
       position: { x: s.at.x, y: s.at.y, z: s.at.z },
       chunk: ctx.streamer.chunkIdAt(s.at),
       expiresAtTick: Number.MAX_SAFE_INTEGER,
-      lines: s.lines,
+      lines: stashLines(s.lines, districtLevelAt(ctx, s.at), ctx.state.domain.progression.level),
     });
     ctx.state.domain = { ...ctx.state.domain, loot: r.loot };
     for (const old of r.evicted) ctx.bus.emit("LootExpired", { containerKey: old.key });

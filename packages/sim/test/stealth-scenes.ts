@@ -1,4 +1,4 @@
-import { type Contract, type EnemyTypeId, type SaveSnapshot, type Vec3, contractItemKey, contractTag, takenFlag } from "@seki/core";
+import { type Contract, type EnemyTypeId, INITIAL_PROGRESSION, type SaveSnapshot, type Vec3, contractItemKey, contractTag, takenFlag, xpForLevel } from "@seki/core";
 import { HANA_SPOT, SIM_DT, Simulation, TAKEDOWN_TIME, docks, gangerEntity, ground, type Entity } from "../src";
 import { input, streetSim, teleportPlayer } from "./helpers";
 import { setProfile } from "./difficulty-scenes";
@@ -79,10 +79,17 @@ const noCameras = (sim: Simulation): Simulation => {
  * A stealth contract (`retrieve` at the Hebi stash, `infiltrate` in the Tessen office) taken with
  * `completed` jobs behind her (so with a variation from the fifth on). The cameras are taken off:
  * they keep their own sight (ADR-0029, unchanged by ADR-0069) and are hacked or walked round.
+ * The crew grows with the job's level (ADR-0059); she is of the level whose crew is the one these
+ * jobs used to bring (one more man every three jobs, one more every 10 levels from 20). That holds
+ * in the docks; the Hebi stash in Alchemia lies in Krakowskie's band (1-8), whose jobs send no more.
  */
 export const stealthContract = (kind: "retrieve" | "infiltrate", seed: number, completed: number): { sim: Simulation; contract: Contract } => {
   const fresh = Simulation.create({ seed }).snapshot(null, "t", "");
-  const sim = Simulation.fromSnapshot(JSON.parse(JSON.stringify({ ...fresh, domain: { ...fresh.domain, contracts: { active: null, completed } } })) as SaveSnapshot);
+  const more = Math.floor(completed / 3);
+  const level = more === 0 ? 1 : 10 + 10 * more;
+  const progression = { ...INITIAL_PROGRESSION, level, xp: xpForLevel(level) };
+  const domain = { ...fresh.domain, progression, contracts: { active: null, completed } };
+  const sim = Simulation.fromSnapshot(JSON.parse(JSON.stringify({ ...fresh, domain })) as SaveSnapshot);
   teleportPlayer(sim, kind === "retrieve" ? ground(HANA_SPOT.x - 1.5, HANA_SPOT.z) : docks(0, 0, 120));
   for (let i = 0; i < 30; i++) sim.step();
   sim.enqueue({ type: "accept-contract", kind });

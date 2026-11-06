@@ -90,11 +90,11 @@ describe("contract kinds (M4)", () => {
     expect(generateContractOfKind("delivery", ctx({ reputation: street }), sequenceRng(0)).reward).toBe(Math.round(400 * 0.8));
   });
 
-  it("protection waves come from one of two sides and grow with experience", () => {
+  it("protection waves come from one of two sides and grow with the job's level (ADR-0059)", () => {
     const first = generateContractOfKind("protect", ctx(), sequenceRng(0, 0));
     expect(first).toMatchObject({ kind: "protect", siteId: "raid_north", targets: 2, reward: 550 });
-    const veteran = generateContractOfKind("protect", ctx({ log: { active: null, completed: 9 } }), sequenceRng(0.99, 0.99));
-    expect(veteran).toMatchObject({ siteId: "raid_east", targets: 4, reward: 800 });
+    const veteran = generateContractOfKind("protect", ctx({ levelAt: () => 20 }), sequenceRng(0.99, 0.99));
+    expect(veteran).toMatchObject({ siteId: "raid_east", targets: 4, reward: Math.round(800 * 1.76) });
   });
 
   it("never reuses the id of a failed contract", () => {

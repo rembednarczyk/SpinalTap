@@ -175,8 +175,9 @@ export interface StreamingSnapshot {
 }
 
 /**
- * A contract as its targets were made (G-178): with the count of jobs done at the time, which
- * toughens them, so a job paid since (one more done) rebuilds them as they were.
+ * A contract as its targets were made (G-178): with the count of jobs done at the time. That
+ * count toughened them until ADR-0059 (stage 5); now their level by the district's band does, and
+ * the count stays in the save, read by nothing that makes them.
  */
 export interface ContractOnSite {
   readonly contract: Contract;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ABILITY_CATALOG, CONTRACT_SITE_SPAWNS_COUNT_GUARD, contractTag, type Contract } from "./m1-helpers";
-import { CONTRACT_SITE_SPAWNS, GANGER_SPEED, Simulation, contractGangerHp, ground, groundY, stateHash } from "../src";
+import { CONTRACT_SITE_SPAWNS, GANGER_SPEED, GANGER_MAX_HP, Simulation, ground, groundY, stateHash } from "../src";
 import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
 /** A copy of the simulation with a patched domain, built the way a load would build it. */
@@ -39,7 +39,7 @@ describe("fixer contracts", () => {
     expect(accepted).toHaveLength(1);
     expect(c.status).toBe("active");
     expect(contractTargets(sim, c)).toHaveLength(c.targets);
-    expect(contractTargets(sim, c)[0]?.health?.max).toBe(contractGangerHp(0));
+    expect(contractTargets(sim, c)[0]?.health?.max).toBe(GANGER_MAX_HP);
     expect(CONTRACT_SITE_SPAWNS_COUNT_GUARD).toBe(true);
   });
 

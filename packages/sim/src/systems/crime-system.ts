@@ -27,6 +27,7 @@ import { SECURITY_ENTRIES } from "../content/devices";
 import type { Entity, WitnessCall } from "../world/components";
 import type { Offence, SimContext, StreetDisturbance, System } from "../world/context";
 import { reinforcementEntity } from "../world/reinforcements";
+import { enemyScalingIn } from "../world/enemy-scaling";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { codeKnown } from "../world/hook-tracker";
@@ -426,7 +427,7 @@ const runReinforcements = (ctx: SimContext, player: Entity | null, dt: number): 
   // The difficulty brings them in more or less often (`reinforce`, ADR-0066).
   watch.reinforce = REINFORCE_INTERVAL / difficultyOf(ctx).reinforce;
   watch.sent += 1;
-  const g = reinforcementEntity(ctx.streamer.takeId(), watch.sent, ctx.tick, type, at, difficultyOf(ctx).npcHealth);
+  const g = reinforcementEntity(ctx.streamer.takeId(), watch.sent, ctx.tick, type, at, enemyScalingIn(ctx));
   if (g.ai) g.ai.lastKnown = heat.lastKnown ? { ...heat.lastKnown } : { ...player.position };
   ctx.world.add(g);
 };

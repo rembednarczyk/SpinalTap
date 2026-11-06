@@ -3,7 +3,7 @@ import type { Vec3 } from "../math/vec3";
 import type { RandomPort } from "../ports/random-port";
 import { isAmmoId, isStackableId } from "./catalog";
 import { type AmmoPouch, type Equipment, type InventoryState, type ItemInstance, addAmmo, addInstance, addStack } from "./inventory";
-import { MIN_ITEM_LEVEL, enemyLootLevel, rollGrade } from "./grade";
+import { MIN_ITEM_LEVEL, enemyLootLevel, hasItemLevel, lootLevel, rollGrade } from "./grade";
 import { bestRarity } from "./rarity";
 import type { AmmoId, InstanceDefId, ItemDefId, ItemRef, LootLine, Rarity, StackableId } from "./types";
 
@@ -114,9 +114,9 @@ export const LOOT_TABLES: Readonly<Record<LootTableId, LootTable>> = {
 const between = (r: number, [min, max]: readonly [number, number]): number => min + Math.min(max - min, Math.floor(r * (max - min + 1)));
 
 /**
- * Who drops the loot (ADR-0059): the source's level (an enemy's, today the player's own until the
- * district bands of stage 5) and the player's, which keeps the loot in its band, and a stream of
- * its own for the levels and traits, so the old draws of the main stream stay where they were.
+ * Who drops the loot (ADR-0059): the source's level (an enemy's, by its district's band) and the
+ * player's, which keeps the loot in its band, and a stream of its own for the levels and traits,
+ * so the old draws of the main stream stay where they were.
  */
 export interface LootGrade {
   readonly source: number;
@@ -173,6 +173,14 @@ export const rollLoot = (table: LootTable, rng: RandomPort, grade: LootGrade = B
   }
   return lines;
 };
+
+/**
+ * A fixed container's lines (a stash) found in a district of level `district` (ADR-0059): a weapon
+ * or garment the content gives no level gets the district's, kept within the player's ± 2. The
+ * tier stays the content's; everything else is as the content has it.
+ */
+export const stashLines = (lines: readonly LootLine[], district: number, player: number): LootLine[] =>
+  lines.map((l) => (l.kind === "item" && l.level === undefined && hasItemLevel(l.item) ? { ...l, level: lootLevel(district, player) } : l));
 
 /** The loot line a piece becomes when dropped: kind, tier, level and traits, nothing of its state. */
 export const itemLine = (item: ItemInstance): LootLine => ({
