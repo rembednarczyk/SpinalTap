@@ -37,8 +37,13 @@ const post = (r: number, top: number, x = 0, z = 0): Post => ({ x, z, r, top });
 /** Shape counts per kind, as the renderer's `PROP_SHAPES` (the low bits of `variant`). */
 const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, tree: 3, monument: 6, artwork: 6, flagpole: 2, "bike-rack": 4, container: 2, "market-goods": 4 };
 const shapeOf = (kind: StreetPropKind, variant: number): number => variant % (SHAPES[kind] ?? 1);
-/** Trees grow 0.8 to 1.25 (bits 4 to 7), like the renderer's `scaleOf`. */
-const treeScale = (variant: number): number => 0.8 + 0.45 * (((variant >> 4) % 16) / 15);
+/**
+ * A tree's size, as `treeScale` of `@seki/core` (G-422): a measured tree's from its step over
+ * 0xf000 (three variants, one per species, a step), else 0.8 to 1.25 from bits 4 to 7. Its own copy,
+ * as the importer loads this module in plain Node, where only types come from the core's index.
+ */
+export const treeScale = (variant: number): number =>
+  variant >= 0xf000 ? Math.round((0.7 + Math.floor((variant - 0xf000) / 3) * 0.01) * 100) / 100 : 0.8 + 0.45 * (((variant >> 4) % 16) / 15);
 
 /**
  * A granite bollard of the old town (G-032), as the renderer draws it: `side` square, `height`
