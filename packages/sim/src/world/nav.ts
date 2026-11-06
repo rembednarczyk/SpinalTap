@@ -185,6 +185,11 @@ export const firingPosition = (world: World<Entity>, graph: NavGraph, from: Vec3
     }
   });
   if (end < 0) return null;
-  // Standing on it already: hold there.
-  return { next: firstStep(p, s, end, from) ?? from, cost: endCost };
+  const step = firstStep(p, s, end, from);
+  if (step) return { next: step, cost: endCost };
+  // Standing on it already: hold there, unless the shot is the node's and not from here. Within
+  // `ARRIVE` of the head of a metro's stairs the pavilion's lintel hides the hall (G-368).
+  const at = p.at[end];
+  const held = !at || lineOfSight(world, raise(from, EYE), raise(target, CHEST)) ? from : at;
+  return { next: held, cost: endCost };
 };

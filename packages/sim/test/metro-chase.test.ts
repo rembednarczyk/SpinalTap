@@ -19,19 +19,24 @@ import { teleportPlayer } from "./helpers";
 
 const entrance = (station: string, label: "A" | "B") => METRO_ENTRANCES.find((e) => e.station === station && e.label === label)!;
 
-/** Seconds an alerted brawler at `from` takes to get within 2.5 m (and a metre of height) of the player at `to`, or null. */
-const chase = (from: Vec3, to: Vec3, chunk: string, seconds: number): number | null => {
-  const sim = Simulation.create({ seed: 3 });
+/**
+ * Seconds an alerted brawler (or `kind`) at `from` takes to get within 2.5 m (and a metre of
+ * height) of the player at `to`, or to hurt her (a gunner shoots from where it sees her), or null.
+ */
+const chase = (from: Vec3, to: Vec3, chunk: string, seconds: number, kind: "hebi_brawler" | "hebi_ganger" = "hebi_brawler", seed = 3): number | null => {
+  const sim = Simulation.create({ seed });
   teleportPlayer(sim, to);
   sim.step();
   const p = sim.player()!;
   p.position = { ...to };
   p.prevPosition = p.position;
-  const g = gangerEntity(9001, { key: "g368-chaser", position: { ...from }, yaw: 0 }, null, 200, chunk, undefined, "hebi_brawler");
+  const health = p.health!.current;
+  const g = gangerEntity(9001, { key: "g368-chaser", position: { ...from }, yaw: 0 }, null, 200, chunk, undefined, kind);
   g.ai!.alerted = true;
   sim.world.add(g);
   for (let i = 0; i < 60 * seconds; i++) {
     sim.step();
+    if (p.health!.current < health) return i / 60;
     if (Math.hypot(g.position.x - p.position.x, g.position.z - p.position.z) < 2.5 && Math.abs(g.position.y - p.position.y) < 1) return i / 60;
   }
   return null;
@@ -54,6 +59,12 @@ describe("chasing the player through a metro entrance (G-368)", () => {
       expect(chase(e.hallSpot, e.door, e.chunk, 10)).not.toBeNull();
     });
   }
+
+  // A gunner takes the head of the stairs for its firing position and stops short of it, within
+  // the reach of a node: from there the pavilion's lintel hid the player in the hall (round 2).
+  it("Alchemia (kanal B): a gunner at the door gets a shot at the player in the hall", () => {
+    for (const seed of [3, 11]) expect(chase(ALCHEMIA_B.door, ALCHEMIA_B.hallSpot, ALCHEMIA_B.chunk, 8, "hebi_ganger", seed), `seed ${seed}`).not.toBeNull();
+  });
 
   it("Plac Łokietka (kanal A): from the hall down the second flight to the platform", () => {
     expect(chase(KANAL_A.hallSpot, platformOf(KANAL_A), KANAL_A.chunk, 12)).not.toBeNull();
