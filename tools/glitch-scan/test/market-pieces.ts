@@ -80,6 +80,19 @@ export const coverPoints = (i: StreetPropItem): Pt[] => {
   return out;
 };
 
+type Box = { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
+const boxOf = (pts: readonly Pt[]): Box => ({ minX: Math.min(...pts.map((p) => p.x)), maxX: Math.max(...pts.map((p) => p.x)), minZ: Math.min(...pts.map((p) => p.z)), maxZ: Math.max(...pts.map((p) => p.z)) });
+/** Do the boxes meet (a hair over, past any rounding)? */
+const boxesNear = (a: Box, b: Box): boolean => a.minX <= b.maxX + 1e-6 && b.minX <= a.maxX + 1e-6 && a.minZ <= b.maxZ + 1e-6 && b.minZ <= a.maxZ + 1e-6;
+/** A function of a piece remembered by the piece: the checks walk the same pieces' points (G-409). */
+const byPiece = <T>(f: (i: StreetPropItem) => T): ((i: StreetPropItem) => T) => {
+  const memo = new Map<StreetPropItem, T>();
+  return (i) => {
+    if (!memo.has(i)) memo.set(i, f(i));
+    return memo.get(i)!;
+  };
+};
+
 const isBuilding = (t: Tags): boolean => t.building !== undefined && t.building !== "roof" && t.location !== "underground" && Number(t.layer ?? 0) >= 0;
 
 /** The checks over the pieces `all` (every piece of the city), the map data `osm` and the crowd's lanes. */
@@ -106,6 +119,9 @@ export const marketChecks = (osm: OsmData, all: readonly StreetPropItem[], lanes
     return { pieces, buildings, roads, zebras, markets, food };
   };
   const data = () => (memo ??= gather());
+  const solid = byPiece(solidPoints);
+  const cover = byPiece(coverPoints);
+  const coverBox = byPiece((i) => boxOf(cover(i)));
   const each = (test: (i: StreetPropItem, d: ReturnType<typeof gather>) => string | null): Finding[] =>
     data().pieces.flatMap((i) => {
       const what = test(i, data());
@@ -115,13 +131,15 @@ export const marketChecks = (osm: OsmData, all: readonly StreetPropItem[], lanes
     /** A market piece (its solid, a stall's canvas) in a building's outline from the map (roofs over a market aside). */
     "market-piece-in-building": () =>
       each((i, d) => {
-        const hit = d.buildings.find((b) => coverPoints(i).some((q) => q.x >= b.minX && q.x <= b.maxX && q.z >= b.minZ && q.z <= b.maxZ && inRing(q, b.ring)));
+        const pts = cover(i);
+        const box = coverBox(i);
+        const hit = d.buildings.find((b) => boxesNear(box, b) && pts.some((q) => q.x >= b.minX && q.x <= b.maxX && q.z >= b.minZ && q.z <= b.maxZ && inRing(q, b.ring)));
         return hit ? `in ${hit.id}` : null;
       }),
     /** A market piece's solid on the carriageway of a car road (its mapped width about its axis, less `ROAD_SLACK`). */
     "market-piece-on-road": () =>
       each((i, d) => {
-        const pts = solidPoints(i);
+        const pts = solid(i);
         const hit = d.roads.find((r) => pts.some((q) => lineGap(q, r.line) < r.half - ROAD_SLACK));
         return hit ? `on ${hit.id}` : null;
       }),
@@ -142,14 +160,14 @@ export const marketChecks = (osm: OsmData, all: readonly StreetPropItem[], lanes
     /** A market piece's solid within `CROSSING_ROOM` of a zebra, or of a passage through a building or a covered way past its half width. */
     "market-piece-in-crossing": () =>
       each((i, d) => {
-        const pts = solidPoints(i);
+        const pts = solid(i);
         const hit = d.zebras.find((z) => pts.some((q) => (z.line.length === 1 ? Math.hypot(q.x - z.line[0]!.x, q.z - z.line[0]!.z) : lineGap(q, z.line)) < z.half + CROSSING_ROOM));
         return hit ? `at ${hit.id}` : null;
       }),
     /** A market piece's solid across a crowd lane: a walker's body would pass through it. */
     "market-piece-on-crowd-lane": () =>
       each((i) => {
-        const pts = solidPoints(i);
+        const pts = solid(i);
         const hit = lanes.find((l) => {
           const line = l.points.map(([x, z]) => ({ x, z }));
           return pts.some((q) => lineGap(q, line, true) < WALKER);
@@ -164,8 +182,8 @@ export const marketChecks = (osm: OsmData, all: readonly StreetPropItem[], lanes
      */
     "market-piece-in-neighbour": () =>
       each((i, d) => {
-        const own = solidPoints(i);
-        const other = all.find((o) => o !== i && Math.hypot(o.x - i.x, o.z - i.z) < 8 && own.some((q) => (o.prop === "market-stall" && i.prop !== "market-stall" ? coverPoints(o).some((c) => Math.hypot(c.x - q.x, c.z - q.z) < 0.15) : distanceToPiece(o, q.x, q.z) === 0)));
+        const own = solid(i);
+        const other = all.find((o) => o !== i && Math.hypot(o.x - i.x, o.z - i.z) < 8 && own.some((q) => (o.prop === "market-stall" && i.prop !== "market-stall" ? cover(o).some((c) => Math.hypot(c.x - q.x, c.z - q.z) < 0.15) : distanceToPiece(o, q.x, q.z) === 0)));
         if (other) return `in ${other.prop} at ${near(other)}`;
         if (i.prop === "market-goods") {
           const atMarket = d.markets.some((r) => inRing(i, r) || lineGap(i, r, true) < STOCK_REACH) || all.some((o) => o.prop === "market-stall" && Math.hypot(o.x - i.x, o.z - i.z) < STOCK_REACH);
