@@ -27,6 +27,7 @@ import {
   scanRangeScale,
   shortCircuitScale,
   uploadTimeScale,
+  workingDeck,
 } from "@seki/core";
 import type { DeviceKind, Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -348,8 +349,9 @@ const start = (ctx: SimContext, focus: Entity, slot: number): void => {
   if ((focus.device?.broken ?? 0) > 0) return fail("wrong-target");
   const ram = hackCost(hackId, icepick(ctx));
   if (netrun.ram + 1e-9 < ram) return fail("no-ram");
-  // Net and Fast Upload upload faster (ADR-0059).
-  const upload = QUICKHACKS[hackId].upload * uploadTimeScale(ctx.state.domain.progression.attributes) * perkUploadScale(ctx.state.domain.progression.perks);
+  // Net, Fast Upload (ADR-0059) and a cyberdeck implant upload faster.
+  const { progression } = ctx.state.domain;
+  const upload = QUICKHACKS[hackId].upload * uploadTimeScale(progression.attributes) * perkUploadScale(progression.perks) * workingDeck(ctx.state.domain).uploadScale;
   ctx.state.domain = { ...ctx.state.domain, netrun: { ram: netrun.ram - ram, upload: { hackId, target: targetRef(focus), left: upload, ram } } };
   ctx.session.watch.uploadId = focus.id;
   ctx.bus.emit("QuickhackStarted", { hackId, targetId: focus.id, upload, ram });
@@ -399,8 +401,9 @@ export const scannerSystem: System = {
       if (focus && ctx.input.quickhack > 0) start(ctx, focus, ctx.input.quickhack);
       const netrun = ctx.state.domain.netrun;
       const max = ramMaxOf(ctx.state.domain);
-      // Recycler (ADR-0059) brings it back faster.
-      if (!netrun.upload && netrun.ram < max && !inCombat(ctx, player)) setRam(ctx, regenRam(netrun.ram, max, ctx.dt * ramRegenScale(ctx.state.domain.progression.perks)));
+      // Recycler (ADR-0059) and a cyberdeck implant bring it back faster.
+      const regen = ramRegenScale(ctx.state.domain.progression.perks) * workingDeck(ctx.state.domain).regenScale;
+      if (!netrun.upload && netrun.ram < max && !inCombat(ctx, player)) setRam(ctx, regenRam(netrun.ram, max, ctx.dt * regen));
     }
     reportRam(ctx);
   },

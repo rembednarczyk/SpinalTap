@@ -48,10 +48,11 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // stage 4) are fields of the starter kit here; G-233 and the market move (v30) change only the version. Re-recorded for
   // ADR-0059, stage 5, a new rule: the Tessen reinforcements are of the docks' level 16, tougher
   // (and saved with their maximum health). Re-recorded for the v31 style and bad luck (ADR-0059,
-  // stage 6), fields: as v30 the runs hash to the goldens of before.
-  for (const [seed, level, golden, v30, v28, v27] of [
-    [21, 2, "1dcd58a8", "86fb3887", "96f59679", "5b25c2ac"],
-    [5, 3, "f462c19c", "4b807e73", "87e672a5", "ff83146a"],
+  // stage 6), fields: as v30 the runs hash to the goldens of before. Re-recorded for the v32
+  // version of the cyberdeck's grades: nobody here has a deck, so as v31 they hash as before.
+  for (const [seed, level, golden, v31, v30, v28, v27] of [
+    [21, 2, "4ba6c2d7", "1dcd58a8", "86fb3887", "96f59679", "5b25c2ac"],
+    [5, 3, "e4cb37dd", "f462c19c", "4b807e73", "87e672a5", "ff83146a"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
       const sim = onTheRoof(seed, level);
@@ -72,6 +73,7 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
       }
       // The run with the rule (seed 21: by the ids it parts otherwise some 510 steps in).
       const snap = sim.snapshot(null, "t", "");
+      expect(stateHash({ ...snap, version: 31 } as unknown as SaveSnapshot)).toBe(v31);
       expect(stateHash(snap)).toBe(golden);
       expect(stateHash({ ...beforeV31(snap), version: 30 } as unknown as SaveSnapshot)).toBe(v30);
       const old = beforeV29(snap);

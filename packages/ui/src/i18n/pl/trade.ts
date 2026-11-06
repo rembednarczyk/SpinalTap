@@ -87,6 +87,7 @@ export const plTrade = {
   "inventory.detail.condition": "Stan {pct}%",
   "inventory.detail.level": "Poziom {level}",
   "inventory.detail.traits": "Cechy",
+  "inventory.detail.deck": "RAM +{ram} · wgrywanie −{upload}% · odnowa RAM +{regen}%",
   "inventory.detail.mods": "Mody: {mods}",
   "inventory.detail.this": "ta",
   "inventory.detail.worn": "założona",

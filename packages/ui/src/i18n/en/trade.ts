@@ -90,6 +90,7 @@ export const enTrade = {
   "inventory.detail.condition": "Condition {pct}%",
   "inventory.detail.level": "Level {level}",
   "inventory.detail.traits": "Traits",
+  "inventory.detail.deck": "RAM +{ram} · upload −{upload}% · RAM recovery +{regen}%",
   "inventory.detail.mods": "Mods: {mods}",
   "inventory.detail.this": "this",
   "inventory.detail.worn": "equipped",

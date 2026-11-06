@@ -109,8 +109,11 @@ describe("the icon table", () => {
 
   it("names the source of every icon after game-icons.net and credits its author under CC BY 3.0", () => {
     const fromGameIcons = OTHERS.filter((id) => itemIcon(id) in GAME_ICON_SOURCES);
-    // The decision of 6.11: implants and consumables, nothing else.
-    expect(fromGameIcons.sort()).toEqual([...Object.keys(CYBERWARE_CATALOG), ...Object.keys(STACKABLE_CATALOG).filter((id) => STACKABLE_CATALOG[id as keyof typeof STACKABLE_CATALOG].category === "consumable")].sort());
+    // The decision of 6.11: implants and consumables, nothing else; the cyberdeck (after ADR-0059
+    // stage 6) is drawn here, in `icon-paths.ts`.
+    const drawnHere = ["kumo_cyberdeck"];
+    expect(OTHERS.filter((id) => drawnHere.includes(id)).map((id) => itemIcon(id) in GAME_ICON_SOURCES)).toEqual([false]);
+    expect(fromGameIcons.sort()).toEqual([...Object.keys(CYBERWARE_CATALOG).filter((id) => !drawnHere.includes(id)), ...Object.keys(STACKABLE_CATALOG).filter((id) => STACKABLE_CATALOG[id as keyof typeof STACKABLE_CATALOG].category === "consumable")].sort());
     for (const { author, name } of Object.values(GAME_ICON_SOURCES)) {
       const credit = CREDITS.find((c) => c.section === "icons" && c.author === author);
       expect(credit?.license, author).toBe("CC-BY-3.0");

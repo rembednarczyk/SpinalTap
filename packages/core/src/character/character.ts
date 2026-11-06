@@ -1,3 +1,4 @@
+import type { ImplantGrades } from "../cyberware/implant-grade";
 import { type CyberwareLoadout, loadoutModifiers } from "../cyberware/cyberware";
 import { MEMORY_CATALOG, type MemoryId } from "./memories";
 import { BASE_STATS, type DerivedStats, type StatModifiers, combineModifiers } from "./stats";
@@ -7,6 +8,8 @@ export interface CharacterState {
   readonly alias: string | null;
   readonly memories: readonly MemoryId[];
   readonly cyberware: CyberwareLoadout;
+  /** Tier and level of the installed graded implants (the cyberdeck), by slot; absent when none (v32). */
+  readonly implantGrades?: ImplantGrades;
 }
 
 export const createCharacter = (): CharacterState => ({

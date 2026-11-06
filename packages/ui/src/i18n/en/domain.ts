@@ -140,6 +140,8 @@ export const enDomain = {
   "cyberware.kitsune_tendons.desc": "Reinforced leg tendons. [Alt]: a 3 m dash the way you move, once in the air too. Cooldown 1.5 s; for 0.3 s bullets go past you.",
   "cyberware.tsubame_reflex.name": "Tsubame reflex",
   "cyberware.tsubame_reflex.desc": "A wrist controller. Guarding with a melee weapon sends bullets back where you look, as long as stamina is above 1/3.",
+  "cyberware.kumo_cyberdeck.name": "Kumo cyberdeck",
+  "cyberware.kumo_cyberdeck.desc": "A deck wired into the nervous system. More RAM, faster quickhack uploads and RAM recovery; a better tier and level do more.",
   // The active ability and the buffs.
   "ability.reflex_overdrive.name": "Reflex overdrive",
   "buff.regen.name": "Regeneration",
