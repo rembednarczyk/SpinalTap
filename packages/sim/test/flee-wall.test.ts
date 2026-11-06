@@ -21,10 +21,10 @@ type Chase = { speed: number; stop: number };
 
 /**
  * Runs the escape of the walker `id` from the player `dx`, `dz` metres off it for `steps` steps
- * (five seconds): how many times its heading jumped while it ran and its sharpest turn, in how
- * many steps it ran back towards the player and in how many of the second half it ran at all
- * (`late`), how close to the player it came after `SETTLE`, where it ended up and how far from
- * where it set off (`gone`). With `chase` the player runs after it.
+ * (five seconds): how many times its heading jumped while it ran (`lateJumps` in the second half)
+ * and its sharpest turn, in how many steps it ran back towards the player and in how many of the
+ * second half it ran at all (`late`), how close to the player it came after `SETTLE`, where it
+ * ended up and how far from where it set off (`gone`). With `chase` the player runs after it.
  */
 const watchEscape = (seed: number, id: number, dx: number, dz = 0, chase?: Chase, steps = 300) => {
   const sim = hostileCrowd(seed);
@@ -33,6 +33,7 @@ const watchEscape = (seed: number, id: number, dx: number, dz = 0, chase?: Chase
   teleportPlayer(sim, { x: at.x + dx, y: at.y, z: at.z + dz });
   let p = sim.player()!.position;
   let jumps = 0;
+  let lateJumps = 0;
   let towards = 0;
   let closest = Infinity;
   let sharpest = 0;
@@ -56,10 +57,11 @@ const watchEscape = (seed: number, id: number, dx: number, dz = 0, chase?: Chase
     const turn = last === null ? 0 : Math.abs(Math.atan2(Math.sin(e.yaw - last), Math.cos(e.yaw - last)));
     sharpest = Math.max(sharpest, turn);
     if (turn > JUMP) jumps++;
+    if (turn > JUMP && i >= steps / 2) lateJumps++;
     last = e.yaw;
   }
   const e = byId(sim, walker.id);
-  return { jumps, towards, late, closest, sharpest, distance: Math.hypot(e.position.x - p.x, e.position.z - p.z), gone: Math.hypot(e.position.x - at.x, e.position.z - at.z) };
+  return { jumps, lateJumps, towards, late, closest, sharpest, distance: Math.hypot(e.position.x - p.x, e.position.z - p.z), gone: Math.hypot(e.position.x - at.x, e.position.z - at.z) };
 };
 
 // Walkers of the deptak's crowd routes whose way away from the player runs into a wall.
@@ -177,4 +179,27 @@ describe("an escape through a gap narrower than the body (G-338)", () => {
     expect(w.towards).toBe(0);
     expect(w.gone).toBeGreaterThanOrEqual(FLEE_RADIUS);
   });
+});
+
+// Walkers whose turn flipped every step between two ways (G-343): after one step on either the
+// other was the one to take. Eight seconds each; jumps of the heading in the last four.
+const EVERY_STEP = [
+  // At the end of the alley by (309.5; -97.7) the way straight away opened and shut as it moved
+  // east and west by 6 cm: its walk led east past the player, the next way west.
+  { seed: 43, id: 1002008, dx: 3, dz: 0, was: 234 },
+  { seed: 11, id: 1002001, dx: 2, dz: 0, was: 195 },
+  { seed: 7, id: 1002001, dx: 2, dz: 0, was: 230 },
+  // Pressed against a planter by (288.5; -74.1) the knee-high lines passed over.
+  { seed: 3, id: 1002002, dx: 0, dz: -2, was: 213 },
+  { seed: 29, id: 1002002, dx: 0, dz: -2, was: 69 },
+  // Along a wall by (325.8; -29.3), north and south in turn.
+  { seed: 3, id: 1002001, dx: 1, dz: 0, was: 213 },
+] as const;
+
+describe("an escape that turns back every step (G-343)", () => {
+  for (const { seed, id, dx, dz, was } of EVERY_STEP) {
+    it(`stands or runs on instead of turning back and forth (seed ${seed}, walker ${id}, player ${dx}; ${dz} m off, ${was} jumps before)`, () => {
+      expect(watchEscape(seed, id, dx, dz, undefined, 480).lateJumps).toBeLessThanOrEqual(4);
+    });
+  }
 });

@@ -183,7 +183,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"9d763354"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"07d841d4"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -202,34 +202,37 @@ describe("determinism", () => {
     // Re-recorded (all of them, "hard" too) for ADR-0069, a new rule: every ganger of the run sees
     // in its type's cone, a crouching player from half as far, and fills a suspicion before the
     // alarm (it turns to her on the first of it) instead of alerting in the step it has a clear line.
-    expect(v17HashOf(sim)).toBe("d4830d20");
-    expect(v19HashOf(sim)).toBe("f9c128b4");
-    expect(v20HashOf(sim)).toBe("5ac09d28");
-    expect(v21HashOf(sim)).toBe("3f560b07");
-    expect(v22HashOf(sim)).toBe("4bc49192");
-    expect(v23HashOf(sim)).toBe("a7c7d458");
-    expect(v24HashOf(sim)).toBe("fe433abd");
-    expect(v25HashOf(sim)).toBe("f34ce692");
-    expect(v26HashOf(sim)).toBe("c8154729");
-    expect(v27HashOf(sim)).toBe("41e3424f");
+    // Re-recorded (all of them, "hard" too) for G-343, a new rule: a fleeing bystander keeps the
+    // way whose walk round a corner it follows and does not turn back while it is open. Bystanders
+    // 1082 and 294 (G-329) of the run swung back and forth in the panic: 283 and 84 jumps, now 40 and 10.
+    expect(v17HashOf(sim)).toBe("0b8693d0");
+    expect(v19HashOf(sim)).toBe("5b3bab6c");
+    expect(v20HashOf(sim)).toBe("b6fc8cc8");
+    expect(v21HashOf(sim)).toBe("6291c9c3");
+    expect(v22HashOf(sim)).toBe("53227402");
+    expect(v23HashOf(sim)).toBe("35865c8c");
+    expect(v24HashOf(sim)).toBe("c88d2625");
+    expect(v25HashOf(sim)).toBe("f856e6fe");
+    expect(v26HashOf(sim)).toBe("29f9cea1");
+    expect(v27HashOf(sim)).toBe("248eb173");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"bff8cbcd"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"4b52ca4d"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
-    expect(v17HashOf(sim)).not.toBe("d4830d20");
-    expect(v19HashOf(sim)).toBe("ebaf4525");
-    expect(v20HashOf(sim)).toBe("1685ef39");
-    expect(v21HashOf(sim)).toBe("7e038b84");
-    expect(v22HashOf(sim)).toBe("1cefd41f");
-    expect(v23HashOf(sim)).toBe("b770c8fd");
-    expect(v24HashOf(sim)).toBe("c86b30b0");
-    expect(v25HashOf(sim)).toBe("bb917473");
-    expect(v26HashOf(sim)).toBe("740f89d0");
-    expect(v27HashOf(sim)).toBe("d3bc9a3a");
+    expect(v17HashOf(sim)).not.toBe("0b8693d0");
+    expect(v19HashOf(sim)).toBe("426e148d");
+    expect(v20HashOf(sim)).toBe("e5972e59");
+    expect(v21HashOf(sim)).toBe("7a751e40");
+    expect(v22HashOf(sim)).toBe("4a74b00f");
+    expect(v23HashOf(sim)).toBe("4f823679");
+    expect(v24HashOf(sim)).toBe("564149b8");
+    expect(v25HashOf(sim)).toBe("3991a5f7");
+    expect(v26HashOf(sim)).toBe("eec79408");
+    expect(v27HashOf(sim)).toBe("d7d1e416");
   });
 
   // One case per density: three full replays in one case ran close to the 20 s limit under coverage.
@@ -254,8 +257,9 @@ describe("determinism", () => {
     // Re-recorded for ADR-0038 (the run starts in the clinic) and ADR-0045 (the clinic is on
     // Krakowskie Przedmieście), and for the car wash moved off Plac Łokietka into the yard behind
     // it; the v14 door states are left out too. Re-recorded for ADR-0069: the gangers of the run see
-    // in a cone and fill a suspicion before the alarm.
-    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("7160875a");
+    // in a cone and fill a suspicion before the alarm. Re-recorded for G-343: fleeing bystanders
+    // no longer turn back and forth.
+    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("95202d96");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {

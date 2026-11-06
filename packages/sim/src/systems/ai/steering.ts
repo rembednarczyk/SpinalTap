@@ -470,11 +470,12 @@ const fieldFor = (world: World<Entity>, floor: number, reach: number, goal: Vec3
 export const KNEE_HEIGHT = 0.6;
 /**
  * On terrain (ADR-0043) the knee-high line ignores the ground itself (it dips under every
- * crest) and instead the way must not cross a bank too steep to walk.
+ * crest) and instead the way must not cross a bank too steep to walk. `height` puts the line
+ * elsewhere above the feet.
  */
-export const straightWalk = (world: World<Entity>, from: Vec3, to: Vec3): boolean => {
+export const straightWalk = (world: World<Entity>, from: Vec3, to: Vec3, height = KNEE_HEIGHT): boolean => {
   const ground = groundOf(world);
-  const knee = (p: Vec3) => ({ x: p.x, y: p.y + KNEE_HEIGHT, z: p.z });
+  const knee = (p: Vec3) => ({ x: p.x, y: p.y + height, z: p.z });
   if (!ground.hasTerrain) return lineOfSight(world, knee(from), knee(to));
   return lineOfSight(world, knee(from), knee(to), false) && !bankBetween(ground, from, to, deckReach(ground, from, to));
 };
