@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-409 Kontrole skanu glitchy blisko limitu 20 s w CI z pokryciem
+- Status: naprawione (PR #336, 6.11; sześć kontroli 2–70× szybciej, raport skanu identyczny bajt w bajt)
+- Ważność: S3 (CI) · Zasięg: pod obciążeniem z `VITEST_COVERAGE_SHARD=1`: building-in-set-piece 21,2 s, cable-low 29,7 s (ponad limit), market-piece-on-crowd-lane 15,2 s, lamp-style-change-on-way 13,8 s, paving-overlap-step 6–8 s; na runnerze CI grożą jak `paving-coplanar` w #328; poprawka: przyspieszyć kontrole (pomiar, indeksy), nie podnosić limitu
+- Pakiet właściciela: tools/glitch-scan
+
 ### G-381 Strzelec staje w promieniu `ARRIVE` od stanowiska, a linia wzroku liczy się z samego węzła: stanowisko bywa bez strzału
 - Status: naprawione w #316 (gałąź `held` w `firingPosition`: strzelec dochodzi do węzła, gdy z pozycji nie ma strzału); potwierdzone sondami 6.11 (metro, stary targ, doki), nie odtwarza się na 245a455
 - Ważność: S3 · Zasięg: `firingPosition` i `firstStep` w `packages/sim/src/world/nav.ts`; strzelec czeka z zerową prędkością bez końca · Koszt: średni

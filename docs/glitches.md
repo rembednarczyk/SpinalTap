@@ -1227,11 +1227,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: na urządzeniu hybrydowym klik myszą w ◎ albo przeciągnięcie myszą po strefie obrotu dostaje wspomaganie jak dotyk (`packages/ui/src/touch/pad-button.tsx`); `feedAimAssist` liczy cele (w TPP z podwójną linią wzroku) w każdym kroku także u gracza bez dotyku i pada, choć wynik nie jest używany
 - Pakiet właściciela: packages/ui (touch), packages/app
 
-### G-409 Kontrole skanu glitchy blisko limitu 20 s w CI z pokryciem
-- Status: zgłoszone (6.11, weryfikator PR #328)
-- Ważność: S3 (CI) · Zasięg: pod obciążeniem z `VITEST_COVERAGE_SHARD=1`: building-in-set-piece 21,2 s, cable-low 29,7 s (ponad limit), market-piece-on-crowd-lane 15,2 s, lamp-style-change-on-way 13,8 s, paving-overlap-step 6–8 s; na runnerze CI grożą jak `paving-coplanar` w #328; poprawka: przyspieszyć kontrole (pomiar, indeksy), nie podnosić limitu
-- Pakiet właściciela: tools/glitch-scan
-
 ### G-410 Ramki rzadkości w torbie i slotach ekwipunku niewidoczne (kolejność reguł CSS)
 - Status: zgłoszone (6.11, budowniczy ADR-0073 etap 1)
 - Ważność: S3 (weryfikator #334: ramki niewidoczne od E4 4c23a7f; rzadkość tylko tekstem) · Zasięg: w `styles.css` reguły `.inv__cell` i `.inv__slot` stoją za `.rarity--*` i nadpisują kolor ramki; od #334 komórki z ikoną mają kolor w stylu, komórki tekstowe (mody, wszczepy) i sloty ubrań nadal nie; zaznaczenie (magenta) wygląda jak kolor rzadkiego
@@ -1266,6 +1261,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, naprawiacz G-381)
 - Ważność: S4 · Zasięg: przy `kanal A` strzelec chodzi tam i z powrotem przy węźle `head` co krok (0,476–0,528 m), gdy oba końce biegu sięgają celu przez `via`; węzeł `doki-pier` w `DOKI_NAV` 0,6 m nad podłogą pomostu (linia wzroku z oka wyżej niż strzelca)
 - Pakiet właściciela: packages/sim (`world/nav.ts`, content doków)
+
+### G-417 `memoAt` w `cable-spans.ts` trzyma ok. 135 MB sterty do końca pliku skanu; pozostałe wolne kontrole i `decksAt` liniowo
+- Status: zgłoszone (6.11, weryfikator PR #336 i naprawiacz G-409)
+- Ważność: S4 (testy) · Zasięg: pamięć `memoAt` na poziomie modułu (zwalniać po kontroli albo płaski klucz); nieruszane kontrole vehicle-outside-passage, paving-coplanar, drone-low-pool 4–7 s pod obciążeniem; `decksAt` w `packages/sim/src/world/deck.ts` przegląda liniowo pomosty chunka (indeks przestrzenny przyspieszyłby cable-low, drone-low-pool i kontrole rekwizytów)
+- Pakiet właściciela: tools/glitch-scan, packages/sim (world/deck)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
