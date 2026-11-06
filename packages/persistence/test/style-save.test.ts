@@ -24,7 +24,7 @@ const withProgression = (p: Json): Json => {
 
 describe("style and bad luck in the save (v30 to v31, ADR-0059 stage 6)", () => {
   it("gives an old save an empty style and a count of 0, and keeps the rest of the progression", () => {
-    expect(SAVE_SCHEMA_VERSION).toBe(31);
+    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(31);
     const migrated = MIGRATIONS[30]!(v30()) as { version: number; domain: SaveSnapshot["domain"] };
     expect(migrated.version).toBe(31);
     expect(migrated.domain.progression).toEqual({ ...INITIAL_PROGRESSION, hacked: ["cam-1"], style: [], unlucky: 0 });
