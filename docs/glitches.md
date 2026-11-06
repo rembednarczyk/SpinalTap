@@ -1092,7 +1092,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan (`metro-entrances.ts`)
 
 ### G-372 Podciąganie (`ledgeAhead`) sprawdza tylko punkt docelowy: na cienką barierkę da się wejść wzdłuż jej linii i chodzić po wierzchu
-- Status: w PR #321, runda 2 (6.11; weryfikator NIE PRZYJĘTE: w narożniku barierek równej wysokości prostopadła barierka daje oparcie, stanie na wierzchu 27/108, przejście 16/36)
+- Status: w PR #321, runda 2 (6.11, aa46b8a; cienki sąsiad liczy się tylko z własnym oparciem; narożniki L/T 0; ponowna weryfikacja)
 - Ważność: S3 · Zasięg: prawdopodobnie barierki w całym mieście; przy windzie Alchemii wymusiło barierki 2,6 m zamiast 1,1 m · Koszt: średni
 - Pakiet właściciela: packages/sim (`movement-system`)
 - Test przyjęcia: podciągnięcie na bryłę węższą niż ciało albo na krawędź barierki jest odrzucane; barierka 1,1 m nie daje się przejść
@@ -1186,6 +1186,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 (wydajność gry i CI) · Zasięg: `packages/sim/src/world/ground.ts:341` (`rayHit`) i ok. l. 164 (`chunkIndex`); pościg strażników przypiętych daleko woła co krok `lineOfSight`; pierwsze kroki do 110 ms, dalej ok. 25 ms; przyczyna G-357, G-390 i wolnych `save-load-away-guards` · Koszt: średni
 - Pakiet właściciela: packages/sim (`world/ground.ts`)
 - Test przyjęcia: wyniki `rayHit` identyczne (test z wersją referencyjną), złote hashe bez zmian, czasy wymienionych testów wyraźnie niższe
+
+### G-392 Cembrowiny fontann 0,46–0,66 m nad brukiem: krok „na kamień i do wody” nie działa na większości odcinków
+- Status: zgłoszone (6.11, naprawiacz G-372; także na main)
+- Ważność: S4 (treść) · Zasięg: `BASIN_RIM.top` 0,45 m plus spadek terenu; komentarz w `basins.ts` („Seki steps up onto the stone”) rozmija się z krokiem 0,45 m · Koszt: mały
+- Pakiet właściciela: packages/sim (`content/lublin/basins.ts`)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
