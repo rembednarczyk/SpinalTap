@@ -256,13 +256,15 @@ describe("a hostile reputation narrows the counter instead of closing it (ADR-00
   });
 
   // Decision 5.11 (ADR-0070): the capacity shard is cyberware work, so it greys out with the implants.
-  it("Mori keeps the capacity shard under the counter but sells the stim", () => {
+  // Decision 6.11: the Shizuka stim is a combat stim and greys out too.
+  it("Mori keeps the capacity shard and the combat stim under the counter", () => {
     mount({ shopId: "clinic", eddies: 5000, reputation: standing({ clinic: -60 }) });
     expect(screen.getByTestId("shop-basic").textContent).toContain("capacity shard");
     const shard = screen.getByTestId("stock-capacity_shard");
     expect(shard.className).toContain("shop__item--locked");
     expect(within(shard).getByRole("button", { name: "Not for you" }).hasAttribute("disabled")).toBe(true);
-    expect(within(screen.getByTestId("stock-steady_stim")).getByRole("button", { name: /Buy · 105 €\$/ }).hasAttribute("disabled")).toBe(false);
+    expect(within(screen.getByTestId("stock-steady_stim")).getByRole("button", { name: "Not for you" }).hasAttribute("disabled")).toBe(true);
+    expect(within(screen.getByTestId("stock-medkit")).getByRole("button", { name: /Buy · 135 €\$/ }).hasAttribute("disabled")).toBe(false);
   });
 
   it("a wary clinic still sells the shard, dearer", () => {
