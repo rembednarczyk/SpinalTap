@@ -193,7 +193,6 @@ const General = ({ settings, set }: SectionProps) => {
       <Slider id="ambienceVolume" label={t("settings.ambienceVolume")} value={settings.ambienceVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ ambienceVolume: v })} />
       <Toggle label="settings.hints" on={settings.hints} onChange={(hints) => set({ hints })} />
       <Toggle label="settings.autosave" on={settings.autosave} onChange={(autosave) => set({ autosave })} />
-      <Slider id="touchSensitivity" label={t("settings.touchSensitivity")} value={settings.touchSensitivity} min={0.2} max={3} step={0.1} format={times(settings.locale)} onChange={(v) => set({ touchSensitivity: v })} />
       <Toggle label="settings.hudAlwaysShow" on={settings.hudAlwaysShow} onChange={(hudAlwaysShow) => set({ hudAlwaysShow })} />
       <Choice label="settings.damageNumbers" value={settings.damageNumbers} options={DAMAGE_NUMBERS} onChange={(damageNumbers) => set({ damageNumbers })} />
       <Toggle label="settings.mapMarkers" on={settings.mapMarkers} onChange={(mapMarkers) => set({ mapMarkers })} />
@@ -223,14 +222,18 @@ const MouseAndCamera = ({ settings, set }: SectionProps) => {
  * The touch fire button and the aim button, where a phone player looks for them (ADR-0072). Fires
  * only goes with a toggled aim button: a tap on it aims, then one thumb fires and steers.
  */
-const TouchAndGamepad = ({ settings, set }: SectionProps) => (
-  <>
-    <Choice label="settings.touchFire" value={settings.touchFire} options={TOUCH_FIRE} onChange={(touchFire) => set(touchFire === "separate" ? { touchFire, aimMode: "toggle" } : { touchFire })} />
-    <Choice label="settings.aimMode" value={settings.aimMode} options={AIM_MODES} onChange={(aimMode) => set({ aimMode })} />
-    <Choice label="settings.aimAssist" value={settings.aimAssist} options={AIM_ASSIST} onChange={(aimAssist) => set({ aimAssist })} />
-    <Gamepad settings={settings} set={set} />
-  </>
-);
+const TouchAndGamepad = ({ settings, set }: SectionProps) => {
+  const t = useT();
+  return (
+    <>
+      <Slider id="touchSensitivity" label={t("settings.touchSensitivity")} value={settings.touchSensitivity} min={0.2} max={3} step={0.1} format={times(settings.locale)} onChange={(v) => set({ touchSensitivity: v })} />
+      <Choice label="settings.touchFire" value={settings.touchFire} options={TOUCH_FIRE} onChange={(touchFire) => set(touchFire === "separate" ? { touchFire, aimMode: "toggle" } : { touchFire })} />
+      <Choice label="settings.aimMode" value={settings.aimMode} options={AIM_MODES} onChange={(aimMode) => set({ aimMode })} />
+      <Choice label="settings.aimAssist" value={settings.aimAssist} options={AIM_ASSIST} onChange={(aimAssist) => set({ aimAssist })} />
+      <Gamepad settings={settings} set={set} />
+    </>
+  );
+};
 
 /** The pad's own look (ADR-0072): sensitivity, the radial dead zone of both sticks, the curve. */
 const Gamepad = ({ settings, set }: SectionProps) => {

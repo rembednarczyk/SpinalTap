@@ -79,6 +79,15 @@ describe("aim assist in the settings (ADR-0072, stage 3)", () => {
     expect(i.changeSettings).toHaveBeenCalledWith({ aimAssist: "light" });
   });
 
+  it("the touch sensitivity sits in the touch tab, not in General (user decision 6.11)", () => {
+    const { i } = openTouchTab({ touchSensitivity: 0.8 });
+    expect(screen.getByTestId("settings").textContent).toContain("0.8×");
+    fireEvent.change(screen.getByLabelText(/Touch sensitivity/), { target: { value: "1.2" } });
+    expect(i.changeSettings).toHaveBeenCalledWith({ touchSensitivity: 1.2 });
+    fireEvent.click(screen.getByRole("tab", { name: "General" }));
+    expect(screen.queryByLabelText(/Touch sensitivity/)).toBeNull();
+  });
+
   it("speaks Polish with the Polish setting", () => {
     openTouchTab({ locale: "pl", aimAssist: "light" }, "Dotyk i pad");
     const assist = screen.getByRole("radiogroup", { name: "Wspomaganie celowania" });
