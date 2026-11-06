@@ -1,6 +1,6 @@
 # ADR-0072: Celowanie na telefonie i padzie: wspomaganie i strzał z celowaniem jednym kciukiem
 
-Status: proponowany (czeka na akceptację użytkownika). Wynika z audytu luk (`docs/audyt-luk.md`, wiersz „Brak wspomagania celowania”, P0 dla telefonu, pad w tym samym ADR-ze) i z backlogu „[plan, 31.10] Celowanie na telefonie”.
+Status: przyjęty 6.11 (decyzje użytkownika: na dotyku oba warianty strzału do wyboru w opcjach, A domyślnie do czasu prototypu z etapu 1; wspomaganie domyślnie standardowe, tylko na wrogów w walce w linii wzroku, nie na nieświadomych przy skradaniu, nigdy dla myszy; pad: martwa strefa promieniowa 0,12, krzywa klasyczna domyślnie i własna czułość, także dla obecnych graczy). Wynika z audytu luk (`docs/audyt-luk.md`, wiersz „Brak wspomagania celowania”, P0 dla telefonu, pad w tym samym ADR-ze) i z backlogu „[plan, 31.10] Celowanie na telefonie”.
 
 ## Kontekst
 Na telefonie nie da się jednym kciukiem jednocześnie celować przez przyrządy (ADS, ADR-0019), strzelać i obracać widok. Na padzie celowanie działa, ale bez wspomagania i z prostą obsługą gałek. Stan na `origin/main` 920dc49:
