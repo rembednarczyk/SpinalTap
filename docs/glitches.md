@@ -1320,6 +1320,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: trawnik upraszczany po przycięciu do chunku nie domyka sąsiedniej nawierzchni; kontrola `ground-chunk-gap` (sonda: 61,4 m próbek przed G-421)
 - Pakiet właściciela: tools/osm-import (ground)
 
+### G-432 Kontrola `pad-unregistered` sprawdza tylko format `T-NNN`, nie istnienie wiersza; scena `alchemia-tpp` patrzy obok hali
+- Status: zgłoszone (6.11, weryfikator PR #343)
+- Ważność: S4 · Zasięg: rejestr topografii jest na gałęzi sesji, więc kontrola w main nie może sprawdzić wiersza (rozważyć przeniesienie `docs/topografia.md` do main albo listę T w danych); budżet `alchemia-tpp` słabo mierzy halę; `raid_north` startuje z zachodu T1 do czasu T2 (etap 2)
+- Pakiet właściciela: tools/glitch-scan, e2e
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
