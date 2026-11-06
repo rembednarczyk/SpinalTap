@@ -8,6 +8,9 @@ import {
   type GraphicsQuality,
   HORIZONTAL_FOV_RANGE,
   HUD_SCALE_RANGE,
+  PAD_DEADZONE_SETTING_RANGE,
+  PAD_SENSITIVITY_RANGE,
+  type PadCurveMode,
   SUBTITLE_SCALE_RANGE,
   type SettingsVm,
   type TouchFireMode,
@@ -47,6 +50,7 @@ const isShoulder = (v: unknown): v is CameraShoulder => v === "right" || v === "
 const isDamageMode = (v: unknown): v is DamageNumbersMode => v === "off" || v === "hit" || v === "total";
 const isColorblind = (v: unknown): v is ColorblindMode => v === "off" || v === "protan" || v === "deutan" || v === "tritan";
 const isTouchFire = (v: unknown): v is TouchFireMode => v === "aims" || v === "separate";
+const isPadCurve = (v: unknown): v is PadCurveMode => v === "linear" || v === "classic" || v === "precise";
 const bool = (v: unknown, fallback: boolean): boolean => (typeof v === "boolean" ? v : fallback);
 
 /** The vertical field of view entries saved before ADR-0049 held by default, degrees. */
@@ -93,6 +97,11 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     touchSensitivity: clamp(r.touchSensitivity, 0.2, 3, defaults.touchSensitivity),
     // ADR-0072: a new field with no default changed, so SETTINGS_REV stays; old entries aim with fire.
     touchFire: isTouchFire(r.touchFire) ? r.touchFire : defaults.touchFire,
+    // ADR-0072 stage 4: new fields, so SETTINGS_REV stays; old entries get the radial dead zone,
+    // the classic curve and the pad's own sensitivity at 1 instead of the mouse's or the touch one.
+    padSensitivity: clamp(r.padSensitivity, PAD_SENSITIVITY_RANGE[0], PAD_SENSITIVITY_RANGE[1], defaults.padSensitivity),
+    padDeadzone: Math.round(clamp(r.padDeadzone, PAD_DEADZONE_SETTING_RANGE[0], PAD_DEADZONE_SETTING_RANGE[1], defaults.padDeadzone) * 100) / 100,
+    padCurve: isPadCurve(r.padCurve) ? r.padCurve : defaults.padCurve,
     horizontalFov: clampFieldOfView(horizontalFovOf16x9(r), defaults.horizontalFov),
     volume: clamp(r.volume, 0, 1, defaults.volume),
     musicVolume: clamp(r.musicVolume, 0, 1, defaults.musicVolume),
