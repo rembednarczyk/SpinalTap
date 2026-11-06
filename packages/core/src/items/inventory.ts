@@ -198,12 +198,15 @@ export const needsWounds = (id: ConsumableId): boolean => {
   return def.buff === undefined && def.cyberCapacity === undefined;
 };
 
-/** Uses one consumable. At full health it is kept, unless it does more than heal (`needsWounds`). */
-export const useConsumable = (inv: InventoryState, id: ConsumableId, health: Health): UseResult => {
+/**
+ * Uses one consumable. At full health it is kept, unless it does more than heal (`needsWounds`).
+ * `healScale` multiplies what it heals (the Field Medic perk, ADR-0059), rounded to whole points.
+ */
+export const useConsumable = (inv: InventoryState, id: ConsumableId, health: Health, healScale = 1): UseResult => {
   const inventory = removeStack(inv, id, 1);
   if (!inventory) return { ok: false, reason: "none" };
   if (health.current >= health.max && needsWounds(id)) return { ok: false, reason: "full-health" };
-  const current = Math.min(health.max, health.current + STACKABLE_CATALOG[id].heal);
+  const current = Math.min(health.max, health.current + Math.round(STACKABLE_CATALOG[id].heal * healScale));
   return { ok: true, inventory, health: { ...health, current }, healed: current - health.current };
 };
 
