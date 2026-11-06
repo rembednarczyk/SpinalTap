@@ -400,6 +400,29 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(880, 346)).toBe("grass");
   });
 
+  // The wedge between the footway w1435832518 and the cycleway w1435832523 east of T-165, with the
+  // bus stop's shelter w672635871 (T-184): beige setts on the orthophoto. The register's test: on a
+  // 0.1 m grid at most 0.5 m² bare in the wedge (seams).
+  const STOP_WEDGE: readonly Pt[] = [
+    { x: 804.67, z: 360.04 },
+    { x: 838.98, z: 355.26 },
+    { x: 850.34, z: 355.9 },
+    { x: 839.01, z: 360.04 },
+    { x: 805.33, z: 364.6 },
+  ];
+  it("paves the wedge with the bus stop's shelter between the sidewalk and the cycleway east of the Dworzec (G-382)", () => {
+    const pieces = ground.filter((g) => g.outline.some((v, i) => (i % 2 === 0 ? v > 803 && v < 852 : v > 354 && v < 366))).map((g) => g.outline);
+    let bare = 0;
+    for (let x = 804.65; x < 850.4; x += 0.1)
+      for (let z = 355.25; z < 364.6; z += 0.1) if (pointInRing({ x, z }, STOP_WEDGE) && !pieces.some((o) => inside(x, z, o))) bare++;
+    expect(bare * 0.01).toBeLessThanOrEqual(0.5);
+    expect(surfaceAt(826, 359.5)).toBe("square");
+    expect(surfaceAt(815, 361)).toBe("square");
+    // The sidewalk and the cycleway stay on top of it.
+    expect(surfaceAt(826, 357)).toBe("sidewalk");
+    expect(surfaceAt(825, 362)).toBe("footway");
+  });
+
   // Along the Bazar's east edge (T-175): red setts from the halls' wall to Nova, where the game had
   // the footway w227698428's band and bare terrain beside it. The register's test: no bare sample.
   it("paves along the Bazar's east edge from the halls to the footway, and leaves the footway and the paths into the halls on top (G-352)", () => {
