@@ -952,9 +952,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: róg Kozia/Bernardyńska ścina narożnik przez w67498752 (ok. 17 m; wierne punkty (390; −144), (362; −149), (368; −172)); w luce T-022 odcinek (1580; 232) → (1738; 386) pod 5 budynkami, a (1738; 386) → (2084; 384) ok. 19 m na północ od łuku ulicy (lepiej (1803; 377), (1891; 368), (1962; 367), (2044; 378)); odcinek (506; −389) → (590; −1840) 5 m od Pałacu Sobieskich w181283749 (wierniej Bernardyńską (583; −528), (639; −627) i Zamojską (662; −728)). Kontrola `metro-line-protected` poza prostokątami importu widzi tylko `PROTECTED_AREAS`: dodać listę zabytków poza importem (punkt i promień, m.in. kościół św. Agnieszki w171014937, Pałac Sobieskich), baza 0; od PR #279 też odcinek Plac Litewski (88; −60) → (240; −66) pod w67504389 i w67504391 (34 m), punkty w T-163
 - Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan
 
-### G-320 Nakładające się nawierzchnie `square` i `cobble` leżą w jednej płaszczyźnie: kropkowane spoiny z zaokrąglenia głębi
-- Status: zgłoszone (5.11, naprawiacz G-301)
-- Ważność: S4 · Zasięg: 69 par różnych nawierzchni z tym samym `SURFACE_LIFT` 0,08; dwa nakładające się `square` z różnym wzorem spoin dają słabe kropkowane linie (zrzut `shots/g301/after/g301-c.png`); trwale: rysować jeden kawałek z pary (przycięcie nakładek w imporcie)
+### G-320 Nakładające się nawierzchnie `square` i `cobble` leżą w jednej płaszczyźnie: migotanie głębi (z-fighting) bruku i płyt w całym mieście
+- Status: zgłoszone (5.11, naprawiacz G-301); 6.11 podniesione do S3 po nagraniu gracza z telefonu (okolice Ratusza i placu Trybunalskiego): bruk i płyty przeplatają się dużymi postrzępionymi trójkątami, które zmieniają się z każdym ruchem kamery; dotyczy całego miasta; następne w kolejce slotu mapy
+- Ważność: S3 (było S4) · Zasięg: 69 par różnych nawierzchni z tym samym `SURFACE_LIFT` 0,08; dwa nakładające się `square` z różnym wzorem spoin dają słabe kropkowane linie (zrzut `shots/g301/after/g301-c.png`); trwale: rysować jeden kawałek z pary (przycięcie nakładek w imporcie)
 - Pakiet właściciela: tools/osm-import i packages/engine (mapcity/ground-plan)
 
 ### G-321 Mapa M przy mocnym oddaleniu: nazwy dzielnic nakładają się („PRZEDSTARE MIASTO”)
