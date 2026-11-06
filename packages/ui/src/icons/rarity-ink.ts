@@ -24,10 +24,13 @@ export const SELECT_INK = "#ffffff";
  * What an icon sits on, for the contrast test: hand copies of the backgrounds in `styles.css`
  * (`.inv__cell` rgba(8, 14, 20, 0.8), `.inv__cell--on` rgba(255, 61, 139, 0.16), `.shop__item`
  * rgba(57, 255, 208, 0.04) over `.shop` rgba(6, 12, 14, 0.94)), flattened over the menu's
- * background (`PREVIEW_BACKGROUND`, #070b10). A change there has to come here too.
+ * background (`PREVIEW_BACKGROUND`, #070b10). The HUD's weapon strip (`--panel`, rgba(8, 14, 20,
+ * 0.72)) lies over the street instead: flattened over a light grey (#c8c8c8), brighter than the
+ * night city behind it nearly everywhere. A change there has to come here too.
  */
-export const ICON_BACKGROUNDS: Readonly<Record<"cell" | "selected" | "card", string>> = {
+export const ICON_BACKGROUNDS: Readonly<Record<"cell" | "selected" | "card" | "hud", string>> = {
   cell: "#080d13",
   selected: "#2f1324",
   card: "#091617",
+  hud: "#3e4246",
 };

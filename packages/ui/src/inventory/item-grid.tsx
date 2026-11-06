@@ -6,6 +6,7 @@ import { useT, useText } from "../i18n/use-t";
 import { ItemIcon } from "../icons/item-icon";
 import { RARITY_INK, SELECT_INK } from "../icons/rarity-ink";
 import { CATEGORY_ORDER, FILTERS, type GridFilter, categoryOf, itemName, matchesFilter, rarityLabel, shortName } from "./item-text";
+import { useWideCells } from "./use-wide-cells";
 
 export type GridSort = "category" | "rarity" | "name";
 
@@ -78,10 +79,9 @@ const label = (t: Translate, tx: TranslateText, cell: BagCell): string => {
  * in styles.css and would win: the rarity's colour on the 2 px border, and when selected a white
  * ring inside it instead of the magenta outline over it (a rare frame is magenta too).
  */
-export const iconCellStyle = (rarity: Rarity, selected: boolean, icon = true): CSSProperties | undefined => {
-  // Text cells keep their frame from CSS (G-410) but take the same white ring when selected, so
-  // one grid has one sign of a selection and magenta only ever means rare.
-  const frame = !icon || rarity === "common" ? {} : { borderColor: RARITY_INK[rarity] };
+export const iconCellStyle = (rarity: Rarity, selected: boolean): CSSProperties | undefined => {
+  // Every item has an icon since stage 2, so every bag cell takes this frame and this ring.
+  const frame = rarity === "common" ? {} : { borderColor: RARITY_INK[rarity] };
   const ring = selected ? { outline: "none", boxShadow: `inset 0 0 0 2px ${SELECT_INK}` } : {};
   const style = { ...frame, ...ring };
   return Object.keys(style).length > 0 ? style : undefined;
@@ -89,9 +89,11 @@ export const iconCellStyle = (rarity: Rarity, selected: boolean, icon = true): C
 
 /**
  * One cell. A tap or click selects; a second one soon after on the same cell, a right click or
- * Enter does the default action; a held touch opens the details. No dragging.
+ * Enter does the default action; a held touch opens the details. No dragging. A `bare` cell (a
+ * phone) shows only the icon, the stack count and the tier; its name is in the label and, after a
+ * tap, in the details (ADR-0073 stage 2).
  */
-export const ItemCell = ({ cell, index, selected, handlers }: { cell: BagCell; index: number; selected: boolean; handlers: CellHandlers }) => {
+export const ItemCell = ({ cell, index, selected, bare = false, handlers }: { cell: BagCell; index: number; selected: boolean; bare?: boolean; handlers: CellHandlers }) => {
   const t = useT();
   const tx = useText();
   const press = useRef<{ timer: ReturnType<typeof setTimeout> | null; type: string; long: boolean }>({ timer: null, type: "mouse", long: false });
@@ -102,13 +104,11 @@ export const ItemCell = ({ cell, index, selected, handlers }: { cell: BagCell; i
     press.current.timer = null;
   };
   const rarity = cell.kind === "item" ? cell.item.rarity : null;
-  // Kinds without an icon yet keep the text cell (ADR-0073: `itemIcon` gives null).
-  const icon = itemIcon(defOf(cell));
   return (
     <button
       type="button"
-      className={`inv__cell${icon ? " inv__cell--icon" : ""}${selected ? " inv__cell--on" : ""}${rarity && rarity !== "common" ? ` rarity--${rarity}` : ""}`}
-      style={iconCellStyle(rarityOf(cell), selected, icon !== null)}
+      className={`inv__cell inv__cell--icon${bare ? " inv__cell--bare" : ""}${selected ? " inv__cell--on" : ""}${rarity && rarity !== "common" ? ` rarity--${rarity}` : ""}`}
+      style={iconCellStyle(rarityOf(cell), selected)}
       data-testid="item-cell"
       data-def={defOf(cell)}
       aria-pressed={selected}
@@ -144,8 +144,8 @@ export const ItemCell = ({ cell, index, selected, handlers }: { cell: BagCell; i
         handlers.onDefault(ref);
       }}
     >
-      {icon && <ItemIcon icon={icon} rarity={rarityOf(cell)} />}
-      <span className="inv__cell-name">{shortName(tx, defOf(cell))}</span>
+      <ItemIcon icon={itemIcon(defOf(cell))} rarity={rarityOf(cell)} />
+      {!bare && <span className="inv__cell-name">{shortName(tx, defOf(cell))}</span>}
       {cell.kind === "stack" && <span className="inv__cell-qty">{cell.qty}</span>}
       {rarity && rarity !== "common" && <span className="inv__cell-tier">{tierShort(t, rarity)}</span>}
     </button>
@@ -170,6 +170,7 @@ export const ItemGrid = ({
   handlers: CellHandlers;
 }) => {
   const t = useT();
+  const bare = !useWideCells();
   const empty = Math.max(0, capacity - cells.length);
   const onKey = (e: KeyboardEvent) => {
     if (cells.length === 0) return;
@@ -190,7 +191,7 @@ export const ItemGrid = ({
       {cells.map((c, i) => {
         const key = refKey(refOf(c));
         const selected = selectedKey === key && (c.kind === "item" || selectedIndex === null || selectedIndex === i);
-        return <ItemCell key={c.kind === "item" ? c.item.uid : `${c.id}#${i}`} cell={c} index={i} selected={selected} handlers={handlers} />;
+        return <ItemCell key={c.kind === "item" ? c.item.uid : `${c.id}#${i}`} cell={c} index={i} selected={selected} bare={bare} handlers={handlers} />;
       })}
       {Array.from({ length: empty }, (_, i) => (
         <div key={`empty${i}`} className="inv__cell inv__cell--empty" aria-hidden="true" />

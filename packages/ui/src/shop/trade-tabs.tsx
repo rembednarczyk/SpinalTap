@@ -68,8 +68,8 @@ const LockedWhy = () => {
 
 const lockedClass = (locked: boolean) => (locked ? " shop__item--locked" : "");
 
-/** The icon of an offer (ADR-0073): weapons and ammo boxes; null for the kinds still drawn as text. */
-const offerIcon = (entry: StockEntry): ItemIconKey | null => (entry.kind === "ammo" ? ammoIcon(entry.item) : entry.kind === "item" ? itemIcon(entry.item) : null);
+/** The icon of an offer (ADR-0073): the ammo box's or the item's; every kind has one since stage 2. */
+const offerIcon = (entry: StockEntry): ItemIconKey => (entry.kind === "ammo" ? ammoIcon(entry.item) : itemIcon(entry.item));
 
 /** What the counter sells; at the clinic the implants first (bought and installed on the spot). */
 export const BuyTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly terms: ShopTerms }) => {
@@ -110,7 +110,8 @@ const ImplantOffer = ({ id, terms }: { readonly id: CyberwareId; readonly terms:
   const replaces = !installed ? loadout[def.slot] : undefined;
   const locked = !installed && !fullService(terms);
   return (
-    <article className={`shop__item${installed ? " shop__item--installed" : ""}${lockedClass(locked)}`} data-testid={`implant-${id}`}>
+    <article className={`shop__item shop__item--icon${installed ? " shop__item--installed" : ""}${lockedClass(locked)}`} data-testid={`implant-${id}`}>
+      <ItemIcon icon={itemIcon(id)} framed />
       <div className="shop__slot">{slotLabel(t, def.slot)}</div>
       <h3 className="shop__name">{tx(def.name)}</h3>
       <p className="shop__desc">{tx(def.description)}</p>
@@ -157,8 +158,8 @@ const StockOffer = ({ entry, terms }: { readonly entry: StockEntry; readonly ter
   }
   const description = entry.kind === "stack" && entry.item === "medkit" ? `${tx(shopItemDescription(entry.item))} ${t("shop.medkitUse")}` : tx(shopItemDescription(entry.item));
   return (
-    <article className={`shop__item${icon ? " shop__item--icon" : ""}${rarityClass({ rarity })}${lockedClass(locked)}`} data-testid={`stock-${entry.item}`}>
-      {icon && <ItemIcon icon={icon} rarity={rarity} framed />}
+    <article className={`shop__item shop__item--icon${rarityClass({ rarity })}${lockedClass(locked)}`} data-testid={`stock-${entry.item}`}>
+      <ItemIcon icon={icon} rarity={rarity} framed />
       <div className="shop__slot">{slot}</div>
       <h3 className="shop__name">{tx(stockName(entry))}</h3>
       <p className="shop__desc">{description}</p>

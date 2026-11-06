@@ -29,6 +29,7 @@ const HEADINGS: Readonly<Record<CreditSection, MessageKey>> = {
   characters: "credits.section.characters",
   weapons: "credits.section.weapons",
   audio: "credits.section.audio",
+  icons: "credits.section.icons",
 };
 
 /** The credits grouped by section, in the screen's order, translated (ADR-0056, ADR-0063). */

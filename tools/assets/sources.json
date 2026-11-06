@@ -1,5 +1,5 @@
 {
-  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb, drone-props.glb, crowd-props.glb, room-props.glb and alchemia-props.glb, and the guns of packages/app/public/weapons: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
+  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb, drone-props.glb, crowd-props.glb, room-props.glb and alchemia-props.glb, the guns of packages/app/public/weapons and the item icons of packages/ui/src/icons: CC0 (ADR-0058), CC-BY 4.0 and, for the icons of game-icons.net only, CC BY 3.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
   "sources": [
     {
       "id": "kenney-modular-buildings",
@@ -685,6 +685,46 @@
         { "path": "taiwan_style_signboard_lowpoly.glb", "url": "https://drive.usercontent.google.com/download?id=12dcgUO6vGXmSkNyfUVz-HiDD6WPYoij3&export=download&confirm=t", "sha256": "6461e2a746dcecc7ed4ddfd2fcce7e3e712c9ab9d82ec76af70d9129fc10d4ae" }
       ],
       "used": []
+    },
+    {
+      "id": "game-icons-lorc",
+      "title": "Layered armor, Brain, Sands of time, Bandage roll, Meat, Syringe, Crystal growth (game-icons.net)",
+      "author": "Lorc",
+      "authorUrl": "http://lorcblog.blogspot.com",
+      "page": "https://game-icons.net",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "licenseQuote": "Icons provided under the Creative Commons 3.0 BY or CC0 if mentioned below. (license.txt of github.com/game-icons/icons)",
+      "files": [
+        { "path": "lorc/layered-armor.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/lorc/layered-armor.svg", "sha256": "65c7450dea43111828ec127c0565f46f33777b5de4dd6c16473d8fd309e3f92a" },
+        { "path": "lorc/brain.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/lorc/brain.svg", "sha256": "1318a7f2b7564a701d3bede544fc747d45d008509c4b8a9f35987b03c15d2db8" },
+        { "path": "lorc/sands-of-time.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/lorc/sands-of-time.svg", "sha256": "380d91fe735ca18291d5cc7a9e1d1b68fda57fb0d93ca45ff3a66eebcc170cc1" },
+        { "path": "lorc/bandage-roll.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/lorc/bandage-roll.svg", "sha256": "dc423b3e81b07efeea1e1847644ac5de35b7f6531fa749ae5812a43063d36a60" },
+        { "path": "lorc/meat.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/lorc/meat.svg", "sha256": "928b0da10545fc2a8b373878aaabdaed0c9c339d25f2fcf3a2888a3f3a6e7950" },
+        { "path": "lorc/syringe.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/lorc/syringe.svg", "sha256": "59513a8b1292e06b3f3aad7524dd386e5d810909f940ba8433d9f863b01ea652" },
+        { "path": "lorc/crystal-growth.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/lorc/crystal-growth.svg", "sha256": "9b5f92549a1173fc6d7061725a273d91fe3c58b213a52099d53b5262dec66e72" }
+      ],
+      "used": ["subdermal", "synapse", "overclock", "bandage", "skewer", "stim", "shard"]
+    },
+    {
+      "id": "game-icons-delapouite",
+      "title": "Eye target, Robot grab, Robot leg, Swallow, First aid kit, Noodles, Coffee cup (game-icons.net)",
+      "author": "Delapouite",
+      "authorUrl": "http://delapouite.com",
+      "page": "https://game-icons.net",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "licenseQuote": "Icons provided under the Creative Commons 3.0 BY or CC0 if mentioned below. (license.txt of github.com/game-icons/icons)",
+      "files": [
+        { "path": "delapouite/eye-target.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/delapouite/eye-target.svg", "sha256": "0ccefba805085ebd9bc6527f3afc61f69f300a9251265d3f50f6d126c3a4a465" },
+        { "path": "delapouite/robot-grab.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/delapouite/robot-grab.svg", "sha256": "44cc1fbc051efda9a318b00ffa30e298b4f6f976100baf654b920d08a895a176" },
+        { "path": "delapouite/robot-leg.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/delapouite/robot-leg.svg", "sha256": "b27b96460a70fc725f1ef8e3fafd5446868f9265a662b157beed3bc7b83af4f7" },
+        { "path": "delapouite/swallow.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/delapouite/swallow.svg", "sha256": "17b7a003623691dc340f3542d59c1d4dee0f5dc59ba42381b0b8a7ae25275f44" },
+        { "path": "delapouite/first-aid-kit.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/delapouite/first-aid-kit.svg", "sha256": "b235669e23d9b5b4c4c9d0bfa0d1154dace7e47152b5e9655028a974cc7a7326" },
+        { "path": "delapouite/noodles.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/delapouite/noodles.svg", "sha256": "d2a38c069384c333715d5b050f57807c0dc88c488cc231ef40c1e07abd9b7bfd" },
+        { "path": "delapouite/coffee-cup.svg", "url": "https://raw.githubusercontent.com/game-icons/icons/master/delapouite/coffee-cup.svg", "sha256": "21ad04a959f54d6289801a8c5d31d3db9be074bbdf78739453aacdbefb7db686" }
+      ],
+      "used": ["optics", "grip", "tendons", "reflex", "medkit", "ramen", "coffee"]
     }
   ]
 }

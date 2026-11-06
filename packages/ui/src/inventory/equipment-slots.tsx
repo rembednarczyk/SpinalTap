@@ -29,7 +29,8 @@ export const EquipmentSlots = ({
         const item = uid === null ? undefined : findItem(inventory, uid);
         const active = kind === "weapons" && equipment.active === slot;
         const name = item ? itemName(tx, item.def) : null;
-        const icon = item ? itemIcon(item.def) : null;
+        // Icons in the weapon slots only (ADR-0073 stage 1); the garment column keeps its names.
+        const icon = item && kind === "weapons" ? itemIcon(item.def) : null;
         return (
           <button
             key={slot}

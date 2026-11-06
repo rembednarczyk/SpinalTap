@@ -1,5 +1,6 @@
 import { useT, useText } from "../i18n/use-t";
 import type { Translate } from "../i18n/t";
+import { ItemIcon } from "../icons/item-icon";
 import type { WeaponStripVm } from "../store/ui-store";
 import type { TouchPadSink } from "../touch/touch-pad-sink";
 import { useUi } from "../use-ui";
@@ -45,14 +46,18 @@ export const WeaponStrip = ({ pad }: { pad?: TouchPadSink | undefined }) => {
       </div>
       <div className="weapon-strip__slots">
         {w.slots.map((s) => {
-          const cls = `weapon-strip__slot${s.slot === w.active ? " weapon-strip__slot--active" : ""}${s.name ? "" : " weapon-strip__slot--empty"}${
-            s.rarity ? ` rarity--${s.rarity}` : ""
-          }`;
+          const cls = `weapon-strip__slot${s.icon ? " weapon-strip__slot--icon" : ""}${s.slot === w.active ? " weapon-strip__slot--active" : ""}${
+            s.name ? "" : " weapon-strip__slot--empty"
+          }${s.rarity ? ` rarity--${s.rarity}` : ""}`;
+          // The weapon's icon in its rarity's colour beside the key and the name (ADR-0073 stage 2).
           const body = (
             <>
-              <span className="weapon-strip__key">{s.key}</span>
-              <span className="weapon-strip__name">
-                {s.name ? tx(s.name) : t(`weapon.slot.${s.slot}`)}
+              {s.icon && <ItemIcon icon={s.icon} rarity={s.rarity ?? "common"} className="weapon-strip__icon" />}
+              <span className="weapon-strip__text">
+                <span className="weapon-strip__key">{s.key}</span>
+                <span className="weapon-strip__name">
+                  {s.name ? tx(s.name) : t(`weapon.slot.${s.slot}`)}
+                </span>
               </span>
             </>
           );
