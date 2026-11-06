@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-390 `save-load-contract-ended.test.ts` przekracza 20 s w CI (przypięci daleko strażnicy)
+- Status: naprawione (PR #324, 6.11)
+- Ważność: S3 (zatrzymuje CI losowych PR-ów) · Zasięg: „saved away from the docks, the guards of the alarm wait at the office in both games”; ten sam wzorzec co G-357 (krokowanie z przypiętymi daleko strażnikami ok. 10× droższe) · Koszt: mały
+- Pakiet właściciela: packages/sim (test)
+- Test przyjęcia: najdłuższy przypadek pliku lokalnie ≤ 1,5 s, asercje bez zmian
+
 ### G-345 Gołe podłoże wokół stanowisk Dworca Autobusowego (x 808–870)
 - Status: naprawione w #318 (6.11, 0fc0023; `T-170/*`, trawnik przed pawilonami jako `flowerbed`)
 - Ważność: S4 · Zasięg: ok. 1000 m² w x 808–870, z 366–395 (pas między ścieżką w227698420, chodnikiem w227698409 i stanowiskami, z gruntem pod zadaszeniem w458862470); też pas na północ od kiosku w73833929 (z 434–442, x 780–816) · Topografia: T-170 (kurator: pod zadaszeniem ok. 453 m², przed pawilonami ok. 535 m², na północ od kiosku ok. 160 m²)
