@@ -209,3 +209,10 @@ Każdy etap: test sesji bez renderera (`app/test/alchemia-*.test.ts`), kontrola 
 8. **Pasmo:** czy parking i trójkątny pawilon mają pasmo targu 10–20 jak reszta Alchemii, czy Krakowskiego 1–8?
 9. **Tunel pod Lubartowską** do kwartału Olejna–Szambelańska–Bramowa (wersja 2009): pomijamy czy dodajemy jako zamknięte wyjście z P−1 na przyszłość?
 10. **Kolejność:** czy etap 1 (food hall ze sprzedawcami) przed parkingiem, jak proponuję?
+
+## Decyzje użytkownika (6.11)
+- Bazą jest plan inwestora z 2026 roku (food hall pod tarasem, odbudowane Arkady z piętrem, trójkątny pawilon, parking na 2 poziomach), nie wersja z 2009.
+- Parking: P−1 i P−2 grywalne; P−2 to automatyczny magazyn aut z robotami, obok schron z II wojny ze skrytką Hebi do zadań na skradanie.
+- Hana: wózek na placu; Ren: na dachu trójkątnego pawilonu.
+- Kolejność: najpierw food hall ze sprzedawcami, potem Arkady, pawilon i parking.
+- Bez decyzji (propozycje do ADR): całkowite usunięcie modelu hali, godziny lokali, rola restauracji w Arkadach i pawilonu, pasmo poziomów dla parkingu i pawilonu, tunel pod Lubartowską.
