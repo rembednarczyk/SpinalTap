@@ -51,7 +51,7 @@ Stan na `origin/main` aca80ad.
 - **Odcienie rzadkości w jednym miejscu (etap 3):** dziś `LOOT_STRIP` w engine i `RARITY_INK` w ui powtarzają te same wartości. Wspólna tabela danych w `core/items/rarity.ts` (kolor jako dane prezentacji, jak `look`) usuwa rozjazd; do decyzji Architekta przy etapie 3.
 
 ## Etapy (osobne PR-y)
-1. **Ikony broni i amunicji** (ten PR): klucze w `core`, `ItemIcon` w `ui`; komórka torby, sloty broni pod podglądem, ładownica w górnym pasku, lada („Kup” i „Sprzedaj”). Bez zmian w `sim`, zapisie i rendererze.
+1. **Ikony broni i amunicji** (ten PR): klucze w `core`, `ItemIcon` w `ui`; komórka torby, sloty broni pod podglądem (od 1100 × 620 px; na telefonie slot zostaje przy nazwie, bo ma ok. 70 px szerokości), ładownica w górnym pasku, lada („Kup” i „Sprzedaj”). Bez zmian w `sim`, zapisie i rendererze.
 2. **Ikony ubrań, wszczepów, modów, zużywalnych i złomu**, panel łupu, pasek broni w HUD. `itemIcon` przestaje zwracać `null`; test wymaga ikony dla każdego przedmiotu katalogu.
 3. **Wygląd ubrań na modelu:** lamówka w kolorze rzadkości (kontrakt `AppearanceDescriptor`), wspólne odcienie rzadkości, osobny wygląd kombinezonu Tessen (zamiast `cargo`), migawka NPR i budżety rysowania.
 4. **Warianty siatek ubrań:** nowe dodatki albo modele z licencją z ADR-0063, przegląd budżetów; zakres po decyzji użytkownika (pytanie 3).
