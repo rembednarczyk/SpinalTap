@@ -12,6 +12,7 @@ import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
 import { ALCHEMIA_CENTRE, ALCHEMIA_PROPS } from "./alchemia";
+import { ALCHEMIA_LIFT_PROPS } from "./alchemia-lift";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
 import { GROUND_DECKS } from "./lublin/decks";
 import type { GroundDeck } from "../world/deck";
@@ -98,7 +99,7 @@ export const CAPSULE_CHUNK = mapChunkOf(CAPSULE_DOOR.at.x, CAPSULE_DOOR.at.z);
 export const ALCHEMIA_CHUNK = mapChunkOf(ALCHEMIA_CENTRE.x, ALCHEMIA_CENTRE.z);
 
 /** The game's own solids in a chunk of the map, after its data (`ChunkDef.rooms`). */
-const roomsOf = (id: string): readonly StaticProp[] => [...(id === CAPSULE_CHUNK ? CAPSULE_PROPS : []), ...(id === ALCHEMIA_CHUNK ? ALCHEMIA_PROPS : [])];
+const roomsOf = (id: string): readonly StaticProp[] => [...(id === CAPSULE_CHUNK ? CAPSULE_PROPS : []), ...(id === ALCHEMIA_CHUNK ? [...ALCHEMIA_PROPS, ...ALCHEMIA_LIFT_PROPS] : [])];
 
 const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS, PASSAGES, BUILDING_CUTS)]));
 
