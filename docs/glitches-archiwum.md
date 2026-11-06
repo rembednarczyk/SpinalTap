@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-410 Ramki rzadkości w torbie i slotach ekwipunku niewidoczne (kolejność reguł CSS)
+- Status: naprawione (PR #342, 6.11; sloty z ramką rzadkości, zaznaczenie białym pierścieniem)
+- Ważność: S3 (weryfikator #334: ramki niewidoczne od E4 4c23a7f; rzadkość tylko tekstem) · Zasięg: w `styles.css` reguły `.inv__cell` i `.inv__slot` stoją za `.rarity--*` i nadpisują kolor ramki; od #334 komórki z ikoną mają kolor w stylu, komórki tekstowe (mody, wszczepy) i sloty ubrań nadal nie; zaznaczenie (magenta) wygląda jak kolor rzadkiego
+- Pakiet właściciela: packages/ui (inventory)
+
 ### G-383 Gołe podłoże na wschód od stanowisk Dworca, x 870–915 (T-185)
 - Status: naprawione (PR #339, 6.11)
 - Ważność: S4 · Zasięg: ok. 630 m² · Koszt: mały (najpierw ortofoto x 870–920)

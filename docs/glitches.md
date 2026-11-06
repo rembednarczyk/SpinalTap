@@ -1215,11 +1215,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: na urządzeniu hybrydowym klik myszą w ◎ albo przeciągnięcie myszą po strefie obrotu dostaje wspomaganie jak dotyk (`packages/ui/src/touch/pad-button.tsx`); `feedAimAssist` liczy cele (w TPP z podwójną linią wzroku) w każdym kroku także u gracza bez dotyku i pada, choć wynik nie jest używany
 - Pakiet właściciela: packages/ui (touch), packages/app
 
-### G-410 Ramki rzadkości w torbie i slotach ekwipunku niewidoczne (kolejność reguł CSS)
-- Status: zgłoszone (6.11, budowniczy ADR-0073 etap 1)
-- Ważność: S3 (weryfikator #334: ramki niewidoczne od E4 4c23a7f; rzadkość tylko tekstem) · Zasięg: w `styles.css` reguły `.inv__cell` i `.inv__slot` stoją za `.rarity--*` i nadpisują kolor ramki; od #334 komórki z ikoną mają kolor w stylu, komórki tekstowe (mody, wszczepy) i sloty ubrań nadal nie; zaznaczenie (magenta) wygląda jak kolor rzadkiego
-- Pakiet właściciela: packages/ui (inventory)
-
 ### G-411 Ikony 9 mm i 5.56 w ładownicy na telefonie prawie nieodróżnialne; linie „Sprzedaj” z ikoną i bez nie są wyrównane
 - Status: zgłoszone (6.11, weryfikator PR #334)
 - Ważność: S4 · Zasięg: ładownica 16 px w kolorze zwykłej rzadkości (`crop-844-pouch.png`), lada „Sprzedaj” na 844×390; do ADR-0073 etap 2
@@ -1294,6 +1289,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, weryfikator PR #341)
 - Ważność: S4 · Zasięg: oferta kliniki z nowym wierszem cyberdecku nie ma kontroli układu na 844×390; `clampItemLevel(NaN)` → NaN propaguje się do `deckStats` (dziś nieosiągalne, walidacja wymaga liczb całkowitych)
 - Pakiet właściciela: e2e, packages/core (items)
+
+### G-426 Aktywna broń rzadkości niezwykłej ma ramkę w kolorze paska aktywnej; na telefonie sloty broni bez ikon i z wychodzącą etykietą
+- Status: zgłoszone (6.11, weryfikator PR #342)
+- Ważność: S4 · Zasięg: `packages/ui/src/styles.css:981`, `equipment-slots.tsx:17`: uncommon i pasek aktywnej to ten sam cyjan #5ff2ff, różni je tylko grubość dolnej krawędzi; na 844×390 sloty broni bez ikon, „2 SECONDARY” wychodzi na sąsiedni slot (było przed #342)
+- Pakiet właściciela: packages/ui (inventory)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
