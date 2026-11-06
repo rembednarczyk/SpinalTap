@@ -1126,7 +1126,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`world/ground.ts`)
 
 ### G-372 Podciąganie (`ledgeAhead`) sprawdza tylko punkt docelowy: na cienką barierkę da się wejść wzdłuż jej linii i chodzić po wierzchu
-- Status: zgłoszone (6.11, autor windy Alchemii; do potwierdzenia w innych miejscach miasta)
+- Status: w PR (6.11, a952549; `foothold()` w `movement-system`: cienki wierzch bez oparcia obok nie jest podłogą; w weryfikacji)
 - Ważność: S3 · Zasięg: prawdopodobnie barierki w całym mieście; przy windzie Alchemii wymusiło barierki 2,6 m zamiast 1,1 m · Koszt: średni
 - Pakiet właściciela: packages/sim (`movement-system`)
 - Test przyjęcia: podciągnięcie na bryłę węższą niż ciało albo na krawędź barierki jest odrzucane; barierka 1,1 m nie daje się przejść
@@ -1155,7 +1155,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-379 Winda targu: gracz staje na zamkniętej bramce 1,1 m i podciąga się na ściany szybu i barierki estakady
 - Status: zgłoszone (6.11, autor windy Alchemii, sonda z #312)
-- Ważność: S4 · Zasięg: skoki z estakady w zamkniętą bramkę (kabina na dole): stopy 1,05–1,20 m nad pomostem na wierzchu bramki, podciągnięcia na 2,20–2,37 m (ściany szybu, barierki), część prób wpada do szybu (do 2,6 m, bez obrażeń) · Koszt: mały (wzorem #312: bramka do nadproża i głowica) albo w ramach G-372
+- Ważność: S4 · Zasięg: skoki z estakady w zamkniętą bramkę (kabina na dole): stopy 1,05–1,20 m nad pomostem na wierzchu bramki, podciągnięcia na 2,20–2,37 m (ściany szybu, barierki), część prób wpada do szybu (do 2,6 m, bez obrażeń) · Koszt: mały (wzorem #312: bramka do nadproża i głowica) albo w ramach G-372. Dopisek 6.11 (G-372): po poprawce nikt nie staje na bramce, ale skok (szczyt 1,17–1,22 m) przenosi gracza nad bramką 1,1 m do szybu (do 9,9 m): 170 → 266 wejść w 396 próbach; potrzebna zmiana treści jak w #312 (bramka do nadproża)
 - Pakiet właściciela: packages/sim (treść windy targu), G-372 (`ledgeAhead`)
 - Test przyjęcia: test skoków w bramki jak w #312 (0–75° co 15°) dla windy targu: 0 wejść na bramkę i do szybu
 
