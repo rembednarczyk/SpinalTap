@@ -3,6 +3,8 @@ import type { GroundCut } from "../world/ground";
 import type { Rect } from "./builders";
 import { type Pavilion, type PavilionSpot, pavilion, pavilionChunk } from "./metro-pavilion";
 
+export { HALL_DEPTH, PAVILION, STAIRS } from "./metro-pavilion";
+
 /** District ids as world-map.ts names them (kept local: world-map imports this table). */
 type DistrictId = "shinsekai-7" | "kanal" | "targ" | "doki";
 

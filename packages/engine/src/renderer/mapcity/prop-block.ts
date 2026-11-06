@@ -126,8 +126,8 @@ export const nearSink = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: P
   }
   if (pole && poles.props) bakePoles(sink, poles.props, pole, pieces.filter((p) => poles.isPole(p)));
   bakeBlockDogs(deps, sink, block, pieces);
-  // The metro's pavilions standing in the block (ADR-0071 stage 2): no mesh of their own.
-  for (const e of pavilionsIn(block.bounds)) bakePavilion(sink, e);
+  // The metro's pavilions standing in the block (ADR-0071 stages 2 and 3): no mesh of their own.
+  for (const e of pavilionsIn(block.bounds)) bakePavilion(sink, e, deps.quality);
   return sink;
 };
 
