@@ -15,8 +15,9 @@ import { surfaceY } from "./lublin/terrain";
  * stands square to the world, turned some 17° from the hall's back wall, inside the site's 3 m square.
  * Its bottom opening faces north to the open square, its top one south, onto the bridge. The bridge
  * lands on the roof's raised back slab (0.36 m over the roof, as drawn), the lift's top level, and the
- * terrace is the roof behind the name ALCHEMIA between the drawn box on the roof (west) and the
- * overhang over the outside stair (east), about 3.6 × 5 m. Its screens and the bridge's are glass to a
+ * terrace is the back of the roof between the drawn box on its west side, the overhang over the
+ * outside stair on its east side and the low box in front of the name ALCHEMIA, about 3.6 × 4.2 m
+ * (none of them is solid: all of them stay outside the screens). Its screens and the bridge's are glass to a
  * handrail and taut lit wires over it to 2.6 m over the slab: no step, jump or pull-up takes a body
  * over or onto them. The gates are 1.8 m, over a jump and a step, so nobody jumps into the shaft. The engine draws the shaft, the bridge and the screens (`renderer/alchemia/lift-bake`);
  * the platform, the gates and the buttons are entities with views of their own, as at the market.
@@ -26,8 +27,8 @@ import { surfaceY } from "./lublin/terrain";
 const ROOF_SLAB = 11.87;
 /** The drawn roof under the slab (`ALCHEMIA_HALL_ROOF`). */
 const ROOF = 11.51;
-/** The terrace in the hall's frame (glTF metres): between its screens' middle lines, from the roof's back edge to behind the name. */
-const TERRACE = { x0: -2.14, x1: 1.49, back: -4.55, slabEnd: -2.55, front: 0.41 } as const;
+/** The terrace in the hall's frame (glTF metres): between its screens' middle lines, from the roof's back edge to the box in front of the name (z -0.25). */
+const TERRACE = { x0: -2.14, x1: 1.49, back: -4.55, slabEnd: -2.55, front: -0.3 } as const;
 
 /** Half the platform's side, the walls' and the screens' thickness, metres. */
 const HALF = 1.1;

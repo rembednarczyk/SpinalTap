@@ -92,10 +92,10 @@ describe("the lift of Alchemia to the hall's roof (G-284, G-289)", () => {
     for (const s of L.screens) expect(s.top - TOP, `${s.a.x},${s.a.z}`).toBeGreaterThan(jump + MANTLE_REACH);
     expect(L.head - TOP).toBeGreaterThan(jump + MANTLE_REACH);
     for (const g of L.gates) expect(g.y1 - g.y0).toBeGreaterThan(jump + STEP_HEIGHT);
-    // The terrace for the stages to come: some 17 m² inside its screens.
+    // The terrace for the stages to come: some 15 m² inside its screens.
     const c = ALCHEMIA_TERRACE.corners;
     const area = Math.abs(c.reduce((s, p, i) => s + p.x * c[(i + 1) % c.length]!.z - c[(i + 1) % c.length]!.x * p.z, 0)) / 2;
-    expect(area).toBeGreaterThan(16);
+    expect(area).toBeGreaterThan(14.5);
     for (const s of L.screens) expect(screenCorners(s)).toHaveLength(4);
   });
 
@@ -217,6 +217,34 @@ describe("the lift of Alchemia to the hall's roof (G-284, G-289)", () => {
     expect(highest).toBeLessThan(GROUND + 0.5);
     expect(sim.player()!.position.y).toBeCloseTo(TOP, 3);
     expect(lift(sim).solid.max.y).toBeCloseTo(TOP, 6);
+  });
+
+  it("keeps the terrace off what the hall's model draws on its roof: the box in front of the name (0.7 m), the box and the overhang at its sides", () => {
+    // The hall's frame (alchemia-props.glb, measured off its faces): x0, x1, z0, z1 of each, over the roof.
+    const drawn = [
+      [-0.85, 0.6, -0.25, 1.2],
+      [-4.1, -2.15, -3.9, -2.05],
+      [1.5, 2.7, -3.8, -2.6],
+    ] as const;
+    const fx = Math.sin(hall.yaw);
+    const fz = Math.cos(hall.yaw);
+    const inDrawn = (p: Pt) => {
+      const dx = p.x - hall.x;
+      const dz = p.z - hall.z;
+      const x = -dx * fz + dz * fx;
+      const z = dx * fx + dz * fz;
+      return drawn.some(([x0, x1, z0, z1]) => x > x0 && x < x1 && z > z0 && z < z1);
+    };
+    for (const [x, z] of [[-0.1, 1], [-0.8, 1], [0.6, 1], [-3, -3], [2, -3.2]] as const) {
+      const sim = at(terraceMid(), ALCHEMIA_TERRACE.roof);
+      const p = sim.player()!;
+      const to = alchemiaPoint(hall, x, z);
+      for (let i = 0; i < 120; i++) {
+        p.yaw = Math.atan2(to.x - p.position.x, to.z - p.position.z);
+        sim.step(input({ moveZ: 1 }));
+        expect(inDrawn(p.position), `towards ${x},${z} step ${i}`).toBe(false);
+      }
+    }
   });
 
   it("lands the bridge on the roof's back slab, behind the drawn parapet, with no step taller than a step", () => {
