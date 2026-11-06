@@ -9,7 +9,7 @@ import { type Area, type Line } from "./features.ts";
 import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, lineLength, offsetLine, pointAlong, pointInRing, r1, removeCollinear, signedArea, simplifyLine, simplifyRing, sliceLine, stripAlong } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
-import { cutHoles, holeFits, holesApart } from "./ring-holes.ts";
+import { cutHoles, holeFits, holesApart, notchOut } from "./ring-holes.ts";
 
 const COBBLES = new Set(["sett", "cobblestone", "unhewn_cobblestone", "cobblestone:flattened"]);
 const cobbled = (t: Tags) => COBBLES.has(t.surface ?? "");
@@ -264,7 +264,9 @@ const UNDER_PAVING = new Set<GroundSurface>(["grass", "water"]);
  * Only what is drawn in a hole is cut, so the paving stays where an inner ring has nothing of its
  * own (a fence, a building, an archaeological site). `whole(b)` says a band is its area's whole
  * ground: a lawn with holes of its own would bare the paving mapped in them. The larger of two
- * lawns that touch is cut, the other stays under the paving.
+ * lawns that touch is cut, the other stays under the paving. A lawn mapped along the paving's edge
+ * (Plac Czechowicza's, with the poet's monument, G-427) is cut as a notch in it (`notchOut`); a
+ * paved patch of a park, lying on its lawn, is never cut.
  */
 export const openPavings = <B extends Band & { readonly box: Rect }>(bands: readonly B[], whole: (b: B) => boolean): B[] => {
   const under = bands.filter((b) => UNDER_PAVING.has(b.surface) && !b.bridge && whole(b));
@@ -274,9 +276,19 @@ export const openPavings = <B extends Band & { readonly box: Rect }>(bands: read
   const cut = new Set<B>();
   const out = bands.map((b) => {
     if (!PAVINGS.has(b.surface) || b.bridge) return b;
-    const fits = under.filter((u) => u.box.minX > b.box.minX && u.box.maxX < b.box.maxX && u.box.minZ > b.box.minZ && u.box.maxZ < b.box.maxZ && holeFits(b.ring, u.ring));
-    fits.sort((p, q) => Math.abs(signedArea(q.ring)) - Math.abs(signedArea(p.ring)) || (p.source < q.source ? -1 : p.source > q.source ? 1 : 0));
-    const ring = grid(b.ring);
+    const within = under.filter((u) => u.box.minX >= b.box.minX && u.box.maxX <= b.box.maxX && u.box.minZ >= b.box.minZ && u.box.maxZ <= b.box.maxZ);
+    within.sort((p, q) => Math.abs(signedArea(q.ring)) - Math.abs(signedArea(p.ring)) || (p.source < q.source ? -1 : p.source > q.source ? 1 : 0));
+    const fits = within.filter((u) => holeFits(b.ring, u.ring));
+    // A lawn along the paving's edge fits no hole: it is cut as a notch in the edge (G-427).
+    let ring = grid(b.ring);
+    let notches = 0;
+    for (const u of within) {
+      const notched = fits.includes(u) ? null : notchOut(ring, grid(u.ring));
+      if (!notched) continue;
+      ring = notched;
+      notches++;
+      cut.add(u);
+    }
     const holes: Pt[][] = [];
     for (const u of fits) {
       const h = grid(u.ring);
@@ -284,7 +296,7 @@ export const openPavings = <B extends Band & { readonly box: Rect }>(bands: read
       holes.push(h);
       cut.add(u);
     }
-    return holes.length > 0 ? { ...b, ring: cutHoles(ring, holes), holed: true } : b;
+    return holes.length > 0 || notches > 0 ? { ...b, ring: cutHoles(ring, holes), holed: true } : b;
   });
   // The lawns cut out laid as their holes.
   return out.map((b) => (cut.has(b) ? { ...b, ring: grid(b.ring), holed: true } : b));

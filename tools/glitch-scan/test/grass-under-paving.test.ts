@@ -95,6 +95,21 @@ describe("grass-under-paving (G-421)", () => {
     expect(top.get("grass") ?? 0).toBeGreaterThan(7800);
   });
 
+  // Plac Czechowicza's lawn (w69672575, 308 m²) lies in the square w505211283 along three of its
+  // edges, so it fits no hole: it lay under the paving with the poet's monument on it (T-197).
+  it("shows Plac Czechowicza's lawn, its monument standing on the grass", () => {
+    const areas = extractFeatures(parseExtract(readFileSync(join(__dirname, "../../../data/osm/krakowskie.json"), "utf8"))).areas;
+    const lawn = areas.find((a) => a.id === "w69672575")!.ring;
+    expect(topSurfaces(WORLD_SCENERY, lawn).get("grass") ?? 0).toBeGreaterThan(295);
+    // Pomnik Józefa Czechowicza (n481952873).
+    expect(drawnAt(WORLD_SCENERY, boxOf(lawn))({ x: 15.7, z: -78.8 })).toBe("grass");
+    // The playgrounds on Plac Litewski, in its lawn and on its own (T-198).
+    for (const id of ["w843994255", "w631252864"]) {
+      const ring = areas.find((a) => a.id === id)!.ring;
+      expect(topSurfaces(WORLD_SCENERY, ring).get("grass") ?? 0, id).toBeGreaterThan(0.95 * Math.abs(signedArea(ring)));
+    }
+  });
+
   // The chunks' edges x = 20 and z = -20 cross the square's lawns: a lawn laid otherwise than its
   // hole where the edge cuts both left a strip of bare terrain across it (T-202).
   it("leaves no bare strip in Plac Litewski's lawns where a chunk's edge crosses them", () => {
