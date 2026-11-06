@@ -31,8 +31,8 @@ export type PurchaseFailure =
 
 /**
  * What the counter offers (ADR-0070). "full": everything. "basic": only ammo and stacks (food,
- * medkits, bandages, stims); weapons, clothes, mods, backpacks, repairs, implants and the
- * capacity shard (cyberware work, decision 5.11) are refused.
+ * medkits, bandages); weapons, clothes, mods, backpacks, repairs, implants, the capacity shard
+ * (cyberware work, decision 5.11) and combat stims (decision 6.11) are refused.
  */
 export type ShopStock = "full" | "basic";
 
@@ -58,10 +58,13 @@ export const shopTerms = (reputation: number): ShopTerms => {
 /** Whether the terms cover more than the basics: pieces, implants, repairs and backpacks. */
 export const fullService = (terms: ShopTerms): boolean => terms.stock === "full";
 
-/** A stack that changes the body's cyberware (the capacity shard) is clinic work, not a basic. */
+/**
+ * A stack that changes the body's cyberware (the capacity shard) is clinic work, and a combat
+ * stim is no basic either (decision 6.11): a hostile counter sells neither.
+ */
 export const isBasicStack = (id: StackableId): boolean => {
   const def: StackableDefinition = STACKABLE_CATALOG[id];
-  return def.cyberCapacity === undefined;
+  return def.cyberCapacity === undefined && def.combatStim !== true;
 };
 
 /** Whether the terms let this stack be sold: basics always, cyberware work only on full terms. */

@@ -43,6 +43,8 @@ export interface StackableDefinition {
   readonly buff?: BuffId;
   /** Cyberware capacity it adds for good when used (a capacity shard, ADR-0033). */
   readonly cyberCapacity?: number;
+  /** A combat stim: a hostile counter does not sell it, it is not one of the basics (decision 6.11). */
+  readonly combatStim?: true;
 }
 
 export const STACKABLE_CATALOG = {
@@ -105,6 +107,7 @@ export const STACKABLE_CATALOG = {
     stack: 5,
     heal: 0,
     buff: "steady",
+    combatStim: true,
   },
   capacity_shard: {
     id: "capacity_shard",
