@@ -4,7 +4,7 @@ import { MIGRATIONS, checksum, decodeSave } from "../src";
 import { MOVED_STASHES, OLD_MARKET_WAKE } from "../src/market-move";
 import { snapshot } from "./fixtures";
 
-/** The market moved off Aleja Tysiąclecia to Alchemia (ADR-0063 stage 6): schema v29 and the v28 -> v29 migration. */
+/** The market moved off Aleja Tysiąclecia to Alchemia (ADR-0063 stage 6): schema v30 and the v29 -> v30 migration. */
 
 const wrap = (payload: unknown) => {
   const text = JSON.stringify(payload);
@@ -12,12 +12,12 @@ const wrap = (payload: unknown) => {
 };
 
 const at = (key: string, x: number, y: number, z: number) => ({ key, position: { x, y, z }, yaw: 0, pitch: 0, hp: 100, cooldown: 0, alerted: false });
-/** A v28 save on the old market's south roof: Oyaji at his stall, the lookout under the deck, Kaito on the deptak. */
+/** A v29 save on the old market's south roof: Oyaji at his stall, the lookout under the deck, Kaito on the deptak. */
 const onTheRoof = () => {
   const s = snapshot({});
   return {
     ...s,
-    version: 28,
+    version: 29,
     entities: [at("player", 775, -7.9, 319.6), at("oyaji", 769, -20.6, 326.6), at("hebi-lookout", 793, -20.6, 352), at("ren", 1500, 0, 1500), at("fixer", 320, -0.3, -93)],
     domain: {
       ...s.domain,
@@ -33,14 +33,14 @@ const onTheRoof = () => {
   };
 };
 
-describe("the market moved to Alchemia in the save (v28 to v29, ADR-0063)", () => {
-  it("is schema v29 or later", () => {
-    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(29);
+describe("the market moved to Alchemia in the save (v29 to v30, ADR-0063)", () => {
+  it("is schema v30 or later", () => {
+    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(30);
   });
 
   it("wakes a player saved in the old market on the avenue and sends its people and stashes to Alchemia", () => {
-    const moved = MIGRATIONS[28]!(onTheRoof() as unknown as Record<string, unknown>) as unknown as ReturnType<typeof onTheRoof>;
-    expect(moved.version).toBe(29);
+    const moved = MIGRATIONS[29]!(onTheRoof() as unknown as Record<string, unknown>) as unknown as ReturnType<typeof onTheRoof>;
+    expect(moved.version).toBe(30);
     // The player on the ground where the square was; the market's people gone from the save (they spawn in Alchemia), Kaito kept.
     expect(moved.entities.map((e) => e.key)).toEqual(["player", "fixer"]);
     expect(moved.entities[0]!.position).toEqual({ x: OLD_MARKET_WAKE.x, y: OLD_MARKET_WAKE.y, z: OLD_MARKET_WAKE.z });
@@ -55,17 +55,17 @@ describe("the market moved to Alchemia in the save (v28 to v29, ADR-0063)", () =
 
   it("leaves a save made anywhere else as it was, but for the market's people", () => {
     const s = snapshot({});
-    const old = { ...s, version: 28 };
-    expect(MIGRATIONS[28]!(old as unknown as Record<string, unknown>)).toEqual({ ...old, version: 29 });
-    const loaded = decodeSave("v28", wrap(old));
+    const old = { ...s, version: 29 };
+    expect(MIGRATIONS[29]!(old as unknown as Record<string, unknown>)).toEqual({ ...old, version: 30 });
+    const loaded = decodeSave("v29", wrap(old));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.entities).toEqual(s.entities);
   });
 
   it("drops the heat's reinforcements and a mugging's bodies left in the old market", () => {
     const person = (x: number) => ({ state: at("r", x, -20.6, 340) });
-    const old = { ...snapshot({}), version: 28, reinforcements: { sent: 2, wait: 3, people: [person(790), person(300)] }, strayBodies: [person(800), person(310)] };
-    const moved = MIGRATIONS[28]!(old as unknown as Record<string, unknown>) as unknown as typeof old;
+    const old = { ...snapshot({}), version: 29, reinforcements: { sent: 2, wait: 3, people: [person(790), person(300)] }, strayBodies: [person(800), person(310)] };
+    const moved = MIGRATIONS[29]!(old as unknown as Record<string, unknown>) as unknown as typeof old;
     expect(moved.reinforcements.people.map((p) => p.state.position.x)).toEqual([300]);
     expect(moved.strayBodies.map((p) => p.state.position.x)).toEqual([310]);
   });

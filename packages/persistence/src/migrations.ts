@@ -376,9 +376,11 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v27 -> v28 (G-233): the bodies of a won mugging's muggers are saved (`strayBodies`, optional).
   // An older save has none: they were gone on loading, and still are.
   27: (old) => ({ ...old, version: 28 }),
-  // v28 -> v29 (ADR-0063 stage 6): the market on Aleja Tysiąclecia is gone and its people are in
+  // v28 -> v29: the step ADR-0059 stage 4 (#323) takes; until it is merged, only the version.
+  28: (old) => ({ ...old, version: 29 }),
+  // v29 -> v30 (ADR-0063 stage 6): the market on Aleja Tysiąclecia is gone and its people are in
   // Alchemia. A save made in it wakes on the avenue; its people and stashes go to their new places.
-  28: moveMarketToAlchemia,
+  29: moveMarketToAlchemia,
 };
 
 export class MigrationError extends Error {}

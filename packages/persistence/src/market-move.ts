@@ -5,7 +5,7 @@ type Json = Record<string, unknown>;
 const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
 
 /**
- * v28 -> v29 (ADR-0063 stage 6): the market on Aleja Tysiąclecia is gone (its stalls, hall, viaduct
+ * v29 -> v30 (ADR-0063 stage 6): the market on Aleja Tysiąclecia is gone (its stalls, hall, viaduct
  * and roofs) and its people stand in Alchemia on Plac Ofiar Getta. Spelled out, like every
  * migration: the content of its time.
  */
@@ -61,7 +61,7 @@ const movedLoot = (loot: unknown): unknown => {
 const keptOutside = (list: unknown): unknown => (Array.isArray(list) ? list.filter((p: unknown) => !(isObject(p) && isObject(p.state) && inOldMarket(p.state.position))) : list);
 
 export const moveMarketToAlchemia = (old: Json): Json => {
-  const out: Json = { ...old, version: 29 };
+  const out: Json = { ...old, version: 30 };
   if (Array.isArray(old.entities)) out.entities = movedEntities(old.entities);
   if (isObject(old.domain)) out.domain = { ...old.domain, loot: movedLoot(old.domain.loot) };
   if (isObject(old.reinforcements)) out.reinforcements = { ...old.reinforcements, people: keptOutside(old.reinforcements.people) };
