@@ -1290,6 +1290,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: zabicie ciała ogłuszonego przed aktualizacją liczy jedną walkę stylu ciosu (np. pistolet) zamiast skradania; nadal najwyżej jedna walka na wroga; poprawka: migracja stawia `fought` na encjach `downed`/`unconscious` albo świadome pozostawienie
 - Pakiet właściciela: packages/persistence (migrations)
 
+### G-425 Spec `touch-layout` nie sprawdza sklepu kliniki na telefonie; `clampItemLevel(NaN)` zwraca NaN
+- Status: zgłoszone (6.11, weryfikator PR #341)
+- Ważność: S4 · Zasięg: oferta kliniki z nowym wierszem cyberdecku nie ma kontroli układu na 844×390; `clampItemLevel(NaN)` → NaN propaguje się do `deckStats` (dziś nieosiągalne, walidacja wymaga liczb całkowitych)
+- Pakiet właściciela: e2e, packages/core (items)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
