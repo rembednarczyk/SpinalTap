@@ -101,8 +101,8 @@ test("Aleja Tysiąclecia on Podzamcze in TPP stays within the perf budget", asyn
 });
 
 test("Alchemia's T1 in TPP stays within the perf budget", async ({ page }) => {
-  // On T1 before the food hall's way in (ADR-0074 stage 1), looking north-east to the Arkady and the way down to T2.
-  await tppAt(page, { x: 412, z: 63, yaw: Math.atan2(40, 37), walk: 20 });
+  // On T1 north of the food hall (ADR-0074 stage 1), walking south to its lit front and the way in: the hall in the frame.
+  await tppAt(page, { x: 418, z: 78, yaw: Math.PI, walk: 20 });
   expect((await gameState(page)).loadedChunks).toContain("krakowskie-2-1");
   within("alchemia-tpp", await sampleNow(page));
 });
