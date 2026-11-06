@@ -1325,6 +1325,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: 844×390 i 800×370, karta skanu (Kiroshi) nachodzi na pasek broni i podpowiedź ruchu; do kontroli w `touch-layout`
 - Pakiet właściciela: packages/ui (HUD, skan)
 
+### G-434 Pad T1 Alchemii podnosi Świętoduską o ok. 1,85 m (T-209)
+- Status: w naprawie (6.11, kurator przeglądu #343; runda 3 PR #343)
+- Ważność: S3 · Zasięg: jezdnia w230503896, chodnik w232464426, pas postojowy w1514058885 przy x 393–402, z 56–84; poprawka: przyciąć T1, przejście od ulicy ≤ 2 m; kontrola `pad-on-road`
+- Pakiet właściciela: packages/sim (content Alchemii), tools/glitch-scan
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
