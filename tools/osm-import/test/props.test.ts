@@ -283,10 +283,11 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(at.z).toBeCloseTo(34.6, 1);
     expect(offRoad(site, { x: 40, z: 24 })).toEqual({ x: 40, z: 24 });
     expect(offRoad(site, { x: 40, z: 30 }, 2)).toBeNull();
-    // Over the whole city: only covers and bollards stand where the cars drive.
+    // Over the whole city: only covers and bollards stand where the cars drive. A road lamp in front
+    // of a car park's cars, on its asphalt strip with no kerb (T-172), is not where they drive.
     const { byChunk } = generateProps(PLAN, CHUNKS);
     const city = new Site(CHUNKS);
-    const onRoad = [...byChunk.values()].flat().filter((i) => city.surfaceAt({ x: i.x, z: i.z }) === "road");
+    const onRoad = [...byChunk.values()].flat().filter((i) => city.surfaceAt({ x: i.x, z: i.z }) === "road" && !(i.prop === "lamp-road" && city.byLot({ x: i.x, z: i.z }, 2)));
     expect(onRoad.filter((i) => i.prop !== "manhole" && i.prop !== "bollard").length).toBeLessThanOrEqual(1);
   });
 
