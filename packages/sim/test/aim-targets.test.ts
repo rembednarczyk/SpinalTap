@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AIM_ASSIST_RANGE, type Entity, type Simulation, aimTargets, gangerEntity } from "../src";
+import { AIM_ASSIST_RANGE, type Entity, type Simulation, aimTargets, gangerEntity, sniperEntity } from "../src";
 import { offset, patrol, stallholder } from "./takedown-scenes";
 import { streetSim } from "./helpers";
 
@@ -21,6 +21,14 @@ const ganger = (sim: Simulation, id: number, dx: number, dz: number, alerted = t
   const g = gangerEntity(id, { key: `aim-${id}`, position: offset(sim, dx, dz), yaw: Math.PI }, null, 80, sim.player()!.chunk ?? "");
   g.ai = { ...g.ai!, alerted };
   return sim.world.add(g);
+};
+
+/** A Tessen sniper (no `ai`, ADR-0024) on the ground `dz` m north, in `phase`. */
+const sniper = (sim: Simulation, id: number, dx: number, dz: number, phase: "idle" | "aim" | "rest" | "move"): Entity => {
+  const at = offset(sim, dx, dz);
+  const s = sniperEntity(id, { key: `sniper-${id}`, position: at, yaw: Math.PI }, null, 70, sim.player()!.chunk ?? "", [at]);
+  s.sniper = { ...s.sniper!, phase, timer: 1 };
+  return sim.world.add(s);
 };
 
 /** A wall 4 m wide and 4 m tall across her view, `dz` m north. */
@@ -101,6 +109,29 @@ describe("aimTargets (ADR-0072)", () => {
     ganger(sim, 4100, 0, AIM_ASSIST_RANGE + 3);
     expect(ids(sim)).toEqual([]);
     expect(aimTargets(sim.world, sim.player()!, AIM_ASSIST_RANGE + 5).length).toBe(1);
+  });
+
+  it("a sniper aiming at her is a target (user decision 6.11), resting, moving or idle it is not", () => {
+    const sim = square();
+    const aiming = sniper(sim, 4200, 0, 12, "aim");
+    for (const [i, phase] of (["idle", "rest", "move"] as const).entries()) sniper(sim, 4201 + i, 3 + 2 * i, 14, phase);
+    expect(ids(sim)).toEqual([aiming.id]);
+    expect(sim.aimTargets()[0]!.radius).toBe(aiming.body!.radius);
+  });
+
+  it("an aiming sniper behind a wall or out of reach is not a target", () => {
+    const sim = square(23);
+    sniper(sim, 4200, 0, 12, "aim");
+    wall(sim, 6);
+    sniper(sim, 4201, 8, AIM_ASSIST_RANGE + 3, "aim");
+    expect(ids(sim)).toEqual([]);
+  });
+
+  it("an aiming sniper knocked out or dead is not a target", () => {
+    const sim = square();
+    sniper(sim, 4200, -2, 12, "aim").unconscious = true;
+    sniper(sim, 4201, 2, 12, "aim").health = { current: 0, max: 70 };
+    expect(ids(sim)).toEqual([]);
   });
 
   it("reads only: the run does not change", () => {
