@@ -1113,12 +1113,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (kod) · Zasięg: `packages/sim/src/systems/player-control-system.ts:40`, eksportowany, nieużywany w src; pułapka dla przyszłych odczytów po etapie 3c · Koszt: mały (usunąć albo przejść na `workingCyberware`)
 - Pakiet właściciela: packages/sim
 
-### G-381 Strzelec staje w promieniu `ARRIVE` od stanowiska, a linia wzroku liczy się z samego węzła: stanowisko bywa bez strzału
-- Status: zgłoszone (6.11, weryfikator #316; ogólne, nie tylko w metrze)
-- Ważność: S3 · Zasięg: `firingPosition` i `firstStep` w `packages/sim/src/world/nav.ts`; strzelec czeka z zerową prędkością bez końca · Koszt: średni
-- Pakiet właściciela: packages/sim (`world/nav.ts`, AI strzelca)
-- Test przyjęcia: strzelec dochodzi do gracza albo strzela we wszystkich przypadkach siatki z #316
-
 ### G-382 Gołe podłoże przy wiacie przystanku w672635871 (T-184)
 - Status: zgłoszone (6.11, kurator, przegląd #318)
 - Ważność: S4 · Zasięg: ok. 98 m² · Koszt: mały
@@ -1262,6 +1256,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, weryfikator PR #331; było przed PR)
 - Ważność: S4 · Zasięg: nazwa i pasmo skrytki nie zgadzają się z dzielnicą; do sprawdzenia z kuratorem topografii
 - Pakiet właściciela: packages/sim (content)
+
+### G-415 Strzelec nie strzela do gracza przykucniętego za krawędzią osłony, stoi do `GIVE_UP` (20 s)
+- Status: zgłoszone (6.11, naprawiacz G-381); decyzja projektowa (ADR-0016, osłony)
+- Ważność: S3 · Zasięg: `firingPosition` sprawdza linię wzroku do torsu stojącego (`CHEST` 1,25), a AI celuje w `chestOf(player)`, niżej przy kucaniu; strzelec stoi na stanowisku z zerową prędkością, np. doki, gracz kuca na stosie kontenerów SW, strzelec przy `doki-aisle-s` 0,47 m, 10 s bez ruchu; poprawka (stanowisko na niski tors) zmienia działanie osłon
+- Pakiet właściciela: packages/sim (`world/nav.ts`, AI strzelca)
+
+### G-416 `routeAcrossLevels` oscyluje na granicy `ARRIVE`, gdy cel stoi na biegu schodów; węzeł `doki-pier` 0,6 m nad pomostem
+- Status: zgłoszone (6.11, naprawiacz G-381)
+- Ważność: S4 · Zasięg: przy `kanal A` strzelec chodzi tam i z powrotem przy węźle `head` co krok (0,476–0,528 m), gdy oba końce biegu sięgają celu przez `via`; węzeł `doki-pier` w `DOKI_NAV` 0,6 m nad podłogą pomostu (linia wzroku z oka wyżej niż strzelca)
+- Pakiet właściciela: packages/sim (`world/nav.ts`, content doków)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

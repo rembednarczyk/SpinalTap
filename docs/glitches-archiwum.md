@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-381 Strzelec staje w promieniu `ARRIVE` od stanowiska, a linia wzroku liczy się z samego węzła: stanowisko bywa bez strzału
+- Status: naprawione w #316 (gałąź `held` w `firingPosition`: strzelec dochodzi do węzła, gdy z pozycji nie ma strzału); potwierdzone sondami 6.11 (metro, stary targ, doki), nie odtwarza się na 245a455
+- Ważność: S3 · Zasięg: `firingPosition` i `firstStep` w `packages/sim/src/world/nav.ts`; strzelec czeka z zerową prędkością bez końca · Koszt: średni
+- Pakiet właściciela: packages/sim (`world/nav.ts`, AI strzelca)
+- Test przyjęcia: strzelec dochodzi do gracza albo strzela we wszystkich przypadkach siatki z #316
+
 ### G-377 Promień z ulicy do szybu metra trafia w niewidzialny teren pod pawilonem
 - Status: naprawione (PR #335, 6.11; skan `metro-shaft-ray` 948 → 0)
 - Ważność: S3 · Zasięg: `GroundField.rayHit` maszeruje teren chunka ulicy w obszarze szybu do najbliższej linii siatki, więc trafia w dawną powierzchnię ulicy pod pawilonem; strzelec 0,5 m przed otworem Alchemii B nie widzi gracza w hali i przez 20 s nie strzela; prawdopodobnie też strzały gracza z zewnątrz do hali · Koszt: średni
