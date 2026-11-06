@@ -1,6 +1,6 @@
 import { MAX_LEVEL, MIN_LEVEL } from "../progression/curve";
 import { isGarmentId, isWeaponId } from "./catalog";
-import { rollRarityAt } from "./rarity";
+import { atLeast, rollRarityAt } from "./rarity";
 import { rollTraits } from "./traits";
 import type { InstanceDefId, Rarity, TraitId } from "./types";
 
@@ -49,11 +49,13 @@ export interface ItemGrade {
 
 /**
  * The grade of a rolled piece: the tier from `rarityRoll` at its level (or the fixed tier), and
- * the traits of an epic or legendary one from two more numbers.
+ * the traits of an epic or legendary one from two more numbers. `floor` lifts a rolled tier below
+ * it (the protection against bad luck, ADR-0059 stage 6); a fixed tier stays.
  */
-export const rollGrade = (def: InstanceDefId, rarity: Rarity | "roll", level: number, rarityRoll: number, t1: number, t2: number): ItemGrade => {
-  if (!hasItemLevel(def)) return { rarity: rarity === "roll" ? rollRarityAt(MIN_ITEM_LEVEL, rarityRoll) : rarity };
-  const tier = rarity === "roll" ? rollRarityAt(level, rarityRoll) : rarity;
+export const rollGrade = (def: InstanceDefId, rarity: Rarity | "roll", level: number, rarityRoll: number, t1: number, t2: number, floor?: Rarity): ItemGrade => {
+  const rolled = (at: number): Rarity => atLeast(rollRarityAt(at, rarityRoll), floor);
+  if (!hasItemLevel(def)) return { rarity: rarity === "roll" ? rolled(MIN_ITEM_LEVEL) : rarity };
+  const tier = rarity === "roll" ? rolled(level) : rarity;
   const traits = rollTraits(def, tier, t1, t2);
   return traits.length > 0 ? { rarity: tier, level: clampItemLevel(level), traits } : { rarity: tier, level: clampItemLevel(level) };
 };
