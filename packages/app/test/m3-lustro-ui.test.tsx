@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { KUROSAWA_SPOT } from "@seki/sim";
 import { mountGame, run, unmountGame } from "./game-ui";
 
 /** Act II's key conversation through the dialogue UI (formerly e2e/m3-lustro.spec.ts, ADR-0046). */
@@ -21,11 +22,11 @@ describe("act II on the overpass in the game", () => {
         flags: ["act1_ending", "ending:aya", "kagami_job", "met_fixer", "met_ren", "recalled:last_call", "recalled:rooftop", "ren_trail", "reported_back", "seen:act2_opening"],
       }),
     );
-    expect(g.seki.state().objective).toContain("Kurosawa from Kagami is waiting on the viaduct");
+    expect(g.seki.state().objective).toContain("Kurosawa from Kagami is waiting on the square behind Alchemia");
 
-    // On the viaduct's deck over aleja Tysiąclecia, next to him; a step streams the market in.
+    // On the square behind Alchemia, next to him (ADR-0063); a step streams the market in.
     run(() => {
-      const p = g.seki.place("market", 98.5, 9.9, 92);
+      const p = { ...KUROSAWA_SPOT, x: KUROSAWA_SPOT.x + 1.5 };
       g.seki.teleport(p.x, p.z, Math.PI / 2, 0, p.y);
     });
     g.step(2);

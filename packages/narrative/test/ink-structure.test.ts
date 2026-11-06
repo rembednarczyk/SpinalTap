@@ -21,6 +21,7 @@ const UNTRANSLATED: readonly InkFile[] = [];
  */
 const POLISH_NAMES: ReadonlySet<string> = new Set<string>([
   "Łokietka",
+  "Świętoduska",
   "Tysiąclecia",
   "Przedmieście",
   "Trybunał",

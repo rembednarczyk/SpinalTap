@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { type DomainEvents, SECONDS_PER_HOUR, type Vec3 } from "@seki/core";
-import { BALCONY_TOP, JUMP_SPEED, MARKET_PLACE, Simulation, type Entity, aabbFromCenter, gangerEntity, ground, market } from "../src";
+import { JUMP_SPEED, Simulation, type Entity, aabbFromCenter, gangerEntity, ground } from "../src";
 import { withCarry } from "../src/world/bodies";
+import { BALCONY_TOP, MARKET_PLACE, OLD_MARKET_CHUNK, market } from "./fixtures/old-market";
 import { STREET_START, collect, input, run, teleportPlayer } from "./helpers";
 import { CROUCH, patrol, quietStreet, stallholder, takeDown, ticks, victim, walkAway } from "./takedown-scenes";
 
@@ -41,7 +42,7 @@ const shoulder = (sim: Simulation): Entity => {
 describe("a body on her shoulder rules out (ADR-0065)", () => {
   it("the fire escape ladder: she walks into it and stays on the ground", () => {
     const climbs = (carry: boolean): number => {
-      const sim = Simulation.create({ seed: 1 });
+      const sim = Simulation.create({ seed: 1, chunks: [OLD_MARKET_CHUNK] });
       const start = market(73.2, 0, 65.6);
       teleportPlayer(sim, start, Math.PI);
       run(sim, 2);

@@ -39,8 +39,8 @@ describe("street furniture in the game (ADR-0050)", () => {
       expect(f.y).toBe(host!.y);
     }
     expect(total).toBeGreaterThan(3000);
-    // Nothing in the market under the viaduct (its own stalls and kiosk stand there).
-    expect(views.flatMap((v) => (v.view.kind === "street-props" ? v.view.items : [])).some((i) => i.x > 757 && i.x < 813 && i.z > 318 && i.z < 374)).toBe(false);
+    // The map's furniture is back on Aleja Tysiąclecia where the market stood until it moved to Alchemia (ADR-0063).
+    expect(views.flatMap((v) => (v.view.kind === "street-props" ? v.view.items : [])).some((i) => i.x > 757 && i.x < 813 && i.z > 318 && i.z < 374)).toBe(true);
   });
 
   it("solid kinds get convex prisms in the piece's frame; small things none", () => {

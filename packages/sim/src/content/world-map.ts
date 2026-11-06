@@ -2,7 +2,7 @@ import type { TerrainGrid } from "@seki/core";
 import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
 import { S7_STASHES } from "./district-m0";
 import { KANAL_ALLEY_STASH, KANAL_SCENERY } from "./district-kanal";
-import { type RoofStash, TARG_NAV, TARG_OVERPASS_STASH, TARG_ROOF_STASH } from "./district-targ";
+import { type RoofStash, TARG_OVERPASS_STASH, TARG_ROOF_STASH } from "./alchemia-market";
 import { DEVICES, type DeviceDef } from "./devices";
 import { TRASA_PODZIEMNA_BOUNDS, TRASA_PODZIEMNA_CHUNK, TRASA_PODZIEMNA_PROPS, TRASA_PODZIEMNA_STASH } from "./kanal-underground";
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
@@ -63,6 +63,12 @@ export interface ChunkDef {
    * so no id of the content moves.
    */
   readonly rooms?: readonly StaticProp[];
+  /**
+   * The level graph of a world of its own (ADR-0021), given to the simulation instead of the city
+   * (a test floor with stairs and decks): its chunks' graphs together. The city's chunks carry
+   * none; theirs is `WORLD_NAV`.
+   */
+  readonly nav?: NavGraph;
 }
 
 /** Horizontal distance from a point to a rectangle; 0 inside. */
@@ -151,11 +157,11 @@ export const WORLD_DEVICES: readonly DeviceDef[] = DEVICES;
 export const WORLD_METRO: readonly MetroStationDef[] = METRO_STATIONS;
 
 /**
- * Level graph of the whole city (ADR-0021): the market's viaduct, the docks' roofs and crane,
+ * Level graph of the whole city (ADR-0021): the docks' roofs and crane,
  * and the interiors of Krakowskie Przedmieście (ADR-0038). The streets themselves are one level
  * on the terrain.
  */
-export const WORLD_NAV: NavGraph = mergeNav(TARG_NAV, DOKI_NAV, S7_NAV, METRO_NAV);
+export const WORLD_NAV: NavGraph = mergeNav(DOKI_NAV, S7_NAV, METRO_NAV);
 
 /** Stashes placed once when the player first comes near: on roofs (ADR-0021), in alleys and dead ends (ADR-0026). */
 export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH, ...S7_STASHES, KANAL_ALLEY_STASH, TARG_OVERPASS_STASH, TRASA_PODZIEMNA_STASH];

@@ -1,6 +1,7 @@
 import { type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
+import { ChunkIndex, distanceTo } from "./chunk-index";
 import type { Entity } from "./components";
 import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight } from "./deck";
 import { type GroundVault, VaultIndex } from "./vault";
@@ -17,8 +18,6 @@ export interface GroundChunk {
 export const MAX_WALK_SLOPE = Math.tan((35 * Math.PI) / 180);
 /** Half the span the slope is measured over (0.5 m in all): small bumps of a 1 m lidar grid do not count. */
 const SLOPE_HALF_SPAN = 0.25;
-/** Edge of a bucket of the chunk index, metres. */
-const BUCKET = 64;
 
 /**
  * A shaft dug into the ground (ADR-0071: the stairs and the hall under a metro pavilion): inside
@@ -37,7 +36,6 @@ const cutChunk = (c: GroundCut): GroundChunk => {
 };
 
 const inside = (r: Rect, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
-const distanceTo = (r: Rect, x: number, z: number): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
 
 /** The step a character walks up without noticing (the movement's `STEP_HEIGHT`): a seam beside a flight no higher is no bank (G-255). */
 export const SEAM_STEP = 0.45;
@@ -86,11 +84,7 @@ export class GroundField {
   private readonly chunks: readonly GroundChunk[];
   /** The first `cuts` of `chunks` are the shafts (`GroundCut`): they win where they are and never stand in for a far chunk. */
   private readonly cuts: number;
-  private readonly x0: number;
-  private readonly z0: number;
-  private readonly cols: number;
-  private readonly rows: number;
-  private readonly buckets: readonly (readonly number[])[];
+  private readonly index: ChunkIndex;
   /** The boxes of the flights of steps hung off a bridge (G-255) in the chunks' decks: almost everywhere none is near. */
   private readonly flightBoxes: readonly GroundDeck["box"][];
   /** All of them in one box: a query far from it (almost all) is answered by one test. */
@@ -117,23 +111,7 @@ export class GroundField {
     this.hasTerrain = grids.length > 0;
     this.maxHeight = grids.reduce((m, g) => g.heights.reduce((a, h) => Math.max(a, h), m), 0);
     this.rayStep = grids.reduce((s, g) => Math.min(s, g.cell / 2), 1);
-    const minX = Math.min(...chunks.map((c) => c.bounds.minX), 0);
-    const minZ = Math.min(...chunks.map((c) => c.bounds.minZ), 0);
-    const maxX = Math.max(...chunks.map((c) => c.bounds.maxX), 0);
-    const maxZ = Math.max(...chunks.map((c) => c.bounds.maxZ), 0);
-    this.x0 = minX;
-    this.z0 = minZ;
-    this.cols = Math.max(1, Math.ceil((maxX - minX) / BUCKET) + 1);
-    this.rows = Math.max(1, Math.ceil((maxZ - minZ) / BUCKET) + 1);
-    const buckets: number[][] = Array.from({ length: this.cols * this.rows }, () => []);
-    if (this.hasTerrain) {
-      chunks.forEach((c, i) => {
-        const [c0, c1] = [Math.floor((c.bounds.minX - minX) / BUCKET), Math.floor((c.bounds.maxX - minX) / BUCKET)];
-        const [r0, r1] = [Math.floor((c.bounds.minZ - minZ) / BUCKET), Math.floor((c.bounds.maxZ - minZ) / BUCKET)];
-        for (let r = r0; r <= r1; r++) for (let col = c0; col <= c1; col++) buckets[r * this.cols + col]?.push(i);
-      });
-    }
-    this.buckets = buckets;
+    this.index = new ChunkIndex(chunks.map((c) => c.bounds), this.cuts, this.hasTerrain);
     this.flightBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight === true)))].map((d) => d.box);
     this.chunkDecks = chunks.map((c) => decksReaching(chunks, c));
     this.deckBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight !== true)))].map((d) => d.box);
@@ -162,21 +140,7 @@ export class GroundField {
 
   /** Index of the chunk whose ground is used at (x, z), or -1 with no chunks. */
   private chunkIndex(x: number, z: number): number {
-    const col = Math.floor((x - this.x0) / BUCKET);
-    const row = Math.floor((z - this.z0) / BUCKET);
-    if (col >= 0 && row >= 0 && col < this.cols && row < this.rows) {
-      for (const i of this.buckets[row * this.cols + col] ?? []) if (inside((this.chunks[i] as GroundChunk).bounds, x, z)) return i;
-    }
-    let best = -1;
-    let bestD = Infinity;
-    for (let i = this.cuts; i < this.chunks.length; i++) {
-      const d = distanceTo((this.chunks[i] as GroundChunk).bounds, x, z);
-      if (d < bestD) {
-        bestD = d;
-        best = i;
-      }
-    }
-    return best;
+    return this.index.at(x, z);
   }
 
   /** The terrain grid under (x, z), or null where the ground is the street plane. */

@@ -154,8 +154,11 @@ jobs:
           if [ -z "$need" ]; then echo "All system dependencies of Chromium are installed."; exit 0; fi
           echo "Missing:" $need
           if ls ~/playwright-debs/*.deb >/dev/null 2>&1; then
-            # Local .deb files whose dependencies are present: no apt-get update, no mirror.
-            sudo apt-get install -y --no-install-recommends ~/playwright-debs/*.deb || true
+            # Local .deb files whose dependencies are present: dpkg only, no apt resolution and no mirror.
+            # apt-get install with file paths still fetched the same fonts from the mirror when the
+            # mirror offered another candidate (amd64v3), which cost 15 min at 31 kB/s (G-400).
+            ls -l ~/playwright-debs
+            sudo dpkg -i ~/playwright-debs/*.deb || true
             need=$(missing)
           fi
           if [ -n "$need" ]; then
@@ -163,7 +166,7 @@ jobs:
             sudo apt-get update
             mkdir -p ~/playwright-debs
             (cd ~/playwright-debs && apt-get download $need)
-            sudo apt-get install -y --no-install-recommends ~/playwright-debs/*.deb
+            sudo dpkg -i ~/playwright-debs/*.deb
             echo "save=true" >> "$GITHUB_OUTPUT"
           fi
           test -z "$(missing)"

@@ -139,7 +139,7 @@ describe("Hana (M4, market)", () => {
 
   it("reminds Seki of a running job and pays for a finished one", () => {
     const { runtime, commands } = setup();
-    expect(text(runtime.start("hana", domain({ active: retrieve("active") })))).toContain("wschodniej ścianie");
+    expect(text(runtime.start("hana", domain({ active: retrieve("active") })))).toContain("przy ruinie za straganami");
     expect(text(runtime.start("hana", domain({ active: protect("active") })))).toContain("pilnuj Oyajiego");
     expect(commands).toEqual([]);
     const paid = runtime.start("hana", domain({ active: retrieve("cleared"), ...rep({ civilians: 20 }) }));

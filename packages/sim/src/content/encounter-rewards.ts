@@ -1,6 +1,5 @@
 import type { StackableId, Vec3 } from "@seki/core";
 import type { DistrictId } from "./world-map";
-import { market } from "./district-targ";
 import { docks } from "./district-doki";
 import { spotNear } from "./lublin/places";
 
@@ -40,6 +39,7 @@ export const ENCOUNTER_REWARDS: Readonly<Record<string, EncounterReward>> = {
 export const MICRO_SPOTS: Readonly<Record<DistrictId, readonly Vec3[]>> = {
   "shinsekai-7": [spotNear(290, -84), spotNear(352, -92), spotNear(205, -63)],
   kanal: [spotNear(528, -58), spotNear(620, 26), spotNear(688, 110)],
-  targ: [market(80, 0, 70), market(104, 0, 70), market(84, 0, 87)],
+  // Podzamcze without its market (ADR-0063): Plac Zamkowy and the squares along Aleja Tysiąclecia by the bus station.
+  targ: [spotNear(740, 306), spotNear(778, 372), spotNear(806, 360)],
   doki: [docks(0, 0, 100), docks(20, 0, 112), docks(-10, 0, 112)],
 };

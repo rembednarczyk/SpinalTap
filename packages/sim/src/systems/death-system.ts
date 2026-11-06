@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, type KillContext, LOOT_TABLES, SECOND_HEART_COOLDOWN, contractKind, killXp, killedFlag, rollLoot, secondHeartShare } from "@seki/core";
+import { ENEMY_TYPES, type KillContext, LOOT_TABLES, type LootGrade, SECOND_HEART_COOLDOWN, contractKind, killXp, killedFlag, rollLoot, secondHeartShare } from "@seki/core";
 import { deriveRandom } from "../rng/derive-random";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
@@ -18,12 +18,17 @@ type Ctx = Parameters<System["run"]>[0];
 
 /**
  * An enemy's bag, rolled once at death from its own stream (seed + key), so it does not
- * depend on anything that happened before and the main stream is untouched.
+ * depend on anything that happened before and the main stream is untouched. Levels and traits
+ * (ADR-0059) come from a second stream of their own (key + ":grade"), so what the first one
+ * draws stays as it was. The enemy is of the player's level until the district bands of stage 5
+ * give it one of its own.
  */
 const dropEnemyLoot = (ctx: Ctx, e: Entity): void => {
   if (!e.enemy || !e.key) return;
   const key = `loot:${e.key}`;
-  dropLoot(ctx, key, e.position, rollLoot(LOOT_TABLES[ENEMY_TYPES[e.enemy.type].loot], deriveRandom(ctx.seed, key)));
+  const level = ctx.state.domain.progression.level;
+  const grade: LootGrade = { source: level, player: level, rng: deriveRandom(ctx.seed, `${key}:grade`) };
+  dropLoot(ctx, key, e.position, rollLoot(LOOT_TABLES[ENEMY_TYPES[e.enemy.type].loot], deriveRandom(ctx.seed, key), grade));
 };
 
 /** How the street sees this death (ADR-0070): from behind, of the heat's people, of a job's crew. */

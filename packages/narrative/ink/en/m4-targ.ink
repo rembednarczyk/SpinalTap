@@ -1,4 +1,4 @@
-// Seki Senshi, M4: the market on Podzamcze (Nowy Plac Targowy, ex Targ pod estakadą, ADR-0042).
+// Seki Senshi, M4: the market in Alchemia (ex Targ pod estakadą on aleja Tysiąclecia, ADR-0042, ADR-0063).
 // Hana sells parts from a handcart in the market. She hands out her own jobs (retrieve, protect)
 // and takes Kaito's deliveries. The domain decides what a job is and pays for it; ink only talks.
 
@@ -51,7 +51,7 @@ EXTERNAL deliver_contract()
 + [What needs recovering? #tone:main]
     SEKI: What needs recovering?
     ~ offer_contract("retrieve")
-    HANA: The Hebi took a crate of my stock. They keep it under the viaduct, by the east wall of the hall, and a few boys guard it.
+    HANA: The Hebi took a crate of my stock. They keep it in the hollow by the ruin behind the stalls, and a few boys guard it.
     HANA: Come back with the crate. What you do about the guards is your business.
     -> END
 + { not has_flag("dead:oyaji") && game_hour >= 8 && game_hour < 22 } [Anyone need protecting? #tone:main]
@@ -60,7 +60,7 @@ EXTERNAL deliver_contract()
     HANA: Oyaji didn't pay the Hebi this month and they're coming for him right now. Watch him until the last of them drops.
     -> END
 + [Not now. #tone:leave]
-    HANA: I'll be by my cart, between the stalls.
+    HANA: I'll be by my cart, on the square behind the stalls.
     -> END
 
 = delivery
@@ -80,7 +80,7 @@ HANA: I've got the package already. Go to Kaito for the money, it's his run.
 
 = running
 { contract_kind == "retrieve":
-    HANA: The crate's still with the Hebi, under the viaduct by the east wall.
+    HANA: The crate's still with the Hebi, by the ruin behind the stalls.
 - else:
     HANA: The Hebi are in the market already. Don't stand by me, watch Oyaji!
 }

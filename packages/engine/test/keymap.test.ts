@@ -53,7 +53,9 @@ describe("gamepad mapping", () => {
   const pad = (axes: number[], buttons: boolean[] = [], pressed: boolean[] = []) => ({ axes, buttons, pressed });
 
   it("applies a deadzone and inverts the forward axis", () => {
-    expect(mapGamepad(pad([PAD_DEADZONE / 2, -1, 0, 0]), 1 / 60)).toMatchObject({ moveX: 0, moveZ: 1 });
+    // The dead zone is radial (ADR-0072): it holds a resting stick, not one axis of a pushed one.
+    expect(mapGamepad(pad([PAD_DEADZONE / 2, 0, 0, 0]), 1 / 60)).toMatchObject({ moveX: 0 });
+    expect(mapGamepad(pad([0, -1, 0, 0]), 1 / 60)).toMatchObject({ moveX: 0, moveZ: 1 });
   });
 
   it("scales look by dt and maps buttons", () => {

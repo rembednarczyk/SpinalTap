@@ -17,7 +17,7 @@ import {
 } from "@seki/core";
 import { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
-import { aimSpreadOf, createSystems, playerStatsOf } from "./systems";
+import { type AimCandidate, aimSpreadOf, aimTargets, createSystems, playerStatsOf } from "./systems";
 import type { Entity } from "./world/components";
 import { type DomainHolder, type SessionState, type SimContext, type System, freshSession } from "./world/context";
 import { PLAYER_SPAWN } from "./content/district-m0";
@@ -121,8 +121,9 @@ export class Simulation {
     return sim;
   }
 
-  static fromSnapshot(snapshot: SaveSnapshot, bus?: EventBus<DomainEvents>, crowd: CrowdDensity = "off", traffic: TrafficDensity = crowd): Simulation {
-    const sim = new Simulation(snapshot.seed, snapshot.domain, bus ?? new EventBus<DomainEvents>(), snapshot);
+  /** A saved game; `chunks` replaces the city as `SimulationOptions.chunks` does (a test floor), the city by default. */
+  static fromSnapshot(snapshot: SaveSnapshot, bus?: EventBus<DomainEvents>, crowd: CrowdDensity = "off", traffic: TrafficDensity = crowd, chunks?: readonly ChunkDef[]): Simulation {
+    const sim = new Simulation(snapshot.seed, snapshot.domain, bus ?? new EventBus<DomainEvents>(), snapshot, chunks);
     sim.setCrowd(crowd);
     sim.setTraffic(traffic);
     sim.rng.setState(snapshot.rngState);
@@ -179,6 +180,12 @@ export class Simulation {
   aimSpread(): number {
     const p = this.player();
     return p ? aimSpreadOf(p, playerStatsOf(this.holder.domain)) : 0;
+  }
+
+  /** Enemies the aim assist may pull to (ADR-0072), read after a step; none without a player. */
+  aimTargets(): AimCandidate[] {
+    const p = this.player();
+    return p ? aimTargets(this.world, p) : [];
   }
 
   /** District the player stands in, or null between chunk bounds. */

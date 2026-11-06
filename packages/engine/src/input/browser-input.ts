@@ -1,7 +1,21 @@
 import { EMPTY_INPUT, type InputFrame, type InputPort } from "@seki/core";
-import { type ButtonMode, DEFAULT_KEYMAP, DoubleTap, InputLatches, type KeyMap, mapGamepad, mapKeyboardMouse, mergeFrames } from "./keymap";
+import { type ButtonMode, DEFAULT_KEYMAP, DEFAULT_PAD_TUNING, DoubleTap, InputLatches, type KeyMap, type PadTuning, mapGamepad, mapKeyboardMouse, mergeFrames } from "./keymap";
 import { PAD_LEFT_STICK, ShoulderSwitch } from "./shoulder-switch";
 import { VirtualPad } from "./virtual-pad";
+
+/**
+ * Look sensitivity per device (ADR-0072): mouse, touch and the pad each turn the view at their
+ * own setting, so the app no longer scales the merged frame by one of them.
+ */
+export interface LookTuning {
+  readonly mouse: number;
+  readonly touch: number;
+  readonly pad: PadTuning;
+}
+
+export const DEFAULT_LOOK_TUNING: LookTuning = { mouse: 1, touch: 1, pad: DEFAULT_PAD_TUNING };
+
+const scaleLook = (frame: InputFrame, k: number): InputFrame => (k === 1 ? frame : { ...frame, lookYaw: frame.lookYaw * k, lookPitch: frame.lookPitch * k });
 
 const MOUSE_SENSITIVITY = 0.0022;
 /** Wheel travel (pixels) per weapon change: one notch of a regular mouse wheel. */
@@ -51,6 +65,7 @@ export class BrowserInput implements InputPort {
   private modes: { aim: ButtonMode; crouch: ButtonMode; sprint: ButtonMode } = { aim: "hold", crouch: "hold", sprint: "hold" };
   /** Wheel travel not yet turned into a notch (trackpads send many small deltas). */
   private wheel = 0;
+  private lookTuning: LookTuning = DEFAULT_LOOK_TUNING;
 
   constructor(private readonly target: HTMLElement) {
     const on = <K extends keyof WindowEventMap>(type: K, fn: (e: WindowEventMap[K]) => void) => {
@@ -128,6 +143,11 @@ export class BrowserInput implements InputPort {
     this.latches.setModes(modes);
   }
 
+  /** Each device's own look sensitivity (ADR-0072), applied before the frames merge. */
+  setLookTuning(tuning: LookTuning): void {
+    this.lookTuning = tuning;
+  }
+
   /** When false (menus, dialogue) poll() returns an empty frame. */
   get enabled(): boolean {
     return this.active;
@@ -196,12 +216,16 @@ export class BrowserInput implements InputPort {
       // Menus and dialogue keep the side: a deflected shot still starts over the shoulder shown.
       return this.shoulder.left ? { ...EMPTY_INPUT, leftShoulder: true } : EMPTY_INPUT;
     }
-    const km = mapKeyboardMouse({ held: this.held, pressed: this.pressed }, { yaw: this.yaw, pitch: this.pitch }, this.keymap);
+    const mouse = this.lookTuning.mouse;
+    const km = mapKeyboardMouse({ held: this.held, pressed: this.pressed }, { yaw: this.yaw * mouse, pitch: this.pitch * mouse }, this.keymap);
     const swapKey = this.keymap.swapShoulder.some((c) => this.pressed.has(c));
     this.clearDeviceBuffers();
-    // The pad consumes its own edges and look deltas while polling.
-    const withTouch = mergeFrames(km, this.virtualPad.poll());
+    // The touch pad consumes its own edges and look deltas while polling. Touch and pad look
+    // stay apart up to here, each at its own sensitivity: the aim assist of ADR-0072 (stage 3)
+    // slows these two frames, never the mouse, before they merge.
+    const touch = scaleLook(this.virtualPad.poll(), this.lookTuning.touch);
     const pad = this.pollPad(dt);
+    const withTouch = mergeFrames(km, touch);
     // The touch fire button aims after the latches, so it never flips a toggled aim (ADR-0072).
     const latched = this.virtualPad.withFireAim(this.latches.apply(pad ? mergeFrames(withTouch, pad) : withTouch));
     return this.shoulder.apply(latched, swapKey, pad !== null && this.padStick);
@@ -237,7 +261,7 @@ export class BrowserInput implements InputPort {
     this.padPrev = buttons;
     this.padStick = pressed[PAD_LEFT_STICK] ?? false;
     const dash = this.padDash.update(pressed[1] ?? false, dt);
-    return mapGamepad({ axes: pad.axes, buttons, pressed, dash }, dt);
+    return mapGamepad({ axes: pad.axes, buttons, pressed, dash }, dt, this.lookTuning.pad);
   }
 }
 

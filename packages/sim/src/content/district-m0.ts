@@ -1,7 +1,7 @@
 import type { ContractSiteId, Vec3 } from "@seki/core";
 import { M0_TARGET_TAG } from "@seki/core";
 import { KANAL_CONTRACT_SITE_SPAWNS } from "./district-kanal";
-import { type RoofStash, TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./district-targ";
+import { type RoofStash, TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./alchemia-market";
 import { CAR_WASH_PROPS } from "./district-car-wash";
 import { DOKI_CONTRACT_SITE_SPAWNS } from "./district-doki";
 import {

@@ -72,6 +72,8 @@ const LOOT_STRIP: Readonly<Record<NonNullable<Loot["best"]> | "none", string>> =
   common: "#c9d1e0",
   uncommon: "#5ff2ff",
   rare: "#ff3d8b",
+  epic: "#b26eff",
+  legendary: "#ff8a1f",
   unique: "#ffbf4a",
 };
 

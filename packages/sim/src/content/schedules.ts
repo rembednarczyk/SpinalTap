@@ -1,9 +1,10 @@
-import { type GameClock, type Vec3, hm, minuteOfDay } from "@seki/core";
+import { type GameClock, hm, minuteOfDay } from "@seki/core";
 import type { ScheduleDef } from "../world/components";
 import type { ActorSpawn } from "./builders";
 import { UME_CORNER, UME_HOME } from "./district-m0";
 import { GRODZKA_WALK, KANAL_SPOTS } from "./district-kanal";
 import { KANAL_PATROL_SCHEDULES } from "./kanal-patrols";
+import { STALL_OF, atStall } from "./alchemia-market";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
 import { WORLD_CHUNKS } from "./world-map";
@@ -22,8 +23,6 @@ const spawnOf = (key: string): ActorSpawn => {
   }
   throw new Error(`schedule for unknown actor "${key}"`);
 };
-
-const offset = (p: Vec3, dx: number, dz: number): Vec3 => ({ x: p.x + dx, y: p.y, z: p.z + dz });
 
 const CIVILIAN_WALK = 1.2;
 const PATROL_WALK = 1.6;
@@ -53,9 +52,9 @@ export const oyajiStallOpen = (clock: GameClock): boolean => {
 
 const oyaji = (): ScheduleDef => {
   const stall = spawnOf("oyaji");
-  const front = offset(stall.position, -3, -1.2);
-  // His door, kept clear of the fire-escape ladder at x 73.2 so the night prompt never covers it.
-  const door = offset(stall.position, -4, -2);
+  // Out on the path, then beside the north end of his stall in Alchemia (ADR-0063), off its steps.
+  const front = atStall(STALL_OF.oyaji, -2, 1.6);
+  const door = atStall(STALL_OF.oyaji, -4.8, 0.6);
   return {
     speed: CIVILIAN_WALK,
     stops: [
@@ -73,7 +72,10 @@ const oyaji = (): ScheduleDef => {
   };
 };
 
-/** The Hebi lookout under the highway: holds his corner by day, walks a loop round the pillars at night. */
+/**
+ * The Hebi lookout north of the stash by the ruin behind Alchemia's stalls (ADR-0063): holds his corner
+ * by day, walks a loop at night between the ruin's north end and the path, out of the stash's hollow.
+ */
 const hebiLookout = (): ScheduleDef => {
   const post = spawnOf("hebi-lookout");
   const p = post.position;
@@ -81,13 +83,7 @@ const hebiLookout = (): ScheduleDef => {
     speed: PATROL_WALK,
     stops: [
       { label: "posterunek", at: hm(5), path: [p], yaw: post.yaw, activity: { cycle: ["guard", "smoke"], minutes: 30 } },
-      {
-        label: "patrol",
-        at: hm(22),
-        path: [p, offset(p, -16, 0), offset(p, -16, 7), offset(p, 6, 7), offset(p, 6, 0)],
-        yaw: post.yaw,
-        loop: true,
-      },
+      { label: "patrol", at: hm(22), path: [p, ground(450, 119), ground(440, 121), ground(434, 108)], yaw: post.yaw, loop: true },
     ],
   };
 };
@@ -139,9 +135,9 @@ export const yataiOpen = (clock: GameClock): boolean => {
 
 const fumiko = (): ScheduleDef => {
   const stall = spawnOf("fumiko");
-  const behind = offset(stall.position, 0, 1);
-  // A stool behind the next stall west, by the wall of the north row.
-  const stool = offset(stall.position, -3.4, 1.2);
+  // A step aside on the path, then a stool between her stall and the next one north, off their steps.
+  const behind = atStall(STALL_OF.fumiko, -2.6, 1.4);
+  const stool = atStall(STALL_OF.fumiko, -4.4, 0.6);
   return {
     speed: CIVILIAN_WALK,
     stops: [

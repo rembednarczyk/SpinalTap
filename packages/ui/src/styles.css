@@ -780,6 +780,8 @@ kbd {
 /* Rarity frame colour always comes with a text label elsewhere (ADR-0015). */
 .rarity--uncommon { border-color: rgba(95, 242, 255, 0.8); }
 .rarity--rare { border-color: rgba(255, 61, 139, 0.8); }
+.rarity--epic { border-color: rgba(178, 110, 255, 0.85); }
+.rarity--legendary { border-color: rgba(255, 138, 31, 0.9); }
 .rarity--unique { border-color: rgba(255, 191, 74, 0.9); }
 
 /* Touch mode: move HUD pieces out of the thumbs' way. */
@@ -1065,6 +1067,8 @@ kbd {
 }
 .rarity-text--uncommon { border-top-color: rgba(95, 242, 255, 0.8); }
 .rarity-text--rare { border-top-color: rgba(255, 61, 139, 0.8); }
+.rarity-text--epic { border-top-color: rgba(178, 110, 255, 0.85); }
+.rarity-text--legendary { border-top-color: rgba(255, 138, 31, 0.9); }
 .rarity-text--unique { border-top-color: rgba(255, 191, 74, 0.9); }
 .inv__detail--empty { justify-content: center; }
 .inv__hint { margin: 0; font-size: 13px; color: var(--ink-dim); }
@@ -1073,7 +1077,11 @@ kbd {
 .inv__tier { font-size: 12px; letter-spacing: 0.08em; color: var(--ink-dim); }
 .inv__tier--uncommon { color: var(--cyan); }
 .inv__tier--rare { color: var(--magenta); }
+.inv__tier--epic { color: #b26eff; }
+.inv__tier--legendary { color: #ff8a1f; }
 .inv__tier--unique { color: var(--amber); }
+.inv__level { font-size: 12px; font-family: var(--font-mono); color: var(--ink); }
+.inv__traits { margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.3; color: var(--ink); }
 .inv__kind { font-size: 12px; color: var(--ink-dim); }
 .inv__desc { margin: 0; font-size: 13px; line-height: 1.3; color: var(--ink-dim); }
 .inv__meta { font-size: 12px; font-family: var(--font-mono); color: var(--ink); }

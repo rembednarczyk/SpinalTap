@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Vec3 } from "@seki/core";
-import { Simulation, docks, market } from "../src";
+import { Simulation, docks } from "../src";
+import { market, oldMarketFloor, oldMarketFloorOf } from "./fixtures/old-market";
 import type { LadderDef } from "../src/world/components";
 import { collect, input, run, teleportPlayer } from "./helpers";
 
-/** Every ladder of the game, by where to stand for its chunk to be streamed in. */
+/** Every ladder of the game (the docks') and of the old market's test floor, by where to stand for its chunk to be streamed in. */
 const LADDERS: readonly { readonly key: string; readonly near: Vec3 }[] = [
   { key: "targ-escape-1", near: market(72, 4.5, 64.65) },
   { key: "targ-escape-2", near: market(69.2, 4.5, 64.6) },
@@ -18,7 +19,7 @@ const GRAB_DEPTH = 0.8;
 
 /** A game with the ladder's chunk streamed in and nobody around to shoot her. */
 const near = (at: Vec3): Simulation => {
-  const sim = Simulation.create({ seed: 1 });
+  const sim = Simulation.create({ seed: 1, ...oldMarketFloor(at) });
   teleportPlayer(sim, at);
   run(sim, 2);
   for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
@@ -65,7 +66,8 @@ const shoulder = (sim: Simulation): void => {
 /** A copy of `sim` as saved now (where she was), run for `steps` without input; whether she landed after a drop. */
 const loadAndRun = (sim: Simulation, steps: number): { sim: Simulation; saved: Vec3; fell: boolean } => {
   const saved = { ...sim.player()!.position };
-  const loaded = Simulation.fromSnapshot(sim.snapshot(null, "ladder", ""));
+  const snap = sim.snapshot(null, "ladder", "");
+  const loaded = Simulation.fromSnapshot(snap, undefined, "off", "off", oldMarketFloorOf(snap));
   const landed = collect<{ drop: number }>(loaded, "Landed");
   run(loaded, steps);
   return { sim: loaded, saved, fell: landed.some((d) => d.drop > 0.5) };
@@ -114,7 +116,7 @@ describe("loading a game saved by a ladder's top (G-313)", () => {
           base.step(input());
           const stands = !b.climb && Math.abs(b.position.y - l.top) < 1e-6;
           const what = `${key} ${s.toFixed(2)} m, ${side} m aside`;
-          const loaded = Simulation.fromSnapshot(saved);
+          const loaded = Simulation.fromSnapshot(saved, undefined, "off", "off", oldMarketFloorOf(saved));
           const landed = collect<{ drop: number }>(loaded, "Landed");
           run(loaded, 10);
           const fell = landed.some((d) => d.drop > 0.5);
@@ -201,9 +203,9 @@ describe("loading a game saved by a ladder's top (G-313)", () => {
   }
 
   it("with a body on her shoulder, a game saved over the gap loads on the roof, not in a fall", () => {
-    // The market's: the docks have no guards to carry in a new game.
+    // The old market's (its ganger): the docks have no guards to carry in a new game.
     for (const { key, near: at } of LADDERS.slice(0, 3)) {
-      const sim = Simulation.create({ seed: 1 });
+      const sim = Simulation.create({ seed: 1, ...oldMarketFloor(at) });
       teleportPlayer(sim, at);
       run(sim, 2);
       const l = ladderIn(sim, key);

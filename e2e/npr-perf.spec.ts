@@ -93,9 +93,9 @@ test("the Rynek in TPP stays within the perf budget", async ({ page }) => {
   within("rynek-tpp", await sampleNow(page));
 });
 
-test("the market under the viaduct in TPP stays within the perf budget", async ({ page }) => {
-  // East end of the market, looking back west over the stalls, under the deck towards the gate.
-  await tppAt(page, { frame: "market", x: 106, z: 79, yaw: -Math.PI / 2, walk: 30 });
+test("Aleja Tysiąclecia on Podzamcze in TPP stays within the perf budget", async ({ page }) => {
+  // Where the market stood until ADR-0063 moved it to Alchemia: on the avenue, looking west towards Plac Zamkowy.
+  await tppAt(page, { x: 795, z: 339, yaw: -Math.PI / 2, walk: 30 });
   expect((await gameState(page)).loadedChunks).not.toContain("krakowskie-2-0");
   within("podzamcze-tpp", await sampleNow(page));
 });

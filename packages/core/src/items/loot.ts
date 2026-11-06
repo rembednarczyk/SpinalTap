@@ -2,7 +2,8 @@ import { credit, type Wallet } from "../economy/wallet";
 import type { Vec3 } from "../math/vec3";
 import type { RandomPort } from "../ports/random-port";
 import { isAmmoId, isStackableId } from "./catalog";
-import { type AmmoPouch, type Equipment, type InventoryState, addAmmo, addInstance, addStack } from "./inventory";
+import { type AmmoPouch, type Equipment, type InventoryState, type ItemInstance, addAmmo, addInstance, addStack } from "./inventory";
+import { MIN_ITEM_LEVEL, enemyLootLevel, rollGrade } from "./grade";
 import { bestRarity } from "./rarity";
 import type { AmmoId, InstanceDefId, ItemDefId, ItemRef, LootLine, Rarity, StackableId } from "./types";
 
@@ -38,7 +39,7 @@ export const MAX_LOOT_CONTAINERS = 12;
 export interface LootEntry {
   readonly item: ItemDefId | AmmoId;
   readonly qty: readonly [min: number, max: number];
-  /** "roll": 75 / 20 / 5 common / uncommon / rare. Only instances use it. */
+  /** "roll": by the item level (`rarityWeights`), 75 / 20 / 5 common / uncommon / rare at level 1. Only instances use it. */
   readonly rarity?: "roll" | Rarity;
 }
 
@@ -112,14 +113,35 @@ export const LOOT_TABLES: Readonly<Record<LootTableId, LootTable>> = {
 /** Integer in [min, max] from one random number. */
 const between = (r: number, [min, max]: readonly [number, number]): number => min + Math.min(max - min, Math.floor(r * (max - min + 1)));
 
-const rollRarity = (r: number): Rarity => (r < 0.75 ? "common" : r < 0.95 ? "uncommon" : "rare");
+/**
+ * Who drops the loot (ADR-0059): the source's level (an enemy's, today the player's own until the
+ * district bands of stage 5) and the player's, which keeps the loot in its band, and a stream of
+ * its own for the levels and traits, so the old draws of the main stream stay where they were.
+ */
+export interface LootGrade {
+  readonly source: number;
+  readonly player: number;
+  readonly rng?: RandomPort;
+}
 
-const lineOf = (entry: LootEntry, qtyRoll: number, rarityRoll: number): LootLine => {
+/** Level 1 everywhere, every roll of the grade in the middle: the loot as it was before levels. */
+export const BASE_LOOT_GRADE: LootGrade = { source: MIN_ITEM_LEVEL, player: MIN_ITEM_LEVEL };
+
+type GradeRolls = readonly [level: number, t1: number, t2: number];
+
+const lineOf = (entry: LootEntry, qtyRoll: number, rarityRoll: number, grade: LootGrade, rolls: GradeRolls): LootLine => {
   const qty = between(qtyRoll, entry.qty);
   if (isAmmoId(entry.item)) return { kind: "ammo", ammo: entry.item, qty };
   if (isStackableId(entry.item)) return { kind: "stack", item: entry.item, qty };
-  const rarity = entry.rarity === undefined ? "common" : entry.rarity === "roll" ? rollRarity(rarityRoll) : entry.rarity;
-  return { kind: "item", item: entry.item as InstanceDefId, rarity, qty: 1 };
+  const item = entry.item as InstanceDefId;
+  const level = enemyLootLevel(grade.source, grade.player, rolls[0]);
+  return { kind: "item", item, ...rollGrade(item, entry.rarity ?? "common", level, rarityRoll, rolls[1], rolls[2]), qty: 1 };
+};
+
+/** Three numbers of the grade stream per line, whatever the line is; the middle without a stream. */
+const gradeRolls = (grade: LootGrade): GradeRolls => {
+  const next = (): number => grade.rng?.next() ?? 0.5;
+  return [next(), next(), next()];
 };
 
 const pick = (entries: readonly WeightedLootEntry[], r: number): WeightedLootEntry => {
@@ -135,21 +157,32 @@ const pick = (entries: readonly WeightedLootEntry[], r: number): WeightedLootEnt
 /**
  * Draws a container's contents. Always the same count of random numbers, whatever comes out:
  * 1 for eddies, 2 per guaranteed entry (quantity, rarity), 3 per roll (entry, quantity,
- * rarity). Changing weights therefore never shifts the stream.
+ * rarity), and 3 more per entry and roll from the grade's own stream (level, two traits).
+ * Changing weights therefore never shifts either stream. A rolled tier depends on the level.
  */
-export const rollLoot = (table: LootTable, rng: RandomPort): LootLine[] => {
+export const rollLoot = (table: LootTable, rng: RandomPort, grade: LootGrade = BASE_LOOT_GRADE): LootLine[] => {
   const lines: LootLine[] = [{ kind: "eddies", qty: between(rng.next(), table.eddies) }];
   for (const g of table.guaranteed) {
     const q = rng.next();
-    lines.push(lineOf(g, q, rng.next()));
+    lines.push(lineOf(g, q, rng.next(), grade, gradeRolls(grade)));
   }
   for (let i = 0; i < table.rolls; i++) {
     const entry = pick(table.entries, rng.next());
     const q = rng.next();
-    lines.push(lineOf(entry, q, rng.next()));
+    lines.push(lineOf(entry, q, rng.next(), grade, gradeRolls(grade)));
   }
   return lines;
 };
+
+/** The loot line a piece becomes when dropped: kind, tier, level and traits, nothing of its state. */
+export const itemLine = (item: ItemInstance): LootLine => ({
+  kind: "item",
+  item: item.def,
+  rarity: item.rarity,
+  ...(item.level === undefined ? {} : { level: item.level }),
+  ...(item.traits === undefined ? {} : { traits: item.traits }),
+  qty: 1,
+});
 
 /** Rarest item in the lines, for the bag's neon strip; null when only stacks and money. */
 export const bestLootRarity = (lines: readonly LootLine[]): Rarity | null =>
@@ -206,7 +239,7 @@ export const takeLoot = (pockets: Pockets, lines: readonly LootLine[], which: nu
       moved = r.added;
       if (moved > 0) added.push({ ref: { stack: line.item as StackableId }, defId: line.item, qty: moved });
     } else {
-      const r = addInstance(inventory, equipment, line.item, line.rarity);
+      const r = addInstance(inventory, equipment, line.item, line);
       if (r.ok) {
         inventory = r.inventory;
         moved = 1;
