@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-366 Odmowa zmiany rozdania (respec) przy przekroczonej puli wszczepów nie mówi, że trzeba wyjąć wszczep
+- Status: naprawione w #313 (6.11, cd6c93e; respec ponad pulą przechodzi, inne odmowy mówią, co zrobić)
+- Ważność: S4 (UI/tekst) · Zasięg: toast „Your body won't take any more…”, przycisk Przebudowy aktywny mimo odmowy · Koszt: mały
+- Pakiet właściciela: packages/ui, packages/app (`ShopController`), i18n en/pl
+
 ### G-088 Zamkowa zapada się o 3,5 m nad tunelem pieszym przed Zamkiem
 - Status: naprawione w #306 (6.11, eb33598; pomost Zamkowej nad tunelem w66258159 z `tunnel-decks.ts`, `road-dip-over-tunnel` 1 → 0; AI: pomost z prześwitem > 2 m jest sufitem, gdy prosta NPC→cel przechodzi pod nim; kurator PRZYJĘTE, kształt: T-178)
 - Ważność: S3 (proponowana; dojście do Zamku, obejście 6 m od osi) · Zasięg: lokalny · Koszt: średni

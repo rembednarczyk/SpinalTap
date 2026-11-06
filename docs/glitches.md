@@ -1103,11 +1103,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`content/metro.ts`); przegląd kuratora
 - Test przyjęcia: wyjście pawilonu na nawierzchni `square`/`sidewalk`, nie na rabacie
 
-### G-366 Odmowa zmiany rozdania (respec) przy przekroczonej puli wszczepów nie mówi, że trzeba wyjąć wszczep
-- Status: w PR #313 (6.11; respec ponad pulą przechodzi, inne odmowy mówią, co zrobić; w weryfikacji)
-- Ważność: S4 (UI/tekst) · Zasięg: toast „Your body won't take any more…”, przycisk Przebudowy aktywny mimo odmowy · Koszt: mały
-- Pakiet właściciela: packages/ui, packages/app (`ShopController`), i18n en/pl
-
 ### G-367 Jasna „piła” pod stropem przejścia z hali na peron metra
 - Status: zgłoszone (6.11, autor ADR-0071 etap 4, do potwierdzenia)
 - Ważność: S4 · Zasięg: ściana przejścia pod stropem; prawdopodobnie światło księżyca między kawałkami stropu · Koszt: mały
