@@ -1272,6 +1272,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (balans) · Zasięg: E10 sprawdza tylko worki Hebi; złote hashe nie przechodzą przez worek pokonany przez gracza, więc nie pilnują tabel łupu; do etapu 8 (test balansu)
 - Pakiet właściciela: packages/core (items/loot), testy balansu
 
+### G-419 Po ADR-0073 etap 2: brak testu sesji ikon w pasku broni, mały zapas kontrastu w HUD, nachodzące etykiety slotów na telefonie
+- Status: zgłoszone (6.11, weryfikator PR #340)
+- Ważność: S4 · Zasięg: `icon: WEAPON_ICONS[weapon]` w `packages/app/src/weapon-hud.ts:33` bez testu sesji; `ICON_BACKGROUNDS.hud` zakłada tło #c8c8c8 (rzadka 3,04:1, przy bieli 2,4:1); na 800/844 etykiety „2 SECONDARY” i „3 MELEE” nachodzą (było przed #340); ikony `magazine` i hełmu Tessen mało czytelne w 31 px; skróty nazw bez kluczy `item.*.short` ucinane na desktopie
+- Pakiet właściciela: packages/app, packages/ui
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
