@@ -13,7 +13,7 @@ import { profile } from "./difficulty-scenes";
  * difficulty's `damageTaken` takes that back, so the fight lasts as long as these saves need.
  */
 const hacking = (seed: number, steps: number): { sim: Simulation; id: string } => {
-  const { sim, c } = taken(seed, 0, ground(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), "hack", profile({ damageTaken: 1 / enemyScale(16) }));
+  const { sim, c } = taken(seed, 0, ground(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), "hack", profile({ damageTaken: 0.5 / enemyScale(16) }));
   const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
   teleportPlayer(sim, ground(t.x, t.z - 1.4), 0);
   sim.step(input({ interact: true }));

@@ -166,14 +166,14 @@ const nextContractId = (log: ContractLog, flags: Flags): string =>
 
 /**
  * The crew of a job grows with its level (ADR-0059), in place of the old one more man every three
- * jobs done: one more every CONTRACT_LEVELS_PER_TARGET levels past CONTRACT_CREW_LEVEL. Below that
- * the level makes the crew tougher, not bigger (its health and damage, 4% a level), so a job at the
- * floor of every band, the docks' 16 included, sends the crew of level 1. First guesses for stage 8.
+ * jobs done: one more every CONTRACT_LEVELS_PER_TARGET levels (the user's decision of 6.11), so a
+ * job of level 1 to 4 sends its template's crew, one of level 5 one more, of 10 two more and so on.
+ * Each template's own limit (4, or 5 for the bigger docks crews) caps it. First guesses for stage 8.
  */
-export const CONTRACT_CREW_LEVEL = 10;
-export const CONTRACT_LEVELS_PER_TARGET = 10;
+export const CONTRACT_CREW_LEVEL = 0;
+export const CONTRACT_LEVELS_PER_TARGET = 5;
 
-/** Men a job of `level` sends on top of its template's: none up to level 19, 1 to 29, 2 at 30. */
+/** Men a job of `level` sends on top of its template's: none up to level 4, 1 to 9, 2 to 14, and so on. */
 export const contractExperience = (level: number): number => Math.max(0, Math.floor((Math.round(level) - CONTRACT_CREW_LEVEL) / CONTRACT_LEVELS_PER_TARGET));
 
 /**

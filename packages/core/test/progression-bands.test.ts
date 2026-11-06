@@ -100,8 +100,8 @@ describe("contract level (ADR-0059)", () => {
     ...(levelAt ? { levelAt } : {}),
   });
 
-  it("sends one more man every 10 levels from level 20, none at the floor of any band", () => {
-    expect([1, 10, 16, 19, 20, 29, 30].map(contractExperience)).toEqual([0, 0, 0, 0, 1, 1, 2]);
+  it("sends one more man every 5 levels, none below level 5", () => {
+    expect([1, 4, 5, 9, 10, 14, 15, 16, 20, 30].map(contractExperience)).toEqual([0, 0, 1, 1, 2, 2, 3, 3, 4, 6]);
   });
 
   it("the old rates are those of level 1, and the pay grows 4% a level before the standing", () => {
@@ -113,8 +113,11 @@ describe("contract level (ADR-0059)", () => {
   it("a job of level 1 is what it was; its district's level sends more and pays more", () => {
     expect(generateContractOfKind("retrieve", ctx(), sequenceRng(0))).toMatchObject({ targets: 2, reward: 250 + 2 * 110 });
     expect(generateContractOfKind("retrieve", ctx(() => 1), sequenceRng(0))).toMatchObject({ targets: 2, reward: 470 });
-    expect(generateContractOfKind("retrieve", ctx(() => 12), sequenceRng(0))).toMatchObject({ targets: 2, reward: Math.round((250 + 2 * 110) * 1.44) });
-    expect(generateContractOfKind("retrieve", ctx(() => 20), sequenceRng(0))).toMatchObject({ targets: 3, reward: Math.round((250 + 3 * 110) * 1.76) });
+    expect(generateContractOfKind("retrieve", ctx(() => 4), sequenceRng(0))).toMatchObject({ targets: 2, reward: Math.round((250 + 2 * 110) * 1.12) });
+    expect(generateContractOfKind("retrieve", ctx(() => 5), sequenceRng(0))).toMatchObject({ targets: 3, reward: Math.round((250 + 3 * 110) * 1.16) });
+    // The template's limit of 4 caps the crew from level 10 on.
+    expect(generateContractOfKind("retrieve", ctx(() => 12), sequenceRng(0))).toMatchObject({ targets: 4, reward: Math.round((250 + 4 * 110) * 1.44) });
+    expect(generateContractOfKind("retrieve", ctx(() => 20), sequenceRng(0))).toMatchObject({ targets: 4, reward: Math.round((250 + 4 * 110) * 1.76) });
     expect(generateContractOfKind("infiltrate", ctx(() => 25), sequenceRng(0.99)).targets).toBe(5);
   });
 

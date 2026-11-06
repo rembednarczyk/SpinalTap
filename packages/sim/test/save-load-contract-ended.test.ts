@@ -19,7 +19,8 @@ const once = <T>(make: () => T): (() => T) => {
 describe("save and load after a contract has ended (G-178)", () => {
   it("the guards of an infiltration lost to the alarm are still there after loading, and still fighting", () => {
     const { sim, id } = alarmed(60);
-    expect(peopleOf(sim, id)).toHaveLength(5);
+    // Five guards (a job of the docks' level 16 sends its template's most, ADR-0059), the hook's man and the item.
+    expect(peopleOf(sim, id)).toHaveLength(7);
     const hpBefore = sim.player()!.health!.current;
     expectSameAfterLoad(sim, id);
     // They kept shooting at her, in the loaded game as in the saved one.
