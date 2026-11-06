@@ -13,6 +13,7 @@ export * from "./interiors";
 export * from "./interior-areas";
 export * from "./capsule-room";
 export * from "./alchemia";
+export { ALCHEMIA_LIFT, ALCHEMIA_LIFT_PROPS, ALCHEMIA_TERRACE, type AlchemiaLiftPlan, type AlchemiaScreen, type LiftBox, screenCorners } from "./alchemia-lift";
 export { FLIGHT_GOING, FLIGHT_MAX_RISE } from "./alchemia-stairs";
 export * from "./metro";
 export * from "./encounters";
