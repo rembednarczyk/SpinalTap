@@ -887,7 +887,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-289 Z dachu Alchemii nie ma bezpiecznego zejścia
-- Status: zgłoszone (4.11, weryfikator PR #247; dług na etap z windą i Rin na dachu)
+- Status: w PR #312 (6.11, 28c22ba; winda Alchemii na dach z mostkiem i tarasem; w weryfikacji, potem kurator)
 - Ważność: S4 · Zasięg: zeskok z 11–13 m kosztuje 48–96 HP; dziś dach nieosiągalny
 - Pakiet właściciela: packages/sim (content/alchemia.ts)
 
@@ -1134,6 +1134,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, weryfikator #309; z etapu 2 metra)
 - Ważność: S4 · Zasięg: AI (sniper, steering, ganger-walk) może brać halę i ulicę za jedno piętro · Koszt: mały
 - Pakiet właściciela: packages/sim (`world/ground.ts`)
+
+### G-372 Podciąganie (`ledgeAhead`) sprawdza tylko punkt docelowy: na cienką barierkę da się wejść wzdłuż jej linii i chodzić po wierzchu
+- Status: zgłoszone (6.11, autor windy Alchemii; do potwierdzenia w innych miejscach miasta)
+- Ważność: S3 · Zasięg: prawdopodobnie barierki w całym mieście; przy windzie Alchemii wymusiło barierki 2,6 m zamiast 1,1 m · Koszt: średni
+- Pakiet właściciela: packages/sim (`movement-system`)
+- Test przyjęcia: podciągnięcie na bryłę węższą niż ciało albo na krawędź barierki jest odrzucane; barierka 1,1 m nie daje się przejść
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
