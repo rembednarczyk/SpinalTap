@@ -4,6 +4,7 @@ import { attributeModifiers } from "./attribute-effects";
 import { MAX_LEVEL, MIN_LEVEL, levelForXp } from "./curve";
 import { perkModifiers } from "./perk-effects";
 import { type PerkRefusal, isPerkId, perkPointsSpent, perkRank, perkRefusal } from "./perks";
+import type { StyleKind } from "./style";
 
 /**
  * Character progression (ADR-0059, stages 1 and 3): the experience, the level it gives and the
@@ -24,6 +25,10 @@ export interface ProgressionState {
    * HACKED_MEMORY of them. Absent until the first one: hacking the same camera again pays nothing.
    */
   readonly hacked?: readonly string[];
+  /** The last fights (stage 6, `STYLE_WINDOW`), oldest first: what the loot leans towards. */
+  readonly style: readonly StyleKind[];
+  /** Rolled pieces in a row below rare (stage 6): at `PITY_AFTER` the next one is rare at least. */
+  readonly unlucky: number;
 }
 
 export const INITIAL_PROGRESSION: ProgressionState = {
@@ -32,6 +37,8 @@ export const INITIAL_PROGRESSION: ProgressionState = {
   attributes: START_ATTRIBUTES,
   perks: {},
   unspent: { attribute: 0, perk: 0 },
+  style: [],
+  unlucky: 0,
 };
 
 /** Points each level up gives. */
@@ -101,7 +108,7 @@ export const pointsSpent = (state: ProgressionState): { readonly attribute: numb
 
 /**
  * The respec at Mori's (ADR-0059): every attribute back to 3, no perks, and every point spent
- * back to spend again. XP, level and the hacked targets stay.
+ * back to spend again. XP, level, the hacked targets, the style and the bad luck stay.
  */
 export const resetProgression = (state: ProgressionState): ProgressionState => {
   const spent = pointsSpent(state);

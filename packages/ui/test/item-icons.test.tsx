@@ -109,8 +109,11 @@ describe("the icon table", () => {
 
   it("names the source of every icon after game-icons.net and credits its author under CC BY 3.0", () => {
     const fromGameIcons = OTHERS.filter((id) => itemIcon(id) in GAME_ICON_SOURCES);
-    // The decision of 6.11: implants and consumables, nothing else.
-    expect(fromGameIcons.sort()).toEqual([...Object.keys(CYBERWARE_CATALOG), ...Object.keys(STACKABLE_CATALOG).filter((id) => STACKABLE_CATALOG[id as keyof typeof STACKABLE_CATALOG].category === "consumable")].sort());
+    // The decision of 6.11: implants and consumables, nothing else; the cyberdeck (after ADR-0059
+    // stage 6) is drawn here, in `icon-paths.ts`.
+    const drawnHere = ["kumo_cyberdeck"];
+    expect(OTHERS.filter((id) => drawnHere.includes(id)).map((id) => itemIcon(id) in GAME_ICON_SOURCES)).toEqual([false]);
+    expect(fromGameIcons.sort()).toEqual([...Object.keys(CYBERWARE_CATALOG).filter((id) => !drawnHere.includes(id)), ...Object.keys(STACKABLE_CATALOG).filter((id) => STACKABLE_CATALOG[id as keyof typeof STACKABLE_CATALOG].category === "consumable")].sort());
     for (const { author, name } of Object.values(GAME_ICON_SOURCES)) {
       const credit = CREDITS.find((c) => c.section === "icons" && c.author === author);
       expect(credit?.license, author).toBe("CC-BY-3.0");
@@ -224,6 +227,37 @@ describe("the bag", () => {
     expect(iconOf(screen.getByTestId("slot-torso"))).toBeNull();
     const pouch = screen.getByTestId("ammo-pouch");
     expect(within(pouch).getAllByTestId("item-icon").map((i) => i.getAttribute("data-icon"))).toEqual(AMMO.map(ammoIcon));
+  });
+});
+
+describe("the equipment slots", () => {
+  /** The starter kit's pieces, equipped, in rarities whose frames would otherwise be lost (G-410). */
+  const TIERS: Readonly<Record<string, Rarity>> = { i1: "epic", i2: "rare", i3: "legendary" };
+  const SLOTS = { i1: "slot-secondary", i2: "slot-torso", i3: "slot-legs" } as const;
+  const mountTiers = () => {
+    const bag = fullBag();
+    const items = bag.inventory.items.map((i) => (TIERS[i.uid] ? { ...i, rarity: TIERS[i.uid]! } : i));
+    mount({ characterTab: "inventory", ...bag, inventory: { ...bag.inventory, items } });
+  };
+
+  it("frames every equipped piece in its rarity's ink, garments and weapons, and an empty slot in none", () => {
+    mountTiers();
+    for (const [uid, testId] of Object.entries(SLOTS)) {
+      // Inline: `.inv__slot` comes after `.rarity--*` in styles.css and sets the border too.
+      expect(screen.getByTestId(testId).style.borderColor, testId).toBe(rgb(RARITY_INK[TIERS[uid]!]));
+    }
+    expect(screen.getByTestId("slot-melee").style.borderColor).toBe("");
+  });
+
+  it("selects a slot with the white ring inside its frame, never a magenta border", () => {
+    mountTiers();
+    for (const [uid, testId] of Object.entries(SLOTS)) {
+      fireEvent.click(screen.getByTestId(testId));
+      const slot = screen.getByTestId(testId);
+      expect(slot.className, testId).toContain("inv__slot--on");
+      expect(slot.style.borderColor, testId).toBe(rgb(RARITY_INK[TIERS[uid]!]));
+      expect(slot.style.boxShadow, testId).toContain(`inset 0 0 0 2px ${SELECT_INK}`);
+    }
   });
 });
 

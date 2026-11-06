@@ -1,11 +1,11 @@
-import { ENEMY_TYPES, type KillContext, LOOT_TABLES, type LootGrade, SECOND_HEART_COOLDOWN, contractKind, killXp, killedFlag, rollLoot, secondHeartShare } from "@seki/core";
+import { ENEMY_TYPES, type KillContext, LOOT_TABLES, type LootGrade, SECOND_HEART_COOLDOWN, contractKind, killXp, killedFlag, rollLootFor, secondHeartShare } from "@seki/core";
 import { deriveRandom } from "../rng/derive-random";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
 import { applyReputationCause, clearContract, dropLoot, raiseFlag } from "../world/domain-ops";
 import { corpseOf } from "../world/bodies";
 import { inCreationOrder } from "../world/ordering";
-import { grantXp } from "../world/progression-ops";
+import { grantXp, noteFight } from "../world/progression-ops";
 import { disturb, isContractTarget, noteTally, offend } from "../world/street";
 import { perksOf } from "./perk-system";
 
@@ -22,13 +22,19 @@ type Ctx = Parameters<System["run"]>[0];
  * (ADR-0059) come from a second stream of their own (key + ":grade"), so what the first one
  * draws stays as it was. The pieces are of the enemy's level ±1 by its district's band, kept
  * within the player's ±2; one never graded (none in the game) counts as of the player's level.
+ * The table leans towards the player's style (ADR-0059, stage 6); the bag of an enemy she
+ * defeated counts towards her bad luck, and lifts a piece to rare when that has run long enough.
  */
-const dropEnemyLoot = (ctx: Ctx, e: Entity): void => {
+const dropEnemyLoot = (ctx: Ctx, e: Entity, hers: boolean): void => {
   if (!e.enemy || !e.key) return;
   const key = `loot:${e.key}`;
-  const player = ctx.state.domain.progression.level;
+  const progression = ctx.state.domain.progression;
+  const player = progression.level;
   const grade: LootGrade = { source: e.enemy.level ?? player, player, rng: deriveRandom(ctx.seed, `${key}:grade`) };
-  dropLoot(ctx, key, e.position, rollLoot(LOOT_TABLES[ENEMY_TYPES[e.enemy.type].loot], deriveRandom(ctx.seed, key), grade));
+  const luck = hers ? { style: progression.style, pity: progression.unlucky } : { style: progression.style };
+  const rolled = rollLootFor(LOOT_TABLES[ENEMY_TYPES[e.enemy.type].loot], deriveRandom(ctx.seed, key), grade, luck);
+  if (rolled.pity !== undefined && rolled.pity !== progression.unlucky) ctx.state.domain = { ...ctx.state.domain, progression: { ...progression, unlucky: rolled.pity } };
+  dropLoot(ctx, key, e.position, rolled.lines);
 };
 
 /** How the street sees this death (ADR-0070): from behind, of the heat's people, of a job's crew. */
@@ -96,7 +102,9 @@ export const deathSystem: System = {
       if (e.tag) raiseFlag(ctx, killedFlag(e.tag));
       // A death the player did not cause (Hebi shooting Oyaji) is not held against them.
       if (e.faction && (e.lastHitBy === undefined || e.lastHitBy === playerId)) applyReputationCause(ctx, { type: "member-killed", faction: e.faction, how: killContext(ctx, e) });
-      dropEnemyLoot(ctx, e);
+      // A fight of her style (ADR-0059): what dealt the last blow, unless hacked or knocked out first.
+      if (byPlayer && e.enemy && e.lastHitStyle) noteFight(ctx, e, e.lastHitStyle);
+      dropEnemyLoot(ctx, e, byPlayer);
       // An enemy the player took down (ADR-0059), by its level against hers.
       if (byPlayer && e.enemy) {
         const player = ctx.state.domain.progression.level;

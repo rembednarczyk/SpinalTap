@@ -9,6 +9,7 @@ import { freshDowned } from "../world/bodies";
 import { awarenessOf } from "./ai/ganger-perception";
 import { seenCommitting } from "./crime-system";
 import { fillMagazine } from "../world/player-weapon";
+import { noteFight } from "../world/progression-ops";
 
 /** How close the player has to be, metres between the centres on the ground (ADR-0065). */
 export const TAKEDOWN_REACH = 1.6;
@@ -119,6 +120,8 @@ const breakFree = (target: Target, player: Entity): void => {
  * contract's alarm read `alerted`). `fought`: it was fighting her, so its body is no crime.
  */
 const knockOut = (ctx: SimContext, target: Target, player: Entity, fought: boolean): void => {
+  // A fight of her style (ADR-0059 stage 6): an enemy defeated by stealth, unless it already was one.
+  if (target.enemy) noteFight(ctx, target, "stealth");
   ctx.world.addComponent(target, "unconscious", true);
   ctx.world.addComponent(target, "downed", freshDowned(player.position, fought));
   hold(target);
@@ -143,6 +146,7 @@ const kill = (ctx: SimContext, target: Target, player: Entity, fought: boolean):
   const amount = target.health.current;
   target.health = { current: 0, max: target.health.max };
   target.lastHitBy = player.id;
+  target.lastHitStyle = "stealth";
   ctx.bus.emit("DamageDealt", { sourceId: player.id, targetId: target.id, amount, critical: false, zone: "torso", at: chestOf(target) });
 };
 

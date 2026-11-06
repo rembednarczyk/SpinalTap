@@ -40,6 +40,8 @@ export type ItemIconKey =
   | "grip"
   | "tendons"
   | "reflex"
+  // Drawn here (decision of 6.11 after ADR-0059 stage 6): the cyberdeck.
+  | "deck"
   | "medkit"
   | "bandage"
   | "ramen"
@@ -95,6 +97,7 @@ export const CYBERWARE_ICONS: Readonly<Record<CyberwareId, ItemIconKey>> = {
   steady_grip: "grip",
   kitsune_tendons: "tendons",
   tsubame_reflex: "reflex",
+  kumo_cyberdeck: "deck",
 };
 
 export const STACKABLE_ICONS: Readonly<Record<StackableId, ItemIconKey>> = {

@@ -44,6 +44,27 @@ const script = (): ReplayFrame[] => {
 const hashOf = (sim: Simulation) => stateHash(sim.snapshot(null, "test", ""));
 
 /**
+ * The hash of a run as schema v31 had it (before the cyberdeck's grades, decision of 6.11 after
+ * ADR-0059 stage 6): the same snapshot, only the version. The runs' player has no cyberdeck, so
+ * nothing else in the save differs and the runs hash to the goldens of v31.
+ */
+const v31HashOf = (sim: Simulation) => stateHash({ ...sim.snapshot(null, "test", ""), version: 31 } as unknown as SaveSnapshot);
+
+/**
+ * The snapshot of a run as v30 wrote it, before the player's style and bad luck (ADR-0059, stage
+ * 6): the progression without them. The runs' player defeats and hacks no one (no fight, no bag
+ * of hers), so without the fields the runs hash to the goldens of v30.
+ */
+const beforeV31 = (sim: Simulation): SaveSnapshot => {
+  const snap = sim.snapshot(null, "test", "");
+  const { style: _s, unlucky: _u, ...progression } = snap.domain.progression;
+  return { ...snap, domain: { ...snap.domain, progression } } as unknown as SaveSnapshot;
+};
+
+/** The hash of a run as schema v30 had it: without the style and the bad luck, the goldens of v30. */
+const v30HashOf = (sim: Simulation) => stateHash({ ...beforeV31(sim), version: 30 } as unknown as SaveSnapshot);
+
+/**
  * The snapshot of a run as v28 wrote it, before item levels and traits (ADR-0059, stage 4): the
  * pieces in the bag and in the loot bags without them. The player of these runs starts at level 1
  * and ends at level 2 at most; the levels and traits come from a stream of their own and no tier
@@ -52,7 +73,7 @@ const hashOf = (sim: Simulation) => stateHash(sim.snapshot(null, "test", ""));
  * goldens were re-recorded with it).
  */
 const beforeV29 = (sim: Simulation): SaveSnapshot => {
-  const snap = sim.snapshot(null, "test", "");
+  const snap = beforeV31(sim);
   const strip = <T extends object>(p: T): T => {
     const { level: _l, traits: _t, ...rest } = p as T & { level?: number; traits?: unknown };
     return rest as T;
@@ -205,7 +226,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"7dd4e4ad"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"79ba59cb"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -235,6 +256,14 @@ describe("determinism", () => {
     // inside Krakowskie's band (1-8), the gangers about keep up with her (level 2, 83 of 80 health).
     // Then again with the v30 version of the market's move (ADR-0063, stage 6), no new rule in the
     // run: the older vN hashes stand.
+    // Re-recorded (all of them, "hard" and the duel too) for the v31 style and bad luck of ADR-0059,
+    // stage 6: fields of the progression, no new rule shows in these runs (the player defeats and
+    // hacks no one: no fight, a count of 0), so as v30 they hash to the goldens of before.
+    // Re-recorded (all of them, "hard" and the duel too) for the v32 version of the cyberdeck's
+    // grades (after ADR-0059 stage 6): the runs' player has no deck, so no new field and no new rule
+    // shows, and as v31 they hash to the goldens of before.
+    expect(v31HashOf(sim)).toBe("8a184ff0");
+    expect(v30HashOf(sim)).toBe("7dd4e4ad");
     expect(v17HashOf(sim)).toBe("1ce01d19");
     expect(v19HashOf(sim)).toBe("6c657123");
     expect(v20HashOf(sim)).toBe("e3f6e797");
@@ -252,8 +281,10 @@ describe("determinism", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"30834a04"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"1f82576c"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
+    expect(v31HashOf(sim)).toBe("13a15bf5");
+    expect(v30HashOf(sim)).toBe("30834a04");
     expect(v17HashOf(sim)).not.toBe("1ce01d19");
     expect(v19HashOf(sim)).toBe("01e929be");
     expect(v20HashOf(sim)).toBe("93e8e16a");
@@ -336,7 +367,9 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"ae6c21d0"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"211f7f40"`);
+    expect(v31HashOf(sim)).toBe("5ce46e55");
+    expect(v30HashOf(sim)).toBe("ae6c21d0");
     expect(v17HashOf(sim)).toBe("3e78c5b2");
     expect(v19HashOf(sim)).toBe("6ebebd7e");
     expect(v20HashOf(sim)).toBe("116f9cfa");

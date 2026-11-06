@@ -1,10 +1,11 @@
 import { credit, type Wallet } from "../economy/wallet";
 import type { Vec3 } from "../math/vec3";
 import type { RandomPort } from "../ports/random-port";
-import { isAmmoId, isStackableId } from "./catalog";
+import { type StyleKind, styleShares, weaponStyle } from "../progression/style";
+import { isAmmoId, isStackableId, isWeaponId } from "./catalog";
 import { type AmmoPouch, type Equipment, type InventoryState, type ItemInstance, addAmmo, addInstance, addStack } from "./inventory";
 import { MIN_ITEM_LEVEL, enemyLootLevel, hasItemLevel, lootLevel, rollGrade } from "./grade";
-import { bestRarity } from "./rarity";
+import { RARITIES, bestRarity } from "./rarity";
 import type { AmmoId, InstanceDefId, ItemDefId, ItemRef, LootLine, Rarity, StackableId } from "./types";
 
 /**
@@ -57,24 +58,35 @@ export interface LootTable {
 
 export type LootTableId = "hebi_common" | "hebi_enforcer" | "tessen_guard" | "tessen_sniper";
 
-/** Faction base table (plan §5.2). Mods share one weight of 3 between the three of them. */
+/**
+ * Faction base table (plan §5.2), 100 in all. Mods share one weight of 3 between the three of
+ * them. A ganger's pistol and baton (ADR-0059 stage 6, the user's call), their weight taken from
+ * the scrap and the weapon parts.
+ */
 const HEBI_COMMON: readonly WeightedLootEntry[] = [
   { item: "9mm", weight: 36, qty: [6, 14] },
-  { item: "scrap", weight: 24, qty: [1, 2] },
+  { item: "scrap", weight: 22, qty: [1, 2] },
   { item: "medkit", weight: 10, qty: [1, 1] },
   { item: "bandage", weight: 10, qty: [1, 1] },
-  { item: "weapon_parts", weight: 8, qty: [1, 1] },
+  { item: "weapon_parts", weight: 6, qty: [1, 1] },
   { item: "hebi_smg", weight: 5, qty: [1, 1], rarity: "roll" },
   { item: "hebi_jacket", weight: 3, qty: [1, 1], rarity: "roll" },
+  { item: "unity9", weight: 2, qty: [1, 1], rarity: "roll" },
+  { item: "baton", weight: 2, qty: [1, 1], rarity: "roll" },
   { item: "suppressor", weight: 1, qty: [1, 1] },
   { item: "holo_sight", weight: 1, qty: [1, 1] },
   { item: "extended_mag", weight: 1, qty: [1, 1] },
   { item: "steady_grip", weight: 1, qty: [1, 1], rarity: "common" },
 ];
 
-/** Corporate stores (ADR-0024): rifle rounds and medical supplies, the odd plate or chip. */
+/**
+ * Corporate stores (ADR-0024): rifle rounds and medical supplies, the odd plate or chip. A guard's
+ * sidearm and baton (ADR-0059 stage 6) and, rarely, a neural implant off the stores' shelf or a
+ * cyberdeck of rolled tier (decision of 6.11), their weight taken from the rifle rounds (99 in
+ * all, as before).
+ */
 const TESSEN_COMMON: readonly WeightedLootEntry[] = [
-  { item: "556", weight: 34, qty: [10, 20] },
+  { item: "556", weight: 28, qty: [10, 20] },
   { item: "medkit", weight: 14, qty: [1, 1] },
   { item: "datachip", weight: 12, qty: [1, 1] },
   { item: "bandage", weight: 10, qty: [1, 2] },
@@ -82,10 +94,14 @@ const TESSEN_COMMON: readonly WeightedLootEntry[] = [
   { item: "tessen_ar5", weight: 4, qty: [1, 1], rarity: "roll" },
   { item: "kevlar_pants", weight: 3, qty: [1, 1], rarity: "roll" },
   { item: "tessen_vest", weight: 2, qty: [1, 1], rarity: "roll" },
+  { item: "unity9", weight: 2, qty: [1, 1], rarity: "roll" },
+  { item: "baton", weight: 2, qty: [1, 1], rarity: "roll" },
   // Disguises of the docks (ADR-0033): the guard's uniform off a guard, the staff's overalls from the stores.
   { item: "tessen_uniform", weight: 4, qty: [1, 1], rarity: "common" },
   { item: "tessen_overalls", weight: 2, qty: [1, 1], rarity: "common" },
   { item: "capacity_shard", weight: 1, qty: [1, 1] },
+  { item: "synapse_booster", weight: 1, qty: [1, 1], rarity: "common" },
+  { item: "kumo_cyberdeck", weight: 1, qty: [1, 1], rarity: "roll" },
   { item: "holo_sight", weight: 2, qty: [1, 1] },
   { item: "suppressor", weight: 1, qty: [1, 1] },
 ];
@@ -99,7 +115,8 @@ export const LOOT_TABLES: Readonly<Record<LootTableId, LootTable>> = {
       { item: "12g", qty: [6, 12] },
     ],
     rolls: 3,
-    entries: HEBI_COMMON,
+    // The enforcers' own (ADR-0059 stage 6): the revolver and the shirasaya of the gang's hard men.
+    entries: [...HEBI_COMMON, { item: "oni44", weight: 2, qty: [1, 1], rarity: "roll" }, { item: "shirasaya", weight: 2, qty: [1, 1], rarity: "roll" }],
   },
   tessen_guard: { eddies: [25, 60], guaranteed: [], rolls: 2, entries: TESSEN_COMMON },
   tessen_sniper: {
@@ -129,13 +146,13 @@ export const BASE_LOOT_GRADE: LootGrade = { source: MIN_ITEM_LEVEL, player: MIN_
 
 type GradeRolls = readonly [level: number, t1: number, t2: number];
 
-const lineOf = (entry: LootEntry, qtyRoll: number, rarityRoll: number, grade: LootGrade, rolls: GradeRolls): LootLine => {
+const lineOf = (entry: LootEntry, qtyRoll: number, rarityRoll: number, grade: LootGrade, rolls: GradeRolls, floor?: Rarity): LootLine => {
   const qty = between(qtyRoll, entry.qty);
   if (isAmmoId(entry.item)) return { kind: "ammo", ammo: entry.item, qty };
   if (isStackableId(entry.item)) return { kind: "stack", item: entry.item, qty };
   const item = entry.item as InstanceDefId;
   const level = enemyLootLevel(grade.source, grade.player, rolls[0]);
-  return { kind: "item", item, ...rollGrade(item, entry.rarity ?? "common", level, rarityRoll, rolls[1], rolls[2]), qty: 1 };
+  return { kind: "item", item, ...rollGrade(item, entry.rarity ?? "common", level, rarityRoll, rolls[1], rolls[2], floor), qty: 1 };
 };
 
 /** Three numbers of the grade stream per line, whatever the line is; the middle without a stream. */
@@ -160,18 +177,88 @@ const pick = (entries: readonly WeightedLootEntry[], r: number): WeightedLootEnt
  * rarity), and 3 more per entry and roll from the grade's own stream (level, two traits).
  * Changing weights therefore never shifts either stream. A rolled tier depends on the level.
  */
-export const rollLoot = (table: LootTable, rng: RandomPort, grade: LootGrade = BASE_LOOT_GRADE): LootLine[] => {
+export const rollLoot = (table: LootTable, rng: RandomPort, grade: LootGrade = BASE_LOOT_GRADE): LootLine[] => rollLootFor(table, rng, grade, NO_LUCK).lines;
+
+/**
+ * Loot fitted to the player (ADR-0059, stage 6): her style of the last fights and her bad luck.
+ * `pity` is the count of rolled pieces in a row below rare she has had so far; absent, the bag is
+ * not hers to count (an enemy someone else killed) and nothing lifts a tier.
+ */
+export interface LootLuck {
+  readonly style: readonly StyleKind[];
+  readonly pity?: number;
+}
+
+export const NO_LUCK: LootLuck = { style: [] };
+
+/** A loot entry's weight grows by at most this share for a player whose every fight was of its kind. */
+export const STYLE_LOOT_BONUS = 0.6;
+/** After this many rolled pieces in a row below rare, the next one is rare at least. */
+export const PITY_AFTER = 8;
+export const PITY_FLOOR: Rarity = "rare";
+
+/**
+ * Pieces that lean to a path rather than a weapon (ADR-0059 stage 6): the suppressor and the
+ * disguises (Hebi's jacket, Tessen's uniform and overalls) sneak; the datachip, the capacity shard,
+ * the neural Synapse booster and the cyberdeck hack.
+ */
+const PATH_OF_ITEM: Partial<Record<ItemDefId | AmmoId, StyleKind>> = {
+  suppressor: "stealth",
+  hebi_jacket: "stealth",
+  tessen_uniform: "stealth",
+  tessen_overalls: "stealth",
+  datachip: "quickhack",
+  capacity_shard: "quickhack",
+  synapse_booster: "quickhack",
+  kumo_cyberdeck: "quickhack",
+};
+
+/** The style an entry of the loot tables belongs to: a weapon its kind, a few pieces a path; null for the rest. */
+export const lootStyleOf = (item: ItemDefId | AmmoId): StyleKind | null => (isWeaponId(item) ? weaponStyle(item) : (PATH_OF_ITEM[item] ?? null));
+
+/**
+ * The table's entries with their weights leant towards the style: an entry of a kind gets
+ * `× (1 + STYLE_LOOT_BONUS × share)`, at most +60% for a player who fought with nothing else.
+ * The other entries keep their weight, so every kind still drops.
+ */
+export const styledEntries = (entries: readonly WeightedLootEntry[], style: readonly StyleKind[]): readonly WeightedLootEntry[] => {
+  if (style.length === 0) return entries;
+  const shares = styleShares(style);
+  return entries.map((e) => {
+    const kind = lootStyleOf(e.item);
+    return kind === null || shares[kind] === 0 ? e : { ...e, weight: e.weight * (1 + STYLE_LOOT_BONUS * shares[kind]) };
+  });
+};
+
+/** A rare piece or better ends a run of bad luck. */
+const breaksLuck = (line: LootLine): boolean => line.kind === "item" && RARITIES.indexOf(line.rarity) >= RARITIES.indexOf(PITY_FLOOR);
+
+/**
+ * `rollLoot` fitted to the player: weights by her style and, when the bag is hers (`luck.pity`),
+ * the protection against bad luck. A piece of rolled tier is a draw of luck: after PITY_AFTER of
+ * them in a row below rare, the next one is rare at least, and a rare one or better starts the
+ * count again. Fixed tiers, stacks and money do not count. The same random numbers as `rollLoot`.
+ */
+export const rollLootFor = (table: LootTable, rng: RandomPort, grade: LootGrade, luck: LootLuck): { lines: LootLine[]; pity?: number } => {
+  const entries = styledEntries(table.entries, luck.style);
+  let pity = luck.pity;
+  const line = (entry: LootEntry, q: number, r: number): LootLine => {
+    if (pity === undefined || entry.rarity !== "roll") return lineOf(entry, q, r, grade, gradeRolls(grade));
+    const l = lineOf(entry, q, r, grade, gradeRolls(grade), pity >= PITY_AFTER ? PITY_FLOOR : undefined);
+    pity = breaksLuck(l) ? 0 : pity + 1;
+    return l;
+  };
   const lines: LootLine[] = [{ kind: "eddies", qty: between(rng.next(), table.eddies) }];
   for (const g of table.guaranteed) {
     const q = rng.next();
-    lines.push(lineOf(g, q, rng.next(), grade, gradeRolls(grade)));
+    lines.push(line(g, q, rng.next()));
   }
   for (let i = 0; i < table.rolls; i++) {
-    const entry = pick(table.entries, rng.next());
+    const entry = pick(entries, rng.next());
     const q = rng.next();
-    lines.push(lineOf(entry, q, rng.next(), grade, gradeRolls(grade)));
+    lines.push(line(entry, q, rng.next()));
   }
-  return lines;
+  return pity === undefined ? { lines } : { lines, pity };
 };
 
 /**

@@ -378,8 +378,10 @@ export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot =>
   const pinned = e.ai?.away !== undefined ? { ...sure, away: e.ai.away } : sure;
   // A body (ADR-0065): knocked out or dead, where the player left it.
   const lying = e.downed ? { ...pinned, downed: bodySnapshotOf(e.downed) } : pinned;
+  // Its fight already in her style (ADR-0059 stage 6): a load does not count it again.
+  const counted = e.fought ? { ...lying, fought: true as const } : lying;
   // Mid-fight (G-185): an NPC's gun and a sniper's aim go on as they were.
-  const fighting = withFight(e, lying);
+  const fighting = withFight(e, counted);
   // Walking (G-208): its stuck check goes on, so it takes the way around in the same step.
   const body = e.walk ? { ...fighting, walk: walkSnapshotOf(e.walk) } : fighting;
   // Looking for the player (ADR-0029): where, for how long, and how long out of sight.
@@ -401,6 +403,7 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
     e.health = { ...e.health, current: restoredHealth(e.health, s.hp, savedMax) };
   }
   if (e.combatant) e.combatant.cooldown = s.cooldown;
+  if (s.fought) e.fought = true;
   if (e.combatant && s.gun) {
     // No more than its own weapon holds: the weapon is the content's, not the save's.
     e.combatant.loaded = Math.min(s.gun.loaded, e.combatant.stats?.magazine ?? s.gun.loaded);

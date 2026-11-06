@@ -4,6 +4,7 @@ import {
   type GameCommand,
   type PerkRanks,
   QUICKHACK_XP,
+  type StyleKind,
   type XpSource,
   attributeRam,
   detectionScale,
@@ -11,10 +12,13 @@ import {
   isAttributeId,
   perkDetectionScale,
   perkRam,
+  recordStyle,
   rememberHack,
   spendAttributePoint,
   spendPerkPoint,
+  workingDeck,
 } from "@seki/core";
+import type { Entity } from "./components";
 import type { SimContext } from "./context";
 import { difficultyOf } from "./difficulty";
 import { goneReinforcement } from "./reinforcements";
@@ -37,20 +41,35 @@ export const grantXp = (ctx: SimContext, amount: number, source: XpSource): void
 };
 
 /**
- * A quickhack landed on the target with `key`: only the first one on each target pays (no farming
+ * A quickhack landed on `target`, with `key`: only the first one on each target pays (no farming
  * a speaker every second). Targets without one (passers-by; the scanner gives the heat's
  * reinforcements one, G-202) are not remembered across a save, so they pay nothing.
  */
-export const grantQuickhackXp = (ctx: SimContext, key: string | undefined): void => {
+export const grantQuickhackXp = (ctx: SimContext, target: Entity, key: string | undefined): void => {
   if (!key) return;
   const remembered = rememberHack(ctx.state.domain.progression, key, goneReinforcement(ctx.world));
   if (!remembered) return;
   ctx.state.domain = { ...ctx.state.domain, progression: remembered };
+  noteFight(ctx, target, "quickhack");
   grantXp(ctx, QUICKHACK_XP, "hack");
 };
 
-/** The cyberdeck's RAM pool: the base, what Net adds and the Buffer perk (ADR-0059). */
-export const ramMaxOf = (domain: DomainState): number => BASE_RAM + attributeRam(domain.progression.attributes) + perkRam(domain.progression.perks);
+/**
+ * One fight more in the player's style (ADR-0059, stage 6): `target` defeated with `kind`, or the
+ * first quickhack on it. The loot leans towards the last STYLE_WINDOW of them. The first use
+ * counts and the target is marked, so a Short Circuit that kills, a hack and then a shot, or a
+ * second takedown after it woke stay one fight.
+ */
+export const noteFight = (ctx: SimContext, target: Entity, kind: StyleKind): void => {
+  if (target.fought) return;
+  target.fought = true;
+  const progression = ctx.state.domain.progression;
+  ctx.state.domain = { ...ctx.state.domain, progression: { ...progression, style: recordStyle(progression.style, kind) } };
+};
+
+/** The cyberdeck's RAM pool: the base, what Net adds, the Buffer perk (ADR-0059) and a working cyberdeck implant. */
+export const ramMaxOf = (domain: DomainState): number =>
+  BASE_RAM + attributeRam(domain.progression.attributes) + perkRam(domain.progression.perks) + workingDeck(domain).ram;
 
 /** The player's perk ranks (ADR-0059, stage 3), for the systems that read a perk's effect. */
 export const playerPerks = (ctx: SimContext): PerkRanks => ctx.state.domain.progression.perks;

@@ -65,7 +65,9 @@ const lootShare = (kind: ContractKind): number => mean(variants(kind).map((c) =>
 
 describe("loot and contract pay (E10)", () => {
   it("a ganger's bag is worth about 50 €$ in cash", () => {
-    expect(gangerLootCash()).toBeCloseTo(50.6, 1);
+    // 50.6 before the pistol and the baton came into the Hebi table (ADR-0059 stage 6, the user's
+    // call): they took the weight of scrap and weapon parts and are worth more at Oyaji's.
+    expect(gangerLootCash()).toBeCloseTo(53.6, 1);
   });
 
   it("the loot of a job's gangers is 20 to 30% of its pay, for every kind with a fight", () => {
@@ -75,8 +77,9 @@ describe("loot and contract pay (E10)", () => {
     }
   });
 
-  it("the plan's example: three targets for 625 €$ leave loot for about 24% of the pay", () => {
-    expect((3 * gangerLootCash()) / 625).toBeCloseTo(0.243, 2);
+  it("the plan's example: three targets for 625 €$ leave loot for about 26% of the pay", () => {
+    // 24.3% before ADR-0059 stage 6 (the pistol and the baton of the Hebi table).
+    expect((3 * gangerLootCash()) / 625).toBeCloseTo(0.257, 2);
   });
 
   it("purchases at the stall fit between the jobs", () => {

@@ -1,11 +1,16 @@
 import { type CharacterState } from "../character/character";
-import { CYBERWARE_CATALOG, type CyberwareId, installCyberware } from "../cyberware/cyberware";
+import { fitImplant, isGradedImplant, isInstalled } from "../cyberware/cyberdeck";
+import type { ImplantGrade } from "../cyberware/implant-grade";
+import { CYBERWARE_CATALOG, type CyberwareId } from "../cyberware/cyberware";
 import { fitsCapacity } from "../cyberware/capacity";
 import { type Wallet, debit } from "../economy/wallet";
 import { STACKABLE_CATALOG, type StackableDefinition } from "../items/catalog";
+import { MIN_ITEM_LEVEL, clampItemLevel, levelScale } from "../items/grade";
+import { RARITIES, RARITY } from "../items/rarity";
 import { type Equipment, type InventoryState, addStack } from "../items/inventory";
 import type { StackableId } from "../items/types";
 import { type ReputationTier, reputationTier } from "../reputation/reputation";
+import { SHOP_RARITY_STEPS, SHOP_TOP_RARITY } from "./shops";
 
 /**
  * Why a trade did not happen. "closed": the stall is shut at this hour; "not-sold-here": not in
@@ -77,13 +82,43 @@ export const priceWithTerms = (listPrice: number, terms: ShopTerms): number =>
   listPrice === 0 ? 0 : Math.max(1, Math.round(listPrice * terms.multiplier));
 
 export type CyberwarePurchase =
-  | { readonly ok: true; readonly wallet: Wallet; readonly character: CharacterState; readonly replaced: CyberwareId | null; readonly price: number }
+  | {
+      readonly ok: true;
+      readonly wallet: Wallet;
+      readonly character: CharacterState;
+      readonly replaced: CyberwareId | null;
+      /** The grade of the replaced implant, when it was a deck. */
+      readonly replacedGrade?: ImplantGrade;
+      readonly price: number;
+    }
   | { readonly ok: false; readonly reason: PurchaseFailure };
+
+/** What Mori fits: an implant, and a deck with the tier her standing brings out and the player's level. */
+export interface ImplantOffer {
+  readonly grade?: ImplantGrade;
+  /** Before the terms: price × tier × level for a deck (ADR-0059), the catalog price otherwise. */
+  readonly listPrice: number;
+}
+
+/**
+ * The clinic's offer of an implant (decision of 6.11 after ADR-0059 stage 6). A deck keeps up with
+ * the player like the counter's weapons (`stockGrade`): her level, common on neutral terms, a tier
+ * better for a friendly clinic, two for a trusted one, never past rare.
+ */
+export const implantOffer = (id: CyberwareId, tier: ReputationTier = "neutral", level: number = MIN_ITEM_LEVEL): ImplantOffer => {
+  const def = CYBERWARE_CATALOG[id];
+  if (!isGradedImplant(id)) return { listPrice: def.price };
+  const rarity = RARITIES[Math.min(RARITIES.indexOf(SHOP_TOP_RARITY), SHOP_RARITY_STEPS[tier])]!;
+  const grade: ImplantGrade = { rarity, level: clampItemLevel(level) };
+  return { grade, listPrice: Math.round(def.price * RARITY[rarity].value * levelScale(grade.level)) };
+};
 
 /**
  * Buying from the ripperdoc installs immediately. The replaced implant is not refunded; the
  * simulation puts it into the bag with `stowImplant` when a cell is free (ADR-0015). An implant
- * past the cyberware capacity `capacity` is refused (ADR-0033); without it there is no limit.
+ * past the cyberware capacity `capacity` is refused (ADR-0033); without it there is no limit. A
+ * deck comes in the grade of `implantOffer` at the player's `level`; one of another grade may
+ * replace the deck she has.
  */
 export const buyCyberware = (
   wallet: Wallet,
@@ -91,16 +126,17 @@ export const buyCyberware = (
   id: CyberwareId,
   terms: ShopTerms = STANDARD_TERMS,
   capacity = Infinity,
+  level: number = MIN_ITEM_LEVEL,
 ): CyberwarePurchase => {
   if (!fullService(terms)) return { ok: false, reason: "refused" };
-  const def = CYBERWARE_CATALOG[id];
-  if (character.cyberware[def.slot] === id) return { ok: false, reason: "already-installed" };
+  const offer = implantOffer(id, terms.tier, level);
+  if (isInstalled(character, id, offer.grade)) return { ok: false, reason: "already-installed" };
   if (!fitsCapacity(character.cyberware, id, capacity)) return { ok: false, reason: "over-capacity" };
-  const price = priceWithTerms(def.price, terms);
+  const price = priceWithTerms(offer.listPrice, terms);
   const paid = price === 0 ? { ok: true as const, wallet } : debit(wallet, price);
   if (!paid.ok) return { ok: false, reason: "insufficient-funds" };
-  const { loadout, replaced } = installCyberware(character.cyberware, id);
-  return { ok: true, wallet: paid.wallet, character: { ...character, cyberware: loadout }, replaced, price };
+  const fit = fitImplant(character, id, offer.grade);
+  return { ok: true, wallet: paid.wallet, character: fit.character, replaced: fit.replaced, ...(fit.replacedGrade ? { replacedGrade: fit.replacedGrade } : {}), price };
 };
 
 export type ItemPurchase =

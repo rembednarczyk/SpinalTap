@@ -9,6 +9,17 @@ export type CyberwareSlot = "optics" | "nervous" | "skeleton" | "arms";
  */
 export type CyberPerk = "dash" | "deflect";
 
+/**
+ * What a cyberdeck adds to the hacking at level 1 and common tier (ADR-0059, after stage 6): RAM
+ * on top of the pool, the share of a quickhack's upload time it takes off and the share it adds
+ * to RAM regeneration. `cyberdeck.ts` scales it with the implant's tier and level.
+ */
+export interface DeckBase {
+  readonly ram: number;
+  readonly upload: number;
+  readonly regen: number;
+}
+
 export interface CyberwareDefinition {
   readonly id: string;
   /** Catalog key of the name (`cyberware.<id>.name`, ADR-0056); `description` likewise. */
@@ -22,6 +33,8 @@ export interface CyberwareDefinition {
   /** Cyberware capacity it takes, 2 to 8 (ADR-0033). */
   readonly capacity: number;
   readonly perk?: CyberPerk;
+  /** A cyberdeck: graded by tier and level like a weapon (ADR-0059), read by the scanner. */
+  readonly deck?: DeckBase;
 }
 
 export const CYBERWARE_CATALOG = {
@@ -92,6 +105,18 @@ export const CYBERWARE_CATALOG = {
     description: "cyberware.tsubame_reflex.desc",
     modifiers: {},
     perk: "deflect",
+  },
+  // The deck itself (decision of 6.11 after ADR-0059 stage 6): the one implant with a tier and a
+  // level, in the nervous slot beside the Synapse booster and Kairos, so hacking competes with them.
+  kumo_cyberdeck: {
+    id: "kumo_cyberdeck",
+    name: "cyberware.kumo_cyberdeck.name",
+    slot: "nervous",
+    price: 800,
+    description: "cyberware.kumo_cyberdeck.desc",
+    capacity: 4,
+    modifiers: {},
+    deck: { ram: 2, upload: 0.08, regen: 0.1 },
   },
 } as const satisfies Record<string, CyberwareDefinition>;
 

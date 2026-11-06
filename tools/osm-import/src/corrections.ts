@@ -6,6 +6,7 @@
  */
 import { type Area, type Line } from "./features.ts";
 import { type Pt, centroid } from "./geometry.ts";
+import { DWORZEC_EAST_AREAS } from "./corrections-dworzec.ts";
 import { type Tags } from "./osm.ts";
 
 export interface TagCorrection {
@@ -663,6 +664,7 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     reason: "trawnik przed pawilonami przy Dworcu Autobusowym na ortofoto PZGiK, w OSM bez obszaru",
     ref: "T-170",
   },
+  ...DWORZEC_EAST_AREAS,
 ];
 
 /** The added areas as the import reads the map's. */

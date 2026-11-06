@@ -56,9 +56,9 @@ describe("rollLoot", () => {
       { kind: "eddies", qty: 34 },
       { kind: "item", item: "steady_grip", rarity: "common", qty: 1 },
     ]);
-    // The SMG band (weights 36+24+10+10+8 = 88 of 100) with a rare roll.
-    expect(rollLoot(LOOT_TABLES.hebi_common, counting([0.5, 90 / 100, 0, 0.97]))[1]).toEqual({ kind: "item", item: "hebi_smg", rarity: "rare", level: 1, qty: 1 });
-    expect(rollLoot(LOOT_TABLES.hebi_common, counting([0.5, 90 / 100, 0, 0.8]))[1]).toMatchObject({ rarity: "uncommon" });
+    // The SMG band (weights 36+22+10+10+6 = 84 of 100, ADR-0059 stage 6) with a rare roll.
+    expect(rollLoot(LOOT_TABLES.hebi_common, counting([0.5, 86 / 100, 0, 0.97]))[1]).toEqual({ kind: "item", item: "hebi_smg", rarity: "rare", level: 1, qty: 1 });
+    expect(rollLoot(LOOT_TABLES.hebi_common, counting([0.5, 86 / 100, 0, 0.8]))[1]).toMatchObject({ rarity: "uncommon" });
     // A mod without a rarity rule is common; scrap is a stack.
     expect(rollLoot(LOOT_TABLES.hebi_common, counting([0.5, 96.5 / 100, 0, 0.99]))[1]).toEqual({ kind: "item", item: "suppressor", rarity: "common", qty: 1 });
     expect(rollLoot(LOOT_TABLES.hebi_common, counting([0.5, 40 / 100, 0.99, 0]))[1]).toEqual({ kind: "stack", item: "scrap", qty: 2 });

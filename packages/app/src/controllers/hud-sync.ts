@@ -1,4 +1,4 @@
-import { ABILITY_CATALOG, type DomainState, type RenderPort, dayOf, dayPhase, daylight, formatClock, loadoutAbility, secondOfDay, stackRoom, workingCyberware } from "@seki/core";
+import { ABILITY_CATALOG, type DomainState, type ImplantGrades, type RenderPort, dayOf, dayPhase, daylight, formatClock, loadoutAbility, secondOfDay, stackRoom, workingCyberware } from "@seki/core";
 import { DISTRICTS, type DistrictId, type Entity, SIM_HZ, type Simulation, ground } from "@seki/sim";
 import { type AbilityVm, type ContractIntents, type LootVm, type Screen, type TradeVm, type UiStore, patchUi } from "@seki/ui";
 import { createStatsCache } from "../character-view";
@@ -15,6 +15,8 @@ import { type SimRef, pushToastTimed } from "./shared";
 export const RECALL_CALM_TICKS = 5 * SIM_HZ;
 /** HUD zoom (share of the hip field of view) is rounded to this step, like the spread. */
 const ZOOM_STEP = 0.01;
+/** One empty object for a character without graded implants, so the store sees no change every frame. */
+const NO_GRADES: ImplantGrades = {};
 /** HUD aim spread is rounded to this many radians, so the store changes only when the cone visibly moves. */
 const SPREAD_STEP = 0.002;
 /** Daylight reaches the renderer in steps of 1/64. */
@@ -132,6 +134,7 @@ export class HudSync implements ContractIntents {
       loot,
       ...this.deps.panels.trade(),
       cyberware: sim.domain.character.cyberware,
+      implantGrades: sim.domain.character.implantGrades ?? NO_GRADES,
       reputation: sim.domain.reputation,
       level: sim.domain.progression.level,
       attributes: sim.domain.progression.attributes,

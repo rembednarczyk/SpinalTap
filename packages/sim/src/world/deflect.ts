@@ -55,6 +55,8 @@ export const deflectShot = (ctx: SimContext, shot: DeflectedShot, defenderOf: (e
   noteViolence(ctx, target, isEngaged(target), result.point);
   target.health = applyDamage(target.health, outcome.damage);
   target.lastHitBy = defender.id;
+  // A bullet sent back is the shooter's gun, not one of hers: the fight is not counted (ADR-0059 stage 6).
+  target.lastHitStyle = undefined;
   if (target.ai && !target.unconscious) target.ai.alerted = true;
   ctx.bus.emit("DamageDealt", { sourceId: defender.id, targetId: target.id, amount: outcome.damage, critical: false, zone: outcome.zone, at: result.point });
 };

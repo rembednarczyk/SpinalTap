@@ -422,6 +422,16 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v29 -> v30 (ADR-0063 stage 6): the market on Aleja Tysiąclecia is gone and its people are in
   // Alchemia. A save made in it wakes on the avenue; its people and stashes go to their new places.
   29: moveMarketToAlchemia,
+  // v30 -> v31 (ADR-0059, stage 6): the progression keeps the player's style and her bad luck. An
+  // older save has fought no fight the loot remembers and had no bad luck yet.
+  30: (old) => {
+    const domain = isObject(old.domain) ? old.domain : null;
+    if (!domain || !isObject(domain.progression)) return { ...old, version: 31 };
+    return { ...old, version: 31, domain: { ...domain, progression: { ...domain.progression, style: [], unlucky: 0 } } };
+  },
+  // v31 -> v32 (decision of 6.11 after ADR-0059 stage 6): an installed cyberdeck keeps its tier and
+  // level (`character.implantGrades`, optional). An older save had no cyberdeck, so nothing changes.
+  31: (old) => ({ ...old, version: 32 }),
 };
 
 export class MigrationError extends Error {}

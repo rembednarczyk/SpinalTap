@@ -80,3 +80,6 @@ export const bestRarity = (tiers: readonly Rarity[]): Rarity | null =>
 
 /** Whether a tier is `floor` or rarer, by the order of `RARITIES` (unique counts as the rarest). */
 export const rarityAtLeast = (rarity: Rarity, floor: Rarity): boolean => RARITIES.indexOf(rarity) >= RARITIES.indexOf(floor);
+
+/** `tier`, or `floor` when that is rarer; no floor leaves it. */
+export const atLeast = (tier: Rarity, floor?: Rarity): Rarity => (floor !== undefined && RARITIES.indexOf(floor) > RARITIES.indexOf(tier) ? floor : tier);
