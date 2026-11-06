@@ -1286,7 +1286,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/ui (inventory)
 
 ### G-427 Plac Czechowicza i plac zabaw na Litewskim pod kostką (T-197, T-198)
-- Status: zgłoszone (6.11, kurator, przegląd G-421)
+- Status: w PR #347 (6.11, kurator: PRZYJĘTE; scalanie z main)
 - Ważność: S3 · Zasięg: trawnik `village_green` 308 m² z pomnikiem wychodzi poza obrysy obu placów, więc `openPavings` go nie wycina; plac zabaw 22 m² styka się z trawnikiem; poprawka: odejmowanie wielokątów albo `place=square` bez nawierzchni
 - Pakiet właściciela: tools/osm-import (ground)
 
@@ -1329,6 +1329,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, weryfikator PR #346)
 - Ważność: S4 · Zasięg: K otwiera Rozwój i jednocześnie wykonuje przypisaną akcję; tak samo T i B; poprawka: `sanitizeBindings` odrzuca klucze zarezerwowane z ostrzeżeniem
 - Pakiet właściciela: packages/app (settings), packages/engine (input)
+
+### G-436 Pas gołego terenu 1–2 m przed Sądem Okręgowym na Placu Czechowicza (T-210)
+- Status: zgłoszone (6.11, kurator, przegląd G-427)
+- Ważność: S4 · Zasięg: x 2–22, z −104,7…−122, ok. 280 punktów `landuse-bare`; poprawka: domknąć nawierzchnię do ściany w69672563 (baza spadnie o ok. 280)
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
