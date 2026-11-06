@@ -169,7 +169,7 @@ export const plTrade = {
   "shop.clinic.leave": "Wyjdź z kliniki",
   "shop.clinic.surcharge": "Klinika ci nie ufa",
   "shop.clinic.hostile": "Klinika widzi w tobie zagrożenie",
-  "shop.clinic.basic": "Wroga reputacja: tylko apteczki, bandaże i stymulanty. Mori nie weźmie cię na stół ani nie sprzeda ci sharda pojemności.",
+  "shop.clinic.basic": "Wroga reputacja: tylko apteczki i bandaże. Mori nie weźmie cię na stół ani nie sprzeda ci sharda pojemności.",
   "shop.oyaji.label": "Stragan Oyajiego",
   "shop.oyaji.eyebrow": "Stragan · Targ na Podzamczu",
   "shop.oyaji.title": "Oyaji",
