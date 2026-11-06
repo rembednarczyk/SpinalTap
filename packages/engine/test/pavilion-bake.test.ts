@@ -6,6 +6,7 @@ import { MAP_SIGN_KIND } from "../src/renderer/mapcity/sign-plan";
 import { DRESS_FLAG, MeshSink } from "../src/renderer/mesh-sink";
 import { bakePavilion, bakePavilionFar, pavilionsIn } from "../src/renderer/metro/pavilion-bake";
 import { LINE_AMBER, PYLON } from "../src/renderer/metro/pavilion-dress";
+import { pavilionRoofOver } from "../src/renderer/metro/pavilion-roof";
 import { pavilionTitle, planPavilionSigns } from "../src/renderer/metro/pavilion-signs";
 
 /** ADR-0071: up to 2 thousand triangles an entrance, baked into meshes the city already draws. */
@@ -110,5 +111,19 @@ describe("the metro pavilions' names in the signs' mesh (ADR-0071 stage 3)", () 
     const sink = new MeshSink();
     expect(planPavilionSigns(sink, { minX: 0, maxX: 10, minZ: 0, maxZ: 10 })).toBe(0);
     expect(sink.empty).toBe(true);
+  });
+});
+
+describe("the rain under the pavilions' roofs (G-331)", () => {
+  it.each(ENTRANCES)("%s: stops under the eaves, on the stairs and in the hall, not beside or over the roof", (_n, e) => {
+    const r = e.roof;
+    const o = e.outline;
+    const mid = { x: (o.minX + o.maxX) / 2, z: (o.minZ + o.maxZ) / 2 };
+    expect(pavilionRoofOver(mid.x, e.floor + 1, mid.z)).toBe(true);
+    expect(pavilionRoofOver(mid.x, e.street + 1, mid.z)).toBe(true);
+    expect(pavilionRoofOver(r.minX + 0.1, e.street + 2, r.minZ + 0.1)).toBe(true);
+    expect(pavilionRoofOver(mid.x, e.street + 3.4, mid.z)).toBe(false);
+    expect(pavilionRoofOver(r.maxX + 0.2, e.street + 1, mid.z)).toBe(false);
+    expect(pavilionRoofOver(mid.x, e.street + 1, r.minZ - 0.2)).toBe(false);
   });
 });

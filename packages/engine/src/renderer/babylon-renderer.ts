@@ -34,6 +34,7 @@ import { ScreenFx } from "./screen-fx";
 import { Signage } from "./signage";
 import { RendererLoading } from "./renderer-loading";
 import { warmUpMaterials } from "./start-prep";
+import { pavilionRoofOver } from "./metro/pavilion-roof";
 import { WetAsphalt } from "./wet-asphalt";
 import type { Stage } from "./stage";
 
@@ -240,7 +241,8 @@ export class BabylonRenderer implements RenderPort {
       signage: this.signage,
       speedLines: this.speedLines,
       fogScale: options.fogScale ?? 1,
-      roofOver: (x, y, z) => this.map.current?.roofOver(x, y, z) ?? false,
+      // The rain stops under the map's roofs and the metro pavilions' (G-331).
+      roofOver: (x, y, z) => (this.map.current?.roofOver(x, y, z) ?? false) || (this.map.current !== null && pavilionRoofOver(x, y, z)),
       actors: this.characters,
       cameraTarget: () => this.cameraTarget,
       scanTargets: (visit) => {
