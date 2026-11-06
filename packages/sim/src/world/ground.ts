@@ -3,6 +3,7 @@ import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
 import type { Entity } from "./components";
 import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight } from "./deck";
+import { type GroundVault, VaultIndex } from "./vault";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
 export interface GroundChunk {
@@ -102,8 +103,11 @@ export class GroundField {
    * to the chunk on its side: without them that point was the terrain under the bridge.
    */
   private readonly chunkDecks: readonly (readonly GroundDeck[] | undefined)[];
+  /** The rooms under the ground (ADR-0071 stage 4): the metro's platforms. */
+  private readonly vaults: VaultIndex;
 
-  constructor(world: readonly GroundChunk[], cuts: readonly GroundCut[] = []) {
+  constructor(world: readonly GroundChunk[], cuts: readonly GroundCut[] = [], vaults: readonly GroundVault[] = []) {
+    this.vaults = new VaultIndex(vaults);
     const chunks = cuts.length > 0 ? [...cuts.map(cutChunk), ...world] : world;
     this.chunks = chunks;
     this.cuts = cuts.length;
@@ -184,7 +188,9 @@ export class GroundField {
     const grid = this.chunks[i]?.terrain;
     const h = grid ? terrainHeightAt(grid, x, z) : 0;
     const decks = this.chunkDecks[i];
-    return decks ? groundOver(decks, x, z, h, reach, this.chunkFlights[i]) : h;
+    const ground = decks ? groundOver(decks, x, z, h, reach, this.chunkFlights[i]) : h;
+    // Under the street, in a vault: its floor for feet deep enough (ADR-0071 stage 4).
+    return reach === Infinity || this.vaults.empty ? ground : this.vaults.groundAt(x, z, ground, reach);
   }
 
   /** The lowest underside of a bridge's deck over (x, z) at or above `head`, or Infinity (G-062). */
@@ -290,6 +296,18 @@ export class GroundField {
     return this.slopeAt(x, z, reach) > MAX_WALK_SLOPE;
   }
 
+  /**
+   * Where the ray at distance t is in a vault under its cover (in the room under the street, not
+   * in the earth): how much further it leaves the vault's bounds; null when it is not in one.
+   */
+  private vaultExit(origin: Vec3, dir: Vec3, t: number, grid: TerrainGrid): number | null {
+    if (this.vaults.empty) return null;
+    const x = origin.x + dir.x * t;
+    const z = origin.z + dir.z * t;
+    const v = this.vaults.holding(x, origin.y + dir.y * t, z, terrainHeightAt(grid, x, z));
+    return v ? Math.max(0, rectExit(v.bounds, x, z, dir)) : null;
+  }
+
   /** Height of the ray above the ground at distance t (the street plane counts as -Infinity below). */
   private clearance(origin: Vec3, dir: Vec3, t: number, grid: TerrainGrid): number {
     return origin.y + dir.y * t - terrainHeightAt(grid, origin.x + dir.x * t, origin.z + dir.z * t);
@@ -328,8 +346,15 @@ export class GroundField {
       const step = Math.min(out, nextLine(fx, dir.x / grid.cell, grid.cols - 1), nextLine(fz, dir.z / grid.cell, grid.rows - 1));
       const end = Math.min(maxDist, t + Math.max(step, 1e-6));
       const hit = firstBelow(this.clearance(origin, dir, t, grid), this.clearance(origin, dir, (t + end) / 2, grid), this.clearance(origin, dir, end, grid));
-      if (hit !== null) return t + (end - t) * hit;
-      t = end;
+      if (hit === null) {
+        t = end;
+        continue;
+      }
+      const at = t + (end - t) * hit;
+      // In a vault the ray goes on through the room, up to where it leaves it (ADR-0071 stage 4).
+      const leave = this.vaultExit(origin, dir, at, grid);
+      if (leave === null) return at;
+      t = Math.min(end, at + leave + 1e-6);
     }
     return null;
   }
