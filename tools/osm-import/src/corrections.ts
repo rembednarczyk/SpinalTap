@@ -590,6 +590,29 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     reason: "czerwona kostka chodnika wzdłuż hal Bazaru przy parkingu na ortofoto PZGiK, w OSM tylko linia chodnika",
     ref: "T-172",
   },
+  {
+    // The north pavement of al. Tysiąclecia east of T-165, beige setts to the kerb on the orthophoto
+    // (PZGiK), with the bus stop's light grey edge, bare in OSM: from the carriageway w1004769663's
+    // axis (drawn over it) north to the footway w1435832518 and the path w1435832524, east to the
+    // lawn w804709934. Off the nodes: T-165's corner and the point on the road's axis by the lawn,
+    // and the path's axis abreast of the lawn's tip.
+    id: "T-173/chodnik-tysiaclecia-wschod",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 804.67, z: 360.04 },
+      { x: 838.98, z: 355.26 },
+      { x: 850.34, z: 355.9 },
+      { x: 867.02, z: 353.11 },
+      { x: 871.29, z: 352.44 },
+      { x: 871.29, z: 348.69 },
+      { x: 870.0, z: 346.7 },
+      { x: 870.0, z: 338.46 },
+      { x: 804.67, z: 347.54 },
+    ],
+    nodesOf: ["w1435832518", "w1435832518", "w1435832518", "w1435832524", null, "w804709934", "w804709934", null, null],
+    reason: "chodnik z kostki po północnej stronie al. Tysiąclecia na wschód od Dworca (przystanek) na ortofoto PZGiK, w OSM tylko linie ścieżek",
+    ref: "T-173",
+  },
 ];
 
 /** The added areas as the import reads the map's. */

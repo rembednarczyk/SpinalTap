@@ -341,6 +341,21 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(725.6, 428)).toBe("footway");
   });
 
+  // The north pavement of al. Tysiąclecia east of x 806 (T-173): from the carriageway to the footway
+  // w1435832518 and the path w1435832524, x 806-870, where the lawn w804709934 begins. The register's test: 0.5 m samples, at most
+  // 0.5 m² bare (seams). North of the footway lies the bed of T-170, not this pavement.
+  const walkAxis = (x: number) => (x <= 838.98 ? 360.04 - ((x - 804.67) * 4.78) / 34.31 : x <= 850.34 ? 355.26 + ((x - 838.98) * 0.64) / 11.36 : 355.9 - ((x - 850.34) * 2.79) / 16.68);
+  it("paves the north pavement of al. Tysiąclecia east of the Dworzec from the carriageway to the footway, and leaves the road and the sidewalk on top (G-350)", () => {
+    const bare: string[] = [];
+    for (let x = 806.25; x < 870; x += 0.5) for (let z = 343.25; z < walkAxis(x); z += 0.5) if (surfaceAt(x, z) === null) bare.push(`${x},${z}`);
+    expect(bare.length * 0.25, bare.slice(0, 20).join(" ")).toBeLessThanOrEqual(0.5);
+    expect(surfaceAt(830, 350)).toBe("square");
+    expect(surfaceAt(860, 352)).toBe("square");
+    expect(surfaceAt(830, 343)).toBe("road");
+    expect(surfaceAt(830, 356.6)).toBe("sidewalk");
+    expect(surfaceAt(880, 346)).toBe("grass");
+  });
+
   const OSM_DIR = join(__dirname, "../../../data/osm");
   const osm = mergeOsm(readdirSync(OSM_DIR).filter((f) => f.endsWith(".json")).map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))));
   const PAVED = new Set(["square", "cobble", "footway", "road"]);
