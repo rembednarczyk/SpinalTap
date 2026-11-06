@@ -1,7 +1,7 @@
 import type { ContractSiteId, Vec3 } from "@seki/core";
 import { KRAKOWSKIE_SITE_POINTS } from "./district-m0";
 import { docks } from "./district-doki";
-import { market } from "./district-targ";
+import { byRuin } from "./alchemia-market";
 import { koiPoint } from "./interiors";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
@@ -30,9 +30,9 @@ export const SITE_PLANS: Readonly<Partial<Record<ContractSiteId, SitePlan>>> = {
   car_wash: { guards: [wash(0, 44.2), wash(2.2, 42.4)], twin: wash(-1.5, 46.5), lookout: wash(2, 36.5), ambush: [wash(0, 33), wash(-1.5, 29.5), wash(4, 31)] },
   south_gate: { guards: [gate(-5, -34.2), gate(-3, -34.6)], twin: gate(8.5, -34.5), lookout: gate(-3, -29), ambush: [gate(0, -24), gate(-5, -26), gate(5, -25)] },
   kanal_bridge: { guards: [spotNear(660.5, 75.5), spotNear(658, 73.5)], twin: spotNear(664, 79.5), lookout: spotNear(650, 63), ambush: [spotNear(646, 58), spotNear(668, 84), spotNear(652, 66)] },
-  hebi_stash: { guards: [market(117, 0, 88.2), market(119, 0, 90)], lookout: market(110, 0, 92), ambush: [market(106, 0, 90), market(108, 0, 96), market(106, 0, 86)] },
-  raid_north: { lookout: market(92, 0, 96) },
-  raid_east: { lookout: market(106, 0, 80) },
+  hebi_stash: { guards: [byRuin(5.2, 7), byRuin(7, 5)], lookout: byRuin(9, 14), ambush: [byRuin(7, 16), byRuin(13, 16), byRuin(3, 13)] },
+  raid_north: { lookout: ground(431.5, 123) },
+  raid_east: { lookout: ground(445, 74) },
   tessen_office: { guards: [docks(-22.5, 0, 135.6), docks(-19.6, 0, 135.6)], lookout: docks(-12, 0, 128) },
   quay_terminal: { lookout: docks(0, 0, 130), ambush: [docks(12, 0, 121), docks(4, 0, 121.5), docks(20, 0, 125)] },
   docks_escort: { lookout: docks(0, 0, 113) },

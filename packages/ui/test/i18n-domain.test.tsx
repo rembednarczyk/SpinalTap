@@ -92,9 +92,9 @@ describe("domain texts (ADR-0056, stage 3)", () => {
     const hack: Contract = { ...job, kind: "hack", siteId: "quay_terminal", progress: 600 };
     expect(translateText("en", contractObjective(job))).toBe("Take out the Hebi gangers (3): the yard behind the car wash past Plac Łokietka");
     expect(translateText("pl", contractObjective(job))).toBe("Zneutralizuj gangerów Hebi (3): podwórko za myjnią za Placem Łokietka");
-    expect(translateText("en", contractObjective(delivery, 75))).toBe("Carry Kaito's package to Hana: Hana's cart at the Podzamcze market (1:15 left)");
-    expect(translateText("pl", contractObjective(delivery, 75))).toBe("Zanieś paczkę od Kaito Hanie: wózek Hany na targu na Podzamczu (zostało 1:15)");
-    expect(translateText("pl", contractObjective(delivery))).toBe("Zanieś paczkę od Kaito Hanie: wózek Hany na targu na Podzamczu");
+    expect(translateText("en", contractObjective(delivery, 75))).toBe("Carry Kaito's package to Hana: Hana's cart at the market in Alchemia (1:15 left)");
+    expect(translateText("pl", contractObjective(delivery, 75))).toBe("Zanieś paczkę od Kaito Hanie: wózek Hany na targu w Alchemii (zostało 1:15)");
+    expect(translateText("pl", contractObjective(delivery))).toBe("Zanieś paczkę od Kaito Hanie: wózek Hany na targu w Alchemii");
     expect(translateText("pl", contractObjective(hack, 25))).toBe("Utrzymaj połączenie z terminalem (zostało 0:25): terminal Tessen pod dźwigiem nad rzeką");
     expect(translateText("pl", contractObjective({ ...hack, progress: undefined } as Contract))).toBe("Włam się do terminala i utrzymaj połączenie 40 s: terminal Tessen pod dźwigiem nad rzeką");
     const retrieved: Contract = { ...job, kind: "retrieve", siteId: "hebi_stash", status: "cleared" };

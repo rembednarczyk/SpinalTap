@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type AudioPort, type EffectDescriptor, EMPTY_INPUT, type EntityId, type RenderPort, type ViewDescriptor } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { SCHEDULES, ground, market } from "@seki/sim";
+import { SCHEDULES, STALL_FRONT_YAW, ground } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
@@ -107,12 +107,13 @@ describe("M2: day clock and schedules through the game loop", () => {
   it("Oyaji is closed at night: the prompt and his words say so; by day the closed sign is gone", () => {
     const { session, ui } = setup();
     session.newGame();
-    const gate = market(40, 0, 78);
+    // The car park in front of Alchemia's hall: the market's chunk loaded, Oyaji out of reach.
+    const gate = ground(410, 32);
     goTo(session, gate.x, gate.z);
     wait(session, 90); // 22:30
     frames(session, 60 * 10);
     const door = oyajiDoor();
-    goTo(session, door.x + 1.5, door.z + 0.8, door.y);
+    goTo(session, door.x + Math.sin(STALL_FRONT_YAW) * 1.4, door.z + Math.cos(STALL_FRONT_YAW) * 1.4, door.y);
     expect(ui.getState().prompt).toBe("Oyaji's stall: closed until 8:00");
     frames(session, 1, true);
     const dialogue = ui.getState().dialogue;

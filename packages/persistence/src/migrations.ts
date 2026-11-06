@@ -1,4 +1,5 @@
 import { SAVE_SCHEMA_VERSION, SHARD_CYBER_CAPACITY, capacityMax, clampItemLevel, hasItemLevel, isInstanceDefId, progressionFromXp } from "@seki/core";
+import { moveMarketToAlchemia } from "./market-move";
 
 type Json = Record<string, unknown>;
 
@@ -418,6 +419,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
         : {};
     return { ...old, version: 29, domain: { ...domain, ...items, ...containers } };
   },
+  // v29 -> v30 (ADR-0063 stage 6): the market on Aleja Tysiąclecia is gone and its people are in
+  // Alchemia. A save made in it wakes on the avenue; its people and stashes go to their new places.
+  29: moveMarketToAlchemia,
 };
 
 export class MigrationError extends Error {}

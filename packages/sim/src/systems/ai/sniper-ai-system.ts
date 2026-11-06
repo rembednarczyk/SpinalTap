@@ -7,7 +7,6 @@ import { inCreationOrder } from "../../world/ordering";
 import { incapacitated } from "../../world/takedown";
 import { readyToFire } from "../../world/player-weapon";
 import { LEVEL_GAP, routeAcrossLevels } from "../../world/nav";
-import { WORLD_NAV } from "../../content/world-map";
 import { worldTimeScale } from "../ability-system";
 import { noteDetected } from "../../world/street";
 import { coveredFrom } from "../../world/disguise";
@@ -76,7 +75,7 @@ const walkTo = (ctx: SimContext, self: Sniper, goal: Vec3): void => {
   const apart = heightApart(ctx.world, goal, from) > LEVEL_GAP;
   const raised = aboveGround(ctx.world, from) > LEVEL_GAP || aboveGround(ctx.world, goal) > LEVEL_GAP;
   const sameFloor = !apart && (straightWalk(ctx.world, from, goal) || detourStep(ctx.world, from, goal) !== null || !raised);
-  const leg = sameFloor ? goal : (routeAcrossLevels(ctx.world, WORLD_NAV, from, goal)?.next ?? goal);
+  const leg = sameFloor ? goal : (routeAcrossLevels(ctx.world, ctx.streamer.nav, from, goal)?.next ?? goal);
   const next = steerPoint(ctx.world, from, leg);
   const dx = next.x - from.x;
   const dz = next.z - from.z;

@@ -6,7 +6,8 @@ import type { DistrictId } from "../content/world-map";
 /** Where each fixer works and the flag that says Seki has met them (ADR-0029, phone offers). */
 const FIXER_HOME: Readonly<Record<ContractGiverId, { readonly district: DistrictId; readonly met: string }>> = {
   kaito: { district: "shinsekai-7", met: "met_fixer" },
-  hana: { district: "targ", met: "met_hana" },
+  // Hana sells in Alchemia, on Krakowskie Przedmieście's side of the Old Town (ADR-0063).
+  hana: { district: "shinsekai-7", met: "met_hana" },
   genzo: { district: "doki", met: "met_genzo" },
 };
 

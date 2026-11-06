@@ -318,12 +318,12 @@ const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRou
 
 /** A vehicle keeps this far from the game's blocks: half the widest car and a margin (m). */
 const BLOCK_REACH = 1.4;
-/** Blocks whose underside is higher than this above the ground (the market's deck, a sign) let vehicles under (m). */
+/** Blocks whose underside is higher than this above the ground (a sign, a deck) let vehicles under (m). */
 const VEHICLE_HEADROOM = 3;
 
 /**
- * The game's solid blocks standing on the roads (the market's halls and the viaduct's pillars on
- * Aleja Tysiąclecia, ADR-0045), grown by `BLOCK_REACH`: lanes stop short of them.
+ * The game's solid blocks standing on the roads (a crate, a cart; the metro pavilions' footprints),
+ * grown by `BLOCK_REACH`: lanes stop short of them.
  */
 const ROAD_BLOCKS: readonly { minX: number; maxX: number; minZ: number; maxZ: number }[] = GAME_PROPS.flatMap((p) =>
   p.solid && p.view.kind === "block" && p.center.y - p.view.size.y / 2 < groundY(p.center.x, p.center.z) + VEHICLE_HEADROOM

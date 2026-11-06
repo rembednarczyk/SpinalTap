@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CharacterState } from "@seki/core";
-import { BALCONY_TOP, MARKET_PLACE, ROOF_WEST_TOP, Simulation, fallDamage, market, playerStatsOf } from "../src";
+import { Simulation, fallDamage, playerStatsOf } from "../src";
+import { BALCONY_TOP, MARKET_PLACE, OLD_MARKET_CHUNK, ROOF_WEST_TOP, market } from "./fixtures/old-market";
 import { collect, input, run, teleportPlayer } from "./helpers";
 
 type Body = Partial<Pick<CharacterState, "cyberware" | "memories">>;
@@ -23,13 +24,13 @@ interface Drop {
  * `yaw` (0 is north, out over the market); with the stick let go once off the roof, or held.
  */
 const walkOff = (x: number, yaw: number, hold: boolean, body?: Body): Drop => {
-  let sim = Simulation.create({ seed: 1 });
+  let sim = Simulation.create({ seed: 1, chunks: [OLD_MARKET_CHUNK] });
   const start = market(x - Math.sin(yaw) * 1.5, ROOF_WEST_TOP, EDGE - 1.5);
   teleportPlayer(sim, start, yaw);
   run(sim, 2);
   if (body) {
     const snap = sim.snapshot(null, "t", "");
-    sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, character: { ...snap.domain.character, ...body } } });
+    sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, character: { ...snap.domain.character, ...body } } }, undefined, "off", "off", [OLD_MARKET_CHUNK]);
   }
   for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
   teleportPlayer(sim, start, yaw);

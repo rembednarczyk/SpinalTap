@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { type AudioPort, type DomainState, EMPTY_INPUT, type RenderPort, createDomainState } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { DISTRICT_M0_PROPS, type Entity, KANAL_PROPS, TARG_NORTH_PROPS, TARG_SOUTH_PROPS, ground } from "@seki/sim";
+import { DISTRICT_M0_PROPS, type Entity, KANAL_PROPS, ground } from "@seki/sim";
+import { OLD_MARKET_CHUNK } from "../../sim/test/fixtures/old-market";
 import { DEFAULT_SETTINGS, createUiStore } from "@seki/ui";
 import { GameSession, type SettingsHost } from "../src/game-session";
 import { buildJournal, createJournalCache } from "../src/journal";
@@ -121,8 +122,9 @@ describe("minimap data", () => {
   });
 
   it("marks floors above the street, stairs, the lift and ladders (ADR-0021)", () => {
-    // Heights from the ground under them: the market stands 20 m below Krakowskie (ADR-0045).
-    const map = buildDistrictMap([...KANAL_PROPS, ...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS], (x, z) => ground(x, z).y);
+    // Heights from the ground under them: the footbridge over Grodzka on Lublin's terrain (ADR-0045), the old
+    // market (the sim's test floor since ADR-0063 moved the market to Alchemia) on its flat floor.
+    const map = buildDistrictMap([...KANAL_PROPS, ...OLD_MARKET_CHUNK.props], (x, z) => (OLD_MARKET_CHUNK.bounds.minX <= x && x <= OLD_MARKET_CHUNK.bounds.maxX && OLD_MARKET_CHUNK.bounds.minZ <= z && z <= OLD_MARKET_CHUNK.bounds.maxZ ? 0 : ground(x, z).y));
     const kinds = (map.links ?? []).map((l) => l.kind);
     // The market's stairs (the covered footbridge over Grodzka has none, ADR-0045); one lift; three fire escape ladders.
     expect(kinds.filter((k) => k === "stairs")).toHaveLength(1);

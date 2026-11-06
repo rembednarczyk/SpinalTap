@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { OVERPASS_TOP, Simulation, aabbFromCenter, market } from "../src";
+import { Simulation, aabbFromCenter } from "../src";
+import { OLD_MARKET_CHUNK, OVERPASS_TOP, market } from "./fixtures/old-market";
 import { STREET_START, collect, input, run, teleportPlayer } from "./helpers";
 
 /** Open ground on Plac Litewski (ADR-0045). */
@@ -98,9 +99,9 @@ describe("thin tops (G-372)", () => {
     expect(footholds).toEqual([]);
   });
 
-  it("gives none on the targ lift's top gate, the shaft's walls or the deck's railing beside them", () => {
+  it("gives none on the targ lift's top gate, the shaft's walls or the deck's railing beside them (the old market's test floor, ADR-0063)", () => {
     const top = market(0, OVERPASS_TOP, 0).y;
-    const first = Simulation.create({ seed: 3 });
+    const first = Simulation.create({ seed: 3, chunks: [OLD_MARKET_CHUNK] });
     teleportPlayer(first, market(108, OVERPASS_TOP, 89), Math.PI);
     run(first, 2);
     const snap = first.snapshot(null, "t", "");
@@ -108,7 +109,7 @@ describe("thin tops (G-372)", () => {
     // From the deck at the closed gate (the cage down), straight and towards both walls.
     for (const sx of [-0.8, 0.8])
       for (let deg = -75; deg <= 75; deg += 15) {
-        const sim = Simulation.fromSnapshot(snap);
+        const sim = Simulation.fromSnapshot(snap, undefined, "off", "off", [OLD_MARKET_CHUNK]);
         for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
         const yaw = Math.PI + (deg * Math.PI) / 180;
         teleportPlayer(sim, market(108 + sx, OVERPASS_TOP, 87.7), yaw);

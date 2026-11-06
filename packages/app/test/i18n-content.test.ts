@@ -133,10 +133,10 @@ describe("the narrative's own words", () => {
 describe("the HUD's own objective", () => {
   const between = (flags: string[]): DomainState => ({ ...createDomainState(), quests: { m0_first_contract: { status: "completed" } }, flags });
 
-  it("says who has work between jobs, in Polish word for word as before", () => {
+  it("says who has work between jobs, in Polish word for word as before (Hana in Alchemia since ADR-0063)", () => {
     expect(describeObjective(between([]), "pl")).toEqual({ title: "Wolna ręka", objective: "Kaito ma kolejne kontrakty. Mori sprzedaje cyberware." });
     expect(describeObjective(between(["met_hana", "met_genzo"]), "pl").objective).toBe(
-      "Kaito ma kolejne kontrakty, Hana z targu na Podzamczu i Genzō na Nabrzeżu też. Mori sprzedaje cyberware.",
+      "Kaito ma kolejne kontrakty, Hana z targu w Alchemii i Genzō na Nabrzeżu też. Mori sprzedaje cyberware.",
     );
     expect(describeObjective(between(["met_genzo"]), "pl").objective).toBe("Kaito ma kolejne kontrakty, Genzō na Nabrzeżu też. Mori sprzedaje cyberware.");
   });
@@ -144,7 +144,7 @@ describe("the HUD's own objective", () => {
   it("and in English", () => {
     expect(describeObjective(between([]), "en")).toEqual({ title: "Free hand", objective: "Kaito has more contracts. Mori sells cyberware." });
     expect(describeObjective(between(["met_hana", "met_genzo"]), "en").objective).toBe(
-      "More contracts from Kaito, and from Hana at the Podzamcze market and Genzō on the Nabrzeże too. Mori sells cyberware.",
+      "More contracts from Kaito, and from Hana at the market in Alchemia and Genzō on the Nabrzeże too. Mori sells cyberware.",
     );
   });
 });

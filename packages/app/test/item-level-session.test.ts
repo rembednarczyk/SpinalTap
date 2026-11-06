@@ -3,11 +3,12 @@ import { type AudioPort, EMPTY_INPUT, INITIAL_PROGRESSION, type InputFrame, type
 import { STORY_SOURCE } from "@seki/narrative";
 import { MIGRATIONS, MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { ground, market } from "@seki/sim";
+import { STALL_FRONT_YAW, STALL_KEEPERS, ground } from "@seki/sim";
 import { GameSession } from "../src/game-session";
 
-/** Between the market's stall rows under the viaduct (ADR-0045). */
-const STALLS = market(80, 0, 64);
+/** On the path in front of Alchemia's stalls (ADR-0063), a few metres from Oyaji's. */
+const OUT = { x: Math.sin(STALL_FRONT_YAW), z: Math.cos(STALL_FRONT_YAW) };
+const STALLS = ground(STALL_KEEPERS.oyaji.x + OUT.x * 4, STALL_KEEPERS.oyaji.z + OUT.z * 4);
 
 const render: RenderPort = {
   spawn() {},
@@ -54,7 +55,7 @@ describe("item level in play (ADR-0059, stage 4)", () => {
     const oyaji = () => [...session.sim.world].find((e) => e.key === "oyaji");
     teleport(session, STALLS.x, STALLS.z);
     steps(session, 2);
-    teleport(session, oyaji()!.position.x, oyaji()!.position.z - 1.4);
+    teleport(session, oyaji()!.position.x + OUT.x * 1.4, oyaji()!.position.z + OUT.z * 1.4);
     steps(session, 1);
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState()).toMatchObject({ shopOpen: true, shopId: "oyaji", level: 10 });
@@ -107,6 +108,7 @@ describe("item level in play (ADR-0059, stage 4)", () => {
         loot: { ...now.domain.loot, containers: now.domain.loot.containers.map((c) => ({ ...c, lines: c.lines.map(strip) })) },
       },
     };
-    expect(JSON.stringify(MIGRATIONS[28]!(JSON.parse(JSON.stringify(v28))))).toBe(JSON.stringify(now));
+    // Through v29 to today's v30 (ADR-0063 stage 6: the market's move changes nothing of a save made elsewhere).
+    expect(JSON.stringify(MIGRATIONS[29]!(MIGRATIONS[28]!(JSON.parse(JSON.stringify(v28)))))).toBe(JSON.stringify(now));
   });
 });

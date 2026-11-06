@@ -16,7 +16,7 @@ VAR time_of_day = "night"
 { game_hour >= 22 || game_hour < 1:
     OYAJI: Closed, closed. The pots have gone cold, shutter's down.
 - else:
-    OYAJI: At this hour? The whole market's asleep, only aleja Tysiąclecia never sleeps.
+    OYAJI: At this hour? The whole market's asleep, only Lubartowska never sleeps.
 }
 OYAJI: Come back after eight, when the shutter's up. We'll talk then.
 -> END

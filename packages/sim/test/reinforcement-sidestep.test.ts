@@ -38,10 +38,10 @@ const onTheRoof = (seed: number, level: HeatLevel): Simulation => {
 
 describe("a reinforcement leans to the side of its number (G-208)", () => {
   // With the hashes of the run as schemas v28 and v27 wrote it: the item levels of v29 (ADR-0059,
-  // stage 4) are fields of the starter kit here, and G-233 changes only the version.
+  // stage 4) are fields of the starter kit here; G-233 and the market move (v30) change only the version.
   for (const [seed, level, golden, v28, v27] of [
-    [21, 2, "fe39d279", "043d5219", "ecbb3d70"],
-    [5, 3, "2d466415", "651ff9cd", "ec6ecf8e"],
+    [21, 2, "774ee167", "043d5219", "ecbb3d70"],
+    [5, 3, "f41565fb", "651ff9cd", "ec6ecf8e"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
       const sim = onTheRoof(seed, level);

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CharacterState, InputFrame, Vec3 } from "@seki/core";
-import { AIR_ACCEL, COYOTE_TIME, SIM_DT, Simulation, docks, gangerEntity, market, playerStatsOf } from "../src";
+import { AIR_ACCEL, COYOTE_TIME, SIM_DT, Simulation, docks, gangerEntity, playerStatsOf } from "../src";
+import { market, oldMarketFloor } from "./fixtures/old-market";
 import type { LadderDef } from "../src/world/components";
 import { collect, input, run, teleportPlayer } from "./helpers";
 
-/** Every ladder of the game, by where to stand for its chunk to be streamed in. */
+/** Every ladder of the game (the docks') and of the old market's test floor, by where to stand for its chunk to be streamed in. */
 const LADDERS: readonly { readonly key: string; readonly near: Vec3 }[] = [
   { key: "targ-escape-1", near: market(72, 4.5, 64.65) },
   { key: "targ-escape-2", near: market(69.2, 4.5, 64.6) },
@@ -20,12 +21,12 @@ type Body = Partial<Pick<CharacterState, "cyberware" | "memories">>;
  * (with these implants and memories, when given).
  */
 const standing = (near: Vec3, position: Vec3, yaw: number, body?: Body): Simulation => {
-  let sim = Simulation.create({ seed: 1 });
+  let sim = Simulation.create({ seed: 1, ...oldMarketFloor(near) });
   teleportPlayer(sim, near);
   run(sim, 2);
   if (body) {
     const snap = sim.snapshot(null, "t", "");
-    sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, character: { ...snap.domain.character, ...body } } });
+    sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, character: { ...snap.domain.character, ...body } } }, undefined, "off", "off", oldMarketFloor(near).chunks);
   }
   teleportPlayer(sim, position, yaw);
   // Not falling from wherever `near` put her.
@@ -37,7 +38,7 @@ const standing = (near: Vec3, position: Vec3, yaw: number, body?: Body): Simulat
 };
 
 const ladderOf = (key: string, near: Vec3): LadderDef => {
-  const sim = Simulation.create({ seed: 1 });
+  const sim = Simulation.create({ seed: 1, ...oldMarketFloor(near) });
   teleportPlayer(sim, near);
   run(sim, 2);
   const l = [...sim.world.with("ladder")].find((e) => e.ladder.key === key)?.ladder;

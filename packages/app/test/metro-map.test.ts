@@ -89,17 +89,16 @@ describe("the metro layer", () => {
   });
 
   it("finds up to four marked things within 150 m of a station, the nearest first", () => {
-    const targ = metroNear("targ");
-    expect(targ).toHaveLength(NEAR_MAX);
-    expect(targ.map((n) => n.distance)).toEqual([...targ.map((n) => n.distance)].sort((a, b) => a - b));
-    expect(targ.every((n) => n.distance <= NEAR_RADIUS)).toBe(true);
-    expect(targ.map((n) => n.kind)).toContain("shop");
-    // Brama Krakowska from its node on Lubartowska (stage 2): Mori's clinic and Kaito down Krakowskie;
-    // Plac Litewski has nothing within 150 m.
-    expect(metroNear("kanal")).toEqual([
-      expect.objectContaining({ kind: "shop", label: "prompt.shop.mori", distance: 120 }),
-      expect.objectContaining({ kind: "contract", name: "Kaito", distance: 140 }),
-    ]);
+    // Brama Krakowska from its node on Lubartowska (stage 2): Hana and the stalls of Alchemia up
+    // Lubartowska (ADR-0063), then Mori's clinic, the four nearest; Kaito at 140 m is the fifth.
+    const kanal = metroNear("kanal");
+    expect(kanal).toHaveLength(NEAR_MAX);
+    expect(kanal.map((n) => n.distance)).toEqual([...kanal.map((n) => n.distance)].sort((a, b) => a - b));
+    expect(kanal.every((n) => n.distance <= NEAR_RADIUS)).toBe(true);
+    expect(kanal[0]).toMatchObject({ kind: "contract", name: "Hana" });
+    expect(kanal).toContainEqual(expect.objectContaining({ kind: "shop", label: "prompt.shop.mori", distance: 120 }));
+    // Plac Zamkowy lost the market to Alchemia, Plac Litewski has nothing within 150 m.
+    expect(metroNear("targ")).toEqual([]);
     expect(metroNear("shinsekai")).toEqual([]);
     expect(metroNear("doki")).toEqual([expect.objectContaining({ kind: "contract", name: "Genzō" })]);
   });
@@ -134,7 +133,8 @@ describe("the kiosk in the session", () => {
     session.intents.selectMetroStop("targ");
     const preview = ui.getState().metroMap?.preview;
     expect(preview).toMatchObject({ name: "Plac Zamkowy", district: "Podzamcze", fare: 20, seconds: 7, route: ["kanal", "targ"] });
-    expect(preview?.near.length).toBeGreaterThan(0);
+    // Nothing marked by Plac Zamkowy since the market moved to Alchemia (ADR-0063); the near list is the layer test's.
+    expect(preview?.near).toEqual([]);
     // The first step buys nothing: no ride, no money gone, the kiosk still open.
     steps(session, 30);
     expect(ui.getState().metroRide).toBeNull();

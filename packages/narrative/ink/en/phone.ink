@@ -16,7 +16,7 @@ KAITO: I heard. The client won't pay for nothing, so neither will I. Next time, 
 -> END
 
 === phone_hana_offer ===
-HANA: Something's stirring on Podzamcze. If you've got a minute, come by my stall.
+HANA: Something's stirring at Alchemia. If you've got a minute, come by my stall.
 -> END
 
 === phone_hana_paid ===

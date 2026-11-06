@@ -10,13 +10,13 @@ import {
 } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { CONTRACT_ITEM_SPOTS, clinicPoint, ground, market } from "@seki/sim";
+import { CONTRACT_ITEM_SPOTS, HANA_SPOT, clinicPoint, ground } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { nearKaito } from "./story-helpers";
 import { GameSession } from "../src/game-session";
 
-/** In front of Hana's cart on the market floor (ADR-0045). */
-const HANA = market(90.5, 0, 74);
+/** In front of Hana by her cart on Alchemia's square (ADR-0063). */
+const HANA = ground(HANA_SPOT.x - 1.5, HANA_SPOT.z);
 
 /** What the debrief card pays on top of the reward (ADR-0029); subscribe right before the payment. */
 const extraPay = (session: GameSession): (() => number) => {
@@ -191,7 +191,7 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     close(session);
     expect(eddies()).toBe(before + protection.reward + extra());
     expect(session.sim.domain.contracts).toEqual({ active: null, completed: 4 });
-    expect(ui.getState().objective).toBe("More contracts from Kaito, and from Hana at the Podzamcze market too. Mori sells cyberware.");
+    expect(ui.getState().objective).toBe("More contracts from Kaito, and from Hana at the market in Alchemia too. Mori sells cyberware.");
 
     // Three market jobs pay for an implant at Mori's.
     expect(eddies()).toBeGreaterThanOrEqual(400 + 250 + 470 + 550 - 1);

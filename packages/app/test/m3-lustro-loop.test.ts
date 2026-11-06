@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { type ActTwoEndingId, type EndingId, KAGAMI_CLEANER_KEYS, QUEST_MIRROR, type SaveSnapshot } from "@seki/core";
 import { MemorySaveStore } from "@seki/persistence";
 import { type Ui, allText, finishDialogue, objective, playActOne, setup, steps, talkTo, talkToKaito, talkToMori, teleport, shootDown } from "./story-helpers";
-import { market } from "@seki/sim";
+import { KUROSAWA_SPOT, REN_SPOT } from "@seki/sim";
 import type { GameSession } from "../src/game-session";
 
 /**
@@ -12,9 +12,9 @@ import type { GameSession } from "../src/game-session";
  * from that save.
  */
 
-/** Ren's roof over the market's south row and the viaduct's deck, in the market's frame (ADR-0045). */
-const REN_ROOF = market(86, 12.7, 59.6);
-const DECK = market(98.5, 9.9, 92);
+/** By Ren on Alchemia's roof terrace and by Kurosawa on the square behind the hall (ADR-0063). */
+const REN_ROOF = { ...REN_SPOT, x: REN_SPOT.x + 0.8 };
+const DECK = { ...KUROSAWA_SPOT, x: KUROSAWA_SPOT.x + 1.5 };
 
 /** Moves to a spot of another district and lets streaming bring it (and its people) in. */
 const goTo = (s: GameSession, at: { x: number; y: number; z: number }) => {
@@ -48,13 +48,14 @@ const findTrail = (s: GameSession, ui: Ui, ending: EndingId) => {
     expect(allText(ui)).toContain("Fiolki już nie ma.");
     finishDialogue(s, ui, "Komu sprzedałeś");
   }
-  expect(objective(ui)).toBe("Climb the fire escape to the roof over the market and find Ren");
+  expect(objective(ui)).toBe("Take the lift behind Alchemia up to the roof terrace and find Ren");
 };
 
 /** Step 2: Ren on the roof hands over the chip; the "dach" flashback follows. */
 const meetRen = (s: GameSession, ui: Ui, ending: EndingId, pick: number) => {
   goTo(s, REN_ROOF);
-  expect(s.sim.district).toBe("targ");
+  // Alchemia stands on Krakowskie Przedmieście's side of the Old Town (ADR-0063).
+  expect(s.sim.district).toBe("shinsekai-7");
   talkTo(s, "ren");
   expect(allText(ui)).toContain(ending === "aya" ? "Aya. Jednak przyszłaś." : "szklaną fiolkę");
   finishDialogue(s, ui, "Czego ode mnie chcesz?");
@@ -72,7 +73,7 @@ const kaitoJob = (s: GameSession, ui: Ui, jobPick: number, voicePick: number) =>
   expect(s.sim.domain.character.memories).toContain("last_call");
   expect(allText(ui)).toContain("Wyłączam filtr Odagiri.");
   finishDialogue(s, ui, voicePick);
-  expect(objective(ui)).toBe("Kurosawa from Kagami is waiting on the viaduct over aleja Tysiąclecia. Decide what happens to the archive");
+  expect(objective(ui)).toBe("Kurosawa from Kagami is waiting on the square behind Alchemia, by the lift. Decide what happens to the archive");
 };
 
 /** Step 4 up to the decision: Kurosawa's offer on the overpass deck. */
@@ -120,10 +121,10 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     } else {
       // The deal is off: Kurosawa leaves and his cleaners attack on the deck.
       expect(present(session, "kurosawa")).toBe(false);
-      expect(objective(ui)).toBe("Kagami's cleaners are attacking on the viaduct. Fight them off");
+      expect(objective(ui)).toBe("Kagami's cleaners are attacking on the square behind Alchemia. Fight them off");
       for (const key of KAGAMI_CLEANER_KEYS) shootDown(session, key);
       steps(session, 1);
-      expect(objective(ui)).toBe("Kagami's cleaners are down. Go back to Ren on the roof over the market");
+      expect(objective(ui)).toBe("Kagami's cleaners are down. Go back up to Ren on Alchemia's roof");
       expect(session.sim.domain.story.act2Ending).toBeNull();
       goTo(session, REN_ROOF);
       talkTo(session, "ren");

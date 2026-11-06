@@ -3,11 +3,12 @@ import { type AudioCue, type AudioPort, EMPTY_INPUT, type InputFrame, type LootL
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { ground, market } from "@seki/sim";
+import { STALL_FRONT_YAW, STALL_KEEPERS, ground } from "@seki/sim";
 import { GameSession } from "../src/game-session";
 
-/** Between the market's stall rows under the viaduct (ADR-0045). */
-const STALLS = market(80, 0, 64);
+/** On the path in front of the stalls of Alchemia (ADR-0063), a few metres from Oyaji's. */
+const OUT = { x: Math.sin(STALL_FRONT_YAW), z: Math.cos(STALL_FRONT_YAW) };
+const STALLS = ground(STALL_KEEPERS.oyaji.x + OUT.x * 4, STALL_KEEPERS.oyaji.z + OUT.z * 4);
 
 const render: RenderPort = {
   spawn() {},
@@ -100,7 +101,7 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     teleport(session, STALLS.x, STALLS.z);
     steps(session, 2);
     expect(oyaji()).toBeDefined();
-    teleport(session, oyaji()!.position.x, oyaji()!.position.z - 1.4);
+    teleport(session, oyaji()!.position.x + OUT.x * 1.4, oyaji()!.position.z + OUT.z * 1.4);
     steps(session, 1);
     expect(ui.getState().prompt).toBe("Oyaji's stall");
     steps(session, 1, frame({ interact: true }));
@@ -161,7 +162,7 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     teleport(session, STALLS.x, STALLS.z);
     steps(session, 2);
     const oyaji = [...session.sim.world].find((e) => e.key === "oyaji")!;
-    teleport(session, oyaji.position.x + 1.5, oyaji.position.z + 0.8);
+    teleport(session, oyaji.position.x + OUT.x * 1.4, oyaji.position.z + OUT.z * 1.4);
     steps(session, 2);
     expect(ui.getState().prompt).toMatch(/closed/);
     steps(session, 1, frame({ interact: true }));

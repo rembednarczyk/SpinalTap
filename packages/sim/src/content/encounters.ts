@@ -1,5 +1,5 @@
 import type { EncounterDef } from "@seki/core";
-import { DOCKS_PLACE, MARKET_PLACE } from "./lublin/sites";
+import { DOCKS_PLACE } from "./lublin/sites";
 
 /**
  * Street encounters (ADR-0032): short ink scenes, three to five per district, that start when
@@ -7,8 +7,7 @@ import { DOCKS_PLACE, MARKET_PLACE } from "./lublin/sites";
  * midnight). Each point lies on a street, a market aisle or a yard path the player can walk to.
  * The knots live in `packages/narrative/ink/enc-<district>.ink`.
  */
-/** The (x, z) of a point of the market or the docks, from their own coordinates. */
-const inMarket = (x: number, z: number) => ({ x: x + MARKET_PLACE.x, z: z + MARKET_PLACE.z });
+/** The (x, z) of a point of the docks, from their own coordinates. */
 const inDocks = (x: number, z: number) => ({ x: x + DOCKS_PLACE.x, z: z + DOCKS_PLACE.z });
 
 export const ENCOUNTERS: readonly EncounterDef[] = [
@@ -32,15 +31,16 @@ export const ENCOUNTERS: readonly EncounterDef[] = [
   // Koji, a Hebi recruit, practises his threats under the footbridge on Grodzka.
   { id: "kanal_recruit", district: "kanal", knot: "enc_kanal_recruit", fromHour: 16, toHour: 23, at: { x: 652, z: 64 }, radius: 4, npcKey: "enc-koji", once: true },
 
-  // Podzamcze: the market floor between the stall rows, under the viaduct.
-  // Kiku the fortune teller between the south stalls, at night.
-  { id: "targ_fortune", district: "targ", knot: "enc_targ_fortune", fromHour: 18, toHour: 2, at: inMarket(84, 76), radius: 4, npcKey: "enc-kiku", once: true },
-  // Daigo's synthetic chicken runs loose across the middle of the market, in the morning.
-  { id: "targ_chicken", district: "targ", knot: "enc_targ_chicken", fromHour: 6, toHour: 13, at: inMarket(100, 84), radius: 6, npcKey: "enc-daigo", once: true },
-  // Akane and a Hebi collector by the east wall of the hall, in the afternoon.
-  { id: "targ_debt", district: "targ", knot: "enc_targ_debt", fromHour: 12, toHour: 20, at: inMarket(108, 78), radius: 4, npcKey: "enc-akane", once: true },
-  // Riko sings in front of the north stalls in the evening.
-  { id: "targ_idol", district: "targ", knot: "enc_targ_idol", fromHour: 19, toHour: 23, at: inMarket(98, 99), radius: 5, npcKey: "enc-riko", once: true },
+  // Podzamcze: Plac Zamkowy and the paved squares with the street stalls by the bus station and
+  // the Bazar halls on Aleja Tysiąclecia (the game's market moved to Alchemia, ADR-0063).
+  // Kiku the fortune teller between the stalls by the bus station, at night.
+  { id: "targ_fortune", district: "targ", knot: "enc_targ_fortune", fromHour: 18, toHour: 2, at: { x: 745, z: 376 }, radius: 4, npcKey: "enc-kiku", once: true },
+  // Daigo's synthetic chicken runs loose across Plac Zamkowy, under the Zamkowa viaduct's steps, in the morning.
+  { id: "targ_chicken", district: "targ", knot: "enc_targ_chicken", fromHour: 6, toHour: 13, at: { x: 735, z: 296 }, radius: 6, npcKey: "enc-daigo", once: true },
+  // Akane and a Hebi collector in front of the Bazar halls, in the afternoon.
+  { id: "targ_debt", district: "targ", knot: "enc_targ_debt", fromHour: 12, toHour: 20, at: { x: 770, z: 366 }, radius: 4, npcKey: "enc-akane", once: true },
+  // Riko sings on the square further east along the avenue in the evening.
+  { id: "targ_idol", district: "targ", knot: "enc_targ_idol", fromHour: 19, toHour: 23, at: { x: 790, z: 362 }, radius: 5, npcKey: "enc-riko", once: true },
 
   // Nabrzeże Bystrzycy: the container yard and the quay.
   // Tomo, laid off by an algorithm, smokes at the north end of the yard in the morning.

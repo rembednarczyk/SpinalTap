@@ -202,7 +202,7 @@ MORI: The vial's gone. I figure Kaito told you.
     SEKI: You could have told me.
     MORI: I could have. But by then the module was just merchandise, and you didn't want to know it.
     MORI: Ren Odagiri bought it. Paid in cash nobody on this street has.
-- MORI: He sleeps on the roof over the market on Podzamcze, by the viaduct. He goes up the fire stairs from the stalls.
+- MORI: He sleeps on the roof of Alchemia, over the market. He rides up in the lift behind the hall.
 ~ set_flag("ren_trail")
 -> END
 

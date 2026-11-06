@@ -1,6 +1,6 @@
 import type { ContractHookDef, Vec3 } from "@seki/core";
 import { docks } from "./district-doki";
-import { market } from "./district-targ";
+import { ground } from "./lublin/terrain";
 import { spotNear } from "./lublin/places";
 
 /**
@@ -105,7 +105,8 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     source: "terminal",
     knot: "hook_protect_2",
     text: "hook.protect_2",
-    carrier: { at: market(93, 0, 70.5) },
+    // Hana's terminal on her cart, behind her stall on Alchemia's square.
+    carrier: { at: ground(437.3, 70.2) },
     reveal: { kind: "intel" },
   },
   {

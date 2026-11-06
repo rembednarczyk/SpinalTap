@@ -21,22 +21,22 @@ Mail na terminalu. Od: chłodnia Neon Koi. Temat: moduły. „Paczka trzyma temp
 HEBI: Pod kładką łapiemy kurierów. Na górę nie chodzimy, bo Kenji ma lęk wysokości i nikt nie chce pierwszy.
 -> END
 
-// retrieve: Hana's crate at the Hebi stash, east end of the market.
+// retrieve: Hana's crate at the Hebi stash by the ruin behind Alchemia's stalls.
 === hook_retrieve_1 ===
 HEBI: Skrzynki pilnujemy we dwóch, ale po północy Daisuke idzie do Fumiko na ramen. Wraca po kwadransie, jak nie ma kolejki.
 -> END
 
 === hook_retrieve_2 ===
-Shard, notatka Hebi: „Z wiaduktu widać skrytkę jak na dłoni. Schody na górę są od zachodu, przy północnym rzędzie. Chłopaki przy skrzynce pilnują tylko przejścia między straganami”.
+Shard, notatka Hebi: „Z tarasu na dachu Alchemii widać skrytkę jak na dłoni. Winda na górę jest za halą. Chłopaki przy skrzynce pilnują tylko wejścia od placu”.
 -> END
 
-// protect: Hebi coming for Oyaji's stall. _1 fits the raid from the east wall, _2 the one from under the viaduct.
+// protect: Hebi coming for Oyaji's stall. _1 fits the raid across the square, _2 the one down the path from Świętoduska.
 === hook_protect_1 ===
-HEBI: Do starego idziemy od wschodniej ściany, jak zawsze. Po co zmieniać coś, co działa.
+HEBI: Do starego idziemy przez plac, jak zawsze. Po co zmieniać coś, co działa.
 -> END
 
 === hook_protect_2 ===
-Mail na terminalu Hany. Od: nieznany. Temat: Oyaji. „Hebi zejdą spod wiaduktu. Z balkonu schodów pożarowych nad pierwszym straganem widać całe przejście, a oni nigdy nie patrzą w górę”.
+Mail na terminalu Hany. Od: nieznany. Temat: Oyaji. „Hebi zejdą ścieżką od Świętoduskiej. Z tarasu na dachu widać całą ścieżkę wzdłuż straganów, a oni nigdy nie patrzą w górę”.
 -> END
 
 // escort: Mika's way from the yard to the boat.

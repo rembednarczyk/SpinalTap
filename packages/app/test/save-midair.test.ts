@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { market } from "@seki/sim";
+import { docks } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { AUTOSAVE_SLOT } from "../src/controllers/autosave-controller";
 import { GameSession } from "../src/game-session";
@@ -25,12 +25,12 @@ class CountingStore extends MemorySaveStore {
 const flush = () => new Promise((r) => setTimeout(r, 0));
 const autos = (store: CountingStore) => store.puts.filter((s) => s === AUTOSAVE_SLOT).length;
 
-/** The roof over the market, and the way off its edge onto the lower roof (about 2.3 m down). */
-const ROOF = market(86, 12.7, 59.6);
-const OFF_THE_EDGE = Math.PI / 2;
+/** The low container stack in the docks' yard (the market's roofs went with ADR-0063), and the way off its north edge (2.6 m down). */
+const ROOF = docks(3, 2.6, 101.2);
+const OFF_THE_EDGE = 0;
 const RUN = frame({ moveZ: 1, sprint: true });
 
-/** On the roof, the market's district autosave written: the writes count from here. */
+/** On the container, the docks' district autosave written: the writes count from here. */
 const start = async () => {
   const store = new CountingStore();
   const ui = createUiStore();
@@ -114,10 +114,10 @@ describe("no save in the air (G-335)", () => {
 
   it("still saves on a ladder: a load puts her back on the rungs (G-313)", async () => {
     const { session, store } = await start();
-    teleport(session, market(73.2, 0, 64.4).x, market(73.2, 0, 64.4).z, Math.PI);
+    teleport(session, docks(3, 0, 99.6).x, docks(3, 0, 99.6).z, 0, 0, docks(3, 0, 99.6).y);
     steps(session, 1, frame({ interact: true }));
     steps(session, 40, frame({ moveZ: 1 }));
-    expect(session.sim.player()!.climb?.ladder).toBe("targ-escape-1");
+    expect(session.sim.player()!.climb?.ladder).toBe("doki-stack-1");
     expect(session.saves.canSave()).toBe(true);
     session.pageHidden();
     await flush();

@@ -21,22 +21,22 @@ Mail on a terminal. From: Neon Koi cold room. Subject: modules. "The package hol
 HEBI: We grab couriers under the footbridge. We don't go up top, because Kenji's scared of heights and nobody wants to go first.
 -> END
 
-// retrieve: Hana's crate at the Hebi stash, east end of the market.
+// retrieve: Hana's crate at the Hebi stash by the ruin behind Alchemia's stalls.
 === hook_retrieve_1 ===
 HEBI: Two of us watch the crate, but after midnight Daisuke goes to Fumiko's for ramen. Back in fifteen, if there's no line.
 -> END
 
 === hook_retrieve_2 ===
-Shard, Hebi note: "From the viaduct you can see the stash plain as day. The stairs up are on the west, by the north row. The boys at the crate only watch the gap between the stalls."
+Shard, Hebi note: "From the roof terrace of Alchemia you can see the stash plain as day. The lift up is behind the hall. The boys at the crate only watch the way in from the square."
 -> END
 
-// protect: Hebi coming for Oyaji's stall. _1 fits the raid from the east wall, _2 the one from under the viaduct.
+// protect: Hebi coming for Oyaji's stall. _1 fits the raid across the square, _2 the one down the path from Świętoduska.
 === hook_protect_1 ===
-HEBI: We hit the old man from the east wall, same as always. Why change what works.
+HEBI: We hit the old man from across the square, same as always. Why change what works.
 -> END
 
 === hook_protect_2 ===
-Mail on Hana's terminal. From: unknown. Subject: Oyaji. "The Hebi will come down from under the viaduct. From the fire-stair landing over the first stall you can see the whole aisle, and they never look up."
+Mail on Hana's terminal. From: unknown. Subject: Oyaji. "The Hebi will come down the path from Świętoduska. From the roof terrace you can see the whole path along the stalls, and they never look up."
 -> END
 
 // escort: Mika's way from the yard to the boat.

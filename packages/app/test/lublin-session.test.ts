@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT } from "@seki/core";
-import { GENZO_SPOT, METRO_STATIONS, market } from "@seki/sim";
+import { GENZO_SPOT, HANA_SPOT, METRO_STATIONS } from "@seki/sim";
 import type { GameSession } from "../src/game-session";
 import { type Ui, frame, setup, steps, teleport } from "./story-helpers";
 
@@ -111,14 +111,14 @@ describe("Lublin in the session (ADR-0045)", () => {
     expect(ui.getState().toasts.map((t) => `${t.title}`)).toContain("New contract: Escort");
   });
 
-  it("Hana on the market under the viaduct hands out a job through the dialogue", () => {
+  it("Hana at the market in Alchemia hands out a job through the dialogue (ADR-0063)", () => {
     const { session, ui } = setup();
     session.newGame();
     // Next to Hana's cart; one step streams the market in.
-    const cart = market(90.5, 0, 74);
+    const cart = { x: HANA_SPOT.x - 1.5, z: HANA_SPOT.z };
     teleport(session, cart.x, cart.z, Math.PI / 2);
     steps(session, 1);
-    expect(session.sim.district).toBe("targ");
+    expect(session.sim.district).toBe("shinsekai-7");
     expect(ui.getState().prompt).toContain("Talk to Hana");
     steps(session, 1, frame({ interact: true }));
     const text = () => (ui.getState().dialogue?.lines ?? []).map((l) => l.text).join("\n");
