@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type ItemCategory, type PrepareStage, type ItemDefId, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
+import { DEFAULT_LOCALE, type ItemCategory, type PrepareStage, type ItemDefId, type ItemIconKey, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
 import type { MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon } from "./map-vm";
 import type { RadioStationId } from "./wave2-vm";
@@ -163,6 +163,8 @@ export interface WeaponSlotVm {
   /** Catalog key of the weapon's name (ADR-0056), null when the slot is empty. */
   readonly name: string | null;
   readonly rarity: Rarity | null;
+  /** The weapon's icon (ADR-0073 stage 2), null when the slot is empty. */
+  readonly icon: ItemIconKey | null;
 }
 
 /** HUD weapon strip: the three slots and the active weapon's rounds. */

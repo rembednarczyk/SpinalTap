@@ -83,10 +83,37 @@ describe("credits (ADR-0063)", () => {
     }
   });
 
-  it("credits every source of sources.json the game uses; all of them CC0 or CC-BY 4.0", () => {
+  it("credits the icons of game-icons.net (CC BY 3.0, ADR-0073) with their source and a row per icon in the icons' README", () => {
+    const icons = CREDITS.filter((c) => c.license === "CC-BY-3.0");
+    expect(icons.map((c) => c.id).sort()).toEqual(["game-icons-delapouite", "game-icons-lorc"]);
+    const rows = readFileSync(join(import.meta.dirname, "../../ui/src/icons/README.md"), "utf8").split("\n").filter((l) => l.startsWith("| `"));
+    for (const c of icons) {
+      expect({ section: c.section, changed: c.changed, files: c.files }).toEqual({ section: "icons", changed: true, files: [] });
+      const s = SOURCES.sources.find((x) => x.id === c.id)!;
+      expect({ title: s.title, author: s.author, authorUrl: s.authorUrl, page: s.page, license: s.license, licenseUrl: s.licenseUrl }).toEqual({
+        title: c.title,
+        author: c.author,
+        authorUrl: c.authorUrl,
+        page: c.url,
+        license: "CC-BY-3.0",
+        licenseUrl: "https://creativecommons.org/licenses/by/3.0/",
+      });
+      // Every icon the source gives has its README row: author with link, its page, the licence.
+      for (const key of s.used ?? []) {
+        const row = rows.find((l) => l.startsWith(`| \`${key}\` |`));
+        expect(row, `README.md has no row for ${key}`).toBeDefined();
+        expect(row).toContain(`[${c.author}](${c.authorUrl})`);
+        expect(row).toContain("(https://game-icons.net/1x1/");
+        expect(row).toContain("[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)");
+      }
+    }
+  });
+
+  it("credits every source of sources.json the game uses; all of them CC0, CC-BY 4.0 or (game-icons.net) CC BY 3.0", () => {
     for (const s of SOURCES.sources) {
-      expect(["CC0", "CC-BY-4.0"], s.id).toContain(s.license);
+      expect(["CC0", "CC-BY-4.0", "CC-BY-3.0"], s.id).toContain(s.license);
       if (s.license === "CC-BY-4.0") expect(s.licenseUrl).toBe("https://creativecommons.org/licenses/by/4.0/");
+      if (s.license === "CC-BY-3.0") expect(s.id, "CC BY 3.0 only for game-icons.net").toMatch(/^game-icons-/);
       // A source marked unused (`"used": []`) waits for a later stage of ADR-0063.
       if (s.used && s.used.length === 0) {
         expect(CREDITS.some((c) => c.id === s.id), `${s.id} is unused but credited`).toBe(false);

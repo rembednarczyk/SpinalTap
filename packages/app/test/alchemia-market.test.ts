@@ -9,7 +9,7 @@ import type { GameSession } from "../src/game-session";
  * The market in Alchemia's food hall (ADR-0074 stage 1), headless: Seki walks from T1 to each
  * keeper's counter and each answers, Oyaji and Fumiko trade; the hours hold (Fumiko's bar shut by
  * day, Oyaji's shop after 22:00, Kenta's and Goro's units after midnight); Ren is on the green roof;
- * a game saved on the old hall's roof terrace (v30) and one saved in the old market on Aleja
+ * a game saved on the old hall's roof terrace (v31) and one saved in the old market on Aleja
  * Tysiąclecia (v28) load with Seki safe on the ground and the people at their new places.
  */
 
@@ -105,7 +105,7 @@ describe("the market in Alchemia's food hall (ADR-0074 stage 1)", () => {
     expect(ui.getState().dialogue).not.toBeNull();
   });
 
-  it("loads a game saved on the old hall's roof terrace (v30) with Seki on T1, unhurt, and the bag by Ren", async () => {
+  it("loads a game saved on the old hall's roof terrace (v31) with Seki on T1, unhurt, and the bag by Ren", async () => {
     // The migration's places are the content's (persistence knows no map).
     const by = REBUILT_STASHES[TARG_ROOF_STASH.key]!;
     expect(Math.hypot(by.x - TARG_ROOF_STASH.at.x, by.y - TARG_ROOF_STASH.at.y, by.z - TARG_ROOF_STASH.at.z)).toBeLessThan(0.01);
@@ -120,10 +120,10 @@ describe("the market in Alchemia's food hall (ADR-0074 stage 1)", () => {
     const roof = MOVED_STASHES[TARG_ROOF_STASH.key]!;
     const entities = [...now.entities.filter((e) => e.key !== "player"), { ...now.entities.find((e) => e.key === "player")!, position: { x: 422.3, y: 7.09, z: 46.1 } }];
     const containers = [{ key: TARG_ROOF_STASH.key, position: { x: roof.x, y: roof.y, z: roof.z }, chunk: roof.chunk, expiresAtTick: Number.MAX_SAFE_INTEGER, lines: TARG_ROOF_STASH.lines }];
-    const text = JSON.stringify({ ...now, version: 30, entities, domain: { ...now.domain, loot: { ...now.domain.loot, containers } }, streaming: { loadedChunks: ["krakowskie-2-1"] } });
+    const text = JSON.stringify({ ...now, version: 31, entities, domain: { ...now.domain, loot: { ...now.domain.loot, containers } }, streaming: { loadedChunks: ["krakowskie-2-1"] } });
     await store.put("old", JSON.stringify({ format: "seki-save", checksum: checksum(text), payload: text }));
     expect(await session.saves.loadAsync("old")).toBe(true);
-    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(31);
+    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(32);
     const p = session.sim.player()!;
     expect({ x: p.position.x, z: p.position.z }).toEqual({ x: ALCHEMIA_WAKE.x, z: ALCHEMIA_WAKE.z });
     const hp = p.health!.current;

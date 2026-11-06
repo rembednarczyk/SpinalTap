@@ -5,10 +5,13 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
- * v31: Alchemia rebuilt by the investor's plan (ADR-0074 stage 1): no new fields, but an older save
+ * v32: Alchemia rebuilt by the investor's plan (ADR-0074 stage 1): no new fields, but an older save
  * may have the player in the old hall, its stalls, lift or roof terrace, or on ground the food hall
  * and its terraces changed; the migration wakes her on T1 in front of the food hall, drops the
  * market's people (they come back at their units) and moves the roof stash by Ren on the green roof.
+ * v31: the player's style and bad luck (ADR-0059 stage 6): `progression.style` (the last fights,
+ * at most `STYLE_WINDOW`) and `progression.unlucky` (rolled pieces in a row below rare); an older
+ * save gets no fights and a count of 0.
  * v30: the market moved from Aleja Tysiąclecia to Alchemia (ADR-0063 stage 6): no new fields, but an
  * older save may have the player, the market's people and its stashes where the market stood; the
  * migration wakes her on the avenue and sends them to their places in Alchemia.
@@ -51,7 +54,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 31;
+export const SAVE_SCHEMA_VERSION = 32;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -88,6 +91,8 @@ export interface EntitySnapshot {
   readonly away?: number;
   /** Knocked out, or killed in a takedown and left lying (ADR-0065). Absent for everyone else. */
   readonly downed?: BodySnapshot;
+  /** Its fight is already in the player's style (ADR-0059, stage 6). Absent until then. */
+  readonly fought?: true;
   /** An NPC's gun not at rest with a full magazine (G-185). Absent for the player and at rest. */
   readonly gun?: GunSnapshot;
   /** A sniper's state (G-185): it may be about to fire. Absent for everyone else. */

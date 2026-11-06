@@ -5,7 +5,7 @@ type Json = Record<string, unknown>;
 const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
 
 /**
- * v30 -> v31 (ADR-0074 stage 1): Alchemia rebuilt by the investor's plan. The hall of igor.tesV,
+ * v31 -> v32 (ADR-0074 stage 1): Alchemia rebuilt by the investor's plan. The hall of igor.tesV,
  * its five stalls and the lift to its roof with the bridge and the terrace are gone; the food hall
  * is dug into the slope where they stood, the square in front of it levelled (T1) and ramps laid
  * beside it. Spelled out, like every migration: the content of its time.
@@ -71,7 +71,7 @@ const rebuiltLoot = (loot: unknown): unknown => {
 const keptOutside = (list: unknown): unknown => (Array.isArray(list) ? list.filter((p: unknown) => !(isObject(p) && isObject(p.state) && inRebuilt(p.state.position))) : list);
 
 export const rebuildAlchemia = (old: Json): Json => {
-  const out: Json = { ...old, version: 31 };
+  const out: Json = { ...old, version: 32 };
   if (Array.isArray(old.entities)) out.entities = rebuiltEntities(old.entities);
   if (isObject(old.domain)) out.domain = { ...old.domain, loot: rebuiltLoot(old.domain.loot) };
   if (isObject(old.reinforcements)) out.reinforcements = { ...old.reinforcements, people: keptOutside(old.reinforcements.people) };

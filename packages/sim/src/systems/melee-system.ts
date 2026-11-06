@@ -125,6 +125,7 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
     if (f.player) noteViolence(ctx, t, isEngaged(t), chest);
     t.health = applyDamage(t.health, outcome.damage);
     t.lastHitBy = f.id;
+    t.lastHitStyle = f.player ? "melee" : undefined;
     if (t.player) wearPlayerClothes(ctx, outcome.zone);
     if (t.ai && !t.unconscious) t.ai.alerted = true;
     ctx.bus.emit("DamageDealt", { sourceId: f.id, targetId: t.id, amount: outcome.damage, critical: outcome.critical, zone: outcome.zone, at: chest });

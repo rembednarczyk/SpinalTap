@@ -1,4 +1,18 @@
-import { ATTRIBUTE_IDS, ATTRIBUTE_MAX, ATTRIBUTE_START, type Attributes, HACKED_MEMORY, MAX_LEVEL, MIN_LEVEL, type ProgressionState, isConsistentProgression, validPerks } from "@seki/core";
+import {
+  ATTRIBUTE_IDS,
+  ATTRIBUTE_MAX,
+  ATTRIBUTE_START,
+  type Attributes,
+  HACKED_MEMORY,
+  MAX_LEVEL,
+  MIN_LEVEL,
+  PITY_AFTER,
+  type ProgressionState,
+  STYLE_WINDOW,
+  isConsistentProgression,
+  isStyleKind,
+  validPerks,
+} from "@seki/core";
 
 type Json = Record<string, unknown>;
 
@@ -22,6 +36,10 @@ export const findProgressionError = (p: unknown): string | null => {
   if (!isObject(u) || !isCount(u.attribute) || !isCount(u.perk)) return "progression points";
   const h = p.hacked;
   if (h !== undefined && (!Array.isArray(h) || h.length > HACKED_MEMORY || !h.every((k) => typeof k === "string"))) return "progression hacked";
+  // Stage 6: at most STYLE_WINDOW known fights, and a run of bad luck no longer than the protection lets it be.
+  const s = p.style;
+  if (!Array.isArray(s) || s.length > STYLE_WINDOW || !s.every(isStyleKind)) return "progression style";
+  if (!isCount(p.unlucky) || (p.unlucky as number) > PITY_AFTER) return "progression luck";
   // Level 30 at 0 XP, or more points than the levels gave, is an edited save.
   if (!isConsistentProgression(p as unknown as ProgressionState)) return "progression level";
   return null;

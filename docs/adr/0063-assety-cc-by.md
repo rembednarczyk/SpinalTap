@@ -16,6 +16,7 @@ Użytkownik zdecydował (31.10): dopuszczamy CC-BY 4.0.
 
 ## Decyzja
 - **Licencje:** CC0 albo CC-BY 4.0. Inne (CC-BY-SA, CC-BY-NC, płatne, bez licencji) dalej odpadają. Dotyczy modeli, tekstur i dźwięków (ADR-0060 bez zmian w części o głosach).
+- **Wyjątek: CC BY 3.0 dla ikon game-icons.net** (decyzja użytkownika 6.11, ADR-0073 etap 2). Tylko ikony z game-icons.net (repozytorium `game-icons/icons`, plik `license.txt`: „Creative Commons 3.0 BY”), tylko jako źródło rysunków ikon przedmiotów w `packages/ui/src/icons/`, zawsze z atrybucją: wpis na ekranie „Autorzy” (sekcja „Ikony przedmiotów”, jeden wiersz na autora z tytułami ikon), wiersz na ikonę w `packages/ui/src/icons/README.md` (tytuł, autor z linkiem, strona ikony, licencja z linkiem, opis zmian) i źródło z sha256 w `tools/assets/sources.json` (`game-icons-<autor>`). Ikony z dopiskiem CC0 w `license.txt` są bez ograniczeń; inne paczki na CC BY 3.0 dalej odpadają.
 - **Uznanie autorstwa:**
   - każdy plik CC-BY ma wiersz w README katalogu (`packages/app/public/*/README.md`): tytuł, autor z linkiem, źródło, licencja z linkiem, opis zmian („uproszczony, kolory sprowadzone do palety”);
   - ekran „Autorzy” w menu tytułowym i pauzy czyta listę z jednego pliku danych (`credits`), żeby README i ekran się nie rozjechały; test sprawdza, że każdy plik CC-BY w `public` ma wpis;
@@ -55,6 +56,12 @@ Użytkownik zdecydował (31.10): dopuszczamy CC-BY 4.0.
 - **Al. Tysiąclecia:** bez placu `MARKET_PLACE`, wyrównania terenu i wycinki budynków; wracają wiaty przystanku w672635872, w672635873 (w grze dziś jako zamknięte bryły, G-395) i piekarnia „Hunek” w458298766 z OSM, meble ulicy i ruch przez dawny plac. Spotkania uliczne Podzamcza (`enc_targ_*`) zostają na Podzamczu (Plac Zamkowy, place przy Dworcu i halach Bazaru).
 - **Testy:** stary targ to podłoga testowa symulacji (`sim/test/fixtures/old-market.ts`, `ChunkDef.nav`) dla skoków, drabin, poziomów i nawigacji; sesja bez renderera (`app/test/alchemia-market.test.ts`) chodzi do sprzedawców, handluje, jedzie do Rena i wczytuje stary zapis.
 - **Zapis:** `SAVE_SCHEMA_VERSION` 30; migracja 29 -> 30 (`persistence/src/market-move.ts`, po kroku 28 -> 29 z ADR-0059 etap 4) budzi gracza z dawnego targu na jezdni (785; 350), usuwa zapisane stany ludzi targu (wracają na swoje miejsca), przenosi skrytki targu i torby leżące na dawnym targu.
+
+## Wdrożenie (ADR-0073 etap 2, 6.11): ikony z game-icons.net
+- **Co:** 14 ikon wszczepów i zużywalnych od dwóch autorów: Lorc (layered-armor, brain, sands-of-time, bandage-roll, meat, syringe, crystal-growth) i Delapouite (eye-target, robot-grab, robot-leg, swallow, first-aid-kit, noodles, coffee-cup).
+- **Pobranie:** pliki SVG z `raw.githubusercontent.com/game-icons/icons/master/<autor>/<nazwa>.svg` (strona game-icons.net miała 6.11 wygasły certyfikat TLS, API GitHuba było dla sesji zamknięte), User-Agent `SekiSenshi-topo/1.0`, jedno żądanie na plik, bez ponowień. SVG czytane tylko jako tekst (ścieżka `d`), nic z nich nie jest uruchamiane; surowe pliki nie trafiają do repo.
+- **Zmiany:** sylwetki 512 px przeskalowane na siatkę 32 × 32 (pole 3–29), krzywe spłaszczone i uproszczone do odcinków na siatce 0,5, drobne elementy pominięte; rysowane jak nasze ikony: kontur `currentColor` w kolorze rzadkości z półprzezroczystym wypełnieniem zamiast białej plamy. Dane w `packages/ui/src/icons/game-icon-paths.ts` razem ze źródłem każdej ikony (`GAME_ICON_SOURCES`), z którego ekran „Autorzy” składa tytuły.
+- **Testy:** `packages/app/test/credits.test.ts` (wpis na ekranie, źródło w `sources.json`, wiersz README dla każdej ikony, CC BY 3.0 tylko dla `game-icons-*`), `packages/ui/test/item-icons.test.tsx` (każda ikona z game-icons.net ma autora z wpisem CC BY 3.0, i tylko wszczepy i zużywalne z nich korzystają).
 
 ## Konsekwencje
 - Więcej gotowych modeli w stylu cyberpunk, kosztem obowiązku podpisu; ekran „Autorzy” robi się stałym elementem menu.

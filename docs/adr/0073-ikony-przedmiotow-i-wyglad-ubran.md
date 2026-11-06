@@ -65,6 +65,17 @@ Stan na `origin/main` aca80ad.
 - **Zrzuty:** ekwipunek i lada na telefonie (800 × 370) i desktopie (1280 × 720) przed i po, przez `pnpm e2e` (ADR-0046: przeglądarka tylko do układu).
 - **Złote hashe `sim` i schemat zapisu** bez zmian w etapach 1 i 2.
 
+## Wdrożenie etapu 2 (6.11)
+- **Klucze w `core`:** `ItemIconKey` ma 38 kluczy; tabele `GARMENT_ICONS`, `MOD_ICONS`, `CYBERWARE_ICONS` i `STACKABLE_ICONS` (`Record` po id, kompilator wymusza ikonę dla nowego przedmiotu), `itemIcon` zwraca zawsze klucz. Ubrania mają ikonę według rodzaju (kurtka, spodnie, hełm, wizjer, kamizelka, kombinezon), a sztuki odróżnia kolor rzadkości i nazwa.
+- **Rysunki:** ubrania, mody (tłumik, celownik holo, magazynek) i złom (płytka, zębatka ze sprężyną, chip) rysowane w repo jak etap 1; wszczepy i zużywalne po game-icons.net (CC BY 3.0, Lorc i Delapouite, ADR-0063: wyjątek licencyjny i wdrożenie), przerysowane automatycznie do siatki 32 × 32, odcinków i konturu w kolorze rzadkości (`ui/src/icons/game-icon-paths.ts`, atrybucja w `README.md` obok i na ekranie „Autorzy”).
+- **Budżet rozmiaru bez zmian:** 6444 znaki danych ścieżek na 38 ikon, średnio 169,6 (budżet 200), najwięcej 308 („synapse”, budżet 320). Uproszczenie ikon z game-icons.net ma tolerancję dobraną na ikonę (0,5–1,2 jednostki siatki), żeby zmieścić się w budżecie etapu 1 bez jego podnoszenia.
+- **Torba na telefonie** (poniżej 1100 × 620 px, komórka 52 px): sama ikona (60% komórki), skrót rzadkości i licznik stosu w dolnych rogach; nazwa jest w etykiecie przycisku dla czytnika i w szczegółach po dotknięciu (`useWideCells`, ten sam próg co układ desktopu w `styles.css`). Desktop bez zmian: ikona nad skrótem nazwy.
+- **Pasek broni w HUD:** `WeaponSlotVm.icon` (app: `weapon-hud.ts`), ikona 30 px w kolorze rzadkości obok klawisza i nazwy, na telefonie (sam aktywny slot) i desktopie; pusty slot bez ikony. Kontrast 3:1 każdej rzadkości także na tle paska (`--panel` spłaszczony na jasnoszarej ulicy, #3e4246).
+- **Lada:** każda oferta (broń, ubrania, mody, stosy, pudełka nabojów) i wszczepy w klinice mają ikonę w ramce.
+- **Paczka** (build na `origin/main` 11dd80c i po zmianie): CSS settings 82,31 → 82,67 kB (gzip 16,55 → 16,60), JS settings 3589,15 → 3597,30 kB (gzip 1017,64 → 1020,75). Bez nowych żądań sieci i tekstur.
+- **Testy:** `ui/test/item-icons.test.tsx` (ikona dla każdego przedmiotu i brak nieużytych rysunków, źródła i atrybucja ikon z game-icons.net, budżet, kontrast z tłem paska HUD, komórka desktopu z nazwą i telefonu z samą ikoną i etykietą, szczegóły po dotknięciu, pasek HUD, lada i klinika), `app/test/credits.test.ts` (atrybucja CC BY 3.0); układ HUD dotykowego `e2e/touch-layout.spec.ts`.
+- **Poza etapem:** panel łupu, ikony w kolumnie ubrań przy podglądzie (zostaje przy nazwach) i w zakładce „Naprawa”. Ramki rzadkości komórek bez ikon (G-410): w torbie takich komórek już nie ma, ale reguła CSS i sloty zostają do osobnej poprawki.
+
 ## Konsekwencje
 - Każda nowa broń i amunicja wymaga ikony (kompilator); nowe ubrania i wszczepy po etapie 2 też.
 - Ikony rysuje się ręcznie w repo; ich jakość zależy od autora, ale nie od licencji ani potoku.
