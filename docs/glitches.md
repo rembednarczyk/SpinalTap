@@ -1154,7 +1154,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`elevator-system`)
 
 ### G-376 Job CI „Typecheck, lint, architecture, unit tests” przekracza `timeout-minutes: 20`: same testy z pokryciem trwają 18,6 min
-- Status: zgłoszone (6.11, orkiestrator; PR #314 anulowany po 20 min, choć 4317/4317 testów przeszło)
+- Status: w PR (6.11, adbb19c; dwie części testów z raportami blob, progi na scalonym pokryciu; orkiestrator)
 - Ważność: S2 (blokuje scalanie każdego PR-a z kodem) · Zasięg: `.github/workflows/ci.yml`, job unit (l. 45), `pnpm test:coverage` 1116 s (testy 57%, import 41%; 452 workery, vitest sugeruje `isolate: false`, ok. 31 s mniej) · Koszt: średni
 - Pakiet właściciela: Infra/Build (`.github`, konfiguracja vitest w root), QA (najwolniejsze testy)
 - Poprawka bez podnoszenia limitu (CLAUDE.md, ADR-0046): podział przebiegu na części (sharding) albo przyspieszenie (izolacja, najwolniejsze pliki, import ciężkich modułów). Pokrycie łączone z części
