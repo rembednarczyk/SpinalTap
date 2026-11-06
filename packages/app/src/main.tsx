@@ -4,7 +4,7 @@ import { audioSampleManifest } from "./audio-manifest";
 import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCES } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
-import { FixedStepLoop, ground, koiPoint, rayGeometry } from "@seki/sim";
+import { FixedStepLoop, SIM_DT, ground, koiPoint, rayGeometry } from "@seki/sim";
 import { DEFAULT_SETTINGS, GameUi, createUiStore, translate } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
@@ -16,6 +16,7 @@ import { bindCrashWatch } from "./crash-watch";
 import { bindPageHidden } from "./page-lifecycle";
 import { pointerFocus } from "./pointer-focus";
 import { feedTouchFire } from "./touch-fire";
+import { feedAimAssist } from "./aim-assist-feed";
 import { feedLookTuning, viewLook } from "./look-tuning";
 import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings } from "./settings";
 
@@ -167,11 +168,13 @@ const loop = new FixedStepLoop(browserClock, {
     const s = ui.getState().settings;
     applyControls(s);
     feedTouchFire(input.virtualPad, s, session.sim.player());
+    feedAimAssist(input.aimAssist, s, session.sim, input.shoulder.left);
     const frame = input.poll();
     // The camera takes the shoulder of the frame the shots start from, in the same step (G-275).
     renderer.rig.leftShoulder = frame.leftShoulder === true;
     // Each device's sensitivity is the adapter's (ADR-0072); the zoom and ADS slowdown stay here.
-    session.step(viewLook(frame, s, renderer.rig.lookScale));
+    // The assist's pull goes on after them, so it turns the view by the angle it means.
+    session.step(input.aimAssist.apply(viewLook(frame, s, renderer.rig.lookScale), SIM_DT));
   },
   render: (alpha) => {
     if (session.preparing !== loadingPainted) {

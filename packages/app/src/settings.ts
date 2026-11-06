@@ -1,5 +1,6 @@
 import { type AudioScenePort, FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, isLocale, radToDeg } from "@seki/core";
 import {
+  type AimAssistMode,
   type AimMode,
   type CameraShoulder,
   type ColorblindMode,
@@ -51,6 +52,7 @@ const isDamageMode = (v: unknown): v is DamageNumbersMode => v === "off" || v ==
 const isColorblind = (v: unknown): v is ColorblindMode => v === "off" || v === "protan" || v === "deutan" || v === "tritan";
 const isTouchFire = (v: unknown): v is TouchFireMode => v === "aims" || v === "separate";
 const isPadCurve = (v: unknown): v is PadCurveMode => v === "linear" || v === "classic" || v === "precise";
+const isAimAssist = (v: unknown): v is AimAssistMode => v === "off" || v === "light" || v === "standard";
 const bool = (v: unknown, fallback: boolean): boolean => (typeof v === "boolean" ? v : fallback);
 
 /** The vertical field of view entries saved before ADR-0049 held by default, degrees. */
@@ -102,6 +104,8 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     padSensitivity: clamp(r.padSensitivity, PAD_SENSITIVITY_RANGE[0], PAD_SENSITIVITY_RANGE[1], defaults.padSensitivity),
     padDeadzone: Math.round(clamp(r.padDeadzone, PAD_DEADZONE_SETTING_RANGE[0], PAD_DEADZONE_SETTING_RANGE[1], defaults.padDeadzone) * 100) / 100,
     padCurve: isPadCurve(r.padCurve) ? r.padCurve : defaults.padCurve,
+    // ADR-0072 stage 3: old entries take the standard assist; no default changed, so SETTINGS_REV stays.
+    aimAssist: isAimAssist(r.aimAssist) ? r.aimAssist : defaults.aimAssist,
     horizontalFov: clampFieldOfView(horizontalFovOf16x9(r), defaults.horizontalFov),
     volume: clamp(r.volume, 0, 1, defaults.volume),
     musicVolume: clamp(r.musicVolume, 0, 1, defaults.musicVolume),

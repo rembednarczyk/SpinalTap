@@ -21,11 +21,15 @@ export interface AimCandidate {
   readonly radius: number;
 }
 
-/** Fighting the player: alerted (ADR-0029), alive and on its feet. Not a civilian, a neutral patrol or an unaware guard (ADR-0069). */
-const inCombat = (e: Entity): boolean => !!e.ai?.alerted && !e.unconscious && (e.health?.current ?? 0) > 0 && !!e.body;
+/**
+ * Fighting the player: alerted (ADR-0029), or a sniper (no `ai`, ADR-0024) aiming at her with
+ * its laser on (user decision 6.11); alive and on its feet. Not a civilian, a neutral patrol, an
+ * unaware guard (ADR-0069) or a sniper resting, moving or idle.
+ */
+const inCombat = (e: Entity): boolean => (!!e.ai?.alerted || e.sniper?.phase === "aim") && !e.unconscious && (e.health?.current ?? 0) > 0 && !!e.body;
 
 /**
- * Who the aim assist may pull to (ADR-0072, stage 2): the enemies fighting the player, within
+ * Who the aim assist may pull to (ADR-0072, stages 2 and 3): the enemies fighting the player, within
  * `range` (`AIM_ASSIST_RANGE` and the reach of her active weapon, whichever is shorter) and in
  * plain sight of her eye. In creation order. A pure query: no state, no randomness, outside
  * `createSystems()`, so the simulation and its golden hashes do not change.
@@ -33,7 +37,7 @@ const inCombat = (e: Entity): boolean => !!e.ai?.alerted && !e.unconscious && (e
 export const aimTargets = (world: World<Entity>, player: Entity, range = aimRangeOf(player)): AimCandidate[] => {
   const eye = eyeOf(player);
   const out: AimCandidate[] = [];
-  for (const e of inCreationOrder(world.with("ai"))) {
+  for (const e of inCreationOrder([...world.with("ai"), ...world.with("sniper")])) {
     if (e === player || !inCombat(e)) continue;
     const point = chestOf(e);
     const distance = Math.hypot(point.x - eye.x, point.y - eye.y, point.z - eye.z);

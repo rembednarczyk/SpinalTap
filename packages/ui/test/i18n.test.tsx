@@ -84,6 +84,7 @@ describe("language of the menus", () => {
   it("rounds the sensitivity values as before and changes only the separator", () => {
     const { store } = mount({ screen: "paused", settings: { ...DEFAULT_SETTINGS, touchSensitivity: 0.35, locale: "pl" } });
     fireEvent.click(screen.getByText("Ustawienia"));
+    fireEvent.click(screen.getByRole("tab", { name: "Dotyk i pad" }));
     expect(screen.getByText("0,3×")).toBeTruthy();
     act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "en" } }));
     expect(screen.getByText("0.3×")).toBeTruthy();
@@ -103,6 +104,7 @@ describe("language of the menus", () => {
     act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "pl" } }));
     expect(screen.getByRole("tab", { name: "Ogólne" })).toBeTruthy();
     expect(screen.getByRole("radiogroup", { name: "Language / Język" })).toBeTruthy();
-    expect(screen.getByText("1,0×")).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Dotyk i pad" }));
+    expect(screen.getAllByText("1,0×").length).toBeGreaterThan(0);
   });
 });

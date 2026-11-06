@@ -256,14 +256,12 @@ describe("settings", () => {
 
   it("shows the current values and sends changes as intents", () => {
     const { i } = openSettings({ settings: { ...DEFAULT_SETTINGS, quality: "high", aimMode: "hold", mouseSensitivity: 1.5, touchSensitivity: 0.8, volume: 0.4 } });
-    // General: graphics, sound, hints, touch.
+    // General: graphics, sound, hints (touch sensitivity is in the touch tab, ADR-0072).
     expect(screen.getByRole("radio", { name: "High" }).getAttribute("aria-checked")).toBe("true");
     expect(screen.getByTestId("settings").textContent).toContain("40%");
-    expect(screen.getByTestId("settings").textContent).toContain("0.8×");
+    expect(screen.queryByLabelText(/Touch sensitivity/)).toBeNull();
     fireEvent.click(screen.getByRole("radio", { name: "Low" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ quality: "low" });
-    fireEvent.change(screen.getByLabelText(/Touch sensitivity/), { target: { value: "1.2" } });
-    expect(i.changeSettings).toHaveBeenCalledWith({ touchSensitivity: 1.2 });
     fireEvent.change(screen.getByLabelText(/Volume/), { target: { value: "0.25" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ volume: 0.25 });
     // The mix buses each have their own slider (ADR-0060 stage 1).

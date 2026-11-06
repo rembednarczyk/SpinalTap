@@ -2,6 +2,7 @@ import { EMPTY_INPUT, type InputFrame, type InputPort } from "@seki/core";
 import { type ButtonMode, DEFAULT_KEYMAP, DEFAULT_PAD_TUNING, DoubleTap, InputLatches, type KeyMap, type PadTuning, mapGamepad, mapKeyboardMouse, mergeFrames } from "./keymap";
 import { PAD_LEFT_STICK, ShoulderSwitch } from "./shoulder-switch";
 import { VirtualPad } from "./virtual-pad";
+import { AimAssist } from "./aim-assist";
 
 /**
  * Look sensitivity per device (ADR-0072): mouse, touch and the pad each turn the view at their
@@ -33,6 +34,8 @@ export class BrowserInput implements InputPort {
   readonly virtualPad = new VirtualPad();
   /** The TPP shoulder (G-275): the settings set its side and hear about a swap. */
   readonly shoulder = new ShoulderSwitch();
+  /** Aim assist for touch look (ADR-0072); the app feeds it the targets and applies its pull. */
+  readonly aimAssist = new AimAssist();
   private lastTouchAt = -Infinity;
   private active = false;
   /** Set when pointer lock is refused (some embedded frames): mouse look then works on plain movement. */
@@ -161,6 +164,7 @@ export class BrowserInput implements InputPort {
     if (value !== this.active) {
       this.clearBuffered();
       this.latches.reset();
+      this.aimAssist.reset();
     }
     this.active = value;
   }
@@ -225,9 +229,12 @@ export class BrowserInput implements InputPort {
     // slows these two frames, never the mouse, before they merge.
     const touch = scaleLook(this.virtualPad.poll(), this.lookTuning.touch);
     const pad = this.pollPad(dt);
-    const withTouch = mergeFrames(km, touch);
+    const withTouch = mergeFrames(km, this.aimAssist.slow(touch));
+    const padLook = pad && this.aimAssist.slow(pad);
     // The touch fire button aims after the latches, so it never flips a toggled aim (ADR-0072).
-    const latched = this.virtualPad.withFireAim(this.latches.apply(pad ? mergeFrames(withTouch, pad) : withTouch));
+    const latched = this.virtualPad.withFireAim(this.latches.apply(padLook ? mergeFrames(withTouch, padLook) : withTouch));
+    // Sights raised from touch or the pad's LT pull to a target; from the mouse never (ADR-0072).
+    this.aimAssist.observe(latched.aim, touch.aim || this.virtualPad.fireAims || pad?.aim === true);
     return this.shoulder.apply(latched, swapKey, pad !== null && this.padStick);
   }
 
