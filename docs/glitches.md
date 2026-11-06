@@ -1265,11 +1265,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: po wczytaniu oślepiony wróg od razu widzi gracza, przebieg rozjeżdża się z zapisanym (hash po wczytaniu inny niż w ciągłej grze); dotyczy każdego zapisu w trakcie walki z hackami
 - Pakiet właściciela: packages/sim, packages/core (save-snapshot), packages/persistence
 
-### G-421 Trawniki pod kostką placów: multipoligon placu bez wyciętych pierścieni `inner` (Plac Litewski i 70 innych kawałków)
-- Status: zgłoszone (6.11, kurator, pytanie użytkownika)
-- Ważność: S2 · Zasięg: 71 kawałków trawy, 13 425 m² w mieście, w tym ok. 9 700 m² w Krakowskim (Plac Litewski r7690183 ma w grze 0,01% trawy wobec 31% w rzeczywistości), obrzeża drzew na deptaku, część Placu Krąpca, Nabrzeże (2343; 161) · Koszt: mały; poprawka w `tools/osm-import` (`features.ts`: wyciąć `inner` z nawierzchni) albo w `ground.ts` (odjąć `grass` od `square`/`cobble`); NIE podnosić `SURFACE_LIFT.grass` (wspólne z symulacją, G-130); test: trawa widoczna na placu ≥ 9 000 m², kontrola `grass-under-paving` z bazą zbijaną do 0
-- Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
-
 ### G-422 Drzewa o ok. 1/3 za niskie i z wąskimi koronami (Plac Litewski)
 - Status: zgłoszone (6.11, kurator)
 - Ważność: S3 · Zasięg: w grze 6,7–12,2 m, w NMPT mediana 12,7 m, 43 drzewa ponad 15 m; poprawka: skala z NMPT (szczyt w promieniu 3 m minus teren) albo z tagu `height`, zakres skali ok. 0,7–2,2; test: mediana błędu ≤ 2 m; kontrola `tree-height-vs-nmpt`

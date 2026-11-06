@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-421 Trawniki pod kostką placów: multipoligon placu bez wyciętych pierścieni `inner` (Plac Litewski i 70 innych kawałków)
+- Status: naprawione (PR #344, 6.11; zgłoszenie użytkownika; Plac Litewski 1,75 → 8 012 m² trawy, `grass-under-paving` 68 → 7)
+- Ważność: S2 · Zasięg: 71 kawałków trawy, 13 425 m² w mieście, w tym ok. 9 700 m² w Krakowskim (Plac Litewski r7690183 ma w grze 0,01% trawy wobec 31% w rzeczywistości), obrzeża drzew na deptaku, część Placu Krąpca, Nabrzeże (2343; 161) · Koszt: mały; poprawka w `tools/osm-import` (`features.ts`: wyciąć `inner` z nawierzchni) albo w `ground.ts` (odjąć `grass` od `square`/`cobble`); NIE podnosić `SURFACE_LIFT.grass` (wspólne z symulacją, G-130); test: trawa widoczna na placu ≥ 9 000 m², kontrola `grass-under-paving` z bazą zbijaną do 0
+- Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
+
 ### G-410 Ramki rzadkości w torbie i slotach ekwipunku niewidoczne (kolejność reguł CSS)
 - Status: naprawione (PR #342, 6.11; sloty z ramką rzadkości, zaznaczenie białym pierścieniem)
 - Ważność: S3 (weryfikator #334: ramki niewidoczne od E4 4c23a7f; rzadkość tylko tekstem) · Zasięg: w `styles.css` reguły `.inv__cell` i `.inv__slot` stoją za `.rarity--*` i nadpisują kolor ramki; od #334 komórki z ikoną mają kolor w stylu, komórki tekstowe (mody, wszczepy) i sloty ubrań nadal nie; zaznaczenie (magenta) wygląda jak kolor rzadkiego
