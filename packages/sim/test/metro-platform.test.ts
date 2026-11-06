@@ -174,6 +174,10 @@ describe("metro platforms in the map (ADR-0071 stage 4)", () => {
     for (const r of p.rooms) {
       for (let x = r.minX; x <= r.maxX; x += 0.5) for (let z = r.minZ; z <= r.maxZ; z += 0.5) expect(inBuilding(x, z), `${x},${z}`).toBe(false);
     }
+    // Nor is any part of it dug under a building: the track's tunnel ends included (G-373).
+    for (const { bounds: b } of p.vaults) {
+      for (let x = b.minX; x <= b.maxX; x += 0.25) for (let z = b.minZ; z <= b.maxZ; z += 0.25) expect(inBuilding(x, z), `vault ${x},${z}`).toBe(false);
+    }
     type R = { minX: number; maxX: number; minZ: number; maxZ: number };
     const meets = (r: R) => p.vaults.some(({ bounds: b }) => r.minX < b.maxX && r.maxX > b.minX && r.minZ < b.maxZ && r.maxZ > b.minZ);
     expect(meets(TRASA_PODZIEMNA_BOUNDS)).toBe(false);
