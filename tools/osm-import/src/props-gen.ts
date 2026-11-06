@@ -165,7 +165,7 @@ const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: rea
     const n = { x: -st.dir.z * side, z: st.dir.x * side };
     for (const s of SLIDES) {
       const at = { x: st.p.x + st.dir.x * s, z: st.p.z + st.dir.z * s };
-      const d = sideOffset(site, at, n, mode, fallback);
+      const d = sideOffset(site, at, n, mode, fallback, lamp);
       if (d === null) continue;
       const p = { x: at.x + n.x * d, z: at.z + n.z * d };
       if (!clear(at, p)) continue;
@@ -315,6 +315,9 @@ export const FOOD_STALLS = "rule.food-stalls";
 
 /** Kinds that belong on the carriageway: covers in it, bollards closing it. */
 const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
+/** Lamps set at a kerb, and how far before a car park one may stand on its asphalt (m, past `LOT_GAP` in `props-place`). */
+const KERB_LAMPS: ReadonlySet<StreetPropKind> = new Set(["lamp-road", "lamp-modern-pole"]);
+const LOT_REACH = 2;
 
 /** Least distance between two pieces of one kind before the later one is dropped. */
 const minGap = (prop: StreetPropKind, fromLine: boolean): number => (prop.startsWith("lamp-") && fromLine ? 7 : prop === "trolley-pole" ? 10 : 0.3);
@@ -409,7 +412,9 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     // A light, a machine or a tree from a node in the road stands on the nearest pavement.
     // Judged where it ends up, at the 0.1 m the chunks keep.
     const at = { x: r1(placedAt.p.x), z: r1(placedAt.p.z) };
-    const off = ON_ROAD.has(placedAt.prop) ? at : offRoad(site, at);
+    // A kerb lamp in front of a car park's cars, on asphalt with no kerb (T-172), stays there.
+    const byLot = KERB_LAMPS.has(placedAt.prop) && site.byLot(at, LOT_REACH);
+    const off = ON_ROAD.has(placedAt.prop) || byLot ? at : offRoad(site, at);
     if (!off) {
       onRoad++;
       continue;

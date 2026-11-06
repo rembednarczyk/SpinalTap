@@ -11,6 +11,7 @@ import {
   knockbackScale,
   perkAdsTimeScale,
   perkDetectionScale,
+  missingTier,
   perkModifiers,
   perkOpen,
   perkPathMet,
@@ -70,15 +71,23 @@ describe("the path through the tiers", () => {
     expect(perkOpen(s.attributes, s.perks, "might_second_wind")).toBe(false);
   });
 
-  it("a stage 3 save with a higher tier and nothing below stays valid and keeps its perks; new ranks need the path", () => {
+  it("a stage 3 save with a higher tier and nothing below stays valid and keeps its perks; every new rank needs the path (stage 3c)", () => {
     // Stage 3 opened a tier by the attribute alone: Might 12 bought Hardened straight away.
     const old = { ...mighty(12, 9), perks: { might_hardened: 1 }, unspent: { attribute: 2, perk: 10 } };
     expect(validPerks(old.attributes, old.perks)).toBe(true);
-    // Its second rank and the key tier above it go on from the perk she has.
-    expect(buy(old, "might_hardened").perks).toEqual({ might_hardened: 2 });
-    // The empty tier below it is shut until a perk of the first tier.
+    // Its second rank waits for the path too (stage 3b let it through), and says which tier is missing.
+    expect(missingTier(old.perks, "might_hardened")).toBe(0);
+    expect(spendPerkPoint(old, "might_hardened")).toEqual({ ok: false, reason: "locked" });
     expect(spendPerkPoint(old, "might_second_wind")).toEqual({ ok: false, reason: "locked" });
-    expect(buy(old, "might_tough", "might_second_wind").perks).toEqual({ might_hardened: 1, might_tough: 1, might_second_wind: 1 });
+    // The key tier above it needs the whole path, not only the tier right below.
+    const key = { ...old, attributes: { ...old.attributes, might: 15 } };
+    expect(perkPathMet(key.perks, "might_crushing_parry")).toBe(false);
+    expect(missingTier(key.perks, "might_crushing_parry")).toBe(0);
+    // Tier 4, then tier 8: the next rank and the key go on.
+    const filled = buy(old, "might_tough");
+    expect(missingTier(filled.perks, "might_hardened")).toBe(1);
+    expect(buy(filled, "might_second_wind", "might_hardened").perks).toEqual({ might_hardened: 2, might_tough: 1, might_second_wind: 1 });
+    expect(perkPathMet({ ...filled.perks, might_second_wind: 1 }, "might_crushing_parry")).toBe(true);
   });
 });
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type EntityId, type InputFrame, type ViewDescriptor } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { ALCHEMIA_CHUNK, ALCHEMIA_MODULES, ALCHEMIA_PROPS, ALCHEMIA_ROOF, ROOM_ID_BASE, alchemiaPoint } from "@seki/sim";
+import { ALCHEMIA_CHUNK, ALCHEMIA_LIFT_PROPS, ALCHEMIA_MODULES, ALCHEMIA_PROPS, ALCHEMIA_ROOF, ROOM_ID_BASE, alchemiaPoint } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 import { FakeRender, steps, teleport } from "./story-helpers";
@@ -12,7 +12,7 @@ import { FakeRender, steps, teleport } from "./story-helpers";
  * Seki walking at the hall's front from the square (up its steps, G-299), at a stall's window from
  * Świętoduska's side and at the stalls' backs from the open square stops at their walls; she climbs
  * from the paving to each stall's door (G-287) and up the hall's outside stair to its landing (G-288); the hall's
- * flat roof holds her up (for the stages to come: a character up there, a lift); their solids
+ * flat roof holds her up (the lift up to it: alchemia-lift.test.ts); their solids
  * stream in with the plot's chunk, without views (the engine draws the models).
  */
 
@@ -141,8 +141,10 @@ describe("Alchemia on Plac Ofiar Getta (ADR-0063 stage 4)", () => {
     const from = off(hall, hall.depth / 2 + 4);
     teleport(session, from.x, from.z, 0);
     steps(session, 3);
-    const solids = session.sim.world.entities.filter((e) => e.id >= ROOM_ID_BASE && e.id < ROOM_ID_BASE + 1_000_000 && e.chunk === ALCHEMIA_CHUNK);
-    expect(solids).toHaveLength(ALCHEMIA_PROPS.length);
+    const rooms = session.sim.world.entities.filter((e) => e.id >= ROOM_ID_BASE && e.id < ROOM_ID_BASE + 1_000_000 && e.chunk === ALCHEMIA_CHUNK).sort((a, b) => a.id - b.id);
+    // The modules first, then the lift (alchemia-lift.test.ts).
+    expect(rooms).toHaveLength(ALCHEMIA_PROPS.length + ALCHEMIA_LIFT_PROPS.length);
+    const solids = rooms.slice(0, ALCHEMIA_PROPS.length);
     expect(solids.every((e) => e.solid && !e.view)).toBe(true);
     expect(solids.some((e) => views.has(e.id))).toBe(false);
   });

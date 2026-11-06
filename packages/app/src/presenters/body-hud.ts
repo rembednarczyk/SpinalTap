@@ -1,4 +1,4 @@
-import { BUFF_CATALOG, type DomainState, buffDurationScale, cooldownRateOf, dashCooldownScale } from "@seki/core";
+import { BUFF_CATALOG, type DomainState, buffDurationScale, cooldownRateOf, dashCooldownScale, inactiveCyberware } from "@seki/core";
 import { DASH_COOLDOWN, cyberCapacityOf } from "@seki/sim";
 import { type BuffVm, type CapacityVm, type DashVm, translate, translateText } from "@seki/ui";
 import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part";
@@ -9,8 +9,15 @@ export const DASH_ZOOM_SECONDS = 0.8;
 /** Seconds of the dash cooldown with the buffs that run now (synthetic coffee shortens it) and the Slipstream perk (ADR-0059). */
 export const dashCooldownSeconds = (domain: DomainState): number => (DASH_COOLDOWN * dashCooldownScale(domain.progression.perks)) / cooldownRateOf(domain.buffs);
 
-/** The pool as the simulation counts it (level, shards and Tech). */
-export const capacityVm = (domain: DomainState): CapacityVm => cyberCapacityOf(domain);
+/** The pool as the simulation counts it (level, shards and Tech), and the implants over it that are off (stage 3c). */
+export const capacityVm = (domain: DomainState): CapacityVm => {
+  const pool = cyberCapacityOf(domain);
+  return { ...pool, inactive: inactiveCyberware(domain.character.cyberware, pool.max) };
+};
+
+/** The same view while nothing in it changed, so the store does not change every frame. */
+const sameCapacity = (a: CapacityVm | null, b: CapacityVm): boolean =>
+  a !== null && a.used === b.used && a.max === b.max && (a.inactive ?? []).join() === (b.inactive ?? []).join();
 
 /**
  * The wave 2 body (ADR-0035): implant capacity, buffs and the dash icon, read from the domain
@@ -21,6 +28,7 @@ export class BodyHud implements HudPart {
   readonly offs: readonly (() => void)[];
   private dashTick: number | null = null;
   private tick = 0;
+  private capacity: CapacityVm | null = null;
 
   constructor(private readonly ctx: HudPartContext) {
     const { bus, hooks, isPlayer } = ctx;
@@ -45,11 +53,14 @@ export class BodyHud implements HudPart {
   frame(f: HudPartFrame): HudPatch {
     this.tick = f.tick;
     const domain = this.ctx.hooks.domain();
-    return { capacity: capacityVm(domain), buffs: this.buffVm(domain), dash: this.dashVm(domain, f.tick) };
+    const capacity = capacityVm(domain);
+    if (!sameCapacity(this.capacity, capacity)) this.capacity = capacity;
+    return { capacity: this.capacity, buffs: this.buffVm(domain), dash: this.dashVm(domain, f.tick) };
   }
 
   reset(): HudPatch {
     this.dashTick = null;
+    this.capacity = null;
     return { buffs: [], dash: null, capacity: null };
   }
 

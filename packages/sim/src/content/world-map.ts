@@ -6,12 +6,14 @@ import { type RoofStash, TARG_NAV, TARG_OVERPASS_STASH, TARG_ROOF_STASH } from "
 import { DEVICES, type DeviceDef } from "./devices";
 import { TRASA_PODZIEMNA_BOUNDS, TRASA_PODZIEMNA_CHUNK, TRASA_PODZIEMNA_PROPS, TRASA_PODZIEMNA_STASH } from "./kanal-underground";
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
+import { METRO_NAV } from "./metro-nav";
 import { CLINIC_DOOR, KOI_DOOR, S7_NAV } from "./interiors";
 import { DOKI_NAV } from "./district-doki";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
 import { ALCHEMIA_CENTRE, ALCHEMIA_PROPS } from "./alchemia";
+import { ALCHEMIA_LIFT_PROPS } from "./alchemia-lift";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
 import { GROUND_DECKS } from "./lublin/decks";
 import type { GroundDeck } from "../world/deck";
@@ -98,7 +100,7 @@ export const CAPSULE_CHUNK = mapChunkOf(CAPSULE_DOOR.at.x, CAPSULE_DOOR.at.z);
 export const ALCHEMIA_CHUNK = mapChunkOf(ALCHEMIA_CENTRE.x, ALCHEMIA_CENTRE.z);
 
 /** The game's own solids in a chunk of the map, after its data (`ChunkDef.rooms`). */
-const roomsOf = (id: string): readonly StaticProp[] => [...(id === CAPSULE_CHUNK ? CAPSULE_PROPS : []), ...(id === ALCHEMIA_CHUNK ? ALCHEMIA_PROPS : [])];
+const roomsOf = (id: string): readonly StaticProp[] => [...(id === CAPSULE_CHUNK ? CAPSULE_PROPS : []), ...(id === ALCHEMIA_CHUNK ? [...ALCHEMIA_PROPS, ...ALCHEMIA_LIFT_PROPS] : [])];
 
 const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS, PASSAGES, BUILDING_CUTS)]));
 
@@ -153,7 +155,7 @@ export const WORLD_METRO: readonly MetroStationDef[] = METRO_STATIONS;
  * and the interiors of Krakowskie Przedmieście (ADR-0038). The streets themselves are one level
  * on the terrain.
  */
-export const WORLD_NAV: NavGraph = mergeNav(TARG_NAV, DOKI_NAV, S7_NAV);
+export const WORLD_NAV: NavGraph = mergeNav(TARG_NAV, DOKI_NAV, S7_NAV, METRO_NAV);
 
 /** Stashes placed once when the player first comes near: on roofs (ADR-0021), in alleys and dead ends (ADR-0026). */
 export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH, ...S7_STASHES, KANAL_ALLEY_STASH, TARG_OVERPASS_STASH, TRASA_PODZIEMNA_STASH];
