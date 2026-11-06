@@ -1,8 +1,8 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { METRO_ENTRANCES } from "../../../packages/sim/src/content/metro";
-import { pavilion } from "../../../packages/sim/src/content/metro-pavilion";
+import { METRO_ENTRANCES, METRO_PLATFORMS, PAVILION, STAIRS } from "../../../packages/sim/src/content/metro";
+import { pavilion, spotFrame } from "../../../packages/sim/src/content/metro-pavilion";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { metroBlocked, metroExitBare, metroNearHeritage, metroShaftOpen } from "./metro-entrances";
 
@@ -40,6 +40,25 @@ describe("the metro entrances' checks (ADR-0071 stage 2)", () => {
     // The end wall's plinth: 0.25 m thick along the long side (x here).
     const walls = e.props.filter((p) => !(p.view.kind === "block" && p.view.material === "concrete" && Math.abs(p.view.size.x - 0.25) < 1e-6 && p.view.size.y > 2));
     expect(metroShaftOpen([{ ...e, props: walls }]).map((f) => f.what)).toEqual([expect.stringContaining("no wall")]);
+  });
+
+  it("checks the end wall round the doorway down to a platform at every entrance A (ADR-0071 stage 4)", () => {
+    for (const e of METRO_PLATFORMS) {
+      expect(metroShaftOpen([e]), `${e.station}`).toEqual([]);
+      const hallEnd = PAVILION.length - 0.25;
+      const strip = spotFrame(e.spot).rect(hallEnd, PAVILION.length, -STAIRS.width / 2, STAIRS.width / 2);
+      const inStrip = (p: (typeof e.props)[number]) => p.center.x > strip.minX && p.center.x < strip.maxX && p.center.z > strip.minZ && p.center.z < strip.maxZ;
+      const bottom = (p: (typeof e.props)[number]) => p.center.y - (p.view.kind === "block" ? p.view.size.y / 2 : 0);
+      const head = e.floor + e.platform.doorwayHead;
+      const lintel = e.props.filter((p) => !(inStrip(p) && Math.abs(bottom(p) - head) < 1e-6));
+      expect(lintel.length, `${e.station} lintel`).toBe(e.props.length - 1);
+      expect(metroShaftOpen([{ ...e, props: lintel }]).map((f) => f.what), `${e.station} lintel`).toEqual([expect.stringContaining("no wall")]);
+      const wall = e.props.filter((p) => !inStrip(p));
+      expect(metroShaftOpen([{ ...e, props: wall }]).map((f) => f.what), `${e.station} wall`).toEqual([expect.stringContaining("no wall")]);
+      // A passage's ceiling higher than the doorway's head leaves a gap into the earth over it.
+      const high = { ...e.platform, ceiling: e.platform.ceiling.map((c, i) => (i === 0 ? { ...c, bottom: head + 0.3 } : c)) };
+      expect(metroShaftOpen([{ ...e, platform: high }]).map((f) => f.what)).toEqual([expect.stringContaining("ceiling")]);
+    }
   });
 
   it("finds the Dworzec Autobusowy's opening onto bare terrain and none where the ground is paved (G-332)", () => {

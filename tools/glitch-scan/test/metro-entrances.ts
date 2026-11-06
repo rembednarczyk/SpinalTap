@@ -132,10 +132,14 @@ export const metroShaftOpen = (entrances: readonly Entrance[] = METRO_ENTRANCES)
       return { minX: p.center.x - s.x / 2, maxX: p.center.x + s.x / 2, minZ: p.center.z - s.z / 2, maxZ: p.center.z + s.z / 2, minY: p.center.y - s.y / 2, maxY: p.center.y + s.y / 2 };
     });
     // The samples at a side's ends lie on the walls' edges, where the rounding of the pavilion's sums decides (G-333).
-    // The end wall's doorway down to a platform (ADR-0071 stage 4) opens on the closed passage of its vault.
-    const passage = (x: number, z: number) => (e.platform?.vaults ?? []).some((v) => x >= v.bounds.minX && x <= v.bounds.maxX && z >= v.bounds.minZ && z <= v.bounds.maxZ);
-    const walled = (x: number, z: number) =>
-      passage(x, z) || walls.some((w) => x >= w.minX - EDGE && x <= w.maxX + EDGE && z >= w.minZ - EDGE && z <= w.maxZ + EDGE && w.minY <= e.floor && w.maxY >= e.street);
+    const at = (x: number, z: number) => walls.filter((w) => x >= w.minX - EDGE && x <= w.maxX + EDGE && z >= w.minZ - EDGE && z <= w.maxZ + EDGE);
+    const walled = (x: number, z: number) => at(x, z).some((w) => w.minY <= e.floor && w.maxY >= e.street);
+    // The end wall's doorway down to a platform (ADR-0071 stage 4): wall under the hall's floor, wall from the
+    // doorway's head up to the street, nothing else open; the passage's ceiling starts no higher than the head.
+    const head = e.platform ? e.floor + e.platform.doorwayHead : null;
+    const doorway = (x: number, z: number) =>
+      head !== null && at(x, z).some((w) => w.minY < e.floor - 0.1 && w.maxY >= e.floor - 1e-6) && at(x, z).some((w) => w.minY <= head + 1e-6 && w.maxY >= e.street);
+    if (e.platform && head !== null && (e.platform.ceiling[0]?.bottom ?? Infinity) > head + 1e-6) out.push({ at: near(e), what: `${name(e)}: the passage's ceiling over the doorway's head` });
     const { along, opens } = e.spot;
     const sides: { readonly x: (t: number) => number; readonly z: (t: number) => number; readonly side: string }[] = [
       { side: "x-", x: () => c.minX - 0.1, z: (t) => c.minZ + (c.maxZ - c.minZ) * t },
@@ -144,10 +148,12 @@ export const metroShaftOpen = (entrances: readonly Entrance[] = METRO_ENTRANCES)
       { side: "z+", x: (t) => c.minX + (c.maxX - c.minX) * t, z: () => c.maxZ + 0.1 },
     ];
     const opening = `${along}${opens > 0 ? "+" : "-"}`;
+    const end = `${along}${opens > 0 ? "-" : "+"}`;
     for (const s of sides) {
       if (s.side === opening) continue;
       for (let k = 0; k <= 10; k++) {
         if (walled(s.x(k / 10), s.z(k / 10))) continue;
+        if (s.side === end && doorway(s.x(k / 10), s.z(k / 10))) continue;
         out.push({ at: near(e), what: `${name(e)}: no wall on the shaft's ${s.side} side` });
         break;
       }
