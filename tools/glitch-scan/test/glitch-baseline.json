@@ -57,6 +57,8 @@
   "bridge-without-deck": 0,
   "under-deck-blocked": 0,
   "landmark-overbuilt": 0,
+  "pad-unregistered": 2,
+  "game-solid-landmark-occlusion": 0,
   "landmark-missing": 0,
   "landmark-default-height": 1,
   "osm-tower-default-height": 1,

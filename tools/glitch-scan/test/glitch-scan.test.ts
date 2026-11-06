@@ -33,6 +33,7 @@ import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
 import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
+import { alchemiaHidesLandmarks, padsUnregistered } from "./alchemia-checks";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
@@ -1194,6 +1195,10 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.
    */
+  /** A pad of the terrain without its row in the topography register (ADR-0074, review of #327). */
+  "pad-unregistered": () => padsUnregistered(),
+  /** Alchemia's solids hiding a landmark's top from more than a quarter of the streets round it (ADR-0074, review of #312). */
+  "game-solid-landmark-occlusion": () => alchemiaHidesLandmarks(),
   "landmark-missing": () => {
     const kept = new Set(MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)).map((b) => b.id)));
     const buildings = LANDMARK_BUILDINGS.filter((id) => !kept.has(id)).map((id) => {
