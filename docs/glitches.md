@@ -1200,7 +1200,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-387 Shard e2e (1) na granicy `timeout-minutes: 25`: przygotowanie ok. 11 min, testy 13,6 min
 - Status: zgłoszone (6.11, orkiestrator; #317 anulowany po 25 min, 20/20 testów zielonych)
-- Ważność: S2 (blokuje scalanie PR-ów z kodem) · Zasięg: `.github/workflows/ci.yml`, job e2e; instalacja, build i pobranie przeglądarek przed testami (10:40 → 10:51), potem 21 testów jednym workerem · Koszt: średni
+- Ważność: S2 (blokuje scalanie PR-ów z kodem) · Zasięg: `.github/workflows/ci.yml`, job e2e; instalacja, build i pobranie przeglądarek przed testami (10:40 → 10:51), potem 21 testów jednym workerem · Koszt: średni. Przyczyna z logu #317: `pnpm exec playwright install --with-deps chromium` pobiera przez apt 9 pakietów czcionek (fonts-ipafont-gothic, fonts-wqy-zenhei, fonts-unifont, xfonts-*; 22 MB) z lustra azure.archive.ubuntu.com, tym razem 31 kB/s → 10 min 59 s; biblioteki Chromium są już na runnerze. Propozycja: cache `.deb` czcionek albo `~/.cache/ms-playwright` (`actions/cache`, klucz z wersji Playwright) i `install-deps` tylko dla brakujących pakietów; migawka NPR może zależeć od czcionek, więc nie wyrzucać ich bez sprawdzenia
 - Pakiet właściciela: Infra/Build (`.github`), QA (`e2e`)
 - Poprawka bez podnoszenia limitu (ADR-0046): skrócić przygotowanie (cache przeglądarek Playwright i builda, build raz i artefakt dla shardów) albo trzeci shard
 - Test przyjęcia: oba shardy e2e kończą się z zapasem ≥ 5 min na obecnym main
