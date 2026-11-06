@@ -44,11 +44,31 @@ const script = (): ReplayFrame[] => {
 const hashOf = (sim: Simulation) => stateHash(sim.snapshot(null, "test", ""));
 
 /**
+ * The snapshot of a run as v28 wrote it, before item levels and traits (ADR-0059, stage 4): the
+ * pieces in the bag and in the loot bags without them. The player of these runs stays at level 1,
+ * where the weights of the tiers are those of before and the levels come from a stream of their
+ * own, so without the fields the runs hash to the goldens of v28 and of the older schemas.
+ */
+const beforeV29 = (sim: Simulation): SaveSnapshot => {
+  const snap = sim.snapshot(null, "test", "");
+  const strip = <T extends object>(p: T): T => {
+    const { level: _l, traits: _t, ...rest } = p as T & { level?: number; traits?: unknown };
+    return rest as T;
+  };
+  const items = snap.domain.inventory.items.map(strip);
+  const containers = snap.domain.loot.containers.map((c) => ({ ...c, lines: c.lines.map(strip) }));
+  return { ...snap, domain: { ...snap.domain, inventory: { ...snap.domain.inventory, items }, loot: { ...snap.domain.loot, containers } } };
+};
+
+/** The hash of a run as schema v28 had it: without the item levels, the goldens of v28. */
+const v28HashOf = (sim: Simulation) => stateHash({ ...beforeV29(sim), version: 28 } as unknown as SaveSnapshot);
+
+/**
  * The hash of a run as schema v27 had it (G-233): without the bodies of a won mugging, of which
  * these runs have none (no micro-event starts in them), so only the version differs from v28.
  */
 const v27HashOf = (sim: Simulation) => {
-  const { strayBodies: _b, ...snap } = sim.snapshot(null, "test", "");
+  const { strayBodies: _b, ...snap } = beforeV29(sim);
   return stateHash({ ...snap, version: 27 } as unknown as SaveSnapshot);
 };
 
@@ -58,7 +78,7 @@ const v27HashOf = (sim: Simulation) => {
  * does not show in these runs, so the hashes of the older schemas stand.
  */
 const beforeV27 = (sim: Simulation): SaveSnapshot => {
-  const snap = sim.snapshot(null, "test", "");
+  const snap = beforeV29(sim);
   const v26 = ({ walk: _w, ...e }: EntitySnapshot): EntitySnapshot => e;
   const r = snap.reinforcements;
   const reinforcements = r ? { reinforcements: { ...r, people: r.people.map((p) => ({ ...p, state: v26(p.state) })) } } : {};
@@ -183,7 +203,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"07d841d4"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"cb5d0920"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -205,6 +225,9 @@ describe("determinism", () => {
     // Re-recorded (all of them, "hard" too) for G-343, a new rule: a fleeing bystander keeps the
     // way whose walk round a corner it follows and does not turn back while it is open. Bystanders
     // 1082 and 294 (G-329) of the run swung back and forth in the panic: 283 and 84 jumps, now 40 and 10.
+    // Re-recorded (all of them, "hard" and the duel too) for the v29 item levels (ADR-0059, stage 4),
+    // fields, no new rule in these runs: the starter kit is of level 1 and, as v28, the runs hash
+    // to the goldens of before.
     expect(v17HashOf(sim)).toBe("0b8693d0");
     expect(v19HashOf(sim)).toBe("5b3bab6c");
     expect(v20HashOf(sim)).toBe("b6fc8cc8");
@@ -215,13 +238,14 @@ describe("determinism", () => {
     expect(v25HashOf(sim)).toBe("f856e6fe");
     expect(v26HashOf(sim)).toBe("29f9cea1");
     expect(v27HashOf(sim)).toBe("248eb173");
+    expect(v28HashOf(sim)).toBe("07d841d4");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"4b52ca4d"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"3fa22559"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
     expect(v17HashOf(sim)).not.toBe("0b8693d0");
     expect(v19HashOf(sim)).toBe("426e148d");
@@ -233,6 +257,7 @@ describe("determinism", () => {
     expect(v25HashOf(sim)).toBe("3991a5f7");
     expect(v26HashOf(sim)).toBe("eec79408");
     expect(v27HashOf(sim)).toBe("d7d1e416");
+    expect(v28HashOf(sim)).toBe("4b52ca4d");
   });
 
   // One case per density: three full replays in one case ran close to the 20 s limit under coverage.
@@ -303,7 +328,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"402f2952"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"25a2126a"`);
     expect(v17HashOf(sim)).toBe("3e78c5b2");
     expect(v19HashOf(sim)).toBe("6ebebd7e");
     expect(v20HashOf(sim)).toBe("116f9cfa");
@@ -314,6 +339,7 @@ describe("determinism", () => {
     expect(v25HashOf(sim)).toBe("66d7b85d");
     expect(v26HashOf(sim)).toBe("94efe6f8");
     expect(v27HashOf(sim)).toBe("de01c1cf");
+    expect(v28HashOf(sim)).toBe("402f2952");
   });
 
   it("restores killed NPCs as absent", () => {

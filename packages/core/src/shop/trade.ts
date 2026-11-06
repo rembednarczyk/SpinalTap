@@ -19,11 +19,12 @@ import {
   stackCount,
   updateItem,
 } from "../items/inventory";
+import { MIN_ITEM_LEVEL, levelScale } from "../items/grade";
 import { RARITY } from "../items/rarity";
 import type { ItemDefId, ItemRef, Rarity } from "../items/types";
 import type { ReputationTier } from "../reputation/reputation";
 import { type PurchaseFailure, type ShopTerms, STANDARD_TERMS, fullService, offersStack, priceWithTerms } from "./ripperdoc";
-import { SHOPS, type ShopId, type ShopItemId, type StockEntry, stockEntry, stockListPrice } from "./shops";
+import { SHOPS, type ShopId, type ShopItemId, type StockEntry, stockEntry, stockGrade, stockListPrice } from "./shops";
 
 /**
  * Selling, repairs, the backpack and implants from the bag (plan §6, ADR-0015). Pure functions
@@ -51,16 +52,18 @@ const SELL_FACTOR: Readonly<Record<ReputationTier, number>> = { hostile: 0.5, wa
 /** What standing with the trader does to a sale: a wary one pays less, a hostile one half, a regular more. */
 export const sellFactor = (tier: ReputationTier): number => SELL_FACTOR[tier];
 
-/** A piece as the trader sees it: kind, tier and wear. */
+/** A piece as the trader sees it: kind, tier, level and wear. */
 export interface Appraisal {
   readonly def: ItemDefId;
   readonly rarity?: Rarity;
+  /** Weapons and garments (ADR-0059); 1 when absent. */
+  readonly level?: number;
   /** Garments only. */
   readonly condition?: number;
 }
 
-/** List value of one piece times its rarity (stacks are common). */
-export const itemValue = (item: Appraisal): number => itemSummary(item.def).value * RARITY[item.rarity ?? "common"].value;
+/** List value of one piece times its rarity and level (stacks are common, mods and implants have no level). */
+export const itemValue = (item: Appraisal): number => itemSummary(item.def).value * RARITY[item.rarity ?? "common"].value * levelScale(item.level);
 
 /**
  * What the trader pays for one piece: a quarter of the value, scaled by standing and, for
@@ -185,15 +188,20 @@ export type StockPurchase =
 export const offersEntry = (entry: StockEntry, terms: ShopTerms): boolean =>
   entry.kind === "ammo" || (entry.kind === "stack" ? offersStack(entry.item, terms) : fullService(terms));
 
+/** What the counter asks for an entry: list price for the standing and the player's level, after terms. */
+export const stockPrice = (entry: StockEntry, terms: ShopTerms = STANDARD_TERMS, level: number = MIN_ITEM_LEVEL): number =>
+  priceWithTerms(stockListPrice(entry, terms.tier, level), terms);
+
 /**
- * Buys one entry of a shop's stock: a piece into a free cell, one of a stack, or a whole box of
- * rounds into the pouch (refused when the box does not fit, so nobody pays for lost rounds).
+ * Buys one entry of a shop's stock: a piece into a free cell (of `stockGrade`: the tier by the
+ * standing, the player's `level`), one of a stack, or a whole box of rounds into the pouch
+ * (refused when the box does not fit, so nobody pays for lost rounds).
  */
-export const buyStock = (state: TradeState, shop: ShopId, itemId: ShopItemId, terms: ShopTerms = STANDARD_TERMS): StockPurchase => {
+export const buyStock = (state: TradeState, shop: ShopId, itemId: ShopItemId, terms: ShopTerms = STANDARD_TERMS, level: number = MIN_ITEM_LEVEL): StockPurchase => {
   const entry = stockEntry(shop, itemId);
   if (!entry) return { ok: false, reason: "not-sold-here" };
   if (!offersEntry(entry, terms)) return { ok: false, reason: "refused" };
-  const price = priceWithTerms(stockListPrice(entry), terms);
+  const price = stockPrice(entry, terms, level);
   let next: TradeState;
   let added: ItemInstance | null = null;
   let qty = 1;
@@ -207,7 +215,7 @@ export const buyStock = (state: TradeState, shop: ShopId, itemId: ShopItemId, te
     if (r.added === 0) return { ok: false, reason: "inventory-full" };
     next = { ...state, inventory: r.inventory };
   } else {
-    const r = addInstance(state.inventory, state.equipment, entry.item, entry.rarity);
+    const r = addInstance(state.inventory, state.equipment, entry.item, stockGrade(entry, terms.tier, level));
     if (!r.ok) return { ok: false, reason: "inventory-full" };
     next = { ...state, inventory: r.inventory };
     added = r.item;

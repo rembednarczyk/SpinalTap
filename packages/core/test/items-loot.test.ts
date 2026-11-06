@@ -57,7 +57,7 @@ describe("rollLoot", () => {
       { kind: "item", item: "steady_grip", rarity: "common", qty: 1 },
     ]);
     // The SMG band (weights 36+24+10+10+8 = 88 of 100) with a rare roll.
-    expect(rollLoot(LOOT_TABLES.hebi_common, counting([0.5, 90 / 100, 0, 0.97]))[1]).toEqual({ kind: "item", item: "hebi_smg", rarity: "rare", qty: 1 });
+    expect(rollLoot(LOOT_TABLES.hebi_common, counting([0.5, 90 / 100, 0, 0.97]))[1]).toEqual({ kind: "item", item: "hebi_smg", rarity: "rare", level: 1, qty: 1 });
     expect(rollLoot(LOOT_TABLES.hebi_common, counting([0.5, 90 / 100, 0, 0.8]))[1]).toMatchObject({ rarity: "uncommon" });
     // A mod without a rarity rule is common; scrap is a stack.
     expect(rollLoot(LOOT_TABLES.hebi_common, counting([0.5, 96.5 / 100, 0, 0.99]))[1]).toEqual({ kind: "item", item: "suppressor", rarity: "common", qty: 1 });
@@ -149,7 +149,7 @@ describe("takeLoot", () => {
     expect(r.wallet.eddies).toBe(24);
     expect(r.ammo).toEqual({ "9mm": 9 });
     expect(r.inventory.stacks).toEqual({ scrap: 2 });
-    expect(r.inventory.items).toEqual([{ uid: "i1", def: "hebi_smg", rarity: "uncommon", loaded: 0, mods: {} }]);
+    expect(r.inventory.items).toEqual([{ uid: "i1", def: "hebi_smg", rarity: "uncommon", level: 1, loaded: 0, mods: {} }]);
     expect(r.left).toEqual([]);
     expect(r.taken).toEqual(lines);
     expect(r.added).toEqual([
