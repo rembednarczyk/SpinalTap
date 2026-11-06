@@ -1175,6 +1175,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (kod) · Zasięg: `packages/sim/src/systems/player-control-system.ts:40`, eksportowany, nieużywany w src; pułapka dla przyszłych odczytów po etapie 3c · Koszt: mały (usunąć albo przejść na `workingCyberware`)
 - Pakiet właściciela: packages/sim
 
+### G-381 Strzelec staje w promieniu `ARRIVE` od stanowiska, a linia wzroku liczy się z samego węzła: stanowisko bywa bez strzału
+- Status: zgłoszone (6.11, weryfikator #316; ogólne, nie tylko w metrze)
+- Ważność: S3 · Zasięg: `firingPosition` i `firstStep` w `packages/sim/src/world/nav.ts`; strzelec czeka z zerową prędkością bez końca · Koszt: średni
+- Pakiet właściciela: packages/sim (`world/nav.ts`, AI strzelca)
+- Test przyjęcia: strzelec dochodzi do gracza albo strzela we wszystkich przypadkach siatki z #316
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
