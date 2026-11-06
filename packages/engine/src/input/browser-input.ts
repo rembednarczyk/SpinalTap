@@ -230,10 +230,11 @@ export class BrowserInput implements InputPort {
     const touch = scaleLook(this.virtualPad.poll(), this.lookTuning.touch);
     const pad = this.pollPad(dt);
     const withTouch = mergeFrames(km, this.aimAssist.slow(touch));
+    const padLook = pad && this.aimAssist.slow(pad);
     // The touch fire button aims after the latches, so it never flips a toggled aim (ADR-0072).
-    const latched = this.virtualPad.withFireAim(this.latches.apply(pad ? mergeFrames(withTouch, pad) : withTouch));
-    // Sights raised from touch pull to a target; from the mouse never (ADR-0072).
-    this.aimAssist.observe(latched.aim, touch.aim || this.virtualPad.fireAims);
+    const latched = this.virtualPad.withFireAim(this.latches.apply(padLook ? mergeFrames(withTouch, padLook) : withTouch));
+    // Sights raised from touch or the pad's LT pull to a target; from the mouse never (ADR-0072).
+    this.aimAssist.observe(latched.aim, touch.aim || this.virtualPad.fireAims || pad?.aim === true);
     return this.shoulder.apply(latched, swapKey, pad !== null && this.padStick);
   }
 
