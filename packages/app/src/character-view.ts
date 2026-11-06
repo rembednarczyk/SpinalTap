@@ -63,8 +63,10 @@ export const createStatsCache = () => {
   let key: readonly unknown[] = [];
   let last: CharacterStatsVm | null = null;
   return (domain: DomainState, hp: number, maxHp: number): CharacterStatsVm => {
-    // The attributes and the perks change the crits, the armor and the aim (ADR-0059).
-    const next = [domain.character, domain.equipment, domain.inventory.items, domain.progression.attributes, domain.progression.perks, hp, maxHp];
+    // The attributes and the perks change the crits, the armor and the aim (ADR-0059); the shards
+    // and the level grow the cyberware pool, which brings implants over it back (stage 3c).
+    const { level, attributes, perks } = domain.progression;
+    const next = [domain.character, domain.equipment, domain.inventory.items, attributes, perks, domain.capacityShards, level, hp, maxHp];
     if (last && next.every((v, i) => v === key[i])) return last;
     key = next;
     last = characterStats(domain, hp, maxHp);
