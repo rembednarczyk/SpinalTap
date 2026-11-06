@@ -1083,7 +1083,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: sesja bez renderera o 23:00 przy straganie Fumiko bez strzałów i walki: żaden sprzedawca nie ucieka
 
 ### G-359 Odmowa wrogiej kliniki: „Ammo and basics, nothing more.”, choć Mori nie sprzedaje amunicji
-- Status: zgłoszone (5.11, weryfikator PR #299)
+- Status: w PR #307 (6.11, 93cdec6; klucz `shop.failure.refusedClinic` en/pl, orkiestrator)
 - Ważność: S4 (tekst) · Zasięg: komunikat odmowy wspólny dla sklepów; klinika potrzebuje własnego wariantu (en i pl) · Koszt: mały
 - Pakiet właściciela: packages/ui (i18n `trade`), packages/core (klucz odmowy per sklep)
 
