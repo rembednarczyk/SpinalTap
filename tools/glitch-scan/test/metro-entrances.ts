@@ -1,5 +1,8 @@
 import type { StreetPropItem } from "../../../packages/core/src";
-import { METRO_ENTRANCES } from "../../../packages/sim/src/content/metro";
+import { METRO_ENTRANCES, PAVILION, STAIRS } from "../../../packages/sim/src/content/metro";
+import { spotFrame } from "../../../packages/sim/src/content/metro-pavilion";
+import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
+import { GroundField } from "../../../packages/sim/src/world/ground";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import type { CrowdLane } from "../../../packages/sim/src/content/crowd";
 import type { TrafficRoute } from "../../../packages/sim/src/content/traffic-lane";
@@ -179,5 +182,47 @@ export const metroExitBare = (entrances: readonly Entrance[] = METRO_ENTRANCES, 
     const out: Finding[] = [];
     for (let x = f.minX + 0.25; x < f.maxX; x += 0.5)
       for (let z = f.minZ + 0.25; z < f.maxZ; z += 0.5) if (!pieces.some((r) => pointInRing({ x, z }, r))) out.push({ at: `${x.toFixed(0)},${z.toFixed(0)}`, what: `${name(e)}: bare terrain at ${x.toFixed(2)},${z.toFixed(2)} in front of the opening` });
+    return out;
+  });
+
+/** The ground the simulation builds (`streaming.ts`): the chunks, the shafts dug under the pavilions and the platforms' vaults. */
+const metroGround = (entrances: readonly Entrance[]): GroundField =>
+  new GroundField(
+    WORLD_CHUNKS,
+    entrances.map((e) => e.cut),
+    entrances.flatMap((e) => e.platform?.vaults ?? []),
+  );
+
+/**
+ * A ray of sight between the street out of an opening (0.5 to 3 m out, eyes standing and crouched)
+ * and the hall (knee and chest high over its floor), either way, stopped by the terrain in the air
+ * of a shaft, over the ground there: the street's old surface under the pavilion (G-377).
+ */
+export const metroShaftRay = (entrances: readonly Entrance[] = METRO_ENTRANCES, ground: GroundField = metroGround(entrances)): Finding[] =>
+  entrances.flatMap((e) => {
+    const { point } = spotFrame(e.spot);
+    const inner = STAIRS.width / 2 - 0.4;
+    const hallU = [STAIRS.landing + STAIRS.run + 0.4, PAVILION.length - 0.6];
+    const out: Finding[] = [];
+    for (const u of [-0.5, -1, -2, -3])
+      for (const w of [-inner, 0, inner])
+        for (const eye of [1.14, 1.62])
+          for (const hu of hallU)
+            for (const hw of [-inner, 0, inner])
+              for (const body of [0.5, 1.25]) {
+                const s = point(u, w);
+                const h = point(hu, hw);
+                const a = { x: s.x, y: ground.heightAt(s.x, s.z) + eye, z: s.z };
+                const b = { x: h.x, y: e.floor + body, z: h.z };
+                for (const [from, to] of [[a, b], [b, a]] as const) {
+                  const len = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z);
+                  const dir = { x: (to.x - from.x) / len, y: (to.y - from.y) / len, z: (to.z - from.z) / len };
+                  const t = ground.rayHit(from, dir, len);
+                  if (t === null) continue;
+                  const [x, y, z] = [from.x + dir.x * t, from.y + dir.y * t, from.z + dir.z * t];
+                  if (ground.shaftAt(x, z) < 0 || y <= ground.heightAt(x, z) + 0.05) continue;
+                  out.push({ at: `${x.toFixed(0)},${z.toFixed(0)}`, what: `${name(e)}: a ray ${from === a ? "into" : "out of"} the hall stopped ${(y - e.floor).toFixed(2)} m over its floor` });
+                }
+              }
     return out;
   });

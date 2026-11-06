@@ -210,6 +210,22 @@ describe("a shaft cut into the ground (ADR-0071 stage 2)", () => {
   it("never stands in for a chunk far off", () => {
     expect(dug.heightAt(60, 21)).toBeCloseTo(whole.heightAt(60, 21), 9);
   });
+
+  // G-377: off a grid line the ray went on through the street's terrain into the shaft, up to the
+  // cell's next line, and hit the street's surface where the shaft wins.
+  it("lets a ray from the street down into its hole and back up out of it, between the street's grid lines", () => {
+    const shaft = new GroundField([chunk], [{ bounds: { minX: 11, maxX: 17, minZ: 20, maxZ: 22.4 }, floor: -5 }]);
+    const street = { x: 10.5, y: slope(10.5, 21) + 1, z: 21 };
+    const hall = { x: 14, y: -4, z: 21.5 };
+    const len = Math.hypot(hall.x - street.x, hall.y - street.y, hall.z - street.z);
+    const down = { x: (hall.x - street.x) / len, y: (hall.y - street.y) / len, z: (hall.z - street.z) / len };
+    expect(whole.rayHit(street, down, len)).not.toBeNull();
+    expect(shaft.rayHit(street, down, len)).toBeNull();
+    expect(shaft.rayHit(hall, { x: -down.x, y: -down.y, z: -down.z }, len)).toBeNull();
+    // Past the hole the street's terrain stops it again, and the shaft's floor does.
+    expect(shaft.rayHit(street, down, 20)).toBeGreaterThan(len);
+    expect(shaft.rayHit({ x: 10, y: slope(10, 21) - 0.5, z: 21 }, { x: 1, y: 0, z: 0 }, 5)).toBe(0);
+  });
 });
 
 describe("a vault under the ground (ADR-0071 stage 4)", () => {
