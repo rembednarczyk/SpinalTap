@@ -55,7 +55,13 @@ const bakeShell = (sink: MeshSink, f: PavilionFrame, quality: RenderQuality): vo
     frameBox(sink, f, [0, L], [k * inner, k * half], [s + PLINTH, s + TRANSOM], pane);
     frameBox(sink, f, [0, L], [k * inner, k * half], [s + TRANSOM, top], CLERESTORY);
   }
-  frameBox(sink, f, [end, L + 0.02], [-inner, inner], [base, s + PLINTH], C.granite);
+  // The end wall; under an entrance A with the doorway down to the platform (ADR-0071 stage 4).
+  const head = f.e.platform ? f.floor + f.e.platform.doorwayHead : null;
+  if (head === null) frameBox(sink, f, [end, L + 0.02], [-inner, inner], [base, s + PLINTH], C.granite);
+  else {
+    frameBox(sink, f, [end, L + 0.02], [-inner, inner], [head, s + PLINTH], C.granite);
+    frameBox(sink, f, [end - 0.01, end], [-inner, inner], [head - 0.08, head], C.nosing);
+  }
   frameBox(sink, f, [end, L], [-inner, inner], [s + PLINTH, s + TRANSOM], pane);
   frameBox(sink, f, [end, L], [-inner, inner], [s + TRANSOM, top], CLERESTORY);
   // The lintel over the opening: a steel panel the screen hangs on.
@@ -139,6 +145,8 @@ const bakeHall = (sink: MeshSink, f: PavilionFrame): void => {
     frameBox(sink, f, [f.foot + 0.4, f.foot + 1.3], [w, w + 0.15], [f.floor, f.floor + 1], C.steel);
     frameBox(sink, f, [f.foot + 0.45, f.foot + 0.6], [w - 0.005, w + 0.155], [f.floor + 1, f.floor + 1.02], hexColor("#39ff8a", DRESS_FLAG.lit));
   }
+  // Under an entrance A the machine stands on the platform, drawn with it (`platform-plan.ts`).
+  if (e.platform) return;
   const m = e.machine;
   const size = e.machineSize;
   sink.box({ x: m.x, y: m.y + size.y / 2, z: m.z }, size.x, size.y, size.z, C.steel, { bottom: false });

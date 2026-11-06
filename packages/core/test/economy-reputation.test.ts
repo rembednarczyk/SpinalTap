@@ -130,5 +130,9 @@ describe("shop terms", () => {
     expect(buyItem({ eddies: 81 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "medkit", shopTerms(20))).toMatchObject({ ok: true, wallet: { eddies: 0 }, inventory: { stacks: { medkit: 1 } }, price: 81 });
     expect(buyItem({ eddies: 99999 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "medkit", shopTerms(-80))).toMatchObject({ ok: true, price: priceWithTerms(STACKABLE_CATALOG.medkit.value, shopTerms(-80)) });
     expect(buyItem({ eddies: 99999 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "capacity_shard", shopTerms(-80))).toEqual({ ok: false, reason: "refused" });
+    // Decision 6.11: the Shizuka stim is a combat stim, not a basic; a wary clinic still sells it.
+    expect(buyItem({ eddies: 99999 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "steady_stim", shopTerms(-80))).toEqual({ ok: false, reason: "refused" });
+    expect(buyItem({ eddies: 99999 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "steady_stim", shopTerms(-20))).toMatchObject({ ok: true });
+    expect(buyItem({ eddies: 99999 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "synth_coffee", shopTerms(-80))).toMatchObject({ ok: true });
   });
 });

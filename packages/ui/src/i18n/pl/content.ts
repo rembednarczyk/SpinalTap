@@ -47,6 +47,11 @@ export const plContent = {
   "interior.tessen-office": "Biuro Tessen",
   "interior.trasa-podziemna": "Trasa Podziemna",
   "interior.capsule": "Pokój kapsułowy na wynajem",
+  // Perony metra (ADR-0071 etap 4).
+  "interior.metro-shinsekai": "Peron metra Plac Litewski",
+  "interior.metro-kanal": "Peron metra Brama Krakowska",
+  "interior.metro-targ": "Peron metra Plac Zamkowy",
+  "interior.metro-doki": "Peron metra Nabrzeże Bystrzycy",
   "prompt.loot": "Przeszukaj",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Szef ekipy co godzinę odchodzi sam na bok",

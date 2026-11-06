@@ -23,6 +23,7 @@ import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passage
 import { type ChunkOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
+import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
 import { type WorldVenue, allVenues, assignVenues, venueOut } from "./venues.ts";
 
 export interface ChunkStats {
@@ -282,10 +283,13 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const atStreet = new Set([...tunnels].filter((id) => lines.some((l) => l.osmId === id && buildingPassages([l], buildings, rects, tunnels).length > 0)));
   // A bridge's deck reaches its abutment (G-344): level from bank to bank, not tilted down to the
   // bank under the bridge. Its band only: the street, its markings and lanes end where the map has them.
+  // So is a street's stretch over a tunnel it dips over (G-088): a deck, as on a bridge.
+  const tunnelWays = tunnelLines(lines);
   for (const [k, l] of toAbutments(lines, areas).entries()) {
     if (!near(l.line)) continue;
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
-    for (const b of lineBands(l, l.tags.highway ? sidewalks.along(mapLines[k]!) : false, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
+    const mapped = l.tags.highway ? sidewalks.along(mapLines[k]!) : false;
+    for (const piece of overTunnels(l, tunnelWays, src)) for (const b of lineBands(piece, mapped, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.filter((l) => l.tags.highway !== undefined && near(l.line));

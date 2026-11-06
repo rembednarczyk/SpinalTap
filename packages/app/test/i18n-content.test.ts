@@ -70,8 +70,9 @@ describe("interaction prompts", () => {
     const { session, ui } = setup();
     session.newGame();
     speak(ui, "pl");
-    const kiosk = METRO_STATIONS.find((s) => s.id === "targ")!;
-    teleport(session, kiosk.arrival.x, kiosk.arrival.z, kiosk.arrivalYaw, 0, kiosk.arrival.y);
+    // The ticket machine on the platform under Plac Zamkowy A (ADR-0071 stage 4).
+    const kiosk = METRO_STATIONS.find((s) => s.id === "targ")!.entrances[0];
+    teleport(session, kiosk.ticket.x, kiosk.ticket.z, kiosk.ticketYaw, 0, kiosk.ticket.y);
     steps(session, 1);
     expect(ui.getState().prompt).toBe("Bilet");
     speak(ui, "en");

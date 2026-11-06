@@ -160,3 +160,12 @@ Atrybutów jest pięć. Każdy ma wartość od 3 do 15. Na starcie są po 3, a n
   - **Zmiana rozdania:** cena to `300 + 150 × (poziom − 1)` €$ (poziom 30: 4650 €$) z mnożnikiem reputacji Mori. Zwraca wszystkie punkty atrybutów i perków, a XP, poziom i pamięć hacków zostają. Liczby są do strojenia w etapie 8.
   - **Zapis:** rangi były w zapisie od etapu 1 (`progression.perks`), a suma rang liczy się już jako wydane punkty perków. Dlatego `SAVE_SCHEMA_VERSION` się nie zmienia i nie ma migracji. Walidacja odrzuca nieznany perk, rangę ponad ostatnią i próg, którego atrybut nie otwiera.
   - **Interfejs:** na zakładce Karta jest sekcja Perki (ranga, opis, wymaganie progu, przycisk 32 px). U Mori na zakładce Wszczepy jest sekcja Przebudowa z ceną. Teksty są w `i18n/{en,pl}/progression.ts`. Pełna zakładka Rozwój przychodzi w etapie 7.
+
+## Decyzje użytkownika po etapie 3 (6.11)
+
+Przyjęte: udana zmiana rozdania (respec) i drugi cel Łańcucha dostają własne zdarzenie i komunikat (np. `ProgressionReset`).
+
+Nieprzyjęte, do poprawy w etapie 3b:
+- drzewka mają mieć ok. 8 perków jak w ADR, nie 5;
+- respec nie odmawia przy wszczepach ponad pulą bez punktów: wszczepy zostają, a pula pokazuje przekroczenie, dopóki gracz ich nie wyjmie (alternatywa z etapu 3);
+- próg drzewka wymaga perka z niższego progu tego drzewka, nie samej wartości atrybutu.

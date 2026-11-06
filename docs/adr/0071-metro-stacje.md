@@ -63,7 +63,7 @@ Do akceptacji użytkownika. Liczby są startowe.
   - niski pawilon 7,2 × 3,6 m i 3,1 m wysokości: płaski dach z okapem 0,6 m, ściany z szyb w stalowych ramach na cokole z szarego granitu 0,5 m, otwór wejściowy 2,4 m od strony głównego ruchu;
   - w środku schody w dół o szerokości 2,4 m: 16 stopni po 0,17 m do podestu 2,7 m niżej, poręcze ze stali, żółte pasy na krawędziach stopni;
   - na podeście hala biletowa w obrysie pawilonu z biletomatem i dwiema bramkami; peron (etap 4) jest drugim biegiem niżej;
-  - pylon 0,5 × 0,5 × 4,2 m przy wejściu, u góry kostka z literą „M” z własnych rurek neonu gry, pod nią tabliczka z nazwą stacji i wejścia;
+  - pylon 0,5 × 0,5 × 4,2 m przy wejściu, u góry kostka z literą „M” z własnych rurek neonu gry, pod nią tabliczka z literą wejścia (decyzja użytkownika 6.11: pełna nazwa stacji jest na blendach dachu, nie na pylonie);
   - warstwa 2077: ekran z odjazdami nad wejściem, naklejki i kamera nad drzwiami (sam wygląd, bez nowej logiki);
   - **bez znaków Metra Warszawskiego:** nie kopiujemy jego logotypu (kształtu i kroju litery), nazwy, oznaczeń linii M1 i M2, piktogramów ani kroju systemu informacji. Nie odtwarzamy też żadnego konkretnego pawilonu, bo projekt stacji to utwór architekta. Bierzemy wspólne cechy gatunku: niski szklany pawilon, granit, stal i pylon z literą.
 - **Wejście dalej działa jak skrzynka.** Interakcja „metro” przechodzi z kiosku na biletomat w hali pod pawilonem (zasięg 2,2 m jak dziś, ten sam `InteractionStarted { kind: "metro", station }`). Przejazd kończy się na podeście wejścia, z którego gracz wsiadł do tej samej stacji docelowej (wejście A, jeśli wsiadał gdzie indziej). Pawilon jest bryłą z otworem: ściany, dach i cokół są solidne, a do schodów prowadzi przejście. Teren i bruk są wycięte tylko pod obrysem pawilonu (szyb do 2,7 m), wzorem wykopu Trasy Podziemnej pod Trybunałem (`PADS`), więc dziury nie widać z ulicy.
@@ -132,3 +132,8 @@ Uwagi kuratora (5.11, sonda na danych gry PR #270 @ a57b56a: `groundY`, wyciągi
 - **Dworzec Autobusowy w66264171.** W OSM to nadal `building=transportation` z peronami „Dworzec Główny PKS (1…17)” w danych gry. Od 2023 r. główny węzeł autobusowy to Dworzec Metropolitalny przy PKP, czyli możliwa stacja Lublin Główny. W 2077 r. budynek zostaje dworcem autobusowym regionu. Wejście B nazywam **„Dworzec Autobusowy”**, a nie samym „Dworzec”, żeby gracz nie mylił go z Lublinem Głównym. Komunikat `metro_ride` „Plac Zamkowy, dworzec autobusowy” zostaje.
 - **G-307 (dzisiejsze kioski).** Pomiar się zgadza: Plac Litewski 3,8 m od tablicy Andrzeja Struga n12785177414, Brama Krakowska 10,8 m od Bramy. Do zgłoszenia trzeba dopisać tablicę Ludomira Michała Rogowskiego n13252649322 (491,3; −75,0), 2,1 m od kiosku `kanal` (T-154). Etap 2 zamyka wszystkie trzy przypadki, bo kioski znikają.
 - **Kontrola skanu (propozycja):** `metro-line-protected`. Punkty `METRO_TUNNEL` i linii `METRO_PLANNED` próbkowane co 5 m nie mogą leżeć w `PROTECTED_AREAS` ani w obrysie budynku `historic`/`heritage`/`place_of_worship`. Baza dziś: 3 linie (tunel Plac Zamkowy – Nabrzeże pod cmentarzem, Ogród Saski w parku, odgałęzienie Lublin Główny pod Kościołem św. Piotra), po poprawce 0.
+
+## Decyzje użytkownika 6.11
+
+- Tabliczka pylonu pokazuje tylko literę wejścia; pełna nazwa stacji jest na blendach dachu (etap 3, #303).
+- Etap 4: biletomat wejścia A stoi na peronie, przy pociągu, i stamtąd rusza przejazd (odpowiedź na pytanie 3). Wejścia B (Alchemia, Dworzec Autobusowy) zostają bez peronu i sprzedają bilet w hali.

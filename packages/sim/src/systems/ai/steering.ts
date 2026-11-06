@@ -2,6 +2,7 @@ import type { Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { Aabb } from "../../world/collision";
 import type { Entity } from "../../world/components";
+import { DECK_HEADROOM } from "../../world/deck";
 import { type GroundField, MAX_WALK_SLOPE, groundOf, heightApart } from "../../world/ground";
 import { lineOfSight } from "../../world/hitscan";
 import { solidIndexOf } from "../../world/solid-index";
@@ -144,15 +145,58 @@ const cellRange = (lo: number, hi: number, origin: number): [number, number] => 
 
 const centre = (i: number, origin: number) => origin + (i + 0.5) * NAV_CELL;
 
+/** How often a walk's line is sampled for a deck it passes under (m). */
+const UNDER_STEP = 1;
+
+/** The part of the line from `a` to `b` (0..1 along it) inside the box, or null. */
+const clipTo = (a: Vec3, b: Vec3, box: { minX: number; maxX: number; minZ: number; maxZ: number }): [number, number] | null => {
+  let [t0, t1] = [0, 1];
+  for (const [p, d, lo, hi] of [[a.x, b.x - a.x, box.minX, box.maxX], [a.z, b.z - a.z, box.minZ, box.maxZ]] as const) {
+    if (Math.abs(d) < 1e-9) {
+      if (p < lo || p > hi) return null;
+      continue;
+    }
+    const [u, v] = [(lo - p) / d, (hi - p) / d];
+    t0 = Math.max(t0, Math.min(u, v));
+    t1 = Math.min(t1, Math.max(u, v));
+  }
+  return t0 <= t1 ? [t0, t1] : null;
+};
+
+/**
+ * Does the straight line from `a` to `b` pass under a bridge's deck with headroom over the
+ * terrain there and over both ends: the way under it, both ends off it (G-088)? Sampled only
+ * across the decks' boxes.
+ */
+const passesUnder = (ground: GroundField, a: Vec3, b: Vec3): boolean => {
+  const boxes = ground.decksNear(Math.min(a.x, b.x), Math.min(a.z, b.z), Math.max(a.x, b.x), Math.max(a.z, b.z));
+  if (boxes.length === 0) return false;
+  const top = Math.max(a.y, b.y) + DECK_HEADROOM;
+  const len = Math.hypot(b.x - a.x, b.z - a.z);
+  for (const box of boxes) {
+    const span = clipTo(a, b, box);
+    if (!span) continue;
+    const n = Math.max(1, Math.ceil(((span[1] - span[0]) * len) / UNDER_STEP));
+    for (let i = 0; i <= n; i++) {
+      const t = span[0] + ((span[1] - span[0]) * i) / n;
+      const [x, z] = [a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t];
+      const deck = ground.heightAt(x, z);
+      if (deck > top && deck - ground.heightAt(x, z, -Infinity) > DECK_HEADROOM) return true;
+    }
+  }
+  return false;
+};
+
 /**
  * How a walk from `a` to `b` sees the bridges' decks high over the terrain (G-062): as overhead
- * (`-Infinity`) when either end stands under one, so the way under the bridge is open and the
- * deck's edges over it are no bank; as ground (`Infinity`) otherwise, so a way over the bridge
- * between two ends off it stays open.
+ * (`-Infinity`) when either end stands under one, or the way between them passes under one high
+ * over both (the footway in its tunnel under Zamkowa, G-088), so the way under the bridge is open
+ * and the deck's edges over it are no bank; as ground (`Infinity`) otherwise, so a way over the
+ * bridge between two ends off it stays open. Only these two: the walk's rasters are kept by it.
  */
 const deckReach = (ground: GroundField, a: Vec3, b: Vec3): number => {
   const underDeck = (p: Vec3) => ground.heightAt(p.x, p.z, p.y + STEP_HEIGHT) < ground.heightAt(p.x, p.z);
-  return underDeck(a) || underDeck(b) ? -Infinity : Infinity;
+  return underDeck(a) || underDeck(b) || passesUnder(ground, a, b) ? -Infinity : Infinity;
 };
 
 /** Terrain height at every cell centre of the window, or null where the world has no terrain. */
@@ -470,11 +514,12 @@ const fieldFor = (world: World<Entity>, floor: number, reach: number, goal: Vec3
 export const KNEE_HEIGHT = 0.6;
 /**
  * On terrain (ADR-0043) the knee-high line ignores the ground itself (it dips under every
- * crest) and instead the way must not cross a bank too steep to walk.
+ * crest) and instead the way must not cross a bank too steep to walk. `height` puts the line
+ * elsewhere above the feet.
  */
-export const straightWalk = (world: World<Entity>, from: Vec3, to: Vec3): boolean => {
+export const straightWalk = (world: World<Entity>, from: Vec3, to: Vec3, height = KNEE_HEIGHT): boolean => {
   const ground = groundOf(world);
-  const knee = (p: Vec3) => ({ x: p.x, y: p.y + KNEE_HEIGHT, z: p.z });
+  const knee = (p: Vec3) => ({ x: p.x, y: p.y + height, z: p.z });
   if (!ground.hasTerrain) return lineOfSight(world, knee(from), knee(to));
   return lineOfSight(world, knee(from), knee(to), false) && !bankBetween(ground, from, to, deckReach(ground, from, to));
 };

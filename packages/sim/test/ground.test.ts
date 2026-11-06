@@ -211,3 +211,29 @@ describe("a shaft cut into the ground (ADR-0071 stage 2)", () => {
     expect(dug.heightAt(60, 21)).toBeCloseTo(whole.heightAt(60, 21), 9);
   });
 });
+
+describe("a vault under the ground (ADR-0071 stage 4)", () => {
+  const slope = (x: number, z: number) => 0.05 * x + 0.02 * z;
+  const chunk = { bounds: { minX: 0, maxX: 40, minZ: 0, maxZ: 40 }, terrain: gridOf(0, 0, 5, 9, 9, slope) };
+  const vault = { bounds: { minX: 10, maxX: 30, minZ: 10, maxZ: 20 }, floor: -9 };
+  const under = new GroundField([chunk], [], [vault]);
+  const whole = new GroundField([chunk]);
+
+  it("is the street for feet on it and for every query without feet, and its floor for feet deep under it", () => {
+    for (const reach of [Infinity, slope(20, 15) + 0.45, slope(20, 15) - 0.9]) expect(under.heightAt(20, 15, reach)).toBeCloseTo(whole.heightAt(20, 15), 9);
+    expect(under.heightAt(20, 15, -7.5)).toBe(-9);
+    // Outside it the earth is the terrain's, however deep the feet.
+    expect(under.heightAt(31, 15, -7.5)).toBeCloseTo(whole.heightAt(31, 15), 9);
+    expect(under.steepAt(20, 15, -7.5)).toBe(false);
+  });
+
+  it("lets a ray on under the street through it, and stops one at its edge in the earth or coming down from the street", () => {
+    expect(whole.rayHit({ x: 15, y: -7, z: 15 }, { x: 1, y: 0, z: 0 }, 10)).toBe(0);
+    expect(under.rayHit({ x: 15, y: -7, z: 15 }, { x: 1, y: 0, z: 0 }, 10)).toBeNull();
+    const out = under.rayHit({ x: 15, y: -7, z: 15 }, { x: 1, y: 0, z: 0 }, 30);
+    expect(out).toBeGreaterThan(14.9);
+    expect(out).toBeLessThan(16.5);
+    const down = under.rayHit({ x: 20, y: 10, z: 15 }, { x: 0, y: -1, z: 0 }, 30);
+    expect(down).toBeCloseTo(10 - slope(20, 15), 3);
+  });
+});
