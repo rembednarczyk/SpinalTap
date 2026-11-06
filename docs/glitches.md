@@ -1171,6 +1171,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: targ A 15 m na północ od otworu, za murem podwórza przy doki A, shinsekai A przy (u −6, w 6) · Koszt: średni
 - Pakiet właściciela: packages/sim (`world/nav.ts`, `steering`)
 
+### G-379 Winda targu: gracz staje na zamkniętej bramce 1,1 m i podciąga się na ściany szybu i barierki estakady
+- Status: zgłoszone (6.11, autor windy Alchemii, sonda z #312)
+- Ważność: S4 · Zasięg: skoki z estakady w zamkniętą bramkę (kabina na dole): stopy 1,05–1,20 m nad pomostem na wierzchu bramki, podciągnięcia na 2,20–2,37 m (ściany szybu, barierki), część prób wpada do szybu (do 2,6 m, bez obrażeń) · Koszt: mały (wzorem #312: bramka do nadproża i głowica) albo w ramach G-372
+- Pakiet właściciela: packages/sim (treść windy targu), G-372 (`ledgeAhead`)
+- Test przyjęcia: test skoków w bramki jak w #312 (0–75° co 15°) dla windy targu: 0 wejść na bramkę i do szybu
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
