@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-320 Nakładające się nawierzchnie `square` i `cobble` leżą w jednej płaszczyźnie: migotanie głębi (z-fighting) bruku i płyt w całym mieście
+- Status: naprawione (PR #328, 6.11; zgłoszenie gracza z nagraniem; skan `paving-coplanar` 1560 → 0)
+- Ważność: S3 (było S4) · Zasięg: 69 par różnych nawierzchni z tym samym `SURFACE_LIFT` 0,08; dwa nakładające się `square` z różnym wzorem spoin dają słabe kropkowane linie (zrzut `shots/g301/after/g301-c.png`); trwale: rysować jeden kawałek z pary (przycięcie nakładek w imporcie)
+- Pakiet właściciela: tools/osm-import i packages/engine (mapcity/ground-plan)
+
 ### G-401 Napad z mikrozdarzenia otwiera pusty panel rozmowy i odbiera sterowanie
 - Status: naprawione (PR #332, 6.11)
 - Ważność: S3 · Zasięg: mikrozdarzenie napadu wysyła `EncounterStarted` z pustym knotem `""`; app (`packages/app/src/controllers/compose.ts`, `onEncounter`) otwiera pusty, zakończony panel rozmowy, który blokuje sterowanie, dopóki gracz go nie zamknie

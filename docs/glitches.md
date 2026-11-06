@@ -952,11 +952,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: róg Kozia/Bernardyńska ścina narożnik przez w67498752 (ok. 17 m; wierne punkty (390; −144), (362; −149), (368; −172)); w luce T-022 odcinek (1580; 232) → (1738; 386) pod 5 budynkami, a (1738; 386) → (2084; 384) ok. 19 m na północ od łuku ulicy (lepiej (1803; 377), (1891; 368), (1962; 367), (2044; 378)); odcinek (506; −389) → (590; −1840) 5 m od Pałacu Sobieskich w181283749 (wierniej Bernardyńską (583; −528), (639; −627) i Zamojską (662; −728)). Kontrola `metro-line-protected` poza prostokątami importu widzi tylko `PROTECTED_AREAS`: dodać listę zabytków poza importem (punkt i promień, m.in. kościół św. Agnieszki w171014937, Pałac Sobieskich), baza 0; od PR #279 też odcinek Plac Litewski (88; −60) → (240; −66) pod w67504389 i w67504391 (34 m), punkty w T-163
 - Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan
 
-### G-320 Nakładające się nawierzchnie `square` i `cobble` leżą w jednej płaszczyźnie: migotanie głębi (z-fighting) bruku i płyt w całym mieście
-- Status: w PR #328 (6.11, weryfikator i kurator: PRZYJĘTE; runda 2: kontrola skanu za wolna w CI)
-- Ważność: S3 (było S4) · Zasięg: 69 par różnych nawierzchni z tym samym `SURFACE_LIFT` 0,08; dwa nakładające się `square` z różnym wzorem spoin dają słabe kropkowane linie (zrzut `shots/g301/after/g301-c.png`); trwale: rysować jeden kawałek z pary (przycięcie nakładek w imporcie)
-- Pakiet właściciela: tools/osm-import i packages/engine (mapcity/ground-plan)
-
 ### G-321 Mapa M przy mocnym oddaleniu: nazwy dzielnic nakładają się („PRZEDSTARE MIASTO”)
 - Status: zgłoszone (5.11, weryfikator PR #270; było też przed tą zmianą)
 - Ważność: S4 · Zasięg: `liftDistricts` przesuwa „KRAKOWSKIE PRZEDMIEŚCIE” i „STARE MIASTO” na ten sam wiersz; na telefonie przy oddaleniu tłoczą się też etykiety zabytków
@@ -1103,7 +1098,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`elevator-system`)
 
 ### G-377 Promień z ulicy do szybu metra trafia w niewidzialny teren pod pawilonem
-- Status: zgłoszone (6.11, naprawiacz G-368)
+- Status: w PR #335 (6.11, w weryfikacji)
 - Ważność: S3 · Zasięg: `GroundField.rayHit` maszeruje teren chunka ulicy w obszarze szybu do najbliższej linii siatki, więc trafia w dawną powierzchnię ulicy pod pawilonem; strzelec 0,5 m przed otworem Alchemii B nie widzi gracza w hali i przez 20 s nie strzela; prawdopodobnie też strzały gracza z zewnątrz do hali · Koszt: średni
 - Pakiet właściciela: packages/sim (`world/ground.ts`, raycast)
 - Test przyjęcia: linia wzroku i strzał z ulicy przed otworem do gracza w hali przechodzą (i odwrotnie)
@@ -1243,6 +1238,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, weryfikator PR #333)
 - Ważność: S4 · Zasięg: na urządzeniu hybrydowym klik myszą w ◎ albo przeciągnięcie myszą po strefie obrotu dostaje wspomaganie jak dotyk (`packages/ui/src/touch/pad-button.tsx`); `feedAimAssist` liczy cele (w TPP z podwójną linią wzroku) w każdym kroku także u gracza bez dotyku i pada, choć wynik nie jest używany
 - Pakiet właściciela: packages/ui (touch), packages/app
+
+### G-409 Kontrole skanu glitchy blisko limitu 20 s w CI z pokryciem
+- Status: zgłoszone (6.11, weryfikator PR #328)
+- Ważność: S3 (CI) · Zasięg: pod obciążeniem z `VITEST_COVERAGE_SHARD=1`: building-in-set-piece 21,2 s, cable-low 29,7 s (ponad limit), market-piece-on-crowd-lane 15,2 s, lamp-style-change-on-way 13,8 s, paving-overlap-step 6–8 s; na runnerze CI grożą jak `paving-coplanar` w #328; poprawka: przyspieszyć kontrole (pomiar, indeksy), nie podnosić limitu
+- Pakiet właściciela: tools/glitch-scan
+
+### G-410 Ramki rzadkości w torbie i slotach ekwipunku niewidoczne (kolejność reguł CSS)
+- Status: zgłoszone (6.11, budowniczy ADR-0073 etap 1)
+- Ważność: S4 · Zasięg: w `styles.css` reguły `.inv__cell` i `.inv__slot` stoją za `.rarity--*` i nadpisują kolor ramki; od #334 komórki z ikoną mają kolor w stylu, komórki tekstowe (mody, wszczepy) i sloty ubrań nadal nie; zaznaczenie (magenta) wygląda jak kolor rzadkiego
+- Pakiet właściciela: packages/ui (inventory)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
