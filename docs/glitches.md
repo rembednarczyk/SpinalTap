@@ -1297,6 +1297,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 3 drzewa na Placu Litewskim; poprawka: `species`/`genus` z OSM (Quercus, Populus), model dębu; kontrola `tree-species-ignored`
 - Pakiet właściciela: tools/osm-import, packages/engine (assety)
 
+### G-424 Zapis v30 z ogłuszonym wrogiem: migracja 30→31 nie stawia `fought` na ciałach
+- Status: zgłoszone (6.11, weryfikator PR #337)
+- Ważność: S4 · Zasięg: zabicie ciała ogłuszonego przed aktualizacją liczy jedną walkę stylu ciosu (np. pistolet) zamiast skradania; nadal najwyżej jedna walka na wroga; poprawka: migracja stawia `fought` na encjach `downed`/`unconscious` albo świadome pozostawienie
+- Pakiet właściciela: packages/persistence (migrations)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
