@@ -886,11 +886,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Do ustalenia: błąd w czujności czy brak trybu skradania (backlog, skradanie)
 - Pakiet właściciela: packages/sim/src/systems/ai
 
-### G-289 Z dachu Alchemii nie ma bezpiecznego zejścia
-- Status: w PR #312 (6.11, 05aaea0, runda 2 PRZYJĘTE przez weryfikatora; kurator w toku)
-- Ważność: S4 · Zasięg: zeskok z 11–13 m kosztuje 48–96 HP; dziś dach nieosiągalny
-- Pakiet właściciela: packages/sim (content/alchemia.ts)
-
 ### G-290 Strażnicy liczą obecność w strefie w mundurze jako czyn zabroniony mimo znanego kodu
 - Status: zgłoszone (4.11, naprawiacz G-280; do sprawdzenia, czy zamierzone)
 - Ważność: S4 · Zasięg: `zoneActive` w `world/disguise.ts` nie uwzględnia `codeKnown` (jego odpowiednik w `crime-system.ts` tak); przy przyjaznej postawie Tessen „Cover blown” bez skutku
@@ -1202,6 +1197,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `packages/sim/src/systems/player-control-system.ts:74-81`, `wornGarments(domain.inventory, …)`; zmiana ubrania przy tym samym `equipment` może dać nieaktualne statystyki · Koszt: mały
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: zmiana zużycia albo sztuki odzieży w `inventory.items` zmienia wynik `playerStatsOf`
+
+### G-387 Shard e2e (1) na granicy `timeout-minutes: 25`: przygotowanie ok. 11 min, testy 13,6 min
+- Status: zgłoszone (6.11, orkiestrator; #317 anulowany po 25 min, 20/20 testów zielonych)
+- Ważność: S2 (blokuje scalanie PR-ów z kodem) · Zasięg: `.github/workflows/ci.yml`, job e2e; instalacja, build i pobranie przeglądarek przed testami (10:40 → 10:51), potem 21 testów jednym workerem · Koszt: średni
+- Pakiet właściciela: Infra/Build (`.github`), QA (`e2e`)
+- Poprawka bez podnoszenia limitu (ADR-0046): skrócić przygotowanie (cache przeglądarek Playwright i builda, build raz i artefakt dla shardów) albo trzeci shard
+- Test przyjęcia: oba shardy e2e kończą się z zapasem ≥ 5 min na obecnym main
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

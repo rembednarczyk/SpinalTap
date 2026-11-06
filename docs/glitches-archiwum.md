@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-289 Z dachu Alchemii nie ma bezpiecznego zejścia
+- Status: naprawione w #312 (6.11, b65bd52; winda Alchemii na dach z mostkiem i tarasem, bramki do nadproża, podświetlone przyciski; weryfikator i kurator PRZYJĘTE)
+- Ważność: S4 · Zasięg: zeskok z 11–13 m kosztuje 48–96 HP; dziś dach nieosiągalny
+- Pakiet właściciela: packages/sim (content/alchemia.ts)
+
 ### G-373 Odcinek tunelu peronu metra `kanal` A wchodzi 0,4 m w narożnik kamienicy w67498758 (T-181)
 - Status: naprawione w #314 (6.11; `w0` −10 → −9,5, test peronu sprawdza `vaults` co 0,25 m)
 - Ważność: S4 (niewidoczne) · Zasięg: 0,81 m² podziemia pod obrysem; test `metro-platform.test.ts` sprawdza tylko `rooms`, nie `vaults` · Koszt: mały (np. `w0` −10 → −9,5 albo krótszy odcinek po tej stronie)
@@ -251,7 +256,7 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-284 Winda nie działa albo jej nie ma
-- Status: nie odtwarza się (4.11; winda targu działa; winda w Alchemii w backlogu)
+- Status: naprawione w #312 (6.11, b65bd52; winda Alchemii na dach z mostkiem i tarasem, bramki do nadproża, podświetlone przyciski; weryfikator i kurator PRZYJĘTE)
 - Ważność: S3 · Zasięg: winda z treści (estakada, ADR windy z bramkami); do ustalenia, która i gdzie
 - Pakiet właściciela: packages/sim i treść lublin; docelowo winda w Alchemii (backlog)
 
