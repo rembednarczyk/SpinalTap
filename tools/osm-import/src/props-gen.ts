@@ -22,6 +22,7 @@ import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
 import { SolidIndex, clearSpot } from "./props-solid.ts";
 import { BASKET, BASKET_LAMPS, nearTraffic, placeStreetGroup } from "./props-streets.ts";
+import { treeVariant } from "./tree-heights.ts";
 
 /** One group of the plan, as far as placement reads it. */
 export interface PlanItem {
@@ -458,8 +459,9 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       continue;
     }
     const hash = fnv(x.key) & 0xffff;
-    // A bollard's variant is its chain (none until its row is strung), not a hash.
-    const variant = x.prop === "bollard" ? 0 : x.shape === undefined ? hash : withShape(hash, x.prop, x.shape);
+    // A bollard's variant is its chain (none until its row is strung), not a hash; a tree's holds its measured height (G-422).
+    const seed = x.shape === undefined ? hash : withShape(hash, x.prop, x.shape);
+    const variant = x.prop === "bollard" ? 0 : x.prop === "tree" ? treeVariant(site, x.key, x.p, seed) : seed;
     // Earlier groups win: a bin beside a bench steps aside from a tree's trunk, on the same ground.
     const surface = site.surfaceAt(x.p);
     // A lantern stepped aside from a solid keeps off the boards too.
