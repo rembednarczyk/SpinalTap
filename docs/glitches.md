@@ -1176,10 +1176,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (`input`), packages/app (`touch-fire.ts`)
 
 ### G-390 `save-load-contract-ended.test.ts` przekracza 20 s w CI (przypięci daleko strażnicy)
-- Status: w naprawie (6.11, orkiestrator; CI #322, run 42215667667, część 2; prawdopodobnie też wcześniejsza porażka #316)
+- Status: w PR (6.11, 07946f7; podział na odcinki ze wspólnym przebiegiem, 4,96 → 0,95 s lokalnie, 10,3 → 1,9 s pod coverage)
 - Ważność: S3 (zatrzymuje CI losowych PR-ów) · Zasięg: „saved away from the docks, the guards of the alarm wait at the office in both games”; ten sam wzorzec co G-357 (krokowanie z przypiętymi daleko strażnikami ok. 10× droższe) · Koszt: mały
 - Pakiet właściciela: packages/sim (test)
 - Test przyjęcia: najdłuższy przypadek pliku lokalnie ≤ 1,5 s, asercje bez zmian
+
+### G-391 `Ground.rayHit` poza chunkami: promień 2 km małymi krokami, `chunkIndex` liniowo po wszystkich chunkach
+- Status: w naprawie (6.11, z profilu G-390)
+- Ważność: S3 (wydajność gry i CI) · Zasięg: `packages/sim/src/world/ground.ts:341` (`rayHit`) i ok. l. 164 (`chunkIndex`); pościg strażników przypiętych daleko woła co krok `lineOfSight`; pierwsze kroki do 110 ms, dalej ok. 25 ms; przyczyna G-357, G-390 i wolnych `save-load-away-guards` · Koszt: średni
+- Pakiet właściciela: packages/sim (`world/ground.ts`)
+- Test przyjęcia: wyniki `rayHit` identyczne (test z wersją referencyjną), złote hashe bez zmian, czasy wymienionych testów wyraźnie niższe
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
