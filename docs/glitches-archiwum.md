@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-391 `Ground.rayHit` poza chunkami: promień 2 km małymi krokami, `chunkIndex` liniowo po wszystkich chunkach
+- Status: naprawione (PR #325, 6.11)
+- Ważność: S3 (wydajność gry i CI) · Zasięg: `packages/sim/src/world/ground.ts:341` (`rayHit`) i ok. l. 164 (`chunkIndex`); pościg strażników przypiętych daleko woła co krok `lineOfSight`; pierwsze kroki do 110 ms, dalej ok. 25 ms; przyczyna G-357, G-390 i wolnych `save-load-away-guards` · Koszt: średni
+- Pakiet właściciela: packages/sim (`world/ground.ts`)
+- Test przyjęcia: wyniki `rayHit` identyczne (test z wersją referencyjną), złote hashe bez zmian, czasy wymienionych testów wyraźnie niższe
+
 ### G-372 Podciąganie (`ledgeAhead`) sprawdza tylko punkt docelowy: na cienką barierkę da się wejść wzdłuż jej linii i chodzić po wierzchu
 - Status: naprawione (PR #321, 6.11; resztka na czubku dachu podzamcze 591 jako G-393)
 - Ważność: S3 · Zasięg: prawdopodobnie barierki w całym mieście; przy windzie Alchemii wymusiło barierki 2,6 m zamiast 1,1 m · Koszt: średni

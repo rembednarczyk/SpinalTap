@@ -1169,12 +1169,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `aim` z ● dochodzi po zatrzaskach (`InputLatches.apply` w `keymap.ts`), więc po puszczeniu ● gracz wraca do sprintu; przy zmianie palna → biała przez jeden krok `posture.aiming` = true (flaga broni spóźnia się o krok). Test sesji B nie obejmuje tapnięcia ◎ krótszego niż krok (tylko test jednostkowy) · Koszt: mały
 - Pakiet właściciela: packages/engine (`input`), packages/app (`touch-fire.ts`)
 
-### G-391 `Ground.rayHit` poza chunkami: promień 2 km małymi krokami, `chunkIndex` liniowo po wszystkich chunkach
-- Status: w naprawie (6.11, z profilu G-390)
-- Ważność: S3 (wydajność gry i CI) · Zasięg: `packages/sim/src/world/ground.ts:341` (`rayHit`) i ok. l. 164 (`chunkIndex`); pościg strażników przypiętych daleko woła co krok `lineOfSight`; pierwsze kroki do 110 ms, dalej ok. 25 ms; przyczyna G-357, G-390 i wolnych `save-load-away-guards` · Koszt: średni
-- Pakiet właściciela: packages/sim (`world/ground.ts`)
-- Test przyjęcia: wyniki `rayHit` identyczne (test z wersją referencyjną), złote hashe bez zmian, czasy wymienionych testów wyraźnie niższe
-
 ### G-392 Cembrowiny fontann 0,46–0,66 m nad brukiem: krok „na kamień i do wody” nie działa na większości odcinków
 - Status: zgłoszone (6.11, naprawiacz G-372; także na main)
 - Ważność: S4 (treść) · Zasięg: `BASIN_RIM.top` 0,45 m plus spadek terenu; komentarz w `basins.ts` („Seki steps up onto the stone”) rozmija się z krokiem 0,45 m · Koszt: mały
