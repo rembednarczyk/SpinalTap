@@ -1192,6 +1192,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: górny przycisk (−1,0; −1,8 od środka) dalej niż `BUTTON_REACH` 3 m z (0; 1,05) i (0,95; 1,0); trzeba podejść pół metra na południe. Przy okazji: `lift-bake.ts` kopiuje wymiar `BUTTON` z sim zamiast brać go z planu · Koszt: mały
 - Pakiet właściciela: packages/sim (`content/alchemia-lift.ts`), packages/engine (`renderer/alchemia/lift-bake.ts`)
 
+### G-385 Strzelec 15 m niżej o dwa biegi schodów metra nigdy nie trafia (shinsekai A, doki A, seed 11)
+- Status: zgłoszone (6.11, naprawiacz G-368; także na main)
+- Ważność: S4 · Zasięg: oddaje wszystkie strzały, zero trafień; prawdopodobnie linia strzału przez strop przejścia albo kąt · Koszt: nieznany
+- Pakiet właściciela: packages/sim (walka, raycast)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
