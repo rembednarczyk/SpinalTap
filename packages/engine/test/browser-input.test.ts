@@ -296,6 +296,17 @@ describe("touch fire button and the aim latch (ADR-0072)", () => {
     expect(i.poll().aim).toBe(false);
   });
 
+  it("B: a tap on aim quicker than a step still latches the sights", () => {
+    const i = touchInput("separate", "toggle");
+    i.virtualPad.press("aim");
+    i.virtualPad.release("aim");
+    expect(i.poll().aim).toBe(true);
+    expect(i.poll().aim).toBe(true);
+    i.virtualPad.press("aim");
+    i.virtualPad.release("aim");
+    expect(i.poll().aim).toBe(false);
+  });
+
   it("A with a melee weapon: fire strikes without raising the guard", () => {
     const i = touchInput("aims", "hold");
     i.virtualPad.adsWeapon = false;
