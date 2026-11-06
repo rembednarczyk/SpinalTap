@@ -16,8 +16,20 @@ import type { GameSession } from "../src/game-session";
 const REN_ROOF = market(86, 12.7, 59.6);
 const DECK = market(98.5, 9.9, 92);
 
-/** Moves to a spot of another district and lets streaming bring it (and its people) in. */
+/**
+ * Moves to a spot of another district and lets streaming bring it (and its people) in. A mugging
+ * the street may start as she comes in (ADR-0034, rolled by the tick, which the levels of ADR-0059
+ * moved) is not this act's: she closes its panel and steps out of its reach, which ends it.
+ */
 const goTo = (s: GameSession, at: { x: number; y: number; z: number }) => {
+  teleport(s, at.x, at.z, Math.PI / 2, 0, at.y);
+  steps(s, 2);
+  const micro = s.sim.session.street2.micro;
+  if (!micro) return;
+  s.intents.closeDialogue();
+  teleport(s, micro.at.x + 60, micro.at.z, Math.PI / 2, 0, micro.at.y);
+  steps(s, 2);
+  expect(s.sim.session.street2.micro).toBeNull();
   teleport(s, at.x, at.z, Math.PI / 2, 0, at.y);
   steps(s, 2);
 };
