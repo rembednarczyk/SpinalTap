@@ -1052,7 +1052,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: e2e (QA), packages/app (`GpuPacer`)
 
 ### G-349 Próg 0,3–0,4 m na zachodnim przyczółku mostu południowego Mełgiewskiej po G-340
-- Status: w PR #300 (5.11, 5820de7; teren przyczółków na wysokości pomostu, kontrola `deck-abutment-step` 21 → 12; w weryfikacji, potem kurator)
+- Status: naprawione w #300 (6.11, 5820de7; teren przyczółków na wysokości pomostu, kontrola `deck-abutment-step` 21 → 12; weryfikator i kurator PRZYJĘTE; reszta progów w G-360)
 - Ważność: S3 · Zasięg: pomost w50733068 przedłużony przez `bridge-ends.ts` jest poziomy na NMT końca osi (−25,72), a teren wzdłuż 13-metrowej krawędzi przyczółka opada na południe do −26,0…−26,14; na próbkach 0,5 m to skarpa (`MAX_WALK_SLOPE`, ADR-0043): postać idąca z Andersa na wschód 4,75–6,0 m na południe od osi staje w (2414,2–2414,7; 323,3–324,4); pas aut Andersa#126:0 schodzi z pomostu bokiem ze skokiem 0,17 m. Skan nie ma kontroli progu pomost–teren na przyczółkach; `bridge-ends.test.ts` nie pilnuje warunku węzła wspólnego (przypadek ze wspólnym węzłem bliżej niż 15 m od krawędzi)
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`), packages/sim (terrain/decks), tools/glitch-scan
 - Test przyjęcia: postać przechodzi z Andersa na most na całej szerokości jezdni; kontrola progu pomost–teren na przyczółkach (> 0,25 m) = 0
@@ -1125,6 +1125,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, naprawiacz G-349)
 - Ważność: S4 · Zasięg: `lamp-road` (2445,6; 246,4), −25,89 przy pomoście −25,23; blokuje przejście ok. 6 m od osi · Koszt: mały
 - Pakiet właściciela: tools/osm-import (rozstawienie latarni przy pomostach)
+
+### G-362 Pomost mostu Lutosławskiego 0,9 m za nisko na zachodnim końcu; plac przed nim obniżony (T-177)
+- Status: zgłoszone (6.11, kurator, przegląd G-349)
+- Ważność: S4 · Zasięg: x 2436–2444, z 428–441, ok. 25 m²; plac do 0,72 m poniżej NMT, podejście ok. 26% · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`bridge-ends.ts`, wysokość końca pomostu), packages/sim (`abutments.ts`)
+- Propozycja: wysokość końca pomostu z NMT przed przyczółkiem (pas OUT), gdy wyższy niż na końcu osi; podnosić pomost zamiast obniżać plac. Kontrola skanu `abutment-cut` (teren w zasięgu ramp przyczółków poza pomostem > 0,3 m pod NMT; baza 7)
+- Test przyjęcia: na (2440; 437,5) teren nie niżej niż NMT − 0,3 m
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
