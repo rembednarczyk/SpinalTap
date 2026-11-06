@@ -1091,12 +1091,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (skan) · Zasięg: wszystkie wejścia metra · Koszt: mały
 - Pakiet właściciela: tools/glitch-scan (`metro-entrances.ts`)
 
-### G-372 Podciąganie (`ledgeAhead`) sprawdza tylko punkt docelowy: na cienką barierkę da się wejść wzdłuż jej linii i chodzić po wierzchu
-- Status: w PR #321, runda 2 (6.11, aa46b8a; cienki sąsiad liczy się tylko z własnym oparciem; narożniki L/T 0; ponowna weryfikacja)
-- Ważność: S3 · Zasięg: prawdopodobnie barierki w całym mieście; przy windzie Alchemii wymusiło barierki 2,6 m zamiast 1,1 m · Koszt: średni
-- Pakiet właściciela: packages/sim (`movement-system`)
-- Test przyjęcia: podciągnięcie na bryłę węższą niż ciało albo na krawędź barierki jest odrzucane; barierka 1,1 m nie daje się przejść
-
 ### G-374 Lista quickhacków w HUD pokazuje koszt RAM bez zniżki ICEpick
 - Status: zgłoszone (6.11, autor ADR-0059 etapu 3b)
 - Ważność: S4 (UI) · Zasięg: `ui/hud/scanner.tsx` bierze koszt z tabeli, a symulacja liczy ze zniżką · Koszt: mały
@@ -1185,6 +1179,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, naprawiacz G-372; także na main)
 - Ważność: S4 (treść) · Zasięg: `BASIN_RIM.top` 0,45 m plus spadek terenu; komentarz w `basins.ts` („Seki steps up onto the stone”) rozmija się z krokiem 0,45 m · Koszt: mały
 - Pakiet właściciela: packages/sim (`content/lublin/basins.ts`)
+
+### G-393 Czubek dachu podzamcze 591: gracz spada 22 m przez widoczny płaski dach
+- Status: zgłoszone (6.11, weryfikator PR #321)
+- Ważność: S4 · Zasięg: jedno miejsce w mieście; trójkątny kawałek dachu 1,5 × 0,41 m przy (613,5–615; 333,9–334,4) liczy się jako wąska bryła; z 8 punktów czubka gracz zostaje na 2 (przed G-372 na 8), idąc w wierzchołek spada już 0,62 m od niego; przyczyna: `LEVEL_HOPS` = 3 i szukanie oparcia tylko w poprzek najwęższego kierunku (`foothold` w `movement-system.ts`); sondy `scratchpad/v-g372b-tip.test.ts.txt`
+- Pakiet właściciela: packages/sim (movement-system)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
