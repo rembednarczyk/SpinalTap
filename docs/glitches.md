@@ -1104,7 +1104,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: wyjście pawilonu na nawierzchni `square`/`sidewalk`, nie na rabacie
 
 ### G-366 Odmowa zmiany rozdania (respec) przy przekroczonej puli wszczepów nie mówi, że trzeba wyjąć wszczep
-- Status: zgłoszone (6.11, weryfikator #308)
+- Status: w PR #313 (6.11; respec ponad pulą przechodzi, inne odmowy mówią, co zrobić; w weryfikacji)
 - Ważność: S4 (UI/tekst) · Zasięg: toast „Your body won't take any more…”, przycisk Przebudowy aktywny mimo odmowy · Koszt: mały
 - Pakiet właściciela: packages/ui, packages/app (`ShopController`), i18n en/pl
 
@@ -1146,6 +1146,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (niewidoczne) · Zasięg: 0,81 m² podziemia pod obrysem; test `metro-platform.test.ts` sprawdza tylko `rooms`, nie `vaults` · Koszt: mały (np. `w0` −10 → −9,5 albo krótszy odcinek po tej stronie)
 - Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan (kontrola `metro-vault-in-building`)
 - Test przyjęcia: każdy `vault` każdego peronu ma 0 próbek (co 0,25 m) w `inBuilding`; test rozszerzony na `vaults` pada przed poprawką
+
+### G-374 Lista quickhacków w HUD pokazuje koszt RAM bez zniżki ICEpick
+- Status: zgłoszone (6.11, autor ADR-0059 etapu 3b)
+- Ważność: S4 (UI) · Zasięg: `ui/hud/scanner.tsx` bierze koszt z tabeli, a symulacja liczy ze zniżką · Koszt: mały
+- Pakiet właściciela: packages/ui, packages/app (przekazanie kosztu z sim)
+- Test przyjęcia: test komponentu: przy ICEpick koszt na liście równa się kosztowi pobieranemu w symulacji
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
