@@ -77,7 +77,7 @@ const bakeShaft = (sink: MeshSink, p: AlchemiaLiftPlan, quality: RenderQuality):
       liftBox(sink, p, { x0: x - NEON / 2, x1: x + NEON / 2, z0: nz - NEON / 2, z1: nz + NEON / 2, y0: p.levels[0] + 0.3, y1: p.head - 0.15 }, C.cyan);
     }
   }
-  // Steel bands round the shaft at its levels and every few metres between.
+  // Steel bands round the shaft at its levels and every few metres between, a cyan tube along each.
   const [ground, top] = p.levels;
   const bands = [ground + p.opening, top - 0.3, top + p.opening];
   for (let y = ground + p.opening + BAND_EVERY; y < top - 0.6; y += BAND_EVERY) bands.push(y);
@@ -87,7 +87,10 @@ const bakeShaft = (sink: MeshSink, p: AlchemiaLiftPlan, quality: RenderQuality):
       [-out, out, out - BAND, out],
       [-out, -out + BAND, -out, out],
       [out - BAND, out, -out, out],
-    ] as const) liftBox(sink, p, { x0, x1, z0, z1, y0: y - BAND / 2, y1: y + BAND / 2 }, C.steel, 0.01);
+    ] as const) {
+      liftBox(sink, p, { x0, x1, z0, z1, y0: y - BAND / 2, y1: y + BAND / 2 }, C.steel, 0.01);
+      liftBox(sink, p, { x0, x1, z0, z1, y0: y - NEON / 4, y1: y + NEON / 4 }, C.cyan, 0.02);
+    }
   }
   liftBox(sink, p, p.sill, C.granite);
   liftBox(sink, p, { ...p.sill, z0: p.sill.z1 - 0.04, y0: p.sill.y1 - 0.04 }, C.cyan, 0.005);
