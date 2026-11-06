@@ -33,7 +33,7 @@ describe("attributes on the Progress tab (ADR-0059, stages 2 and 7)", () => {
 
   it("with points left a button raises an attribute through the intent; none at 15", () => {
     const { i } = sheet({ level: 3, attributePoints: 2, attributes: { ...START_ATTRIBUTES, shadow: 15 } });
-    expect(screen.getByTestId("attribute-points").textContent).toContain("Points to spend: 2");
+    expect(screen.getByTestId("attribute-points").textContent).toBe("2 attribute points to spend");
     fireEvent.click(screen.getByRole("button", { name: "Raise Tech" }));
     expect(i.spendAttributePoint).toHaveBeenCalledWith("tech");
     expect(within(screen.getByTestId("attribute-shadow")).queryByRole("button", { name: /^Raise/ })).toBeNull();
@@ -41,7 +41,7 @@ describe("attributes on the Progress tab (ADR-0059, stages 2 and 7)", () => {
 
   it("speaks Polish with the Polish setting", () => {
     sheet({ attributePoints: 2, settings: { ...DEFAULT_SETTINGS, locale: "pl" } });
-    expect(screen.getByTestId("attribute-points").textContent).toContain("Punkty do rozdania: 2");
+    expect(screen.getByTestId("attribute-points").textContent).toBe("2 punkty atrybutów do rozdania");
     expect(screen.getByRole("button", { name: "Podnieś: Krzepa" })).toBeTruthy();
   });
 });

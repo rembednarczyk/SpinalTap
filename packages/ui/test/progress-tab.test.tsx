@@ -94,7 +94,7 @@ describe("the Progress tab", () => {
       expect(screen.getByTestId("attribute-tree-" + tree).getAttribute("aria-pressed")).toBe("true");
       expect(screen.getAllByTestId(/^perk-/).every((el) => el.dataset.testid!.startsWith(`perk-${tree}_`))).toBe(true);
     }
-    expect(screen.getByTestId("attribute-net").textContent).toContain("Ranks bought: 2");
+    expect(screen.getByTestId("attribute-net").textContent).toContain("2 ranks bought");
   });
 
   it("says where the respec is and for how much; on basic terms and with nothing spent it says why not", () => {
@@ -127,7 +127,7 @@ describe("the sheet after the move", () => {
     fireEvent.keyDown(window, { code: "Tab" });
     expect(screen.queryByTestId("attributes")).toBeNull();
     expect(screen.queryByTestId("perks")).toBeNull();
-    expect(screen.getByTestId("sheet-level").textContent).toContain("Level 4 · Points to spend: 1");
+    expect(screen.getByTestId("sheet-level").textContent).toContain("Level 4 · 1 point to spend");
     expect(screen.getByTestId("sheet-implant-skeleton").textContent).toContain("off: over the pool");
     expect(screen.getByTestId("sheet-implant-optics").textContent).not.toContain("off");
     fireEvent.click(screen.getByRole("button", { name: "Spend in Progress" }));
@@ -142,7 +142,7 @@ describe("the XP bar on the HUD", () => {
     expect(within(identity).getByTestId("hud-level").textContent).toBe("Lv 3");
     expect(within(identity).getByTestId("hud-xp")).toBeTruthy();
     expect(within(identity).getByTestId("hud-points").textContent).toBe("▲ 3 K");
-    expect(within(identity).getByTestId("hud-points").getAttribute("aria-label")).toBe("Points to spend: 3");
+    expect(within(identity).getByTestId("hud-points").getAttribute("aria-label")).toBe("3 points to spend");
   });
 
   it("shows the calm block a moment after XP comes in, and flashes the bar on a level up", () => {
@@ -160,13 +160,30 @@ describe("the XP bar on the HUD", () => {
     expect(screen.getByTestId("hud-progress").classList.contains("hud__progress--up")).toBe(false);
   });
 
-  it("on touch the menu button wears the points instead; none without points", () => {
-    mount({ attributePoints: 1, perkPoints: 1 }, true);
+  it("on touch the menu button wears the points and opens on Progress; without points none, and the inventory", () => {
+    const withPoints = mount({ attributePoints: 1, perkPoints: 1 }, true);
     expect(within(screen.getByTestId("touch-character")).getByTestId("touch-character-points").textContent).toBe("2");
+    fireEvent.click(screen.getByTestId("touch-character"));
+    expect(withPoints.store.getState().characterTab).toBe("progress");
+    expect(screen.getByTestId("progress-tab")).toBeTruthy();
     cleanup();
-    mount({}, true);
+    const none = mount({}, true);
     expect(screen.queryByTestId("touch-character-points")).toBeNull();
     expect(screen.queryByTestId("hud-points")).toBeNull();
+    fireEvent.click(screen.getByTestId("touch-character"));
+    expect(none.store.getState().characterTab).toBe("inventory");
+  });
+});
+
+describe("the scanned enemy's level (decision of 6.11)", () => {
+  it("the scan card names an enemy's level, in Polish too; a passer-by has none", () => {
+    const enemy = { id: 7, kind: "person" as const, name: "Hebi ganger", faction: "Hebi", profile: null, hostile: true, level: 12 };
+    const { store } = mount({ scanning: true, scanTarget: enemy });
+    expect(screen.getByTestId("scan-level").textContent).toBe(" · Level 12");
+    act(() => patchUi(store, { settings: { ...DEFAULT_SETTINGS, locale: "pl" } }));
+    expect(screen.getByTestId("scan-level").textContent).toBe(" · Poziom 12");
+    act(() => patchUi(store, { scanTarget: { id: 8, kind: "person", name: "Ola", faction: null, profile: null, hostile: false } }));
+    expect(screen.queryByTestId("scan-level")).toBeNull();
   });
 });
 

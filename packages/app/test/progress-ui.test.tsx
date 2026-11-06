@@ -66,13 +66,14 @@ describe("level up and the Progress tab in the session", () => {
     expect(screen.queryByTestId("hud-points")).toBeNull();
   });
 
-  it("on a phone the menu button wears the points and the tab spends them by tap", () => {
+  it("on a phone the menu button wears the points, opens on Progress and the tab spends them by tap", () => {
     const g = start(true);
     levelUp(g);
     const menu = screen.getByRole("button", { name: "Character" });
     expect(within(menu).getByTestId("touch-character-points").textContent).toBe("2");
+    // With points to spend the menu opens straight on Progress (decision of 6.11).
     fireEvent.click(menu);
-    fireEvent.click(screen.getByRole("tab", { name: /Progress/ }));
+    expect(screen.getByRole("tab", { name: /Progress/ }).getAttribute("aria-selected")).toBe("true");
     fireEvent.click(screen.getByTestId("attribute-tree-net"));
     fireEvent.click(screen.getByRole("button", { name: "Raise Net" }));
     expect(g.session.sim.domain.progression.attributes.net).toBe(4);

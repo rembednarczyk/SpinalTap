@@ -136,8 +136,8 @@ for (const [w, h] of [
       await expect(page.getByTestId("touch-character-points")).toHaveText("6");
       // The HUD with the XP row and the badge: nothing overlaps.
       await check(page, w, h);
+      // With points to spend the menu button opens straight on Progress (decision of 6.11).
       await page.getByRole("button", { name: "Character" }).tap();
-      await page.getByRole("tab", { name: /Progress/ }).tap();
       await expect(page.getByTestId("progress-tab")).toBeVisible();
       await expect(page.getByTestId("touch-controls")).toBeHidden();
       for (const tab of await page.getByRole("tab").all()) {
@@ -166,6 +166,9 @@ for (const [w, h] of [
       await buy.tap();
       await expect(page.getByTestId("perk-might_tough")).toContainText("Rank 1/3");
       await expect(page.getByTestId("progress-tab-points")).toHaveText("4");
+      // Polish counts the points in its plural forms: 2 attribute points left, then 1.
+      await page.evaluate(() => window.__seki!.session.intents.changeSettings({ locale: "pl" }));
+      await expect(page.getByTestId("attribute-points")).toHaveText("2 punkty atrybutów do rozdania");
       if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, `touch-progress-${w}x${h}.png`) });
     });
   });

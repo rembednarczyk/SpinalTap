@@ -52,7 +52,7 @@ describe("perks on the Progress tab (ADR-0059, stages 3 and 7)", () => {
     const { i } = sheet({ perkPoints: 2, attributes: { ...START_ATTRIBUTES, net: 8 }, perks: { net_recycler: 1 } });
     // The tab opens on the first tree where a point buys something: Net's.
     expect(screen.getByTestId("attribute-tree-net").getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByTestId("perk-points").textContent).toContain("Perk points: 2");
+    expect(screen.getByTestId("perk-points").textContent).toBe("2 perk points to spend");
     fireEvent.click(screen.getByRole("button", { name: "Buy Buffer" }));
     expect(i.spendPerkPoint).toHaveBeenCalledWith("net_buffer");
     expect(within(screen.getByTestId("perk-net_recycler")).queryByRole("button")).toBeNull();
@@ -63,7 +63,7 @@ describe("perks on the Progress tab (ADR-0059, stages 3 and 7)", () => {
 
   it("speaks Polish with the Polish setting", () => {
     sheet({ perkPoints: 1, attributes: { ...START_ATTRIBUTES, shadow: 4 }, settings: { ...DEFAULT_SETTINGS, locale: "pl" } });
-    expect(screen.getByTestId("perk-points").textContent).toContain("Punkty perków: 1");
+    expect(screen.getByTestId("perk-points").textContent).toBe("1 punkt perku do rozdania");
     expect(screen.getByRole("button", { name: "Kup: Ciche kroki" })).toBeTruthy();
     expect(screen.getByTestId("perk-shadow_mule").textContent).toContain("Wymaga: Cień 8");
   });

@@ -67,12 +67,13 @@ const TopBar = () => {
   const session = useSessionIntents();
   const toggleCharacter = useUi((s) => s.toggleCharacter);
   const unread = useUi((s) => s.phone.unread);
-  // Points left to spend (ADR-0059, stage 7) wear a badge, like the phone's unread messages.
+  // Points left to spend (ADR-0059, stage 7) wear a badge, like the phone's unread messages, and
+  // open the screen on the Progress tab (decision of 6.11); without points it opens on the inventory.
   const points = useUnspentPoints();
   return (
     <div className="touch__top">
       {/* One button for the whole character screen instead of separate sheet and journal ones (plan §7). */}
-      <button type="button" className="touch__btn touch__btn--small touch__btn--menu" aria-label={t("touch.character")} data-testid="touch-character" onClick={() => toggleCharacter("inventory")}>
+      <button type="button" className="touch__btn touch__btn--small touch__btn--menu" aria-label={t("touch.character")} data-testid="touch-character" onClick={() => toggleCharacter(points > 0 ? "progress" : "inventory")}>
         ☰
         {points > 0 && (
           <span className="touch__badge" data-testid="touch-character-points" title={t("progress.unspent", { count: points })}>

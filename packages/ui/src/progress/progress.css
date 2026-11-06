@@ -132,3 +132,6 @@
 /* On touch the menu button wears the points instead. */
 .touch-mode .hud__points { display: none; }
 .touch-mode .hud__progress { margin-top: 2px; }
+
+/* The scanned enemy's level (ADR-0059, stage 7, decision of 6.11). */
+.scan-card__level { color: var(--amber); font-size: 0.8em; white-space: nowrap; }

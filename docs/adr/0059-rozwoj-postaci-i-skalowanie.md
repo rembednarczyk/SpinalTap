@@ -351,3 +351,11 @@ Etap 7 to sam interfejs. Symulacja, zapis i kontrakty (porty, zdarzenia, komendy
 - **Karta przedmiotu:** poziom, rzadkość i cechy były od etapu 4. Liczby porównania już wcześniej skalowały się z poziomem obu przedmiotów (`weaponStatsOf`, `garmentArmor`). Etap 7 dopisuje do nagłówka porównania poziom założonego przedmiotu („Hebi SMG · Poziom 5”) i pod tabelą jego cechy.
 - **Teksty:** nowe klucze są w `i18n/{en,pl}/progression.ts`. Polskie liczby punktów są w formie „Punkty do rozdania: N”, bez odmiany, bo test katalogów wymaga tych samych parametrów w obu językach.
 - **Bez zmian:** poziom wroga w interfejsie czeka na decyzję użytkownika (otwarta od etapu 5).
+
+## Decyzje użytkownika po etapie 7 (6.11)
+
+Te decyzje zastępują dwa punkty z „Z budowy etapu 7”: liczby punktów bez odmiany i poziom wroga czekający na decyzję.
+
+- **Poziom wroga w skanerze.** Karta skanu pokazuje poziom zeskanowanego wroga („Poziom 12”, en: „Level 12”). Nad głową nie ma paska. Poziom to `enemy.level` z oceny wroga w symulacji (`gradeEnemy`, pasmo dzielnicy z etapu 5). Aplikacja czyta go z encji tak jak resztę karty skanu (`scanTargetVm`), więc zdarzenie `ScanFocusChanged` i porty się nie zmieniają. `ScanTargetVm` w UI dostał opcjonalne pole `level`, które mają tylko wrogowie. Awans przelicza wrogów w świecie (`regradeEnemies`), a karta otwarta na tym samym celu rysuje się wtedy na nowo.
+- **Przycisk postaci na dotyku (☰)** otwiera ekran od razu na zakładce Rozwój, gdy są punkty do wydania. Bez punktów otwiera Ekwipunek, jak dotąd.
+- **Odmiana liczby punktów.** Liczby punktów i rang mają formy mnogie: po polsku „1 punkt”, „3 punkty”, „5 punktów”, „22 punkty”, po angielsku „1 point” i „N points”. Dotyczy to kluczy `progress.unspent`, `attribute.points`, `perk.points` i `perk.rankCount`. Test katalogów przyjmuje formy mnogie, jeśli są w obu językach naraz: angielski ma `one` i `other`, polski `one`, `few`, `many` i `other`, a każda forma ma te same parametry co angielskie `other`.

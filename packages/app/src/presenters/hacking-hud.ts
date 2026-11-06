@@ -56,7 +56,8 @@ export class HackingHud implements HudPart {
       const prev = ui.getState().scanTarget;
       const locale = ui.getState().settings.locale;
       if (!target) out.scanTarget = null;
-      else if (prev?.id !== target.id || this.cardLocale !== locale) {
+      // A level up regrades the enemies in the world (ADR-0059, stage 5): the card follows the level too.
+      else if (prev?.id !== target.id || this.cardLocale !== locale || prev.level !== target.enemy?.level) {
         out.scanTarget = scanTargetVm(target, locale);
         this.cardLocale = locale;
       }
