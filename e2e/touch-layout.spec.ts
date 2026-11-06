@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { type Page, expect, test } from "@playwright/test";
 import { freeze, step, teleport, newGame, waitForGame, waitForPlay } from "./helpers";
 
@@ -130,6 +131,23 @@ test("phone: the settings in the pause menu scroll to their last control", async
   const head = await top.boundingBox();
   expect(head && head.y >= -1).toBe(true);
   expect(await menu.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+
+  // The touch tab (ADR-0072): all five tabs and both fire button choices inside the screen.
+  await page.getByRole("tab", { name: "Touch & Gamepad" }).tap();
+  for (const tab of await page.getByRole("tab").all()) {
+    const b = (await tab.boundingBox())!;
+    expect(b.x >= -1 && b.x + b.width <= 844 + 1).toBe(true);
+  }
+  const fire = page.getByRole("radiogroup", { name: "Fire button" });
+  for (const name of ["Aims and fires", "Fires only"]) {
+    const option = fire.getByRole("radio", { name });
+    await option.scrollIntoViewIfNeeded();
+    const b = (await option.boundingBox())!;
+    expect(b.x >= -1 && b.x + b.width <= 844 + 1).toBe(true);
+  }
+  await fire.getByRole("radio", { name: "Fires only" }).tap();
+  await expect(page.getByRole("radiogroup", { name: "Aim button" }).getByRole("radio", { name: "Toggle" })).toHaveAttribute("aria-checked", "true");
+  if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, "touch-settings-tab.png") });
 });
 });
 
