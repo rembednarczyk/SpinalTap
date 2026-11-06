@@ -101,3 +101,32 @@ describe("bad luck in play", () => {
     expect(bag.lines).toEqual(rollLootFor(LOOT_TABLES.hebi_enforcer, deriveRandom(5, "loot:style-4200"), grade, { style: [] }).lines);
   });
 });
+
+describe("a blade from the loot (ADR-0059 stage 6, the user's call)", () => {
+  it("an enforcer's shirasaya comes into the bag, into the melee slot and into her hand", () => {
+    // The first key (in a fixed order) whose bag holds a shirasaya: the entry comes from the main stream alone.
+    const grade = (key: string) => ({ source: 1, player: 1, rng: deriveRandom(5, `loot:${key}:grade`) });
+    const key = Array.from({ length: 400 }, (_, i) => `blade-${i}`).find((k) =>
+      rollLootFor(LOOT_TABLES.hebi_enforcer, deriveRandom(5, `loot:${k}`), grade(k), { style: [] }).lines.some((l) => l.kind === "item" && l.item === "shirasaya"),
+    )!;
+    expect(key).toBeDefined();
+    const sim = simWith((d) => d);
+    sim.step();
+    const p = sim.player()!;
+    const g = sim.world.add(gangerEntity(4300, { key, position: { x: p.position.x, y: p.position.y, z: p.position.z + 1 }, yaw: Math.PI }, null, 1, p.chunk ?? "", undefined, "hebi_enforcer"));
+    g.health = { ...g.health!, current: 0 };
+    sim.step();
+    sim.enqueue({ type: "take-loot", containerKey: `loot:${key}`, line: "all" });
+    sim.step();
+    const blade = sim.domain.inventory.items.find((i) => i.def === "shirasaya")!;
+    // A weapon of a level (ADR-0059 stage 4), whatever the pick of the main stream gives.
+    expect(blade.level).toBeGreaterThanOrEqual(1);
+    sim.enqueue({ type: "equip-item", uid: blade.uid });
+    sim.step();
+    expect(sim.domain.equipment.melee).toBe(blade.uid);
+    sim.step(input({ weaponSlot: 3 }));
+    for (let i = 0; i < 60; i++) sim.step();
+    expect(sim.player()!.combatant).toMatchObject({ weapon: "shirasaya", slot: "melee" });
+    expect(sim.player()!.combatant!.stats!.look).toBe("blade");
+  });
+});

@@ -140,8 +140,57 @@ describe("loot weights leant towards the style", () => {
     expect(plain).toBeGreaterThan(60);
     expect(smg / plain).toBeGreaterThan(1.35);
     expect(smg / plain).toBeLessThan(1.75);
-    // A pistol player finds none more (no pistol in the Hebi table) and no fewer.
-    expect(smgs(all("pistol"))).toBe(plain);
+    // A rifle player finds none more (no rifle in the Hebi table) and no fewer.
+    expect(smgs(all("rifle"))).toBe(plain);
+  });
+});
+
+describe("the tables after the user's calls of stage 6", () => {
+  const items = (id: keyof typeof LOOT_TABLES) => LOOT_TABLES[id].entries.map((e) => e.item);
+  const share = (id: keyof typeof LOOT_TABLES, style: readonly StyleKind[], of: readonly string[]): number => {
+    const entries = styledEntries(LOOT_TABLES[id].entries, style);
+    const total = entries.reduce((s, e) => s + e.weight, 0);
+    return entries.filter((e) => of.includes(e.item)).reduce((s, e) => s + e.weight, 0) / total;
+  };
+
+  it("pistols and melee weapons drop from the enemies, of a rolled tier", () => {
+    for (const id of ["hebi_common", "hebi_enforcer", "tessen_guard", "tessen_sniper"] as const) {
+      expect(items(id).some((i) => lootStyleOf(i) === "pistol"), id).toBe(true);
+      expect(items(id).some((i) => lootStyleOf(i) === "melee"), id).toBe(true);
+    }
+    expect(items("hebi_enforcer")).toEqual(expect.arrayContaining(["unity9", "oni44", "baton", "shirasaya"]));
+    for (const e of LOOT_TABLES.hebi_enforcer.entries) if (lootStyleOf(e.item) === "pistol" || lootStyleOf(e.item) === "melee") expect(e.rarity).toBe("roll");
+    // The Hebi table still sums to the plan's 100, Tessen's to its 99.
+    expect(LOOT_TABLES.hebi_common.entries.reduce((s, e) => s + e.weight, 0)).toBe(100);
+    expect(LOOT_TABLES.tessen_guard.entries.reduce((s, e) => s + e.weight, 0)).toBe(99);
+  });
+
+  it("the pistol and melee styles raise the share of their weapons, the others stay above 0", () => {
+    const pistols = ["unity9", "oni44"];
+    const blades = ["baton", "shirasaya"];
+    expect(share("hebi_enforcer", all("pistol"), pistols)).toBeGreaterThan(share("hebi_enforcer", [], pistols) * 1.5);
+    expect(share("hebi_enforcer", all("melee"), blades)).toBeGreaterThan(share("hebi_enforcer", [], blades) * 1.5);
+    expect(share("tessen_guard", all("pistol"), ["unity9"])).toBeGreaterThan(share("tessen_guard", [], ["unity9"]));
+    for (const style of [all("pistol"), all("melee")]) for (const e of styledEntries(LOOT_TABLES.hebi_enforcer.entries, style)) expect(e.weight).toBeGreaterThan(0);
+  });
+
+  it("a hacker finds more capacity shards, datachips and neural implants; a sneak more disguises and suppressors", () => {
+    const hacker = ["capacity_shard", "synapse_booster", "datachip"];
+    for (const i of hacker) expect(lootStyleOf(i as Parameters<typeof lootStyleOf>[0])).toBe("quickhack");
+    expect(share("tessen_guard", all("quickhack"), hacker)).toBeGreaterThan(share("tessen_guard", [], hacker) * 1.3);
+    expect(share("tessen_guard", all("quickhack"), ["synapse_booster"])).toBeGreaterThan(share("tessen_guard", [], ["synapse_booster"]));
+    const sneak = ["suppressor", "hebi_jacket", "tessen_uniform", "tessen_overalls"];
+    for (const i of sneak) expect(lootStyleOf(i as Parameters<typeof lootStyleOf>[0])).toBe("stealth");
+    expect(share("tessen_guard", all("stealth"), sneak)).toBeGreaterThan(share("tessen_guard", [], sneak) * 1.3);
+    expect(share("hebi_common", all("stealth"), sneak)).toBeGreaterThan(share("hebi_common", [], sneak) * 1.3);
+    // Within the +60%, and nothing else goes to 0.
+    for (const style of [all("quickhack"), all("stealth")]) {
+      styledEntries(LOOT_TABLES.tessen_guard.entries, style).forEach((e, i) => {
+        const was = LOOT_TABLES.tessen_guard.entries[i]!.weight;
+        expect(e.weight).toBeGreaterThan(0);
+        expect(e.weight).toBeLessThanOrEqual(was * 1.6 + 1e-9);
+      });
+    }
   });
 });
 

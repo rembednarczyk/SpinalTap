@@ -11,8 +11,9 @@ import { type Game, mountGame, run, unmountGame } from "./game-ui";
  * touch-layout.
  */
 
-// Seed 71: the alley guard drops an uncommon Hebi SMG (rolled from its own loot stream).
-const SEED = 71;
+// Seed 169: the alley guard drops an uncommon Hebi SMG (rolled from its own loot stream). It was 71
+// before the pistol and the baton came into the Hebi table (ADR-0059 stage 6).
+const SEED = 169;
 
 /** Downs the guard, opens its bag and takes everything: the SMG lands in the inventory. */
 const lootTheGuard = (g: Game) => {
