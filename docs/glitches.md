@@ -1194,6 +1194,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 1 budynek (w66286396, skrytka Hebi) · Koszt: średni; test przyjęcia: budynek z `ruins=yes` nie ma okien ani dachu, a jego wysokość ≤ poziom × 3 m; pokrewne G-053
 - Pakiet właściciela: tools/osm-import
 
+### G-397 Taras Alchemii to strefa bez walki przy zasadzce Kagami
+- Status: zgłoszone (6.11, weryfikator PR #327)
+- Ważność: S4 · Zasięg: NPC nie jeżdżą windą, czyściciele na placu nie alarmują się przez 40 s, a ekrany tarasu blokują strzały w obie strony; gracz zjeżdża windą i walczy na placu, więc bez softlocka; do decyzji: zejście czyścicieli schodami albo celowe schronienie
+- Pakiet właściciela: packages/sim (systems/ai, content Alchemii)
+
+### G-398 Haki `hook_retrieve_2` i `hook_protect_2` obiecują widok z tarasu, którego ekrany nie dają
+- Status: zgłoszone (6.11, weryfikator PR #327)
+- Ważność: S4 · Zasięg: ekrany tarasu blokują linię wzroku do wszystkich celów (0,2–5,5 m od oka); tekst haka albo przezierność ekranów do poprawy
+- Pakiet właściciela: packages/sim (content), packages/narrative
+
+### G-399 Dostawa Kaito→Hana: limity 50/65/80 s liczone na dawną trasę, haki przy kładce nad Grodzką poza trasą
+- Status: zgłoszone (6.11, weryfikator PR #327)
+- Ważność: S4 (balans) · Zasięg: trasa ma teraz ok. 200 m; limity za luźne, haki dostawy nie leżą na drodze
+- Pakiet właściciela: packages/sim (content kontraktów)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
