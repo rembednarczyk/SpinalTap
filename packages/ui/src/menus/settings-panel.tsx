@@ -4,7 +4,7 @@ import type { MessageKey } from "../i18n/en";
 import { type Translate, isMessageKey } from "../i18n/t";
 import { useT } from "../i18n/use-t";
 import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE, SUBTITLE_SCALE_RANGE } from "../store/hud-vm";
-import type { AimMode, CameraShoulder, ControlBindingVm, GraphicsQuality, SettingsVm, TouchFireMode } from "../store/ui-store";
+import { type AimMode, type CameraShoulder, type ControlBindingVm, type GraphicsQuality, PAD_DEADZONE_SETTING_RANGE, PAD_SENSITIVITY_RANGE, type PadCurveMode, type SettingsVm, type TouchFireMode } from "../store/ui-store";
 import { TOKENS } from "../hud/tokens";
 import { useSettingsIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
@@ -27,6 +27,12 @@ const AIM_MODES: Options<AimMode> = [
 const TOUCH_FIRE: Options<TouchFireMode> = [
   ["aims", "settings.touchFire.aims"],
   ["separate", "settings.touchFire.separate"],
+];
+
+const PAD_CURVES: Options<PadCurveMode> = [
+  ["linear", "settings.padCurve.linear"],
+  ["classic", "settings.padCurve.classic"],
+  ["precise", "settings.padCurve.precise"],
 ];
 
 /** Each language under its own name, so a player can find theirs whatever is set now. */
@@ -215,8 +221,23 @@ const TouchAndGamepad = ({ settings, set }: SectionProps) => (
   <>
     <Choice label="settings.touchFire" value={settings.touchFire} options={TOUCH_FIRE} onChange={(touchFire) => set(touchFire === "separate" ? { touchFire, aimMode: "toggle" } : { touchFire })} />
     <Choice label="settings.aimMode" value={settings.aimMode} options={AIM_MODES} onChange={(aimMode) => set({ aimMode })} />
+    <Gamepad settings={settings} set={set} />
   </>
 );
+
+/** The pad's own look (ADR-0072): sensitivity, the radial dead zone of both sticks, the curve. */
+const Gamepad = ({ settings, set }: SectionProps) => {
+  const t = useT();
+  const [minSens, maxSens] = PAD_SENSITIVITY_RANGE;
+  const [minDead, maxDead] = PAD_DEADZONE_SETTING_RANGE;
+  return (
+    <>
+      <Slider id="padSensitivity" label={t("settings.padSensitivity")} value={settings.padSensitivity} min={minSens} max={maxSens} step={0.1} format={times(settings.locale)} onChange={(padSensitivity) => set({ padSensitivity })} />
+      <Slider id="padDeadzone" label={t("settings.padDeadzone")} value={settings.padDeadzone} min={minDead} max={maxDead} step={0.01} format={percent} onChange={(padDeadzone) => set({ padDeadzone })} />
+      <Choice label="settings.padCurve" value={settings.padCurve} options={PAD_CURVES} onChange={(padCurve) => set({ padCurve })} />
+    </>
+  );
+};
 
 /** A control's name in the chosen language; one the catalogs do not know keeps the app's label. */
 const controlName = (t: Translate, c: ControlBindingVm): string => {

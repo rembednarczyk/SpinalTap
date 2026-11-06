@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { type Page, expect, test } from "@playwright/test";
+import { type Locator, type Page, expect, test } from "@playwright/test";
 import { freeze, step, teleport, newGame, waitForGame, waitForPlay } from "./helpers";
 
 /**
@@ -147,6 +147,18 @@ test("phone: the settings in the pause menu scroll to their last control", async
   }
   await fire.getByRole("radio", { name: "Fires only" }).tap();
   await expect(page.getByRole("radiogroup", { name: "Aim button" }).getByRole("radio", { name: "Toggle" })).toHaveAttribute("aria-checked", "true");
+  // The gamepad's own look (ADR-0072, stage 4): both sliders and all three curves on the screen.
+  const inside = async (el: Locator) => {
+    await el.scrollIntoViewIfNeeded();
+    const b = (await el.boundingBox())!;
+    expect(b.x >= -1 && b.x + b.width <= 844 + 1 && b.y >= -1 && b.y + b.height <= 390 + 1).toBe(true);
+  };
+  await inside(page.getByRole("slider", { name: /^Gamepad sensitivity/ }));
+  await inside(page.getByRole("slider", { name: /^Stick dead zone/ }));
+  const curve = page.getByRole("radiogroup", { name: "Response curve" });
+  for (const name of ["Linear", "Classic", "Precise"]) await inside(curve.getByRole("radio", { name }));
+  await curve.getByRole("radio", { name: "Linear" }).tap();
+  await expect(curve.getByRole("radio", { name: "Linear" })).toHaveAttribute("aria-checked", "true");
   if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, "touch-settings-tab.png") });
 });
 });
