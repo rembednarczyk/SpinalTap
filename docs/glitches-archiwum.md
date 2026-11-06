@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-400 E2E w CI: przy trafieniu cache `.deb` apt i tak pobiera czcionki z mirrora (15 min)
+- Status: naprawione (PR #330, 6.11; setup e2e 887 s → 21 s)
+- Ważność: S3 (CI) · Zasięg: przebieg 42237620499 (#327): cache `playwright-debs` trafiony, ale `apt-get install ~/playwright-debs/*.deb` pobrał te same 9 paczek (21,9 MB) z mirrora Azure w 15 min, shard 1 przekroczył 25 min; regresja po G-387 (#319); poprawka: `dpkg -i` na lokalnych plikach
+- Pakiet właściciela: .github (Infra)
+
 ### G-391 `Ground.rayHit` poza chunkami: promień 2 km małymi krokami, `chunkIndex` liniowo po wszystkich chunkach
 - Status: naprawione (PR #325, 6.11)
 - Ważność: S3 (wydajność gry i CI) · Zasięg: `packages/sim/src/world/ground.ts:341` (`rayHit`) i ok. l. 164 (`chunkIndex`); pościg strażników przypiętych daleko woła co krok `lineOfSight`; pierwsze kroki do 110 ms, dalej ok. 25 ms; przyczyna G-357, G-390 i wolnych `save-load-away-guards` · Koszt: średni

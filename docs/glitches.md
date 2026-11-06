@@ -1209,11 +1209,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (balans) · Zasięg: trasa ma teraz ok. 200 m; limity za luźne, haki dostawy nie leżą na drodze
 - Pakiet właściciela: packages/sim (content kontraktów)
 
-### G-400 E2E w CI: przy trafieniu cache `.deb` apt i tak pobiera czcionki z mirrora (15 min)
-- Status: w naprawie (6.11, orkiestrator, gałąź `ccr-ec2c4269-ilh8k8-g400`)
-- Ważność: S3 (CI) · Zasięg: przebieg 42237620499 (#327): cache `playwright-debs` trafiony, ale `apt-get install ~/playwright-debs/*.deb` pobrał te same 9 paczek (21,9 MB) z mirrora Azure w 15 min, shard 1 przekroczył 25 min; regresja po G-387 (#319); poprawka: `dpkg -i` na lokalnych plikach
-- Pakiet właściciela: .github (Infra)
-
 ### G-401 Napad z mikrozdarzenia otwiera pusty panel rozmowy i odbiera sterowanie
 - Status: zgłoszone (6.11, budowniczy ADR-0059 etap 5)
 - Ważność: S3 · Zasięg: mikrozdarzenie napadu wysyła `EncounterStarted` z pustym knotem `""`; app (`packages/app/src/controllers/compose.ts`, `onEncounter`) otwiera pusty, zakończony panel rozmowy, który blokuje sterowanie, dopóki gracz go nie zamknie
