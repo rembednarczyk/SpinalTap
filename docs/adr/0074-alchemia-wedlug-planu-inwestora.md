@@ -32,6 +32,7 @@ Hala, stoiska i winda nie odpowiadają żadnej bryle z planu. Teren spada ok. 10
 - Kenta i Fumiko mają lokale w food hallu, Sachiko kiosk przy wejściu z parkingu, Goro sklep hybrydowy, a Oyaji sklep na narożu. Każdy sprzedawca stoi w swoim lokalu.
 - Kolejność: najpierw food hall ze sprzedawcami, potem Arkady, pawilon i parking.
 - Druga tura (6.11): model hali igor.tesV znika całkiem; Arkady i trójkątny pawilon to tło z restauracjami, bez nowej mechaniki; cały kompleks z parkingiem i pawilonem w paśmie targu 10–20; hala metra B dostaje zejście do P−1 (etap 4); tunel pod Lubartowską do kwartału Olejna–Szambelańska–Bramowa wchodzi do zakresu jako przejście z P−1 (osobny etap po etapie 5, z kuratorem topografii, bo to odstępstwo od planu 2026 wzięte z wersji 2009).
+- Godziny lokali (6.11, otwarte pytanie 1 rozstrzygnięte): jak w propozycji. Food hall 10:00–24:00, Fumiko z własnymi drzwiami 16:00–4:00, Oyaji do 22:00, reszta według dzisiejszych harmonogramów.
 
 ## Decyzja
 
@@ -166,7 +167,21 @@ Każdy etap ma test sesji bez renderera (`packages/app/test/alchemia-*.test.ts`,
 Do repo nie trafia nic z wizualizacji ani zdjęć prasowych (redakcje, „materiały prasowe Arkady sp. z o.o.”). Bryły opisujemy słowami i liczbami ze źródeł planu. Geometria jest własna albo z modeli CC0 lub CC-BY 4.0 z wpisem w README katalogu i na ekranie „Autorzy” (ADR-0063). Kopie artykułów zostają w scratchpadzie kuratora.
 
 ## Otwarte pytania
-1. **Godziny lokali:** propozycja to food hall 10:00–24:00 jak w realu (S13), Fumiko z własnymi drzwiami 16:00–4:00 jak dziś, Oyaji do 22:00 jak dziś, reszta według dzisiejszych harmonogramów (bez decyzji; etap 1 przyjmuje propozycję).
+Brak. Pytanie o godziny lokali rozstrzygnął użytkownik 6.11 (sekcja „Decyzje użytkownika”).
+
+## Wykonanie
+
+### Etap 1: food hall ze sprzedawcami (gałąź `feat/alchemia-etap1`)
+- **Bryła.** Food hall x 400–436, z 32–58 (36 × 26 m, ok. 35% prawdziwej powierzchni), 2,2 m od szybu i hali pawilonu B. Obrys leży na liniach siatki terenu 4 m, więc taras styka się ze ścianami całymi oczkami. Poziomy z pomiaru: T0 = −2,2 (parking przy tylnej ścianie), T1 = posadzka = −6,4 (średnia NMT przed frontem, −5,6…−7,8). W świetle 3,8 m. Grunt pod obrysem to `GroundCut`, czyli dziura w rysowanym terenie, jak pod pawilonem metra, a nie `GroundVault` ani płyta z `decks.ts`. Przy oczku 4 m przejście z T1 do sklepienia pod T0 dawało w drzwiach rampę 48°. Schody mają osobny wycinek przed wycinkiem hali, żeby AI na biegu szło grafem (pomiar: bez tego pościg z sali na dach utykał na stopniu 1,5 m pod celem).
+- **Wnętrze.** 12 lokali: Kenta i Goro przy wejściu, bar Fumiko w narożu NW z ladą przez front na T1 i własnymi drzwiami, sklep Oyajiego w narożu NE (lada pancerna, krata, zaplecze, drugie wyjście na T1), kiosk Sachiko przy tylnych drzwiach do klatki. Tła: kawiarnia, tajska, koreańska (roleta), grecka, gruzińska (roleta), wok, burgery (roleta). Sześć lokali z właścicielami z tabeli §3 to w etapie 1 pięć, bo Hana stoi z wózkiem na T1. Stoły wspólne pośrodku. Fronty HW 4 nie wróciły: mają 9 m wysokości, więc lokale to własna geometria, a `alchemia-props.glb` zniknął z gry razem z wpisami w „Autorach”.
+- **Komunikacja.** Klatka przy windzie biegnie wzdłuż tylnej ściany z domkiem na dachu i drzwiami na parking. Winda T0 ↔ −6,4 w szybie przy tylnej ścianie: dolne drzwi do sali, górne na parking. Rampy T0 → T1 po obu bokach (16,8%, 9,5°), wschodnia rysowana jako schody. Rampa 8% z §4 nie zmieściła się w 25 m spadku 4,2 m. T0 i T1 z rampami to jeden poziom terenu, więc graf łączy je tylko po to, żeby droga z dachu albo z sali szła dalej.
+- **Graf** `ALCHEMIA_NAV`: drzwi frontu (wejście, Fumiko, zaplecze Oyajiego i drzwi do jego sklepu), sala, klatka, dach od strony parkingu. Testy: pościg z parkingu do lady Kenty klatką, z T1 do sali i z powrotem, z sali na dach.
+- **Ludzie.** Hana na T1 (428; 66), Ren i torba Hebi na zielonym dachu do etapu 3, Kurosawa i czyściciele przy kiosku windy na parkingu, czujka i skrytka Hebi bez zmian do etapu 2. Godziny według decyzji: Kenta i Goro siedzą w głębi lokali od 0:00 do 10:00, Oyaji po 22:00 przechodzi przez zaplecze na T1, Fumiko w dzień siedzi na stołku przed barem.
+- **Pasmo.** `BAND_AREAS` ma dwa prostokąty: działkę x 379–456, z 30–140 i parking x 379–441, z −16…30, bez przystanku „Brama Krakowska 01” i chodnika Lubartowskiej. Test ADR-0059 nie łapie nikogo spoza targu.
+- **Zapis.** Schemat v32 (main + 1, po v31 z ADR-0059 etapu 6): migracja 31 → 32 w `persistence/src/alchemia-rebuild.ts`.
+- **Światło i budżet.** Zewnętrze jest jedną siatką do 135 m: przy 150 m z §7 włączało się w scenie Rynku (149 m), więc odległość skrócono. Wnętrze to druga siatka do 45 m od ścian, z jedną ciepłą lampą. Front świeci ciepło (`win-warm`). Scena `alchemia-tpp` zmierzona na 209 wywołań i 79 siatek, budżet 216 / 82. Pozostałe sceny i migawka NPR bez zmian.
+- **Skan.** `pad-unregistered` (baza 2: pady pokoi kliniki i Neon Koi bez wiersza T) i `game-solid-landmark-occlusion` (baza 0). Pozostałe bazy bez zmian.
+- **Wiersze T do rejestru** (numery po T-196 z rejestru sesji): T-145 na nowo (food hall według planu 2026), T-197 (T0, linia siatki pod tylną ścianą na −2,2), T-198 (T1, x 396–444, z 56–76 na −6,4, przejście 8 m), T-199 (rampy T0 → T1 po bokach), T-200 (bryła food hallu i wycięty grunt). T-157 bez zmian: pawilon B stoi poza padem T0.
 
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.
