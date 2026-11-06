@@ -261,7 +261,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (audyt dróg) (T-052) · Ważność: S4 · Koszt: średni (kontrakt `GroundSurface` w core, ADR)
 
 ### G-088 Zamkowa zapada się o 3,5 m nad tunelem pieszym przed Zamkiem
-- Status: zgłoszone (z przeglądu kuratora G-077)
+- Status: w naprawie (6.11, PR #306, a35f62c: pomost Zamkowej nad tunelem, `road-dip-over-tunnel` 1 → 0; weryfikator NIE PRZYJĘTE: pomost blokuje pościg AI przez tunel pieszy w66258159 (przed 3,35 s, po: brak w 20 s), reguła sufitu z G-068; runda 2 u autora)
 - Ważność: S3 (proponowana; dojście do Zamku, obejście 6 m od osi) · Zasięg: lokalny · Koszt: średni
 - Gdzie: (781.2, 198.8), Zamkowa w154962966 nad w66258159; T-053
 - Dowód: GroundField wzdłuż osi: −12,5 → −15,6 → −12,8 m; steepAt prawda na pasie od −8 do +5 m od osi
