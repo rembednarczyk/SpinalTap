@@ -21,11 +21,11 @@ describe("the scanned enemy's level", () => {
     expect(ui.getState().scanTarget).toMatchObject({ id: lookout.id, hostile: true, level: lookout.enemy!.level });
     // A passer-by has no level.
     const civilian = [...session.sim.world].find((e) => e.civilian !== undefined && e.health !== undefined);
-    if (civilian) {
-      session.sim.bus.emit("ScanFocusChanged", { targetId: civilian.id, kind: "person" });
-      steps(session, 1);
-      expect(ui.getState().scanTarget?.level).toBeUndefined();
-    }
+    expect(civilian, "a passer-by on the street").toBeDefined();
+    session.sim.bus.emit("ScanFocusChanged", { targetId: civilian!.id, kind: "person" });
+    steps(session, 1);
+    expect(ui.getState().scanTarget).toMatchObject({ id: civilian!.id });
+    expect(ui.getState().scanTarget?.level).toBeUndefined();
   });
 
   it("a level up regrades an enemy of Krakowskie (band 1-8) and the card follows its new level", () => {
