@@ -1210,7 +1210,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content kontraktów)
 
 ### G-401 Napad z mikrozdarzenia otwiera pusty panel rozmowy i odbiera sterowanie
-- Status: zgłoszone (6.11, budowniczy ADR-0059 etap 5)
+- Status: w PR #332 (6.11, w weryfikacji)
 - Ważność: S3 · Zasięg: mikrozdarzenie napadu wysyła `EncounterStarted` z pustym knotem `""`; app (`packages/app/src/controllers/compose.ts`, `onEncounter`) otwiera pusty, zakończony panel rozmowy, który blokuje sterowanie, dopóki gracz go nie zamknie
 - Pakiet właściciela: packages/app (controllers), packages/sim (micro-events)
 
