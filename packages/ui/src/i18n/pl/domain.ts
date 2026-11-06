@@ -137,6 +137,8 @@ export const plDomain = {
   "cyberware.kitsune_tendons.desc": "Wzmocnione ścięgna nóg. [Alt]: zryw na 3 m w kierunku ruchu, także raz w powietrzu. Odnowienie 1,5 s, przez 0,3 s kule przechodzą obok.",
   "cyberware.tsubame_reflex.name": "Odruch Tsubame",
   "cyberware.tsubame_reflex.desc": "Sterownik nadgarstka. Blok bronią białą odbija kule tam, gdzie patrzysz, dopóki wytrzymałość jest powyżej 1/3.",
+  "cyberware.kumo_cyberdeck.name": "Cyberdeck Kumo",
+  "cyberware.kumo_cyberdeck.desc": "Deck wpięty w układ nerwowy. Więcej RAM, szybsze wgrywanie quickhacków i odnowa RAM; lepsza rzadkość i poziom dają więcej.",
   // The active ability and the buffs.
   "ability.reflex_overdrive.name": "Przeciążenie odruchów",
   "buff.regen.name": "Regeneracja",

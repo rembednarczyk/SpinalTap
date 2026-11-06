@@ -430,10 +430,13 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     if (!domain || !isObject(domain.progression)) return { ...old, version: 31 };
     return { ...old, version: 31, domain: { ...domain, progression: { ...domain.progression, style: [], unlucky: 0 } } };
   },
-  // v31 -> v32 (ADR-0074 stage 1): Alchemia rebuilt by the investor's plan. A save made in the old
+  // v31 -> v32 (decision of 6.11 after ADR-0059 stage 6): an installed cyberdeck keeps its tier and
+  // level (`character.implantGrades`, optional). An older save had no cyberdeck, so nothing changes.
+  31: (old) => ({ ...old, version: 32 }),
+  // v32 -> v33 (ADR-0074 stage 1): Alchemia rebuilt by the investor's plan. A save made in the old
   // hall, its stalls, lift or terrace wakes on T1 in front of the food hall; the market's people
   // come back at their new places, the roof stash goes by Ren on the green roof.
-  31: rebuildAlchemia,
+  32: rebuildAlchemia,
 };
 
 export class MigrationError extends Error {}

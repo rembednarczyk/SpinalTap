@@ -16,6 +16,7 @@ import {
   rememberHack,
   spendAttributePoint,
   spendPerkPoint,
+  workingDeck,
 } from "@seki/core";
 import type { Entity } from "./components";
 import type { SimContext } from "./context";
@@ -66,8 +67,9 @@ export const noteFight = (ctx: SimContext, target: Entity, kind: StyleKind): voi
   ctx.state.domain = { ...ctx.state.domain, progression: { ...progression, style: recordStyle(progression.style, kind) } };
 };
 
-/** The cyberdeck's RAM pool: the base, what Net adds and the Buffer perk (ADR-0059). */
-export const ramMaxOf = (domain: DomainState): number => BASE_RAM + attributeRam(domain.progression.attributes) + perkRam(domain.progression.perks);
+/** The cyberdeck's RAM pool: the base, what Net adds, the Buffer perk (ADR-0059) and a working cyberdeck implant. */
+export const ramMaxOf = (domain: DomainState): number =>
+  BASE_RAM + attributeRam(domain.progression.attributes) + perkRam(domain.progression.perks) + workingDeck(domain).ram;
 
 /** The player's perk ranks (ADR-0059, stage 3), for the systems that read a perk's effect. */
 export const playerPerks = (ctx: SimContext): PerkRanks => ctx.state.domain.progression.perks;

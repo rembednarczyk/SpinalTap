@@ -211,7 +211,7 @@ export interface TradeItemVm {
   readonly category: ItemCategory;
   /** Null for stacks. */
   readonly rarity: Rarity | null;
-  /** Item level of a weapon or garment (ADR-0059); absent on stacks, mods and implants. */
+  /** Item level of a weapon, garment or cyberdeck (ADR-0059); absent on stacks, mods and other implants. */
   readonly level?: number;
   readonly qty: number;
   /** Garments only. */

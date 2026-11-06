@@ -8,6 +8,7 @@ import {
   type Equipment,
   type InventoryState,
   type CyberwareLoadout,
+  type ImplantGrades,
   type DayPhase,
   type HitZone,
   type PerkRanks,
@@ -106,6 +107,8 @@ export interface PlayerHudUiState {
   readonly medkitRoom: number;
   readonly ability: AbilityVm | null;
   readonly cyberware: CyberwareLoadout;
+  /** Tier and level of the installed cyberdeck, by slot (decision of 6.11 after ADR-0059 stage 6). */
+  readonly implantGrades: ImplantGrades;
   readonly reputation: ReputationState;
   /** The character's level and attributes (ADR-0059), and the attribute points left to spend. */
   readonly level: number;
@@ -315,6 +318,7 @@ export const initialUiState: UiState = {
   ability: null,
   weapons: null,
   cyberware: {},
+  implantGrades: {},
   reputation: createReputation(),
   level: 1,
   attributes: START_ATTRIBUTES,

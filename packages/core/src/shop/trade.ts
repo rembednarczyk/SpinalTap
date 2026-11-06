@@ -1,5 +1,7 @@
 import { type CharacterState } from "../character/character";
-import { CYBERWARE_CATALOG, type CyberwareId, type CyberwareSlot, installCyberware, isCyberwareId, uninstallCyberware } from "../cyberware/cyberware";
+import { fitImplant, isGradedImplant, isInstalled, isPreciousGrade, takeOutImplant } from "../cyberware/cyberdeck";
+import type { ImplantGrade } from "../cyberware/implant-grade";
+import { CYBERWARE_CATALOG, type CyberwareId, type CyberwareSlot, isCyberwareId } from "../cyberware/cyberware";
 import { fitsCapacity } from "../cyberware/capacity";
 import { type Wallet, credit, debit } from "../economy/wallet";
 import { conditionFactor } from "../items/armor";
@@ -227,13 +229,21 @@ export const buyStock = (state: TradeState, shop: ShopId, itemId: ShopItemId, te
 
 // ---- implants as items (E11) ----
 
-/** Doktor Mori's fee for fitting an implant from the bag: a quarter of its value, after terms. */
-export const installFee = (item: { readonly def: CyberwareId; readonly rarity?: Rarity }, terms: ShopTerms = STANDARD_TERMS): number =>
-  priceWithTerms(Math.round(CYBERWARE_CATALOG[item.def].price * RARITY[item.rarity ?? "common"].value * INSTALL_RATE), terms);
+/** Doktor Mori's fee for fitting an implant from the bag: a quarter of its value (tier, and a deck's level), after terms. */
+export const installFee = (item: { readonly def: CyberwareId; readonly rarity?: Rarity; readonly level?: number }, terms: ShopTerms = STANDARD_TERMS): number =>
+  priceWithTerms(Math.round(CYBERWARE_CATALOG[item.def].price * RARITY[item.rarity ?? "common"].value * levelScale(item.level) * INSTALL_RATE), terms);
 
-/** Puts a removed implant into the bag when a cell is free; null when it does not fit (it is lost). */
-export const stowImplant = (inventory: InventoryState, equipment: Equipment, id: CyberwareId): { inventory: InventoryState; item: ItemInstance | null } => {
-  const r = addInstance(inventory, equipment, id, "common");
+/**
+ * Puts a removed implant into the bag when a cell is free; null when it does not fit (it is lost).
+ * A deck goes back with its `grade`; the other implants as common, as before.
+ */
+export const stowImplant = (
+  inventory: InventoryState,
+  equipment: Equipment,
+  id: CyberwareId,
+  grade?: ImplantGrade,
+): { inventory: InventoryState; item: ItemInstance | null } => {
+  const r = addInstance(inventory, equipment, id, grade && isGradedImplant(id) ? grade : "common");
   return r.ok ? { inventory: r.inventory, item: r.item } : { inventory, item: null };
 };
 
@@ -246,7 +256,7 @@ export type ImplantFitting =
       readonly cyberwareId: CyberwareId;
       readonly fee: number;
       readonly replaced: CyberwareId | null;
-      /** The replaced implant, back in the bag (always fits: the fitted one freed its cell). */
+      /** The replaced implant, back in the bag (the fitted one freed its cell; a graded deck that still has no room refuses the fitting). */
       readonly returned: ItemInstance | null;
     }
   | { readonly ok: false; readonly reason: TradeFailure };
@@ -266,16 +276,19 @@ export const installCyberwareItem = (
   if (!item) return { ok: false, reason: "not-found" };
   const id = item.def;
   if (!isCyberwareId(id)) return { ok: false, reason: "not-sold-here" };
-  if (character.cyberware[CYBERWARE_CATALOG[id].slot] === id) return { ok: false, reason: "already-installed" };
+  const grade: ImplantGrade | undefined = isGradedImplant(id) ? { rarity: item.rarity, level: item.level ?? MIN_ITEM_LEVEL } : undefined;
+  if (isInstalled(character, id, grade)) return { ok: false, reason: "already-installed" };
   if (!fitsCapacity(character.cyberware, id, capacity)) return { ok: false, reason: "over-capacity" };
-  const fee = installFee({ def: id, rarity: item.rarity }, terms);
+  const fee = installFee({ def: id, rarity: item.rarity, ...(grade ? { level: grade.level } : {}) }, terms);
   const pay = fee === 0 ? { ok: true as const, wallet } : debit(wallet, fee);
   if (!pay.ok) return { ok: false, reason: "insufficient-funds" };
   const removed = removeInstance(inventory, equipment, uid);
   if (!removed.ok) return { ok: false, reason: removed.reason };
-  const { loadout, replaced } = installCyberware(character.cyberware, id);
-  const stowed = replaced ? stowImplant(removed.inventory, equipment, replaced) : { inventory: removed.inventory, item: null };
-  return { ok: true, wallet: pay.wallet, character: { ...character, cyberware: loadout }, inventory: stowed.inventory, cyberwareId: id, fee, replaced, returned: stowed.item };
+  const fit = fitImplant(character, id, grade);
+  const replaced = fit.replaced;
+  const stowed = replaced ? stowImplant(removed.inventory, equipment, replaced, fit.replacedGrade) : { inventory: removed.inventory, item: null };
+  if (!stowed.item && isPreciousGrade(fit.replacedGrade)) return { ok: false, reason: "inventory-full" };
+  return { ok: true, wallet: pay.wallet, character: fit.character, inventory: stowed.inventory, cyberwareId: id, fee, replaced, returned: stowed.item };
 };
 
 export type ImplantRemoval =
@@ -293,7 +306,8 @@ export const removeCyberware = (
   if (!fullService(terms)) return { ok: false, reason: "refused" };
   const id = character.cyberware[slot];
   if (id === undefined) return { ok: false, reason: "empty-slot" };
-  const stowed = stowImplant(inventory, equipment, id);
+  const out = takeOutImplant(character, slot);
+  const stowed = stowImplant(inventory, equipment, id, out.grade);
   if (!stowed.item) return { ok: false, reason: "inventory-full" };
-  return { ok: true, character: { ...character, cyberware: uninstallCyberware(character.cyberware, slot) }, inventory: stowed.inventory, cyberwareId: id, item: stowed.item };
+  return { ok: true, character: out.character, inventory: stowed.inventory, cyberwareId: id, item: stowed.item };
 };
