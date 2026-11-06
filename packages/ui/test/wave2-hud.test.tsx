@@ -189,9 +189,9 @@ describe("touch of wave 2", () => {
       patchUi(store, {
         weapons: {
           slots: [
-            { slot: "primary", key: 1, name: "Pistolet", rarity: "common" },
-            { slot: "secondary", key: 2, name: null, rarity: null },
-            { slot: "melee", key: 3, name: "Pałka", rarity: "common" },
+            { slot: "primary", key: 1, name: "Pistolet", rarity: "common", icon: "pistol" },
+            { slot: "secondary", key: 2, name: null, rarity: null, icon: null },
+            { slot: "melee", key: 3, name: "Pałka", rarity: "common", icon: "baton" },
           ],
           active: "primary",
           loaded: 8,

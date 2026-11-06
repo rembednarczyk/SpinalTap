@@ -31,11 +31,10 @@ export const ItemIcon = ({ icon, rarity = "common", framed = false, className }:
   );
 };
 
-/** The icon of an item from the catalogs, or nothing for the kinds still drawn as text (`itemIcon` gives null). */
-export const ItemDefIcon = ({ def, rarity, framed, className }: { def: ItemDefId; rarity?: Rarity; framed?: boolean; className?: string }) => {
-  const icon = itemIcon(def);
-  return icon === null ? null : <ItemIcon icon={icon} {...(rarity ? { rarity } : {})} {...(framed ? { framed } : {})} {...(className ? { className } : {})} />;
-};
+/** The icon of an item from the catalogs (every kind has one since stage 2). */
+export const ItemDefIcon = ({ def, rarity, framed, className }: { def: ItemDefId; rarity?: Rarity; framed?: boolean; className?: string }) => (
+  <ItemIcon icon={itemIcon(def)} {...(rarity ? { rarity } : {})} {...(framed ? { framed } : {})} {...(className ? { className } : {})} />
+);
 
 export const AmmoIcon = ({ ammo, framed, className }: { ammo: AmmoId; framed?: boolean; className?: string }) => (
   <ItemIcon icon={ammoIcon(ammo)} {...(framed ? { framed } : {})} {...(className ? { className } : {})} />

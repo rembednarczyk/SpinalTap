@@ -1,16 +1,15 @@
 import type { ItemIconKey } from "@seki/core";
+import { GAME_ICON_PATHS } from "./game-icon-paths";
+import type { IconDrawing } from "./icon-drawing";
+
+export type { IconDrawing } from "./icon-drawing";
 
 /**
  * Item icons drawn for this game (ADR-0073): one 32 × 32 grid, weapons with the muzzle to the
- * right, ammo upright. `body` paths get the outline and a faint fill, `line` paths only the
- * outline; both take `currentColor`, so one drawing serves every rarity. Data table: the size
- * budget in `item-icons.test.tsx` counts these strings.
+ * right, ammo upright; garments, mods and junk front on (stage 2). Implants and consumables come
+ * after game-icons.net (`game-icon-paths.ts`, CC BY 3.0). Data table: the size budget in
+ * `item-icons.test.tsx` counts these strings.
  */
-export interface IconDrawing {
-  readonly body: readonly string[];
-  readonly line?: readonly string[];
-}
-
 export const ICON_VIEWBOX = "0 0 32 32";
 
 export const ICON_PATHS: Readonly<Record<ItemIconKey, IconDrawing>> = {
@@ -78,4 +77,24 @@ export const ICON_PATHS: Readonly<Record<ItemIconKey, IconDrawing>> = {
       "M21.5 10.8l1-5.3 1 5.3z",
     ],
   },
+  // Stage 2: garments by what they are (the rarity's colour tells the pieces apart).
+  jacket: { body: ["M11.5 4.5L5 7.5 2.5 19l4 1 2-6V28h15V14l2 6 4-1L27 7.5l-6.5-3-2.5 3h-4z"], line: ["M13 5l3 4.5 3-4.5", "M16 9.5V28", "M10 20h3.5M18.5 20H22"] },
+  pants: { body: ["M8 3.5h16l2 25h-7L16 12l-3 16.5H6z"], line: ["M8 7.5h16", "M9.5 15h3.5v5H9.5zM19 15h3.5v5H19z"] },
+  helmet: { body: ["M4.5 23C4.5 13 10 6.5 17 6.5S28.5 12 28.5 19v5.5H4.5z"], line: ["M15 13.5h13.5v6H15z", "M8 24.5v3h7v-3"] },
+  visor: { body: ["M3 12.5h26v7l-3.5 2.5h-6.5L16 19l-3 3H6.5L3 19.5z"], line: ["M1.5 15H3M29 15h1.5", "M6 15.5h7M19 15.5h7"] },
+  vest: { body: ["M9 3.5h4l3 4 3-4h4l1 7 3 3V28H5V13.5l3-3z"], line: ["M9 16h14v7H9z", "M5 13.5h4M23 13.5h4"] },
+  overalls: { body: ["M9 3h4v6h6V3h4v10.5l2 15h-7l-2-12-2 12H7l2-15z"], line: ["M9 13.5h14", "M13 9h6v4.5h-6z"] },
+  // Mods, as they sit on the gun: muzzle, sight, magazine.
+  suppressor: { body: ["M3.5 12h22v8h-22z", "M25.5 13.5h3.5v5h-3.5z"], line: ["M9 12v8M14.5 12v8M20 12v8"] },
+  "holo-sight": { body: ["M4 22h24v4H4z", "M6 7h20v15H6z"], line: ["M9.5 10.5h13v8h-13z", "M16 12v5M13.5 14.5h5"] },
+  magazine: { body: ["M11 3.5h9l2.5 13 1 11.5h-9.5l-.5-11.5z"], line: ["M11.5 7.5h8.5M12 11.5h9M13 15.5h9", "M13 24.5h10"] },
+  // Junk: a broken board, a gear with a spring, a chip.
+  scrap: { body: ["M3 8h19l-3 5.5 4.5 3.5-2 9H3z"], line: ["M7 12h5v4.5H7z", "M15 12v6.5h3.5", "M7 21.5h9", "M23.5 17l5-2M21.5 26l6 2"] },
+  "weapon-parts": {
+    body: ["M20 11.5L22.5 12 22.5 14 20 14.5 19 17 20.5 19 19 20.5 17 19 14.5 20 14 22.5 12 22.5 11.5 20 9 19 7 20.5 5.5 19 7 17 6 14.5 3.5 14 3.5 12 6 11.5 7 9 5.5 7 7 5.5 9 7 11.5 6 12 3.5 14 3.5 14.5 6 17 7 19 5.5 20.5 7 19 9z"],
+    line: ["M13 10.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 1 0 0-5z", "M19 25l2-4 2 6 2-6 2 6 2-4"],
+  },
+  datachip: { body: ["M8 4.5h12l4 4v19H8z"], line: ["M11 8.5h10v8H11z", "M11.5 20.5v4M14.5 20.5v4M17.5 20.5v4M20.5 20.5v4"] },
+  // Implants and consumables after game-icons.net (CC BY 3.0).
+  ...GAME_ICON_PATHS,
 };

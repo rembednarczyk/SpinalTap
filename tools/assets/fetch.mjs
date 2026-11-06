@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Downloads the packs and models of tools/assets/sources.json (CC0, ADR-0058; CC-BY 4.0,
- * ADR-0063) into DIR and checks their sha256; a file already there with the right hash is kept.
+ * Downloads the packs, models and icons of tools/assets/sources.json (CC0, ADR-0058; CC-BY 4.0,
+ * ADR-0063; CC BY 3.0 for game-icons.net, ADR-0073) into DIR and checks their sha256; a file
+ * already there with the right hash is kept.
  * Zips are unpacked with the system `unzip` into DIR/<id>/<unzip>/, single files land in
  * DIR/<id>/<path>. The result is what `tools/city_kit.py --props DIR --quaternius
  * DIR/quaternius-cyberpunk-kit --ccby DIR` reads. A source under any other licence, or a CC-BY one
@@ -31,13 +32,13 @@ if (!out || out.startsWith("--")) {
 const onlyAt = args.indexOf("--only");
 const only = onlyAt >= 0 ? new Set((args[onlyAt + 1] ?? "").split(",")) : null;
 
-/** Licences the game takes (ADR-0063). */
-const LICENSES = new Set(["CC0", "CC-BY-4.0"]);
+/** Licences the game takes (ADR-0063); CC BY 3.0 only for the icons of game-icons.net (ADR-0073). */
+const LICENSES = new Set(["CC0", "CC-BY-4.0", "CC-BY-3.0"]);
 
 /** Why a source may not be fetched, or null. */
 const refused = (s) => {
-  if (!LICENSES.has(s.license)) return `licence ${s.license} is not CC0 or CC-BY-4.0`;
-  if (s.license === "CC-BY-4.0" && !(s.author && s.page && s.licenseUrl)) return "a CC-BY source needs author, page and licenseUrl";
+  if (!LICENSES.has(s.license)) return `licence ${s.license} is not CC0, CC-BY-4.0 or CC-BY-3.0`;
+  if (s.license.startsWith("CC-BY") && !(s.author && s.page && s.licenseUrl)) return "a CC-BY source needs author, page and licenseUrl";
   return null;
 };
 

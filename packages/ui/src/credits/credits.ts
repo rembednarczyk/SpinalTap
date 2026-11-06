@@ -1,14 +1,17 @@
+import { GAME_ICON_SOURCES, type GameIconAuthor } from "../icons/game-icon-paths";
+
 /**
- * Who made the models and sounds the game is built from (ADR-0063): the one list the "Credits"
+ * Who made the models, sounds and icons the game is built from (ADR-0063): the one list the "Credits"
  * screen reads. Titles and names stay as their authors wrote them; only the headings and labels
  * around them are translated (ADR-0056). Every file under `packages/app/public` that holds CC-BY
  * work has its entry here and a row in the README of its folder; `packages/app/test/credits.test.ts`
  * holds the three together (and against `tools/assets/sources.json`).
  */
 
-export type CreditSection = "city" | "street" | "characters" | "weapons" | "audio";
+export type CreditSection = "city" | "street" | "characters" | "weapons" | "audio" | "icons";
 
-export type CreditLicense = "CC0-1.0" | "CC-BY-4.0" | "VRoid-Hub-1.0";
+/** CC BY 3.0 only for the icons of game-icons.net (ADR-0063, decision of 6.11 in ADR-0073). */
+export type CreditLicense = "CC0-1.0" | "CC-BY-4.0" | "CC-BY-3.0" | "VRoid-Hub-1.0";
 
 export interface Credit {
   /** The source's id in `tools/assets/sources.json` where it has one; a CC-BY model carries it in its `extras.credit`. */
@@ -21,7 +24,7 @@ export interface Credit {
   /** Where it comes from. */
   readonly url: string;
   readonly license: CreditLicense;
-  /** Files under `packages/app/public` built from it. */
+  /** Files under `packages/app/public` built from it; none for the item icons, which are drawn into the code (`icons/`). */
   readonly files: readonly string[];
   /** Changed for the game (CC-BY asks to say so): simplified, recoloured, trimmed. */
   readonly changed: boolean;
@@ -31,12 +34,13 @@ export interface Credit {
 export const LICENSES: Readonly<Record<CreditLicense, { readonly name: string; readonly url?: string }>> = {
   "CC0-1.0": { name: "CC0 1.0", url: "https://creativecommons.org/publicdomain/zero/1.0/" },
   "CC-BY-4.0": { name: "CC BY 4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
+  "CC-BY-3.0": { name: "CC BY 3.0", url: "https://creativecommons.org/licenses/by/3.0/" },
   // Written in each model's VRM metadata (packages/app/public/models/README.md).
   "VRoid-Hub-1.0": { name: "VRoid Hub License 1.0" },
 };
 
 /** The order of the sections on the screen. */
-export const CREDIT_SECTIONS: readonly CreditSection[] = ["street", "city", "characters", "weapons", "audio"];
+export const CREDIT_SECTIONS: readonly CreditSection[] = ["street", "city", "characters", "weapons", "audio", "icons"];
 
 const CITY = ["city/city-kit.glb"] as const;
 const PROPS = ["city/city-props.glb"] as const;
@@ -48,6 +52,11 @@ const DRONES = ["city/drone-props.glb"] as const;
 const CROWD = ["city/crowd-props.glb"] as const;
 const ROOMS = ["city/room-props.glb"] as const;
 const ALCHEMIA = ["city/alchemia-props.glb"] as const;
+/** The icons of one game-icons.net author the game draws after, by their titles there: "Brain, Syringe (game-icons.net)". */
+const gameIcons = (author: GameIconAuthor): string => {
+  const names = Object.values(GAME_ICON_SOURCES).filter((s) => s.author === author);
+  return `${names.map((s) => s.name.charAt(0).toUpperCase() + s.name.slice(1).split("-").join(" ")).join(", ")} (game-icons.net)`;
+};
 /** `audio/<name>-000.ogg` ... for the numbers given. */
 const ogg = (name: string, ...n: number[]): string[] => n.map((i) => `audio/${name}-${String(i).padStart(3, "0")}.ogg`);
 
@@ -113,5 +122,8 @@ export const CREDITS: readonly Credit[] = [
   { id: "kenney-interface-sounds", section: "audio", title: "Interface Sounds", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://kenney.nl/assets/interface-sounds", license: "CC0-1.0", files: [...ogg("ui-select", 1, 2), ...ogg("ui-confirm", 1), ...ogg("ui-purchase", 2), ...ogg("ui-save-click", 1), ...ogg("ui-error", 4, 5), ...ogg("glitch", 1, 2, 3, 4)], changed: false },
   { id: "kenney-sci-fi-sounds", section: "audio", title: "Sci-fi Sounds", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://kenney.nl/assets/sci-fi-sounds", license: "CC0-1.0", files: [...ogg("clinic-heal", 0, 1), "audio/cyber-overdrive.ogg"], changed: true },
   { id: "free-firearm-sound-library", section: "audio", title: "The Free Firearm Sound Library", author: "Ben Jaszczak et al. (freefirearmsfx.com)", url: "https://opengameart.org/content/the-free-firearm-sound-library", license: "CC0-1.0", files: ["audio/gun-pistol-ppq-near.ogg", "audio/gun-pistol-1911-near.ogg", "audio/gun-smg-m45-near.ogg", "audio/gun-pistol-ppq-mid.ogg", "audio/gun-smg-m45-mid.ogg"], changed: true },
+  // CC BY 3.0 (ADR-0063, ADR-0073 stage 2): the icons of implants and consumables, redrawn into icons/game-icon-paths.ts.
+  { id: "game-icons-lorc", section: "icons", title: gameIcons("Lorc"), author: "Lorc", authorUrl: "http://lorcblog.blogspot.com", url: "https://game-icons.net", license: "CC-BY-3.0", files: [], changed: true },
+  { id: "game-icons-delapouite", section: "icons", title: gameIcons("Delapouite"), author: "Delapouite", authorUrl: "http://delapouite.com", url: "https://game-icons.net", license: "CC-BY-3.0", files: [], changed: true },
   { id: "ylmir-rain-loopable", section: "audio", title: "Rain (loopable)", author: "Ylmir", url: "https://opengameart.org/content/rain-loopable", license: "CC0-1.0", files: ["audio/rain-loop.ogg"], changed: false },
 ];

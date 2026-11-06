@@ -30,3 +30,15 @@
   .inv__slot-icon { display: inline-flex; width: 30px; height: 30px; }
   .inv__slot.inv__slot--icon { flex-direction: row; align-items: center; justify-content: flex-start; gap: 6px; }
 }
+
+/*
+ * A phone's bag cell (below 1100 x 620, 52 px): the icon alone, larger, clear of the tier and the
+ * count in the bottom corners; the name is in the cell's label and in the details (stage 2).
+ */
+.inv__cell.inv__cell--bare { justify-content: center; padding-bottom: 9px; }
+.inv__cell--bare .item-icon { width: calc(var(--cell) * 0.6); height: calc(var(--cell) * 0.6); }
+
+/* The HUD's weapon strip (stage 2): the icon left of the slot's key and name, in the rarity's colour. */
+.weapon-strip__text { display: flex; flex-direction: column; min-width: 0; }
+.weapon-strip__slot.weapon-strip__slot--icon { flex-direction: row; align-items: center; gap: 5px; }
+.weapon-strip__icon { width: 30px; height: 30px; }

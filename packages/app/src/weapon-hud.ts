@@ -1,4 +1,4 @@
-import { AMMO_CATALOG, WEAPON_CATALOG, WEAPON_SLOTS, ammoCount, findItem, isWeaponId, usesAmmo } from "@seki/core";
+import { AMMO_CATALOG, WEAPON_CATALOG, WEAPON_ICONS, WEAPON_SLOTS, ammoCount, findItem, isWeaponId, usesAmmo } from "@seki/core";
 import type { Simulation } from "@seki/sim";
 import type { WeaponSlotVm, WeaponStripVm } from "@seki/ui";
 
@@ -12,7 +12,7 @@ const sameStrip = (a: WeaponStripVm, b: WeaponStripVm): boolean =>
   a.ammoName === b.ammoName &&
   a.reloading === b.reloading &&
   a.holstered === b.holstered &&
-  a.slots.every((s, i) => s.name === b.slots[i]?.name && s.rarity === b.slots[i]?.rarity);
+  a.slots.every((s, i) => s.name === b.slots[i]?.name && s.rarity === b.slots[i]?.rarity && s.icon === b.slots[i]?.icon);
 
 /**
  * Builds the HUD weapon strip from the domain (slots, rounds, pouch) and the player's combatant
@@ -28,8 +28,9 @@ export const createWeaponHud = () => {
     const slots: WeaponSlotVm[] = WEAPON_SLOTS.map((slot) => {
       const uid = equipment[slot];
       const item = uid === null ? undefined : findItem(inventory, uid);
-      const def = item && isWeaponId(item.def) ? WEAPON_CATALOG[item.def] : null;
-      return { slot, key: KEYS[slot], name: def?.name ?? null, rarity: def && item ? item.rarity : null };
+      const weapon = item && isWeaponId(item.def) ? item.def : null;
+      const def = weapon ? WEAPON_CATALOG[weapon] : null;
+      return { slot, key: KEYS[slot], name: def?.name ?? null, rarity: def && item ? item.rarity : null, icon: weapon ? WEAPON_ICONS[weapon] : null };
     });
     const stats = c.stats;
     const firearm = stats !== null && usesAmmo(stats);
