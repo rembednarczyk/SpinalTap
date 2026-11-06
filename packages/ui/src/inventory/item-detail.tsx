@@ -8,8 +8,10 @@ import {
   type StatLine,
   TRAIT_CATALOG,
   type TraitId,
+  MIN_ITEM_LEVEL,
   compareItems,
   findItem,
+  isCyberwareId,
   isGarmentId,
   isModId,
   isWeaponId,
@@ -20,6 +22,7 @@ import {
 import { useLocale } from "../i18n/number";
 import { useT, useText } from "../i18n/use-t";
 import { ActionBar, type ActionId, type ItemAction } from "./actions";
+import { DeckLine } from "./deck-line";
 import { description, formatDelta, formatStat, itemName, kindLabel, modSlotLabel, rarityLabel, slotNoun, statLabel } from "./item-text";
 
 /** Change against the piece in the slot: arrow and colour, always with the number too. */
@@ -100,6 +103,7 @@ export const ItemDetail = ({
       </div>
       <p className="inv__desc">{description(tx, def)}</p>
       {item?.traits && item.traits.length > 0 && <ItemTraits traits={item.traits} />}
+      {item && isCyberwareId(item.def) && <DeckLine id={item.def} grade={{ rarity: item.rarity, level: item.level ?? MIN_ITEM_LEVEL }} />}
       {stats?.ammo && (
         <div className="inv__meta">{t("inventory.detail.loaded", { loaded: item?.loaded ?? 0, magazine: stats.magazine, ammo: tx(AMMO_CATALOG[stats.ammo].name) })}</div>
       )}

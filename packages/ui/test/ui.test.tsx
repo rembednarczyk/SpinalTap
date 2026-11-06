@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_HORIZONTAL_FOV, GameUi, createUiStore, dismissToast, expireToast, hipVerticalFov, patchUi, pushToast, type UiIntents, type UiState } from "../src";
 import { NORMAL_DIFFICULTY } from "@seki/core";
@@ -417,7 +417,9 @@ describe("ripperdoc clinic", () => {
 
   it("warns which implant a purchase replaces", () => {
     mount({ screen: "playing", shopOpen: true, eddies: 5000, cyberware: { nervous: "synapse_booster" } });
-    expect(screen.getByText("Replaces: Synapse booster")).toBeTruthy();
+    // Kairos and the cyberdeck share the nervous slot: each offer says what it replaces.
+    expect(within(screen.getByTestId("implant-kairos_overclock")).getByText("Replaces: Synapse booster")).toBeTruthy();
+    expect(within(screen.getByTestId("implant-kumo_cyberdeck")).getByText("Replaces: Synapse booster")).toBeTruthy();
   });
 });
 

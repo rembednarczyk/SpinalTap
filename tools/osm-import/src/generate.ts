@@ -13,7 +13,7 @@ import { addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
-import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, lineBands, markedCrossing, roadWidth } from "./ground.ts";
+import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, lineBands, markedCrossing, openPavings, roadWidth } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
@@ -271,11 +271,13 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const orphans = new Set(orphanParts(outlines, partAreas));
   const buildings = [...outlines, ...[...orphans].map(asBuilding)];
   const near = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, 1)));
-  const bands: (Band & { box: Rect })[] = [];
+  const areaBands: (Band & { box: Rect })[] = [];
   for (const a of areas) {
     const b = areaBand(a);
-    if (b && near(b.ring)) bands.push({ ...b, box: ringBounds(b.ring) });
+    if (b && near(b.ring)) areaBands.push({ ...b, box: ringBounds(b.ring) });
   }
+  const holed = new Set(areas.filter((a) => a.holes > 0).map((a) => a.id));
+  const bands = openPavings(areaBands, (b) => !holed.has(b.source));
   const water = bands.filter((b) => b.surface === "water").map((b) => b.ring);
   const rects = chunks.map((c) => c.rect);
   const tunnels = streetLevelTunnels(data);

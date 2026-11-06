@@ -308,3 +308,27 @@ Te decyzje zastępują trzy zdania z „Z budowy etapu 6”: że w tabelach nie 
   - quickhacki: datachip, odłamek pojemności i wszczep Synapse booster (układ nerwowy, „szybsze przetwarzanie celów”). Wszczep dochodzi do tabeli Tessenu z wagą 1 i stałą rzadkością zwykłą, jak chwyt stabilizujący u Hebi. W grze nie ma jeszcze wszczepu samego cyberdecku ani przedmiotu z RAM, więc to najbliższy hakerski wpis z katalogu;
   - skradanie: tłumik i przebrania, czyli kurtka Hebi oraz mundur i kombinezon Tessenu.
 - **Determinizm:** złote hashe się nie zmieniają. W przebiegach z `determinism.test.ts` i `reinforcement-sidestep.test.ts` nowe wagi nie zmieniają żadnego worka: hashe przed zmianą i po niej są takie same.
+
+## Cyberdeck jako wszczep (decyzja użytkownika 6.11, po etapie 6)
+
+Decyzja zastępuje zdanie z „Decyzji użytkownika po etapie 6”, że w grze nie ma wszczepu samego cyberdecku ani przedmiotu z RAM, i zdanie z „Z budowy etapu 4”, że wszczepy nie mają poziomu. Liczby są wstępne i do strojenia w etapie 8.
+
+- **Wszczep** `kumo_cyberdeck` (Cyberdeck Kumo, en: Kumo cyberdeck) w gnieździe układu nerwowego, obok Wzmacniacza synaps i Akceleratora Kairos, więc hakowanie konkuruje z krytykiem i spowolnieniem czasu. Pojemność 4, cena katalogowa 800 €$, bez `StatModifiers` (pole `deck` w `CyberwareDefinition`).
+- **Jedyny wszczep z rzadkością i poziomem.** `hasItemLevel` obejmuje cyberdeck, więc w torbie i w łupie ma poziom jak broń i odzież. Nie ma cech (tabele cech są dla broni i odzieży). Zamontowany trzyma rzadkość i poziom w `CharacterState.implantGrades` według gniazda (`core/cyberware/cyberdeck.ts`), więc po wyjęciu lub zamianie wraca do torby ten sam egzemplarz. Inne wszczepy dalej wracają jako zwykłe.
+- **Efekt** (`deckStats`), skalowany jak obrażenia broni, czyli mnożnik obrażeń rzadkości × `levelScale` (moc):
+
+  | | Wartość |
+  |---|---|
+  | RAM do puli | 2 + rzadkość (rzadki i epicki +1, legendarny +2) + 1 na każde 15 poziomów |
+  | czas wgrywania quickhacka | × (1 − min(0,3; 0,08 × moc)) |
+  | odnowa RAM | × (1 + 0,1 × moc) |
+
+  Przykłady: zwykły poziom 1: RAM +2, wgrywanie −8%, odnowa +10%; rzadki 10: +3, −12,6%, +15,8%; legendarny 30: +6, −22,8%, +28,5%. Mnożniki łączą się z Siecią, Szybkim wgrywaniem i Odzyskiem przez mnożenie. Działa tylko wszczep w puli (`workingDeck`, etap 3c). Pula RAM to `BASE_RAM` + Sieć + Bufor + cyberdeck (`ramMaxOf`). Montaż i wyjęcie u Mori wysyłają `RamChanged` i przycinają RAM.
+- **Klinika** (`implantOffer`): cyberdeck ma poziom gracza, a rzadkość rośnie z reputacją kliniki jak towar u handlarzy (`SHOP_RARITY_STEPS`): neutralna zwykły, przyjazna niezwykły, zaufana rzadki, nigdy powyżej rzadkiego. Cena to 800 × wartość rzadkości × `levelScale`, potem warunki: 800 €$ dla neutralnej na poziomie 1, 1280 × 0,9 dla przyjaznej, 2829 × 0,8 dla zaufanej na poziomie 10. Cyberdeck innej rzadkości lub poziomu zastępuje zamontowany, a ten trafia do torby. Ten sam odmawia `already-installed`. Montaż z torby kosztuje ćwierć wartości z rzadkością i poziomem (`installFee`). Komenda `buy-cyberware` się nie zmienia: poziom bierze symulacja z domeny.
+- **Pełna torba przy zamianie:** zwykły wszczep, który nie mieści się w torbie, dalej przepada (ADR-0015). Cyberdeck z oceną powyżej zwykłego poziomu 1 (`isPreciousGrade`: inna rzadkość niż zwykła albo poziom > 1) nie przepada nigdy: kupno w klinice i montaż z torby, po których nie miałby gdzie wrócić, symulacja odrzuca powodem `inventory-full` i nie pobiera opłaty. Wybraliśmy odmowę, nie potwierdzenie, bo potwierdzenie wymagałoby nowego pola w komendzie `buy-cyberware` (kontrakt), a zwolnienie jednego pola w plecaku to jeden ruch gracza. Klinika pokazuje to z góry: oferta ma wyszarzony przycisk „Brak miejsca” i ostrzeżenie „Brak miejsca w plecaku: najpierw zwolnij pole, bo obecny deck by przepadł” (en: „No room in the backpack: free a cell first, or your current deck would be lost”). Zwykły deck poziomu 1 zachowuje się jak inne wszczepy (dawne ostrzeżenie, że przepadnie).
+- **Łup:** w tabeli Tessenu (strażnik, snajper) z wagą 1 i losowaną rzadkością. Wagę oddała amunicja 5,56 (29 → 28), więc strażnik dalej ma 99. Liczy się do ochrony przed pechem. Styl quickhack przesuwa go tak jak datachip, odłamek i Synapse booster, w limicie +60%.
+- **Ikona** `deck`: własny rysunek w `ui/src/icons/icon-paths.ts` (deck z ekranem, dwoma portami i wtykiem neuralnym), bez atrybucji. Test ikon z game-icons.net wymienia go jako jedyny wszczep rysowany w repo.
+- **Interfejs:** karta przedmiotu pokazuje rzadkość, poziom i wiersz „RAM +N · wgrywanie −X% · odnowa RAM +Y%”, a oferta w klinice rzadkość, poziom, ten sam wiersz i cenę. Store UI dostał `implantGrades`. Teksty są w `i18n/{en,pl}`.
+- **Zapis v32:** opcjonalne `character.implantGrades`. Migracja v31 → v32 zmienia tylko wersję, bo starszy zapis nie miał cyberdecku. Walidacja przyjmuje ocenę tylko dla gniazda z cyberdeckiem, znaną rzadkość i poziom 1–30. Zamontowany cyberdeck bez oceny liczy się jako zwykły z poziomem 1.
+- **Kontrakty:** porty, zdarzenia i komendy się nie zmieniają.
+- **Determinizm:** złote hashe nagrano na nowo tylko przez wersję v32. Jako v31 (`v31HashOf`) wszystkie przebiegi, także trudny, pojedynek i posiłki w dokach, dają złote hashe sprzed zmiany: gracz przebiegów nie ma cyberdecku, a zmiana wagi 5,56 nie zmienia żadnego worka.
