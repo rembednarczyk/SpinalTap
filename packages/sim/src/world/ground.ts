@@ -101,6 +101,8 @@ export class GroundField {
   private readonly chunkDecks: readonly (readonly GroundDeck[] | undefined)[];
   /** The rooms under the ground (ADR-0071 stage 4): the metro's platforms. */
   private readonly vaults: VaultIndex;
+  /** The shafts within each chunk's bounds (none for the shafts themselves): a ray in the chunk stops at their edge (G-377). */
+  private readonly chunkCuts: readonly (readonly Rect[])[];
 
   constructor(world: readonly GroundChunk[], cuts: readonly GroundCut[] = [], vaults: readonly GroundVault[] = []) {
     this.vaults = new VaultIndex(vaults);
@@ -116,6 +118,8 @@ export class GroundField {
     this.chunkDecks = chunks.map((c) => decksReaching(chunks, c));
     this.deckBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight !== true)))].map((d) => d.box);
     this.chunkFlights = this.chunkDecks.map((d) => flightsIn(d ?? []));
+    const cutBounds = chunks.slice(0, this.cuts).map((c) => c.bounds);
+    this.chunkCuts = chunks.map((c, i) => (i < this.cuts ? [] : cutBounds.filter((b) => b.minX <= c.bounds.maxX && b.maxX >= c.bounds.minX && b.minZ <= c.bounds.maxZ && b.maxZ >= c.bounds.minZ)));
     const boxes = this.flightBoxes;
     this.flightsBox = {
       minX: Math.min(...boxes.map((b) => b.minX)),
@@ -290,6 +294,14 @@ export class GroundField {
     return v ? Math.max(0, rectExit(v.bounds, x, z, dir)) : null;
   }
 
+  /** `out` (the ray's way to the edge of chunk `i`, -1 outside it) cut short where it first goes into a shaft within the chunk. */
+  private cutEntry(i: number, out: number, x: number, z: number, dir: Vec3): number {
+    if (out < 0) return out;
+    let end = out;
+    for (const b of this.chunkCuts[i] ?? []) end = Math.min(end, rectEntry(b, x, z, dir));
+    return end;
+  }
+
   /** Height of the ray above the ground at distance t (the street plane counts as -Infinity below). */
   private clearance(origin: Vec3, dir: Vec3, t: number, grid: TerrainGrid): number {
     return origin.y + dir.y * t - terrainHeightAt(grid, origin.x + dir.x * t, origin.z + dir.z * t);
@@ -308,9 +320,12 @@ export class GroundField {
     for (let guard = 0; guard < 100_000 && t < maxDist; guard++) {
       const x = origin.x + dir.x * t;
       const z = origin.z + dir.z * t;
-      const chunk = this.chunks[this.chunkIndex(x, z)];
+      const at = this.chunkIndex(x, z);
+      const chunk = this.chunks[at];
       if (!chunk) return null;
-      const out = rectExit(chunk.bounds, x, z, dir);
+      // A shaft wins where it is (like `heightAt`): the street's terrain under it, the old surface
+      // under the pavilion, is no ground, so the walk through the street's grid ends at its edge.
+      const out = this.cutEntry(at, rectExit(chunk.bounds, x, z, dir), x, z, dir);
       const grid = chunk.terrain;
       if (out < 0) {
         // Outside every chunk (the nearest one's ground): short plain steps.
@@ -332,11 +347,11 @@ export class GroundField {
         t = end;
         continue;
       }
-      const at = t + (end - t) * hit;
+      const where = t + (end - t) * hit;
       // In a vault the ray goes on through the room, up to where it leaves it (ADR-0071 stage 4).
-      const leave = this.vaultExit(origin, dir, at, grid);
-      if (leave === null) return at;
-      t = Math.min(end, at + leave + 1e-6);
+      const leave = this.vaultExit(origin, dir, where, grid);
+      if (leave === null) return where;
+      t = Math.min(end, where + leave + 1e-6);
     }
     return null;
   }
@@ -348,6 +363,24 @@ const rectExit = (r: Rect, x: number, z: number, dir: Vec3): number => {
   const tx = dir.x > 1e-12 ? (r.maxX - x) / dir.x : dir.x < -1e-12 ? (r.minX - x) / dir.x : Infinity;
   const tz = dir.z > 1e-12 ? (r.maxZ - z) / dir.z : dir.z < -1e-12 ? (r.minZ - z) / dir.z : Infinity;
   return Math.min(tx, tz);
+};
+
+/** The span [lo, hi] of ray distances where a coordinate `p` moving at `d` per metre is within [min, max]; null when never. */
+const slab = (p: number, d: number, min: number, max: number): readonly [number, number] | null => {
+  if (Math.abs(d) <= 1e-12) return p < min || p > max ? null : [-Infinity, Infinity];
+  const a = (min - p) / d;
+  const b = (max - p) / d;
+  return a < b ? [a, b] : [b, a];
+};
+
+/** Distance along the ray (XZ part of `dir`) from (x, z) outside the rectangle to where it goes in; Infinity when it never does. */
+const rectEntry = (r: Rect, x: number, z: number, dir: Vec3): number => {
+  if (inside(r, x, z)) return Infinity;
+  const sx = slab(x, dir.x, r.minX, r.maxX);
+  const sz = sx && slab(z, dir.z, r.minZ, r.maxZ);
+  if (!sx || !sz) return Infinity;
+  const lo = Math.max(0, sx[0], sz[0]);
+  return lo <= Math.min(sx[1], sz[1]) ? lo : Infinity;
 };
 
 /**

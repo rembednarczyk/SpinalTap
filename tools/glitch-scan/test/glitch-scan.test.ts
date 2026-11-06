@@ -36,7 +36,7 @@ import { figureChecks } from "./figure-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
-import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen } from "./metro-entrances";
+import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
@@ -1727,6 +1727,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "metro-shaft-open": () => metroShaftOpen(),
   /** A point of a 0.5 m grid in the 3 m in front of a metro pavilion's opening on no ground surface of the map: the exit onto bare terrain (G-332). */
   "metro-exit-bare": () => metroExitBare(),
+  /** A ray of sight between the street out of a metro pavilion's opening and its hall stopped by the terrain in the air of the shaft (G-377). */
+  "metro-shaft-ray": () => metroShaftRay(),
   /** A point of a 0.5 m grid on bare terrain in a shops' or market's area, by a shop's or public building's walls or at a stop (`landuse-bare.ts`, decision 5.11). */
   "landuse-bare": () => landuseBare(cityLanduseWorld(SOURCE_OSM)),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).

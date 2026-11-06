@@ -4,7 +4,7 @@ import { METRO_ENTRANCES, Simulation, gangerEntity, groundY, heightApart } from 
 import { spotFrame } from "../src/content/metro-pavilion";
 import { METRO_NAV } from "../src/content/metro-nav";
 import { KNEE_HEIGHT } from "../src/systems/ai/steering";
-import { lineOfSight } from "../src/world/hitscan";
+import { EYE_HEIGHT, lineOfSight } from "../src/world/hitscan";
 import { LEVEL_GAP } from "../src/world/nav";
 import { teleportPlayer } from "./helpers";
 
@@ -22,8 +22,9 @@ const entrance = (station: string, label: "A" | "B") => METRO_ENTRANCES.find((e)
 /**
  * Seconds an alerted brawler (or `kind`) at `from` takes to get within 2.5 m (and a metre of
  * height) of the player at `to`, or to hurt her (a gunner shoots from where it sees her), or null.
+ * How far it went from `from` by then is written into `track`.
  */
-const chase = (from: Vec3, to: Vec3, chunk: string, seconds: number, kind: "hebi_brawler" | "hebi_ganger" = "hebi_brawler", seed = 3): number | null => {
+const chase = (from: Vec3, to: Vec3, chunk: string, seconds: number, kind: "hebi_brawler" | "hebi_ganger" = "hebi_brawler", seed = 3, track = { moved: 0 }): number | null => {
   const sim = Simulation.create({ seed });
   teleportPlayer(sim, to);
   sim.step();
@@ -36,6 +37,7 @@ const chase = (from: Vec3, to: Vec3, chunk: string, seconds: number, kind: "hebi
   sim.world.add(g);
   for (let i = 0; i < 60 * seconds; i++) {
     sim.step();
+    track.moved = Math.hypot(g.position.x - from.x, g.position.z - from.z);
     if (p.health!.current < health) return i / 60;
     if (Math.hypot(g.position.x - p.position.x, g.position.z - p.position.z) < 2.5 && Math.abs(g.position.y - p.position.y) < 1) return i / 60;
   }
@@ -44,6 +46,13 @@ const chase = (from: Vec3, to: Vec3, chunk: string, seconds: number, kind: "hebi
 
 const KANAL_A = entrance("kanal", "A");
 const ALCHEMIA_B = entrance("kanal", "B");
+/** Chest height of a standing body, as the AI aims (hitscan.ts). */
+const CHEST = 1.25;
+/** On the street half a metre out of the pavilion's opening, on its axis. */
+const outside = (e: typeof KANAL_A): Vec3 => {
+  const q = spotFrame(e.spot).point(-0.5, 0);
+  return { ...q, y: groundY(q.x, q.z) };
+};
 const platformOf = (e: typeof KANAL_A): Vec3 => ({ ...spotFrame(e.spot).point(e.platform!.u.back + 2, 0), y: e.platform!.floor });
 
 describe("chasing the player through a metro entrance (G-368)", () => {
@@ -64,6 +73,33 @@ describe("chasing the player through a metro entrance (G-368)", () => {
   // the reach of a node: from there the pavilion's lintel hid the player in the hall (round 2).
   it("Alchemia (kanal B): a gunner at the door gets a shot at the player in the hall", () => {
     for (const seed of [3, 11]) expect(chase(ALCHEMIA_B.door, ALCHEMIA_B.hallSpot, ALCHEMIA_B.chunk, 8, "hebi_ganger", seed), `seed ${seed}`).not.toBeNull();
+  });
+
+  // G-377: the ray marched the street chunk's terrain into the shaft up to its next grid line, and
+  // hit the street's old surface under the pavilion: a gunner half a metre out of the opening at
+  // Alchemia did not see the player in the hall, and went in to the landing or waited for a shot.
+  it("a gunner half a metre out of the opening shoots the player in the hall from where it stands", () => {
+    for (const e of [ALCHEMIA_B, entrance("shinsekai", "A")]) {
+      for (const seed of [3, 5, 11]) {
+        const track = { moved: 0 };
+        const label = `${e.station} ${e.label} seed ${seed}`;
+        expect(chase(outside(e), e.hallSpot, e.chunk, 3, "hebi_ganger", seed, track), label).not.toBeNull();
+        expect(track.moved, label).toBeLessThan(0.2);
+      }
+    }
+  });
+
+  it("the street out of the opening and the hall see each other at every entrance (G-377)", () => {
+    for (const e of METRO_ENTRANCES) {
+      const sim = Simulation.create({ seed: 3 });
+      teleportPlayer(sim, e.door);
+      sim.step();
+      const street = outside(e);
+      const eye = { ...street, y: street.y + EYE_HEIGHT };
+      const chest = { ...e.hallSpot, y: e.hallSpot.y + CHEST };
+      expect(lineOfSight(sim.world, eye, chest), `${e.station} ${e.label} in`).toBe(true);
+      expect(lineOfSight(sim.world, { ...e.hallSpot, y: e.hallSpot.y + EYE_HEIGHT }, { ...street, y: street.y + CHEST }), `${e.station} ${e.label} out`).toBe(true);
+    }
   });
 
   it("Plac Łokietka (kanal A): from the hall down the second flight to the platform", () => {
