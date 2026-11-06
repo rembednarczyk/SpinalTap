@@ -132,7 +132,10 @@ export const metroShaftOpen = (entrances: readonly Entrance[] = METRO_ENTRANCES)
       return { minX: p.center.x - s.x / 2, maxX: p.center.x + s.x / 2, minZ: p.center.z - s.z / 2, maxZ: p.center.z + s.z / 2, minY: p.center.y - s.y / 2, maxY: p.center.y + s.y / 2 };
     });
     // The samples at a side's ends lie on the walls' edges, where the rounding of the pavilion's sums decides (G-333).
-    const walled = (x: number, z: number) => walls.some((w) => x >= w.minX - EDGE && x <= w.maxX + EDGE && z >= w.minZ - EDGE && z <= w.maxZ + EDGE && w.minY <= e.floor && w.maxY >= e.street);
+    // The end wall's doorway down to a platform (ADR-0071 stage 4) opens on the closed passage of its vault.
+    const passage = (x: number, z: number) => (e.platform?.vaults ?? []).some((v) => x >= v.bounds.minX && x <= v.bounds.maxX && z >= v.bounds.minZ && z <= v.bounds.maxZ);
+    const walled = (x: number, z: number) =>
+      passage(x, z) || walls.some((w) => x >= w.minX - EDGE && x <= w.maxX + EDGE && z >= w.minZ - EDGE && z <= w.maxZ + EDGE && w.minY <= e.floor && w.maxY >= e.street);
     const { along, opens } = e.spot;
     const sides: { readonly x: (t: number) => number; readonly z: (t: number) => number; readonly side: string }[] = [
       { side: "x-", x: () => c.minX - 0.1, z: (t) => c.minZ + (c.maxZ - c.minZ) * t },

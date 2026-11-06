@@ -16,7 +16,8 @@ const OSM = mergeOsm(
 /** An entrance at a place of the old kiosks, built as the game builds the pavilions. */
 const at = (x: number, z: number, along: "x" | "z" = "x"): (typeof METRO_ENTRANCES)[number] => {
   const spot = { x, z, along, opens: 1 as const };
-  return { ...pavilion(spot), label: "A", name: "test", spot, chunk: "test", station: "kanal" };
+  const p = pavilion(spot);
+  return { ...p, label: "A", name: "test", spot, chunk: "test", station: "kanal", platform: null, ticket: p.arrival, ticketYaw: p.arrivalYaw, hallSpot: p.arrival, hallYaw: p.arrivalYaw };
 };
 
 describe("the metro entrances' checks (ADR-0071 stage 2)", () => {

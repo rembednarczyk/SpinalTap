@@ -50,6 +50,11 @@ export const enContent = {
   "interior.tessen-office": "Tessen office",
   "interior.trasa-podziemna": "Trasa Podziemna",
   "interior.capsule": "Capsule room to let",
+  // The metro's platforms (ADR-0071 stage 4): the stations keep their Polish names.
+  "interior.metro-shinsekai": "Plac Litewski metro platform",
+  "interior.metro-kanal": "Brama Krakowska metro platform",
+  "interior.metro-targ": "Plac Zamkowy metro platform",
+  "interior.metro-doki": "Nabrzeże Bystrzycy metro platform",
   "prompt.loot": "Search",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Every hour the crew boss steps aside on his own",
