@@ -1012,7 +1012,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (bodies, death-system, crime-system)
 
 ### G-337 Północny chodnik al. Tysiąclecia bez nawierzchni (T-165)
-- Status: w naprawie (5.11, PR #298; przegląd kuratora e522164: NIE PRZYJĘTE, rabaty przed Bazarem 1–3,75 m dalej na południe, pas pod okapem do zabrukowania, T-165)
+- Status: w PR #298, przyjęte przez kuratora po drugiej rundzie (c7b53db), czeka na CI (5.11; wcześniej przegląd e522164: NIE PRZYJĘTE, rabaty przed Bazarem 1–3,75 m dalej na południe, pas pod okapem do zabrukowania, T-165)
 - Ważność: S4 · Zasięg: x ok. 640–790, z ok. 362–383, ok. 670 m² na samym x 705–790; przed halami Bazaru rabaty (nie brukować); także x 764–806 przed frontem Dworca (T-165 pkt 1–2): ok. 136 m² między drogą rowerową w1435832523 a ścieżką w227698420 (x 773–803 rabata, nie brukować) i ok. 50 m² między chodnikiem w1435832518 a drogą rowerową (kostka z wiatami)
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
 - Test przyjęcia: 0 gołych próbek 0,5 m w obszarze T-165 poza rabatami; propozycja kontroli `paving-sliver` dla całego miasta
@@ -1099,7 +1099,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: zrzut po `step` pokazuje stan po tym kroku
 
 ### G-357 `pinned-far-sleep.test.ts` przekracza 20 s pod coverage w CI
-- Status: zgłoszone (5.11, orkiestrator, CI PR #298, test niezwiązany ze zmianą)
+- Status: w PR #302 (6.11, 3502420; podział na przypadki ze wspólnym przebiegiem, najdłuższy pod coverage 9,2 → 2,9 s; przeniesione też do #298). Poboczne: krokowanie z przypiętym daleko strażnikiem ok. 10× droższe (60 vs 5 ms na sekundę symulacji), do zbadania jako wydajność sim
 - Ważność: S4 (narzędzia testowe) · Zasięg: „a calm guard whose chunk sleeps stays while he stands in a loaded one…” lokalnie ok. 3 s, plik ok. 30 s także na main; w CI pod coverage 20 s. Wzorzec jak #276 i #295: podzielić test albo zapamiętać wspólny przebieg, limitu nie podnosić
 - Pakiet właściciela: packages/sim (test)
 - Test przyjęcia: najdłuższy test pliku lokalnie ≤ 1,5 s
