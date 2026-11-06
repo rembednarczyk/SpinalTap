@@ -2,6 +2,7 @@ import { AMMO_CATALOG, type AmmoId } from "@seki/core";
 import { useEffect, useRef } from "react";
 import { CityMapPanel } from "../citymap/city-map-panel";
 import { InventoryTab } from "../inventory/inventory-tab";
+import { AmmoIcon } from "../icons/item-icon";
 import { JournalPanel } from "../journal/journal-panel";
 import { formatNumber, useLocale } from "../i18n/number";
 import { useT, useText } from "../i18n/use-t";
@@ -30,6 +31,7 @@ const AmmoSummary = () => {
     <div className="cscreen__ammo" data-testid="ammo-pouch" aria-label={t("character.ammo")}>
       {(kinds.length > 0 ? kinds : (["9mm"] as AmmoId[])).map((id) => (
         <span key={id} className="cscreen__round">
+          <AmmoIcon ammo={id} />
           {tx(AMMO_CATALOG[id].name)} <b>{ammo[id] ?? 0}</b>
         </span>
       ))}

@@ -1,5 +1,6 @@
-import { type EquipSlot, type Equipment, GARMENT_SLOTS, type InventoryState, WEAPON_SLOTS, findItem } from "@seki/core";
+import { type EquipSlot, type Equipment, GARMENT_SLOTS, type InventoryState, WEAPON_SLOTS, findItem, itemIcon } from "@seki/core";
 import { useT, useText } from "../i18n/use-t";
+import { ItemIcon } from "../icons/item-icon";
 import { itemName, rarityLabel, slotLabel } from "./item-text";
 
 const KEY: Readonly<Partial<Record<EquipSlot, number>>> = { primary: 1, secondary: 2, melee: 3 };
@@ -28,11 +29,12 @@ export const EquipmentSlots = ({
         const item = uid === null ? undefined : findItem(inventory, uid);
         const active = kind === "weapons" && equipment.active === slot;
         const name = item ? itemName(tx, item.def) : null;
+        const icon = item ? itemIcon(item.def) : null;
         return (
           <button
             key={slot}
             type="button"
-            className={`inv__slot${item ? "" : " inv__slot--empty"}${active ? " inv__slot--active" : ""}${item && uid === selectedUid ? " inv__slot--on" : ""}${
+            className={`inv__slot${icon ? " inv__slot--icon" : ""}${item ? "" : " inv__slot--empty"}${active ? " inv__slot--active" : ""}${item && uid === selectedUid ? " inv__slot--on" : ""}${
               item && item.rarity !== "common" ? ` rarity--${item.rarity}` : ""
             }`}
             data-testid={`slot-${slot}`}
@@ -40,11 +42,14 @@ export const EquipmentSlots = ({
             disabled={!item}
             onClick={() => item && onSelect(item.uid)}
           >
-            <span className="inv__slot-label">
-              {KEY[slot] !== undefined && <span className="inv__slot-key">{KEY[slot]}</span>}
-              {slotLabel(t, slot)}
+            {icon && item && <ItemIcon icon={icon} rarity={item.rarity} className="inv__slot-icon" />}
+            <span className="inv__slot-text">
+              <span className="inv__slot-label">
+                {KEY[slot] !== undefined && <span className="inv__slot-key">{KEY[slot]}</span>}
+                {slotLabel(t, slot)}
+              </span>
+              <span className="inv__slot-name">{name ?? t("inventory.empty")}</span>
             </span>
-            <span className="inv__slot-name">{name ?? t("inventory.empty")}</span>
           </button>
         );
       })}
