@@ -31,11 +31,11 @@ const poses = (sim: Simulation) => vehicles(sim).map((v) => `${v.id}:${v.positio
 const drives = (r: { readonly id: string }, street: string): boolean => r.id.split(">").some((lane) => lane.startsWith(`${street}#`));
 
 /**
- * A route's turn round within 150 m of the avenue's east end by Rondo Dmowskiego and Ruska, found
+ * A route's turn round within 150 m of Mełgiewska by the Bystrzyca (Turystyczna, Grafa), found
  * by place: a route joined at the junctions has other turns too. The four before the market went with it (ADR-0063).
  */
-const TURNS_AT = ground(1035, 300);
-const eastTurn = (r: TrafficRoute): readonly [number, number] | undefined =>
+const TURNS_AT = ground(2510, 260);
+const nearTurn = (r: TrafficRoute): readonly [number, number] | undefined =>
   r.turns?.find(([a, b]) => {
     const p = pointAt(r.points, (a + b) / 2);
     return Math.hypot(p.x - TURNS_AT.x, p.z - TURNS_AT.z) < 150;
@@ -392,7 +392,7 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     expect(scared.some((v) => v.vehicle.panic!.kind === "flee")).toBe(true);
   });
 
-  it("drives Aleja Tysiąclecia through where the market stood (ADR-0063) and turns round slowly by its east end", () => {
+  it("drives Aleja Tysiąclecia through where the market stood (ADR-0063) and turns round slowly by Mełgiewska", () => {
     const market = { minX: 758, maxX: 815, minZ: 325, maxZ: 366 };
     const inMarket = (p: { x: number; z: number }) => p.x > market.minX && p.x < market.maxX && p.z > market.minZ && p.z < market.maxZ;
     const cars = TRAFFIC_ROUTES.filter((x) => x.use === "cars" && drives(x, "Aleja Tysiąclecia"));
@@ -400,9 +400,9 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     const across = cars.filter((r) => Array.from({ length: Math.floor(r.length) }, (_, s) => pointAt(r.points, s)).some(inMarket));
     expect(across.length).toBeGreaterThanOrEqual(2);
     for (const r of cars) for (const [a, b] of r.turns ?? []) expect(inMarket(pointAt(r.points, (a + b) / 2)), r.id).toBe(false);
-    // The car lanes that turn round by the east end, each on a route joined at the junctions.
-    const turning = TRAFFIC_ROUTES.filter((r) => r.use === "cars" && eastTurn(r) !== undefined);
-    expect(turning.length).toBeGreaterThanOrEqual(2);
+    // The car lanes that turn round by Mełgiewska, each on a route joined at the junctions.
+    const turning = TRAFFIC_ROUTES.filter((r) => r.use === "cars" && nearTurn(r) !== undefined);
+    expect(turning.length).toBeGreaterThanOrEqual(4);
     const sim = busySim(3, TURNS_AT);
     const through = new Set<number>();
     let fastest = 0;
@@ -410,7 +410,7 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     const coming = new Set<number>();
     // Each route's turn worked out once, not for every car on every step.
     const turns = new Map<number, readonly [number, number] | undefined>();
-    const turnOf = (route: number) => (turns.has(route) ? turns.get(route) : turns.set(route, eastTurn(TRAFFIC_ROUTES[route]!)).get(route));
+    const turnOf = (route: number) => (turns.has(route) ? turns.get(route) : turns.set(route, nearTurn(TRAFFIC_ROUTES[route]!)).get(route));
     // 25 s of traffic: ten cars drive the turn (23 in 50 s), so the speed is checked on as many
     // as before at half the cost; the 50 s went over the 20 s limit on a loaded CI runner.
     for (let t = 0; t < 25 * 60; t++) {
@@ -425,21 +425,19 @@ describe("the traffic in the simulation (ADR-0050)", () => {
         if (v.vehicle.s > turn[1] - 1) through.add(v.id);
       }
     }
-    // The turns by the east end are a few metres long and see fewer cars in 25 s than the four
-    // before the market did (ten): two at least, each held to the turn's speed.
-    expect(through.size).toBeGreaterThanOrEqual(2);
+    expect(through.size).toBeGreaterThanOrEqual(5);
     expect(fastest).toBeLessThanOrEqual(TURN_SPEED + 0.01);
   });
 
   it("put back on its timetable out of sight inside a turn round, a vehicle drives it slowly (G-028)", () => {
-    // The player on the avenue looking west, away from the turns round at its east end.
+    // The player west of the turns round by Mełgiewska, looking west, away from them.
     const sim = busySim(3, TURNS_AT);
-    teleportPlayer(sim, ground(TURNS_AT.x - 140, TURNS_AT.z), -Math.PI / 2);
+    teleportPlayer(sim, ground(TURNS_AT.x - 60, TURNS_AT.z), -Math.PI / 2);
     let moved: (Entity & { vehicle: NonNullable<Entity["vehicle"]> }) | undefined;
     for (let t = 0; t < 60 * 60 && !moved; t++) {
       sim.step();
       moved = vehicles(sim).find((v) => {
-        const turn = eastTurn(TRAFFIC_ROUTES[v.vehicle.route]!);
+        const turn = nearTurn(TRAFFIC_ROUTES[v.vehicle.route]!);
         const tt = timetable(vehiclePlan(sim.seed, v.vehicle.route, v.vehicle.index), sim.clock);
         return turn !== undefined && tt.v > TURN_SPEED && tt.s > turn[0] + 1 && tt.s < turn[1] - 1;
       });
@@ -449,12 +447,12 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     // Far behind its timetable at a main road's speed, as after a long hold-up behind a trolleybus.
     const tt = timetable(vehiclePlan(sim.seed, v.vehicle.route, v.vehicle.index), sim.clock);
     v.vehicle.s = tt.s - 60;
-    // Its place on the timetable cleared: the short turns by the rondo are busy, and nobody lands on another vehicle.
+    // Its place on the timetable cleared: the short turns are busy, and nobody lands on another vehicle.
     const at = pointAt(TRAFFIC_ROUTES[v.vehicle.route]!.points, tt.s);
     for (const o of vehicles(sim)) if (o !== v && Math.hypot(o.position.x - at.x, o.position.z - at.z) < 14) sim.world.remove(o);
     v.vehicle.v = 13.5;
     sim.step();
-    const turn = eastTurn(TRAFFIC_ROUTES[v.vehicle.route]!)!;
+    const turn = nearTurn(TRAFFIC_ROUTES[v.vehicle.route]!)!;
     expect(v.vehicle.s).toBeGreaterThan(turn[0]);
     expect(v.vehicle.v).toBeLessThanOrEqual(TURN_SPEED + 0.01);
   });
