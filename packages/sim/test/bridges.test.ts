@@ -189,4 +189,36 @@ describe("bridges' decks (ADR-0053)", () => {
       expect(under, where).toBeLessThan(0.2);
     }
   });
+
+  it("take a walker off Andersa onto Mełgiewska's south bridge and back across the whole carriageway, within a kerb (G-349)", () => {
+    // The carriageway's deck (w50733068) to its west abutment, 13 m wide; the terrain of the
+    // street before it fell across it 0.4 m below the deck, the walker stopping 4.75-6 m south of the axis.
+    const [east, west] = [{ x: 2458.7, z: 302.7 }, { x: 2412.6, z: 318.7 }];
+    const len = Math.hypot(west.x - east.x, west.z - east.z);
+    const u = { x: (east.x - west.x) / len, z: (east.z - west.z) / len };
+    const n = { x: -u.z, z: u.x };
+    const fails: string[] = [];
+    for (const off of [-6, -4.5, -3, -1.5, 0, 1.5, 3, 4.5, 4.75, 5.25, 5.75, 6.25]) {
+      const edge = { x: west.x + n.x * off, z: west.z + n.z * off };
+      const [street, deck] = [{ x: edge.x - u.x * 8, z: edge.z - u.z * 8 }, { x: edge.x + u.x * 8, z: edge.z + u.z * 8 }];
+      expect(bridgeDeckAt(deck.x, deck.z), `${off}`).not.toBeNull();
+      for (const [from, to] of [[street, deck], [deck, street]] as const) {
+        const sim = Simulation.create({ seed: 3 });
+        teleportPlayer(sim, { x: from.x, y: sim.streamer.ground.heightAt(from.x, from.z), z: from.z }, Math.atan2(to.x - from.x, to.z - from.z));
+        let [step, prev] = [0, sim.player()!.position.y];
+        for (let i = 0; i < 60 * 6; i++) {
+          const p = sim.player()!.position;
+          if (Math.hypot(to.x - p.x, to.z - p.z) < 0.5) break;
+          sim.player()!.yaw = Math.atan2(to.x - p.x, to.z - p.z);
+          sim.step(input({ moveZ: 1 }));
+          step = Math.max(step, Math.abs(sim.player()!.position.y - prev));
+          prev = sim.player()!.position.y;
+        }
+        const p = sim.player()!.position;
+        const left = Math.hypot(to.x - p.x, to.z - p.z);
+        if (left >= 0.5 || step >= 0.15) fails.push(`${off} m off the axis, ${from === street ? "on" : "off"}: ${left.toFixed(1)} m short at (${p.x.toFixed(1)}, ${p.z.toFixed(1)}), a step of ${step.toFixed(2)}`);
+      }
+    }
+    expect(fails).toEqual([]);
+  });
 });

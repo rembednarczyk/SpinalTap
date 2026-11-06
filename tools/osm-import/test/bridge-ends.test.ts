@@ -23,6 +23,9 @@ describe("a bridge's way to its abutment (G-344)", () => {
     expect(toAbutments([at], [bridge])[0]).toBe(at);
     const [a, b] = toAbutments([line(1, onBridge, [0, 0], [20, 0]), line(2, onBridge, [20, 0], [40, 0])], [bridge]);
     expect([...ends(a!), ...ends(b!)]).toEqual(["0,0", "20,0", "20,0", "40,0"]);
+    // The node they share 10 m from the edge, within reach: still one deck on through it (G-349).
+    const [c, d] = toAbutments([line(1, onBridge, [0, 0], [30, 0]), line(2, onBridge, [30, 0], [40, 0])], [bridge]);
+    expect([...ends(c!), ...ends(d!)]).toEqual(["0,0", "30,0", "30,0", "40,0"]);
     const off = line(1, onBridge, [50, 0], [60, 0]);
     expect(toAbutments([off], [bridge])[0]).toBe(off);
     const long = outline({ man_made: "bridge" }, [0, -15], [80, -15], [80, 10], [0, 10]);
