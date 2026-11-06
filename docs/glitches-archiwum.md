@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-359 Odmowa wrogiej kliniki: „Ammo and basics, nothing more.”, choć Mori nie sprzedaje amunicji
+- Status: naprawione w #307 (6.11, d8352bc; klucz `shop.failure.refusedClinic` en/pl)
+- Ważność: S4 (tekst) · Zasięg: komunikat odmowy wspólny dla sklepów; klinika potrzebuje własnego wariantu (en i pl) · Koszt: mały
+- Pakiet właściciela: packages/ui (i18n `trade`), packages/core (klucz odmowy per sklep)
+
 ### G-331 Deszcz pada pod dachem pawilonu metra i w hali biletowej
 - Status: naprawione w #303 (6.11, fd4e7be; deszcz i rozbryzgi kończą się pod dachem pawilonu i w hali)
 - Ważność: S4 · Zasięg: wszystkie wejścia metra (widać na zrzutach schodów `shots/metro2/`); do etapu 3 ADR-0071 albo osobno

@@ -261,7 +261,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (audyt dróg) (T-052) · Ważność: S4 · Koszt: średni (kontrakt `GroundSurface` w core, ADR)
 
 ### G-088 Zamkowa zapada się o 3,5 m nad tunelem pieszym przed Zamkiem
-- Status: w naprawie (6.11, PR #306, a35f62c: pomost Zamkowej nad tunelem, `road-dip-over-tunnel` 1 → 0; weryfikator NIE PRZYJĘTE: pomost blokuje pościg AI przez tunel pieszy w66258159 (przed 3,35 s, po: brak w 20 s), reguła sufitu z G-068; runda 2 u autora)
+- Status: w PR #306, runda 2 (6.11, b4ba7f4: pomost z prześwitem > 2 m jest sufitem dla AI, gdy prosta NPC→cel przechodzi pod nim; pościgi przez tunel 3,35 s jak przed zmianą; ponowna weryfikacja w toku)
 - Ważność: S3 (proponowana; dojście do Zamku, obejście 6 m od osi) · Zasięg: lokalny · Koszt: średni
 - Gdzie: (781.2, 198.8), Zamkowa w154962966 nad w66258159; T-053
 - Dowód: GroundField wzdłuż osi: −12,5 → −15,6 → −12,8 m; steepAt prawda na pasie od −8 do +5 m od osi
@@ -1010,7 +1010,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `deck-end-step` (różnica `groundY` 0,15 m przed i za krawędzią > 0,15 m, poza drogą pod mostem) = 0
 
 ### G-343 Uciekający cywil przełącza się co krok między dwoma kierunkami przy ścianie (ziarna 3 i 7)
-- Status: zgłoszone (5.11, naprawiacz G-338)
+- Status: w PR #310 (6.11, 570bcb1; trzymana droga po kursie objazdu, próg zawrotu 5π/6, sonda ciała na `STEP_HEIGHT + 0.05`; złote hashe zmienione świadomie; w weryfikacji)
 - Ważność: S4 · Zasięg: ziarno 7, 1002001, gracz 2 m, ok. (309; −99,5): ściana tuż przy końcu sondy 2,5 m, a objazd „na wprost” prowadzi z powrotem obok gracza (242 skoki); ziarno 3, 1002001/1002003, gracz 1 m, ok. (326; −29): `fleeStep` biegnie na zablokowany punkt 6 m dalej (`steerPoint` oddaje cel, objazd pusty), na zmianę z objazdem przy +π/2 (183/186 skoków). Dopisek 6.11 (weryfikacja #305): także warianty z G-328 w zaułku (ok. 309,5; −97,7): ziarno 43, 1002008, gracz (3; 0): 431 skoków, 1,18 m od gracza; ziarno 11 i 7, 1002001, gracz (2; 0): 352 i 417 skoków; ziarna 3 i 29, 1002002, gracz (0; −2): 380 i 129 skoków. Ślad `fleeTurn`: co krok 0 ↔ −π/4, `null` nie pada. Test przyjęcia: w każdym z tych przypadków po 4 s cywil stoi albo ucieka bez przeskoków co krok
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `fleeStep`, `bendsBack`)
 
@@ -1082,11 +1082,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`systems/ai`, tłum)
 - Test przyjęcia: sesja bez renderera o 23:00 przy straganie Fumiko bez strzałów i walki: żaden sprzedawca nie ucieka
 
-### G-359 Odmowa wrogiej kliniki: „Ammo and basics, nothing more.”, choć Mori nie sprzedaje amunicji
-- Status: w PR #307 (6.11, 93cdec6; klucz `shop.failure.refusedClinic` en/pl, orkiestrator)
-- Ważność: S4 (tekst) · Zasięg: komunikat odmowy wspólny dla sklepów; klinika potrzebuje własnego wariantu (en i pl) · Koszt: mały
-- Pakiet właściciela: packages/ui (i18n `trade`), packages/core (klucz odmowy per sklep)
-
 ### G-360 Nawigacja AI przepuszcza krawędź pomostu ze stopniem 0,25–0,45 m, a ruch postaci na niej staje
 - Status: zgłoszone (5.11, naprawiacz G-349)
 - Ważność: S3 · Zasięg: rampa na wschodnim końcu Zamkowej psuła pościgi (`flight-chase`, `under-deck-ai`); pozostałe stopnie przyczółków z `deck-abutment-step` (wiadukt Zamkowej 9, kładka podzamcze-2-0 3) · Koszt: średni
@@ -1121,6 +1116,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: otwór (722; 286) wychodzi na rabatę z 289,6–292,6; według T-158 otwór miał dostać stronę parkingu albo pawilon miał się przesunąć · Koszt: mały
 - Pakiet właściciela: packages/sim (`content/metro.ts`); przegląd kuratora
 - Test przyjęcia: wyjście pawilonu na nawierzchni `square`/`sidewalk`, nie na rabacie
+
+### G-366 Odmowa zmiany rozdania (respec) przy przekroczonej puli wszczepów nie mówi, że trzeba wyjąć wszczep
+- Status: zgłoszone (6.11, weryfikator #308)
+- Ważność: S4 (UI/tekst) · Zasięg: toast „Your body won't take any more…”, przycisk Przebudowy aktywny mimo odmowy · Koszt: mały
+- Pakiet właściciela: packages/ui, packages/app (`ShopController`), i18n en/pl
+
+### G-367 Jasna „piła” pod stropem przejścia z hali na peron metra
+- Status: zgłoszone (6.11, autor ADR-0071 etap 4, do potwierdzenia)
+- Ważność: S4 · Zasięg: ściana przejścia pod stropem; prawdopodobnie światło księżyca między kawałkami stropu · Koszt: mały
+- Pakiet właściciela: packages/engine (`renderer/metro`, cienie/światło)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
