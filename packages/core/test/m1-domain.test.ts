@@ -87,12 +87,12 @@ describe("contracts", () => {
     expect(isContractSiteId("moon")).toBe(false);
   });
 
-  it("grows with experience and caps at four targets", () => {
-    const c = generateContract({ active: null, completed: 9 }, sequenceRng(0.99, 0.99), 100);
+  it("grows with its site's level (ADR-0059) and caps at four targets", () => {
+    const c = generateContract({ active: null, completed: 9 }, sequenceRng(0.99, 0.99), 100, () => 20);
     expect(c.id).toBe("c10");
     expect(c.siteId).toBe(ELIMINATION_SITE_IDS.at(-1));
     expect(c.targets).toBe(4);
-    expect(c.reward).toBe(1125);
+    expect(c.reward).toBe(Math.round(750 * 1.76 * 1.5));
   });
 
   it("describes the objective for both states", () => {

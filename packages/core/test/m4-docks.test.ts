@@ -43,11 +43,11 @@ describe("docks contracts (ADR-0024)", () => {
     expect(liked.reward).toBe(Math.round(700 * 1.2));
   });
 
-  it("sites, sizes and growth with experience", () => {
+  it("sites, sizes and growth with the job's level (ADR-0059)", () => {
     expect(generateContractOfKind("escort", ctx(), sequenceRng(0))).toMatchObject({ siteId: "docks_escort", targets: 2, reward: 580, status: "active" });
     expect(generateContractOfKind("infiltrate", ctx(), sequenceRng(0.99))).toMatchObject({ siteId: "tessen_office", targets: 4, reward: 700 });
     expect(generateContractOfKind("hack", ctx(), sequenceRng(0))).toMatchObject({ siteId: "quay_terminal", targets: 3 });
-    const veteran = ctx({ log: { active: null, completed: 12 } });
+    const veteran = ctx({ levelAt: () => 21 });
     expect(generateContractOfKind("escort", veteran, sequenceRng(0.99)).targets).toBe(4);
     expect(generateContractOfKind("infiltrate", veteran, sequenceRng(0.99)).targets).toBe(5);
     expect(generateContractOfKind("hack", veteran, sequenceRng(0.99)).targets).toBe(5);

@@ -1,0 +1,142 @@
+import { describe, expect, it } from "vitest";
+import {
+  EMPTY_CONTRACTS,
+  type ContractContext,
+  type ContractSiteId,
+  type LootLine,
+  bandLevel,
+  contractExperience,
+  contractPay,
+  contractXp,
+  createReputation,
+  enemyLevel,
+  enemyScale,
+  generateContract,
+  generateContractOfKind,
+  killXp,
+  killXpShare,
+  levelScale,
+  stashLines,
+} from "../src";
+import { sequenceRng } from "./helpers";
+
+/** Stage 5 of ADR-0059: district bands, enemy levels and contract levels. */
+describe("enemy level by district band (ADR-0059)", () => {
+  const band = { min: 5, max: 14 };
+
+  it("is the player's level kept within the band", () => {
+    expect(enemyLevel(1, band)).toBe(5);
+    expect(enemyLevel(9, band)).toBe(9);
+    expect(enemyLevel(20, band)).toBe(14);
+    expect(bandLevel(30, { min: 16, max: 30 })).toBe(30);
+  });
+
+  it("is the player's own outside every district", () => {
+    expect(enemyLevel(7, null)).toBe(7);
+  });
+
+  it("an elite and a boss are a level above the band's, never past 30", () => {
+    expect(enemyLevel(1, band, "elite")).toBe(6);
+    expect(enemyLevel(20, band, "boss")).toBe(15);
+    expect(enemyLevel(9, band, "regular")).toBe(9);
+    expect(enemyLevel(30, { min: 16, max: 30 }, "boss")).toBe(30);
+  });
+
+  it("health and damage grow 4% a level, as an item's level does", () => {
+    expect(enemyScale(1)).toBe(1);
+    expect(enemyScale(10)).toBeCloseTo(1.36, 10);
+    expect(enemyScale(30)).toBeCloseTo(2.16, 10);
+    for (const l of [1, 5, 14, 30]) expect(enemyScale(l)).toBe(levelScale(l));
+  });
+});
+
+describe("kill XP by the level difference (ADR-0059)", () => {
+  it("5 levels weaker 10%, even 100%, 5 stronger 150%, flat beyond", () => {
+    expect(killXpShare(5, 10)).toBeCloseTo(0.1, 10);
+    expect(killXpShare(1, 10)).toBeCloseTo(0.1, 10);
+    expect(killXpShare(10, 10)).toBe(1);
+    expect(killXpShare(15, 10)).toBeCloseTo(1.5, 10);
+    expect(killXpShare(20, 10)).toBeCloseTo(1.5, 10);
+    expect(killXpShare(12, 10)).toBeCloseTo(1.2, 10);
+  });
+
+  it("scales the type's XP, the same as before for an even fight", () => {
+    expect(killXp("hebi_ganger")).toBe(60);
+    expect(killXp("hebi_ganger", 4, 4)).toBe(60);
+    expect(killXp("hebi_ganger", 9, 4)).toBe(90);
+    expect(killXp("hebi_ganger", 1, 6)).toBe(6);
+  });
+});
+
+describe("loot level from a stash: its district's level (ADR-0059)", () => {
+  const lines: LootLine[] = [
+    { kind: "eddies", qty: 50 },
+    { kind: "item", item: "unity9", rarity: "common", qty: 1 },
+    { kind: "item", item: "holo_sight", rarity: "uncommon", qty: 1 },
+    { kind: "item", item: "hebi_jacket", rarity: "rare", qty: 1, level: 3 },
+  ];
+
+  it("gives a weapon without a level the district's, kept within the player's ± 2", () => {
+    expect(stashLines(lines, 10, 9)[1]).toMatchObject({ item: "unity9", rarity: "common", level: 10 });
+    expect(stashLines(lines, 16, 1)[1]).toMatchObject({ level: 3 });
+    expect(stashLines(lines, 5, 12)[1]).toMatchObject({ level: 10 });
+  });
+
+  it("leaves a mod, money and a piece with a level of its own as they are", () => {
+    const out = stashLines(lines, 16, 14);
+    expect(out[0]).toEqual(lines[0]);
+    expect(out[2]).toEqual(lines[2]);
+    expect(out[3]).toEqual(lines[3]);
+  });
+});
+
+describe("contract level (ADR-0059)", () => {
+  const ctx = (levelAt?: (site: ContractSiteId) => number): ContractContext => ({
+    log: EMPTY_CONTRACTS,
+    reputation: createReputation(),
+    flags: [],
+    tick: 0,
+    ticksPerSecond: 60,
+    ...(levelAt ? { levelAt } : {}),
+  });
+
+  it("sends one more man every 10 levels from level 20, none at the floor of any band", () => {
+    expect([1, 10, 16, 19, 20, 29, 30].map(contractExperience)).toEqual([0, 0, 0, 0, 1, 1, 2]);
+  });
+
+  it("the old rates are those of level 1, and the pay grows 4% a level before the standing", () => {
+    expect(contractPay(500, 1, 0)).toBe(500);
+    expect(contractPay(500, 10, 0)).toBe(680);
+    expect(contractPay(500, 10, 40)).toBe(Math.round(680 * 1.2));
+  });
+
+  it("a job of level 1 is what it was; its district's level sends more and pays more", () => {
+    expect(generateContractOfKind("retrieve", ctx(), sequenceRng(0))).toMatchObject({ targets: 2, reward: 250 + 2 * 110 });
+    expect(generateContractOfKind("retrieve", ctx(() => 1), sequenceRng(0))).toMatchObject({ targets: 2, reward: 470 });
+    expect(generateContractOfKind("retrieve", ctx(() => 12), sequenceRng(0))).toMatchObject({ targets: 2, reward: Math.round((250 + 2 * 110) * 1.44) });
+    expect(generateContractOfKind("retrieve", ctx(() => 20), sequenceRng(0))).toMatchObject({ targets: 3, reward: Math.round((250 + 3 * 110) * 1.76) });
+    expect(generateContractOfKind("infiltrate", ctx(() => 25), sequenceRng(0.99)).targets).toBe(5);
+  });
+
+  it("asks the level of the site it picked", () => {
+    const asked: ContractSiteId[] = [];
+    const c = generateContract(EMPTY_CONTRACTS, sequenceRng(0.99, 0), 0, (site) => {
+      asked.push(site);
+      return 30;
+    });
+    expect(asked).toEqual(["kanal_bridge"]);
+    expect(c).toMatchObject({ siteId: "kanal_bridge", targets: 4, reward: Math.round((250 + 4 * 125) * 2.16) });
+  });
+
+  it("a delivery pays by the level of Hana's stall", () => {
+    const at = (level: number) => generateContractOfKind("delivery", ctx(() => level), sequenceRng(0)).reward;
+    expect(at(1)).toBe(400);
+    expect(at(10)).toBe(544);
+  });
+
+  it("its XP grows with its level as the pay does", () => {
+    expect(contractXp("eliminate", 3)).toBe(1000);
+    expect(contractXp("eliminate", 3, 1)).toBe(1000);
+    expect(contractXp("eliminate", 3, 11)).toBe(1400);
+  });
+});
