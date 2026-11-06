@@ -84,4 +84,20 @@ describe("character progression in the save (v16 to v17, ADR-0059)", () => {
     expect(bad({ ...INITIAL_PROGRESSION, perks: { x: -1 } })).toBe("progression perks");
     expect(bad({ ...INITIAL_PROGRESSION, unspent: { attribute: 1.5, perk: 0 } })).toBe("progression points");
   });
+
+  it("keeps bought perk ranks without a new schema version, and refuses edited ones (stage 3)", () => {
+    const s = snapshot();
+    const bad = (progression: unknown) => findSchemaError({ ...s, domain: { ...s.domain, progression } } as unknown as Record<string, unknown>);
+    // Level 3: two points each; Might 4 opens the first tier, one rank of Tough bought.
+    const base = progressionFromXp(xpForLevel(3));
+    const built = { ...base, attributes: { ...base.attributes, might: 4 }, perks: { might_tough: 1 }, unspent: { attribute: 1, perk: 1 } };
+    expect(bad(built)).toBeNull();
+    const loaded = decodeSave("v", wrap({ ...s, domain: { ...s.domain, progression: built } }));
+    expect(loaded.domain.progression.perks).toEqual({ might_tough: 1 });
+    // An unknown perk, a rank above its last, or a tier the attribute does not open.
+    expect(bad({ ...built, perks: { gone_perk: 1 } })).toBe("progression perks");
+    const five = progressionFromXp(xpForLevel(5));
+    expect(bad({ ...five, attributes: { ...five.attributes, might: 4 }, perks: { might_tough: 4 }, unspent: { attribute: 3, perk: 0 } })).toBe("progression perks");
+    expect(bad({ ...base, perks: { might_tough: 1 }, unspent: { attribute: 2, perk: 1 } })).toBe("progression perks");
+  });
 });

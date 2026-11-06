@@ -136,6 +136,8 @@ export class HudSync implements ContractIntents {
       level: sim.domain.progression.level,
       attributes: sim.domain.progression.attributes,
       attributePoints: sim.domain.progression.unspent.attribute,
+      perks: sim.domain.progression.perks,
+      perkPoints: sim.domain.progression.unspent.perk,
       contractsDone: sim.domain.contracts.completed,
       aimSpread: Math.round(sim.aimSpread() / SPREAD_STEP) * SPREAD_STEP,
       crouched: player?.posture?.crouched ?? false,

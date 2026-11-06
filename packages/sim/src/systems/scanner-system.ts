@@ -13,11 +13,14 @@ import {
   SHORT_CIRCUIT_DAMAGE,
   type Vec3,
   applyDamage,
+  chainRadius,
   contractKind,
   directionFromAngles,
   factionStance,
   hackCost,
   hackInSlot,
+  perkUploadScale,
+  ramRegenScale,
   refundOf,
   regenRam,
   uploadTimeScale,
@@ -255,16 +258,28 @@ const shortCircuit = (ctx: SimContext, player: Entity, target: Entity): void => 
   disturb(ctx, "hack", target.position, HACK_NOISE, target.id);
 };
 
-/** The upload is through: the effect, and maybe the trace. */
-const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Entity): void => {
-  const def = QUICKHACKS[hackId];
-  const seen = watchers(ctx, player, hackId === "reboot_optics" ? target : null);
-  if (seen.length > 0) {
-    // Traced (ADR-0028): the target's network knows where the player is.
-    ctx.bus.emit("QuickhackTraced", { hackId, targetId: target.id });
-    noteDetected(ctx);
-    for (const w of seen) giveLead(w, player.position);
+/**
+ * Chain (ADR-0059): the nearest other target of the same kind within `radius` of the first, in
+ * its plain sight, alive and not broken; ties go to creation order. Null when there is none.
+ */
+const chainTarget = (ctx: SimContext, player: Entity, first: Entity, radius: number): Entity | null => {
+  const kind = hackTargetKind(first);
+  const from = scanPoint(first);
+  let best: Entity | null = null;
+  let bestDistance = Infinity;
+  for (const e of inCreationOrder([...ctx.world.with("device"), ...ctx.world.with("body")])) {
+    if (e === first || e === player || hackTargetKind(e) !== kind || (e.health && e.health.current <= 0) || (e.device?.broken ?? 0) > 0) continue;
+    const distance = Math.hypot(e.position.x - first.position.x, e.position.z - first.position.z);
+    if (distance > radius || distance >= bestDistance || !lineOfSight(ctx.world, from, scanPoint(e))) continue;
+    best = e;
+    bestDistance = distance;
   }
+  return best;
+};
+
+/** What the hack does to the target. */
+const applyEffect = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Entity): void => {
+  const def = QUICKHACKS[hackId];
   switch (hackId) {
     case "ping":
       ping(ctx, target, def.duration);
@@ -282,8 +297,30 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
       shortCircuit(ctx, player, target);
       break;
   }
+};
+
+/**
+ * The upload is through: the effect, and maybe the trace. With Chain (ADR-0059) the effect also
+ * jumps to the next target of the kind nearby, with no trace and no XP of its own.
+ */
+const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Entity): void => {
+  const seen = watchers(ctx, player, hackId === "reboot_optics" ? target : null);
+  if (seen.length > 0) {
+    // Traced (ADR-0028): the target's network knows where the player is.
+    ctx.bus.emit("QuickhackTraced", { hackId, targetId: target.id });
+    noteDetected(ctx);
+    for (const w of seen) giveLead(w, player.position);
+  }
+  const duration = QUICKHACKS[hackId].duration;
+  applyEffect(ctx, player, hackId, target);
   noteHacked(ctx);
-  ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration: def.duration });
+  ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration });
+  const radius = chainRadius(ctx.state.domain.progression.perks);
+  const next = radius > 0 ? chainTarget(ctx, player, target, radius) : null;
+  if (next) {
+    applyEffect(ctx, player, hackId, next);
+    ctx.bus.emit("QuickhackApplied", { hackId, targetId: next.id, duration });
+  }
   grantQuickhackXp(ctx, xpKey(target));
 };
 
@@ -298,8 +335,8 @@ const start = (ctx: SimContext, focus: Entity, slot: number): void => {
   if ((focus.device?.broken ?? 0) > 0) return fail("wrong-target");
   const ram = hackCost(hackId, icepick(ctx));
   if (netrun.ram + 1e-9 < ram) return fail("no-ram");
-  // Net uploads faster (ADR-0059).
-  const upload = QUICKHACKS[hackId].upload * uploadTimeScale(ctx.state.domain.progression.attributes);
+  // Net and Fast Upload upload faster (ADR-0059).
+  const upload = QUICKHACKS[hackId].upload * uploadTimeScale(ctx.state.domain.progression.attributes) * perkUploadScale(ctx.state.domain.progression.perks);
   ctx.state.domain = { ...ctx.state.domain, netrun: { ram: netrun.ram - ram, upload: { hackId, target: targetRef(focus), left: upload, ram } } };
   ctx.session.watch.uploadId = focus.id;
   ctx.bus.emit("QuickhackStarted", { hackId, targetId: focus.id, upload, ram });
@@ -349,7 +386,8 @@ export const scannerSystem: System = {
       if (focus && ctx.input.quickhack > 0) start(ctx, focus, ctx.input.quickhack);
       const netrun = ctx.state.domain.netrun;
       const max = ramMaxOf(ctx.state.domain);
-      if (!netrun.upload && netrun.ram < max && !inCombat(ctx, player)) setRam(ctx, regenRam(netrun.ram, max, ctx.dt));
+      // Recycler (ADR-0059) brings it back faster.
+      if (!netrun.upload && netrun.ram < max && !inCombat(ctx, player)) setRam(ctx, regenRam(netrun.ram, max, ctx.dt * ramRegenScale(ctx.state.domain.progression.perks)));
     }
     reportRam(ctx);
   },

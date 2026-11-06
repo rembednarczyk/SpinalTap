@@ -5,7 +5,7 @@ import { applyItemCommand } from "./item-commands";
 import { applyAlias, applyResolveEnding, changeReputation, endDialogue, setFlag, storyChoice, unlockMemory, trackQuest, waitMinutes } from "./story-commands";
 import { applyTradeCommand } from "./trade-commands";
 import { travelMetro } from "./metro-ride";
-import { spendAttribute } from "./progression-ops";
+import { spendAttribute, spendPerk } from "./progression-ops";
 import { startTakedown } from "../systems/takedown-system";
 import { carryBody, dropBody } from "../systems/carry-system";
 import { setDifficulty } from "./difficulty";
@@ -35,6 +35,7 @@ export const COMMAND_HANDLERS: CommandHandlers = {
   "track-quest": trackQuest,
   // Character progression (ADR-0059).
   "spend-attribute-point": spendAttribute,
+  "spend-perk-point": spendPerk,
   // Contracts and hacking.
   "accept-contract": acceptContract,
   "deliver-contract": deliverContract,
@@ -48,6 +49,8 @@ export const COMMAND_HANDLERS: CommandHandlers = {
   "upgrade-capacity": applyTradeCommand,
   "install-cyberware-item": applyTradeCommand,
   "remove-cyberware": applyTradeCommand,
+  // The respec at Mori's (ADR-0059): a clinic service.
+  respec: applyTradeCommand,
   // Inventory and loot (ADR-0015).
   "equip-item": applyItemCommand,
   "unequip-item": applyItemCommand,

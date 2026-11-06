@@ -93,3 +93,21 @@ export const readyToFire = (c: Combatant, loaded: number): boolean => {
   if (c.reloading > 0) return stats.reloadMode === "per-round" && loaded > 0;
   return true;
 };
+
+/**
+ * Fills the magazine in hand from the pouch at once, whatever its reload mode (the Ghost Reload
+ * perk, ADR-0059): a reload under way is done. False when there is nothing to load.
+ */
+export const fillMagazine = (ctx: SimContext, e: Entity): boolean => {
+  const c = e.combatant;
+  const stats = c?.stats;
+  if (!c || !stats || !usesAmmo(stats)) return false;
+  const loaded = loadedOf(ctx, e);
+  const reserve = reserveOf(ctx, e);
+  if (loaded >= stats.magazine || reserve <= 0) return false;
+  const next = Math.min(stats.magazine, loaded + reserve);
+  setRounds(ctx, e, next, reserve - (next - loaded));
+  c.reloading = 0;
+  ctx.bus.emit("ReloadFinished", { entityId: e.id, loaded: next });
+  return true;
+};

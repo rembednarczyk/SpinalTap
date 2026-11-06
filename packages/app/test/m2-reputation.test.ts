@@ -66,7 +66,8 @@ describe("M2: NPCs react to reputation", () => {
     expect(ui.getState().eddies).toBe(eddies - 135);
     expect(ui.getState().cyberware.arms).toBeUndefined();
     const refusal = ui.getState().toasts.find((t) => t.title === "Mori shakes his head");
-    expect(refusal?.text).toBe("Not for you. Ammo and basics, nothing more.");
+    // Mori sells no ammo, so his refusal names meds instead (G-359).
+    expect(refusal?.text).toBe("Not for you. Meds and basics, nothing more.");
     // Decision 5.11: the capacity shard is cyberware work, so a hostile Mori does not sell it either.
     session.intents.buyItem("capacity_shard");
     steps(session, 1);

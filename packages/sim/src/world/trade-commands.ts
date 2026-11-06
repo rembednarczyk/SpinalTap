@@ -7,6 +7,7 @@ import {
   type ShopId,
   type ShopTerms,
   buyCyberware,
+  buyRespec,
   buyStock,
   findItem,
   hasFlag,
@@ -23,10 +24,11 @@ import { deadFlag } from "../systems/death-system";
 import type { SimContext } from "./context";
 import { applyReputationCause, raiseProgress } from "./domain-ops";
 import { cyberCapacityOf } from "../systems/body-system";
+import { ramMaxOf, reportRamPool } from "./progression-ops";
 
 type TradeCommand = Extract<
   GameCommand,
-  { type: "buy-cyberware" | "buy-item" | "sell-item" | "repair-item" | "upgrade-capacity" | "install-cyberware-item" | "remove-cyberware" }
+  { type: "buy-cyberware" | "buy-item" | "sell-item" | "repair-item" | "upgrade-capacity" | "install-cyberware-item" | "remove-cyberware" | "respec" }
 >;
 
 /**
@@ -118,6 +120,22 @@ const removeImplant = (ctx: SimContext, cmd: Command<"remove-cyberware">, { doma
   ctx.bus.emit("CyberwareRemoved", { cyberwareId: r.cyberwareId, slot: cmd.slot });
 };
 
+/**
+ * The respec (ADR-0059): every attribute point and perk rank back to spend, for a fee. The
+ * implants have to fit the pool without Tech and Overclock; a RAM pool that shrinks is reported.
+ */
+const respec = (ctx: SimContext, { domain, terms, fail, charged }: Counter): void => {
+  const r = buyRespec(domain.wallet, domain.progression, terms, (progression) => {
+    const capacity = cyberCapacityOf({ ...domain, progression });
+    return capacity.used <= capacity.max;
+  });
+  if (!r.ok) return fail(r.reason);
+  const ram = ramMaxOf(domain);
+  ctx.state.domain = { ...domain, wallet: r.wallet, progression: r.progression };
+  charged(r.wallet, r.price);
+  reportRamPool(ctx, ram);
+};
+
 const buyItem = (ctx: SimContext, cmd: Command<"buy-item">, { domain, shopId, terms, pockets, fail, charged }: Counter): void => {
   const r = buyStock(pockets, shopId, cmd.itemId, terms);
   if (!r.ok) return fail(r.reason);
@@ -184,5 +202,7 @@ export const applyTradeCommand = (ctx: SimContext, cmd: TradeCommand): void => {
       return repairItem(ctx, cmd, counter);
     case "upgrade-capacity":
       return upgradeCapacity(ctx, counter);
+    case "respec":
+      return respec(ctx, counter);
   }
 };

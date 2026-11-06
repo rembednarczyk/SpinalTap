@@ -244,6 +244,7 @@ export const plTrade = {
   "shop.failure.already-installed": "To już masz.",
   "shop.failure.inventory-full": "Nie uniesiesz więcej.",
   "shop.failure.refused": "Nie dla ciebie. Amunicja i podstawy, nic więcej.",
+  "shop.failure.refusedClinic": "Nie dla ciebie. Leki i podstawy, nic więcej.",
   "shop.failure.closed": "Zamknięte. Wróć za dnia.",
   "shop.failure.not-found": "Nie masz tego przy sobie.",
   "shop.failure.in-use": "Najpierw to zdejmij.",

@@ -247,6 +247,7 @@ export const enTrade = {
   "shop.failure.already-installed": "You already have that.",
   "shop.failure.inventory-full": "You can't carry any more.",
   "shop.failure.refused": "Not for you. Ammo and basics, nothing more.",
+  "shop.failure.refusedClinic": "Not for you. Meds and basics, nothing more.",
   "shop.failure.closed": "Closed. Come back in the daytime.",
   "shop.failure.not-found": "You don't have that on you.",
   "shop.failure.in-use": "Take it off first.",
