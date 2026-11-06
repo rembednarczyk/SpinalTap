@@ -992,7 +992,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
 
 ### G-329 Cywil 294 (koi-regular-2) drga w miejscu podczas paniki po strzałach
-- Status: zgłoszone (5.11, weryfikator PR #277)
+- Status: częściowo naprawione w #310 (6.11; przechodzień 294: 84 → 10 skoków, 1082: 283 → 40 w nagranym przebiegu; w tickach 1060–1159 u 294 zostaje 7)
 - Ważność: S4 · Zasięg: nagrany przebieg `determinism.test.ts`, ticki ok. 1060–1159
 - Pakiet właściciela: packages/sim/src/systems/ai
 
@@ -1008,11 +1008,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna (przypuszczalna): `makeDeck` bierze `rawHeight` końców osi i robi pomost poziomy w poprzek; droga obok idzie za poprzecznym spadkiem NMT
 - Pakiet właściciela: packages/sim (content/lublin decks, terrain PADS/RAMPS)
 - Test przyjęcia: kontrola `deck-end-step` (różnica `groundY` 0,15 m przed i za krawędzią > 0,15 m, poza drogą pod mostem) = 0
-
-### G-343 Uciekający cywil przełącza się co krok między dwoma kierunkami przy ścianie (ziarna 3 i 7)
-- Status: w PR #310 (6.11, 570bcb1; trzymana droga po kursie objazdu, próg zawrotu 5π/6, sonda ciała na `STEP_HEIGHT + 0.05`; złote hashe zmienione świadomie; w weryfikacji)
-- Ważność: S4 · Zasięg: ziarno 7, 1002001, gracz 2 m, ok. (309; −99,5): ściana tuż przy końcu sondy 2,5 m, a objazd „na wprost” prowadzi z powrotem obok gracza (242 skoki); ziarno 3, 1002001/1002003, gracz 1 m, ok. (326; −29): `fleeStep` biegnie na zablokowany punkt 6 m dalej (`steerPoint` oddaje cel, objazd pusty), na zmianę z objazdem przy +π/2 (183/186 skoków). Dopisek 6.11 (weryfikacja #305): także warianty z G-328 w zaułku (ok. 309,5; −97,7): ziarno 43, 1002008, gracz (3; 0): 431 skoków, 1,18 m od gracza; ziarno 11 i 7, 1002001, gracz (2; 0): 352 i 417 skoków; ziarna 3 i 29, 1002002, gracz (0; −2): 380 i 129 skoków. Ślad `fleeTurn`: co krok 0 ↔ −π/4, `null` nie pada. Test przyjęcia: w każdym z tych przypadków po 4 s cywil stoi albo ucieka bez przeskoków co krok
-- Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `fleeStep`, `bendsBack`)
 
 ### G-345 Gołe podłoże wokół stanowisk Dworca Autobusowego (x 808–870)
 - Status: zgłoszone (5.11, naprawiacz G-341)
@@ -1132,6 +1127,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: ganger zaalarmowany z ulicy, z hali albo z peronu nie dochodzi do gracza w żadnym z 14 sprawdzonych przypadków · Koszt: średni
 - Pakiet właściciela: packages/sim (`systems/ai`, nawigacja przez schody i sklepienia)
 - Test przyjęcia: pościg z ulicy do hali i z hali na peron dochodzi do gracza w rozsądnym czasie
+
+### G-369 Cywil biega w kieszeni ok. 0,9 m przy graczu 1 m i drga w miejscu w pościgu 4 m/s (resztki G-343, G-328, G-326)
+- Status: zgłoszone (6.11, weryfikator #310)
+- Ważność: S4 · Zasięg: ucieczka przy graczu 1 m: 3/1002001 (0; −1) 35 skoków w drugiej połowie, 11/1002001 (1; 0) 44 (okres ok. 0,5 s); pościg 4 m/s: 43/1002008 115–163, 11/1002001 (0; −2) 239, 19/1002002 (0; 2) 29; 11/1002001 przy (310; −96) napiera na róg skrzyni 274 (sonda ±0,5 promienia ciała nie widzi rogu, pas z G-338) · Koszt: średni
+- Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, steering)
+- Test przyjęcia: w tych przypadkach skoki w drugiej połowie ≤ 4, bez biegu w miejscu
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-343 Uciekający cywil przełącza się co krok między dwoma kierunkami przy ścianie (ziarna 3 i 7)
+- Status: naprawione w #310 (6.11, c9b13d1; trzymana droga po kursie objazdu, próg zawrotu 5π/6, sonda ciała na `STEP_HEIGHT + 0.05`; skoki w przeglądzie 144 przypadków 1414 → 212; złote hashe zmienione świadomie). Resztki: G-369
+- Ważność: S4 · Zasięg: ziarno 7, 1002001, gracz 2 m, ok. (309; −99,5): ściana tuż przy końcu sondy 2,5 m, a objazd „na wprost” prowadzi z powrotem obok gracza (242 skoki); ziarno 3, 1002001/1002003, gracz 1 m, ok. (326; −29): `fleeStep` biegnie na zablokowany punkt 6 m dalej (`steerPoint` oddaje cel, objazd pusty), na zmianę z objazdem przy +π/2 (183/186 skoków). Dopisek 6.11 (weryfikacja #305): także warianty z G-328 w zaułku (ok. 309,5; −97,7): ziarno 43, 1002008, gracz (3; 0): 431 skoków, 1,18 m od gracza; ziarno 11 i 7, 1002001, gracz (2; 0): 352 i 417 skoków; ziarna 3 i 29, 1002002, gracz (0; −2): 380 i 129 skoków. Ślad `fleeTurn`: co krok 0 ↔ −π/4, `null` nie pada. Test przyjęcia: w każdym z tych przypadków po 4 s cywil stoi albo ucieka bez przeskoków co krok
+- Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `fleeStep`, `bendsBack`)
+
 ### G-359 Odmowa wrogiej kliniki: „Ammo and basics, nothing more.”, choć Mori nie sprzedaje amunicji
 - Status: naprawione w #307 (6.11, d8352bc; klucz `shop.failure.refusedClinic` en/pl)
 - Ważność: S4 (tekst) · Zasięg: komunikat odmowy wspólny dla sklepów; klinika potrzebuje własnego wariantu (en i pl) · Koszt: mały
