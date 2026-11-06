@@ -135,7 +135,7 @@ const respec = (ctx: SimContext, { domain, terms, fail, charged }: Counter): voi
 };
 
 const buyItem = (ctx: SimContext, cmd: Command<"buy-item">, { domain, shopId, terms, pockets, fail, charged }: Counter): void => {
-  const r = buyStock(pockets, shopId, cmd.itemId, terms);
+  const r = buyStock(pockets, shopId, cmd.itemId, terms, domain.progression.level);
   if (!r.ok) return fail(r.reason);
   ctx.state.domain = { ...domain, wallet: r.wallet, inventory: r.inventory, ammo: r.ammo };
   charged(r.wallet, r.price);
