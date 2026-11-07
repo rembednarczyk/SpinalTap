@@ -41,6 +41,8 @@ export interface PlanItem {
   readonly osm?: string | readonly string[];
   readonly look?: string;
   readonly note?: string;
+  /** False: its lamps hang no basket, and the others' baskets stay where they were (T0's square, ADR-0074 stage 7). */
+  readonly baskets?: false;
 }
 
 export interface PropsPlan {
@@ -56,6 +58,8 @@ export interface Placed {
   readonly shape?: number;
   /** Id of the plan's group (filled in by the generator). */
   readonly from?: string;
+  /** A lamp of a group with no baskets (`PlanItem.baskets`). */
+  readonly bare?: true;
 }
 
 export interface PropsStats {
@@ -354,7 +358,7 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
         skipped[shape] = (skipped[shape] ?? 0) + 1;
         continue;
       }
-      const p = shape === undefined ? { ...x, from: item.id } : { ...x, shape, from: item.id };
+      const p = { ...x, ...(shape === undefined ? {} : { shape }), from: item.id, ...(item.baskets === false ? { bare: true as const } : {}) };
       placed.push(p);
       if (item.line || item.lines) fromLine.add(p);
     }

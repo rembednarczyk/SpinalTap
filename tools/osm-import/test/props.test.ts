@@ -230,6 +230,23 @@ describe("street furniture generator (ADR-0047)", () => {
     for (const b of baskets) expect(lamps.some((l) => l.x === b.x && l.z === b.z), `basket at ${b.x}, ${b.z}`).toBe(true);
   });
 
+  it("hangs no basket on the lamps of a group without them, and leaves the other lamps' baskets where they were (ADR-0074 stage 7)", () => {
+    const row = { id: "a", kind: "lamp-pastoral", lines: [[0, 30, 100, 30]], spacing: 25 };
+    const baskets = { id: "baskets", kind: "hanging-basket", lines: [[0, 30, 100, 30]], count: 8 };
+    // Keyed before the row's lamps and by its line, so with baskets they would take the row's turns.
+    const square = { id: "_plac.lamp-pastoral", kind: "lamp-pastoral", points: [[25, 36.5] as const, [75, 36.5] as const], baskets: false as const };
+    const hung = (plan: PropsPlan) =>
+      generateProps(plan, [street()])
+        .byChunk.get("test-0-0")!
+        .filter((i) => i.prop === "hanging-basket")
+        .map((i) => [i.x, i.z]);
+    const before = hung({ items: [row, baskets] });
+    expect(before.length).toBeGreaterThan(0);
+    expect(hung({ items: [row, square, baskets] })).toEqual(before);
+    // With baskets, the square's lamps take their turn among the others.
+    expect(hung({ items: [row, { ...square, baskets: undefined }, baskets] })).not.toEqual(before);
+  });
+
   it("spreads lines and areas deterministically, inside the area and off the buildings", () => {
     const line = [
       { x: 0, z: 0 },
