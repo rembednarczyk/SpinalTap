@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-474 Fixer (Kaito) rysuje się jako czarna postać
+- Status: naprawione (PR #368, 7.11; `kaito.vrm` niesie COLOR_0 z samych zer, toon shader mnożył albedo przez kolor wierzchołków; loader zdejmuje COLOR_0 z siatek VRM, glTF bez zmian; test `model-cast-colours.test.ts` na każdym pliku manifestu; jasność postaci na zrzucie 6,9 → 40,3)
+- Ważność: S2 · Zasięg: model `kaito.vrm` (Sakurada Fumiriya, `manifest.json` rola `fixer`) widoczny w grze jako czarna sylwetka; do zbadania: materiał MToon/tekstury po zmniejszeniu (`tools/shrink_glb.py`), światło NPR, alfa; postać kluczowa dla wątku
+- Pakiet właściciela: packages/engine (renderer: modele postaci), packages/app/public/models
+
 ### G-450 Goły pas przy fasadach Peowiaków na rogach Kościuszki i przy w67508886 (T-221, T-224)
 - Status: naprawione (PR #364, 7.11; 5 obszarów kostki T-221/* i T-224 od fasad do osi chodników, 431 + 998 + 52 → 0 gołych próbek 0,25 m; skan bez zmian, kontrola `facade-footway-bare` przeniesiona do G-470)
 - Ważność: S4 · Zasięg: ok. 70 m pierzei Peowiaków i 3 m² przy w67508886; poprawka jak T-210 i T-211 (`ADDED_AREAS` od fasad do osi chodników, obszar na dom); test: zero gołych próbek 0,25 m; przy okazji kontrola `facade-footway-bare`

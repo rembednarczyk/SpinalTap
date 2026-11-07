@@ -1406,7 +1406,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (test)
 
 ### G-466 Karta dzielnicy na telefonie zasłania przycisk „Użyj”; po zmianie języka zostaje po angielsku
-- Status: w PR #365 (7.11, w weryfikacji; zgłoszone przez weryfikatora #359)
+- Status: w PR #365 (7.11, runda 2 b502bb0: w rozmowie na telefonie węższa kolumna toastów, czeka na CI; zgłoszone przez weryfikatora #359)
 - Ważność: S4 · Zasięg: 667×375 przy przyjeździe na Krakowskie Przedmieście karta zasłania „Użyj”, na 800×370 podobnie pierwsza linia podpowiedzi ruchu; karta pokazana przed zmianą języka nie przechodzi na pl
 - Pakiet właściciela: packages/ui (HUD)
 
@@ -1445,10 +1445,15 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: karta dzielnicy i „Zapisano grę” razem: stos 126 px (y 76–202) nachodzi na „Użyj” i skok przy 844×390, 800×370 i 667×375 (ok. 26 px przy 800×370); poprawka: limit wysokości stosu toastów pod `.touch-mode` albo jeden toast naraz na telefonie
 - Pakiet właściciela: packages/ui (HUD)
 
-### G-474 Fixer (Kaito) rysuje się jako czarna postać
-- Status: zgłoszone (7.11, użytkownik)
-- Ważność: S2 · Zasięg: model `kaito.vrm` (Sakurada Fumiriya, `manifest.json` rola `fixer`) widoczny w grze jako czarna sylwetka; do zbadania: materiał MToon/tekstury po zmniejszeniu (`tools/shrink_glb.py`), światło NPR, alfa; postać kluczowa dla wątku
-- Pakiet właściciela: packages/engine (renderer: modele postaci), packages/app/public/models
+### G-475 Na telefonie toasty w rozmowie leżą na dwóch pierwszych opcjach koła dialogowego
+- Status: zgłoszone (7.11, naprawiacz G-466 runda 2)
+- Ważność: S4 · Zasięg: 844×390, w rozmowie kolumna toastów x 464–724, y 76–200 nachodzi na opcje koła x 490–670, y 140–246; było tak już przed G-466 (kolumna 260 px); `e2e/dialogue-fit.spec.ts` nie sprawdza koła z toastami; przy okazji: e2e nie ma dostępu do `hooks.toastMs` (krótszy czas toastów w testach wymaga przeciągnięcia haka przez `pushToastTimed`)
+- Pakiet właściciela: packages/ui (HUD)
+
+### G-476 Brak stałego testu, że zwykły glTF zachowuje kolory wierzchołków
+- Status: zgłoszone (7.11, weryfikator #368)
+- Ważność: S4 · Zasięg: po G-474 kolory wierzchołków zdejmowane są tylko z VRM; weryfikator sprawdził sondą z syntetycznym GLB z COLOR_0 (glTF zachowuje, VRM 0.x, VRM 1.0 i VRM w .glb tracą), ale sonda nie została w repo; wystarczy dopisać ją do `packages/engine/test/model-cast-colours.test.ts`
+- Pakiet właściciela: packages/engine (renderer: modele postaci)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
