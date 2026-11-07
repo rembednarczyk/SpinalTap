@@ -5,6 +5,10 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v36: P-1 under Alchemia's car park (ADR-0074 stage 4): no new fields, but an older save may have
+ * the player on the ground its ramp's trench and its stair core's house took; the migration wakes
+ * her on the car park by the ramp's top with the bags left there, and drops Sachiko's state (her
+ * counter turned to the door from P-1).
  * v35: the triangular pavilion on the corner of Bajkowskiego and Lubartowska (ADR-0074 stage 3): no
  * new fields, but an older save has the Hebi bag by Ren on the food hall's green roof and Ren's
  * state there, and may have the player on the ground the pavilion stands on; the migration moves
@@ -65,7 +69,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 35;
+export const SAVE_SCHEMA_VERSION = 36;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {

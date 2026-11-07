@@ -111,10 +111,10 @@ describe("item level in play (ADR-0059, stage 4)", () => {
         loot: { ...now.domain.loot, containers: now.domain.loot.containers.map((c) => ({ ...c, lines: c.lines.map(strip) })) },
       },
     };
-    // Through v29 to v35, today (ADR-0063 stage 6 and ADR-0074 stages 1 to 3: the market's moves change nothing of a
+    // Through v29 to v36, today (ADR-0063 stage 6 and ADR-0074 stages 1 to 4: the market's moves change nothing of a
     // save made elsewhere; ADR-0059 stage 6: a run with no fight has an empty style and no bad luck, as the
     // migration gives; the cyberdeck's grades after stage 6: a run without a deck has none).
-    const through = [28, 29, 30, 31, 32, 33, 34].reduce((save, v) => MIGRATIONS[v]!(save), JSON.parse(JSON.stringify(v28)) as Record<string, unknown>);
+    const through = [28, 29, 30, 31, 32, 33, 34, 35].reduce((save, v) => MIGRATIONS[v]!(save), JSON.parse(JSON.stringify(v28)) as Record<string, unknown>);
     expect(JSON.stringify(through)).toBe(JSON.stringify(now));
   });
 });
