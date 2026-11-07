@@ -1431,13 +1431,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele postaci)
 
 ### G-477 Latarnie z planu mebli stoją poza pasem deptaka (T-232, T-233)
-- Status: w PR #374 (7.11, przegląd kuratora; zgłoszone przez kuratora przeglądu #366)
+- Status: w PR #374 (7.11, kurator: ZGODNE; tolerancja skanu 1 m dopisana, czeka na CI)
 - Ważność: S4 · Zasięg: grobla Zamkowej 9 `lamp-pastoral` 1,4–2,2 m na trawie Błoni, Karmelicka 3 `lamp-road` w ogrodzie za murem; przyczyna: stały odstęp `FALLBACK` w `props-gen.ts:104` zamiast ½ szerokości pasu + 0,3 m; nowa kontrola `lamp-off-band` (latarnia z planu > 0,5 m poza nawierzchnią swojej drogi), bazę policzyć w całym mieście
 - Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
 
 ### G-478 Murki `barrier=wall` przy deptakach nie mają bryły (T-234)
 - Status: zgłoszone (7.11, kurator przeglądu #366)
-- Ważność: S4 · Zasięg: murki grobli Zamkowej w294098689/w294098690 i mur ogrodu Karmelitów (brak w OSM) zostawiają goły grunt; `barrier=wall` nie jest importowane (`features.ts:66`); por. T-178; nowa kontrola `wall-unbuilt` (`barrier=wall` ≤ 5 m od osi drogi pieszej bez bryły)
+- Ważność: S4 · Zasięg: murki grobli Zamkowej w294098689/w294098690 i mur ogrodu Karmelitów (brak w OSM) zostawiają goły grunt; `barrier=wall` nie jest importowane (`features.ts:66`); por. T-178; nowa kontrola `wall-unbuilt` (`barrier=wall` ≤ 5 m od osi drogi pieszej bez bryły); po G-477 latarnie grobli stoją 0,3 m za kostką, na osi przyszłych murków: postawić je na murku albo zostawić przerwę
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-480 Po podniesieniu ciała na ziemi zostaje ciemny przedmiot w miejscu głowy
@@ -1524,6 +1524,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, naprawiacz G-485; pomiar zgrubny)
 - Ważność: S4 · Zasięg: test `reinforcement-sidestep.test.ts` (G-208) notuje kroki z wnikaniem w bryły do 0,38 m, przed i po G-485 (900 kroków: ziarno 21 ok. 1355, ziarno 5 ok. 1746); licznik filtruje wysokość brył prosto, więc część to może być fałsz; do sprawdzenia sondą
 - Pakiet właściciela: packages/sim (AI, ruch)
+
+### G-497 Pastorał grobli przy wiadukcie w232362907 stoi na trawie (T-235)
+- Status: zgłoszone (7.11, kurator przeglądu #374)
+- Ważność: S4 · Zasięg: 1 `lamp-pastoral` (757,6; 175,0), 1,45 m poza kostką; oś Zamkowej leży tu na ziemi mostu, której `Site` nie widzi (`surfaceAt` zwraca null), więc `byPaving` się nie włącza i zostaje FALLBACK 5 m; poprawka: krawędź mierzona też z osi na moście albo z kostki przyczółka; kontrola `lamp-off-band` baza 1 → 0
+- Pakiet właściciela: tools/osm-import (props)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
