@@ -69,7 +69,7 @@ export const cast = async (who: CharacterModelKey | null): Promise<Cast> => {
   const materials = new ToonMaterials(scene);
   const library = new ModelLibrary(scene, materials);
   const loadouts = new Loadouts(scene, materials, new WeaponMounts(library, allWeaponUrls()), () => {});
-  const models = new CharacterModels({ library, loadouts, addCaster: () => {} });
+  const models = new CharacterModels({ library, loadouts, addCaster: () => {}, scene, materials });
   const rig = who === "ganger" ? buildGanger(scene, materials, "c") : buildHeroine(scene, materials, "c");
   const spec = who ? MODELS[who] : undefined;
   if (who && spec) {

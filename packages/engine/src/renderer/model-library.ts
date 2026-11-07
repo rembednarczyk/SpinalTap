@@ -17,6 +17,7 @@ import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
 import { FaceRig } from "./face";
+import type { VariantDress } from "./model-variant";
 import { type VrmExpressions, type VrmSprings, isVrm, readGlbJson, readVrmExpressions, readVrmSprings } from "./vrm-meta";
 
 /** Which character views can be replaced by imported models. */
@@ -36,10 +37,12 @@ export interface CharacterModelSpec {
   readonly preset?: PresetName;
   readonly outline?: boolean;
   /**
-   * Which look of the file (ADR-0076): two characters may share a file in different variants.
-   * Carried through and part of the pool key; the variants themselves come in stage 2.
+   * Which look of the file (ADR-0076 §3, `variantOf`): 0 is the file's own, 1..16 the
+   * background's, the named characters' from 100 up. Part of the pool key.
    */
   readonly variant?: number;
+  /** A named character's hand-made changes over its variant (hair, clothes, accessories). */
+  readonly dress?: VariantDress;
 }
 
 /** Background roles with a pool of models (ADR-0076). */
@@ -60,6 +63,13 @@ export type CharacterModelManifest = Partial<Record<CharacterModelKey, Character
   readonly cast?: Partial<Record<CastKey, CharacterModelSpec>>;
   readonly pools?: Partial<Record<ModelPoolRole, readonly PooledModelSpec[]>>;
 };
+
+/** What a file lends to the variants of other files of its base (`ModelLibrary.clothOf`). */
+export interface ModelCloth {
+  readonly family: string | null;
+  readonly torso: Texture | null;
+  readonly legs: Texture | null;
+}
 
 interface Loaded {
   readonly container: AssetContainer;
@@ -103,7 +113,19 @@ export interface SourceMaterial {
   readonly layer: number;
   /** The garment slot a VRoid cloth material dresses ("Tops", "Bottoms"), for garment tints. */
   readonly garment: "torso" | "legs" | null;
+  /**
+   * What a VRoid material paints, for the model variants (ADR-0076): skin, hair, brows, and the
+   * top (a one-piece dress too) and trousers or skirt. Null for the eyes, mouth, shoes and the rest.
+   */
+  readonly part: ModelPart | null;
+  /** The VRoid base the material belongs to ("F00", "M00"), from its name; null for other files. */
+  readonly family: string | null;
 }
+
+export type ModelPart = "skin" | "hair" | "brow" | "torso" | "legs";
+
+const partOf = (name: string): ModelPart | null =>
+  /_SKIN\b/.test(name) ? "skin" : /_HAIR(\b|_)/.test(name) ? "hair" : /facebrow/i.test(name) ? "brow" : /tops|onepi/i.test(name) ? "torso" : /bottoms/i.test(name) ? "legs" : null;
 
 /** What an imported mesh's toon material was made from, kept in `mesh.metadata.toonSource` to recolour it. */
 export interface ToonSource {
@@ -145,6 +167,8 @@ export const readSourceMaterial = (material: unknown): SourceMaterial => {
     layer: FACE_LAYERS.find(([re]) => re.test(m?.name ?? ""))?.[1] ?? 0,
     outline: mode < 2 && m?.backFaceCulling !== false && !/face|eye|mouth|lash|brow|highlight/i.test(m?.name ?? ""),
     garment: /tops/i.test(m?.name ?? "") ? "torso" : /bottoms/i.test(m?.name ?? "") ? "legs" : null,
+    part: partOf(m?.name ?? ""),
+    family: /^([FM]\d\d)_/.exec(m?.name ?? "")?.[1] ?? null,
   };
 };
 
@@ -294,6 +318,18 @@ export class ModelLibrary {
   /** The textures a loaded file keeps for its instances (a measure of its memory, ADR-0076). */
   async texturesOf(spec: CharacterModelSpec): Promise<readonly BaseTexture[]> {
     return [...(await this.load(spec)).container.textures];
+  }
+
+  /**
+   * The cloth of a file for the variants of others (ADR-0076): its VRoid base (that of its top)
+   * and the textures of its separate top ("Tops") and trousers or skirt ("Bottoms"), which share
+   * their UV layout within a base. A one-piece dress lends nothing.
+   */
+  async clothOf(spec: CharacterModelSpec): Promise<ModelCloth> {
+    const { container } = await this.load(spec);
+    const sources = container.meshes.map((m) => toonSourceOf(m)?.source).filter((s): s is SourceMaterial => !!s);
+    const textureOf = (slot: "torso" | "legs") => sources.find((s) => s.garment === slot && s.texture)?.texture ?? null;
+    return { family: sources.find((s) => s.part === "torso")?.family ?? null, torso: textureOf("torso"), legs: textureOf("legs") };
   }
 
   private load(spec: CharacterModelSpec): Promise<Loaded> {
