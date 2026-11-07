@@ -1430,6 +1430,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (test) · Zasięg: `balance-model.ts:128` (HP gracza bez `levelModifiers`, HP wroga bez `npcHealth`), `:205` (pasmo z tabeli zamiast `gradeEnemy`), `:218` (`questGains` zamiast `evaluateQuests`/`questLogXp`); rozjazd z grą może przejść niezauważony
 - Pakiet właściciela: packages/sim (test)
 
+### G-465 Krótkie kliknięcie lub stuknięcie ataku gubi strzał (brak krawędzi `fire` w klatce)
+- Status: w naprawie (7.11, runda 2 PR #359; weryfikator)
+- Ważność: S3 · Zasięg: `fire` w klatce to stan trzymania (`virtual-pad.ts` `poll()`, `keymap.ts:143`); naciśnięcie i puszczenie między dwoma odczytami wejścia nie oddaje strzału ani nie wybiera „Zabij” w chwycie; przy 15–20 kl./s na telefonie dotyczy stuknięć krótszych niż 50–66 ms
+- Pakiet właściciela: packages/engine (input), packages/app (kontrolery)
+
+### G-466 Karta dzielnicy na telefonie zasłania przycisk „Użyj”; po zmianie języka zostaje po angielsku
+- Status: zgłoszone (7.11, weryfikator #359; sprzed tego PR)
+- Ważność: S4 · Zasięg: 667×375 przy przyjeździe na Krakowskie Przedmieście karta zasłania „Użyj”, na 800×370 podobnie pierwsza linia podpowiedzi ruchu; karta pokazana przed zmianą języka nie przechodzi na pl
+- Pakiet właściciela: packages/ui (HUD)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
