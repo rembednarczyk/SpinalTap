@@ -1466,7 +1466,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-488 Waga puli modeli niebędąca liczbą daje zawsze ostatni plik
-- Status: zgłoszone (7.11, weryfikator #372)
+- Status: w PR #388 (7.11, orkiestrator; czeka na CI)
 - Ważność: S4 · Zasięg: `pickFromPool` w `model-cast.ts`: `weight` = `"abc"` daje NaN i wybór ostatniego pliku puli, także z wagą ujemną; `parseModelManifest` nie sprawdza typu ani znaku `weight`; przy okazji: próg `< 50` MiB w `model-textures.test.ts` nie odróżnia stanu przed i po, a `loadToonModel` nie ma wywołań w kodzie
 - Pakiet właściciela: packages/engine (renderer)
 
@@ -1491,7 +1491,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: toon-shader)
 
 ### G-495 `models.spec` czasem mierzy klatkę bez aktywnych siatek
-- Status: zgłoszone (7.11, budowniczy ADR-0076 etap 2)
+- Status: w PR #387 (7.11, czeka na CI; `sampleNow` po krokach, budżet sceny `models` 465/158)
 - Ważność: S4 · Zasięg: na main w dwóch z trzech przebiegów pomiar 324/0 (wywołania / aktywne siatki); pomiar niestabilny, bramka może przepuścić regresję; przy okazji: NPC „doker” w dokach bez wpisu w obsadzie, akcesoria sztywne (fartuch jak deska, dłonie siedzących sprzedawców przez niego); potwierdzone w 4 przebiegach przy load 10–12 (budowniczy i weryfikator #376): koszt wariantów i fartucha nie jest mierzony lokalnie
 - Pakiet właściciela: e2e (QA)
 
