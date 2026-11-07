@@ -51,7 +51,6 @@ const VEHICLES = ["city/vehicle-props.glb"] as const;
 const DRONES = ["city/drone-props.glb"] as const;
 const CROWD = ["city/crowd-props.glb"] as const;
 const ROOMS = ["city/room-props.glb"] as const;
-const ALCHEMIA = ["city/alchemia-props.glb"] as const;
 /** The icons of one game-icons.net author the game draws after, by their titles there: "Brain, Syringe (game-icons.net)". */
 const gameIcons = (author: GameIconAuthor): string => {
   const names = Object.values(GAME_ICON_SOURCES).filter((s) => s.author === author);
@@ -110,9 +109,6 @@ export const CREDITS: readonly Credit[] = [
   { id: "sketchfab-cyberpunk-drone", section: "city", title: "Cyberpunk Drone Concept Design", author: "Berk Gedik", authorUrl: "https://sketchfab.com/berkgedik", url: "https://sketchfab.com/3d-models/cyberpunk-drone-concept-design-09e7406fc76248a2866209025588dad0", license: "CC-BY-4.0", files: DRONES, changed: true },
   // CC-BY 4.0 (ADR-0063 stage 3): the capsule room on Jezuicka, room-props.glb.
   { id: "sketchfab-futuristic-compact-room", section: "city", title: "Futuristic Compact Room", author: "igor.tesV", authorUrl: "https://sketchfab.com/igor.tesV", url: "https://sketchfab.com/3d-models/futuristic-compact-room-f49b4d0fbd45427bb47484b0a9ccfe75", license: "CC-BY-4.0", files: ROOMS, changed: true },
-  // CC-BY 4.0 (ADR-0063 stage 4): Alchemia, the food hall on Plac Ofiar Getta, alchemia-props.glb.
-  { id: "sketchfab-cyberpunk-building", section: "city", title: "Cyberpunk Building", author: "igor.tesV", authorUrl: "https://sketchfab.com/igor.tesV", url: "https://sketchfab.com/3d-models/cyberpunk-building-e79154e588bd4a6c84fa07e9a53f3ff9", license: "CC-BY-4.0", files: ALCHEMIA, changed: true },
-  { id: "sketchfab-hw4-cyberpunk-building", section: "city", title: "HW 4 Cyberpunk Sci-fi Building", author: "Eh (Just_Eh)", authorUrl: "https://sketchfab.com/Just_Eh", url: "https://sketchfab.com/3d-models/hw-4-cyberpunk-sci-fi-building-99bc36183ca94ca2bd493218566d1209", license: "CC-BY-4.0", files: ALCHEMIA, changed: true },
   // The cast (VRoid Project samples) and the weapons.
   { id: "vroid-samples", section: "characters", title: "VRoid Studio sample models (AvatarSample_D, AvatarSample_F, Sakurada Fumiriya, Sendagaya Shino, Base_Male)", author: "pixiv / VRoid Project", url: "https://opengameart.org/content/vroid-studio-cc0-models", license: "VRoid-Hub-1.0", files: ["models/seki.vrm", "models/kaito.vrm", "models/ganger.vrm", "models/civilian.vrm", "models/mori.vrm"], changed: true },
   { id: "quaternius-ultimate-gun-pack", section: "weapons", title: "Ultimate Gun Pack", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://opengameart.org/content/ultimate-gun-pack", license: "CC0-1.0", files: ["weapons/pistol.glb", "weapons/revolver.glb", "weapons/smg.glb", "weapons/shotgun.glb", "weapons/rifle.glb"], changed: true },

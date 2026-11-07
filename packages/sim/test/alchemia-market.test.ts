@@ -4,7 +4,7 @@ import {
   ACTIVITY_SPOTS,
   ALCHEMIA_CHUNK,
   ALCHEMIA_MARKET_ACTORS,
-  ALCHEMIA_TERRACE,
+  FOODHALL,
   CONTRACT_HOOKS,
   CONTRACT_ITEM_SPOTS,
   CROWD_SPOTS,
@@ -28,10 +28,11 @@ import { circleTouchesPrism } from "../src/world/prism";
 import { run, teleportPlayer } from "./helpers";
 
 /**
- * The market in Alchemia (ADR-0063 stage 6): the people of the market that stood on Aleja
- * Tysiąclecia stand at the stalls and on the square of the food hall, Ren on the hall's roof
- * terrace, the Hebi by the ruin; every place of theirs (and of the jobs, the crowd and the daily
- * plans there) is open ground in the plot's chunk, measured on the simulation's own solids.
+ * The market in Alchemia (ADR-0063 stage 6, ADR-0074 stage 1): the people of the market that stood
+ * on Aleja Tysiąclecia keep their units in the food hall, Hana's cart stands on T1 in front of it,
+ * Ren on its green roof, the Hebi by the ruin; every place of theirs (and of the jobs, the crowd and
+ * the daily plans there) is open floor in the plot's chunk, measured on the simulation's own solids:
+ * the ground outside, the hall's floor or its roof inside its outline.
  */
 
 const BODY = 0.4;
@@ -43,7 +44,7 @@ const loaded = (() => {
   return (): Simulation => {
     if (sim) return sim;
     sim = Simulation.create({ seed: 5 });
-    teleportPlayer(sim, { x: 440, y: groundY(440, 60) + 0.05, z: 60 });
+    teleportPlayer(sim, { x: 440, y: groundY(440, 64) + 0.05, z: 64 });
     run(sim, 2);
     return sim;
   };
@@ -60,6 +61,13 @@ const blockers = (sim: Simulation, p: Vec3): Entity[] =>
     return e.prisms.some((q) => q.top > p.y + 0.3 && q.bottom < p.y + 1.8 && circleTouchesPrism(q, p.x, p.z, BODY));
   });
 
+/** The floor under `p`: inside the hall's outline its floor or its roof, the ground elsewhere. */
+const floorAt = (p: Vec3): number => {
+  const inHall = p.x >= FOODHALL.minX && p.x <= FOODHALL.maxX && p.z >= FOODHALL.minZ && p.z <= FOODHALL.maxZ;
+  if (!inHall) return groundY(p.x, p.z);
+  return p.y > FOODHALL.floor + 1 ? FOODHALL.roof : FOODHALL.floor;
+};
+
 const where = (p: Vec3): string => `(${p.x.toFixed(1)}, ${p.y.toFixed(2)}, ${p.z.toFixed(1)})`;
 
 /** Points every half metre along a daily plan's paths. */
@@ -68,7 +76,10 @@ const planPoints = (def: ScheduleDef): Vec3[] =>
     stop.path.slice(1).flatMap((b, k) => {
       const a = stop.path[k]!;
       const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.5));
-      return Array.from({ length: n + 1 }, (_, j) => ({ x: a.x + ((b.x - a.x) * j) / n, y: groundY(a.x + ((b.x - a.x) * j) / n, a.z + ((b.z - a.z) * j) / n), z: a.z + ((b.z - a.z) * j) / n }));
+      return Array.from({ length: n + 1 }, (_, j) => {
+        const q = { x: a.x + ((b.x - a.x) * j) / n, y: a.y + ((b.y - a.y) * j) / n, z: a.z + ((b.z - a.z) * j) / n };
+        return { ...q, y: floorAt(q) };
+      });
     }),
   );
 
@@ -76,7 +87,7 @@ const onGroundAndClear = (sim: Simulation, points: readonly Vec3[]): string[] =>
   points.flatMap((p) => {
     const out: string[] = [];
     if (chunkAt(p.x, p.z)?.id !== ALCHEMIA_CHUNK) out.push(`${where(p)} outside ${ALCHEMIA_CHUNK}`);
-    if (Math.abs(p.y - groundY(p.x, p.z)) > 0.05) out.push(`${where(p)} off the ground ${groundY(p.x, p.z).toFixed(2)}`);
+    if (Math.abs(p.y - floorAt(p)) > 0.05) out.push(`${where(p)} off the floor ${floorAt(p).toFixed(2)}`);
     for (const b of blockers(sim, p)) out.push(`${where(p)} in a solid at ${where(b.position)}`);
     return out;
   });
@@ -91,9 +102,9 @@ describe("the market in Alchemia (ADR-0063 stage 6)", () => {
     for (const c of WORLD_CHUNKS.filter((c) => c.district === "targ")) for (const k of keys) expect(c.actors.map((a) => a.spawn.key)).not.toContain(k);
   });
 
-  it("puts every one of them, but Ren, on open ground", () => {
+  it("puts every one of them on open floor: the keepers behind their counters, Ren on the roof", () => {
     const sim = loaded();
-    const points = ALCHEMIA_MARKET_ACTORS.filter((a) => a.spawn.key !== "ren").map((a) => a.spawn.position);
+    const points = ALCHEMIA_MARKET_ACTORS.map((a) => a.spawn.position);
     expect(onGroundAndClear(sim, [...points, ...Object.values(STALL_KEEPERS)])).toEqual([]);
   });
 
@@ -114,12 +125,15 @@ describe("the market in Alchemia (ADR-0063 stage 6)", () => {
 
   it("keeps the daily plans, the crowd, the activity spots and the devices in the chunk, clear of solids", () => {
     const sim = loaded();
-    const plans = ["oyaji", "fumiko", "hebi-lookout"].flatMap((k) => planPoints(SCHEDULES[k]!));
+    const plans = ["oyaji", "fumiko", "kenta", "goro", "hebi-lookout"].flatMap((k) => planPoints(SCHEDULES[k]!));
     // The square's own standers (the chunk's benches elsewhere hold seated ones).
-    const crowd = CROWD_SPOTS.filter((s) => s.chunk === ALCHEMIA_CHUNK && Math.hypot(s.at.x - 438, s.at.z - 85) < 40).map((s) => s.at);
+    // The hall's sitters are on its benches: a seat, not open floor.
+    const crowd = CROWD_SPOTS.filter((s) => s.chunk === ALCHEMIA_CHUNK && Math.hypot(s.at.x - 430, s.at.z - 70) < 45 && !s.does.includes("sit")).map((s) => s.at);
     const spots = ACTIVITY_SPOTS.filter((s) => s.id.startsWith("targ-")).map((s) => s.at);
     expect(crowd.length).toBeGreaterThanOrEqual(10);
     expect(spots.length).toBeGreaterThanOrEqual(5);
+    // Nobody walks into the hall on a routine (its doors are the level graph's): the spots are outside.
+    for (const sp of spots) expect(floorAt(sp), sp.x.toFixed(1)).toBe(groundY(sp.x, sp.z));
     // The street encounters of the market stay on Podzamcze's streets (ADR-0032): none here.
     expect(ENCOUNTERS.filter((e) => chunkAt(e.at.x, e.at.z)?.id === ALCHEMIA_CHUNK)).toEqual([]);
     expect(onGroundAndClear(sim, [...plans, ...crowd, ...spots])).toEqual([]);
@@ -129,22 +143,11 @@ describe("the market in Alchemia (ADR-0063 stage 6)", () => {
     }
   });
 
-  it("has Ren on the roof terrace, on its floor, inside its screens, with the roof stash by him", () => {
-    const inside = (p: { x: number; z: number }): boolean => {
-      const c = ALCHEMIA_TERRACE.corners;
-      let sign = 0;
-      for (let i = 0; i < c.length; i++) {
-        const a = c[i]!;
-        const b = c[(i + 1) % c.length]!;
-        const cross = (b.x - a.x) * (p.z - a.z) - (b.z - a.z) * (p.x - a.x);
-        if (sign === 0) sign = Math.sign(cross);
-        else if (Math.sign(cross) !== sign) return false;
-      }
-      return true;
-    };
-    expect(REN_SPOT.y).toBeCloseTo(ALCHEMIA_TERRACE.roof, 6);
-    expect(inside(REN_SPOT)).toBe(true);
-    expect(inside(TARG_ROOF_STASH.at)).toBe(true);
+  it("has Ren on the hall's green roof, on its slab, with the roof stash by him", () => {
+    for (const p of [REN_SPOT, TARG_ROOF_STASH.at]) {
+      expect(p.y).toBe(FOODHALL.roof);
+      expect(p.x > FOODHALL.minX + 1 && p.x < FOODHALL.maxX - 1 && p.z > FOODHALL.minZ + 1 && p.z < FOODHALL.maxZ - 0.3).toBe(true);
+    }
     expect(Math.hypot(TARG_ROOF_STASH.at.x - REN_SPOT.x, TARG_ROOF_STASH.at.z - REN_SPOT.z)).toBeGreaterThan(1);
     const sim = loaded();
     expect(blockers(sim, REN_SPOT).map((e) => where(e.position))).toEqual([]);

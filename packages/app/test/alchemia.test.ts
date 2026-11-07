@@ -1,151 +1,113 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_INPUT, type EntityId, type InputFrame, type ViewDescriptor } from "@seki/core";
+import { EMPTY_INPUT, type EntityId, type InputFrame, type Vec3, type ViewDescriptor } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { ALCHEMIA_CHUNK, ALCHEMIA_LIFT_PROPS, ALCHEMIA_MODULES, ALCHEMIA_PROPS, ALCHEMIA_ROOF, ROOM_ID_BASE, alchemiaPoint } from "@seki/sim";
+import { ALCHEMIA_CHUNK, ALCHEMIA_PROPS, FOODHALL, ROOM_ID_BASE, STAIR, STAIR_HEAD_X, beforeKeeper, ground, opening } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 import { FakeRender, steps, teleport } from "./story-helpers";
 
 /**
- * Alchemia on Plac Ofiar Getta (ADR-0063 stage 4), headless: the hall and its stalls are solid.
- * Seki walking at the hall's front from the square (up its steps, G-299), at a stall's window from
- * Świętoduska's side and at the stalls' backs from the open square stops at their walls; she climbs
- * from the paving to each stall's door (G-287) and up the hall's outside stair to its landing (G-288); the hall's
- * flat roof holds her up (the lift up to it: alchemia-lift.test.ts); their solids
- * stream in with the plot's chunk, without views (the engine draws the models).
+ * Alchemia's food hall under its terrace (ADR-0074 stage 1), headless: Seki walks from T1 in
+ * through the way in to the counters, the glass of the front stops her, she walks up the stairs
+ * by the lift to the car park and back down, and onto the green roof from the car park; entering
+ * the hall is an interior of ADR-0061 (autosave); its solids stream in with the plot's chunk,
+ * without views (the engine draws them).
  */
 
 const start = () => {
   const views = new Map<EntityId, ViewDescriptor>();
   const render = Object.assign(new FakeRender(), { spawn: (id: EntityId, v: ViewDescriptor) => void views.set(id, v) });
-  const session = new GameSession({ render, audio: { play() {}, stopAll() {} }, persistence: new SavePersistence(new MemorySaveStore()), ui: createUiStore(), story: STORY_SOURCE, seed: () => 77, now: () => new Date(2026, 10, 2) });
+  const ui = createUiStore();
+  const session = new GameSession({ render, audio: { play() {}, stopAll() {} }, persistence: new SavePersistence(new MemorySaveStore()), ui, story: STORY_SOURCE, seed: () => 77, now: () => new Date(2026, 10, 6) });
   session.newGame();
   steps(session, 2);
   for (const g of [...session.sim.world.with("ai")]) session.sim.world.remove(g);
-  return { session, views };
+  return { session, views, ui };
 };
 
-/** Walks towards (x, z), turning to it every step, for `n` steps. */
-const walkAt = (session: GameSession, x: number, z: number, n: number): void => {
+/** Walks towards (x, z), turning to it every step, for at most `n` steps or until within `near` of it. */
+const walkAt = (session: GameSession, to: { x: number; z: number }, n: number, near = 0.3): void => {
   for (let i = 0; i < n; i++) {
     const p = session.sim.player()!;
-    const want = Math.atan2(x - p.position.x, z - p.position.z);
+    if (Math.hypot(to.x - p.position.x, to.z - p.position.z) < near) return;
+    const want = Math.atan2(to.x - p.position.x, to.z - p.position.z);
     const input: InputFrame = { ...EMPTY_INPUT, moveZ: 1, lookYaw: Math.atan2(Math.sin(want - p.yaw), Math.cos(want - p.yaw)) };
     steps(session, 1, input);
   }
 };
 
-const module = (key: string) => ALCHEMIA_MODULES.find((m) => m.key === key)!;
+const at = (session: GameSession): Vec3 => session.sim.player()!.position;
+const flat = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.hypot(a.x - b.x, a.z - b.z);
+const ENTRANCE = (opening("entrance").x0 + opening("entrance").x1) / 2;
 
-/** A point `out` metres off the module's middle along its front (negative: behind it), `side` metres to its right. */
-const off = (m: (typeof ALCHEMIA_MODULES)[number], out: number, side = 0) => ({
-  x: m.x + Math.sin(m.yaw) * out + Math.cos(m.yaw) * side,
-  z: m.z + Math.cos(m.yaw) * out - Math.sin(m.yaw) * side,
-});
-
-/** How far in front of the module's middle (along its front) the player stands. */
-const ahead = (session: GameSession, m: (typeof ALCHEMIA_MODULES)[number]): number => {
-  const p = session.sim.player()!.position;
-  return (p.x - m.x) * Math.sin(m.yaw) + (p.z - m.z) * Math.cos(m.yaw);
-};
-
-/** Body radius and a margin: she stops this far out of the wall or more. */
-const CLEAR = 0.2;
-/** The hall's front wall behind its porch, off its middle (alchemia-props.glb). */
-const HALL_FRONT_WALL = 2.8;
-
-describe("Alchemia on Plac Ofiar Getta (ADR-0063 stage 4)", () => {
-  it("lets her up the steps before the hall's front from the square by the car park and stops her at its shut doors (G-299)", () => {
+describe("Alchemia's food hall under its terrace (ADR-0074 stage 1)", () => {
+  it("lets her in from T1 through the way in to Kenta's counter, on the hall's floor, and counts it an interior", () => {
     const { session } = start();
-    const hall = module("alchemia-hall");
-    const from = off(hall, hall.depth / 2 + 4);
-    teleport(session, from.x, from.z, hall.yaw + Math.PI);
+    teleport(session, ENTRANCE, 64, Math.PI);
     steps(session, 2);
-    walkAt(session, hall.x, hall.z, 160);
-    // On the podium under the porch, at the ground storey's front wall (z 2.8 of the model's frame, G-298).
-    expect(session.sim.player()!.position.y).toBeCloseTo(hall.floor + 1.23, 1);
-    expect(ahead(session, hall)).toBeGreaterThan(HALL_FRONT_WALL + CLEAR);
-    expect(ahead(session, hall)).toBeLessThan(HALL_FRONT_WALL + 1);
+    expect(session.sim.session.interior).toBeNull();
+    for (const p of [{ x: ENTRANCE, z: 55 }, { x: 418, z: 50 }, beforeKeeper("kenta")]) walkAt(session, p, 400);
+    expect(flat(at(session), beforeKeeper("kenta"))).toBeLessThan(0.5);
+    expect(at(session).y).toBeCloseTo(FOODHALL.floor, 2);
+    expect(session.sim.session.interior).toBe("alchemia-foodhall");
   });
 
-  it("stops her at a stall's window from Świętoduska's side and at the stalls' backs from the open square", () => {
+  it("stops her at the front's glass beside the way in", () => {
     const { session } = start();
-    const stall = module("alchemia-stall-3");
-    const front = off(stall, stall.depth / 2 + 1.2);
-    teleport(session, front.x, front.z, stall.yaw + Math.PI);
+    teleport(session, ENTRANCE + 8, 62, Math.PI);
     steps(session, 2);
-    walkAt(session, stall.x, stall.z, 120);
-    expect(ahead(session, stall)).toBeGreaterThan(stall.depth / 2 + CLEAR);
-    const back = off(stall, -stall.depth / 2 - 4);
-    teleport(session, back.x, back.z, stall.yaw);
-    steps(session, 2);
-    walkAt(session, stall.x, stall.z, 160);
-    expect(ahead(session, stall)).toBeLessThan(-stall.depth / 2 - CLEAR);
+    walkAt(session, { x: ENTRANCE + 8, z: 50 }, 240);
+    expect(at(session).z).toBeGreaterThan(FOODHALL.maxZ + 0.3);
+    expect(at(session).y).toBeCloseTo(ground(ENTRANCE + 8, 59).y, 1);
   });
 
-  it("lets her up the steps from the paving to the door of each stall, at its middle and by its corners (G-287)", () => {
+  it("takes her up the stairs by the lift to the car park and back down to the hall, unhurt", () => {
     const { session } = start();
-    for (const m of ALCHEMIA_MODULES.filter((q) => q.key.startsWith("alchemia-stall"))) {
-      for (const side of [-3.2, 0, 3.2]) {
-        const from = off(m, m.depth / 2 + 4.5, side);
-        teleport(session, from.x, from.z, m.yaw + Math.PI);
-        steps(session, 2);
-        const door = off(m, m.depth / 2 + 0.2, side);
-        walkAt(session, door.x, door.z, 150);
-        const p = session.sim.player()!.position;
-        expect(p.y, `${m.key} at ${side}`).toBeCloseTo(m.floor, 1);
-        expect(ahead(session, m), `${m.key} at ${side}`).toBeLessThan(m.depth / 2 + 0.9);
-      }
-    }
-  });
-
-  it("lets her up the hall's outside stair from the paving to its landing, and down again (G-288)", () => {
-    const { session } = start();
-    const hall = module("alchemia-hall");
-    const at = (x: number, z: number) => alchemiaPoint(hall, x, z);
-    // Its foot is at the back of the hall, its landing over the front.
-    const from = at(3.2, -9.5);
-    teleport(session, from.x, from.z, hall.yaw);
+    const foot = { x: STAIR.footX + 1, z: 33.5 };
+    teleport(session, 411, 38, Math.PI, 0, FOODHALL.floor);
     steps(session, 2);
-    for (const [x, z, n] of [
-      [3.2, -5.2, 120],
-      [3.2, 1.6, 200],
-      [2.9, 2.4, 60],
-    ] as const) {
-      const p = at(x, z);
-      walkAt(session, p.x, p.z, n);
-    }
-    const top = session.sim.player()!.position;
-    expect(top.y).toBeCloseTo(hall.floor + 6.64, 1);
-    expect(Math.hypot(top.x - at(2.9, 2.4).x, top.z - at(2.9, 2.4).z)).toBeLessThan(0.6);
     const hp = session.sim.player()!.health!.current;
-    walkAt(session, from.x, from.z, 300);
-    const back = session.sim.player()!.position;
-    expect(Math.hypot(back.x - from.x, back.z - from.z)).toBeLessThan(0.6);
+    walkAt(session, foot, 200);
+    walkAt(session, { x: STAIR_HEAD_X - 1.2, z: 33.5 }, 600);
+    expect(at(session).y).toBeCloseTo(FOODHALL.roof, 1);
+    walkAt(session, { x: 401.8, z: 33.5 }, 200);
+    walkAt(session, { x: 401.8, z: 29 }, 300);
+    expect(at(session).z).toBeLessThan(FOODHALL.minZ);
+    expect(at(session).y).toBeCloseTo(ground(401.8, 29).y, 1);
+    // And down again into the hall.
+    walkAt(session, { x: 401.8, z: 33.5 }, 300);
+    walkAt(session, { x: STAIR_HEAD_X - 1.2, z: 33.5 }, 200);
+    walkAt(session, foot, 600);
+    walkAt(session, { x: 411.3, z: 38 }, 300);
+    expect(at(session).y).toBeCloseTo(FOODHALL.floor, 1);
     expect(session.sim.player()!.health!.current).toBe(hp);
   });
 
-  it("holds her up on the hall's flat roof, the floor the next stages put a character on", () => {
+  it("holds her up on the green roof, walked onto from the car park", () => {
     const { session } = start();
-    const [a, , c] = ALCHEMIA_ROOF.corners;
-    const mid = { x: (a!.x + c!.x) / 2, z: (a!.z + c!.z) / 2 };
-    teleport(session, mid.x, mid.z, 0, 0, ALCHEMIA_ROOF.y);
-    steps(session, 60);
-    expect(session.sim.player()!.position.y).toBeCloseTo(ALCHEMIA_ROOF.y, 1);
+    teleport(session, 420, 28, 0);
+    steps(session, 2);
+    walkAt(session, { x: 420, z: 50 }, 600);
+    expect(at(session).z).toBeGreaterThan(49);
+    expect(at(session).y).toBeCloseTo(FOODHALL.roof, 1);
+    // The parapet over T1 keeps her on it.
+    walkAt(session, { x: 420, z: 66 }, 300);
+    expect(at(session).z).toBeLessThan(FOODHALL.maxZ);
+    expect(at(session).y).toBeCloseTo(FOODHALL.roof, 1);
   });
 
   it("streams its solids in with the plot's chunk, without views and with ids outside the allocator", () => {
     const { session, views } = start();
-    const hall = module("alchemia-hall");
-    const from = off(hall, hall.depth / 2 + 4);
-    teleport(session, from.x, from.z, 0);
+    teleport(session, 420, 28, 0);
     steps(session, 3);
-    const rooms = session.sim.world.entities.filter((e) => e.id >= ROOM_ID_BASE && e.id < ROOM_ID_BASE + 1_000_000 && e.chunk === ALCHEMIA_CHUNK).sort((a, b) => a.id - b.id);
-    // The modules first, then the lift (alchemia-lift.test.ts).
-    expect(rooms).toHaveLength(ALCHEMIA_PROPS.length + ALCHEMIA_LIFT_PROPS.length);
-    const solids = rooms.slice(0, ALCHEMIA_PROPS.length);
-    expect(solids.every((e) => e.solid && !e.view)).toBe(true);
-    expect(solids.some((e) => views.has(e.id))).toBe(false);
+    expect(session.sim.streamer.isLoaded(ALCHEMIA_CHUNK)).toBe(true);
+    const ids = [...session.sim.world.with("solid")].filter((e) => e.id >= ROOM_ID_BASE && Math.abs(e.position.x - 418) < 30 && Math.abs(e.position.z - 45) < 30).map((e) => e.id);
+    expect(ids.length).toBeGreaterThanOrEqual(ALCHEMIA_PROPS.filter((p) => !p.mechanism).length);
+    for (const id of ids) {
+      const v = views.get(id);
+      if (v && v.kind === "block") continue; // the lift's cage and gates draw themselves
+      expect(v === undefined || (v.kind === "street-props" && v.items.length === 0), String(id)).toBe(true);
+    }
   });
 });

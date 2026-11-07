@@ -119,7 +119,7 @@ export class BabylonRenderer implements RenderPort {
   private readonly drones: DroneViews;
   /** The capsule room on Jezuicka, one mesh near it (ADR-0063 stage 3). */
   private readonly capsule: CapsuleRoomView;
-  /** Alchemia on Plac Ofiar Getta, one mesh near it (ADR-0063 stage 4). */
+  /** Alchemia on Plac Ofiar Getta, its outside and, near it, its inside (ADR-0074 stage 1). */
   private readonly alchemia: AlchemiaView;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
@@ -233,7 +233,7 @@ export class BabylonRenderer implements RenderPort {
       city: () => this.map.current !== null,
       eye: () => eye,
     });
-    this.alchemia = new AlchemiaView({ scene, kit: () => this.cityKit.kit, props: () => this.cityKit.props, city: () => this.map.current !== null, eye: () => eye });
+    this.alchemia = new AlchemiaView({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
       stage,

@@ -2,7 +2,7 @@ import { FIGURE_HOSTS, FIGURE_REACH, type StreetPropItem, figureLayout, isSittin
 import type { ActorDef, Rect, StaticProp } from "./builders";
 import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_ACTORS, KANAL_PROPS } from "./district-kanal";
-import { ALCHEMIA_MARKET_ACTORS, ALCHEMIA_MARKET_PROPS } from "./alchemia-market";
+import { ALCHEMIA_MARKET_ACTORS, ALCHEMIA_MARKET_PROPS } from "./alchemia/market";
 import { DOKI_QUAY_ACTORS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_PROPS } from "./district-doki";
 import { METRO_FOOTPRINTS } from "./metro";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "./lublin/sites";

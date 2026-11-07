@@ -1,5 +1,5 @@
 import type { EntityId } from "@seki/core";
-import { METRO_CUTS } from "@seki/sim";
+import { ALCHEMIA_CUTS, METRO_CUTS } from "@seki/sim";
 import type { Mesh, Scene } from "../../babylon";
 import type { MoonShadow } from "../../npr/moon-shadow";
 import type { ToonMaterials } from "../../npr/toon-material";
@@ -21,8 +21,11 @@ import type { MapEntries, TerrainEntry } from "./map-entries";
 import type { MapSignMaterial } from "./map-signs";
 import type { MapWaterMaterial } from "./map-water";
 
-/** The ground dug out under the metro's pavilions (ADR-0071 stage 2): no terrain or paving over their stairs and halls. */
-const SHAFTS = METRO_CUTS.map((c) => c.bounds);
+/**
+ * The ground dug out under the metro's pavilions (ADR-0071 stage 2) and Alchemia's food hall
+ * (ADR-0074): no terrain or paving over their stairs and halls.
+ */
+const SHAFTS = [...METRO_CUTS, ...ALCHEMIA_CUTS].map((c) => c.bounds);
 
 export interface CellBuilderDeps {
   readonly scene: Scene;

@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { SCHEDULES, STALL_FRONT_YAW, ground } from "@seki/sim";
+import { SCHEDULES, ground } from "@seki/sim";
 import { type Game, mountGame, run, unmountGame } from "./game-ui";
 
-/** The car park in front of Alchemia's hall, the market's chunk loaded, and the path by Oyaji's door at night (his plan's last stop). */
-const CAR_PARK = { x: 410, z: 32 };
+/** The car park behind Alchemia's food hall, the market's chunk loaded, and T1 by Oyaji's back door at night (his plan's last stop, ADR-0074). */
+const CAR_PARK = { x: 410, z: 28 };
 const OYAJI_DOOR = SCHEDULES.oyaji!.stops[1]!.path.at(-1)!;
-const BY_OYAJI_DOOR = { x: OYAJI_DOOR.x + Math.sin(STALL_FRONT_YAW) * 1.4, z: OYAJI_DOOR.z + Math.cos(STALL_FRONT_YAW) * 1.4 };
+const BY_OYAJI_DOOR = { x: OYAJI_DOOR.x, z: OYAJI_DOOR.z + 1.4 };
 
 /**
  * The day clock and Oyaji's stall on the real UI (formerly e2e/day-cycle.spec.ts and
