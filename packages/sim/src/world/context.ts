@@ -50,6 +50,8 @@ export interface SessionState {
   bodyTarget: { readonly id: EntityId; readonly distance: number } | null;
   /** The free hiding place in reach of the carried body, null when none: the key hides it there. */
   hideSpot: EntityId | null;
+  /** Room beside the player to put the carried body down (G-479); recomputed every step, not saved. */
+  dropRoom: boolean;
   /**
    * A difficulty asked for during a fight (ADR-0066): it takes effect when the fight is over.
    * Transient, not saved.
@@ -168,6 +170,7 @@ export const freshSession = (): SessionState => ({
   carrying: null,
   bodyTarget: null,
   hideSpot: null,
+  dropRoom: true,
   pendingDifficulty: null,
 });
 

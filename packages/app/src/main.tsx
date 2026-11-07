@@ -4,7 +4,7 @@ import { audioSampleManifest } from "./audio-manifest";
 import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCES } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
-import { FixedStepLoop, SIM_DT, ground, koiPoint, rayGeometry } from "@seki/sim";
+import { FixedStepLoop, SIM_DT, ground, koiPoint } from "@seki/sim";
 import { DEFAULT_SETTINGS, GameUi, createUiStore, translate } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
@@ -17,6 +17,7 @@ import { bindCrashWatch } from "./crash-watch";
 import { bindPageHidden } from "./page-lifecycle";
 import { pointerFocus } from "./pointer-focus";
 import { feedTouchFire } from "./touch-fire";
+import { connectWorldRays } from "./world-rays";
 import { feedAimAssist } from "./aim-assist-feed";
 import { feedLookTuning, viewLook } from "./look-tuning";
 import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings } from "./settings";
@@ -138,9 +139,8 @@ const session = new GameSession({
     gesture: () => navigator.userActivation?.isActive,
   }),
 });
-// The TPP camera stops at the map's buildings and the terrain too (ADR-0045): the simulation's
-// own ray through its solids, handed to the camera through the app.
-renderer.rig.setOccluder((origin, dir, maxDist) => rayGeometry(session.sim.world, origin, dir, maxDist, true));
+// The simulation's own rays through its solids, for the TPP camera (ADR-0045) and lying bodies (G-458).
+connectWorldRays(renderer, () => session.sim);
 
 // The shoulder key swaps the TPP side in play; the settings remember it like the menu's choice (G-275).
 input.shoulder.onChange = (left) => session.intents.changeSettings({ shoulder: left ? "left" : "right" });

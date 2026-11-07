@@ -3,5 +3,39 @@
   "fixer": { "url": "kaito.vrm", "scale": 1.03 },
   "ganger": { "url": "ganger.vrm", "scale": 1.07 },
   "civilian": { "url": "civilian.vrm", "scale": 0.97 },
-  "ripperdoc": { "url": "mori.vrm", "scale": 1.08 }
+  "ripperdoc": { "url": "mori.vrm", "scale": 1.08 },
+  "cast": {
+    "kaito": { "url": "kaito.vrm", "scale": 1.03 },
+    "kurosawa": { "url": "kaito.vrm", "scale": 1.03 },
+    "mori": { "url": "mori.vrm", "scale": 1.08 },
+    "ume": { "url": "civilian.vrm", "scale": 0.97 },
+    "hana": { "url": "civilian.vrm", "scale": 0.97 },
+    "genzo": { "url": "civilian.vrm", "scale": 0.97 },
+    "ren": { "url": "civilian.vrm", "scale": 0.97 },
+    "fumiko": { "url": "civilian.vrm", "scale": 0.97 },
+    "kenta": { "url": "civilian.vrm", "scale": 0.97 },
+    "goro": { "url": "civilian.vrm", "scale": 0.97 },
+    "oyaji": { "url": "civilian.vrm", "scale": 0.97 },
+    "sachiko": { "url": "civilian.vrm", "scale": 0.97 },
+    "tetsu": { "url": "civilian.vrm", "scale": 0.97 },
+    "hideo": { "url": "civilian.vrm", "scale": 0.97 },
+    "mei": { "url": "civilian.vrm", "scale": 0.97 },
+    "sabu": { "url": "civilian.vrm", "scale": 0.97 },
+    "hina": { "url": "civilian.vrm", "scale": 0.97 },
+    "takumi": { "url": "civilian.vrm", "scale": 0.97 },
+    "shiro": { "url": "civilian.vrm", "scale": 0.97 },
+    "tomo": { "url": "civilian.vrm", "scale": 0.97 },
+    "nobu": { "url": "civilian.vrm", "scale": 0.97 },
+    "koji": { "url": "civilian.vrm", "scale": 0.97 },
+    "daigo": { "url": "civilian.vrm", "scale": 0.97 },
+    "riko": { "url": "civilian.vrm", "scale": 0.97 },
+    "kiku": { "url": "civilian.vrm", "scale": 0.97 },
+    "akane": { "url": "civilian.vrm", "scale": 0.97 }
+  },
+  "pools": {
+    "civilian": [{ "url": "civilian.vrm", "scale": 0.97 }],
+    "vendor": [{ "url": "civilian.vrm", "scale": 0.97 }],
+    "ganger": [{ "url": "ganger.vrm", "scale": 1.07 }],
+    "corpo": [{ "url": "ganger.vrm", "scale": 1.07 }]
+  }
 }

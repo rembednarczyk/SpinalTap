@@ -1,4 +1,5 @@
 export * from "./types";
+export * from "./cast";
 export * from "./render-port";
 export * from "./input-port";
 export * from "./audio-port";

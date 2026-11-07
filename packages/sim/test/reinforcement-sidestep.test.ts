@@ -50,12 +50,15 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // (and saved with their maximum health). Re-recorded for the v31 style and bad luck (ADR-0059,
   // stage 6), fields: as v30 the runs hash to the goldens of before. Re-recorded for the v32
   // version of the cyberdeck's grades: nobody here has a deck, so as v31 they hash as before.
-  // Alchemia rebuilt (v33, ADR-0074 stage 1), its T2 with the Arkady (v34, stage 2), the pavilion
-  // on the corner with Ren on its roof (v35, stage 3) and P-1 under its car park (v36, stage 4)
-  // change only the version: as v32 the runs hash to the goldens of v32.
+  // Alchemia rebuilt (v33, ADR-0074 stage 1), its T2 with the Arkady (v34, stage 2) and the pavilion
+  // on the corner with Ren on its roof (v35, stage 3) change only
+  // the version: as v32 the runs hash to the goldens of v32. Re-recorded for G-485, a rule of
+  // movement: the push-out ends on the solids, so reinforcements crowding by a wall no longer
+  // press each other into it. Re-recorded for P-1 under Alchemia's car park (v36, stage 4): only
+  // the version; as v35 the runs hash to G-485's goldens (dbd53908, 11d2bf94).
   for (const [seed, level, golden, v32, v31, v30, v28, v27] of [
-    [21, 2, "22db9513", "4ba6c2d7", "1dcd58a8", "86fb3887", "96f59679", "5b25c2ac"],
-    [5, 3, "ad9fad91", "e4cb37dd", "f462c19c", "4b807e73", "87e672a5", "ff83146a"],
+    [21, 2, "a11206cf", "1c0d0ad3", "55a02c1c", "18d6bea3", "5e8676f5", "7e54b2a0"],
+    [5, 3, "bf8c66f1", "a0370c6d", "2d80f750", "b19791bb", "3a1c66f5", "11bea0a6"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
       const sim = onTheRoof(seed, level);

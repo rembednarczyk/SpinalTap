@@ -38,6 +38,8 @@ export interface CharacterRig {
   /** 0 holstered .. 1 drawn, eased towards `drawTarget` over DRAW_SECONDS. */
   drawn: number;
   drawTarget: boolean;
+  /** Both hands taken (a takedown grab, a body on the shoulder; G-459): the weapon stays holstered. */
+  handsBusy: boolean;
   /** 0 low ready (muzzle down, arm loose) .. 1 aimed; raised by a shot, lowered after `aimHold`. */
   aim: number;
   aimHold: number;
@@ -66,6 +68,8 @@ export interface CharacterRig {
   flinch: number;
   /** null while alive; seconds since death otherwise. */
   dying: number | null;
+  /** Height of the root when the fall began (the ground the body lies on, sidewalk lift included). */
+  deathGround: number;
   /** Vertical speed last frame while airborne, null on the ground (ADR-0021). */
   lastAir: number | null;
   /** 0..1 blend of the jump pose, eased in on take-off and out on landing. */

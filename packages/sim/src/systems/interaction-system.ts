@@ -10,7 +10,7 @@ import { grabLadder } from "./ladder-system";
 import { readHookTerminal } from "../world/hook-tracker";
 import { helpPasserBy } from "../world/micro-events";
 import { GRAB_PROMPT, TAKEDOWN_PROMPT } from "../world/takedown";
-import { CARRY_PROMPT, DROP_PROMPT, HIDE_PROMPT } from "../world/bodies";
+import { CARRY_PROMPT, DROP_PROMPT, HIDE_PROMPT, NO_ROOM_PROMPT } from "../world/bodies";
 
 /**
  * Picking up the crate of the running retrieval job, or the data of an infiltration (ADR-0024):
@@ -43,8 +43,8 @@ const startHack = (ctx: SimContext, terminal: Entity): void => {
 
 /**
  * What the interact key does with a body (ADR-0065), if that holds the prompt: with a body on
- * her shoulder always (hide it in reach of a hiding place, else drop it: hands full, nothing
- * else), else a takedown or a body to pick up nearer than anything else, the nearer of the two
+ * her shoulder always (hide it in reach of a hiding place, else drop it, or say there is no room
+ * to: hands full, nothing else), else a takedown or a body to pick up nearer than anything else, the nearer of the two
  * (a tie goes to the takedown). The key takes down and picks up only what the prompt names, so
  * the loser's target is cleared. A takedown under way keeps the key (ADR-0075): the grab offers
  * its choice, and the end chosen offers nothing.
@@ -53,7 +53,8 @@ const bodyAction = (session: SimContext["session"], bestDist: number): { id: Ent
   if (session.carrying !== null) {
     session.takedownTarget = null;
     session.bodyTarget = null;
-    return session.hideSpot !== null ? { id: session.hideSpot, prompt: HIDE_PROMPT } : { id: session.carrying, prompt: DROP_PROMPT };
+    if (session.hideSpot !== null) return { id: session.hideSpot, prompt: HIDE_PROMPT };
+    return { id: session.carrying, prompt: session.dropRoom ? DROP_PROMPT : NO_ROOM_PROMPT };
   }
   const run = session.takedown;
   if (run) {

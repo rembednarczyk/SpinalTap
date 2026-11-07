@@ -1,7 +1,7 @@
 import { applyDamage } from "@seki/core";
 import type { Entity } from "../world/components";
 import { type GroundField, MAX_WALK_SLOPE, groundOf } from "../world/ground";
-import { type Collider, circleTouches, closestXZ, collidersOf, colliderTop, overCollider, pushCircleOut } from "../world/solids";
+import { type Collider, circleTouches, closestXZ, collidersOf, colliderTop, overCollider, pushCircleOut, rayCollider } from "../world/solids";
 import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
 import { solidIndexOf } from "../world/solid-index";
@@ -273,19 +273,33 @@ const within = (r: Reach | null, x: number, z: number): boolean => !r || (x >= r
 /** A push-out that left the reach of its colliders: done again with every solid. */
 const FAR = { x: NaN, z: NaN } as const;
 
+const ray = { x: 0, y: 0, z: 0 };
+const rayDir = { x: 0, y: 0, z: 0 };
+
 /**
- * Pushes a footprint at (x, z) out of the solids it bumps into and the bodies it overlaps.
+ * Does the centre's way from (fx, fz) to (x, z) cross the footprint of a solid that stops her
+ * there (G-485)? Felt just above the solid's bottom, so a sloped top is above the ray throughout.
+ */
+const crossesSolid = (solids: readonly Collider[], field: GroundField, e: Mover, fx: number, fz: number, x: number, z: number, feet: number): boolean => {
+  const len = Math.hypot(x - fx, z - fz);
+  if (len < 1e-9) return false;
+  [rayDir.x, rayDir.z] = [(x - fx) / len, (z - fz) / len];
+  for (const s of solids) {
+    [ray.x, ray.y, ray.z] = [fx, s.box.min.y + Math.min(0.01, (s.box.max.y - s.box.min.y) / 2), fz];
+    const t = rayCollider(ray, rayDir, s, len);
+    if (t !== null && blocks(solids, field, s, fx + rayDir.x * t, fz + rayDir.z * t, 1e-3, feet, e.body.height)) return true;
+  }
+  return false;
+};
+
+/**
+ * Pushes a footprint at (x, z) out of the bodies it overlaps and the solids it bumps into.
+ * Solids come last and a body never pushes the centre across one (G-485): bodies give, walls
+ * do not, so a body lying by a wall cannot press her into it or through a thin one.
  * Returns FAR when a push carried it out of `reach` (the colliders near the mover).
  */
 const pushOut = (solids: readonly Collider[], field: GroundField, bodies: readonly Body[], e: Mover, x: number, z: number, feet: number, reach: Reach | null): { x: number; z: number } => {
   for (let i = 0; i < ITERATIONS; i++) {
-    for (const s of solids) {
-      if (!blocks(solids, field, s, x, z, e.body.radius, feet, e.body.height)) continue;
-      // Sunk onto a top with no foothold (G-372): off it the side she came from, not past its middle.
-      const back = colliderTop(s, near.x, near.z) <= feet + STEP_HEIGHT && overCollider(s, x, z);
-      ({ x, z } = pushCircleOut(s, back ? e.position.x : x, back ? e.position.z : z, e.body.radius));
-      if (!within(reach, x, z)) return FAR;
-    }
     for (const other of bodies) {
       if (other === e || Math.abs(other.position.y - feet) >= e.body.height) continue;
       const dx = x - other.position.x;
@@ -293,10 +307,18 @@ const pushOut = (solids: readonly Collider[], field: GroundField, bodies: readon
       const min = e.body.radius + other.body.radius;
       const d = Math.hypot(dx, dz);
       if (d < min && d > 1e-6) {
-        x = other.position.x + (dx / d) * min;
-        z = other.position.z + (dz / d) * min;
-        if (!within(reach, x, z)) return FAR;
+        const px = other.position.x + (dx / d) * min;
+        const pz = other.position.z + (dz / d) * min;
+        if (!within(reach, px, pz)) return FAR;
+        if (!crossesSolid(solids, field, e, x, z, px, pz, feet)) [x, z] = [px, pz];
       }
+    }
+    for (const s of solids) {
+      if (!blocks(solids, field, s, x, z, e.body.radius, feet, e.body.height)) continue;
+      // Sunk onto a top with no foothold (G-372): off it the side she came from, not past its middle.
+      const back = colliderTop(s, near.x, near.z) <= feet + STEP_HEIGHT && overCollider(s, x, z);
+      ({ x, z } = pushCircleOut(s, back ? e.position.x : x, back ? e.position.z : z, e.body.radius));
+      if (!within(reach, x, z)) return FAR;
     }
   }
   return { x, z };

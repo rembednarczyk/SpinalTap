@@ -4,6 +4,7 @@ import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 import { BodyFade, bodyFadeTarget } from "./body-fade";
+import { ChokeArms } from "./choke-arms";
 import { moveOf, swingEnd, swingPhase } from "../renderer/melee-timing";
 import { type ViewmodelPose, viewmodelPose } from "./viewmodel-poses";
 
@@ -114,6 +115,13 @@ export class CameraRig {
   private readonly placeholderGun: AbstractMesh;
   private reference: { position: Vector3; target: Vector3 } | null = null;
   private occluder: CameraOccluder | null = null;
+  /**
+   * Both of the player's hands are taken (a body on the shoulder, G-459): the weapon drops out of
+   * the FPP view as on a ladder. A takedown grab does it from the transform's `grab`.
+   */
+  handsBusy = false;
+  /** The forearms on a grabbed target's neck in first person (ADR-0075). */
+  private readonly chokeArms: ChokeArms;
   onBodyVisibility: (visible: boolean) => void = () => {};
   /** Halftone fade of the player's figure when it is in the way of the TPP view (G-275). */
   readonly bodyFade = new BodyFade();
@@ -175,6 +183,7 @@ export class CameraRig {
       applyOutline(m, 0.004);
     }
     this.viewmodel.position.set(this.pose.hip.x, this.pose.hip.y, this.pose.hip.z);
+    this.chokeArms = new ChokeArms(scene, materials, this.camera);
   }
 
   /** Node a weapon model is mounted under in the FPP viewmodel. */
@@ -315,6 +324,7 @@ export class CameraRig {
       // The reference frame and the title backdrop see what the player sees from the hip.
       this.camera.fov = this.hipFov;
       this.viewmodel.setEnabled(false);
+      this.chokeArms.update(false, undefined, dt);
       this.onBodyVisibility(true);
       this.bodyFade.update(0, 1);
       return;
@@ -329,9 +339,12 @@ export class CameraRig {
     // Aiming down sights (ADR-0019): the zoom follows the simulation's eased aim exactly, so the
     // HUD crosshair (which uses the same numbers) stays calibrated.
     const aim = Math.min(1, Math.max(0, target.aim ?? 0));
-    const crouch = target.crouch ?? 0;
+    // In a takedown grab the forearms come up on the target's neck and the eye goes with her figure.
+    this.chokeArms.update(this.blend < 0.35, target.grab, dt);
+    const { crouch, side: grabSide } = this.chokeArms.eye(target.crouch ?? 0);
     // Same curve as the simulation's aim origin, so the crosshair stays exact while crouching.
-    const eye = new Vector3(p.x, p.y + eyeHeightAt(crouch), p.z);
+    const beside = grabSide * (1 - this.blend);
+    const eye = new Vector3(p.x + Math.cos(yaw) * beside, p.y + eyeHeightAt(crouch), p.z - Math.sin(yaw) * beside);
     const side = this.leftShoulder ? -TPP_SHOULDER_OFFSET : TPP_SHOULDER_OFFSET;
     const shoulder = eye.add(new Vector3(Math.cos(yaw) * side, TPP_HEIGHT_OFFSET, -Math.sin(yaw) * side).scale(this.blend));
     const back = new Vector3(-dir.x, -dir.y, -dir.z);
@@ -370,8 +383,9 @@ export class CameraRig {
     );
 
     const fpp = this.blend < 0.35;
-    // On a ladder (and pulling up onto a ledge) both hands hold on: the weapon drops out of view (ADR-0021).
-    const held = this.weaponDrawn && target.climb === undefined ? 1 : 0;
+    // On a ladder (and pulling up onto a ledge) both hands hold on: the weapon drops out of view
+    // (ADR-0021); so it does with a body on the shoulder or in a takedown grab (G-459).
+    const held = this.weaponDrawn && target.climb === undefined && !this.handsBusy && target.grab === undefined ? 1 : 0;
     this.draw += Math.sign(held - this.draw) * Math.min(Math.abs(held - this.draw), dt / 0.35);
     this.reload = Math.max(0, this.reload - dt);
     const reloading = this.reloadTotal > 0 && this.reload > 0 ? Math.sin(Math.PI * (1 - this.reload / this.reloadTotal)) : 0;
