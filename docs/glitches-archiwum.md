@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-444 `map-city.test.ts` z małym zapasem do 5 s: koszt docinania i drapowania podłoża
+- Status: naprawione (PR #363, 7.11; CPU głównego wątku −35/−39%, czas testu ok. 5,2 → 3,4 s przy load 11–18; geometria identyczna bit w bit, test `map-ground-golden`)
+- Ważność: S4 (test) · Zasięg: „builds the whole generated Lublin” zużywa ok. 3,8–4,2 s CPU wobec limitu 5000 ms, więc przy load ok. 15 na 4 rdzeniach przekracza limit na każdym commicie; ok. 60% profilu to `ground-cut.ts` (`cutCovers`, `minusTriangle`), `ground-plan.ts` (drapowanie, `planSurface`) i `heightAt` w `map-entries.ts`; profil w scratchpadzie sesji `g444-new.cpuprofile`; bez podnoszenia limitu
+- Pakiet właściciela: packages/engine (renderer/mapcity)
+
 ### G-465 Krótkie kliknięcie lub stuknięcie ataku gubi strzał (brak krawędzi `fire` w klatce)
 - Status: naprawione (PR #359, 7.11; `fire` w klatce to trzymanie albo krawędź naciśnięcia w `virtual-pad.ts` i `keymap.ts`; krótkie kliknięcie oddaje jeden strzał, trzymanie bez zmian)
 - Ważność: S3 · Zasięg: `fire` w klatce to stan trzymania (`virtual-pad.ts` `poll()`, `keymap.ts:143`); naciśnięcie i puszczenie między dwoma odczytami wejścia nie oddaje strzału ani nie wybiera „Zabij” w chwycie; przy 15–20 kl./s na telefonie dotyczy stuknięć krótszych niż 50–66 ms

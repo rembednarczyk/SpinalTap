@@ -1335,11 +1335,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: r 0,87/0,92 m wobec 0,62/0,64 m z obwodu; także kolizja w sim; poprawka: pień skalowany słabiej niż korona
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
 
-### G-444 `map-city.test.ts` z małym zapasem do 5 s: koszt docinania i drapowania podłoża
-- Status: w PR #363 (7.11, w weryfikacji; CPU głównego wątku −35%, geometria bit w bit); wcześniej: zgłoszone (7.11, kurator przy G-423; zbadane 7.11, naprawiacz: #348 nie spowalnia testu, różnice w szumie obciążenia)
-- Ważność: S4 (test) · Zasięg: „builds the whole generated Lublin” zużywa ok. 3,8–4,2 s CPU wobec limitu 5000 ms, więc przy load ok. 15 na 4 rdzeniach przekracza limit na każdym commicie; ok. 60% profilu to `ground-cut.ts` (`cutCovers`, `minusTriangle`), `ground-plan.ts` (drapowanie, `planSurface`) i `heightAt` w `map-entries.ts`; profil w scratchpadzie sesji `g444-new.cpuprofile`; bez podnoszenia limitu
-- Pakiet właściciela: packages/engine (renderer/mapcity)
-
 ### G-445 Rampa E Alchemii: kostka drapowana na siatce 2,5 m przebija stopnie
 - Status: zgłoszone (7.11, naprawiacz rundy 3 PR #343)
 - Ważność: S4 · Zasięg: `drapedTriangles` (`DRAPE_GRID` 2,5 m) czyta teren przy x 435 (NMT w obrysie hali) i x 442,5 (wyższy grunt na wschód), więc paski kostki wychodzą ponad stopnie; poprawka: wyrównać teren pod obrysem hali przy ścianie E albo stopnie dopasowane do siatki drapowania
@@ -1444,6 +1439,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, kurator przeglądu #357; było już w rundzie 1)
 - Ważność: S4 · Zasięg: z kamery (437; 104) napis odwrócony, z ujęcia autora poprawny; do sprawdzenia strona billboardu
 - Pakiet właściciela: packages/engine (renderer)
+
+### G-469 Brak testu unieważniania koszyków `TerrainEntries` przy `set`/`delete`/`clear`
+- Status: zgłoszone (7.11, weryfikator #363)
+- Ważność: S4 (test) · Zasięg: mutacja usuwająca unieważnienie koszyków po pierwszym odczycie przechodzi wszystkie testy; gotowa sonda weryfikatora w scratchpadzie sesji `v-g444-stale.test.ts` do przeniesienia do `packages/engine/test`
+- Pakiet właściciela: packages/engine (renderer/mapcity)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
