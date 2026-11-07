@@ -1400,11 +1400,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (test) · Zasięg: `balance-model.ts:128` (HP gracza bez `levelModifiers`, HP wroga bez `npcHealth`), `:205` (pasmo z tabeli zamiast `gradeEnemy`), `:218` (`questGains` zamiast `evaluateQuests`/`questLogXp`); rozjazd z grą może przejść niezauważony
 - Pakiet właściciela: packages/sim (test)
 
-### G-466 Karta dzielnicy na telefonie zasłania przycisk „Użyj”; po zmianie języka zostaje po angielsku
-- Status: w PR #365 (7.11, runda 2 b502bb0: w rozmowie na telefonie węższa kolumna toastów, czeka na CI; zgłoszone przez weryfikatora #359)
-- Ważność: S4 · Zasięg: 667×375 przy przyjeździe na Krakowskie Przedmieście karta zasłania „Użyj”, na 800×370 podobnie pierwsza linia podpowiedzi ruchu; karta pokazana przed zmianą języka nie przechodzi na pl
-- Pakiet właściciela: packages/ui (HUD)
-
 ### G-467 Chodnik przy Arkadach nie do przejścia bez skoku (T-218)
 - Status: zgłoszone (7.11, kurator przeglądu #357 runda 2)
 - Ważność: S4 · Zasięg: na północnym końcu chodnika stopnie 0,54 i 0,75 m i czoło 0,63–1,2 m, uskok 0,5 m między podestem a płytą a −2…0; wszystko ponad `STEP_HEIGHT` 0,45 m; poprawka: koniec chodnika jako schody (rampa jak T2_STAIRS), płyta a −2…0 na poziomie podestu; kontrola `alchemia-walk-step` (baza 3)

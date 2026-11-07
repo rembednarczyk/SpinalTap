@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-466 Karta dzielnicy na telefonie zasłania przycisk „Użyj”; po zmianie języka zostaje po angielsku
+- Status: naprawione (PR #365, 7.11; karta dzielnicy na telefonie poza „Use” i skokiem, odświeża język; runda 2: w rozmowie węższa kolumna toastów `toasts--talk`, nie wchodzi pod napisy; testy komponentu padają bez poprawki; dialogue-fit, touch-layout, hud-layout 20/20)
+- Ważność: S4 · Zasięg: 667×375 przy przyjeździe na Krakowskie Przedmieście karta zasłania „Użyj”, na 800×370 podobnie pierwsza linia podpowiedzi ruchu; karta pokazana przed zmianą języka nie przechodzi na pl
+- Pakiet właściciela: packages/ui (HUD)
+
 ### G-428 Deptaki bez `width` buforowane na 8 m zachodzą na trawniki (T-199)
 - Status: naprawione (PR #366, 7.11; szerokości z ortofoto PZGiK w `corrections-deptaki.ts`: Karmelicka 5 m, grobla 6,5 m, aleja Placu Litewskiego 6 m, ścieżki 1,5/1 m, podwórze w470555118 jako bruk; kostka na trawnikach 68/79/23 → 0/23/2 m², `grass-under-paving` 5 → 0; test pada bez poprawki, build deterministyczny)
 - Ważność: S4 · Zasięg: Karmelicka, Szambelańska, Zamkowa ×2; poprawka: `TAG_CORRECTIONS` `width` z ortofoto; trawnik w470555118 na brukowanym podwórzu
