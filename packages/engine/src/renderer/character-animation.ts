@@ -13,11 +13,24 @@ export const CROUCH_THIGH = -1.2;
 export const CROUCH_KNEE = 2.0;
 /** Forward lean of the body when fully crouched. */
 export const CROUCH_LEAN = 0.35;
+/** Share of the stride left when fully crouched: short, careful steps. */
+const CROUCH_STRIDE = 0.45;
 /** Speeds (m/s) where the walk starts turning into a run and where the run is full. */
 const RUN_FROM = 5;
 const RUN_FULL = 6.6;
 /** Forward lean of the body at a full run (radians). */
 const RUN_LEAN = 0.24;
+/** Run knee: the fold at mid swing, how far past mid swing it peaks, and the knee in stance (radians). */
+const RUN_TUCK = 2.1;
+const RUN_KNEE_LAG = 0.35;
+const RUN_STANCE_KNEE = 0.45;
+/**
+ * Stride swing of the thighs: walking, and what a full run adds. The run also reaches a little
+ * further forward than back (radians), so the thigh in front stays under 65° from the hips.
+ */
+const WALK_SWING = 0.7;
+const RUN_SWING = 0.1;
+const RUN_REACH = 0.05;
 
 export interface CrouchOffset {
   /** Body drop (negative) and shift along Z that keep the feet planted at the root. */
@@ -167,19 +180,30 @@ const gaitOf = (rig: CharacterRig, speed: number, dt: number, crouch: number): G
   const knee = CROUCH_KNEE * c;
   const amount = Math.min(1, speed / 4.2);
   rig.phase += dt * (4 + speed * 1.9) * (amount > 0.05 ? 1 : 0);
-  // Short, careful steps while crouched.
-  const swing = Math.sin(rig.phase) * (0.7 + 0.32 * run) * amount * (1 - 0.55 * c);
+  const swing = Math.sin(rig.phase) * (WALK_SWING + RUN_SWING * run) * amount * (1 - (1 - CROUCH_STRIDE) * c);
   return { c, run, lean, thigh, knee, amount, swing };
 };
 
-const poseLegs = (rig: CharacterRig, { swing, thigh, lean, run, knee }: Gait): void => {
+/** Knee of a leg at stride phase `phase` (its thigh swings forward while cos(phase) < 0). */
+const legKnee = (swing: number, phase: number, { run, amount, c }: Gait): number => {
+  // Walking, the knee bends as the thigh comes forward.
+  const walk = Math.max(0, -swing) * 1.3;
+  // Running, the heel folds up while the thigh passes under the hips and opens again as it reaches
+  // forward, so the shin does not tuck behind a raised thigh (into a skirt); a soft knee in stance.
+  const lagged = Math.cos(phase - RUN_KNEE_LAG);
+  const stride = amount * (1 - (1 - CROUCH_STRIDE) * c);
+  const sprint = (Math.max(0, -lagged) * RUN_TUCK + Math.max(0, lagged) * RUN_STANCE_KNEE) * stride;
+  return walk * (1 - run) + sprint * run;
+};
+
+const poseLegs = (rig: CharacterRig, gait: Gait): void => {
+  const { swing, thigh, lean, knee } = gait;
   // Leg angles are relative to the leaning body: take the lean back out.
-  rig.legL.rotation.x = swing + thigh - lean;
-  rig.legR.rotation.x = -swing + thigh - lean;
-  // Knees bend on the back swing; at a run the heel kicks up high and the front knee stays soft.
-  const kick = 1.3 + 1.1 * run;
-  rig.kneeL.rotation.x = Math.max(0, -swing) * kick + Math.max(0, swing) * 0.45 * run + KNEE_REST + knee;
-  rig.kneeR.rotation.x = Math.max(0, swing) * kick + Math.max(0, -swing) * 0.45 * run + KNEE_REST + knee;
+  const reach = RUN_REACH * gait.run;
+  rig.legL.rotation.x = swing + thigh - lean - reach;
+  rig.legR.rotation.x = -swing + thigh - lean - reach;
+  rig.kneeL.rotation.x = legKnee(swing, rig.phase, gait) + KNEE_REST + knee;
+  rig.kneeR.rotation.x = legKnee(-swing, rig.phase + Math.PI, gait) + KNEE_REST + knee;
 };
 
 const poseArms = (rig: CharacterRig, { swing, run, amount, lean }: Gait, dt: number, combat: RigCombat): void => {
