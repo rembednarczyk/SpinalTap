@@ -1325,11 +1325,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: K otwiera Rozwój i jednocześnie wykonuje przypisaną akcję; tak samo T i B; poprawka: `sanitizeBindings` odrzuca klucze zarezerwowane z ostrzeżeniem
 - Pakiet właściciela: packages/app (settings), packages/engine (input)
 
-### G-436 Pas gołego terenu 1–2 m przed Sądem Okręgowym na Placu Czechowicza (T-210)
-- Status: w PR #349 (7.11, kostka do ścian sądu, `landuse-bare` −271; przegląd kuratora)
-- Ważność: S4 · Zasięg: x 2–22, z −104,7…−122, ok. 280 punktów `landuse-bare`; poprawka: domknąć nawierzchnię do ściany w69672563 (baza spadnie o ok. 280)
-- Pakiet właściciela: tools/osm-import
-
 ### G-437 Po awansie maks. zdrowie rośnie, a zdrowie nie: blok HUD widoczny do leczenia; stopka Dziennika bez K
 - Status: zgłoszone (6.11, naprawiacz rundy 3 PR #346)
 - Ważność: S4 · Zasięg: 100/100 → 100/109 po awansie trzyma blok zdrowia na ekranie (decyzja: dolać różnicę przy awansie albo ukrywać blok przy zdrowiu ≥ poprzedniego maks.); stopka Dziennika („J zamknij · I ekwipunek · Tab karta postaci”) nie wymienia K; odznaki przebrania i przekroczonej puli oraz kolumna buffów nachodzą na minimapę na komputerze: pomiar weryfikatora 7.11 na 1024×600–1920×1080 to −17 px (pula), −31/−32 px (przebranie, najdłuższa etykieta pl), −53 px (obie), identycznie na main; `e2e/hud-layout.spec.ts` mierzy tylko blok bez odznak
@@ -1343,6 +1338,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-439 Goły teren na zachód od domu w69672561 przy Placu Czechowicza
 - Status: zgłoszone (7.11, naprawiacz G-436)
 - Ważność: S4 · Zasięg: x −5…−2, z −123…−125, ok. 23 punkty `landuse-bare`
+- Pakiet właściciela: tools/osm-import
+
+### G-440 Goły pas 1–1,5 m wzdłuż fasad ul. Kościuszki (T-211)
+- Status: zgłoszone (7.11, kurator, przegląd G-436)
+- Ważność: S4 · Zasięg: x ok. 8–21, z −127…−182 i wschodnia strona ulicy, ok. 1200 punktów `landuse-bare`; poprawka jak T-210/T-164 (`ADDED_AREAS` kostki do ścian)
 - Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)

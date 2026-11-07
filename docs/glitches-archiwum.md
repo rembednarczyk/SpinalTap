@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-436 Pas gołego terenu 1–2 m przed Sądem Okręgowym na Placu Czechowicza (T-210)
+- Status: naprawione (PR #349, 7.11; `landuse-bare` 108 863 → 108 592)
+- Ważność: S4 · Zasięg: x 2–22, z −104,7…−122, ok. 280 punktów `landuse-bare`; poprawka: domknąć nawierzchnię do ściany w69672563 (baza spadnie o ok. 280)
+- Pakiet właściciela: tools/osm-import
+
 ### G-427 Plac Czechowicza i plac zabaw na Litewskim pod kostką (T-197, T-198)
 - Status: naprawione (PR #347, 7.11; `grass-under-paving` 7 → 5; plac zabaw z T-198 był błędną diagnozą, resztka w G-428)
 - Ważność: S3 · Zasięg: trawnik `village_green` 308 m² z pomnikiem wychodzi poza obrysy obu placów, więc `openPavings` go nie wycina; plac zabaw 22 m² styka się z trawnikiem; poprawka: odejmowanie wielokątów albo `place=square` bez nawierzchni
