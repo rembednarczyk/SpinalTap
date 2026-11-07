@@ -4,7 +4,10 @@ import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import type { Aabb } from "../world/collision";
 import { inCreationOrder } from "../world/ordering";
+import { solidIndexOf } from "../world/solid-index";
+import { type Collider, circleTouches, colliderTop, overCollider } from "../world/solids";
 import { playerHeld } from "../world/takedown";
+import { STEP_HEIGHT } from "./movement-system";
 
 /** How close a body has to lie to be picked up, metres between the centres on the ground (ADR-0065). */
 export const CARRY_REACH = 1.6;
@@ -93,23 +96,59 @@ const hide = (ctx: SimContext, b: Body, spot: Spot): void => {
   ctx.bus.emit("BodyHidden", { body: b.id, spot: spot.id });
 };
 
-/** The `drop-body` command: into the free hiding place in reach, else down at the player's feet, in front of her. */
+const near = { x: 0, z: 0 };
+
+/** Would a body of `radius` at (x, z) touch a solid the movement system stops it at (not a floor within a step)? */
+const blocked = (solids: readonly Collider[], x: number, z: number, radius: number, feet: number, height: number): boolean =>
+  solids.some((c) => c.box.min.y < feet + height && circleTouches(c, x, z, radius, near) && colliderTop(c, near.x, near.z) > feet + STEP_HEIGHT);
+
+/** Turns from her heading tried in order: ahead, the diagonals ahead, the sides, the diagonals behind, behind. */
+const DROP_TURNS = [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2, (3 * Math.PI) / 4, (-3 * Math.PI) / 4, Math.PI];
+
+/**
+ * Where the body goes down (G-479): touching her, never overlapping her, and clear of solids;
+ * null when there is no such spot. A lying body is not pushed out (she is), so a centre put
+ * inside a container stays there, and one put on her pushes her into the wall behind her.
+ */
+const dropSpot = (ctx: SimContext, player: Entity, b: Body): { x: number; z: number } | null => {
+  const { x, z } = player.position;
+  const radius = b.downed.frame?.radius ?? 0;
+  const height = b.downed.frame?.height ?? 0;
+  const reach = (player.body?.radius ?? 0) + radius;
+  const span = reach + radius;
+  // A solid her own centre is in (she was put inside a building) cannot be got out of by a drop:
+  // it does not count, else the body would stay on her shoulder for good.
+  const solids = solidIndexOf(ctx.world)
+    .collidersNear(x - span, z - span, x + span, z + span)
+    .filter((c) => !overCollider(c, x, z));
+  for (const turn of DROP_TURNS) {
+    const at = { x: x + Math.sin(player.yaw + turn) * reach, z: z + Math.cos(player.yaw + turn) * reach };
+    if (!blocked(solids, at.x, at.z, radius, player.position.y, height)) return at;
+  }
+  return null;
+};
+
+/**
+ * The `drop-body` command: into the free hiding place in reach, else down beside the player.
+ * With no room around her she keeps it on her shoulder (the prompt says so).
+ */
 export const dropBody = (ctx: SimContext): void => {
   const player = ctx.world.with("player").first;
   const b = carriedBody(ctx);
+  const spot = player && b ? hideSpotNear(ctx, player) : null;
+  const at = player && b && !spot ? dropSpot(ctx, player, b) : null;
+  if (player && b && !spot && !at) return;
   ctx.session.carrying = null;
   ctx.session.hideSpot = null;
+  ctx.session.dropRoom = true;
   if (!b) return;
   b.downed.carried = false;
-  const spot = player ? hideSpotNear(ctx, player) : null;
   if (spot) {
     hide(ctx, b, spot);
     return;
   }
-  // Just in front of her, touching: the next step's push-out keeps it out of walls and her way.
-  if (player) {
-    const reach = (player.body?.radius ?? 0) + (b.downed.frame?.radius ?? 0);
-    b.position = { x: player.position.x + Math.sin(player.yaw) * reach, y: player.position.y, z: player.position.z + Math.cos(player.yaw) * reach };
+  if (at && player) {
+    b.position = { ...at, y: player.position.y };
     b.prevPosition = b.position;
   }
   unstow(ctx.world, b);
@@ -124,7 +163,8 @@ const follow = (b: Body, player: Entity): void => {
 /**
  * Carrying bodies (ADR-0065), after the takedown (a body knocked out this step lies already) and
  * before interaction (its prompt): the carried body follows the player, and the system names the
- * body the interact key would pick up and the hiding place the carried one would go into.
+ * body the interact key would pick up, the hiding place the carried one would go into, and
+ * whether there is room to put it down.
  * Without a player the body drops where it is. Uses no randomness.
  */
 export const carrySystem: System = {
@@ -138,5 +178,6 @@ export const carrySystem: System = {
     ctx.session.bodyTarget = found ? { id: found.body.id, distance: found.distance } : null;
     const spot: EntityId | null = player && ctx.session.carrying !== null ? (hideSpotNear(ctx, player)?.id ?? null) : null;
     ctx.session.hideSpot = spot;
+    ctx.session.dropRoom = b && player && ctx.session.carrying !== null && spot === null ? dropSpot(ctx, player, b) !== null : true;
   },
 };

@@ -42,6 +42,7 @@ export const plContent = {
   "prompt.body.carry": "Podnieś",
   "prompt.body.drop": "Upuść",
   "prompt.body.hide": "Ukryj",
+  "prompt.body.no-room": "Brak miejsca, by je odłożyć",
   // Wnętrza (sim `INTERIORS`, ADR-0061).
   "interior.clinic": "Klinika doktora Mori",
   "interior.neon-koi": "Neon Koi",
