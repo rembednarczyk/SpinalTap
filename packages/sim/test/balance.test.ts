@@ -8,9 +8,9 @@ import {
   QUEST_ECHO,
   QUEST_FIRST_CONTRACT,
   QUEST_MIRROR,
-  QUICKHACK_XP,
   type Rarity,
   killXp,
+  quickhackXp,
 } from "@seki/core";
 import { type DistrictPass, type PassageResult, raritySample, runPassage } from "./balance-model";
 
@@ -26,8 +26,8 @@ import { type DistrictPass, type PassageResult, raritySample, runPassage } from 
  *    uncommon stay the most, epic not at 1, legendary not below 11 and 2 to 10% at 30, and the
  *    protection against bad luck lifts rare at level 1 to at most 20%;
  * 4. no run of bad luck longer than 8 rolled pieces below rare;
- * 5. a fight is worth more than a quickhack: at every level a regular enemy of the player's level
- *    gives at least the XP of a landed quickhack (the user's decision of 7.11, round 3).
+ * 5. a fight is worth more than a quickhack: a regular enemy 10 levels below the player to 5 above
+ *    gives at least the XP of a quickhack on it, at every level (the user's decision of 7.11, round 3).
  */
 
 const KAITO_ROUND = ["eliminate", "delivery"] as const;
@@ -114,10 +114,12 @@ describe("balance of the passage (ADR-0059 stage 8)", () => {
 describe("a fight is worth more than a quickhack (ADR-0059 stage 8, round 3)", () => {
   const regular = (Object.keys(ENEMY_TYPES) as EnemyTypeId[]).filter((t) => (ENEMY_TYPES[t] as { readonly rank?: string }).rank === undefined);
 
-  it("at every level a regular enemy of the player's level gives at least a quickhack's XP", () => {
+  it("for players of levels 1 to 30 a regular enemy 10 levels below to 5 above gives at least the XP of a quickhack on it", () => {
     expect(regular.length).toBeGreaterThan(3);
-    for (let level = MIN_LEVEL; level <= MAX_LEVEL; level++)
-      for (const type of regular) expect(killXp(type, level, level), `${type} at level ${level}`).toBeGreaterThanOrEqual(QUICKHACK_XP);
+    for (let player = MIN_LEVEL; player <= MAX_LEVEL; player++)
+      for (let enemy = Math.max(MIN_LEVEL, player - 10); enemy <= Math.min(MAX_LEVEL, player + 5); enemy++)
+        for (const type of regular)
+          expect(killXp(type, enemy, player), `${type} of level ${enemy}, player ${player}`).toBeGreaterThanOrEqual(quickhackXp(enemy, player));
   });
 });
 

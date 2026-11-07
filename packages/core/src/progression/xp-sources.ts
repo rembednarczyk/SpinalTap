@@ -78,8 +78,16 @@ export const ENEMY_XP: Readonly<Record<EnemyTypeId, number>> = {
 export const killXp = (type: EnemyTypeId, enemy: number = MIN_LEVEL, player: number = enemy): number =>
   Math.round(ENEMY_XP[type] * xpLevelScale(enemy) * killXpShare(enemy, player));
 
-/** A quickhack that landed. */
+/** A quickhack that landed, on a target of the player's level. */
 export const QUICKHACK_XP = 25;
+
+/**
+ * XP of a quickhack on an enemy of `enemy`: the same share by the level against the player's as a
+ * kill of it (`killXpShare`, −5 levels 10%, +5 levels 150%), so a fight is always worth more than a
+ * hack on the same enemy (the user's decision of 7.11, ADR-0059 stage 8, round 3). A target without
+ * a level (a camera, a speaker) counts as the player's own.
+ */
+export const quickhackXp = (enemy: number = MIN_LEVEL, player: number = enemy): number => Math.round(QUICKHACK_XP * killXpShare(enemy, player));
 
 /** A terminal breach that won something, and each daemon won. */
 export const BREACH_XP = 100;

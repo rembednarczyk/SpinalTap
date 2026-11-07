@@ -20,6 +20,8 @@ import {
   undetectedXp,
   XP_BASE_LEVEL,
   xpLevelScale,
+  quickhackXp,
+  QUICKHACK_XP,
   xpToNext,
 } from "../src";
 import { sequenceRng } from "./helpers";
@@ -84,6 +86,15 @@ describe("kill XP by the level difference (ADR-0059)", () => {
     expect(killXp("hebi_ganger", 12, 12)).toBe(182);
     expect(killXp("hebi_ganger", 12, 12) / xpToNext(12)).toBeCloseTo(killXp("hebi_ganger", 6, 6) / xpToNext(6), 2);
     expect(killXp("hebi_ganger", 9, 4)).toBe(172);
+  });
+
+  it("a quickhack on an enemy takes the same share by the level difference (stage 8, round 3)", () => {
+    expect(quickhackXp(6, 6)).toBe(QUICKHACK_XP);
+    expect(quickhackXp()).toBe(QUICKHACK_XP);
+    expect(quickhackXp(1, 6)).toBe(2);
+    expect(quickhackXp(1, 20)).toBe(2);
+    expect(quickhackXp(11, 10)).toBe(28);
+    expect(quickhackXp(15, 10)).toBe(38);
   });
 });
 

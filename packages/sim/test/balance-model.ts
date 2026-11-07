@@ -14,7 +14,6 @@ import {
   type LevelBand,
   type LootLine,
   type ProgressionState,
-  QUICKHACK_XP,
   type QuestDefinition,
   type RandomPort,
   type Rarity,
@@ -33,6 +32,7 @@ import {
   gainXp,
   generateContractOfKind,
   killXp,
+  quickhackXp,
   mitigate,
   npcWeapon,
   outfitDefense,
@@ -204,7 +204,8 @@ const job = (r: Run, pass: DistrictPass, kind: ContractKind, index: number): voi
   const c = contractOf(r, kind, pass.sites);
   const band = DISTRICT_BANDS[CONTRACT_SITE_BANDS[c.siteId]];
   if (kind !== "infiltrate") for (let i = 0; i < c.targets; i++) fight(r, pass, pass.foe, band);
-  gain(r, QUICKHACK_XP);
+  // The quickhack lands on one of the job's men, by his level against the player's (ADR-0059 stage 8).
+  gain(r, quickhackXp(enemyLevel(r.progression.level, band, rankOf(pass.foe)), r.progression.level));
   if (kind === "hack") gain(r, breachXp(2));
   gain(r, contractXp(kind, c.targets, contractLevelOf(r.progression.level, c.siteId, kind)));
   if (kind === "infiltrate" || index % 5 === 1 || index % 5 === 3) gain(r, undetectedXp(contractLevelOf(r.progression.level, c.siteId, kind)));
