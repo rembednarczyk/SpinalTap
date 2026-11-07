@@ -4,7 +4,10 @@ import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import type { Aabb } from "../world/collision";
 import { inCreationOrder } from "../world/ordering";
+import { solidIndexOf } from "../world/solid-index";
+import { type Collider, circleTouches, colliderTop } from "../world/solids";
 import { playerHeld } from "../world/takedown";
+import { STEP_HEIGHT } from "./movement-system";
 
 /** How close a body has to lie to be picked up, metres between the centres on the ground (ADR-0065). */
 export const CARRY_REACH = 1.6;
@@ -93,6 +96,39 @@ const hide = (ctx: SimContext, b: Body, spot: Spot): void => {
   ctx.bus.emit("BodyHidden", { body: b.id, spot: spot.id });
 };
 
+const near = { x: 0, z: 0 };
+
+/** Would a body of `radius` at (x, z) touch a solid the movement system stops it at (not a floor within a step)? */
+const blocked = (solids: readonly Collider[], x: number, z: number, radius: number, feet: number, height: number): boolean =>
+  solids.some((c) => c.box.min.y < feet + height && circleTouches(c, x, z, radius, near) && colliderTop(c, near.x, near.z) > feet + STEP_HEIGHT);
+
+/**
+ * Where the body goes down (G-479): just in front of her, else touching her in front, to her
+ * sides, behind her, and in the end under her. The push-out only keeps it out of walls it
+ * overlaps at the edge; a centre put inside a container stays in there.
+ */
+const dropSpot = (ctx: SimContext, player: Entity, b: Body): { x: number; z: number } => {
+  const { x, z } = player.position;
+  const radius = b.downed.frame?.radius ?? 0;
+  const height = b.downed.frame?.height ?? 0;
+  const own = player.body?.radius ?? 0;
+  const reach = own + radius;
+  const span = reach + radius;
+  const solids = solidIndexOf(ctx.world).collidersNear(x - span, z - span, x + span, z + span);
+  const tries: ReadonlyArray<readonly [number, number]> = [
+    [0, reach],
+    [0, own],
+    [Math.PI / 2, reach],
+    [-Math.PI / 2, reach],
+    [Math.PI, reach],
+  ];
+  for (const [turn, d] of tries) {
+    const at = { x: x + Math.sin(player.yaw + turn) * d, z: z + Math.cos(player.yaw + turn) * d };
+    if (!blocked(solids, at.x, at.z, radius, player.position.y, height)) return at;
+  }
+  return { x, z };
+};
+
 /** The `drop-body` command: into the free hiding place in reach, else down at the player's feet, in front of her. */
 export const dropBody = (ctx: SimContext): void => {
   const player = ctx.world.with("player").first;
@@ -106,10 +142,9 @@ export const dropBody = (ctx: SimContext): void => {
     hide(ctx, b, spot);
     return;
   }
-  // Just in front of her, touching: the next step's push-out keeps it out of walls and her way.
+  // At her feet, clear of solids: the next step's push-out keeps it out of her way.
   if (player) {
-    const reach = (player.body?.radius ?? 0) + (b.downed.frame?.radius ?? 0);
-    b.position = { x: player.position.x + Math.sin(player.yaw) * reach, y: player.position.y, z: player.position.z + Math.cos(player.yaw) * reach };
+    b.position = { ...dropSpot(ctx, player, b), y: player.position.y };
     b.prevPosition = b.position;
   }
   unstow(ctx.world, b);
