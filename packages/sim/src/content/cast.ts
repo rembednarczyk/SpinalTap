@@ -35,7 +35,16 @@ export const CAST_OF_SPAWN: Readonly<Record<string, CastKey>> = {
   "enc-riko": "riko",
   "enc-kiku": "kiku",
   "enc-akane": "akane",
+  "enc-salaryman": "salaryman",
+  "enc-gull-guard": "gull-guard",
+  // Neon Koi (ADR-0038).
+  "koi-barman": "barman",
+  "koi-regular-1": "koi-regular-1",
+  "koi-regular-2": "koi-regular-2",
 };
+
+/** The defector of every escort job is Mika (`contractEscortKey`: the contract's id and "-escort"). */
+const ESCORT_SUFFIX = "-escort";
 
 /**
  * The view fields that pick a character's model: its name, if it is one of the story, and the
@@ -43,6 +52,6 @@ export const CAST_OF_SPAWN: Readonly<Record<string, CastKey>> = {
  * the key, so a loaded game shows the same people; it is no state of the simulation.
  */
 export const castViewOf = (key: string | undefined, seed: string): { readonly cast?: CastKey; readonly look: number } => {
-  const cast = key ? CAST_OF_SPAWN[key] : undefined;
+  const cast = key ? (CAST_OF_SPAWN[key] ?? (key.endsWith(ESCORT_SUFFIX) ? "mika" : undefined)) : undefined;
   return cast ? { cast, look: fnv1a(seed) } : { look: fnv1a(seed) };
 };

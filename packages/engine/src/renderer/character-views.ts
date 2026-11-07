@@ -111,7 +111,7 @@ export class CharacterViews implements FxActors {
   constructor(private readonly deps: CharacterViewsDeps) {
     const library = new ModelLibrary(deps.scene, deps.materials);
     this.kit = new CharacterKit({ ...deps, library });
-    this.models = new CharacterModels({ library, loadouts: this.kit.loadouts, addCaster: (m) => deps.shadow.addCaster(m) });
+    this.models = new CharacterModels({ library, loadouts: this.kit.loadouts, addCaster: (m) => deps.shadow.addCaster(m), scene: deps.scene, materials: deps.materials });
   }
 
   has(id: EntityId): boolean {
