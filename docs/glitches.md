@@ -1336,7 +1336,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
 
 ### G-444 `map-city.test.ts` z małym zapasem do 5 s: koszt docinania i drapowania podłoża
-- Status: zgłoszone (7.11, kurator przy G-423; zbadane 7.11, naprawiacz: #348 nie spowalnia testu, różnice w szumie obciążenia)
+- Status: w PR #363 (7.11, w weryfikacji; CPU głównego wątku −35%, geometria bit w bit); wcześniej: zgłoszone (7.11, kurator przy G-423; zbadane 7.11, naprawiacz: #348 nie spowalnia testu, różnice w szumie obciążenia)
 - Ważność: S4 (test) · Zasięg: „builds the whole generated Lublin” zużywa ok. 3,8–4,2 s CPU wobec limitu 5000 ms, więc przy load ok. 15 na 4 rdzeniach przekracza limit na każdym commicie; ok. 60% profilu to `ground-cut.ts` (`cutCovers`, `minusTriangle`), `ground-plan.ts` (drapowanie, `planSurface`) i `heightAt` w `map-entries.ts`; profil w scratchpadzie sesji `g444-new.cpuprofile`; bez podnoszenia limitu
 - Pakiet właściciela: packages/engine (renderer/mapcity)
 
