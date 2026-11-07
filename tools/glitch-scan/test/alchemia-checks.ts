@@ -1,4 +1,4 @@
-import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ARKADY, ARKADY_OSM_ID, ARKADY_OUTLINE, ARKADY_PIECES, ARKADY_PROP, KEPT_OSM, type AlchemiaBox, arkadyLocal } from "../../../packages/sim/src/content/alchemia";
+import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ARKADY, P1_PIECES, ARKADY_OSM_ID, ARKADY_OUTLINE, ARKADY_PIECES, ARKADY_PROP, KEPT_OSM, type AlchemiaBox, arkadyLocal } from "../../../packages/sim/src/content/alchemia";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import { isLandmark } from "../../../packages/sim/src/content/lublin";
 import { MAP_CHUNKS, PADS } from "../../../packages/sim/src/content/lublin/sites";
@@ -57,12 +57,13 @@ const EYE_EVERY = 8;
 const EYE = 1.6;
 
 /**
- * `game-solid-landmark-occlusion` (review of #312): Alchemia's solids (the Arkady's and the pavilion's too) seen from the streets within
+ * `game-solid-landmark-occlusion` (review of #312): Alchemia's solids (the Arkady's, the pavilion's and P-1's outside too) seen from the streets within
  * 250 m hide at most a quarter of the views of a landmark's top (the eyes on the streets from which
  * the top is behind one of its boxes, of all the eyes within 250 m of both). Baseline 0.
  */
 export const alchemiaHidesLandmarks = (): Finding[] => {
-  const boxes = ALCHEMIA_PIECES.filter((p) => p.solid && !p.inside).map((p) => p.box);
+  // With P-1's outside (stage 4): the ramp trench's parapets and portal, the stair core's house.
+  const boxes = [...ALCHEMIA_PIECES, ...P1_PIECES].filter((p) => p.solid && !p.inside).map((p) => p.box);
   // The Arkady's boxes are of their own frame (x along the building, z across it): the eye and the top go into it.
   const arkady = ARKADY_PIECES.filter((p) => p.solid).map((p) => p.box);
   const local = (p: P3): P3 => {
