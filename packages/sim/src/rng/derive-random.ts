@@ -1,7 +1,7 @@
 import { SeededRandom } from "./seeded-random";
 
 /** FNV-1a over the UTF-16 code units of `text`. */
-const fnv1a = (text: string): number => {
+export const fnv1a = (text: string): number => {
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     h ^= text.charCodeAt(i);

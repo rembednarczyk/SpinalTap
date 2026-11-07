@@ -46,9 +46,9 @@ describe("disguises (ADR-0033)", () => {
     // The view carries the mark for the HUD.
     const sim = simWearing(null);
     const boss = watcher(sim, "tessen_guard", "c9-g0");
-    expect(boss.view).toEqual({ kind: "enemy", preset: "corpo", enforcer: true });
+    expect(boss.view).toEqual({ kind: "enemy", preset: "corpo", enforcer: true, look: expect.any(Number) });
     expect(boss.ai?.enforcer).toBe(true);
-    expect(watcher(sim, "tessen_guard", "c9-g1").view).toEqual({ kind: "enemy", preset: "corpo" });
+    expect(watcher(sim, "tessen_guard", "c9-g1").view).toEqual({ kind: "enemy", preset: "corpo", look: expect.any(Number) });
   });
 
   it("without a disguise a guard sees the intruder; in a uniform it sees a colleague", () => {

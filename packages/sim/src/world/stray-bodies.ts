@@ -30,7 +30,10 @@ export const strayBodiesSnapshot = (world: World<Entity>): StrayBodySnapshot[] =
 const strayEntity = (id: EntityId, s: StrayBodySnapshot, scaling: EnemyScaling): Entity => {
   const g = gangerEntity(id, { key: "", position: s.home, yaw: 0 }, null, ENEMY_TYPES[s.type].hp, s.chunk, undefined, s.type);
   delete g.key;
-  if (g.view?.kind === "enemy") g.view = { kind: "enemy", preset: g.view.preset, ...(s.enforcer ? { enforcer: true } : {}) };
+  if (g.view?.kind === "enemy") {
+    const { enforcer: _marked, ...view } = g.view;
+    g.view = s.enforcer ? { ...view, enforcer: true } : view;
+  }
   if (g.ai) {
     const { enforcer: _enforcer, ...ai } = g.ai;
     g.ai = s.enforcer ? { ...ai, enforcer: true } : ai;
