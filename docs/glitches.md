@@ -1370,6 +1370,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (test) · Zasięg: przy load ok. 14 pada na limicie 5000 ms, osobno przechodzi; najpierw pomiar kosztu, bez podnoszenia limitu
 - Pakiet właściciela: packages/sim (traffic)
 
+### G-449 Ogłuszona postać stoi: renderer nie zna stanu `unconscious`
+- Status: zgłoszone (7.11, użytkownik; przyczyna potwierdzona w kodzie przez orkiestratora); priorytet: następny wolny slot
+- Ważność: S2 · Zasięg: każdy nokaut (takedown bez zabicia): `render-sync.ts:79` wysyła `unconscious: true`, ale `packages/engine` nigdzie go nie czyta, więc postać zostaje w pozie stojącej; da się ją tylko nieść. Do sprawdzenia przy okazji: poza niesionego ciała i ciała odłożonego po niesieniu
+- Pakiet właściciela: packages/engine (renderer: character-animation, character-poses)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
