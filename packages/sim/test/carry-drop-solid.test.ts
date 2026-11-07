@@ -61,11 +61,10 @@ const besideHer = (sim: Simulation, body: Entity): void => {
 };
 
 /**
- * Walking into a body lying by a wall, the movement's push-out ends on the body and leaves her a
- * few centimetres in the wall (3.5 cm at most over 400 steps here; a glitch of its own, not of the
- * drop). A body dropped on her sank her 0.23-0.36 m.
+ * Walking into a body lying by a wall she stays out of it (the push-out ends on the solids,
+ * G-485; it left her up to 3.5 cm in before). A body dropped on her sank her 0.23-0.36 m.
  */
-const SINK = 0.05;
+const SINK = 0.001;
 
 /** Walks `frame` for 40 steps: she never sinks into a solid (beyond `SINK`) nor gets past one. */
 const walkClear = (sim: Simulation, frame: ReturnType<typeof input>, solids: readonly Entity[]): void => {
