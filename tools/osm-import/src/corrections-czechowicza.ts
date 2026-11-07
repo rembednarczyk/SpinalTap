@@ -1,5 +1,5 @@
 /**
- * Added areas on Plac Czechowicza and ul. Kościuszki (ADR-0042), the tail of `ADDED_AREAS`: kept apart so
+ * Added areas on Plac Czechowicza, ul. Kościuszki and Peowiaków (ADR-0042), the tail of `ADDED_AREAS`: kept apart so
  * `corrections.ts` stays within ADR-0031's 500 lines. Drawn after the areas there.
  */
 import type { AddedArea } from "./corrections.ts";
@@ -136,5 +136,79 @@ const KOSCIUSZKI_AREAS: readonly AddedArea[] = [
   ),
 ];
 
+/** A piece of the pavement along the north frontage of Peowiaków (T-221), as `kosciuszki`'s: along the façade west to east, back along the footway's axis. */
+const peowiakow = (name: string, wall: readonly Pt[], wallOf: readonly (string | null)[], axis: readonly Pt[], axisOf: readonly (string | null)[]): AddedArea => ({
+  id: `T-221/${name}`,
+  tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+  ring: [...wall, ...axis],
+  nodesOf: [...wallOf, ...axisOf],
+  reason: "kostka chodnika ul. Peowiaków do fasad na ortofoto PZGiK, w OSM chodnik (linia) kończy się 0,5–1,5 m przed budynkami",
+  ref: "T-221",
+});
+
+/**
+ * The pavement along the north frontage of Peowiaków by the corners with Kościuszki (T-221): the
+ * footways w288178955 (west) and w288178957 (east) end 0.5-1.5 m short of the houses there, as on
+ * Kościuszki (T-211), and the pieces go on from T-211's at the corners, round the footways' bends.
+ * One piece per house, parted on the axis abreast of the houses' corners (off the nodes). The façade
+ * jogs the houses' outlines simplify out are left out too: w67508949's by (25.0; -191.7), w67508955's
+ * by (58.8; -202.2) (the piece follows the chord the house is drawn with) and its 0.1 m step at the
+ * corner with r1207677. The chunk's edge (x 20) cuts w67508949's piece 0.9 m short of the house's
+ * corner (20.86; -190.43), which the cut piece then simplifies out, a chord 0.2 m short of the wall:
+ * the piece starts on that edge 0.4 m north of the corner instead, under T-211's piece and the wall.
+ */
+const PEOWIAKOW_AREAS: readonly AddedArea[] = [
+  peowiakow(
+    "zachod-w69672557",
+    [{ x: -17.39, z: -178.45 }, { x: 4.82, z: -185.13 }, { x: 7.78, z: -183.32 }],
+    ["w69672557", "w69672557", "w69672557"],
+    [{ x: 9.24, z: -184.64 }, { x: 7.53, z: -186.47 }, { x: 4.4, z: -187.32 }, { x: -17.98, z: -180.35 }],
+    ["w288178955", "w288178955", "w288178955", null],
+  ),
+  peowiakow(
+    "wschod-w67508949",
+    [{ x: 20, z: -190 }, { x: 32.48, z: -193.59 }, { x: 32.51, z: -194.06 }, { x: 36.52, z: -195.3 }],
+    [null, "w67508949", "w67508949", "w67508949"],
+    [{ x: 35.74, z: -197.59 }, { x: 19.83, z: -192.15 }, { x: 18.22, z: -190.43 }],
+    [null, "w288178957", "w288178957"],
+  ),
+  peowiakow(
+    "wschod-r1207677",
+    [{ x: 36.52, z: -195.3 }, { x: 36.62, z: -194.96 }, { x: 54.09, z: -200.79 }],
+    ["w67508949", "w67508946", "w67508946"],
+    [{ x: 53.15, z: -203.55 }, { x: 35.74, z: -197.59 }],
+    [null, null],
+  ),
+  peowiakow(
+    "wschod-w67508955",
+    [{ x: 54.09, z: -200.79 }, { x: 56.19, z: -201.63 }, { x: 56.77, z: -201.27 }, { x: 61.28, z: -203.28 }],
+    ["w67508955", "w67508955", "w67508955", "w67508955"],
+    [{ x: 60.34, z: -206.01 }, { x: 53.15, z: -203.55 }],
+    [null, null],
+  ),
+];
+
+/**
+ * The pavement by the west wall of w67508886 (T-224): between the footway w288178957's band, the
+ * driveway w536680784's axis and the church r5420680, 0.7-1 m left bare. Its north-east corner is
+ * off the nodes, 0.1 m east of the house's corner and just inside the church's outline as the chunk
+ * simplifies it (a chord 0.1-0.2 m north of its nodes there): on the nodes, the piece's simplified
+ * edges left cracks of 1-15 cm along the house's west wall and under the church.
+ */
+const W67508886_AREA: AddedArea = {
+  id: "T-224/chodnik-przy-w67508886",
+  tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+  ring: [
+    { x: 29.19, z: -110.05 },
+    { x: 31.38, z: -110.01 },
+    { x: 31.39, z: -108.77 },
+    { x: 31.3, z: -104.8 },
+    { x: 29.72, z: -104.94 },
+  ],
+  nodesOf: ["w536680784", "w536680784", "w67508886", null, "w67508885"],
+  reason: "kostka chodnika ul. Kościuszki do zachodniej ściany budynku w67508886 na ortofoto PZGiK, w OSM chodnik (linia) kończy się 0,7–1 m przed nią",
+  ref: "T-224",
+};
+
 /** The added areas of this file, in draw order. */
-export const CZECHOWICZA_AREAS: readonly AddedArea[] = [...PLAC_AREAS, ...KOSCIUSZKI_AREAS];
+export const CZECHOWICZA_AREAS: readonly AddedArea[] = [...PLAC_AREAS, ...KOSCIUSZKI_AREAS, ...PEOWIAKOW_AREAS, W67508886_AREA];
