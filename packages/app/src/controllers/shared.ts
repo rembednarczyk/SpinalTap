@@ -1,3 +1,4 @@
+import type { DomainText } from "@seki/core";
 import type { Simulation } from "@seki/sim";
 import { type Toast, type UiStore, expireToast, pushToast } from "@seki/ui";
 
@@ -23,8 +24,8 @@ export const focusOf = (onFocusChange: ((wantsPointer: boolean) => void) | undef
   settle: () => onFocusChange?.(inControl()),
 });
 
-/** A system toast that goes away on its own. */
-export const pushToastTimed = (ui: UiStore, kind: Toast["kind"], title: string, text = "", keep = false): void => {
+/** A system toast that goes away on its own; a key with its parameters follows the language while up. */
+export const pushToastTimed = (ui: UiStore, kind: Toast["kind"], title: DomainText, text: DomainText = "", keep = false): void => {
   const id = pushToast(ui, { kind, title, text, ...(keep ? { keep } : {}) });
   setTimeout(() => expireToast(ui, id), TOAST_MS);
 };

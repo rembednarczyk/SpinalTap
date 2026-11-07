@@ -10,6 +10,7 @@ import {
   type CyberwareLoadout,
   type ImplantGrades,
   type DayPhase,
+  type DomainText,
   type HitZone,
   type PerkRanks,
   type ReputationState,
@@ -433,9 +434,11 @@ let toastSeq = 0;
  */
 const isKeptToast = (t: Toast): boolean => t.kind === "quest" || t.kind === "memory" || t.keep === true;
 
+const sameText = (a: DomainText, b: DomainText): boolean => (typeof a === "string" || typeof b === "string" ? a === b : JSON.stringify(a) === JSON.stringify(b));
+
 // `keep` too: counting a failed load into an ordinary toast would let it go first in a burst (G-286).
 const sameToast = (a: Omit<Toast, "id">, b: Omit<Toast, "id">): boolean =>
-  a.kind === b.kind && a.title === b.title && a.text === b.text && (a.keep === true) === (b.keep === true);
+  a.kind === b.kind && sameText(a.title, b.title) && sameText(a.text, b.text) && (a.keep === true) === (b.keep === true);
 
 /**
  * Pushes per toast on screen whose time has not run out yet: a counted toast stays until the
