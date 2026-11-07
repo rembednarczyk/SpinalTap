@@ -6,7 +6,7 @@ import { worldRing } from "../../../packages/engine/src/renderer/drones/drone-wo
 import { type P2, pointInRing, signedArea, triangulate } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import { extractFeatures } from "../../osm-import/src/features.ts";
-import { parseExtract } from "../../osm-import/src/osm.ts";
+import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { grassUnderPaving, grassUnderPavingFindings } from "./grass-under-paving";
 
 /**
@@ -135,6 +135,58 @@ describe("grass-under-paving (G-421)", () => {
     }
     expect(lawns.length).toBeGreaterThan(30);
     expect(bare).toEqual([]);
+  });
+
+  // A pedestrian way with no `width` in OSM was a band 8 m wide, so Karmelicka (4.1-4.3 m of
+  // paving), the causeway of Zamkowa (6.5-6.6 m) and Plac Litewski's north promenade (5.5-6.1 m)
+  // with the two paths by its lawn laid their paving over the lawns along them (T-199). Read on a
+  // 0.25 m grid: the paving on top of each lawn within 6 m of the way's axis.
+  it("shows the lawns along the pedestrian ways as wide as they are, and the yard on Szambelańska paved (G-428)", () => {
+    const { areas, lines } = extractFeatures(mergeOsm(["krakowskie", "stare-miasto", "podzamcze"].map((d) => parseExtract(readFileSync(join(__dirname, `../../../data/osm/${d}.json`), "utf8")))));
+    const ring = (id: string) => areas.find((a) => a.id === id)!.ring;
+    const axis = (id: string) => lines.find((l) => l.id === id)!.line;
+    const near = (p: P2, l: readonly P2[]) =>
+      l.slice(1).some((b, i) => {
+        const a = l[i]!;
+        const [dx, dz] = [b.x - a.x, b.z - a.z];
+        const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz)));
+        return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z) < 6;
+      });
+    /** m² of the lawn `id` within 6 m of the ways `ways` with the drawn surface on top one of `surfaces`. */
+    const covered = (id: string, ways: readonly string[], surfaces: readonly GroundSurface[]) => {
+      const lawn = ring(id);
+      const box = boxOf(lawn);
+      const at = drawnAt(WORLD_SCENERY, box);
+      const axes = ways.map(axis);
+      let n = 0;
+      for (let x = box.minX + 0.125; x < box.maxX; x += 0.25) {
+        for (let z = box.minZ + 0.125; z < box.maxZ; z += 0.25) {
+          const p = { x, z };
+          if (!axes.some((l) => near(p, l)) || !pointInRing(p, lawn)) continue;
+          const top = at(p);
+          if (top && surfaces.includes(top)) n++;
+        }
+      }
+      return n * 0.0625;
+    };
+    const paving: GroundSurface[] = ["square", "cobble"];
+    const under = {
+      // The Carmelites' garden behind the wall north of Karmelicka.
+      karmelicka: covered("w232805974", ["w232805946"], paving),
+      // Błonia pod Zamkiem south-east and north-west of the causeway w154962966.
+      zamkowa: covered("r949675/0", ["w154962966"], paving) + covered("r949675/1", ["w154962966"], paving),
+      // Plac Litewski's lawn between the promenade w1054556920 and the paths w1269052752, w1269052749.
+      litewski: covered("w631252861", ["w1054556920", "w1269052752", "w1269052749"], paving),
+    };
+    // Before: 68, 79 and 23 m². What stays are slivers under 0.3 m along the lawns' edges, mapped to
+    // the parapets' outer faces of Zamkowa while its axis lies 0.3 m off the causeway's middle, and
+    // the end of the viaduct w232362907, kept 8 m wide for the niche of its steps (T-147).
+    expect(under.karmelicka, JSON.stringify(under)).toBeLessThan(1);
+    expect(under.zamkowa, JSON.stringify(under)).toBeLessThan(25);
+    expect(under.litewski, JSON.stringify(under)).toBeLessThan(5);
+    // The yard w470555118 east of Szambelańska, `landuse=grass` in OSM and paved on the orthophoto.
+    expect(covered("w470555118", ["w173565362"], ["grass"])).toBe(0);
+    expect(drawnAt(WORLD_SCENERY, boxOf(ring("w470555118")))({ x: 482, z: -5 })).toBe("square");
   });
 
   it("lays every piece of paving with holes as the triangles of its own area", () => {

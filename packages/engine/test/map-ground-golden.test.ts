@@ -91,7 +91,9 @@ describe("the ground the map city lays (G-444)", () => {
       hash.add(m.getIndices() ?? []);
       vertices += m.getTotalVertices();
     }
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 22, vertices: 120935, hash: "bad55205" });
+    // The map's data, not the laying, moved it last: Plac Litewski's north promenade 6 m wide and
+    // Zamkowa's causeway 6.5 m instead of 8 (G-428).
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 22, vertices: 121106, hash: "5d29b235" });
     scene.dispose();
   });
 
