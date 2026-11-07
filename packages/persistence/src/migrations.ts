@@ -7,12 +7,13 @@ type Json = Record<string, unknown>;
 const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
 
 /**
- * Experience of the quests as v17 pays it (ADR-0059): each step's XP and the bonus for the whole
- * quest. Spelled out, like the ids: a migration describes the content of its time.
+ * Experience of the quests (ADR-0059): each step's XP and the bonus for the whole quest, as the
+ * quests pay it today, so an old save gets what a new game would. Spelled out, like the ids: a
+ * migration describes its content. Act I pays 1350 since the balance test of stage 8 (4600 in v17).
  */
 const V17_QUEST_XP: Readonly<Record<string, { readonly steps: readonly number[]; readonly quest: number }>> = {
   m0_first_contract: { steps: [100, 300, 250], quest: 600 },
-  m3_echo: { steps: [500, 400, 500, 700], quest: 2500 },
+  m3_echo: { steps: [150, 100, 150, 250], quest: 700 },
   m3_lustro: { steps: [600, 1000, 1000, 1500], quest: 3000 },
 };
 

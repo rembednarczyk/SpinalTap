@@ -367,20 +367,24 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"b036f5d7"`);
-    expect(v31HashOf(sim)).toBe("5ce46e55");
-    expect(v30HashOf(sim)).toBe("ae6c21d0");
-    expect(v17HashOf(sim)).toBe("3e78c5b2");
-    expect(v19HashOf(sim)).toBe("6ebebd7e");
-    expect(v20HashOf(sim)).toBe("116f9cfa");
-    expect(v21HashOf(sim)).toBe("ce560791");
-    expect(v22HashOf(sim)).toBe("7c4d11bc");
-    expect(v23HashOf(sim)).toBe("9398eab3");
-    expect(v24HashOf(sim)).toBe("2cbf3696");
-    expect(v25HashOf(sim)).toBe("66d7b85d");
-    expect(v26HashOf(sim)).toBe("94efe6f8");
-    expect(v27HashOf(sim)).toBe("de01c1cf");
-    expect(v28HashOf(sim)).toBe("402f2952");
+    // Re-recorded (all of them) for the XP of ADR-0059 stage 8, round 2, a new rule: a kill's XP
+    // follows the cost of a level below level 6 too, so the brawler the player of level 1 downs is
+    // worth 4 XP, not 70. The only XP the scripted run above earns is a quest step's, so its hashes
+    // stand; contracts' XP shows in no golden hash (the balance test and progression tests cover it).
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"c562278a"`);
+    expect(v31HashOf(sim)).toBe("b99f0748");
+    expect(v30HashOf(sim)).toBe("4df717eb");
+    expect(v17HashOf(sim)).toBe("cce9d1c3");
+    expect(v19HashOf(sim)).toBe("8e832d49");
+    expect(v20HashOf(sim)).toBe("4d6391cd");
+    expect(v21HashOf(sim)).toBe("cc89ffa0");
+    expect(v22HashOf(sim)).toBe("462f8eff");
+    expect(v23HashOf(sim)).toBe("1dfa73aa");
+    expect(v24HashOf(sim)).toBe("7cf23f91");
+    expect(v25HashOf(sim)).toBe("e9f531b4");
+    expect(v26HashOf(sim)).toBe("690522c3");
+    expect(v27HashOf(sim)).toBe("41a0c3fe");
+    expect(v28HashOf(sim)).toBe("1714e2b5");
   });
 
   it("restores killed NPCs as absent", () => {

@@ -8,7 +8,7 @@ import { setup, steps, teleport } from "./story-helpers";
  * own focus event; a level up regrades it and the card follows.
  */
 describe("the scanned enemy's level", () => {
-  it("the Hebi lookout in the market (band 10-28) shows the simulation's level on the card", () => {
+  it("the Hebi lookout in the market (band 10-20) shows the simulation's level on the card", () => {
     const { session, ui } = setup();
     session.newGame();
     // By Hana's cart in the market of Alchemia: the lookout streams in, graded in the market's band.

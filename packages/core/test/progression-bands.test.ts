@@ -18,7 +18,7 @@ import {
   levelScale,
   stashLines,
   undetectedXp,
-  XP_CURVE_FROM,
+  XP_BASE_LEVEL,
   xpLevelScale,
   xpToNext,
 } from "../src";
@@ -64,22 +64,23 @@ describe("kill XP by the level difference (ADR-0059)", () => {
     expect(killXpShare(12, 10)).toBeCloseTo(1.2, 10);
   });
 
-  it("scales the type's XP, the same as before for an even fight up to level 6", () => {
-    expect(killXp("hebi_ganger")).toBe(60);
-    expect(killXp("hebi_ganger", 4, 4)).toBe(60);
+  it("scales the type's XP, which is its own at level 6 for an even fight", () => {
     expect(killXp("hebi_ganger", 6, 6)).toBe(60);
-    expect(killXp("hebi_ganger", 1, 6)).toBe(6);
+    expect(killXp("hebi_ganger", 4, 4)).toBe(31);
+    expect(killXp("hebi_ganger")).toBe(3);
+    // An enemy 5 levels weaker: 10% of its own, which at level 1 rounds to nothing.
+    expect(killXp("hebi_ganger", 1, 6)).toBe(0);
   });
 
-  it("grows with the enemy's level from level 6 as the cost of a level does (stage 8)", () => {
-    expect(xpLevelScale(1)).toBe(1);
-    expect(xpLevelScale(XP_CURVE_FROM)).toBe(1);
+  it("grows with the enemy's level as the cost of a level does, below level 6 too (stage 8)", () => {
+    expect(xpLevelScale(XP_BASE_LEVEL)).toBe(1);
+    expect(xpLevelScale(1)).toBeCloseTo(6 ** -1.6, 10);
     expect(xpLevelScale(12)).toBeCloseTo(2 ** 1.6, 10);
     expect(xpLevelScale(30)).toBeCloseTo(5 ** 1.6, 10);
     expect(xpLevelScale(40)).toBe(xpLevelScale(30));
-    // An even fight at 12 is worth a share of the level about as at 6: 182 of 5330 against 60 of 1758.
+    // An even fight is worth about the same share of a level at 1, 6 and 12: 3 of 100, 60 of 1753, 182 of 5330.
     expect(killXp("hebi_ganger", 12, 12)).toBe(182);
-    expect(killXp("hebi_ganger", 12, 12) / xpToNext(12)).toBeCloseTo(killXp("hebi_ganger", 6, 6) / xpToNext(6), 2);
+    for (const level of [1, 12]) expect(killXp("hebi_ganger", level, level) / xpToNext(level)).toBeCloseTo(killXp("hebi_ganger", 6, 6) / xpToNext(6), 2);
     expect(killXp("hebi_ganger", 9, 4)).toBe(172);
   });
 });
@@ -107,7 +108,7 @@ describe("loot level from a stash: its district's level (ADR-0059)", () => {
 });
 
 describe("contract level (ADR-0059)", () => {
-  const ctx = (levelAt?: (site: ContractSiteId) => number): ContractContext => ({
+  const ctx = (levelAt?: ContractContext["levelAt"]): ContractContext => ({
     log: EMPTY_CONTRACTS,
     reputation: createReputation(),
     flags: [],
@@ -147,18 +148,30 @@ describe("contract level (ADR-0059)", () => {
     expect(c).toMatchObject({ siteId: "kanal_bridge", targets: 4, reward: Math.round((250 + 4 * 125) * 2.16) });
   });
 
-  it("a delivery pays by the level of Hana's stall", () => {
-    const at = (level: number) => generateContractOfKind("delivery", ctx(() => level), sequenceRng(0)).reward;
+  it("a delivery pays by the level the sim gives it for its kind, asked for Hana's stall", () => {
+    const asked: string[] = [];
+    const at = (level: number) =>
+      generateContractOfKind(
+        "delivery",
+        ctx((site, kind) => {
+          asked.push(`${kind}@${site}`);
+          return level;
+        }),
+        sequenceRng(0),
+      ).reward;
     expect(at(1)).toBe(400);
     expect(at(10)).toBe(544);
+    expect(asked).toEqual(["delivery@hana_stall", "delivery@hana_stall"]);
   });
 
-  it("its XP grows with its level from level 6 as the cost of a level does (stage 8)", () => {
-    expect(contractXp("eliminate", 3)).toBe(1000);
-    expect(contractXp("eliminate", 3, 1)).toBe(1000);
-    expect(contractXp("eliminate", 3, 6)).toBe(1000);
-    expect(contractXp("eliminate", 3, 11)).toBe(2637);
-    expect(undetectedXp()).toBe(150);
+  it("its XP grows with its level as the cost of a level does, below level 6 too (stage 8)", () => {
+    expect(contractXp("eliminate", 3, 6)).toBe(860);
+    expect(contractXp("eliminate", 3)).toBe(49);
+    expect(contractXp("eliminate", 3, 11)).toBe(Math.round(860 * (11 / 6) ** 1.6));
+    // About half a level at any level: 49 of 100 at 1, 860 of 1753 at 6.
+    expect(contractXp("eliminate", 3, 1) / xpToNext(1)).toBeCloseTo(contractXp("eliminate", 3, 6) / xpToNext(6), 2);
+    expect(undetectedXp(6)).toBe(150);
+    expect(undetectedXp()).toBe(9);
     expect(undetectedXp(12)).toBe(455);
   });
 });

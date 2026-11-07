@@ -6,7 +6,8 @@ import { type DistrictPass, type PassageResult, raritySample, runPassage } from 
  * The balance test of ADR-0059 stage 8: a passage through the content as it is, district after
  * district in the order of their bands, on the sim's formulas (`balance-model.ts`). Four measures
  * with the thresholds written into the ADR:
- * 1. pace: 8 to 10 levels a district, and the last one ends the road at level 30;
+ * 1. pace: 6 to 9 levels a district, the last one too, and the last one ends the road at level 30
+ *    (the user's decision of 7.11: about 7 levels a district, alike in all four);
  * 2. time of combat in the band: every fight within 0.75 to 1.33 of the same fight at the band's
  *    floor, both ways (the player downing the enemy, the enemy downing the player);
  * 3. rarities at item levels 1, 10, 20 and 30: rare and better grow with the level, common and
@@ -21,15 +22,17 @@ const GENZO_ROUND = ["escort", "infiltrate", "hack"] as const;
 const jobs = <T,>(round: readonly T[], n = 10): T[] => Array.from({ length: n }, (_, i) => round[i % round.length] as T);
 
 /**
- * The content in order. Krakowskie: the first contract and act I with ten of Kaito's jobs on its
- * own sites (a delivery goes to Hana's stall); Stare Miasto: ten jobs under the footbridge on
- * Grodzka; the market: act II with Kagami's cleaners and ten of Hana's jobs; the docks: ten of
- * Genzō's. Only Krakowskie and the market have a main thread.
+ * The content in order. Krakowskie: the first contract before anything else (it leads the player
+ * to Kaito), then act I with ten of Kaito's jobs on its own sites (a delivery goes to Hana's
+ * stall, of Krakowskie's level); Stare Miasto: ten jobs under the footbridge on Grodzka; the
+ * market: act II with Kagami's cleaners and ten of Hana's jobs; the docks: ten of Genzō's. Only
+ * Krakowskie and the market have a main thread.
  */
 export const PASSAGE: readonly DistrictPass[] = [
   {
     district: "shinsekai-7",
-    quests: [QUEST_FIRST_CONTRACT, QUEST_ECHO],
+    opening: [QUEST_FIRST_CONTRACT],
+    quests: [QUEST_ECHO],
     questFights: [{ type: "hebi_ganger", count: 2, band: "shinsekai-7" }],
     jobs: jobs(KAITO_ROUND),
     sites: ["east_lot", "koi_back", "car_wash", "south_gate", "hana_stall"],
@@ -54,17 +57,17 @@ const SEEDS = [1, 2, 3, 4, 5];
 const runs: readonly PassageResult[] = SEEDS.map((seed) => runPassage(PASSAGE, seed));
 
 /** The thresholds of the ADR. */
-export const PACE = { min: 8, max: 10 } as const;
+export const PACE = { min: 6, max: 9 } as const;
 export const COMBAT_TIME = { min: 0.75, max: 1.33 } as const;
 const SAMPLE_LEVELS = [1, 10, 20, 30] as const;
 const SAMPLE_PIECES = 3000;
 
 describe("balance of the passage (ADR-0059 stage 8)", () => {
-  it("each district but the last gives 8 to 10 levels, the last ends the road at 30", () => {
+  it("each district gives 6 to 9 levels, the last ends the road at 30", () => {
     for (const r of runs) {
       const levels = r.districts.map((d) => d.to - d.from);
       const last = r.districts[r.districts.length - 1]!;
-      for (const gained of levels.slice(0, -1)) {
+      for (const gained of levels) {
         expect(gained, `levels by district ${levels.join("/")}`).toBeGreaterThanOrEqual(PACE.min);
         expect(gained, `levels by district ${levels.join("/")}`).toBeLessThanOrEqual(PACE.max);
       }

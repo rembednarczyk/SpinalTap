@@ -51,7 +51,8 @@ import type { DistrictId } from "../src/content/world-map";
  * rolls with style and bad luck) instead of the ECS, so a whole passage takes milliseconds.
  *
  * What is modelled and what is assumed (written into the ADR with the results):
- * - a district's pass is its main-thread quests and ten jobs of its givers, in order;
+ * - a district's pass is its opening quests, then its main-thread quests with ten jobs of its
+ *   givers, in order;
  * - every man a job sends is a fight the player wins (an infiltration is done unseen, without
  *   kills), each job lands one quickhack, a hack wins two daemons, four jobs in ten go unseen;
  * - the player fights with a common gun and wears a common jacket of her own level (a shop's
@@ -66,6 +67,8 @@ export const HIT_MIX: Readonly<Record<HitZone, number>> = { head: 0.1, torso: 0.
 /** One district of the passage. */
 export interface DistrictPass {
   readonly district: DistrictId;
+  /** Quests done before the jobs, in order (the first contract, which leads the player to Kaito). */
+  readonly opening?: readonly QuestDefinition[];
   /** The district's main thread, in order; each step's XP comes after a job, spread evenly. */
   readonly quests: readonly QuestDefinition[];
   /** Fights of the quests themselves (the courier and his guard, Kagami's cleaners). */
@@ -188,7 +191,7 @@ const contractOf = (r: Run, kind: ContractKind, sites: readonly ContractSiteId[]
     flags: [],
     tick: 0,
     ticksPerSecond: 60,
-    levelAt: (site: ContractSiteId) => contractLevelOf(r.progression.level, site),
+    levelAt: (site: ContractSiteId, kind: ContractKind) => contractLevelOf(r.progression.level, site, kind),
   };
   for (;;) {
     const c = generateContractOfKind(kind, ctx, r.rng);
@@ -203,8 +206,8 @@ const job = (r: Run, pass: DistrictPass, kind: ContractKind, index: number): voi
   if (kind !== "infiltrate") for (let i = 0; i < c.targets; i++) fight(r, pass, pass.foe, band);
   gain(r, QUICKHACK_XP);
   if (kind === "hack") gain(r, breachXp(2));
-  gain(r, contractXp(kind, c.targets, contractLevelOf(r.progression.level, c.siteId)));
-  if (kind === "infiltrate" || index % 5 === 1 || index % 5 === 3) gain(r, undetectedXp(contractLevelOf(r.progression.level, c.siteId)));
+  gain(r, contractXp(kind, c.targets, contractLevelOf(r.progression.level, c.siteId, kind)));
+  if (kind === "infiltrate" || index % 5 === 1 || index % 5 === 3) gain(r, undetectedXp(contractLevelOf(r.progression.level, c.siteId, kind)));
   r.log = { ...r.log, active: null, completed: r.log.completed + 1 };
 };
 
@@ -216,6 +219,7 @@ const district = (r: Run, pass: DistrictPass): DistrictResult => {
   const from = r.progression.level;
   const xp0 = r.progression.xp;
   for (const f of pass.questFights) for (let i = 0; i < f.count; i++) fight(r, pass, f.type, DISTRICT_BANDS[f.band]);
+  for (const xp of questGains(pass.opening ?? [])) gain(r, xp);
   const steps = questGains(pass.quests);
   let next = 0;
   pass.jobs.forEach((kind, i) => {

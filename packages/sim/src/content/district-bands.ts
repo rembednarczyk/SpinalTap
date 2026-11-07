@@ -6,15 +6,15 @@ import type { DistrictId } from "./world-map";
  * The band of difficulty of each district (ADR-0059, stage 5): an enemy there is of the player's
  * level kept within it. Krakowskie (`shinsekai-7`) is where Seki wakes; Stare Miasto (`kanal`)
  * comes next, the market (`targ`: Podzamcze, and since ADR-0063 stage 6 the plot of Alchemia, see
- * `BAND_AREAS`) after it and the docks on the Bystrzyca (`doki`) last. The tops of Stare Miasto and
- * the market come from the balance test of stage 8 (`test/balance.test.ts`): the player leaves
- * Krakowskie at about 11, Stare Miasto at 19 and the market at 28, so 14 and 20 left the city
- * behind her (now 19 and 28). The floors stay where the user set them.
+ * `BAND_AREAS`) after it and the docks on the Bystrzyca (`doki`) last. The balance test of stage 8
+ * (`test/balance.test.ts`) keeps them: the player leaves Krakowskie at about 9, Stare Miasto at 16
+ * and the market at 23, a little above the tops of 14 and 20, where the jobs stop growing and slow
+ * the pace; only the docks have enemies above 21.
  */
 export const DISTRICT_BANDS: Readonly<Record<DistrictId, LevelBand>> = {
   "shinsekai-7": { min: 1, max: 8 },
-  kanal: { min: 5, max: 19 },
-  targ: { min: 10, max: 28 },
+  kanal: { min: 5, max: 14 },
+  targ: { min: 10, max: 20 },
   doki: { min: 16, max: 30 },
 };
 

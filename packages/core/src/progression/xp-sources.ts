@@ -4,48 +4,54 @@ import { CURVE_EXPONENT, MAX_LEVEL, MIN_LEVEL } from "./curve";
 import { killXpShare } from "./bands";
 
 /**
- * Where experience comes from (ADR-0059). Every amount here is the value up to level XP_CURVE_FROM:
- * a contract's level and a kill's enemy grow it (`xpLevelScale`), an enemy's level against the
+ * Where experience comes from (ADR-0059). Every amount here is the value at level XP_BASE_LEVEL:
+ * a contract's level and a kill's enemy scale it (`xpLevelScale`), an enemy's level against the
  * player's scales a kill. Quest steps carry their own XP in the quest definitions. The numbers are
- * tuned so that one district's main thread with its contracts gives 8 to 10 levels (the pace of
- * the passage in `sim/test/balance.test.ts`, Krakowskie also in `core/test/progression.test.ts`).
+ * tuned so that each district's main thread with its contracts gives about 7 levels, 6 to 9 (the
+ * pace of the passage in `sim/test/balance.test.ts`, Krakowskie also in `core/test/progression.test.ts`).
  */
 export type XpSource = "quest" | "contract" | "kill" | "hack" | "stealth";
 
 export const XP_SOURCES: readonly XpSource[] = ["quest", "contract", "kill", "hack", "stealth"];
 
 /**
- * How the XP of a source grows with its level (ADR-0059 stage 8). Up to XP_CURVE_FROM it stays at
- * its base; from there it grows as the cost of a level does (`(level / XP_CURVE_FROM)^1.6`, the
- * exponent of the curve), so a job or a kill in a later band teaches about the same share of a level
- * as one at the end of Krakowskie. The balance test of the passage (`sim/test/balance.test.ts`)
- * set it: with +4% a level, as the pay grows, Stare Miasto gave 4 levels and the docks 3, not 8 to 10.
+ * How the XP of a source grows with its level (ADR-0059 stage 8): as the cost of a level does,
+ * `(level / XP_BASE_LEVEL)^1.6` with the exponent of the curve, so a job or a kill teaches about
+ * the same share of a level at every level, below XP_BASE_LEVEL too (a job of level 1 gives 6% of
+ * its base, as level 1 costs 6% of level 6). The balance test of the passage set it. With +4% a
+ * level, as the pay grows, Stare Miasto gave 4 levels and the docks 3. With the growth only from
+ * level 6 and the base below it (round 1, 7.11), Krakowskie gave 8 levels even without any XP of
+ * its quests, since its first jobs gave several cheap levels each; the user's aim is about 7.
  */
-export const XP_CURVE_FROM = 6;
+export const XP_BASE_LEVEL = 6;
 
 export const xpLevelScale = (level: number): number => {
   const l = Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, Math.round(level)));
-  return Math.max(1, (l / XP_CURVE_FROM) ** CURVE_EXPONENT);
+  return (l / XP_BASE_LEVEL) ** CURVE_EXPONENT;
 };
 
 /**
- * A contract's base by template: the harder and longer the job, the more it teaches. A delivery
- * fights nobody and takes the level of Hana's stall in the market's band (10 at least), so its
- * base is 300 (500 before stage 8: with the growth of `xpLevelScale` it gave Krakowskie 11 levels
- * for some seeds of the balance test and left the docks 1).
+ * A contract's base by template, at level XP_BASE_LEVEL. The men a job sends add to it
+ * (`CONTRACT_XP_PER_TARGET`), so a job that fights more teaches more. The bases are set by the
+ * balance test for each giver's district, since each district's jobs make most of its pace:
+ * Kaito's (delivery and elimination: Krakowskie, Stare Miasto), Hana's (retrieval, protection:
+ * the market, which also has act II) and Genzō's (the docks). Hana's and Genzō's jobs send big
+ * crews (four men from level 10, five for a docks infiltration or hack, Tessen's guards worth
+ * more than a Hebi), so their bases are below a delivery's, which fights nobody. A delivery is
+ * Kaito's job and takes the level of Krakowskie, not of Hana's stall (the user's decision of 7.11).
  */
 export const CONTRACT_XP_BASE: Readonly<Record<ContractKind, number>> = {
-  delivery: 300,
-  eliminate: 550,
-  retrieve: 600,
-  protect: 650,
-  escort: 800,
-  infiltrate: 850,
-  hack: 800,
+  delivery: 500,
+  eliminate: 500,
+  retrieve: 350,
+  protect: 400,
+  escort: 350,
+  infiltrate: 400,
+  hack: 350,
 };
 
 /** What each man the contract sends against the player adds. */
-export const CONTRACT_XP_PER_TARGET = 150;
+export const CONTRACT_XP_PER_TARGET = 120;
 
 /**
  * XP of a finished contract, from its difficulty: the template and the number of targets, grown
@@ -54,7 +60,7 @@ export const CONTRACT_XP_PER_TARGET = 150;
 export const contractXp = (kind: ContractKind, targets: number, level: number = MIN_LEVEL): number =>
   Math.round((CONTRACT_XP_BASE[kind] + Math.max(0, Math.floor(targets)) * CONTRACT_XP_PER_TARGET) * xpLevelScale(level));
 
-/** An enemy the player took down, by type: tougher and better armed is worth more. */
+/** An enemy the player took down, by type, at level XP_BASE_LEVEL: tougher and better armed is worth more. */
 export const ENEMY_XP: Readonly<Record<EnemyTypeId, number>> = {
   hebi_lookout: 50,
   hebi_ganger: 60,

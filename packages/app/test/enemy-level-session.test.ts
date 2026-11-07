@@ -45,7 +45,7 @@ const atLevel = async (level: number) => {
 const byKey = (s: GameSession, key: string) => [...s.sim.world].find((e) => e.key === key);
 
 describe("enemy level by district band in play (ADR-0059, stage 5)", () => {
-  it("a Hebi patrol in Stare Miasto (5-19) is above a level 1 player, and as tough as its level", async () => {
+  it("a Hebi patrol in Stare Miasto (5-14) is above a level 1 player, and as tough as its level", async () => {
     const session = await atLevel(1);
     teleport(session, 500, -71);
     steps(session, 2);

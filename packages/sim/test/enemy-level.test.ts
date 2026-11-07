@@ -55,11 +55,11 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
     expect(others).toEqual([]);
   });
 
-  it("an enemy in the market in Alchemia is of the market's band (10-28), one elsewhere in Krakowskie of Krakowskie's (1-8)", () => {
+  it("an enemy in the market in Alchemia is of the market's band (10-20), one elsewhere in Krakowskie of Krakowskie's (1-8)", () => {
     for (const [level, market, krakowskie] of [
       [1, 10, 1],
       [12, 12, 8],
-      [30, 28, 8],
+      [25, 20, 8],
     ] as const) {
       const sim = atLevel(Simulation.create({ seed: 5 }), level);
       teleportPlayer(sim, ground(HANA_SPOT.x - 1.5, HANA_SPOT.z), Math.PI / 2);
@@ -88,8 +88,8 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
   });
 
   it("a level-up regrades the enemies about at the same share of health, and a load builds them the same", () => {
-    // One kill short of level 2: the courier pays 60 XP.
-    const sim = atLevel(alleySim({ seed: 3 }), 1, 90);
+    // One kill short of level 2: the courier of level 1 pays 3 XP (ADR-0059 stage 8).
+    const sim = atLevel(alleySim({ seed: 3 }), 1, 99);
     const player = sim.player()!;
     const guard = byKey(sim, "guard")!;
     guard.health = { current: 40, max: GANGER_MAX_HP };
@@ -108,7 +108,7 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
     expect(loaded.health).toEqual(byKey(sim, "guard")!.health);
   });
 
-  it("a job's level is its band's: the Hebi stash in Alchemia (the market's 10-28) for a level 12 player is of level 12", () => {
+  it("a job's level is its band's: the Hebi stash in Alchemia (the market's 10-20) for a level 12 player is of level 12", () => {
     const sim = atLevel(Simulation.create({ seed: 4 }), 12);
     teleportPlayer(sim, ground(HANA_SPOT.x - 1.5, HANA_SPOT.z), Math.PI / 2);
     sim.step();
@@ -116,6 +116,10 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
     expect(contractLevelOf(1, "hebi_stash")).toBe(10);
     expect(contractLevelOf(12, "east_lot")).toBe(8);
     expect(contractLevelOf(1, "tessen_office")).toBe(16);
+    // A delivery to Hana's stall is Kaito's job, of Krakowskie's band (the user's decision of 7.11).
+    expect(contractLevelOf(12, "hana_stall")).toBe(12);
+    expect(contractLevelOf(12, "hana_stall", "delivery")).toBe(8);
+    expect(contractLevelOf(1, "hana_stall", "delivery")).toBe(1);
     sim.enqueue({ type: "accept-contract", kind: "retrieve" });
     sim.step();
     const c = sim.domain.contracts.active!;
