@@ -21,8 +21,8 @@ export interface PlanGroup {
   readonly position?: Pt;
 }
 
-/** The most a lamp of the plan may stand off the paving (m): its base's half and a kerb's. */
-export const SLACK = 0.5;
+/** The most a lamp of the plan may stand off the paving (m): a kerbside lamp stands 0.5–1 m off the road in Lublin (curator, G-477). */
+export const SLACK = 1.0;
 /** How far from its group's line a lamp still belongs to it (m): past the widest offset the generator gives. */
 const REACH = 8;
 /** A lamp this near a node of the plan is that node's (m). */
