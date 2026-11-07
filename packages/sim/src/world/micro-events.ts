@@ -1,4 +1,4 @@
-import { MICRO_EVENT_CHANCE, MICRO_EVENT_REWARD, type MicroEventKind, type Vec3 } from "@seki/core";
+import { MICRO_EVENT_REWARD, type MicroEventKind, type Vec3, microEventChance } from "@seki/core";
 import { MICRO_SPOTS } from "../content/encounter-rewards";
 import type { DistrictId } from "../content/world-map";
 import { deriveRandom } from "../rng/derive-random";
@@ -7,7 +7,7 @@ import type { Entity } from "./components";
 import type { MicroEventRun, SimContext } from "./context";
 import { lowerFlag } from "./domain-ops";
 import { GANGER_MAX_HP, gangerEntity, toughen } from "./factory";
-import { difficultyOf } from "./difficulty";
+import { enemyScalingIn } from "./enemy-scaling";
 import { passerBy, streetOpen, thankedByStreet } from "./street-scenes";
 
 /**
@@ -52,7 +52,7 @@ const spawn = (ctx: SimContext, kind: MicroEventKind, at: Vec3): MicroEventRun =
       const px = at.x + (i === 0 ? 1.4 : -1.4);
       const position = { x: px, y: ctx.streamer.ground.heightAt(px, at.z + 1.2), z: at.z + 1.2 };
       const g = gangerEntity(ctx.streamer.takeId(), { key: `${id}:m${i}`, position, yaw: Math.PI }, null, GANGER_MAX_HP, victim.chunk ?? "", victimKey);
-      ctx.world.add(toughen(g, difficultyOf(ctx).npcHealth));
+      ctx.world.add(toughen(g, enemyScalingIn(ctx)));
       attackers.push(g.id);
     }
   } else {
@@ -69,7 +69,8 @@ export const rollMicroEvent = (ctx: SimContext, district: DistrictId, player: En
   const rng = deriveRandom(ctx.seed, `micro:${ctx.tick}`);
   const roll = rng.next();
   const kind: MicroEventKind = rng.next() < 0.6 ? "mugging" : "aid";
-  if (roll >= MICRO_EVENT_CHANCE) return;
+  // More often while the street thinks badly of the player (ADR-0070); the roll itself is the same.
+  if (roll >= microEventChance(ctx.state.domain.reputation.civilians)) return;
   const at = spotFor(district, player.position);
   if (at) s.micro = spawn(ctx, kind, at);
 };

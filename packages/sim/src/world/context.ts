@@ -50,6 +50,8 @@ export interface SessionState {
   bodyTarget: { readonly id: EntityId; readonly distance: number } | null;
   /** The free hiding place in reach of the carried body, null when none: the key hides it there. */
   hideSpot: EntityId | null;
+  /** Room beside the player to put the carried body down (G-479); recomputed every step, not saved. */
+  dropRoom: boolean;
   /**
    * A difficulty asked for during a fight (ADR-0066): it takes effect when the fight is over.
    * Transient, not saved.
@@ -57,16 +59,20 @@ export interface SessionState {
   pendingDifficulty: DifficultyProfile | null;
 }
 
-/** A takedown in progress (ADR-0065): the player and `target` stand still until `left` runs out. */
+/**
+ * A takedown in progress (ADR-0065, ADR-0075): the player holds `target` in a grab until she
+ * chooses (or `left` runs out: a knock-out), then both stand still for the end chosen.
+ */
 export interface TakedownRun {
   readonly target: EntityId;
-  /** Seconds left. */
+  /** `grab`: waiting for the choice; `finish`: the knock-out or the kill under way. */
+  phase: "grab" | "finish";
+  /** Seconds left of the phase. */
   left: number;
-  /** Asked for by the command; holding the attack button through most of it kills as well. */
-  readonly lethal: boolean;
-  /** Steps of the takedown so far, and how many of them with the attack button held. */
-  steps: number;
-  held: number;
+  /** The choice: a kill, a knock-out (false), or null while the grab waits for it. */
+  lethal: boolean | null;
+  /** How long the end lasts once chosen, seconds (Quick Takedown shortens it). */
+  readonly finish: number;
   /** The player's health when it began: any damage below it breaks the hold. */
   readonly health: number;
 }
@@ -107,6 +113,8 @@ export interface Offence {
   readonly incident: number;
   /** Someone knocked out by it (ADR-0065): once reported, its body brings no second call. */
   readonly body?: EntityId;
+  /** Whom it was done to (an assault, a murder): one deed costs the street once (ADR-0070). */
+  readonly victim?: EntityId;
 }
 
 export interface StreetLog {
@@ -114,6 +122,15 @@ export interface StreetLog {
   offences: Offence[];
   /** Incidents so far (ids of offences); transient, a loaded game counts from 0 again. */
   incidents: number;
+  /**
+   * What the reported assaults on each victim have cost the street so far (ADR-0070), until
+   * its murder is reported. Not saved, like `wronged`: after a load the bodies get new ids, so
+   * a reported murder costs a whole −2 without the assaults reported before the save, up to −2
+   * more (two camera knockouts, it wakes, killed unseen and found: −2 in a run, −4 after a
+   * load; knocked out in sight of a patrol, saved, finished in sight of one: −2 in a run, −3
+   * after a load, heat 1→2 in both, G-334). Accepted (ADR-0070, „Zapis”).
+   */
+  charged: Map<EntityId, number>;
 }
 
 export interface SessionWatch {
@@ -142,7 +159,7 @@ export const freshSession = (): SessionState => ({
   focusId: null,
   focusPrompt: null,
   lastThreat: null,
-  street: { disturbances: [], offences: [], incidents: 0 },
+  street: { disturbances: [], offences: [], incidents: 0, charged: new Map() },
   watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0, sent: 0, uploadId: null },
   passenger: null,
   street2: { encounter: null, npcs: {}, micro: null, district: null },
@@ -153,6 +170,7 @@ export const freshSession = (): SessionState => ({
   carrying: null,
   bodyTarget: null,
   hideSpot: null,
+  dropRoom: true,
   pendingDifficulty: null,
 });
 

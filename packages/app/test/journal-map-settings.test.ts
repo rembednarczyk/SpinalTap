@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { type AudioPort, type DomainState, EMPTY_INPUT, type RenderPort, createDomainState } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { DISTRICT_M0_PROPS, type Entity, KANAL_PROPS, TARG_NORTH_PROPS, TARG_SOUTH_PROPS, ground } from "@seki/sim";
+import { DISTRICT_M0_PROPS, type Entity, KANAL_PROPS, ground } from "@seki/sim";
+import { OLD_MARKET_CHUNK } from "../../sim/test/fixtures/old-market";
 import { DEFAULT_SETTINGS, createUiStore } from "@seki/ui";
 import { GameSession, type SettingsHost } from "../src/game-session";
 import { buildJournal, createJournalCache } from "../src/journal";
@@ -121,8 +122,9 @@ describe("minimap data", () => {
   });
 
   it("marks floors above the street, stairs, the lift and ladders (ADR-0021)", () => {
-    // Heights from the ground under them: the market stands 20 m below Krakowskie (ADR-0045).
-    const map = buildDistrictMap([...KANAL_PROPS, ...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS], (x, z) => ground(x, z).y);
+    // Heights from the ground under them: the footbridge over Grodzka on Lublin's terrain (ADR-0045), the old
+    // market (the sim's test floor since ADR-0063 moved the market to Alchemia) on its flat floor.
+    const map = buildDistrictMap([...KANAL_PROPS, ...OLD_MARKET_CHUNK.props], (x, z) => (OLD_MARKET_CHUNK.bounds.minX <= x && x <= OLD_MARKET_CHUNK.bounds.maxX && OLD_MARKET_CHUNK.bounds.minZ <= z && z <= OLD_MARKET_CHUNK.bounds.maxZ ? 0 : ground(x, z).y));
     const kinds = (map.links ?? []).map((l) => l.kind);
     // The market's stairs (the covered footbridge over Grodzka has none, ADR-0045); one lift; three fire escape ladders.
     expect(kinds.filter((k) => k === "stairs")).toHaveLength(1);
@@ -278,9 +280,16 @@ describe("settings", () => {
     const old = sanitizeSettings({ quality: "low", volume: 0.3 });
     expect(old).toMatchObject({ volume: 0.3, musicVolume: DEFAULT_SETTINGS.musicVolume, sfxVolume: DEFAULT_SETTINGS.sfxVolume, ambienceVolume: DEFAULT_SETTINGS.ambienceVolume });
     expect(sanitizeSettings({ musicVolume: 3, sfxVolume: -1, ambienceVolume: "x" })).toMatchObject({ musicVolume: 1, sfxVolume: 0, ambienceVolume: DEFAULT_SETTINGS.ambienceVolume });
+    // Dialogue and radio (ADR-0060 stage 1): dialogue at full volume; the radio, which played on
+    // the music bus, keeps an old entry's music level, and a saved radio level wins over it.
+    expect(old).toMatchObject({ dialogueVolume: 1, radioVolume: DEFAULT_SETTINGS.radioVolume });
+    expect(sanitizeSettings({ musicVolume: 0.25 })).toMatchObject({ musicVolume: 0.25, radioVolume: 0.25 });
+    expect(sanitizeSettings({ musicVolume: 0.25, radioVolume: 0.8, dialogueVolume: 0.5 })).toMatchObject({ radioVolume: 0.8, dialogueVolume: 0.5 });
+    expect(sanitizeSettings({ radioVolume: 4, dialogueVolume: "loud" })).toMatchObject({ radioVolume: 1, dialogueVolume: 1 });
+    expect(sanitizeSettings({ radioVolume: "x", musicVolume: 0.25 })).toMatchObject({ radioVolume: DEFAULT_SETTINGS.radioVolume });
     const set: [string, number][] = [];
-    applyVolumes({ setVolume: (bus: string, v: number) => set.push([bus, v]) }, { volume: 0.5, musicVolume: 0.2, sfxVolume: 0.7, ambienceVolume: 0.1 });
-    expect(set).toEqual([["master", 0.5], ["music", 0.2], ["sfx", 0.7], ["ambience", 0.1]]);
+    applyVolumes({ setVolume: (bus: string, v: number) => set.push([bus, v]) }, { volume: 0.5, musicVolume: 0.2, sfxVolume: 0.7, ambienceVolume: 0.1, dialogueVolume: 0.9, radioVolume: 0.4 });
+    expect(set).toEqual([["master", 0.5], ["music", 0.2], ["sfx", 0.7], ["ambience", 0.1], ["dialogue", 0.9], ["radio", 0.4]]);
   });
 
   it("defaults to High quality and damage numbers per hit, also for entries saved under the old defaults", () => {
@@ -300,6 +309,23 @@ describe("settings", () => {
     expect(sanitizeSettings({ quality: "low" }).autosave).toBe(true);
     expect(sanitizeSettings({ autosave: "no" }).autosave).toBe(true);
     expect(sanitizeSettings({ autosave: false }).autosave).toBe(false);
+  });
+
+  it("keeps the TPP shoulder with the settings: right by default and for old entries, saved, no reload (G-275)", () => {
+    expect(DEFAULT_SETTINGS.shoulder).toBe("right");
+    expect(sanitizeSettings({ quality: "low" }).shoulder).toBe("right");
+    expect(sanitizeSettings({ shoulder: "middle" }).shoulder).toBe("right");
+    const st = memoryStorage();
+    saveSettings(st, { ...DEFAULT_SETTINGS, shoulder: "left" });
+    expect(loadSettings(st).shoulder).toBe("left");
+    const host = { applied: DEFAULT_SETTINGS, save: vi.fn(), reload: vi.fn() };
+    const { s, ui } = session(host);
+    s.intents.changeSettings({ shoulder: "left" });
+    expect(ui.getState().settings.shoulder).toBe("left");
+    expect(host.save).toHaveBeenLastCalledWith(expect.objectContaining({ shoulder: "left" }));
+    expect(ui.getState().reloadNeeded).toBe(false);
+    // The swap is a remappable control, listed with the others.
+    expect(ui.getState().controls.some((c) => c.action === "swapShoulder" && c.codes.includes("KeyG"))).toBe(true);
   });
 
   it("keeps the language with the settings: English by default and for old entries, saved, no reload (ADR-0056)", () => {

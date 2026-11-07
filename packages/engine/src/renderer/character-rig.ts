@@ -1,4 +1,6 @@
 import type { Mesh, TransformNode } from "../babylon";
+import type { LadderRungs } from "./ladder-rungs";
+import type { ArmReach, TwoHandGrip } from "./two-hand-grip";
 
 /** A procedurally built character with a jointed skeleton for procedural animation. */
 export interface CharacterRig {
@@ -14,6 +16,17 @@ export interface CharacterRig {
   readonly armR: TransformNode;
   readonly elbowL: TransformNode;
   readonly elbowR: TransformNode;
+  /** Wrists at the forearms' ends: the hands turn here (the procedural box hands and a dressed model's). */
+  readonly wristL: TransformNode;
+  readonly wristR: TransformNode;
+  /** A long gun held in both hands hangs here, on the body, placed every frame (G-282). */
+  readonly gunHold: TransformNode;
+  /** The long gun in hand while one is the active weapon, or null (set by the loadout). */
+  grip: TwoHandGrip | null;
+  /** The arms the hold is solved for while an imported model is dressed over the rig; null: the rig's own. */
+  reach: ArmReach | null;
+  /** How far the fingers of the left and the right hand close, 0 open .. 1 a fist (imported models). */
+  readonly fist: [number, number];
   readonly meshes: Mesh[];
   /** Carries a pistol: holster at the right hip, drawn into the right hand. */
   readonly aiming: boolean;
@@ -25,6 +38,8 @@ export interface CharacterRig {
   /** 0 holstered .. 1 drawn, eased towards `drawTarget` over DRAW_SECONDS. */
   drawn: number;
   drawTarget: boolean;
+  /** Both hands taken (a takedown grab, a body on the shoulder; G-459): the weapon stays holstered. */
+  handsBusy: boolean;
   /** 0 low ready (muzzle down, arm loose) .. 1 aimed; raised by a shot, lowered after `aimHold`. */
   aim: number;
   aimHold: number;
@@ -53,6 +68,8 @@ export interface CharacterRig {
   flinch: number;
   /** null while alive; seconds since death otherwise. */
   dying: number | null;
+  /** Height of the root when the fall began (the ground the body lies on, sidewalk lift included). */
+  deathGround: number;
   /** Vertical speed last frame while airborne, null on the ground (ADR-0021). */
   lastAir: number | null;
   /** 0..1 blend of the jump pose, eased in on take-off and out on landing. */
@@ -62,6 +79,12 @@ export interface CharacterRig {
   /** 0..1 blend of the ladder pose, and the phase of the hand-over-hand cycle. */
   climbBlend: number;
   climbPhase: number;
+  /** 0 on the feet .. 1 lying knocked out (ADR-0065), eased through the slump and the getting up. */
+  knockout: number;
+  /** 0 lying .. 1 over a carrier's shoulder, eased while picked up and put down. */
+  carried: number;
+  /** The rungs of the ladder climbed last (null: none in view); the hands keep to them while the pose eases out. */
+  ladder: LadderRungs | null;
 }
 
 /** A melee swing in progress: strike `strike` of the combo, timed like the simulation's. */

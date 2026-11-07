@@ -12,6 +12,7 @@ import {
   makePrism,
   terrainSeamGap,
 } from "../src";
+import { makeDeck } from "../src/world/deck";
 import { propEntity } from "../src/world/factory";
 import { NAV_CELL, followDetour, planDetour, straightWalk } from "../src/systems/ai/steering";
 import { BOUNDS, gridOf, hill, testChunks } from "./terrain-world";
@@ -46,6 +47,20 @@ describe("the ground of chunks (ADR-0043)", () => {
     expect(terrainSeamGap(west, { bounds: east.bounds })).toBe(0);
     expect(terrainSeamGap(west, { ...east, bounds: { ...BOUNDS, minX: 10 } })).toBe(0);
     for (let z = -50; z <= 250; z += 3.7) expect(field.heightAt(-1e-9, z)).toBeCloseTo(field.heightAt(1e-9, z), 6);
+  });
+
+  it("finds a deck on the seam of two chunks, the one it belongs to second in the table (G-278)", () => {
+    const flat = gridOf(-10, 0, 10, 3, 2, () => 0);
+    // A deck at y 1 in the east chunk, from the seam x = 0 east; the west chunk comes first.
+    const deck = makeDeck([0, 2, 10, 2, 10, 8, 0, 8], [0, 5, 10, 5], () => 1);
+    const seam = new GroundField([
+      { bounds: { minX: -10, maxX: 0, minZ: 0, maxZ: 10 }, terrain: flat },
+      { bounds: { minX: 0, maxX: 10, minZ: 0, maxZ: 10 }, terrain: flat, decks: [deck] },
+    ]);
+    expect([seam.heightAt(-1e-6, 5), seam.heightAt(0, 5), seam.heightAt(1e-6, 5)]).toEqual([0, 1, 1]);
+    expect(seam.ceilingAt(0, 5, -1)).toBe(seam.ceilingAt(1e-6, 5, -1));
+    expect(seam.ceilingAt(0, 5, -1)).toBeLessThan(1);
+    expect(seam.onLowDeck(0, 5)).toBe(true);
   });
 
   it("measures the slope over half a metre: the hill is walkable, the bank and the ridge are not", () => {
@@ -162,5 +177,79 @@ describe("the AI's raster on terrain and prisms (ADR-0043, ADR-0025)", () => {
     const along = planDetour(w, from, { x: 70, y: hill(70, 70), z: 70 });
     expect(along ? followDetour(along, from) : null).not.toBeNull();
     expect(NAV_CELL).toBe(0.5);
+  });
+});
+
+describe("a shaft cut into the ground (ADR-0071 stage 2)", () => {
+  const slope = (x: number, z: number) => 0.05 * x + 0.02 * z;
+  const chunk = { bounds: { minX: 0, maxX: 40, minZ: 0, maxZ: 40 }, terrain: gridOf(0, 0, 5, 9, 9, slope) };
+  const cut = { bounds: { minX: 10, maxX: 17, minZ: 20, maxZ: 22.4 }, floor: -5 };
+  const dug = new GroundField([chunk], [cut]);
+  const whole = new GroundField([chunk]);
+
+  it("lies at its floor inside its bounds and leaves the terrain as it was outside", () => {
+    expect(dug.heightAt(13, 21)).toBeCloseTo(-5, 9);
+    for (const [x, z] of [[9.9, 21], [17.1, 21], [13, 19.9], [13, 22.5], [30, 5]] as const) expect(dug.heightAt(x, z)).toBeCloseTo(whole.heightAt(x, z), 9);
+  });
+
+  it("is no bank to feet beside it, and only the street's own slope counts there", () => {
+    for (const [x, z] of [[9.9, 21], [17.1, 21], [13, 19.9], [13, 22.5]] as const) {
+      expect(dug.steepAt(x, z)).toBe(false);
+      expect(dug.slopeAt(x, z)).toBeCloseTo(whole.slopeAt(x, z), 6);
+    }
+    expect(dug.slopeAt(13, 21)).toBe(0);
+  });
+
+  it("lets a ray through its hole and stops one going into the terrain round it", () => {
+    expect(dug.rayHit({ x: 11, y: -3, z: 21 }, { x: 1, y: 0, z: 0 }, 5)).toBeNull();
+    expect(whole.rayHit({ x: 11, y: -3, z: 21 }, { x: 1, y: 0, z: 0 }, 5)).toBe(0);
+    const t = dug.rayHit({ x: 11, y: -3, z: 21 }, { x: 1, y: 0, z: 0 }, 10);
+    expect(t).toBeCloseTo(6, 4);
+  });
+
+  it("never stands in for a chunk far off", () => {
+    expect(dug.heightAt(60, 21)).toBeCloseTo(whole.heightAt(60, 21), 9);
+  });
+
+  // G-377: off a grid line the ray went on through the street's terrain into the shaft, up to the
+  // cell's next line, and hit the street's surface where the shaft wins.
+  it("lets a ray from the street down into its hole and back up out of it, between the street's grid lines", () => {
+    const shaft = new GroundField([chunk], [{ bounds: { minX: 11, maxX: 17, minZ: 20, maxZ: 22.4 }, floor: -5 }]);
+    const street = { x: 10.5, y: slope(10.5, 21) + 1, z: 21 };
+    const hall = { x: 14, y: -4, z: 21.5 };
+    const len = Math.hypot(hall.x - street.x, hall.y - street.y, hall.z - street.z);
+    const down = { x: (hall.x - street.x) / len, y: (hall.y - street.y) / len, z: (hall.z - street.z) / len };
+    expect(whole.rayHit(street, down, len)).not.toBeNull();
+    expect(shaft.rayHit(street, down, len)).toBeNull();
+    expect(shaft.rayHit(hall, { x: -down.x, y: -down.y, z: -down.z }, len)).toBeNull();
+    // Past the hole the street's terrain stops it again, and the shaft's floor does.
+    expect(shaft.rayHit(street, down, 20)).toBeGreaterThan(len);
+    expect(shaft.rayHit({ x: 10, y: slope(10, 21) - 0.5, z: 21 }, { x: 1, y: 0, z: 0 }, 5)).toBe(0);
+  });
+});
+
+describe("a vault under the ground (ADR-0071 stage 4)", () => {
+  const slope = (x: number, z: number) => 0.05 * x + 0.02 * z;
+  const chunk = { bounds: { minX: 0, maxX: 40, minZ: 0, maxZ: 40 }, terrain: gridOf(0, 0, 5, 9, 9, slope) };
+  const vault = { bounds: { minX: 10, maxX: 30, minZ: 10, maxZ: 20 }, floor: -9 };
+  const under = new GroundField([chunk], [], [vault]);
+  const whole = new GroundField([chunk]);
+
+  it("is the street for feet on it and for every query without feet, and its floor for feet deep under it", () => {
+    for (const reach of [Infinity, slope(20, 15) + 0.45, slope(20, 15) - 0.9]) expect(under.heightAt(20, 15, reach)).toBeCloseTo(whole.heightAt(20, 15), 9);
+    expect(under.heightAt(20, 15, -7.5)).toBe(-9);
+    // Outside it the earth is the terrain's, however deep the feet.
+    expect(under.heightAt(31, 15, -7.5)).toBeCloseTo(whole.heightAt(31, 15), 9);
+    expect(under.steepAt(20, 15, -7.5)).toBe(false);
+  });
+
+  it("lets a ray on under the street through it, and stops one at its edge in the earth or coming down from the street", () => {
+    expect(whole.rayHit({ x: 15, y: -7, z: 15 }, { x: 1, y: 0, z: 0 }, 10)).toBe(0);
+    expect(under.rayHit({ x: 15, y: -7, z: 15 }, { x: 1, y: 0, z: 0 }, 10)).toBeNull();
+    const out = under.rayHit({ x: 15, y: -7, z: 15 }, { x: 1, y: 0, z: 0 }, 30);
+    expect(out).toBeGreaterThan(14.9);
+    expect(out).toBeLessThan(16.5);
+    const down = under.rayHit({ x: 20, y: 10, z: 15 }, { x: 0, y: -1, z: 0 }, 30);
+    expect(down).toBeCloseTo(10 - slope(20, 15), 3);
   });
 });

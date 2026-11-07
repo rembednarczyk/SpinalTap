@@ -1,6 +1,6 @@
 import type { Vec3, ViewDescriptor } from "@seki/core";
 import { type ActorDef, type StaticProp, crate, v } from "./builders";
-import type { RoofStash } from "./district-targ";
+import type { RoofStash } from "./alchemia/market";
 import { KANAL_PATROL_ACTORS } from "./kanal-patrols";
 import { againstWall, spotNear } from "./lublin/places";
 import { TRASA_PODZIEMNA } from "./lublin/sites";

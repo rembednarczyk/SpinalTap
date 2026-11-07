@@ -67,7 +67,7 @@ function within(scene: string, sample: Awaited<ReturnType<typeof perf>>) {
 }
 
 /** A new game in TPP, the player put at a spot of Lublin (ADR-0045) and walked a little. */
-const tppAt = async (page: Page, at: { frame?: Frame; x: number; z: number; yaw: number; walk: number }, query = "/?seed=3&models=off") => {
+const tppAt = async (page: Page, at: { frame?: Frame; x: number; z: number; y?: number; yaw: number; walk: number }, query = "/?seed=3&models=off") => {
   await page.goto(query);
   await waitForGame(page);
   await newGame(page);
@@ -75,6 +75,7 @@ const tppAt = async (page: Page, at: { frame?: Frame; x: number; z: number; yaw:
   await freeze(page);
   await step(page, 1, { toggleCamera: true });
   if (at.frame) await teleportTo(page, await place(page, at.frame, at.x, at.z), at.yaw);
+  else if (at.y !== undefined) await teleportTo(page, { x: at.x, y: at.y, z: at.z }, at.yaw);
   else await teleport(page, at.x, at.z, at.yaw);
   await step(page, at.walk, { moveZ: 1 });
 };
@@ -93,11 +94,33 @@ test("the Rynek in TPP stays within the perf budget", async ({ page }) => {
   within("rynek-tpp", await sampleNow(page));
 });
 
-test("the market under the viaduct in TPP stays within the perf budget", async ({ page }) => {
-  // East end of the market, looking back west over the stalls, under the deck towards the gate.
-  await tppAt(page, { frame: "market", x: 106, z: 79, yaw: -Math.PI / 2, walk: 30 });
+test("Aleja Tysiąclecia on Podzamcze in TPP stays within the perf budget", async ({ page }) => {
+  // Where the market stood until ADR-0063 moved it to Alchemia: on the avenue, looking west towards Plac Zamkowy.
+  await tppAt(page, { x: 795, z: 339, yaw: -Math.PI / 2, walk: 30 });
   expect((await gameState(page)).loadedChunks).not.toContain("krakowskie-2-0");
   within("podzamcze-tpp", await sampleNow(page));
+});
+
+test("Alchemia's T1 in TPP stays within the perf budget", async ({ page }) => {
+  // On T1 north of the food hall (ADR-0074 stage 1), walking south to its lit front and the way in: the hall in the frame.
+  await tppAt(page, { x: 418, z: 78, yaw: Math.PI, walk: 20 });
+  expect((await gameState(page)).loadedChunks).toContain("krakowskie-2-1");
+  within("alchemia-tpp", await sampleNow(page));
+});
+
+test("Alchemia's stairs down to T2 in TPP stays within the perf budget", async ({ page }) => {
+  // On the stairs from T1 down to T2 (ADR-0074 stage 2), walking down north-north-east: T2, the Arkady's arches and their upper floor in the frame.
+  await tppAt(page, { x: 429.5, z: 79, yaw: 0.25, walk: 20 });
+  expect((await gameState(page)).loadedChunks).toContain("krakowskie-2-1");
+  within("alchemia-t2-tpp", await sampleNow(page));
+});
+
+test("Alchemia's car park P-1 in TPP stays within the perf budget", async ({ page }) => {
+  // On P-1 under the car park (ADR-0074 stage 4), on the apron by the ramp's foot walking north-west to the hand-over cabins: the cabins, the deck and the ramp in the frame.
+  await tppAt(page, { x: 410, z: 22.5, y: -6.4, yaw: -Math.PI / 4, walk: 12 });
+  const s = await gameState(page);
+  expect(s.loadedChunks).toContain("krakowskie-2-1");
+  within("alchemia-p1", await sampleNow(page));
 });
 
 test("Nabrzeże Bystrzycy at night in TPP stays within the perf budget", async ({ page }) => {

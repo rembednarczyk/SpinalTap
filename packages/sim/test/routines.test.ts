@@ -109,7 +109,7 @@ describe("activities from the daily plan", () => {
   it("a guard on a post stands watch; an alerted one does not", () => {
     const sim = Simulation.create({ seed: 1 });
     const clock = sim.clock;
-    const guard = { id: 1, position: at(0, 0), prevPosition: at(0, 0), yaw: 0, prevYaw: 0, pitch: 0, ai: { home: at(0, 0), aggroRange: 18, attackRange: 20, alerted: false, cone: true, watch: { yaw: 0, phase: 0 } } } as Entity;
+    const guard = { id: 1, position: at(0, 0), prevPosition: at(0, 0), yaw: 0, prevYaw: 0, pitch: 0, enemy: { type: "tessen_guard" }, ai: { home: at(0, 0), aggroRange: 18, attackRange: 20, alerted: false, watch: { yaw: 0, phase: 0 } } } as Entity;
     expect(activityOf(guard, clock)).toBe("guard");
     expect(activityOf({ ...guard, ai: { ...guard.ai!, alerted: true } }, clock)).toBeNull();
     // Talking with the player is talking, whatever the habit.

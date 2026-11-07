@@ -2,16 +2,22 @@ import type { TerrainGrid } from "@seki/core";
 import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
 import { S7_STASHES } from "./district-m0";
 import { KANAL_ALLEY_STASH, KANAL_SCENERY } from "./district-kanal";
-import { type RoofStash, TARG_NAV, TARG_OVERPASS_STASH, TARG_ROOF_STASH } from "./district-targ";
+import { type RoofStash, TARG_OVERPASS_STASH, TARG_ROOF_STASH } from "./alchemia/market";
 import { DEVICES, type DeviceDef } from "./devices";
 import { TRASA_PODZIEMNA_BOUNDS, TRASA_PODZIEMNA_CHUNK, TRASA_PODZIEMNA_PROPS, TRASA_PODZIEMNA_STASH } from "./kanal-underground";
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
+import { METRO_NAV } from "./metro-nav";
 import { CLINIC_DOOR, KOI_DOOR, S7_NAV } from "./interiors";
 import { DOKI_NAV } from "./district-doki";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
+import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
+import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ALCHEMIA_PROPS, ALCHEMIA_VAULTS, P1_CARS, type P1Car, p1CarView } from "./alchemia";
+import { ALCHEMIA_NAV } from "./alchemia/nav";
+import type { GroundCut } from "../world/ground";
+import type { GroundVault } from "../world/vault";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
-import { BRIDGE_DECKS } from "./lublin/decks";
+import { GROUND_DECKS } from "./lublin/decks";
 import type { GroundDeck } from "../world/deck";
 import { furnitureProps } from "./lublin/furniture";
 import { basinRimProps } from "./lublin/basins";
@@ -45,13 +51,36 @@ export interface ChunkDef {
    * must give the same heights where their bounds meet. Without it the ground is y = 0.
    */
   readonly terrain?: TerrainGrid;
-  /** Bridge decks over the terrain (ADR-0053): the ground there. */
+  /** Bridge decks over the terrain (ADR-0053) and the flights of steps hung off them (G-255): the ground there. */
   readonly decks?: readonly GroundDeck[];
   /**
    * Solids of the street (ADR-0050): the furniture a body stumbles on, drawn by the scenery.
    * Their ids come from `STREET_ID_BASE`, not the allocator, so no id of the content moves.
    */
   readonly street?: readonly StaticProp[];
+  /**
+   * Solids the game adds to the map after its own data (ADR-0063): the rooms cut into its buildings
+   * (the capsule room: walls, ceiling, floor and furniture) and the buildings of 2077 on its empty
+   * plots (Alchemia), drawn by the engine. Their ids come from `ROOM_ID_BASE`, not the allocator,
+   * so no id of the content moves.
+   */
+  readonly rooms?: readonly StaticProp[];
+  /**
+   * The level graph of a world of its own (ADR-0021), given to the simulation instead of the city
+   * (a test floor with stairs and decks): its chunks' graphs together. The city's chunks carry
+   * none; theirs is `WORLD_NAV`.
+   */
+  readonly nav?: NavGraph;
+  /**
+   * Ground dug out to a floor of its own in the chunk (`GroundCut`, ADR-0074: the food hall of
+   * Alchemia under its terrace): the ground of the simulation there, a hole in the drawn terrain.
+   */
+  readonly cuts?: readonly GroundCut[];
+  /**
+   * Rooms in the ground under the chunk's terrain (`GroundVault`, ADR-0074 stage 4: Alchemia's P-1
+   * under its car park): the ground of the simulation for feet deep in them, the terrain whole over them.
+   */
+  readonly vaults?: readonly GroundVault[];
 }
 
 /** Horizontal distance from a point to a rectangle; 0 inside. */
@@ -73,11 +102,26 @@ const mapChunkOf = (x: number, z: number): string => {
   return best;
 };
 
-/** The rooms cut into the tenements of Krakowskie Przedmieście, with their doors (ADR-0045). */
+/**
+ * The rooms cut into the map's tenements, with their doors: the clinic and Neon Koi on
+ * Krakowskie Przedmieście (ADR-0045), the capsule room on Jezuicka (ADR-0063).
+ */
 const ROOM_CUTS: readonly RoomCut[] = [
   { site: CLINIC_SITE, doors: [{ x: CLINIC_DOOR.at.x, width: CLINIC_DOOR.width, height: CLINIC_DOOR.height }] },
   { site: KOI_SITE, doors: [{ x: KOI_DOOR.at.x, width: KOI_DOOR.width, height: KOI_DOOR.height }] },
+  { site: CAPSULE_SITE, doors: [{ x: CAPSULE_DOOR.at.x, width: CAPSULE_DOOR.width, height: CAPSULE_DOOR.height }] },
 ];
+
+/** The chunk of the map holding the capsule room's door: its solids stream in with it. */
+export const CAPSULE_CHUNK = mapChunkOf(CAPSULE_DOOR.at.x, CAPSULE_DOOR.at.z);
+/** The chunk of the map holding Alchemia (ADR-0074): its solids stream in with it. */
+export const ALCHEMIA_CHUNK = mapChunkOf(ALCHEMIA_CENTRE.x, ALCHEMIA_CENTRE.z);
+
+/** A car in a bay of P-1 as a solid of the street, on P-1's floor (a parked car's, without the terrain under it). */
+const p1CarProp = (c: P1Car): StaticProp => parkedProp({ ...c, chunk: ALCHEMIA_CHUNK }, c.y);
+
+/** The game's own solids in a chunk of the map, after its data (`ChunkDef.rooms`). */
+const roomsOf = (id: string): readonly StaticProp[] => [...(id === CAPSULE_CHUNK ? CAPSULE_PROPS : []), ...(id === ALCHEMIA_CHUNK ? ALCHEMIA_PROPS : [])];
 
 const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS, PASSAGES, BUILDING_CUTS)]));
 
@@ -96,8 +140,16 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
       props: [...(MAP_BUILDINGS.get(c.id) ?? []), ...GAME_PROPS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id)],
       actors: GAME_ACTORS.filter((a) => mapChunkOf(a.spawn.position.x, a.spawn.position.z) === c.id),
       ...(terrain ? { terrain } : {}),
-      ...((BRIDGE_DECKS.get(c.id) ?? []).length > 0 ? { decks: BRIDGE_DECKS.get(c.id) } : {}),
-      street: [...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []), ...basinRimProps(c), ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp)],
+      ...((GROUND_DECKS.get(c.id) ?? []).length > 0 ? { decks: GROUND_DECKS.get(c.id) } : {}),
+      street: [
+        ...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []),
+        ...basinRimProps(c),
+        ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp),
+        // The cars in the bays of Alchemia's P-1 (ADR-0074 stage 4), after the street's, so their ids stay.
+        ...(c.id === ALCHEMIA_CHUNK ? P1_CARS.map(p1CarProp) : []),
+      ],
+      ...(roomsOf(c.id).length > 0 ? { rooms: roomsOf(c.id) } : {}),
+      ...(c.id === ALCHEMIA_CHUNK ? { cuts: ALCHEMIA_CUTS, vaults: ALCHEMIA_VAULTS } : {}),
     };
   }),
   // Trasa Podziemna (ADR-0048): a chunk of its own over the cellars, last in the table, so it
@@ -118,6 +170,8 @@ export const WORLD_SCENERY: readonly SceneryItem[] = [
   ...MAP_CHUNKS.map((c): SceneryItem => ({ chunk: c.id, view: { kind: "street-props", items: WORLD_STREET_PROPS[c.id] ?? [] }, at: { x: 0, y: 0, z: 0 } })),
   // The parked cars (ADR-0050), each drawn where it stands.
   ...PARKED_CARS.map((p): SceneryItem => ({ chunk: p.chunk, view: parkedView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
+  // And those in the bays of Alchemia's P-1 under its car park (ADR-0074 stage 4).
+  ...P1_CARS.map((p): SceneryItem => ({ chunk: ALCHEMIA_CHUNK, view: p1CarView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
 ];
 
 /** Cameras and hackable devices (ADR-0029); each one names its chunk above. */
@@ -127,11 +181,12 @@ export const WORLD_DEVICES: readonly DeviceDef[] = DEVICES;
 export const WORLD_METRO: readonly MetroStationDef[] = METRO_STATIONS;
 
 /**
- * Level graph of the whole city (ADR-0021): the market's viaduct, the docks' roofs and crane,
- * and the interiors of Krakowskie Przedmieście (ADR-0038). The streets themselves are one level
+ * Level graph of the whole city (ADR-0021): the docks' roofs and crane,
+ * the interiors of Krakowskie Przedmieście (ADR-0038), the metro's stairs (ADR-0071) and
+ * Alchemia's food hall under its terrace (ADR-0074). The streets themselves are one level
  * on the terrain.
  */
-export const WORLD_NAV: NavGraph = mergeNav(TARG_NAV, DOKI_NAV, S7_NAV);
+export const WORLD_NAV: NavGraph = mergeNav(DOKI_NAV, S7_NAV, METRO_NAV, ALCHEMIA_NAV);
 
 /** Stashes placed once when the player first comes near: on roofs (ADR-0021), in alleys and dead ends (ADR-0026). */
 export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH, ...S7_STASHES, KANAL_ALLEY_STASH, TARG_OVERPASS_STASH, TRASA_PODZIEMNA_STASH];

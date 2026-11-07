@@ -112,7 +112,7 @@ describe("inventory tab", () => {
     expect(screen.getByTestId("slot-secondary").textContent).toContain("Unity-9");
     expect(screen.getByTestId("slot-torso").textContent).toContain("Seki's jacket");
     expect(screen.getByTestId("slot-primary").textContent).toContain("empty");
-    expect(screen.getByTestId("stats-panel").textContent).toContain("86/100");
+    expect(screen.getByTestId("inventory-health").textContent).toContain("86 / 100");
   });
 
   it("filters by category and sorts on demand", () => {

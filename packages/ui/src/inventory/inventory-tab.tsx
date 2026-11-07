@@ -8,6 +8,7 @@ import { useCharacterIntents, useUi } from "../use-ui";
 import { type ActionContext, ConfirmSheet, QuantityPicker } from "./actions";
 import { CharacterPreview } from "./character-preview";
 import { EquipmentSlots } from "./equipment-slots";
+import { HealthBar } from "./health-bar";
 import { ItemDetail } from "./item-detail";
 import { type GridSort, GridFilters, ItemGrid, NEXT_SORT, arrangeCells, refKey } from "./item-grid";
 import type { GridFilter } from "./item-text";
@@ -21,7 +22,7 @@ interface PanelProps {
   readonly sel: InventorySelection;
 }
 
-/** Left: the worn pieces around the 3D preview, the weapon slots and the stats. */
+/** Left: the worn pieces around the 3D preview, the weapon slots, the health bar and the stats. */
 const PaperDoll = ({ inventory, equipment, sel, stats }: PanelProps & { readonly stats: CharacterStatsVm | null }) => {
   const t = useT();
   const selectSlot = (uid: string) => sel.select({ uid }, null);
@@ -32,6 +33,7 @@ const PaperDoll = ({ inventory, equipment, sel, stats }: PanelProps & { readonly
         <CharacterPreview />
       </div>
       <EquipmentSlots kind="weapons" inventory={inventory} equipment={equipment} selectedUid={sel.selectedUid} onSelect={selectSlot} />
+      {stats && <HealthBar hp={stats.hp} maxHp={stats.maxHp} selected={sel.ref} />}
       <StatsPanel stats={stats} />
     </section>
   );

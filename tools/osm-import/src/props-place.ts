@@ -83,25 +83,54 @@ export type SideMode = "kerb" | "facade" | "front" | "path";
 /** How far from a line's axis a facade or a road edge is looked for, metres. */
 const SIDE_REACH = 16;
 const FACADE_REACH = 36;
+/** How far before a car park's edge a kerb lamp stands when asphalt runs on into it (m): in front of the cars. */
+const LOT_GAP = 1.6;
+
+/** How far past a pedestrian street's paving a lamp of the plan stands (m): at its edge, by its parapets and kerbs. */
+const PAST_PAVING = 0.3;
+/**
+ * How far a bridge's deck may lie over the ground past its edge for a lamp to stand there (m): at a
+ * viaduct's end, on its abutment's bank (Zamkowa's, 1.9 m, G-497). Along the span the lamp, whose
+ * foot keeps to the terrain, would stand down in the valley with its lantern (3.4 m up the post,
+ * 0.75 m in over the deck) among the deck's walkers (3.1 m under Zamkowa's) or in its slab (4.8 m),
+ * so there it stands on the deck (`byParapet`).
+ */
+const DECK_DROP = 2.5;
 
 /**
- * The wall between the last open sample (`inside` − 0.5) and the first one in a building, to a
+ * The edge between the last sample short of it (`inside` − 0.5) and the first one `past` it, to a
  * centimetre: a lantern hung 0.3 m off a wall placed by the 0.5 m step alone ended up to a
  * quarter of a metre inside it, its halo glowing out of the plaster.
  */
-const facadeAt = (site: Site, at: (d: number) => Pt, inside: number): number => {
+const edgeAt = (at: (d: number) => Pt, inside: number, past: (q: Pt) => boolean): number => {
   let open = inside - 0.5;
   let hit = inside;
   while (hit - open > 0.01) {
     const mid = (open + hit) / 2;
-    if (site.surfaceAt(at(mid)) === "building") hit = mid;
+    if (past(at(mid))) hit = mid;
     else open = mid;
   }
   return open;
 };
 
-/** Where a thing beside the axis goes: the offset along the normal, or null when there is no place. */
-export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: number): number | null => {
+const offPaving = (s: SiteSurface): boolean => s !== "walk" && s !== "road";
+
+/** A place beside the axis: the offset along the normal, and whether the thing stands on a bridge's deck there, not on the ground under it. */
+export interface SideSpot {
+  readonly d: number;
+  readonly deck: boolean;
+}
+
+/**
+ * Where a thing beside the axis goes: the offset along the normal, or null when there is no place.
+ * A `lamp` of the plan reads the car parks and, unless `toEdge` is off, the paving's edge.
+ */
+export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: number, lamp = false, toEdge = lamp): number | null =>
+  sideSpot(site, p, n, mode, fallback, lamp, toEdge)?.d ?? null;
+
+/** `sideOffset` with whether the thing stands on a bridge's deck (a lamp of the plan over a span, `byParapet`). */
+export const sideSpot = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: number, lamp = false, toEdge = lamp): SideSpot | null => {
+  const ground = (d: number): SideSpot => ({ d, deck: false });
   const at = (d: number): Pt => ({ x: p.x + n.x * d, z: p.z + n.z * d });
   if (mode === "path") {
     // Beside a path: the given side, else the other, else on the path itself. On a flight wider
@@ -118,16 +147,30 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
       return null;
     };
     for (const d of [fallback, -fallback, 0]) {
-      if (free(at(d))) return d;
+      if (free(at(d))) return ground(d);
       const past = d !== 0 && site.onSteps(at(d)) ? pastSteps(d) : null;
-      if (past !== null) return past;
+      if (past !== null) return ground(past);
     }
     return null;
   }
-  const axisRoad = site.surfaceAt(p) === "road";
+  // A way under a bridge's span (the path under Zamkowa's viaduct) is not the street's paving: the deck high over it is (G-503).
+  const deckY = toEdge && !offPaving(site.deckAt(p)) ? site.deckHeightAt(p) : null;
+  const overWay = deckY !== null && deckY - site.heightAt(p) > DECK_DROP;
+  const axisRoad = !overWay && site.surfaceAt(p) === "road";
+  // A lamp of the plan on a pedestrian street's paving stands at its edge, not the fallback past it:
+  // 5 m off Zamkowa's 6.5 m causeway was on the lawn of the Błonie, 6 m off Karmelicka's 5 m in a
+  // garden behind a wall (G-477). Where the axis is not paved the fallback stays. Over a bridge the
+  // paving is the deck's, which the ground under it does not show: 5 m off the end of Zamkowa's
+  // viaduct was on the bank's lawn (G-497).
+  const onDeck = overWay || (toEdge && !axisRoad && site.surfaceAt(p) !== "walk" && !offPaving(site.deckAt(p)));
+  const byPaving = (toEdge && !axisRoad && site.surfaceAt(p) === "walk") || onDeck;
+  const offPave = (q: Pt): boolean => (overWay || offPaving(site.surfaceAt(q))) && (!onDeck || offPaving(site.deckAt(q)));
+  let paving: number | null = null;
   let building: number | null = null;
   let walkFrom: number | null = null;
   let road: number | null = null;
+  // A car park reached over asphalt with no kerb before it (T-172): the lamp keeps to the street's side of it.
+  let lot: number | null = null;
   // A wall lantern looks for the facade across a whole square (the Rynek is some 60 m wide),
   // anything else only along a street's width.
   const reach = mode === "facade" ? FACADE_REACH : SIDE_REACH;
@@ -138,20 +181,44 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
       break;
     }
     if (axisRoad && walkFrom === null && s !== "road") walkFrom = d;
+    if (lamp && axisRoad && walkFrom === null && lot === null && site.inLot(at(d))) lot = d;
     if (!axisRoad && road === null && s === "road") road = d;
+    if (byPaving && paving === null && offPave(at(d))) paving = d;
   }
-  if (mode === "facade") return building === null ? null : facadeAt(site, at, building) - 0.3;
-  if (mode === "front") return building === null ? fallback : Math.max(building - fallback, 0.8);
+  if (mode === "facade") return building === null ? null : ground(edgeAt(at, building, (q) => site.surfaceAt(q) === "building") - 0.3);
+  if (mode === "front") return ground(building === null ? fallback : Math.max(building - fallback, 0.8));
   // Kerb: on the pavement just past the road's edge, or the fallback on a pedestrian street.
   let d: number;
   if (axisRoad) {
     if (walkFrom === null) return null;
-    d = walkFrom + 0.4;
+    // In front of the lot's cars only past the street's own band (the road ground under its axis).
+    const front = lot === null || site.inLot(p) ? null : lot - LOT_GAP;
+    const band = site.roadsAt(p);
+    d = front !== null && front > 0.3 && !band.some((r) => pointInRing(at(front), r)) ? front : walkFrom + 0.4;
   } else {
     d = road === null ? fallback : Math.min(fallback, road - 0.6);
+    const edge = paving === null ? null : edgeAt(at, paving, offPave);
+    const low = edge !== null && (!onDeck || (site.deckHeightAt(at(edge)) ?? -Infinity) - site.heightAt(at(edge + PAST_PAVING)) <= DECK_DROP);
+    if (edge !== null && low) d = Math.min(d, edge + PAST_PAVING);
+    else if (onDeck) return byParapet(site, at);
   }
   if (building !== null) d = Math.min(d, building - 1.2);
-  return d > 0.3 && site.standable(at(d)) ? d : null;
+  return d > 0.3 && site.standable(at(d)) ? ground(d) : null;
+};
+
+/**
+ * Over a bridge's span, high over the ground beside it: on the deck, `PAST_PAVING` in from its
+ * edge, by its parapet (G-503). The fallback stood down in the valley (Zamkowa's viaduct, 3.1 to
+ * 5.6 m under the deck), its lantern among the deck's walkers or in its slab.
+ */
+const byParapet = (site: Site, at: (d: number) => Pt): SideSpot | null => {
+  const off = (q: Pt): boolean => offPaving(site.deckAt(q));
+  for (let d = 0.5; d <= SIDE_REACH; d += 0.5) {
+    if (!off(at(d))) continue;
+    const e = edgeAt(at, d, off) - PAST_PAVING;
+    return e > 0.3 ? { d: e, deck: true } : null;
+  }
+  return null;
 };
 
 const DIRS = Array.from({ length: 8 }, (_, i) => ({ x: Math.sin((i * Math.PI) / 4), z: Math.cos((i * Math.PI) / 4) }));

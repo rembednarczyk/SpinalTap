@@ -32,7 +32,7 @@ import {
   DOCKS_PLACE,
   docks,
   ground,
-  market,
+  HANA_SPOT,
 } from "../src";
 import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
@@ -204,6 +204,9 @@ describe("escort (Mika to the boat)", () => {
       sim.step();
     }
     run(sim, 30);
+    // The fourth man of the ambush (a job of the docks' level 16, ADR-0059) scares the docker off the
+    // quay: the crowd's fear is transient (G-240), so the save calms the street first, as the app's does.
+    sim.calmForSave();
     const restored = reload(sim);
     expect(crew(restored, c)).toHaveLength(c.targets);
     expect(byKey(restored, contractEscortKey(c.id))!.position).toEqual(byKey(sim, contractEscortKey(c.id))!.position);
@@ -411,7 +414,7 @@ describe("no sniper outside the docks", () => {
   it("market and Krakowskie jobs never bring Tessen", () => {
     for (const kind of ["eliminate", "retrieve", "protect"] as const) {
       const sim = Simulation.create({ seed: 4 });
-      teleportPlayer(sim, market(90.5, 0, 74), 0);
+      teleportPlayer(sim, { ...HANA_SPOT, x: HANA_SPOT.x - 1.5 }, 0);
       sim.step();
       const c = accept(sim, kind);
       const site = CONTRACT_SITE_SPAWNS[c.siteId][0]!;

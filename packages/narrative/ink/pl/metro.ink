@@ -8,12 +8,12 @@ PASAZER: Krakowskie. Mówię ci, tam przy deptaku jest bar, w którym nikt nie p
 -> END
 
 === metro_ride_2 ===
-GLOSNIK: Tsugi wa Brama Krakowska desu. Następna stacja: Brama Krakowska, Stare Miasto. Prosimy uważać na odstęp między wagonem a peronem.
+GLOSNIK: Tsugi wa Brama Krakowska desu. Następna stacja: Brama Krakowska, Stare Miasto. Wyjście A na Plac Łokietka, wyjście B do Alchemii. Prosimy uważać na odstęp między wagonem a peronem.
 PASAZERKA: Odstęp między wagonem a peronem jest od dziesięciu lat ten sam. Powinni go wpisać do rejestru zabytków.
 -> END
 
 === metro_ride_3 ===
-GLOSNIK: Tsugi wa Plac Zamkowy desu. Następna stacja: Plac Zamkowy, Podzamcze. Przesiadka na dworzec autobusowy i linie nocne.
+GLOSNIK: Tsugi wa Plac Zamkowy desu. Następna stacja: Plac Zamkowy, Podzamcze. Wyjście B: Dworzec Autobusowy, przesiadka na linie nocne.
 DZIECKO: Mamo, czemu ten pan śpi na stojąco?
 PASAZERKA: Bo pracuje w Tessen, kochanie. Oni tak odpoczywają.
 -> END

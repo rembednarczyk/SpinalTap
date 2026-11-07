@@ -71,10 +71,14 @@ const prepare = (graph: NavGraph): Prepared => {
 /** Nodes a character standing at `from` can walk to directly, with the cost of getting there. */
 const attach = (world: World<Entity>, p: Prepared, from: Vec3): Map<number, number> => {
   const out = new Map<number, number>();
-  // On a flight of stairs both of its ends are in reach, whatever the height.
+  // On a flight of stairs both of its ends are in reach, whatever the height between them; over
+  // or under it they are not (the street over a metro's second flight, G-368).
   for (const e of p.graph.edges) {
     const r = e.via;
     if (!r || from.x < r.minX || from.x > r.maxX || from.z < r.minZ || from.z > r.maxZ) continue;
+    const ya = p.at[p.ids.indexOf(e.a)]?.y ?? from.y;
+    const yb = p.at[p.ids.indexOf(e.b)]?.y ?? from.y;
+    if (from.y > Math.max(ya, yb) + SAME_LEVEL || from.y < Math.min(ya, yb) - SAME_LEVEL) continue;
     p.ids.forEach((id, i) => {
       const at = p.at[i];
       if (at && (id === e.a || id === e.b)) out.set(i, dist(from, at));
@@ -181,6 +185,11 @@ export const firingPosition = (world: World<Entity>, graph: NavGraph, from: Vec3
     }
   });
   if (end < 0) return null;
-  // Standing on it already: hold there.
-  return { next: firstStep(p, s, end, from) ?? from, cost: endCost };
+  const step = firstStep(p, s, end, from);
+  if (step) return { next: step, cost: endCost };
+  // Standing on it already: hold there, unless the shot is the node's and not from here. Within
+  // `ARRIVE` of the head of a metro's stairs the pavilion's lintel hides the hall (G-368).
+  const at = p.at[end];
+  const held = !at || lineOfSight(world, raise(from, EYE), raise(target, CHEST)) ? from : at;
+  return { next: held, cost: endCost };
 };

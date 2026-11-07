@@ -5,6 +5,8 @@ import {
   type HitZone,
   defenseOf,
   outfitDefense,
+  WEAR_PER_HIT,
+  garmentWearScale,
   wearGarments,
   wornGarments,
   type DerivedStats,
@@ -19,6 +21,7 @@ import {
   sampleCone,
   spreadAngle,
   type RandomPort,
+  weaponStyle,
 } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -27,7 +30,7 @@ import { aimOrigin, chestOf, hitscan, type HitscanResult } from "../world/hitsca
 import { consumeRound, loadedOf, readyToFire } from "../world/player-weapon";
 import { playerStatsOf } from "./player-control-system";
 import { disturb, isEngaged, noteViolence, offend, playerEngaged } from "../world/street";
-import { deflectShot, deflects } from "../world/deflect";
+import { dancesBullet, deflectShot, deflects } from "../world/deflect";
 import { playerHeld } from "../world/takedown";
 import { difficultyOf } from "../world/difficulty";
 
@@ -83,10 +86,10 @@ export const landedDamage = (ctx: SimContext, target: Entity, amount: number): n
  */
 export const npcSpreadOf = (ctx: SimContext, e: Entity): number => aimSpreadOf(e, null) / difficultyOf(ctx).npcAccuracy;
 
-/** A hit on the player wears the clothes covering that zone. */
+/** A hit on the player wears the clothes covering that zone (half as much with Reinforced Seams, ADR-0059). */
 export const wearPlayerClothes = (ctx: SimContext, zone: HitZone): void => {
   const domain = ctx.state.domain;
-  const inventory = wearGarments(domain.inventory, domain.equipment, zone);
+  const inventory = wearGarments(domain.inventory, domain.equipment, zone, WEAR_PER_HIT * garmentWearScale(domain.progression.perks));
   if (inventory !== domain.inventory) ctx.state.domain = { ...domain, inventory };
 };
 
@@ -169,7 +172,8 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
  * One pellet hits `target` in `zone`: a raised melee guard takes some of a shot from the front
  * (ADR-0019), `resolveAttack` draws the crit (one random number), the damage lands and any AI
  * hit is alerted. Returns whether the player was hurt. A dashing player is not there for the
- * bullet, and a guard with the Tsubame reflex sends it back instead (ADR-0033).
+ * bullet (with Bullet Dance it flies back, ADR-0059), and a guard with the Tsubame reflex sends
+ * it back instead (ADR-0033).
  */
 const hitWithPellet = (
   ctx: SimContext,
@@ -178,7 +182,11 @@ const hitWithPellet = (
   { target, health, point, zone }: { target: Entity; health: NonNullable<Entity["health"]>; point: Vec3; zone: HitZone },
   rng: RandomPort,
 ): boolean => {
-  if (target.player && (target.perks?.iframes ?? 0) > 0) return false;
+  if (target.player && (target.perks?.iframes ?? 0) > 0) {
+    // Bullet Dance (ADR-0059): the bullet that meets her dash flies back along her aim.
+    if (dancesBullet(ctx, target)) deflectShot(ctx, { shooter: shot.shooter, defender: target, at: point, weapon }, (e) => defenderOf(ctx, e), rng);
+    return false;
+  }
   const guard = guardAgainst(target, shot.origin, "projectile");
   if (guard.blocked && deflects(ctx, target)) {
     deflectShot(ctx, { shooter: shot.shooter, defender: target, at: point, weapon }, (e) => defenderOf(ctx, e), rng);
@@ -195,6 +203,7 @@ const hitWithPellet = (
   if (shot.shooter.player) noteViolence(ctx, target, isEngaged(target), point);
   target.health = applyDamage(health, outcome.damage);
   target.lastHitBy = shot.shooter.id;
+  target.lastHitStyle = shot.shooter.player ? weaponStyle(weapon.id) : undefined;
   if (target.player) wearPlayerClothes(ctx, outcome.zone);
   // Getting shot provokes any AI, whatever it thought of the shooter before; not one knocked out.
   if (target.ai && !target.unconscious) target.ai.alerted = true;
@@ -253,7 +262,7 @@ export const combatSystem: System = {
         ctx,
         {
           shooter: p,
-          origin: aimOrigin(p, ctx.state.domain.preferences.cameraMode),
+          origin: aimOrigin(p, ctx.state.domain.preferences.cameraMode, ctx.input.leftShoulder === true),
           dir: directionFromAngles(p.yaw, p.pitch),
           spread: aimSpreadOf(p, stats),
           critChance: stats.critChance,

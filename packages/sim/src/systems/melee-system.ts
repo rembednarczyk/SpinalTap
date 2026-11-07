@@ -1,4 +1,4 @@
-import { type EntityId, type MeleeProfile, applyDamage, meleeReach, nextStrike, resolveAttack, strikeAt, strikeZone } from "@seki/core";
+import { type EntityId, type MeleeProfile, applyDamage, knockbackScale, meleeReach, nextStrike, parryStunScale, resolveAttack, strikeAt, strikeZone } from "@seki/core";
 import type { Entity, MeleeState } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { bodyHeightOf } from "../world/hitboxes";
@@ -86,6 +86,8 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
   if (!weapon) return false;
   const strike = strikeAt(profile, f.melee.strike);
   const crit = f.player ? playerStatsOf(ctx.state.domain) : NPC_CRIT;
+  // Might hits harder (ADR-0059): weapon damage and the implants' bonus alike.
+  const might = f.player ? 1 + playerStatsOf(ctx.state.domain).meleeDamage : 1;
   const eye = eyeOf(f);
   const facing = { x: f.position.x, z: f.position.z, yaw: f.yaw };
   let hits = 0;
@@ -100,18 +102,20 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
     const guard = guardAgainst(t, f.position, "melee");
     if (guard.parried) {
       ctx.bus.emit("AttackBlocked", { attackerId: f.id, defenderId: t.id, parried: true, kind: "melee", at: chest });
-      stagger(ctx, f, t.combatant?.stats?.melee?.block.parryStun ?? 0, "parry");
+      // Crushing Parry (ADR-0059): the player's parry stuns longer, so the takedown window stays open.
+      const stun = (t.combatant?.stats?.melee?.block.parryStun ?? 0) * (t.player ? parryStunScale(ctx.state.domain.progression.perks) : 1);
+      stagger(ctx, f, stun, "parry");
       parried = true;
       break;
     }
     const zone = strikeZone(strikeHeight(f, t, reach.distance), reach.angle / profile.arc);
     const resolved = resolveAttack(
       {
-        damage: weapon.damage * strike.damage * guard.multiplier,
+        damage: weapon.damage * strike.damage * guard.multiplier * might,
         zones: weapon.zones,
         critChance: crit.critChance,
         critMultiplier: crit.critMultiplier,
-        damageBonus: crit.damageBonus * guard.multiplier,
+        damageBonus: crit.damageBonus * guard.multiplier * might,
       },
       defenderOf(ctx, t),
       ctx.rng,
@@ -121,6 +125,7 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
     if (f.player) noteViolence(ctx, t, isEngaged(t), chest);
     t.health = applyDamage(t.health, outcome.damage);
     t.lastHitBy = f.id;
+    t.lastHitStyle = f.player ? "melee" : undefined;
     if (t.player) wearPlayerClothes(ctx, outcome.zone);
     if (t.ai && !t.unconscious) t.ai.alerted = true;
     ctx.bus.emit("DamageDealt", { sourceId: f.id, targetId: t.id, amount: outcome.damage, critical: outcome.critical, zone: outcome.zone, at: chest });
@@ -130,7 +135,9 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
       // Shoved away from the attacker; movement keeps it out of walls.
       if (t.melee) {
         const d = Math.max(1e-6, reach.distance);
-        t.melee.knock = { x: ((t.position.x - f.position.x) / d) * KNOCKBACK_SPEED, z: ((t.position.z - f.position.z) / d) * KNOCKBACK_SPEED, time: KNOCKBACK_TIME };
+        // Battering Ram (ADR-0059): the player's hits shove harder.
+        const push = KNOCKBACK_SPEED * (f.player ? knockbackScale(ctx.state.domain.progression.perks) : 1);
+        t.melee.knock = { x: ((t.position.x - f.position.x) / d) * push, z: ((t.position.z - f.position.z) / d) * push, time: KNOCKBACK_TIME };
       }
     }
     if (t.player) threaten(ctx, "damage", f.id);

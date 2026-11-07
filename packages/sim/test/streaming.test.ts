@@ -4,12 +4,9 @@ import {
   RenderSync,
   STREAMING_RADII,
   Simulation,
-  TARG_NORTH_BOUNDS,
-  TARG_SOUTH_BOUNDS,
   WORLD_CHUNKS,
   distanceToRect,
   ground,
-  market,
   stateHash,
   type Entity,
 } from "../src";
@@ -17,15 +14,20 @@ import { ALLEY_START, AWAY, byKey, input, run, teleportPlayer } from "./helpers"
 
 /**
  * Lublin's chunks (ADR-0045): the deptak with the clinic, Neon Koi and the car wash; the Rynek
- * end of the Old Town; the two chunks of Podzamcze the market straddles.
+ * end of the Old Town; the chunk of Podzamcze on Aleja Tysiąclecia where the market stood, and the
+ * chunk of Krakowskie Przedmieście with Alchemia, where its people are now (ADR-0063).
  */
 const HOME = "krakowskie-2-0";
 const RYNEK = "stare-miasto-0-0";
 const MARKET = "podzamcze-1-0";
-/** Plac Łokietka by Brama Krakowska, Plac Zamkowy, and the market floor under the viaduct. */
+/** Plac Łokietka by Brama Krakowska, Plac Zamkowy, the avenue where the market stood and Alchemia's square. */
 const LOKIETKA = ground(440, -100);
 const ZAMKOWY = ground(717.5, 296);
-const IN_MARKET = market(96, 0, 90);
+const IN_MARKET = ground(785, 350);
+const ALCHEMIA = "krakowskie-2-1";
+const AT_ALCHEMIA = ground(438, 70);
+/** Where the market stood on Aleja Tysiąclecia until ADR-0063. */
+const OLD_MARKET = { minX: 755, maxX: 815, minZ: 316, maxZ: 376 };
 
 const hasKey = (sim: Simulation, key: string) => byKey(sim, key) !== undefined;
 
@@ -72,6 +74,10 @@ describe("world streaming: loading and unloading", () => {
     goTo(sim, ZAMKOWY);
     expect(sim.district).toBe("targ");
     expect(sim.streamer.loadedChunks).toEqual(["podzamcze-0-0", MARKET]);
+    // The market's people are in Alchemia (ADR-0063): its chunk brings them in.
+    expect(hasKey(sim, "oyaji")).toBe(false);
+    goTo(sim, AT_ALCHEMIA);
+    expect(sim.streamer.loadedChunks).toContain(ALCHEMIA);
     expect(hasKey(sim, "oyaji")).toBe(true);
     expect(hasKey(sim, "hebi-lookout")).toBe(true);
   });
@@ -154,14 +160,14 @@ describe("world streaming: loading and unloading", () => {
 
   it("never brings the dead back", () => {
     const sim = Simulation.create({ seed: 1 });
-    goTo(sim, IN_MARKET);
+    goTo(sim, AT_ALCHEMIA);
     const lookout = byKey(sim, "hebi-lookout")!;
     lookout.health = { ...lookout.health!, current: 0 };
     sim.step();
     expect(sim.domain.flags).toContain("dead:hebi-lookout");
     goTo(sim, AWAY);
-    expect(sim.streamer.isLoaded(MARKET)).toBe(false);
-    goTo(sim, IN_MARKET);
+    expect(sim.streamer.isLoaded(ALCHEMIA)).toBe(false);
+    goTo(sim, AT_ALCHEMIA);
     expect(hasKey(sim, "hebi-lookout")).toBe(false);
   });
 
@@ -173,8 +179,8 @@ describe("world streaming: loading and unloading", () => {
     const contract = sim.domain.contracts.active!;
     expect(contract.status).toBe("active");
     expect(contract.siteId).toBe("car_wash");
-    goTo(sim, ZAMKOWY);
-    goTo(sim, IN_MARKET);
+    goTo(sim, AT_ALCHEMIA);
+    expect(sim.streamer.isLoaded(HOME)).toBe(false);
     expect([...sim.world].some((e) => e.key?.startsWith(`${contract.id}-g`))).toBe(false);
     const lookout = byKey(sim, "hebi-lookout")!;
     lookout.health = { ...lookout.health!, current: 0 };
@@ -191,7 +197,7 @@ describe("world streaming: saves", () => {
     const guard = byKey(sim, "guard")!;
     guard.health = { ...guard.health!, current: 41 };
     goTo(sim, ZAMKOWY);
-    goTo(sim, market(92, 0, 70), 0.7);
+    goTo(sim, ground(781, 330), 0.7);
     const saved = roundTrip(sim.snapshot(null, "market", ""));
     expect(saved.streaming.loadedChunks).toEqual([MARKET]);
     expect(saved.entities.find((e) => e.key === "player")?.position).toEqual(sim.player()!.position);
@@ -291,6 +297,8 @@ describe("world streaming: presentation", () => {
     sync.sync(sim.world, 0, sim.streamer.streamedOut);
     expect(port.despawns).toContainEqual([fixer, "unloaded"]);
     expect(port.despawns.filter(([, r]) => r === "removed")).toHaveLength(1);
+    goTo(sim, AT_ALCHEMIA);
+    sync.sync(sim.world, 0, sim.streamer.streamedOut);
     expect(port.views.has(byKey(sim, "oyaji")!.id)).toBe(true);
   });
 });
@@ -304,9 +312,9 @@ describe("world map", () => {
     }
   });
 
-  it("the deptak's chunk is out of the unload radius anywhere in the market", () => {
+  it("the deptak's chunk is out of the unload radius anywhere where the market stood", () => {
     const home = WORLD_CHUNKS.find((c) => c.id === HOME)!.bounds;
-    for (const b of [TARG_SOUTH_BOUNDS, TARG_NORTH_BOUNDS]) {
+    for (const b of [OLD_MARKET]) {
       for (let x = b.minX; x <= b.maxX; x += 2) {
         for (let z = b.minZ; z <= b.maxZ; z += 2) {
           expect(distanceToRect(x, z, home)).toBeGreaterThan(STREAMING_RADII.unloadRadius);
@@ -315,12 +323,12 @@ describe("world map", () => {
     }
   });
 
-  it("the streets are walkable from the deptak through the Old Town's gates into the market", () => {
+  it("the streets are walkable from the deptak through the Old Town's gates down to Aleja Tysiąclecia", () => {
     const sim = Simulation.create({ seed: 6 });
     teleportPlayer(sim, ALLEY_START);
     const districts = new Set<string | null>();
     // Plac Łokietka, Brama Krakowska, Bramowa, the Rynek, Grodzka under the footbridge, Brama
-    // Grodzka, Zamkowa down to Plac Zamkowy and under the viaduct to the market (ADR-0045).
+    // Grodzka, Zamkowa down to Plac Zamkowy and on to Aleja Tysiąclecia (ADR-0045).
     const route = [
       [440, -100], [447, -95], [457, -95.6], [472, -91.4], [487, -87.2], [497, -79], [520, -63], [561, -40], [573, -28], [577, -23],
       [610, 14], [637, 47], [685, 112], [708, 134], [722, 147], [730, 155], [739, 174], [725, 193], [720, 203], [720, 267],

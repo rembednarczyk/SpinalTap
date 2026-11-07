@@ -1,0 +1,1 @@
+Każdy wróg z AI gangera (Hebi, Kagami, Tessen) widzi w stożku przed sobą, kucającą Seki z połowy zasięgu i potrzebuje chwili patrzenia przed alarmem, więc od tyłu w kucaniu da się podejść i obezwładnić także gangera Hebi (ADR-0069 etap 1, G-285).

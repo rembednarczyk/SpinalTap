@@ -1,5 +1,5 @@
 import { EMPTY_INPUT, type InputFrame, type Vec3 } from "@seki/core";
-import { Simulation, type SimulationOptions, ground } from "../src";
+import { type Entity, Simulation, type SimulationOptions, ground } from "../src";
 
 export const input = (partial: Partial<InputFrame> = {}): InputFrame => ({ ...EMPTY_INPUT, ...partial });
 
@@ -59,4 +59,66 @@ export const collect = <T>(sim: Simulation, type: Parameters<Simulation["bus"]["
 export const debriefExtras = (sim: Simulation): (() => number) => {
   const cards = collect<{ bonus: number; styleBonus: number }>(sim, "ContractDebrief");
   return () => cards.reduce((sum, c) => sum + c.bonus + c.styleBonus, 0);
+};
+
+type Passer = Entity & { passerby: NonNullable<Entity["passerby"]> };
+
+/** A passer-by standing at its stop (ADR-0040), not one walking a crowd route (ADR-0041). */
+export const atStop = (e: Passer): boolean => !e.passerby.lane;
+
+/**
+ * A background passer-by on the deptak, with no shop and no conversation: the street's opinion
+ * moves it (ADR-0070). By default one standing at its stop; `pick` chooses another kind (a
+ * walker of a crowd route, one sitting on a bench). The player stands `gap` metres from it.
+ */
+export const passerbyOnDeptak = (sim: Simulation, gap = 2, pick: (e: Passer) => boolean = atStop): Entity => {
+  teleportPlayer(sim, ground(300, -84));
+  run(sim, 5);
+  const walker = [...sim.world]
+    .filter((e): e is Passer => !!e.civilian && !!e.passerby && !e.interactable && !e.vehicle)
+    .filter(pick)
+    .sort((a, b) => a.id - b.id)[0];
+  if (!walker) throw new Error("no passer-by on the deptak");
+  teleportPlayer(sim, { x: walker.position.x + gap, y: walker.position.y, z: walker.position.z });
+  return walker;
+};
+
+/**
+ * Watches the civilian `id` for `steps` steps with the player standing still (the measurement of
+ * ADR-0070): how often its movement relative to the player turns between "away" and "towards",
+ * how far from the player it keeps after the first five seconds and how fast it went.
+ */
+export const watchStandOff = (sim: Simulation, id: number, steps: number) => {
+  let flips = 0;
+  let last = 0;
+  let min = Infinity;
+  let max = 0;
+  let speed = 0;
+  for (let i = 0; i < steps; i++) {
+    run(sim, 1);
+    const e = [...sim.world].find((x) => x.id === id)!;
+    const p = sim.player()!;
+    const dx = e.position.x - p.position.x;
+    const dz = e.position.z - p.position.z;
+    const d = Math.hypot(dx, dz);
+    const vx = e.velocity?.x ?? 0;
+    const vz = e.velocity?.z ?? 0;
+    speed = Math.max(speed, Math.hypot(vx, vz));
+    const radial = (vx * dx + vz * dz) / Math.max(d, 1e-6);
+    const s = Math.abs(radial) < 0.05 ? 0 : Math.sign(radial);
+    if (s !== 0 && last !== 0 && s !== last) flips++;
+    if (s !== 0) last = s;
+    if (i > 300) {
+      min = Math.min(min, d);
+      max = Math.max(max, d);
+    }
+  }
+  return { flips, min, max, speed };
+};
+
+/** How far `e`'s facing is off looking at the player (radians). */
+export const offFacingPlayer = (sim: Simulation, e: Entity): number => {
+  const p = sim.player()!;
+  const facing = Math.atan2(p.position.x - e.position.x, p.position.z - e.position.z);
+  return Math.abs(Math.atan2(Math.sin(e.yaw - facing), Math.cos(e.yaw - facing)));
 };

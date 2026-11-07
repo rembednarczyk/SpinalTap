@@ -1,21 +1,42 @@
 import { BehaviourTree, State } from "mistreevous";
-import { type CrowdState, type EntityId, type Vec3, factionStance } from "@seki/core";
+import { type CrowdState, type EntityId, type Vec3, reputationTier } from "@seki/core";
 import type { CrowdMind, Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
 import { followSchedule } from "../../world/schedule";
 import { incapacitated } from "../../world/takedown";
+import { activityOf } from "../../world/activity";
 import { worldTimeScale } from "../ability-system";
+import { STEP_HEIGHT } from "../movement-system";
 import { CIVILIAN_TREE } from "./civilian-tree";
+import { type Walker, holdLanePlace, laneSpot } from "./crowd-walk";
 import { walkRoutine } from "./passerby-walk";
-import { steerPoint, straightWalk } from "./steering";
+import { detourStep, steerPoint, straightWalk } from "./steering";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
 
-/** Civilians run from a feared player closer than this (metres). */
+/** Passers-by run from a player the street is hostile to (ADR-0070) closer than this (metres). */
 export const FLEE_RADIUS = 7;
+/**
+ * A wary street (ADR-0070) only makes way: a passer-by steps back at a walk from a player
+ * closer than this (metres), watching them, and says nothing.
+ */
+export const YIELD_RADIUS = 3.5;
+/**
+ * An escape from the player ends (and the next one gets its own cue) only this far from them or
+ * once the street stops fearing them: a passer-by going back to its spot steps over FLEE_RADIUS
+ * again and again, and each step used to cue a new escape (G-281).
+ */
+const FLEE_CUE_RESET = 2 * FLEE_RADIUS;
+/**
+ * A civilian that fears the player and whose spot is within its flee radius plus this (metres)
+ * does not go back to it, only stands past the radius and watches the player (ADR-0070): going
+ * back stepped it over the radius again, and it turned in and out of it 36 times a second. The
+ * rule reads only positions and reputation, so a load mid-stand-off goes on the same.
+ */
+export const FLEE_DEAD_ZONE = 2;
 export const CIVILIAN_FLEE_SPEED = 3.4;
-const CIVILIAN_WALK_SPEED = 1.4;
+export const CIVILIAN_WALK_SPEED = 1.4;
 /** Fastest a civilian hurries to catch up with its daily plan (after fleeing, say). */
 const CIVILIAN_SCHEDULE_SPEED = 1.6;
 const HOME_TOLERANCE = 0.3;
@@ -31,9 +52,138 @@ export const FLEE_SECONDS = 8;
 export const ALARMED_SECONDS = 5;
 /** The running bystander heads for a point this far ahead, away from the danger, round obstacles. */
 const FLEE_LOOKAHEAD = 6;
-/** Turns tried, in order, when the way straight away is blocked; the probe is this long. */
-const FLEE_TURNS = [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2, (3 * Math.PI) / 4, (-3 * Math.PI) / 4];
+/**
+ * Turns tried, in order, when the way straight away is blocked; the probe is this long. None
+ * leads back towards the danger (G-328): at the end of a blind alley the ways on opened and shut
+ * as it shuffled along the wall, and whenever they all shut it took a way back towards the
+ * player and in again, so it never stood: it ran on the spot, its heading jumping 509 times in
+ * 10 s. With no way on open it is cornered and stands.
+ */
+const FLEE_TURNS = [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2];
 const FLEE_PROBE = 2.5;
+/**
+ * Hysteresis of the turn (G-317): the way it runs on (read from its heading) is kept while it is
+ * open this much further than the probe, and a way closer to straight away takes over only once
+ * it is open as far. Along a wall the probe of the next way in opened and closed every step, and
+ * the heading swung by 0.8 rad 24 times. Half a metre already lets it run up and down a blind
+ * alley closer to the player; 1.5 m keeps others swinging (flee-wall.test.ts).
+ */
+const FLEE_SWITCH_MARGIN = 1;
+/** How close its heading has to be to a turn to count as running on it (radians). */
+const FLEE_HELD_TURN = Math.PI / 8;
+/**
+ * How far off the middle the side lines of a way run, of the body's radius: a gap between them
+ * (0.38 m) is too narrow to run through. 0.8 and 1 shut more ways by the walls of the deptak and
+ * swung more walkers than they stopped (seeds 3, 7, 17, 29, 43, G-338).
+ */
+const FLEE_PROBE_SIDE = 0.5;
+/**
+ * How high above the feet the lines of a way run: just over what a step takes (G-343). At knee
+ * height they passed over a planter 0.56 m high that the body ran into: the way straight away
+ * stayed open, the body slid along the planter until a lamp post shut it, and the walker swung
+ * between that way and the next every step, 380 times in 8 s.
+ */
+const FLEE_PROBE_HEIGHT = STEP_HEIGHT + 0.05;
+/**
+ * A way whose walk turns a runner back by more than this (radians) does not take over while the
+ * way it runs on is still open (G-343): the step back undid the step on, and at the end of an
+ * alley the walker ran east and west in turn every step, 431 times in 8 s. With 3π/4 two walkers
+ * along a wall no longer took a way back that had opened wide, and ran on past the player.
+ */
+const FLEE_REVERSAL = (5 * Math.PI) / 6;
+
+/**
+ * Is the way along `heading` open `reach` metres for the body, not just for a line through its
+ * middle (G-338)? Between a lamp post and a planter 0.2 m apart the knee-high line went through
+ * where the body, 0.76 m wide, did not: the probe of the way straight away opened and closed
+ * every step, the heading swung by a quarter turn 242 times and the walker stood still. So a
+ * way with something across both side lines too is shut. With one side on a wall it stays
+ * open: the body slides along it, and shutting it swung walkers along walls (flee-wall.test.ts).
+ */
+const bodyWalk = (ctx: SimContext, from: Vec3, heading: number, reach: number, radius: number): boolean => {
+  const [ux, uz] = [Math.sin(heading), Math.cos(heading)];
+  const line = (s: number): boolean => {
+    const start = { x: from.x + uz * s, y: from.y, z: from.z - ux * s };
+    return straightWalk(ctx.world, start, { x: start.x + ux * reach, y: from.y, z: start.z + uz * reach }, FLEE_PROBE_HEIGHT);
+  };
+  const side = radius * FLEE_PROBE_SIDE;
+  return line(0) && (side <= 0 || line(side) || line(-side));
+};
+
+/** The heading of the walk along `heading`, round its obstacle as `steerPoint` takes it. */
+const walkHeading = (ctx: SimContext, from: Vec3, heading: number): number => {
+  const p = steerPoint(ctx.world, from, { x: from.x + Math.sin(heading) * FLEE_LOOKAHEAD, y: from.y, z: from.z + Math.cos(heading) * FLEE_LOOKAHEAD });
+  return Math.atan2(p.x - from.x, p.z - from.z);
+};
+
+/** The angle between two headings, unsigned. */
+const turnBetween = (a: number, b: number): number => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+
+/**
+ * Does the walk along `turn` off `away`, round its obstacle as `steerPoint` takes it, bend back
+ * across the line straight away from the danger or nearer to it (straight away itself: back
+ * towards the danger)? Then the probe of that way was cut by a corner the walk goes round, not
+ * by the wall alongside, and keeping the way it ran on led a chased walker off the way out of an
+ * alley into a corner, where it swung at the player's feet (G-317, flee-wall.test.ts).
+ */
+const bendsBack = (ctx: SimContext, from: Vec3, away: number, turn: number): boolean => {
+  const off = walkHeading(ctx, from, away + turn) - away;
+  const bend = Math.atan2(Math.sin(off), Math.cos(off));
+  if (Math.abs(bend - turn) <= FLEE_HELD_TURN) return false;
+  if (turn === 0) return Math.abs(bend) > Math.PI / 2;
+  return Math.sign(bend) !== Math.sign(turn) || Math.abs(bend) < Math.abs(turn);
+};
+
+/**
+ * The turn off `away` to run on: straight away when the way is open, else the open way closest
+ * to it (a wall at its back), with the hysteresis above. `course` is the way its velocity points
+ * while it runs, null while it only walked: such a heading is not kept (kept for its first step,
+ * it turned 1.5 rad on the next). Nor is any heading kept past a way closer to straight away that
+ * `bendsBack`. Null when every way is blocked. Running the way it faces (fleeing, not making
+ * way), the way it runs on is also one whose walk round a corner its course follows (G-343): read
+ * only from the turn, it was lost on the first step round, and the walker turned back.
+ */
+const fleeTurn = (ctx: SimContext, from: Vec3, away: number, yaw: number, course: number | null, radius: number): number | null => {
+  const open = (turn: number, reach: number): boolean => bodyWalk(ctx, from, away + turn, reach, radius);
+  const best = FLEE_TURNS.find((t) => open(t, FLEE_PROBE));
+  if (best === undefined || course === null) return best ?? null;
+  const faces = turnBetween(yaw, course) <= FLEE_HELD_TURN;
+  const walksOn = (t: number): boolean => faces && open(t, FLEE_PROBE) && turnBetween(walkHeading(ctx, from, away + t), course) <= FLEE_HELD_TURN;
+  const held = FLEE_TURNS.find((t) => turnBetween(away + t, yaw) <= FLEE_HELD_TURN) ?? FLEE_TURNS.find(walksOn);
+  if (held === undefined || held === best) return best;
+  if (faces && open(held, FLEE_PROBE) && turnBetween(walkHeading(ctx, from, away + best), course) > FLEE_REVERSAL) return held;
+  const far = FLEE_PROBE + FLEE_SWITCH_MARGIN;
+  if (open(best, far) || !open(held, far)) return best;
+  return bendsBack(ctx, from, away, best) ? best : held;
+};
+
+/**
+ * How close its heading has to be to a way for that to be the way it ran on its last step
+ * (radians, G-326): one step turns the heading towards a moving point by hundredths of a radian,
+ * round a corner by up to a tenth. With 0.05 a walker let go of its way round on such a bend and
+ * swung again (flee-wall.test.ts, seed 29).
+ */
+const FLEE_HELD_STEP = 0.15;
+
+/** The angle between `heading` and the way from `from` to `to`, unsigned. */
+const offHeading = (from: Vec3, to: Vec3, heading: number): number => {
+  const d = Math.atan2(to.x - from.x, to.z - from.z) - heading;
+  return Math.abs(Math.atan2(Math.sin(d), Math.cos(d)));
+};
+
+/**
+ * The point to run towards this step, `steerPoint` with hysteresis (G-326): a runner that took
+ * the way round on its last step (`heading`, the way its velocity points) keeps it while the
+ * straight walk is free again. Not its yaw: making way, it faces the player. The knee-high
+ * line grazed a corner that the way round, in cells with room for a body, keeps clear of: the
+ * line opened and closed every step, and the heading swung by 0.42 rad 25 times.
+ */
+const fleeStep = (ctx: SimContext, from: Vec3, ahead: Vec3, heading: number, running: boolean): Vec3 => {
+  if (!straightWalk(ctx.world, from, ahead)) return steerPoint(ctx.world, from, ahead, true);
+  if (!running || offHeading(from, ahead, heading) <= FLEE_HELD_STEP) return ahead;
+  const round = detourStep(ctx.world, from, ahead);
+  return round && offHeading(from, round, heading) <= FLEE_HELD_STEP ? round : ahead;
+};
 
 const FEAR: Readonly<Record<CrowdState, number>> = { calm: 0, alarmed: 1, fleeing: 2, cowering: 3 };
 
@@ -57,7 +207,62 @@ export const scare = (ctx: SimContext, c: Entity, state: CrowdState, from: Vec3)
   ctx.bus.emit("CrowdReacted", { entityId: c.id, state });
 };
 
+/**
+ * Calms the street for a save (G-240). The crowd's fear is not saved and a loaded game starts
+ * calm (ADR-0029), so the game it is saved from calms down too: both go on the same. Calls in
+ * progress are settled first (`settleCalls`). Being scared off the phone (`scared`) goes too: it
+ * is not in the save either, and only lets a witness call sooner.
+ */
+export const calmStreet = (ctx: SimContext): void => {
+  for (const c of inCreationOrder(ctx.world.with("civilian"))) {
+    const mind = c.civilian.crowd;
+    if (!mind) continue;
+    delete c.civilian.crowd;
+    if (mind.state !== "calm") ctx.bus.emit("CrowdReacted", { entityId: c.id, state: "calm" });
+  }
+};
+
 type Civilian = Entity & { civilian: NonNullable<Entity["civilian"]>; velocity: NonNullable<Entity["velocity"]> };
+
+const onLane = (c: Civilian): c is Civilian & Walker => !!c.passerby?.lane;
+
+/**
+ * Where a civilian goes back to: its routine's spot, its place on a crowd route (ADR-0041),
+ * its daily plan's place or its home.
+ */
+const spotOf = (ctx: SimContext, c: Civilian): Vec3 | null => {
+  if (onLane(c)) return laneSpot(ctx, c);
+  if (c.passerby) return c.passerby.goal;
+  return c.schedule?.pose?.position ?? c.civilian.home;
+};
+
+/** Activities done sitting or lying (ADR-0040): the figure keeps its heading on the seat. */
+const SEATED: ReadonlySet<string> = new Set(["sit", "sleep"]);
+
+/**
+ * Sitting (a bench, a stool, home) or lying down: the street's opinion does not turn it round
+ * (ADR-0070). Read from the activity rule itself, not the stored `activity`, so a load goes on
+ * the same.
+ */
+const seated = (ctx: SimContext, c: Civilian): boolean => {
+  const now = activityOf(c, ctx.state.domain.clock);
+  return now !== null && SEATED.has(now);
+};
+
+/** Turns `self` to look at the player, unless it sits. */
+const facePlayer = (ctx: SimContext, self: Civilian, player: Entity): void => {
+  if (seated(ctx, self)) return;
+  self.yaw = Math.atan2(player.position.x - self.position.x, player.position.z - self.position.z);
+};
+
+/**
+ * A resident with a shop or a conversation (ADR-0070): the street's opinion changes its prices
+ * and its words, it does not chase it off its spot. A shot still does (ADR-0029).
+ */
+const isResident = (c: Entity): boolean => c.interactable?.kind === "shop" || c.interactable?.kind === "dialogue";
+
+/** How a passer-by keeps away from the player: runs (hostile street), makes way (wary) or not at all. */
+type PlayerFear = "flee" | "yield" | null;
 
 const hasRoutine = (c: Civilian): c is Civilian & { passerby: NonNullable<Entity["passerby"]> } => c.passerby !== undefined;
 
@@ -74,8 +279,55 @@ class CivilianAgent {
   IsFleeing = (): boolean => this.crowd() === "fleeing";
   IsAlarmed = (): boolean => this.crowd() === "alarmed";
 
-  FearsPlayer = (): boolean => !!this.ctx && !!this.self && factionStance(this.ctx.state.domain.reputation, this.self.faction ?? "civilians") === "hostile";
-  PlayerNearby = (): boolean => this.player !== null && this.distance <= FLEE_RADIUS;
+  /** The street's opinion of the player by tiers (ADR-0070); residents are never chased off. */
+  private playerFear = (): PlayerFear => {
+    const { ctx, self } = this;
+    if (!ctx || !self || isResident(self)) return null;
+    const tier = reputationTier(ctx.state.domain.reputation[self.faction ?? "civilians"]);
+    return tier === "hostile" ? "flee" : tier === "wary" ? "yield" : null;
+  };
+  private fearRadius = (): number => (this.playerFear() === "yield" ? YIELD_RADIUS : FLEE_RADIUS);
+
+  FearsPlayer = (): boolean => this.playerFear() !== null;
+  PlayerNearby = (): boolean => this.player !== null && this.distance <= this.fearRadius();
+
+  /** Past the flee radius, in the dead zone, with its spot in it too: going back would step it in. */
+  SpotNearPlayer = (): boolean => {
+    const { ctx, self, player } = this;
+    const reach = this.fearRadius() + FLEE_DEAD_ZONE;
+    if (!ctx || !self || !player || this.distance > reach) return false;
+    const spot = spotOf(ctx, self);
+    return spot !== null && Math.hypot(spot.x - player.position.x, spot.z - player.position.z) <= reach;
+  };
+
+  /** A resident of a street hostile to the player (ADR-0070), with the player close. */
+  ResentsPlayer = (): boolean => {
+    const { ctx, self } = this;
+    if (!ctx || !self || !isResident(self) || this.player === null || this.distance > FLEE_RADIUS) return false;
+    return reputationTier(ctx.state.domain.reputation[self.faction ?? "civilians"]) === "hostile";
+  };
+
+  /** Keeps to its spot and its plan, and turns to the player while it stands. */
+  StayFacingPlayer = (): State => {
+    const state = this.ReturnHome();
+    const { ctx, self, player } = this;
+    if (!ctx || !self || !player || self.velocity.x !== 0 || self.velocity.z !== 0) return state;
+    facePlayer(ctx, self, player);
+    return state;
+  };
+
+  /**
+   * Stands where it is and keeps an eye on the player (seated, it only stays put). A walker of
+   * a crowd route holds its place on it, or the clock would walk the place on without it.
+   */
+  WatchPlayer = (): State => {
+    const { ctx, self, player } = this;
+    if (!ctx || !self || !player) return State.FAILED;
+    if (onLane(self)) holdLanePlace(self);
+    facePlayer(ctx, self, player);
+    self.velocity = { x: 0, y: 0, z: 0 };
+    return State.SUCCEEDED;
+  };
 
   /** Down on the ground, hands over the head: it stays where it is. */
   Cower = (): State => {
@@ -89,7 +341,7 @@ class CivilianAgent {
     const { ctx, self } = this;
     const from = self?.civilian.crowd?.from;
     if (!ctx || !self || !from) return State.FAILED;
-    this.runFrom(ctx, self, from, this.player?.yaw ?? 0);
+    this.runFrom(ctx, self, from, this.player?.yaw ?? 0, CIVILIAN_FLEE_SPEED);
     return State.SUCCEEDED;
   };
 
@@ -105,7 +357,13 @@ class CivilianAgent {
   FleeFromPlayer = (): State => {
     const { ctx, self, player } = this;
     if (!ctx || !self || !player) return State.FAILED;
-    this.runFrom(ctx, self, player.position, player.yaw);
+    if (this.playerFear() === "yield") {
+      // Makes way: a step back at a walk, an eye on the player, no word (no NpcReacted).
+      this.runFrom(ctx, self, player.position, player.yaw, CIVILIAN_WALK_SPEED);
+      self.yaw = Math.atan2(player.position.x - self.position.x, player.position.z - self.position.z);
+      return State.SUCCEEDED;
+    }
+    this.runFrom(ctx, self, player.position, player.yaw, CIVILIAN_FLEE_SPEED);
     if (!this.fleeing) {
       this.fleeing = true;
       ctx.bus.emit("NpcReacted", { entityId: self.id, faction: self.faction ?? "civilians", reaction: "flee" });
@@ -113,32 +371,30 @@ class CivilianAgent {
     return State.SUCCEEDED;
   };
 
-  private runFrom(ctx: SimContext, self: Civilian, from: Vec3, fallbackYaw: number): void {
+  private runFrom(ctx: SimContext, self: Civilian, from: Vec3, fallbackYaw: number, speed: number): void {
     const dx = self.position.x - from.x;
     const dz = self.position.z - from.z;
     const d = Math.hypot(dx, dz);
     // Standing exactly on top of it: run along the street, away from the player's facing.
     const away = d < 1e-6 ? fallbackYaw : Math.atan2(dx, dz);
-    // Straight away when the way is open, else the open way closest to it (a wall at its back).
-    let ux = Math.sin(away);
-    let uz = Math.cos(away);
-    for (const turn of FLEE_TURNS) {
-      const tx = Math.sin(away + turn);
-      const tz = Math.cos(away + turn);
-      const probe = { x: self.position.x + tx * FLEE_PROBE, y: self.position.y, z: self.position.z + tz * FLEE_PROBE };
-      if (straightWalk(ctx.world, self.position, probe)) {
-        ux = tx;
-        uz = tz;
-        break;
-      }
+    const running = Math.hypot(self.velocity.x, self.velocity.z) > 0.9 * speed;
+    const course = running ? Math.atan2(self.velocity.x, self.velocity.z) : null;
+    const turn = fleeTurn(ctx, self.position, away, self.yaw, course, self.body?.radius ?? 0);
+    if (turn === null) {
+      // Cornered: it stands with its back to the wall and faces what it runs from.
+      self.velocity = { x: 0, y: 0, z: 0 };
+      self.yaw = Math.atan2(-Math.sin(away), -Math.cos(away));
+      return;
     }
+    const ux = Math.sin(away + turn);
+    const uz = Math.cos(away + turn);
     const ahead = { x: self.position.x + ux * FLEE_LOOKAHEAD, y: self.position.y, z: self.position.z + uz * FLEE_LOOKAHEAD };
-    const p = steerPoint(ctx.world, self.position, ahead);
+    const p = fleeStep(ctx, self.position, ahead, Math.atan2(self.velocity.x, self.velocity.z), running);
     const sx = p.x - self.position.x;
     const sz = p.z - self.position.z;
     const s = Math.hypot(sx, sz);
     const [vx, vz] = s < 1e-6 ? [ux, uz] : [sx / s, sz / s];
-    self.velocity = { x: vx * CIVILIAN_FLEE_SPEED, y: 0, z: vz * CIVILIAN_FLEE_SPEED };
+    self.velocity = { x: vx * speed, y: 0, z: vz * speed };
     self.yaw = Math.atan2(vx, vz);
   }
 
@@ -146,7 +402,7 @@ class CivilianAgent {
   ReturnHome = (): State => {
     const { self, ctx } = this;
     if (!self) return State.FAILED;
-    this.fleeing = false;
+    if (this.distance > FLEE_CUE_RESET || this.playerFear() !== "flee") this.fleeing = false;
     // A background passer-by goes on with its routine (ADR-0040).
     if (ctx && hasRoutine(self)) {
       walkRoutine(ctx, self, ctx.dt);
@@ -186,10 +442,10 @@ const calmDown = (ctx: SimContext, c: Civilian, dt: number): void => {
 
 /**
  * Bystanders react to the street (ADR-0029) and to its opinion of the player: scared by a
- * disturbance they cower, run or watch, and calm down after a while; when the civilians'
- * stance is hostile they keep their distance from the player; otherwise they stay at (or walk
- * back to) their spot or follow their daily plan. Uses no randomness, so it cannot shift the
- * RNG stream of the combat systems.
+ * disturbance they cower, run or watch, and calm down after a while; when the civilians think
+ * badly of the player, passers-by keep their distance (ADR-0070); otherwise they stay at (or
+ * walk back to) their spot or follow their daily plan. Uses no randomness, so it cannot shift
+ * the RNG stream of the combat systems.
  */
 export const createCivilianAiSystem = (): System => {
   const brains = new Map<EntityId, { tree: BehaviourTree; agent: CivilianAgent }>();

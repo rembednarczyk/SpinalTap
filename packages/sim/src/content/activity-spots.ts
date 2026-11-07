@@ -1,9 +1,10 @@
 import type { ActivityId, Vec3 } from "@seki/core";
 import type { ActivitySpot, SpotKind } from "../world/activity-types";
-import { type StaticProp, placeAt, v } from "./builders";
-import { TARG_NORTH_PROPS, TARG_SOUTH_PROPS } from "./district-targ";
+import { placeAt, v } from "./builders";
+import { atUnit } from "./alchemia/units";
+import { HALL } from "./alchemia/plan";
 import { againstWall, spotNear } from "./lublin/places";
-import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
+import { DOCKS_PLACE, MAP_CHUNKS } from "./lublin/sites";
 import { seatGroups } from "./lublin/seats";
 import { groundY } from "./lublin/terrain";
 import { WORLD_STREET_PROPS } from "./street-props";
@@ -43,10 +44,6 @@ export const spotWeightsAt = (hour: number): Readonly<Record<SpotKind, number>> 
   for (const w of SPOT_WEIGHTS) if (w.from <= hour) out = w.weights;
   return out;
 };
-
-/** X of the food stalls' counters in a row at local `z` (the market's generator placed them), in the world. */
-const stallsAt = (props: readonly StaticProp[], z: number): number[] =>
-  props.flatMap((p) => (p.view.kind === "block" && p.solid && p.center.z === z + MARKET_PLACE.z && p.view.size.x === 2.6 && p.view.size.z === 1.3 ? [p.center.x] : []));
 
 /** The chunk of Lublin a spot stands in (the first holding it, as streaming does). */
 const chunkOf = (x: number, z: number): string =>
@@ -88,15 +85,13 @@ const wallSpot = (id: string, kind: SpotKind, x: number, z: number, only?: reado
   return spotAt(id, kind, w.at, w.yaw, only);
 };
 
-/** A spot of the market or the docks, in their own coordinates. */
-const marketSpot = (id: string, kind: SpotKind, x: number, z: number, yaw: number): ActivitySpot => spotAt(id, kind, placeAt(MARKET_PLACE, v(x, 0, z)), yaw);
+/** A spot of the docks, in their own coordinates. */
 const docksSpot = (id: string, kind: SpotKind, x: number, z: number, yaw: number, only?: readonly [ActivityId, ...ActivityId[]]): ActivitySpot =>
   spotAt(id, kind, placeAt(DOCKS_PLACE, v(x, 0, z)), yaw, only);
 
 /** On the open quay there is nothing to lean on. */
 const STANDING: readonly [ActivityId, ...ActivityId[]] = ["smoke", "phone"];
 
-const EAST = Math.PI / 2;
 const WEST = -Math.PI / 2;
 const NORTH = 0;
 const SOUTH = Math.PI;
@@ -130,23 +125,27 @@ const KANAL: readonly ActivitySpot[] = [
   benchSpot("kanal-bench", 585, -88, WEST),
 ];
 
-const SOUTH_STALLS = stallsAt(TARG_SOUTH_PROPS, 68);
-const NORTH_STALLS = stallsAt(TARG_NORTH_PROPS, 102);
+/** A spot on T1, on the ground at (x, z). */
+const onT1 = (id: string, kind: SpotKind, x: number, z: number, yaw: number, only?: readonly [ActivityId, ...ActivityId[]]): ActivitySpot =>
+  spotAt(id, kind, { x, y: groundY(x, z), z }, yaw, only);
+
+/** On Fumiko's stools before her hatch: `across` from its middle. */
+const stool = (id: string, across: number): ActivitySpot => {
+  const p = atUnit("fumiko", 1.2, across);
+  return onT1(id, "bar", p.x, p.z, SOUTH);
+};
 
 /**
- * The market: in front of the stalls of both rows (the south row's customers face south, the
- * north row's north), the TAKO and PACHI facades on the east side, a pillar under the viaduct.
+ * The market in Alchemia (ADR-0074): Fumiko's stools on T1 before the hatch of her ramen bar, and
+ * the hall's front of glass to lean on either side of its way in. The units inside have their
+ * still crowd (`alchemia/crowd.ts`): passers-by keep to T1.
  */
 const TARG: readonly ActivitySpot[] = [
-  ...SOUTH_STALLS.slice(1, 3).map((x, i) => spotAt(`targ-south-stall-${i}`, "stall", placeAt(MARKET_PLACE, v(x - MARKET_PLACE.x, 0, 69.1)), SOUTH)),
-  marketSpot("targ-tako-bar", "bar", 113.5, 66.5, EAST),
-  marketSpot("targ-tako-vending", "vending", 113.5, 71, EAST),
-  marketSpot("targ-pachi-wall", "wall", 113.5, 81, WEST),
-  ...NORTH_STALLS.slice(0, 1).map((x) => spotAt("targ-north-stall", "stall", placeAt(MARKET_PLACE, v(x - MARKET_PLACE.x, 0, 100.9)), NORTH)),
-  ...NORTH_STALLS.slice(2, 3).map((x) => spotAt("targ-yatai-bar", "bar", placeAt(MARKET_PLACE, v(x - MARKET_PLACE.x, 0, 100.9)), NORTH)),
-  marketSpot("targ-pillar-wall", "wall", 96, 94.3, SOUTH),
-  marketSpot("targ-north-vending", "vending", 110, 105.55, NORTH),
-  marketSpot("targ-north-bench", "bench", 84, 105.55, SOUTH),
+  stool("targ-yatai-bar", -1.6),
+  stool("targ-yatai-bar-2", 0),
+  onT1("targ-front-wall", "wall", 410, HALL.maxZ + 0.55, NORTH),
+  onT1("targ-front-wall-2", "wall", 422.5, HALL.maxZ + 0.55, NORTH, ["smoke", "phone"]),
+  onT1("targ-front-wall-3", "wall", 427.5, HALL.maxZ + 0.55, NORTH, ["lean", "phone"]),
 ];
 
 /** The docks: the vending machine by the office, the open quay. Tessen's yard has no idlers. */
@@ -167,6 +166,6 @@ export const PASSERSBY: Readonly<Record<string, number>> = {
   "krakowskie-2-0": 3,
   "stare-miasto-0-0": 3,
   "stare-miasto-0-1": 1,
-  "podzamcze-1-0": 3,
+  "krakowskie-2-1": 3,
   "nabrzeze-1-1": 1,
 };

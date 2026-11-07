@@ -13,6 +13,23 @@ import { alleySim, teleportPlayer } from "./helpers";
 const ROOF = docks(-28, 9, 107);
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
 
+/** The snapshot as v30 wrote it, before the style and bad luck (ADR-0059, stage 6): the progression without them. */
+const beforeV31 = (s: SaveSnapshot): SaveSnapshot => {
+  const { style: _s, unlucky: _u, ...progression } = s.domain.progression;
+  return { ...s, domain: { ...s.domain, progression } } as unknown as SaveSnapshot;
+};
+
+/** The snapshot as v28 wrote it, before item levels (ADR-0059, stage 4): the pieces without them. */
+const beforeV29 = (v31: SaveSnapshot): SaveSnapshot => {
+  const s = beforeV31(v31);
+  const strip = <T extends object>(p: T): T => {
+    const { level: _l, traits: _t, ...rest } = p as T & { level?: number; traits?: unknown };
+    return rest as T;
+  };
+  const containers = s.domain.loot.containers.map((c) => ({ ...c, lines: c.lines.map(strip) }));
+  return { ...s, domain: { ...s.domain, inventory: { ...s.domain.inventory, items: s.domain.inventory.items.map(strip) }, loot: { ...s.domain.loot, containers } } };
+};
+
 const onTheRoof = (seed: number, level: HeatLevel): Simulation => {
   const start = alleySim({ seed });
   teleportPlayer(start, ROOF);
@@ -27,10 +44,21 @@ const onTheRoof = (seed: number, level: HeatLevel): Simulation => {
 };
 
 describe("a reinforcement leans to the side of its number (G-208)", () => {
-  // With the hash of the run as schema v27 wrote it (G-233 changes only the version here).
-  for (const [seed, level, golden, v27] of [
-    [21, 2, "942db7fe", "6d25ba81"],
-    [5, 3, "86f75272", "ab60fb91"],
+  // With the hashes of the run as schemas v28 and v27 wrote it: the item levels of v29 (ADR-0059,
+  // stage 4) are fields of the starter kit here; G-233 and the market move (v30) change only the version. Re-recorded for
+  // ADR-0059, stage 5, a new rule: the Tessen reinforcements are of the docks' level 16, tougher
+  // (and saved with their maximum health). Re-recorded for the v31 style and bad luck (ADR-0059,
+  // stage 6), fields: as v30 the runs hash to the goldens of before. Re-recorded for the v32
+  // version of the cyberdeck's grades: nobody here has a deck, so as v31 they hash as before.
+  // Alchemia rebuilt (v33, ADR-0074 stage 1), its T2 with the Arkady (v34, stage 2) and the pavilion
+  // on the corner with Ren on its roof (v35, stage 3) change only
+  // the version: as v32 the runs hash to the goldens of v32. Re-recorded for G-485, a rule of
+  // movement: the push-out ends on the solids, so reinforcements crowding by a wall no longer
+  // press each other into it. Re-recorded for P-1 under Alchemia's car park (v36, stage 4): only
+  // the version; as v35 the runs hash to G-485's goldens (dbd53908, 11d2bf94).
+  for (const [seed, level, golden, v32, v31, v30, v28, v27] of [
+    [21, 2, "a11206cf", "1c0d0ad3", "55a02c1c", "18d6bea3", "5e8676f5", "7e54b2a0"],
+    [5, 3, "bf8c66f1", "a0370c6d", "2d80f750", "b19791bb", "3a1c66f5", "11bea0a6"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
       const sim = onTheRoof(seed, level);
@@ -51,8 +79,13 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
       }
       // The run with the rule (seed 21: by the ids it parts otherwise some 510 steps in).
       const snap = sim.snapshot(null, "t", "");
+      expect(stateHash({ ...snap, version: 31 } as unknown as SaveSnapshot)).toBe(v31);
       expect(stateHash(snap)).toBe(golden);
-      expect([snap.strayBodies, stateHash({ ...snap, version: 27 } as unknown as SaveSnapshot)]).toEqual([undefined, v27]);
+      expect(stateHash({ ...snap, version: 32 } as unknown as SaveSnapshot)).toBe(v32);
+      expect(stateHash({ ...beforeV31(snap), version: 30 } as unknown as SaveSnapshot)).toBe(v30);
+      const old = beforeV29(snap);
+      expect(stateHash({ ...old, version: 28 } as unknown as SaveSnapshot)).toBe(v28);
+      expect([snap.strayBodies, stateHash({ ...old, version: 27 } as unknown as SaveSnapshot)]).toEqual([undefined, v27]);
     });
   }
 });

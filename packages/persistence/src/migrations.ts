@@ -1,16 +1,20 @@
-import { SAVE_SCHEMA_VERSION, SHARD_CYBER_CAPACITY, capacityMax, progressionFromXp } from "@seki/core";
+import { SAVE_SCHEMA_VERSION, SHARD_CYBER_CAPACITY, capacityMax, clampItemLevel, hasItemLevel, isInstanceDefId, progressionFromXp } from "@seki/core";
+import { moveMarketToAlchemia } from "./market-move";
+import { levelAlchemiaT2, raiseAlchemiaPavilion, rebuildAlchemia } from "./alchemia-rebuild";
+import { digAlchemiaParking } from "./alchemia-parking";
 
 type Json = Record<string, unknown>;
 
 const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
 
 /**
- * Experience of the quests as v17 pays it (ADR-0059): each step's XP and the bonus for the whole
- * quest. Spelled out, like the ids: a migration describes the content of its time.
+ * Experience of the quests (ADR-0059): each step's XP and the bonus for the whole quest, as the
+ * quests pay it today, so an old save gets what a new game would. Spelled out, like the ids: a
+ * migration describes its content. Act I pays 1350 since the balance test of stage 8 (4600 in v17).
  */
 const V17_QUEST_XP: Readonly<Record<string, { readonly steps: readonly number[]; readonly quest: number }>> = {
   m0_first_contract: { steps: [100, 300, 250], quest: 600 },
-  m3_echo: { steps: [500, 400, 500, 700], quest: 2500 },
+  m3_echo: { steps: [150, 100, 150, 250], quest: 700 },
   m3_lustro: { steps: [600, 1000, 1000, 1500], quest: 3000 },
 };
 
@@ -47,6 +51,28 @@ export const retroactiveXp = (domain: Json): number => {
   const contracts = isObject(domain.contracts) ? domain.contracts : {};
   const completed = Number.isInteger(contracts.completed) ? Math.max(0, contracts.completed as number) : 0;
   return xp + completed * V17_CONTRACT_XP;
+};
+
+/**
+ * The level an old piece gets from its tier (ADR-0059): common 1, uncommon 3, rare 5, a unique one
+ * the player's level. Spelled out, like the ids: a migration describes the content of its time.
+ */
+export const V28_LEVEL_OF_TIER: Readonly<Record<string, number>> = { common: 1, uncommon: 3, rare: 5 };
+
+/**
+ * A v28 weapon or garment (an instance by `def`, a loot line by `item`) with its v29 level, put
+ * right after the tier as a new piece has it. Anything else, or a piece that has one, as it was.
+ */
+export const withV28Level = (piece: unknown, idKey: "def" | "item", player: number): unknown => {
+  if (!isObject(piece) || piece.level !== undefined || !isInstanceDefId(piece[idKey]) || !hasItemLevel(piece[idKey])) return piece;
+  const tier = typeof piece.rarity === "string" ? piece.rarity : "common";
+  const level = clampItemLevel(tier === "unique" ? player : (V28_LEVEL_OF_TIER[tier] ?? 1));
+  const out: Json = {};
+  for (const [k, v] of Object.entries(piece)) {
+    out[k] = v;
+    if (k === "rarity") out.level = level;
+  }
+  return "level" in out ? out : { ...out, level };
 };
 
 /**
@@ -375,6 +401,56 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v27 -> v28 (G-233): the bodies of a won mugging's muggers are saved (`strayBodies`, optional).
   // An older save has none: they were gone on loading, and still are.
   27: (old) => ({ ...old, version: 28 }),
+  // v28 -> v29 (ADR-0059, stage 4): every weapon and garment has a level, in the bag and in the
+  // loot bags. An older save's pieces get the level of their tier (`V28_LEVEL_OF_TIER`); there
+  // were no epic or legendary ones, so no traits either.
+  28: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const progression = isObject(domain.progression) ? domain.progression : {};
+    const player = Number.isInteger(progression.level) ? (progression.level as number) : 1;
+    const inventory = isObject(domain.inventory) ? domain.inventory : null;
+    const loot = isObject(domain.loot) ? domain.loot : null;
+    const items = inventory && Array.isArray(inventory.items) ? { inventory: { ...inventory, items: inventory.items.map((i) => withV28Level(i, "def", player)) } } : {};
+    const containers =
+      loot && Array.isArray(loot.containers)
+        ? {
+            loot: {
+              ...loot,
+              containers: loot.containers.map((c) => (isObject(c) && Array.isArray(c.lines) ? { ...c, lines: c.lines.map((l) => withV28Level(l, "item", player)) } : c)),
+            },
+          }
+        : {};
+    return { ...old, version: 29, domain: { ...domain, ...items, ...containers } };
+  },
+  // v29 -> v30 (ADR-0063 stage 6): the market on Aleja Tysiąclecia is gone and its people are in
+  // Alchemia. A save made in it wakes on the avenue; its people and stashes go to their new places.
+  29: moveMarketToAlchemia,
+  // v30 -> v31 (ADR-0059, stage 6): the progression keeps the player's style and her bad luck. An
+  // older save has fought no fight the loot remembers and had no bad luck yet.
+  30: (old) => {
+    const domain = isObject(old.domain) ? old.domain : null;
+    if (!domain || !isObject(domain.progression)) return { ...old, version: 31 };
+    return { ...old, version: 31, domain: { ...domain, progression: { ...domain.progression, style: [], unlucky: 0 } } };
+  },
+  // v31 -> v32 (decision of 6.11 after ADR-0059 stage 6): an installed cyberdeck keeps its tier and
+  // level (`character.implantGrades`, optional). An older save had no cyberdeck, so nothing changes.
+  31: (old) => ({ ...old, version: 32 }),
+  // v32 -> v33 (ADR-0074 stage 1): Alchemia rebuilt by the investor's plan. A save made in the old
+  // hall, its stalls, lift or terrace wakes on T1 in front of the food hall; the market's people
+  // come back at their new places, the roof stash goes by Ren on the green roof.
+  32: rebuildAlchemia,
+  // v33 -> v34 (ADR-0074 stage 2): T2 levelled before the rebuilt Arkady where the Hebi hollow was. A
+  // save made in the hollow or on the ground the square changed wakes on T2; the overpass bag goes
+  // before the Arkady's arches, the bags on the square onto T2, the lookout back under the arches.
+  33: levelAlchemiaT2,
+  // v34 -> v35 (ADR-0074 stage 3): the triangular pavilion raised on the corner of Bajkowskiego and
+  // Lubartowska. The Hebi bag by Ren goes onto its roof and Ren's state is dropped (he comes back
+  // there from the content); a save made on its ground wakes by the foot of its ladder.
+  34: raiseAlchemiaPavilion,
+  // v35 -> v36 (ADR-0074 stage 4): P-1 dug under the car park, its ramp's trench and its stair core's
+  // house on it. A save made on that ground wakes on the car park by the ramp's top, its bags with
+  // her; Sachiko's state is dropped (she comes back behind her counter turned to the door from P-1).
+  35: digAlchemiaParking,
 };
 
 export class MigrationError extends Error {}

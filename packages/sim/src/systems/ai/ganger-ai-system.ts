@@ -25,6 +25,7 @@ import {
   track,
   victimsOf,
 } from "./ganger-perception";
+import { footstepNoise, hearNoise } from "./ganger-hearing";
 
 export { GANGER_SPEED, MELEE_CHASE_SPEED, STUCK_TIME } from "./ganger-walk";
 export { MELEE_REST } from "./ganger-fight";
@@ -45,7 +46,7 @@ class GangerAgent {
   self: Ganger | null = null;
   /** Local time scale (the player's overdrive slows gangers down). */
   timeScale = 1;
-  seen: Perception = { player: null, distance: Infinity, visible: false };
+  seen: Perception = { player: null, distance: Infinity, visible: false, glimpsed: false };
   target: VictimPerception = NO_VICTIM;
   /** Presentation memory only: the warning cue fires once per ganger, it never feeds back into the state. */
   warned = false;
@@ -70,6 +71,9 @@ class GangerAgent {
       return State.SUCCEEDED;
     }
     this.walk.pursueTo(lead);
+    // It turns the way it walks (ADR-0069): it goes to look, not backwards with its eyes on its post.
+    const v = self.velocity;
+    if (Math.hypot(v.x, v.z) > 1e-6) faceTowards(this, { position: { x: self.position.x + v.x, y: self.position.y, z: self.position.z + v.z } });
     return State.SUCCEEDED;
   };
 
@@ -126,11 +130,18 @@ class GangerAgent {
 
   /**
    * Holds its post, or walks its daily plan (a night patrol) when it has one. A guard on watch
-   * looks around its post; one that half saw something turns towards it instead.
+   * looks around its post. One that half saw something stops and turns towards it instead
+   * (ADR-0069), so it is no longer unaware of her; out of its sight it keeps looking the way it
+   * saw her last, not after her through the wall (G-294).
    */
   HoldPosition = (): State => {
     const { self, ctx } = this;
     if (!self) return State.FAILED;
+    if ((self.ai.suspicion ?? 0) > 0 && this.seen.player) {
+      self.velocity = { x: 0, y: 0, z: 0 };
+      if (this.seen.glimpsed) faceTowards(this, this.seen.player);
+      return State.SUCCEEDED;
+    }
     const pose = self.schedule?.pose;
     if (pose && ctx) {
       followSchedule(self, pose, GANGER_SPEED, ctx.dt * this.timeScale);
@@ -140,8 +151,7 @@ class GangerAgent {
     if (d > 0.3) this.walk.walkTo(self.ai.home);
     else self.velocity = { x: 0, y: 0, z: 0 };
     const watch = self.ai.watch;
-    if ((self.ai.suspicion ?? 0) > 0 && this.seen.player) faceTowards(this, this.seen.player);
-    else if (watch && ctx && d <= 0.3) self.yaw = watch.yaw + WATCH_SWEEP * Math.sin((2 * Math.PI * ctx.tick * ctx.dt) / (watch.period ?? WATCH_PERIOD) + watch.phase);
+    if (watch && ctx && d <= 0.3) self.yaw = watch.yaw + WATCH_SWEEP * Math.sin((2 * Math.PI * ctx.tick * ctx.dt) / (watch.period ?? WATCH_PERIOD) + watch.phase);
     return State.SUCCEEDED;
   };
 }
@@ -217,6 +227,8 @@ export const createGangerAiSystem = (): System => {
       const timeScale = worldTimeScale(ctx);
       const { reputation, heat } = ctx.state.domain;
       const victims = victimsOf(ctx);
+      // Her steps this step (ADR-0069): heard before anyone looks.
+      if (player) hearNoise(ctx, player.position, footstepNoise(player));
       for (const g of inCreationOrder(ctx.world.with("ai", "velocity"))) {
         alive.add(g.id);
         // Knocked out or held in a takedown (ADR-0065): it sees, hears and does nothing.

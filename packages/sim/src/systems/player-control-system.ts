@@ -11,7 +11,12 @@ import {
   wornGarments,
   buffModifiers,
   BUFF_CATALOG,
-  levelModifiers,
+  adsTimeScale,
+  perkAdsTimeScale,
+  progressionModifiers,
+  carrySpeedBonus,
+  crouchSpeedBonus,
+  workingCyberware,
 } from "@seki/core";
 import type { Entity } from "../world/components";
 import { playerHeld } from "../world/takedown";
@@ -40,7 +45,15 @@ export const statsFor = (c: CharacterState): DerivedStats => {
   return cachedStats;
 };
 
-let cachedFor: { character: CharacterState; equipment: DomainState["equipment"]; buffs: string; level: number } | null = null;
+let cachedFor: {
+  character: CharacterState;
+  equipment: DomainState["equipment"];
+  buffs: string;
+  level: number;
+  attributes: DomainState["progression"]["attributes"];
+  perks: DomainState["progression"]["perks"];
+  shards: number;
+} | null = null;
 let cachedPlayer: DerivedStats | null = null;
 
 /** The buffs that change stats, as a key: their seconds left tick every step, the stats do not. */
@@ -49,18 +62,29 @@ const statBuffKey = (domain: DomainState): string =>
 
 /**
  * The player's stats with worn garments (a ballistic vest slows her down), running buffs (the
- * stim steadies the aim, ADR-0033) and the character's level (health, ADR-0059). Memoised on the
- * character, the equipment, the stat buffs and the level, which only change on install, memory,
- * equip, a buff starting or ending, or a level up.
+ * stim steadies the aim, ADR-0033), the character's level (health), attributes and perks
+ * (ADR-0059); implants over the cyberware pool count for nothing (stage 3c). Memoised on the
+ * character, the equipment, the stat buffs, the level, the attributes, the perks and the capacity
+ * shards, which only change on install, memory, equip, a buff starting or ending, a level up, a
+ * point spent, a shard or a respec.
  */
 export const playerStatsOf = (domain: DomainState): DerivedStats => {
   const buffs = statBuffKey(domain);
-  const level = domain.progression.level;
-  const stale = cachedFor?.character !== domain.character || cachedFor.equipment !== domain.equipment || cachedFor.buffs !== buffs || cachedFor.level !== level;
+  const { level, attributes, perks } = domain.progression;
+  const stale =
+    cachedFor?.character !== domain.character ||
+    cachedFor.equipment !== domain.equipment ||
+    cachedFor.buffs !== buffs ||
+    cachedFor.level !== level ||
+    cachedFor.attributes !== attributes ||
+    cachedFor.perks !== perks ||
+    cachedFor.shards !== domain.capacityShards;
   if (!cachedPlayer || stale) {
-    cachedFor = { character: domain.character, equipment: domain.equipment, buffs, level };
+    cachedFor = { character: domain.character, equipment: domain.equipment, buffs, level, attributes, perks, shards: domain.capacityShards };
     const worn = garmentModifiers(wornGarments(domain.inventory, domain.equipment));
-    cachedPlayer = deriveStats(domain.character, [...worn, ...buffModifiers(domain.buffs), levelModifiers(domain.progression)]);
+    // Implants over the pool give nothing (stage 3c): the pool follows the level, Tech, Overclock and the shards.
+    const character = { ...domain.character, cyberware: workingCyberware(domain) };
+    cachedPlayer = deriveStats(character, [...worn, ...buffModifiers(domain.buffs), ...progressionModifiers(domain.progression)]);
   }
   return cachedPlayer;
 };
@@ -115,11 +139,11 @@ const weaponReady = (p: Entity): boolean => {
 
 /**
  * The aim button (ADR-0019): with a firearm it eases the aim down sights in and out over the
- * weapon's `ads.time`; with a melee weapon it raises the guard, which opens a parry window
+ * weapon's `ads.time` (shorter with Reflex, ADR-0059); with a melee weapon it raises the guard, which opens a parry window
  * unless the guard went up less than PARRY_COOLDOWN ago. Neither while staggered, a swing is
  * on its way or the weapon is not ready. Frozen (dialogue, death) both drop.
  */
-const updateAimAndGuard = (p: Entity, wantsAim: boolean, frozen: boolean, dt: number): void => {
+const updateAimAndGuard = (p: Entity, wantsAim: boolean, frozen: boolean, dt: number, adsScale: number): void => {
   const weapon = p.combatant?.stats ?? null;
   const posture = p.posture;
   const melee = p.melee;
@@ -127,7 +151,7 @@ const updateAimAndGuard = (p: Entity, wantsAim: boolean, frozen: boolean, dt: nu
   const able = wantsAim && !frozen && !staggered && weaponReady(p);
   if (posture) {
     posture.aiming = able && !!weapon?.ads;
-    const step = dt / (weapon?.ads?.time ?? DEFAULT_ADS_TIME);
+    const step = dt / ((weapon?.ads?.time ?? DEFAULT_ADS_TIME) * adsScale);
     const target = posture.aiming ? 1 : 0;
     posture.aim = posture.aim < target ? Math.min(target, posture.aim + step) : Math.max(target, posture.aim - step);
   }
@@ -168,12 +192,28 @@ const tickLanding = (p: Entity, dt: number): boolean => {
   return landingSlow;
 };
 
+interface Gait {
+  /** Speed multiplier of the crouched walk. */
+  readonly crouch: number;
+  /** Speed multiplier with a body on the shoulder; 1 without one. */
+  readonly carry: number;
+}
+
+/** The crouch and carry speeds, with the Prowler and Mule perks (ADR-0059). */
+const gaitOf = (ctx: SimContext): Gait => {
+  const perks = ctx.state.domain.progression.perks;
+  return {
+    crouch: CROUCH_SPEED_MULTIPLIER + (1 - CROUCH_SPEED_MULTIPLIER) * crouchSpeedBonus(perks),
+    carry: ctx.session.carrying !== null ? CARRY_SPEED + carrySpeedBonus(perks) : 1,
+  };
+};
+
 /**
  * The velocity the stick asks for on the ground, along the player's facing: walk, crouch, aim,
  * guard or sprint speed, slowed by a stagger, a hard landing or a body on the shoulder
  * (`CARRY_SPEED`, ADR-0065), plus any knockback. Sets the sprint flag of the posture.
  */
-const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landingSlow: boolean, carrying: boolean): { x: number; z: number } => {
+const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landingSlow: boolean, gait: Gait): { x: number; z: number } => {
   const posture = p.posture;
   const len = Math.hypot(input.moveX, input.moveZ);
   const nx = len > 1 ? input.moveX / len : input.moveX;
@@ -186,7 +226,7 @@ const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landi
   const sprinting = input.sprint && nz > 0 && !crouched && !(posture?.aiming ?? false) && !guarding && !staggered;
   if (posture) posture.sprinting = sprinting;
   // Speed follows the eased crouch and aim, so getting down or aiming slows the step smoothly.
-  const crouchSlow = 1 + (CROUCH_SPEED_MULTIPLIER - 1) * (posture?.amount ?? 0);
+  const crouchSlow = 1 + (gait.crouch - 1) * (posture?.amount ?? 0);
   const aimSlow = 1 + ((weapon?.ads?.move ?? 1) - 1) * (posture?.aim ?? 0);
   const guardSlow = guarding && weapon?.melee ? weapon.melee.block.move : 1;
   const speed =
@@ -194,7 +234,7 @@ const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landi
     (sprinting ? SPRINT_MULTIPLIER : crouchSlow * aimSlow * guardSlow) *
     (staggered ? STAGGER_MOVE : 1) *
     (landingSlow ? LANDING_SLOW_MULTIPLIER : 1) *
-    (carrying ? CARRY_SPEED : 1);
+    gait.carry;
   const sin = Math.sin(p.yaw);
   const cos = Math.cos(p.yaw);
   // Forward = (sin, cos); right = (cos, -sin).
@@ -226,7 +266,7 @@ export const playerControlSystem: System = {
       if (p.health) p.health = { current: Math.min(p.health.current, stats.maxHp), max: stats.maxHp };
       const frozen = playerHeld(ctx);
       if (p.posture) updateCrouch(p.posture, input.crouch, frozen, ctx.dt);
-      updateAimAndGuard(p, input.aim, frozen, ctx.dt);
+      updateAimAndGuard(p, input.aim, frozen, ctx.dt, adsTimeScale(ctx.state.domain.progression.attributes) * perkAdsTimeScale(ctx.state.domain.progression.perks));
       updateJump(ctx, p, frozen);
       const landingSlow = tickLanding(p, ctx.dt);
       if (frozen) {
@@ -235,7 +275,7 @@ export const playerControlSystem: System = {
       }
       p.yaw += input.lookYaw;
       p.pitch = clamp(p.pitch + input.lookPitch, -PITCH_LIMIT, PITCH_LIMIT);
-      steer(p, wantedVelocity(p, input, stats, landingSlow, ctx.session.carrying !== null), ctx.dt);
+      steer(p, wantedVelocity(p, input, stats, landingSlow, gaitOf(ctx)), ctx.dt);
     }
   },
 };

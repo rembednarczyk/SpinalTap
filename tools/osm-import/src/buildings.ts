@@ -3,6 +3,7 @@ import { terrainHeightAt, type TerrainGrid } from "../../../packages/core/src/wo
 import { type Lifted, partTier, stackParts } from "./building-parts.ts";
 import { landmarkName, lookOf, massing, buildingUse } from "./building-tags.ts";
 import { isTowerTags } from "./building-towers.ts";
+import { wallOf } from "./building-wall.ts";
 import { convexParts, isConvex } from "./convex.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area } from "./features.ts";
@@ -107,6 +108,7 @@ const liftedPart = (l: Lifted, of: BuildingOut): BuildingOut[] => {
     ...(t.shape ? { roofShape: t.shape } : {}),
     ...(t.across ? { roofAcross: true as const } : {}),
     look: lookOf(t.area.id),
+    ...wallOf(t.area.tags),
     source: t.source,
   };
   return [out];
@@ -167,6 +169,7 @@ export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly A
     ...(shops ? { shopfront: true as const } : {}),
     ...(use === "church" && ctx.towered?.has(a.id) ? { mappedTower: true as const } : {}),
     ...(tower ? { tower: true as const } : {}),
+    ...wallOf(a.tags),
     source: m.source,
   };
   return { ok, lifted: lifted.flatMap((l) => liftedPart(l, ok)) };

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_HORIZONTAL_FOV, GameUi, createUiStore, dismissToast, hipVerticalFov, patchUi, pushToast, type UiIntents, type UiState } from "../src";
+import { DEFAULT_HORIZONTAL_FOV, GameUi, createUiStore, dismissToast, expireToast, hipVerticalFov, patchUi, pushToast, type UiIntents, type UiState } from "../src";
 import { NORMAL_DIFFICULTY } from "@seki/core";
 import { HUD_CAMERA_FOV, spreadToScreen } from "../src/hud/hud";
 
@@ -44,6 +44,9 @@ const intents = (): UiIntents => ({
   dropItem: vi.fn(),
   installMod: vi.fn(),
   removeMod: vi.fn(),
+  spendAttributePoint: vi.fn(),
+  spendPerkPoint: vi.fn(),
+  respec: vi.fn(),
   openPhone: vi.fn(),
   closePhone: vi.fn(),
   readThread: vi.fn(),
@@ -51,7 +54,8 @@ const intents = (): UiIntents => ({
   setScan: vi.fn(),
   pickQuickhack: vi.fn(),
   submitBreach: vi.fn(),
-  travelMetro: vi.fn(),
+  selectMetroStop: vi.fn(),
+  buyMetroTicket: vi.fn(),
   closeMetro: vi.fn(),
   setRadioStation: vi.fn(),
   nextRadioStation: vi.fn(),
@@ -221,6 +225,53 @@ describe("HUD", () => {
     expect(store.getState().toasts.map((t) => t.title)).toEqual(["t2", "t3", "t4", "t5"]);
   });
 
+  it("counts a toast identical to one on screen instead of stacking it (G-281)", () => {
+    const { store } = mount({ screen: "playing" });
+    let ids: number[] = [];
+    act(() => {
+      ids = [0, 1, 2].map(() => pushToast(store, { kind: "reputation", title: "Passers-by run away", text: "Civilians are afraid of you" }));
+      pushToast(store, { kind: "reputation", title: "Passers-by run away", text: "Hebi are afraid of you" });
+    });
+    expect(new Set(ids).size).toBe(1);
+    expect(store.getState().toasts.map((t) => [t.text, t.count ?? 1])).toEqual([
+      ["Civilians are afraid of you", 3],
+      ["Hebi are afraid of you", 1],
+    ]);
+    expect(screen.getByText("×3")).toBeTruthy();
+    // Once it is gone, the next one is a toast of its own again.
+    act(() => dismissToast(store, ids[0]!));
+    act(() => void pushToast(store, { kind: "reputation", title: "Passers-by run away", text: "Civilians are afraid of you" }));
+    expect(store.getState().toasts.map((t) => t.count ?? 1)).toEqual([1, 1]);
+  });
+
+  it("a counted toast stays until the last of its pushes runs out, not the first (G-286)", () => {
+    const store = createUiStore();
+    const first = pushToast(store, { kind: "reputation", title: "Passers-by run away", text: "" });
+    const second = pushToast(store, { kind: "reputation", title: "Passers-by run away", text: "" });
+    expect(second).toBe(first);
+    expireToast(store, first);
+    expect(store.getState().toasts.map((t) => [t.title, t.count ?? 1])).toEqual([["Passers-by run away", 2]]);
+    expireToast(store, second);
+    expect(store.getState().toasts).toEqual([]);
+    // A toast taken down by hand goes at once, however many pushes it counts.
+    const id = pushToast(store, { kind: "system", title: "Saved", text: "" });
+    pushToast(store, { kind: "system", title: "Saved", text: "" });
+    dismissToast(store, id);
+    expect(store.getState().toasts).toEqual([]);
+    expireToast(store, id);
+    expect(pushToast(store, { kind: "system", title: "Saved", text: "" })).not.toBe(id);
+  });
+
+  it("does not count a kept toast together with an ordinary one (G-286)", () => {
+    const store = createUiStore();
+    pushToast(store, { kind: "system", title: "Couldn't load the game", text: "" });
+    pushToast(store, { kind: "system", title: "Couldn't load the game", text: "", keep: true });
+    expect(store.getState().toasts.map((t) => [t.keep === true, t.count ?? 1])).toEqual([
+      [false, 1],
+      [true, 1],
+    ]);
+  });
+
   it("over the limit drops the oldest toast that is not quest, memory or kept first (ADR-0059: a level up beside an ending)", () => {
     const store = createUiStore();
     pushToast(store, { kind: "quest", title: "ending", text: "" });
@@ -366,7 +417,9 @@ describe("ripperdoc clinic", () => {
 
   it("warns which implant a purchase replaces", () => {
     mount({ screen: "playing", shopOpen: true, eddies: 5000, cyberware: { nervous: "synapse_booster" } });
-    expect(screen.getByText("Replaces: Synapse booster")).toBeTruthy();
+    // Kairos and the cyberdeck share the nervous slot: each offer says what it replaces.
+    expect(within(screen.getByTestId("implant-kairos_overclock")).getByText("Replaces: Synapse booster")).toBeTruthy();
+    expect(within(screen.getByTestId("implant-kumo_cyberdeck")).getByText("Replaces: Synapse booster")).toBeTruthy();
   });
 });
 

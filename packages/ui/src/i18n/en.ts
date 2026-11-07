@@ -4,6 +4,7 @@ import { enTrade } from "./en/trade";
 import { enDomain } from "./en/domain";
 import { enContent } from "./en/content";
 import { enDifficulty } from "./en/difficulty";
+import { enProgression } from "./en/progression";
 
 /**
  * English, the default language and the source of every key (ADR-0056). The Polish catalog must
@@ -24,12 +25,13 @@ export const en = {
   "credits.osm": "Streets, buildings and names: © OpenStreetMap contributors, data under the Open Database License (ODbL), openstreetmap.org/copyright.",
   "credits.terrain": "Terrain: GUGiK digital terrain model (geoportal.gov.pl).",
   "credits.fiction": "The city in the game is fiction: its people, companies and events have nothing to do with the real Lublin.",
-  "credits.assets": "Models and sounds",
+  "credits.assets": "Models, sounds and icons",
   "credits.section.street": "Street props",
   "credits.section.city": "City: buildings, vehicles, facades",
   "credits.section.characters": "Characters",
   "credits.section.weapons": "Weapons",
   "credits.section.audio": "Sounds",
+  "credits.section.icons": "Item icons",
   "credits.by": "by {author}",
   "credits.changed": "changed for the game",
   "menu.back": "Back",
@@ -107,12 +109,27 @@ export const en = {
   "control.nextWeapon": "Next weapon",
   "control.prevWeapon": "Previous weapon",
   "control.toggleCamera": "FPP / TPP view",
+  "control.swapShoulder": "Swap shoulder (TPP)",
   // Settings.
   "settings.heading": "Settings",
   "settings.tab.general": "General",
   "settings.tab.mouse": "Mouse & Camera",
   "settings.tab.keys": "Controls",
   "settings.tab.access": "Accessibility",
+  "settings.tab.touch": "Touch & Gamepad",
+  "settings.touchFire": "Fire button",
+  "settings.touchFire.aims": "Aims and fires",
+  "settings.touchFire.separate": "Fires only",
+  "settings.padSensitivity": "Gamepad sensitivity",
+  "settings.padDeadzone": "Stick dead zone",
+  "settings.padCurve": "Response curve",
+  "settings.padCurve.linear": "Linear",
+  "settings.padCurve.classic": "Classic",
+  "settings.padCurve.precise": "Precise",
+  "settings.aimAssist": "Aim assist",
+  "settings.aimAssist.off": "Off",
+  "settings.aimAssist.light": "Light",
+  "settings.aimAssist.standard": "Standard",
   "settings.language": "Language / Język",
   "settings.language.en": "English",
   "settings.language.pl": "Polski",
@@ -123,9 +140,11 @@ export const en = {
   "settings.quality.medium": "Medium",
   "settings.quality.low": "Low",
   "settings.volume": "Volume",
-  "settings.musicVolume": "Music and radio",
+  "settings.musicVolume": "Music",
   "settings.sfxVolume": "Effects",
   "settings.ambienceVolume": "City ambience",
+  "settings.dialogueVolume": "Dialogue",
+  "settings.radioVolume": "Radio",
   "settings.hints": "Hints",
   "settings.autosave": "Autosave",
   "settings.touchSensitivity": "Touch sensitivity",
@@ -140,11 +159,14 @@ export const en = {
   "settings.adsSensitivity": "Aiming sensitivity",
   "settings.invertY": "Invert Y axis",
   "settings.fov": "Field of view (horizontal)",
-  "settings.aimMode": "Aim (RMB)",
+  "settings.aimMode": "Aim button",
   "settings.crouchMode": "Crouch",
   "settings.sprintMode": "Sprint",
   "settings.mode.hold": "Hold",
   "settings.mode.toggle": "Toggle",
+  "settings.shoulder": "TPP camera shoulder",
+  "settings.shoulder.right": "Right",
+  "settings.shoulder.left": "Left",
   "settings.hudScale": "HUD scale",
   "settings.subtitleScale": "Subtitle size",
   "settings.subtitleBackground": "Solid subtitle background",
@@ -177,6 +199,7 @@ export const en = {
   ...enDomain,
   ...enContent,
   ...enDifficulty,
+  ...enProgression,
 } as const satisfies Readonly<Record<string, Message>>;
 
 export type MessageKey = keyof typeof en;

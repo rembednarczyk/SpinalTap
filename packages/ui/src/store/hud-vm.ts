@@ -126,6 +126,8 @@ export interface ScanTargetVm {
   readonly profile: readonly string[] | null;
   /** The target is hostile (threat token) or not. */
   readonly hostile: boolean;
+  /** An enemy's level (ADR-0059, stages 5 and 7: its district band and the player's level); absent for anyone else. */
+  readonly level?: number;
 }
 
 export interface RamVm {

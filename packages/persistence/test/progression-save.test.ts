@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { INITIAL_PROGRESSION, QUEST_DEFINITIONS, type QuestLog, SAVE_SCHEMA_VERSION, type SaveSnapshot, capacityMax, levelForXp, progressionFromXp, questLogXp, xpForLevel } from "@seki/core";
+import { INITIAL_PROGRESSION, QUEST_DEFINITIONS, type QuestLog, SAVE_SCHEMA_VERSION, type SaveSnapshot, capacityMax, levelForXp, progressionFromXp, questLogXp, spendPerkPoint, xpForLevel } from "@seki/core";
 import { MIGRATIONS, V17_CONTRACT_XP, checksum, compensatingShards, decodeSave, findSchemaError, retroactiveXp } from "../src";
 import { snapshot } from "./fixtures";
 
@@ -23,7 +23,8 @@ describe("character progression in the save (v16 to v17, ADR-0059)", () => {
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     const xp = questLogXp(actOneDone, QUEST_DEFINITIONS) + 9 * V17_CONTRACT_XP;
     const level = levelForXp(xp);
-    expect(level).toBe(10);
+    // 1250 + 1350 (act I since ADR-0059 stage 8, 4600 before) + 600 + 9 × 850 = 10 850 XP.
+    expect(level).toBe(9);
     expect(loaded.domain.progression).toEqual({ ...INITIAL_PROGRESSION, xp, level, unspent: { attribute: level - 1, perk: level - 1 } });
   });
 
@@ -83,5 +84,43 @@ describe("character progression in the save (v16 to v17, ADR-0059)", () => {
     expect(bad({ ...INITIAL_PROGRESSION, attributes: { might: 3 } })).toBe("progression attributes");
     expect(bad({ ...INITIAL_PROGRESSION, perks: { x: -1 } })).toBe("progression perks");
     expect(bad({ ...INITIAL_PROGRESSION, unspent: { attribute: 1.5, perk: 0 } })).toBe("progression points");
+  });
+
+  it("keeps bought perk ranks without a new schema version, and refuses edited ones (stage 3)", () => {
+    const s = snapshot();
+    const bad = (progression: unknown) => findSchemaError({ ...s, domain: { ...s.domain, progression } } as unknown as Record<string, unknown>);
+    // Level 3: two points each; Might 4 opens the first tier, one rank of Tough bought.
+    const base = progressionFromXp(xpForLevel(3));
+    const built = { ...base, attributes: { ...base.attributes, might: 4 }, perks: { might_tough: 1 }, unspent: { attribute: 1, perk: 1 } };
+    expect(bad(built)).toBeNull();
+    const loaded = decodeSave("v", wrap({ ...s, domain: { ...s.domain, progression: built } }));
+    expect(loaded.domain.progression.perks).toEqual({ might_tough: 1 });
+    // An unknown perk, a rank above its last, or a tier the attribute does not open.
+    expect(bad({ ...built, perks: { gone_perk: 1 } })).toBe("progression perks");
+    const five = progressionFromXp(xpForLevel(5));
+    expect(bad({ ...five, attributes: { ...five.attributes, might: 4 }, perks: { might_tough: 4 }, unspent: { attribute: 3, perk: 0 } })).toBe("progression perks");
+    expect(bad({ ...base, perks: { might_tough: 1 }, unspent: { attribute: 2, perk: 1 } })).toBe("progression perks");
+  });
+
+  it("a stage 3 save with a perk above an empty tier still loads with its perks; no new rank until the path is filled (stage 3c)", () => {
+    const s = snapshot();
+    // Level 12: stage 3 let Might 12 buy Hardened (tier 12) with nothing on the tiers below.
+    const base = progressionFromXp(xpForLevel(12));
+    const old = { ...base, attributes: { ...base.attributes, might: 12 }, perks: { might_hardened: 1 }, unspent: { attribute: 2, perk: 10 } };
+    expect(findSchemaError({ ...s, domain: { ...s.domain, progression: old } } as unknown as Record<string, unknown>)).toBeNull();
+    const loaded = decodeSave("v", wrap({ ...s, domain: { ...s.domain, progression: old } }));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(loaded.domain.progression.perks).toEqual({ might_hardened: 1 });
+    // New ranks follow the rule: Second Wind (tier 8) needs a perk of tier 4 first.
+    expect(spendPerkPoint(loaded.domain.progression, "might_second_wind")).toEqual({ ok: false, reason: "locked" });
+    // Its own next rank too (stage 3c): the tiers below it come first.
+    expect(spendPerkPoint(loaded.domain.progression, "might_hardened")).toEqual({ ok: false, reason: "locked" });
+    let s3 = loaded.domain.progression;
+    for (const id of ["might_tough", "might_second_wind", "might_hardened"]) {
+      const r = spendPerkPoint(s3, id);
+      if (!r.ok) throw new Error(`${id}: ${r.reason}`);
+      s3 = r.state;
+    }
+    expect(s3.perks).toEqual({ might_hardened: 2, might_tough: 1, might_second_wind: 1 });
   });
 });

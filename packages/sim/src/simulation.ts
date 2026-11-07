@@ -17,7 +17,7 @@ import {
 } from "@seki/core";
 import { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
-import { aimSpreadOf, createSystems, playerStatsOf } from "./systems";
+import { type AimCandidate, aimSpreadOf, aimTargets, createSystems, playerStatsOf } from "./systems";
 import type { Entity } from "./world/components";
 import { type DomainHolder, type SessionState, type SimContext, type System, freshSession } from "./world/context";
 import { PLAYER_SPAWN } from "./content/district-m0";
@@ -32,11 +32,15 @@ import { CROWD_CAP, type CrowdDensity } from "./content/crowd";
 import type { TrafficDensity } from "./content/traffic";
 import { isMicroKey } from "./world/micro-events";
 import { doorSnapshots, restoreDoors } from "./systems/door-system";
+import { resumeOnLadderTop } from "./systems/ladder-system";
 import { withAttackLock } from "./world/takedown";
 import { withCarry } from "./world/bodies";
 import { resumeSession } from "./world/session-resume";
 import { reinforcementsSnapshot, restoreReinforcements } from "./world/reinforcements";
 import { restoreStrayBodies, strayBodiesSnapshot } from "./world/stray-bodies";
+import { calmStreet } from "./systems/ai/civilian-ai-system";
+import { type EnemyScaling, enemyScalingOf } from "./world/enemy-grade";
+import { settleCalls } from "./systems/crime-system";
 
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./world/contract-commands";
 export { SIM_DT, SIM_HZ } from "./step-rate";
@@ -92,10 +96,10 @@ export class Simulation {
     const player = playerEntity(ids.take());
     this.streamer = chunks ? new WorldStreamer(ids, chunks) : new WorldStreamer(ids);
     bindGround(this.world, this.streamer.ground);
-    this.streamer.enemyHealth = () => this.holder.domain.difficulty.npcHealth;
+    this.streamer.enemyScaling = () => this.enemyScaling();
     // The people of a job stay in the world after it ends, done or lost, until the next is taken
     // (G-178): the guards of an alarm fight on, an ambush waits by the way out (ADR-0034).
-    // An ended one is made with the jobs done when it was taken: its pay counts one more since.
+    // Its people are of the level their district's band gives the player's level (ADR-0059).
     // Replaced jobs first, as they were taken: their saved people come back with them.
     for (const f of saved?.formerContracts ?? []) this.streamer.restoreFormer(f);
     const active = domain.contracts.active;
@@ -118,8 +122,9 @@ export class Simulation {
     return sim;
   }
 
-  static fromSnapshot(snapshot: SaveSnapshot, bus?: EventBus<DomainEvents>, crowd: CrowdDensity = "off", traffic: TrafficDensity = crowd): Simulation {
-    const sim = new Simulation(snapshot.seed, snapshot.domain, bus ?? new EventBus<DomainEvents>(), snapshot);
+  /** A saved game; `chunks` replaces the city as `SimulationOptions.chunks` does (a test floor), the city by default. */
+  static fromSnapshot(snapshot: SaveSnapshot, bus?: EventBus<DomainEvents>, crowd: CrowdDensity = "off", traffic: TrafficDensity = crowd, chunks?: readonly ChunkDef[]): Simulation {
+    const sim = new Simulation(snapshot.seed, snapshot.domain, bus ?? new EventBus<DomainEvents>(), snapshot, chunks);
     sim.setCrowd(crowd);
     sim.setTraffic(traffic);
     sim.rng.setState(snapshot.rngState);
@@ -127,14 +132,17 @@ export class Simulation {
     sim.streamer.restoreEntities(sim.world, snapshot.domain.flags, snapshot.entities);
     restoreDoors(sim, snapshot.doors ?? []);
     // The heat's reinforcements (G-179), before the body on her shoulder: it may be one of them.
-    restoreReinforcements(sim.world, sim.session.watch, snapshot.reinforcements, () => sim.streamer.takeId(), sim.domain.difficulty.npcHealth);
+    restoreReinforcements(sim.world, sim.session.watch, snapshot.reinforcements, () => sim.streamer.takeId(), sim.enemyScaling());
     // And the bodies of a won mugging (G-233): one of them may be on her shoulder too.
-    restoreStrayBodies(sim.world, snapshot.strayBodies, () => sim.streamer.takeId(), sim.domain.difficulty.npcHealth);
+    restoreStrayBodies(sim.world, snapshot.strayBodies, () => sim.streamer.takeId(), sim.enemyScaling());
     // The body on her shoulder (ADR-0065) is saved on the body.
     sim.session.carrying = sim.world.with("downed").entities.find((b) => b.downed.carried)?.id ?? null;
     // A profile asked for in the fight still waits for its end (G-171).
     sim.session.pendingDifficulty = snapshot.pendingDifficulty ?? null;
     resumeSession(sim.session, sim.domain, sim.player(), sim.streamer);
+    // Saved in the step across the top of a ladder (ADR-0021): onto the rungs or the roof.
+    const player = sim.player();
+    if (player) resumeOnLadderTop(sim.world, player, sim.session.carrying !== null);
     return sim;
   }
 
@@ -175,10 +183,21 @@ export class Simulation {
     return p ? aimSpreadOf(p, playerStatsOf(this.holder.domain)) : 0;
   }
 
+  /** Enemies the aim assist may pull to (ADR-0072), read after a step; none without a player. */
+  aimTargets(): AimCandidate[] {
+    const p = this.player();
+    return p ? aimTargets(this.world, p) : [];
+  }
+
   /** District the player stands in, or null between chunk bounds. */
   get district(): DistrictId | null {
     const p = this.player();
     return p ? this.streamer.districtAt(p.position) : null;
+  }
+
+  /** What an enemy appearing now is made with: the difficulty and the player's level, by these districts (ADR-0059). */
+  private enemyScaling(): EnemyScaling {
+    return enemyScalingOf(this.holder.domain, (p) => this.streamer.districtAt(p));
   }
 
   enqueue(command: GameCommand): void {
@@ -223,6 +242,17 @@ export class Simulation {
 
   private applyCommands(ctx: SimContext): void {
     for (const cmd of this.commands.splice(0)) applyCommand(ctx, cmd);
+  }
+
+  /**
+   * Settles what a save does not keep, before the save (G-240): the witnesses' calls go through,
+   * then the street's fear goes (ADR-0029), so the game saved from goes on as the loaded one.
+   * Not part of `snapshot`, which hashes read.
+   */
+  calmForSave(): void {
+    const ctx = this.context(EMPTY_INPUT);
+    settleCalls(ctx);
+    calmStreet(ctx);
   }
 
   snapshot(narrative: string | null, label: string, objective: string): SaveSnapshot {

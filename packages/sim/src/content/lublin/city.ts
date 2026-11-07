@@ -3,9 +3,11 @@ import { makeDeck } from "../../world/deck";
 import type { PrismDef } from "../../world/prism";
 import type { StaticProp } from "../builders";
 import { clearedBuilding } from "../cleared-buildings";
+import { ARKADY_OSM_ID, ARKADY_PROP } from "../alchemia/arkady";
 import { buildingView, groundView, markingView, toPoints } from "./index";
 import { type GroundRect } from "./shape";
 import { type BuildingCut, CLEARED, type PassageSite, ROOM_STOREY, type RoomSite, rawHeight } from "./sites";
+import { bridgePieces, flightDeckAt, flightTopAt } from "./decks";
 import { SHAPED_TERRAIN, groundY } from "./terrain";
 import type { LublinBuildingData, LublinChunkData, LublinGroundData } from "./types";
 
@@ -189,12 +191,30 @@ interface Carve {
   readonly bottom: number;
 }
 
-/** A piece of ground, on a bridge with its deck's axis and heights (ADR-0053). */
-const bridgeView = (g: LublinGroundData): ViewDescriptor => {
+/** The flight hung off a bridge (G-255) whose band holds the middle of `pts`, or the bridge's deck its run on the deck lies on (G-330), or null. */
+const flightUnder = (pts: readonly GroundPoint[]) => {
+  if (pts.length === 0) return null;
+  const x = pts.reduce((a, p) => a + p.x, 0) / pts.length;
+  const z = pts.reduce((a, p) => a + p.z, 0) / pts.length;
+  return flightDeckAt(x, z) ?? flightTopAt(x, z);
+};
+
+/**
+ * A piece of ground, on a bridge with its deck's axis and heights (ADR-0053), and so is a band
+ * of steps on a flight hung off a bridge (G-255): the renderer lays its treads on the flight's
+ * grade, as the simulation walks it, not on the terrain under it or on the bridge beside it. A
+ * bridge's piece is drawn without the niches of such flights (`bridgePieces`, G-274), as walked.
+ */
+const bridgeViews = (g: LublinGroundData): ViewDescriptor[] => {
   const view = groundView(g);
-  if (!g.deck || view.kind !== "ground") return view;
-  const d = makeDeck(g.outline, g.deck, rawHeight);
-  return { ...view, deck: { a: { x: d.a.x, y: d.ya, z: d.a.z }, b: { x: d.b.x, y: d.yb, z: d.b.z } } };
+  if (view.kind !== "ground") return [view];
+  const d = g.deck ? makeDeck(g.outline, g.deck, rawHeight) : g.surface === "steps" ? flightUnder(toPoints(g.outline)) : null;
+  if (!d) return [view];
+  const deck = { a: { x: d.a.x, y: d.ya, z: d.a.z }, b: { x: d.b.x, y: d.yb, z: d.b.z } };
+  if (!g.deck) return [{ ...view, deck }];
+  const pieces = bridgePieces(g.outline);
+  if (pieces.length === 1 && pieces[0]!.length * 2 === g.outline.length) return [{ ...view, deck }];
+  return pieces.map((ring) => ({ ...view, outline: ring, deck }));
 };
 
 /**
@@ -252,11 +272,18 @@ export const carvedProp = (b: LublinBuildingData, passages: readonly PassageSite
 /** Old Town buildings sign their shops on wrought-iron brackets (ADR-0048). */
 const oldTownSigns = (prop: StaticProp): StaticProp => (prop.view.kind === "building" ? { ...prop, view: { ...prop.view, signs: "bracket" } } : prop);
 
-/** The buildings of a chunk that stay, as props (rooms cut into those named by `rooms`, passages and cuts through others). */
+/**
+ * The buildings of a chunk that stay, as props (rooms cut into those named by `rooms`, passages and
+ * cuts through others). The map's ruin of the Arkady gives way to the Arkady rebuilt (ADR-0074
+ * stage 2), Alchemia's own solid on its outline drawn by the engine, in its place in the list, so
+ * the ids after it stay as they were; the ruin's outline still holds its place for the content
+ * placed by the map's walls (`places.ts`) and on the city's map.
+ */
 export const chunkBuildings = (c: LublinChunkData, rooms: readonly RoomCut[], passages: readonly PassageSite[] = [], cuts: readonly BuildingCut[] = []): StaticProp[] =>
   c.buildings
     .filter((b) => !clearedBuilding(b))
     .map((b) => {
+      if (b.id === ARKADY_OSM_ID) return ARKADY_PROP;
       const through = passages.filter((p) => p.building === b.id);
       const boxes = cuts.filter((k) => k.building === b.id);
       const prop = through.length > 0 || boxes.length > 0 ? carvedProp(b, through, boxes, c.district) : buildingProp(b, rooms.find((r) => r.site.building === b.id), c.district);
@@ -270,8 +297,9 @@ export const chunkScenery = (c: LublinChunkData, buildings: readonly StaticProp[
   const terrain = SHAPED_TERRAIN.get(c.id) ?? c.terrain;
   return [
     { chunk: c.id, view: { kind: "terrain", grid: terrain }, at: ORIGIN },
-    ...c.ground.filter((g) => !clearedSurface(toPoints(g.outline))).map((g): SceneryItem => ({ chunk: c.id, view: bridgeView(g), at: ORIGIN })),
+    ...c.ground.filter((g) => !clearedSurface(toPoints(g.outline))).flatMap((g): SceneryItem[] => bridgeViews(g).map((view) => ({ chunk: c.id, view, at: ORIGIN }))),
     ...c.markings.map((m): SceneryItem => ({ chunk: c.id, view: markingView(m), at: ORIGIN })),
-    ...buildings.map((p): SceneryItem => ({ chunk: c.id, view: p.view, at: p.center })),
+    // The Arkady (ADR-0074 stage 2) are drawn by Alchemia's own meshes, not as a building of the map.
+    ...buildings.filter((p) => p !== ARKADY_PROP).map((p): SceneryItem => ({ chunk: c.id, view: p.view, at: p.center })),
   ];
 };

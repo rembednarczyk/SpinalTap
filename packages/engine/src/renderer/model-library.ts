@@ -9,13 +9,16 @@ import {
   type Scene,
   type Texture,
   type TransformNode,
+  VertexBuffer,
   loadGltfPlugin,
 } from "../babylon";
+import type { CastKey } from "@seki/core";
 import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
 import { FaceRig } from "./face";
-import { type VrmExpressions, type VrmSprings, readGlbJson, readVrmExpressions, readVrmSprings } from "./vrm-meta";
+import type { VariantDress } from "./model-variant";
+import { type VrmExpressions, type VrmSprings, isVrm, readGlbJson, readVrmExpressions, readVrmSprings } from "./vrm-meta";
 
 /** Which character views can be replaced by imported models. */
 export type CharacterModelKey = "heroine" | "fixer" | "civilian" | "ripperdoc" | "ganger";
@@ -33,9 +36,40 @@ export interface CharacterModelSpec {
   readonly run?: string;
   readonly preset?: PresetName;
   readonly outline?: boolean;
+  /**
+   * Which look of the file (ADR-0076 §3, `variantOf`): 0 is the file's own, 1..16 the
+   * background's, the named characters' from 100 up. Part of the pool key.
+   */
+  readonly variant?: number;
+  /** A named character's hand-made changes over its variant (hair, clothes, accessories). */
+  readonly dress?: VariantDress;
 }
 
-export type CharacterModelManifest = Partial<Record<CharacterModelKey, CharacterModelSpec>>;
+/** Background roles with a pool of models (ADR-0076). */
+export type ModelPoolRole = "civilian" | "vendor" | "ganger" | "corpo";
+
+export const MODEL_POOL_ROLES: readonly ModelPoolRole[] = ["civilian", "vendor", "ganger", "corpo"];
+
+/** One file of a background pool, drawn as often as its weight says (default 1). */
+export interface PooledModelSpec extends CharacterModelSpec {
+  readonly weight?: number;
+}
+
+/**
+ * models/manifest.json: a model per role (the fallback), a model per named character (`cast`)
+ * and a pool per background role (`pools`, ADR-0076).
+ */
+export type CharacterModelManifest = Partial<Record<CharacterModelKey, CharacterModelSpec>> & {
+  readonly cast?: Partial<Record<CastKey, CharacterModelSpec>>;
+  readonly pools?: Partial<Record<ModelPoolRole, readonly PooledModelSpec[]>>;
+};
+
+/** What a file lends to the variants of other files of its base (`ModelLibrary.clothOf`). */
+export interface ModelCloth {
+  readonly family: string | null;
+  readonly torso: Texture | null;
+  readonly legs: Texture | null;
+}
 
 interface Loaded {
   readonly container: AssetContainer;
@@ -79,7 +113,19 @@ export interface SourceMaterial {
   readonly layer: number;
   /** The garment slot a VRoid cloth material dresses ("Tops", "Bottoms"), for garment tints. */
   readonly garment: "torso" | "legs" | null;
+  /**
+   * What a VRoid material paints, for the model variants (ADR-0076): skin, hair, brows, and the
+   * top (a one-piece dress too) and trousers or skirt. Null for the eyes, mouth, shoes and the rest.
+   */
+  readonly part: ModelPart | null;
+  /** The VRoid base the material belongs to ("F00", "M00"), from its name; null for other files. */
+  readonly family: string | null;
 }
+
+export type ModelPart = "skin" | "hair" | "brow" | "torso" | "legs";
+
+const partOf = (name: string): ModelPart | null =>
+  /_SKIN\b/.test(name) ? "skin" : /_HAIR(\b|_)/.test(name) ? "hair" : /facebrow/i.test(name) ? "brow" : /tops|onepi/i.test(name) ? "torso" : /bottoms/i.test(name) ? "legs" : null;
 
 /** What an imported mesh's toon material was made from, kept in `mesh.metadata.toonSource` to recolour it. */
 export interface ToonSource {
@@ -121,6 +167,8 @@ export const readSourceMaterial = (material: unknown): SourceMaterial => {
     layer: FACE_LAYERS.find(([re]) => re.test(m?.name ?? ""))?.[1] ?? 0,
     outline: mode < 2 && m?.backFaceCulling !== false && !/face|eye|mouth|lash|brow|highlight/i.test(m?.name ?? ""),
     garment: /tops/i.test(m?.name ?? "") ? "torso" : /bottoms/i.test(m?.name ?? "") ? "legs" : null,
+    part: partOf(m?.name ?? ""),
+    family: /^([FM]\d\d)_/.exec(m?.name ?? "")?.[1] ?? null,
   };
 };
 
@@ -132,23 +180,30 @@ export const pluginExtensionFor = (url: string): string | undefined =>
  * Swaps glTF materials for toon materials and folds primitives that end up with the same
  * material back into one mesh: VRoid splits a hairstyle into dozens of primitives over one
  * vertex buffer, which would otherwise cost a draw call (and an outline pass) each.
+ *
+ * `vertexColors: false` drops the meshes' COLOR_0 (VRM files: MToon does not read it). Babylon
+ * compiles VERTEXCOLOR into the toon shader for any mesh with the buffer, and the albedo is
+ * multiplied by it: `kaito.vrm` carries one of zeros and drew as a black figure (G-474).
  */
-export const convertModelMaterials = (container: AssetContainer, materials: ToonMaterials, preset: PresetName): void => {
+export const convertModelMaterials = (container: AssetContainer, materials: ToonMaterials, preset: PresetName, vertexColors = true): void => {
   const replaced = new Set<unknown>();
   const groups = new Map<string, AbstractMesh[]>();
   const dataIds = new Map<object, number>();
   const dropped: AbstractMesh[] = [];
+  const read = new Set<BaseTexture>();
   let nextDataId = 0;
   for (const mesh of container.meshes) {
     if (!mesh.material || mesh.getTotalVertices() === 0) continue;
+    if (!vertexColors && mesh.isVerticesDataPresent(VertexBuffer.ColorKind)) (mesh as Mesh).removeVerticesData(VertexBuffer.ColorKind);
     const source = readSourceMaterial(mesh.material);
     replaced.add(mesh.material);
-    mesh.material = materials.forImported(source.base, source.texture, preset, source);
-    mesh.isPickable = false;
     if (source.hidden) {
       dropped.push(mesh);
       continue;
     }
+    if (source.texture) read.add(source.texture);
+    mesh.material = materials.forImported(source.base, source.texture, preset, source);
+    mesh.isPickable = false;
     const toonSource: ToonSource = { preset, source };
     mesh.metadata = { ...(mesh.metadata as object | null), toonOutline: source.outline, toonSource };
     // Primitives of one glTF mesh have their own Geometry but share the vertex data.
@@ -180,6 +235,18 @@ export const convertModelMaterials = (container: AssetContainer, materials: Toon
   }
   for (const old of replaced) (old as { dispose?: (a?: boolean, b?: boolean) => void }).dispose?.(false, false);
   container.materials.length = 0;
+  releaseUnreadTextures(container, read);
+};
+
+/**
+ * Frees the file's textures no toon material reads (ADR-0076 §4): the hidden layers', and any
+ * normal, emission or occlusion map a non-VRM glTF brings (the toon shader samples the base only).
+ */
+const releaseUnreadTextures = (container: AssetContainer, read: ReadonlySet<BaseTexture>): void => {
+  const kept = container.textures.filter((t) => read.has(t));
+  for (const t of container.textures) if (!read.has(t)) t.dispose();
+  container.textures.length = 0;
+  container.textures.push(...kept);
 };
 
 /** Thin enough to stay under most clothing layers when a model opts into the hull. */
@@ -248,6 +315,23 @@ export class ModelLibrary {
     return this.load(spec);
   }
 
+  /** The textures a loaded file keeps for its instances (a measure of its memory, ADR-0076). */
+  async texturesOf(spec: CharacterModelSpec): Promise<readonly BaseTexture[]> {
+    return [...(await this.load(spec)).container.textures];
+  }
+
+  /**
+   * The cloth of a file for the variants of others (ADR-0076): its VRoid base (that of its top)
+   * and the textures of its separate top ("Tops") and trousers or skirt ("Bottoms"), which share
+   * their UV layout within a base. A one-piece dress lends nothing.
+   */
+  async clothOf(spec: CharacterModelSpec): Promise<ModelCloth> {
+    const { container } = await this.load(spec);
+    const sources = container.meshes.map((m) => toonSourceOf(m)?.source).filter((s): s is SourceMaterial => !!s);
+    const textureOf = (slot: "torso" | "legs") => sources.find((s) => s.garment === slot && s.texture)?.texture ?? null;
+    return { family: sources.find((s) => s.part === "torso")?.family ?? null, torso: textureOf("torso"), legs: textureOf("legs") };
+  }
+
   private load(spec: CharacterModelSpec): Promise<Loaded> {
     let pending = this.containers.get(spec.url);
     if (!pending) {
@@ -258,16 +342,18 @@ export class ModelLibrary {
         // chunk; a .gltf with external buffers loads by URL so its relative paths resolve.
         let springs: VrmSprings | null = null;
         let expressions: VrmExpressions | null = null;
+        let vrm = false;
         let source: string | Uint8Array = spec.url;
         if (extension === ".glb" || /\.glb(\?|#|$)/i.test(spec.url)) {
           const bytes = await (await fetch(spec.url)).arrayBuffer();
           const json = readGlbJson(bytes);
           springs = json ? readVrmSprings(json) : null;
           expressions = json ? readVrmExpressions(json) : null;
+          vrm = json ? isVrm(json) : false;
           source = new Uint8Array(bytes);
         }
         const container = await LoadAssetContainerAsync(source, this.scene, { pluginExtension: extension ?? (typeof source === "string" ? undefined : ".glb") });
-        convertModelMaterials(container, this.materials, spec.preset ?? "importedCharacter");
+        convertModelMaterials(container, this.materials, spec.preset ?? "importedCharacter", !vrm);
         return { container, springs, expressions };
       })();
       this.containers.set(spec.url, pending);

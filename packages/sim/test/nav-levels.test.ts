@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { EnemyTypeId, Vec3 } from "@seki/core";
-import { MARKET_PLACE, type NavGraph, OVERPASS_TOP, ROOF_WEST_TOP, Simulation, WORLD_NAV, gangerEntity, market } from "../src";
+import { type NavGraph, Simulation, gangerEntity } from "../src";
 import { firingPosition, routeAcrossLevels } from "../src/world/nav";
 import { collect, run, teleportPlayer } from "./helpers";
+import { MARKET_PLACE, OLD_MARKET_CHUNK, OVERPASS_TOP, ROOF_WEST_TOP, TARG_NAV, market } from "./fixtures/old-market";
 
-/** The market keeps its own coordinates, moved by `MARKET_PLACE` (ADR-0045): every point here is one of it. */
+/** The old market as a test floor with its level graph (`fixtures/old-market.ts`; the game's market is in Alchemia since ADR-0063): every point here is one of it. */
 const M = MARKET_PLACE;
 
 /** The player stands still at `p`; every other ganger is gone. */
 const scene = (p: Vec3): Simulation => {
-  const sim = Simulation.create({ seed: 5 });
+  const sim = Simulation.create({ seed: 5, chunks: [OLD_MARKET_CHUNK] });
   teleportPlayer(sim, p);
   run(sim, 2);
   teleportPlayer(sim, p);
@@ -89,12 +90,12 @@ describe("NPC navigation between levels (ADR-0021)", () => {
     const empty: NavGraph = { nodes: [], edges: [] };
     expect(routeAcrossLevels(sim.world, empty, market(96, 0, 80), market(100, OVERPASS_TOP, 92))).toBeNull();
     expect(firingPosition(sim.world, empty, market(96, 0, 80), market(100, OVERPASS_TOP, 92), 15)).toBeNull();
-    const a = routeAcrossLevels(sim.world, WORLD_NAV, market(96, 0, 80), market(100, OVERPASS_TOP, 92));
-    const b = routeAcrossLevels(sim.world, WORLD_NAV, market(96, 0, 80), market(100, OVERPASS_TOP, 92));
+    const a = routeAcrossLevels(sim.world, TARG_NAV, market(96, 0, 80), market(100, OVERPASS_TOP, 92));
+    const b = routeAcrossLevels(sim.world, TARG_NAV, market(96, 0, 80), market(100, OVERPASS_TOP, 92));
     expect(a).toEqual(b);
     expect(a?.next).toEqual(market(72, 0, 85.5));
     // Nothing connects the street to a roof.
-    expect(routeAcrossLevels(sim.world, WORLD_NAV, market(96, 0, 80), market(74, ROOF_WEST_TOP, 61))).toBeNull();
+    expect(routeAcrossLevels(sim.world, TARG_NAV, market(96, 0, 80), market(74, ROOF_WEST_TOP, 61))).toBeNull();
     expect(() => routeAcrossLevels(sim.world, { nodes: [], edges: [{ a: "x", b: "y" }] }, market(0, 0, 0), market(0, 5, 0))).not.toThrow();
   });
 });

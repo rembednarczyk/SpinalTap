@@ -41,6 +41,7 @@ export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./com
 export { meleeSystem, stagger, startSwing } from "./melee-system";
 export { equippedAbility, scanning, worldTimeScale } from "./ability-system";
 export { DEVICE_SHORT_SECONDS, hackTargetKind, scanFocus, scannerSystem } from "./scanner-system";
+export { AIM_ASSIST_RANGE, type AimCandidate, aimRangeOf, aimTargets } from "./aim-targets";
 export {
   CAMERA_ALARM_RADIUS,
   CAMERA_CONE,
@@ -92,7 +93,7 @@ export {
 export { createBodySystem, cyberCapacityOf } from "./body-system";
 export { doorForcedFlag, doorSnapshots, doorSystem, forceDoor, restoreDoors } from "./door-system";
 export { CARRY_REACH, CARRY_SPEED, HIDE_REACH, bodyCandidate, carriedBody, carrySystem, hideSpotNear } from "./carry-system";
-export { TAKEDOWN_BACK_CONE, TAKEDOWN_REACH, TAKEDOWN_TIME, takedownCandidate, takedownDistance, takedownSystem } from "./takedown-system";
+export { GRAB_TIME, TAKEDOWN_BACK_CONE, TAKEDOWN_REACH, TAKEDOWN_TIME, takedownCandidate, takedownDistance, takedownSystem } from "./takedown-system";
 
 /**
  * Explicit, fixed system order (determinism: never derived from map iteration).

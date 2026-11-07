@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT } from "@seki/core";
-import { GENZO_SPOT, METRO_STATIONS, market } from "@seki/sim";
+import { GENZO_SPOT, HANA_SPOT, METRO_STATIONS } from "@seki/sim";
 import type { GameSession } from "../src/game-session";
 import { type Ui, frame, setup, steps, teleport } from "./story-helpers";
 
@@ -71,14 +71,17 @@ describe("Lublin in the session (ADR-0045)", () => {
     session.newGame();
     // Plac Zamkowy below the castle: the docks are reached by the metro only.
     const from = METRO_STATIONS.find((s) => s.id === "targ")!;
-    teleport(session, from.kiosk.x + Math.sin(from.yaw), from.kiosk.z + Math.cos(from.yaw), from.yaw + Math.PI);
+    // At the ticket machine on the platform under its entrance A (ADR-0071 stage 4).
+    const machine = from.entrances[0];
+    teleport(session, machine.ticket.x, machine.ticket.z, machine.ticketYaw, 0, machine.ticket.y);
     steps(session, 1);
     expect(session.sim.district).toBe("targ");
     expect(ui.getState().prompt).toContain("Ticket");
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().metroMap?.from).toBe("targ");
     const eddies = session.sim.domain.wallet.eddies;
-    session.intents.travelMetro("doki");
+    session.intents.selectMetroStop("doki");
+    session.intents.buyMetroTicket();
     for (let i = 0; i < 60 * 30 && session.sim.district !== "doki"; i++) {
       session.step(EMPTY_INPUT);
       session.render(0);
@@ -108,14 +111,14 @@ describe("Lublin in the session (ADR-0045)", () => {
     expect(ui.getState().toasts.map((t) => `${t.title}`)).toContain("New contract: Escort");
   });
 
-  it("Hana on the market under the viaduct hands out a job through the dialogue", () => {
+  it("Hana at the market in Alchemia hands out a job through the dialogue (ADR-0063)", () => {
     const { session, ui } = setup();
     session.newGame();
     // Next to Hana's cart; one step streams the market in.
-    const cart = market(90.5, 0, 74);
+    const cart = { x: HANA_SPOT.x - 1.5, z: HANA_SPOT.z };
     teleport(session, cart.x, cart.z, Math.PI / 2);
     steps(session, 1);
-    expect(session.sim.district).toBe("targ");
+    expect(session.sim.district).toBe("shinsekai-7");
     expect(ui.getState().prompt).toContain("Talk to Hana");
     steps(session, 1, frame({ interact: true }));
     const text = () => (ui.getState().dialogue?.lines ?? []).map((l) => l.text).join("\n");

@@ -1,7 +1,6 @@
 import { type StaticProp } from "./builders";
 import { CAR_WASH_PROPS } from "./district-car-wash";
 import { DOKI_QUAY_PROPS, DOKI_YARD_PROPS } from "./district-doki";
-import { TARG_NORTH_PROPS, TARG_SOUTH_PROPS } from "./district-targ";
 import { type GroundRect, rectOverlap } from "./lublin/shape";
 import { CLEARED_BUILDINGS } from "./lublin/sites";
 import { groundY } from "./lublin/terrain";
@@ -9,7 +8,7 @@ import type { LublinBuildingData } from "./lublin/types";
 
 /**
  * Which of the map's buildings give way to the set pieces that clear them (ADR-0045, G-008):
- * the market, the docks and the car wash. Only their own props count here; the rest of the
+ * the docks and the car wash. Only their own props count here; the rest of the
  * game's content finds its places by the buildings that stay (`lublin/places.ts`).
  */
 
@@ -19,7 +18,7 @@ const OVER_SET_PIECE = 0.25;
 const ANYWHERE: GroundRect = { minX: -Infinity, maxX: Infinity, minZ: -Infinity, maxZ: Infinity };
 
 /** The footprints of the set pieces' solid blocks standing on the ground (their walls, stalls, crates; not awnings or decks). */
-const SET_PIECE_BLOCKS: readonly GroundRect[] = [...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS, ...DOKI_YARD_PROPS, ...DOKI_QUAY_PROPS, ...CAR_WASH_PROPS].flatMap((p: StaticProp) => {
+const SET_PIECE_BLOCKS: readonly GroundRect[] = [...DOKI_YARD_PROPS, ...DOKI_QUAY_PROPS, ...CAR_WASH_PROPS].flatMap((p: StaticProp) => {
   if (p.view.kind !== "block" || !p.solid) return [];
   const { x, y, z } = p.view.size;
   if (p.center.y - y / 2 - groundY(p.center.x, p.center.z) > 0.5) return [];

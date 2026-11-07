@@ -1,4 +1,4 @@
-import { cooldownRateOf, hasPerk } from "@seki/core";
+import { cooldownRateOf, dashCooldownScale, hasPerk, staminaRegenScale, workingCyberware } from "@seki/core";
 import type { Entity, PerkState } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { playerHeld } from "../world/takedown";
@@ -17,7 +17,7 @@ export const DASH_EXIT_SPEED = 6;
 export const STAMINA_REGEN = 0.35;
 export const STAMINA_GUARD_REGEN = 0;
 
-export const freshPerks = (): PerkState => ({ dash: 0, dashDir: { x: 0, z: 1 }, dashCooldown: 0, airDash: false, iframes: 0, stamina: 1 });
+export const freshPerks = (): PerkState => ({ dash: 0, dashDir: { x: 0, z: 1 }, dashCooldown: 0, airDash: false, dashFlight: false, iframes: 0, stamina: 1, secondHeart: 0 });
 
 /** The perk state of the player, created on first use. */
 export const perksOf = (p: Entity): PerkState => (p.perks ??= freshPerks());
@@ -50,7 +50,7 @@ const carryDash = (p: Mover, s: PerkState, dt: number): void => {
 /** Can a dash start now? Legs implant, cooldown, not on a ladder or a ledge, not off balance, one in the air. */
 const canDash = (ctx: SimContext, p: Entity, s: PerkState, grounded: boolean): boolean => {
   if (!ctx.input.dash || playerHeld(ctx)) return false;
-  if (!hasPerk(ctx.state.domain.character.cyberware, "dash") || s.dashCooldown > 0) return false;
+  if (!hasPerk(workingCyberware(ctx.state.domain), "dash") || s.dashCooldown > 0) return false;
   if (p.climb || p.mantle || (p.melee?.stagger ?? 0) > 0) return false;
   return grounded || !s.airDash;
 };
@@ -65,22 +65,32 @@ export const perkSystem: System = {
   name: "perk",
   run(ctx) {
     const rate = cooldownRateOf(ctx.state.domain.buffs);
+    // Second Wind and Slipstream (ADR-0059): the guard rests faster, the dash comes back sooner.
+    const perks = ctx.state.domain.progression.perks;
+    const regen = STAMINA_REGEN * staminaRegenScale(perks);
     for (const p of ctx.world.with("player", "velocity")) {
       const s = perksOf(p);
       s.dashCooldown = Math.max(0, s.dashCooldown - ctx.dt * rate);
       s.iframes = Math.max(0, s.iframes - ctx.dt);
-      s.stamina = Math.min(1, s.stamina + ctx.dt * (p.melee?.guard ? STAMINA_GUARD_REGEN : STAMINA_REGEN));
+      s.secondHeart = Math.max(0, s.secondHeart - ctx.dt);
+      s.stamina = Math.min(1, s.stamina + ctx.dt * (p.melee?.guard ? STAMINA_GUARD_REGEN : regen));
       const grounded = p.fall === undefined && !p.climb && !p.mantle;
-      if (grounded) s.airDash = false;
+      if (grounded) {
+        s.airDash = false;
+        s.dashFlight = false;
+      }
       if (s.dash > 0) {
+        // Set on the ground too: the last step of a burst may carry her over an edge.
+        s.dashFlight = true;
         carryDash(p, s, ctx.dt);
         continue;
       }
       if (!canDash(ctx, p, s, grounded)) continue;
       s.dashDir = dashDirection(p, ctx.input.moveX, ctx.input.moveZ);
       s.dash = DASH_TIME;
-      s.dashCooldown = DASH_COOLDOWN;
+      s.dashCooldown = DASH_COOLDOWN * dashCooldownScale(perks);
       s.iframes = DASH_IFRAMES;
+      s.dashFlight = true;
       if (!grounded) {
         s.airDash = true;
         // The burst holds the body up for its start: a fall pauses, a rise goes on.

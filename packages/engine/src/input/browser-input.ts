@@ -1,6 +1,22 @@
 import { EMPTY_INPUT, type InputFrame, type InputPort } from "@seki/core";
-import { type ButtonMode, DEFAULT_KEYMAP, DoubleTap, InputLatches, type KeyMap, mapGamepad, mapKeyboardMouse, mergeFrames } from "./keymap";
+import { type ButtonMode, DEFAULT_KEYMAP, DEFAULT_PAD_TUNING, DoubleTap, InputLatches, type KeyMap, type PadTuning, mapGamepad, mapKeyboardMouse, mergeFrames } from "./keymap";
+import { PAD_LEFT_STICK, ShoulderSwitch } from "./shoulder-switch";
 import { VirtualPad } from "./virtual-pad";
+import { AimAssist } from "./aim-assist";
+
+/**
+ * Look sensitivity per device (ADR-0072): mouse, touch and the pad each turn the view at their
+ * own setting, so the app no longer scales the merged frame by one of them.
+ */
+export interface LookTuning {
+  readonly mouse: number;
+  readonly touch: number;
+  readonly pad: PadTuning;
+}
+
+export const DEFAULT_LOOK_TUNING: LookTuning = { mouse: 1, touch: 1, pad: DEFAULT_PAD_TUNING };
+
+const scaleLook = (frame: InputFrame, k: number): InputFrame => (k === 1 ? frame : { ...frame, lookYaw: frame.lookYaw * k, lookPitch: frame.lookPitch * k });
 
 const MOUSE_SENSITIVITY = 0.0022;
 /** Wheel travel (pixels) per weapon change: one notch of a regular mouse wheel. */
@@ -16,6 +32,10 @@ export class BrowserInput implements InputPort {
   keymap: KeyMap = DEFAULT_KEYMAP;
   /** On-screen touch gamepad; merged with keyboard, mouse and physical pads. */
   readonly virtualPad = new VirtualPad();
+  /** The TPP shoulder (G-275): the settings set its side and hear about a swap. */
+  readonly shoulder = new ShoulderSwitch();
+  /** Aim assist for touch look (ADR-0072); the app feeds it the targets and applies its pull. */
+  readonly aimAssist = new AimAssist();
   private lastTouchAt = -Infinity;
   private active = false;
   /** Set when pointer lock is refused (some embedded frames): mouse look then works on plain movement. */
@@ -26,6 +46,11 @@ export class BrowserInput implements InputPort {
    * retry takes the lock (G-139).
    */
   private lockByPromise = false;
+  /**
+   * The game wants the lock: a release asked for while a request is still in flight (I pressed
+   * just after the loading screen) is carried out when the browser grants it late (G-306).
+   */
+  private wantsLock = false;
   private readonly held = new Set<string>();
   private readonly pressed = new Set<string>();
   private yaw = 0;
@@ -33,6 +58,8 @@ export class BrowserInput implements InputPort {
   /** Whether the pointer was locked at the last mouse move. */
   private movedLocked = false;
   private padPrev: boolean[] = [];
+  /** The pad's left stick went down in the last poll. */
+  private padStick = false;
   /** B tapped twice dashes (ADR-0036). */
   private readonly padDash = new DoubleTap();
   private lastPoll: number | null = null;
@@ -41,6 +68,7 @@ export class BrowserInput implements InputPort {
   private modes: { aim: ButtonMode; crouch: ButtonMode; sprint: ButtonMode } = { aim: "hold", crouch: "hold", sprint: "hold" };
   /** Wheel travel not yet turned into a notch (trackpads send many small deltas). */
   private wheel = 0;
+  private lookTuning: LookTuning = DEFAULT_LOOK_TUNING;
 
   constructor(private readonly target: HTMLElement) {
     const on = <K extends keyof WindowEventMap>(type: K, fn: (e: WindowEventMap[K]) => void) => {
@@ -62,6 +90,11 @@ export class BrowserInput implements InputPort {
     };
     document.addEventListener("pointerlockerror", onLockError);
     this.disposers.push(() => document.removeEventListener("pointerlockerror", onLockError));
+    const onLockChange = () => {
+      if (this.locked && !this.wantsLock) document.exitPointerLock();
+    };
+    document.addEventListener("pointerlockchange", onLockChange);
+    this.disposers.push(() => document.removeEventListener("pointerlockchange", onLockChange));
     on("touchstart", () => {
       this.lastTouchAt = performance.now();
     });
@@ -113,6 +146,11 @@ export class BrowserInput implements InputPort {
     this.latches.setModes(modes);
   }
 
+  /** Each device's own look sensitivity (ADR-0072), applied before the frames merge. */
+  setLookTuning(tuning: LookTuning): void {
+    this.lookTuning = tuning;
+  }
+
   /** When false (menus, dialogue) poll() returns an empty frame. */
   get enabled(): boolean {
     return this.active;
@@ -126,6 +164,7 @@ export class BrowserInput implements InputPort {
     if (value !== this.active) {
       this.clearBuffered();
       this.latches.reset();
+      this.aimAssist.reset();
     }
     this.active = value;
   }
@@ -140,6 +179,7 @@ export class BrowserInput implements InputPort {
   }
 
   requestPointerLock(): void {
+    this.wantsLock = true;
     if (this.locked) return;
     try {
       // Some browsers return a promise that rejects when the request is refused.
@@ -148,7 +188,9 @@ export class BrowserInput implements InputPort {
       if (r instanceof Promise) {
         this.lockByPromise = true;
         r.catch(() => {
-          // Refused with the option (older Chromium, Linux without raw input): try without it.
+          // Refused with the option (older Chromium, Linux without raw input): try without it,
+          // unless a menu let go of the lock in the meantime.
+          if (!this.wantsLock) return;
           try {
             const plain = this.target.requestPointerLock() as unknown;
             // Refused for want of a user gesture (a panel closed with Esc before the first click,
@@ -165,6 +207,7 @@ export class BrowserInput implements InputPort {
   }
 
   releasePointerLock(): void {
+    this.wantsLock = false;
     if (this.locked) document.exitPointerLock();
   }
 
@@ -174,14 +217,25 @@ export class BrowserInput implements InputPort {
     this.lastPoll = now;
     if (!this.active) {
       this.clearBuffered();
-      return EMPTY_INPUT;
+      // Menus and dialogue keep the side: a deflected shot still starts over the shoulder shown.
+      return this.shoulder.left ? { ...EMPTY_INPUT, leftShoulder: true } : EMPTY_INPUT;
     }
-    const km = mapKeyboardMouse({ held: this.held, pressed: this.pressed }, { yaw: this.yaw, pitch: this.pitch }, this.keymap);
+    const mouse = this.lookTuning.mouse;
+    const km = mapKeyboardMouse({ held: this.held, pressed: this.pressed }, { yaw: this.yaw * mouse, pitch: this.pitch * mouse }, this.keymap);
+    const swapKey = this.keymap.swapShoulder.some((c) => this.pressed.has(c));
     this.clearDeviceBuffers();
-    // The pad consumes its own edges and look deltas while polling.
-    const withTouch = mergeFrames(km, this.virtualPad.poll());
+    // The touch pad consumes its own edges and look deltas while polling. Touch and pad look
+    // stay apart up to here, each at its own sensitivity: the aim assist of ADR-0072 (stage 3)
+    // slows these two frames, never the mouse, before they merge.
+    const touch = scaleLook(this.virtualPad.poll(), this.lookTuning.touch);
     const pad = this.pollPad(dt);
-    return this.latches.apply(pad ? mergeFrames(withTouch, pad) : withTouch);
+    const withTouch = mergeFrames(km, this.aimAssist.slow(touch));
+    const padLook = pad && this.aimAssist.slow(pad);
+    // The touch fire button aims after the latches, so it never flips a toggled aim (ADR-0072).
+    const latched = this.virtualPad.withFireAim(this.latches.apply(padLook ? mergeFrames(withTouch, padLook) : withTouch));
+    // Sights raised from touch or the pad's LT pull to a target; from the mouse never (ADR-0072).
+    this.aimAssist.observe(latched.aim, touch.aim || this.virtualPad.fireAims || pad?.aim === true);
+    return this.shoulder.apply(latched, swapKey, pad !== null && this.padStick);
   }
 
   dispose(): void {
@@ -212,8 +266,9 @@ export class BrowserInput implements InputPort {
     const buttons = pad.buttons.map((b) => b.pressed);
     const pressed = buttons.map((b, i) => b && !this.padPrev[i]);
     this.padPrev = buttons;
+    this.padStick = pressed[PAD_LEFT_STICK] ?? false;
     const dash = this.padDash.update(pressed[1] ?? false, dt);
-    return mapGamepad({ axes: pad.axes, buttons, pressed, dash }, dt);
+    return mapGamepad({ axes: pad.axes, buttons, pressed, dash }, dt, this.lookTuning.pad);
   }
 }
 

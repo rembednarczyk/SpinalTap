@@ -8,7 +8,7 @@ import {
   contractTag,
   takenFlag,
 } from "@seki/core";
-import { CONTRACT_ITEM_SPOTS, OYAJI_MAX_HP, SIM_HZ, Simulation, ground, market, stateHash } from "../src";
+import { CONTRACT_ITEM_SPOTS, HANA_SPOT, OYAJI_MAX_HP, SIM_HZ, STALL_KEEPERS, Simulation, ground, stateHash } from "../src";
 import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
 /** A point on the ground at (x, z) (the terrain of ADR-0045). */
@@ -28,7 +28,7 @@ const withDomain = (sim: Simulation, patch: (d: Simulation["domain"]) => Simulat
 
 /** Next to Hana's cart in the market; one step lets streaming load the market around the player. */
 const toMarket = (sim: Simulation) => {
-  teleportPlayer(sim, market(90.5, 0, 74), Math.PI / 2);
+  teleportPlayer(sim, ground(HANA_SPOT.x - 1.5, HANA_SPOT.z), Math.PI / 2);
   sim.step();
 };
 
@@ -162,7 +162,8 @@ describe("retrieval (Hana's crate from the Hebi stash)", () => {
     const rep = sim.domain.reputation;
     complete(sim);
     expect(sim.domain.wallet.eddies).toBe(before + c.reward + extra());
-    expect(sim.domain.reputation).toEqual({ ...rep, civilians: rep.civilians + 3, hebi: rep.hebi - 4, fixers: rep.fixers + 1 });
+    // A clean job (no alarm, nobody killed besides the guards): +3 and +2 with the street (ADR-0070).
+    expect(sim.domain.reputation).toEqual({ ...rep, civilians: rep.civilians + 5, hebi: rep.hebi - 4, fixers: rep.fixers + 1 });
   });
 
   it("killing the guards alone does not clear it", () => {
@@ -237,7 +238,8 @@ describe("protection (Hebi come for Oyaji)", () => {
     expect(sim.domain.reputation).toEqual({
       ...rep,
       hebi: rep.hebi - 4 * c.targets - 3,
-      civilians: rep.civilians - c.targets + 6,
+      // The wave is the job's crew: the street judges the job, not each body (ADR-0070).
+      civilians: rep.civilians + 6,
     });
   });
 
@@ -247,9 +249,9 @@ describe("protection (Hebi come for Oyaji)", () => {
     const failed = collect<{ reason: string }>(sim, "ContractFailed");
     const c = accept(sim, "protect");
     const [g] = gangers(sim, c);
-    const start = Math.hypot(g!.position.x - 80, g!.position.z - 66.6);
+    const start = Math.hypot(g!.position.x - STALL_KEEPERS.oyaji.x, g!.position.z - STALL_KEEPERS.oyaji.z);
     run(sim, 120);
-    expect(Math.hypot(g!.position.x - 80, g!.position.z - 66.6)).toBeLessThan(start - 3);
+    expect(Math.hypot(g!.position.x - STALL_KEEPERS.oyaji.x, g!.position.z - STALL_KEEPERS.oyaji.z)).toBeLessThan(start - 3);
     const civilians = sim.domain.reputation.civilians;
     for (let i = 0; i < 60 * 90 && failed.length === 0; i++) sim.step();
     expect(failed).toEqual([{ contract: c, reason: "protectee-killed" }]);
@@ -316,8 +318,16 @@ describe("protection (Hebi come for Oyaji)", () => {
     expect(shots).toHaveLength(0);
     const restored = reload(sim);
     expect(hash(restored)).toBe(hash(sim));
-    run(sim, 900);
-    run(restored, 900);
+    // Until the wave has hurt Oyaji (the game's state, not a clock): with seed 5 some 1000 steps
+    // after the job since the pavilion's stash left the market's 40 m (ADR-0074 stage 3: one id
+    // fewer, 659 steps before), a hang guard well past that.
+    let n = 0;
+    while (n < 3000 && (byKey(sim, "oyaji")?.health?.current ?? 0) >= OYAJI_MAX_HP) {
+      sim.step();
+      n++;
+    }
+    run(sim, 60);
+    run(restored, n + 60);
     expect(byKey(sim, "oyaji")?.health?.current ?? 0).toBeLessThan(OYAJI_MAX_HP);
     expect(byKey(restored, "oyaji")?.health).toEqual(byKey(sim, "oyaji")?.health);
     expect(hash(restored)).toBe(hash(sim));

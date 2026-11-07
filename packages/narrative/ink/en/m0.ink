@@ -14,6 +14,13 @@ VAR fixers_stance = "neutral"
 VAR hebi_stance = "neutral"
 VAR civilians_stance = "neutral"
 VAR clinic_stance = "neutral"
+// ADR-0070: the five tiers next to the three stances; "hostile" here means -50 or worse.
+VAR fixers_tier = "neutral"
+VAR hebi_tier = "neutral"
+VAR civilians_tier = "neutral"
+VAR clinic_tier = "neutral"
+VAR kagami_tier = "neutral"
+VAR tessen_tier = "neutral"
 
 EXTERNAL set_flag(name)
 EXTERNAL has_flag(name)
@@ -119,7 +126,7 @@ KAITO: One more thing, Seki. Someone's already been asking about the woman from 
     ~ set_flag("kaito_after_act2")
 }
 { contracts_done >= 1 && not has_flag("met_hana"):
-    KAITO: Hana trades on Podzamcze, at Nowy Plac Targowy. She takes stock from me, and sometimes she's after someone who can shoot.
+    KAITO: Hana trades at Alchemia, the food hall behind the Ratusz. She takes stock from me, and sometimes she's after someone who can shoot.
 }
 -> contract_menu
 
@@ -133,7 +140,7 @@ KAITO: One more thing, Seki. Someone's already been asking about the woman from 
 + { contracts_done >= 1 } [Got anything to haul? #tone:main]
     SEKI: Got anything that needs hauling?
     ~ offer_contract("delivery")
-    KAITO: Cooled modules for Hana, at the market on Podzamcze. If they warm up, nobody pays for them.
+    KAITO: Cooled modules for Hana, at the market in Alchemia. If they warm up, nobody pays for them.
     KAITO: The clock's on your optics. Hand the package to Hana and come back to me for the money.
     -> END
 + [Where can I get upgraded? #tone:optional]
@@ -165,25 +172,25 @@ KAITO: A client in clean shoes is paying five grand for Ren Odagiri and the case
     Five grand. Almost what Kagami promised the two of you for that run.
 }
 KAITO: Listen, it's their message. Came in yesterday.
-Kaito plays the recording. It's Ren, calm and a little too even: a handover tonight, on the viaduct over aleja Tysiąclecia, by the market.
+Kaito plays the recording. It's Ren, calm and a little too even: a handover tonight, on the square behind Alchemia, by the market.
 KAITO: Your boy's setting up meets with Kagami himself. Or someone's talking with his voice.
 * [I'm not hunting Ren. #tone:main]
     ~ choice_job = "refused"
     ~ story_choice("job", "refused")
     SEKI: I'm not hunting Ren. Find someone else.
-    KAITO: I will. So will Kagami. Their man, Kurosawa, is waiting on the viaduct tonight.
+    KAITO: I will. So will Kagami. Their man, Kurosawa, is waiting behind Alchemia tonight.
     ~ change_rep("fixers", -3)
 * [I'm in. I want to see this client. #tone:main]
     ~ choice_job = "taken"
     ~ story_choice("job", "taken")
     SEKI: I'm in. I want to see this client.
-    KAITO: Sensible. His name's Kurosawa and he's waiting on the viaduct. Just don't turn it into a war, he's my client.
+    KAITO: Sensible. His name's Kurosawa and he's waiting behind Alchemia. Just don't turn it into a war, he's my client.
     ~ change_rep("fixers", 3)
 - ~ set_flag("kagami_job")
 -> END
 
 = delivery_running
-KAITO: Those modules should be with Hana by now. The market on Podzamcze, down through Stare Miasto and Brama Grodzka.
+KAITO: Those modules should be with Hana by now. The market in Alchemia, down Lubartowska from Plac Łokietka.
 { contract_time_left > 0:
     KAITO: You've got {contract_time_left} s left. Don't stand around.
 }
@@ -212,9 +219,12 @@ KAITO: I hear you're doing something for Hana. Finish with her, then we'll talk.
 -> contract_offer
 
 === ume ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     UME: Don't come near me. I've seen what you do on this street.
     -> END
+- civilians_tier == "wary":
+    UME: Oh, it's you. People talk about you, child. I don't know what to believe.
 }
 // After 23:00 she stands in her doorway (daily schedule, ADR-0017).
 { game_hour >= 23 || game_hour < 6:
@@ -271,7 +281,7 @@ UME: I saw them pull you out of that car. I thought you were gone.
 + [Where do I find Ren Odagiri? #tone:main]
     SEKI: Where do I find Ren Odagiri?
     UME: He came back a week ago. Thin, unshaven, nothing like the boy from two years back.
-    UME: He sleeps on the roof over the market on Podzamcze, by the viaduct. You go up the fire stairs from the stalls.
+    UME: He sleeps on the roof of Alchemia, over the market. You ride up in the lift behind the hall.
     { has_flag("ume_ren"):
         UME: I told you he looked for you for half a year. Now he's the one hiding.
     }
@@ -308,9 +318,12 @@ BARMAN: Neon Koi. You drink or you listen, both count.
     -> END
 
 === koi_regular ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     BYWALEC: Back off. I've heard what you do on this street.
     -> END
+- civilians_tier == "wary":
+    BYWALEC: Heard about you. Drink if you want, just not next to me.
 }
 { has_flag("reported_back"):
     BYWALEC: You're the one who took down that courier by the car wash? I'd buy you a drink, but the Hebi have ears in here.

@@ -121,6 +121,9 @@ export type RoadMarkingKind = "centre-dash" | "centre-double" | "lane-dash" | "e
  * `doorVariant`). Drawn only: the walls behind them are the building's solid already. ADR-0058
  * stage 6 adds the decals, drawn only (`decals.ts`): `graffiti` on walls without glass,
  * `house-plate` with the map's house number, `sticker` on a pole or a cabinet, `drain-grate` at the kerb.
+ * ADR-0058 stage 8 adds the still crowd, drawn only (`figures.ts`): a `figure` sitting on a bench or a
+ * stool, queueing at a booth, waiting at a stop or smoking by a door; its variant holds its pose, build,
+ * seat and look (`figureVariant`).
  */
 export type StreetPropKind =
   | "lamp-pastoral"
@@ -169,7 +172,8 @@ export type StreetPropKind =
   | "house-plate"
   | "sticker"
   | "drain-grate"
-  | "door";
+  | "door"
+  | "figure";
 
 /** One piece of street furniture, in world metres relative to its chunk entity's position. */
 export interface StreetPropItem {
@@ -180,7 +184,7 @@ export interface StreetPropItem {
   /** Facing around Y in radians (a bench's front, a lamp's arm). */
   readonly yaw: number;
   /**
-   * Seed of the variation (species of tree, colour of a bin, which monument), up to 16 bits. For
+   * Seed of the variation (species and size of a tree, `trees.ts`; colour of a bin, which monument), up to 16 bits. For
    * a bollard its chains (G-032), 0 for none: bits 0-8 where the chain along its +x ends (cm from
    * its centre, at the next post's face or a lamp's shaft), bits 9-17 where a second chain ends
    * behind it, back to a lamp of its row (cm), bits 18-24 that chain's turn off its -x towards

@@ -29,6 +29,8 @@ interface Shape {
   readonly path?: boolean;
   /** A flight of steps (with the rails in `surface`). */
   readonly steps?: boolean;
+  /** A bridge's piece: its deck's axis and the terrain's height at the axis' ends, the sim's deck (`makeDeck`). */
+  readonly deck?: { readonly a: Pt; readonly b: Pt; readonly ya: number; readonly yb: number };
 }
 
 export interface SiteStreet {
@@ -52,20 +54,31 @@ export class Site {
   readonly chunks: readonly LublinChunkData[];
   readonly streets: readonly SiteStreet[];
   private readonly bins = new Map<string, Shape[]>();
+  /** The bridges' ground, kept apart: a deck is no ground to stand things on, but a street's paving runs over it. */
+  private readonly decks = new Map<string, Shape[]>();
   /** The passages through the chunks' buildings (ADR-0048), along their axes. */
   private readonly passages: readonly (readonly [Pt, Pt])[];
   /** The gates the game cuts by hand, along their axes under their buildings and the mouths. */
   private readonly gates: readonly (readonly [Pt, Pt])[];
+  /** The car parks of the map laid out as lots (`parking=surface`), not lanes along a kerb. */
+  private readonly lots: readonly { readonly ring: readonly Pt[]; readonly box: Rect }[];
 
   constructor(chunks: readonly LublinChunkData[]) {
     this.chunks = chunks;
     const streets: SiteStreet[] = [];
     for (const c of chunks) {
       for (const b of c.buildings) this.add({ ring: flat(b.outline, b.x, b.z), surface: "building", box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
-      for (const g of c.ground) if (!g.bridge) this.add({ ring: flat(g.outline), surface: surfaceOf(g.surface), path: g.surface === "footway", steps: g.surface === "steps", box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
+      for (const g of c.ground) {
+        const [a, b] = g.deck ? flat(g.deck) : [];
+        const deck = a && b ? { a, b, ya: this.heightAt(a), yb: this.heightAt(b) } : undefined;
+        const shape = { ring: flat(g.outline), surface: surfaceOf(g.surface), path: g.surface === "footway", steps: g.surface === "steps", deck, box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } };
+        this.add(shape, g.bridge ? this.decks : this.bins);
+      }
       for (const s of c.streets) streets.push({ name: s.name, kind: s.kind, line: flat(s.line), chunk: c.id });
     }
     this.streets = streets;
+    const lots = new Map(chunks.flatMap((c) => (c.carParks ?? []).filter((k) => k.kind === "surface").map((k) => [k.id, flat(k.outline)] as const)));
+    this.lots = [...lots.values()].map((ring) => ({ ring, box: ringBounds(ring) }));
     this.passages = chunks.flatMap((c) => (c.passages ?? []).map((p) => [p.from, p.to] as const));
     // The gates are solid in the map, with no passage in their chunk (Brama Krakowska), or one off the arch the game cuts
     // (Brama Grodzka, G-183). Their axes run on along the street 4.6 to 8.7 m past the fronts, where the next houses' walls are.
@@ -79,15 +92,15 @@ export class Site {
     });
   }
 
-  private add(s: Shape): void {
+  private add(s: Shape, bins = this.bins): void {
     if (s.ring.length < 3) return;
     const shape = { ...s, box: ringBounds(s.ring) };
     for (let i = Math.floor(shape.box.minX / BIN); i <= Math.floor(shape.box.maxX / BIN); i++) {
       for (let j = Math.floor(shape.box.minZ / BIN); j <= Math.floor(shape.box.maxZ / BIN); j++) {
         const k = `${i}:${j}`;
-        const list = this.bins.get(k);
+        const list = bins.get(k);
         if (list) list.push(shape);
-        else this.bins.set(k, [shape]);
+        else bins.set(k, [shape]);
       }
     }
   }
@@ -109,7 +122,29 @@ export class Site {
 
   /** What lies at p: a building wins, then a road, then the other surfaces in their draw order. */
   surfaceAt(p: Pt): SiteSurface {
-    const list = this.bins.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`);
+    return this.surfaceIn(this.bins, p);
+  }
+
+  /** What a bridge's deck carries at p (its road or walk), null off every deck. */
+  deckAt(p: Pt): SiteSurface {
+    return this.surfaceIn(this.decks, p);
+  }
+
+  /** The height of the highest deck at p, straight from abutment to abutment as the sim lays it (`deckHeight`); null off every deck. */
+  deckHeightAt(p: Pt): number | null {
+    let top: number | null = null;
+    for (const s of this.decks.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`) ?? []) {
+      if (!s.deck || !inRect(p, s.box) || !pointInRing(p, s.ring)) continue;
+      const { a, b, ya, yb } = s.deck;
+      const [dx, dz] = [b.x - a.x, b.z - a.z];
+      const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      top = Math.max(top ?? -Infinity, ya + (yb - ya) * t);
+    }
+    return top;
+  }
+
+  private surfaceIn(bins: ReadonlyMap<string, readonly Shape[]>, p: Pt): SiteSurface {
+    const list = bins.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`);
     if (!list) return null;
     let found: SiteSurface = null;
     for (const s of list) {
@@ -118,6 +153,28 @@ export class Site {
       if (RANK[s.surface ?? "none"]! > RANK[found ?? "none"]!) found = s.surface;
     }
     return found;
+  }
+
+  /** The outlines of the road ground at p (a street's band under its axis). */
+  roadsAt(p: Pt): (readonly Pt[])[] {
+    const list = this.bins.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`) ?? [];
+    return list.filter((s) => s.surface === "road" && inRect(p, s.box) && pointInRing(p, s.ring)).map((s) => s.ring);
+  }
+
+  /** Whether p lies in a car park laid out as a lot. */
+  inLot(p: Pt): boolean {
+    return this.lots.some((l) => inRect(p, l.box) && pointInRing(p, l.ring));
+  }
+
+  /** Whether p lies out of every lot but within `reach` metres of one (on the four axes): in front of its cars. */
+  byLot(p: Pt, reach: number): boolean {
+    if (this.inLot(p)) return false;
+    return [
+      { x: reach, z: 0 },
+      { x: -reach, z: 0 },
+      { x: 0, z: reach },
+      { x: 0, z: -reach },
+    ].some((o) => this.inLot({ x: p.x + o.x, z: p.z + o.z }));
   }
 
   /** Whether p lies on a footpath's outline (a market's aisle in the map data, a path across a square). */

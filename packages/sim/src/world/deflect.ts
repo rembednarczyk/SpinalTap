@@ -1,4 +1,4 @@
-import { type DefenderProfile, type RandomPort, type Vec3, type WeaponStats, applyDamage, directionFromAngles, hasPerk, resolveAttack } from "@seki/core";
+import { type DefenderProfile, type RandomPort, type Vec3, type WeaponStats, applyDamage, deflectCostScale, directionFromAngles, hasPerk, hasProgressionPerk, resolveAttack, workingCyberware } from "@seki/core";
 import type { Entity } from "./components";
 import type { SimContext } from "./context";
 import { aimOrigin, hitscan } from "./hitscan";
@@ -23,7 +23,10 @@ export const deflects = (ctx: SimContext, target: Entity): boolean =>
   !!target.combatant?.stats?.melee &&
   (target.melee?.guard ?? false) &&
   (target.perks?.stamina ?? 1) > DEFLECT_THRESHOLD &&
-  hasPerk(ctx.state.domain.character.cyberware, "deflect");
+  hasPerk(workingCyberware(ctx.state.domain), "deflect");
+
+/** Does a bullet that meets the player's dash fly back (the Bullet Dance perk, ADR-0059)? No implant or guard needed. */
+export const dancesBullet = (ctx: SimContext, target: Entity): boolean => !!target.player && hasProgressionPerk(ctx.state.domain.progression.perks, "reflex_bullet_dance");
 
 export interface DeflectedShot {
   readonly shooter: Entity;
@@ -40,8 +43,10 @@ export interface DeflectedShot {
  */
 export const deflectShot = (ctx: SimContext, shot: DeflectedShot, defenderOf: (e: Entity) => DefenderProfile, rng: RandomPort): void => {
   const { defender, weapon } = shot;
-  if (defender.perks) defender.perks.stamina = Math.max(0, defender.perks.stamina - DEFLECT_COST / Math.max(1, weapon.pellets));
-  const origin = aimOrigin(defender, ctx.state.domain.preferences.cameraMode);
+  // Iron Guard (ADR-0059) makes a deflection cost less of the guard.
+  const cost = (DEFLECT_COST * deflectCostScale(ctx.state.domain.progression.perks)) / Math.max(1, weapon.pellets);
+  if (defender.perks) defender.perks.stamina = Math.max(0, defender.perks.stamina - cost);
+  const origin = aimOrigin(defender, ctx.state.domain.preferences.cameraMode, ctx.input.leftShoulder === true);
   const result = hitscan(ctx.world, origin, directionFromAngles(defender.yaw, defender.pitch), weapon.range, defender.id);
   const target = result.entity;
   ctx.bus.emit("ProjectileReflected", { defenderId: defender.id, attackerId: shot.shooter.id, at: shot.at, to: result.point, hitEntity: target?.id ?? null });
@@ -50,6 +55,8 @@ export const deflectShot = (ctx: SimContext, shot: DeflectedShot, defenderOf: (e
   noteViolence(ctx, target, isEngaged(target), result.point);
   target.health = applyDamage(target.health, outcome.damage);
   target.lastHitBy = defender.id;
+  // A bullet sent back is the shooter's gun, not one of hers: the fight is not counted (ADR-0059 stage 6).
+  target.lastHitStyle = undefined;
   if (target.ai && !target.unconscious) target.ai.alerted = true;
   ctx.bus.emit("DamageDealt", { sourceId: defender.id, targetId: target.id, amount: outcome.damage, critical: false, zone: outcome.zone, at: result.point });
 };

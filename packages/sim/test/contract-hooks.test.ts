@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CONTRACT_KIND_IDS, type Contract, type SaveSnapshot, type Vec3, SECONDS_PER_HOUR } from "@seki/core";
-import { CONTRACT_HOOKS, Simulation, ground, hooksOfKind, market, stateHash } from "../src";
+import { CONTRACT_HOOKS, Simulation, ground, hooksOfKind, stateHash } from "../src";
 import { hookTerminalKey, offPostFlag } from "../src/world/contract-plan";
 import { lineOfSight } from "../src/world/hitscan";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
@@ -42,7 +42,7 @@ const stash: Contract = { id: "c3", kind: "retrieve", siteId: "hebi_stash", targ
 
 describe("finding hooks (ADR-0034)", () => {
   it("a guard's bark is heard up close and found once", () => {
-    const sim = withJob(stash, market(96, 0, 86));
+    const sim = withJob(stash, ground(438, 70));
     const barks = collect<{ knot: string }>(sim, "GuardBark");
     const found = collect<{ hookId: string; text: string }>(sim, "ContractHookFound");
     run(sim, 5);
@@ -60,7 +60,7 @@ describe("finding hooks (ADR-0034)", () => {
   });
 
   it("the rotation gap takes the guard off his post in its window", () => {
-    const sim = withJob(stash, market(96, 0, 86), 0);
+    const sim = withJob(stash, ground(438, 70), 0);
     run(sim, 2);
     expect(sim.domain.flags).toContain(offPostFlag("c3", 1));
     expect(byKey(sim, "c3-g1")).toBeUndefined();

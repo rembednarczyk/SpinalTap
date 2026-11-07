@@ -6,9 +6,11 @@
 
 export const MIN_LEVEL = 1;
 export const MAX_LEVEL = 30;
+/** How steeply the cost of a level grows; the XP of later sources follows it (`xpLevelScale`). */
+export const CURVE_EXPONENT = 1.6;
 
 /** XP from level `level` to the next one (0 at the cap). */
-export const xpToNext = (level: number): number => (level >= MAX_LEVEL || level < MIN_LEVEL ? 0 : Math.round(100 * level ** 1.6));
+export const xpToNext = (level: number): number => (level >= MAX_LEVEL || level < MIN_LEVEL ? 0 : Math.round(100 * level ** CURVE_EXPONENT));
 
 /** Total XP at which each level starts: index 0 is level 1 (0 XP), index 29 is level 30. */
 export const LEVEL_THRESHOLDS: readonly number[] = (() => {

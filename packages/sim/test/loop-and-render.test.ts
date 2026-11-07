@@ -91,3 +91,31 @@ describe("RenderSync and activities (ADR-0040)", () => {
     expect(port.activities.at(-1)).toEqual([first.id, null]);
   });
 });
+
+describe("RenderSync and the grab (ADR-0075 stage 2)", () => {
+  it("gives the player and the target the grab's phase, a still target too, and takes it back at the end", () => {
+    const port = new FakeRenderPort();
+    const sync = new RenderSync(port);
+    const sim = streetSim({ seed: 3 });
+    sim.step();
+    const player = sim.player()!;
+    const at = { x: player.position.x, y: player.position.y, z: player.position.z + 1 };
+    // A still target (no velocity): it gets transforms only when its grab changes.
+    const still = sim.world.add({ id: 77_777, position: at, prevPosition: at, yaw: 0, prevYaw: 0, pitch: 0, view: { kind: "enemy", preset: "corpo" } });
+    sync.sync(sim.world, 0);
+    expect(port.transforms.get(still.id)?.grab).toBeUndefined();
+    sync.sync(sim.world, 0, undefined, undefined, { target: still.id, phase: "grab", lethal: null });
+    expect(port.transforms.get(player.id)?.grab).toBe("hold");
+    expect(port.transforms.get(still.id)?.grab).toBe("hold");
+    sync.sync(sim.world, 0, undefined, undefined, { target: still.id, phase: "finish", lethal: false });
+    expect(port.transforms.get(still.id)?.grab).toBe("choke");
+    sync.sync(sim.world, 0, undefined, undefined, { target: still.id, phase: "finish", lethal: true });
+    expect(port.transforms.get(player.id)?.grab).toBe("kill");
+    expect(port.transforms.get(still.id)?.grab).toBe("kill");
+    // Nobody else is in it.
+    expect([...port.transforms].filter(([, t]) => t.grab).map(([id]) => id).sort()).toEqual([player.id, still.id].sort());
+    sync.sync(sim.world, 0, undefined, undefined, null);
+    expect(port.transforms.get(player.id)?.grab).toBeUndefined();
+    expect(port.transforms.get(still.id)?.grab).toBeUndefined();
+  });
+});

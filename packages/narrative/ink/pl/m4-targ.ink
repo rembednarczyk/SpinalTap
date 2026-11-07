@@ -1,4 +1,4 @@
-// Seki Senshi, M4: the market on Podzamcze (Nowy Plac Targowy, ex Targ pod estakadą, ADR-0042).
+// Seki Senshi, M4: the market in Alchemia (ex Targ pod estakadą on aleja Tysiąclecia, ADR-0042, ADR-0063).
 // Hana sells parts from a handcart in the market. She hands out her own jobs (retrieve, protect)
 // and takes Kaito's deliveries. The domain decides what a job is and pays for it; ink only talks.
 
@@ -13,12 +13,10 @@ EXTERNAL offer_contract(kind)
 EXTERNAL deliver_contract()
 
 === hana ===
-{ civilians_stance == "hostile":
-    HANA: Nie sprzedam ci nawet śrubki. Na targu wszyscy wiedzą, co robisz na ulicy.
-    -> END
-}
+// G-304, ADR-0070: Hana is always the way back: she takes Kaito's run and, even when the
+// street fears Seki, offers her own jobs (the greeting says why).
+{ contract_kind == "delivery" && contract_state == "active": -> delivery }
 {
-- contract_kind == "delivery" && contract_state == "active": -> delivery
 - contract_giver == "hana" && contract_state == "cleared": -> payday
 - contract_giver == "hana": -> running
 - contract_kind == "delivery": -> delivered
@@ -32,6 +30,11 @@ EXTERNAL deliver_contract()
     ~ set_flag("met_hana")
 }
 {
+- civilians_tier == "hostile":
+    HANA: Nie sprzedam ci nawet śrubki. Na targu wszyscy wiedzą, co robisz na ulicy.
+    HANA: Ale robotę mam. Udowodnij, że jesteś po naszej stronie.
+- civilians_tier == "wary":
+    HANA: Ludzie na targu zaczynają patrzeć na ciebie spode łba. Popracuj dla mnie, to przestaną.
 - civilians_stance == "friendly":
     HANA: {alias}, dobrze, że jesteś. Oyaji mówi, że przy tobie Hebi omijają targ.
 - fixers_stance == "friendly":
@@ -48,7 +51,7 @@ EXTERNAL deliver_contract()
 + [Co trzeba odzyskać? #tone:main]
     SEKI: Co trzeba odzyskać?
     ~ offer_contract("retrieve")
-    HANA: Hebi zabrali mi skrzynkę z towarem. Trzymają ją pod wiaduktem, przy wschodniej ścianie hali, i pilnuje jej kilku chłopaków.
+    HANA: Hebi zabrali mi skrzynkę z towarem. Trzymają ją w zagłębieniu przy ruinie za straganami i pilnuje jej kilku chłopaków.
     HANA: Wróć ze skrzynką. Co zrobisz ze strażnikami, to już twoja sprawa.
     -> END
 + { not has_flag("dead:oyaji") && game_hour >= 8 && game_hour < 22 } [Ktoś potrzebuje ochrony? #tone:main]
@@ -57,11 +60,15 @@ EXTERNAL deliver_contract()
     HANA: Oyaji nie zapłacił Hebi w tym miesiącu i właśnie po niego idą. Pilnuj go, aż padnie ostatni z nich.
     -> END
 + [Nie teraz. #tone:leave]
-    HANA: Będę przy wózku, między straganami.
+    HANA: Będę przy wózku, na placu za straganami.
     -> END
 
 = delivery
-HANA: Od Kaito? Dawaj, zanim się nagrzeje.
+{ civilians_stance == "hostile":
+    HANA: To kurs Kaito, więc biorę. Chcesz odzyskać targ? Przyjdź popracować dla mnie.
+- else:
+    HANA: Od Kaito? Dawaj, zanim się nagrzeje.
+}
 ~ deliver_contract()
 Hana sprawdza plomby i wsuwa pudełko pod plandekę.
 HANA: Zimne, w porządku. Dam znać Kaito, zapłatę odbierzesz u niego.
@@ -73,7 +80,7 @@ HANA: Paczkę już mam. Po pieniądze idź do Kaito, to jego kurs.
 
 = running
 { contract_kind == "retrieve":
-    HANA: Skrzynka dalej jest u Hebi, pod wiaduktem przy wschodniej ścianie.
+    HANA: Skrzynka dalej jest u Hebi, przy ruinie za straganami.
 - else:
     HANA: Hebi są już na targu. Nie stój przy mnie, pilnuj Oyajiego!
 }

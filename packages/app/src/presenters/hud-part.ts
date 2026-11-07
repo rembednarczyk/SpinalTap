@@ -1,6 +1,6 @@
 import type { DomainEvents, DomainState, EntityId, EventBus } from "@seki/core";
 import type { Entity } from "@seki/sim";
-import { type DamageNumbersMode, type PhoneLineVm, type UiState, type UiStore, dismissToast, pushToast } from "@seki/ui";
+import { type DamageNumbersMode, type PhoneLineVm, type UiState, type UiStore, expireToast, pushToast } from "@seki/ui";
 
 export const snap = (v: number, step: number) => Math.round(v / step) * step;
 
@@ -32,7 +32,7 @@ export const hudPartContext = (bus: EventBus<DomainEvents>, ui: UiStore, hooks: 
   isPlayer: (id) => id === hooks.playerId(),
   toast(kind, title, text) {
     const id = pushToast(ui, { kind, title, text });
-    setTimeout(() => dismissToast(ui, id), hooks.toastMs ?? 4500);
+    setTimeout(() => expireToast(ui, id), hooks.toastMs ?? 4500);
   },
 });
 

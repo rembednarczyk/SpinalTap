@@ -1,12 +1,13 @@
-import { ENEMY_TYPES, LOOT_TABLES, contractKind, killXp, killedFlag, rollLoot } from "@seki/core";
+import { ENEMY_TYPES, type KillContext, LOOT_TABLES, type LootGrade, SECOND_HEART_COOLDOWN, contractKind, killXp, killedFlag, rollLootFor, secondHeartShare } from "@seki/core";
 import { deriveRandom } from "../rng/derive-random";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
 import { applyReputationCause, clearContract, dropLoot, raiseFlag } from "../world/domain-ops";
 import { corpseOf } from "../world/bodies";
 import { inCreationOrder } from "../world/ordering";
-import { grantXp } from "../world/progression-ops";
+import { grantXp, noteFight } from "../world/progression-ops";
 import { disturb, isContractTarget, noteTally, offend } from "../world/street";
+import { perksOf } from "./perk-system";
 
 /** A body is noticed this far (ADR-0029). */
 export const BODY_NOISE = 12;
@@ -17,13 +18,37 @@ type Ctx = Parameters<System["run"]>[0];
 
 /**
  * An enemy's bag, rolled once at death from its own stream (seed + key), so it does not
- * depend on anything that happened before and the main stream is untouched.
+ * depend on anything that happened before and the main stream is untouched. Levels and traits
+ * (ADR-0059) come from a second stream of their own (key + ":grade"), so what the first one
+ * draws stays as it was. The pieces are of the enemy's level ±1 by its district's band, kept
+ * within the player's ±2; one never graded (none in the game) counts as of the player's level.
+ * The table leans towards the player's style (ADR-0059, stage 6); the bag of an enemy she
+ * defeated counts towards her bad luck, and lifts a piece to rare when that has run long enough.
  */
-const dropEnemyLoot = (ctx: Ctx, e: Entity): void => {
+const dropEnemyLoot = (ctx: Ctx, e: Entity, hers: boolean): void => {
   if (!e.enemy || !e.key) return;
   const key = `loot:${e.key}`;
-  dropLoot(ctx, key, e.position, rollLoot(LOOT_TABLES[ENEMY_TYPES[e.enemy.type].loot], deriveRandom(ctx.seed, key)));
+  const progression = ctx.state.domain.progression;
+  const player = progression.level;
+  const grade: LootGrade = { source: e.enemy.level ?? player, player, rng: deriveRandom(ctx.seed, `${key}:grade`) };
+  const luck = hers ? { style: progression.style, pity: progression.unlucky } : { style: progression.style };
+  const rolled = rollLootFor(LOOT_TABLES[ENEMY_TYPES[e.enemy.type].loot], deriveRandom(ctx.seed, key), grade, luck);
+  if (rolled.pity !== undefined && rolled.pity !== progression.unlucky) ctx.state.domain = { ...ctx.state.domain, progression: { ...progression, unlucky: rolled.pity } };
+  dropLoot(ctx, key, e.position, rolled.lines);
 };
+
+/**
+ * Was it not fighting her (ADR-0029)? A body knocked out with no fight (ADR-0065) is saved with
+ * that, `wronged` is not: after a load its killing is the murder it is in a game played through (G-334).
+ */
+const wronged = (e: Entity): boolean => !!e.wronged || (!!e.downed && !e.downed.fought);
+
+/** How the street sees this death (ADR-0070): from behind, of the heat's people, of a job's crew. */
+const killContext = (ctx: Ctx, e: Entity): KillContext => ({
+  wronged: wronged(e),
+  security: !!e.security,
+  crew: isContractTarget(ctx, e) || (ctx.session.street2.micro?.attackers.includes(e.id) ?? false),
+});
 
 const checkContractCleared = (ctx: Parameters<System["run"]>[0]): void => {
   const contract = ctx.state.domain.contracts.active;
@@ -35,6 +60,20 @@ const checkContractCleared = (ctx: Parameters<System["run"]>[0]): void => {
   const flags = ctx.state.domain.flags;
   for (let i = 0; i < contract.targets; i++) if (!flags.includes(deadFlag(`${contract.id}-g${i}`))) return;
   clearContract(ctx);
+};
+
+/**
+ * Second Heart (ADR-0059): a blow that would kill the player leaves her a share of her health
+ * instead, once per SECOND_HEART_COOLDOWN seconds. True when it saved her.
+ */
+const secondHeart = (ctx: Ctx, player: Entity): boolean => {
+  const share = secondHeartShare(ctx.state.domain.progression.perks);
+  if (share <= 0 || !player.health) return false;
+  const s = perksOf(player);
+  if (s.secondHeart > 0) return false;
+  player.health = { ...player.health, current: Math.max(1, Math.round(player.health.max * share)) };
+  s.secondHeart = SECOND_HEART_COOLDOWN;
+  return true;
 };
 
 /**
@@ -51,6 +90,7 @@ export const deathSystem: System = {
     const playerId = ctx.world.with("player").first?.id;
     for (const e of dead) {
       if (e.player) {
+        if (!ctx.session.gameOver && secondHeart(ctx, e)) continue;
         if (!ctx.session.gameOver) {
           ctx.session.gameOver = true;
           ctx.bus.emit("PlayerDied", { entityId: e.id });
@@ -59,16 +99,22 @@ export const deathSystem: System = {
       }
       if (e.key) raiseFlag(ctx, deadFlag(e.key));
       const byPlayer = playerId !== undefined && e.lastHitBy === playerId;
-      // Killing someone who was not fighting is a murder once someone sees it (ADR-0029).
-      if (byPlayer && e.wronged) offend(ctx, "murder", e.position);
+      // Killing someone who was not fighting is a murder once someone sees it (ADR-0029). A body
+      // left lying (below) is that murder's: once reported, it brings no second report.
+      if (byPlayer && wronged(e)) offend(ctx, "murder", e.position, e.downed ? e.id : undefined, e.id);
       if (byPlayer && !isContractTarget(ctx, e)) noteTally(ctx, (t) => ({ ...t, extraKills: t.extraKills + 1 }));
       disturb(ctx, "body", e.position, BODY_NOISE, e.id);
       if (e.tag) raiseFlag(ctx, killedFlag(e.tag));
       // A death the player did not cause (Hebi shooting Oyaji) is not held against them.
-      if (e.faction && (e.lastHitBy === undefined || e.lastHitBy === playerId)) applyReputationCause(ctx, { type: "member-killed", faction: e.faction });
-      dropEnemyLoot(ctx, e);
-      // An enemy the player took down (ADR-0059); its level against the player's comes in stage 5.
-      if (byPlayer && e.enemy) grantXp(ctx, killXp(e.enemy.type), "kill");
+      if (e.faction && (e.lastHitBy === undefined || e.lastHitBy === playerId)) applyReputationCause(ctx, { type: "member-killed", faction: e.faction, how: killContext(ctx, e) });
+      // A fight of her style (ADR-0059): what dealt the last blow, unless hacked or knocked out first.
+      if (byPlayer && e.enemy && e.lastHitStyle) noteFight(ctx, e, e.lastHitStyle);
+      dropEnemyLoot(ctx, e, byPlayer);
+      // An enemy the player took down (ADR-0059), by its level against hers.
+      if (byPlayer && e.enemy) {
+        const player = ctx.state.domain.progression.level;
+        grantXp(ctx, killXp(e.enemy.type, e.enemy.level ?? player, player), "kill");
+      }
       ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null, ...(e.lastHitBy === undefined ? {} : { killerId: e.lastHitBy }) });
       ctx.world.remove(e);
       // Killed in a takedown, or while knocked out (ADR-0065): its body stays to be found, carried, hidden.

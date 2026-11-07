@@ -47,6 +47,14 @@ describe("VirtualPad", () => {
     expect(pad.poll()).toMatchObject({ lookYaw: 0, lookPitch: 0 });
   });
 
+  it("fires once on a tap that goes down and up between two polls (ADR-0075)", () => {
+    const pad = new VirtualPad();
+    pad.press("fire");
+    pad.release("fire");
+    expect(pad.poll().fire).toBe(true);
+    expect(pad.poll().fire).toBe(false);
+  });
+
   it("holds fire while pressed and fires edges once", () => {
     const pad = new VirtualPad();
     pad.press("fire");
@@ -94,5 +102,47 @@ describe("virtual pad aim button (ADR-0019)", () => {
     expect(pad.poll().aim).toBe(true);
     pad.release("aim");
     expect(pad.poll().aim).toBe(false);
+  });
+});
+
+describe("virtual pad fire button that aims (ADR-0072)", () => {
+  const aimed = (pad: VirtualPad) => pad.withFireAim(pad.poll()).aim;
+
+  it("in \"aims\" mode the held fire button aims too, with a firearm in hand", () => {
+    const pad = new VirtualPad();
+    pad.adsWeapon = true;
+    pad.press("fire");
+    expect(pad.poll().aim).toBe(false);
+    expect(pad.fireAims).toBe(true);
+    expect(pad.withFireAim(pad.poll())).toMatchObject({ fire: true, aim: true });
+    pad.release("fire");
+    expect(aimed(pad)).toBe(false);
+  });
+
+  it("with a melee weapon the fire button only strikes, without the guard", () => {
+    const pad = new VirtualPad();
+    pad.adsWeapon = false;
+    pad.press("fire");
+    expect(pad.withFireAim(pad.poll())).toMatchObject({ fire: true, aim: false });
+  });
+
+  it("in \"separate\" mode the fire button never aims", () => {
+    const pad = new VirtualPad();
+    pad.adsWeapon = true;
+    pad.touchFire = "separate";
+    pad.press("fire");
+    expect(pad.withFireAim(pad.poll())).toMatchObject({ fire: true, aim: false });
+  });
+
+  it("aims by default, the mode the settings start with", () => {
+    expect(new VirtualPad().touchFire).toBe("aims");
+  });
+
+  it("lifting every finger ends the fire button's aim", () => {
+    const pad = new VirtualPad();
+    pad.adsWeapon = true;
+    pad.press("fire");
+    pad.reset();
+    expect(aimed(pad)).toBe(false);
   });
 });

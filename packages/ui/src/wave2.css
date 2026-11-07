@@ -66,6 +66,9 @@
 .capacity__bar { flex: 1; height: 8px; background: rgba(255, 255, 255, 0.08); }
 .capacity__fill { height: 100%; background: #39ffd0; }
 .capacity--full .capacity__fill { background: var(--amber); }
+.capacity--over { flex-wrap: wrap; }
+.capacity--over .capacity__fill { background: var(--danger); }
+.capacity--over .shop__warn { flex-basis: 100%; }
 .shop__capacity { display: inline-block; margin: 2px 0; font-family: var(--font-mono); font-size: 12px; color: #39ffd0; }
 
 /* ---- buffs, the dash, the disguise ---- */
@@ -88,6 +91,8 @@
 .disguise { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; color: var(--amber); }
 .disguise__icon { display: grid; place-items: center; width: 18px; height: 18px; border: 1px solid currentColor; border-radius: 50%; font-size: 11px; }
 .disguise--blown { color: var(--danger); animation: buff-blink 0.6s steps(2) 4; }
+.over-pool { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; color: var(--danger); }
+.over-pool__icon { display: grid; place-items: center; width: 18px; height: 18px; font-size: 14px; }
 
 /* ---- contract hooks and the debrief's variation ---- */
 .hud__hooks { margin: 4px 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--cyan); }
@@ -144,6 +149,9 @@
 }
 .touch__use-verb { font-family: var(--font-ui); font-size: 15px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .touch__use-what { max-width: 140px; overflow: hidden; font-family: var(--font-ui); font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
+/* The fire button naming the grab's kill (ADR-0075): the dot over the action, as on "Use". */
+.touch__btn--fire-act { display: flex; flex-direction: column; justify-content: center; align-items: center; line-height: 1.1; }
+.touch__fire-what { max-width: 80px; font-size: 13px; font-weight: 700; text-transform: uppercase; }
 /* "More" unfolds one row left of the cluster. */
 .touch__more { position: absolute; right: 248px; bottom: 86px; display: flex; gap: 6px; pointer-events: none; }
 .touch__more .touch__btn { position: relative; right: auto; bottom: auto; width: 44px; height: 44px; font-size: 16px; }
@@ -154,14 +162,20 @@
 .touch-mode .minimap { top: max(60px, calc(env(safe-area-inset-top, 0px) + 52px)); right: max(16px, env(safe-area-inset-right, 0px)); width: 88px; height: 88px; }
 .touch-mode .hud__wallet { top: max(8px, env(safe-area-inset-top, 0px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 152px); font-size: 15px; padding: 4px 10px; }
 .touch-mode .hud__clock { top: max(44px, calc(env(safe-area-inset-top, 0px) + 36px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 152px); font-size: 12px; padding: 2px 8px; }
-.touch-mode .toasts { top: max(76px, calc(env(safe-area-inset-top, 0px) + 68px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 104px); width: min(260px, 36vw); gap: 4px; }
+/* Wide and short: the arrival card's three sentences in a 260 px column ran down over "Use", the
+   jump button and the move hint of a phone held sideways (G-466). Left of the minimap's column. */
+.touch-mode .toasts { top: max(76px, calc(env(safe-area-inset-top, 0px) + 68px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 104px); width: min(400px, calc(100vw - 280px)); gap: 4px; }
+/* In a talk the pad is gone and the subtitles grow up the left side to under the objective: the
+   wide column would reach over them, so it narrows back to clear the box. */
+.touch-mode .toasts--talk { width: min(260px, 36vw); }
 .touch-mode .toast { padding: 4px 8px; }
 .touch-mode .toast:nth-last-child(n + 3) { display: none; }
 
 /* Left: the objective, the stick, health only when it matters, the active weapon. */
 .touch-mode .hud__objective { left: max(16px, env(safe-area-inset-left, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); max-width: calc(100vw - 380px); font-size: 13px; padding: 4px 10px; }
 .touch-mode .hud__quest-title { font-size: 10px; }
-.touch-mode .hud__identity { left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); width: 160px; padding: 4px 8px; }
+/* 160 px with its padding and border: the weapon strip starts 172 px in (it overlapped by 7 px as 160 px of content). */
+.touch-mode .hud__identity { box-sizing: border-box; left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); width: 160px; padding: 4px 8px; }
 .touch-mode .hud__identity--calm { display: none; }
 .touch-mode .hud__name { display: none; }
 .touch-mode .hud__hp { margin-top: 0; }

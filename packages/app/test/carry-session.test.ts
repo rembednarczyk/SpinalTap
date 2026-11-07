@@ -26,6 +26,8 @@ const knockedOut = () => {
   const at = { x: p.position.x, y: p.position.y, z: p.position.z + 1.2 };
   const guard = session.sim.world.add(gangerEntity(9000, { key: "test-guard", position: at, yaw: 0 }, null, 80, p.chunk ?? "", undefined, "tessen_guard"));
   steps(session, 1, CROUCH);
+  // The key grabs, and in the grab (ADR-0075) knocks out.
+  steps(session, 1, USE);
   steps(session, 1, USE);
   steps(session, Math.ceil(TAKEDOWN_TIME / SIM_DT) + 1, CROUCH);
   expect(guard.unconscious).toBe(true);

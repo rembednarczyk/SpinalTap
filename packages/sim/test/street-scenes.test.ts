@@ -6,7 +6,7 @@ import { enterKanal, street } from "./micro-scenes";
 import { takeDown } from "./takedown-scenes";
 
 /** Shiro's lamp on Plac Litewski and the salaryman's pavement by Neon Koi (ADR-0045). */
-const POET = { x: 102, z: -23 };
+const POET = { x: 97, z: -23 };
 const SALARYMAN = { x: 328, z: -91 };
 
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
@@ -74,8 +74,8 @@ describe("micro-events (ADR-0034)", () => {
     run(sim, 2);
     expect(ended).toEqual([{ encounterId: run0.id, outcome: "won" }]);
     expect(sim.domain.wallet.eddies).toBeGreaterThanOrEqual(eddies + MICRO_EVENT_REWARD.mugging.eddies);
-    // The thanks of the street, less what the kills themselves cost with the civilians.
-    expect(sim.domain.reputation.civilians).toBeGreaterThan(civ);
+    // The thanks of the street: the muggers are the event's own, they do not count on their own (ADR-0070).
+    expect(sim.domain.reputation.civilians).toBe(civ + MICRO_EVENT_REWARD.mugging.civilians);
     expect(sim.domain.flags.filter((f) => f.includes("micro:"))).toEqual([]);
   });
 

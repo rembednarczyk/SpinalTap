@@ -1,14 +1,17 @@
+import { GAME_ICON_SOURCES, type GameIconAuthor } from "../icons/game-icon-paths";
+
 /**
- * Who made the models and sounds the game is built from (ADR-0063): the one list the "Credits"
+ * Who made the models, sounds and icons the game is built from (ADR-0063): the one list the "Credits"
  * screen reads. Titles and names stay as their authors wrote them; only the headings and labels
  * around them are translated (ADR-0056). Every file under `packages/app/public` that holds CC-BY
  * work has its entry here and a row in the README of its folder; `packages/app/test/credits.test.ts`
  * holds the three together (and against `tools/assets/sources.json`).
  */
 
-export type CreditSection = "city" | "street" | "characters" | "weapons" | "audio";
+export type CreditSection = "city" | "street" | "characters" | "weapons" | "audio" | "icons";
 
-export type CreditLicense = "CC0-1.0" | "CC-BY-4.0" | "VRoid-Hub-1.0";
+/** CC BY 3.0 only for the icons of game-icons.net (ADR-0063, decision of 6.11 in ADR-0073). */
+export type CreditLicense = "CC0-1.0" | "CC-BY-4.0" | "CC-BY-3.0" | "VRoid-Hub-1.0";
 
 export interface Credit {
   /** The source's id in `tools/assets/sources.json` where it has one; a CC-BY model carries it in its `extras.credit`. */
@@ -21,7 +24,7 @@ export interface Credit {
   /** Where it comes from. */
   readonly url: string;
   readonly license: CreditLicense;
-  /** Files under `packages/app/public` built from it. */
+  /** Files under `packages/app/public` built from it; none for the item icons, which are drawn into the code (`icons/`). */
   readonly files: readonly string[];
   /** Changed for the game (CC-BY asks to say so): simplified, recoloured, trimmed. */
   readonly changed: boolean;
@@ -31,12 +34,13 @@ export interface Credit {
 export const LICENSES: Readonly<Record<CreditLicense, { readonly name: string; readonly url?: string }>> = {
   "CC0-1.0": { name: "CC0 1.0", url: "https://creativecommons.org/publicdomain/zero/1.0/" },
   "CC-BY-4.0": { name: "CC BY 4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
+  "CC-BY-3.0": { name: "CC BY 3.0", url: "https://creativecommons.org/licenses/by/3.0/" },
   // Written in each model's VRM metadata (packages/app/public/models/README.md).
   "VRoid-Hub-1.0": { name: "VRoid Hub License 1.0" },
 };
 
 /** The order of the sections on the screen. */
-export const CREDIT_SECTIONS: readonly CreditSection[] = ["street", "city", "characters", "weapons", "audio"];
+export const CREDIT_SECTIONS: readonly CreditSection[] = ["street", "city", "characters", "weapons", "audio", "icons"];
 
 const CITY = ["city/city-kit.glb"] as const;
 const PROPS = ["city/city-props.glb"] as const;
@@ -44,6 +48,14 @@ const STREET = ["city/street-props.glb"] as const;
 const MARKET = ["city/market-props.glb"] as const;
 const DOORS = ["city/door-props.glb"] as const;
 const VEHICLES = ["city/vehicle-props.glb"] as const;
+const DRONES = ["city/drone-props.glb"] as const;
+const CROWD = ["city/crowd-props.glb"] as const;
+const ROOMS = ["city/room-props.glb"] as const;
+/** The icons of one game-icons.net author the game draws after, by their titles there: "Brain, Syringe (game-icons.net)". */
+const gameIcons = (author: GameIconAuthor): string => {
+  const names = Object.values(GAME_ICON_SOURCES).filter((s) => s.author === author);
+  return `${names.map((s) => s.name.charAt(0).toUpperCase() + s.name.slice(1).split("-").join(" ")).join(", ")} (game-icons.net)`;
+};
 /** `audio/<name>-000.ogg` ... for the numbers given. */
 const ogg = (name: string, ...n: number[]): string[] => n.map((i) => `audio/${name}-${String(i).padStart(3, "0")}.ogg`);
 
@@ -82,6 +94,8 @@ export const CREDITS: readonly Credit[] = [
   { id: "kenney-mini-market", section: "street", title: "Mini Market 1.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/mini-market", license: "CC0-1.0", files: MARKET, changed: true },
   { id: "kenney-survival-kit", section: "street", title: "Survival Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/survival-kit", license: "CC0-1.0", files: MARKET, changed: true },
   { id: "kenney-furniture-kit", section: "street", title: "Furniture Pack 1.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/furniture-kit", license: "CC0-1.0", files: MARKET, changed: true },
+  // CC0 (ADR-0058 stage 8): the still crowd of crowd-props.glb.
+  { id: "quaternius-posed-humans", section: "street", title: "Background Posed Humans", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://quaternius.com/packs/backgroundposedhumans.html", license: "CC0-1.0", files: CROWD, changed: true },
   // CC-BY 4.0 (ADR-0058 stage 9, E7 of the second pack): the leaves of the doors on the facades, door-props.glb.
   { id: "sketchfab-cyberpunk-doors-and-windows", section: "street", title: "Cyberpunk City Assets Pack 3# Doors and Windows", author: "carlcapu9", authorUrl: "https://sketchfab.com/carlcapu9", url: "https://sketchfab.com/3d-models/cyberpunk-city-assets-pack-3-doors-and-windows-c6cdc4f6715e4d8eae61eeb81fe636c8", license: "CC-BY-4.0", files: DOORS, changed: true },
   { id: "sketchfab-psx-garage-doors", section: "street", title: "Low-Poly PSX Style Garage Doors Pack", author: "vanillao03", authorUrl: "https://sketchfab.com/vanillao03", url: "https://sketchfab.com/3d-models/low-poly-psx-style-garage-doors-pack-6cd3bb88d27e44ac96f080e533d7015a", license: "CC-BY-4.0", files: DOORS, changed: true },
@@ -91,13 +105,21 @@ export const CREDITS: readonly Credit[] = [
   { id: "sketchfab-dirty-car", section: "street", title: "Dirty car", author: "3D Error 404", authorUrl: "https://sketchfab.com/3DError404", url: "https://sketchfab.com/3d-models/dirty-car-da77a8c75ddd4d7a8391912ba35735b8", license: "CC-BY-4.0", files: VEHICLES, changed: true },
   // CC0 (ADR-0058 stage 4): SUV, pickup and garbage truck, also in vehicle-props.glb (with the far and phone versions of the city kit cars, Car Kit 3.1).
   { id: "kenney-car-kit-2", section: "street", title: "Car Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/car-kit", license: "CC0-1.0", files: VEHICLES, changed: true },
+  // CC-BY 4.0 (ADR-0058 stage 7, E4 of the second pack): the drones over the street canyons, drone-props.glb.
+  { id: "sketchfab-cyberpunk-drone", section: "city", title: "Cyberpunk Drone Concept Design", author: "Berk Gedik", authorUrl: "https://sketchfab.com/berkgedik", url: "https://sketchfab.com/3d-models/cyberpunk-drone-concept-design-09e7406fc76248a2866209025588dad0", license: "CC-BY-4.0", files: DRONES, changed: true },
+  // CC-BY 4.0 (ADR-0063 stage 3): the capsule room on Jezuicka, room-props.glb.
+  { id: "sketchfab-futuristic-compact-room", section: "city", title: "Futuristic Compact Room", author: "igor.tesV", authorUrl: "https://sketchfab.com/igor.tesV", url: "https://sketchfab.com/3d-models/futuristic-compact-room-f49b4d0fbd45427bb47484b0a9ccfe75", license: "CC-BY-4.0", files: ROOMS, changed: true },
   // The cast (VRoid Project samples) and the weapons.
   { id: "vroid-samples", section: "characters", title: "VRoid Studio sample models (AvatarSample_D, AvatarSample_F, Sakurada Fumiriya, Sendagaya Shino, Base_Male)", author: "pixiv / VRoid Project", url: "https://opengameart.org/content/vroid-studio-cc0-models", license: "VRoid-Hub-1.0", files: ["models/seki.vrm", "models/kaito.vrm", "models/ganger.vrm", "models/civilian.vrm", "models/mori.vrm"], changed: true },
-  { id: "quaternius-ultimate-gun-pack", section: "weapons", title: "Ultimate Gun Pack", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://opengameart.org/content/ultimate-gun-pack", license: "CC0-1.0", files: ["weapons/pistol.glb", "weapons/smg.glb"], changed: true },
+  { id: "quaternius-ultimate-gun-pack", section: "weapons", title: "Ultimate Gun Pack", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://opengameart.org/content/ultimate-gun-pack", license: "CC0-1.0", files: ["weapons/pistol.glb", "weapons/revolver.glb", "weapons/smg.glb", "weapons/shotgun.glb", "weapons/rifle.glb"], changed: true },
+  { id: "quaternius-medieval-weapons", section: "weapons", title: "Low poly medieval weapons", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://opengameart.org/content/low-poly-medieval-weapons", license: "CC0-1.0", files: ["weapons/baton.glb", "weapons/blade.glb"], changed: true },
   // Sounds (packages/app/public/audio/README.md).
   { id: "kenney-impact-sounds", section: "audio", title: "Impact Sounds 1.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://kenney.nl/assets/impact-sounds", license: "CC0-1.0", files: [...ogg("hit-punch", 0, 1, 2), ...ogg("crit-punch", 0, 1, 2), ...ogg("hurt-soft", 0, 1, 2), ...ogg("kill-plate", 0), ...ogg("kill-metal", 0), ...ogg("step-concrete", 0, 1, 2, 3, 4), ...ogg("reload-metal", 0, 1), ...ogg("weapon-switch", 0, 1), ...ogg("loot-pickup", 0, 1), ...ogg("sell-tin", 0, 1), ...ogg("repair-hammer", 0, 1)], changed: false },
   { id: "kenney-interface-sounds", section: "audio", title: "Interface Sounds", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://kenney.nl/assets/interface-sounds", license: "CC0-1.0", files: [...ogg("ui-select", 1, 2), ...ogg("ui-confirm", 1), ...ogg("ui-purchase", 2), ...ogg("ui-save-click", 1), ...ogg("ui-error", 4, 5), ...ogg("glitch", 1, 2, 3, 4)], changed: false },
   { id: "kenney-sci-fi-sounds", section: "audio", title: "Sci-fi Sounds", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://kenney.nl/assets/sci-fi-sounds", license: "CC0-1.0", files: [...ogg("clinic-heal", 0, 1), "audio/cyber-overdrive.ogg"], changed: true },
   { id: "free-firearm-sound-library", section: "audio", title: "The Free Firearm Sound Library", author: "Ben Jaszczak et al. (freefirearmsfx.com)", url: "https://opengameart.org/content/the-free-firearm-sound-library", license: "CC0-1.0", files: ["audio/gun-pistol-ppq-near.ogg", "audio/gun-pistol-1911-near.ogg", "audio/gun-smg-m45-near.ogg", "audio/gun-pistol-ppq-mid.ogg", "audio/gun-smg-m45-mid.ogg"], changed: true },
+  // CC BY 3.0 (ADR-0063, ADR-0073 stage 2): the icons of implants and consumables, redrawn into icons/game-icon-paths.ts.
+  { id: "game-icons-lorc", section: "icons", title: gameIcons("Lorc"), author: "Lorc", authorUrl: "http://lorcblog.blogspot.com", url: "https://game-icons.net", license: "CC-BY-3.0", files: [], changed: true },
+  { id: "game-icons-delapouite", section: "icons", title: gameIcons("Delapouite"), author: "Delapouite", authorUrl: "http://delapouite.com", url: "https://game-icons.net", license: "CC-BY-3.0", files: [], changed: true },
   { id: "ylmir-rain-loopable", section: "audio", title: "Rain (loopable)", author: "Ylmir", url: "https://opengameart.org/content/rain-loopable", license: "CC0-1.0", files: ["audio/rain-loop.ogg"], changed: false },
 ];

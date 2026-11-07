@@ -1,14 +1,20 @@
-import { type AudioScenePort, FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, isLocale, radToDeg } from "@seki/core";
+import { type AudioBus, type AudioScenePort, FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, isLocale, radToDeg } from "@seki/core";
 import {
+  type AimAssistMode,
   type AimMode,
+  type CameraShoulder,
   type ColorblindMode,
   DEFAULT_SETTINGS,
   type DamageNumbersMode,
   type GraphicsQuality,
   HORIZONTAL_FOV_RANGE,
   HUD_SCALE_RANGE,
+  PAD_DEADZONE_SETTING_RANGE,
+  PAD_SENSITIVITY_RANGE,
+  type PadCurveMode,
   SUBTITLE_SCALE_RANGE,
   type SettingsVm,
+  type TouchFireMode,
   isRadioStationId,
 } from "@seki/ui";
 
@@ -41,8 +47,12 @@ const clamp = (v: unknown, min: number, max: number, fallback: number): number =
 
 const isQuality = (v: unknown): v is GraphicsQuality => v === "high" || v === "medium" || v === "low";
 const isAimMode = (v: unknown): v is AimMode => v === "hold" || v === "toggle";
+const isShoulder = (v: unknown): v is CameraShoulder => v === "right" || v === "left";
 const isDamageMode = (v: unknown): v is DamageNumbersMode => v === "off" || v === "hit" || v === "total";
 const isColorblind = (v: unknown): v is ColorblindMode => v === "off" || v === "protan" || v === "deutan" || v === "tritan";
+const isTouchFire = (v: unknown): v is TouchFireMode => v === "aims" || v === "separate";
+const isPadCurve = (v: unknown): v is PadCurveMode => v === "linear" || v === "classic" || v === "precise";
+const isAimAssist = (v: unknown): v is AimAssistMode => v === "off" || v === "light" || v === "standard";
 const bool = (v: unknown, fallback: boolean): boolean => (typeof v === "boolean" ? v : fallback);
 
 /** The vertical field of view entries saved before ADR-0049 held by default, degrees. */
@@ -81,15 +91,30 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     aimMode: isAimMode(r.aimMode) ? r.aimMode : defaults.aimMode,
     crouchMode: isAimMode(r.crouchMode) ? r.crouchMode : defaults.crouchMode,
     sprintMode: isAimMode(r.sprintMode) ? r.sprintMode : defaults.sprintMode,
+    // G-275: entries saved before the setting look over the right shoulder.
+    shoulder: isShoulder(r.shoulder) ? r.shoulder : defaults.shoulder,
     mouseSensitivity: clamp(r.mouseSensitivity, 0.2, 3, defaults.mouseSensitivity),
     adsSensitivity: clamp(r.adsSensitivity, 0.3, 2, defaults.adsSensitivity),
     invertY: typeof r.invertY === "boolean" ? r.invertY : defaults.invertY,
     touchSensitivity: clamp(r.touchSensitivity, 0.2, 3, defaults.touchSensitivity),
+    // ADR-0072: a new field with no default changed, so SETTINGS_REV stays; old entries aim with fire.
+    touchFire: isTouchFire(r.touchFire) ? r.touchFire : defaults.touchFire,
+    // ADR-0072 stage 4: new fields, so SETTINGS_REV stays; old entries get the radial dead zone,
+    // the classic curve and the pad's own sensitivity at 1 instead of the mouse's or the touch one.
+    padSensitivity: clamp(r.padSensitivity, PAD_SENSITIVITY_RANGE[0], PAD_SENSITIVITY_RANGE[1], defaults.padSensitivity),
+    padDeadzone: Math.round(clamp(r.padDeadzone, PAD_DEADZONE_SETTING_RANGE[0], PAD_DEADZONE_SETTING_RANGE[1], defaults.padDeadzone) * 100) / 100,
+    padCurve: isPadCurve(r.padCurve) ? r.padCurve : defaults.padCurve,
+    // ADR-0072 stage 3: old entries take the standard assist; no default changed, so SETTINGS_REV stays.
+    aimAssist: isAimAssist(r.aimAssist) ? r.aimAssist : defaults.aimAssist,
     horizontalFov: clampFieldOfView(horizontalFovOf16x9(r), defaults.horizontalFov),
     volume: clamp(r.volume, 0, 1, defaults.volume),
     musicVolume: clamp(r.musicVolume, 0, 1, defaults.musicVolume),
     sfxVolume: clamp(r.sfxVolume, 0, 1, defaults.sfxVolume),
     ambienceVolume: clamp(r.ambienceVolume, 0, 1, defaults.ambienceVolume),
+    // ADR-0060 stage 1: new fields, so SETTINGS_REV stays. Spoken lines start at full volume;
+    // the radio, which played on the music bus, keeps the level an old entry chose for music.
+    dialogueVolume: clamp(r.dialogueVolume, 0, 1, defaults.dialogueVolume),
+    radioVolume: clamp(r.radioVolume, 0, 1, r.radioVolume === undefined ? clamp(r.musicVolume, 0, 1, defaults.radioVolume) : defaults.radioVolume),
     bindings: sanitizeBindings(r.bindings),
     hints: typeof r.hints === "boolean" ? r.hints : defaults.hints,
     // Entries saved before autosave existed keep it on.
@@ -157,13 +182,25 @@ export const applyEffects = (target: object, settings: Pick<SettingsVm, "reduceF
   if (settings.highlights !== undefined) (target as EffectsTarget).setHighlights?.(settings.highlights);
 };
 
+/** Setting of each mix bus (ADR-0060 stage 1). */
+export const VOLUME_SETTINGS = {
+  master: "volume",
+  music: "musicVolume",
+  sfx: "sfxVolume",
+  ambience: "ambienceVolume",
+  dialogue: "dialogueVolume",
+  radio: "radioVolume",
+} as const satisfies Record<AudioBus, keyof SettingsVm>;
+
+export type VolumeSettings = Pick<SettingsVm, (typeof VOLUME_SETTINGS)[AudioBus]>;
+
 /** The volumes of the settings on the mix (master and the buses, ADR-0060 stage 1). */
-export const applyVolumes = (audio: Pick<AudioScenePort, "setVolume">, s: Pick<SettingsVm, "volume" | "musicVolume" | "sfxVolume" | "ambienceVolume">): void => {
-  audio.setVolume("master", s.volume);
-  audio.setVolume("music", s.musicVolume);
-  audio.setVolume("sfx", s.sfxVolume);
-  audio.setVolume("ambience", s.ambienceVolume);
+export const applyVolumes = (audio: Pick<AudioScenePort, "setVolume">, s: VolumeSettings): void => {
+  for (const [bus, key] of Object.entries(VOLUME_SETTINGS) as [AudioBus, keyof VolumeSettings][]) audio.setVolume(bus, s[key]);
 };
+
+/** True when any bus volume differs between the two settings. */
+export const volumesDiffer = (a: VolumeSettings, b: VolumeSettings): boolean => Object.values(VOLUME_SETTINGS).some((k) => a[k] !== b[k]);
 
 /** Settings that the running game cannot change on the fly. */
 /** Only the graphics quality needs a reload; volume and sensitivity apply at once. */

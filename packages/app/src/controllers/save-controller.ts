@@ -13,8 +13,10 @@ export interface SaveControllerDeps {
   readonly narrative: NarrativeRuntime;
   readonly sim: SimRef;
   readonly now: () => Date;
-  /** A save is allowed now: no conversation, shop or bag open, and a game running. */
+  /** A save is allowed now: no conversation, shop or bag open, no takedown under way, and a game running. */
   readonly canSave: () => boolean;
+  /** She is in the air (a jump, a fall, a mantle), which a save does not keep (G-335): no save of the player's now. */
+  readonly airborne: () => boolean;
   /** Replaces the running game with a loaded snapshot. */
   readonly restore: (snapshot: SaveSnapshot) => void;
   /** Hands a file to the player (a download in the browser); without it a slot cannot be exported. */
@@ -115,9 +117,16 @@ export class SaveController {
     }
   }
 
+  /** The gate of every save of the player's (a takedown, a panel, a ride, the air, death, the title). */
+  canSave(): boolean {
+    return this.deps.canSave() && !this.deps.airborne();
+  }
+
   snapshot(): SaveSnapshot {
     const sim = this.deps.sim();
     const { objective } = describeObjective(sim.domain, this.locale);
+    // The street calms down as the loaded game would (G-240): the game goes on as after a load.
+    sim.calmForSave();
     return sim.snapshot(this.deps.narrative.saveState(), slotDateLabel(this.deps.now(), this.locale), objective ?? "");
   }
 
@@ -134,6 +143,10 @@ export class SaveController {
     const { ui } = this.deps;
     if (!this.deps.canSave()) {
       pushToastTimed(ui, "system", this.t("save.unavailable"));
+      return false;
+    }
+    if (this.deps.airborne()) {
+      pushToastTimed(ui, "system", this.t("save.airborne"));
       return false;
     }
     patchUi(ui, { busy: true });

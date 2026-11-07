@@ -4,7 +4,7 @@ import type { MessageKey } from "../i18n/en";
 import { type Translate, isMessageKey } from "../i18n/t";
 import { useT } from "../i18n/use-t";
 import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE, SUBTITLE_SCALE_RANGE } from "../store/hud-vm";
-import type { AimMode, ControlBindingVm, GraphicsQuality, SettingsVm } from "../store/ui-store";
+import { type AimAssistMode, type AimMode, type CameraShoulder, type ControlBindingVm, type GraphicsQuality, PAD_DEADZONE_SETTING_RANGE, PAD_SENSITIVITY_RANGE, type PadCurveMode, type SettingsVm, type TouchFireMode } from "../store/ui-store";
 import { TOKENS } from "../hud/tokens";
 import { useSettingsIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
@@ -24,7 +24,29 @@ const AIM_MODES: Options<AimMode> = [
   ["toggle", "settings.mode.toggle"],
 ];
 
+const TOUCH_FIRE: Options<TouchFireMode> = [
+  ["aims", "settings.touchFire.aims"],
+  ["separate", "settings.touchFire.separate"],
+];
+
+const PAD_CURVES: Options<PadCurveMode> = [
+  ["linear", "settings.padCurve.linear"],
+  ["classic", "settings.padCurve.classic"],
+  ["precise", "settings.padCurve.precise"],
+];
+
+const AIM_ASSIST: Options<AimAssistMode> = [
+  ["off", "settings.aimAssist.off"],
+  ["light", "settings.aimAssist.light"],
+  ["standard", "settings.aimAssist.standard"],
+];
+
 /** Each language under its own name, so a player can find theirs whatever is set now. */
+const SHOULDERS: Options<CameraShoulder> = [
+  ["right", "settings.shoulder.right"],
+  ["left", "settings.shoulder.left"],
+];
+
 const LANGUAGES: Options<Locale> = LOCALES.map((l) => [l, `settings.language.${l}`] as const);
 
 const Slider = ({
@@ -100,10 +122,11 @@ const Toggle = ({ label, on, onChange }: { label: MessageKey; on: boolean; onCha
   <Choice label={label} value={on ? "on" : "off"} options={ON_OFF} onChange={(v) => onChange(v === "on")} />
 );
 
-type Section = "general" | "mouse" | "keys" | "access";
+type Section = "general" | "mouse" | "touch" | "keys" | "access";
 const SECTIONS: Options<Section> = [
   ["general", "settings.tab.general"],
   ["mouse", "settings.tab.mouse"],
+  ["touch", "settings.tab.touch"],
   ["keys", "settings.tab.keys"],
   ["access", "settings.tab.access"],
 ];
@@ -168,9 +191,10 @@ const General = ({ settings, set }: SectionProps) => {
       <Slider id="musicVolume" label={t("settings.musicVolume")} value={settings.musicVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ musicVolume: v })} />
       <Slider id="sfxVolume" label={t("settings.sfxVolume")} value={settings.sfxVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ sfxVolume: v })} />
       <Slider id="ambienceVolume" label={t("settings.ambienceVolume")} value={settings.ambienceVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ ambienceVolume: v })} />
+      <Slider id="dialogueVolume" label={t("settings.dialogueVolume")} value={settings.dialogueVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ dialogueVolume: v })} />
+      <Slider id="radioVolume" label={t("settings.radioVolume")} value={settings.radioVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ radioVolume: v })} />
       <Toggle label="settings.hints" on={settings.hints} onChange={(hints) => set({ hints })} />
       <Toggle label="settings.autosave" on={settings.autosave} onChange={(autosave) => set({ autosave })} />
-      <Slider id="touchSensitivity" label={t("settings.touchSensitivity")} value={settings.touchSensitivity} min={0.2} max={3} step={0.1} format={times(settings.locale)} onChange={(v) => set({ touchSensitivity: v })} />
       <Toggle label="settings.hudAlwaysShow" on={settings.hudAlwaysShow} onChange={(hudAlwaysShow) => set({ hudAlwaysShow })} />
       <Choice label="settings.damageNumbers" value={settings.damageNumbers} options={DAMAGE_NUMBERS} onChange={(damageNumbers) => set({ damageNumbers })} />
       <Toggle label="settings.mapMarkers" on={settings.mapMarkers} onChange={(mapMarkers) => set({ mapMarkers })} />
@@ -191,6 +215,38 @@ const MouseAndCamera = ({ settings, set }: SectionProps) => {
       <Choice label="settings.aimMode" value={settings.aimMode} options={AIM_MODES} onChange={(aimMode) => set({ aimMode })} />
       <Choice label="settings.crouchMode" value={settings.crouchMode} options={AIM_MODES} onChange={(crouchMode) => set({ crouchMode })} />
       <Choice label="settings.sprintMode" value={settings.sprintMode} options={AIM_MODES} onChange={(sprintMode) => set({ sprintMode })} />
+      <Choice label="settings.shoulder" value={settings.shoulder} options={SHOULDERS} onChange={(shoulder) => set({ shoulder })} />
+    </>
+  );
+};
+
+/**
+ * The touch fire button and the aim button, where a phone player looks for them (ADR-0072). Fires
+ * only goes with a toggled aim button: a tap on it aims, then one thumb fires and steers.
+ */
+const TouchAndGamepad = ({ settings, set }: SectionProps) => {
+  const t = useT();
+  return (
+    <>
+      <Slider id="touchSensitivity" label={t("settings.touchSensitivity")} value={settings.touchSensitivity} min={0.2} max={3} step={0.1} format={times(settings.locale)} onChange={(v) => set({ touchSensitivity: v })} />
+      <Choice label="settings.touchFire" value={settings.touchFire} options={TOUCH_FIRE} onChange={(touchFire) => set(touchFire === "separate" ? { touchFire, aimMode: "toggle" } : { touchFire })} />
+      <Choice label="settings.aimMode" value={settings.aimMode} options={AIM_MODES} onChange={(aimMode) => set({ aimMode })} />
+      <Choice label="settings.aimAssist" value={settings.aimAssist} options={AIM_ASSIST} onChange={(aimAssist) => set({ aimAssist })} />
+      <Gamepad settings={settings} set={set} />
+    </>
+  );
+};
+
+/** The pad's own look (ADR-0072): sensitivity, the radial dead zone of both sticks, the curve. */
+const Gamepad = ({ settings, set }: SectionProps) => {
+  const t = useT();
+  const [minSens, maxSens] = PAD_SENSITIVITY_RANGE;
+  const [minDead, maxDead] = PAD_DEADZONE_SETTING_RANGE;
+  return (
+    <>
+      <Slider id="padSensitivity" label={t("settings.padSensitivity")} value={settings.padSensitivity} min={minSens} max={maxSens} step={0.1} format={times(settings.locale)} onChange={(padSensitivity) => set({ padSensitivity })} />
+      <Slider id="padDeadzone" label={t("settings.padDeadzone")} value={settings.padDeadzone} min={minDead} max={maxDead} step={0.01} format={percent} onChange={(padDeadzone) => set({ padDeadzone })} />
+      <Choice label="settings.padCurve" value={settings.padCurve} options={PAD_CURVES} onChange={(padCurve) => set({ padCurve })} />
     </>
   );
 };
@@ -289,6 +345,7 @@ export const SettingsPanel = () => {
       </div>
       {section === "general" && <General settings={settings} set={set} />}
       {section === "mouse" && <MouseAndCamera settings={settings} set={set} />}
+      {section === "touch" && <TouchAndGamepad settings={settings} set={set} />}
       {section === "keys" && <KeyBindings />}
       {section === "access" && <Accessibility settings={settings} set={set} />}
       {reloadNeeded && (

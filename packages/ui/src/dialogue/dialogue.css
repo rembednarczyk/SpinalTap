@@ -37,6 +37,9 @@
 
 /* The rest of the HUD steps back while the wheel is up (it stays readable, as in CP2077). */
 #ui-root:has(.dialogue) .hud { opacity: 0.35; transition: opacity 150ms ease-out; }
+/* The subtitles take the bottom left, where the name, the minimap and the weapon strip sit;
+   these are of no use mid-talk, so they go away instead of showing through the text (G-283). */
+#ui-root:has(.dialogue) :is(.hud__identity, .minimap, .weapon-strip) { visibility: hidden; }
 
 /* The hub is the person Seki talks to: right of the screen centre, a little above it. Slots
    sit --step apart; never under 44 px on screen, never more than the screen can hold. */
@@ -133,32 +136,70 @@
   to { opacity: 1; translate: 0 0; }
 }
 
-/* Subtitles: the last lines at the bottom, earlier ones above them, dimmed and scrollable. */
+/* Subtitles: the lines of the last step in the bottom left, read from the top (G-283). The box
+   stays left of the wheel's hub, so it may grow up to just under the objective in the top left
+   corner and a usual step needs no scrolling; one that still runs on shows an arrow at the
+   bottom. The speaker's name opens the line, so the text keeps the whole width. */
 .subs {
   position: absolute;
-  left: 50%;
+  left: 24px;
   bottom: 24px;
-  transform: translateX(-50%);
+  width: min(760px, calc(50% - 48px));
+  border-top: 2px solid var(--cyan);
+  background: rgba(6, 10, 16, 0.8);
+  pointer-events: auto;
+}
+.subs-solid .subs { background: rgb(2, 4, 8); }
+.subs__scroll {
+  position: relative;
   box-sizing: border-box;
-  width: min(760px, calc(100% - 32px));
-  max-height: calc(24vh / var(--s));
+  max-height: calc(100vh / var(--s) - 24px - 112px);
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
   padding: 10px 18px 4px;
-  background: rgba(6, 10, 16, 0.8);
-  border-top: 2px solid var(--cyan);
-  pointer-events: auto;
   outline: none;
 }
+.subs__more {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 30px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 2px;
+  box-sizing: border-box;
+  font-size: 14px;
+  color: var(--cyan);
+  background: linear-gradient(transparent, rgb(6, 10, 16) 85%);
+  pointer-events: none;
+}
+/* A tab on the box's top edge, outside the text, so it never pushes a line aside. */
+.subs__history {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  padding: 2px 8px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  background: rgba(6, 10, 16, 0.9);
+  border: 1px solid rgba(159, 179, 184, 0.3);
+  border-bottom: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.subs__history[aria-expanded="true"] { color: var(--cyan); border-color: var(--cyan); }
 .subs__line { margin: 0 0 6px; font-size: calc(18px * var(--subs-scale, 1)); line-height: 1.35; }
-.subs-solid .subs { background: rgb(2, 4, 8); }
 .subs__line--past { opacity: 0.55; }
 .subs__line--narration { font-style: italic; color: var(--magenta); }
 .subs__speaker {
-  display: inline-block;
-  min-width: 7em;
   margin-right: 10px;
+  font-size: 0.85em;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -187,13 +228,13 @@
   .subs {
     left: max(12px, env(safe-area-inset-left, 0px));
     bottom: 8px;
-    transform: none;
     width: calc(44% - 28px - max(12px, env(safe-area-inset-left, 0px)));
-    max-height: 44%;
-    padding: 8px 10px 2px;
   }
+  /* Up to just under the objective: the pad hides during a talk. */
+  .subs__scroll { max-height: calc(100vh / var(--s) - 8px - 52px); padding: 8px 10px 2px; }
   .subs__line { font-size: calc(14px * var(--subs-scale, 1)); margin-bottom: 4px; }
-  .subs__speaker { display: block; min-width: 0; margin: 0; font-size: calc(12px * var(--subs-scale, 1)); }
+  .subs__speaker { margin-right: 6px; }
+  .subs__history { font-size: 11px; }
 }
 
 /* No slide or pulse with reduced flashes (Dostępność) or a system-wide reduced motion. */

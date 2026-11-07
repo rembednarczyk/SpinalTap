@@ -1,10 +1,10 @@
-import type { StreetPropItem } from "@seki/core";
+import { FIGURE_HOSTS, FIGURE_REACH, type StreetPropItem, figureLayout, isSitting, seatAt } from "@seki/core";
 import type { ActorDef, Rect, StaticProp } from "./builders";
 import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_ACTORS, KANAL_PROPS } from "./district-kanal";
-import { TARG_NORTH_ACTORS, TARG_NORTH_PROPS, TARG_SOUTH_ACTORS, TARG_SOUTH_PROPS } from "./district-targ";
+import { ALCHEMIA_MARKET_ACTORS, ALCHEMIA_MARKET_PROPS } from "./alchemia/market";
 import { DOKI_QUAY_ACTORS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_PROPS } from "./district-doki";
-import { METRO_STATIONS } from "./metro";
+import { METRO_FOOTPRINTS } from "./metro";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { inBuilding } from "./lublin/places";
 import { groundY } from "./lublin/terrain";
@@ -21,15 +21,15 @@ import { DRINKER_SITES, drinkerWay } from "./contract-plans";
 const distanceToRect = (x: number, z: number, r: Rect): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
 
 /** What the game adds to the map, in the order its entity ids are reserved. */
-export const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS, ...DOKI_YARD_PROPS, ...DOKI_QUAY_PROPS];
-export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...TARG_SOUTH_ACTORS, ...TARG_NORTH_ACTORS, ...DOKI_YARD_ACTORS, ...DOKI_QUAY_ACTORS];
+export const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...ALCHEMIA_MARKET_PROPS, ...DOKI_YARD_PROPS, ...DOKI_QUAY_PROPS];
+export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...ALCHEMIA_MARKET_ACTORS, ...DOKI_YARD_ACTORS, ...DOKI_QUAY_ACTORS];
 
 /** A set piece's or a game block's clearance from the map's furniture (m). */
 const FURNITURE_CLEARANCE = 1.2;
 
-const gameBlocks: readonly Rect[] = [...GAME_PROPS, ...METRO_STATIONS.flatMap((m) => m.props)].flatMap((p) =>
+const gameBlocks: readonly Rect[] = GAME_PROPS.flatMap((p) =>
   p.view.kind === "block" ? [{ minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2 }] : [],
-).concat(METRO_STATIONS.map((m) => ({ minX: m.kiosk.x - 0.6, maxX: m.kiosk.x + 0.6, minZ: m.kiosk.z - 0.6, maxZ: m.kiosk.z + 0.6 })));
+).concat(METRO_FOOTPRINTS);
 
 type Pt = { readonly x: number; readonly z: number };
 
@@ -115,13 +115,35 @@ const keptStalls = Object.values(clear)
 /** The stock whose stall gave way to the game goes with it: no pallet of a stall that is not there. */
 const withStall = (i: StreetPropItem): boolean => i.prop !== "market-goods" || keptStalls.some((s) => Math.hypot(s.x - i.x, s.z - i.z) <= STOCK_REACH);
 
+/** Every piece the still crowd keeps to that the game kept (ADR-0058 stage 8), of all chunks. */
+const keptHosts = Object.values(clear)
+  .flat()
+  .filter((i) => FIGURE_HOSTS.has(i.prop));
+
+/**
+ * A still figure goes with its furniture: a sitter with the piece whose seat it is on, one standing
+ * with a piece it stands at within `FIGURE_REACH`. No one sits on a bench that is not there.
+ */
+const withHost = (i: StreetPropItem): boolean => {
+  if (i.prop !== "figure") return true;
+  const sitting = isSitting(figureLayout(i.variant).pose);
+  return keptHosts.some((h) => Math.hypot(h.x - i.x, h.z - i.z) <= FIGURE_REACH && (!sitting || seatAt(h, i.x, i.z) !== null));
+};
+
 /**
  * The map's pieces clear of the game, on the shaped terrain. A door on a facade (ADR-0058 stage 9)
  * keeps the foot the import measured on the paving drawn under it: its top was fitted to the
- * facade's windows from there.
+ * facade's windows from there. So does a still figure (stage 8): a sitter the foot of its seat's
+ * piece, one standing the paving at its feet, both measured on this terrain.
  */
 const kept: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(
-  Object.entries(clear).map(([id, items]) => [id, items.filter(withStall).map((i) => (i.prop === "door" ? i : { ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 }))]),
+  Object.entries(clear).map(([id, items]) => [
+    id,
+    items
+      .filter(withStall)
+      .filter(withHost)
+      .map((i) => (i.prop === "door" || i.prop === "figure" ? i : { ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 })),
+  ]),
 );
 
 const keptPieces = Object.values(kept).flat();

@@ -1,27 +1,34 @@
 import { type BlockStyle, type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { StaticProp } from "../builders";
-import { shapeGrid } from "./shape";
-import { bridgeDeckAt } from "./decks";
-import { MAP_CHUNKS, PADS, RAMPS } from "./sites";
+import { flightGrid, shapeGrid } from "./shape";
+import { bridgeDeckAt, deckGroundAt } from "./decks";
+import { FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS } from "./sites";
 import { surfaceLiftAt } from "./roads";
 
 /**
  * The terrain of the game's Lublin (ADR-0045): the map's grids with the pads and ramps of
  * `sites.ts` applied, by chunk id. The simulation walks on these and the renderer draws them.
+ * The pads and the steps' ramps are shaped on the import's grid (G-236 round 3; Trasa
+ * Podziemna's dig is in metres and holds on any grid of up to 5 m, G-252); only then is a grid
+ * under a flight's ramp refined, which keeps that surface as it is, and the flights' ramps laid
+ * on the finer points.
  */
-export const SHAPED_TERRAIN: ReadonlyMap<string, TerrainGrid> = new Map(MAP_CHUNKS.map((c) => [c.id, shapeGrid(c.terrain, PADS, RAMPS)]));
+export const SHAPED_TERRAIN: ReadonlyMap<string, TerrainGrid> = new Map(
+  MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(shapeGrid(c.terrain, PADS, RAMPS), FLIGHT_RAMPS), [], FLIGHT_RAMPS)]),
+);
 
 const inside = (b: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number): boolean => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ;
 
-/** Ground height of the game's terrain at (x, z): the first chunk holding the point, or a bridge's deck over it, as the simulation's ground does. */
+/**
+ * Ground height of the game's terrain at (x, z): the first chunk holding the point, or a bridge's
+ * deck over it or a flight of steps hung off one (G-255), as the simulation's ground does.
+ */
 export const groundY = (x: number, z: number): number => {
   for (const c of MAP_CHUNKS) {
     if (!inside(c.bounds, x, z)) continue;
     const g = SHAPED_TERRAIN.get(c.id);
     if (!g) return 0;
-    const h = terrainHeightAt(g, x, z);
-    const deck = bridgeDeckAt(x, z);
-    return deck !== null && deck > h ? deck : h;
+    return deckGroundAt(x, z, terrainHeightAt(g, x, z));
   }
   return 0;
 };

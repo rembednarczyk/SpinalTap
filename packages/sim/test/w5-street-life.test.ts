@@ -4,7 +4,7 @@ import {
   CONTRACT_SITE_SPAWNS,
   HIDEO_BUS_STOP,
   KANAL_SPOTS,
-  MARKET_PLACE,
+  beforeKeeper,
   SCHEDULES,
   STALL_KEEPERS,
   type ScheduleDef,
@@ -30,8 +30,11 @@ import { AWAY, byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 /** The covered footbridge over Grodzka, which Hideo walks under on his way to the bus. */
 const FOOTBRIDGE = { x: 659, z: 74 };
-/** Where Fumiko's customers stand: in front of her counter in the market's north row. */
-const atFumiko = (): Vec3 => ({ x: STALL_KEEPERS.fumiko.x, y: STALL_KEEPERS.fumiko.y, z: MARKET_PLACE.z + 100.6 });
+/** Where Fumiko's customers stand: on T1 before the hatch of her ramen bar in the food hall (ADR-0074). */
+const atFumiko = (): Vec3 => {
+  const p = beforeKeeper("fumiko");
+  return ground(p.x, p.z);
+};
 const SOLIDS: readonly StaticProp[] = WORLD_CHUNKS.flatMap((c) => c.props).filter((p) => p.solid && p.view.kind === "block" && !p.mechanism);
 /** A character's radius, with a little room to spare. */
 const BODY = 0.4;

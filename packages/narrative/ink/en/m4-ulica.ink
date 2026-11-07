@@ -1,13 +1,16 @@
-// Seki Senshi, ADR-0026: the people of Stare Miasto (ex Ulica Kanałowa, ADR-0042) and the market stalls on Podzamcze.
+// Seki Senshi, ADR-0026: the people of Stare Miasto (ex Ulica Kanałowa, ADR-0042) and the market stalls in Alchemia (ADR-0063).
 // Small talk with a pinch of rumour: each knot has one question that points at a find or a job
-// (the bag behind the dumpster, the car on the al. Tysiąclecia viaduct, the Hebi under the Grodzka footbridge).
+// (the bag behind the dumpster, the bag behind the ruin at Alchemia, the Hebi under the Grodzka footbridge).
 // No knot pays or hands out items; trade goes through the shop panel, the rest through flags.
 
 // Hideo, a clerk from the Tessen office on the Bystrzyca. Over the Grodzka footbridge to work, back to SAKE at night.
 === hideo ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     HIDEO: I don't have any money on me. Really. Please keep walking.
     -> END
+- civilians_tier == "wary":
+    HIDEO: Oh. It's you. Say what you want and let me go.
 }
 {
 - game_hour >= 2 && game_hour < 7:
@@ -37,9 +40,12 @@
 
 // Tetsu keeps DENKI, the electronics shop on the north kerb.
 === tetsu ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     TETSU: Shutter's down. For you, DENKI is closed.
     -> END
+- civilians_tier == "wary":
+    TETSU: I'll serve you. I won't smile while I do it.
 }
 { not has_flag("met_tetsu"):
     TETSU: Tetsu, DENKI. I fix anything with a battery. Not people, that's Mori.
@@ -70,9 +76,12 @@
 
 // Mei sings at KARAOKE from eight in the evening to four in the morning.
 === mei ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     MEI: Go find company somewhere else.
     -> END
+- civilians_tier == "wary":
+    MEI: You again. Fine, talk, but keep your hands where I can see them.
 }
 { game_hour >= 20 || game_hour < 4:
     MEI: Break between sets. Three songs about broken hearts and one about a train, because the boss likes it.
@@ -96,11 +105,14 @@
     MEI: You say good night in the morning. But fine.
     -> END
 
-// Sachiko keeps the kiosk at the market gate. She sees everyone who comes in.
+// Sachiko keeps the first stall of Alchemia, by the car park. She sees everyone who comes in.
 === sachiko ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     SACHIKO: No papers, no cigarettes, nothing for you.
     -> END
+- civilians_tier == "wary":
+    SACHIKO: I hear things about you, sweetheart. None of them good.
 }
 { time_of_day == "night":
     SACHIKO: Night kiosk, sweetheart. Yesterday's papers, tomorrow's cigarettes.
@@ -113,7 +125,7 @@
 + [What's new at the market? #tone:optional]
     SEKI: What's new at the market?
     { hebi_stance == "hostile":
-        SACHIKO: The Hebi talk about you. Not by name, more in curses. Watch yourself under the viaduct.
+        SACHIKO: The Hebi talk about you. Not by name, more in curses. Watch yourself by the ruin behind the stalls.
     - else:
         SACHIKO: Hana's got new stock, Oyaji old prices, and the Hebi the same faces. Nothing ever changes here.
     }
@@ -121,7 +133,7 @@
 + { not has_flag("sachiko_car") } [Seen anything odd here? #tone:optional]
     SEKI: Have you seen anything strange around here?
     ~ set_flag("sachiko_car")
-    SACHIKO: There's a car parked on the viaduct over Tysiąclecia. Someone left it the night of the blockade and never came back for it.
+    SACHIKO: There's a bag behind the ruin at the back of the square. Someone left it the night of the blockade and never came back for it.
     SACHIKO: Nobody's looked inside. At least nobody who'd admit it.
     -> talk
 + [Thanks for everything. #tone:leave]
@@ -131,9 +143,12 @@
 
 // Goro sells umbrellas at the east end of the north row.
 === goro ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     GORO: No umbrella for you. Get wet.
     -> END
+- civilians_tier == "wary":
+    GORO: I sell umbrellas to everyone. Friendship, not so much.
 }
 { game_hour >= 8 && game_hour < 22:
     GORO: Umbrellas, raincoats, implant wrap. Here it rains even when it doesn't.
@@ -150,17 +165,20 @@
 + { not has_flag("goro_oyaji") } [Known Oyaji long? #tone:optional]
     SEKI: Have you known Oyaji long?
     ~ set_flag("goro_oyaji")
-    GORO: Thirty years we've traded at this market. He fixes, I sell, we both pay the Hebi. Neighborly friendship.
+    GORO: Thirty years we've traded side by side, under the viaduct and now here in Alchemia. He fixes, I sell, we both pay the Hebi. Neighborly friendship.
     -> talk
 + [Gotta run. #tone:leave]
     GORO: Take an umbrella next time. I mean it.
     -> END
 
-// Kenta fries okonomiyaki in the north row, under the OKONOMI sign.
+// Kenta fries okonomiyaki at the second stall of Alchemia.
 === kenta ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     KENTA: The griddle's hot, and I've got a spatula. Better move along.
     -> END
+- civilians_tier == "wary":
+    KENTA: Order and step back from the griddle. People are watching.
 }
 KENTA: Okonomiyaki! Cabbage, batter, sauce and whatever you like. Meat costs extra, because the meat's almost real.
 -> talk
@@ -170,11 +188,11 @@ KENTA: Okonomiyaki! Cabbage, batter, sauce and whatever you like. Meat costs ext
     SEKI: Almost real?
     KENTA: Really something. I don't ask the supplier, the supplier doesn't ask me.
     -> talk
-+ { not has_flag("kenta_overpass") } [What's up on the viaduct? #tone:optional]
-    SEKI: What's up on the viaduct?
++ { not has_flag("kenta_overpass") } [What's up on the roof? #tone:optional]
+    SEKI: What's up on the roof?
     ~ set_flag("kenta_overpass")
-    KENTA: Wind, dust and a Hebi lookout drone that circles the pillars at night. Nobody's driven up there since the blockade.
-    KENTA: People take the stairs on the west side to look at the Zamek and Stare Miasto. Or to look for something.
+    KENTA: Wind, glass and a terrace nobody rents. The lift behind the hall still runs, if you press hard enough.
+    KENTA: People ride up to look at the Ratusz and Stare Miasto. Or to look for something.
     -> talk
 + [Some other time. #tone:leave]
     KENTA: The griddle will be hot. It always is.
@@ -183,9 +201,12 @@ KENTA: Okonomiyaki! Cabbage, batter, sauce and whatever you like. Meat costs ext
 // Fumiko's ramen stall, the market's food shop: 16:00 to 4:00. The shop panel opens first;
 // "Porozmawiaj z Fumiko" leads here. The rest of the day the schedule swaps in `fumiko_closed`.
 === fumiko ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     FUMIKO: Eat somewhere else. My seats are for people who don't shoot at dinner.
     -> END
+- civilians_tier == "wary":
+    FUMIKO: Sit at the end of the counter. And keep it quiet.
 }
 { not has_flag("met_fumiko"):
     FUMIKO: Fumiko. Ramen from four in the afternoon to four in the morning. Whoever eats here doesn't get sick. Almost nobody.
@@ -214,9 +235,12 @@ KENTA: Okonomiyaki! Cabbage, batter, sauce and whatever you like. Meat costs ext
     -> END
 
 === fumiko_closed ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     FUMIKO: Closed. And don't come back this evening either.
     -> END
+- civilians_tier == "wary":
+    FUMIKO: You again. Closed, either way.
 }
 FUMIKO: The pot's gone cold, the burner too. I open at four in the afternoon.
 { game_hour >= 4 && game_hour < 8:

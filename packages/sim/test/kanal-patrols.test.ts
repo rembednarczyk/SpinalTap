@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type DomainState, type GarmentId, type ItemInstance, NO_HEAT, type SaveSnapshot, type Vec3, hm } from "@seki/core";
+import { type DomainState, type GarmentId, HEAT_SEARCH_SECONDS, type ItemInstance, NO_HEAT, type SaveSnapshot, type Vec3, hm } from "@seki/core";
 import {
   KANAL_NIGHT,
   KANAL_PATROL_ACTORS,
@@ -142,7 +142,8 @@ describe("how a Hebi patrol takes the player (ADR-0048, as any ganger after ADR-
   });
 
   it("goes for her when Hebi hunt her (the heat) or hate her", () => {
-    const hunted = street(null, (d) => ({ ...d, heat: { ...NO_HEAT, level: 1, faction: "hebi" } }));
+    // A hunt with its clock (as a report starts it): the patrol needs a moment to make her out (ADR-0069).
+    const hunted = street(null, (d) => ({ ...d, heat: { ...NO_HEAT, level: 1, faction: "hebi", searchLeft: HEAT_SEARCH_SECONDS[1] } }));
     expect(alertedAfter(hunted, hebi(hunted, true))).toBe(true);
     const hated = street(null, (d) => ({ ...d, reputation: { ...d.reputation, hebi: -40 } }));
     expect(alertedAfter(hated, hebi(hated, true))).toBe(true);

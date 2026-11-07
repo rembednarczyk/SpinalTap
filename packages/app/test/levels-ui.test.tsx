@@ -1,15 +1,18 @@
 // @vitest-environment jsdom
 import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { ALCHEMIA_LIFT, ALCHEMIA_MARKET_PROPS, HANA_SPOT, docks, groundY } from "@seki/sim";
 import { type Game, mountGame, run, unmountGame } from "./game-ui";
 
 /**
- * Stairs, the freight lift, a jump and the fire escape with the HUD's prompts and the minimap
- * (formerly e2e/levels.spec.ts, ADR-0046). The real Space key in the running loop is smoke's
- * "real input" test; here the jump is an input frame.
+ * The lift, a jump and a ladder with the HUD's prompts and the minimap (formerly
+ * e2e/levels.spec.ts, ADR-0046): Alchemia's lift from the food hall to T0 (ADR-0074; the market's overpass and
+ * fire escape went with it off Aleja Tysiąclecia, ADR-0063; their mechanics are the sim's test
+ * floor's), Hana's cart and the ladder of the docks' container stack. The real Space key in the
+ * running loop is smoke's "real input" test; here the jump is an input frame.
  */
-const EAST = Math.PI / 2;
 const NORTH = 0;
+const SOUTH = Math.PI;
 
 type Point = { x: number; y: number; z: number };
 
@@ -31,50 +34,38 @@ const walkUntil = (g: Game, done: (p: Point) => boolean, chunks = 20): Point => 
   return g.seki.state().player!;
 };
 
-/** Puts the player on a floor above the ground (the deck, a balcony), facing `yaw`. */
-const standAt = (g: Game, at: Point, yaw: number) =>
-  run(() => {
-    const p = g.session.sim.player()!;
-    p.position = at;
-    p.prevPosition = at;
-    p.yaw = yaw;
-  });
-
 const prompt = () => screen.queryByTestId("prompt")?.textContent ?? "";
+
+const C = ALCHEMIA_LIFT.centre;
+const [GROUND, TOP] = ALCHEMIA_LIFT.levels;
+/** Steps of a ride from one level to the other (2.5 m/s, ADR-0020), and a few for the gate. */
+const RIDE = Math.ceil(((TOP - GROUND) / 2.5) * 60) + 15;
 
 afterEach(unmountGame);
 
 describe("levels in the game (ADR-0020, ADR-0021)", () => {
-  it("stairs up to the overpass and the freight lift down", () => {
+  it("Alchemia's lift from the food hall up to the car park and back down, the minimap level with T0 at the top", () => {
     const g = start();
-    // The market keeps its own coordinates, moved under the viaduct (ADR-0045): O is its origin.
-    const O = g.seki.place("market", 0, 0, 0);
-    // Foot of the stairs on the north edge of the deck; one step streams the market in.
-    run(() => g.seki.teleport(O.x + 69.4, O.z + 98.1, EAST));
+    // In front of the cage's door in the hall (ADR-0074); one step streams the plot in.
+    const [low] = ALCHEMIA_LIFT.levels;
+    const door = ALCHEMIA_LIFT.doors[0];
+    run(() => g.seki.teleport(door.x, door.z, SOUTH, 0, low));
     g.step(1);
-    const top = walkUntil(g, (p) => p.x > O.x + 87);
-    expect(top.y - O.y).toBeCloseTo(9.9, 3);
-
-    // Along the deck to the lift gate, then call the platform up with the button.
-    standAt(g, { x: O.x + 108, y: O.y + 9.9, z: O.z + 89 }, Math.PI);
-    g.step(1);
+    walkUntil(g, (p) => Math.hypot(p.x - C.x, p.z - C.z) < 0.5, 6);
     expect(prompt()).toContain("Elevator");
     g.step(1, { interact: true });
-    g.step(300);
-    // Onto the platform and down.
-    walkUntil(g, (p) => p.z < O.z + 85.8);
+    g.step(RIDE);
+    expect(g.seki.state().player!.y).toBeCloseTo(TOP, 2);
+    g.step(1);
+    // The top is the car park's level (T0): no height over the ground on the minimap.
+    expect(screen.queryByTestId("minimap-level")).toBeNull();
+    // And down again from the cage.
     g.step(1, { interact: true });
-    g.step(300);
-    expect(g.seki.state().player!.y - O.y).toBeLessThan(0.3);
-    // Off the platform northwards, under the deck.
-    run(() => {
-      g.session.sim.player()!.yaw = NORTH;
-    });
-    const below = walkUntil(g, (p) => p.z > O.z + 90);
-    expect(below.y).toBeCloseTo(O.y, 3);
+    g.step(RIDE);
+    expect(g.seki.state().player!.y).toBeCloseTo(GROUND, 2);
   });
 
-  it("jump onto a stall counter and the fire escape onto the roof", () => {
+  it("jump onto Hana's cart and the container stack's ladder onto its top", () => {
     const g = start();
     // A new game wakes on the clinic chair (ADR-0038): jump from the deptak in front of it (ADR-0045).
     run(() => g.seki.teleport(321.4, -80));
@@ -90,29 +81,23 @@ describe("levels in the game (ADR-0020, ADR-0021)", () => {
     g.step(90);
     expect(g.seki.state().player!.y).toBeCloseTo(base, 2);
 
-    // A 1 m counter: walking only bumps into it, a jump lands on top.
-    const O = g.seki.place("market", 0, 0, 0);
-    run(() => g.seki.teleport(O.x + 96.7, O.z + 69.2, Math.PI));
+    // Hana's 1 m cart (ADR-0063): walking only bumps into it, a jump lands on top.
+    const cart = ALCHEMIA_MARKET_PROPS[0]!;
+    const cartTop = cart.center.y + (cart.view.kind === "block" ? cart.view.size.y / 2 : 0);
+    run(() => g.seki.teleport(cart.center.x, HANA_SPOT.z + 2.1, SOUTH, 0, groundY(cart.center.x, HANA_SPOT.z + 2.1)));
     g.step(1);
     g.step(1, { moveZ: 1, jump: true });
     for (let i = 0; i < 60 && g.seki.state().airborne; i++) g.step(1, { moveZ: 1 });
-    expect(g.seki.state().player!.y - O.y).toBeCloseTo(1, 3);
+    expect(g.seki.state().player!.y).toBeCloseTo(cartTop, 2);
 
-    // Fire escape: into the foot of the first ladder, up onto the balcony.
-    run(() => g.seki.teleport(O.x + 73.2, O.z + 65.6, Math.PI));
+    // The docks' container stack: into the foot of its ladder, up onto the low container.
+    const foot = docks(3, 0, 99.6);
+    run(() => g.seki.teleport(foot.x, foot.z, NORTH, 0, foot.y));
     g.step(1);
     walkUntil(g, () => false, 1);
-    expect(g.seki.state().climbing).toBe("targ-escape-1");
-    walkUntil(g, (p) => p.y - O.y > 4.4, 10);
-    // From the balcony, the interact key on the second ladder, then up onto the roof.
-    standAt(g, { x: O.x + 69.2, y: O.y + 4.5, z: O.z + 64.6 }, Math.PI);
-    g.step(1);
-    expect(prompt()).toContain("Climb");
-    g.step(1, { interact: true });
-    expect(g.seki.state().climbing).toBe("targ-escape-2");
-    const roof = walkUntil(g, (p) => p.z < O.z + 64 && (p.y - O.y > 9 || p.y - O.y < 0.1), 12);
-    expect(roof.y - O.y).toBeGreaterThan(8);
-    expect(g.seki.state().climbing).toBeNull();
+    expect(g.seki.state().climbing).toBe("doki-stack-1");
+    const top = walkUntil(g, (p) => !g.seki.state().climbing && p.y - foot.y > 2.4, 12);
+    expect(top.y - foot.y).toBeGreaterThan(2.4);
     // The minimap says the player is up on a level.
     g.step(1);
     expect(screen.getByTestId("minimap-level").textContent).toContain("m");

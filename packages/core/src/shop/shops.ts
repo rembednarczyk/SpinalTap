@@ -1,8 +1,9 @@
 import { type DomainText, textRef } from "../i18n/text";
 import { AMMO_CATALOG, GARMENT_CATALOG, MOD_CATALOG, STACKABLE_CATALOG, WEAPON_CATALOG, isAmmoId, isGarmentId, isStackableId, isWeaponId, itemSummary } from "../items/catalog";
-import { RARITY } from "../items/rarity";
+import { type ItemGrade, MIN_ITEM_LEVEL, clampItemLevel, hasItemLevel, levelScale } from "../items/grade";
+import { RARITIES, RARITY } from "../items/rarity";
 import type { AmmoId, GarmentId, ItemCategory, ModId, Rarity, StackableId, WeaponId } from "../items/types";
-import type { FactionId } from "../reputation/reputation";
+import type { FactionId, ReputationTier } from "../reputation/reputation";
 
 /**
  * The traders of the game (plan §6): doktor Mori's clinic, Oyaji's stall on the market and,
@@ -20,7 +21,10 @@ export type StockEntry =
   | { readonly kind: "stack"; readonly item: StackableId }
   /** A box of `qty` rounds into the pouch. */
   | { readonly kind: "ammo"; readonly item: AmmoId; readonly qty: number }
+  /** `rarity` is the tier on neutral terms; a regular gets better ones (`stockGrade`). */
   | { readonly kind: "item"; readonly item: WeaponId | GarmentId | ModId; readonly rarity: Rarity };
+
+export type ItemStockEntry = Extract<StockEntry, { readonly kind: "item" }>;
 
 export type ShopItemId = StockEntry["item"];
 
@@ -121,14 +125,41 @@ export const shopItemDescription = (item: ShopItemId): DomainText => {
 const entryDef = (item: WeaponId | GarmentId | ModId): { readonly name: string; readonly value: number; readonly description: string } =>
   isWeaponId(item) ? WEAPON_CATALOG[item] : isGarmentId(item) ? GARMENT_CATALOG[item] : MOD_CATALOG[item as ModId];
 
-/** List price of a stock entry before the shop's terms: value × rarity, or a box of rounds. */
-export const stockListPrice = (entry: StockEntry): number => {
+/**
+ * Tiers a trader's standing adds to the pieces on the counter (ADR-0059, ADR-0011): a friendly one
+ * brings out a better tier, a trusted one two, never past `SHOP_TOP_RARITY` (epic and legendary
+ * come only from loot). First guesses, to be tuned in stage 8.
+ */
+export const SHOP_RARITY_STEPS: Readonly<Record<ReputationTier, number>> = { hostile: 0, wary: 0, neutral: 0, friendly: 1, trusted: 2 };
+export const SHOP_TOP_RARITY: Rarity = "rare";
+
+/**
+ * What a piece on the counter is: for a weapon or garment its tier raised by the standing and the
+ * player's level, so the stock keeps up with her (the level band of ADR-0059). No traits. A mod
+ * keeps its listed tier: its effect is the catalog's whatever the tier, so a better tier would only
+ * raise the price and eat the discount of a good standing (ADR-0011).
+ */
+export const stockGrade = (entry: ItemStockEntry, tier: ReputationTier = "neutral", level: number = MIN_ITEM_LEVEL): ItemGrade => {
+  if (!hasItemLevel(entry.item)) return { rarity: entry.rarity };
+  const top = RARITIES.indexOf(SHOP_TOP_RARITY);
+  const own = RARITIES.indexOf(entry.rarity);
+  const rarity = own >= top ? entry.rarity : RARITIES[Math.min(top, own + SHOP_RARITY_STEPS[tier])]!;
+  return { rarity, level: clampItemLevel(level) };
+};
+
+/**
+ * List price of a stock entry before the shop's terms: value × rarity × level (ADR-0059) for a
+ * piece of `stockGrade`, or a box of rounds.
+ */
+export const stockListPrice = (entry: StockEntry, tier: ReputationTier = "neutral", level: number = MIN_ITEM_LEVEL): number => {
   switch (entry.kind) {
     case "ammo":
       return AMMO_CATALOG[entry.item].value * entry.qty;
     case "stack":
       return STACKABLE_CATALOG[entry.item].value;
-    case "item":
-      return Math.round(entryDef(entry.item).value * RARITY[entry.rarity].value);
+    case "item": {
+      const grade = stockGrade(entry, tier, level);
+      return Math.round(entryDef(entry.item).value * RARITY[grade.rarity].value * levelScale(grade.level));
+    }
   }
 };

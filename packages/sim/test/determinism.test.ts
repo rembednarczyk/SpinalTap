@@ -44,11 +44,54 @@ const script = (): ReplayFrame[] => {
 const hashOf = (sim: Simulation) => stateHash(sim.snapshot(null, "test", ""));
 
 /**
+ * The hash of a run as schema v31 had it (before the cyberdeck's grades, decision of 6.11 after
+ * ADR-0059 stage 6): the same snapshot, only the version. The runs' player has no cyberdeck, so
+ * nothing else in the save differs and the runs hash to the goldens of v31.
+ */
+const v31HashOf = (sim: Simulation) => stateHash({ ...sim.snapshot(null, "test", ""), version: 31 } as unknown as SaveSnapshot);
+
+/**
+ * The snapshot of a run as v30 wrote it, before the player's style and bad luck (ADR-0059, stage
+ * 6): the progression without them. The runs' player defeats and hacks no one (no fight, no bag
+ * of hers), so without the fields the runs hash to the goldens of v30.
+ */
+const beforeV31 = (sim: Simulation): SaveSnapshot => {
+  const snap = sim.snapshot(null, "test", "");
+  const { style: _s, unlucky: _u, ...progression } = snap.domain.progression;
+  return { ...snap, domain: { ...snap.domain, progression } } as unknown as SaveSnapshot;
+};
+
+/** The hash of a run as schema v30 had it: without the style and the bad luck, the goldens of v30. */
+const v30HashOf = (sim: Simulation) => stateHash({ ...beforeV31(sim), version: 30 } as unknown as SaveSnapshot);
+
+/**
+ * The snapshot of a run as v28 wrote it, before item levels and traits (ADR-0059, stage 4): the
+ * pieces in the bag and in the loot bags without them. The player of these runs starts at level 1
+ * and ends at level 2 at most; the levels and traits come from a stream of their own and no tier
+ * of a piece in the runs differs from before, so without the fields the runs hash as v28 and the
+ * older schemas would hash them (since stage 5 the enemies' levels change the runs, and those
+ * goldens were re-recorded with it).
+ */
+const beforeV29 = (sim: Simulation): SaveSnapshot => {
+  const snap = beforeV31(sim);
+  const strip = <T extends object>(p: T): T => {
+    const { level: _l, traits: _t, ...rest } = p as T & { level?: number; traits?: unknown };
+    return rest as T;
+  };
+  const items = snap.domain.inventory.items.map(strip);
+  const containers = snap.domain.loot.containers.map((c) => ({ ...c, lines: c.lines.map(strip) }));
+  return { ...snap, domain: { ...snap.domain, inventory: { ...snap.domain.inventory, items }, loot: { ...snap.domain.loot, containers } } };
+};
+
+/** The hash of a run as schema v28 had it: without the item levels, the goldens of v28. */
+const v28HashOf = (sim: Simulation) => stateHash({ ...beforeV29(sim), version: 28 } as unknown as SaveSnapshot);
+
+/**
  * The hash of a run as schema v27 had it (G-233): without the bodies of a won mugging, of which
  * these runs have none (no micro-event starts in them), so only the version differs from v28.
  */
 const v27HashOf = (sim: Simulation) => {
-  const { strayBodies: _b, ...snap } = sim.snapshot(null, "test", "");
+  const { strayBodies: _b, ...snap } = beforeV29(sim);
   return stateHash({ ...snap, version: 27 } as unknown as SaveSnapshot);
 };
 
@@ -58,7 +101,7 @@ const v27HashOf = (sim: Simulation) => {
  * does not show in these runs, so the hashes of the older schemas stand.
  */
 const beforeV27 = (sim: Simulation): SaveSnapshot => {
-  const snap = sim.snapshot(null, "test", "");
+  const snap = beforeV29(sim);
   const v26 = ({ walk: _w, ...e }: EntitySnapshot): EntitySnapshot => e;
   const r = snap.reinforcements;
   const reinforcements = r ? { reinforcements: { ...r, people: r.people.map((p) => ({ ...p, state: v26(p.state) })) } } : {};
@@ -183,7 +226,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"3729b6d4"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"5deb94af"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -199,46 +242,85 @@ describe("determinism", () => {
     // Re-recorded (with the "hard" one, v27 included) for G-098, no new rule: the Brigittines' bell
     // tower is a building more in the map, so the ids of the run's entities come one later and a
     // stuck ganger's first side (by its id) flips: only the saved `walk` differs, v26 stands.
-    expect(v17HashOf(sim)).toBe("c52fd247");
-    expect(v19HashOf(sim)).toBe("ef63b731");
-    expect(v20HashOf(sim)).toBe("9957ac6d");
-    expect(v21HashOf(sim)).toBe("6fbce3e8");
-    expect(v22HashOf(sim)).toBe("9c7d29c3");
-    expect(v23HashOf(sim)).toBe("c16d972e");
-    expect(v24HashOf(sim)).toBe("87658f95");
-    expect(v25HashOf(sim)).toBe("7d2a6a8c");
-    expect(v26HashOf(sim)).toBe("7e87ff25");
-    expect(v27HashOf(sim)).toBe("96d8aafb");
+    // Re-recorded (all of them, "hard" too) for ADR-0069, a new rule: every ganger of the run sees
+    // in its type's cone, a crouching player from half as far, and fills a suspicion before the
+    // alarm (it turns to her on the first of it) instead of alerting in the step it has a clear line.
+    // Re-recorded (all of them, "hard" too) for G-343, a new rule: a fleeing bystander keeps the
+    // way whose walk round a corner it follows and does not turn back while it is open. Bystanders
+    // 1082 and 294 (G-329) of the run swung back and forth in the panic: 283 and 84 jumps, now 40 and 10.
+    // Re-recorded (all of them, "hard" and the duel too) for the v29 item levels (ADR-0059, stage 4),
+    // fields, no new rule shows in these runs: the starter kit is of level 1 and, as v28, the runs hash
+    // to the goldens of before.
+    // Re-recorded (all of them, "hard" too; the duel's brawler is made by hand, with no level) for
+    // the district bands of ADR-0059, stage 5, a new rule: the run's player reaches level 2 and,
+    // inside Krakowskie's band (1-8), the gangers about keep up with her (level 2, 83 of 80 health).
+    // Then again with the v30 version of the market's move (ADR-0063, stage 6), no new rule in the
+    // run: the older vN hashes stand.
+    // Re-recorded (all of them, "hard" and the duel too) for the v31 style and bad luck of ADR-0059,
+    // stage 6: fields of the progression, no new rule shows in these runs (the player defeats and
+    // hacks no one: no fight, a count of 0), so as v30 they hash to the goldens of before.
+    // Re-recorded (all of them, "hard" and the duel too) for the v32 version of the cyberdeck's
+    // grades (after ADR-0059 stage 6): the runs' player has no deck, so no new field and no new rule
+    // shows, and as v31 they hash to the goldens of before.
+    // Re-recorded (all of them, "hard" and the duel too) for the v34 version of Alchemia's T2 and the
+    // Arkady (ADR-0074 stage 2): a migration, no new field; the Arkady take the map's ruin's place
+    // among its buildings, so no id moves, and as v31 the runs hash to the goldens of before.
+    // Re-recorded (all of them, "hard" and the duel too) for the v35 version of the pavilion on
+    // Alchemia's corner (ADR-0074 stage 3): a migration, no new field; the pavilion's solids and
+    // ladder take ids from ROOM_ID_BASE after Alchemia's, Ren moves onto its roof, and with the
+    // version at 34 the runs hash to the v34 goldens, so only the version changed them.
+    // Re-recorded (all of them, "hard" and the duel too) for the v36 version of P-1 under Alchemia's
+    // car park (ADR-0074 stage 4): a migration, no new field; its solids, ramp and cars take ids
+    // from ROOM_ID_BASE and STREET_ID_BASE after the others', and with the version at 35 the runs
+    // hash to the v35 goldens (c839b064, 4689e661, 5716d8d1), so only the version changed them.
+    expect(v31HashOf(sim)).toBe("8a184ff0");
+    expect(v30HashOf(sim)).toBe("7dd4e4ad");
+    expect(v17HashOf(sim)).toBe("1ce01d19");
+    expect(v19HashOf(sim)).toBe("6c657123");
+    expect(v20HashOf(sim)).toBe("e3f6e797");
+    expect(v21HashOf(sim)).toBe("0b324838");
+    expect(v22HashOf(sim)).toBe("16a7e7d5");
+    expect(v23HashOf(sim)).toBe("ac734ccd");
+    expect(v24HashOf(sim)).toBe("90600c96");
+    expect(v25HashOf(sim)).toBe("94c21ad3");
+    expect(v26HashOf(sim)).toBe("b8d0ace2");
+    expect(v27HashOf(sim)).toBe("ef0f8c1e");
+    expect(v28HashOf(sim)).toBe("0dfb20ef");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"a8ef0089"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"980794a8"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
-    expect(v17HashOf(sim)).not.toBe("c52fd247");
-    expect(v19HashOf(sim)).toBe("e296d440");
-    expect(v20HashOf(sim)).toBe("92bfb504");
-    expect(v21HashOf(sim)).toBe("f97f907b");
-    expect(v22HashOf(sim)).toBe("39c6139a");
-    expect(v23HashOf(sim)).toBe("4f999211");
-    expect(v24HashOf(sim)).toBe("98554720");
-    expect(v25HashOf(sim)).toBe("21d187bf");
-    expect(v26HashOf(sim)).toBe("aa2ed010");
-    expect(v27HashOf(sim)).toBe("f8ea7928");
+    expect(v31HashOf(sim)).toBe("13a15bf5");
+    expect(v30HashOf(sim)).toBe("30834a04");
+    expect(v17HashOf(sim)).not.toBe("1ce01d19");
+    expect(v19HashOf(sim)).toBe("01e929be");
+    expect(v20HashOf(sim)).toBe("93e8e16a");
+    expect(v21HashOf(sim)).toBe("7e76b28b");
+    expect(v22HashOf(sim)).toBe("b3ca81f8");
+    expect(v23HashOf(sim)).toBe("3f2c0e82");
+    expect(v24HashOf(sim)).toBe("a995b57b");
+    expect(v25HashOf(sim)).toBe("76e283bc");
+    expect(v26HashOf(sim)).toBe("be1e9237");
+    expect(v27HashOf(sim)).toBe("3aa62e95");
+    expect(v28HashOf(sim)).toBe("5250f136");
   });
 
-  it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {
-    const golden = hashOf(runReplay(1234, script()));
-    for (const crowd of ["low", "high"] as const) {
+  // One case per density: three full replays in one case ran close to the 20 s limit under coverage.
+  let golden: string | undefined;
+  const goldenRun = (): string => (golden ??= hashOf(runReplay(1234, script())));
+  for (const crowd of ["low", "high"] as const) {
+    it(`the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at density ${crowd}`, () => {
       const sim = runReplay(1234, script(), crowd);
       expect([...sim.world].some((e) => e.view?.kind === "crowd")).toBe(true);
       // The traffic follows the crowd's density: cars on Lubartowska and Królewska by Plac Łokietka.
       if (crowd === "high") expect([...sim.world].some((e) => e.vehicle !== undefined)).toBe(true);
-      expect(hashOf(sim)).toBe(golden);
-    }
-  });
+      expect(hashOf(sim)).toBe(goldenRun());
+    });
+  }
 
   it("without the v13 fields of ADR-0033, the v17 progression and the v18 difficulty the replay hashes as with sim B of wave 2 (fields, not rules)", () => {
     const snap = beforeV23(runReplay(1234, script()));
@@ -248,8 +330,11 @@ describe("determinism", () => {
     const { doors: _doors, ...rest } = snap;
     // Re-recorded for ADR-0038 (the run starts in the clinic) and ADR-0045 (the clinic is on
     // Krakowskie Przedmieście), and for the car wash moved off Plac Łokietka into the yard behind
-    // it; the v14 door states are left out too.
-    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("380539e5");
+    // it; the v14 door states are left out too. Re-recorded for ADR-0069: the gangers of the run see
+    // in a cone and fill a suspicion before the alarm. Re-recorded for G-343: fleeing bystanders
+    // no longer turn back and forth. Re-recorded for ADR-0059, stage 5: the gangers keep up with
+    // the player's level 2 in Krakowskie's band.
+    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("d100771d");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
@@ -293,17 +378,28 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"3e5b6e59"`);
-    expect(v17HashOf(sim)).toBe("62992d7b");
-    expect(v19HashOf(sim)).toBe("36a75c45");
-    expect(v20HashOf(sim)).toBe("1d2880c1");
-    expect(v21HashOf(sim)).toBe("8c13a3a0");
-    expect(v22HashOf(sim)).toBe("24c5de87");
-    expect(v23HashOf(sim)).toBe("e4247ade");
-    expect(v24HashOf(sim)).toBe("7ec2e45d");
-    expect(v25HashOf(sim)).toBe("f92c26ec");
-    expect(v26HashOf(sim)).toBe("8f19fb83");
-    expect(v27HashOf(sim)).toBe("740e342a");
+    // Back to the hashes before ADR-0059 stage 8, round 2 (all of them): with the floor of round 3
+    // a kill's XP is the type's own up to level 6, so the brawler the player of level 1 downs is
+    // worth 70 XP again, not 4. The only XP the scripted run above earns is a quest step's, so its
+    // hashes stand; contracts' XP and kills above level 1 show in no golden hash (the balance test
+    // and progression tests cover them).
+    // On top of that, re-recorded for the v34 version (ADR-0074 stage 2, see the first golden test):
+    // b036f5d7 before it; for the v35 version (stage 3): f0ccb612 before it; and for the v36
+    // version (stage 4): 5716d8d1 before it.
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"db17fe1c"`);
+    expect(v31HashOf(sim)).toBe("5ce46e55");
+    expect(v30HashOf(sim)).toBe("ae6c21d0");
+    expect(v17HashOf(sim)).toBe("3e78c5b2");
+    expect(v19HashOf(sim)).toBe("6ebebd7e");
+    expect(v20HashOf(sim)).toBe("116f9cfa");
+    expect(v21HashOf(sim)).toBe("ce560791");
+    expect(v22HashOf(sim)).toBe("7c4d11bc");
+    expect(v23HashOf(sim)).toBe("9398eab3");
+    expect(v24HashOf(sim)).toBe("2cbf3696");
+    expect(v25HashOf(sim)).toBe("66d7b85d");
+    expect(v26HashOf(sim)).toBe("94efe6f8");
+    expect(v27HashOf(sim)).toBe("de01c1cf");
+    expect(v28HashOf(sim)).toBe("402f2952");
   });
 
   it("restores killed NPCs as absent", () => {

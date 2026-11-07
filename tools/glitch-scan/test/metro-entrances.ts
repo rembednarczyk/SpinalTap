@@ -1,0 +1,228 @@
+import type { StreetPropItem } from "../../../packages/core/src";
+import { METRO_ENTRANCES, PAVILION, STAIRS } from "../../../packages/sim/src/content/metro";
+import { spotFrame } from "../../../packages/sim/src/content/metro-pavilion";
+import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
+import { GroundField } from "../../../packages/sim/src/world/ground";
+import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
+import type { CrowdLane } from "../../../packages/sim/src/content/crowd";
+import type { TrafficRoute } from "../../../packages/sim/src/content/traffic-lane";
+import { type P2, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
+import type { OsmData } from "../../osm-import/src/osm.ts";
+import { geoToWorld } from "../../osm-import/src/project.ts";
+
+/**
+ * The metro's entrances (ADR-0071 stage 2, "Kontrole") against the map data, measured from the
+ * pavilions' outlines (the topography curator's review, 5.11): in a building; near a monument,
+ * a church or a public building (15 m), a memorial, an artwork or a fountain (10 m), or with the
+ * dig near an archaeological site (3 m); the opening blocked (3 m free in front of it, furniture,
+ * the walkers' lanes, a car's lane closer than a pavement); the shaft open beyond its walls; the
+ * opening onto bare terrain, no paving of the map in front of it (G-332).
+ */
+
+type Rect = { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
+type Finding = { readonly at: string; readonly what: string };
+type Entrance = (typeof METRO_ENTRANCES)[number];
+
+const HERITAGE_USES: ReadonlySet<string> = new Set(["historic", "church", "civic"]);
+const BUILDING_GAP = 15;
+const POINT_GAP = 10;
+const DIG_GAP = 3;
+const FRONT = 3;
+const LANE_GAP = 1.5 + 2;
+/** How far off a wall's edge a sample still counts as on it: far under any gap a wall left out makes. */
+const EDGE = 1e-6;
+
+const toRect = (r: Rect, x: number, z: number): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
+const segToRect = (a: P2, b: P2, r: Rect): number => {
+  let best = Infinity;
+  const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.1));
+  for (let k = 0; k <= n; k++) best = Math.min(best, toRect(r, a.x + ((b.x - a.x) * k) / n, a.z + ((b.z - a.z) * k) / n));
+  return best;
+};
+/** Distance from a ring to a rectangle: 0 when they overlap. */
+const ringToRect = (ring: readonly P2[], r: Rect): number => {
+  if (pointInRing({ x: (r.minX + r.maxX) / 2, z: (r.minZ + r.maxZ) / 2 }, ring)) return 0;
+  let best = Infinity;
+  for (let i = 0; i < ring.length; i++) best = Math.min(best, segToRect(ring[i]!, ring[(i + 1) % ring.length]!, r));
+  return best;
+};
+const lineToRect = (line: readonly P2[], r: Rect): number => {
+  let best = Infinity;
+  for (let i = 1; i < line.length; i++) best = Math.min(best, segToRect(line[i - 1]!, line[i]!, r));
+  return best;
+};
+const near = (e: Entrance) => `${e.spot.x.toFixed(0)},${e.spot.z.toFixed(0)}`;
+const name = (e: Entrance) => `${e.station} ${e.label} ${e.name}`;
+
+/** The 3 m in front of the opening, as wide as the stairs. */
+export const frontOf = (e: Entrance): Rect => {
+  const { along, opens } = e.spot;
+  const o = e.outline;
+  const mouth = along === "x" ? (opens > 0 ? o.maxX : o.minX) : opens > 0 ? o.maxZ : o.minZ;
+  const [a, b] = [mouth, mouth + opens * FRONT].sort((p, q) => p - q) as [number, number];
+  return along === "x" ? { minX: a, maxX: b, minZ: e.cut.bounds.minZ, maxZ: e.cut.bounds.maxZ } : { minX: e.cut.bounds.minX, maxX: e.cut.bounds.maxX, minZ: a, maxZ: b };
+};
+
+const buildingRings = () =>
+  MAP_CHUNKS.flatMap((c) =>
+    c.buildings.map((b) => {
+      const ring: P2[] = [];
+      for (let i = 0; i + 1 < b.outline.length; i += 2) ring.push({ x: b.outline[i]! + b.x, z: b.outline[i + 1]! + b.z });
+      return { id: b.id, use: b.use, name: b.name, ring };
+    }),
+  );
+
+export const metroInBuilding = (entrances: readonly Entrance[] = METRO_ENTRANCES): Finding[] => {
+  const rings = buildingRings();
+  return entrances.flatMap((e) => rings.filter((b) => ringToRect(b.ring, e.outline) < 0.5).map((b) => ({ at: near(e), what: `${name(e)}: in ${b.id} ${b.name ?? b.use}` })));
+};
+
+/** Points and areas of the map data a pavilion keeps off: memorials, monuments, artworks, fountains; archaeological sites. */
+const heritageOf = (osm: OsmData) => {
+  const points: { readonly what: string; readonly p: P2 }[] = [];
+  for (const n of osm.nodes.values()) {
+    const t = n.tags;
+    if (!t) continue;
+    if (t.historic === "memorial" || t.historic === "monument" || t.tourism === "artwork" || t.amenity === "fountain") points.push({ what: `n${n.id} ${t.name ?? t.historic ?? t.tourism ?? t.amenity}`, p: geoToWorld(n.lat, n.lon) });
+  }
+  const sites: { readonly what: string; readonly ring: P2[] }[] = [];
+  for (const w of osm.ways.values()) {
+    if (w.tags?.historic !== "archaeological_site") continue;
+    const ring = w.nodes.flatMap((id) => {
+      const n = osm.nodes.get(id);
+      return n ? [geoToWorld(n.lat, n.lon)] : [];
+    });
+    if (ring.length >= 3) sites.push({ what: `w${w.id} ${w.tags.name ?? "archaeological site"}`, ring });
+  }
+  return { points, sites };
+};
+
+export const metroNearHeritage = (osm: OsmData, protectedBuilding: (id: string, use: string) => boolean, entrances: readonly Entrance[] = METRO_ENTRANCES): Finding[] => {
+  const rings = buildingRings().filter((b) => HERITAGE_USES.has(b.use) || protectedBuilding(b.id, b.use));
+  const { points, sites } = heritageOf(osm);
+  return entrances.flatMap((e) => [
+    ...rings.filter((b) => ringToRect(b.ring, e.outline) < BUILDING_GAP).map((b) => ({ at: near(e), what: `${name(e)}: ${ringToRect(b.ring, e.outline).toFixed(1)} m from ${b.id} ${b.name ?? b.use}` })),
+    ...points.filter((h) => toRect(e.outline, h.p.x, h.p.z) < POINT_GAP).map((h) => ({ at: near(e), what: `${name(e)}: ${toRect(e.outline, h.p.x, h.p.z).toFixed(1)} m from ${h.what}` })),
+    ...sites.filter((s) => ringToRect(s.ring, e.cut.bounds) < DIG_GAP).map((s) => ({ at: near(e), what: `${name(e)}: dig ${ringToRect(s.ring, e.cut.bounds).toFixed(1)} m from ${s.what}` })),
+  ]);
+};
+
+export const metroBlocked = (furniture: readonly StreetPropItem[], crowd: readonly CrowdLane[], lanes: readonly TrafficRoute[], entrances: readonly Entrance[] = METRO_ENTRANCES): Finding[] => {
+  const rings = buildingRings();
+  return entrances.flatMap((e) => {
+    const front = frontOf(e);
+    return [
+      ...furniture.filter((p) => toRect(front, p.x, p.z) < 0.3 || toRect(e.outline, p.x, p.z) < 0.5).map((p) => ({ at: near(e), what: `${name(e)}: ${p.prop} at ${p.x.toFixed(1)},${p.z.toFixed(1)}` })),
+      ...rings.filter((b) => ringToRect(b.ring, front) === 0 || ringToRect(b.ring, front) < 0.3).map((b) => ({ at: near(e), what: `${name(e)}: ${b.id} in front of the opening` })),
+      ...crowd.filter((l) => lineToRect(l.points.map(([x, z]) => ({ x, z })), e.outline) < 0.5).map((l) => ({ at: near(e), what: `${name(e)}: walkers' lane ${l.id}` })),
+      ...lanes.filter((r) => lineToRect(r.points.map(([x, z]) => ({ x, z })), e.outline) < LANE_GAP).map((r) => ({ at: near(e), what: `${name(e)}: car lane ${r.id}` })),
+    ];
+  });
+};
+
+/**
+ * A shaft open beyond its walls: the dug ground (`cut`) out of the outline, or a side of it other
+ * than the opening without a solid wall from the hall's floor up to the street over it.
+ */
+export const metroShaftOpen = (entrances: readonly Entrance[] = METRO_ENTRANCES): Finding[] =>
+  entrances.flatMap((e) => {
+    const c = e.cut.bounds;
+    const o = e.outline;
+    const out: Finding[] = [];
+    if (c.minX < o.minX || c.maxX > o.maxX || c.minZ < o.minZ || c.maxZ > o.maxZ) out.push({ at: near(e), what: `${name(e)}: dug beyond the outline` });
+    const walls = e.props.filter((p) => p.solid && p.view.kind === "block").map((p) => {
+      const s = (p.view as { size: { x: number; y: number; z: number } }).size;
+      return { minX: p.center.x - s.x / 2, maxX: p.center.x + s.x / 2, minZ: p.center.z - s.z / 2, maxZ: p.center.z + s.z / 2, minY: p.center.y - s.y / 2, maxY: p.center.y + s.y / 2 };
+    });
+    // The samples at a side's ends lie on the walls' edges, where the rounding of the pavilion's sums decides (G-333).
+    const at = (x: number, z: number) => walls.filter((w) => x >= w.minX - EDGE && x <= w.maxX + EDGE && z >= w.minZ - EDGE && z <= w.maxZ + EDGE);
+    const walled = (x: number, z: number) => at(x, z).some((w) => w.minY <= e.floor && w.maxY >= e.street);
+    // The end wall's doorway down to a platform (ADR-0071 stage 4): wall under the hall's floor, wall from the
+    // doorway's head up to the street, nothing else open; the passage's ceiling starts no higher than the head.
+    const head = e.platform ? e.floor + e.platform.doorwayHead : null;
+    const doorway = (x: number, z: number) =>
+      head !== null && at(x, z).some((w) => w.minY < e.floor - 0.1 && w.maxY >= e.floor - 1e-6) && at(x, z).some((w) => w.minY <= head + 1e-6 && w.maxY >= e.street);
+    if (e.platform && head !== null && (e.platform.ceiling[0]?.bottom ?? Infinity) > head + 1e-6) out.push({ at: near(e), what: `${name(e)}: the passage's ceiling over the doorway's head` });
+    const { along, opens } = e.spot;
+    const sides: { readonly x: (t: number) => number; readonly z: (t: number) => number; readonly side: string }[] = [
+      { side: "x-", x: () => c.minX - 0.1, z: (t) => c.minZ + (c.maxZ - c.minZ) * t },
+      { side: "x+", x: () => c.maxX + 0.1, z: (t) => c.minZ + (c.maxZ - c.minZ) * t },
+      { side: "z-", x: (t) => c.minX + (c.maxX - c.minX) * t, z: () => c.minZ - 0.1 },
+      { side: "z+", x: (t) => c.minX + (c.maxX - c.minX) * t, z: () => c.maxZ + 0.1 },
+    ];
+    const opening = `${along}${opens > 0 ? "+" : "-"}`;
+    const end = `${along}${opens > 0 ? "-" : "+"}`;
+    for (const s of sides) {
+      if (s.side === opening) continue;
+      for (let k = 0; k <= 10; k++) {
+        if (walled(s.x(k / 10), s.z(k / 10))) continue;
+        if (s.side === end && doorway(s.x(k / 10), s.z(k / 10))) continue;
+        out.push({ at: near(e), what: `${name(e)}: no wall on the shaft's ${s.side} side` });
+        break;
+      }
+    }
+    return out;
+  });
+
+/** The map's ground pieces as rings. */
+const groundRings = (): P2[][] =>
+  MAP_CHUNKS.flatMap((c) =>
+    c.ground.map((g) => {
+      const ring: P2[] = [];
+      for (let i = 0; i + 1 < g.outline.length; i += 2) ring.push({ x: g.outline[i]!, z: g.outline[i + 1]! });
+      return ring;
+    }),
+  );
+
+/** A point of a 0.5 m grid in the 3 m in front of an opening on none of the map's ground pieces: the player walks out onto bare terrain. */
+export const metroExitBare = (entrances: readonly Entrance[] = METRO_ENTRANCES, ground: readonly (readonly P2[])[] = groundRings()): Finding[] =>
+  entrances.flatMap((e) => {
+    const f = frontOf(e);
+    const pieces = ground.filter((r) => ringToRect(r, f) < 0.5);
+    const out: Finding[] = [];
+    for (let x = f.minX + 0.25; x < f.maxX; x += 0.5)
+      for (let z = f.minZ + 0.25; z < f.maxZ; z += 0.5) if (!pieces.some((r) => pointInRing({ x, z }, r))) out.push({ at: `${x.toFixed(0)},${z.toFixed(0)}`, what: `${name(e)}: bare terrain at ${x.toFixed(2)},${z.toFixed(2)} in front of the opening` });
+    return out;
+  });
+
+/** The ground the simulation builds (`streaming.ts`): the chunks, the shafts dug under the pavilions and the platforms' vaults. */
+const metroGround = (entrances: readonly Entrance[]): GroundField =>
+  new GroundField(
+    WORLD_CHUNKS,
+    entrances.map((e) => e.cut),
+    entrances.flatMap((e) => e.platform?.vaults ?? []),
+  );
+
+/**
+ * A ray of sight between the street out of an opening (0.5 to 3 m out, eyes standing and crouched)
+ * and the hall (knee and chest high over its floor), either way, stopped by the terrain in the air
+ * of a shaft, over the ground there: the street's old surface under the pavilion (G-377).
+ */
+export const metroShaftRay = (entrances: readonly Entrance[] = METRO_ENTRANCES, ground: GroundField = metroGround(entrances)): Finding[] =>
+  entrances.flatMap((e) => {
+    const { point } = spotFrame(e.spot);
+    const inner = STAIRS.width / 2 - 0.4;
+    const hallU = [STAIRS.landing + STAIRS.run + 0.4, PAVILION.length - 0.6];
+    const out: Finding[] = [];
+    for (const u of [-0.5, -1, -2, -3])
+      for (const w of [-inner, 0, inner])
+        for (const eye of [1.14, 1.62])
+          for (const hu of hallU)
+            for (const hw of [-inner, 0, inner])
+              for (const body of [0.5, 1.25]) {
+                const s = point(u, w);
+                const h = point(hu, hw);
+                const a = { x: s.x, y: ground.heightAt(s.x, s.z) + eye, z: s.z };
+                const b = { x: h.x, y: e.floor + body, z: h.z };
+                for (const [from, to] of [[a, b], [b, a]] as const) {
+                  const len = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z);
+                  const dir = { x: (to.x - from.x) / len, y: (to.y - from.y) / len, z: (to.z - from.z) / len };
+                  const t = ground.rayHit(from, dir, len);
+                  if (t === null) continue;
+                  const [x, y, z] = [from.x + dir.x * t, from.y + dir.y * t, from.z + dir.z * t];
+                  if (ground.shaftAt(x, z) < 0 || y <= ground.heightAt(x, z) + 0.05) continue;
+                  out.push({ at: `${x.toFixed(0)},${z.toFixed(0)}`, what: `${name(e)}: a ray ${from === a ? "into" : "out of"} the hall stopped ${(y - e.floor).toFixed(2)} m over its floor` });
+                }
+              }
+    return out;
+  });

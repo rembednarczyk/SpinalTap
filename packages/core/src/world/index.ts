@@ -5,3 +5,5 @@ export * from "./city-geo";
 export * from "./venues";
 export * from "./decals";
 export * from "./doors";
+export * from "./figures";
+export * from "./trees";

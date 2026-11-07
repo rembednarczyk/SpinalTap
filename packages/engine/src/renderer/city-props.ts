@@ -176,11 +176,14 @@ export const addPropToKit = (sink: GeometrySink, props: CityProps, uvs: readonly
   for (const i of m.indices) sink.indices.push(base + i);
 };
 
-/** Bakes a prop into a map city mesh: the swatch's colour per vertex, glowing swatches self-lit. */
-export const addPropToSink = (sink: MeshSink, props: CityProps, m: KitModel, xf: PropXform): void => {
+/**
+ * Bakes a prop into a map city mesh: the swatch's colour per vertex, glowing swatches self-lit;
+ * `paint` gives some swatches a colour of the piece's own (a figure's skin and clothes, ADR-0058 stage 8).
+ */
+export const addPropToSink = (sink: MeshSink, props: CityProps, m: KitModel, xf: PropXform, paint?: (swatch: string) => readonly number[] | null): void => {
   const base = sink.vertexCount;
   const { positions, normals } = transformProp(m, xf);
-  const colors = props.swatches.map((s) => (s.kind === "glow" ? hexColor(s.color, DRESS_FLAG.lit) : [...hexRgb(s.color), DRESS_FLAG.solid]));
+  const colors = props.swatches.map((s) => paint?.(s.name) ?? (s.kind === "glow" ? hexColor(s.color, DRESS_FLAG.lit) : [...hexRgb(s.color), DRESS_FLAG.solid]));
   for (let i = 0; i < positions.length; i++) {
     sink.positions.push(positions[i] ?? 0);
     sink.normals.push(normals[i] ?? 0);

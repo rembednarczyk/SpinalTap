@@ -8,3 +8,6 @@ export * from "./loot";
 export * from "./enemies";
 export * from "./appearance";
 export * from "./compare";
+export * from "./grade";
+export * from "./traits";
+export * from "./icons";

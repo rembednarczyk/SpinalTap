@@ -1,7 +1,7 @@
-import type { DifficultyProfile, DomainEvents, EventBus, SaveSnapshot } from "@seki/core";
+import { type DifficultyProfile, type DomainEvents, type EventBus, type SaveSnapshot, textRef } from "@seki/core";
 import type { NarrativeRuntime } from "@seki/narrative";
 import { type RenderSync, Simulation } from "@seki/sim";
-import { patchUi, translate } from "@seki/ui";
+import { patchUi } from "@seki/ui";
 import type { Controllers } from "./controllers/compose";
 import type { LoadingController } from "./controllers/loading-controller";
 import { pushToastTimed } from "./controllers/shared";
@@ -50,10 +50,8 @@ export class SessionFlow implements FlowIntents {
     this.replaceSimulation(Simulation.create({ seed: seed(), bus: this.deps.bus, crowd: crowd ?? "off", traffic: traffic ?? crowd ?? "off", ...(difficulty ? { difficulty } : {}) }));
     this.deps.narrative.resetState();
     this.deps.controllers().hints.start();
-    this.startPlaying(() => {
-      const locale = ui.getState().settings.locale;
-      pushToastTimed(ui, "system", translate(locale, "newGame.place"), translate(locale, "newGame.intro"));
-    });
+    // Keys, not sentences: the card follows a language switch while it is up (G-466).
+    this.startPlaying(() => pushToastTimed(ui, "system", textRef("newGame.place"), textRef("newGame.intro")));
   }
 
   resume(): void {

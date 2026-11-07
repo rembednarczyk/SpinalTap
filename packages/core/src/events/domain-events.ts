@@ -154,6 +154,8 @@ export interface DomainEvents {
   QuickhackFailed: { hackId: QuickhackId; targetId: EntityId; reason: QuickhackFailure };
   /** The upload was noticed: the target's network knows where the player is. */
   QuickhackTraced: { hackId: QuickhackId; targetId: EntityId };
+  /** Chain (ADR-0059): the hack applied on `fromId` also landed on `targetId`, after that one's QuickhackApplied. */
+  QuickhackChained: { hackId: QuickhackId; fromId: EntityId; targetId: EntityId };
   RamChanged: { current: number; max: number };
   /** A terminal breach ended (the UI minigame sends the result as a command). */
   BreachCompleted: { terminalKey: string; daemons: readonly BreachDaemonId[] };
@@ -208,6 +210,11 @@ export interface DomainEvents {
   ExperienceGained: { amount: number; source: XpSource };
   /** The character reached `level`; one per level gained, after its ExperienceGained. */
   LevelUp: { level: number };
+  /**
+   * Mori's respec went through for `price` (ADR-0059, stage 3b): every attribute and perk back
+   * at the start, `attribute` and `perk` points now to spend.
+   */
+  ProgressionReset: { price: number; attribute: number; perk: number };
   // Interiors (ADR-0061).
   /**
    * The player stepped into an interior (`interiorId` of the sim's `INTERIORS`). Not sent when a
@@ -217,8 +224,16 @@ export interface DomainEvents {
   /** The player stepped out of the interior `interiorId`. */
   InteriorLeft: { interiorId: string };
   // Takedowns (ADR-0065).
-  /** The player got hold of `target`; both stand still for `duration` seconds. */
-  TakedownStarted: { target: EntityId; duration: number };
+  /**
+   * The player got hold of `target` (ADR-0075): both stand still while she chooses, for up to
+   * `window` seconds (0: the command chose already), then for the `duration` of the end chosen.
+   */
+  TakedownStarted: { target: EntityId; duration: number; window: number };
+  /**
+   * The grab's choice (ADR-0075): `lethal` kills, else a knock-out; `timedOut` when the window
+   * ran out without one. The end chosen takes the `duration` of `TakedownStarted`.
+   */
+  TakedownChosen: { target: EntityId; lethal: boolean; timedOut: boolean };
   /**
    * The takedown ended: `target` is unconscious, or dead with `lethal` (its EntityKilled follows).
    * `witnessed`: a camera, a patrol of the district's security or a civilian saw it, by the rules

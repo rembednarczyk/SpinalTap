@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { type GameClock, type SaveSnapshot, START_CLOCK, type Vec3, formatClock, hm } from "@seki/core";
 import {
   OYAJI_HOURS,
-  market,
+  beforeKeeper,
+  ground,
   SCHEDULES,
   type ScheduleDef,
   Simulation,
@@ -14,8 +15,8 @@ import {
 } from "../src";
 import { AWAY, byKey, collect, input, run, teleportPlayer } from "./helpers";
 
-/** The chunk of Podzamcze the market stands in. */
-const MARKET_CHUNK = "podzamcze-1-0";
+/** The chunk of Krakowskie Przedmieście Alchemia and its market stand in (ADR-0063). */
+const MARKET_CHUNK = "krakowskie-2-1";
 const clockAt = (h: number, m = 0, s = 0): GameClock => ({ seconds: h * 3600 + m * 60 + s });
 const plan = (key: string): ScheduleDef => {
   const def = SCHEDULES[key];
@@ -39,10 +40,14 @@ const goTo = (sim: Simulation, p: Vec3) => {
   teleportPlayer(sim, p);
   sim.step();
 };
-/** The market keeps its own coordinates, moved under the viaduct by `MARKET_PLACE` (ADR-0045). */
-const inMarket = (x: number, z: number): Vec3 => market(x, 0, z);
-/** Beside Oyaji's door, where its prompt is in reach. */
-const byDoor = (): Vec3 => ({ x: OYAJI_DOOR.x + 1.5, y: OYAJI_DOOR.y, z: OYAJI_DOOR.z + 0.8 });
+/**
+ * In the food hall a few metres in front of Oyaji's counter, and the car park behind the hall, the
+ * market's chunk loaded (ADR-0074).
+ */
+const NEAR_STALL: Vec3 = beforeKeeper("oyaji", 3);
+const ON_PLOT: Vec3 = ground(410, 28);
+/** On T1 beside Oyaji's back door, where he sits out the night and his prompt is in reach. */
+const byDoor = (): Vec3 => ground(OYAJI_DOOR.x, OYAJI_DOOR.z + 1.4);
 
 /** Skips time to the given minute of the day (today or tomorrow), in one step. */
 const skipTo = (sim: Simulation, minute: number) => {
@@ -129,7 +134,7 @@ describe("daily plans", () => {
 describe("daily plans in a loaded chunk", () => {
   it("Oyaji closes at 22:00, walks home along his path and is closed when spoken to", () => {
     const sim = Simulation.create({ seed: 1 });
-    goTo(sim, inMarket(76, 66));
+    goTo(sim, NEAR_STALL);
     const oyaji = byKey(sim, "oyaji")!;
     const prompts = collect<{ prompt: string | null }>(sim, "InteractionFocusChanged");
     const started = collect<{ dialogueId: string }>(sim, "InteractionStarted");
@@ -137,7 +142,7 @@ describe("daily plans in a loaded chunk", () => {
     expect(oyaji.interactable?.dialogueId).not.toBe("oyaji_closed");
 
     skipTo(sim, OYAJI_HOURS.close - 1);
-    teleportPlayer(sim, inMarket(40, 78));
+    teleportPlayer(sim, ON_PLOT);
     run(sim, 60);
     expect(oyaji.position).toEqual(OYAJI_STALL);
     expect(oyaji.interactable?.dialogueId).toBe("oyaji_closed");
@@ -171,9 +176,9 @@ describe("daily plans in a loaded chunk", () => {
     expect(prompts.some((p) => p.prompt === null || !/^prompt\.closed\./.test(p.prompt))).toBe(true);
   });
 
-  it("the Hebi lookout patrols the loop round the pillars at night and returns to his post by day", () => {
+  it("the Hebi lookout patrols the loop round T2 by the Arkady at night and returns to his post under the arches by day", () => {
     const sim = Simulation.create({ seed: 1 });
-    goTo(sim, inMarket(40, 78));
+    goTo(sim, ON_PLOT);
     skipTo(sim, hm(22, 20));
     const hebi = byKey(sim, "hebi-lookout")!;
     expect(hebi.ai?.alerted).toBe(false);
@@ -193,10 +198,10 @@ describe("daily plans in a loaded chunk", () => {
 describe("daily plans and streaming", () => {
   it("an NPC asleep in an unloaded chunk turns up where its plan says when the chunk returns", () => {
     const sim = Simulation.create({ seed: 1 });
-    goTo(sim, inMarket(30, 78));
-    goTo(sim, inMarket(90, 70));
+    goTo(sim, ON_PLOT);
+    goTo(sim, NEAR_STALL);
     expect(byKey(sim, "oyaji")!.position).toEqual(OYAJI_STALL);
-    goTo(sim, inMarket(30, 78));
+    goTo(sim, ON_PLOT);
     // Out on Plac Litewski, far from the market.
     goTo(sim, AWAY);
     expect(sim.streamer.isLoaded(MARKET_CHUNK)).toBe(false);
@@ -205,7 +210,7 @@ describe("daily plans and streaming", () => {
     // Time passes while the market sleeps; it is past midnight when Seki comes back.
     run(sim, 60);
     skipTo(sim, hm(0, 40));
-    goTo(sim, inMarket(40, 78));
+    goTo(sim, ON_PLOT);
     const oyaji = byKey(sim, "oyaji")!;
     expect(oyaji.position).toEqual(OYAJI_DOOR);
     expect(oyaji.prevPosition).toEqual(OYAJI_DOOR);
@@ -216,10 +221,12 @@ describe("daily plans and streaming", () => {
   it("a chunk loading for the first time late at night already has its NPCs where they belong", () => {
     const sim = Simulation.create({ seed: 1 });
     skipTo(sim, hm(23, 30));
-    goTo(sim, inMarket(40, 78));
+    goTo(sim, ON_PLOT);
     expect(byKey(sim, "oyaji")!.position).toEqual(OYAJI_DOOR);
     const hebi = byKey(sim, "hebi-lookout")!;
-    expect(hebi.position).toEqual(scheduledPose(plan("hebi-lookout"), sim.clock).position);
+    // Where his plan is, on the ground under its line (the square behind Alchemia slopes, ADR-0063).
+    const pose = scheduledPose(plan("hebi-lookout"), sim.clock).position;
+    expect({ x: hebi.position.x, z: hebi.position.z }).toEqual({ x: pose.x, z: pose.z });
   });
 
   it("a wait puts NPCs of loaded chunks on their plan at once", () => {
@@ -232,7 +239,7 @@ describe("daily plans and streaming", () => {
 describe("daily plans: saves and determinism", () => {
   it("a game saved mid-walk continues exactly like the original", () => {
     const sim = Simulation.create({ seed: 9 });
-    goTo(sim, inMarket(40, 78));
+    goTo(sim, ON_PLOT);
     skipTo(sim, OYAJI_HOURS.close);
     run(sim, 120);
     const oyaji = byKey(sim, "oyaji")!;
@@ -251,7 +258,7 @@ describe("daily plans: saves and determinism", () => {
   it("the same run across closing time and the night patrol gives the same state twice", () => {
     const play = () => {
       const sim = Simulation.create({ seed: 5 });
-      goTo(sim, inMarket(40, 78));
+      goTo(sim, ON_PLOT);
       skipTo(sim, hm(21, 58));
       run(sim, 60 * 30);
       return hash(sim);

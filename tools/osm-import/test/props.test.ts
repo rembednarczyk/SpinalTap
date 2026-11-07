@@ -51,8 +51,9 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(propOf("crossing")).toBeNull();
   });
 
-  it("is deterministic and places nothing outside its chunk, every piece on the chunk's terrain", () => {
+  it("is deterministic and places nothing outside its chunk, every piece on the chunk's terrain or a lamp on a bridge's deck", () => {
     const a = generateProps(PLAN, CHUNKS);
+    const site = new Site(CHUNKS);
     const b = generateProps(PLAN, CHUNKS);
     expect([...a.byChunk.entries()]).toEqual([...b.byChunk.entries()]);
     let total = 0;
@@ -60,7 +61,9 @@ describe("street furniture generator (ADR-0047)", () => {
       for (const i of a.byChunk.get(c.id) ?? []) {
         total++;
         expect(i.x >= c.bounds.minX - 0.05 && i.x <= c.bounds.maxX + 0.05 && i.z >= c.bounds.minZ - 0.05 && i.z <= c.bounds.maxZ + 0.05, `${i.prop} in ${c.id}`).toBe(true);
-        expect(Math.abs(i.y - terrainHeightAt(c.terrain, i.x, i.z))).toBeLessThan(0.2);
+        // A lamp of the plan over a bridge's span stands on its deck, its basket with it (G-503).
+        const deck = i.prop.startsWith("lamp-") || i.prop === "hanging-basket" ? site.deckHeightAt(i) : null;
+        expect(Math.min(Math.abs(i.y - terrainHeightAt(c.terrain, i.x, i.z)), Math.abs(i.y - (deck ?? Infinity))), `${i.prop} at ${i.x}, ${i.z}`).toBeLessThan(0.2);
         // A bollard's chains take 25 bits (G-032), the rest's variant 16.
         expect(Number.isInteger(i.variant) && i.variant >= 0 && i.variant <= (i.prop === "bollard" ? 0x1ffffff : 0xffff)).toBe(true);
       }
@@ -78,7 +81,9 @@ describe("street furniture generator (ADR-0047)", () => {
     addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors(), underground: loadUndergroundWays() });
     const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt, blockOf: furnitureBlock };
     addDecals(table, new Site(CHUNKS), lublinDecalWalls(), ctx);
-    expect(emitProps(table)).toBe(committed);
+    // The still crowd (ADR-0058 stage 8) comes last, from the simulation's crowd as well: `props-figures.test.ts` checks its rows.
+    const others = (text: string) => text.split("\n").filter((l) => !l.startsWith('    "figure": ')).join("\n");
+    expect(others(emitProps(table))).toBe(others(committed));
   });
 
   it("stands lamps on the pavement beside the road on both sides, their arms towards it, and lanterns on the facades", () => {
@@ -171,6 +176,46 @@ describe("street furniture generator (ADR-0047)", () => {
     for (const l of lamps) expect(Math.hypot(Math.max(l.x - 20, 0), l.z - 34), `lamp at ${l.x}, ${l.z}`).toBeGreaterThan(3);
   });
 
+  it("leaves out a plain lamp within 8 m of a styled one, whichever group came first, and keeps it farther off (G-259)", () => {
+    // The OSM road lamps come before the pastorals in the plan; the memorial lantern is drawn as a pastoral.
+    const plan: PropsPlan = {
+      items: [
+        { id: "osm", kind: "street-lamp", points: [[27, 24], [40, 24], [61, 24], [82, 36]] },
+        { id: "poles", kind: "lamp-modern-pole", points: [[21, 24], [60, 24]] },
+        { id: "pastorals", kind: "lamp-pastoral", points: [[20, 24]] },
+        { id: "memorial", kind: "lamp-memorial", position: { x: 80, z: 36 } },
+      ],
+    };
+    const lamps = generateProps(plan, [street()]).byChunk.get("test-0-0")!.filter((i) => i.prop.startsWith("lamp-"));
+    const at = (prop: string) => lamps.filter((i) => i.prop === prop).map((i) => [i.x, i.z]);
+    expect(at("lamp-pastoral")).toEqual([[20, 24], [80, 36]]);
+    expect(at("lamp-road")).toEqual([[40, 24], [61, 24]]);
+    expect(at("lamp-modern-pole")).toEqual([[60, 24]]);
+  });
+
+  it("draws an OSM street lamp inside the Old Town's walls as a pastoral where OSM has it, and outside them as a road lamp (G-264)", () => {
+    // The test street moved to Plac po Farze (inside the walls) and to Królewska (the district, past the walls).
+    const moved = (id: string, dx: number, dz: number): LublinChunkData => {
+      const c = street();
+      const by = (pts: readonly number[]) => pts.map((v, k) => v + (k % 2 === 0 ? dx : dz));
+      return {
+        ...c,
+        id,
+        bounds: { minX: dx, maxX: 100 + dx, minZ: dz, maxZ: 60 + dz },
+        terrain: { ...c.terrain, originX: dx, originZ: dz },
+        buildings: c.buildings.map((b) => ({ ...b, x: b.x + dx, z: b.z + dz })),
+        ground: c.ground.map((g) => ({ ...g, outline: by(g.outline) })),
+        streets: c.streets.map((s) => ({ ...s, line: by(s.line) })),
+      };
+    };
+    const plan: PropsPlan = { items: [{ id: "osm", kind: "street-lamp", points: [[640, 24], [670, 24], [640, -206], [40, 24]] }] };
+    const out = generateProps(plan, [moved("fara-0-0", 600, 0), moved("krolewska-0-0", 600, -230), street()]).byChunk;
+    const at = (chunk: string) => out.get(chunk)!.filter((i) => i.prop.startsWith("lamp-")).map((i) => [i.prop, i.x, i.z]);
+    expect(at("fara-0-0")).toEqual([["lamp-pastoral", 640, 24], ["lamp-pastoral", 670, 24]]);
+    expect(at("krolewska-0-0")).toEqual([["lamp-road", 640, -206]]);
+    expect(at("test-0-0")).toEqual([["lamp-road", 40, 24]]);
+  });
+
   it("hangs a basket only on a lamp that stays, where it stands (G-004)", () => {
     // The second row runs 3 m behind the first, so its lamps are merged away; the baskets were picked from both.
     const plan: PropsPlan = {
@@ -241,10 +286,11 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(at.z).toBeCloseTo(34.6, 1);
     expect(offRoad(site, { x: 40, z: 24 })).toEqual({ x: 40, z: 24 });
     expect(offRoad(site, { x: 40, z: 30 }, 2)).toBeNull();
-    // Over the whole city: only covers and bollards stand where the cars drive.
+    // Over the whole city: only covers and bollards stand where the cars drive. A road lamp in front
+    // of a car park's cars, on its asphalt strip with no kerb (T-172), is not where they drive.
     const { byChunk } = generateProps(PLAN, CHUNKS);
     const city = new Site(CHUNKS);
-    const onRoad = [...byChunk.values()].flat().filter((i) => city.surfaceAt({ x: i.x, z: i.z }) === "road");
+    const onRoad = [...byChunk.values()].flat().filter((i) => city.surfaceAt({ x: i.x, z: i.z }) === "road" && !(i.prop === "lamp-road" && city.byLot({ x: i.x, z: i.z }, 2)));
     expect(onRoad.filter((i) => i.prop !== "manhole" && i.prop !== "bollard").length).toBeLessThanOrEqual(1);
   });
 

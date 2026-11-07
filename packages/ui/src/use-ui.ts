@@ -11,6 +11,7 @@ import type {
   LootIntents,
   MetroIntents,
   PhoneIntents,
+  ProgressionIntents,
   RadioIntents,
   SessionIntents,
   SettingsIntents,
@@ -37,6 +38,7 @@ export const useDialogueIntents = (): DialogueIntents => useUiContext().intents;
 export const useShopIntents = (): ShopIntents => useUiContext().intents;
 export const useLootIntents = (): LootIntents => useUiContext().intents;
 export const useCharacterIntents = (): CharacterIntents => useUiContext().intents;
+export const useProgressionIntents = (): ProgressionIntents => useUiContext().intents;
 export const useSettingsIntents = (): SettingsIntents => useUiContext().intents;
 export const useDifficultyIntents = (): DifficultyIntents => useUiContext().intents;
 export const useCameraIntents = (): CameraIntents => useUiContext().intents;

@@ -3,11 +3,12 @@ import { DISTRICTS, type DistrictId, MAP_CHUNKS, WORLD_CHUNKS, WORLD_METRO, clea
 import type { LublinChunkData, LublinStreetData } from "@seki/sim/lublin";
 import type { MapAreaKind, MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon, MapRectVm, MapVm } from "@seki/ui";
 import { buildDistrictMap, sidewalkProps } from "./minimap";
+import { metroLayerVm } from "./presenters/metro-map";
 
 /**
  * Lublin for the minimap and the map tab (ADR-0045): the surfaces and the buildings of the map
  * data under the game's own blocks, decks and links, with the names of the streets, the
- * districts, the landmarks and the metro stations.
+ * districts, the landmarks and the metro stations, and the metro line as a layer (ADR-0071).
  */
 
 const AREA: Readonly<Record<GroundSurface, MapAreaKind>> = {
@@ -107,7 +108,7 @@ export const buildCityMap = (chunks: readonly LublinChunkData[] = MAP_CHUNKS): M
   const labels: MapLabelVm[] = [
     ...places.map((p) => ({ kind: "district" as const, text: p.name, x: p.x, z: p.z, angle: 0 })),
     ...landmarkLabels(chunks),
-    ...WORLD_METRO.map((s) => ({ kind: "station" as const, text: `Ⓜ ${s.name}`, x: s.kiosk.x, z: s.kiosk.z, angle: 0 })),
+    ...WORLD_METRO.map((s) => ({ kind: "station" as const, text: `Ⓜ ${s.name}`, x: s.node.x, z: s.node.z, angle: 0 })),
     ...streetLabels(chunks),
   ];
   return {
@@ -118,5 +119,6 @@ export const buildCityMap = (chunks: readonly LublinChunkData[] = MAP_CHUNKS): M
     buildings: cityBuildings(chunks),
     labels,
     places,
+    metro: metroLayerVm(),
   };
 };

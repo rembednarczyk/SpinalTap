@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { type Aabb, FOOTBRIDGE_TOP, MARKET_PLACE, OVERPASS_TOP, Simulation, ground, groundY, market, raySolid, topAt } from "../src";
+import { type Aabb, FOOTBRIDGE_TOP, Simulation, ground, groundY, raySolid, topAt } from "../src";
+import { MARKET_PLACE, OLD_MARKET_CHUNK, OVERPASS_TOP, market } from "./fixtures/old-market";
 import { input, run, teleportPlayer } from "./helpers";
 
 const EAST = Math.PI / 2;
@@ -8,12 +9,12 @@ const NORTH = 0;
 const SOUTH = Math.PI;
 
 /**
- * A world with the market loaded and the player at the given spot of it. The market keeps its
- * own coordinates, moved onto Aleja Tysiąclecia by `MARKET_PLACE` (ADR-0045): points go in and
- * come back out in them.
+ * A world with the old market as a test floor (`fixtures/old-market.ts`; the game's market is in
+ * Alchemia since ADR-0063) and the player at the given spot of it: points go in and come back
+ * out in its own coordinates.
  */
 const at = (x: number, y: number, z: number, yaw = NORTH): Simulation => {
-  const sim = Simulation.create({ seed: 1 });
+  const sim = Simulation.create({ seed: 1, chunks: [OLD_MARKET_CHUNK] });
   teleportPlayer(sim, market(x, y, z), yaw);
   run(sim, 2);
   teleportPlayer(sim, market(x, y, z), yaw);

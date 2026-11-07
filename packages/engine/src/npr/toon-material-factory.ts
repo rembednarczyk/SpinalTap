@@ -1,5 +1,6 @@
 import { type BaseTexture, Color3, type Scene, ShaderMaterial, type Texture } from "../babylon";
 import type { ToonPreset } from "./presets";
+import { ditherOf } from "./body-dither";
 import { TOON_FRAGMENT, TOON_VERTEX } from "./toon-shader";
 
 const UNIFORMS = [
@@ -26,9 +27,11 @@ const UNIFORMS = [
   "fogDensity",
   "pointPos",
   "pointColor",
+  "pointClip",
   "pointCount",
   "selfLit",
   "envStrength",
+  "dither",
 ];
 
 const SAMPLERS = ["shadowSampler", "baseSampler"];
@@ -76,6 +79,8 @@ export const createToonMaterial = (scene: Scene, name: string, p: ToonPreset, sp
       needAlphaBlending: alpha === "ALPHABLEND",
     },
   );
+  // Per mesh, after the shared uniforms: only the player's figure is ever faded.
+  m.onBindObservable.add((mesh) => m.getEffect()?.setFloat("dither", ditherOf(mesh)));
   if (texture) m.setTexture("baseSampler", texture);
   m.setColor3("baseColor", hex(p.base));
   m.setColor3("emissiveColor", hex(p.emissive ?? "#000000"));

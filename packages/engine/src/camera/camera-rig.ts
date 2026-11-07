@@ -3,26 +3,28 @@ import { type CameraMode, FOV_REFERENCE_ASPECT, type Transform, type Vec3, type 
 import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
+import { BodyFade, bodyFadeTarget } from "./body-fade";
+import { ChokeArms } from "./choke-arms";
+import { moveOf, swingEnd, swingPhase } from "../renderer/melee-timing";
+import { type ViewmodelPose, viewmodelPose } from "./viewmodel-poses";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
 const TPP_DISTANCE = 2.2;
 const WALL_MARGIN = 0.25;
 const BLEND_SPEED = 6;
-const VIEWMODEL = { x: 0.2, y: -0.22, z: 0.62 } as const;
 /** Horizontal field of view from the hip by default (ADR-0049); the settings change it. */
 export const DEFAULT_HORIZONTAL_FOV = degToRad(80);
 /** Vertical field of view from the hip at 16:9 (the HUD calibrates the crosshair against the same numbers). */
 export const BASE_FOV = verticalFov(DEFAULT_HORIZONTAL_FOV, FOV_REFERENCE_ASPECT);
 /** Sprint widens the view by this share; eased in and out. */
 const SPRINT_WIDEN = 0.1;
-/** Viewmodel aimed down sights: centred, the sights on the eye line, pulled in (ADR-0019). */
-const VIEWMODEL_ADS = { x: 0, y: -0.078, z: 0.4 } as const;
 /** How much closer the TPP camera comes over the shoulder at full aim. */
 const TPP_ADS_PULL = 0.45;
 /** FPP melee guard: the weapon across the view, a little left of centre. */
 const VIEWMODEL_GUARD = { x: 0.08, y: -0.12, z: 0.5 } as const;
-/** Seconds from the end of a windup to the end of the follow-through (matches the rig). */
-const VIEW_STRIKE = 0.09;
+/** Height of the figure the TPP camera fades when it is in the way (G-275), standing and crouched. */
+const FIGURE_HEIGHT = 1.85;
+const FIGURE_CROUCHED = 1.3;
 
 /** Field of view for an aim of 0..1 with a weapon zooming by `zoom` at full aim. */
 export const aimedFov = (aim: number, zoom: number, base: number = BASE_FOV): number => base * (1 + (zoom - 1) * Math.min(1, Math.max(0, aim)));
@@ -61,20 +63,14 @@ const VIEW_SWINGS: readonly { readonly cocked: ViewOffset; readonly through: Vie
   { cocked: { x: -0.06, y: 0.24, z: -0.12, rx: -1.1, ry: 0, rz: -0.1 }, through: { x: -0.1, y: -0.2, z: 0.08, rx: 1.0, ry: 0, rz: 0 } },
 ];
 
-/** Offset of the FPP melee viewmodel `elapsed` seconds into a swing (zero before and after). */
+/**
+ * Offset of the FPP melee viewmodel `elapsed` seconds into a swing (zero before and after), on
+ * the rig's timing: half way through the sweep when the simulation lands the blow.
+ */
 export const viewSwingOffset = (strike: number, elapsed: number, windup: number, recovery: number): ViewOffset => {
-  const poses = VIEW_SWINGS[((strike % VIEW_SWINGS.length) + VIEW_SWINGS.length) % VIEW_SWINGS.length] ?? VIEW_SWINGS[0]!;
-  let cock: number;
-  let through: number;
-  if (elapsed < windup) {
-    cock = smooth(elapsed / Math.max(1e-3, windup));
-    through = 0;
-  } else if (elapsed < windup + VIEW_STRIKE) {
-    cock = 1;
-    through = smooth((elapsed - windup) / VIEW_STRIKE);
-  } else {
-    cock = through = 1 - smooth(Math.min(1, (elapsed - windup - VIEW_STRIKE) / Math.max(1e-3, recovery - VIEW_STRIKE)));
-  }
+  // The light strikes alternate forehand and backhand; the heavy finisher is the overhead cut.
+  const poses = VIEW_SWINGS[moveOf(strike) === "heavy" ? 2 : ((strike % 2) + 2) % 2] ?? VIEW_SWINGS[0]!;
+  const { cock, through } = swingPhase(elapsed, windup, recovery);
   const mix = (k: keyof ViewOffset) => poses.cocked[k] * cock + (poses.through[k] - poses.cocked[k]) * through;
   return { x: mix("x"), y: mix("y"), z: mix("z"), rx: mix("rx"), ry: mix("ry"), rz: mix("rz") };
 };
@@ -111,10 +107,29 @@ export class CameraRig {
   private readonly meleeHolder: TransformNode;
   private meleeLook: WeaponLook | null = null;
   private meleeMesh: AbstractMesh | null = null;
+  /** The stand-in shape of the melee weapon shows until its model is mounted. */
+  private meleePlaceholder = true;
+  /** Hip and aimed positions of the gun in hand (G-282). */
+  private pose: ViewmodelPose = viewmodelPose(null);
   private readonly materials: ToonMaterials;
+  private readonly placeholderGun: AbstractMesh;
   private reference: { position: Vector3; target: Vector3 } | null = null;
   private occluder: CameraOccluder | null = null;
+  /**
+   * Both of the player's hands are taken (a body on the shoulder, G-459): the weapon drops out of
+   * the FPP view as on a ladder. A takedown grab does it from the transform's `grab`.
+   */
+  handsBusy = false;
+  /** The forearms on a grabbed target's neck in first person (ADR-0075). */
+  private readonly chokeArms: ChokeArms;
   onBodyVisibility: (visible: boolean) => void = () => {};
+  /** Halftone fade of the player's figure when it is in the way of the TPP view (G-275). */
+  readonly bodyFade = new BodyFade();
+  /**
+   * The TPP camera looks over the left shoulder (G-275). It changes at once, with the side in the
+   * input frame the simulation shoots from: an eased swing left the crosshair off the shot line.
+   */
+  leftShoulder = false;
 
   constructor(
     private readonly scene: Scene,
@@ -127,6 +142,10 @@ export class CameraRig {
     this.camera.fov = BASE_FOV;
     this.materials = materials;
     this.camera.inputs.clear();
+    // Babylon otherwise re-derives the up vector only when `rotation.z` changes and keeps it
+    // between such frames: a roll from the hit shake or the metro car then leaves the old
+    // yaw's and pitch's up behind, and every later turn rolls the view about it (G-279).
+    this.camera.updateUpVectorFromRotation = true;
     scene.activeCamera = this.camera;
 
     this.viewmodel = new TransformNode("viewmodel", scene);
@@ -163,14 +182,18 @@ export class CameraRig {
       m.isPickable = false;
       applyOutline(m, 0.004);
     }
-    this.viewmodel.position.set(VIEWMODEL.x, VIEWMODEL.y, VIEWMODEL.z);
+    this.viewmodel.position.set(this.pose.hip.x, this.pose.hip.y, this.pose.hip.z);
+    this.chokeArms = new ChokeArms(scene, materials, this.camera);
   }
-
-  private placeholderGun: AbstractMesh | null = null;
 
   /** Node a weapon model is mounted under in the FPP viewmodel. */
   get weaponMount(): TransformNode {
     return this.gunHolder;
+  }
+
+  /** Node a baton or blade model is mounted under in the FPP viewmodel: it swings and guards. */
+  get meleeMount(): TransformNode {
+    return this.meleeHolder;
   }
 
   /** Current look speed multiplier from the aim zoom (ADR-0019); 1 from the hip. */
@@ -190,6 +213,7 @@ export class CameraRig {
   setHeldWeapon(look: WeaponLook | null): void {
     const melee = look === "baton" || look === "blade";
     this.melee = melee;
+    this.pose = viewmodelPose(look);
     this.gunHolder.setEnabled(!melee);
     this.meleeHolder.setEnabled(melee);
     if (!melee || look === this.meleeLook) return;
@@ -204,6 +228,7 @@ export class CameraRig {
     mesh.rotation.x = 0.55;
     mesh.isPickable = false;
     applyOutline(mesh, 0.004);
+    mesh.setEnabled(this.meleePlaceholder);
     this.meleeMesh = mesh;
   }
 
@@ -212,10 +237,14 @@ export class CameraRig {
     this.swing = { strike, windup, recovery, elapsed: 0 };
   }
 
-  /** Drops the box pistol once a weapon model is mounted. */
-  hidePlaceholderGun(): void {
-    this.placeholderGun?.dispose();
-    this.placeholderGun = null;
+  /**
+   * Stand-ins shown while the weapon in hand has no model mounted: the box pistol (G-282) and
+   * the baton or blade shape.
+   */
+  setPlaceholders(shown: { readonly gun: boolean; readonly melee: boolean }): void {
+    this.placeholderGun.setEnabled(shown.gun);
+    this.meleePlaceholder = shown.melee;
+    this.meleeMesh?.setEnabled(shown.melee);
   }
 
   /** What else stops the TPP camera besides the scene's blockers (null: the blockers alone). */
@@ -241,7 +270,8 @@ export class CameraRig {
   muzzlePosition(): Vector3 | null {
     if (this.blend > 0.5 || this.reference) return null;
     this.viewmodel.computeWorldMatrix(true);
-    return Vector3.TransformCoordinates(new Vector3(0, 0.04, 0.17), this.viewmodel.getWorldMatrix());
+    const m = this.pose.muzzle;
+    return Vector3.TransformCoordinates(new Vector3(m.x, m.y, m.z), this.viewmodel.getWorldMatrix());
   }
 
   kick(): void {
@@ -283,7 +313,7 @@ export class CameraRig {
       return { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 };
     }
     sw.elapsed += dt;
-    if (sw.elapsed >= sw.windup + Math.max(VIEW_STRIKE, sw.recovery)) this.swing = null;
+    if (sw.elapsed >= swingEnd(sw.windup, sw.recovery)) this.swing = null;
     return viewSwingOffset(sw.strike, sw.elapsed, sw.windup, sw.recovery);
   }
 
@@ -294,7 +324,9 @@ export class CameraRig {
       // The reference frame and the title backdrop see what the player sees from the hip.
       this.camera.fov = this.hipFov;
       this.viewmodel.setEnabled(false);
+      this.chokeArms.update(false, undefined, dt);
       this.onBodyVisibility(true);
+      this.bodyFade.update(0, 1);
       return;
     }
     if (!target) return;
@@ -304,14 +336,18 @@ export class CameraRig {
 
     const { position: p, yaw, pitch } = target;
     const dir = directionFromAngles(yaw, pitch);
-    // Same curve as the simulation's aim origin, so the crosshair stays exact while crouching.
-    const eye = new Vector3(p.x, p.y + eyeHeightAt(target.crouch ?? 0), p.z);
-    const shoulder = eye.add(new Vector3(Math.cos(yaw) * TPP_SHOULDER_OFFSET, TPP_HEIGHT_OFFSET, -Math.sin(yaw) * TPP_SHOULDER_OFFSET).scale(this.blend));
-    const back = new Vector3(-dir.x, -dir.y, -dir.z);
-
     // Aiming down sights (ADR-0019): the zoom follows the simulation's eased aim exactly, so the
     // HUD crosshair (which uses the same numbers) stays calibrated.
     const aim = Math.min(1, Math.max(0, target.aim ?? 0));
+    // In a takedown grab the forearms come up on the target's neck and the eye goes with her figure.
+    this.chokeArms.update(this.blend < 0.35, target.grab, dt);
+    const { crouch, side: grabSide } = this.chokeArms.eye(target.crouch ?? 0);
+    // Same curve as the simulation's aim origin, so the crosshair stays exact while crouching.
+    const beside = grabSide * (1 - this.blend);
+    const eye = new Vector3(p.x + Math.cos(yaw) * beside, p.y + eyeHeightAt(crouch), p.z - Math.sin(yaw) * beside);
+    const side = this.leftShoulder ? -TPP_SHOULDER_OFFSET : TPP_SHOULDER_OFFSET;
+    const shoulder = eye.add(new Vector3(Math.cos(yaw) * side, TPP_HEIGHT_OFFSET, -Math.sin(yaw) * side).scale(this.blend));
+    const back = new Vector3(-dir.x, -dir.y, -dir.z);
     const adsFov = aimedFov(aim, target.aimZoom ?? 1, this.hipFov);
     let distance = TPP_DISTANCE * this.blend * (1 - TPP_ADS_PULL * smooth(aim));
     if (distance > 0.01) {
@@ -347,7 +383,10 @@ export class CameraRig {
     );
 
     const fpp = this.blend < 0.35;
-    this.draw += Math.sign((this.weaponDrawn ? 1 : 0) - this.draw) * Math.min(Math.abs((this.weaponDrawn ? 1 : 0) - this.draw), dt / 0.35);
+    // On a ladder (and pulling up onto a ledge) both hands hold on: the weapon drops out of view
+    // (ADR-0021); so it does with a body on the shoulder or in a takedown grab (G-459).
+    const held = this.weaponDrawn && target.climb === undefined && !this.handsBusy && target.grab === undefined ? 1 : 0;
+    this.draw += Math.sign(held - this.draw) * Math.min(Math.abs(held - this.draw), dt / 0.35);
     this.reload = Math.max(0, this.reload - dt);
     const reloading = this.reloadTotal > 0 && this.reload > 0 ? Math.sin(Math.PI * (1 - this.reload / this.reloadTotal)) : 0;
     const away = 1 - this.draw * this.draw * (3 - 2 * this.draw) + reloading * 0.35;
@@ -356,19 +395,22 @@ export class CameraRig {
     const ads = this.melee ? 0 : smooth(aim);
     const guard = this.updateGuard(target.guard ?? 0, dt);
     const sw = this.updateSwing(dt);
+    const { hip, ads: aimed } = this.pose;
     const base = {
-      x: VIEWMODEL.x + (VIEWMODEL_ADS.x - VIEWMODEL.x) * ads + (VIEWMODEL_GUARD.x - VIEWMODEL.x) * guard,
-      y: VIEWMODEL.y + (VIEWMODEL_ADS.y - VIEWMODEL.y) * ads + (VIEWMODEL_GUARD.y - VIEWMODEL.y) * guard,
-      z: VIEWMODEL.z + (VIEWMODEL_ADS.z - VIEWMODEL.z) * ads + (VIEWMODEL_GUARD.z - VIEWMODEL.z) * guard,
+      x: hip.x + (aimed.x - hip.x) * ads + (VIEWMODEL_GUARD.x - hip.x) * guard,
+      y: hip.y + (aimed.y - hip.y) * ads + (VIEWMODEL_GUARD.y - hip.y) * guard,
+      z: hip.z + (aimed.z - hip.z) * ads + (VIEWMODEL_GUARD.z - hip.z) * guard,
     };
     // Weapon sways with the walk, sinks and tips down when put away.
     this.viewmodel.position.x = base.x + Math.sin(t) * 0.012 * bob + sw.x;
     this.viewmodel.position.y = base.y - Math.abs(Math.cos(t)) * 0.01 * bob - away * 0.32 + sw.y;
     this.viewmodel.position.z = base.z - this.recoil * 0.035 * (1 - 0.5 * ads) + sw.z;
-    this.viewmodel.rotation.x = -this.recoil * 0.25 * (1 - 0.5 * ads) + away * 0.9 + sw.rx;
+    // Aimed in, the kick goes straight back: tipping up, the muzzle would rise over the crosshair.
+    this.viewmodel.rotation.x = -this.recoil * 0.25 * (1 - ads) + away * 0.9 + sw.rx;
     this.viewmodel.rotation.y = sw.ry;
     // The guard turns the weapon flat across the view.
     this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7 + guard * 1.25 + sw.rz;
     this.onBodyVisibility(!fpp);
+    this.bodyFade.update(fpp ? 0 : bodyFadeTarget(pos, dir, p, FIGURE_HEIGHT + (FIGURE_CROUCHED - FIGURE_HEIGHT) * Math.min(1, Math.max(0, crouch))), dt);
   }
 }

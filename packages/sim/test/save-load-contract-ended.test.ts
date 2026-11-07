@@ -6,10 +6,21 @@ import { alarmed, expectSameAfterLoad, hash, peopleOf, reload, roundTrip, taken 
 
 /** Saving and loading after a contract has ended while its people still stand in the world (G-178). */
 
+/**
+ * Made on first use and kept: a long run is split into one case per stretch, each asking for the
+ * stretches before it, as one case of the whole run went past the 20 s limit under coverage (G-390,
+ * as G-357). The cases note what they check when the stretch is made, so their order does not matter.
+ */
+const once = <T>(make: () => T): (() => T) => {
+  let made: { value: T } | undefined;
+  return () => (made ??= { value: make() }).value;
+};
+
 describe("save and load after a contract has ended (G-178)", () => {
   it("the guards of an infiltration lost to the alarm are still there after loading, and still fighting", () => {
     const { sim, id } = alarmed(60);
-    expect(peopleOf(sim, id)).toHaveLength(5);
+    // Five guards (a job of the docks' level 16 sends its template's most, ADR-0059), the hook's man and the item.
+    expect(peopleOf(sim, id)).toHaveLength(7);
     const hpBefore = sim.player()!.health!.current;
     expectSameAfterLoad(sim, id);
     // They kept shooting at her, in the loaded game as in the saved one.
@@ -24,27 +35,64 @@ describe("save and load after a contract has ended (G-178)", () => {
     expectSameAfterLoad(sim, id);
   });
 
-  it("saved away from the docks, the guards of the alarm wait at the office in both games", () => {
-    const { sim, id } = alarmed(10);
-    const guards = peopleOf(sim, id);
-    // Far off, and landed: a fall in progress is not saved (ADR-0021).
-    teleportPlayer(sim, ground(GENZO_SPOT.x + 2000, GENZO_SPOT.z));
-    run(sim, 120);
-    const loaded = reload(sim);
-    expect(peopleOf(loaded, id)).toEqual(peopleOf(sim, id));
-    expect(hash(loaded)).toBe(hash(sim));
-    // Only the people are compared from here: 2 km east of Genzō is off the map, she dies of the
-    // fall, and a save of a dead player (the game makes none) loads her alive, so the alerted
-    // guards count the time they have lost her on (G-185; alive on the map they do not part).
-    for (const s of [sim, loaded]) {
-      teleportPlayer(s, docks(0, 0, 120));
-      run(s, 5);
+  describe("saved away from the docks, the guards of the alarm wait at the office in both games", () => {
+    const far = once(() => {
+      const { sim, id } = alarmed(10);
+      const guards = peopleOf(sim, id);
+      // Far off, and landed: a fall in progress is not saved (ADR-0021).
+      teleportPlayer(sim, ground(GENZO_SPOT.x + 2000, GENZO_SPOT.z));
+      return { sim, id, guards };
+    });
+    const pinned = (sim: Simulation, id: string) => peopleOf(sim, id).filter((k) => k.includes("-g"));
+    // The 120 steps to landing, the dearest first, while the guards still chase her 2 km off.
+    const stretches = [6, 8, 8, 10, 28, 30, 30];
+    const away: string[][] = [];
+    const awayUpTo = (n: number): string[] => {
+      const { sim, id } = far();
+      while (away.length < n) {
+        run(sim, stretches[away.length]!);
+        away.push(pinned(sim, id));
+      }
+      return away[n - 1]!;
+    };
+    for (const n of stretches.keys()) {
+      const steps = stretches.slice(0, n + 1).reduce((a, b) => a + b, 0);
+      it(`far off, every guard is still there after ${steps} steps`, () => {
+        const atDocks = far().guards.filter((k) => k.includes("-g"));
+        expect(atDocks.length).toBeGreaterThan(0);
+        expect(awayUpTo(n + 1)).toEqual(atDocks);
+      });
     }
-    expect(peopleOf(sim, id)).toEqual(guards);
-    expect(peopleOf(loaded, id)).toEqual(guards);
+    const saved = once(() => {
+      const { sim, id } = far();
+      awayUpTo(stretches.length);
+      const loaded = reload(sim);
+      return { loaded, people: [peopleOf(loaded, id), peopleOf(sim, id)], hashes: [hash(loaded), hash(sim)] };
+    });
+    it("saved there, the loaded game is the saved one", () => {
+      const { people, hashes } = saved();
+      expect(people[0]).toEqual(people[1]);
+      expect(hashes[0]).toBe(hashes[1]);
+    });
+    const back = once(() => {
+      const { sim, id } = far();
+      const { loaded } = saved();
+      // Only the people are compared from here: 2 km east of Genzō is off the map, she dies of the
+      // fall, and a save of a dead player (the game makes none) loads her alive, so the alerted
+      // guards count the time they have lost her on (G-185; alive on the map they do not part).
+      for (const s of [sim, loaded]) {
+        teleportPlayer(s, docks(0, 0, 120));
+        run(s, 5);
+      }
+      return [peopleOf(sim, id), peopleOf(loaded, id)];
+    });
+    it("back at the docks, the guards wait at the office in both games", () => {
+      const { guards } = far();
+      expect(back()).toEqual([guards, guards]);
+    });
   });
 
-  it("an infiltration done (data taken unseen) keeps its calm guards, cleared and then paid, no more and no fewer", () => {
+  describe("an infiltration done (data taken unseen) keeps its calm guards, cleared and then paid, no more and no fewer", () => {
     const cleared = (): { sim: Simulation; c: Contract } => {
       const { sim, c } = taken(8, 0, docks(0, 0, 120), "infiltrate");
       const spot = DOKI_ITEM_SPOTS.tessen_office!;
@@ -53,16 +101,20 @@ describe("save and load after a contract has ended (G-178)", () => {
       expect(sim.domain.contracts.active?.status).toBe("cleared");
       return { sim, c };
     };
-    const done = cleared();
-    expect(peopleOf(done.sim, done.c.id).filter((k) => k.includes("-g")).length).toBe(done.c.targets);
-    expectSameAfterLoad(done.sim, done.c.id);
-    const paid = cleared();
-    paid.sim.enqueue({ type: "complete-contract" });
-    paid.sim.step();
-    expect(paid.sim.domain.contracts.active).toBeNull();
-    expect(paid.sim.domain.contracts.completed).toBe(1);
-    expect(paid.sim.snapshot(null, "t", "").endedContract?.contract.id).toBe(paid.c.id);
-    expectSameAfterLoad(paid.sim, paid.c.id);
+    it("cleared", () => {
+      const done = cleared();
+      expect(peopleOf(done.sim, done.c.id).filter((k) => k.includes("-g")).length).toBe(done.c.targets);
+      expectSameAfterLoad(done.sim, done.c.id);
+    });
+    it("paid", () => {
+      const paid = cleared();
+      paid.sim.enqueue({ type: "complete-contract" });
+      paid.sim.step();
+      expect(paid.sim.domain.contracts.active).toBeNull();
+      expect(paid.sim.domain.contracts.completed).toBe(1);
+      expect(paid.sim.snapshot(null, "t", "").endedContract?.contract.id).toBe(paid.c.id);
+      expectSameAfterLoad(paid.sim, paid.c.id);
+    });
   });
 
   for (const [label, completed, difficulty] of [

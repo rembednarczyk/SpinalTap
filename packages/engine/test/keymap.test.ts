@@ -15,6 +15,13 @@ describe("keyboard and mouse mapping", () => {
     expect(f).toMatchObject({ lookYaw: 0.1, lookPitch: -0.2, fire: true, interact: false, toggleCamera: true });
   });
 
+  it("fires on a click that went down and up since the last poll (ADR-0075)", () => {
+    expect(mapKeyboardMouse(keys([], ["Mouse0"]), { yaw: 0, pitch: 0 }).fire).toBe(true);
+    expect(mapKeyboardMouse(keys([]), { yaw: 0, pitch: 0 }).fire).toBe(false);
+    const map = remap(DEFAULT_KEYMAP, "fire", ["KeyJ"]);
+    expect(mapKeyboardMouse(keys([], ["KeyJ"]), { yaw: 0, pitch: 0 }, map).fire).toBe(true);
+  });
+
   it("jumps on the Space edge (ADR-0021)", () => {
     expect(mapKeyboardMouse(keys(["Space"], ["Space"]), { yaw: 0, pitch: 0 }).jump).toBe(true);
     expect(mapKeyboardMouse(keys(["Space"]), { yaw: 0, pitch: 0 }).jump).toBe(false);
@@ -53,7 +60,9 @@ describe("gamepad mapping", () => {
   const pad = (axes: number[], buttons: boolean[] = [], pressed: boolean[] = []) => ({ axes, buttons, pressed });
 
   it("applies a deadzone and inverts the forward axis", () => {
-    expect(mapGamepad(pad([PAD_DEADZONE / 2, -1, 0, 0]), 1 / 60)).toMatchObject({ moveX: 0, moveZ: 1 });
+    // The dead zone is radial (ADR-0072): it holds a resting stick, not one axis of a pushed one.
+    expect(mapGamepad(pad([PAD_DEADZONE / 2, 0, 0, 0]), 1 / 60)).toMatchObject({ moveX: 0 });
+    expect(mapGamepad(pad([0, -1, 0, 0]), 1 / 60)).toMatchObject({ moveX: 0, moveZ: 1 });
   });
 
   it("scales look by dt and maps buttons", () => {

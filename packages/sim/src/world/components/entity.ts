@@ -1,4 +1,4 @@
-import type { ActivityId, EnemyTypeId, EntityId, FactionId, Health, Slope, Vec3, ViewDescriptor } from "@seki/core";
+import type { ActivityId, EnemyTypeId, EntityId, FactionId, Health, LevelBand, Slope, StyleKind, Vec3, ViewDescriptor } from "@seki/core";
 import type { Passerby } from "../activity-types";
 import type { Aabb } from "../collision";
 import type { Prism } from "../prism";
@@ -74,14 +74,28 @@ export interface Entity {
   baseHp?: number;
   /** Who dealt the last damage. Transient (never saved): death is resolved in the same step. */
   lastHitBy?: EntityId;
+  /**
+   * What the player's last blow on it was (ADR-0059 stage 6: her style), set with `lastHitBy` by
+   * her hits and cleared by anyone else's. Transient, like it.
+   */
+  lastHitStyle?: StyleKind;
+  /**
+   * Its fight is already in her style (ADR-0059 stage 6): one enemy is one fight, whether she
+   * hacks it, knocks it out again after it woke or kills it after that. Saved (`EntitySnapshot.fought`).
+   */
+  fought?: true;
   faction?: FactionId;
   combatant?: Combatant;
   melee?: MeleeState;
   ai?: GangerAi;
   /** A ganger's stuck check (ADR-0025), once it has run its tree. Saved (G-208). */
   walk?: WalkProgress;
-  /** Enemy type (ADR-0015): weapon, outfit and loot table come from it. */
-  enemy?: { readonly type: EnemyTypeId };
+  /**
+   * Enemy type (ADR-0015): weapon, outfit and loot table come from it. Its level (ADR-0059) and
+   * what made it, its district's band and the difficulty's `npcHealth`, are set by `toughen` and,
+   * on the player's level-up, by `regradeEnemies`. Transient: rebuilt whenever the entity is made.
+   */
+  enemy?: { readonly type: EnemyTypeId; readonly level?: number; readonly band?: LevelBand | null; readonly npcHealth?: number };
   civilian?: CivilianAi;
   sniper?: SniperState;
   escort?: EscortAi;

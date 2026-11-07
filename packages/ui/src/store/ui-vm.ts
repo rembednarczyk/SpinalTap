@@ -1,7 +1,8 @@
-import { DEFAULT_LOCALE, type ItemCategory, type PrepareStage, type ItemDefId, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
+import { DEFAULT_LOCALE, type DomainText, type ItemCategory, type PrepareStage, type ItemDefId, type ItemIconKey, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
 import type { MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon } from "./map-vm";
 import type { RadioStationId } from "./wave2-vm";
+import type { MapMetroVm } from "./metro-vm";
 
 // View models of the UI store: what the areas of `UiState` hold (ADR-0031).
 
@@ -52,10 +53,16 @@ export interface AbilityVm {
 export interface Toast {
   readonly id: number;
   readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware" | "heat" | "radio";
-  readonly title: string;
-  readonly text: string;
+  /**
+   * A catalog key with its parameters or a text as it is (ADR-0056); a key is translated when
+   * shown, so a toast up during a language switch reads the new language (G-466).
+   */
+  readonly title: DomainText;
+  readonly text: DomainText;
   /** Outlives ordinary toasts when too many come at once (a level up, a failed load). */
   readonly keep?: boolean;
+  /** How many identical toasts this one stands for while on screen (G-281); one when absent. */
+  readonly count?: number;
 }
 
 export interface JournalStepVm {
@@ -126,6 +133,8 @@ export interface MapVm {
   readonly links?: readonly MapLinkVm[];
   /** Open water (the docks, ADR-0024), under everything else. */
   readonly water?: readonly MapRectVm[];
+  /** The metro line as a layer (ADR-0071): tunnel, stations, entrances, possible stations. */
+  readonly metro?: MapMetroVm;
 }
 
 /** "enforcer": someone who sees through the player's disguise (ADR-0032); "quest": whom the shown step of a quest sends the player to. */
@@ -158,6 +167,8 @@ export interface WeaponSlotVm {
   /** Catalog key of the weapon's name (ADR-0056), null when the slot is empty. */
   readonly name: string | null;
   readonly rarity: Rarity | null;
+  /** The weapon's icon (ADR-0073 stage 2), null when the slot is empty. */
+  readonly icon: ItemIconKey | null;
 }
 
 /** HUD weapon strip: the three slots and the active weapon's rounds. */
@@ -204,6 +215,8 @@ export interface TradeItemVm {
   readonly category: ItemCategory;
   /** Null for stacks. */
   readonly rarity: Rarity | null;
+  /** Item level of a weapon, garment or cyberdeck (ADR-0059); absent on stacks, mods and other implants. */
+  readonly level?: number;
   readonly qty: number;
   /** Garments only. */
   readonly condition: number | null;
@@ -221,8 +234,8 @@ export interface TradeVm {
 
 export const EMPTY_TRADE: TradeVm = { items: [], capacity: 24, freeCells: 24, weaponParts: 0 };
 
-/** Tabs of the character screen (plan §7): I, Tab, J and M open it on theirs. */
-export type CharacterTab = "inventory" | "sheet" | "journal" | "map";
+/** Tabs of the character screen (plan §7): I, Tab, J, M and K (Progress, ADR-0059) open it on theirs. */
+export type CharacterTab = "inventory" | "sheet" | "progress" | "journal" | "map";
 
 /** Numbers of the stats panel, worked out by the app from the domain and the player. */
 export interface CharacterStatsVm {
@@ -244,6 +257,21 @@ export type GraphicsQuality = "high" | "medium" | "low";
 /** The aim button held down, or pressed once to aim and again to stop (ADR-0019). */
 export type AimMode = "hold" | "toggle";
 
+/** The shoulder the TPP camera looks over (G-275). */
+export type CameraShoulder = "right" | "left";
+
+/** The touch fire button aims down sights while held, or only fires (ADR-0072). */
+export type TouchFireMode = "aims" | "separate";
+
+/** Response of the gamepad's look stick (ADR-0072): classic by default, linear as before. */
+export type PadCurveMode = "linear" | "classic" | "precise";
+
+/** Ranges of the gamepad settings (ADR-0072); the engine holds the same dead zone range. */
+export const PAD_SENSITIVITY_RANGE: readonly [number, number] = [0.2, 3];
+export const PAD_DEADZONE_SETTING_RANGE: readonly [number, number] = [0.05, 0.3];
+/** Aim assist for touch and pad look, never the mouse (ADR-0072): only on enemies fighting the player. */
+export type AimAssistMode = "off" | "light" | "standard";
+
 export interface SettingsVm {
   readonly quality: GraphicsQuality;
   readonly aimMode: AimMode;
@@ -251,6 +279,8 @@ export interface SettingsVm {
   readonly crouchMode: AimMode;
   /** Sprint key: held (default), or pressed once to run until stopping. */
   readonly sprintMode: AimMode;
+  /** TPP camera over the right (default) or the left shoulder; a key swaps it in play. */
+  readonly shoulder: CameraShoulder;
   /** Look speed multiplier, 1 = default. */
   readonly mouseSensitivity: number;
   /** Extra look speed multiplier while aiming down sights (on top of the zoom's own slowdown). */
@@ -259,16 +289,31 @@ export interface SettingsVm {
   readonly invertY: boolean;
   readonly touchSensitivity: number;
   /**
+   * Touch fire button (ADR-0072): "aims" (default) fires from the sights with one thumb; with a
+   * melee weapon it only strikes. "separate" only fires, and the aim button aims on its own.
+   */
+  readonly touchFire: TouchFireMode;
+  /** Gamepad look speed multiplier (ADR-0072), its own instead of the mouse's or the touch one. */
+  readonly padSensitivity: number;
+  /** Inner radial dead zone of both sticks, as a share of full deflection (`PAD_DEADZONE_SETTING_RANGE`). */
+  readonly padDeadzone: number;
+  /** How the right stick's travel maps to look speed (ADR-0072). */
+  readonly padCurve: PadCurveMode;
+  /** Aim assist on touch (and pad) look: a slowdown over an enemy in combat and a pull on raising the sights. */
+  readonly aimAssist: AimAssistMode;
+  /**
    * Horizontal field of view from the hip, degrees (ADR-0049): the same width of the street on
    * any screen; the camera works out the vertical angle for the screen's proportions.
    */
   readonly horizontalFov: number;
   /** Master volume 0..1. */
   readonly volume: number;
-  /** Volumes of the mix buses 0..1 (ADR-0060 stage 1): music and radio, effects, the city around. */
+  /** Volumes of the mix buses 0..1 (ADR-0060 stage 1): music, effects, the city around, spoken lines, the radio. */
   readonly musicVolume: number;
   readonly sfxVolume: number;
   readonly ambienceVolume: number;
+  readonly dialogueVolume: number;
+  readonly radioVolume: number;
   /** Key bindings that differ from the defaults: action id -> codes. */
   readonly bindings: Readonly<Record<string, readonly string[]>>;
   /** First-run hints (controls, interactions) shown while playing. */
@@ -321,15 +366,23 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   aimMode: "hold",
   crouchMode: "toggle",
   sprintMode: "hold",
+  shoulder: "right",
   mouseSensitivity: 1,
   adsSensitivity: 1,
   invertY: false,
   touchSensitivity: 1,
+  touchFire: "aims",
+  padSensitivity: 1,
+  padDeadzone: 0.12,
+  padCurve: "classic",
+  aimAssist: "standard",
   horizontalFov: DEFAULT_HORIZONTAL_FOV,
   volume: 0.6,
   musicVolume: 0.55,
   sfxVolume: 0.9,
   ambienceVolume: 0.7,
+  dialogueVolume: 1,
+  radioVolume: 0.55,
   bindings: {},
   hints: true,
   autosave: true,

@@ -6,6 +6,13 @@ import type { InputFrame, WeaponSlotInput } from "@seki/core";
  */
 export type PadButton = "fire" | "aim" | "interact" | "jump" | "ability" | "useItem" | "toggleCamera" | "sprint" | "toggleWeapon" | "crouch" | "reload" | "dash";
 
+/**
+ * What the touch fire button does (ADR-0072): "aims" fires and aims down sights at once, so one
+ * thumb shoots from the sights and steers by dragging; "separate" only fires, and the aim
+ * button aims on its own.
+ */
+export type TouchFire = "aims" | "separate";
+
 /** Stick deflection above which the on-screen stick also sprints. */
 export const STICK_SPRINT_THRESHOLD = 0.92;
 
@@ -22,6 +29,13 @@ export class VirtualPad {
   private readonly pressed = new Set<PadButton>();
   /** Slot tapped on the HUD weapon strip since the last poll. */
   private slot: WeaponSlotInput = 0;
+  /** The fire button's mode, from the settings. */
+  touchFire: TouchFire = "aims";
+  /**
+   * The weapon in hand aims down sights; the app sets it every step. Without it (a melee weapon,
+   * bare hands) the fire button only strikes, never raising the guard that `aim` means then.
+   */
+  adsWeapon = false;
 
   /** x: right, z: forward, both in [-1, 1]; the vector is clamped to the unit circle. */
   setStick(x: number, z: number): void {
@@ -66,6 +80,20 @@ export class VirtualPad {
     this.pitch = 0;
   }
 
+  /** The fire button is held in "aims" mode with a firearm in hand: the frame aims as well. */
+  get fireAims(): boolean {
+    return this.touchFire === "aims" && this.adsWeapon && this.held.has("fire");
+  }
+
+  /**
+   * Adds the fire button's aim to a frame whose aim button the latches already resolved: the
+   * fire button never flips a toggled aim, and letting go of it keeps an aim latched by the aim
+   * button (ADR-0072).
+   */
+  withFireAim(latched: InputFrame): InputFrame {
+    return this.fireAims && !latched.aim ? { ...latched, aim: true } : latched;
+  }
+
   poll(): InputFrame {
     const edge = (b: PadButton) => this.pressed.has(b);
     const frame: InputFrame = {
@@ -75,8 +103,10 @@ export class VirtualPad {
       lookPitch: this.pitch,
       sprint: this.held.has("sprint") || Math.hypot(this.stickX, this.stickZ) >= STICK_SPRINT_THRESHOLD,
       crouch: this.held.has("crouch"),
-      fire: this.held.has("fire"),
-      aim: this.held.has("aim"),
+      // A tap shorter than a step fires once, and chooses the kill in a grab (ADR-0075).
+      fire: this.held.has("fire") || edge("fire"),
+      // A tap shorter than a step still reaches the frame: in toggle mode it is what latches (ADR-0072).
+      aim: this.held.has("aim") || edge("aim"),
       interact: edge("interact"),
       jump: edge("jump"),
       toggleCamera: edge("toggleCamera"),

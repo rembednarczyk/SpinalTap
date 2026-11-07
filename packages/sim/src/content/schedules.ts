@@ -1,9 +1,11 @@
-import { type GameClock, type Vec3, hm, minuteOfDay } from "@seki/core";
+import { type GameClock, hm, minuteOfDay } from "@seki/core";
 import type { ScheduleDef } from "../world/components";
 import type { ActorSpawn } from "./builders";
 import { UME_CORNER, UME_HOME } from "./district-m0";
 import { GRODZKA_WALK, KANAL_SPOTS } from "./district-kanal";
 import { KANAL_PATROL_SCHEDULES } from "./kanal-patrols";
+import { OYAJI_BACK_DOOR, OYAJI_BACK_ROOM, arkadySpanMid, atUnit, byArkady, opening } from "./alchemia";
+import { HALL } from "./alchemia/plan";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
 import { WORLD_CHUNKS } from "./world-map";
@@ -23,8 +25,6 @@ const spawnOf = (key: string): ActorSpawn => {
   throw new Error(`schedule for unknown actor "${key}"`);
 };
 
-const offset = (p: Vec3, dx: number, dz: number): Vec3 => ({ x: p.x + dx, y: p.y, z: p.z + dz });
-
 const CIVILIAN_WALK = 1.2;
 const PATROL_WALK = 1.6;
 
@@ -42,7 +42,7 @@ const ume = (): ScheduleDef => {
   };
 };
 
-/** Oyaji keeps his stall open 8:00–22:00, then shuts it and sits out the night in his doorway. */
+/** Oyaji keeps his shop open 8:00–22:00, then shuts it and sits out the night by his back door. */
 export const OYAJI_HOURS = { open: hm(8), close: hm(22) } as const;
 
 /** The stall is open (trade, protection jobs from Hana; ADR-0017, ADR-0018). */
@@ -51,21 +51,30 @@ export const oyajiStallOpen = (clock: GameClock): boolean => {
   return m >= OYAJI_HOURS.open && m < OYAJI_HOURS.close;
 };
 
+/** Through Oyaji's back room: from his shop's door to the back door onto T1 (ADR-0074 §3). */
+const OYAJI_DOOR_X = (OYAJI_BACK_DOOR.minX + OYAJI_BACK_DOOR.maxX) / 2;
+const OYAJI_EXIT_X = (opening("oyaji-door").x0 + opening("oyaji-door").x1) / 2;
+const OYAJI_WAY_OUT = [
+  { x: OYAJI_DOOR_X, y: HALL.floor, z: OYAJI_BACK_ROOM.minZ - 1.2 },
+  { x: OYAJI_DOOR_X, y: HALL.floor, z: OYAJI_BACK_ROOM.minZ + 0.9 },
+  { x: OYAJI_EXIT_X, y: HALL.floor, z: HALL.maxZ - 1.4 },
+] as const;
+
 const oyaji = (): ScheduleDef => {
-  const stall = spawnOf("oyaji");
-  const front = offset(stall.position, -3, -1.2);
-  // His door, kept clear of the fire-escape ladder at x 73.2 so the night prompt never covers it.
-  const door = offset(stall.position, -4, -2);
+  const shop = spawnOf("oyaji");
+  // He sits out the night outside his back door on T1, by the front's glass.
+  const doorway = ground(OYAJI_EXIT_X + 1.6, HALL.maxZ + 0.9);
+  const step = ground(OYAJI_EXIT_X, HALL.maxZ + 0.9);
   return {
     speed: CIVILIAN_WALK,
     stops: [
       // He lays out and rearranges his wares (the hands-on-the-counter loop), and sweeps up.
-      { label: "stragan", at: OYAJI_HOURS.open, path: [front, stall.position], yaw: stall.yaw, activity: { cycle: ["cook", "cook", "sweep"], minutes: 20 } },
+      { label: "stragan", at: OYAJI_HOURS.open, path: [step, ...[...OYAJI_WAY_OUT].reverse(), shop.position], yaw: shop.yaw, activity: { cycle: ["cook", "cook", "sweep"], minutes: 20 } },
       {
         label: "dom",
         at: OYAJI_HOURS.close,
-        path: [front, door],
-        yaw: stall.yaw,
+        path: [shop.position, ...OYAJI_WAY_OUT, step, doorway],
+        yaw: Math.PI,
         activity: "sit",
         interaction: { kind: "dialogue", dialogueId: "oyaji_closed", prompt: "prompt.closed.oyaji", radius: 2.4 },
       },
@@ -73,7 +82,10 @@ const oyaji = (): ScheduleDef => {
   };
 };
 
-/** The Hebi lookout under the highway: holds his corner by day, walks a loop round the pillars at night. */
+/**
+ * The Hebi lookout by the Arkady north of the stash on T2 (ADR-0074 stage 2): holds his place under
+ * their arches by day, walks a loop of the square at night, out of the stash's corner.
+ */
 const hebiLookout = (): ScheduleDef => {
   const post = spawnOf("hebi-lookout");
   const p = post.position;
@@ -81,13 +93,8 @@ const hebiLookout = (): ScheduleDef => {
     speed: PATROL_WALK,
     stops: [
       { label: "posterunek", at: hm(5), path: [p], yaw: post.yaw, activity: { cycle: ["guard", "smoke"], minutes: 30 } },
-      {
-        label: "patrol",
-        at: hm(22),
-        path: [p, offset(p, -16, 0), offset(p, -16, 7), offset(p, 6, 7), offset(p, 6, 0)],
-        yaw: post.yaw,
-        loop: true,
-      },
+      // Out from under the arch of his span (between the piers), then round the square.
+      { label: "patrol", at: hm(22), path: [p, byArkady(arkadySpanMid(8), 1.5), ground(452, 121), ground(441, 122), ground(434, 108)], yaw: post.yaw, loop: true },
     ],
   };
 };
@@ -138,22 +145,45 @@ export const yataiOpen = (clock: GameClock): boolean => {
 };
 
 const fumiko = (): ScheduleDef => {
-  const stall = spawnOf("fumiko");
-  const behind = offset(stall.position, 0, 1);
-  // A stool behind the next stall west, by the wall of the north row.
-  const stool = offset(stall.position, -3.4, 1.2);
+  const bar = spawnOf("fumiko");
+  // Out through her own door onto T1 and onto the last stool before her hatch, by day.
+  const door = opening("fumiko-door");
+  const x = (door.x0 + door.x1) / 2;
+  const inside = { x, y: HALL.floor, z: HALL.maxZ - 1.5 };
+  const outside = ground(x, HALL.maxZ + 0.9);
+  const stool = atUnit("fumiko", 1.2, 1.4);
+  const stoolOnT1 = ground(stool.x, stool.z);
   return {
     speed: CIVILIAN_WALK,
     stops: [
       {
         label: "dom",
         at: YATAI_HOURS.close,
-        path: [behind, stool],
-        yaw: stall.yaw,
+        path: [bar.position, inside, outside, stoolOnT1],
+        yaw: Math.PI,
         activity: "sit",
         interaction: { kind: "dialogue", dialogueId: "fumiko_closed", prompt: "prompt.closed.fumiko", radius: 3 },
       },
-      { label: "stragan", at: YATAI_HOURS.open, path: [behind, stall.position], yaw: stall.yaw, activity: { cycle: ["cook", "sweep"], minutes: 20 } },
+      { label: "stragan", at: YATAI_HOURS.open, path: [stoolOnT1, outside, inside, bar.position], yaw: bar.yaw, activity: { cycle: ["cook", "sweep"], minutes: 20 } },
+    ],
+  };
+};
+
+/**
+ * The food hall is open 10:00-24:00 as the real one (ADR-0074, the user's decision of 6.11):
+ * Kenta and Goro cook and sell at their counters then, and sit at the back of their units at night.
+ * Sachiko's kiosk keeps its old hours (always), Fumiko's bar and Oyaji's shop theirs.
+ */
+export const FOODHALL_HOURS = { open: hm(10), close: hm(0) } as const;
+
+const hallKeeper = (key: "kenta" | "goro"): ScheduleDef => {
+  const counter = spawnOf(key);
+  const back = atUnit(key, -3.6);
+  return {
+    speed: CIVILIAN_WALK,
+    stops: [
+      { label: "dom", at: FOODHALL_HOURS.close, path: [counter.position, back], yaw: counter.yaw, activity: "sit" },
+      { label: "lokal", at: FOODHALL_HOURS.open, path: [back, counter.position], yaw: counter.yaw, activity: { cycle: ["cook", "sweep"], minutes: 20 } },
     ],
   };
 };
@@ -165,5 +195,7 @@ export const SCHEDULES: Readonly<Record<string, ScheduleDef>> = {
   hideo: hideo(),
   mei: mei(),
   fumiko: fumiko(),
+  kenta: hallKeeper("kenta"),
+  goro: hallKeeper("goro"),
   ...KANAL_PATROL_SCHEDULES,
 };

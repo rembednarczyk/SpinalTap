@@ -26,6 +26,7 @@ import { ShopController } from "./shop-controller";
 import { TakedownController } from "./takedown-controller";
 import { CarryController } from "./carry-controller";
 import { DifficultyController } from "./difficulty-controller";
+import { ProgressionController } from "./progression-controller";
 
 /** What the controllers need from the session that composes them. */
 export interface SessionHooks {
@@ -64,6 +65,8 @@ export interface Controllers {
   readonly carry: CarryController;
   // Difficulty (ADR-0066).
   readonly difficulty: DifficultyController;
+  // Character progression (ADR-0059).
+  readonly progression: ProgressionController;
 }
 
 /** The metro and the radio: their ink pools come from one knot renderer shared with the phone. */
@@ -114,6 +117,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   let free = (): boolean => false;
   bindEventPresenter(bus, render, audio, ui, {
     playerId: () => sim().player()?.id ?? null,
+    playSeconds: () => sim().tick / SIM_HZ,
     onDialogue: (id) => dialogue.open(id),
     // A ticket kiosk opens the line map, not ink (ADR-0034, ADR-0035).
     onMetro: (station) => {
@@ -164,8 +168,15 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
       trade: () => shop.tradeFrame(),
     },
   });
-  const canSave = () => !dialogue.isOpen && !shop.isOpen && !loot.isOpen && !travel.metro.isOpen && !travel.metro.riding && s.screen() !== "dead" && s.screen() !== "title" && s.screen() !== "loading";
-  const saves = new SaveController({ persistence: deps.persistence, ui, audio, narrative: s.narrative, sim, now: deps.now, canSave, restore: s.restore, ...(deps.download ? { download: deps.download } : {}) });
+  // A takedown's grip is not in the save (G-253): the save waits for its end.
+  const canSave = () => sim().session.takedown === null && !dialogue.isOpen && !shop.isOpen && !loot.isOpen && !travel.metro.isOpen && !travel.metro.riding && s.screen() !== "dead" && s.screen() !== "title" && s.screen() !== "loading";
+  // A flight is not in the save (G-335): no fall speed, peak or mantle, so it would load standing
+  // still in mid-air. A ladder is resumed on load (the ladder system, `resumeOnLadderTop`).
+  const airborne = () => {
+    const p = sim().player();
+    return p !== undefined && (p.fall !== undefined || p.mantle !== undefined);
+  };
+  const saves = new SaveController({ persistence: deps.persistence, ui, audio, narrative: s.narrative, sim, now: deps.now, canSave, airborne, restore: s.restore, ...(deps.download ? { download: deps.download } : {}) });
   const autosave = new AutosaveController({
     bus,
     sim,
@@ -173,6 +184,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     // In control (no panel, menu, breach or kiosk) or paused from there, out of combat, alive,
     // the story not over. A phone player often pauses before switching apps.
     safe: () => (s.inControl() || s.screen() === "paused") && canSave() && !hud.inCombat && !sim().session.gameOver && (sim().player()?.health?.current ?? 0) > 0,
+    airborne,
     write: (slot) => saves.write(slot),
     view: autosaveView(ui, audio),
     ...(deps.autosaveIntervalTicks ? { intervalTicks: deps.autosaveIntervalTicks } : {}),
@@ -180,5 +192,6 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   const takedown = new TakedownController(sim);
   const carry = new CarryController(sim);
   const difficulty = new DifficultyController({ sim, ui, screen: s.screen });
-  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, autosave, wave1, hud, wave2, takedown, carry, difficulty, ...travel };
+  const progression = new ProgressionController({ sim, menuOpen: () => character.isOpen, syncHud: () => hud.sync() });
+  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, autosave, wave1, hud, wave2, takedown, carry, difficulty, progression, ...travel };
 };

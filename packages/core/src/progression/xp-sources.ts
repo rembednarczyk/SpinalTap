@@ -1,34 +1,66 @@
 import type { ContractKind } from "../contracts/kinds";
 import type { EnemyTypeId } from "../items/enemies";
+import { CURVE_EXPONENT, MAX_LEVEL, MIN_LEVEL } from "./curve";
+import { killXpShare } from "./bands";
 
 /**
- * Where experience comes from (ADR-0059). Every amount here is the value at level 1: the level
- * of the enemy and of the contract scale it in stage 5. Quest steps carry their own XP in the
- * quest definitions. The numbers are tuned so that one district's main thread with its
- * contracts gives 8 to 10 levels (the pace test in `core/test/progression.test.ts`).
+ * Where experience comes from (ADR-0059). Every amount here is the value at level XP_BASE_LEVEL:
+ * a contract's level and a kill's enemy scale it (`xpLevelScale`), an enemy's level against the
+ * player's scales a kill. Quest steps carry their own XP in the quest definitions. The numbers are
+ * tuned so that each district's main thread with its contracts gives about 7 levels, 6 to 9 (the
+ * pace of the passage in `sim/test/balance.test.ts`, Krakowskie also in `core/test/progression.test.ts`).
  */
 export type XpSource = "quest" | "contract" | "kill" | "hack" | "stealth";
 
 export const XP_SOURCES: readonly XpSource[] = ["quest", "contract", "kill", "hack", "stealth"];
 
-/** A contract's base by template: the harder and longer the job, the more it teaches. */
+/**
+ * How the XP of a source grows with its level (ADR-0059 stage 8): 1 up to XP_BASE_LEVEL, then as
+ * the cost of a level does, `(level / XP_BASE_LEVEL)^1.6` with the exponent of the curve, so from
+ * level 6 a job or a kill teaches about the same share of a level at every level. The balance test
+ * of the passage set it. With +4% a level, as the pay grows, Stare Miasto gave 4 levels and the
+ * docks 3. The floor is the user's decision of 7.11 (round 3): a kill is always worth more than a
+ * quickhack, which the scale without it (round 2) broke below level 6 (3 XP for a ganger at 1).
+ */
+export const XP_BASE_LEVEL = 6;
+
+export const xpLevelScale = (level: number): number => {
+  const l = Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, Math.round(level)));
+  return l <= XP_BASE_LEVEL ? 1 : (l / XP_BASE_LEVEL) ** CURVE_EXPONENT;
+};
+
+/**
+ * A contract's base by template, at level XP_BASE_LEVEL. The men a job sends add to it
+ * (`CONTRACT_XP_PER_TARGET`), so a job that fights more teaches more. The bases are set by the
+ * balance test for each giver's district, since each district's jobs make most of its pace:
+ * Kaito's (delivery and elimination: Krakowskie, Stare Miasto), Hana's (retrieval, protection:
+ * the market, which also has act II) and Genzō's (the docks). Hana's and Genzō's jobs send big
+ * crews (four men from level 10, five for a docks infiltration or hack, Tessen's guards worth
+ * more than a Hebi), so their bases are below an elimination's. A delivery is Kaito's job and takes
+ * the level of Krakowskie, not of Hana's stall (the user's decision of 7.11); it fights nobody and
+ * comes only there, below level 6 at its full base, so its base holds Krakowskie at 8 levels.
+ */
 export const CONTRACT_XP_BASE: Readonly<Record<ContractKind, number>> = {
-  delivery: 500,
-  eliminate: 550,
-  retrieve: 600,
-  protect: 650,
-  escort: 800,
-  infiltrate: 850,
-  hack: 800,
+  delivery: 225,
+  eliminate: 500,
+  retrieve: 350,
+  protect: 400,
+  escort: 350,
+  infiltrate: 400,
+  hack: 350,
 };
 
 /** What each man the contract sends against the player adds. */
-export const CONTRACT_XP_PER_TARGET = 150;
+export const CONTRACT_XP_PER_TARGET = 120;
 
-/** XP of a finished contract, from its difficulty: the template and the number of targets. */
-export const contractXp = (kind: ContractKind, targets: number): number => CONTRACT_XP_BASE[kind] + Math.max(0, Math.floor(targets)) * CONTRACT_XP_PER_TARGET;
+/**
+ * XP of a finished contract, from its difficulty: the template and the number of targets, grown
+ * by the contract's level (`xpLevelScale`).
+ */
+export const contractXp = (kind: ContractKind, targets: number, level: number = MIN_LEVEL): number =>
+  Math.round((CONTRACT_XP_BASE[kind] + Math.max(0, Math.floor(targets)) * CONTRACT_XP_PER_TARGET) * xpLevelScale(level));
 
-/** An enemy the player took down, by type: tougher and better armed is worth more. */
+/** An enemy the player took down, by type, at level XP_BASE_LEVEL: tougher and better armed is worth more. */
 export const ENEMY_XP: Readonly<Record<EnemyTypeId, number>> = {
   hebi_lookout: 50,
   hebi_ganger: 60,
@@ -39,11 +71,23 @@ export const ENEMY_XP: Readonly<Record<EnemyTypeId, number>> = {
   tessen_sniper: 150,
 };
 
-/** XP of a kill. The level difference (ADR-0059: −5 levels 10%, +5 levels 150%) comes in stage 5. */
-export const killXp = (type: EnemyTypeId): number => ENEMY_XP[type];
+/**
+ * XP of a kill: the type's, grown by the enemy's level as a job's is (`xpLevelScale`), and by its
+ * level against the player's (−5 levels 10%, +5 levels 150%).
+ */
+export const killXp = (type: EnemyTypeId, enemy: number = MIN_LEVEL, player: number = enemy): number =>
+  Math.round(ENEMY_XP[type] * xpLevelScale(enemy) * killXpShare(enemy, player));
 
-/** A quickhack that landed. */
+/** A quickhack that landed, on a target of the player's level. */
 export const QUICKHACK_XP = 25;
+
+/**
+ * XP of a quickhack on an enemy of `enemy`: the same share by the level against the player's as a
+ * kill of it (`killXpShare`, −5 levels 10%, +5 levels 150%), so a fight is always worth more than a
+ * hack on the same enemy (the user's decision of 7.11, ADR-0059 stage 8, round 3). A target without
+ * a level (a camera, a speaker) counts as the player's own.
+ */
+export const quickhackXp = (enemy: number = MIN_LEVEL, player: number = enemy): number => Math.round(QUICKHACK_XP * killXpShare(enemy, player));
 
 /** A terminal breach that won something, and each daemon won. */
 export const BREACH_XP = 100;
@@ -57,3 +101,6 @@ export const breachXp = (daemons: number): number => (daemons > 0 ? BREACH_XP + 
  * separate feature; when they come, they report the same `stealth` source.
  */
 export const UNDETECTED_CONTRACT_XP = 150;
+
+/** The stealth bonus of a job of `level`, grown as the job's own XP is. */
+export const undetectedXp = (level: number = MIN_LEVEL): number => Math.round(UNDETECTED_CONTRACT_XP * xpLevelScale(level));

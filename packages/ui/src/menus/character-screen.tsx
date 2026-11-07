@@ -2,21 +2,25 @@ import { AMMO_CATALOG, type AmmoId } from "@seki/core";
 import { useEffect, useRef } from "react";
 import { CityMapPanel } from "../citymap/city-map-panel";
 import { InventoryTab } from "../inventory/inventory-tab";
+import { AmmoIcon } from "../icons/item-icon";
 import { JournalPanel } from "../journal/journal-panel";
 import { formatNumber, useLocale } from "../i18n/number";
 import { useT, useText } from "../i18n/use-t";
 import type { CharacterTab } from "../store/ui-store";
 import { useCharacterIntents, useUi } from "../use-ui";
 import { CharacterPanel } from "./character-panel";
+import { ProgressTab } from "../progress/progress-tab";
+import { useUnspentPoints } from "../hud/xp-hud";
 
 const TABS: readonly (readonly [CharacterTab, string])[] = [
   ["inventory", "I"],
   ["sheet", "Tab"],
+  ["progress", "K"],
   ["journal", "J"],
   ["map", "M"],
 ];
 
-const KEYS: Readonly<Record<string, CharacterTab>> = { KeyI: "inventory", Tab: "sheet", KeyJ: "journal", KeyM: "map" };
+const KEYS: Readonly<Record<string, CharacterTab>> = { KeyI: "inventory", Tab: "sheet", KeyK: "progress", KeyJ: "journal", KeyM: "map" };
 
 const AMMO_ORDER = Object.keys(AMMO_CATALOG) as AmmoId[];
 
@@ -30,6 +34,7 @@ const AmmoSummary = () => {
     <div className="cscreen__ammo" data-testid="ammo-pouch" aria-label={t("character.ammo")}>
       {(kinds.length > 0 ? kinds : (["9mm"] as AmmoId[])).map((id) => (
         <span key={id} className="cscreen__round">
+          <AmmoIcon ammo={id} />
           {tx(AMMO_CATALOG[id].name)} <b>{ammo[id] ?? 0}</b>
         </span>
       ))}
@@ -37,10 +42,41 @@ const AmmoSummary = () => {
   );
 };
 
+/** The tabs with their keys; Progress wears the number of points left to spend (ADR-0059, stage 7). */
+const ScreenTabs = ({ tab, show }: { readonly tab: CharacterTab; readonly show: (tab: CharacterTab) => void }) => {
+  const t = useT();
+  const points = useUnspentPoints();
+  return (
+    <div className="cscreen__tabs" role="tablist" aria-label={t("character.tabs")}>
+      {TABS.map(([id, key]) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={tab === id}
+          className={`cscreen__tab${tab === id ? " cscreen__tab--on" : ""}`}
+          onClick={() => show(id)}
+          // A touch switches on release: mobile Chrome does not always follow a tap with a click.
+          onPointerUp={(e) => e.pointerType === "touch" && show(id)}
+        >
+          {t(`character.tab.${id}`)}
+          <kbd className="cscreen__key">{key}</kbd>
+          {id === "progress" && points > 0 && (
+            <span className="cscreen__badge" data-testid="progress-tab-points" title={t("progress.unspent", { count: points })}>
+              {points}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+};
+
 /**
- * The character screen (plan §7): Inventory, Sheet, Journal and Map (ADR-0045) as tabs of
- * one full-screen menu. I, Tab, J and M open it on their tab and close it from there; Esc or
- * the cross closes it. While it is open the game clock stands (the app stops the simulation).
+ * The character screen (plan §7): Inventory, Sheet, Progress (ADR-0059), Journal and Map
+ * (ADR-0045) as tabs of one full-screen menu. I, Tab, K, J and M open it on their tab and close
+ * it from there; Esc or the cross closes it. While it is open the game clock stands (the app
+ * stops the simulation).
  */
 export const CharacterScreen = () => {
   const t = useT();
@@ -83,23 +119,7 @@ export const CharacterScreen = () => {
     <div className={`cscreen cscreen--${tab}`} data-testid="character-screen" role="dialog" aria-label={t("character.label")}>
       <div className="cscreen__frame">
         <header className="cscreen__bar">
-          <div className="cscreen__tabs" role="tablist" aria-label={t("character.tabs")}>
-            {TABS.map(([id, key]) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={tab === id}
-                className={`cscreen__tab${tab === id ? " cscreen__tab--on" : ""}`}
-                onClick={() => show(id)}
-                // A touch switches on release: mobile Chrome does not always follow a tap with a click.
-                onPointerUp={(e) => e.pointerType === "touch" && show(id)}
-              >
-                {t(`character.tab.${id}`)}
-                <kbd className="cscreen__key">{key}</kbd>
-              </button>
-            ))}
-          </div>
+          <ScreenTabs tab={tab} show={show} />
           <div className="cscreen__wallet" data-testid="menu-eddies">
             <span className="hud__currency">€$</span> {formatNumber(locale, eddies)}
           </div>
@@ -111,6 +131,7 @@ export const CharacterScreen = () => {
         <div className="cscreen__body">
           {tab === "inventory" && <InventoryTab />}
           {tab === "sheet" && <CharacterPanel />}
+          {tab === "progress" && <ProgressTab />}
           {tab === "journal" && <JournalPanel />}
           {tab === "map" && <CityMapPanel />}
         </div>

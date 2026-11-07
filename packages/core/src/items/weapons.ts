@@ -2,8 +2,10 @@ import { type HitZone, ZONE_MULTIPLIERS } from "../combat/combat-rules";
 import type { SpreadProfile } from "../combat/spread";
 import { type AdsProfile, MOD_CATALOG, type MeleeProfile, WEAPON_CATALOG, type WeaponDefinition, isModId, isWeaponId } from "./catalog";
 import { type Equipment, type InventoryState, findItem, freeCells, isPlaced, updateItem } from "./inventory";
+import { levelScale } from "./grade";
 import { RARITY } from "./rarity";
-import type { AmmoId, ModId, ModSlot, Rarity, WeaponId, WeaponLook, WeaponSlot } from "./types";
+import { traitEffects } from "./traits";
+import type { AmmoId, ModId, ModSlot, Rarity, TraitId, WeaponId, WeaponLook, WeaponSlot } from "./types";
 
 /**
  * A weapon as it fires: the definition with rarity and mods applied. The sim shoots with it
@@ -62,15 +64,35 @@ const base = (def: WeaponDefinition): WeaponStats => ({
   melee: def.melee ?? null,
 });
 
-/** Stats of a player's weapon with its rarity and mounted mods. Pure, shared by sim and UI. */
-export const effectiveWeapon = (id: WeaponId, rarity: Rarity, mods: readonly ModId[] = []): WeaponStats => {
+/** Level and traits of a weapon (ADR-0059); level 1 and none by default. */
+export interface WeaponGrade {
+  readonly level?: number;
+  readonly traits?: readonly TraitId[];
+}
+
+/**
+ * Stats of a player's weapon with its rarity, level, traits and mounted mods. Pure, shared by sim
+ * and UI. The level scales the damage (+4% a level, ADR-0059); traits are data (`traits.ts`).
+ */
+export const effectiveWeapon = (id: WeaponId, rarity: Rarity, mods: readonly ModId[] = [], grade: WeaponGrade = {}): WeaponStats => {
   const def: WeaponDefinition = WEAPON_CATALOG[id];
   const tier = RARITY[rarity];
-  let damage = def.damage * tier.damage;
+  let damage = def.damage * tier.damage * levelScale(grade.level);
   let spread = def.spread.base * tier.spread;
   let magazine = def.magazine;
   let reload = def.reload;
   let alertRadius = def.alertRadius;
+  let interval = def.interval;
+  let drawTime = def.drawTime;
+  let range = def.range;
+  for (const t of traitEffects(grade.traits)) {
+    damage *= t.damage ?? 1;
+    spread *= t.spread ?? 1;
+    interval *= t.interval ?? 1;
+    drawTime *= t.drawTime ?? 1;
+    range += t.range ?? 0;
+    alertRadius = Math.min(alertRadius, t.alertRadius ?? alertRadius);
+  }
   for (const m of mods) {
     const e = MOD_CATALOG[m].effect;
     if ("damage" in e) damage *= e.damage;
@@ -81,7 +103,7 @@ export const effectiveWeapon = (id: WeaponId, rarity: Rarity, mods: readonly Mod
     }
     if ("alertRadius" in e) alertRadius = Math.min(alertRadius, e.alertRadius);
   }
-  return { ...base(def), damage, magazine, reload, alertRadius, spread: { ...def.spread, base: spread } };
+  return { ...base(def), damage, magazine, reload, alertRadius, interval, drawTime, range, spread: { ...def.spread, base: spread } };
 };
 
 /**
@@ -108,7 +130,7 @@ export const mountedMods = (inv: InventoryState, uid: string): ModId[] => {
 export const weaponStatsOf = (inv: InventoryState, uid: string | null): WeaponStats | null => {
   const item = uid === null ? undefined : findItem(inv, uid);
   if (!item || !isWeaponId(item.def)) return null;
-  return effectiveWeapon(item.def, item.rarity, mountedMods(inv, item.uid));
+  return effectiveWeapon(item.def, item.rarity, mountedMods(inv, item.uid), item);
 };
 
 /** Holstering takes half the draw. */
@@ -175,7 +197,7 @@ export const removeMod = (inv: InventoryState, eq: Equipment, weaponUid: string,
   const mods: Partial<Record<ModSlot, string>> = { ...weapon.mods };
   delete mods[slot];
   let inventory = updateItem(inv, weaponUid, (w) => ({ ...w, mods }));
-  const magazine = effectiveWeapon(def, weapon.rarity, mountedMods(inventory, weaponUid)).magazine;
+  const magazine = effectiveWeapon(def, weapon.rarity, mountedMods(inventory, weaponUid), weapon).magazine;
   const loaded = weapon.loaded ?? 0;
   const excess = Math.max(0, loaded - magazine);
   if (excess > 0) inventory = updateItem(inventory, weaponUid, (w) => ({ ...w, loaded: magazine }));

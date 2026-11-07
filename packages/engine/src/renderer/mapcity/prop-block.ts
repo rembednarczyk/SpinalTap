@@ -4,8 +4,13 @@ import type { RenderQuality } from "../../npr/quality";
 import type { ToonMaterials } from "../../npr/toon-material";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
+import { bakePavilion, bakePavilionFar, pavilionsIn } from "../metro/pavilion-bake";
+import { alchemiaIn, arkadyIn, bakeAlchemiaStandIn, bakeArkadyStandIn } from "../alchemia/alchemia-far";
+import { bakePavilionStandIn, pavilionIn } from "../alchemia/pavilion-far";
+import { bakeParkingStandIn, parkingIn } from "../alchemia/parking-far";
 import { FINE_DECALS, bakeDecal } from "./decal-models";
 import { bakeDoor } from "./door-models";
+import { bakeFigure } from "./figure-models";
 import { cellBounds } from "./map-index";
 import { type WorldProp, bake } from "./prop-batch";
 import { chainModel, farModel, propModel } from "./prop-models";
@@ -53,7 +58,7 @@ export const newBlock = (key: string): PropBlock => ({
 });
 
 /** A block's pieces by entity id, so a block bakes the same whatever order its entities came in. */
-export const sortedPieces = (block: PropBlock): WorldProp[] =>
+export const sortedPieces = (block: Pick<PropBlock, "pieces">): WorldProp[] =>
   [...block.pieces.keys()].sort((a, b) => a - b).flatMap((id) => block.pieces.get(id)!);
 
 const blockMesh = (deps: PropBakeDeps, name: string, sink: MeshSink): Mesh | null => {
@@ -71,11 +76,17 @@ export const buildFar = (deps: PropBakeDeps, block: PropBlock): void => {
     const f = deps.poles.isPole(p) ? deps.poles.far : farModel(p.prop, p.shape);
     if (f) bake(far, f, p);
   }
+  for (const e of pavilionsIn(block.bounds)) bakePavilionFar(far, e);
+  // Alchemia's food hall, the Arkady, the pavilion and P-1's trench from afar (ADR-0074): its detailed mesh is drawn near it only.
+  if (alchemiaIn(block.bounds)) bakeAlchemiaStandIn(far);
+  if (arkadyIn(block.bounds)) bakeArkadyStandIn(far);
+  if (pavilionIn(block.bounds)) bakePavilionStandIn(far);
+  if (parkingIn(block.bounds)) bakeParkingStandIn(far);
   block.far = blockMesh(deps, `props-far-${block.key}`, far);
 };
 
 /** The robot dogs of a block (ADR-0063): by its stalls and by the gateways in it; none on phones. */
-const bakeBlockDogs = (deps: PropBakeDeps, sink: MeshSink, block: PropBlock, pieces: readonly WorldProp[]): void => {
+const bakeBlockDogs = (deps: Pick<PropBakeDeps, "poles">, sink: MeshSink, block: Pick<PropBlock, "bounds">, pieces: readonly WorldProp[]): void => {
   const dog = deps.poles.dog;
   const cityProps = deps.poles.props;
   if (!dog || !cityProps) return;
@@ -90,9 +101,11 @@ const bakeBlockDogs = (deps: PropBakeDeps, sink: MeshSink, block: PropBlock, pie
   bakeDogs(sink, cityProps, dog, spots);
 };
 
-/** Bakes a block's detailed pieces into one mesh on the street props' material (ADR-0050). */
-export const bakeNear = (deps: PropBakeDeps, block: PropBlock): void => {
-  block.baked = true;
+/**
+ * A block's detailed pieces as one sink (ADR-0050), as `bakeNear` draws them: pure, so the glitch
+ * scan flies the low patrols (ADR-0058 stage 7b) through the furniture the city draws.
+ */
+export const nearSink = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: Pick<PropBlock, "pieces" | "bounds">): MeshSink => {
   const sink = new MeshSink();
   const { poles } = deps;
   const pole = poles.pole;
@@ -110,11 +123,29 @@ export const bakeNear = (deps: PropBakeDeps, block: PropBlock): void => {
       bakeDoor(sink, models, p);
       continue;
     }
+    // A still figure (ADR-0058 stage 8): a model of the crowd's file on every quality, nobody before it loads.
+    if (p.prop === "figure") {
+      bakeFigure(sink, poles.props, p, deps.quality);
+      continue;
+    }
     if (models && bakeStreetModel(sink, models, p)) continue;
     bake(sink, propModel(p.prop, p.shape).sink, p);
     for (const c of p.chains ?? []) bake(sink, chainModel(c.end), { ...p, yaw: c.yaw });
   }
   if (pole && poles.props) bakePoles(sink, poles.props, pole, pieces.filter((p) => poles.isPole(p)));
   bakeBlockDogs(deps, sink, block, pieces);
-  block.near = blockMesh(deps, `props-${block.key}`, sink);
+  // The metro's pavilions standing in the block (ADR-0071 stages 2 and 3): no mesh of their own.
+  for (const e of pavilionsIn(block.bounds)) bakePavilion(sink, e, deps.quality);
+  // And under Alchemia's detailed mesh, hidden by it near the hall, standing in for it beyond.
+  if (alchemiaIn(block.bounds)) bakeAlchemiaStandIn(sink);
+  if (arkadyIn(block.bounds)) bakeArkadyStandIn(sink);
+  if (pavilionIn(block.bounds)) bakePavilionStandIn(sink);
+  if (parkingIn(block.bounds)) bakeParkingStandIn(sink);
+  return sink;
+};
+
+/** Bakes a block's detailed pieces into one mesh on the street props' material (ADR-0050). */
+export const bakeNear = (deps: PropBakeDeps, block: PropBlock): void => {
+  block.baked = true;
+  block.near = blockMesh(deps, `props-${block.key}`, nearSink(deps, block));
 };

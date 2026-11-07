@@ -1,0 +1,1 @@
+Broń i odzież mają poziom 1–30 i dwie nowe rzadkości, epicką i legendarną, z cechami; łup z wrogów i towar u Oyajiego mają poziom gracza, a karta przedmiotu pokazuje poziom, rzadkość i cechy (ADR-0059 etap 4).

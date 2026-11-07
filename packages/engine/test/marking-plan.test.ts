@@ -7,6 +7,17 @@ const line = [
   { x: 40, z: 0 },
 ];
 
+/** The area the triangles of `sink` cover, seen from above. */
+const paintedArea = (sink: MeshSink): number => {
+  let s = 0;
+  const p = sink.positions;
+  for (let t = 0; t < sink.indices.length; t += 3) {
+    const [a, b, c] = [sink.indices[t]!, sink.indices[t + 1]!, sink.indices[t + 2]!].map((i) => ({ x: p[i * 3]!, z: p[i * 3 + 2]! }));
+    s += Math.abs((b!.x - a!.x) * (c!.z - a!.z) - (c!.x - a!.x) * (b!.z - a!.z)) / 2;
+  }
+  return s;
+};
+
 describe("road markings in the picture (ADR-0052)", () => {
   it("break a centre line into dashes centred on the line, the same from either end", () => {
     const d = dashes(40, 3, 5);
@@ -21,7 +32,10 @@ describe("road markings in the picture (ADR-0052)", () => {
     planMarking(one, "edge", line, () => 1);
     const two = new MeshSink();
     planMarking(two, "centre-double", line, () => 1);
-    expect(two.vertexCount).toBe(one.vertexCount * 2);
+    // Two lines of the centre's width, 0.12 m apart between them; the drape cuts them on its own grid (G-301).
+    expect(paintedArea(two)).toBeCloseTo(2 * 40 * 0.12, 6);
+    expect(paintedArea(one)).toBeCloseTo(40 * 0.15, 6);
+    expect(Array.from({ length: two.vertexCount }, (_, i) => Math.abs(two.positions[i * 3 + 2]!)).every((z) => z > 0.06 - 1e-9)).toBe(true);
     for (let i = 0; i < one.vertexCount; i++) {
       expect(one.positions[i * 3 + 1]).toBeCloseTo(1 + MARKING_LIFT, 5);
       expect(one.colors[i * 4 + 3]).toBe(0);

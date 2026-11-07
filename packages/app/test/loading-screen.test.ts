@@ -9,7 +9,7 @@ import {
 } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { createUiStore } from "@seki/ui";
+import { createUiStore, translateText } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
 /** The loading screen of ADR-0057, headless: a fake renderer whose `prepare` the test drives. */
@@ -53,7 +53,7 @@ const setup = (render: RenderPort) => {
 /** Lets the promise callbacks of a settled prepare run. */
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
-const intro = (ui: ReturnType<typeof createUiStore>) => ui.getState().toasts.filter((t) => t.title === "Krakowskie Przedmieście").length;
+const intro = (ui: ReturnType<typeof createUiStore>) => ui.getState().toasts.filter((t) => translateText("en", t.title) === "Krakowskie Przedmieście").length;
 
 describe("loading screen (ADR-0057)", () => {
   it("starts at once with a renderer that prepares nothing", () => {

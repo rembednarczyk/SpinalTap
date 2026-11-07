@@ -1,4 +1,4 @@
-import { Compiler, type Story } from "inkjs/full";
+import { Compiler, Story } from "inkjs/full";
 import {
   type ContractVariation,
   type DomainState,
@@ -23,6 +23,7 @@ import {
   isMemoryId,
   isStoryChoiceId,
   isStoryOption,
+  reputationTier,
   resolveEnding,
   stanceOf,
 } from "@seki/core";
@@ -59,6 +60,28 @@ export const compileInk = (source: string): Story => {
   }
   if (!story || compiler.errors.length > 0) throw new InkCompileError(compiler.errors.join("\n") || "ink compilation failed");
   return story;
+};
+
+/** How many compiled stories `loadInk` keeps; the game has one source per language. */
+const COMPILED_LIMIT = 8;
+/** Compiled stories as ink JSON by their source (each language has its own source, so its own entry). */
+const compiled = new Map<string, string>();
+
+/**
+ * A fresh story of `source`, compiled once per source (G-325): compiling takes about ten times
+ * longer than loading the JSON. Only the compiled JSON is shared, an immutable string; every
+ * story gets its own state and its own externals, so nothing passes from one game to another.
+ * The first story of a source comes from the JSON too, so every runtime plays the same thing.
+ */
+export const loadInk = (source: string): Story => {
+  let json = compiled.get(source);
+  if (json === undefined) {
+    json = compileInk(source).ToJson() ?? "";
+    const oldest = compiled.keys().next();
+    if (compiled.size >= COMPILED_LIMIT && !oldest.done) compiled.delete(oldest.value);
+    compiled.set(source, json);
+  }
+  return new Story(json);
 };
 
 /** The main-quest step id the ink scripts branch on. */
@@ -126,7 +149,7 @@ export class NarrativeRuntime {
   private storyIn(language: Locale): Story {
     let story = this.stories.get(language);
     if (!story) {
-      story = compileInk(this.sources[language] ?? this.sources.pl);
+      story = loadInk(this.sources[language] ?? this.sources.pl);
       this.bindExternals(story);
       this.stories.set(language, story);
     }
@@ -163,7 +186,11 @@ export class NarrativeRuntime {
     const left = contract && clock ? contractSecondsLeft(contract, clock.tick, clock.ticksPerSecond) : null;
     this.story.variablesState.$("contract_time_left", left ?? 0);
     this.story.variablesState.$("contract_variation", contract ? describeVariation(variation ?? variationOf(contract), this.text) : "");
-    for (const f of FACTION_IDS) this.story.variablesState.$(`${f}_stance`, stanceOf(domain.reputation[f]));
+    // Three stances for coarse reactions, five tiers where -50 differs from -11 (ADR-0070).
+    for (const f of FACTION_IDS) {
+      this.story.variablesState.$(`${f}_stance`, stanceOf(domain.reputation[f]));
+      this.story.variablesState.$(`${f}_tier`, reputationTier(domain.reputation[f]));
+    }
     // The domain owns the main-thread choices; ink sees them as plain string variables.
     for (const choice of Object.keys(STORY_CHOICES) as StoryChoiceId[]) {
       this.story.variablesState.$(`choice_${choice}`, domain.story.choices[choice] ?? "");

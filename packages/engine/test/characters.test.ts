@@ -17,8 +17,8 @@ describe.each(Object.entries(builders))("character %s", (name, build) => {
     expect(rig.meshes.length).toBeGreaterThan(0);
     expect(rig.meshes.length).toBeLessThanOrEqual(3);
     for (const m of rig.meshes) {
-      // Ten joints, plus the hand and holster pistols (and their placeholder boxes) of armed characters.
-      expect(m.skeleton?.bones).toHaveLength(rig.aiming ? 14 : 10);
+      // Twelve joints (the wrists turn the hands, G-282), plus the hand and holster pistols (and their placeholder boxes) of armed characters.
+      expect(m.skeleton?.bones).toHaveLength(rig.aiming ? 16 : 12);
       expect(m.parent).toBe(rig.root);
     }
   });
@@ -67,6 +67,20 @@ describe("procedural animation", () => {
     expect(deathFinished(rig)).toBe(false);
     for (let i = 0; i < 20; i++) animateRig(rig, 0, 0.5);
     expect(deathFinished(rig)).toBe(true);
+  });
+
+  it("falls and sinks from the ground it died on, not from y = 0 (G-457)", () => {
+    for (const ground of [3, -1.5]) {
+      const rig = buildGanger(scene, materials, `dead-${ground}`);
+      rig.root.position.y = ground;
+      startDeath(rig);
+      animateRig(rig, 0, 0.7);
+      expect(rig.root.position.y).toBeCloseTo(ground + 0.12, 5);
+      for (let i = 0; i < 12; i++) animateRig(rig, 0, 0.5);
+      const sink = rig.dying! - 0.65 - 5.5;
+      expect(sink).toBeGreaterThan(0);
+      expect(rig.root.position.y).toBeCloseTo(ground + 0.12 - sink * 0.5, 5);
+    }
   });
 
   it("decays a hit flinch", () => {
@@ -257,15 +271,30 @@ describe("jumps, landings and ladders (ADR-0021)", () => {
     expect(hard.body.position.y).toBeCloseTo(0, 1);
   });
 
-  it("climbs a ladder hand over hand, arms up, and the cycle follows the climbing speed", () => {
+  it("climbs a ladder hand over hand, arms up, and the cycle follows the height on it (G-310)", () => {
     const r = rig();
-    for (let i = 0; i < 40; i++) animateRig(r, 0, 1 / 60, 0, {}, { climb: 2.2 });
-    expect(r.armL.rotation.x).toBeLessThan(-1.8);
-    expect(r.armR.rotation.x).toBeLessThan(-1.8);
+    // World height of a joint, its chain from the root brought up to date.
+    const worldY = (n: typeof r.root): number => {
+      const chain: (typeof r.root)[] = [];
+      for (let p: typeof r.root | null = n; p; p = p.parent as typeof r.root | null) chain.unshift(p);
+      for (const p of chain) p.computeWorldMatrix(true);
+      return n.getAbsolutePosition().y;
+    };
+    const climbTo = (frames: number, speed: number) => {
+      for (let i = 0; i < frames; i++) {
+        r.root.position.y += speed / 60;
+        animateRig(r, 0, 1 / 60, 0, {}, { climb: speed });
+      }
+    };
+    climbTo(40, 1.5);
+    for (const [wrist, shoulder] of [[r.wristL, r.armL], [r.wristR, r.armR]] as const) expect(worldY(wrist)).toBeGreaterThan(worldY(shoulder) - 0.1);
     expect(r.kneeL.rotation.x).toBeGreaterThan(0.6);
     const phase = r.climbPhase;
-    for (let i = 0; i < 10; i++) animateRig(r, 0, 1 / 60, 0, {}, { climb: 0 });
+    climbTo(10, 0);
     expect(r.climbPhase).toBe(phase);
+    // Two rungs (0.6 m) further up, a whole cycle on: the phase goes with the height, not the speed.
+    climbTo(18, 2);
+    expect(r.climbPhase - phase).toBeCloseTo(2 * Math.PI, 6);
     // Off the ladder the pose blends back to standing.
     for (let i = 0; i < 60; i++) animateRig(r, 0, 1 / 60);
     expect(r.armL.rotation.x).toBeGreaterThan(-0.5);

@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { type MapMarkerVm } from "@seki/ui";
 import { type DomainState, QUEST_MIRROR, createDomainState, endingFlag, hm, minuteOfDay } from "@seki/core";
 import { MemorySaveStore } from "@seki/persistence";
-import { CIVILIAN_SPAWN, FIXER_SPAWN, UME_HOME, market } from "@seki/sim";
+import { CIVILIAN_SPAWN, FIXER_SPAWN, REN_SPOT, UME_HOME, ground } from "@seki/sim";
 import { type Ui, allText, objective, playActOne, setup, steps, talkTo, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 import { expectedSpot, shownQuestTarget } from "../src/quest-target";
@@ -65,7 +65,8 @@ describe("G-035: the quest step's target on the map", () => {
   it("keeps the marker on her plan's spot while her chunk is not loaded", async () => {
     const { session, ui } = await loaded();
     waitUntil(session, 12);
-    const roof = market(86, 12.7, 59.6);
+    // Aleja Tysiąclecia on Podzamcze, far from the deptak.
+    const roof = ground(785, 350);
     teleport(session, roof.x, roof.z, 0, 0, roof.y);
     steps(session, 2);
     expect(session.sim.district).toBe("targ");
@@ -75,7 +76,7 @@ describe("G-035: the quest step's target on the map", () => {
     expect(near(marks[0], CIVILIAN_SPAWN.position, 1)).toBe(true);
   });
 
-  it("moves the marker on with the step: Ren on the roof over the market", async () => {
+  it("moves the marker on with the step: Ren on Alchemia's roof terrace", async () => {
     const { session, ui } = await loaded();
     talkTo(session, "ume");
     for (let guard = 0; guard < 10 && !ui.getState().dialogue?.ended; guard++) {
@@ -85,10 +86,10 @@ describe("G-035: the quest step's target on the map", () => {
     }
     session.intents.closeDialogue();
     steps(session, 2);
-    expect(objective(ui)).toBe("Climb the fire escape to the roof over the market and find Ren");
+    expect(objective(ui)).toBe("Climb the service ladder at the back of the glass pavilion on Alchemia's corner and find Ren on its roof");
     const marks = questMarkers(ui);
     expect(marks).toHaveLength(1);
-    expect(near(marks[0], market(86, 12.7, 59.6), 1)).toBe(true);
+    expect(near(marks[0], REN_SPOT, 1)).toBe(true);
   });
 });
 

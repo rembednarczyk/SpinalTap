@@ -71,6 +71,21 @@ describe("story language in a session (ADR-0056)", () => {
     expect(lines("metro_ride_3", createDomainState())?.[1]).toEqual({ speaker: "Dziecko", text: "Mamo, czemu ten pan śpi na stojąco?" });
   });
 
+  it("keeps each session's ink state its own, the compiled story shared (G-325)", () => {
+    const first = setup();
+    talkToKaito(first.session);
+    talkThrough(first.session, first.ui);
+    const second = setup();
+    second.session.intents.changeSettings({ locale: "pl" });
+    talkToKaito(second.session);
+    // The second game meets Kaito for the first time, in Polish, whatever the first has said.
+    expect(said(second.ui)[0]).toBe("No proszę. Chodzący trup z wraku na Krakowskim.");
+    second.session.intents.closeDialogue();
+    steps(second.session, 1);
+    talkToKaito(first.session);
+    expect(said(first.ui)[0]).not.toBe("Well, look at that. The walking corpse from the wreck on Krakowskie.");
+  });
+
   it("loads a Polish save in English, the ink state with it", async () => {
     const store = new MemorySaveStore();
     const pl = setup(store);

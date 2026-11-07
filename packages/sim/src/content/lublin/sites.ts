@@ -4,14 +4,17 @@ import { NABRZEZE_CHUNKS } from "./nabrzeze.generated";
 import { PODZAMCZE_CHUNKS } from "./podzamcze.generated";
 import { STARE_MIASTO_CHUNKS } from "./stare-miasto.generated";
 import { GATE_PASSAGES, type PassageSite } from "./gate-passages";
-import { type GroundRect, type Pad, type Ramp, mapHeight, stepRamps } from "./shape";
+import { abutmentRamps } from "./abutments";
+import { type GroundRect, type Pad, type Ramp, flightRamps, mapHeight, stepRamps } from "./shape";
 import type { LublinChunkData } from "./types";
+import { ALCHEMIA_PADS, ALCHEMIA_RAMPS } from "../alchemia/terraces";
 
 /**
  * Where the game's places stand in Lublin (ADR-0045): the hand-made set pieces moved into the
- * city (the market under the viaduct on Aleja Tysiąclecia, Tessen's docks on the Bystrzyca, the
- * car wash in a yard behind Plac Łokietka), the interiors cut into real tenements on Krakowskie Przedmieście,
- * and the terrain shaped under them. World metres around `LUBLIN_ANCHOR` (ADR-0042).
+ * city (Tessen's docks on the Bystrzyca, the car wash in a yard behind Plac Łokietka; the market
+ * that stood on Aleja Tysiąclecia is in Alchemia now, ADR-0063), the interiors cut into real
+ * tenements on Krakowskie Przedmieście, and the terrain shaped under them. World metres around
+ * `LUBLIN_ANCHOR` (ADR-0042).
  */
 
 /** The map's chunks in table order (the generated data, before the game's shaping). */
@@ -22,12 +25,6 @@ export const rawHeight = (x: number, z: number): number => mapHeight(MAP_CHUNKS,
 
 const round = (y: number): number => Math.round(y * 100) / 100;
 
-/**
- * The market of Podzamcze (ADR-0045): the old market under the elevated highway, now on Aleja
- * Tysiąclecia between Plac Zamkowy and the bus station; its deck is the viaduct over the
- * avenue. Its own coordinates (x 66..126, z 56..116) shift by this.
- */
-export const MARKET_PLACE: Vec3 = { x: 689, y: -20.6, z: 260 };
 /** Tessen's docks on the Bystrzyca (local x -40..34, z 90..218), reached by the metro only. */
 export const DOCKS_PLACE: Vec3 = { x: 2560, y: -28.6, z: 300 };
 /**
@@ -38,8 +35,6 @@ export const DOCKS_PLACE: Vec3 = { x: 2560, y: -28.6, z: 300 };
  */
 export const CAR_WASH_PLACE: Vec3 = { x: 395, y: round(rawHeight(403, -32)), z: -69 };
 
-/** The market's area in the world. */
-export const MARKET_AREA: GroundRect = { minX: 755, maxX: 815, minZ: 316, maxZ: 376 };
 /** The docks' yard and quay, and the basin dug in front of the quay. */
 export const DOCKS_AREA: GroundRect = { minX: 2520, maxX: 2594, minZ: 390, maxZ: 450 };
 export const DOCKS_BASIN: GroundRect = { minX: 2520, maxX: 2594, minZ: 452, maxZ: 500 };
@@ -135,8 +130,8 @@ export const BUILDING_CUTS: readonly BuildingCut[] = [
 
 /** Rectangles where the map's buildings and surfaces give way to a set piece. */
 export const CLEARED: readonly GroundRect[] = [DOCKS_AREA, DOCKS_BASIN];
-/** Rectangles where only the map's buildings give way (the surfaces stay under the market). */
-export const CLEARED_BUILDINGS: readonly GroundRect[] = [MARKET_AREA, DOCKS_AREA, DOCKS_BASIN, CAR_WASH_AREA];
+/** Rectangles where only the map's buildings give way (the surfaces stay under the car wash). */
+export const CLEARED_BUILDINGS: readonly GroundRect[] = [DOCKS_AREA, DOCKS_BASIN, CAR_WASH_AREA];
 
 /** A rectangle grown by `d` metres on every side (or by `d` and `north` on the north side). */
 const grow = (r: GroundRect, d: number, north = d): GroundRect => ({ minX: r.minX - d, maxX: r.maxX + d, minZ: r.minZ - d, maxZ: r.maxZ + north });
@@ -147,17 +142,26 @@ const grow = (r: GroundRect, d: number, north = d): GroundRect => ({ minX: r.min
  * what must be flat (the docks' quay ends at the basin instead, which starts 2 m out).
  */
 export const PADS: readonly Pad[] = [
-  { rect: grow(MARKET_AREA, 2.5), y: MARKET_PLACE.y, blend: 5 },
-  { rect: grow(DOCKS_AREA, 5, 0), y: DOCKS_PLACE.y, blend: 6 },
-  { rect: DOCKS_BASIN, y: DOCKS_PLACE.y - 3, blend: 1.5 },
-  { rect: grow(CAR_WASH_AREA, 5), y: CAR_WASH_PLACE.y, blend: 3 },
+  { rect: grow(DOCKS_AREA, 5, 0), y: DOCKS_PLACE.y, blend: 6, row: "T-002" },
+  { rect: DOCKS_BASIN, y: DOCKS_PLACE.y - 3, blend: 1.5, row: "T-002" },
+  { rect: grow(CAR_WASH_AREA, 5), y: CAR_WASH_PLACE.y, blend: 3, row: "T-051" },
   ...ROOM_SITES.map((r): Pad => ({ rect: grow(r.rect, 5), y: r.floor, blend: 2 })),
-  // Dug out under the Trybunał for Trasa Podziemna (ADR-0048): the grid points x 575..585,
-  // z -65..-55 of the 5 m grid, so the cells between them are below the cellars' floor and the
-  // slope into the cells around stays inside the Trybunał's walls. 2 m under the floor: the
-  // Rynek's paving, draped in 5 m triangles, then stays under the floor up to the cellars' walls.
-  { rect: { minX: 574, maxX: 586, minZ: -66, maxZ: -54 }, y: TRASA_PODZIEMNA.floor - 2, blend: 0.01 },
+  // Dug out under the Trybunał for Trasa Podziemna (ADR-0048): level over x 575..585, z -65..-55,
+  // sloping up to the Rynek over 5 m, so the slope stays inside the Trybunał's walls. In metres,
+  // not on a grid's points (G-252): on any grid of up to 5 m the stairs keep a metre of ground
+  // under them, and on the import's 5 m grid its points are as they were. 2 m under the floor:
+  // the Rynek's paving, draped in 5 m triangles, then stays under the floor up to the cellars' walls.
+  { rect: { minX: 575, maxX: 585, minZ: -65, maxZ: -55 }, y: TRASA_PODZIEMNA.floor - 2, blend: 5, row: "T-055" },
+  // Alchemia's terraces by the investor's plan (ADR-0074, T-206, T-207, T-217): T1 in front of the food
+  // hall, the line of the grid under its back wall at T0, T2 before the Arkady where the Hebi hollow was (T-186).
+  ...ALCHEMIA_PADS,
 ];
 
-/** Even ramps along the steps of the map (ADR-0045). */
-export const RAMPS: readonly Ramp[] = stepRamps(MAP_CHUNKS);
+/**
+ * Even ramps along the steps of the map (ADR-0045), then the level ground before the bridges'
+ * abutments (G-349), then Alchemia's ramps beside the food hall from T0 to T1 (ADR-0074, T-208) and its
+ * stairs from T1 down to T2 (T-219), laid over the pads.
+ */
+export const RAMPS: readonly Ramp[] = [...stepRamps(MAP_CHUNKS), ...abutmentRamps(MAP_CHUNKS), ...ALCHEMIA_RAMPS];
+/** Ramps along the flights the terrain climbs against their `incline` (G-236, T-131), laid last on a finer grid (`terrain.ts`). */
+export const FLIGHT_RAMPS: readonly Ramp[] = flightRamps(MAP_CHUNKS);

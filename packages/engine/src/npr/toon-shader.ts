@@ -102,6 +102,8 @@ uniform vec3 fogColor;
 uniform float fogDensity;
 uniform vec4 pointPos[${MAX_POINT_LIGHTS}];
 uniform vec4 pointColor[${MAX_POINT_LIGHTS}];
+/** Ground rectangle each light reaches (min x, min z, max x, max z), as pointLightAt in toon-point-lights. */
+uniform vec4 pointClip[${MAX_POINT_LIGHTS}];
 uniform float pointCount;
 uniform sampler2D shadowSampler;
 /** x: depth bias, y: texel size, z: shadow strength (0 disables). */
@@ -110,6 +112,8 @@ uniform vec3 shadowParams;
 uniform vec4 flashLight;
 /** City kit: brightness of self-lit swatches (1 at night, dimmer by day). */
 uniform float selfLit;
+/** Halftone fade of this mesh (body-dither.ts): 0 solid .. 1 gone. */
+uniform float dither;
 #ifdef ENV_REFLECT
 /** Static wet-asphalt probe (ADR-0036): neon, signs, far city and sky, seen from under the street. */
 uniform samplerCube envSampler;
@@ -237,6 +241,8 @@ float moonShadow() {
 }
 
 void main(void) {
+  // Dots of a 4 px grid grow with the fade and are left out (G-275): screen-door, no blending.
+  if (dither > 0.0 && length(fract(gl_FragCoord.xy * 0.25) - 0.5) < dither * 0.71) discard;
   vec3 n = normalize(vNormal);
   if (!gl_FrontFacing) n = -n;
   vec3 v = normalize(cameraPosition - vWorldPos);
@@ -244,14 +250,16 @@ void main(void) {
   vec3 albedo = baseColor;
 #ifdef TEXTURE
   vec4 texel = texture2D(baseSampler, vUV);
+#ifdef TINT
+  // Garment colour (ADR-0015 E7): the cloth's shading kept as brightness, the hue from baseColor.
+  // A cut-out texel takes the tint too: its brightness floor would light up the key below, a
+  // magenta fringe round tinted hair and cloth (ADR-0076).
+  albedo *= 0.3 + 0.85 * dot(texel.rgb, vec3(0.299, 0.587, 0.114));
+#else
 #ifdef ALPHATEST
   // Cut-out hair strands, lashes and brows; the toon pass stays opaque.
   if (texel.a < 0.5) albedo = vec3(1.0, 0.0, 1.0);
 #endif
-#ifdef TINT
-  // Garment colour (ADR-0015 E7): the cloth's shading kept as brightness, the hue from baseColor.
-  albedo *= 0.3 + 0.85 * dot(texel.rgb, vec3(0.299, 0.587, 0.114));
-#else
   albedo *= texel.rgb;
 #endif
 #endif
@@ -305,6 +313,8 @@ void main(void) {
     vec3 l = toL / max(d, 0.0001);
     float att = clamp(1.0 - d / pointPos[i].w, 0.0, 1.0);
     att *= att;
+    vec4 clip = pointClip[i];
+    att *= step(clip.x, vWorldPos.x) * step(vWorldPos.x, clip.z) * step(clip.y, vWorldPos.z) * step(vWorldPos.z, clip.w);
     float ndl = max(dot(n, l), 0.0);
     lit += pointColor[i].rgb * pointColor[i].a * band(ndl * att * 1.8);
     if (g > 0.0) {

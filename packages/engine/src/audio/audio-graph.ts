@@ -83,13 +83,22 @@ export const buildGraph = (ctx: AudioContext, mix: MixState): Graph => {
   const master = gain(mix.gain("master"));
   master.connect(compressor);
 
-  const buses = { music: gain(mix.gain("music")), sfx: gain(mix.gain("sfx")), ambience: gain(mix.gain("ambience")) };
+  const buses = {
+    music: gain(mix.gain("music")),
+    sfx: gain(mix.gain("sfx")),
+    ambience: gain(mix.gain("ambience")),
+    dialogue: gain(mix.gain("dialogue")),
+    radio: gain(mix.gain("radio")),
+  };
   const musicFilter = ctx.createBiquadFilter();
   musicFilter.type = "lowpass";
   musicFilter.frequency.value = MOOD_CUTOFF.explore;
   buses.music.connect(musicFilter).connect(master);
   buses.sfx.connect(master);
   buses.ambience.connect(master);
+  buses.dialogue.connect(master);
+  // The radio keeps the score's mood filter it had on the music bus, under its own volume.
+  buses.radio.connect(musicFilter);
 
   const layers = {} as Record<Layer, GainNode>;
   for (const l of LAYERS) {

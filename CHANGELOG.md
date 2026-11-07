@@ -5,6 +5,27 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 2 listopada 2026
+- Budynki ceglane z mapy (Donżon, Baszta Gotycka, Kaplica Trójcy) mają ściany z gołej cegły zamiast tynku, a budynki z kolorem fasady w OSM (m.in. Urząd Miasta, Trybunał Koronny, Archikatedra, Zamek) dostają najbliższy mu tynk z palety (G-244).
+- Na deptaku Krakowskiego Przedmieścia świecą same pastorały: znika 16 nowoczesnych słupów, które stały metr od nich, i 2 latarnie drogowe u wylotów bocznych ulic; generator nie stawia zwykłej latarni bliżej niż 8 m od stylizowanej (G-259).
+- Na pierzei Krakowskiego Przedmieścia przy Placu Litewskim stoją same pastorały, od zachodniego końca placu do Kapucyńskiej: 8 nowoczesnych słupów ustępuje pastorałom w rozstawie deptaka, słupy zostają na alejkach placu (G-266).
+- Na Starym Mieście w murach nie ma już latarni drogowych: dwie latarnie z OSM na Archidiakońskiej przy Placu po Farze są stylizowanymi pastorałami w tych samych miejscach (G-264).
+- Przy Jezuickiej 14 na Starym Mieście można wejść do pokoju kapsułowego na wynajem (kuchnia, łóżko we wnęce pod szafkami, ekrany); wejście zapisuje grę jak w innych lokalach (ADR-0063 etap 3).
+- Na ławkach, w ogródkach i przy budkach z jedzeniem, na przystankach i przed drzwiami lokali są ludzie w nieruchomych pozach: siedzą, czekają w kolejce, palą; na telefonie (jakość niska) jest ich połowa, w prostszej wersji (ADR-0058 etap 8).
+- Ciało napastnika z wygranego napadu (obalonego albo zabitego takedownem) nie znika, gdy gracz odejdzie kilkaset metrów: po powrocie, także po zapisie i wczytaniu, leży tam, gdzie upadło; ocucony napastnik znów odchodzi z ulicą jak zwykły przechodzień (G-239).
+- Wieża cerkwi św. Jozafata dostaje niski dach namiotowy z NMPT: okap y 8,1 zamiast 6,5, szczyt bez zmian na y 9,5 (G-246).
+- Niska przybudówka Pałacu Lubomirskich od Placu Litewskiego ma płaski dach ok. 5,5 m nad ziemią, jak w numerycznym modelu pokrycia terenu, zamiast bryły równej pałacowi; parter i pierwsze piętro fasady pałacu są znów widoczne (G-251).
+- Nad dachami ulic Lublina latają drony: patrole policji i korporacji ze światłami, kurierzy z paczkami i drony z ekranami reklamowymi; na telefonie (jakość niska) ich nie ma (ADR-0058 etap 7).
+- Zapis czeka na koniec obezwładnienia, bo chwytu nie ma w zapisie: zapis ręczny w chwycie jest odmówiony jak w rozmowie, a autozapis zapisuje się zaraz po chwycie, więc gra wczytana i ta, z której zapisano, toczą się dalej tak samo (G-253).
+- Ciało napastnika z wygranego napadu (obalonego albo zabitego takedownem) zostaje po zapisie i wczytaniu tam, gdzie było: na ulicy, na ramieniu gracza albo w kryjówce; zapis w trakcie napadu kończy go jak odejście (G-233).
+- Podpowiedź na drążku ruchu na telefonie jest po angielsku („Move”), a po polsku tylko przy wybranym polskim w opcjach.
+- Pojazdy z paczki 2 i Kenneya: stary sedan, sportowe auto, SUV, pickup, śmieciarka i trolejbus z autobusu, z prostszymi wersjami na telefon i z daleka (ADR-0058 etap 4).
+- Skaner pokazuje „Doctor Mori” w wersji angielskiej i „Doktor Mori” w polskiej, zamiast zawsze po polsku (G-248).
+- Wolnostojące wieże z mapy (dzwonnica św. Mikołaja, wieża cerkwi św. Jozafata, Baszta Gotycka, Donżon) mają fasadę wieży zamiast rzędów okien mieszkań, a dzwonnice bez dachu w mapie dostają dach namiotowy (G-232).
+- Zapis w trakcie paniki po walce uspokaja ulicę także w grze, z której zapisano, a telefon świadka w toku dochodzi od razu przy zapisie (zgłoszenie i heat jak bez zapisu), więc gra wczytana i niewczytana dalej toczą się tak samo (G-240).
+- Pałac Lubomirskich przy Placu Litewskim ma dwie wieże i dach na wysokości z numerycznego modelu pokrycia terenu zamiast płaskiej bryły o domyślnej wysokości (G-249).
+- Schody z kierunkiem w mapie wznoszą się w tę stronę co w Lublinie: także schody przy portalu Archikatedry i schody z wiaduktu Zamkowej (G-236).
+- Wieża kościoła Brygidek przy Narutowicza stoi w grze z wysokością ok. 34 m z numerycznego modelu pokrycia terenu; wieże zmapowane bez `building` nie są już pomijane (G-098).
+- Schody na mapie mają stopnie ułożone wzdłuż biegu i widoczny pas szeroki na co najmniej 0,45 m (G-213).
 - Kamienica przy Złotej 6 ma drzwi klatki od Złotej zamiast od parkingu, a Grodzka 7 nie ma już drzwi od zamkniętego podwórza: Trasa Podziemna pod Starym Miastem nie liczy się jako ulica przed ścianą (G-197).
 - Napad na przechodnia kończy się wygraną i nagrodą także wtedy, gdy napastnik został obalony albo zabity takedownem i jego ciało leży na ulicy; nagroda jest jedna, także po zapisie i wczytaniu (G-231).
 - Posiłek ochrony powalony żywcem nie znika już, gdy gracz odejdzie kilkaset metrów: leży w świecie jak ciało posiłku, a licznik wezwanych posiłków zostaje (G-219).

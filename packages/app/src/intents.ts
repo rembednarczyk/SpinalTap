@@ -9,6 +9,7 @@ import type {
   LootIntents,
   MetroIntents,
   PhoneIntents,
+  ProgressionIntents,
   RadioIntents,
   SessionIntents,
   SettingsIntents,
@@ -48,6 +49,7 @@ const SHOP: Keys<ShopIntents> = {
   upgradeBackpack: true,
   installCyberwareItem: true,
   removeCyberware: true,
+  respec: true,
   closeShop: true,
   talkToShopkeeper: true,
 };
@@ -65,13 +67,14 @@ const CHARACTER: Keys<CharacterIntents> = {
   installMod: true,
   removeMod: true,
 };
+const PROGRESSION: Keys<ProgressionIntents> = { spendAttributePoint: true, spendPerkPoint: true };
 const SETTINGS: Keys<SettingsIntents> = { changeSettings: true, bindKey: true, resetControls: true, reload: true };
 const DIFFICULTY: Keys<DifficultyIntents> = { setDifficulty: true };
 const CAMERA: Keys<CameraIntents> = { setFieldOfView: true };
 const PHONE: Keys<PhoneIntents> = { openPhone: true, closePhone: true, readThread: true };
 const CONTRACT: Keys<ContractIntents> = { dismissDebrief: true };
 const HACK: Keys<HackIntents> = { setScan: true, pickQuickhack: true, submitBreach: true };
-const METRO: Keys<MetroIntents> = { travelMetro: true, closeMetro: true };
+const METRO: Keys<MetroIntents> = { selectMetroStop: true, buyMetroTicket: true, closeMetro: true };
 const RADIO: Keys<RadioIntents> = { setRadioStation: true, nextRadioStation: true };
 
 /** The journal has no controller: following an entry is one command to the simulation. */
@@ -85,6 +88,7 @@ export const controllerIntents = (c: Controllers, sim: SimRef): ControllerIntent
   ...part<ShopIntents>(c.shop, SHOP),
   ...part<LootIntents>(c.loot, LOOT),
   ...part<CharacterIntents>(c.character, CHARACTER),
+  ...part<ProgressionIntents>(c.progression, PROGRESSION),
   ...part<SettingsIntents>(c.settings, SETTINGS),
   ...part<CameraIntents>(c.settings, CAMERA),
   ...part<DifficultyIntents>(c.difficulty, DIFFICULTY),

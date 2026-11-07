@@ -42,6 +42,9 @@ const intents = (): UiIntents => ({
   dropItem: vi.fn(),
   installMod: vi.fn(),
   removeMod: vi.fn(),
+  spendAttributePoint: vi.fn(),
+  spendPerkPoint: vi.fn(),
+  respec: vi.fn(),
   openPhone: vi.fn(),
   closePhone: vi.fn(),
   readThread: vi.fn(),
@@ -49,7 +52,8 @@ const intents = (): UiIntents => ({
   setScan: vi.fn(),
   pickQuickhack: vi.fn(),
   submitBreach: vi.fn(),
-  travelMetro: vi.fn(),
+  selectMetroStop: vi.fn(),
+  buyMetroTicket: vi.fn(),
   closeMetro: vi.fn(),
   setRadioStation: vi.fn(),
   nextRadioStation: vi.fn(),
@@ -60,9 +64,9 @@ const pad = (): TouchPadSink => ({ setStick: vi.fn(), look: vi.fn(), press: vi.f
 
 const strip = (patch: Partial<WeaponStripVm> = {}): WeaponStripVm => ({
   slots: [
-    { slot: "primary", key: 1, name: "Hebi SMG", rarity: "uncommon" },
-    { slot: "secondary", key: 2, name: "Unity-9", rarity: "common" },
-    { slot: "melee", key: 3, name: null, rarity: null },
+    { slot: "primary", key: 1, name: "Hebi SMG", rarity: "uncommon", icon: "smg" },
+    { slot: "secondary", key: 2, name: "Unity-9", rarity: "common", icon: "pistol" },
+    { slot: "melee", key: 3, name: null, rarity: null, icon: null },
   ],
   active: "secondary",
   loaded: 7,

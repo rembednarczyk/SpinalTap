@@ -37,9 +37,43 @@ jobs:
           echo "$files"
           if echo "$files" | grep -qvE '^(docs/|changelog\.d/)|\.md$'; then echo "code=true" >> "$GITHUB_OUTPUT"; else echo "code=false" >> "$GITHUB_OUTPUT"; fi
 
+  # G-376: one job ran the whole suite with coverage in 18.6 min against its 20 min limit. Two
+  # shards run in parallel and write blob reports; the checks job merges them and applies the
+  # coverage thresholds once, on the merged coverage (a shard alone covers only part of the code).
+  unit:
+    # No matrix value in the name, as with the e2e shards.
+    name: Unit tests
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The default reporter prints failures in the log; the blob report feeds the merge.
+      - run: pnpm exec vitest run --coverage --reporter=default --reporter=blob --shard=${{ matrix.shard }}/2
+        env:
+          VITEST_COVERAGE_SHARD: "1"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: blob-${{ matrix.shard }}
+          path: .vitest/blob
+          include-hidden-files: true
+          retention-days: 1
+
   checks:
     name: Typecheck, lint, architecture, unit tests
-    needs: changes
+    needs: [changes, unit]
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -54,7 +88,12 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm depcheck
-      - run: pnpm test:coverage
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: blob-*
+          path: .vitest/blob
+          merge-multiple: true
+      - run: pnpm exec vitest run --merge-reports --coverage
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -63,7 +102,8 @@ jobs:
 
   # ADR-0046: two shards in parallel with the checks; each builds once and runs half of the
   # specs (a single job took 40 min, most of it cold boots under SwiftShader). Setup is about
-  # 40 s a shard, so two shards cost about the same minutes as three with less rounding.
+  # 2 min a shard with warm caches (G-387), so two shards cost about the same minutes as three
+  # with less rounding.
   e2e:
     # No matrix value in the name: GitHub appends "(1)", "(2)" itself, and a skipped job (docs-only
     # change) then reads plainly instead of showing the unexpanded expression.
@@ -83,12 +123,73 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Start the clock
+        run: echo "start $(date +%s)" > "$RUNNER_TEMP/e2e-times"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - run: pnpm exec playwright install --with-deps chromium
+      - id: pw
+        run: |
+          echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "image=${ImageOS:-unknown}" >> "$GITHUB_OUTPUT"
+      # G-387: browsers and the system packages Playwright wants come from caches. The fonts
+      # (fonts-ipafont-gothic, fonts-unifont, xfonts-*, 22 MB) once took 11 min from a slow apt
+      # mirror and the shard ran out of time. They stay installed: signs and props draw text into
+      # the canvas, so the NPR snapshot may depend on the fallback fonts.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - id: apt-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/playwright-debs
+          key: playwright-debs-${{ runner.os }}-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}
+      - run: pnpm exec playwright install chromium
+      - name: Install system dependencies of Chromium (cached .deb packages first)
+        id: deps
+        run: |
+          # The dry run lists what apt would install (dependencies included) and exits 1 if any.
+          missing() { pnpm exec playwright install-deps --dry-run chromium | sed -n 's/^  \([^ ]*\)$/\1/p' || true; }
+          need=$(missing)
+          if [ -z "$need" ]; then echo "All system dependencies of Chromium are installed."; exit 0; fi
+          echo "Missing:" $need
+          if ls ~/playwright-debs/*.deb >/dev/null 2>&1; then
+            # Local .deb files whose dependencies are present: dpkg only, no apt resolution and no mirror.
+            # apt-get install with file paths still fetched the same fonts from the mirror when the
+            # mirror offered another candidate (amd64v3), which cost 15 min at 31 kB/s (G-400).
+            ls -l ~/playwright-debs
+            sudo dpkg -i ~/playwright-debs/*.deb || true
+            need=$(missing)
+          fi
+          if [ -n "$need" ]; then
+            echo "Downloading:" $need
+            sudo apt-get update
+            mkdir -p ~/playwright-debs
+            (cd ~/playwright-debs && apt-get download $need)
+            sudo dpkg -i ~/playwright-debs/*.deb
+            echo "save=true" >> "$GITHUB_OUTPUT"
+          fi
+          test -z "$(missing)"
+      - if: steps.deps.outputs.save == 'true' && steps.apt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/playwright-debs
+          key: playwright-debs-${{ runner.os }}-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}
+      - name: Mark the end of setup
+        run: echo "setup $(date +%s)" >> "$RUNNER_TEMP/e2e-times"
       - run: pnpm test:e2e --shard=${{ matrix.shard }}/2
         env:
           CI: "true"
+      - name: Print setup and test times
+        if: always()
+        run: |
+          now=$(date +%s)
+          start=$(awk '$1 == "start" { print $2 }' "$RUNNER_TEMP/e2e-times")
+          setup=$(awk '$1 == "setup" { print $2 }' "$RUNNER_TEMP/e2e-times")
+          setup=${setup:-$now}
+          line="E2E shard ${{ matrix.shard }}: setup $((setup - start)) s, tests $((now - setup)) s, total $((now - start)) s of 1500 s; .deb cache hit: ${{ steps.apt-cache.outputs.cache-hit || 'false' }}"
+          echo "$line"
+          echo "$line" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

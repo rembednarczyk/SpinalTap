@@ -1,4 +1,4 @@
-import { CIVILIAN_SIGHT, type Vec3, angleTo } from "@seki/core";
+import { CIVILIAN_SIGHT, type Vec3 } from "@seki/core";
 import type { DownedBody, Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { eyeOf, lineOfSight } from "../../world/hitscan";
@@ -10,7 +10,7 @@ import { worldTimeScale } from "../ability-system";
 import { cameraSeesPoint, dropBodyCalls, report, securityAt, sendSecurity } from "../crime-system";
 import { BODY_NOISE } from "../death-system";
 import { scare } from "./civilian-ai-system";
-import { GUARD_CONE, GUARD_NEAR, TRACK_GRACE, giveLead } from "./ganger-perception";
+import { TRACK_GRACE, giveLead, inSightCone } from "./ganger-perception";
 
 /** Seconds an NPC spends at the side of someone knocked out before it comes round (ADR-0065). */
 export const WAKE_TIME = 6;
@@ -30,12 +30,12 @@ const civilianBody = (b: Entity): boolean => !!b.civilian || b.faction === "civi
 const freeToLook = (ctx: SimContext, g: Entity): boolean =>
   !!g.ai && !g.ai.alerted && !g.ai.victim && !g.downed && !incapacitated(ctx, g) && (g.health?.current ?? 1) > 0;
 
-/** Does this AI see the body: its sight range, its cone for a guard (or right next to it), a clear line. */
+/** Does this AI see the body: its sight range, its cone (or right next to it, ADR-0069), a clear line. */
 const aiSeesBody = (ctx: SimContext, g: Entity, b: Entity): boolean => {
   if (!g.ai || (g.hackFx?.blind ?? 0) > 0) return false;
   const distance = Math.hypot(b.position.x - g.position.x, b.position.z - g.position.z);
   if (distance > g.ai.aggroRange) return false;
-  if (g.ai.cone && distance > GUARD_NEAR && Math.abs(angleTo({ x: g.position.x, z: g.position.z, yaw: g.yaw }, b.position.x, b.position.z)) > GUARD_CONE) return false;
+  if (!g.ai.alerted && !inSightCone(g, b.position.x, b.position.z, distance)) return false;
   return lineOfSight(ctx.world, eyeOf(g), lyingAt(b));
 };
 
@@ -68,7 +68,7 @@ const found = (ctx: SimContext, b: Body, finder: Entity, channel: "patrol" | "ca
   }
   const player = ctx.world.with("player").first;
   // A dead body is a murder (ADR-0029), someone knocked out an assault.
-  report(ctx, b.downed.dead ? "murder" : "assault", channel, finder.id, player?.id ?? 0, at);
+  report(ctx, b.downed.dead ? "murder" : "assault", channel, finder.id, player?.id ?? 0, at, b.id);
   dropBodyCalls(ctx, b.id);
 };
 

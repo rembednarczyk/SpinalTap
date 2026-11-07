@@ -81,6 +81,7 @@ const decode = (ctx: BaseAudioContext, bytes: ArrayBuffer): Promise<AudioBuffer>
 export class SampleBank {
   private readonly entries = new Map<string, Entry>();
   private readonly inflight = new Set<Promise<void>>();
+  private readonly jobs = new Map<string, Promise<void>>();
 
   constructor(private readonly fetchBytes: FetchBytes = defaultFetch) {}
 
@@ -97,9 +98,17 @@ export class SampleBank {
           this.entries.set(url, { state: "failed" });
         }
       })();
+      this.jobs.set(url, job);
       this.inflight.add(job);
       void job.finally(() => this.inflight.delete(job));
     }
+  }
+
+  /** Loads one URL (once) and resolves with its buffer, or null when it is missing or undecodable. */
+  async request(ctx: BaseAudioContext, url: string): Promise<AudioBuffer | null> {
+    this.load(ctx, [url]);
+    await this.jobs.get(url);
+    return this.get(url);
   }
 
   /** Decoded buffer, or null while pending, after a failure or when never requested. */

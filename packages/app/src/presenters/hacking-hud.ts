@@ -32,6 +32,8 @@ export class HackingHud implements HudPart {
         if (ui.getState().upload?.hackId === e.hackId) patchUi(ui, { upload: null });
         this.note("fail", this.t("hack.failed", { hack: this.t(`quickhack.${e.hackId}`), reason: this.t(`hack.fail.${e.reason}`) }));
       }),
+      // Chain (ADR-0059): the hack also landed on a second target; after its QuickhackApplied.
+      bus.on("QuickhackChained", (e) => this.note("ok", this.t("perk.chained", { hack: this.t(`quickhack.${e.hackId}`) }))),
       bus.on("QuickhackTraced", () => this.note("traced", this.t("hack.traced"))),
       bus.on("BreachCompleted", (e) => {
         // The result in the language of the moment (ADR-0056), the daemons by their catalog names.
@@ -54,7 +56,8 @@ export class HackingHud implements HudPart {
       const prev = ui.getState().scanTarget;
       const locale = ui.getState().settings.locale;
       if (!target) out.scanTarget = null;
-      else if (prev?.id !== target.id || this.cardLocale !== locale) {
+      // A level up regrades the enemies in the world (ADR-0059, stage 5): the card follows the level too.
+      else if (prev?.id !== target.id || this.cardLocale !== locale || prev.level !== target.enemy?.level) {
         out.scanTarget = scanTargetVm(target, locale);
         this.cardLocale = locale;
       }

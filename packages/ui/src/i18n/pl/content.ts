@@ -34,18 +34,28 @@ export const plContent = {
   "prompt.help": "Pomóż",
   "prompt.door.force": "Wyłam zamek (podniesie alarm)",
   "prompt.door.locked": "Drzwi na kod: zamknięte",
-  // Obezwładnienia (ADR-0065): klawisz interakcji i przytrzymanie ataku do końca.
-  "prompt.takedown": "Obezwładnij",
-  "prompt.takedown.kill": "przytrzymaj atak, by zabić",
+  // Obezwładnienia (ADR-0065, ADR-0075): klawisz interakcji chwyta; w chwycie ogłusza, a atak zabija.
+  "prompt.takedown": "Chwyć",
+  "prompt.grab": "Ogłusz",
+  "prompt.grab.kill": "Zabij",
   // Ciała (ADR-0065, etap 3): ten sam klawisz podnosi, upuszcza albo ukrywa.
   "prompt.body.carry": "Podnieś",
   "prompt.body.drop": "Upuść",
   "prompt.body.hide": "Ukryj",
+  "prompt.body.no-room": "Brak miejsca, by je odłożyć",
   // Wnętrza (sim `INTERIORS`, ADR-0061).
   "interior.clinic": "Klinika doktora Mori",
   "interior.neon-koi": "Neon Koi",
   "interior.tessen-office": "Biuro Tessen",
   "interior.trasa-podziemna": "Trasa Podziemna",
+  "interior.capsule": "Pokój kapsułowy na wynajem",
+  // Perony metra (ADR-0071 etap 4).
+  "interior.metro-shinsekai": "Peron metra Plac Litewski",
+  "interior.metro-kanal": "Peron metra Brama Krakowska",
+  "interior.metro-targ": "Peron metra Plac Zamkowy",
+  "interior.metro-doki": "Peron metra Nabrzeże Bystrzycy",
+  "interior.alchemia-foodhall": "Food hall Alchemia",
+  "interior.alchemia-parking": "Parking Alchemii",
   "prompt.loot": "Przeszukaj",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Szef ekipy co godzinę odchodzi sam na bok",
@@ -53,9 +63,9 @@ export const plContent = {
   "hook.delivery_1": "Grodzką pod kładką jest szybciej i nikt tam nie stoi",
   "hook.delivery_2": "Hebi łapią kurierów pod kładką na Grodzkiej, Placu po Farze nie pilnują",
   "hook.retrieve_1": "Po północy drugi strażnik skrytki idzie na kwadrans po ramen",
-  "hook.retrieve_2": "Z wiaduktu widać skrytkę; strażnicy pilnują tylko przejścia",
+  "hook.retrieve_2": "Z tarasu na dachu Alchemii widać skrytkę; strażnicy pilnują tylko przejścia",
   "hook.protect_1": "Hebi idą na Oyaji zawsze tą samą drogą",
-  "hook.protect_2": "Z balkonu schodów pożarowych widać całe przejście",
+  "hook.protect_2": "Z tarasu na dachu widać całą ścieżkę wzdłuż straganów",
   "hook.escort_1": "Zasadzka czeka przy biurze, nie na molo",
   "hook.escort_2": "Wschodnia alejka placu bez obsady od 1:00 do 3:00",
   "hook.infiltrate_1": "Kod do bocznych drzwi biura: 4177 (kamera bierze cię za personel)",

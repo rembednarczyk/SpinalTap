@@ -11,6 +11,8 @@ import type { DownedBody, Entity } from "./components";
 export const CARRY_PROMPT = "prompt.body.carry";
 export const DROP_PROMPT = "prompt.body.drop";
 export const HIDE_PROMPT = "prompt.body.hide";
+/** With a body on her shoulder and no room around her to put it down (G-479). */
+export const NO_ROOM_PROMPT = "prompt.body.no-room";
 
 export type Body = Entity & { downed: DownedBody };
 
@@ -72,7 +74,8 @@ export const corpseOf = (e: Entity, downed: DownedBody): Body => {
     pitch: 0,
     velocity: { x: 0, y: 0, z: 0 },
     unconscious: true,
-    downed: { ...downed, dead: true, lookedBy: [], finder: null, wake: 0 },
+    // The report of a knock-out is the assault's (G-334): the corpse waits for its murder's own.
+    downed: { ...downed, dead: true, reported: downed.dead && downed.reported, lookedBy: [], finder: null, wake: 0 },
   };
   if (e.key) c.key = e.key;
   if (e.chunk) c.chunk = e.chunk;

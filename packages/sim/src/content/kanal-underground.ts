@@ -1,6 +1,6 @@
 import type { Vec3 } from "@seki/core";
 import { type BlockMaterial, type StaticProp, neon, stairs, v } from "./builders";
-import type { RoofStash } from "./district-targ";
+import type { RoofStash } from "./alchemia/market";
 import { inBuilding } from "./lublin/places";
 import { TRASA_PODZIEMNA as T } from "./lublin/sites";
 

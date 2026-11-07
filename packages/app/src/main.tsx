@@ -4,7 +4,7 @@ import { audioSampleManifest } from "./audio-manifest";
 import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCES } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
-import { FixedStepLoop, ground, koiPoint, rayGeometry } from "@seki/sim";
+import { FixedStepLoop, SIM_DT, ground, koiPoint } from "@seki/sim";
 import { DEFAULT_SETTINGS, GameUi, createUiStore, translate } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
@@ -12,10 +12,15 @@ import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
 import { keymapFor } from "./controls";
 import { pushToastTimed } from "./controllers/shared";
+import { bindAudioMix } from "./controllers/audio-mix";
 import { bindCrashWatch } from "./crash-watch";
 import { bindPageHidden } from "./page-lifecycle";
 import { pointerFocus } from "./pointer-focus";
-import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
+import { feedTouchFire } from "./touch-fire";
+import { connectWorldRays } from "./world-rays";
+import { feedAimAssist } from "./aim-assist-feed";
+import { feedLookTuning, viewLook } from "./look-tuning";
+import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings } from "./settings";
 
 declare global {
   interface Window {
@@ -66,8 +71,8 @@ const stage = new Stage(canvas, { reference, quality: renderQuality });
 const cityOn = params.get("city") !== "off";
 const renderer = new BabylonRenderer(stage, {
   cityKit: cityOn ? new URL("city/city-kit.glb", document.baseURI).href : null,
-  // Facade props (ADR-0058), the CC-BY street furniture (ADR-0063) and the vehicles (ADR-0058 stage 4), after the kit; ?city=off leaves them out too.
-  cityProps: cityOn ? ["city/city-props.glb", "city/street-props.glb", "city/market-props.glb", "city/door-props.glb", "city/vehicle-props.glb"].map((f) => new URL(f, document.baseURI).href) : null,
+  // Facade props (ADR-0058), the CC-BY street furniture (ADR-0063), the vehicles (ADR-0058 stage 4), the drones (stage 7), the still crowd (stage 8), and the capsule room (ADR-0063 stage 3), after the kit; ?city=off leaves them out too.
+  cityProps: cityOn ? ["city/city-props.glb", "city/street-props.glb", "city/market-props.glb", "city/door-props.glb", "city/vehicle-props.glb", "city/drone-props.glb", "city/crowd-props.glb", "city/room-props.glb"].map((f) => new URL(f, document.baseURI).href) : null,
   farCity: false,
 });
 // The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).
@@ -79,7 +84,7 @@ const modelsParam = params.get("models");
 if (modelsParam !== "off" && (modelsParam || !reference)) {
   // CC0 weapon models replace the box pistols (see public/weapons/README.md).
   const weapons = new URL("weapons/", document.baseURI);
-  const weaponModels = { pistol: new URL("pistol.glb", weapons).href, smg: new URL("smg.glb", weapons).href };
+  const weaponModels = Object.fromEntries(["pistol", "revolver", "smg", "shotgun", "rifle", "baton", "blade"].map((k) => [k, new URL(`${k}.glb`, weapons).href]));
   // The loading screen waits for the manifest and loads its files (ADR-0057).
   const manifest = loadModelManifest(modelsParam ?? "./models/manifest.json");
   renderer.loading.loadCharacterModels(manifest);
@@ -90,7 +95,11 @@ if (modelsParam !== "off" && (modelsParam || !reference)) {
 const input = new BrowserInput(canvas);
 // Recorded CC0 sounds from public/audio, loaded after the first gesture; ?audio=off keeps the
 // pure synth. Anything missing or undecodable (e.g. Vorbis on old Safari) is synthesized.
-const audio = new SynthAudio({ samples: params.get("audio") === "off" ? {} : audioSampleManifest(new URL("audio/", document.baseURI).href) });
+// Voiced lines (ADR-0060) by key from public/voice/en; a key without a file stays a subtitle.
+const audio = new SynthAudio({
+  samples: params.get("audio") === "off" ? {} : audioSampleManifest(new URL("audio/", document.baseURI).href),
+  voiceUrl: (key) => new URL(`voice/en/${key}.ogg`, document.baseURI).href,
+});
 applyVolumes(audio, settings);
 const ui = createUiStore();
 const probe = new PerfProbe(stage.engine, stage.scene);
@@ -130,9 +139,11 @@ const session = new GameSession({
     gesture: () => navigator.userActivation?.isActive,
   }),
 });
-// The TPP camera stops at the map's buildings and the terrain too (ADR-0045): the simulation's
-// own ray through its solids, handed to the camera through the app.
-renderer.rig.setOccluder((origin, dir, maxDist) => rayGeometry(session.sim.world, origin, dir, maxDist, true));
+// The simulation's own rays through its solids, for the TPP camera (ADR-0045) and lying bodies (G-458).
+connectWorldRays(renderer, () => session.sim);
+
+// The shoulder key swaps the TPP side in play; the settings remember it like the menu's choice (G-275).
+input.shoulder.onChange = (left) => session.intents.changeSettings({ shoulder: left ? "left" : "right" });
 
 /** Controls from the settings: key bindings, hold or toggle buttons and the field of view. */
 let controlsFor: unknown = null;
@@ -141,6 +152,8 @@ const applyControls = (s: typeof settings) => {
   controlsFor = s;
   input.keymap = keymapFor(s.bindings);
   input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
+  input.shoulder.left = s.shoulder === "left";
+  feedLookTuning(input, s);
   renderer.rig.horizontalFov = degToRad(s.horizontalFov);
   renderer.rig.cameraMotion = s.cameraMotion;
   applyEffects(renderer, s);
@@ -159,10 +172,14 @@ const loop = new FixedStepLoop(browserClock, {
   update: () => {
     const s = ui.getState().settings;
     applyControls(s);
-    // Zoomed in, the look slows with the field of view (ADR-0019); the ADS setting on top.
-    const zoom = renderer.rig.lookScale;
-    const ads = zoom < 0.999 ? s.adsSensitivity : 1;
-    session.step(scaleLook(input.poll(), (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * zoom * ads, s.invertY));
+    feedTouchFire(input.virtualPad, s, session.sim.player());
+    feedAimAssist(input.aimAssist, s, session.sim, input.shoulder.left);
+    const frame = input.poll();
+    // The camera takes the shoulder of the frame the shots start from, in the same step (G-275).
+    renderer.rig.leftShoulder = frame.leftShoulder === true;
+    // Each device's sensitivity is the adapter's (ADR-0072); the zoom and ADS slowdown stay here.
+    // The assist's pull goes on after them, so it turns the view by the angle it means.
+    session.step(input.aimAssist.apply(viewLook(frame, s, renderer.rig.lookScale), SIM_DT));
   },
   render: (alpha) => {
     if (session.preparing !== loadingPainted) {
@@ -214,20 +231,7 @@ ui.subscribe(applyBackdrop);
 applyBackdrop();
 
 // Music ducks under conversations; the volumes follow the settings live.
-let talking = false;
-let volumes = settings;
-ui.subscribe((s) => {
-  const nowTalking = s.dialogue !== null;
-  if (nowTalking !== talking) {
-    talking = nowTalking;
-    audio.setMood(talking ? "dialog" : "explore");
-  }
-  const v = s.settings;
-  if (v.volume !== volumes.volume || v.musicVolume !== volumes.musicVolume || v.sfxVolume !== volumes.sfxVolume || v.ambienceVolume !== volumes.ambienceVolume) {
-    volumes = v;
-    applyVolumes(audio, v);
-  }
-});
+bindAudioMix(ui, audio, settings);
 
 // System keys and pointer-lock driven pause.
 window.addEventListener("keydown", (e) => {

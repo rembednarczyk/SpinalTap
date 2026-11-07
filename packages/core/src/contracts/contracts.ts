@@ -1,4 +1,6 @@
 import { contractPayout } from "../economy/wallet";
+import { enemyScale } from "../progression/bands";
+import { MIN_LEVEL } from "../progression/curve";
 import { type TextRef, textRef } from "../i18n/text";
 import type { RandomPort } from "../ports/random-port";
 import type { FactionId, ReputationState } from "../reputation/reputation";
@@ -152,23 +154,49 @@ export interface ContractContext {
   /** Current simulation tick and the tick rate, for deadlines. */
   readonly tick: number;
   readonly ticksPerSecond: number;
+  /**
+   * The level of a job of `kind` at `site` (ADR-0059): that of an enemy in the site's district,
+   * which the sim knows from its bands, or of the giver's district for a kind that fights nobody
+   * at its site (a delivery to Hana's stall is Kaito's job). Without it every job is of level 1.
+   */
+  readonly levelAt?: (site: ContractSiteId, kind: ContractKind) => number;
 }
 
 const nextContractId = (log: ContractLog, flags: Flags): string =>
   `c${log.completed + flags.filter((f) => f.startsWith("contract_failed:")).length + 1}`;
 
 /**
- * Procedural elimination job from Kaito (M1). Consumes exactly two random numbers. Later
- * contracts send more targets and pay more; standing with the fixer scales the payout.
+ * The crew of a job grows with its level (ADR-0059), in place of the old one more man every three
+ * jobs done: one more every CONTRACT_LEVELS_PER_TARGET levels (the user's decision of 6.11), so a
+ * job of level 1 to 4 sends its template's crew, one of level 5 one more, of 10 two more and so on.
+ * Each template's own limit (4, or 5 for the bigger docks crews) caps it. First guesses for stage 8.
  */
-export const generateContract = (log: ContractLog, rng: RandomPort, fixerReputation: number): Contract => {
+export const CONTRACT_CREW_LEVEL = 0;
+export const CONTRACT_LEVELS_PER_TARGET = 5;
+
+/** Men a job of `level` sends on top of its template's: none up to level 4, 1 to 9, 2 to 14, and so on. */
+export const contractExperience = (level: number): number => Math.max(0, Math.floor((Math.round(level) - CONTRACT_CREW_LEVEL) / CONTRACT_LEVELS_PER_TARGET));
+
+/**
+ * The pay of a job of `level`: the template's rates are those of level 1 (ADR-0018, ADR-0024)
+ * and grow as an enemy's health does (+4% a level), then the giver's standing scales it.
+ */
+export const contractPay = (base: number, level: number, reputation: number): number => contractPayout(base * enemyScale(level), reputation);
+
+/**
+ * Procedural elimination job from Kaito (M1). Consumes exactly two random numbers. A job of a
+ * higher level (its site's district, ADR-0059) sends more targets and pays more; standing with
+ * the fixer scales the payout.
+ */
+export const generateContract = (log: ContractLog, rng: RandomPort, fixerReputation: number, levelAt?: (site: ContractSiteId) => number): Contract => {
   const site = ELIMINATION_SITE_IDS[Math.floor(rng.next() * ELIMINATION_SITE_IDS.length)] ?? "east_lot";
-  const targets = Math.min(4, 2 + Math.floor(rng.next() * 2) + Math.floor(log.completed / 3));
+  const level = levelAt?.(site) ?? MIN_LEVEL;
+  const targets = Math.min(4, 2 + Math.floor(rng.next() * 2) + contractExperience(level));
   return {
     id: `c${log.completed + 1}`,
     siteId: site,
     targets,
-    reward: contractPayout(250 + targets * 125, fixerReputation),
+    reward: contractPay(250 + targets * 125, level, fixerReputation),
     status: "active",
   };
 };
@@ -182,18 +210,27 @@ export const deliveryBase = (limitSeconds: number): number => 200 + (90 - limitS
 /** Base pay of the docks jobs before the per-guard part (ADR-0024 balance table). */
 const DOCKS_BASE = { escort: 320, infiltrate: 380, hack: 340 } as const;
 
+/** A crew of 2 or 3 (3 or 4 for `bigger`) by one random number, more at a higher level, at most 4 (5). */
+const crewOf = (r: number, level: number, bigger: boolean): number => Math.min(bigger ? 5 : 4, (bigger ? 3 : 2) + Math.floor(r * 2) + contractExperience(level));
+
 /**
  * A contract of the given kind. Each generator consumes a fixed amount of randomness:
  * elimination two numbers (site, targets), delivery one (time limit), retrieval one (guards),
- * protection two (approach, wave size), and each docks job one (guards or wave size).
+ * protection two (approach, wave size), and each docks job one (guards or wave size). The crew
+ * and the pay come from the job's level (`levelAt`, ADR-0059), the pay also from the giver's standing.
  */
 export const generateContractOfKind = (kind: ContractKind, ctx: ContractContext, rng: RandomPort): Contract => {
   const id = nextContractId(ctx.log, ctx.flags);
   const giverRep = ctx.reputation[CONTRACT_GIVERS[CONTRACT_KINDS[kind].giver].faction];
-  const experience = Math.floor(ctx.log.completed / 3);
+  const levelAt = (site: ContractSiteId): number => ctx.levelAt?.(site, kind) ?? MIN_LEVEL;
+  const job = (siteId: ContractSiteId, r: number, bigger: boolean, base: number, perTarget: number): Contract => {
+    const level = levelAt(siteId);
+    const targets = crewOf(r, level, bigger);
+    return { id, kind, siteId, targets, reward: contractPay(base + targets * perTarget, level, giverRep), status: "active" };
+  };
   switch (kind) {
     case "eliminate":
-      return { ...generateContract(ctx.log, rng, giverRep), id };
+      return { ...generateContract(ctx.log, rng, giverRep, levelAt), id };
     case "delivery": {
       const limit = DELIVERY_LIMITS[Math.floor(rng.next() * DELIVERY_LIMITS.length)] ?? DELIVERY_LIMITS[1];
       return {
@@ -201,33 +238,24 @@ export const generateContractOfKind = (kind: ContractKind, ctx: ContractContext,
         kind,
         siteId: "hana_stall",
         targets: 0,
-        reward: contractPayout(deliveryBase(limit), giverRep),
+        reward: contractPay(deliveryBase(limit), levelAt("hana_stall"), giverRep),
         status: "active",
         deadlineTick: ctx.tick + limit * ctx.ticksPerSecond,
       };
     }
-    case "retrieve": {
-      const targets = Math.min(4, 2 + Math.floor(rng.next() * 2) + experience);
-      return { id, kind, siteId: "hebi_stash", targets, reward: contractPayout(250 + targets * 110, giverRep), status: "active" };
-    }
+    case "retrieve":
+      return job("hebi_stash", rng.next(), false, 250, 110);
     case "protect": {
       const site = RAID_SITE_IDS[Math.floor(rng.next() * RAID_SITE_IDS.length)] ?? "raid_north";
-      const targets = Math.min(4, 2 + Math.floor(rng.next() * 2) + experience);
-      return { id, kind, siteId: site, targets, reward: contractPayout(300 + targets * 125, giverRep), status: "active" };
+      return job(site, rng.next(), false, 300, 125);
     }
     // The docks (ADR-0024): corporate guards in armour, so a man there is worth more than a Hebi.
-    case "escort": {
-      const targets = Math.min(4, 2 + Math.floor(rng.next() * 2) + experience);
-      return { id, kind, siteId: "docks_escort", targets, reward: contractPayout(DOCKS_BASE.escort + targets * 130, giverRep), status: "active" };
-    }
-    case "infiltrate": {
-      const targets = Math.min(5, 3 + Math.floor(rng.next() * 2) + experience);
-      return { id, kind, siteId: "tessen_office", targets, reward: contractPayout(DOCKS_BASE.infiltrate + targets * 80, giverRep), status: "active" };
-    }
-    case "hack": {
-      const targets = Math.min(5, 3 + Math.floor(rng.next() * 2) + experience);
-      return { id, kind, siteId: "quay_terminal", targets, reward: contractPayout(DOCKS_BASE.hack + targets * 120, giverRep), status: "active" };
-    }
+    case "escort":
+      return job("docks_escort", rng.next(), false, DOCKS_BASE.escort, 130);
+    case "infiltrate":
+      return job("tessen_office", rng.next(), true, DOCKS_BASE.infiltrate, 80);
+    case "hack":
+      return job("quay_terminal", rng.next(), true, DOCKS_BASE.hack, 120);
   }
 };
 

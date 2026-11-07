@@ -1,6 +1,6 @@
 import { type BreachDaemonId, type DomainEvents, type DomainState, EMPTY_INPUT, type InputFrame, type MetroStationId, formatClock } from "@seki/core";
 import type { PerfSample, PreviewState } from "@seki/engine";
-import { type FixedStepLoop, clinicPoint, docks, koiPoint, market } from "@seki/sim";
+import { type FixedStepLoop, clinicPoint, docks, koiPoint } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
 import type { GameSession } from "./game-session";
 
@@ -51,6 +51,7 @@ export interface DebugApi {
   /**
    * Restarts the running game from its own snapshot with part of the domain replaced, e.g. to
    * start a test in the middle of the main thread. The world is rebuilt as a load would.
+   * Throws where the player cannot save (the same gate, G-256).
    */
   jump(domain: Partial<DomainState>): void;
   step(n: number, input?: Partial<InputFrame>): void;
@@ -78,8 +79,8 @@ export interface DebugApi {
   /** Opens the metro line map as the kiosk at `from` would (ADR-0035). */
   metro(from: MetroStationId): void;
   /**
-   * A point of a set piece in its own coordinates, in the world (ADR-0045): the market and the
-   * docks are moved, the clinic and Neon Koi are turned into their tenements.
+   * A point of a set piece in its own coordinates, in the world (ADR-0045): the docks are
+   * moved, the clinic and Neon Koi are turned into their tenements.
    */
   place(frame: PlaceFrame, x: number, y: number, z: number): { x: number; y: number; z: number };
   /**
@@ -90,9 +91,9 @@ export interface DebugApi {
   session: GameSession;
 }
 
-export type PlaceFrame = "market" | "docks" | "clinic" | "koi";
+export type PlaceFrame = "docks" | "clinic" | "koi";
 
-const FRAMES: Readonly<Record<PlaceFrame, (x: number, y: number, z: number) => { x: number; y: number; z: number }>> = { market, docks, clinic: clinicPoint, koi: koiPoint };
+const FRAMES: Readonly<Record<PlaceFrame, (x: number, y: number, z: number) => { x: number; y: number; z: number }>> = { docks, clinic: clinicPoint, koi: koiPoint };
 
 /** Shortest turn from `a` to `b`, radians. */
 const turn = (a: number, b: number): number => Math.atan2(Math.sin(b - a), Math.cos(b - a));
@@ -151,6 +152,9 @@ export const createDebugApi = (
     p.pitch = pitch;
   },
   jump(domain) {
+    // A snapshot the player could not save (in a grip, a ride, a panel) loads into a game that
+    // drifts from this one (G-256, G-253): a test would start from a state no load can give.
+    if (!session.saves.canSave()) throw new Error("jump: can't save right now (a takedown, a panel, a ride, the air, death or the title)");
     const snapshot = session.saves.snapshot();
     // Straight into play: a test jumping mid-story steps at once, no loading screen (ADR-0057).
     session.restore({ ...snapshot, domain: { ...snapshot.domain, ...domain } }, false);

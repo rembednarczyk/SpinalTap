@@ -62,7 +62,7 @@ describe("the trail to Ren", () => {
       const { runtime, commands } = setup();
       const view = runtime.start("ume", lustro(0, ending, {}, ["ume_memory"]));
       expect(view.choices.map((c) => c.text)).toEqual(["Gdzie znajdę Rena Odagiri?", "Nieważne."]);
-      expect(text(runtime.choose(0))).toContain("Śpi na dachu nad targiem");
+      expect(text(runtime.choose(0))).toContain("Śpi na dachu Alchemii");
       expect(flagsSet(commands)).toEqual(["ren_trail"]);
     }
   });

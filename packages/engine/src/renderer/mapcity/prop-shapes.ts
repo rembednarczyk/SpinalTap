@@ -1,4 +1,4 @@
-import type { StreetPropKind } from "@seki/core";
+import { type StreetPropKind, TREE_KIND, TREE_SPECIES, treeScale, treeSpecies } from "@seki/core";
 import type { RenderQuality } from "../../npr/quality";
 
 /**
@@ -10,7 +10,7 @@ export const PROP_SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = {
   monument: 6,
   artwork: 6,
   flagpole: 2,
-  tree: 3,
+  tree: TREE_SPECIES,
   bench: 2,
   "lamp-wall-lantern": 2,
   "waste-bin": 2,
@@ -30,16 +30,15 @@ export const PROP_SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = {
 /** Monument and artwork shapes. */
 export const MONUMENT_SHAPE = { obelisk: 0, figure: 1, koziolek: 2, abstract: 3, stele: 4, shrine: 5 } as const;
 
-/** Tree species. */
-export const TREE_SHAPE = { lime: 0, maple: 1, chestnut: 2 } as const;
+/** Tree species: the core's `TREE_KIND`, whose layout of the variant (`treeSpecies`) picks them. */
+export const TREE_SHAPE = TREE_KIND;
 
-export const shapeOf = (kind: StreetPropKind, variant: number): number => variant % (PROP_SHAPES[kind] ?? 1);
+export const shapeOf = (kind: StreetPropKind, variant: number): number => (kind === "tree" ? treeSpecies(variant) : variant % (PROP_SHAPES[kind] ?? 1));
 
-/** Size of a piece: trees 0.8 to 1.25, shrubs 0.7 to 1.2, the rest 1. */
+/** Size of a piece: trees by `treeScale` (G-422), shrubs 0.7 to 1.2, the rest 1. */
 export const scaleOf = (kind: StreetPropKind, variant: number): number => {
-  const t = ((variant >> 4) % 16) / 15;
-  if (kind === "tree") return 0.8 + 0.45 * t;
-  if (kind === "shrubs") return 0.7 + 0.5 * t;
+  if (kind === "tree") return treeScale(variant);
+  if (kind === "shrubs") return 0.7 + 0.5 * (((variant >> 4) % 16) / 15);
   return 1;
 };
 

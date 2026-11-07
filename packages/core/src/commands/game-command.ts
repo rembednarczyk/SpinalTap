@@ -8,6 +8,7 @@ import type { EquipSlot, ItemRef, ModSlot } from "../items/types";
 import type { BreachDaemonId } from "../hacking/quickhacks";
 import type { MetroStationId } from "../world/wave2";
 import type { AttributeId } from "../progression/attributes";
+import type { PerkId } from "../progression/perks";
 import type { DifficultyProfile } from "../difficulty/difficulty";
 
 /**
@@ -76,13 +77,26 @@ export type GameCommand =
   // Character progression (ADR-0059).
   /** Puts one unspent attribute point into `attribute`; refused without a point or at the cap. */
   | { readonly type: "spend-attribute-point"; readonly attribute: AttributeId }
+  /** Buys one rank of `perk` with an unspent perk point; refused without a point, below the perk's tier or at its last rank. */
+  | { readonly type: "spend-perk-point"; readonly perk: PerkId }
+  /**
+   * Doktor Mori's respec (ADR-0059): every attribute back to 3 and every perk off, for a fee that
+   * grows with the level; all the points spent come back. Refused on basic terms, without the
+   * money, with nothing spent, or when the implants would not fit the pool without the points.
+   */
+  | { readonly type: "respec" }
   // Takedowns (ADR-0065).
   /**
-   * Takes down the NPC the HUD offers (the interact key with the takedown prompt): it knocks the
-   * target out, or kills it with `lethal`. Holding the attack button to the end of the takedown
-   * kills as well. Refused without a valid target in reach.
+   * Grabs the NPC the HUD offers (the interact key with the takedown prompt, ADR-0075). Without
+   * `lethal` the grab waits for `takedown-choose` (a knock-out when the time runs out); with it
+   * the choice is made at once. Refused without a valid target in reach.
    */
-  | { readonly type: "takedown"; readonly lethal: boolean }
+  | { readonly type: "takedown"; readonly lethal?: boolean }
+  /**
+   * The choice in the grab (ADR-0075): knock the target out, or kill it with `lethal`. Refused
+   * without a grab waiting for one.
+   */
+  | { readonly type: "takedown-choose"; readonly lethal: boolean }
   /**
    * Picks up the body the HUD offers (the interact key with the pick-up prompt): someone knocked
    * out or killed, in reach. Refused while carrying one already or without a body in reach.

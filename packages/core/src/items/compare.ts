@@ -1,5 +1,5 @@
 import { HIT_ZONES, type HitZone } from "../combat/combat-rules";
-import { type WornGarment, garmentArmor } from "./armor";
+import { type WornGarment, garmentArmor, wornOf } from "./armor";
 import { GARMENT_CATALOG, STACKABLE_CATALOG, type GarmentDefinition, isConsumableId, isWeaponId } from "./catalog";
 import { type Equipment, type InventoryState, type ItemInstance, findItem, isPlaced, slotFor } from "./inventory";
 import type { EquipSlot, GarmentId, ItemRef, StackableId } from "./types";
@@ -85,7 +85,7 @@ const garmentNumbers = (g: WornGarment): Numbers => {
 const numbersOf = (inv: InventoryState, item: ItemInstance): Numbers =>
   isWeaponId(item.def)
     ? weaponNumbers(weaponStatsOf(inv, item.uid)!)
-    : garmentNumbers({ def: item.def as GarmentId, rarity: item.rarity, condition: item.condition ?? 100 });
+    : garmentNumbers(wornOf(item.def as GarmentId, item));
 
 const trendOf = (key: StatKey, value: number, current: number | null): StatLine["trend"] => {
   if (current === null || Math.abs(value - current) < 1e-9) return null;

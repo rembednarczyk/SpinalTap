@@ -1,100 +1,41 @@
 import { describe, expect, it } from "vitest";
-import { type SaveSnapshot, type Vec3, metroFare, metroRideSeconds } from "@seki/core";
-import {
-  CONTRACT_SITE_SPAWNS,
-  ENCOUNTERS,
-  KIOSK_SIZE,
-  METRO_STATIONS,
-  SCHEDULES,
-  SECURITY_ENTRIES,
-  SIM_HZ,
-  Simulation,
-  WORLD_NAV,
-  WORLD_STASHES,
-  metroStation,
-  stateHash,
-} from "../src";
-import { lineOfSight } from "../src/world/hitscan";
-import { circleTouchesPrism } from "../src/world/prism";
+import { type SaveSnapshot, metroFare, metroRideSeconds } from "@seki/core";
+import { METRO_ENTRANCES, SIM_HZ, Simulation, metroStation, stateHash } from "../src";
 import { collect, input, run, teleportPlayer } from "./helpers";
 
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
 const hash = (sim: Simulation) => stateHash(sim.snapshot(null, "t", ""));
 const flat = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.hypot(a.x - b.x, a.z - b.z);
 
-/** A world with the player at `p` and the chunks around loaded. */
-const sceneAt = (p: Vec3, seed = 5): Simulation => {
-  const sim = Simulation.create({ seed });
-  teleportPlayer(sim, p);
+/** In front of the ticket machine of the station's entrance A: on its platform (ADR-0071 stage 4). */
+const atKiosk = (sim: Simulation, id: Parameters<typeof metroStation>[0]) => {
+  const a = metroStation(id).entrances[0];
+  teleportPlayer(sim, a.ticket, a.ticketYaw);
   run(sim, 2);
-  return sim;
 };
 
-/** Distance from a point to a segment, horizontally. */
-const toSegment = (p: Vec3, a: Vec3, b: Vec3): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const len = dx * dx + dz * dz;
-  const t = len === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / len));
-  return Math.hypot(p.x - (a.x + t * dx), p.z - (a.z + t * dz));
-};
-
-/** Every point other content relies on: routes, posts, entries, graph nodes, stashes, encounters. */
-const busyPoints = (): Vec3[] => [
-  ...Object.values(CONTRACT_SITE_SPAWNS).flat(),
-  ...SECURITY_ENTRIES,
-  ...WORLD_NAV.nodes.map((n) => n.at),
-  ...WORLD_STASHES.map((s) => s.at),
-  ...ENCOUNTERS.map((e) => ({ x: e.at.x, y: 0, z: e.at.z })),
-];
-
-describe("metro platforms (ADR-0034)", () => {
-  it.each(METRO_STATIONS.map((s) => [s.id, s] as const))("%s: a kiosk against a wall, off every street, route and graph node", (_id, s) => {
-    const sim = sceneAt(s.arrival);
-    const kiosk = [...sim.world].find((e) => e.interactable?.kind === "metro" && e.interactable.station === s.id)!;
-    expect(kiosk.solid).toBeDefined();
-    const box = kiosk.solid!;
-    // A building of the map (ADR-0045) is its prisms, not the box round them.
-    const overlaps = [...sim.world].filter((e) => {
-      if (!e.solid || e === kiosk) return false;
-      if (e.prisms) return e.prisms.some((p) => p.bottom < box.max.y && p.top > box.min.y && circleTouchesPrism(p, s.kiosk.x, s.kiosk.z, KIOSK_SIZE.z / 2 - 0.05));
-      const b = e.solid;
-      return b.min.x < box.max.x && b.max.x > box.min.x && b.min.z < box.max.z && b.max.z > box.min.z && b.min.y < box.max.y && b.max.y > box.min.y;
-    });
-    expect(overlaps).toEqual([]);
-    // Its back is to a wall: a solid within 0.1 m behind it.
-    const back = { x: s.kiosk.x - Math.sin(s.yaw) * (KIOSK_SIZE.z / 2 + 0.1), y: 1, z: s.kiosk.z - Math.cos(s.yaw) * (KIOSK_SIZE.z / 2 + 0.1) };
-    expect(lineOfSight(sim.world, { ...back, y: s.kiosk.y + 0.5 }, { ...back, y: s.kiosk.y + 1.5 })).toBe(false);
-    // The rider comes up on open ground, with room to walk away.
-    for (const [dx, dz] of [[0, 0], [0.5, 0], [-0.5, 0], [0, 0.4]] as const) {
-      const p = { x: s.arrival.x + dx, y: 0, z: s.arrival.z + dz };
-      expect(lineOfSight(sim.world, { ...p, y: s.arrival.y + 0.3 }, { ...p, y: s.arrival.y + 1.7 })).toBe(true);
-    }
-    // Nothing anyone else uses is within 3 m of the kiosk or the arrival point.
-    for (const p of busyPoints()) {
-      expect(flat(p, s.kiosk), `${p.x},${p.z}`).toBeGreaterThan(3);
-      expect(flat(p, s.arrival), `${p.x},${p.z}`).toBeGreaterThan(3);
-    }
-    // No daily plan walks through it.
-    for (const def of Object.values(SCHEDULES)) {
-      for (let i = 0; i < def.stops.length; i++) {
-        const stop = def.stops[i]!;
-        const prev = def.stops[(i + def.stops.length - 1) % def.stops.length]!;
-        const path = [prev.path[prev.path.length - 1]!, ...stop.path];
-        for (let k = 1; k < path.length; k++) expect(toSegment(s.kiosk, path[k - 1]!, path[k]!)).toBeGreaterThan(2);
-      }
-    }
+describe("metro entrances (ADR-0071 stage 2)", () => {
+  it.each(METRO_ENTRANCES.map((e) => [`${e.station} ${e.label}`, e] as const))("%s: up the stairs from the hall to the street and back down", (_name, e) => {
+    const sim = Simulation.create({ seed: 3 });
+    teleportPlayer(sim, e.hallSpot, e.hallYaw);
+    run(sim, 2);
+    // Walk out: forward up the stairs, through the opening, onto the street.
+    for (let i = 0; i < 6 * SIM_HZ && flat(sim.player()!.position, e.door) > 0.6; i++) sim.step(input({ moveZ: 1 }));
+    const out = sim.player()!.position;
+    expect(flat(out, e.door), `${out.x},${out.y},${out.z}`).toBeLessThan(0.8);
+    expect(Math.abs(out.y - e.door.y)).toBeLessThan(0.3);
+    // And back down to the hall.
+    teleportPlayer(sim, e.door, e.hallYaw + Math.PI);
+    run(sim, 2);
+    for (let i = 0; i < 6 * SIM_HZ && flat(sim.player()!.position, e.hallSpot) > 0.6; i++) sim.step(input({ moveZ: 1 }));
+    const down = sim.player()!.position;
+    expect(flat(down, e.hallSpot), `${down.x},${down.y},${down.z}`).toBeLessThan(1.5);
+    expect(Math.abs(down.y - e.floor)).toBeLessThan(0.1);
   });
 });
 
-const atKiosk = (sim: Simulation, id: Parameters<typeof metroStation>[0]) => {
-  const s = metroStation(id);
-  teleportPlayer(sim, s.arrival, s.yaw + Math.PI);
-  run(sim, 2);
-};
-
 describe("riding the metro (ADR-0034)", () => {
-  it("the kiosk opens the line map for its station", () => {
+  it("the ticket machine on the platform opens the line map for its station", () => {
     const sim = Simulation.create({ seed: 2 });
     const started = collect<{ kind: string; station?: string }>(sim, "InteractionStarted");
     atKiosk(sim, "shinsekai");
@@ -103,7 +44,7 @@ describe("riding the metro (ADR-0034)", () => {
     expect(sim.session.dialogueActive).toBe(true);
   });
 
-  it("refuses away from a kiosk, to the same station, without the fare and on a watched platform", () => {
+  it("refuses away from a machine, to the same station, without the fare and on a watched platform", () => {
     const sim = Simulation.create({ seed: 2 });
     const refused = collect<{ reason: string }>(sim, "MetroRefused");
     sim.enqueue({ type: "travel-metro", to: "kanal" });
@@ -127,7 +68,18 @@ describe("riding the metro (ADR-0034)", () => {
     expect(hot.domain.wallet.eddies).toBe(snap.domain.wallet.eddies);
   });
 
-  it("takes the player off the street, streams the destination in and brings them up on its platform", () => {
+  it("sells no ticket on the street over the hall", () => {
+    const sim = Simulation.create({ seed: 2 });
+    const refused = collect<{ reason: string }>(sim, "MetroRefused");
+    const a = metroStation("shinsekai").entrances[0];
+    teleportPlayer(sim, a.door, a.arrivalYaw + Math.PI);
+    run(sim, 2);
+    sim.enqueue({ type: "travel-metro", to: "kanal" });
+    run(sim, 1);
+    expect(refused.map((r) => r.reason)).toEqual(["not-at-kiosk"]);
+  });
+
+  it("takes the player off the platform, streams the destination in and lets them off on its platform", () => {
     const sim = Simulation.create({ seed: 2 });
     atKiosk(sim, "shinsekai");
     const departed = collect<{ from: string; to: string; seconds: number }>(sim, "MetroDeparted");
@@ -146,10 +98,23 @@ describe("riding the metro (ADR-0034)", () => {
     expect(arrived).toEqual([{ station: "doki" }]);
     const p = sim.player()!;
     expect(flat(p.position, metroStation("doki").arrival)).toBeLessThan(0.5);
+    expect(Math.abs(p.position.y - metroStation("doki").entrances[0].platform!.floor)).toBeLessThan(0.1);
     expect(sim.district).toBe("doki");
     // The world went on meanwhile.
     expect(sim.clock.seconds).toBeGreaterThan(clock + 60 * metroRideSeconds("shinsekai", "doki") - 60);
     expect(sim.domain.metro.ride).toBeNull();
+  });
+
+  it("buys in the hall of entrance B and gets off on the platform of the destination's A", () => {
+    const sim = Simulation.create({ seed: 2 });
+    const b = metroStation("kanal").entrances[1]!;
+    teleportPlayer(sim, b.arrival, b.arrivalYaw);
+    run(sim, 2);
+    const departed = collect<{ from: string; to: string }>(sim, "MetroDeparted");
+    sim.enqueue({ type: "travel-metro", to: "targ" });
+    run(sim, 1 + metroRideSeconds("kanal", "targ") * SIM_HZ);
+    expect(departed).toEqual([expect.objectContaining({ from: "kanal", to: "targ" })]);
+    expect(flat(sim.player()!.position, metroStation("targ").entrances[0].arrival)).toBeLessThan(0.5);
   });
 
   it("a game saved in the carriage loads in it and arrives on the same step", () => {

@@ -1,5 +1,4 @@
 import {
-  BASE_RAM,
   COMBAT_RADIUS,
   DISTRACT_RADIUS,
   type DomainState,
@@ -14,23 +13,31 @@ import {
   SHORT_CIRCUIT_DAMAGE,
   type Vec3,
   applyDamage,
+  chainRadius,
   contractKind,
   directionFromAngles,
   factionStance,
   hackCost,
+  hackDurationScale,
   hackInSlot,
+  perkUploadScale,
+  ramRegenScale,
   refundOf,
   regenRam,
+  scanRangeScale,
+  shortCircuitScale,
+  uploadTimeScale,
+  workingDeck,
 } from "@seki/core";
 import type { DeviceKind, Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
-import { grantQuickhackXp } from "../world/progression-ops";
+import { grantQuickhackXp, ramMaxOf } from "../world/progression-ops";
 import { securityKey } from "../world/reinforcements";
 import { alertedNear, disturb, hackFxOf, isEngaged, noteDetected, noteHacked, noteViolence } from "../world/street";
 import { scanning, worldTimeScale } from "./ability-system";
-import { SEARCH_SECONDS, TRACK_GRACE, effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
+import { SEARCH_SECONDS, TRACK_GRACE, effectiveAggroRange, enemySees, giveLead } from "./ai/ganger-perception";
 import { cameraSees } from "./crime-system";
 
 /** Seconds a `short_circuit` knocks a device out. */
@@ -64,7 +71,8 @@ const scanPoint = (e: Entity): Vec3 => (e.device ? e.position : chestOf(e));
 
 /**
  * The scanner's focus (ADR-0029): the scannable thing closest to the centre of the view, within
- * `SCAN_RANGE` and `SCAN_CONE`, in plain sight. Ties go to the nearer one, then creation order.
+ * `SCAN_RANGE` (longer with Long Range, ADR-0059) and `SCAN_CONE`, in plain sight. Ties go to
+ * the nearer one, then creation order.
  */
 export const scanFocus = (ctx: SimContext, player: Entity): Entity | null => {
   const eye = eyeOf(player);
@@ -72,6 +80,7 @@ export const scanFocus = (ctx: SimContext, player: Entity): Entity | null => {
   let best: Entity | null = null;
   let bestAngle = Infinity;
   let bestDistance = Infinity;
+  const range = SCAN_RANGE * scanRangeScale(ctx.state.domain.progression.perks);
   for (const e of inCreationOrder([...ctx.world.with("device"), ...ctx.world.with("body")])) {
     if (e === player || !hackTargetKind(e) || (e.health && e.health.current <= 0)) continue;
     const p = scanPoint(e);
@@ -79,7 +88,7 @@ export const scanFocus = (ctx: SimContext, player: Entity): Entity | null => {
     const dy = p.y - eye.y;
     const dz = p.z - eye.z;
     const distance = Math.hypot(dx, dy, dz);
-    if (distance > SCAN_RANGE || distance < 1e-6) continue;
+    if (distance > range || distance < 1e-6) continue;
     const angle = Math.acos(Math.max(-1, Math.min(1, (dx * dir.x + dy * dir.y + dz * dir.z) / distance)));
     if (angle > SCAN_CONE || angle > bestAngle + 1e-9) continue;
     if (Math.abs(angle - bestAngle) <= 1e-9 && distance >= bestDistance) continue;
@@ -138,7 +147,7 @@ const reportRam = (ctx: SimContext): void => {
   if (ctx.session.watch.ram === current) return;
   const first = ctx.session.watch.ram === null;
   ctx.session.watch.ram = current;
-  if (!first) ctx.bus.emit("RamChanged", { current, max: BASE_RAM });
+  if (!first) ctx.bus.emit("RamChanged", { current, max: ramMaxOf(ctx.state.domain) });
 };
 
 /** The breached network's ICEpick (ADR-0029): hacks cost 1 RAM less while the hack job runs. */
@@ -169,8 +178,8 @@ const tickEffects = (ctx: SimContext): void => {
 };
 
 /**
- * Enemies and cameras that see the player right now (the trace of an upload). A cone-sighted
- * guard needs its cone; the target of `reboot_optics` goes dark before it can look.
+ * Enemies and cameras that see the player right now (the trace of an upload). An unalerted enemy
+ * needs its cone (ADR-0069); the target of `reboot_optics` goes dark before it can look.
  */
 const watchers = (ctx: SimContext, player: Entity, except: Entity | null): Entity[] => {
   const out: Entity[] = [];
@@ -184,7 +193,7 @@ const watchers = (ctx: SimContext, player: Entity, except: Entity | null): Entit
     const distance = Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z);
     const sight = effectiveAggroRange(g.ai.aggroRange, stance);
     if (distance > sight || !lineOfSight(ctx.world, eyeOf(g), chest)) continue;
-    if (g.ai.cone && !guardSees(g, player, distance, true, sight)) continue;
+    if (!enemySees(g, player, distance, true, sight)) continue;
     out.push(g);
   }
   for (const c of inCreationOrder(ctx.world.with("device"))) {
@@ -242,22 +251,72 @@ const shortCircuit = (ctx: SimContext, player: Entity, target: Entity): void => 
   } else if (target.health) {
     const at = chestOf(target);
     noteViolence(ctx, target, isEngaged(target), at);
-    target.health = applyDamage(target.health, SHORT_CIRCUIT_DAMAGE);
+    // Overload (ADR-0059): more damage, in whole points.
+    const damage = Math.round(SHORT_CIRCUIT_DAMAGE * shortCircuitScale(ctx.state.domain.progression.perks));
+    target.health = applyDamage(target.health, damage);
     target.lastHitBy = player.id;
+    target.lastHitStyle = "quickhack";
     const ai = target.ai;
     if (ai && !ai.alerted) {
       // Hurt by something it cannot see: it looks around where it stands (seeing the player alerts it).
       ai.lastKnown = { ...target.position };
       ai.search = SEARCH_SECONDS;
     }
-    ctx.bus.emit("DamageDealt", { sourceId: player.id, targetId: target.id, amount: SHORT_CIRCUIT_DAMAGE, critical: false, zone: "torso", at });
+    ctx.bus.emit("DamageDealt", { sourceId: player.id, targetId: target.id, amount: damage, critical: false, zone: "torso", at });
   }
   disturb(ctx, "hack", target.position, HACK_NOISE, target.id);
 };
 
-/** The upload is through: the effect, and maybe the trace. */
+/**
+ * Chain (ADR-0059): the nearest other target of the same kind within `radius` of the first, in
+ * its plain sight, alive and not broken; ties go to creation order. Null when there is none.
+ */
+const chainTarget = (ctx: SimContext, player: Entity, first: Entity, radius: number): Entity | null => {
+  const kind = hackTargetKind(first);
+  const from = scanPoint(first);
+  let best: Entity | null = null;
+  let bestDistance = Infinity;
+  for (const e of inCreationOrder([...ctx.world.with("device"), ...ctx.world.with("body")])) {
+    if (e === first || e === player || hackTargetKind(e) !== kind || (e.health && e.health.current <= 0) || (e.device?.broken ?? 0) > 0) continue;
+    const distance = Math.hypot(e.position.x - first.position.x, e.position.z - first.position.z);
+    if (distance > radius || distance >= bestDistance || !lineOfSight(ctx.world, from, scanPoint(e))) continue;
+    best = e;
+    bestDistance = distance;
+  }
+  return best;
+};
+
+/** How long the hack's effect lasts: the table's, longer with Persistence (ADR-0059). */
+const hackDuration = (ctx: SimContext, hackId: QuickhackId): number => QUICKHACKS[hackId].duration * hackDurationScale(ctx.state.domain.progression.perks);
+
+/** What the hack does to the target. */
+const applyEffect = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Entity): void => {
+  const duration = hackDuration(ctx, hackId);
+  switch (hackId) {
+    case "ping":
+      ping(ctx, target, duration);
+      break;
+    case "reboot_optics":
+      rebootOptics(ctx, target, duration);
+      break;
+    case "distract":
+      distract(ctx, target, duration);
+      break;
+    case "cripple_movement":
+      hackFxOf(ctx.world, target).crippled = duration;
+      break;
+    case "short_circuit":
+      shortCircuit(ctx, player, target);
+      break;
+  }
+};
+
+/**
+ * The upload is through: the effect, and maybe the trace. With Chain (ADR-0059) the effect also
+ * jumps to the next target of the kind nearby, with no trace and no XP of its own; its
+ * QuickhackChained follows that target's QuickhackApplied, for the HUD's note.
+ */
 const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Entity): void => {
-  const def = QUICKHACKS[hackId];
   const seen = watchers(ctx, player, hackId === "reboot_optics" ? target : null);
   if (seen.length > 0) {
     // Traced (ADR-0028): the target's network knows where the player is.
@@ -265,26 +324,18 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
     noteDetected(ctx);
     for (const w of seen) giveLead(w, player.position);
   }
-  switch (hackId) {
-    case "ping":
-      ping(ctx, target, def.duration);
-      break;
-    case "reboot_optics":
-      rebootOptics(ctx, target, def.duration);
-      break;
-    case "distract":
-      distract(ctx, target, def.duration);
-      break;
-    case "cripple_movement":
-      hackFxOf(ctx.world, target).crippled = def.duration;
-      break;
-    case "short_circuit":
-      shortCircuit(ctx, player, target);
-      break;
-  }
+  const duration = hackDuration(ctx, hackId);
+  applyEffect(ctx, player, hackId, target);
   noteHacked(ctx);
-  ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration: def.duration });
-  grantQuickhackXp(ctx, xpKey(target));
+  ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration });
+  const radius = chainRadius(ctx.state.domain.progression.perks);
+  const next = radius > 0 ? chainTarget(ctx, player, target, radius) : null;
+  if (next) {
+    applyEffect(ctx, player, hackId, next);
+    ctx.bus.emit("QuickhackApplied", { hackId, targetId: next.id, duration });
+    ctx.bus.emit("QuickhackChained", { hackId, fromId: target.id, targetId: next.id });
+  }
+  grantQuickhackXp(ctx, target, xpKey(target));
 };
 
 /** Starts the n-th hack of the focused target's list (ADR-0028: RAM is paid at the start). */
@@ -298,7 +349,9 @@ const start = (ctx: SimContext, focus: Entity, slot: number): void => {
   if ((focus.device?.broken ?? 0) > 0) return fail("wrong-target");
   const ram = hackCost(hackId, icepick(ctx));
   if (netrun.ram + 1e-9 < ram) return fail("no-ram");
-  const upload = QUICKHACKS[hackId].upload;
+  // Net, Fast Upload (ADR-0059) and a cyberdeck implant upload faster.
+  const { progression } = ctx.state.domain;
+  const upload = QUICKHACKS[hackId].upload * uploadTimeScale(progression.attributes) * perkUploadScale(progression.perks) * workingDeck(ctx.state.domain).uploadScale;
   ctx.state.domain = { ...ctx.state.domain, netrun: { ram: netrun.ram - ram, upload: { hackId, target: targetRef(focus), left: upload, ram } } };
   ctx.session.watch.uploadId = focus.id;
   ctx.bus.emit("QuickhackStarted", { hackId, targetId: focus.id, upload, ram });
@@ -311,7 +364,7 @@ const runUpload = (ctx: SimContext, player: Entity, focus: Entity | null): void 
   if (!upload) return;
   const target = findTarget(ctx, upload.target);
   if (!target || target !== focus) {
-    ctx.state.domain = { ...ctx.state.domain, netrun: { ram: Math.min(BASE_RAM, netrun.ram + refundOf(upload)), upload: null } };
+    ctx.state.domain = { ...ctx.state.domain, netrun: { ram: Math.min(ramMaxOf(ctx.state.domain), netrun.ram + refundOf(upload)), upload: null } };
     ctx.bus.emit("QuickhackFailed", { hackId: upload.hackId, targetId: target?.id ?? focus?.id ?? player.id, reason: "lost-target" });
     return;
   }
@@ -347,7 +400,10 @@ export const scannerSystem: System = {
       runUpload(ctx, player, focus);
       if (focus && ctx.input.quickhack > 0) start(ctx, focus, ctx.input.quickhack);
       const netrun = ctx.state.domain.netrun;
-      if (!netrun.upload && netrun.ram < BASE_RAM && !inCombat(ctx, player)) setRam(ctx, regenRam(netrun.ram, BASE_RAM, ctx.dt));
+      const max = ramMaxOf(ctx.state.domain);
+      // Recycler (ADR-0059) and a cyberdeck implant bring it back faster.
+      const regen = ramRegenScale(ctx.state.domain.progression.perks) * workingDeck(ctx.state.domain).regenScale;
+      if (!netrun.upload && netrun.ram < max && !inCombat(ctx, player)) setRam(ctx, regenRam(netrun.ram, max, ctx.dt * regen));
     }
     reportRam(ctx);
   },

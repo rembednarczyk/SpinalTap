@@ -2,7 +2,6 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../packages/core/src";
-import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
@@ -13,47 +12,89 @@ import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/r
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
+import { streetAxes } from "../../../packages/engine/src/renderer/drones/drone-world";
+import { planDroneLanes } from "../../../packages/engine/src/renderer/drones/drone-lanes";
+import { droneWorldOf } from "../../../packages/engine/src/renderer/drones/drone-world";
+import type { PatrolLane } from "../../../packages/engine/src/renderer/drones/patrol-flight";
+import { planPatrolLanes } from "../../../packages/engine/src/renderer/drones/patrol-lanes";
+import { PATROL_STREETS, cityPatrolWorld, patrolWorldOf, quietAt } from "../../../packages/engine/src/renderer/drones/patrol-world";
 import { decalChecks } from "./decal-pieces";
 import { lublinDecalWorld } from "./decal-world";
 import { doorChecks } from "./door-pieces";
+import { droneChecks } from "./drone-pieces";
+import { airMesh } from "./patrol-mesh";
+import { patrolChecks } from "./patrol-pieces";
+import { deckPaint, mapGround } from "./deck-paint";
+import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
+import { grassUnderPavingFindings } from "./grass-under-paving";
+import { isStreet, padOnRoadFindings } from "./pad-on-road";
+import { pavingCoplanar } from "./paving-coplanar";
+import { drawnPaving, poolSunk } from "./pool-paving";
+import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
 import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
 import { vehicleChecks } from "./vehicle-pieces";
+import { figureChecks } from "./figure-pieces";
+import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
+import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
+import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
+import { levelExitsInGame, undergroundLevelExits } from "./level-exit-checks";
 import { signsInNeighbours } from "./sign-neighbours";
+import { lowCables } from "./cable-spans";
+import { metroLineProtected } from "./metro-line";
+import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
+import { cityLanduseWorld, landuseBare } from "./landuse-bare";
+import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
+import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
+import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
+import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
+import { lampsBesideDeck } from "./lamp-deck";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
+import { stepsInclineAgainst } from "./steps-incline";
+import { roadDipsOverTunnels } from "./road-tunnel";
+import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
+import { deckSlots } from "./deck-slot";
+import { deckSteps } from "./deck-step";
+import { abutmentSteps } from "./deck-abutment";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
+import { cityBricks, plasteredWalls } from "./wall-materials";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { correctedLine } from "../../osm-import/src/corrections.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
+import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { loadEntrances } from "../../osm-import/src/props-doors.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
 import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { cityVenueBoards } from "../../osm-import/src/venue-boards.ts";
-import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
+import { CROWD_LANES, CROWD_SPOTS } from "../../../packages/sim/src/content/crowd";
+import { ACTIVITY_SPOTS } from "../../../packages/sim/src/content/activity-spots";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
 import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interiors";
+import { CAPSULE_DOOR, CAPSULE_SITE } from "../../../packages/sim/src/content/capsule-room";
 import { furnitureNear } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
-import { LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
+import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
-import { CLEARED_BUILDINGS, GATE_PASSAGES, MAP_CHUNKS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
-import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
+import { CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PADS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
+import { ALCHEMIA_RAMPS } from "../../../packages/sim/src/content/alchemia/terraces";
+import { mapHeight } from "../../../packages/sim/src/content/lublin/shape";
+import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
-import { type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
+import { DECK_DEPTH, DECK_HEADROOM, type GroundDeck, deckAt, deckHeight } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
-import { groundAt } from "../../../packages/sim/src/systems/movement-system";
+import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movement-system";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
@@ -127,6 +168,8 @@ const LANDMARK_BUILDINGS = [
 ];
 const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 
+/** The surfaces a lamp of the plan stands on or beside (`lamp-off-band`). */
+const PAVED: ReadonlySet<string> = new Set(["road", "crossing", "sidewalk", "square", "cobble", "footway", "steps"]);
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
 
 /** The wall lantern's model, plate and arm and lantern, in the piece's frame. */
@@ -169,8 +212,21 @@ type Rect = (typeof CLEARED_BUILDINGS)[number];
 
 /** Square metres of a rectangle covered by a building's outline, sampled every 0.5 m. */
 const coveredArea = (r: Rect, flat: readonly number[], ox: number, oz: number) => {
+  // A point off the outline's bounds is outside it (G-409): only those within them are tested,
+  // and a rectangle clear of them covers nothing. A hair over, past any rounding of the test.
+  const b = { minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity };
+  for (let i = 0; i + 1 < flat.length; i += 2) {
+    b.minX = Math.min(b.minX, flat[i]! + ox - 1e-6);
+    b.maxX = Math.max(b.maxX, flat[i]! + ox + 1e-6);
+    b.minZ = Math.min(b.minZ, flat[i + 1]! + oz - 1e-6);
+    b.maxZ = Math.max(b.maxZ, flat[i + 1]! + oz + 1e-6);
+  }
+  if (r.maxX < b.minX || r.minX > b.maxX || r.maxZ < b.minZ || r.minZ > b.maxZ) return 0;
   let n = 0;
-  for (let x = r.minX + 0.25; x < r.maxX; x += 0.5) for (let z = r.minZ + 0.25; z < r.maxZ; z += 0.5) if (inOutline(x, z, flat, ox, oz)) n++;
+  for (let x = r.minX + 0.25; x < r.maxX; x += 0.5) {
+    if (x < b.minX || x > b.maxX) continue;
+    for (let z = r.minZ + 0.25; z < r.maxZ; z += 0.5) if (z >= b.minZ && z <= b.maxZ && inOutline(x, z, flat, ox, oz)) n++;
+  }
   return n * 0.25;
 };
 
@@ -263,20 +319,16 @@ const setPieceBlocks: readonly Rect[] = GAME_PROPS.flatMap((p) => {
 /** The mouths of the zebra crossings (G-032). */
 const BANDS = crossingBands(MAP_CHUNKS);
 
-/** The risers of a map steps surface as the renderer draws it on the game's terrain: each one's height, metres. */
-const riserHeights = (outline: readonly number[]) => {
+/** The risers of a map steps surface as the renderer draws it on the game's ground (`groundY`): each one's height, metres, and its middle. */
+const risersOf = (outline: readonly number[]) => {
   const ring: Pt[] = [];
   for (let i = 0; i + 1 < outline.length; i += 2) ring.push({ x: outline[i]!, z: outline[i + 1]! });
-  const sink = new MeshSink();
-  planSteps(sink, ring, groundY);
-  const out: number[] = [];
-  for (let v = 0; v < sink.vertexCount; v += 4) {
-    if (Math.abs(sink.normals[v * 3 + 1]!) > 0.5) continue;
-    const ys = [0, 1, 2, 3].map((k) => sink.positions[(v + k) * 3 + 1]!);
-    out.push(Math.max(...ys) - Math.min(...ys));
-  }
-  return out;
+  return stepFaces(ring, groundY).flatMap((f) => (f.up ? [] : [riserOf(f)]));
 };
+/** The heights of the risers of a map steps surface, metres (`risersOf`). */
+const riserHeights = (outline: readonly number[]) => risersOf(outline).map((r) => r.h);
+/** A riser of a flight of steps taller than this is a wall in the flight, not a step (m): outdoor steps rise 0.15–0.18 m. */
+const TALL_RISER = 0.5;
 
 /** The ground the simulation walks (ADR-0043, ADR-0053), terrain and decks of every chunk. */
 const FIELD = new GroundField(WORLD_CHUNKS);
@@ -291,6 +343,8 @@ const BRIDGES = (() => {
   }
   return groups;
 })();
+/** The nodes of the map's bridges' ways: a way sharing one is joined to the bridge there. */
+const BRIDGE_NODES: ReadonlySet<number> = new Set([...SOURCE_OSM.ways.values()].flatMap((w) => (w.tags?.bridge && w.tags.bridge !== "no" ? w.nodes : [])));
 /** A map way's points every half metre, world x and z. */
 const wayPoints = (nodes: readonly number[]) => {
   const pts = nodes.flatMap((id) => {
@@ -422,6 +476,25 @@ const tagsBearOut = (shape: string, t: Readonly<Record<string, string>>): boolea
   if (shape === "abstract") return !kozio && t.artwork_type === "sculpture";
   return true;
 };
+
+/** The low patrols' lanes (ADR-0058 stage 7b) as the renderer plans them from the whole scenery, once. */
+const PATROL_LANES = (() => {
+  let memo: readonly PatrolLane[] | null = null;
+  // Under the canyon drones' lanes, as the renderer plans them.
+  return () => (memo ??= planPatrolLanes(patrolWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS, PATROL_STREETS), groundY, quietAt, surfaceY), planDroneLanes(droneWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY))));
+})();
+
+/** The paving as the renderer drapes it over the terrain (`pool-paving.ts`), once. */
+const DRAWN_PAVING = (() => {
+  let memo: ((x: number, z: number) => number | null) | null = null;
+  return () => (memo ??= drawnPaving(WORLD_SCENERY, groundY));
+})();
+
+/** The paint on and by the decks as the cell builder lays it (`deck-paint.ts`), once. */
+const DECK_PAINT = (() => {
+  let memo: ReturnType<typeof deckPaint> | null = null;
+  return () => (memo ??= deckPaint(mapGround(WORLD_SCENERY)));
+})();
 
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
@@ -914,6 +987,99 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
           return low * 2 > risers.length ? [{ at: near(g.outline[0]!, g.outline[1]!), what: `${c.id} ${low} of ${risers.length} risers under 4.5 cm` }] : [];
         }),
     ),
+  /**
+   * A band of map steps with a riser over `TALL_RISER` as the renderer draws it on the game's
+   * ground (G-255): the treads drop off a bridge's deck onto the terrain under it, or climb a
+   * kerb of the terrain, a wall in the flight. One per band, its tallest riser.
+   */
+  "steps-riser-tall": () =>
+    MAP_CHUNKS.flatMap((c) =>
+      c.ground
+        .filter((g) => g.surface === "steps")
+        .flatMap((g) => {
+          const tall = risersOf(g.outline).reduce<{ h: number; x: number; z: number } | null>((m, r) => (r.h > TALL_RISER && (!m || r.h > m.h) ? r : m), null);
+          return tall ? [{ at: near(tall.x, tall.z), what: `${c.id} riser ${tall.h.toFixed(2)} m` }] : [];
+        }),
+    ),
+  /**
+   * A band of map steps a walker coming along the terrain gets under, its body through the drawn
+   * treads (G-255): the ground there for feet on the terrain lies more than a step and less than a
+   * body and a deck's slab under them. Not the treads on a bridge's own deck (G-062's headroom).
+   */
+  "flight-underpass": () =>
+    flightUnderpass(
+      MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => ({ id: c.id, ring: worldOutline({ x: 0, z: 0, outline: g.outline }) }))),
+      groundY,
+      (x, z) => {
+        const g = FIELD.gridAt(x, z);
+        const t = g ? terrainHeightAt(g, x, z) : 0;
+        return FIELD.heightAt(x, z, t + STEP_HEIGHT);
+      },
+      (x, z, y) => Math.abs((bridgeDeckAt(x, z) ?? -Infinity) - y) < 0.01,
+      STEP_HEIGHT,
+      DECK_DEPTH,
+    ),
+  /**
+   * A point of a bridge's deck as the renderer draws it (its piece's outline, every 0.5 m) where
+   * the ground the game walks (`groundY`) lies more than a step under the deck (G-274): the
+   * walker falls through the paving drawn there, or stands with its head in the slab. `groundY`
+   * takes a deck high over a way under it as the ground too, so the ways under bridges (G-062)
+   * are not counted.
+   */
+  "deck-drawn-over-flight": () =>
+    [...BRIDGE_DECKS.values()].flat().flatMap((d) => {
+      const out: Finding[] = [];
+      for (let x = Math.ceil(d.box.minX * 2) / 2; x <= d.box.maxX; x += 0.5) {
+        for (let z = Math.ceil(d.box.minZ * 2) / 2; z <= d.box.maxZ; z += 0.5) {
+          if (!pointInRing({ x, z }, d.ring)) continue;
+          const y = deckHeight(d, x, z);
+          const g = groundY(x, z);
+          if (y - g > STEP_HEIGHT) out.push({ at: near(x, z), what: `ground ${g.toFixed(2)} under the deck drawn at ${y.toFixed(2)}` });
+        }
+      }
+      return out;
+    }),
+  /**
+   * A point (grid 0.25 m) off the bridges' decks with a deck on both sides within 2 m along x or
+   * z and the ground at least 0.5 m under the lower one (G-340): a slot between the carriageway
+   * and the sidewalk of one bridge, the walker falling through to the valley. Not the niche of
+   * the steps by the viaduct of Zamkowa, cut on purpose (T-147).
+   */
+  "deck-slot": () =>
+    deckSlots(
+      BRIDGES.map((g) => ({ minX: Math.min(...g.map((d) => d.box.minX)), maxX: Math.max(...g.map((d) => d.box.maxX)), minZ: Math.min(...g.map((d) => d.box.minZ)), maxZ: Math.max(...g.map((d) => d.box.maxZ)) })),
+      bridgeDeckAt,
+      groundY,
+      (p) => p.x >= 728.5 && p.x <= 735.1 && p.z >= 157.5 && p.z <= 163.8,
+    ),
+  /**
+   * A point (every 0.5 m) on the edge of a bridge's piece with another piece 0.3 m beyond it more
+   * than 0.3 m lower (G-340, G-344): a face the renderer draws and nothing collides with, the
+   * walker from the lower piece going on under the higher one onto the terrain. Not the niche of
+   * the steps by the viaduct of Zamkowa (T-147).
+   */
+  "deck-step-face": () =>
+    deckSteps(
+      [...BRIDGE_DECKS.values()].flat(),
+      deckHeight,
+      bridgeDeckAt,
+      (p) => p.x >= 728.5 && p.x <= 735.1 && p.z >= 157.5 && p.z <= 163.8,
+    ),
+  /**
+   * A point (every 0.5 m) on the edge of a bridge's piece past which a street or a path runs on
+   * the terrain more than 0.25 m above or below the deck (G-349): the walker coming off the
+   * street stops at the abutment, a car jumps onto the deck. Not a way under the bridge (G-062),
+   * nor the niche of the steps by the viaduct of Zamkowa, which go down from its edge (T-147).
+   */
+  "deck-abutment-step": () =>
+    abutmentSteps([...BRIDGE_DECKS.values()].flat(), {
+      height: deckHeight,
+      deck: bridgeDeckAt,
+      ground: groundY,
+      paved: (x, z) => surfacesAt(x, z).some((s) => s === "road" || s === "crossing" || s === "cobble" || s === "sidewalk" || s === "footway" || s === "square"),
+      headroom: DECK_HEADROOM,
+      skip: (p) => p.x >= 728.5 && p.x <= 735.1 && p.z >= 157.5 && p.z <= 163.8,
+    }),
   /** A run of map steps between two parallel walls further apart than the steps the game lays plus 1 m (G-203). */
   "steps-narrower-than-walls": () => {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
@@ -935,10 +1101,64 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A band of map steps the renderer draws nothing on, too short or too narrow for a flight: a hole in the steps (G-213). */
   "steps-band-hidden": () => stepsHidden(MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })))),
+  /** A flight of map steps whose game terrain falls against its `incline` by 0.3 m or more, end to end (G-236). */
+  "steps-incline-against": () => {
+    const terrain = (p: Pt) => {
+      const g = FIELD.gridAt(p.x, p.z);
+      return g ? terrainHeightAt(g, p.x, p.z) : 0;
+    };
+    const onMap = (p: Pt) => MAP_CHUNKS.some((c) => p.x >= c.bounds.minX && p.x <= c.bounds.maxX && p.z >= c.bounds.minZ && p.z <= c.bounds.maxZ);
+    return stepsInclineAgainst(extractFeatures(SOURCE_OSM).lines.map((l) => correctedLine(l)), terrain, onMap);
+  },
+  /** A street sinking more than 1 m over a tunnel it does not join, on the game's ground (`road-tunnel.ts`, G-088). */
+  "road-dip-over-tunnel": () =>
+    roadDipsOverTunnels(
+      extractFeatures(SOURCE_OSM).lines.map((l) => ({ ...correctedLine(l), nodes: SOURCE_OSM.ways.get(l.osmId)?.nodes ?? [] })),
+      (p) => groundY(p.x, p.z),
+      (p) => onChunk(p.x, p.z),
+    ),
+  /**
+   * A flight's ramp (G-236) lifting the terrain over 2 m above the map's at an end: a wrong
+   * `incline` in a new extract (`osm:fetch`) would raise a mound up the flight unnoticed.
+   */
+  "flight-ramp-lift": () =>
+    FLIGHT_RAMPS.flatMap((r) => {
+      const lift = Math.max(r.ya - mapHeight(MAP_CHUNKS, r.a.x, r.a.z), r.yb - mapHeight(MAP_CHUNKS, r.b.x, r.b.z));
+      return lift > 2 ? [{ at: near(r.a.x, r.a.z), what: `flight ramp lifts the terrain ${lift.toFixed(2)} m` }] : [];
+    }),
   /** A lamp or a candelabrum of the generator's table standing inside a band of steps (G-203). */
   "lamp-on-steps": () => {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
     return lampsOnSteps(Object.values(LUBLIN_STREET_PROPS).flat(), (p) => flights.some((r) => pointInRing(p, r)));
+  },
+  /**
+   * A plain town lamp of the generator's table within 8 m of a styled one (G-259): two lamps of
+   * one street nearer than the 7 m that merges two of a kind read as one light point doubled.
+   */
+  "lamp-plain-by-styled": () => plainLampsByStyled(Object.values(LUBLIN_STREET_PROPS).flat(), 8),
+  /**
+   * A street of the map (one OSM way, so one kind and one set of tags) whose lamps change look
+   * along it (G-266): a plain lamp and a styled one both within 8 m of its axis, 15 m off its ends.
+   */
+  "lamp-style-change-on-way": () =>
+    mixedLampWays(
+      [...SOURCE_OSM.ways.values()].filter((w) => w.tags?.highway).map((w) => ({ id: w.id, pts: wayPoints(w.nodes) })),
+      Object.values(LUBLIN_STREET_PROPS).flat(),
+      8,
+      15,
+    ),
+  /** A road lamp or a modern pole of the generator's table inside the walled Old Town, where Lublin's lamps are styled (G-264). */
+  "lamp-road-in-old-town": () => plainLampsIn(Object.values(LUBLIN_STREET_PROPS).flat(), (p) => pointInRing(p, OLD_TOWN_RING)),
+  /** A lamp of the plan's lines more than 0.5 m off the paving (G-477): on the lawn by Zamkowa's causeway, in the Carmelites' garden. */
+  "lamp-off-band": () => {
+    const paving = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => PAVED.has(g.surface)).map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
+    const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
+    return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, pavedAt(paving));
+  },
+  /** A lamp of the plan's line over a bridge 2.5 m or more under the deck beside it or over it (G-503): on the valley's ground by Zamkowa's viaduct. */
+  "lamp-beside-deck": () => {
+    const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
+    return lampsBesideDeck(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, bridgeDeckAt);
   },
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
@@ -946,12 +1166,16 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * A way of the map off the bridge (a street, a path, steps) under a bridge's deck more than 2 m
    * over the terrain, which a walker cannot follow under it (G-062): walked on the simulation's
    * ground from 5 m before the deck to 5 m past it, the feet jump by more than 0.5 m in a step.
+   * A way joined to a bridge's way at an end (steps down from a viaduct, G-255) is walked from
+   * that end, its feet starting on the deck there, not on the terrain under it.
    */
   "under-deck-blocked": () =>
     [...SOURCE_OSM.ways.values()].flatMap((w) => {
       const t = w.tags ?? {};
       if (!t.highway || (t.bridge && t.bridge !== "no")) return [];
-      const pts = wayPoints(w.nodes);
+      const first = BRIDGE_NODES.has(w.nodes[0]!);
+      const joined = first || BRIDGE_NODES.has(w.nodes[w.nodes.length - 1]!);
+      const pts = wayPoints(joined && !first ? [...w.nodes].reverse() : w.nodes);
       return BRIDGES.flatMap((bridge) => {
         const terrain = (p: { x: number; z: number }) => {
           const g = FIELD.gridAt(p.x, p.z);
@@ -960,7 +1184,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         const under = pts.flatMap((p, i) => ((deckAt(bridge, p.x, p.z) ?? -Infinity) - terrain(p) > 2 ? [i] : []));
         if (under.length === 0) return [];
         const walk = pts.slice(Math.max(0, under[0]! - 10), under[under.length - 1]! + 11);
-        let feet = terrain(walk[0]!);
+        let feet = (joined && under[0]! < 10 ? deckAt(bridge, walk[0]!.x, walk[0]!.z) : null) ?? terrain(walk[0]!);
         let jump = 0;
         for (const p of walk) {
           const y = groundAt([], FIELD, p.x, p.z, feet);
@@ -990,6 +1214,31 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       });
     });
   },
+  /** A pad of the terrain without its row in the topography register (ADR-0074, review of #327). */
+  "pad-unregistered": () => padsUnregistered(),
+  /**
+   * A set piece's pad, or one of Alchemia's ramps, moving the terrain by over 0.3 m on an OSM street's
+   * or footway's axis (T-209, `pad-on-road.ts`). The ramps along the steps and the bridges' abutments
+   * follow the streets by design and are left out.
+   */
+  "pad-on-road": () =>
+    padOnRoadFindings(
+      [...PADS.map((p, i) => ({ name: `pad ${p.row ?? i}`, pads: [p], ramps: [] })), ...ALCHEMIA_RAMPS.map((r, i) => ({ name: `Alchemia's ramp ${i}`, pads: [], ramps: [r] }))],
+      MAP_CHUNKS,
+      extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags)),
+    ),
+  /** Alchemia's solids hiding a landmark's top from more than a quarter of the streets round it (ADR-0074, review of #312). */
+  "game-solid-landmark-occlusion": () => alchemiaHidesLandmarks(),
+  /** A building the investor's plan keeps (the Arkady, the shed by them) without a solid on its OSM outline (ADR-0074 §11). */
+  "osm-building-kept": () => osmBuildingsKept(keptInGame()),
+  /** The Arkady's arcade piers off the orthophoto's (ADR-0074 stage 2, G-461): 13 piers, 14 spans, ±0.3 m. */
+  "arcade-rhythm": () => arcadeRhythm(gamePiers()),
+  /** Ground left over 0.3 m under the map's by T2's pads on grid points, off the Arkady, their pavement and landing (G-460). */
+  "pad-dip-uncovered": () => padDipUncovered(dipInGame()),
+  /** The pavilion on Alchemia's corner on a sidewalk's paving, a crossing or a carriageway, or its ladder's foot on a sidewalk (ADR-0074 stage 3). */
+  "pavilion-on-paving": () => pavilionOnPaving(pavingInGame()),
+  /** An interior of the game's own under the ground with fewer than two ways out in the level graph (ADR-0074 stage 4: P-1). */
+  "underground-level-exit": () => undergroundLevelExits(levelExitsInGame()),
   /**
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.
@@ -1046,6 +1295,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "church-tower-off-building": () => towersOffBuilding(cityChurches(SOURCE_OSM)),
   /** A tower of the map (`man_made=tower`, `tower:type`, `building=tower`) drawn as a tenement: flats' windows or shop fronts (G-232). */
   "tower-dwelling-windows": () => dwellingTowers(cityTowers(SOURCE_OSM)),
+  /** A building or a lifted part `building:material=brick` in OSM drawn in a plaster of the facades or the landmark kit (G-244). */
+  "brick-plastered": () => plasteredWalls(cityBricks(SOURCE_OSM)),
   /**
    * A monument or an artwork whose shape its OSM tags do not bear out (G-149), judged by the
    * tagged node nearest within 3 m: anything standing for a plaque, a stumbling stone, a mural or
@@ -1384,8 +1635,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       if (i.building === null) return [];
       const b = MAP_CHUNKS.flatMap((c) => c.buildings).find((m) => m.id === i.building);
       if (!b) return [{ at: i.id, what: `${i.building} not on the map` }];
-      const doors = ROOM_SITES.filter((s) => s.building === i.building).flatMap((s) =>
-        [CLINIC_DOOR, KOI_DOOR].filter((d) => d.at.x > s.rect.minX && d.at.x < s.rect.maxX && Math.abs(d.at.z - s.front) < 1.5).map((d) => ({ x: d.at.x, y: d.at.y, z: d.at.z - s.faces * 0.3 })),
+      const doors = [...ROOM_SITES, CAPSULE_SITE].filter((s) => s.building === i.building).flatMap((s) =>
+        [CLINIC_DOOR, KOI_DOOR, CAPSULE_DOOR].filter((d) => d.at.x > s.rect.minX && d.at.x < s.rect.maxX && Math.abs(d.at.z - s.front) < 1.5).map((d) => ({ x: d.at.x, y: d.at.y, z: d.at.z - s.faces * 0.3 })),
       );
       const passages = PASSAGES.filter((p) => p.building === i.building).flatMap((p) => {
         const len = Math.hypot(p.to.x - p.from.x, p.to.z - p.from.z);
@@ -1524,6 +1775,31 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "holo-or-blade-in-neighbour": () => signsIn([MAP_SIGN_KIND.holo, MAP_SIGN_KIND.blade]),
   /** A neon tube under the cornice (ADR-0044) running on into the building next door (G-170). */
   "tube-in-neighbour": () => signsIn([MAP_SIGN_KIND.tube]),
+  /** A span's cable or lantern over the street (ADR-0051) under 2.5 m over the paving drawn under it, or in it (G-268). */
+  "cable-low": () => lowCables().low.map((l) => ({ at: near(l.x, l.z), what: `${l.building}: ${l.clearance.toFixed(2)} m over the paving` })),
+  /** The metro line on the map (ADR-0071) under a protected area or a historic building or church, sampled every 5 m (G-314, G-315). */
+  "metro-line-protected": () => metroLineProtected().map((f) => ({ at: near(f.x, f.z), what: `${f.line}: under ${f.what}` })),
+  /** A metro pavilion (ADR-0071 stage 2) standing in a building of the map. */
+  "metro-entrance-in-building": () => metroInBuilding(),
+  /** A metro pavilion under 15 m from a monument, church or public building, 10 m from a memorial, artwork or fountain, its dig 3 m from an archaeological site. */
+  "metro-entrance-near-heritage": () => metroNearHeritage(SOURCE_OSM, (id) => { const t = osmTags(id); return t.historic !== undefined || t.heritage !== undefined || t.amenity === "place_of_worship"; }),
+  /** A metro pavilion's opening without 3 m free in front, furniture in it, a walkers' lane through it or a car's lane closer than a pavement. */
+  "metro-entrance-blocked": () => metroBlocked(Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES, cars),
+  /** A metro pavilion's shaft dug beyond its outline or without a wall on a side other than the opening. */
+  "metro-shaft-open": () => metroShaftOpen(),
+  /** A point of a 0.5 m grid in the 3 m in front of a metro pavilion's opening on no ground surface of the map: the exit onto bare terrain (G-332). */
+  "metro-exit-bare": () => metroExitBare(),
+  /** A ray of sight between the street out of a metro pavilion's opening and its hall stopped by the terrain in the air of the shaft (G-377). */
+  "metro-shaft-ray": () => metroShaftRay(),
+  /** A point of a 0.5 m grid on bare terrain in a shops' or market's area, by a shop's or public building's walls or at a stop (`landuse-bare.ts`, decision 5.11). */
+  "landuse-bare": () => landuseBare(cityLanduseWorld(SOURCE_OSM)),
+  /**
+   * A tree drawn lower than 0.6 of its measured height (OSM `height` or NMPT less NMT, `tree-heights.ts`, G-422). The
+   * baseline's are by walls: their crowns grow only as far as clear of the facades.
+   */
+  "tree-height-vs-nmpt": () => treesBelowMeasured(cityMeasuredTrees(), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A tree OSM names a genus of the renderer's models (`genus`, `species`: Quercus, Populus...) drawn as another one: the oaks and the "Baobab" of Plac Litewski as limes and maples (G-423, `tree-species.ts`). */
+  "tree-species-ignored": () => treesOfOtherSpecies(cityNamedTrees(), Object.values(WORLD_STREET_PROPS).flat()),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
   // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).
@@ -1535,6 +1811,32 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     doorsFacingUnderground(WORLD_SCENERY, Object.values(WORLD_STREET_PROPS).flat(), cityVenueBoards(WORLD_SCENERY), extractFeatures(SOURCE_OSM).lines, loadEntrances().map((e) => e.p)),
   // The vehicles of ADR-0058 stage 4 as drawn against their bodies in the simulation (`vehicle-pieces.ts`).
   ...vehicleChecks(PARKED_CARS),
+  // The drones of ADR-0058 stage 7 flown round the lanes the renderer plans from the scenery, and the
+  // low patrols of stage 7b through theirs (`drone-pieces.ts`, `patrol-pieces.ts`).
+  ...droneChecks(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY, planDroneLanes, PATROL_LANES),
+  ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones), surfaceY),
+  /** A low patrol's searchlight pool, laid where the views lay it (`cityPatrolWorld`), sinking into the drawn paving: a dark middle (G-293). */
+  "drone-low-pool-sunk": () => poolSunk(PATROL_LANES(), cityPatrolWorld().surfaceAt, DRAWN_PAVING()),
+  /** Two overlapping pieces of the drawn paving at different heights over the ground where they meet: a step, patches and the depth flickering (G-301, `paving-overlap.ts`). */
+  "paving-overlap-step": () => pavingOverlapSteps(drawnPieces(WORLD_SCENERY, groundY)),
+  /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */
+  "paving-coplanar": () => pavingCoplanar(mapGround(WORLD_SCENERY)),
+  /** A drawn lawn with over 20 m² of it under a square's or a cobbled area's paving, which lies over it: Plac Litewski's lawns (G-421, `grass-under-paving.ts`). */
+  "grass-under-paving": () => grassUnderPavingFindings(WORLD_SCENERY),
+  /** Road markings, zebras and flights on a bridge's deck drawn under its carriageway (G-301, `deck-paint.ts`). */
+  "paint-under-deck": () => DECK_PAINT().under,
+  /** Road markings and zebras beside a deck pulled up off the terrain towards it (G-301, `deck-paint.ts`). */
+  "paint-lifted-by-deck": () => DECK_PAINT().lifted,
+  /** A low patrol coming into sight or going 2 px large or more from anywhere on a street (`patrol-sight.ts`). */
+  "drone-low-pop": () => popSight(PATROL_LANES(), streetEyes(WORLD_SCENERY, surfaceY), patrolModelSpan()),
+  // The still crowd of ADR-0058 stage 8 against the game's buildings, roads, paving, kept furniture and moving crowd (`figure-pieces.ts`).
+  ...figureChecks(Object.values(WORLD_STREET_PROPS).flat(), {
+    inBuilding,
+    onRoad: (x, z) => surfacesAt(x, z).some((s) => s === "road" || s === "crossing"),
+    surfaceY,
+    crowdSpots: [...CROWD_SPOTS.map((s) => s.at), ...ACTIVITY_SPOTS.map((s) => s.at)],
+    crowdLanes: CROWD_LANES.map((l) => [...l.points, l.points[0]!].map(([x, z]) => ({ x, z }))),
+  }),
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */
@@ -1706,6 +2008,41 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(lampsOnSteps([{ ...lamp, prop: "lamp-pastoral" }], flight)).toHaveLength(1);
     expect(lampsOnSteps([{ ...lamp, z: 5.5 }], flight)).toEqual([]);
     expect(lampsOnSteps([{ ...lamp, prop: "shrubs" }], flight)).toEqual([]);
+  });
+
+  it("finds a plain lamp beside a styled one, and none farther off or beside another plain one (G-259)", () => {
+    const pastoral = { prop: "lamp-pastoral", x: 0, z: 0 };
+    const pole = { prop: "lamp-modern-pole", x: 1, z: 0 };
+    expect(plainLampsByStyled([pastoral, pole], 8)).toEqual([{ at: "1,0", what: "lamp-modern-pole 1.0 m from lamp-pastoral" }]);
+    expect(plainLampsByStyled([{ ...pastoral, prop: "lamp-wall-lantern" }, { ...pole, prop: "lamp-road", x: 7 }], 8)).toHaveLength(1);
+    expect(plainLampsByStyled([pastoral, { ...pole, x: 9 }], 8)).toEqual([]);
+    expect(plainLampsByStyled([{ ...pastoral, prop: "lamp-road" }, pole], 8)).toEqual([]);
+    expect(plainLampsByStyled([{ ...pastoral, prop: "lamp-park" }, pole], 8)).toEqual([]);
+  });
+
+  it("finds a plain lamp inside the Old Town's walls, and none outside them or of a styled kind (G-264)", () => {
+    const square = [{ x: 0, z: 0 }, { x: 10, z: 0 }, { x: 10, z: 10 }, { x: 0, z: 10 }];
+    const inside = (p: { x: number; z: number }) => pointInRing(p, square);
+    expect(plainLampsIn([{ prop: "lamp-road", x: 5, z: 5 }], inside)).toEqual([{ at: "5,5", what: "lamp-road in the Old Town" }]);
+    expect(plainLampsIn([{ prop: "lamp-modern-pole", x: 1, z: 9 }], inside)).toHaveLength(1);
+    expect(plainLampsIn([{ prop: "lamp-road", x: 15, z: 5 }], inside)).toEqual([]);
+    expect(plainLampsIn([{ prop: "lamp-pastoral", x: 5, z: 5 }], inside)).toEqual([]);
+  });
+
+  it("finds a way whose lamps change from styled to plain along it, and none at its ends or lit one way (G-266)", () => {
+    const way = { id: 1, pts: Array.from({ length: 101 }, (_, k) => ({ x: k, z: 0 })) };
+    const pastoral = { prop: "lamp-pastoral", x: 30, z: 5 };
+    const pole = { prop: "lamp-modern-pole", x: 70, z: -5 };
+    expect(mixedLampWays([way], [pastoral, pole], 8, 15)).toEqual([{ at: "70,-5", what: "w1: 1 plain and 1 styled lamps" }]);
+    expect(mixedLampWays([way], [pastoral, { ...pole, x: 95 }], 8, 15)).toEqual([]);
+    expect(mixedLampWays([way], [pastoral, { ...pole, z: -12 }], 8, 15)).toEqual([]);
+    expect(mixedLampWays([way], [pastoral, { ...pole, prop: "lamp-pastoral" }], 8, 15)).toEqual([]);
+  });
+
+  it("keeps Plac po Farze and the Rynek inside the Old Town's ring and the streets past its walls out of it (G-264)", () => {
+    for (const p of [{ x: 653.9, z: 39.3 }, { x: 653.5, z: 46.6 }, { x: 582.4, z: -61.2 }]) expect(pointInRing(p, OLD_TOWN_RING)).toBe(true);
+    // Królewska, the road east of the walls and Kowalska: the plan's road lamps of the Old Town's edges.
+    for (const p of [{ x: 655.1, z: -204.1 }, { x: 749.8, z: 7.8 }, { x: 729.1, z: 126.2 }, { x: 622, z: 152.9 }]) expect(pointInRing(p, OLD_TOWN_RING)).toBe(false);
   });
 
   it("finds a wall lantern within 2 m of a gate's axis cut by hand, in its vault or its mouth, and none on the street past its fronts (G-183)", () => {

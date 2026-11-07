@@ -148,7 +148,7 @@ describe("a part on no outline (G-061)", () => {
 
 describe("a tower mapped without building (G-098)", () => {
   const inputs = loadInputs();
-  const specs = [...new Set([{ x: 161.2, z: -228.4 }, { x: 83.5, z: 99.3 }].flatMap((p) => ALL_CHUNKS.filter((c) => inRect(p, c.rect))))];
+  const specs = [...new Set([{ x: 161.2, z: -228.4 }, { x: 83.5, z: 99.3 }, { x: 57.9, z: 74.3 }].flatMap((p) => ALL_CHUNKS.filter((c) => inRect(p, c.rect))))];
   const all = generate(inputs.osm, inputs.src, specs).chunks.flatMap((c) => c.buildings);
   const byId = (id: string) => all.find((b) => b.id === id);
 
@@ -178,5 +178,15 @@ describe("a tower mapped without building (G-098)", () => {
     // NMPT: the roof's median y 11.9 over the outline, eaves at y 11, the inner roof at y 13.1.
     expect(Math.abs(roofTop - 11.9)).toBeLessThanOrEqual(1.5);
     expect(Math.abs(palace.y + palace.height - 11)).toBeLessThanOrEqual(0.5);
+  });
+
+  it("keeps the palace's annex w232805924 at its flat roof at y 4.6 of the surface model, under the palace's eaves (G-251)", () => {
+    const annex = byId("w232805924")!;
+    const palace = byId("w67508859")!;
+    const top = annex.y + annex.height + (annex.roof ?? 0);
+    // NMPT GUGiK 0.5 m: the flat roof at y 4.6 off the palace's wall (the outline's p50 5.1 takes the wall in).
+    expect(Math.abs(top - 4.6)).toBeLessThanOrEqual(1);
+    expect(palace.y + palace.height - top).toBeGreaterThanOrEqual(4);
+    expect(annex.levels).toBeLessThanOrEqual(2);
   });
 });

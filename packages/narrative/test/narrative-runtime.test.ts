@@ -140,13 +140,18 @@ describe("Ume conversation", () => {
     expect(view.lines).toHaveLength(1);
   });
 
-  it("refuses to talk when the street fears Seki", () => {
+  // ADR-0070: a refusal only at the hostile tier (-50 or worse); a wary street gets a cold line, then the talk.
+  it("refuses to talk when the street fears Seki, and is only cold when it distrusts her", () => {
     const { runtime, commands } = setup();
     const d = createDomainState();
-    const view = runtime.start("ume", { ...d, reputation: { ...d.reputation, civilians: -30 } });
+    const view = runtime.start("ume", { ...d, reputation: { ...d.reputation, civilians: -60 } });
     expect(view.lines).toEqual([{ speaker: "speaker.ume", text: "Nie podchodź do mnie. Widziałam, co robisz na tej ulicy." }]);
     expect(view.ended).toBe(true);
     expect(commands).toEqual([]);
+    const wary = runtime.start("ume", { ...d, reputation: { ...d.reputation, civilians: -30 } });
+    expect(wary.lines[0]).toEqual({ speaker: "speaker.ume", text: "A, to ty. Ludzie o tobie gadają, dziecko. Nie wiem, w co wierzyć." });
+    expect(wary.lines.length).toBeGreaterThan(1);
+    expect(wary.lines.map((l) => l.text).join(" ")).not.toContain("Nie podchodź");
   });
 });
 
@@ -442,10 +447,13 @@ describe("time of day (ADR-0017)", () => {
     expect(runtime.start("oyaji_closed", at(4)).lines[0]?.text).toMatch(/O tej godzinie/);
   });
 
-  it("a feared Seki gets nothing but a closed shutter", () => {
+  it("a feared Seki gets nothing but a closed shutter; a distrusted one a cold word first", () => {
     const { runtime } = setup();
-    const domain = { ...at(23), reputation: { ...createDomainState().reputation, civilians: -40 } };
-    expect(runtime.start("oyaji_closed", domain).lines).toEqual([{ speaker: "Oyaji", text: "Zamknięte. Dla ciebie zawsze zamknięte." }]);
+    const domain = (civilians: number) => ({ ...at(23), reputation: { ...createDomainState().reputation, civilians } });
+    expect(runtime.start("oyaji_closed", domain(-60)).lines).toEqual([{ speaker: "Oyaji", text: "Zamknięte. Dla ciebie zawsze zamknięte." }]);
+    const wary = runtime.start("oyaji_closed", domain(-40)).lines;
+    expect(wary[0]).toEqual({ speaker: "Oyaji", text: "A, to ty. Zamknięte i specjalnie dla ciebie nie otworzę." });
+    expect(wary.length).toBeGreaterThan(1);
   });
 
   it("Ume in her doorway late at night mentions the hour, by day she does not", () => {

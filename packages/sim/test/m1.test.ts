@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ABILITY_CATALOG, CONTRACT_SITE_SPAWNS_COUNT_GUARD, contractTag, type Contract } from "./m1-helpers";
-import { CONTRACT_SITE_SPAWNS, GANGER_SPEED, Simulation, contractGangerHp, ground, groundY, stateHash } from "../src";
+import { CONTRACT_SITE_SPAWNS, GANGER_SPEED, GANGER_MAX_HP, Simulation, ground, groundY, stateHash } from "../src";
 import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
 /** A copy of the simulation with a patched domain, built the way a load would build it. */
@@ -39,7 +39,7 @@ describe("fixer contracts", () => {
     expect(accepted).toHaveLength(1);
     expect(c.status).toBe("active");
     expect(contractTargets(sim, c)).toHaveLength(c.targets);
-    expect(contractTargets(sim, c)[0]?.health?.max).toBe(contractGangerHp(0));
+    expect(contractTargets(sim, c)[0]?.health?.max).toBe(GANGER_MAX_HP);
     expect(CONTRACT_SITE_SPAWNS_COUNT_GUARD).toBe(true);
   });
 
@@ -71,8 +71,9 @@ describe("fixer contracts", () => {
     expect(completed).toEqual([expect.objectContaining({ reward: c.reward })]);
     expect(sim.domain.wallet.eddies).toBe(before + c.reward + extra());
     expect(sim.domain.contracts).toEqual({ active: null, completed: 1 });
-    // -4 per target killed, -5 for completing the contract.
-    expect(sim.domain.reputation).toEqual({ fixers: 3, hebi: -4 * c.targets - 5, civilians: 1 - c.targets, clinic: 0, kagami: 0, tessen: 0 });
+    // -4 per target killed, -5 for completing the contract. The street judges the job, not its
+    // targets: +2, and +2 more for a clean one (no alarm, no other kills, ADR-0070).
+    expect(sim.domain.reputation).toEqual({ fixers: 3, hebi: -4 * c.targets - 5, civilians: 4, clinic: 0, kagami: 0, tessen: 0 });
   });
 
   it("a load in the middle of a contract restores only the surviving targets", () => {

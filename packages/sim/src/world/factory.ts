@@ -1,7 +1,8 @@
-import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, sightOf, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/district-doki";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
+import { castViewOf } from "../content/cast";
 import { type DeviceDef, deviceView } from "../content/devices";
 import { DOOR_CLOSE_DELAY } from "../content/doors";
 import { SCHEDULES } from "../content/schedules";
@@ -10,6 +11,7 @@ import { type PrismDef, boundsOfPrisms, isConvex, prismsAt } from "./prism";
 import type { Combatant, Entity, MeleeState, WalkProgress } from "./components";
 import { isEnforcer } from "./enforcer";
 import { bodySnapshotOf } from "./bodies";
+import { type EnemyScaling, enemyMaxHp, gradeEnemy } from "./enemy-grade";
 
 export const BODY = { radius: 0.38, height: 1.8 } as const;
 
@@ -152,27 +154,27 @@ export const gangerEntity = (
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
-    view: { kind: "enemy", preset: def.faction === "tessen" ? "corpo" : "ganger", ...(enforcer ? { enforcer: true } : {}) },
+    view: { kind: "enemy", preset: def.faction === "tessen" ? "corpo" : "ganger", ...(enforcer ? { enforcer: true } : {}), ...castViewOf(spawn.key, spawn.key || `#${id}`) },
     faction: def.faction,
     enemy: { type },
     velocity: { x: 0, y: 0, z: 0 },
     health: { current: maxHp, max: maxHp },
     combatant: npcCombatant(def.weapon),
     melee: idleMelee(),
-    // A melee fighter has to close in: it attacks from inside its weapon's reach. Tessen's guards
-    // (ADR-0024) see in a cone and fire their rifles from a little further out.
-    ai:
-      def.faction === "tessen"
-        ? { home: spawn.position, aggroRange: GUARD_SIGHT, attackRange: 20, alerted: false, cone: true, ...(victim ? { victim } : {}) }
-        : { home: spawn.position, aggroRange: 17, attackRange: meleeAttackRange(def.weapon) ?? 15, alerted: false, ...(victim ? { victim } : {}) },
+    // It sees as far as its type's profile (ADR-0069). A melee fighter has to close in: it attacks
+    // from inside its weapon's reach. Tessen's guards (ADR-0024) fire their rifles from a little further out.
+    ai: {
+      home: spawn.position,
+      aggroRange: sightOf(type).sight,
+      attackRange: def.faction === "tessen" ? 20 : (meleeAttackRange(def.weapon) ?? 15),
+      alerted: false,
+      ...(victim ? { victim } : {}),
+    },
   };
   if (tag) e.tag = tag;
   if (enforcer && e.ai) e.ai = { ...e.ai, enforcer: true };
   return e;
 };
-
-/** How far a corporate guard sees a standing player in front of it, metres. */
-export const GUARD_SIGHT = 18;
 
 /** Index of the perch nearest to `p`. */
 export const nearestPerch = (perches: readonly Vec3[], p: Vec3): number => {
@@ -194,7 +196,7 @@ export const sniperEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
-    view: { kind: "enemy", preset: "corpo" },
+    view: { kind: "enemy", preset: "corpo", ...castViewOf(spawn.key, spawn.key || `#${id}`) },
     faction: def.faction,
     enemy: { type: "tessen_sniper" },
     velocity: { x: 0, y: 0, z: 0 },
@@ -214,7 +216,7 @@ export const ESCORT_MAX_HP = 110;
 export const escortEntity = (id: EntityId, key: string, route: readonly [Vec3, ...Vec3[]], chunk: string): Entity => ({
   ...actor(id, { key, position: route[0], yaw: Math.PI }),
   chunk,
-  view: { kind: "npc", preset: "civilian" },
+  view: { kind: "npc", preset: "civilian", ...castViewOf(key, key) },
   faction: "civilians",
   velocity: { x: 0, y: 0, z: 0 },
   health: { current: ESCORT_MAX_HP, max: ESCORT_MAX_HP },
@@ -248,7 +250,8 @@ export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity 
 };
 
 const npcEntity = (id: EntityId, def: ActorDef & { kind: "npc" }, chunk: string): Entity => {
-  const view = def.indoor ? { kind: "npc" as const, preset: def.preset, umbrella: false } : { kind: "npc" as const, preset: def.preset };
+  const cast = castViewOf(def.spawn.key, def.spawn.key);
+  const view = def.indoor ? { kind: "npc" as const, preset: def.preset, umbrella: false, ...cast } : { kind: "npc" as const, preset: def.preset, ...cast };
   const e: Entity = { ...actor(id, def.spawn), chunk, view, faction: def.faction };
   if (def.interactable) e.interactable = def.interactable;
   if (def.maxHp !== undefined) e.health = { current: def.maxHp, max: def.maxHp };
@@ -302,18 +305,17 @@ export const pickupEntity = (id: EntityId, key: string, position: Vec3, chunk: s
   interactable: { kind: "pickup", dialogueId: key, prompt: what === "crate" ? "prompt.pickup.crate" : "prompt.pickup.data", radius: 1.8 },
 });
 
-/** Contract targets get tougher as Seki completes more jobs. */
-export const contractGangerHp = (completed: number): number => GANGER_MAX_HP + Math.min(60, completed * 10);
-
 /**
- * A hostile NPC as it appears in the world (`npcHealth`): its health, full, scaled. Called on a
- * freshly built entity, before any saved state goes back onto it (that keeps its saved health).
+ * A hostile NPC as it appears in the world: its level by its district's band (ADR-0059) and its
+ * health, full, scaled by the difficulty's `npcHealth` (ADR-0066) and that level, its weapon's
+ * damage by the level. Called on a freshly built entity, before any saved state goes back onto it
+ * (that keeps its saved share of health).
  */
-export const toughen = (e: Entity, npcHealth: number): Entity => {
+export const toughen = (e: Entity, s: EnemyScaling): Entity => {
   if (e.view?.kind !== "enemy" || !e.health) return e;
   e.baseHp = e.health.max;
   // Whole points, as the content gives them (110 × 1.2 is not quite 132 in floating point).
-  const max = Math.max(1, Math.round(e.health.max * npcHealth));
+  const max = enemyMaxHp(e.health.max, s.npcHealth, gradeEnemy(e, s));
   e.health = { current: max, max };
   return e;
 };
@@ -378,8 +380,10 @@ export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot =>
   const pinned = e.ai?.away !== undefined ? { ...sure, away: e.ai.away } : sure;
   // A body (ADR-0065): knocked out or dead, where the player left it.
   const lying = e.downed ? { ...pinned, downed: bodySnapshotOf(e.downed) } : pinned;
+  // Its fight already in her style (ADR-0059 stage 6): a load does not count it again.
+  const counted = e.fought ? { ...lying, fought: true as const } : lying;
   // Mid-fight (G-185): an NPC's gun and a sniper's aim go on as they were.
-  const fighting = withFight(e, lying);
+  const fighting = withFight(e, counted);
   // Walking (G-208): its stuck check goes on, so it takes the way around in the same step.
   const body = e.walk ? { ...fighting, walk: walkSnapshotOf(e.walk) } : fighting;
   // Looking for the player (ADR-0029): where, for how long, and how long out of sight.
@@ -401,6 +405,7 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
     e.health = { ...e.health, current: restoredHealth(e.health, s.hp, savedMax) };
   }
   if (e.combatant) e.combatant.cooldown = s.cooldown;
+  if (s.fought) e.fought = true;
   if (e.combatant && s.gun) {
     // No more than its own weapon holds: the weapon is the content's, not the save's.
     e.combatant.loaded = Math.min(s.gun.loaded, e.combatant.stats?.magazine ?? s.gun.loaded);

@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { type Page, expect, test } from "@playwright/test";
 import { gameState, place, teleportTo, newGame, waitForGame, waitForPlay } from "./helpers";
 
@@ -56,6 +57,51 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
   await expect(page.getByTestId("touch-controls")).toBeHidden();
   await page.getByTestId("dialogue").getByRole("button").first().tap();
   await expect(page.getByTestId("dialogue")).toContainText("I fix things.");
+});
+
+/**
+ * One thumb fires from the sights (ADR-0072): by default holding ● aims and fires; with "Fires
+ * only" a tap on ◎ latches the sights, lights ◎ and rings the crosshair. SHOTS=<dir> keeps a
+ * screenshot of each state.
+ */
+test("phone: the fire button aims, or a tap on aim holds the sights", async ({ page }) => {
+  test.setTimeout(180_000);
+  await page.goto("/?seed=7&models=off");
+  await waitForGame(page);
+  await newGame(page, "tap");
+  await waitForPlay(page);
+  const cdp = await page.context().newCDPSession(page);
+  const finger = (type: "touchStart" | "touchEnd", at: { x: number; y: number }) =>
+    cdp.send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x: at.x, y: at.y, id: 2 }] });
+  const centre = async (name: RegExp | string) => {
+    const box = (await page.getByRole("button", { name }).boundingBox())!;
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  };
+  const aiming = () => page.evaluate(() => window.__seki!.session.sim.player()!.posture!.aiming);
+  const shot = async (name: string) => {
+    if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, `${name}.png`) });
+  };
+  await shot("touch-hip");
+
+  // A: ● held aims and fires; letting go ends both.
+  const fire = await centre(/^Fire/);
+  await finger("touchStart", fire);
+  await expect.poll(aiming).toBe(true);
+  await expect(page.getByTestId("crosshair")).toHaveClass(/crosshair--aiming/);
+  await shot("touch-a-fire-held");
+  await finger("touchEnd", fire);
+  await expect.poll(aiming).toBe(false);
+
+  // B: a tap on ◎ holds the sights, lit and ringed; a second tap lets go.
+  await page.evaluate(() => window.__seki!.session.intents.changeSettings({ touchFire: "separate", aimMode: "toggle" }));
+  await page.getByTestId("touch-aim").tap();
+  await expect.poll(aiming).toBe(true);
+  await expect(page.getByTestId("touch-aim")).toHaveClass(/touch__btn--on/);
+  await expect(page.getByTestId("ads-ring")).toBeVisible();
+  await shot("touch-b-latched");
+  await page.getByTestId("touch-aim").tap();
+  await expect.poll(aiming).toBe(false);
+  await expect(page.getByTestId("ads-ring")).toBeHidden();
 });
 
 test("phone in portrait asks to rotate", async ({ page }) => {

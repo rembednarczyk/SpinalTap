@@ -16,6 +16,13 @@ import { metroPieces } from "./metro-pieces";
  */
 export const STREET_ID_BASE = 2_000_000;
 export const STREET_IDS_PER_CHUNK = 4_000;
+/**
+ * Ids of the rooms cut into the map's buildings (ADR-0063, the capsule room): `ROOM_IDS_PER_CHUNK`
+ * per chunk in table order from here, outside the allocator like the street's, between the
+ * vehicles' (3 000 000) and the scenery's (5 000 000).
+ */
+export const ROOM_ID_BASE = 4_000_000;
+export const ROOM_IDS_PER_CHUNK = 1_000;
 
 /** A recipe for one entity with an id reserved up front, so reloading gives it the same id. */
 export interface Template {
@@ -61,6 +68,10 @@ export class StreamCatalog {
         const id = STREET_ID_BASE + order * STREET_IDS_PER_CHUNK + i;
         list.push({ id, chunk: chunk.id, key: null, make: () => propEntity(id, prop, chunk.id) });
       });
+      (chunk.rooms ?? []).slice(0, ROOM_IDS_PER_CHUNK).forEach((prop, i) => {
+        const id = ROOM_ID_BASE + order * ROOM_IDS_PER_CHUNK + i;
+        list.push({ id, chunk: chunk.id, key: null, make: () => propEntity(id, prop, chunk.id) });
+      });
       this.content.set(chunk.id, list);
     });
     // Devices (ADR-0029) after every chunk's own content, so the ids above stay what they were.
@@ -72,13 +83,15 @@ export class StreamCatalog {
       list.push(t);
       this.byKey.set(def.key, t);
     }
-    // Metro platforms (ADR-0034) after the devices, so every id above stays what it was.
+    // Metro entrances (ADR-0071) after the devices, so every id above stays what it was.
     for (const station of metro) {
-      const list = this.content.get(station.chunk);
-      if (!list) continue;
-      for (const make of metroPieces(station)) {
-        const id = ids.take();
-        list.push({ id, chunk: station.chunk, key: null, make: () => make(id) });
+      for (const entrance of station.entrances) {
+        const list = this.content.get(entrance.chunk);
+        if (!list) continue;
+        for (const make of metroPieces(station.id, entrance)) {
+          const id = ids.take();
+          list.push({ id, chunk: entrance.chunk, key: null, make: () => make(id) });
+        }
       }
     }
     // Passers-by (ADR-0040) last, so every id above stays what it was.

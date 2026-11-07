@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Line } from "../src/features.ts";
-import { chunkFootWays, chunkServiceWays, chunkStreets } from "../src/labels.ts";
+import { chunkFlights, chunkFootWays, chunkServiceWays, chunkStreets } from "../src/labels.ts";
 
 const rect = { minX: 0, minZ: 0, maxX: 100, maxZ: 100 };
 const street = (x0: number, x1: number): Line => ({ id: "w1", osmId: 1, tags: { highway: "residential", name: "Lubartowska" }, line: [{ x: x0, z: 50 }, { x: x1, z: 50 }] });
@@ -45,5 +45,21 @@ describe("chunk footways (G-143)", () => {
   it("leave out a sidewalk along a kerb (a footway or a path, G-156), a crossing, an area, a footbridge, a tunnel and a cycleway", () => {
     for (const tags of [{ footway: "sidewalk" }, { highway: "path", path: "sidewalk" }, { footway: "crossing" }, { highway: "path", path: "crossing" }, { area: "yes" }, { bridge: "yes", layer: "1" }, { tunnel: "yes" }, { layer: "-1" }, { highway: "cycleway" }] as Record<string, string>[])
       expect(chunkFootWays([way(tags)], rect)).toEqual([]);
+  });
+});
+
+describe("chunk flights of steps (G-236)", () => {
+  const steps = (tags: Record<string, string>, x0 = 90, x1 = 110): Line => ({ id: "w7", osmId: 7, tags: { highway: "steps", ...tags }, line: [{ x: x0, z: 50 }, { x: x1, z: 50.04 }] });
+
+  it("keep a flight with its incline whole, foot first, with its step_count", () => {
+    expect(chunkFlights([steps({ incline: "up" })], rect)).toEqual([{ id: "w7", line: [90, 50, 110, 50] }]);
+    expect(chunkFlights([steps({ incline: "down", step_count: "7" })], rect)).toEqual([{ id: "w7", line: [110, 50, 90, 50], steps: 7 }]);
+  });
+
+  it("leave out a flight without an incline up or down, off the chunk or not steps", () => {
+    expect(chunkFlights([steps({})], rect)).toEqual([]);
+    expect(chunkFlights([steps({ incline: "10%" })], rect)).toEqual([]);
+    expect(chunkFlights([steps({ incline: "up" }, 120, 140)], rect)).toEqual([]);
+    expect(chunkFlights([steps({ incline: "up", highway: "footway" })], rect)).toEqual([]);
   });
 });

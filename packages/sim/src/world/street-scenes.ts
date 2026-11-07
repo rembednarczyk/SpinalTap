@@ -1,5 +1,6 @@
 import { type EncounterDef, type EntityId, type Vec3, addStack, credit, encounterAvailable, hasFlag, markEncounter } from "@seki/core";
 import { ENCOUNTER_REWARDS, type EncounterReward } from "../content/encounter-rewards";
+import { castViewOf } from "../content/cast";
 import { ENCOUNTERS } from "../content/encounters";
 import type { Entity } from "./components";
 import type { SimContext } from "./context";
@@ -18,12 +19,16 @@ export const ENCOUNTER_SPAWN_MARGIN = 12;
 
 const flat = (a: Vec3, b: { x: number; z: number }): number => Math.hypot(a.x - b.x, a.z - b.z);
 
-/** A passer-by standing at a point: drawn, with a body, no AI (a scene, a mugging, an aid). */
-export const passerBy = (ctx: SimContext, at: Vec3, yaw: number, hp: number, key?: string): Entity => {
+/**
+ * A passer-by standing at a point: drawn, with a body, no AI (a scene, a mugging, an aid). `cast`
+ * is the scene's character (its `npcKey`): it only picks the look (ADR-0076), it is not a key.
+ */
+export const passerBy = (ctx: SimContext, at: Vec3, yaw: number, hp: number, key?: string, cast?: string): Entity => {
   // On the ground there (the terrain of ADR-0043).
   const position = { x: at.x, y: ctx.streamer.ground.heightAt(at.x, at.z), z: at.z };
+  const id = ctx.streamer.takeId();
   const e: Entity = {
-    id: ctx.streamer.takeId(),
+    id,
     chunk: ctx.streamer.chunkIdAt(position),
     position,
     prevPosition: position,
@@ -31,7 +36,7 @@ export const passerBy = (ctx: SimContext, at: Vec3, yaw: number, hp: number, key
     prevYaw: yaw,
     pitch: 0,
     body: { radius: 0.38, height: 1.8 },
-    view: { kind: "npc", preset: "civilian" },
+    view: { kind: "npc", preset: "civilian", ...castViewOf(cast, cast ?? key ?? `#${id}`) },
     faction: "civilians",
     velocity: { x: 0, y: 0, z: 0 },
     health: { current: hp, max: hp },
@@ -55,7 +60,7 @@ const stage = (ctx: SimContext, def: EncounterDef, player: Entity): void => {
   if (flat(player.position, def.at) > def.radius + ENCOUNTER_SPAWN_MARGIN) return;
   const at = { x: def.at.x, y: ctx.streamer.ground.heightAt(def.at.x, def.at.z), z: def.at.z };
   const yaw = Math.atan2(player.position.x - at.x, player.position.z - at.z);
-  ctx.session.street2.npcs = { ...ctx.session.street2.npcs, [def.id]: passerBy(ctx, at, yaw, 60).id };
+  ctx.session.street2.npcs = { ...ctx.session.street2.npcs, [def.id]: passerBy(ctx, at, yaw, 60, undefined, def.npcKey).id };
 };
 
 /** Starts the scene: logged in the domain, the dialogue opens with its knot. */

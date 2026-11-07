@@ -10,6 +10,28 @@ Decyzje użytkownika (31.10):
 - **Źródło głosów:** wszystko z otwartego TTS na licencji komercyjnej, każdy głos sprawdzany osobno. Aktorów nie będzie (zmiana decyzji z 31.10: najpierw mieszane, potem pełne TTS).
 - **Język głosów:** angielski, z napisami po angielsku albo po polsku według ustawienia języka (ADR-0056).
 
+## Decyzje użytkownika (7.11)
+Zmieniają źródło głosów z „otwartego TTS” na ElevenLabs. Reszta ADR-u (klucze, wyzwalacze, odtwarzanie, etapy) zostaje.
+- **Źródło głosów:** ElevenLabs (konto użytkownika), głosy z biblioteki ElevenLabs udostępniane przez lektorów, a gdzie biblioteka nie ma pasującego głosu, głos zaprojektowany z opisu (Voice Design).
+- **Gra jest niekomercyjna.** Mimo to każdy głos ma w `packages/app/public/voice/README.md` zapis: nazwa i identyfikator głosu, autor, model, data i warunki użycia, a ekran „Autorzy” wymienia ElevenLabs i autorów głosów.
+- **Oszczędzanie kredytów:** jedna próbka na linię (bez wariantów do wyboru); generowanie tylko linii, które wchodzą do gry; odsłuch kandydatów na podstawie darmowych próbek z biblioteki.
+- **Obsada (głosy z biblioteki, identyfikatory ElevenLabs):**
+
+| Postać | Głos | Id |
+|---|---|---|
+| Seki | Emma, Wry Gritty Hero | `dmWfLQZJq7wNPv9WmtiM` |
+| Kaito | Silas, Weathered Villain | `WzVKtqQpTUUQ2JNx8YxI` |
+| Kurosawa | Malakai, Shadowed and Gruff | `7squ7rvxEIZ2rYy7KYPP` |
+| Mori | Jonah Vale | `vveagfomyMCJLZsOPRP2` |
+| Ume | Mora, Gritty and Enigmatic | `YHcCpa6SBWnKDaCPZJQR` |
+| Genzō | Gravel Midnight | `M5E055lOUxMi0kJpGyE9` |
+| Ren | Thomas | `IigRH4ZsY7dfxk9VRn2r` |
+| Hana | Ruby B, London Playful | `jUPSOpRcPt8GMPsWx5fy` |
+| gangerzy i mieszkańcy | Amir, Deep Voice, Polish Accent | `lh3DpiIvYKliryahXrpY` |
+
+- Angielskiego z japońskim akcentem biblioteka nie ma; ewentualne głosy projektowane z opisu wymagają opisu i linii od użytkownika.
+- `tools/voice` generuje przez API ElevenLabs z kluczem jako sekretem środowiska (nigdy w repo), z ustawieniami głosu w `tools/voice/voices.json`. Pliki wynikowe trafiają do repo jak dotąd, a narzędzie nie generuje linii, która ma już plik.
+
 ## Decyzja
 
 ### Zakres głosów
@@ -24,7 +46,7 @@ Decyzje użytkownika (31.10):
 4. **Kwestie środowiskowe:** zaczepki i komentarze przechodniów oraz zasłyszane rozmowy NPC między sobą (sekcja „Wyzwalacze kwestii”).
 
 ### Źródła i licencje
-- **TTS:**
+- **TTS** (do 7.11; od 7.11 źródłem jest ElevenLabs, sekcja „Decyzje użytkownika (7.11)”):
   - Tylko modele i głosy, których licencja pozwala na komercyjną dystrybucję wygenerowanego audio.
   - Każdy model i każdy głos sprawdzamy osobno. Kod, wagi i nagrania treningowe głosu bywają na różnych licencjach, a głos z licencją niekomercyjną odpada.
   - W `packages/app/public/voice/README.md` zapisujemy model, wersję, głos, licencję z cytatem i datę sprawdzenia.
@@ -97,3 +119,20 @@ Trzy rodzaje, wszystkie rozstrzygane w `sim` (deterministycznie, losowość prze
   - logika wyzwalaczy i odtwarzania (warunki, limity, priorytety, ducking, wybór wariantu, brak powtórzeń, przerwanie rozmowy) testowana w sesji bez przeglądarki, z fałszywym `AudioPort`;
   - kompletność tagów `#voice` sprawdza test ink;
   - rozmiar pakietu pilnowany w budżetach.
+
+## Z budowy etapu 1 (7.11)
+- **Zmiana kontraktu** (`core/src/ports/audio-port.ts`, minimalna):
+  - `AudioBus` dostaje `"dialogue"` i `"radio"`; `setVolume` i `getVolume` działają na nich bez zmian sygnatur.
+  - `AudioScenePort` dostaje dwie metody opcjonalne, jak `setRadioStation`: `playLine?(key)` gra nagranie linii po kluczu na szynie dialogu i zastępuje linię, która jeszcze brzmi; `stopLine?()` ją ucina. Fałszywe porty w testach nie muszą ich mieć.
+  - `AudioPort` (jednorazowe sygnały) się nie zmienia.
+- **Szyny** (`engine/src/audio/audio-graph.ts`): `dialogue` idzie prosto do szyny głównej, `radio` przez filtr nastroju muzyki (jak dotąd, gdy radio grało na szynie muzyki), ale z własną głośnością. Domyślnie dialog 1,0, radio 0,55 (poziom muzyki, więc radio brzmi tak samo jak przed zmianą).
+- **Ducking pod mową** (`engine/src/audio/ducking.ts`, `SpeechDucker`, czysta logika bez WebAudio):
+  - głębokość −8 dB (mnożnik ok. 0,40) na muzyce i radiu; SFX, otoczenie i dialog bez zmian;
+  - opadanie liniowe w dB: pełne −8 dB w 0,25 s (pierwsze słowo nie ginie pod muzyką);
+  - przytrzymanie 0,35 s po końcu linii, żeby muzyka nie pompowała między dwiema liniami;
+  - narastanie z powrotem do 0 dB w 0,8 s; ucięcie linii (`stopLine`) zaczyna narastanie od razu, bez przytrzymania;
+  - poziom liczy krok planisty (50 ms), a węzeł dochodzi do niego z `setTargetAtTime` (stała 0,08 s), jak przy suwakach;
+  - otwarta rozmowa nadal ścisza muzykę i radio do 0,3 (ok. −10,5 dB, ADR-0013); z dwóch ściszeń liczy się głębsze, nie iloczyn, więc linia w rozmowie nie spycha muzyki niżej.
+- **Droga odtwarzania** (`engine/src/audio/dialogue-lines.ts`): adres pliku podaje aplikacja (`voiceUrl`, w grze `voice/en/<klucz>.ogg`), silnik nie buduje ścieżek. Plik pobiera się przy pierwszym użyciu klucza i zostaje w pamięci podręcznej; brak pliku, błąd dekodowania albo brak `voiceUrl` to cisza bez wyjątku, a klucz nie jest pobierany drugi raz. Linia, która doładuje się po `stopLine` albo po nowszej linii, nie gra. Przed pierwszym gestem gracza linie milczą.
+- **Ustawienia:** suwaki „Dialog” i „Radio” obok muzyki, SFX i otoczenia; suwak muzyki nazywa się teraz „Muzyka” zamiast „Muzyka i radio”. Nowe pola nie zmieniają domyślnych wartości starych, więc `SETTINGS_REV` zostaje. Wpis zapisany przed zmianą dostaje dialog 1,0, a radio dziedziczy jego głośność muzyki, bo suwak muzyki sterował dotąd i radiem.
+- **Aplikacja:** `controllers/audio-mix.ts` (`bindAudioMix`) przejmuje z `main.tsx` nastrój rozmowy i głośności na żywo, a zamknięcie rozmowy woła `stopLine`. Linii z kluczami jeszcze nie ma (tagi `#voice` to etap 5), więc nikt jeszcze nie woła `playLine`.

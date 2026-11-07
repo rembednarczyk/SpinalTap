@@ -91,11 +91,11 @@ describe("contract toasts, the HUD objective and the journal", () => {
     const domain = { ...createDomainState(), quests: { m0_first_contract: { status: "completed" as const } }, contracts: { active: job, completed: 1 } };
     expect(describeObjective(domain, "en")).toEqual({
       title: "Contract 2 · Hana",
-      objective: "Take Hana's crate from the Hebi stash (guards: 2): the Hebi stash under the viaduct, east end of the market",
+      objective: "Take Hana's crate from the Hebi stash (guards: 2): the Hebi stash by the ruin behind Alchemia's stalls",
     });
     expect(describeObjective(domain, "pl")).toEqual({
       title: "Kontrakt 2 · Hana",
-      objective: "Zabierz skrzynkę Hany ze skrytki Hebi (strażnicy: 2): skrytka Hebi pod wiaduktem, wschodni koniec targu",
+      objective: "Zabierz skrzynkę Hany ze skrytki Hebi (strażnicy: 2): skrytka Hebi przy ruinie za straganami Alchemii",
     });
     const entry = (locale: Locale) => buildJournal(domain, locale).quests.find((q) => q.id === "contract-c2");
     expect(entry("en")?.steps[0]?.objective).toMatch(/^Take Hana's crate/);
@@ -106,9 +106,9 @@ describe("contract toasts, the HUD objective and the journal", () => {
     const quiet = { ...createDomainState(), quests: { m0_first_contract: { status: "completed" as const } }, flags: ["met_hana", "met_genzo"] };
     expect(describeObjective(quiet, "en")).toEqual({
       title: "Free hand",
-      objective: "More contracts from Kaito, and from Hana at the Podzamcze market and Genzō on the Nabrzeże too. Mori sells cyberware.",
+      objective: "More contracts from Kaito, and from Hana at the market in Alchemia and Genzō on the Nabrzeże too. Mori sells cyberware.",
     });
-    expect(describeObjective(quiet, "pl").objective).toBe("Kaito ma kolejne kontrakty, Hana z targu na Podzamczu i Genzō na Nabrzeżu też. Mori sprzedaje cyberware.");
+    expect(describeObjective(quiet, "pl").objective).toBe("Kaito ma kolejne kontrakty, Hana z targu w Alchemii i Genzō na Nabrzeżu też. Mori sprzedaje cyberware.");
     expect(describeObjective({ ...quiet, flags: [] }, "pl").objective).toBe("Kaito ma kolejne kontrakty. Mori sprzedaje cyberware.");
   });
 });

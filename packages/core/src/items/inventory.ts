@@ -1,12 +1,17 @@
 import type { Health } from "../combat/combat-rules";
 import { AMMO_CATALOG, GARMENT_CATALOG, STACKABLE_CATALOG, type StackableDefinition, WEAPON_CATALOG, isGarmentId, isWeaponId } from "./catalog";
-import type { AmmoId, ConsumableId, EquipSlot, InstanceDefId, ModSlot, Rarity, StackableId, WeaponSlot } from "./types";
+import { type ItemGrade, MIN_ITEM_LEVEL, clampItemLevel, hasItemLevel } from "./grade";
+import type { AmmoId, ConsumableId, EquipSlot, InstanceDefId, ModSlot, Rarity, StackableId, TraitId, WeaponSlot } from "./types";
 
 /** One piece with state of its own. Where it is (bag, slot, weapon) is said by `Equipment` and `mods`. */
 export interface ItemInstance {
   readonly uid: string;
   readonly def: InstanceDefId;
   readonly rarity: Rarity;
+  /** Item level 1..30 (ADR-0059): weapons and garments only. */
+  readonly level?: number;
+  /** Traits of an epic or legendary weapon or garment (ADR-0059); absent when none. */
+  readonly traits?: readonly TraitId[];
   /** Rounds in the magazine (firearms). */
   readonly loaded?: number;
   /** Mounted mods by slot, as uids of instances in the same inventory (weapons). */
@@ -51,11 +56,20 @@ export const EMPTY_INVENTORY: InventoryState = { stacks: {}, items: [], keyItems
 
 export type InventoryFailure = "not-found" | "inventory-full" | "not-equippable" | "wrong-slot" | "already-equipped" | "empty-slot" | "in-use";
 
-/** A fresh piece: firearms empty, garments in mint condition. */
-export const newInstance = (uid: string, def: InstanceDefId, rarity: Rarity): ItemInstance => {
-  if (isWeaponId(def)) return { uid, def, rarity, loaded: 0, mods: {} };
-  if (isGarmentId(def)) return { uid, def, rarity, condition: 100 };
-  return { uid, def, rarity };
+/** The grade a piece keeps: a weapon or garment its level (1 by default) and traits, the rest only the tier. */
+const gradeFields = (def: InstanceDefId, grade: Rarity | ItemGrade): Pick<ItemInstance, "rarity" | "level" | "traits"> => {
+  const g: ItemGrade = typeof grade === "string" ? { rarity: grade } : grade;
+  if (!hasItemLevel(def)) return { rarity: g.rarity };
+  const level = clampItemLevel(g.level ?? MIN_ITEM_LEVEL);
+  return g.traits && g.traits.length > 0 ? { rarity: g.rarity, level, traits: g.traits } : { rarity: g.rarity, level };
+};
+
+/** A fresh piece: firearms empty, garments in mint condition. A bare tier means level 1, no traits. */
+export const newInstance = (uid: string, def: InstanceDefId, grade: Rarity | ItemGrade): ItemInstance => {
+  const g = gradeFields(def, grade);
+  if (isWeaponId(def)) return { uid, def, ...g, loaded: 0, mods: {} };
+  if (isGarmentId(def)) return { uid, def, ...g, condition: 100 };
+  return { uid, def, ...g };
 };
 
 /** What a new game starts with: Unity-9 loaded, jacket, cargo pants, a medkit and 48 rounds. */
@@ -117,16 +131,16 @@ export type AddInstanceResult =
   | { readonly ok: true; readonly inventory: InventoryState; readonly item: ItemInstance }
   | { readonly ok: false; readonly reason: "inventory-full" };
 
-/** Adds a new piece (with the next uid) into a free cell. `patch` sets e.g. rounds already loaded. */
+/** Adds a new piece (with the next uid and the grade) into a free cell. `patch` sets e.g. rounds already loaded. */
 export const addInstance = (
   inv: InventoryState,
   eq: Equipment,
   def: InstanceDefId,
-  rarity: Rarity,
+  grade: Rarity | ItemGrade,
   patch: Partial<Pick<ItemInstance, "loaded" | "condition">> = {},
 ): AddInstanceResult => {
   if (freeCells(inv, eq) < 1) return { ok: false, reason: "inventory-full" };
-  const item = { ...newInstance(`i${inv.nextUid}`, def, rarity), ...patch };
+  const item = { ...newInstance(`i${inv.nextUid}`, def, grade), ...patch };
   return { ok: true, item, inventory: { ...inv, items: [...inv.items, item], nextUid: inv.nextUid + 1 } };
 };
 
@@ -198,12 +212,15 @@ export const needsWounds = (id: ConsumableId): boolean => {
   return def.buff === undefined && def.cyberCapacity === undefined;
 };
 
-/** Uses one consumable. At full health it is kept, unless it does more than heal (`needsWounds`). */
-export const useConsumable = (inv: InventoryState, id: ConsumableId, health: Health): UseResult => {
+/**
+ * Uses one consumable. At full health it is kept, unless it does more than heal (`needsWounds`).
+ * `healScale` multiplies what it heals (the Field Medic perk, ADR-0059), rounded to whole points.
+ */
+export const useConsumable = (inv: InventoryState, id: ConsumableId, health: Health, healScale = 1): UseResult => {
   const inventory = removeStack(inv, id, 1);
   if (!inventory) return { ok: false, reason: "none" };
   if (health.current >= health.max && needsWounds(id)) return { ok: false, reason: "full-health" };
-  const current = Math.min(health.max, health.current + STACKABLE_CATALOG[id].heal);
+  const current = Math.min(health.max, health.current + Math.round(STACKABLE_CATALOG[id].heal * healScale));
   return { ok: true, inventory, health: { ...health, current }, healed: current - health.current };
 };
 

@@ -5,6 +5,34 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v36: P-1 under Alchemia's car park (ADR-0074 stage 4): no new fields, but an older save may have
+ * the player on the ground its ramp's trench and its stair core's house took; the migration wakes
+ * her on the car park by the ramp's top with the bags left there, and drops Sachiko's state (her
+ * counter turned to the door from P-1).
+ * v35: the triangular pavilion on the corner of Bajkowskiego and Lubartowska (ADR-0074 stage 3): no
+ * new fields, but an older save has the Hebi bag by Ren on the food hall's green roof and Ren's
+ * state there, and may have the player on the ground the pavilion stands on; the migration moves
+ * the bag onto the pavilion's roof, drops Ren (he comes back up there) and wakes the player by the
+ * foot of its ladder.
+ * v34: the lower square T2 before the rebuilt Arkady (ADR-0074 stage 2): no new fields, but an older
+ * save may have the player in the Hebi hollow or on the ground the square levelled; the migration
+ * wakes her on T2, moves the overpass bag before the Arkady's arches and the bags on the square onto
+ * T2, and drops the people there (the lookout comes back under the arches).
+ * v33: Alchemia rebuilt by the investor's plan (ADR-0074 stage 1): no new fields, but an older save
+ * may have the player in the old hall, its stalls, lift or roof terrace, or on ground the food hall
+ * and its terraces changed; the migration wakes her on T1 in front of the food hall, drops the
+ * market's people (they come back at their units) and moves the roof stash by Ren on the green roof.
+ * v32: the tier and level of an installed cyberdeck (`character.implantGrades`, optional), and a
+ * level on a cyberdeck in the bag and in the loot bags (decision of 6.11 after ADR-0059 stage 6).
+ * v31: the player's style and bad luck (ADR-0059 stage 6): `progression.style` (the last fights,
+ * at most `STYLE_WINDOW`) and `progression.unlucky` (rolled pieces in a row below rare); an older
+ * save gets no fights and a count of 0.
+ * v30: the market moved from Aleja Tysiąclecia to Alchemia (ADR-0063 stage 6): no new fields, but an
+ * older save may have the player, the market's people and its stashes where the market stood; the
+ * migration wakes her on the avenue and sends them to their places in Alchemia.
+ * v29: item level and traits (ADR-0059): every weapon and garment, in the bag and in a loot bag,
+ * has a level 1..30, an epic or legendary one its traits; an older save's pieces get the level of
+ * their tier (common 1, uncommon 3, rare 5, unique the player's level).
  * v28: the bodies of a won mugging's muggers (G-233), who are in no content table and none of the
  * heat's; an older save has none, they were gone on loading as before.
  * v27: a walking NPC's stuck check (ADR-0025, G-208): where its current stretch began, until when
@@ -41,7 +69,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 28;
+export const SAVE_SCHEMA_VERSION = 36;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -78,6 +106,8 @@ export interface EntitySnapshot {
   readonly away?: number;
   /** Knocked out, or killed in a takedown and left lying (ADR-0065). Absent for everyone else. */
   readonly downed?: BodySnapshot;
+  /** Its fight is already in the player's style (ADR-0059, stage 6). Absent until then. */
+  readonly fought?: true;
   /** An NPC's gun not at rest with a full magazine (G-185). Absent for the player and at rest. */
   readonly gun?: GunSnapshot;
   /** A sniper's state (G-185): it may be about to fire. Absent for everyone else. */
@@ -169,8 +199,9 @@ export interface StreamingSnapshot {
 }
 
 /**
- * A contract as its targets were made (G-178): with the count of jobs done at the time, which
- * toughens them, so a job paid since (one more done) rebuilds them as they were.
+ * A contract as its targets were made (G-178): with the count of jobs done at the time. That
+ * count toughened them until ADR-0059 (stage 5); now their level by the district's band does, and
+ * the count stays in the save, read by nothing that makes them.
  */
 export interface ContractOnSite {
   readonly contract: Contract;

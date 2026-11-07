@@ -1,6 +1,7 @@
 import { type CSSProperties, useEffect, useState } from "react";
 import { keyLabel } from "../menus/key-label";
 import { type ControlBindingVm, DEFAULT_HORIZONTAL_FOV, hipVerticalFov } from "../store/ui-store";
+import { type Translate } from "../i18n/t";
 import { useT } from "../i18n/use-t";
 import { useUi } from "../use-ui";
 import { AbilityWidget } from "./ability-widget";
@@ -13,8 +14,10 @@ import { DamageNumbers } from "./damage-numbers";
 import { ScannerHud } from "./scanner";
 import { DetectionRing, HeatStars } from "./stealth";
 import { PhoneNotice } from "../phone/phone";
-import { BuffIcons, DashIcon, DisguiseBadge, HookList } from "./body-hud";
+import { BuffIcons, DashIcon, DisguiseBadge, HookList, OverPoolBadge } from "./body-hud";
 import { useViewportAspect } from "./use-viewport-aspect";
+import { useRecentChange } from "./use-recent-change";
+import { XpHud } from "./xp-hud";
 
 /** Default vertical field of view of the game camera at 16:9 in radians (engine CameraRig, ADR-0049; the settings and the screen change it). */
 export const HUD_CAMERA_FOV = hipVerticalFov(DEFAULT_HORIZONTAL_FOV, 16 / 9);
@@ -29,9 +32,10 @@ export const spreadToScreen = (spread: number, zoom = 1, fov = HUD_CAMERA_FOV): 
  * Four ticks that sit where the aim cone meets the screen: they spread apart while moving
  * and after shots, and pull in while crouched or aiming down sights. A melee guard turns them
  * into a bracket. A confirmed hit flashes them, a head hit red. A critical hit adds an amber
- * cross, a kill a larger white one with a ring (shape as well as colour).
+ * cross, a kill a larger white one with a ring (shape as well as colour). On touch with a fire
+ * button that only fires (ADR-0072), a ring round the ticks says the sights stay up after the tap.
  */
-const Crosshair = () => {
+const Crosshair = ({ touch }: { touch: boolean }) => {
   const hit = useUi((s) => s.hitMarker);
   const zone = useUi((s) => s.hitZone);
   const kind = useUi((s) => s.hitKind);
@@ -40,6 +44,7 @@ const Crosshair = () => {
   const aiming = useUi((s) => s.aiming);
   const zoom = useUi((s) => s.aimZoom);
   const blocking = useUi((s) => s.blocking);
+  const adsRing = useUi((s) => touch && s.aiming && s.settings.touchFire === "separate");
   // The camera's hip field of view follows the settings and the screen's proportions (ADR-0049).
   const fov = hipVerticalFov(
     useUi((s) => s.settings.horizontalFov),
@@ -81,6 +86,7 @@ const Crosshair = () => {
       <span className="crosshair__tick crosshair__tick--right" />
       {(flash === "head" || mark) && <span className="crosshair__x" data-testid={`hit-${mark ?? "head"}`} />}
       {mark === "kill" && <span className="crosshair__ring" />}
+      {adsRing && <span className="crosshair__ads" data-testid="ads-ring" />}
     </div>
   );
 };
@@ -107,19 +113,20 @@ const Clock = () => {
 };
 
 /** The first key bound to a control, as a label, or `fallback` before the bindings arrive. */
-const keyOf = (controls: readonly ControlBindingVm[], action: string, fallback: string): string => {
+const keyOf = (controls: readonly ControlBindingVm[], action: string, fallback: string, t: Translate): string => {
   const code = controls.find((c) => c.action === action)?.codes[0];
-  return code ? keyLabel(code) : fallback;
+  return code ? keyLabel(code, t) : fallback;
 };
 
 /** A first-run hint: the keys to press and what they do, low in the middle of the screen. */
 const Hint = () => {
+  const t = useT();
   const hint = useUi((s) => s.hint);
   if (!hint) return null;
   return (
     <div className="hud__hint" data-testid="hint" key={hint.id}>
       {hint.keys.map((k) => (
-        <kbd key={k}>{keyLabel(k)}</kbd>
+        <kbd key={k}>{keyLabel(k, t)}</kbd>
       ))}
       <span className="hud__hint-text">{hint.text}</span>
     </div>
@@ -147,12 +154,17 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   // Contextual HUD (Cyberpunk 2.1): out of combat and at full health the bar steps aside.
   // A disguise keeps the bar up: the role badge sits next to it (ADR-0035).
   const disguised = useUi((s) => s.disguise !== null);
-  const calm = !always && !combat && hp >= maxHp && !disguised;
+  // So does cyberware over the pool (ADR-0059, stage 3c): the mark says implants are off.
+  const overPool = useUi((s) => s.capacity !== null && s.capacity.used > s.capacity.max);
+  // XP that just came in shows its bar a moment (ADR-0059, stage 7); a level up flashes it.
+  const gained = useRecentChange(useUi((s) => s.xpGains), 4000);
+  const levelUp = useRecentChange(useUi((s) => s.levelUps), 2500);
+  const calm = !always && !combat && hp >= maxHp && !disguised && !overPool && !gained;
 
   return (
     <div className="hud" data-testid="hud">
       <HurtVignette />
-      <Crosshair />
+      <Crosshair touch={!!touch} />
       <DetectionRing />
       <DamageNumbers />
       <div className={`hud__identity${calm ? " hud__identity--calm" : ""}`} data-testid="identity">
@@ -160,10 +172,14 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
         <div className="hud__hp" aria-label={t("hud.health")}>
           <div className={`hud__hp-fill${hpPct < 30 ? " hud__hp-fill--low" : ""}`} style={{ width: `${hpPct}%` }} />
         </div>
-        <div className="hud__hp-label">
-          {Math.ceil(hp)} / {maxHp}
+        <div className="hud__stats">
+          <div className="hud__hp-label">
+            {Math.ceil(hp)} / {maxHp}
+          </div>
+          <XpHud up={levelUp} />
         </div>
         <DisguiseBadge />
+        <OverPoolBadge />
       </div>
       <BuffIcons />
       <div className="hud__wallet" data-testid="eddies">
@@ -184,17 +200,21 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
       <WeaponStrip pad={touch} />
       <Minimap />
       <div className="hud__camera">
-        {cameraMode} · [{keyOf(controls, "toggleCamera", "V")}]
+        {cameraMode} · [{keyOf(controls, "toggleCamera", "V", t)}]
       </div>
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
-          {!touch && <kbd>{keyOf(controls, "interact", "E")}</kbd>} {prompt}
+          <span className="hud__prompt-action" data-testid="prompt-main">
+            {!touch && <kbd>{keyOf(controls, "interact", "E", t)}</kbd>} {prompt}
+          </span>
           {promptHold && (
-            // A second action on the same target (ADR-0065): the attack button held, on touch too.
-            <span className="hud__prompt-hold" data-testid="prompt-hold">
-              {" · "}
-              {!touch && <kbd>{keyOf(controls, "fire", "LMB")}</kbd>} {promptHold}
-            </span>
+            // A second action on the same target (ADR-0075), the attack button's: as loud as the first.
+            <>
+              <span className="hud__prompt-sep">{" · "}</span>
+              <span className="hud__prompt-action" data-testid="prompt-hold">
+                {!touch && <kbd>{keyOf(controls, "fire", "LMB", t)}</kbd>} {promptHold}
+              </span>
+            </>
           )}
         </div>
       )}

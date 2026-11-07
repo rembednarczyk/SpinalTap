@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useT } from "../i18n/use-t";
 import { useHackIntents, usePhoneIntents, useSessionIntents, useUi } from "../use-ui";
-import { ActionArc, MoreActions, UseButton } from "./action-arc";
+import { useUnspentPoints } from "../hud/xp-hud";
+import { ActionArc, FireButton, MoreActions, UseButton } from "./action-arc";
 import { PadButtonView, useLookDrag } from "./pad-button";
 import type { TouchPadSink } from "./touch-pad-sink";
 
@@ -18,6 +19,8 @@ const Stick = ({ pad }: { pad: TouchPadSink }) => {
   const t = useT();
   const [origin, setOrigin] = useState<Drag | null>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
+  // The scanner's card takes the left column of a phone held sideways (G-433); the stick still works.
+  const scanning = useUi((s) => s.scanning);
 
   const end = () => {
     setOrigin(null);
@@ -54,7 +57,7 @@ const Stick = ({ pad }: { pad: TouchPadSink }) => {
           <div className="touch__knob" style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }} />
         </div>
       )}
-      {!origin && <div className="touch__stick-hint">{t("touch.move")}</div>}
+      {!origin && !scanning && <div className="touch__stick-hint">{t("touch.move")}</div>}
     </div>
   );
 };
@@ -66,11 +69,19 @@ const TopBar = () => {
   const session = useSessionIntents();
   const toggleCharacter = useUi((s) => s.toggleCharacter);
   const unread = useUi((s) => s.phone.unread);
+  // Points left to spend (ADR-0059, stage 7) wear a badge, like the phone's unread messages, and
+  // open the screen on the Progress tab (decision of 6.11); without points it opens on the inventory.
+  const points = useUnspentPoints();
   return (
     <div className="touch__top">
       {/* One button for the whole character screen instead of separate sheet and journal ones (plan §7). */}
-      <button type="button" className="touch__btn touch__btn--small touch__btn--menu" aria-label={t("touch.character")} data-testid="touch-character" onClick={() => toggleCharacter("inventory")}>
+      <button type="button" className="touch__btn touch__btn--small touch__btn--menu" aria-label={t("touch.character")} data-testid="touch-character" onClick={() => toggleCharacter(points > 0 ? "progress" : "inventory")}>
         ☰
+        {points > 0 && (
+          <span className="touch__badge" data-testid="touch-character-points" title={t("progress.unspent", { count: points })}>
+            {points}
+          </span>
+        )}
       </button>
       <button type="button" className="touch__btn touch__btn--small touch__btn--phone" aria-label={t("touch.phone")} data-testid="touch-phone" onClick={() => phone.openPhone()}>
         ☏{unread > 0 && <span className="touch__badge">{unread}</span>}
@@ -122,7 +133,7 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
       <Stick pad={pad} />
       <TopBar />
       <div className="touch__actions">
-        <PadButtonView pad={pad} button="fire" label="●" hint={t("touch.fire")} className="touch__btn--fire" lookToo />
+        <FireButton pad={pad} />
         <ActionArc pad={pad} more={more} onMore={() => setMore(!more)} />
         <PadButtonView pad={pad} button="aim" label="◎" hint={t("touch.aim")} className={`touch__btn--aim${aimOn ? " touch__btn--on" : ""}`} lookToo testId="touch-aim" />
         <PadButtonView pad={pad} button="jump" label="⤒" hint={t("touch.jump")} className="touch__btn--jump" testId="touch-jump" />

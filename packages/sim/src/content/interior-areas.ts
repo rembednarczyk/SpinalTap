@@ -2,6 +2,10 @@ import type { Vec3 } from "@seki/core";
 import { placeRect } from "./builders";
 import { ROOM_CEILING, clinicPoint, koiPoint } from "./interiors";
 import { TRASA_PODZIEMNA_ROOMS } from "./kanal-underground";
+import { CAPSULE_INTERIOR_ROOM, CAPSULE_SITE } from "./capsule-room";
+import { METRO_PLATFORMS } from "./metro";
+import { FOODHALL_ROOM } from "./alchemia/foodhall";
+import { P1_ROOMS } from "./alchemia/parking";
 import { CLINIC_SITE, DOCKS_PLACE, KOI_SITE, TRASA_PODZIEMNA } from "./lublin/sites";
 
 /**
@@ -51,6 +55,13 @@ export const INTERIORS: readonly InteriorDef[] = [
   { id: "neon-koi", name: "interior.neon-koi", building: KOI_SITE.building, rooms: [oldRoom(koiPoint, 7.3, 17, -6.7, 10.7, KOI_SITE.floor)] },
   { id: "tessen-office", name: "interior.tessen-office", building: null, rooms: [TESSEN_OFFICE_ROOM] },
   { id: "trasa-podziemna", name: "interior.trasa-podziemna", building: TRASA_PODZIEMNA.building, rooms: TRASA_PODZIEMNA_ROOMS },
+  { id: "capsule", name: "interior.capsule", building: CAPSULE_SITE.building, rooms: [CAPSULE_INTERIOR_ROOM] },
+  // The metro's platforms under the streets (ADR-0071 stage 4), the second flight down to each.
+  ...METRO_PLATFORMS.map((e): InteriorDef => ({ id: `metro-${e.station}`, name: `interior.metro-${e.station}`, building: null, rooms: e.platform.rooms })),
+  // Alchemia's food hall under its terrace (ADR-0074 stage 1): a building of the game's own.
+  { id: "alchemia-foodhall", name: "interior.alchemia-foodhall", building: null, rooms: [FOODHALL_ROOM] },
+  // Its car park's upper level P-1 under T0 (stage 4): the deck, the apron and the stair core's foot.
+  { id: "alchemia-parking", name: "interior.alchemia-parking", building: null, rooms: P1_ROOMS },
 ];
 
 /** Feet this far under a room's floor still count (a floor slab, a step down the stairs). */

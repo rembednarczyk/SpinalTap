@@ -37,18 +37,28 @@ export const enContent = {
   "prompt.help": "Help",
   "prompt.door.force": "Force the lock (raises the alarm)",
   "prompt.door.locked": "Keypad door: locked",
-  // Takedowns (ADR-0065): the interact key, and holding the attack button to the end.
-  "prompt.takedown": "Take down",
-  "prompt.takedown.kill": "hold attack to kill",
+  // Takedowns (ADR-0065, ADR-0075): the interact key grabs; in the grab it knocks out, the attack button kills.
+  "prompt.takedown": "Grab",
+  "prompt.grab": "Knock out",
+  "prompt.grab.kill": "Kill",
   // Bodies (ADR-0065, stage 3): the same key picks one up, drops it, or hides it.
   "prompt.body.carry": "Pick up",
   "prompt.body.drop": "Drop",
   "prompt.body.hide": "Hide",
+  "prompt.body.no-room": "No room to put it down",
   // Interiors (sim `INTERIORS`, ADR-0061); Lublin's own places keep their names.
   "interior.clinic": "Doctor Mori's clinic",
   "interior.neon-koi": "Neon Koi",
   "interior.tessen-office": "Tessen office",
   "interior.trasa-podziemna": "Trasa Podziemna",
+  "interior.capsule": "Capsule room to let",
+  // The metro's platforms (ADR-0071 stage 4): the stations keep their Polish names.
+  "interior.metro-shinsekai": "Plac Litewski metro platform",
+  "interior.metro-kanal": "Brama Krakowska metro platform",
+  "interior.metro-targ": "Plac Zamkowy metro platform",
+  "interior.metro-doki": "Nabrzeże Bystrzycy metro platform",
+  "interior.alchemia-foodhall": "Alchemia food hall",
+  "interior.alchemia-parking": "Alchemia car park",
   "prompt.loot": "Search",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Every hour the crew boss steps aside on his own",
@@ -56,9 +66,9 @@ export const enContent = {
   "hook.delivery_1": "Grodzka under the footbridge is faster and nobody stands there",
   "hook.delivery_2": "The Hebi catch couriers under the footbridge on Grodzka; they don't watch Plac po Farze",
   "hook.retrieve_1": "After midnight the stash's second guard goes out for ramen for a quarter of an hour",
-  "hook.retrieve_2": "The stash is in view from the viaduct; the guards only watch the passage",
+  "hook.retrieve_2": "The stash is in view from Alchemia's roof terrace; the guards only watch the passage",
   "hook.protect_1": "The Hebi always come for Oyaji the same way",
-  "hook.protect_2": "From the fire-escape balcony you can see the whole passage",
+  "hook.protect_2": "From the roof terrace you can see the whole path along the stalls",
   "hook.escort_1": "The ambush waits by the office, not on the pier",
   "hook.escort_2": "The square's east alley is unmanned from 1:00 to 3:00",
   "hook.infiltrate_1": "Code for the office side door: 4177 (the camera takes you for staff)",

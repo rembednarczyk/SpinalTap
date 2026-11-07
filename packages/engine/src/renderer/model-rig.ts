@@ -1,5 +1,7 @@
 import { Matrix, Quaternion, TransformNode, Vector3 } from "../babylon";
 import type { CharacterRig } from "./characters";
+import { FingerCurl } from "./finger-curl";
+import type { ArmReach } from "./two-hand-grip";
 
 const IDENTITY = Matrix.Identity();
 
@@ -20,7 +22,9 @@ const ALIASES: Record<Driven, readonly string[]> = {
   lowerArmR: ["rlowerarm", "rightforearm", "rightlowerarm", "forearmr", "lowerarmr"],
 };
 
-const RIGHT_HAND = ["rhand", "righthand", "handr"];
+const HAND = { L: ["lhand", "lefthand", "handl"], R: ["rhand", "righthand", "handr"] } as const;
+/** The right middle finger's knuckle under the hand: where the palm ends. */
+const RIGHT_MIDDLE_KNUCKLE = ["rmiddle1", "righthandmiddle1"];
 
 /** Upper torso bones, best first: garment add-ons on the chest hang from the first one found. */
 const CHEST = ["cupperchest", "upperchest", "spine2", "cchest", "chest", "spine1"];
@@ -84,20 +88,28 @@ export class HumanoidRetarget {
   private readonly held: { node: TransformNode; hand: TransformNode; joints: TransformNode[]; offset: Vector3 }[] = [];
   private rightHand: TransformNode | null = null;
   private rightForearm: TransformNode[] = [];
+  private readonly fingers: { side: 0 | 1; curl: FingerCurl }[] = [];
+  private armReach: ArmReach | null = null;
   /** Head and chest bones with their model-space rotation at rest (rig joint at identity). */
   private readonly anchors = new Map<AnchorBone, { bone: TransformNode; rest: Matrix }>();
   /** Height of the head bone over the rig body's origin (the feet), in metres. */
   private headY = 0;
 
-  private constructor(private readonly root: TransformNode) {}
+  private constructor(
+    private readonly root: TransformNode,
+    private readonly rig: CharacterRig,
+  ) {}
 
   /** Returns null when the model has no recognisable legs and arms. */
   static create(rig: CharacterRig, root: TransformNode, prefix = ""): HumanoidRetarget | null {
     const found = findHumanoidBones(root.getDescendants(false).filter((n): n is TransformNode => "rotation" in n), prefix);
     if (!DRIVEN.every((k) => found[k])) return null;
-    const self = new HumanoidRetarget(root);
-    self.rightHand = found.lowerArmR!.getChildren((n): n is TransformNode => RIGHT_HAND.includes(normaliseBoneName(n.name, prefix)), true)[0] ?? null;
-    self.rightForearm = [rig.armR, rig.elbowR];
+    const self = new HumanoidRetarget(root, rig);
+    const handOf = (side: "L" | "R") =>
+      found[`lowerArm${side}`]!.getChildren((n): n is TransformNode => (HAND[side] as readonly string[]).includes(normaliseBoneName(n.name, prefix)), true)[0] ?? null;
+    const hands = { L: handOf("L"), R: handOf("R") };
+    self.rightHand = hands.R;
+    self.rightForearm = [rig.armR, rig.elbowR, rig.wristR];
     root.parent = rig.body;
     root.position.setAll(0);
     self.updateFrame();
@@ -132,6 +144,35 @@ export class HumanoidRetarget {
       restOf.set(key, rest);
       self.bones.push({ node, joints: joints[key], rest });
     }
+    // Hands turn at the rig's wrists (a long gun's grip, G-282) and keep their bind turn against the forearm.
+    for (const side of ["L", "R"] as const) {
+      const hand = hands[side];
+      if (!hand) continue;
+      const lower = found[`lowerArm${side}`]!;
+      const rest = self.modelRotation(hand).multiply(self.modelRotation(lower).transpose()).multiply(restOf.get(`lowerArm${side}`)!);
+      const wrist = side === "L" ? [rig.armL, rig.elbowL, rig.wristL] : [rig.armR, rig.elbowR, rig.wristR];
+      self.bones.push({ node: hand, joints: wrist, rest });
+      const curl = FingerCurl.create(hand, side === "L" ? "l" : "r", (n) => self.modelRotation(n), down, (name) => normaliseBoneName(name, prefix));
+      if (curl) self.fingers.push({ side: side === "L" ? 0 : 1, curl });
+    }
+    const scale = Math.abs(root.scaling.x) || 1;
+    const length = (n: TransformNode | null | undefined) => (n ? n.position.length() * scale : 0);
+    const upper = length(found.lowerArmR);
+    const knuckle = hands.R?.getChildren((n): n is TransformNode => RIGHT_MIDDLE_KNUCKLE.includes(normaliseBoneName(n.name, prefix)), true)[0];
+    // The hand's middle, a little short of the knuckles, in the rig wrist's frame: at rest the
+    // hand bone turns from the model's frame by its rest rotation, then into the body's.
+    const handRest = hands.R ? self.bones.find((b) => b.node === hands.R)?.rest : undefined;
+    const palm =
+      knuckle && handRest
+        ? Vector3.TransformNormal(Vector3.TransformNormal(knuckle.position, handRest), self.toBody).scale(0.85 * scale)
+        : new Vector3(0, -0.07 * scale, 0);
+    self.armReach = {
+      shoulderL: self.bodyPosition(found.upperArmL!).scale(scale),
+      shoulderR: self.bodyPosition(found.upperArmR!).scale(scale),
+      upper,
+      fore: length(hands.R) || upper,
+      palm,
+    };
     self.anchors.set("head", { bone: found.head!, rest: restOf.get("head")! });
     const nodes = root.getDescendants(false).filter((n): n is TransformNode => "rotation" in n);
     const chest = CHEST.map((alias) => nodes.find((n) => normaliseBoneName(n.name, prefix) === alias)).find((n) => n !== undefined);
@@ -165,6 +206,7 @@ export class HumanoidRetarget {
       else b.node.rotationQuaternion = q.clone();
       this.memo.delete(b.node);
     }
+    for (const f of this.fingers) f.curl.apply(this.rig.fist[f.side]);
     for (const h of this.held) {
       // The prop follows the rig's forearm (gun along the aim) and sits at the model's hand:
       // world = D (forearm turn in body space) = S * R * handRot * toBody, where S undoes the
@@ -196,6 +238,11 @@ export class HumanoidRetarget {
     this.held.push({ node, hand: this.rightHand, joints: this.rightForearm, offset });
     this.update();
     return true;
+  }
+
+  /** The model's shoulders and arm lengths in the rig body's frame, for a hold the rig solves for them (G-282). */
+  get reach(): ArmReach {
+    return this.armReach!;
   }
 
   /** Height of the model's head bone over its feet, in metres (to fit add-ons to the model's size). */

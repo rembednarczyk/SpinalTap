@@ -6,6 +6,7 @@ import {
   type ItemDefId,
   type LootLine,
   addAmmo,
+  itemLine,
   isAmmoId,
   removeInstance,
   removeStack,
@@ -18,6 +19,9 @@ import {
   removeMod,
   unequip,
   useConsumable,
+  healScale,
+  BUFF_CATALOG,
+  buffDurationScale,
   weaponStatsOf,
   WEAPON_SLOTS,
   type EquipSlot,
@@ -65,13 +69,15 @@ const useItem = (ctx: SimContext, cmd: Command<"use-item">): void => {
   if (!("stack" in cmd.ref) || !isConsumableId(cmd.ref.stack)) return;
   const player = ctx.world.with("player", "health").first;
   if (!player) return;
-  const r = useConsumable(domain.inventory, cmd.ref.stack, player.health);
+  // Field Medic (ADR-0059) heals more.
+  const r = useConsumable(domain.inventory, cmd.ref.stack, player.health, healScale(domain.progression.perks));
   if (!r.ok) return;
   player.health = r.health;
   // Wave 2 (ADR-0033): a buff starts (or refreshes), a capacity shard counts for good. The body
   // system reports both (BuffApplied, CyberwareCapacityChanged) at its turn in this step.
   const def: StackableDefinition = STACKABLE_CATALOG[cmd.ref.stack];
-  const buffs = def.buff ? applyBuff(domain.buffs, def.buff) : domain.buffs;
+  // Stim Tolerance (ADR-0059) makes a buff last longer.
+  const buffs = def.buff ? applyBuff(domain.buffs, def.buff, BUFF_CATALOG[def.buff].duration * buffDurationScale(domain.progression.perks)) : domain.buffs;
   const capacityShards = domain.capacityShards + (def.cyberCapacity ? 1 : 0);
   ctx.state.domain = { ...domain, inventory: r.inventory, buffs, capacityShards };
   ctx.bus.emit("ItemUsed", { itemId: cmd.ref.stack, healed: r.healed });
@@ -122,7 +128,7 @@ const takeOutForDrop = (domain: Domain, cmd: Command<"drop-item">): { line: Loot
   }
   const r = removeInstance(inventory, equipment, cmd.ref.uid);
   if (!r.ok) return null;
-  const line: LootLine = { kind: "item", item: r.item.def, rarity: r.item.rarity, qty: 1 };
+  const line: LootLine = itemLine(r.item);
   // Rounds in a dropped gun go back to the pouch first.
   const ammoId = weaponStatsOf(inventory, r.item.uid)?.ammo;
   const ammo = ammoId && (r.item.loaded ?? 0) > 0 ? addAmmo(domain.ammo, ammoId, r.item.loaded ?? 0).ammo : domain.ammo;

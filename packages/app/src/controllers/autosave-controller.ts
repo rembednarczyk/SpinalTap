@@ -9,7 +9,7 @@ export { AUTOSAVE_SLOT };
 export const AUTOSAVE_INTERVAL_TICKS = 5 * 60 * SIM_HZ;
 
 /** What asked for an autosave; the toast names none of them, one save covers them all. */
-export type AutosaveTrigger = "quest-step" | "quest" | "contract" | "district" | "interior" | "interval";
+export type AutosaveTrigger = "quest-step" | "quest" | "contract" | "district" | "interior" | "interval" | "hidden";
 
 /**
  * A place trigger (an interior, a district) soon after an autosave asks for nothing: walking in
@@ -33,9 +33,14 @@ export interface AutosaveControllerDeps {
   readonly enabled: () => boolean;
   /**
    * A save now could be loaded into: playing, in control (no conversation, shop, bag, breach,
-   * kiosk or menu), out of combat, alive. Anything else and the save waits.
+   * kiosk or menu), no takedown under way, out of combat, alive. Anything else and the save waits.
    */
   readonly safe: () => boolean;
+  /**
+   * She is in the air (a jump, a fall, a mantle): the save keeps no flight (G-335), so it waits
+   * for the floor, the page hiding too.
+   */
+  readonly airborne: () => boolean;
   /**
    * Writes the slot. The snapshot is taken and encoded before the first await, so a write
    * started in a `visibilitychange` handler reaches IndexedDB within the same task.
@@ -101,17 +106,23 @@ export class AutosaveController {
       this.district = district;
     }
     if (sim.tick - this.sinceTick >= (this.deps.intervalTicks ?? AUTOSAVE_INTERVAL_TICKS)) this.request("interval");
-    if (this.pending === null || this.inFlight || !this.deps.enabled() || !this.deps.safe()) return;
+    if (this.pending === null || this.inFlight || !this.deps.enabled() || !this.deps.safe() || this.deps.airborne()) return;
     void this.flush(true);
   }
 
   /**
    * The page was hidden or is going away (`visibilitychange` to hidden, `pagehide`): write now,
    * without a toast nobody sees. On a phone this is the last moment JavaScript reliably runs.
+   * In the air it waits for the landing instead: a hidden page steps no further, so the save is
+   * written once the player is back and she is on the floor (G-335).
    */
   hidden(): void {
     const tick = this.deps.sim().tick;
     if (this.hiddenTick === tick || this.inFlight || !this.deps.enabled() || !this.deps.safe()) return;
+    if (this.deps.airborne()) {
+      this.request("hidden");
+      return;
+    }
     this.hiddenTick = tick;
     void this.flush(false);
   }

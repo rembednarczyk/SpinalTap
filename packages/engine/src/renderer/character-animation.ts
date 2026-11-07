@@ -1,5 +1,8 @@
 import type { CharacterRig } from "./character-rig";
-import { AIM_HOLD, applyStagger, applySwingBody, poseMeleeArms, poseWeaponArms, smooth } from "./character-poses";
+import { type LadderRungs, reachForRungs } from "./ladder-hands";
+import { AIM_HOLD, applyStagger, poseWeaponArms, reloadPhase, smooth } from "./character-poses";
+import { applySwingBody, poseMeleeArms } from "./melee-poses";
+import { bladeOf, holdLongGun, holdWeight } from "./two-hand-hold";
 
 const DEATH_FALL = 0.65;
 const DEATH_LINGER = 5.5;
@@ -63,6 +66,8 @@ export interface RigMotion {
   readonly air?: number;
   /** Climbing speed on a ladder, m/s; absent off it. */
   readonly climb?: number;
+  /** The rungs of that ladder; without them the hands take rungs as the content spaces them, ahead. */
+  readonly rungs?: LadderRungs | null;
   /** Seconds the idle clock (breathing, flinch, stagger rock) moves on; `dt` when absent. */
   readonly clock?: number;
 }
@@ -86,24 +91,30 @@ export const jumpLegs = (air: number): { thigh: number; knee: number } => {
   return { thigh: -0.75 * up - 0.3 * down, knee: 1.25 * up + 0.35 * down + 0.2 };
 };
 
-/** Hand over hand, foot over foot: the ladder pose at phase `p`. */
-const climbPose = (rig: CharacterRig, w: number): void => {
+/** Foot over foot at the phase the hands set (`reachForRungs`). */
+const climbLegs = (rig: CharacterRig, w: number): void => {
   const s = Math.sin(rig.climbPhase);
   const mix = (from: number, to: number) => from + (to - from) * w;
-  rig.armL.rotation.x = mix(rig.armL.rotation.x, -2.5 + 0.4 * s);
-  rig.armR.rotation.x = mix(rig.armR.rotation.x, -2.5 - 0.4 * s);
-  rig.armL.rotation.z = mix(rig.armL.rotation.z, 0.12);
-  rig.armR.rotation.z = mix(rig.armR.rotation.z, -0.12);
-  rig.elbowL.rotation.x = mix(rig.elbowL.rotation.x, -0.55 - 0.35 * Math.max(0, -s));
-  rig.elbowR.rotation.x = mix(rig.elbowR.rotation.x, -0.55 - 0.35 * Math.max(0, s));
   rig.legL.rotation.x = mix(rig.legL.rotation.x, -0.55 - 0.5 * Math.max(0, s));
   rig.legR.rotation.x = mix(rig.legR.rotation.x, -0.55 - 0.5 * Math.max(0, -s));
   rig.kneeL.rotation.x = mix(rig.kneeL.rotation.x, 0.9 + 0.7 * Math.max(0, s));
   rig.kneeR.rotation.x = mix(rig.kneeR.rotation.x, 0.9 + 0.7 * Math.max(0, -s));
 };
 
+/** Turns only the long-gun hold gives back to rest: the arms' twist, the wrists, the fingers. */
+const relaxHands = (rig: CharacterRig): void => {
+  rig.armL.rotation.y = 0;
+  rig.armR.rotation.y = 0;
+  rig.wristL.rotationQuaternion?.set(0, 0, 0, 1);
+  rig.wristR.rotationQuaternion?.set(0, 0, 0, 1);
+  rig.fist[0] = 0;
+  rig.fist[1] = 0;
+};
+
+
 /** Knees give, then the body drops backwards onto the street; after lying still it sinks out of view. */
 const animateDeath = (rig: CharacterRig, dying: number): void => {
+  relaxHands(rig);
   const t = Math.min(1, dying / DEATH_FALL);
   const ease = t * t * (3 - 2 * t);
   rig.kneeL.rotation.x = rig.kneeR.rotation.x = 1.1 * ease;
@@ -113,7 +124,7 @@ const animateDeath = (rig: CharacterRig, dying: number): void => {
   rig.armR.rotation.z = -0.9 * ease;
   rig.armR.rotation.x = -0.4 * (1 - ease) - 0.2 * ease;
   const sink = Math.max(0, dying - DEATH_FALL - DEATH_LINGER);
-  rig.root.position.y = 0.12 * ease - sink * 0.5;
+  rig.root.position.y = rig.deathGround + 0.12 * ease - sink * 0.5;
 };
 
 /**
@@ -129,7 +140,6 @@ const updateAirAndClimb = (rig: CharacterRig, dt: number, motion: RigMotion): nu
   const airTarget = air !== undefined && !climbing ? 1 : 0;
   rig.airBlend += (airTarget - rig.airBlend) * Math.min(1, dt * (airTarget > rig.airBlend ? AIR_BLEND_IN : AIR_BLEND_OUT));
   rig.climbBlend += ((climbing ? 1 : 0) - rig.climbBlend) * Math.min(1, dt * CLIMB_BLEND);
-  if (climbing) rig.climbPhase += dt * Math.abs(motion.climb ?? 0) * 3.4;
   return Math.max(rig.airBlend, rig.climbBlend);
 };
 
@@ -173,6 +183,7 @@ const poseLegs = (rig: CharacterRig, { swing, thigh, lean, run, knee }: Gait): v
 };
 
 const poseArms = (rig: CharacterRig, { swing, run, amount, lean }: Gait, dt: number, combat: RigCombat): void => {
+  relaxHands(rig);
   if (rig.leftHold) {
     rig.armL.rotation.x = rig.leftHold[0];
     rig.elbowL.rotation.x = rig.leftHold[1];
@@ -192,6 +203,17 @@ const poseArms = (rig: CharacterRig, { swing, run, amount, lean }: Gait, dt: num
   // Arms hang and aim in world terms, so the lean is taken out of them too.
   rig.armL.rotation.x -= lean;
   rig.armR.rotation.x -= lean;
+  if (rig.aiming && rig.drawn >= 0.5) {
+    rig.fist[1] = 1;
+    // The support hand under a raised pistol half closes round the other.
+    if (!rig.melee && !rig.leftHold) rig.fist[0] = 0.5 * smooth(Math.min(1, Math.max(0, rig.aim)));
+  }
+  const w = holdWeight(rig);
+  if (w > 0) {
+    const left = rig.leftHold ? 0 : w;
+    holdLongGun(rig, rig.grip!, rig.stoop + lean, w, left, reloadPhase(rig));
+    rig.fist[0] = 0.6 * left;
+  }
 };
 
 /** One knee leads: the jump reads as a step into the air, not a hop on both feet. */
@@ -203,8 +225,10 @@ const applyAirPose = (rig: CharacterRig, air: number | undefined): void => {
   rig.kneeL.rotation.x += w * legs.knee;
   rig.kneeR.rotation.x += w * legs.knee * 0.7;
   // Arms out for balance; a weapon arm stays where it aims.
-  rig.armL.rotation.x -= w * 0.45;
-  rig.armL.rotation.z += w * 0.35;
+  if (holdWeight(rig) <= 0) {
+    rig.armL.rotation.x -= w * 0.45;
+    rig.armL.rotation.z += w * 0.35;
+  }
   if (!rig.aiming) {
     rig.armR.rotation.x -= w * 0.45;
     rig.armR.rotation.z -= w * 0.35;
@@ -224,7 +248,13 @@ const poseBody = (rig: CharacterRig, { c, thigh, knee, lean, run, amount }: Gait
   rig.body.rotation.z = Math.sin(rig.time * 30) * 0.05 * rig.flinch;
   // The head keeps looking ahead over the lean.
   rig.head.rotation.x = -0.25 * rig.flinch - lean * 0.8;
-  rig.body.rotation.y = 0;
+  // With a long gun the body stands bladed; the head looks ahead past it and the legs keep
+  // stepping the way the character goes (they turn back under the hips).
+  const blade = bladeOf(rig, holdWeight(rig));
+  rig.body.rotation.y = blade;
+  rig.head.rotation.y = -blade;
+  rig.legL.rotation.y = -blade;
+  rig.legR.rotation.y = -blade;
 };
 
 /**
@@ -246,8 +276,12 @@ export const animateRig = (rig: CharacterRig, speed: number, dt: number, crouch 
   poseLegs(rig, gait);
   poseArms(rig, gait, dt, combat);
   if (rig.airBlend > 0.001) applyAirPose(rig, motion.air);
-  if (rig.climbBlend > 0.001) climbPose(rig, rig.climbBlend);
   poseBody(rig, gait, dt);
+  if (motion.climb !== undefined) rig.ladder = motion.rungs ?? null;
+  if (rig.climbBlend > 0.001) {
+    reachForRungs(rig, rig.climbBlend, rig.ladder);
+    climbLegs(rig, rig.climbBlend);
+  }
   if (rig.aiming && rig.melee) applySwingBody(rig);
   applyStagger(rig, dt);
 };
@@ -281,7 +315,10 @@ export const raiseWeapon = (rig: CharacterRig): void => {
 
 /** Starts the death fall; the renderer disposes the rig when `deathFinished` says so. */
 export const startDeath = (rig: CharacterRig): void => {
-  if (rig.dying === null) rig.dying = 0;
+  if (rig.dying !== null) return;
+  rig.dying = 0;
+  // The root stands where the views put the living figure (terrain height plus lift); the fall is relative to it.
+  rig.deathGround = rig.root.position.y;
 };
 
 export const deathFinished = (rig: CharacterRig): boolean => rig.dying !== null && rig.dying > DEATH_FALL + DEATH_LINGER + 1.2;

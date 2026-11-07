@@ -72,6 +72,8 @@ kbd {
 /* Aimed down sights: the ticks pull in (the gap follows --spread) and turn bright. */
 .crosshair--aiming { opacity: 1; }
 .crosshair--aiming .crosshair__tick { background: var(--cyan); }
+/* Sights latched on touch (ADR-0072): a steady ring outside the ticks, visible at a glance. */
+.crosshair__ads { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; border: 2px solid var(--cyan); border-radius: 50%; opacity: 0.75; pointer-events: none; }
 /* Melee guard: short wide brackets left and right instead of a cone. */
 .crosshair--guard .crosshair__tick--top,
 .crosshair--guard .crosshair__tick--bottom { opacity: 0; }
@@ -170,10 +172,12 @@ kbd {
   font-size: 18px;
 }
 
-/* A takedown's kill (ADR-0065): the second action on the same target, a step quieter. */
-.hud__prompt-hold {
-  font-size: 15px;
-  opacity: 0.8;
+/*
+ * The grab's two actions (ADR-0075), knock out and kill, side by side and equal: a quieter kill
+ * went unnoticed. Only the separator between them is dimmed.
+ */
+.hud__prompt-sep {
+  color: var(--ink-dim);
 }
 
 .hud__hint {
@@ -495,6 +499,9 @@ kbd {
   min-width: 0;
 }
 .shop__item--installed { border-color: #39ffd0; background: rgba(57, 255, 208, 0.1); }
+/* Under the counter on basic terms (ADR-0070): greyed out, the reason stays readable. */
+.shop__item--locked { border-style: dashed; border-color: rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.02); }
+.shop__item--locked .shop__slot, .shop__item--locked .shop__name, .shop__item--locked .shop__desc { opacity: 0.5; }
 .shop__slot { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); }
 .shop__name { margin: 0; font-size: 19px; }
 .shop__desc { margin: 0; flex: 1; font-size: 15px; color: var(--ink-dim); line-height: 1.35; }
@@ -570,6 +577,7 @@ kbd {
 .sheet__memories { margin: 0; padding-left: 18px; font-size: 15px; }
 .sheet__empty { margin: 0; color: var(--ink-dim); font-style: italic; }
 .sheet__hint { font-size: 13px; color: var(--ink-dim); }
+.sheet__raise { margin-left: 8px; min-width: 32px; min-height: 32px; font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--magenta); cursor: pointer; }
 
 /* Journal */
 .journal { pointer-events: auto; max-height: calc(100vh - 140px); overflow-y: auto; }
@@ -774,6 +782,8 @@ kbd {
 /* Rarity frame colour always comes with a text label elsewhere (ADR-0015). */
 .rarity--uncommon { border-color: rgba(95, 242, 255, 0.8); }
 .rarity--rare { border-color: rgba(255, 61, 139, 0.8); }
+.rarity--epic { border-color: rgba(178, 110, 255, 0.85); }
+.rarity--legendary { border-color: rgba(255, 138, 31, 0.9); }
 .rarity--unique { border-color: rgba(255, 191, 74, 0.9); }
 
 /* Touch mode: move HUD pieces out of the thumbs' way. */
@@ -971,7 +981,8 @@ kbd {
 .inv__slots--garments .inv__slot { flex: 0 0 auto; }
 .inv__slot--empty { color: var(--ink-dim); opacity: 0.6; cursor: default; }
 .inv__slot--active { box-shadow: inset 0 -2px 0 var(--cyan); }
-.inv__slot--on { border-color: var(--magenta); background: rgba(255, 61, 139, 0.14); }
+/* The ring of a selected slot comes inline with its rarity frame (`slotStyle`, G-410). */
+.inv__slot--on { background: rgba(255, 61, 139, 0.14); }
 .inv__slot-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
 .inv__slot-key { font-family: var(--font-mono); color: var(--cyan); margin-right: 4px; }
 .inv__slot-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -979,6 +990,14 @@ kbd {
 .inv__stat { display: flex; gap: 6px; align-items: baseline; }
 .inv__stat dt { color: var(--ink-dim); }
 .inv__stat dd { margin: 0; font-family: var(--font-mono); }
+/* The HUD's health bar, with the part a selected medkit or meal would fill. */
+.inv__health { display: flex; flex-direction: column; gap: 3px; }
+.inv__hp { position: relative; height: 8px; background: rgba(255, 255, 255, 0.08); }
+.inv__hp-fill { height: 100%; background: linear-gradient(90deg, var(--cyan), #a8fff6); transition: width 150ms; }
+.inv__hp-fill--low { background: linear-gradient(90deg, var(--danger), var(--amber)); }
+.inv__hp-gain { position: absolute; top: 0; bottom: 0; background: rgba(109, 255, 176, 0.4); box-shadow: inset 0 0 0 1px var(--ok); }
+.inv__hp-label { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 13px; color: var(--ink-dim); }
+.inv__hp-plus { color: var(--ok); }
 
 .inv__mid { width: calc(var(--cell) * 6 + var(--gap) * 5); }
 .inv__filters { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
@@ -1017,7 +1036,7 @@ kbd {
   -webkit-touch-callout: none;
 }
 .inv__cell--empty { background: rgba(8, 14, 20, 0.4); border-style: dashed; border-color: rgba(120, 220, 230, 0.12); cursor: default; }
-.inv__cell--on { outline: 2px solid var(--magenta); outline-offset: -2px; background: rgba(255, 61, 139, 0.16); }
+.inv__cell--on { outline: none; box-shadow: inset 0 0 0 2px #ffffff; background: rgba(255, 61, 139, 0.16); }
 .inv__cell-name { display: block; font-size: 11px; line-height: 1.1; word-break: break-word; }
 .inv__cell-qty { position: absolute; right: 3px; bottom: 1px; font-family: var(--font-mono); font-size: 12px; color: var(--amber); }
 .inv__cell-tier { position: absolute; left: 3px; bottom: 1px; font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-dim); }
@@ -1051,6 +1070,8 @@ kbd {
 }
 .rarity-text--uncommon { border-top-color: rgba(95, 242, 255, 0.8); }
 .rarity-text--rare { border-top-color: rgba(255, 61, 139, 0.8); }
+.rarity-text--epic { border-top-color: rgba(178, 110, 255, 0.85); }
+.rarity-text--legendary { border-top-color: rgba(255, 138, 31, 0.9); }
 .rarity-text--unique { border-top-color: rgba(255, 191, 74, 0.9); }
 .inv__detail--empty { justify-content: center; }
 .inv__hint { margin: 0; font-size: 13px; color: var(--ink-dim); }
@@ -1059,7 +1080,11 @@ kbd {
 .inv__tier { font-size: 12px; letter-spacing: 0.08em; color: var(--ink-dim); }
 .inv__tier--uncommon { color: var(--cyan); }
 .inv__tier--rare { color: var(--magenta); }
+.inv__tier--epic { color: #b26eff; }
+.inv__tier--legendary { color: #ff8a1f; }
 .inv__tier--unique { color: var(--amber); }
+.inv__level { font-size: 12px; font-family: var(--font-mono); color: var(--ink); }
+.inv__traits { margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.3; color: var(--ink); }
 .inv__kind { font-size: 12px; color: var(--ink-dim); }
 .inv__desc { margin: 0; font-size: 13px; line-height: 1.3; color: var(--ink-dim); }
 .inv__meta { font-size: 12px; font-family: var(--font-mono); color: var(--ink); }
@@ -1558,11 +1583,18 @@ kbd {
 /* Touch scanner: the card left of the crosshair, compact; the bars right of the heat stars,
    clear of the pad. */
 .touch-mode .scanner__brand { display: none; }
-.touch-mode .scanner__panel { left: auto; right: calc(50% + 40px); top: 40px; width: 240px; }
+.touch-mode .scanner__panel { left: auto; right: calc(50% + 40px); top: 40px; width: 264px; }
 .touch-mode .scan-card { padding: 6px 10px; }
 .touch-mode .scan-card__name { font-size: 16px; }
 .touch-mode .scan-card__profile li + li { display: none; }
-.touch-mode .hacks { margin-top: 4px; }
-.touch-mode .hacks__row { padding: 1px 0; border-top: none; }
+/* The hacks as a 2x2 grid of 44 px targets with the name over its RAM, one line per field: a
+   list of four rows ran the card down over the move hint and the weapon strip of a phone held
+   sideways (G-433). The stick's ring steps aside while the scanner is on (touch-controls.tsx). */
+.touch-mode .scan-card__faction, .touch-mode .scan-card__profile li, .touch-mode .hacks__title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.touch-mode .hacks { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
+.touch-mode .hacks__row { padding: 0; border-top: none; }
+.touch-mode .hacks__btn { flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; padding: 2px 4px; font-size: 14px; line-height: 1.2; }
+.touch-mode .hacks__title { flex: none; max-width: 100%; }
+.touch-mode .hacks__ram { font-size: 12px; }
 .touch-mode .hacks__cat { display: none; }
 .touch-mode .scanner__status { left: calc(50% + 10px); top: 92px; transform: none; width: 220px; align-items: flex-start; }

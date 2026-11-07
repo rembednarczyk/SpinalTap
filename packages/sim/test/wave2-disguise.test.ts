@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { DomainState, EnemyTypeId, GarmentId, ItemInstance } from "@seki/core";
-import { SIM_DT, Simulation, deviceEntity, gangerEntity, type Entity } from "../src";
+import { DIFFICULTY_MAX, DIFFICULTY_PRESETS, type DifficultyProfile, type DomainState, type EnemyTypeId, type GarmentId, type ItemInstance } from "@seki/core";
+import { DASH_COOLDOWN, SIM_DT, Simulation, deviceEntity, gangerEntity, type Entity } from "../src";
 import { isEnforcer } from "../src/world/disguise";
 import { sniperEntity } from "../src/world/factory";
 import { collect, input, run, streetSim } from "./helpers";
@@ -46,9 +46,9 @@ describe("disguises (ADR-0033)", () => {
     // The view carries the mark for the HUD.
     const sim = simWearing(null);
     const boss = watcher(sim, "tessen_guard", "c9-g0");
-    expect(boss.view).toEqual({ kind: "enemy", preset: "corpo", enforcer: true });
+    expect(boss.view).toEqual({ kind: "enemy", preset: "corpo", enforcer: true, look: expect.any(Number) });
     expect(boss.ai?.enforcer).toBe(true);
-    expect(watcher(sim, "tessen_guard", "c9-g1").view).toEqual({ kind: "enemy", preset: "corpo" });
+    expect(watcher(sim, "tessen_guard", "c9-g1").view).toEqual({ kind: "enemy", preset: "corpo", look: expect.any(Number) });
   });
 
   it("without a disguise a guard sees the intruder; in a uniform it sees a colleague", () => {
@@ -167,5 +167,75 @@ describe("disguises (ADR-0033)", () => {
     loaded.step();
     expect(loaded.domain.disguise).toEqual({ role: null, blown: false });
     expect(changed.at(-1)).toEqual({ role: null });
+  });
+});
+
+describe("a dash in disguise (G-280)", () => {
+  /** In a Tessen uniform with the Kitsune tendons at `difficulty`, the coffee's quicker cooldown if `coffee`, holstered. */
+  const dasher = (difficulty: DifficultyProfile, coffee = false): Simulation => {
+    const sim = simWearing("tessen_uniform", (d) => ({
+      ...d,
+      difficulty,
+      character: { ...d.character, cyberware: { optics: "hitomi_optics_mk1", skeleton: "kitsune_tendons" } },
+      buffs: coffee ? [{ id: "quick_cooldown", left: 60 }] : [],
+    }));
+    holster(sim);
+    // Facing east: a dash or a sprint ahead runs across the guard's view, not into him.
+    sim.player()!.yaw = Math.PI / 2;
+    return sim;
+  };
+
+  /** Steps `n` times with `frame(i)`, returning the guard's highest suspicion meanwhile. */
+  const watch = (sim: Simulation, g: Entity, n: number, frame: (i: number) => Parameters<typeof input>[0] = () => ({})): number => {
+    let top = 0;
+    for (let i = 0; i < n; i++) {
+      sim.step(input(frame(i)));
+      top = Math.max(top, g.ai!.suspicion ?? 0);
+    }
+    return top;
+  };
+
+  it("one dash gives her away on no level, the hardest awareness and the coffee included", () => {
+    const levels: [DifficultyProfile, boolean][] = [
+      [DIFFICULTY_PRESETS.hard, true],
+      [DIFFICULTY_PRESETS.hard, false],
+      [{ ...DIFFICULTY_PRESETS.hard, awareness: DIFFICULTY_MAX }, true],
+      [{ ...DIFFICULTY_PRESETS.hard, awareness: DIFFICULTY_MAX }, false],
+    ];
+    const tops = levels.map(([level, coffee]) => {
+      const sim = dasher(level, coffee);
+      const g = watcher(sim, "tessen_guard", "c9-g1", 1.5);
+      const top = watch(sim, g, ticks(4), (i) => (i === 0 ? { dash: true, moveZ: 1 } : {}));
+      expect(sim.domain.disguise.blown).toBe(false);
+      expect(g.ai!.alerted).toBe(false);
+      return top;
+    });
+    // Seen from a step away on hard, one dash leaves him well short of sure.
+    expect(tops[0]).toBeGreaterThan(0);
+    expect(tops[0]).toBeLessThan(0.35);
+    expect(tops[1]).toBeLessThan(0.35);
+  });
+
+  it("dash after dash in front of a guard still gives her away", () => {
+    const sim = dasher(DIFFICULTY_PRESETS.normal);
+    const blown = collect(sim, "DisguiseBlown");
+    const g = watcher(sim, "tessen_guard", "c9-g1", 4);
+    const every = ticks(DASH_COOLDOWN) + 1;
+    // Back and forth across his view, a dash as soon as the legs allow.
+    watch(sim, g, ticks(15), (i) => (i % every === 0 ? { dash: true, moveZ: (i / every) % 2 === 0 ? 1 : -1 } : {}));
+    expect(blown).toHaveLength(1);
+    expect(g.ai!.alerted).toBe(true);
+  });
+
+  it("a sprint gives her away faster than dashes in the same time", () => {
+    const seconds = ticks(1);
+    const sprint = dasher(DIFFICULTY_PRESETS.normal);
+    const g1 = watcher(sprint, "tessen_guard", "c9-g1", 6);
+    const bySprint = watch(sprint, g1, seconds, () => ({ moveZ: 1, sprint: true }));
+    const dash = dasher(DIFFICULTY_PRESETS.normal);
+    const g2 = watcher(dash, "tessen_guard", "c9-g1", 6);
+    const byDash = watch(dash, g2, seconds, (i) => (i === 0 ? { dash: true, moveZ: 1 } : {}));
+    expect(byDash).toBeGreaterThan(0);
+    expect(bySprint).toBeGreaterThan(byDash * 2);
   });
 });

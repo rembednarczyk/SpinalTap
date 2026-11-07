@@ -3,7 +3,7 @@ import type { KitModel } from "../city-kit-data";
 import { type CityProps, type PropXform, addPropToSink, facing } from "../city-props";
 import { MeshSink } from "../mesh-sink";
 import { type WorldProp, bake, placePoint } from "./prop-batch";
-import { DOOR_FRAME, doorSurround, leafHeight, proceduralDoor } from "./prop-door";
+import { DOOR_FRAME, doorSurround, leafHeight, leafWidth, proceduralDoor } from "./prop-door";
 
 /**
  * The doors on the facades (ADR-0058 stage 9) at their place: a door's surround from `prop-door.ts`
@@ -31,7 +31,7 @@ const surroundOf = (variant: number): MeshSink => {
 /** Where a leaf model goes in a door: between the jambs from the sill up, its face at the leaf's. */
 export const leafXform = (p: WorldProp, variant: number, m: KitModel): PropXform => {
   const d = doorLayout(variant);
-  const w = d.width - 2 * DOOR_FRAME.side;
+  const w = leafWidth(d);
   const h = leafHeight(d);
   const front = { x: Math.sin(p.yaw), y: 0, z: Math.cos(p.yaw) };
   return facing(placePoint(p, { x: 0, y: 0, z: DOOR_FRAME.leafAt }), front, { x: w / m.size.x, y: h / m.size.y, z: DOOR_FRAME.leafDepth / m.size.z });

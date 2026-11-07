@@ -6,8 +6,25 @@ import type { CyberwareId } from "../cyberware/cyberware";
  * catalog contents; every catalog is checked against them with `satisfies`.
  */
 
-/** Fixed multipliers instead of random affixes, so a save stores only the tier. */
-export type Rarity = "common" | "uncommon" | "rare" | "unique";
+/**
+ * Fixed multipliers per tier (ADR-0015), and from epic on one or two traits out of a table of
+ * data (ADR-0059), so a save stores the tier, the level and the trait ids.
+ */
+export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "unique";
+
+/** Traits of an epic or legendary piece (ADR-0059): data in `traits.ts`, read through the stats. */
+export type TraitId =
+  | "silenced"
+  | "match_barrel"
+  | "hot_loads"
+  | "quick_draw"
+  | "light_trigger"
+  | "weighted"
+  | "balanced"
+  | "long_reach"
+  | "padded"
+  | "durable"
+  | "lightweight";
 
 export type ItemCategory = "weapon" | "ammo" | "consumable" | "garment" | "cyberware" | "mod" | "junk";
 
@@ -66,4 +83,12 @@ export type LootLine =
   | { readonly kind: "eddies"; readonly qty: number }
   | { readonly kind: "ammo"; readonly ammo: AmmoId; readonly qty: number }
   | { readonly kind: "stack"; readonly item: StackableId; readonly qty: number }
-  | { readonly kind: "item"; readonly item: InstanceDefId; readonly rarity: Rarity; readonly qty: 1 };
+  | {
+      readonly kind: "item";
+      readonly item: InstanceDefId;
+      readonly rarity: Rarity;
+      readonly qty: 1;
+      /** Item level 1..30 of a weapon or garment (ADR-0059); absent on mods and implants. */
+      readonly level?: number;
+      readonly traits?: readonly TraitId[];
+    };

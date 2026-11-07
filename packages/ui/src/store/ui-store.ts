@@ -1,5 +1,6 @@
 import {
   type AmmoPouch,
+  type Attributes,
   BASE_RAM,
   type CameraMode,
   EMPTY_EQUIPMENT,
@@ -7,10 +8,14 @@ import {
   type Equipment,
   type InventoryState,
   type CyberwareLoadout,
+  type ImplantGrades,
   type DayPhase,
+  type DomainText,
   type HitZone,
+  type PerkRanks,
   type ReputationState,
   type ShopId,
+  START_ATTRIBUTES,
   createReputation,
 } from "@seki/core";
 import { createStore, type StoreApi } from "zustand/vanilla";
@@ -55,13 +60,15 @@ import {
   type TradeVm,
   type WeaponStripVm,
 } from "./ui-vm";
-import type { BuffVm, CapacityVm, ContractHookVm, DashVm, DisguiseVm, MetroMapVm, MetroRideVm } from "./wave2-vm";
+import type { BuffVm, CapacityVm, ContractHookVm, DashVm, DisguiseVm, MetroRideVm } from "./wave2-vm";
+import type { MetroMapVm } from "./metro-vm";
 import { type DifficultyVm, NO_DIFFICULTY_CHANGE, type SlotVm } from "./difficulty-vm";
 
 export * from "./hud-vm";
 export * from "./ui-vm";
 export * from "./map-vm";
 export * from "./wave2-vm";
+export * from "./metro-vm";
 export * from "./difficulty-vm";
 
 // ---- Areas of the UI state (ADR-0031) ----
@@ -74,8 +81,8 @@ export interface SessionUiState {
   readonly loading: LoadingVm;
   readonly prompt: string | null;
   /**
-   * What holding the attack button does with the prompt's target (a takedown's kill, ADR-0065),
-   * shown with the prompt; null for nothing.
+   * What the attack button does with the prompt's target (the grab's kill, ADR-0075), shown with
+   * the prompt and on the touch fire button; null for nothing.
    */
   readonly promptHold: string | null;
   readonly toasts: readonly Toast[];
@@ -101,7 +108,23 @@ export interface PlayerHudUiState {
   readonly medkitRoom: number;
   readonly ability: AbilityVm | null;
   readonly cyberware: CyberwareLoadout;
+  /** Tier and level of the installed cyberdeck, by slot (decision of 6.11 after ADR-0059 stage 6). */
+  readonly implantGrades: ImplantGrades;
   readonly reputation: ReputationState;
+  /** The character's total XP, level and attributes (ADR-0059), and the attribute points left to spend. */
+  readonly xp: number;
+  readonly level: number;
+  readonly attributes: Attributes;
+  readonly attributePoints: number;
+  /** Perk ranks bought (ADR-0059, stage 3) and the perk points left to spend. */
+  readonly perks: PerkRanks;
+  readonly perkPoints: number;
+  /**
+   * Bumped for XP earned and for each level gained in play (ADR-0059, stage 7): the HUD shows its
+   * bar a moment and flashes it. A load or a new game moves `xp` and `level` without them.
+   */
+  readonly xpGains: number;
+  readonly levelUps: number;
   /** Game time as "HH:MM"; null before a game runs. */
   readonly clock: string | null;
   readonly day: number;
@@ -303,7 +326,16 @@ export const initialUiState: UiState = {
   ability: null,
   weapons: null,
   cyberware: {},
+  implantGrades: {},
   reputation: createReputation(),
+  xp: 0,
+  level: 1,
+  attributes: START_ATTRIBUTES,
+  attributePoints: 0,
+  perks: {},
+  perkPoints: 0,
+  xpGains: 0,
+  levelUps: 0,
   contractsDone: 0,
   shopOpen: false,
   shopId: "clinic",
@@ -402,13 +434,41 @@ let toastSeq = 0;
  */
 const isKeptToast = (t: Toast): boolean => t.kind === "quest" || t.kind === "memory" || t.keep === true;
 
+const sameText = (a: DomainText, b: DomainText): boolean => (typeof a === "string" || typeof b === "string" ? a === b : JSON.stringify(a) === JSON.stringify(b));
+
+// `keep` too: counting a failed load into an ordinary toast would let it go first in a burst (G-286).
+const sameToast = (a: Omit<Toast, "id">, b: Omit<Toast, "id">): boolean =>
+  a.kind === b.kind && sameText(a.title, b.title) && sameText(a.text, b.text) && (a.keep === true) === (b.keep === true);
+
+/**
+ * Pushes per toast on screen whose time has not run out yet: a counted toast stays until the
+ * last of them expires, so an identical one just before the first runs out gets its full time (G-286).
+ */
+const toastLeases = new WeakMap<UiStore, Map<number, number>>();
+
+const leasesOf = (store: UiStore): Map<number, number> => {
+  let leases = toastLeases.get(store);
+  if (!leases) toastLeases.set(store, (leases = new Map()));
+  return leases;
+};
+
 /**
  * Shows a toast; over TOAST_LIMIT the oldest toast goes, but one that is not kept first, so a
  * burst (an ending with its reputation, level-up and quest toasts) does not push the ending out.
- * When every toast is kept, the oldest goes.
+ * When every toast is kept, the oldest goes. A toast identical to one on screen does not take a
+ * place of its own: the one on screen counts it and its id comes back (G-281); time it with
+ * `expireToast`, one call per push.
  */
 export const pushToast = (store: UiStore, toast: Omit<Toast, "id">): number => {
+  const twin = store.getState().toasts.find((t) => sameToast(t, toast));
+  if (twin) {
+    store.setState((s) => ({ toasts: s.toasts.map((t) => (t.id === twin.id ? { ...t, count: (t.count ?? 1) + 1 } : t)) }));
+    const leases = leasesOf(store);
+    leases.set(twin.id, (leases.get(twin.id) ?? 1) + 1);
+    return twin.id;
+  }
   const id = ++toastSeq;
+  leasesOf(store).set(id, 1);
   store.setState((s) => {
     const toasts = [...s.toasts, { ...toast, id }];
     while (toasts.length > TOAST_LIMIT) {
@@ -420,6 +480,15 @@ export const pushToast = (store: UiStore, toast: Omit<Toast, "id">): number => {
   return id;
 };
 
+/** Takes a toast down at once, however many pushes it counts. */
 export const dismissToast = (store: UiStore, id: number): void => {
+  leasesOf(store).delete(id);
   store.setState((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
+};
+
+/** The time of one push of toast `id` ran out: it goes once no other push of it is still running. */
+export const expireToast = (store: UiStore, id: number): void => {
+  const left = (leasesOf(store).get(id) ?? 1) - 1;
+  if (left > 0) leasesOf(store).set(id, left);
+  else dismissToast(store, id);
 };

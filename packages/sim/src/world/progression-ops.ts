@@ -1,9 +1,31 @@
-import { type GameCommand, QUICKHACK_XP, type XpSource, gainXp, isAttributeId, rememberHack, spendAttributePoint } from "@seki/core";
+import {
+  BASE_RAM,
+  type DomainState,
+  type GameCommand,
+  type PerkRanks,
+  type StyleKind,
+  type XpSource,
+  attributeRam,
+  detectionScale,
+  gainXp,
+  isAttributeId,
+  perkDetectionScale,
+  perkRam,
+  quickhackXp,
+  recordStyle,
+  rememberHack,
+  spendAttributePoint,
+  spendPerkPoint,
+  workingDeck,
+} from "@seki/core";
+import type { Entity } from "./components";
 import type { SimContext } from "./context";
+import { difficultyOf } from "./difficulty";
 import { goneReinforcement } from "./reinforcements";
+import { regradeEnemies } from "./enemy-grade";
 
 /**
- * Character progression in the simulation (ADR-0059, stage 1). Every source of experience goes
+ * Character progression in the simulation (ADR-0059, stages 1 to 3). Every source of experience goes
  * through `grantXp`: it adds the XP to the domain, reports it and reports each level gained.
  * No randomness.
  */
@@ -14,24 +36,81 @@ export const grantXp = (ctx: SimContext, amount: number, source: XpSource): void
   ctx.state.domain = { ...ctx.state.domain, progression: r.state };
   ctx.bus.emit("ExperienceGained", { amount: r.state.xp - before.xp, source });
   for (let level = before.level + 1; level <= r.state.level; level++) ctx.bus.emit("LevelUp", { level });
+  // Inside a district's band the city keeps up with her (ADR-0059).
+  if (r.state.level !== before.level) regradeEnemies(ctx.world, r.state.level);
 };
 
 /**
- * A quickhack landed on the target with `key`: only the first one on each target pays (no farming
+ * A quickhack landed on `target`, with `key`: only the first one on each target pays (no farming
  * a speaker every second). Targets without one (passers-by; the scanner gives the heat's
- * reinforcements one, G-202) are not remembered across a save, so they pay nothing.
+ * reinforcements one, G-202) are not remembered across a save, so they pay nothing. An enemy's
+ * level against the player's scales it as it does a kill (`quickhackXp`, ADR-0059 stage 8).
  */
-export const grantQuickhackXp = (ctx: SimContext, key: string | undefined): void => {
+export const grantQuickhackXp = (ctx: SimContext, target: Entity, key: string | undefined): void => {
   if (!key) return;
   const remembered = rememberHack(ctx.state.domain.progression, key, goneReinforcement(ctx.world));
   if (!remembered) return;
   ctx.state.domain = { ...ctx.state.domain, progression: remembered };
-  grantXp(ctx, QUICKHACK_XP, "hack");
+  noteFight(ctx, target, "quickhack");
+  const player = remembered.level;
+  grantXp(ctx, quickhackXp(target.enemy?.level ?? player, player), "hack");
 };
 
-/** The `spend-attribute-point` command: a refused spend (no point, attribute at 15) changes nothing. */
+/**
+ * One fight more in the player's style (ADR-0059, stage 6): `target` defeated with `kind`, or the
+ * first quickhack on it. The loot leans towards the last STYLE_WINDOW of them. The first use
+ * counts and the target is marked, so a Short Circuit that kills, a hack and then a shot, or a
+ * second takedown after it woke stay one fight.
+ */
+export const noteFight = (ctx: SimContext, target: Entity, kind: StyleKind): void => {
+  if (target.fought) return;
+  target.fought = true;
+  const progression = ctx.state.domain.progression;
+  ctx.state.domain = { ...ctx.state.domain, progression: { ...progression, style: recordStyle(progression.style, kind) } };
+};
+
+/** The cyberdeck's RAM pool: the base, what Net adds, the Buffer perk (ADR-0059) and a working cyberdeck implant. */
+export const ramMaxOf = (domain: DomainState): number =>
+  BASE_RAM + attributeRam(domain.progression.attributes) + perkRam(domain.progression.perks) + workingDeck(domain).ram;
+
+/** The player's perk ranks (ADR-0059, stage 3), for the systems that read a perk's effect. */
+export const playerPerks = (ctx: SimContext): PerkRanks => ctx.state.domain.progression.perks;
+
+/**
+ * The pace at which enemies and cameras fill their suspicion of the player: the difficulty's
+ * `awareness` (ADR-0066) slowed by Shadow and Low Profile (ADR-0059). Draining is not affected.
+ */
+export const detectionPaceOf = (ctx: SimContext): number =>
+  difficultyOf(ctx).awareness * detectionScale(ctx.state.domain.progression.attributes) * perkDetectionScale(ctx.state.domain.progression.perks);
+
+/**
+ * The `spend-attribute-point` command: a refused spend (no point, attribute at 15) changes
+ * nothing. A point of Net that grows the RAM pool reports it, so the HUD shows the new pool
+ * before the RAM next changes.
+ */
 export const spendAttribute = (ctx: SimContext, cmd: Extract<GameCommand, { type: "spend-attribute-point" }>): void => {
   if (!isAttributeId(cmd.attribute)) return;
+  const ram = ramMaxOf(ctx.state.domain);
   const r = spendAttributePoint(ctx.state.domain.progression, cmd.attribute);
-  if (r.ok) ctx.state.domain = { ...ctx.state.domain, progression: r.state };
+  if (!r.ok) return;
+  ctx.state.domain = { ...ctx.state.domain, progression: r.state };
+  reportRamPool(ctx, ram);
+};
+
+/** Reports a RAM pool that changed (a point of Net, the Buffer perk, a respec), clamping the RAM to it. */
+export const reportRamPool = (ctx: SimContext, before: number): void => {
+  const max = ramMaxOf(ctx.state.domain);
+  if (max === before) return;
+  const netrun = ctx.state.domain.netrun;
+  if (netrun.ram > max) ctx.state.domain = { ...ctx.state.domain, netrun: { ...netrun, ram: max } };
+  ctx.bus.emit("RamChanged", { current: Math.floor(ctx.state.domain.netrun.ram + 1e-9), max });
+};
+
+/** The `spend-perk-point` command (stage 3): a refused one (no point, a tier not open, the last rank) changes nothing. */
+export const spendPerk = (ctx: SimContext, cmd: Extract<GameCommand, { type: "spend-perk-point" }>): void => {
+  const ram = ramMaxOf(ctx.state.domain);
+  const r = spendPerkPoint(ctx.state.domain.progression, cmd.perk);
+  if (!r.ok) return;
+  ctx.state.domain = { ...ctx.state.domain, progression: r.state };
+  reportRamPool(ctx, ram);
 };

@@ -49,8 +49,8 @@ ADR-0032 ustalił kontrakty fali 2. Ten ADR opisuje, jak symulacja realizuje cz�
 - Postać spotkania pojawia się 12 m przed promieniem. Wejście w promień w oknie godzin zapisuje spotkanie w domenie (`once` w `used`, cykliczne w `nights` z numerem nocy), otwiera dialog i wysyła `EncounterStarted`.
 - Komenda `end-dialogue` kończy spotkanie i wysyła `EncounterEnded` z wynikiem, czyli z końcówką flagi `<knot>_<wynik>` ustawionej przez ink (bez flagi: `none`).
 - Nagrody: ink zmienia reputację sam. Wybrane wyniki płacą €$ albo przedmioty z `ENCOUNTER_REWARDS`, raz (flaga `paid:<flaga>`). Pozostałe flagi zostają dla przyszłej treści.
-- Mikrozdarzenia (napad dwóch Hebi na przechodnia albo pomoc przy zasłabnięciu) losują się z szansą 12% przy wejściu do dystryktu, z osobnego strumienia (ziarno i tick). Wybierane jest miejsce z `MICRO_SPOTS` w odległości 12–40 m. Używają zdarzeń `EncounterStarted` i `EncounterEnded` z id `micro:<rodzaj>:<tick>` i wynikiem `won`, `helped`, `failed` albo `left`.
-- Nagroda za mikrozdarzenie: 70 €$ i +3 u cywili za napad, 25 €$ i +2 za pomoc. Uczestnicy są przejściowi: zapis ich pomija, a odejście na ponad 45 m kończy zdarzenie bez nagrody.
+- Mikrozdarzenia (napad dwóch Hebi na przechodnia albo pomoc przy zasłabnięciu) losują się z szansą 12% przy wejściu do dystryktu (25%, gdy cywile mają poniżej −10, ADR-0070), z osobnego strumienia (ziarno i tick). Wybierane jest miejsce z `MICRO_SPOTS` w odległości 12–40 m. Używają zdarzeń `EncounterStarted` i `EncounterEnded` z id `micro:<rodzaj>:<tick>` i wynikiem `won`, `helped`, `failed` albo `left`.
+- Nagroda za mikrozdarzenie: 70 €$ i +3 u cywili za napad, 25 €$ i +3 za pomoc (ADR-0070; wcześniej +2). Uczestnicy są przejściowi: zapis ich pomija, a odejście na ponad 45 m kończy zdarzenie bez nagrody.
 
 ## Konsekwencje
 - Zapis v12 (migracja 11 → 12) dodaje `metro` i `encounters`. Złote hashe zmieniły się tylko przez nowe pola i numer wersji. Reguły nie ruszyły replayów, bo te nie przyjmują zleceń, nie wchodzą w sceny i nie jeżdżą metrem.

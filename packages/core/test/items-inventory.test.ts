@@ -56,7 +56,8 @@ describe("rarity", () => {
     expect(RARITY.uncommon).toMatchObject({ damage: 1.08, spread: 0.92, armor: 1, value: 1.6, label: "inventory.rarity.uncommon" });
     expect(RARITY.rare).toMatchObject({ damage: 1.16, spread: 0.85, armor: 2, value: 2.6 });
     expect(isRarity("rare")).toBe(true);
-    expect(isRarity("epic")).toBe(false);
+    expect(isRarity("epic")).toBe(true);
+    expect(isRarity("mythic")).toBe(false);
     expect(isRarity(3)).toBe(false);
   });
 
@@ -116,8 +117,8 @@ describe("starter kit", () => {
   });
 
   it("creates fresh pieces by kind", () => {
-    expect(newInstance("i9", "hebi_smg", "rare")).toEqual({ uid: "i9", def: "hebi_smg", rarity: "rare", loaded: 0, mods: {} });
-    expect(newInstance("i9", "moto_helmet", "common")).toEqual({ uid: "i9", def: "moto_helmet", rarity: "common", condition: 100 });
+    expect(newInstance("i9", "hebi_smg", "rare")).toEqual({ uid: "i9", def: "hebi_smg", rarity: "rare", level: 1, loaded: 0, mods: {} });
+    expect(newInstance("i9", "moto_helmet", "common")).toEqual({ uid: "i9", def: "moto_helmet", rarity: "common", level: 1, condition: 100 });
     expect(newInstance("i9", "steady_grip", "common")).toEqual({ uid: "i9", def: "steady_grip", rarity: "common" });
   });
 });

@@ -256,23 +256,27 @@ describe("settings", () => {
 
   it("shows the current values and sends changes as intents", () => {
     const { i } = openSettings({ settings: { ...DEFAULT_SETTINGS, quality: "high", aimMode: "hold", mouseSensitivity: 1.5, touchSensitivity: 0.8, volume: 0.4 } });
-    // General: graphics, sound, hints, touch.
+    // General: graphics, sound, hints (touch sensitivity is in the touch tab, ADR-0072).
     expect(screen.getByRole("radio", { name: "High" }).getAttribute("aria-checked")).toBe("true");
     expect(screen.getByTestId("settings").textContent).toContain("40%");
-    expect(screen.getByTestId("settings").textContent).toContain("0.8×");
+    expect(screen.queryByLabelText(/Touch sensitivity/)).toBeNull();
     fireEvent.click(screen.getByRole("radio", { name: "Low" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ quality: "low" });
-    fireEvent.change(screen.getByLabelText(/Touch sensitivity/), { target: { value: "1.2" } });
-    expect(i.changeSettings).toHaveBeenCalledWith({ touchSensitivity: 1.2 });
     fireEvent.change(screen.getByLabelText(/Volume/), { target: { value: "0.25" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ volume: 0.25 });
     // The mix buses each have their own slider (ADR-0060 stage 1).
-    fireEvent.change(screen.getByLabelText(/Music and radio/), { target: { value: "0.3" } });
+    fireEvent.change(screen.getByLabelText(/^Music/), { target: { value: "0.3" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ musicVolume: 0.3 });
     fireEvent.change(screen.getByLabelText(/Effects/), { target: { value: "0.5" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ sfxVolume: 0.5 });
     fireEvent.change(screen.getByLabelText(/City ambience/), { target: { value: "0.1" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ ambienceVolume: 0.1 });
+    // Spoken lines and the radio have their own sliders too (ADR-0060 stage 1).
+    expect(screen.getByLabelText(/^Dialogue/)).toHaveProperty("value", "1");
+    fireEvent.change(screen.getByLabelText(/^Dialogue/), { target: { value: "0.65" } });
+    expect(i.changeSettings).toHaveBeenCalledWith({ dialogueVolume: 0.65 });
+    fireEvent.change(screen.getByLabelText(/^Radio/), { target: { value: "0.2" } });
+    expect(i.changeSettings).toHaveBeenCalledWith({ radioVolume: 0.2 });
     // Autosave: on by default, off through the same intent.
     const autosave = screen.getByRole("radiogroup", { name: "Autosave" });
     expect(within(autosave).getByRole("radio", { name: "On" }).getAttribute("aria-checked")).toBe("true");
@@ -283,11 +287,14 @@ describe("settings", () => {
     expect(screen.getByLabelText(/Mouse sensitivity/)).toHaveProperty("value", "1.5");
     fireEvent.change(screen.getByLabelText(/Mouse sensitivity/), { target: { value: "2" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ mouseSensitivity: 2 });
-    const aim = screen.getByRole("radiogroup", { name: "Aim (RMB)" });
+    const aim = screen.getByRole("radiogroup", { name: "Aim button" });
     fireEvent.click(within(aim).getByRole("radio", { name: "Toggle" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ aimMode: "toggle" });
     fireEvent.click(within(screen.getByRole("radiogroup", { name: "Crouch" })).getByRole("radio", { name: "Hold" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ crouchMode: "hold" });
+    // G-275: the TPP camera over the left shoulder.
+    fireEvent.click(within(screen.getByRole("radiogroup", { name: "TPP camera shoulder" })).getByRole("radio", { name: "Left" }));
+    expect(i.changeSettings).toHaveBeenCalledWith({ shoulder: "left" });
     fireEvent.click(within(screen.getByRole("radiogroup", { name: "Invert Y axis" })).getByRole("radio", { name: "On" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ invertY: true });
     // Field of view (ADR-0049): horizontal degrees, 70..100, through the camera intent.

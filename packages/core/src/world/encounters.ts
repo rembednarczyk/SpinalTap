@@ -40,8 +40,21 @@ export type MicroEventKind = "mugging" | "aid";
 /** Chance per district entry that a micro-event starts. */
 export const MICRO_EVENT_CHANCE = 0.12;
 
+/**
+ * The chance while the street thinks badly of the player (civilians below −10, wary or hostile):
+ * more chances to make it right (ADR-0070).
+ */
+export const MICRO_EVENT_CHANCE_DISTRUSTED = 0.25;
+
+/** Civilians' standing below this raises the chance of a micro-event (ADR-0070). */
+export const MICRO_EVENT_DISTRUST_BELOW = -10;
+
+/** The chance per district entry at `civilians` standing. */
+export const microEventChance = (civilians: number): number =>
+  civilians < MICRO_EVENT_DISTRUST_BELOW ? MICRO_EVENT_CHANCE_DISTRUSTED : MICRO_EVENT_CHANCE;
+
 /** What it pays: eddies and standing with the civilians. */
 export const MICRO_EVENT_REWARD: Readonly<Record<MicroEventKind, { readonly eddies: number; readonly civilians: number }>> = {
   mugging: { eddies: 70, civilians: 3 },
-  aid: { eddies: 25, civilians: 2 },
+  aid: { eddies: 25, civilians: 3 },
 };

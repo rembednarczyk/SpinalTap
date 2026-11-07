@@ -2,7 +2,8 @@ import { Matrix } from "../babylon";
 import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, PrepareStage, RenderPort, Transform, Vec3, ViewDescriptor } from "@seki/core";
 import type { ChunkDef } from "@seki/sim";
 import { WORLD_CHUNKS } from "@seki/sim";
-import { CameraRig } from "../camera/camera-rig";
+import { type CameraOccluder, CameraRig } from "../camera/camera-rig";
+import { fadeFigure } from "../npr/body-dither";
 import type { Grading } from "../npr/grading";
 import { LineArt } from "../npr/line-art";
 import { SpeedLines } from "../npr/speed-lines";
@@ -15,19 +16,29 @@ import { CharacterActivities } from "./character-activities";
 import { type CharacterDescriptor, CharacterViews } from "./character-views";
 import { CityKitLoader } from "./city-kit-loader";
 import { CrowdViews } from "./crowd-views";
+import { DroneViews } from "./drones/drone-views";
+import { cityDroneWorld } from "./drones/drone-world";
+import { cityPatrolWorld } from "./drones/patrol-world";
+import { CapsuleRoomView } from "./rooms/capsule-room-view";
+import { AlchemiaView } from "./alchemia/alchemia-view";
+import { parkingRoofOver } from "./alchemia/parking-view";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCitySlot } from "./map-city-slot";
 import { isMapView } from "./mapcity/map-city";
 import { MetroRide, type MetroRideView, type RideCast } from "./metro-ride";
 import { VehicleViews } from "./vehicle-views";
+import { rungsNear } from "./ladder-hands";
 import { PropViews } from "./prop-views";
 import { RendererStats } from "./renderer-stats";
 import { ScreenFx } from "./screen-fx";
 import { Signage } from "./signage";
 import { RendererLoading } from "./renderer-loading";
 import { warmUpMaterials } from "./start-prep";
+import { pavilionRoofOver } from "./metro/pavilion-roof";
+import { PlatformViews, platformRoofOver } from "./metro/platform-view";
 import { WetAsphalt } from "./wet-asphalt";
+import { wallProbe } from "./wall-probe";
 import type { Stage } from "./stage";
 
 export type { GameplayFxEvent } from "./screen-fx";
@@ -98,6 +109,11 @@ export class BabylonRenderer implements RenderPort {
   readonly farCity: FarCity;
   /** Signs, holo-ads and their street reflections, one draw call (ADR-0030). */
   readonly signage: Signage;
+  /**
+   * The simulation's ray through every solid (street furniture too), set by the app: the walls a
+   * lying body is laid clear of (G-458). The camera's occluder looks past the furniture.
+   */
+  wallRay: CameraOccluder | null = null;
   private readonly characters: CharacterViews;
   /** What the characters do where they stand (ADR-0040). */
   private readonly activities: CharacterActivities;
@@ -106,10 +122,18 @@ export class BabylonRenderer implements RenderPort {
   private readonly crowd: CrowdViews;
   /** The street's traffic and parked cars on the city kit (ADR-0050). */
   private readonly vehicles: VehicleViews;
+  /** The drones over the street canyons, one shared mesh (ADR-0058 stage 7). */
+  private readonly drones: DroneViews;
+  /** The capsule room on Jezuicka, one mesh near it (ADR-0063 stage 3). */
+  private readonly capsule: CapsuleRoomView;
+  /** Alchemia on Plac Ofiar Getta, its outside and, near it, its inside (ADR-0074 stage 1). */
+  private readonly alchemia: AlchemiaView;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
   /** The metro car between districts (ADR-0036). */
   private readonly metro: MetroRide;
+  /** The metro's platforms under the streets (ADR-0071 stage 4), on only near. */
+  private platforms: PlatformViews | null = null;
   /** Static reflection probe of the wet asphalt on medium and high quality (ADR-0036). */
   private readonly wet: WetAsphalt | null;
   /** Buildings, terrain and ground from map data (ADR-0044), created with the first of them. */
@@ -146,8 +170,11 @@ export class BabylonRenderer implements RenderPort {
     });
     this.map = new MapCitySlot({ scene, materials: this.materials, shadow: this.shadow, quality: stage.options.quality ?? "high", props: () => this.cityKit.props });
     this.rig = new CameraRig(scene, this.materials, (m) => this.props.isBlocker(m));
-    this.rig.onBodyVisibility = (visible) => {
-      if (this.cameraTarget !== null) this.characters.setBodyVisible(this.cameraTarget, visible);
+    this.rig.onBodyVisibility = (visible) => this.cameraTarget !== null && this.characters.setBodyVisible(this.cameraTarget, visible);
+    // The player's figure as a halftone while it is in the way of the TPP view (G-275).
+    this.rig.bodyFade.onChange = (amount) => {
+      const figure = this.cameraTarget === null ? null : this.characters.rigOf(this.cameraTarget);
+      if (figure) fadeFigure(figure.root, amount);
     };
     this.activities = new CharacterActivities(scene, this.materials, () => this.rig.camera.position);
     this.characters = new CharacterViews({
@@ -158,6 +185,8 @@ export class BabylonRenderer implements RenderPort {
       cameraTarget: () => this.cameraTarget,
       pose: (id, rig, speed, dt, retarget, clock) => this.activities.apply(id, rig, speed, dt, retarget, clock),
       lift: this.map.liftAt,
+      rungs: (x, y, z) => rungsNear(this.props.ladderViews(), x, y, z),
+      wall: wallProbe(scene, (m) => this.props.isBlocker(m), () => this.wallRay),
     });
     const eye = this.rig.camera.position;
     this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"], lift: this.map.liftAt });
@@ -191,6 +220,26 @@ export class BabylonRenderer implements RenderPort {
       groundAt: (x, z) => this.map.current?.heightAt(x, z) ?? null,
     });
     this.vehicles = new VehicleViews({ scene, kit: () => this.cityKit.kit, glow: stage.glow, eye: () => eye, quality: stage.options.quality ?? "high" });
+    this.drones = new DroneViews({
+      scene,
+      kit: () => this.cityKit.kit,
+      props: () => this.cityKit.props,
+      // Lublin's lanes once the map city draws (no drones over the old test streets).
+      world: () => (this.map.current ? cityDroneWorld() : null),
+      // And the low patrols' over the pedestrian streets (ADR-0058 stage 7b).
+      patrolWorld: () => (this.map.current ? cityPatrolWorld() : null),
+      eye: () => eye,
+      quality: stage.options.quality ?? "high",
+    });
+    this.capsule = new CapsuleRoomView({
+      scene,
+      materials: this.materials,
+      kit: () => this.cityKit.kit,
+      props: () => this.cityKit.props,
+      city: () => this.map.current !== null,
+      eye: () => eye,
+    });
+    this.alchemia = new AlchemiaView({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
       stage,
@@ -201,7 +250,7 @@ export class BabylonRenderer implements RenderPort {
       signage: this.signage,
       speedLines: this.speedLines,
       fogScale: options.fogScale ?? 1,
-      roofOver: (x, y, z) => this.map.current?.roofOver(x, y, z) ?? false,
+      roofOver: (x, y, z) => this.roofOver(x, y, z),
       actors: this.characters,
       cameraTarget: () => this.cameraTarget,
       scanTargets: (visit) => {
@@ -221,8 +270,8 @@ export class BabylonRenderer implements RenderPort {
       cityKit: () => this.cityKit.ready,
       cityWaiting: () => this.map.current?.waiting ?? 0,
     });
-    const { characters, activities, props, crowd, vehicles, cityKit, map, metro, fx, wet } = this;
-    this.stats = new RendererStats({ characters, activities, props, crowd, vehicles, cityKit, map, metro, fx, wet });
+    const { characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet } = this;
+    this.stats = new RendererStats({ characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet });
   }
 
   /** The start of a game behind the loading screen (ADR-0057); the moon shadow goes on `at` first. */
@@ -273,7 +322,7 @@ export class BabylonRenderer implements RenderPort {
 
   attachCamera(id: EntityId): void {
     this.cameraTarget = id;
-    this.rig.setHeldWeapon(this.characters.heldOf(id));
+    this.characters.holdInView(id);
   }
 
   playEffect(effect: EffectDescriptor): void {
@@ -302,6 +351,18 @@ export class BabylonRenderer implements RenderPort {
     this.fx.setIndoor(ride !== null);
   }
 
+  /** The platforms' views, made with the map city: their letters go on its sign material. */
+  private platformViews(): PlatformViews {
+    const eye = this.rig.camera.position;
+    return new PlatformViews({ scene: this.stage.scene, materials: this.materials, shadow: this.shadow, signs: () => this.map.current?.signMaterial ?? null, eye: () => eye });
+  }
+
+  /** The rain stops under the map's roofs, the metro pavilions' (G-331) and over the platforms under the street (ADR-0071 stage 4) and in Alchemia's P-1 (ADR-0074 stage 4). */
+  private roofOver(x: number, y: number, z: number): boolean {
+    const city = this.map.current;
+    return city !== null && (city.roofOver(x, y, z) || pavilionRoofOver(x, y, z) || platformRoofOver(x, y, z) || parkingRoofOver(x, y, z));
+  }
+
   /** Per-frame presentation update: animation, camera, VFX, rain. Call before scene.render(). */
   frame(dt: number): void {
     this.fx.beginFrame(dt);
@@ -317,6 +378,11 @@ export class BabylonRenderer implements RenderPort {
     this.characters.update(dt, this.stage.options.reference);
     this.crowd.update(dt, this.stage.options.reference);
     this.vehicles.update();
+    this.drones.update(dt, this.stage.options.reference);
+    this.capsule.update();
+    this.alchemia.update();
+    this.alchemia.parking.update(dt, this.stage.options.reference);
+    if (this.map.current) (this.platforms ??= this.platformViews()).update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();

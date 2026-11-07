@@ -22,13 +22,33 @@ const mount = (state: Partial<UiState> = {}) => {
 afterEach(cleanup);
 
 const forms = (m: string | Readonly<Record<string, string>>): string[] => (typeof m === "string" ? [m] : Object.values(m));
-const slots = (m: string | Readonly<Record<string, string>>): string[] => forms(m).flatMap((f) => [...f.matchAll(/\{(\w+)\}/g)].map((x) => x[1]!)).sort();
+/** The parameters of one form, each once, sorted. */
+const slotsOf = (f: string): string[] => [...new Set([...f.matchAll(/\{(\w+)\}/g)].map((x) => x[1]!))].sort();
+/** The plural forms a language needs: English one and other, Polish also few and many (ADR-0059, stage 7). */
+const PLURAL_FORMS = { en: ["one", "other"], pl: ["few", "many", "one", "other"] } as const;
 
 describe("catalogs (ADR-0056)", () => {
   it("Polish has exactly the English keys, none empty, with the same parameters", () => {
     expect(Object.keys(pl).sort()).toEqual(Object.keys(en).sort());
     for (const catalog of [en, pl]) for (const [key, m] of Object.entries(catalog)) for (const f of forms(m)) expect(f.trim(), key).not.toBe("");
-    for (const key of Object.keys(en)) if (isMessageKey(key)) expect(slots(pl[key]), key).toEqual(slots(en[key]));
+    for (const key of Object.keys(en)) {
+      if (!isMessageKey(key)) continue;
+      const [e, p] = [en[key], pl[key]];
+      // Plural in one language, plural in the other, each with all its forms.
+      expect(typeof p, key).toBe(typeof e);
+      if (typeof e !== "string" && typeof p !== "string") {
+        expect(Object.keys(e).sort(), key).toEqual([...PLURAL_FORMS.en]);
+        expect(Object.keys(p).sort(), key).toEqual([...PLURAL_FORMS.pl]);
+      }
+      // Every form of either language takes the same parameters as the English `other`.
+      const want = slotsOf(typeof e === "string" ? e : e.other);
+      for (const f of [...forms(e), ...forms(p)]) expect(slotsOf(f), key).toEqual(want);
+    }
+  });
+
+  it("counts the points in both languages' plural forms (ADR-0059, stage 7)", () => {
+    expect([1, 3, 5, 22].map((count) => translate("pl", "progress.unspent", { count }))).toEqual(["1 punkt do rozdania", "3 punkty do rozdania", "5 punktów do rozdania", "22 punkty do rozdania"]);
+    expect([1, 3].map((count) => translate("en", "progress.unspent", { count }))).toEqual(["1 point to spend", "3 points to spend"]);
   });
 
   it("puts named parameters in and leaves unknown slots alone", () => {
@@ -84,6 +104,7 @@ describe("language of the menus", () => {
   it("rounds the sensitivity values as before and changes only the separator", () => {
     const { store } = mount({ screen: "paused", settings: { ...DEFAULT_SETTINGS, touchSensitivity: 0.35, locale: "pl" } });
     fireEvent.click(screen.getByText("Ustawienia"));
+    fireEvent.click(screen.getByRole("tab", { name: "Dotyk i pad" }));
     expect(screen.getByText("0,3×")).toBeTruthy();
     act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "en" } }));
     expect(screen.getByText("0.3×")).toBeTruthy();
@@ -103,6 +124,7 @@ describe("language of the menus", () => {
     act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "pl" } }));
     expect(screen.getByRole("tab", { name: "Ogólne" })).toBeTruthy();
     expect(screen.getByRole("radiogroup", { name: "Language / Język" })).toBeTruthy();
-    expect(screen.getByText("1,0×")).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Dotyk i pad" }));
+    expect(screen.getAllByText("1,0×").length).toBeGreaterThan(0);
   });
 });

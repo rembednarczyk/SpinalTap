@@ -6,21 +6,24 @@ import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { smallAlone } from "./building-alone.ts";
 import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
+import { toAbutments } from "./bridge-ends.ts";
+import { bridgeFills } from "./bridge-fill.ts";
 import { makeBuilding } from "./buildings.ts";
-import { corrected, correctedLine } from "./corrections.ts";
+import { addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
-import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, lineBands, markedCrossing, roadWidth } from "./ground.ts";
+import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, lineBands, markedCrossing, openPavings, roadWidth } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
-import { allPois, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
+import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
 import { type ChunkOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
+import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
 import { type WorldVenue, allVenues, assignVenues, venueOut } from "./venues.ts";
 
 export interface ChunkStats {
@@ -208,6 +211,7 @@ const generateChunk = (
   const through = passages.filter((p) => own.has(p.building));
   const service = chunkServiceWays(lines, spec.rect);
   const foot = chunkFootWays(lines, spec.rect);
+  const flights = chunkFlights(lines, spec.rect);
   const parks = chunkCarParks(kerb.carParks, spec.rect);
   const stops = chunkBusStops(kerb.busStops, spec.rect);
   const wide = chunkMultiLaneWays(lines, spec.rect);
@@ -224,6 +228,7 @@ const generateChunk = (
     ...(through.length > 0 ? { passages: through } : {}),
     ...(service.length > 0 ? { serviceWays: service } : {}),
     ...(foot.length > 0 ? { footWays: foot } : {}),
+    ...(flights.length > 0 ? { flights } : {}),
     ...(parks.length > 0 ? { carParks: parks } : {}),
     ...(stops.length > 0 ? { busStops: stops } : {}),
     ...(wide.length > 0 ? { multiLaneWays: wide } : {}),
@@ -255,8 +260,8 @@ const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
 
 export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS): Generated => {
   const features = extractFeatures(data);
-  // The explicit corrections of estimated tags (corrections.ts), before anything reads them.
-  const areas = features.areas.map((a) => corrected(a));
+  // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), before anything reads them.
+  const areas = [...features.areas.map((a) => corrected(a)), ...addedAreas()];
   const mapLines = features.lines.map((l) => correctedLine(l));
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
   const sidewalks = sidewalkIndex(mapLines);
@@ -266,20 +271,27 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const orphans = new Set(orphanParts(outlines, partAreas));
   const buildings = [...outlines, ...[...orphans].map(asBuilding)];
   const near = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, 1)));
-  const bands: (Band & { box: Rect })[] = [];
+  const areaBands: (Band & { box: Rect })[] = [];
   for (const a of areas) {
     const b = areaBand(a);
-    if (b && near(b.ring)) bands.push({ ...b, box: ringBounds(b.ring) });
+    if (b && near(b.ring)) areaBands.push({ ...b, box: ringBounds(b.ring) });
   }
+  const holed = new Set(areas.filter((a) => a.holes > 0).map((a) => a.id));
+  const bands = openPavings(areaBands, (b) => !holed.has(b.source));
   const water = bands.filter((b) => b.surface === "water").map((b) => b.ring);
   const rects = chunks.map((c) => c.rect);
   const tunnels = streetLevelTunnels(data);
   // Paved only where it runs through a building: elsewhere it may pass under a street of its own.
   const atStreet = new Set([...tunnels].filter((id) => lines.some((l) => l.osmId === id && buildingPassages([l], buildings, rects, tunnels).length > 0)));
-  for (const [k, l] of lines.entries()) {
+  // A bridge's deck reaches its abutment (G-344): level from bank to bank, not tilted down to the
+  // bank under the bridge. Its band only: the street, its markings and lanes end where the map has them.
+  // So is a street's stretch over a tunnel it dips over (G-088): a deck, as on a bridge.
+  const tunnelWays = tunnelLines(lines);
+  for (const [k, l] of toAbutments(lines, areas).entries()) {
     if (!near(l.line)) continue;
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
-    for (const b of lineBands(l, l.tags.highway ? sidewalks.along(mapLines[k]!) : false, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
+    const mapped = l.tags.highway ? sidewalks.along(mapLines[k]!) : false;
+    for (const piece of overTunnels(l, tunnelWays, src)) for (const b of lineBands(piece, mapped, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.filter((l) => l.tags.highway !== undefined && near(l.line));
@@ -301,6 +313,8 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     const pieces = cutSidewalk(b, (p) => others.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring)));
     bands.splice(bands.indexOf(b), 1, ...pieces.map((x) => ({ ...x, box: ringBounds(x.ring) })));
   }
+  // A bridge is one deck: its outline fills the gap between its sidewalk and its carriageway (G-340).
+  for (const b of bridgeFills(areas, bands)) bands.push({ ...b, box: ringBounds(b.ring) });
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
   const zebras = bands.filter((b) => b.surface === "crossing");
   const onOther = (p: Pt, source: string) => carriageways.some((c) => c.source !== source && p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));

@@ -7,10 +7,12 @@ import {
   type ShopId,
   type ShopTerms,
   buyCyberware,
+  buyRespec,
   buyStock,
   findItem,
   hasFlag,
   installCyberwareItem,
+  isPreciousGrade,
   removeCyberware,
   repair,
   sell,
@@ -23,10 +25,11 @@ import { deadFlag } from "../systems/death-system";
 import type { SimContext } from "./context";
 import { applyReputationCause, raiseProgress } from "./domain-ops";
 import { cyberCapacityOf } from "../systems/body-system";
+import { ramMaxOf, reportRamPool } from "./progression-ops";
 
 type TradeCommand = Extract<
   GameCommand,
-  { type: "buy-cyberware" | "buy-item" | "sell-item" | "repair-item" | "upgrade-capacity" | "install-cyberware-item" | "remove-cyberware" }
+  { type: "buy-cyberware" | "buy-item" | "sell-item" | "repair-item" | "upgrade-capacity" | "install-cyberware-item" | "remove-cyberware" | "respec" }
 >;
 
 /**
@@ -87,9 +90,11 @@ const counterAt = (ctx: SimContext, domain: DomainState, shopId: ShopId, fail: C
 });
 
 const buyImplant = (ctx: SimContext, cmd: Command<"buy-cyberware">, { domain, terms, fail, charged }: Counter): void => {
-  const r = buyCyberware(domain.wallet, domain.character, cmd.cyberwareId, terms, cyberCapacityOf(domain).max);
+  const r = buyCyberware(domain.wallet, domain.character, cmd.cyberwareId, terms, cyberCapacityOf(domain).max, domain.progression.level);
   if (!r.ok) return fail(r.reason);
-  const stowed = r.replaced ? stowImplant(domain.inventory, domain.equipment, r.replaced) : { inventory: domain.inventory, item: null };
+  const stowed = r.replaced ? stowImplant(domain.inventory, domain.equipment, r.replaced, r.replacedGrade) : { inventory: domain.inventory, item: null };
+  // A plain implant may still be lost to a full bag (ADR-0015); a graded deck is refused instead (ADR-0059).
+  if (!stowed.item && isPreciousGrade(r.replacedGrade)) return fail("inventory-full");
   ctx.state.domain = { ...domain, wallet: r.wallet, character: r.character, inventory: stowed.inventory };
   charged(r.wallet, r.price);
   if (stowed.item) ctx.bus.emit("ItemAdded", { ref: { uid: stowed.item.uid }, defId: stowed.item.def, qty: 1, source: "clinic" });
@@ -110,16 +115,30 @@ const installImplantFromBag = (ctx: SimContext, cmd: Command<"install-cyberware-
   raiseProgress(ctx, "cyberware_installed");
 };
 
-const removeImplant = (ctx: SimContext, cmd: Command<"remove-cyberware">, { domain, fail }: Counter): void => {
-  const r = removeCyberware(domain.character, domain.inventory, domain.equipment, cmd.slot);
+const removeImplant = (ctx: SimContext, cmd: Command<"remove-cyberware">, { domain, terms, fail }: Counter): void => {
+  const r = removeCyberware(domain.character, domain.inventory, domain.equipment, cmd.slot, terms);
   if (!r.ok) return fail(r.reason);
   ctx.state.domain = { ...domain, character: r.character, inventory: r.inventory };
   ctx.bus.emit("ItemAdded", { ref: { uid: r.item.uid }, defId: r.item.def, qty: 1, source: "clinic" });
   ctx.bus.emit("CyberwareRemoved", { cyberwareId: r.cyberwareId, slot: cmd.slot });
 };
 
+/**
+ * The respec (ADR-0059): every attribute point and perk rank back to spend, for a fee. Implants
+ * over the pool without Tech and Overclock stay in (stage 3b); a RAM pool that shrinks is reported.
+ */
+const respec = (ctx: SimContext, { domain, terms, fail, charged }: Counter): void => {
+  const r = buyRespec(domain.wallet, domain.progression, terms);
+  if (!r.ok) return fail(r.reason);
+  const ram = ramMaxOf(domain);
+  ctx.state.domain = { ...domain, wallet: r.wallet, progression: r.progression };
+  charged(r.wallet, r.price);
+  reportRamPool(ctx, ram);
+  ctx.bus.emit("ProgressionReset", { price: r.price, ...r.progression.unspent });
+};
+
 const buyItem = (ctx: SimContext, cmd: Command<"buy-item">, { domain, shopId, terms, pockets, fail, charged }: Counter): void => {
-  const r = buyStock(pockets, shopId, cmd.itemId, terms);
+  const r = buyStock(pockets, shopId, cmd.itemId, terms, domain.progression.level);
   if (!r.ok) return fail(r.reason);
   ctx.state.domain = { ...domain, wallet: r.wallet, inventory: r.inventory, ammo: r.ammo };
   charged(r.wallet, r.price);
@@ -169,13 +188,18 @@ export const applyTradeCommand = (ctx: SimContext, cmd: TradeCommand): void => {
     return;
   }
   const counter = counterAt(ctx, domain, shopId, fail);
+  // A cyberdeck in or out changes the RAM pool (decision of 6.11 after ADR-0059 stage 6).
+  const ram = ramMaxOf(domain);
   switch (cmd.type) {
     case "buy-cyberware":
-      return buyImplant(ctx, cmd, counter);
+      buyImplant(ctx, cmd, counter);
+      return reportRamPool(ctx, ram);
     case "install-cyberware-item":
-      return installImplantFromBag(ctx, cmd, counter);
+      installImplantFromBag(ctx, cmd, counter);
+      return reportRamPool(ctx, ram);
     case "remove-cyberware":
-      return removeImplant(ctx, cmd, counter);
+      removeImplant(ctx, cmd, counter);
+      return reportRamPool(ctx, ram);
     case "buy-item":
       return buyItem(ctx, cmd, counter);
     case "sell-item":
@@ -184,5 +208,7 @@ export const applyTradeCommand = (ctx: SimContext, cmd: TradeCommand): void => {
       return repairItem(ctx, cmd, counter);
     case "upgrade-capacity":
       return upgradeCapacity(ctx, counter);
+    case "respec":
+      return respec(ctx, counter);
   }
 };

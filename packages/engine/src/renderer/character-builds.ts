@@ -40,7 +40,8 @@ const finish = (
   opts: { aiming: boolean; armSpread: number; leftHold?: [number, number]; gun?: Pistol },
 ): CharacterRig => {
   const { s: _s, ...joints } = sk;
-  const order = [joints.body, joints.legL, joints.kneeL, joints.legR, joints.kneeR, joints.head, joints.armL, joints.elbowL, joints.armR, joints.elbowR];
+  const gunHold = b.node("gunHold", joints.body);
+  const order = [joints.body, joints.legL, joints.kneeL, joints.legR, joints.kneeR, joints.head, joints.armL, joints.elbowL, joints.wristL, joints.armR, joints.elbowR, joints.wristR];
   if (opts.gun) order.push(opts.gun.hand, opts.gun.hip, ...opts.gun.boxes);
   const meshes = skinCharacter(b, root, order);
   // After skinning: a zero scale in the bind pose would make the bind matrix singular.
@@ -51,8 +52,13 @@ const finish = (
     gunHand: opts.gun?.hand ?? null,
     gunHip: opts.gun?.hip ?? null,
     gunBoxes: opts.gun?.boxes ?? [],
+    gunHold,
+    grip: null,
+    reach: null,
+    fist: [0, 0],
     drawn: 1,
     drawTarget: true,
+    handsBusy: false,
     aim: 0,
     aimHold: 0,
     reload: 0,
@@ -70,11 +76,15 @@ const finish = (
     time: 0,
     flinch: 0,
     dying: null,
+    deathGround: 0,
     lastAir: null,
     airBlend: 0,
     landing: 0,
     climbBlend: 0,
     climbPhase: 0,
+    knockout: 0,
+    carried: 0,
+    ladder: null,
     ...joints,
   };
 };

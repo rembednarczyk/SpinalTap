@@ -53,6 +53,13 @@ export interface LublinBuildingData {
    * whatever its size, where a short one would pass for a tenement.
    */
   readonly tower?: true;
+  /**
+   * OSM `building:material` of its own element (G-244): `brick` (the Gothic keep and bastion,
+   * the Trinity Chapel), `stone` or `plaster`. The renderer draws brick and stone walls bare.
+   */
+  readonly material?: "brick" | "stone" | "plaster";
+  /** OSM `building:colour` of its own element as `#rrggbb` (G-244): the renderer's wall colour nearest it. */
+  readonly colour?: string;
   /** Where the height came from: the `height` tag, `building:levels`, or the district's defaults. */
   readonly source: "height" | "levels" | "default";
   /** Venues in or at it (ADR-0064 stage 4): a point relative to (x, z), the kind, the 2077 name and the neon. */
@@ -138,6 +145,19 @@ export interface LublinFootWayData {
   readonly width: number;
 }
 
+/**
+ * A flight of steps the map tags with `incline=up` or `down` (G-236): its way's whole polyline,
+ * from its foot to its top, in every chunk it reaches into.
+ */
+export interface LublinFlightData {
+  /** Its map id, to take a flight in several chunks once. */
+  readonly id: string;
+  /** World polyline, foot first, not clipped to the chunk. */
+  readonly line: FlatPoints;
+  /** Its mapped `step_count`, when it has one. */
+  readonly steps?: number;
+}
+
 /** A car park mapped as an area (on the ground): the kerbs and yards where the map says cars park. */
 export interface LublinCarParkData {
   /** Its map id; one reaching over a chunk's edge is in both chunks. */
@@ -169,6 +189,8 @@ export interface LublinChunkData {
   readonly serviceWays?: readonly LublinServiceWayData[];
   /** Footways and paths mapped on their own, when it has any. */
   readonly footWays?: readonly LublinFootWayData[];
+  /** Flights of steps with a mapped `incline` reaching into it, when it has any. */
+  readonly flights?: readonly LublinFlightData[];
   /** Car parks reaching into it, when it has any. */
   readonly carParks?: readonly LublinCarParkData[];
   /** Bus stops' posts by it (and up to 25 m past its edge), when it has any: no car parks 15 m either side of one (G-156). */

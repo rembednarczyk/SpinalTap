@@ -14,6 +14,7 @@ import {
   WITNESS_CALL_SECONDS,
   type WitnessChannel,
   angleTo,
+  cameraSpotScale,
   ZONE_ACCESS,
   contractKind,
   factionStance,
@@ -23,19 +24,22 @@ import {
   tickHeat,
 } from "@seki/core";
 import { SECURITY_ENTRIES } from "../content/devices";
-import type { Entity } from "../world/components";
+import type { Entity, WitnessCall } from "../world/components";
 import type { Offence, SimContext, StreetDisturbance, System } from "../world/context";
 import { reinforcementEntity } from "../world/reinforcements";
+import { enemyScalingIn } from "../world/enemy-scaling";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { codeKnown } from "../world/hook-tracker";
 import { disturb, noteAlarm, noteDetected } from "../world/street";
+import { applyReputationCause } from "../world/domain-ops";
 import { incapacitated } from "../world/takedown";
 import { coveredFrom } from "../world/disguise";
 import { difficultyOf } from "../world/difficulty";
+import { detectionPaceOf } from "../world/progression-ops";
 import { worldTimeScale } from "./ability-system";
 import { COWER_RADIUS, scare } from "./ai/civilian-ai-system";
-import { effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
+import { effectiveAggroRange, enemySees, giveLead } from "./ai/ganger-perception";
 
 /**
  * Cameras (ADR-0029): they see `CAMERA_RANGE` metres in a cone of `CAMERA_CONE` either side of
@@ -91,14 +95,14 @@ export const inPlayerView = (ctx: SimContext, player: Entity, p: Vec3): boolean 
 const civilianSees = (ctx: SimContext, c: Entity, player: Entity): boolean =>
   Math.hypot(player.position.x - c.position.x, player.position.z - c.position.z) <= CIVILIAN_SIGHT && lineOfSight(ctx.world, eyeOf(c), chestOf(player));
 
-/** Does a member of the security see the player (its sight range, its cone for a guard)? */
+/** Does a member of the security see the player (its sight range, its cone until alerted, ADR-0069)? */
 const patrolSees = (ctx: SimContext, g: Entity, player: Entity): boolean => {
   if (!g.ai || (g.hackFx?.blind ?? 0) > 0) return false;
   const stance = factionStance(ctx.state.domain.reputation, g.faction ?? "hebi");
   const sight = effectiveAggroRange(g.ai.aggroRange, stance);
   const distance = Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z);
   if (distance > sight || !lineOfSight(ctx.world, eyeOf(g), chestOf(player))) return false;
-  return !g.ai.cone || guardSees(g, player, distance, true, sight);
+  return enemySees(g, player, distance, true, sight);
 };
 
 const setHeat = (ctx: SimContext, heat: HeatState, force = false): void => {
@@ -118,13 +122,37 @@ const setHeat = (ctx: SimContext, heat: HeatState, force = false): void => {
 };
 
 /** A crime reached the security: CrimeReported, the heat, and its people nearby go to look. */
-export const report = (ctx: SimContext, crime: CrimeKind, channel: WitnessChannel, witnessId: EntityId, offenderId: EntityId, at: Vec3): void => {
+export const report = (
+  ctx: SimContext,
+  crime: CrimeKind,
+  channel: WitnessChannel,
+  witnessId: EntityId,
+  offenderId: EntityId,
+  at: Vec3,
+  victim?: EntityId,
+): void => {
   ctx.bus.emit("CrimeReported", { crime, channel, witnessId, offenderId, at: { ...at } });
+  chargeStreet(ctx, crime, victim);
   const faction = securityAt(ctx, at);
   setHeat(ctx, reportCrime(ctx.state.domain.heat, crime, faction, at), true);
   noteAlarm(ctx);
   const hunting = ctx.state.domain.heat.faction;
   if (hunting) sendSecurity(ctx, hunting, at);
+};
+
+/**
+ * What a report costs the street (ADR-0070): one per incident (ADR-0029). Each reported assault
+ * costs its own; the murder of a victim whose assaults were reported costs only the rest of a
+ * murder (at most down to nothing), and its victim's account is then settled.
+ */
+const chargeStreet = (ctx: SimContext, crime: CrimeKind, victim: EntityId | undefined): void => {
+  const charged = ctx.session.street.charged;
+  const before = victim === undefined ? 0 : (charged.get(victim) ?? 0);
+  const civilians = ctx.state.domain.reputation.civilians;
+  applyReputationCause(ctx, { type: "crime-reported", crime, charged: before });
+  if (victim === undefined) return;
+  if (crime === "murder") charged.delete(victim);
+  else charged.set(victim, before + ctx.state.domain.reputation.civilians - civilians);
 };
 
 /** The security of `faction` within `REPORT_LEAD_RADIUS` of `at` goes to look there. */
@@ -134,10 +162,14 @@ export const sendSecurity = (ctx: SimContext, faction: FactionId, at: Vec3): voi
   }
 };
 
-/** The takedown of someone knocked out has reached the security (ADR-0065): its body brings no second call. */
-const bodyReported = (ctx: SimContext, body: EntityId | undefined): void => {
+/**
+ * The takedown of someone knocked out has reached the security (ADR-0065): its body brings no
+ * second call. A corpse is its murder's (G-334, G-447): an assault's report (the knock-out of one
+ * finished later, a lethal takedown phoned in by a bystander) leaves it to be found.
+ */
+const bodyReported = (ctx: SimContext, crime: CrimeKind, body: EntityId | undefined): void => {
   if (body === undefined) return;
-  for (const b of ctx.world.with("downed")) if (b.id === body) b.downed.reported = true;
+  for (const b of ctx.world.with("downed")) if (b.id === body && (crime === "murder" || !b.downed.dead)) b.downed.reported = true;
 };
 
 /** The body was reported by whoever found it (ADR-0065): the calls about its takedown are not needed. */
@@ -197,15 +229,15 @@ const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
   for (const cam of inCreationOrder(ctx.world.with("device"))) {
     if (!cameraSees(ctx, cam, player)) continue;
     noteDetected(ctx);
-    report(ctx, o.crime, "camera", cam.id, player.id, o.at);
-    bodyReported(ctx, o.body);
+    report(ctx, o.crime, "camera", cam.id, player.id, o.at, o.victim);
+    bodyReported(ctx, o.crime, o.body);
     return;
   }
   const security = securityAt(ctx, o.at);
   for (const g of inCreationOrder(ctx.world.with("ai"))) {
     if (!patrolWitness(ctx, g, player, security)) continue;
-    report(ctx, o.crime, "patrol", g.id, player.id, o.at);
-    bodyReported(ctx, o.body);
+    report(ctx, o.crime, "patrol", g.id, player.id, o.at, o.victim);
+    bodyReported(ctx, o.crime, o.body);
     return;
   }
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
@@ -213,7 +245,14 @@ const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
     scare(ctx, c, "fleeing", player.position);
     const m = c.civilian.crowd;
     if (!m) continue;
-    m.call = { crime: o.crime, at: { ...o.at }, incident: o.incident, left: WITNESS_CALL_SECONDS, ...(o.body === undefined ? {} : { body: o.body }) };
+    m.call = {
+      crime: o.crime,
+      at: { ...o.at },
+      incident: o.incident,
+      left: WITNESS_CALL_SECONDS,
+      ...(o.body === undefined ? {} : { body: o.body }),
+      ...(o.victim === undefined ? {} : { victim: o.victim }),
+    };
     ctx.bus.emit("WitnessCalling", { witnessId: c.id, crime: o.crime, duration: WITNESS_CALL_SECONDS });
   }
 };
@@ -250,9 +289,26 @@ const runCalls = (ctx: SimContext, player: Entity | null, dt: number): void => {
     if (!call) continue;
     call.left -= dt;
     if (call.left > 0) continue;
-    dropCalls(ctx, call.incident);
-    report(ctx, call.crime, "civilian", c.id, player?.id ?? 0, call.at);
-    bodyReported(ctx, call.body);
+    callThrough(ctx, c.id, call, player);
+  }
+};
+
+const callThrough = (ctx: SimContext, witnessId: EntityId, call: WitnessCall, player: Entity | null): void => {
+  dropCalls(ctx, call.incident);
+  report(ctx, call.crime, "civilian", witnessId, player?.id ?? 0, call.at, call.victim);
+  bodyReported(ctx, call.crime, call.body);
+};
+
+/**
+ * Calls in progress before a save (G-240): the crowd is not saved (ADR-0029), so each call goes
+ * through now, as at its end, in the game saved from and in the loaded one alike; a save is no
+ * way out of a report. One knocked out has none; one held in a takedown still has it (G-141).
+ */
+export const settleCalls = (ctx: SimContext): void => {
+  const player = ctx.session.gameOver ? null : (ctx.world.with("player").first ?? null);
+  for (const c of inCreationOrder(ctx.world.with("civilian"))) {
+    const call = c.civilian.crowd?.call;
+    if (call && !c.unconscious) callThrough(ctx, c.id, call, player);
   }
 };
 
@@ -281,8 +337,8 @@ const runCameras = (ctx: SimContext, player: Entity | null, dt: number, aware: M
       player.position.z >= zone.minZ &&
       player.position.z <= zone.maxZ;
     const sees = inside && !!player && cameraSees(ctx, cam, player);
-    // The spot meter fills at the difficulty's pace (`awareness`, ADR-0066); it drains as ever.
-    d.spot = Math.max(0, Math.min(1, d.spot + (sees ? (dt / CAMERA_SPOT_SECONDS) * difficultyOf(ctx).awareness : -dt * 0.5)));
+    // The spot meter fills at the difficulty's pace (`awareness`, ADR-0066), slowed by Shadow and Ghost Signal (ADR-0059); it drains as ever.
+    d.spot = Math.max(0, Math.min(1, d.spot + (sees ? (dt / CAMERA_SPOT_SECONDS) * detectionPaceOf(ctx) * cameraSpotScale(ctx.state.domain.progression.perks) : -dt * 0.5)));
     if (player && sees && d.spot >= 1 && d.cooldown === 0) {
       d.cooldown = CAMERA_REPORT_COOLDOWN;
       noteDetected(ctx);
@@ -375,7 +431,7 @@ const runReinforcements = (ctx: SimContext, player: Entity | null, dt: number): 
   // The difficulty brings them in more or less often (`reinforce`, ADR-0066).
   watch.reinforce = REINFORCE_INTERVAL / difficultyOf(ctx).reinforce;
   watch.sent += 1;
-  const g = reinforcementEntity(ctx.streamer.takeId(), watch.sent, ctx.tick, type, at, difficultyOf(ctx).npcHealth);
+  const g = reinforcementEntity(ctx.streamer.takeId(), watch.sent, ctx.tick, type, at, enemyScalingIn(ctx));
   if (g.ai) g.ai.lastKnown = heat.lastKnown ? { ...heat.lastKnown } : { ...player.position };
   ctx.world.add(g);
 };

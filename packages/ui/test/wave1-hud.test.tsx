@@ -273,7 +273,7 @@ describe("combat feedback and the contextual HUD", () => {
 
   it("hides health and ammo at full health out of combat, unless always shown", () => {
     const weapons = {
-      slots: [{ slot: "secondary" as const, key: 2 as const, name: "Unity-9", rarity: null }],
+      slots: [{ slot: "secondary" as const, key: 2 as const, name: "Unity-9", rarity: null, icon: "pistol" as const }],
       active: "secondary" as const,
       loaded: 12,
       magazine: 12,

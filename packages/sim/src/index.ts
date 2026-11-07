@@ -42,6 +42,10 @@ export {
   DEVICE_SHORT_SECONDS,
   hackTargetKind,
   scanFocus,
+  AIM_ASSIST_RANGE,
+  type AimCandidate,
+  aimRangeOf,
+  aimTargets,
   CAMERA_ALARM_RADIUS,
   CAMERA_CONE,
   CAMERA_RANGE,
@@ -66,17 +70,21 @@ export {
   TAKEDOWN_BACK_CONE,
   TAKEDOWN_REACH,
   TAKEDOWN_TIME,
+  GRAB_TIME,
   takedownDistance,
   CARRY_REACH,
   CARRY_SPEED,
   HIDE_REACH,
 } from "./systems";
-export { TAKEDOWN_PROMPT } from "./world/takedown";
-export { CARRY_PROMPT, DROP_PROMPT, HIDE_PROMPT } from "./world/bodies";
+export { GRAB_PROMPT, TAKEDOWN_PROMPT } from "./world/takedown";
+export { CARRY_PROMPT, DROP_PROMPT, HIDE_PROMPT, NO_ROOM_PROMPT } from "./world/bodies";
 export {
   CIVILIAN_FLEE_SPEED,
   CIVILIAN_TREE,
+  FLEE_DEAD_ZONE,
   FLEE_RADIUS,
+  YIELD_RADIUS,
+  CIVILIAN_WALK_SPEED,
   GANGER_SPEED,
   MELEE_CHASE_SPEED,
   MELEE_REST,
@@ -85,13 +93,12 @@ export {
   effectiveAggroRange,
   ESCORT_FOLLOW_RADIUS,
   ESCORT_SPEED,
-  GUARD_CONE,
-  GUARD_CROUCH_SIGHT,
-  GUARD_NEAR,
   SNIPER_AIM_TIME,
   SNIPER_RETREAT_RADIUS,
   WATCH_SWEEP,
-  guardSees,
+  enemySees,
+  inSightCone,
+  visionOf,
   nextOnRoute,
   retreatPerch,
   ALARMED_SECONDS,
@@ -109,13 +116,13 @@ export {
   WAKE_REACH,
   WAKE_TIME,
 } from "./systems/ai";
+export { BAND_AREAS, CONTRACT_KIND_BANDS, CONTRACT_SITE_BANDS, DISTRICT_BANDS, bandAt, bandDistrictAt, bandOf } from "./content/district-bands";
+export { contractLevelOf, enemyRankOf } from "./world/enemy-grade";
 export {
-  contractGangerHp,
   ESCORT_MAX_HP,
   escortEntity,
   gangerEntity,
   GANGER_MAX_HP,
-  GUARD_SIGHT,
   idleMelee,
   meleeAttackRange,
   nearestPerch,

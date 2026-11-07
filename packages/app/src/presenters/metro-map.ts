@@ -1,0 +1,130 @@
+import { type Locale, METRO_STATION_IDS, type MetroStationId, metroFare, metroRideSeconds, metroStops } from "@seki/core";
+import { CAPSULE_DOOR, DISTRICTS, METRO_PLANNED, METRO_STATIONS, METRO_TUNNEL, type MetroMapPoint, WORLD_CHUNKS, metroRoute, metroStation } from "@seki/sim";
+import {
+  type MapMetroEntranceVm,
+  type MapMetroPlannedVm,
+  type MapMetroStationVm,
+  type MapMetroVm,
+  type MapPolygon,
+  type MetroMapVm,
+  type MetroNearVm,
+  type MetroPreviewVm,
+  NEAR_MAX,
+  NEAR_RADIUS,
+  isMessageKey,
+  translate,
+} from "@seki/ui";
+
+/**
+ * The metro on the map (ADR-0071 stages 1 and 2): the line as a layer, built once from the
+ * simulation's content, and the ticket machine with the route and the preview of the chosen
+ * destination. The station
+ * and entrance names are Lublin's; the UI translates everything else.
+ */
+
+const round = (v: number) => Math.round(v * 10) / 10;
+const flat = (points: readonly MetroMapPoint[]): MapPolygon => points.flatMap((p) => [round(p.x), round(p.z)]);
+const length = (points: readonly MetroMapPoint[]): number => points.slice(1).reduce((sum, p, i) => sum + Math.hypot(p.x - (points[i] as MetroMapPoint).x, p.z - (points[i] as MetroMapPoint).z), 0);
+
+/** A station's entrances (ADR-0071 stage 2): the pavilions, by their middles. */
+const entrances = (id: MetroStationId): MapMetroEntranceVm[] => metroStation(id).entrances.map((e) => ({ label: e.label, name: e.name, x: round(e.spot.x), z: round(e.spot.z) }));
+
+const stationVm = (id: MetroStationId): MapMetroStationVm => {
+  const s = metroStation(id);
+  return { id, name: s.name, district: DISTRICTS[s.district].name, x: round(s.node.x), z: round(s.node.z), entrances: entrances(id) };
+};
+
+/** The tunnel from `from` up to `at`, for a possible station on the line itself. */
+const alongTunnel = (p: (typeof METRO_PLANNED)[number]): MetroMapPoint[] => {
+  const via = METRO_TUNNEL.find((t) => t.from === p.from)?.via ?? [];
+  const end = via.findIndex((v) => v.x === p.at.x && v.z === p.at.z);
+  return [metroStation(p.from).node, ...(end < 0 ? [] : via.slice(0, end)), p.at];
+};
+
+const plannedVm = (p: (typeof METRO_PLANNED)[number]): MapMetroPlannedVm => {
+  const path = p.onLine ? alongTunnel(p) : [metroStation(p.from).node, ...p.via, p.at];
+  // A station on the line has no branch of its own: only the hollow ring on the tunnel.
+  return { id: p.id, name: p.name, from: p.from, x: p.at.x, z: p.at.z, path: p.onLine ? [] : flat(path), distance: Math.round(length(path) / 10) * 10 };
+};
+
+/** The layer of the city map, the minimap and the kiosk. */
+export const metroLayerVm = (): MapMetroVm => ({
+  stations: METRO_STATION_IDS.map(stationVm),
+  legs: METRO_TUNNEL.map((t) => flat([metroStation(t.from).node, ...t.via, metroStation(t.to).node])),
+  planned: METRO_PLANNED.map(plannedVm),
+});
+
+/** Who hands out contracts (the minimap's fixers, ADR-0035), by their knot; people keep their names. */
+const CONTRACT_GIVERS: Readonly<Record<string, string>> = { fixer: "Kaito", hana: "Hana", genzo: "Genzō" };
+
+type NearPoint = Omit<MetroNearVm, "distance">;
+
+/** What the map already knows of the city: the shops, the contract givers and the capsule room. */
+const NEAR_POINTS: readonly NearPoint[] = [
+  ...WORLD_CHUNKS.flatMap((c) =>
+    c.actors.flatMap((a): NearPoint[] => {
+      const i = "interactable" in a ? a.interactable : undefined;
+      if (!i) return [];
+      const { x, z } = a.spawn.position;
+      const giver = CONTRACT_GIVERS[i.dialogueId];
+      if (giver) return [{ kind: "contract", label: "metro.near.contract", name: giver, x, z }];
+      if ((i.kind === "shop" || i.prompt.startsWith("prompt.shop.")) && isMessageKey(i.prompt)) return [{ kind: "shop", label: i.prompt, x, z }];
+      return [];
+    }),
+  ),
+  { kind: "hideout", label: "metro.near.hideout", x: CAPSULE_DOOR.at.x, z: CAPSULE_DOOR.at.z },
+];
+
+/** Up to four things within 150 m of the station, the nearest first. */
+export const metroNear = (id: MetroStationId, points: readonly NearPoint[] = NEAR_POINTS): MetroNearVm[] => {
+  const at = metroStation(id).node;
+  return points
+    .map((p) => ({ ...p, x: round(p.x), z: round(p.z), distance: Math.hypot(p.x - at.x, p.z - at.z) }))
+    .filter((p) => p.distance <= NEAR_RADIUS)
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, NEAR_MAX)
+    .map((p) => ({ ...p, distance: Math.round(p.distance / 10) * 10 }));
+};
+
+export const metroPreviewVm = (from: MetroStationId, to: MetroStationId): MetroPreviewVm => {
+  const s = stationVm(to);
+  return {
+    id: to,
+    name: s.name,
+    district: s.district,
+    entrances: s.entrances,
+    x: s.x,
+    z: s.z,
+    near: metroNear(to),
+    route: metroRoute(from, to),
+    fare: metroFare(from, to),
+    stops: metroStops(from, to),
+    seconds: metroRideSeconds(from, to),
+  };
+};
+
+/** Said at the kiosk while a contract is hot: the platform is watched (ADR-0032). */
+export const METRO_GUARDED = "metro.guarded" as const;
+
+/** The kiosk at `from`: every stop with its fare and time, and the chosen one's route and card. */
+export const metroMapVm = (from: MetroStationId, guarded: boolean, locale: Locale, selected: MetroStationId | null = null): MetroMapVm => {
+  const to = selected !== null && selected !== from ? selected : null;
+  return {
+    line: translate(locale, "metro.line"),
+    from,
+    stops: METRO_STATION_IDS.map((id) => ({
+      id,
+      name: metroStation(id).name,
+      fare: id === from ? 0 : metroFare(from, id),
+      stops: metroStops(from, id),
+      seconds: id === from ? 0 : metroRideSeconds(from, id),
+      here: id === from,
+    })),
+    selected: to,
+    preview: to ? metroPreviewVm(from, to) : null,
+    refusal: guarded ? translate(locale, METRO_GUARDED) : null,
+  };
+};
+
+/** Every station's entrances, for the minimap's icons. */
+export const METRO_ENTRANCES = METRO_STATIONS.flatMap((s) => entrances(s.id));

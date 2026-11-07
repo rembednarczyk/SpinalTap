@@ -7,6 +7,8 @@ import {
   type InventoryState,
   MAX_CAPACITY,
   SHOPS,
+  STACKABLE_CATALOG,
+  type ShopId,
   SHOP_IDS,
   type TradeState,
   addInstance,
@@ -19,6 +21,7 @@ import {
   installCyberwareItem,
   installFee,
   isShopId,
+  offersEntry,
   removeCyberware,
   repair,
   repairQuote,
@@ -73,8 +76,11 @@ describe("sale prices (plan §6)", () => {
 
   it("scales by the trader's opinion and by a garment's condition", () => {
     expect([shopTerms(-30), shopTerms(0), shopTerms(30), shopTerms(80)].map((t) => sellFactor(t.tier))).toEqual([0.75, 1, 1.1, 1.2]);
-    expect(sellFactor("hostile")).toBe(0);
+    expect(sellFactor("hostile")).toBe(0.5);
     expect(sellPrice({ def: "scrap" }, shopTerms(-30))).toBe(9);
+    // ADR-0070: a hostile trader still buys, at half the price.
+    expect(sellPrice({ def: "scrap" }, HOSTILE)).toBe(6);
+    expect(sellPrice({ def: "hebi_jacket", rarity: "common", condition: 100 }, HOSTILE)).toBe(75);
     expect(sellPrice({ def: "scrap" }, shopTerms(30))).toBe(13);
     expect(sellPrice({ def: "medkit" }, shopTerms(80))).toBe(27);
     expect(sellPrice({ def: "hebi_jacket", rarity: "common", condition: 100 })).toBe(150);
@@ -117,7 +123,7 @@ describe("selling", () => {
     expect(sell(jacket.s, "oyaji", { uid: jacket.uid }, 1, NEUTRAL)).toMatchObject({ ok: true, price: 150 });
   });
 
-  it("refuses what is worn, unknown, unwanted, worthless, or a hostile customer", () => {
+  it("refuses what is worn, unknown, unwanted or worthless; a hostile customer gets half", () => {
     const s = state();
     expect(sell(s, "oyaji", { uid: "i1" }, 1, NEUTRAL)).toEqual({ ok: false, reason: "in-use" });
     expect(sell(s, "oyaji", { uid: "i99" }, 1, NEUTRAL)).toEqual({ ok: false, reason: "not-found" });
@@ -125,7 +131,7 @@ describe("selling", () => {
     expect(sell(s, "oyaji", { stack: "medkit" }, 0, NEUTRAL)).toEqual({ ok: false, reason: "not-found" });
     expect(sell(s, "clinic", { stack: "medkit" }, 1, NEUTRAL)).toEqual({ ok: false, reason: "not-bought-here" });
     expect(sell(s, "clinic", { uid: "i2" }, 1, NEUTRAL)).toEqual({ ok: false, reason: "not-bought-here" });
-    expect(sell(s, "oyaji", { stack: "medkit" }, 1, HOSTILE)).toEqual({ ok: false, reason: "refused" });
+    expect(sell(s, "oyaji", { stack: "medkit" }, 1, HOSTILE)).toMatchObject({ ok: true, qty: 1, price: Math.floor(sellPrice({ def: "medkit" }) / 2) });
     const optics = withItem("hitomi_optics_mk1");
     expect(sell(optics.s, "clinic", { uid: optics.uid }, 1, NEUTRAL)).toEqual({ ok: false, reason: "worthless" });
     const grip = withItem("steady_grip");
@@ -138,12 +144,11 @@ describe("selling", () => {
     expect(sell(modded, "oyaji", { uid }, 1, NEUTRAL)).toEqual({ ok: false, reason: "in-use" });
   });
 
-  it("a stack nobody pays for is refused before anything moves", () => {
-    // Junk at a hostile tier would be worth 0; terms close the shop first, so check the guard directly.
-    expect(sellPrice({ def: "scrap" }, { open: true, multiplier: 1, tier: "hostile" })).toBe(0);
+  it("even a hostile trader pays something for every stack (ADR-0070)", () => {
+    for (const id of Object.keys(STACKABLE_CATALOG) as (keyof typeof STACKABLE_CATALOG)[]) expect(sellPrice({ def: id }, HOSTILE)).toBeGreaterThan(0);
     const s = state();
     const inv = addStack(s.inventory, s.equipment, "scrap", 1).inventory;
-    expect(sell({ ...s, inventory: inv }, "oyaji", { stack: "scrap" }, 1, { open: true, multiplier: 1, tier: "hostile" })).toEqual({ ok: false, reason: "worthless" });
+    expect(sell({ ...s, inventory: inv }, "oyaji", { stack: "scrap" }, 1, HOSTILE)).toMatchObject({ ok: true, price: 6 });
   });
 });
 
@@ -179,6 +184,7 @@ describe("repairs (plan §6)", () => {
     const worn = { ...s.inventory, items: s.inventory.items.map((i) => (i.uid === "i2" ? { ...i, condition: 0 } : i)) };
     expect(repair({ eddies: 10 }, worn, "i2")).toEqual({ ok: false, reason: "insufficient-funds" });
     expect(repair({ eddies: 100 }, worn, "i2", 0, HOSTILE)).toEqual({ ok: false, reason: "refused" });
+    expect(repair({ eddies: 100 }, worn, "i2", 0, shopTerms(-30))).toMatchObject({ ok: true });
   });
 });
 
@@ -242,7 +248,28 @@ describe("shop stock", () => {
     expect(buyStock(state({ inventory: fullBag(), equipment: EMPTY_EQUIPMENT }), "oyaji", "holo_sight")).toEqual({ ok: false, reason: "inventory-full" });
     expect(buyStock(state({ inventory: fullBag(), equipment: EMPTY_EQUIPMENT }), "clinic", "bandage")).toEqual({ ok: false, reason: "inventory-full" });
     expect(buyStock(state({ wallet: { eddies: 10 } }), "oyaji", "tessen_ar5")).toEqual({ ok: false, reason: "insufficient-funds" });
-    expect(buyStock(state(), "oyaji", "9mm", HOSTILE)).toEqual({ ok: false, reason: "refused" });
+  });
+
+  it("a hostile trader sells only ammo and stacks, at half again the price (ADR-0070)", () => {
+    expect(buyStock(state(), "oyaji", "9mm", HOSTILE)).toMatchObject({ ok: true, price: 36, qty: 24 });
+    expect(buyStock(state(), "clinic", "medkit", HOSTILE)).toMatchObject({ ok: true, price: Math.round(STACKABLE_CATALOG.medkit.value * 1.5) });
+    expect(buyStock(state(), "oyaji", "hebi_smg", HOSTILE)).toEqual({ ok: false, reason: "refused" });
+    expect(buyStock(state(), "oyaji", "nothing" as never, HOSTILE)).toEqual({ ok: false, reason: "not-sold-here" });
+    const basics = (shop: ShopId) => SHOPS[shop].stock.filter((e) => offersEntry(e, HOSTILE)).map((e) => e.item);
+    expect(basics("oyaji")).toEqual(["9mm", "44", "12g", "556"]);
+    expect(basics("yatai")).toEqual(["ramen", "yakitori", "synth_coffee"]);
+    expect(basics("clinic")).toEqual(["medkit", "bandage"]);
+    expect(SHOPS.oyaji.stock.every((e) => offersEntry(e, shopTerms(-49)))).toBe(true);
+  });
+
+  // ADR-0070, decision 5.11: the shard is cyberware work (it raises the capacity for good), not a
+  // basic like a medkit, so a hostile Mori keeps it under the counter with the implants.
+  it("a hostile clinic keeps the capacity shard under the counter; a wary one sells it dearer", () => {
+    expect(buyStock(state(), "clinic", "capacity_shard", HOSTILE)).toEqual({ ok: false, reason: "refused" });
+    expect(buyStock(state(), "clinic", "capacity_shard", shopTerms(-49))).toMatchObject({ ok: true, price: Math.round(STACKABLE_CATALOG.capacity_shard.value * 1.25) });
+    // Decision 6.11: the Shizuka stim is a combat stim, not a basic: refused when hostile, dearer when wary.
+    expect(buyStock(state(), "clinic", "steady_stim", HOSTILE)).toEqual({ ok: false, reason: "refused" });
+    expect(buyStock(state(), "clinic", "steady_stim", shopTerms(-49))).toMatchObject({ ok: true, price: Math.round(STACKABLE_CATALOG.steady_stim.value * 1.25) });
   });
 });
 
@@ -295,6 +322,7 @@ describe("implants from the bag (E11)", () => {
     expect(r).toMatchObject({ ok: true, cyberwareId: "steady_grip", item: { def: "steady_grip" }, character: { cyberware: {} } });
     expect(removeCyberware(character(), EMPTY_INVENTORY, EMPTY_EQUIPMENT, "arms")).toEqual({ ok: false, reason: "empty-slot" });
     expect(removeCyberware(character({ arms: "steady_grip" }), fullBag(), EMPTY_EQUIPMENT, "arms")).toEqual({ ok: false, reason: "inventory-full" });
+    expect(removeCyberware(character({ arms: "steady_grip" }), EMPTY_INVENTORY, EMPTY_EQUIPMENT, "arms", HOSTILE)).toEqual({ ok: false, reason: "refused" });
   });
 
   it("a removed implant without room is lost", () => {
