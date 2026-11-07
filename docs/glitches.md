@@ -1431,7 +1431,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele postaci)
 
 ### G-477 Latarnie z planu mebli stoją poza pasem deptaka (T-232, T-233)
-- Status: zgłoszone (7.11, kurator przeglądu #366)
+- Status: w PR #374 (7.11, przegląd kuratora; zgłoszone przez kuratora przeglądu #366)
 - Ważność: S4 · Zasięg: grobla Zamkowej 9 `lamp-pastoral` 1,4–2,2 m na trawie Błoni, Karmelicka 3 `lamp-road` w ogrodzie za murem; przyczyna: stały odstęp `FALLBACK` w `props-gen.ts:104` zamiast ½ szerokości pasu + 0,3 m; nowa kontrola `lamp-off-band` (latarnia z planu > 0,5 m poza nawierzchnią swojej drogi), bazę policzyć w całym mieście
 - Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
 
@@ -1489,6 +1489,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, naprawiacz G-479 runda 2)
 - Ważność: S4 · Zasięg: miejsce sceny `s7_poet` (102, −23) w `encounters.ts` leży w pryzmacie budynku (chunk `krakowskie-1-1`, bryła 318); ruch nie wypycha z głębi pryzmatu (graczka postawiona w (102, −13) dalej w nim stoi); test sceny ulicznej teleportuje graczkę do wnętrza; poprawka: przesunąć scenę na chodnik
 - Pakiet właściciela: packages/sim (treść)
+
+### G-490 Przez strop P−1 Alchemii widać półprzezroczysty stożek
+- Status: zgłoszone (7.11, budowniczy ADR-0074 etap 4)
+- Ważność: S4 · Zasięg: na zrzucie `after/e4-deck.png` stożek (prawdopodobnie poświata latarni albo drona z T0) przechodzi przez strop parkingu; do sprawdzenia też, czy w food hallu z etapu 1 nie pada deszcz pod stropem
+- Pakiet właściciela: packages/engine (renderer: efekty)
+
+### G-491 Auto na rampie P−1 pojawia się i znika na szczycie rampy
+- Status: zgłoszone (7.11, budowniczy ADR-0074 etap 4)
+- Ważność: S4 · Zasięg: przy chodniku Bajkowskiego auto wjeżdżające i wyjeżdżające z P−1 materializuje się i znika zamiast włączać się w ruch
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-492 Auta w ruchu nie mają bryły w symulacji
+- Status: zgłoszone (7.11, budowniczy ADR-0074 etap 4)
+- Ważność: S4 · Zasięg: tak jak drony; gracz przechodzi przez jadące auto na P−1 i na ulicach; przy okazji: trzy osoby na P−1 (parkingowy, technik, ochroniarz) to mieszkańcy tłumu bez dialogów
+- Pakiet właściciela: packages/sim
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
