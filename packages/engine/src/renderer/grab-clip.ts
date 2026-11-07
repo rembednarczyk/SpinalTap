@@ -1,5 +1,6 @@
 import type { GrabPhase, Transform } from "@seki/core";
 import { type Matrix, type TransformNode, Vector3 } from "../babylon";
+import type { LayOffset } from "./body-lay";
 import type { CharacterRig } from "./character-rig";
 import { smooth } from "./character-poses";
 import { GRAB_PULL, heldPose, holderPose } from "./grab-pose";
@@ -94,10 +95,11 @@ const lerpAngle = (a: number, b: number, t: number): number => a + Math.atan2(Ma
 
 /**
  * Puts a held target's root `GRAB_PULL` in front of the player (`holder`, her rig's root), eased
- * in with the grab and back to the simulation's place (`t`, lifted `lift`) after it. Returns
- * false (and touches nothing) for a rig that is not pulled.
+ * in with the grab and back to the simulation's place (`t`, lifted `lift`) after it, laid over
+ * by `lay` (a body turned and moved off a wall, `body-lay`). Returns false (and touches nothing)
+ * for a rig that is not pulled.
  */
-export const placeHeld = (rig: CharacterRig, t: Transform, lift: number, holder: CharacterRig | null): boolean => {
+export const placeHeld = (rig: CharacterRig, t: Transform, lift: number, holder: CharacterRig | null, lay: LayOffset | null): boolean => {
   const c = clips.get(rig);
   if (!c) return false;
   if (holder && c.phase !== null) {
@@ -108,11 +110,11 @@ export const placeHeld = (rig: CharacterRig, t: Transform, lift: number, holder:
   const a = c.anchor;
   if (!a) return false;
   const k = smooth(c.pull);
-  const x = t.position.x;
+  const x = t.position.x + (lay?.x ?? 0);
   const y = t.position.y + lift;
-  const z = t.position.z;
+  const z = t.position.z + (lay?.z ?? 0);
   rig.root.position.set(x + (a.x - x) * k, y + (a.y - y) * k, z + (a.z - z) * k);
-  rig.root.rotation.y = lerpAngle(t.yaw, a.yaw, k);
+  rig.root.rotation.y = lerpAngle(t.yaw + (lay?.turn ?? 0), a.yaw, k);
   // Back on the simulation's place: the clip is done with.
   if (c.phase === null && c.pull <= 0 && c.weight <= 0) clips.delete(rig);
   return true;

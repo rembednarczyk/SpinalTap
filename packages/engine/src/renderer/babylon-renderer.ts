@@ -37,6 +37,7 @@ import { warmUpMaterials } from "./start-prep";
 import { pavilionRoofOver } from "./metro/pavilion-roof";
 import { PlatformViews, platformRoofOver } from "./metro/platform-view";
 import { WetAsphalt } from "./wet-asphalt";
+import { wallProbe } from "./wall-probe";
 import type { Stage } from "./stage";
 
 export type { GameplayFxEvent } from "./screen-fx";
@@ -163,9 +164,7 @@ export class BabylonRenderer implements RenderPort {
     });
     this.map = new MapCitySlot({ scene, materials: this.materials, shadow: this.shadow, quality: stage.options.quality ?? "high", props: () => this.cityKit.props });
     this.rig = new CameraRig(scene, this.materials, (m) => this.props.isBlocker(m));
-    this.rig.onBodyVisibility = (visible) => {
-      if (this.cameraTarget !== null) this.characters.setBodyVisible(this.cameraTarget, visible);
-    };
+    this.rig.onBodyVisibility = (visible) => this.cameraTarget !== null && this.characters.setBodyVisible(this.cameraTarget, visible);
     // The player's figure as a halftone while it is in the way of the TPP view (G-275).
     this.rig.bodyFade.onChange = (amount) => {
       const figure = this.cameraTarget === null ? null : this.characters.rigOf(this.cameraTarget);
@@ -181,6 +180,7 @@ export class BabylonRenderer implements RenderPort {
       pose: (id, rig, speed, dt, retarget, clock) => this.activities.apply(id, rig, speed, dt, retarget, clock),
       lift: this.map.liftAt,
       rungs: (x, y, z) => rungsNear(this.props.ladderViews(), x, y, z),
+      wall: wallProbe(scene, (m) => this.props.isBlocker(m), () => this.rig.occluder),
     });
     const eye = this.rig.camera.position;
     this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"], lift: this.map.liftAt });

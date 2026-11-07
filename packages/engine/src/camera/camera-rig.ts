@@ -114,7 +114,8 @@ export class CameraRig {
   private readonly materials: ToonMaterials;
   private readonly placeholderGun: AbstractMesh;
   private reference: { position: Vector3; target: Vector3 } | null = null;
-  private occluder: CameraOccluder | null = null;
+  /** What else stops the TPP camera (`setOccluder`); the renderer asks it about walls too (G-458). */
+  occluder: CameraOccluder | null = null;
   /**
    * Both of the player's hands are taken (a body on the shoulder, G-459): the weapon drops out of
    * the FPP view as on a ladder. A takedown grab does it from the transform's `grab`.
