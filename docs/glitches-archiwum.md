@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-428 Deptaki bez `width` buforowane na 8 m zachodzą na trawniki (T-199)
+- Status: naprawione (PR #366, 7.11; szerokości z ortofoto PZGiK w `corrections-deptaki.ts`: Karmelicka 5 m, grobla 6,5 m, aleja Placu Litewskiego 6 m, ścieżki 1,5/1 m, podwórze w470555118 jako bruk; kostka na trawnikach 68/79/23 → 0/23/2 m², `grass-under-paving` 5 → 0; test pada bez poprawki, build deterministyczny)
+- Ważność: S4 · Zasięg: Karmelicka, Szambelańska, Zamkowa ×2; poprawka: `TAG_CORRECTIONS` `width` z ortofoto; trawnik w470555118 na brukowanym podwórzu
+- Pakiet właściciela: tools/osm-import
+
 ### G-474 Fixer (Kaito) rysuje się jako czarna postać
 - Status: naprawione (PR #368, 7.11; `kaito.vrm` niesie COLOR_0 z samych zer, toon shader mnożył albedo przez kolor wierzchołków; loader zdejmuje COLOR_0 z siatek VRM, glTF bez zmian; test `model-cast-colours.test.ts` na każdym pliku manifestu; jasność postaci na zrzucie 6,9 → 40,3)
 - Ważność: S2 · Zasięg: model `kaito.vrm` (Sakurada Fumiriya, `manifest.json` rola `fixer`) widoczny w grze jako czarna sylwetka; do zbadania: materiał MToon/tekstury po zmniejszeniu (`tools/shrink_glb.py`), światło NPR, alfa; postać kluczowa dla wątku

@@ -1270,11 +1270,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `packages/ui/src/styles.css:981`, `equipment-slots.tsx:17`: uncommon i pasek aktywnej to ten sam cyjan #5ff2ff, różni je tylko grubość dolnej krawędzi; na 844×390 sloty broni bez ikon, „2 SECONDARY” wychodzi na sąsiedni slot (było przed #342)
 - Pakiet właściciela: packages/ui (inventory)
 
-### G-428 Deptaki bez `width` buforowane na 8 m zachodzą na trawniki (T-199)
-- Status: zgłoszone (6.11, kurator)
-- Ważność: S4 · Zasięg: Karmelicka, Szambelańska, Zamkowa ×2; poprawka: `TAG_CORRECTIONS` `width` z ortofoto; trawnik w470555118 na brukowanym podwórzu
-- Pakiet właściciela: tools/osm-import
-
 ### G-429 `place=square` rysuje drugą identyczną kostkę placu (T-200)
 - Status: zgłoszone (6.11, kurator)
 - Ważność: S4 · Zasięg: 7 par w mieście (28 144 m²), m.in. r10460232 na r7690183; kontrola `ground-duplicate` (baza 7)
@@ -1454,6 +1449,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, weryfikator #368)
 - Ważność: S4 · Zasięg: po G-474 kolory wierzchołków zdejmowane są tylko z VRM; weryfikator sprawdził sondą z syntetycznym GLB z COLOR_0 (glTF zachowuje, VRM 0.x, VRM 1.0 i VRM w .glb tracą), ale sonda nie została w repo; wystarczy dopisać ją do `packages/engine/test/model-cast-colours.test.ts`
 - Pakiet właściciela: packages/engine (renderer: modele postaci)
+
+### G-477 Latarnie z planu mebli stoją poza pasem deptaka (T-232, T-233)
+- Status: zgłoszone (7.11, kurator przeglądu #366)
+- Ważność: S4 · Zasięg: grobla Zamkowej 9 `lamp-pastoral` 1,4–2,2 m na trawie Błoni, Karmelicka 3 `lamp-road` w ogrodzie za murem; przyczyna: stały odstęp `FALLBACK` w `props-gen.ts:104` zamiast ½ szerokości pasu + 0,3 m; nowa kontrola `lamp-off-band` (latarnia z planu > 0,5 m poza nawierzchnią swojej drogi), bazę policzyć w całym mieście
+- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
+
+### G-478 Murki `barrier=wall` przy deptakach nie mają bryły (T-234)
+- Status: zgłoszone (7.11, kurator przeglądu #366)
+- Ważność: S4 · Zasięg: murki grobli Zamkowej w294098689/w294098690 i mur ogrodu Karmelitów (brak w OSM) zostawiają goły grunt; `barrier=wall` nie jest importowane (`features.ts:66`); por. T-178; nowa kontrola `wall-unbuilt` (`barrier=wall` ≤ 5 m od osi drogi pieszej bez bryły)
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
