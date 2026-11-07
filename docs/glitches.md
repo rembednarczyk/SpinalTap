@@ -977,11 +977,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: nagrany przebieg `determinism.test.ts`, ticki ok. 1060–1159
 - Pakiet właściciela: packages/sim/src/systems/ai
 
-### G-334 Zabójstwo ogłuszonego gangera po nokaucie zgłoszonym wcześniej nigdy nie jest zgłaszane jako zabójstwo
-- Status: w PR #350 (7.11, w weryfikacji; zgłoszone 5.11, weryfikator PR #278; sprzed tego PR, ADR-0065)
-- Ważność: S3 · Zasięg: `corpseOf` przenosi na zwłoki `reported` z nokautu (`bodies.ts:75`), więc patrol, który znajdzie świeże ciało, go nie zgłasza; po wczytaniu dobicie ogłuszonego na oczach patrolu też nie jest przestępstwem, bo `wronged` jest przejściowe, a `offend` w `death-system.ts:72` nie czyta `downed.fought`
-- Pakiet właściciela: packages/sim (bodies, death-system, crime-system)
-
 ### G-339 Uskok na końcach pomostów: pomost poziomy w poprzek, droga obok na terenie (T-166)
 - Status: zgłoszone (5.11, kurator, przegląd G-330)
 - Ważność: S4 · Zasięg: 8 końców (Mełgiewska, wiadukt Zamkowej, kładka Podzamcza) · Koszt: średni
@@ -1306,14 +1301,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan, e2e
 
 ### G-433 Na telefonie karta skanu zasłania pasek broni i podpowiedź ruchu
-- Status: zgłoszone (6.11, budowniczy ADR-0059 etap 7; sprzed tej zmiany)
+- Status: w PR #353 (7.11, w weryfikacji; zgłoszone 6.11, budowniczy ADR-0059 etap 7)
 - Ważność: S3 · Zasięg: 844×390 i 800×370, karta skanu (Kiroshi) nachodzi na pasek broni i podpowiedź ruchu; do kontroli w `touch-layout`
 - Pakiet właściciela: packages/ui (HUD, skan)
-
-### G-434 Pad T1 Alchemii podnosi Świętoduską o ok. 1,85 m (T-209)
-- Status: w PR #343 (7.11, runda 3 @ 6bd9608 w weryfikacji i przeglądzie kuratora)
-- Ważność: S3 · Zasięg: jezdnia w230503896, chodnik w232464426, pas postojowy w1514058885 przy x 393–402, z 56–84; poprawka: przyciąć T1, przejście od ulicy ≤ 2 m; kontrola `pad-on-road`
-- Pakiet właściciela: packages/sim (content Alchemii), tools/glitch-scan
 
 ### G-435 Zapisane ustawienia z K przypisanym do sterowania zostają (`sanitizeBindings` nie odrzuca `RESERVED_KEYS`)
 - Status: zgłoszone (6.11, weryfikator PR #346)
@@ -1336,7 +1326,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-440 Goły pas 1–1,5 m wzdłuż fasad ul. Kościuszki (T-211)
-- Status: zgłoszone (7.11, kurator, przegląd G-436)
+- Status: w PR #352 (7.11, przegląd kuratora; landuse-bare bez zmian, bo skan nie liczy zwykłych domów)
 - Ważność: S4 · Zasięg: x ok. 8–21, z −127…−182 i wschodnia strona ulicy, ok. 1200 punktów `landuse-bare`; poprawka jak T-210/T-164 (`ADDED_AREAS` kostki do ścian)
 - Pakiet właściciela: tools/osm-import
 
@@ -1372,7 +1362,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-447 Zabójczy takedown widziany przez jednego przechodnia nigdy nie jest zgłaszany jako zabójstwo
 - Status: zgłoszone (7.11, naprawiacz G-334)
-- Ważność: S3 · Zasięg: świadek dzwoni tylko o napaść, a będąc już w trakcie połączenia pomija zabójstwo; połączenie o napaści oznacza zwłoki jako zgłoszone, bo zabójczy takedown oznacza ciało jak nokaut (ADR-0065, etap 3)
+- Ważność: S3 · Zasięg: świadek dzwoni tylko o napaść, a będąc już w trakcie połączenia pomija zabójstwo; połączenie o napaści oznacza zwłoki jako zgłoszone, bo zabójczy takedown oznacza ciało jak nokaut (ADR-0065, etap 3); potwierdzone sondą weryfikatora #350: `takedown-system.ts:182` woła `noteViolence(..., target.id)`, `civilianWitness` pomija dzwoniącego, `callThrough` → `bodyReported` oznacza martwe ciało; propozycja: strażnik w `bodyReported`/`callThrough`, żeby zgłoszenie napaści nie oznaczało martwego ciała (może zastąpić `knockOutCallsOver`)
 - Pakiet właściciela: packages/sim (bodies, crime-system)
 
 ### G-448 `traffic.test.ts` „takes turns at crossings by the market” przekracza 5 s pod obciążeniem

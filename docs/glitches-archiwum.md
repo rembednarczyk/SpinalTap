@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-334 Zabójstwo ogłuszonego gangera po nokaucie zgłoszonym wcześniej nigdy nie jest zgłaszane jako zabójstwo
+- Status: naprawione (PR #350, 7.11; zwłoki ogłuszonego nie dziedziczą zgłoszenia nokautu, `wronged` czyta `downed.fought`)
+- Ważność: S3 · Zasięg: `corpseOf` przenosi na zwłoki `reported` z nokautu (`bodies.ts:75`), więc patrol, który znajdzie świeże ciało, go nie zgłasza; po wczytaniu dobicie ogłuszonego na oczach patrolu też nie jest przestępstwem, bo `wronged` jest przejściowe, a `offend` w `death-system.ts:72` nie czyta `downed.fought`
+- Pakiet właściciela: packages/sim (bodies, death-system, crime-system)
+
+### G-434 Pad T1 Alchemii podnosi Świętoduską o ok. 1,85 m (T-209)
+- Status: naprawione (PR #343, runda 3, 7.11; T1 trzy pady, ulica ±0,15 m od NMT; kontrola `pad-on-road` 13 → 8)
+- Ważność: S3 · Zasięg: jezdnia w230503896, chodnik w232464426, pas postojowy w1514058885 przy x 393–402, z 56–84; poprawka: przyciąć T1, przejście od ulicy ≤ 2 m; kontrola `pad-on-road`
+- Pakiet właściciela: packages/sim (content Alchemii), tools/glitch-scan
+
 ### G-423 Pomniki przyrody bez swojego gatunku (dęby i topola „Baobab” jako lipy i klony)
 - Status: naprawione (PR #348, 7.11; `tree-species-ignored` 4 → 0, dęby i topola z własnymi modelami)
 - Ważność: S4 · Zasięg: 3 drzewa na Placu Litewskim; poprawka: `species`/`genus` z OSM (Quercus, Populus), model dębu; kontrola `tree-species-ignored`
