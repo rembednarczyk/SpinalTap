@@ -28,9 +28,12 @@ const smoothstep = (t: number): number => t * t * (3 - 2 * t);
 const RAISE = 0.25;
 /** The kill's snap, seconds into it (as the TPP clip, `grab-pose`). */
 const SNAP = 0.4;
+/** The eye in the grab: up out of a crouch, beside the target's head (metres to the left), down to a kneel at the end. */
+const EYE_SIDE = 0.16;
+const KNEEL_CROUCH = 0.7;
 
-const RIGHT: ArmAt = { x: 0.2, y: -0.2, z: 0.3, dx: -1, dy: 0.04, dz: 0.18 };
-const LEFT: ArmAt = { x: -0.24, y: -0.34, z: 0.2, dx: 0.45, dy: 0.75, dz: 0.45 };
+const RIGHT: ArmAt = { x: 0.34, y: -0.15, z: 0.36, dx: -1, dy: 0.05, dz: -0.22 };
+const LEFT: ArmAt = { x: -0.14, y: -0.34, z: 0.2, dx: 0.5, dy: 0.62, dz: 0.5 };
 
 interface Forearm {
   readonly node: TransformNode;
@@ -82,6 +85,19 @@ export class ChokeArms {
     this.right = buildForearm(scene, materials, this.root, "r");
     this.left = buildForearm(scene, materials, this.root, "l");
     this.root.setEnabled(false);
+  }
+
+  /**
+   * Where the eye is in the grab, from the simulation's `crouch`: she stands up behind the target
+   * with her head beside its own (`side`, metres to her left) and goes down on a knee with it
+   * through the choke and after the kill's snap, as her figure does in TPP.
+   */
+  eye(crouch: number): { crouch: number; side: number } {
+    const w = smoothstep(this.raised);
+    if (w <= 0) return { crouch, side: 0 };
+    const t = this.time;
+    const kneel = this.phase === "choke" ? smoothstep(Math.min(1, Math.max(0, (t - 0.2) / 1))) : this.phase === "kill" ? smoothstep(Math.min(1, Math.max(0, (t - SNAP - 0.12) / 0.6))) : 0;
+    return { crouch: crouch + (KNEEL_CROUCH * kneel - crouch) * w, side: -EYE_SIDE * w };
   }
 
   /** Shown in first person while `grab` lasts; `fpp` false hides them at once (TPP, the reference view). */
