@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-427 Plac Czechowicza i plac zabaw na Litewskim pod kostką (T-197, T-198)
+- Status: naprawione (PR #347, 7.11; `grass-under-paving` 7 → 5; plac zabaw z T-198 był błędną diagnozą, resztka w G-428)
+- Ważność: S3 · Zasięg: trawnik `village_green` 308 m² z pomnikiem wychodzi poza obrysy obu placów, więc `openPavings` go nie wycina; plac zabaw 22 m² styka się z trawnikiem; poprawka: odejmowanie wielokątów albo `place=square` bez nawierzchni
+- Pakiet właściciela: tools/osm-import (ground)
+
 ### G-422 Drzewa o ok. 1/3 za niskie i z wąskimi koronami (Plac Litewski)
 - Status: naprawione (PR #345, 6.11; mediana błędu wysokości 4,91 → 0,03 m, `tree-height-vs-nmpt` 47 → 6)
 - Ważność: S3 · Zasięg: w grze 6,7–12,2 m, w NMPT mediana 12,7 m, 43 drzewa ponad 15 m; poprawka: skala z NMPT (szczyt w promieniu 3 m minus teren) albo z tagu `height`, zakres skali ok. 0,7–2,2; test: mediana błędu ≤ 2 m; kontrola `tree-height-vs-nmpt`

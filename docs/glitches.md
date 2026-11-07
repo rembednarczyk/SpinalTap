@@ -1285,11 +1285,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `packages/ui/src/styles.css:981`, `equipment-slots.tsx:17`: uncommon i pasek aktywnej to ten sam cyjan #5ff2ff, różni je tylko grubość dolnej krawędzi; na 844×390 sloty broni bez ikon, „2 SECONDARY” wychodzi na sąsiedni slot (było przed #342)
 - Pakiet właściciela: packages/ui (inventory)
 
-### G-427 Plac Czechowicza i plac zabaw na Litewskim pod kostką (T-197, T-198)
-- Status: w PR #347 (6.11, kurator: PRZYJĘTE; scalanie z main)
-- Ważność: S3 · Zasięg: trawnik `village_green` 308 m² z pomnikiem wychodzi poza obrysy obu placów, więc `openPavings` go nie wycina; plac zabaw 22 m² styka się z trawnikiem; poprawka: odejmowanie wielokątów albo `place=square` bez nawierzchni
-- Pakiet właściciela: tools/osm-import (ground)
-
 ### G-428 Deptaki bez `width` buforowane na 8 m zachodzą na trawniki (T-199)
 - Status: zgłoszone (6.11, kurator)
 - Ważność: S4 · Zasięg: Karmelicka, Szambelańska, Zamkowa ×2; poprawka: `TAG_CORRECTIONS` `width` z ortofoto; trawnik w470555118 na brukowanym podwórzu
