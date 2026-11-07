@@ -103,7 +103,8 @@ export class VirtualPad {
       lookPitch: this.pitch,
       sprint: this.held.has("sprint") || Math.hypot(this.stickX, this.stickZ) >= STICK_SPRINT_THRESHOLD,
       crouch: this.held.has("crouch"),
-      fire: this.held.has("fire"),
+      // A tap shorter than a step fires once, and chooses the kill in a grab (ADR-0075).
+      fire: this.held.has("fire") || edge("fire"),
       // A tap shorter than a step still reaches the frame: in toggle mode it is what latches (ADR-0072).
       aim: this.held.has("aim") || edge("aim"),
       interact: edge("interact"),

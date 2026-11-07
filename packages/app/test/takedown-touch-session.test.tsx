@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, fireEvent, screen } from "@testing-library/react";
 import type { DomainEvents } from "@seki/core";
-import { BrowserInput } from "@seki/engine";
+import { BrowserInput, DEFAULT_KEYMAP, remap } from "@seki/engine";
 import { SIM_DT, TAKEDOWN_TIME, clinicPoint, gangerEntity, type Entity } from "@seki/sim";
 import { afterEach, describe, expect, it } from "vitest";
 import { feedTouchFire } from "../src/touch-fire";
@@ -36,11 +36,11 @@ const steps = (g: Game, n: number) =>
 
 const ticks = (seconds: number) => Math.ceil(seconds / SIM_DT - 1e-9);
 
-/** A new game on touch, out on the deptak with nobody about, a Tessen guard 1.2 m ahead with its back to her. */
-const start = (): { g: Game; guard: Entity; done: DomainEvents["TakedownDone"][] } => {
+/** A new game (on touch by default), out on the deptak with nobody about, a Tessen guard 1.2 m ahead with its back to her. */
+const start = (touch = true): { g: Game; guard: Entity; done: DomainEvents["TakedownDone"][] } => {
   input = new BrowserInput(document.createElement("canvas"));
   input.enabled = true;
-  const g = mountGame({ seed: 7, touch: true, pad: input.virtualPad });
+  const g = mountGame({ seed: 7, touch, pad: input.virtualPad });
   fireEvent.click(screen.getByRole("button", { name: "New Game" }));
   fireEvent.click(screen.getByRole("button", { name: "Start" }));
   steps(g, 2);
@@ -92,5 +92,49 @@ describe("the grab with a choice on touch (ADR-0075)", () => {
     steps(g, ticks(TAKEDOWN_TIME));
     expect(done).toEqual([{ target: guard.id, lethal: false, witnessed: false }]);
     expect(guard.unconscious).toBe(true);
+  });
+});
+
+const key = (type: "keydown" | "keyup", code: string) => window.dispatchEvent(new KeyboardEvent(type, { code }));
+
+/**
+ * A press shorter than a step (ADR-0075): the finger, the mouse button or the key goes down and
+ * comes up between two reads of the input, as at 15 to 20 frames a second on a phone. It still kills.
+ */
+describe("a press of the attack button shorter than a step kills in the grab (ADR-0075)", () => {
+  it("touch: the fire button down and up with no step between", () => {
+    const { g, guard, done } = start();
+    tap(g, screen.getByTestId("touch-use"));
+    expect(g.session.sim.session.takedown?.phase).toBe("grab");
+    const fire = screen.getByTestId("touch-fire");
+    fireEvent.pointerDown(fire, { pointerId: 6, clientX: 700, clientY: 250 });
+    fireEvent.pointerUp(fire, { pointerId: 6, clientX: 700, clientY: 250 });
+    steps(g, 1 + ticks(TAKEDOWN_TIME));
+    expect(done).toEqual([{ target: guard.id, lethal: true, witnessed: false }]);
+  });
+
+  it("mouse: a click between two steps", () => {
+    const { g, guard, done } = start(false);
+    document.dispatchEvent(new Event("pointerlockerror"));
+    key("keydown", "KeyE");
+    steps(g, 1);
+    key("keyup", "KeyE");
+    expect(g.session.sim.session.takedown?.phase).toBe("grab");
+    window.dispatchEvent(new MouseEvent("mousedown", { button: 0 }));
+    window.dispatchEvent(new MouseEvent("mouseup", { button: 0 }));
+    steps(g, 1 + ticks(TAKEDOWN_TIME));
+    expect(done).toEqual([{ target: guard.id, lethal: true, witnessed: false }]);
+  });
+
+  it("keyboard: the attack bound to a key, struck between two steps", () => {
+    const { g, guard, done } = start(false);
+    input!.keymap = remap(DEFAULT_KEYMAP, "fire", ["KeyJ"]);
+    key("keydown", "KeyE");
+    steps(g, 1);
+    key("keyup", "KeyE");
+    key("keydown", "KeyJ");
+    key("keyup", "KeyJ");
+    steps(g, 1 + ticks(TAKEDOWN_TIME));
+    expect(done).toEqual([{ target: guard.id, lethal: true, witnessed: false }]);
   });
 });

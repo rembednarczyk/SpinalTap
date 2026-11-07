@@ -140,7 +140,8 @@ export const mapKeyboardMouse = (
     lookPitch: look.pitch,
     sprint: any(keys.held, map.sprint),
     crouch: any(keys.held, map.crouch),
-    fire: any(keys.held, map.fire),
+    // A click shorter than a poll still fires once, and chooses the kill in a grab (ADR-0075).
+    fire: any(keys.held, map.fire) || any(keys.pressed, map.fire),
     aim: any(keys.held, map.aim),
     interact: any(keys.pressed, map.interact),
     jump: any(keys.pressed, map.jump),
