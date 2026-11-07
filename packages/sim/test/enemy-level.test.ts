@@ -88,7 +88,7 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
   });
 
   it("a level-up regrades the enemies about at the same share of health, and a load builds them the same", () => {
-    // One kill short of level 2: the courier of level 1 pays 3 XP (ADR-0059 stage 8).
+    // One kill short of level 2: the courier of level 1 pays 60 XP, the floor below level 6 (ADR-0059 stage 8).
     const sim = atLevel(alleySim({ seed: 3 }), 1, 99);
     const player = sim.player()!;
     const guard = byKey(sim, "guard")!;
