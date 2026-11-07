@@ -1,6 +1,6 @@
 # ADR-0074: Przebudowa Alchemii według planu inwestora
 
-Status: przyjęty (6.11, decyzje użytkownika do otwartych pytań 1, 3–6 w sekcji „Decyzje użytkownika”). Decyzje użytkownika z 6.11 są wiążące (sekcja „Decyzje użytkownika”). Krok 2 backlogu „Alchemia według przetargu”. Wejście: plan kuratora topografii [`docs/plany/alchemia.md`](../plany/alchemia.md) (źródła S1–S14, D1–D3, tabela NMT w §2). Stan kodu: `origin/main` 948fe48, rejestr topografii z gałęzi sesji.
+Status: przyjęty (6.11, decyzje użytkownika do otwartych pytań 1, 3–6 w sekcji „Decyzje użytkownika”; dalsze decyzje 7.11 po etapie 4: plac T0, spójność, teksturowanie, drzwi z metra B). Decyzje użytkownika z 6.11 są wiążące (sekcja „Decyzje użytkownika”). Krok 2 backlogu „Alchemia według przetargu”. Wejście: plan kuratora topografii [`docs/plany/alchemia.md`](../plany/alchemia.md) (źródła S1–S14, D1–D3, tabela NMT w §2). Stan kodu: `origin/main` 948fe48, rejestr topografii z gałęzi sesji.
 
 ## Kontekst
 Użytkownik (6.11): „Alchemia powinna wyglądać jak na przetargach (zbierz plan z internetu). W niej są sprzedawcy w swoich sklepach. Trzeba będzie całkowicie przebudować obecną i dodać podziemny parking.” Przetargu nie było: teren ma spółka Arkady w użytkowaniu wieczystym, a jedynym planem jest koncepcja inwestora opisana w prasie 2009–2026 (plan, §1). Wersja z 2026 roku to **układ tarasowy na spadku działki** z trzema obiektami nad dwupoziomowym parkingiem:
@@ -33,6 +33,13 @@ Hala, stoiska i winda nie odpowiadają żadnej bryle z planu. Teren spada ok. 10
 - Kolejność: najpierw food hall ze sprzedawcami, potem Arkady, pawilon i parking.
 - Druga tura (6.11): model hali igor.tesV znika całkiem; Arkady i trójkątny pawilon to tło z restauracjami, bez nowej mechaniki; cały kompleks z parkingiem i pawilonem w paśmie targu 10–20; hala metra B dostaje zejście do P−1 (etap 4); tunel pod Lubartowską do kwartału Olejna–Szambelańska–Bramowa wchodzi do zakresu jako przejście z P−1 (osobny etap po etapie 5, z kuratorem topografii, bo to odstępstwo od planu 2026 wzięte z wersji 2009).
 - Godziny lokali (6.11, otwarte pytanie 1 rozstrzygnięte): jak w propozycji. Food hall 10:00–24:00, Fumiko z własnymi drzwiami 16:00–4:00, Oyaji do 22:00, reszta według dzisiejszych harmonogramów.
+
+## Decyzje użytkownika (7.11, po etapie 4)
+- **Pawilon (T-230):** bez powiększenia, zgodnie z rekomendacją kuratora z przeglądu etapu 4 (na zachód wszedłby w wylot rampy; powiększenie na północ nie jest zlecone).
+- **T0 nad parkingiem:** asfalt parkingu z OSM znika. W jego miejscu atrakcyjny plac z pergolami i lampionami w stylu deptaku Krakowskiego Przedmieścia oraz zielony dach z trawnikami (zielony w sensie trawników, nie tylko koloru). Zamyka G-500.
+- **Drzwi z hali metra B na P−1:** osobny etap.
+- **Spójność:** Alchemia ma wyglądać jak jeden, jednolity kompleks, a nie zestaw osobnych klocków. Bryły food hallu, tarasów, Arkad, pawilonu, placu T0 i wejść na parking mają być ze sobą zintegrowane (wspólny język materiałów, przejścia, krawędzie, balustrady, oświetlenie).
+- **Teksturowanie:** dodatkowy etap, w którym cała Alchemia dostaje odpowiednie tekstury w stylu NPR gry.
 
 ## Decyzja
 
@@ -164,6 +171,10 @@ Każdy etap ma test sesji bez renderera (`packages/app/test/alchemia-*.test.ts`,
 4. **Parking P−1.** Rampa od Bajkowskiego, kabiny, auta statyczne i wjeżdżające, ładowarki, druga klatka, drzwi z food hallu (kiosk Sachiko na właściwym miejscu), opcjonalnie drzwi z hali metra B, NPC (parkingowy, technik, ochroniarz), zniknięcie naziemnego parkingu, scena `alchemia-p1`, kontrola `underground-level-exit`.
 5. **Parking P−2 i schron.** Magazyn z regałami i robotami jako ruchomymi przeszkodami, korytarze serwisowe, wylot na T2, przystanek windy, schron z ekspozycją, skrytka Hebi w schronie i zlecenie odzyskania ze skradaniem. Migracja skrytki. Test sesji: odzyskanie bez alarmu obiema drogami, pościg P−1 → P−2 → schron.
 6. **Życie placu** (po decyzji, poza zakresem tego ADR-u): wydarzenia na T1 i T2 z tłumem ADR-0060, rola Arkad i pawilonu.
+7. **Plac T0 i zielony dach** (decyzja 7.11): rozbiórka asfaltu i alejek parkingu w173531008 (korekta importu z przeglądem kuratora), plac w stylu deptaku z pergolami, lampionami, ławkami i zielenią, zielony dach z trawnikami; domek klatki P−1 i parapety rampy wpisane w plac; kontrola `cut-on-road` z bazą 0. Zamyka G-500.
+8. **Spójność kompleksu** (decyzja 7.11): wspólny język brył i materiałów dla food hallu, tarasów T0–T2, Arkad, pawilonu, placu i wejść na parking: ciągłe krawędzie i balustrady, jednolite przejścia między poziomami, wspólne oświetlenie; przegląd zrzutów z ulic dookoła.
+9. **Teksturowanie** (decyzja 7.11): tekstury dla całej Alchemii w stylu NPR (elewacje, posadzki, trawniki, pergole, szkło pawilonu), CC0 albo własne, z wpisem w README i „Autorach”; migawka NPR i budżety bez wzrostu wywołań.
+10. **Drzwi z hali metra B na P−1** (decyzja 7.11): osobny etap; nowy pomiar do T-157, świadoma zmiana złotego hasha.
 
 ### 13. Prawa autorskie
 Do repo nie trafia nic z wizualizacji ani zdjęć prasowych (redakcje, „materiały prasowe Arkady sp. z o.o.”). Bryły opisujemy słowami i liczbami ze źródeł planu. Geometria jest własna albo z modeli CC0 lub CC-BY 4.0 z wpisem w README katalogu i na ekranie „Autorzy” (ADR-0063). Kopie artykułów zostają w scratchpadzie kuratora.

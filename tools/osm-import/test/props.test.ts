@@ -51,8 +51,9 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(propOf("crossing")).toBeNull();
   });
 
-  it("is deterministic and places nothing outside its chunk, every piece on the chunk's terrain", () => {
+  it("is deterministic and places nothing outside its chunk, every piece on the chunk's terrain or a lamp on a bridge's deck", () => {
     const a = generateProps(PLAN, CHUNKS);
+    const site = new Site(CHUNKS);
     const b = generateProps(PLAN, CHUNKS);
     expect([...a.byChunk.entries()]).toEqual([...b.byChunk.entries()]);
     let total = 0;
@@ -60,7 +61,9 @@ describe("street furniture generator (ADR-0047)", () => {
       for (const i of a.byChunk.get(c.id) ?? []) {
         total++;
         expect(i.x >= c.bounds.minX - 0.05 && i.x <= c.bounds.maxX + 0.05 && i.z >= c.bounds.minZ - 0.05 && i.z <= c.bounds.maxZ + 0.05, `${i.prop} in ${c.id}`).toBe(true);
-        expect(Math.abs(i.y - terrainHeightAt(c.terrain, i.x, i.z))).toBeLessThan(0.2);
+        // A lamp of the plan over a bridge's span stands on its deck, its basket with it (G-503).
+        const deck = i.prop.startsWith("lamp-") || i.prop === "hanging-basket" ? site.deckHeightAt(i) : null;
+        expect(Math.min(Math.abs(i.y - terrainHeightAt(c.terrain, i.x, i.z)), Math.abs(i.y - (deck ?? Infinity))), `${i.prop} at ${i.x}, ${i.z}`).toBeLessThan(0.2);
         // A bollard's chains take 25 bits (G-032), the rest's variant 16.
         expect(Number.isInteger(i.variant) && i.variant >= 0 && i.variant <= (i.prop === "bollard" ? 0x1ffffff : 0xffff)).toBe(true);
       }

@@ -6,7 +6,7 @@ import { enterKanal, street } from "./micro-scenes";
 import { takeDown } from "./takedown-scenes";
 
 /** Shiro's lamp on Plac Litewski and the salaryman's pavement by Neon Koi (ADR-0045). */
-const POET = { x: 102, z: -23 };
+const POET = { x: 97, z: -23 };
 const SALARYMAN = { x: 328, z: -91 };
 
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;

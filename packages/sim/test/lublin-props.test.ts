@@ -3,6 +3,7 @@ import { terrainHeightAt } from "@seki/core";
 import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, streetPropsView } from "../src/content/lublin";
 import { decodePropTable } from "../src/content/lublin/props";
 import { groundY } from "../src/content/lublin/terrain";
+import { bridgeDeckAt } from "../src/content/lublin/decks";
 
 describe("street furniture of Lublin (ADR-0047)", () => {
   it("decodes the table into items per chunk, kind by kind", () => {
@@ -14,7 +15,7 @@ describe("street furniture of Lublin (ADR-0047)", () => {
     ]);
   });
 
-  it("has furniture in every chunk, inside it and on its terrain, and a view per chunk", () => {
+  it("has furniture in every chunk, inside it and on its terrain or a lamp on a bridge's deck, and a view per chunk", () => {
     for (const c of LUBLIN_CHUNKS) {
       const items = LUBLIN_STREET_PROPS[c.id] ?? [];
       expect(items.length, c.id).toBeGreaterThan(0);
@@ -22,7 +23,9 @@ describe("street furniture of Lublin (ADR-0047)", () => {
         expect(i.x >= c.bounds.minX - 0.05 && i.x <= c.bounds.maxX + 0.05 && i.z >= c.bounds.minZ - 0.05 && i.z <= c.bounds.maxZ + 0.05).toBe(true);
         // A still figure (ADR-0058 stage 8) is measured on the game's shaped terrain (a pad may lift it 2 m off the map's).
         const ground = i.prop === "figure" ? groundY(i.x, i.z) : terrainHeightAt(c.terrain, i.x, i.z);
-        expect(Math.abs(i.y - ground), `${i.prop} at ${i.x}, ${i.z}`).toBeLessThan(0.2);
+        // A lamp of the plan over a bridge's span stands on its deck, its basket and stickers with it (G-503).
+        const deck = i.prop.startsWith("lamp-") || i.prop === "hanging-basket" || i.prop === "sticker" ? bridgeDeckAt(i.x, i.z) : null;
+        expect(Math.min(Math.abs(i.y - ground), Math.abs(i.y - (deck ?? Infinity))), `${i.prop} at ${i.x}, ${i.z}`).toBeLessThan(0.2);
       }
       const view = streetPropsView(c.id);
       expect(view.kind === "street-props" && view.items.length).toBe(items.length);

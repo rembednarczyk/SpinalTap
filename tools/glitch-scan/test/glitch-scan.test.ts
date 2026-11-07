@@ -50,6 +50,7 @@ import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
+import { lampsBesideDeck } from "./lamp-deck";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
@@ -1154,6 +1155,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const paving = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => PAVED.has(g.surface)).map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
     const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
     return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, pavedAt(paving));
+  },
+  /** A lamp of the plan's line over a bridge 2.5 m or more under the deck beside it or over it (G-503): on the valley's ground by Zamkowa's viaduct. */
+  "lamp-beside-deck": () => {
+    const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
+    return lampsBesideDeck(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, bridgeDeckAt);
   },
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),

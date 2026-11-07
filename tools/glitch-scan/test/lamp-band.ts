@@ -24,9 +24,9 @@ export interface PlanGroup {
 /** The most a lamp of the plan may stand off the paving (m): a kerbside lamp stands 0.5–1 m off the road in Lublin (curator, G-477). */
 export const SLACK = 1.0;
 /** How far from its group's line a lamp still belongs to it (m): past the widest offset the generator gives. */
-const REACH = 8;
+export const REACH = 8;
 /** A lamp this near a node of the plan is that node's (m). */
-const AT_NODE = 1;
+export const AT_NODE = 1;
 /** The kinds whose lines the generator walks at the kerb; a candelabrum with no spacing lights a path (the castle's stairs). */
 const KERB_LAMPS: ReadonlySet<string> = new Set(["lamp-pastoral", "lamp-modern-pole", "lamp-candelabra", "lamp-road"]);
 /** Directions the slack is sampled in round a lamp. */
@@ -38,7 +38,7 @@ const flat = (f: readonly number[]): Pt[] => {
   return out;
 };
 
-const toLine = (p: Pt, line: readonly Pt[]): number => {
+export const toLine = (p: Pt, line: readonly Pt[]): number => {
   let best = Number.POSITIVE_INFINITY;
   for (let i = 0; i + 1 < line.length; i++) {
     const [a, b] = [line[i]!, line[i + 1]!];
@@ -80,7 +80,7 @@ export const pavedAt = (rings: readonly (readonly Pt[])[]): ((p: Pt) => boolean)
 };
 
 /** The lines of the plan's kerb lamps by kind, and the plan's nodes. */
-const planOf = (groups: readonly PlanGroup[]): { lines: { id: string; prop: string; line: Pt[] }[]; nodes: Pt[] } => ({
+export const planOf = (groups: readonly PlanGroup[]): { lines: { id: string; prop: string; line: Pt[] }[]; nodes: Pt[] } => ({
   lines: groups
     .filter((g) => KERB_LAMPS.has(g.kind) && (g.kind !== "lamp-candelabra" || g.spacing !== undefined))
     .flatMap((g) => [...(g.line ? [g.line] : []), ...(g.lines ?? [])].map((l) => ({ id: g.id, prop: g.kind, line: flat(l) })).filter((l) => l.line.length >= 2)),
