@@ -25,7 +25,7 @@ describe("cut-on-road (G-500, ADR-0074 stage 7)", () => {
 
   it("passes a way the import replaces with its register's row, and only with it", () => {
     const base = { footprints: [square("trench", 0, 4, 0, 10)], ways: [way("w1", [[2, -5], [2, 15]])] };
-    expect(cutOnRoad({ ...base, replaced: [{ id: "w1", by: "plac", reason: "plac zamiast parkingu", ref: "T-239" }] })).toEqual([]);
+    expect(cutOnRoad({ ...base, replaced: [{ id: "w1", by: "plac", reason: "plac zamiast parkingu", ref: "T-241" }] })).toEqual([]);
     expect(cutOnRoad({ ...base, replaced: [{ id: "w1", by: "plac", reason: "plac zamiast parkingu", ref: "" }] })).toHaveLength(1);
   });
 

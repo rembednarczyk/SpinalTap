@@ -31,19 +31,19 @@ export const REPLACED_WAYS: readonly ReplacedWay[] = [
     id: "w173531008",
     by: "plac T0 nad P−1",
     reason: "parking naziemny Alchemii: auta zjechały na P−1 (ADR-0074 etap 4), asfalt zastępuje plac z kostki z trawnikami i pergolami (decyzja użytkownika 7.11)",
-    ref: "T-239",
+    ref: "T-241",
   },
   {
     id: "w177513189",
     by: "plac T0, rampa P−1 i druga klatka",
     reason: "alejka parkingu od wjazdu z Bajkowskiego z wyjazdem na Lubartowską przy przystanku (447; 16): wjazd przejęła rampa P−1, reszta to plac T0 (G-500)",
-    ref: "T-239",
+    ref: "T-241",
   },
   {
     id: "w173567309",
     by: "plac T0",
     reason: "zachodnia pętla alejek parkingu: bez aut na T0 zostaje plac z trawnikiem i pergolą (decyzja użytkownika 7.11)",
-    ref: "T-239",
+    ref: "T-241",
   },
 ];
 
@@ -85,7 +85,7 @@ const lawn = (x0: number, x1: number, z0: number, z1: number, c: number): Pt[] =
 
 const LAWN_REASON = "trawnik placu T0 Alchemii na miejscu parkingu w173531008 (decyzja użytkownika 7.11: plac i zielony dach z trawnikami)";
 
-/** T0's lawns (T-239): world rectangles with their corners cut. */
+/** T0's lawns (T-241): world rectangles with their corners cut. */
 export const T0_LAWNS: readonly { readonly name: string; readonly ring: readonly Pt[] }[] = [
   { name: "trawnik-zachod", ring: lawn(391, 403.6, 3, 21, 1.5) },
   { name: "trawnik-wschod", ring: lawn(424, 434, 9, 21, 1.5) },
@@ -93,7 +93,7 @@ export const T0_LAWNS: readonly { readonly name: string; readonly ring: readonly
 ];
 
 /**
- * T0's square (T-239): the car park's outline paved as a square, the deptak's setts, and three lawns
+ * T0's square (T-241): the car park's outline paved as a square, the deptak's setts, and three lawns
  * in it, which the import cuts out of the paving as holes (`openPavings`): west of the ramp's trench
  * over P-1's deck, east of it between P-1's stair core and metro B's pavilion, and one by
  * Bajkowskiego west of the driveway. They keep clear of the trench's parapets and their beds, the
@@ -101,12 +101,12 @@ export const T0_LAWNS: readonly { readonly name: string; readonly ring: readonly
  */
 export const ALCHEMIA_AREAS: readonly AddedArea[] = [
   {
-    id: "T-239/plac-t0",
+    id: "T-241/plac-t0",
     tags: { "area:highway": "pedestrian", surface: "paving_stones" },
     ring: CAR_PARK,
     nodesOf: CAR_PARK.map(() => "w173531008"),
     reason: "plac T0 Alchemii z kostki w obrysie dawnego parkingu w173531008, styl deptaku Krakowskiego Przedmieścia (decyzja użytkownika 7.11)",
-    ref: "T-239",
+    ref: "T-241",
   },
-  ...T0_LAWNS.map((l): AddedArea => ({ id: `T-239/${l.name}`, tags: { landuse: "grass" }, ring: l.ring, nodesOf: l.ring.map(() => null), reason: LAWN_REASON, ref: "T-239" })),
+  ...T0_LAWNS.map((l): AddedArea => ({ id: `T-241/${l.name}`, tags: { landuse: "grass" }, ring: l.ring, nodesOf: l.ring.map(() => null), reason: LAWN_REASON, ref: "T-241" })),
 ];

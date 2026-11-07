@@ -491,7 +491,7 @@ describe("tag corrections (ADR-0042)", () => {
 
   // As a tag correction stays until OSM agrees, an added area goes once OSM maps a paving there.
   it("adds no area where OSM maps a paving of its own: the added area is to go once it does", () => {
-    // The ways a set piece replaces are not the map's paving any more: the import leaves them out (T-239).
+    // The ways a set piece replaces are not the map's paving any more: the import leaves them out (T-241).
     const mapped = withoutReplaced(extractFeatures(osm)).areas.filter((a) => PAVED.has(areaSurface(a.tags) ?? ""));
     for (const a of ADDED_AREAS) {
       const xs = a.ring.map((p) => p.x);

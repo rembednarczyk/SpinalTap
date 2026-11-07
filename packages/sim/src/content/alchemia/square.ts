@@ -5,7 +5,7 @@ import { type Box, HALL, type Piece, box, piece } from "./plan";
 /**
  * T0's square over P-1 and the food hall's green roof (ADR-0074 stage 7, decision 7.11): where the
  * car park's asphalt was, a square in the style of the deptak of Krakowskie Przedmieście. The import
- * lays its setts and lawns (`tools/osm-import`, T-239) and the deptak's pastoral lamps and benches
+ * lays its setts and lawns (`tools/osm-import`, T-241) and the deptak's pastoral lamps and benches
  * stand on it from the furniture's plan; this module is what the game builds on it:
  * - pergolas of dark timber with paper lanterns under their beams: one along the walk west of the
  *   ramp's trench from Bajkowskiego to the hall, one along the hall's back wall from the west ramp

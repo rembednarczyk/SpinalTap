@@ -3,7 +3,7 @@ import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krak
 import { ALCHEMIA_AREAS, REPLACED_WAYS, T0_LAWNS, withoutReplaced } from "../src/corrections-alchemia.ts";
 import { pointInRing } from "../src/geometry.ts";
 
-const CAR_PARK_RING = ALCHEMIA_AREAS.find((a) => a.id === "T-239/plac-t0")!.ring;
+const CAR_PARK_RING = ALCHEMIA_AREAS.find((a) => a.id === "T-241/plac-t0")!.ring;
 
 /** The map's ways a set piece of the game replaces (ADR-0074 stage 7): left out of the import, each with its register's row. */
 
@@ -20,7 +20,7 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
     expect(new Set(REPLACED_WAYS.map((w) => w.id)).size).toBe(REPLACED_WAYS.length);
   });
 
-  it("replaces Alchemia's car park and its two aisles with T0's square (T-239, G-500)", () => {
+  it("replaces Alchemia's car park and its two aisles with T0's square (T-241, G-500)", () => {
     expect(REPLACED_WAYS.map((w) => w.id).sort()).toEqual(["w173531008", "w173567309", "w177513189"]);
   });
 
