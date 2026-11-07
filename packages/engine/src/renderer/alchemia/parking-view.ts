@@ -22,11 +22,15 @@ export const TRAFFIC_DRAW = 40;
 /** In the frozen reference views (`npr-perf`) the cars stand where they are at this time. */
 const REFERENCE_TIME = 12;
 
+/**
+ * In the ceiling's fittings, a hand into its slab: a light under the ceiling lit its underside,
+ * a pool and a highlight where no fitting hangs, which from the deck read as a cone through it (G-490).
+ */
 const LAMP = {
   color: "#bfe4ff",
   range: 24,
   intensity: 0.9,
-  position: { x: (P1.minX + P1.maxX) / 2, y: P1.ceiling - 0.4, z: (P1.minZ + P1.maxZ) / 2 },
+  position: { x: (P1.minX + P1.maxX) / 2, y: P1.ceiling + 0.05, z: (P1.minZ + P1.maxZ) / 2 },
   clip: { minX: P1.minX, maxX: P1.maxX, minZ: P1.minZ, maxZ: P1.maxZ },
 } as const;
 export const PARKING_LAMP_KEY = "alchemia-parking";

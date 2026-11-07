@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import { P1, P1_CABINS, P1_PIECES, P1_RAMP, P1_RAMP_CUT, P1_STAIR_CUT, p1RampY } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
+import { pointLightOn } from "../src/npr/toon-point-lights";
+import { TOON_FRAGMENT } from "../src/npr/toon-shader";
 import { CityKit } from "../src/renderer/city-kit";
 import { parseCityKit } from "../src/renderer/city-kit-data";
 import { MeshSink } from "../src/renderer/mesh-sink";
@@ -157,5 +159,30 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     box.city = false;
     view.update(1 / 60);
     expect(view.stats.meshes).toBe(0);
+  });
+
+  it("lights the deck from its ceiling's fittings, never the ceiling itself: no glow on it seen from the deck (G-490)", () => {
+    const { view, materials } = setup();
+    view.update(1 / 60);
+    const lamp = materials.light(PARKING_LAMP_KEY)!;
+    // The toon shader's thresholds: the lowest band and the highlight's smoothstep start there.
+    const BAND = 0.03;
+    const HIGHLIGHT = 0.18;
+    const down = { x: 0, y: -1, z: 0 };
+    let glow = 0;
+    for (let ex = P1.minX + 1; ex < P1_RAMP.minX; ex += 2)
+      for (let ez = P1.minZ + 1; ez < P1.maxZ; ez += 2) {
+        const eye = { x: ex, y: P1.floor + 1.6, z: ez };
+        for (let x = P1.minX; x <= P1.maxX; x += 0.5)
+          for (let z = P1.minZ; z <= P1.maxZ; z += 0.5) {
+            const on = pointLightOn(lamp, { x, y: P1.ceiling, z }, down, eye);
+            if (on.diffuse > BAND || on.specular > HIGHLIGHT) glow++;
+          }
+      }
+    expect(glow).toBe(0);
+    // The deck under it still lit in full.
+    expect(pointLightOn(lamp, { x: lamp.position.x, y: P1.floor, z: lamp.position.z }, { x: 0, y: 1, z: 0 }, { x: 402, y: P1.floor + 1.6, z: 4 }).diffuse).toBeGreaterThan(0.47);
+    // The shader as its mirror: a face turned from a light gets no highlight of it.
+    expect(TOON_FRAGMENT).toMatch(/if \(g > 0\.0 && ndl > 0\.0\)/);
   });
 });
