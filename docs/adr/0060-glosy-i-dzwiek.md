@@ -10,6 +10,28 @@ Decyzje użytkownika (31.10):
 - **Źródło głosów:** wszystko z otwartego TTS na licencji komercyjnej, każdy głos sprawdzany osobno. Aktorów nie będzie (zmiana decyzji z 31.10: najpierw mieszane, potem pełne TTS).
 - **Język głosów:** angielski, z napisami po angielsku albo po polsku według ustawienia języka (ADR-0056).
 
+## Decyzje użytkownika (7.11)
+Zmieniają źródło głosów z „otwartego TTS” na ElevenLabs. Reszta ADR-u (klucze, wyzwalacze, odtwarzanie, etapy) zostaje.
+- **Źródło głosów:** ElevenLabs (konto użytkownika), głosy z biblioteki ElevenLabs udostępniane przez lektorów, a gdzie biblioteka nie ma pasującego głosu, głos zaprojektowany z opisu (Voice Design).
+- **Gra jest niekomercyjna.** Mimo to każdy głos ma w `packages/app/public/voice/README.md` zapis: nazwa i identyfikator głosu, autor, model, data i warunki użycia, a ekran „Autorzy” wymienia ElevenLabs i autorów głosów.
+- **Oszczędzanie kredytów:** jedna próbka na linię (bez wariantów do wyboru); generowanie tylko linii, które wchodzą do gry; odsłuch kandydatów na podstawie darmowych próbek z biblioteki.
+- **Obsada (głosy z biblioteki, identyfikatory ElevenLabs):**
+
+| Postać | Głos | Id |
+|---|---|---|
+| Seki | Emma, Wry Gritty Hero | `dmWfLQZJq7wNPv9WmtiM` |
+| Kaito | Silas, Weathered Villain | `WzVKtqQpTUUQ2JNx8YxI` |
+| Kurosawa | Malakai, Shadowed and Gruff | `7squ7rvxEIZ2rYy7KYPP` |
+| Mori | Jonah Vale | `vveagfomyMCJLZsOPRP2` |
+| Ume | Mora, Gritty and Enigmatic | `YHcCpa6SBWnKDaCPZJQR` |
+| Genzō | Gravel Midnight | `M5E055lOUxMi0kJpGyE9` |
+| Ren | Thomas | `IigRH4ZsY7dfxk9VRn2r` |
+| Hana | Ruby B, London Playful | `jUPSOpRcPt8GMPsWx5fy` |
+| gangerzy i mieszkańcy | Amir, Deep Voice, Polish Accent | `lh3DpiIvYKliryahXrpY` |
+
+- Angielskiego z japońskim akcentem biblioteka nie ma; ewentualne głosy projektowane z opisu wymagają opisu i linii od użytkownika.
+- `tools/voice` generuje przez API ElevenLabs z kluczem jako sekretem środowiska (nigdy w repo), z ustawieniami głosu w `tools/voice/voices.json`. Pliki wynikowe trafiają do repo jak dotąd, a narzędzie nie generuje linii, która ma już plik.
+
 ## Decyzja
 
 ### Zakres głosów
@@ -24,7 +46,7 @@ Decyzje użytkownika (31.10):
 4. **Kwestie środowiskowe:** zaczepki i komentarze przechodniów oraz zasłyszane rozmowy NPC między sobą (sekcja „Wyzwalacze kwestii”).
 
 ### Źródła i licencje
-- **TTS:**
+- **TTS** (do 7.11; od 7.11 źródłem jest ElevenLabs, sekcja „Decyzje użytkownika (7.11)”):
   - Tylko modele i głosy, których licencja pozwala na komercyjną dystrybucję wygenerowanego audio.
   - Każdy model i każdy głos sprawdzamy osobno. Kod, wagi i nagrania treningowe głosu bywają na różnych licencjach, a głos z licencją niekomercyjną odpada.
   - W `packages/app/public/voice/README.md` zapisujemy model, wersję, głos, licencję z cytatem i datę sprawdzenia.

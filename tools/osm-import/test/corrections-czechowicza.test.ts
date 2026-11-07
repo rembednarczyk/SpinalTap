@@ -38,3 +38,40 @@ describe("the paving before the Sąd Okręgowy on Plac Czechowicza (G-436)", () 
     expect(inBuilding(18, -110)).toBe(true);
   });
 });
+
+describe("the pavement along the façades of ul. Kościuszki (G-440)", () => {
+  /** Bare samples (0.25 m grid) within 3 m of a footway's axis `a`–`b`, on the side `side` of it (+1 east, `a` north of `b`), between `zFrom` and `zTo`. */
+  const bareBeside = (a: readonly [number, number], b: readonly [number, number], side: 1 | -1, zFrom: number, zTo: number) => {
+    const [dx, dz] = [b[0] - a[0], b[1] - a[1]];
+    const len = Math.hypot(dx, dz);
+    const bare: string[] = [];
+    for (let x = -0.125; x < 35; x += 0.25)
+      for (let z = zFrom + 0.125; z < zTo; z += 0.25) {
+        // The distance off the axis, positive on the façades' side.
+        const off = (side * ((x - a[0]) * -dz + (z - a[1]) * dx)) / len;
+        if (off < 0 || off > 3 || inBuilding(x, z) || surfaceAt(x, z) !== null) continue;
+        bare.push(`${x},${z}`);
+      }
+    return bare;
+  };
+
+  // The footways w288178955 (west) and w288178957 (east) are lines, 2.5 m bands, that end 1-1.5 m
+  // short of the façades: bare terrain where the orthophoto (PZGiK) has the pavement up to the walls.
+  it("paves from the footways up to the façades on both sides of the street", () => {
+    const west = bareBeside([23.03, -111.88], [9.24, -184.64], -1, -182, -127.25);
+    const east = bareBeside([29.37, -115.84], [17.79, -188.27], 1, -187, -110.5);
+    expect(west.length, west.slice(0, 20).join(" ")).toBe(0);
+    expect(east.length, east.slice(0, 20).join(" ")).toBe(0);
+    expect(surfaceAt(13.4, -150)).toBe("square");
+    expect(surfaceAt(25.7, -150)).toBe("square");
+  });
+
+  it("leaves the footways, the street and the driveway on top, and the façades where they are", () => {
+    expect(surfaceAt(15.8, -150)).toBe("footway");
+    expect(surfaceAt(23.9, -150)).toBe("footway");
+    expect(surfaceAt(20, -150)).toBe("road");
+    expect(surfaceAt(30.5, -110.5)).toBe("road");
+    expect(inBuilding(12.5, -150)).toBe(true);
+    expect(inBuilding(26.5, -150)).toBe(true);
+  });
+});

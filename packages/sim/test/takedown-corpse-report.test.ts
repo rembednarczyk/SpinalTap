@@ -68,6 +68,21 @@ describe("a corpse of one knocked out first (G-334)", () => {
     ]);
   });
 
+  it("finished unseen and found while a bystander still phones in the knock-out: the murder covers the deed", () => {
+    const sim = quietStreet();
+    const rep = sim.domain.reputation.civilians;
+    const guard = victim(sim);
+    stallholder(sim, 4300, offset(sim, -2, 0));
+    const reports = reportsOf(sim);
+    takeDown(sim);
+    finish(sim, guard);
+    walkAway(sim);
+    findBody(sim, sim.world.with("downed").entities.find((e) => e.id === guard.id)!);
+    run(sim, ticks(WITNESS_CALL_SECONDS + 1), CROUCH);
+    expect(reports.map((r) => [r.crime, r.channel])).toEqual([["murder", "patrol"]]);
+    expect(sim.domain.reputation.civilians - rep).toBe(-2);
+  });
+
   it("finished in sight of a patrol: one murder reported, the corpse brings no second report", () => {
     const sim = quietStreet();
     const guard = victim(sim);
@@ -124,5 +139,50 @@ describe("finishing one knocked out after a load (G-334)", () => {
     const through = finishedInSight(true, false);
     expect(through).toEqual({ reports: [], heat: 0 });
     expect(finishedInSight(true, true)).toEqual(through);
+  });
+});
+
+/**
+ * G-447 (ADR-0065): a lethal takedown is an assault and a murder. A bystander phones in only the
+ * first (it is already on the phone), so its call must not take the corpse for reported.
+ */
+describe("a corpse of a lethal takedown (G-447)", () => {
+  const corpseOfGuard = (sim: Simulation, guard: Entity) => sim.world.with("downed").entities.find((e) => e.id === guard.id)!;
+
+  it("seen by one bystander: its call reports the assault, the patrol that finds the corpse the murder, once", () => {
+    const sim = quietStreet();
+    const guard = victim(sim);
+    stallholder(sim, 4300, offset(sim, -2, 0));
+    const reports = reportsOf(sim);
+    takeDown(sim, true);
+    walkAway(sim);
+    run(sim, ticks(WITNESS_CALL_SECONDS + 1), CROUCH);
+    expect(reports.map((r) => [r.crime, r.channel])).toEqual([["assault", "civilian"]]);
+    const body = corpseOfGuard(sim, guard);
+    expect(body.downed).toMatchObject({ dead: true, reported: false });
+    findBody(sim, body);
+    patrol(sim, 4102, { ...body.position, x: body.position.x - 12 }, Math.PI / 2);
+    run(sim, ticks(2), CROUCH);
+    expect(reports.map((r) => [r.crime, r.channel])).toEqual([
+      ["assault", "civilian"],
+      ["murder", "patrol"],
+    ]);
+    expect(body.downed.reported).toBe(true);
+  });
+
+  it("seen by a patrol: the assault and the murder reported at once, the corpse brings no third report", () => {
+    const sim = quietStreet();
+    const guard = victim(sim);
+    const w = patrol(sim, 4100, offset(sim, 7, 0), -Math.PI / 2);
+    const reports = reportsOf(sim);
+    takeDown(sim, true);
+    expect(reports.map((r) => [r.crime, r.channel])).toEqual([
+      ["assault", "patrol"],
+      ["murder", "patrol"],
+    ]);
+    sim.world.remove(w);
+    walkAway(sim);
+    findBody(sim, corpseOfGuard(sim, guard));
+    expect(reports).toHaveLength(2);
   });
 });
