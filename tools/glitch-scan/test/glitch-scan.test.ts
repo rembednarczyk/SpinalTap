@@ -38,6 +38,7 @@ import { figureChecks } from "./figure-pieces";
 import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
+import { levelExitsInGame, undergroundLevelExits } from "./level-exit-checks";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
@@ -1221,6 +1222,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "pad-dip-uncovered": () => padDipUncovered(dipInGame()),
   /** The pavilion on Alchemia's corner on a sidewalk's paving, a crossing or a carriageway, or its ladder's foot on a sidewalk (ADR-0074 stage 3). */
   "pavilion-on-paving": () => pavilionOnPaving(pavingInGame()),
+  /** An interior of the game's own under the ground with fewer than two ways out in the level graph (ADR-0074 stage 4: P-1). */
+  "underground-level-exit": () => undergroundLevelExits(levelExitsInGame()),
   /**
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.
