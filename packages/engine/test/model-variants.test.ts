@@ -34,7 +34,7 @@ const settled = async (views: CharacterViews) => {
 
 /** The dressed model's meshes of a character, by what they paint. */
 const meshesOf = (views: CharacterViews, id: EntityId): AbstractMesh[] => {
-  let out: AbstractMesh[] = [];
+  let out: readonly AbstractMesh[] = [];
   views.scanTargets((who, _scan, meshes) => {
     if (who === id) out = meshes();
   });
