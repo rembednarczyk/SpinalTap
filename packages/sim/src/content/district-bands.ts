@@ -1,4 +1,4 @@
-import type { ContractSiteId, LevelBand } from "@seki/core";
+import type { ContractKind, ContractSiteId, LevelBand } from "@seki/core";
 import type { Rect } from "./builders";
 import type { DistrictId } from "./world-map";
 
@@ -80,3 +80,10 @@ export const CONTRACT_SITE_BANDS: Readonly<Record<ContractSiteId, DistrictId>> =
   tessen_office: "doki",
   quay_terminal: "doki",
 };
+
+/**
+ * Kinds of job whose level is not their site's but their giver's district's (the user's decision
+ * of 7.11): a delivery fights nobody at Hana's stall, in the market's band, and is Kaito's job, so
+ * it takes Krakowskie's band as his eliminations do.
+ */
+export const CONTRACT_KIND_BANDS: Readonly<Partial<Record<ContractKind, DistrictId>>> = { delivery: "shinsekai-7" };

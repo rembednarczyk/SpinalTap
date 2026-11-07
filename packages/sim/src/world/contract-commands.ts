@@ -63,7 +63,7 @@ export const acceptContract = (ctx: SimContext, cmd: Command<"accept-contract">)
       tick: ctx.tick,
       ticksPerSecond: SIM_HZ,
       // The job's level is an enemy's in its site's district (ADR-0059): its crew and pay follow.
-      levelAt: (site) => contractLevelOf(domain.progression.level, site),
+      levelAt: (site, kind) => contractLevelOf(domain.progression.level, site, kind),
     },
     ctx.rng,
   );
@@ -112,7 +112,7 @@ export const completeContract = (ctx: SimContext): void => {
   phoneFromFixer(ctx, giverOfContract(contract), "paid");
   // Experience by difficulty and the job's level (ADR-0059: its district's for her level now, which
   // the contract does not keep), and a stealth bonus when nobody noticed the player.
-  const level = contractLevelOf(domain.progression.level, contract.siteId);
+  const level = contractLevelOf(domain.progression.level, contract.siteId, kind);
   grantXp(ctx, contractXp(kind, contract.targets, level), "contract");
   if (!tally.detected) grantXp(ctx, undetectedXp(level), "stealth");
   raiseProgress(ctx, "contract_completed");
