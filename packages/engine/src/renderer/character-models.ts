@@ -105,7 +105,9 @@ export class CharacterModels {
   /** Loads the model in the background and swaps it in once ready, if the rig still exists. */
   dress(rig: CharacterRig, choice: ModelChoice | null, name: string): void {
     const spec = choice ? resolveModel(this.manifest, choice) : undefined;
-    if (!spec || !choice) return;
+    // A rig whose model is still on its way is dressed once: a manifest arriving meanwhile must
+    // not start a second model, nor count its variant twice in the budget.
+    if (!spec || !choice || this.loading.has(rig)) return;
     const poolKey = modelPoolKey(spec);
     const who = choice.cast ?? choice.fallback;
     const wearing = this.wearing(spec, choice);

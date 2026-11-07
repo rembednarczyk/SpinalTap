@@ -5,11 +5,15 @@ import { type AbstractMesh, type Mesh, Scene, Vector3, VertexBuffer } from "../s
 import type { CameraRig } from "../src/camera/camera-rig";
 import type { MoonShadow } from "../src/npr/moon-shadow";
 import { ToonMaterials } from "../src/npr/toon-material";
+import { CharacterModels } from "../src/renderer/character-models";
 import { CharacterViews } from "../src/renderer/character-views";
+import { buildCivilian } from "../src/renderer/characters";
+import { Loadouts } from "../src/renderer/loadout";
 import { BONE_OF } from "../src/renderer/model-accessories";
 import { skinMultiplier } from "../src/renderer/model-dress";
-import { type CharacterModelManifest, toonSourceOf } from "../src/renderer/model-library";
+import { type CharacterModelManifest, ModelLibrary, toonSourceOf } from "../src/renderer/model-library";
 import { BACKGROUND_VARIANTS, OWN_LOOK, VARIANTS_PER_FILE, VariantBudget, backgroundVariantOf, variantOf, variantText } from "../src/renderer/model-variant";
+import { WeaponMounts } from "../src/renderer/weapon-mount";
 import { readModelFile, serveModels } from "./game-models";
 
 const STAND = { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0 };
@@ -152,6 +156,27 @@ describe("variants on the game's models (ADR-0076 stage 2)", () => {
       expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(0.35);
       expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(0.6);
     }
+  });
+
+  it("dress a rig once while its model loads: a second manifest neither starts a second model nor counts the variant twice", async () => {
+    serveModels();
+    const scene = new Scene(new NullEngine());
+    const materials = new ToonMaterials(scene);
+    const library = new ModelLibrary(scene, materials);
+    const loadouts = new Loadouts(scene, materials, new WeaponMounts(library), () => {});
+    const models = new CharacterModels({ library, loadouts, addCaster: () => {}, scene, materials });
+    models.setManifest({ civilian: { url: "civilian.vrm" }, pools: { civilian: [{ url: "civilian.vrm" }] } });
+    const rig = buildCivilian(scene, materials, "c", false);
+    const choice = { fallback: "civilian", pool: "civilian", look: 7919 } as const;
+    models.dress(rig, choice, "c");
+    models.dress(rig, choice, "c");
+    for (let i = 0; i < 4000 && models.loadingCount > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
+    expect(models.dressedCount).toBe(1);
+    expect(models.variantsOf("civilian.vrm")).toBe(1);
+    expect(scene.transformNodes.filter((n) => n.name.startsWith("c-m-")).length).toBeGreaterThan(0);
+    expect(new Set(scene.meshes.filter((m) => m.name.startsWith("c-m-")).map((m) => m.name)).size).toBe(scene.meshes.filter((m) => m.name.startsWith("c-m-")).length);
+    models.release(rig);
+    expect(models.variantsOf("civilian.vrm")).toBe(0);
   });
 
   it("share materials between characters of one variant and give the file's own back to the pool", async () => {
