@@ -1500,11 +1500,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: test `reinforcement-sidestep.test.ts` (G-208) notuje kroki z wnikaniem w bryły do 0,38 m, przed i po G-485 (900 kroków: ziarno 21 ok. 1355, ziarno 5 ok. 1746); licznik filtruje wysokość brył prosto, więc część to może być fałsz; do sprawdzenia sondą; weryfikator #377: po G-485 wnikanie posiłków w bryły ponad 1 mm 116/106 → 0/0 kroków (liczby autora 1355/1746 liczyły bryły podłogi), do zamknięcia po sondzie
 - Pakiet właściciela: packages/sim (AI, ruch)
 
-### G-497 Pastorał grobli przy wiadukcie w232362907 stoi na trawie (T-235)
-- Status: w PR #381 (7.11, przegląd kuratora; zgłoszone przez kuratora przeglądu #374)
-- Ważność: S4 · Zasięg: 1 `lamp-pastoral` (757,6; 175,0), 1,45 m poza kostką; oś Zamkowej leży tu na ziemi mostu, której `Site` nie widzi (`surfaceAt` zwraca null), więc `byPaving` się nie włącza i zostaje FALLBACK 5 m; poprawka: krawędź mierzona też z osi na moście albo z kostki przyczółka; kontrola `lamp-off-band` baza 1 → 0
-- Pakiet właściciela: tools/osm-import (props)
-
 ### G-498 Kontrola `underground-level-exit` liczy krawędzie grafu zamiast wyjść
 - Status: zgłoszone (7.11, weryfikator #375)
 - Ważność: S4 · Zasięg: `tools/glitch-scan/test/level-exit-checks.ts`: dwie krawędzie przez jedne drzwi dają „2 wyjścia”, więc kontrola może przepuścić poziom z jednym wyjściem; przy okazji: scena `alchemia-p1` pod ziemią ma aktywne siatki miasta nad sobą (`map-ground` 11, `map-signs` 11, `map-near` 7), brak zasłaniania dla wnętrz podziemnych to kandydat na oszczędność budżetu
@@ -1529,6 +1524,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, naprawiacz G-489)
 - Ważność: S4 · Zasięg: prop gry pod `ground(100, -21)` („the lamp Shiro reads his poems under”) stoi 1,3 m w kamienicy; kontrola `furniture-in-building` liczy tylko `WORLD_STREET_PROPS`, więc propów gry nie widzi; przy okazji: `solidsAt` w `wave2-encounters.test.ts` filtruje wysokość brył bezwzględnie (`top < 0.3 || bottom > 1.8`), w wyższych dzielnicach (targ y ≈ −20, doki y ≈ −28) może nic nie sprawdzać
 - Pakiet właściciela: packages/sim (treść), tools/glitch-scan
+
+### G-503 Generator mebli nie stawia latarni na pomostach (T-239)
+- Status: zgłoszone (7.11, kurator przeglądu #381)
+- Ważność: S4 · Zasięg: linia `lamps.zamkowa` przy wiadukcie w232362907 i pomoście grobli: 3 pastorały na gruncie 3,1–5,6 m pod pomostem; poprawka: wysokość stopy z `deckHeightAt` dla latarni linii biegnącej po pomoście; kontrola `lamp-beside-deck` (baza 5, w tym 2 z Nabrzeża)
+- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
+
+### G-504 Latarnie i słupy trakcji przebijają pomosty mostów Mełgiewskiej (T-240)
+- Status: zgłoszone (7.11, kurator przeglądu #381; z danych)
+- Ważność: S4 · Zasięg: 3 `lamp-road` i 3 `trolley-pole` stoją pod pomostem, pięć z nich 3,8–4,4 m niżej, więc słup przebija płytę; kontrola `pole-through-deck` dla słupów od 4 m (baza 6, w tym (2445,6; 246,4) z G-361)
+- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

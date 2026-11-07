@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-497 Pastorał grobli przy wiadukcie w232362907 stoi na trawie (T-235)
+- Status: naprawione (PR #381, 7.11; kurator ZGODNE; krawędź mierzona z kostki pomostu (`deckAt`, `deckHeightAt`, próg `DECK_DROP` 2,5 m), latarnia (757,6; 175,0) → (756,8; 175,7), 0,35 m od kostki; `lamp-off-band` 1 → 0; test pada bez poprawki; reszta w G-503)
+- Ważność: S4 · Zasięg: 1 `lamp-pastoral`
+- Pakiet właściciela: tools/osm-import (props)
+
 ### G-489 Scena `s7_poet` stoi wewnątrz bryły budynku
 - Status: naprawione (PR #378, 7.11; scena z (102, −23) w kamienicy w67498725 na (97, −23), płyta placu Litewskiego, 1,6 m od ściany; kontrola `buildingsAt` w `wave2-encounters.test.ts` (pryzmaty budynków, wysokość od gruntu w punkcie) dla 15 scen, pada ze starym punktem; brak testu dojścia pieszo do poety)
 - Ważność: S4 · Zasięg: miejsce sceny `s7_poet` (102, −23) w `encounters.ts` leży w pryzmacie budynku (chunk `krakowskie-1-1`, bryła 318); ruch nie wypycha z głębi pryzmatu (graczka postawiona w (102, −13) dalej w nim stoi); test sceny ulicznej teleportuje graczkę do wnętrza; poprawka: przesunąć scenę na chodnik
