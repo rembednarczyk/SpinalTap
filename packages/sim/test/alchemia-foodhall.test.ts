@@ -76,10 +76,14 @@ describe("the food hall of Alchemia under its terrace (ADR-0074 stage 1)", () =>
   it("has walkable ramps beside it from T0 down to T1", () => {
     const g = loaded().streamer.ground;
     for (const x of [397, 439]) {
-      for (let z = FOODHALL.minZ; z <= FOODHALL.maxZ - 2; z += 1) expect(g.slopeAt(x, z), `${x},${z}`).toBeLessThan(MAX_WALK_SLOPE);
+      for (let z = FOODHALL.minZ; z <= FOODHALL.maxZ; z += 1) expect(g.slopeAt(x, z), `${x},${z}`).toBeLessThan(MAX_WALK_SLOPE);
       expect(g.heightAt(x, FOODHALL.minZ - 0.5)).toBeGreaterThan(ALCHEMIA_T0 - 0.3);
-      expect(g.heightAt(x, FOODHALL.maxZ - 1)).toBeCloseTo(ALCHEMIA_T1, 1);
+      expect(g.heightAt(x, FOODHALL.maxZ - 2)).toBeCloseTo(ALCHEMIA_T1, 1);
     }
+    // Past its foot the east ramp is on T1. The west one ends by Świętoduska's sidewalk, whose cell of
+    // the 4 m grid keeps the NMT (T-209): a metre past its foot the ground is 0.1 m under T1 at most.
+    expect(g.heightAt(439, FOODHALL.maxZ - 1)).toBeCloseTo(ALCHEMIA_T1, 1);
+    expect(Math.abs(g.heightAt(397, FOODHALL.maxZ - 1) - ALCHEMIA_T1)).toBeLessThan(0.1);
   });
 
   it("has twelve units, five of them with their keepers behind the counters inside", () => {

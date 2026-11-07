@@ -157,14 +157,14 @@ export const PADS: readonly Pad[] = [
   // under them, and on the import's 5 m grid its points are as they were. 2 m under the floor:
   // the Rynek's paving, draped in 5 m triangles, then stays under the floor up to the cellars' walls.
   { rect: { minX: 575, maxX: 585, minZ: -65, maxZ: -55 }, y: TRASA_PODZIEMNA.floor - 2, blend: 5, row: "T-055" },
-  // Alchemia's terraces by the investor's plan (ADR-0074 stage 1, T-197, T-198): T1 in front of the food
+  // Alchemia's terraces by the investor's plan (ADR-0074 stage 1, T-206, T-207): T1 in front of the food
   // hall, the line of the grid under its back wall at T0.
   ...ALCHEMIA_PADS,
 ];
 
 /**
  * Even ramps along the steps of the map (ADR-0045), then the level ground before the bridges'
- * abutments (G-349), then Alchemia's ramps beside the food hall from T0 to T1 (ADR-0074, T-199).
+ * abutments (G-349), then Alchemia's ramps beside the food hall from T0 to T1 (ADR-0074, T-208).
  */
 export const RAMPS: readonly Ramp[] = [...stepRamps(MAP_CHUNKS), ...abutmentRamps(MAP_CHUNKS), ...ALCHEMIA_RAMPS];
 /** Ramps along the flights the terrain climbs against their `incline` (G-236, T-131), laid last on a finer grid (`terrain.ts`). */
