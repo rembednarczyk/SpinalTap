@@ -1581,11 +1581,18 @@ kbd {
 /* Touch scanner: the card left of the crosshair, compact; the bars right of the heat stars,
    clear of the pad. */
 .touch-mode .scanner__brand { display: none; }
-.touch-mode .scanner__panel { left: auto; right: calc(50% + 40px); top: 40px; width: 240px; }
+.touch-mode .scanner__panel { left: auto; right: calc(50% + 40px); top: 40px; width: 264px; }
 .touch-mode .scan-card { padding: 6px 10px; }
 .touch-mode .scan-card__name { font-size: 16px; }
 .touch-mode .scan-card__profile li + li { display: none; }
-.touch-mode .hacks { margin-top: 4px; }
-.touch-mode .hacks__row { padding: 1px 0; border-top: none; }
+/* The hacks as a 2x2 grid of 44 px targets with the name over its RAM, one line per field: a
+   list of four rows ran the card down over the move hint and the weapon strip of a phone held
+   sideways (G-433). The stick's ring steps aside while the scanner is on (touch-controls.tsx). */
+.touch-mode .scan-card__faction, .touch-mode .scan-card__profile li, .touch-mode .hacks__title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.touch-mode .hacks { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
+.touch-mode .hacks__row { padding: 0; border-top: none; }
+.touch-mode .hacks__btn { flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; padding: 2px 4px; font-size: 14px; line-height: 1.2; }
+.touch-mode .hacks__title { flex: none; max-width: 100%; }
+.touch-mode .hacks__ram { font-size: 12px; }
 .touch-mode .hacks__cat { display: none; }
 .touch-mode .scanner__status { left: calc(50% + 10px); top: 92px; transform: none; width: 220px; align-items: flex-start; }

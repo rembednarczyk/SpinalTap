@@ -19,6 +19,8 @@ const Stick = ({ pad }: { pad: TouchPadSink }) => {
   const t = useT();
   const [origin, setOrigin] = useState<Drag | null>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
+  // The scanner's card takes the left column of a phone held sideways (G-433); the stick still works.
+  const scanning = useUi((s) => s.scanning);
 
   const end = () => {
     setOrigin(null);
@@ -55,7 +57,7 @@ const Stick = ({ pad }: { pad: TouchPadSink }) => {
           <div className="touch__knob" style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }} />
         </div>
       )}
-      {!origin && <div className="touch__stick-hint">{t("touch.move")}</div>}
+      {!origin && !scanning && <div className="touch__stick-hint">{t("touch.move")}</div>}
     </div>
   );
 };
