@@ -87,19 +87,6 @@ export const corpseOf = (e: Entity, downed: DownedBody): Body => {
 };
 
 /**
- * The one knocked out has just been killed (G-334): the calls still about its knock-out report the
- * assault, not the corpse, whose murder is reported by its own witnesses or by whoever finds it.
- */
-export const knockOutCallsOver = (world: World<Entity>, body: EntityId): void => {
-  for (const c of world.with("civilian")) {
-    const m = c.civilian.crowd;
-    if (m?.call?.body !== body) continue;
-    const { body: _, ...call } = m.call;
-    m.call = call;
-  }
-};
-
-/**
  * Puts a saved body back onto `e`, already in the world: knocked out (or dead), carried or
  * hidden as it was. A hidden body is not drawn either: it lies inside the hiding place.
  */
