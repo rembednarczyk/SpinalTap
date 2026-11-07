@@ -1440,6 +1440,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 667×375 przy przyjeździe na Krakowskie Przedmieście karta zasłania „Użyj”, na 800×370 podobnie pierwsza linia podpowiedzi ruchu; karta pokazana przed zmianą języka nie przechodzi na pl
 - Pakiet właściciela: packages/ui (HUD)
 
+### G-467 Chodnik przy Arkadach nie do przejścia bez skoku (T-218)
+- Status: zgłoszone (7.11, kurator przeglądu #357 runda 2)
+- Ważność: S4 · Zasięg: na północnym końcu chodnika stopnie 0,54 i 0,75 m i czoło 0,63–1,2 m, uskok 0,5 m między podestem a płytą a −2…0; wszystko ponad `STEP_HEIGHT` 0,45 m; poprawka: koniec chodnika jako schody (rampa jak T2_STAIRS), płyta a −2…0 na poziomie podestu; kontrola `alchemia-walk-step` (baza 3)
+- Pakiet właściciela: packages/sim (Alchemia), tools/glitch-scan
+
+### G-468 Neon Hebi przy Arkadach czytany lustrzanie („ƎH”) z części ujęć
+- Status: zgłoszone (7.11, kurator przeglądu #357; było już w rundzie 1)
+- Ważność: S4 · Zasięg: z kamery (437; 104) napis odwrócony, z ujęcia autora poprawny; do sprawdzenia strona billboardu
+- Pakiet właściciela: packages/engine (renderer)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
