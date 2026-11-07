@@ -272,6 +272,15 @@ test("phone: the settings in the pause menu scroll to their last control", async
   expect(head && head.y >= -1).toBe(true);
   expect(await menu.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
 
+  // The mix sliders (ADR-0060 stage 1): dialogue and radio next to music, inside the screen.
+  await top.tap();
+  for (const name of [/^Music/, /^Dialogue/, /^Radio/]) {
+    const slider = page.getByRole("slider", { name });
+    await slider.scrollIntoViewIfNeeded();
+    const b = (await slider.boundingBox())!;
+    expect(b.x >= -1 && b.x + b.width <= 844 + 1 && b.y >= -1 && b.y + b.height <= 390 + 1).toBe(true);
+  }
+
   // The touch tab (ADR-0072): all five tabs and both fire button choices inside the screen.
   await page.getByRole("tab", { name: "Touch & Gamepad" }).tap();
   for (const tab of await page.getByRole("tab").all()) {
