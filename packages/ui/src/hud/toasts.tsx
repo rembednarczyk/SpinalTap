@@ -6,8 +6,9 @@ const ICON: Record<string, string> = { quest: "◆", memory: "◎", money: "€$
 export const Toasts = () => {
   const toasts = useUi((s) => s.toasts);
   const text = useText();
+  const talking = useUi((s) => s.dialogue !== null);
   return (
-    <div className="toasts" aria-live="polite">
+    <div className={`toasts${talking ? " toasts--talk" : ""}`} aria-live="polite">
       {toasts.map((t) => (
         <div key={t.id} className={`toast toast--${t.kind}`}>
           <span className="toast__icon">{ICON[t.kind]}</span>

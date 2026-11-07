@@ -165,6 +165,9 @@
 /* Wide and short: the arrival card's three sentences in a 260 px column ran down over "Use", the
    jump button and the move hint of a phone held sideways (G-466). Left of the minimap's column. */
 .touch-mode .toasts { top: max(76px, calc(env(safe-area-inset-top, 0px) + 68px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 104px); width: min(400px, calc(100vw - 280px)); gap: 4px; }
+/* In a talk the pad is gone and the subtitles grow up the left side to under the objective: the
+   wide column would reach over them, so it narrows back to clear the box. */
+.touch-mode .toasts--talk { width: min(260px, 36vw); }
 .touch-mode .toast { padding: 4px 8px; }
 .touch-mode .toast:nth-last-child(n + 3) { display: none; }
 

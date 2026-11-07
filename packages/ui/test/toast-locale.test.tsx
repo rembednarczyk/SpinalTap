@@ -32,4 +32,16 @@ describe("toast language", () => {
     expect(store.getState().toasts).toHaveLength(1);
     expect(store.getState().toasts[0]?.count).toBe(2);
   });
+
+  it("marks the column while a talk is open, so a phone narrows it clear of the subtitles", () => {
+    const store = createUiStore({ screen: "playing" });
+    pushToast(store, { kind: "system", title: textRef("newGame.place"), text: textRef("newGame.intro") });
+    const { container } = render(<GameUi store={store} intents={intents()} />);
+    const column = () => container.querySelector(".toasts");
+    expect(column()?.classList.contains("toasts--talk")).toBe(false);
+    act(() => patchUi(store, { dialogue: { lines: [{ speaker: "Kaito", text: "Dalej." }], choices: [], ended: false } }));
+    expect(column()?.classList.contains("toasts--talk")).toBe(true);
+    act(() => patchUi(store, { dialogue: null }));
+    expect(column()?.classList.contains("toasts--talk")).toBe(false);
+  });
 });
