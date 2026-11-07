@@ -55,9 +55,9 @@ describe("the cast in the views (ADR-0076)", () => {
 
   it("names the character of a street scene without giving it a key: Shiro under his lamp", () => {
     const sim = street(21);
-    teleportPlayer(sim, ground(102, -23 + 10));
+    teleportPlayer(sim, ground(97, -23 + 10));
     run(sim, 2);
-    const poet = [...sim.world].find((e) => !e.key && e.view?.kind === "npc" && Math.hypot(e.position.x - 102, e.position.z + 23) < 0.5);
+    const poet = [...sim.world].find((e) => !e.key && e.view?.kind === "npc" && Math.hypot(e.position.x - 97, e.position.z + 23) < 0.5);
     expect(poet?.view).toMatchObject({ kind: "npc", preset: "civilian", cast: "shiro", look: castViewOf("enc-shiro", "enc-shiro").look });
   });
 });

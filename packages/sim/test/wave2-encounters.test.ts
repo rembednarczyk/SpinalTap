@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DISTRICTS, ENCOUNTERS, WORLD_CHUNKS, distanceToRect } from "../src/content";
+import { groundY } from "../src/content/lublin/terrain";
+import { circleTouchesPrism, prismsAt } from "../src/world/prism";
 
 /** Clearance a walking character needs around the trigger point. */
 const BODY = 0.5;
@@ -14,6 +16,22 @@ const solidsAt = (x: number, z: number) =>
     if (top < 0.3 || bottom > 1.8) return false;
     return Math.abs(x - p.center.x) < size.x / 2 + BODY && Math.abs(z - p.center.z) < size.z / 2 + BODY;
   });
+
+/**
+ * The map's buildings whose convex parts reach (x, z) between the ankle and the head: the block
+ * test above misses them, they are prisms (G-489). Street furniture is left out, a scene may
+ * lean on a lamp post.
+ */
+const buildingsAt = (x: number, z: number) => {
+  const y = groundY(x, z);
+  return WORLD_CHUNKS.flatMap((c) => c.props).filter(
+    (p) =>
+      p.solid &&
+      p.view.kind === "building" &&
+      p.prisms &&
+      prismsAt(p.prisms, p.center).some((q) => q.top > y + 0.3 && q.bottom < y + 1.8 && circleTouchesPrism(q, x, z, BODY)),
+  );
+};
 
 describe("street encounters (ADR-0032)", () => {
   it("have unique ids and knots named after their district", () => {
@@ -42,5 +60,6 @@ describe("street encounters (ADR-0032)", () => {
     const chunks = WORLD_CHUNKS.filter((c) => distanceToRect(e.at.x, e.at.z, c.bounds) === 0);
     expect(chunks.some((c) => c.district === e.district)).toBe(true);
     expect(solidsAt(e.at.x, e.at.z).map((p) => p.center)).toEqual([]);
+    expect(buildingsAt(e.at.x, e.at.z).map((p) => p.center)).toEqual([]);
   });
 });
