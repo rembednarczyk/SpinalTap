@@ -9,13 +9,14 @@ import {
   type Scene,
   type Texture,
   type TransformNode,
+  VertexBuffer,
   loadGltfPlugin,
 } from "../babylon";
 import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
 import { FaceRig } from "./face";
-import { type VrmExpressions, type VrmSprings, readGlbJson, readVrmExpressions, readVrmSprings } from "./vrm-meta";
+import { type VrmExpressions, type VrmSprings, isVrm, readGlbJson, readVrmExpressions, readVrmSprings } from "./vrm-meta";
 
 /** Which character views can be replaced by imported models. */
 export type CharacterModelKey = "heroine" | "fixer" | "civilian" | "ripperdoc" | "ganger";
@@ -132,8 +133,12 @@ export const pluginExtensionFor = (url: string): string | undefined =>
  * Swaps glTF materials for toon materials and folds primitives that end up with the same
  * material back into one mesh: VRoid splits a hairstyle into dozens of primitives over one
  * vertex buffer, which would otherwise cost a draw call (and an outline pass) each.
+ *
+ * `vertexColors: false` drops the meshes' COLOR_0 (VRM files: MToon does not read it). Babylon
+ * compiles VERTEXCOLOR into the toon shader for any mesh with the buffer, and the albedo is
+ * multiplied by it: `kaito.vrm` carries one of zeros and drew as a black figure (G-474).
  */
-export const convertModelMaterials = (container: AssetContainer, materials: ToonMaterials, preset: PresetName): void => {
+export const convertModelMaterials = (container: AssetContainer, materials: ToonMaterials, preset: PresetName, vertexColors = true): void => {
   const replaced = new Set<unknown>();
   const groups = new Map<string, AbstractMesh[]>();
   const dataIds = new Map<object, number>();
@@ -141,6 +146,7 @@ export const convertModelMaterials = (container: AssetContainer, materials: Toon
   let nextDataId = 0;
   for (const mesh of container.meshes) {
     if (!mesh.material || mesh.getTotalVertices() === 0) continue;
+    if (!vertexColors && mesh.isVerticesDataPresent(VertexBuffer.ColorKind)) (mesh as Mesh).removeVerticesData(VertexBuffer.ColorKind);
     const source = readSourceMaterial(mesh.material);
     replaced.add(mesh.material);
     mesh.material = materials.forImported(source.base, source.texture, preset, source);
@@ -258,16 +264,18 @@ export class ModelLibrary {
         // chunk; a .gltf with external buffers loads by URL so its relative paths resolve.
         let springs: VrmSprings | null = null;
         let expressions: VrmExpressions | null = null;
+        let vrm = false;
         let source: string | Uint8Array = spec.url;
         if (extension === ".glb" || /\.glb(\?|#|$)/i.test(spec.url)) {
           const bytes = await (await fetch(spec.url)).arrayBuffer();
           const json = readGlbJson(bytes);
           springs = json ? readVrmSprings(json) : null;
           expressions = json ? readVrmExpressions(json) : null;
+          vrm = json ? isVrm(json) : false;
           source = new Uint8Array(bytes);
         }
         const container = await LoadAssetContainerAsync(source, this.scene, { pluginExtension: extension ?? (typeof source === "string" ? undefined : ".glb") });
-        convertModelMaterials(container, this.materials, spec.preset ?? "importedCharacter");
+        convertModelMaterials(container, this.materials, spec.preset ?? "importedCharacter", !vrm);
         return { container, springs, expressions };
       })();
       this.containers.set(spec.url, pending);
