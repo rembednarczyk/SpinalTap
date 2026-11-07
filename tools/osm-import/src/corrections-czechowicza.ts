@@ -1,8 +1,9 @@
 /**
- * Added areas on Plac Czechowicza (ADR-0042), the tail of `ADDED_AREAS`: kept apart so
+ * Added areas on Plac Czechowicza and ul. Kościuszki (ADR-0042), the tail of `ADDED_AREAS`: kept apart so
  * `corrections.ts` stays within ADR-0031's 500 lines. Drawn after the areas there.
  */
 import type { AddedArea } from "./corrections.ts";
+import type { Pt } from "./geometry.ts";
 
 /**
  * The pavement before the Sąd Okręgowy w69672563 (T-210): the square w505211283 ends 1-2 m short of
@@ -11,7 +12,7 @@ import type { AddedArea } from "./corrections.ts";
  * Two pieces parted at the square's corner (16.28; -104.69): one ring's edge along the square's would
  * be simplified in its chunk to a straight line, a 0.1 m crack under that corner.
  */
-export const CZECHOWICZA_AREAS: readonly AddedArea[] = [
+const PLAC_AREAS: readonly AddedArea[] = [
   {
     // From the square's south edge to the court's north wall, west of the square's corner. Off the
     // nodes: the point on the wall abreast of the corner.
@@ -49,3 +50,91 @@ export const CZECHOWICZA_AREAS: readonly AddedArea[] = [
     ref: "T-210",
   },
 ];
+
+/**
+ * A piece of the pavement along ul. Kościuszki (T-211): along a house's façade `wall` (north to south,
+ * its nodes of the ways `wallOf`), across to the footway's axis and up it, `axis` (south to north,
+ * drawn under the footway's band).
+ */
+const kosciuszki = (name: string, wall: readonly Pt[], wallOf: readonly (string | null)[], axis: readonly Pt[], axisOf: readonly (string | null)[]): AddedArea => ({
+  id: `T-211/${name}`,
+  tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+  ring: [...wall, ...axis],
+  nodesOf: [...wallOf, ...axisOf],
+  reason: "kostka chodnika ul. Kościuszki do fasad na ortofoto PZGiK, w OSM chodnik (linia) kończy się 1–1,5 m przed budynkami",
+  ref: "T-211",
+});
+
+/**
+ * The pavement along the façades of ul. Kościuszki (T-211): the footways w288178955 (west) and
+ * w288178957 (east), lines with 2.5 m bands, end 1-1.5 m short of the houses, where the orthophoto
+ * (PZGiK) has the setts up to the walls. One piece per house: a ring along several would be simplified
+ * in its chunk (0.3 m) to a chord past the houses' own, a crack along the walls. The pieces part on the
+ * houses' corners and the footway's axis abreast of them (off the nodes). Along w67508939 and
+ * w67508949 the façade's jogs under 0.3 m are left out, as the houses' outlines leave them: kept,
+ * they would part the setts from the simplified wall. w67508949's façade runs 0.4 m inside the wall,
+ * from w67508939's corner to a point off its south-west corner: the chunk's edge (x 20) cuts the
+ * piece by that corner, and on the wall the cut, simplified and rounded pieces leave cracks of 1-25 cm.
+ */
+const KOSCIUSZKI_AREAS: readonly AddedArea[] = [
+  // West, on from T-210's south edge to the corner by Peowiaków.
+  kosciuszki(
+    "zachod-w69672561",
+    [{ x: 17.11, z: -127.07 }, { x: 17.34, z: -127.15 }, { x: 16.74, z: -130.76 }, { x: 16.51, z: -130.69 }, { x: 15.19, z: -138.59 }, { x: 15.42, z: -138.67 }, { x: 14.43, z: -143.43 }],
+    ["w69672561", "w69672561", "w69672561", "w69672561", "w69672561", "w69672561", "w69672561"],
+    [{ x: 17.05, z: -143.43 }, { x: 20.15, z: -127.07 }],
+    [null, null],
+  ),
+  kosciuszki(
+    "zachod-w69672559",
+    [{ x: 14.43, z: -143.43 }, { x: 11.9, z: -158.64 }, { x: 12.09, z: -158.79 }, { x: 11.36, z: -162.37 }],
+    ["w69672559", "w69672559", "w69672559", "w69672559"],
+    [{ x: 13.46, z: -162.37 }, { x: 17.05, z: -143.43 }],
+    [null, null],
+  ),
+  kosciuszki(
+    "zachod-w69672557",
+    [{ x: 11.36, z: -162.37 }, { x: 7.78, z: -183.32 }],
+    ["w69672557", "w69672557"],
+    [{ x: 9.24, z: -184.64 }, { x: 13.46, z: -162.37 }],
+    ["w288178955", null],
+  ),
+  // East, from the driveway w536680784's axis to the corner by Peowiaków.
+  // w67508887's façade with w67508904's: apart, the corner between them is simplified out of the
+  // first piece, a crack along w67508904's north wall.
+  kosciuszki(
+    "wschod-w67508904",
+    [
+      { x: 31.38, z: -110.01 },
+      { x: 31.43, z: -111.6 },
+      { x: 31.59, z: -114.53 },
+      { x: 30.79, z: -114.64 },
+      { x: 30.24, z: -118.91 },
+      { x: 30.42, z: -118.93 },
+      { x: 29.05, z: -129.35 },
+      { x: 28.86, z: -129.33 },
+      { x: 28.3, z: -133.56 },
+    ],
+    ["w536680784", "w67508887", "w67508887", "w67508904", "w67508904", "w67508904", "w67508904", "w67508904", "w67508904"],
+    [{ x: 26.54, z: -133.56 }, { x: 29.37, z: -115.84 }, { x: 29.19, z: -110.05 }],
+    [null, "w288178957", "w288178957"],
+  ),
+  kosciuszki("wschod-w67508881", [{ x: 28.3, z: -133.56 }, { x: 25.71, z: -151.92 }], ["w67508881", "w67508881"], [{ x: 23.6, z: -151.92 }, { x: 26.54, z: -133.56 }], [null, null]),
+  kosciuszki(
+    "wschod-w67508939",
+    [{ x: 25.71, z: -151.92 }, { x: 23.33, z: -167.59 }],
+    ["w67508939", "w67508939"],
+    [{ x: 21.1, z: -167.59 }, { x: 23.6, z: -151.92 }],
+    [null, null],
+  ),
+  kosciuszki(
+    "wschod-w67508949",
+    [{ x: 23.33, z: -167.59 }, { x: 19.89, z: -187.59 }, { x: 20.86, z: -190.43 }],
+    ["w67508949", null, "w67508949"],
+    [{ x: 18.22, z: -190.43 }, { x: 17.79, z: -188.27 }, { x: 21.1, z: -167.59 }],
+    ["w288178957", "w288178957", null],
+  ),
+];
+
+/** The added areas of this file, in draw order. */
+export const CZECHOWICZA_AREAS: readonly AddedArea[] = [...PLAC_AREAS, ...KOSCIUSZKI_AREAS];
