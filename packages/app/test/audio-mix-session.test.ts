@@ -42,7 +42,12 @@ const synth = (files: Record<string, number>) => {
       audio.tick();
     }
   };
-  return { audio, run };
+  /** Where a bus node's gain is heading; the gains are created master, music, sfx, ambience, dialogue, radio. */
+  const level = (bus: "music" | "dialogue" | "radio") => {
+    const node = ctx.created.filter((n) => n.kind === "gain")[{ music: 1, dialogue: 4, radio: 5 }[bus]]!.params.gain!;
+    return node.target ?? node.value;
+  };
+  return { audio, run, level };
 };
 
 const DUCKED = dbToGain(SPEECH_DUCK_DB);
@@ -82,40 +87,51 @@ describe("audio mix in the session (ADR-0060 stage 1)", () => {
 
   it("changes the real dialogue bus with the slider", () => {
     const { session, ui } = setup();
-    const { audio } = synth({});
+    const { audio, level } = synth({});
     bindAudioMix(ui, audio, DEFAULT_SETTINGS);
-    expect(audio.getVolume("dialogue")).toBe(1);
+    expect(level("dialogue")).toBe(1);
     session.intents.changeSettings({ dialogueVolume: 0.35, radioVolume: 0.15 });
     expect(audio.getVolume("dialogue")).toBe(0.35);
-    expect(audio.getVolume("radio")).toBe(0.15);
+    expect(level("dialogue")).toBe(0.35);
+    expect(level("radio")).toBe(0.15);
   });
 
   it("ducks music and radio while a line is spoken and brings them back after it", async () => {
-    const { audio, run } = synth({ "voice/en/kaito/greet.ogg": 1.2 });
+    const { audio, run, level } = synth({ "voice/en/kaito/greet.ogg": 1.2 });
+    const music = audio.getVolume("music");
+    const radio = audio.getVolume("radio");
     expect(audio.speechDuck).toBe(1);
     expect(await audio.playLine("kaito/greet")).toBe(true);
     run(SPEECH_DUCK_ATTACK + 0.05);
     expect(audio.lineSpeaking).toBe("kaito/greet");
     expect(audio.speechDuck).toBeCloseTo(DUCKED);
+    expect(level("music")).toBeCloseTo(music * DUCKED);
+    expect(level("radio")).toBeCloseTo(radio * DUCKED);
+    expect(level("dialogue")).toBe(audio.getVolume("dialogue"));
     run(1.2 + SPEECH_DUCK_HOLD);
     expect(audio.speechDuck).toBeLessThan(1);
     run(SPEECH_DUCK_RELEASE);
     expect(audio.speechDuck).toBe(1);
+    expect(level("music")).toBeCloseTo(music);
+    expect(level("radio")).toBeCloseTo(radio);
   });
 
   it("closing the conversation cuts the line and lifts the duck; the open conversation holds the score lower", async () => {
     const { session, ui } = setup();
-    const { audio, run } = synth({ "voice/en/kaito/greet.ogg": 10 });
+    const { audio, run, level } = synth({ "voice/en/kaito/greet.ogg": 10 });
     bindAudioMix(ui, audio, DEFAULT_SETTINGS);
+    const music = audio.getVolume("music");
     session.newGame();
     talkToKaito(session);
     expect(await audio.playLine("kaito/greet")).toBe(true);
     run(SPEECH_DUCK_ATTACK + 0.05);
-    expect(Math.min(DUCK_LEVEL, audio.speechDuck)).toBe(DUCK_LEVEL);
+    // The conversation's duck is the deeper one and the line does not add to it.
+    expect(level("music")).toBeCloseTo(music * Math.min(DUCK_LEVEL, DUCKED));
     finishDialogue(session, ui);
     expect(audio.lineSpeaking).toBeNull();
     run(SPEECH_DUCK_RELEASE + 0.05);
     expect(audio.speechDuck).toBe(1);
+    expect(level("music")).toBeCloseTo(music);
   });
 
   it("a key without a recording does not throw and leaves the mix alone", async () => {
