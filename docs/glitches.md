@@ -1451,7 +1451,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-479 Odłożone ciało może trafić środkiem w bryłę (kontener) i w niej zostać
-- Status: w PR #373 (7.11, w weryfikacji; zgłoszone przez budowniczego ADR-0075 etap 2)
+- Status: w PR #373 (7.11, runda 2: weryfikator odrzucił rundę 1, kandydaci „bliżej” i „pod graczem” nachodzą na graczkę i wpychają ją w ścianę; zgłoszone przez budowniczego ADR-0075 etap 2)
 - Ważność: S3 · Zasięg: `dropBody` w sim stawia ciało 0,6 m przed graczem bez sprawdzania brył; przy kontenerze (391,2..392,8 × −33,6..−32,4) środek ciała wszedł w bryłę i po 30 krokach wypychanie go nie wyciągnęło; sonda renderera (G-458) patrzy wtedy od środka bryły; poprawka w sim: miejsce odłożenia poza bryłami (cofnięcie do gracza albo bok), test w sim; do połączenia z ADR-0075 etap 4 (`settle-body`)
 - Pakiet właściciela: packages/sim
 
@@ -1479,6 +1479,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, weryfikator #371)
 - Ważność: S4 · Zasięg: lokalnie strona padła przy `page.evaluate` w czasie strojenia miasta, powtórka przy load 16–19 zielona; CI zielone; nie podnosić limitu, najpierw ślad (ADR-0046)
 - Pakiet właściciela: e2e (QA)
+
+### G-485 `pushOut` kończy się odepchnięciem od ciał bez ponownego sprawdzenia brył
+- Status: zgłoszone (7.11, weryfikator #373)
+- Ważność: S3 · Zasięg: `movement-system.ts`, `ITERATIONS = 2`: ostatni krok to odepchnięcie od innych ciał, bez kolizji z bryłami; postać nachodząca na leżące ciało (zerowa prędkość, nie jest wypychane) przy ścianie zostaje w ścianie, przy cienkiej ścianie przechodzi przez nią; niezależne od G-479
+- Pakiet właściciela: packages/sim
+
+### G-486 Odłożone ciało może spaść przez niską barierkę bez oparcia
+- Status: zgłoszone (7.11, weryfikator #373; z kodu)
+- Ważność: S4 · Zasięg: `blocked` w `carry-system.ts` pomija warunek `foothold` z `blocks`; barierka do 0,45 m nad uskokiem nie zatrzymuje ciała, które może spaść z balkonu
+- Pakiet właściciela: packages/sim
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
