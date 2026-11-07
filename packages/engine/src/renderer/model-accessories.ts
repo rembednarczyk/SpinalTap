@@ -27,14 +27,25 @@ const at = (m: Mesh, x: number, y: number, z: number, rx = 0, ry = 0, rz = 0): M
 
 const box = (scene: Scene, name: string, width: number, height: number, depth: number): Mesh => MeshBuilder.CreateBox(name, { width, height, depth }, scene);
 
-/** Two lenses on a bridge and the temples back over the ears, at the height of the eyes. */
+/** A rim round one lens, open in the middle so the eyes show through. */
+const rim = (scene: Scene, name: string, x: number): Mesh[] => {
+  const [y, z, w, h, t] = [0.068, 0.112, 0.046, 0.028, 0.005];
+  return [
+    at(box(scene, `${name}-t`, w, t, t), x, y + h / 2, z),
+    at(box(scene, `${name}-b`, w, t, t), x, y - h / 2, z),
+    at(box(scene, `${name}-i`, t, h, t), x - w / 2, y, z),
+    at(box(scene, `${name}-o`, t, h, t), x + w / 2, y, z),
+  ];
+};
+
+/** Two rims on a bridge and the temples back over the ears, at the height of the eyes, ahead of the face. */
 const glasses: Part = (scene, name) => {
   const parts = [
-    at(box(scene, `${name}-l`, 0.042, 0.024, 0.006), -0.032, 0.07, 0.1),
-    at(box(scene, `${name}-r`, 0.042, 0.024, 0.006), 0.032, 0.07, 0.1),
-    at(box(scene, `${name}-b`, 0.024, 0.006, 0.006), 0, 0.076, 0.1),
-    at(box(scene, `${name}-tl`, 0.005, 0.006, 0.1), -0.074, 0.074, 0.05, 0, -0.12),
-    at(box(scene, `${name}-tr`, 0.005, 0.006, 0.1), 0.074, 0.074, 0.05, 0, 0.12),
+    ...rim(scene, `${name}-l`, -0.033),
+    ...rim(scene, `${name}-r`, 0.033),
+    at(box(scene, `${name}-b`, 0.02, 0.005, 0.005), 0, 0.074, 0.112),
+    at(box(scene, `${name}-tl`, 0.005, 0.005, 0.12), -0.079, 0.074, 0.056, 0, -0.1),
+    at(box(scene, `${name}-tr`, 0.005, 0.005, 0.12), 0.079, 0.074, 0.056, 0, 0.1),
   ];
   return MeshClass.MergeMeshes(parts, true, true)!;
 };
@@ -64,11 +75,11 @@ const bag: Part = (scene, name) => {
   return MeshClass.MergeMeshes(parts, true, true)!;
 };
 
-/** A work apron from the chest to mid-thigh, its hem a little ahead of the legs, on a neck strap. */
+/** A work apron from the chest to the hips, clear of the chest (and of the thighs of a seated keeper), on a neck strap. */
 const apron: Part = (scene, name) => {
   const parts = [
-    at(box(scene, `${name}-f`, 0.34, 0.62, 0.012), 0, -0.36, 0.13, -0.1),
-    at(box(scene, `${name}-n`, 0.2, 0.012, 0.16), 0, 0.06, 0.05),
+    at(box(scene, `${name}-f`, 0.34, 0.5, 0.012), 0, -0.23, 0.15, -0.03),
+    at(box(scene, `${name}-n`, 0.2, 0.012, 0.15), 0, 0.03, 0.075),
   ];
   return MeshClass.MergeMeshes(parts, true, true)!;
 };
