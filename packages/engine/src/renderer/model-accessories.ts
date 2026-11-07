@@ -75,16 +75,8 @@ const bag: Part = (scene, name) => {
   return MeshClass.MergeMeshes(parts, true, true)!;
 };
 
-/** A work apron from the chest to the hips, clear of the chest (and of the thighs of a seated keeper), on a neck strap. */
-const apron: Part = (scene, name) => {
-  const parts = [
-    at(box(scene, `${name}-f`, 0.34, 0.5, 0.012), 0, -0.23, 0.15, -0.03),
-    at(box(scene, `${name}-n`, 0.2, 0.012, 0.15), 0, 0.03, 0.075),
-  ];
-  return MeshClass.MergeMeshes(parts, true, true)!;
-};
-
-const PARTS: Readonly<Record<Accessory, Part>> = { glasses, cap, mask, bag, apron };
+/** The apron is no shape on a bone but a shell of the model's cloth (`model-apron.ts`). */
+const PARTS: Readonly<Partial<Record<Accessory, Part>>> = { glasses, cap, mask, bag };
 
 const paint = (mesh: Mesh, hex: string): Mesh => {
   const c = Color3.FromHexString(hex);
@@ -97,7 +89,10 @@ const paint = (mesh: Mesh, hex: string): Mesh => {
 
 /** The accessories of one bone as one mesh (null for none). */
 export const buildAccessories = (scene: Scene, name: string, worn: readonly Worn[], bone: AnchorBone): Mesh | null => {
-  const parts = worn.filter((w) => BONE_OF[w.id] === bone).map((w) => paint(PARTS[w.id](scene, `${name}-${w.id}`), w.color));
+  const parts = worn.flatMap((w) => {
+    const part = BONE_OF[w.id] === bone ? PARTS[w.id] : undefined;
+    return part ? [paint(part(scene, `${name}-${w.id}`), w.color)] : [];
+  });
   if (parts.length === 0) return null;
   const merged = parts.length === 1 ? parts[0]! : MeshClass.MergeMeshes(parts, true, true)!;
   merged.name = `${name}-${bone}`;

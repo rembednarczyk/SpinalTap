@@ -1,6 +1,7 @@
 import { type AbstractMesh, Color3, type Mesh, type Scene, type Texture, type TransformNode } from "../babylon";
 import type { ToonMaterials } from "../npr/toon-material";
 import { buildAccessories } from "./model-accessories";
+import { buildApron } from "./model-apron";
 import { type ModelCloth, type ModelPart, toonSourceOf } from "./model-library";
 import type { AnchorBone, HumanoidRetarget } from "./model-rig";
 import type { ModelVariant } from "./model-variant";
@@ -71,11 +72,19 @@ const materialOf = (ctx: DressContext, mesh: AbstractMesh, v: ModelVariant, swap
 /** A file's cloth to lend: whether `cloth` may dress a model of base `family`. */
 export const lends = (cloth: ModelCloth, family: string | null): boolean => family !== null && cloth.family === family;
 
+/** Where a dressed model stands: its retarget, the rig body it faces with, and its size against the rig's. */
+export interface DressedOn {
+  readonly retarget: HumanoidRetarget;
+  readonly body: TransformNode;
+  readonly fit: number;
+}
+
 /**
- * Dresses `meshes` (an instance's) in `v`; `fit` is the model's size against the rig's, for
- * the accessories, which hang on the retarget's anchors of the head and chest bones.
+ * Dresses `meshes` (an instance's) in `v`: the accessories hang on the retarget's anchors of the
+ * head and chest bones, sized by `fit`; an apron is a shell of the model's own cloth.
  */
-export const dressVariant = (ctx: DressContext, name: string, meshes: readonly AbstractMesh[], retarget: HumanoidRetarget, fit: number, v: ModelVariant, donors: Donors): WornVariant => {
+export const dressVariant = (ctx: DressContext, name: string, meshes: readonly AbstractMesh[], on: DressedOn, v: ModelVariant, donors: Donors): WornVariant => {
+  const { retarget, fit } = on;
   const own = new Map<AbstractMesh, AbstractMesh["material"]>();
   const swap: Partial<Record<ModelPart, Texture>> = {};
   const top = donorOf(donors.torso, v.topFrom);
@@ -104,6 +113,12 @@ export const dressVariant = (ctx: DressContext, name: string, meshes: readonly A
     mesh.scaling.setAll(fit);
     mesh.material = ctx.materials.get("charVertexColor");
     worn.push(mesh);
+  }
+  const apron = v.accessories.find((a) => a.id === "apron");
+  const shell = apron ? buildApron(ctx.scene, `${name}-apron`, meshes, on.body, apron.color) : null;
+  if (shell) {
+    shell.material = ctx.materials.get("charVertexColor");
+    worn.push(shell);
   }
   return {
     meshes: worn,

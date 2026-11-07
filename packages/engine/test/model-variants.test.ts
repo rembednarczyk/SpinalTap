@@ -1,7 +1,7 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import type { EntityId } from "@seki/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { type AbstractMesh, Scene, Vector3 } from "../src/babylon";
+import { type AbstractMesh, type Mesh, Scene, Vector3, VertexBuffer } from "../src/babylon";
 import type { CameraRig } from "../src/camera/camera-rig";
 import type { MoonShadow } from "../src/npr/moon-shadow";
 import { ToonMaterials } from "../src/npr/toon-material";
@@ -108,10 +108,50 @@ describe("variants on the game's models (ADR-0076 stage 2)", () => {
     // Kaito wears his file as it is: no accessory.
     expect(scene.meshes.filter((m) => m.name.startsWith("e2-v-"))).toEqual([]);
     expect(scene.getMeshByName("e3-v-head")).not.toBeNull();
-    // Mori: Base_Male (M00), glasses on the head and the apron on the chest.
+    // Mori: Base_Male (M00), glasses on the head and the apron over his cloth, nothing hung on the chest.
     expect(meshesOf(views, 4).some((m) => toonSourceOf(m)?.source.family === "M00")).toBe(true);
     expect(scene.getMeshByName("e4-v-head")?.parent?.name).toBe("e4-v-head-variant");
-    expect(scene.getMeshByName("e4-v-chest")?.parent?.name).toBe("e4-v-chest-variant");
+    expect(scene.getMeshByName("e4-v-chest")).toBeNull();
+    expect(scene.getMeshByName("e4-v-apron")).not.toBeNull();
+  });
+
+  it("lay the apron on the body: a skinned shell of the cloth's front, a centimetre out, chest to crotch", async () => {
+    serveModels();
+    const scene = new Scene(new NullEngine());
+    const views = viewsOn(scene);
+    views.setCharacterModels(GAME);
+    views.spawn(4, { kind: "npc", preset: "ripperdoc", cast: "mori" }, STAND);
+    views.spawn(5, { kind: "npc", preset: "civilian", cast: "fumiko" }, STAND);
+    await settled(views);
+    for (const id of [4, 5]) {
+      const apron = scene.getMeshByName(`e${id}-v-apron`) as Mesh | null;
+      expect(apron, `e${id}`).not.toBeNull();
+      const top = meshesOf(views, id).find((m) => toonSourceOf(m)?.source.part === "torso") as Mesh;
+      // On the cloth's skeleton: it bends with the body, a seated keeper's thighs too.
+      expect(apron!.skeleton).toBe(top.skeleton);
+      expect(apron!.isVerticesDataPresent(VertexBuffer.MatricesWeightsKind)).toBe(true);
+      // It lies on the front of the cloth (STAND faces +Z), within a few centimetres of its surface.
+      const zOf = (m: Mesh) => {
+        const world = m.computeWorldMatrix(true);
+        const pos = m.getVerticesData(VertexBuffer.PositionKind)!;
+        const out: { z: number[]; y: number[] } = { z: [], y: [] };
+        for (let i = 0; i < pos.length; i += 3) {
+          const p = Vector3.TransformCoordinates(new Vector3(pos[i]!, pos[i + 1]!, pos[i + 2]!), world);
+          out.z.push(p.z);
+          out.y.push(p.y);
+        }
+        return out;
+      };
+      const cloth = zOf(top);
+      const centre = (Math.min(...cloth.z) + Math.max(...cloth.z)) / 2;
+      const { z: zs, y: ys } = zOf(apron!);
+      const median = [...zs].sort((a, b) => a - b)[zs.length >> 1]!;
+      expect(median, `e${id} behind the centre`).toBeGreaterThan(centre);
+      expect(Math.max(...zs), `e${id} off the body`).toBeLessThan(Math.max(...cloth.z) + 0.03);
+      // From about the chest to the crotch of a 1.5-1.8 m figure.
+      expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(0.35);
+      expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(0.6);
+    }
   });
 
   it("share materials between characters of one variant and give the file's own back to the pool", async () => {
