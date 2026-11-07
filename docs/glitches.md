@@ -1525,11 +1525,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: prop gry pod `ground(100, -21)` („the lamp Shiro reads his poems under”) stoi 1,3 m w kamienicy; kontrola `furniture-in-building` liczy tylko `WORLD_STREET_PROPS`, więc propów gry nie widzi; przy okazji: `solidsAt` w `wave2-encounters.test.ts` filtruje wysokość brył bezwzględnie (`top < 0.3 || bottom > 1.8`), w wyższych dzielnicach (targ y ≈ −20, doki y ≈ −28) może nic nie sprawdzać
 - Pakiet właściciela: packages/sim (treść), tools/glitch-scan
 
-### G-503 Generator mebli nie stawia latarni na pomostach (T-239)
-- Status: w PR #383 (7.11, przegląd kuratora; zgłoszone przez kuratora przeglądu #381)
-- Ważność: S4 · Zasięg: linia `lamps.zamkowa` przy wiadukcie w232362907 i pomoście grobli: 3 pastorały na gruncie 3,1–5,6 m pod pomostem; poprawka: wysokość stopy z `deckHeightAt` dla latarni linii biegnącej po pomoście; kontrola `lamp-beside-deck` (baza 5, w tym 2 z Nabrzeża)
-- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
-
 ### G-504 Latarnie i słupy trakcji przebijają pomosty mostów Mełgiewskiej (T-240)
 - Status: zgłoszone (7.11, kurator przeglądu #381; z danych)
 - Ważność: S4 · Zasięg: 3 `lamp-road` i 3 `trolley-pole` stoją pod pomostem, pięć z nich 3,8–4,4 m niżej, więc słup przebija płytę; kontrola `pole-through-deck` dla słupów od 4 m (baza 6, w tym (2445,6; 246,4) z G-361); po G-503 (#383) 3 `lamp-road` stoją już na pomoście, zostają słupy trakcji
@@ -1539,6 +1534,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, weryfikator #376)
 - Ważność: S4 · Zasięg: `model-apron.ts` tnie całymi trójkątami (próg `FACING` 0,35, ±0,09 wzrostu), więc boki kamizelki i spodni Mori mają białe zęby, a rąbek fartucha Kenty wystaje zębami spod bioder siedzącego; poprawka: przycięcie trójkątów na granicy albo maska; przy okazji: test „at most four looks” w `model-variants.test.ts` przekracza 20 s pod obciążeniem (4000 kroków `setTimeout(0)` dla 12 modeli)
 - Pakiet właściciela: packages/engine (renderer)
+
+### G-506 Generator mebli ignoruje `yaw` grup planu z `points` (ławki placu T0 tyłem do trawników)
+- Status: w PR #382 (7.11, runda 2; kurator przeglądu #382)
+- Ważność: S4 · Zasięg: `placeItem` dla grup z `points` ustawia `yaw: null` (props-gen.ts ok. 245), `openFacing` odwraca 7 z 8 ławek placu T0 od trawy, 4 pod pergolą patrzą na wykop rampy; kontrola `plan-yaw-ignored` (baza 8)
+- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
+
+### G-507 Pastorał przy przyczółku wiaduktu Zamkowej ma latarenkę na wysokości przechodniów
+- Status: zgłoszone (7.11, kurator przeglądu #383)
+- Ważność: S4 · Zasięg: (756,8; 175,7) stoi 1,85 m pod pomostem, 2 m od niego (poniżej progu `DECK_DROP` 2,5 m), latarenka ok. 1,55 m nad pomostem, 0,35 m od kostki; poprawka: niższy próg albo `byParapet` od ok. 1,5 m; zaostrzenie `lamp-beside-deck` do 1,5 m (baza 1)
+- Pakiet właściciela: tools/osm-import (props)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-503 Generator mebli nie stawia latarni na pomostach (T-239)
+- Status: naprawione (PR #383, 7.11; kurator ZGODNE; latarnia linii planu nad przęsłem staje na pomoście 0,3 m od krawędzi (`sideSpot`/`byParapet`), stopa z `deckHeightAt`; 3 pastorały Zamkowej i 3 `lamp-road` Mełgiewskiej na pomoście; `lamp-beside-deck` 6 → 0, pada bez poprawki; reszta G-507)
+- Ważność: S4 · Zasięg: linia `lamps.zamkowa` przy wiadukcie w232362907 i pomoście grobli, przy okazji Mełgiewska
+- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
+
 ### G-497 Pastorał grobli przy wiadukcie w232362907 stoi na trawie (T-235)
 - Status: naprawione (PR #381, 7.11; kurator ZGODNE; krawędź mierzona z kostki pomostu (`deckAt`, `deckHeightAt`, próg `DECK_DROP` 2,5 m), latarnia (757,6; 175,0) → (756,8; 175,7), 0,35 m od kostki; `lamp-off-band` 1 → 0; test pada bez poprawki; reszta w G-503)
 - Ważność: S4 · Zasięg: 1 `lamp-pastoral`
