@@ -83,8 +83,8 @@ const oyaji = (): ScheduleDef => {
 };
 
 /**
- * The Hebi lookout north of the stash by the ruin behind Alchemia's stalls (ADR-0063): holds his corner
- * by day, walks a loop at night between the ruin's north end and the path, out of the stash's hollow.
+ * The Hebi lookout by the Arkady north of the stash on T2 (ADR-0074 stage 2): holds his place under
+ * their arches by day, walks a loop of the square at night, out of the stash's corner.
  */
 const hebiLookout = (): ScheduleDef => {
   const post = spawnOf("hebi-lookout");
@@ -93,7 +93,7 @@ const hebiLookout = (): ScheduleDef => {
     speed: PATROL_WALK,
     stops: [
       { label: "posterunek", at: hm(5), path: [p], yaw: post.yaw, activity: { cycle: ["guard", "smoke"], minutes: 30 } },
-      { label: "patrol", at: hm(22), path: [p, ground(450, 119), ground(440, 121), ground(434, 108)], yaw: post.yaw, loop: true },
+      { label: "patrol", at: hm(22), path: [p, ground(452, 121), ground(441, 122), ground(434, 108)], yaw: post.yaw, loop: true },
     ],
   };
 };

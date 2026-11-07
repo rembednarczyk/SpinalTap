@@ -35,8 +35,8 @@ export interface BandArea {
 /**
  * Alchemia by the investor's plan (ADR-0074 §9, the user's decision of 6.11: the whole complex,
  * the car park and the pavilion on its corner in the market's band): the plot from Świętoduska to
- * Lubartowska (x 379..456, z 30..140, the food hall, T1 with Hana's cart, the hollow of the Hebi
- * stash, the lookout's post and the bag behind the ruin) and the car park south of the hall with
+ * Lubartowska (x 379..456, z 30..140, the food hall, T1 with Hana's cart, T2 with the Hebi stash,
+ * the lookout's post under the Arkady's arches and the bag before them) and the car park south of the hall with
  * Kurosawa and the cleaners by the lift's kiosk (x 379..441, z -16..30). The car park's piece stops
  * short of Lubartowska's footway, the stop "Brama Krakowska 01" (447; 16) and metro B's pavilion
  * stays in it, its hall under the street being the station's. A test checks every one of the

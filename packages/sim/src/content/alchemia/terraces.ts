@@ -1,5 +1,6 @@
 import type { GroundRect, Pad, Ramp } from "../lublin/shape";
 import { HALL, T0, T1, type Piece, box, piece } from "./plan";
+import { T2_PADS, T2_STAIRS } from "./plaza";
 
 /**
  * The terraces round the food hall (ADR-0074 §1, stage 1), shaped into the game's terrain as pads
@@ -40,8 +41,10 @@ export const ALCHEMIA_PADS: readonly Pad[] = [
   { rect: T1_WEST, y: T1, blend: 2, row: "T-207" },
   { rect: T1_HATCH, y: T1, blend: 2, row: "T-207" },
   { rect: T0_LINE, y: T0, blend: 0, row: "T-206" },
+  // T2 (stage 2), after T1: its bands reach over T1's blend to the north.
+  ...T2_PADS,
 ];
-export const ALCHEMIA_RAMPS: readonly Ramp[] = [WEST_RAMP, EAST_RAMP];
+export const ALCHEMIA_RAMPS: readonly Ramp[] = [WEST_RAMP, EAST_RAMP, T2_STAIRS];
 
 /** Height of a ramp's axis at z. */
 export const rampY = (r: Ramp, z: number): number => {

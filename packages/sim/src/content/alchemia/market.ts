@@ -13,6 +13,7 @@ import {
 import { type ActorDef, type Rect, type StaticProp, crate, lamp } from "../builders";
 import { ground, groundY } from "../lublin/terrain";
 import { ALCHEMIA_LIFT } from "./lift";
+import { ARKADY_ARCADE_FLOOR, ARKADY_FRAME, arkadyPoint } from "./arkady";
 import { HALL, NORTH, SOUTH, facing } from "./plan";
 import { KEEPER_SPOTS, KEEPER_YAW, type KeeperKey } from "./units";
 
@@ -21,8 +22,8 @@ import { KEEPER_SPOTS, KEEPER_YAW, type KeeperKey } from "./units";
  * the stallholders keep their units in the food hall, each behind his or her own counter (`units.ts`);
  * Hana sells from her cart on the square in front of it (T1); Ren sleeps on the hall's green roof
  * (T0) until the triangular pavilion is built (stage 3), the Hebi bag by him; Kurosawa of Kagami
- * waits by the lift's kiosk on the car park. The Hebi keep their stash in the hollow by the ruined
- * outbuilding (w66286396) until stage 2.
+ * waits by the lift's kiosk on the car park. The Hebi keep their stash on the lower square T2 before
+ * the Arkady's south arches (stage 2, until the shelter of stage 5), their lookout by the Arkady.
  *
  * World metres, every point on the ground, on the hall's floor or on its roof.
  */
@@ -40,31 +41,28 @@ const HANA_YAW = SOUTH;
 /** Oyaji can be hurt: Hebi come for him in Hana's protection jobs. */
 export const OYAJI_MAX_HP = 120;
 
-/** The ruined outbuilding's west wall (OSM way 66286396), from its south corner north, and the way out of it. */
-const RUIN = { x: 443.1, z: 83.4 } as const;
-const RUIN_ALONG = { x: 0.36, z: 0.933 } as const;
-const RUIN_OUT = { x: -0.933, z: 0.36 } as const;
+/** A point before the Arkady's west face (`arkady.ts`): `along` metres from its south corner, `out` metres off it, on the ground. */
+export const byArkady = (along: number, out: number, up = 0): Vec3 => {
+  const p = arkadyPoint(along, -out);
+  return ground(p.x, p.z, up);
+};
 
-/** A point by the ruin's west wall: `along` metres from its south corner, `out` metres off the wall. */
-export const byRuin = (along: number, out: number, up = 0): Vec3 =>
-  ground(RUIN.x + RUIN_ALONG.x * along + RUIN_OUT.x * out, RUIN.z + RUIN_ALONG.z * along + RUIN_OUT.z * out, up);
+/** Which way a thing on the Arkady's west face faces: out of it, to the square. */
+export const ARKADY_OUT_YAW = Math.atan2(-ARKADY_FRAME.across.x, -ARKADY_FRAME.across.z);
 
-/** Which way a thing on the ruin's wall faces: out of it, to the square. */
-export const RUIN_OUT_YAW = Math.atan2(RUIN_OUT.x, RUIN_OUT.z);
-
-/** The Hebi stash in the hollow by the ruin (the retrieval's no-go zone, `devices.ts`). */
+/** The Hebi stash on T2 before the Arkady's south arches (the retrieval's no-go zone, `devices.ts`). */
 export const HEBI_STASH_ZONE: Rect = { minX: 435, maxX: 449, minZ: 86, maxZ: 101 };
 
 /** A box standing on the ground at (x, z), sunk a little into the slope's high side. */
 const onGround = (p: StaticProp, sink = 0.08): StaticProp => ({ ...p, center: { ...p.center, y: p.center.y + groundY(p.center.x, p.center.z) - sink } });
 
-const RETRIEVE_CRATE = byRuin(9, 1.8);
+const RETRIEVE_CRATE = byArkady(9, 1.8);
 
 /** A lamp standing on the ground at `p`. */
 const lampAt = (p: Vec3, color: string): StaticProp => ({ ...lamp(p.x, p.z, color), center: p });
 
-const COVER = byRuin(9, 4.2);
-const BODY_CRATE = byRuin(13.6, 1.5);
+const COVER = byArkady(9, 4.2);
+const BODY_CRATE = byArkady(13.6, 1.5);
 
 /** Hana's cart, the Hebi stash's crates and lights: the market's own things outside the hall. */
 export const ALCHEMIA_MARKET_PROPS: readonly StaticProp[] = [
@@ -74,7 +72,7 @@ export const ALCHEMIA_MARKET_PROPS: readonly StaticProp[] = [
   // The Hebi stash: cover in front of it, and the big crate by it takes a body (ADR-0065).
   onGround(crate(COVER.x, COVER.z, 1.0, 1.1, 2.4)),
   { ...onGround(crate(BODY_CRATE.x, BODY_CRATE.z, 1.6, 1.4, 1.4)), hide: "container" },
-  lampAt(byRuin(4, 1.2), "#ffcf8a"),
+  lampAt(byArkady(4, 1.2), "#ffcf8a"),
 ];
 
 /** A stash placed once, when the player first comes near (ADR-0021). */
@@ -106,10 +104,10 @@ export const TARG_ROOF_STASH: RoofStash = {
   ],
 };
 
-/** The bag left behind the ruin the night of the blockade (ADR-0026; once in the car on the viaduct). */
+/** The bag left by the Arkady the night of the blockade (ADR-0026; once in the car on the viaduct, then behind the ruin). */
 export const TARG_OVERPASS_STASH: RoofStash = {
   key: "stash:targ-overpass",
-  at: byRuin(30, 1.2, 0.2),
+  at: byArkady(30, 1.2, 0.2),
   lines: [
     { kind: "eddies", qty: 120 },
     { kind: "ammo", ammo: "9mm", qty: 18 },
@@ -162,8 +160,10 @@ const keeper = (key: KeeperKey, interactable: NonNullable<Extract<ActorDef, { ki
   interactable,
 });
 
-/** The Hebi lookout north of the stash: watches the way in from Lubartowska by day, walks round the hollow at night. */
-export const HEBI_LOOKOUT_POST: Vec3 = ground(444, 112);
+/** The Hebi lookout by the Arkady north of the stash, under their arches: watches T2 and the stairs from T1 by day, walks the square at night. */
+export const HEBI_LOOKOUT_POST: Vec3 = { ...byArkady(29.5, -1.2), y: ARKADY_ARCADE_FLOOR };
+/** He looks south-west down the square, to the stairs from T1 and the stash. */
+const HEBI_LOOKOUT_YAW = Math.atan2(431 - HEBI_LOOKOUT_POST.x, 90 - HEBI_LOOKOUT_POST.z);
 
 export const ALCHEMIA_MARKET_ACTORS: readonly ActorDef[] = [
   // By day the shop; from 22:00 the schedule swaps in `oyaji_closed`.
@@ -171,7 +171,7 @@ export const ALCHEMIA_MARKET_ACTORS: readonly ActorDef[] = [
   { kind: "npc", spawn: { key: "hana", position: HANA_SPOT, yaw: HANA_YAW }, preset: "civilian", faction: "civilians", interactable: { kind: "dialogue", dialogueId: "hana", prompt: "prompt.talk.hana", radius: 2.4 } },
   REN,
   keeper("sachiko", { kind: "dialogue", dialogueId: "sachiko", prompt: "prompt.shop.sachiko", radius: 2.4 }),
-  { kind: "ganger", spawn: { key: "hebi-lookout", position: HEBI_LOOKOUT_POST, yaw: 0.3, tag: null } },
+  { kind: "ganger", spawn: { key: "hebi-lookout", position: HEBI_LOOKOUT_POST, yaw: HEBI_LOOKOUT_YAW, tag: null } },
   KUROSAWA,
   ...CLEANERS,
   keeper("kenta", { kind: "dialogue", dialogueId: "kenta", prompt: "prompt.shop.kenta", radius: 3 }),
@@ -189,7 +189,7 @@ type MarketSite = "hana_stall" | "hebi_stash" | "raid_north" | "raid_east";
  */
 export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<MarketSite, readonly Vec3[]>> = {
   hana_stall: [ground(426.5, 66), ground(426.5, 67.5), ground(426.5, 64.5), ground(425, 66)],
-  hebi_stash: [byRuin(6, 6), byRuin(12.5, 4.5), byRuin(9.5, 7.5), byRuin(5, 2.5)],
+  hebi_stash: [byArkady(6, 6), byArkady(12.5, 4.5), byArkady(9.5, 7.5), byArkady(5, 2.5)],
   raid_north: [ground(403, 72), ground(400.5, 74.5), ground(406, 74), ground(399, 70)],
   raid_east: [ground(441, 66), ground(442.5, 63), ground(439.5, 69), ground(443, 68)],
 };
@@ -200,7 +200,7 @@ export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<MarketSite, readonly Vec
  */
 export const TARG_CONTRACT_SITE_FACING: Readonly<Record<MarketSite, Vec3>> = {
   hana_stall: HANA_SPOT,
-  hebi_stash: byRuin(7, 24),
+  hebi_stash: byArkady(7, 24),
   raid_north: STALL_KEEPERS.oyaji,
   raid_east: STALL_KEEPERS.oyaji,
 };

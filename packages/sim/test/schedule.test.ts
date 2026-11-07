@@ -176,7 +176,7 @@ describe("daily plans in a loaded chunk", () => {
     expect(prompts.some((p) => p.prompt === null || !/^prompt\.closed\./.test(p.prompt))).toBe(true);
   });
 
-  it("the Hebi lookout patrols the loop round the hollow by the ruin at night and returns to his post by day", () => {
+  it("the Hebi lookout patrols the loop round T2 by the Arkady at night and returns to his post under the arches by day", () => {
     const sim = Simulation.create({ seed: 1 });
     goTo(sim, ON_PLOT);
     skipTo(sim, hm(22, 20));
