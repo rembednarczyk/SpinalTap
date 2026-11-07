@@ -69,6 +69,20 @@ describe("procedural animation", () => {
     expect(deathFinished(rig)).toBe(true);
   });
 
+  it("falls and sinks from the ground it died on, not from y = 0 (G-457)", () => {
+    for (const ground of [3, -1.5]) {
+      const rig = buildGanger(scene, materials, `dead-${ground}`);
+      rig.root.position.y = ground;
+      startDeath(rig);
+      animateRig(rig, 0, 0.7);
+      expect(rig.root.position.y).toBeCloseTo(ground + 0.12, 5);
+      for (let i = 0; i < 12; i++) animateRig(rig, 0, 0.5);
+      const sink = rig.dying! - 0.65 - 5.5;
+      expect(sink).toBeGreaterThan(0);
+      expect(rig.root.position.y).toBeCloseTo(ground + 0.12 - sink * 0.5, 5);
+    }
+  });
+
   it("decays a hit flinch", () => {
     const rig = buildFixer(scene, materials, "flinch");
     rig.flinch = 1;
