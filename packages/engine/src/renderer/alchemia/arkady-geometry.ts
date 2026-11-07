@@ -35,7 +35,7 @@ const swatchOf = (p: AlchemiaPiece): string => {
     case "wall":
       return b.y1 <= ARKADY.upper && b.z1 - b.z0 <= ARKADY.pier + 0.01 ? "brick" : "wall";
     case "glass": {
-      if (b.y0 < ARKADY.upper) return "shop-warm";
+      if (b.y0 < ARKADY.upper) return "win-warm";
       const k = Math.floor((b.x0 + b.x1) / 2 / (ARKADY.length / ARKADY.spans));
       return k % 3 === 1 ? "glass-dark" : "win-warm";
     }
