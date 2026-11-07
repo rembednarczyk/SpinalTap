@@ -1,7 +1,8 @@
 import type { AbstractMesh } from "../babylon";
 import type { CharacterRig } from "./characters";
 import type { Loadouts } from "./loadout";
-import type { CharacterModelKey, CharacterModelManifest, ModelInstance, ModelLibrary } from "./model-library";
+import { type ModelChoice, manifestFiles, modelPoolKey, resolveModel } from "./model-cast";
+import type { CharacterModelManifest, ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
 import { SpringBones, humanoidColliders } from "./spring-bones";
 
@@ -11,8 +12,8 @@ export interface Dressed {
   readonly retarget: HumanoidRetarget;
   /** Hair and cloth secondary motion, if the model has such bones. */
   readonly springs: SpringBones | null;
-  /** Pool key: the model file. */
-  readonly url: string;
+  /** Pool key: the model file with its scale, turn and variant (`modelPoolKey`). */
+  readonly poolKey: string;
 }
 
 export interface CharacterModelsDeps {
@@ -57,17 +58,19 @@ export class CharacterModels {
 
   /** Starts loading every model of the manifest, one promise per file (ADR-0057). */
   preload(): Promise<unknown>[] {
-    return Object.values(this.manifest).map((spec) => this.deps.library.preload(spec));
+    return manifestFiles(this.manifest).map((spec) => this.deps.library.preload(spec));
   }
 
   /** Loads the model in the background and swaps it in once ready, if the rig still exists. */
-  dress(rig: CharacterRig, key: CharacterModelKey | null, name: string): void {
-    const spec = key ? this.manifest[key] : undefined;
+  dress(rig: CharacterRig, choice: ModelChoice | null, name: string): void {
+    const spec = choice ? resolveModel(this.manifest, choice) : undefined;
     if (!spec) return;
+    const key = modelPoolKey(spec);
+    const who = choice?.cast ?? choice?.fallback ?? null;
     // A model released by a cleared scene (new game, load, streaming) is reused at once.
-    const pooled = this.pool.get(spec.url)?.pop();
+    const pooled = this.pool.get(key)?.pop();
     if (pooled) {
-      this.attach(rig, pooled, spec.url, key);
+      this.attach(rig, pooled, key, who);
       return;
     }
     this.loading.add(rig);
@@ -75,8 +78,8 @@ export class CharacterModels {
       .instantiate(spec, `${name}-m`)
       .then((model) => {
         this.loading.delete(rig);
-        if (rig.root.isDisposed()) return this.pooled(model, spec.url);
-        this.attach(rig, model, spec.url, key);
+        if (rig.root.isDisposed()) return this.pooled(model, key);
+        this.attach(rig, model, key, who);
       })
       .catch((err: unknown) => {
         this.loading.delete(rig);
@@ -87,7 +90,7 @@ export class CharacterModels {
   /** Returns the rig's model, if any, to the pool; the loadout must be off its bones first. */
   release(rig: CharacterRig): void {
     const d = this.dressed.get(rig);
-    if (d) this.pooled(d.model, d.url);
+    if (d) this.pooled(d.model, d.poolKey);
     this.dressed.delete(rig);
     rig.reach = null;
   }
@@ -102,18 +105,18 @@ export class CharacterModels {
     }
   }
 
-  private attach(rig: CharacterRig, model: ModelInstance, url: string, key: CharacterModelKey | null): void {
+  private attach(rig: CharacterRig, model: ModelInstance, poolKey: string, who: string | null): void {
     model.root.setEnabled(true);
     const retarget = HumanoidRetarget.create(rig, model.root, model.prefix);
     if (!retarget) {
-      console.warn(`[models] ${url}: no humanoid bones found, keeping the procedural ${key}`);
+      console.warn(`[models] ${poolKey}: no humanoid bones found, keeping the procedural ${who}`);
       model.dispose();
       return;
     }
     for (const m of rig.meshes) m.setEnabled(false);
     for (const m of model.meshes) if (m.getTotalVertices() > 0) this.deps.addCaster(m);
     const springs = SpringBones.create(model.root, { vrm: model.springs, prefix: model.prefix, colliders: humanoidColliders(model.root, model.prefix) });
-    this.dressed.set(rig, { model, retarget, springs, url });
+    this.dressed.set(rig, { model, retarget, springs, poolKey });
     // The rig solves a two-handed hold for the model's arms, which it no longer shows itself.
     rig.reach = retarget.reach;
     // The gun in the model's hand and the garment add-ons on its bones.
@@ -121,12 +124,12 @@ export class CharacterModels {
   }
 
   /** Detaches a model, resets its pose and keeps it for the next character of the same look. */
-  private pooled(model: ModelInstance, url: string): void {
+  private pooled(model: ModelInstance, poolKey: string): void {
     model.root.parent = null;
     model.root.setEnabled(false);
     model.resetPose();
-    const pool = this.pool.get(url) ?? [];
+    const pool = this.pool.get(poolKey) ?? [];
     pool.push(model);
-    this.pool.set(url, pool);
+    this.pool.set(poolKey, pool);
   }
 }

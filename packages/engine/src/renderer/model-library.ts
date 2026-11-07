@@ -12,6 +12,7 @@ import {
   VertexBuffer,
   loadGltfPlugin,
 } from "../babylon";
+import type { CastKey } from "@seki/core";
 import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
@@ -34,9 +35,31 @@ export interface CharacterModelSpec {
   readonly run?: string;
   readonly preset?: PresetName;
   readonly outline?: boolean;
+  /**
+   * Which look of the file (ADR-0076): two characters may share a file in different variants.
+   * Carried through and part of the pool key; the variants themselves come in stage 2.
+   */
+  readonly variant?: number;
 }
 
-export type CharacterModelManifest = Partial<Record<CharacterModelKey, CharacterModelSpec>>;
+/** Background roles with a pool of models (ADR-0076). */
+export type ModelPoolRole = "civilian" | "vendor" | "ganger" | "corpo";
+
+export const MODEL_POOL_ROLES: readonly ModelPoolRole[] = ["civilian", "vendor", "ganger", "corpo"];
+
+/** One file of a background pool, drawn as often as its weight says (default 1). */
+export interface PooledModelSpec extends CharacterModelSpec {
+  readonly weight?: number;
+}
+
+/**
+ * models/manifest.json: a model per role (the fallback), a model per named character (`cast`)
+ * and a pool per background role (`pools`, ADR-0076).
+ */
+export type CharacterModelManifest = Partial<Record<CharacterModelKey, CharacterModelSpec>> & {
+  readonly cast?: Partial<Record<CastKey, CharacterModelSpec>>;
+  readonly pools?: Partial<Record<ModelPoolRole, readonly PooledModelSpec[]>>;
+};
 
 interface Loaded {
   readonly container: AssetContainer;
