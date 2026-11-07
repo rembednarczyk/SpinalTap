@@ -9,6 +9,7 @@ import { LUBLIN_PROP_TABLE } from "../../../packages/sim/src/content/lublin/prop
 import { STOREY } from "../src/building-tags.ts";
 import { partTier } from "../src/building-parts.ts";
 import { ADDED_AREAS, TAG_CORRECTIONS, addedAreas, corrected, correctedLine } from "../src/corrections.ts";
+import { withoutReplaced } from "../src/corrections-alchemia.ts";
 import { type Area, type Line, extractFeatures } from "../src/features.ts";
 import { type Pt, pointInRing } from "../src/geometry.ts";
 import { areaSurface } from "../src/ground.ts";
@@ -490,7 +491,8 @@ describe("tag corrections (ADR-0042)", () => {
 
   // As a tag correction stays until OSM agrees, an added area goes once OSM maps a paving there.
   it("adds no area where OSM maps a paving of its own: the added area is to go once it does", () => {
-    const mapped = extractFeatures(osm).areas.filter((a) => PAVED.has(areaSurface(a.tags) ?? ""));
+    // The ways a set piece replaces are not the map's paving any more: the import leaves them out (T-239).
+    const mapped = withoutReplaced(extractFeatures(osm)).areas.filter((a) => PAVED.has(areaSurface(a.tags) ?? ""));
     for (const a of ADDED_AREAS) {
       const xs = a.ring.map((p) => p.x);
       const zs = a.ring.map((p) => p.z);

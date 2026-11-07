@@ -38,9 +38,7 @@ describe("cut-on-road (G-500, ADR-0074 stage 7)", () => {
     expect(names.some((n) => n.includes(" solid "))).toBe(true);
   });
 
-  it("finds P-1's ramp trench, its stair core's shaft and stair house on the car park's aisle w177513189 (G-500)", () => {
-    const found = cutOnRoadInGame(ways).map((f) => f.what);
-    expect(found).toHaveLength(3);
-    for (const f of found) expect(f).toContain("on w177513189");
+  it("finds nothing in the game: the car park's aisle under P-1's ramp trench, stair shaft and stair house is replaced by T0's square (G-500)", () => {
+    expect(cutOnRoadInGame(ways)).toEqual([]);
   });
 });

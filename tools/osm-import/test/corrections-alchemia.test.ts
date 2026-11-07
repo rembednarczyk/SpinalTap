@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { REPLACED_WAYS, withoutReplaced } from "../src/corrections-alchemia.ts";
+import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
+import { ALCHEMIA_AREAS, REPLACED_WAYS, T0_LAWNS, withoutReplaced } from "../src/corrections-alchemia.ts";
+import { pointInRing } from "../src/geometry.ts";
+
+const CAR_PARK_RING = ALCHEMIA_AREAS.find((a) => a.id === "T-239/plac-t0")!.ring;
 
 /** The map's ways a set piece of the game replaces (ADR-0074 stage 7): left out of the import, each with its register's row. */
 
@@ -14,6 +18,44 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
       expect(w.ref).toMatch(/^T-\d{3}$/);
     }
     expect(new Set(REPLACED_WAYS.map((w) => w.id)).size).toBe(REPLACED_WAYS.length);
+  });
+
+  it("replaces Alchemia's car park and its two aisles with T0's square (T-239, G-500)", () => {
+    expect(REPLACED_WAYS.map((w) => w.id).sort()).toEqual(["w173531008", "w173567309", "w177513189"]);
+  });
+
+  // The generated chunk: the car park's asphalt and its aisles are gone, T0 is a square of setts
+  // with three lawns cut out of it, Lubartowska's lane line runs on past the old way out (447; 16).
+  const chunk = KRAKOWSKIE_CHUNKS.find((c) => c.id === "krakowskie-2-1")!;
+  const inside = (x: number, z: number, o: readonly number[]) => {
+    let hit = false;
+    for (let i = 0, j = o.length - 2; i < o.length; j = i, i += 2) {
+      if (o[i + 1]! > z !== o[j + 1]! > z && x < ((o[j]! - o[i]!) * (z - o[i + 1]!)) / (o[j + 1]! - o[i + 1]!) + o[i]!) hit = !hit;
+    }
+    return hit;
+  };
+  /** The surface drawn on top at (x, z): the last piece in draw order, or null for bare terrain. */
+  const surfaceAt = (x: number, z: number) => chunk.ground.reduce<string | null>((s, g) => (inside(x, z, g.outline) ? g.surface : s), null);
+  const lawnAt = (x: number, z: number) => T0_LAWNS.some((l) => pointInRing({ x, z }, l.ring));
+
+  it("paves T0 with no asphalt left on it, the lawns green, and keeps no car park there", () => {
+    const off: string[] = [];
+    for (let x = 381.5; x < 440; x += 1)
+      for (let z = -8.5; z < 38; z += 1) {
+        if (!pointInRing({ x, z }, CAR_PARK_RING)) continue;
+        const s = surfaceAt(x, z);
+        if (s !== (lawnAt(x, z) ? "grass" : "square")) off.push(`${x},${z} ${s}`);
+      }
+    expect(off.slice(0, 20).join(" ")).toEqual("");
+    expect((chunk.carParks ?? []).map((p) => p.id)).not.toContain("w173531008");
+  });
+
+  it("leaves Bajkowskiego's footway, Lubartowska's footway and its carriageway as they were", () => {
+    expect(surfaceAt(400, -10.9)).toBe("footway");
+    expect(surfaceAt(437.6, 4)).toBe("footway");
+    expect(surfaceAt(446, 16)).toBe("road");
+    const dashes = (chunk.markings ?? []).filter((m) => m.kind === "lane-dash" && m.line[0] === 441.3);
+    expect(dashes).toHaveLength(1);
   });
 
   it("leaves out the replaced areas and lines by id, and the rest as mapped", () => {
