@@ -10,6 +10,7 @@ import { PAVILION_PROPS } from "./pavilion";
 import { P1_PIECES, P1_RAMP_CUT, P1_RAMP_PROPS, P1_STAIR_CUT, P1_VAULT } from "./parking";
 import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
+import { squarePieces } from "./square";
 import { unitPieces } from "./units";
 
 export { T0 as ALCHEMIA_T0, T1 as ALCHEMIA_T1, HALL as FOODHALL, HALL_INNER as FOODHALL_INNER, type Box as AlchemiaBox, type Piece as AlchemiaPiece, type PieceKind as AlchemiaPieceKind } from "./plan";
@@ -22,13 +23,15 @@ export { T2 as ALCHEMIA_T2, T2_PADS, T2_RECTS, T2_STAIRS, MEMORIAL as ALCHEMIA_M
 export * from "./market";
 export * from "./pavilion";
 export * from "./parking";
+export { PARAPET_BEDS, PERGOLA_BACK, PERGOLA_DOOR, PERGOLA_WALK, ROOF_LAWNS } from "./square";
 export { ALCHEMIA_NAV } from "./nav";
 
 /**
  * Alchemia by the investor's plan (ADR-0074): the food hall with its units, stairs and lift, its
  * green roof and the terraces round it (stage 1); the lower square T2 with its stairs and the
  * Arkady rebuilt on it (stage 2); the triangular pavilion on the corner with Ren on its roof
- * (stage 3, `pavilion.ts`). Everything is drawn by the engine
+ * (stage 3, `pavilion.ts`); P-1 under the car park (stage 4, `parking.ts`); T0's square with its
+ * pergolas, lanterns and beds and the lawns of the green roof (stage 7, `square.ts`). Everything is drawn by the engine
  * (`renderer/alchemia`) from `ALCHEMIA_PIECES`; the solid ones are the simulation's scenery, with
  * ids from `ROOM_ID_BASE` (outside the allocator).
  */
@@ -49,9 +52,10 @@ const UNITS = unitPieces();
 const LIFT = liftPieces();
 
 const PLAZA = plazaPieces();
+const SQUARE = squarePieces();
 
 /** Every drawn piece of Alchemia in the world's axes (the Arkady's, askew, are `ARKADY_PIECES`). */
-export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...PLANTERS, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA];
+export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...PLANTERS, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE];
 
 /** Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the Arkady. */
 export const ALCHEMIA_PROPS: readonly StaticProp[] = [
@@ -73,6 +77,8 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   solidProp(P1_PIECES.filter((p) => p.kind === "wall" || p.kind === "roof" || p.kind === "floor" || p.kind === "parapet" || p.kind === "step")),
   solidProp(P1_PIECES.filter((p) => p.kind !== "wall" && p.kind !== "roof" && p.kind !== "floor" && p.kind !== "parapet" && p.kind !== "step")),
   ...P1_RAMP_PROPS,
+  // Stage 7 after stage 4's: T0's square, its pergolas' posts and the beds along the trench.
+  solidProp(SQUARE),
 ];
 
 /** The ground dug out under Alchemia. */

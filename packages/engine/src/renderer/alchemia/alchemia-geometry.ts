@@ -10,7 +10,8 @@ import { parkingOutside } from "./parking-geometry";
  * texture: the simulation's boxes (`ALCHEMIA_PIECES`) coloured by their kind, and what only the
  * eye needs: the front's frame, the units' signs (proper names, drawn without words), the ceiling's
  * light strips. Two sinks: outside (the shell, the green roof, the lift's kiosk, the terraces'
- * steps, T2 with its stairs and the Arkady of stage 2, the pavilion on the corner of stage 3, P-1's ramp trench and stair house of stage 4), drawn from afar, and inside (units, counters, tables, the stairs, the lights), drawn near
+ * steps, T2 with its stairs and the Arkady of stage 2, the pavilion on the corner of stage 3, P-1's ramp trench and stair house of stage 4,
+ * T0's pergolas with their paper lanterns, the beds and the roof's lawns of stage 7), drawn from afar, and inside (units, counters, tables, the stairs, the lights), drawn near
  * only. Glass is opaque with the inside's warm light in it (ADR-0071's glass). Pure data, no Babylon.
  */
 
@@ -35,6 +36,9 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   marking: "trim-light",
   charger: "neon-green",
   machine: "metal",
+  lawn: "plant",
+  pergola: "rust",
+  lantern: "win-warm",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */
@@ -66,10 +70,10 @@ const boxOf = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox, swatch: st
   sink.box({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2, z: (b.z0 + b.z1) / 2 }, [X, Y, Z], [(b.x1 - b.x0) / 2, (b.y1 - b.y0) / 2, (b.z1 - b.z0) / 2], swatchUv(data, swatch));
 };
 
-/** A piece's swatch: the roof's big slab is the green roof (T0), the lift's glass a cooler light. */
+/** A piece's swatch: the roof's big slab is the green roof's paving between its lawns (T0, stage 7), the lift's glass a cooler light. */
 const swatchOf = (p: AlchemiaPiece): string => {
   const b = p.box;
-  if (p.kind === "roof" && (b.x1 - b.x0) * (b.z1 - b.z0) > 100) return "plant";
+  if (p.kind === "roof" && (b.x1 - b.x0) * (b.z1 - b.z0) > 100) return "trim-light";
   if (p.kind === "glass" && b.x1 - b.x0 < 3 && b.z1 - b.z0 < 3) return "office";
   return SWATCH[p.kind];
 };

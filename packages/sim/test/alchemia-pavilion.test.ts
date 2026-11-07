@@ -141,10 +141,10 @@ describe("the triangular pavilion on the corner (ADR-0074 stage 3)", () => {
     // Drawn with the pavilion, no entity's view of its own.
     expect(ladder.scenery).toBe(true);
     expect(PAVILION_PROPS.filter((p) => p.mechanism?.kind === "ladder-end")).toHaveLength(2);
-    // After stages 1 and 2's solids, before stage 4's: their ids (from ROOM_ID_BASE, in order) stay.
+    // After stages 1 and 2's solids, before stage 4's (two props and the ramp's wedges) and stage 7's (one): their ids (from ROOM_ID_BASE, in order) stay.
     const from = ALCHEMIA_PROPS.indexOf(PAVILION_PROPS[0]!);
     expect(ALCHEMIA_PROPS.slice(from, from + PAVILION_PROPS.length)).toEqual(PAVILION_PROPS);
-    expect(ALCHEMIA_PROPS.slice(from + PAVILION_PROPS.length)).toHaveLength(2 + P1_RAMP_PROPS.length);
+    expect(ALCHEMIA_PROPS.slice(from + PAVILION_PROPS.length)).toHaveLength(2 + P1_RAMP_PROPS.length + 1);
   });
 
   it("puts Ren and the Hebi bag on the roof, inside the attic and clear of the sign", () => {
