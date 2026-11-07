@@ -38,13 +38,16 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
   const surfaceAt = (x: number, z: number) => chunk.ground.reduce<string | null>((s, g) => (inside(x, z, g.outline) ? g.surface : s), null);
   const lawnAt = (x: number, z: number) => T0_LAWNS.some((l) => pointInRing({ x, z }, l.ring));
 
-  it("paves T0 with no asphalt left on it, the lawns green, and keeps no car park there", () => {
+  /** The driveway from Bajkowskiego to the ramp's top, between the ramp's walls. */
+  const drivewayAt = (x: number, z: number) => x > 409.7 && x < 418.3 && z < -5.5;
+
+  it("paves T0 with no asphalt left on it but the ramp's driveway, the lawns green, and keeps no car park there", () => {
     const off: string[] = [];
     for (let x = 381.5; x < 440; x += 1)
       for (let z = -8.5; z < 38; z += 1) {
         if (!pointInRing({ x, z }, CAR_PARK_RING)) continue;
         const s = surfaceAt(x, z);
-        if (s !== (lawnAt(x, z) ? "grass" : "square")) off.push(`${x},${z} ${s}`);
+        if (s !== (lawnAt(x, z) ? "grass" : drivewayAt(x, z) ? "road" : "square")) off.push(`${x},${z} ${s}`);
       }
     expect(off.slice(0, 20).join(" ")).toEqual("");
     expect((chunk.carParks ?? []).map((p) => p.id)).not.toContain("w173531008");
@@ -56,6 +59,18 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
     expect(surfaceAt(446, 16)).toBe("road");
     const dashes = (chunk.markings ?? []).filter((m) => m.kind === "lane-dash" && m.line[0] === 441.3);
     expect(dashes).toHaveLength(1);
+  });
+
+  it("drives from Bajkowskiego's carriageway onto the ramp's top across the footway, which runs on over it", () => {
+    // Along the ramp's lanes from the carriageway to its top: asphalt, the footway, asphalt, asphalt to the top.
+    for (const x of [411.6, 414.9]) {
+      const way: string[] = [];
+      for (let z = -13.6; z <= -5.6; z += 0.2) {
+        const s = surfaceAt(x, z) ?? "bare";
+        if (way[way.length - 1] !== s) way.push(s);
+      }
+      expect(way, `x ${x}`).toEqual(["road", "footway", "road"]);
+    }
   });
 
   it("leaves out the replaced areas and lines by id, and the rest as mapped", () => {

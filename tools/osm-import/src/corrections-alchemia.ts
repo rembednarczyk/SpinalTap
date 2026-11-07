@@ -92,6 +92,37 @@ export const T0_LAWNS: readonly { readonly name: string; readonly ring: readonly
   { name: "trawnik-bajkowskiego", ring: lawn(385, 398, -5.5, -1.5, 1) },
 ];
 
+const DRIVEWAY_REASON = "wjazd z jezdni Bajkowskiego na rampę P−1 Alchemii przez chodnik, z obniżonym krawężnikiem (przegląd PR #382, prośba użytkownika 7.11)";
+
+/**
+ * The driveway from Bajkowskiego's carriageway to the top of P-1's ramp (T-241), between the ramp's
+ * walls (x 409.7–418.3): asphalt from the ramp's top (z −5.5) to the north edge of the footway
+ * along the street (w232464426's band), and again from its south edge to the carriageway's. The
+ * footway runs on across it, the pedestrians' (a lowered kerb: the footway has no kerb in the game,
+ * and the asphalt meets the carriageway flush). The edges are the bands' as the import lays them
+ * at the walls' lines, rounded off them by a centimetre or two so neither paving covers the other.
+ */
+const DRIVEWAY: readonly AddedArea[] = [
+  {
+    id: "T-241/wjazd-plac",
+    ring: [
+      { x: 409.7, z: -5.5 },
+      { x: 418.3, z: -5.5 },
+      { x: 418.3, z: -9.4 },
+      { x: 409.7, z: -9.85 },
+    ],
+  },
+  {
+    id: "T-241/wjazd-jezdnia",
+    ring: [
+      { x: 409.7, z: -12.4 },
+      { x: 418.3, z: -11.95 },
+      { x: 418.3, z: -13.05 },
+      { x: 409.7, z: -13.25 },
+    ],
+  },
+].map((d): AddedArea => ({ ...d, tags: { "area:highway": "service", surface: "asphalt" }, nodesOf: d.ring.map(() => null), reason: DRIVEWAY_REASON, ref: "T-241" }));
+
 /**
  * T0's square (T-241): the car park's outline paved as a square, the deptak's setts, and three lawns
  * in it, which the import cuts out of the paving as holes (`openPavings`): west of the ramp's trench
@@ -109,4 +140,5 @@ export const ALCHEMIA_AREAS: readonly AddedArea[] = [
     ref: "T-241",
   },
   ...T0_LAWNS.map((l): AddedArea => ({ id: `T-241/${l.name}`, tags: { landuse: "grass" }, ring: l.ring, nodesOf: l.ring.map(() => null), reason: LAWN_REASON, ref: "T-241" })),
+  ...DRIVEWAY,
 ];
