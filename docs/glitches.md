@@ -1350,11 +1350,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: pad T-051 przy Bajkowskiego zmienia teren na 7 drogach i chodnikach o 0,5–1,5 m (w40052294 +1,52 m); pad T-002 przy (2515; 387) obniża ścieżkę w972606056 o 1,80 m; także rampa zachodnia Alchemii nachodzi na chodnik w232464426 przy z 52–56 (przypadkiem w tolerancji)
 - Pakiet właściciela: packages/sim (content, pady), tools/glitch-scan
 
-### G-447 Zabójczy takedown widziany przez jednego przechodnia nigdy nie jest zgłaszany jako zabójstwo
-- Status: w PR #355 (7.11, w weryfikacji; zgłoszone przez naprawiacza G-334)
-- Ważność: S3 · Zasięg: świadek dzwoni tylko o napaść, a będąc już w trakcie połączenia pomija zabójstwo; połączenie o napaści oznacza zwłoki jako zgłoszone, bo zabójczy takedown oznacza ciało jak nokaut (ADR-0065, etap 3); potwierdzone sondą weryfikatora #350: `takedown-system.ts:182` woła `noteViolence(..., target.id)`, `civilianWitness` pomija dzwoniącego, `callThrough` → `bodyReported` oznacza martwe ciało; propozycja: strażnik w `bodyReported`/`callThrough`, żeby zgłoszenie napaści nie oznaczało martwego ciała (może zastąpić `knockOutCallsOver`)
-- Pakiet właściciela: packages/sim (bodies, crime-system)
-
 ### G-448 `traffic.test.ts` „takes turns at crossings by the market” przekracza 5 s pod obciążeniem
 - Status: zgłoszone (7.11, naprawiacz G-334)
 - Ważność: S4 (test) · Zasięg: przy load ok. 14 pada na limicie 5000 ms, osobno przechodzi; najpierw pomiar kosztu, bez podnoszenia limitu
@@ -1365,17 +1360,17 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S2 · Zasięg: każdy nokaut (takedown bez zabicia): `render-sync.ts:79` wysyła `unconscious: true`, ale `packages/engine` nigdzie go nie czyta, więc postać zostaje w pozie stojącej; da się ją tylko nieść. Do sprawdzenia przy okazji: poza niesionego ciała i ciała odłożonego po niesieniu
 - Pakiet właściciela: packages/engine (renderer: character-animation, character-poses)
 
-### G-450 Goły pas przy fasadach Peowiaków na rogach Kościuszki i przy w67508886 (T-217, T-220)
+### G-450 Goły pas przy fasadach Peowiaków na rogach Kościuszki i przy w67508886 (T-221, T-224)
 - Status: zgłoszone (7.11, kurator, przegląd G-440)
 - Ważność: S4 · Zasięg: ok. 70 m pierzei Peowiaków i 3 m² przy w67508886; poprawka jak T-210 i T-211 (`ADDED_AREAS` od fasad do osi chodników, obszar na dom); test: zero gołych próbek 0,25 m; przy okazji kontrola `facade-footway-bare`
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-451 Klin gołego terenu między chodnikiem a jezdnią Kościuszki (T-218)
+### G-451 Klin gołego terenu między chodnikiem a jezdnią Kościuszki (T-222)
 - Status: zgłoszone (7.11, kurator, przegląd G-440)
 - Ważność: S4 · Zasięg: zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²; poprawka: lokalnie domknąć jezdnię do krawędzi chodnika; kontrola `kerb-gap-bare` (baza 35 631 próbek 0,25 m)
 - Pakiet właściciela: tools/osm-import (ground)
 
-### G-452 Szczeliny 1–15 cm między przylegającymi budynkami z OSM (T-219)
+### G-452 Szczeliny 1–15 cm między przylegającymi budynkami z OSM (T-223)
 - Status: zgłoszone (7.11, kurator, przegląd G-440; widoczność do potwierdzenia zrzutem)
 - Ważność: S4 · Zasięg: 241 par, 1731 m szczelin w mieście; poprawka: przy imporcie dociągać ściany do sąsiada w odległości ≤ 0,15 m; kontrola `building-sliver` (baza 241)
 - Pakiet właściciela: tools/osm-import (buildings)
@@ -1389,6 +1384,31 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, weryfikator #353; do potwierdzenia, może błąd sondy)
 - Ważność: S4 (test) · Zasięg: `step(30)` z drążkiem wciśniętym przez CDP nie rusza gracza, przed i po #353; możliwe, że wejście dotykowe nie idzie przez `step`
 - Pakiet właściciela: e2e (QA), packages/app (input)
+
+### G-455 Nokaut przy przechodniu, dobicie na oczach patrolu przed końcem telefonu: −3 zamiast −2
+- Status: zgłoszone (7.11, weryfikator #355; także na main)
+- Ważność: S4 · Zasięg: kanał świadka nie wywołuje `dropBodyCalls`, więc telefon o napaści dolicza −1 po zgłoszonym zabójstwie; niespójne z zasadą jednego czynu (ADR-0070); przy okazji nieścisłe komentarze `WitnessCall.body` (`components/ai.ts:174`) i `Offence.body` (`context.ts:108`)
+- Pakiet właściciela: packages/sim (crime-system)
+
+### G-456 Napad `raid_east` w `m4-contracts` zależy od kolejności id encji
+- Status: zgłoszone (7.11, budowniczy ADR-0074 etap 2)
+- Ważność: S4 (test) · Zasięg: przy zmianie id gangerzy stoją ok. 600 kroków przy wschodniej ścianie hali (x 436,4), test wisi na granicy 960 kroków
+- Pakiet właściciela: packages/sim (AI, treść Alchemii), packages/app (test)
+
+### G-457 Zwłoki na podniesionym terenie skaczą na y≈0
+- Status: zgłoszone (7.11, naprawiacz G-449)
+- Ważność: S3 · Zasięg: `animateDeath` ustawia `root.position.y = 0.12 − sink` w układzie świata, więc ciało na terenie NMT wyżej niż 0 spada pod teren albo wisi; do połączenia z ragdollem
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-458 Leżące ciało rysowane na 1,7 m, a kolizja to małe koło: głowa w ścianie
+- Status: zgłoszone (7.11, naprawiacz G-449)
+- Ważność: S4 · Zasięg: ciało odłożone twarzą do ściany wchodzi w nią (głowa w witrynie); poprawka: odłożenie z kierunkiem od ściany albo kolizja leżącego ciała
+- Pakiet właściciela: packages/sim (bodies), packages/engine
+
+### G-459 Bohaterka niesie ciało z wyciągniętym pistoletem
+- Status: zgłoszone (7.11, naprawiacz G-449)
+- Ważność: S3 · Zasięg: sim blokuje broń przy niesieniu (ADR-0065), ale renderer dalej rysuje pistolet w dłoni
+- Pakiet właściciela: packages/engine (renderer)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

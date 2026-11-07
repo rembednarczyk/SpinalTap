@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-447 Zabójczy takedown widziany przez jednego przechodnia nigdy nie jest zgłaszany jako zabójstwo
+- Status: naprawione (PR #355, 7.11; `bodyReported` oznacza martwe ciało tylko przy zgłoszeniu zabójstwa, `knockOutCallsOver` usunięte; nokaut przy przechodniu i zwłoki znalezione w trakcie telefonu: −2 zamiast −3 zgodnie z zasadą jednego czynu z ADR-0070)
+- Ważność: S3 · Zasięg: świadek dzwoni tylko o napaść, a będąc już w trakcie połączenia pomija zabójstwo; połączenie o napaści oznacza zwłoki jako zgłoszone, bo zabójczy takedown oznacza ciało jak nokaut (ADR-0065, etap 3); potwierdzone sondą weryfikatora #350: `takedown-system.ts:182` woła `noteViolence(..., target.id)`, `civilianWitness` pomija dzwoniącego, `callThrough` → `bodyReported` oznacza martwe ciało; propozycja: strażnik w `bodyReported`/`callThrough`, żeby zgłoszenie napaści nie oznaczało martwego ciała (może zastąpić `knockOutCallsOver`)
+- Pakiet właściciela: packages/sim (bodies, crime-system)
+
 ### G-433 Na telefonie karta skanu zasłania pasek broni i podpowiedź ruchu
 - Status: naprawione (PR #353, 7.11; hacki w siatce 2×2, karta 264×183 px, kółko drążka schowane przy skanerze; zero nachodzeń przy 844×390, 800×370, 667×375)
 - Ważność: S3 · Zasięg: 844×390 i 800×370, karta skanu (Kiroshi) nachodzi na pasek broni i podpowiedź ruchu; do kontroli w `touch-layout`
