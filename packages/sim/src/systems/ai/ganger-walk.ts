@@ -1,5 +1,5 @@
 import { MOST_UNSTICK_STEPS, type Vec3 } from "@seki/core";
-import { aboveGround, heightApart } from "../../world/ground";
+import { aboveGround, groundOf, heightApart } from "../../world/ground";
 import type { SimContext } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
 import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
@@ -82,10 +82,16 @@ export class GangerWalk {
     const { ctx, self } = this.at;
     if (!ctx || !self) return;
     const from = self.position;
-    const apart = heightApart(ctx.world, to, from) > LEVEL_GAP;
+    const gap = heightApart(ctx.world, to, from);
+    const apart = gap > LEVEL_GAP;
     const raised = aboveGround(ctx.world, from) > LEVEL_GAP || aboveGround(ctx.world, to) > LEVEL_GAP;
     if (!apart) {
-      const step = this.head(to);
+      // Under the street (a vault, its heights plain y) more than a floor's height apart but less
+      // than a level's: the lower end of Alchemia's car park ramp beside the deck it comes down to
+      // (ADR-0074 stage 4). There is no way round on this floor there: the level graph's way.
+      const ground = groundOf(ctx.world);
+      const vaulted = gap > SAME_FLOOR && (ground.underStreet(to) || ground.underStreet(from));
+      const step = vaulted ? null : this.head(to);
       if (step || !raised) {
         this.goal = to;
         this.moveTowards((step ?? to).x, (step ?? to).z);

@@ -193,7 +193,8 @@ describe("P-1 in the level graph (ADR-0074 §5, stage 4)", () => {
     return null;
   };
 
-  it("an alerted brawler on the deck gets to the player on the car park", () => {
+  it("an alerted brawler on the car park gets to the player on the deck, and one on the deck to her on the car park", () => {
+    for (const seed of [3, 11]) expect(chase(onGround(406, -4), { x: 402, y: F, z: 15 }, 40, seed), `down, seed ${seed}`).not.toBeNull();
     for (const seed of [3, 11]) expect(chase({ x: 402, y: F, z: 15 }, onGround(424, 16), 40, seed), `up, seed ${seed}`).not.toBeNull();
   });
 
