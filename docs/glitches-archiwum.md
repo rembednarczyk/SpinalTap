@@ -2,6 +2,21 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-396 Ruina `ruins=yes` rysowana jak cały budynek (T-188)
+- Status: naprawione (PR #357, 7.11; w66286396 odbudowany jako Arkady; inne ruiny w G-462)
+- Ważność: S4 · Zasięg: 1 budynek (w66286396, skrytka Hebi) · Koszt: średni; test przyjęcia: budynek z `ruins=yes` nie ma okien ani dachu, a jego wysokość ≤ poziom × 3 m; pokrewne G-053
+- Pakiet właściciela: tools/osm-import
+
+### G-460 Dołek do 1,0–1,3 m przy północno-wschodnim końcu Arkad (T-218)
+- Status: naprawione (PR #357, 7.11; chodnik do a 44, podest 2,2 m na zachód; `pad-dip-uncovered` 33 → 0)
+- Ważność: S4 · Zasięg: a 40–43, x 463–465, z 118–121, ok. 12 m², poza płytami chodnika; test: na wschód od ściany poza płytami `rawHeight − groundY ≤ 0,3`; kontrola `pad-dip-uncovered`
+- Pakiet właściciela: packages/sim (content Alchemii), tools/glitch-scan
+
+### G-461 Arkady: 12 równych przęseł zamiast 14 z ortofoto (T-218)
+- Status: naprawione (PR #357, 7.11; 13 filarów co do 0,00 m z ortofoto; `arcade-rhythm` 0)
+- Ważność: S4 · Zasięg: filary z ortofoto w a = 2,95 / 6,25 / 9,9 / 13,6 / 17,2 / 20,8 / 24,55 / 28,25 / 31,75 / 35,4 / 39,1 / 42,95 / 46,4 m; kontrola `arcade-rhythm`
+- Pakiet właściciela: packages/sim, packages/engine (Alchemia)
+
 ### G-444 `map-city.test.ts` z małym zapasem do 5 s: koszt docinania i drapowania podłoża
 - Status: naprawione (PR #363, 7.11; CPU głównego wątku −35/−39%, czas testu ok. 5,2 → 3,4 s przy load 11–18; geometria identyczna bit w bit, test `map-ground-golden`)
 - Ważność: S4 (test) · Zasięg: „builds the whole generated Lublin” zużywa ok. 3,8–4,2 s CPU wobec limitu 5000 ms, więc przy load ok. 15 na 4 rdzeniach przekracza limit na każdym commicie; ok. 60% profilu to `ground-cut.ts` (`cutCovers`, `minusTriangle`), `ground-plan.ts` (drapowanie, `planSurface`) i `heightAt` w `map-entries.ts`; profil w scratchpadzie sesji `g444-new.cpuprofile`; bez podnoszenia limitu

@@ -1155,11 +1155,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 3 wiaty (w672635872, w672635873, w672635874), 2 widoczne od #327 · Koszt: mały; test przyjęcia: `shelter_type=public_transport` daje prop `bus-shelter` na obrysie zamiast budynku, budynków `use=garage` z `amenity=shelter` jest 0; kontrola skanu `shelter-as-building` (baza 3)
 - Pakiet właściciela: tools/osm-import (`building-tags.ts`, `props-gen.ts`)
 
-### G-396 Ruina `ruins=yes` rysowana jak cały budynek (T-188)
-- Status: zgłoszone (6.11, kurator, przegląd #327)
-- Ważność: S4 · Zasięg: 1 budynek (w66286396, skrytka Hebi) · Koszt: średni; test przyjęcia: budynek z `ruins=yes` nie ma okien ani dachu, a jego wysokość ≤ poziom × 3 m; pokrewne G-053
-- Pakiet właściciela: tools/osm-import
-
 ### G-397 Taras Alchemii to strefa bez walki przy zasadzce Kagami
 - Status: zgłoszone (6.11, weryfikator PR #327)
 - Ważność: S4 · Zasięg: NPC nie jeżdżą windą, czyściciele na placu nie alarmują się przez 40 s, a ekrany tarasu blokują strzały w obie strony; gracz zjeżdża windą i walczy na placu, więc bez softlocka; do decyzji: zejście czyścicieli schodami albo celowe schronienie
@@ -1399,16 +1394,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, naprawiacz G-449)
 - Ważność: S3 · Zasięg: sim blokuje broń przy niesieniu (ADR-0065), ale renderer dalej rysuje pistolet w dłoni
 - Pakiet właściciela: packages/engine (renderer)
-
-### G-460 Dołek do 1,0–1,3 m przy północno-wschodnim końcu Arkad (T-218)
-- Status: w naprawie (7.11, runda 2 PR #357; kurator)
-- Ważność: S4 · Zasięg: a 40–43, x 463–465, z 118–121, ok. 12 m², poza płytami chodnika; test: na wschód od ściany poza płytami `rawHeight − groundY ≤ 0,3`; kontrola `pad-dip-uncovered`
-- Pakiet właściciela: packages/sim (content Alchemii), tools/glitch-scan
-
-### G-461 Arkady: 12 równych przęseł zamiast 14 z ortofoto (T-218)
-- Status: w naprawie (7.11, runda 2 PR #357; kurator)
-- Ważność: S4 · Zasięg: filary z ortofoto w a = 2,95 / 6,25 / 9,9 / 13,6 / 17,2 / 20,8 / 24,55 / 28,25 / 31,75 / 35,4 / 39,1 / 42,95 / 46,4 m; kontrola `arcade-rhythm`
-- Pakiet właściciela: packages/sim, packages/engine (Alchemia)
 
 ### G-462 Inne ruiny z OSM rysowane jak budynki
 - Status: zgłoszone (7.11, kurator przeglądu #357; poza w66286396, które zamyka #357)
