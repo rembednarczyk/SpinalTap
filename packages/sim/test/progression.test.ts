@@ -3,11 +3,11 @@ import {
   type Contract,
   type DomainState,
   QUEST_FIRST_CONTRACT,
-  UNDETECTED_CONTRACT_XP,
   contractXp,
   freshTally,
   killXp,
   progressionFromXp,
+  undetectedXp,
   xpForLevel,
 } from "@seki/core";
 import { Simulation } from "../src";
@@ -45,10 +45,26 @@ describe("experience in the simulation (ADR-0059)", () => {
       const xp = collect<{ amount: number; source: string }>(sim, "ExperienceGained");
       sim.enqueue({ type: "complete-contract" });
       sim.step();
-      const expected = [{ amount: contractXp("eliminate", 3), source: "contract" }];
-      if (!detected) expected.push({ amount: UNDETECTED_CONTRACT_XP, source: "stealth" });
+      // A job of level 1 in Krakowskie: its XP and the bonus follow the cost of level 1 (ADR-0059 stage 8).
+      const expected = [{ amount: contractXp("eliminate", 3, 1), source: "contract" }];
+      if (!detected) expected.push({ amount: undetectedXp(1), source: "stealth" });
       expect(xp.filter((e) => e.source !== "quest")).toEqual(expected);
     }
+  });
+
+  it("a delivery to Hana's stall pays as a job of Krakowskie's band, Kaito's (user's decision of 7.11)", () => {
+    const delivered: Contract = { id: "c1", kind: "delivery", siteId: "hana_stall", targets: 0, reward: 300, status: "cleared" };
+    const sim = simWith((d) => ({
+      ...d,
+      progression: progressionFromXp(xpForLevel(12)),
+      contracts: { active: delivered, completed: 0, tally: { ...freshTally(0), detected: true } },
+    }));
+    const xp = collect<{ amount: number; source: string }>(sim, "ExperienceGained");
+    sim.enqueue({ type: "complete-contract" });
+    sim.step();
+    // Of level 8, the top of Krakowskie's 1-8, not 12 as the market's band would make it.
+    expect(xp.filter((e) => e.source === "contract")).toEqual([{ amount: contractXp("delivery", 0, 8), source: "contract" }]);
+    expect(contractXp("delivery", 0, 8)).toBeLessThan(contractXp("delivery", 0, 12));
   });
 
   it("an enemy killed by the player pays its type's XP; one killed by someone else pays nothing", () => {

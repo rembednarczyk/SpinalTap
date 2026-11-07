@@ -13,6 +13,8 @@ import { markEnforcer } from "./enforcer-mark";
 import { easeLift, groundLift } from "./ground-lift";
 import type { LadderRungs } from "./ladder-hands";
 import { type CharacterModelKey, type CharacterModelManifest, ModelLibrary } from "./model-library";
+import { carriedShoulder } from "./knockout-carry";
+import { animateKnockout, settleKnockout } from "./knockout-pose";
 import type { HumanoidRetarget } from "./model-rig";
 import { type ScanClass, scanClassOfView } from "./scan-highlight";
 import type { FxActors, ScanVisitor } from "./screen-fx";
@@ -85,8 +87,8 @@ export interface CharacterViewsDeps {
 /**
  * Views of the characters: procedural rigs, their transforms, draw distance and animation. A
  * facade (ADR-0031) over `CharacterModels` (imported models dressed over the rigs, pooled for
- * reuse), `CharacterKit` (weapons and garment add-ons) and `CharacterDeaths` (the death fall
- * after the simulation removed one).
+ * reuse), `CharacterKit` (weapons and garment add-ons), `CharacterDeaths` (the death fall
+ * after the simulation removed one) and the knockout parts (`knockout-pose`, `knockout-carry`).
  */
 export class CharacterViews implements FxActors {
   private readonly views = new Map<EntityId, CharacterView>();
@@ -154,6 +156,7 @@ export class CharacterViews implements FxActors {
     const lift = (this.deps.lift ?? groundLift)(t.position.x, t.position.y, t.position.z);
     this.views.set(id, { rig, transform: t, model, name, scan: scanClassOfView(view), lift });
     applyTransform(rig, t, lift);
+    settleKnockout(rig, !!t.unconscious, carriedShoulder(id, t, this.deps.cameraTarget(), this.views));
     this.models.dress(rig, model, name);
   }
 
@@ -166,7 +169,10 @@ export class CharacterViews implements FxActors {
     return true;
   }
 
-  /** `fall` plays the death fall first; otherwise the character goes at once (reset, streaming, the player). */
+  /**
+   * `fall` plays the death fall first; otherwise the character goes at once (reset, streaming, the
+   * player). A knocked-out body is down already and goes at once too (into a hiding place, ADR-0065).
+   */
   despawn(id: EntityId, fall: boolean): void {
     const v = this.views.get(id);
     if (!v) return;
@@ -174,7 +180,7 @@ export class CharacterViews implements FxActors {
     this.kit.forget(id);
     // A pooled model must not come back faded on someone else.
     fadeFigure(v.rig.root, 0);
-    if (fall) {
+    if (fall && !v.transform.unconscious) {
       this.deaths.fall(v.rig);
     } else {
       disposeRig(v.rig, this.kit, this.models);
@@ -198,12 +204,16 @@ export class CharacterViews implements FxActors {
     const followed = this.deps.cameraTarget();
     for (const [id, v] of this.views) {
       // Far characters are switched off and skip their animation (ADR-0040).
+      const t = v.transform;
+      const shoulder = carriedShoulder(id, t, followed, this.views);
       if (id !== followed) {
         const near = withinDrawDistance(v.rig.root.position, eye);
-        if (v.rig.root.isEnabled(false) !== near) v.rig.root.setEnabled(near);
-        if (!near) continue;
+        // A carried body is hidden with its carrier in first person.
+        const shown = near && (shoulder === null || followed === null || this.views.get(followed)?.rig.root.isEnabled(false) !== false);
+        if (v.rig.root.isEnabled(false) !== shown) v.rig.root.setEnabled(shown);
+        if (!near) settleKnockout(v.rig, !!t.unconscious, null);
+        if (!shown) continue;
       }
-      const t = v.transform;
       // On a sidewalk the figure stands on its top (ADR-0041); the kerb is a short step.
       const lift = easeLift(v.lift, (this.deps.lift ?? groundLift)(t.position.x, t.position.y, t.position.z), dt);
       if (lift !== v.lift) {
@@ -214,6 +224,7 @@ export class CharacterViews implements FxActors {
       const motion = { ...(t.air !== undefined ? { air: t.air } : {}), ...climb, clock };
       animateRig(v.rig, t.speed, dt, t.crouch, { aim: t.aim ?? 0, guard: t.guard ?? 0 }, motion);
       this.deps.pose?.(id, v.rig, t.speed, dt, this.models.of(v.rig)?.retarget ?? null, clock);
+      animateKnockout(v.rig, dt, !!t.unconscious, shoulder);
     }
     this.deaths.update(dt);
     this.models.update(dt, clock);
