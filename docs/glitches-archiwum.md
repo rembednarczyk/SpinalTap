@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-459 Bohaterka niesie ciało z wyciągniętym pistoletem
+- Status: naprawione (PR #371, 7.11, ADR-0075 etap 2; `handsBusy` w rigu: broń w kaburze w chwycie i przy niesieniu, kamera chowa viewmodel w FPP; testy `grab-pose` i `camera-grab` padają bez zmiany)
+- Ważność: S3 · Zasięg: sim blokuje broń przy niesieniu (ADR-0065), ale renderer dalej rysuje pistolet w dłoni
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-458 Leżące ciało rysowane na 1,7 m, a kolizja to małe koło: głowa w ścianie
+- Status: naprawione (PR #371, 7.11, ADR-0075 etap 2; `body-lay.ts` sprawdza ściany i meble ulicy (`BabylonRenderer.wallRay` przez `connectWorldRays`) i obraca albo odsuwa ciało do 0,5 m; testy `body-lay`, `wall-probe`, `world-rays` padają bez zmiany)
+- Ważność: S4 · Zasięg: ciało odłożone albo osuwające się twarzą do ściany wchodzi w nią (głowa w witrynie; poza leżenia sięga 0,8–0,9 m od punktu symulacji w kierunku yaw); poprawka: odłożenie z kierunkiem od ściany albo kolizja leżącego ciała
+- Pakiet właściciela: packages/sim (bodies), packages/engine
+
 ### G-457 Zwłoki na podniesionym terenie skaczą na y≈0
 - Status: naprawione (PR #370, 7.11; `startDeath` zapamiętuje wysokość korzenia (teren z sim + podniesienie chodnika) w `rig.deathGround`, `animateDeath` liczy od niej; testy `characters.test.ts` i `character-deaths.test.ts` padają bez poprawki; przypadek śmierci w locie i na drabinie w G-481)
 - Ważność: S3 · Zasięg: `animateDeath` ustawia `root.position.y = 0.12 − sink` w układzie świata, więc ciało na terenie NMT wyżej niż 0 spada pod teren albo wisi; do połączenia z ragdollem

@@ -1370,16 +1370,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (test) · Zasięg: przy zmianie id gangerzy stoją ok. 600 kroków przy wschodniej ścianie hali (x 436,4), test wisi na granicy 960 kroków
 - Pakiet właściciela: packages/sim (AI, treść Alchemii), packages/app (test)
 
-### G-458 Leżące ciało rysowane na 1,7 m, a kolizja to małe koło: głowa w ścianie
-- Status: w PR #371 (7.11, ADR-0075 etap 2, w weryfikacji; zgłoszone przez naprawiacza G-449)
-- Ważność: S4 · Zasięg: ciało odłożone albo osuwające się twarzą do ściany wchodzi w nią (głowa w witrynie; poza leżenia sięga 0,8–0,9 m od punktu symulacji w kierunku yaw); poprawka: odłożenie z kierunkiem od ściany albo kolizja leżącego ciała
-- Pakiet właściciela: packages/sim (bodies), packages/engine
-
-### G-459 Bohaterka niesie ciało z wyciągniętym pistoletem
-- Status: w PR #371 (7.11, ADR-0075 etap 2, w weryfikacji; zgłoszone przez naprawiacza G-449)
-- Ważność: S3 · Zasięg: sim blokuje broń przy niesieniu (ADR-0065), ale renderer dalej rysuje pistolet w dłoni
-- Pakiet właściciela: packages/engine (renderer)
-
 ### G-462 Inne ruiny z OSM rysowane jak budynki
 - Status: zgłoszone (7.11, kurator przeglądu #357; poza w66286396, które zamyka #357)
 - Ważność: S4 · Zasięg: w232362881 (`ruins=yes`), `building=ruins` w67498742, w813194693, w1330433247; do rozważenia razem z G-053
