@@ -51,9 +51,12 @@ const fractionOf = (look: number): number => {
   return ((h ^ (h >>> 16)) >>> 0) / 0x100000000;
 };
 
+/** A file's weight in its pool: 1 by default and for anything but a finite number, never below 0 (G-488). */
+const weightOf = (p: PooledModelSpec): number => (typeof p.weight === "number" && Number.isFinite(p.weight) ? Math.max(0, p.weight) : 1);
+
 /** The file of a pool a look draws, by the weights; null for an empty pool. */
 export const pickFromPool = (pool: readonly PooledModelSpec[], look: number): PooledModelSpec | null => {
-  const weights = pool.map((p) => Math.max(0, p.weight ?? 1));
+  const weights = pool.map(weightOf);
   const total = weights.reduce((a, b) => a + b, 0);
   if (total <= 0) return null;
   let r = fractionOf(look) * total;

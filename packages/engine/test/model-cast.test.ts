@@ -49,6 +49,18 @@ describe("the model a character wears", () => {
     expect(pickFromPool([{ url: "z", weight: 0 }], 1)).toBeNull();
   });
 
+  it("draws a weight that is no number as the default 1 and a negative one as 0, never always the last file (G-488)", () => {
+    const pool = [{ url: "a", weight: "abc" as unknown as number }, { url: "b" }, { url: "c", weight: -5 }];
+    const counts = new Map<string, number>();
+    for (let look = 0; look < 4000; look++) {
+      const u = pickFromPool(pool, look)!.url;
+      counts.set(u, (counts.get(u) ?? 0) + 1);
+    }
+    expect(counts.get("c")).toBeUndefined();
+    expect(counts.get("a")! / 4000).toBeCloseTo(0.5, 1);
+    expect(pickFromPool([{ url: "z", weight: Number.NaN }], 1)!.url).toBe("z");
+  });
+
   it("pools instances by file, scale, turn and variant, and loads each file once", () => {
     expect(modelPoolKey({ url: "kaito.vrm", scale: 1.03 })).not.toBe(modelPoolKey({ url: "kaito.vrm", scale: 1.03, variant: 1 }));
     expect(modelPoolKey({ url: "kaito.vrm" })).toBe(modelPoolKey({ url: "kaito.vrm", scale: 1, yaw: 0, variant: 0 }));
