@@ -204,13 +204,17 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
       </div>
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
-          {!touch && <kbd>{keyOf(controls, "interact", "E", t)}</kbd>} {prompt}
+          <span className="hud__prompt-action" data-testid="prompt-main">
+            {!touch && <kbd>{keyOf(controls, "interact", "E", t)}</kbd>} {prompt}
+          </span>
           {promptHold && (
-            // A second action on the same target (ADR-0075): the attack button, on touch too.
-            <span className="hud__prompt-hold" data-testid="prompt-hold">
-              {" · "}
-              {!touch && <kbd>{keyOf(controls, "fire", "LMB", t)}</kbd>} {promptHold}
-            </span>
+            // A second action on the same target (ADR-0075), the attack button's: as loud as the first.
+            <>
+              <span className="hud__prompt-sep">{" · "}</span>
+              <span className="hud__prompt-action" data-testid="prompt-hold">
+                {!touch && <kbd>{keyOf(controls, "fire", "LMB", t)}</kbd>} {promptHold}
+              </span>
+            </>
           )}
         </div>
       )}

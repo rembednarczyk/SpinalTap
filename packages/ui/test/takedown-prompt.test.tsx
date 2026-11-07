@@ -33,6 +33,20 @@ describe("grab prompt (ADR-0075)", () => {
     expect(keys(prompt)).toEqual(["F", "J"]);
   });
 
+  it("shows the knock-out and the kill as two equal parts on a computer", () => {
+    const { store } = mount();
+    act(() => patchUi(store, { prompt: "Knock out", promptHold: "Kill" }));
+    const main = screen.getByTestId("prompt-main");
+    const kill = screen.getByTestId("prompt-hold");
+    expect(main.textContent).toBe("E Knock out");
+    expect(kill.textContent).toBe("LMB Kill");
+    // Siblings with the same class: the kill is not nested in, nor styled quieter than, the knock-out.
+    expect(kill.parentElement).toBe(main.parentElement);
+    expect(kill.className).toBe(main.className);
+    expect(kill.getAttribute("style")).toBeNull();
+    expect(screen.getByTestId("prompt").textContent).toBe("E Knock out · LMB Kill");
+  });
+
   it("has no second action for a plain prompt, nor once the prompt goes", () => {
     const { store } = mount();
     act(() => patchUi(store, { prompt: "Talk to Kaito", promptHold: null }));
