@@ -1540,6 +1540,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: wykop rampy przecina oś alejki w177513189 na 17,6 m, szyb klatki na 2,2 m, domek klatki stoi na jej zakręcie (zostaje ok. 2,8 m przejazdu); T0 ma nawierzchnię z OSM, choć plan 2026 przewiduje plac i zielony dach; proponowana kontrola `cut-on-road` (baza dziś 3); T-237, T-238
 - Pakiet właściciela: tools/osm-import
 
+### G-501 Przebranie zdejmuje pożyczoną górę albo dół wariantu postaci
+- Status: zgłoszone (7.11, weryfikator #376)
+- Ważność: S4 · Zasięg: `loadout.ts:448` bierze własną teksturę pliku, więc w przebraniu postać traci teksturę ubrań pożyczoną z innego modelu (ADR-0076 etap 2); przy okazji: akcesoria bez obrysu i cienia odstają od stylu modeli; `donorsOf` wczytuje każdy plik manifestu, by poznać jego bazę (przy limicie 5 plików na telefonie problem w etapie 4); `models.spec` nie sprawdza aktywnych siatek, tylko wywołania; `npr-perf` „Nabrzeże at night” przekracza limit czekania na klatkę przy load ok. 19
+- Pakiet właściciela: packages/engine (renderer)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
