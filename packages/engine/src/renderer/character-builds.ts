@@ -75,6 +75,7 @@ const finish = (
     time: 0,
     flinch: 0,
     dying: null,
+    deathGround: 0,
     lastAir: null,
     airBlend: 0,
     landing: 0,
