@@ -13,7 +13,8 @@ import { markEnforcer } from "./enforcer-mark";
 import { easeLift, groundLift } from "./ground-lift";
 import type { LadderRungs } from "./ladder-hands";
 import { type CharacterModelKey, type CharacterModelManifest, ModelLibrary } from "./model-library";
-import { type Shoulder, animateKnockout, settleKnockout } from "./knockout-pose";
+import { carriedShoulder } from "./knockout-carry";
+import { animateKnockout, settleKnockout } from "./knockout-pose";
 import type { HumanoidRetarget } from "./model-rig";
 import { type ScanClass, scanClassOfView } from "./scan-highlight";
 import type { FxActors, ScanVisitor } from "./screen-fx";
@@ -56,13 +57,6 @@ const builderOf = (view: CharacterDescriptor) =>
           ? buildRipperdoc
           : buildCivilian;
 
-/**
- * How close (metres) a knocked-out body stands to the followed character when that one carries it:
- * the simulation puts a carried body right on its carrier (ADR-0065), a lying one is kept a body's
- * width away by the push-out.
- */
-const CARRIED_WITHIN = 0.3;
-
 const applyTransform = (rig: CharacterRig, t: Transform, lift: number): void => {
   rig.root.position.set(t.position.x, t.position.y + lift, t.position.z);
   rig.root.rotation.y = t.yaw;
@@ -93,8 +87,8 @@ export interface CharacterViewsDeps {
 /**
  * Views of the characters: procedural rigs, their transforms, draw distance and animation. A
  * facade (ADR-0031) over `CharacterModels` (imported models dressed over the rigs, pooled for
- * reuse), `CharacterKit` (weapons and garment add-ons) and `CharacterDeaths` (the death fall
- * after the simulation removed one).
+ * reuse), `CharacterKit` (weapons and garment add-ons), `CharacterDeaths` (the death fall
+ * after the simulation removed one) and the knockout parts (`knockout-pose`, `knockout-carry`).
  */
 export class CharacterViews implements FxActors {
   private readonly views = new Map<EntityId, CharacterView>();
@@ -162,7 +156,7 @@ export class CharacterViews implements FxActors {
     const lift = (this.deps.lift ?? groundLift)(t.position.x, t.position.y, t.position.z);
     this.views.set(id, { rig, transform: t, model, name, scan: scanClassOfView(view), lift });
     applyTransform(rig, t, lift);
-    settleKnockout(rig, !!t.unconscious, this.shoulderFor(id, t));
+    settleKnockout(rig, !!t.unconscious, carriedShoulder(id, t, this.deps.cameraTarget(), this.views));
     this.models.dress(rig, model, name);
   }
 
@@ -211,7 +205,7 @@ export class CharacterViews implements FxActors {
     for (const [id, v] of this.views) {
       // Far characters are switched off and skip their animation (ADR-0040).
       const t = v.transform;
-      const shoulder = this.shoulderFor(id, t);
+      const shoulder = carriedShoulder(id, t, followed, this.views);
       if (id !== followed) {
         const near = withinDrawDistance(v.rig.root.position, eye);
         // A carried body is hidden with its carrier in first person.
@@ -236,22 +230,6 @@ export class CharacterViews implements FxActors {
     this.models.update(dt, clock);
     for (const v of this.views.values()) if (v.rig.root.isEnabled(false)) this.kit.loadouts.update(v.rig);
     for (const rig of this.deaths.rigs) this.kit.loadouts.update(rig);
-  }
-
-  /**
-   * The followed character's left shoulder (the TPP camera looks over the right one) in the frame
-   * of the knocked-out body `id` it carries; null when it is not carried. The simulation names no
-   * carrier, so a body on the followed character's spot is taken as on its shoulder.
-   */
-  private shoulderFor(id: EntityId, t: Transform): Shoulder | null {
-    const followed = this.deps.cameraTarget();
-    if (!t.unconscious || followed === null || followed === id) return null;
-    const carrier = this.views.get(followed);
-    if (!carrier) return null;
-    const c = carrier.transform.position;
-    if (Math.hypot(c.x - t.position.x, c.z - t.position.z) > CARRIED_WITHIN || Math.abs(c.y - t.position.y) > CARRIED_WITHIN) return null;
-    const arm = carrier.rig.armL.position;
-    return { x: arm.x, y: arm.y + carrier.rig.body.position.y, z: arm.z };
   }
 
   /** Hides the player's body in first person. */

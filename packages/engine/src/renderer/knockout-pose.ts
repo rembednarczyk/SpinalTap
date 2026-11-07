@@ -53,11 +53,19 @@ interface Limp {
   readonly headY: number;
 }
 
-const mixLimp = (a: Limp, b: Limp, t: number): Limp => {
-  const out = { ...a } as Record<keyof Limp, number>;
-  for (const k of Object.keys(a) as (keyof Limp)[]) out[k] = a[k] + (b[k] - a[k]) * t;
+const LIMP_KEYS = ["x", "y", "z", "pitch", "yaw", "roll", "thighL", "thighR", "kneeL", "kneeR", "armLX", "armLZ", "armRX", "armRZ", "elbowL", "elbowR", "headX", "headY"] as const satisfies readonly (keyof Limp)[];
+
+type MutableLimp = { -readonly [K in keyof Limp]: number };
+
+const blankLimp = (): MutableLimp => ({ x: 0, y: 0, z: 0, pitch: 0, yaw: 0, roll: 0, thighL: 0, thighR: 0, kneeL: 0, kneeR: 0, armLX: 0, armLZ: 0, armRX: 0, armRZ: 0, elbowL: 0, elbowR: 0, headX: 0, headY: 0 });
+
+/** Mixes into `out`, reused every frame for every body: the pose is applied before the next one is mixed. */
+const mixLimp = (a: Limp, b: Limp, t: number, out: MutableLimp): Limp => {
+  for (const k of LIMP_KEYS) out[k] = a[k] + (b[k] - a[k]) * t;
   return out;
 };
+const FALL_MIX = blankLimp();
+const CARRY_MIX = blankLimp();
 
 /** On the knees, slumped forward, the head dropped and the arms hanging. */
 const kneeling = (rig: CharacterRig): Limp => {
@@ -122,7 +130,7 @@ const overShoulder = (rig: CharacterRig, at: Shoulder): Limp => {
 };
 
 /** Where the fall stands at `k` (0 on the feet .. 1 lying): the knees give first, then the body goes over. */
-const limpPose = (rig: CharacterRig, k: number): Limp => mixLimp(kneeling(rig), prone(rig), smooth(Math.min(1, Math.max(0, (k - 0.35) / 0.65))));
+const limpPose = (rig: CharacterRig, k: number): Limp => mixLimp(kneeling(rig), prone(rig), smooth(Math.min(1, Math.max(0, (k - 0.35) / 0.65))), FALL_MIX);
 
 const apply = (rig: CharacterRig, p: Limp, w: number): void => {
   const mix = (from: number, to: number) => from + (to - from) * w;
@@ -168,7 +176,7 @@ export const animateKnockout = (rig: CharacterRig, dt: number, unconscious: bool
   if (shoulder) lastShoulder.set(rig, shoulder);
   if (k <= 0 && rig.carried <= 0) return;
   const held = shoulder ?? lastShoulder.get(rig) ?? null;
-  const pose = held && rig.carried > 0 ? mixLimp(limpPose(rig, k), overShoulder(rig, held), smooth(rig.carried)) : limpPose(rig, k);
+  const pose = held && rig.carried > 0 ? mixLimp(limpPose(rig, k), overShoulder(rig, held), smooth(rig.carried), CARRY_MIX) : limpPose(rig, k);
   // The walk gives way within the first half of the fall; the shape of the fall itself is the slump.
   apply(rig, pose, Math.max(smooth(Math.min(1, k / 0.5)), rig.carried));
 };
