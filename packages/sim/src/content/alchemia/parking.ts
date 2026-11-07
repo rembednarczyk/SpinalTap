@@ -190,6 +190,8 @@ const shellPieces = (): Piece[] => {
     piece(box(P1.minX, P1.minX + W, P1.minZ, P1.maxZ, base, top), "wall", true),
     piece(box(P1.minX + W, r.minX - W, P1.minZ, P1.minZ + W, base, top), "wall", true),
     piece(box(P1.minX, HALL.minX, P1.maxZ - W, P1.maxZ, base, top), "wall", true),
+    // The threshold in the hall's back wall: its floor drawn across the wall's thickness.
+    piece(box(P1_HALL_DOOR.x0, P1_HALL_DOOR.x1, HALL.minZ, HALL.minZ + HALL.wall, base, F), "floor", true, false),
     piece(box(P1.maxX - W, P1.maxX, s.maxZ, P1.maxZ, base, top), "wall", true),
     // The trench's west wall goes on along the deck's east side down to the covered part.
     piece(box(r.minX - W, r.minX, P1.minZ, r.covered, base, top), "wall", true),
