@@ -166,18 +166,20 @@ export const convertModelMaterials = (container: AssetContainer, materials: Toon
   const groups = new Map<string, AbstractMesh[]>();
   const dataIds = new Map<object, number>();
   const dropped: AbstractMesh[] = [];
+  const read = new Set<BaseTexture>();
   let nextDataId = 0;
   for (const mesh of container.meshes) {
     if (!mesh.material || mesh.getTotalVertices() === 0) continue;
     if (!vertexColors && mesh.isVerticesDataPresent(VertexBuffer.ColorKind)) (mesh as Mesh).removeVerticesData(VertexBuffer.ColorKind);
     const source = readSourceMaterial(mesh.material);
     replaced.add(mesh.material);
-    mesh.material = materials.forImported(source.base, source.texture, preset, source);
-    mesh.isPickable = false;
     if (source.hidden) {
       dropped.push(mesh);
       continue;
     }
+    if (source.texture) read.add(source.texture);
+    mesh.material = materials.forImported(source.base, source.texture, preset, source);
+    mesh.isPickable = false;
     const toonSource: ToonSource = { preset, source };
     mesh.metadata = { ...(mesh.metadata as object | null), toonOutline: source.outline, toonSource };
     // Primitives of one glTF mesh have their own Geometry but share the vertex data.
@@ -209,6 +211,18 @@ export const convertModelMaterials = (container: AssetContainer, materials: Toon
   }
   for (const old of replaced) (old as { dispose?: (a?: boolean, b?: boolean) => void }).dispose?.(false, false);
   container.materials.length = 0;
+  releaseUnreadTextures(container, read);
+};
+
+/**
+ * Frees the file's textures no toon material reads (ADR-0076 §4): the hidden layers', and any
+ * normal, emission or occlusion map a non-VRM glTF brings (the toon shader samples the base only).
+ */
+const releaseUnreadTextures = (container: AssetContainer, read: ReadonlySet<BaseTexture>): void => {
+  const kept = container.textures.filter((t) => read.has(t));
+  for (const t of container.textures) if (!read.has(t)) t.dispose();
+  container.textures.length = 0;
+  container.textures.push(...kept);
 };
 
 /** Thin enough to stay under most clothing layers when a model opts into the hull. */
@@ -275,6 +289,11 @@ export class ModelLibrary {
   /** Downloads and parses the file without making an instance (the loading screen, ADR-0057). */
   preload(spec: CharacterModelSpec): Promise<unknown> {
     return this.load(spec);
+  }
+
+  /** The textures a loaded file keeps for its instances (a measure of its memory, ADR-0076). */
+  async texturesOf(spec: CharacterModelSpec): Promise<readonly BaseTexture[]> {
+    return [...(await this.load(spec)).container.textures];
   }
 
   private load(spec: CharacterModelSpec): Promise<Loaded> {
