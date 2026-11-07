@@ -37,6 +37,7 @@ import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
 import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
+import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
@@ -1218,6 +1219,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "arcade-rhythm": () => arcadeRhythm(gamePiers()),
   /** Ground left over 0.3 m under the map's by T2's pads on grid points, off the Arkady, their pavement and landing (G-460). */
   "pad-dip-uncovered": () => padDipUncovered(dipInGame()),
+  /** The pavilion on Alchemia's corner on a sidewalk's paving, a crossing or a carriageway, or its ladder's foot on a sidewalk (ADR-0074 stage 3). */
+  "pavilion-on-paving": () => pavilionOnPaving(pavingInGame()),
   /**
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.
