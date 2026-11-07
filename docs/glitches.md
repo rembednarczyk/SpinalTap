@@ -1521,7 +1521,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/persistence
 
 ### G-500 Asfalt alejek parkingu w173531008 urywa się na parapetach rampy P−1 i wchodzi pod domek klatki
-- Status: zgłoszone (7.11, kurator przeglądu #375; czeka na decyzję użytkownika o asfalcie T0)
+- Status: zgłoszone (7.11, kurator przeglądu #375; decyzja użytkownika 7.11: asfalt T0 zamienić na plac i zielony dach, ADR-0074 etap 7)
 - Ważność: S4 · Zasięg: wykop rampy przecina oś alejki w177513189 na 17,6 m, szyb klatki na 2,2 m, domek klatki stoi na jej zakręcie (zostaje ok. 2,8 m przejazdu); T0 ma nawierzchnię z OSM, choć plan 2026 przewiduje plac i zielony dach; proponowana kontrola `cut-on-road` (baza dziś 3); T-237, T-238
 - Pakiet właściciela: tools/osm-import
 
