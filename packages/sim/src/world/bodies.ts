@@ -72,7 +72,8 @@ export const corpseOf = (e: Entity, downed: DownedBody): Body => {
     pitch: 0,
     velocity: { x: 0, y: 0, z: 0 },
     unconscious: true,
-    downed: { ...downed, dead: true, lookedBy: [], finder: null, wake: 0 },
+    // The report of a knock-out is the assault's (G-334): the corpse waits for its murder's own.
+    downed: { ...downed, dead: true, reported: downed.dead && downed.reported, lookedBy: [], finder: null, wake: 0 },
   };
   if (e.key) c.key = e.key;
   if (e.chunk) c.chunk = e.chunk;
@@ -83,6 +84,19 @@ export const corpseOf = (e: Entity, downed: DownedBody): Body => {
   // Its look comes from its type (the presentation); nothing else reads it without health.
   if (e.enemy) c.enemy = e.enemy;
   return c;
+};
+
+/**
+ * The one knocked out has just been killed (G-334): the calls still about its knock-out report the
+ * assault, not the corpse, whose murder is reported by its own witnesses or by whoever finds it.
+ */
+export const knockOutCallsOver = (world: World<Entity>, body: EntityId): void => {
+  for (const c of world.with("civilian")) {
+    const m = c.civilian.crowd;
+    if (m?.call?.body !== body) continue;
+    const { body: _, ...call } = m.call;
+    m.call = call;
+  }
 };
 
 /**
