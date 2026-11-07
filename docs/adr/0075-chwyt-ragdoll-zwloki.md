@@ -1,6 +1,6 @@
 # ADR-0075: Chwyt z wyborem, animacje obezwładnienia, ragdoll i zwłoki
 
-Status: Proponowany (7.11). Wynika z prośby użytkownika z 7.11 (backlog, sekcja „Następne”, „Obezwładnienie, prośba użytkownika 7.11”). Rozszerza ADR-0065 (obezwładnienie) i zastępuje jego regułę „przytrzymanie ataku zabija”. Stan kodu: `origin/main` 4cad348 (zapis v33), PR #356 (G-449, pozy ogłuszenia i niesienia w rendererze) i PR #357 (Alchemia etap 2, zapis v34) otwarte.
+Status: Zaakceptowany (7.11, decyzje użytkownika w sekcji „Decyzje użytkownika (7.11)”). Wynika z prośby użytkownika z 7.11 (backlog, sekcja „Następne”, „Obezwładnienie, prośba użytkownika 7.11”). Rozszerza ADR-0065 (obezwładnienie) i zastępuje jego regułę „przytrzymanie ataku zabija”. Stan kodu: `origin/main` 4cad348 (zapis v33), PR #356 (G-449, pozy ogłuszenia i niesienia w rendererze) i PR #357 (Alchemia etap 2, zapis v34) otwarte.
 
 ## Kontekst
 Użytkownik (7.11):
@@ -54,13 +54,13 @@ Użytkownik (7.11):
 
 ### 5. Zwłoki (etap 3)
 - Renderer trzyma upadłe rigi, dopóki gracz jest bliżej niż 40 m, z limitem 12 najbliższych ciał (6 na telefonie). Ciało znika tylko poza kadrem (sprawdzenie frustum kamery): najpierw najdalsze ponad limit, potem każde dalsze niż 40 m. Zanurzanie pod ziemię zostaje tylko dla ciał w kadrze po 60 s, gdy limit jest przekroczony (rzadkie, np. masowa strzelanina).
-- Zwłoki z obezwładnienia i zastrzelonego ogłuszonego są dalej bytami symulacji (ADR-0065) i rysuje je ten sam mechanizm. Zwykła śmierć zostaje obrazem bez bytu (pytanie 3).
+- Zwłoki z obezwładnienia i zastrzelonego ogłuszonego są dalej bytami symulacji (ADR-0065) i rysuje je ten sam mechanizm. Zwykła śmierć zostaje obrazem bez bytu (decyzja 3).
 - G-457 zamyka etap 3 (wysokość ciała z terenu pod nim), a G-458 etap 2 (kierunek odłożenia).
 
 ### 6. Zapis
 - Etapy 1–3: bez zmiany schematu. Chwyt jest przejściowy, a zwłoki w rendererze nie trafiają do zapisu.
 - Etap 4 (`settle-body`): miejsce zwłok zapisuje się już dziś w ciele (`BodySnapshot` z pozycją bytu), więc bez zmiany schematu.
-- Jeśli użytkownik wybierze w pytaniu 3 zwłoki jako byt po każdej śmierci, zapis dostaje nowe pole i wersję po v34 z #357 (najbliższa wolna: v35, do uzgodnienia z orkiestratorem w chwili integracji), z migracją „stare zapisy bez zwłok”.
+- Zwłoki jako byt po każdej śmierci odpadły (decyzja 3), więc żaden etap nie zmienia schematu zapisu ani złotych hashy.
 
 ## Etapy (osobne PR-y)
 1. **Chwyt z wyborem w symulacji i UI** (ten PR): kontrakt (`takedown { lethal? }`, `takedown-choose`, `TakedownStarted.window`, `TakedownChosen`), faza chwytu i zakończenia w `takedown-system`, podpowiedź z dwiema akcjami (klawiatura, pad, dotyk), teksty en/pl, testy symulacji i sesji bez renderera. Renderer bez zmian: postacie stoją w chwycie jak dotąd.
@@ -69,17 +69,19 @@ Użytkownik (7.11):
 4. **Ragdoll** dla śmierci z obezwładnienia i dla zwłok z bytem, `DamageDealt.dir`, `settle-body`, pomiar na telefonie.
 5. **Ragdoll dla każdej śmierci** (strzał, broń biała, upadek, eksplozja), limity na telefonie, budżety w `npr-perf`.
 
-## Pytania do użytkownika
-1. Co robi chwyt, gdy gracz nic nie wybierze w 3 s? (a) ogłusza (domyślne w etapie 1, zgodnie z „domyślnie bez zabijania” z ADR-0065); (b) cel się wyrywa i jest zaalarmowany; (c) chwyt trwa bez limitu, jak tarcza z człowieka w Cyberpunku.
-2. Czy świadek ma reagować już na sam chwyt? (a) nie, ocenia koniec, jak dziś (etap 1); (b) tak: chwyt widziany przez świadka jest od razu napaścią, a zabicie dokłada zabójstwo.
-3. Czy każda śmierć zostawia zwłoki jako byt symulacji (do niesienia, ukrycia i znalezienia przez ochronę)? (a) nie, tylko obezwładnienie i zastrzelony ogłuszony, reszta to obraz w rendererze (domyślne); (b) tak, z limitem i zmianą zapisu (v35), co zmienia złote hashe.
-4. Czy zabicie w chwycie ma być krótsze od duszenia? (a) oba 1,2 s (etap 1); (b) zabicie 0,8 s, duszenie 1,2 s; (c) inne liczby.
-5. Polityka zwłok: (a) 40 m i 12 ciał (6 na telefonie), znikanie poza kadrem (propozycja); (b) zwłoki na stałe do zmiany chunku; (c) inne liczby.
+## Decyzje użytkownika (7.11)
+1. Brak wyboru w 3 s kończy chwyt ogłuszeniem (wariant a).
+2. Świadek ocenia koniec obezwładnienia, jak w ADR-0065; sam chwyt nie jest jeszcze napaścią (wariant a).
+3. W symulacji zwłoki zostają tylko po obezwładnieniu i po zastrzeleniu ogłuszonego. Każda inna śmierć to obraz z ragdollem w rendererze, bez zmiany zapisu i złotych hashy (wariant a).
+5. Zwłoki leżą w promieniu 40 m od gracza, najwyżej 12 (6 na telefonie), i znikają tylko poza kadrem (wariant a).
+
+## Pytania otwarte
+4. Czy zabicie w chwycie ma być krótsze od duszenia? (a) oba 1,2 s; (b) zabicie 0,8 s, duszenie 1,2 s; (c) inne liczby. Bez odpowiedzi z 7.11: obowiązuje (a), jak w etapie 1.
 
 ## Konsekwencje
 - Wybór jest jawny i widoczny w podpowiedzi, a przytrzymanie ataku przestaje cokolwiek znaczyć. Obezwładnienie trwa dłużej o czas decyzji, więc skradanie ma więcej napięcia, a ochrona więcej czasu na nadejście.
 - Testy ADR-0065, które zabijały przytrzymaniem ataku, przechodzą na `takedown-choose`; testy sesji wciskają klawisz interakcji drugi raz albo czekają na koniec okna.
-- Ragdoll i zwłoki zostają w rendererze, więc symulacja i złote hashe nie zmieniają się do pytania 3 (b). Jedyny przepływ z renderera do symulacji to komenda `settle-body`, ograniczona regułami symulacji i nagrywana jak wejście.
+- Ragdoll i zwłoki zostają w rendererze, więc symulacja i złote hashe nie zmieniają się (decyzja 3). Jedyny przepływ z renderera do symulacji to komenda `settle-body`, ograniczona regułami symulacji i nagrywana jak wejście.
 - Własny ragdoll to kod do utrzymania (ok. 300 linii w kilku plikach) bez zależności i bez kosztu pobrania.
 
 ## Wdrożenie
