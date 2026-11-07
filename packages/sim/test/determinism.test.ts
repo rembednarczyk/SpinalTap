@@ -226,7 +226,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"dde46992"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"8cee658d"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -262,6 +262,9 @@ describe("determinism", () => {
     // Re-recorded (all of them, "hard" and the duel too) for the v32 version of the cyberdeck's
     // grades (after ADR-0059 stage 6): the runs' player has no deck, so no new field and no new rule
     // shows, and as v31 they hash to the goldens of before.
+    // Re-recorded (all of them, "hard" and the duel too) for the v34 version of Alchemia's T2 and the
+    // Arkady (ADR-0074 stage 2): a migration, no new field; the Arkady take the map's ruin's place
+    // among its buildings, so no id moves, and as v31 the runs hash to the goldens of before.
     expect(v31HashOf(sim)).toBe("8a184ff0");
     expect(v30HashOf(sim)).toBe("7dd4e4ad");
     expect(v17HashOf(sim)).toBe("1ce01d19");
@@ -281,7 +284,7 @@ describe("determinism", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"a12dbddf"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"c41cbdae"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
     expect(v31HashOf(sim)).toBe("13a15bf5");
     expect(v30HashOf(sim)).toBe("30834a04");
@@ -367,7 +370,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"b036f5d7"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"f0ccb612"`);
     expect(v31HashOf(sim)).toBe("5ce46e55");
     expect(v30HashOf(sim)).toBe("ae6c21d0");
     expect(v17HashOf(sim)).toBe("3e78c5b2");

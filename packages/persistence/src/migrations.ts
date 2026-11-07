@@ -1,6 +1,6 @@
 import { SAVE_SCHEMA_VERSION, SHARD_CYBER_CAPACITY, capacityMax, clampItemLevel, hasItemLevel, isInstanceDefId, progressionFromXp } from "@seki/core";
 import { moveMarketToAlchemia } from "./market-move";
-import { rebuildAlchemia } from "./alchemia-rebuild";
+import { levelAlchemiaT2, rebuildAlchemia } from "./alchemia-rebuild";
 
 type Json = Record<string, unknown>;
 
@@ -437,6 +437,10 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // hall, its stalls, lift or terrace wakes on T1 in front of the food hall; the market's people
   // come back at their new places, the roof stash goes by Ren on the green roof.
   32: rebuildAlchemia,
+  // v33 -> v34 (ADR-0074 stage 2): T2 levelled before the rebuilt Arkady where the Hebi hollow was. A
+  // save made in the hollow or on the ground the square changed wakes on T2; the overpass bag goes
+  // before the Arkady's arches, the bags on the square onto T2, the lookout back under the arches.
+  33: levelAlchemiaT2,
 };
 
 export class MigrationError extends Error {}
