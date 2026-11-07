@@ -415,12 +415,13 @@ export const parkedView = (c: ParkedCar): ViewDescriptor => ({ kind: "vehicle", 
  * A parked car as a static solid of the simulation: its footprint turned by its yaw, as tall as
  * the car, reaching down into the terrain under its lowest point so nobody slips under its low side.
  */
-export const parkedProp = (c: ParkedCar): StaticProp => {
+export const parkedProp = (c: ParkedCar, floor?: number): StaticProp => {
   const { width, length, height } = VEHICLE_SIZE[c.model];
   const fx = Math.sin(c.yaw);
   const fz = Math.cos(c.yaw);
   const corner = (a: number, b: number) => ({ x: fx * length * b + fz * width * a, z: fz * length * b - fx * width * a });
-  const low = Math.min(...underBody(c.x, c.z, c.yaw, c.model).map((p) => groundY(p.x, p.z)));
+  // On a floor of its own (under the street, ADR-0074 stage 4) the terrain is not under it.
+  const low = floor ?? Math.min(...underBody(c.x, c.z, c.yaw, c.model).map((p) => groundY(p.x, p.z)));
   return {
     center: { x: c.x, y: c.y, z: c.z },
     view: parkedView(c),

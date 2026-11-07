@@ -46,7 +46,8 @@ export const ALCHEMIA_UNITS: readonly UnitDef[] = [
   { id: "georgian", cuisine: "georgian", rect: r(429.6, I.maxX, 42.8, OYAJI_FRONT - 3), open: "w", shut: true },
   { id: "wok", cuisine: "wok", rect: r(415.2, 421.6, I.minZ, 38.4), open: "n" },
   { id: "burger", cuisine: "burger", rect: r(421.6, 428.2, I.minZ, 38.4), open: "n", shut: true },
-  { id: "sachiko", keeper: "sachiko", cuisine: "kiosk", rect: r(404.4, 407.7, 34.8, 37.4), open: "n" },
+  // Her counter east to the way in from P-1 (stage 4): the door in the back wall at the stairs' foot.
+  { id: "sachiko", keeper: "sachiko", cuisine: "kiosk", rect: r(404.4, 407.7, 34.8, 37.4), open: "e" },
 ];
 
 const PARTITION = 0.15;
@@ -97,7 +98,7 @@ export type KeeperKey = keyof typeof KEEPER_SPOTS;
 export const KEEPER_YAW: Readonly<Record<KeeperKey, number>> = {
   kenta: OPEN_YAW.s,
   fumiko: OPEN_YAW.n,
-  sachiko: OPEN_YAW.n,
+  sachiko: OPEN_YAW.e,
   goro: OPEN_YAW.s,
   oyaji: OPEN_YAW.s,
 };

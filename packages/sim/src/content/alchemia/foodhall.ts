@@ -1,5 +1,6 @@
 import type { GroundCut } from "../../world/ground";
 import type { Rect } from "../builders";
+import { P1_HALL_DOOR } from "./parking";
 import { type Box, HALL, HALL_INNER, PARAPET, type Piece, SINK, box, piece } from "./plan";
 
 /**
@@ -94,9 +95,11 @@ const front = (): Piece[] => {
   return out;
 };
 
-/** The back and side walls, up to the ceiling. */
+/** The back and side walls, up to the ceiling; the back one with the door onto P-1 (stage 4) at the stairs' foot. */
 const walls = (): Piece[] => [
-  piece(box(HALL.minX, HALL.maxX, HALL.minZ, HALL.minZ + W, F - SINK, C), "wall", false),
+  piece(box(HALL.minX, P1_HALL_DOOR.x0, HALL.minZ, HALL.minZ + W, F - SINK, C), "wall", false),
+  piece(box(P1_HALL_DOOR.x0, P1_HALL_DOOR.x1, HALL.minZ, HALL.minZ + W, F + P1_HALL_DOOR.top, C), "wall", false),
+  piece(box(P1_HALL_DOOR.x1, HALL.maxX, HALL.minZ, HALL.minZ + W, F - SINK, C), "wall", false),
   piece(box(HALL.minX, HALL.minX + W, HALL.minZ + W, HALL.maxZ - W, F - SINK, C), "wall", false),
   piece(box(HALL.maxX - W, HALL.maxX, HALL.minZ + W, HALL.maxZ - W, F - SINK, C), "wall", false),
 ];

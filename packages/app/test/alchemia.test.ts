@@ -102,7 +102,7 @@ describe("Alchemia's food hall under its terrace (ADR-0074 stage 1)", () => {
     teleport(session, 420, 28, 0);
     steps(session, 3);
     expect(session.sim.streamer.isLoaded(ALCHEMIA_CHUNK)).toBe(true);
-    const ids = [...session.sim.world.with("solid")].filter((e) => e.id >= ROOM_ID_BASE && Math.abs(e.position.x - 418) < 30 && Math.abs(e.position.z - 45) < 30).map((e) => e.id);
+    const ids = [...session.sim.world.with("solid")].filter((e) => e.id >= ROOM_ID_BASE && Math.abs(e.position.x - 418) < 30 && e.position.z > -12 && e.position.z < 75).map((e) => e.id);
     expect(ids.length).toBeGreaterThanOrEqual(ALCHEMIA_PROPS.filter((p) => !p.mechanism).length);
     for (const id of ids) {
       const v = views.get(id);

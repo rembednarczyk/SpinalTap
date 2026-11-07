@@ -5,6 +5,8 @@ import {
   ALCHEMIA_CHUNK,
   ALCHEMIA_MARKET_ACTORS,
   FOODHALL,
+  P1,
+  P1_ROOMS,
   CONTRACT_HOOKS,
   CONTRACT_ITEM_SPOTS,
   CROWD_SPOTS,
@@ -73,6 +75,8 @@ const inPavilion = (p: Vec3): boolean =>
 /** The floor under `p`: inside the hall's outline its floor or its roof, on the pavilion its roof, the ground elsewhere. */
 const floorAt = (p: Vec3): number => {
   if (inPavilion(p) && p.y > ALCHEMIA_PAVILION.floor + 1) return ALCHEMIA_PAVILION.roof;
+  // P-1 under the car park (stage 4): its floor for points deep under the ground.
+  if (P1_ROOMS.some((r) => p.x >= r.minX && p.x <= r.maxX && p.z >= r.minZ && p.z <= r.maxZ) && p.y < P1.ceiling) return P1.floor;
   const inHall = p.x >= FOODHALL.minX && p.x <= FOODHALL.maxX && p.z >= FOODHALL.minZ && p.z <= FOODHALL.maxZ;
   if (!inHall) return groundY(p.x, p.z);
   return p.y > FOODHALL.floor + 1 ? FOODHALL.roof : FOODHALL.floor;

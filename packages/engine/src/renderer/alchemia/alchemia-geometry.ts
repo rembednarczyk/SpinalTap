@@ -29,6 +29,11 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   frame: "dark",
   shutter: "metal",
   memorial: "dark",
+  floor: "roof",
+  column: "trim-light",
+  marking: "trim-light",
+  charger: "neon-green",
+  machine: "metal",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */

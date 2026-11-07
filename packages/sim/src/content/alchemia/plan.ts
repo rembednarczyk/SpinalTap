@@ -42,7 +42,27 @@ export interface Box {
 export const box = (x0: number, x1: number, z0: number, z1: number, y0: number, y1: number): Box => ({ x0, x1, z0, z1, y0, y1 });
 
 /** What a piece is, for the engine's colours (one material, ADR-0074 §6). */
-export type PieceKind = "wall" | "glass" | "roof" | "green" | "parapet" | "partition" | "counter" | "grille" | "table" | "bench" | "step" | "frame" | "shutter" | "memorial";
+export type PieceKind =
+  | "wall"
+  | "glass"
+  | "roof"
+  | "green"
+  | "parapet"
+  | "partition"
+  | "counter"
+  | "grille"
+  | "table"
+  | "bench"
+  | "step"
+  | "frame"
+  | "shutter"
+  | "memorial"
+  // The car park's (stage 4): its floor, columns, paint, chargers and machines.
+  | "floor"
+  | "column"
+  | "marking"
+  | "charger"
+  | "machine";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {

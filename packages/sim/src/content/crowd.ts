@@ -12,7 +12,7 @@ import { SEAT_SPOTS } from "./crowd-seats";
 import { offKerbParks, onKerbPark } from "./crowd-kerb-parks";
 import type { CrowdSpot } from "./crowd-spot";
 import { TRAFFIC_ROUTES } from "./traffic";
-import { FOODHALL_CROWD } from "./alchemia/crowd";
+import { FOODHALL_CROWD, PARKING_CROWD } from "./alchemia/crowd";
 
 /** The chunks of Lublin that hold the market (in Alchemia, ADR-0063) and the docks (ADR-0045). */
 const MARKET_CHUNK = "krakowskie-2-1";
@@ -425,6 +425,8 @@ export const CROWD_SPOTS: readonly CrowdSpot[] = [
   spot(MARKET_CHUNK, ground(436, 106), SOUTH, ["phone"]),
   // In the food hall under the terrace (ADR-0074): at the counters and the shared tables.
   ...FOODHALL_CROWD,
+  // And in its car park's P-1 under T0 (stage 4): the attendant, a technician, a guard.
+  ...PARKING_CROWD,
   spot(DOCKS_CHUNK, inDocks(12.6, 101.2), WEST, ["smoke", "lean"]),
   spot(DOCKS_CHUNK, inDocks(26, 104), NORTH, ["phone"]),
   spot(DOCKS_CHUNK, inDocks(12.6, 137.5), NORTH, ["lean", "smoke"]),
