@@ -250,6 +250,20 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(hung({ items: [row, { ...square, baskets: undefined }, baskets] })).not.toEqual(before);
   });
 
+  it("faces a group of points the way its yaw says, and one without a yaw towards open pavement (ADR-0074 stage 7)", () => {
+    const benches = (yaw?: number) =>
+      generateProps({ items: [{ id: "plac.bench", kind: "bench", points: [[30, 36.5], [70, 36.5]], ...(yaw === undefined ? {} : { yaw }) }] }, [street()])
+        .byChunk.get("test-0-0")!
+        .filter((i) => i.prop === "bench")
+        .map((i) => i.yaw);
+    expect(benches(-90)).toEqual([-1.57, -1.57]);
+    expect(benches(180)).toEqual([3.14, 3.14]);
+    // Without a yaw, the generator's own facing, the same for both on this straight sidewalk.
+    const open = benches();
+    expect(open).toHaveLength(2);
+    expect(open[0]).toBe(open[1]);
+  });
+
   it("spreads lines and areas deterministically, inside the area and off the buildings", () => {
     const line = [
       { x: 0, z: 0 },
