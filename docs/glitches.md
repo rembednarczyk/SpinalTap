@@ -1355,9 +1355,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: r 0,87/0,92 m wobec 0,62/0,64 m z obwodu; także kolizja w sim; poprawka: pień skalowany słabiej niż korona
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
 
-### G-444 `map-city.test.ts` wolniejszy o ok. 12% po G-423, pada na 5 s pod obciążeniem
-- Status: zgłoszone (7.11, kurator, przegląd G-423)
-- Ważność: S4 (test) · Zasięg: „builds the whole generated Lublin” 3,5–3,9 s wobec 3,2–3,3 s przed; przy load ok. 15 przekroczył 5000 ms; najpierw pomiar przyczyny (nowe modele drzew), bez podnoszenia limitu
+### G-444 `map-city.test.ts` z małym zapasem do 5 s: koszt docinania i drapowania podłoża
+- Status: zgłoszone (7.11, kurator przy G-423; zbadane 7.11, naprawiacz: #348 nie spowalnia testu, różnice w szumie obciążenia)
+- Ważność: S4 (test) · Zasięg: „builds the whole generated Lublin” zużywa ok. 3,8–4,2 s CPU wobec limitu 5000 ms, więc przy load ok. 15 na 4 rdzeniach przekracza limit na każdym commicie; ok. 60% profilu to `ground-cut.ts` (`cutCovers`, `minusTriangle`), `ground-plan.ts` (drapowanie, `planSurface`) i `heightAt` w `map-entries.ts`; profil w scratchpadzie sesji `g444-new.cpuprofile`; bez podnoszenia limitu
 - Pakiet właściciela: packages/engine (renderer/mapcity)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
