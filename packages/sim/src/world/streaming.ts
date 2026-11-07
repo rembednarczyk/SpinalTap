@@ -108,7 +108,8 @@ export class WorldStreamer {
     // And the vaults of their platforms under the street (stage 4).
     this.ground = new GroundField(
       chunks,
-      here.map((e) => e.cut),
+      // With the chunks' own dug ground (Alchemia's food hall, ADR-0074).
+      [...here.map((e) => e.cut), ...chunks.flatMap((c) => c.cuts ?? [])],
       here.flatMap((e) => e.platform?.vaults ?? []),
     );
     this.nav = chunks === WORLD_CHUNKS ? WORLD_NAV : mergeNav(...chunks.flatMap((c) => (c.nav ? [c.nav] : [])));

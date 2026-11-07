@@ -7,6 +7,7 @@ import { GATE_PASSAGES, type PassageSite } from "./gate-passages";
 import { abutmentRamps } from "./abutments";
 import { type GroundRect, type Pad, type Ramp, flightRamps, mapHeight, stepRamps } from "./shape";
 import type { LublinChunkData } from "./types";
+import { ALCHEMIA_PADS, ALCHEMIA_RAMPS } from "../alchemia/terraces";
 
 /**
  * Where the game's places stand in Lublin (ADR-0045): the hand-made set pieces moved into the
@@ -143,22 +144,28 @@ const grow = (r: GroundRect, d: number, north = d): GroundRect => ({ minX: r.min
  * what must be flat (the docks' quay ends at the basin instead, which starts 2 m out).
  */
 export const PADS: readonly Pad[] = [
-  { rect: grow(DOCKS_AREA, 5, 0), y: DOCKS_PLACE.y, blend: 6 },
-  { rect: DOCKS_BASIN, y: DOCKS_PLACE.y - 3, blend: 1.5 },
-  { rect: grow(CAR_WASH_AREA, 5), y: CAR_WASH_PLACE.y, blend: 3 },
+  { rect: grow(DOCKS_AREA, 5, 0), y: DOCKS_PLACE.y, blend: 6, row: "T-002" },
+  { rect: DOCKS_BASIN, y: DOCKS_PLACE.y - 3, blend: 1.5, row: "T-002" },
+  { rect: grow(CAR_WASH_AREA, 5), y: CAR_WASH_PLACE.y, blend: 3, row: "T-051" },
   // The Hebi stash in the hollow by the ruin behind Alchemia's stalls (ADR-0063 stage 6): its floor levelled,
   // kept 1 m clear of the fifth stall (x <= 431.9), so no module's floor moves.
-  { rect: HEBI_HOLLOW, y: round(rawHeight(442, 93)), blend: 3 },
+  { rect: HEBI_HOLLOW, y: round(rawHeight(442, 93)), blend: 3, row: "T-186" },
   ...ROOM_SITES.map((r): Pad => ({ rect: grow(r.rect, 5), y: r.floor, blend: 2 })),
   // Dug out under the Trybunał for Trasa Podziemna (ADR-0048): level over x 575..585, z -65..-55,
   // sloping up to the Rynek over 5 m, so the slope stays inside the Trybunał's walls. In metres,
   // not on a grid's points (G-252): on any grid of up to 5 m the stairs keep a metre of ground
   // under them, and on the import's 5 m grid its points are as they were. 2 m under the floor:
   // the Rynek's paving, draped in 5 m triangles, then stays under the floor up to the cellars' walls.
-  { rect: { minX: 575, maxX: 585, minZ: -65, maxZ: -55 }, y: TRASA_PODZIEMNA.floor - 2, blend: 5 },
+  { rect: { minX: 575, maxX: 585, minZ: -65, maxZ: -55 }, y: TRASA_PODZIEMNA.floor - 2, blend: 5, row: "T-055" },
+  // Alchemia's terraces by the investor's plan (ADR-0074 stage 1, T-206, T-207): T1 in front of the food
+  // hall, the line of the grid under its back wall at T0.
+  ...ALCHEMIA_PADS,
 ];
 
-/** Even ramps along the steps of the map (ADR-0045), then the level ground before the bridges' abutments (G-349). */
-export const RAMPS: readonly Ramp[] = [...stepRamps(MAP_CHUNKS), ...abutmentRamps(MAP_CHUNKS)];
+/**
+ * Even ramps along the steps of the map (ADR-0045), then the level ground before the bridges'
+ * abutments (G-349), then Alchemia's ramps beside the food hall from T0 to T1 (ADR-0074, T-208).
+ */
+export const RAMPS: readonly Ramp[] = [...stepRamps(MAP_CHUNKS), ...abutmentRamps(MAP_CHUNKS), ...ALCHEMIA_RAMPS];
 /** Ramps along the flights the terrain climbs against their `incline` (G-236, T-131), laid last on a finer grid (`terrain.ts`). */
 export const FLIGHT_RAMPS: readonly Ramp[] = flightRamps(MAP_CHUNKS);

@@ -34,16 +34,27 @@ type Part = Box | Post;
 const box = (x: number, z: number, hx: number, hz: number, top: number): Box => ({ x, z, hx, hz, top });
 const post = (r: number, top: number, x = 0, z = 0): Post => ({ x, z, r, top });
 
-/** Shape counts per kind, as the renderer's `PROP_SHAPES` (the low bits of `variant`). */
-const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, tree: 3, monument: 6, artwork: 6, flagpole: 2, "bike-rack": 4, container: 2, "market-goods": 4 };
+/** Shape counts per kind, as the renderer's `PROP_SHAPES` (the low bits of `variant`); a tree's solid is by `treeGirth`. */
+const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, monument: 6, artwork: 6, flagpole: 2, "bike-rack": 4, container: 2, "market-goods": 4 };
 const shapeOf = (kind: StreetPropKind, variant: number): number => variant % (SHAPES[kind] ?? 1);
 /**
- * A tree's size, as `treeScale` of `@seki/core` (G-422): a measured tree's from its step over
- * 0xf000 (three variants, one per species, a step), else 0.8 to 1.25 from bits 4 to 7. Its own copy,
- * as the importer loads this module in plain Node, where only types come from the core's index.
+ * A tree's size, as `treeScale` of `@seki/core` (G-422, G-423): an oak's or a poplar's from its step
+ * over 0xf400 (two variants, one per species, a step), a measured tree's from its step over 0xf000
+ * (three variants a step), else 0.8 to 1.25 from bits 4 to 7. Its own copy, as the importer loads
+ * this module in plain Node, where only types come from the core's index.
  */
-export const treeScale = (variant: number): number =>
-  variant >= 0xf000 ? Math.round((0.7 + Math.floor((variant - 0xf000) / 3) * 0.01) * 100) / 100 : 0.8 + 0.45 * (((variant >> 4) % 16) / 15);
+export const treeScale = (variant: number): number => {
+  const step = (k: number) => Math.round((0.7 + k * 0.01) * 100) / 100;
+  if (variant >= 0xf400) return step(Math.floor((variant - 0xf400) / 2));
+  return variant >= 0xf000 ? step(Math.floor((variant - 0xf000) / 3)) : 0.8 + 0.45 * (((variant >> 4) % 16) / 15);
+};
+
+/**
+ * A tree's trunk radius at size 1 by its species (`treeSpecies` of `@seki/core`), a little over the
+ * renderer's (`TRUNK` in `prop-green.ts`): lime, maple and horse chestnut 0.26, oak 0.42, poplar 0.45.
+ */
+const TREE_GIRTH: readonly number[] = [0.28, 0.28, 0.28, 0.44, 0.47];
+export const treeGirth = (variant: number): number => TREE_GIRTH[variant >= 0xf400 ? 3 + ((variant - 0xf400) % 2) : variant % 3]! * treeScale(variant);
 
 /**
  * A granite bollard of the old town (G-032), as the renderer draws it: `side` square, `height`
@@ -89,7 +100,7 @@ const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => 
   "lamp-modern-pole": () => [box(0, 0, 0.17, 0.17, 7.5)],
   "lamp-road": () => [box(0, 0, 0.19, 0.19, 8)],
   "lamp-park": () => [post(0.12, 3.5)],
-  tree: (_s, variant) => [post(0.28 * treeScale(variant), 3)],
+  tree: (_s, variant) => [post(treeGirth(variant), 3)],
   kiosk: () => [box(0, 0, 1.3, 1.0, 2.7)],
   // The glass back and side, the ad screen and the bench; open at the front.
   "bus-shelter": () => [box(0, -0.66, 1.74, 0.05, 2.5), box(-1.7, -0.05, 0.05, 0.6, 2.5), box(1.72, -0.05, 0.05, 0.55, 2.2), box(0, -0.4, 1.1, 0.19, 0.5)],

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type GameClock, type SaveSnapshot, START_CLOCK, type Vec3, formatClock, hm } from "@seki/core";
 import {
   OYAJI_HOURS,
-  STALL_FRONT_YAW,
+  beforeKeeper,
   ground,
   SCHEDULES,
   type ScheduleDef,
@@ -40,12 +40,14 @@ const goTo = (sim: Simulation, p: Vec3) => {
   teleportPlayer(sim, p);
   sim.step();
 };
-/** Out on the path a few metres in front of Oyaji's stall, and the car park in front of the hall, the market's chunk loaded. */
-const OUT = { x: Math.sin(STALL_FRONT_YAW), z: Math.cos(STALL_FRONT_YAW) };
-const NEAR_STALL: Vec3 = ground(OYAJI_STALL.x + OUT.x * 3, OYAJI_STALL.z + OUT.z * 3);
-const ON_PLOT: Vec3 = ground(410, 32);
-/** Beside Oyaji's door, where its prompt is in reach. */
-const byDoor = (): Vec3 => ground(OYAJI_DOOR.x + OUT.x * 1.4, OYAJI_DOOR.z + OUT.z * 1.4);
+/**
+ * In the food hall a few metres in front of Oyaji's counter, and the car park behind the hall, the
+ * market's chunk loaded (ADR-0074).
+ */
+const NEAR_STALL: Vec3 = beforeKeeper("oyaji", 3);
+const ON_PLOT: Vec3 = ground(410, 28);
+/** On T1 beside Oyaji's back door, where he sits out the night and his prompt is in reach. */
+const byDoor = (): Vec3 => ground(OYAJI_DOOR.x, OYAJI_DOOR.z + 1.4);
 
 /** Skips time to the given minute of the day (today or tomorrow), in one step. */
 const skipTo = (sim: Simulation, minute: number) => {

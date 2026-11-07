@@ -3,7 +3,7 @@ import { deriveRandom } from "../rng/derive-random";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
 import { applyReputationCause, clearContract, dropLoot, raiseFlag } from "../world/domain-ops";
-import { corpseOf } from "../world/bodies";
+import { corpseOf, knockOutCallsOver } from "../world/bodies";
 import { inCreationOrder } from "../world/ordering";
 import { grantXp, noteFight } from "../world/progression-ops";
 import { disturb, isContractTarget, noteTally, offend } from "../world/street";
@@ -37,10 +37,15 @@ const dropEnemyLoot = (ctx: Ctx, e: Entity, hers: boolean): void => {
   dropLoot(ctx, key, e.position, rolled.lines);
 };
 
+/**
+ * Was it not fighting her (ADR-0029)? A body knocked out with no fight (ADR-0065) is saved with
+ * that, `wronged` is not: after a load its killing is the murder it is in a game played through (G-334).
+ */
+const wronged = (e: Entity): boolean => !!e.wronged || (!!e.downed && !e.downed.fought);
+
 /** How the street sees this death (ADR-0070): from behind, of the heat's people, of a job's crew. */
 const killContext = (ctx: Ctx, e: Entity): KillContext => ({
-  // A body knocked out with no fight (ADR-0065) is saved with that, `wronged` is not.
-  wronged: !!e.wronged || (!!e.downed && !e.downed.fought),
+  wronged: wronged(e),
   security: !!e.security,
   crew: isContractTarget(ctx, e) || (ctx.session.street2.micro?.attackers.includes(e.id) ?? false),
 });
@@ -96,7 +101,7 @@ export const deathSystem: System = {
       const byPlayer = playerId !== undefined && e.lastHitBy === playerId;
       // Killing someone who was not fighting is a murder once someone sees it (ADR-0029). A body
       // left lying (below) is that murder's: once reported, it brings no second report.
-      if (byPlayer && e.wronged) offend(ctx, "murder", e.position, e.downed ? e.id : undefined, e.id);
+      if (byPlayer && wronged(e)) offend(ctx, "murder", e.position, e.downed ? e.id : undefined, e.id);
       if (byPlayer && !isContractTarget(ctx, e)) noteTally(ctx, (t) => ({ ...t, extraKills: t.extraKills + 1 }));
       disturb(ctx, "body", e.position, BODY_NOISE, e.id);
       if (e.tag) raiseFlag(ctx, killedFlag(e.tag));
@@ -113,6 +118,7 @@ export const deathSystem: System = {
       ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null, ...(e.lastHitBy === undefined ? {} : { killerId: e.lastHitBy }) });
       ctx.world.remove(e);
       // Killed in a takedown, or while knocked out (ADR-0065): its body stays to be found, carried, hidden.
+      if (e.downed && !e.downed.dead) knockOutCallsOver(ctx.world, e.id);
       if (e.downed) ctx.world.add(corpseOf(e, e.downed));
     }
     if (dead.length > 0) checkContractCleared(ctx);

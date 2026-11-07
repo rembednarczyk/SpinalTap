@@ -27,6 +27,7 @@ import { patrolChecks } from "./patrol-pieces";
 import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
+import { isStreet, padOnRoadFindings } from "./pad-on-road";
 import { pavingCoplanar } from "./paving-coplanar";
 import { drawnPaving, poolSunk } from "./pool-paving";
 import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
@@ -34,6 +35,7 @@ import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
 import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
+import { alchemiaHidesLandmarks, padsUnregistered } from "./alchemia-checks";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
@@ -41,6 +43,7 @@ import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroS
 import { lanternsByPassages } from "./passage-lanterns";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
+import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
@@ -77,7 +80,8 @@ import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, isLandmark } from "..
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
-import { CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
+import { CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PADS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
+import { ALCHEMIA_RAMPS } from "../../../packages/sim/src/content/alchemia/terraces";
 import { mapHeight } from "../../../packages/sim/src/content/lublin/shape";
 import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
@@ -1192,6 +1196,21 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       });
     });
   },
+  /** A pad of the terrain without its row in the topography register (ADR-0074, review of #327). */
+  "pad-unregistered": () => padsUnregistered(),
+  /**
+   * A set piece's pad, or one of Alchemia's ramps, moving the terrain by over 0.3 m on an OSM street's
+   * or footway's axis (T-209, `pad-on-road.ts`). The ramps along the steps and the bridges' abutments
+   * follow the streets by design and are left out.
+   */
+  "pad-on-road": () =>
+    padOnRoadFindings(
+      [...PADS.map((p, i) => ({ name: `pad ${p.row ?? i}`, pads: [p], ramps: [] })), ...ALCHEMIA_RAMPS.map((r, i) => ({ name: `Alchemia's ramp ${i}`, pads: [], ramps: [r] }))],
+      MAP_CHUNKS,
+      extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags)),
+    ),
+  /** Alchemia's solids hiding a landmark's top from more than a quarter of the streets round it (ADR-0074, review of #312). */
+  "game-solid-landmark-occlusion": () => alchemiaHidesLandmarks(),
   /**
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.
@@ -1751,6 +1770,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * baseline's are by walls: their crowns grow only as far as clear of the facades.
    */
   "tree-height-vs-nmpt": () => treesBelowMeasured(cityMeasuredTrees(), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A tree OSM names a genus of the renderer's models (`genus`, `species`: Quercus, Populus...) drawn as another one: the oaks and the "Baobab" of Plac Litewski as limes and maples (G-423, `tree-species.ts`). */
+  "tree-species-ignored": () => treesOfOtherSpecies(cityNamedTrees(), Object.values(WORLD_STREET_PROPS).flat()),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
   // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).

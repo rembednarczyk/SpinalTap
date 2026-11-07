@@ -1,5 +1,5 @@
 {
-  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb, drone-props.glb, crowd-props.glb, room-props.glb and alchemia-props.glb, the guns of packages/app/public/weapons and the item icons of packages/ui/src/icons: CC0 (ADR-0058), CC-BY 4.0 and, for the icons of game-icons.net only, CC BY 3.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
+  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb, drone-props.glb, crowd-props.glb and room-props.glb, the guns of packages/app/public/weapons and the item icons of packages/ui/src/icons: CC0 (ADR-0058), CC-BY 4.0 and, for the icons of game-icons.net only, CC BY 3.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
   "sources": [
     {
       "id": "kenney-modular-buildings",
@@ -253,20 +253,6 @@
       "used": ["pr-robodog"]
     },
     {
-      "id": "sketchfab-cyberpunk-building",
-      "title": "Cyberpunk Building",
-      "author": "igor.tesV",
-      "authorUrl": "https://sketchfab.com/igor.tesV",
-      "page": "https://sketchfab.com/3d-models/cyberpunk-building-e79154e588bd4a6c84fa07e9a53f3ff9",
-      "license": "CC-BY-4.0",
-      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
-      "files": [
-        { "path": "cyberpunk_building.glb", "url": "https://drive.usercontent.google.com/download?id=1NUvIka3BkJDOeEx7CFp39CLJo4OE7TKS&export=download&confirm=t", "sha256": "e6b855ec02f09f6b26186c1a1a2ae7a820979bf0b6e254ca7592de3cf83f638f" }
-      ],
-      "used": ["alchemia-hall"]
-    },
-    {
       "id": "sketchfab-futuristic-compact-room",
       "title": "Futuristic Compact Room",
       "author": "igor.tesV",
@@ -279,20 +265,6 @@
         { "path": "futuristic_compact_room.glb", "url": "https://drive.usercontent.google.com/download?id=1LWL6tdudHXCxDUU4-_yHnKaDo0qvjdli&export=download&confirm=t", "sha256": "ec3cc9033680e18a17289adfeb5126ae621756d7d8480c1b83547a9a7fb9d0a6" }
       ],
       "used": ["room-capsule"]
-    },
-    {
-      "id": "sketchfab-hw4-cyberpunk-building",
-      "title": "HW 4 Cyberpunk Sci-fi Building",
-      "author": "Eh (Just_Eh)",
-      "authorUrl": "https://sketchfab.com/Just_Eh",
-      "page": "https://sketchfab.com/3d-models/hw-4-cyberpunk-sci-fi-building-99bc36183ca94ca2bd493218566d1209",
-      "license": "CC-BY-4.0",
-      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
-      "files": [
-        { "path": "hw_4_cyberpunk_sci-fi_building.glb", "url": "https://drive.usercontent.google.com/download?id=1oaxL4fHcO-XF6VzsECMBp78aAK2bMl0g&export=download&confirm=t", "sha256": "c145e9a2e4857d22061fea5b8dbfb5f032b118309c00b3c878606d70cac1a4ef" }
-      ],
-      "used": ["alchemia-stall-1", "alchemia-stall-2", "alchemia-stall-3", "alchemia-stall-4", "alchemia-stall-5"]
     },
     {
       "id": "sketchfab-megacity-cluster",

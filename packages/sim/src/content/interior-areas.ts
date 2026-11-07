@@ -4,6 +4,7 @@ import { ROOM_CEILING, clinicPoint, koiPoint } from "./interiors";
 import { TRASA_PODZIEMNA_ROOMS } from "./kanal-underground";
 import { CAPSULE_INTERIOR_ROOM, CAPSULE_SITE } from "./capsule-room";
 import { METRO_PLATFORMS } from "./metro";
+import { FOODHALL_ROOM } from "./alchemia/foodhall";
 import { CLINIC_SITE, DOCKS_PLACE, KOI_SITE, TRASA_PODZIEMNA } from "./lublin/sites";
 
 /**
@@ -56,6 +57,8 @@ export const INTERIORS: readonly InteriorDef[] = [
   { id: "capsule", name: "interior.capsule", building: CAPSULE_SITE.building, rooms: [CAPSULE_INTERIOR_ROOM] },
   // The metro's platforms under the streets (ADR-0071 stage 4), the second flight down to each.
   ...METRO_PLATFORMS.map((e): InteriorDef => ({ id: `metro-${e.station}`, name: `interior.metro-${e.station}`, building: null, rooms: e.platform.rooms })),
+  // Alchemia's food hall under its terrace (ADR-0074 stage 1): a building of the game's own.
+  { id: "alchemia-foodhall", name: "interior.alchemia-foodhall", building: null, rooms: [FOODHALL_ROOM] },
 ];
 
 /** Feet this far under a room's floor still count (a floor slab, a step down the stairs). */

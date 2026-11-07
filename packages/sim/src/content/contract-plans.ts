@@ -1,7 +1,7 @@
 import type { ContractSiteId, Vec3 } from "@seki/core";
 import { KRAKOWSKIE_SITE_POINTS } from "./district-m0";
 import { docks } from "./district-doki";
-import { byRuin } from "./alchemia-market";
+import { byRuin } from "./alchemia/market";
 import { koiPoint } from "./interiors";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";

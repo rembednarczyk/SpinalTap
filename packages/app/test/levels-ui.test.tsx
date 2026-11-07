@@ -6,7 +6,7 @@ import { type Game, mountGame, run, unmountGame } from "./game-ui";
 
 /**
  * The lift, a jump and a ladder with the HUD's prompts and the minimap (formerly
- * e2e/levels.spec.ts, ADR-0046): Alchemia's lift to the roof terrace (the market's overpass and
+ * e2e/levels.spec.ts, ADR-0046): Alchemia's lift from the food hall to T0 (ADR-0074; the market's overpass and
  * fire escape went with it off Aleja Tysiąclecia, ADR-0063; their mechanics are the sim's test
  * floor's), Hana's cart and the ladder of the docks' container stack. The real Space key in the
  * running loop is smoke's "real input" test; here the jump is an input frame.
@@ -44,10 +44,12 @@ const RIDE = Math.ceil(((TOP - GROUND) / 2.5) * 60) + 15;
 afterEach(unmountGame);
 
 describe("levels in the game (ADR-0020, ADR-0021)", () => {
-  it("Alchemia's lift up to the roof terrace and back down, the minimap telling the height", () => {
+  it("Alchemia's lift from the food hall up to the car park and back down, the minimap level with T0 at the top", () => {
     const g = start();
-    // In front of the cage's door on the square behind the hall; one step streams the plot in.
-    run(() => g.seki.teleport(C.x, C.z + ALCHEMIA_LIFT.half + 1.4, SOUTH));
+    // In front of the cage's door in the hall (ADR-0074); one step streams the plot in.
+    const [low] = ALCHEMIA_LIFT.levels;
+    const door = ALCHEMIA_LIFT.doors[0];
+    run(() => g.seki.teleport(door.x, door.z, SOUTH, 0, low));
     g.step(1);
     walkUntil(g, (p) => Math.hypot(p.x - C.x, p.z - C.z) < 0.5, 6);
     expect(prompt()).toContain("Elevator");
@@ -55,7 +57,8 @@ describe("levels in the game (ADR-0020, ADR-0021)", () => {
     g.step(RIDE);
     expect(g.seki.state().player!.y).toBeCloseTo(TOP, 2);
     g.step(1);
-    expect(screen.getByTestId("minimap-level").textContent).toContain("m");
+    // The top is the car park's level (T0): no height over the ground on the minimap.
+    expect(screen.queryByTestId("minimap-level")).toBeNull();
     // And down again from the cage.
     g.step(1, { interact: true });
     g.step(RIDE);
