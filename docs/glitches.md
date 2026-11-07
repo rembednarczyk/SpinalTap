@@ -1465,11 +1465,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: lokalnie strona padła przy `page.evaluate` w czasie strojenia miasta, powtórka przy load 16–19 zielona; CI zielone; nie podnosić limitu, najpierw ślad (ADR-0046)
 - Pakiet właściciela: e2e (QA)
 
-### G-485 `pushOut` kończy się odepchnięciem od ciał bez ponownego sprawdzenia brył
-- Status: w PR #377 (7.11, w weryfikacji; zgłoszone przez weryfikatora #373)
-- Ważność: S3 · Zasięg: `movement-system.ts`, `ITERATIONS = 2`: ostatni krok to odepchnięcie od innych ciał, bez kolizji z bryłami; postać nachodząca na leżące ciało (zerowa prędkość, nie jest wypychane) przy ścianie zostaje w ścianie, przy cienkiej ścianie przechodzi przez nią; niezależne od G-479; po G-479 runda 2 graczka wchodząca w leżące ciało przy ścianie wnika w nią do 3,5 cm (próg `SINK` 5 cm w `carry-drop-solid.test.ts` do zaostrzenia po naprawie); skutek: graczka stojąca środkiem w cienkiej ścianie (6 cm) odkłada ciało po drugiej stronie, bo bryła ze środkiem graczki nie blokuje odłożenia (G-479); przy okazji: `m1.test.ts` „save/load with deaths and spawns” przekracza limit przy load ok. 22 (146 s), osobno przechodzi (nie podnosić limitu)
-- Pakiet właściciela: packages/sim
-
 ### G-486 Odłożone ciało może spaść przez niską barierkę bez oparcia
 - Status: zgłoszone (7.11, weryfikator #373; z kodu)
 - Ważność: S4 · Zasięg: `blocked` w `carry-system.ts` pomija warunek `foothold` z `blocks`; barierka do 0,45 m nad uskokiem nie zatrzymuje ciała, które może spaść z balkonu
@@ -1522,7 +1517,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-496 Posiłki w dokach mogą stać w bryłach
 - Status: zgłoszone (7.11, naprawiacz G-485; pomiar zgrubny)
-- Ważność: S4 · Zasięg: test `reinforcement-sidestep.test.ts` (G-208) notuje kroki z wnikaniem w bryły do 0,38 m, przed i po G-485 (900 kroków: ziarno 21 ok. 1355, ziarno 5 ok. 1746); licznik filtruje wysokość brył prosto, więc część to może być fałsz; do sprawdzenia sondą
+- Ważność: S4 · Zasięg: test `reinforcement-sidestep.test.ts` (G-208) notuje kroki z wnikaniem w bryły do 0,38 m, przed i po G-485 (900 kroków: ziarno 21 ok. 1355, ziarno 5 ok. 1746); licznik filtruje wysokość brył prosto, więc część to może być fałsz; do sprawdzenia sondą; weryfikator #377: po G-485 wnikanie posiłków w bryły ponad 1 mm 116/106 → 0/0 kroków (liczby autora 1355/1746 liczyły bryły podłogi), do zamknięcia po sondzie
 - Pakiet właściciela: packages/sim (AI, ruch)
 
 ### G-497 Pastorał grobli przy wiadukcie w232362907 stoi na trawie (T-235)
@@ -1539,6 +1534,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, weryfikator #375)
 - Ważność: S4 · Zasięg: `packages/persistence/src/alchemia-parking.ts` usuwa stan Sachiko (wzorzec `MOVED_PEOPLE` z etapu 1), więc po wczytaniu zapisu v35 wraca zdrowa; wzorzec przyjęty, ale skutek nieopisany w ADR ani w teście
 - Pakiet właściciela: packages/persistence
+
+### G-500 Asfalt alejek parkingu w173531008 urywa się na parapetach rampy P−1 i wchodzi pod domek klatki
+- Status: zgłoszone (7.11, kurator przeglądu #375; czeka na decyzję użytkownika o asfalcie T0)
+- Ważność: S4 · Zasięg: wykop rampy przecina oś alejki w177513189 na 17,6 m, szyb klatki na 2,2 m, domek klatki stoi na jej zakręcie (zostaje ok. 2,8 m przejazdu); T0 ma nawierzchnię z OSM, choć plan 2026 przewiduje plac i zielony dach; proponowana kontrola `cut-on-road` (baza dziś 3); T-237, T-238
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

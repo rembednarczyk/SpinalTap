@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-485 `pushOut` kończy się odepchnięciem od ciał bez ponownego sprawdzenia brył
+- Status: naprawione (PR #377, 7.11; `pushOut` w każdej iteracji najpierw ciała, potem bryły, a odepchnięcie od ciała przecinające lico bryły jest odrzucane (`crossesSolid`); test `push-out-bodies-solids.test.ts` 127 przypadków, bez poprawki pada 102; `SINK` w `carry-drop-solid.test.ts` 1 mm; hashe G-208 przepisane świadomie, wnikanie posiłków w bryły ponad 1 mm 116/106 → 0/0 kroków; posiłki w tłumie przy ścianie nakładają się do 1,7 cm, zamierzenie)
+- Ważność: S3 · Zasięg: `movement-system.ts`, `ITERATIONS = 2`: ostatni krok to odepchnięcie od innych ciał, bez kolizji z bryłami; postać nachodząca na leżące ciało (zerowa prędkość, nie jest wypychane) przy ścianie zostaje w ścianie, przy cienkiej ścianie przechodzi przez nią; niezależne od G-479; po G-479 runda 2 graczka wchodząca w leżące ciało przy ścianie wnika w nią do 3,5 cm (próg `SINK` 5 cm w `carry-drop-solid.test.ts` do zaostrzenia po naprawie); skutek: graczka stojąca środkiem w cienkiej ścianie (6 cm) odkłada ciało po drugiej stronie, bo bryła ze środkiem graczki nie blokuje odłożenia (G-479); przy okazji: `m1.test.ts` „save/load with deaths and spawns” przekracza limit przy load ok. 22 (146 s), osobno przechodzi (nie podnosić limitu)
+- Pakiet właściciela: packages/sim
+
 ### G-479 Odłożone ciało może trafić środkiem w bryłę (kontener) i w niej zostać
 - Status: naprawione (PR #373, 7.11, dwie rundy; `dropSpot` w `carry-system.ts` sprawdza 8 miejsc w odległości promień graczki + promień ciała (przód, skosy, boki, tył), bez miejsca ciało zostaje na ramieniu z podpowiedzią `prompt.body.no-room`; test `carry-drop-solid.test.ts` 19 przypadków, na kodzie sprzed G-479 pada 22 z sondami; próg `SINK` 5 cm do zaostrzenia po G-485)
 - Ważność: S3 · Zasięg: `dropBody` w sim stawia ciało 0,6 m przed graczem bez sprawdzania brył; przy kontenerze (391,2..392,8 × −33,6..−32,4) środek ciała wszedł w bryłę i po 30 krokach wypychanie go nie wyciągnęło; sonda renderera (G-458) patrzy wtedy od środka bryły; poprawka w sim: miejsce odłożenia poza bryłami (cofnięcie do gracza albo bok), test w sim; do połączenia z ADR-0075 etap 4 (`settle-body`)
