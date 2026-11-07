@@ -21,7 +21,7 @@ const DT = 1 / 60;
  * Seki's legs stay inside her skirt (prośba użytkownika 7.11): `seki.vrm` as the game dresses the
  * heroine (scale 1.15, the retarget over the procedural rig and the spring bones), stepped through
  * whole strides. Before, the running heel folded up behind a raised thigh and went through the
- * back of the skirt by up to 3.7 cm.
+ * back of the skirt by up to 3.7 cm, and the crouched thighs through its front by up to 5.1 cm.
  */
 describe("Seki's legs and skirt (seki.vrm)", () => {
   const dress = async () => {
@@ -46,6 +46,9 @@ describe("Seki's legs and skirt (seki.vrm)", () => {
     { name: "sprint", speed: 6.93, crouch: 0, frames: 26 },
     { name: "fast sprint (cyberware)", speed: 9, crouch: 0, frames: 22 },
     { name: "walk", speed: 4.2, crouch: 0, frames: 32 },
+    { name: "crouch", speed: 0, crouch: 1, frames: 2 },
+    { name: "crouched walk", speed: 2.1, crouch: 1, frames: 48 },
+    { name: "fast crouched walk (shadow_prowler, cyberware)", speed: 3.9, crouch: 1, frames: 30 },
   ];
   for (const c of cases) {
     it(`${c.name}: no leg through the skirt by more than ${SLACK * 100} cm over a whole stride`, async () => {

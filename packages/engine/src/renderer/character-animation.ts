@@ -8,13 +8,18 @@ const DEATH_FALL = 0.65;
 const DEATH_LINGER = 5.5;
 
 /** Thigh angle from vertical when fully crouched (negative: knee forward and up). */
-export const CROUCH_THIGH = -1.2;
+export const CROUCH_THIGH = -0.9;
 /** Knee bend when fully crouched. */
-export const CROUCH_KNEE = 2.0;
-/** Forward lean of the body when fully crouched. */
-export const CROUCH_LEAN = 0.35;
+export const CROUCH_KNEE = 1.88;
+/** Knees out when fully crouched (radians each way), clear of the middle of a skirt. */
+const CROUCH_SPREAD = 0.25;
 /** Share of the stride left when fully crouched: short, careful steps. */
-const CROUCH_STRIDE = 0.45;
+const CROUCH_STRIDE = 0.25;
+/**
+ * Forward lean of the body when fully crouched. Thigh and lean together keep the hips bent by
+ * under 65°: past that a short skirt weighted to the hips (VRoid) is cut by the thighs.
+ */
+export const CROUCH_LEAN = 0.15;
 /** Speeds (m/s) where the walk starts turning into a run and where the run is full. */
 const RUN_FROM = 5;
 const RUN_FULL = 6.6;
@@ -43,14 +48,16 @@ export interface CrouchOffset {
  * given thigh angle and knee bend, the feet stay on the ground under the root. Measured from
  * the rig's own segments, so it fits every build.
  */
-export const crouchOffset = (rig: CharacterRig, thigh: number, knee: number, lean: number): CrouchOffset => {
+export const crouchOffset = (rig: CharacterRig, thigh: number, knee: number, lean: number, spread = 0): CrouchOffset => {
   const hip = rig.legL.position.y;
   const thighLen = -rig.kneeL.position.y;
   const shinLen = thighLen * (0.42 / 0.44);
-  const shin = thigh + knee;
-  // A leg rotated by θ around X points along (y = -cos θ, z = -sin θ).
-  const legHeight = thighLen * Math.cos(thigh) + shinLen * Math.cos(shin);
-  const footZ = -thighLen * Math.sin(thigh) - shinLen * Math.sin(shin);
+  // The bent leg in the thigh's frame: along the thigh (shortened by opening it sideways by
+  // `spread`) and the shin's fold back across it; then the thigh turns by θ around X.
+  const along = (thighLen + shinLen * Math.cos(knee)) * Math.cos(spread);
+  const across = shinLen * Math.sin(knee);
+  const legHeight = along * Math.cos(thigh) - across * Math.sin(thigh);
+  const footZ = -along * Math.sin(thigh) - across * Math.cos(thigh);
   return {
     y: legHeight - (thighLen + shinLen) - hip * (Math.cos(lean) - 1),
     z: -(hip * Math.sin(lean) + footZ),
@@ -61,9 +68,9 @@ export const crouchOffset = (rig: CharacterRig, thigh: number, knee: number, lea
 const KNEE_REST = 0.04;
 
 /** Crouch offset relative to the standing pose (which already has the rest knee bend). */
-const crouchDelta = (rig: CharacterRig, thigh: number, knee: number, lean: number): CrouchOffset => {
+const crouchDelta = (rig: CharacterRig, thigh: number, knee: number, lean: number, spread: number): CrouchOffset => {
   const rest = crouchOffset(rig, 0, KNEE_REST, 0);
-  const pose = crouchOffset(rig, thigh, knee + KNEE_REST, lean);
+  const pose = crouchOffset(rig, thigh, knee + KNEE_REST, lean, spread);
   return { y: pose.y - rest.y, z: pose.z - rest.z };
 };
 
@@ -202,6 +209,9 @@ const poseLegs = (rig: CharacterRig, gait: Gait): void => {
   const reach = RUN_REACH * gait.run;
   rig.legL.rotation.x = swing + thigh - lean - reach;
   rig.legR.rotation.x = -swing + thigh - lean - reach;
+  // The rig's left is -X: a negative turn about Z opens the left leg.
+  rig.legL.rotation.z = -CROUCH_SPREAD * gait.c;
+  rig.legR.rotation.z = CROUCH_SPREAD * gait.c;
   rig.kneeL.rotation.x = legKnee(swing, rig.phase, gait) + KNEE_REST + knee;
   rig.kneeR.rotation.x = legKnee(-swing, rig.phase + Math.PI, gait) + KNEE_REST + knee;
 };
@@ -261,7 +271,7 @@ const applyAirPose = (rig: CharacterRig, air: number | undefined): void => {
 
 /** Drop and lean with the feet planted, bob, breathing and hit flinch; the head keeps looking ahead. */
 const poseBody = (rig: CharacterRig, { c, thigh, knee, lean, run, amount }: Gait, dt: number): void => {
-  const offset = c > 0 ? crouchDelta(rig, thigh, knee, lean) : { y: 0, z: 0 };
+  const offset = c > 0 ? crouchDelta(rig, thigh, knee, lean, CROUCH_SPREAD * c) : { y: 0, z: 0 };
   const breathe = Math.sin(rig.time * 1.7) * 0.006;
   // Bob: a soft dip at a walk, a push-off and flight at a run.
   const bob = Math.abs(Math.cos(rig.phase)) * (0.04 + 0.05 * run) * amount * (1 - 0.5 * c) - 0.03 * run;

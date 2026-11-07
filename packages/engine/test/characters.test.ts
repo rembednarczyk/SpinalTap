@@ -162,11 +162,16 @@ describe("crouch pose", () => {
     const standingAnkle = ankle(rig);
     animateRig(rig, 0, 1 / 60, 1);
     expect(rig.kneeL.rotation.x).toBeGreaterThan(1.8);
-    expect(rig.legL.rotation.x).toBeLessThan(-1.2);
-    expect(rig.body.rotation.x).toBeGreaterThan(0.3);
+    expect(rig.legL.rotation.x).toBeLessThan(-1);
+    // Hips bent by under 65° (thigh against the body): past that a VRoid skirt is cut by the thighs.
+    expect(rig.legL.rotation.x).toBeGreaterThan(-1.14);
+    // Knees out, the left one to -X.
+    expect(rig.legL.rotation.z).toBeLessThan(-0.2);
+    expect(rig.body.rotation.x).toBeGreaterThan(0);
     expect(rig.body.position.y).toBeLessThan(-0.3);
     const head = at(rig, rig.head).y;
-    expect(standingHead - head).toBeGreaterThan(0.4);
+    // A shallower crouch than the 0.46 m before the skirt limit (feat/seki-ruch), still in the eye-height band below.
+    expect(standingHead - head).toBeGreaterThan(0.35);
     // Head at about the simulation's crouched eye height (1.14 m).
     expect(head).toBeGreaterThan(1.05);
     expect(head).toBeLessThan(1.25);
