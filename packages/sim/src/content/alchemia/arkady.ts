@@ -211,20 +211,28 @@ const raw = (p: GroundPoint): number => Math.round(mapHeight([...KRAKOWSKIE_CHUN
  * The pavement along the east face (Lubartowska's side), in slabs 2 m along it and `PAVEMENT` wide,
  * and the landing off T1 before the south door: over the dip the arcade's grid points leave round
  * the building (`plaza.ts`). Each is level with the highest of the map's ground under it, so no
- * ground shows through it (a kerb over its lower side). Where Lubartowska falls away to the north
- * the pavement ends, the dip there under 0.8 m against the wall.
+ * ground shows through it (a kerb over its lower side). The pavement runs from 2 m south of the
+ * building to 44 m along it, past the last of the dip where Lubartowska falls away to the north
+ * (G-460: a 40..43, to 0.97 m under the map's ground); north of it the ground is the map's. The
+ * landing reaches 2.2 m west of the building and half a metre along its corner room, over the dip
+ * the first span's grid points leave at the foot of T1's slope (G-460, the scan's `pad-dip-uncovered`).
  */
 const PAVEMENT = 5;
-const PAVEMENT_TO = 40;
+const PAVEMENT_FROM = -2;
+const PAVEMENT_TO = 44;
 const LANDING = 3;
-const LANDING_TOP = Math.max(...[0, 1, 2, 3].flatMap((t) => [0, 2, 4, 5.8].map((c) => raw(arkadyPoint(-t, c)))));
+const LANDING_WEST = 2.2;
+const LANDING_ALONG = 0.5;
+const LANDING_TOP = Math.max(...[0, 1, 2, 3].flatMap((t) => [-LANDING_WEST, -1, 0, 2, 4, 5.8].map((c) => raw(arkadyPoint(-t, c)))));
 
 const pavement = (): Piece[] => [
-  ...Array.from({ length: PAVEMENT_TO / 2 }, (_, k): Piece => {
-    const top = Math.max(...[0, 1, 2].flatMap((t) => [1, 2, 3, 4, 5].map((c) => raw(arkadyPoint(k * 2 + t, D + c)))));
-    return piece(box(k * 2, k * 2 + 2, D, D + PAVEMENT, top - 3, top), "step", false);
+  ...Array.from({ length: (PAVEMENT_TO - PAVEMENT_FROM) / 2 }, (_, k): Piece => {
+    const a = PAVEMENT_FROM + k * 2;
+    const top = Math.max(...[0, 1, 2].flatMap((t) => [1, 2, 3, 4, 5].map((c) => raw(arkadyPoint(a + t, D + c)))));
+    return piece(box(a, a + 2, D, D + PAVEMENT, top - 3, top), "step", false);
   }),
   piece(box(-LANDING, 0, 0, D, LANDING_TOP - 3, LANDING_TOP), "step", false),
+  piece(box(-LANDING, LANDING_ALONG, -LANDING_WEST, 0, LANDING_TOP - 3, LANDING_TOP), "step", false),
 ];
 
 /** The building's pieces in its frame: its walls, arches, roof and glass. */

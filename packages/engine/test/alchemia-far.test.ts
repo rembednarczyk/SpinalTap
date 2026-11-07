@@ -83,12 +83,12 @@ describe("the Arkady from afar (ADR-0074 stage 2)", () => {
       }
     }
     expect(misses).toEqual([]);
-    // Every vertex on the building's frame: its outline, the pavement east of it and the landing south of it.
+    // Every vertex on the building's frame: its outline, the pavement east of it and the landing south of it, reaching 2.2 m west of its west face (G-460).
     for (let i = 0; i < s.positions.length; i += 3) {
       const q = arkadyLocal(s.positions[i]!, s.positions[i + 2]!);
       expect(q.a).toBeGreaterThan(-3.1);
       expect(q.a).toBeLessThan(ARKADY.length + 0.05);
-      expect(q.c).toBeGreaterThan(-0.05);
+      expect(q.c).toBeGreaterThan(-2.25);
       expect(q.c).toBeLessThan(ARKADY.depth + 5.05);
     }
   });

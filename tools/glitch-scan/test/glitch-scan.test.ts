@@ -36,7 +36,7 @@ import { marketChecks } from "./market-pieces";
 import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
 import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
-import { arcadeRhythm, gamePiers } from "./arkady-checks";
+import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
@@ -1216,6 +1216,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "osm-building-kept": () => osmBuildingsKept(keptInGame()),
   /** The Arkady's arcade piers off the orthophoto's (ADR-0074 stage 2, G-461): 13 piers, 14 spans, ±0.3 m. */
   "arcade-rhythm": () => arcadeRhythm(gamePiers()),
+  /** Ground left over 0.3 m under the map's by T2's pads on grid points, off the Arkady, their pavement and landing (G-460). */
+  "pad-dip-uncovered": () => padDipUncovered(dipInGame()),
   /**
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.

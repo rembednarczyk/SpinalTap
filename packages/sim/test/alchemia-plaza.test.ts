@@ -10,6 +10,7 @@ import {
   ARKADY_BUILDING,
   ARKADY_OSM_ID,
   ARKADY_OUTLINE,
+  ARKADY_PAVEMENT,
   ARKADY_PROP,
   ARKADY_RESTAURANTS,
   CONTRACT_ITEM_SPOTS,
@@ -27,7 +28,7 @@ import {
 import { DEVICES } from "../src/content/devices";
 import { chunkBuildings } from "../src/content/lublin/city";
 import { SITE_PLANS } from "../src/content/contract-plans";
-import { MAP_CHUNKS, PADS, RAMPS } from "../src/content/lublin/sites";
+import { MAP_CHUNKS, PADS, RAMPS, rawHeight } from "../src/content/lublin/sites";
 
 /** The middles of the arcade's piers from the south corner on the PZGiK orthophoto (5 cm/px, ±0.15 m, review of #357). */
 const ORTHO_PIERS = [2.95, 6.25, 9.9, 13.6, 17.2, 20.8, 24.55, 28.25, 31.75, 35.4, 39.1, 42.95, 46.4];
@@ -80,6 +81,20 @@ describe("T2 and the Arkady (ADR-0074 stage 2)", () => {
     // Clear of the pier along the face by more than half a crate.
     for (const p of points) expect(off(along(p)), `${p.x.toFixed(1)},${p.z.toFixed(1)}`).toBeGreaterThan(ARKADY.pier / 2 + 0.3);
     for (const r of ARKADY_RESTAURANTS) expect(off(arkadySpanMid(r.door)), r.id).toBeGreaterThan(1.2);
+  });
+
+  it("leaves no dip east of the Arkady off their pavement and landing (G-460)", () => {
+    const covers = ARKADY_PAVEMENT.map((p) => p.box);
+    let seen = 0;
+    for (let a = -4; a <= ARKADY.length + 4; a += 0.5) {
+      for (let c = ARKADY.depth + 0.25; c <= ARKADY.depth + 10; c += 0.5) {
+        if (covers.some((b) => a >= b.x0 && a <= b.x1 && c >= b.z0 && c <= b.z1)) continue;
+        const p = arkadyPoint(a, c);
+        seen++;
+        expect(rawHeight(p.x, p.z) - groundY(p.x, p.z), `a ${a}, c ${c.toFixed(2)}`).toBeLessThanOrEqual(0.3);
+      }
+    }
+    expect(seen).toBeGreaterThan(500);
   });
 
   it("keeps the arcade's floor level on T2 under its paving, from its first pier to its north end", () => {
