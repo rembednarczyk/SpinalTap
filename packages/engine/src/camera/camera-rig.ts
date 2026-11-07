@@ -4,6 +4,7 @@ import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 import { BodyFade, bodyFadeTarget } from "./body-fade";
+import { ChokeArms } from "./choke-arms";
 import { moveOf, swingEnd, swingPhase } from "../renderer/melee-timing";
 import { type ViewmodelPose, viewmodelPose } from "./viewmodel-poses";
 
@@ -114,6 +115,8 @@ export class CameraRig {
   private readonly placeholderGun: AbstractMesh;
   private reference: { position: Vector3; target: Vector3 } | null = null;
   private occluder: CameraOccluder | null = null;
+  /** The forearms on a grabbed target's neck in first person (ADR-0075). */
+  private readonly chokeArms: ChokeArms;
   onBodyVisibility: (visible: boolean) => void = () => {};
   /** Halftone fade of the player's figure when it is in the way of the TPP view (G-275). */
   readonly bodyFade = new BodyFade();
@@ -175,6 +178,7 @@ export class CameraRig {
       applyOutline(m, 0.004);
     }
     this.viewmodel.position.set(this.pose.hip.x, this.pose.hip.y, this.pose.hip.z);
+    this.chokeArms = new ChokeArms(scene, materials, this.camera);
   }
 
   /** Node a weapon model is mounted under in the FPP viewmodel. */
@@ -315,6 +319,7 @@ export class CameraRig {
       // The reference frame and the title backdrop see what the player sees from the hip.
       this.camera.fov = this.hipFov;
       this.viewmodel.setEnabled(false);
+      this.chokeArms.update(false, undefined, dt);
       this.onBodyVisibility(true);
       this.bodyFade.update(0, 1);
       return;
@@ -370,8 +375,10 @@ export class CameraRig {
     );
 
     const fpp = this.blend < 0.35;
-    // On a ladder (and pulling up onto a ledge) both hands hold on: the weapon drops out of view (ADR-0021).
-    const held = this.weaponDrawn && target.climb === undefined ? 1 : 0;
+    // On a ladder (and pulling up onto a ledge) both hands hold on: the weapon drops out of view
+    // (ADR-0021); in a takedown grab the forearms on the target's neck come up instead.
+    const held = this.weaponDrawn && target.climb === undefined && target.grab === undefined ? 1 : 0;
+    this.chokeArms.update(fpp, target.grab, dt);
     this.draw += Math.sign(held - this.draw) * Math.min(Math.abs(held - this.draw), dt / 0.35);
     this.reload = Math.max(0, this.reload - dt);
     const reloading = this.reloadTotal > 0 && this.reload > 0 ? Math.sin(Math.PI * (1 - this.reload / this.reloadTotal)) : 0;

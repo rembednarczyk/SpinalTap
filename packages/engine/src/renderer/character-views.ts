@@ -13,6 +13,7 @@ import { markEnforcer } from "./enforcer-mark";
 import { easeLift, groundLift } from "./ground-lift";
 import type { LadderRungs } from "./ladder-hands";
 import { type CharacterModelKey, type CharacterModelManifest, ModelLibrary } from "./model-library";
+import { animateGrab, inGrab, placeHeld, reachForNeck } from "./grab-clip";
 import { carriedShoulder } from "./knockout-carry";
 import { animateKnockout, settleKnockout } from "./knockout-pose";
 import type { HumanoidRetarget } from "./model-rig";
@@ -84,11 +85,18 @@ export interface CharacterViewsDeps {
   readonly rungs?: (x: number, y: number, z: number) => LadderRungs | null;
 }
 
+
+/** The root of a body held in a grab (ADR-0075), over the simulation's place. */
+const placeBody = (v: CharacterView, holder: CharacterRig | null): void => {
+  placeHeld(v.rig, v.transform, v.lift, holder);
+};
+
 /**
  * Views of the characters: procedural rigs, their transforms, draw distance and animation. A
  * facade (ADR-0031) over `CharacterModels` (imported models dressed over the rigs, pooled for
  * reuse), `CharacterKit` (weapons and garment add-ons), `CharacterDeaths` (the death fall
- * after the simulation removed one) and the knockout parts (`knockout-pose`, `knockout-carry`).
+ * after the simulation removed one), the knockout parts (`knockout-pose`, `knockout-carry`)
+ * and the takedown grab's (`grab-clip`, ADR-0075).
  */
 export class CharacterViews implements FxActors {
   private readonly views = new Map<EntityId, CharacterView>();
@@ -98,6 +106,8 @@ export class CharacterViews implements FxActors {
   private readonly models: CharacterModels;
   /** Characters playing their death fall after the simulation removed them. */
   private readonly deaths = new CharacterDeaths((rig) => disposeRig(rig, this.kit, this.models));
+  /** The character the followed one holds in a takedown grab, kept while her clip eases out. */
+  private held: EntityId | null = null;
 
   constructor(private readonly deps: CharacterViewsDeps) {
     const library = new ModelLibrary(deps.scene, deps.materials);
@@ -156,7 +166,8 @@ export class CharacterViews implements FxActors {
     const lift = (this.deps.lift ?? groundLift)(t.position.x, t.position.y, t.position.z);
     this.views.set(id, { rig, transform: t, model, name, scan: scanClassOfView(view), lift });
     applyTransform(rig, t, lift);
-    settleKnockout(rig, !!t.unconscious, carriedShoulder(id, t, this.deps.cameraTarget(), this.views));
+    const shoulder = carriedShoulder(id, t, this.deps.cameraTarget(), this.views);
+    settleKnockout(rig, !!t.unconscious, shoulder);
     this.models.dress(rig, model, name);
   }
 
@@ -202,6 +213,7 @@ export class CharacterViews implements FxActors {
     const clock = frozen ? 0 : dt;
     const eye = this.deps.camera.camera.position;
     const followed = this.deps.cameraTarget();
+    const holder = followed === null ? undefined : this.views.get(followed);
     for (const [id, v] of this.views) {
       // Far characters are switched off and skip their animation (ADR-0040).
       const t = v.transform;
@@ -225,7 +237,14 @@ export class CharacterViews implements FxActors {
       animateRig(v.rig, t.speed, dt, t.crouch, { aim: t.aim ?? 0, guard: t.guard ?? 0 }, motion);
       this.deps.pose?.(id, v.rig, t.speed, dt, this.models.of(v.rig)?.retarget ?? null, clock);
       animateKnockout(v.rig, dt, !!t.unconscious, shoulder);
+      animateGrab(v.rig, dt, t, id === followed ? "holder" : "held");
+      if (id !== followed && t.grab) this.held = id;
+      if (id !== followed) placeBody(v, holder?.rig ?? null);
     }
+    // The hands on the held one's neck, once both are posed; until her clip has eased out.
+    const held = this.held === null ? undefined : this.views.get(this.held);
+    if (holder && held && inGrab(holder.rig)) reachForNeck(holder.rig, held.rig);
+    else this.held = null;
     this.deaths.update(dt);
     this.models.update(dt, clock);
     for (const v of this.views.values()) if (v.rig.root.isEnabled(false)) this.kit.loadouts.update(v.rig);
