@@ -11,6 +11,8 @@ import type { DownedBody, Entity } from "./components";
 export const CARRY_PROMPT = "prompt.body.carry";
 export const DROP_PROMPT = "prompt.body.drop";
 export const HIDE_PROMPT = "prompt.body.hide";
+/** With a body on her shoulder and no room around her to put it down (G-479). */
+export const NO_ROOM_PROMPT = "prompt.body.no-room";
 
 export type Body = Entity & { downed: DownedBody };
 

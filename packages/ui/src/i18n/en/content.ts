@@ -45,6 +45,7 @@ export const enContent = {
   "prompt.body.carry": "Pick up",
   "prompt.body.drop": "Drop",
   "prompt.body.hide": "Hide",
+  "prompt.body.no-room": "No room to put it down",
   // Interiors (sim `INTERIORS`, ADR-0061); Lublin's own places keep their names.
   "interior.clinic": "Doctor Mori's clinic",
   "interior.neon-koi": "Neon Koi",
