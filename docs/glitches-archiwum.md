@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-479 Odłożone ciało może trafić środkiem w bryłę (kontener) i w niej zostać
+- Status: naprawione (PR #373, 7.11, dwie rundy; `dropSpot` w `carry-system.ts` sprawdza 8 miejsc w odległości promień graczki + promień ciała (przód, skosy, boki, tył), bez miejsca ciało zostaje na ramieniu z podpowiedzią `prompt.body.no-room`; test `carry-drop-solid.test.ts` 19 przypadków, na kodzie sprzed G-479 pada 22 z sondami; próg `SINK` 5 cm do zaostrzenia po G-485)
+- Ważność: S3 · Zasięg: `dropBody` w sim stawia ciało 0,6 m przed graczem bez sprawdzania brył; przy kontenerze (391,2..392,8 × −33,6..−32,4) środek ciała wszedł w bryłę i po 30 krokach wypychanie go nie wyciągnęło; sonda renderera (G-458) patrzy wtedy od środka bryły; poprawka w sim: miejsce odłożenia poza bryłami (cofnięcie do gracza albo bok), test w sim; do połączenia z ADR-0075 etap 4 (`settle-body`)
+- Pakiet właściciela: packages/sim
+
 ### G-459 Bohaterka niesie ciało z wyciągniętym pistoletem
 - Status: naprawione (PR #371, 7.11, ADR-0075 etap 2; `handsBusy` w rigu: broń w kaburze w chwycie i przy niesieniu, kamera chowa viewmodel w FPP; testy `grab-pose` i `camera-grab` padają bez zmiany)
 - Ważność: S3 · Zasięg: sim blokuje broń przy niesieniu (ADR-0065), ale renderer dalej rysuje pistolet w dłoni

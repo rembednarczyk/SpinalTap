@@ -1440,11 +1440,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: murki grobli Zamkowej w294098689/w294098690 i mur ogrodu Karmelitów (brak w OSM) zostawiają goły grunt; `barrier=wall` nie jest importowane (`features.ts:66`); por. T-178; nowa kontrola `wall-unbuilt` (`barrier=wall` ≤ 5 m od osi drogi pieszej bez bryły)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-479 Odłożone ciało może trafić środkiem w bryłę (kontener) i w niej zostać
-- Status: w PR #373 (7.11, runda 2: weryfikator odrzucił rundę 1, kandydaci „bliżej” i „pod graczem” nachodzą na graczkę i wpychają ją w ścianę; zgłoszone przez budowniczego ADR-0075 etap 2)
-- Ważność: S3 · Zasięg: `dropBody` w sim stawia ciało 0,6 m przed graczem bez sprawdzania brył; przy kontenerze (391,2..392,8 × −33,6..−32,4) środek ciała wszedł w bryłę i po 30 krokach wypychanie go nie wyciągnęło; sonda renderera (G-458) patrzy wtedy od środka bryły; poprawka w sim: miejsce odłożenia poza bryłami (cofnięcie do gracza albo bok), test w sim; do połączenia z ADR-0075 etap 4 (`settle-body`)
-- Pakiet właściciela: packages/sim
-
 ### G-480 Po podniesieniu ciała na ziemi zostaje ciemny przedmiot w miejscu głowy
 - Status: zgłoszone (7.11, budowniczy ADR-0075 etap 2)
 - Ważność: S4 · Zasięg: widoczne na zrzucie niesienia (`4-niesienie-bok.png`); wygląda na nakrycie głowy albo dodatek stroju korpo (`garment-addons.ts`), który nie idzie za niesionym ciałem; prawdopodobnie sprzed etapu 2
@@ -1472,7 +1467,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-485 `pushOut` kończy się odepchnięciem od ciał bez ponownego sprawdzenia brył
 - Status: zgłoszone (7.11, weryfikator #373)
-- Ważność: S3 · Zasięg: `movement-system.ts`, `ITERATIONS = 2`: ostatni krok to odepchnięcie od innych ciał, bez kolizji z bryłami; postać nachodząca na leżące ciało (zerowa prędkość, nie jest wypychane) przy ścianie zostaje w ścianie, przy cienkiej ścianie przechodzi przez nią; niezależne od G-479; po G-479 runda 2 graczka wchodząca w leżące ciało przy ścianie wnika w nią do 3,5 cm (próg `SINK` 5 cm w `carry-drop-solid.test.ts` do zaostrzenia po naprawie)
+- Ważność: S3 · Zasięg: `movement-system.ts`, `ITERATIONS = 2`: ostatni krok to odepchnięcie od innych ciał, bez kolizji z bryłami; postać nachodząca na leżące ciało (zerowa prędkość, nie jest wypychane) przy ścianie zostaje w ścianie, przy cienkiej ścianie przechodzi przez nią; niezależne od G-479; po G-479 runda 2 graczka wchodząca w leżące ciało przy ścianie wnika w nią do 3,5 cm (próg `SINK` 5 cm w `carry-drop-solid.test.ts` do zaostrzenia po naprawie); skutek: graczka stojąca środkiem w cienkiej ścianie (6 cm) odkłada ciało po drugiej stronie, bo bryła ze środkiem graczki nie blokuje odłożenia (G-479); przy okazji: `m1.test.ts` „save/load with deaths and spawns” przekracza limit przy load ok. 22 (146 s), osobno przechodzi (nie podnosić limitu)
 - Pakiet właściciela: packages/sim
 
 ### G-486 Odłożone ciało może spaść przez niską barierkę bez oparcia
