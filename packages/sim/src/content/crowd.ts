@@ -412,10 +412,10 @@ export const CROWD_SPOTS: readonly CrowdSpot[] = [
   wallSpot(604, -100, ["phone", "lean"]),
   wallSpot(520, -60, ["smoke"]),
   wallSpot(590, -42, ["talk", "phone"]),
-  // Alchemia's square (ADR-0063): two talking by Hana's cart, a smoker by the ruin, a few on the open square.
+  // Alchemia's square (ADR-0063): two talking by Hana's cart, a smoker by the Arkady's landing, a few on the open square.
   spot(MARKET_CHUNK, ground(441, 71.5), WEST, ["talk"]),
   spot(MARKET_CHUNK, ground(442.2, 71.5), EAST, ["talk"]),
-  spot(MARKET_CHUNK, ground(441, 84), WEST, ["smoke", "lean"]),
+  spot(MARKET_CHUNK, ground(440.4, 84.4), WEST, ["smoke", "lean"]),
   spot(MARKET_CHUNK, ground(444, 64), NORTH, ["phone"]),
   spot(MARKET_CHUNK, ground(435.5, 75.5), SOUTH, ["phone", "lean"]),
   spot(MARKET_CHUNK, ground(445, 74.5), SOUTH, ["phone", "lean"]),

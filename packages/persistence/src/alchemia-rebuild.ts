@@ -23,7 +23,7 @@ interface Area {
  * Where the old Alchemia stood and the ground changed: the new hall with its ramps and T1 in
  * front of it (the old hall, its lift, bridge and terrace among them), and the band of the five
  * stalls along the plot's west fence. The hollow of the Hebi stash by the ruin (x 436..449,
- * z 86..101) is not in them: it stays as it was until stage 2.
+ * z 86..101) is not in them: it stays as it was until stage 2 (`levelAlchemiaT2`).
  */
 export const REBUILT_AREAS: readonly Area[] = [
   { minX: 394, maxX: 446, minZ: 28, maxZ: 80 },
@@ -76,5 +76,68 @@ export const rebuildAlchemia = (old: Json): Json => {
   if (isObject(old.domain)) out.domain = { ...old.domain, loot: rebuiltLoot(old.domain.loot) };
   if (isObject(old.reinforcements)) out.reinforcements = { ...old.reinforcements, people: keptOutside(old.reinforcements.people) };
   if (Array.isArray(old.strayBodies)) out.strayBodies = keptOutside(old.strayBodies);
+  return out;
+};
+
+/**
+ * v33 -> v34 (ADR-0074 stage 2): the lower square T2 levelled before the rebuilt Arkady, where the
+ * Hebi hollow was, the ridge west of it cut away. Spelled out, the content of its time.
+ */
+
+/**
+ * Where the ground changed: from Świętoduska's side of the square (x 422) to the Arkady's east
+ * face (the line through (448.5; 81.3) and (466.5; 127.7)), from the hollow's south blend (z 80.5)
+ * to the square's north end (z 130). East of the face lies Lubartowska's pavement, as it was.
+ */
+const PLAZA_AREA = { minX: 422, maxX: 467, minZ: 80.5, maxZ: 130 } as const;
+const EAST_FACE = { x: 448.5, z: 81.3, dx: 18, dz: 46.4 } as const;
+
+const onPlaza = (p: unknown): boolean => {
+  if (!isObject(p) || typeof p.x !== "number" || typeof p.z !== "number") return false;
+  const [x, z] = [p.x, p.z];
+  if (x < PLAZA_AREA.minX || x > PLAZA_AREA.maxX || z < PLAZA_AREA.minZ || z > PLAZA_AREA.maxZ) return false;
+  // West of the east face: the face's direction crossed with the way to the point is positive.
+  return EAST_FACE.dx * (z - EAST_FACE.z) - EAST_FACE.dz * (x - EAST_FACE.x) > 0;
+};
+
+/** Where a save made in the old hollow or on its slopes wakes: on T2 before the Arkady's south arches, a few centimetres over it. */
+export const PLAZA_WAKE = { x: 440, y: -9.15, z: 104, chunk: "krakowskie-2-1" } as const;
+
+/** The bag of the blockade's night, from behind the ruin to T2 before the Arkady's arches (`TARG_OVERPASS_STASH`). */
+export const PLAZA_STASHES: Readonly<Record<string, { readonly x: number; readonly y: number; readonly z: number; readonly chunk: string }>> = {
+  "stash:targ-overpass": { x: 452.78, y: -9.0, z: 111.82, chunk: "krakowskie-2-1" },
+};
+
+const PLAZA_WAKE_AT = { x: PLAZA_WAKE.x, y: PLAZA_WAKE.y, z: PLAZA_WAKE.z };
+
+/** The player woken on T2, everybody else on the square dropped (the content brings them back: the lookout under the arches). */
+const plazaEntities = (entities: readonly unknown[]): unknown[] =>
+  entities.flatMap((e) => {
+    if (!isObject(e)) return [e];
+    if (e.key === "player") return [onPlaza(e.position) ? { ...e, position: PLAZA_WAKE_AT } : e];
+    return onPlaza(e.position) ? [] : [e];
+  });
+
+/** The overpass bag by the Arkady, the other bags on the square put down on T2. */
+const plazaLoot = (loot: unknown): unknown => {
+  if (!isObject(loot) || !Array.isArray(loot.containers)) return loot;
+  const containers = loot.containers.map((c: unknown) => {
+    if (!isObject(c)) return c;
+    const stash = typeof c.key === "string" ? PLAZA_STASHES[c.key] : undefined;
+    if (stash) return { ...c, position: { x: stash.x, y: stash.y, z: stash.z }, chunk: stash.chunk };
+    return onPlaza(c.position) ? { ...c, position: PLAZA_WAKE_AT, chunk: PLAZA_WAKE.chunk } : c;
+  });
+  return { ...loot, containers };
+};
+
+/** Somebody kept outside the content (reinforcements, a mugging's bodies) on the square: gone with its old ground. */
+const keptOffPlaza = (list: unknown): unknown => (Array.isArray(list) ? list.filter((p: unknown) => !(isObject(p) && isObject(p.state) && onPlaza(p.state.position))) : list);
+
+export const levelAlchemiaT2 = (old: Json): Json => {
+  const out: Json = { ...old, version: 34 };
+  if (Array.isArray(old.entities)) out.entities = plazaEntities(old.entities);
+  if (isObject(old.domain)) out.domain = { ...old.domain, loot: plazaLoot(old.domain.loot) };
+  if (isObject(old.reinforcements)) out.reinforcements = { ...old.reinforcements, people: keptOffPlaza(old.reinforcements.people) };
+  if (Array.isArray(old.strayBodies)) out.strayBodies = keptOffPlaza(old.strayBodies);
   return out;
 };
