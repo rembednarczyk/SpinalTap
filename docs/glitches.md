@@ -1451,7 +1451,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-479 Odłożone ciało może trafić środkiem w bryłę (kontener) i w niej zostać
-- Status: w naprawie (7.11, gałąź `ccr-ec2c4269-ilh8k8-g479`; zgłoszone przez budowniczego ADR-0075 etap 2)
+- Status: w PR #373 (7.11, w weryfikacji; zgłoszone przez budowniczego ADR-0075 etap 2)
 - Ważność: S3 · Zasięg: `dropBody` w sim stawia ciało 0,6 m przed graczem bez sprawdzania brył; przy kontenerze (391,2..392,8 × −33,6..−32,4) środek ciała wszedł w bryłę i po 30 krokach wypychanie go nie wyciągnęło; sonda renderera (G-458) patrzy wtedy od środka bryły; poprawka w sim: miejsce odłożenia poza bryłami (cofnięcie do gracza albo bok), test w sim; do połączenia z ADR-0075 etap 4 (`settle-body`)
 - Pakiet właściciela: packages/sim
 
