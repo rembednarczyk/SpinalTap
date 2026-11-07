@@ -37,12 +37,24 @@ const fearedInCrowd = async (locale: "en" | "pl") => {
   return { session, ui };
 };
 
+type Resident = GameSession["sim"]["world"]["entities"][number];
+
 /**
- * Paces up and down beside a resident for `seconds`, two seconds each way. The toasts' own
- * timers run with the play, so they go after their time as in the game.
+ * The first resident with another one within `reach` metres: two passers-by the player stands
+ * by at once. Where the walkers are along their lanes follows the lanes' length, which bends
+ * round the street furniture (ADR-0050), so the first resident alone has a neighbour or not as
+ * the furniture moves (G-477 moved the deptak's lamps half a metre and left it alone).
  */
-const paceBy = (session: GameSession, seconds: number) => {
-  const resident = session.sim.world.with("civilian", "passerby").entities[0];
+const residentInPair = (session: GameSession, reach = 3): Resident | undefined => {
+  const residents = session.sim.world.with("civilian", "passerby").entities;
+  return residents.find((r) => residents.some((o) => o !== r && Math.hypot(o.position.x - r.position.x, o.position.z - r.position.z) < reach));
+};
+
+/**
+ * Paces up and down beside a resident (the first one by default) for `seconds`, two seconds
+ * each way. The toasts' own timers run with the play, so they go after their time as in the game.
+ */
+const paceBy = (session: GameSession, seconds: number, resident: Resident | undefined = session.sim.world.with("civilian", "passerby").entities[0]) => {
   expect(resident, "a resident in the street").toBeDefined();
   const p = session.sim.player()!;
   p.position = { ...resident!.position, x: resident!.position.x + 3 };
@@ -90,7 +102,7 @@ describe("a feared player in a crowd (G-281)", () => {
   it("counts the runners in the one toast, in Polish too", async () => {
     const { session, ui } = await fearedInCrowd("pl");
     const toasts = watchToasts(ui);
-    paceBy(session, 4);
+    paceBy(session, 4, residentInPair(session));
     const fled = [...toasts.shown.values()].filter((t) => t.title === "Przechodnie uciekają");
     expect(fled).toHaveLength(1);
     expect(fled[0]!.count ?? 1).toBeGreaterThan(1);
