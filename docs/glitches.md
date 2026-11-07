@@ -1371,7 +1371,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (AI, treść Alchemii), packages/app (test)
 
 ### G-457 Zwłoki na podniesionym terenie skaczą na y≈0
-- Status: w naprawie (7.11, gałąź `ccr-ec2c4269-ilh8k8-g457`; zgłoszone przez naprawiacza G-449)
+- Status: w PR #370 (7.11, w weryfikacji; zgłoszone przez naprawiacza G-449)
 - Ważność: S3 · Zasięg: `animateDeath` ustawia `root.position.y = 0.12 − sink` w układzie świata, więc ciało na terenie NMT wyżej niż 0 spada pod teren albo wisi; do połączenia z ragdollem
 - Pakiet właściciela: packages/engine (renderer)
 
