@@ -85,6 +85,11 @@ export interface CharacterViewsDeps {
   readonly rungs?: (x: number, y: number, z: number) => LadderRungs | null;
 }
 
+/** The followed character has a body on her shoulder. */
+const carrying = (views: ReadonlyMap<EntityId, CharacterView>, followed: EntityId): boolean => {
+  for (const [id, v] of views) if (carriedShoulder(id, v.transform, followed, views) !== null) return true;
+  return false;
+};
 
 /** The root of a body held in a grab (ADR-0075), over the simulation's place. */
 const placeBody = (v: CharacterView, holder: CharacterRig | null): void => {
@@ -214,6 +219,10 @@ export class CharacterViews implements FxActors {
     const eye = this.deps.camera.camera.position;
     const followed = this.deps.cameraTarget();
     const holder = followed === null ? undefined : this.views.get(followed);
+    // Hands full (G-459): the weapon goes away in a grab and with a body on the shoulder.
+    const busy = holder !== undefined && followed !== null && (holder.transform.grab !== undefined || carrying(this.views, followed));
+    if (holder) holder.rig.handsBusy = busy;
+    this.deps.camera.handsBusy = busy;
     for (const [id, v] of this.views) {
       // Far characters are switched off and skip their animation (ADR-0040).
       const t = v.transform;

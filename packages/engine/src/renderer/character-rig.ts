@@ -38,6 +38,8 @@ export interface CharacterRig {
   /** 0 holstered .. 1 drawn, eased towards `drawTarget` over DRAW_SECONDS. */
   drawn: number;
   drawTarget: boolean;
+  /** Both hands taken (a takedown grab, a body on the shoulder; G-459): the weapon stays holstered. */
+  handsBusy: boolean;
   /** 0 low ready (muzzle down, arm loose) .. 1 aimed; raised by a shot, lowered after `aimHold`. */
   aim: number;
   aimHold: number;

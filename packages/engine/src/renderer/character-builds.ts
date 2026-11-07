@@ -58,6 +58,7 @@ const finish = (
     fist: [0, 0],
     drawn: 1,
     drawTarget: true,
+    handsBusy: false,
     aim: 0,
     aimHold: 0,
     reload: 0,

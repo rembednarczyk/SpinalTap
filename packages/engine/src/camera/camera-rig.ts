@@ -115,6 +115,11 @@ export class CameraRig {
   private readonly placeholderGun: AbstractMesh;
   private reference: { position: Vector3; target: Vector3 } | null = null;
   private occluder: CameraOccluder | null = null;
+  /**
+   * Both of the player's hands are taken (a body on the shoulder, G-459): the weapon drops out of
+   * the FPP view as on a ladder. A takedown grab does it from the transform's `grab`.
+   */
+  handsBusy = false;
   /** The forearms on a grabbed target's neck in first person (ADR-0075). */
   private readonly chokeArms: ChokeArms;
   onBodyVisibility: (visible: boolean) => void = () => {};
@@ -376,8 +381,8 @@ export class CameraRig {
 
     const fpp = this.blend < 0.35;
     // On a ladder (and pulling up onto a ledge) both hands hold on: the weapon drops out of view
-    // (ADR-0021); in a takedown grab the forearms on the target's neck come up instead.
-    const held = this.weaponDrawn && target.climb === undefined && target.grab === undefined ? 1 : 0;
+    // (ADR-0021); so it does with a body on the shoulder or in a takedown grab (G-459).
+    const held = this.weaponDrawn && target.climb === undefined && !this.handsBusy && target.grab === undefined ? 1 : 0;
     this.chokeArms.update(fpp, target.grab, dt);
     this.draw += Math.sign(held - this.draw) * Math.min(Math.abs(held - this.draw), dt / 0.35);
     this.reload = Math.max(0, this.reload - dt);

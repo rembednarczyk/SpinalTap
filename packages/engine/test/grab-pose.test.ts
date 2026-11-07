@@ -13,7 +13,7 @@ import { CHOKE_TIME, GRAB_PULL, KILL_TIME, SNAP, heldPose, holderPose } from "..
  * The takedown grab's clips (ADR-0075 stage 2): the poses per phase as pure functions of the rig,
  * and played through the views from `Transform.grab`: the target pulled in front of the player,
  * her hands on its neck, the choke and the kill ending on its knees and lying where the
- * simulation has it.
+ * simulation has it, the weapon put away in the grab (G-459).
  */
 
 const HEROINE = 1;
@@ -156,5 +156,41 @@ describe("the grab in the views (ADR-0075 stage 2)", () => {
     run(views, 2);
     expect(world(rig(views, GUARD).head).y).toBeLessThan(0.45);
     expect(rig(views, GUARD).root.position.z).toBeCloseTo(1.2, 3);
+  });
+
+  it("puts the weapon away in the grab and draws it again after (G-459)", () => {
+    const { scene, views, cam } = setup();
+    run(views, 1);
+    const inHand = () => scene.transformNodes.filter((n) => n.name.startsWith("e1-hand-") && n.isEnabled()).length;
+    expect(inHand()).toBe(1);
+    grab(views, "hold");
+    run(views, 0.6);
+    expect(cam.handsBusy).toBe(true);
+    expect(rig(views, HEROINE).drawn).toBe(0);
+    expect(inHand()).toBe(0);
+    grab(views, "kill");
+    run(views, 0.5);
+    expect(inHand()).toBe(0);
+    grab(views, null, { unconscious: true });
+    run(views, 1);
+    expect(cam.handsBusy).toBe(false);
+    expect(inHand()).toBe(1);
+  });
+
+  it("keeps the weapon away while she carries a body (G-459)", () => {
+    const { scene, views, cam } = setup();
+    views.move(GUARD, at(0.3, 1.2, { unconscious: true }));
+    run(views, 2);
+    const inHand = () => scene.transformNodes.filter((n) => n.name.startsWith("e1-hand-") && n.isEnabled()).length;
+    expect(inHand()).toBe(1);
+    // On her spot: on her shoulder.
+    views.move(GUARD, at(0, 0, { unconscious: true }));
+    run(views, 0.6);
+    expect(cam.handsBusy).toBe(true);
+    expect(inHand()).toBe(0);
+    views.move(GUARD, at(0, 0.7, { unconscious: true }));
+    run(views, 1);
+    expect(cam.handsBusy).toBe(false);
+    expect(inHand()).toBe(1);
   });
 });
