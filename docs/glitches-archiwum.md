@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-423 Pomniki przyrody bez swojego gatunku (dęby i topola „Baobab” jako lipy i klony)
+- Status: naprawione (PR #348, 7.11; `tree-species-ignored` 4 → 0, dęby i topola z własnymi modelami)
+- Ważność: S4 · Zasięg: 3 drzewa na Placu Litewskim; poprawka: `species`/`genus` z OSM (Quercus, Populus), model dębu; kontrola `tree-species-ignored`
+- Pakiet właściciela: tools/osm-import, packages/engine (assety)
+
 ### G-436 Pas gołego terenu 1–2 m przed Sądem Okręgowym na Placu Czechowicza (T-210)
 - Status: naprawione (PR #349, 7.11; `landuse-bare` 108 863 → 108 592)
 - Ważność: S4 · Zasięg: x 2–22, z −104,7…−122, ok. 280 punktów `landuse-bare`; poprawka: domknąć nawierzchnię do ściany w69672563 (baza spadnie o ok. 280)

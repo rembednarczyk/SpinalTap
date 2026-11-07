@@ -1265,11 +1265,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: po wczytaniu oślepiony wróg od razu widzi gracza, przebieg rozjeżdża się z zapisanym (hash po wczytaniu inny niż w ciągłej grze); dotyczy każdego zapisu w trakcie walki z hackami
 - Pakiet właściciela: packages/sim, packages/core (save-snapshot), packages/persistence
 
-### G-423 Pomniki przyrody bez swojego gatunku (dęby i topola „Baobab” jako lipy i klony)
-- Status: w PR #348 (7.11, przegląd kuratora; zgłoszone 6.11, kurator)
-- Ważność: S4 · Zasięg: 3 drzewa na Placu Litewskim; poprawka: `species`/`genus` z OSM (Quercus, Populus), model dębu; kontrola `tree-species-ignored`
-- Pakiet właściciela: tools/osm-import, packages/engine (assety)
-
 ### G-424 Zapis v30 z ogłuszonym wrogiem: migracja 30→31 nie stawia `fought` na ciałach
 - Status: zgłoszone (6.11, weryfikator PR #337)
 - Ważność: S4 · Zasięg: zabicie ciała ogłuszonego przed aktualizacją liczy jedną walkę stylu ciosu (np. pistolet) zamiast skradania; nadal najwyżej jedna walka na wroga; poprawka: migracja stawia `fought` na encjach `downed`/`unconscious` albo świadome pozostawienie
@@ -1344,6 +1339,26 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, kurator, przegląd G-436)
 - Ważność: S4 · Zasięg: x ok. 8–21, z −127…−182 i wschodnia strona ulicy, ok. 1200 punktów `landuse-bare`; poprawka jak T-210/T-164 (`ADDED_AREAS` kostki do ścian)
 - Pakiet właściciela: tools/osm-import
+
+### G-441 Iglaki z OSM rysowane jako drzewa liściaste (T-212)
+- Status: zgłoszone (7.11, kurator, przegląd G-423)
+- Ważność: S4 · Zasięg: 5 drzew i szpaler 9 drzew z `leaf_type=needleleaved`; poprawka: model iglaka w stylu NPR, kontrola skanu `tree-needleleaved-as-broadleaved` (baza 6)
+- Pakiet właściciela: tools/osm-import (props), packages/engine (renderer/mapcity)
+
+### G-442 Drzewa poza NMPT bez wysokości z tagu `height` (T-214)
+- Status: zgłoszone (7.11, kurator, przegląd G-423)
+- Ważność: S4 · Zasięg: topola biała n1929177005 ma 13,3 m zamiast 25 m; poprawka: pobierać `height` w `osm:trees`, kontrola `tree-height-vs-osm-tag` (różnica ponad 3 m, baza 1)
+- Pakiet właściciela: tools/osm-import
+
+### G-443 Pnie starych dębów o ok. 40% za grube (T-215)
+- Status: zgłoszone (7.11, kurator, przegląd G-423)
+- Ważność: S4 · Zasięg: r 0,87/0,92 m wobec 0,62/0,64 m z obwodu; także kolizja w sim; poprawka: pień skalowany słabiej niż korona
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
+
+### G-444 `map-city.test.ts` wolniejszy o ok. 12% po G-423, pada na 5 s pod obciążeniem
+- Status: zgłoszone (7.11, kurator, przegląd G-423)
+- Ważność: S4 (test) · Zasięg: „builds the whole generated Lublin” 3,5–3,9 s wobec 3,2–3,3 s przed; przy load ok. 15 przekroczył 5000 ms; najpierw pomiar przyczyny (nowe modele drzew), bez podnoszenia limitu
+- Pakiet właściciela: packages/engine (renderer/mapcity)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
