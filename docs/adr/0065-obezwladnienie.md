@@ -1,5 +1,7 @@
 # ADR-0065: Obezwładnienie bez zabijania, ogłuszenie i ukrywanie ciał
 
+Uzupełnienie (7.11): wybór wariantu w trakcie (przytrzymanie ataku) zastępuje chwyt z wyborem z ADR-0075.
+
 ## Kontekst
 Audyt luk (31.10, `docs/audyt-luk.md`, Skradanie, P0) pokazał, że gra nie ma obezwładnień. Jedyne ogłuszenie to krótki stan po sparowanym ciosie (`parryStun`, `melee-system.ts`). Tymczasem ADR-0059 zakłada je w trzech miejscach:
 - źródło XP „skradanie: obezwładnienie bez alarmu”;
