@@ -3,6 +3,7 @@ import { ALCHEMIA_PIECES, ALCHEMIA_UNITS, type AlchemiaBox, type AlchemiaPiece, 
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { arkadyGeometry } from "./arkady-geometry";
 import { pavilionGeometry } from "./pavilion-geometry";
+import { garlandsGeometry } from "./garlands";
 import { parkingOutside } from "./parking-geometry";
 
 /**
@@ -11,7 +12,7 @@ import { parkingOutside } from "./parking-geometry";
  * eye needs: the front's frame, the units' signs (proper names, drawn without words), the ceiling's
  * light strips. Two sinks: outside (the shell, the green roof, the lift's kiosk, the terraces'
  * steps, T2 with its stairs and the Arkady of stage 2, the pavilion on the corner of stage 3, P-1's ramp trench and stair house of stage 4,
- * T0's pergolas with their paper lanterns, the beds and the roof's lawns of stage 7), drawn from afar, and inside (units, counters, tables, the stairs, the lights), drawn near
+ * T0's pergolas with their paper lanterns and garlands, the beds and the roof's lawns of stage 7), drawn from afar, and inside (units, counters, tables, the stairs, the lights), drawn near
  * only. Glass is opaque with the inside's warm light in it (ADR-0071's glass). Pure data, no Babylon.
  */
 
@@ -161,6 +162,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   arkadyGeometry(outside, data);
   pavilionGeometry(outside, data);
   parkingOutside(outside, data);
+  garlandsGeometry(outside, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);
   return { outside, inside };

@@ -14,10 +14,13 @@ import {
   PERGOLA_DOOR,
   ROOF_LAWNS,
   ROOF_PLANTERS,
+  SQUARE_GARLANDS,
   STAIR_HOUSE,
   Simulation,
   gangerEntity,
+  garlandAt,
   groundY,
+  p1RampY,
 } from "../src";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { teleportPlayer } from "./helpers";
@@ -99,6 +102,32 @@ describe("T0's square and the green roof (ADR-0074 stage 7)", () => {
   it("hangs its lanterns and beams over every head", () => {
     for (const p of square.filter((q) => q.kind === "lantern")) expect(p.box.y0 - groundY((p.box.x0 + p.box.x1) / 2, (p.box.z0 + p.box.z1) / 2)).toBeGreaterThan(2.0);
     for (const p of square.filter((q) => q.kind === "pergola" && !q.solid)) expect(p.box.y0 - groundY((p.box.x0 + p.box.x1) / 2, (p.box.z0 + p.box.z1) / 2)).toBeGreaterThan(2.6);
+  });
+
+  it("hangs its garlands crosswise from a pergola's corner to another's, over every head and the ramp's cars (user's request 7.11)", () => {
+    expect(SQUARE_GARLANDS).toHaveLength(4);
+    const posts = square.filter((p) => p.kind === "pergola" && p.solid).map((p) => p.box);
+    const beams = square.filter((p) => p.kind === "pergola" && !p.solid).map((p) => p.box);
+    for (const g of SQUARE_GARLANDS) {
+      // Each end on a beam's top over a post, or on a beam by the stair house's wall.
+      for (const e of [g.from, g.to]) {
+        expect(posts.some((b) => gap(b, e.x, e.z) < 0.35) || beams.some((b) => gap(b, e.x, e.z) < 0.05), `${e.x},${e.z}`).toBe(true);
+        expect(beams.some((b) => Math.abs(b.y1 - e.y) < 0.01 && gap(b, e.x, e.z) < 0.35), `${e.x},${e.z} on a beam`).toBe(true);
+      }
+      for (let t = 0; t <= 1; t += 0.05) {
+        const p = garlandAt(g, t);
+        expect(p.y - groundY(p.x, p.z), `${p.x.toFixed(1)},${p.z.toFixed(1)}`).toBeGreaterThan(2.4);
+        // Over the ramp, a car's roof (1.6 m) well under it.
+        if (p.x > P1_RAMP.minX && p.x < P1_RAMP.maxX && p.z < P1_RAMP.covered) expect(p.y - p1RampY(p.z)).toBeGreaterThan(3);
+      }
+    }
+    // Two by two they cross: each pair's spans meet in plan.
+    const meet = (a: (typeof SQUARE_GARLANDS)[number], b: (typeof SQUARE_GARLANDS)[number]) => {
+      const d = (p: { x: number; z: number }, q: { x: number; z: number }, r: { x: number; z: number }) => (q.x - p.x) * (r.z - p.z) - (q.z - p.z) * (r.x - p.x);
+      return d(a.from, a.to, b.from) * d(a.from, a.to, b.to) < 0 && d(b.from, b.to, a.from) * d(b.from, b.to, a.to) < 0;
+    };
+    expect(meet(SQUARE_GARLANDS[0]!, SQUARE_GARLANDS[1]!)).toBe(true);
+    expect(meet(SQUARE_GARLANDS[2]!, SQUARE_GARLANDS[3]!)).toBe(true);
   });
 
   it("stands its posts and beds on the square's paving, off the map's lawns, footways and roads", () => {

@@ -1,3 +1,4 @@
+import type { Vec3 } from "@seki/core";
 import { groundY } from "../lublin/terrain";
 import { P1_RAMP, P1_STAIR } from "./parking";
 import { type Box, HALL, type Piece, box, piece } from "./plan";
@@ -52,6 +53,63 @@ const BED_STEP = 2;
 /** The lawns on the hall's roof: four beds of grass either side of a cross of paths. */
 export const ROOF_LAWNS: readonly Box[] = [402.5, 420].flatMap((x) => [37, 47.5].map((z) => box(x, x + 13.5, z, z + 7.5, HALL.roof, HALL.roof + 0.05)));
 
+/** The tops of the pergolas' crossbeams: of pergola A's pair at z, of pergola C's, of pergola B's. */
+const walkTop = (z: number): number => cm(Math.max(groundY(PERGOLA_WALK.west, z), groundY(PERGOLA_WALK.east, z)) + HEIGHT);
+const backXs = (): number[] => {
+  const xs: number[] = [];
+  for (let x = PERGOLA_BACK.from; x <= PERGOLA_BACK.to + 1e-6; x += PERGOLA_BACK.every) xs.push(x);
+  return xs;
+};
+const backTop = (): number => cm(Math.max(...backXs().flatMap((x) => [groundY(x, PERGOLA_BACK.south), groundY(x, PERGOLA_BACK.north)])) + HEIGHT);
+const doorTop = (): number => {
+  const p = PERGOLA_DOOR;
+  const mid = (p.west + p.east) / 2;
+  return cm(Math.max(groundY(mid, p.south), groundY(mid, p.north)) + HEIGHT);
+};
+
+/** A string of coloured lights, hung from a pergola's corner to another's, sagging this much at its middle. */
+export interface Garland {
+  readonly from: Vec3;
+  readonly to: Vec3;
+  readonly sag: number;
+}
+
+/** How much a garland sags per metre of its span. */
+const SAG = 0.045;
+const garland = (from: Vec3, to: Vec3): Garland => ({ from, to, sag: cm(SAG * Math.hypot(to.x - from.x, to.z - from.z)) });
+
+/**
+ * The garlands (user's request 7.11, review of PR #382): crosswise between the pergolas, corner to
+ * corner, on the tops of their beams: between pergola A's north end and pergola C (A's north-east
+ * corner to C's north-west one and A's north-west to C's north-east), and over the ramp's trench
+ * between A's east row and pergola B by P-1's stair house (A's posts at z 7.5 and 13.5 to B's
+ * corners on the house's wall and at its posts). Drawn only, by the engine (`garlands.ts`).
+ */
+export const SQUARE_GARLANDS: readonly Garland[] = (() => {
+  const a = PERGOLA_WALK;
+  const c = PERGOLA_BACK;
+  const b = PERGOLA_DOOR;
+  const aTop = (z: number) => walkTop(z) + BEAM;
+  const cTop = backTop() + 2 * BEAM;
+  // B: its side beams' top by the house's wall, its front beam's over the posts.
+  const bWall = doorTop() + BEAM;
+  const bFront = doorTop() + 2 * BEAM;
+  const at = (x: number, y: number, z: number): Vec3 => ({ x, y, z });
+  return [
+    garland(at(a.east + POST / 2, aTop(a.to), a.to + POST / 2), at(c.from + POST / 2, cTop, c.north + POST / 2)),
+    garland(at(a.west + POST / 2, aTop(a.to), a.to + POST / 2), at(c.to + POST / 2, cTop, c.north + POST / 2)),
+    garland(at(a.east + POST / 2, aTop(7.5), 7.5 + POST / 2), at(b.west + POST / 2, bWall, b.north - 0.1)),
+    garland(at(a.east + POST / 2, aTop(13.5), 13.5 + POST / 2), at(b.west + POST / 2, bFront, b.south + POST / 2)),
+  ];
+})();
+
+/** A point of a garland, `t` of the way along it (0..1): straight between its ends, less its sag (a parabola, near enough a catenary). */
+export const garlandAt = (g: Garland, t: number): Vec3 => ({
+  x: g.from.x + (g.to.x - g.from.x) * t,
+  y: g.from.y + (g.to.y - g.from.y) * t - 4 * g.sag * t * (1 - t),
+  z: g.from.z + (g.to.z - g.from.z) * t,
+});
+
 /** A post standing on the ground at (x, z), up to `top`. */
 const post = (x: number, z: number, top: number): Piece => piece(box(x, x + POST, z, z + POST, cm(groundY(x, z) - 0.1), top), "pergola", false);
 
@@ -65,7 +123,7 @@ const walkPergola = (): Piece[] => {
   const out: Piece[] = [];
   let last: { z: number; top: number } | null = null;
   for (let z = p.from; z <= p.to + 1e-6; z += p.every) {
-    const top = cm(Math.max(groundY(p.west, z), groundY(p.east, z)) + HEIGHT);
+    const top = walkTop(z);
     out.push(post(p.west, z, top), post(p.east, z, top));
     out.push(piece(box(p.west - 0.2, p.east + POST + 0.2, z, z + POST, top, top + BEAM), "pergola", false, false));
     out.push(lantern((p.west + p.east + POST) / 2, z + POST / 2, top));
@@ -84,9 +142,8 @@ const walkPergola = (): Piece[] => {
 const backPergola = (): Piece[] => {
   const p = PERGOLA_BACK;
   const out: Piece[] = [];
-  const xs: number[] = [];
-  for (let x = p.from; x <= p.to + 1e-6; x += p.every) xs.push(x);
-  const top = cm(Math.max(...xs.flatMap((x) => [groundY(x, p.south), groundY(x, p.north)])) + HEIGHT);
+  const xs = backXs();
+  const top = backTop();
   for (const x of xs) {
     out.push(post(x, p.south, top), post(x, p.north, top));
     out.push(piece(box(x, x + POST, p.south - 0.2, p.north + POST + 0.2, top, top + BEAM), "pergola", false, false));
@@ -100,8 +157,7 @@ const backPergola = (): Piece[] => {
 /** Pergola B: two posts south of the stair house's door, beams from them to its wall, slats across, two lanterns. */
 const doorPergola = (): Piece[] => {
   const p = PERGOLA_DOOR;
-  const mid = (p.west + p.east) / 2;
-  const top = cm(Math.max(groundY(mid, p.south), groundY(mid, p.north)) + HEIGHT);
+  const top = doorTop();
   const out: Piece[] = [post(p.west, p.south, top), post(p.east, p.south, top)];
   for (const x of [p.west, p.east]) out.push(piece(box(x, x + POST, p.south, p.north, top, top + BEAM), "pergola", false, false));
   for (let z = p.south + 0.6; z < p.north - 0.1; z += 0.6) out.push(piece(box(p.west - 0.2, p.east + POST + 0.2, z, z + 0.08, top + BEAM, top + BEAM + 0.08), "pergola", false, false));

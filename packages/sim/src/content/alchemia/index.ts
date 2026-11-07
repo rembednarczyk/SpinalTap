@@ -23,7 +23,7 @@ export { T2 as ALCHEMIA_T2, T2_PADS, T2_RECTS, T2_STAIRS, MEMORIAL as ALCHEMIA_M
 export * from "./market";
 export * from "./pavilion";
 export * from "./parking";
-export { PARAPET_BEDS, PERGOLA_BACK, PERGOLA_DOOR, PERGOLA_WALK, ROOF_LAWNS } from "./square";
+export { type Garland as AlchemiaGarland, PARAPET_BEDS, PERGOLA_BACK, PERGOLA_DOOR, PERGOLA_WALK, ROOF_LAWNS, SQUARE_GARLANDS, garlandAt } from "./square";
 export { ALCHEMIA_NAV } from "./nav";
 
 /**
