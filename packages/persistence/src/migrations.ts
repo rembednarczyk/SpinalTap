@@ -1,6 +1,6 @@
 import { SAVE_SCHEMA_VERSION, SHARD_CYBER_CAPACITY, capacityMax, clampItemLevel, hasItemLevel, isInstanceDefId, progressionFromXp } from "@seki/core";
 import { moveMarketToAlchemia } from "./market-move";
-import { levelAlchemiaT2, rebuildAlchemia } from "./alchemia-rebuild";
+import { levelAlchemiaT2, raiseAlchemiaPavilion, rebuildAlchemia } from "./alchemia-rebuild";
 
 type Json = Record<string, unknown>;
 
@@ -442,6 +442,10 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // save made in the hollow or on the ground the square changed wakes on T2; the overpass bag goes
   // before the Arkady's arches, the bags on the square onto T2, the lookout back under the arches.
   33: levelAlchemiaT2,
+  // v34 -> v35 (ADR-0074 stage 3): the triangular pavilion raised on the corner of Bajkowskiego and
+  // Lubartowska. The Hebi bag by Ren goes onto its roof and Ren's state is dropped (he comes back
+  // there from the content); a save made on its ground wakes by the foot of its ladder.
+  34: raiseAlchemiaPavilion,
 };
 
 export class MigrationError extends Error {}

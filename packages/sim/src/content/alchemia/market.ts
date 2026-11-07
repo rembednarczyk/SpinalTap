@@ -14,18 +14,19 @@ import { type ActorDef, type Rect, type StaticProp, crate, lamp } from "../build
 import { ground, groundY } from "../lublin/terrain";
 import { ALCHEMIA_LIFT } from "./lift";
 import { ARKADY_ARCADE_FLOOR, ARKADY_FRAME, arkadyPoint, arkadySpanMid } from "./arkady";
-import { HALL, NORTH, SOUTH, facing } from "./plan";
+import { SOUTH, facing } from "./plan";
+import { onPavilionRoof } from "./pavilion";
 import { KEEPER_SPOTS, KEEPER_YAW, type KeeperKey } from "./units";
 
 /**
  * The market in Alchemia by the investor's plan (ADR-0074 §3, stage 1; once ADR-0063 stage 6):
  * the stallholders keep their units in the food hall, each behind his or her own counter (`units.ts`);
- * Hana sells from her cart on the square in front of it (T1); Ren sleeps on the hall's green roof
- * (T0) until the triangular pavilion is built (stage 3), the Hebi bag by him; Kurosawa of Kagami
+ * Hana sells from her cart on the square in front of it (T1); Ren sleeps on the roof of the
+ * triangular pavilion on the corner (stage 3), the Hebi bag by him; Kurosawa of Kagami
  * waits by the lift's kiosk on the car park. The Hebi keep their stash on the lower square T2 before
  * the Arkady's south arches (stage 2, until the shelter of stage 5), their lookout by the Arkady.
  *
- * World metres, every point on the ground, on the hall's floor or on its roof.
+ * World metres, every point on the ground, on the hall's floor or on the pavilion's roof.
  */
 
 /** The keepers' units (`units.ts`): once the numbers of the five stalls. */
@@ -87,20 +88,20 @@ export interface RoofStash {
   readonly lines: readonly LootLine[];
 }
 
-/** A point on the hall's green roof (T0). */
-const onRoof = (x: number, z: number): Vec3 => ({ x, y: HALL.roof, z });
-
 /**
- * Ren Odagiri sleeps on the hall's green roof, between its planters by the north parapet, looking
- * over T1 to the Old Town (act II, ADR-0023; on the triangular pavilion's roof from stage 3). He
- * turns up once someone told Seki where he is and is gone after the "kagami" ending.
+ * Ren Odagiri sleeps on the roof of the triangular pavilion on the corner (stage 3; on the hall's
+ * green roof in stage 1), behind its attic and its neon, up the service ladder from the car park,
+ * looking east over Lubartowska to the Old Town (act II, ADR-0023). He turns up once someone told
+ * Seki where he is and is gone after the "kagami" ending. Nobody follows him up the ladder (ADR-0021).
  */
-export const REN_SPOT: Vec3 = onRoof(419, 55.8);
+export const REN_SPOT: Vec3 = onPavilionRoof(430, -3.4);
+/** He looks to the Trybunał on the Rynek (582.4; -61.2). */
+const REN_YAW = facing(REN_SPOT, { x: 582.4, z: -61.2 });
 
 /** Hebi's bag by Ren (ADR-0021): the key of the old roof stash, so a taken one stays taken. */
 export const TARG_ROOF_STASH: RoofStash = {
   key: "stash:targ-roof",
-  at: onRoof(420.6, 56.2),
+  at: onPavilionRoof(431.3, -2.7),
   lines: [
     { kind: "eddies", qty: 180 },
     { kind: "ammo", ammo: "556", qty: 30 },
@@ -131,7 +132,7 @@ export const KAGAMI_CLEANER_TAG = "kagami_cleaner";
 
 const REN: ActorDef = {
   kind: "npc",
-  spawn: { key: "ren", position: REN_SPOT, yaw: NORTH },
+  spawn: { key: "ren", position: REN_SPOT, yaw: REN_YAW },
   preset: "civilian",
   faction: "hebi",
   when: { all: [REN_TRAIL_FLAG], none: [endingFlag("kagami")] },

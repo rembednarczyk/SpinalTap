@@ -60,7 +60,7 @@ const findTrail = (s: GameSession, ui: Ui, ending: EndingId) => {
     expect(allText(ui)).toContain("Fiolki już nie ma.");
     finishDialogue(s, ui, "Komu sprzedałeś");
   }
-  expect(objective(ui)).toBe("Take the lift behind Alchemia up to the roof terrace and find Ren");
+  expect(objective(ui)).toBe("Climb the service ladder at the back of the glass pavilion on Alchemia's corner and find Ren on its roof");
 };
 
 /** Step 2: Ren on the roof hands over the chip; the "dach" flashback follows. */

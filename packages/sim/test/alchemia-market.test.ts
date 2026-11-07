@@ -23,6 +23,8 @@ import {
   WORLD_CHUNKS,
   chunkAt,
   groundY,
+  ALCHEMIA_PAVILION,
+  PAVILION_CORNERS,
 } from "../src";
 import { circleTouchesPrism } from "../src/world/prism";
 import { run, teleportPlayer } from "./helpers";
@@ -30,9 +32,9 @@ import { run, teleportPlayer } from "./helpers";
 /**
  * The market in Alchemia (ADR-0063 stage 6, ADR-0074 stage 1): the people of the market that stood
  * on Aleja Tysiąclecia keep their units in the food hall, Hana's cart stands on T1 in front of it,
- * Ren on its green roof, the Hebi by the ruin; every place of theirs (and of the jobs, the crowd and
+ * Ren on the roof of the pavilion on the corner (stage 3), the Hebi by the Arkady; every place of theirs (and of the jobs, the crowd and
  * the daily plans there) is open floor in the plot's chunk, measured on the simulation's own solids:
- * the ground outside, the hall's floor or its roof inside its outline.
+ * the ground outside, the hall's floor or its roof inside its outline, the pavilion's roof.
  */
 
 const BODY = 0.4;
@@ -61,8 +63,16 @@ const blockers = (sim: Simulation, p: Vec3): Entity[] =>
     return e.prisms.some((q) => q.top > p.y + 0.3 && q.bottom < p.y + 1.8 && circleTouchesPrism(q, p.x, p.z, BODY));
   });
 
-/** The floor under `p`: inside the hall's outline its floor or its roof, the ground elsewhere. */
+/** Inside the pavilion's triangle on the corner (stage 3)? */
+const inPavilion = (p: Vec3): boolean =>
+  PAVILION_CORNERS.every((a, i) => {
+    const b = PAVILION_CORNERS[(i + 1) % 3]!;
+    return (b.x - a.x) * (p.z - a.z) - (b.z - a.z) * (p.x - a.x) >= 0;
+  });
+
+/** The floor under `p`: inside the hall's outline its floor or its roof, on the pavilion its roof, the ground elsewhere. */
 const floorAt = (p: Vec3): number => {
+  if (inPavilion(p) && p.y > ALCHEMIA_PAVILION.floor + 1) return ALCHEMIA_PAVILION.roof;
   const inHall = p.x >= FOODHALL.minX && p.x <= FOODHALL.maxX && p.z >= FOODHALL.minZ && p.z <= FOODHALL.maxZ;
   if (!inHall) return groundY(p.x, p.z);
   return p.y > FOODHALL.floor + 1 ? FOODHALL.roof : FOODHALL.floor;
@@ -143,10 +153,10 @@ describe("the market in Alchemia (ADR-0063 stage 6)", () => {
     }
   });
 
-  it("has Ren on the hall's green roof, on its slab, with the roof stash by him", () => {
+  it("has Ren on the pavilion's roof (stage 3), on its slab, with the roof stash by him", () => {
     for (const p of [REN_SPOT, TARG_ROOF_STASH.at]) {
-      expect(p.y).toBe(FOODHALL.roof);
-      expect(p.x > FOODHALL.minX + 1 && p.x < FOODHALL.maxX - 1 && p.z > FOODHALL.minZ + 1 && p.z < FOODHALL.maxZ - 0.3).toBe(true);
+      expect(p.y).toBe(ALCHEMIA_PAVILION.roof);
+      expect(inPavilion(p)).toBe(true);
     }
     expect(Math.hypot(TARG_ROOF_STASH.at.x - REN_SPOT.x, TARG_ROOF_STASH.at.z - REN_SPOT.z)).toBeGreaterThan(1);
     const sim = loaded();

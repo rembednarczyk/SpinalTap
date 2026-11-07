@@ -190,7 +190,7 @@ export const enDomain = {
   "quest.m3_lustro.title": "Mirror",
   "quest.m3_lustro.ren_trail": "Someone is calling you through the module. Ask Grandma Ume about Ren Odagiri (the promenade by the clinic)",
   "quest.m3_lustro.ren_trail.sold": "Mori sold your module. Ask him who bought it (Mori's clinic)",
-  "quest.m3_lustro.meet_ren": "Take the lift behind Alchemia up to the roof terrace and find Ren",
+  "quest.m3_lustro.meet_ren": "Climb the service ladder at the back of the glass pavilion on Alchemia's corner and find Ren on its roof",
   "quest.m3_lustro.kaito_job": "Kaito has a job out on Ren. Find out who is paying for it (Neon Koi bar)",
   "quest.m3_lustro.overpass": "Kurosawa from Kagami is waiting on the square behind Alchemia, by the lift. Decide what happens to the archive",
   "quest.m3_lustro.overpass.cleared": "Kagami's cleaners are down. Go back up to Ren on Alchemia's roof",

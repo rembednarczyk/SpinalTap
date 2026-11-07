@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_INPUT, type InputFrame, REN_TRAIL_FLAG, SAVE_SCHEMA_VERSION } from "@seki/core";
-import { ALCHEMIA_WAKE, MOVED_STASHES, OLD_MARKET_WAKE, REBUILT_STASHES, checksum } from "@seki/persistence";
-import { FOODHALL, REN_SPOT, STALL_KEEPERS, TARG_OVERPASS_STASH, TARG_ROOF_STASH, beforeKeeper, chunkAt, groundY, opening } from "@seki/sim";
+import { EMPTY_INPUT, type InputFrame, SAVE_SCHEMA_VERSION } from "@seki/core";
+import { ALCHEMIA_WAKE, MOVED_STASHES, OLD_MARKET_WAKE, PAVILION_STASHES, checksum } from "@seki/persistence";
+import { FOODHALL, STALL_KEEPERS, TARG_OVERPASS_STASH, TARG_ROOF_STASH, beforeKeeper, chunkAt, groundY, opening } from "@seki/sim";
 import { frame, setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 
 /**
  * The market in Alchemia's food hall (ADR-0074 stage 1), headless: Seki walks from T1 to each
  * keeper's counter and each answers, Oyaji and Fumiko trade; the hours hold (Fumiko's bar shut by
- * day, Oyaji's shop after 22:00, Kenta's and Goro's units after midnight); Ren is on the green roof;
+ * day, Oyaji's shop after 22:00, Kenta's and Goro's units after midnight) (Ren on the pavilion's
+ * roof: `alchemia-pavilion.test.ts`);
  * a game saved on the old hall's roof terrace (v32) and one saved in the old market on Aleja
  * Tysiąclecia (v28) load with Seki safe on the ground and the people at their new places.
  */
@@ -89,25 +90,9 @@ describe("the market in Alchemia's food hall (ADR-0074 stage 1)", () => {
     expect(Math.hypot(kenta.position.x - STALL_KEEPERS.kenta.x, kenta.position.z - STALL_KEEPERS.kenta.z)).toBeLessThan(0.5);
   });
 
-  it("Ren waits on the green roof, walked onto from the car park, and he talks", () => {
-    const { session, ui } = setup();
-    session.newGame();
-    session.sim.enqueue({ type: "set-flag", flag: REN_TRAIL_FLAG });
-    teleport(session, 420, 28, 0);
-    steps(session, 2);
-    for (const g of [...session.sim.world.with("ai")]) session.sim.world.remove(g);
-    walkAt(session, { x: REN_SPOT.x - 1, z: REN_SPOT.z - 1.4 }, 900);
-    const ren = [...session.sim.world].find((e) => e.key === "ren")!;
-    expect(ren.position.y).toBeCloseTo(FOODHALL.roof, 1);
-    expect(session.sim.player()!.position.y).toBeCloseTo(FOODHALL.roof, 1);
-    expect(ui.getState().prompt ?? "").toContain("Ren");
-    steps(session, 1, frame({ interact: true }));
-    expect(ui.getState().dialogue).not.toBeNull();
-  });
-
   it("loads a game saved on the old hall's roof terrace (v32) with Seki on T1, unhurt, and the bag by Ren", async () => {
-    // The migration's places are the content's (persistence knows no map).
-    const by = REBUILT_STASHES[TARG_ROOF_STASH.key]!;
+    // The migration's places are the content's (persistence knows no map): the bag ends by Ren on the pavilion's roof (stage 3).
+    const by = PAVILION_STASHES[TARG_ROOF_STASH.key]!;
     expect(Math.hypot(by.x - TARG_ROOF_STASH.at.x, by.y - TARG_ROOF_STASH.at.y, by.z - TARG_ROOF_STASH.at.z)).toBeLessThan(0.01);
     expect(chunkAt(by.x, by.z)?.id).toBe(by.chunk);
     expect(ALCHEMIA_WAKE.y - groundY(ALCHEMIA_WAKE.x, ALCHEMIA_WAKE.z)).toBeCloseTo(0.05, 2);

@@ -226,7 +226,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"8cee658d"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"c839b064"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -265,6 +265,10 @@ describe("determinism", () => {
     // Re-recorded (all of them, "hard" and the duel too) for the v34 version of Alchemia's T2 and the
     // Arkady (ADR-0074 stage 2): a migration, no new field; the Arkady take the map's ruin's place
     // among its buildings, so no id moves, and as v31 the runs hash to the goldens of before.
+    // Re-recorded (all of them, "hard" and the duel too) for the v35 version of the pavilion on
+    // Alchemia's corner (ADR-0074 stage 3): a migration, no new field; the pavilion's solids and
+    // ladder take ids from ROOM_ID_BASE after Alchemia's, Ren moves onto its roof, and with the
+    // version at 34 the runs hash to the v34 goldens, so only the version changed them.
     expect(v31HashOf(sim)).toBe("8a184ff0");
     expect(v30HashOf(sim)).toBe("7dd4e4ad");
     expect(v17HashOf(sim)).toBe("1ce01d19");
@@ -284,7 +288,7 @@ describe("determinism", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"c41cbdae"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"4689e661"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
     expect(v31HashOf(sim)).toBe("13a15bf5");
     expect(v30HashOf(sim)).toBe("30834a04");
@@ -376,8 +380,8 @@ describe("determinism", () => {
     // hashes stand; contracts' XP and kills above level 1 show in no golden hash (the balance test
     // and progression tests cover them).
     // On top of that, re-recorded for the v34 version (ADR-0074 stage 2, see the first golden test):
-    // b036f5d7 before it.
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"f0ccb612"`);
+    // b036f5d7 before it; and for the v35 version (stage 3): f0ccb612 before it.
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"5716d8d1"`);
     expect(v31HashOf(sim)).toBe("5ce46e55");
     expect(v30HashOf(sim)).toBe("ae6c21d0");
     expect(v17HashOf(sim)).toBe("3e78c5b2");
