@@ -165,16 +165,21 @@ const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: rea
       continue;
     }
     const n = { x: -st.dir.z * side, z: st.dir.x * side };
-    for (const s of SLIDES) {
-      const at = { x: st.p.x + st.dir.x * s, z: st.p.z + st.dir.z * s };
-      const d = sideOffset(site, at, n, mode, fallback, lamp);
-      if (d === null) continue;
-      const p = { x: at.x + n.x * d, z: at.z + n.z * d };
-      if (!clear(at, p)) continue;
-      // Lamps' arms, lanterns and café fronts face the street's axis.
-      out.push({ prop, p, yaw: yawOf(-n.x, -n.z), key });
-      break;
-    }
+    const place = (toEdge: boolean): Placed | null => {
+      for (const s of SLIDES) {
+        const at = { x: st.p.x + st.dir.x * s, z: st.p.z + st.dir.z * s };
+        const d = sideOffset(site, at, n, mode, fallback, lamp, toEdge);
+        if (d === null) continue;
+        const p = { x: at.x + n.x * d, z: at.z + n.z * d };
+        // Lamps' arms, lanterns and café fronts face the street's axis.
+        if (clear(at, p)) return { prop, p, yaw: yawOf(-n.x, -n.z), key };
+      }
+      return null;
+    };
+    // A paving's edge nearer a car street's axis than a lamp keeps (Plac Zamkowy's cobbles, where
+    // cars drive the paving's middle) leaves the lamp at the fallback, as before G-477, not without one.
+    const placed = place(lamp) ?? (lamp ? place(false) : null);
+    if (placed) out.push(placed);
   }
   return out;
 };
