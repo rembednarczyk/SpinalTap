@@ -1482,7 +1482,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-485 `pushOut` kończy się odepchnięciem od ciał bez ponownego sprawdzenia brył
 - Status: zgłoszone (7.11, weryfikator #373)
-- Ważność: S3 · Zasięg: `movement-system.ts`, `ITERATIONS = 2`: ostatni krok to odepchnięcie od innych ciał, bez kolizji z bryłami; postać nachodząca na leżące ciało (zerowa prędkość, nie jest wypychane) przy ścianie zostaje w ścianie, przy cienkiej ścianie przechodzi przez nią; niezależne od G-479
+- Ważność: S3 · Zasięg: `movement-system.ts`, `ITERATIONS = 2`: ostatni krok to odepchnięcie od innych ciał, bez kolizji z bryłami; postać nachodząca na leżące ciało (zerowa prędkość, nie jest wypychane) przy ścianie zostaje w ścianie, przy cienkiej ścianie przechodzi przez nią; niezależne od G-479; po G-479 runda 2 graczka wchodząca w leżące ciało przy ścianie wnika w nią do 3,5 cm (próg `SINK` 5 cm w `carry-drop-solid.test.ts` do zaostrzenia po naprawie)
 - Pakiet właściciela: packages/sim
 
 ### G-486 Odłożone ciało może spaść przez niską barierkę bez oparcia
@@ -1499,6 +1499,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, weryfikator #372)
 - Ważność: S4 · Zasięg: `pickFromPool` w `model-cast.ts`: `weight` = `"abc"` daje NaN i wybór ostatniego pliku puli, także z wagą ujemną; `parseModelManifest` nie sprawdza typu ani znaku `weight`; przy okazji: próg `< 50` MiB w `model-textures.test.ts` nie odróżnia stanu przed i po, a `loadToonModel` nie ma wywołań w kodzie
 - Pakiet właściciela: packages/engine (renderer)
+
+### G-489 Scena `s7_poet` stoi wewnątrz bryły budynku
+- Status: zgłoszone (7.11, naprawiacz G-479 runda 2)
+- Ważność: S4 · Zasięg: miejsce sceny `s7_poet` (102, −23) w `encounters.ts` leży w pryzmacie budynku (chunk `krakowskie-1-1`, bryła 318); ruch nie wypycha z głębi pryzmatu (graczka postawiona w (102, −13) dalej w nim stoi); test sceny ulicznej teleportuje graczkę do wnętrza; poprawka: przesunąć scenę na chodnik
+- Pakiet właściciela: packages/sim (treść)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
