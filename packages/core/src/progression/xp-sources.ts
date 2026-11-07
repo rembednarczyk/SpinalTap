@@ -15,19 +15,18 @@ export type XpSource = "quest" | "contract" | "kill" | "hack" | "stealth";
 export const XP_SOURCES: readonly XpSource[] = ["quest", "contract", "kill", "hack", "stealth"];
 
 /**
- * How the XP of a source grows with its level (ADR-0059 stage 8): as the cost of a level does,
- * `(level / XP_BASE_LEVEL)^1.6` with the exponent of the curve, so a job or a kill teaches about
- * the same share of a level at every level, below XP_BASE_LEVEL too (a job of level 1 gives 6% of
- * its base, as level 1 costs 6% of level 6). The balance test of the passage set it. With +4% a
- * level, as the pay grows, Stare Miasto gave 4 levels and the docks 3. With the growth only from
- * level 6 and the base below it (round 1, 7.11), Krakowskie gave 8 levels even without any XP of
- * its quests, since its first jobs gave several cheap levels each; the user's aim is about 7.
+ * How the XP of a source grows with its level (ADR-0059 stage 8): 1 up to XP_BASE_LEVEL, then as
+ * the cost of a level does, `(level / XP_BASE_LEVEL)^1.6` with the exponent of the curve, so from
+ * level 6 a job or a kill teaches about the same share of a level at every level. The balance test
+ * of the passage set it. With +4% a level, as the pay grows, Stare Miasto gave 4 levels and the
+ * docks 3. The floor is the user's decision of 7.11 (round 3): a kill is always worth more than a
+ * quickhack, which the scale without it (round 2) broke below level 6 (3 XP for a ganger at 1).
  */
 export const XP_BASE_LEVEL = 6;
 
 export const xpLevelScale = (level: number): number => {
   const l = Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, Math.round(level)));
-  return (l / XP_BASE_LEVEL) ** CURVE_EXPONENT;
+  return l <= XP_BASE_LEVEL ? 1 : (l / XP_BASE_LEVEL) ** CURVE_EXPONENT;
 };
 
 /**

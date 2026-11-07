@@ -64,23 +64,25 @@ describe("kill XP by the level difference (ADR-0059)", () => {
     expect(killXpShare(12, 10)).toBeCloseTo(1.2, 10);
   });
 
-  it("scales the type's XP, which is its own at level 6 for an even fight", () => {
+  it("scales the type's XP, which is its own up to level 6 for an even fight", () => {
     expect(killXp("hebi_ganger", 6, 6)).toBe(60);
-    expect(killXp("hebi_ganger", 4, 4)).toBe(31);
-    expect(killXp("hebi_ganger")).toBe(3);
-    // An enemy 5 levels weaker: 10% of its own, which at level 1 rounds to nothing.
-    expect(killXp("hebi_ganger", 1, 6)).toBe(0);
+    expect(killXp("hebi_ganger", 4, 4)).toBe(60);
+    expect(killXp("hebi_ganger")).toBe(60);
+    // An enemy 5 levels weaker: 10% of its own.
+    expect(killXp("hebi_ganger", 1, 6)).toBe(6);
   });
 
-  it("grows with the enemy's level as the cost of a level does, below level 6 too (stage 8)", () => {
+  it("grows with the enemy's level as the cost of a level does, from level 6 on (stage 8, round 3)", () => {
     expect(xpLevelScale(XP_BASE_LEVEL)).toBe(1);
-    expect(xpLevelScale(1)).toBeCloseTo(6 ** -1.6, 10);
+    // Below level 6 the floor: the type's own XP (the user's decision of 7.11).
+    expect(xpLevelScale(1)).toBe(1);
+    expect(xpLevelScale(5)).toBe(1);
     expect(xpLevelScale(12)).toBeCloseTo(2 ** 1.6, 10);
     expect(xpLevelScale(30)).toBeCloseTo(5 ** 1.6, 10);
     expect(xpLevelScale(40)).toBe(xpLevelScale(30));
-    // An even fight is worth about the same share of a level at 1, 6 and 12: 3 of 100, 60 of 1753, 182 of 5330.
+    // From level 6 an even fight is worth about the same share of a level: 60 of 1753 at 6, 182 of 5330 at 12.
     expect(killXp("hebi_ganger", 12, 12)).toBe(182);
-    for (const level of [1, 12]) expect(killXp("hebi_ganger", level, level) / xpToNext(level)).toBeCloseTo(killXp("hebi_ganger", 6, 6) / xpToNext(6), 2);
+    expect(killXp("hebi_ganger", 12, 12) / xpToNext(12)).toBeCloseTo(killXp("hebi_ganger", 6, 6) / xpToNext(6), 2);
     expect(killXp("hebi_ganger", 9, 4)).toBe(172);
   });
 });
@@ -164,14 +166,14 @@ describe("contract level (ADR-0059)", () => {
     expect(asked).toEqual(["delivery@hana_stall", "delivery@hana_stall"]);
   });
 
-  it("its XP grows with its level as the cost of a level does, below level 6 too (stage 8)", () => {
+  it("its XP grows with its level as the cost of a level does, from level 6 on (stage 8, round 3)", () => {
     expect(contractXp("eliminate", 3, 6)).toBe(860);
-    expect(contractXp("eliminate", 3)).toBe(49);
+    expect(contractXp("eliminate", 3)).toBe(860);
     expect(contractXp("eliminate", 3, 11)).toBe(Math.round(860 * (11 / 6) ** 1.6));
-    // About half a level at any level: 49 of 100 at 1, 860 of 1753 at 6.
-    expect(contractXp("eliminate", 3, 1) / xpToNext(1)).toBeCloseTo(contractXp("eliminate", 3, 6) / xpToNext(6), 2);
+    // From level 6 about half a level: 860 of 1753 at 6, 2607 of 5330 at 12.
+    expect(contractXp("eliminate", 3, 12) / xpToNext(12)).toBeCloseTo(contractXp("eliminate", 3, 6) / xpToNext(6), 2);
     expect(undetectedXp(6)).toBe(150);
-    expect(undetectedXp()).toBe(9);
+    expect(undetectedXp()).toBe(150);
     expect(undetectedXp(12)).toBe(455);
   });
 });

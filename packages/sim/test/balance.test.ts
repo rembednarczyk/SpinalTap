@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { MAX_LEVEL, PITY_AFTER, QUEST_ECHO, QUEST_FIRST_CONTRACT, QUEST_MIRROR, type Rarity } from "@seki/core";
+import {
+  ENEMY_TYPES,
+  type EnemyTypeId,
+  MAX_LEVEL,
+  MIN_LEVEL,
+  PITY_AFTER,
+  QUEST_ECHO,
+  QUEST_FIRST_CONTRACT,
+  QUEST_MIRROR,
+  QUICKHACK_XP,
+  type Rarity,
+  killXp,
+} from "@seki/core";
 import { type DistrictPass, type PassageResult, raritySample, runPassage } from "./balance-model";
 
 /**
@@ -13,7 +25,9 @@ import { type DistrictPass, type PassageResult, raritySample, runPassage } from 
  * 3. rarities at item levels 1, 10, 20 and 30: rare and better grow with the level, common and
  *    uncommon stay the most, epic not at 1, legendary not below 11 and 2 to 10% at 30, and the
  *    protection against bad luck lifts rare at level 1 to at most 20%;
- * 4. no run of bad luck longer than 8 rolled pieces below rare.
+ * 4. no run of bad luck longer than 8 rolled pieces below rare;
+ * 5. a fight is worth more than a quickhack: at every level a regular enemy of the player's level
+ *    gives at least the XP of a landed quickhack (the user's decision of 7.11, round 3).
  */
 
 const KAITO_ROUND = ["eliminate", "delivery"] as const;
@@ -94,6 +108,16 @@ describe("balance of the passage (ADR-0059 stage 8)", () => {
       expect(r.pieces.length).toBeGreaterThan(20);
       expect(r.worstRun).toBeLessThanOrEqual(PITY_AFTER);
     }
+  });
+});
+
+describe("a fight is worth more than a quickhack (ADR-0059 stage 8, round 3)", () => {
+  const regular = (Object.keys(ENEMY_TYPES) as EnemyTypeId[]).filter((t) => (ENEMY_TYPES[t] as { readonly rank?: string }).rank === undefined);
+
+  it("at every level a regular enemy of the player's level gives at least a quickhack's XP", () => {
+    expect(regular.length).toBeGreaterThan(3);
+    for (let level = MIN_LEVEL; level <= MAX_LEVEL; level++)
+      for (const type of regular) expect(killXp(type, level, level), `${type} at level ${level}`).toBeGreaterThanOrEqual(QUICKHACK_XP);
   });
 });
 
