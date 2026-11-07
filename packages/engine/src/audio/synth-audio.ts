@@ -2,7 +2,7 @@ import type { AudioBus, AudioCue, AudioListenerPose, AudioPort, AudioScenePort, 
 import { AmbientScape } from "./ambience";
 import { applyBus } from "./audio-graph";
 import { AudioContextHost } from "./audio-context-host";
-import { DialogueLines, type VoiceUrl } from "./dialogue-lines";
+import { DialogueLines, type SpeechState, type VoiceUrl } from "./dialogue-lines";
 import { LayeredMusic } from "./layered-music";
 import { MixState } from "./mixer";
 import { mulberry32 } from "./music";
@@ -17,7 +17,7 @@ import { TickTimer } from "./tick-timer";
 export { CUES, type Recipe, type Voice } from "./cues";
 export { RADIO_STATIONS, RADIO_STATION_IDS, type RadioStationId } from "./radio-stations";
 export { crushCurve } from "./audio-graph";
-export type { VoiceUrl } from "./dialogue-lines";
+export type { SpeechState, VoiceUrl } from "./dialogue-lines";
 export { SPEECH_DUCK_ATTACK, SPEECH_DUCK_DB, SPEECH_DUCK_HOLD, SPEECH_DUCK_RELEASE, SpeechDucker, dbToGain } from "./ducking";
 
 export interface SynthAudioOptions {
@@ -71,6 +71,8 @@ export class SynthAudio implements AudioPort, AudioScenePort {
   private readonly radio: RadioPlayer;
   private readonly clock: SoundscapeClock;
   private readonly lines: DialogueLines;
+  /** The voiced line speaking now and the duck under it (debug, tests). */
+  readonly speech: SpeechState;
   /** Last start of each cue; identical cues in the same instant would only phase and cost voices. */
   private readonly lastCue = new Map<AudioCue, number>();
 
@@ -85,7 +87,8 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.radio = new RadioPlayer(this.voices);
     this.clock = new SoundscapeClock({ voices: this.voices, ambient: this.ambient, music: this.music, radio: this.radio });
     // Voice files are many and large: their own bank, filled line by line, not with the samples.
-    this.lines = new DialogueLines(new SampleBank(opts.fetchBytes), opts.voiceUrl);
+    this.lines = new DialogueLines(new SampleBank(opts.fetchBytes), opts.voiceUrl, this.mix);
+    this.speech = this.lines;
   }
   /** True while the recorded rain loop plays instead of the synthesized hiss alone. */
   get recordedRain(): boolean {
@@ -119,16 +122,6 @@ export class SynthAudio implements AudioPort, AudioScenePort {
   /** The station heard right now: her own, a speaker's nearby, or none (debug, tests). */
   get radioAudible(): RadioStationId | null {
     return this.radio.audible;
-  }
-
-  /** Key of the voiced line speaking now, null when silent (debug, tests). */
-  get lineSpeaking(): string | null {
-    return this.lines.speaking;
-  }
-
-  /** Linear factor of the duck under speech on music and radio, 1 at rest (debug, tests). */
-  get speechDuck(): number {
-    return this.lines.ducker.factor;
   }
 
   /** Level of the score under the radio, 0..1 (debug, tests). */
@@ -181,7 +174,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.music.stop(g, now);
     this.radio.stop(now);
     this.lines.stop(now);
-    if (g) this.applyDuck(g, now);
+    if (g) this.lines.applyDuck(g, now);
   }
 
   // ------------------------------------------------------------------------ AudioScenePort
@@ -215,7 +208,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     const g = this.host.graph;
     if (!g) return false;
     const started = await this.lines.play(g, key);
-    this.applyDuck(g, g.ctx.currentTime);
+    this.lines.applyDuck(g, g.ctx.currentTime);
     return started;
   }
 
@@ -223,16 +216,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     const g = this.host.graph;
     if (!g) return;
     this.lines.stop(g.ctx.currentTime);
-    this.applyDuck(g, g.ctx.currentTime);
-  }
-
-  /** Moves the speech duck to `now` and eases music and radio to it when it changed. */
-  private applyDuck(g: NonNullable<AudioContextHost["graph"]>, now: number): void {
-    const factor = this.lines.ducker.update(now);
-    if (factor === this.mix.speechDuck) return;
-    this.mix.setSpeechDuck(factor);
-    applyBus(g, this.mix, "music", now);
-    applyBus(g, this.mix, "radio", now);
+    this.lines.applyDuck(g, g.ctx.currentTime);
   }
 
   // ---------------------------------------------------------------------------- Soundscape
@@ -249,7 +233,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
   tick(): void {
     const g = this.host.graph;
     if (!g) return;
-    this.applyDuck(g, g.ctx.currentTime);
+    this.lines.applyDuck(g, g.ctx.currentTime);
     this.clock.tick(g);
   }
 }
