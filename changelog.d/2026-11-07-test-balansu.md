@@ -1,0 +1,1 @@
+Test balansu przejścia (ADR-0059 etap 8): XP zleceń i wrogów rośnie z poziomem jak koszt poziomu, dostawa daje 300 XP, a pasma Starego Miasta i targu sięgają 19 i 28, więc każda z trzech pierwszych dzielnic daje 8–10 poziomów, a doki kończą drogę na 30.
