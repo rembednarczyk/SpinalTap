@@ -47,6 +47,7 @@ import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
+import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
@@ -165,6 +166,8 @@ const LANDMARK_BUILDINGS = [
 ];
 const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 
+/** The surfaces a lamp of the plan stands on or beside (`lamp-off-band`). */
+const PAVED: ReadonlySet<string> = new Set(["road", "crossing", "sidewalk", "square", "cobble", "footway", "steps"]);
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
 
 /** The wall lantern's model, plate and arm and lantern, in the piece's frame. */
@@ -1144,6 +1147,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     ),
   /** A road lamp or a modern pole of the generator's table inside the walled Old Town, where Lublin's lamps are styled (G-264). */
   "lamp-road-in-old-town": () => plainLampsIn(Object.values(LUBLIN_STREET_PROPS).flat(), (p) => pointInRing(p, OLD_TOWN_RING)),
+  /** A lamp of the plan's lines more than 0.5 m off the paving (G-477): on the lawn by Zamkowa's causeway, in the Carmelites' garden. */
+  "lamp-off-band": () => {
+    const paving = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => PAVED.has(g.surface)).map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
+    const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
+    return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, pavedAt(paving));
+  },
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
   /**

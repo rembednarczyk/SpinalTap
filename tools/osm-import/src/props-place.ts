@@ -86,24 +86,33 @@ const FACADE_REACH = 36;
 /** How far before a car park's edge a kerb lamp stands when asphalt runs on into it (m): in front of the cars. */
 const LOT_GAP = 1.6;
 
+/** How far past a pedestrian street's paving a lamp of the plan stands (m): at its edge, by its parapets and kerbs. */
+const PAST_PAVING = 0.3;
+
 /**
- * The wall between the last open sample (`inside` − 0.5) and the first one in a building, to a
+ * The edge between the last sample short of it (`inside` − 0.5) and the first one `past` it, to a
  * centimetre: a lantern hung 0.3 m off a wall placed by the 0.5 m step alone ended up to a
  * quarter of a metre inside it, its halo glowing out of the plaster.
  */
-const facadeAt = (site: Site, at: (d: number) => Pt, inside: number): number => {
+const edgeAt = (site: Site, at: (d: number) => Pt, inside: number, past: (s: SiteSurface) => boolean): number => {
   let open = inside - 0.5;
   let hit = inside;
   while (hit - open > 0.01) {
     const mid = (open + hit) / 2;
-    if (site.surfaceAt(at(mid)) === "building") hit = mid;
+    if (past(site.surfaceAt(at(mid)))) hit = mid;
     else open = mid;
   }
   return open;
 };
 
-/** Where a thing beside the axis goes: the offset along the normal, or null when there is no place. */
-export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: number, byLots = false): number | null => {
+const isBuilding = (s: SiteSurface): boolean => s === "building";
+const offPaving = (s: SiteSurface): boolean => s !== "walk" && s !== "road";
+
+/**
+ * Where a thing beside the axis goes: the offset along the normal, or null when there is no place.
+ * A `lamp` of the plan reads the car parks and, unless `toEdge` is off, the paving's edge.
+ */
+export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: number, lamp = false, toEdge = lamp): number | null => {
   const at = (d: number): Pt => ({ x: p.x + n.x * d, z: p.z + n.z * d });
   if (mode === "path") {
     // Beside a path: the given side, else the other, else on the path itself. On a flight wider
@@ -127,6 +136,11 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
     return null;
   }
   const axisRoad = site.surfaceAt(p) === "road";
+  // A lamp of the plan on a pedestrian street's paving stands at its edge, not the fallback past it:
+  // 5 m off Zamkowa's 6.5 m causeway was on the lawn of the Błonie, 6 m off Karmelicka's 5 m in a
+  // garden behind a wall (G-477). Where the axis is not paved the fallback stays.
+  const byPaving = toEdge && !axisRoad && site.surfaceAt(p) === "walk";
+  let paving: number | null = null;
   let building: number | null = null;
   let walkFrom: number | null = null;
   let road: number | null = null;
@@ -142,10 +156,11 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
       break;
     }
     if (axisRoad && walkFrom === null && s !== "road") walkFrom = d;
-    if (byLots && axisRoad && walkFrom === null && lot === null && site.inLot(at(d))) lot = d;
+    if (lamp && axisRoad && walkFrom === null && lot === null && site.inLot(at(d))) lot = d;
     if (!axisRoad && road === null && s === "road") road = d;
+    if (byPaving && paving === null && offPaving(s)) paving = d;
   }
-  if (mode === "facade") return building === null ? null : facadeAt(site, at, building) - 0.3;
+  if (mode === "facade") return building === null ? null : edgeAt(site, at, building, isBuilding) - 0.3;
   if (mode === "front") return building === null ? fallback : Math.max(building - fallback, 0.8);
   // Kerb: on the pavement just past the road's edge, or the fallback on a pedestrian street.
   let d: number;
@@ -157,6 +172,7 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
     d = front !== null && front > 0.3 && !band.some((r) => pointInRing(at(front), r)) ? front : walkFrom + 0.4;
   } else {
     d = road === null ? fallback : Math.min(fallback, road - 0.6);
+    if (paving !== null) d = Math.min(d, edgeAt(site, at, paving, offPaving) + PAST_PAVING);
   }
   if (building !== null) d = Math.min(d, building - 1.2);
   return d > 0.3 && site.standable(at(d)) ? d : null;
