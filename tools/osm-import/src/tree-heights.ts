@@ -7,7 +7,7 @@
  * size of its seed. Where the surface model shows no crown (under 3 m: a young tree or one planted
  * since) the tree takes the smallest size of `TREE_SCALE`.
  */
-import { TREE_CROWN, TREE_SPECIES, measuredTreeVariant, plainTreeVariant, treeHeight, treeScale } from "../../../packages/core/src/world/trees.ts";
+import { TREE_CROWN, measuredTreeVariant, plainTreeVariant, treeHeight, treeScale, treeSpecies, withTreeSpecies } from "../../../packages/core/src/world/trees.ts";
 import type { Pt } from "./geometry.ts";
 import type { Site } from "./props-site.ts";
 
@@ -50,20 +50,22 @@ const clearOfWalls = (site: Site, p: Pt, r: number): boolean => {
 };
 
 /**
- * A tree's variant from its seed: grown to its measured height where the table has one. A crown
- * grown past its seed's size stops short of the walls it would reach into (the renderer's crown
- * would hang through the facade), and one that cannot grow at all clear of them keeps its seed's.
+ * A tree's variant from its seed: of `species` where OSM names it (`tree-species.ts`, G-423), else
+ * the seed's, grown to its measured height where the table has one. A crown grown past its seed's
+ * size stops short of the walls it would reach into (the renderer's crown would hang through the
+ * facade), and one that cannot grow at all clear of them keeps its seed's.
  */
-export const treeVariant = (site: Site, key: string, p: Pt, seed: number): number => {
-  const plain = plainTreeVariant(seed);
+export const treeVariant = (site: Site, key: string, p: Pt, seed: number, species?: number): number => {
+  const plain = species === undefined ? plainTreeVariant(seed) : withTreeSpecies(plainTreeVariant(seed), species);
+  const s = treeSpecies(plain);
   const h = TREE_HEIGHTS[key];
   if (h === undefined) return plain;
-  const reach = TREE_CROWN[seed % TREE_SPECIES]!;
+  const reach = TREE_CROWN[s]!;
   const from = treeScale(plain);
-  let v = measuredTreeVariant(seed, h);
+  let v = measuredTreeVariant(seed, h, s);
   if (treeScale(v) <= from) return v;
   while (!clearOfWalls(site, p, reach * treeScale(v))) {
-    v = measuredTreeVariant(seed, treeHeight(v) - 0.1);
+    v = measuredTreeVariant(seed, treeHeight(v) - 0.1, s);
     if (treeScale(v) <= from) return plain;
   }
   return v;

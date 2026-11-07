@@ -41,6 +41,7 @@ import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroS
 import { lanternsByPassages } from "./passage-lanterns";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
+import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
@@ -1751,6 +1752,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * baseline's are by walls: their crowns grow only as far as clear of the facades.
    */
   "tree-height-vs-nmpt": () => treesBelowMeasured(cityMeasuredTrees(), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A tree OSM names a genus of the renderer's models (`genus`, `species`: Quercus, Populus...) drawn as another one: the oaks and the "Baobab" of Plac Litewski as limes and maples (G-423, `tree-species.ts`). */
+  "tree-species-ignored": () => treesOfOtherSpecies(cityNamedTrees(), Object.values(WORLD_STREET_PROPS).flat()),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
   // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).
