@@ -55,7 +55,8 @@ const up = (p: Vec3, dy: number): Vec3 => ({ ...p, y: p.y + dy });
 describe("the food hall of Alchemia under its terrace (ADR-0074 stage 1)", () => {
   it("is dug to its floor, T1 in front of it, its roof level with the car park behind it", () => {
     const g = loaded().streamer.ground;
-    expect(ALCHEMIA_CUTS.map((c) => c.floor)).toEqual([ALCHEMIA_T1, ALCHEMIA_T1]);
+    // The hall's stairs and the hall; then P-1's ramp trench and stair core (stage 4, `alchemia-parking.test.ts`).
+    expect(ALCHEMIA_CUTS.slice(0, 2).map((c) => c.floor)).toEqual([ALCHEMIA_T1, ALCHEMIA_T1]);
     for (const [x, z] of [
       [418, 45],
       [401, 33],
@@ -134,7 +135,8 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
     const ids = new Set(WORLD_NAV.nodes.map((n) => n.id));
     for (const n of ALCHEMIA_NAV.nodes) expect(ids.has(n.id), n.id).toBe(true);
     const g = loaded().streamer.ground;
-    for (const n of ALCHEMIA_NAV.nodes) {
+    // P-1's nodes (stage 4) stand on its floor, ramp and stairs: `alchemia-parking.test.ts`.
+    for (const n of ALCHEMIA_NAV.nodes.filter((n) => !n.id.startsWith("alchemia-p1-"))) {
       const inHall = n.at.x >= FOODHALL.minX && n.at.x <= FOODHALL.maxX && n.at.z >= FOODHALL.minZ && n.at.z <= FOODHALL.maxZ;
       const floor = inHall ? (n.at.y > F + 1 ? R : F) : g.heightAt(n.at.x, n.at.z);
       expect(n.at.y, n.id).toBeCloseTo(floor, 1);

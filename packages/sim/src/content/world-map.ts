@@ -12,9 +12,10 @@ import { DOKI_NAV } from "./district-doki";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
-import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ALCHEMIA_PROPS } from "./alchemia";
+import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ALCHEMIA_PROPS, ALCHEMIA_VAULTS, P1_CARS, type P1Car, p1CarView } from "./alchemia";
 import { ALCHEMIA_NAV } from "./alchemia/nav";
 import type { GroundCut } from "../world/ground";
+import type { GroundVault } from "../world/vault";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
 import { GROUND_DECKS } from "./lublin/decks";
 import type { GroundDeck } from "../world/deck";
@@ -75,6 +76,11 @@ export interface ChunkDef {
    * Alchemia under its terrace): the ground of the simulation there, a hole in the drawn terrain.
    */
   readonly cuts?: readonly GroundCut[];
+  /**
+   * Rooms in the ground under the chunk's terrain (`GroundVault`, ADR-0074 stage 4: Alchemia's P-1
+   * under its car park): the ground of the simulation for feet deep in them, the terrain whole over them.
+   */
+  readonly vaults?: readonly GroundVault[];
 }
 
 /** Horizontal distance from a point to a rectangle; 0 inside. */
@@ -111,6 +117,9 @@ export const CAPSULE_CHUNK = mapChunkOf(CAPSULE_DOOR.at.x, CAPSULE_DOOR.at.z);
 /** The chunk of the map holding Alchemia (ADR-0074): its solids stream in with it. */
 export const ALCHEMIA_CHUNK = mapChunkOf(ALCHEMIA_CENTRE.x, ALCHEMIA_CENTRE.z);
 
+/** A car in a bay of P-1 as a solid of the street, on P-1's floor (a parked car's, without the terrain under it). */
+const p1CarProp = (c: P1Car): StaticProp => parkedProp({ ...c, chunk: ALCHEMIA_CHUNK }, c.y);
+
 /** The game's own solids in a chunk of the map, after its data (`ChunkDef.rooms`). */
 const roomsOf = (id: string): readonly StaticProp[] => [...(id === CAPSULE_CHUNK ? CAPSULE_PROPS : []), ...(id === ALCHEMIA_CHUNK ? ALCHEMIA_PROPS : [])];
 
@@ -132,9 +141,15 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
       actors: GAME_ACTORS.filter((a) => mapChunkOf(a.spawn.position.x, a.spawn.position.z) === c.id),
       ...(terrain ? { terrain } : {}),
       ...((GROUND_DECKS.get(c.id) ?? []).length > 0 ? { decks: GROUND_DECKS.get(c.id) } : {}),
-      street: [...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []), ...basinRimProps(c), ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp)],
+      street: [
+        ...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []),
+        ...basinRimProps(c),
+        ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp),
+        // The cars in the bays of Alchemia's P-1 (ADR-0074 stage 4), after the street's, so their ids stay.
+        ...(c.id === ALCHEMIA_CHUNK ? P1_CARS.map(p1CarProp) : []),
+      ],
       ...(roomsOf(c.id).length > 0 ? { rooms: roomsOf(c.id) } : {}),
-      ...(c.id === ALCHEMIA_CHUNK ? { cuts: ALCHEMIA_CUTS } : {}),
+      ...(c.id === ALCHEMIA_CHUNK ? { cuts: ALCHEMIA_CUTS, vaults: ALCHEMIA_VAULTS } : {}),
     };
   }),
   // Trasa Podziemna (ADR-0048): a chunk of its own over the cellars, last in the table, so it
@@ -155,6 +170,8 @@ export const WORLD_SCENERY: readonly SceneryItem[] = [
   ...MAP_CHUNKS.map((c): SceneryItem => ({ chunk: c.id, view: { kind: "street-props", items: WORLD_STREET_PROPS[c.id] ?? [] }, at: { x: 0, y: 0, z: 0 } })),
   // The parked cars (ADR-0050), each drawn where it stands.
   ...PARKED_CARS.map((p): SceneryItem => ({ chunk: p.chunk, view: parkedView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
+  // And those in the bays of Alchemia's P-1 under its car park (ADR-0074 stage 4).
+  ...P1_CARS.map((p): SceneryItem => ({ chunk: ALCHEMIA_CHUNK, view: p1CarView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
 ];
 
 /** Cameras and hackable devices (ADR-0029); each one names its chunk above. */

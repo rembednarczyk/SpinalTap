@@ -33,13 +33,15 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     const onPlot = (x: number, z: number) => x > FOODHALL.minX - 7 && x < FOODHALL.maxX + 7 && z > FOODHALL.minZ - 7 && z < 94;
     const onCorner = (x: number, z: number) => x > 420.2 && x < 436.6 && z > -9.1 && z < 6.4;
     const onT2 = (x: number, z: number) => x > 423 && x < 445 && z > 74 && z < 122;
+    // P-1's ramp in its trench and its stair core's house on the car park (stage 4, `alchemia-parking.test.ts`).
+    const byRamp = (x: number, z: number) => x > 409.2 && x < 422 && z > -6 && z < 25;
     const byArkady = (x: number, z: number) => {
       const q = arkadyLocal(x, z);
       return q.a > -3.2 && q.a < ARKADY.length + 0.2 && q.c > -0.3 && q.c < ARKADY.depth + 5.2;
     };
     for (let i = 0; i < outside.positions.length; i += 3) {
       const [x, z] = [outside.positions[i]!, outside.positions[i + 2]!];
-      expect(onPlot(x, z) || onT2(x, z) || byArkady(x, z) || onCorner(x, z), `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
+      expect(onPlot(x, z) || onT2(x, z) || byArkady(x, z) || onCorner(x, z) || byRamp(x, z), `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
     }
   });
 

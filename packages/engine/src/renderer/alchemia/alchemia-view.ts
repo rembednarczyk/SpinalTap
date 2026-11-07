@@ -5,6 +5,7 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
 import { alchemiaGeometry } from "./alchemia-geometry";
+import { ParkingView } from "./parking-view";
 
 /**
  * How near the eye Alchemia's outside is drawn (m from the middle of the hall or of the Arkady,
@@ -58,8 +59,12 @@ export class AlchemiaView {
   private inside: Mesh | null = null;
   private kitSeen: CityKit | null = null;
   private level = 0;
+  /** Its car park's P-1 under T0, near it only, and the cars on its ramp (ADR-0074 stage 4): a part of its own. */
+  readonly parking: ParkingView;
 
-  constructor(private readonly deps: AlchemiaDeps) {}
+  constructor(private readonly deps: AlchemiaDeps) {
+    this.parking = new ParkingView(deps);
+  }
 
   /** The meshes drawn last frame and their triangles (debug, tests). */
   get stats(): { readonly meshes: number; readonly triangles: number; readonly insideTriangles: number } {

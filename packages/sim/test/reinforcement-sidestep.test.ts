@@ -54,10 +54,11 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // on the corner with Ren on its roof (v35, stage 3) change only
   // the version: as v32 the runs hash to the goldens of v32. Re-recorded for G-485, a rule of
   // movement: the push-out ends on the solids, so reinforcements crowding by a wall no longer
-  // press each other into it.
+  // press each other into it. Re-recorded for P-1 under Alchemia's car park (v36, stage 4): only
+  // the version; as v35 the runs hash to G-485's goldens (dbd53908, 11d2bf94).
   for (const [seed, level, golden, v32, v31, v30, v28, v27] of [
-    [21, 2, "dbd53908", "1c0d0ad3", "55a02c1c", "18d6bea3", "5e8676f5", "7e54b2a0"],
-    [5, 3, "11d2bf94", "a0370c6d", "2d80f750", "b19791bb", "3a1c66f5", "11bea0a6"],
+    [21, 2, "a11206cf", "1c0d0ad3", "55a02c1c", "18d6bea3", "5e8676f5", "7e54b2a0"],
+    [5, 3, "bf8c66f1", "a0370c6d", "2d80f750", "b19791bb", "3a1c66f5", "11bea0a6"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
       const sim = onTheRoof(seed, level);

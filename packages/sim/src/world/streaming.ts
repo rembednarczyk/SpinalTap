@@ -110,7 +110,7 @@ export class WorldStreamer {
       chunks,
       // With the chunks' own dug ground (Alchemia's food hall, ADR-0074).
       [...here.map((e) => e.cut), ...chunks.flatMap((c) => c.cuts ?? [])],
-      here.flatMap((e) => e.platform?.vaults ?? []),
+      [...here.flatMap((e) => e.platform?.vaults ?? []), ...chunks.flatMap((c) => c.vaults ?? [])],
     );
     this.nav = chunks === WORLD_CHUNKS ? WORLD_NAV : mergeNav(...chunks.flatMap((c) => (c.nav ? [c.nav] : [])));
     this.catalog = new StreamCatalog(ids, chunks, devices, metro);

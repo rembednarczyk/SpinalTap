@@ -7,6 +7,8 @@ import { HALL, type Piece, box, piece, solidProp } from "./plan";
 import { terracePieces } from "./terraces";
 import { ARKADY_PAVEMENT_PROP } from "./arkady";
 import { PAVILION_PROPS } from "./pavilion";
+import { P1_PIECES, P1_RAMP_CUT, P1_RAMP_PROPS, P1_STAIR_CUT, P1_VAULT } from "./parking";
+import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
 import { unitPieces } from "./units";
 
@@ -19,6 +21,7 @@ export * from "./arkady";
 export { T2 as ALCHEMIA_T2, T2_PADS, T2_RECTS, T2_STAIRS, MEMORIAL as ALCHEMIA_MEMORIAL, onT2 } from "./plaza";
 export * from "./market";
 export * from "./pavilion";
+export * from "./parking";
 export { ALCHEMIA_NAV } from "./nav";
 
 /**
@@ -66,10 +69,17 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ARKADY_PAVEMENT_PROP,
   // Stage 3 after stage 2's: the pavilion on the corner with its ladder.
   ...PAVILION_PROPS,
+  // Stage 4 after stage 3's: P-1 under the car park (its shell, then its fittings) and its ramp.
+  solidProp(P1_PIECES.filter((p) => p.kind === "wall" || p.kind === "roof" || p.kind === "floor" || p.kind === "parapet" || p.kind === "step")),
+  solidProp(P1_PIECES.filter((p) => p.kind !== "wall" && p.kind !== "roof" && p.kind !== "floor" && p.kind !== "parapet" && p.kind !== "step")),
+  ...P1_RAMP_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */
-export const ALCHEMIA_CUTS: readonly GroundCut[] = [FOODHALL_STAIR_CUT, FOODHALL_CUT];
+export const ALCHEMIA_CUTS: readonly GroundCut[] = [FOODHALL_STAIR_CUT, FOODHALL_CUT, P1_RAMP_CUT, P1_STAIR_CUT];
+
+/** The rooms of Alchemia in the ground under the car park, its terrain whole over them (stage 4: P-1). */
+export const ALCHEMIA_VAULTS: readonly GroundVault[] = [P1_VAULT];
 
 /** The middle of the hall: for streaming and drawing distances. */
 export const ALCHEMIA_CENTRE: GroundPoint = { x: (HALL.minX + HALL.maxX) / 2, z: (HALL.minZ + HALL.maxZ) / 2 };

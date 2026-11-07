@@ -3,13 +3,14 @@ import { ALCHEMIA_PIECES, ALCHEMIA_UNITS, type AlchemiaBox, type AlchemiaPiece, 
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { arkadyGeometry } from "./arkady-geometry";
 import { pavilionGeometry } from "./pavilion-geometry";
+import { parkingOutside } from "./parking-geometry";
 
 /**
  * Alchemia by the investor's plan (ADR-0074 stage 1) as pieces of geometry on the city kit's
  * texture: the simulation's boxes (`ALCHEMIA_PIECES`) coloured by their kind, and what only the
  * eye needs: the front's frame, the units' signs (proper names, drawn without words), the ceiling's
  * light strips. Two sinks: outside (the shell, the green roof, the lift's kiosk, the terraces'
- * steps, T2 with its stairs and the Arkady of stage 2, the pavilion on the corner of stage 3), drawn from afar, and inside (units, counters, tables, the stairs, the lights), drawn near
+ * steps, T2 with its stairs and the Arkady of stage 2, the pavilion on the corner of stage 3, P-1's ramp trench and stair house of stage 4), drawn from afar, and inside (units, counters, tables, the stairs, the lights), drawn near
  * only. Glass is opaque with the inside's warm light in it (ADR-0071's glass). Pure data, no Babylon.
  */
 
@@ -29,6 +30,11 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   frame: "dark",
   shutter: "metal",
   memorial: "dark",
+  floor: "roof",
+  column: "trim-light",
+  marking: "trim-light",
+  charger: "neon-green",
+  machine: "metal",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */
@@ -150,6 +156,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   frontFrame(outside, data);
   arkadyGeometry(outside, data);
   pavilionGeometry(outside, data);
+  parkingOutside(outside, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);
   return { outside, inside };

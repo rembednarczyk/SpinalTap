@@ -1,6 +1,7 @@
 import { SAVE_SCHEMA_VERSION, SHARD_CYBER_CAPACITY, capacityMax, clampItemLevel, hasItemLevel, isInstanceDefId, progressionFromXp } from "@seki/core";
 import { moveMarketToAlchemia } from "./market-move";
 import { levelAlchemiaT2, raiseAlchemiaPavilion, rebuildAlchemia } from "./alchemia-rebuild";
+import { digAlchemiaParking } from "./alchemia-parking";
 
 type Json = Record<string, unknown>;
 
@@ -446,6 +447,10 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // Lubartowska. The Hebi bag by Ren goes onto its roof and Ren's state is dropped (he comes back
   // there from the content); a save made on its ground wakes by the foot of its ladder.
   34: raiseAlchemiaPavilion,
+  // v35 -> v36 (ADR-0074 stage 4): P-1 dug under the car park, its ramp's trench and its stair core's
+  // house on it. A save made on that ground wakes on the car park by the ramp's top, its bags with
+  // her; Sachiko's state is dropped (she comes back behind her counter turned to the door from P-1).
+  35: digAlchemiaParking,
 };
 
 export class MigrationError extends Error {}

@@ -58,6 +58,7 @@ export const enContent = {
   "interior.metro-targ": "Plac Zamkowy metro platform",
   "interior.metro-doki": "Nabrzeże Bystrzycy metro platform",
   "interior.alchemia-foodhall": "Alchemia food hall",
+  "interior.alchemia-parking": "Alchemia car park",
   "prompt.loot": "Search",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Every hour the crew boss steps aside on his own",
