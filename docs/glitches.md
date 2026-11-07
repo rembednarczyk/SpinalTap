@@ -1492,7 +1492,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-495 `models.spec` czasem mierzy klatkę bez aktywnych siatek
 - Status: zgłoszone (7.11, budowniczy ADR-0076 etap 2)
-- Ważność: S4 · Zasięg: na main w dwóch z trzech przebiegów pomiar 324/0 (wywołania / aktywne siatki); pomiar niestabilny, bramka może przepuścić regresję; przy okazji: NPC „doker” w dokach bez wpisu w obsadzie, akcesoria sztywne (fartuch jak deska, dłonie siedzących sprzedawców przez niego)
+- Ważność: S4 · Zasięg: na main w dwóch z trzech przebiegów pomiar 324/0 (wywołania / aktywne siatki); pomiar niestabilny, bramka może przepuścić regresję; przy okazji: NPC „doker” w dokach bez wpisu w obsadzie, akcesoria sztywne (fartuch jak deska, dłonie siedzących sprzedawców przez niego); potwierdzone w 4 przebiegach przy load 10–12 (budowniczy i weryfikator #376): koszt wariantów i fartucha nie jest mierzony lokalnie
 - Pakiet właściciela: e2e (QA)
 
 ### G-496 Posiłki w dokach mogą stać w bryłach
@@ -1534,6 +1534,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, kurator przeglądu #381; z danych)
 - Ważność: S4 · Zasięg: 3 `lamp-road` i 3 `trolley-pole` stoją pod pomostem, pięć z nich 3,8–4,4 m niżej, więc słup przebija płytę; kontrola `pole-through-deck` dla słupów od 4 m (baza 6, w tym (2445,6; 246,4) z G-361); po G-503 (#383) 3 `lamp-road` stoją już na pomoście, zostają słupy trakcji
 - Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
+
+### G-505 Fartuch NPC ma postrzępiony kontur
+- Status: zgłoszone (7.11, weryfikator #376)
+- Ważność: S4 · Zasięg: `model-apron.ts` tnie całymi trójkątami (próg `FACING` 0,35, ±0,09 wzrostu), więc boki kamizelki i spodni Mori mają białe zęby, a rąbek fartucha Kenty wystaje zębami spod bioder siedzącego; poprawka: przycięcie trójkątów na granicy albo maska; przy okazji: test „at most four looks” w `model-variants.test.ts` przekracza 20 s pod obciążeniem (4000 kroków `setTimeout(0)` dla 12 modeli)
+- Pakiet właściciela: packages/engine (renderer)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
