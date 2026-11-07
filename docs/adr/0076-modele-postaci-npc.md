@@ -1,6 +1,6 @@
 # ADR-0076: Modele postaci NPC: obsada nazwanych, pula tła i warianty
 
-Status: Proponowany (7.11). Wynika z prośby użytkownika z 7.11 (backlog, sekcja „Następne”: „Podmiana wszystkich NPC na modele z assetów i różnorodność”). Dotyczy ADR-0058 (assety CC0, etap 8: tłum w pozach), ADR-0063 (licencje, ekran „Autorzy”), ADR-0057 (ekran ładowania i wczytywanie modeli) i ADR-0031 (podział renderera). Stan kodu: `origin/main` b8ffc81. G-474 (czarny Kaito) ma osobny PR na gałęzi `ccr-ec2c4269-ilh8k8-g474`.
+Status: Zaakceptowany (7.11, decyzje użytkownika w sekcji „Decyzje użytkownika”). Wynika z prośby użytkownika z 7.11 (backlog, sekcja „Następne”: „Podmiana wszystkich NPC na modele z assetów i różnorodność”). Dotyczy ADR-0058 (assety CC0, etap 8: tłum w pozach), ADR-0063 (licencje, ekran „Autorzy”), ADR-0057 (ekran ładowania i wczytywanie modeli) i ADR-0031 (podział renderera). Stan kodu: `origin/main` b8ffc81. G-474 (czarny Kaito) ma osobny PR na gałęzi `ccr-ec2c4269-ilh8k8-g474`.
 
 ## Kontekst
 
@@ -61,7 +61,16 @@ Inne źródła odpadają: modele z VRoid Hub z innymi warunkami niż próbki (ka
 
 **Wniosek.** W stylu obecnej obsady (anime, VRoid) zostało sześć nieużytych próbek, za mało na 12 nazwanych postaci, a starszych (Ume, Oyaji, Goro, Genzō) wśród nich nie ma. Quaternius daje 21 riggowanych postaci CC0 z animacjami, lekkich (5–11 tys. trójkątów, bez tekstur, więc ułamek pamięci GPU modelu VRoid), ale w innym stylu (stylizowane low-poly, płaskie kolory zamiast rysunku anime). Trzecia droga to postacie zrobione w VRoid Studio na bazach Base_Male i Base_Female: prawa do wyniku ma według warunków VRoid Studio jego autor, więc nie trzeba licencji z zewnątrz, ale wymaga pracy ręcznej w programie z interfejsem graficznym.
 
-## Decyzja (proponowana)
+## Decyzje użytkownika (7.11)
+Nadrzędny cel: **maksymalna różnorodność** postaci przy jednym, spójnym stylu.
+1. **Postacie nazwane: spójny styl VRoid.** Bez mieszania z low-poly w jednej scenie. Teraz A (próbki VRoid: sześć nieużytych i obecne, z wariantami), a B (postacie z VRoid Studio) wchodzi plik po pliku, gdy takie pliki się pojawią; manifest obsady przyjmie je bez zmian w kodzie.
+2. **Pula tła: warianty obecnych modeli albo inne modele.** Etap 2 robi warianty VRoid; inne źródła (w tym nowe próbki VRoid, a Quaternius tylko tam, gdzie nie psuje spójności, np. na telefonie po pomiarze) są dozwolone w etapie 4.
+3. **Mori: poprawić** w etapie 2 na model męski (baza M00) z fartuchem i okularami.
+4. **Kurosawa: osobny model** w etapie 3 (do tego czasu wariant zapasowy różny od Kaito).
+5. **Rozmiar: zgoda** na obsadę do 80 MiB i wczytywanie postaci w tle.
+6. **Drugi plan: wszyscy dostają własny wygląd.** Każda postać z ink (Tetsu, Mei, Shiro i inne) ma własny wpis w `cast`: osobny plik, gdy jest dostępny, inaczej unikalna, stała kombinacja bazy, fryzury, kolorów, tekstur ubrań i akcesoriów, której nie dzieli z nikim innym. Test pilnuje, że żadne dwie postacie nazwane nie mają tego samego wyglądu.
+
+## Decyzja
 
 ### 1. Tożsamość postaci w widoku (zmiana kontraktu, Architekt)
 - `ViewDescriptor` NPC i wroga dostaje dwa opcjonalne pola: `cast?: CastKey` (klucz postaci nazwanej, np. `"ume"`, `"kurosawa"`; typ w `core`, lista z treści) i `look?: number` (ziarno wyglądu postaci tła). `preset` zostaje jako rola zachowania i zapasowy wygląd.
