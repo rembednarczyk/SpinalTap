@@ -69,6 +69,9 @@ Nadrzędny cel: **maksymalna różnorodność** postaci przy jednym, spójnym st
 4. **Kurosawa: osobny model** w etapie 3 (do tego czasu wariant zapasowy różny od Kaito).
 5. **Rozmiar: zgoda** na obsadę do 80 MiB i wczytywanie postaci w tle.
 6. **Drugi plan: wszyscy dostają własny wygląd.** Każda postać z ink (Tetsu, Mei, Shiro i inne) ma własny wpis w `cast`: osobny plik, gdy jest dostępny, inaczej unikalna, stała kombinacja bazy, fryzury, kolorów, tekstur ubrań i akcesoriów, której nie dzieli z nikim innym. Test pilnuje, że żadne dwie postacie nazwane nie mają tego samego wyglądu.
+7. **Wiek i sylwetka (7.11, druga tura):** obecna obsada wciąż jest za mało różnorodna, np. babcia Ume to młoda dziewczyna. Postacie starsze (Ume, Oyaji, Goro, Genzō i inne starsze według dialogów) mają wyglądać na swój wiek: siwe albo przerzedzone włosy, przygarbiona postawa, inne proporcje (niższe, cięższe albo szczuplejsze sylwetki przez skalę kości), ubrania stosowne do wieku. Jeśli warianty nie wystarczą, wolno zaciągnąć więcej modeli (najpierw nieużyte próbki VRoid CC0 i inne pliki VRM z licencją pozwalającą na użycie w grze, w spójnym stylu), z wpisem licencji w README i „Autorach”.
+8. **Wyższe limity wywołań dla postaci (7.11):** użytkownik zgadza się na wyższe budżety wywołań rysowania i siatek dla scen z postaciami (`models.spec`, sceny z obsadą), jeśli różnorodność tego wymaga. Każde podniesienie z pomiarem przed i po w commicie i wpisem w ADR-0046 (decyzja użytkownika jako uzasadnienie).
+9. **Tłum z modelami w pobliżu kamery (7.11):** mieszkańcy tłumu (ADR-0041, figury z 11 brył w jednej siatce) bliżej kamery niż ok. 15–20 m zamieniają się na modele VRoid z wariantami (LOD), dalsi zostają figurami; limit modeli tłumu naraz (np. 8 na komputerze, 4 na telefonie) i budżety rysowania; osobny etap po etapie 4.
 
 ## Decyzja
 
@@ -110,7 +113,9 @@ Nadrzędny cel: **maksymalna różnorodność** postaci przy jednym, spójnym st
 2. **Warianty:** odcienie skóry, włosów i ubrań z `look` na obecnych pięciu modelach i akcesoria; od razu różni sprzedawcy i przechodnie. Migawka NPR świadomie.
 3. **Postacie nazwane:** pliki według wyboru użytkownika (pytanie 1), po jednym albo dwóch na PR, ze zrzutami z dialogu i z ulicy.
 4. **Pula tła:** cywile, sprzedawcy tła, gangerzy Hebi, ochrona Tessen, wczytywanie w tle według dzielnic, limity na telefonie.
+3a. **Wiek i sylwetka (decyzja 7):** zanim przyjdą nowe pliki postaci nazwanych, warianty wieku na obecnych i nowych plikach (siwe włosy, postawa, proporcje kości, ubrania); od razu Ume, Oyaji, Goro, Genzō i starsi z drugiego planu; zaciągnięcie dodatkowych modeli VRM, jeśli warianty nie wystarczą; budżety postaci wyższe zgodnie z decyzją 8.
 5. **Porządki:** `shrink_glb.py` (COLOR_0, miniatury, tekstury 512 px tła), pomiar rozmiaru paczki i pamięci na telefonie.
+6. **Tłum z modelami w pobliżu (decyzja 9):** podmiana mieszkańców tłumu bliżej niż ok. 15–20 m na modele VRoid z wariantami (LOD), limity naraz na komputerze i telefonie, płynne przejście figura ↔ model, budżety rysowania z pomiarem.
 
 ## Pytania do użytkownika
 1. **Skąd modele postaci nazwanych?**
