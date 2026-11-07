@@ -13,7 +13,6 @@ import {
   QUEST_ECHO,
   QUEST_FIRST_CONTRACT,
   QUICKHACK_XP,
-  UNDETECTED_CONTRACT_XP,
   type ProgressionState,
   breachXp,
   combineModifiers,
@@ -27,6 +26,7 @@ import {
   progressionFromXp,
   questLogXp,
   spendAttributePoint,
+  undetectedXp,
   xpForLevel,
   xpToNext,
 } from "../src";
@@ -178,32 +178,38 @@ describe("XP sources (ADR-0059)", () => {
 });
 
 /**
- * The pace (ADR-0059): one district's main thread with its contracts gives 8 to 10 levels.
- * Krakowskie Przedmieście as played today: the first contract and act I ("Echo"), ten of
- * Kaito's jobs (five eliminations of three Hebi, five deliveries), the gangers they send plus
- * the courier and his guard, a quickhack a job, four of the jobs done unseen.
+ * The pace (ADR-0059, stage 8): one district's main thread with its contracts gives about 7
+ * levels, 6 to 9. Krakowskie Przedmieście as played today: the first contract, then ten of
+ * Kaito's jobs (eliminations and deliveries in turn) of the player's level kept
+ * within Krakowskie's band (1 to 8), the gangers they send of the same level, a quickhack a job,
+ * four of the jobs done unseen, and act I ("Echo") with the courier and his guard at the end.
+ * The passage over every district, on the sim's bands and generator, is `sim/test/balance.test.ts`.
  */
 describe("pace of one district (ADR-0059)", () => {
-  it("the main thread of Krakowskie with its contracts gives 8 to 10 levels", () => {
-    const quests = questLogXp({ [QUEST_FIRST_CONTRACT.id]: { status: "completed" }, [QUEST_ECHO.id]: { status: "completed" } }, QUEST_DEFINITIONS);
-    const gains: number[] = [quests];
-    for (let i = 0; i < 5; i++) gains.push(contractXp("eliminate", 3), contractXp("delivery", 0));
-    const kills = 5 * 3 + 2;
-    for (let i = 0; i < kills; i++) gains.push(killXp("hebi_ganger"));
-    for (let i = 0; i < 4; i++) gains.push(UNDETECTED_CONTRACT_XP);
-    for (let i = 0; i < 10; i++) gains.push(QUICKHACK_XP);
+  it("the main thread of Krakowskie with its contracts gives 6 to 9 levels", () => {
     let p = INITIAL_PROGRESSION;
-    let levels = 0;
-    for (const xp of gains) {
-      const r = gainXp(p, xp);
-      p = r.state;
-      levels += r.levelsGained;
+    const gain = (xp: number): void => {
+      p = gainXp(p, xp).state;
+    };
+    const job = (): number => Math.min(8, p.level);
+    gain(questLogXp({ [QUEST_FIRST_CONTRACT.id]: { status: "completed" } }, QUEST_DEFINITIONS));
+    for (let i = 0; i < 10; i++) {
+      const level = job();
+      // An elimination's crew: two Hebi below level 5, three from it (the smaller of its two sizes).
+      const crew = i % 2 === 0 ? (level < 5 ? 2 : 3) : 0;
+      for (let k = 0; k < crew; k++) gain(killXp("hebi_ganger", level, p.level));
+      gain(QUICKHACK_XP);
+      gain(contractXp(i % 2 === 0 ? "eliminate" : "delivery", crew, level));
+      if (i % 5 === 1 || i % 5 === 3) gain(undetectedXp(level));
     }
-    expect(levels).toBe(p.level - 1);
-    expect(levels).toBeGreaterThanOrEqual(8);
-    expect(levels).toBeLessThanOrEqual(10);
-    // Not at the edge of the range: about the middle of level 10.
-    expect(p.xp).toBeGreaterThan(xpForLevel(10));
-    expect(p.xp).toBeLessThan(xpForLevel(11));
+    for (let k = 0; k < 2; k++) gain(killXp("hebi_ganger", job(), p.level));
+    gain(questLogXp({ [QUEST_ECHO.id]: { status: "completed" } }, QUEST_DEFINITIONS));
+    const levels = p.level - 1;
+    expect(levels).toBeGreaterThanOrEqual(6);
+    expect(levels).toBeLessThanOrEqual(9);
+    // Not at the edge of the range: inside level 9, so 8 levels, as in the passage (its two main
+    // quests give Krakowskie one level more than the other districts).
+    expect(p.xp).toBeGreaterThan(xpForLevel(9));
+    expect(p.xp).toBeLessThan(xpForLevel(10));
   });
 });

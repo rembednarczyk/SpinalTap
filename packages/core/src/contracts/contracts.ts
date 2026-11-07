@@ -155,10 +155,11 @@ export interface ContractContext {
   readonly tick: number;
   readonly ticksPerSecond: number;
   /**
-   * The level of a job at `site` (ADR-0059): that of an enemy in the site's district, which the
-   * sim knows from its bands. Without it every job is of level 1.
+   * The level of a job of `kind` at `site` (ADR-0059): that of an enemy in the site's district,
+   * which the sim knows from its bands, or of the giver's district for a kind that fights nobody
+   * at its site (a delivery to Hana's stall is Kaito's job). Without it every job is of level 1.
    */
-  readonly levelAt?: (site: ContractSiteId) => number;
+  readonly levelAt?: (site: ContractSiteId, kind: ContractKind) => number;
 }
 
 const nextContractId = (log: ContractLog, flags: Flags): string =>
@@ -221,7 +222,7 @@ const crewOf = (r: number, level: number, bigger: boolean): number => Math.min(b
 export const generateContractOfKind = (kind: ContractKind, ctx: ContractContext, rng: RandomPort): Contract => {
   const id = nextContractId(ctx.log, ctx.flags);
   const giverRep = ctx.reputation[CONTRACT_GIVERS[CONTRACT_KINDS[kind].giver].faction];
-  const levelAt = (site: ContractSiteId): number => ctx.levelAt?.(site) ?? MIN_LEVEL;
+  const levelAt = (site: ContractSiteId): number => ctx.levelAt?.(site, kind) ?? MIN_LEVEL;
   const job = (siteId: ContractSiteId, r: number, bigger: boolean, base: number, perTarget: number): Contract => {
     const level = levelAt(siteId);
     const targets = crewOf(r, level, bigger);
@@ -229,7 +230,7 @@ export const generateContractOfKind = (kind: ContractKind, ctx: ContractContext,
   };
   switch (kind) {
     case "eliminate":
-      return { ...generateContract(ctx.log, rng, giverRep, ctx.levelAt), id };
+      return { ...generateContract(ctx.log, rng, giverRep, levelAt), id };
     case "delivery": {
       const limit = DELIVERY_LIMITS[Math.floor(rng.next() * DELIVERY_LIMITS.length)] ?? DELIVERY_LIMITS[1];
       return {

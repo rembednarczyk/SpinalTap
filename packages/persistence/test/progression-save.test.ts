@@ -23,7 +23,8 @@ describe("character progression in the save (v16 to v17, ADR-0059)", () => {
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     const xp = questLogXp(actOneDone, QUEST_DEFINITIONS) + 9 * V17_CONTRACT_XP;
     const level = levelForXp(xp);
-    expect(level).toBe(10);
+    // 1250 + 1350 (act I since ADR-0059 stage 8, 4600 before) + 600 + 9 × 850 = 10 850 XP.
+    expect(level).toBe(9);
     expect(loaded.domain.progression).toEqual({ ...INITIAL_PROGRESSION, xp, level, unspent: { attribute: level - 1, perk: level - 1 } });
   });
 

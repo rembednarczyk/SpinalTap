@@ -359,3 +359,123 @@ Te decyzje zastępują dwa punkty z „Z budowy etapu 7”: liczby punktów bez 
 - **Poziom wroga w skanerze.** Karta skanu pokazuje poziom zeskanowanego wroga („Poziom 12”, en: „Level 12”). Nad głową nie ma paska. Poziom to `enemy.level` z oceny wroga w symulacji (`gradeEnemy`, pasmo dzielnicy z etapu 5). Aplikacja czyta go z encji tak jak resztę karty skanu (`scanTargetVm`), więc zdarzenie `ScanFocusChanged` i porty się nie zmieniają. `ScanTargetVm` w UI dostał opcjonalne pole `level`, które mają tylko wrogowie. Awans przelicza wrogów w świecie (`regradeEnemies`), a karta otwarta na tym samym celu rysuje się wtedy na nowo.
 - **Przycisk postaci na dotyku (☰)** otwiera ekran od razu na zakładce Rozwój, gdy są punkty do wydania. Bez punktów otwiera Ekwipunek, jak dotąd.
 - **Odmiana liczby punktów.** Liczby punktów i rang mają formy mnogie: po polsku „1 punkt”, „3 punkty”, „5 punktów”, „22 punkty”, po angielsku „1 point” i „N points”. Dotyczy to kluczy `progress.unspent`, `attribute.points`, `perk.points` i `perk.rankCount`. Test katalogów przyjmuje formy mnogie, jeśli są w obu językach naraz: angielski ma `one` i `other`, polski `one`, `few`, `many` i `other`, a każda forma ma te same parametry co angielskie `other`.
+
+## Z budowy etapu 8 (7.11)
+
+Etap 8 to test balansu `packages/sim/test/balance.test.ts` z modelem przejścia w `balance-model.ts`. Ta sekcja zastępuje zdanie z „Z budowy etapu 5”, że XP z kontraktu rośnie o 4% na poziom kontraktu, oraz wartości pasm Starego Miasta (5–14) i targu (10–20).
+
+- **Model przejścia.** Test nie uruchamia ECS, tylko te same funkcje, których używa symulacja: generator kontraktów (`generateContractOfKind`), poziom kontraktu i wroga z pasma (`contractLevelOf`, `enemyLevel`), źródła XP, krzywą (`gainXp`) i łup ze stylem i ochroną przed pechem (`rollLootFor`) na ziarnie (`deriveRandom`). Test przechodzi grę z pięcioma ziarnami w kilkadziesiąt milisekund, bez zegara. Dzielnice idą w kolejności pasm:
+  - Krakowskie: pierwszy kontrakt i akt I („Echo”) z kurierem i jego ochroną, do tego dziesięć zleceń Kaito na zmianę (eliminacja w miejscach Krakowskiego i dostawa do straganu Hany);
+  - Stare Miasto: dziesięć eliminacji pod kładką na Grodzkiej;
+  - targ: akt II („Lustro”) z trzema czyścicielami Kagami i dziesięć zleceń Hany (odzyskanie, ochrona);
+  - doki: dziesięć zleceń Genzō (eskorta, infiltracja, hack).
+- **Założenia modelu.** Gracz wygrywa każdą walkę, z którą przychodzi zlecenie, a infiltrację robi bez zabijania i bez wykrycia. Każde zlecenie daje jeden quickhack, hack wygrywa dwa demony, a cztery zlecenia na dziesięć idą bez wykrycia. Styl jest pusty. Do czasu walki gracz ma zwykłą broń i kurtkę swojego poziomu, tak jak towar w sklepie. Czas walki to liczba trafień potrzebna do pokonania drugiej strony razy odstęp strzałów, przy trafieniach w 10% w głowę, 50% w tułów i po 20% w ręce i nogi.
+- **Progi (z ADR-u, ustalone przed pomiarem):**
+  - tempo: każda dzielnica poza ostatnią daje 8–10 poziomów, gracz wchodzi do doków poniżej 30 i kończy je na 30;
+  - czas walki w paśmie: każda walka trwa od 0,75 do 1,33 czasu tej samej walki na dolnej granicy pasma, w obie strony (gracz pokonuje wroga i wróg pokonuje gracza);
+  - rzadkości na poziomach przedmiotu 1, 10, 20 i 30, po 3000 przedmiotów: udział rzadkich i lepszych rośnie z poziomem, zwykłe i niezwykłe to razem co najmniej 60%, na poziomie 1 nie ma epickich, poniżej 11 legendarnych, a na 30 legendarne mają 2–10%; ochrona przed pechem podnosi rzadkie na poziomie 1 najwyżej do 20%;
+  - pech: żadna seria losowanych przedmiotów poniżej rzadkiego nie jest dłuższa niż 8, w przejściu ani w próbce.
+- **Wyniki przed strojeniem i po nim** (przed: pięć ziaren testu; po: te same pięć i sonda na 200 ziarnach, z tym samym tempem):
+
+  | Miara | Przed | Po |
+  |---|---|---|
+  | Poziomy w dzielnicach (Krakowskie / Stare Miasto / targ / doki) | 9–10 / 3–4 / 4 / 3, gra kończy się na poziomie 21. Test pada. | 10 / 8 / 9 / 2, czyli 1 → 11 → 19 → 28 → 30. |
+  | Czas pokonania wroga względem dolnej granicy pasma | 0,90–1,00 | 0,90–1,00 |
+  | Czas pokonania gracza względem dolnej granicy pasma | 0,84–1,00 | 0,80–1,00 |
+  | Rzadkości z tabel, poziom 1 (zwykły / niezwykły / rzadki / epicki / legendarny) | 75,3 / 19,4 / 5,3 / 0 / 0% | bez zmian |
+  | Poziom 10 | 59,7 / 26,0 / 9,9 / 4,4 / 0% | bez zmian |
+  | Poziom 20 | 46,0 / 30,6 / 13,3 / 8,1 / 2,0% | bez zmian |
+  | Poziom 30 | 32,6 / 31,9 / 19,2 / 11,7 / 4,6% | bez zmian |
+  | Rzadkie i lepsze z ochroną przed pechem (poziomy 1, 10, 20, 30) | 12,8 / 19,1 / 25,5 / 36,1% | bez zmian |
+  | Najdłuższa seria pecha | bez ochrony 106 na poziomie 1 i 17 na 30; z ochroną 8; w przejściu 3–8 | bez zmian |
+
+  Przed strojeniem nie przechodziło tylko tempo. XP z zadań jest stałe, a XP ze zleceń rosło o 4% na poziom, podczas gdy koszt poziomu rośnie jak L^1,6. Dlatego Krakowskie dawało 9–10 poziomów, a każda następna dzielnica 3–4. Do tego gracz wychodził ponad górną granicę Starego Miasta (14) i targu (20), a wtedy zlecenia przestają rosnąć, a XP za wroga spada do 10%.
+- **Zmienione liczby:**
+  - XP zleceń, wrogów i premii za brak wykrycia rośnie z poziomem źródła jak koszt poziomu, od poziomu 6: `xpLevelScale = max(1, (poziom / 6)^1,6)` (`XP_CURVE_FROM = 6`, wykładnik krzywej `CURVE_EXPONENT`). Zastępuje to +4% na poziom. Do poziomu 6 nic się nie zmienia, na 12 mnożnik wynosi 3,03, a na 30 13,1. Zlecenie albo wróg daje więc mniej więcej ten sam ułamek poziomu w każdym paśmie. Próg 6 wybrał test: przy 5 dzielnice dawały 11 / 10 / 8 / 0 poziomów, a przy 7 dawały 9 / 7 / 7 / 6.
+  - XP za wroga rośnie teraz z jego poziomem, a nie tylko z różnicą poziomów. Bez tego wróg na poziomie 20 jest wart 0,5% poziomu.
+  - Premia za kontrakt bez wykrycia to `undetectedXp(poziom kontraktu)`, czyli 150 XP razy ten sam mnożnik.
+  - Baza XP dostawy: 300 zamiast 500. Dostawa nie ma walki, a ma poziom straganu Hany w paśmie targu (co najmniej 10), więc przy nowym mnożniku jest warta więcej niż eliminacja w Krakowskiem. Z bazą 500 sonda na 200 ziarnach dawała 10 / 8 / 10 / 1 dla 190 ziaren i 11 / 8 / 9 / 1 dla 3, czyli Krakowskie ponad próg. Z bazą 300 wszystkie 200 dają 10 / 8 / 9 / 2.
+  - Pasma: Stare Miasto 5–19 zamiast 5–14, targ 10–28 zamiast 10–20. Gracz wychodzi ze Starego Miasta na poziomie 19, a z targu na 28, więc w starych granicach świat zostawał za nim. Z nowym XP i starymi pasmami dzielnice dają 10 / 7 / 8 / 4 poziomy, a test pada na Starym Mieście. Dolne granice i pasma Krakowskiego (1–8) i doków (16–30) zostają. Krakowskie 1–8 przy wyjściu na poziomie 11 też przechodzi próg czasu walki, a wyższa granica nic w tempie nie zmienia.
+- **Bez zmian:** krzywa XP (więc zapis i walidacja poziomu się nie zmieniają, a migracja nie jest potrzebna), +4% na poziom dla przedmiotów, wrogów i wypłat, wagi rzadkości, ochrona przed pechem, ceny zmiany rozdania i liczby perków. Ostatnich dwóch test nie mierzy, więc nie ma podstaw, żeby je zmieniać.
+- **Zapis i determinizm:** `SAVE_SCHEMA_VERSION` zostaje na v32, a kontrakty (porty, zdarzenia, komendy) się nie zmieniają. Złote hashe w `determinism.test.ts` i `reinforcement-sidestep.test.ts` się nie zmieniły (testy przechodzą bez `-u`): w przebiegach mnożnik XP zostaje równy 1, a gracz nie przekracza starych górnych granic pasm.
+- **Do decyzji użytkownika:**
+  - 29 poziomów na cztery dzielnice to średnio 7,25. Przy 8–10 na każdą z trzech pierwszych doki dają tylko 2 poziomy, bo gracz wchodzi do nich na 28. Do wyboru: zostawić tak, obniżyć cel do ok. 7 na dzielnicę, podnieść limit poziomu albo dać dokom własny wątek główny.
+  - Marginesów nie ma: Krakowskie jest na górnej granicy (10), a Stare Miasto na dolnej (8). Przyczyną jest treść: Krakowskie ma dwa zadania główne, a Stare Miasto i doki żadnego. Każde nowe zadanie w jednej dzielnicy przesunie tempo, a test to pokaże.
+  - Dostawa od Kaito ma poziom straganu Hany (pasmo targu), więc dla gracza z poziomem 1 jest kontraktem poziomu 10. Można zostawić obniżoną bazę albo liczyć poziom dostawy z dzielnicy Kaito.
+  - Po podniesieniu górnej granicy targ (10–28) i doki (16–30) pod koniec gry mają prawie ten sam poziom. Do decyzji, czy doki mają zostać jedynym miejscem z wrogami 29–30.
+  - Wypłaty dalej rosną o 4% na poziom, a XP jak koszt poziomu. Test nie mierzy ekonomii (ceny, wypłaty), więc jej balans zostaje do osobnego przeglądu.
+
+### Runda 2: decyzje użytkownika z 7.11 i strojenie
+
+Ta część zastępuje w punktach wyżej próg tempa (8–10), wzrost XP dopiero od poziomu 6, bazy zleceń, bazę dostawy 300, XP aktu I i pasma Starego Miasta 5–19 oraz targu 10–28.
+
+- **Decyzje użytkownika (7.11):**
+  - Cel to ok. 7 poziomów na dzielnicę, równo we wszystkich czterech, także w dokach. Próg testu tempa to 6–9 poziomów w każdej dzielnicy, a doki kończą na poziomie 30. Liczby mają mieć zapas po obu stronach, bo każde nowe zadanie przesunie tempo.
+  - Dostawa od Kaito ma poziom dzielnicy Kaito (pasmo Krakowskiego 1–8), jak jego eliminacje, a nie poziom straganu Hany w paśmie targu. Baza XP dostawy wraca do 500, chyba że test pokaże, że trzeba inaczej.
+  - Reguła XP z rundy 1 jest przyjęta: XP za wroga rośnie z jego poziomem, a XP zleceń jak koszt poziomu.
+  - Jeśli cel 7 na to pozwala, pasma wracają bliżej starych (Stare Miasto 5–14, targ 10–20), żeby pod koniec gry targ i doki się różniły.
+- **Poprawka modelu.** Pierwszy kontrakt idzie teraz w całości przed zleceniami Kaito (`opening` w `DistrictPass`), bo to on prowadzi gracza do Kaito. W rundzie 1 jego kroki były rozłożone między zlecenia. Na poziomach 1–4 jego 1250 XP to ponad trzy poziomy, więc gracz robi potem zlecenia na wyższym poziomie, a Krakowskie daje o ok. poziom więcej niż w modelu z rundy 1.
+- **Wyniki przed rundą 2 i po niej** (model i progi jak wyżej, poza progiem tempa; „przed” to stan rundy 1 po scaleniu `main` z #343 i #350; sonda na 200 ziarnach, test na pięciu):
+
+  | Miara | Przed | Po |
+  |---|---|---|
+  | Poziomy w dzielnicach (Krakowskie / Stare Miasto / targ / doki) | 10 / 8 / 9 / 2 dla wszystkich 200 ziaren, czyli 1 → 11 → 19 → 28 → 30. Z progiem 6–9 test pada na Krakowskiem i dokach. | 8 / 7 / 7 / 7 dla wszystkich 200 ziaren, czyli 1 → 9 → 16 → 23 → 30. |
+  | Poziom z ułamkiem przy wyjściu z dzielnicy | nie mierzony | Krakowskie 9,56–9,85, Stare Miasto 16,42–16,65, targ 23,38–23,54 |
+  | Zapas doków | doki dają 2 poziomy | bez limitu poziomu doki dałyby o 1,4–1,6 poziomu więcej, niż trzeba do 30 (w kosztach poziomu 29), więc gracz dochodzi do 30 przy ósmym albo dziewiątym zleceniu z dziesięciu |
+  | Czas pokonania wroga względem dolnej granicy pasma | 0,90–1,00 | 0,88–1,00 |
+  | Czas pokonania gracza względem dolnej granicy pasma | 0,80–1,00 | 0,84–1,00 |
+  | Rzadkości, ochrona przed pechem, serie pecha | jak w rundzie 1 | bez zmian (testy przechodzą) |
+
+  Każda dzielnica jest co najmniej o poziom od obu granic progu (7 i 8 przy progu 6–9). Krakowskie daje o poziom więcej niż reszta, bo tylko ono ma dwa zadania główne, a 29 poziomów nie dzieli się równo na cztery. Nowe zadanie warte mniej niż ok. poziomu przesunie dzielnicę najwyżej o jeden poziom, a ta dalej zmieści się w progu. Najbliżej granicy jest Krakowskie: wychodzi na 9,56–9,85, więc ok. 0,2 poziomu więcej w tej dzielnicy da 9 poziomów, czyli górną granicę progu.
+- **Dlaczego zmieniła się reguła poniżej poziomu 6.** Przy wzroście XP dopiero od poziomu 6 (pod nim baza) Krakowskie dawało co najmniej 8 poziomów, nawet bez XP z jego zadań. Pierwsze poziomy kosztują 100 do 1313 XP, a zlecenie z bazą 1000 XP dawało pod poziomem 6 kilka poziomów naraz. Sondy na 10 ziarnach w modelu z rundy 1, przy tej regule, pasmach 5–15 i 10–22, eliminacji 400 XP i 130 XP za cel: z XP pierwszego kontraktu i aktu I zmniejszonym do 30% dzielnice dawały 8 / 7 / 8 / 6 albo 8 / 7 / 9 / 5, a bez XP z tych zadań 7 / 7 / 9 / 6. Z podłogą mnożnika 0,25 zamiast 1 Krakowskie wychodziło na 9 dla 35 z 50 ziaren, na granicy poziomu. Dlatego XP zleceń, wrogów i premii za brak wykrycia rośnie jak koszt poziomu od poziomu 1: `xpLevelScale = (poziom / 6)^1,6` bez dolnej granicy 1 (`XP_BASE_LEVEL = 6`, dawniej `XP_CURVE_FROM`). Bazy w kodzie są wartościami na poziomie 6. Na poziomie 1 mnożnik wynosi 0,057, więc zabity wróg daje ok. 3% poziomu, a zlecenie ok. pół poziomu, na każdym poziomie gry. Ganger na poziomie 1 daje 3 XP zamiast 60, a eliminacja z trzema celami 49 XP zamiast 1000, przy koszcie poziomu 1 równym 100. To odstępstwo od przyjętego „od poziomu 6” i czeka na potwierdzenie użytkownika.
+- **Zmienione liczby:**
+  - dostawa ma poziom pasma Krakowskiego (`CONTRACT_KIND_BANDS` w `sim/content/district-bands.ts`, a `levelAt` w `ContractContext` dostaje rodzaj zlecenia). Dotyczy to XP i wypłaty, więc dostawa dla gracza z poziomem 1 płaci jak zlecenie poziomu 1 (np. 400 kredytów zamiast 544 przy tym samym limicie czasu). Baza XP dostawy wraca do 500, jak chciał użytkownik. Test tego nie zmienia;
+  - bazy zleceń: eliminacja 500 (było 550), odzyskanie 350 (600), ochrona 400 (650), eskorta 350 (800), infiltracja 400 (850), hack 350 (800), a za każdego wysłanego człowieka 120 (150). Eliminacje Kaito niosą tempo Krakowskiego i Starego Miasta, zlecenia Hany targu, a Genzō doków, więc bazy są ustawione osobno dla dawcy. Zlecenia Hany i Genzō mają bazę niższą niż dostawa, bo przychodzą z dużymi załogami (od poziomu 10 czterech ludzi, pięciu przy infiltracji i hacku w dokach), a strażnik Tessenu jest wart więcej niż Hebi. Eliminacja 500 zamiast 475 przesuwa wyjście ze Starego Miasta z 16,11–16,49 na 16,42–16,65, a z Krakowskiego z 9,36–9,81 na 9,56–9,85;
+  - XP aktu I („Echo”): 1350 zamiast 4600 (zakończenie 700 zamiast 2500, kroki 150, 100, 150 i 250 zamiast 500, 400, 500 i 700). Na poziomach 5–9 stare XP dawało dwa poziomy, a nowe daje ok. trzech piątych poziomu, tyle co akt II (7100 XP) na poziomach 16–23. Przy 1850 XP (i eliminacji 475) Krakowskie wychodziło na 9,68–9,96, tuż pod granicą dziewięciu poziomów. Pierwszy kontrakt zostaje bez zmian (1250 XP), bo jego pierwszy krok daje poziom 2 na starcie gry, na czym opierają się złoty hash i testy sesji;
+  - tabela XP zadań w migracji v16 → v17 (`V17_QUEST_XP` w `persistence/src/migrations.ts`) ma nowe XP aktu I, bo test zapisu wymaga, żeby stary zapis dostał tyle, ile dziś daje nowa gra. Schemat zapisu się nie zmienia (v33), a zmiana dotyczy tylko zapisów sprzed v17;
+  - pasma wracają do starych: Stare Miasto 5–14, targ 10–20. Gracz wychodzi ze Starego Miasta na ok. 16, a z targu na ok. 23, więc pod koniec każdej z tych dzielnic świat zostaje trochę za nim, a XP zleceń i wrogów przestaje rosnąć. To hamuje tempo bez nowych liczb. Pod koniec gry targ (do 20, elita 21) i doki (16–30) znów się różnią: tylko doki mają wrogów powyżej 21. Próg czasu walki przechodzi.
+- **Bez zmian:** krzywa XP (zapis i walidacja poziomu się nie zmieniają), `SAVE_SCHEMA_VERSION` (v33 po #343), kontrakty w `core/src/{ports,events,commands}`, pierwszy kontrakt, akt II, XP quickhacków i włamań, `ENEMY_XP`, rzadkości i ochrona przed pechem.
+- **Determinizm i luka w złotych hashach.** Złoty hash przebiegu w `determinism.test.ts` (i jego wersje vN) się nie zmienił. Jedyne XP w tym przebiegu to krok zadania „find_fixer” (100 XP, poziom 2), a gracz nikogo nie pokonuje. Zmienił się hash pojedynku wręcz (we wszystkich wersjach vN): gracz z poziomem 1 pokonuje tam zbira bez poziomu, który dostaje poziom gracza, i dostaje 4 XP zamiast 70. To jedyne miejsce, gdzie złoty hash obejmuje zdobywanie XP, i to tylko za wroga na poziomie 1. W rundzie 1 ten hash się nie zmienił, bo do poziomu 6 XP zostawało bez zmian. XP zleceń, premii za brak wykrycia, wrogów powyżej poziomu 1 i kroków zadań poza pierwszym nie obejmuje żaden złoty hash. Pilnują ich test balansu, `core/test/progression*.test.ts` i `sim/test/progression.test.ts`. Tę lukę można zamknąć przebiegiem z kontraktem zakończonym w wyższym paśmie.
+- **Do decyzji użytkownika:**
+  - XP rośnie jak koszt poziomu także poniżej poziomu 6 (wyżej, dlaczego). Liczby w toastach na początku gry są przez to małe (3 XP za gangera), choć poziomy przychodzą równie szybko. Quickhack (25 XP) i włamanie (100 XP i 25 za demona) zostają stałe, więc na poziomie 1 quickhack jest wart więcej niż zabicie wroga, a na poziomie 30 prawie nic.
+  - Akt I daje 1350 XP zamiast 4600.
+  - Krakowskie daje 8 poziomów, a reszta po 7. Równe 7 w Krakowskiem wymaga też obcięcia pierwszego kontraktu: sonda na 100 ziarnach z pierwszym kontraktem za 600 XP, aktem I za 1850 XP i eliminacją 475 dawała Krakowskie z wyjściem na 8,88–9,11, czyli na granicy poziomu (7 albo 8 zależnie od ziarna).
+  - Wypłata dostawy liczy się teraz z poziomu Krakowskiego, a nie targu. `V17_CONTRACT_XP` (850 XP za stary kontrakt w migracji) zostaje, choć dzisiejsze zlecenia dają XP zależne od poziomu. Test nie mierzy ekonomii, więc to zostaje do przeglądu wypłat z rundy 1.
+
+### Runda 3: decyzje użytkownika z 7.11 i strojenie
+
+Ta część zastępuje w rundzie 2 regułę XP bez dolnej granicy (`xpLevelScale = (poziom / 6)^1,6` także poniżej poziomu 6) i bazę XP dostawy 500. Rozstrzyga też punkty z jej listy „Do decyzji użytkownika”.
+
+- **Decyzje użytkownika (7.11):**
+  - XP zleceń, wrogów i premii za brak wykrycia rośnie jak koszt poziomu dopiero od poziomu 6, a poniżej mnożnik wynosi 1: `xpLevelScale = 1` do poziomu 6, wyżej `(poziom / 6)^1,6`. Walka ma zawsze dawać więcej XP niż quickhack.
+  - Tempo Krakowskiego stroją niższe bazy zleceń i XP aktu I, a nie zmiana reguły z punktu wyżej.
+  - Akt I za 1350 XP jest przyjęty.
+  - Tempo 8 / 7 / 7 / 7 wystarczy. Próg testu zostaje 6–9 poziomów na dzielnicę, z zapasem od granic.
+- **Nowa miara w teście balansu.** Na każdym poziomie od 1 do 30 każdy zwykły wróg (bez rangi elity) na poziomie gracza daje co najmniej tyle XP, co quickhack (`QUICKHACK_XP`, 25). Z regułą z rundy 2 test pada na poziomie 1 (ganger daje 3 XP), a z podłogą przechodzi. Najtańszy zwykły wróg, czujka Hebi, daje na poziomie 1 50 XP.
+- **Strojenie.** Sama podłoga dawała tempo 9 / 6 / 7 / 7 (47 z 50 ziaren) albo 9 / 7 / 6 / 7 (3 z 50), z wyjściem z Krakowskiego na 10,02–10,32. Test przechodził, ale Krakowskie stało na górnej granicy progu. Zlecenia Kaito na poziomach 1–6 dają z podłogą pełną bazę, a dostawa jest jego zleceniem bez walki tylko w Krakowskiem (pasmo 1–8), więc niższa jest jej baza. Eliminacja zostaje na 500, bo niesie też tempo Starego Miasta. Sonda na 200 ziarnach z bazą dostawy 300 dawała wyjście z Krakowskiego na 9,47–9,97, z bazą 250 na 9,38–9,77, a z bazą 225 na 9,33–9,72. Przy bazie 200 (sonda na 50 ziarnach) wyjście wynosiło 9,27–9,60. Wybrana jest baza 225, bo wyjście leży najbliżej środka między poziomem 9 a 10. Akt I zostaje na 1350 XP, więc tabela migracji `V17_QUEST_XP` się nie zmienia.
+- **Wyniki przed rundą 3 i po niej** (model i progi jak w rundzie 2; „przed” to stan rundy 2 po scaleniu `main` z #353 i #355; sonda na 200 ziarnach, test na pięciu):
+
+  | Miara | Przed | Po |
+  |---|---|---|
+  | Poziomy w dzielnicach (Krakowskie / Stare Miasto / targ / doki) | 8 / 7 / 7 / 7 dla wszystkich 200 ziaren | 8 / 7 / 7 / 7 dla wszystkich 200 ziaren |
+  | Poziom z ułamkiem przy wyjściu z dzielnicy | Krakowskie 9,56–9,85, Stare Miasto 16,42–16,65, targ 23,38–23,54 | Krakowskie 9,33–9,72, Stare Miasto 16,19–16,52, targ 23,25–23,43 |
+  | Zapas doków (XP ponad próg poziomu 30, w kosztach poziomu 29) | 1,4–1,6 | 1,30–1,52 |
+  | Czas pokonania wroga względem dolnej granicy pasma | 0,88–1,00 | 0,88–1,00 |
+  | Czas pokonania gracza względem dolnej granicy pasma | 0,84–1,00 | 0,84–1,00 |
+  | XP za gangera na poziomie gracza (poziomy 1, 5, 10, 20, 30) | 3 / 45 / 136 / 412 / 788 | 60 / 60 / 136 / 412 / 788 |
+  | XP za czujkę Hebi, najtańszego zwykłego wroga (te same poziomy) | 3 / 37 / 113 / 343 / 657 | 50 / 50 / 113 / 343 / 657 |
+  | XP za quickhack | 25 na każdym poziomie i na każdym celu | 25 na wrogu na poziomie gracza i na celu bez poziomu, 2 na wrogu o 5 i więcej poziomów słabszym, 38 na o 5 silniejszym (niżej, domknięcie rundy) |
+  | Eliminacja z trzema celami (poziomy 1 i 5) | 49 / 642 | 860 / 860 |
+  | Dostawa (poziomy 1 i 5, a pasmo Krakowskiego kończy się na 8) | 28 / 373 | 225 / 225 |
+  | Rzadkości, ochrona przed pechem, serie pecha | jak w rundzie 1 | bez zmian (testy przechodzą) |
+
+  Krakowskie wychodzi na 9,33–9,72. Do 9 poziomów w tej dzielnicy brakuje więc co najmniej 0,28 poziomu, a do 7 trzeba by stracić co najmniej 0,33. W rundzie 2 do 9 poziomów brakowało 0,15. Oba wyniki, 7 i 9, mieszczą się jeszcze w progu 6–9. Stare Miasto wychodzi na 16,19–16,52, więc 0,19 poziomu mniej dałoby mu 6 poziomów zamiast 7, co też mieści się w progu.
+- **Zmienione liczby:**
+  - `xpLevelScale`: 1 do poziomu 6 (`XP_BASE_LEVEL`), wyżej `(poziom / 6)^1,6`. Bazy w kodzie są wartościami do poziomu 6;
+  - baza XP dostawy: 225 zamiast 500.
+- **Bez zmian:** krzywa XP, `SAVE_SCHEMA_VERSION`, kontrakty w `core/src/{ports,events,commands}`, akt I (1350 XP), pierwszy kontrakt, akt II, pozostałe bazy zleceń, `ENEMY_XP`, XP quickhacków i włamań, pasma, rzadkości i ochrona przed pechem.
+- **Determinizm i luka w złotych hashach.** Hash pojedynku wręcz w `determinism.test.ts` (`hashOf` i wersje v17–v31) wraca do wartości sprzed rundy 2 (`b036f5d7` i pozostałe), bo zbir pokonany przez gracza z poziomem 1 znów daje 70 XP zamiast 4. Pozostałe złote hashe się nie zmieniły. Luka z rundy 2 zostaje: żaden złoty hash nie obejmuje XP zleceń, premii za brak wykrycia, wrogów powyżej poziomu 1 ani kroków zadań poza pierwszym. Pilnują ich test balansu, `core/test/progression*.test.ts` i `sim/test/progression.test.ts`. Lukę zamknie przebieg z kontraktem zakończonym w wyższym paśmie.
+- **`V17_CONTRACT_XP` (850 XP za kontrakt zakończony przed v17).** Zostaje. Zapis sprzed v17 nie trzyma rodzajów ani poziomów zleceń, a w tamtej treści były tylko zlecenia Kaito w Krakowskiem, czyli dziś zlecenia na poziomach 1–8, w większości z mnożnikiem 1. Dzisiejsze zlecenie Kaito daje tam średnio ok. 540 XP z samego kontraktu (dostawa 225, eliminacja z trzema celami 860), a z walką, quickhackiem i premią za brak wykrycia ok. 720 XP. Migracja nie zna zabitych ani hacków, więc 850 XP za kontrakt to rozsądna rekompensata za całe zlecenie. Test zapisu daje dla aktu I z dziewięcioma kontraktami poziom 9, a model przejścia kończy Krakowskie (akt I i dziesięć zleceń) na 9,33–9,72, więc oba się zgadzają. Test zapisu przechodzi bez zmiany.
+- **Quickhack według różnicy poziomów (domknięcie rundy 3, decyzja z 7.11).** Wróg o 5 i więcej poziomów słabszy od gracza daje 10% swojego XP (`killXpShare`), więc ze stałym quickhackiem (25 XP) dla gracza z poziomem 6 do ok. 20 zabicie takiego wroga było warte mniej niż quickhack na nim (ganger o 5 poziomów słabszy daje 6 XP przy graczu z poziomem 6, 14 przy 15 i 26 przy 20, a czujka 5, 11 i 22 XP). Dlatego quickhack dostaje ten sam udział co zabicie wroga, na którym go użyto: `quickhackXp(poziom wroga, poziom gracza) = round(25 · killXpShare)`, czyli 2 XP na wrogu o 5 i więcej poziomów słabszym, 25 na równym i 38 na wrogu o 5 poziomów silniejszym. Cel bez poziomu (kamera, głośnik) liczy się jak cel na poziomie gracza i daje 25 XP. Miara w teście balansu obejmuje teraz graczy na poziomach 1–30 i wrogów od 10 poziomów słabszych do 5 silniejszych: XP za pokonanie zwykłego wroga jest zawsze co najmniej równe XP za quickhack na tym samym wrogu. Ze stałym quickhackiem test pada (czujka na poziomie 1 przy graczu z poziomem 4 daje 23 XP, mniej niż 25), a z nowym przechodzi. W modelu przejścia quickhack zlecenia trafia w wroga z pasma zlecenia, a tempo zostaje 8 / 7 / 7 / 7 dla wszystkich 200 ziaren (wyjście z Krakowskiego 9,34–9,74, ze Starego Miasta 16,19–16,53, z targu 23,26–23,43, zapas doków 1,30–1,52). Bez zmian zostają `QUICKHACK_XP`, XP włamań i baza dostawy 225.
+- **Do decyzji użytkownika:**
+  - Dostawa daje teraz 225 XP przy wypłacie bez zmian, więc w Krakowskiem płaci mniej XP niż eliminacja (860 XP z trzema celami), a ta przynosi do tego XP za walkę.
