@@ -75,6 +75,10 @@ export interface CharacterRig {
   /** 0..1 blend of the ladder pose, and the phase of the hand-over-hand cycle. */
   climbBlend: number;
   climbPhase: number;
+  /** 0 on the feet .. 1 lying knocked out (ADR-0065), eased through the slump and the getting up. */
+  knockout: number;
+  /** 0 lying .. 1 over a carrier's shoulder, eased while picked up and put down. */
+  carried: number;
   /** The rungs of the ladder climbed last (null: none in view); the hands keep to them while the pose eases out. */
   ladder: LadderRungs | null;
 }
