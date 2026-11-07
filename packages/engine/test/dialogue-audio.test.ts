@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SPEECH_DUCK_ATTACK, SPEECH_DUCK_DB, SPEECH_DUCK_HOLD, SPEECH_DUCK_RELEASE, SpeechDucker, dbToGain } from "../src/audio/ducking";
 import { DUCK_LEVEL, MixState } from "../src/audio/mixer";
 import { SynthAudio } from "../src/audio/synth-audio";
-import { FakeAudioContext, type FakeNode, ManualTimer } from "./fake-audio-context";
+import { FakeAudioContext, type FakeNode, ManualTimer } from "./fixtures/fake-audio-context";
 
 const DUCKED = dbToGain(SPEECH_DUCK_DB);
 
@@ -113,16 +113,16 @@ describe("SynthAudio dialogue and radio buses", () => {
     const music = audio.getVolume("music");
     expect(await audio.playLine("kaito/greet")).toBe(true);
     expect(requests).toEqual(["voice/en/kaito/greet.ogg"]);
-    expect(audio.lineSpeaking).toBe("kaito/greet");
+    expect(audio.speech.line).toBe("kaito/greet");
     const src = ctx.sources().at(-1)!;
     expect(src.outputs).toEqual([b.dialogue]);
     run(ctx, audio, SPEECH_DUCK_ATTACK + 0.05);
-    expect(audio.speechDuck).toBeCloseTo(DUCKED);
+    expect(audio.speech.duck).toBeCloseTo(DUCKED);
     expect(gain(b.music).target).toBeCloseTo(music * DUCKED);
     expect(gain(b.radio).target).toBeCloseTo(audio.getVolume("radio") * DUCKED);
     expect(gain(b.sfx).target ?? gain(b.sfx).value).toBe(audio.getVolume("sfx"));
     run(ctx, audio, 1.5 + SPEECH_DUCK_HOLD + SPEECH_DUCK_RELEASE);
-    expect(audio.speechDuck).toBe(1);
+    expect(audio.speech.duck).toBe(1);
     expect(gain(b.music).target).toBeCloseTo(music);
   });
 
@@ -134,9 +134,9 @@ describe("SynthAudio dialogue and radio buses", () => {
     await expect(audio.playLine("nobody/nothing")).resolves.toBe(false);
     expect(requests).toEqual(["voice/en/nobody/nothing.ogg"]);
     expect(ctx.sources().length).toBe(sources);
-    expect(audio.lineSpeaking).toBeNull();
+    expect(audio.speech.line).toBeNull();
     run(ctx, audio, 0.5);
-    expect(audio.speechDuck).toBe(1);
+    expect(audio.speech.duck).toBe(1);
   });
 
   it("stays silent without a voice URL or before the first gesture", async () => {
@@ -156,12 +156,12 @@ describe("SynthAudio dialogue and radio buses", () => {
     const a = ctx.sources().at(-1)!;
     await audio.playLine("b");
     expect(a.stopped).not.toBeNull();
-    expect(audio.lineSpeaking).toBe("b");
+    expect(audio.speech.line).toBe("b");
     run(ctx, audio, 0.5);
     audio.stopLine();
-    expect(audio.lineSpeaking).toBeNull();
+    expect(audio.speech.line).toBeNull();
     run(ctx, audio, SPEECH_DUCK_RELEASE + 0.05);
-    expect(audio.speechDuck).toBe(1);
+    expect(audio.speech.duck).toBe(1);
   });
 
   it("drops a line that finishes loading after it was stopped", async () => {
@@ -170,6 +170,6 @@ describe("SynthAudio dialogue and radio buses", () => {
     const p = audio.playLine("a");
     audio.stopLine();
     await expect(p).resolves.toBe(false);
-    expect(audio.lineSpeaking).toBeNull();
+    expect(audio.speech.line).toBeNull();
   });
 });

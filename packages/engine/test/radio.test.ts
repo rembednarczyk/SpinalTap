@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { VENUE_STATIONS, radioMix, radioSpeakers, speakerMix } from "../src/audio/radio-speakers";
 import { RADIO_STATIONS, RADIO_STATION_IDS, STEPS_PER_BAR, buildStationLoop, chordOn, degreeToMidi } from "../src/audio/radio-stations";
 import { SynthAudio } from "../src/audio/synth-audio";
-import { FakeAudioContext, ManualTimer } from "./fake-audio-context";
+import { FakeAudioContext, ManualTimer } from "./fixtures/fake-audio-context";
 
 const pose = (x: number, z: number): AudioListenerPose => ({ position: { x, y: 1.6, z }, yaw: 0, speed: 0 });
 

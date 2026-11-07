@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AudioBus, AudioScenePort, MusicMood } from "@seki/core";
 import { DUCK_LEVEL, SPEECH_DUCK_ATTACK, SPEECH_DUCK_DB, SPEECH_DUCK_HOLD, SPEECH_DUCK_RELEASE, SynthAudio, dbToGain } from "@seki/engine";
 import { DEFAULT_SETTINGS } from "@seki/ui";
-import { FakeAudioContext, ManualTimer } from "../../engine/test/fake-audio-context";
+import { FakeAudioContext, ManualTimer } from "../../engine/test/fixtures/fake-audio-context";
 import { bindAudioMix } from "../src/controllers/audio-mix";
 import { finishDialogue, setup, talkToKaito } from "./story-helpers";
 
@@ -100,18 +100,18 @@ describe("audio mix in the session (ADR-0060 stage 1)", () => {
     const { audio, run, level } = synth({ "voice/en/kaito/greet.ogg": 1.2 });
     const music = audio.getVolume("music");
     const radio = audio.getVolume("radio");
-    expect(audio.speechDuck).toBe(1);
+    expect(audio.speech.duck).toBe(1);
     expect(await audio.playLine("kaito/greet")).toBe(true);
     run(SPEECH_DUCK_ATTACK + 0.05);
-    expect(audio.lineSpeaking).toBe("kaito/greet");
-    expect(audio.speechDuck).toBeCloseTo(DUCKED);
+    expect(audio.speech.line).toBe("kaito/greet");
+    expect(audio.speech.duck).toBeCloseTo(DUCKED);
     expect(level("music")).toBeCloseTo(music * DUCKED);
     expect(level("radio")).toBeCloseTo(radio * DUCKED);
     expect(level("dialogue")).toBe(audio.getVolume("dialogue"));
     run(1.2 + SPEECH_DUCK_HOLD);
-    expect(audio.speechDuck).toBeLessThan(1);
+    expect(audio.speech.duck).toBeLessThan(1);
     run(SPEECH_DUCK_RELEASE);
-    expect(audio.speechDuck).toBe(1);
+    expect(audio.speech.duck).toBe(1);
     expect(level("music")).toBeCloseTo(music);
     expect(level("radio")).toBeCloseTo(radio);
   });
@@ -128,9 +128,9 @@ describe("audio mix in the session (ADR-0060 stage 1)", () => {
     // The conversation's duck is the deeper one and the line does not add to it.
     expect(level("music")).toBeCloseTo(music * Math.min(DUCK_LEVEL, DUCKED));
     finishDialogue(session, ui);
-    expect(audio.lineSpeaking).toBeNull();
+    expect(audio.speech.line).toBeNull();
     run(SPEECH_DUCK_RELEASE + 0.05);
-    expect(audio.speechDuck).toBe(1);
+    expect(audio.speech.duck).toBe(1);
     expect(level("music")).toBeCloseTo(music);
   });
 
@@ -138,7 +138,7 @@ describe("audio mix in the session (ADR-0060 stage 1)", () => {
     const { audio, run } = synth({});
     await expect(audio.playLine("nobody/missing")).resolves.toBe(false);
     run(0.5);
-    expect(audio.lineSpeaking).toBeNull();
-    expect(audio.speechDuck).toBe(1);
+    expect(audio.speech.line).toBeNull();
+    expect(audio.speech.duck).toBe(1);
   });
 });

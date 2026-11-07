@@ -3,7 +3,7 @@ import type { AudioListenerPose } from "@seki/core";
 import { DUCK_LEVEL } from "../src/audio/mixer";
 import { LAYER_MIX } from "../src/audio/music";
 import { CUES, SynthAudio } from "../src/audio/synth-audio";
-import { FakeAudioContext, type FakeNode, type FakeParam, ManualTimer } from "./fake-audio-context";
+import { FakeAudioContext, type FakeNode, type FakeParam, ManualTimer } from "./fixtures/fake-audio-context";
 
 const setup = (opts: { maxVoices?: number; autoStart?: boolean } = {}) => {
   const ctx = new FakeAudioContext();

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CUES, SynthAudio } from "../src/audio/synth-audio";
 import { type AudioSampleManifest, SampleBank, VariantPicker, manifestUrls, pickVariant, pitchRate } from "../src/audio/samples";
 import { mulberry32 } from "../src/audio/music";
-import { FakeAudioContext, type FakeNode, ManualTimer } from "./fake-audio-context";
+import { FakeAudioContext, type FakeNode, ManualTimer } from "./fixtures/fake-audio-context";
 
 /** In-memory "server": URL → bytes; anything else is a 404. Counts requests per URL. */
 const server = (files: Record<string, number>) => {
