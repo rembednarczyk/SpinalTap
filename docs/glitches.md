@@ -1410,6 +1410,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: sim blokuje broń przy niesieniu (ADR-0065), ale renderer dalej rysuje pistolet w dłoni
 - Pakiet właściciela: packages/engine (renderer)
 
+### G-460 Dołek do 1,0–1,3 m przy północno-wschodnim końcu Arkad (T-218)
+- Status: w naprawie (7.11, runda 2 PR #357; kurator)
+- Ważność: S4 · Zasięg: a 40–43, x 463–465, z 118–121, ok. 12 m², poza płytami chodnika; test: na wschód od ściany poza płytami `rawHeight − groundY ≤ 0,3`; kontrola `pad-dip-uncovered`
+- Pakiet właściciela: packages/sim (content Alchemii), tools/glitch-scan
+
+### G-461 Arkady: 12 równych przęseł zamiast 14 z ortofoto (T-218)
+- Status: w naprawie (7.11, runda 2 PR #357; kurator)
+- Ważność: S4 · Zasięg: filary z ortofoto w a = 2,95 / 6,25 / 9,9 / 13,6 / 17,2 / 20,8 / 24,55 / 28,25 / 31,75 / 35,4 / 39,1 / 42,95 / 46,4 m; kontrola `arcade-rhythm`
+- Pakiet właściciela: packages/sim, packages/engine (Alchemia)
+
+### G-462 Inne ruiny z OSM rysowane jak budynki
+- Status: zgłoszone (7.11, kurator przeglądu #357; poza w66286396, które zamyka #357)
+- Ważność: S4 · Zasięg: w232362881 (`ruins=yes`), `building=ruins` w67498742, w813194693, w1330433247; do rozważenia razem z G-053
+- Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
