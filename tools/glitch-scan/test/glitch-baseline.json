@@ -66,6 +66,7 @@
   "pad-dip-uncovered": 0,
   "pavilion-on-paving": 0,
   "underground-level-exit": 0,
+  "cut-on-road": 3,
   "landmark-missing": 0,
   "landmark-default-height": 1,
   "osm-tower-default-height": 1,
