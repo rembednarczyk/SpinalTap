@@ -170,3 +170,22 @@ export const UseButton = ({ pad }: { pad: TouchPadSink }) => {
     />
   );
 };
+
+/**
+ * The fire button (ADR-0035). While the prompt has a second action for it (the grab's kill,
+ * ADR-0075) it names that action under the dot, as "Use" names the prompt: no new button.
+ */
+export const FireButton = ({ pad }: { pad: TouchPadSink }) => {
+  const t = useT();
+  const action = useUi((s) => (s.prompt ? s.promptHold : null));
+  const label = action ? (
+    <>
+      <span>●</span>
+      <span className="touch__use-what touch__fire-what">{action}</span>
+    </>
+  ) : (
+    "●"
+  );
+  const hint = action ? t("touch.fireAction", { what: action }) : t("touch.fire");
+  return <PadButtonView pad={pad} button="fire" label={label} hint={hint} className={`touch__btn--fire${action ? " touch__btn--fire-act" : ""}`} lookToo testId="touch-fire" />;
+};

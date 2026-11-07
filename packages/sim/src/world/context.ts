@@ -57,16 +57,20 @@ export interface SessionState {
   pendingDifficulty: DifficultyProfile | null;
 }
 
-/** A takedown in progress (ADR-0065): the player and `target` stand still until `left` runs out. */
+/**
+ * A takedown in progress (ADR-0065, ADR-0075): the player holds `target` in a grab until she
+ * chooses (or `left` runs out: a knock-out), then both stand still for the end chosen.
+ */
 export interface TakedownRun {
   readonly target: EntityId;
-  /** Seconds left. */
+  /** `grab`: waiting for the choice; `finish`: the knock-out or the kill under way. */
+  phase: "grab" | "finish";
+  /** Seconds left of the phase. */
   left: number;
-  /** Asked for by the command; holding the attack button through most of it kills as well. */
-  readonly lethal: boolean;
-  /** Steps of the takedown so far, and how many of them with the attack button held. */
-  steps: number;
-  held: number;
+  /** The choice: a kill, a knock-out (false), or null while the grab waits for it. */
+  lethal: boolean | null;
+  /** How long the end lasts once chosen, seconds (Quick Takedown shortens it). */
+  readonly finish: number;
   /** The player's health when it began: any damage below it breaks the hold. */
   readonly health: number;
 }

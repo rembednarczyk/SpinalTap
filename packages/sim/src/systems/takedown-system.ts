@@ -13,8 +13,10 @@ import { noteFight } from "../world/progression-ops";
 
 /** How close the player has to be, metres between the centres on the ground (ADR-0065). */
 export const TAKEDOWN_REACH = 1.6;
-/** How long a takedown holds the player and the target, seconds. */
+/** How long the end of a takedown (the knock-out or the kill) holds the player and the target, seconds. */
 export const TAKEDOWN_TIME = 1.2;
+/** How long the grab waits for the player's choice before it knocks the target out (ADR-0075), seconds. */
+export const GRAB_TIME = 3;
 /** Half-angle of the cone behind the target's back the player can come from: 120° in all. */
 export const TAKEDOWN_BACK_CONE = Math.PI / 3;
 /** Most height between the feet: nobody is taken down through a floor. */
@@ -91,7 +93,18 @@ const hold = (target: Target): void => {
   }
 };
 
-/** The `takedown` command (ADR-0065): grabs the target the HUD offers, if there still is one. */
+/** The end chosen in the grab (ADR-0075): the finish starts and lasts `run.finish`. */
+const choose = (ctx: SimContext, run: TakedownRun, lethal: boolean, timedOut: boolean): void => {
+  run.phase = "finish";
+  run.lethal = lethal;
+  run.left = run.finish;
+  ctx.bus.emit("TakedownChosen", { target: run.target, lethal, timedOut });
+};
+
+/**
+ * The `takedown` command (ADR-0065, ADR-0075): grabs the target the HUD offers, if there still is
+ * one. Without `lethal` the grab waits for the player's choice; with it the end starts at once.
+ */
 export const startTakedown = (ctx: SimContext, cmd: Extract<GameCommand, { type: "takedown" }>): void => {
   const player = ctx.world.with("player").first;
   if (!player?.health || ctx.session.takedown) return;
@@ -99,12 +112,19 @@ export const startTakedown = (ctx: SimContext, cmd: Extract<GameCommand, { type:
   if (!found) return;
   // Only the takedown that holds the prompt (the interaction system's choice of the last step).
   if (ctx.session.takedownTarget?.id !== found.target.id) return;
-  // Quick Takedown (ADR-0059) shortens the hold.
-  const duration = TAKEDOWN_TIME * takedownTimeScale(ctx.state.domain.progression.perks);
-  ctx.session.takedown = { target: found.target.id, left: duration, lethal: cmd.lethal, health: player.health.current, steps: 0, held: 0 };
+  // Quick Takedown (ADR-0059) shortens the end, not the time to choose.
+  const finish = TAKEDOWN_TIME * takedownTimeScale(ctx.state.domain.progression.perks);
+  const chosen = cmd.lethal !== undefined;
+  ctx.session.takedown = { target: found.target.id, phase: chosen ? "finish" : "grab", left: chosen ? finish : GRAB_TIME, lethal: cmd.lethal ?? null, finish, health: player.health.current };
   if (player.velocity) player.velocity = { ...ZERO };
   hold(found.target);
-  ctx.bus.emit("TakedownStarted", { target: found.target.id, duration });
+  ctx.bus.emit("TakedownStarted", { target: found.target.id, duration: finish, window: chosen ? 0 : GRAB_TIME });
+};
+
+/** The `takedown-choose` command (ADR-0075): the knock-out or the kill, while the grab waits for it. */
+export const chooseTakedown = (ctx: SimContext, cmd: Extract<GameCommand, { type: "takedown-choose" }>): void => {
+  const run = ctx.session.takedown;
+  if (run?.phase === "grab") choose(ctx, run, cmd.lethal, false);
 };
 
 /** The target broke free: it fights the player from where she stood. */
@@ -165,13 +185,16 @@ const advance = (ctx: SimContext, run: TakedownRun, player: Entity | null): void
     return;
   }
   hold(target);
-  run.steps += 1;
-  if (ctx.input.fire) run.held += 1;
   run.left -= ctx.dt;
   if (run.left > TIME_EPSILON) return;
+  // Nothing chosen in time: the grab ends the gentle way (ADR-0075), and the end starts now.
+  if (run.phase === "grab") {
+    choose(ctx, run, false, true);
+    return;
+  }
   ctx.session.takedown = null;
-  // Holding the attack button through most of it turns it into a kill; still held, it fires nothing.
-  const lethal = run.lethal || run.held * 2 > run.steps;
+  const lethal = run.lethal === true;
+  // The attack button that chose the kill fires nothing until it is let go.
   ctx.session.attackLock = ctx.input.fire;
   const engaged = isEngaged(target);
   if (lethal) kill(ctx, target, player, engaged);

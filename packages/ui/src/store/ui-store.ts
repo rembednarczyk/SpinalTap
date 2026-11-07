@@ -80,8 +80,8 @@ export interface SessionUiState {
   readonly loading: LoadingVm;
   readonly prompt: string | null;
   /**
-   * What holding the attack button does with the prompt's target (a takedown's kill, ADR-0065),
-   * shown with the prompt; null for nothing.
+   * What the attack button does with the prompt's target (the grab's kill, ADR-0075), shown with
+   * the prompt and on the touch fire button; null for nothing.
    */
   readonly promptHold: string | null;
   readonly toasts: readonly Toast[];

@@ -34,9 +34,10 @@ export const plContent = {
   "prompt.help": "Pomóż",
   "prompt.door.force": "Wyłam zamek (podniesie alarm)",
   "prompt.door.locked": "Drzwi na kod: zamknięte",
-  // Obezwładnienia (ADR-0065): klawisz interakcji i przytrzymanie ataku do końca.
-  "prompt.takedown": "Obezwładnij",
-  "prompt.takedown.kill": "przytrzymaj atak, by zabić",
+  // Obezwładnienia (ADR-0065, ADR-0075): klawisz interakcji chwyta; w chwycie ogłusza, a atak zabija.
+  "prompt.takedown": "Chwyć",
+  "prompt.grab": "Ogłusz",
+  "prompt.grab.kill": "Zabij",
   // Ciała (ADR-0065, etap 3): ten sam klawisz podnosi, upuszcza albo ukrywa.
   "prompt.body.carry": "Podnieś",
   "prompt.body.drop": "Upuść",

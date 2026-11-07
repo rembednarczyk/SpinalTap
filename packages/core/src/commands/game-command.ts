@@ -87,11 +87,16 @@ export type GameCommand =
   | { readonly type: "respec" }
   // Takedowns (ADR-0065).
   /**
-   * Takes down the NPC the HUD offers (the interact key with the takedown prompt): it knocks the
-   * target out, or kills it with `lethal`. Holding the attack button to the end of the takedown
-   * kills as well. Refused without a valid target in reach.
+   * Grabs the NPC the HUD offers (the interact key with the takedown prompt, ADR-0075). Without
+   * `lethal` the grab waits for `takedown-choose` (a knock-out when the time runs out); with it
+   * the choice is made at once. Refused without a valid target in reach.
    */
-  | { readonly type: "takedown"; readonly lethal: boolean }
+  | { readonly type: "takedown"; readonly lethal?: boolean }
+  /**
+   * The choice in the grab (ADR-0075): knock the target out, or kill it with `lethal`. Refused
+   * without a grab waiting for one.
+   */
+  | { readonly type: "takedown-choose"; readonly lethal: boolean }
   /**
    * Picks up the body the HUD offers (the interact key with the pick-up prompt): someone knocked
    * out or killed, in reach. Refused while carrying one already or without a body in reach.

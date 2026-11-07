@@ -363,6 +363,7 @@ export const enWorld = {
   "touch.phone": "Phone",
   "touch.pause": "Pause",
   "touch.fire": "Fire",
+  "touch.fireAction": "Attack: {what}",
   "touch.aim": "Aim or block",
   "touch.jump": "Jump",
   "touch.ability": "Ability",

@@ -70,12 +70,13 @@ export {
   TAKEDOWN_BACK_CONE,
   TAKEDOWN_REACH,
   TAKEDOWN_TIME,
+  GRAB_TIME,
   takedownDistance,
   CARRY_REACH,
   CARRY_SPEED,
   HIDE_REACH,
 } from "./systems";
-export { TAKEDOWN_PROMPT } from "./world/takedown";
+export { GRAB_PROMPT, TAKEDOWN_PROMPT } from "./world/takedown";
 export { CARRY_PROMPT, DROP_PROMPT, HIDE_PROMPT } from "./world/bodies";
 export {
   CIVILIAN_FLEE_SPEED,

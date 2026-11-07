@@ -9,7 +9,7 @@ import { forceDoor } from "./door-system";
 import { grabLadder } from "./ladder-system";
 import { readHookTerminal } from "../world/hook-tracker";
 import { helpPasserBy } from "../world/micro-events";
-import { TAKEDOWN_PROMPT } from "../world/takedown";
+import { GRAB_PROMPT, TAKEDOWN_PROMPT } from "../world/takedown";
 import { CARRY_PROMPT, DROP_PROMPT, HIDE_PROMPT } from "../world/bodies";
 
 /**
@@ -46,15 +46,22 @@ const startHack = (ctx: SimContext, terminal: Entity): void => {
  * her shoulder always (hide it in reach of a hiding place, else drop it: hands full, nothing
  * else), else a takedown or a body to pick up nearer than anything else, the nearer of the two
  * (a tie goes to the takedown). The key takes down and picks up only what the prompt names, so
- * the loser's target is cleared.
+ * the loser's target is cleared. A takedown under way keeps the key (ADR-0075): the grab offers
+ * its choice, and the end chosen offers nothing.
  */
-const bodyAction = (session: SimContext["session"], bestDist: number): { id: EntityId; prompt: string } | null => {
+const bodyAction = (session: SimContext["session"], bestDist: number): { id: EntityId; prompt: string | null } | null => {
   if (session.carrying !== null) {
     session.takedownTarget = null;
     session.bodyTarget = null;
     return session.hideSpot !== null ? { id: session.hideSpot, prompt: HIDE_PROMPT } : { id: session.carrying, prompt: DROP_PROMPT };
   }
-  const takedown = session.takedown ? { id: session.takedown.target, distance: 0 } : session.takedownTarget;
+  const run = session.takedown;
+  if (run) {
+    session.takedownTarget = null;
+    session.bodyTarget = null;
+    return { id: run.target, prompt: run.phase === "grab" ? GRAB_PROMPT : null };
+  }
+  const takedown = session.takedownTarget;
   const body = session.bodyTarget;
   const takingDown = takedown !== null && takedown.distance < bestDist && (body === null || takedown.distance <= body.distance);
   // A tie with the bag a dead body dropped goes to the body: the bag is still there under it.
