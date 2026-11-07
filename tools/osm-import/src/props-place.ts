@@ -88,24 +88,31 @@ const LOT_GAP = 1.6;
 
 /** How far past a pedestrian street's paving a lamp of the plan stands (m): at its edge, by its parapets and kerbs. */
 const PAST_PAVING = 0.3;
+/**
+ * How far a bridge's deck may lie over the ground past its edge for a lamp to stand there (m): at a
+ * viaduct's end, on its abutment's bank (Zamkowa's, 1.9 m, G-497). Along the span the lamp, whose
+ * foot keeps to the terrain, would stand down in the valley with its lantern (3.4 m up the post,
+ * 0.75 m in over the deck) among the deck's walkers (3.1 m under Zamkowa's) or in its slab (4.8 m),
+ * so there the fallback stays.
+ */
+const DECK_DROP = 2.5;
 
 /**
  * The edge between the last sample short of it (`inside` − 0.5) and the first one `past` it, to a
  * centimetre: a lantern hung 0.3 m off a wall placed by the 0.5 m step alone ended up to a
  * quarter of a metre inside it, its halo glowing out of the plaster.
  */
-const edgeAt = (site: Site, at: (d: number) => Pt, inside: number, past: (s: SiteSurface) => boolean): number => {
+const edgeAt = (at: (d: number) => Pt, inside: number, past: (q: Pt) => boolean): number => {
   let open = inside - 0.5;
   let hit = inside;
   while (hit - open > 0.01) {
     const mid = (open + hit) / 2;
-    if (past(site.surfaceAt(at(mid)))) hit = mid;
+    if (past(at(mid))) hit = mid;
     else open = mid;
   }
   return open;
 };
 
-const isBuilding = (s: SiteSurface): boolean => s === "building";
 const offPaving = (s: SiteSurface): boolean => s !== "walk" && s !== "road";
 
 /**
@@ -138,8 +145,12 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
   const axisRoad = site.surfaceAt(p) === "road";
   // A lamp of the plan on a pedestrian street's paving stands at its edge, not the fallback past it:
   // 5 m off Zamkowa's 6.5 m causeway was on the lawn of the Błonie, 6 m off Karmelicka's 5 m in a
-  // garden behind a wall (G-477). Where the axis is not paved the fallback stays.
-  const byPaving = toEdge && !axisRoad && site.surfaceAt(p) === "walk";
+  // garden behind a wall (G-477). Where the axis is not paved the fallback stays. Over a bridge the
+  // paving is the deck's, which the ground under it does not show: 5 m off the end of Zamkowa's
+  // viaduct was on the bank's lawn (G-497).
+  const onDeck = toEdge && !axisRoad && site.surfaceAt(p) !== "walk" && !offPaving(site.deckAt(p));
+  const byPaving = (toEdge && !axisRoad && site.surfaceAt(p) === "walk") || onDeck;
+  const offPave = (q: Pt): boolean => offPaving(site.surfaceAt(q)) && (!onDeck || offPaving(site.deckAt(q)));
   let paving: number | null = null;
   let building: number | null = null;
   let walkFrom: number | null = null;
@@ -158,9 +169,9 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
     if (axisRoad && walkFrom === null && s !== "road") walkFrom = d;
     if (lamp && axisRoad && walkFrom === null && lot === null && site.inLot(at(d))) lot = d;
     if (!axisRoad && road === null && s === "road") road = d;
-    if (byPaving && paving === null && offPaving(s)) paving = d;
+    if (byPaving && paving === null && offPave(at(d))) paving = d;
   }
-  if (mode === "facade") return building === null ? null : edgeAt(site, at, building, isBuilding) - 0.3;
+  if (mode === "facade") return building === null ? null : edgeAt(at, building, (q) => site.surfaceAt(q) === "building") - 0.3;
   if (mode === "front") return building === null ? fallback : Math.max(building - fallback, 0.8);
   // Kerb: on the pavement just past the road's edge, or the fallback on a pedestrian street.
   let d: number;
@@ -172,7 +183,9 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
     d = front !== null && front > 0.3 && !band.some((r) => pointInRing(at(front), r)) ? front : walkFrom + 0.4;
   } else {
     d = road === null ? fallback : Math.min(fallback, road - 0.6);
-    if (paving !== null) d = Math.min(d, edgeAt(site, at, paving, offPaving) + PAST_PAVING);
+    const edge = paving === null ? null : edgeAt(at, paving, offPave);
+    const low = edge !== null && (!onDeck || (site.deckHeightAt(at(edge)) ?? -Infinity) - site.heightAt(at(edge + PAST_PAVING)) <= DECK_DROP);
+    if (edge !== null && low) d = Math.min(d, edge + PAST_PAVING);
   }
   if (building !== null) d = Math.min(d, building - 1.2);
   return d > 0.3 && site.standable(at(d)) ? d : null;
