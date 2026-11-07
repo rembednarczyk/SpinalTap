@@ -18,8 +18,9 @@ export const ENCOUNTERS: readonly EncounterDef[] = [
   { id: "s7_salaryman", district: "shinsekai-7", knot: "enc_s7_salaryman", fromHour: 1, toHour: 6, at: { x: 328, z: -91 }, radius: 4, npcKey: "enc-salaryman", once: true },
   // Hina looks for her robot cat on Plac Łokietka, by day.
   { id: "s7_neko", district: "shinsekai-7", knot: "enc_s7_neko", fromHour: 9, toHour: 18, at: { x: 428, z: -99 }, radius: 5, npcKey: "enc-hina", once: true },
-  // Shiro reads his poems under the lamp on Plac Litewski in the evening.
-  { id: "s7_poet", district: "shinsekai-7", knot: "enc_s7_poet", fromHour: 18, toHour: 23, at: { x: 102, z: -23 }, radius: 4, npcKey: "enc-shiro", once: true },
+  // Shiro reads his poems by the lamp on Plac Litewski in the evening, on the square's paving west of
+  // the tenement w67498725 (G-489: the old point lay 2.6 m inside it).
+  { id: "s7_poet", district: "shinsekai-7", knot: "enc_s7_poet", fromHour: 18, toHour: 23, at: { x: 97, z: -23 }, radius: 4, npcKey: "enc-shiro", once: true },
 
   // Stare Miasto: Bramowa, the Rynek round the Trybunał, Grodzka down to Brama Grodzka.
   // Takumi with plastic flowers outside KARAOKE on the Rynek while Mei sings.

@@ -96,7 +96,7 @@ describe("a body on her shoulder rules out (ADR-0065)", () => {
       run(sim, 1);
       return sim;
     };
-    const POET = { x: 102, z: -23 };
+    const POET = { x: 97, z: -23 };
     const sim = evening();
     const started = collect(sim, "EncounterStarted");
     // Out of the poet's reach she picks the body up, then walks up to him.
