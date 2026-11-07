@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-477 Latarnie z planu mebli stoją poza pasem deptaka (T-232, T-233)
+- Status: naprawione (PR #374, 7.11, dwie rundy; latarnia z linii planu na wyłożonej osi deptaka staje 0,3 m za zmierzoną krawędzią kostki, najwyżej w odstępie FALLBACK; nowa kontrola `lamp-off-band` z tolerancją 1 m: 16 → 1 (przed tolerancją 210 → 188); 24 latarnie przesunięte, żadna nie zniknęła; test i skan padają bez poprawki; build deterministyczny; runda 2: test reputacji G-281 zależał od przypadkowej długości pasa tłumu, scena testu wybiera teraz parę mieszkańców; reszta przy wiadukcie w232362907 w G-497)
+- Ważność: S4 · Zasięg: grobla Zamkowej (pastorały na trawie Błoni), Karmelicka (2 `lamp-road` w ogrodzie), przy okazji 17 pastorałów deptaka Krakowskiego Przedmieścia bliżej kostki
+- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
+
 ### G-494 Kurosawa wisi nad ziemią
 - Status: nie odtwarza się (7.11, naprawiacz; Kurosawa w `KUROSAWA_SPOT` (418; 29,4) na parkingu stoi na gruncie: y = `groundY` = −2,0375, renderer podnosi stopy o 0,1 na drodze (ADR-0045); ucięta głowa to kadr speca zrzutów liczony od y z sim bez podniesienia nawierzchni; uwaga do kadrowania zrzutów, nie glitch gry)
 - Ważność: S4 · Zasięg: postać stoi na y −2,04 wyżej niż grunt, także na main; na zrzutach z etapu 2 ucina jej głowę

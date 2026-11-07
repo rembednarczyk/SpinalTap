@@ -1430,11 +1430,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: po G-474 kolory wierzchołków zdejmowane są tylko z VRM; weryfikator sprawdził sondą z syntetycznym GLB z COLOR_0 (glTF zachowuje, VRM 0.x, VRM 1.0 i VRM w .glb tracą), ale sonda nie została w repo; wystarczy dopisać ją do `packages/engine/test/model-cast-colours.test.ts`
 - Pakiet właściciela: packages/engine (renderer: modele postaci)
 
-### G-477 Latarnie z planu mebli stoją poza pasem deptaka (T-232, T-233)
-- Status: w PR #374 (7.11, kurator: ZGODNE; tolerancja skanu 1 m dopisana, czeka na CI)
-- Ważność: S4 · Zasięg: grobla Zamkowej 9 `lamp-pastoral` 1,4–2,2 m na trawie Błoni, Karmelicka 3 `lamp-road` w ogrodzie za murem; przyczyna: stały odstęp `FALLBACK` w `props-gen.ts:104` zamiast ½ szerokości pasu + 0,3 m; nowa kontrola `lamp-off-band` (latarnia z planu > 0,5 m poza nawierzchnią swojej drogi), bazę policzyć w całym mieście
-- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
-
 ### G-478 Murki `barrier=wall` przy deptakach nie mają bryły (T-234)
 - Status: zgłoszone (7.11, kurator przeglądu #366)
 - Ważność: S4 · Zasięg: murki grobli Zamkowej w294098689/w294098690 i mur ogrodu Karmelitów (brak w OSM) zostawiają goły grunt; `barrier=wall` nie jest importowane (`features.ts:66`); por. T-178; nowa kontrola `wall-unbuilt` (`barrier=wall` ≤ 5 m od osi drogi pieszej bez bryły); po G-477 latarnie grobli stoją 0,3 m za kostką, na osi przyszłych murków: postawić je na murku albo zostawić przerwę
