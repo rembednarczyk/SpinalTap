@@ -1345,11 +1345,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (test) · Zasięg: przy load ok. 14 pada na limicie 5000 ms, osobno przechodzi; najpierw pomiar kosztu, bez podnoszenia limitu
 - Pakiet właściciela: packages/sim (traffic)
 
-### G-450 Goły pas przy fasadach Peowiaków na rogach Kościuszki i przy w67508886 (T-221, T-224)
-- Status: zgłoszone (7.11, kurator, przegląd G-440)
-- Ważność: S4 · Zasięg: ok. 70 m pierzei Peowiaków i 3 m² przy w67508886; poprawka jak T-210 i T-211 (`ADDED_AREAS` od fasad do osi chodników, obszar na dom); test: zero gołych próbek 0,25 m; przy okazji kontrola `facade-footway-bare`
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-451 Klin gołego terenu między chodnikiem a jezdnią Kościuszki (T-222)
 - Status: zgłoszone (7.11, kurator, przegląd G-440)
 - Ważność: S4 · Zasięg: zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²; poprawka: lokalnie domknąć jezdnię do krawędzi chodnika; kontrola `kerb-gap-bare` (baza 35 631 próbek 0,25 m)
@@ -1429,6 +1424,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, weryfikator #363)
 - Ważność: S4 (test) · Zasięg: mutacja usuwająca unieważnienie koszyków po pierwszym odczycie przechodzi wszystkie testy; gotowa sonda weryfikatora w scratchpadzie sesji `v-g444-stale.test.ts` do przeniesienia do `packages/engine/test`
 - Pakiet właściciela: packages/engine (renderer/mapcity)
+
+### G-470 Kostka do fasad Peowiaków dalej na zachód i po stronie południowej (T-225, T-226)
+- Status: zgłoszone (7.11, kurator, przegląd G-450)
+- Ważność: S4 · Zasięg: 361 próbek przy w69672573 i ok. 1000 po stronie południowej; poprawka wzorem T-211 i T-221; kontrola skanu `facade-footway-bare` (goła próbka do 3 m od osi `footway`, po stronie budynku, najwyżej 1,5 m od ściany; bazę zmierzyć w całym mieście)
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-471 Szczelina przy południowym krawężniku Peowiaków (T-228)
+- Status: zgłoszone (7.11, kurator, przegląd G-450)
+- Ważność: S4 · Zasięg: x −44…57, 1134 próbki; ta sama klasa co G-451 (`kerb-gap-bare`)
+- Pakiet właściciela: tools/osm-import (ground)
+
+### G-472 Luki OSM przy Peowiaków: przesmyk z budynkiem i plac (T-227, T-229)
+- Status: zgłoszone (7.11, kurator, przegląd G-450; do weryfikacji)
+- Ważność: S4 · Zasięg: niski budynek z dachem dwuspadowym i brukowany przesmyk (x −1…21) oraz utwardzony plac 283 m² (x 61–78) bez danych w OSM
+- Pakiet właściciela: tools/osm-import (korekty)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

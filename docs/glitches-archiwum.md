@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-450 Goły pas przy fasadach Peowiaków na rogach Kościuszki i przy w67508886 (T-221, T-224)
+- Status: naprawione (PR #364, 7.11; 5 obszarów kostki T-221/* i T-224 od fasad do osi chodników, 431 + 998 + 52 → 0 gołych próbek 0,25 m; skan bez zmian, kontrola `facade-footway-bare` przeniesiona do G-470)
+- Ważność: S4 · Zasięg: ok. 70 m pierzei Peowiaków i 3 m² przy w67508886; poprawka jak T-210 i T-211 (`ADDED_AREAS` od fasad do osi chodników, obszar na dom); test: zero gołych próbek 0,25 m; przy okazji kontrola `facade-footway-bare`
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
 ### G-396 Ruina `ruins=yes` rysowana jak cały budynek (T-188)
 - Status: naprawione (PR #357, 7.11; w66286396 odbudowany jako Arkady; inne ruiny w G-462)
 - Ważność: S4 · Zasięg: 1 budynek (w66286396, skrytka Hebi) · Koszt: średni; test przyjęcia: budynek z `ruins=yes` nie ma okien ani dachu, a jego wysokość ≤ poziom × 3 m; pokrewne G-053
