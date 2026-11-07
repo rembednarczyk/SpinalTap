@@ -9,6 +9,7 @@ import {
   type InputFrame,
   QUEST_ECHO,
   type RenderPort,
+  type Transform,
   contractTag,
   progressFlag,
 } from "@seki/core";
@@ -23,8 +24,14 @@ import { GameSession } from "../src/game-session";
 export class FakeRender implements RenderPort {
   effects: EffectDescriptor["kind"][] = [];
   despawns: [EntityId, DespawnReason][] = [];
-  spawn() {}
-  updateTransform() {}
+  /** The last transform each view got. */
+  transforms = new Map<EntityId, Transform>();
+  spawn(id: EntityId, _view: unknown, t: Transform) {
+    this.transforms.set(id, t);
+  }
+  updateTransform(id: EntityId, t: Transform) {
+    this.transforms.set(id, t);
+  }
   despawn(id: EntityId, reason: DespawnReason) {
     this.despawns.push([id, reason]);
   }
