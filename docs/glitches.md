@@ -1406,7 +1406,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (test)
 
 ### G-466 Karta dzielnicy na telefonie zasłania przycisk „Użyj”; po zmianie języka zostaje po angielsku
-- Status: zgłoszone (7.11, weryfikator #359; sprzed tego PR)
+- Status: w PR #365 (7.11, w weryfikacji; zgłoszone przez weryfikatora #359)
 - Ważność: S4 · Zasięg: 667×375 przy przyjeździe na Krakowskie Przedmieście karta zasłania „Użyj”, na 800×370 podobnie pierwsza linia podpowiedzi ruchu; karta pokazana przed zmianą języka nie przechodzi na pl
 - Pakiet właściciela: packages/ui (HUD)
 
@@ -1439,6 +1439,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, kurator, przegląd G-450; do weryfikacji)
 - Ważność: S4 · Zasięg: niski budynek z dachem dwuspadowym i brukowany przesmyk (x −1…21) oraz utwardzony plac 283 m² (x 61–78) bez danych w OSM
 - Pakiet właściciela: tools/osm-import (korekty)
+
+### G-473 Na telefonie dwa toasty naraz zasłaniają „Użyj” i skok
+- Status: zgłoszone (7.11, naprawiacz G-466)
+- Ważność: S4 · Zasięg: karta dzielnicy i „Zapisano grę” razem: stos 126 px (y 76–202) nachodzi na „Użyj” i skok przy 844×390, 800×370 i 667×375 (ok. 26 px przy 800×370); poprawka: limit wysokości stosu toastów pod `.touch-mode` albo jeden toast naraz na telefonie
+- Pakiet właściciela: packages/ui (HUD)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
