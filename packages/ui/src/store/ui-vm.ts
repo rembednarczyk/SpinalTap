@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type ItemCategory, type PrepareStage, type ItemDefId, type ItemIconKey, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
+import { DEFAULT_LOCALE, type DomainText, type ItemCategory, type PrepareStage, type ItemDefId, type ItemIconKey, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
 import type { MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon } from "./map-vm";
 import type { RadioStationId } from "./wave2-vm";
@@ -53,8 +53,12 @@ export interface AbilityVm {
 export interface Toast {
   readonly id: number;
   readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware" | "heat" | "radio";
-  readonly title: string;
-  readonly text: string;
+  /**
+   * A catalog key with its parameters or a text as it is (ADR-0056); a key is translated when
+   * shown, so a toast up during a language switch reads the new language (G-466).
+   */
+  readonly title: DomainText;
+  readonly text: DomainText;
   /** Outlives ordinary toasts when too many come at once (a level up, a failed load). */
   readonly keep?: boolean;
   /** How many identical toasts this one stands for while on screen (G-281); one when absent. */

@@ -162,7 +162,9 @@
 .touch-mode .minimap { top: max(60px, calc(env(safe-area-inset-top, 0px) + 52px)); right: max(16px, env(safe-area-inset-right, 0px)); width: 88px; height: 88px; }
 .touch-mode .hud__wallet { top: max(8px, env(safe-area-inset-top, 0px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 152px); font-size: 15px; padding: 4px 10px; }
 .touch-mode .hud__clock { top: max(44px, calc(env(safe-area-inset-top, 0px) + 36px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 152px); font-size: 12px; padding: 2px 8px; }
-.touch-mode .toasts { top: max(76px, calc(env(safe-area-inset-top, 0px) + 68px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 104px); width: min(260px, 36vw); gap: 4px; }
+/* Wide and short: the arrival card's three sentences in a 260 px column ran down over "Use", the
+   jump button and the move hint of a phone held sideways (G-466). Left of the minimap's column. */
+.touch-mode .toasts { top: max(76px, calc(env(safe-area-inset-top, 0px) + 68px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 104px); width: min(400px, calc(100vw - 280px)); gap: 4px; }
 .touch-mode .toast { padding: 4px 8px; }
 .touch-mode .toast:nth-last-child(n + 3) { display: none; }
 
