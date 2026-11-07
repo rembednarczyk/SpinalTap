@@ -1335,6 +1335,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: x 2–22, z −104,7…−122, ok. 280 punktów `landuse-bare`; poprawka: domknąć nawierzchnię do ściany w69672563 (baza spadnie o ok. 280)
 - Pakiet właściciela: tools/osm-import
 
+### G-437 Po awansie maks. zdrowie rośnie, a zdrowie nie: blok HUD widoczny do leczenia; stopka Dziennika bez K
+- Status: zgłoszone (6.11, naprawiacz rundy 3 PR #346)
+- Ważność: S4 · Zasięg: 100/100 → 100/109 po awansie trzyma blok zdrowia na ekranie (decyzja: dolać różnicę przy awansie albo ukrywać blok przy zdrowiu ≥ poprzedniego maks.); stopka Dziennika („J zamknij · I ekwipunek · Tab karta postaci”) nie wymienia K; odznaki przebrania i przekroczonej puli oraz kolumna buffów mogą nachodzić na minimapę na komputerze (niezmierzone)
+- Pakiet właściciela: packages/sim (progression), packages/ui (HUD, dziennik)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
