@@ -52,6 +52,15 @@ export class Decks {
     return best;
   }
 
+  /** Whether (x, z) lies in the box of a piece: away from them there is no deck, whatever lies under it. */
+  readonly near = (x: number, z: number): boolean => {
+    for (const p of this.pieces.values()) {
+      const b = p.bounds;
+      if (!(x < b.minX || x > b.maxX || z < b.minZ || z > b.maxZ)) return true;
+    }
+    return false;
+  };
+
   /**
    * The highest deck over (x, z), or null off every bridge. For a way on the terrain at `under`,
    * only the decks within DECK_HEADROOM of it: under a higher one it stays on the terrain (G-062).
