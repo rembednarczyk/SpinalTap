@@ -1481,7 +1481,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-489 Scena `s7_poet` stoi wewnątrz bryły budynku
-- Status: zgłoszone (7.11, naprawiacz G-479 runda 2)
+- Status: w PR #378 (7.11, w weryfikacji; zgłoszone przez naprawiacza G-479 runda 2)
 - Ważność: S4 · Zasięg: miejsce sceny `s7_poet` (102, −23) w `encounters.ts` leży w pryzmacie budynku (chunk `krakowskie-1-1`, bryła 318); ruch nie wypycha z głębi pryzmatu (graczka postawiona w (102, −13) dalej w nim stoi); test sceny ulicznej teleportuje graczkę do wnętrza; poprawka: przesunąć scenę na chodnik
 - Pakiet właściciela: packages/sim (treść)
 
@@ -1539,6 +1539,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, weryfikator #376)
 - Ważność: S4 · Zasięg: `loadout.ts:448` bierze własną teksturę pliku, więc w przebraniu postać traci teksturę ubrań pożyczoną z innego modelu (ADR-0076 etap 2); przy okazji: akcesoria bez obrysu i cienia odstają od stylu modeli; `donorsOf` wczytuje każdy plik manifestu, by poznać jego bazę (przy limicie 5 plików na telefonie problem w etapie 4); `models.spec` nie sprawdza aktywnych siatek, tylko wywołania; `npr-perf` „Nabrzeże at night” przekracza limit czekania na klatkę przy load ok. 19
 - Pakiet właściciela: packages/engine (renderer)
+
+### G-502 Latarnia poety z `district-m0.ts` stoi w kamienicy w67498725
+- Status: zgłoszone (7.11, naprawiacz G-489)
+- Ważność: S4 · Zasięg: prop gry pod `ground(100, -21)` („the lamp Shiro reads his poems under”) stoi 1,3 m w kamienicy; kontrola `furniture-in-building` liczy tylko `WORLD_STREET_PROPS`, więc propów gry nie widzi; przy okazji: `solidsAt` w `wave2-encounters.test.ts` filtruje wysokość brył bezwzględnie (`top < 0.3 || bottom > 1.8`), w wyższych dzielnicach (targ y ≈ −20, doki y ≈ −28) może nic nie sprawdzać
+- Pakiet właściciela: packages/sim (treść), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
