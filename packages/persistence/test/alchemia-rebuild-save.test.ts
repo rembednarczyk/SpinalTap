@@ -87,7 +87,7 @@ describe("Alchemia rebuilt in the save (v32 to v33, ADR-0074)", () => {
     }
   });
 
-  it("walks a v29 save from the old market on the avenue through both moves, ADR-0059 stage 6 and the cyberdeck", () => {
+  it("walks a v29 save from the old market on the avenue through every move, ADR-0059 stage 6 and the cyberdeck", () => {
     const s = snapshot({});
     const old = {
       ...s,
@@ -99,7 +99,8 @@ describe("Alchemia rebuilt in the save (v32 to v33, ADR-0074)", () => {
     };
     const loaded = decodeSave("v29", wrap(old));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
-    expect(loaded.domain.loot.containers[0]!.position).toEqual({ x: 420.6, y: -2.2, z: 56.2 });
+    // By Ren: on the green roof since v33, on the pavilion's roof since v35 (ADR-0074 stage 3).
+    expect(loaded.domain.loot.containers[0]!.position).toEqual({ x: 431.3, y: 3.85, z: -2.7 });
   });
 
   it("drops the heat's reinforcements and a mugging's bodies left in the rebuilt Alchemia", () => {

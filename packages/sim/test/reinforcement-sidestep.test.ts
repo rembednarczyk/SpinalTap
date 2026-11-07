@@ -50,11 +50,12 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // (and saved with their maximum health). Re-recorded for the v31 style and bad luck (ADR-0059,
   // stage 6), fields: as v30 the runs hash to the goldens of before. Re-recorded for the v32
   // version of the cyberdeck's grades: nobody here has a deck, so as v31 they hash as before.
-  // Alchemia rebuilt (v33, ADR-0074 stage 1) and its T2 with the Arkady (v34, stage 2) change only
+  // Alchemia rebuilt (v33, ADR-0074 stage 1), its T2 with the Arkady (v34, stage 2) and the pavilion
+  // on the corner with Ren on its roof (v35, stage 3) change only
   // the version: as v32 the runs hash to the goldens of v32.
   for (const [seed, level, golden, v32, v31, v30, v28, v27] of [
-    [21, 2, "89593fc5", "4ba6c2d7", "1dcd58a8", "86fb3887", "96f59679", "5b25c2ac"],
-    [5, 3, "0026b7d3", "e4cb37dd", "f462c19c", "4b807e73", "87e672a5", "ff83146a"],
+    [21, 2, "65c46914", "4ba6c2d7", "1dcd58a8", "86fb3887", "96f59679", "5b25c2ac"],
+    [5, 3, "edad0e70", "e4cb37dd", "f462c19c", "4b807e73", "87e672a5", "ff83146a"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
       const sim = onTheRoof(seed, level);

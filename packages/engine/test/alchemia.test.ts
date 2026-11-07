@@ -29,8 +29,9 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     expect(boxes(outside) + boxes(inside)).toBeGreaterThanOrEqual(ALCHEMIA_PIECES.length + ARKADY_PIECES.length);
     expect(outside.indices.length / 3).toBeLessThanOrEqual(8000);
     expect(inside.indices.length / 3).toBeLessThanOrEqual(8000);
-    // Nothing of it outside the plot round the hall and its ramps, T2 with its stairs, and the Arkady with their pavements.
+    // Nothing of it outside the plot round the hall and its ramps, T2 with its stairs, the Arkady with their pavements, and the pavilion on the corner (stage 3).
     const onPlot = (x: number, z: number) => x > FOODHALL.minX - 7 && x < FOODHALL.maxX + 7 && z > FOODHALL.minZ - 7 && z < 94;
+    const onCorner = (x: number, z: number) => x > 420.2 && x < 436.6 && z > -9.1 && z < 6.4;
     const onT2 = (x: number, z: number) => x > 423 && x < 445 && z > 74 && z < 122;
     const byArkady = (x: number, z: number) => {
       const q = arkadyLocal(x, z);
@@ -38,7 +39,7 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     };
     for (let i = 0; i < outside.positions.length; i += 3) {
       const [x, z] = [outside.positions[i]!, outside.positions[i + 2]!];
-      expect(onPlot(x, z) || onT2(x, z) || byArkady(x, z), `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
+      expect(onPlot(x, z) || onT2(x, z) || byArkady(x, z) || onCorner(x, z), `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
     }
   });
 

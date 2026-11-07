@@ -6,6 +6,7 @@ import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { bakePavilion, bakePavilionFar, pavilionsIn } from "../metro/pavilion-bake";
 import { alchemiaIn, arkadyIn, bakeAlchemiaStandIn, bakeArkadyStandIn } from "../alchemia/alchemia-far";
+import { bakePavilionStandIn, pavilionIn } from "../alchemia/pavilion-far";
 import { FINE_DECALS, bakeDecal } from "./decal-models";
 import { bakeDoor } from "./door-models";
 import { bakeFigure } from "./figure-models";
@@ -75,9 +76,10 @@ export const buildFar = (deps: PropBakeDeps, block: PropBlock): void => {
     if (f) bake(far, f, p);
   }
   for (const e of pavilionsIn(block.bounds)) bakePavilionFar(far, e);
-  // Alchemia's food hall and the Arkady from afar (ADR-0074): its detailed mesh is drawn near it only.
+  // Alchemia's food hall, the Arkady and the pavilion from afar (ADR-0074): its detailed mesh is drawn near it only.
   if (alchemiaIn(block.bounds)) bakeAlchemiaStandIn(far);
   if (arkadyIn(block.bounds)) bakeArkadyStandIn(far);
+  if (pavilionIn(block.bounds)) bakePavilionStandIn(far);
   block.far = blockMesh(deps, `props-far-${block.key}`, far);
 };
 
@@ -135,6 +137,7 @@ export const nearSink = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: P
   // And under Alchemia's detailed mesh, hidden by it near the hall, standing in for it beyond.
   if (alchemiaIn(block.bounds)) bakeAlchemiaStandIn(sink);
   if (arkadyIn(block.bounds)) bakeArkadyStandIn(sink);
+  if (pavilionIn(block.bounds)) bakePavilionStandIn(sink);
   return sink;
 };
 

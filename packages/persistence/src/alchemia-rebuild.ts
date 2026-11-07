@@ -141,3 +141,74 @@ export const levelAlchemiaT2 = (old: Json): Json => {
   if (Array.isArray(old.strayBodies)) out.strayBodies = keptOffPlaza(old.strayBodies);
   return out;
 };
+
+/**
+ * v34 -> v35 (ADR-0074 stage 3): the triangular pavilion raised on the corner of Bajkowskiego and
+ * Lubartowska, in the car park's notch, with Ren and the Hebi bag on its roof. Spelled out, the
+ * content of its time.
+ */
+
+/** The pavilion's footprint: its triangle (on Bajkowskiego, the corner, on Lubartowska) and the back-of-house box on its north-west side. */
+const PAVILION_TRIANGLE = [
+  { x: 420.5, z: -8.85 },
+  { x: 432.3, z: -8.2 },
+  { x: 436.2, z: 6.0 },
+] as const;
+const PAVILION_ANNEX = { minX: 424.5, maxX: 428.5, minZ: -3.5, maxZ: 0 } as const;
+
+const inPavilion = (p: unknown): boolean => {
+  if (!isObject(p) || typeof p.x !== "number" || typeof p.z !== "number") return false;
+  const [x, z] = [p.x, p.z];
+  if (x >= PAVILION_ANNEX.minX && x <= PAVILION_ANNEX.maxX && z >= PAVILION_ANNEX.minZ && z <= PAVILION_ANNEX.maxZ) return true;
+  // Counter-clockwise corners: inside is left of every side.
+  return PAVILION_TRIANGLE.every((a, i) => {
+    const b = PAVILION_TRIANGLE[(i + 1) % 3]!;
+    return (b.x - a.x) * (z - a.z) - (b.z - a.z) * (x - a.x) >= 0;
+  });
+};
+
+/** Where a save made on the ground the pavilion now stands on wakes: by the foot of its ladder on the car park, a few centimetres over the ground. */
+export const PAVILION_WAKE = { x: 423.5, y: -0.73, z: -1.75, chunk: "krakowskie-2-1" } as const;
+
+/** The Hebi bag by Ren, from the hall's green roof to the pavilion's roof (`TARG_ROOF_STASH`). */
+export const PAVILION_STASHES: Readonly<Record<string, { readonly x: number; readonly y: number; readonly z: number; readonly chunk: string }>> = {
+  "stash:targ-roof": { x: 431.3, y: 3.85, z: -2.7, chunk: "krakowskie-2-1" },
+};
+
+/** Ren's state: he comes back from the content, on the pavilion's roof. */
+const PAVILION_MOVED: readonly string[] = ["ren"];
+
+const PAVILION_WAKE_AT = { x: PAVILION_WAKE.x, y: PAVILION_WAKE.y, z: PAVILION_WAKE.z };
+
+/** The player woken by the ladder, Ren and everybody else on the pavilion's ground dropped. */
+const pavilionEntities = (entities: readonly unknown[]): unknown[] =>
+  entities.flatMap((e) => {
+    if (!isObject(e)) return [e];
+    if (e.key === "player") return [inPavilion(e.position) ? { ...e, position: PAVILION_WAKE_AT } : e];
+    if (typeof e.key === "string" && PAVILION_MOVED.includes(e.key)) return [];
+    return inPavilion(e.position) ? [] : [e];
+  });
+
+/** The roof bag onto the pavilion's roof, other bags on its ground put down by the ladder. */
+const pavilionLoot = (loot: unknown): unknown => {
+  if (!isObject(loot) || !Array.isArray(loot.containers)) return loot;
+  const containers = loot.containers.map((c: unknown) => {
+    if (!isObject(c)) return c;
+    const stash = typeof c.key === "string" ? PAVILION_STASHES[c.key] : undefined;
+    if (stash) return { ...c, position: { x: stash.x, y: stash.y, z: stash.z }, chunk: stash.chunk };
+    return inPavilion(c.position) ? { ...c, position: PAVILION_WAKE_AT, chunk: PAVILION_WAKE.chunk } : c;
+  });
+  return { ...loot, containers };
+};
+
+/** Somebody kept outside the content (reinforcements, a mugging's bodies) where the pavilion stands: gone. */
+const keptOffPavilion = (list: unknown): unknown => (Array.isArray(list) ? list.filter((p: unknown) => !(isObject(p) && isObject(p.state) && inPavilion(p.state.position))) : list);
+
+export const raiseAlchemiaPavilion = (old: Json): Json => {
+  const out: Json = { ...old, version: 35 };
+  if (Array.isArray(old.entities)) out.entities = pavilionEntities(old.entities);
+  if (isObject(old.domain)) out.domain = { ...old.domain, loot: pavilionLoot(old.domain.loot) };
+  if (isObject(old.reinforcements)) out.reinforcements = { ...old.reinforcements, people: keptOffPavilion(old.reinforcements.people) };
+  if (Array.isArray(old.strayBodies)) out.strayBodies = keptOffPavilion(old.strayBodies);
+  return out;
+};

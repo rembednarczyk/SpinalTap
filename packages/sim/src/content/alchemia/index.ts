@@ -6,6 +6,7 @@ import { ALCHEMIA_LIFT_MECHANISM, liftPieces } from "./lift";
 import { HALL, type Piece, box, piece, solidProp } from "./plan";
 import { terracePieces } from "./terraces";
 import { ARKADY_PAVEMENT_PROP } from "./arkady";
+import { PAVILION_PROPS } from "./pavilion";
 import { plazaPieces } from "./plaza";
 import { unitPieces } from "./units";
 
@@ -17,12 +18,14 @@ export * from "./terraces";
 export * from "./arkady";
 export { T2 as ALCHEMIA_T2, T2_PADS, T2_RECTS, T2_STAIRS, MEMORIAL as ALCHEMIA_MEMORIAL, onT2 } from "./plaza";
 export * from "./market";
+export * from "./pavilion";
 export { ALCHEMIA_NAV } from "./nav";
 
 /**
  * Alchemia by the investor's plan (ADR-0074): the food hall with its units, stairs and lift, its
  * green roof and the terraces round it (stage 1); the lower square T2 with its stairs and the
- * Arkady rebuilt on it (stage 2). Everything is drawn by the engine
+ * Arkady rebuilt on it (stage 2); the triangular pavilion on the corner with Ren on its roof
+ * (stage 3, `pavilion.ts`). Everything is drawn by the engine
  * (`renderer/alchemia`) from `ALCHEMIA_PIECES`; the solid ones are the simulation's scenery, with
  * ids from `ROOM_ID_BASE` (outside the allocator).
  */
@@ -61,6 +64,8 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   // Arkady themselves stand in the map's ruin's place among its buildings (`lublin/city.ts`).
   solidProp(PLAZA),
   ARKADY_PAVEMENT_PROP,
+  // Stage 3 after stage 2's: the pavilion on the corner with its ladder.
+  ...PAVILION_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */

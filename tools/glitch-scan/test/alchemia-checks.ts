@@ -4,9 +4,11 @@ import { isLandmark } from "../../../packages/sim/src/content/lublin";
 import { MAP_CHUNKS, PADS } from "../../../packages/sim/src/content/lublin/sites";
 import { ROAD_CHAINS } from "../../../packages/sim/src/content/lublin/roads";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
+import { pavilionPrisms, segmentHitsPrism } from "./pavilion-checks";
 
 /**
- * The glitch scan's checks of ADR-0074 (Alchemia by the investor's plan), stages 1 and 2.
+ * The glitch scan's checks of ADR-0074 (Alchemia by the investor's plan), stages 1 and 2 (the
+ * pavilion of stage 3 has its own, `pavilion-checks.ts`).
  */
 
 type Finding = { readonly at: string; readonly what: string };
@@ -55,7 +57,7 @@ const EYE_EVERY = 8;
 const EYE = 1.6;
 
 /**
- * `game-solid-landmark-occlusion` (review of #312): Alchemia's solids (the Arkady's too) seen from the streets within
+ * `game-solid-landmark-occlusion` (review of #312): Alchemia's solids (the Arkady's and the pavilion's too) seen from the streets within
  * 250 m hide at most a quarter of the views of a landmark's top (the eyes on the streets from which
  * the top is behind one of its boxes, of all the eyes within 250 m of both). Baseline 0.
  */
@@ -67,7 +69,8 @@ export const alchemiaHidesLandmarks = (): Finding[] => {
     const q = arkadyLocal(p.x, p.z);
     return { x: q.a, y: p.y, z: q.c };
   };
-  const hides = (e: P3, top: P3): boolean => boxes.some((q) => segmentHitsBox(e, top, q)) || arkady.some((q) => segmentHitsBox(local(e), local(top), q));
+  const pavilion = pavilionPrisms();
+  const hides = (e: P3, top: P3): boolean => boxes.some((q) => segmentHitsBox(e, top, q)) || arkady.some((q) => segmentHitsBox(local(e), local(top), q)) || pavilion.some((q) => segmentHitsPrism(e, top, q));
   const c = ALCHEMIA_CENTRE;
   const eyes: P3[] = [];
   for (const r of ROAD_CHAINS) {
