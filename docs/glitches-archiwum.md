@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-469 Brak testu unieważniania koszyków `TerrainEntries` przy `set`/`delete`/`clear`
+- Status: naprawione (PR #379, 7.11; sam test `terrain-index.test.ts`, 5 przypadków odczytu przed i po `set`, `delete`, `clear`; mutacja usuwająca czyszczenie koszyków łamie 5/5, 2/5 i 1/5; błędu w kodzie nie znaleziono)
+- Ważność: S4 (test) · Zasięg: mutacja usuwająca unieważnienie koszyków po pierwszym odczycie przechodzi wszystkie testy; gotowa sonda weryfikatora w scratchpadzie sesji `v-g444-stale.test.ts` do przeniesienia do `packages/engine/test`
+- Pakiet właściciela: packages/engine (renderer/mapcity)
+
 ### G-477 Latarnie z planu mebli stoją poza pasem deptaka (T-232, T-233)
 - Status: naprawione (PR #374, 7.11, dwie rundy; latarnia z linii planu na wyłożonej osi deptaka staje 0,3 m za zmierzoną krawędzią kostki, najwyżej w odstępie FALLBACK; nowa kontrola `lamp-off-band` z tolerancją 1 m: 16 → 1 (przed tolerancją 210 → 188); 24 latarnie przesunięte, żadna nie zniknęła; test i skan padają bez poprawki; build deterministyczny; runda 2: test reputacji G-281 zależał od przypadkowej długości pasa tłumu, scena testu wybiera teraz parę mieszkańców; reszta przy wiadukcie w232362907 w G-497)
 - Ważność: S4 · Zasięg: grobla Zamkowej (pastorały na trawie Błoni), Karmelicka (2 `lamp-road` w ogrodzie), przy okazji 17 pastorałów deptaka Krakowskiego Przedmieścia bliżej kostki

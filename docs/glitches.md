@@ -1395,11 +1395,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: z kamery (437; 104) napis odwrócony, z ujęcia autora poprawny; do sprawdzenia strona billboardu
 - Pakiet właściciela: packages/engine (renderer)
 
-### G-469 Brak testu unieważniania koszyków `TerrainEntries` przy `set`/`delete`/`clear`
-- Status: zgłoszone (7.11, weryfikator #363)
-- Ważność: S4 (test) · Zasięg: mutacja usuwająca unieważnienie koszyków po pierwszym odczycie przechodzi wszystkie testy; gotowa sonda weryfikatora w scratchpadzie sesji `v-g444-stale.test.ts` do przeniesienia do `packages/engine/test`
-- Pakiet właściciela: packages/engine (renderer/mapcity)
-
 ### G-470 Kostka do fasad Peowiaków dalej na zachód i po stronie południowej (T-225, T-226)
 - Status: zgłoszone (7.11, kurator, przegląd G-450)
 - Ważność: S4 · Zasięg: 361 próbek przy w69672573 i ok. 1000 po stronie południowej; poprawka wzorem T-211 i T-221; kontrola skanu `facade-footway-bare` (goła próbka do 3 m od osi `footway`, po stronie budynku, najwyżej 1,5 m od ściany; bazę zmierzyć w całym mieście)
