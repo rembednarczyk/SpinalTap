@@ -1420,6 +1420,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: w232362881 (`ruins=yes`), `building=ruins` w67498742, w813194693, w1330433247; do rozważenia razem z G-053
 - Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
 
+### G-463 Złote hashe nie obejmują XP zleceń, premii za brak wykrycia i wrogów powyżej poziomu 1
+- Status: zgłoszone (7.11, weryfikator #351; potwierdzone sondą)
+- Ważność: S4 (test) · Zasięg: zmiana XP zleceń, `undetectedXp`, mnożnika powyżej poziomu 1 albo kroków zadań poza pierwszym nie zmienia `determinism` ani `reinforcement-sidestep`; poprawka: scenariusz hasha ze zleceniem ukończonym bez wykrycia i wrogiem z pasma powyżej 1
+- Pakiet właściciela: packages/sim (test)
+
+### G-464 Model przejścia testu balansu powiela logikę gry
+- Status: zgłoszone (7.11, weryfikator #351)
+- Ważność: S4 (test) · Zasięg: `balance-model.ts:128` (HP gracza bez `levelModifiers`, HP wroga bez `npcHealth`), `:205` (pasmo z tabeli zamiast `gradeEnemy`), `:218` (`questGains` zamiast `evaluateQuests`/`questLogXp`); rozjazd z grą może przejść niezauważony
+- Pakiet właściciela: packages/sim (test)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
