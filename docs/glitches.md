@@ -1402,7 +1402,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-458 Leżące ciało rysowane na 1,7 m, a kolizja to małe koło: głowa w ścianie
 - Status: zgłoszone (7.11, naprawiacz G-449)
-- Ważność: S4 · Zasięg: ciało odłożone twarzą do ściany wchodzi w nią (głowa w witrynie); poprawka: odłożenie z kierunkiem od ściany albo kolizja leżącego ciała
+- Ważność: S4 · Zasięg: ciało odłożone albo osuwające się twarzą do ściany wchodzi w nią (głowa w witrynie; poza leżenia sięga 0,8–0,9 m od punktu symulacji w kierunku yaw); poprawka: odłożenie z kierunkiem od ściany albo kolizja leżącego ciała
 - Pakiet właściciela: packages/sim (bodies), packages/engine
 
 ### G-459 Bohaterka niesie ciało z wyciągniętym pistoletem
