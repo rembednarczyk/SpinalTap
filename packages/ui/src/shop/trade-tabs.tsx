@@ -124,6 +124,8 @@ const ImplantOffer = ({ id, terms }: { readonly id: CyberwareId; readonly terms:
   // The simulation refuses to drop a graded deck for want of a cell (ADR-0059), so the offer waits.
   const keepsDeck = replaces !== undefined && freeCells < 1 && isPreciousGrade(installedGrade({ cyberware: loadout, implantGrades }, def.slot));
   const locked = !installed && !fullService(terms);
+  // The fitted one over the pool is off (ADR-0059, stage 3c); its offer says so.
+  const off = useUi((s) => s.cyberware[def.slot] === id && (s.capacity?.inactive ?? []).includes(id));
   return (
     <article className={`shop__item shop__item--icon${installed ? " shop__item--installed" : ""}${lockedClass(locked)}`} data-testid={`implant-${id}`}>
       <ItemIcon icon={itemIcon(id)} framed />
@@ -137,6 +139,7 @@ const ImplantOffer = ({ id, terms }: { readonly id: CyberwareId; readonly terms:
       <CapacityCost fit={fit} />
       {replaces && <p className="shop__warn">{t("shop.replaces", { name: tx(CYBERWARE_CATALOG[replaces].name) })}</p>}
       {replaces && freeCells < 1 && <p className="shop__warn">{t(keepsDeck ? "shop.noRoomDeck" : "shop.noRoomImplant")}</p>}
+      {off && <p className="shop__warn" data-testid="implant-off">⊘ {t("character.implantOff")}</p>}
       {locked && <LockedWhy />}
       <button type="button" className="shop__buy" disabled={installed || locked || eddies < price || fit.over || keepsDeck} onClick={() => intents.buyCyberware(id)}>
         {installed

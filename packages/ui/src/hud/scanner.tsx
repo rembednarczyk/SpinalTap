@@ -65,7 +65,15 @@ const ScanTarget = ({ touch }: { touch: boolean }) => {
       <div className="scan-card__kind">
         <span aria-hidden="true">{target.hostile ? "▲" : "●"}</span> {t(`scan.kind.${target.kind}`)}
       </div>
-      <div className="scan-card__name">{target.name}</div>
+      <div className="scan-card__name">
+        {target.name}
+        {target.level !== undefined && (
+          <span className="scan-card__level" data-testid="scan-level">
+            {" · "}
+            {t("scan.level", { level: target.level })}
+          </span>
+        )}
+      </div>
       {target.faction && <div className="scan-card__faction">{target.faction}</div>}
       {target.profile && (
         <ul className="scan-card__profile">

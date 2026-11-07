@@ -110,13 +110,20 @@ export interface PlayerHudUiState {
   /** Tier and level of the installed cyberdeck, by slot (decision of 6.11 after ADR-0059 stage 6). */
   readonly implantGrades: ImplantGrades;
   readonly reputation: ReputationState;
-  /** The character's level and attributes (ADR-0059), and the attribute points left to spend. */
+  /** The character's total XP, level and attributes (ADR-0059), and the attribute points left to spend. */
+  readonly xp: number;
   readonly level: number;
   readonly attributes: Attributes;
   readonly attributePoints: number;
   /** Perk ranks bought (ADR-0059, stage 3) and the perk points left to spend. */
   readonly perks: PerkRanks;
   readonly perkPoints: number;
+  /**
+   * Bumped for XP earned and for each level gained in play (ADR-0059, stage 7): the HUD shows its
+   * bar a moment and flashes it. A load or a new game moves `xp` and `level` without them.
+   */
+  readonly xpGains: number;
+  readonly levelUps: number;
   /** Game time as "HH:MM"; null before a game runs. */
   readonly clock: string | null;
   readonly day: number;
@@ -320,11 +327,14 @@ export const initialUiState: UiState = {
   cyberware: {},
   implantGrades: {},
   reputation: createReputation(),
+  xp: 0,
   level: 1,
   attributes: START_ATTRIBUTES,
   attributePoints: 0,
   perks: {},
   perkPoints: 0,
+  xpGains: 0,
+  levelUps: 0,
   contractsDone: 0,
   shopOpen: false,
   shopId: "clinic",

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { START_ATTRIBUTES } from "@seki/core";
+import { type AttributeId, START_ATTRIBUTES } from "@seki/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_SETTINGS, GameUi, type UiIntents, type UiState, createUiStore } from "../src";
 
@@ -11,12 +11,13 @@ const intents = (): UiIntents & Record<string, ReturnType<typeof vi.fn>> => {
   return new Proxy(spies, { get: (t, k) => (t[k] ??= vi.fn()) }) as UiIntents & Record<string, ReturnType<typeof vi.fn>>;
 };
 
-/** The sheet tab open on a game with `state`. */
-const sheet = (state: Partial<UiState>) => {
+/** The Progress tab (K, stage 7) open on a game with `state`, on the tree of `tree` when given. */
+const sheet = (state: Partial<UiState>, tree: AttributeId = "might", key = "KeyK") => {
   const store = createUiStore({ screen: "playing", ...state });
   const i = intents();
   render(<GameUi store={store} intents={i} />);
-  fireEvent.keyDown(window, { code: "Tab" });
+  fireEvent.keyDown(window, { code: key });
+  if (key === "KeyK") fireEvent.click(screen.getByTestId(`attribute-tree-${tree}`));
   return i;
 };
 
@@ -56,7 +57,7 @@ describe("a tier needs a perk of the tier below (stage 3b)", () => {
   });
 
   it("speaks Polish with the Polish setting", () => {
-    sheet({ attributes: { ...START_ATTRIBUTES, net: 8 }, settings: { ...DEFAULT_SETTINGS, locale: "pl" } });
+    sheet({ attributes: { ...START_ATTRIBUTES, net: 8 }, settings: { ...DEFAULT_SETTINGS, locale: "pl" } }, "net");
     expect(screen.getByTestId("perk-net_persistence").textContent).toContain("Uporczywy kod");
     expect(screen.getByTestId("perk-net_persistence").textContent).toContain("Wymaga: perk z progu 4");
   });
@@ -64,11 +65,11 @@ describe("a tier needs a perk of the tier below (stage 3b)", () => {
 
 describe("implants over the pool after a respec (stage 3b)", () => {
   it("the sheet shows the pool and what to do while it is over", () => {
-    sheet({ capacity: { used: 14, max: 12 } });
+    sheet({ capacity: { used: 14, max: 12 } }, "might", "Tab");
     expect(screen.getByTestId("sheet-capacity").textContent).toBe("Cyberware capacity14 / 12");
     expect(screen.getByTestId("capacity-over-pool").textContent).toContain("swap it for a smaller one");
     cleanup();
-    sheet({ capacity: { used: 12, max: 12 } });
+    sheet({ capacity: { used: 12, max: 12 } }, "might", "Tab");
     expect(screen.queryByTestId("capacity-over-pool")).toBeNull();
   });
 

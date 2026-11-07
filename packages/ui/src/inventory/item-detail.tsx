@@ -2,6 +2,7 @@ import {
   AMMO_CATALOG,
   type Equipment,
   type InventoryState,
+  type ItemInstance,
   type ItemRef,
   MOD_CATALOG,
   type ModSlot,
@@ -53,6 +54,54 @@ const ItemTraits = ({ traits }: { traits: readonly TraitId[] }) => {
   );
 };
 
+/**
+ * The piece's numbers beside the equipped one's. The numbers already carry both levels (they
+ * scale with them); the head names the equipped piece with its level, and its traits follow
+ * (ADR-0059, stage 7).
+ */
+const CompareTable = ({ lines, against }: { lines: readonly StatLine[]; against: ItemInstance | undefined }) => {
+  const againstLevel = against ? itemLevelOf(against) : null;
+  const t = useT();
+  const tx = useText();
+  const locale = useLocale();
+  return (
+    <>
+      <table className="inv__compare" data-testid="item-compare">
+        {lines.some((l) => l.current !== null) && (
+          <thead>
+            <tr>
+              <th />
+              <th>{t("inventory.detail.this")}</th>
+              <th data-testid="compare-against">
+                {against ? itemName(tx, against.def) : t("inventory.detail.worn")}
+                {againstLevel !== null && <span className="inv__against-level"> · {t("inventory.detail.level", { level: againstLevel })}</span>}
+              </th>
+              <th />
+            </tr>
+          </thead>
+        )}
+        <tbody>
+          {lines.map((l) => (
+            <tr key={l.key} className={l.trend ? `inv__row--${l.trend}` : undefined}>
+              <th scope="row">{statLabel(t, l.key)}</th>
+              <td>{formatStat(locale, l.key, l.value)}</td>
+              <td>{l.current === null ? "" : formatStat(locale, l.key, l.current)}</td>
+              <td>
+                <StatDelta line={l} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {against?.traits && against.traits.length > 0 && (
+        <p className="inv__note" data-testid="against-traits">
+          {t("inventory.detail.wornTraits", { traits: against.traits.map((id) => tx(TRAIT_CATALOG[id].label)).join(", ") })}
+        </p>
+      )}
+    </>
+  );
+};
+
 /** Name, tier and level, kind, description, traits, numbers beside the equipped piece, and the actions. */
 export const ItemDetail = ({
   selected,
@@ -69,7 +118,6 @@ export const ItemDetail = ({
 }) => {
   const t = useT();
   const tx = useText();
-  const locale = useLocale();
   const compare = selected ? compareItems(inventory, equipment, selected) : null;
   if (!selected || !compare) {
     return (
@@ -121,32 +169,7 @@ export const ItemDetail = ({
           })}
         </div>
       )}
-      {compare.lines.length > 0 && (
-        <table className="inv__compare" data-testid="item-compare">
-          {compare.lines.some((l) => l.current !== null) && (
-            <thead>
-              <tr>
-                <th />
-                <th>{t("inventory.detail.this")}</th>
-                <th>{against ? itemName(tx, against.def) : t("inventory.detail.worn")}</th>
-                <th />
-              </tr>
-            </thead>
-          )}
-          <tbody>
-            {compare.lines.map((l) => (
-              <tr key={l.key} className={l.trend ? `inv__row--${l.trend}` : undefined}>
-                <th scope="row">{statLabel(t, l.key)}</th>
-                <td>{formatStat(locale, l.key, l.value)}</td>
-                <td>{l.current === null ? "" : formatStat(locale, l.key, l.current)}</td>
-                <td>
-                  <StatDelta line={l} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      {compare.lines.length > 0 && <CompareTable lines={compare.lines} against={against} />}
       {compare.equipped && <p className="inv__note">{t("inventory.detail.equipped")}</p>}
       {compare.slot && !compare.equipped && !compare.against && <p className="inv__note">{t("inventory.detail.slotEmpty", { slot: slotNoun(t, compare.slot) })}</p>}
       <ActionBar actions={actions} onAction={onAction} />

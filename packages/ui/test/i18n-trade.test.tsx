@@ -71,7 +71,7 @@ describe("inventory and character screen in both languages", () => {
   it("is English by default and Polish as before once chosen, numbers included", () => {
     expect(DEFAULT_SETTINGS.locale).toBe("en");
     const store = mount({ characterTab: "inventory" });
-    expect(screen.getAllByRole("tab").slice(0, 4).map((t) => t.textContent)).toEqual(["InventoryI", "SheetTab", "JournalJ", "MapM"]);
+    expect(screen.getAllByRole("tab").slice(0, 5).map((t) => t.textContent)).toEqual(["InventoryI", "SheetTab", "ProgressK", "JournalJ", "MapM"]);
     expect(screen.getByTestId("menu-eddies").textContent).toBe("€$ 12,345");
     expect(screen.getByRole("button", { name: /Sort: category/ })).toBeTruthy();
     fireEvent.click(cell("oni44"), { timeStamp: 1000 });
@@ -80,7 +80,7 @@ describe("inventory and character screen in both languages", () => {
     expect(screen.getByTestId("stats-panel").textContent).toContain("H2 T3 A3 L3");
 
     polish(store);
-    expect(screen.getAllByRole("tab").slice(0, 4).map((t) => t.textContent)).toEqual(["EkwipunekI", "KartaTab", "DziennikJ", "MapaM"]);
+    expect(screen.getAllByRole("tab").slice(0, 5).map((t) => t.textContent)).toEqual(["EkwipunekI", "KartaTab", "RozwójK", "DziennikJ", "MapaM"]);
     expect(screen.getByTestId("menu-eddies").textContent).toBe("€$ 12 345");
     expect(screen.getByRole("button", { name: /Sortuj: kategoria/ })).toBeTruthy();
     expect(screen.getAllByRole("tab", { name: "Broń" })).toHaveLength(1);
@@ -105,13 +105,14 @@ describe("inventory and character screen in both languages", () => {
     const sheet = () => screen.getByTestId("character-panel").textContent;
     expect(sheet()).toContain("UnknownContracts done: 0");
     expect(sheet()).toContain("-60 · hostilityThey hunt you");
+    expect(sheet()).toContain("Tab close · I inventory · K progress · J journal");
     polish(store);
     expect(sheet()).toContain("NieznanaWykonane kontrakty: 0");
     expect(sheet()).toContain("Optykapusty slotUkład nerwowypusty slot");
     expect(sheet()).toContain("Pustka. Na razie.");
     expect(sheet()).toContain("+20 · sympatiaKaito płaci więcej");
     expect(sheet()).toContain("-60 · wrogośćPolują na ciebie");
-    expect(sheet()).toContain("Tab zamknij · I ekwipunek · J dziennik");
+    expect(sheet()).toContain("Tab zamknij · I ekwipunek · K rozwój · J dziennik");
     expect(screen.getByRole("dialog", { name: "Postać" })).toBeTruthy();
   });
 });

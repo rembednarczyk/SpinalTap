@@ -10,38 +10,38 @@ const intents = (): UiIntents & Record<string, ReturnType<typeof vi.fn>> => {
   return new Proxy(spies, { get: (t, k) => (t[k] ??= vi.fn()) }) as UiIntents & Record<string, ReturnType<typeof vi.fn>>;
 };
 
-/** The sheet tab open on a game with `state`. */
+/** The Progress tab (K, stage 7) open on a game with `state`. */
 const sheet = (state: Partial<UiState>) => {
   const store = createUiStore({ screen: "playing", ...state });
   const i = intents();
   render(<GameUi store={store} intents={i} />);
-  fireEvent.keyDown(window, { code: "Tab" });
+  fireEvent.keyDown(window, { code: "KeyK" });
   return { i, section: screen.getByTestId("attributes") };
 };
 
 afterEach(cleanup);
 
-describe("attributes on the sheet (ADR-0059, stage 2)", () => {
-  it("lists the five with their values and the level; no buttons without a point", () => {
+describe("attributes on the Progress tab (ADR-0059, stages 2 and 7)", () => {
+  it("lists the five with their values and the level; no raise buttons without a point", () => {
     const { section } = sheet({ level: 4, attributes: { ...START_ATTRIBUTES, net: 5 } });
-    expect(section.textContent).toContain("Level 4");
+    expect(screen.getByTestId("progress-level").textContent).toBe("Level 4");
     expect(within(screen.getByTestId("attribute-net")).getByText("Net")).toBeTruthy();
     expect(screen.getByTestId("attribute-net").textContent).toContain("5");
     expect(screen.queryByTestId("attribute-points")).toBeNull();
-    expect(within(section).queryAllByRole("button")).toHaveLength(0);
+    expect(within(section).queryAllByRole("button", { name: /^Raise/ })).toHaveLength(0);
   });
 
   it("with points left a button raises an attribute through the intent; none at 15", () => {
     const { i } = sheet({ level: 3, attributePoints: 2, attributes: { ...START_ATTRIBUTES, shadow: 15 } });
-    expect(screen.getByTestId("attribute-points").textContent).toContain("Points to spend: 2");
+    expect(screen.getByTestId("attribute-points").textContent).toBe("2 attribute points to spend");
     fireEvent.click(screen.getByRole("button", { name: "Raise Tech" }));
     expect(i.spendAttributePoint).toHaveBeenCalledWith("tech");
-    expect(within(screen.getByTestId("attribute-shadow")).queryByRole("button")).toBeNull();
+    expect(within(screen.getByTestId("attribute-shadow")).queryByRole("button", { name: /^Raise/ })).toBeNull();
   });
 
   it("speaks Polish with the Polish setting", () => {
     sheet({ attributePoints: 2, settings: { ...DEFAULT_SETTINGS, locale: "pl" } });
-    expect(screen.getByTestId("attribute-points").textContent).toContain("Punkty do rozdania: 2");
+    expect(screen.getByTestId("attribute-points").textContent).toBe("2 punkty atrybutów do rozdania");
     expect(screen.getByRole("button", { name: "Podnieś: Krzepa" })).toBeTruthy();
   });
 });

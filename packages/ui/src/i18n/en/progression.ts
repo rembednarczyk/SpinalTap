@@ -2,13 +2,13 @@ import type { Message } from "../message";
 
 /**
  * English texts of the attributes (ADR-0059, stage 2) and the perk trees (stages 3 and 3b): their names,
- * what a point or a rank does, the sheet's sections to spend the points in, and the respec at
- * Mori's. The full Progress tab comes in stage 7.
+ * what a point or a rank does, the Progress tab (stage 7) where the points are spent, the XP bar,
+ * and the respec at Mori's.
  */
 export const enProgression = {
   "attribute.section": "Attributes",
   "attribute.level": "Level {level}",
-  "attribute.points": "Points to spend: {count}",
+  "attribute.points": { one: "{count} attribute point to spend", other: "{count} attribute points to spend" },
   "attribute.raise": "Raise {name}",
   "attribute.might.name": "Might",
   "attribute.might.effect": "+4 health and +2% melee damage per point",
@@ -22,7 +22,7 @@ export const enProgression = {
   "attribute.shadow.effect": "Spotted 2% slower and +0.5% crit chance per point",
   // The perk trees (stage 3): one per attribute, tiers at 4, 8, 12 and 15.
   "perk.section": "Perks",
-  "perk.points": "Perk points: {count}",
+  "perk.points": { one: "{count} perk point to spend", other: "{count} perk points to spend" },
   "perk.rank": "Rank {rank}/{ranks}",
   "perk.requires": "Needs {attribute} {value}",
   "perk.key": "Key perk",
@@ -109,6 +109,26 @@ export const enProgression = {
   "perk.shadow_assassin.desc": "+4% crit chance per rank",
   "perk.shadow_ghost_reload.name": "Ghost Reload",
   "perk.shadow_ghost_reload.desc": "A takedown with no alarm and no witness reloads the weapon in hand",
+  // The Progress tab (stage 7): XP, the trees tier by tier, the respec's price and the HUD.
+  "character.tab.progress": "Progress",
+  "character.hint.progress": "progress",
+  "progress.xp": "Experience",
+  "progress.xpValue": "{xp} / {next} XP",
+  "progress.xpMax": "Top level",
+  "progress.unspent": { one: "{count} point to spend", other: "{count} points to spend" },
+  "progress.trees": "Perk trees",
+  "progress.showTree": "Show the {attribute} tree",
+  "progress.tree": "{attribute} tree",
+  "progress.tier": "Tier {value}",
+  "progress.tierShut": "Opens at {attribute} {value}",
+  "progress.respec": "Rewire at Mori's clinic: {price}. Every point comes back.",
+  "progress.respecTerms": "Mori rewires only clients she trusts.",
+  "progress.open": "Spend in Progress",
+  "perk.rankCount": { one: "{count} rank bought", other: "{count} ranks bought" },
+  "scan.level": "Level {level}",
+  "hud.level": "Lv {level}",
+  "character.implantOff": "off: over the pool",
+  "inventory.detail.wornTraits": "Equipped piece's traits: {traits}",
   // The respec at Mori's clinic.
   "respec.heading": "Rewire",
   "respec.note": "Mori resets your attributes and perks: every point comes back to spend again.",

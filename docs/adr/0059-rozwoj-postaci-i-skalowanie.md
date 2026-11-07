@@ -332,3 +332,30 @@ Decyzja zastępuje zdanie z „Decyzji użytkownika po etapie 6”, że w grze n
 - **Zapis v32:** opcjonalne `character.implantGrades`. Migracja v31 → v32 zmienia tylko wersję, bo starszy zapis nie miał cyberdecku. Walidacja przyjmuje ocenę tylko dla gniazda z cyberdeckiem, znaną rzadkość i poziom 1–30. Zamontowany cyberdeck bez oceny liczy się jako zwykły z poziomem 1.
 - **Kontrakty:** porty, zdarzenia i komendy się nie zmieniają.
 - **Determinizm:** złote hashe nagrano na nowo tylko przez wersję v32. Jako v31 (`v31HashOf`) wszystkie przebiegi, także trudny, pojedynek i posiłki w dokach, dają złote hashe sprzed zmiany: gracz przebiegów nie ma cyberdecku, a zmiana wagi 5,56 nie zmienia żadnego worka.
+
+## Z budowy etapu 7 (6.11)
+
+Etap 7 to sam interfejs. Symulacja, zapis i kontrakty (porty, zdarzenia, komendy) się nie zmieniają, więc złote hashe i `SAVE_SCHEMA_VERSION` zostają.
+
+- **Zakładka Rozwój** (en: Progress) na ekranie postaci, klawisz K, między Kartą a Dziennikiem. K jest zarezerwowany jak I, Tab, J i M, więc nie da się go przypisać do sterowania.
+  - Na górze poziom i pasek XP z liczbami („50 / 303 PD”), liczony krzywą z `core/progression/curve.ts`.
+  - Po lewej pięć atrybutów: wartość, efekt punktu, liczba kupionych rang w drzewku i przycisk „+” (36 px, na dotyku 44 px). Atrybut jest też przyciskiem, który pokazuje swoje drzewko.
+  - Po prawej jedno drzewko naraz, próg po progu (4, 8, 12, 15). Zamknięty próg mówi „Otwiera się przy: Krzepa 8”, a perk pokazuje rangę jako romby, opis, perk kluczowy, wymaganie atrybutu i ciąg progów (`missingTier`) oraz przycisk kupna. Reguły kupna to te same funkcje core, które sprawdza komenda `spend-perk-point`.
+  - Zakładka otwiera się na pierwszym drzewku, w którym punkt perku coś kupi. Bez takiego drzewka otwiera się na tym z największą liczbą rang, a bez rang na Krzepie.
+  - Przebudowa jest usługą kliniki (komendy handlowe, etap 3), więc zakładka tylko mówi, gdzie ją zrobić i za ile. Cenę liczy `respecPrice` z warunkami Mori, tą samą funkcją co lada. Przy warunkach podstawowych zakładka mówi, że Mori przebudowuje tylko zaufanych, a bez wydanych punktów, że nie ma czego zerować.
+- **Karta:** sekcje Atrybuty i Perki przeszły na zakładkę Rozwój, bez kopii. Na Karcie zostaje poziom, pasek XP, liczba punktów do rozdania i przycisk „Rozdaj w Rozwoju”. Wiersz wszczepu, który nie działa ponad pulą (etap 3c), ma dopisek „nie działa: ponad pulą”. Ten sam dopisek ma oferta zamontowanego wszczepu u Mori. Znacznik na HUD z etapu 3c zostaje bez zmian.
+- **HUD:**
+  - pod paskiem zdrowia jest „Poz. N” i cienki pasek XP. Znikają razem z paskiem zdrowia poza walką, ale nowe XP trzyma blok na ekranie przez 4 s, a awans rozbłyskuje pasek na 2,5 s (bez błysku przy ograniczonych błyskach);
+  - niewydane punkty (atrybutów i perków razem) pokazuje znacznik „▲ N K” przy pasku na komputerze, plakietka na przycisku postaci na dotyku i plakietka na zakładce Rozwój;
+  - komunikat awansu to toast z etapu 1, a udanej przebudowy toast z etapu 3b. Ich teksty się nie zmieniają.
+- **Karta przedmiotu:** poziom, rzadkość i cechy były od etapu 4. Liczby porównania już wcześniej skalowały się z poziomem obu przedmiotów (`weaponStatsOf`, `garmentArmor`). Etap 7 dopisuje do nagłówka porównania poziom założonego przedmiotu („Hebi SMG · Poziom 5”) i pod tabelą jego cechy.
+- **Teksty:** nowe klucze są w `i18n/{en,pl}/progression.ts`. Polskie liczby punktów są w formie „Punkty do rozdania: N”, bez odmiany, bo test katalogów wymaga tych samych parametrów w obu językach.
+- **Bez zmian:** poziom wroga w interfejsie czeka na decyzję użytkownika (otwarta od etapu 5).
+
+## Decyzje użytkownika po etapie 7 (6.11)
+
+Te decyzje zastępują dwa punkty z „Z budowy etapu 7”: liczby punktów bez odmiany i poziom wroga czekający na decyzję.
+
+- **Poziom wroga w skanerze.** Karta skanu pokazuje poziom zeskanowanego wroga („Poziom 12”, en: „Level 12”). Nad głową nie ma paska. Poziom to `enemy.level` z oceny wroga w symulacji (`gradeEnemy`, pasmo dzielnicy z etapu 5). Aplikacja czyta go z encji tak jak resztę karty skanu (`scanTargetVm`), więc zdarzenie `ScanFocusChanged` i porty się nie zmieniają. `ScanTargetVm` w UI dostał opcjonalne pole `level`, które mają tylko wrogowie. Awans przelicza wrogów w świecie (`regradeEnemies`), a karta otwarta na tym samym celu rysuje się wtedy na nowo.
+- **Przycisk postaci na dotyku (☰)** otwiera ekran od razu na zakładce Rozwój, gdy są punkty do wydania. Bez punktów otwiera Ekwipunek, jak dotąd.
+- **Odmiana liczby punktów.** Liczby punktów i rang mają formy mnogie: po polsku „1 punkt”, „3 punkty”, „5 punktów”, „22 punkty”, po angielsku „1 point” i „N points”. Dotyczy to kluczy `progress.unspent`, `attribute.points`, `perk.points` i `perk.rankCount`. Test katalogów przyjmuje formy mnogie, jeśli są w obu językach naraz: angielski ma `one` i `other`, polski `one`, `few`, `many` i `other`, a każda forma ma te same parametry co angielskie `other`.
