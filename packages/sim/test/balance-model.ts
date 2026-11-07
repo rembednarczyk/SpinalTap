@@ -39,7 +39,7 @@ import {
   rollLootFor,
   armorFor,
   type DefenderProfile,
-  UNDETECTED_CONTRACT_XP,
+  undetectedXp,
   MIN_LEVEL,
 } from "@seki/core";
 import { CONTRACT_SITE_BANDS, DISTRICT_BANDS, contractLevelOf, deriveRandom } from "../src";
@@ -204,7 +204,7 @@ const job = (r: Run, pass: DistrictPass, kind: ContractKind, index: number): voi
   gain(r, QUICKHACK_XP);
   if (kind === "hack") gain(r, breachXp(2));
   gain(r, contractXp(kind, c.targets, contractLevelOf(r.progression.level, c.siteId)));
-  if (kind === "infiltrate" || index % 5 === 1 || index % 5 === 3) gain(r, UNDETECTED_CONTRACT_XP);
+  if (kind === "infiltrate" || index % 5 === 1 || index % 5 === 3) gain(r, undetectedXp(contractLevelOf(r.progression.level, c.siteId)));
   r.log = { ...r.log, active: null, completed: r.log.completed + 1 };
 };
 

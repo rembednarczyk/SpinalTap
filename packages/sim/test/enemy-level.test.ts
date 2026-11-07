@@ -55,11 +55,11 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
     expect(others).toEqual([]);
   });
 
-  it("an enemy in the market in Alchemia is of the market's band (10-20), one elsewhere in Krakowskie of Krakowskie's (1-8)", () => {
+  it("an enemy in the market in Alchemia is of the market's band (10-28), one elsewhere in Krakowskie of Krakowskie's (1-8)", () => {
     for (const [level, market, krakowskie] of [
       [1, 10, 1],
       [12, 12, 8],
-      [25, 20, 8],
+      [30, 28, 8],
     ] as const) {
       const sim = atLevel(Simulation.create({ seed: 5 }), level);
       teleportPlayer(sim, ground(HANA_SPOT.x - 1.5, HANA_SPOT.z), Math.PI / 2);
@@ -108,7 +108,7 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
     expect(loaded.health).toEqual(byKey(sim, "guard")!.health);
   });
 
-  it("a job's level is its band's: the Hebi stash in Alchemia (the market's 10-20) for a level 12 player is of level 12", () => {
+  it("a job's level is its band's: the Hebi stash in Alchemia (the market's 10-28) for a level 12 player is of level 12", () => {
     const sim = atLevel(Simulation.create({ seed: 4 }), 12);
     teleportPlayer(sim, ground(HANA_SPOT.x - 1.5, HANA_SPOT.z), Math.PI / 2);
     sim.step();

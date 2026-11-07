@@ -17,6 +17,10 @@ import {
   killXpShare,
   levelScale,
   stashLines,
+  undetectedXp,
+  XP_CURVE_FROM,
+  xpLevelScale,
+  xpToNext,
 } from "../src";
 import { sequenceRng } from "./helpers";
 
@@ -60,11 +64,23 @@ describe("kill XP by the level difference (ADR-0059)", () => {
     expect(killXpShare(12, 10)).toBeCloseTo(1.2, 10);
   });
 
-  it("scales the type's XP, the same as before for an even fight", () => {
+  it("scales the type's XP, the same as before for an even fight up to level 6", () => {
     expect(killXp("hebi_ganger")).toBe(60);
     expect(killXp("hebi_ganger", 4, 4)).toBe(60);
-    expect(killXp("hebi_ganger", 9, 4)).toBe(90);
+    expect(killXp("hebi_ganger", 6, 6)).toBe(60);
     expect(killXp("hebi_ganger", 1, 6)).toBe(6);
+  });
+
+  it("grows with the enemy's level from level 6 as the cost of a level does (stage 8)", () => {
+    expect(xpLevelScale(1)).toBe(1);
+    expect(xpLevelScale(XP_CURVE_FROM)).toBe(1);
+    expect(xpLevelScale(12)).toBeCloseTo(2 ** 1.6, 10);
+    expect(xpLevelScale(30)).toBeCloseTo(5 ** 1.6, 10);
+    expect(xpLevelScale(40)).toBe(xpLevelScale(30));
+    // An even fight at 12 is worth a share of the level about as at 6: 182 of 5330 against 60 of 1758.
+    expect(killXp("hebi_ganger", 12, 12)).toBe(182);
+    expect(killXp("hebi_ganger", 12, 12) / xpToNext(12)).toBeCloseTo(killXp("hebi_ganger", 6, 6) / xpToNext(6), 2);
+    expect(killXp("hebi_ganger", 9, 4)).toBe(172);
   });
 });
 
@@ -137,9 +153,12 @@ describe("contract level (ADR-0059)", () => {
     expect(at(10)).toBe(544);
   });
 
-  it("its XP grows with its level as the pay does", () => {
+  it("its XP grows with its level from level 6 as the cost of a level does (stage 8)", () => {
     expect(contractXp("eliminate", 3)).toBe(1000);
     expect(contractXp("eliminate", 3, 1)).toBe(1000);
-    expect(contractXp("eliminate", 3, 11)).toBe(1400);
+    expect(contractXp("eliminate", 3, 6)).toBe(1000);
+    expect(contractXp("eliminate", 3, 11)).toBe(2637);
+    expect(undetectedXp()).toBe(150);
+    expect(undetectedXp(12)).toBe(455);
   });
 });

@@ -356,7 +356,7 @@ describe("awareness and npcHealth off the beaten track (ADR-0066)", () => {
       const attackers = sim.session.street2.micro?.attackers ?? [];
       return [...sim.world].filter((e) => attackers.includes(e.id)).map((e) => e.health);
     };
-    // Stare Miasto's band (5-14) makes them of level 5 for a level 1 player (ADR-0059).
+    // Stare Miasto's band (5-19) makes them of level 5 for a level 1 player (ADR-0059).
     const base = Math.round(GANGER_MAX_HP * enemyScale(5));
     const hp = Math.round(GANGER_MAX_HP * 1.5 * enemyScale(5));
     expect(muggers({})).toEqual([{ current: base, max: base }, { current: base, max: base }]);

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { PITY_AFTER, QUEST_ECHO, QUEST_FIRST_CONTRACT, QUEST_MIRROR, type Rarity } from "@seki/core";
+import { MAX_LEVEL, PITY_AFTER, QUEST_ECHO, QUEST_FIRST_CONTRACT, QUEST_MIRROR, type Rarity } from "@seki/core";
 import { type DistrictPass, type PassageResult, raritySample, runPassage } from "./balance-model";
 
 /**
  * The balance test of ADR-0059 stage 8: a passage through the content as it is, district after
  * district in the order of their bands, on the sim's formulas (`balance-model.ts`). Four measures
  * with the thresholds written into the ADR:
- * 1. pace: 8 to 10 levels a district, and the last one ends the road at level 30 (with the tuning);
+ * 1. pace: 8 to 10 levels a district, and the last one ends the road at level 30;
  * 2. time of combat in the band: every fight within 0.75 to 1.33 of the same fight at the band's
  *    floor, both ways (the player downing the enemy, the enemy downing the player);
  * 3. rarities at item levels 1, 10, 20 and 30: rare and better grow with the level, common and
@@ -54,11 +54,25 @@ const SEEDS = [1, 2, 3, 4, 5];
 const runs: readonly PassageResult[] = SEEDS.map((seed) => runPassage(PASSAGE, seed));
 
 /** The thresholds of the ADR. */
+export const PACE = { min: 8, max: 10 } as const;
 export const COMBAT_TIME = { min: 0.75, max: 1.33 } as const;
 const SAMPLE_LEVELS = [1, 10, 20, 30] as const;
 const SAMPLE_PIECES = 3000;
 
 describe("balance of the passage (ADR-0059 stage 8)", () => {
+  it("each district but the last gives 8 to 10 levels, the last ends the road at 30", () => {
+    for (const r of runs) {
+      const levels = r.districts.map((d) => d.to - d.from);
+      const last = r.districts[r.districts.length - 1]!;
+      for (const gained of levels.slice(0, -1)) {
+        expect(gained, `levels by district ${levels.join("/")}`).toBeGreaterThanOrEqual(PACE.min);
+        expect(gained, `levels by district ${levels.join("/")}`).toBeLessThanOrEqual(PACE.max);
+      }
+      expect(last.from, "the docks still teach").toBeLessThan(MAX_LEVEL);
+      expect(last.to).toBe(MAX_LEVEL);
+    }
+  });
+
   it("every fight takes 0.75 to 1.33 of the same fight at its band's floor, both ways", () => {
     for (const r of runs) {
       expect(r.fights.length).toBeGreaterThan(100);
