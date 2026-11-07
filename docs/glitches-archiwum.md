@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-440 Goły pas 1–1,5 m wzdłuż fasad ul. Kościuszki (T-211)
+- Status: naprawione (PR #352, 7.11; 7 obszarów kostki T-211/* od fasad do osi chodników, 927 + 698 → 0 gołych próbek; landuse-bare bez zmian, bo nie liczy zwykłych domów)
+- Ważność: S4 · Zasięg: x ok. 8–21, z −127…−182 i wschodnia strona ulicy, ok. 1200 punktów `landuse-bare`; poprawka jak T-210/T-164 (`ADDED_AREAS` kostki do ścian)
+- Pakiet właściciela: tools/osm-import
+
 ### G-334 Zabójstwo ogłuszonego gangera po nokaucie zgłoszonym wcześniej nigdy nie jest zgłaszane jako zabójstwo
 - Status: naprawione (PR #350, 7.11; zwłoki ogłuszonego nie dziedziczą zgłoszenia nokautu, `wronged` czyta `downed.fought`)
 - Ważność: S3 · Zasięg: `corpseOf` przenosi na zwłoki `reported` z nokautu (`bodies.ts:75`), więc patrol, który znajdzie świeże ciało, go nie zgłasza; po wczytaniu dobicie ogłuszonego na oczach patrolu też nie jest przestępstwem, bo `wronged` jest przejściowe, a `offend` w `death-system.ts:72` nie czyta `downed.fought`
