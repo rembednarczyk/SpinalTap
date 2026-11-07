@@ -45,6 +45,12 @@ export const readGlbJson = (bytes: ArrayBuffer): Json | null => {
   }
 };
 
+/** The glTF JSON is a VRM avatar (0.x `VRM` or 1.0 `VRMC_vrm`), whose MToon materials ignore vertex colours. */
+export const isVrm = (gltf: Json): boolean => {
+  const ext = obj(gltf.extensions);
+  return "VRM" in ext || "VRMC_vrm" in ext;
+};
+
 /** Spring bones from VRM 0.x (`VRM.secondaryAnimation`) or VRM 1.0 (`VRMC_springBone`). */
 export const readVrmSprings = (gltf: Json): VrmSprings | null => {
   const nodes = arr(gltf.nodes).map((n) => String(obj(n).name ?? ""));
