@@ -162,10 +162,14 @@ export const sendSecurity = (ctx: SimContext, faction: FactionId, at: Vec3): voi
   }
 };
 
-/** The takedown of someone knocked out has reached the security (ADR-0065): its body brings no second call. */
-const bodyReported = (ctx: SimContext, body: EntityId | undefined): void => {
+/**
+ * The takedown of someone knocked out has reached the security (ADR-0065): its body brings no
+ * second call. A corpse is its murder's (G-334, G-447): an assault's report (the knock-out of one
+ * finished later, a lethal takedown phoned in by a bystander) leaves it to be found.
+ */
+const bodyReported = (ctx: SimContext, crime: CrimeKind, body: EntityId | undefined): void => {
   if (body === undefined) return;
-  for (const b of ctx.world.with("downed")) if (b.id === body) b.downed.reported = true;
+  for (const b of ctx.world.with("downed")) if (b.id === body && (crime === "murder" || !b.downed.dead)) b.downed.reported = true;
 };
 
 /** The body was reported by whoever found it (ADR-0065): the calls about its takedown are not needed. */
@@ -226,14 +230,14 @@ const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
     if (!cameraSees(ctx, cam, player)) continue;
     noteDetected(ctx);
     report(ctx, o.crime, "camera", cam.id, player.id, o.at, o.victim);
-    bodyReported(ctx, o.body);
+    bodyReported(ctx, o.crime, o.body);
     return;
   }
   const security = securityAt(ctx, o.at);
   for (const g of inCreationOrder(ctx.world.with("ai"))) {
     if (!patrolWitness(ctx, g, player, security)) continue;
     report(ctx, o.crime, "patrol", g.id, player.id, o.at, o.victim);
-    bodyReported(ctx, o.body);
+    bodyReported(ctx, o.crime, o.body);
     return;
   }
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
@@ -292,7 +296,7 @@ const runCalls = (ctx: SimContext, player: Entity | null, dt: number): void => {
 const callThrough = (ctx: SimContext, witnessId: EntityId, call: WitnessCall, player: Entity | null): void => {
   dropCalls(ctx, call.incident);
   report(ctx, call.crime, "civilian", witnessId, player?.id ?? 0, call.at, call.victim);
-  bodyReported(ctx, call.body);
+  bodyReported(ctx, call.crime, call.body);
 };
 
 /**

@@ -3,7 +3,7 @@ import { deriveRandom } from "../rng/derive-random";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
 import { applyReputationCause, clearContract, dropLoot, raiseFlag } from "../world/domain-ops";
-import { corpseOf, knockOutCallsOver } from "../world/bodies";
+import { corpseOf } from "../world/bodies";
 import { inCreationOrder } from "../world/ordering";
 import { grantXp, noteFight } from "../world/progression-ops";
 import { disturb, isContractTarget, noteTally, offend } from "../world/street";
@@ -118,7 +118,6 @@ export const deathSystem: System = {
       ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null, ...(e.lastHitBy === undefined ? {} : { killerId: e.lastHitBy }) });
       ctx.world.remove(e);
       // Killed in a takedown, or while knocked out (ADR-0065): its body stays to be found, carried, hidden.
-      if (e.downed && !e.downed.dead) knockOutCallsOver(ctx.world, e.id);
       if (e.downed) ctx.world.add(corpseOf(e, e.downed));
     }
     if (dead.length > 0) checkContractCleared(ctx);
