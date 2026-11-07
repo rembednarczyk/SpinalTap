@@ -361,6 +361,7 @@ export const plWorld = {
   "touch.phone": "Telefon",
   "touch.pause": "Pauza",
   "touch.fire": "Strzał",
+  "touch.fireAction": "Atak: {what}",
   "touch.aim": "Celuj lub blokuj",
   "touch.jump": "Skok",
   "touch.ability": "Zdolność",

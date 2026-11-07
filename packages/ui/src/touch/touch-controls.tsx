@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useT } from "../i18n/use-t";
 import { useHackIntents, usePhoneIntents, useSessionIntents, useUi } from "../use-ui";
 import { useUnspentPoints } from "../hud/xp-hud";
-import { ActionArc, MoreActions, UseButton } from "./action-arc";
+import { ActionArc, FireButton, MoreActions, UseButton } from "./action-arc";
 import { PadButtonView, useLookDrag } from "./pad-button";
 import type { TouchPadSink } from "./touch-pad-sink";
 
@@ -133,7 +133,7 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
       <Stick pad={pad} />
       <TopBar />
       <div className="touch__actions">
-        <PadButtonView pad={pad} button="fire" label="●" hint={t("touch.fire")} className="touch__btn--fire" lookToo />
+        <FireButton pad={pad} />
         <ActionArc pad={pad} more={more} onMore={() => setMore(!more)} />
         <PadButtonView pad={pad} button="aim" label="◎" hint={t("touch.aim")} className={`touch__btn--aim${aimOn ? " touch__btn--on" : ""}`} lookToo testId="touch-aim" />
         <PadButtonView pad={pad} button="jump" label="⤒" hint={t("touch.jump")} className="touch__btn--jump" testId="touch-jump" />

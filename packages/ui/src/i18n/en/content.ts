@@ -37,9 +37,10 @@ export const enContent = {
   "prompt.help": "Help",
   "prompt.door.force": "Force the lock (raises the alarm)",
   "prompt.door.locked": "Keypad door: locked",
-  // Takedowns (ADR-0065): the interact key, and holding the attack button to the end.
-  "prompt.takedown": "Take down",
-  "prompt.takedown.kill": "hold attack to kill",
+  // Takedowns (ADR-0065, ADR-0075): the interact key grabs; in the grab it knocks out, the attack button kills.
+  "prompt.takedown": "Grab",
+  "prompt.grab": "Knock out",
+  "prompt.grab.kill": "Kill",
   // Bodies (ADR-0065, stage 3): the same key picks one up, drops it, or hides it.
   "prompt.body.carry": "Pick up",
   "prompt.body.drop": "Drop",

@@ -224,8 +224,16 @@ export interface DomainEvents {
   /** The player stepped out of the interior `interiorId`. */
   InteriorLeft: { interiorId: string };
   // Takedowns (ADR-0065).
-  /** The player got hold of `target`; both stand still for `duration` seconds. */
-  TakedownStarted: { target: EntityId; duration: number };
+  /**
+   * The player got hold of `target` (ADR-0075): both stand still while she chooses, for up to
+   * `window` seconds (0: the command chose already), then for the `duration` of the end chosen.
+   */
+  TakedownStarted: { target: EntityId; duration: number; window: number };
+  /**
+   * The grab's choice (ADR-0075): `lethal` kills, else a knock-out; `timedOut` when the window
+   * ran out without one. The end chosen takes the `duration` of `TakedownStarted`.
+   */
+  TakedownChosen: { target: EntityId; lethal: boolean; timedOut: boolean };
   /**
    * The takedown ended: `target` is unconscious, or dead with `lethal` (its EntityKilled follows).
    * `witnessed`: a camera, a patrol of the district's security or a civilian saw it, by the rules

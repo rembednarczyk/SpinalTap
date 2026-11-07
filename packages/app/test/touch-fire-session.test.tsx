@@ -166,3 +166,39 @@ describe("touch fire setting in the saved settings (ADR-0072)", () => {
     expect(sanitizeSettings({ touchFire: "separate" }).touchFire).toBe("separate");
   });
 });
+
+describe("a tap on the fire button shorter than a step (ADR-0075)", () => {
+  it("fires one shot with a firearm, and holding fires on as before", () => {
+    const g = start({ touchFire: "separate" });
+    faceGuard(g);
+    const shots: unknown[] = [];
+    g.session.bus.on("ShotFired", (e) => e.shooterId === player(g).id && shots.push(e));
+    down(fireButton(), 1);
+    up(fireButton(), 1);
+    steps(g, 30);
+    expect(shots).toHaveLength(1);
+    down(fireButton(), 1);
+    steps(g, 60);
+    up(fireButton(), 1);
+    expect(shots.length).toBeGreaterThan(2);
+  });
+
+  it("swings once with a melee weapon", () => {
+    const g = start();
+    run(() => {
+      const d = g.session.sim.domain;
+      g.seki.jump({
+        inventory: { ...d.inventory, items: [...d.inventory.items, { uid: "t-baton", def: "baton", rarity: "common" }] },
+        equipment: { ...d.equipment, melee: "t-baton" },
+      });
+    });
+    g.step(1, { weaponSlot: 3 });
+    g.step(30);
+    const swings: unknown[] = [];
+    g.session.bus.on("MeleeSwing", (e) => e.entityId === player(g).id && swings.push(e));
+    down(fireButton(), 1);
+    up(fireButton(), 1);
+    steps(g, 90);
+    expect(swings).toHaveLength(1);
+  });
+});

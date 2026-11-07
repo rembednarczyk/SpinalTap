@@ -172,10 +172,12 @@ kbd {
   font-size: 18px;
 }
 
-/* A takedown's kill (ADR-0065): the second action on the same target, a step quieter. */
-.hud__prompt-hold {
-  font-size: 15px;
-  opacity: 0.8;
+/*
+ * The grab's two actions (ADR-0075), knock out and kill, side by side and equal: a quieter kill
+ * went unnoticed. Only the separator between them is dimmed.
+ */
+.hud__prompt-sep {
+  color: var(--ink-dim);
 }
 
 .hud__hint {

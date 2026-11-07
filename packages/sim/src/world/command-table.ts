@@ -6,7 +6,7 @@ import { applyAlias, applyResolveEnding, changeReputation, endDialogue, setFlag,
 import { applyTradeCommand } from "./trade-commands";
 import { travelMetro } from "./metro-ride";
 import { spendAttribute, spendPerk } from "./progression-ops";
-import { startTakedown } from "../systems/takedown-system";
+import { chooseTakedown, startTakedown } from "../systems/takedown-system";
 import { carryBody, dropBody } from "../systems/carry-system";
 import { setDifficulty } from "./difficulty";
 
@@ -63,6 +63,7 @@ export const COMMAND_HANDLERS: CommandHandlers = {
   "travel-metro": travelMetro,
   // Takedowns (ADR-0065).
   takedown: startTakedown,
+  "takedown-choose": chooseTakedown,
   "carry-body": carryBody,
   "drop-body": dropBody,
   // Difficulty (ADR-0066).

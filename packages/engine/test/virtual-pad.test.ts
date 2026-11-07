@@ -47,6 +47,14 @@ describe("VirtualPad", () => {
     expect(pad.poll()).toMatchObject({ lookYaw: 0, lookPitch: 0 });
   });
 
+  it("fires once on a tap that goes down and up between two polls (ADR-0075)", () => {
+    const pad = new VirtualPad();
+    pad.press("fire");
+    pad.release("fire");
+    expect(pad.poll().fire).toBe(true);
+    expect(pad.poll().fire).toBe(false);
+  });
+
   it("holds fire while pressed and fires edges once", () => {
     const pad = new VirtualPad();
     pad.press("fire");

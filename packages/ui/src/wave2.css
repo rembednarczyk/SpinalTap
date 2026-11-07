@@ -149,6 +149,9 @@
 }
 .touch__use-verb { font-family: var(--font-ui); font-size: 15px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .touch__use-what { max-width: 140px; overflow: hidden; font-family: var(--font-ui); font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
+/* The fire button naming the grab's kill (ADR-0075): the dot over the action, as on "Use". */
+.touch__btn--fire-act { display: flex; flex-direction: column; justify-content: center; align-items: center; line-height: 1.1; }
+.touch__fire-what { max-width: 80px; font-size: 13px; font-weight: 700; text-transform: uppercase; }
 /* "More" unfolds one row left of the cluster. */
 .touch__more { position: absolute; right: 248px; bottom: 86px; display: flex; gap: 6px; pointer-events: none; }
 .touch__more .touch__btn { position: relative; right: auto; bottom: auto; width: 44px; height: 44px; font-size: 16px; }

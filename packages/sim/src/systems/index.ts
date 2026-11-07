@@ -93,7 +93,7 @@ export {
 export { createBodySystem, cyberCapacityOf } from "./body-system";
 export { doorForcedFlag, doorSnapshots, doorSystem, forceDoor, restoreDoors } from "./door-system";
 export { CARRY_REACH, CARRY_SPEED, HIDE_REACH, bodyCandidate, carriedBody, carrySystem, hideSpotNear } from "./carry-system";
-export { TAKEDOWN_BACK_CONE, TAKEDOWN_REACH, TAKEDOWN_TIME, takedownCandidate, takedownDistance, takedownSystem } from "./takedown-system";
+export { GRAB_TIME, TAKEDOWN_BACK_CONE, TAKEDOWN_REACH, TAKEDOWN_TIME, takedownCandidate, takedownDistance, takedownSystem } from "./takedown-system";
 
 /**
  * Explicit, fixed system order (determinism: never derived from map iteration).

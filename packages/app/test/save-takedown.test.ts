@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { FixedStepLoop, SIM_DT, Simulation, TAKEDOWN_TIME, clinicPoint, gangerEntity, stateHash } from "@seki/sim";
+import { FixedStepLoop, GRAB_TIME, SIM_DT, Simulation, TAKEDOWN_TIME, clinicPoint, gangerEntity, stateHash } from "@seki/sim";
 import { AUTOSAVE_SLOT } from "../src/controllers/autosave-controller";
 import { createDebugApi } from "../src/debug-api";
 import type { GameSession } from "../src/game-session";
@@ -21,7 +21,8 @@ class CountingStore extends MemorySaveStore {
 }
 
 const CROUCH = frame({ crouch: true });
-const GRIP = Math.ceil(TAKEDOWN_TIME / SIM_DT);
+// The grab waits for the choice (ADR-0075); left alone it knocks out after the window.
+const GRIP = Math.ceil((GRAB_TIME + TAKEDOWN_TIME) / SIM_DT);
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
 /**

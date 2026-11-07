@@ -85,6 +85,19 @@ describe("BrowserInput without pointer lock", () => {
     expect(f.fire).toBe(true);
     expect(i.mouseActive).toBe(true);
   });
+
+  it("fires once on a click shorter than a poll, and a held button keeps firing (ADR-0075)", () => {
+    const i = make();
+    document.dispatchEvent(new Event("pointerlockerror"));
+    window.dispatchEvent(new MouseEvent("mousedown", { button: 0 }));
+    window.dispatchEvent(new MouseEvent("mouseup", { button: 0 }));
+    expect(i.poll().fire).toBe(true);
+    expect(i.poll().fire).toBe(false);
+    window.dispatchEvent(new MouseEvent("mousedown", { button: 0 }));
+    expect([i.poll().fire, i.poll().fire]).toEqual([true, true]);
+    window.dispatchEvent(new MouseEvent("mouseup", { button: 0 }));
+    expect(i.poll().fire).toBe(false);
+  });
 });
 
 describe("BrowserInput with the touch pad", () => {

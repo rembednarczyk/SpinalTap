@@ -42,8 +42,10 @@ const behindGuard = (alone: boolean) => {
   return { session, ui, guard };
 };
 
+/** The key grabs, and in the grab (ADR-0075) knocks out. */
 const takeDown = (session: GameSession): void => {
   steps(session, 1, CROUCH);
+  steps(session, 1, INTERACT);
   steps(session, 1, INTERACT);
   steps(session, ticks(TAKEDOWN_TIME), CROUCH);
 };

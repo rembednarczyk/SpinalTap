@@ -15,6 +15,13 @@ describe("keyboard and mouse mapping", () => {
     expect(f).toMatchObject({ lookYaw: 0.1, lookPitch: -0.2, fire: true, interact: false, toggleCamera: true });
   });
 
+  it("fires on a click that went down and up since the last poll (ADR-0075)", () => {
+    expect(mapKeyboardMouse(keys([], ["Mouse0"]), { yaw: 0, pitch: 0 }).fire).toBe(true);
+    expect(mapKeyboardMouse(keys([]), { yaw: 0, pitch: 0 }).fire).toBe(false);
+    const map = remap(DEFAULT_KEYMAP, "fire", ["KeyJ"]);
+    expect(mapKeyboardMouse(keys([], ["KeyJ"]), { yaw: 0, pitch: 0 }, map).fire).toBe(true);
+  });
+
   it("jumps on the Space edge (ADR-0021)", () => {
     expect(mapKeyboardMouse(keys(["Space"], ["Space"]), { yaw: 0, pitch: 0 }).jump).toBe(true);
     expect(mapKeyboardMouse(keys(["Space"]), { yaw: 0, pitch: 0 }).jump).toBe(false);

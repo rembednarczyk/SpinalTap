@@ -24,5 +24,7 @@ export const withAttackLock = (session: SessionState, input: InputFrame): InputF
   return { ...input, fire: false };
 };
 
-/** The interaction prompt of a takedown (a key of the content catalogs, ADR-0056). */
+/** The interaction prompt of a takedown (a key of the content catalogs, ADR-0056): the key grabs. */
 export const TAKEDOWN_PROMPT = "prompt.takedown";
+/** The prompt of a grab waiting for the choice (ADR-0075): the interact key knocks out, the attack button kills. */
+export const GRAB_PROMPT = "prompt.grab";

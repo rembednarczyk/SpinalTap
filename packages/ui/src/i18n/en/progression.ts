@@ -96,7 +96,7 @@ export const enProgression = {
   "perk.shadow_soft_steps.name": "Soft Steps",
   "perk.shadow_soft_steps.desc": "Your steps and landings are 25% quieter per rank",
   "perk.shadow_quick_takedown.name": "Quick Takedown",
-  "perk.shadow_quick_takedown.desc": "Takedowns take 20% less time per rank",
+  "perk.shadow_quick_takedown.desc": "Knocking out or killing a grabbed target takes 20% less time per rank; the time to choose stays",
   "perk.shadow_low_profile.name": "Low Profile",
   "perk.shadow_low_profile.desc": "Guards, cameras and disguise checks spot you 5% slower per rank",
   "perk.shadow_mule.name": "Mule",

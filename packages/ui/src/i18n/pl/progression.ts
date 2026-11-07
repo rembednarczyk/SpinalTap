@@ -92,7 +92,7 @@ export const plProgression = {
   "perk.shadow_soft_steps.name": "Ciche kroki",
   "perk.shadow_soft_steps.desc": "Kroki i lądowania o 25% cichsze na rangę",
   "perk.shadow_quick_takedown.name": "Szybki chwyt",
-  "perk.shadow_quick_takedown.desc": "Obezwładnienie trwa o 20% krócej na rangę",
+  "perk.shadow_quick_takedown.desc": "Ogłuszenie albo zabicie chwyconego celu trwa o 20% krócej na rangę; czas na wybór bez zmian",
   "perk.shadow_low_profile.name": "Niski profil",
   "perk.shadow_low_profile.desc": "Strażnicy, kamery i sprawdzanie przebrania wykrywają cię o 5% wolniej na rangę",
   "perk.shadow_mule.name": "Muł",
