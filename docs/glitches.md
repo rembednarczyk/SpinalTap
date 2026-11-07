@@ -1501,7 +1501,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (AI, ruch)
 
 ### G-497 Pastorał grobli przy wiadukcie w232362907 stoi na trawie (T-235)
-- Status: zgłoszone (7.11, kurator przeglądu #374)
+- Status: w PR #381 (7.11, przegląd kuratora; zgłoszone przez kuratora przeglądu #374)
 - Ważność: S4 · Zasięg: 1 `lamp-pastoral` (757,6; 175,0), 1,45 m poza kostką; oś Zamkowej leży tu na ziemi mostu, której `Site` nie widzi (`surfaceAt` zwraca null), więc `byPaving` się nie włącza i zostaje FALLBACK 5 m; poprawka: krawędź mierzona też z osi na moście albo z kostki przyczółka; kontrola `lamp-off-band` baza 1 → 0
 - Pakiet właściciela: tools/osm-import (props)
 
