@@ -35,7 +35,7 @@ import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
 import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
-import { alchemiaHidesLandmarks, padsUnregistered } from "./alchemia-checks";
+import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
@@ -1211,6 +1211,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     ),
   /** Alchemia's solids hiding a landmark's top from more than a quarter of the streets round it (ADR-0074, review of #312). */
   "game-solid-landmark-occlusion": () => alchemiaHidesLandmarks(),
+  /** A building the investor's plan keeps (the Arkady, the shed by them) without a solid on its OSM outline (ADR-0074 §11). */
+  "osm-building-kept": () => osmBuildingsKept(keptInGame()),
   /**
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.

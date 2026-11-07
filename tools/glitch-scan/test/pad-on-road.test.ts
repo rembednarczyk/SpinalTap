@@ -34,7 +34,7 @@ describe("pad-on-road (T-209)", () => {
     expect(isStreet({ highway: "footway", footway: "sidewalk" })).toBe(true);
   });
 
-  it("keeps Świętoduska, its sidewalk and its parking lane on the NMT by Alchemia's T1 (ADR-0042)", () => {
+  it("keeps Świętoduska, its sidewalk and its parking lane on the NMT by Alchemia's T1 and T2 (ADR-0042)", () => {
     const osm = parseExtract(readFileSync(join(__dirname, "../../../data/osm/krakowskie.json"), "utf8"));
     const { lines, areas } = extractFeatures(osm);
     const lane = areas.find((a) => a.id === "w1514058885")!;
@@ -42,7 +42,7 @@ describe("pad-on-road (T-209)", () => {
     expect(ways).toHaveLength(3);
     const chunk = MAP_CHUNKS.find((c) => c.id === "krakowskie-2-1")!;
     const game = SHAPED_TERRAIN.get(chunk.id)!;
-    const near = (x: number, z: number) => x > 380 && x < 460 && z > 20 && z < 100;
+    const near = (x: number, z: number) => x > 380 && x < 460 && z > 20 && z < 140;
     let worst = 0;
     for (const w of ways) {
       for (let i = 0; i + 1 < w.line.length; i++) {
