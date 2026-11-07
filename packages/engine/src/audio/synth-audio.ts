@@ -2,6 +2,7 @@ import type { AudioBus, AudioCue, AudioListenerPose, AudioPort, AudioScenePort, 
 import { AmbientScape } from "./ambience";
 import { applyBus } from "./audio-graph";
 import { AudioContextHost } from "./audio-context-host";
+import { DialogueLines, type VoiceUrl } from "./dialogue-lines";
 import { LayeredMusic } from "./layered-music";
 import { MixState } from "./mixer";
 import { mulberry32 } from "./music";
@@ -16,6 +17,8 @@ import { TickTimer } from "./tick-timer";
 export { CUES, type Recipe, type Voice } from "./cues";
 export { RADIO_STATIONS, RADIO_STATION_IDS, type RadioStationId } from "./radio-stations";
 export { crushCurve } from "./audio-graph";
+export type { VoiceUrl } from "./dialogue-lines";
+export { SPEECH_DUCK_ATTACK, SPEECH_DUCK_DB, SPEECH_DUCK_HOLD, SPEECH_DUCK_RELEASE, SpeechDucker, dbToGain } from "./ducking";
 
 export interface SynthAudioOptions {
   /** Context factory; return null when audio is unavailable. Defaults to `new AudioContext()`. */
@@ -34,6 +37,8 @@ export interface SynthAudioOptions {
   readonly samples?: AudioSampleManifest;
   /** Byte loader for the samples, injectable for tests. Defaults to `fetch`. */
   readonly fetchBytes?: FetchBytes;
+  /** URL of a voiced line's recording by key (ADR-0060); without it every line stays silent. */
+  readonly voiceUrl?: VoiceUrl;
 }
 
 const TICK_MS = 50;
@@ -48,7 +53,8 @@ const CUE_RETRIGGER = 0.025;
  * A facade (ADR-0031): voices and effects live in `SynthVoices`, the soundscape in
  * `AmbientScape`, the music in `LayeredMusic`, the radio in `RadioPlayer`, bus levels in `MixState`,
  * the context in `AudioContextHost`, the scheduler step and the listener pose in `SoundscapeClock`,
- * its timer in `TickTimer`; this class routes the ports to them.
+ * its timer in `TickTimer`, spoken lines and their ducking in `DialogueLines`; this class routes
+ * the ports to them.
  */
 export class SynthAudio implements AudioPort, AudioScenePort {
   private readonly host: AudioContextHost;
@@ -64,6 +70,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
   private readonly music: LayeredMusic;
   private readonly radio: RadioPlayer;
   private readonly clock: SoundscapeClock;
+  private readonly lines: DialogueLines;
   /** Last start of each cue; identical cues in the same instant would only phase and cost voices. */
   private readonly lastCue = new Map<AudioCue, number>();
 
@@ -77,6 +84,8 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.music = new LayeredMusic(this.voices, this.mix);
     this.radio = new RadioPlayer(this.voices);
     this.clock = new SoundscapeClock({ voices: this.voices, ambient: this.ambient, music: this.music, radio: this.radio });
+    // Voice files are many and large: their own bank, filled line by line, not with the samples.
+    this.lines = new DialogueLines(new SampleBank(opts.fetchBytes), opts.voiceUrl);
   }
   /** True while the recorded rain loop plays instead of the synthesized hiss alone. */
   get recordedRain(): boolean {
@@ -110,6 +119,16 @@ export class SynthAudio implements AudioPort, AudioScenePort {
   /** The station heard right now: her own, a speaker's nearby, or none (debug, tests). */
   get radioAudible(): RadioStationId | null {
     return this.radio.audible;
+  }
+
+  /** Key of the voiced line speaking now, null when silent (debug, tests). */
+  get lineSpeaking(): string | null {
+    return this.lines.speaking;
+  }
+
+  /** Linear factor of the duck under speech on music and radio, 1 at rest (debug, tests). */
+  get speechDuck(): number {
+    return this.lines.ducker.factor;
   }
 
   /** Level of the score under the radio, 0..1 (debug, tests). */
@@ -161,6 +180,8 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.ambient.stop(now);
     this.music.stop(g, now);
     this.radio.stop(now);
+    this.lines.stop(now);
+    if (g) this.applyDuck(g, now);
   }
 
   // ------------------------------------------------------------------------ AudioScenePort
@@ -186,6 +207,34 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     return this.mix.get(bus);
   }
 
+  /**
+   * A voiced line on the dialogue bus; music and radio duck under it. Silent before the first
+   * gesture and for a key without a recording. Resolves true once the line plays.
+   */
+  async playLine(key: string): Promise<boolean> {
+    const g = this.host.graph;
+    if (!g) return false;
+    const started = await this.lines.play(g, key);
+    this.applyDuck(g, g.ctx.currentTime);
+    return started;
+  }
+
+  stopLine(): void {
+    const g = this.host.graph;
+    if (!g) return;
+    this.lines.stop(g.ctx.currentTime);
+    this.applyDuck(g, g.ctx.currentTime);
+  }
+
+  /** Moves the speech duck to `now` and eases music and radio to it when it changed. */
+  private applyDuck(g: NonNullable<AudioContextHost["graph"]>, now: number): void {
+    const factor = this.lines.ducker.update(now);
+    if (factor === this.mix.speechDuck) return;
+    this.mix.setSpeechDuck(factor);
+    applyBus(g, this.mix, "music", now);
+    applyBus(g, this.mix, "radio", now);
+  }
+
   // ---------------------------------------------------------------------------- Soundscape
 
   /** Rain, traffic, neon hum, steam and the music loop. Idempotent. */
@@ -199,6 +248,8 @@ export class SynthAudio implements AudioPort, AudioScenePort {
   /** One scheduler step; driven by the internal timer, public for tests. */
   tick(): void {
     const g = this.host.graph;
-    if (g) this.clock.tick(g);
+    if (!g) return;
+    this.applyDuck(g, g.ctx.currentTime);
+    this.clock.tick(g);
   }
 }
