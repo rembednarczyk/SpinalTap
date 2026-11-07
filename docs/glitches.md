@@ -1505,11 +1505,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: widoczna też na main; klucz ALPHATEST razy jasny teksel w ścieżce bez odcienia (etap 2 naprawił tylko ścieżkę TINT)
 - Pakiet właściciela: packages/engine (renderer: toon-shader)
 
-### G-494 Kurosawa wisi nad ziemią
-- Status: zgłoszone (7.11, budowniczy ADR-0076 etap 2)
-- Ważność: S4 · Zasięg: postać stoi na y −2,04 wyżej niż grunt, także na main; na zrzutach z etapu 2 ucina jej głowę
-- Pakiet właściciela: packages/sim (treść) albo packages/engine (renderer), do ustalenia
-
 ### G-495 `models.spec` czasem mierzy klatkę bez aktywnych siatek
 - Status: zgłoszone (7.11, budowniczy ADR-0076 etap 2)
 - Ważność: S4 · Zasięg: na main w dwóch z trzech przebiegów pomiar 324/0 (wywołania / aktywne siatki); pomiar niestabilny, bramka może przepuścić regresję; przy okazji: NPC „doker” w dokach bez wpisu w obsadzie, akcesoria sztywne (fartuch jak deska, dłonie siedzących sprzedawców przez niego)

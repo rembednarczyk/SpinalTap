@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-494 Kurosawa wisi nad ziemią
+- Status: nie odtwarza się (7.11, naprawiacz; Kurosawa w `KUROSAWA_SPOT` (418; 29,4) na parkingu stoi na gruncie: y = `groundY` = −2,0375, renderer podnosi stopy o 0,1 na drodze (ADR-0045); ucięta głowa to kadr speca zrzutów liczony od y z sim bez podniesienia nawierzchni; uwaga do kadrowania zrzutów, nie glitch gry)
+- Ważność: S4 · Zasięg: postać stoi na y −2,04 wyżej niż grunt, także na main; na zrzutach z etapu 2 ucina jej głowę
+- Pakiet właściciela: packages/sim (treść) albo packages/engine (renderer), do ustalenia
+
 ### G-485 `pushOut` kończy się odepchnięciem od ciał bez ponownego sprawdzenia brył
 - Status: naprawione (PR #377, 7.11; `pushOut` w każdej iteracji najpierw ciała, potem bryły, a odepchnięcie od ciała przecinające lico bryły jest odrzucane (`crossesSolid`); test `push-out-bodies-solids.test.ts` 127 przypadków, bez poprawki pada 102; `SINK` w `carry-drop-solid.test.ts` 1 mm; hashe G-208 przepisane świadomie, wnikanie posiłków w bryły ponad 1 mm 116/106 → 0/0 kroków; posiłki w tłumie przy ścianie nakładają się do 1,7 cm, zamierzenie)
 - Ważność: S3 · Zasięg: `movement-system.ts`, `ITERATIONS = 2`: ostatni krok to odepchnięcie od innych ciał, bez kolizji z bryłami; postać nachodząca na leżące ciało (zerowa prędkość, nie jest wypychane) przy ścianie zostaje w ścianie, przy cienkiej ścianie przechodzi przez nią; niezależne od G-479; po G-479 runda 2 graczka wchodząca w leżące ciało przy ścianie wnika w nią do 3,5 cm (próg `SINK` 5 cm w `carry-drop-solid.test.ts` do zaostrzenia po naprawie); skutek: graczka stojąca środkiem w cienkiej ścianie (6 cm) odkłada ciało po drugiej stronie, bo bryła ze środkiem graczki nie blokuje odłożenia (G-479); przy okazji: `m1.test.ts` „save/load with deaths and spawns” przekracza limit przy load ok. 22 (146 s), osobno przechodzi (nie podnosić limitu)
