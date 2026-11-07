@@ -1300,11 +1300,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: rejestr topografii jest na gałęzi sesji, więc kontrola w main nie może sprawdzić wiersza (rozważyć przeniesienie `docs/topografia.md` do main albo listę T w danych); budżet `alchemia-tpp` słabo mierzy halę; `raid_north` startuje z zachodu T1 do czasu T2 (etap 2)
 - Pakiet właściciela: tools/glitch-scan, e2e
 
-### G-433 Na telefonie karta skanu zasłania pasek broni i podpowiedź ruchu
-- Status: w PR #353 (7.11, w weryfikacji; zgłoszone 6.11, budowniczy ADR-0059 etap 7)
-- Ważność: S3 · Zasięg: 844×390 i 800×370, karta skanu (Kiroshi) nachodzi na pasek broni i podpowiedź ruchu; do kontroli w `touch-layout`
-- Pakiet właściciela: packages/ui (HUD, skan)
-
 ### G-435 Zapisane ustawienia z K przypisanym do sterowania zostają (`sanitizeBindings` nie odrzuca `RESERVED_KEYS`)
 - Status: zgłoszone (6.11, weryfikator PR #346)
 - Ważność: S4 · Zasięg: K otwiera Rozwój i jednocześnie wykonuje przypisaną akcję; tak samo T i B; poprawka: `sanitizeBindings` odrzuca klucze zarezerwowane z ostrzeżeniem
@@ -1356,7 +1351,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content, pady), tools/glitch-scan
 
 ### G-447 Zabójczy takedown widziany przez jednego przechodnia nigdy nie jest zgłaszany jako zabójstwo
-- Status: zgłoszone (7.11, naprawiacz G-334)
+- Status: w naprawie (7.11; zgłoszone przez naprawiacza G-334)
 - Ważność: S3 · Zasięg: świadek dzwoni tylko o napaść, a będąc już w trakcie połączenia pomija zabójstwo; połączenie o napaści oznacza zwłoki jako zgłoszone, bo zabójczy takedown oznacza ciało jak nokaut (ADR-0065, etap 3); potwierdzone sondą weryfikatora #350: `takedown-system.ts:182` woła `noteViolence(..., target.id)`, `civilianWitness` pomija dzwoniącego, `callThrough` → `bodyReported` oznacza martwe ciało; propozycja: strażnik w `bodyReported`/`callThrough`, żeby zgłoszenie napaści nie oznaczało martwego ciała (może zastąpić `knockOutCallsOver`)
 - Pakiet właściciela: packages/sim (bodies, crime-system)
 
@@ -1384,6 +1379,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, kurator, przegląd G-440; widoczność do potwierdzenia zrzutem)
 - Ważność: S4 · Zasięg: 241 par, 1731 m szczelin w mieście; poprawka: przy imporcie dociągać ściany do sąsiada w odległości ≤ 0,15 m; kontrola `building-sliver` (baza 241)
 - Pakiet właściciela: tools/osm-import (buildings)
+
+### G-453 Karta skanu na telefonie zasłania cel misji
+- Status: zgłoszone (7.11, weryfikator #353; sprzed tego PR, po nim o 24 px szerzej)
+- Ważność: S4 · Zasięg: 4 px przy jednej linii celu, przy 667×375 pl cała druga linia celu (264×20 px); poprawka: karta poniżej celu albo cel nad kartą; dopisać do kontroli `touch-layout`
+- Pakiet właściciela: packages/ui (HUD, skan)
+
+### G-454 E2E: `step` przy zamrożonej symulacji nie przesuwa gracza z wciśniętym drążkiem
+- Status: zgłoszone (7.11, weryfikator #353; do potwierdzenia, może błąd sondy)
+- Ważność: S4 (test) · Zasięg: `step(30)` z drążkiem wciśniętym przez CDP nie rusza gracza, przed i po #353; możliwe, że wejście dotykowe nie idzie przez `step`
+- Pakiet właściciela: e2e (QA), packages/app (input)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

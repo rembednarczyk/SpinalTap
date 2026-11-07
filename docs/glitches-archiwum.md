@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-433 Na telefonie karta skanu zasłania pasek broni i podpowiedź ruchu
+- Status: naprawione (PR #353, 7.11; hacki w siatce 2×2, karta 264×183 px, kółko drążka schowane przy skanerze; zero nachodzeń przy 844×390, 800×370, 667×375)
+- Ważność: S3 · Zasięg: 844×390 i 800×370, karta skanu (Kiroshi) nachodzi na pasek broni i podpowiedź ruchu; do kontroli w `touch-layout`
+- Pakiet właściciela: packages/ui (HUD, skan)
+
 ### G-440 Goły pas 1–1,5 m wzdłuż fasad ul. Kościuszki (T-211)
 - Status: naprawione (PR #352, 7.11; 7 obszarów kostki T-211/* od fasad do osi chodników, 927 + 698 → 0 gołych próbek; landuse-bare bez zmian, bo nie liczy zwykłych domów)
 - Ważność: S4 · Zasięg: x ok. 8–21, z −127…−182 i wschodnia strona ulicy, ok. 1200 punktów `landuse-bare`; poprawka jak T-210/T-164 (`ADDED_AREAS` kostki do ścian)
