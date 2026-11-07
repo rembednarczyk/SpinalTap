@@ -36,11 +36,12 @@ export const xpLevelScale = (level: number): number => {
  * Kaito's (delivery and elimination: Krakowskie, Stare Miasto), Hana's (retrieval, protection:
  * the market, which also has act II) and Genzō's (the docks). Hana's and Genzō's jobs send big
  * crews (four men from level 10, five for a docks infiltration or hack, Tessen's guards worth
- * more than a Hebi), so their bases are below a delivery's, which fights nobody. A delivery is
- * Kaito's job and takes the level of Krakowskie, not of Hana's stall (the user's decision of 7.11).
+ * more than a Hebi), so their bases are below an elimination's. A delivery is Kaito's job and takes
+ * the level of Krakowskie, not of Hana's stall (the user's decision of 7.11); it fights nobody and
+ * comes only there, below level 6 at its full base, so its base holds Krakowskie at 8 levels.
  */
 export const CONTRACT_XP_BASE: Readonly<Record<ContractKind, number>> = {
-  delivery: 500,
+  delivery: 225,
   eliminate: 500,
   retrieve: 350,
   protect: 400,
