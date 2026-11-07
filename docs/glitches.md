@@ -1530,6 +1530,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 1 `lamp-pastoral` (757,6; 175,0), 1,45 m poza kostką; oś Zamkowej leży tu na ziemi mostu, której `Site` nie widzi (`surfaceAt` zwraca null), więc `byPaving` się nie włącza i zostaje FALLBACK 5 m; poprawka: krawędź mierzona też z osi na moście albo z kostki przyczółka; kontrola `lamp-off-band` baza 1 → 0
 - Pakiet właściciela: tools/osm-import (props)
 
+### G-498 Kontrola `underground-level-exit` liczy krawędzie grafu zamiast wyjść
+- Status: zgłoszone (7.11, weryfikator #375)
+- Ważność: S4 · Zasięg: `tools/glitch-scan/test/level-exit-checks.ts`: dwie krawędzie przez jedne drzwi dają „2 wyjścia”, więc kontrola może przepuścić poziom z jednym wyjściem; przy okazji: scena `alchemia-p1` pod ziemią ma aktywne siatki miasta nad sobą (`map-ground` 11, `map-signs` 11, `map-near` 7), brak zasłaniania dla wnętrz podziemnych to kandydat na oszczędność budżetu
+- Pakiet właściciela: tools/glitch-scan, packages/engine (renderer)
+
+### G-499 Migracja do v36 wskrzesza Sachiko z zapisu, w którym była martwa albo ranna
+- Status: zgłoszone (7.11, weryfikator #375)
+- Ważność: S4 · Zasięg: `packages/persistence/src/alchemia-parking.ts` usuwa stan Sachiko (wzorzec `MOVED_PEOPLE` z etapu 1), więc po wczytaniu zapisu v35 wraca zdrowa; wzorzec przyjęty, ale skutek nieopisany w ADR ani w teście
+- Pakiet właściciela: packages/persistence
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
