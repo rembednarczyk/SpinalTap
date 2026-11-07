@@ -1376,12 +1376,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-458 Leżące ciało rysowane na 1,7 m, a kolizja to małe koło: głowa w ścianie
-- Status: zgłoszone (7.11, naprawiacz G-449)
+- Status: w PR #371 (7.11, ADR-0075 etap 2, w weryfikacji; zgłoszone przez naprawiacza G-449)
 - Ważność: S4 · Zasięg: ciało odłożone albo osuwające się twarzą do ściany wchodzi w nią (głowa w witrynie; poza leżenia sięga 0,8–0,9 m od punktu symulacji w kierunku yaw); poprawka: odłożenie z kierunkiem od ściany albo kolizja leżącego ciała
 - Pakiet właściciela: packages/sim (bodies), packages/engine
 
 ### G-459 Bohaterka niesie ciało z wyciągniętym pistoletem
-- Status: zgłoszone (7.11, naprawiacz G-449)
+- Status: w PR #371 (7.11, ADR-0075 etap 2, w weryfikacji; zgłoszone przez naprawiacza G-449)
 - Ważność: S3 · Zasięg: sim blokuje broń przy niesieniu (ADR-0065), ale renderer dalej rysuje pistolet w dłoni
 - Pakiet właściciela: packages/engine (renderer)
 
@@ -1454,6 +1454,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, kurator przeglądu #366)
 - Ważność: S4 · Zasięg: murki grobli Zamkowej w294098689/w294098690 i mur ogrodu Karmelitów (brak w OSM) zostawiają goły grunt; `barrier=wall` nie jest importowane (`features.ts:66`); por. T-178; nowa kontrola `wall-unbuilt` (`barrier=wall` ≤ 5 m od osi drogi pieszej bez bryły)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-479 Odłożone ciało może trafić środkiem w bryłę (kontener) i w niej zostać
+- Status: zgłoszone (7.11, budowniczy ADR-0075 etap 2)
+- Ważność: S3 · Zasięg: `dropBody` w sim stawia ciało 0,6 m przed graczem bez sprawdzania brył; przy kontenerze (391,2..392,8 × −33,6..−32,4) środek ciała wszedł w bryłę i po 30 krokach wypychanie go nie wyciągnęło; sonda renderera (G-458) patrzy wtedy od środka bryły; poprawka w sim: miejsce odłożenia poza bryłami (cofnięcie do gracza albo bok), test w sim; do połączenia z ADR-0075 etap 4 (`settle-body`)
+- Pakiet właściciela: packages/sim
+
+### G-480 Po podniesieniu ciała na ziemi zostaje ciemny przedmiot w miejscu głowy
+- Status: zgłoszone (7.11, budowniczy ADR-0075 etap 2)
+- Ważność: S4 · Zasięg: widoczne na zrzucie niesienia (`4-niesienie-bok.png`); wygląda na nakrycie głowy albo dodatek stroju korpo (`garment-addons.ts`), który nie idzie za niesionym ciałem; prawdopodobnie sprzed etapu 2
+- Pakiet właściciela: packages/engine (renderer)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
