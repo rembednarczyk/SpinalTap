@@ -1466,7 +1466,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: e2e (QA)
 
 ### G-485 `pushOut` kończy się odepchnięciem od ciał bez ponownego sprawdzenia brył
-- Status: w naprawie (7.11, gałąź `ccr-ec2c4269-ilh8k8-g485`; zgłoszone przez weryfikatora #373)
+- Status: w PR #377 (7.11, w weryfikacji; zgłoszone przez weryfikatora #373)
 - Ważność: S3 · Zasięg: `movement-system.ts`, `ITERATIONS = 2`: ostatni krok to odepchnięcie od innych ciał, bez kolizji z bryłami; postać nachodząca na leżące ciało (zerowa prędkość, nie jest wypychane) przy ścianie zostaje w ścianie, przy cienkiej ścianie przechodzi przez nią; niezależne od G-479; po G-479 runda 2 graczka wchodząca w leżące ciało przy ścianie wnika w nią do 3,5 cm (próg `SINK` 5 cm w `carry-drop-solid.test.ts` do zaostrzenia po naprawie); skutek: graczka stojąca środkiem w cienkiej ścianie (6 cm) odkłada ciało po drugiej stronie, bo bryła ze środkiem graczki nie blokuje odłożenia (G-479); przy okazji: `m1.test.ts` „save/load with deaths and spawns” przekracza limit przy load ok. 22 (146 s), osobno przechodzi (nie podnosić limitu)
 - Pakiet właściciela: packages/sim
 
@@ -1519,6 +1519,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, budowniczy ADR-0076 etap 2)
 - Ważność: S4 · Zasięg: na main w dwóch z trzech przebiegów pomiar 324/0 (wywołania / aktywne siatki); pomiar niestabilny, bramka może przepuścić regresję; przy okazji: NPC „doker” w dokach bez wpisu w obsadzie, akcesoria sztywne (fartuch jak deska, dłonie siedzących sprzedawców przez niego)
 - Pakiet właściciela: e2e (QA)
+
+### G-496 Posiłki w dokach mogą stać w bryłach
+- Status: zgłoszone (7.11, naprawiacz G-485; pomiar zgrubny)
+- Ważność: S4 · Zasięg: test `reinforcement-sidestep.test.ts` (G-208) notuje kroki z wnikaniem w bryły do 0,38 m, przed i po G-485 (900 kroków: ziarno 21 ok. 1355, ziarno 5 ok. 1746); licznik filtruje wysokość brył prosto, więc część to może być fałsz; do sprawdzenia sondą
+- Pakiet właściciela: packages/sim (AI, ruch)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
