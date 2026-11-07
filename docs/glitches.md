@@ -1490,6 +1490,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `blocked` w `carry-system.ts` pomija warunek `foothold` z `blocks`; barierka do 0,45 m nad uskokiem nie zatrzymuje ciała, które może spaść z balkonu
 - Pakiet właściciela: packages/sim
 
+### G-487 Ciało bez klucza zmienia wygląd po wczytaniu gry
+- Status: zgłoszone (7.11, weryfikator #372)
+- Ważność: S4 · Zasięg: `stray-bodies.ts:31` liczy `look = fnv1a("#"+id)`, a po wczytaniu `id` jest nowe; rabuś za życia ma `look` z klucza `${id}:m${i}` (`micro-events.ts:54`), więc zmienia wygląd już przy przejściu w ciało; ofiary pomocy z `passerBy` bez klucza tak samo; łamie ADR-0076 §1 (wygląd stały między zapisami); widoczne dopiero od etapu 2 (warianty); naprawa: `look` w `StrayBodySnapshot` (migracja) albo z danych zapisu
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-488 Waga puli modeli niebędąca liczbą daje zawsze ostatni plik
+- Status: zgłoszone (7.11, weryfikator #372)
+- Ważność: S4 · Zasięg: `pickFromPool` w `model-cast.ts`: `weight` = `"abc"` daje NaN i wybór ostatniego pliku puli, także z wagą ujemną; `parseModelManifest` nie sprawdza typu ani znaku `weight`; przy okazji: próg `< 50` MiB w `model-textures.test.ts` nie odróżnia stanu przed i po, a `loadToonModel` nie ma wywołań w kodzie
+- Pakiet właściciela: packages/engine (renderer)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
