@@ -1355,11 +1355,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (test) · Zasięg: przy load ok. 14 pada na limicie 5000 ms, osobno przechodzi; najpierw pomiar kosztu, bez podnoszenia limitu
 - Pakiet właściciela: packages/sim (traffic)
 
-### G-449 Ogłuszona postać stoi: renderer nie zna stanu `unconscious`
-- Status: zgłoszone (7.11, użytkownik; przyczyna potwierdzona w kodzie przez orkiestratora); w naprawie (7.11)
-- Ważność: S2 · Zasięg: każdy nokaut (takedown bez zabicia): `render-sync.ts:79` wysyła `unconscious: true`, ale `packages/engine` nigdzie go nie czyta, więc postać zostaje w pozie stojącej; da się ją tylko nieść. Do sprawdzenia przy okazji: poza niesionego ciała i ciała odłożonego po niesieniu
-- Pakiet właściciela: packages/engine (renderer: character-animation, character-poses)
-
 ### G-450 Goły pas przy fasadach Peowiaków na rogach Kościuszki i przy w67508886 (T-221, T-224)
 - Status: zgłoszone (7.11, kurator, przegląd G-440)
 - Ważność: S4 · Zasięg: ok. 70 m pierzei Peowiaków i 3 m² przy w67508886; poprawka jak T-210 i T-211 (`ADDED_AREAS` od fasad do osi chodników, obszar na dom); test: zero gołych próbek 0,25 m; przy okazji kontrola `facade-footway-bare`

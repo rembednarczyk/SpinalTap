@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-449 Ogłuszona postać stoi: renderer nie zna stanu `unconscious`
+- Status: naprawione (PR #356, 7.11; pozy osunięcia, leżenia, przebudzenia, niesienia przez ramię i odłożenia w rendererze; `knockout-carry.ts` poza `CharacterViews`)
+- Ważność: S2 · Zasięg: każdy nokaut (takedown bez zabicia): `render-sync.ts:79` wysyła `unconscious: true`, ale `packages/engine` nigdzie go nie czyta, więc postać zostaje w pozie stojącej; da się ją tylko nieść. Do sprawdzenia przy okazji: poza niesionego ciała i ciała odłożonego po niesieniu
+- Pakiet właściciela: packages/engine (renderer: character-animation, character-poses)
+
 ### G-447 Zabójczy takedown widziany przez jednego przechodnia nigdy nie jest zgłaszany jako zabójstwo
 - Status: naprawione (PR #355, 7.11; `bodyReported` oznacza martwe ciało tylko przy zgłoszeniu zabójstwa, `knockOutCallsOver` usunięte; nokaut przy przechodniu i zwłoki znalezione w trakcie telefonu: −2 zamiast −3 zgodnie z zasadą jednego czynu z ADR-0070)
 - Ważność: S3 · Zasięg: świadek dzwoni tylko o napaść, a będąc już w trakcie połączenia pomija zabójstwo; połączenie o napaści oznacza zwłoki jako zgłoszone, bo zabójczy takedown oznacza ciało jak nokaut (ADR-0065, etap 3); potwierdzone sondą weryfikatora #350: `takedown-system.ts:182` woła `noteViolence(..., target.id)`, `civilianWitness` pomija dzwoniącego, `callThrough` → `bodyReported` oznacza martwe ciało; propozycja: strażnik w `bodyReported`/`callThrough`, żeby zgłoszenie napaści nie oznaczało martwego ciała (może zastąpić `knockOutCallsOver`)
