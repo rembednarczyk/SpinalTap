@@ -141,6 +141,8 @@ const session = new GameSession({
 // The TPP camera stops at the map's buildings and the terrain too (ADR-0045): the simulation's
 // own ray through its solids, handed to the camera through the app.
 renderer.rig.setOccluder((origin, dir, maxDist) => rayGeometry(session.sim.world, origin, dir, maxDist, true));
+// A lying body is laid clear of every solid, street furniture too (G-458).
+renderer.wallRay = (origin, dir, maxDist) => rayGeometry(session.sim.world, origin, dir, maxDist);
 
 // The shoulder key swaps the TPP side in play; the settings remember it like the menu's choice (G-275).
 input.shoulder.onChange = (left) => session.intents.changeSettings({ shoulder: left ? "left" : "right" });

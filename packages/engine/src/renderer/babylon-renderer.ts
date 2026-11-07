@@ -2,7 +2,7 @@ import { Matrix } from "../babylon";
 import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, PrepareStage, RenderPort, Transform, Vec3, ViewDescriptor } from "@seki/core";
 import type { ChunkDef } from "@seki/sim";
 import { WORLD_CHUNKS } from "@seki/sim";
-import { CameraRig } from "../camera/camera-rig";
+import { type CameraOccluder, CameraRig } from "../camera/camera-rig";
 import { fadeFigure } from "../npr/body-dither";
 import type { Grading } from "../npr/grading";
 import { LineArt } from "../npr/line-art";
@@ -108,6 +108,11 @@ export class BabylonRenderer implements RenderPort {
   readonly farCity: FarCity;
   /** Signs, holo-ads and their street reflections, one draw call (ADR-0030). */
   readonly signage: Signage;
+  /**
+   * The simulation's ray through every solid (street furniture too), set by the app: the walls a
+   * lying body is laid clear of (G-458). The camera's occluder looks past the furniture.
+   */
+  wallRay: CameraOccluder | null = null;
   private readonly characters: CharacterViews;
   /** What the characters do where they stand (ADR-0040). */
   private readonly activities: CharacterActivities;
@@ -180,7 +185,7 @@ export class BabylonRenderer implements RenderPort {
       pose: (id, rig, speed, dt, retarget, clock) => this.activities.apply(id, rig, speed, dt, retarget, clock),
       lift: this.map.liftAt,
       rungs: (x, y, z) => rungsNear(this.props.ladderViews(), x, y, z),
-      wall: wallProbe(scene, (m) => this.props.isBlocker(m), () => this.rig.occluder),
+      wall: wallProbe(scene, (m) => this.props.isBlocker(m), () => this.wallRay),
     });
     const eye = this.rig.camera.position;
     this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"], lift: this.map.liftAt });
