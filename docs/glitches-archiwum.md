@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-489 Scena `s7_poet` stoi wewnątrz bryły budynku
+- Status: naprawione (PR #378, 7.11; scena z (102, −23) w kamienicy w67498725 na (97, −23), płyta placu Litewskiego, 1,6 m od ściany; kontrola `buildingsAt` w `wave2-encounters.test.ts` (pryzmaty budynków, wysokość od gruntu w punkcie) dla 15 scen, pada ze starym punktem; brak testu dojścia pieszo do poety)
+- Ważność: S4 · Zasięg: miejsce sceny `s7_poet` (102, −23) w `encounters.ts` leży w pryzmacie budynku (chunk `krakowskie-1-1`, bryła 318); ruch nie wypycha z głębi pryzmatu (graczka postawiona w (102, −13) dalej w nim stoi); test sceny ulicznej teleportuje graczkę do wnętrza; poprawka: przesunąć scenę na chodnik
+- Pakiet właściciela: packages/sim (treść)
+
 ### G-469 Brak testu unieważniania koszyków `TerrainEntries` przy `set`/`delete`/`clear`
 - Status: naprawione (PR #379, 7.11; sam test `terrain-index.test.ts`, 5 przypadków odczytu przed i po `set`, `delete`, `clear`; mutacja usuwająca czyszczenie koszyków łamie 5/5, 2/5 i 1/5; błędu w kodzie nie znaleziono)
 - Ważność: S4 (test) · Zasięg: mutacja usuwająca unieważnienie koszyków po pierwszym odczycie przechodzi wszystkie testy; gotowa sonda weryfikatora w scratchpadzie sesji `v-g444-stale.test.ts` do przeniesienia do `packages/engine/test`

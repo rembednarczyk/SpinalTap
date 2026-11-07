@@ -1470,11 +1470,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `pickFromPool` w `model-cast.ts`: `weight` = `"abc"` daje NaN i wybór ostatniego pliku puli, także z wagą ujemną; `parseModelManifest` nie sprawdza typu ani znaku `weight`; przy okazji: próg `< 50` MiB w `model-textures.test.ts` nie odróżnia stanu przed i po, a `loadToonModel` nie ma wywołań w kodzie
 - Pakiet właściciela: packages/engine (renderer)
 
-### G-489 Scena `s7_poet` stoi wewnątrz bryły budynku
-- Status: w PR #378 (7.11, w weryfikacji; zgłoszone przez naprawiacza G-479 runda 2)
-- Ważność: S4 · Zasięg: miejsce sceny `s7_poet` (102, −23) w `encounters.ts` leży w pryzmacie budynku (chunk `krakowskie-1-1`, bryła 318); ruch nie wypycha z głębi pryzmatu (graczka postawiona w (102, −13) dalej w nim stoi); test sceny ulicznej teleportuje graczkę do wnętrza; poprawka: przesunąć scenę na chodnik
-- Pakiet właściciela: packages/sim (treść)
-
 ### G-490 Przez strop P−1 Alchemii widać półprzezroczysty stożek
 - Status: zgłoszone (7.11, budowniczy ADR-0074 etap 4)
 - Ważność: S4 · Zasięg: na zrzucie `after/e4-deck.png` stożek (prawdopodobnie poświata latarni albo drona z T0) przechodzi przez strop parkingu; do sprawdzenia też, czy w food hallu z etapu 1 nie pada deszcz pod stropem
