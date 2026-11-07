@@ -1511,7 +1511,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/persistence
 
 ### G-500 Asfalt alejek parkingu w173531008 urywa się na parapetach rampy P−1 i wchodzi pod domek klatki
-- Status: zgłoszone (7.11, kurator przeglądu #375; decyzja użytkownika 7.11: asfalt T0 zamienić na plac i zielony dach, ADR-0074 etap 7)
+- Status: w PR #382 (7.11, ADR-0074 etap 7, przegląd kuratora; decyzja użytkownika 7.11: plac i zielony dach)
 - Ważność: S4 · Zasięg: wykop rampy przecina oś alejki w177513189 na 17,6 m, szyb klatki na 2,2 m, domek klatki stoi na jej zakręcie (zostaje ok. 2,8 m przejazdu); T0 ma nawierzchnię z OSM, choć plan 2026 przewiduje plac i zielony dach; proponowana kontrola `cut-on-road` (baza dziś 3); T-237, T-238
 - Pakiet właściciela: tools/osm-import
 
@@ -1526,13 +1526,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (treść), tools/glitch-scan
 
 ### G-503 Generator mebli nie stawia latarni na pomostach (T-239)
-- Status: zgłoszone (7.11, kurator przeglądu #381)
+- Status: w PR #383 (7.11, przegląd kuratora; zgłoszone przez kuratora przeglądu #381)
 - Ważność: S4 · Zasięg: linia `lamps.zamkowa` przy wiadukcie w232362907 i pomoście grobli: 3 pastorały na gruncie 3,1–5,6 m pod pomostem; poprawka: wysokość stopy z `deckHeightAt` dla latarni linii biegnącej po pomoście; kontrola `lamp-beside-deck` (baza 5, w tym 2 z Nabrzeża)
 - Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
 
 ### G-504 Latarnie i słupy trakcji przebijają pomosty mostów Mełgiewskiej (T-240)
 - Status: zgłoszone (7.11, kurator przeglądu #381; z danych)
-- Ważność: S4 · Zasięg: 3 `lamp-road` i 3 `trolley-pole` stoją pod pomostem, pięć z nich 3,8–4,4 m niżej, więc słup przebija płytę; kontrola `pole-through-deck` dla słupów od 4 m (baza 6, w tym (2445,6; 246,4) z G-361)
+- Ważność: S4 · Zasięg: 3 `lamp-road` i 3 `trolley-pole` stoją pod pomostem, pięć z nich 3,8–4,4 m niżej, więc słup przebija płytę; kontrola `pole-through-deck` dla słupów od 4 m (baza 6, w tym (2445,6; 246,4) z G-361); po G-503 (#383) 3 `lamp-road` stoją już na pomoście, zostają słupy trakcji
 - Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
