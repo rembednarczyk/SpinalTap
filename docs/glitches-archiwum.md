@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-465 Krótkie kliknięcie lub stuknięcie ataku gubi strzał (brak krawędzi `fire` w klatce)
+- Status: naprawione (PR #359, 7.11; `fire` w klatce to trzymanie albo krawędź naciśnięcia w `virtual-pad.ts` i `keymap.ts`; krótkie kliknięcie oddaje jeden strzał, trzymanie bez zmian)
+- Ważność: S3 · Zasięg: `fire` w klatce to stan trzymania (`virtual-pad.ts` `poll()`, `keymap.ts:143`); naciśnięcie i puszczenie między dwoma odczytami wejścia nie oddaje strzału ani nie wybiera „Zabij” w chwycie; przy 15–20 kl./s na telefonie dotyczy stuknięć krótszych niż 50–66 ms
+- Pakiet właściciela: packages/engine (input), packages/app (kontrolery)
+
 ### G-449 Ogłuszona postać stoi: renderer nie zna stanu `unconscious`
 - Status: naprawione (PR #356, 7.11; pozy osunięcia, leżenia, przebudzenia, niesienia przez ramię i odłożenia w rendererze; `knockout-carry.ts` poza `CharacterViews`)
 - Ważność: S2 · Zasięg: każdy nokaut (takedown bez zabicia): `render-sync.ts:79` wysyła `unconscious: true`, ale `packages/engine` nigdzie go nie czyta, więc postać zostaje w pozie stojącej; da się ją tylko nieść. Do sprawdzenia przy okazji: poza niesionego ciała i ciała odłożonego po niesieniu
