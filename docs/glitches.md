@@ -1465,6 +1465,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: po G-457 zwłoki opadają z wysokości korzenia w chwili śmierci, więc przy śmierci w locie albo na drabinie ciało zostaje na tej wysokości (wcześniej spadało na y = 0); poprawka: grunt z terenu pod postacią bez części lotnej albo ragdoll (ADR-0075 etap 5)
 - Pakiet właściciela: packages/engine (renderer)
 
+### G-482 Z perkiem Quick Takedown klip duszenia urywa się w 60%
+- Status: zgłoszone (7.11, weryfikator #371)
+- Ważność: S4 · Zasięg: renderer liczy czas klipu od zmiany fazy (1,2 s), a perk skraca duszenie do 0,72 s; upadek zaczyna się z głową na 1,41 m zamiast 1,28 m (bez skoku, krok 0,074 m/klatkę); poprawka: czas fazy w widoku (`Transform`, zmiana portu) albo skalowanie klipu
+- Pakiet właściciela: packages/engine (renderer), packages/core (ports)
+
+### G-483 Sonda ścian przy odkładaniu ciała może trafiać w teren na stoku
+- Status: zgłoszone (7.11, weryfikator #371; tylko z kodu, niezweryfikowane sondą)
+- Ważność: S4 · Zasięg: `body-lay.ts` sprawdza ściany na 0,3 m nad korzeniem przez `rayGeometry` po wszystkich bryłach, w tym terenie; na stoku ponad ok. 30% ciało może się obrócić albo przesunąć bez ściany; do sprawdzenia testem na nachylonym terenie
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-484 `npr-perf` „Rynek” przekracza 90 s przy load ok. 17
+- Status: zgłoszone (7.11, weryfikator #371)
+- Ważność: S4 · Zasięg: lokalnie strona padła przy `page.evaluate` w czasie strojenia miasta, powtórka przy load 16–19 zielona; CI zielone; nie podnosić limitu, najpierw ślad (ADR-0046)
+- Pakiet właściciela: e2e (QA)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
