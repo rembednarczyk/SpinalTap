@@ -978,7 +978,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-334 Zabójstwo ogłuszonego gangera po nokaucie zgłoszonym wcześniej nigdy nie jest zgłaszane jako zabójstwo
-- Status: zgłoszone (5.11, weryfikator PR #278; sprzed tego PR, ADR-0065)
+- Status: w naprawie (7.11; zgłoszone 5.11, weryfikator PR #278; sprzed tego PR, ADR-0065)
 - Ważność: S3 · Zasięg: `corpseOf` przenosi na zwłoki `reported` z nokautu (`bodies.ts:75`), więc patrol, który znajdzie świeże ciało, go nie zgłasza; po wczytaniu dobicie ogłuszonego na oczach patrolu też nie jest przestępstwem, bo `wronged` jest przejściowe, a `offend` w `death-system.ts:72` nie czyta `downed.fought`
 - Pakiet właściciela: packages/sim (bodies, death-system, crime-system)
 
@@ -1266,7 +1266,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, packages/core (save-snapshot), packages/persistence
 
 ### G-423 Pomniki przyrody bez swojego gatunku (dęby i topola „Baobab” jako lipy i klony)
-- Status: zgłoszone (6.11, kurator)
+- Status: w PR #348 (7.11, przegląd kuratora; zgłoszone 6.11, kurator)
 - Ważność: S4 · Zasięg: 3 drzewa na Placu Litewskim; poprawka: `species`/`genus` z OSM (Quercus, Populus), model dębu; kontrola `tree-species-ignored`
 - Pakiet właściciela: tools/osm-import, packages/engine (assety)
 
