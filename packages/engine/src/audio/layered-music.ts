@@ -71,6 +71,7 @@ export class LayeredMusic {
     if (ducked !== this.mix.isDucked) {
       this.mix.setDucked(ducked);
       applyBus(g, this.mix, "music", now);
+      applyBus(g, this.mix, "radio", now);
     }
     if (mood === this.mood || !this.on) return;
     this.fadeFrom = this.mood;

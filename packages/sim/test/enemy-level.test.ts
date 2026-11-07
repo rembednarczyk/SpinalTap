@@ -88,8 +88,8 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
   });
 
   it("a level-up regrades the enemies about at the same share of health, and a load builds them the same", () => {
-    // One kill short of level 2: the courier pays 60 XP.
-    const sim = atLevel(alleySim({ seed: 3 }), 1, 90);
+    // One kill short of level 2: the courier of level 1 pays 60 XP, the floor below level 6 (ADR-0059 stage 8).
+    const sim = atLevel(alleySim({ seed: 3 }), 1, 99);
     const player = sim.player()!;
     const guard = byKey(sim, "guard")!;
     guard.health = { current: 40, max: GANGER_MAX_HP };
@@ -116,6 +116,10 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
     expect(contractLevelOf(1, "hebi_stash")).toBe(10);
     expect(contractLevelOf(12, "east_lot")).toBe(8);
     expect(contractLevelOf(1, "tessen_office")).toBe(16);
+    // A delivery to Hana's stall is Kaito's job, of Krakowskie's band (the user's decision of 7.11).
+    expect(contractLevelOf(12, "hana_stall")).toBe(12);
+    expect(contractLevelOf(12, "hana_stall", "delivery")).toBe(8);
+    expect(contractLevelOf(1, "hana_stall", "delivery")).toBe(1);
     sim.enqueue({ type: "accept-contract", kind: "retrieve" });
     sim.step();
     const c = sim.domain.contracts.active!;

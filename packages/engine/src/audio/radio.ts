@@ -23,7 +23,7 @@ interface RadioNodes {
 /**
  * The radio (ADR-0036): the player's own station, or the station of the loudest speaker nearby.
  * One station plays at a time and only while audible, so a silent radio schedules nothing. It
- * runs on the music bus, so dialogue ducks it like the score.
+ * runs on its own radio bus (ADR-0060), which dialogue ducks like the score.
  */
 export class RadioPlayer {
   private own: RadioStationId | null = null;
@@ -130,7 +130,7 @@ export class RadioPlayer {
     const pan = typeof ctx.createStereoPanner === "function" ? ctx.createStereoPanner() : null;
     let node: AudioNode = input.connect(level).connect(lowCut);
     if (pan) node = node.connect(pan);
-    node.connect(highCut).connect(g.buses.music);
+    node.connect(highCut).connect(g.buses.radio);
     return { input, level, pan, lowCut, highCut };
   }
 

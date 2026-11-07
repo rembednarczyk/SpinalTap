@@ -370,6 +370,13 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
+    // Back to the hashes before ADR-0059 stage 8, round 2 (all of them): with the floor of round 3
+    // a kill's XP is the type's own up to level 6, so the brawler the player of level 1 downs is
+    // worth 70 XP again, not 4. The only XP the scripted run above earns is a quest step's, so its
+    // hashes stand; contracts' XP and kills above level 1 show in no golden hash (the balance test
+    // and progression tests cover them).
+    // On top of that, re-recorded for the v34 version (ADR-0074 stage 2, see the first golden test):
+    // b036f5d7 before it.
     expect(hashOf(sim)).toMatchInlineSnapshot(`"f0ccb612"`);
     expect(v31HashOf(sim)).toBe("5ce46e55");
     expect(v30HashOf(sim)).toBe("ae6c21d0");

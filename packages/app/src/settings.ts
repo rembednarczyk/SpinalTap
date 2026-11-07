@@ -1,4 +1,4 @@
-import { type AudioScenePort, FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, isLocale, radToDeg } from "@seki/core";
+import { type AudioBus, type AudioScenePort, FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, isLocale, radToDeg } from "@seki/core";
 import {
   type AimAssistMode,
   type AimMode,
@@ -111,6 +111,10 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     musicVolume: clamp(r.musicVolume, 0, 1, defaults.musicVolume),
     sfxVolume: clamp(r.sfxVolume, 0, 1, defaults.sfxVolume),
     ambienceVolume: clamp(r.ambienceVolume, 0, 1, defaults.ambienceVolume),
+    // ADR-0060 stage 1: new fields, so SETTINGS_REV stays. Spoken lines start at full volume;
+    // the radio, which played on the music bus, keeps the level an old entry chose for music.
+    dialogueVolume: clamp(r.dialogueVolume, 0, 1, defaults.dialogueVolume),
+    radioVolume: clamp(r.radioVolume, 0, 1, r.radioVolume === undefined ? clamp(r.musicVolume, 0, 1, defaults.radioVolume) : defaults.radioVolume),
     bindings: sanitizeBindings(r.bindings),
     hints: typeof r.hints === "boolean" ? r.hints : defaults.hints,
     // Entries saved before autosave existed keep it on.
@@ -178,13 +182,25 @@ export const applyEffects = (target: object, settings: Pick<SettingsVm, "reduceF
   if (settings.highlights !== undefined) (target as EffectsTarget).setHighlights?.(settings.highlights);
 };
 
+/** Setting of each mix bus (ADR-0060 stage 1). */
+export const VOLUME_SETTINGS = {
+  master: "volume",
+  music: "musicVolume",
+  sfx: "sfxVolume",
+  ambience: "ambienceVolume",
+  dialogue: "dialogueVolume",
+  radio: "radioVolume",
+} as const satisfies Record<AudioBus, keyof SettingsVm>;
+
+export type VolumeSettings = Pick<SettingsVm, (typeof VOLUME_SETTINGS)[AudioBus]>;
+
 /** The volumes of the settings on the mix (master and the buses, ADR-0060 stage 1). */
-export const applyVolumes = (audio: Pick<AudioScenePort, "setVolume">, s: Pick<SettingsVm, "volume" | "musicVolume" | "sfxVolume" | "ambienceVolume">): void => {
-  audio.setVolume("master", s.volume);
-  audio.setVolume("music", s.musicVolume);
-  audio.setVolume("sfx", s.sfxVolume);
-  audio.setVolume("ambience", s.ambienceVolume);
+export const applyVolumes = (audio: Pick<AudioScenePort, "setVolume">, s: VolumeSettings): void => {
+  for (const [bus, key] of Object.entries(VOLUME_SETTINGS) as [AudioBus, keyof VolumeSettings][]) audio.setVolume(bus, s[key]);
 };
+
+/** True when any bus volume differs between the two settings. */
+export const volumesDiffer = (a: VolumeSettings, b: VolumeSettings): boolean => Object.values(VOLUME_SETTINGS).some((k) => a[k] !== b[k]);
 
 /** Settings that the running game cannot change on the fly. */
 /** Only the graphics quality needs a reload; volume and sensitivity apply at once. */
