@@ -108,6 +108,79 @@ for (const [w, h] of [
 }
 
 /**
+ * The scan card on a phone held sideways (G-433): the Kiroshi card at its longest (Polish, an
+ * enemy with its two-digit level, the longest enemy name and faction, each enemy's own line)
+ * stays off the weapon strip, the move hints (the first-run line and the stick's ring), the
+ * minimap and the pad's buttons.
+ */
+for (const [w, h] of [
+  [844, 390],
+  [800, 370],
+  [667, 375],
+] as const) {
+  test.describe(`phone ${w}x${h} scan card`, () => {
+    test.use({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+
+    test(`phone: the scan card covers nothing at ${w}x${h}`, async ({ page }) => {
+      test.setTimeout(180_000);
+      await page.goto("/?seed=7&models=off&audio=off&touch");
+      await waitForGame(page);
+      await newGame(page, "tap");
+      await waitForPlay(page);
+      await freeze(page);
+      await teleport(page, 321.4, -80);
+      await page.evaluate(() => window.__seki!.session.intents.changeSettings({ locale: "pl" }));
+      await step(page, 1);
+      await expect(page.getByTestId("hint")).toBeVisible();
+      await page.getByTestId("touch-scan").tap();
+      await step(page, 1);
+      await expect(page.getByTestId("scanner")).toBeVisible();
+      // Every enemy in reach dressed as the longest card: the name, the faction and a level of two digits.
+      const ids = await page.evaluate(() => {
+        const out: number[] = [];
+        for (const e of window.__seki!.session.sim.world as unknown as Iterable<{ id: number; faction?: string; enemy?: { type: string; level?: number } }>) {
+          if (!e.enemy) continue;
+          e.enemy.type = "kagami_cleaner";
+          e.enemy.level = 10;
+          e.faction = "civilians";
+          out.push(e.id);
+        }
+        return out;
+      });
+      expect(ids.length).toBeGreaterThan(0);
+      const covered: string[] = [];
+      for (const id of ids) {
+        await page.evaluate((targetId) => window.__seki!.emit("ScanFocusChanged", { targetId, kind: "person" }), id);
+        await step(page, 1);
+        await expect(page.getByTestId("scan-level")).toContainText("Poziom 10");
+        await expect(page.getByTestId("hint")).toBeVisible();
+        const card = { name: "scan-card", ...(await page.getByTestId("scan-card").boundingBox())! };
+        expect(card.y >= 0 && card.y + card.height <= h + 0.5, `card ${id} on screen`).toBe(true);
+        // A shorter card, not smaller targets: every hack a 44 px button with its whole name.
+        for (const hack of await page.locator("[data-testid=scan-card] .hacks__btn").all()) {
+          const b = (await hack.boundingBox())!;
+          expect(Math.min(b.width, b.height), `${await hack.getAttribute("aria-label")} at least 44 px`).toBeGreaterThanOrEqual(43.5);
+        }
+        expect(await page.locator("[data-testid=scan-card] .hacks__title").evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth).map((e) => e.textContent))).toEqual([]);
+        const others = page.locator("[data-testid=weapon-strip], [data-testid=hint], .touch__stick-hint, [data-testid=minimap], [data-testid=touch-controls] button");
+        for (let i = 0; i < (await others.count()); i++) {
+          const el = others.nth(i);
+          if (!(await el.isVisible())) continue;
+          const b = (await el.boundingBox())!;
+          const name = (await el.getAttribute("aria-label")) ?? (await el.getAttribute("data-testid")) ?? (await el.getAttribute("class")) ?? `#${i}`;
+          if (!overlap(card, { name, ...b })) continue;
+          const dx = Math.min(card.x + card.width, b.x + b.width) - Math.max(card.x, b.x);
+          const dy = Math.min(card.y + card.height, b.y + b.height) - Math.max(card.y, b.y);
+          covered.push(`${id} × ${name} (${dx.toFixed(0)}×${dy.toFixed(0)} px)`);
+        }
+      }
+      if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, `touch-scan-${w}x${h}.png`) });
+      expect(covered).toEqual([]);
+    });
+  });
+}
+
+/**
  * The Progress tab on a phone held sideways (ADR-0059, stage 7): after a real level up the menu
  * button wears the points, the tab's columns sit side by side on the screen, and every button in
  * it is a 44 px target that spends by tap. The pad and the HUD stay clear while the menu is open.
