@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-457 Zwłoki na podniesionym terenie skaczą na y≈0
+- Status: naprawione (PR #370, 7.11; `startDeath` zapamiętuje wysokość korzenia (teren z sim + podniesienie chodnika) w `rig.deathGround`, `animateDeath` liczy od niej; testy `characters.test.ts` i `character-deaths.test.ts` padają bez poprawki; przypadek śmierci w locie i na drabinie w G-481)
+- Ważność: S3 · Zasięg: `animateDeath` ustawia `root.position.y = 0.12 − sink` w układzie świata, więc ciało na terenie NMT wyżej niż 0 spada pod teren albo wisi; do połączenia z ragdollem
+- Pakiet właściciela: packages/engine (renderer)
+
 ### G-466 Karta dzielnicy na telefonie zasłania przycisk „Użyj”; po zmianie języka zostaje po angielsku
 - Status: naprawione (PR #365, 7.11; karta dzielnicy na telefonie poza „Use” i skokiem, odświeża język; runda 2: w rozmowie węższa kolumna toastów `toasts--talk`, nie wchodzi pod napisy; testy komponentu padają bez poprawki; dialogue-fit, touch-layout, hud-layout 20/20)
 - Ważność: S4 · Zasięg: 667×375 przy przyjeździe na Krakowskie Przedmieście karta zasłania „Użyj”, na 800×370 podobnie pierwsza linia podpowiedzi ruchu; karta pokazana przed zmianą języka nie przechodzi na pl

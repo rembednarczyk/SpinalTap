@@ -1370,11 +1370,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (test) · Zasięg: przy zmianie id gangerzy stoją ok. 600 kroków przy wschodniej ścianie hali (x 436,4), test wisi na granicy 960 kroków
 - Pakiet właściciela: packages/sim (AI, treść Alchemii), packages/app (test)
 
-### G-457 Zwłoki na podniesionym terenie skaczą na y≈0
-- Status: w PR #370 (7.11, w weryfikacji; zgłoszone przez naprawiacza G-449)
-- Ważność: S3 · Zasięg: `animateDeath` ustawia `root.position.y = 0.12 − sink` w układzie świata, więc ciało na terenie NMT wyżej niż 0 spada pod teren albo wisi; do połączenia z ragdollem
-- Pakiet właściciela: packages/engine (renderer)
-
 ### G-458 Leżące ciało rysowane na 1,7 m, a kolizja to małe koło: głowa w ścianie
 - Status: w PR #371 (7.11, ADR-0075 etap 2, w weryfikacji; zgłoszone przez naprawiacza G-449)
 - Ważność: S4 · Zasięg: ciało odłożone albo osuwające się twarzą do ściany wchodzi w nią (głowa w witrynie; poza leżenia sięga 0,8–0,9 m od punktu symulacji w kierunku yaw); poprawka: odłożenie z kierunkiem od ściany albo kolizja leżącego ciała
