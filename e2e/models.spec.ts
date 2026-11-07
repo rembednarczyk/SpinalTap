@@ -1,11 +1,9 @@
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { freeze, step, newGame, waitForGame, waitForPlay } from "./helpers";
+import { freeze, sampleNow, step, newGame, waitForGame, waitForPlay } from "./helpers";
 
-/**
- * Draw calls with the whole cast dressed (ADR-0046): measured 480 and 483 with all 12 characters
- * in range dressed (Lublin, ADR-0045); the passers-by's hand props move it by a few.
- */
-const MODELS_DRAW_CALLS = 495;
+/** The whole cast dressed (ADR-0046): its budget sits with the scenes' in `tools/perf-budgets.json`. */
+const budget = (JSON.parse(readFileSync("tools/perf-budgets.json", "utf8")) as { scenes: Record<string, { drawCalls: number; activeMeshes: number }> }).scenes["models"]!;
 
 test("placeholder VRoid cast dresses the characters", async ({ page }) => {
   test.setTimeout(150_000);
@@ -22,11 +20,15 @@ test("placeholder VRoid cast dresses the characters", async ({ page }) => {
   await step(page, 10, { moveZ: 1 });
   await page.waitForFunction(() => window.__seki!.modelsLoading() === 0, null, { timeout: 30_000 });
   await step(page, 1);
-  const perf = await page.evaluate(() => window.__seki!.perf());
+  // A frame drawn after the steps (G-495): the last one drawn before them may be the start's,
+  // with no active meshes, and read at once it passed any draw-call budget.
+  const perf = await sampleNow(page);
   const dressed = await page.evaluate(() => window.__seki!.dressed());
   test.info().annotations.push({ type: "models", description: `${dressed} dressed, ${perf.drawCalls} draw calls, ${perf.activeMeshes} active meshes` });
   // A new game wakes in the clinic in Lublin (ADR-0045) with Kaito, Mori, the Neon Koi cast and
   // the passers-by of the deptak in range, every one of them dressed.
-  expect(perf.drawCalls).toBeLessThanOrEqual(MODELS_DRAW_CALLS);
+  expect(perf.activeMeshes).toBeGreaterThan(0);
+  expect(perf.drawCalls).toBeLessThanOrEqual(budget.drawCalls);
+  expect(perf.activeMeshes).toBeLessThanOrEqual(budget.activeMeshes);
   expect(errors).toEqual([]);
 });
