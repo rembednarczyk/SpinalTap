@@ -54,18 +54,20 @@ export const MORI_MODULE_FLAG = "mori_module";
 
 /**
  * Main thread, act I. Each step recovers one memory fragment; the flashback scene (ink
- * `recall_<memory>`) must be played before the next step can complete.
+ * `recall_<memory>`) must be played before the next step can complete. Its XP (1350, 4600 before
+ * the balance test of ADR-0059 stage 8) is about three fifths of a level at levels 5 to 9, as act
+ * II's 7100 is at 16 to 23; the old amount was two levels there.
  */
 export const QUEST_ECHO: QuestDefinition = {
   id: "m3_echo",
-  xp: 2500,
+  xp: 700,
   title: "quest.m3_echo.title",
   main: true,
   startsAfter: QUEST_FIRST_CONTRACT.id,
   steps: [
     {
       id: "echo_contract",
-      xp: 500,
+      xp: 150,
       objective: "quest.m3_echo.echo_contract",
       target: { actor: "fixer" },
       completeWhen: { type: "flag", flag: progressFlag("contract_completed", "echo_contract") },
@@ -73,7 +75,7 @@ export const QUEST_ECHO: QuestDefinition = {
     },
     {
       id: "ask_mori",
-      xp: 400,
+      xp: 100,
       objective: "quest.m3_echo.ask_mori",
       target: { actor: "mori" },
       completeWhen: { type: "all", of: [{ type: "flag", flag: recalledFlag("courier_case") }, { type: "flag", flag: MORI_MODULE_FLAG }] },
@@ -81,7 +83,7 @@ export const QUEST_ECHO: QuestDefinition = {
     },
     {
       id: "new_implant",
-      xp: 500,
+      xp: 150,
       objective: "quest.m3_echo.new_implant",
       target: { actor: "mori" },
       completeWhen: {
@@ -92,7 +94,7 @@ export const QUEST_ECHO: QuestDefinition = {
     },
     {
       id: "decide",
-      xp: 700,
+      xp: 250,
       objective: "quest.m3_echo.decide",
       target: { actor: "mori" },
       completeWhen: { type: "all", of: [{ type: "flag", flag: recalledFlag("crash_night") }, { type: "flag", flag: ACT_ONE_ENDING_FLAG }] },

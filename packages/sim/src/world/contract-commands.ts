@@ -13,9 +13,9 @@ import {
   VARIATION_FROM_COMPLETED,
   applyVariation,
   rollContractVariation,
-  UNDETECTED_CONTRACT_XP,
   breachXp,
   contractXp,
+  undetectedXp,
 } from "@seki/core";
 import { deriveRandom } from "../rng/derive-random";
 import { DOKI_TERMINAL_SPOTS } from "../content/district-doki";
@@ -63,7 +63,7 @@ export const acceptContract = (ctx: SimContext, cmd: Command<"accept-contract">)
       tick: ctx.tick,
       ticksPerSecond: SIM_HZ,
       // The job's level is an enemy's in its site's district (ADR-0059): its crew and pay follow.
-      levelAt: (site) => contractLevelOf(domain.progression.level, site),
+      levelAt: (site, kind) => contractLevelOf(domain.progression.level, site, kind),
     },
     ctx.rng,
   );
@@ -112,8 +112,9 @@ export const completeContract = (ctx: SimContext): void => {
   phoneFromFixer(ctx, giverOfContract(contract), "paid");
   // Experience by difficulty and the job's level (ADR-0059: its district's for her level now, which
   // the contract does not keep), and a stealth bonus when nobody noticed the player.
-  grantXp(ctx, contractXp(kind, contract.targets, contractLevelOf(domain.progression.level, contract.siteId)), "contract");
-  if (!tally.detected) grantXp(ctx, UNDETECTED_CONTRACT_XP, "stealth");
+  const level = contractLevelOf(domain.progression.level, contract.siteId, kind);
+  grantXp(ctx, contractXp(kind, contract.targets, level), "contract");
+  if (!tally.detected) grantXp(ctx, undetectedXp(level), "stealth");
   raiseProgress(ctx, "contract_completed");
 };
 

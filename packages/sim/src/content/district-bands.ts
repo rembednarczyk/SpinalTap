@@ -1,4 +1,4 @@
-import type { ContractSiteId, LevelBand } from "@seki/core";
+import type { ContractKind, ContractSiteId, LevelBand } from "@seki/core";
 import type { Rect } from "./builders";
 import type { DistrictId } from "./world-map";
 
@@ -6,7 +6,10 @@ import type { DistrictId } from "./world-map";
  * The band of difficulty of each district (ADR-0059, stage 5): an enemy there is of the player's
  * level kept within it. Krakowskie (`shinsekai-7`) is where Seki wakes; Stare Miasto (`kanal`)
  * comes next, the market (`targ`: Podzamcze, and since ADR-0063 stage 6 the plot of Alchemia, see
- * `BAND_AREAS`) after it and the docks on the Bystrzyca (`doki`) last. First guesses, to be tuned by the balance test of stage 8.
+ * `BAND_AREAS`) after it and the docks on the Bystrzyca (`doki`) last. The balance test of stage 8
+ * (`test/balance.test.ts`) keeps them: the player leaves Krakowskie at about 9, Stare Miasto at 16
+ * and the market at 23, a little above the tops of 14 and 20, where the jobs stop growing and slow
+ * the pace; only the docks have enemies above 21.
  */
 export const DISTRICT_BANDS: Readonly<Record<DistrictId, LevelBand>> = {
   "shinsekai-7": { min: 1, max: 8 },
@@ -77,3 +80,10 @@ export const CONTRACT_SITE_BANDS: Readonly<Record<ContractSiteId, DistrictId>> =
   tessen_office: "doki",
   quay_terminal: "doki",
 };
+
+/**
+ * Kinds of job whose level is not their site's but their giver's district's (the user's decision
+ * of 7.11): a delivery fights nobody at Hana's stall, in the market's band, and is Kaito's job, so
+ * it takes Krakowskie's band as his eliminations do.
+ */
+export const CONTRACT_KIND_BANDS: Readonly<Partial<Record<ContractKind, DistrictId>>> = { delivery: "shinsekai-7" };

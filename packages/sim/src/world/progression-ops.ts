@@ -3,7 +3,6 @@ import {
   type DomainState,
   type GameCommand,
   type PerkRanks,
-  QUICKHACK_XP,
   type StyleKind,
   type XpSource,
   attributeRam,
@@ -12,6 +11,7 @@ import {
   isAttributeId,
   perkDetectionScale,
   perkRam,
+  quickhackXp,
   recordStyle,
   rememberHack,
   spendAttributePoint,
@@ -43,7 +43,8 @@ export const grantXp = (ctx: SimContext, amount: number, source: XpSource): void
 /**
  * A quickhack landed on `target`, with `key`: only the first one on each target pays (no farming
  * a speaker every second). Targets without one (passers-by; the scanner gives the heat's
- * reinforcements one, G-202) are not remembered across a save, so they pay nothing.
+ * reinforcements one, G-202) are not remembered across a save, so they pay nothing. An enemy's
+ * level against the player's scales it as it does a kill (`quickhackXp`, ADR-0059 stage 8).
  */
 export const grantQuickhackXp = (ctx: SimContext, target: Entity, key: string | undefined): void => {
   if (!key) return;
@@ -51,7 +52,8 @@ export const grantQuickhackXp = (ctx: SimContext, target: Entity, key: string | 
   if (!remembered) return;
   ctx.state.domain = { ...ctx.state.domain, progression: remembered };
   noteFight(ctx, target, "quickhack");
-  grantXp(ctx, QUICKHACK_XP, "hack");
+  const player = remembered.level;
+  grantXp(ctx, quickhackXp(target.enemy?.level ?? player, player), "hack");
 };
 
 /**

@@ -1,4 +1,5 @@
 import {
+  type ContractKind,
   type ContractSiteId,
   type DomainState,
   ENEMY_TYPES,
@@ -11,7 +12,7 @@ import {
   npcWeapon,
 } from "@seki/core";
 import type { World } from "miniplex";
-import { CONTRACT_SITE_BANDS, DISTRICT_BANDS, bandAt } from "../content/district-bands";
+import { CONTRACT_KIND_BANDS, CONTRACT_SITE_BANDS, DISTRICT_BANDS, bandAt } from "../content/district-bands";
 import type { DistrictId } from "../content/world-map";
 import type { Entity } from "./components";
 
@@ -88,5 +89,9 @@ export const regradeEnemies = (world: World<Entity>, playerLevel: number): void 
   }
 };
 
-/** The level of a contract at `site` (ADR-0059): that of a regular enemy in its band. */
-export const contractLevelOf = (playerLevel: number, site: ContractSiteId): number => enemyLevel(playerLevel, DISTRICT_BANDS[CONTRACT_SITE_BANDS[site]]);
+/**
+ * The level of a contract at `site` (ADR-0059): that of a regular enemy in its band, the site's
+ * or, for a kind of `CONTRACT_KIND_BANDS`, the giver's district's.
+ */
+export const contractLevelOf = (playerLevel: number, site: ContractSiteId, kind?: ContractKind): number =>
+  enemyLevel(playerLevel, DISTRICT_BANDS[(kind && CONTRACT_KIND_BANDS[kind]) ?? CONTRACT_SITE_BANDS[site]]);

@@ -1,0 +1,1 @@
+Test balansu przejścia (ADR-0059 etap 8): XP zleceń i wrogów rośnie z poziomem jak koszt poziomu dopiero od poziomu 6 (niżej bez zmian), XP za quickhack zależy od różnicy poziomów tak jak XP za wroga, więc walka zawsze daje co najmniej tyle co quickhack; dostawa od Kaito ma poziom Krakowskiego, akt I daje 1350 XP, a dzielnice dają 8 / 7 / 7 / 7 poziomów i doki kończą drogę na 30.
