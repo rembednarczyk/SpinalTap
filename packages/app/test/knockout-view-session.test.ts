@@ -27,6 +27,9 @@ const knockedOut = () => {
   const guard = world.add(gangerEntity(9000, { key: "test-guard", position: at, yaw: 0 }, null, 80, p.chunk ?? "", undefined, "tessen_guard"));
   steps(session, 1, CROUCH);
   expect(render.transforms.get(guard.id)?.unconscious).toBeUndefined();
+  // The grab (ADR-0075), then the interact key again chooses the knock-out.
+  steps(session, 1, USE);
+  steps(session, 1, CROUCH);
   steps(session, 1, USE);
   steps(session, ticks(TAKEDOWN_TIME) + 1, CROUCH);
   expect(guard.unconscious).toBe(true);
