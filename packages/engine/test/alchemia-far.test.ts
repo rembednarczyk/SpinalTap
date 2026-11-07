@@ -34,7 +34,8 @@ describe("Alchemia's food hall from afar (ADR-0074 stage 1)", () => {
   it("closes the terrain's hole over the hall's whole outline with its roof, within a hand of the detailed one", () => {
     const s = new MeshSink();
     bakeAlchemiaStandIn(s);
-    const cut = ALCHEMIA_CUTS[ALCHEMIA_CUTS.length - 1]!.bounds;
+    // The hall's own cut, after its stairs' (P-1's trench and stair core come after it, stage 4).
+    const cut = ALCHEMIA_CUTS[1]!.bounds;
     expect(cut).toEqual({ minX: FOODHALL.minX, maxX: FOODHALL.maxX, minZ: FOODHALL.minZ, maxZ: FOODHALL.maxZ });
     const misses: string[] = [];
     for (let x = cut.minX + 0.05; x < cut.maxX; x += 1) {

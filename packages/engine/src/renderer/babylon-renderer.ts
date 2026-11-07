@@ -21,6 +21,7 @@ import { cityDroneWorld } from "./drones/drone-world";
 import { cityPatrolWorld } from "./drones/patrol-world";
 import { CapsuleRoomView } from "./rooms/capsule-room-view";
 import { AlchemiaView } from "./alchemia/alchemia-view";
+import { ParkingView } from "./alchemia/parking-view";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCitySlot } from "./map-city-slot";
@@ -121,6 +122,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly capsule: CapsuleRoomView;
   /** Alchemia on Plac Ofiar Getta, its outside and, near it, its inside (ADR-0074 stage 1). */
   private readonly alchemia: AlchemiaView;
+  /** Its car park's P-1 under T0, near it only, and the cars on its ramp (ADR-0074 stage 4). */
+  private readonly parking: ParkingView;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
   /** The metro car between districts (ADR-0036). */
@@ -234,6 +237,7 @@ export class BabylonRenderer implements RenderPort {
       eye: () => eye,
     });
     this.alchemia = new AlchemiaView({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye });
+    this.parking = new ParkingView({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
       stage,
@@ -375,6 +379,7 @@ export class BabylonRenderer implements RenderPort {
     this.drones.update(dt, this.stage.options.reference);
     this.capsule.update();
     this.alchemia.update();
+    this.parking.update(dt, this.stage.options.reference);
     if (this.map.current) (this.platforms ??= this.platformViews()).update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
