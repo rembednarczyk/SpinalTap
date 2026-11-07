@@ -5,6 +5,10 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v34: the lower square T2 before the rebuilt Arkady (ADR-0074 stage 2): no new fields, but an older
+ * save may have the player in the Hebi hollow or on the ground the square levelled; the migration
+ * wakes her on T2, moves the overpass bag before the Arkady's arches and the bags on the square onto
+ * T2, and drops the people there (the lookout comes back under the arches).
  * v33: Alchemia rebuilt by the investor's plan (ADR-0074 stage 1): no new fields, but an older save
  * may have the player in the old hall, its stalls, lift or roof terrace, or on ground the food hall
  * and its terraces changed; the migration wakes her on T1 in front of the food hall, drops the
@@ -56,7 +60,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 33;
+export const SAVE_SCHEMA_VERSION = 34;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {

@@ -3,6 +3,7 @@ import { makeDeck } from "../../world/deck";
 import type { PrismDef } from "../../world/prism";
 import type { StaticProp } from "../builders";
 import { clearedBuilding } from "../cleared-buildings";
+import { ARKADY_OSM_ID, ARKADY_PROP } from "../alchemia/arkady";
 import { buildingView, groundView, markingView, toPoints } from "./index";
 import { type GroundRect } from "./shape";
 import { type BuildingCut, CLEARED, type PassageSite, ROOM_STOREY, type RoomSite, rawHeight } from "./sites";
@@ -271,11 +272,18 @@ export const carvedProp = (b: LublinBuildingData, passages: readonly PassageSite
 /** Old Town buildings sign their shops on wrought-iron brackets (ADR-0048). */
 const oldTownSigns = (prop: StaticProp): StaticProp => (prop.view.kind === "building" ? { ...prop, view: { ...prop.view, signs: "bracket" } } : prop);
 
-/** The buildings of a chunk that stay, as props (rooms cut into those named by `rooms`, passages and cuts through others). */
+/**
+ * The buildings of a chunk that stay, as props (rooms cut into those named by `rooms`, passages and
+ * cuts through others). The map's ruin of the Arkady gives way to the Arkady rebuilt (ADR-0074
+ * stage 2), Alchemia's own solid on its outline drawn by the engine, in its place in the list, so
+ * the ids after it stay as they were; the ruin's outline still holds its place for the content
+ * placed by the map's walls (`places.ts`) and on the city's map.
+ */
 export const chunkBuildings = (c: LublinChunkData, rooms: readonly RoomCut[], passages: readonly PassageSite[] = [], cuts: readonly BuildingCut[] = []): StaticProp[] =>
   c.buildings
     .filter((b) => !clearedBuilding(b))
     .map((b) => {
+      if (b.id === ARKADY_OSM_ID) return ARKADY_PROP;
       const through = passages.filter((p) => p.building === b.id);
       const boxes = cuts.filter((k) => k.building === b.id);
       const prop = through.length > 0 || boxes.length > 0 ? carvedProp(b, through, boxes, c.district) : buildingProp(b, rooms.find((r) => r.site.building === b.id), c.district);
@@ -291,6 +299,7 @@ export const chunkScenery = (c: LublinChunkData, buildings: readonly StaticProp[
     { chunk: c.id, view: { kind: "terrain", grid: terrain }, at: ORIGIN },
     ...c.ground.filter((g) => !clearedSurface(toPoints(g.outline))).flatMap((g): SceneryItem[] => bridgeViews(g).map((view) => ({ chunk: c.id, view, at: ORIGIN }))),
     ...c.markings.map((m): SceneryItem => ({ chunk: c.id, view: markingView(m), at: ORIGIN })),
-    ...buildings.map((p): SceneryItem => ({ chunk: c.id, view: p.view, at: p.center })),
+    // The Arkady (ADR-0074 stage 2) are drawn by Alchemia's own meshes, not as a building of the map.
+    ...buildings.filter((p) => p !== ARKADY_PROP).map((p): SceneryItem => ({ chunk: c.id, view: p.view, at: p.center })),
   ];
 };

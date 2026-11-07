@@ -1,13 +1,14 @@
 import type { Vec3 } from "@seki/core";
 import { ALCHEMIA_PIECES, ALCHEMIA_UNITS, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
+import { arkadyGeometry } from "./arkady-geometry";
 
 /**
  * Alchemia by the investor's plan (ADR-0074 stage 1) as pieces of geometry on the city kit's
  * texture: the simulation's boxes (`ALCHEMIA_PIECES`) coloured by their kind, and what only the
  * eye needs: the front's frame, the units' signs (proper names, drawn without words), the ceiling's
  * light strips. Two sinks: outside (the shell, the green roof, the lift's kiosk, the terraces'
- * steps), drawn from afar, and inside (units, counters, tables, the stairs, the lights), drawn near
+ * steps, T2 with its stairs and the Arkady of stage 2), drawn from afar, and inside (units, counters, tables, the stairs, the lights), drawn near
  * only. Glass is opaque with the inside's warm light in it (ADR-0071's glass). Pure data, no Babylon.
  */
 
@@ -26,6 +27,7 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   step: "trim-light",
   frame: "dark",
   shutter: "metal",
+  memorial: "dark",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */
@@ -145,6 +147,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     boxOf(sink, data, b, swatchOf(p));
   }
   frontFrame(outside, data);
+  arkadyGeometry(outside, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);
   return { outside, inside };
