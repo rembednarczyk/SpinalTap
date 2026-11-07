@@ -4,6 +4,7 @@ import { type Rect, placeAt, placeRect, v } from "./builders";
 import { DOCKS_PLACE } from "./lublin/sites";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
+import { arkadySpanMid } from "./alchemia/arkady";
 import { ARKADY_OUT_YAW, HEBI_STASH_ZONE, byArkady } from "./alchemia/market";
 
 /**
@@ -63,19 +64,19 @@ export const DEVICES: readonly DeviceDef[] = [
   { key: "dev:doki-yard-cam", chunk: DOCKS_CHUNK, kind: "camera", position: docks(-15.5, 3.5, 95.5), yaw: Math.PI / 2, network: "tessen-yard", faction: "tessen" },
   { key: "dev:doki-vending", chunk: DOCKS_CHUNK, kind: "vending", position: docks(-24, 0.95, 127.6), yaw: Math.PI, network: "tessen-office", faction: "tessen" },
   { key: "dev:doki-speaker", chunk: DOCKS_CHUNK, kind: "speaker", position: docks(12, 2.6, 95.8), yaw: 0, network: "tessen-yard", faction: "tessen" },
-  // The market in Alchemia: Hebi's stash before the Arkady, the camera on their arches looking back along them.
+  // The market in Alchemia: Hebi's stash before the Arkady, the camera on their arches looking back along them; each in a span (`ARKADY_PIERS`).
   {
     key: "dev:targ-stash-cam",
     chunk: MARKET_CHUNK,
     kind: "camera",
-    position: byArkady(16.5, 0.4, 3.2),
+    position: byArkady(arkadySpanMid(4), 0.4, 3.2),
     yaw: -2.3,
     network: "hebi-stash",
     faction: "hebi",
     restricted: { ...HEBI_STASH, during: "retrieve" },
   },
-  { key: "dev:targ-neon", chunk: MARKET_CHUNK, kind: "neon", position: byArkady(8.3, 0.1, 4.4), yaw: ARKADY_OUT_YAW, network: "hebi-stash", faction: "hebi" },
-  { key: "dev:targ-speaker", chunk: MARKET_CHUNK, kind: "speaker", position: byArkady(11.8, 0.25, 3.0), yaw: ARKADY_OUT_YAW, network: "hebi-stash", faction: "hebi" },
+  { key: "dev:targ-neon", chunk: MARKET_CHUNK, kind: "neon", position: byArkady(arkadySpanMid(2), 0.1, 4.4), yaw: ARKADY_OUT_YAW, network: "hebi-stash", faction: "hebi" },
+  { key: "dev:targ-speaker", chunk: MARKET_CHUNK, kind: "speaker", position: byArkady(arkadySpanMid(3), 0.25, 3.0), yaw: ARKADY_OUT_YAW, network: "hebi-stash", faction: "hebi" },
 ];
 
 /**

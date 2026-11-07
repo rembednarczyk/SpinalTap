@@ -36,6 +36,7 @@ import { marketChecks } from "./market-pieces";
 import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
 import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
+import { arcadeRhythm, gamePiers } from "./arkady-checks";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
@@ -1213,6 +1214,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "game-solid-landmark-occlusion": () => alchemiaHidesLandmarks(),
   /** A building the investor's plan keeps (the Arkady, the shed by them) without a solid on its OSM outline (ADR-0074 §11). */
   "osm-building-kept": () => osmBuildingsKept(keptInGame()),
+  /** The Arkady's arcade piers off the orthophoto's (ADR-0074 stage 2, G-461): 13 piers, 14 spans, ±0.3 m. */
+  "arcade-rhythm": () => arcadeRhythm(gamePiers()),
   /**
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.

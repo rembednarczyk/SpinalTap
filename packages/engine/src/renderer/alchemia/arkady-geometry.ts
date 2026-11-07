@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ARKADY, ARKADY_FRAME, ARKADY_PIECES, ARKADY_RESTAURANTS, type AlchemiaBox, type AlchemiaPiece, arkadyPoint, arkadySpanMid } from "@seki/sim";
+import { ARKADY, ARKADY_ARCADE_SPAN, ARKADY_FRAME, ARKADY_PIECES, ARKADY_RESTAURANTS, type AlchemiaBox, type AlchemiaPiece, arkadyPoint, arkadySpanAt, arkadySpanMid } from "@seki/sim";
 import { type CityKitData, type GeometrySink, swatchUv } from "../city-kit-data";
 
 /**
@@ -36,7 +36,7 @@ const swatchOf = (p: AlchemiaPiece): string => {
       return b.y1 <= ARKADY.upper && b.z1 - b.z0 <= ARKADY.pier + 0.01 ? "brick" : "wall";
     case "glass": {
       if (b.y0 < ARKADY.upper) return "win-warm";
-      const k = Math.floor((b.x0 + b.x1) / 2 / (ARKADY.length / ARKADY.spans));
+      const k = arkadySpanAt((b.x0 + b.x1) / 2);
       return k % 3 === 1 ? "glass-dark" : "win-warm";
     }
     case "frame":
@@ -57,7 +57,7 @@ const arcadeDress = (sink: GeometrySink, data: CityKitData): void => {
     const m = arkadySpanMid(r.door);
     arkadyBox(sink, data, { x0: m - 1.1, x1: m + 1.1, z0: ARKADY.arcade - 0.1, z1: ARKADY.arcade - 0.04, y0: ARKADY.ground + 2.5, y1: ARKADY.ground + 2.75 }, SIGN[r.cuisine] ?? "neon-cyan");
   }
-  const span = ARKADY.length / ARKADY.spans;
+  const span = ARKADY_ARCADE_SPAN.a0;
   arkadyBox(sink, data, { x0: span + 0.5, x1: ARKADY.length - 1, z0: ARKADY.arcade / 2 - 0.12, z1: ARKADY.arcade / 2 + 0.12, y0: ARKADY.upper - 0.45, y1: ARKADY.upper - 0.37 }, "win-warm");
   // The arches' underside, so the band over the spans reads as arches from below.
   arkadyBox(sink, data, { x0: span, x1: ARKADY.length, z0: 0.02, z1: ARKADY.pier - 0.02, y0: crown - 0.02, y1: crown }, "trim");

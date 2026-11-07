@@ -77,10 +77,10 @@ export const ARKADY = {
   upper: -5.6,
   roof: -2.2,
   attic: 0.7,
-  /** The arcade's depth from the west face, its spans and piers. */
+  /** The arcade's depth from the west face, its spans (`ARKADY_PIERS`) and its piers' width. */
   arcade: 2.4,
-  spans: 12,
-  pier: 0.7,
+  spans: 14,
+  pier: 0.55,
   /** Under the arches: from the floor up to the arches' crown. */
   clear: 2.7,
 } as const;
@@ -94,9 +94,30 @@ const SINK = 0.3;
 /** The attic's thickness. */
 const ATTIC = 0.25;
 
-const SPAN = ARKADY.length / ARKADY.spans;
+/**
+ * The middles of the arcade's 13 piers along the west face, from the south corner, as the PZGiK
+ * orthophoto (5 cm/px) has them (±0.15 m, `docs/topografia.md` T-218): 14 spans, unequal, the
+ * south one 2.95 m (the closed corner room), the north one 3.35 m to the corner.
+ */
+export const ARKADY_PIERS: readonly number[] = [2.95, 6.25, 9.9, 13.6, 17.2, 20.8, 24.55, 28.25, 31.75, 35.4, 39.1, 42.95, 46.4];
+
+/** Span `k` (0-based from the south) between the middles of its piers, or of the building's ends. */
+export const arkadySpan = (k: number): { readonly a0: number; readonly a1: number } => ({
+  a0: k <= 0 ? 0 : (ARKADY_PIERS[k - 1] ?? ARKADY.length),
+  a1: k >= ARKADY_PIERS.length ? ARKADY.length : (ARKADY_PIERS[k] ?? 0),
+});
+
 /** The middle of span `k` (0-based) along the building. */
-export const arkadySpanMid = (k: number): number => (k + 0.5) * SPAN;
+export const arkadySpanMid = (k: number): number => {
+  const s = arkadySpan(k);
+  return (s.a0 + s.a1) / 2;
+};
+
+/** The span `a` along the building lies in. */
+export const arkadySpanAt = (a: number): number => ARKADY_PIERS.filter((p) => p <= a).length;
+
+/** The arcade's floor along the building: from the first pier's middle (the south span is closed) to the north end wall. */
+export const ARKADY_ARCADE_SPAN = { a0: ARKADY_PIERS[0] ?? 0, a1: ARKADY.length - ARKADY.pier } as const;
 
 /** The restaurants behind the arcade: which spans each fills, its kitchen (its sign's colour), its door's span. */
 export interface ArkadyRestaurant {
@@ -108,9 +129,9 @@ export interface ArkadyRestaurant {
 }
 
 export const ARKADY_RESTAURANTS: readonly ArkadyRestaurant[] = [
-  { id: "arkady-south", cuisine: "polish", from: 0, to: 4, door: 2 },
-  { id: "arkady-middle", cuisine: "italian", from: 4, to: 8, door: 5 },
-  { id: "arkady-north", cuisine: "wine", from: 8, to: 12, door: 10 },
+  { id: "arkady-south", cuisine: "polish", from: 0, to: 5, door: 2 },
+  { id: "arkady-middle", cuisine: "italian", from: 5, to: 9, door: 7 },
+  { id: "arkady-north", cuisine: "wine", from: 9, to: 14, door: 11 },
 ];
 
 /** The door onto Lubartowska's pavement, in the upper floor's east wall: from-to along the building. */
@@ -128,14 +149,15 @@ const D = A.depth;
 const groundFloor = (): Piece[] => {
   const crown = A.ground + A.clear;
   const under = A.upper - SLAB;
-  const out: Piece[] = [piece(box(SPAN, L, 0, A.arcade, A.ground - SINK, ARKADY_ARCADE_FLOOR), "step", false)];
-  for (let k = 1; k <= A.spans; k++) {
-    const a = Math.min(k * SPAN - A.pier / 2, L - A.pier);
+  const first = ARKADY_ARCADE_SPAN.a0;
+  const out: Piece[] = [piece(box(first, L, 0, A.arcade, A.ground - SINK, ARKADY_ARCADE_FLOOR), "step", false)];
+  // The 13 piers from the orthophoto and the north corner's.
+  for (const a of [...ARKADY_PIERS.map((m) => m - A.pier / 2), L - A.pier]) {
     out.push(piece(box(a, a + A.pier, 0, A.pier, A.ground - SINK, under), "wall", false));
   }
-  out.push(piece(box(SPAN, L, 0, A.pier, crown, under), "wall", false));
-  out.push(piece(box(SPAN, L, A.arcade, D, A.ground - SINK, under), "wall", false));
-  out.push(piece(box(0, SPAN - A.pier / 2, 0, D, A.ground - SINK, under), "wall", false));
+  out.push(piece(box(first, L, 0, A.pier, crown, under), "wall", false));
+  out.push(piece(box(first, L, A.arcade, D, A.ground - SINK, under), "wall", false));
+  out.push(piece(box(0, first - A.pier / 2, 0, D, A.ground - SINK, under), "wall", false));
   // The arcade's north end: a wall, the way in from T2 is through the arches.
   out.push(piece(box(L - A.pier, L, A.pier, A.arcade, A.ground - SINK, under), "wall", false));
   return out;
@@ -158,14 +180,16 @@ export const ARKADY_SOUTH_DOOR = { c0: 1.9, c1: 3.9, top: 2.4 } as const;
 /** The restaurants' fronts at the back of the arcade (glass, a door each), the corner room's window and the upper floor's, drawn only. */
 const glazing = (): Piece[] => {
   const out: Piece[] = [];
+  const first = ARKADY_ARCADE_SPAN.a0;
   const front = A.arcade - 0.04;
   for (const r of ARKADY_RESTAURANTS) {
     for (let k = Math.max(r.from, 1); k < r.to; k++) {
-      const [a0, a1] = [k * SPAN + A.pier / 2 + 0.25, (k + 1) * SPAN - A.pier / 2 - 0.25];
+      const s = arkadySpan(k);
+      const [a0, a1] = [s.a0 + A.pier / 2 + 0.25, Math.min(s.a1, L - A.pier) - A.pier / 2 - 0.25];
       out.push(piece(box(a0, a1, front, A.arcade, A.ground + (k === r.door ? 0 : 0.5), A.ground + 2.4), k === r.door ? "frame" : "glass", false, false));
     }
   }
-  out.push(piece(box(0.6, SPAN - 0.9, -0.04, 0, A.ground + 0.9, A.ground + 2.4), "glass", false, false));
+  out.push(piece(box(0.6, first - 0.9, -0.04, 0, A.ground + 0.9, A.ground + 2.4), "glass", false, false));
   for (let k = 0; k < A.spans; k++) {
     const m = arkadySpanMid(k);
     out.push(piece(box(m - 0.75, m + 0.75, -0.04, 0, A.upper + 0.9, A.upper + 2.5), "glass", false, false));

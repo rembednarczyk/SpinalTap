@@ -6,9 +6,12 @@ import {
   ALCHEMIA_T2,
   ARKADY,
   ARKADY_ARCADE_FLOOR,
+  ARKADY_ARCADE_SPAN,
+  ARKADY_BUILDING,
   ARKADY_OSM_ID,
   ARKADY_OUTLINE,
   ARKADY_PROP,
+  ARKADY_RESTAURANTS,
   CONTRACT_ITEM_SPOTS,
   HEBI_LOOKOUT_POST,
   HEBI_STASH_ZONE,
@@ -18,11 +21,22 @@ import {
   T2_STAIRS,
   arkadyLocal,
   arkadyPoint,
+  arkadySpanMid,
   groundY,
 } from "../src";
+import { DEVICES } from "../src/content/devices";
 import { chunkBuildings } from "../src/content/lublin/city";
 import { SITE_PLANS } from "../src/content/contract-plans";
 import { MAP_CHUNKS, PADS, RAMPS } from "../src/content/lublin/sites";
+
+/** The middles of the arcade's piers from the south corner on the PZGiK orthophoto (5 cm/px, ±0.15 m, review of #357). */
+const ORTHO_PIERS = [2.95, 6.25, 9.9, 13.6, 17.2, 20.8, 24.55, 28.25, 31.75, 35.4, 39.1, 42.95, 46.4];
+
+/** The arcade's piers as built: the walls on the west face, at most a metre on a side, from under the floor; not the north corner's. */
+const builtPiers = () =>
+  ARKADY_BUILDING.filter((p) => p.kind === "wall" && p.solid)
+    .map((p) => p.box)
+    .filter((b) => b.z0 === 0 && b.z1 <= 1 && b.x1 - b.x0 <= 1 && b.y0 < ARKADY.ground && b.x1 < ARKADY.length - 1e-6);
 
 /**
  * The lower square T2 and the rebuilt Arkady (ADR-0074 stage 2) as content: T2 levelled where the
@@ -44,9 +58,32 @@ describe("T2 and the Arkady (ADR-0074 stage 2)", () => {
     }
   });
 
+  it("stands the arcade's 13 piers where the orthophoto has them, 14 spans (G-461)", () => {
+    const piers = builtPiers();
+    expect(piers).toHaveLength(ORTHO_PIERS.length);
+    expect(ARKADY.spans).toBe(14);
+    piers.forEach((b, i) => {
+      expect(Math.abs((b.x0 + b.x1) / 2 - ORTHO_PIERS[i]!), `pier ${i}`).toBeLessThanOrEqual(0.3);
+      expect(b.x1 - b.x0).toBeGreaterThanOrEqual(0.5);
+      expect(b.x1 - b.x0).toBeLessThanOrEqual(0.6);
+    });
+    expect(arkadySpanMid(0)).toBeCloseTo(2.95 / 2, 2);
+    expect(ARKADY.length - ORTHO_PIERS.at(-1)!).toBeCloseTo(3.35, 1);
+  });
+
+  it("keeps the restaurants' doors, the Hebi stash, its camera, neon, speaker and bag and the lookout in spans, off the piers (G-461)", () => {
+    const along = (p: { x: number; z: number }) => arkadyLocal(p.x, p.z).a;
+    const off = (a: number) => Math.min(...ORTHO_PIERS.map((m) => Math.abs(m - a)));
+    const hebi = DEVICES.filter((d) => d.key.startsWith("dev:targ-")).map((d) => d.position);
+    expect(hebi).toHaveLength(3);
+    const points = [...hebi, CONTRACT_ITEM_SPOTS.hebi_stash!, TARG_OVERPASS_STASH.at, HEBI_LOOKOUT_POST];
+    // Clear of the pier along the face by more than half a crate.
+    for (const p of points) expect(off(along(p)), `${p.x.toFixed(1)},${p.z.toFixed(1)}`).toBeGreaterThan(ARKADY.pier / 2 + 0.3);
+    for (const r of ARKADY_RESTAURANTS) expect(off(arkadySpanMid(r.door)), r.id).toBeGreaterThan(1.2);
+  });
+
   it("keeps the arcade's floor level on T2 under its paving, from its first pier to its north end", () => {
-    const span = ARKADY.length / ARKADY.spans;
-    for (let a = span; a <= ARKADY.length - ARKADY.pier; a += 0.5) {
+    for (let a = ARKADY_ARCADE_SPAN.a0; a <= ARKADY.length - ARKADY.pier; a += 0.5) {
       for (let c = 0; c <= ARKADY.arcade; c += 0.4) {
         const p = arkadyPoint(a, c);
         expect(groundY(p.x, p.z), `${a},${c}`).toBeCloseTo(ALCHEMIA_T2, 2);

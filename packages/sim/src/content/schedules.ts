@@ -4,7 +4,7 @@ import type { ActorSpawn } from "./builders";
 import { UME_CORNER, UME_HOME } from "./district-m0";
 import { GRODZKA_WALK, KANAL_SPOTS } from "./district-kanal";
 import { KANAL_PATROL_SCHEDULES } from "./kanal-patrols";
-import { OYAJI_BACK_DOOR, OYAJI_BACK_ROOM, atUnit, opening } from "./alchemia";
+import { OYAJI_BACK_DOOR, OYAJI_BACK_ROOM, arkadySpanMid, atUnit, byArkady, opening } from "./alchemia";
 import { HALL } from "./alchemia/plan";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
@@ -93,7 +93,8 @@ const hebiLookout = (): ScheduleDef => {
     speed: PATROL_WALK,
     stops: [
       { label: "posterunek", at: hm(5), path: [p], yaw: post.yaw, activity: { cycle: ["guard", "smoke"], minutes: 30 } },
-      { label: "patrol", at: hm(22), path: [p, ground(452, 121), ground(441, 122), ground(434, 108)], yaw: post.yaw, loop: true },
+      // Out from under the arch of his span (between the piers), then round the square.
+      { label: "patrol", at: hm(22), path: [p, byArkady(arkadySpanMid(8), 1.5), ground(452, 121), ground(441, 122), ground(434, 108)], yaw: post.yaw, loop: true },
     ],
   };
 };

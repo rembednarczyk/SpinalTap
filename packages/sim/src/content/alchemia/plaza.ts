@@ -2,7 +2,7 @@ import type { GroundPoint } from "@seki/core";
 import { KRAKOWSKIE_CHUNKS } from "../lublin/krakowskie.generated";
 import { STARE_MIASTO_CHUNKS } from "../lublin/stare-miasto.generated";
 import type { GroundRect, Pad, Ramp } from "../lublin/shape";
-import { ARKADY, arkadyLineX, arkadyPoint } from "./arkady";
+import { ARKADY, ARKADY_ARCADE_SPAN, arkadyLineX, arkadyPoint } from "./arkady";
 import { type Box, type Piece, T1, box, piece } from "./plan";
 
 /**
@@ -42,14 +42,18 @@ const bands = (): GroundRect[] => {
 
 export const T2_RECTS: readonly GroundRect[] = bands();
 
-/** The arcade's floor in the building's frame: from its first pier (the south span is closed) to its north end wall. */
-const ARCADE = { a0: ARKADY.length / ARKADY.spans, a1: ARKADY.length - ARKADY.pier, c0: -0.3, c1: ARKADY.arcade } as const;
+/**
+ * The arcade's floor in the building's frame: from its first pier (the south span is closed) to its
+ * north end wall, and 0.3 m before the arches past the first pier (before it the 4 m grid's next
+ * cell west would pull T1's slope down by the stairs, G-460).
+ */
+const ARCADE = { ...ARKADY_ARCADE_SPAN, c0: -0.3, c1: ARKADY.arcade, before: ARKADY_ARCADE_SPAN.a0 + ARKADY.pier } as const;
 
 /** The grid points of every cell of the map's terrain the arcade's floor touches, once each. */
 const arcadePoints = (): GroundPoint[] => {
   const seen = new Map<string, GroundPoint>();
   for (let a = ARCADE.a0; a <= ARCADE.a1 + 1e-9; a += 0.25) {
-    for (let c = ARCADE.c0; c <= ARCADE.c1 + 1e-9; c += 0.25) {
+    for (let c = a < ARCADE.before ? 0 : ARCADE.c0; c <= ARCADE.c1 + 1e-9; c += 0.25) {
       const p = arkadyPoint(a, c);
       const chunk = CHUNKS.find((k) => p.x >= k.bounds.minX && p.x <= k.bounds.maxX && p.z >= k.bounds.minZ && p.z <= k.bounds.maxZ);
       if (!chunk) continue;

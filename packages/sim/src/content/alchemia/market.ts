@@ -13,7 +13,7 @@ import {
 import { type ActorDef, type Rect, type StaticProp, crate, lamp } from "../builders";
 import { ground, groundY } from "../lublin/terrain";
 import { ALCHEMIA_LIFT } from "./lift";
-import { ARKADY_ARCADE_FLOOR, ARKADY_FRAME, arkadyPoint } from "./arkady";
+import { ARKADY_ARCADE_FLOOR, ARKADY_FRAME, arkadyPoint, arkadySpanMid } from "./arkady";
 import { HALL, NORTH, SOUTH, facing } from "./plan";
 import { KEEPER_SPOTS, KEEPER_YAW, type KeeperKey } from "./units";
 
@@ -56,12 +56,17 @@ export const HEBI_STASH_ZONE: Rect = { minX: 435, maxX: 449, minZ: 86, maxZ: 101
 /** A box standing on the ground at (x, z), sunk a little into the slope's high side. */
 const onGround = (p: StaticProp, sink = 0.08): StaticProp => ({ ...p, center: { ...p.center, y: p.center.y + groundY(p.center.x, p.center.z) - sink } });
 
-const RETRIEVE_CRATE = byArkady(9, 1.8);
+/**
+ * The stash before the third span from the south (6.25..9.9 m, the orthophoto's, `ARKADY_PIERS`),
+ * its cover further out: where they stood by the ruin, which the retrieval's sneaking is laid out round.
+ */
+const STASH_ALONG = 9;
+const RETRIEVE_CRATE = byArkady(STASH_ALONG, 1.8);
 
 /** A lamp standing on the ground at `p`. */
 const lampAt = (p: Vec3, color: string): StaticProp => ({ ...lamp(p.x, p.z, color), center: p });
 
-const COVER = byArkady(9, 4.2);
+const COVER = byArkady(STASH_ALONG, 4.2);
 const BODY_CRATE = byArkady(13.6, 1.5);
 
 /** Hana's cart, the Hebi stash's crates and lights: the market's own things outside the hall. */
@@ -107,7 +112,7 @@ export const TARG_ROOF_STASH: RoofStash = {
 /** The bag left by the Arkady the night of the blockade (ADR-0026; once in the car on the viaduct, then behind the ruin). */
 export const TARG_OVERPASS_STASH: RoofStash = {
   key: "stash:targ-overpass",
-  at: byArkady(30, 1.2, 0.2),
+  at: byArkady(arkadySpanMid(8), 1.2, 0.2),
   lines: [
     { kind: "eddies", qty: 120 },
     { kind: "ammo", ammo: "9mm", qty: 18 },
@@ -161,7 +166,7 @@ const keeper = (key: KeeperKey, interactable: NonNullable<Extract<ActorDef, { ki
 });
 
 /** The Hebi lookout by the Arkady north of the stash, under their arches: watches T2 and the stairs from T1 by day, walks the square at night. */
-export const HEBI_LOOKOUT_POST: Vec3 = { ...byArkady(29.5, -1.2), y: ARKADY_ARCADE_FLOOR };
+export const HEBI_LOOKOUT_POST: Vec3 = { ...byArkady(arkadySpanMid(8), -1.2), y: ARKADY_ARCADE_FLOOR };
 /** He looks south-west down the square, to the stairs from T1 and the stash. */
 const HEBI_LOOKOUT_YAW = Math.atan2(431 - HEBI_LOOKOUT_POST.x, 90 - HEBI_LOOKOUT_POST.z);
 

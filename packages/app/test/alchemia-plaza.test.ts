@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type InputFrame, SAVE_SCHEMA_VERSION } from "@seki/core";
 import { PLAZA_STASHES, PLAZA_WAKE, checksum } from "@seki/persistence";
-import { ALCHEMIA_T1, ALCHEMIA_T2, ARKADY, CONTRACT_ITEM_SPOTS, HEBI_LOOKOUT_POST, TARG_OVERPASS_STASH, T2_STAIRS, arkadyLocal, arkadyPoint, groundY } from "@seki/sim";
+import { ALCHEMIA_T1, ALCHEMIA_T2, ARKADY, CONTRACT_ITEM_SPOTS, HEBI_LOOKOUT_POST, TARG_OVERPASS_STASH, T2_STAIRS, arkadyLocal, arkadyPoint, arkadySpanMid, groundY } from "@seki/sim";
 import { setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 
@@ -60,13 +60,13 @@ describe("T2 before the Arkady (ADR-0074 stage 2)", () => {
 
   it("lets her in under the arches on their level floor, and the restaurants' fronts stop her", () => {
     const { session } = start();
-    const before = arkadyPoint(18.6, -4);
+    const before = arkadyPoint(arkadySpanMid(5), -4);
     teleport(session, before.x, before.z, 0);
     steps(session, 3);
     quiet(session);
     const p = session.sim.player()!;
-    // In through the arch of the fifth span, on to the restaurants' glass behind.
-    const deep = arkadyPoint(18.6, 4);
+    // In through the arch of the sixth span (`ARKADY_PIERS`), on to the restaurants' glass behind.
+    const deep = arkadyPoint(arkadySpanMid(5), 4);
     walkAt(session, deep, 300);
     const inside = arkadyLocal(p.position.x, p.position.z);
     expect(inside.c).toBeGreaterThan(0.8);
