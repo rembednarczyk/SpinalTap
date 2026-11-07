@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { CAST_KEYS, type ViewDescriptor } from "@seki/core";
+import { CAST_KEYS, type ViewDescriptor, contractEscortKey } from "@seki/core";
 import { CAST_OF_SPAWN, ENCOUNTERS, KANAL_PATROL_ACTORS, castViewOf, ground } from "../src";
 import { GAME_ACTORS } from "../src/content/street-props";
-import { actorEntity } from "../src/world/factory";
+import { actorEntity, escortEntity } from "../src/world/factory";
 import { passerbyEntity } from "../src/world/passersby";
 import { teleportPlayer, run } from "./helpers";
 import { street } from "./micro-scenes";
@@ -21,18 +21,29 @@ describe("the cast in the views (ADR-0076)", () => {
     expect(viewOfActor("fixer")).toMatchObject({ kind: "npc", preset: "fixer", cast: "kaito" });
     expect(viewOfActor("ume")).toMatchObject({ kind: "npc", preset: "civilian", cast: "ume" });
     expect(viewOfActor("kurosawa")).toMatchObject({ kind: "npc", preset: "fixer", cast: "kurosawa" });
+    // Neon Koi's barman and regulars have names of their own since stage 2.
+    expect(castOf(viewOfActor("koi-barman"))).toBe("barman");
+    expect(castOf(viewOfActor("koi-regular-2"))).toBe("koi-regular-2");
     // The background has a look but no name.
-    expect(castOf(viewOfActor("koi-barman"))).toBeUndefined();
-    expect(lookOf(viewOfActor("koi-barman"))).toEqual(expect.any(Number));
     expect(castOf(viewOfActor("guard"))).toBeUndefined();
+    expect(lookOf(viewOfActor("guard"))).toEqual(expect.any(Number));
   });
 
   it("covers every name of the cast, by a character the content places (an actor or a street scene)", () => {
     const placed = new Set([...ACTORS.map((a) => a.spawn.key), ...ENCOUNTERS.flatMap((e) => (e.npcKey ? [e.npcKey] : []))]);
     for (const key of Object.keys(CAST_OF_SPAWN)) expect(placed.has(key), key).toBe(true);
-    expect(new Set(Object.values(CAST_OF_SPAWN))).toEqual(new Set(CAST_KEYS));
+    // Mika comes with every escort job, under the job's key.
+    expect(new Set([...Object.values(CAST_OF_SPAWN), "mika"])).toEqual(new Set(CAST_KEYS));
     // One spawn key per name: two bodies of one character would be the same look twice.
-    expect(Object.values(CAST_OF_SPAWN).length).toBe(CAST_KEYS.length);
+    expect(Object.values(CAST_OF_SPAWN).length).toBe(CAST_KEYS.length - 1);
+  });
+
+  it("names the defector of an escort job Mika, whatever the job (ADR-0076 stage 2)", () => {
+    const route = [ground(0, 0)] as const;
+    const views = ["docks-1-escort", "docks-7-escort"].map((key) => escortEntity(3, key, route, "c").view);
+    expect(views.map(castOf)).toEqual(["mika", "mika"]);
+    expect(castViewOf(contractEscortKey("docks-2"), "x").cast).toBe("mika");
+    expect(castViewOf("escort", "x").cast).toBeUndefined();
   });
 
   it("seeds the look from the key, the same in every game, and different between characters", () => {

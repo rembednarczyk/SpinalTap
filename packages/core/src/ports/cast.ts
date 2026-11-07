@@ -32,6 +32,15 @@ export const CAST_KEYS = [
   "riko",
   "kiku",
   "akane",
+  // The people of the places and the jobs (ADR-0076 stage 2): Neon Koi's barman and two
+  // regulars, the salaryman and the Tessen guard with the gull of the street scenes, and Mika,
+  // the defector of the escort job.
+  "barman",
+  "koi-regular-1",
+  "koi-regular-2",
+  "salaryman",
+  "gull-guard",
+  "mika",
 ] as const;
 
 export type CastKey = (typeof CAST_KEYS)[number];
