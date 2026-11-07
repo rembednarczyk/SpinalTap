@@ -11,7 +11,7 @@ import { MeshSink } from "../src/renderer/mesh-sink";
 import { parkingInside, parkingOutside } from "../src/renderer/alchemia/parking-geometry";
 import { bakeParkingStandIn, parkingIn } from "../src/renderer/alchemia/parking-far";
 import { CYCLE, SHUTTERS, carPoses, shutterLifts } from "../src/renderer/alchemia/parking-traffic";
-import { PARKING_DRAW, PARKING_LAMP_KEY, ParkingView, TRAFFIC_DRAW } from "../src/renderer/alchemia/parking-view";
+import { PARKING_DRAW, PARKING_LAMP_KEY, ParkingView, TRAFFIC_DRAW, parkingRoofOver } from "../src/renderer/alchemia/parking-view";
 import { GeometrySink } from "../src/renderer/city-kit-data";
 
 const file = (name: string): ArrayBuffer => {
@@ -118,6 +118,15 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     }
     expect(inSeen).toBeGreaterThan(40);
     expect(outSeen).toBeGreaterThan(40);
+  });
+
+  it("stops the rain in the room and the stair house, not over the car park or in the ramp's open trench", () => {
+    expect(parkingRoofOver(402, P1.floor + 1.5, 15)).toBe(true);
+    expect(parkingRoofOver(414, p1RampY(20) + 1.5, 20)).toBe(true);
+    expect(parkingRoofOver(420, P1.floor + 3, 18)).toBe(true);
+    expect(parkingRoofOver(402, 1, 15)).toBe(false);
+    expect(parkingRoofOver(414, p1RampY(4) + 1.5, 4)).toBe(false);
+    expect(parkingRoofOver(380, P1.floor + 1.5, 15)).toBe(false);
   });
 
   const setup = () => {

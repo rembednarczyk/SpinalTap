@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { P1, P1_RAMP_CUT } from "@seki/sim";
+import { P1, P1_RAMP_CUT, P1_STAIR, P1_STAIR_CUT, groundY } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, Vector3, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
@@ -40,6 +40,19 @@ export interface ParkingDeps {
 }
 
 const toRect = (e: Vec3, r: { minX: number; maxX: number; minZ: number; maxZ: number }): number => Math.hypot(Math.max(r.minX - e.x, 0, e.x - r.maxX), Math.max(r.minZ - e.z, 0, e.z - r.maxZ));
+
+const inRect = (r: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
+
+/**
+ * Whether a roof is over (x, y, z) in P-1 (ADR-0074 stage 4), where no rain falls (as on a metro
+ * platform): under the car park's ground over the room, and in the stair core's house; not in the
+ * ramp's open trench.
+ */
+export const parkingRoofOver = (x: number, y: number, z: number): boolean => {
+  if (inRect(P1_STAIR_CUT.bounds, x, z)) return y < P1_STAIR.top + P1_STAIR.house;
+  if (!inRect(P1, x, z) || inRect(P1_RAMP_CUT.bounds, x, z)) return false;
+  return y < groundY(x, z) - 0.2;
+};
 
 const X: Vec3 = { x: 1, y: 0, z: 0 };
 const Y: Vec3 = { x: 0, y: 1, z: 0 };

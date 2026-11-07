@@ -21,6 +21,7 @@ import { cityDroneWorld } from "./drones/drone-world";
 import { cityPatrolWorld } from "./drones/patrol-world";
 import { CapsuleRoomView } from "./rooms/capsule-room-view";
 import { AlchemiaView } from "./alchemia/alchemia-view";
+import { parkingRoofOver } from "./alchemia/parking-view";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCitySlot } from "./map-city-slot";
@@ -351,10 +352,10 @@ export class BabylonRenderer implements RenderPort {
     return new PlatformViews({ scene: this.stage.scene, materials: this.materials, shadow: this.shadow, signs: () => this.map.current?.signMaterial ?? null, eye: () => eye });
   }
 
-  /** The rain stops under the map's roofs, the metro pavilions' (G-331) and over the platforms under the street (ADR-0071 stage 4). */
+  /** The rain stops under the map's roofs, the metro pavilions' (G-331) and over the platforms under the street (ADR-0071 stage 4) and in Alchemia's P-1 (ADR-0074 stage 4). */
   private roofOver(x: number, y: number, z: number): boolean {
     const city = this.map.current;
-    return city !== null && (city.roofOver(x, y, z) || pavilionRoofOver(x, y, z) || platformRoofOver(x, y, z));
+    return city !== null && (city.roofOver(x, y, z) || pavilionRoofOver(x, y, z) || platformRoofOver(x, y, z) || parkingRoofOver(x, y, z));
   }
 
   /** Per-frame presentation update: animation, camera, VFX, rain. Call before scene.render(). */
