@@ -38,11 +38,20 @@ export interface Transform {
   /** Climbing speed in m/s (positive up) while on a ladder (ADR-0021); absent otherwise. */
   readonly climb?: number;
   /**
-   * Knocked out by a takedown (ADR-0065): the body lies still. The renderer draws the pose in
-   * stage 4 of the ADR; until then it is only data. Absent means conscious.
+   * Knocked out by a takedown (ADR-0065): the body lies still (the renderer's knockout poses,
+   * G-449). Absent means conscious.
    */
   readonly unconscious?: boolean;
+  /**
+   * The phase of a takedown grab (ADR-0075 stage 2), on both the player and the target: `hold`
+   * while the grab waits for the choice, `choke` through the knock-out, `kill` through the kill.
+   * The renderer plays the grab's clips from it; the events only cue the sound. Absent outside a grab.
+   */
+  readonly grab?: GrabPhase;
 }
+
+/** What a takedown grab is doing (ADR-0075): holding, choking out or killing. */
+export type GrabPhase = "hold" | "choke" | "kill";
 
 /** What the presentation layer should build for an entity. Pure data, engine-agnostic. */
 export type ViewDescriptor =
