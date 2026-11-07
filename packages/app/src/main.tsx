@@ -12,6 +12,7 @@ import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
 import { keymapFor } from "./controls";
 import { pushToastTimed } from "./controllers/shared";
+import { bindAudioMix } from "./controllers/audio-mix";
 import { bindCrashWatch } from "./crash-watch";
 import { bindPageHidden } from "./page-lifecycle";
 import { pointerFocus } from "./pointer-focus";
@@ -93,7 +94,11 @@ if (modelsParam !== "off" && (modelsParam || !reference)) {
 const input = new BrowserInput(canvas);
 // Recorded CC0 sounds from public/audio, loaded after the first gesture; ?audio=off keeps the
 // pure synth. Anything missing or undecodable (e.g. Vorbis on old Safari) is synthesized.
-const audio = new SynthAudio({ samples: params.get("audio") === "off" ? {} : audioSampleManifest(new URL("audio/", document.baseURI).href) });
+// Voiced lines (ADR-0060) by key from public/voice/en; a key without a file stays a subtitle.
+const audio = new SynthAudio({
+  samples: params.get("audio") === "off" ? {} : audioSampleManifest(new URL("audio/", document.baseURI).href),
+  voiceUrl: (key) => new URL(`voice/en/${key}.ogg`, document.baseURI).href,
+});
 applyVolumes(audio, settings);
 const ui = createUiStore();
 const probe = new PerfProbe(stage.engine, stage.scene);
@@ -226,20 +231,7 @@ ui.subscribe(applyBackdrop);
 applyBackdrop();
 
 // Music ducks under conversations; the volumes follow the settings live.
-let talking = false;
-let volumes = settings;
-ui.subscribe((s) => {
-  const nowTalking = s.dialogue !== null;
-  if (nowTalking !== talking) {
-    talking = nowTalking;
-    audio.setMood(talking ? "dialog" : "explore");
-  }
-  const v = s.settings;
-  if (v.volume !== volumes.volume || v.musicVolume !== volumes.musicVolume || v.sfxVolume !== volumes.sfxVolume || v.ambienceVolume !== volumes.ambienceVolume) {
-    volumes = v;
-    applyVolumes(audio, v);
-  }
-});
+bindAudioMix(ui, audio, settings);
 
 // System keys and pointer-lock driven pause.
 window.addEventListener("keydown", (e) => {

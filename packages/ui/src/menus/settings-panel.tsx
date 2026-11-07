@@ -191,6 +191,8 @@ const General = ({ settings, set }: SectionProps) => {
       <Slider id="musicVolume" label={t("settings.musicVolume")} value={settings.musicVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ musicVolume: v })} />
       <Slider id="sfxVolume" label={t("settings.sfxVolume")} value={settings.sfxVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ sfxVolume: v })} />
       <Slider id="ambienceVolume" label={t("settings.ambienceVolume")} value={settings.ambienceVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ ambienceVolume: v })} />
+      <Slider id="dialogueVolume" label={t("settings.dialogueVolume")} value={settings.dialogueVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ dialogueVolume: v })} />
+      <Slider id="radioVolume" label={t("settings.radioVolume")} value={settings.radioVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ radioVolume: v })} />
       <Toggle label="settings.hints" on={settings.hints} onChange={(hints) => set({ hints })} />
       <Toggle label="settings.autosave" on={settings.autosave} onChange={(autosave) => set({ autosave })} />
       <Toggle label="settings.hudAlwaysShow" on={settings.hudAlwaysShow} onChange={(hudAlwaysShow) => set({ hudAlwaysShow })} />

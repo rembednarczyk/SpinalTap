@@ -265,12 +265,18 @@ describe("settings", () => {
     fireEvent.change(screen.getByLabelText(/Volume/), { target: { value: "0.25" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ volume: 0.25 });
     // The mix buses each have their own slider (ADR-0060 stage 1).
-    fireEvent.change(screen.getByLabelText(/Music and radio/), { target: { value: "0.3" } });
+    fireEvent.change(screen.getByLabelText(/^Music/), { target: { value: "0.3" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ musicVolume: 0.3 });
     fireEvent.change(screen.getByLabelText(/Effects/), { target: { value: "0.5" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ sfxVolume: 0.5 });
     fireEvent.change(screen.getByLabelText(/City ambience/), { target: { value: "0.1" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ ambienceVolume: 0.1 });
+    // Spoken lines and the radio have their own sliders too (ADR-0060 stage 1).
+    expect(screen.getByLabelText(/^Dialogue/)).toHaveProperty("value", "1");
+    fireEvent.change(screen.getByLabelText(/^Dialogue/), { target: { value: "0.65" } });
+    expect(i.changeSettings).toHaveBeenCalledWith({ dialogueVolume: 0.65 });
+    fireEvent.change(screen.getByLabelText(/^Radio/), { target: { value: "0.2" } });
+    expect(i.changeSettings).toHaveBeenCalledWith({ radioVolume: 0.2 });
     // Autosave: on by default, off through the same intent.
     const autosave = screen.getByRole("radiogroup", { name: "Autosave" });
     expect(within(autosave).getByRole("radio", { name: "On" }).getAttribute("aria-checked")).toBe("true");

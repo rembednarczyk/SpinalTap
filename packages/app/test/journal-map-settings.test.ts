@@ -280,9 +280,16 @@ describe("settings", () => {
     const old = sanitizeSettings({ quality: "low", volume: 0.3 });
     expect(old).toMatchObject({ volume: 0.3, musicVolume: DEFAULT_SETTINGS.musicVolume, sfxVolume: DEFAULT_SETTINGS.sfxVolume, ambienceVolume: DEFAULT_SETTINGS.ambienceVolume });
     expect(sanitizeSettings({ musicVolume: 3, sfxVolume: -1, ambienceVolume: "x" })).toMatchObject({ musicVolume: 1, sfxVolume: 0, ambienceVolume: DEFAULT_SETTINGS.ambienceVolume });
+    // Dialogue and radio (ADR-0060 stage 1): dialogue at full volume; the radio, which played on
+    // the music bus, keeps an old entry's music level, and a saved radio level wins over it.
+    expect(old).toMatchObject({ dialogueVolume: 1, radioVolume: DEFAULT_SETTINGS.radioVolume });
+    expect(sanitizeSettings({ musicVolume: 0.25 })).toMatchObject({ musicVolume: 0.25, radioVolume: 0.25 });
+    expect(sanitizeSettings({ musicVolume: 0.25, radioVolume: 0.8, dialogueVolume: 0.5 })).toMatchObject({ radioVolume: 0.8, dialogueVolume: 0.5 });
+    expect(sanitizeSettings({ radioVolume: 4, dialogueVolume: "loud" })).toMatchObject({ radioVolume: 1, dialogueVolume: 1 });
+    expect(sanitizeSettings({ radioVolume: "x", musicVolume: 0.25 })).toMatchObject({ radioVolume: DEFAULT_SETTINGS.radioVolume });
     const set: [string, number][] = [];
-    applyVolumes({ setVolume: (bus: string, v: number) => set.push([bus, v]) }, { volume: 0.5, musicVolume: 0.2, sfxVolume: 0.7, ambienceVolume: 0.1 });
-    expect(set).toEqual([["master", 0.5], ["music", 0.2], ["sfx", 0.7], ["ambience", 0.1]]);
+    applyVolumes({ setVolume: (bus: string, v: number) => set.push([bus, v]) }, { volume: 0.5, musicVolume: 0.2, sfxVolume: 0.7, ambienceVolume: 0.1, dialogueVolume: 0.9, radioVolume: 0.4 });
+    expect(set).toEqual([["master", 0.5], ["music", 0.2], ["sfx", 0.7], ["ambience", 0.1], ["dialogue", 0.9], ["radio", 0.4]]);
   });
 
   it("defaults to High quality and damage numbers per hit, also for entries saved under the old defaults", () => {
