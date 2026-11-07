@@ -1311,7 +1311,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/ui (HUD, skan)
 
 ### G-434 Pad T1 Alchemii podnosi Świętoduską o ok. 1,85 m (T-209)
-- Status: w naprawie (6.11, kurator przeglądu #343; runda 3 PR #343)
+- Status: w PR #343 (7.11, runda 3 @ 6bd9608 w weryfikacji i przeglądzie kuratora)
 - Ważność: S3 · Zasięg: jezdnia w230503896, chodnik w232464426, pas postojowy w1514058885 przy x 393–402, z 56–84; poprawka: przyciąć T1, przejście od ulicy ≤ 2 m; kontrola `pad-on-road`
 - Pakiet właściciela: packages/sim (content Alchemii), tools/glitch-scan
 
@@ -1359,6 +1359,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, kurator przy G-423; zbadane 7.11, naprawiacz: #348 nie spowalnia testu, różnice w szumie obciążenia)
 - Ważność: S4 (test) · Zasięg: „builds the whole generated Lublin” zużywa ok. 3,8–4,2 s CPU wobec limitu 5000 ms, więc przy load ok. 15 na 4 rdzeniach przekracza limit na każdym commicie; ok. 60% profilu to `ground-cut.ts` (`cutCovers`, `minusTriangle`), `ground-plan.ts` (drapowanie, `planSurface`) i `heightAt` w `map-entries.ts`; profil w scratchpadzie sesji `g444-new.cpuprofile`; bez podnoszenia limitu
 - Pakiet właściciela: packages/engine (renderer/mapcity)
+
+### G-445 Rampa E Alchemii: kostka drapowana na siatce 2,5 m przebija stopnie
+- Status: zgłoszone (7.11, naprawiacz rundy 3 PR #343)
+- Ważność: S4 · Zasięg: `drapedTriangles` (`DRAPE_GRID` 2,5 m) czyta teren przy x 435 (NMT w obrysie hali) i x 442,5 (wyższy grunt na wschód), więc paski kostki wychodzą ponad stopnie; poprawka: wyrównać teren pod obrysem hali przy ścianie E albo stopnie dopasowane do siatki drapowania
+- Pakiet właściciela: packages/sim (content Alchemii), packages/engine (renderer/mapcity)
+
+### G-446 Starsze pady zmieniają teren na drogach i chodnikach (`pad-on-road` baza 8; T-051, T-002)
+- Status: zgłoszone (7.11, naprawiacz rundy 3 PR #343; kontrola `pad-on-road` z tego PR)
+- Ważność: S4 · Zasięg: pad T-051 przy Bajkowskiego zmienia teren na 7 drogach i chodnikach o 0,5–1,5 m (w40052294 +1,52 m); pad T-002 przy (2515; 387) obniża ścieżkę w972606056 o 1,80 m; także rampa zachodnia Alchemii nachodzi na chodnik w232464426 przy z 52–56 (przypadkiem w tolerancji)
+- Pakiet właściciela: packages/sim (content, pady), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
