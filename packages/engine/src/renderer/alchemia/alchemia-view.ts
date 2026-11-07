@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_CENTRE, FOODHALL, FOODHALL_INNER } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ARKADY_CENTRE, FOODHALL, FOODHALL_INNER } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
@@ -7,8 +7,8 @@ import type { CityKit } from "../city-kit";
 import { alchemiaGeometry } from "./alchemia-geometry";
 
 /**
- * How near the eye Alchemia's outside is drawn (m from the middle of the hall), and the margin it
- * goes off beyond that: from the streets round the plot and from behind the Ratusz (some 115 m), while the
+ * How near the eye Alchemia's outside is drawn (m from the middle of the hall or of the Arkady,
+ * whichever is nearer), and the margin it goes off beyond that: from the streets round the plot and from behind the Ratusz (some 115 m), while the
  * street scenes of `npr-perf` (the Rynek's from 149 m) stay as they were. The inside is drawn only
  * within `INSIDE_DRAW` of the hall's walls (ADR-0074 §7).
  */
@@ -75,7 +75,7 @@ export class AlchemiaView {
       return;
     }
     const e = this.deps.eye();
-    const far = Math.hypot(e.x - ALCHEMIA_CENTRE.x, e.z - ALCHEMIA_CENTRE.z);
+    const far = Math.min(Math.hypot(e.x - ALCHEMIA_CENTRE.x, e.z - ALCHEMIA_CENTRE.z), Math.hypot(e.x - ARKADY_CENTRE.x, e.z - ARKADY_CENTRE.z));
     const near = toHall(e);
     const out = far < ALCHEMIA_DRAW + (this.outside?.isEnabled(false) ? ALCHEMIA_HOLD : 0);
     const inn = near < INSIDE_DRAW + (this.inside?.isEnabled(false) ? INSIDE_HOLD : 0);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, FOODHALL, FOODHALL_INNER } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ARKADY, FOODHALL, FOODHALL_INNER, arkadyLocal, arkadyPoint } from "@seki/sim";
 import { MeshSink } from "../src/renderer/mesh-sink";
-import { alchemiaIn, bakeAlchemiaStandIn } from "../src/renderer/alchemia/alchemia-far";
+import { alchemiaIn, arkadyIn, bakeAlchemiaStandIn, bakeArkadyStandIn } from "../src/renderer/alchemia/alchemia-far";
 import { ALCHEMIA_DRAW } from "../src/renderer/alchemia/alchemia-view";
 
 /**
@@ -67,5 +67,34 @@ describe("Alchemia's food hall from afar (ADR-0074 stage 1)", () => {
     expect(alchemiaIn({ minX: 0, maxX: 256, minZ: 0, maxZ: 256 })).toBe(false);
     expect(165).toBeGreaterThan(ALCHEMIA_DRAW + 10);
     expect(Math.hypot(ALCHEMIA_CENTRE.x - 418, ALCHEMIA_CENTRE.z - 45)).toBeLessThan(1e-9);
+  });
+});
+
+describe("the Arkady from afar (ADR-0074 stage 2)", () => {
+  it("stands where the map's ruin stood, its roof over the whole outline, within a hand of the detailed one", () => {
+    const s = new MeshSink();
+    bakeArkadyStandIn(s);
+    const misses: string[] = [];
+    for (let a = 0.3; a < ARKADY.length - 0.3; a += 1) {
+      for (let c = 0.3; c < ARKADY.depth - 0.3; c += 1) {
+        const p = arkadyPoint(a, c);
+        const y = hitDown(s, p.x, p.z);
+        if (y === null || y < ARKADY.roof - 0.1) misses.push(`${a.toFixed(1)},${c.toFixed(1)}: ${y}`);
+      }
+    }
+    expect(misses).toEqual([]);
+    // Every vertex on the building's frame: its outline, the pavement east of it and the landing south of it.
+    for (let i = 0; i < s.positions.length; i += 3) {
+      const q = arkadyLocal(s.positions[i]!, s.positions[i + 2]!);
+      expect(q.a).toBeGreaterThan(-3.1);
+      expect(q.a).toBeLessThan(ARKADY.length + 0.05);
+      expect(q.c).toBeGreaterThan(-0.05);
+      expect(q.c).toBeLessThan(ARKADY.depth + 5.05);
+    }
+  });
+
+  it("is in the block of the street furniture that holds the Arkady", () => {
+    expect(arkadyIn({ minX: 256, maxX: 512, minZ: 0, maxZ: 256 })).toBe(true);
+    expect(arkadyIn({ minX: 256, maxX: 512, minZ: -256, maxZ: 0 })).toBe(false);
   });
 });
