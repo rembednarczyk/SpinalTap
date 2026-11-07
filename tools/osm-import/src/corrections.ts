@@ -7,6 +7,7 @@
 import { type Area, type Line } from "./features.ts";
 import { type Pt, centroid } from "./geometry.ts";
 import { CZECHOWICZA_AREAS } from "./corrections-czechowicza.ts";
+import { DEPTAKI_CORRECTIONS } from "./corrections-deptaki.ts";
 import { DWORZEC_EAST_AREAS } from "./corrections-dworzec.ts";
 import { type Tags } from "./osm.ts";
 
@@ -160,6 +161,7 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
   // stand 9.6..10.1 m apart (centre lines), about 11 m with the balustrades on the orthophoto.
   ...stairs(["w1435832499", "w1305940836", "w1305889408", "w1305940837", "w1306105687"], "biegi"),
   ...stairs(["w1435832498", "w56965512", "w1305889407", "w1305940838", "w48500135", "w1306105686"], "podesty"),
+  ...DEPTAKI_CORRECTIONS,
 ];
 
 /**
