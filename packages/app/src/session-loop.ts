@@ -41,7 +41,7 @@ export class SessionLoop {
     const c = this.deps.controllers();
     c.character.renderPreview();
     const simulation = this.deps.sim();
-    this.deps.renderSync.sync(simulation.world, alpha, simulation.streamer.streamedOut, simulation.domain);
+    this.deps.renderSync.sync(simulation.world, alpha, simulation.streamer.streamedOut, simulation.domain, simulation.session.takedown);
     c.hud.frame();
   }
 

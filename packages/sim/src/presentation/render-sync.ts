@@ -1,4 +1,4 @@
-import { type ActivityId, type AppearanceDescriptor, type DomainState, ENEMY_TYPES, type EntityId, type RenderPort, type Transform, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
+import { type ActivityId, type AppearanceDescriptor, type DomainState, ENEMY_TYPES, type EntityId, type GrabPhase, type RenderPort, type Transform, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
 import type { SceneryItem } from "../content/lublin/city";
@@ -22,6 +22,16 @@ const aimOf = (e: Entity, alpha: number): AimFields => {
   return out;
 };
 
+/** The takedown under way as far as the picture goes (the session's `TakedownRun`, ADR-0075). */
+export interface GrabView {
+  readonly target: EntityId;
+  readonly phase: "grab" | "finish";
+  readonly lethal: boolean | null;
+}
+
+/** The grab's phase for the renderer: holding while it waits for the choice, then the chosen end. */
+const grabPhaseOf = (run: GrabView): GrabPhase => (run.phase === "grab" ? "hold" : run.lethal ? "kill" : "choke");
+
 /**
  * Mirrors the ECS world into a RenderPort: spawns new views, despawns removed ones and
  * pushes interpolated transforms for moving entities. Entities listed in `streamedOut`
@@ -34,6 +44,8 @@ export class RenderSync {
   private readonly looks = new Map<EntityId, AppearanceDescriptor>();
   /** Last activity sent per entity (ADR-0040); a change goes out once, null when it stops. */
   private readonly activities = new Map<EntityId, ActivityId>();
+  /** Grab phase sent last per entity (ADR-0075), so a still one gets its change too. */
+  private readonly grabbed = new Map<EntityId, GrabPhase>();
   private playerLook: { inv: unknown; eq: unknown; cyber: unknown; look: AppearanceDescriptor } | null = null;
 
   /** The scenery has been handed to the port (again after every reset). */
@@ -55,15 +67,24 @@ export class RenderSync {
     this.scenery.forEach((s, i) => this.port.spawn(SCENERY_ID_BASE + i, s.view, { position: s.at, yaw: s.yaw ?? 0, pitch: 0, speed: 0 }));
   }
 
-  sync(world: World<Entity>, alpha: number, streamedOut?: ReadonlySet<EntityId>, domain?: DomainState): void {
+  /**
+   * `takedown`: the grab under way (ADR-0075); the player and its target get its phase in `grab`.
+   * Only the picture reads it: nothing here feeds back into the simulation.
+   */
+  sync(world: World<Entity>, alpha: number, streamedOut?: ReadonlySet<EntityId>, domain?: DomainState, takedown?: GrabView | null): void {
     this.showScenery();
     const seen = new Set<EntityId>();
+    const phase = takedown ? grabPhaseOf(takedown) : null;
     for (const e of world.with("view")) {
       seen.add(e.id);
-      const moving = e.velocity !== undefined;
+      const grab = phase !== null && (e.player || e.id === takedown?.target) ? phase : null;
+      // A grab's start and end go out to a still entity too (a sniper at its post).
+      const moving = e.velocity !== undefined || grab !== (this.grabbed.get(e.id) ?? null);
+      if (grab) this.grabbed.set(e.id, grab);
+      else this.grabbed.delete(e.id);
       const transform: Transform = {
-        position: moving ? lerp(e.prevPosition, e.position, alpha) : e.position,
-        yaw: moving ? lerpAngle(e.prevYaw, e.yaw, alpha) : e.yaw,
+        position: e.velocity ? lerp(e.prevPosition, e.position, alpha) : e.position,
+        yaw: e.velocity ? lerpAngle(e.prevYaw, e.yaw, alpha) : e.yaw,
         pitch: e.pitch,
         speed: e.velocity ? Math.hypot(e.velocity.x, e.velocity.z) : 0,
         ...(e.posture ? { crouch: e.posture.prevAmount + (e.posture.amount - e.posture.prevAmount) * alpha } : {}),
@@ -75,8 +96,10 @@ export class RenderSync {
         ...(e.climb ? { climb: e.climb.speed } : {}),
         // A pull-up onto a ledge borrows the ladder pose: arms up, the body rising.
         ...(e.mantle ? { climb: 1.5 } : {}),
-        // Knocked out by a takedown (ADR-0065); the renderer draws the pose in stage 4.
+        // Knocked out by a takedown (ADR-0065): the renderer's knockout poses (G-449).
         ...(e.unconscious ? { unconscious: true } : {}),
+        // In a takedown's grab (ADR-0075 stage 2): the renderer's grab clips.
+        ...(grab ? { grab } : {}),
       };
       if (!this.spawned.has(e.id)) {
         this.spawned.add(e.id);
@@ -100,6 +123,7 @@ export class RenderSync {
       this.spawned.delete(id);
       this.looks.delete(id);
       this.activities.delete(id);
+      this.grabbed.delete(id);
       this.port.despawn(id, streamedOut?.has(id) ? "unloaded" : "removed");
     }
   }
@@ -111,6 +135,7 @@ export class RenderSync {
     this.spawned.clear();
     this.looks.clear();
     this.activities.clear();
+    this.grabbed.clear();
     this.playerLook = null;
     this.cameraTarget = null;
   }

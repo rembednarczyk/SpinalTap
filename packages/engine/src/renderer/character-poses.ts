@@ -25,10 +25,11 @@ export const reloadPhase = (rig: CharacterRig): number => (rig.reloadTotal > 0 &
 /**
  * Draws or holsters towards the weapon's state; on a ladder or pulling up onto a ledge (the
  * ladder pose, ADR-0021) both hands are on the rungs, so the weapon goes back in the holster
- * for the climb and comes out again after it.
+ * for the climb and comes out again after it. So it does while both hands are taken
+ * (`handsBusy`: a takedown grab, a body on the shoulder; G-459).
  */
 export const easeDrawn = (rig: CharacterRig, dt: number): void => {
-  const target = rig.drawTarget && rig.climbBlend < 0.5 ? 1 : 0;
+  const target = rig.drawTarget && !rig.handsBusy && rig.climbBlend < 0.5 ? 1 : 0;
   rig.drawn += Math.sign(target - rig.drawn) * Math.min(Math.abs(target - rig.drawn), dt / DRAW_SECONDS);
 };
 
