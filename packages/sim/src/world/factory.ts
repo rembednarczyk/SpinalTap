@@ -2,6 +2,7 @@ import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, sightOf, type EntityId, ty
 import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/district-doki";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
+import { castViewOf } from "../content/cast";
 import { type DeviceDef, deviceView } from "../content/devices";
 import { DOOR_CLOSE_DELAY } from "../content/doors";
 import { SCHEDULES } from "../content/schedules";
@@ -153,7 +154,7 @@ export const gangerEntity = (
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
-    view: { kind: "enemy", preset: def.faction === "tessen" ? "corpo" : "ganger", ...(enforcer ? { enforcer: true } : {}) },
+    view: { kind: "enemy", preset: def.faction === "tessen" ? "corpo" : "ganger", ...(enforcer ? { enforcer: true } : {}), ...castViewOf(spawn.key, spawn.key || `#${id}`) },
     faction: def.faction,
     enemy: { type },
     velocity: { x: 0, y: 0, z: 0 },
@@ -195,7 +196,7 @@ export const sniperEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
-    view: { kind: "enemy", preset: "corpo" },
+    view: { kind: "enemy", preset: "corpo", ...castViewOf(spawn.key, spawn.key || `#${id}`) },
     faction: def.faction,
     enemy: { type: "tessen_sniper" },
     velocity: { x: 0, y: 0, z: 0 },
@@ -215,7 +216,7 @@ export const ESCORT_MAX_HP = 110;
 export const escortEntity = (id: EntityId, key: string, route: readonly [Vec3, ...Vec3[]], chunk: string): Entity => ({
   ...actor(id, { key, position: route[0], yaw: Math.PI }),
   chunk,
-  view: { kind: "npc", preset: "civilian" },
+  view: { kind: "npc", preset: "civilian", ...castViewOf(key, key) },
   faction: "civilians",
   velocity: { x: 0, y: 0, z: 0 },
   health: { current: ESCORT_MAX_HP, max: ESCORT_MAX_HP },
@@ -249,7 +250,8 @@ export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity 
 };
 
 const npcEntity = (id: EntityId, def: ActorDef & { kind: "npc" }, chunk: string): Entity => {
-  const view = def.indoor ? { kind: "npc" as const, preset: def.preset, umbrella: false } : { kind: "npc" as const, preset: def.preset };
+  const cast = castViewOf(def.spawn.key, def.spawn.key);
+  const view = def.indoor ? { kind: "npc" as const, preset: def.preset, umbrella: false, ...cast } : { kind: "npc" as const, preset: def.preset, ...cast };
   const e: Entity = { ...actor(id, def.spawn), chunk, view, faction: def.faction };
   if (def.interactable) e.interactable = def.interactable;
   if (def.maxHp !== undefined) e.health = { current: def.maxHp, max: def.maxHp };

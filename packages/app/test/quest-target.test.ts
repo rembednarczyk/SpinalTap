@@ -86,7 +86,7 @@ describe("G-035: the quest step's target on the map", () => {
     }
     session.intents.closeDialogue();
     steps(session, 2);
-    expect(objective(ui)).toBe("Take the lift behind Alchemia up to the roof terrace and find Ren");
+    expect(objective(ui)).toBe("Climb the service ladder at the back of the glass pavilion on Alchemia's corner and find Ren on its roof");
     const marks = questMarkers(ui);
     expect(marks).toHaveLength(1);
     expect(near(marks[0], REN_SPOT, 1)).toBe(true);

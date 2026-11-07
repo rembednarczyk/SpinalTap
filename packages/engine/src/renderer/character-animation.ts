@@ -124,7 +124,7 @@ const animateDeath = (rig: CharacterRig, dying: number): void => {
   rig.armR.rotation.z = -0.9 * ease;
   rig.armR.rotation.x = -0.4 * (1 - ease) - 0.2 * ease;
   const sink = Math.max(0, dying - DEATH_FALL - DEATH_LINGER);
-  rig.root.position.y = 0.12 * ease - sink * 0.5;
+  rig.root.position.y = rig.deathGround + 0.12 * ease - sink * 0.5;
 };
 
 /**
@@ -315,7 +315,10 @@ export const raiseWeapon = (rig: CharacterRig): void => {
 
 /** Starts the death fall; the renderer disposes the rig when `deathFinished` says so. */
 export const startDeath = (rig: CharacterRig): void => {
-  if (rig.dying === null) rig.dying = 0;
+  if (rig.dying !== null) return;
+  rig.dying = 0;
+  // The root stands where the views put the living figure (terrain height plus lift); the fall is relative to it.
+  rig.deathGround = rig.root.position.y;
 };
 
 export const deathFinished = (rig: CharacterRig): boolean => rig.dying !== null && rig.dying > DEATH_FALL + DEATH_LINGER + 1.2;

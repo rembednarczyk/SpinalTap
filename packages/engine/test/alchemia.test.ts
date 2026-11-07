@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, FOODHALL } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ARKADY, ARKADY_CENTRE, ARKADY_PIECES, FOODHALL, arkadyLocal } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { CityKit } from "../src/renderer/city-kit";
@@ -26,13 +26,20 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     const { outside, inside } = alchemiaGeometry(kitData);
     // A box is 12 triangles; the frame, the signs and the lights come on top.
     const boxes = (s: { indices: readonly number[] }) => s.indices.length / 3 / 12;
-    expect(boxes(outside) + boxes(inside)).toBeGreaterThanOrEqual(ALCHEMIA_PIECES.length);
+    expect(boxes(outside) + boxes(inside)).toBeGreaterThanOrEqual(ALCHEMIA_PIECES.length + ARKADY_PIECES.length);
     expect(outside.indices.length / 3).toBeLessThanOrEqual(8000);
     expect(inside.indices.length / 3).toBeLessThanOrEqual(8000);
-    // Nothing of it outside the plot round the hall and its ramps.
+    // Nothing of it outside the plot round the hall and its ramps, T2 with its stairs, the Arkady with their pavements, and the pavilion on the corner (stage 3).
+    const onPlot = (x: number, z: number) => x > FOODHALL.minX - 7 && x < FOODHALL.maxX + 7 && z > FOODHALL.minZ - 7 && z < 94;
+    const onCorner = (x: number, z: number) => x > 420.2 && x < 436.6 && z > -9.1 && z < 6.4;
+    const onT2 = (x: number, z: number) => x > 423 && x < 445 && z > 74 && z < 122;
+    const byArkady = (x: number, z: number) => {
+      const q = arkadyLocal(x, z);
+      return q.a > -3.2 && q.a < ARKADY.length + 0.2 && q.c > -0.3 && q.c < ARKADY.depth + 5.2;
+    };
     for (let i = 0; i < outside.positions.length; i += 3) {
-      expect(outside.positions[i]!).toBeGreaterThan(FOODHALL.minX - 7);
-      expect(outside.positions[i]!).toBeLessThan(FOODHALL.maxX + 7);
+      const [x, z] = [outside.positions[i]!, outside.positions[i + 2]!];
+      expect(onPlot(x, z) || onT2(x, z) || byArkady(x, z) || onCorner(x, z), `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
     }
   });
 
@@ -68,6 +75,18 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     expect(scene.meshes.filter((m) => m.name.startsWith("alchemia"))).toHaveLength(2);
   });
 
+  it("draws the outside near the Arkady (ADR-0074 stage 2) when the hall is beyond its distance", () => {
+    const { view, eye } = setup();
+    eye.x = ARKADY_CENTRE.x + 20;
+    eye.z = ARKADY_CENTRE.z + 110;
+    expect(Math.hypot(eye.x - ALCHEMIA_CENTRE.x, eye.z - ALCHEMIA_CENTRE.z)).toBeGreaterThan(ALCHEMIA_DRAW + 10);
+    view.update();
+    expect(view.stats.meshes).toBe(1);
+    eye.z = ARKADY_CENTRE.z + ALCHEMIA_DRAW + 15;
+    view.update();
+    expect(view.stats.meshes).toBe(0);
+  });
+
   it("stays out of the street scenes of npr-perf, all of them farther than it is drawn", () => {
     // Where the scenes' cameras end up (e2e/npr-perf.spec.ts): the start and the walk along the yaw.
     const scenes = [
@@ -80,6 +99,7 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
         const x = s.x + Math.sin(s.yaw) * s.walk * k;
         const z = s.z + Math.cos(s.yaw) * s.walk * k;
         expect(Math.hypot(x - ALCHEMIA_CENTRE.x, z - ALCHEMIA_CENTRE.z)).toBeGreaterThan(ALCHEMIA_DRAW + 10);
+        expect(Math.hypot(x - ARKADY_CENTRE.x, z - ARKADY_CENTRE.z)).toBeGreaterThan(ALCHEMIA_DRAW + 10);
       }
     }
   });

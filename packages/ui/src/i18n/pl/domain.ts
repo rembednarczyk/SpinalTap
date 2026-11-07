@@ -187,7 +187,7 @@ export const plDomain = {
   "quest.m3_lustro.title": "Lustro",
   "quest.m3_lustro.ren_trail": "Ktoś woła cię przez moduł. Zapytaj babcię Ume o Rena Odagiri (deptak przy klinice)",
   "quest.m3_lustro.ren_trail.sold": "Mori sprzedał twój moduł. Zapytaj go, kto go kupił (klinika Mori)",
-  "quest.m3_lustro.meet_ren": "Wjedź windą za Alchemią na taras na dachu i znajdź Rena",
+  "quest.m3_lustro.meet_ren": "Wejdź drabiną serwisową od zaplecza szklanego pawilonu na rogu Alchemii i znajdź Rena na dachu",
   "quest.m3_lustro.kaito_job": "Kaito ma zlecenie na Rena. Dowiedz się, kto za nie płaci (bar Neon Koi)",
   "quest.m3_lustro.overpass": "Kurosawa z Kagami czeka na placu za Alchemią, przy windzie. Zdecyduj, co stanie się z archiwum",
   "quest.m3_lustro.overpass.cleared": "Czyściciele Kagami leżą. Wróć do Rena na dach Alchemii",

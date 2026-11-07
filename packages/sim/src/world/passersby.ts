@@ -1,5 +1,6 @@
 import { type ActivityId, type EntityId, type GameClock, type RandomPort, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from "@seki/core";
 import { ACTIVITY_SPOTS, SPOT_ACTIVITIES, spotWeightsAt } from "../content/activity-spots";
+import { castViewOf } from "../content/cast";
 import { deriveRandom } from "../rng/derive-random";
 import type { ActivitySpot } from "./activity-types";
 import type { Entity } from "./components";
@@ -105,7 +106,8 @@ export const passerbyEntity = (id: EntityId, chunk: string, index: number, stop:
     prevYaw: stop.spot.yaw,
     pitch: 0,
     body: BODY,
-    view: { kind: "npc", preset: "civilian" },
+    // The resident's own look (ADR-0076), fixed by its chunk and its place in the plan.
+    view: { kind: "npc", preset: "civilian", ...castViewOf(undefined, `passerby:${chunk}:${index}`) },
     faction: "civilians",
     velocity: { x: 0, y: 0, z: 0 },
     civilian: { home: p },

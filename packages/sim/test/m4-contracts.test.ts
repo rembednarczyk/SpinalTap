@@ -318,8 +318,16 @@ describe("protection (Hebi come for Oyaji)", () => {
     expect(shots).toHaveLength(0);
     const restored = reload(sim);
     expect(hash(restored)).toBe(hash(sim));
-    run(sim, 900);
-    run(restored, 900);
+    // Until the wave has hurt Oyaji (the game's state, not a clock): with seed 5 some 1000 steps
+    // after the job since the pavilion's stash left the market's 40 m (ADR-0074 stage 3: one id
+    // fewer, 659 steps before), a hang guard well past that.
+    let n = 0;
+    while (n < 3000 && (byKey(sim, "oyaji")?.health?.current ?? 0) >= OYAJI_MAX_HP) {
+      sim.step();
+      n++;
+    }
+    run(sim, 60);
+    run(restored, n + 60);
     expect(byKey(sim, "oyaji")?.health?.current ?? 0).toBeLessThan(OYAJI_MAX_HP);
     expect(byKey(restored, "oyaji")?.health).toEqual(byKey(sim, "oyaji")?.health);
     expect(hash(restored)).toBe(hash(sim));

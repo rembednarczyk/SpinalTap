@@ -68,6 +68,8 @@ export interface CharacterRig {
   flinch: number;
   /** null while alive; seconds since death otherwise. */
   dying: number | null;
+  /** Height of the root when the fall began (the ground the body lies on, sidewalk lift included). */
+  deathGround: number;
   /** Vertical speed last frame while airborne, null on the ground (ADR-0021). */
   lastAir: number | null;
   /** 0..1 blend of the jump pose, eased in on take-off and out on landing. */

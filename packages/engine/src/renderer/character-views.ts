@@ -1,5 +1,5 @@
 import type { Scene } from "../babylon";
-import type { AppearanceDescriptor, EntityId, Transform, ViewDescriptor } from "@seki/core";
+import type { AppearanceDescriptor, EntityId, Transform } from "@seki/core";
 import type { CameraRig } from "../camera/camera-rig";
 import { fadeFigure } from "../npr/body-dither";
 import type { MoonShadow } from "../npr/moon-shadow";
@@ -12,7 +12,8 @@ import { type CharacterRig, animateRig, buildCivilian, buildCorpo, buildFixer, b
 import { markEnforcer } from "./enforcer-mark";
 import { easeLift, groundLift } from "./ground-lift";
 import type { LadderRungs } from "./ladder-hands";
-import { type CharacterModelKey, type CharacterModelManifest, ModelLibrary } from "./model-library";
+import { type CharacterModelManifest, ModelLibrary } from "./model-library";
+import { type CharacterDescriptor, type ModelChoice, modelChoiceOf } from "./model-cast";
 import { type WallProbe, layBody, placeLaid } from "./body-lay";
 import { animateGrab, inGrab, placeHeld, reachForNeck } from "./grab-clip";
 import { carriedShoulder } from "./knockout-carry";
@@ -22,29 +23,17 @@ import { type ScanClass, scanClassOfView } from "./scan-highlight";
 import type { FxActors, ScanVisitor } from "./screen-fx";
 import type { WeaponManifest } from "./weapon-mount";
 
-/** The player, NPCs and enemies. */
-export type CharacterDescriptor = Extract<ViewDescriptor, { kind: "heroine" | "npc" | "enemy" }>;
+export type { CharacterDescriptor } from "./model-cast";
 
 interface CharacterView {
   readonly rig: CharacterRig;
   transform: Transform;
-  readonly model: CharacterModelKey | null;
+  readonly model: ModelChoice | null;
   readonly name: string;
   readonly scan: ScanClass | null;
   /** Height of the sidewalk it stands on, eased (ADR-0041). */
   lift: number;
 }
-
-const modelKeyOf = (view: CharacterDescriptor): CharacterModelKey => {
-  switch (view.kind) {
-    case "heroine":
-      return "heroine";
-    case "enemy":
-      return "ganger";
-    case "npc":
-      return view.preset === "fixer" ? "fixer" : view.preset === "ripperdoc" ? "ripperdoc" : "civilian";
-  }
-};
 
 const builderOf = (view: CharacterDescriptor) =>
   view.kind === "heroine"
@@ -172,7 +161,7 @@ export class CharacterViews implements FxActors {
         : builderOf(view)(this.deps.scene, this.deps.materials, name);
     for (const m of rig.meshes) this.deps.shadow.addCaster(m);
     if (view.kind === "enemy" && view.enforcer) markEnforcer(this.deps.scene, this.deps.materials, rig, name);
-    const model = modelKeyOf(view);
+    const model = modelChoiceOf(view);
     const lift = (this.deps.lift ?? groundLift)(t.position.x, t.position.y, t.position.z);
     this.views.set(id, { rig, transform: t, model, name, scan: scanClassOfView(view), lift });
     applyTransform(rig, t, lift);

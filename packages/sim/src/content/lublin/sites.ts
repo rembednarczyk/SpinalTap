@@ -39,8 +39,6 @@ export const CAR_WASH_PLACE: Vec3 = { x: 395, y: round(rawHeight(403, -32)), z: 
 export const DOCKS_AREA: GroundRect = { minX: 2520, maxX: 2594, minZ: 390, maxZ: 450 };
 export const DOCKS_BASIN: GroundRect = { minX: 2520, maxX: 2594, minZ: 452, maxZ: 500 };
 export const CAR_WASH_AREA: GroundRect = { minX: 389, maxX: 417, minZ: -44, maxZ: -20 };
-/** The hollow by the ruined outbuilding w66286396 on Alchemia's plot where the Hebi keep their stash (ADR-0063), levelled. */
-export const HEBI_HOLLOW: GroundRect = { minX: 436, maxX: 449, minZ: 86, maxZ: 101 };
 
 /**
  * A room cut into the ground floor of a tenement (ADR-0045). The front wall of the building is
@@ -147,9 +145,6 @@ export const PADS: readonly Pad[] = [
   { rect: grow(DOCKS_AREA, 5, 0), y: DOCKS_PLACE.y, blend: 6, row: "T-002" },
   { rect: DOCKS_BASIN, y: DOCKS_PLACE.y - 3, blend: 1.5, row: "T-002" },
   { rect: grow(CAR_WASH_AREA, 5), y: CAR_WASH_PLACE.y, blend: 3, row: "T-051" },
-  // The Hebi stash in the hollow by the ruin behind Alchemia's stalls (ADR-0063 stage 6): its floor levelled,
-  // kept 1 m clear of the fifth stall (x <= 431.9), so no module's floor moves.
-  { rect: HEBI_HOLLOW, y: round(rawHeight(442, 93)), blend: 3, row: "T-186" },
   ...ROOM_SITES.map((r): Pad => ({ rect: grow(r.rect, 5), y: r.floor, blend: 2 })),
   // Dug out under the Trybunał for Trasa Podziemna (ADR-0048): level over x 575..585, z -65..-55,
   // sloping up to the Rynek over 5 m, so the slope stays inside the Trybunał's walls. In metres,
@@ -157,14 +152,15 @@ export const PADS: readonly Pad[] = [
   // under them, and on the import's 5 m grid its points are as they were. 2 m under the floor:
   // the Rynek's paving, draped in 5 m triangles, then stays under the floor up to the cellars' walls.
   { rect: { minX: 575, maxX: 585, minZ: -65, maxZ: -55 }, y: TRASA_PODZIEMNA.floor - 2, blend: 5, row: "T-055" },
-  // Alchemia's terraces by the investor's plan (ADR-0074 stage 1, T-206, T-207): T1 in front of the food
-  // hall, the line of the grid under its back wall at T0.
+  // Alchemia's terraces by the investor's plan (ADR-0074, T-206, T-207, T-217): T1 in front of the food
+  // hall, the line of the grid under its back wall at T0, T2 before the Arkady where the Hebi hollow was (T-186).
   ...ALCHEMIA_PADS,
 ];
 
 /**
  * Even ramps along the steps of the map (ADR-0045), then the level ground before the bridges'
- * abutments (G-349), then Alchemia's ramps beside the food hall from T0 to T1 (ADR-0074, T-208).
+ * abutments (G-349), then Alchemia's ramps beside the food hall from T0 to T1 (ADR-0074, T-208) and its
+ * stairs from T1 down to T2 (T-219), laid over the pads.
  */
 export const RAMPS: readonly Ramp[] = [...stepRamps(MAP_CHUNKS), ...abutmentRamps(MAP_CHUNKS), ...ALCHEMIA_RAMPS];
 /** Ramps along the flights the terrain climbs against their `incline` (G-236, T-131), laid last on a finer grid (`terrain.ts`). */

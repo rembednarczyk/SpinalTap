@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MemorySaveStore, checksum } from "@seki/persistence";
 import { CLINIC_WAKE_SPOT, FIXER_SPAWN, PLAYER_SPAWN, clinicPoint } from "@seki/sim";
+import { translateText } from "@seki/ui";
 import { allText, finishDialogue, objective, setup, steps, talkTo, talkToKaito } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 
@@ -20,7 +21,7 @@ describe("the prologue (G-034)", () => {
     expect(near(session.sim.player()!.position, PLAYER_SPAWN.position)).toBeLessThan(0.1);
     expect(objective(ui)).toContain("Kaito");
     expect(objective(ui)).toContain("Neon Koi");
-    expect(ui.getState().toasts.map((t) => t.text)).toContainEqual(expect.stringContaining("Kaito is waiting at Neon Koi, across the promenade."));
+    expect(ui.getState().toasts.map((t) => translateText("en", t.text))).toContainEqual(expect.stringContaining("Kaito is waiting at Neon Koi, across the promenade."));
     const before = kaito(session)!;
     expect(before.position).toEqual(FIXER_SPAWN.position);
     expect(near(before.position, CLINIC_WAKE_SPOT)).toBeGreaterThan(10);

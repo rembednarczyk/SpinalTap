@@ -2,6 +2,7 @@ import type { Vec3 } from "../math/vec3";
 import type { BuildingUse, GroundPoint, GroundSurface, RoadMarkingKind, StreetPropItem, TerrainGrid, TerrainOpenSides } from "../world/city-geo";
 import type { VenueKind } from "../world/venues";
 import type { GarmentLook, GarmentSlot, Rarity, WeaponLook, WeaponSlot } from "../items/types";
+import type { CastKey } from "./cast";
 
 export type EntityId = number;
 
@@ -56,8 +57,18 @@ export type GrabPhase = "hold" | "choke" | "kill";
 /** What the presentation layer should build for an entity. Pure data, engine-agnostic. */
 export type ViewDescriptor =
   | { readonly kind: "heroine" }
-  /** `umbrella: false` leaves a civilian's umbrella at home: indoors (ADR-0041). */
-  | { readonly kind: "npc"; readonly preset: "fixer" | "civilian" | "ripperdoc"; readonly umbrella?: boolean }
+  /**
+   * `umbrella: false` leaves a civilian's umbrella at home: indoors (ADR-0041). `cast` names a
+   * character of the story and `look` seeds a background character's look (ADR-0076); both only
+   * pick the model, `preset` stays the role and the fallback look.
+   */
+  | {
+      readonly kind: "npc";
+      readonly preset: "fixer" | "civilian" | "ripperdoc";
+      readonly umbrella?: boolean;
+      readonly cast?: CastKey;
+      readonly look?: number;
+    }
   /**
    * A resident of the city (ADR-0041): one of the crowd on the sidewalks, drawn in bulk and
    * cheaply. `look` seeds the silhouette, the clothes and their colours; `umbrella` is false
@@ -72,9 +83,10 @@ export type ViewDescriptor =
   | { readonly kind: "vehicle"; readonly model: VehicleModel; readonly tint: number; readonly parked?: true }
   /**
    * "corpo": Tessen's security in the docks (ADR-0024); "ganger": Hebi. `enforcer`: sees through
-   * disguises (ADR-0033), the HUD marks it with an icon.
+   * disguises (ADR-0033), the HUD marks it with an icon. `cast` and `look` pick the model as an
+   * NPC's do (ADR-0076).
    */
-  | { readonly kind: "enemy"; readonly preset: "ganger" | "corpo"; readonly enforcer?: boolean }
+  | { readonly kind: "enemy"; readonly preset: "ganger" | "corpo"; readonly enforcer?: boolean; readonly cast?: CastKey; readonly look?: number }
   | {
       readonly kind: "block";
       readonly size: Vec3;

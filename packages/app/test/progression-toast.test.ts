@@ -11,7 +11,8 @@ describe("level up in the session", () => {
     ui.subscribe((s) => {
       for (const t of s.toasts) shown.set(t.id, { title: t.title, text: t.text });
     });
-    const levelUps = () => [...shown.values()].filter((t) => /^(Level up|Awans)/.test(t.title));
+    const levelUp = (t: Pick<Toast, "title">) => typeof t.title === "string" && /^(Level up|Awans)/.test(t.title);
+    const levelUps = () => [...shown.values()].filter(levelUp);
     session.newGame();
     session.sim.enqueue({ type: "set-flag", flag: "met_fixer" });
     steps(session, 2);
@@ -28,6 +29,6 @@ describe("level up in the session", () => {
       { title: "Awans: poziom 4", text: "Punkt atrybutu i punkt perku do rozdania" },
     ]);
     // Two levels at once take one place in the stack: the newer replaced the older.
-    expect(ui.getState().toasts.filter((t) => /^(Level up|Awans)/.test(t.title)).map((t) => t.title)).toEqual(["Awans: poziom 4"]);
+    expect(ui.getState().toasts.filter(levelUp).map((t) => t.title)).toEqual(["Awans: poziom 4"]);
   });
 });

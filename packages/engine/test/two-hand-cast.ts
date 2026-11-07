@@ -74,7 +74,7 @@ export const cast = async (who: CharacterModelKey | null): Promise<Cast> => {
   const spec = who ? MODELS[who] : undefined;
   if (who && spec) {
     models.setManifest({ [who]: { url: characterUrl(spec.file), scale: spec.scale } });
-    models.dress(rig, who, "c");
+    models.dress(rig, { fallback: who }, "c");
     await until(() => models.loadingCount === 0);
   }
   const dressed = models.of(rig);

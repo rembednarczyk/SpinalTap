@@ -38,6 +38,11 @@ export interface Ramp {
    * round end reaches half its width past it (G-349, a bridge's abutment 13 m wide).
    */
   readonly square?: boolean;
+  /**
+   * Laid over the pads, not under them: a ramp between two terraces (ADR-0074's stairs from T1
+   * down to T2) keeps its grade where a terrace's blend reaches over it.
+   */
+  readonly over?: boolean;
 }
 
 /** 1 inside, 0 beyond `blend`, smooth between. */
@@ -89,10 +94,11 @@ export const rectOverlap = (r: GroundRect, flat: readonly number[], ox: number, 
   return Math.abs(s) / 2;
 };
 
-/** Height at (x, z) after the ramps and then the pads, from the original height `h`. */
-export const shapeHeight = (x: number, z: number, h: number, pads: readonly Pad[], ramps: readonly Ramp[]): number => {
+/** Height at (x, z) after the ramps laid under the pads (`over` false) or over them (true). */
+const rampsOver = (x: number, z: number, h: number, ramps: readonly Ramp[], over: boolean): number => {
   let out = h;
   for (const r of ramps) {
+    if ((r.over ?? false) !== over) continue;
     const dx = r.b.x - r.a.x;
     const dz = r.b.z - r.a.z;
     const len2 = dx * dx + dz * dz || 1;
@@ -106,11 +112,17 @@ export const shapeHeight = (x: number, z: number, h: number, pads: readonly Pad[
     const w = weight(d, r.blend);
     if (w > 0) out += (r.ya + (r.yb - r.ya) * t - out) * w;
   }
+  return out;
+};
+
+/** Height at (x, z) after the ramps, then the pads, then the ramps laid over them, from the original height `h`. */
+export const shapeHeight = (x: number, z: number, h: number, pads: readonly Pad[], ramps: readonly Ramp[]): number => {
+  let out = rampsOver(x, z, h, ramps, false);
   for (const p of pads) {
     const w = weight(rectDistance(p.rect, x, z), p.blend);
     if (w > 0) out += (p.y - out) * w;
   }
-  return out;
+  return rampsOver(x, z, out, ramps, true);
 };
 
 /** The grid with every point shaped. */

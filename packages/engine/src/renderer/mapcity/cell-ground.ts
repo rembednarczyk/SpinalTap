@@ -70,5 +70,9 @@ export const planGround = (ground: MeshSink, water: MeshSink, entries: MapEntrie
   else if (g.surface === "basin") planBasin(water, ground, g.ring, h);
   else if (g.surface === "steps") planSteps(ground, g.ring, h);
   else if (g.surface === "crossing") planCrossing(ground, g.ring, h);
-  else planSurface(ground, g.surface, g.ring, h, g.surface === "sidewalk" ? entries.roadAt : null, drawnAbove(entries, id, g, within ?? cellsMeeting(g.bounds)), within);
+  else {
+    const cells = within ?? cellsMeeting(g.bounds);
+    const under = (near: DrapeCells) => drawnAbove(entries, id, g, (i, k) => cells(i, k) && near(i, k));
+    planSurface(ground, g.surface, g.ring, h, g.surface === "sidewalk" ? entries.roadAt : null, under, within);
+  }
 };

@@ -1,5 +1,4 @@
-import { type EntityId, type GroundSurface, type RoadMarkingKind, type TerrainGrid, type TerrainOpenSides, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
-import type { Mesh } from "../../babylon";
+import type { EntityId, GroundSurface, RoadMarkingKind, Vec3, ViewDescriptor } from "@seki/core";
 import type { AcrossAt } from "./canyon-plan";
 import { type DeckAxis, Decks, deckHeight } from "./deck-plan";
 import type { MapBuilding } from "./facade-frame";
@@ -9,6 +8,9 @@ import { mapBuilding } from "./map-building";
 import { BinIndex } from "./map-index";
 import { type Box2, type P2, pointInRing } from "./polygon";
 import { surfaceLiftAt } from "./surface-lift";
+import { TerrainEntries } from "./terrain-index";
+
+export type { TerrainEntry } from "./terrain-index";
 
 export interface BuildingEntry {
   readonly ring: readonly P2[];
@@ -33,14 +35,6 @@ export interface GroundEntry {
   readonly cell: string;
 }
 
-export interface TerrainEntry {
-  readonly grid: TerrainGrid;
-  /** Sides at the edge of the map data: an apron runs on from them (ADR-0044). */
-  readonly open: TerrainOpenSides | undefined;
-  readonly bounds: Box2;
-  mesh: Mesh | null;
-}
-
 /** The point halfway along a line. */
 const middleOf = (line: readonly P2[]): P2 => {
   let rest = line.slice(1).reduce((s, p, i) => s + Math.hypot(p.x - line[i]!.x, p.z - line[i]!.z), 0) / 2;
@@ -61,7 +55,7 @@ const middleOf = (line: readonly P2[]): P2 => {
 export class MapEntries {
   readonly buildings = new Map<EntityId, BuildingEntry>();
   readonly grounds = new Map<EntityId, GroundEntry>();
-  readonly terrains = new Map<EntityId, TerrainEntry>();
+  readonly terrains = new TerrainEntries();
   readonly buildingIndex = new BinIndex();
   private readonly roadIndex = new BinIndex();
   /** Every surface but water, for the lift of the feet standing on one (ADR-0045). */
@@ -102,11 +96,7 @@ export class MapEntries {
 
   /** Ground height at (x, z) from the terrain of the chunk there, or null outside every terrain. */
   heightAt(x: number, z: number): number | null {
-    for (const t of this.terrains.values()) {
-      const b = t.bounds;
-      if (x >= b.minX - 0.01 && x <= b.maxX + 0.01 && z >= b.minZ - 0.01 && z <= b.maxZ + 0.01) return terrainHeightAt(t.grid, x, z);
-    }
-    return null;
+    return this.terrains.heightAt(x, z);
   }
 
   /** The terrain under a ground entry: the chunk's, or the entry's own height outside every terrain. */
@@ -132,9 +122,14 @@ export class MapEntries {
       const surface = this.decks.surfaceAt(mid.x, mid.z) ?? terrain;
       return Object.assign((x: number, z: number) => surface(x, z), { surfaceAt: () => surface });
     }
-    return Object.assign((x: number, z: number) => this.decks.heightAt(x, z, terrain(x, z)) ?? terrain(x, z), {
-      surfaceAt: (x: number, z: number) => this.decks.surfaceAt(x, z, terrain(x, z)) ?? terrain,
-    });
+    // The drape reads millions of points: the terrain under each once, and only for a deck there (G-444).
+    return Object.assign(
+      (x: number, z: number) => {
+        const under = terrain(x, z);
+        return this.decks.heightAt(x, z, under) ?? under;
+      },
+      { surfaceAt: (x: number, z: number) => (this.decks.near(x, z) ? this.decks.surfaceAt(x, z, terrain(x, z)) : null) ?? terrain },
+    );
   }
 
   /** The surfaces (not water, fountains or markings) whose boxes meet `box`. */
