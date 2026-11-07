@@ -1456,13 +1456,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-479 Odłożone ciało może trafić środkiem w bryłę (kontener) i w niej zostać
-- Status: zgłoszone (7.11, budowniczy ADR-0075 etap 2)
+- Status: w naprawie (7.11, gałąź `ccr-ec2c4269-ilh8k8-g479`; zgłoszone przez budowniczego ADR-0075 etap 2)
 - Ważność: S3 · Zasięg: `dropBody` w sim stawia ciało 0,6 m przed graczem bez sprawdzania brył; przy kontenerze (391,2..392,8 × −33,6..−32,4) środek ciała wszedł w bryłę i po 30 krokach wypychanie go nie wyciągnęło; sonda renderera (G-458) patrzy wtedy od środka bryły; poprawka w sim: miejsce odłożenia poza bryłami (cofnięcie do gracza albo bok), test w sim; do połączenia z ADR-0075 etap 4 (`settle-body`)
 - Pakiet właściciela: packages/sim
 
 ### G-480 Po podniesieniu ciała na ziemi zostaje ciemny przedmiot w miejscu głowy
 - Status: zgłoszone (7.11, budowniczy ADR-0075 etap 2)
 - Ważność: S4 · Zasięg: widoczne na zrzucie niesienia (`4-niesienie-bok.png`); wygląda na nakrycie głowy albo dodatek stroju korpo (`garment-addons.ts`), który nie idzie za niesionym ciałem; prawdopodobnie sprzed etapu 2
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-481 Postać zabita w skoku albo na drabinie leży w powietrzu
+- Status: zgłoszone (7.11, weryfikator #370)
+- Ważność: S4 · Zasięg: po G-457 zwłoki opadają z wysokości korzenia w chwili śmierci, więc przy śmierci w locie albo na drabinie ciało zostaje na tej wysokości (wcześniej spadało na y = 0); poprawka: grunt z terenu pod postacią bez części lotnej albo ragdoll (ADR-0075 etap 5)
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
