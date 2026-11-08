@@ -98,13 +98,14 @@ describe("model variants (ADR-0076 §3)", () => {
 });
 
 describe("variants on the game's models (ADR-0076 stage 2)", () => {
-  it("dress Kurosawa unlike Kaito on Kaito's file, and Mori as a man in glasses and an apron", async () => {
+  it("dress Hideo unlike Kaito on Kaito's file, and Mori as a man in glasses and an apron", async () => {
     serveModels();
     const scene = new Scene(new NullEngine());
     const views = viewsOn(scene);
     views.setCharacterModels(GAME);
     views.spawn(2, { kind: "npc", preset: "fixer", cast: "kaito" }, STAND);
-    views.spawn(3, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
+    // Kurosawa wore Kaito's file until stage 3 (model-kurosawa.test.ts); Hideo still does.
+    views.spawn(3, { kind: "npc", preset: "fixer", cast: "hideo" }, STAND);
     views.spawn(4, { kind: "npc", preset: "ripperdoc", cast: "mori" }, STAND);
     await settled(views);
     expect(views.dressedCount).toBe(3);
@@ -184,19 +185,19 @@ describe("variants on the game's models (ADR-0076 stage 2)", () => {
     const scene = new Scene(new NullEngine());
     const views = viewsOn(scene);
     views.setCharacterModels(GAME);
-    views.spawn(2, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
+    views.spawn(2, { kind: "npc", preset: "fixer", cast: "hideo" }, STAND);
     await settled(views);
-    const kurosawa = materialOf(views, 2, "hair");
+    const hideo = materialOf(views, 2, "hair");
     const materials = scene.materials.length;
     views.despawn(2, false);
-    // The same file again, as Kaito: his own hair, not Kurosawa's, and no new material.
+    // The same file again, as Kaito: his own hair, not Hideo's, and no new material.
     views.spawn(3, { kind: "npc", preset: "fixer", cast: "kaito" }, STAND);
     await settled(views);
-    expect(materialOf(views, 3, "hair")).not.toBe(kurosawa);
+    expect(materialOf(views, 3, "hair")).not.toBe(hideo);
     views.despawn(3, false);
-    views.spawn(4, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
+    views.spawn(4, { kind: "npc", preset: "fixer", cast: "hideo" }, STAND);
     await settled(views);
-    expect(materialOf(views, 4, "hair")).toBe(kurosawa);
+    expect(materialOf(views, 4, "hair")).toBe(hideo);
     expect(scene.materials.length).toBe(materials);
     expect(scene.meshes.filter((m) => m.name.startsWith("e2-v-") || m.name.startsWith("e3-v-"))).toEqual([]);
   });
