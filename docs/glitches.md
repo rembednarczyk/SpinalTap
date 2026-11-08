@@ -1585,6 +1585,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: 87 kwadratów 10 × 10 m `landuse-bare`, 1540 m² w 60 skupieniach (6159 próbek 0,5 m); największe: 397 m² (x 115..177; z 10..31) i 151 m² (119..191; 5..45) przy UM Collegium Maximum w67499318 (`amenity=university`), 291 m² (146..180; 100..141) i 113 m² (168..180; 109..131) za w232674406 i kamienicami, 145 m² (205..217; −20..7) i 48 m² (203..222; 8..18) przy garażach w67499326 i w67499315, 106 m² (20..42; 122..140) i 42 m² (20..29; 139..144) przy Collegium Medicum w232674395 i kościele w232674421, dziedziniec SP nr 24 przy w232674397 (ok. 136 m² w 4 skupieniach), zaplecze Radziwiłłowskiej 33 m² (147..166; 93..98); zrzuty `shots/opiekun-k11/coll-g.png`, `yard-s-g.png`; przyczyna jak G-513 i G-521 (OSM bez nawierzchni podwórek, dziedzińców uczelni i szkoły); ok. 94% powierzchni to 6 największych skupień; test przyjęcia jak `landuse-bare-krakowskie.test.ts`
 - Pakiet właściciela: tools/osm-import (korekty)
 
+### G-533 Auto rampy P−1 nie objeżdża gracza na dolnej połowie pasa w dół
+- Status: zgłoszone (8.11, weryfikator #399)
+- Ważność: S4 · Zasięg: `ownWayRoom` w `packages/sim/src/content/traffic-ramp.ts` bierze najmniejsze miejsce w oknie 14 m naprzód, a łuk u stopy rampy (miejsce 0) wchodzi w okno już od z ≈ 8; na pasie w dół przy z ≈ 8–22 auto IN stoi i trąbi, choć do wschodniej ściany są prawie 2 m; przykład: ziarno 1234, gracz (416,15; 12), 1,3 m od osi pasa, auto stoi 8 s i rusza po zejściu gracza; bezpieczne, ale zachowawcze; test `alchemia-ramp-pass` ma przypadki „down” tylko przy z 4–8
+- Pakiet właściciela: packages/sim (ruch aut)
+
+### G-534 Auto pojawia się tuż przy graczu poza jego widokiem i go spycha
+- Status: zgłoszone (8.11, weryfikator #399)
+- Ważność: S4 · Zasięg: `comeAndGo` nie ma minimalnej odległości od gracza; przykład: ziarno 77, ruch high, 11:00, gracz (413,25; −13,5), yaw 0: `alchemia-p1:in` pojawia się w kroku 1 przy (412,96; −13,72) i spycha gracza; najpewniej dotyczy też tras miasta (niesprawdzone)
+- Pakiet właściciela: packages/sim (ruch aut)
+
+### G-536 Goła ziemia na placu przy Nowym Placu Targowym, Nadstawnej i na podwórzach Podzamcza (podzamcze-1-1)
+- Status: zgłoszone (8.11, opiekun mapy, komórka podzamcze-1-1)
+- Ważność: S3 · Zasięg: 93 kwadraty 10 × 10 m `landuse-bare`, ok. 2005 m² (8021 próbek 0,5 m) w 28 skupieniach; największe (m², x, z): 680 (747..800; 446..490) przy parkingach w227698438 i w227698440, postoju taxi w227698439 i sklepie w73833921; 221 (735..750; 452..511) za Nova w66264174; 159 (815..841; 450..485) przy kioskach w73833930/31/32; 153 (742..769; 513..536) przy skraju Ruskiej; 121 i 107 (848..868; 507..526) przy Szkolnej; 110 (769..808; 501..526); 98 (807..828; 458..490); 91 (860..878; 487..498); dziewięć największych to ok. 88%; 60% próbek w `landuse=commercial` w1305996965 bez `surface`, 37% w pasie do 5 m od ścian; zrzuty dzienne `shots/opiekun-p11/d-d1-d.png`, `d-b1-b.png`, `d-a2-plac-e.png`; przyczyna jak G-513, G-521, G-527; test przyjęcia: `landuse-bare` w komórce do ≤ 10% z bazą obniżoną w tym samym commicie
+- Pakiet właściciela: tools/osm-import (korekty nawierzchni)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
