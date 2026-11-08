@@ -82,11 +82,36 @@ export const resolveModel = (manifest: CharacterModelManifest, choice: ModelChoi
 /** Instances are interchangeable only with the same file, scale, turn and variant. */
 export const modelPoolKey = (spec: CharacterModelSpec): string => `${spec.url}|${spec.scale ?? 1}|${spec.yaw ?? 0}|${spec.variant ?? 0}`;
 
-/** Every model the manifest names, one per file, the role models first (the loading screen, ADR-0057). */
+/** The first spec of every file, in order. */
+const oneByUrl = (specs: Iterable<CharacterModelSpec | undefined>): CharacterModelSpec[] => {
+  const byUrl = new Map<string, CharacterModelSpec>();
+  for (const spec of specs) if (spec && !byUrl.has(spec.url)) byUrl.set(spec.url, spec);
+  return [...byUrl.values()];
+};
+
+/** Every model the manifest names, one per file, the role models first. */
 export const manifestFiles = (manifest: CharacterModelManifest): CharacterModelSpec[] => {
   const { cast, pools, ...roles } = manifest;
-  const all = [...Object.values(roles), ...Object.values(cast ?? {}), ...Object.values(pools ?? {}).flat()];
-  const byUrl = new Map<string, CharacterModelSpec>();
-  for (const spec of all) if (spec && !byUrl.has(spec.url)) byUrl.set(spec.url, spec);
-  return [...byUrl.values()];
+  return oneByUrl([...Object.values(roles), ...Object.values(cast ?? {}), ...Object.values(pools ?? {}).flat()]);
+};
+
+/**
+ * The files the loading screen waits for (ADR-0057, ADR-0076 stage 4a): the heroine's and those
+ * of the characters already in the scene round the start, one per file. The rest load later.
+ */
+export const startFiles = (manifest: CharacterModelManifest, choices: Iterable<ModelChoice | null>): CharacterModelSpec[] => {
+  const wanted: (CharacterModelSpec | undefined)[] = [manifest.heroine];
+  for (const choice of choices) if (choice) wanted.push(resolveModel(manifest, choice));
+  return oneByUrl(wanted);
+};
+
+/**
+ * The files fetched in the background once the game is on screen (ADR-0076 stage 4a): the role
+ * models and the background pools, since passers-by, vendors and gangers stream in in every
+ * district. A file only named characters wear (Kurosawa's, in the second act) loads when one of
+ * them first appears.
+ */
+export const backgroundFiles = (manifest: CharacterModelManifest): CharacterModelSpec[] => {
+  const { cast: _cast, pools, ...roles } = manifest;
+  return oneByUrl([...Object.values(roles), ...Object.values(pools ?? {}).flat()]);
 };

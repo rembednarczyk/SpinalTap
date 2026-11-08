@@ -231,6 +231,9 @@ describe("variants on the game's models (ADR-0076 stage 2)", () => {
     views.spawn(2, { kind: "enemy", preset: "ganger", look: borrowing("topFrom") }, STAND);
     views.spawn(3, { kind: "npc", preset: "civilian", look: borrowing("topFrom") }, STAND);
     views.spawn(4, { kind: "npc", preset: "civilian", look: borrowing("bottomFrom") }, STAND);
+    // Donors are the loaded files (ADR-0076 stage 4a): Seki and Kaito are in the scene.
+    views.spawn(5, { kind: "heroine" }, STAND);
+    views.spawn(6, { kind: "npc", preset: "fixer" }, STAND);
     await settled(views);
     /** The texture a character's part is drawn with, and the one its own file gave it. */
     const textures = (id: EntityId, part: string) => {

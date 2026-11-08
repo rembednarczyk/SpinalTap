@@ -100,6 +100,8 @@ describe("Kurosawa's model (ADR-0076 stage 3)", () => {
     };
     views.spawn(2, { kind: "enemy", preset: "ganger", look: borrowing("topFrom") }, STAND);
     views.spawn(3, { kind: "enemy", preset: "ganger", look: borrowing("bottomFrom") }, STAND);
+    // Donors are the loaded files (ADR-0076 stage 4a): Kurosawa is in the scene.
+    views.spawn(4, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
     await settled(views);
     // A coat on a shirt's UVs would scatter its texels: Base_Male keeps his own top.
     // Booleans: a failing `toContain` would print the scene graph of the textures.

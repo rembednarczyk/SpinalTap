@@ -274,6 +274,11 @@ export const outlineModelMeshes = (meshes: readonly AbstractMesh[], enabled: boo
  */
 export class ModelLibrary {
   private readonly containers = new Map<string, Promise<Loaded>>();
+  /** Files whose container is ready (ADR-0076 stage 4a: the variants borrow cloth of these only). */
+  private readonly ready = new Set<string>();
+  /** Files still on their way, failed or not. */
+  private readonly inFlight = new Set<Promise<unknown>>();
+  private readonly listeners: ((url: string) => void)[] = [];
 
   constructor(
     private readonly scene: Scene,
@@ -323,6 +328,21 @@ export class ModelLibrary {
     return this.load(spec);
   }
 
+  /** The file is loaded and its container ready for instances. */
+  isLoaded(url: string): boolean {
+    return this.ready.has(url);
+  }
+
+  /** Calls `listener` with the URL of every file that loads from now on. */
+  onLoaded(listener: (url: string) => void): void {
+    this.listeners.push(listener);
+  }
+
+  /** Resolves once no file is on its way, those asked for meanwhile included; failures count as settled. */
+  async settled(): Promise<void> {
+    while (this.inFlight.size > 0) await Promise.all([...this.inFlight]);
+  }
+
   /** The textures a loaded file keeps for its instances (a measure of its memory, ADR-0076). */
   async texturesOf(spec: CharacterModelSpec): Promise<readonly BaseTexture[]> {
     return [...(await this.load(spec)).container.textures];
@@ -368,9 +388,16 @@ export class ModelLibrary {
         }
         const container = await LoadAssetContainerAsync(source, this.scene, { pluginExtension: extension ?? (typeof source === "string" ? undefined : ".glb") });
         convertModelMaterials(container, this.materials, spec.preset ?? "importedCharacter", !vrm);
+        this.ready.add(spec.url);
+        for (const listener of this.listeners) listener(spec.url);
         return { container, springs, expressions };
       })();
       this.containers.set(spec.url, pending);
+      const flight: Promise<unknown> = pending.then(
+        () => this.inFlight.delete(flight),
+        () => this.inFlight.delete(flight),
+      );
+      this.inFlight.add(flight);
     }
     return pending;
   }

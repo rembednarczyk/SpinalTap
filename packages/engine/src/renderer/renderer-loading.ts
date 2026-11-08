@@ -25,9 +25,11 @@ export interface RendererLoadingDeps {
 export class RendererLoading {
   private readonly prep: StartPrep;
   private modelManifest: Promise<unknown> = Promise.resolve();
+  /** Starts so far: only the latest one, not cancelled, fetches the rest in the background. */
+  private runs = 0;
 
   constructor(private readonly deps: RendererLoadingDeps) {
-    const modelFiles = () => this.modelManifest.then(() => deps.characters.preloadModels());
+    const modelFiles = () => this.modelManifest.then(() => deps.characters.modelLoading.start());
     this.prep = sceneStartPrep({ stage: deps.stage, modelFiles, cityKit: deps.cityKit, cityWaiting: deps.cityWaiting });
   }
 
@@ -35,11 +37,17 @@ export class RendererLoading {
   prepare(at: Vec3, onProgress: (done: number, stage: PrepareStage) => void): Promise<void> {
     const moved = this.deps.shadow.update(at);
     if (moved) this.deps.materials.setShadowMatrix(moved);
-    return this.prep.run(onProgress);
+    const run = ++this.runs;
+    return this.prep.run(onProgress).then(() => {
+      // Once the game is on screen, the files the start left out (ADR-0076 stage 4a); a start
+      // that a newer one or the title replaced leaves the bandwidth to that one.
+      if (run === this.runs) void this.deps.characters.modelLoading.rest();
+    });
   }
 
   /** The start under way leads nowhere any more (back to the title). */
   cancel(): void {
+    this.runs++;
     this.prep.cancel();
   }
 

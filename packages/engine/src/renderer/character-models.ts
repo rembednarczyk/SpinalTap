@@ -2,7 +2,7 @@ import type { AbstractMesh, Scene } from "../babylon";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { CharacterRig } from "./characters";
 import type { Loadouts } from "./loadout";
-import { type ModelChoice, manifestFiles, modelPoolKey, resolveModel } from "./model-cast";
+import { type ModelChoice, backgroundFiles, manifestFiles, modelPoolKey, resolveModel, startFiles } from "./model-cast";
 import { type Donors, type WornVariant, dressVariant, lends } from "./model-dress";
 import type { CharacterModelManifest, CharacterModelSpec, ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
@@ -54,7 +54,8 @@ export interface CharacterModelsDeps {
  * Imported models over the characters' procedural rigs (ADR-0031 part behind `CharacterViews`):
  * the manifest, loading in the background, the dressed rigs, their variants (ADR-0076) and a
  * pool of released models per file, so a cleared scene (new game, load, streaming) dresses the
- * next characters at once.
+ * next characters at once. The loading screen waits for the files of the scene round the start
+ * only; until its file has loaded a character stands as its procedural rig (ADR-0076 stage 4a).
  */
 export class CharacterModels {
   private manifest: CharacterModelManifest = {};
@@ -67,8 +68,15 @@ export class CharacterModels {
   /** Tops and trousers the other files of a file's base lend it, loading and loaded. */
   private readonly donors = new Map<string, Promise<Donors>>();
   private readonly donorsReady = new Map<string, Donors>();
+  /** Bumped by every file that loads: donors counted before it miss its cloth. */
+  private donorsAge = 0;
 
-  constructor(private readonly deps: CharacterModelsDeps) {}
+  constructor(private readonly deps: CharacterModelsDeps) {
+    // Donors come from the loaded files only (G-547): a new one may lend, so they are counted again.
+    deps.library.onLoaded((url) => {
+      if (manifestFiles(this.manifest).some((f) => f.url === url)) this.forgetDonors();
+    });
+  }
 
   /** Characters dressed in an imported model. */
   get dressedCount(): number {
@@ -93,13 +101,26 @@ export class CharacterModels {
   /** Takes a new manifest; the caller dresses the characters already on screen. */
   setManifest(manifest: CharacterModelManifest): void {
     this.manifest = manifest;
-    this.donors.clear();
-    this.donorsReady.clear();
+    this.forgetDonors();
   }
 
-  /** Starts loading every model of the manifest, one promise per file (ADR-0057). */
-  preload(): Promise<unknown>[] {
-    return manifestFiles(this.manifest).map((spec) => this.deps.library.preload(spec));
+  /**
+   * Starts loading the files the start needs, one promise per file (ADR-0057): the heroine's and
+   * those `choices` (the characters in the scene) wear. Not every file of the manifest (G-547).
+   */
+  preload(choices: Iterable<ModelChoice | null>): Promise<unknown>[] {
+    return startFiles(this.manifest, choices).map((spec) => this.deps.library.preload(spec));
+  }
+
+  /**
+   * Loads the background roles' files the start did not, one after another, so the game on screen
+   * takes one file's work at a time (ADR-0076 stage 4a). Failures are skipped.
+   */
+  async prefetch(): Promise<void> {
+    const { library } = this.deps;
+    for (const spec of backgroundFiles(this.manifest)) {
+      if (!library.isLoaded(spec.url)) await library.preload(spec).catch(() => undefined);
+    }
   }
 
   /** Loads the model in the background and swaps it in once ready, if the rig still exists. */
@@ -177,16 +198,33 @@ export class CharacterModels {
     if (w.budget !== null) this.budget.give(w.budget, w.id);
   }
 
-  /** The tops and trousers of the other files of `spec`'s VRoid base; Seki's jacket is hers alone. */
+  private forgetDonors(): void {
+    this.donorsAge++;
+    this.donors.clear();
+    this.donorsReady.clear();
+  }
+
+  /**
+   * The tops and trousers of the other loaded files of `spec`'s VRoid base; Seki's jacket is hers
+   * alone. Counted once the files on their way have settled, so the scene of the start counts the
+   * files of the whole scene, and never loads a file for its cloth alone (G-547).
+   */
   private donorsOf(spec: CharacterModelSpec): Promise<Donors> {
     let pending = this.donors.get(spec.url);
     if (pending) return pending;
     const { library } = this.deps;
     const heroine = this.manifest.heroine?.url;
+    pending = library.settled().then(() => this.countDonors(spec, heroine, this.donorsAge));
+    this.donors.set(spec.url, pending);
+    return pending;
+  }
+
+  private countDonors(spec: CharacterModelSpec, heroine: string | undefined, age: number): Promise<Donors> {
+    const { library } = this.deps;
     const files = manifestFiles(this.manifest)
-      .filter((f) => f.url !== spec.url)
+      .filter((f) => f.url !== spec.url && library.isLoaded(f.url))
       .sort((a, b) => (a.url < b.url ? -1 : a.url > b.url ? 1 : 0));
-    pending = Promise.all([library.clothOf(spec), ...files.map((f) => library.clothOf(f).catch(() => null))]).then(([own, ...cloth]) => {
+    return Promise.all([library.clothOf(spec), ...files.map((f) => library.clothOf(f).catch(() => null))]).then(([own, ...cloth]) => {
       const lenders = files.flatMap((f, i) => {
         const c = cloth[i];
         return c ? [{ url: f.url, cloth: c }] : [];
@@ -195,11 +233,9 @@ export class CharacterModels {
         torso: lenders.flatMap((l) => (l.url !== heroine && l.cloth.torso && lends(l.cloth, own, "torso") ? [l.cloth.torso] : [])),
         legs: lenders.flatMap((l) => (l.cloth.legs && lends(l.cloth, own, "legs") ? [l.cloth.legs] : [])),
       };
-      this.donorsReady.set(spec.url, donors);
+      if (age === this.donorsAge) this.donorsReady.set(spec.url, donors);
       return donors;
     });
-    this.donors.set(spec.url, pending);
-    return pending;
   }
 
   private attach(rig: CharacterRig, model: ModelInstance, at: Attach): void {
