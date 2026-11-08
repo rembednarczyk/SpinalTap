@@ -23,6 +23,27 @@ export const pointLightAt = (l: PointLightDef, p: { x: number; y: number; z: num
   return att * att;
 };
 
+type V3 = { readonly x: number; readonly y: number; readonly z: number };
+
+/**
+ * What a light puts on a surface at `p` facing `n` seen from `eye`, as the toon shader's loop
+ * reckons it before its bands (for tests): the diffuse term `band` takes and the specular one
+ * its highlight's smoothstep takes. No highlight on a face turned from the light (G-490).
+ */
+export const pointLightOn = (l: PointLightDef, p: V3, n: V3, eye: V3): { readonly diffuse: number; readonly specular: number } => {
+  const att = pointLightAt(l, p);
+  const unit = (x: number, y: number, z: number): V3 => {
+    const d = Math.max(Math.hypot(x, y, z), 1e-4);
+    return { x: x / d, y: y / d, z: z / d };
+  };
+  const dot = (a: V3, b: V3): number => a.x * b.x + a.y * b.y + a.z * b.z;
+  const to = unit(l.position.x - p.x, l.position.y - p.y, l.position.z - p.z);
+  const v = unit(eye.x - p.x, eye.y - p.y, eye.z - p.z);
+  const ndl = Math.max(dot(n, to), 0);
+  const h = unit(to.x + v.x, to.y + v.y, to.z + v.z);
+  return { diffuse: ndl * att * 1.8, specular: ndl > 0 ? Math.max(dot(n, h), 0) ** 18 * att : 0 };
+};
+
 /**
  * Point lights registered by key and the ones bound to the shader's slots. Only
  * MAX_POINT_LIGHTS fit: slots go in registration order, first to lights within

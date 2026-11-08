@@ -10,6 +10,7 @@ import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills } from "./bridge-fill.ts";
 import { makeBuilding } from "./buildings.ts";
 import { addedAreas, corrected, correctedLine } from "./corrections.ts";
+import { withoutReplaced } from "./corrections-alchemia.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
@@ -259,7 +260,8 @@ const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
 };
 
 export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS): Generated => {
-  const features = extractFeatures(data);
+  // The ways a set piece of the game replaces (ADR-0074 stage 7) are left out before anything reads them.
+  const features = withoutReplaced(extractFeatures(data));
   // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), before anything reads them.
   const areas = [...features.areas.map((a) => corrected(a)), ...addedAreas()];
   const mapLines = features.lines.map((l) => correctedLine(l));

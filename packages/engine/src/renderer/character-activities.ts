@@ -97,6 +97,7 @@ export class CharacterActivities {
     const showing = stepBlend(d.blend, dt, speed > MOVING, clock);
     const joints = blendJoints(d.blend);
     applyActivityPose(rig, joints ?? zeroJoints, showing && joints ? blendWeight(d.blend) : 0);
+    rig.doing = showing ? doingOf(d.blend) : [];
     if (!showing) {
       this.forget(id);
       return;
@@ -132,6 +133,13 @@ export class CharacterActivities {
     d.propsFor = null;
   }
 }
+
+/** The activities of a blend that shape the pose now: the one blending out, the current one and the one asked for. */
+const doingOf = (b: ActivityBlend): ActivityId[] => {
+  if (b.weight <= 0 && b.target === null) return [];
+  const all = [b.cross < 1 ? b.from : null, b.current, b.target];
+  return [...new Set(all.filter((a): a is ActivityId => a !== null))];
+};
 
 /** Neutral joints for the last frame of a blend (only the channels the walk never sets are read). */
 const zeroJoints = {

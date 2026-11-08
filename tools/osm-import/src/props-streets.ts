@@ -40,7 +40,7 @@ const byKey = (a: Placed, b: Placed): number => (a.key < b.key ? -1 : a.key > b.
 const baskets = (item: PlanItem, placed: readonly Placed[]): Placed[] => {
   const lines = (item.lines ?? (item.line ? [item.line] : [])).map(flat);
   // Near the plan's lines first, then the other pastoral lamps and candelabra of the city.
-  const all = placed.filter((x) => BASKET_LAMPS.has(x.prop)).sort(byKey);
+  const all = placed.filter((x) => BASKET_LAMPS.has(x.prop) && !x.bare).sort(byKey);
   const near = (x: Placed) => lines.some((l) => distToLine(x.p, l) < 12);
   const lamps = [...all.filter(near), ...all.filter((x) => !near(x))];
   return lamps.filter((_, i) => i % 2 === 0).slice(0, item.count ?? lamps.length).map((x) => ({ prop: "hanging-basket", p: x.p, yaw: x.yaw, key: `${x.key}${BASKET}` }));

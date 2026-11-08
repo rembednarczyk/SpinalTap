@@ -110,7 +110,7 @@ export class CharacterModels {
     if (!spec || !choice || this.loading.has(rig)) return;
     const poolKey = modelPoolKey(spec);
     const who = choice.cast ?? choice.fallback;
-    const wearing = this.wearing(spec, choice);
+    const wearing = this.wearing(spec, choice, rig.aiming);
     const needs = wearing.look.topFrom !== null || wearing.look.bottomFrom !== null;
     // A model released by a cleared scene (new game, load, streaming) is reused at once.
     const pooled = this.pool.get(poolKey)?.pop();
@@ -162,13 +162,15 @@ export class CharacterModels {
    * The variant of a character: a named one's from the manifest (with its hand-made `dress`),
    * a background one's from its look within the file's budget, the file's own for the rest.
    */
-  private wearing(spec: CharacterModelSpec, choice: ModelChoice): Wearing {
+  private wearing(spec: CharacterModelSpec, choice: ModelChoice, armed: boolean): Wearing {
     if (choice.cast !== undefined || choice.look === undefined || spec.variant !== undefined || spec.dress !== undefined) {
       const id = spec.variant ?? 0;
       return { id, look: variantOf(id, spec.dress), budget: null };
     }
     const id = this.budget.take(spec.url, backgroundVariantOf(choice.look));
-    return { id, look: variantOf(id), budget: spec.url };
+    // Older looks only for the street's people (ADR-0076 decision 7), never for a fighter.
+    const elders = !armed && (choice.pool === "civilian" || choice.pool === "vendor");
+    return { id, look: variantOf(id, undefined, elders), budget: spec.url };
   }
 
   private giveBack(w: { readonly id: number; readonly budget: string | null }): void {
@@ -187,11 +189,11 @@ export class CharacterModels {
     pending = Promise.all([library.clothOf(spec), ...files.map((f) => library.clothOf(f).catch(() => null))]).then(([own, ...cloth]) => {
       const lenders = files.flatMap((f, i) => {
         const c = cloth[i];
-        return c && lends(c, own.family) ? [{ url: f.url, cloth: c }] : [];
+        return c ? [{ url: f.url, cloth: c }] : [];
       });
       const donors: Donors = {
-        torso: lenders.flatMap((l) => (l.url !== heroine && l.cloth.torso ? [l.cloth.torso] : [])),
-        legs: lenders.flatMap((l) => (l.cloth.legs ? [l.cloth.legs] : [])),
+        torso: lenders.flatMap((l) => (l.url !== heroine && l.cloth.torso && lends(l.cloth, own, "torso") ? [l.cloth.torso] : [])),
+        legs: lenders.flatMap((l) => (l.cloth.legs && lends(l.cloth, own, "legs") ? [l.cloth.legs] : [])),
       };
       this.donorsReady.set(spec.url, donors);
       return donors;
@@ -213,7 +215,7 @@ export class CharacterModels {
     // A smaller or taller model gets smaller or bigger accessories, within reason (as the loadouts' add-ons).
     const ratio = retarget.headHeight / (rig.head.position.y || 1);
     const fit = Number.isFinite(ratio) && ratio > 0 ? Math.min(1.25, Math.max(0.8, ratio)) : 1;
-    const worn = dressVariant(this.deps, `${at.name}-v`, model.meshes, { retarget, body: rig.root, fit }, at.wearing.look, at.donors);
+    const worn = dressVariant(this.deps, `${at.name}-v`, model.meshes, { retarget, body: rig.root, fit, rig, model }, at.wearing.look, at.donors);
     for (const m of model.meshes) if (m.getTotalVertices() > 0) this.deps.addCaster(m);
     const springs = SpringBones.create(model.root, { vrm: model.springs, prefix: model.prefix, colliders: humanoidColliders(model.root, model.prefix) });
     this.dressed.set(rig, { model, retarget, springs, poolKey: at.poolKey, worn, variant: at.wearing.id, budget: at.wearing.budget });

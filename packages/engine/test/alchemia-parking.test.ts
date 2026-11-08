@@ -5,13 +5,15 @@ import { describe, expect, it } from "vitest";
 import { P1, P1_CABINS, P1_PIECES, P1_RAMP, P1_RAMP_CUT, P1_STAIR_CUT, p1RampY } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
+import { pointLightOn } from "../src/npr/toon-point-lights";
+import { TOON_FRAGMENT } from "../src/npr/toon-shader";
 import { CityKit } from "../src/renderer/city-kit";
 import { parseCityKit } from "../src/renderer/city-kit-data";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { parkingInside, parkingOutside } from "../src/renderer/alchemia/parking-geometry";
 import { bakeParkingStandIn, parkingIn } from "../src/renderer/alchemia/parking-far";
-import { CYCLE, SHUTTERS, carPoses, shutterLifts } from "../src/renderer/alchemia/parking-traffic";
-import { PARKING_DRAW, PARKING_LAMP_KEY, ParkingView, TRAFFIC_DRAW, parkingRoofOver } from "../src/renderer/alchemia/parking-view";
+import { SHUTTERS, rampPitch, shutterLifts } from "../src/renderer/alchemia/parking-traffic";
+import { PARKING_DRAW, PARKING_LAMP_KEY, ParkingView, parkingRoofOver } from "../src/renderer/alchemia/parking-view";
 import { GeometrySink } from "../src/renderer/city-kit-data";
 
 const file = (name: string): ArrayBuffer => {
@@ -95,29 +97,45 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     }
   });
 
-  it("drives one car down the ramp into the south cabin and one out of the north cabin up the ramp, on the ramp's surface", () => {
-    let inSeen = 0;
-    let outSeen = 0;
-    for (let t = 0; t < CYCLE; t += 0.25) {
-      const [a, b] = carPoses(t);
-      for (const p of [a, b]) {
-        if (!p) continue;
-        const onRamp = p.x > P1_RAMP.minX && p.x < P1_RAMP.maxX && p.z < P1_RAMP.foot;
-        expect(p.y).toBeCloseTo(onRamp ? p1RampY(p.z) : P1.floor, 6);
-        // Within the ramp's walls, on the apron or in a cabin: never through a wall.
-        const inCabin = P1_CABINS.some((c) => p.x >= c.minX && p.x <= c.maxX + 3 && p.z >= c.minZ && p.z <= c.maxZ);
-        expect(onRamp || inCabin || (p.z >= P1_RAMP.foot - 1 && p.z <= P1.maxZ && p.x >= P1_CABINS[0]!.maxX), `${t}: ${p.x},${p.z}`).toBe(true);
+  it("puts each cabin's shutter up before a car heading in and while one leaves, down once none is by its doorway, shut in the reference views", () => {
+    // The simulation's cars (G-491): one down the ramp's east lane and west across the apron into the south cabin.
+    const [south, north] = P1_CABINS;
+    const run = (cars: (t: number) => { x: number; z: number; yaw: number }[], from: number, to: number) => {
+      let lifts: number[] = [0, 0];
+      const out: { t: number; lifts: number[] }[] = [];
+      for (let t = from; t <= to; t += 1 / 60) {
+        lifts = shutterLifts(lifts, cars(t), 1 / 60);
+        out.push({ t, lifts });
       }
-      if (a) inSeen++;
-      if (b) outSeen++;
-      // A car crossing a cabin's doorway has its shutter up.
-      const lifts = shutterLifts(t);
-      SHUTTERS.forEach((s, i) => {
-        for (const p of [a, b]) if (p && Math.abs(p.x - s.x1) < 2.3 && p.z > s.z0 && p.z < s.z1) expect(lifts[i], `${t}`).toBeGreaterThan(0.95);
-      });
+      return out;
+    };
+    const z = (south!.minZ + south!.maxZ) / 2;
+    // In at 4 m/s from the ramp's foot (x 412) to the cabin's middle (x 400.8): its nose 2.2 m ahead of its middle.
+    const goingIn = run((t) => [{ x: Math.max(400.8, 412 - 4 * t), z, yaw: -Math.PI / 2 }], 0, 8);
+    for (const { t, lifts } of goingIn) {
+      const nose = Math.max(400.8, 412 - 4 * t) - 2.2;
+      if (nose < SHUTTERS[0]!.x1 + 0.3) expect(lifts[0], `${t}`).toBeGreaterThan(0.95);
+      expect(lifts[1], `${t}`).toBe(0);
     }
-    expect(inSeen).toBeGreaterThan(40);
-    expect(outSeen).toBeGreaterThan(40);
+    // Gone into the garage (taken off the street out of sight): the shutter comes down.
+    let lifts = goingIn[goingIn.length - 1]!.lifts;
+    for (let i = 0; i < 120; i++) lifts = shutterLifts(lifts, [], 1 / 60);
+    expect(lifts).toEqual([0, 0]);
+    // Out of the north cabin: up at once, and until its tail is out.
+    const zn = (north!.minZ + north!.maxZ) / 2;
+    const out = run((t) => [{ x: 400.8 + 4 * t, z: zn, yaw: Math.PI / 2 }], 0, 3);
+    for (const { t, lifts } of out) if (400.8 + 4 * t - 2.2 < SHUTTERS[1]!.x1 + 0.3) expect(lifts[1], `${t}`).toBe(1);
+    // A car going up the west lane past the south cabin's doorway, away from it, leaves its shutter down.
+    expect(run((t) => [{ x: 411.65, z: 27 - 4 * t, yaw: Math.PI }], 0, 1).every((r) => r.lifts[0] === 0)).toBe(true);
+  });
+
+  it("tips a car on the ramp to its grade, nose down going down and up going up, level on P-1 and on the street", () => {
+    const grade = Math.atan2(p1RampY(P1_RAMP.top + 10) - p1RampY(P1_RAMP.top + 12), 2);
+    expect(rampPitch(414.85, P1_RAMP.top + 11, 0)).toBeCloseTo(-grade, 6);
+    expect(rampPitch(411.65, P1_RAMP.top + 11, Math.PI)).toBeCloseTo(grade, 6);
+    expect(rampPitch(402, 26.6, -Math.PI / 2)).toBe(0);
+    expect(rampPitch(414.85, -14.8, Math.PI / 2)).toBe(0);
+    expect(rampPitch(430, 10, 0)).toBe(0);
   });
 
   it("stops the rain in the room and the stair house, not over the car park or in the ramp's open trench", () => {
@@ -139,23 +157,51 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     return { view, eye, box, materials };
   };
 
-  it("draws the room and its lamp only near it, the cars near the ramp, none without the map city", () => {
+  it("draws the room, its shutters and its lamp only near it, none without the map city", () => {
     const { view, eye, box, materials } = setup();
     view.update(1 / 60);
     expect(view.stats.meshes).toBe(2);
     expect(view.stats.triangles).toBeGreaterThan(500);
     expect(materials.light(PARKING_LAMP_KEY)).toBeDefined();
-    // On T1 before the food hall's front: the room off, the cars too.
-    Object.assign(eye, { x: 416, y: -4.8, z: P1.maxZ + PARKING_DRAW + 10 + TRAFFIC_DRAW });
+    // On T1 before the food hall's front: the room off, its shutters too.
+    Object.assign(eye, { x: 416, y: -4.8, z: P1.maxZ + PARKING_DRAW + 10 });
     view.update(1 / 60);
     expect(view.stats.meshes).toBe(0);
     expect(materials.light(PARKING_LAMP_KEY)).toBeUndefined();
-    // By the ramp's top on Bajkowskiego: the cars, not the room.
+    // On Bajkowskiego away from the ramp's top: nothing of P-1 (its cars are the traffic's, G-491).
     Object.assign(eye, { x: 414, y: 0.6, z: P1_RAMP.top - 3 - PARKING_DRAW - 6 });
     view.update(1 / 60);
-    expect(view.stats.meshes).toBe(1);
+    expect(view.stats.meshes).toBe(0);
+    Object.assign(eye, { x: 405, y: P1.floor + 1.6, z: 15 });
+    view.update(1 / 60);
+    expect(view.stats.meshes).toBe(2);
     box.city = false;
     view.update(1 / 60);
     expect(view.stats.meshes).toBe(0);
+  });
+
+  it("lights the deck from its ceiling's fittings, never the ceiling itself: no glow on it seen from the deck (G-490)", () => {
+    const { view, materials } = setup();
+    view.update(1 / 60);
+    const lamp = materials.light(PARKING_LAMP_KEY)!;
+    // The toon shader's thresholds: the lowest band and the highlight's smoothstep start there.
+    const BAND = 0.03;
+    const HIGHLIGHT = 0.18;
+    const down = { x: 0, y: -1, z: 0 };
+    let glow = 0;
+    for (let ex = P1.minX + 1; ex < P1_RAMP.minX; ex += 2)
+      for (let ez = P1.minZ + 1; ez < P1.maxZ; ez += 2) {
+        const eye = { x: ex, y: P1.floor + 1.6, z: ez };
+        for (let x = P1.minX; x <= P1.maxX; x += 0.5)
+          for (let z = P1.minZ; z <= P1.maxZ; z += 0.5) {
+            const on = pointLightOn(lamp, { x, y: P1.ceiling, z }, down, eye);
+            if (on.diffuse > BAND || on.specular > HIGHLIGHT) glow++;
+          }
+      }
+    expect(glow).toBe(0);
+    // The deck under it still lit in full.
+    expect(pointLightOn(lamp, { x: lamp.position.x, y: P1.floor, z: lamp.position.z }, { x: 0, y: 1, z: 0 }, { x: 402, y: P1.floor + 1.6, z: 4 }).diffuse).toBeGreaterThan(0.47);
+    // The shader as its mirror: a face turned from a light gets no highlight of it.
+    expect(TOON_FRAGMENT).toMatch(/if \(g > 0\.0 && ndl > 0\.0\)/);
   });
 });

@@ -215,8 +215,9 @@ export const poseParts = (out: Affine[], d: PuppetDims, p: PuppetPose, x: number
     translate(s, 0, -d.thigh, 0);
     rotX(s, knee);
   };
-  leg(PART.thighL, PART.shinL, -1, p.legLX, p.kneeL, p.spread);
-  leg(PART.thighR, PART.shinR, 1, p.legRX, p.kneeR, -p.spread);
+  // The left leg is at -X: a negative turn about Z opens it (G-511).
+  leg(PART.thighL, PART.shinL, -1, p.legLX, p.kneeL, -p.spread);
+  leg(PART.thighR, PART.shinR, 1, p.legRX, p.kneeR, p.spread);
   const arm = (upper: number, fore: number, side: number, armX: number, armZ: number, elbow: number) => {
     const u = out[upper] as Affine;
     u.set(torso);

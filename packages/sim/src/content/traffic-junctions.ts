@@ -65,7 +65,7 @@ export const wayOf = (a: Heading, b: Heading): Way | null => {
 };
 
 /** A cubic Bézier from `a` heading `ea` to `b` heading `eb`, tangent to both, its handles as for a circle's arc; points every `STEP` or less. */
-const bezier = (a: Pt, ea: Heading, b: Pt, eb: Heading): Pt[] => {
+export const bezier = (a: Pt, ea: Heading, b: Pt, eb: Heading): Pt[] => {
   const chord = Math.hypot(b[0] - a[0], b[1] - a[1]);
   const angle = Math.acos(Math.max(-1, Math.min(1, ea.tx * eb.tx + ea.tz * eb.tz)));
   const k = angle < 1e-3 ? chord / 3 : (chord * (4 / 3) * Math.tan(angle / 4)) / (2 * Math.sin(angle / 2));

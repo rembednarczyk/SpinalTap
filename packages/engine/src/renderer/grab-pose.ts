@@ -142,11 +142,15 @@ const holdingUp = (t: number): JointPose => {
   };
 };
 
-/** Down on one knee behind the kneeling target, leaning over it. */
+/**
+ * Down on one knee behind the kneeling target, leaning over it. The front thigh and the lean
+ * together keep her left hip bent by under 70°: past that the thigh goes through the front of a
+ * short skirt (`seki.vrm`, G-514). The body sits high enough for the front foot to stay on the ground.
+ */
 const holdingDown = (rig: CharacterRig): JointPose => {
-  const lean = 0.3;
-  const drop = crouchOffset(rig, -0.75, 1.55, lean);
-  return { ...holdingUp(0), y: drop.y, z: drop.z, pitch: lean, thighL: -1.25 - lean, thighR: -0.2 - lean, kneeL: 1.2, kneeR: 1.9, headX: 0.35 };
+  const lean = 0.15;
+  const drop = crouchOffset(rig, -0.7, 1.45, lean);
+  return { ...holdingUp(0), y: drop.y, z: drop.z, pitch: lean, thighL: -1 - lean, thighR: -0.2 - lean, kneeL: 0.8, kneeR: 1.9, headX: 0.35 };
 };
 
 const HOLDING_MIX: MutablePose = { ...holdingUp(0) };

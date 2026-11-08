@@ -59,6 +59,17 @@ describe("a knocked-out body (G-449)", () => {
     expect(world(rig(views, GUARD).head).y).toBeCloseTo(head.y, 3);
   });
 
+  it("lies with the knees together when knocked out in a crouch (G-512)", () => {
+    const { views } = setup();
+    views.move(GUARD, at(0, 1.2, { crouch: 1 }));
+    run(views, 1);
+    expect(Math.abs(rig(views, GUARD).legL.rotation.z)).toBeGreaterThan(0.05);
+    views.move(GUARD, at(0, 1.2, { ...OUT, crouch: 1 }));
+    run(views, 2);
+    expect(rig(views, GUARD).legL.rotation.z).toBeCloseTo(0, 5);
+    expect(rig(views, GUARD).legR.rotation.z).toBeCloseTo(0, 5);
+  });
+
   it("gets back on its feet when woken", () => {
     const { views } = setup();
     views.move(GUARD, at(0, 1.2, OUT));

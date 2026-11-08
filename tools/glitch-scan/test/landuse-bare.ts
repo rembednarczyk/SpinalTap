@@ -117,9 +117,9 @@ const segmentGap = (a: Pt, b: Pt, x: number, z: number): number => {
   return Math.hypot(a.x + dx * t - x, a.z + dz * t - z);
 };
 
-/** The bare samples of a world: one finding per point, at its metre. */
-export const landuseBare = (w: LanduseWorld): Finding[] => {
-  if (w.landuse.length + w.shops.length + w.stops.length === 0) return [];
+/** The world's raster: where a town has paving, and what covers it. */
+const landuseGrid = (w: LanduseWorld): Grid | undefined => {
+  if (w.landuse.length + w.shops.length + w.stops.length === 0) return undefined;
   const grid = new Grid(boxOf([...w.landuse, ...w.shops, ...w.stops.map((p) => [p])], STOP_REACH));
   for (const r of w.landuse) grid.fill(r, IN_REGION);
   for (const r of w.shops) {
@@ -128,6 +128,26 @@ export const landuseBare = (w: LanduseWorld): Finding[] => {
   }
   for (const p of w.stops) grid.around([p], STOP_REACH, IN_REGION);
   for (const r of [...w.buildings, ...w.ground, ...w.green]) grid.fill(r, COVERED);
+  return grid;
+};
+
+/**
+ * Whether the 0.5 m cell holding (x, z) is bare in a town's paved area: another check of bare
+ * ground leaves such a cell to `landuse-bare`, so the coverage report does not count it twice.
+ */
+export const landuseBareAt = (w: LanduseWorld): ((x: number, z: number) => boolean) => {
+  const grid = landuseGrid(w);
+  if (!grid) return () => false;
+  return (x, z) => {
+    const [i, j] = [Math.floor((x - grid.x0) / BARE_GRID), Math.floor((z - grid.z0) / BARE_GRID)];
+    return i >= 0 && j >= 0 && i < grid.nx && j < grid.nz && grid.cells[j * grid.nx + i] === IN_REGION;
+  };
+};
+
+/** The bare samples of a world: one finding per point, at its metre. */
+export const landuseBare = (w: LanduseWorld): Finding[] => {
+  const grid = landuseGrid(w);
+  if (!grid) return [];
   const onChunk = (x: number, z: number) => w.chunks.some((c) => x > c.minX && x < c.maxX && z > c.minZ && z < c.maxZ);
   const out: Finding[] = [];
   for (let j = 0; j < grid.nz; j++)
@@ -139,7 +159,7 @@ export const landuseBare = (w: LanduseWorld): Finding[] => {
   return out;
 };
 
-const flatRing = (flat: readonly number[], ox = 0, oz = 0): Pt[] => {
+export const flatRing = (flat: readonly number[], ox = 0, oz = 0): Pt[] => {
   const ring: Pt[] = [];
   for (let i = 0; i + 1 < flat.length; i += 2) ring.push({ x: flat[i]! + ox, z: flat[i + 1]! + oz });
   return ring;

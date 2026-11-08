@@ -39,12 +39,15 @@ import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered 
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
 import { levelExitsInGame, undergroundLevelExits } from "./level-exit-checks";
+import { cutOnRoadInGame } from "./cut-on-road";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
+import { type CoverageRegister, hitsPerCell, registerProblems } from "../src/map-coverage.ts";
 import { metroLineProtected } from "./metro-line";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
+import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
@@ -98,7 +101,9 @@ import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movemen
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
-import { CAR_MODELS, MIN_ROUTE, TRAFFIC_LANES, TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
+import { alchemiaRampLanes, streetSegments } from "../../../packages/sim/src/content/traffic-ramp";
+import { rampCarsOffLane } from "./ramp-cars";
+import { CAR_MODELS, CITY_ROUTES, MIN_ROUTE, TRAFFIC_LANES, TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
 
 /**
  * The glitch scan (ADR-0054): the map's known kinds of glitch counted over the whole city, each
@@ -124,6 +129,10 @@ const carLanes = TRAFFIC_LANES.filter((r) => r.use !== "deliveries");
 const carStreets = ROAD_CHAINS.filter((c) => c.use === "cars");
 /** The side streets cars park along (ADR-0050). */
 const kerbStreets = carStreets.filter((c) => c.kind === "residential" || c.kind === "tertiary" || c.kind === "unclassified");
+
+/** How far (x, z) lies from a route at the street's level: Alchemia's ramp routes go under T0's square down to P-1 (`streetSegments`). */
+const fromStreetLane = (r: TrafficRoute, x: number, z: number): number =>
+  r.ownWay ? Math.min(Infinity, ...streetSegments(r).map((seg) => projectOn(seg, x, z).d)) : projectOn(r.points, x, z).d;
 
 /** Samples along a lane every `step` metres. */
 const along = (r: TrafficRoute, step: number) => {
@@ -526,7 +535,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    */
   "lane-dead-end": () => {
     const starts = cars.map((r) => ({ r, p: pointAt(r.points, 0) }));
+    // Alchemia's ramp routes end in the hand-over cabin, or where the city's route they go on with does.
     return cars.flatMap((r) => {
+      if (r.ownWay) return [];
       const e = pointAt(r.points, r.length);
       if (!deepInMap(e.x, e.z, 6)) return [];
       const met = starts.some(({ r: o, p }) => o !== r && o.use === r.use && Math.hypot(p.x - e.x, p.z - e.z) < 3 && p.tx * e.tx + p.tz * e.tz > 0.5);
@@ -567,12 +578,14 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A turn of a route (round before a block or at a dead end) or an arc from lane to lane at a
    * junction (ADR-0055, straight on too) with a point off every road surface or in a building,
-   * every quarter metre.
+   * every quarter metre. Alchemia's driveway, ramp and P-1 (a route's `ownWay`) are the set
+   * piece's own, off the map's paving (`ramp-car-off-lane` and `traffic-ramp.test.ts` keep them).
    */
   "turn-off-road": () =>
     cars.flatMap((r) =>
       [...(r.turns ?? []), ...(r.arcs ?? []).filter(([a]) => !r.turns?.some(([x]) => x === a))].flatMap(([a, b]) => {
         for (let s = a; s <= b; s += 0.25) {
+          if (r.ownWay?.some(([x, y]) => s >= x && s <= y)) continue;
           const p = pointAt(r.points, s);
           const road = surfacesAt(p.x, p.z).some((k) => k === "road" || k === "crossing" || k === "cobble");
           if (inMap(p.x, p.z) && (!road || (inBuilding(p.x, p.z) && !inPassage(p.x, p.z)))) return [{ at: near(p.x, p.z), what: `${r.id} at ${s.toFixed(1)}` }];
@@ -590,7 +603,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     Object.values(WORLD_STREET_PROPS)
       .flat()
       .filter((i) => i.prop !== "manhole" && i.prop !== "bollard" && furnitureRadius(i) > 0)
-      .flatMap((i) => (cars.some((r) => projectOn(r.points, i.x, i.z).d < furnitureRadius(i) + 0.9) ? [{ at: near(i.x, i.z), what: i.prop }] : [])),
+      .flatMap((i) => (cars.some((r) => fromStreetLane(r, i.x, i.z) < furnitureRadius(i) + 0.9) ? [{ at: near(i.x, i.z), what: i.prop }] : [])),
   /** A bulky free-standing piece reaching into a wall. */
   "furniture-in-wall": () =>
     Object.values(WORLD_STREET_PROPS)
@@ -1155,7 +1168,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
     return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, pavedAt(paving));
   },
-  /** A lamp of the plan's line over a bridge 2.5 m or more under the deck beside it or over it (G-503): on the valley's ground by Zamkowa's viaduct. */
+  /** A lamp of the plan's line over a bridge 1.5 m or more under the deck beside it or over it (G-503, G-507): on the valley's ground by Zamkowa's viaduct, on its abutment's bank. */
   "lamp-beside-deck": () => {
     const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
     return lampsBesideDeck(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, bridgeDeckAt);
@@ -1239,6 +1252,22 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "pavilion-on-paving": () => pavilionOnPaving(pavingInGame()),
   /** An interior of the game's own under the ground with fewer than two ways out in the level graph (ADR-0074 stage 4: P-1). */
   "underground-level-exit": () => undergroundLevelExits(levelExitsInGame()),
+  /**
+   * A point of the way a car of Alchemia's P-1 ramp drives (its route's), on a carriageway and off
+   * its turns, farther than 0.5 m from every car lane and the ramp's (G-510): it drives the
+   * street's axis, not a lane.
+   */
+  "ramp-car-off-lane": () =>
+    rampCarsOffLane(
+      TRAFFIC_ROUTES.filter((r) => r.ownWay).map((r) => ({ id: r.id, points: r.points, arcs: r.arcs ?? [] })),
+      [...carLanes.map((r) => r.points), ...alchemiaRampLanes(CITY_ROUTES)],
+      (x, z) => surfacesAt(x, z).some((s) => s === "road" || s === "crossing" || s === "cobble"),
+    ),
+  /**
+   * Ground the game digs out of a chunk, or a solid of its own over the ground, on an OSM street's or
+   * footway's axis the import does not drop in its favour with a row in the register (G-500, `cut-on-road.ts`).
+   */
+  "cut-on-road": () => cutOnRoadInGame(extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags))),
   /**
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.
@@ -1793,6 +1822,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "metro-shaft-ray": () => metroShaftRay(),
   /** A point of a 0.5 m grid on bare terrain in a shops' or market's area, by a shop's or public building's walls or at a stop (`landuse-bare.ts`, decision 5.11). */
   "landuse-bare": () => landuseBare(cityLanduseWorld(SOURCE_OSM)),
+  /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
+  "kerb-gap-bare": () => kerbGapBare(cityKerbWorld(SOURCE_OSM)),
   /**
    * A tree drawn lower than 0.6 of its measured height (OSM `height` or NMPT less NMT, `tree-heights.ts`, G-422). The
    * baseline's are by walls: their crowns grow only as far as clear of the facades.
@@ -2126,6 +2157,8 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
     mkdirSync("reports", { recursive: true });
     writeFileSync("reports/glitch-scan.json", JSON.stringify({ counts, found }, null, 2));
     if (update && Object.keys(found).length === Object.keys(CHECKS).length) writeFileSync(BASELINE, `${JSON.stringify(counts, null, 2)}\n`);
+    // The hits per cell of the map's coverage register (docs/mapa-pokrycie.md), for its report.
+    writeFileSync("reports/map-coverage-hits.json", JSON.stringify(hitsPerCell(found, MAP_CHUNKS), null, 2));
   });
   for (const [k, check] of Object.entries(CHECKS)) {
     it(`finds no more ${k} than its baseline`, () => {
@@ -2133,4 +2166,10 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
       if (!update) expect(found[k].length, `${k}: ${found[k].length} found, baseline ${baseline[k] ?? 0} (see reports/glitch-scan.json)`).toBeLessThanOrEqual(baseline[k] ?? 0);
     });
   }
+  // After every kind has run: a cell of the coverage register is `czyste` only with no hit of the scan in it.
+  it("holds no hit in a cell the coverage register calls czyste (docs/mapa-pokrycie.json)", () => {
+    if (Object.keys(found).length < Object.keys(CHECKS).length) return;
+    const register = JSON.parse(readFileSync(join(__dirname, "../../../docs/mapa-pokrycie.json"), "utf8")) as CoverageRegister;
+    expect(registerProblems(register, MAP_CHUNKS, hitsPerCell(found, MAP_CHUNKS))).toEqual([]);
+  });
 });

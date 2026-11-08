@@ -141,6 +141,31 @@ describe("the grab in the views (ADR-0075 stage 2)", () => {
     expect(world(rig(views, HEROINE).head).y).toBeLessThan(1.3);
   });
 
+  it("a grab run out (3 s) chokes it onto its knees and keeps it there however long the choke lasts (G-517)", () => {
+    const { views } = setup();
+    grab(views, "hold");
+    run(views, 3);
+    grab(views, "choke");
+    const head = () => world(rig(views, GUARD).head).y;
+    const knee = () => world(rig(views, GUARD).kneeL).y;
+    // Quick Takedown ends the choke at 0.72 s: by then well on the way down (G-482).
+    run(views, 0.72);
+    expect(head()).toBeLessThan(1.45);
+    run(views, CHOKE_TIME - 0.72);
+    const kneeling = head();
+    expect(kneeling).toBeLessThan(1.35);
+    expect(knee()).toBeLessThan(0.15);
+    // Held past the clip, the pose holds its end every frame: no getting up again.
+    for (let t = 0; t < 3; t += 1 / 60) {
+      views.update(1 / 60);
+      expect(head()).toBeCloseTo(kneeling, 2);
+      expect(knee()).toBeLessThan(0.15);
+    }
+    grab(views, null, { unconscious: true });
+    run(views, 2);
+    expect(head()).toBeLessThan(0.45);
+  });
+
   it("kills: the head goes round at the snap, the body goes limp and lies as a corpse", () => {
     const { views } = setup();
     grab(views, "hold");

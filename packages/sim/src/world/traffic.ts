@@ -36,10 +36,10 @@ export const vehicleId = (route: number, index: number): EntityId => VEHICLE_ID_
 /** Golden ratio's fractional part: the vehicles of a lane spread evenly for any count. */
 const SPREAD = 0.618034;
 
-const pickModel = (u: number): VehicleModel => {
-  const total = CAR_MODELS.reduce((s, [, w]) => s + w, 0);
+const pickModel = (u: number, models: readonly (readonly [VehicleModel, number])[] = CAR_MODELS): VehicleModel => {
+  const total = models.reduce((s, [, w]) => s + w, 0);
   let left = u * total;
-  for (const [m, w] of CAR_MODELS) {
+  for (const [m, w] of models) {
     if (left < w) return m;
     left -= w;
   }
@@ -61,7 +61,7 @@ export const vehiclePlan = (seed: number, route: number, index: number): Vehicle
   const start = lane.next();
   const speed = r.speed * (0.88 + lane.next() * 0.12);
   const own = deriveRandom(seed, `traffic-vehicle:${r.id}:${index}`);
-  const model: VehicleModel = r.use === "trolley" ? "trolleybus" : r.use === "deliveries" ? (own.next() < 0.5 ? "van" : "delivery") : pickModel(own.next());
+  const model: VehicleModel = r.use === "trolley" ? "trolleybus" : r.use === "deliveries" ? (own.next() < 0.5 ? "van" : "delivery") : pickModel(own.next(), r.models);
   const tint = Math.floor(own.next() * 0x7fffffff);
   const spread = (start + index * SPREAD) % 1;
   const phase = r.use === "trolley" ? trolleyCycle(r, speed) * spread : r.length * spread;

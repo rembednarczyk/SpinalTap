@@ -1,11 +1,12 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_CENTRE, ARKADY_CENTRE, FOODHALL, FOODHALL_INNER } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_LIFT, ARKADY_CENTRE, FOODHALL, FOODHALL_INNER, LIFT_HOLE, STAIR_HOUSE } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
 import { alchemiaGeometry } from "./alchemia-geometry";
 import { ParkingView } from "./parking-view";
+import type { CarAt } from "./parking-traffic";
 
 /**
  * How near the eye Alchemia's outside is drawn (m from the middle of the hall or of the Arkady,
@@ -19,19 +20,33 @@ export const INSIDE_DRAW = 45;
 const INSIDE_HOLD = 5;
 
 /**
- * The hall's lamp (ADR-0074 §6): warm, under the ceiling over its middle, as far as its corners and
- * only inside its walls (the toon shader's lights have no occlusion, G-263).
+ * The hall's lamp (ADR-0074 §6): warm, in the ceiling's fitting over its middle, as far as its corners
+ * and only inside its walls (the toon shader's lights have no occlusion, G-263). A hand into the slab:
+ * 0.4 m under the ceiling it lit its underside, a pool and a highlight seen from the floor (G-509, as G-490).
  */
 const LAMP = {
   color: "#ffd2a0",
   range: 26,
   intensity: 1.0,
-  position: { x: ALCHEMIA_CENTRE.x, y: FOODHALL.ceiling - 0.4, z: ALCHEMIA_CENTRE.z },
+  position: { x: ALCHEMIA_CENTRE.x, y: FOODHALL.ceiling + 0.05, z: ALCHEMIA_CENTRE.z },
   clip: { minX: FOODHALL_INNER.minX - 0.05, maxX: FOODHALL_INNER.maxX + 0.05, minZ: FOODHALL_INNER.minZ - 0.05, maxZ: FOODHALL_INNER.maxZ + 0.05 },
 } as const;
 export const ALCHEMIA_LAMP_KEY = "alchemia-foodhall";
 /** Over these metres up to INSIDE_DRAW the lamp fades out, so it does not go on in one step with the mesh. */
 const LAMP_FADE = 10;
+
+type Rect = { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
+const inRect = (r: Rect, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
+
+/**
+ * Whether a roof is over (x, y, z) at the food hall (ADR-0074 stage 1), where no rain falls: in the
+ * hall under its green roof, in the stair house and the lift's kiosk on it; not on the roof or on T1.
+ */
+export const hallRoofOver = (x: number, y: number, z: number): boolean => {
+  if (inRect(STAIR_HOUSE, x, z) && y < FOODHALL.roof + STAIR_HOUSE.height) return true;
+  if (inRect(LIFT_HOLE, x, z) && y < ALCHEMIA_LIFT.head) return true;
+  return inRect(FOODHALL, x, z) && y < FOODHALL.roof;
+};
 
 export interface AlchemiaDeps {
   readonly scene: Scene;
@@ -41,6 +56,8 @@ export interface AlchemiaDeps {
   /** False without Lublin's map city (the hall stands on one of its squares). */
   readonly city: () => boolean;
   readonly eye: () => Vec3;
+  /** The traffic's cars as drawn (P-1's shutters go up before them, ADR-0074 §4). */
+  readonly cars?: () => Iterable<CarAt>;
 }
 
 /** Horizontal distance from the eye to the hall's outline; 0 inside. */

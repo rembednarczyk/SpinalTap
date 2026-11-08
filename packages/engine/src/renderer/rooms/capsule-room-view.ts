@@ -15,15 +15,17 @@ export const CAPSULE_DRAW = 45;
 const CAPSULE_HOLD = 5;
 
 /**
- * The room's lamp: warm, under the ceiling, as far as its corners, and only inside its walls
+ * The room's lamp: warm, in the ceiling's fitting, as far as its corners, and only inside its walls
  * (G-263: the toon shader's lights have no occlusion; the margin keeps the walls' inner faces
- * lit, their outer faces are 0.2 m or more out).
+ * lit, their outer faces are 0.2 m or more out). A hand into the slab: 0.3 m under the ceiling it
+ * lit its underside, a pool and a highlight seen from the floor (G-509, as G-490); the longer range
+ * keeps the floor's full band under it as large as it was from there.
  */
 const LAMP = {
   color: "#ffd9a8",
-  range: 5.5,
+  range: 6.2,
   intensity: 1.1,
-  position: { x: CAPSULE_ORIGIN.x, y: CAPSULE_ORIGIN.y + CAPSULE_CEILING - 0.3, z: CAPSULE_ORIGIN.z },
+  position: { x: CAPSULE_ORIGIN.x, y: CAPSULE_ORIGIN.y + CAPSULE_CEILING + 0.05, z: CAPSULE_ORIGIN.z },
   clip: { minX: CAPSULE_INTERIOR_ROOM.minX - 0.05, maxX: CAPSULE_INTERIOR_ROOM.maxX + 0.05, minZ: CAPSULE_INTERIOR_ROOM.minZ - 0.05, maxZ: CAPSULE_INTERIOR_ROOM.maxZ + 0.05 },
 } as const;
 export const CAPSULE_LAMP_KEY = "capsule-room";
