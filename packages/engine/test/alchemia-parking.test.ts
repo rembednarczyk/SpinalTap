@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { MAP_CHUNKS, P1, P1_CABINS, P1_PIECES, P1_RAMP, P1_RAMP_CUT, P1_STAIR_CUT, groundY, p1RampY } from "@seki/sim";
+import { P1, P1_CABINS, P1_PIECES, P1_RAMP, P1_RAMP_CUT, P1_STAIR_CUT, p1RampY } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { CityKit } from "../src/renderer/city-kit";
@@ -10,8 +10,8 @@ import { parseCityKit } from "../src/renderer/city-kit-data";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { parkingInside, parkingOutside } from "../src/renderer/alchemia/parking-geometry";
 import { bakeParkingStandIn, parkingIn } from "../src/renderer/alchemia/parking-far";
-import { CYCLE, SHUTTERS, carPoses, shutterLifts } from "../src/renderer/alchemia/parking-traffic";
-import { PARKING_DRAW, PARKING_LAMP_KEY, ParkingView, TRAFFIC_DRAW, parkingRoofOver } from "../src/renderer/alchemia/parking-view";
+import { SHUTTERS, rampPitch, shutterLifts } from "../src/renderer/alchemia/parking-traffic";
+import { PARKING_DRAW, PARKING_LAMP_KEY, ParkingView, parkingRoofOver } from "../src/renderer/alchemia/parking-view";
 import { GeometrySink } from "../src/renderer/city-kit-data";
 
 const file = (name: string): ArrayBuffer => {
@@ -95,56 +95,45 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     }
   });
 
-  /** The map's surface drawn on top at (x, z) in Alchemia's chunk (the last piece holding it). */
-  const surfaceAt = (x: number, z: number): string | null => {
-    const c = MAP_CHUNKS.find((k) => k.id === "krakowskie-2-1")!;
-    const inside = (o: readonly number[]) => {
-      let hit = false;
-      for (let i = 0, j = o.length - 2; i < o.length; j = i, i += 2) {
-        if (o[i + 1]! > z !== o[j + 1]! > z && x < ((o[j]! - o[i]!) * (z - o[i + 1]!)) / (o[j + 1]! - o[i + 1]!) + o[i]!) hit = !hit;
+  it("puts each cabin's shutter up before a car heading in and while one leaves, down once none is by its doorway, shut in the reference views", () => {
+    // The simulation's cars (G-491): one down the ramp's east lane and west across the apron into the south cabin.
+    const [south, north] = P1_CABINS;
+    const run = (cars: (t: number) => { x: number; z: number; yaw: number }[], from: number, to: number) => {
+      let lifts: number[] = [0, 0];
+      const out: { t: number; lifts: number[] }[] = [];
+      for (let t = from; t <= to; t += 1 / 60) {
+        lifts = shutterLifts(lifts, cars(t), 1 / 60);
+        out.push({ t, lifts });
       }
-      return hit;
+      return out;
     };
-    return c.ground.reduce<string | null>((s, g) => (inside(g.outline) ? g.surface : s), null);
-  };
-
-  it("brings one car from Bajkowskiego down the ramp into the south cabin and one out of the north cabin up the ramp onto the street, on its surfaces", () => {
-    let inSeen = 0;
-    let outSeen = 0;
-    for (let t = 0; t < CYCLE; t += 0.25) {
-      const [a, b] = carPoses(t);
-      for (const p of [a, b]) {
-        if (!p) continue;
-        // On the street before the ramp's top (stage 7, G-491): on its ground, on a carriageway or the driveway.
-        if (p.z <= P1_RAMP.top || p.x > P1.maxX + 10) {
-          expect(p.y).toBeCloseTo(groundY(p.x, p.z), 6);
-          expect(surfaceAt(p.x, p.z), `${t}: ${p.x},${p.z}`).toMatch(/^(road|footway|crossing)$/);
-          continue;
-        }
-        const onRamp = p.x > P1_RAMP.minX && p.x < P1_RAMP.maxX && p.z < P1_RAMP.foot;
-        expect(p.y).toBeCloseTo(onRamp ? p1RampY(p.z) : P1.floor, 6);
-        // Within the ramp's walls, on the apron or in a cabin: never through a wall.
-        const inCabin = P1_CABINS.some((c) => p.x >= c.minX && p.x <= c.maxX + 3 && p.z >= c.minZ && p.z <= c.maxZ);
-        expect(onRamp || inCabin || (p.z >= P1_RAMP.foot - 1 && p.z <= P1.maxZ && p.x >= P1_CABINS[0]!.maxX), `${t}: ${p.x},${p.z}`).toBe(true);
-      }
-      if (a) inSeen++;
-      if (b) outSeen++;
-      // A car crossing a cabin's doorway has its shutter up.
-      const lifts = shutterLifts(t);
-      SHUTTERS.forEach((s, i) => {
-        for (const p of [a, b]) if (p && Math.abs(p.x - s.x1) < 2.3 && p.z > s.z0 && p.z < s.z1) expect(lifts[i], `${t}`).toBeGreaterThan(0.95);
-      });
+    const z = (south!.minZ + south!.maxZ) / 2;
+    // In at 4 m/s from the ramp's foot (x 412) to the cabin's middle (x 400.8): its nose 2.2 m ahead of its middle.
+    const goingIn = run((t) => [{ x: Math.max(400.8, 412 - 4 * t), z, yaw: -Math.PI / 2 }], 0, 8);
+    for (const { t, lifts } of goingIn) {
+      const nose = Math.max(400.8, 412 - 4 * t) - 2.2;
+      if (nose < SHUTTERS[0]!.x1 + 0.3) expect(lifts[0], `${t}`).toBeGreaterThan(0.95);
+      expect(lifts[1], `${t}`).toBe(0);
     }
-    expect(inSeen).toBeGreaterThan(40);
-    expect(outSeen).toBeGreaterThan(40);
-    // They come from the street and go back to it (G-491): from Bajkowskiego by Świętoduska, onto Lubartowska past the stop.
-    const first = carPoses(0)[0]!;
-    expect(first.x).toBeLessThan(380);
-    const seen = (t: number) => carPoses(t)[1];
-    let last = seen(45)!;
-    for (let t = 45; t < CYCLE; t += 0.25) last = seen(t) ?? last;
-    expect(last.z).toBeGreaterThan(20);
-    expect(last.x).toBeGreaterThan(445);
+    // Gone into the garage (taken off the street out of sight): the shutter comes down.
+    let lifts = goingIn[goingIn.length - 1]!.lifts;
+    for (let i = 0; i < 120; i++) lifts = shutterLifts(lifts, [], 1 / 60);
+    expect(lifts).toEqual([0, 0]);
+    // Out of the north cabin: up at once, and until its tail is out.
+    const zn = (north!.minZ + north!.maxZ) / 2;
+    const out = run((t) => [{ x: 400.8 + 4 * t, z: zn, yaw: Math.PI / 2 }], 0, 3);
+    for (const { t, lifts } of out) if (400.8 + 4 * t - 2.2 < SHUTTERS[1]!.x1 + 0.3) expect(lifts[1], `${t}`).toBe(1);
+    // A car going up the west lane past the south cabin's doorway, away from it, leaves its shutter down.
+    expect(run((t) => [{ x: 411.65, z: 27 - 4 * t, yaw: Math.PI }], 0, 1).every((r) => r.lifts[0] === 0)).toBe(true);
+  });
+
+  it("tips a car on the ramp to its grade, nose down going down and up going up, level on P-1 and on the street", () => {
+    const grade = Math.atan2(p1RampY(P1_RAMP.top + 10) - p1RampY(P1_RAMP.top + 12), 2);
+    expect(rampPitch(414.85, P1_RAMP.top + 11, 0)).toBeCloseTo(-grade, 6);
+    expect(rampPitch(411.65, P1_RAMP.top + 11, Math.PI)).toBeCloseTo(grade, 6);
+    expect(rampPitch(402, 26.6, -Math.PI / 2)).toBe(0);
+    expect(rampPitch(414.85, -14.8, Math.PI / 2)).toBe(0);
+    expect(rampPitch(430, 10, 0)).toBe(0);
   });
 
   it("stops the rain in the room and the stair house, not over the car park or in the ramp's open trench", () => {
@@ -166,21 +155,24 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     return { view, eye, box, materials };
   };
 
-  it("draws the room and its lamp only near it, the cars near the ramp, none without the map city", () => {
+  it("draws the room, its shutters and its lamp only near it, none without the map city", () => {
     const { view, eye, box, materials } = setup();
     view.update(1 / 60);
     expect(view.stats.meshes).toBe(2);
     expect(view.stats.triangles).toBeGreaterThan(500);
     expect(materials.light(PARKING_LAMP_KEY)).toBeDefined();
-    // On T1 before the food hall's front: the room off, the cars too.
-    Object.assign(eye, { x: 416, y: -4.8, z: P1.maxZ + PARKING_DRAW + 10 + TRAFFIC_DRAW });
+    // On T1 before the food hall's front: the room off, its shutters too.
+    Object.assign(eye, { x: 416, y: -4.8, z: P1.maxZ + PARKING_DRAW + 10 });
     view.update(1 / 60);
     expect(view.stats.meshes).toBe(0);
     expect(materials.light(PARKING_LAMP_KEY)).toBeUndefined();
-    // By the ramp's top on Bajkowskiego: the cars, not the room.
+    // On Bajkowskiego away from the ramp's top: nothing of P-1 (its cars are the traffic's, G-491).
     Object.assign(eye, { x: 414, y: 0.6, z: P1_RAMP.top - 3 - PARKING_DRAW - 6 });
     view.update(1 / 60);
-    expect(view.stats.meshes).toBe(1);
+    expect(view.stats.meshes).toBe(0);
+    Object.assign(eye, { x: 405, y: P1.floor + 1.6, z: 15 });
+    view.update(1 / 60);
+    expect(view.stats.meshes).toBe(2);
     box.city = false;
     view.update(1 / 60);
     expect(view.stats.meshes).toBe(0);
