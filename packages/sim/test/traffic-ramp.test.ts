@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CITY_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, pointAt, projectOn } from "../src/content/traffic";
-import { RAMP_DOWN_X, RAMP_UP_X, alchemiaRampLanes, alchemiaRampRoutes, streetSegments } from "../src/content/traffic-ramp";
+import { RAMP_DOWN_X, RAMP_UP_X, alchemiaRampLanes, alchemiaRampRoutes, ownWayRoom, streetSegments } from "../src/content/traffic-ramp";
 import { P1, P1_CABINS, P1_RAMP, p1DriveFloor, p1RampY } from "../src/content/alchemia/parking";
 import { surfacesAt } from "../src/content/lublin/roads";
 import { vehiclePlan } from "../src/world/traffic";
@@ -100,5 +100,22 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4)", () => {
       expect(r.models?.map(([m]) => m)).toEqual(["sedan", "hatchback", "taxi"]);
       for (let i = 0; i < 40; i++) expect(["sedan", "hatchback", "taxi"]).toContain(vehiclePlan(77 + i, TRAFFIC_ROUTES.indexOf(r), 0).model);
     }
+  });
+
+  it("leaves a car going round someone the room between the ramp's walls, none on the apron and in the cabins, the street's own rule off them", () => {
+    const at = (r: typeof IN, x: number, z: number) => projectOn(r!.points, x, z).s;
+    const w = 0.91;
+    // Up the west lane (heading south, its right is west): 0.49 m west to the wall's room, over 5 m east.
+    const up = ownWayRoom(OUT!, at(OUT, RAMP_UP_X, 4.5), w, 0)!;
+    expect(up[1]).toBeCloseTo(RAMP_UP_X - (P1_RAMP.minX + w + 0.25), 6);
+    expect(up[0]).toBeCloseTo(RAMP_UP_X - (P1_RAMP.maxX - w - 0.25), 6);
+    // Down the east lane (heading north, its right is east).
+    const down = ownWayRoom(IN!, at(IN, RAMP_DOWN_X, 4.5), w, 0)!;
+    expect(down[1]).toBeCloseTo(P1_RAMP.maxX - w - 0.25 - RAMP_DOWN_X, 6);
+    // By the ramp's foot the room ahead is the apron's: none.
+    expect(ownWayRoom(IN!, at(IN, RAMP_DOWN_X, P1_RAMP.foot - 6), w)).toEqual([0, 0]);
+    expect(ownWayRoom(OUT!, 1, w)).toEqual([0, 0]);
+    expect(ownWayRoom(IN!, 1, w)).toBeNull();
+    expect(ownWayRoom(CITY_ROUTES[0]!, 1, w)).toBeNull();
   });
 });

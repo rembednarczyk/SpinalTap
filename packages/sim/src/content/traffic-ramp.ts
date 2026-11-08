@@ -189,3 +189,45 @@ export const streetSegments = (r: TrafficRoute): (readonly [Pt, Pt])[] => {
   });
 };
 
+/** A car going round someone keeps this far off the ramp's walls (m). */
+const WALL_ROOM = 0.25;
+
+/**
+ * How far a car of half width `halfW` may step aside (right +, left -) from a ramp route's line at
+ * a point of it heading (tx, tz), so its body stays clear of the walls: down the ramp between
+ * them; on the car park's driveway over P-1's top as anywhere on the street (no limit); none at
+ * all on the turns at the ramp's foot, on the apron and in the cabins.
+ */
+const roomAt = (x: number, z: number, tz: number, halfW: number): readonly [number, number] => {
+  const r = P1_RAMP;
+  if (p1DriveFloor(x, z) === null) return [-Infinity, Infinity];
+  if (x > r.minX && x < r.maxX && z > r.top && z < r.foot && Math.abs(tz) > 0.99) {
+    const [a, b] = [(r.minX + halfW + WALL_ROOM - x) / tz, (r.maxX - halfW - WALL_ROOM - x) / tz];
+    return [Math.min(a, b), Math.max(a, b)];
+  }
+  return [0, 0];
+};
+
+/** Every so often over this far ahead (m) the room aside is read: a car back in its lane before the room narrows. */
+const ROOM_AHEAD = 14;
+const ROOM_STEP = 1;
+
+/**
+ * The room aside (its least and most, the lane's own line always in it) for a car at arc length
+ * `s` of a route, over `ahead` metres from there, where any of it lies on the route's own way
+ * (Alchemia's ramp and P-1); null off it (the street's own rule).
+ */
+export const ownWayRoom = (r: TrafficRoute, s: number, halfW: number, ahead = ROOM_AHEAD): readonly [number, number] | null => {
+  const own = r.ownWay;
+  if (!own?.some(([a, b]) => s + ahead >= a && s <= b)) return null;
+  let [lo, hi] = [-Infinity, Infinity];
+  for (let k = 0; k <= ahead; k += ROOM_STEP) {
+    const t = s + k;
+    if (!own.some(([a, b]) => t >= a && t <= b)) continue;
+    const p = pointAt(r.points, t);
+    const [l, h] = roomAt(p.x, p.z, p.tz, halfW);
+    lo = Math.max(lo, l);
+    hi = Math.min(hi, h);
+  }
+  return [Math.min(lo, 0), Math.max(hi, 0)];
+};
