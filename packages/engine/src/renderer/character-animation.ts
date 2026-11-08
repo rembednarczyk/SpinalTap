@@ -139,6 +139,9 @@ const animateDeath = (rig: CharacterRig, dying: number): void => {
   const ease = t * t * (3 - 2 * t);
   rig.kneeL.rotation.x = rig.kneeR.rotation.x = 1.1 * ease;
   rig.legL.rotation.x = rig.legR.rotation.x = -0.5 * ease;
+  // The crouch (or an activity) spread the knees; they close as the body goes over, not with a snap.
+  rig.legL.rotation.z *= 1 - ease;
+  rig.legR.rotation.z *= 1 - ease;
   rig.root.rotation.x = -1.45 * ease * ease;
   rig.armL.rotation.z = 0.9 * ease;
   rig.armR.rotation.z = -0.9 * ease;
