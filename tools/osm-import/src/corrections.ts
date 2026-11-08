@@ -10,7 +10,7 @@ import { ALCHEMIA_AREAS } from "./corrections-alchemia.ts";
 import { CZECHOWICZA_AREAS } from "./corrections-czechowicza.ts";
 import { DEPTAKI_CORRECTIONS } from "./corrections-deptaki.ts";
 import { DWORZEC_EAST_AREAS } from "./corrections-dworzec.ts";
-import { T243_AREAS } from "./corrections-ck.ts";
+import { KRAKOWSKIE_ADDED_AREAS } from "./corrections-radziwillowska.ts";
 import { type Tags } from "./osm.ts";
 
 export interface TagCorrection {
@@ -672,7 +672,7 @@ export const ADDED_AREAS: readonly AddedArea[] = [
   ...DWORZEC_EAST_AREAS,
   ...CZECHOWICZA_AREAS,
   ...ALCHEMIA_AREAS,
-  ...T243_AREAS,
+  ...KRAKOWSKIE_ADDED_AREAS,
 ];
 
 /** The added areas as the import reads the map's. */
