@@ -1550,11 +1550,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: x −122…−100, z −64…−13; na ortofoto zachodni krawężnik ok. 3–4 m dalej na zachód niż krawędź jezdni w grze (−113,8 przy z −40); w grze ten pas to chodnik i kostka T-243 (wcześniej goła ziemia), w rzeczywistości lewy pas ruchu i asfalt skrzyżowania; por. T-094
 - Pakiet właściciela: tools/osm-import
 
-### G-521 Goła ziemia na podwórkach bloków Krakowskiego Przedmieścia (krakowskie-0-1)
-- Status: w PR #405 (8.11, 19 obszarów T-245/*, 6 trawników; `landuse-bare` komórka 10 004 → 136, miasto 96 273 → 86 405; kurator runda 2 ODSTĘPSTWO CELOWE, PRZYJĘTE; czeka na CI)
-- Ważność: S3 · Zasięg: 141 kwadratów 10 × 10 m, ok. 3100 m², 59 skupień; największe: blok NW 1431 m² (x −200..−120; z −20..49, zawiera pas z 7..12 od naprawiacza G-513), podwórze SW 289 m² (−198..−165; 92..124) i 273 m² (−163..−135; 73..93), wschód (−27..−5; 143..158) 109 m², (6..19; 139..151) 81 m²; zrzuty `shots/opiekun-k01/` (`nw-strip-a`, `s-yard-i`, `se-a`); przyczyna jak G-513 (OSM bez nawierzchni na podwórkach); poza skanem ok. 4800 m² gołych podwórek mieszkalnych (do decyzji kuratora)
-- Pakiet właściciela: tools/osm-import (korekty)
-
 ### G-522 Klinowe szczeliny bez nawierzchni między jezdnią a chodnikiem Krakowskiego
 - Status: krok 1 scalony w #400, krok 2 w PR #409 (reguła `kerbFills`, `kerb-gap-bare` 103 204 → 32 148; przegląd kuratora w toku) (8.11, kontrola `kerb-gap-bare`, baza 103 982 próbek = 6 499 m² w 2 155 skupieniach; przyczyna systemowa: import kładzie jezdnię krócej niż chodnik wzdłuż ulic, pas 1–2,5 m; krok 2: reguła importu, po scaleniu #397)
 - Ważność: S3 · Zasięg: (−120,5..−114; 54,5..101) 128 m², (−104,5..−102,5; −6,5..13) 48 m², (−121,5..−120,5; 74,5..100,5) 27 m², także części nieliczone skanem; zrzuty `kp-strip-g`, `s-strip-l`, `wedge`; przyczyna: jezdnia i chodnik się nie schodzą; propozycja `kerb-gap-bare` z przeglądu G-440 (baza ok. 35 631 próbek 0,25 m w mieście)

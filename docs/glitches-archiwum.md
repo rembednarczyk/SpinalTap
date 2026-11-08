@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-521 Goła ziemia na podwórkach bloków Krakowskiego Przedmieścia (krakowskie-0-1)
+- Status: naprawione (PR #405, 8.11; 19 obszarów T-245/*, w tym 6 trawników, w `corrections-zn.ts` i `corrections-radziwillowska.ts`; `landuse-bare` komórka 10 004 → 136, miasto 96 273 → 86 405, `kerb-gap-bare` → 101 904; test `landuse-bare-krakowskie-0-1.test.ts` pada bez poprawki; kurator ODSTĘPSTWO CELOWE T-245 po rundzie 2; budynki Cichej 3–8 w G-556, pętle `highway=service area=yes` w G-555)
+- Ważność: S3 · Zasięg: 141 kwadratów 10 × 10 m, ok. 3100 m², 59 skupień; największe: blok NW 1431 m² (x −200..−120; z −20..49, zawiera pas z 7..12 od naprawiacza G-513), podwórze SW 289 m² (−198..−165; 92..124) i 273 m² (−163..−135; 73..93), wschód (−27..−5; 143..158) 109 m², (6..19; 139..151) 81 m²; zrzuty `shots/opiekun-k01/` (`nw-strip-a`, `s-yard-i`, `se-a`); przyczyna jak G-513 (OSM bez nawierzchni na podwórkach); poza skanem ok. 4800 m² gołych podwórek mieszkalnych (do decyzji kuratora)
+- Pakiet właściciela: tools/osm-import (korekty)
+
 ### G-509 Stożek odblasku na stropie food hallu Alchemii (i możliwy w kapsule)
 - Status: naprawione (PR #402, 8.11; lampy hali i kapsuły w oprawie stropu, testy padają bez poprawki)
 - Ważność: S4 · Zasięg: lampa w `alchemia-view.ts` wisi 0,4 m pod stropem hali (zrzut `shots/g490/after/hall-north.png`), lampa w `capsule-room-view.ts` 0,3 m pod sufitem; poprawka jak w P−1: lampa w oprawie stropu (po G-490 shader już nie świeci od tyłu)
