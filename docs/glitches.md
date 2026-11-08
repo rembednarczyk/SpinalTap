@@ -1465,11 +1465,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `stray-bodies.ts:31` liczy `look = fnv1a("#"+id)`, a po wczytaniu `id` jest nowe; rabuś za życia ma `look` z klucza `${id}:m${i}` (`micro-events.ts:54`), więc zmienia wygląd już przy przejściu w ciało; ofiary pomocy z `passerBy` bez klucza tak samo; łamie ADR-0076 §1 (wygląd stały między zapisami); widoczne dopiero od etapu 2 (warianty); naprawa: `look` w `StrayBodySnapshot` (migracja) albo z danych zapisu
 - Pakiet właściciela: packages/sim, packages/persistence
 
-### G-488 Waga puli modeli niebędąca liczbą daje zawsze ostatni plik
-- Status: w PR #388 (7.11, orkiestrator; czeka na CI)
-- Ważność: S4 · Zasięg: `pickFromPool` w `model-cast.ts`: `weight` = `"abc"` daje NaN i wybór ostatniego pliku puli, także z wagą ujemną; `parseModelManifest` nie sprawdza typu ani znaku `weight`; przy okazji: próg `< 50` MiB w `model-textures.test.ts` nie odróżnia stanu przed i po, a `loadToonModel` nie ma wywołań w kodzie
-- Pakiet właściciela: packages/engine (renderer)
-
 ### G-490 Przez strop P−1 Alchemii widać półprzezroczysty stożek
 - Status: w PR #385 (7.11, czeka na weryfikację; zgłoszone przez budowniczego ADR-0074 etap 4)
 - Ważność: S4 · Zasięg: na zrzucie `after/e4-deck.png` stożek (prawdopodobnie poświata latarni albo drona z T0) przechodzi przez strop parkingu; do sprawdzenia też, czy w food hallu z etapu 1 nie pada deszcz pod stropem
@@ -1489,11 +1484,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, budowniczy ADR-0076 etap 2)
 - Ważność: S4 · Zasięg: widoczna też na main; klucz ALPHATEST razy jasny teksel w ścieżce bez odcienia (etap 2 naprawił tylko ścieżkę TINT)
 - Pakiet właściciela: packages/engine (renderer: toon-shader)
-
-### G-495 `models.spec` czasem mierzy klatkę bez aktywnych siatek
-- Status: w PR #387 (7.11, czeka na CI; `sampleNow` po krokach, budżet sceny `models` 465/158)
-- Ważność: S4 · Zasięg: na main w dwóch z trzech przebiegów pomiar 324/0 (wywołania / aktywne siatki); pomiar niestabilny, bramka może przepuścić regresję; przy okazji: NPC „doker” w dokach bez wpisu w obsadzie, akcesoria sztywne (fartuch jak deska, dłonie siedzących sprzedawców przez niego); potwierdzone w 4 przebiegach przy load 10–12 (budowniczy i weryfikator #376): koszt wariantów i fartucha nie jest mierzony lokalnie
-- Pakiet właściciela: e2e (QA)
 
 ### G-496 Posiłki w dokach mogą stać w bryłach
 - Status: zgłoszone (7.11, naprawiacz G-485; pomiar zgrubny)

@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-495 `models.spec` czasem mierzy klatkę bez aktywnych siatek
+- Status: naprawione (PR #387, 8.11; po `freeze` `step` nie rysuje klatki, spec czytał klatkę z rozruchu 326/0; `sampleNow` w `e2e/helpers.ts`, asercja aktywnych siatek > 0, scena `models` 465/158 w `tools/perf-budgets.json`; stary pomiar 5/5 pustych klatek, nowy 4/4 stabilnie 448/152)
+- Ważność: S4 · Zasięg: na main w dwóch z trzech przebiegów pomiar 324/0 (wywołania / aktywne siatki); pomiar niestabilny, bramka może przepuścić regresję; przy okazji: NPC „doker” w dokach bez wpisu w obsadzie, akcesoria sztywne (fartuch jak deska, dłonie siedzących sprzedawców przez niego); potwierdzone w 4 przebiegach przy load 10–12 (budowniczy i weryfikator #376): koszt wariantów i fartucha nie jest mierzony lokalnie
+- Pakiet właściciela: e2e (QA)
+
+### G-488 Waga puli modeli niebędąca liczbą daje zawsze ostatni plik
+- Status: naprawione (PR #388, 8.11; `weightOf` w `model-cast.ts`: waga spoza skończonych liczb jak 1, ujemna jak 0; parser manifestu odrzuca wpisy puli z wagą nie będącą skończoną liczbą ≥ 0; dwa testy padają bez poprawki)
+- Ważność: S4 · Zasięg: `pickFromPool` w `model-cast.ts`: `weight` = `"abc"` daje NaN i wybór ostatniego pliku puli, także z wagą ujemną; `parseModelManifest` nie sprawdza typu ani znaku `weight`; przy okazji: próg `< 50` MiB w `model-textures.test.ts` nie odróżnia stanu przed i po, a `loadToonModel` nie ma wywołań w kodzie
+- Pakiet właściciela: packages/engine (renderer)
+
 ### G-503 Generator mebli nie stawia latarni na pomostach (T-239)
 - Status: naprawione (PR #383, 7.11; kurator ZGODNE; latarnia linii planu nad przęsłem staje na pomoście 0,3 m od krawędzi (`sideSpot`/`byParapet`), stopa z `deckHeightAt`; 3 pastorały Zamkowej i 3 `lamp-road` Mełgiewskiej na pomoście; `lamp-beside-deck` 6 → 0, pada bez poprawki; reszta G-507)
 - Ważność: S4 · Zasięg: linia `lamps.zamkowa` przy wiadukcie w232362907 i pomoście grobli, przy okazji Mełgiewska
