@@ -1546,7 +1546,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: pozy)
 
 ### G-517 Duszony strażnik po ok. 4 s nadal stoi zamiast klęczeć
-- Status: zgłoszone (8.11, naprawiacz G-514; z zrzutu e2e, do potwierdzenia)
+- Status: nie odtwarza się w grze (8.11, PR #401 z testem ochronnym; cel klęczy po 1,2 s i do końca przytrzymania; zrzut e2e był po krokowaniu hurtem `step(n)` bez klatek renderera, rozwiązanie dokładne w G-482)
 - Ważność: S4 · Zasięg: przy przytrzymanym duszeniu (ADR-0075) `heldPose` celu nie przechodzi w klęczenie po ok. 4 s; do sprawdzenia testem pozy w czasie i z czasem fazy (por. G-482)
 - Pakiet właściciela: packages/engine (renderer: grab-pose)
 
