@@ -62,7 +62,11 @@ export type PieceKind =
   | "column"
   | "marking"
   | "charger"
-  | "machine";
+  | "machine"
+  // T0's square and the green roof (stage 7): the roof's lawns, the pergolas' timber, their paper lanterns.
+  | "lawn"
+  | "pergola"
+  | "lantern";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {

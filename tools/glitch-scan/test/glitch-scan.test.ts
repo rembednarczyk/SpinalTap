@@ -39,6 +39,7 @@ import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered 
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
 import { levelExitsInGame, undergroundLevelExits } from "./level-exit-checks";
+import { cutOnRoadInGame } from "./cut-on-road";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
@@ -1239,6 +1240,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "pavilion-on-paving": () => pavilionOnPaving(pavingInGame()),
   /** An interior of the game's own under the ground with fewer than two ways out in the level graph (ADR-0074 stage 4: P-1). */
   "underground-level-exit": () => undergroundLevelExits(levelExitsInGame()),
+  /**
+   * Ground the game digs out of a chunk, or a solid of its own over the ground, on an OSM street's or
+   * footway's axis the import does not drop in its favour with a row in the register (G-500, `cut-on-road.ts`).
+   */
+  "cut-on-road": () => cutOnRoadInGame(extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags))),
   /**
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.

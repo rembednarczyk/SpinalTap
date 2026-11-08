@@ -2,11 +2,12 @@
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ARKADY, ARKADY_CENTRE, ARKADY_PIECES, FOODHALL, arkadyLocal } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ARKADY, ARKADY_CENTRE, ARKADY_PIECES, FOODHALL, SQUARE_GARLANDS, arkadyLocal } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { CityKit } from "../src/renderer/city-kit";
-import { parseCityKit } from "../src/renderer/city-kit-data";
+import { GeometrySink, parseCityKit, swatchUv } from "../src/renderer/city-kit-data";
+import { BULB_COLOURS, garlandBulbs, garlandsGeometry } from "../src/renderer/alchemia/garlands";
 import { alchemiaGeometry } from "../src/renderer/alchemia/alchemia-geometry";
 import { ALCHEMIA_DRAW, ALCHEMIA_LAMP_KEY, AlchemiaView, INSIDE_DRAW } from "../src/renderer/alchemia/alchemia-view";
 
@@ -35,14 +36,48 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     const onT2 = (x: number, z: number) => x > 423 && x < 445 && z > 74 && z < 122;
     // P-1's ramp in its trench and its stair core's house on the car park (stage 4, `alchemia-parking.test.ts`).
     const byRamp = (x: number, z: number) => x > 409.2 && x < 422 && z > -6 && z < 25;
+    // T0's square where the car park was, its pergolas and beds (stage 7): within the car park's outline's box.
+    const onSquare = (x: number, z: number) => x > 379.2 && x < 441.3 && z > -9.3 && z < 38.6;
     const byArkady = (x: number, z: number) => {
       const q = arkadyLocal(x, z);
       return q.a > -3.2 && q.a < ARKADY.length + 0.2 && q.c > -0.3 && q.c < ARKADY.depth + 5.2;
     };
     for (let i = 0; i < outside.positions.length; i += 3) {
       const [x, z] = [outside.positions[i]!, outside.positions[i + 2]!];
-      expect(onPlot(x, z) || onT2(x, z) || byArkady(x, z) || onCorner(x, z) || byRamp(x, z), `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
+      expect(onPlot(x, z) || onT2(x, z) || byArkady(x, z) || onCorner(x, z) || byRamp(x, z) || onSquare(x, z), `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
     }
+  });
+
+  it("draws T0's pergolas in timber with their paper lanterns lit, and the green roof's lawns on its paving (stage 7)", () => {
+    // The first vertex's uv of the pieces of a kind: every box's vertices share its swatch.
+    const uvOf = (pieces: typeof ALCHEMIA_PIECES) => {
+      const s = alchemiaGeometry(kitData, pieces).outside;
+      return [s.uvs[0], s.uvs[1]];
+    };
+    const kind = (k: string) => ALCHEMIA_PIECES.filter((p) => p.kind === k);
+    expect(uvOf(kind("lantern"))).toEqual([...swatchUv(kitData, "win-warm")]);
+    expect(uvOf(kind("pergola"))).toEqual([...swatchUv(kitData, "rust")]);
+    expect(uvOf(kind("lawn"))).toEqual([...swatchUv(kitData, "plant")]);
+    const slab = kind("roof").filter((p) => (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) > 100);
+    expect(uvOf(slab)).toEqual([...swatchUv(kitData, "trim-light")]);
+  });
+
+  it("hangs coloured garlands between T0's pergolas, their bulbs lit in the kit's glow colours, in the outside's one mesh (stage 7)", () => {
+    const sink = new GeometrySink();
+    garlandsGeometry(sink, kitData);
+    const bulbs = SQUARE_GARLANDS.flatMap((g) => garlandBulbs(g));
+    expect(SQUARE_GARLANDS).toHaveLength(4);
+    expect(bulbs.length).toBeGreaterThan(50);
+    // Every colour in turn, each a glow swatch of the kit (self-lit at night).
+    expect(new Set(bulbs.map((b) => b.colour)).size).toBe(BULB_COLOURS.length);
+    for (const c of BULB_COLOURS) expect(kitData.swatches.find((s) => s.name === c)?.kind, c).toBe("glow");
+    // Their uvs are among the sink's: the bulbs are drawn.
+    const uvs = new Set<string>();
+    for (let i = 0; i < sink.uvs.length; i += 2) uvs.add(`${sink.uvs[i]},${sink.uvs[i + 1]}`);
+    for (const c of BULB_COLOURS) expect(uvs.has(swatchUv(kitData, c).join(","))).toBe(true);
+    // In the outside's mesh, within its budget.
+    const { outside } = alchemiaGeometry(kitData);
+    expect(outside.indices.length / 3).toBeLessThanOrEqual(8000);
   });
 
   const setup = () => {

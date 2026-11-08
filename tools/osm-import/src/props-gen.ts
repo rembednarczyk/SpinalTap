@@ -41,6 +41,8 @@ export interface PlanItem {
   readonly osm?: string | readonly string[];
   readonly look?: string;
   readonly note?: string;
+  /** False: its lamps hang no basket, and the others' baskets stay where they were (T0's square, ADR-0074 stage 7). */
+  readonly baskets?: false;
 }
 
 export interface PropsPlan {
@@ -56,6 +58,8 @@ export interface Placed {
   readonly shape?: number;
   /** Id of the plan's group (filled in by the generator). */
   readonly from?: string;
+  /** A lamp of a group with no baskets (`PlanItem.baskets`). */
+  readonly bare?: true;
   /** Standing on a bridge's deck, not on the ground under it (`sideSpot`). */
   readonly deck?: boolean;
 }
@@ -240,7 +244,8 @@ const BULKY: ReadonlySet<StreetPropKind> = new Set(["food-cart", "container"]);
 
 const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[], placed: readonly Placed[]): Placed[] => {
   if (item.position) return [{ prop, p: item.position, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: typeof item.osm === "string" ? item.osm : item.id }];
-  if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: null, key: osmAt(item, i) }));
+  // A group of points with a yaw faces that way, as a single position does (the benches of Alchemia's T0 towards their lawns).
+  if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: osmAt(item, i) }));
   if (item.polygon) {
     const ring = flat(item.polygon);
     // A kiosk or a shelter whose outline the importer already raised as a building would stand inside its own double.
@@ -356,7 +361,7 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
         skipped[shape] = (skipped[shape] ?? 0) + 1;
         continue;
       }
-      const p = shape === undefined ? { ...x, from: item.id } : { ...x, shape, from: item.id };
+      const p = { ...x, ...(shape === undefined ? {} : { shape }), from: item.id, ...(item.baskets === false ? { bare: true as const } : {}) };
       placed.push(p);
       if (item.line || item.lines) fromLine.add(p);
     }
