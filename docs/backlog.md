@@ -260,6 +260,14 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   Podpowiedzi przy pierwszej grze: ruch, sprint i skok, rozmowa, walka, torba, ekwipunek,
   dziennik; jedna naraz, z klawiszy gracza, zapamiętane, do wyłączenia; słowa dotykowe na telefonie.
 
+## Poszerzanie mapy (zbiór, decyzja użytkownika 8.11)
+
+Zasada (8.11): wszystko, co wypada za obecną mapę, trafia tutaj, a nie do bieżącej naprawy. Na razie mapy nie poszerzamy; ta lista posłuży, gdy przyjdzie etap poszerzania (ADR-0042, prostokąty dzielnic). Glitch, którego przyczyną jest brzeg mapy, dostaje w rejestrze status „odłożone: poszerzanie mapy” z odnośnikiem do tej sekcji. Części leżące w mapie naprawiamy normalnie.
+
+- G-096 / T-058: narożnik Starego Miasta za z = −240 (Pałac Ordynacki w66335239, Kuria w66293168 i 5 budynków), uskok gruntu Krakowskiego na x = 460, z −270..−240; propozycja: `stare-miasto` minZ −270.
+- G-556: budynki ze środkiem poza mapą (49 w skanie `edge-building-dropped`). Poprawka w gałęzi `ccr-ec2c4269-ilh8k8-g556` przycina je do brzegu; pełne bryły (m.in. Szkoła Urszulanek r14476826, XVI LO w66330436, Probostwo 7 w444375255, Towarowa 29 w171014944, Pałac Morskich, Cicha 6) wrócą z poszerzeniem.
+- Lwowska w139586648 na brzegu x = 1120 (podzamcze-2-1): jezdnia częściowo poza mapą (przegląd #409).
+
 ## Później
 
 - Witryna obok Neon Koi w scenie referencyjnej to duża płaska bursztynowa plama: dodać

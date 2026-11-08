@@ -292,7 +292,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `cable-through-interior` (odcinek kabla wchodzi w bryłę wnętrza `interior: true`) z bazą → 0
 
 ### G-096 Narożnik Starego Miasta za brzegiem z = −240 (Pałac Ordynacki, Kuria)
-- Status: zgłoszone (z przeglądu kuratora G-052)
+- Status: odłożone: poszerzanie mapy (decyzja użytkownika 8.11, `docs/backlog.md`, sekcja „Poszerzanie mapy”; zgłoszone z przeglądu kuratora G-052)
 - Ważność: S3 (proponowana) · Zasięg: lokalny, 7 budynków, 2 zabytki · Koszt: średni (prostokąt, ADR-0042, regeneracja)
 - Gdzie: x od 460 do 760, z od −240 do −270; T-058
 - Przyczyna: `stare-miasto` minZ = −240, a G-052 przesuwa Krakowskie do −270 (uskok gruntu na x = 460)
