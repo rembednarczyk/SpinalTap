@@ -6,6 +6,7 @@ import type { GeometrySink } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
 import { alchemiaGeometry } from "./alchemia-geometry";
 import { ParkingView } from "./parking-view";
+import type { CarAt } from "./parking-traffic";
 
 /**
  * How near the eye Alchemia's outside is drawn (m from the middle of the hall or of the Arkady,
@@ -19,14 +20,15 @@ export const INSIDE_DRAW = 45;
 const INSIDE_HOLD = 5;
 
 /**
- * The hall's lamp (ADR-0074 §6): warm, under the ceiling over its middle, as far as its corners and
- * only inside its walls (the toon shader's lights have no occlusion, G-263).
+ * The hall's lamp (ADR-0074 §6): warm, in the ceiling's fitting over its middle, as far as its corners
+ * and only inside its walls (the toon shader's lights have no occlusion, G-263). A hand into the slab:
+ * 0.4 m under the ceiling it lit its underside, a pool and a highlight seen from the floor (G-509, as G-490).
  */
 const LAMP = {
   color: "#ffd2a0",
   range: 26,
   intensity: 1.0,
-  position: { x: ALCHEMIA_CENTRE.x, y: FOODHALL.ceiling - 0.4, z: ALCHEMIA_CENTRE.z },
+  position: { x: ALCHEMIA_CENTRE.x, y: FOODHALL.ceiling + 0.05, z: ALCHEMIA_CENTRE.z },
   clip: { minX: FOODHALL_INNER.minX - 0.05, maxX: FOODHALL_INNER.maxX + 0.05, minZ: FOODHALL_INNER.minZ - 0.05, maxZ: FOODHALL_INNER.maxZ + 0.05 },
 } as const;
 export const ALCHEMIA_LAMP_KEY = "alchemia-foodhall";
@@ -54,6 +56,8 @@ export interface AlchemiaDeps {
   /** False without Lublin's map city (the hall stands on one of its squares). */
   readonly city: () => boolean;
   readonly eye: () => Vec3;
+  /** The traffic's cars as drawn (P-1's shutters go up before them, ADR-0074 §4). */
+  readonly cars?: () => Iterable<CarAt>;
 }
 
 /** Horizontal distance from the eye to the hall's outline; 0 inside. */

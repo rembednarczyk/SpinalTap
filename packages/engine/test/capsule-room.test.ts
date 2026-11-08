@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { CAPSULE_CEILING, CAPSULE_DOOR, CAPSULE_FURNITURE, CAPSULE_HALF_DEPTH, CAPSULE_HALF_WIDTH, CAPSULE_INTERIOR_ROOM, CAPSULE_ORIGIN } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
-import { ToonPointLights, pointLightAt } from "../src/npr/toon-point-lights";
+import { ToonPointLights, pointLightAt, pointLightOn } from "../src/npr/toon-point-lights";
 import { MAX_POINT_LIGHTS, TOON_FRAGMENT } from "../src/npr/toon-shader";
 import { CityKit } from "../src/renderer/city-kit";
 import { parseCityKit } from "../src/renderer/city-kit-data";
@@ -204,5 +204,30 @@ describe("the capsule room's view (ADR-0063 stage 3)", () => {
     expect(clip.slice(4, 8)).toEqual([lamp.clip!.minX, lamp.clip!.minZ, lamp.clip!.maxX, lamp.clip!.maxZ]);
     expect(TOON_FRAGMENT).toMatch(/uniform vec4 pointClip\[/);
     expect(TOON_FRAGMENT).toMatch(/att \*= step\(clip\.x, vWorldPos\.x\)/);
+  });
+
+  it("lights the room from its ceiling's fitting, never the ceiling itself: no glow on it seen from the floor (G-509)", () => {
+    const { materials, view } = setup();
+    view.update();
+    const lamp = materials.light(CAPSULE_LAMP_KEY)!;
+    // The toon shader's thresholds: the lowest band and the highlight's smoothstep start there.
+    const BAND = 0.03;
+    const HIGHLIGHT = 0.18;
+    const down = { x: 0, y: -1, z: 0 };
+    const r = CAPSULE_INTERIOR_ROOM;
+    let glow = 0;
+    for (let ex = r.minX + 0.25; ex < r.maxX; ex += 0.5)
+      for (let ez = r.minZ + 0.25; ez < r.maxZ; ez += 0.5) {
+        const eye = { x: ex, y: r.bottom + 1.6, z: ez };
+        for (let x = r.minX; x <= r.maxX; x += 0.1)
+          for (let z = r.minZ; z <= r.maxZ; z += 0.1) {
+            const on = pointLightOn(lamp, { x, y: r.top, z }, down, eye);
+            if (on.diffuse > BAND || on.specular > HIGHLIGHT) glow++;
+          }
+      }
+    expect(glow).toBe(0);
+    // The floor under it still lit in full.
+    const under = { x: lamp.position.x, y: r.bottom, z: lamp.position.z };
+    expect(pointLightOn(lamp, under, { x: 0, y: 1, z: 0 }, { x: r.minX + 0.5, y: r.bottom + 1.6, z: r.minZ + 0.5 }).diffuse).toBeGreaterThan(0.47);
   });
 });

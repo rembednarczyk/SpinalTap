@@ -69,6 +69,8 @@ export interface ModelCloth {
   readonly family: string | null;
   readonly torso: Texture | null;
   readonly legs: Texture | null;
+  /** The VRoid cut of the top and of the trousers or skirt ("M00_001"): only one cut shares a UV layout. */
+  readonly cuts: { readonly torso: string | null; readonly legs: string | null };
 }
 
 interface Loaded {
@@ -120,6 +122,11 @@ export interface SourceMaterial {
   readonly part: ModelPart | null;
   /** The VRoid base the material belongs to ("F00", "M00"), from its name; null for other files. */
   readonly family: string | null;
+  /**
+   * The VRoid cut of the material, base and garment number ("M00_001", "M00_006"), from its name:
+   * cloth of one cut shares its UV layout, of another not (ADR-0076 stage 3). Null for other files.
+   */
+  readonly cut: string | null;
 }
 
 export type ModelPart = "skin" | "hair" | "brow" | "torso" | "legs" | "tie";
@@ -169,6 +176,7 @@ export const readSourceMaterial = (material: unknown): SourceMaterial => {
     garment: /tops/i.test(m?.name ?? "") ? "torso" : /bottoms/i.test(m?.name ?? "") ? "legs" : null,
     part: partOf(m?.name ?? ""),
     family: /^([FM]\d\d)_/.exec(m?.name ?? "")?.[1] ?? null,
+    cut: /^([FM]\d\d_\d{3})_/.exec(m?.name ?? "")?.[1] ?? null,
   };
 };
 
@@ -323,13 +331,19 @@ export class ModelLibrary {
   /**
    * The cloth of a file for the variants of others (ADR-0076): its VRoid base (that of its top)
    * and the textures of its separate top ("Tops") and trousers or skirt ("Bottoms"), which share
-   * their UV layout within a base. A one-piece dress lends nothing.
+   * their UV layout within a base and a cut. A one-piece dress lends nothing.
    */
   async clothOf(spec: CharacterModelSpec): Promise<ModelCloth> {
     const { container } = await this.load(spec);
     const sources = container.meshes.map((m) => toonSourceOf(m)?.source).filter((s): s is SourceMaterial => !!s);
-    const textureOf = (slot: "torso" | "legs") => sources.find((s) => s.garment === slot && s.texture)?.texture ?? null;
-    return { family: sources.find((s) => s.part === "torso")?.family ?? null, torso: textureOf("torso"), legs: textureOf("legs") };
+    const garmentOf = (slot: "torso" | "legs") => sources.find((s) => s.garment === slot && s.texture);
+    const [torso, legs] = [garmentOf("torso"), garmentOf("legs")];
+    return {
+      family: sources.find((s) => s.part === "torso")?.family ?? null,
+      torso: torso?.texture ?? null,
+      legs: legs?.texture ?? null,
+      cuts: { torso: torso?.cut ?? null, legs: legs?.cut ?? null },
+    };
   }
 
   private load(spec: CharacterModelSpec): Promise<Loaded> {
