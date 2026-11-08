@@ -1611,9 +1611,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele), packages/app/public/models
 
 ### G-547 `kurosawa.vrm` wczytuje się na ekranie ładowania, choć Kurosawa pojawia się w II akcie
-- Status: zgłoszone (8.11, weryfikator #404; do etapu 4 ADR-0076)
+- Status: w PR #407 (8.11, ADR-0076 etap 4a: start 7 plików / 42,5 MiB → 5 / 31,0 MiB, reszta w tle; w weryfikacji)
 - Ważność: S4 · Zasięg: +6 MiB na starcie; `donorsOf` ładuje wszystkie pliki manifestu przy liczeniu dawców ubrań; wczytywanie w tle według dzielnic i aktów to etap 4
 - Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-550 Nieudana asercja na teksturach w testach modeli kończy worker vitest brakiem pamięci
+- Status: zgłoszone (8.11, budowniczy ADR-0076 etap 4a)
+- Ważność: S4 · Zasięg: `toContain` na tablicy tekstur w `packages/engine/test/model-variants.test.ts` przy porażce wypisuje graf sceny i kończy się OOM w workerze (SIGABRT) zamiast czytelnego błędu; `model-kurosawa.test.ts` obchodzi to porównaniem wartości logicznych; poprawka: porównywać nazwy albo wartości logiczne
+- Pakiet właściciela: packages/engine (testy)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
