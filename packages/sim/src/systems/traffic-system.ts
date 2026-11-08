@@ -1,4 +1,5 @@
 import { type EntityId, type EventBus, type DomainEvents, type Vec3, terrainHeightAt } from "@seki/core";
+import { p1DriveFloor } from "../content/alchemia/parking";
 import { surfaceLiftAt } from "../content/lublin/roads";
 import { TRAFFIC_RANGE, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute } from "../content/traffic";
 import { pointsAlong } from "../content/traffic-lane";
@@ -66,9 +67,12 @@ const flat = (a: { x: number; z: number }, b: { x: number; z: number }): number 
 
 /**
  * Height a vehicle drives at over (x, z): the ground and the lift of the carriageway the renderer
- * draws there (`SURFACE_LIFT`, G-130), on a bridge that of its deck's paving.
+ * draws there (`SURFACE_LIFT`, G-130), on a bridge that of its deck's paving; down Alchemia's ramp the ramp's.
  */
-const roadY = (ctx: SimContext, x: number, z: number): number => {
+const roadY = (ctx: SimContext, lane: TrafficRoute, x: number, z: number): number => {
+  // On a set piece's own carriageway (Alchemia's ramp and P-1), its floor.
+  const own = lane.ownWay ? p1DriveFloor(x, z) : null;
+  if (own !== null) return own;
   const g = ctx.streamer.ground;
   const y = g.heightAt(x, z);
   const grid = g.gridAt(x, z);
@@ -80,7 +84,7 @@ const vehicleEntity = (ctx: SimContext, route: number, index: number, s: number)
   const plan = vehiclePlan(ctx.seed, route, index);
   const lane = TRAFFIC_ROUTES[route]!;
   const pose = lanePose(lane, s);
-  const at = { x: pose.x, y: roadY(ctx, pose.x, pose.z), z: pose.z };
+  const at = { x: pose.x, y: roadY(ctx, lane, pose.x, pose.z), z: pose.z };
   return {
     id: vehicleId(route, index),
     position: at,
@@ -465,7 +469,7 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
     st.v = 0;
   }
   const next = lanePose(lane, st.s, st.aside);
-  const y = roadY(ctx, next.x, next.z);
+  const y = roadY(ctx, lane, next.x, next.z);
   v.velocity = { x: (next.x - v.position.x) / dt, y: 0, z: (next.z - v.position.z) / dt };
   v.position = { x: next.x, y, z: next.z };
   v.yaw = next.yaw;

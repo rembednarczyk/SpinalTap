@@ -25,6 +25,12 @@ export interface TrafficRoute {
   readonly turns?: readonly (readonly [number, number])[];
   /** Arc length ranges of the arcs it drives from lane to lane at the junctions (ADR-0055), straight on too. */
   readonly arcs?: readonly (readonly [number, number])[];
+  /**
+   * Arc length ranges driven off the map's paving, on a set piece's own carriageway: Alchemia's
+   * driveway, its ramp down to P-1 and P-1's apron (`traffic-ramp.ts`). Its floor there is the set
+   * piece's (`p1DriveFloor`), not the map's ground.
+   */
+  readonly ownWay?: readonly (readonly [number, number])[];
 }
 
 /** The point at arc length `s` of an open polyline (clamped), with the way along it. */
@@ -43,6 +49,27 @@ export const pointAt = (pts: readonly Pt[], s: number): { x: number; z: number; 
   }
   const p = pts[0] ?? [0, 0];
   return { x: p[0], z: p[1], tx: 0, tz: 1 };
+};
+
+/** Arc length of the polyline's point nearest to (x, z), and how far from the line it is (+ right). */
+export const projectOn = (pts: readonly Pt[], x: number, z: number): { s: number; d: number; side: number } => {
+  let best = { s: 0, d: Infinity, side: 0 };
+  let acc = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1]!;
+    const b = pts[i]!;
+    const dx = b[0] - a[0];
+    const dz = b[1] - a[1];
+    const len2 = dx * dx + dz * dz;
+    const len = Math.sqrt(len2);
+    const t = len2 > 1e-12 ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / len2)) : 0;
+    const px = a[0] + dx * t;
+    const pz = a[1] + dz * t;
+    const d = Math.hypot(x - px, z - pz);
+    if (d < best.d) best = { s: acc + len * t, d, side: len > 0 ? ((x - a[0]) * dz - (z - a[1]) * dx) / len : 0 };
+    acc += len;
+  }
+  return best;
 };
 
 /**
