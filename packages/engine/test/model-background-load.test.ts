@@ -119,7 +119,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
     expect(fetched).not.toContain("kurosawa.vrm");
   });
 
-  it("fetches the background roles' files after the start, one at a time, and Kurosawa's only when he comes", async () => {
+  it("fetches the background roles' and the donors' files after the start, one at a time, and Kurosawa's only when he comes", async () => {
     const { fetched } = serve();
     const views = viewsOn(new Scene(new NullEngine()));
     // Seki with Kaito alone: no look to borrow for, so the start waits for their two files.
@@ -131,7 +131,8 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
     await views.modelLoading.rest(() => false);
     expect(fetched).toHaveLength(2);
     await views.modelLoading.rest();
-    expect([...new Set(fetched)].sort()).toEqual(["civilian.vrm", "ganger.vrm", "kaito.vrm", "mori.vrm", "seki.vrm"]);
+    // The background roles' files and the donors', base-female.vrm with them (G-575).
+    expect([...new Set(fetched)].sort()).toEqual(["base-female.vrm", "civilian.vrm", "ganger.vrm", "kaito.vrm", "mori.vrm", "seki.vrm"]);
     views.spawn(20, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
     await settled(views);
     expect(fetched.filter((u) => u === "kurosawa.vrm")).toHaveLength(1);
@@ -198,7 +199,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
     expect(legsOf(views, 2)).toEqual(first);
   });
 
-  it("borrows from the background roles' files only: not Kurosawa's, loaded first or not (G-560)", async () => {
+  it("borrows from the donor files only: not Kurosawa's, loaded first or not (G-560)", async () => {
     serve();
     const views = viewsOn(new Scene(new NullEngine()));
     // Base_Male with the last donor's trousers, of the fixed set sorted by name.

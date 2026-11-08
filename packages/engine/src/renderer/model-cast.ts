@@ -140,8 +140,12 @@ export const backgroundFiles = (manifest: CharacterModelManifest): CharacterMode
 };
 
 /**
- * The files whose tops and trousers the variants may borrow (ADR-0076 §3, G-560): the heroine's and
- * the background roles', a set fixed by the manifest alone, so a look wears the same cloth however
- * many files have loaded. A file only named characters wear (Kurosawa's) lends nothing.
+ * The files whose tops and trousers the variants may borrow (ADR-0076 §3, G-560, G-575): the
+ * heroine's, the background roles' and those a cast entry marks `lends` (`base-female.vrm`), a set
+ * fixed by the manifest alone, so a look wears the same cloth however many files have loaded. Any
+ * other file only named characters wear (Kurosawa's) lends nothing.
  */
-export const donorFiles = (manifest: CharacterModelManifest): CharacterModelSpec[] => oneByUrl([manifest.heroine, ...backgroundFiles(manifest)]);
+export const donorFiles = (manifest: CharacterModelManifest): CharacterModelSpec[] => {
+  const lending = Object.values(manifest.cast ?? {}).filter((spec) => spec?.lends === true);
+  return oneByUrl([manifest.heroine, ...backgroundFiles(manifest), ...lending]);
+};

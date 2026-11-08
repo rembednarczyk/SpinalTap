@@ -2,7 +2,7 @@ import type { AbstractMesh, Scene } from "../babylon";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { CharacterRig } from "./characters";
 import type { Loadouts } from "./loadout";
-import { type ModelChoice, backgroundFiles, donorFiles, isBackgroundLook, modelPoolKey, resolveModel, startFiles } from "./model-cast";
+import { type ModelChoice, donorFiles, isBackgroundLook, modelPoolKey, resolveModel, startFiles } from "./model-cast";
 import { type Donors, type WornVariant, dressVariant, lends } from "./model-dress";
 import type { CharacterModelManifest, CharacterModelSpec, ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
@@ -107,13 +107,14 @@ export class CharacterModels {
   }
 
   /**
-   * Loads the background roles' files the start did not, one after another, so the game on screen
-   * takes one file's work at a time (ADR-0076 stage 4a). Failures are skipped; it stops before the
-   * next file once `live` says no (a newer start or the title took over).
+   * Loads the donors' files (`donorFiles`: the background roles' among them) the start did not, one
+   * after another, so the game on screen takes one file's work at a time (ADR-0076 stage 4a).
+   * Failures are skipped; it stops before the next file once `live` says no (a newer start or the
+   * title took over).
    */
   async prefetch(live: () => boolean = () => true): Promise<void> {
     const { library } = this.deps;
-    for (const spec of backgroundFiles(this.manifest)) {
+    for (const spec of donorFiles(this.manifest)) {
       if (!live()) return;
       if (!library.isLoaded(spec.url)) await library.preload(spec).catch(() => undefined);
     }

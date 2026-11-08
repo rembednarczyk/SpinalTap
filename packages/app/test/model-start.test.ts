@@ -5,7 +5,7 @@ import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { KUROSAWA_SPOT } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
-import { type CharacterDescriptor, backgroundFiles, manifestFiles, modelChoiceOf, startFiles } from "@seki/engine";
+import { type CharacterDescriptor, donorFiles, manifestFiles, modelChoiceOf, startFiles } from "@seki/engine";
 import { GameSession } from "../src/game-session";
 import { parseModelManifest } from "../src/model-manifest";
 import { steps, teleport } from "./story-helpers";
@@ -52,7 +52,7 @@ class ModelRender implements RenderPort {
   prepare(): Promise<void> {
     const files = startFiles(GAME, [...this.views.values()].filter(isCharacter).map(modelChoiceOf)).map((s) => s.url);
     this.starts.push({ files: files.map(nameOf).sort(), ms: bytesOf(files) / BYTES_PER_MS });
-    this.background = backgroundFiles(GAME).map((s) => nameOf(s.url)).filter((n) => !files.some((f) => nameOf(f) === n));
+    this.background = donorFiles(GAME).map((s) => nameOf(s.url)).filter((n) => !files.some((f) => nameOf(f) === n));
     return Promise.resolve();
   }
 }
@@ -75,11 +75,11 @@ describe("the models a start loads (ADR-0076 stage 4a)", () => {
     const [start] = render.starts;
     // The gangers' looks may borrow cloth, so the donors' files (mori.vrm for the pools) come too.
     expect(start!.files).toEqual(["base-female.vrm", "civilian.vrm", "ganger.vrm", "kaito.vrm", "mori.vrm", "seki.vrm"]);
-    const all = manifestFiles(GAME).map((s) => s.url);
-    // Before: every file of the manifest (42.5 MiB); now the scene's five and a donor (36.5 MiB).
+    expect(start!.files).not.toContain("kurosawa.vrm");
+    const all = manifestFiles(GAME).map((s) => nameOf(s.url));
+    // Before: every file of the manifest (42.5 MiB); now all but Kurosawa's (36.5 MiB).
+    expect(bytesOf(start!.files)).toBe(bytesOf(all) - bytesOf(["kurosawa.vrm"]));
     expect(bytesOf(all) / MIB).toBeGreaterThan(42);
-    expect(bytesOf(start!.files) / MIB).toBeLessThan(37);
-    expect(start!.ms).toBeLessThan((0.9 * bytesOf(all)) / BYTES_PER_MS);
     // Kurosawa's file, only a named one wears, neither comes with the start nor in the background.
     expect(render.background).toEqual([]);
   });

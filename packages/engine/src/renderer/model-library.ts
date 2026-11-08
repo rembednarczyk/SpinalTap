@@ -43,6 +43,11 @@ export interface CharacterModelSpec {
   readonly variant?: number;
   /** A named character's hand-made changes over its variant (hair, clothes, accessories). */
   readonly dress?: VariantDress;
+  /**
+   * The file lends its top and trousers to the variants though only named characters wear it
+   * (`donorFiles`, ADR-0076 stage 4a): set on any of its cast entries.
+   */
+  readonly lends?: boolean;
 }
 
 /** Background roles with a pool of models (ADR-0076). */
