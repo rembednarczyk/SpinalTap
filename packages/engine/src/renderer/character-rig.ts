@@ -1,3 +1,4 @@
+import type { ActivityId } from "@seki/core";
 import type { Mesh, TransformNode } from "../babylon";
 import type { LadderRungs } from "./ladder-rungs";
 import type { ArmReach, TwoHandGrip } from "./two-hand-grip";
@@ -64,6 +65,12 @@ export interface CharacterRig {
   stoop: number;
   /** Stride of the walk, 1 the rig's; an older model's figure shortens it (ADR-0076 decision 7). */
   pace?: number;
+  /**
+   * The activities whose pose lies over the walk now (ADR-0040; the one blending out and the one
+   * blending in), empty or absent while walking and standing. The dressed model's walking stick
+   * and long skirt read it (ADR-0076 decision 7).
+   */
+  doing?: readonly ActivityId[];
   /** Seconds alive; drives idle breathing. */
   time: number;
   /** 0..1 flinch after a hit, decays quickly. */

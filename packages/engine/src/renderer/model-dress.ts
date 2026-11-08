@@ -1,9 +1,10 @@
 import { type AbstractMesh, Color3, Matrix, type Mesh, type Scene, type Texture, type TransformNode, Vector3 } from "../babylon";
 import type { ToonMaterials } from "../npr/toon-material";
+import type { ActivityId } from "@seki/core";
 import type { CharacterRig } from "./character-rig";
 import { buildAccessories, buildCane, buildSkirt } from "./model-accessories";
 import { buildApron, buildVest } from "./model-apron";
-import { freshWorld, wearFigure } from "./model-figure";
+import { UPRIGHT, freshWorld, wearFigure } from "./model-figure";
 import { type ModelCloth, type ModelPart, toonSourceOf } from "./model-library";
 import { type AnchorBone, type HumanoidRetarget, normaliseBoneName } from "./model-rig";
 import type { ModelVariant } from "./model-variant";
@@ -142,20 +143,33 @@ export const dressVariant = (ctx: DressContext, name: string, meshes: readonly A
   const cane = holdCane(ctx, name, on, v);
   if (cane) worn.push(cane.mesh);
   const long = v.accessories.find((a) => a.id === "skirt");
+  let skirt: Mesh | null = null;
   if (long && on.rig) {
-    const skirt = buildSkirt(ctx.scene, `${name}-skirt`, on.retarget.headHeight / HEAD_OF_HEIGHT, v.figure.build, long.color);
+    skirt = buildSkirt(ctx.scene, `${name}-skirt`, on.retarget.headHeight / HEAD_OF_HEIGHT, v.figure.build, long.color);
     skirt.material = ctx.materials.get("charVertexColor");
     skirt.parent = on.rig.body;
     worn.push(skirt);
   }
+  const rig = on.rig;
+  const follow = () => {
+    if (!rig) return;
+    cane?.mesh.setEnabled(caneShows(rig));
+    if (cane?.mesh.isEnabled(false)) cane.place();
+    skirt?.setEnabled(skirtShows(rig));
+  };
+  follow();
+  const observer = cane || skirt ? ctx.scene.onBeforeRenderObservable.add(follow) : null;
   // The figure last: the accessories' anchors are sized by the model's scale before it widens.
-  const figure = on.model ? wearFigure(on.model.root, on.model.prefix, on.body, v.figure) : null;
-  if (on.rig) on.rig.pace = v.figure.pace;
+  // An armed character stays upright: its two-handed hold is solved from the shoulders and arm
+  // lengths the retarget measured at rest (G-282), which a bent back or a new width would move.
+  const shape = on.rig?.aiming ? UPRIGHT : v.figure;
+  const figure = on.model ? wearFigure(on.model.root, on.model.prefix, on.body, shape) : null;
+  if (on.rig) on.rig.pace = shape.pace;
   return {
     meshes: worn,
     undo: () => {
       for (const [mesh, material] of own) mesh.material = material;
-      cane?.stop();
+      if (observer) ctx.scene.onBeforeRenderObservable.remove(observer);
       for (const m of worn) m.dispose();
       for (const a of anchors) a.dispose();
       figure?.undo();
@@ -164,17 +178,32 @@ export const dressVariant = (ctx: DressContext, name: string, meshes: readonly A
   };
 };
 
-/** A walking stick and how to stop it following the hand. */
+/** A walking stick and how to put it at the hand. */
 interface Cane {
   readonly mesh: Mesh;
-  stop(): void;
+  place(): void;
 }
+
+/** Activities whose pose bends the knees past a long skirt or lays the body down (ADR-0040). */
+const SEATED: readonly ActivityId[] = ["sit", "sleep"];
+
+/** Down, fallen, or over someone's shoulder: no stick in the hand, no stiff skirt round the legs. */
+const offFeet = (rig: CharacterRig): boolean => rig.dying !== null || rig.knockout > 0 || rig.carried > 0;
+
+/**
+ * The stick only while walking or just standing: an activity's hands (a broom, a gesture, a
+ * bowl) would lift it off the ground or cross it; seated and lying it would sink into the floor.
+ */
+const caneShows = (rig: CharacterRig): boolean => !offFeet(rig) && (rig.doing ?? []).every((a) => a === "idle");
+
+/** The long skirt is a stiff bell: off while seated or lying, where the knees would leave it and it would sink into the floor. */
+const skirtShows = (rig: CharacterRig): boolean => !offFeet(rig) && !(rig.doing ?? []).some((a) => SEATED.includes(a));
 
 /**
  * The walking stick in the model's right hand, long enough to reach the ground from the palm;
  * null without one. It hangs from the palm but stays upright whatever the forearm does (a
  * gesture, the swing of a step): on the character's root, which only turns about Y, placed at
- * the hand before every frame.
+ * the hand before every frame (by the dress's observer, which also hides it outside walking and standing).
  */
 const holdCane = (ctx: DressContext, name: string, on: DressedOn, v: ModelVariant): Cane | null => {
   const worn = v.accessories.find((a) => a.id === "cane");
@@ -192,6 +221,5 @@ const holdCane = (ctx: DressContext, name: string, on: DressedOn, v: ModelVarian
     mesh.position.y -= PALM;
   };
   place();
-  const observer = ctx.scene.onBeforeRenderObservable.add(place);
-  return { mesh, stop: () => ctx.scene.onBeforeRenderObservable.remove(observer) };
+  return { mesh, place };
 };
