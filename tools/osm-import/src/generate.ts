@@ -9,7 +9,7 @@ import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
 import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills } from "./bridge-fill.ts";
 import { makeBuilding } from "./buildings.ts";
-import { addedAreas, corrected, correctedLine } from "./corrections.ts";
+import { type AddedArea, addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { withoutReplaced } from "./corrections-alchemia.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
@@ -259,11 +259,11 @@ const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
   return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
 };
 
-export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS): Generated => {
+export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS, added?: readonly AddedArea[]): Generated => {
   // The ways a set piece of the game replaces (ADR-0074 stage 7) are left out before anything reads them.
   const features = withoutReplaced(extractFeatures(data));
   // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), before anything reads them.
-  const areas = [...features.areas.map((a) => corrected(a)), ...addedAreas()];
+  const areas = [...features.areas.map((a) => corrected(a)), ...addedAreas(added)];
   const mapLines = features.lines.map((l) => correctedLine(l));
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
   const sidewalks = sidewalkIndex(mapLines);
