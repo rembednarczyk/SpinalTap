@@ -1550,6 +1550,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `animateDeath` (`character-animation.ts`, ok. l. 136) nie zeruje `legL/legR.rotation.z`, więc po nowym kucaniu z kolanami na zewnątrz (0,25 rad) ciało leży z rozwartymi kolanami; przy okazji: nieaktualny komentarz `CROUCH_EYE_HEIGHT` w `packages/sim/src/world/hitscan.ts:93` (głowa rigu w kucki 1,22 m, oko 1,14 m)
 - Pakiet właściciela: packages/engine (renderer)
 
+### G-513 Goła ziemia na podwórkach i przy gmachach Krakowskiego Przedmieścia (krakowskie-0-0)
+- Status: w naprawie (8.11, gałąź `ccr-ec2c4269-ilh8k8-g513`; opiekun mapy, komórka krakowskie-0-0)
+- Ważność: S3 · Zasięg: 144 kwadraty 10 × 10 m `landuse-bare` w ok. 87 skupieniach, ok. 2500 m²; największe: 244 m² (x −53,8..−13,8; z −94,3..−84,3), 208 m² (−189..−150; −220..−189), 190 m² (−188..−127; −270..−220), 182 m² (−176..−162; −32..−20), 180 m² (−155..−107; −101..−72), 155 m² (−16..−2; −128..−99); zrzuty `shots/opiekun-k00/clD-0.png`, `bare1-a.png`, `sad.png`; przyczyna: import nie kładzie nawierzchni na podwórkach i pasach przy gmachach (`landuse=retail/commercial`, gmachy publiczne); rozszerzenie G-450/T-221; kontrola `landuse-bare` istnieje, poprawka obniża bazę; przy okazji: G-508 w tej komórce to szum NMT przy krawędziach budynków (1 krawędź > 20° pod budynkiem, 15 > 10° w gołym terenie; propozycja `terrain-crease` z progiem 12° bez obrysów budynków), T-204 do sprawdzenia przez kuratora (skan `tree-height-vs-nmpt` 0 w komórce)
+- Pakiet właściciela: tools/osm-import (ground), tools/glitch-scan
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
