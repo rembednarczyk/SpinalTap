@@ -39,6 +39,13 @@ describe("parseModelManifest", () => {
     // Broken sections are dropped, the role models stay.
     expect(parseModelManifest({ civilian: { url: "c.vrm" }, cast: [1], pools: "x" }, BASE)).toEqual({ civilian: { url: "https://example.test/game/models/c.vrm" } });
   });
+
+  it("keeps a cast entry's `lends` and drops an entry whose `lends` is no boolean (G-580)", () => {
+    const manifest = parseModelManifest({ cast: { ume: { url: "ume.vrm", lends: true }, hana: { url: "h.vrm", lends: false }, kiku: { url: "k.vrm", lends: "yes" }, mei: { url: "m.vrm", lends: 1 } } }, BASE);
+    expect(manifest).toEqual({ cast: { ume: { url: "https://example.test/game/models/ume.vrm", lends: true }, hana: { url: "https://example.test/game/models/h.vrm", lends: false } } });
+    // The game's base-female.vrm lends through Ume's entry (G-575): the donors depend on it.
+    expect(GAME.cast?.ume?.lends).toBe(true);
+  });
 });
 
 const read = readFileSync as (u: URL) => Uint8Array;
