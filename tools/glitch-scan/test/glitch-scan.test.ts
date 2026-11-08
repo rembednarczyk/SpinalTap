@@ -1155,7 +1155,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
     return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, pavedAt(paving));
   },
-  /** A lamp of the plan's line over a bridge 2.5 m or more under the deck beside it or over it (G-503): on the valley's ground by Zamkowa's viaduct. */
+  /** A lamp of the plan's line over a bridge 1.5 m or more under the deck beside it or over it (G-503, G-507): on the valley's ground by Zamkowa's viaduct, on its abutment's bank. */
   "lamp-beside-deck": () => {
     const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
     return lampsBesideDeck(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, bridgeDeckAt);
