@@ -5,7 +5,7 @@
  * OSM maps no surface round Nadstawna 1-4 (`landuse=commercial` w1305996965), round Społem between
  * Lubartowska and the Bazar (`landuse=retail` w291844839), on the dairy cooperative's yard
  * (w1094207955), along the shops by Ruska and at the stops by Szkolna, where the orthophoto (PZGiK)
- * shows setts, car parks and a lawn or two. No import rule lays them right: a paving over the land's
+ * shows setts, car parks, lawns and a bed. No import rule lays them right: a paving over the land's
  * outline would lie in one plane with the Bazar's square inside w291844839 (G-320); a third to two
  * fifths of the bare ground is in the strips along the shops' walls outside the land; and land with
  * no lawn of the map may still be half grass (`landuse=retail` w175886791 on Nabrzeże).
@@ -15,7 +15,8 @@
  * setts, and kept 0.4 m off the map's squares, lawns and steps: a paving in one plane with a square
  * flickers (G-320), one over a lawn hides it (G-421). Its corners within 1 m of a car park or a
  * footway area of the map are moved onto that outline, with its nodes between them, so the setts end
- * where the car park begins and no added area lies over a paving OSM maps.
+ * where the car park begins and no added area lies over a paving OSM maps. The lawns and the bed the
+ * orthophoto shows in them are areas of their own, the setts kept off them or cut round them.
  */
 import type { AddedArea } from "./corrections.ts";
 import { DWORZEC_EAST_AREAS } from "./corrections-dworzec.ts";
@@ -42,17 +43,45 @@ const YARD_NADSTAWNA_4 = area("nadstawna-4", SETTS, [
   506.47, 766.38, 505.69, 765.32, 505.03, 766.5, 503, 777, 498.75, 777.25, 497, 778.5, 495.5, 781, 495.25, 782, 494, 783.5, 493.5, 785.25, 494, 786.5,
   492, 789, 491.75, 790, 490.5, 793.25, 489.5, 794.25, 488.5, 778.25, 452, 775.5, 450.25, 774.5, 450.25, 763, 452.25, 763.75, 461.5, 768, 460.5, 772,
   462, 773.5, 463.5, 784, 487, 783.5, 488.5, 781.5, 490.25, 778, 491.5, 775, 490.75, 771.5, 492.75, 768.5, 493.5, 767, 493, 765.25, 491, 762.75, 479.5,
-  760.1, 482.71, 759.96, 482.07, 759.57, 480.37, 758.59, 480.53, 750.79, 481.79, 738.5, 484.13, 742.06, 509.28, 742.26, 509.79, 751.25, 531.86, 764.89,
-  526.75, 760.75, 517.61, 760.33, 516.68, 760.86, 516.44, 765.15, 514.53, 765.33, 514.46, 766.28, 514.02, 767.25, 516, 768, 515, 770.63, 514.08,
-  774.85, 523.59, 775.06, 523.51, 804.99, 512.14, 798.07, 494.6, 804.75, 495, 806, 499.25, 807, 500, 810.75, 508.5, 811, 510.5, 810, 514, 807.5,
-  515.75, 775, 528.75, 771.5, 528.5, 770, 530.5, 768.5, 531.25, 761, 533.75, 749.5, 538.75, 746.5, 538.5, 744.75, 536, 739, 514, 739.25, 512.5, 738.25,
-  511, 737.5, 507.5, 734.5, 486, 734.5, 482, 735.5, 479, 733, 461.5,
+  760.1, 482.71, 759.96, 482.07, 759.57, 480.37, 758.59, 480.53, 750.79, 481.79, 738.5, 484.13, 742.01, 508.93, 742.05, 509.29, 745.76, 518.4, 745.49,
+  519.22, 744.63, 519.57, 744.67, 519.68, 749.86, 532.43, 751.56, 531.74, 764.89, 526.75, 760.75, 517.61, 760.33, 516.68, 760.86, 516.44, 765.15,
+  514.53, 765.33, 514.46, 766.28, 514.02, 767.25, 516, 768, 515, 770.63, 514.08, 774.85, 523.59, 775.06, 523.51, 804.06, 512.5, 805.5, 511.8, 805.3,
+  511.8, 805.29, 511.74, 805.3, 511.8, 807.6, 511.8, 807.6, 511.75, 807.6, 507.25, 807.6, 507.2, 804.3, 507.2, 804.31, 507.24, 804.48, 510.86, 798.07,
+  494.6, 804.75, 495, 805, 497, 804.5, 498.25, 807, 500, 809.75, 506, 809.75, 507.5, 810.75, 508.5, 811, 510.5, 810, 514, 807.5, 515.75, 775, 528.75,
+  771.5, 528.5, 770, 530.5, 768.5, 531.25, 761, 533.75, 749.5, 538.75, 746.5, 538.5, 744.75, 536, 739, 514, 739.25, 512.5, 738.25, 511, 737.5, 507.5,
+  734.5, 486, 734.5, 482, 735.5, 479, 733, 461.5,
 ], "kostka i parkingi wokół Nadstawnej 4 i domów na zachód od niej na ortofoto PZGiK, w OSM landuse=commercial w1305996965 bez nawierzchni");
 
 /** A strip at the south-east corner of the same land, between the street's pavement and the footway. */
 const CORNER_NADSTAWNA_4 = area("nadstawna-4-rog", SETTS, [
   797.5, 451.5, 799, 449, 800.75, 449, 800.28, 456.97, 798.14, 452.44, 797.78, 452.79,
 ], "pas kostki przy południowo-wschodnim narożniku działki Nadstawnej 4 na ortofoto PZGiK, w OSM bez nawierzchni");
+
+/**
+ * The strip of grass along the west fence of the car park w73976159 (green on the orthophoto, its
+ * east edge on the car park's), a bed of the map.
+ */
+const LAWN_CAR_PARK = area("trawnik-przy-parkingu", LAWN, [
+  751.25, 531.86, 746.02, 519, 744.63, 519.57, 749.86, 532.43,
+], "pas trawy wzdłuż zachodniego płotu parkingu w73976159 na ortofoto PZGiK, w OSM bez obszaru");
+
+/** The raised bed by the kiosk east of the car park w73976162. */
+const BED_KIOSK = area("klomb-przy-kiosku", LAWN, [
+  804.3, 507.2, 807.6, 507.2, 807.6, 511.8, 805.3, 511.8,
+], "podwyższony kwietnik przy kiosku na wschód od parkingu w73976162 na ortofoto PZGiK, w OSM bez obszaru");
+
+/** The patch of lawn south of the same kiosk, by the steps. */
+const LAWN_KIOSK = area("trawnik-przy-kiosku", LAWN, [
+  801, 497, 803, 497, 803, 500, 801, 500,
+], "trawnik na południe od kiosku przy schodach na ortofoto PZGiK, w OSM bez obszaru");
+
+/**
+ * The strip of grass with trees along the west wall of Nadstawna 3 (w73833932), 0.2 m under the wall:
+ * the import cuts it out of the setts round it (`openPavings`).
+ */
+const LAWN_NADSTAWNA_3 = area("trawnik-nadstawna-3", LAWN, [
+  816.65, 473.92, 823.28, 488.12, 821.02, 489.17, 814.39, 474.97,
+], "pas trawy z drzewami przy zachodniej ścianie Nadstawnej 3 na ortofoto PZGiK, w OSM bez obszaru");
 
 /**
  * Round the shops Nadstawna 1 and 3 (w73833931, w73833932) and the kiosk w73833930, inside the
@@ -89,8 +118,13 @@ const STOP_SZKOLNA = area("przystanek-szkolna", SETTS, [
 
 /** A strip south of the Dworzec Autobusowy w66264171, on the chunk's south edge. */
 const EDGE_DWORZEC = area("pod-dworcem", SETTS, [
-  773.75, 371, 774, 370.5, 793, 370.5, 792.75, 371.5, 792, 371.75, 777, 373.75, 775, 373.75, 774.75, 373, 773.75, 373,
+  774, 371, 789.5, 371, 789.25, 371, 788.25, 372.25, 775, 373.75, 774.75, 373, 773.75, 373,
 ], "pas kostki na południe od Dworca Autobusowego w66264171 na ortofoto PZGiK, w OSM bez nawierzchni");
+
+/** The row of planters with shrubs along the same strip, a bed of the map up to the chunk's edge. */
+const PLANTERS_DWORZEC = area("donice-pod-dworcem", LAWN, [
+  774, 370.05, 793, 370.05, 793, 371, 774, 371,
+], "rząd donic z krzewami na południe od Dworca Autobusowego na ortofoto PZGiK, w OSM bez obszaru");
 
 /**
  * Round the Społem supermarket w66264139 between Lubartowska and the Bazar w67502759, on `landuse=retail`
@@ -110,8 +144,8 @@ const BLOCK_LUBARTOWSKA = area("lubartowska-bazar", SETTS, [
 const YARD_LSUM = area("podworze-lsm", SETTS, [
   517, 418.5, 517.5, 417, 519, 415.5, 520.5, 415, 526, 414, 527.5, 414.5, 528.75, 416, 530.5, 422, 529.75, 425, 530.75, 426, 531.75, 432.5, 528.5, 433,
   528.5, 435, 526, 436, 527, 439.25, 529.5, 438.75, 530.25, 456.25, 533.5, 456.25, 533.25, 458, 532.5, 458.75, 533.5, 461, 533.5, 463, 530.5, 462.25,
-  530.75, 472, 520.25, 473.25, 519.5, 473.75, 519.5, 476.25, 517.5, 475, 517, 473.5, 517, 462.5, 518, 460.75, 517, 458.5, 517, 448.5, 517.5, 447.5,
-  517, 446, 517, 429, 518, 427.25, 517, 425,
+  530.75, 472, 520.25, 473.25, 518.75, 474, 517.25, 474, 517, 473.5, 517, 462.5, 518, 460.75, 517, 458.5, 517, 448.5, 517.5, 447.5, 517, 446, 517, 429,
+  518, 427.25, 517, 425,
 ], "asfalt i parking podwórza Lubelskiej Spółdzielni Usług Mleczarskich na ortofoto PZGiK, w OSM landuse=commercial w1094207955 bez nawierzchni");
 
 /** Pieces of the strip between the shops' front on Lubartowska (x 616-630, z 476-498) and the pavement. */
@@ -155,7 +189,7 @@ const RUSKA_A = area("ruska-a", SETTS, [
 const RUSKA_B = area("ruska-b", SETTS, [
   674, 579.5, 675.5, 577.75, 677, 577.5, 679.5, 576, 680.5, 576, 682.5, 575, 683.25, 575.25, 685, 574, 687.5, 573.5, 689, 572.5, 693, 571.5, 694.5,
   570.5, 697, 570, 698.5, 569, 699.5, 569, 701.5, 568, 703, 568, 704.5, 567, 705.5, 567, 709, 565.5, 710.25, 565.75, 710, 566.75, 713.75, 578, 713.5,
-  578.75, 712.25, 575.5, 709.75, 576.75, 709.5, 580.25, 710, 580.75, 709.5, 581, 686, 581, 685.25, 580, 684.75, 580, 684, 581, 675, 581, 674.25, 580.5,
+  578.75, 712.25, 575.5, 709.75, 576.75, 709.5, 581, 686, 581, 685.25, 580, 684.75, 580, 684, 581, 675, 581, 674.25, 580.5,
 ], "pas kostki i miejsc postojowych przed sklepami przy Ruskiej na ortofoto PZGiK, w OSM bez nawierzchni");
 
 /** The added areas east of the Dworzec Autobusowy, then those of this file. */
@@ -163,12 +197,17 @@ export const PODZAMCZE_AREAS: readonly AddedArea[] = [
   ...DWORZEC_EAST_AREAS,
   YARD_NADSTAWNA_4,
   CORNER_NADSTAWNA_4,
+  LAWN_CAR_PARK,
+  BED_KIOSK,
+  LAWN_KIOSK,
+  LAWN_NADSTAWNA_3,
   YARD_NADSTAWNA_1_3,
   WEST_NADSTAWNA_1_3,
   BAY_SZKOLNA,
   LAWN_SZKOLNA,
   STOP_SZKOLNA,
   EDGE_DWORZEC,
+  PLANTERS_DWORZEC,
   BLOCK_LUBARTOWSKA,
   YARD_LSUM,
   FRONT_LUBARTOWSKA_A,

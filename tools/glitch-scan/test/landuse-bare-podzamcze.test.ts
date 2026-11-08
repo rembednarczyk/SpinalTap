@@ -29,12 +29,13 @@ const inCell = (id: string) => {
 describe("bare terrain on the shops' land of Podzamcze (G-536, G-540)", () => {
   // OSM maps no surface there; the orthophoto shows setts, car parks and lawns (T-246). What is left
   // are the 0.4 m strips the added areas keep off the map's squares, lawns and steps (G-320, G-421):
-  // along the Nowy Plac Targowy, the Targ na Ruskiej and the beds by the dairy and the stops.
+  // along the Nowy Plac Targowy, the Targ na Ruskiej and the beds by the dairy and the stops, and
+  // half-metre slivers between the car parks' edges and the lawns and the bed laid along them.
   it.each<[string, Box, number]>([
     ["the forecourt and yards of Nadstawna 4", [747, 800, 446, 490], 10],
     ["the strip west of Nadstawna 4", [735, 750, 452, 511], 0],
-    ["the yard south of Nadstawna 4's car parks", [742, 769, 513, 536], 2],
-    ["the strip by the car park south of Nadstawna 4", [769, 808, 501, 526], 4],
+    ["the yard south of Nadstawna 4's car parks", [742, 769, 513, 536], 5],
+    ["the strip by the car park south of Nadstawna 4", [769, 808, 501, 526], 8],
     ["the strips round Nadstawna 1 and 3", [807, 841, 450, 490], 2],
     ["the stops by Szkolna", [848, 878, 487, 526], 27],
     ["the block between Lubartowska and the Bazar", [606, 662, 386, 461], 53],
