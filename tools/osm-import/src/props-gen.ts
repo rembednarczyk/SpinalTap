@@ -15,7 +15,7 @@ import { KERB_SHY, MAPPED, MAX_MOVE, ON_BUILDINGS, WALL_REACH, WALL_ROOM, propOf
 import { bulkyPieces } from "./props-bulky.ts";
 import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } from "./props-food.ts";
 import { marketEntrances, marketStalls } from "./props-market.ts";
-import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
+import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideSpot, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
 import { byStyledLamp, oldTownLook } from "./props-lamp-looks.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
@@ -41,6 +41,8 @@ export interface PlanItem {
   readonly osm?: string | readonly string[];
   readonly look?: string;
   readonly note?: string;
+  /** False: its lamps hang no basket, and the others' baskets stay where they were (T0's square, ADR-0074 stage 7). */
+  readonly baskets?: false;
 }
 
 export interface PropsPlan {
@@ -56,6 +58,10 @@ export interface Placed {
   readonly shape?: number;
   /** Id of the plan's group (filled in by the generator). */
   readonly from?: string;
+  /** A lamp of a group with no baskets (`PlanItem.baskets`). */
+  readonly bare?: true;
+  /** Standing on a bridge's deck, not on the ground under it (`sideSpot`). */
+  readonly deck?: boolean;
 }
 
 export interface PropsStats {
@@ -168,11 +174,11 @@ const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: rea
     const place = (toEdge: boolean): Placed | null => {
       for (const s of SLIDES) {
         const at = { x: st.p.x + st.dir.x * s, z: st.p.z + st.dir.z * s };
-        const d = sideOffset(site, at, n, mode, fallback, lamp, toEdge);
-        if (d === null) continue;
-        const p = { x: at.x + n.x * d, z: at.z + n.z * d };
+        const spot = sideSpot(site, at, n, mode, fallback, lamp, toEdge);
+        if (spot === null) continue;
+        const p = { x: at.x + n.x * spot.d, z: at.z + n.z * spot.d };
         // Lamps' arms, lanterns and café fronts face the street's axis.
-        if (clear(at, p)) return { prop, p, yaw: yawOf(-n.x, -n.z), key };
+        if (clear(at, p)) return { prop, p, yaw: yawOf(-n.x, -n.z), key, ...(spot.deck ? { deck: true } : {}) };
       }
       return null;
     };
@@ -238,7 +244,8 @@ const BULKY: ReadonlySet<StreetPropKind> = new Set(["food-cart", "container"]);
 
 const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[], placed: readonly Placed[]): Placed[] => {
   if (item.position) return [{ prop, p: item.position, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: typeof item.osm === "string" ? item.osm : item.id }];
-  if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: null, key: osmAt(item, i) }));
+  // A group of points with a yaw faces that way, as a single position does (the benches of Alchemia's T0 towards their lawns).
+  if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: osmAt(item, i) }));
   if (item.polygon) {
     const ring = flat(item.polygon);
     // A kiosk or a shelter whose outline the importer already raised as a building would stand inside its own double.
@@ -354,7 +361,7 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
         skipped[shape] = (skipped[shape] ?? 0) + 1;
         continue;
       }
-      const p = shape === undefined ? { ...x, from: item.id } : { ...x, shape, from: item.id };
+      const p = { ...x, ...(shape === undefined ? {} : { shape }), from: item.id, ...(item.baskets === false ? { bare: true as const } : {}) };
       placed.push(p);
       if (item.line || item.lines) fromLine.add(p);
     }
@@ -404,7 +411,7 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   let offBoard = 0;
   let onBoard = 0;
   // Where each lamp ended up: its basket was picked before the lamps were merged or moved.
-  const lampAt = new Map<string, Pt>();
+  const lampAt = new Map<string, Pt & { readonly deck?: boolean }>();
   // How far each stall moved from where it was placed: its stock moves with it (ADR-0058 stage 3).
   const stallShift = new Map<string, Pt>();
   for (const piece of placed) {
@@ -415,13 +422,15 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       merged++;
       continue;
     }
-    const placedAt = lamp ? { ...piece, p: lamp } : shift ? { ...piece, p: { x: piece.p.x + shift.x, z: piece.p.z + shift.z } } : piece;
+    // A basket hangs on its lamp, on a bridge's deck with it.
+    const placedAt = lamp ? { ...piece, p: { x: lamp.x, z: lamp.z }, deck: lamp.deck } : shift ? { ...piece, p: { x: piece.p.x + shift.x, z: piece.p.z + shift.z } } : piece;
     // A light, a machine or a tree from a node in the road stands on the nearest pavement.
     // Judged where it ends up, at the 0.1 m the chunks keep.
     const at = { x: r1(placedAt.p.x), z: r1(placedAt.p.z) };
     // A kerb lamp in front of a car park's cars, on asphalt with no kerb (T-172), stays there.
     const byLot = KERB_LAMPS.has(placedAt.prop) && site.byLot(at, LOT_REACH);
-    const off = ON_ROAD.has(placedAt.prop) || byLot ? at : offRoad(site, at);
+    // A lamp on a bridge's deck stands on its paving whatever road runs under it.
+    const off = ON_ROAD.has(placedAt.prop) || byLot || placedAt.deck ? at : offRoad(site, at);
     if (!off) {
       onRoad++;
       continue;
@@ -480,13 +489,13 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       crowded++;
       continue;
     }
-    if (BASKET_LAMPS.has(x.prop)) lampAt.set(x.key, { x: item.x, z: item.z });
+    if (BASKET_LAMPS.has(x.prop)) lampAt.set(x.key, { x: item.x, z: item.z, deck: x.deck });
     if (x.prop === "market-stall") stallShift.set(x.key, { x: item.x - piece.p.x, z: item.z - piece.p.z });
     same.push({ x: item.x, z: item.z });
     kept.set(x.prop, same);
     solids.add(item);
     const list = byChunk.get(chunk.id)!;
-    list.push({ ...item, y: r2(site.heightAt(item)) });
+    list.push({ ...item, y: r2((x.deck ? site.deckHeightAt(item) : null) ?? site.heightAt(item)) });
     if (bollardGroups.has(x.from ?? "")) bollards.push({ chunk: chunk.id, index: list.length - 1, district: chunk.district, from: x.from ?? "" });
     perKind[x.prop] = (perKind[x.prop] ?? 0) + 1;
     perDistrict[chunk.district] = (perDistrict[chunk.district] ?? 0) + 1;

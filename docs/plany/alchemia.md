@@ -216,3 +216,4 @@ Każdy etap: test sesji bez renderera (`app/test/alchemia-*.test.ts`), kontrola 
 - Hana: wózek na placu; Ren: na dachu trójkątnego pawilonu.
 - Kolejność: najpierw food hall ze sprzedawcami, potem Arkady, pawilon i parking.
 - Bez decyzji (propozycje do ADR): całkowite usunięcie modelu hali, godziny lokali, rola restauracji w Arkadach i pawilonu, pasmo poziomów dla parkingu i pawilonu, tunel pod Lubartowską.
+- Godziny lokali (decyzja użytkownika 6.11): jak w propozycji ADR-0074, food hall 10:00–24:00, Fumiko 16:00–4:00, Oyaji do 22:00, reszta według dzisiejszych harmonogramów.

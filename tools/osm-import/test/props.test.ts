@@ -51,8 +51,9 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(propOf("crossing")).toBeNull();
   });
 
-  it("is deterministic and places nothing outside its chunk, every piece on the chunk's terrain", () => {
+  it("is deterministic and places nothing outside its chunk, every piece on the chunk's terrain or a lamp on a bridge's deck", () => {
     const a = generateProps(PLAN, CHUNKS);
+    const site = new Site(CHUNKS);
     const b = generateProps(PLAN, CHUNKS);
     expect([...a.byChunk.entries()]).toEqual([...b.byChunk.entries()]);
     let total = 0;
@@ -60,7 +61,9 @@ describe("street furniture generator (ADR-0047)", () => {
       for (const i of a.byChunk.get(c.id) ?? []) {
         total++;
         expect(i.x >= c.bounds.minX - 0.05 && i.x <= c.bounds.maxX + 0.05 && i.z >= c.bounds.minZ - 0.05 && i.z <= c.bounds.maxZ + 0.05, `${i.prop} in ${c.id}`).toBe(true);
-        expect(Math.abs(i.y - terrainHeightAt(c.terrain, i.x, i.z))).toBeLessThan(0.2);
+        // A lamp of the plan over a bridge's span stands on its deck, its basket with it (G-503).
+        const deck = i.prop.startsWith("lamp-") || i.prop === "hanging-basket" ? site.deckHeightAt(i) : null;
+        expect(Math.min(Math.abs(i.y - terrainHeightAt(c.terrain, i.x, i.z)), Math.abs(i.y - (deck ?? Infinity))), `${i.prop} at ${i.x}, ${i.z}`).toBeLessThan(0.2);
         // A bollard's chains take 25 bits (G-032), the rest's variant 16.
         expect(Number.isInteger(i.variant) && i.variant >= 0 && i.variant <= (i.prop === "bollard" ? 0x1ffffff : 0xffff)).toBe(true);
       }
@@ -228,6 +231,37 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(lamps).toHaveLength(4);
     expect(baskets.length).toBeGreaterThan(0);
     for (const b of baskets) expect(lamps.some((l) => l.x === b.x && l.z === b.z), `basket at ${b.x}, ${b.z}`).toBe(true);
+  });
+
+  it("hangs no basket on the lamps of a group without them, and leaves the other lamps' baskets where they were (ADR-0074 stage 7)", () => {
+    const row = { id: "a", kind: "lamp-pastoral", lines: [[0, 30, 100, 30]], spacing: 25 };
+    const baskets = { id: "baskets", kind: "hanging-basket", lines: [[0, 30, 100, 30]], count: 8 };
+    // Keyed before the row's lamps and by its line, so with baskets they would take the row's turns.
+    const square = { id: "_plac.lamp-pastoral", kind: "lamp-pastoral", points: [[25, 36.5] as const, [75, 36.5] as const], baskets: false as const };
+    const hung = (plan: PropsPlan) =>
+      generateProps(plan, [street()])
+        .byChunk.get("test-0-0")!
+        .filter((i) => i.prop === "hanging-basket")
+        .map((i) => [i.x, i.z]);
+    const before = hung({ items: [row, baskets] });
+    expect(before.length).toBeGreaterThan(0);
+    expect(hung({ items: [row, square, baskets] })).toEqual(before);
+    // With baskets, the square's lamps take their turn among the others.
+    expect(hung({ items: [row, { ...square, baskets: undefined }, baskets] })).not.toEqual(before);
+  });
+
+  it("faces a group of points the way its yaw says, and one without a yaw towards open pavement (ADR-0074 stage 7)", () => {
+    const benches = (yaw?: number) =>
+      generateProps({ items: [{ id: "plac.bench", kind: "bench", points: [[30, 36.5], [70, 36.5]], ...(yaw === undefined ? {} : { yaw }) }] }, [street()])
+        .byChunk.get("test-0-0")!
+        .filter((i) => i.prop === "bench")
+        .map((i) => i.yaw);
+    expect(benches(-90)).toEqual([-1.57, -1.57]);
+    expect(benches(180)).toEqual([3.14, 3.14]);
+    // Without a yaw, the generator's own facing, the same for both on this straight sidewalk.
+    const open = benches();
+    expect(open).toHaveLength(2);
+    expect(open[0]).toBe(open[1]);
   });
 
   it("spreads lines and areas deterministically, inside the area and off the buildings", () => {
