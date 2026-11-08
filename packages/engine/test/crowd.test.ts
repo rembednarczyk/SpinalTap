@@ -81,6 +81,18 @@ describe("residents' looks and figures (ADR-0041)", () => {
     expect(plantedHips(d, 0, 0.04).y).toBeCloseTo(0);
   });
 
+  it("a spread opens the feet: the knees go out from under the hips (G-511)", () => {
+    const t = buildPuppet(crowdLook(5), false);
+    const parts = partMatrices();
+    const pose = puppetPose(freshPuppet(), 0, t.dims, false);
+    poseParts(parts, t.dims, pose, 0, 0, 0, 0);
+    const [l, r] = [parts[PART.shinL]![3]!, parts[PART.shinR]![3]!];
+    poseParts(parts, t.dims, { ...pose, spread: 0.2 }, 0, 0, 0, 0);
+    // The figure's left is -X.
+    expect(parts[PART.shinL]![3]).toBeLessThan(l - 0.05);
+    expect(parts[PART.shinR]![3]).toBeGreaterThan(r + 0.05);
+  });
+
   it("the pelvis follows the position and the facing", () => {
     const t = buildPuppet(crowdLook(5), false);
     const parts = partMatrices();

@@ -24,8 +24,9 @@ export const plantedOffset = (rig: CharacterRig, j: ActivityJoints): { y: number
  */
 export const applyActivityPose = (rig: CharacterRig, j: ActivityJoints, w: number): void => {
   // The walk only opens the legs in a crouch, so the pose blends them from there (w = 0 leaves the walk's).
-  rig.legL.rotation.z += (j.spread - rig.legL.rotation.z) * w;
-  rig.legR.rotation.z += (-j.spread - rig.legR.rotation.z) * w;
+  // The rig's left is -X: a negative turn about Z opens the left leg (G-511).
+  rig.legL.rotation.z += (-j.spread - rig.legL.rotation.z) * w;
+  rig.legR.rotation.z += (j.spread - rig.legR.rotation.z) * w;
   // The walk never turns these: they rest at 0, so the pose scales them from there (and w = 0 puts them back).
   rig.head.rotation.y = j.headY * w;
   rig.head.rotation.z = j.headZ * w;
