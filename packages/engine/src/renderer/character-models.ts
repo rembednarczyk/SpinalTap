@@ -110,7 +110,7 @@ export class CharacterModels {
     if (!spec || !choice || this.loading.has(rig)) return;
     const poolKey = modelPoolKey(spec);
     const who = choice.cast ?? choice.fallback;
-    const wearing = this.wearing(spec, choice);
+    const wearing = this.wearing(spec, choice, rig.aiming);
     const needs = wearing.look.topFrom !== null || wearing.look.bottomFrom !== null;
     // A model released by a cleared scene (new game, load, streaming) is reused at once.
     const pooled = this.pool.get(poolKey)?.pop();
@@ -162,13 +162,15 @@ export class CharacterModels {
    * The variant of a character: a named one's from the manifest (with its hand-made `dress`),
    * a background one's from its look within the file's budget, the file's own for the rest.
    */
-  private wearing(spec: CharacterModelSpec, choice: ModelChoice): Wearing {
+  private wearing(spec: CharacterModelSpec, choice: ModelChoice, armed: boolean): Wearing {
     if (choice.cast !== undefined || choice.look === undefined || spec.variant !== undefined || spec.dress !== undefined) {
       const id = spec.variant ?? 0;
       return { id, look: variantOf(id, spec.dress), budget: null };
     }
     const id = this.budget.take(spec.url, backgroundVariantOf(choice.look));
-    return { id, look: variantOf(id), budget: spec.url };
+    // Older looks only for the street's people (ADR-0076 decision 7), never for a fighter.
+    const elders = !armed && (choice.pool === "civilian" || choice.pool === "vendor");
+    return { id, look: variantOf(id, undefined, elders), budget: spec.url };
   }
 
   private giveBack(w: { readonly id: number; readonly budget: string | null }): void {

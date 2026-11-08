@@ -128,11 +128,11 @@ const seededAge = (id: number): { readonly hair: string; readonly figure: Figure
   return { hair, figure: clampFigure({ stoop: 0.2 + 0.25 * rand(), build: 0.92 + 0.14 * rand(), pace: 0.7 }) };
 };
 
-/** The seeded look of a variant number; 0 is the file's own. */
-const seeded = (id: number): ModelVariant => {
+/** The seeded look of a variant number; 0 is the file's own. Without `elders` no variant is aged. */
+const seeded = (id: number, elders: boolean): ModelVariant => {
   if (id === 0) return OWN_LOOK;
   const rand = lookStream(mix(id) ^ 0x7a3d91e5);
-  const age = seededAge(id);
+  const age = elders ? seededAge(id) : null;
   const skin = pick(rand, SKIN);
   const young = pick(rand, HAIR);
   const hair = age?.hair ?? young;
@@ -147,9 +147,13 @@ const seeded = (id: number): ModelVariant => {
 
 const has = <K extends keyof VariantDress>(dress: VariantDress, key: K): boolean => Object.prototype.hasOwnProperty.call(dress, key);
 
-/** The look of a variant number with a named character's changes over it. */
-export const variantOf = (id: number, dress?: VariantDress): ModelVariant => {
-  const base = seeded(Math.max(0, Math.floor(id)));
+/**
+ * The look of a variant number with a named character's changes over it. `elders: false` keeps
+ * the background variant young: the aged ones are for the people of the street, not for anyone
+ * who fights (a bent back moves the shoulders a two-handed hold is solved from, G-282).
+ */
+export const variantOf = (id: number, dress?: VariantDress, elders = true): ModelVariant => {
+  const base = seeded(Math.max(0, Math.floor(id)), elders);
   if (!dress) return base;
   const field = <K extends "skin" | "hair" | "top" | "bottom" | "tie" | "topFrom" | "bottomFrom">(key: K): ModelVariant[K] =>
     has(dress, key) ? ((dress[key] ?? null) as ModelVariant[K]) : base[key];
