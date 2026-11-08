@@ -1591,12 +1591,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (ruch aut)
 
 ### G-536 Goła ziemia na placu przy Nowym Placu Targowym, Nadstawnej i na podwórzach Podzamcza (podzamcze-1-1)
-- Status: w PR #408 (8.11, 17 obszarów T-246/* razem z G-540; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; przegląd kuratora w toku; zgłoszone przez opiekuna mapy, komórka podzamcze-1-1)
+- Status: w PR #408 (8.11, 22 obszary T-246/* po rundzie 2 razem z G-540; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; przegląd kuratora w toku; zgłoszone przez opiekuna mapy, komórka podzamcze-1-1)
 - Ważność: S3 · Zasięg: 93 kwadraty 10 × 10 m `landuse-bare`, ok. 2005 m² (8021 próbek 0,5 m) w 28 skupieniach; największe (m², x, z): 680 (747..800; 446..490) przy parkingach w227698438 i w227698440, postoju taxi w227698439 i sklepie w73833921; 221 (735..750; 452..511) za Nova w66264174; 159 (815..841; 450..485) przy kioskach w73833930/31/32; 153 (742..769; 513..536) przy skraju Ruskiej; 121 i 107 (848..868; 507..526) przy Szkolnej; 110 (769..808; 501..526); 98 (807..828; 458..490); 91 (860..878; 487..498); dziewięć największych to ok. 88%; 60% próbek w `landuse=commercial` w1305996965 bez `surface`, 37% w pasie do 5 m od ścian; zrzuty dzienne `shots/opiekun-p11/d-d1-d.png`, `d-b1-b.png`, `d-a2-plac-e.png`; przyczyna jak G-513, G-521, G-527; test przyjęcia: `landuse-bare` w komórce do ≤ 10% z bazą obniżoną w tym samym commicie
 - Pakiet właściciela: tools/osm-import (korekty nawierzchni)
 
 ### G-540 Goła ziemia na podwórzach i placach Podzamcza: Lubartowska, Probostwo, Nowy Plac Targowy, Ruska (podzamcze-0-1)
-- Status: w PR #408 (8.11, 17 obszarów T-246/* razem z G-536; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; przegląd kuratora w toku; zgłoszone przez opiekuna mapy, komórka podzamcze-0-1)
+- Status: w PR #408 (8.11, 22 obszary T-246/* po rundzie 2 razem z G-536; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; przegląd kuratora w toku; zgłoszone przez opiekuna mapy, komórka podzamcze-0-1)
 - Ważność: S3 · Zasięg: 81 kwadratów 10 × 10 m `landuse-bare`, ok. 1743 m² (6972 próbki 0,5 m; pierwotnie zaniżone do 2180 przez błąd zaokrąglenia) w 28 skupieniach; największe (m², x, z): 208 (609..662; 386..457) wzdłuż Lubartowskiej i przy Nowym Placu Targowym, 48 (606..630; 398..461), 38 (636..650; 559..580) przy parkingu w227679484, 37 (520..530; 427..447), 34 (676..715; 567..580) przy Ruskiej; kontekst OSM: 36% w `landuse=retail` w291844839 bez `surface`, 20% w `landuse=commercial` w1094207955, 7% w `landuse=retail` w1547216431, 35% poza wielokątami; zrzuty `shots/opiekun-p01/d-s3-slope2.png`, `d-a1-big-w.png`, `d-a2-big-n.png`; przyczyna jak G-513, G-521, G-527, G-536; przy okazji w komórce `kerb-gap-bare` 116 trafień (G-522) i 7 znanych `lane-dead-end`, G-508 tu to prawdziwe skarpy NMT (największa 548..570 × 538..560, 33°)
 - Pakiet właściciela: tools/osm-import (korekty nawierzchni)
 
@@ -1641,7 +1641,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-565 Jezdnia Ruskiej przy Szkolnej i przy Targu na Ruskiej węższa od prawdziwej
-- Status: zgłoszone (8.11, kurator przeglądu #408; T-247)
+- Status: zgłoszone (8.11, kurator przeglądu #408; T-249)
 - Ważność: S4 · Zasięg: przy przystanku Szkolna (x 845–880, z 486–520) i przy sklepach obok Targu na Ruskiej (x 676–714, z 565–575) pas jezdni kończy się 2–3 m przed prawdziwym krawężnikiem; przy Szkolnej zewnętrzny asfaltowy pas ze strzałkami (ok. 2 m) leży pod kostką `zatoka-szkolna`; OSM w732251517 bez `lanes`, w213515733 `lanes=3`; na ortofoto ok. 20 m od krawężnika do krawężnika
 - Pakiet właściciela: tools/osm-import (szerokość jezdni)
 
