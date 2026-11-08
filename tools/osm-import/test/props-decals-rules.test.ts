@@ -4,7 +4,7 @@ import { doorVariant } from "../../../packages/core/src/world/doors.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { BAND_ROOM, DOOR_FRAME, type DecalContext, doorsOn, type DecalWall, END_ROOM, MURAL_LIFT, PLATE_LIFT, STREET_LIFT, addDecals } from "../src/props-decals.ts";
-import { GRATE_SPACING, KERB_GAP, STICKER_GAP, grateCorners } from "../src/props-decals-street.ts";
+import { GRATE_PLANE, GRATE_SPACING, KERB_GAP, STICKER_GAP, grateCorners } from "../src/props-decals-street.ts";
 import { Site } from "../src/props-site.ts";
 import { LISTED_BUILDINGS } from "../src/listed-buildings.ts";
 import type { Tags } from "../src/osm.ts";
@@ -472,6 +472,22 @@ describe("gully grates", () => {
     expect(tilted.length).toBe(base.length);
     for (const i of tilted) expect(Math.abs(Math.abs(grateLayout(i.variant).slopeX) - 0.05)).toBeLessThan(0.006);
     expect(decals([], { groundY: (p: Pt) => p.x * 0.2 }).of("drain-grate")).toHaveLength(0);
+  });
+
+  it("lays none with a corner off the plane of its variant, where the terrain bends under it (G-522)", () => {
+    // A ridge every 1.3 m along the kerb, its sides 10 % steep: a grate across one fits no plane.
+    const ridged = (p: Pt) => 0.13 * Math.abs((((p.x / 1.3) % 1) + 1) % 1 - 0.5);
+    const g = decals([], { groundY: ridged }).of("drain-grate");
+    expect(g.length).toBeGreaterThan(0);
+    for (const i of g) {
+      const { slopeX, slopeZ } = grateLayout(i.variant);
+      const [cos, sin] = [Math.cos(i.yaw), Math.sin(i.yaw)];
+      for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]] as const) {
+        const [lx, lz] = [(a * DRAIN_GRATE.length) / 2, (b * DRAIN_GRATE.width) / 2];
+        const y = ridged({ x: i.x + lx * cos + lz * sin, z: i.z - lx * sin + lz * cos });
+        expect(Math.abs(y - (i.y + slopeX * lx + slopeZ * lz)), `${i.x},${i.z}`).toBeLessThanOrEqual(GRATE_PLANE);
+      }
+    }
   });
 
   it("keeps every grate wholly on the carriageway, off the zebras' bands and apart, on a street of kerb extensions and zebras", () => {

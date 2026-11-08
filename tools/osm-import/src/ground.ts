@@ -136,9 +136,14 @@ export interface Band {
   readonly carriageway?: true;
   /** A sidewalk's line (laid along a road, or mapped on its own): `width` wide from `from` metres off `line`. */
   readonly along?: { readonly line: readonly Pt[]; readonly from: number; readonly width: number };
+  /** A carriageway's axis and half its width: where its kerbs run (`kerbFills`, G-522). */
+  readonly kerb?: { readonly line: readonly Pt[]; readonly half: number };
   /** A band of steps' run, end to end: what its pieces in a chunk are cut along (`flightStrips`). */
   readonly run?: readonly [Pt, Pt];
-  /** Paving with holes, or a lawn cut out of it (`openPavings`), simplified already: simplifying it again in a chunk would part the lawn from its hole. */
+  /**
+   * Paving with holes, or a lawn cut out of it (`openPavings`), simplified already: simplifying it
+   * again in a chunk would part the lawn from its hole. So is a kerb's fill (`kerbFills`), finer.
+   */
   readonly holed?: true;
 }
 
@@ -174,14 +179,14 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
   const bridge = t.bridge !== undefined && t.bridge !== "no";
   const deck = bridge ? ([l.line[0]!, l.line[l.line.length - 1]!] as const) : undefined;
   const out: Band[] = [];
-  const add = (surface: GroundSurface, ring: Pt[], extra: Pick<Band, "carriageway" | "along" | "run"> = {}) => {
+  const add = (surface: GroundSurface, ring: Pt[], extra: Pick<Band, "carriageway" | "kerb" | "along" | "run"> = {}) => {
     if (ring.length >= 3) out.push({ surface, ring, bridge, ...(deck ? { deck } : {}), source: l.id, ...extra });
   };
   const hw = t.highway;
   if (hw && t.area !== "yes") {
     if (ROAD_WIDTH[hw] !== undefined) {
       const w = roadWidth(t);
-      add(cobbled(t) ? "cobble" : "road", bufferLine(l.line, w), { carriageway: true });
+      add(cobbled(t) ? "cobble" : "road", bufferLine(l.line, w), { carriageway: true, kerb: { line: l.line, half: w / 2 } });
       const sides = sidewalkSides(t, mappedSidewalkNear);
       const sw = parseLength(t["sidewalk:width"]) ?? (hw === "primary" || hw === "secondary" ? 3 : 2.5);
       if (sides.left) add("sidewalk", stripAlong(l.line, w / 2, sw), { along: { line: l.line, from: w / 2, width: sw } });

@@ -18,6 +18,7 @@ import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewal
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
+import { FILL_MARGIN, kerbFills } from "./kerb-fill.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
@@ -273,10 +274,12 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const orphans = new Set(orphanParts(outlines, partAreas));
   const buildings = [...outlines, ...[...orphans].map(asBuilding)];
   const near = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, 1)));
+  // The ground is laid as far past the chunks as the kerbs' fills in them read it (G-522).
+  const nearGround = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, FILL_MARGIN)));
   const areaBands: (Band & { box: Rect })[] = [];
   for (const a of areas) {
     const b = areaBand(a);
-    if (b && near(b.ring)) areaBands.push({ ...b, box: ringBounds(b.ring) });
+    if (b && nearGround(b.ring)) areaBands.push({ ...b, box: ringBounds(b.ring) });
   }
   const holed = new Set(areas.filter((a) => a.holes > 0).map((a) => a.id));
   const bands = openPavings(areaBands, (b) => !holed.has(b.source));
@@ -290,7 +293,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   // So is a street's stretch over a tunnel it dips over (G-088): a deck, as on a bridge.
   const tunnelWays = tunnelLines(lines);
   for (const [k, l] of toAbutments(lines, areas).entries()) {
-    if (!near(l.line)) continue;
+    if (!nearGround(l.line)) continue;
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
     const mapped = l.tags.highway ? sidewalks.along(mapLines[k]!) : false;
     for (const piece of overTunnels(l, tunnelWays, src)) for (const b of lineBands(piece, mapped, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
@@ -317,6 +320,8 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   }
   // A bridge is one deck: its outline fills the gap between its sidewalk and its carriageway (G-340).
   for (const b of bridgeFills(areas, bands)) bands.push({ ...b, box: ringBounds(b.ring) });
+  // A pavement reaches the kerb: the bare strip between a carriageway and its paving is paved (G-522).
+  for (const b of kerbFills(bands, buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring))) bands.push({ ...b, box: ringBounds(b.ring) });
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
   const zebras = bands.filter((b) => b.surface === "crossing");
   const onOther = (p: Pt, source: string) => carriageways.some((c) => c.source !== source && p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));
