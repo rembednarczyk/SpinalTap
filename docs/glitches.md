@@ -1611,7 +1611,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele), packages/app/public/models
 
 ### G-547 `kurosawa.vrm` wczytuje się na ekranie ładowania, choć Kurosawa pojawia się w II akcie
-- Status: w PR #407 (8.11, ADR-0076 etap 4a: start 7 plików / 42,5 MiB → 5 / 31,0 MiB, reszta w tle; w weryfikacji)
+- Status: w PR #407 (8.11, ADR-0076 etap 4a: start 7 plików / 42,5 MiB → 5 / 31,0 MiB, reszta w tle; weryfikator runda 1 NIE PRZYJĘTE przez G-560, runda 2 w toku)
 - Ważność: S4 · Zasięg: +6 MiB na starcie; `donorsOf` ładuje wszystkie pliki manifestu przy liczeniu dawców ubrań; wczytywanie w tle według dzielnic i aktów to etap 4
 - Pakiet właściciela: packages/engine (renderer: modele)
 
@@ -1629,6 +1629,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, kurator przeglądu #405)
 - Ważność: S3 · Zasięg: w mieście 50 budynków, ok. 10 100 m²; w krakowskie-0-1 Cicha 3, 5, 6 i 8 (281 m²), które w grze dają gołą ziemię w pasie Cichej i przy ogrodzie na zachód od Cichej 4; Ordynacki i Kuria już w T-058/G-096; propozycja kontroli `edge-building-dropped` (część w chunku > 2 m², środek poza mapą, poza rejestrem), baza 50 albo 48 bez T-058
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-560 Wygląd postaci tła zależy od tego, które pliki modeli są już wczytane
+- Status: zgłoszone (8.11, weryfikator #407; blokuje #407, poprawka w rundzie 2)
+- Ważność: S3 · Zasięg: w gałęzi #407 `countDonors` (`character-models.ts`) liczy dawców tylko z wczytanych plików, a `donorOf` (`model-dress.ts:48-49`) wybiera teksturę jako `floor(fraction * list.length)`; ta sama postać tła (to samo ziarno) po ponownym ubraniu nosi inne spodnie lub górę po wczytaniu `mori.vrm` w tle i po `kurosawa.vrm` w II akcie; łamie decyzję „Determinizm” ADR-0076
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
+- Status: zgłoszone (8.11, weryfikator #407; istniało przed #407)
+- Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-562 Plik modelu, który się nie wczytał, nie wczyta się ponownie w tej sesji
+- Status: zgłoszone (8.11, weryfikator #407; istniało przed #407)
+- Ważność: S4 · Zasięg: odrzucony promise zostaje w `containers` `ModelLibrary`, bez ponowienia
+- Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
