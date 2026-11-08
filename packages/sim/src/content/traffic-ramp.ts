@@ -24,8 +24,17 @@ export const RAMP_UP_X = AXIS - LANE;
 const MOUTH = 5;
 /** The turns between the ramp's lanes and the apron at its foot: their radii (m). */
 const FOOT_IN = 2.6;
-const FOOT_OUT = 3;
+const FOOT_OUT = 4;
 const [CABIN_IN, CABIN_OUT] = [P1_CABINS[0]!, P1_CABINS[1]!];
+/**
+ * The cars a hand-over cabin (6 m deep) takes, by the city's weights: no van or delivery van, whose
+ * tail sweeps over the pay machine and the hall's wall on the turn out of the north cabin.
+ */
+const CABIN_MODELS = [
+  ["sedan", 30],
+  ["hatchback", 25],
+  ["taxi", 15],
+] as const;
 /** A car stands in a cabin this far from its back wall (its middle, m): its tail clear of the shutter. */
 const IN_CABIN = 2.8;
 const midZ = (c: (typeof P1_CABINS)[number]): number => (c.minZ + c.maxZ) / 2;
@@ -127,6 +136,7 @@ const join = (id: string, from: TrafficRoute, pieces: readonly Piece[]): Traffic
     turns: [...own.map((r): Range => [r[0], r[1]]), ...turns].sort(byStart),
     arcs: arcs.sort(byStart),
     ownWay: own,
+    models: CABIN_MODELS,
   };
 };
 
@@ -178,3 +188,4 @@ export const streetSegments = (r: TrafficRoute): (readonly [Pt, Pt])[] => {
     return Array.from({ length: n }, (_, k) => [at(k), at(k + 1)] as const).filter(([p, q]) => p1DriveFloor((p[0] + q[0]) / 2, (p[1] + q[1]) / 2) === null);
   });
 };
+

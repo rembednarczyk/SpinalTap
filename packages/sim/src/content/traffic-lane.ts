@@ -1,3 +1,4 @@
+import type { VehicleModel } from "@seki/core";
 import type { Pt } from "./lublin/roads";
 
 /** The traffic's lane (ADR-0050) and the polyline helpers both its building (`traffic.ts`) and its junctions (`traffic-junctions.ts`) use. */
@@ -31,6 +32,8 @@ export interface TrafficRoute {
    * piece's (`p1DriveFloor`), not the map's ground.
    */
   readonly ownWay?: readonly (readonly [number, number])[];
+  /** The models that drive it, by weight, where not every car of the city fits (Alchemia's hand-over cabins take cars up to a taxi). */
+  readonly models?: readonly (readonly [VehicleModel, number])[];
 }
 
 /** The point at arc length `s` of an open polyline (clamped), with the way along it. */

@@ -3,6 +3,7 @@ import { CITY_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, pointAt, projec
 import { RAMP_DOWN_X, RAMP_UP_X, alchemiaRampLanes, alchemiaRampRoutes, streetSegments } from "../src/content/traffic-ramp";
 import { P1, P1_CABINS, P1_RAMP, p1DriveFloor, p1RampY } from "../src/content/alchemia/parking";
 import { surfacesAt } from "../src/content/lublin/roads";
+import { vehiclePlan } from "../src/world/traffic";
 
 /** Alchemia's P-1 in the street's traffic (ADR-0074 §4, G-491, G-510). */
 
@@ -92,5 +93,12 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4)", () => {
     const kept = streetSegments(OUT!).reduce((s, [a, b]) => s + Math.hypot(b[0] - a[0], b[1] - a[1]), 0);
     expect(kept).toBeGreaterThan(OUT!.length - (P1_RAMP.foot - P1_RAMP.top) - 20);
     expect(kept).toBeLessThan(OUT!.length - (P1_RAMP.foot - P1_RAMP.top));
+  });
+
+  it("takes into the hand-over cabins only the cars that fit them: no van, no delivery van", () => {
+    for (const r of [IN!, OUT!]) {
+      expect(r.models?.map(([m]) => m)).toEqual(["sedan", "hatchback", "taxi"]);
+      for (let i = 0; i < 40; i++) expect(["sedan", "hatchback", "taxi"]).toContain(vehiclePlan(77 + i, TRAFFIC_ROUTES.indexOf(r), 0).model);
+    }
   });
 });
