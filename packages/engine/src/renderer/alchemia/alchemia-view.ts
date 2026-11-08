@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_CENTRE, ARKADY_CENTRE, FOODHALL, FOODHALL_INNER } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_LIFT, ARKADY_CENTRE, FOODHALL, FOODHALL_INNER, LIFT_HOLE, STAIR_HOUSE } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
@@ -32,6 +32,19 @@ const LAMP = {
 export const ALCHEMIA_LAMP_KEY = "alchemia-foodhall";
 /** Over these metres up to INSIDE_DRAW the lamp fades out, so it does not go on in one step with the mesh. */
 const LAMP_FADE = 10;
+
+type Rect = { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
+const inRect = (r: Rect, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
+
+/**
+ * Whether a roof is over (x, y, z) at the food hall (ADR-0074 stage 1), where no rain falls: in the
+ * hall under its green roof, in the stair house and the lift's kiosk on it; not on the roof or on T1.
+ */
+export const hallRoofOver = (x: number, y: number, z: number): boolean => {
+  if (inRect(STAIR_HOUSE, x, z) && y < FOODHALL.roof + STAIR_HOUSE.height) return true;
+  if (inRect(LIFT_HOLE, x, z) && y < ALCHEMIA_LIFT.head) return true;
+  return inRect(FOODHALL, x, z) && y < FOODHALL.roof;
+};
 
 export interface AlchemiaDeps {
   readonly scene: Scene;

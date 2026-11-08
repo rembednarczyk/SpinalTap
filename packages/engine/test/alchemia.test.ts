@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ARKADY, ARKADY_CENTRE, ARKADY_PIECES, FOODHALL, SQUARE_GARLANDS, arkadyLocal } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ALCHEMIA_T0, ALCHEMIA_T1, ARKADY, ARKADY_CENTRE, ARKADY_PIECES, FOODHALL, P1, SQUARE_GARLANDS, arkadyLocal } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { CityKit } from "../src/renderer/city-kit";
@@ -10,6 +10,7 @@ import { GeometrySink, parseCityKit, swatchUv } from "../src/renderer/city-kit-d
 import { BULB_COLOURS, garlandBulbs, garlandsGeometry } from "../src/renderer/alchemia/garlands";
 import { alchemiaGeometry } from "../src/renderer/alchemia/alchemia-geometry";
 import { ALCHEMIA_DRAW, ALCHEMIA_LAMP_KEY, AlchemiaView, INSIDE_DRAW } from "../src/renderer/alchemia/alchemia-view";
+import { builtRoofOver } from "../src/renderer/built-roofs";
 
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
@@ -139,5 +140,19 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
         expect(Math.hypot(x - ARKADY_CENTRE.x, z - ARKADY_CENTRE.z)).toBeGreaterThan(ALCHEMIA_DRAW + 10);
       }
     }
+  });
+
+  it("stops the rain in the hall, its stair house and the lift's kiosk, not on its roof or on T1", () => {
+    // Under the green roof: by the counters, at the foot of the stairs, under the ceiling.
+    for (const [x, z] of [[418, 45], [430, 55], [402, 40], [411, 34]] as const) expect(builtRoofOver(x, ALCHEMIA_T1 + 1.5, z), `${x},${z}`).toBe(true);
+    expect(builtRoofOver(418, FOODHALL.ceiling - 0.1, 45)).toBe(true);
+    // On the roof, in the stair house and in the lift's kiosk.
+    expect(builtRoofOver(404, ALCHEMIA_T0 + 1.5, 33.5)).toBe(true);
+    expect(builtRoofOver(413.5, ALCHEMIA_T0 + 1.5, 33.5)).toBe(true);
+    // Rain on the roof and on T1 before the front, as on the car park over P-1; P-1 stays dry.
+    expect(builtRoofOver(420, ALCHEMIA_T0 + 1, 45)).toBe(false);
+    expect(builtRoofOver(420, ALCHEMIA_T1 + 1.5, 65)).toBe(false);
+    expect(builtRoofOver(402, ALCHEMIA_T0 + 1, 15)).toBe(false);
+    expect(builtRoofOver(402, P1.floor + 1.5, 15)).toBe(true);
   });
 });
