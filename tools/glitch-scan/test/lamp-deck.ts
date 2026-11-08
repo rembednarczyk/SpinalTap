@@ -13,8 +13,11 @@ type Lamp = { readonly prop: string; readonly x: number; readonly y: number; rea
 
 /** How far from a deck's edge a lamp still stands beside it (m). */
 export const NEAR = 2;
-/** How far under the deck a lamp's foot may stand (m): the generator's `DECK_DROP`, an abutment's bank. */
-export const DROP = 2.5;
+/**
+ * How far under the deck a lamp's foot may stand (m): an abutment's bank. 1.85 m under Zamkowa's the
+ * pastoral's lantern hung 1.55 m over the paving, among its walkers (G-507).
+ */
+export const DROP = 1.5;
 /** Directions and radii the deck is looked for at round a lamp. */
 const AROUND = Array.from({ length: 16 }, (_, i) => ({ x: Math.sin((i * Math.PI) / 8), z: Math.cos((i * Math.PI) / 8) }));
 const RADII = [0.5, 1, 1.5, NEAR];

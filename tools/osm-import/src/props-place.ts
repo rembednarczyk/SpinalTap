@@ -90,12 +90,14 @@ const LOT_GAP = 1.6;
 const PAST_PAVING = 0.3;
 /**
  * How far a bridge's deck may lie over the ground past its edge for a lamp to stand there (m): at a
- * viaduct's end, on its abutment's bank (Zamkowa's, 1.9 m, G-497). Along the span the lamp, whose
- * foot keeps to the terrain, would stand down in the valley with its lantern (3.4 m up the post,
- * 0.75 m in over the deck) among the deck's walkers (3.1 m under Zamkowa's) or in its slab (4.8 m),
- * so there it stands on the deck (`byParapet`).
+ * viaduct's end, on its abutment's bank (G-497). Further down the lamp, whose foot keeps to the
+ * terrain, would hang its lantern (its underside 3.3 m up the pastoral's post, 0.75 m in over the
+ * deck) among the deck's walkers: 1.85 m under Zamkowa's it hung 1.55 m over the paving (G-507).
+ * Keeping it 2.3 m over the deck leaves the bank a metre; lower down the lamp stands on the deck (`byParapet`).
  */
-const DECK_DROP = 2.5;
+const DECK_DROP = 1;
+/** How high a deck runs over the ground under the axis for the way there to pass under its span, not along its abutment (m, G-503). */
+const SPAN_DROP = 2.5;
 
 /**
  * The edge between the last sample short of it (`inside` − 0.5) and the first one `past` it, to a
@@ -155,7 +157,7 @@ export const sideSpot = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: num
   }
   // A way under a bridge's span (the path under Zamkowa's viaduct) is not the street's paving: the deck high over it is (G-503).
   const deckY = toEdge && !offPaving(site.deckAt(p)) ? site.deckHeightAt(p) : null;
-  const overWay = deckY !== null && deckY - site.heightAt(p) > DECK_DROP;
+  const overWay = deckY !== null && deckY - site.heightAt(p) > SPAN_DROP;
   const axisRoad = !overWay && site.surfaceAt(p) === "road";
   // A lamp of the plan on a pedestrian street's paving stands at its edge, not the fallback past it:
   // 5 m off Zamkowa's 6.5 m causeway was on the lawn of the Błonie, 6 m off Karmelicka's 5 m in a

@@ -101,6 +101,13 @@ describe("a lamp of the plan on a viaduct's span (G-503)", () => {
     for (const n of [{ x: 0, z: 1 }, { x: 0, z: -1 }]) onDeck(sideSpot(new Site([span()]), { x: 30, z: 30 }, n, "kerb", 5, true));
   });
 
+  it("stands on the deck at the abutment where its bank lies 1.85 m under it, the lantern over the walkers' heads (G-507)", () => {
+    // Zamkowa's at (756.8; 175.7): the bank 1.85 m under the deck put the lantern 1.55 m over its paving.
+    const site = new Site([span()]);
+    expect(site.deckHeightAt({ x: 52.6, z: 33 })! - site.heightAt({ x: 52.6, z: 33.55 })).toBeCloseTo(1.85, 2);
+    for (const n of [{ x: 0, z: 1 }, { x: 0, z: -1 }]) onDeck(sideSpot(site, { x: 52.6, z: 30 }, n, "kerb", 5, true));
+  });
+
   it("stands on the deck over a path under the span, which is not the street's paving", () => {
     // A path crossing under the viaduct at x = 30, as Podwale's under Zamkowa's.
     const under = new Site([span([{ surface: "sidewalk", outline: [27, 0, 33, 0, 33, 60, 27, 60] }])]);
@@ -113,13 +120,13 @@ describe("a lamp of the plan on a viaduct's span (G-503)", () => {
     expect(sideSpot(site, { x: 30, z: 30 }, { x: 0, z: 1 }, "kerb", 5, true, false)).toEqual({ d: 5, deck: false });
   });
 
-  it("gives the lamp on the deck the deck's height for its foot, the lamps at the abutments the bank's", () => {
+  it("gives the lamps on the deck the deck's height for their foot, by the abutments 2.5 m over the bank too (G-507)", () => {
     const plan = { items: [{ id: "lamps.wiadukt", kind: "lamp-pastoral", line: [0, 30, 60, 30], spacing: 20 }] };
     const lamps = generateProps(plan, [span()]).byChunk.get("test-0-0")!.filter((i) => i.prop === "lamp-pastoral");
     expect(lamps.map((i) => [i.x, i.y, i.z])).toEqual([
-      [10, -2.5, 33.5],
+      [10, 0, 32.9],
       [30, 0, 32.9],
-      [50, -2.5, 33.5],
+      [50, 0, 32.9],
     ]);
   });
 });
