@@ -54,6 +54,19 @@
       "used": ["Club", "Katana"]
     },
     {
+      "id": "vroid-base-female",
+      "title": "VRoid Studio CC0 models: Base_Female",
+      "author": "pixiv / VRoid Project (VRoidプロジェクト)",
+      "page": "https://opengameart.org/content/vroid-studio-cc0-models",
+      "license": "CC0",
+      "licenseQuote": "License: CC0 (strona paczki na OpenGameArt); metadane VRM pliku Base_Female.vrm: licenseName CC0, allowedUserName Everyone, commercialUssageName Allow, otherLicenseUrl VRoid Hub license v1 (redistribution=allow, modification=allow, credit=unnecessary)",
+      "url": "https://opengameart.org/sites/default/files/base_female.zip",
+      "file": "base_female.zip",
+      "sha256": "bf2717cff70b40a278df56e137dbb699c6499551096fa4c005e9aeca1de68eb3",
+      "unzip": "x",
+      "used": ["Base_Female.vrm -> packages/app/public/models/base-female.vrm (tools/shrink_glb.py 1024 --keep-morphs=blink,a,i,u,e,o)"]
+    },
+    {
       "id": "quaternius-cyberpunk-kit",
       "title": "Cyberpunk Game Kit",
       "author": "Quaternius (quaternius.com)",
