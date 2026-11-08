@@ -2,7 +2,7 @@ import type { AbstractMesh, Scene } from "../babylon";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { CharacterRig } from "./characters";
 import type { Loadouts } from "./loadout";
-import { type ModelChoice, manifestFiles, modelPoolKey, resolveModel } from "./model-cast";
+import { type ModelChoice, donorFiles, isBackgroundLook, modelPoolKey, resolveModel, startFiles } from "./model-cast";
 import { type Donors, type WornVariant, dressVariant, lends } from "./model-dress";
 import type { CharacterModelManifest, CharacterModelSpec, ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
@@ -54,7 +54,8 @@ export interface CharacterModelsDeps {
  * Imported models over the characters' procedural rigs (ADR-0031 part behind `CharacterViews`):
  * the manifest, loading in the background, the dressed rigs, their variants (ADR-0076) and a
  * pool of released models per file, so a cleared scene (new game, load, streaming) dresses the
- * next characters at once.
+ * next characters at once. The loading screen waits for the files of the scene round the start
+ * only; until its file has loaded a character stands as its procedural rig (ADR-0076 stage 4a).
  */
 export class CharacterModels {
   private manifest: CharacterModelManifest = {};
@@ -97,9 +98,26 @@ export class CharacterModels {
     this.donorsReady.clear();
   }
 
-  /** Starts loading every model of the manifest, one promise per file (ADR-0057). */
-  preload(): Promise<unknown>[] {
-    return manifestFiles(this.manifest).map((spec) => this.deps.library.preload(spec));
+  /**
+   * Starts loading the files the start needs, one promise per file (ADR-0057): the heroine's and
+   * those `choices` (the characters in the scene) wear. Not every file of the manifest (G-547).
+   */
+  preload(choices: Iterable<ModelChoice | null>): Promise<unknown>[] {
+    return startFiles(this.manifest, choices).map((spec) => this.deps.library.preload(spec));
+  }
+
+  /**
+   * Loads the donors' files (`donorFiles`: the background roles' among them) the start did not, one
+   * after another, so the game on screen takes one file's work at a time (ADR-0076 stage 4a).
+   * Failures are skipped; it stops before the next file once `live` says no (a newer start or the
+   * title took over).
+   */
+  async prefetch(live: () => boolean = () => true): Promise<void> {
+    const { library } = this.deps;
+    for (const spec of donorFiles(this.manifest)) {
+      if (!live()) return;
+      if (!library.isLoaded(spec.url)) await library.preload(spec).catch(() => undefined);
+    }
   }
 
   /** Loads the model in the background and swaps it in once ready, if the rig still exists. */
@@ -163,7 +181,7 @@ export class CharacterModels {
    * a background one's from its look within the file's budget, the file's own for the rest.
    */
   private wearing(spec: CharacterModelSpec, choice: ModelChoice, armed: boolean): Wearing {
-    if (choice.cast !== undefined || choice.look === undefined || spec.variant !== undefined || spec.dress !== undefined) {
+    if (choice.look === undefined || !isBackgroundLook(spec, choice)) {
       const id = spec.variant ?? 0;
       return { id, look: variantOf(id, spec.dress), budget: null };
     }
@@ -177,13 +195,18 @@ export class CharacterModels {
     if (w.budget !== null) this.budget.give(w.budget, w.id);
   }
 
-  /** The tops and trousers of the other files of `spec`'s VRoid base; Seki's jacket is hers alone. */
+  /**
+   * The tops and trousers the donor files (`donorFiles`: the heroine's and the background roles')
+   * of `spec`'s VRoid base lend it; Seki's jacket is hers alone. The set is fixed by the manifest,
+   * not by what has loaded, so a look wears the same cloth in every scene (ADR-0076 §3, G-560): the
+   * dressing waits for those files, which the start loads when its scene borrows (`startFiles`).
+   */
   private donorsOf(spec: CharacterModelSpec): Promise<Donors> {
     let pending = this.donors.get(spec.url);
     if (pending) return pending;
     const { library } = this.deps;
     const heroine = this.manifest.heroine?.url;
-    const files = manifestFiles(this.manifest)
+    const files = donorFiles(this.manifest)
       .filter((f) => f.url !== spec.url)
       .sort((a, b) => (a.url < b.url ? -1 : a.url > b.url ? 1 : 0));
     pending = Promise.all([library.clothOf(spec), ...files.map((f) => library.clothOf(f).catch(() => null))]).then(([own, ...cloth]) => {

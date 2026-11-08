@@ -77,6 +77,14 @@ export interface CharacterViewsDeps {
   readonly wall?: WallProbe;
 }
 
+/** What the loading screen waits for and what loads after it (ADR-0057, ADR-0076 stage 4a). */
+export interface ModelLoading {
+  /** Starts loading the models of the characters in the scene, the heroine's and every weapon: one promise per file. */
+  start(): Promise<unknown>[];
+  /** Loads the background roles' models the start did not, one file at a time, while `live` says so. */
+  rest(live?: () => boolean): Promise<void>;
+}
+
 /** The followed character has a body on her shoulder. */
 const carrying = (views: ReadonlyMap<EntityId, CharacterView>, followed: EntityId): boolean => {
   for (const [id, v] of views) if (carriedShoulder(id, v.transform, followed, views) !== null) return true;
@@ -289,8 +297,11 @@ export class CharacterViews implements FxActors {
     for (const v of this.views.values()) if (!this.models.of(v.rig)) this.models.dress(v.rig, v.model, v.name);
   }
 
-  /** Starts loading every model of the manifest and every weapon, one promise per file (ADR-0057). */
-  preloadModels(): Promise<unknown>[] {
-    return [...this.models.preload(), ...this.kit.preload()];
+  /** The models the loading screen waits for, and those that load once the game is on screen. */
+  get modelLoading(): ModelLoading {
+    return {
+      start: () => [...this.models.preload([...this.views.values()].map((v) => v.model)), ...this.kit.preload()],
+      rest: (live) => this.models.prefetch(live),
+    };
   }
 }
