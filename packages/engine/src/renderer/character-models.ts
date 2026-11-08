@@ -213,7 +213,7 @@ export class CharacterModels {
     // A smaller or taller model gets smaller or bigger accessories, within reason (as the loadouts' add-ons).
     const ratio = retarget.headHeight / (rig.head.position.y || 1);
     const fit = Number.isFinite(ratio) && ratio > 0 ? Math.min(1.25, Math.max(0.8, ratio)) : 1;
-    const worn = dressVariant(this.deps, `${at.name}-v`, model.meshes, { retarget, body: rig.root, fit }, at.wearing.look, at.donors);
+    const worn = dressVariant(this.deps, `${at.name}-v`, model.meshes, { retarget, body: rig.root, fit, rig, model }, at.wearing.look, at.donors);
     for (const m of model.meshes) if (m.getTotalVertices() > 0) this.deps.addCaster(m);
     const springs = SpringBones.create(model.root, { vrm: model.springs, prefix: model.prefix, colliders: humanoidColliders(model.root, model.prefix) });
     this.dressed.set(rig, { model, retarget, springs, poolKey: at.poolKey, worn, variant: at.wearing.id, budget: at.wearing.budget });

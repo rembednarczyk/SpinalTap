@@ -1,9 +1,11 @@
-import { type AbstractMesh, Color3, type Mesh, type Scene, type Texture, type TransformNode } from "../babylon";
+import { type AbstractMesh, Color3, Matrix, type Mesh, type Scene, type Texture, type TransformNode, Vector3 } from "../babylon";
 import type { ToonMaterials } from "../npr/toon-material";
-import { buildAccessories } from "./model-accessories";
-import { buildApron } from "./model-apron";
+import type { CharacterRig } from "./character-rig";
+import { buildAccessories, buildCane, buildSkirt } from "./model-accessories";
+import { buildApron, buildVest } from "./model-apron";
+import { freshWorld, wearFigure } from "./model-figure";
 import { type ModelCloth, type ModelPart, toonSourceOf } from "./model-library";
-import type { AnchorBone, HumanoidRetarget } from "./model-rig";
+import { type AnchorBone, type HumanoidRetarget, normaliseBoneName } from "./model-rig";
 import type { ModelVariant } from "./model-variant";
 
 /**
@@ -58,6 +60,8 @@ const materialOf = (ctx: DressContext, mesh: AbstractMesh, v: ModelVariant, swap
       return v.hair ? ctx.materials.forImported(v.hair, source.texture, preset, { ...source, tint: true }) : null;
     case "brow":
       return v.hair ? ctx.materials.forImported(v.hair, source.texture, preset, source) : null;
+    case "tie":
+      return v.tie ? ctx.materials.forImported(v.tie, source.texture, preset, { ...source, tint: true }) : null;
     case "torso":
     case "legs": {
       const colour = part === "torso" ? v.top : v.bottom;
@@ -77,11 +81,22 @@ export interface DressedOn {
   readonly retarget: HumanoidRetarget;
   readonly body: TransformNode;
   readonly fit: number;
+  /** The rig, whose stride the figure shortens, and the model's root and bone prefix, whose back it bends (ADR-0076 decision 7). */
+  readonly rig?: CharacterRig;
+  readonly model?: { readonly root: TransformNode; readonly prefix: string };
 }
+
+/** A walking stick reaches from the palm to the ground: about half the height of the head bone. */
+const CANE_OF_HEAD = 0.5;
+/** The head bone of a VRoid figure stands at about this fraction of its height. */
+const HEAD_OF_HEIGHT = 0.86;
+/** The hand bone sits at the wrist; the stick is held this much lower, in the palm. */
+const PALM = 0.07;
 
 /**
  * Dresses `meshes` (an instance's) in `v`: the accessories hang on the retarget's anchors of the
- * head and chest bones, sized by `fit`; an apron is a shell of the model's own cloth.
+ * head and chest bones, sized by `fit`; an apron or a vest is a shell of the model's own cloth,
+ * a walking stick is held in the right hand, and the figure bends the back and sets the build.
  */
 export const dressVariant = (ctx: DressContext, name: string, meshes: readonly AbstractMesh[], on: DressedOn, v: ModelVariant, donors: Donors): WornVariant => {
   const { retarget, fit } = on;
@@ -114,18 +129,69 @@ export const dressVariant = (ctx: DressContext, name: string, meshes: readonly A
     mesh.material = ctx.materials.get("charVertexColor");
     worn.push(mesh);
   }
-  const apron = v.accessories.find((a) => a.id === "apron");
-  const shell = apron ? buildApron(ctx.scene, `${name}-apron`, meshes, on.body, apron.color) : null;
-  if (shell) {
+  for (const [id, build] of [
+    ["apron", buildApron],
+    ["vest", buildVest],
+  ] as const) {
+    const item = v.accessories.find((a) => a.id === id);
+    const shell = item ? build(ctx.scene, `${name}-${id}`, meshes, on.body, item.color) : null;
+    if (!shell) continue;
     shell.material = ctx.materials.get("charVertexColor");
     worn.push(shell);
   }
+  const cane = holdCane(ctx, name, on, v);
+  if (cane) worn.push(cane.mesh);
+  const long = v.accessories.find((a) => a.id === "skirt");
+  if (long && on.rig) {
+    const skirt = buildSkirt(ctx.scene, `${name}-skirt`, on.retarget.headHeight / HEAD_OF_HEIGHT, v.figure.build, long.color);
+    skirt.material = ctx.materials.get("charVertexColor");
+    skirt.parent = on.rig.body;
+    worn.push(skirt);
+  }
+  // The figure last: the accessories' anchors are sized by the model's scale before it widens.
+  const figure = on.model ? wearFigure(on.model.root, on.model.prefix, on.body, v.figure) : null;
+  if (on.rig) on.rig.pace = v.figure.pace;
   return {
     meshes: worn,
     undo: () => {
       for (const [mesh, material] of own) mesh.material = material;
+      cane?.stop();
       for (const m of worn) m.dispose();
       for (const a of anchors) a.dispose();
+      figure?.undo();
+      if (on.rig) on.rig.pace = 1;
     },
   };
+};
+
+/** A walking stick and how to stop it following the hand. */
+interface Cane {
+  readonly mesh: Mesh;
+  stop(): void;
+}
+
+/**
+ * The walking stick in the model's right hand, long enough to reach the ground from the palm;
+ * null without one. It hangs from the palm but stays upright whatever the forearm does (a
+ * gesture, the swing of a step): on the character's root, which only turns about Y, placed at
+ * the hand before every frame.
+ */
+const holdCane = (ctx: DressContext, name: string, on: DressedOn, v: ModelVariant): Cane | null => {
+  const worn = v.accessories.find((a) => a.id === "cane");
+  const model = on.model;
+  const root = on.rig?.root;
+  if (!worn || !model || !root) return null;
+  const hand = model.root.getDescendants(false).find((n): n is TransformNode => "rotation" in n && normaliseBoneName(n.name, model.prefix) === "rhand");
+  if (!hand) return null;
+  const mesh = buildCane(ctx.scene, `${name}-cane`, CANE_OF_HEAD * on.retarget.headHeight, worn.color);
+  mesh.material = ctx.materials.get("charVertexColor");
+  mesh.parent = root;
+  const place = () => {
+    const at = freshWorld(hand).getTranslation();
+    Vector3.TransformCoordinatesToRef(at, Matrix.Invert(root.getWorldMatrix()), mesh.position);
+    mesh.position.y -= PALM;
+  };
+  place();
+  const observer = ctx.scene.onBeforeRenderObservable.add(place);
+  return { mesh, stop: () => ctx.scene.onBeforeRenderObservable.remove(observer) };
 };

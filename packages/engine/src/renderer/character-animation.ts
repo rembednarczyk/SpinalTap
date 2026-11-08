@@ -167,8 +167,8 @@ const gaitOf = (rig: CharacterRig, speed: number, dt: number, crouch: number): G
   const knee = CROUCH_KNEE * c;
   const amount = Math.min(1, speed / 4.2);
   rig.phase += dt * (4 + speed * 1.9) * (amount > 0.05 ? 1 : 0);
-  // Short, careful steps while crouched.
-  const swing = Math.sin(rig.phase) * (0.7 + 0.32 * run) * amount * (1 - 0.55 * c);
+  // Short, careful steps while crouched, and shorter ones for an older figure (ADR-0076 decision 7).
+  const swing = Math.sin(rig.phase) * (0.7 + 0.32 * run) * amount * (1 - 0.55 * c) * (rig.pace ?? 1);
   return { c, run, lean, thigh, knee, amount, swing };
 };
 

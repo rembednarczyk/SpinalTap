@@ -62,6 +62,8 @@ export interface CharacterRig {
   phase: number;
   /** Forward stoop of the body at rest (radians around X), e.g. an old woman's bent back. */
   stoop: number;
+  /** Stride of the walk, 1 the rig's; an older model's figure shortens it (ADR-0076 decision 7). */
+  pace?: number;
   /** Seconds alive; drives idle breathing. */
   time: number;
   /** 0..1 flinch after a hit, decays quickly. */

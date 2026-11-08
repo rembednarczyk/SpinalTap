@@ -1,4 +1,5 @@
 import { ACCENTS, BAGS, BOTTOMS, COATS, HAIR, SKIN, TOPS, lookStream, pick } from "./crowd-look";
+import { type Figure, UPRIGHT, clampFigure, figureText } from "./model-figure";
 
 /**
  * Variants of one imported model (ADR-0076 §3): another skin, hair and clothes over the same
@@ -7,10 +8,13 @@ import { ACCENTS, BAGS, BOTTOMS, COATS, HAIR, SKIN, TOPS, lookStream, pick } fro
  * the crowd's (`crowd-look.ts`), so the background and the sidewalk crowd belong together.
  */
 
-/** Simple shapes on the head and chest bones of a dressed model. */
-export type Accessory = "glasses" | "cap" | "mask" | "bag" | "apron";
+/**
+ * Simple shapes on the head and chest bones of a dressed model; the apron and the vest are
+ * shells of its cloth, the walking stick is held in the right hand, the long skirt hangs from the waist.
+ */
+export type Accessory = "glasses" | "cap" | "mask" | "bag" | "apron" | "shawl" | "headscarf" | "vest" | "cane" | "skirt";
 
-export const ACCESSORIES: readonly Accessory[] = ["glasses", "cap", "mask", "bag", "apron"];
+export const ACCESSORIES: readonly Accessory[] = ["glasses", "cap", "mask", "bag", "apron", "shawl", "headscarf", "vest", "cane", "skirt"];
 
 export interface Worn {
   readonly id: Accessory;
@@ -25,10 +29,14 @@ export interface ModelVariant {
   /** Hue of the top and of the trousers or skirt over their texture's shading (null: the texture's own). */
   readonly top: string | null;
   readonly bottom: string | null;
+  /** Hue of the tie or bow over the top (null: its own colour). */
+  readonly tie: string | null;
   /** The top or trousers of another file of the same base, a fraction in [0, 1) picking which (null: the file's own). */
   readonly topFrom: number | null;
   readonly bottomFrom: number | null;
   readonly accessories: readonly Worn[];
+  /** The body: a bent back, a heavier or slighter build, shorter steps (ADR-0076 decision 7). */
+  readonly figure: Figure;
 }
 
 /** A named character's hand-made changes over its seeded variant (manifest `dress`). */
@@ -37,14 +45,17 @@ export interface VariantDress {
   readonly hair?: string | null;
   readonly top?: string | null;
   readonly bottom?: string | null;
+  readonly tie?: string | null;
   readonly topFrom?: number | null;
   readonly bottomFrom?: number | null;
   /** Replaces the seeded accessories: names (colours from the seed) or names with colours. */
   readonly accessories?: readonly (Accessory | Worn)[];
+  /** The figure over the seeded one, field by field. */
+  readonly figure?: Partial<Figure>;
 }
 
 /** Variant 0: the file as it is. */
-export const OWN_LOOK: ModelVariant = { skin: null, hair: null, top: null, bottom: null, topFrom: null, bottomFrom: null, accessories: [] };
+export const OWN_LOOK: ModelVariant = { skin: null, hair: null, top: null, bottom: null, tie: null, topFrom: null, bottomFrom: null, accessories: [], figure: UPRIGHT };
 
 /**
  * Variants the background draws from, 1..BACKGROUND_VARIANTS per file; the named characters
@@ -58,6 +69,11 @@ export const VARIANTS_PER_FILE = 4;
 const GLASSES = ["#14161a", "#2a2522", "#5a5f68"] as const;
 const MASKS = ["#14161a", "#1d2027", "#d9e3ea", ...ACCENTS] as const;
 const APRONS = ["#e8e4da", "#2a2f3a", "#6b2238", "#46392c"] as const;
+/** Muted wool and cotton of older people's shawls, scarves and vests. */
+const WOOL = ["#6a5a44", "#4b2a2a", "#3b3328", "#5a4a5e", "#2c3a4a", "#7a6a52", "#46392c"] as const;
+const CANES = ["#3b2f25", "#2a2522", "#14161a", "#5a5f68"] as const;
+/** Grey and white hair of the older background variants. */
+const GREYS = ["#c9c9cf", "#d8cfbd", "#a7a7ad", "#e4e4e8"] as const;
 
 const ACCESSORY_COLOURS: Readonly<Record<Accessory, readonly string[]>> = {
   glasses: GLASSES,
@@ -65,6 +81,11 @@ const ACCESSORY_COLOURS: Readonly<Record<Accessory, readonly string[]>> = {
   mask: MASKS,
   bag: BAGS,
   apron: APRONS,
+  shawl: WOOL,
+  headscarf: WOOL,
+  vest: WOOL,
+  cane: CANES,
+  skirt: WOOL,
 };
 
 /** One round of a 32-bit integer mix: close numbers land far apart. */
@@ -94,19 +115,34 @@ const colourOf = (id: number, accessory: Accessory): string => {
   return pick(rand, ACCESSORY_COLOURS[accessory]);
 };
 
+/**
+ * About one background variant in five is older: grey hair, a bent back and shorter steps. From a
+ * stream of its own, so the colours and accessories of the other variants stay as they were. The
+ * named characters' numbers (from 100) are never aged by the seed: their age is in the manifest.
+ */
+const seededAge = (id: number): { readonly hair: string; readonly figure: Figure } | null => {
+  if (id > BACKGROUND_VARIANTS) return null;
+  const rand = lookStream(mix(id) ^ 0x51ed270b);
+  if (rand() >= 0.2) return null;
+  const hair = pick(rand, GREYS);
+  return { hair, figure: clampFigure({ stoop: 0.2 + 0.25 * rand(), build: 0.92 + 0.14 * rand(), pace: 0.7 }) };
+};
+
 /** The seeded look of a variant number; 0 is the file's own. */
 const seeded = (id: number): ModelVariant => {
   if (id === 0) return OWN_LOOK;
   const rand = lookStream(mix(id) ^ 0x7a3d91e5);
+  const age = seededAge(id);
   const skin = pick(rand, SKIN);
-  const hair = pick(rand, HAIR);
+  const young = pick(rand, HAIR);
+  const hair = age?.hair ?? young;
   const topRoll = rand();
   const top = topRoll < 0.45 ? pick(rand, TOPS) : topRoll < 0.7 ? pick(rand, COATS) : null;
   const bottomRoll = rand();
   const bottom = bottomRoll < 0.6 ? pick(rand, BOTTOMS) : null;
   const topFrom = rand() < 0.35 ? rand() : null;
   const bottomFrom = rand() < 0.35 ? rand() : null;
-  return { skin, hair, top, bottom, topFrom, bottomFrom, accessories: seededAccessories(rand) };
+  return { skin, hair, top, bottom, tie: null, topFrom, bottomFrom, accessories: seededAccessories(rand), figure: age?.figure ?? UPRIGHT };
 };
 
 const has = <K extends keyof VariantDress>(dress: VariantDress, key: K): boolean => Object.prototype.hasOwnProperty.call(dress, key);
@@ -115,7 +151,7 @@ const has = <K extends keyof VariantDress>(dress: VariantDress, key: K): boolean
 export const variantOf = (id: number, dress?: VariantDress): ModelVariant => {
   const base = seeded(Math.max(0, Math.floor(id)));
   if (!dress) return base;
-  const field = <K extends "skin" | "hair" | "top" | "bottom" | "topFrom" | "bottomFrom">(key: K): ModelVariant[K] =>
+  const field = <K extends "skin" | "hair" | "top" | "bottom" | "tie" | "topFrom" | "bottomFrom">(key: K): ModelVariant[K] =>
     has(dress, key) ? ((dress[key] ?? null) as ModelVariant[K]) : base[key];
   const accessories = dress.accessories
     ? dress.accessories.filter((a) => ACCESSORIES.includes(typeof a === "string" ? a : a.id)).map((a) => (typeof a === "string" ? { id: a, color: colourOf(id, a) } : a))
@@ -125,9 +161,11 @@ export const variantOf = (id: number, dress?: VariantDress): ModelVariant => {
     hair: field("hair"),
     top: field("top"),
     bottom: field("bottom"),
+    tie: field("tie"),
     topFrom: field("topFrom"),
     bottomFrom: field("bottomFrom"),
     accessories,
+    figure: dress.figure ? clampFigure({ ...base.figure, ...dress.figure }) : base.figure,
   };
 };
 
@@ -136,7 +174,7 @@ export const backgroundVariantOf = (look: number): number => 1 + (mix(look ^ 0x1
 
 /** A variant as text: two variants with the same text look the same. */
 export const variantText = (v: ModelVariant): string =>
-  [v.skin, v.hair, v.top, v.bottom, v.topFrom === null ? null : "t", v.bottomFrom === null ? null : "b", ...v.accessories.map((a) => `${a.id}:${a.color}`)].join("|");
+  [v.skin, v.hair, v.top, v.bottom, v.tie, v.topFrom === null ? null : "t", v.bottomFrom === null ? null : "b", ...v.accessories.map((a) => `${a.id}:${a.color}`), figureText(v.figure)].join("|");
 
 /**
  * Which background variants of each file are dressed now (ADR-0076 §3): up to
