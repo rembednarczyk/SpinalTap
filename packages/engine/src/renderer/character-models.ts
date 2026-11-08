@@ -2,9 +2,10 @@ import type { AbstractMesh, Scene } from "../babylon";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { CharacterRig } from "./characters";
 import type { Loadouts } from "./loadout";
-import { type ModelChoice, donorFiles, isBackgroundLook, modelPoolKey, resolveModel, startFiles } from "./model-cast";
+import { type ModelChoice, donorFiles, isBackgroundLook, manifestFiles, modelPoolKey, resolveModel, startFiles } from "./model-cast";
 import { type Donors, type WornVariant, dressVariant, lends } from "./model-dress";
 import type { CharacterModelManifest, CharacterModelSpec, ModelInstance, ModelLibrary } from "./model-library";
+import { type ModelFilesNow, ModelMemory } from "./model-memory";
 import { HumanoidRetarget } from "./model-rig";
 import { type ModelVariant, VariantBudget, backgroundVariantOf, variantOf } from "./model-variant";
 import { SpringBones, humanoidColliders } from "./spring-bones";
@@ -12,6 +13,8 @@ import { SpringBones, humanoidColliders } from "./spring-bones";
 /** An imported model dressed over a procedural rig, which keeps animating invisibly. */
 export interface Dressed {
   readonly model: ModelInstance;
+  /** Its file (ADR-0076 stage 4b: a file nobody wears may be let go of). */
+  readonly url: string;
   readonly retarget: HumanoidRetarget;
   /** Hair and cloth secondary motion, if the model has such bones. */
   readonly springs: SpringBones | null;
@@ -32,6 +35,7 @@ interface Wearing {
 }
 
 interface Attach {
+  readonly url: string;
   readonly poolKey: string;
   readonly who: string;
   readonly name: string;
@@ -48,6 +52,8 @@ export interface CharacterModelsDeps {
   /** For the variants' materials and accessories (ADR-0076). */
   readonly scene: Scene;
   readonly materials: ToonMaterials;
+  /** Character model files in memory at once (`QualityTier.modelFiles`, ADR-0076 stage 4b); default 11. */
+  readonly modelFiles?: number;
 }
 
 /**
@@ -60,16 +66,22 @@ export interface CharacterModelsDeps {
 export class CharacterModels {
   private manifest: CharacterModelManifest = {};
   private readonly dressed = new Map<CharacterRig, Dressed>();
-  /** Rigs whose model is still loading, so a manifest arriving meanwhile does not dress them twice. */
-  private readonly loading = new Set<CharacterRig>();
+  /** Rigs whose model is still loading, with its file, so a manifest arriving meanwhile does not dress them twice. */
+  private readonly loading = new Map<CharacterRig, string>();
   private readonly pool = new Map<string, ModelInstance[]>();
   /** Background variants dressed per file (at most four different ones, ADR-0076 §3). */
   private readonly budget = new VariantBudget();
   /** Tops and trousers the other files of a file's base lend it, loading and loaded. */
   private readonly donors = new Map<string, Promise<Donors>>();
   private readonly donorsReady = new Map<string, Donors>();
+  /** Which files nobody wears to let go of (ADR-0076 stage 4b). */
+  private readonly memory: ModelMemory;
+  /** Seconds of frames since the last sweep: files are looked over once a second, not every frame. */
+  private unswept = 0;
 
-  constructor(private readonly deps: CharacterModelsDeps) {}
+  constructor(private readonly deps: CharacterModelsDeps) {
+    this.memory = new ModelMemory(deps.modelFiles ?? 11);
+  }
 
   /** Characters dressed in an imported model. */
   get dressedCount(): number {
@@ -79,6 +91,11 @@ export class CharacterModels {
   /** Models still loading for characters in the scene (tests wait for none before measuring). */
   get loadingCount(): number {
     return this.loading.size;
+  }
+
+  /** Model files in memory now, weapons' too (ADR-0076 stage 4b). */
+  loadedFiles(): string[] {
+    return this.deps.library.loadedFiles();
   }
 
   /** The model a rig wears, if it has one. */
@@ -103,7 +120,10 @@ export class CharacterModels {
    * those `choices` (the characters in the scene) wear. Not every file of the manifest (G-547).
    */
   preload(choices: Iterable<ModelChoice | null>): Promise<unknown>[] {
-    return startFiles(this.manifest, choices).map((spec) => this.deps.library.preload(spec));
+    const files = startFiles(this.manifest, choices);
+    // A new scene (new game, loaded save): the old one's files nobody wears now go (ADR-0076 stage 4b).
+    this.sweep(0, files.map((f) => f.url));
+    return files.map((spec) => this.deps.library.preload(spec));
   }
 
   /**
@@ -134,10 +154,10 @@ export class CharacterModels {
     const pooled = this.pool.get(poolKey)?.pop();
     const ready = needs ? this.donorsReady.get(spec.url) : NO_DONORS;
     if (pooled && ready) {
-      this.attach(rig, pooled, { poolKey, who, name, wearing, donors: ready });
+      this.attach(rig, pooled, { url: spec.url, poolKey, who, name, wearing, donors: ready });
       return;
     }
-    this.loading.add(rig);
+    this.loading.set(rig, spec.url);
     Promise.all([pooled ?? this.deps.library.instantiate(spec, `${name}-m`), needs ? this.donorsOf(spec) : NO_DONORS])
       .then(([model, donors]) => {
         this.loading.delete(rig);
@@ -145,7 +165,7 @@ export class CharacterModels {
           this.giveBack(wearing);
           return this.pooled(model, poolKey);
         }
-        this.attach(rig, model, { poolKey, who, name, wearing, donors });
+        this.attach(rig, model, { url: spec.url, poolKey, who, name, wearing, donors });
       })
       .catch((err: unknown) => {
         this.loading.delete(rig);
@@ -166,8 +186,10 @@ export class CharacterModels {
     rig.reach = null;
   }
 
-  /** Follows the rigs: retargeted bones, springs and faces of the models on screen. */
+  /** Follows the rigs: retargeted bones, springs and faces of the models on screen; lets go of files nobody wears. */
   update(dt: number, clock: number): void {
+    this.unswept += dt;
+    if (this.unswept >= 1) this.sweep(this.unswept);
     for (const d of this.dressed.values()) {
       if (!d.model.root.isEnabled()) continue;
       d.retarget.update();
@@ -241,7 +263,7 @@ export class CharacterModels {
     const worn = dressVariant(this.deps, `${at.name}-v`, model.meshes, { retarget, body: rig.root, fit, rig, model }, at.wearing.look, at.donors);
     for (const m of model.meshes) if (m.getTotalVertices() > 0) this.deps.addCaster(m);
     const springs = SpringBones.create(model.root, { vrm: model.springs, prefix: model.prefix, colliders: humanoidColliders(model.root, model.prefix) });
-    this.dressed.set(rig, { model, retarget, springs, poolKey: at.poolKey, worn, variant: at.wearing.id, budget: at.wearing.budget });
+    this.dressed.set(rig, { model, url: at.url, retarget, springs, poolKey: at.poolKey, worn, variant: at.wearing.id, budget: at.wearing.budget });
     // The rig solves a two-handed hold for the model's arms, which it no longer shows itself.
     rig.reach = retarget.reach;
     // The gun in the model's hand and the garment add-ons on its bones.
@@ -256,5 +278,31 @@ export class CharacterModels {
     const pool = this.pool.get(poolKey) ?? [];
     pool.push(model);
     this.pool.set(poolKey, pool);
+  }
+
+  /**
+   * Lets go of the character files nobody in the scene wears (ADR-0076 stage 4b, `ModelMemory`):
+   * their pooled models first, then the file. Seki's and the donors' stay. `wanted` are a new
+   * scene's files: then every other unused file goes at once.
+   */
+  private sweep(dt: number, wanted?: readonly string[]): void {
+    const { library } = this.deps;
+    this.unswept = 0;
+    const used = new Set<string>([...this.loading.values(), ...[...this.dressed.values()].map((d) => d.url), ...(wanted ?? [])]);
+    const kept = new Set(donorFiles(this.manifest).map((f) => f.url));
+    const loaded = manifestFiles(this.manifest)
+      .map((f) => f.url)
+      .filter((url) => library.isLoaded(url));
+    const files: ModelFilesNow = { loaded, used, kept };
+    for (const url of this.memory.sweep(dt, files, wanted !== undefined)) {
+      for (const [key, models] of this.pool) {
+        if (!key.startsWith(`${url}|`)) continue;
+        for (const m of models) m.dispose();
+        this.pool.delete(key);
+      }
+      this.donors.delete(url);
+      this.donorsReady.delete(url);
+      library.release(url);
+    }
   }
 }

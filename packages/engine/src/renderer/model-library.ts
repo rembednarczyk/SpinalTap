@@ -280,7 +280,7 @@ export const outlineModelMeshes = (meshes: readonly AbstractMesh[], enabled: boo
 export class ModelLibrary {
   private readonly containers = new Map<string, Promise<Loaded>>();
   /** Files whose container is ready (ADR-0076 stage 4a: the background fetch skips these). */
-  private readonly ready = new Set<string>();
+  private readonly ready = new Map<string, Loaded>();
 
   constructor(
     private readonly scene: Scene,
@@ -335,6 +335,26 @@ export class ModelLibrary {
     return this.ready.has(url);
   }
 
+  /** The files loaded now, in the order they finished. */
+  loadedFiles(): string[] {
+    return [...this.ready.keys()];
+  }
+
+  /**
+   * Frees a loaded file (ADR-0076 stage 4b): its container with the meshes, skeletons, animation
+   * groups and textures, and the toon materials painted with those textures. Its instances must be
+   * disposed first. The next ask loads it again. False for a file not loaded or still on its way.
+   */
+  release(url: string): boolean {
+    const loaded = this.ready.get(url);
+    if (!loaded) return false;
+    this.ready.delete(url);
+    this.containers.delete(url);
+    this.materials.releaseTextures(loaded.container.textures);
+    loaded.container.dispose();
+    return true;
+  }
+
   /** The textures a loaded file keeps for its instances (a measure of its memory, ADR-0076). */
   async texturesOf(spec: CharacterModelSpec): Promise<readonly BaseTexture[]> {
     return [...(await this.load(spec)).container.textures];
@@ -380,8 +400,9 @@ export class ModelLibrary {
         }
         const container = await LoadAssetContainerAsync(source, this.scene, { pluginExtension: extension ?? (typeof source === "string" ? undefined : ".glb") });
         convertModelMaterials(container, this.materials, spec.preset ?? "importedCharacter", !vrm);
-        this.ready.add(spec.url);
-        return { container, springs, expressions };
+        const loaded = { container, springs, expressions };
+        this.ready.set(spec.url, loaded);
+        return loaded;
       })();
       this.containers.set(spec.url, pending);
       // A file that failed is forgotten, so the next ask fetches it again (G-562).
