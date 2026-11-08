@@ -1471,7 +1471,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: efekty)
 
 ### G-491 Auto na rampie P−1 pojawia się i znika na szczycie rampy
-- Status: zgłoszone (7.11, budowniczy ADR-0074 etap 4)
+- Status: częściowo w PR #382 (8.11; auta pojawiają się i znikają poza szczytem rampy, ale wyjeżdżające znika w (450; 26), w połowie kwartału Lubartowskiej, w polu widzenia z placu; poprawka: `OUT_WAY` do Olejnej (454,9; 42,8), razem z G-510 i G-492)
 - Ważność: S4 · Zasięg: przy chodniku Bajkowskiego auto wjeżdżające i wyjeżdżające z P−1 materializuje się i znika zamiast włączać się w ruch
 - Pakiet właściciela: packages/engine (renderer)
 
@@ -1500,11 +1500,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `packages/persistence/src/alchemia-parking.ts` usuwa stan Sachiko (wzorzec `MOVED_PEOPLE` z etapu 1), więc po wczytaniu zapisu v35 wraca zdrowa; wzorzec przyjęty, ale skutek nieopisany w ADR ani w teście
 - Pakiet właściciela: packages/persistence
 
-### G-500 Asfalt alejek parkingu w173531008 urywa się na parapetach rampy P−1 i wchodzi pod domek klatki
-- Status: w PR #382 (7.11, ADR-0074 etap 7, przegląd kuratora; decyzja użytkownika 7.11: plac i zielony dach)
-- Ważność: S4 · Zasięg: wykop rampy przecina oś alejki w177513189 na 17,6 m, szyb klatki na 2,2 m, domek klatki stoi na jej zakręcie (zostaje ok. 2,8 m przejazdu); T0 ma nawierzchnię z OSM, choć plan 2026 przewiduje plac i zielony dach; proponowana kontrola `cut-on-road` (baza dziś 3); T-237, T-238
-- Pakiet właściciela: tools/osm-import
-
 ### G-501 Przebranie zdejmuje pożyczoną górę albo dół wariantu postaci
 - Status: zgłoszone (7.11, weryfikator #376)
 - Ważność: S4 · Zasięg: `loadout.ts:448` bierze własną teksturę pliku, więc w przebraniu postać traci teksturę ubrań pożyczoną z innego modelu (ADR-0076 etap 2); przy okazji: akcesoria bez obrysu i cienia odstają od stylu modeli; `donorsOf` wczytuje każdy plik manifestu, by poznać jego bazę (przy limicie 5 plików na telefonie problem w etapie 4); `models.spec` nie sprawdza aktywnych siatek, tylko wywołania; `npr-perf` „Nabrzeże at night” przekracza limit czekania na klatkę przy load ok. 19
@@ -1525,11 +1520,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `model-apron.ts` tnie całymi trójkątami (próg `FACING` 0,35, ±0,09 wzrostu), więc boki kamizelki i spodni Mori mają białe zęby, a rąbek fartucha Kenty wystaje zębami spod bioder siedzącego; poprawka: przycięcie trójkątów na granicy albo maska; przy okazji: test „at most four looks” w `model-variants.test.ts` przekracza 20 s pod obciążeniem (4000 kroków `setTimeout(0)` dla 12 modeli)
 - Pakiet właściciela: packages/engine (renderer)
 
-### G-506 Generator mebli ignoruje `yaw` grup planu z `points` (ławki placu T0 tyłem do trawników)
-- Status: w PR #382 (7.11, runda 2; kurator przeglądu #382)
-- Ważność: S4 · Zasięg: `placeItem` dla grup z `points` ustawia `yaw: null` (props-gen.ts ok. 245), `openFacing` odwraca 7 z 8 ławek placu T0 od trawy, 4 pod pergolą patrzą na wykop rampy; kontrola `plan-yaw-ignored` (baza 8)
-- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
-
 ### G-507 Pastorał przy przyczółku wiaduktu Zamkowej ma latarenkę na wysokości przechodniów
 - Status: zgłoszone (7.11, kurator przeglądu #383)
 - Ważność: S4 · Zasięg: (756,8; 175,7) stoi 1,85 m pod pomostem, 2 m od niego (poniżej progu `DECK_DROP` 2,5 m), latarenka ok. 1,55 m nad pomostem, 0,35 m od kostki; poprawka: niższy próg albo `byParapet` od ok. 1,5 m; zaostrzenie `lamp-beside-deck` do 1,5 m (baza 1)
@@ -1544,6 +1534,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, naprawiacz G-490)
 - Ważność: S4 · Zasięg: lampa w `alchemia-view.ts` wisi 0,4 m pod stropem hali (zrzut `shots/g490/after/hall-north.png`), lampa w `capsule-room-view.ts` 0,3 m pod sufitem; poprawka jak w P−1: lampa w oprawie stropu (po G-490 shader już nie świeci od tyłu)
 - Pakiet właściciela: packages/engine (renderer)
+
+### G-510 Auta rampy P−1 jadą osią Bajkowskiego i Lubartowskiej, a auta ruchu przez nie przejeżdżają
+- Status: zgłoszone (8.11, kurator przeglądu #382)
+- Ważność: S4 · Zasięg: `parking-traffic.ts`: `IN_WAY`/`OUT_WAY` na osi jezdni (np. (407,5; −16,5)), a ruch symulacji ma na Bajkowskiego dwa pasy ±1,6 m; auto szerokości ok. 1,8 m zachodzi na oba, jedzie 2,5 m/s wobec 8 m/s ruchu, bez bryły (G-492); skręt w lewo powinien iść z lewego pasa (`turn:lanes=left|right`); pas wjazdu w `TRAFFIC_ROUTES` sim na osobny PR ze złotym hashem; kontrola `ramp-car-off-lane` (baza dziś 9 punktów)
+- Pakiet właściciela: packages/engine (renderer), packages/sim (G-492)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

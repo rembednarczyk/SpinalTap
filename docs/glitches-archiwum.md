@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-506 Generator mebli ignoruje `yaw` grup planu z `points` (ławki placu T0 tyłem do trawników)
+- Status: naprawione (PR #382, 8.11, runda 2; `placeItem` bierze `yaw` grupy także dla `points`, zmiany tylko w krakowskie-2-1; 11 ławek placu T0 przodem do trawników i placu; test w `props.test.ts` pada bez poprawki)
+- Ważność: S4 · Zasięg: `placeItem` dla grup z `points` ustawia `yaw: null` (props-gen.ts ok. 245), `openFacing` odwraca 7 z 8 ławek placu T0 od trawy, 4 pod pergolą patrzą na wykop rampy; kontrola `plan-yaw-ignored` (baza 8)
+- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
+
+### G-500 Asfalt alejek parkingu w173531008 urywa się na parapetach rampy P−1 i wchodzi pod domek klatki
+- Status: naprawione (PR #382, 8.11; kurator ODSTĘPSTWO CELOWE T-241; parking i alejki w177513189, w173567309 wyłączone z importu (`REPLACED_WAYS`), plac T0 z kostki w obrysie, wjazd asfaltem tylko między ścianami rampy; `cut-on-road` 3 → 0, pada bez poprawki)
+- Ważność: S4 · Zasięg: wykop rampy przecina oś alejki w177513189 na 17,6 m, szyb klatki na 2,2 m, domek klatki stoi na jej zakręcie (zostaje ok. 2,8 m przejazdu); T0 ma nawierzchnię z OSM, choć plan 2026 przewiduje plac i zielony dach; proponowana kontrola `cut-on-road` (baza dziś 3); T-237, T-238
+- Pakiet właściciela: tools/osm-import
+
 ### G-495 `models.spec` czasem mierzy klatkę bez aktywnych siatek
 - Status: naprawione (PR #387, 8.11; po `freeze` `step` nie rysuje klatki, spec czytał klatkę z rozruchu 326/0; `sampleNow` w `e2e/helpers.ts`, asercja aktywnych siatek > 0, scena `models` 465/158 w `tools/perf-budgets.json`; stary pomiar 5/5 pustych klatek, nowy 4/4 stabilnie 448/152)
 - Ważność: S4 · Zasięg: na main w dwóch z trzech przebiegów pomiar 324/0 (wywołania / aktywne siatki); pomiar niestabilny, bramka może przepuścić regresję; przy okazji: NPC „doker” w dokach bez wpisu w obsadzie, akcesoria sztywne (fartuch jak deska, dłonie siedzących sprzedawców przez niego); potwierdzone w 4 przebiegach przy load 10–12 (budowniczy i weryfikator #376): koszt wariantów i fartucha nie jest mierzony lokalnie
