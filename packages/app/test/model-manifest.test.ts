@@ -83,14 +83,28 @@ describe("the game's cast (ADR-0076)", () => {
     }
   });
 
-  it("puts Mori on a man's model in an apron and glasses, and Kurosawa in other colours than Kaito (decisions 3 and 4)", () => {
+  it("puts Mori on a man's model in an apron and glasses, and Kurosawa on a file of his own (decisions 3 and 4)", () => {
     const mori = GAME.cast!.mori!;
     expect(mori.url).toMatch(/ganger\.vrm$/);
     expect(variantOf(mori.variant ?? 0, mori.dress).accessories.map((a) => a.id).sort()).toEqual(["apron", "glasses"]);
+    // Stage 3: his own face and hair (HairSample_Male), worn by no other named character nor the pools.
+    const kurosawa = GAME.cast!.kurosawa!;
+    expect(kurosawa.url).toMatch(/kurosawa\.vrm$/);
+    expect(CAST_KEYS.filter((k) => GAME.cast?.[k]?.url === kurosawa.url)).toEqual(["kurosawa"]);
+    expect(Object.values(GAME.pools ?? {}).flat().some((p) => p.url === kurosawa.url)).toBe(false);
+    // Still dressed unlike Kaito: the cold man of Kagami in a dark suit.
     const kaito = variantOf(GAME.cast!.kaito!.variant ?? 0, GAME.cast!.kaito!.dress);
-    const kurosawa = variantOf(GAME.cast!.kurosawa!.variant ?? 0, GAME.cast!.kurosawa!.dress);
-    const differs = (["hair", "top", "bottom"] as const).filter((k) => kaito[k] !== kurosawa[k]);
-    expect(differs).toEqual(["hair", "top", "bottom"]);
+    const look = variantOf(kurosawa.variant ?? 0, kurosawa.dress);
+    expect((["hair", "top", "bottom"] as const).filter((k) => kaito[k] !== look[k])).toEqual(["hair", "top", "bottom"]);
+  });
+
+  it("keeps the cast's files within 80 MiB (decision 5)", () => {
+    const files = new Set([...Object.values(GAME.cast ?? {}), ...Object.values(GAME.pools ?? {}).flat(), GAME.heroine, GAME.fixer, GAME.civilian, GAME.ganger, GAME.ripperdoc].map((s) => s?.url));
+    files.delete(undefined);
+    expect(files.size).toBeGreaterThanOrEqual(7);
+    const bytes = [...files].reduce((sum, url) => sum + read(new URL(`../public/models/${url!.slice(url!.lastIndexOf("/") + 1)}`, import.meta.url)).byteLength, 0);
+    console.info(`[cast] ${files.size} files, ${(bytes / 2 ** 20).toFixed(1)} MiB`);
+    expect(bytes / 2 ** 20).toBeLessThanOrEqual(80);
   });
 
   it("keeps a pool for every background role, in the files of the role models", () => {
