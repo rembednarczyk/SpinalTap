@@ -3,7 +3,7 @@ import { type AudioPort, EMPTY_INPUT } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { P1_CABINS, P1_RAMP, TRAFFIC_ROUTES, type Entity, p1DriveFloor, p1RampY } from "@seki/sim";
+import { P1_CABINS, P1_RAMP, TRAFFIC_ROUTES, VIEW_HALF_ANGLE, type Entity, eyeOf, lineOfSight, p1RampY } from "@seki/sim";
 import { FakeRender, teleport } from "./story-helpers";
 import { GameSession } from "../src/game-session";
 
@@ -57,11 +57,15 @@ const overlap = (a: Car, b: Car): boolean => {
   return axes.every((ax) => Math.abs((b.position.x - a.position.x) * ax[0] + (b.position.z - a.position.z) * ax[1]) < reach(a, ax) + reach(b, ax));
 };
 
-/** Would Seki on the square see a car at `p`: within 0.6 of the traffic's radius, in her view's cone, not under T0's slab or the terrace over the ramp? */
-const inSight = (me: { x: number; z: number; yaw: number }, p: { x: number; z: number }): boolean => {
-  const off = Math.atan2(p.x - me.x, p.z - me.z) - me.yaw;
-  const under = p1DriveFloor(p.x, p.z) !== null && p.z > P1_RAMP.covered;
-  return Math.hypot(p.x - me.x, p.z - me.z) < 260 * 0.6 && Math.abs(Math.atan2(Math.sin(off), Math.cos(off))) < 1.2 && !under;
+/**
+ * Would Seki on the square see a car at `p`: within 0.6 of the traffic's radius, in her view's cone
+ * and nothing solid between her eye and it (the traffic's own rule, `inPlayerView`).
+ */
+const inSight = (session: GameSession, p: { x: number; y: number; z: number }): boolean => {
+  const me = session.sim.player()!;
+  const off = Math.atan2(p.x - me.position.x, p.z - me.position.z) - me.yaw;
+  if (Math.hypot(p.x - me.position.x, p.z - me.position.z) >= 260 * 0.6 || Math.abs(Math.atan2(Math.sin(off), Math.cos(off))) > VIEW_HALF_ANGLE) return false;
+  return lineOfSight(session.sim.world, eyeOf(me), { x: p.x, y: p.y + 1.25, z: p.z });
 };
 
 describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4, G-491)", () => {
@@ -72,17 +76,16 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4, G-491)", () => {
     const comesOrGoes: string[] = [];
     const into: string[] = [];
     const offRamp: string[] = [];
-    let before = new Map<number, { x: number; z: number }>();
+    let before = new Map<number, { x: number; y: number; z: number }>();
     for (let i = 0; i < 60 * 70; i++) {
       session.step(EMPTY_INPUT);
-      const me = session.sim.player()!;
       const all = cars(session);
       const ramp = all.filter((c) => c.vehicle.route === IN || c.vehicle.route === OUT);
-      const now = new Map(ramp.map((c) => [c.id, { x: c.position.x, z: c.position.z }]));
+      const now = new Map(ramp.map((c) => [c.id, { ...c.position }]));
       // After the street filled at the teleport: nobody comes or goes in her sight.
       if (i > 30) {
-        for (const [id, p] of now) if (!before.has(id) && inSight({ ...me.position, yaw: me.yaw }, p)) comesOrGoes.push(`${i} came at ${p.x.toFixed(1)},${p.z.toFixed(1)}`);
-        for (const [id, p] of before) if (!now.has(id) && inSight({ ...me.position, yaw: me.yaw }, p)) comesOrGoes.push(`${i} went at ${p.x.toFixed(1)},${p.z.toFixed(1)}`);
+        for (const [id, p] of now) if (!before.has(id) && inSight(session, p)) comesOrGoes.push(`${i} came at ${p.x.toFixed(1)},${p.z.toFixed(1)}`);
+        for (const [id, p] of before) if (!now.has(id) && inSight(session, p)) comesOrGoes.push(`${i} went at ${p.x.toFixed(1)},${p.z.toFixed(1)}`);
       }
       for (const [id, life] of lives) {
         if (now.has(id)) continue;
