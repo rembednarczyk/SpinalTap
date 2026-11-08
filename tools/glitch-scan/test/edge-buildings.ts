@@ -40,3 +40,10 @@ export const edgeBuildingsDropped = (buildings: readonly Area[], chunks: readonl
     const name = b.tags.name ?? (b.tags["addr:street"] ? `${b.tags["addr:street"]} ${b.tags["addr:housenumber"] ?? ""}`.trim() : b.tags.building);
     return [{ at: `${at.x.toFixed(0)},${at.z.toFixed(0)}`, what: `${b.id} (${name}): ${area.toFixed(1)} m² on the map, centroid off it` }];
   });
+
+/**
+ * The whole area (m²) by id of the map's buildings centred off every chunk: what the game draws of
+ * one is its piece cut at the map's edge, the rest of it standing past the edge.
+ */
+export const offMapAreas = (buildings: readonly Area[], chunks: readonly Rect[]): ReadonlyMap<string, number> =>
+  new Map(buildings.filter((b) => !chunks.some((r) => inRect(centroid(b.ring), r))).map((b) => [b.id, Math.abs(signedArea(b.ring))]));

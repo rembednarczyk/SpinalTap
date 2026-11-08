@@ -47,7 +47,7 @@ import { metroLineProtected } from "./metro-line";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
-import { edgeBuildingsDropped, osmBuildings } from "./edge-buildings";
+import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
@@ -1381,13 +1381,15 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A small building standing on its own (under `SMALL_ALONE_AREA`, no other outline within 1 m:
    * a pavilion, a kiosk, a shed) raised to the district's default houses when the map gives it no
-   * height (G-127: Bar Centralny by Pedet, 4 storeys for a round one-storey pavilion).
+   * height (G-127: Bar Centralny by Pedet, 4 storeys for a round one-storey pavilion). A building
+   * the map's edge cuts (G-556) is as small as the whole of it in OSM, not as its piece on the map.
    */
   "small-freestanding-tall": () => {
     const all = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
     const areas = all.map((b) => ({ id: b.id, tags: {}, ring: worldOutline(b), holes: 0 }) as unknown as Parameters<typeof smallAlone>[0][number]);
     const alone = smallAlone(areas);
-    return all.filter((b) => alone.has(b.id) && b.source === "default" && b.levels > 1).map((b) => ({ at: near(b.x, b.z), what: `${b.id} ${b.levels} storeys on ${SMALL_ALONE_AREA} m² or less` }));
+    const whole = offMapAreas(osmBuildings(SOURCE_OSM), MAP_CHUNKS.map((c) => c.bounds));
+    return all.filter((b) => alone.has(b.id) && (whole.get(b.id) ?? 0) < SMALL_ALONE_AREA && b.source === "default" && b.levels > 1).map((b) => ({ at: near(b.x, b.z), what: `${b.id} ${b.levels} storeys on ${SMALL_ALONE_AREA} m² or less` }));
   },
   /**
    * A building the map puts under ground (`location=underground`: a cellar, a shelter, G-077)

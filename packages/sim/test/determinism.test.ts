@@ -226,7 +226,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"5deb94af"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"9782a0f1"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -273,8 +273,11 @@ describe("determinism", () => {
     // car park (ADR-0074 stage 4): a migration, no new field; its solids, ramp and cars take ids
     // from ROOM_ID_BASE and STREET_ID_BASE after the others', and with the version at 35 the runs
     // hash to the v35 goldens (c839b064, 4689e661, 5716d8d1), so only the version changed them.
-    expect(v31HashOf(sim)).toBe("8a184ff0");
-    expect(v30HashOf(sim)).toBe("7dd4e4ad");
+    // Re-recorded (with the "hard" one, v27 to v31 included) for G-556, no new rule: the buildings
+    // the map's edge cuts are in the map now (16 in Krakowskie), so the ids of the run's entities
+    // move and two stuck gangers' first sides (by their ids) flip: only the saved `walk` differs, v26 stands.
+    expect(v31HashOf(sim)).toBe("e339d9fe");
+    expect(v30HashOf(sim)).toBe("63a5cd4f");
     expect(v17HashOf(sim)).toBe("1ce01d19");
     expect(v19HashOf(sim)).toBe("6c657123");
     expect(v20HashOf(sim)).toBe("e3f6e797");
@@ -284,18 +287,18 @@ describe("determinism", () => {
     expect(v24HashOf(sim)).toBe("90600c96");
     expect(v25HashOf(sim)).toBe("94c21ad3");
     expect(v26HashOf(sim)).toBe("b8d0ace2");
-    expect(v27HashOf(sim)).toBe("ef0f8c1e");
-    expect(v28HashOf(sim)).toBe("0dfb20ef");
+    expect(v27HashOf(sim)).toBe("faa9b708");
+    expect(v28HashOf(sim)).toBe("aeb97225");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"980794a8"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"4732aeea"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
-    expect(v31HashOf(sim)).toBe("13a15bf5");
-    expect(v30HashOf(sim)).toBe("30834a04");
+    expect(v31HashOf(sim)).toBe("4a80eca3");
+    expect(v30HashOf(sim)).toBe("da12045e");
     expect(v17HashOf(sim)).not.toBe("1ce01d19");
     expect(v19HashOf(sim)).toBe("01e929be");
     expect(v20HashOf(sim)).toBe("93e8e16a");
@@ -305,8 +308,8 @@ describe("determinism", () => {
     expect(v24HashOf(sim)).toBe("a995b57b");
     expect(v25HashOf(sim)).toBe("76e283bc");
     expect(v26HashOf(sim)).toBe("be1e9237");
-    expect(v27HashOf(sim)).toBe("3aa62e95");
-    expect(v28HashOf(sim)).toBe("5250f136");
+    expect(v27HashOf(sim)).toBe("59548947");
+    expect(v28HashOf(sim)).toBe("7d0164d4");
   });
 
   // One case per density: three full replays in one case ran close to the 20 s limit under coverage.
