@@ -144,6 +144,22 @@ describe("activity poses on the rigs", () => {
     expect(rig.armR.rotation.x).toBe(arm);
   });
 
+  it("a spread opens the feet: the knees go out from under the hips (G-511)", () => {
+    const rig = buildCivilian(scene, materials, "act-spread");
+    animateRig(rig, 0, DT);
+    const kneeX = () => {
+      rig.root.computeWorldMatrix(true);
+      for (const n of [rig.body, rig.legL, rig.legR, rig.kneeL, rig.kneeR]) n.computeWorldMatrix(true);
+      return [rig.kneeL.getAbsolutePosition().x, rig.kneeR.getAbsolutePosition().x] as const;
+    };
+    const [l, r] = kneeX();
+    applyActivityPose(rig, { ...activityJoints("guard", 0), spread: 0.2 }, 1);
+    const [spreadL, spreadR] = kneeX();
+    // The rig's left is -X.
+    expect(spreadL).toBeLessThan(l - 0.05);
+    expect(spreadR).toBeGreaterThan(r + 0.05);
+  });
+
   it("a drawn weapon keeps its arm through the pose", () => {
     const rig = buildGanger(scene, materials, "act-armed");
     setWeaponDrawn(rig, true);
