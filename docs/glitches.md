@@ -1605,6 +1605,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: 81 kwadratów 10 × 10 m `landuse-bare`, ok. 535 m² (2180 próbek 0,5 m) w 28 skupieniach; największe (m², x, z): 208 (609..662; 386..457) wzdłuż Lubartowskiej i przy Nowym Placu Targowym, 48 (606..630; 398..461), 38 (636..650; 559..580) przy parkingu w227679484, 37 (520..530; 427..447), 34 (676..715; 567..580) przy Ruskiej; kontekst OSM: 36% w `landuse=retail` w291844839 bez `surface`, 20% w `landuse=commercial` w1094207955, 7% w `landuse=retail` w1547216431, 35% poza wielokątami; zrzuty `shots/opiekun-p01/d-s3-slope2.png`, `d-a1-big-w.png`, `d-a2-big-n.png`; przyczyna jak G-513, G-521, G-527, G-536; przy okazji w komórce `kerb-gap-bare` 116 trafień (G-522) i 7 znanych `lane-dead-end`, G-508 tu to prawdziwe skarpy NMT (największa 548..570 × 538..560, 33°)
 - Pakiet właściciela: tools/osm-import (korekty nawierzchni)
 
+### G-546 Kurosawa nosi młodzieżową bluzę z kapturem zamiast garnituru
+- Status: zgłoszone (8.11, weryfikator #404; czeka na plik z VRoid Studio, ADR-0076 decyzja 1 B)
+- Ważność: S4 · Zasięg: `kurosawa.vrm` (HairSample_Male CC0) ma bluzę z kapturem w jasnych pasach i rękawach; ciemny odcień z `dress` i okulary łagodzą, ale człowiek Kagami wygląda młodziej, niż pasuje do postaci; przy okazji drobne z weryfikacji: tytuł testu w `model-kurosawa.test.ts` wymienia Kaito, a sprawdza tylko Base_Male; komentarz „in a dark suit” w `model-manifest.test.ts` nieaktualny; krój `M00_006` bez numeru wersji w `model-library.ts`
+- Pakiet właściciela: packages/engine (renderer: modele), packages/app/public/models
+
+### G-547 `kurosawa.vrm` wczytuje się na ekranie ładowania, choć Kurosawa pojawia się w II akcie
+- Status: zgłoszone (8.11, weryfikator #404; do etapu 4 ADR-0076)
+- Ważność: S4 · Zasięg: +6 MiB na starcie; `donorsOf` ładuje wszystkie pliki manifestu przy liczeniu dawców ubrań; wczytywanie w tle według dzielnic i aktów to etap 4
+- Pakiet właściciela: packages/engine (renderer: modele)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
