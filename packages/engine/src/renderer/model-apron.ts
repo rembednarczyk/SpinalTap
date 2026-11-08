@@ -6,18 +6,30 @@ import { toonSourceOf } from "./model-library";
  * model's own cloth. The front-facing triangles of its top and trousers (or one-piece dress)
  * between the chest and the crotch, narrower than the shoulders, are copied a centimetre out
  * along their normals onto the same skeleton, so the apron lies on the body, bends with it and
- * stays behind the hands. One mesh, painted by vertex colour.
+ * stays behind the hands. One mesh, painted by vertex colour. The vest of the older characters
+ * (ADR-0076 decision 7) is the same shell cut differently: the whole torso of the top, front,
+ * sides and back, without the sleeves.
  */
 
-/** Heights of the apron as fractions of the model's height, from the feet: hem just under the crotch (clear of a seated keeper's thighs), bib at the chest. */
-const HEM = 0.48;
-const BIB = 0.74;
-/** Half its width against the model's height (about 15 cm on a 1.7 m figure). */
-const HALF_WIDTH = 0.09;
+/** Which triangles of the cloth a shell copies. */
+interface Cut {
+  /** Heights as fractions of the model's height, from the feet. */
+  readonly hem: number;
+  readonly bib: number;
+  /** Half its width against the model's height. */
+  readonly halfWidth: number;
+  /** A triangle must face forward at least this much (-1: any way). */
+  readonly facing: number;
+  /** The trousers too, or only the top. */
+  readonly legs: boolean;
+}
+
+/** Hem just under the crotch (clear of a seated keeper's thighs), bib at the chest, about 15 cm half-width on a 1.7 m figure. */
+const APRON: Cut = { hem: 0.48, bib: 0.74, halfWidth: 0.09, facing: 0.35, legs: true };
+/** From the waist to the armpits, round the body, narrower than the arms hanging at its sides. */
+const VEST: Cut = { hem: 0.53, bib: 0.79, halfWidth: 0.105, facing: -1, legs: false };
 /** How far it stands off the cloth, in the mesh's units (metres in VRoid files). */
 const LIFT = 0.012;
-/** A triangle faces forward enough to belong to the front of the apron. */
-const FACING = 0.35;
 
 const SKIN_KINDS = [VertexBuffer.MatricesIndicesKind, VertexBuffer.MatricesWeightsKind, VertexBuffer.MatricesIndicesExtraKind, VertexBuffer.MatricesWeightsExtraKind] as const;
 
@@ -68,8 +80,8 @@ interface Shell {
   readonly skin: Map<string, number[]>;
 }
 
-/** Copies the apron's triangles of `src` into `out`, in the space of `into` (the first cloth mesh). */
-const copyFront = (src: Mesh, into: Mesh, f: Frame, out: Shell): void => {
+/** Copies the triangles of `src` the cut takes into `out`, in the space of `into` (the first cloth mesh). */
+const copyCut = (src: Mesh, into: Mesh, f: Frame, cut: Cut, out: Shell): void => {
   const pos = src.getVerticesData(VertexBuffer.PositionKind);
   const nor = src.getVerticesData(VertexBuffer.NormalKind);
   const idx = src.getIndices();
@@ -80,7 +92,7 @@ const copyFront = (src: Mesh, into: Mesh, f: Frame, out: Shell): void => {
   const wp = (i: number) => Vector3.TransformCoordinatesFromFloatsToRef(pos[i * 3]!, pos[i * 3 + 1]!, pos[i * 3 + 2]!, world, new Vector3());
   const inside = (p: Vector3): boolean => {
     const h = (p.y - f.up) / f.height;
-    return h >= HEM && h <= BIB && Math.abs(Vector3.Dot(p.subtract(f.centre), f.right)) <= HALF_WIDTH * f.height;
+    return h >= cut.hem && h <= cut.bib && Math.abs(Vector3.Dot(p.subtract(f.centre), f.right)) <= cut.halfWidth * f.height;
   };
   const taken = new Map<number, number>();
   const take = (i: number): number => {
@@ -110,7 +122,7 @@ const copyFront = (src: Mesh, into: Mesh, f: Frame, out: Shell): void => {
     const length = normal.length();
     // Degenerate triangles out; facing by the vertex normal (the sense of the winding depends on the mirrored glTF root).
     const facing = Vector3.TransformNormal(new Vector3(nor[a * 3]!, nor[a * 3 + 1]!, nor[a * 3 + 2]!), world).normalize();
-    if (length < 1e-9 || Vector3.Dot(facing, f.forward) < FACING) continue;
+    if (length < 1e-9 || Vector3.Dot(facing, f.forward) < cut.facing) continue;
     // Both windings: the apron takes the shared vertex-colour material, which culls back faces, and the
     // file's cloth may be double-sided under a mirrored root (glTF). The far copy hides in the body.
     out.indices.push(take(a), take(b), take(c), take(a), take(c), take(b));
@@ -118,17 +130,24 @@ const copyFront = (src: Mesh, into: Mesh, f: Frame, out: Shell): void => {
 };
 
 /** The apron over a dressed model's cloth, or null when the model has no cloth to follow. */
-export const buildApron = (scene: Scene, name: string, meshes: readonly AbstractMesh[], body: TransformNode, colour: string): Mesh | null => {
+export const buildApron = (scene: Scene, name: string, meshes: readonly AbstractMesh[], body: TransformNode, colour: string): Mesh | null =>
+  buildShell(scene, name, meshes, body, colour, APRON);
+
+/** The vest over a dressed model's top, or null when the model has none. */
+export const buildVest = (scene: Scene, name: string, meshes: readonly AbstractMesh[], body: TransformNode, colour: string): Mesh | null =>
+  buildShell(scene, name, meshes, body, colour, VEST);
+
+const buildShell = (scene: Scene, name: string, meshes: readonly AbstractMesh[], body: TransformNode, colour: string, cut: Cut): Mesh | null => {
   const all = meshes.filter((m): m is Mesh => m instanceof MeshClass && m.getTotalVertices() > 0);
   const cloth = all.filter((m) => {
     const part = toonSourceOf(m)?.source.part;
-    return (part === "torso" || part === "legs") && m.skeleton !== null;
+    return (part === "torso" || (cut.legs && part === "legs")) && m.skeleton !== null;
   });
   const into = cloth[0];
   const frame = frameOf(cloth.slice(0, 1), body);
   if (!into || !frame) return null;
   const shell: Shell = { positions: [], normals: [], indices: [], skin: new Map() };
-  for (const m of cloth) if (m.skeleton === into.skeleton) copyFront(m, into, frame, shell);
+  for (const m of cloth) if (m.skeleton === into.skeleton) copyCut(m, into, frame, cut, shell);
   if (shell.indices.length === 0) return null;
   const apron = new MeshClass(name, scene);
   const data = new VertexData();

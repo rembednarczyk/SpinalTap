@@ -8,12 +8,17 @@ import type { Accessory, Worn } from "./model-variant";
  * before the size fit. Every accessory of one bone is merged into one mesh painted by vertex
  * colours, so a character pays one draw call per bone, not per shape.
  */
-export const BONE_OF: Readonly<Record<Accessory, AnchorBone>> = {
+export const BONE_OF: Readonly<Record<Accessory, AnchorBone | "hand" | "waist">> = {
   glasses: "head",
   cap: "head",
   mask: "head",
   bag: "chest",
   apron: "chest",
+  shawl: "chest",
+  headscarf: "head",
+  vest: "chest",
+  cane: "hand",
+  skirt: "waist",
 };
 
 type Part = (scene: Scene, name: string) => Mesh;
@@ -75,8 +80,61 @@ const bag: Part = (scene, name) => {
   return MeshClass.MergeMeshes(parts, true, true)!;
 };
 
-/** The apron is no shape on a bone but a shell of the model's cloth (`model-apron.ts`). */
-const PARTS: Readonly<Partial<Record<Accessory, Part>>> = { glasses, cap, mask, bag };
+/**
+ * A shawl round the shoulders (ADR-0076 decision 7): a cone from the neck over the shoulders,
+ * open at the front, and its two ends hanging down the chest.
+ */
+const shawl: Part = (scene, name) => {
+  const sweep = 0.8;
+  const cone = MeshBuilder.CreateCylinder(`${name}-c`, { diameterTop: 0.19, diameterBottom: 0.42, height: 0.2, arc: sweep, tessellation: 24, enclose: false, sideOrientation: MeshClass.DOUBLESIDE }, scene);
+  cone.scaling.z = 0.72;
+  at(cone, 0, 0.07, -0.01, 0, Math.PI / 2 - Math.PI * sweep);
+  const ends = [-0.075, 0.075].map((x, i) => at(box(scene, `${name}-e${i}`, 0.06, 0.24, 0.015), x, -0.06, 0.105, -0.1, 0, x * 0.8));
+  return MeshClass.MergeMeshes([cone, ...ends], true, true)!;
+};
+
+/**
+ * A headscarf: a shell over the crown and the back of the hair, the forehead left free, two
+ * flaps down the cheeks framing the face and a tail over the nape.
+ */
+const headscarf: Part = (scene, name) => {
+  const shell = MeshBuilder.CreateSphere(`${name}-s`, { diameterX: 0.27, diameterY: 0.25, diameterZ: 0.29, segments: 12, slice: 0.66, sideOrientation: MeshClass.DOUBLESIDE }, scene);
+  at(shell, 0, 0.1, -0.025, -0.55);
+  const tail = at(box(scene, `${name}-t`, 0.16, 0.2, 0.02), 0, -0.03, -0.13, 0.2);
+  const flaps = [-0.11, 0.11].map((x, i) => at(box(scene, `${name}-f${i}`, 0.025, 0.14, 0.09), x, 0.01, 0.0, 0, 0, -x * 1.2));
+  return MeshClass.MergeMeshes([shell, tail, ...flaps], true, true)!;
+};
+
+/**
+ * A long skirt from the waist to the calves, a bell of `height` metres (the model's height):
+ * on the rig's body, not on a bone, so the legs step inside it and the feet show under the hem.
+ * Wider than the file's own skirt or trousers at every height, so they stay inside it.
+ */
+export const buildSkirt = (scene: Scene, name: string, height: number, build: number, colour: string): Mesh => {
+  const [waist, hem] = [0.58 * height, 0.15 * height];
+  const bell = MeshBuilder.CreateCylinder(name, { diameterTop: 0.19 * height, diameterBottom: 0.3 * height, height: waist - hem, tessellation: 20, cap: MeshClass.NO_CAP, sideOrientation: MeshClass.DOUBLESIDE }, scene);
+  bell.scaling.set(build, 1, 0.82 * build);
+  at(bell, 0, (waist + hem) / 2, 0);
+  const skirt = paint(bell, colour);
+  skirt.isPickable = false;
+  return skirt;
+};
+
+/**
+ * The apron and the vest are no shapes on a bone but shells of the model's cloth
+ * (`model-apron.ts`); the walking stick is held in the hand (`model-dress.ts`).
+ */
+const PARTS: Readonly<Partial<Record<Accessory, Part>>> = { glasses, cap, mask, bag, shawl, headscarf };
+
+/** A walking stick of `length` metres, in the rig forearm's axes: from the palm down along -Y, the crook ahead. */
+export const buildCane = (scene: Scene, name: string, length: number, colour: string): Mesh => {
+  const shaft = at(MeshBuilder.CreateCylinder(`${name}-s`, { diameter: 0.022, height: length, tessellation: 8 }, scene), 0, -length / 2 + 0.05, 0);
+  const crook = at(MeshBuilder.CreateCylinder(`${name}-c`, { diameter: 0.022, height: 0.1, tessellation: 8 }, scene), 0, 0.05, 0.04, Math.PI / 2);
+  const cane = paint(MeshClass.MergeMeshes([shaft, crook], true, true)!, colour);
+  cane.name = name;
+  cane.isPickable = false;
+  return cane;
+};
 
 const paint = (mesh: Mesh, hex: string): Mesh => {
   const c = Color3.FromHexString(hex);

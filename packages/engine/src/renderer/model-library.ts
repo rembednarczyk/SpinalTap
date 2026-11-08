@@ -115,17 +115,17 @@ export interface SourceMaterial {
   readonly garment: "torso" | "legs" | null;
   /**
    * What a VRoid material paints, for the model variants (ADR-0076): skin, hair, brows, and the
-   * top (a one-piece dress too) and trousers or skirt. Null for the eyes, mouth, shoes and the rest.
+   * top (a one-piece dress too), trousers or skirt, and the tie or bow over the top. Null for the eyes, mouth, shoes and the rest.
    */
   readonly part: ModelPart | null;
   /** The VRoid base the material belongs to ("F00", "M00"), from its name; null for other files. */
   readonly family: string | null;
 }
 
-export type ModelPart = "skin" | "hair" | "brow" | "torso" | "legs";
+export type ModelPart = "skin" | "hair" | "brow" | "torso" | "legs" | "tie";
 
 const partOf = (name: string): ModelPart | null =>
-  /_SKIN\b/.test(name) ? "skin" : /_HAIR(\b|_)/.test(name) ? "hair" : /facebrow/i.test(name) ? "brow" : /tops|onepi/i.test(name) ? "torso" : /bottoms/i.test(name) ? "legs" : null;
+  /_SKIN\b/.test(name) ? "skin" : /_HAIR(\b|_)/.test(name) ? "hair" : /facebrow/i.test(name) ? "brow" : /tops|onepi/i.test(name) ? "torso" : /bottoms/i.test(name) ? "legs" : /_accessory/i.test(name) ? "tie" : null;
 
 /** What an imported mesh's toon material was made from, kept in `mesh.metadata.toonSource` to recolour it. */
 export interface ToonSource {

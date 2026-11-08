@@ -34,7 +34,9 @@ describe("the cast's models keep their own colours (G-474)", () => {
         expect(source, mesh.name).toBeDefined();
         // Every VRoid layer is painted by its base texture; the factor only tints it.
         expect(source!.texture, `${mesh.name}: base texture`).not.toBeNull();
-        expect(luminance(source!.base), `${mesh.name}: base colour ${source!.base}`).toBeGreaterThan(0.05);
+        // Base_Female tints its brows dark navy by the factor (#07092c): dark by design, not the
+        // black of G-474, and every cast entry on that file gives the brows the hair's colour.
+        expect(luminance(source!.base), `${mesh.name}: base colour ${source!.base}`).toBeGreaterThan(source!.part === "brow" ? 0.03 : 0.05);
         expect(mesh.isVerticesDataPresent(VertexBuffer.ColorKind), `${mesh.name}: vertex colour`).toBe(false);
       }
       model.dispose();
