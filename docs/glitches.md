@@ -1546,7 +1546,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: pozy)
 
 ### G-512 Postać zabita w kucki leży z kolanami na zewnątrz
-- Status: w naprawie (8.11, gałąź `ccr-ec2c4269-ilh8k8-g512`; regresja z #386, weryfikator)
+- Status: w PR #394 (8.11, weryfikator PRZYJĘTE, czeka na CI; regresja z #386)
 - Ważność: S4 · Zasięg: `animateDeath` (`character-animation.ts`, ok. l. 136) nie zeruje `legL/legR.rotation.z`, więc po nowym kucaniu z kolanami na zewnątrz (0,25 rad) ciało leży z rozwartymi kolanami; przy okazji: nieaktualny komentarz `CROUCH_EYE_HEIGHT` w `packages/sim/src/world/hitscan.ts:93` (głowa rigu w kucki 1,22 m, oko 1,14 m)
 - Pakiet właściciela: packages/engine (renderer)
 
@@ -1554,6 +1554,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w naprawie (8.11, gałąź `ccr-ec2c4269-ilh8k8-g513`; opiekun mapy, komórka krakowskie-0-0)
 - Ważność: S3 · Zasięg: 144 kwadraty 10 × 10 m `landuse-bare` w ok. 87 skupieniach, ok. 2500 m²; największe: 244 m² (x −53,8..−13,8; z −94,3..−84,3), 208 m² (−189..−150; −220..−189), 190 m² (−188..−127; −270..−220), 182 m² (−176..−162; −32..−20), 180 m² (−155..−107; −101..−72), 155 m² (−16..−2; −128..−99); zrzuty `shots/opiekun-k00/clD-0.png`, `bare1-a.png`, `sad.png`; przyczyna: import nie kładzie nawierzchni na podwórkach i pasach przy gmachach (`landuse=retail/commercial`, gmachy publiczne); rozszerzenie G-450/T-221; kontrola `landuse-bare` istnieje, poprawka obniża bazę; przy okazji: G-508 w tej komórce to szum NMT przy krawędziach budynków (1 krawędź > 20° pod budynkiem, 15 > 10° w gołym terenie; propozycja `terrain-crease` z progiem 12° bez obrysów budynków), T-204 do sprawdzenia przez kuratora (skan `tree-height-vs-nmpt` 0 w komórce)
 - Pakiet właściciela: tools/osm-import (ground), tools/glitch-scan
+
+### G-514 Przód spódnicy Seki wcina się w udo przy duszeniu (poza „holdingDown”)
+- Status: zgłoszone (8.11, weryfikator #394; z sondy pozy, bez zrzutu)
+- Ważność: S4 · Zasięg: `grab-pose.ts:149`, poza postaci chwytającej ma udo L −1,55 rad przy pochyleniu 0,3 (ok. 72° zgięcia w biodrze), ponad granicą ok. 63° dla przodu spódnicy `seki.vrm` (pomiar z #386); brak przypadku w `seki-skirt.test.ts`; przy okazji: śmierć z kucnięcia nie wygasza `body.position.y/z` ani `body.rotation.x` (ciało przesunięte −0,38/−0,14 m, kosmetyka)
+- Pakiet właściciela: packages/engine (renderer: pozy)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
