@@ -1556,7 +1556,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (korekty)
 
 ### G-522 Klinowe szczeliny bez nawierzchni między jezdnią a chodnikiem Krakowskiego
-- Status: krok 1 scalony w #400, krok 2 do zrobienia (8.11, kontrola `kerb-gap-bare`, baza 103 982 próbek = 6 499 m² w 2 155 skupieniach; przyczyna systemowa: import kładzie jezdnię krócej niż chodnik wzdłuż ulic, pas 1–2,5 m; krok 2: reguła importu, po scaleniu #397)
+- Status: krok 1 scalony w #400, krok 2 w PR #409 (reguła `kerbFills`, `kerb-gap-bare` 103 204 → 32 148; przegląd kuratora w toku) (8.11, kontrola `kerb-gap-bare`, baza 103 982 próbek = 6 499 m² w 2 155 skupieniach; przyczyna systemowa: import kładzie jezdnię krócej niż chodnik wzdłuż ulic, pas 1–2,5 m; krok 2: reguła importu, po scaleniu #397)
 - Ważność: S3 · Zasięg: (−120,5..−114; 54,5..101) 128 m², (−104,5..−102,5; −6,5..13) 48 m², (−121,5..−120,5; 74,5..100,5) 27 m², także części nieliczone skanem; zrzuty `kp-strip-g`, `s-strip-l`, `wedge`; przyczyna: jezdnia i chodnik się nie schodzą; propozycja `kerb-gap-bare` z przeglądu G-440 (baza ok. 35 631 próbek 0,25 m w mieście)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
