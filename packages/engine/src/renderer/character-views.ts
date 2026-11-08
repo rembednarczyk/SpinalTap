@@ -81,8 +81,8 @@ export interface CharacterViewsDeps {
 export interface ModelLoading {
   /** Starts loading the models of the characters in the scene, the heroine's and every weapon: one promise per file. */
   start(): Promise<unknown>[];
-  /** Loads the background roles' models the start did not, one file at a time. */
-  rest(): Promise<void>;
+  /** Loads the background roles' models the start did not, one file at a time, while `live` says so. */
+  rest(live?: () => boolean): Promise<void>;
 }
 
 /** The followed character has a body on her shoulder. */
@@ -301,7 +301,7 @@ export class CharacterViews implements FxActors {
   get modelLoading(): ModelLoading {
     return {
       start: () => [...this.models.preload([...this.views.values()].map((v) => v.model)), ...this.kit.preload()],
-      rest: () => this.models.prefetch(),
+      rest: (live) => this.models.prefetch(live),
     };
   }
 }

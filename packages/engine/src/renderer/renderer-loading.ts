@@ -39,9 +39,11 @@ export class RendererLoading {
     if (moved) this.deps.materials.setShadowMatrix(moved);
     const run = ++this.runs;
     return this.prep.run(onProgress).then(() => {
-      // Once the game is on screen, the files the start left out (ADR-0076 stage 4a); a start
-      // that a newer one or the title replaced leaves the bandwidth to that one.
-      if (run === this.runs) void this.deps.characters.modelLoading.rest();
+      // Once the game is on screen, the files the start left out (ADR-0076 stage 4a). A start that
+      // a newer one or the title replaced fetches none, and its fetch under way stops before the
+      // next file (the one on its way finishes: the library keeps it for whoever asks next).
+      const live = () => run === this.runs;
+      if (live()) void this.deps.characters.modelLoading.rest(live);
     });
   }
 

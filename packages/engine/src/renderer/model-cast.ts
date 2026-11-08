@@ -1,5 +1,6 @@
 import type { CastKey, ViewDescriptor } from "@seki/core";
 import type { CharacterModelKey, CharacterModelManifest, CharacterModelSpec, ModelPoolRole, PooledModelSpec } from "./model-library";
+import { variantOf } from "./model-variant";
 
 /** The player, NPCs and enemies. */
 export type CharacterDescriptor = Extract<ViewDescriptor, { kind: "heroine" | "npc" | "enemy" }>;
@@ -96,13 +97,35 @@ export const manifestFiles = (manifest: CharacterModelManifest): CharacterModelS
 };
 
 /**
+ * A character whose variant comes from its look within the file's budget (ADR-0076 §3): not a
+ * named one, nor a file whose spec fixes the variant or the dress.
+ */
+export const isBackgroundLook = (spec: CharacterModelSpec, choice: ModelChoice): boolean =>
+  choice.cast === undefined && choice.look !== undefined && spec.variant === undefined && spec.dress === undefined;
+
+/** The character may wear another file's top or trousers: any background look, a named one by its dress. */
+const mayBorrow = (spec: CharacterModelSpec, choice: ModelChoice): boolean => {
+  if (isBackgroundLook(spec, choice)) return true;
+  const v = variantOf(spec.variant ?? 0, spec.dress);
+  return v.topFrom !== null || v.bottomFrom !== null;
+};
+
+/**
  * The files the loading screen waits for (ADR-0057, ADR-0076 stage 4a): the heroine's and those
- * of the characters already in the scene round the start, one per file. The rest load later.
+ * of the characters already in the scene round the start, one per file, and the donors' files
+ * (`donorFiles`) if one of them may borrow cloth, so it is dressed before the game shows. The
+ * rest load later.
  */
 export const startFiles = (manifest: CharacterModelManifest, choices: Iterable<ModelChoice | null>): CharacterModelSpec[] => {
   const wanted: (CharacterModelSpec | undefined)[] = [manifest.heroine];
-  for (const choice of choices) if (choice) wanted.push(resolveModel(manifest, choice));
-  return oneByUrl(wanted);
+  let borrows = false;
+  for (const choice of choices) {
+    const spec = choice ? resolveModel(manifest, choice) : undefined;
+    if (!spec || !choice) continue;
+    wanted.push(spec);
+    borrows ||= mayBorrow(spec, choice);
+  }
+  return oneByUrl(borrows ? [...wanted, ...donorFiles(manifest)] : wanted);
 };
 
 /**
@@ -115,3 +138,10 @@ export const backgroundFiles = (manifest: CharacterModelManifest): CharacterMode
   const { cast: _cast, pools, ...roles } = manifest;
   return oneByUrl([...Object.values(roles), ...Object.values(pools ?? {}).flat()]);
 };
+
+/**
+ * The files whose tops and trousers the variants may borrow (ADR-0076 §3, G-560): the heroine's and
+ * the background roles', a set fixed by the manifest alone, so a look wears the same cloth however
+ * many files have loaded. A file only named characters wear (Kurosawa's) lends nothing.
+ */
+export const donorFiles = (manifest: CharacterModelManifest): CharacterModelSpec[] => oneByUrl([manifest.heroine, ...backgroundFiles(manifest)]);

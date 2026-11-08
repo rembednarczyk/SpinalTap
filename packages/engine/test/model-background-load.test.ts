@@ -8,6 +8,7 @@ import { ToonMaterials } from "../src/npr/toon-material";
 import { CharacterViews } from "../src/renderer/character-views";
 import { type CharacterModelManifest, toonSourceOf } from "../src/renderer/model-library";
 import { findHumanoidBones } from "../src/renderer/model-rig";
+import { backgroundVariantOf, variantOf } from "../src/renderer/model-variant";
 import { readModelFile } from "./game-models";
 
 /**
@@ -80,38 +81,61 @@ const texturesOf = (views: CharacterViews, id: EntityId, part: string) => {
   return { drawn: (m.material as unknown as { getActiveTextures(): unknown[] }).getActiveTextures(), own: toonSourceOf(m)!.source.texture };
 };
 
+/** The textures a character's trousers are drawn with, by id (the VRoid files name theirs alike). */
+const idsOf = (textures: readonly unknown[]): number[] => textures.map((t) => (t as { uniqueId: number }).uniqueId);
+const legsOf = (views: CharacterViews, id: EntityId): number[] => idsOf(texturesOf(views, id, "legs").drawn);
+
+/** A ganger's look whose background variant takes another file's trousers. */
+const borrowingLook = (): number => {
+  for (let look = 0; ; look++) if (variantOf(backgroundVariantOf(look), undefined, false).bottomFrom !== null) return look;
+};
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe("character models in the background (ADR-0076 stage 4a)", () => {
-  it("loads the files of the start's scene behind the loading screen, not kurosawa.vrm nor the rest (G-547)", async () => {
+  it("loads the files of the start's scene and its donors behind the loading screen, not kurosawa.vrm (G-547, G-560)", async () => {
     const { fetched } = serve();
     const views = viewsOn(new Scene(new NullEngine()));
     spawnAll(views, NEW_GAME);
     views.setCharacterModels(GAME);
     await Promise.all(views.modelLoading.start());
+    // The gangers' looks may borrow: the donors' mori.vrm comes with the scene's files.
+    expect([...new Set(fetched)].sort()).toEqual(["base-female.vrm", "civilian.vrm", "ganger.vrm", "kaito.vrm", "mori.vrm", "seki.vrm"]);
     await settled(views);
     expect(views.dressedCount).toBe(NEW_GAME.length);
-    expect([...new Set(fetched)].sort()).toEqual(["base-female.vrm", "civilian.vrm", "ganger.vrm", "kaito.vrm", "seki.vrm"]);
-    expect(fetched).not.toContain("kurosawa.vrm");
     // Every file once, though nine characters and their donors asked for them.
     expect(fetched).toHaveLength(new Set(fetched).size);
+  });
+
+  it("dresses the scene of a new game without fetching kurosawa.vrm for its cloth (G-547)", async () => {
+    const { fetched } = serve();
+    const views = viewsOn(new Scene(new NullEngine()));
+    spawnAll(views, NEW_GAME);
+    views.setCharacterModels(GAME);
+    await settled(views);
+    expect(views.dressedCount).toBe(NEW_GAME.length);
+    expect(fetched).not.toContain("kurosawa.vrm");
   });
 
   it("fetches the background roles' files after the start, one at a time, and Kurosawa's only when he comes", async () => {
     const { fetched } = serve();
     const views = viewsOn(new Scene(new NullEngine()));
-    spawnAll(views, NEW_GAME);
+    // Seki with Kaito alone: no look to borrow for, so the start waits for their two files.
+    spawnAll(views, NEW_GAME.slice(0, 2));
     views.setCharacterModels(GAME);
     await Promise.all(views.modelLoading.start());
+    expect([...new Set(fetched)].sort()).toEqual(["kaito.vrm", "seki.vrm"]);
+    // A start replaced by a newer one or the title fetches nothing more.
+    await views.modelLoading.rest(() => false);
+    expect(fetched).toHaveLength(2);
     await views.modelLoading.rest();
-    expect(fetched).toContain("mori.vrm");
-    expect(fetched).not.toContain("kurosawa.vrm");
+    expect([...new Set(fetched)].sort()).toEqual(["civilian.vrm", "ganger.vrm", "kaito.vrm", "mori.vrm", "seki.vrm"]);
     views.spawn(20, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
     await settled(views);
     expect(fetched.filter((u) => u === "kurosawa.vrm")).toHaveLength(1);
-    expect(views.dressedCount).toBe(NEW_GAME.length + 1);
+    expect(views.dressedCount).toBe(3);
   });
 
   it("stands a character whose file is on its way as its rig, then swaps the model in, posed as the rig", async () => {
@@ -142,31 +166,57 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
     expect(Vector3.Dot(thighOfRig, thighOfModel)).toBeGreaterThan(0.97);
   });
 
-  it("borrows cloth from the loaded files only, and counts the donors again once another loads", async () => {
+  it("dresses a look in the same cloth whichever files have loaded: after the rest, Kurosawa's and a new start (G-560)", async () => {
+    const { fetched } = serve();
+    const views = viewsOn(new Scene(new NullEngine()));
+    views.setCharacterModels(GAME);
+    // A ganger whose look borrows trousers, alone with Seki.
+    const look = borrowingLook();
+    const scene = () => {
+      views.clear();
+      views.spawn(1, { kind: "heroine" }, STAND);
+      views.spawn(2, { kind: "enemy", preset: "ganger", look }, STAND);
+    };
+    scene();
+    await Promise.all(views.modelLoading.start());
+    await settled(views);
+    const first = legsOf(views, 2);
+    await views.modelLoading.rest();
+    scene();
+    await settled(views);
+    expect(legsOf(views, 2)).toEqual(first);
+    views.spawn(20, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
+    await settled(views);
+    expect(fetched).toContain("kurosawa.vrm");
+    scene();
+    await settled(views);
+    expect(legsOf(views, 2)).toEqual(first);
+    // A new game behind a new loading screen, every file already in memory.
+    scene();
+    await Promise.all(views.modelLoading.start());
+    await settled(views);
+    expect(legsOf(views, 2)).toEqual(first);
+  });
+
+  it("borrows from the background roles' files only: not Kurosawa's, loaded first or not (G-560)", async () => {
     serve();
     const views = viewsOn(new Scene(new NullEngine()));
-    // Base_Male with the last donor's trousers: of the loaded M00 files, sorted by name.
+    // Base_Male with the last donor's trousers, of the fixed set sorted by name.
     const borrower = { url: "ganger.vrm", variant: 150, dress: { bottomFrom: 0.99, topFrom: null } };
     views.setCharacterModels({ ...GAME, cast: { ...GAME.cast, tetsu: borrower } });
-    views.spawn(1, { kind: "heroine" }, STAND);
-    views.spawn(2, { kind: "npc", preset: "fixer", cast: "kaito" }, STAND);
-    views.spawn(3, { kind: "enemy", preset: "ganger", cast: "tetsu" }, STAND);
-    await settled(views);
-    // Kaito's are the only other M00 trousers loaded: kurosawa.vrm is not fetched for its cloth.
-    expect(texturesOf(views, 3, "legs").drawn).toContain(texturesOf(views, 2, "legs").own);
     views.spawn(4, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
     await settled(views);
     views.spawn(5, { kind: "enemy", preset: "ganger", cast: "tetsu" }, STAND);
     await settled(views);
-    expect(texturesOf(views, 5, "legs").drawn).toContain(texturesOf(views, 4, "legs").own);
-    // The one dressed before keeps what it wore.
-    expect(texturesOf(views, 3, "legs").drawn).toContain(texturesOf(views, 2, "legs").own);
+    const legs = texturesOf(views, 5, "legs");
+    expect(idsOf(legs.drawn)).not.toContain(idsOf([texturesOf(views, 4, "legs").own])[0]);
+    expect(idsOf(legs.drawn)).not.toContain(idsOf([legs.own])[0]);
   });
 
   it("dresses a loaded game's scene while the old one's files still load in the background", async () => {
     const { fetched, release } = serve(["mori.vrm"]);
     const views = viewsOn(new Scene(new NullEngine()));
-    spawnAll(views, NEW_GAME);
+    spawnAll(views, NEW_GAME.slice(0, 2));
     views.setCharacterModels(GAME);
     await Promise.all(views.modelLoading.start());
     await settled(views);

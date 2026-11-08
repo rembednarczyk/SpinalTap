@@ -67,23 +67,24 @@ const setup = () => {
 };
 
 describe("the models a start loads (ADR-0076 stage 4a)", () => {
-  it("waits for the files of Neon Koi's scene on a new game, not kurosawa.vrm nor mori.vrm (G-547)", async () => {
+  it("waits for the files of Neon Koi's scene and its donors on a new game, not kurosawa.vrm (G-547, G-560)", async () => {
     const { render, session } = setup();
     session.newGame();
     await settle();
     expect(session.screen).toBe("playing");
     const [start] = render.starts;
-    expect(start!.files).toEqual(["base-female.vrm", "civilian.vrm", "ganger.vrm", "kaito.vrm", "seki.vrm"]);
+    // The gangers' looks may borrow cloth, so the donors' files (mori.vrm for the pools) come too.
+    expect(start!.files).toEqual(["base-female.vrm", "civilian.vrm", "ganger.vrm", "kaito.vrm", "mori.vrm", "seki.vrm"]);
     const all = manifestFiles(GAME).map((s) => s.url);
-    // Before: every file of the manifest (42.5 MiB); now the scene's five (31.0 MiB).
+    // Before: every file of the manifest (42.5 MiB); now the scene's five and a donor (36.5 MiB).
     expect(bytesOf(all) / MIB).toBeGreaterThan(42);
-    expect(bytesOf(start!.files) / MIB).toBeLessThan(31.5);
-    expect(start!.ms).toBeLessThan((0.75 * bytesOf(all)) / BYTES_PER_MS);
-    // The pools' file comes in the background; Kurosawa's, only a named one wears, does not.
-    expect(render.background).toEqual(["mori.vrm"]);
+    expect(bytesOf(start!.files) / MIB).toBeLessThan(37);
+    expect(start!.ms).toBeLessThan((0.9 * bytesOf(all)) / BYTES_PER_MS);
+    // Kurosawa's file, only a named one wears, neither comes with the start nor in the background.
+    expect(render.background).toEqual([]);
   });
 
-  it("waits for Kurosawa's file when a save loads by him, and saves and loads while the rest still load", async () => {
+  it("waits for Kurosawa's file when a save loads by him, and saves and loads in the second act", async () => {
     const { render, session } = setup();
     session.newGame();
     await settle();
@@ -92,8 +93,6 @@ describe("the models a start loads (ADR-0076 stage 4a)", () => {
     teleport(session, KUROSAWA_SPOT.x + 1.5, KUROSAWA_SPOT.z, Math.PI / 2, 0, KUROSAWA_SPOT.y);
     steps(session, 2);
     expect([...render.views.values()].some((v) => v.kind === "npc" && v.cast === "kurosawa")).toBe(true);
-    // The renderer is still fetching the background's files when the player saves and loads.
-    expect(render.background.length).toBeGreaterThan(0);
     expect(await session.saves.saveAsync("act2")).toBe(true);
     const saved = session.saves.snapshot();
     expect(await session.saves.loadAsync("act2")).toBe(true);
