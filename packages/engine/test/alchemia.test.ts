@@ -2,9 +2,10 @@
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ALCHEMIA_T0, ALCHEMIA_T1, ARKADY, ARKADY_CENTRE, ARKADY_PIECES, FOODHALL, P1, SQUARE_GARLANDS, arkadyLocal } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ALCHEMIA_T0, ALCHEMIA_T1, ARKADY, ARKADY_CENTRE, ARKADY_PIECES, FOODHALL, FOODHALL_INNER, P1, SQUARE_GARLANDS, arkadyLocal } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
+import { pointLightOn } from "../src/npr/toon-point-lights";
 import { CityKit } from "../src/renderer/city-kit";
 import { GeometrySink, parseCityKit, swatchUv } from "../src/renderer/city-kit-data";
 import { BULB_COLOURS, garlandBulbs, garlandsGeometry } from "../src/renderer/alchemia/garlands";
@@ -154,5 +155,30 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     expect(builtRoofOver(420, ALCHEMIA_T1 + 1.5, 65)).toBe(false);
     expect(builtRoofOver(402, ALCHEMIA_T0 + 1, 15)).toBe(false);
     expect(builtRoofOver(402, P1.floor + 1.5, 15)).toBe(true);
+  });
+
+  it("lights the hall from its ceiling's fitting, never the ceiling itself: no glow on it seen from the floor (G-509)", () => {
+    const { view, materials } = setup();
+    view.update();
+    const lamp = materials.light(ALCHEMIA_LAMP_KEY)!;
+    // The toon shader's thresholds: the lowest band and the highlight's smoothstep start there.
+    const BAND = 0.03;
+    const HIGHLIGHT = 0.18;
+    const down = { x: 0, y: -1, z: 0 };
+    const r = FOODHALL_INNER;
+    let glow = 0;
+    for (let ex = r.minX + 1; ex < r.maxX; ex += 2)
+      for (let ez = r.minZ + 1; ez < r.maxZ; ez += 2) {
+        const eye = { x: ex, y: FOODHALL.floor + 1.6, z: ez };
+        for (let x = r.minX; x <= r.maxX; x += 0.5)
+          for (let z = r.minZ; z <= r.maxZ; z += 0.5) {
+            const on = pointLightOn(lamp, { x, y: FOODHALL.ceiling, z }, down, eye);
+            if (on.diffuse > BAND || on.specular > HIGHLIGHT) glow++;
+          }
+      }
+    expect(glow).toBe(0);
+    // The floor under it still lit in full.
+    const under = { x: lamp.position.x, y: FOODHALL.floor, z: lamp.position.z };
+    expect(pointLightOn(lamp, under, { x: 0, y: 1, z: 0 }, { x: r.minX + 2, y: FOODHALL.floor + 1.6, z: r.minZ + 2 }).diffuse).toBeGreaterThan(0.47);
   });
 });
