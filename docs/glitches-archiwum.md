@@ -2,6 +2,21 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-512 Postać zabita w kucki leży z kolanami na zewnątrz
+- Status: naprawione (PR #394, 8.11; `animateDeath` wygasza `rotation.z` nóg, `applyPose` miesza ją do 0; w chwycie z kucnięcia kolana schodzą płynnie, pozy aktywności bez zmian; testy padają bez poprawki)
+- Ważność: S4 · Zasięg: `animateDeath` (`character-animation.ts`, ok. l. 136) nie zeruje `legL/legR.rotation.z`, więc po nowym kucaniu z kolanami na zewnątrz (0,25 rad) ciało leży z rozwartymi kolanami; przy okazji: nieaktualny komentarz `CROUCH_EYE_HEIGHT` w `packages/sim/src/world/hitscan.ts:93` (głowa rigu w kucki 1,22 m, oko 1,14 m)
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-507 Pastorał przy przyczółku wiaduktu Zamkowej ma latarenkę na wysokości przechodniów
+- Status: naprawione (PR #392, 8.11; `DECK_DROP` 1 m z pomiaru, pastorał (756,8; 175,7) → (756,4; 176,2) na pomoście; przy okazji `lamp-road` Nabrzeża z obrysu pomostu jezdni na chodnik mostu; `lamp-beside-deck` od 1,5 m, 1 → 0)
+- Ważność: S4 · Zasięg: (756,8; 175,7) stoi 1,85 m pod pomostem, 2 m od niego (poniżej progu `DECK_DROP` 2,5 m), latarenka ok. 1,55 m nad pomostem, 0,35 m od kostki; poprawka: niższy próg albo `byParapet` od ok. 1,5 m; zaostrzenie `lamp-beside-deck` do 1,5 m (baza 1)
+- Pakiet właściciela: tools/osm-import (props)
+
+### G-490 Przez strop P−1 Alchemii widać półprzezroczysty stożek
+- Status: naprawione (PR #385, 8.11; stożek na stropie P−1 to odblask lampy P−1 0,4 m pod stropem i shader świecący od tyłu: lampa w oprawie, odblask tylko z powierzchni zwróconej do światła; deszcz nie pada w food hallu (`built-roofs.ts`); oświetlonych punktów stropu 126067 → 0; migawka NPR bez zmian; reszta w G-509)
+- Ważność: S4 · Zasięg: na zrzucie `after/e4-deck.png` stożek (prawdopodobnie poświata latarni albo drona z T0) przechodzi przez strop parkingu; do sprawdzenia też, czy w food hallu z etapu 1 nie pada deszcz pod stropem
+- Pakiet właściciela: packages/engine (renderer: efekty)
+
 ### G-506 Generator mebli ignoruje `yaw` grup planu z `points` (ławki placu T0 tyłem do trawników)
 - Status: naprawione (PR #382, 8.11, runda 2; `placeItem` bierze `yaw` grupy także dla `points`, zmiany tylko w krakowskie-2-1; 11 ławek placu T0 przodem do trawników i placu; test w `props.test.ts` pada bez poprawki)
 - Ważność: S4 · Zasięg: `placeItem` dla grup z `points` ustawia `yaw: null` (props-gen.ts ok. 245), `openFacing` odwraca 7 z 8 ławek placu T0 od trawy, 4 pod pergolą patrzą na wykop rampy; kontrola `plan-yaw-ignored` (baza 8)

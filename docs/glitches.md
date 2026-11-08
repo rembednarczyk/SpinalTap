@@ -1465,11 +1465,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `stray-bodies.ts:31` liczy `look = fnv1a("#"+id)`, a po wczytaniu `id` jest nowe; rabuś za życia ma `look` z klucza `${id}:m${i}` (`micro-events.ts:54`), więc zmienia wygląd już przy przejściu w ciało; ofiary pomocy z `passerBy` bez klucza tak samo; łamie ADR-0076 §1 (wygląd stały między zapisami); widoczne dopiero od etapu 2 (warianty); naprawa: `look` w `StrayBodySnapshot` (migracja) albo z danych zapisu
 - Pakiet właściciela: packages/sim, packages/persistence
 
-### G-490 Przez strop P−1 Alchemii widać półprzezroczysty stożek
-- Status: w PR #385 (8.11, weryfikator PRZYJĘTE; po scaleniu main konflikt w imporcie testu rozwiązany, czeka na testy i CI)
-- Ważność: S4 · Zasięg: na zrzucie `after/e4-deck.png` stożek (prawdopodobnie poświata latarni albo drona z T0) przechodzi przez strop parkingu; do sprawdzenia też, czy w food hallu z etapu 1 nie pada deszcz pod stropem
-- Pakiet właściciela: packages/engine (renderer: efekty)
-
 ### G-491 Auto na rampie P−1 pojawia się i znika na szczycie rampy
 - Status: częściowo w PR #382 (8.11; auta pojawiają się i znikają poza szczytem rampy, ale wyjeżdżające znika w (450; 26), w połowie kwartału Lubartowskiej, w polu widzenia z placu; poprawka: `OUT_WAY` do Olejnej (454,9; 42,8), razem z G-510 i G-492)
 - Ważność: S4 · Zasięg: przy chodniku Bajkowskiego auto wjeżdżające i wyjeżdżające z P−1 materializuje się i znika zamiast włączać się w ruch
@@ -1520,11 +1515,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `model-apron.ts` tnie całymi trójkątami (próg `FACING` 0,35, ±0,09 wzrostu), więc boki kamizelki i spodni Mori mają białe zęby, a rąbek fartucha Kenty wystaje zębami spod bioder siedzącego; poprawka: przycięcie trójkątów na granicy albo maska; przy okazji: test „at most four looks” w `model-variants.test.ts` przekracza 20 s pod obciążeniem (4000 kroków `setTimeout(0)` dla 12 modeli)
 - Pakiet właściciela: packages/engine (renderer)
 
-### G-507 Pastorał przy przyczółku wiaduktu Zamkowej ma latarenkę na wysokości przechodniów
-- Status: w PR #392 (8.11; przy okazji `lamp-road` Nabrzeża z obrysu pomostu jezdni na chodnik mostu)
-- Ważność: S4 · Zasięg: (756,8; 175,7) stoi 1,85 m pod pomostem, 2 m od niego (poniżej progu `DECK_DROP` 2,5 m), latarenka ok. 1,55 m nad pomostem, 0,35 m od kostki; poprawka: niższy próg albo `byParapet` od ok. 1,5 m; zaostrzenie `lamp-beside-deck` do 1,5 m (baza 1)
-- Pakiet właściciela: tools/osm-import (props)
-
 ### G-508 Kanciaste górki terenu
 - Status: zgłoszone (7.11, użytkownik)
 - Ważność: S3 · Zasięg: w wielu miejscach miasta wzniesienia terenu z NMT wyglądają kanciasto (widoczne płaskie trójkąty i ostre załamania zamiast łagodnych zboczy); do ustalenia: rozdzielczość siatki terenu (4 m i skośne cięcie), wygładzanie NMT przy imporcie, normalne cieniowania (płaskie zamiast uśrednionych), krawędzie NPR na załamaniach; najpierw pomiar i zrzuty kilku miejsc, potem poprawka z testem `map-ground-golden`
@@ -1544,11 +1534,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, budowniczy i weryfikator #386)
 - Ważność: S4 · Zasięg: dodatnie `spread` dla lewej nogi obraca ją do środka (`legL.rotation.z = +0,2` przesuwa kolano z x −0,083 na +0,005), komentarz mówi „feet apart”; wartości 0,04–0,08, sprzed #386
 - Pakiet właściciela: packages/engine (renderer: pozy)
-
-### G-512 Postać zabita w kucki leży z kolanami na zewnątrz
-- Status: w PR #394 (8.11, weryfikator PRZYJĘTE, czeka na CI; regresja z #386)
-- Ważność: S4 · Zasięg: `animateDeath` (`character-animation.ts`, ok. l. 136) nie zeruje `legL/legR.rotation.z`, więc po nowym kucaniu z kolanami na zewnątrz (0,25 rad) ciało leży z rozwartymi kolanami; przy okazji: nieaktualny komentarz `CROUCH_EYE_HEIGHT` w `packages/sim/src/world/hitscan.ts:93` (głowa rigu w kucki 1,22 m, oko 1,14 m)
-- Pakiet właściciela: packages/engine (renderer)
 
 ### G-513 Goła ziemia na podwórkach i przy gmachach Krakowskiego Przedmieścia (krakowskie-0-0)
 - Status: w naprawie (8.11, gałąź `ccr-ec2c4269-ilh8k8-g513`; opiekun mapy, komórka krakowskie-0-0)
