@@ -51,6 +51,16 @@ export const p1RampY = (z: number): number => {
   return r.yTop + (F - r.yTop) * t;
 };
 
+/**
+ * The floor a car drives on at (x, z) in P-1 and down its ramp: the ramp's surface between its
+ * walls over its length, P-1's floor elsewhere in the room; null outside both (the map's ground).
+ */
+export const p1DriveFloor = (x: number, z: number): number | null => {
+  const r = P1_RAMP;
+  if (x > r.minX && x < r.maxX && z > r.top && z < r.foot) return p1RampY(z);
+  return x >= P1.minX && x <= P1.maxX && z >= P1.minZ && z <= P1.maxZ ? F : null;
+};
+
 /** Its grade: rise over run. */
 export const P1_RAMP_GRADE = (P1_RAMP.yTop - F) / (P1_RAMP.foot - P1_RAMP.top);
 

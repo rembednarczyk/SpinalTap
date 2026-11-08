@@ -1,6 +1,8 @@
 import { type EntityId, type EventBus, type DomainEvents, type Vec3, terrainHeightAt } from "@seki/core";
+import { p1DriveFloor } from "../content/alchemia/parking";
 import { surfaceLiftAt } from "../content/lublin/roads";
 import { TRAFFIC_RANGE, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute } from "../content/traffic";
+import { ownWayRoom } from "../content/traffic-ramp";
 import { pointsAlong } from "../content/traffic-lane";
 import type { Entity, VehicleState } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -66,9 +68,12 @@ const flat = (a: { x: number; z: number }, b: { x: number; z: number }): number 
 
 /**
  * Height a vehicle drives at over (x, z): the ground and the lift of the carriageway the renderer
- * draws there (`SURFACE_LIFT`, G-130), on a bridge that of its deck's paving.
+ * draws there (`SURFACE_LIFT`, G-130), on a bridge that of its deck's paving; down Alchemia's ramp the ramp's.
  */
-const roadY = (ctx: SimContext, x: number, z: number): number => {
+const roadY = (ctx: SimContext, lane: TrafficRoute, x: number, z: number): number => {
+  // On a set piece's own carriageway (Alchemia's ramp and P-1), its floor.
+  const own = lane.ownWay ? p1DriveFloor(x, z) : null;
+  if (own !== null) return own;
   const g = ctx.streamer.ground;
   const y = g.heightAt(x, z);
   const grid = g.gridAt(x, z);
@@ -80,7 +85,7 @@ const vehicleEntity = (ctx: SimContext, route: number, index: number, s: number)
   const plan = vehiclePlan(ctx.seed, route, index);
   const lane = TRAFFIC_ROUTES[route]!;
   const pose = lanePose(lane, s);
-  const at = { x: pose.x, y: roadY(ctx, pose.x, pose.z), z: pose.z };
+  const at = { x: pose.x, y: roadY(ctx, lane, pose.x, pose.z), z: pose.z };
   return {
     id: vehicleId(route, index),
     position: at,
@@ -399,6 +404,18 @@ const crowded = (live: ReadonlyMap<EntityId, Vehicle>, route: number, s: number,
 const freeFor = (live: ReadonlyMap<EntityId, Vehicle>, self: Vehicle, at: { x: number; z: number }): boolean =>
   [...live.values()].every((o) => o === self || flat(o.position, at) >= o.vehicle.half.l + 9);
 
+/**
+ * Where a vehicle going round the player steps within `room`: the side away from them if it fits,
+ * else the other side if that does, else as far as the room lets it on the side away (it does not
+ * clear them, so it waits and sounds the horn).
+ */
+const roundWithin = (room: readonly [number, number], away: number, other: number): number => {
+  const fits = (t: number) => t >= room[0] && t <= room[1] && Math.abs(t) <= MAX_ASIDE;
+  if (fits(away)) return away;
+  if (fits(other)) return other;
+  return Math.max(room[0], Math.min(room[1], away));
+};
+
 /** One step of one vehicle: its timetable, what is in its way, a shot, the player; then on along the lane. */
 const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player: Entity | null, shots: readonly Vec3[]): void => {
   const st = v.vehicle;
@@ -442,14 +459,20 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
   }
   let target = 0;
   const by = ahead.player ?? ahead.beside;
+  // Down Alchemia's ramp and on P-1 only as far aside as its walls leave room (null on the street).
+  const room = ownWayRoom(lane, st.s, st.half.w);
   if (st.blocked > PASS_AFTER && by !== null) {
     // Round the player on the side away from them, as far as it takes.
     const clear = st.half.w + BODY + PASS_ROOM;
     target = st.aside + (by >= 0 ? by - clear : by + clear);
+    if (room) target = roundWithin(room, target, st.aside + (by >= 0 ? by + clear : by - clear));
     target = Math.max(-MAX_ASIDE, Math.min(MAX_ASIDE, target));
   }
   const rate = (target !== 0 ? ASIDE_RATE : BACK_RATE) * dt;
   if (st.blocked > PASS_AFTER || by === null) st.aside += Math.max(-rate, Math.min(rate, target - st.aside));
+  // Never through a wall, even when the room narrows under it.
+  const here = room && ownWayRoom(lane, st.s, st.half.w, 0);
+  if (here) st.aside = Math.max(here[0], Math.min(here[1], st.aside));
   const goal = Math.min(want, ahead.allowed);
   st.v += Math.max(-BRAKE * 1.5 * dt, Math.min(ACCEL * dt, goal - st.v));
   if (goal <= 0 && st.v < 0.05) st.v = 0;
@@ -465,7 +488,7 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
     st.v = 0;
   }
   const next = lanePose(lane, st.s, st.aside);
-  const y = roadY(ctx, next.x, next.z);
+  const y = roadY(ctx, lane, next.x, next.z);
   v.velocity = { x: (next.x - v.position.x) / dt, y: 0, z: (next.z - v.position.z) / dt };
   v.position = { x: next.x, y, z: next.z };
   v.yaw = next.yaw;

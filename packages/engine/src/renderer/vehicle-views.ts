@@ -4,6 +4,7 @@ import type { RenderQuality } from "../npr/quality";
 import type { CityKit } from "./city-kit";
 import { type VehicleTemplate, paintOf, vehicleTemplates } from "./vehicle-models";
 import { pickVariant } from "./vehicle-variants";
+import { type CarAt, rampPitch } from "./alchemia/parking-traffic";
 
 export type VehicleDescriptor = Extract<ViewDescriptor, { kind: "vehicle" }>;
 
@@ -104,6 +105,11 @@ class Fleet {
     if (this.members.delete(id)) this.dirty = true;
   }
 
+  /** Where each one is and its heading. */
+  *cars(): IterableIterator<CarAt> {
+    for (const m of this.members.values()) yield { x: m.transform.position.x, z: m.transform.position.z, yaw: m.transform.yaw };
+  }
+
   clear(): void {
     this.members.clear();
     this.dirty = true;
@@ -169,24 +175,32 @@ class Fleet {
     mesh.buildBoundingInfo(this.min, this.max);
   }
 
-  /** Writes a template turned by the yaw and moved to the transform into the shared buffers. */
+  /**
+   * Writes a template turned by the yaw and moved to the transform into the shared buffers; on
+   * Alchemia's ramp down to P-1 its nose tipped to the ramp's grade first (`rampPitch`).
+   */
   private place(t: VehicleTemplate, offset: number, tr: Transform): void {
     const c = Math.cos(tr.yaw);
     const s = Math.sin(tr.yaw);
+    const pitch = rampPitch(tr.position.x, tr.position.z, tr.yaw);
+    const [cp, sp] = [Math.cos(pitch), Math.sin(pitch)];
     const { x: px, y: py, z: pz } = tr.position;
     const src = t.positions;
     const nsrc = t.normals;
     let o = offset * 3;
     for (let i = 0; i < src.length; i += 3, o += 3) {
+      // Nose up about its own x (its front +z), then its heading about y.
       const x = src[i] as number;
-      const z = src[i + 2] as number;
+      const y = (src[i + 1] as number) * cp + (src[i + 2] as number) * sp;
+      const z = (src[i + 2] as number) * cp - (src[i + 1] as number) * sp;
       this.positions[o] = px + x * c + z * s;
-      this.positions[o + 1] = py + (src[i + 1] as number);
+      this.positions[o + 1] = py + y;
       this.positions[o + 2] = pz - x * s + z * c;
       const nx = nsrc[i] as number;
-      const nz = nsrc[i + 2] as number;
+      const ny = (nsrc[i + 1] as number) * cp + (nsrc[i + 2] as number) * sp;
+      const nz = (nsrc[i + 2] as number) * cp - (nsrc[i + 1] as number) * sp;
       this.normals[o] = nx * c + nz * s;
-      this.normals[o + 1] = nsrc[i + 1] as number;
+      this.normals[o + 1] = ny;
       this.normals[o + 2] = -nx * s + nz * c;
     }
   }
@@ -295,6 +309,11 @@ export class VehicleViews {
   /** False for an unknown id. */
   move(id: EntityId, t: Transform): boolean {
     return this.driving.move(id, t);
+  }
+
+  /** The vehicles driving now, where each one is and its heading (Alchemia's P-1 lifts its shutters before them). */
+  cars(): IterableIterator<CarAt> {
+    return this.driving.cars();
   }
 
   despawn(id: EntityId): void {

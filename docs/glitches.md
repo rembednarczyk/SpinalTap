@@ -1465,18 +1465,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `stray-bodies.ts:31` liczy `look = fnv1a("#"+id)`, a po wczytaniu `id` jest nowe; rabuś za życia ma `look` z klucza `${id}:m${i}` (`micro-events.ts:54`), więc zmienia wygląd już przy przejściu w ciało; ofiary pomocy z `passerBy` bez klucza tak samo; łamie ADR-0076 §1 (wygląd stały między zapisami); widoczne dopiero od etapu 2 (warianty); naprawa: `look` w `StrayBodySnapshot` (migracja) albo z danych zapisu
 - Pakiet właściciela: packages/sim, packages/persistence
 
-### G-488 Waga puli modeli niebędąca liczbą daje zawsze ostatni plik
-- Status: w PR #388 (7.11, orkiestrator; czeka na CI)
-- Ważność: S4 · Zasięg: `pickFromPool` w `model-cast.ts`: `weight` = `"abc"` daje NaN i wybór ostatniego pliku puli, także z wagą ujemną; `parseModelManifest` nie sprawdza typu ani znaku `weight`; przy okazji: próg `< 50` MiB w `model-textures.test.ts` nie odróżnia stanu przed i po, a `loadToonModel` nie ma wywołań w kodzie
-- Pakiet właściciela: packages/engine (renderer)
-
-### G-490 Przez strop P−1 Alchemii widać półprzezroczysty stożek
-- Status: w PR #385 (7.11, czeka na weryfikację; zgłoszone przez budowniczego ADR-0074 etap 4)
-- Ważność: S4 · Zasięg: na zrzucie `after/e4-deck.png` stożek (prawdopodobnie poświata latarni albo drona z T0) przechodzi przez strop parkingu; do sprawdzenia też, czy w food hallu z etapu 1 nie pada deszcz pod stropem
-- Pakiet właściciela: packages/engine (renderer: efekty)
-
 ### G-491 Auto na rampie P−1 pojawia się i znika na szczycie rampy
-- Status: zgłoszone (7.11, budowniczy ADR-0074 etap 4)
+- Status: częściowo w PR #382 (8.11; auta pojawiają się i znikają poza szczytem rampy, ale wyjeżdżające znika w (450; 26), w połowie kwartału Lubartowskiej, w polu widzenia z placu; poprawka: `OUT_WAY` do Olejnej (454,9; 42,8), razem z G-510 i G-492)
 - Ważność: S4 · Zasięg: przy chodniku Bajkowskiego auto wjeżdżające i wyjeżdżające z P−1 materializuje się i znika zamiast włączać się w ruch
 - Pakiet właściciela: packages/engine (renderer)
 
@@ -1490,18 +1480,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: widoczna też na main; klucz ALPHATEST razy jasny teksel w ścieżce bez odcienia (etap 2 naprawił tylko ścieżkę TINT)
 - Pakiet właściciela: packages/engine (renderer: toon-shader)
 
-### G-495 `models.spec` czasem mierzy klatkę bez aktywnych siatek
-- Status: w PR #387 (7.11, czeka na CI; `sampleNow` po krokach, budżet sceny `models` 465/158)
-- Ważność: S4 · Zasięg: na main w dwóch z trzech przebiegów pomiar 324/0 (wywołania / aktywne siatki); pomiar niestabilny, bramka może przepuścić regresję; przy okazji: NPC „doker” w dokach bez wpisu w obsadzie, akcesoria sztywne (fartuch jak deska, dłonie siedzących sprzedawców przez niego); potwierdzone w 4 przebiegach przy load 10–12 (budowniczy i weryfikator #376): koszt wariantów i fartucha nie jest mierzony lokalnie
-- Pakiet właściciela: e2e (QA)
-
 ### G-496 Posiłki w dokach mogą stać w bryłach
 - Status: zgłoszone (7.11, naprawiacz G-485; pomiar zgrubny)
 - Ważność: S4 · Zasięg: test `reinforcement-sidestep.test.ts` (G-208) notuje kroki z wnikaniem w bryły do 0,38 m, przed i po G-485 (900 kroków: ziarno 21 ok. 1355, ziarno 5 ok. 1746); licznik filtruje wysokość brył prosto, więc część to może być fałsz; do sprawdzenia sondą; weryfikator #377: po G-485 wnikanie posiłków w bryły ponad 1 mm 116/106 → 0/0 kroków (liczby autora 1355/1746 liczyły bryły podłogi), do zamknięcia po sondzie
 - Pakiet właściciela: packages/sim (AI, ruch)
 
 ### G-498 Kontrola `underground-level-exit` liczy krawędzie grafu zamiast wyjść
-- Status: zgłoszone (7.11, weryfikator #375)
+- Status: częściowo w PR #398 (8.11; kontrola liczy wyjścia po punktach na granicy, nie krawędzie; zostaje część renderera: aktywne siatki miasta nad sceną `alchemia-p1`)
 - Ważność: S4 · Zasięg: `tools/glitch-scan/test/level-exit-checks.ts`: dwie krawędzie przez jedne drzwi dają „2 wyjścia”, więc kontrola może przepuścić poziom z jednym wyjściem; przy okazji: scena `alchemia-p1` pod ziemią ma aktywne siatki miasta nad sobą (`map-ground` 11, `map-signs` 11, `map-near` 7), brak zasłaniania dla wnętrz podziemnych to kandydat na oszczędność budżetu
 - Pakiet właściciela: tools/glitch-scan, packages/engine (renderer)
 
@@ -1509,11 +1494,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, weryfikator #375)
 - Ważność: S4 · Zasięg: `packages/persistence/src/alchemia-parking.ts` usuwa stan Sachiko (wzorzec `MOVED_PEOPLE` z etapu 1), więc po wczytaniu zapisu v35 wraca zdrowa; wzorzec przyjęty, ale skutek nieopisany w ADR ani w teście
 - Pakiet właściciela: packages/persistence
-
-### G-500 Asfalt alejek parkingu w173531008 urywa się na parapetach rampy P−1 i wchodzi pod domek klatki
-- Status: w PR #382 (7.11, ADR-0074 etap 7, przegląd kuratora; decyzja użytkownika 7.11: plac i zielony dach)
-- Ważność: S4 · Zasięg: wykop rampy przecina oś alejki w177513189 na 17,6 m, szyb klatki na 2,2 m, domek klatki stoi na jej zakręcie (zostaje ok. 2,8 m przejazdu); T0 ma nawierzchnię z OSM, choć plan 2026 przewiduje plac i zielony dach; proponowana kontrola `cut-on-road` (baza dziś 3); T-237, T-238
-- Pakiet właściciela: tools/osm-import
 
 ### G-501 Przebranie zdejmuje pożyczoną górę albo dół wariantu postaci
 - Status: zgłoszone (7.11, weryfikator #376)
@@ -1535,25 +1515,130 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `model-apron.ts` tnie całymi trójkątami (próg `FACING` 0,35, ±0,09 wzrostu), więc boki kamizelki i spodni Mori mają białe zęby, a rąbek fartucha Kenty wystaje zębami spod bioder siedzącego; poprawka: przycięcie trójkątów na granicy albo maska; przy okazji: test „at most four looks” w `model-variants.test.ts` przekracza 20 s pod obciążeniem (4000 kroków `setTimeout(0)` dla 12 modeli)
 - Pakiet właściciela: packages/engine (renderer)
 
-### G-506 Generator mebli ignoruje `yaw` grup planu z `points` (ławki placu T0 tyłem do trawników)
-- Status: w PR #382 (7.11, runda 2; kurator przeglądu #382)
-- Ważność: S4 · Zasięg: `placeItem` dla grup z `points` ustawia `yaw: null` (props-gen.ts ok. 245), `openFacing` odwraca 7 z 8 ławek placu T0 od trawy, 4 pod pergolą patrzą na wykop rampy; kontrola `plan-yaw-ignored` (baza 8)
-- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
-
-### G-507 Pastorał przy przyczółku wiaduktu Zamkowej ma latarenkę na wysokości przechodniów
-- Status: zgłoszone (7.11, kurator przeglądu #383)
-- Ważność: S4 · Zasięg: (756,8; 175,7) stoi 1,85 m pod pomostem, 2 m od niego (poniżej progu `DECK_DROP` 2,5 m), latarenka ok. 1,55 m nad pomostem, 0,35 m od kostki; poprawka: niższy próg albo `byParapet` od ok. 1,5 m; zaostrzenie `lamp-beside-deck` do 1,5 m (baza 1)
-- Pakiet właściciela: tools/osm-import (props)
-
 ### G-508 Kanciaste górki terenu
 - Status: zgłoszone (7.11, użytkownik)
-- Ważność: S3 · Zasięg: w wielu miejscach miasta wzniesienia terenu z NMT wyglądają kanciasto (widoczne płaskie trójkąty i ostre załamania zamiast łagodnych zboczy); do ustalenia: rozdzielczość siatki terenu (4 m i skośne cięcie), wygładzanie NMT przy imporcie, normalne cieniowania (płaskie zamiast uśrednionych), krawędzie NPR na załamaniach; najpierw pomiar i zrzuty kilku miejsc, potem poprawka z testem `map-ground-golden`
+- Ważność: S3 · Zasięg: w wielu miejscach miasta wzniesienia terenu z NMT wyglądają kanciasto (widoczne płaskie trójkąty i ostre załamania zamiast łagodnych zboczy); do ustalenia: rozdzielczość siatki terenu (4 m i skośne cięcie), wygładzanie NMT przy imporcie, normalne cieniowania (płaskie zamiast uśrednionych), krawędzie NPR na załamaniach; najpierw pomiar i zrzuty kilku miejsc, potem poprawka z testem `map-ground-golden`; pomiary opiekuna mapy: krakowskie-0-0 szum NMT przy ścianach (1 krawędź > 20° pod budynkiem), krakowskie-0-1 jeden lokalny dół (G-523: 4 krawędzie > 20°); zalecany próg kontroli `terrain-crease` 15° bez obrysów budynków
 - Pakiet właściciela: tools/osm-import (teren), packages/engine (renderer: teren)
 
-### G-509 Stożek odblasku na stropie food hallu Alchemii (i możliwy w kapsule)
-- Status: zgłoszone (7.11, naprawiacz G-490)
-- Ważność: S4 · Zasięg: lampa w `alchemia-view.ts` wisi 0,4 m pod stropem hali (zrzut `shots/g490/after/hall-north.png`), lampa w `capsule-room-view.ts` 0,3 m pod sufitem; poprawka jak w P−1: lampa w oprawie stropu (po G-490 shader już nie świeci od tyłu)
-- Pakiet właściciela: packages/engine (renderer)
+### G-510 Auta rampy P−1 jadą osią Bajkowskiego i Lubartowskiej, a auta ruchu przez nie przejeżdżają
+- Status: zgłoszone (8.11, kurator przeglądu #382)
+- Ważność: S4 · Zasięg: `parking-traffic.ts`: `IN_WAY`/`OUT_WAY` na osi jezdni (np. (407,5; −16,5)), a ruch symulacji ma na Bajkowskiego dwa pasy ±1,6 m; auto szerokości ok. 1,8 m zachodzi na oba, jedzie 2,5 m/s wobec 8 m/s ruchu, bez bryły (G-492); skręt w lewo powinien iść z lewego pasa (`turn:lanes=left|right`); pas wjazdu w `TRAFFIC_ROUTES` sim na osobny PR ze złotym hashem; kontrola `ramp-car-off-lane` (baza dziś 9 punktów)
+- Pakiet właściciela: packages/engine (renderer), packages/sim (G-492)
+
+### G-515 Cywile w modelu VRoid trzymają lewą rękę przy twarzy bez parasola
+- Status: zgłoszone (8.11, budowniczy ADR-0076 etap 3a)
+- Ważność: S4 · Zasięg: poza parasola riga zostaje na modelu VRoid, choć parasol jest ukryty; u Ume i innych starszych mocno odmładza sylwetkę; przy okazji: pochylenie starszych na Base_Male (Sabu, Goro, Genzō) słabo czyta się z boku (głowa Sabu wysunięta o ok. 10 cm, na zrzucie prawie prosto), do podniesienia `stoop` w manifeście
+- Pakiet właściciela: packages/engine (renderer: pozy, modele)
+
+### G-516 Spódnica Seki przebita w pozach siedzenia i snu
+- Status: zgłoszone (8.11, naprawiacz G-514)
+- Ważność: S4 · Zasięg: sonda `seki-skirt`: w `sit` 2,0 cm, w `sleep` 6,9 cm (oba uda, spread 0); dotyczy scen, w których bohaterka siada albo śpi; przy okazji: poza `holdingDown` nie klęczy naprawdę (tylne kolano ok. 0,27 m nad ziemią, tylna stopa w powietrzu); po #396 tylne kolano i stopa w `holdingDown` 0,29 i 0,34 m nad ziemią, a oko FPP w duszeniu (`choke-arms.ts`, `eyeHeightAt(0.7)` 1,284 m) ok. 9 cm pod głową TPP: do wyrównania przy prawdziwym klęczeniu
+- Pakiet właściciela: packages/engine (renderer: pozy)
+
+### G-518 Hina (dziecko) ma kolizję i strefę trafień dorosłego
+- Status: zgłoszone (8.11, weryfikator #395)
+- Ważność: S4 · Zasięg: po etapie 3a Hina rysuje się w skali 0,74, ale kolizja i trafienia w sim mają wymiar dorosłego, więc trafienie może wypaść nad głową; przy okazji: `fit` przycinany do 0,8 (torba Hiny ok. 8% za duża), niejednorodne skalowanie korzenia przekosi rekwizyty w dłoni (miotła Ume ok. 6%)
+- Pakiet właściciela: packages/sim (wymiary postaci), packages/engine (renderer)
+
+### G-519 Kratki ściekowe i krawężnik przy kostce T-243 na KP, 3 Maja i Kołłątaja
+- Status: zgłoszone (8.11, kurator przeglądu #397)
+- Ważność: S4 · Zasięg: 9 kratek usuniętych przez `grateAt` (odrzucenie „kerb” w `props-decals-street.ts`), m.in. (−113,9; −38,3), (−118,0; −53,9), (−132,2; −54,8), (−103,7; −80,5), (−97,7; −81,3), (−97,4; −75,0), (−103,4; −74,5), (−107,7; −112,3), (−110,5; −134,2); reguła przepuszczała gołą ziemię, a odrzuca kostkę `square`; między jezdnią a `square` nie rysuje się krawężnik, w rzeczywistości jest; poprawka: krawężnik i kratki przy obszarach-chodnikach (np. `footway=sidewalk` → `sidewalk`) albo `square` w regule; kontrola `grate-kerb-square` (baza ≥ 9; w mieście 182 odrzuceń „kerb”)
+- Pakiet właściciela: tools/osm-import (props-decals-street), packages/engine (renderer: krawężniki)
+
+### G-520 Jezdnia 3 Maja i róg KP/3 Maja/Kołłątaja przesunięte na wschód (T-244)
+- Status: zgłoszone (8.11, kurator przeglądu #397)
+- Ważność: S4 · Zasięg: x −122…−100, z −64…−13; na ortofoto zachodni krawężnik ok. 3–4 m dalej na zachód niż krawędź jezdni w grze (−113,8 przy z −40); w grze ten pas to chodnik i kostka T-243 (wcześniej goła ziemia), w rzeczywistości lewy pas ruchu i asfalt skrzyżowania; por. T-094
+- Pakiet właściciela: tools/osm-import
+
+### G-522 Klinowe szczeliny bez nawierzchni między jezdnią a chodnikiem Krakowskiego
+- Status: krok 1 scalony w #400, krok 2 w PR #409 (reguła `kerbFills`, `kerb-gap-bare` 103 204 → 32 148; przegląd kuratora w toku) (8.11, kontrola `kerb-gap-bare`, baza 103 982 próbek = 6 499 m² w 2 155 skupieniach; przyczyna systemowa: import kładzie jezdnię krócej niż chodnik wzdłuż ulic, pas 1–2,5 m; krok 2: reguła importu, po scaleniu #397)
+- Ważność: S3 · Zasięg: (−120,5..−114; 54,5..101) 128 m², (−104,5..−102,5; −6,5..13) 48 m², (−121,5..−120,5; 74,5..100,5) 27 m², także części nieliczone skanem; zrzuty `kp-strip-g`, `s-strip-l`, `wedge`; przyczyna: jezdnia i chodnik się nie schodzą; propozycja `kerb-gap-bare` z przeglądu G-440 (baza ok. 35 631 próbek 0,25 m w mieście)
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-523 Dół 3,7 m w dziedzińcu pod w55897055 (krakowskie-0-1)
+- Status: zgłoszone (8.11, opiekun mapy; do oceny kuratora: prawdziwy dół czy artefakt NMT)
+- Ważność: S4 · Zasięg: teren spada z 0,6 do −3,5 m na ok. 25 × 15 m (x −175..−150, z −5..10), najgłębiej (−160; 5); czarny cokół ściany 3–4 m od dna (`pit-e`, `pit-f`, `pit-g`); `SHAPED_TERRAIN` bez `PADS`; to tu 4 krawędzie terenu > 20° (G-508); przy okazji: `steps-band-hidden` na krawędzi chunka (−200; 125), pasmo 3 × 0,2 m, niewidoczne dla gracza
+- Pakiet właściciela: tools/osm-import (teren NMT)
+
+### G-524 Złoty hash nie obejmuje ruchu aut
+- Status: zgłoszone (8.11, weryfikator #399)
+- Ważność: S4 · Zasięg: `determinism.test.ts` liczy hash z `snapshot` (zapis), a pojazdów w zapisie nie ma; test „the traffic leave the golden run as it was” celowo zakłada, że ruch hasha nie zmienia; zmiana tras miasta przeszłaby niezauważona; poprawka: złoty wzorzec przebiegu ruchu (pozycje i id aut po N krokach); przy okazji: `ramp-car-off-lane` sprawdza tylko wierzchołki trasy, nie odcinki
+- Pakiet właściciela: packages/sim (testy), tools/glitch-scan
+
+### G-525 Objazd gracza przez auta ruchu nie zna ścian
+- Status: zgłoszone (8.11, weryfikator #399; na rampie P−1 naprawiane w #399 runda 2)
+- Ważność: S3 · Zasięg: `traffic-system.ts` (`MAX_ASIDE` 2,8 m) zjeżdża w bok bez sprawdzania brył; na rampie P−1 auto przejeżdżało przez ścianę; do sprawdzenia kabiny, fartuch P−1 i wąskie przejazdy w mieście
+- Pakiet właściciela: packages/sim
+
+### G-526 Lampa hali Alchemii oświetla przez strop ściany brył na dachu
+- Status: zgłoszone (8.11, naprawiacz G-509)
+- Ważność: S4 · Zasięg: światło punktowe food hallu w obrysie klipu oświetla od dołu ściany boczne brył na dachu (trawniki zielonego dachu ok. 860 punktów próbnych, domek klatki, kiosk windy); przeciek tego samego rodzaju co G-263; był przed G-509
+- Pakiet właściciela: packages/engine (renderer: światła punktowe)
+
+### G-527 Goła ziemia na podwórzach i przy gmachach Krakowskiego Przedmieścia wschód (krakowskie-1-1)
+- Status: zgłoszone (8.11, opiekun mapy, komórka krakowskie-1-1; naprawa po G-521, bo te same pliki korekt)
+- Ważność: S3 · Zasięg: 87 kwadratów 10 × 10 m `landuse-bare`, 1540 m² w 60 skupieniach (6159 próbek 0,5 m); największe: 397 m² (x 115..177; z 10..31) i 151 m² (119..191; 5..45) przy UM Collegium Maximum w67499318 (`amenity=university`), 291 m² (146..180; 100..141) i 113 m² (168..180; 109..131) za w232674406 i kamienicami, 145 m² (205..217; −20..7) i 48 m² (203..222; 8..18) przy garażach w67499326 i w67499315, 106 m² (20..42; 122..140) i 42 m² (20..29; 139..144) przy Collegium Medicum w232674395 i kościele w232674421, dziedziniec SP nr 24 przy w232674397 (ok. 136 m² w 4 skupieniach), zaplecze Radziwiłłowskiej 33 m² (147..166; 93..98); zrzuty `shots/opiekun-k11/coll-g.png`, `yard-s-g.png`; przyczyna jak G-513 i G-521 (OSM bez nawierzchni podwórek, dziedzińców uczelni i szkoły); ok. 94% powierzchni to 6 największych skupień; test przyjęcia jak `landuse-bare-krakowskie.test.ts`
+- Pakiet właściciela: tools/osm-import (korekty)
+
+### G-533 Auto rampy P−1 nie objeżdża gracza na dolnej połowie pasa w dół
+- Status: zgłoszone (8.11, weryfikator #399)
+- Ważność: S4 · Zasięg: `ownWayRoom` w `packages/sim/src/content/traffic-ramp.ts` bierze najmniejsze miejsce w oknie 14 m naprzód, a łuk u stopy rampy (miejsce 0) wchodzi w okno już od z ≈ 8; na pasie w dół przy z ≈ 8–22 auto IN stoi i trąbi, choć do wschodniej ściany są prawie 2 m; przykład: ziarno 1234, gracz (416,15; 12), 1,3 m od osi pasa, auto stoi 8 s i rusza po zejściu gracza; bezpieczne, ale zachowawcze; test `alchemia-ramp-pass` ma przypadki „down” tylko przy z 4–8
+- Pakiet właściciela: packages/sim (ruch aut)
+
+### G-534 Auto pojawia się tuż przy graczu poza jego widokiem i go spycha
+- Status: zgłoszone (8.11, weryfikator #399)
+- Ważność: S4 · Zasięg: `comeAndGo` nie ma minimalnej odległości od gracza; przykład: ziarno 77, ruch high, 11:00, gracz (413,25; −13,5), yaw 0: `alchemia-p1:in` pojawia się w kroku 1 przy (412,96; −13,72) i spycha gracza; najpewniej dotyczy też tras miasta (niesprawdzone)
+- Pakiet właściciela: packages/sim (ruch aut)
+
+### G-536 Goła ziemia na placu przy Nowym Placu Targowym, Nadstawnej i na podwórzach Podzamcza (podzamcze-1-1)
+- Status: w PR #408 (8.11, 17 obszarów T-246/* razem z G-540; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; przegląd kuratora w toku; zgłoszone przez opiekuna mapy, komórka podzamcze-1-1)
+- Ważność: S3 · Zasięg: 93 kwadraty 10 × 10 m `landuse-bare`, ok. 2005 m² (8021 próbek 0,5 m) w 28 skupieniach; największe (m², x, z): 680 (747..800; 446..490) przy parkingach w227698438 i w227698440, postoju taxi w227698439 i sklepie w73833921; 221 (735..750; 452..511) za Nova w66264174; 159 (815..841; 450..485) przy kioskach w73833930/31/32; 153 (742..769; 513..536) przy skraju Ruskiej; 121 i 107 (848..868; 507..526) przy Szkolnej; 110 (769..808; 501..526); 98 (807..828; 458..490); 91 (860..878; 487..498); dziewięć największych to ok. 88%; 60% próbek w `landuse=commercial` w1305996965 bez `surface`, 37% w pasie do 5 m od ścian; zrzuty dzienne `shots/opiekun-p11/d-d1-d.png`, `d-b1-b.png`, `d-a2-plac-e.png`; przyczyna jak G-513, G-521, G-527; test przyjęcia: `landuse-bare` w komórce do ≤ 10% z bazą obniżoną w tym samym commicie
+- Pakiet właściciela: tools/osm-import (korekty nawierzchni)
+
+### G-540 Goła ziemia na podwórzach i placach Podzamcza: Lubartowska, Probostwo, Nowy Plac Targowy, Ruska (podzamcze-0-1)
+- Status: w PR #408 (8.11, 17 obszarów T-246/* razem z G-536; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; przegląd kuratora w toku; zgłoszone przez opiekuna mapy, komórka podzamcze-0-1)
+- Ważność: S3 · Zasięg: 81 kwadratów 10 × 10 m `landuse-bare`, ok. 1743 m² (6972 próbki 0,5 m; pierwotnie zaniżone do 2180 przez błąd zaokrąglenia) w 28 skupieniach; największe (m², x, z): 208 (609..662; 386..457) wzdłuż Lubartowskiej i przy Nowym Placu Targowym, 48 (606..630; 398..461), 38 (636..650; 559..580) przy parkingu w227679484, 37 (520..530; 427..447), 34 (676..715; 567..580) przy Ruskiej; kontekst OSM: 36% w `landuse=retail` w291844839 bez `surface`, 20% w `landuse=commercial` w1094207955, 7% w `landuse=retail` w1547216431, 35% poza wielokątami; zrzuty `shots/opiekun-p01/d-s3-slope2.png`, `d-a1-big-w.png`, `d-a2-big-n.png`; przyczyna jak G-513, G-521, G-527, G-536; przy okazji w komórce `kerb-gap-bare` 116 trafień (G-522) i 7 znanych `lane-dead-end`, G-508 tu to prawdziwe skarpy NMT (największa 548..570 × 538..560, 33°)
+- Pakiet właściciela: tools/osm-import (korekty nawierzchni)
+
+### G-546 Kurosawa nosi młodzieżową bluzę z kapturem zamiast garnituru
+- Status: zgłoszone (8.11, weryfikator #404; czeka na plik z VRoid Studio, ADR-0076 decyzja 1 B)
+- Ważność: S4 · Zasięg: `kurosawa.vrm` (HairSample_Male CC0) ma bluzę z kapturem w jasnych pasach i rękawach; ciemny odcień z `dress` i okulary łagodzą, ale człowiek Kagami wygląda młodziej, niż pasuje do postaci; przy okazji drobne z weryfikacji: tytuł testu w `model-kurosawa.test.ts` wymienia Kaito, a sprawdza tylko Base_Male; komentarz „in a dark suit” w `model-manifest.test.ts` nieaktualny; krój `M00_006` bez numeru wersji w `model-library.ts`
+- Pakiet właściciela: packages/engine (renderer: modele), packages/app/public/models
+
+### G-547 `kurosawa.vrm` wczytuje się na ekranie ładowania, choć Kurosawa pojawia się w II akcie
+- Status: w PR #407 (8.11, ADR-0076 etap 4a: start 7 plików / 42,5 MiB → 5 / 31,0 MiB, reszta w tle; weryfikator runda 1 NIE PRZYJĘTE przez G-560, runda 2 w toku)
+- Ważność: S4 · Zasięg: +6 MiB na starcie; `donorsOf` ładuje wszystkie pliki manifestu przy liczeniu dawców ubrań; wczytywanie w tle według dzielnic i aktów to etap 4
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-550 Nieudana asercja na teksturach w testach modeli kończy worker vitest brakiem pamięci
+- Status: zgłoszone (8.11, budowniczy ADR-0076 etap 4a)
+- Ważność: S4 · Zasięg: `toContain` na tablicy tekstur w `packages/engine/test/model-variants.test.ts` przy porażce wypisuje graf sceny i kończy się OOM w workerze (SIGABRT) zamiast czytelnego błędu; `model-kurosawa.test.ts` obchodzi to porównaniem wartości logicznych; poprawka: porównywać nazwy albo wartości logiczne
+- Pakiet właściciela: packages/engine (testy)
+
+### G-555 Import nie rysuje obszarów `highway=service` z `area=yes`
+- Status: zgłoszone (8.11, kurator przeglądu #405)
+- Ważność: S4 · Zasięg: `areaSurface` zwraca null dla `highway=service` + `area=yes`, więc asfalt tych obszarów nie powstaje; 4 obszary, ok. 2 970 m²: w232464419 (410 m²), w283151244 (1 567 m²), w294902807 (864 m²), w1022724910 (131 m², pętla podjazdu kliniki Radziwiłłowska 13); propozycja kontroli `highway-area-undrawn`, baza 4
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-556 Budynek ze środkiem poza mapą znika w całości, także w części leżącej w chunku
+- Status: zgłoszone (8.11, kurator przeglądu #405)
+- Ważność: S3 · Zasięg: w mieście 50 budynków, ok. 10 100 m²; w krakowskie-0-1 Cicha 3, 5, 6 i 8 (281 m²), które w grze dają gołą ziemię w pasie Cichej i przy ogrodzie na zachód od Cichej 4; Ordynacki i Kuria już w T-058/G-096; propozycja kontroli `edge-building-dropped` (część w chunku > 2 m², środek poza mapą, poza rejestrem), baza 50 albo 48 bez T-058
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-560 Wygląd postaci tła zależy od tego, które pliki modeli są już wczytane
+- Status: zgłoszone (8.11, weryfikator #407; blokuje #407, poprawka w rundzie 2)
+- Ważność: S3 · Zasięg: w gałęzi #407 `countDonors` (`character-models.ts`) liczy dawców tylko z wczytanych plików, a `donorOf` (`model-dress.ts:48-49`) wybiera teksturę jako `floor(fraction * list.length)`; ta sama postać tła (to samo ziarno) po ponownym ubraniu nosi inne spodnie lub górę po wczytaniu `mori.vrm` w tle i po `kurosawa.vrm` w II akcie; łamie decyzję „Determinizm” ADR-0076
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
+- Status: zgłoszone (8.11, weryfikator #407; istniało przed #407)
+- Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-562 Plik modelu, który się nie wczytał, nie wczyta się ponownie w tej sesji
+- Status: zgłoszone (8.11, weryfikator #407; istniało przed #407)
+- Ważność: S4 · Zasięg: odrzucony promise zostaje w `containers` `ModelLibrary`, bez ponowienia
+- Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
