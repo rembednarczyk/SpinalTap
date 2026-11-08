@@ -100,6 +100,8 @@ import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movemen
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
+import { RAMP_WAYS } from "../../../packages/engine/src/renderer/alchemia/parking-traffic";
+import { rampCarsOffLane } from "./ramp-cars";
 import { CAR_MODELS, MIN_ROUTE, TRAFFIC_LANES, TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
 
 /**
@@ -1241,6 +1243,16 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "pavilion-on-paving": () => pavilionOnPaving(pavingInGame()),
   /** An interior of the game's own under the ground with fewer than two ways out in the level graph (ADR-0074 stage 4: P-1). */
   "underground-level-exit": () => undergroundLevelExits(levelExitsInGame()),
+  /**
+   * A point of the way a car of Alchemia's P-1 ramp drives, on a carriageway and off its turns,
+   * farther than 0.5 m from every car lane (G-510): it drives the street's axis, not a lane.
+   */
+  "ramp-car-off-lane": () =>
+    rampCarsOffLane(
+      RAMP_WAYS,
+      carLanes.map((r) => r.points),
+      (x, z) => surfacesAt(x, z).some((s) => s === "road" || s === "crossing" || s === "cobble"),
+    ),
   /**
    * Ground the game digs out of a chunk, or a solid of its own over the ground, on an OSM street's or
    * footway's axis the import does not drop in its favour with a row in the register (G-500, `cut-on-road.ts`).

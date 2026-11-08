@@ -18,7 +18,7 @@ import { P1, P1_CABINS, P1_RAMP, groundY, p1RampY } from "@seki/sim";
 type P = readonly [number, number];
 
 /** In: east along Bajkowskiego from Świętoduska, left onto the driveway, down the east lane, round onto the apron, west into the south cabin. */
-const IN_WAY: readonly P[] = [
+export const IN_WAY: readonly P[] = [
   [374.5, -14.6],
   [381.4, -17.0],
   [407.5, -16.5],
@@ -34,7 +34,7 @@ const IN_WAY: readonly P[] = [
   [400.8, 26.6],
 ];
 /** Out: east out of the north cabin, round onto the west lane, up it onto the car park. */
-const OUT_WAY: readonly P[] = [
+export const OUT_WAY: readonly P[] = [
   [400.8, 30.0],
   [409.0, 30.0],
   [410.5, 29.6],
@@ -72,6 +72,16 @@ export interface CarPose {
 const lengthOf = (way: readonly P[]): number => way.slice(1).reduce((s, b, i) => s + Math.hypot(b[0] - way[i]![0], b[1] - way[i]![1]), 0);
 const IN_LENGTH = lengthOf(IN_WAY);
 const OUT_LENGTH = lengthOf(OUT_WAY);
+
+/** Arc length of a way's point `i`. */
+const atPoint = (way: readonly P[], i: number): number => lengthOf(way.slice(0, i + 1));
+
+/** The two ways as the glitch scan reads them (G-510): their turns off and onto Bajkowskiego by arc length. */
+export const RAMP_WAYS: readonly { readonly id: string; readonly points: readonly P[]; readonly arcs: readonly (readonly [number, number])[] }[] = [
+  { id: "in", points: IN_WAY, arcs: [[atPoint(IN_WAY, 3), atPoint(IN_WAY, 5)]] },
+  { id: "out", points: OUT_WAY, arcs: [[atPoint(OUT_WAY, 6), atPoint(OUT_WAY, 8)]] },
+];
+
 /** When the car coming in stands in its cabin, and when the one going out is gone up the ramp. */
 const IN_ARRIVES = IN_LENGTH / SPEED;
 const OUT_GONE = OUT_AT + OUT_LENGTH / SPEED;
