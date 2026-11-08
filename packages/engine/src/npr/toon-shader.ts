@@ -317,7 +317,9 @@ void main(void) {
     att *= step(clip.x, vWorldPos.x) * step(vWorldPos.x, clip.z) * step(clip.y, vWorldPos.z) * step(vWorldPos.z, clip.w);
     float ndl = max(dot(n, l), 0.0);
     lit += pointColor[i].rgb * pointColor[i].a * band(ndl * att * 1.8);
-    if (g > 0.0) {
+    // A face turned from the light gets no highlight of it: else a lamp over a ceiling glows
+    // on its underside along the eye's line to it (G-490).
+    if (g > 0.0 && ndl > 0.0) {
       vec3 h = normalize(l + v);
       float s = pow(max(dot(n, h), 0.0), 18.0) * att;
       spec += pointColor[i].rgb * pointColor[i].a * smoothstep(0.18, 0.22, s) * g;

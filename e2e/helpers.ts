@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { type Page, expect } from "@playwright/test";
 
 export const waitForGame = async (page: Page) => {
   await page.waitForFunction(() => window.__seki?.ready === true, null, { timeout: 60_000 });
@@ -29,6 +29,27 @@ export const waitForPlay = async (page: Page) => {
 export const gameState = (page: Page) => page.evaluate(() => window.__seki!.state());
 
 export const perf = (page: Page) => page.evaluate(() => window.__seki!.perf());
+
+/** The draw calls and meshes of the frame just drawn, after the test stepped the game and the city settled. */
+export const sampleNow = async (page: Page) => {
+  // `citySettled()` is the renderer's last frame, which may still be before the step (G-013): its
+  // new district and chunk dressing set the wet probe off only in the next one (G-114). The frame
+  // count and the probe's renders as of the frame the city settled in, read together.
+  const stepped = await page.evaluate(() => window.__seki!.frames!());
+  const settled = await page.waitForFunction(
+    (n) => window.__seki!.frames!() > n && window.__seki!.citySettled() && [window.__seki!.frames!(), window.__seki!.probeRenders!()],
+    stepped,
+    { timeout: 60_000 },
+  );
+  const [drawn, probed] = (await settled.jsonValue()) as [number, number | null];
+  // Two frames drawn after it: an animation frame may skip the draw while the GPU catches up (G-029).
+  await page.waitForFunction((n) => window.__seki!.frames!() >= n + 2, drawn, { timeout: 30_000 });
+  const sample = await perf(page);
+  // A wet-probe render after the city settled puts its six faces, some hundred draw calls, into
+  // the sampled frame (G-114): settled includes the probe, so none may come after it.
+  expect(await page.evaluate(() => window.__seki!.probeRenders!())).toBe(probed);
+  return sample;
+};
 
 /** Freezes the real-time loop and advances the simulation deterministically from the test. */
 export const step = (page: Page, n: number, input: Record<string, unknown> = {}) =>

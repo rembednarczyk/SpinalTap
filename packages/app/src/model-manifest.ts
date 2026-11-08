@@ -22,6 +22,9 @@ const castOf = (json: unknown, base: string): Partial<Record<CastKey, CharacterM
   return Object.keys(out).length > 0 ? out : null;
 };
 
+/** A pool entry's weight, if given, is a finite number of 0 or more; otherwise the entry is dropped (G-488). */
+const validWeight = (entry: unknown): boolean => !isObject(entry) || entry.weight === undefined || (typeof entry.weight === "number" && Number.isFinite(entry.weight) && entry.weight >= 0);
+
 /** `pools`: a background role → its files with weights (ADR-0076); unknown roles and empty pools are dropped. */
 const poolsOf = (json: unknown, base: string): Partial<Record<ModelPoolRole, readonly PooledModelSpec[]>> | null => {
   if (!isObject(json)) return null;
@@ -29,7 +32,7 @@ const poolsOf = (json: unknown, base: string): Partial<Record<ModelPoolRole, rea
   for (const role of MODEL_POOL_ROLES) {
     const list = json[role];
     if (!Array.isArray(list)) continue;
-    const specs = list.map((e) => specOf(e, base)).filter((s): s is PooledModelSpec => s !== null);
+    const specs = list.filter(validWeight).map((e) => specOf(e, base)).filter((s): s is PooledModelSpec => s !== null);
     if (specs.length > 0) out[role] = specs;
   }
   return Object.keys(out).length > 0 ? out : null;

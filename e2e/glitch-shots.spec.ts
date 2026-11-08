@@ -37,7 +37,7 @@ test("shots of the hunters' places", async ({ page }) => {
     const drawn = await page.evaluate(() => window.__seki!.frames!());
     await page.waitForFunction((n) => window.__seki!.frames!() > n && window.__seki!.citySettled(), drawn, { timeout: 30_000 });
     // The city may have settled in a frame the pacer skipped (G-031), leaving the canvas on the
-    // frame before it (G-054): two more frames drawn after it, as `sampleNow` in npr-perf (G-029).
+    // frame before it (G-054): two more frames drawn after it, as `sampleNow` in the helpers (G-029).
     const settled = await page.evaluate(() => window.__seki!.frames!());
     await page.waitForFunction((n) => window.__seki!.frames!() >= n + 2, settled, { timeout: 30_000 });
     const shot = await page.evaluate(() => {

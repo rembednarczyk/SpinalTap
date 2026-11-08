@@ -90,7 +90,10 @@ export const lineOfSight = (world: World<Entity>, from: Vec3, to: Vec3, terrain 
 };
 
 export const EYE_HEIGHT = 1.62;
-/** Eye height fully crouched; matches the crouch pose of the rig. */
+/**
+ * Eye height fully crouched, for line of sight and the first-person camera. It sits a little below
+ * the head of the rig's crouch pose (about 1.22 m since the shallower crouch): it is the eye, not the head.
+ */
 export const CROUCH_EYE_HEIGHT = 1.14;
 const CHEST_HEIGHT = 1.25;
 

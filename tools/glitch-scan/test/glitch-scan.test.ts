@@ -39,8 +39,10 @@ import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered 
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
 import { levelExitsInGame, undergroundLevelExits } from "./level-exit-checks";
+import { cutOnRoadInGame } from "./cut-on-road";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
+import { type CoverageRegister, hitsPerCell, registerProblems } from "../src/map-coverage.ts";
 import { metroLineProtected } from "./metro-line";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
@@ -1155,7 +1157,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
     return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, pavedAt(paving));
   },
-  /** A lamp of the plan's line over a bridge 2.5 m or more under the deck beside it or over it (G-503): on the valley's ground by Zamkowa's viaduct. */
+  /** A lamp of the plan's line over a bridge 1.5 m or more under the deck beside it or over it (G-503, G-507): on the valley's ground by Zamkowa's viaduct, on its abutment's bank. */
   "lamp-beside-deck": () => {
     const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
     return lampsBesideDeck(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, bridgeDeckAt);
@@ -1239,6 +1241,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "pavilion-on-paving": () => pavilionOnPaving(pavingInGame()),
   /** An interior of the game's own under the ground with fewer than two ways out in the level graph (ADR-0074 stage 4: P-1). */
   "underground-level-exit": () => undergroundLevelExits(levelExitsInGame()),
+  /**
+   * Ground the game digs out of a chunk, or a solid of its own over the ground, on an OSM street's or
+   * footway's axis the import does not drop in its favour with a row in the register (G-500, `cut-on-road.ts`).
+   */
+  "cut-on-road": () => cutOnRoadInGame(extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags))),
   /**
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.
@@ -2126,6 +2133,8 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
     mkdirSync("reports", { recursive: true });
     writeFileSync("reports/glitch-scan.json", JSON.stringify({ counts, found }, null, 2));
     if (update && Object.keys(found).length === Object.keys(CHECKS).length) writeFileSync(BASELINE, `${JSON.stringify(counts, null, 2)}\n`);
+    // The hits per cell of the map's coverage register (docs/mapa-pokrycie.md), for its report.
+    writeFileSync("reports/map-coverage-hits.json", JSON.stringify(hitsPerCell(found, MAP_CHUNKS), null, 2));
   });
   for (const [k, check] of Object.entries(CHECKS)) {
     it(`finds no more ${k} than its baseline`, () => {
@@ -2133,4 +2142,10 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
       if (!update) expect(found[k].length, `${k}: ${found[k].length} found, baseline ${baseline[k] ?? 0} (see reports/glitch-scan.json)`).toBeLessThanOrEqual(baseline[k] ?? 0);
     });
   }
+  // After every kind has run: a cell of the coverage register is `czyste` only with no hit of the scan in it.
+  it("holds no hit in a cell the coverage register calls czyste (docs/mapa-pokrycie.json)", () => {
+    if (Object.keys(found).length < Object.keys(CHECKS).length) return;
+    const register = JSON.parse(readFileSync(join(__dirname, "../../../docs/mapa-pokrycie.json"), "utf8")) as CoverageRegister;
+    expect(registerProblems(register, MAP_CHUNKS, hitsPerCell(found, MAP_CHUNKS))).toEqual([]);
+  });
 });

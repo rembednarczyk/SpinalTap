@@ -1,10 +1,15 @@
-import { P1, P1_CABINS, P1_RAMP, p1RampY } from "@seki/sim";
+import { P1, P1_CABINS, P1_RAMP, groundY, p1RampY } from "@seki/sim";
 
 /**
  * The cars of Alchemia's P-1 on the move (ADR-0074 §4, stage 4), for the eye only: one comes down
  * the ramp from Bajkowskiego on the east lane, turns onto the apron and drives into the south
  * hand-over cabin, whose shutter goes up before it and down behind it; half a cycle later another
- * comes out of the north cabin and drives up the west lane onto the car park. The robots of P-2
+ * comes out of the north cabin and drives up the west lane onto the car park. Since stage 7 they come
+ * from the street and go back to it (G-491): the one going in drives east along Bajkowskiego (one way,
+ * from the junction with Świętoduska) and turns left across the footway onto the driveway, the one
+ * going out turns left, east, onto Bajkowskiego and on north up Lubartowska, as the traffic there
+ * goes. They join the street only for the eye: the simulation's traffic has no lane into the ramp.
+ * The robots of P-2
  * (stage 5) take the cars from the cabins and bring them. A fixed cycle of the renderer's own clock,
  * as the drones' (ADR-0058 stage 7): nobody's state, no solid. Pure: poses at a time.
  */
@@ -12,8 +17,14 @@ import { P1, P1_CABINS, P1_RAMP, p1RampY } from "@seki/sim";
 /** A point of a car's way on the map. */
 type P = readonly [number, number];
 
-/** In: down the east lane, round onto the apron, west into the south cabin. */
+/** In: east along Bajkowskiego from Świętoduska, left onto the driveway, down the east lane, round onto the apron, west into the south cabin. */
 const IN_WAY: readonly P[] = [
+  [374.5, -14.6],
+  [381.4, -17.0],
+  [407.5, -16.5],
+  [410.6, -15.7],
+  [413.3, -13.9],
+  [414.6, -11.6],
   [414.9, P1_RAMP.top - 3.5],
   [414.9, P1_RAMP.foot - 0.5],
   [414.6, 25.4],
@@ -30,12 +41,21 @@ const OUT_WAY: readonly P[] = [
   [411.3, 28.6],
   [411.6, 27.2],
   [411.6, P1_RAMP.top - 3.5],
+  [411.6, -11.4],
+  [412.5, -13.7],
+  [414.6, -15.6],
+  [417.6, -16.3],
+  [440.4, -15.85],
+  [442.5, -14.3],
+  [442.9, -9.9],
+  [447.2, 16.4],
+  [450.0, 26.0],
 ];
 
 /** How fast they drive (m/s), how long a cycle is, when the second car leaves its cabin (s). */
 const SPEED = 2.5;
-export const CYCLE = 60;
-const OUT_AT = 30;
+export const CYCLE = 100;
+const OUT_AT = 45;
 /** A shutter rises and falls over this long (s), this high (m). */
 const SHUTTER_TIME = 2;
 export const SHUTTER_RISE = 2.3;
@@ -56,8 +76,11 @@ const OUT_LENGTH = lengthOf(OUT_WAY);
 const IN_ARRIVES = IN_LENGTH / SPEED;
 const OUT_GONE = OUT_AT + OUT_LENGTH / SPEED;
 
-/** The floor under a point of the ways: the ramp's surface over its length, P-1's floor past its foot. */
-const floorAt = (x: number, z: number): number => (x > P1_RAMP.minX && x < P1_RAMP.maxX && z < P1_RAMP.foot ? p1RampY(z) : P1.floor);
+/** The floor under a point of the ways: the ramp's surface over its length, P-1's floor past its foot, the street's ground elsewhere. */
+export const floorAt = (x: number, z: number): number => {
+  if (z > P1_RAMP.top && x > P1_RAMP.minX && x < P1_RAMP.maxX && z < P1_RAMP.foot) return p1RampY(z);
+  return x >= P1.minX && x <= P1.maxX && z >= P1.minZ && z <= P1.maxZ ? P1.floor : groundY(x, z);
+};
 
 /** The point `s` metres along a way, its heading, and its nose's pitch over its own length. */
 const along = (way: readonly P[], s: number): CarPose => {

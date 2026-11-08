@@ -2,9 +2,11 @@
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { P1, P1_CABINS, P1_PIECES, P1_RAMP, P1_RAMP_CUT, P1_STAIR_CUT, p1RampY } from "@seki/sim";
+import { MAP_CHUNKS, P1, P1_CABINS, P1_PIECES, P1_RAMP, P1_RAMP_CUT, P1_STAIR_CUT, groundY, p1RampY } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
+import { pointLightOn } from "../src/npr/toon-point-lights";
+import { TOON_FRAGMENT } from "../src/npr/toon-shader";
 import { CityKit } from "../src/renderer/city-kit";
 import { parseCityKit } from "../src/renderer/city-kit-data";
 import { MeshSink } from "../src/renderer/mesh-sink";
@@ -95,13 +97,32 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     }
   });
 
-  it("drives one car down the ramp into the south cabin and one out of the north cabin up the ramp, on the ramp's surface", () => {
+  /** The map's surface drawn on top at (x, z) in Alchemia's chunk (the last piece holding it). */
+  const surfaceAt = (x: number, z: number): string | null => {
+    const c = MAP_CHUNKS.find((k) => k.id === "krakowskie-2-1")!;
+    const inside = (o: readonly number[]) => {
+      let hit = false;
+      for (let i = 0, j = o.length - 2; i < o.length; j = i, i += 2) {
+        if (o[i + 1]! > z !== o[j + 1]! > z && x < ((o[j]! - o[i]!) * (z - o[i + 1]!)) / (o[j + 1]! - o[i + 1]!) + o[i]!) hit = !hit;
+      }
+      return hit;
+    };
+    return c.ground.reduce<string | null>((s, g) => (inside(g.outline) ? g.surface : s), null);
+  };
+
+  it("brings one car from Bajkowskiego down the ramp into the south cabin and one out of the north cabin up the ramp onto the street, on its surfaces", () => {
     let inSeen = 0;
     let outSeen = 0;
     for (let t = 0; t < CYCLE; t += 0.25) {
       const [a, b] = carPoses(t);
       for (const p of [a, b]) {
         if (!p) continue;
+        // On the street before the ramp's top (stage 7, G-491): on its ground, on a carriageway or the driveway.
+        if (p.z <= P1_RAMP.top || p.x > P1.maxX + 10) {
+          expect(p.y).toBeCloseTo(groundY(p.x, p.z), 6);
+          expect(surfaceAt(p.x, p.z), `${t}: ${p.x},${p.z}`).toMatch(/^(road|footway|crossing)$/);
+          continue;
+        }
         const onRamp = p.x > P1_RAMP.minX && p.x < P1_RAMP.maxX && p.z < P1_RAMP.foot;
         expect(p.y).toBeCloseTo(onRamp ? p1RampY(p.z) : P1.floor, 6);
         // Within the ramp's walls, on the apron or in a cabin: never through a wall.
@@ -118,6 +139,14 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     }
     expect(inSeen).toBeGreaterThan(40);
     expect(outSeen).toBeGreaterThan(40);
+    // They come from the street and go back to it (G-491): from Bajkowskiego by Świętoduska, onto Lubartowska past the stop.
+    const first = carPoses(0)[0]!;
+    expect(first.x).toBeLessThan(380);
+    const seen = (t: number) => carPoses(t)[1];
+    let last = seen(45)!;
+    for (let t = 45; t < CYCLE; t += 0.25) last = seen(t) ?? last;
+    expect(last.z).toBeGreaterThan(20);
+    expect(last.x).toBeGreaterThan(445);
   });
 
   it("stops the rain in the room and the stair house, not over the car park or in the ramp's open trench", () => {
@@ -157,5 +186,30 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     box.city = false;
     view.update(1 / 60);
     expect(view.stats.meshes).toBe(0);
+  });
+
+  it("lights the deck from its ceiling's fittings, never the ceiling itself: no glow on it seen from the deck (G-490)", () => {
+    const { view, materials } = setup();
+    view.update(1 / 60);
+    const lamp = materials.light(PARKING_LAMP_KEY)!;
+    // The toon shader's thresholds: the lowest band and the highlight's smoothstep start there.
+    const BAND = 0.03;
+    const HIGHLIGHT = 0.18;
+    const down = { x: 0, y: -1, z: 0 };
+    let glow = 0;
+    for (let ex = P1.minX + 1; ex < P1_RAMP.minX; ex += 2)
+      for (let ez = P1.minZ + 1; ez < P1.maxZ; ez += 2) {
+        const eye = { x: ex, y: P1.floor + 1.6, z: ez };
+        for (let x = P1.minX; x <= P1.maxX; x += 0.5)
+          for (let z = P1.minZ; z <= P1.maxZ; z += 0.5) {
+            const on = pointLightOn(lamp, { x, y: P1.ceiling, z }, down, eye);
+            if (on.diffuse > BAND || on.specular > HIGHLIGHT) glow++;
+          }
+      }
+    expect(glow).toBe(0);
+    // The deck under it still lit in full.
+    expect(pointLightOn(lamp, { x: lamp.position.x, y: P1.floor, z: lamp.position.z }, { x: 0, y: 1, z: 0 }, { x: 402, y: P1.floor + 1.6, z: 4 }).diffuse).toBeGreaterThan(0.47);
+    // The shader as its mirror: a face turned from a light gets no highlight of it.
+    expect(TOON_FRAGMENT).toMatch(/if \(g > 0\.0 && ndl > 0\.0\)/);
   });
 });
