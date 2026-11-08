@@ -1580,6 +1580,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: teren spada z 0,6 do −3,5 m na ok. 25 × 15 m (x −175..−150, z −5..10), najgłębiej (−160; 5); czarny cokół ściany 3–4 m od dna (`pit-e`, `pit-f`, `pit-g`); `SHAPED_TERRAIN` bez `PADS`; to tu 4 krawędzie terenu > 20° (G-508); przy okazji: `steps-band-hidden` na krawędzi chunka (−200; 125), pasmo 3 × 0,2 m, niewidoczne dla gracza
 - Pakiet właściciela: tools/osm-import (teren NMT)
 
+### G-524 Złoty hash nie obejmuje ruchu aut
+- Status: zgłoszone (8.11, weryfikator #399)
+- Ważność: S4 · Zasięg: `determinism.test.ts` liczy hash z `snapshot` (zapis), a pojazdów w zapisie nie ma; test „the traffic leave the golden run as it was” celowo zakłada, że ruch hasha nie zmienia; zmiana tras miasta przeszłaby niezauważona; poprawka: złoty wzorzec przebiegu ruchu (pozycje i id aut po N krokach); przy okazji: `ramp-car-off-lane` sprawdza tylko wierzchołki trasy, nie odcinki
+- Pakiet właściciela: packages/sim (testy), tools/glitch-scan
+
+### G-525 Objazd gracza przez auta ruchu nie zna ścian
+- Status: zgłoszone (8.11, weryfikator #399; na rampie P−1 naprawiane w #399 runda 2)
+- Ważność: S3 · Zasięg: `traffic-system.ts` (`MAX_ASIDE` 2,8 m) zjeżdża w bok bez sprawdzania brył; na rampie P−1 auto przejeżdżało przez ścianę; do sprawdzenia kabiny, fartuch P−1 i wąskie przejazdy w mieście
+- Pakiet właściciela: packages/sim
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
