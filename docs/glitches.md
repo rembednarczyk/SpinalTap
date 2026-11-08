@@ -1536,7 +1536,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: pozy)
 
 ### G-513 Goła ziemia na podwórkach i przy gmachach Krakowskiego Przedmieścia (krakowskie-0-0)
-- Status: w PR #397 (8.11, przegląd kuratora; 17 obszarów T-243/*, `landuse-bare` komórki 10 075 → 155)
+- Status: w PR #397 (8.11, runda 2: kurator ODSTĘPSTWO CELOWE po poprawce pasa `ck-zachod` na trawnik)
 - Ważność: S3 · Zasięg: 144 kwadraty 10 × 10 m `landuse-bare` w ok. 87 skupieniach, ok. 2500 m²; największe: 244 m² (x −53,8..−13,8; z −94,3..−84,3), 208 m² (−189..−150; −220..−189), 190 m² (−188..−127; −270..−220), 182 m² (−176..−162; −32..−20), 180 m² (−155..−107; −101..−72), 155 m² (−16..−2; −128..−99); zrzuty `shots/opiekun-k00/clD-0.png`, `bare1-a.png`, `sad.png`; przyczyna: import nie kładzie nawierzchni na podwórkach i pasach przy gmachach (`landuse=retail/commercial`, gmachy publiczne); rozszerzenie G-450/T-221; kontrola `landuse-bare` istnieje, poprawka obniża bazę; przy okazji: G-508 w tej komórce to szum NMT przy krawędziach budynków (1 krawędź > 20° pod budynkiem, 15 > 10° w gołym terenie; propozycja `terrain-crease` z progiem 12° bez obrysów budynków), T-204 do sprawdzenia przez kuratora (skan `tree-height-vs-nmpt` 0 w komórce)
 - Pakiet właściciela: tools/osm-import (ground), tools/glitch-scan
 
@@ -1564,6 +1564,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, weryfikator #395)
 - Ważność: S4 · Zasięg: po etapie 3a Hina rysuje się w skali 0,74, ale kolizja i trafienia w sim mają wymiar dorosłego, więc trafienie może wypaść nad głową; przy okazji: `fit` przycinany do 0,8 (torba Hiny ok. 8% za duża), niejednorodne skalowanie korzenia przekosi rekwizyty w dłoni (miotła Ume ok. 6%)
 - Pakiet właściciela: packages/sim (wymiary postaci), packages/engine (renderer)
+
+### G-519 Kratki ściekowe i krawężnik przy kostce T-243 na KP, 3 Maja i Kołłątaja
+- Status: zgłoszone (8.11, kurator przeglądu #397)
+- Ważność: S4 · Zasięg: 9 kratek usuniętych przez `grateAt` (odrzucenie „kerb” w `props-decals-street.ts`), m.in. (−113,9; −38,3), (−118,0; −53,9), (−132,2; −54,8), (−103,7; −80,5), (−97,7; −81,3), (−97,4; −75,0), (−103,4; −74,5), (−107,7; −112,3), (−110,5; −134,2); reguła przepuszczała gołą ziemię, a odrzuca kostkę `square`; między jezdnią a `square` nie rysuje się krawężnik, w rzeczywistości jest; poprawka: krawężnik i kratki przy obszarach-chodnikach (np. `footway=sidewalk` → `sidewalk`) albo `square` w regule; kontrola `grate-kerb-square` (baza ≥ 9; w mieście 182 odrzuceń „kerb”)
+- Pakiet właściciela: tools/osm-import (props-decals-street), packages/engine (renderer: krawężniki)
+
+### G-520 Jezdnia 3 Maja i róg KP/3 Maja/Kołłątaja przesunięte na wschód (T-244)
+- Status: zgłoszone (8.11, kurator przeglądu #397)
+- Ważność: S4 · Zasięg: x −122…−100, z −64…−13; na ortofoto zachodni krawężnik ok. 3–4 m dalej na zachód niż krawędź jezdni w grze (−113,8 przy z −40); w grze ten pas to chodnik i kostka T-243 (wcześniej goła ziemia), w rzeczywistości lewy pas ruchu i asfalt skrzyżowania; por. T-094
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
