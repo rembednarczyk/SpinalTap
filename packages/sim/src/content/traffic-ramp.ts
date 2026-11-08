@@ -70,7 +70,7 @@ const BY_DRIVEWAY = { x: AXIS, z: P1_RAMP.top - 8 } as const;
 /** The city's route that drives Bajkowskiego's left lane past the driveway, eastwards. */
 const leftLaneOf = (routes: readonly TrafficRoute[]): TrafficRoute => {
   const d = (r: TrafficRoute) => projectOn(r.points, BY_DRIVEWAY.x, BY_DRIVEWAY.z);
-  const east = routes.filter((r) => r.use === "cars" && r.id.startsWith("Wacława Bajkowskiego#") && pointAt(r.points, d(r).s).tx > 0.9);
+  const east = routes.filter((r) => r.use === "cars" && r.id.includes("Bajkowskiego#") && pointAt(r.points, d(r).s).tx > 0.9);
   const near = [...east].sort((a, b) => d(a).d - d(b).d)[0];
   if (!near) throw new Error("No lane of Bajkowskiego by Alchemia's driveway");
   return near;
