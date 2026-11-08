@@ -51,6 +51,9 @@ export const applyPose = (rig: CharacterRig, p: JointPose, w: number, fist = 0):
   rig.legR.rotation.x = mix(rig.legR.rotation.x, p.thighR);
   rig.legL.rotation.y = mix(rig.legL.rotation.y, 0);
   rig.legR.rotation.y = mix(rig.legR.rotation.y, 0);
+  // The poses keep the knees together; the crouch's spread (G-512) gives way like the long-gun turn above.
+  rig.legL.rotation.z = mix(rig.legL.rotation.z, 0);
+  rig.legR.rotation.z = mix(rig.legR.rotation.z, 0);
   rig.kneeL.rotation.x = mix(rig.kneeL.rotation.x, p.kneeL);
   rig.kneeR.rotation.x = mix(rig.kneeR.rotation.x, p.kneeR);
   rig.armL.rotation.x = mix(rig.armL.rotation.x, p.armLX);

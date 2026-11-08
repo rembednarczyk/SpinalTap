@@ -34,3 +34,19 @@ describe("death fall on raised ground (G-457)", () => {
     }
   });
 });
+
+describe("death fall from a crouch (G-512)", () => {
+  it("brings the knees in from the crouch's spread, lying like a body that died standing", () => {
+    for (const crouch of [1, 0.5]) {
+      const views = viewsOn(new Scene(new NullEngine()));
+      views.spawn(7, { kind: "enemy", preset: "ganger" }, { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0, crouch });
+      for (let i = 0; i < 30; i++) views.update(0.1);
+      const rig = views.rigOf(7)!;
+      expect(Math.abs(rig.legL.rotation.z)).toBeGreaterThan(0.05);
+      views.despawn(7, true);
+      for (let i = 0; i < 10; i++) views.update(0.1);
+      expect(rig.legL.rotation.z).toBeCloseTo(0, 5);
+      expect(rig.legR.rotation.z).toBeCloseTo(0, 5);
+    }
+  });
+});
