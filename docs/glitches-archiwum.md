@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-511 Znak `spread` w `activity-poses.ts` zwiera nogi zamiast je rozstawiać
+- Status: naprawione (PR #396, 8.11; `applyActivityPose` i `poseParts` tłumu: lewa noga −spread, prawa +spread, jak w kucaniu; testy w `activities.test.ts` i `crowd.test.ts` padają bez poprawki)
+- Ważność: S4 · Zasięg: dodatnie `spread` dla lewej nogi obraca ją do środka (`legL.rotation.z = +0,2` przesuwa kolano z x −0,083 na +0,005), komentarz mówi „feet apart”; wartości 0,04–0,08, sprzed #386
+- Pakiet właściciela: packages/engine (renderer: pozy)
+
+### G-514 Przód spódnicy Seki wcina się w udo przy duszeniu (poza „holdingDown”)
+- Status: naprawione (PR #396, 8.11; `holdingDown` w `grab-pose.ts`: pochylenie 0,15, udo −1,0 rad (biodro 66°), kolano 0,8, ciało 3 cm wyżej; wnikanie 3,8/2,2 cm (duszenie) i 3,9/2,5 cm (zabicie) → najwyżej 0,6 cm; rozjazd głowy TPP i oka FPP w duszeniu ok. 9 cm, tylne kolano i stopa w powietrzu w G-516)
+- Ważność: S4 · Zasięg: `grab-pose.ts:149`, poza postaci chwytającej ma udo L −1,55 rad przy pochyleniu 0,3 (ok. 72° zgięcia w biodrze), ponad granicą ok. 63° dla przodu spódnicy `seki.vrm` (pomiar z #386); brak przypadku w `seki-skirt.test.ts`; przy okazji: śmierć z kucnięcia nie wygasza `body.position.y/z` ani `body.rotation.x` (ciało przesunięte −0,38/−0,14 m, kosmetyka)
+- Pakiet właściciela: packages/engine (renderer: pozy)
+
 ### G-512 Postać zabita w kucki leży z kolanami na zewnątrz
 - Status: naprawione (PR #394, 8.11; `animateDeath` wygasza `rotation.z` nóg, `applyPose` miesza ją do 0; w chwycie z kucnięcia kolana schodzą płynnie, pozy aktywności bez zmian; testy padają bez poprawki)
 - Ważność: S4 · Zasięg: `animateDeath` (`character-animation.ts`, ok. l. 136) nie zeruje `legL/legR.rotation.z`, więc po nowym kucaniu z kolanami na zewnątrz (0,25 rad) ciało leży z rozwartymi kolanami; przy okazji: nieaktualny komentarz `CROUCH_EYE_HEIGHT` w `packages/sim/src/world/hitscan.ts:93` (głowa rigu w kucki 1,22 m, oko 1,14 m)
