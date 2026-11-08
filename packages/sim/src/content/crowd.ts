@@ -12,6 +12,7 @@ import { SEAT_SPOTS } from "./crowd-seats";
 import { offKerbParks, onKerbPark } from "./crowd-kerb-parks";
 import type { CrowdSpot } from "./crowd-spot";
 import { TRAFFIC_ROUTES } from "./traffic";
+import { streetSegments } from "./traffic-ramp";
 import { FOODHALL_CROWD, PARKING_CROWD } from "./alchemia/crowd";
 
 /** The chunks of Lublin that hold the market (in Alchemia, ADR-0063) and the docks (ADR-0045). */
@@ -147,9 +148,8 @@ const carSegments = (() => {
   const cells = new Map<string, (readonly [number, number, number, number])[]>();
   for (const r of TRAFFIC_ROUTES) {
     if (r.use === "deliveries") continue;
-    for (let i = 0; i + 1 < r.points.length; i++) {
-      const [ax, az] = r.points[i] as Pt;
-      const [bx, bz] = r.points[i + 1] as Pt;
+    // At the street's level: Alchemia's ramp routes go under the car park, off it (ADR-0074 §4).
+    for (const [[ax, az], [bx, bz]] of streetSegments(r)) {
       const seg = [ax, az, bx, bz] as const;
       for (let cx = Math.floor((Math.min(ax, bx) - CAR_LANE_REACH) / CAR_CELL); cx <= Math.floor((Math.max(ax, bx) + CAR_LANE_REACH) / CAR_CELL); cx++) {
         for (let cz = Math.floor((Math.min(az, bz) - CAR_LANE_REACH) / CAR_CELL); cz <= Math.floor((Math.max(az, bz) + CAR_LANE_REACH) / CAR_CELL); cz++) {

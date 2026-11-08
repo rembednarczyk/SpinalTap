@@ -42,6 +42,7 @@ import type { Entity } from "../src";
 import { asideFor } from "../src/systems/ai/crowd-walk";
 import { furnitureClearance } from "../src/content/crowd";
 import { TRAFFIC_ROUTES } from "../src/content/traffic";
+import { streetSegments } from "../src/content/traffic-ramp";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { byKey, input, run, teleportPlayer } from "./helpers";
 
@@ -158,7 +159,8 @@ describe("routes and spots of the crowd", () => {
   });
 
   it("keep the deptak's, the squares' and the alleys' walkers off the carriageways the traffic drives", () => {
-    const segs = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries").flatMap((r) => r.points.slice(1).map((p, i) => [r.points[i]!, p] as const));
+    // At the street's level: Alchemia's ramp routes run under the car park's square on their way down to P-1 (ADR-0074 §4).
+    const segs = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries").flatMap(streetSegments);
     const fromLanes = (x: number, z: number) =>
       Math.min(...segs.map(([[ax, az], [bx, bz]]) => {
         const dx = bx - ax;
