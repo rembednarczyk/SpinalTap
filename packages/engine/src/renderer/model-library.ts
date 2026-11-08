@@ -384,6 +384,11 @@ export class ModelLibrary {
         return { container, springs, expressions };
       })();
       this.containers.set(spec.url, pending);
+      // A file that failed is forgotten, so the next ask fetches it again (G-562).
+      const failed = pending;
+      failed.catch(() => {
+        if (this.containers.get(spec.url) === failed) this.containers.delete(spec.url);
+      });
     }
     return pending;
   }
