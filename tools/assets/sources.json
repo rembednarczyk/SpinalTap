@@ -67,6 +67,19 @@
       "used": ["Base_Female.vrm -> packages/app/public/models/base-female.vrm (tools/shrink_glb.py 1024 --keep-morphs=blink,a,i,u,e,o)"]
     },
     {
+      "id": "vroid-hairsample-male",
+      "title": "VRoid Studio CC0 models: HairSample_Male",
+      "author": "pixiv / VRoid Project (VRoidプロジェクト)",
+      "page": "https://opengameart.org/content/vroid-studio-cc0-models",
+      "license": "CC0",
+      "licenseQuote": "License: CC0 (strona paczki na OpenGameArt); metadane VRM pliku HairSample_Male.vrm: licenseName CC0, allowedUserName Everyone, commercialUssageName Allow, otherLicenseUrl VRoid Hub license v1 (redistribution=allow, modification=allow, credit=unnecessary)",
+      "url": "https://opengameart.org/sites/default/files/hairsample_male.zip",
+      "file": "hairsample_male.zip",
+      "sha256": "ba87440272b157a443dbe2cddb375eb175bce3586a45a84779bb018a5e730129",
+      "unzip": "x",
+      "used": ["HairSample_Male.vrm -> packages/app/public/models/kurosawa.vrm (tools/shrink_glb.py 1024 --keep-morphs=blink,a,i,u,e,o)"]
+    },
+    {
       "id": "quaternius-cyberpunk-kit",
       "title": "Cyberpunk Game Kit",
       "author": "Quaternius (quaternius.com)",
