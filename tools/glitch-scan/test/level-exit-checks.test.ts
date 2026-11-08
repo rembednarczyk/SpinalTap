@@ -14,6 +14,15 @@ describe("underground-level-exit (ADR-0074 stage 4)", () => {
     expect(undergroundLevelExits({ ...one, interiors: [{ id: "room", rooms: [room], extra: 1 }] })).toEqual([]);
   });
 
+  it("counts two edges through one door as one way out, and two doors apart as two (G-498)", () => {
+    const nodes = [node("in", 9, -6, 5), node("in2", 9, -6, 6), node("out", 11, -6, 5), node("out2", 11, -6, 6), node("hall", 5, -6, 1), node("yard", 5, -6, -1)];
+    const room1 = { id: "room", rooms: [room], extra: 0 };
+    const oneDoor = { interiors: [room1], nodes, edges: [{ a: "in", b: "out" }, { a: "in2", b: "out2" }, { a: "in", b: "out2" }] };
+    expect(undergroundLevelExits(oneDoor)).toEqual([{ at: "5,5", what: "room: 1 way(s) out" }]);
+    const twoDoors = { interiors: [room1], nodes, edges: [{ a: "in", b: "out" }, { a: "hall", b: "yard" }] };
+    expect(undergroundLevelExits(twoDoors)).toEqual([]);
+  });
+
   it("finds none in the game: P-1 under Alchemia's car park has its ramp, its stair core and the hall's door, a metro platform its flight and its train", () => {
     const k = levelExitsInGame();
     expect(k.interiors.map((i) => i.id)).toContain("alchemia-parking");
