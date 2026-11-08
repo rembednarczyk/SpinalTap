@@ -8,14 +8,35 @@ import type { AddedArea } from "./corrections.ts";
 import { KRAKOWSKIE_AREAS, SETTS, yard } from "./corrections-krakowskie.ts";
 
 /**
- * The paving between the Centrum Kultury's west wing and walls and Plac Lecha Kaczyńskiego w67884913
- * (its edge on its nodes), down to the car park w356947938 by the wing's south wall.
+ * The lawn of Plac Lecha Kaczyńskiego w67884913 up to the Centrum Kultury's main west wall, as on
+ * the orthophoto (PZGiK), where the park's edge stops 2-4 m short of it: from the edge (on its
+ * nodes) to the wall, south to the corner of the west wing.
+ */
+const CK_WEST_LAWN: AddedArea = yard(
+  "ck-zachod-trawnik",
+  { landuse: "grass" },
+  [
+    { x: -150.73, z: -188.55 },
+    { x: -160.15, z: -213.55 },
+    { x: -158.0, z: -221.0 },
+    { x: -157.0, z: -222.0 },
+    { x: -150.0, z: -205.0 },
+    { x: -147.5, z: -198.0 },
+    { x: -149.64, z: -189.58 },
+  ],
+  "trawnik Placu Lecha Kaczyńskiego do zachodniej ściany głównego gmachu Centrum Kultury na ortofoto PZGiK, w OSM park kończy się 2–4 m przed ścianą",
+  ["w67884913", "w67884913", null, null, null, null, "w67884882"],
+);
+
+/**
+ * The paving round the Centrum Kultury's west wing between its walls, Plac Lecha Kaczyńskiego
+ * w67884913 (its edge on its nodes) and the car park w356947938 by the wing's south wall; east of
+ * the wing's north-east corner the lawn `CK_WEST_LAWN` meets it.
  */
 const CK_WEST: AddedArea = yard(
   "ck-zachod",
   SETTS,
   [
-    { x: -150.73, z: -188.55 },
     { x: -160.15, z: -213.55 },
     { x: -188.74, z: -203.62 },
     { x: -191.39, z: -204.61 },
@@ -24,12 +45,10 @@ const CK_WEST: AddedArea = yard(
     { x: -166.11, z: -221.89 },
     { x: -160.36, z: -223.75 },
     { x: -157.0, z: -222.0 },
-    { x: -150.0, z: -205.0 },
-    { x: -147.5, z: -198.0 },
-    { x: -149.64, z: -189.58 },
+    { x: -158.0, z: -221.0 },
   ],
   "kostka wokół zachodniego skrzydła Centrum Kultury między ścianami a Placem Lecha Kaczyńskiego i parkingiem w356947938, w OSM goła ziemia w obszarze landuse=commercial",
-  ["w67884913", "w67884913", "w67884913", "w67884913", "w67884913", null, "w356947938", "w356947938", null, null, null, "w67884882"],
+  ["w67884913", "w67884913", "w67884913", "w67884913", null, "w356947938", "w356947938", null, null],
 );
 
 /**
@@ -250,4 +269,4 @@ const CK_LAWN: AddedArea = yard(
 );
 
 /** T-243's added areas in draw order: Krakowskie Przedmieście's, then this file's. */
-export const T243_AREAS: readonly AddedArea[] = [...KRAKOWSKIE_AREAS, CK_WEST, CK_SOUTH, CK_DRIVE, CK_EAST, CK_KERB, CK_SOUTH_EDGE, CK_LAWN];
+export const T243_AREAS: readonly AddedArea[] = [...KRAKOWSKIE_AREAS, CK_WEST_LAWN, CK_WEST, CK_SOUTH, CK_DRIVE, CK_EAST, CK_KERB, CK_SOUTH_EDGE, CK_LAWN];
