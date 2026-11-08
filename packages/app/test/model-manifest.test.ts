@@ -32,6 +32,10 @@ describe("parseModelManifest", () => {
       cast: { ume: { url: "https://example.test/game/models/ume.vrm", scale: 0.9, variant: 2 } },
       pools: { civilian: [{ url: "https://example.test/game/models/a.vrm", weight: 3 }] },
     });
+    // A weight that is no finite number of 0 or more drops its entry (G-488).
+    expect(
+      parseModelManifest({ pools: { vendor: [{ url: "a.vrm", weight: "abc" }, { url: "b.vrm", weight: -1 }, { url: "c.vrm", weight: 0 }, { url: "d.vrm", weight: Number.POSITIVE_INFINITY }] } }, BASE),
+    ).toEqual({ pools: { vendor: [{ url: "https://example.test/game/models/c.vrm", weight: 0 }] } });
     // Broken sections are dropped, the role models stay.
     expect(parseModelManifest({ civilian: { url: "c.vrm" }, cast: [1], pools: "x" }, BASE)).toEqual({ civilian: { url: "https://example.test/game/models/c.vrm" } });
   });
