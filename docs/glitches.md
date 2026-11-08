@@ -1517,7 +1517,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-508 Kanciaste górki terenu
 - Status: zgłoszone (7.11, użytkownik)
-- Ważność: S3 · Zasięg: w wielu miejscach miasta wzniesienia terenu z NMT wyglądają kanciasto (widoczne płaskie trójkąty i ostre załamania zamiast łagodnych zboczy); do ustalenia: rozdzielczość siatki terenu (4 m i skośne cięcie), wygładzanie NMT przy imporcie, normalne cieniowania (płaskie zamiast uśrednionych), krawędzie NPR na załamaniach; najpierw pomiar i zrzuty kilku miejsc, potem poprawka z testem `map-ground-golden`
+- Ważność: S3 · Zasięg: w wielu miejscach miasta wzniesienia terenu z NMT wyglądają kanciasto (widoczne płaskie trójkąty i ostre załamania zamiast łagodnych zboczy); do ustalenia: rozdzielczość siatki terenu (4 m i skośne cięcie), wygładzanie NMT przy imporcie, normalne cieniowania (płaskie zamiast uśrednionych), krawędzie NPR na załamaniach; najpierw pomiar i zrzuty kilku miejsc, potem poprawka z testem `map-ground-golden`; pomiary opiekuna mapy: krakowskie-0-0 szum NMT przy ścianach (1 krawędź > 20° pod budynkiem), krakowskie-0-1 jeden lokalny dół (G-523: 4 krawędzie > 20°); zalecany próg kontroli `terrain-crease` 15° bez obrysów budynków
 - Pakiet właściciela: tools/osm-import (teren), packages/engine (renderer: teren)
 
 ### G-509 Stożek odblasku na stropie food hallu Alchemii (i możliwy w kapsule)
@@ -1564,6 +1564,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, kurator przeglądu #397)
 - Ważność: S4 · Zasięg: x −122…−100, z −64…−13; na ortofoto zachodni krawężnik ok. 3–4 m dalej na zachód niż krawędź jezdni w grze (−113,8 przy z −40); w grze ten pas to chodnik i kostka T-243 (wcześniej goła ziemia), w rzeczywistości lewy pas ruchu i asfalt skrzyżowania; por. T-094
 - Pakiet właściciela: tools/osm-import
+
+### G-521 Goła ziemia na podwórkach bloków Krakowskiego Przedmieścia (krakowskie-0-1)
+- Status: zgłoszone (8.11, opiekun mapy, komórka krakowskie-0-1; naprawa po scaleniu #397, bo te same pliki korekt)
+- Ważność: S3 · Zasięg: 141 kwadratów 10 × 10 m, ok. 3100 m², 59 skupień; największe: blok NW 1431 m² (x −200..−120; z −20..49, zawiera pas z 7..12 od naprawiacza G-513), podwórze SW 289 m² (−198..−165; 92..124) i 273 m² (−163..−135; 73..93), wschód (−27..−5; 143..158) 109 m², (6..19; 139..151) 81 m²; zrzuty `shots/opiekun-k01/` (`nw-strip-a`, `s-yard-i`, `se-a`); przyczyna jak G-513 (OSM bez nawierzchni na podwórkach); poza skanem ok. 4800 m² gołych podwórek mieszkalnych (do decyzji kuratora)
+- Pakiet właściciela: tools/osm-import (korekty)
+
+### G-522 Klinowe szczeliny bez nawierzchni między jezdnią a chodnikiem Krakowskiego
+- Status: w naprawie (8.11, gałąź `ccr-ec2c4269-ilh8k8-g522`, krok 1: kontrola `kerb-gap-bare`; opiekun mapy, krakowskie-0-1)
+- Ważność: S3 · Zasięg: (−120,5..−114; 54,5..101) 128 m², (−104,5..−102,5; −6,5..13) 48 m², (−121,5..−120,5; 74,5..100,5) 27 m², także części nieliczone skanem; zrzuty `kp-strip-g`, `s-strip-l`, `wedge`; przyczyna: jezdnia i chodnik się nie schodzą; propozycja `kerb-gap-bare` z przeglądu G-440 (baza ok. 35 631 próbek 0,25 m w mieście)
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-523 Dół 3,7 m w dziedzińcu pod w55897055 (krakowskie-0-1)
+- Status: zgłoszone (8.11, opiekun mapy; do oceny kuratora: prawdziwy dół czy artefakt NMT)
+- Ważność: S4 · Zasięg: teren spada z 0,6 do −3,5 m na ok. 25 × 15 m (x −175..−150, z −5..10), najgłębiej (−160; 5); czarny cokół ściany 3–4 m od dna (`pit-e`, `pit-f`, `pit-g`); `SHAPED_TERRAIN` bez `PADS`; to tu 4 krawędzie terenu > 20° (G-508); przy okazji: `steps-band-hidden` na krawędzi chunka (−200; 125), pasmo 3 × 0,2 m, niewidoczne dla gracza
+- Pakiet właściciela: tools/osm-import (teren NMT)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
