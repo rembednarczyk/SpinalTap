@@ -50,7 +50,8 @@ describe("generator", () => {
   });
 
   it("builds a chunk from a small map", () => {
-    const { chunks, stats } = generate(tinyMap(), slope, tinyChunk);
+    // Without the city's added areas (corrections.ts): T-245's round the Collegium lie in the tiny chunk.
+    const { chunks, stats } = generate(tinyMap(), slope, tinyChunk, []);
     const c = chunks[0]!;
     expect(c.buildings).toHaveLength(1);
     const b = c.buildings[0]!;
