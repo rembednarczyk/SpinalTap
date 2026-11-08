@@ -2,6 +2,21 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-547 `kurosawa.vrm` wczytuje się na ekranie ładowania, choć Kurosawa pojawia się w II akcie
+- Status: naprawione (PR #407, 8.11; ADR-0076 etap 4a: start nowej gry 7 plików / 42,5 MiB → 6 / 36,5 MiB, `kurosawa.vrm` wczytuje się, gdy Kurosawa staje w scenie; 3 rundy weryfikacji: G-560, G-575)
+- Ważność: S4 · Zasięg: +6 MiB na starcie; `donorsOf` ładuje wszystkie pliki manifestu przy liczeniu dawców ubrań; wczytywanie w tle według dzielnic i aktów to etap 4
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-560 Wygląd postaci tła zależy od tego, które pliki modeli są już wczytane
+- Status: naprawione (PR #407, 8.11; stały zbiór dawców `donorFiles` = Seki ∪ pliki tła ∪ obsada z `lends`; testy determinizmu padają na rundzie 1)
+- Ważność: S3 · Zasięg: w gałęzi #407 `countDonors` (`character-models.ts`) liczy dawców tylko z wczytanych plików, a `donorOf` (`model-dress.ts:48-49`) wybiera teksturę jako `floor(fraction * list.length)`; ta sama postać tła (to samo ziarno) po ponownym ubraniu nosi inne spodnie lub górę po wczytaniu `mori.vrm` w tle i po `kurosawa.vrm` w II akcie; łamie decyzję „Determinizm” ADR-0076
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-575 Postacie nazwane zmieniają ubranie po zmianie zbioru dawców w #407
+- Status: naprawione (PR #407, 8.11; `base-female.vrm` wśród dawców przez `lends`; względem main zmieniają się tylko spodnie barmana, gull-guard, Shiro, Daigo i Koji, opisane w ADR-0076 §4a; test `model-donors.test.ts`)
+- Ważność: S3 · Zasięg: wariant 100+ z `dress` bez `topFrom`/`bottomFrom` bierze te pola z ziarna, więc krótsza lista dawców zmienia indeks w `donorOf`; zmiany: spodnie barmana, gull-guard, shiro, daigo (Kurosawy → Kaito), koji (Kurosawy → gangera), akane (base-female → Seki), koi-regular-2 (góra i spodnie), mei i mika (góra); barman i koi-regular-2 w Neon Koi; ADR nie opisywał zmiany
+- Pakiet właściciela: packages/engine (renderer: modele)
+
 ### G-521 Goła ziemia na podwórkach bloków Krakowskiego Przedmieścia (krakowskie-0-1)
 - Status: naprawione (PR #405, 8.11; 19 obszarów T-245/*, w tym 6 trawników, w `corrections-zn.ts` i `corrections-radziwillowska.ts`; `landuse-bare` komórka 10 004 → 136, miasto 96 273 → 86 405, `kerb-gap-bare` → 101 904; test `landuse-bare-krakowskie-0-1.test.ts` pada bez poprawki; kurator ODSTĘPSTWO CELOWE T-245 po rundzie 2; budynki Cichej 3–8 w G-556, pętle `highway=service area=yes` w G-555)
 - Ważność: S3 · Zasięg: 141 kwadratów 10 × 10 m, ok. 3100 m², 59 skupień; największe: blok NW 1431 m² (x −200..−120; z −20..49, zawiera pas z 7..12 od naprawiacza G-513), podwórze SW 289 m² (−198..−165; 92..124) i 273 m² (−163..−135; 73..93), wschód (−27..−5; 143..158) 109 m², (6..19; 139..151) 81 m²; zrzuty `shots/opiekun-k01/` (`nw-strip-a`, `s-yard-i`, `se-a`); przyczyna jak G-513 (OSM bez nawierzchni na podwórkach); poza skanem ok. 4800 m² gołych podwórek mieszkalnych (do decyzji kuratora)

@@ -1605,11 +1605,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `kurosawa.vrm` (HairSample_Male CC0) ma bluzę z kapturem w jasnych pasach i rękawach; ciemny odcień z `dress` i okulary łagodzą, ale człowiek Kagami wygląda młodziej, niż pasuje do postaci; przy okazji drobne z weryfikacji: tytuł testu w `model-kurosawa.test.ts` wymienia Kaito, a sprawdza tylko Base_Male; komentarz „in a dark suit” w `model-manifest.test.ts` nieaktualny; krój `M00_006` bez numeru wersji w `model-library.ts`
 - Pakiet właściciela: packages/engine (renderer: modele), packages/app/public/models
 
-### G-547 `kurosawa.vrm` wczytuje się na ekranie ładowania, choć Kurosawa pojawia się w II akcie
-- Status: w PR #407 (8.11, ADR-0076 etap 4a: start 7 plików / 42,5 MiB → 5 / 31,0 MiB, reszta w tle; weryfikator runda 1 NIE PRZYJĘTE przez G-560, runda 2 NIE PRZYJĘTE przez G-575 (G-560 naprawione), poprawki u autora)
-- Ważność: S4 · Zasięg: +6 MiB na starcie; `donorsOf` ładuje wszystkie pliki manifestu przy liczeniu dawców ubrań; wczytywanie w tle według dzielnic i aktów to etap 4
-- Pakiet właściciela: packages/engine (renderer: modele)
-
 ### G-550 Nieudana asercja na teksturach w testach modeli kończy worker vitest brakiem pamięci
 - Status: zgłoszone (8.11, budowniczy ADR-0076 etap 4a)
 - Ważność: S4 · Zasięg: `toContain` na tablicy tekstur w `packages/engine/test/model-variants.test.ts` przy porażce wypisuje graf sceny i kończy się OOM w workerze (SIGABRT) zamiast czytelnego błędu; `model-kurosawa.test.ts` obchodzi to porównaniem wartości logicznych; poprawka: porównywać nazwy albo wartości logiczne
@@ -1624,11 +1619,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, kurator przeglądu #405)
 - Ważność: S3 · Zasięg: w mieście 50 budynków, ok. 10 100 m²; w krakowskie-0-1 Cicha 3, 5, 6 i 8 (281 m²), które w grze dają gołą ziemię w pasie Cichej i przy ogrodzie na zachód od Cichej 4; Ordynacki i Kuria już w T-058/G-096; propozycja kontroli `edge-building-dropped` (część w chunku > 2 m², środek poza mapą, poza rejestrem), baza 50 albo 48 bez T-058
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
-### G-560 Wygląd postaci tła zależy od tego, które pliki modeli są już wczytane
-- Status: poprawione w gałęzi #407 (8.11, runda 2: stały zbiór dawców `donorFiles`; potwierdzone sondą weryfikatora)
-- Ważność: S3 · Zasięg: w gałęzi #407 `countDonors` (`character-models.ts`) liczy dawców tylko z wczytanych plików, a `donorOf` (`model-dress.ts:48-49`) wybiera teksturę jako `floor(fraction * list.length)`; ta sama postać tła (to samo ziarno) po ponownym ubraniu nosi inne spodnie lub górę po wczytaniu `mori.vrm` w tle i po `kurosawa.vrm` w II akcie; łamie decyzję „Determinizm” ADR-0076
-- Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
 - Status: zgłoszone (8.11, weryfikator #407; istniało przed #407)
@@ -1655,15 +1645,15 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: 12 z 19 miejsc ortofoto, ok. 63% z 5 855 m² wypełnień przy ulicach z `lanes`; krawężnik 1–3 m wewnątrz prawdziwej jezdni (Ruska, Kapucyńska, Niecała, Peowiaków, Lubartowska przy przystanku Brama Krakowska 01, Unii Lubelskiej, Turystyczna, 3 Maja, Dolna Panny Marii, Zesłańców Sybiru); trawnik jako chodnik przy Andersa; przyczyna: szerokość z `lanes` × 3,25 lub typu nie obejmuje postoju, `fitToKerb` (T-046) tylko zwęża; poprawka: pas przy ulicy o szacowanej szerokości i szczelinie ≥ 1 m jako jezdnia z krawężnikiem przy nawierzchni pieszej, zebry do nowego krawężnika, trawniki przez korekty; kontrole `bus-stop-on-fill` i `kerb-fill-wide-estimated`
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-575 Postacie nazwane zmieniają ubranie po zmianie zbioru dawców w #407
-- Status: zgłoszone (8.11, weryfikator #407 runda 2; poprawka u autora: `base-female.vrm` w dawcach, opis w ADR)
-- Ważność: S3 · Zasięg: wariant 100+ z `dress` bez `topFrom`/`bottomFrom` bierze te pola z ziarna, więc krótsza lista dawców zmienia indeks w `donorOf`; zmiany: spodnie barmana, gull-guard, shiro, daigo (Kurosawy → Kaito), koji (Kurosawy → gangera), akane (base-female → Seki), koi-regular-2 (góra i spodnie), mei i mika (góra); barman i koi-regular-2 w Neon Koi; ADR nie opisywał zmiany
-- Pakiet właściciela: packages/engine (renderer: modele)
-
 ### G-576 `donorsOf` po `setManifest` wpisuje dawców starego manifestu
 - Status: zgłoszone (8.11, weryfikator #407; istniało na main)
 - Ważność: S4 · Zasięg: obietnica dla starego manifestu rozstrzyga się po `clear()` i wpisuje `donorsReady`; w grze manifest ustawia się raz, skutek teoretyczny
 - Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-580 `parseModelManifest` przepuszcza pole `lends` bez walidacji
+- Status: zgłoszone (8.11, weryfikator #407 runda 3)
+- Ważność: S4 · Zasięg: `"lends": "true"` (napis) po cichu usuwa `base-female.vrm` z dawców i przywraca G-575; żaden test aplikacji nie sprawdza, że `lends` przeżywa parsowanie (`model-donors.test.ts` czyta surowy JSON); przy okazji opis commita d2e8007 mówi o 10 postaciach, ADR wylicza 9
+- Pakiet właściciela: packages/app (manifest modeli)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
