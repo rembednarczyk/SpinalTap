@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-509 Stożek odblasku na stropie food hallu Alchemii (i możliwy w kapsule)
+- Status: naprawione (PR #402, 8.11; lampy hali i kapsuły w oprawie stropu, testy padają bez poprawki)
+- Ważność: S4 · Zasięg: lampa w `alchemia-view.ts` wisi 0,4 m pod stropem hali (zrzut `shots/g490/after/hall-north.png`), lampa w `capsule-room-view.ts` 0,3 m pod sufitem; poprawka jak w P−1: lampa w oprawie stropu (po G-490 shader już nie świeci od tyłu)
+- Pakiet właściciela: packages/engine (renderer)
+
 ### G-513 Goła ziemia na podwórkach i przy gmachach Krakowskiego Przedmieścia (krakowskie-0-0)
 - Status: naprawione (PR #397, 8.11; 18 ręcznych obszarów kostki T-243/* w `corrections-krakowskie.ts` i `corrections-ck.ts`: podwórza KP 37–60 z Sądem i UM, pasy przy fasadach, okolice Centrum Kultury, trawnik `ck-zachod` przy zachodniej ścianie CK; `landuse-bare` komórka 10 075 → 155, miasto 108 592 → 96 273; test `landuse-bare-krakowskie.test.ts` pada na danych sprzed poprawki; kurator ODSTĘPSTWO CELOWE T-243; kratki i krawężnik w G-519)
 - Ważność: S3 · Zasięg: 144 kwadraty 10 × 10 m `landuse-bare` w ok. 87 skupieniach, ok. 2500 m²; największe: 244 m² (x −53,8..−13,8; z −94,3..−84,3), 208 m² (−189..−150; −220..−189), 190 m² (−188..−127; −270..−220), 182 m² (−176..−162; −32..−20), 180 m² (−155..−107; −101..−72), 155 m² (−16..−2; −128..−99); zrzuty `shots/opiekun-k00/clD-0.png`, `bare1-a.png`, `sad.png`; przyczyna: import nie kładzie nawierzchni na podwórkach i pasach przy gmachach (`landuse=retail/commercial`, gmachy publiczne); rozszerzenie G-450/T-221; kontrola `landuse-bare` istnieje, poprawka obniża bazę; przy okazji: G-508 w tej komórce to szum NMT przy krawędziach budynków (1 krawędź > 20° pod budynkiem, 15 > 10° w gołym terenie; propozycja `terrain-crease` z progiem 12° bez obrysów budynków), T-204 do sprawdzenia przez kuratora (skan `tree-height-vs-nmpt` 0 w komórce)
