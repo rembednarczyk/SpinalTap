@@ -1551,7 +1551,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-521 Goła ziemia na podwórkach bloków Krakowskiego Przedmieścia (krakowskie-0-1)
-- Status: w PR #405 (8.11, 17 obszarów T-245/*; `landuse-bare` komórka 10 004 → 136, miasto 96 273 → 86 405; przegląd kuratora w toku)
+- Status: w PR #405 (8.11, 17 obszarów T-245/*; `landuse-bare` komórka 10 004 → 136, miasto 96 273 → 86 405; kurator runda 1 DO POPRAWY: zieleń przy Litevski i rabata Collegium pod kostką, pętla podjazdu kliniki w1022724910; runda 2 u autora)
 - Ważność: S3 · Zasięg: 141 kwadratów 10 × 10 m, ok. 3100 m², 59 skupień; największe: blok NW 1431 m² (x −200..−120; z −20..49, zawiera pas z 7..12 od naprawiacza G-513), podwórze SW 289 m² (−198..−165; 92..124) i 273 m² (−163..−135; 73..93), wschód (−27..−5; 143..158) 109 m², (6..19; 139..151) 81 m²; zrzuty `shots/opiekun-k01/` (`nw-strip-a`, `s-yard-i`, `se-a`); przyczyna jak G-513 (OSM bez nawierzchni na podwórkach); poza skanem ok. 4800 m² gołych podwórek mieszkalnych (do decyzji kuratora)
 - Pakiet właściciela: tools/osm-import (korekty)
 
@@ -1619,6 +1619,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, budowniczy ADR-0076 etap 4a)
 - Ważność: S4 · Zasięg: `toContain` na tablicy tekstur w `packages/engine/test/model-variants.test.ts` przy porażce wypisuje graf sceny i kończy się OOM w workerze (SIGABRT) zamiast czytelnego błędu; `model-kurosawa.test.ts` obchodzi to porównaniem wartości logicznych; poprawka: porównywać nazwy albo wartości logiczne
 - Pakiet właściciela: packages/engine (testy)
+
+### G-555 Import nie rysuje obszarów `highway=service` z `area=yes`
+- Status: zgłoszone (8.11, kurator przeglądu #405)
+- Ważność: S4 · Zasięg: `areaSurface` zwraca null dla `highway=service` + `area=yes`, więc asfalt tych obszarów nie powstaje; 4 obszary, ok. 2 970 m²: w232464419 (410 m²), w283151244 (1 567 m²), w294902807 (864 m²), w1022724910 (131 m², pętla podjazdu kliniki Radziwiłłowska 13); propozycja kontroli `highway-area-undrawn`, baza 4
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-556 Budynek ze środkiem poza mapą znika w całości, także w części leżącej w chunku
+- Status: zgłoszone (8.11, kurator przeglądu #405)
+- Ważność: S3 · Zasięg: w mieście 50 budynków, ok. 10 100 m²; w krakowskie-0-1 Cicha 3, 5, 6 i 8 (281 m²), które w grze dają gołą ziemię w pasie Cichej i przy ogrodzie na zachód od Cichej 4; Ordynacki i Kuria już w T-058/G-096; propozycja kontroli `edge-building-dropped` (część w chunku > 2 m², środek poza mapą, poza rejestrem), baza 50 albo 48 bez T-058
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
