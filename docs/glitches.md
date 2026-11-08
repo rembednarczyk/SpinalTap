@@ -1466,7 +1466,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-490 Przez strop P−1 Alchemii widać półprzezroczysty stożek
-- Status: w PR #385 (7.11, czeka na weryfikację; zgłoszone przez budowniczego ADR-0074 etap 4)
+- Status: w PR #385 (8.11, weryfikator PRZYJĘTE; po scaleniu main konflikt w imporcie testu rozwiązany, czeka na testy i CI)
 - Ważność: S4 · Zasięg: na zrzucie `after/e4-deck.png` stożek (prawdopodobnie poświata latarni albo drona z T0) przechodzi przez strop parkingu; do sprawdzenia też, czy w food hallu z etapu 1 nie pada deszcz pod stropem
 - Pakiet właściciela: packages/engine (renderer: efekty)
 
@@ -1521,7 +1521,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-507 Pastorał przy przyczółku wiaduktu Zamkowej ma latarenkę na wysokości przechodniów
-- Status: zgłoszone (7.11, kurator przeglądu #383)
+- Status: w PR #392 (8.11; przy okazji `lamp-road` Nabrzeża z obrysu pomostu jezdni na chodnik mostu)
 - Ważność: S4 · Zasięg: (756,8; 175,7) stoi 1,85 m pod pomostem, 2 m od niego (poniżej progu `DECK_DROP` 2,5 m), latarenka ok. 1,55 m nad pomostem, 0,35 m od kostki; poprawka: niższy próg albo `byParapet` od ok. 1,5 m; zaostrzenie `lamp-beside-deck` do 1,5 m (baza 1)
 - Pakiet właściciela: tools/osm-import (props)
 
@@ -1539,6 +1539,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, kurator przeglądu #382)
 - Ważność: S4 · Zasięg: `parking-traffic.ts`: `IN_WAY`/`OUT_WAY` na osi jezdni (np. (407,5; −16,5)), a ruch symulacji ma na Bajkowskiego dwa pasy ±1,6 m; auto szerokości ok. 1,8 m zachodzi na oba, jedzie 2,5 m/s wobec 8 m/s ruchu, bez bryły (G-492); skręt w lewo powinien iść z lewego pasa (`turn:lanes=left|right`); pas wjazdu w `TRAFFIC_ROUTES` sim na osobny PR ze złotym hashem; kontrola `ramp-car-off-lane` (baza dziś 9 punktów)
 - Pakiet właściciela: packages/engine (renderer), packages/sim (G-492)
+
+### G-511 Znak `spread` w `activity-poses.ts` zwiera nogi zamiast je rozstawiać
+- Status: zgłoszone (8.11, budowniczy i weryfikator #386)
+- Ważność: S4 · Zasięg: dodatnie `spread` dla lewej nogi obraca ją do środka (`legL.rotation.z = +0,2` przesuwa kolano z x −0,083 na +0,005), komentarz mówi „feet apart”; wartości 0,04–0,08, sprzed #386
+- Pakiet właściciela: packages/engine (renderer: pozy)
+
+### G-512 Postać zabita w kucki leży z kolanami na zewnątrz
+- Status: w naprawie (8.11, gałąź `ccr-ec2c4269-ilh8k8-g512`; regresja z #386, weryfikator)
+- Ważność: S4 · Zasięg: `animateDeath` (`character-animation.ts`, ok. l. 136) nie zeruje `legL/legR.rotation.z`, więc po nowym kucaniu z kolanami na zewnątrz (0,25 rad) ciało leży z rozwartymi kolanami; przy okazji: nieaktualny komentarz `CROUCH_EYE_HEIGHT` w `packages/sim/src/world/hitscan.ts:93` (głowa rigu w kucki 1,22 m, oko 1,14 m)
+- Pakiet właściciela: packages/engine (renderer)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
