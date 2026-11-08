@@ -1640,6 +1640,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: odrzucony promise zostaje w `containers` `ModelLibrary`, bez ponowienia
 - Pakiet właściciela: packages/engine (renderer: modele)
 
+### G-565 Jezdnia Ruskiej przy Szkolnej i przy Targu na Ruskiej węższa od prawdziwej
+- Status: zgłoszone (8.11, kurator przeglądu #408; T-247)
+- Ważność: S4 · Zasięg: przy przystanku Szkolna (x 845–880, z 486–520) i przy sklepach obok Targu na Ruskiej (x 676–714, z 565–575) pas jezdni kończy się 2–3 m przed prawdziwym krawężnikiem; przy Szkolnej zewnętrzny asfaltowy pas ze strzałkami (ok. 2 m) leży pod kostką `zatoka-szkolna`; OSM w732251517 bez `lanes`, w213515733 `lanes=3`; na ortofoto ok. 20 m od krawężnika do krawężnika
+- Pakiet właściciela: tools/osm-import (szerokość jezdni)
+
+### G-566 Wcięcie Nadstawnej 4 to w grze otwarte podwórze, a w rzeczywistości niski dach
+- Status: zgłoszone (8.11, kurator przeglądu #408; T-248)
+- Ważność: S4 · Zasięg: obrys w73833921 (x 758–781, z 464–491) ma w OSM 9 m przerwy na zachód między (761; 464,9) a (758,1; 474); w grze dostępny dziedziniec wyłożony kostką, na ortofoto dach zamknięty skrzydłami budynku; zrzut `topo-408-shots/notch.png`
+- Pakiet właściciela: tools/osm-import (korekty budynków)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
