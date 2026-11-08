@@ -5,10 +5,11 @@ import { MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
 import { METRO_FOOTPRINTS } from "./metro";
 import { groundY } from "./lublin/terrain";
-import { type RouteUse, type TrafficRoute, pointAt, slice } from "./traffic-lane";
+import { type RouteUse, type TrafficRoute, pointAt, projectOn, slice } from "./traffic-lane";
 import { joinAtJunctions } from "./traffic-junctions";
+import { alchemiaRampRoutes } from "./traffic-ramp";
 
-export { type RouteUse, type TrafficRoute, TURN_SPEED, pointAt } from "./traffic-lane";
+export { type RouteUse, type TrafficRoute, TURN_SPEED, pointAt, projectOn } from "./traffic-lane";
 
 /**
  * The street's traffic (ADR-0050): the lanes cars drive along on the map's roads, the
@@ -174,27 +175,6 @@ const offsetAlong = (pts: readonly Pt[], at: readonly number[], off: readonly nu
     out.push([round(p[0] + tz * o), round(p[1] - tx * o)]);
   });
   return out;
-};
-
-/** Arc length of the polyline's point nearest to (x, z), and how far from the line it is (+ right). */
-export const projectOn = (pts: readonly Pt[], x: number, z: number): { s: number; d: number; side: number } => {
-  let best = { s: 0, d: Infinity, side: 0 };
-  let acc = 0;
-  for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1]!;
-    const b = pts[i]!;
-    const dx = b[0] - a[0];
-    const dz = b[1] - a[1];
-    const len2 = dx * dx + dz * dz;
-    const len = Math.sqrt(len2);
-    const t = len2 > 1e-12 ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / len2)) : 0;
-    const px = a[0] + dx * t;
-    const pz = a[1] + dz * t;
-    const d = Math.hypot(x - px, z - pz);
-    if (d < best.d) best = { s: acc + len * t, d, side: len > 0 ? ((x - a[0]) * dz - (z - a[1]) * dx) / len : 0 };
-    acc += len;
-  }
-  return best;
 };
 
 /**
@@ -489,8 +469,11 @@ const turnRound = (pieces: readonly Piece[]): TrafficRoute[] => {
 /** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane), clear of the game's blocks, on the map. */
 export const TRAFFIC_LANES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS), deadEndsOf(c, k)).map(onTheMap)));
 
-/** The routes the vehicles drive: the lanes joined at the junctions (ADR-0055). */
-export const TRAFFIC_ROUTES: readonly TrafficRoute[] = joinAtJunctions(TRAFFIC_LANES);
+/** The city's routes: the lanes joined at the junctions (ADR-0055). */
+export const CITY_ROUTES: readonly TrafficRoute[] = joinAtJunctions(TRAFFIC_LANES);
+
+/** The routes the vehicles drive: the city's, then the two in and out of Alchemia's P-1 off Bajkowskiego (ADR-0074 §4, G-491). */
+export const TRAFFIC_ROUTES: readonly TrafficRoute[] = [...CITY_ROUTES, ...alchemiaRampRoutes(CITY_ROUTES)];
 
 /** How busy the roads are by the hour (0..1 of full traffic): the rush hours, a quiet night. */
 export const TRAFFIC_BY_HOUR: readonly number[] = [

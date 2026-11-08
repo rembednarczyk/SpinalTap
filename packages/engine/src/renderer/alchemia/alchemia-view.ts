@@ -6,6 +6,7 @@ import type { GeometrySink } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
 import { alchemiaGeometry } from "./alchemia-geometry";
 import { ParkingView } from "./parking-view";
+import type { CarAt } from "./parking-traffic";
 
 /**
  * How near the eye Alchemia's outside is drawn (m from the middle of the hall or of the Arkady,
@@ -55,6 +56,8 @@ export interface AlchemiaDeps {
   /** False without Lublin's map city (the hall stands on one of its squares). */
   readonly city: () => boolean;
   readonly eye: () => Vec3;
+  /** The traffic's cars as drawn (P-1's shutters go up before them, ADR-0074 §4). */
+  readonly cars?: () => Iterable<CarAt>;
 }
 
 /** Horizontal distance from the eye to the hall's outline; 0 inside. */

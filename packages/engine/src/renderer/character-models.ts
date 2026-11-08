@@ -189,11 +189,11 @@ export class CharacterModels {
     pending = Promise.all([library.clothOf(spec), ...files.map((f) => library.clothOf(f).catch(() => null))]).then(([own, ...cloth]) => {
       const lenders = files.flatMap((f, i) => {
         const c = cloth[i];
-        return c && lends(c, own.family) ? [{ url: f.url, cloth: c }] : [];
+        return c ? [{ url: f.url, cloth: c }] : [];
       });
       const donors: Donors = {
-        torso: lenders.flatMap((l) => (l.url !== heroine && l.cloth.torso ? [l.cloth.torso] : [])),
-        legs: lenders.flatMap((l) => (l.cloth.legs ? [l.cloth.legs] : [])),
+        torso: lenders.flatMap((l) => (l.url !== heroine && l.cloth.torso && lends(l.cloth, own, "torso") ? [l.cloth.torso] : [])),
+        legs: lenders.flatMap((l) => (l.cloth.legs && lends(l.cloth, own, "legs") ? [l.cloth.legs] : [])),
       };
       this.donorsReady.set(spec.url, donors);
       return donors;

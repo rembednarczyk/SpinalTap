@@ -74,8 +74,13 @@ const materialOf = (ctx: DressContext, mesh: AbstractMesh, v: ModelVariant, swap
   }
 };
 
-/** A file's cloth to lend: whether `cloth` may dress a model of base `family`. */
-export const lends = (cloth: ModelCloth, family: string | null): boolean => family !== null && cloth.family === family;
+/**
+ * A file's cloth to lend: whether the top or trousers (`slot`) of `cloth` may dress a model whose
+ * own cloth is `own`, of the same VRoid base and the same cut (one UV layout). Kurosawa's coat
+ * (`M00_006`) on Kaito's shirt (`M00_001`) would scatter its texels over the wrong faces.
+ */
+export const lends = (cloth: ModelCloth, own: ModelCloth, slot: "torso" | "legs"): boolean =>
+  own.family !== null && cloth.family === own.family && cloth.cuts[slot] !== null && cloth.cuts[slot] === own.cuts[slot];
 
 /** Where a dressed model stands: its retarget, the rig body it faces with, and its size against the rig's. */
 export interface DressedOn {
