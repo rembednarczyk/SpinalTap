@@ -1551,7 +1551,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-521 Goła ziemia na podwórkach bloków Krakowskiego Przedmieścia (krakowskie-0-1)
-- Status: w naprawie (8.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g521`, obszary T-245/*; zgłoszone przez opiekuna mapy, komórka krakowskie-0-1)
+- Status: w PR #405 (8.11, 17 obszarów T-245/*; `landuse-bare` komórka 10 004 → 136, miasto 96 273 → 86 405; przegląd kuratora w toku)
 - Ważność: S3 · Zasięg: 141 kwadratów 10 × 10 m, ok. 3100 m², 59 skupień; największe: blok NW 1431 m² (x −200..−120; z −20..49, zawiera pas z 7..12 od naprawiacza G-513), podwórze SW 289 m² (−198..−165; 92..124) i 273 m² (−163..−135; 73..93), wschód (−27..−5; 143..158) 109 m², (6..19; 139..151) 81 m²; zrzuty `shots/opiekun-k01/` (`nw-strip-a`, `s-yard-i`, `se-a`); przyczyna jak G-513 (OSM bez nawierzchni na podwórkach); poza skanem ok. 4800 m² gołych podwórek mieszkalnych (do decyzji kuratora)
 - Pakiet właściciela: tools/osm-import (korekty)
 
