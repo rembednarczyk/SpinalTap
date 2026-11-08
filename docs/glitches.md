@@ -1560,6 +1560,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: przy przytrzymanym duszeniu (ADR-0075) `heldPose` celu nie przechodzi w klęczenie po ok. 4 s; do sprawdzenia testem pozy w czasie i z czasem fazy (por. G-482)
 - Pakiet właściciela: packages/engine (renderer: grab-pose)
 
+### G-518 Hina (dziecko) ma kolizję i strefę trafień dorosłego
+- Status: zgłoszone (8.11, weryfikator #395)
+- Ważność: S4 · Zasięg: po etapie 3a Hina rysuje się w skali 0,74, ale kolizja i trafienia w sim mają wymiar dorosłego, więc trafienie może wypaść nad głową; przy okazji: `fit` przycinany do 0,8 (torba Hiny ok. 8% za duża), niejednorodne skalowanie korzenia przekosi rekwizyty w dłoni (miotła Ume ok. 6%)
+- Pakiet właściciela: packages/sim (wymiary postaci), packages/engine (renderer)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
