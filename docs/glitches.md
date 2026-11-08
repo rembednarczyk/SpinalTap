@@ -1621,7 +1621,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
-- Status: zgłoszone (8.11, weryfikator #407; istniało przed #407)
+- Status: w PR #410 (8.11, ADR-0076 etap 4b)
 - Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
 - Pakiet właściciela: packages/engine (renderer: modele)
 
@@ -1651,9 +1651,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-580 `parseModelManifest` przepuszcza pole `lends` bez walidacji
-- Status: zgłoszone (8.11, weryfikator #407 runda 3)
+- Status: w PR #410 (8.11, ADR-0076 etap 4b)
 - Ważność: S4 · Zasięg: `"lends": "true"` (napis) po cichu usuwa `base-female.vrm` z dawców i przywraca G-575; żaden test aplikacji nie sprawdza, że `lends` przeżywa parsowanie (`model-donors.test.ts` czyta surowy JSON); przy okazji opis commita d2e8007 mówi o 10 postaciach, ADR wylicza 9
 - Pakiet właściciela: packages/app (manifest modeli)
+
+### G-585 Na telefonie same pliki dawców ubrań przekraczają limit plików modeli
+- Status: zgłoszone (8.11, budowniczy ADR-0076 etap 4b)
+- Ważność: S4 · Zasięg: profil `low` ma limit 5 plików, a dawców jest 6 (ok. 260 MiB tekstur); limitu nie da się spełnić bez etapu 5 (tekstury tła 512 px) albo mniejszego zbioru dawców
+- Pakiet właściciela: packages/engine (renderer: modele), tools (shrink_glb)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
