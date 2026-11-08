@@ -1531,7 +1531,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer), packages/sim (G-492)
 
 ### G-511 Znak `spread` w `activity-poses.ts` zwiera nogi zamiast je rozstawiać
-- Status: zgłoszone (8.11, budowniczy i weryfikator #386)
+- Status: w PR #396 (8.11, w weryfikacji)
 - Ważność: S4 · Zasięg: dodatnie `spread` dla lewej nogi obraca ją do środka (`legL.rotation.z = +0,2` przesuwa kolano z x −0,083 na +0,005), komentarz mówi „feet apart”; wartości 0,04–0,08, sprzed #386
 - Pakiet właściciela: packages/engine (renderer: pozy)
 
@@ -1541,7 +1541,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (ground), tools/glitch-scan
 
 ### G-514 Przód spódnicy Seki wcina się w udo przy duszeniu (poza „holdingDown”)
-- Status: zgłoszone (8.11, weryfikator #394; z sondy pozy, bez zrzutu)
+- Status: w PR #396 (8.11, w weryfikacji)
 - Ważność: S4 · Zasięg: `grab-pose.ts:149`, poza postaci chwytającej ma udo L −1,55 rad przy pochyleniu 0,3 (ok. 72° zgięcia w biodrze), ponad granicą ok. 63° dla przodu spódnicy `seki.vrm` (pomiar z #386); brak przypadku w `seki-skirt.test.ts`; przy okazji: śmierć z kucnięcia nie wygasza `body.position.y/z` ani `body.rotation.x` (ciało przesunięte −0,38/−0,14 m, kosmetyka)
 - Pakiet właściciela: packages/engine (renderer: pozy)
 
@@ -1549,6 +1549,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, budowniczy ADR-0076 etap 3a)
 - Ważność: S4 · Zasięg: poza parasola riga zostaje na modelu VRoid, choć parasol jest ukryty; u Ume i innych starszych mocno odmładza sylwetkę; przy okazji: pochylenie starszych na Base_Male (Sabu, Goro, Genzō) słabo czyta się z boku (głowa Sabu wysunięta o ok. 10 cm, na zrzucie prawie prosto), do podniesienia `stoop` w manifeście
 - Pakiet właściciela: packages/engine (renderer: pozy, modele)
+
+### G-516 Spódnica Seki przebita w pozach siedzenia i snu
+- Status: zgłoszone (8.11, naprawiacz G-514)
+- Ważność: S4 · Zasięg: sonda `seki-skirt`: w `sit` 2,0 cm, w `sleep` 6,9 cm (oba uda, spread 0); dotyczy scen, w których bohaterka siada albo śpi; przy okazji: poza `holdingDown` nie klęczy naprawdę (tylne kolano ok. 0,27 m nad ziemią, tylna stopa w powietrzu)
+- Pakiet właściciela: packages/engine (renderer: pozy)
+
+### G-517 Duszony strażnik po ok. 4 s nadal stoi zamiast klęczeć
+- Status: zgłoszone (8.11, naprawiacz G-514; z zrzutu e2e, do potwierdzenia)
+- Ważność: S4 · Zasięg: przy przytrzymanym duszeniu (ADR-0075) `heldPose` celu nie przechodzi w klęczenie po ok. 4 s; do sprawdzenia testem pozy w czasie i z czasem fazy (por. G-482)
+- Pakiet właściciela: packages/engine (renderer: grab-pose)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
