@@ -1521,7 +1521,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (teren), packages/engine (renderer: teren)
 
 ### G-509 Stożek odblasku na stropie food hallu Alchemii (i możliwy w kapsule)
-- Status: zgłoszone (7.11, naprawiacz G-490)
+- Status: w PR #402 (8.11; lampy hali i kapsuły w oprawie stropu, testy pada/przechodzi)
 - Ważność: S4 · Zasięg: lampa w `alchemia-view.ts` wisi 0,4 m pod stropem hali (zrzut `shots/g490/after/hall-north.png`), lampa w `capsule-room-view.ts` 0,3 m pod sufitem; poprawka jak w P−1: lampa w oprawie stropu (po G-490 shader już nie świeci od tyłu)
 - Pakiet właściciela: packages/engine (renderer)
 
@@ -1589,6 +1589,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, weryfikator #399; na rampie P−1 naprawiane w #399 runda 2)
 - Ważność: S3 · Zasięg: `traffic-system.ts` (`MAX_ASIDE` 2,8 m) zjeżdża w bok bez sprawdzania brył; na rampie P−1 auto przejeżdżało przez ścianę; do sprawdzenia kabiny, fartuch P−1 i wąskie przejazdy w mieście
 - Pakiet właściciela: packages/sim
+
+### G-526 Lampa hali Alchemii oświetla przez strop ściany brył na dachu
+- Status: zgłoszone (8.11, naprawiacz G-509)
+- Ważność: S4 · Zasięg: światło punktowe food hallu w obrysie klipu oświetla od dołu ściany boczne brył na dachu (trawniki zielonego dachu ok. 860 punktów próbnych, domek klatki, kiosk windy); przeciek tego samego rodzaju co G-263; był przed G-509
+- Pakiet właściciela: packages/engine (renderer: światła punktowe)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
