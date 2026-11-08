@@ -1585,6 +1585,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: światło punktowe food hallu w obrysie klipu oświetla od dołu ściany boczne brył na dachu (trawniki zielonego dachu ok. 860 punktów próbnych, domek klatki, kiosk windy); przeciek tego samego rodzaju co G-263; był przed G-509
 - Pakiet właściciela: packages/engine (renderer: światła punktowe)
 
+### G-527 Goła ziemia na podwórzach i przy gmachach Krakowskiego Przedmieścia wschód (krakowskie-1-1)
+- Status: zgłoszone (8.11, opiekun mapy, komórka krakowskie-1-1; naprawa po G-521, bo te same pliki korekt)
+- Ważność: S3 · Zasięg: 87 kwadratów 10 × 10 m `landuse-bare`, 1540 m² w 60 skupieniach (6159 próbek 0,5 m); największe: 397 m² (x 115..177; z 10..31) i 151 m² (119..191; 5..45) przy UM Collegium Maximum w67499318 (`amenity=university`), 291 m² (146..180; 100..141) i 113 m² (168..180; 109..131) za w232674406 i kamienicami, 145 m² (205..217; −20..7) i 48 m² (203..222; 8..18) przy garażach w67499326 i w67499315, 106 m² (20..42; 122..140) i 42 m² (20..29; 139..144) przy Collegium Medicum w232674395 i kościele w232674421, dziedziniec SP nr 24 przy w232674397 (ok. 136 m² w 4 skupieniach), zaplecze Radziwiłłowskiej 33 m² (147..166; 93..98); zrzuty `shots/opiekun-k11/coll-g.png`, `yard-s-g.png`; przyczyna jak G-513 i G-521 (OSM bez nawierzchni podwórek, dziedzińców uczelni i szkoły); ok. 94% powierzchni to 6 największych skupień; test przyjęcia jak `landuse-bare-krakowskie.test.ts`
+- Pakiet właściciela: tools/osm-import (korekty)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
