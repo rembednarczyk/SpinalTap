@@ -40,7 +40,9 @@ const CLINIC_LAWN: AddedArea = t245(
 );
 
 /**
- * The clinic's forecourt in the curve of the path w1011367937, up to the service way w1011367931's axis.
+ * The clinic's forecourt: the turning loop w1022724910 (`highway=service` with `area=yes`, asphalt,
+ * which the import does not draw, G-555) on its nodes, and the paving in the curve of the path
+ * w1011367937 east to the service way w1011367931's axis. Setts, as T-243's asphalt yards.
  */
 const CLINIC_DRIVE: AddedArea = t245(
   "podjazd-klinika",
@@ -64,11 +66,30 @@ const CLINIC_DRIVE: AddedArea = t245(
     { x: -47.83, z: 149.44 },
     { x: -47.74, z: 151.5 },
     { x: -63.95, z: 152.96 },
-    { x: -71.17, z: 153.58 },
+    { x: -63.78, z: 154.94 },
+    { x: -64.37, z: 155.71 },
+    { x: -64.96, z: 156.4 },
+    { x: -65.6, z: 157.0 },
+    { x: -66.23, z: 157.55 },
+    { x: -67.0, z: 158.08 },
+    { x: -67.77, z: 158.52 },
+    { x: -68.66, z: 158.96 },
+    { x: -69.63, z: 159.35 },
+    { x: -70.71, z: 159.38 },
+    { x: -72.13, z: 159.44 },
+    { x: -72.95, z: 159.35 },
+    { x: -73.8, z: 159.07 },
+    { x: -74.57, z: 158.77 },
+    { x: -75.35, z: 158.38 },
+    { x: -76.1, z: 157.98 },
+    { x: -76.93, z: 157.36 },
+    { x: -77.56, z: 156.83 },
+    { x: -78.21, z: 156.14 },
     { x: -78.37, z: 154.2 },
+    { x: -78.49, z: 152.57 },
   ],
-  "kostka podjazdu przed kliniką w łuku ścieżki w1011367937 do osi drogi serwisowej w1011367931, w OSM goła ziemia",
-  ["w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367931", "w1011367931", "w1011367931"],
+  "kostka (w rzeczywistości asfalt) podjazdu przed kliniką: pętla w1022724910 (highway=service, area=yes, import jej nie rysuje, G-555) i nawierzchnia w łuku ścieżki w1011367937 do osi drogi serwisowej w1011367931",
+  ["w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1011367937", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910", "w1022724910"],
 );
 
 /**
@@ -91,7 +112,8 @@ const LAWN_3MAJA_CLINIC: AddedArea = t245(
 
 /**
  * North of the Collegium on Radziwiłłowska 11: the yard between its wall and the lawns w1011367930 and
- * w1011367929 (on their nodes) and the path between w1011367929 and the annex, to the car park w681172446.
+ * w1011367929 (on their nodes), round the bed `COLLEGIUM_NORTH_BED`, and the path between w1011367929
+ * and the annex, to the car park w681172446.
  */
 const COLLEGIUM_NORTH: AddedArea = t245(
   "kolegium-polnoc",
@@ -109,10 +131,29 @@ const COLLEGIUM_NORTH: AddedArea = t245(
     { x: -8.88, z: 159.05 },
     { x: -4.68, z: 158.65 },
     { x: -5.22, z: 142.96 },
+    { x: -13.0, z: 143.61 },
+    { x: -13.0, z: 147.8 },
+    { x: -21.0, z: 147.8 },
+    { x: -21.0, z: 144.28 },
     { x: -27.93, z: 144.86 },
   ],
   "kostka dziedzińca na północ od Collegium przy Radziwiłłowskiej 11 i ścieżki między trawnikiem w1011367929 a skrzydłem, w OSM goła ziemia",
-  ["w1011367930", "w1011367930", "w1011367930", "w1011367929", "w1011367929", "w1011367929", "w1011367929", "w1011367929", "w681172446", ...Array<null>(4).fill(null)],
+  ["w1011367930", "w1011367930", "w1011367930", "w1011367929", "w1011367929", "w1011367929", "w1011367929", "w1011367929", "w681172446", ...Array<null>(8).fill(null)],
+);
+
+/**
+ * The bed against the Collegium's north wall (orthophoto, PZGiK), in the shadow of the building: a lawn.
+ */
+const COLLEGIUM_NORTH_BED: AddedArea = t245(
+  "rabata-kolegium-polnoc",
+  GRASS,
+  [
+    { x: -21.0, z: 144.28 },
+    { x: -21.0, z: 147.8 },
+    { x: -13.0, z: 147.8 },
+    { x: -13.0, z: 143.61 },
+  ],
+  "rabata przy północnej ścianie Collegium na ortofoto PZGiK, w OSM goła ziemia",
 );
 
 /**
@@ -136,8 +177,8 @@ const COLLEGIUM_EAST: AddedArea = t245(
 
 /**
  * The Collegium's south and west: the ramp and the paving along its walls to the sidewalk w232674453's
- * axis, round the bed w1011367948 and up the west wall to the lawn w1011367930 (on their nodes), up to
- * the chunk's east edge.
+ * axis, round the beds w1011367948 (on its nodes) and `COLLEGIUM_SOUTH_BED`, and up the west wall to the
+ * lawn w1011367930, up to the chunk's east edge.
  */
 const COLLEGIUM_SOUTH: AddedArea = t245(
   "kolegium-poludnie",
@@ -152,6 +193,10 @@ const COLLEGIUM_SOUTH: AddedArea = t245(
     { x: 19.2, z: 128.67 },
     { x: 19.2, z: 127.36 },
     { x: 20.0, z: 127.28 },
+    { x: 20.0, z: 126.0 },
+    { x: 13.0, z: 126.0 },
+    { x: 13.0, z: 123.0 },
+    { x: 20.0, z: 123.0 },
     { x: 20.0, z: 121.19 },
     { x: 6.58, z: 122.03 },
     { x: 6.66, z: 124.31 },
@@ -165,11 +210,26 @@ const COLLEGIUM_SOUTH: AddedArea = t245(
     { x: -34.5, z: 136.72 },
   ],
   "kostka i rampa wzdłuż południowej i zachodniej ściany Collegium do osi chodnika w232674453, w OSM goła ziemia",
-  ["w1011367930", "w1011367930", ...Array<null>(9).fill(null), "w1011367948", "w1011367948", "w1011367948", "w1011367948", null, "w232674453", "w232674453", ...Array<null>(2).fill(null)],
+  ["w1011367930", "w1011367930", ...Array<null>(13).fill(null), "w1011367948", "w1011367948", "w1011367948", "w1011367948", null, "w232674453", "w232674453", ...Array<null>(2).fill(null)],
+);
+
+/**
+ * The shrub bed east of the steps south of the Collegium (orthophoto, PZGiK), which OSM lacks.
+ */
+const COLLEGIUM_SOUTH_BED: AddedArea = t245(
+  "rabata-kolegium-poludnie",
+  GRASS,
+  [
+    { x: 13.0, z: 123.0 },
+    { x: 20.0, z: 123.0 },
+    { x: 20.0, z: 126.0 },
+    { x: 13.0, z: 126.0 },
+  ],
+  "rabata z krzewami na wschód od schodów przed Collegium na ortofoto PZGiK, w OSM goła ziemia",
 );
 
 /** T-245's added areas in draw order: `corrections-zn.ts`'s, then this file's. */
-export const T245_AREAS: readonly AddedArea[] = [...ZN_AREAS, CLINIC_LAWN, CLINIC_DRIVE, LAWN_3MAJA_CLINIC, COLLEGIUM_NORTH, COLLEGIUM_EAST, COLLEGIUM_SOUTH];
+export const T245_AREAS: readonly AddedArea[] = [...ZN_AREAS, CLINIC_LAWN, CLINIC_DRIVE, LAWN_3MAJA_CLINIC, COLLEGIUM_NORTH, COLLEGIUM_NORTH_BED, COLLEGIUM_EAST, COLLEGIUM_SOUTH, COLLEGIUM_SOUTH_BED];
 
 /** Krakowskie Przedmieście's added areas in draw order, the tail of `ADDED_AREAS`: T-243's, then T-245's. */
 export const KRAKOWSKIE_ADDED_AREAS: readonly AddedArea[] = [...T243_AREAS, ...T245_AREAS];

@@ -30,15 +30,15 @@ export const t245 = (name: string, tags: AddedArea["tags"], ring: readonly Pt[],
 
 /**
  * The grounds of Litevski Art Residence (Żołnierzy Niepodległej 4) round its west, north and east walls:
- * the driveway w181172336 to its garage on the west, the forecourt to the footway w233257773's axis and
- * the passage with the driveway w181172345 to Żołnierzy Niepodległej 2. South of the line of its south
- * wall `ZN2_SOUTH` takes over; the trees at its south-west corner are `LITEVSKI_TREES`.
+ * the driveway w181172336 to its garage on the west (to x -197, where `LITEVSKI_GREEN` begins), the
+ * forecourt to the footway w233257773's axis and the passage with the driveway w181172345 to Żołnierzy
+ * Niepodległej 2. South of the line of its south wall `ZN2_SOUTH` takes over.
  */
 const YARD_LITEVSKI: AddedArea = t245(
   "podworze-litevski",
   SETTS,
   [
-    { x: -201.0, z: 51.61 },
+    { x: -197.0, z: 51.29 },
     { x: -193.63, z: 51.01 },
     { x: -164.12, z: 49.4 },
     { x: -158.52, z: 49.01 },
@@ -53,37 +53,43 @@ const YARD_LITEVSKI: AddedArea = t245(
     { x: -191.11, z: 14.5 },
     { x: -194.5, z: 14.5 },
     { x: -194.5, z: 27.0 },
-    { x: -201.0, z: 27.0 },
+    { x: -197.0, z: 27.0 },
   ],
   "kostka podjazdu i dziedzińca wokół Litevski Art Residence (Żołnierzy Niepodległej 4) do osi chodnika w233257773, w OSM goła ziemia",
   [null, "w233257773", "w233257773", ...Array<null>(13).fill(null)],
 );
 
 /**
- * The trees south-west of Litevski Art Residence, west of its garage ramp (orthophoto, PZGiK): a lawn under them.
+ * The green west of Litevski Art Residence (orthophoto, PZGiK): the strip of grass and shrubs along the
+ * chunk's west edge from the footway w233257773's axis to the trees south-west of the building, west of
+ * its garage ramp, and the trees on to Żołnierzy Niepodległej 6's north wall.
  */
-const LITEVSKI_TREES: AddedArea = t245(
+const LITEVSKI_GREEN: AddedArea = t245(
   "zielen-litevski",
   GRASS,
   [
-    { x: -201.0, z: 14.5 },
-    { x: -194.5, z: 14.5 },
+    { x: -201.0, z: 5.23 },
+    { x: -201.0, z: 51.61 },
+    { x: -197.0, z: 51.29 },
+    { x: -197.0, z: 27.0 },
     { x: -194.5, z: 27.0 },
-    { x: -201.0, z: 27.0 },
+    { x: -194.5, z: 14.5 },
+    { x: -192.0, z: 14.5 },
+    { x: -192.0, z: 5.53 },
   ],
-  "zieleń pod drzewami na południowy zachód od Litevski Art Residence na ortofoto PZGiK, w OSM goła ziemia",
+  "pas trawy z krzewami i drzewa na zachód i południowy zachód od Litevski Art Residence do ściany Żołnierzy Niepodległej 6 na ortofoto PZGiK, w OSM goła ziemia",
 );
 
 /**
- * The strip south of Litevski Art Residence along KP 39b and Żołnierzy Niepodległej 6 (round the
- * notch in 39b's north wall) and the yard between Żołnierzy Niepodległej 2, the bank's wing (KP 37) and
- * 3 Maja 2, up to T-243's KP 37 yard on its corners.
+ * The strip south of Litevski Art Residence along KP 39b and Żołnierzy Niepodległej 6 east of the trees
+ * (`LITEVSKI_GREEN`, x -192), round the notch in 39b's north wall, and the yard between Żołnierzy
+ * Niepodległej 2, the bank's wing (KP 37) and 3 Maja 2, up to T-243's KP 37 yard on its corners.
  */
 const ZN2_SOUTH: AddedArea = t245(
   "podworze-zn2-poludnie",
   SETTS,
   [
-    { x: -201.0, z: 14.5 },
+    { x: -192.0, z: 14.5 },
     { x: -166.6, z: 14.5 },
     { x: -166.7, z: 30.89 },
     { x: -152.32, z: 31.83 },
@@ -98,7 +104,7 @@ const ZN2_SOUTH: AddedArea = t245(
     { x: -175.18, z: 1.58 },
     { x: -175.38, z: 5.99 },
     { x: -186.89, z: 5.7 },
-    { x: -201.0, z: 5.23 },
+    { x: -192.0, z: 5.53 },
   ],
   "utwardzony pas na południe od Litevski Art Residence i podwórze między Żołnierzy Niepodległej 2, KP 39b i bankiem KP 37 do podwórza T-243/podworze-kp37, w OSM goła ziemia",
 );
@@ -362,7 +368,7 @@ const SCHOOL_GREEN: AddedArea = t245(
 /** The added areas of this file, in draw order. */
 export const ZN_AREAS: readonly AddedArea[] = [
   YARD_LITEVSKI,
-  LITEVSKI_TREES,
+  LITEVSKI_GREEN,
   ZN2_SOUTH,
   ZN2_EAST_SOUTH,
   ZN2_EAST_WEST,
