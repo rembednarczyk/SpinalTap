@@ -1530,11 +1530,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `parking-traffic.ts`: `IN_WAY`/`OUT_WAY` na osi jezdni (np. (407,5; −16,5)), a ruch symulacji ma na Bajkowskiego dwa pasy ±1,6 m; auto szerokości ok. 1,8 m zachodzi na oba, jedzie 2,5 m/s wobec 8 m/s ruchu, bez bryły (G-492); skręt w lewo powinien iść z lewego pasa (`turn:lanes=left|right`); pas wjazdu w `TRAFFIC_ROUTES` sim na osobny PR ze złotym hashem; kontrola `ramp-car-off-lane` (baza dziś 9 punktów)
 - Pakiet właściciela: packages/engine (renderer), packages/sim (G-492)
 
-### G-513 Goła ziemia na podwórkach i przy gmachach Krakowskiego Przedmieścia (krakowskie-0-0)
-- Status: w PR #397 (8.11, runda 2: kurator ODSTĘPSTWO CELOWE po poprawce pasa `ck-zachod` na trawnik)
-- Ważność: S3 · Zasięg: 144 kwadraty 10 × 10 m `landuse-bare` w ok. 87 skupieniach, ok. 2500 m²; największe: 244 m² (x −53,8..−13,8; z −94,3..−84,3), 208 m² (−189..−150; −220..−189), 190 m² (−188..−127; −270..−220), 182 m² (−176..−162; −32..−20), 180 m² (−155..−107; −101..−72), 155 m² (−16..−2; −128..−99); zrzuty `shots/opiekun-k00/clD-0.png`, `bare1-a.png`, `sad.png`; przyczyna: import nie kładzie nawierzchni na podwórkach i pasach przy gmachach (`landuse=retail/commercial`, gmachy publiczne); rozszerzenie G-450/T-221; kontrola `landuse-bare` istnieje, poprawka obniża bazę; przy okazji: G-508 w tej komórce to szum NMT przy krawędziach budynków (1 krawędź > 20° pod budynkiem, 15 > 10° w gołym terenie; propozycja `terrain-crease` z progiem 12° bez obrysów budynków), T-204 do sprawdzenia przez kuratora (skan `tree-height-vs-nmpt` 0 w komórce)
-- Pakiet właściciela: tools/osm-import (ground), tools/glitch-scan
-
 ### G-515 Cywile w modelu VRoid trzymają lewą rękę przy twarzy bez parasola
 - Status: zgłoszone (8.11, budowniczy ADR-0076 etap 3a)
 - Ważność: S4 · Zasięg: poza parasola riga zostaje na modelu VRoid, choć parasol jest ukryty; u Ume i innych starszych mocno odmładza sylwetkę; przy okazji: pochylenie starszych na Base_Male (Sabu, Goro, Genzō) słabo czyta się z boku (głowa Sabu wysunięta o ok. 10 cm, na zrzucie prawie prosto), do podniesienia `stoop` w manifeście
@@ -1544,11 +1539,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, naprawiacz G-514)
 - Ważność: S4 · Zasięg: sonda `seki-skirt`: w `sit` 2,0 cm, w `sleep` 6,9 cm (oba uda, spread 0); dotyczy scen, w których bohaterka siada albo śpi; przy okazji: poza `holdingDown` nie klęczy naprawdę (tylne kolano ok. 0,27 m nad ziemią, tylna stopa w powietrzu); po #396 tylne kolano i stopa w `holdingDown` 0,29 i 0,34 m nad ziemią, a oko FPP w duszeniu (`choke-arms.ts`, `eyeHeightAt(0.7)` 1,284 m) ok. 9 cm pod głową TPP: do wyrównania przy prawdziwym klęczeniu
 - Pakiet właściciela: packages/engine (renderer: pozy)
-
-### G-517 Duszony strażnik po ok. 4 s nadal stoi zamiast klęczeć
-- Status: nie odtwarza się w grze (8.11, PR #401 z testem ochronnym; cel klęczy po 1,2 s i do końca przytrzymania; zrzut e2e był po krokowaniu hurtem `step(n)` bez klatek renderera, rozwiązanie dokładne w G-482)
-- Ważność: S4 · Zasięg: przy przytrzymanym duszeniu (ADR-0075) `heldPose` celu nie przechodzi w klęczenie po ok. 4 s; do sprawdzenia testem pozy w czasie i z czasem fazy (por. G-482)
-- Pakiet właściciela: packages/engine (renderer: grab-pose)
 
 ### G-518 Hina (dziecko) ma kolizję i strefę trafień dorosłego
 - Status: zgłoszone (8.11, weryfikator #395)

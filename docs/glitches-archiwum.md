@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-513 Goła ziemia na podwórkach i przy gmachach Krakowskiego Przedmieścia (krakowskie-0-0)
+- Status: naprawione (PR #397, 8.11; 18 ręcznych obszarów kostki T-243/* w `corrections-krakowskie.ts` i `corrections-ck.ts`: podwórza KP 37–60 z Sądem i UM, pasy przy fasadach, okolice Centrum Kultury, trawnik `ck-zachod` przy zachodniej ścianie CK; `landuse-bare` komórka 10 075 → 155, miasto 108 592 → 96 273; test `landuse-bare-krakowskie.test.ts` pada na danych sprzed poprawki; kurator ODSTĘPSTWO CELOWE T-243; kratki i krawężnik w G-519)
+- Ważność: S3 · Zasięg: 144 kwadraty 10 × 10 m `landuse-bare` w ok. 87 skupieniach, ok. 2500 m²; największe: 244 m² (x −53,8..−13,8; z −94,3..−84,3), 208 m² (−189..−150; −220..−189), 190 m² (−188..−127; −270..−220), 182 m² (−176..−162; −32..−20), 180 m² (−155..−107; −101..−72), 155 m² (−16..−2; −128..−99); zrzuty `shots/opiekun-k00/clD-0.png`, `bare1-a.png`, `sad.png`; przyczyna: import nie kładzie nawierzchni na podwórkach i pasach przy gmachach (`landuse=retail/commercial`, gmachy publiczne); rozszerzenie G-450/T-221; kontrola `landuse-bare` istnieje, poprawka obniża bazę; przy okazji: G-508 w tej komórce to szum NMT przy krawędziach budynków (1 krawędź > 20° pod budynkiem, 15 > 10° w gołym terenie; propozycja `terrain-crease` z progiem 12° bez obrysów budynków), T-204 do sprawdzenia przez kuratora (skan `tree-height-vs-nmpt` 0 w komórce)
+- Pakiet właściciela: tools/osm-import (ground), tools/glitch-scan
+
+### G-517 Duszony strażnik po ok. 4 s nadal stoi zamiast klęczeć
+- Status: odrzucone, nie odtwarza się (PR #401, 8.11; test ochronny: cel klęczy po 1,2 s i do końca przytrzymania; zrzut e2e był po krokowaniu hurtem `step(n)` bez klatek renderera, rozwiązanie dokładne w G-482)
+- Ważność: S4 · Zasięg: przy przytrzymanym duszeniu (ADR-0075) `heldPose` celu nie przechodzi w klęczenie po ok. 4 s; do sprawdzenia testem pozy w czasie i z czasem fazy (por. G-482)
+- Pakiet właściciela: packages/engine (renderer: grab-pose)
+
 ### G-511 Znak `spread` w `activity-poses.ts` zwiera nogi zamiast je rozstawiać
 - Status: naprawione (PR #396, 8.11; `applyActivityPose` i `poseParts` tłumu: lewa noga −spread, prawa +spread, jak w kucaniu; testy w `activities.test.ts` i `crowd.test.ts` padają bez poprawki)
 - Ważność: S4 · Zasięg: dodatnie `spread` dla lewej nogi obraca ją do środka (`legL.rotation.z = +0,2` przesuwa kolano z x −0,083 na +0,005), komentarz mówi „feet apart”; wartości 0,04–0,08, sprzed #386
