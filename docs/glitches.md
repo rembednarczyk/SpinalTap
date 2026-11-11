@@ -1527,7 +1527,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-522 Klinowe szczeliny bez nawierzchni między jezdnią a chodnikiem Krakowskiego
-- Status: krok 1 scalony w #400, krok 2 w PR #409 (reguła `kerbFills`, `kerb-gap-bare` 103 204 → 32 148; kurator runda 1 DO POPRAWY: G-570, T-247; runda 2 u autora) (8.11, kontrola `kerb-gap-bare`, baza 103 982 próbek = 6 499 m² w 2 155 skupieniach; przyczyna systemowa: import kładzie jezdnię krócej niż chodnik wzdłuż ulic, pas 1–2,5 m; krok 2: reguła importu, po scaleniu #397)
+- Status: krok 1 scalony w #400, krok 2 w PR #409 (reguła `kerbFills`, `kerb-gap-bare` 103 204 → 32 148; kurator runda 1 DO POPRAWY: G-570, T-247; runda 3 @ ef78842: asfalt jako osobne kawałki jezdni, `kerb-gap-bare` 30 482, przegląd kuratora w toku; blokuje budżet reference przez G-595) (8.11, kontrola `kerb-gap-bare`, baza 103 982 próbek = 6 499 m² w 2 155 skupieniach; przyczyna systemowa: import kładzie jezdnię krócej niż chodnik wzdłuż ulic, pas 1–2,5 m; krok 2: reguła importu, po scaleniu #397)
 - Ważność: S3 · Zasięg: (−120,5..−114; 54,5..101) 128 m², (−104,5..−102,5; −6,5..13) 48 m², (−121,5..−120,5; 74,5..100,5) 27 m², także części nieliczone skanem; zrzuty `kp-strip-g`, `s-strip-l`, `wedge`; przyczyna: jezdnia i chodnik się nie schodzą; propozycja `kerb-gap-bare` z przeglądu G-440 (baza ok. 35 631 próbek 0,25 m w mieście)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1635,6 +1635,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, weryfikator #410)
 - Ważność: S4 · Zasięg: przegląd `ModelMemory` widzi tylko `manifestFiles` nowego manifestu; dziś manifest przychodzi raz na renderer, skutek teoretyczny
 - Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-595 Cała flota zaparkowanych aut jest aktywna, gdy jej obrys zahacza o stożek widoku
+- Status: zgłoszone (11.11, naprawiacz G-522 runda 3)
+- Ważność: S3 · Zasięg: zaparkowane auta są we wspólnej siatce floty z zasięgiem rysowania 240 m (`VEHICLE_LOD` w `vehicle-views.ts`); jedno nowe auto 170 m od kamery (Kapucyńska, (153,7; −147,9)) poszerza obrys siatki tak, że przecina stożek widoku sceny `reference`, i cała flota staje się aktywna, choć auta w kadrze nie ma: 193/82 → 196/83; poprawka: podział floty na komórki albo obrys liczony z aut w zasięgu, bez podnoszenia budżetu; blokuje #409
+- Pakiet właściciela: packages/engine (renderer: pojazdy)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
