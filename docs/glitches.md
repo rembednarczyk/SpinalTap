@@ -1666,6 +1666,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S2 · Zasięg: `packages/engine/test/model-release.test.ts` › „keeps no more files than a phone's limit” (#410) wczytuje sześć pełnych plików VRM przez NullEngine i w CI kończy się `Test timed out in 20000ms`; czerwieni shard „Unit tests (1)” w #416, #417, #418 (lokalnie przechodzi); limitu nie podnosimy, test do odchudzenia
 - Pakiet właściciela: packages/engine (testy)
 
+### G-610 Gracz za płotem jest nietykalny: ganger widzi przez płot i strzela w niego bez końca
+- Status: zgłoszone (11.11, weryfikator #418; blokuje #418, runda 2 u autora)
+- Ważność: S2 · Zasięg: `inSight` (`ganger-perception.ts:201`) przez `clearSight` przepuszcza wzrok przez płot, a strzał płot zatrzymuje; `ShootAtPlayer` zeruje prędkość, `ChasePlayer` i `firingPosition` się nie włączają; sonda: 11 strzałów, 0 HP straty przy trzech płotach; 1359 płotów w grze
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-611 Świadkowie przestępstwa nie widzą przez płot i żywopłot, obserwatorzy ciał widzą
+- Status: zgłoszone (11.11, weryfikator #418)
+- Ważność: S4 · Zasięg: `crime-system.ts:82-104` (kamera, świadek, patrol, `inPlayerView`) używa `lineOfSight`, a reszta wzroku `clearSight`
+- Pakiet właściciela: packages/sim
+
+### G-612 Mury przecinają ogródki kawiarniane i siedziska tłumu
+- Status: zgłoszone (11.11, weryfikator #418; runda 2 u autora)
+- Ważność: S3 · Zasięg: `furnitureClearance` (`world-barriers.ts:513`) pomija meble niesolidne, `CROWD_SPOTS` i `SEAT_SPOTS` nie biorą udziału w cięciu; cafe-garden (629,5; 117,2) 31 ze 168 próbek w murze, (583,7; 24,5), siedziska #286 i #287 z murem 0,05–0,14 m przed twarzą
+- Pakiet właściciela: packages/sim, tools/glitch-scan
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
