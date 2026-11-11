@@ -1,4 +1,4 @@
-import type { BuildingUse, GroundSurface, RoadMarkingKind, RoofShape, StreetPropKind, TerrainGrid, VenueKind } from "@seki/core";
+import type { BarrierKind, BuildingUse, GroundSurface, RoadMarkingKind, RoofShape, StreetPropKind, TerrainGrid, VenueKind } from "@seki/core";
 
 /**
  * Lublin's centre from map data (ADR-0042), as `tools/osm-import` writes it into
@@ -170,6 +170,24 @@ export interface LublinCarParkData {
   readonly outline: FlatPoints;
 }
 
+/**
+ * A barrier of the map (ADR-0077 point 4): a wall, a retaining wall, the city walls, a fence or a
+ * hedge as a line with its height over the ground, cut by the import where the map's ways cross
+ * it, at its gates and clear of the buildings, carriageways and steps; a gate or a lift gate as
+ * an opening, its span post to post, drawn without a solid.
+ */
+export interface LublinBarrierData {
+  /** Its map id: `w<id>` a way, `n<id>` a gate node. */
+  readonly id: string;
+  readonly kind: BarrierKind;
+  /** Over the ground (m). */
+  readonly height: number;
+  /** World polyline, clipped to the chunk; an opening's span. */
+  readonly line: FlatPoints;
+  /** OSM `material`, or a fence's `fence_type`. */
+  readonly material?: string;
+}
+
 export interface LublinChunkData {
   readonly id: string;
   readonly district: "shinsekai-7" | "kanal" | "targ" | "doki";
@@ -197,6 +215,8 @@ export interface LublinChunkData {
   readonly busStops?: FlatPoints;
   /** Axes of the streets of two lanes or more a way, clipped to the chunk, when it has any: no car parks by their kerbs outside a car park (G-155). */
   readonly multiLaneWays?: readonly { readonly line: FlatPoints }[];
+  /** Walls, fences, hedges and their gates (ADR-0077), when it has any. */
+  readonly barriers?: readonly LublinBarrierData[];
 }
 
 /**

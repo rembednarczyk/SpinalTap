@@ -6,6 +6,7 @@ import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { smallAlone } from "./building-alone.ts";
 import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
+import { type WorldBarrier, chunkBarriers, worldBarriers } from "./barriers.ts";
 import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills } from "./bridge-fill.ts";
 import { makeBuilding } from "./buildings.ts";
@@ -179,6 +180,7 @@ const generateChunk = (
   towered: ReadonlySet<string>,
   venues: ReadonlyMap<string, readonly WorldVenue[]>,
   kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[] },
+  barriers: readonly WorldBarrier[],
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
@@ -216,6 +218,7 @@ const generateChunk = (
   const parks = chunkCarParks(kerb.carParks, spec.rect);
   const stops = chunkBusStops(kerb.busStops, spec.rect);
   const wide = chunkMultiLaneWays(lines, spec.rect);
+  const walls = chunkBarriers(barriers, spec.rect);
   const chunk: ChunkOut = {
     id: spec.id,
     district: spec.district.id,
@@ -233,6 +236,7 @@ const generateChunk = (
     ...(parks.length > 0 ? { carParks: parks } : {}),
     ...(stops.length > 0 ? { busStops: stops } : {}),
     ...(wide.length > 0 ? { multiLaneWays: wide } : {}),
+    ...(walls.length > 0 ? { barriers: walls } : {}),
   };
   const stats: ChunkStats = {
     id: spec.id,
@@ -340,7 +344,9 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const venues = assignVenues(allVenues(data, areas), buildings.map((b) => ({ id: b.id, ring: b.ring })));
   const mapped = allVenues(data, areas).filter((v) => chunks.some((c) => inRect(v.at, c.rect)));
   const kerb = { carParks: areas, busStops: busStopPosts(data, mapLines, areas) };
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb));
+  // Walls, fences and hedges (ADR-0077) clear of the buildings, carriageways, steps and the ways through them.
+  const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
+  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers));
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
   const venueStats: VenueStats = {
     total: mapped.length,
