@@ -312,6 +312,8 @@ Pełna wizualna regresja 3D jest trudna i kosztowna. Migawki na stałej kamerze 
 
 ## 11. Model pracy agentowej
 
+> **Stan obecny (11.11).** Zasady z §11–13 (własność pakietów, kontrakty przed implementacją, ADR, małe PR-y) obowiązują nadal i streszcza je `CLAUDE.md`. W praktyce zamiast rostera z §12 pracuje zespół z ADR-0054: orkiestrator, łowca, naprawiacz i budowniczy glitchy, weryfikator i kurator topografii (`.claude/agents/`). Bramką wydajności są wywołania rysowania i aktywne siatki, a czas klatki pod SwiftShaderem to tylko raport (ADR-0046). Stałe decyzje użytkownika o sposobie pracy są w `docs/decyzje.md`.
+
 ### Zasada naczelna
 Agenci komunikują się przez kontrakty (interfejsy TS) i testy, nie przez czytanie swoich wnętrz. Granica pakietu to granica własności. To przenosi SRP i czystą architekturę na poziom współpracy i eliminuje konflikty scalania.
 

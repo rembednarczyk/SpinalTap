@@ -1,5 +1,7 @@
 # Co jeszcze można wziąć z OSM (31.10)
 
+> **Status: wykonany jako przegląd (31.10).** Wybór użytkownika jest niżej, a etapy i ich stan są w [ADR-0064](../adr/0064-wiecej-danych-z-osm.md) i w backlogu („Więcej danych z OSM”). Tu niczego nie aktualizujemy.
+
 **Decyzja użytkownika (31.10):** bierzemy 1, 3, 4, 7, 8, 9, 12, 13, 15, 17, 19. Plan etapów: [ADR-0064](../adr/0064-wiecej-danych-z-osm.md).
 
 Przegląd `data/osm/*.json` (cztery dzielnice) i `tools/osm-import`. Liczby to obiekty w danych gry.

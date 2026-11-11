@@ -1,6 +1,6 @@
 # ADR-0069: Skradanie: jeden model wzroku, kucanie i słuch dla wszystkich wrogów
 
-Status: proponowana (szkic do akceptacji użytkownika; wynika z G-285).
+Status: zaakceptowana przez użytkownika 4.11 w całości (sekcja niżej; wynika z G-285).
 
 ## Kontekst
 Użytkownik zgłosił po testowym przebiegu 4.11 (G-285), że przeciwnicy wykrywają gracza natychmiast, nie da się zakraść, a obezwładnienie (ADR-0065) jest praktycznie niemożliwe. Sprawdziłem to testami `sim` bez renderera (Plac Litewski, ziarno 7, poziom Normalny, wróg 2, 5, 10 i 16 m na północ od gracza, plecami do niej, krok 1/60 s). Mierzyłem czas do `ai.alerted`.
