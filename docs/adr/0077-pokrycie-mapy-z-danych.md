@@ -34,7 +34,7 @@ Wniosek: otwartych tekstur elewacji dla Lublina nie ma. Kolory dachów i nawierz
      2. szczeliny przy krawężnikach (G-522, G-570);
      3. wysokości budynków z LoD1 2024 albo NMPT − NMT (ADR-0064 etap 11);
      4. dachy z LoD2, jeśli Lublin jest w zasięgu;
-     5. drzewa z modeli 3D drzew GUGiK albo NMPT.
+     5. drzewa z modeli 3D drzew GUGiK albo NMPT;
      6. meble uliczne z danych: ławki, słupki, latarnie, kosze, stojaki, hydranty, wiaty, tablice (prośba użytkownika 11.11).
    - **Przejścia po komórkach** obejmują już tylko resztę: raport skryptowy, zrzut tylko przy podejrzeniu.
 2. **Ręczne obszary nawierzchni tylko jako wyjątek.** Gdy klasyfikacja się myli (cień, dach widoczny z góry, sezon), obszar ręczny dostaje nakładkę liczbową, a kurator sprawdza liczby zamiast obrazów.
