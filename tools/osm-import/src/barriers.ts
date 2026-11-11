@@ -165,6 +165,18 @@ export const cutBarrier = (line: readonly Pt[], blocked: (p: Pt) => boolean): Pt
   return out;
 };
 
+const between = (a: Pt, b: Pt, t: number): Pt => ({ x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t });
+
+/** Is a closed barrier the lining of a stream's channel: a ring with a waterway's point inside? */
+const channelLining = (line: readonly Pt[], streams: readonly Line[]): boolean => {
+  const first = line[0];
+  const last = line[line.length - 1];
+  if (!first || !last || line.length < 4 || Math.hypot(first.x - last.x, first.z - last.z) > 0.1) return false;
+  const ring = line.slice(0, -1);
+  // Sampled along the stream: its nodes may lie on the lining itself.
+  return streams.some((s) => s.line.some((b, k) => k > 0 && [0.25, 0.5, 0.75].some((t) => pointInRing(between(s.line[k - 1]!, b, t), ring))));
+};
+
 /** A barrier of the whole map, before it is clipped to the chunks. */
 export interface WorldBarrier {
   readonly id: string;
@@ -233,8 +245,11 @@ export const worldBarriers = (data: OsmData, lines: readonly Line[], areas: read
     ...areas.filter((a) => barrierKind(a.tags) && a.tags.building === undefined).map((a) => ({ id: a.id, osmId: a.osmId, tags: a.tags, line: [...a.ring, a.ring[0]!] })),
   ];
   const gates = gateNodes(data, barrierLines, ways);
+  const streams = cuts.lines.filter((l) => l.tags.waterway !== undefined && l.tags.tunnel === undefined && l.tags.covered !== "yes");
   const out: WorldBarrier[] = [];
   for (const l of barrierLines) {
+    // A ring of walls round a stream is its channel's lining: the water and its banks are drawn on their own.
+    if (channelLining(l.line, streams)) continue;
     const kind = barrierKind(l.tags)!;
     const height = barrierHeight(l.tags, kind);
     const material = materialOf(l.tags, kind);

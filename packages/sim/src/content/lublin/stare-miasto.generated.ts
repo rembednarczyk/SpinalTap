@@ -828,7 +828,6 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
       {"id":"w232362982","kind":"wall","height":1,"line":[563.3,98.9,565.8,113.5]},
       {"id":"w232362990","kind":"wall","height":1,"line":[610,117,588.9,107.7,572.1,108,573,112.1]},
       {"id":"w436266757","kind":"wall","height":1,"line":[555.2,100.9,557.7,100.6]},
-      {"id":"w783241007","kind":"fence","height":1.6,"line":[460,138.8,478.5,131.9,477.9,127.2,476.2,124.4,460,83.9],"material":"metal"},
       {"id":"w1046741866","kind":"wall","height":1,"line":[527.3,21.6,523.7,21]},
       {"id":"w1046741867","kind":"wall","height":1,"line":[528.2,46.1,521.1,45.8]},
       {"id":"w1259816677","kind":"wall","height":1,"line":[588.1,29.8,586,27.3]},

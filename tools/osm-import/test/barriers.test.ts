@@ -110,6 +110,17 @@ describe("barriers of the map (ADR-0077 point 4)", () => {
     expect(out[0]!.line[0]!.z).toBeCloseTo(10, 1);
   });
 
+  it("leave out a ring of walls lining a stream's channel", () => {
+    const ring = { id: 5, tags: { barrier: "wall" }, pts: [[0, 0], [8, 0], [8, 50], [0, 50], [0, 0]] as P[] };
+    const stream = { id: 6, tags: { waterway: "stream" }, pts: [[4, -10], [4, 60]] as P[] };
+    const { data, lines } = mapOf([ring, stream]);
+    expect(worldBarriers(data, lines, [], { buildings: [], bands: [], lines })).toEqual([]);
+    expect(worldBarriers(data, lines.slice(0, 1), [], cutsNone)).toHaveLength(1);
+    // A stream in a culvert under a fenced yard leaves the fence.
+    const covered = mapOf([ring, { ...stream, tags: { waterway: "stream", tunnel: "culvert" } }]);
+    expect(worldBarriers(covered.data, covered.lines, [], { buildings: [], bands: [], lines: covered.lines })).toHaveLength(1);
+  });
+
   it("take a closed area's barrier as its outline, and clip a barrier to the chunks, an opening whole by its centre", () => {
     const yard: Area = { id: "w9", osmId: 9, tags: { landuse: "grass", barrier: "hedge" }, ring: [{ x: 0, z: 0 }, { x: 10, z: 0 }, { x: 10, z: 10 }, { x: 0, z: 10 }], holes: 0 };
     const out = worldBarriers({ nodes: new Map(), ways: new Map(), relations: new Map() }, [], [yard], cutsNone);

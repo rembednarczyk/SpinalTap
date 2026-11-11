@@ -21,7 +21,12 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
   });
 
   it("replaces Alchemia's car park and its two aisles with T0's square (T-241, G-500)", () => {
-    expect(REPLACED_WAYS.map((w) => w.id).sort()).toEqual(["w173531008", "w173567309", "w177513189"]);
+    expect(REPLACED_WAYS.filter((w) => w.ref === "T-241").map((w) => w.id).sort()).toEqual(["w173531008", "w173567309", "w177513189"]);
+  });
+
+  it("leaves out the plot's fence round Alchemia, which would close its ways in (T-145, ADR-0077)", () => {
+    expect(REPLACED_WAYS.filter((w) => w.ref === "T-145").map((w) => w.id)).toEqual(["w783241007"]);
+    expect(KRAKOWSKIE_CHUNKS.flatMap((c) => c.barriers ?? []).some((b) => b.id === "w783241007")).toBe(false);
   });
 
   // The generated chunk: the car park's asphalt and its aisles are gone, T0 is a square of setts
