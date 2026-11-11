@@ -1625,11 +1625,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
 - Pakiet właściciela: packages/engine (renderer: modele)
 
-### G-562 Plik modelu, który się nie wczytał, nie wczyta się ponownie w tej sesji
-- Status: zgłoszone (8.11, weryfikator #407; istniało przed #407)
-- Ważność: S4 · Zasięg: odrzucony promise zostaje w `containers` `ModelLibrary`, bez ponowienia
-- Pakiet właściciela: packages/engine (renderer: modele)
-
 ### G-565 Jezdnia Ruskiej przy Szkolnej i przy Targu na Ruskiej węższa od prawdziwej
 - Status: zgłoszone (8.11, kurator przeglądu #408; T-249)
 - Ważność: S4 · Zasięg: przy przystanku Szkolna (x 845–880, z 486–520) i przy sklepach obok Targu na Ruskiej (x 676–714, z 565–575) pas jezdni kończy się 2–3 m przed prawdziwym krawężnikiem; przy Szkolnej zewnętrzny asfaltowy pas ze strzałkami (ok. 2 m) leży pod kostką `zatoka-szkolna`; OSM w732251517 bez `lanes`, w213515733 `lanes=3`; na ortofoto ok. 20 m od krawężnika do krawężnika
@@ -1650,15 +1645,20 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: obietnica dla starego manifestu rozstrzyga się po `clear()` i wpisuje `donorsReady`; w grze manifest ustawia się raz, skutek teoretyczny
 - Pakiet właściciela: packages/engine (renderer: modele)
 
-### G-580 `parseModelManifest` przepuszcza pole `lends` bez walidacji
-- Status: w PR #410 (8.11, ADR-0076 etap 4b)
-- Ważność: S4 · Zasięg: `"lends": "true"` (napis) po cichu usuwa `base-female.vrm` z dawców i przywraca G-575; żaden test aplikacji nie sprawdza, że `lends` przeżywa parsowanie (`model-donors.test.ts` czyta surowy JSON); przy okazji opis commita d2e8007 mówi o 10 postaciach, ADR wylicza 9
-- Pakiet właściciela: packages/app (manifest modeli)
-
 ### G-585 Na telefonie same pliki dawców ubrań przekraczają limit plików modeli
 - Status: zgłoszone (8.11, budowniczy ADR-0076 etap 4b)
 - Ważność: S4 · Zasięg: profil `low` ma limit 5 plików, a dawców jest 6 (ok. 260 MiB tekstur); limitu nie da się spełnić bez etapu 5 (tekstury tła 512 px) albo mniejszego zbioru dawców
 - Pakiet właściciela: packages/engine (renderer: modele), tools (shrink_glb)
+
+### G-590 Na telefonie plik obsady spoza dawców nie czeka 30 s i pobiera się przy każdym powrocie
+- Status: zgłoszone (8.11, weryfikator #410; skutek G-585)
+- Ważność: S3 · Zasięg: profil `low`: dawcy sami przekraczają limit 5 plików, więc `kurosawa.vrm` wypada od razu; 3 wyjścia i powroty co 2 s dały 4 pobrania (ok. 45 MiB tekstur na wczytanie); poprawka: limit liczony bez dawców albo w MiB
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-591 `setManifest` z innym manifestem zostawia pliki starego w pamięci
+- Status: zgłoszone (8.11, weryfikator #410)
+- Ważność: S4 · Zasięg: przegląd `ModelMemory` widzi tylko `manifestFiles` nowego manifestu; dziś manifest przychodzi raz na renderer, skutek teoretyczny
+- Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

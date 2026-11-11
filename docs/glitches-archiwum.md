@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-562 Plik modelu, który się nie wczytał, nie wczyta się ponownie w tej sesji
+- Status: naprawione (PR #410, 8.11; odrzucony promise wypada z `containers`, plik wczytuje się ponownie; testy `model-loader` i `model-release` padają bez poprawki)
+- Ważność: S4 · Zasięg: odrzucony promise zostaje w `containers` `ModelLibrary`, bez ponowienia
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-580 `parseModelManifest` przepuszcza pole `lends` bez walidacji
+- Status: naprawione (PR #410, 8.11; `parseModelManifest` odrzuca wpis z `lends` innym niż boolean; test w app)
+- Ważność: S4 · Zasięg: `"lends": "true"` (napis) po cichu usuwa `base-female.vrm` z dawców i przywraca G-575; żaden test aplikacji nie sprawdza, że `lends` przeżywa parsowanie (`model-donors.test.ts` czyta surowy JSON); przy okazji opis commita d2e8007 mówi o 10 postaciach, ADR wylicza 9
+- Pakiet właściciela: packages/app (manifest modeli)
+
 ### G-547 `kurosawa.vrm` wczytuje się na ekranie ładowania, choć Kurosawa pojawia się w II akcie
 - Status: naprawione (PR #407, 8.11; ADR-0076 etap 4a: start nowej gry 7 plików / 42,5 MiB → 6 / 36,5 MiB, `kurosawa.vrm` wczytuje się, gdy Kurosawa staje w scenie; 3 rundy weryfikacji: G-560, G-575)
 - Ważność: S4 · Zasięg: +6 MiB na starcie; `donorsOf` ładuje wszystkie pliki manifestu przy liczeniu dawców ubrań; wczytywanie w tle według dzielnic i aktów to etap 4
