@@ -1,7 +1,6 @@
-import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import type { EntityId, ViewDescriptor } from "@seki/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { type AbstractMesh, Scene, Vector3 } from "../src/babylon";
+import { type AbstractMesh, type Scene, Vector3 } from "../src/babylon";
 import type { CameraRig } from "../src/camera/camera-rig";
 import type { MoonShadow } from "../src/npr/moon-shadow";
 import { QUALITY_TIERS } from "../src/npr/quality";
@@ -10,7 +9,7 @@ import { CharacterViews } from "../src/renderer/character-views";
 import { donorFiles } from "../src/renderer/model-cast";
 import { type CharacterModelManifest, toonSourceOf } from "../src/renderer/model-library";
 import { MODEL_LINGER_S } from "../src/renderer/model-memory";
-import { fileGpuMiB, readModelFile } from "./game-models";
+import { disposeModelScenes, fileGpuMiB, modelScene, readModelFile } from "./game-models";
 
 /**
  * Letting go of character model files (ADR-0076 stage 4b): a file only named characters wear goes
@@ -24,15 +23,18 @@ const KUROSAWA: ViewDescriptor = { kind: "npc", preset: "fixer", cast: "kurosawa
 /** The scene of a save at Kurosawa (ADR-0076 stage 4a): Seki, Kurosawa and Hana. */
 const AT_KUROSAWA: readonly ViewDescriptor[] = [{ kind: "heroine" }, KUROSAWA, { kind: "npc", preset: "civilian", cast: "hana" }];
 
-/** Serves the game's files from disk (`?…` ignored) and notes what is asked; `hold` keeps files back, `fail` fails their first fetch. */
-const serve = (opts: { hold?: readonly string[]; fail?: readonly string[] } = {}) => {
+/**
+ * Serves the game's files from disk (`?…` ignored) and notes what is asked; `hold` keeps files
+ * back, `fail` fails their first fetch, `as` serves that one file under every name.
+ */
+const serve = (opts: { hold?: readonly string[]; fail?: readonly string[]; as?: string } = {}) => {
   const fetched: string[] = [];
   const held = new Map<string, () => void>();
   const failing = new Set(opts.fail ?? []);
   vi.stubGlobal("fetch", (url: string) => {
     fetched.push(url);
     if (failing.delete(url)) return Promise.reject(new Error(`${url}: offline`));
-    const b = readModelFile(url.split("?")[0]!);
+    const b = readModelFile(opts.as ?? url.split("?")[0]!);
     const answer = { ok: true, arrayBuffer: () => Promise.resolve(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)) };
     if (!opts.hold?.includes(url)) return Promise.resolve(answer);
     return new Promise((ok) => held.set(url, () => ok(answer)));
@@ -95,6 +97,7 @@ const outfitOf = (views: CharacterViews, id: EntityId): string[] => {
 };
 
 afterEach(() => {
+  disposeModelScenes();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -102,7 +105,7 @@ afterEach(() => {
 describe("letting go of character model files (ADR-0076 stage 4b)", () => {
   it("lets go of kurosawa.vrm a while after he left the scene, with its meshes and textures", async () => {
     const { times } = serve();
-    const scene = new Scene(new NullEngine());
+    const scene = modelScene();
     const views = viewsOn(scene);
     views.setCharacterModels(GAME);
     spawnAll(views, AT_KUROSAWA);
@@ -140,7 +143,7 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
 
   it("never lets go of Seki's file or the donors', not on a phone over its limit, nor behind a new scene", async () => {
     serve();
-    const views = viewsOn(new Scene(new NullEngine()), QUALITY_TIERS.low.modelFiles);
+    const views = viewsOn(modelScene(), QUALITY_TIERS.low.modelFiles);
     views.setCharacterModels(GAME);
     spawnAll(views, AT_KUROSAWA);
     await Promise.all(views.modelLoading.start());
@@ -157,7 +160,9 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
   });
 
   it("keeps no more files than a phone's limit: the longest unused goes first, at once", async () => {
-    serve();
+    // Which file goes hangs on the names and the order they went unused, not on what they hold:
+    // the lightest file under seven names, fourteen loads of the real ones overran CI's 20 s (G-620).
+    serve({ as: "ganger.vrm" });
     // Named characters only, no donors but Seki's: six files a phone may let go of.
     const cast: CharacterModelManifest = {
       heroine: { url: "seki.vrm" },
@@ -173,7 +178,7 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
       { kind: "npc", preset: "civilian", cast: "mei" },
     ];
     const at = async (modelFiles: number) => {
-      const views = viewsOn(new Scene(new NullEngine()), modelFiles);
+      const views = viewsOn(modelScene(), modelFiles);
       views.setCharacterModels(cast);
       spawnAll(views, people);
       await settled(views);
@@ -198,7 +203,7 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
 
   it("dresses a look the same after its file was let go of and loaded again", async () => {
     const { times } = serve();
-    const views = viewsOn(new Scene(new NullEngine()));
+    const views = viewsOn(modelScene());
     // Kurosawa in his own dress, and a man on his file with a donor's trousers (ADR-0076 §3).
     const borrower = { url: "kurosawa.vrm", variant: 150, dress: { bottomFrom: 0.99, topFrom: null } };
     views.setCharacterModels({ ...GAME, cast: { ...GAME.cast, tetsu: borrower } });
@@ -221,7 +226,7 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
   it("loads a file again after its fetch failed (G-562)", async () => {
     const { times } = serve({ fail: ["kurosawa.vrm"] });
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const views = viewsOn(new Scene(new NullEngine()));
+    const views = viewsOn(modelScene());
     views.setCharacterModels(GAME);
     views.spawn(2, KUROSAWA, STAND);
     await settled(views);
@@ -236,7 +241,7 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
 
   it("loads a save away from Kurosawa and back again, his file let go of behind the first loading screen", async () => {
     const { times, release } = serve({ hold: ["kurosawa.vrm"] });
-    const scene = new Scene(new NullEngine());
+    const scene = modelScene();
     const views = viewsOn(scene);
     views.setCharacterModels(GAME);
     spawnAll(views, AT_KUROSAWA);
