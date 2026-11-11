@@ -1618,7 +1618,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-590 Na telefonie plik obsady spoza dawców nie czeka 30 s i pobiera się przy każdym powrocie
 - Status: zgłoszone (8.11, weryfikator #410; skutek G-585)
-- Ważność: S3 · Zasięg: profil `low`: dawcy sami przekraczają limit 5 plików, więc `kurosawa.vrm` wypada od razu; 3 wyjścia i powroty co 2 s dały 4 pobrania (ok. 45 MiB tekstur na wczytanie); poprawka: limit liczony bez dawców albo w MiB
+- Ważność: S4 (tylko profil Low wybrany ręcznie; domyślnie High także na telefonach, decyzja 1.11) · Zasięg: profil `low`: dawcy sami przekraczają limit 5 plików, więc `kurosawa.vrm` wypada od razu; 3 wyjścia i powroty co 2 s dały 4 pobrania (ok. 45 MiB tekstur na wczytanie); poprawka: limit liczony bez dawców albo w MiB
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-591 `setManifest` z innym manifestem zostawia pliki starego w pamięci
