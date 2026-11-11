@@ -1662,7 +1662,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-620 Test zwalniania modeli przekracza w CI limit 20 s
-- Status: w naprawie (11.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g620`)
+- Status: w PR #419 (11.11; przyczyna: niezwalniane `NullEngine` (sterta do 1,07 GB) i 14 plików VRM; przypadek telefonu 6,3 → 1,8 s, limity bez zmian)
 - Ważność: S2 · Zasięg: `packages/engine/test/model-release.test.ts` › „keeps no more files than a phone's limit” (#410) wczytuje sześć pełnych plików VRM przez NullEngine i w CI kończy się `Test timed out in 20000ms`; czerwieni shard „Unit tests (1)” w #416, #417, #418 (lokalnie przechodzi); limitu nie podnosimy, test do odchudzenia
 - Pakiet właściciela: packages/engine (testy)
 
@@ -1680,6 +1680,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (11.11, weryfikator #418; runda 2 u autora)
 - Ważność: S3 · Zasięg: `furnitureClearance` (`world-barriers.ts:513`) pomija meble niesolidne, `CROWD_SPOTS` i `SEAT_SPOTS` nie biorą udziału w cięciu; cafe-garden (629,5; 117,2) 31 ze 168 próbek w murze, (583,7; 24,5), siedziska #286 i #287 z murem 0,05–0,14 m przed twarzą
 - Pakiet właściciela: packages/sim, tools/glitch-scan
+
+### G-621 `ModelMemory` bez testu kolejności zwalniania
+- Status: zgłoszone (11.11, naprawiacz G-620)
+- Ważność: S4 · Zasięg: przypadek telefonu w `model-release.test.ts` przechodzi także z odwróconym sortowaniem w `ModelMemory.sweep` (naraz jeden kandydat); brak testu jednostkowego „najdłużej nieużywany idzie pierwszy”
+- Pakiet właściciela: packages/engine (testy)
+
+### G-622 Loader glTF liczy pozycje skóry na CPU dla każdego prymitywu
+- Status: zgłoszone (11.11, naprawiacz G-620; do sprawdzenia w przeglądarce)
+- Ważność: S4 · Zasięg: `refreshBoundingInfo(true, true)` przy wczytywaniu VRM kosztuje 40–450 ms na plik w NullEngine; jeśli tak samo w przeglądarce, wydłuża wczytywanie postaci; inne testy modeli (`model-textures`, `model-cast-colours`, `model-donors`, `model-figure*`) też nie zwalniają silników
+- Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
