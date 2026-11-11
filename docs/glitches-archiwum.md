@@ -2,6 +2,55 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-059 Testy sesji `m2-schedules` i `m3-loop` trwają ok. 5 s i przekraczają limit vitest pod obciążeniem
+- Status: odrzucone (pomiar, 31.10)
+- Ustalenie orkiestratora: główny `vitest.config.ts` daje `testTimeout: 20_000` właśnie dla testów całych aktów. Limit 5 s działa tylko przy vitest puszczonym z katalogu pakietu, bez głównej konfiguracji. Z roota przy load 30: najdłuższy test 7,6 s (zegar HUD, 3600 klatek), wszystkie 10 zielonych. Testy uruchamiamy z roota repo
+
+### G-095 Żółty kabel kanionu przez przedsionek Trasy Podziemnej (do potwierdzenia)
+- Status: odrzucone, niepotwierdzone (porządek rejestru 11.11): niepotwierdzone (glitch hunt wnętrz, 31.10)
+- Ważność: S4 (proponowana) · Koszt: mały
+- Dowód: zrzut `scratchpad/shots1/p1-trasa-vest.png` (kamera 567, 1,93, −57, yaw π/2): żółta linia na wysokości głowy w poprzek przedsionka i krótki odcinek na tylnej ścianie
+- Do ustalenia: czy to kabel z `renderer/mapcity/canyon-plan.ts` albo `landmarks/cables.ts` przechodzący przez bryłę; ile takich w mieście
+- Pakiet właściciela: packages/engine (jeśli się potwierdzi)
+- Test przyjęcia: kontrola `cable-through-interior` (odcinek kabla wchodzi w bryłę wnętrza `interior: true`) z bazą → 0
+
+### G-226 E2E `npr-perf` „the Rynek in TPP” przekracza 90 s na `citySettled` przy load 12–15
+- Status: odrzucone, nie regresja (porządek rejestru 11.11): zbadane (2.11, naprawiacz): przepustowość maszyny, nie regresja. Klatka pod SwiftShaderem 2–3 s przy load 10, 4–7 s przy 15–19 (skoki 10–16 s); miasto dochodzi do `citySettled` w 1–3 klatki; main vs. przed #186 i #167: wywołania i siatki identyczne, trójkąty +1 %, czas w szumie. Propozycje: (1) wspólna strona dla scen TPP (zmienia historię próbki, decyzja), (2) klatki na żądanie w `freeze` (`__seki.draw(n)`, ADR-0046), żeby `page.evaluate` nie czekało za klatkami w tle (pomoże też G-132), (3) orkiestrator wstrzymuje ciężkie zadania na czas e2e perf. Propozycja (2) zbudowana i odłożona (gałąź `ccr-ec2c4269-ilh8k8-draw-on-demand` @ 07c0b98, bez PR): `FrameGate` i `__seki.draw(n)` działają, budżety i migawka bez zmian, ale scena nie jest krótsza (settle potrzebuje 4–5 klatek zamiast 3–4, sumy w szumie); wątek strony blokuje też coś poza klatkami w tle (wiadukt: `step` 10 s, rynek: teleport 3 s; hipoteza: synchroniczne GL przy spawnie siatek nowego chunka). Następny krok: ślad tego `step`, potem decyzja o (1); raport `scratchpad/g226-raport.md`
+- Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `e2e/npr-perf.spec.ts:89` (Rynek TPP), także „Krakowskie Przedmieście TPP” i „market under the viaduct” (weryfikator #199: timeout 90 s przy load 13–17; viaduct na main 1,4 min przy load 15–21); powtórki same przechodzą
+- Poprawka: ślad (trace) i pomiar, co trzyma `citySettled` (wczytywanie chunków, kafle, decale z #186?); bez podnoszenia limitu (ADR-0046)
+- Pakiet właściciela: e2e (QA), engine
+
+### G-285 Przeciwnicy wykrywają gracza natychmiast, takedown niemożliwy
+- Status: naprawione (porządek rejestru 11.11): naprawione przez ADR-0069 etap 1 (#252) i 2 (#254, 5.11, słuch kroków); balans w etapie 3 (trop co krok za ścianą, sprint przed Kagami i Tessen 0,6–0,7 s)
+- Ważność: S2 (proponowana: blokuje mechanikę) · Zasięg: walka z gangerami; czujność NPC i kamer (`AWARENESS_STEP`, `GUARD_CONE`, `ganger-perception.ts`)
+- Do ustalenia: błąd w czujności czy brak trybu skradania (backlog, skradanie)
+- Pakiet właściciela: packages/sim/src/systems/ai
+
+### G-562 Plik modelu, który się nie wczytał, nie wczyta się ponownie w tej sesji
+- Status: naprawione (PR #410, 8.11; odrzucony promise wypada z `containers`, plik wczytuje się ponownie; testy `model-loader` i `model-release` padają bez poprawki)
+- Ważność: S4 · Zasięg: odrzucony promise zostaje w `containers` `ModelLibrary`, bez ponowienia
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-580 `parseModelManifest` przepuszcza pole `lends` bez walidacji
+- Status: naprawione (PR #410, 8.11; `parseModelManifest` odrzuca wpis z `lends` innym niż boolean; test w app)
+- Ważność: S4 · Zasięg: `"lends": "true"` (napis) po cichu usuwa `base-female.vrm` z dawców i przywraca G-575; żaden test aplikacji nie sprawdza, że `lends` przeżywa parsowanie (`model-donors.test.ts` czyta surowy JSON); przy okazji opis commita d2e8007 mówi o 10 postaciach, ADR wylicza 9
+- Pakiet właściciela: packages/app (manifest modeli)
+
+### G-547 `kurosawa.vrm` wczytuje się na ekranie ładowania, choć Kurosawa pojawia się w II akcie
+- Status: naprawione (PR #407, 8.11; ADR-0076 etap 4a: start nowej gry 7 plików / 42,5 MiB → 6 / 36,5 MiB, `kurosawa.vrm` wczytuje się, gdy Kurosawa staje w scenie; 3 rundy weryfikacji: G-560, G-575)
+- Ważność: S4 · Zasięg: +6 MiB na starcie; `donorsOf` ładuje wszystkie pliki manifestu przy liczeniu dawców ubrań; wczytywanie w tle według dzielnic i aktów to etap 4
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-560 Wygląd postaci tła zależy od tego, które pliki modeli są już wczytane
+- Status: naprawione (PR #407, 8.11; stały zbiór dawców `donorFiles` = Seki ∪ pliki tła ∪ obsada z `lends`; testy determinizmu padają na rundzie 1)
+- Ważność: S3 · Zasięg: w gałęzi #407 `countDonors` (`character-models.ts`) liczy dawców tylko z wczytanych plików, a `donorOf` (`model-dress.ts:48-49`) wybiera teksturę jako `floor(fraction * list.length)`; ta sama postać tła (to samo ziarno) po ponownym ubraniu nosi inne spodnie lub górę po wczytaniu `mori.vrm` w tle i po `kurosawa.vrm` w II akcie; łamie decyzję „Determinizm” ADR-0076
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-575 Postacie nazwane zmieniają ubranie po zmianie zbioru dawców w #407
+- Status: naprawione (PR #407, 8.11; `base-female.vrm` wśród dawców przez `lends`; względem main zmieniają się tylko spodnie barmana, gull-guard, Shiro, Daigo i Koji, opisane w ADR-0076 §4a; test `model-donors.test.ts`)
+- Ważność: S3 · Zasięg: wariant 100+ z `dress` bez `topFrom`/`bottomFrom` bierze te pola z ziarna, więc krótsza lista dawców zmienia indeks w `donorOf`; zmiany: spodnie barmana, gull-guard, shiro, daigo (Kurosawy → Kaito), koji (Kurosawy → gangera), akane (base-female → Seki), koi-regular-2 (góra i spodnie), mei i mika (góra); barman i koi-regular-2 w Neon Koi; ADR nie opisywał zmiany
+- Pakiet właściciela: packages/engine (renderer: modele)
+
 ### G-521 Goła ziemia na podwórkach bloków Krakowskiego Przedmieścia (krakowskie-0-1)
 - Status: naprawione (PR #405, 8.11; 19 obszarów T-245/*, w tym 6 trawników, w `corrections-zn.ts` i `corrections-radziwillowska.ts`; `landuse-bare` komórka 10 004 → 136, miasto 96 273 → 86 405, `kerb-gap-bare` → 101 904; test `landuse-bare-krakowskie-0-1.test.ts` pada bez poprawki; kurator ODSTĘPSTWO CELOWE T-245 po rundzie 2; budynki Cichej 3–8 w G-556, pętle `highway=service area=yes` w G-555)
 - Ważność: S3 · Zasięg: 141 kwadratów 10 × 10 m, ok. 3100 m², 59 skupień; największe: blok NW 1431 m² (x −200..−120; z −20..49, zawiera pas z 7..12 od naprawiacza G-513), podwórze SW 289 m² (−198..−165; 92..124) i 273 m² (−163..−135; 73..93), wschód (−27..−5; 143..158) 109 m², (6..19; 139..151) 81 m²; zrzuty `shots/opiekun-k01/` (`nw-strip-a`, `s-yard-i`, `se-a`); przyczyna jak G-513 (OSM bez nawierzchni na podwórkach); poza skanem ok. 4800 m² gołych podwórek mieszkalnych (do decyzji kuratora)

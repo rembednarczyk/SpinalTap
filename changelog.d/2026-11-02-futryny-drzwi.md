@@ -1,1 +1,0 @@
-Drzwi mają widoczne futryny: jasną kamienną (kamienice, klatki) albo aluminiową (sklepy, banki) ościeżnicę z nadprożem i progiem, odcinającą się od ciemnego skrzydła i tynku; takie samo obramowanie dostały drzwi kliniki, Neon Koi i wejście pokoju kapsułowego (G-270).

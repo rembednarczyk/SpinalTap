@@ -6,6 +6,8 @@ cień, line art i animację z proceduralnego rigu, więc nie potrzebuje własnyc
 
 ## Manifest
 
+> **Stan po ADR-0076 (11.11).** Manifest gry (`packages/app/public/models/manifest.json`) ma dziś oprócz ról (`heroine`, `fixer`, `ganger`, `civilian`, `ripperdoc`) sekcje `cast` (postacie nazwane: plik, `variant`, `dress` z kolorami, akcesoriami, `figure` i `topFrom`/`bottomFrom`, opcjonalne `lends`) i `pools` (pule tła: `civilian`, `vendor`, `ganger`, `corpo`). Etapy, zbiór dawców ubrań, wczytywanie w tle i zwalnianie plików (4a, 4b) opisuje [ADR-0076](adr/0076-modele-postaci-npc.md), licencje plików są w [README modeli](../packages/app/public/models/README.md). Przykład niżej pokazuje tylko pola ról.
+
 `models/manifest.json` obok gry (albo dowolny URL w parametrze `?models=`):
 
 ```json
@@ -67,5 +69,5 @@ NPR zawsze używa obsady proceduralnej, żeby migawka nie zależała od pobrań.
   wpływ > 0 i `optimizeInfluencers = false`, bo zmiana liczby aktywnych celów rekompiluje shader.
   Pliki zawierają tylko te sześć kształtów (`tools/shrink_glb.py --keep-morphs=...`).
 - **Klipy animacji z pliku** nie są odtwarzane, bo rig daje chód, celowanie, trafienie i upadek.
-- **Wydajność:** model VRoid to około 15 draw calli plus cień. Budżet ulicy (280) mieści
-  kilka takich postaci. Przy większej obsadzie potrzebne będzie LOD albo atlas materiałów.
+- **Wydajność:** model VRoid to około 15 draw calli plus cień. Budżety postaci i pomiary są w
+  ADR-0076 (decyzja 8) i ADR-0046; tłum z modelami w pobliżu kamery (LOD) to etap 6 ADR-0076.

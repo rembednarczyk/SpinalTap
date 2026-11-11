@@ -26,7 +26,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu `lane-end-at-laneless-street` daje 0; dziś 8 (bez G-020, po G-021).
 
 ### G-024 Jednokierunkowe pasy kończą się przed ulicą dla dostaw (Lubartowska, Kowalska, Świętoduska)
-- Status: otwarte, decyzja użytkownika ponownie: skręty (opcja B) niemożliwe, w zasięgu 16 m brak ulicy dla aut (najbliższe pasy aut: Lubartowska#37 ok. 100 m, Kowalska#76 56 m, Świętoduska#20 48 m; spotykają je tylko ulice dla dostaw). Zostaje opcja A (dalej ulicą dla dostaw) albo pozostawienie
+- Status: przyjęte, decyzja użytkownika ponownie: skręty (opcja B) niemożliwe, w zasięgu 16 m brak ulicy dla aut (najbliższe pasy aut: Lubartowska#37 ok. 100 m, Kowalska#76 56 m, Świętoduska#20 48 m; spotykają je tylko ulice dla dostaw). Zostaje opcja A (dalej ulicą dla dostaw) albo pozostawienie
 - Ważność: S3 · Zasięg: lokalny (6 końców) · Koszt: średni
 - Gdzie: Lubartowska#37:0/1 (460, 56), Kowalska#76:0/1 (568, 160), Świętoduska#20:0/1 (350, −48)
 - Dowód: naprawiacz G-023: oba pasy jadą w tę samą stronę, nie ma pasa powrotnego do zawrotki; zawrotka oznaczałaby jazdę pod prąd (regres G-105) albo czołowe zatory.
@@ -124,10 +124,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (proponowana) · Koszt: nieznany
 - Dowód: w tym samym punkcie (300, −60) przy ustalonym mieście kolejne klatki dają 223 i 163 wywołania. Sprawdzić, skąd różnica (komórki przebudowywane leniwie, glow, cienie), i czy nie zaszumia budżetów w `npr-perf`.
 - Pakiet właściciela: packages/engine
-
-### G-059 Testy sesji `m2-schedules` i `m3-loop` trwają ok. 5 s i przekraczają limit vitest pod obciążeniem
-- Status: odrzucone (pomiar, 31.10)
-- Ustalenie orkiestratora: główny `vitest.config.ts` daje `testTimeout: 20_000` właśnie dla testów całych aktów. Limit 5 s działa tylko przy vitest puszczonym z katalogu pakietu, bez głównej konfiguracji. Z roota przy load 30: najdłuższy test 7,6 s (zegar HUD, 3600 klatek), wszystkie 10 zielonych. Testy uruchamiamy z roota repo
 
 ### G-060 Części `building:part` niższe od obrysu pomijane przy pokryciu < 75% (Podzamcze)
 - Status: zgłoszone (z przeglądu topografii G-049)
@@ -283,16 +279,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (ground)
 - Test przyjęcia: kontrola `car-road-hole` (albo nowa) wykrywa i spada do 0
 
-### G-095 Żółty kabel kanionu przez przedsionek Trasy Podziemnej (do potwierdzenia)
-- Status: niepotwierdzone (glitch hunt wnętrz, 31.10)
-- Ważność: S4 (proponowana) · Koszt: mały
-- Dowód: zrzut `scratchpad/shots1/p1-trasa-vest.png` (kamera 567, 1,93, −57, yaw π/2): żółta linia na wysokości głowy w poprzek przedsionka i krótki odcinek na tylnej ścianie
-- Do ustalenia: czy to kabel z `renderer/mapcity/canyon-plan.ts` albo `landmarks/cables.ts` przechodzący przez bryłę; ile takich w mieście
-- Pakiet właściciela: packages/engine (jeśli się potwierdzi)
-- Test przyjęcia: kontrola `cable-through-interior` (odcinek kabla wchodzi w bryłę wnętrza `interior: true`) z bazą → 0
-
 ### G-096 Narożnik Starego Miasta za brzegiem z = −240 (Pałac Ordynacki, Kuria)
-- Status: zgłoszone (z przeglądu kuratora G-052)
+- Status: odłożone: poszerzanie mapy (decyzja użytkownika 8.11, `docs/backlog.md`, sekcja „Poszerzanie mapy”; zgłoszone z przeglądu kuratora G-052)
 - Ważność: S3 (proponowana) · Zasięg: lokalny, 7 budynków, 2 zabytki · Koszt: średni (prostokąt, ADR-0042, regeneracja)
 - Gdzie: x od 460 do 760, z od −240 do −270; T-058
 - Przyczyna: `stare-miasto` minZ = −240, a G-052 przesuwa Krakowskie do −270 (uskok gruntu na x = 460)
@@ -555,7 +543,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-190 Puste pasy postojowe OSM
-- Status: skan w main (1.11, #169: `kerb-strip-no-car-street` baza 3, `bay-strip-empty-known` baza 4, `bay-strip-sparse` 0); zostaje poprawka generatora: łatka zatok przy ulicach dostaw (`docs/plany/g190-zatoki-przy-ulicach-dostaw.patch`) razem z G-133; Łęczyńska w1159135271 (OSM `capacity=23`, w grze 0: obrys płytszy niż auto w poprzek) do decyzji, np. nadwozie nad krawężnikiem
+- Status: częściowo naprawione: skan w main (1.11, #169: `kerb-strip-no-car-street` baza 3, `bay-strip-empty-known` baza 4, `bay-strip-sparse` 0); zostaje poprawka generatora: łatka zatok przy ulicach dostaw (`docs/plany/g190-zatoki-przy-ulicach-dostaw.patch`) razem z G-133; Łęczyńska w1159135271 (OSM `capacity=23`, w grze 0: obrys płytszy niż auto w poprzek) do decyzji, np. nadwozie nad krawężnikiem
 - Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133)
 - Poprawka: płytki pas z tagiem `diagonal`/`perpendicular` → mniejszy kąt albo krótszy model; spadek przez G-133 (pochylenie aut); `bay-strip-sparse` dziś pomija pasy bez auta
 - Kurator #162: także odcinek Kowalskiej w232362980 x 644..668 bez zatok, bo ulica ma `use: deliveries`, a `bayCars` bierze tylko `CAR_STREETS` (T-107); zatoka w1544340690 s=24,8 (689,2; 171,8) odrzucona przez odstęp od chodnika w173566578, a na ortofoto stoi tam auto. Proponowane kontrole: `kerb-strip-no-car-street` (baza ≥ 1) i `bay-strip-sparse` także dla pasów bez aut (baza ≥ 5)
@@ -678,12 +666,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `tools/osm-import/src/props-doors.ts:234`: odcinek ulicy z chunków pokrywający się w rzucie z drogą pod ziemią przestaje być ulicą; Rynek nad Trasą Podziemną traci 2 odcinki (609,1; −50,9)→(617,9; −48,7), Teodora Gruella w298307007 (przejazd bramny `tunnel=yes`, `layer=-1`, por. G-076) 1 odcinek. Kamienica stojąca tylko od takiego odcinka straciłaby drzwi, a `door-faces-underground` tego nie wykryje. Testy nie łapią mutacji „tylko końce” i `ALONG=0.3`
 - Poprawka: odróżniać drogę pod ziemią od nawierzchni po id/nazwie drogi (chunki niosą id OSM?), przejazdy bramne z tagiem `tunnel=yes` krótsze niż ok. 20 m pod budynkiem traktować jak `building_passage`; testy warunku środka i progu
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
-### G-226 E2E `npr-perf` „the Rynek in TPP” przekracza 90 s na `citySettled` przy load 12–15
-- Status: zbadane (2.11, naprawiacz): przepustowość maszyny, nie regresja. Klatka pod SwiftShaderem 2–3 s przy load 10, 4–7 s przy 15–19 (skoki 10–16 s); miasto dochodzi do `citySettled` w 1–3 klatki; main vs. przed #186 i #167: wywołania i siatki identyczne, trójkąty +1 %, czas w szumie. Propozycje: (1) wspólna strona dla scen TPP (zmienia historię próbki, decyzja), (2) klatki na żądanie w `freeze` (`__seki.draw(n)`, ADR-0046), żeby `page.evaluate` nie czekało za klatkami w tle (pomoże też G-132), (3) orkiestrator wstrzymuje ciężkie zadania na czas e2e perf. Propozycja (2) zbudowana i odłożona (gałąź `ccr-ec2c4269-ilh8k8-draw-on-demand` @ 07c0b98, bez PR): `FrameGate` i `__seki.draw(n)` działają, budżety i migawka bez zmian, ale scena nie jest krótsza (settle potrzebuje 4–5 klatek zamiast 3–4, sumy w szumie); wątek strony blokuje też coś poza klatkami w tle (wiadukt: `step` 10 s, rynek: teleport 3 s; hipoteza: synchroniczne GL przy spawnie siatek nowego chunka). Następny krok: ślad tego `step`, potem decyzja o (1); raport `scratchpad/g226-raport.md`
-- Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `e2e/npr-perf.spec.ts:89` (Rynek TPP), także „Krakowskie Przedmieście TPP” i „market under the viaduct” (weryfikator #199: timeout 90 s przy load 13–17; viaduct na main 1,4 min przy load 15–21); powtórki same przechodzą
-- Poprawka: ślad (trace) i pomiar, co trzyma `citySettled` (wczytywanie chunków, kafle, decale z #186?); bez podnoszenia limitu (ADR-0046)
-- Pakiet właściciela: e2e (QA), engine
 
 ### G-227 Grodzka 7 (Warsztaty Kultury) r3119721 bez żadnych drzwi po G-197
 - Status: zgłoszone (2.11, kurator #201, T-130)
@@ -879,12 +861,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: pas szer. ok. 0,2–0,3 m, 7 cm niżej, częściowo bez nawierzchni: Zamkowa (760,6; 186,0), deptak (404,9; −98,2) · Koszt: do ustalenia
 - Poprawka: ustalić źródło (szew pasów nawierzchni, krawężnik, rynsztok z importu) i domknąć nawierzchnię; kontrola skanu na szczeliny nawierzchni (punkt chodnika bez nawierzchni otoczony nawierzchnią)
 - Pakiet właściciela: tools/osm-import (ground), packages/engine (renderer/mapcity)
-
-### G-285 Przeciwnicy wykrywają gracza natychmiast, takedown niemożliwy
-- Status: naprawione przez ADR-0069 etap 1 (#252) i 2 (#254, 5.11, słuch kroków); balans w etapie 3 (trop co krok za ścianą, sprint przed Kagami i Tessen 0,6–0,7 s)
-- Ważność: S2 (proponowana: blokuje mechanikę) · Zasięg: walka z gangerami; czujność NPC i kamer (`AWARENESS_STEP`, `GUARD_CONE`, `ganger-perception.ts`)
-- Do ustalenia: błąd w czujności czy brak trybu skradania (backlog, skradanie)
-- Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-290 Strażnicy liczą obecność w strefie w mundurze jako czyn zabroniony mimo znanego kodu
 - Status: zgłoszone (4.11, naprawiacz G-280; do sprawdzenia, czy zamierzone)
@@ -1551,7 +1527,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-522 Klinowe szczeliny bez nawierzchni między jezdnią a chodnikiem Krakowskiego
-- Status: krok 1 scalony w #400, krok 2 w PR #409 (reguła `kerbFills`, `kerb-gap-bare` 103 204 → 32 148; przegląd kuratora w toku) (8.11, kontrola `kerb-gap-bare`, baza 103 982 próbek = 6 499 m² w 2 155 skupieniach; przyczyna systemowa: import kładzie jezdnię krócej niż chodnik wzdłuż ulic, pas 1–2,5 m; krok 2: reguła importu, po scaleniu #397)
+- Status: krok 1 scalony w #400, krok 2 w PR #409 (reguła `kerbFills`, `kerb-gap-bare` 103 204 → 32 148; kurator runda 1 DO POPRAWY: G-570, T-247; runda 2 u autora) (8.11, kontrola `kerb-gap-bare`, baza 103 982 próbek = 6 499 m² w 2 155 skupieniach; przyczyna systemowa: import kładzie jezdnię krócej niż chodnik wzdłuż ulic, pas 1–2,5 m; krok 2: reguła importu, po scaleniu #397)
 - Ważność: S3 · Zasięg: (−120,5..−114; 54,5..101) 128 m², (−104,5..−102,5; −6,5..13) 48 m², (−121,5..−120,5; 74,5..100,5) 27 m², także części nieliczone skanem; zrzuty `kp-strip-g`, `s-strip-l`, `wedge`; przyczyna: jezdnia i chodnik się nie schodzą; propozycja `kerb-gap-bare` z przeglądu G-440 (baza ok. 35 631 próbek 0,25 m w mieście)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1591,12 +1567,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (ruch aut)
 
 ### G-536 Goła ziemia na placu przy Nowym Placu Targowym, Nadstawnej i na podwórzach Podzamcza (podzamcze-1-1)
-- Status: w PR #408 (8.11, 17 obszarów T-246/* razem z G-540; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; przegląd kuratora w toku; zgłoszone przez opiekuna mapy, komórka podzamcze-1-1)
+- Status: w PR #408 (8.11, 22 obszary T-246/* po rundzie 2 razem z G-540; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; kurator runda 2 ODSTĘPSTWO CELOWE, PRZYJĘTE (T-246); CI: npr-perf krakowskie-tpp 165 > 164, przyczyna w ustaleniu; zgłoszone przez opiekuna mapy, komórka podzamcze-1-1)
 - Ważność: S3 · Zasięg: 93 kwadraty 10 × 10 m `landuse-bare`, ok. 2005 m² (8021 próbek 0,5 m) w 28 skupieniach; największe (m², x, z): 680 (747..800; 446..490) przy parkingach w227698438 i w227698440, postoju taxi w227698439 i sklepie w73833921; 221 (735..750; 452..511) za Nova w66264174; 159 (815..841; 450..485) przy kioskach w73833930/31/32; 153 (742..769; 513..536) przy skraju Ruskiej; 121 i 107 (848..868; 507..526) przy Szkolnej; 110 (769..808; 501..526); 98 (807..828; 458..490); 91 (860..878; 487..498); dziewięć największych to ok. 88%; 60% próbek w `landuse=commercial` w1305996965 bez `surface`, 37% w pasie do 5 m od ścian; zrzuty dzienne `shots/opiekun-p11/d-d1-d.png`, `d-b1-b.png`, `d-a2-plac-e.png`; przyczyna jak G-513, G-521, G-527; test przyjęcia: `landuse-bare` w komórce do ≤ 10% z bazą obniżoną w tym samym commicie
 - Pakiet właściciela: tools/osm-import (korekty nawierzchni)
 
 ### G-540 Goła ziemia na podwórzach i placach Podzamcza: Lubartowska, Probostwo, Nowy Plac Targowy, Ruska (podzamcze-0-1)
-- Status: w PR #408 (8.11, 17 obszarów T-246/* razem z G-536; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; przegląd kuratora w toku; zgłoszone przez opiekuna mapy, komórka podzamcze-0-1)
+- Status: w PR #408 (8.11, 22 obszary T-246/* po rundzie 2 razem z G-536; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; kurator runda 2 ODSTĘPSTWO CELOWE, PRZYJĘTE (T-246); CI: npr-perf krakowskie-tpp 165 > 164, przyczyna w ustaleniu; zgłoszone przez opiekuna mapy, komórka podzamcze-0-1)
 - Ważność: S3 · Zasięg: 81 kwadratów 10 × 10 m `landuse-bare`, ok. 1743 m² (6972 próbki 0,5 m; pierwotnie zaniżone do 2180 przez błąd zaokrąglenia) w 28 skupieniach; największe (m², x, z): 208 (609..662; 386..457) wzdłuż Lubartowskiej i przy Nowym Placu Targowym, 48 (606..630; 398..461), 38 (636..650; 559..580) przy parkingu w227679484, 37 (520..530; 427..447), 34 (676..715; 567..580) przy Ruskiej; kontekst OSM: 36% w `landuse=retail` w291844839 bez `surface`, 20% w `landuse=commercial` w1094207955, 7% w `landuse=retail` w1547216431, 35% poza wielokątami; zrzuty `shots/opiekun-p01/d-s3-slope2.png`, `d-a1-big-w.png`, `d-a2-big-n.png`; przyczyna jak G-513, G-521, G-527, G-536; przy okazji w komórce `kerb-gap-bare` 116 trafień (G-522) i 7 znanych `lane-dead-end`, G-508 tu to prawdziwe skarpy NMT (największa 548..570 × 538..560, 33°)
 - Pakiet właściciela: tools/osm-import (korekty nawierzchni)
 
@@ -1604,11 +1580,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, weryfikator #404; czeka na plik z VRoid Studio, ADR-0076 decyzja 1 B)
 - Ważność: S4 · Zasięg: `kurosawa.vrm` (HairSample_Male CC0) ma bluzę z kapturem w jasnych pasach i rękawach; ciemny odcień z `dress` i okulary łagodzą, ale człowiek Kagami wygląda młodziej, niż pasuje do postaci; przy okazji drobne z weryfikacji: tytuł testu w `model-kurosawa.test.ts` wymienia Kaito, a sprawdza tylko Base_Male; komentarz „in a dark suit” w `model-manifest.test.ts` nieaktualny; krój `M00_006` bez numeru wersji w `model-library.ts`
 - Pakiet właściciela: packages/engine (renderer: modele), packages/app/public/models
-
-### G-547 `kurosawa.vrm` wczytuje się na ekranie ładowania, choć Kurosawa pojawia się w II akcie
-- Status: w PR #407 (8.11, ADR-0076 etap 4a: start 7 plików / 42,5 MiB → 5 / 31,0 MiB, reszta w tle; weryfikator runda 1 NIE PRZYJĘTE przez G-560, runda 2 w toku)
-- Ważność: S4 · Zasięg: +6 MiB na starcie; `donorsOf` ładuje wszystkie pliki manifestu przy liczeniu dawców ubrań; wczytywanie w tle według dzielnic i aktów to etap 4
-- Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-550 Nieudana asercja na teksturach w testach modeli kończy worker vitest brakiem pamięci
 - Status: zgłoszone (8.11, budowniczy ADR-0076 etap 4a)
@@ -1625,23 +1596,48 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: w mieście 50 budynków, ok. 10 100 m²; w krakowskie-0-1 Cicha 3, 5, 6 i 8 (281 m²), które w grze dają gołą ziemię w pasie Cichej i przy ogrodzie na zachód od Cichej 4; Ordynacki i Kuria już w T-058/G-096; propozycja kontroli `edge-building-dropped` (część w chunku > 2 m², środek poza mapą, poza rejestrem), baza 50 albo 48 bez T-058
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-560 Wygląd postaci tła zależy od tego, które pliki modeli są już wczytane
-- Status: zgłoszone (8.11, weryfikator #407; blokuje #407, poprawka w rundzie 2)
-- Ważność: S3 · Zasięg: w gałęzi #407 `countDonors` (`character-models.ts`) liczy dawców tylko z wczytanych plików, a `donorOf` (`model-dress.ts:48-49`) wybiera teksturę jako `floor(fraction * list.length)`; ta sama postać tła (to samo ziarno) po ponownym ubraniu nosi inne spodnie lub górę po wczytaniu `mori.vrm` w tle i po `kurosawa.vrm` w II akcie; łamie decyzję „Determinizm” ADR-0076
-- Pakiet właściciela: packages/engine (renderer: modele)
-
 ### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
-- Status: zgłoszone (8.11, weryfikator #407; istniało przed #407)
+- Status: w PR #410 (8.11, ADR-0076 etap 4b)
 - Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
 - Pakiet właściciela: packages/engine (renderer: modele)
 
-### G-562 Plik modelu, który się nie wczytał, nie wczyta się ponownie w tej sesji
-- Status: zgłoszone (8.11, weryfikator #407; istniało przed #407)
-- Ważność: S4 · Zasięg: odrzucony promise zostaje w `containers` `ModelLibrary`, bez ponowienia
+### G-565 Jezdnia Ruskiej przy Szkolnej i przy Targu na Ruskiej węższa od prawdziwej
+- Status: zgłoszone (8.11, kurator przeglądu #408; T-249)
+- Ważność: S4 · Zasięg: przy przystanku Szkolna (x 845–880, z 486–520) i przy sklepach obok Targu na Ruskiej (x 676–714, z 565–575) pas jezdni kończy się 2–3 m przed prawdziwym krawężnikiem; przy Szkolnej zewnętrzny asfaltowy pas ze strzałkami (ok. 2 m) leży pod kostką `zatoka-szkolna`; OSM w732251517 bez `lanes`, w213515733 `lanes=3`; na ortofoto ok. 20 m od krawężnika do krawężnika
+- Pakiet właściciela: tools/osm-import (szerokość jezdni)
+
+### G-566 Wcięcie Nadstawnej 4 to w grze otwarte podwórze, a w rzeczywistości niski dach
+- Status: zgłoszone (8.11, kurator przeglądu #408; T-248)
+- Ważność: S4 · Zasięg: obrys w73833921 (x 758–781, z 464–491) ma w OSM 9 m przerwy na zachód między (761; 464,9) a (758,1; 474); w grze dostępny dziedziniec wyłożony kostką, na ortofoto dach zamknięty skrzydłami budynku; zrzut `topo-408-shots/notch.png`
+- Pakiet właściciela: tools/osm-import (korekty budynków)
+
+### G-570 Wypełnienie G-522 kładzie chodnik na pasach postojowych, zatokach i pasie ruchu
+- Status: zgłoszone (8.11, kurator przeglądu #409; poprawka w rundzie 2 #409)
+- Ważność: S3 · Zasięg: 12 z 19 miejsc ortofoto, ok. 63% z 5 855 m² wypełnień przy ulicach z `lanes`; krawężnik 1–3 m wewnątrz prawdziwej jezdni (Ruska, Kapucyńska, Niecała, Peowiaków, Lubartowska przy przystanku Brama Krakowska 01, Unii Lubelskiej, Turystyczna, 3 Maja, Dolna Panny Marii, Zesłańców Sybiru); trawnik jako chodnik przy Andersa; przyczyna: szerokość z `lanes` × 3,25 lub typu nie obejmuje postoju, `fitToKerb` (T-046) tylko zwęża; poprawka: pas przy ulicy o szacowanej szerokości i szczelinie ≥ 1 m jako jezdnia z krawężnikiem przy nawierzchni pieszej, zebry do nowego krawężnika, trawniki przez korekty; kontrole `bus-stop-on-fill` i `kerb-fill-wide-estimated`
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-576 `donorsOf` po `setManifest` wpisuje dawców starego manifestu
+- Status: zgłoszone (8.11, weryfikator #407; istniało na main)
+- Ważność: S4 · Zasięg: obietnica dla starego manifestu rozstrzyga się po `clear()` i wpisuje `donorsReady`; w grze manifest ustawia się raz, skutek teoretyczny
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-585 Na telefonie same pliki dawców ubrań przekraczają limit plików modeli
+- Status: zgłoszone (8.11, budowniczy ADR-0076 etap 4b)
+- Ważność: S4 · Zasięg: profil `low` ma limit 5 plików, a dawców jest 6 (ok. 260 MiB tekstur); limitu nie da się spełnić bez etapu 5 (tekstury tła 512 px) albo mniejszego zbioru dawców
+- Pakiet właściciela: packages/engine (renderer: modele), tools (shrink_glb)
+
+### G-590 Na telefonie plik obsady spoza dawców nie czeka 30 s i pobiera się przy każdym powrocie
+- Status: zgłoszone (8.11, weryfikator #410; skutek G-585)
+- Ważność: S3 · Zasięg: profil `low`: dawcy sami przekraczają limit 5 plików, więc `kurosawa.vrm` wypada od razu; 3 wyjścia i powroty co 2 s dały 4 pobrania (ok. 45 MiB tekstur na wczytanie); poprawka: limit liczony bez dawców albo w MiB
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-591 `setManifest` z innym manifestem zostawia pliki starego w pamięci
+- Status: zgłoszone (8.11, weryfikator #410)
+- Ważność: S4 · Zasięg: przegląd `ModelMemory` widzi tylko `manifestFiles` nowego manifestu; dziś manifest przychodzi raz na renderer, skutek teoretyczny
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
-- Status: nowe (weryfikator ADR-0057, 1.11)
+- Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
 - Gdzie: `e2e/smoke.spec.ts`, test quicksave/quickload; przy load ponad 15 F5 albo F9 trafia na stronę zablokowaną długim zadaniem (Press F5 8,8 s, poll 30 s na „Game saved”)
 - Pomiar: na `feat/loading-screen` 2/5 czerwone przy load 20–26, 4/4 zielone przy 7–15; na origin/main 1/4 czerwone (F9)
