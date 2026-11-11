@@ -7,6 +7,7 @@ import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts
 import { parseLength } from "./building-tags.ts";
 import { type Area, type Line } from "./features.ts";
 import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, lineLength, offsetLine, pointAlong, pointInRing, r1, removeCollinear, signedArea, simplifyLine, simplifyRing, sliceLine, stripAlong } from "./geometry.ts";
+import { type WidenRun, widenPieces } from "./kerb-widen.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
 import { cutHoles, holeFits, holesApart, notchOut } from "./ring-holes.ts";
@@ -138,6 +139,8 @@ export interface Band {
   readonly along?: { readonly line: readonly Pt[]; readonly from: number; readonly width: number };
   /** A carriageway's axis and half its width: where its kerbs run (`kerbFills`, G-522). */
   readonly kerb?: { readonly line: readonly Pt[]; readonly half: number };
+  /** A carriageway's stretches widened to its paving (`kerbFills`, G-570): laid in a chunk as pieces of their own along its piece (`widenPieces`). */
+  readonly widen?: readonly WidenRun[];
   /** A band of steps' run, end to end: what its pieces in a chunk are cut along (`flightStrips`). */
   readonly run?: readonly [Pt, Pt];
   /**
@@ -349,9 +352,12 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
   const round = (ring: readonly Pt[]) => removeCollinear(ring.map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02);
   bands.forEach((b, k) => {
     const clipped = clipRingToRect(ccw(b.ring), rect);
-    if (clipped.length < 3) return;
+    const widen = (ring: readonly Pt[] | null) => {
+      for (const w of b.widen ? widenPieces(ring, b.widen, rect) : []) out.push({ g: { surface: b.surface, outline: w.flatMap((q) => [q.x, q.z]) }, order: ORDER[b.surface], source: b.source, k });
+    };
+    if (clipped.length < 3) return widen(null);
     const simple = b.holed ? clipped : simplifyRing(clipped, 0.3);
-    if (Math.abs(signedArea(round(simple))) < 0.5) return;
+    if (Math.abs(signedArea(round(simple))) < 0.5) return widen(null);
     // Steps are cut into strips in the chunk, so a piece its edge cuts short is cut too; the
     // strips of a piece kept are all kept, however small, or the flight would have gaps.
     const pieces = b.run ? flightStrips(simple, ...b.run).map(round) : [round(simple)];
@@ -361,6 +367,8 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
       const ring = ccw(p);
       out.push({ g: { surface: b.surface, outline: ring.flatMap((q) => [q.x, q.z]), ...(b.bridge ? { bridge: true as const } : {}), ...deck }, order: ORDER[b.surface], source: b.source, k });
     }
+    // Along the carriageway's piece as the chunk keeps it: its widening shares that edge (G-570).
+    widen(pieces.length === 1 && pieces[0]!.length >= 3 ? ccw(pieces[0]!) : null);
   });
   out.sort((a, b) => a.order - b.order || (a.source < b.source ? -1 : a.source > b.source ? 1 : a.k - b.k));
   return out.map((o) => o.g);

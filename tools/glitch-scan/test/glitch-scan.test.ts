@@ -48,6 +48,7 @@ import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroS
 import { lanternsByPassages } from "./passage-lanterns";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
+import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
 import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
@@ -123,6 +124,9 @@ const SOURCE_OSM = mergeOsm(
     .filter((f) => f.endsWith(".json"))
     .map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))),
 );
+/** The kerb fills' world (`kerb-fill.ts`), built once for both of its checks. */
+let fillWorld: ReturnType<typeof cityFillWorld> | undefined;
+const FILL_WORLD = () => (fillWorld ??= cityFillWorld(SOURCE_OSM));
 const cars = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries");
 /** The car lanes one by one, before the junctions join them into routes (ADR-0055): sampled from each lane's own start. */
 const carLanes = TRAFFIC_LANES.filter((r) => r.use !== "deliveries");
@@ -1824,6 +1828,10 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "landuse-bare": () => landuseBare(cityLanduseWorld(SOURCE_OSM)),
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => kerbGapBare(cityKerbWorld(SOURCE_OSM)),
+  /** A point of a 0.25 m grid in a pavement no paving of the map explains, a metre wide and more, by a carriageway the map gives no width: its asphalt laid as a pavement (`kerb-fill.ts`, G-570). */
+  "kerb-fill-wide-estimated": () => kerbFillWideEstimated(FILL_WORLD()),
+  /** A bus stop of the map within 2 m of a pavement no paving of the map explains: its bay laid as a pavement (`kerb-fill.ts`, G-570). */
+  "bus-stop-on-fill": () => busStopOnFill(FILL_WORLD()),
   /**
    * A tree drawn lower than 0.6 of its measured height (OSM `height` or NMPT less NMT, `tree-heights.ts`, G-422). The
    * baseline's are by walls: their crowns grow only as far as clear of the facades.
