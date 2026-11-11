@@ -1627,7 +1627,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-595 Cała flota zaparkowanych aut jest aktywna, gdy jej obrys zahacza o stożek widoku
-- Status: zgłoszone (11.11, naprawiacz G-522 runda 3)
+- Status: częściowo naprawione: odcinanie floty po stożku w PR #417 (rynek-tpp 232/91 → 229/90); budżet #409 to przesłanianie za ścianami, nie stożek (diagnoza w zgłoszeniu błędna), decyzja użytkownika 11.11: wyjątek w ADR-0046 i przesłanianie w backlogu
 - Ważność: S3 · Zasięg: zaparkowane auta są we wspólnej siatce floty z zasięgiem rysowania 240 m (`VEHICLE_LOD` w `vehicle-views.ts`); jedno nowe auto 170 m od kamery (Kapucyńska, (153,7; −147,9)) poszerza obrys siatki tak, że przecina stożek widoku sceny `reference`, i cała flota staje się aktywna, choć auta w kadrze nie ma: 193/82 → 196/83; poprawka: podział floty na komórki albo obrys liczony z aut w zasięgu, bez podnoszenia budżetu; blokuje #409
 - Pakiet właściciela: packages/engine (renderer: pojazdy)
 
