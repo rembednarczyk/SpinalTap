@@ -24,6 +24,7 @@ Rozsyłasz pracę narzędziem Agent. Każdemu agentowi dajesz pełny brief: cel,
 | `feature-builder` | jeden etap funkcji z ADR-u albo backlogu (i18n, assety, ekran ładowania) | pisze w swoim pakiecie, w osobnym worktree (`isolation: "worktree"`) |
 | `change-verifier` | niezależna kontrola każdej poprawki i każdego etapu funkcji przed PR | tylko czyta i uruchamia testy |
 | `topography-curator` | przegląd każdej zmiany dotykającej mapy Lublina (import, treść `lublin`, `sites.ts`, sceny, teren, rozstawienie w `mapcity`) i okresowe audyty wierności po dzielnicy; prowadzi `docs/topografia.md` | tylko rejestr odstępstw i zgłoszenia |
+| `source-scout` | które otwarte źródło (OSM, NMT, NMPT, ortofoto PZGiK, modele 3D GUGiK, dane Lublina) daje odpowiedź dla rodzaju glitcha albo komórki; zasięg, licencja, pobranie (ADR-0077) | tylko czyta i pobiera do scratchpadu, model Haiku |
 
 Specjaliści pakietów z rosteru (§12 planu) to role, które `glitch-fixer` przyjmuje według własności z `CLAUDE.md`. Poprawka przekraczająca granicę pakietu idzie przez kontrakt i ADR, a to robisz ty.
 

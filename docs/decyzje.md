@@ -4,6 +4,7 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 
 ## Sposób pracy
 
+- **Pokrycie mapy z danych (11.11, ADR-0077):** najpierw narzędzia, potem reguły dla całego miasta, na końcu przejścia po komórkach. Ręczne obszary nawierzchni tylko jako wyjątek z nakładką liczbową. Źródła wskazuje agent `source-scout` (Haiku).
 - **Porządek w dokumentach (11.11):** zamknięte pozycje backlogu trafiają do [backlog-archiwum.md](backlog-archiwum.md), czytanego tylko w razie potrzeby. Stałe decyzje trafiają tutaj. Wykonane plany w `docs/plany` mają na górze nagłówek ze statusem i odnośnikiem do ADR-u.
 - **Brzeg mapy (8.11):** wszystko, co wypada za obecną mapę, trafia do sekcji „Poszerzanie mapy” w backlogu, a glitch dostaje status „odłożone: poszerzanie mapy”. Mapy na razie nie poszerzamy. Części leżące w mapie naprawiamy normalnie.
 - **Liczba agentów (8.11):** najwyżej 4 agentów naraz.
