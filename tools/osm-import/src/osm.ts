@@ -126,8 +126,26 @@ const crossingTags = (tags: Tags): Tags => {
 };
 
 const keeps = (tags: Tags | undefined, keys: readonly string[]): boolean => !!tags && keys.some((k) => tags[k] !== undefined);
-/** Walls kept for the checks that read them (steps between walls, G-203); fences and hedges stay out. */
-const WALLS = new Set(["wall", "retaining_wall"]);
+/**
+ * Barriers the game builds (ADR-0077 point 4): walls, retaining walls, the city walls, fences,
+ * hedges, and gates and lift gates mapped as lines; the scan's steps between walls (G-203) read
+ * the walls too. Bollards, kerbs and the rest of `barrier=*` stay out.
+ */
+export const BARRIER_LINES: ReadonlySet<string> = new Set(["wall", "retaining_wall", "city_wall", "fence", "hedge", "gate", "lift_gate"]);
+/** Openings mapped as a node of a barrier or a way: a gap in the barrier there (ADR-0077). */
+export const BARRIER_GAPS: ReadonlySet<string> = new Set(["gate", "lift_gate", "swing_gate", "sliding_gate", "entrance"]);
+
+/** The tags of a way's node the generator reads: crossings and traffic lights (zebras, stop lines), and gates (gaps in barriers). */
+const wayNodeTags = (tags: Tags | undefined): Tags | undefined => {
+  if (!tags) return undefined;
+  if (tags.highway === "crossing" || tags.highway === "traffic_signals") return crossingTags(tags);
+  if (BARRIER_GAPS.has(tags.barrier ?? "")) {
+    const out: Record<string, string> = { barrier: tags.barrier! };
+    if (tags.width !== undefined) out.width = tags.width;
+    return out;
+  }
+  return undefined;
+};
 
 /** Only what the generator reads: map features, multipolygons, their nodes and named points of interest. */
 export const filterOsm = (data: OsmData): OsmData => {
@@ -143,7 +161,7 @@ export const filterOsm = (data: OsmData): OsmData => {
   const ways = new Map<number, OsmWay>();
   const nodeIds = new Set<number>();
   for (const w of data.ways.values()) {
-    if (!wayIds.has(w.id) && !keeps(w.tags, AREA_OR_LINE_KEYS) && !WALLS.has(w.tags?.barrier ?? "")) continue;
+    if (!wayIds.has(w.id) && !keeps(w.tags, AREA_OR_LINE_KEYS) && !BARRIER_LINES.has(w.tags?.barrier ?? "")) continue;
     const tags = cleanTags(w.tags);
     ways.set(w.id, { id: w.id, nodes: w.nodes, ...(tags ? { tags } : {}) });
     for (const n of w.nodes) nodeIds.add(n);
@@ -152,8 +170,8 @@ export const filterOsm = (data: OsmData): OsmData => {
   for (const n of data.nodes.values()) {
     const poi = n.tags?.name !== undefined && keeps(n.tags, POI_KEYS);
     if (!poi && !nodeIds.has(n.id)) continue;
-    // A way's node keeps only its crossing and traffic light tags: zebras and stop lines are drawn from them.
-    const tags = poi ? cleanTags(n.tags) : n.tags?.highway === "crossing" || n.tags?.highway === "traffic_signals" ? crossingTags(n.tags) : undefined;
+    // A way's node keeps only its crossing, traffic light and gate tags: zebras, stop lines and the barriers' gaps are drawn from them.
+    const tags = poi ? cleanTags(n.tags) : wayNodeTags(n.tags);
     nodes.set(n.id, { id: n.id, lat: n.lat, lon: n.lon, ...(tags ? { tags } : {}) });
   }
   return { nodes, ways, relations };
