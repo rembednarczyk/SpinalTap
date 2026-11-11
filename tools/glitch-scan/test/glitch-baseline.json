@@ -174,5 +174,10 @@
   "barrier-on-road": 0,
   "barrier-on-steps": 0,
   "barrier-in-building": 0,
-  "barrier-on-crowd-lane": 0
+  "barrier-on-crowd-lane": 0,
+  "barrier-in-furniture": 0,
+  "barrier-on-seat": 0,
+  "barrier-parallel-cut": 14,
+  "city-wall-kept": 14,
+  "ruin-wall-height": 0
 }

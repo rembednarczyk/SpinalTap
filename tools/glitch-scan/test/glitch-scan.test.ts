@@ -36,6 +36,8 @@ import { marketChecks } from "./market-pieces";
 import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
 import { type ScanDoor, barrierChecks, facadeDoor } from "./barrier-pieces";
+import { barrierCoverChecks } from "./barrier-cover";
+import { inFootprint } from "../../../packages/sim/src/content/barrier-room";
 import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
@@ -1885,7 +1887,18 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     onSteps: (x, z) => surfacesAt(x, z).includes("steps"),
     inBuilding: (x, z) => (inBuilding(x, z) ? nearestWall(x, z).d : 0),
     crowdLanes: CROWD_LANES.map((l) => [...l.points, l.points[0]!].map(([x, z]) => ({ x, z }))),
+    inFurniture: (x, z) => inFootprint(x, z, 0) || furnitureNear(x, z).some((f) => distanceToPiece(f.item, x, z) <= 0),
+    spots: [...CROWD_SPOTS.map((s) => s.at), ...ACTIVITY_SPOTS.map((s) => s.at)],
   }),
+  // How much of the map's barriers the game keeps, and the ruins' low walls (`barrier-cover.ts`).
+  ...barrierCoverChecks(
+    MAP_CHUNKS,
+    Object.values(WORLD_BARRIERS).flat(),
+    extractFeatures(SOURCE_OSM)
+      .areas.filter((a) => a.tags.historic === "ruins" && a.tags.building === undefined)
+      .map((a) => a.ring),
+    pointInRing,
+  ),
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */

@@ -31,11 +31,18 @@ export interface BarrierWorld {
   readonly inBuilding: (x: number, z: number) => number;
   /** The crowd's lanes as closed lines (walkers keep 0.28 m to a side, a body 0.3 m round). */
   readonly crowdLanes: readonly (readonly Pt[])[];
+  /** Inside a piece of furniture at (x, z): a solid one's footprint, a café's garden, a planter, shrubs. */
+  readonly inFurniture: (x: number, z: number) => boolean;
+  /** The residents' places: seats, wall spots, activities. */
+  readonly spots: readonly Pt[];
 }
 
 /** A door's way out stays clear this far (m); a walker reaches this far off its lane, a car's side this far off its line. */
 const DOOR_OUT = 1.2;
 const WALKER = 0.58;
+/** A route along a barrier may pass it this close (its walkers brush past, G-606); a resident keeps this round its place. */
+const ALONG = 0.2;
+const SEAT = 0.5;
 const CAR = 1.2;
 /** A barrier may run this far into a building's wall, where it meets it (m). */
 const INTO_WALL = 0.5;
@@ -62,8 +69,11 @@ const segDistance = (p: Pt, a: Pt, b: Pt): number => {
   return Math.hypot(p.x - (a.x + dx * t), p.z - (a.z + dz * t));
 };
 
-/** Lines' segments bucketed by 8 m: is a point within `r` (under 8 m) of one? */
-const segmentsNear = (lines: readonly (readonly Pt[])[], r: number): ((p: Pt) => boolean) => {
+/** The sine of the angle between two directions. */
+const sine = (u: Pt, v: Pt): number => (u.x * v.z - u.z * v.x) / (Math.hypot(u.x, u.z) * Math.hypot(v.x, v.z) || 1);
+
+/** Lines' segments bucketed by 8 m: is a point within `r` (under 8 m) of one; with `across`, of one crossing it at 30 degrees and more? */
+const segmentsNear = (lines: readonly (readonly Pt[])[], r: number): ((p: Pt, across?: Pt) => boolean) => {
   const cells = new Map<string, [Pt, Pt][]>();
   for (const l of lines) {
     for (let k = 1; k < l.length; k++) {
@@ -73,17 +83,25 @@ const segmentsNear = (lines: readonly (readonly Pt[])[], r: number): ((p: Pt) =>
       }
     }
   }
-  return (p) => {
+  return (p, across) => {
     const [ci, cj] = [Math.floor(p.x / 8), Math.floor(p.z / 8)];
-    for (let i = ci - 1; i <= ci + 1; i++) for (let j = cj - 1; j <= cj + 1; j++) for (const [a, b] of cells.get(`${i}:${j}`) ?? []) if (segDistance(p, a, b) < r) return true;
+    for (let i = ci - 1; i <= ci + 1; i++) {
+      for (let j = cj - 1; j <= cj + 1; j++) {
+        for (const [a, b] of cells.get(`${i}:${j}`) ?? []) {
+          if (across && Math.abs(sine(across, { x: b.x - a.x, z: b.z - a.z })) < 0.5) continue;
+          if (segDistance(p, a, b) < r) return true;
+        }
+      }
+    }
     return false;
   };
 };
 
-/** The first sample of a piece where `bad` holds, as a finding. */
-const findOn = (pieces: readonly StreetPropItem[], what: string, bad: (p: Pt) => boolean): Finding[] =>
+/** The first sample of a piece where `bad` holds (given the piece's direction), as a finding. */
+const findOn = (pieces: readonly StreetPropItem[], what: string, bad: (p: Pt, dir: Pt) => boolean): Finding[] =>
   pieces.flatMap((i) => {
-    const hit = samplesOf(i).find(bad);
+    const dir = { x: Math.sin(i.yaw), z: Math.cos(i.yaw) };
+    const hit = samplesOf(i).find((p) => bad(p, dir));
     return hit ? [{ at: near(hit.x, hit.z), what: `${barrierLayout(i.variant).kind} ${what}` }] : [];
   });
 
@@ -91,6 +109,7 @@ export const barrierChecks = (items: readonly StreetPropItem[], w: BarrierWorld)
   const solid = items.filter((i) => barrierPrism(i) !== null);
   const byCar = segmentsNear(w.carLanes, CAR);
   const byWalker = segmentsNear(w.crowdLanes, WALKER);
+  const onWalkerLine = segmentsNear(w.crowdLanes, ALONG);
   return {
     /** A wall, fence or hedge in a door's way out: within 1.2 m in front of it, as wide as the door. */
     "barrier-blocks-door": () =>
@@ -109,8 +128,15 @@ export const barrierChecks = (items: readonly StreetPropItem[], w: BarrierWorld)
     "barrier-on-steps": () => findOn(solid, "on steps", (p) => w.onSteps(p.x, p.z)),
     /** A barrier more than 0.5 m inside a building's solid. */
     "barrier-in-building": () => findOn(solid, "in a building", (p) => w.inBuilding(p.x, p.z) > INTO_WALL),
-    /** A barrier across or along a crowd's lane, within a walker's reach of its line. */
-    "barrier-on-crowd-lane": () => findOn(solid, "on a crowd's lane", byWalker),
+    /**
+     * A barrier across a crowd's lane within a walker's reach of its line, or on the line itself
+     * (G-606: a lane running along a barrier passes it; its walkers brush past).
+     */
+    "barrier-on-crowd-lane": () => findOn(solid, "on a crowd's lane", (p, dir) => byWalker(p, dir) || onWalkerLine(p)),
+    /** A barrier through a piece of furniture: a solid one, a café's garden, a planter, shrubs (G-612). */
+    "barrier-in-furniture": () => findOn(solid, "through furniture", (p) => w.inFurniture(p.x, p.z)),
+    /** A barrier on a resident's place: a seat, a wall spot, an activity, within a body and a step before its face (G-612). */
+    "barrier-on-seat": () => findOn(solid, "on a resident's place", (p) => w.spots.some((s) => Math.abs(s.x - p.x) < 1 && Math.abs(s.z - p.z) < 1 && Math.hypot(s.x - p.x, s.z - p.z) < SEAT)),
   };
 };
 
