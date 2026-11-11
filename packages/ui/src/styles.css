@@ -911,6 +911,8 @@ kbd {
 .cscreen__wallet { margin-left: auto; font-family: var(--font-mono); font-size: 18px; white-space: nowrap; }
 .cscreen__ammo { display: flex; gap: 10px; font-family: var(--font-mono); font-size: 13px; color: var(--ink-dim); white-space: nowrap; }
 .cscreen__round b { color: var(--ink); font-weight: 400; }
+/* The bar does not fit even with the whole menu scaled down: the ammo row is clipped, never the close button. */
+.cscreen__frame[data-squeezed] .cscreen__ammo { min-width: 0; overflow: hidden; }
 .cscreen__close {
   flex: 0 0 auto;
   width: 48px;
