@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-620 Test zwalniania modeli przekracza w CI limit 20 s
+- Status: naprawione (PR #419, 11.11; testy zwalniają `NullEngine` w `afterEach`, przypadek telefonu na lekkim pliku pod siedmioma nazwami; 6,3 → 1,8 s, pod obciążeniem 9,7 → 4,3 s; limity czasu bez zmian)
+- Ważność: S2 · Zasięg: `packages/engine/test/model-release.test.ts` › „keeps no more files than a phone's limit” (#410) wczytuje sześć pełnych plików VRM przez NullEngine i w CI kończy się `Test timed out in 20000ms`; czerwieni shard „Unit tests (1)” w #416, #417, #418 (lokalnie przechodzi); limitu nie podnosimy, test do odchudzenia
+- Pakiet właściciela: packages/engine (testy)
+
 ### G-536 Goła ziemia na placu przy Nowym Placu Targowym, Nadstawnej i na podwórzach Podzamcza (podzamcze-1-1)
 - Status: naprawione (PR #408, 11.11; 22 obszary T-246/*: 15 kostki, 7 trawników i rabat; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; kurator ODSTĘPSTWO CELOWE T-246 po rundzie 2; obszary pocięte, żeby nie poszerzać siatek ziemi komórek: `krakowskie-tpp` 164 siatki jak na main)
 - Ważność: S3 · Zasięg: 93 kwadraty 10 × 10 m `landuse-bare`, ok. 2005 m² (8021 próbek 0,5 m) w 28 skupieniach; największe (m², x, z): 680 (747..800; 446..490) przy parkingach w227698438 i w227698440, postoju taxi w227698439 i sklepie w73833921; 221 (735..750; 452..511) za Nova w66264174; 159 (815..841; 450..485) przy kioskach w73833930/31/32; 153 (742..769; 513..536) przy skraju Ruskiej; 121 i 107 (848..868; 507..526) przy Szkolnej; 110 (769..808; 501..526); 98 (807..828; 458..490); 91 (860..878; 487..498); dziewięć największych to ok. 88%; 60% próbek w `landuse=commercial` w1305996965 bez `surface`, 37% w pasie do 5 m od ścian; zrzuty dzienne `shots/opiekun-p11/d-d1-d.png`, `d-b1-b.png`, `d-a2-plac-e.png`; przyczyna jak G-513, G-521, G-527; test przyjęcia: `landuse-bare` w komórce do ≤ 10% z bazą obniżoną w tym samym commicie

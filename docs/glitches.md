@@ -1661,11 +1661,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: pas z `roadWidth` szerszy niż jezdnia na ortofoto, więc mur przy krawężniku leży „na jezdni”: w232806008 (51 m, 389; 153), w886723051 (48 m, 220; −196), płot w73811517 przy Zamkowej (985; 281), murek w227679479 (28 m, 534; 517), koniec w67626198 (29 m); poprawka: reguła kąta jak dla dróg, bariery wzdłuż krawędzi przesunąć poza pas
 - Pakiet właściciela: tools/osm-import
 
-### G-620 Test zwalniania modeli przekracza w CI limit 20 s
-- Status: w PR #419 (11.11; przyczyna: niezwalniane `NullEngine` (sterta do 1,07 GB) i 14 plików VRM; przypadek telefonu 6,3 → 1,8 s, limity bez zmian)
-- Ważność: S2 · Zasięg: `packages/engine/test/model-release.test.ts` › „keeps no more files than a phone's limit” (#410) wczytuje sześć pełnych plików VRM przez NullEngine i w CI kończy się `Test timed out in 20000ms`; czerwieni shard „Unit tests (1)” w #416, #417, #418 (lokalnie przechodzi); limitu nie podnosimy, test do odchudzenia
-- Pakiet właściciela: packages/engine (testy)
-
 ### G-610 Gracz za płotem jest nietykalny: ganger widzi przez płot i strzela w niego bez końca
 - Status: poprawione w gałęzi #418, runda 2 (11.11; ponowny przegląd w toku)
 - Ważność: S2 · Zasięg: `inSight` (`ganger-perception.ts:201`) przez `clearSight` przepuszcza wzrok przez płot, a strzał płot zatrzymuje; `ShootAtPlayer` zeruje prędkość, `ChasePlayer` i `firingPosition` się nie włączają; sonda: 11 strzałów, 0 HP straty przy trzech płotach; 1359 płotów w grze
