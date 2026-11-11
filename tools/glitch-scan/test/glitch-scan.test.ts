@@ -35,6 +35,7 @@ import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
 import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
+import { type ScanDoor, barrierChecks, facadeDoor } from "./barrier-pieces";
 import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
@@ -100,6 +101,7 @@ import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../pa
 import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movement-system";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
+import { WORLD_BARRIERS } from "../../../packages/sim/src/content/world-barriers";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
 import { alchemiaRampLanes, streetSegments } from "../../../packages/sim/src/content/traffic-ramp";
 import { rampCarsOffLane } from "./ramp-cars";
@@ -1866,6 +1868,22 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     onRoad: (x, z) => surfacesAt(x, z).some((s) => s === "road" || s === "crossing"),
     surfaceY,
     crowdSpots: [...CROWD_SPOTS.map((s) => s.at), ...ACTIVITY_SPOTS.map((s) => s.at)],
+    crowdLanes: CROWD_LANES.map((l) => [...l.points, l.points[0]!].map(([x, z]) => ({ x, z }))),
+  }),
+  // The map's walls, fences and hedges (ADR-0077) against the doors, roads, steps, buildings and the crowd's lanes (`barrier-pieces.ts`).
+  ...barrierChecks(Object.values(WORLD_BARRIERS).flat(), {
+    doors: [
+      ...Object.values(WORLD_STREET_PROPS)
+        .flat()
+        .filter((i) => i.prop === "door")
+        .map(facadeDoor),
+      ...[CLINIC_DOOR, KOI_DOOR].flatMap((d) => [1, -1].map((s): ScanDoor => ({ x: d.at.x, z: d.at.z, ox: d.along === "x" ? 0 : s, oz: d.along === "x" ? s : 0, width: d.width }))),
+      ...[1, -1].map((s): ScanDoor => ({ x: CAPSULE_DOOR.at.x, z: CAPSULE_DOOR.at.z, ox: 0, oz: s, width: CAPSULE_DOOR.width })),
+    ],
+    onCrossing: (x, z) => surfacesAt(x, z).includes("crossing"),
+    carLanes: TRAFFIC_ROUTES.map((r) => r.points.map(([x, z]) => ({ x, z }))),
+    onSteps: (x, z) => surfacesAt(x, z).includes("steps"),
+    inBuilding: (x, z) => (inBuilding(x, z) ? nearestWall(x, z).d : 0),
     crowdLanes: CROWD_LANES.map((l) => [...l.points, l.points[0]!].map(([x, z]) => ({ x, z }))),
   }),
 };
