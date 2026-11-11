@@ -90,10 +90,12 @@ export interface Wall {
   /** Outward unit normal. */
   readonly nx: number;
   readonly nz: number;
-  /** Another building stands against it: no windows, no signs. */
+  /** Another building stands against it, or it is on the map's edge: no windows, no signs. */
   readonly blind: boolean;
   /** Top of the neighbour against it (world y), or -Infinity. */
   readonly coveredTo: number;
+  /** On the map's edge (G-556): blind, facing nothing, so nothing hangs or is painted on it. */
+  readonly edge?: true;
   /** Bay width that fits the wall a whole number of times; 0 for no windows. */
   readonly bay: number;
 }
@@ -121,6 +123,9 @@ export type NeighbourAt = (x: number, z: number, self: number) => number | null;
 /** The bounds of the other buildings that meet the box, or null where they are not known. */
 export type NeighboursNear = (box: Box2, self: number) => readonly Box2[] | null;
 
+/** Whether a wall runs along the edge of the map data, where the importer cut its building (G-556). */
+export type MapEdgeAt = (a: P2, c: P2) => boolean;
+
 /** The seed in the middle of one of 256 bins: the shader reads it back exactly. */
 export const seedBin = (seed: number): number => (Math.min(Math.floor(Math.max(seed, 0) * 256), 255) + 0.5) / 256;
 
@@ -145,7 +150,7 @@ const classify = (b: MapBuilding, a: P2, c: P2, neighbour: NeighbourAt): { blind
   return { blind: true, coveredTo: covered };
 };
 
-export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt, near: NeighboursNear = () => null): FacadeFrame => {
+export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt, near: NeighboursNear = () => null, edge: MapEdgeAt = () => false): FacadeFrame => {
   const box = orientedBox(b.ring);
   const area = Math.abs(signedArea(b.ring));
   const style = facadeStyle({ use: b.use, levels: b.levels, height: b.height, ...(b.roof !== undefined ? { roof: b.roof } : {}), look: b.look, area, width: box.halfShort * 2, ...(b.shopfront !== undefined ? { shopfront: b.shopfront } : {}), ...(b.lifted ? { lifted: true } : {}), ...(b.roofShape ? { shape: b.roofShape } : {}), ...(b.freeTower ? { tower: true } : {}), ...(b.material ? { material: b.material } : {}), ...(b.wallColour ? { colour: b.wallColour } : {}) });
@@ -162,7 +167,10 @@ export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt, near: Neighb
     const c = b.ring[(i + 1) % b.ring.length] as P2;
     const length = Math.hypot(c.x - a.x, c.z - a.z);
     if (length < 0.05) continue;
-    const { blind, coveredTo } = classify(b, a, c, neighbour);
+    const side = classify(b, a, c, neighbour);
+    // The rest of a building cut at the map's edge stands past it: a firewall there, drawn whole.
+    const onEdge = !side.blind && edge(a, c);
+    const { blind, coveredTo } = onEdge ? { blind: true, coveredTo: -Infinity } : side;
     const n = Math.max(1, Math.round(length / style.bay));
     walls.push({
       a,
@@ -172,6 +180,7 @@ export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt, near: Neighb
       nz: -(c.x - a.x) / length,
       blind,
       coveredTo,
+      ...(onEdge ? { edge: true as const } : {}),
       bay: blind || length < 1.4 || style.window === WINDOW_STYLE.none ? 0 : length / n,
     });
   }

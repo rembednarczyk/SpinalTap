@@ -149,7 +149,7 @@ const buildingAir = (items: readonly Item[], near: (x: number, z: number) => boo
   for (const [id, e] of entries.buildings) {
     const b = e.bounds;
     if (![b.minX, b.maxX].some((x) => [b.minZ, b.maxZ].some((z) => near(x, z)))) continue;
-    const f = withLandmark(facadeFrame(entries.building(id, e), entries.neighbourAt, entries.neighboursNear), e.landmark);
+    const f = withLandmark(facadeFrame(entries.building(id, e), entries.neighbourAt, entries.neighboursNear, entries.mapEdgeAt), e.landmark);
     if (isLandmarkFrame(f)) {
       for (const r of cableRuns(f)) posts.push(...runPosts((t) => cablePoint(r, t), Math.hypot(r.b.x - r.a.x, r.b.z - r.a.z), CABLE_R, 0));
       continue;

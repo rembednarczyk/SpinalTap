@@ -12,6 +12,13 @@ import { type OsmData } from "../../osm-import/src/osm.ts";
 /** A part on the map under this many square metres is a sliver of the outline's line, not a building. */
 export const EDGE_PART_MIN = 2;
 
+/**
+ * A part on the map less deep than this (m) from the map's edge is a slab, not a building: it waits
+ * off the map with the rest of its building for the map's widening (user's decision 8.11, backlog
+ * "Poszerzanie mapy").
+ */
+export const EDGE_DEPTH_MIN = 3;
+
 /** Buildings left off the map on purpose, with their reason (none: the map's edge cuts them, G-556). */
 export const EDGE_DROPPED_KNOWN: Readonly<Record<string, string>> = {};
 
@@ -28,13 +35,35 @@ export const osmBuildings = (data: OsmData): Area[] => {
 
 type Finding = { readonly at: string; readonly what: string };
 
-/** Buildings centred off every chunk with over `EDGE_PART_MIN` m² on them that the game has not got. */
+/**
+ * How deep a building's parts reach into the map from its edge (m): for each chunk, from the sides
+ * the outline crosses with no chunk past them, the least; the deepest of the chunks.
+ */
+export const depthOnMap = (ring: readonly Pt[], chunks: readonly Rect[]): number => {
+  const offMap = (p: Pt) => !chunks.some((r) => p.x >= r.minX && p.x <= r.maxX && p.z >= r.minZ && p.z <= r.maxZ);
+  let deepest = 0;
+  for (const r of chunks) {
+    const piece = clipRingToRect(ring, r);
+    if (piece.length < 3 || Math.abs(signedArea(piece)) <= 0) continue;
+    const c = centroid(piece);
+    const sides = [
+      { past: (p: Pt) => p.x < r.minX, beyond: { x: r.minX - 0.5, z: c.z }, from: (p: Pt) => p.x - r.minX },
+      { past: (p: Pt) => p.x > r.maxX, beyond: { x: r.maxX + 0.5, z: c.z }, from: (p: Pt) => r.maxX - p.x },
+      { past: (p: Pt) => p.z < r.minZ, beyond: { x: c.x, z: r.minZ - 0.5 }, from: (p: Pt) => p.z - r.minZ },
+      { past: (p: Pt) => p.z > r.maxZ, beyond: { x: c.x, z: r.maxZ + 0.5 }, from: (p: Pt) => r.maxZ - p.z },
+    ].filter((s) => ring.some(s.past) && offMap(s.beyond));
+    deepest = Math.max(deepest, sides.length > 0 ? Math.min(...sides.map((s) => Math.max(...piece.map(s.from)))) : Infinity);
+  }
+  return deepest;
+};
+
+/** Buildings centred off every chunk with over `EDGE_PART_MIN` m² and `EDGE_DEPTH_MIN` m on them that the game has not got. */
 export const edgeBuildingsDropped = (buildings: readonly Area[], chunks: readonly Rect[], inGame: ReadonlySet<string>, known = EDGE_DROPPED_KNOWN): Finding[] =>
   buildings.flatMap((b) => {
     if (inGame.has(b.id) || known[b.id] !== undefined || chunks.some((r) => inRect(centroid(b.ring), r))) return [];
     const pieces = chunks.map((r) => clipRingToRect(b.ring, r)).filter((p) => p.length >= 3);
     const area = pieces.reduce((s, p) => s + Math.abs(signedArea(p)), 0);
-    if (area <= EDGE_PART_MIN) return [];
+    if (area <= EDGE_PART_MIN || depthOnMap(b.ring, chunks) < EDGE_DEPTH_MIN) return [];
     const biggest = pieces.reduce((a, p) => (Math.abs(signedArea(p)) > Math.abs(signedArea(a)) ? p : a));
     const at: Pt = centroid(biggest);
     const name = b.tags.name ?? (b.tags["addr:street"] ? `${b.tags["addr:street"]} ${b.tags["addr:housenumber"] ?? ""}`.trim() : b.tags.building);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
 import { LUBLIN_CHUNKS } from "../../../packages/sim/src/content/lublin";
-import { piecesInRect } from "../src/building-edge.ts";
+import { MIN_EDGE_DEPTH, edgeDepth, piecesInRect } from "../src/building-edge.ts";
 import { ALL_CHUNKS } from "../src/config.ts";
 import { generate } from "../src/generate.ts";
 import { type Pt, signedArea } from "../src/geometry.ts";
@@ -40,10 +40,20 @@ describe("buildings across the map's edge (G-556)", () => {
   });
 
   it("gives a building cut at the edge the storeys of the whole building, not of its piece on the map", () => {
-    // 120 m² in all, 8 m² on the map: a house of three or four storeys by Krakowskie's default, not a shed.
-    const [c] = generate(edgeMap(-228, -198, 104, '<tag k="building" v="yes"/>'), () => 200, krakowskie01()).chunks;
+    // 128 m² in all, 16 m² on the map: a house of three or four storeys by Krakowskie's default, not a shed.
+    const [c] = generate(edgeMap(-228, -196, 104, '<tag k="building" v="yes"/>'), () => 200, krakowskie01()).chunks;
     const b = c!.buildings.find((x) => x.id === "w100");
     expect(b?.levels).toBeGreaterThanOrEqual(3);
+  });
+
+  it("leaves a building whose piece on the map is a slab under 3 m deep off it, with the rest of it (decision 8.11)", () => {
+    // 2 m of 16 on the map: Probostwo 7 and Pałac Morskich were such slabs.
+    const [c] = generate(edgeMap(-214, -198, 110, '<tag k="building" v="house"/>'), () => 200, krakowskie01()).chunks;
+    expect(c!.buildings.find((x) => x.id === "w100")).toBeUndefined();
+    const ring = pts([-214, 100, -198, 100, -198, 110, -214, 110]);
+    const rect = { minX: -200, minZ: -270, maxX: 460, maxZ: 160 };
+    expect(edgeDepth(ring, piecesInRect(ring, rect)[0]!, rect)).toBeCloseTo(2, 5);
+    expect(MIN_EDGE_DEPTH).toBe(3);
   });
 
   it("closes each piece of a ring leaving the rectangle and coming back on its own, without a corridor along the edge", () => {

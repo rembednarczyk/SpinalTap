@@ -200,8 +200,10 @@ const generateChunk = (
       continue;
     }
     if (a.holes > 0) withHoles++;
-    const signs = venues.get(a.id);
-    const ok = signs ? { ...r.ok, venues: signs.map((v) => venueOut(v, r.ok)) } : r.ok;
+    // A building cut at the map's edge signs only the venues on its part on the map (G-556).
+    const edge = a.edge?.rect;
+    const signs = edge ? venues.get(a.id)?.filter((v) => inRect(v.at, edge)) : venues.get(a.id);
+    const ok = signs?.length ? { ...r.ok, venues: signs.map((v) => venueOut(v, r.ok)) } : r.ok;
     // A building's parts follow it, in its chunk, wherever their own centroids fall.
     out.push(ok, ...r.lifted);
   }

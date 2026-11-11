@@ -86,13 +86,31 @@ export interface EdgeCut {
   readonly rect: Rect;
 }
 
-/** Buildings centred off every district, by id: their largest piece in a district. */
+/**
+ * A piece on the map shallower than this (m) from the edge cutting it is a slab, not a building:
+ * one room deep at least, or it stays off the map with the rest of its building, for the map's
+ * widening (user's decision 8.11: Probostwo 7 1 m, Pałac Morskich 2 m deep).
+ */
+export const MIN_EDGE_DEPTH = 3;
+
+/** How deep a piece of `ring` in `rect` reaches in from the sides of `rect` the ring crosses (m): the least of them. */
+export const edgeDepth = (ring: readonly Pt[], piece: readonly Pt[], rect: Rect): number => {
+  const sides = [
+    { past: (p: Pt) => p.x < rect.minX, from: (p: Pt) => p.x - rect.minX },
+    { past: (p: Pt) => p.x > rect.maxX, from: (p: Pt) => rect.maxX - p.x },
+    { past: (p: Pt) => p.z < rect.minZ, from: (p: Pt) => p.z - rect.minZ },
+    { past: (p: Pt) => p.z > rect.maxZ, from: (p: Pt) => rect.maxZ - p.z },
+  ];
+  return Math.min(...sides.filter((s) => ring.some(s.past)).map((s) => Math.max(...piece.map(s.from))));
+};
+
+/** Buildings centred off every district, by id: their largest piece in a district, if `MIN_EDGE_DEPTH` deep. */
 export const edgeOutlines = (buildings: readonly { readonly id: string; readonly ring: readonly Pt[] }[], districts: readonly Rect[]): ReadonlyMap<string, EdgeCut> => {
   const out = new Map<string, EdgeCut>();
   for (const b of buildings) {
     if (districts.some((r) => inRect(centroid(b.ring), r))) continue;
     const best = largestPiece(b.ring, districts);
-    if (best) out.set(b.id, best);
+    if (best && edgeDepth(b.ring, best.ring, best.rect) >= MIN_EDGE_DEPTH) out.set(b.id, best);
   }
   return out;
 };
