@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BARRIER_HEIGHT, barrierHeight, barrierKind, chunkBarriers, worldBarriers } from "../src/barriers.ts";
 import { type Area, type Line } from "../src/features.ts";
+import { SKIPPED, knownKind, propOf } from "../src/props-kinds.ts";
 import { type OsmData, type OsmNode, type OsmWay } from "../src/osm.ts";
 import { geoToWorld, worldToGeo } from "../src/project.ts";
 
@@ -119,6 +120,12 @@ describe("barriers of the map (ADR-0077 point 4)", () => {
     // A stream in a culvert under a fenced yard leaves the fence.
     const covered = mapOf([ring, { ...stream, tags: { waterway: "stream", tunnel: "culvert" } }]);
     expect(worldBarriers(covered.data, covered.lines, [], { buildings: [], bands: [], lines: covered.lines })).toHaveLength(1);
+  });
+
+  it("leave the plan's hedges to the barriers: no rows of shrubs along them in osm:props", () => {
+    expect(propOf("hedge")).toBeNull();
+    expect(knownKind("hedge")).toBe(true);
+    expect(SKIPPED.hedge).toContain("ADR-0077");
   });
 
   it("take a closed area's barrier as its outline, and clip a barrier to the chunks, an opening whole by its centre", () => {
