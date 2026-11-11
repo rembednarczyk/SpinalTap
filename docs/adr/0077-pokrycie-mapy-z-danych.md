@@ -22,6 +22,15 @@ Research źródeł (11.11):
 
 Wniosek: otwartych tekstur elewacji dla Lublina nie ma. Kolory dachów i nawierzchni można próbkować z ortofoto.
 
+Ustalenia `source-scout` (11.11), wszystkie zbiory na licencji CC BY 4.0, do atrybucji w `data/osm/ATTRIBUTION.md` przy pierwszym użyciu:
+- **Budynki LoD2 (CityGML 2.0, stan 2017):** Lublin (powiat 0663) jest w zasięgu, 35 602 budynki, kształty dachów; `opendata.geoportal.gov.pl/InneDane/Budynki3D/LOD2/0663_gml.zip`, 24,5 MB.
+- **Budynki LoD1 2024 (`measuredHeight`):** 38 687 budynków; `opendata.geoportal.gov.pl/InneDane/Budynki3D/LOD1/2024/06/0663.zip`, 13,2 MB.
+- **Drzewa LoD1 2023:** 433 748 drzew w powiecie, położenie, wysokość i wysokość przyziemia, bez korony; `opendata.geoportal.gov.pl/InneDane/Drzewa3D/LOD1/2023/06/0663.zip`, 1,92 GB. Pobierać tylko wycinek mapy.
+- **BDOT10k powiatu Lublin (GML lub GPKG, 2026):** bezpłatny, ok. 22 MB; zawiera m.in. budowle (ogrodzenia, mury). Klasy do sprawdzenia po pobraniu.
+- **Ortofoto:** najnowszy arkusz w punkcie Lublina z 2025 r.; CIR niedostępne w WMS.
+- **Otwarte dane miasta Lublin:** serwery nie odpowiadały, zawartość i licencja nieustalone (NMT, NMPT, chmura punktów EPT 2013–2023 według wyszukiwarki). Rejestrów mebli ulicznych nie znaleziono.
+- **OSM a meble i bariery:** wyciągi `data/osm/*.json` odrzucają przy pobieraniu punkty mebli i większość linii barier. Surowe dane OSM z 6 kafli pamięci podręcznej (część mapy) mają m.in.: 380 ławek, 395 słupków, 26 koszy, 51 stojaków, 105 hydrantów, 144 ogrodzenia, 82 mury, 15 murów oporowych, 57 żywopłotów, 145 bram, 9 szlabanów, ale tylko 11 latarni. Meble i bariery z OSM to tani, prawdziwy zysk. Latarnie dalej rozstawia głównie generator (ADR-0047).
+
 ## Decyzja
 1. **Najpierw narzędzia, potem reguły, na końcu przejścia po komórkach.**
    - **Narzędzia (jednorazowo):**
