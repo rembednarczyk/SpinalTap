@@ -75,6 +75,18 @@ export interface CharacterViewsDeps {
   readonly rungs?: (x: number, y: number, z: number) => LadderRungs | null;
   /** Walls round a lying body (G-458): it is turned on the ground until it is clear of them. */
   readonly wall?: WallProbe;
+  /** Character model files in memory at once (`QualityTier.modelFiles`, ADR-0076 stage 4b). */
+  readonly modelFiles?: number;
+}
+
+/** What the loading screen waits for and what loads after it (ADR-0057, ADR-0076 stage 4a). */
+export interface ModelLoading {
+  /** Starts loading the models of the characters in the scene, the heroine's and every weapon: one promise per file. */
+  start(): Promise<unknown>[];
+  /** Loads the background roles' models the start did not, one file at a time, while `live` says so. */
+  rest(live?: () => boolean): Promise<void>;
+  /** Model files in memory now, weapons' too; a file nobody wears goes after a while (ADR-0076 stage 4b). */
+  loaded(): string[];
 }
 
 /** The followed character has a body on her shoulder. */
@@ -111,7 +123,7 @@ export class CharacterViews implements FxActors {
   constructor(private readonly deps: CharacterViewsDeps) {
     const library = new ModelLibrary(deps.scene, deps.materials);
     this.kit = new CharacterKit({ ...deps, library });
-    this.models = new CharacterModels({ library, loadouts: this.kit.loadouts, addCaster: (m) => deps.shadow.addCaster(m), scene: deps.scene, materials: deps.materials });
+    this.models = new CharacterModels({ library, loadouts: this.kit.loadouts, addCaster: (m) => deps.shadow.addCaster(m), scene: deps.scene, materials: deps.materials, ...(deps.modelFiles !== undefined ? { modelFiles: deps.modelFiles } : {}) });
   }
 
   has(id: EntityId): boolean {
@@ -289,8 +301,12 @@ export class CharacterViews implements FxActors {
     for (const v of this.views.values()) if (!this.models.of(v.rig)) this.models.dress(v.rig, v.model, v.name);
   }
 
-  /** Starts loading every model of the manifest and every weapon, one promise per file (ADR-0057). */
-  preloadModels(): Promise<unknown>[] {
-    return [...this.models.preload(), ...this.kit.preload()];
+  /** The models the loading screen waits for, and those that load once the game is on screen. */
+  get modelLoading(): ModelLoading {
+    return {
+      start: () => [...this.models.preload([...this.views.values()].map((v) => v.model)), ...this.kit.preload()],
+      rest: (live) => this.models.prefetch(live),
+      loaded: () => this.models.loadedFiles(),
+    };
   }
 }

@@ -3,39 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { ModelLibrary, toonSourceOf } from "../src/renderer/model-library";
-import { GAME_MODEL_FILES, readModelFile, serveModels } from "./game-models";
-
-interface Gltf {
-  readonly materials: { readonly name: string; readonly pbrMetallicRoughness?: { readonly baseColorTexture?: { readonly index: number } } }[];
-  readonly textures: { readonly source: number }[];
-  readonly images: { readonly bufferView: number }[];
-  readonly bufferViews: { readonly byteOffset?: number }[];
-}
-
-/**
- * Pixels of each material's base texture, read from the PNG headers in the file: the null engine
- * reports no real sizes. Babylon names a glTF base texture "<material> (Base Color)".
- */
-const basePixelsOf = (url: string): Map<string, number> => {
-  const b = readModelFile(url);
-  const view = new DataView(b.buffer, b.byteOffset, b.byteLength);
-  const length = view.getUint32(12, true);
-  const gltf = JSON.parse(new TextDecoder().decode(b.subarray(20, 20 + length))) as Gltf;
-  const bin = 20 + length + 8;
-  const out = new Map<string, number>();
-  for (const m of gltf.materials) {
-    const tex = m.pbrMetallicRoughness?.baseColorTexture;
-    if (!tex) continue;
-    const image = gltf.images[gltf.textures[tex.index]!.source]!;
-    const at = bin + (gltf.bufferViews[image.bufferView]!.byteOffset ?? 0);
-    // PNG: the IHDR chunk's width and height follow the 8-byte signature and the chunk header.
-    out.set(`${m.name} (Base Color)`, view.getUint32(at + 16) * view.getUint32(at + 20));
-  }
-  return out;
-};
-
-/** GPU bytes of an RGBA8 texture with its mip chain. */
-const gpuMiB = (pixels: number): number => (pixels * 4 * 4) / 3 / 2 ** 20;
+import { GAME_MODEL_FILES, basePixelsOf, gpuMiB, serveModels } from "./game-models";
 
 afterEach(() => {
   vi.unstubAllGlobals();

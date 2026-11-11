@@ -7,6 +7,7 @@ export * from "./babylon-renderer";
 export * from "./atmosphere";
 export * from "./dressing";
 export * from "./model-loader";
+export * from "./model-cast";
 export * from "./model-library";
 export * from "./model-variant";
 export * from "./model-rig";
