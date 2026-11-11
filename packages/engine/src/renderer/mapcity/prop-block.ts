@@ -74,11 +74,8 @@ const blockMesh = (deps: PropBakeDeps, name: string, sink: MeshSink): Mesh | nul
 export const buildFar = (deps: PropBakeDeps, block: PropBlock): void => {
   const far = new MeshSink();
   for (const p of sortedPieces(block)) {
-    // A wall, the city walls or a hedge (ADR-0077) as its plain block; fences and gates are not drawn far.
-    if (p.prop === "barrier") {
-      bakeBarrier(far, p, deps.quality, true);
-      continue;
-    }
+    // The map's barriers (ADR-0077) are drawn near only.
+    if (p.prop === "barrier") continue;
     const f = deps.poles.isPole(p) ? deps.poles.far : farModel(p.prop, p.shape);
     if (f) bake(far, f, p);
   }

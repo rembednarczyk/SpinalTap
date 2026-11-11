@@ -11,7 +11,7 @@ import { quadUv } from "./sink-ops";
  * the ground rising `rise` from its -z end to its +z end. Baked into the furniture's block meshes
  * (`prop-block.ts`), so they cost no draw call of their own. A wall is a block with a coping, the
  * city walls a thick brick one, a hedge a green mass, a fence an open work of posts, rails and
- * bars, a gate two posts and a lift gate a post with its arm raised. Colours of the furniture's
+ * bars, a gate two posts and a lift gate a post with its arm raised. Near only (`barrierModel`). Colours of the furniture's
  * palette: the granite and concrete of the kerbs, the facades' brick, the shrubs' green, iron.
  */
 
@@ -62,11 +62,10 @@ const shearedBox = (sink: MeshSink, b: BarrierLayout, x0: number, x1: number, z0
 const post = (sink: MeshSink, b: BarrierLayout, z: number, side: number, top: number, color: Rgba): void => shearedBox(sink, b, -side / 2, side / 2, z - side / 2, z + side / 2, 0, top, color);
 
 /** A wall: its block and a coping a little wider on top. */
-const wall = (sink: MeshSink, b: BarrierLayout, far: boolean): void => {
+const wall = (sink: MeshSink, b: BarrierLayout): void => {
   const ht = BARRIER_THICKNESS[b.kind] / 2;
   const hl = b.length / 2;
   const [face, cap] = wallColour(b);
-  if (far) return shearedBox(sink, b, -ht, ht, -hl, hl, 0, b.height, face);
   shearedBox(sink, b, -ht, ht, -hl, hl, 0, b.height - 0.07, face);
   shearedBox(sink, b, -ht - 0.03, ht + 0.03, -hl, hl, b.height - 0.07, b.height, cap);
 };
@@ -118,23 +117,47 @@ const opening = (sink: MeshSink, b: BarrierLayout): void => {
   }
 };
 
-/** A barrier piece in its own frame, near (`far` false) or as the far mesh's block (null for kinds not drawn far). */
-export const barrierModel = (variant: number, quality: RenderQuality, far = false): MeshSink | null => {
+/**
+ * A barrier piece in its own frame. Drawn near only, to the detail distance as a bench is: a far
+ * block of walls would be a mesh more in blocks whose far mesh holds no tree or lamp (the
+ * reference scene's budget, ADR-0046), for a strip of a few pixels at 170 m and more.
+ */
+export const barrierModel = (variant: number, quality: RenderQuality): MeshSink => {
   const b = barrierLayout(variant);
   const sink = new MeshSink();
   if (b.kind === "fence") {
-    if (far) return null;
     fence(sink, b, quality);
   } else if (b.kind === "hedge") hedge(sink, b);
   else if (b.kind === "gate" || b.kind === "lift-gate") {
-    if (far) return null;
     opening(sink, b);
-  } else wall(sink, b, far);
+  } else wall(sink, b);
   return sink;
 };
 
-/** Bakes a barrier piece at its place into a block's sink (near or far). */
-export const bakeBarrier = (sink: MeshSink, p: WorldProp, quality: RenderQuality, far = false): void => {
-  const model = barrierModel(p.variant ?? 0, quality, far);
-  if (model) bake(sink, model, { ...p, scale: 1 });
+/**
+ * The block a barrier piece is baked into: its own if furniture stands there, else the nearest
+ * of the eight round it that holds furniture, so a stretch of wall at the map's edge (the strip
+ * of Krakowskie south of z = -256 has no furniture) makes no block mesh of its own; its own when
+ * none does. `furnished` tells a block key that holds furniture.
+ */
+export const barrierBlock = (x: number, z: number, size: number, furnished: (key: string) => boolean): string => {
+  const [i, j] = [Math.floor(x / size), Math.floor(z / size)];
+  const own = `${i}:${j}`;
+  if (furnished(own)) return own;
+  let best: string | null = null;
+  let bestD = Infinity;
+  for (let di = -1; di <= 1; di++) {
+    for (let dj = -1; dj <= 1; dj++) {
+      const k = `${i + di}:${j + dj}`;
+      if ((di === 0 && dj === 0) || !furnished(k)) continue;
+      const dx = Math.max((i + di) * size - x, 0, x - (i + di + 1) * size);
+      const dz = Math.max((j + dj) * size - z, 0, z - (j + dj + 1) * size);
+      const d = Math.hypot(dx, dz);
+      if (d < bestD) [best, bestD] = [k, d];
+    }
+  }
+  return best ?? own;
 };
+
+/** Bakes a barrier piece at its place into a block's detailed sink. */
+export const bakeBarrier = (sink: MeshSink, p: WorldProp, quality: RenderQuality): void => bake(sink, barrierModel(p.variant ?? 0, quality), { ...p, scale: 1 });
