@@ -26,7 +26,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu `lane-end-at-laneless-street` daje 0; dziś 8 (bez G-020, po G-021).
 
 ### G-024 Jednokierunkowe pasy kończą się przed ulicą dla dostaw (Lubartowska, Kowalska, Świętoduska)
-- Status: otwarte, decyzja użytkownika ponownie: skręty (opcja B) niemożliwe, w zasięgu 16 m brak ulicy dla aut (najbliższe pasy aut: Lubartowska#37 ok. 100 m, Kowalska#76 56 m, Świętoduska#20 48 m; spotykają je tylko ulice dla dostaw). Zostaje opcja A (dalej ulicą dla dostaw) albo pozostawienie
+- Status: przyjęte, decyzja użytkownika ponownie: skręty (opcja B) niemożliwe, w zasięgu 16 m brak ulicy dla aut (najbliższe pasy aut: Lubartowska#37 ok. 100 m, Kowalska#76 56 m, Świętoduska#20 48 m; spotykają je tylko ulice dla dostaw). Zostaje opcja A (dalej ulicą dla dostaw) albo pozostawienie
 - Ważność: S3 · Zasięg: lokalny (6 końców) · Koszt: średni
 - Gdzie: Lubartowska#37:0/1 (460, 56), Kowalska#76:0/1 (568, 160), Świętoduska#20:0/1 (350, −48)
 - Dowód: naprawiacz G-023: oba pasy jadą w tę samą stronę, nie ma pasa powrotnego do zawrotki; zawrotka oznaczałaby jazdę pod prąd (regres G-105) albo czołowe zatory.
@@ -124,10 +124,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (proponowana) · Koszt: nieznany
 - Dowód: w tym samym punkcie (300, −60) przy ustalonym mieście kolejne klatki dają 223 i 163 wywołania. Sprawdzić, skąd różnica (komórki przebudowywane leniwie, glow, cienie), i czy nie zaszumia budżetów w `npr-perf`.
 - Pakiet właściciela: packages/engine
-
-### G-059 Testy sesji `m2-schedules` i `m3-loop` trwają ok. 5 s i przekraczają limit vitest pod obciążeniem
-- Status: odrzucone (pomiar, 31.10)
-- Ustalenie orkiestratora: główny `vitest.config.ts` daje `testTimeout: 20_000` właśnie dla testów całych aktów. Limit 5 s działa tylko przy vitest puszczonym z katalogu pakietu, bez głównej konfiguracji. Z roota przy load 30: najdłuższy test 7,6 s (zegar HUD, 3600 klatek), wszystkie 10 zielonych. Testy uruchamiamy z roota repo
 
 ### G-060 Części `building:part` niższe od obrysu pomijane przy pokryciu < 75% (Podzamcze)
 - Status: zgłoszone (z przeglądu topografii G-049)
@@ -282,14 +278,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: sonda G-090 (`scratchpad/g090-scan.sh`); pas zwęża się przed dziurą
 - Pakiet właściciela: tools/osm-import (ground)
 - Test przyjęcia: kontrola `car-road-hole` (albo nowa) wykrywa i spada do 0
-
-### G-095 Żółty kabel kanionu przez przedsionek Trasy Podziemnej (do potwierdzenia)
-- Status: niepotwierdzone (glitch hunt wnętrz, 31.10)
-- Ważność: S4 (proponowana) · Koszt: mały
-- Dowód: zrzut `scratchpad/shots1/p1-trasa-vest.png` (kamera 567, 1,93, −57, yaw π/2): żółta linia na wysokości głowy w poprzek przedsionka i krótki odcinek na tylnej ścianie
-- Do ustalenia: czy to kabel z `renderer/mapcity/canyon-plan.ts` albo `landmarks/cables.ts` przechodzący przez bryłę; ile takich w mieście
-- Pakiet właściciela: packages/engine (jeśli się potwierdzi)
-- Test przyjęcia: kontrola `cable-through-interior` (odcinek kabla wchodzi w bryłę wnętrza `interior: true`) z bazą → 0
 
 ### G-096 Narożnik Starego Miasta za brzegiem z = −240 (Pałac Ordynacki, Kuria)
 - Status: odłożone: poszerzanie mapy (decyzja użytkownika 8.11, `docs/backlog.md`, sekcja „Poszerzanie mapy”; zgłoszone z przeglądu kuratora G-052)
@@ -555,7 +543,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-190 Puste pasy postojowe OSM
-- Status: skan w main (1.11, #169: `kerb-strip-no-car-street` baza 3, `bay-strip-empty-known` baza 4, `bay-strip-sparse` 0); zostaje poprawka generatora: łatka zatok przy ulicach dostaw (`docs/plany/g190-zatoki-przy-ulicach-dostaw.patch`) razem z G-133; Łęczyńska w1159135271 (OSM `capacity=23`, w grze 0: obrys płytszy niż auto w poprzek) do decyzji, np. nadwozie nad krawężnikiem
+- Status: częściowo naprawione: skan w main (1.11, #169: `kerb-strip-no-car-street` baza 3, `bay-strip-empty-known` baza 4, `bay-strip-sparse` 0); zostaje poprawka generatora: łatka zatok przy ulicach dostaw (`docs/plany/g190-zatoki-przy-ulicach-dostaw.patch`) razem z G-133; Łęczyńska w1159135271 (OSM `capacity=23`, w grze 0: obrys płytszy niż auto w poprzek) do decyzji, np. nadwozie nad krawężnikiem
 - Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133)
 - Poprawka: płytki pas z tagiem `diagonal`/`perpendicular` → mniejszy kąt albo krótszy model; spadek przez G-133 (pochylenie aut); `bay-strip-sparse` dziś pomija pasy bez auta
 - Kurator #162: także odcinek Kowalskiej w232362980 x 644..668 bez zatok, bo ulica ma `use: deliveries`, a `bayCars` bierze tylko `CAR_STREETS` (T-107); zatoka w1544340690 s=24,8 (689,2; 171,8) odrzucona przez odstęp od chodnika w173566578, a na ortofoto stoi tam auto. Proponowane kontrole: `kerb-strip-no-car-street` (baza ≥ 1) i `bay-strip-sparse` także dla pasów bez aut (baza ≥ 5)
@@ -678,12 +666,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `tools/osm-import/src/props-doors.ts:234`: odcinek ulicy z chunków pokrywający się w rzucie z drogą pod ziemią przestaje być ulicą; Rynek nad Trasą Podziemną traci 2 odcinki (609,1; −50,9)→(617,9; −48,7), Teodora Gruella w298307007 (przejazd bramny `tunnel=yes`, `layer=-1`, por. G-076) 1 odcinek. Kamienica stojąca tylko od takiego odcinka straciłaby drzwi, a `door-faces-underground` tego nie wykryje. Testy nie łapią mutacji „tylko końce” i `ALONG=0.3`
 - Poprawka: odróżniać drogę pod ziemią od nawierzchni po id/nazwie drogi (chunki niosą id OSM?), przejazdy bramne z tagiem `tunnel=yes` krótsze niż ok. 20 m pod budynkiem traktować jak `building_passage`; testy warunku środka i progu
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
-### G-226 E2E `npr-perf` „the Rynek in TPP” przekracza 90 s na `citySettled` przy load 12–15
-- Status: zbadane (2.11, naprawiacz): przepustowość maszyny, nie regresja. Klatka pod SwiftShaderem 2–3 s przy load 10, 4–7 s przy 15–19 (skoki 10–16 s); miasto dochodzi do `citySettled` w 1–3 klatki; main vs. przed #186 i #167: wywołania i siatki identyczne, trójkąty +1 %, czas w szumie. Propozycje: (1) wspólna strona dla scen TPP (zmienia historię próbki, decyzja), (2) klatki na żądanie w `freeze` (`__seki.draw(n)`, ADR-0046), żeby `page.evaluate` nie czekało za klatkami w tle (pomoże też G-132), (3) orkiestrator wstrzymuje ciężkie zadania na czas e2e perf. Propozycja (2) zbudowana i odłożona (gałąź `ccr-ec2c4269-ilh8k8-draw-on-demand` @ 07c0b98, bez PR): `FrameGate` i `__seki.draw(n)` działają, budżety i migawka bez zmian, ale scena nie jest krótsza (settle potrzebuje 4–5 klatek zamiast 3–4, sumy w szumie); wątek strony blokuje też coś poza klatkami w tle (wiadukt: `step` 10 s, rynek: teleport 3 s; hipoteza: synchroniczne GL przy spawnie siatek nowego chunka). Następny krok: ślad tego `step`, potem decyzja o (1); raport `scratchpad/g226-raport.md`
-- Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `e2e/npr-perf.spec.ts:89` (Rynek TPP), także „Krakowskie Przedmieście TPP” i „market under the viaduct” (weryfikator #199: timeout 90 s przy load 13–17; viaduct na main 1,4 min przy load 15–21); powtórki same przechodzą
-- Poprawka: ślad (trace) i pomiar, co trzyma `citySettled` (wczytywanie chunków, kafle, decale z #186?); bez podnoszenia limitu (ADR-0046)
-- Pakiet właściciela: e2e (QA), engine
 
 ### G-227 Grodzka 7 (Warsztaty Kultury) r3119721 bez żadnych drzwi po G-197
 - Status: zgłoszone (2.11, kurator #201, T-130)
@@ -879,12 +861,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: pas szer. ok. 0,2–0,3 m, 7 cm niżej, częściowo bez nawierzchni: Zamkowa (760,6; 186,0), deptak (404,9; −98,2) · Koszt: do ustalenia
 - Poprawka: ustalić źródło (szew pasów nawierzchni, krawężnik, rynsztok z importu) i domknąć nawierzchnię; kontrola skanu na szczeliny nawierzchni (punkt chodnika bez nawierzchni otoczony nawierzchnią)
 - Pakiet właściciela: tools/osm-import (ground), packages/engine (renderer/mapcity)
-
-### G-285 Przeciwnicy wykrywają gracza natychmiast, takedown niemożliwy
-- Status: naprawione przez ADR-0069 etap 1 (#252) i 2 (#254, 5.11, słuch kroków); balans w etapie 3 (trop co krok za ścianą, sprint przed Kagami i Tessen 0,6–0,7 s)
-- Ważność: S2 (proponowana: blokuje mechanikę) · Zasięg: walka z gangerami; czujność NPC i kamer (`AWARENESS_STEP`, `GUARD_CONE`, `ganger-perception.ts`)
-- Do ustalenia: błąd w czujności czy brak trybu skradania (backlog, skradanie)
-- Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-290 Strażnicy liczą obecność w strefie w mundurze jako czyn zabroniony mimo znanego kodu
 - Status: zgłoszone (4.11, naprawiacz G-280; do sprawdzenia, czy zamierzone)
@@ -1661,7 +1637,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
-- Status: nowe (weryfikator ADR-0057, 1.11)
+- Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
 - Gdzie: `e2e/smoke.spec.ts`, test quicksave/quickload; przy load ponad 15 F5 albo F9 trafia na stronę zablokowaną długim zadaniem (Press F5 8,8 s, poll 30 s na „Game saved”)
 - Pomiar: na `feat/loading-screen` 2/5 czerwone przy load 20–26, 4/4 zielone przy 7–15; na origin/main 1/4 czerwone (F9)

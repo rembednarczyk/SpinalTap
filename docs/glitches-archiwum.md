@@ -2,6 +2,30 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-059 Testy sesji `m2-schedules` i `m3-loop` trwają ok. 5 s i przekraczają limit vitest pod obciążeniem
+- Status: odrzucone (pomiar, 31.10)
+- Ustalenie orkiestratora: główny `vitest.config.ts` daje `testTimeout: 20_000` właśnie dla testów całych aktów. Limit 5 s działa tylko przy vitest puszczonym z katalogu pakietu, bez głównej konfiguracji. Z roota przy load 30: najdłuższy test 7,6 s (zegar HUD, 3600 klatek), wszystkie 10 zielonych. Testy uruchamiamy z roota repo
+
+### G-095 Żółty kabel kanionu przez przedsionek Trasy Podziemnej (do potwierdzenia)
+- Status: odrzucone, niepotwierdzone (porządek rejestru 11.11): niepotwierdzone (glitch hunt wnętrz, 31.10)
+- Ważność: S4 (proponowana) · Koszt: mały
+- Dowód: zrzut `scratchpad/shots1/p1-trasa-vest.png` (kamera 567, 1,93, −57, yaw π/2): żółta linia na wysokości głowy w poprzek przedsionka i krótki odcinek na tylnej ścianie
+- Do ustalenia: czy to kabel z `renderer/mapcity/canyon-plan.ts` albo `landmarks/cables.ts` przechodzący przez bryłę; ile takich w mieście
+- Pakiet właściciela: packages/engine (jeśli się potwierdzi)
+- Test przyjęcia: kontrola `cable-through-interior` (odcinek kabla wchodzi w bryłę wnętrza `interior: true`) z bazą → 0
+
+### G-226 E2E `npr-perf` „the Rynek in TPP” przekracza 90 s na `citySettled` przy load 12–15
+- Status: odrzucone, nie regresja (porządek rejestru 11.11): zbadane (2.11, naprawiacz): przepustowość maszyny, nie regresja. Klatka pod SwiftShaderem 2–3 s przy load 10, 4–7 s przy 15–19 (skoki 10–16 s); miasto dochodzi do `citySettled` w 1–3 klatki; main vs. przed #186 i #167: wywołania i siatki identyczne, trójkąty +1 %, czas w szumie. Propozycje: (1) wspólna strona dla scen TPP (zmienia historię próbki, decyzja), (2) klatki na żądanie w `freeze` (`__seki.draw(n)`, ADR-0046), żeby `page.evaluate` nie czekało za klatkami w tle (pomoże też G-132), (3) orkiestrator wstrzymuje ciężkie zadania na czas e2e perf. Propozycja (2) zbudowana i odłożona (gałąź `ccr-ec2c4269-ilh8k8-draw-on-demand` @ 07c0b98, bez PR): `FrameGate` i `__seki.draw(n)` działają, budżety i migawka bez zmian, ale scena nie jest krótsza (settle potrzebuje 4–5 klatek zamiast 3–4, sumy w szumie); wątek strony blokuje też coś poza klatkami w tle (wiadukt: `step` 10 s, rynek: teleport 3 s; hipoteza: synchroniczne GL przy spawnie siatek nowego chunka). Następny krok: ślad tego `step`, potem decyzja o (1); raport `scratchpad/g226-raport.md`
+- Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `e2e/npr-perf.spec.ts:89` (Rynek TPP), także „Krakowskie Przedmieście TPP” i „market under the viaduct” (weryfikator #199: timeout 90 s przy load 13–17; viaduct na main 1,4 min przy load 15–21); powtórki same przechodzą
+- Poprawka: ślad (trace) i pomiar, co trzyma `citySettled` (wczytywanie chunków, kafle, decale z #186?); bez podnoszenia limitu (ADR-0046)
+- Pakiet właściciela: e2e (QA), engine
+
+### G-285 Przeciwnicy wykrywają gracza natychmiast, takedown niemożliwy
+- Status: naprawione (porządek rejestru 11.11): naprawione przez ADR-0069 etap 1 (#252) i 2 (#254, 5.11, słuch kroków); balans w etapie 3 (trop co krok za ścianą, sprint przed Kagami i Tessen 0,6–0,7 s)
+- Ważność: S2 (proponowana: blokuje mechanikę) · Zasięg: walka z gangerami; czujność NPC i kamer (`AWARENESS_STEP`, `GUARD_CONE`, `ganger-perception.ts`)
+- Do ustalenia: błąd w czujności czy brak trybu skradania (backlog, skradanie)
+- Pakiet właściciela: packages/sim/src/systems/ai
+
 ### G-562 Plik modelu, który się nie wczytał, nie wczyta się ponownie w tej sesji
 - Status: naprawione (PR #410, 8.11; odrzucony promise wypada z `containers`, plik wczytuje się ponownie; testy `model-loader` i `model-release` padają bez poprawki)
 - Ważność: S4 · Zasięg: odrzucony promise zostaje w `containers` `ModelLibrary`, bez ponowienia

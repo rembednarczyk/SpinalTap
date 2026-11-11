@@ -31,6 +31,7 @@ Kolejka: S1 zawsze pierwsze, potem S2 szerokie, a potem reszta wg priorytetu. Po
 
 ## Statusy w `docs/glitches.md`
 `zgłoszone` → `przyjęte` (ma ważność i właściciela) → `w naprawie` (przydzielone, worktree) → `weryfikacja` → `naprawione (#PR)`. Albo `odrzucone (powód)` / `później (powód)` / `duplikat (ID)`.
+Pośrednie: `w PR #N` (gałąź z PR-em), `częściowo naprawione (co zostało)`, `odłożone: poszerzanie mapy` (brzeg mapy, `docs/decyzje.md`). Wpis z `naprawione`, `odrzucone` albo `duplikat` przenosi się od razu do `docs/glitches-archiwum.md` (na górę).
 
 ## Szablon zgłoszenia
 ```
