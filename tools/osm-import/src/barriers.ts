@@ -7,6 +7,7 @@
  * (doors, the crowd's routes, the set pieces) the simulation cuts on top (`barriers.ts` in sim).
  */
 import type { BarrierKind } from "../../../packages/core/src/world/barriers.ts";
+import { bandAxes, outOfBands } from "./barrier-edges.ts";
 import { parseLength } from "./building-tags.ts";
 import { type Area, type Line } from "./features.ts";
 import { type Pt, type Rect, clipLineToRect, inRect, lineLength, pointAlong, pointInRing, r1, ringBounds, simplifyLine, sliceLine } from "./geometry.ts";
@@ -52,6 +53,18 @@ export const BARRIER_HEIGHT: Readonly<Record<BarrierKind, number>> = {
   gate: 1.6,
   "lift-gate": 1.1,
 };
+
+/**
+ * A wall of a ruin's outline (`historic=ruins`) without a `height` tag: the low walls marking the
+ * foundations of the Fara on Plac po Farze stand some 0.45 m over the paving (NMPT − NMT, G-605).
+ */
+export const RUIN_WALL_HEIGHT = 0.5;
+/** Walls inside a ruin's outline that are not its foundations: the terrace wall by Rynek 11 (G-605). */
+const NOT_RUIN: ReadonlySet<string> = new Set(["w1348806709"]);
+
+/** Is a wall a ruin's low foundation wall: most of its points inside a `historic=ruins` outline? */
+const ruinWall = (l: Line, ruins: readonly (readonly Pt[])[]): boolean =>
+  !NOT_RUIN.has(l.id) && l.tags.height === undefined && ruins.some((r) => l.line.filter((p) => pointInRing(p, r)).length * 2 > l.line.length);
 
 /** Tagged heights past these are noise (a whole facade tagged as a wall). */
 const MIN_HEIGHT = 0.4;
@@ -246,12 +259,14 @@ export const worldBarriers = (data: OsmData, lines: readonly Line[], areas: read
   ];
   const gates = gateNodes(data, barrierLines, ways);
   const streams = cuts.lines.filter((l) => l.tags.waterway !== undefined && l.tags.tunnel === undefined && l.tags.covered !== "yes");
+  const ruins = areas.filter((a) => a.tags.historic === "ruins" && a.tags.building === undefined).map((a) => a.ring);
+  const axes = bandAxes(cuts.lines);
   const out: WorldBarrier[] = [];
   for (const l of barrierLines) {
     // A ring of walls round a stream is its channel's lining: the water and its banks are drawn on their own.
     if (channelLining(l.line, streams)) continue;
     const kind = barrierKind(l.tags)!;
-    const height = barrierHeight(l.tags, kind);
+    const height = kind === "wall" && ruinWall(l, ruins) ? RUIN_WALL_HEIGHT : barrierHeight(l.tags, kind);
     const material = materialOf(l.tags, kind);
     const extra = material ? { material } : {};
     // A gate mapped as a way is an opening of its own.
@@ -259,9 +274,11 @@ export const worldBarriers = (data: OsmData, lines: readonly Line[], areas: read
       out.push({ id: l.id, kind, height: BARRIER_HEIGHT[kind], line: l.line, ...extra });
       continue;
     }
-    const gaps = [...wayGaps(l.line, ways), ...gates.map((g) => g.gap)];
+    // Along a carriageway or a flight, out of its band to its edge; across it, cut (G-607, G-608).
+    const line = outOfBands(l.line, kind, axes);
+    const gaps = [...wayGaps(line, ways), ...gates.map((g) => g.gap)];
     const blocked = (p: Pt) => inAny(p, buildings) || inAny(p, paved) || gaps.some((g) => Math.hypot(p.x - g.at.x, p.z - g.at.z) < g.half);
-    for (const piece of cutBarrier(l.line, blocked)) out.push({ id: l.id, kind, height, line: piece, ...extra });
+    for (const piece of cutBarrier(line, blocked)) out.push({ id: l.id, kind, height, line: piece, ...extra });
   }
   for (const g of gates) {
     // A gate's posts stand on the ground, not in a building, nor (a lift gate's) in the road.

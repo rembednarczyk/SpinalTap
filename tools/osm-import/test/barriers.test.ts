@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { BARRIER_HEIGHT, barrierHeight, barrierKind, chunkBarriers, worldBarriers } from "../src/barriers.ts";
+import { BARRIER_HEIGHT, RUIN_WALL_HEIGHT, barrierHeight, barrierKind, chunkBarriers, worldBarriers } from "../src/barriers.ts";
+import { EDGE_MARGIN } from "../src/barrier-edges.ts";
+import { roadWidth } from "../src/ground.ts";
 import { type Area, type Line } from "../src/features.ts";
 import { SKIPPED, knownKind, propOf } from "../src/props-kinds.ts";
 import { type OsmData, type OsmNode, type OsmWay } from "../src/osm.ts";
@@ -109,6 +111,32 @@ describe("barriers of the map (ADR-0077 point 4)", () => {
     expect(out[0]!.kind).toBe("lift-gate");
     expect(Math.abs(out[0]!.line[0]!.x - out[0]!.line[1]!.x)).toBeGreaterThan(3);
     expect(out[0]!.line[0]!.z).toBeCloseTo(10, 1);
+  });
+
+  it("move a barrier running along a carriageway or a flight out of its band to its edge, cut one crossing it (G-607, G-608)", () => {
+    // A residential street on z = 0, a fence along it 2 m off its axis: inside the band.
+    const road = { id: 7, tags: { highway: "residential" }, pts: [[-10, 0], [30, 0]] as P[] };
+    const along = { id: 8, tags: { barrier: "fence" }, pts: [[0, 2], [20, 2]] as P[] };
+    const { data, lines } = mapOf([road, along]);
+    const w = roadWidth({ highway: "residential" }) / 2;
+    const band = { ring: [{ x: -10, z: -w }, { x: 30, z: -w }, { x: 30, z: w }, { x: -10, z: w }], surface: "road", carriageway: true as const };
+    const out = worldBarriers(data, lines, [], { buildings: [], bands: [band], lines });
+    expect(out).toHaveLength(1);
+    expect(spans(out)).toEqual([[0, 20]]);
+    for (const p of out[0]!.line) expect(p.z).toBeCloseTo(roadWidth({ highway: "residential" }) / 2 + 0.06 + EDGE_MARGIN, 2);
+    // A wall across the street is cut where it crosses the band, not moved.
+    const across = mapOf([road, { id: 9, tags: { barrier: "wall" }, pts: [[5, -10], [5, 10]] as P[] }]);
+    const cut = worldBarriers(across.data, across.lines, [], { buildings: [], bands: [band], lines: across.lines });
+    expect(cut).toHaveLength(2);
+    expect(cut.every((b) => b.line.every((p) => Math.abs(p.x - 5) < 1e-6))).toBe(true);
+  });
+
+  it("lay the walls of a ruin's outline low: the Fara's foundations (G-605)", () => {
+    const fara: Area = { id: "w5", osmId: 5, tags: { historic: "ruins" }, ring: [{ x: -1, z: -1 }, { x: 30, z: -1 }, { x: 30, z: 10 }, { x: -1, z: 10 }], holes: 0 };
+    const { data, lines } = mapOf([{ id: 6, tags: { barrier: "wall" }, pts: [[0, 0], [20, 0]] as P[] }, { id: 7, tags: { barrier: "wall", height: "1.2" }, pts: [[0, 5], [20, 5]] as P[] }]);
+    const out = worldBarriers(data, lines, [fara], cutsNone);
+    expect(out.map((b) => b.height)).toEqual([RUIN_WALL_HEIGHT, 1.2]);
+    expect(worldBarriers(data, lines, [], cutsNone).map((b) => b.height)).toEqual([1, 1.2]);
   });
 
   it("leave out a ring of walls lining a stream's channel", () => {
