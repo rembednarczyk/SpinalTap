@@ -186,6 +186,7 @@ export class BabylonRenderer implements RenderPort {
       lift: this.map.liftAt,
       rungs: (x, y, z) => rungsNear(this.props.ladderViews(), x, y, z),
       wall: wallProbe(scene, (m) => this.props.isBlocker(m), () => this.wallRay),
+      modelFiles: tier.modelFiles,
     });
     const eye = this.rig.camera.position;
     this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"], lift: this.map.liftAt });

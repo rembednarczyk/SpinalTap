@@ -83,7 +83,7 @@ describe("Kurosawa's model (ADR-0076 stage 3)", () => {
     expect(kurosawa).toBeLessThanOrEqual(kaito);
   });
 
-  it("lends his trousers to Base_Male and Kaito, but his coat to no one: it is another cut (M00_006)", async () => {
+  it("wears a coat of another cut (M00_006), and lends nothing: only a named character wears his file (G-560)", async () => {
     serveModels();
     const library = new ModelLibrary(new Scene(new NullEngine()), new ToonMaterials(new Scene(new NullEngine())));
     const cloth = await library.clothOf({ url: "kurosawa.vrm" });
@@ -92,7 +92,7 @@ describe("Kurosawa's model (ADR-0076 stage 3)", () => {
 
     const scene = new Scene(new NullEngine());
     const views = viewsOn(scene);
-    // Base_Male and Kurosawa only: his file is the one lender Base_Male has.
+    // Base_Male and Kurosawa only: the donors are the background roles' files, so Base_Male has none.
     views.setCharacterModels({ ganger: { url: "ganger.vrm" }, cast: { kurosawa: { url: "kurosawa.vrm" } }, pools: { ganger: [{ url: "ganger.vrm" }] } });
     const borrowing = (want: "topFrom" | "bottomFrom") => {
       for (let look = 0; look < 5000; look++) if (variantOf(backgroundVariantOf(look), undefined, false)[want] !== null) return look;
@@ -100,11 +100,13 @@ describe("Kurosawa's model (ADR-0076 stage 3)", () => {
     };
     views.spawn(2, { kind: "enemy", preset: "ganger", look: borrowing("topFrom") }, STAND);
     views.spawn(3, { kind: "enemy", preset: "ganger", look: borrowing("bottomFrom") }, STAND);
+    // Kurosawa in the scene, his file loaded: still no lender (ADR-0076 stage 4a).
+    views.spawn(4, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
     await settled(views);
     // A coat on a shirt's UVs would scatter its texels: Base_Male keeps his own top.
     // Booleans: a failing `toContain` would print the scene graph of the textures.
     const wearsOwn = (id: EntityId, part: string) => texturesOf(views, id, part).drawn.includes(texturesOf(views, id, part).own);
     expect(wearsOwn(2, "torso"), "Base_Male in Kurosawa's coat").toBe(true);
-    expect(wearsOwn(3, "legs"), "Base_Male in Kurosawa's trousers").toBe(false);
+    expect(wearsOwn(3, "legs"), "Base_Male in Kurosawa's trousers").toBe(true);
   });
 });

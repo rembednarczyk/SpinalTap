@@ -2,6 +2,71 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-521 Goła ziemia na podwórkach bloków Krakowskiego Przedmieścia (krakowskie-0-1)
+- Status: naprawione (PR #405, 8.11; 19 obszarów T-245/*, w tym 6 trawników, w `corrections-zn.ts` i `corrections-radziwillowska.ts`; `landuse-bare` komórka 10 004 → 136, miasto 96 273 → 86 405, `kerb-gap-bare` → 101 904; test `landuse-bare-krakowskie-0-1.test.ts` pada bez poprawki; kurator ODSTĘPSTWO CELOWE T-245 po rundzie 2; budynki Cichej 3–8 w G-556, pętle `highway=service area=yes` w G-555)
+- Ważność: S3 · Zasięg: 141 kwadratów 10 × 10 m, ok. 3100 m², 59 skupień; największe: blok NW 1431 m² (x −200..−120; z −20..49, zawiera pas z 7..12 od naprawiacza G-513), podwórze SW 289 m² (−198..−165; 92..124) i 273 m² (−163..−135; 73..93), wschód (−27..−5; 143..158) 109 m², (6..19; 139..151) 81 m²; zrzuty `shots/opiekun-k01/` (`nw-strip-a`, `s-yard-i`, `se-a`); przyczyna jak G-513 (OSM bez nawierzchni na podwórkach); poza skanem ok. 4800 m² gołych podwórek mieszkalnych (do decyzji kuratora)
+- Pakiet właściciela: tools/osm-import (korekty)
+
+### G-509 Stożek odblasku na stropie food hallu Alchemii (i możliwy w kapsule)
+- Status: naprawione (PR #402, 8.11; lampy hali i kapsuły w oprawie stropu, testy padają bez poprawki)
+- Ważność: S4 · Zasięg: lampa w `alchemia-view.ts` wisi 0,4 m pod stropem hali (zrzut `shots/g490/after/hall-north.png`), lampa w `capsule-room-view.ts` 0,3 m pod sufitem; poprawka jak w P−1: lampa w oprawie stropu (po G-490 shader już nie świeci od tyłu)
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-513 Goła ziemia na podwórkach i przy gmachach Krakowskiego Przedmieścia (krakowskie-0-0)
+- Status: naprawione (PR #397, 8.11; 18 ręcznych obszarów kostki T-243/* w `corrections-krakowskie.ts` i `corrections-ck.ts`: podwórza KP 37–60 z Sądem i UM, pasy przy fasadach, okolice Centrum Kultury, trawnik `ck-zachod` przy zachodniej ścianie CK; `landuse-bare` komórka 10 075 → 155, miasto 108 592 → 96 273; test `landuse-bare-krakowskie.test.ts` pada na danych sprzed poprawki; kurator ODSTĘPSTWO CELOWE T-243; kratki i krawężnik w G-519)
+- Ważność: S3 · Zasięg: 144 kwadraty 10 × 10 m `landuse-bare` w ok. 87 skupieniach, ok. 2500 m²; największe: 244 m² (x −53,8..−13,8; z −94,3..−84,3), 208 m² (−189..−150; −220..−189), 190 m² (−188..−127; −270..−220), 182 m² (−176..−162; −32..−20), 180 m² (−155..−107; −101..−72), 155 m² (−16..−2; −128..−99); zrzuty `shots/opiekun-k00/clD-0.png`, `bare1-a.png`, `sad.png`; przyczyna: import nie kładzie nawierzchni na podwórkach i pasach przy gmachach (`landuse=retail/commercial`, gmachy publiczne); rozszerzenie G-450/T-221; kontrola `landuse-bare` istnieje, poprawka obniża bazę; przy okazji: G-508 w tej komórce to szum NMT przy krawędziach budynków (1 krawędź > 20° pod budynkiem, 15 > 10° w gołym terenie; propozycja `terrain-crease` z progiem 12° bez obrysów budynków), T-204 do sprawdzenia przez kuratora (skan `tree-height-vs-nmpt` 0 w komórce)
+- Pakiet właściciela: tools/osm-import (ground), tools/glitch-scan
+
+### G-517 Duszony strażnik po ok. 4 s nadal stoi zamiast klęczeć
+- Status: odrzucone, nie odtwarza się (PR #401, 8.11; test ochronny: cel klęczy po 1,2 s i do końca przytrzymania; zrzut e2e był po krokowaniu hurtem `step(n)` bez klatek renderera, rozwiązanie dokładne w G-482)
+- Ważność: S4 · Zasięg: przy przytrzymanym duszeniu (ADR-0075) `heldPose` celu nie przechodzi w klęczenie po ok. 4 s; do sprawdzenia testem pozy w czasie i z czasem fazy (por. G-482)
+- Pakiet właściciela: packages/engine (renderer: grab-pose)
+
+### G-511 Znak `spread` w `activity-poses.ts` zwiera nogi zamiast je rozstawiać
+- Status: naprawione (PR #396, 8.11; `applyActivityPose` i `poseParts` tłumu: lewa noga −spread, prawa +spread, jak w kucaniu; testy w `activities.test.ts` i `crowd.test.ts` padają bez poprawki)
+- Ważność: S4 · Zasięg: dodatnie `spread` dla lewej nogi obraca ją do środka (`legL.rotation.z = +0,2` przesuwa kolano z x −0,083 na +0,005), komentarz mówi „feet apart”; wartości 0,04–0,08, sprzed #386
+- Pakiet właściciela: packages/engine (renderer: pozy)
+
+### G-514 Przód spódnicy Seki wcina się w udo przy duszeniu (poza „holdingDown”)
+- Status: naprawione (PR #396, 8.11; `holdingDown` w `grab-pose.ts`: pochylenie 0,15, udo −1,0 rad (biodro 66°), kolano 0,8, ciało 3 cm wyżej; wnikanie 3,8/2,2 cm (duszenie) i 3,9/2,5 cm (zabicie) → najwyżej 0,6 cm; rozjazd głowy TPP i oka FPP w duszeniu ok. 9 cm, tylne kolano i stopa w powietrzu w G-516)
+- Ważność: S4 · Zasięg: `grab-pose.ts:149`, poza postaci chwytającej ma udo L −1,55 rad przy pochyleniu 0,3 (ok. 72° zgięcia w biodrze), ponad granicą ok. 63° dla przodu spódnicy `seki.vrm` (pomiar z #386); brak przypadku w `seki-skirt.test.ts`; przy okazji: śmierć z kucnięcia nie wygasza `body.position.y/z` ani `body.rotation.x` (ciało przesunięte −0,38/−0,14 m, kosmetyka)
+- Pakiet właściciela: packages/engine (renderer: pozy)
+
+### G-512 Postać zabita w kucki leży z kolanami na zewnątrz
+- Status: naprawione (PR #394, 8.11; `animateDeath` wygasza `rotation.z` nóg, `applyPose` miesza ją do 0; w chwycie z kucnięcia kolana schodzą płynnie, pozy aktywności bez zmian; testy padają bez poprawki)
+- Ważność: S4 · Zasięg: `animateDeath` (`character-animation.ts`, ok. l. 136) nie zeruje `legL/legR.rotation.z`, więc po nowym kucaniu z kolanami na zewnątrz (0,25 rad) ciało leży z rozwartymi kolanami; przy okazji: nieaktualny komentarz `CROUCH_EYE_HEIGHT` w `packages/sim/src/world/hitscan.ts:93` (głowa rigu w kucki 1,22 m, oko 1,14 m)
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-507 Pastorał przy przyczółku wiaduktu Zamkowej ma latarenkę na wysokości przechodniów
+- Status: naprawione (PR #392, 8.11; `DECK_DROP` 1 m z pomiaru, pastorał (756,8; 175,7) → (756,4; 176,2) na pomoście; przy okazji `lamp-road` Nabrzeża z obrysu pomostu jezdni na chodnik mostu; `lamp-beside-deck` od 1,5 m, 1 → 0)
+- Ważność: S4 · Zasięg: (756,8; 175,7) stoi 1,85 m pod pomostem, 2 m od niego (poniżej progu `DECK_DROP` 2,5 m), latarenka ok. 1,55 m nad pomostem, 0,35 m od kostki; poprawka: niższy próg albo `byParapet` od ok. 1,5 m; zaostrzenie `lamp-beside-deck` do 1,5 m (baza 1)
+- Pakiet właściciela: tools/osm-import (props)
+
+### G-490 Przez strop P−1 Alchemii widać półprzezroczysty stożek
+- Status: naprawione (PR #385, 8.11; stożek na stropie P−1 to odblask lampy P−1 0,4 m pod stropem i shader świecący od tyłu: lampa w oprawie, odblask tylko z powierzchni zwróconej do światła; deszcz nie pada w food hallu (`built-roofs.ts`); oświetlonych punktów stropu 126067 → 0; migawka NPR bez zmian; reszta w G-509)
+- Ważność: S4 · Zasięg: na zrzucie `after/e4-deck.png` stożek (prawdopodobnie poświata latarni albo drona z T0) przechodzi przez strop parkingu; do sprawdzenia też, czy w food hallu z etapu 1 nie pada deszcz pod stropem
+- Pakiet właściciela: packages/engine (renderer: efekty)
+
+### G-506 Generator mebli ignoruje `yaw` grup planu z `points` (ławki placu T0 tyłem do trawników)
+- Status: naprawione (PR #382, 8.11, runda 2; `placeItem` bierze `yaw` grupy także dla `points`, zmiany tylko w krakowskie-2-1; 11 ławek placu T0 przodem do trawników i placu; test w `props.test.ts` pada bez poprawki)
+- Ważność: S4 · Zasięg: `placeItem` dla grup z `points` ustawia `yaw: null` (props-gen.ts ok. 245), `openFacing` odwraca 7 z 8 ławek placu T0 od trawy, 4 pod pergolą patrzą na wykop rampy; kontrola `plan-yaw-ignored` (baza 8)
+- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
+
+### G-500 Asfalt alejek parkingu w173531008 urywa się na parapetach rampy P−1 i wchodzi pod domek klatki
+- Status: naprawione (PR #382, 8.11; kurator ODSTĘPSTWO CELOWE T-241; parking i alejki w177513189, w173567309 wyłączone z importu (`REPLACED_WAYS`), plac T0 z kostki w obrysie, wjazd asfaltem tylko między ścianami rampy; `cut-on-road` 3 → 0, pada bez poprawki)
+- Ważność: S4 · Zasięg: wykop rampy przecina oś alejki w177513189 na 17,6 m, szyb klatki na 2,2 m, domek klatki stoi na jej zakręcie (zostaje ok. 2,8 m przejazdu); T0 ma nawierzchnię z OSM, choć plan 2026 przewiduje plac i zielony dach; proponowana kontrola `cut-on-road` (baza dziś 3); T-237, T-238
+- Pakiet właściciela: tools/osm-import
+
+### G-495 `models.spec` czasem mierzy klatkę bez aktywnych siatek
+- Status: naprawione (PR #387, 8.11; po `freeze` `step` nie rysuje klatki, spec czytał klatkę z rozruchu 326/0; `sampleNow` w `e2e/helpers.ts`, asercja aktywnych siatek > 0, scena `models` 465/158 w `tools/perf-budgets.json`; stary pomiar 5/5 pustych klatek, nowy 4/4 stabilnie 448/152)
+- Ważność: S4 · Zasięg: na main w dwóch z trzech przebiegów pomiar 324/0 (wywołania / aktywne siatki); pomiar niestabilny, bramka może przepuścić regresję; przy okazji: NPC „doker” w dokach bez wpisu w obsadzie, akcesoria sztywne (fartuch jak deska, dłonie siedzących sprzedawców przez niego); potwierdzone w 4 przebiegach przy load 10–12 (budowniczy i weryfikator #376): koszt wariantów i fartucha nie jest mierzony lokalnie
+- Pakiet właściciela: e2e (QA)
+
+### G-488 Waga puli modeli niebędąca liczbą daje zawsze ostatni plik
+- Status: naprawione (PR #388, 8.11; `weightOf` w `model-cast.ts`: waga spoza skończonych liczb jak 1, ujemna jak 0; parser manifestu odrzuca wpisy puli z wagą nie będącą skończoną liczbą ≥ 0; dwa testy padają bez poprawki)
+- Ważność: S4 · Zasięg: `pickFromPool` w `model-cast.ts`: `weight` = `"abc"` daje NaN i wybór ostatniego pliku puli, także z wagą ujemną; `parseModelManifest` nie sprawdza typu ani znaku `weight`; przy okazji: próg `< 50` MiB w `model-textures.test.ts` nie odróżnia stanu przed i po, a `loadToonModel` nie ma wywołań w kodzie
+- Pakiet właściciela: packages/engine (renderer)
+
 ### G-503 Generator mebli nie stawia latarni na pomostach (T-239)
 - Status: naprawione (PR #383, 7.11; kurator ZGODNE; latarnia linii planu nad przęsłem staje na pomoście 0,3 m od krawędzi (`sideSpot`/`byParapet`), stopa z `deckHeightAt`; 3 pastorały Zamkowej i 3 `lamp-road` Mełgiewskiej na pomoście; `lamp-beside-deck` 6 → 0, pada bez poprawki; reszta G-507)
 - Ważność: S4 · Zasięg: linia `lamps.zamkowa` przy wiadukcie w232362907 i pomoście grobli, przy okazji Mełgiewska
