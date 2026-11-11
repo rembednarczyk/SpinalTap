@@ -1,6 +1,8 @@
 // @ts-expect-error The engine is typed for the browser; the tests read the files off disk.
 import { readFileSync } from "node:fs";
+import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { vi } from "vitest";
+import { Scene } from "../src/babylon";
 
 const read = readFileSync as (u: URL) => Uint8Array;
 
@@ -16,6 +18,24 @@ const entriesOf = (v: unknown): { url: string }[] =>
 
 /** Every file the game's manifest names, once: the role models, the cast and the pools (ADR-0076). */
 export const GAME_MODEL_FILES: readonly string[] = [...new Set(Object.values(manifest).flatMap(entriesOf).map((e) => e.url))].sort();
+
+const engines: NullEngine[] = [];
+
+/**
+ * A scene on a null engine for loading model files, freed by `disposeModelScenes`: Babylon keeps
+ * every engine in `EngineStore`, and with its scenes the files' vertex data, so a test file
+ * that loads the game's files over and over grew to 1.4 GB of heap and spent its time in the
+ * garbage collector (G-620).
+ */
+export const modelScene = (): Scene => {
+  const engine = new NullEngine();
+  engines.push(engine);
+  return new Scene(engine);
+};
+
+export const disposeModelScenes = (): void => {
+  for (const engine of engines.splice(0)) engine.dispose();
+};
 
 /** The game's own model files, served from disk to `fetch`. */
 export const serveModels = (): void => {
