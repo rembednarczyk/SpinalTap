@@ -1661,6 +1661,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: pas z `roadWidth` szerszy niż jezdnia na ortofoto, więc mur przy krawężniku leży „na jezdni”: w232806008 (51 m, 389; 153), w886723051 (48 m, 220; −196), płot w73811517 przy Zamkowej (985; 281), murek w227679479 (28 m, 534; 517), koniec w67626198 (29 m); poprawka: reguła kąta jak dla dróg, bariery wzdłuż krawędzi przesunąć poza pas
 - Pakiet właściciela: tools/osm-import
 
+### G-620 Test zwalniania modeli przekracza w CI limit 20 s
+- Status: w naprawie (11.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g620`)
+- Ważność: S2 · Zasięg: `packages/engine/test/model-release.test.ts` › „keeps no more files than a phone's limit” (#410) wczytuje sześć pełnych plików VRM przez NullEngine i w CI kończy się `Test timed out in 20000ms`; czerwieni shard „Unit tests (1)” w #416, #417, #418 (lokalnie przechodzi); limitu nie podnosimy, test do odchudzenia
+- Pakiet właściciela: packages/engine (testy)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
