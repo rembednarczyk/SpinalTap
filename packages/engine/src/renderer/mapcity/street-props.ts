@@ -86,7 +86,9 @@ export class StreetProps {
     const byBlock = new Map<string, WorldProp[]>();
     for (const w of toWorld(items, at)) {
       const p = isPoleLamp(w) ? { ...w, pole: true } : w;
-      // The map's barriers (ADR-0077) go with the furniture's blocks, after it in the scenery.
+      // The map's barriers (ADR-0077) go with the furniture's blocks: the scenery comes whole and in
+      // its order (`RenderSync` spawns it once, again whole after a reset), the furniture before them,
+      // so a piece always lands in the same block.
       const k = p.prop === "barrier" ? barrierBlock(p.x, p.z, PROP_BLOCK, (key) => this.furnished(key)) : cellKey(p.x, p.z, PROP_BLOCK);
       const list = byBlock.get(k);
       if (list) list.push(p);
