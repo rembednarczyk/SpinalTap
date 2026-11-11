@@ -4,6 +4,9 @@ import { Simulation, WORLD_BARRIERS, WORLD_CHUNKS, WORLD_SCENERY, ground, ground
 import { barrierPieces, barrierPrism, distanceToBarrier } from "../src/content/lublin/barriers";
 import { barrierBlocked } from "../src/content/world-barriers";
 import { clearSight, lineOfSight } from "../src/world/hitscan";
+import { inPlayerView } from "../src/systems/crime-system";
+import { WORLD_STREET_PROPS } from "../src/content/street-props";
+import { CROWD_SPOTS } from "../src/content/crowd";
 import { input, run, teleportPlayer } from "./helpers";
 
 const all = Object.entries(WORLD_BARRIERS).flatMap(([chunk, items]) => items.map((item) => ({ chunk, item })));
@@ -73,10 +76,20 @@ describe("the map's barriers in the game (ADR-0077 point 4)", () => {
         const p = { x: item.x + Math.sin(item.yaw) * b.length * t * 0.9, z: item.z + Math.cos(item.yaw) * b.length * t * 0.9 };
         // On the line or a hair either side of it: the piece's place is rounded to the centimetre.
         const half = BARRIER_THICKNESS[b.kind] / 2;
-        const clear = [0, 0.05, -0.05].some((a) => !barrierBlocked(p.x + Math.cos(item.yaw) * a, p.z - Math.sin(item.yaw) * a, half));
+        const dir = { x: Math.sin(item.yaw), z: Math.cos(item.yaw) };
+        const clear = [0, 0.05, -0.05].some((a) => !barrierBlocked(p.x + Math.cos(item.yaw) * a, p.z - Math.sin(item.yaw) * a, half, dir));
         expect(clear, `${b.kind} at ${p.x.toFixed(1)}, ${p.z.toFixed(1)}`).toBe(true);
       }
     }
+  });
+
+  it("cut through no café garden and no resident's place (G-612)", () => {
+    const gardens = Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "cafe-garden");
+    expect(gardens.length).toBeGreaterThan(5);
+    for (const g of gardens) expect(barrierBlocked(g.x, g.z)).toBe(true);
+    for (const s of CROWD_SPOTS) expect(barrierBlocked(s.at.x + 0.4, s.at.z)).toBe(true);
   });
 
   it("a fence stops the player walking into it", () => {
@@ -106,6 +119,11 @@ describe("the map's barriers in the game (ADR-0077 point 4)", () => {
       const at = (p: { x: number; z: number }) => ({ x: p.x, y: groundY(p.x, p.z) + 0.6, z: p.z });
       expect(clearSight(sim.world, at(a), at(b)), kind).toBe(seen);
       expect(lineOfSight(sim.world, at(a), at(b)), kind).toBe(false);
+      // The crimes' witnesses look the same way (G-611): through a fence or a hedge (over a low wall too).
+      const p = sim.player()!;
+      p.position = { ...at(a), y: groundY(a.x, a.z) };
+      p.yaw = Math.atan2(b.x - a.x, b.z - a.z);
+      if (seen) expect(inPlayerView({ world: sim.world } as never, p, { ...at(b), y: groundY(b.x, b.z) }), kind).toBe(true);
     }
   });
 });
