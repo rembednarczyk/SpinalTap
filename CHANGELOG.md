@@ -4,7 +4,83 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 
 ## Nieopublikowane (0.1.0)
 
+### 11 listopada 2026
+- Pliki modeli postaci spoza sceny zwalniają pamięć, na telefonie z limitem plików; plik, który się nie wczytał, wczyta się ponownie (ADR-0076 etap 4b, G-562, #410).
+
+### 8 listopada 2026
+- Alchemia: plac T0 z pergolami, girlandami lampek na krzyż i zielony dach z trawnikami, wjazd z Bajkowskiego (ADR-0074 etap 7, #382); bez stożka światła na stropie P−1 i deszczu w food hallu (G-490, G-509, #385, #402).
+- Auta zjeżdżają rampą do kabin parkingu P−1 Alchemii i objeżdżają gracza tylko między ścianami (G-491, G-510, #399).
+- Modele postaci spoza pierwszej sceny wczytują się w tle: start nowej gry 36,5 MiB zamiast 42,5 (ADR-0076 etap 4a, #407).
+- Kostka i trawniki na podwórzach i chodnikach Krakowskiego Przedmieścia (G-513, G-521, T-243, T-245, #397, #405); pastorał przy wiadukcie na pomoście (G-507, #392).
+- Starsze postacie wyglądają na swój wiek: siwe włosy, pochylenie, laska Ume, chusty (ADR-0076 etap 3a, #395); Kurosawa z własnym modelem (etap 3, #404); pula tła losuje wszystkie pliki (G-488, #388).
+- Seki biega, kuca i dusi bez nóg przechodzących przez spódnicę; rozstaw stóp w pozach i kolana po śmierci w kucki (G-511, G-512, G-514, #386, #394, #396).
+
+### 7 listopada 2026
+- Przebudowa Alchemii według planu 2026: food hall i tarasy, Arkady i plac T2, trójkątny pawilon, parking P−1 z rampą (ADR-0074 etapy 1–4, zapis v33–v36, #343, #357, #367, #375).
+- Chwyt z wyborem ogłusz albo zabij oraz animacje chwytu, duszenia, zabicia i odłożenia ciała (ADR-0075 etapy 1–2, #359, #371).
+- Ogłuszony leży, niesiony wisi na ramieniu, odłożone ciało ląduje poza bryłami, zwłoki opadają z wysokości terenu; zabójstwo przy świadku zgłaszane osobno od nokautu (G-334, G-447, G-449, G-457, G-479, #350, #355, #356, #370, #373).
+- Gatunki i wysokości drzew z OSM i NMPT, modele dębu i topoli (G-422, G-423, #345, #348).
+- Karty skanu i dzielnicy na telefonie nie zasłaniają przycisków (G-433, G-466, #353, #365).
+- Kostka do fasad przy Sądzie, na Kościuszki i Peowiaków, szerokości deptaków z ortofoto, trawnik Placu Czechowicza (G-427, G-428, G-436, G-440, G-450, #347, #349, #352, #364, #366).
+- Latarnie z planu przy krawędzi deptaka i pomostów wiaduktów (G-477, G-497, G-503, #374, #381, #383); bryły mają ostatnie słowo przy wypychaniu postaci (G-485, #377); scena poety na płycie Placu Litewskiego (G-489, #378).
+- Obsada postaci: każda postać nazwana ma własny wygląd, warianty skóry, włosów i ubrań, Fixer bez czarnej skóry (ADR-0076 etapy 1–2, G-474, #368, #372, #376).
+- Postęp postaci w HUD i zakładce Rozwój, poziom wroga w skanerze (ADR-0059 etap 7, #346).
+- Osobne suwaki głośności dialogów i radia w opcjach (zakładka „Ogólne”), a muzyka i radio cichną o 8 dB pod mówioną linią (ADR-0060 etap 1).
+- Test balansu przejścia (ADR-0059 etap 8): XP zleceń i wrogów rośnie z poziomem jak koszt poziomu dopiero od poziomu 6 (niżej bez zmian), XP za quickhack zależy od różnicy poziomów tak jak XP za wroga, więc walka zawsze daje co najmniej tyle co quickhack; dostawa od Kaito ma poziom Krakowskiego, akt I daje 1350 XP, a dzielnice dają 8 / 7 / 7 / 7 poziomów i doki kończą drogę na 30.
+
+### 6 listopada 2026
+- Wszczep cyberdeck z RAM i szybszym wgrywaniem quickhacków (#341).
+- Ikony broni, amunicji i wszystkich przedmiotów, pasek broni w HUD, na telefonie torba z samymi ikonami (ADR-0073 etapy 1–2, #334, #340).
+- Łup według stylu gracza i ochrona przed pechem (ADR-0059 etap 6, #337).
+- Wrogowie ścigają gracza w metrze, a strzał przez szyb nie trafia w ulicę pod pawilonem (G-368, G-371, G-377, #316, #335).
+- Mikrozdarzenie bez tekstu nie otwiera pustej rozmowy (G-401, #332); cienki wierzch nie jest podłogą bez oparcia (G-372, #321).
+- Kostka na gołych pasach Podzamcza i przy Dworcu, trawniki wycięte z bruku placów, bez migotania nakładających się nawierzchni (G-345, G-382, G-383, G-421, G-320, #318, #339, #344, #328).
+- Pad ma promieniową martwą strefę 0,12 bez „krzyża” na skosach, krzywą obrotu (klasyczna domyślnie, liniowa i precyzyjna w opcjach) i własną czułość w zakładce „Dotyk i pad”; mysz, dotyk i pad obracają widok każde ze swoją czułością (ADR-0072 etap 4).
+- Pasma dzielnic: poziom wrogów, łupu i kontraktów zależny od dzielnicy (ADR-0059 etap 5, #331).
+- Broń i odzież mają poziom 1–30 i dwie nowe rzadkości, epicką i legendarną, z cechami; łup z wrogów i towar u Oyajiego mają poziom gracza, a karta przedmiotu pokazuje poziom, rzadkość i cechy (ADR-0059 etap 4).
+- Ramka rzadkości w slotach ekwipunku (G-410, #342).
+- Strzał z celowaniem jednym kciukiem na dotyku (ADR-0072 etap 1, #322).
+- Targ z al. Tysiąclecia przeniesiony do Alchemii: sprzedawcy przy stoiskach, Hana na placu, skrytka Hebi przy ruinie, Ren na tarasie dachu; aleja wraca do danych OSM (ADR-0063 etap 6).
+- Wspomaganie celowania na dotyku (domyślnie standardowe, w opcjach lekkie i wyłączone, zakładka „Dotyk i pad”): obrót zwalnia nad wrogiem w walce, a wejście w przyrządy dociąga celownik o 60% drogi do klatki piersiowej (najwyżej 4°, w stożku 6°, w 0,15 s); ruch w przeciwną stronę przerywa dociąganie. Mysz nie dostaje wspomagania (ADR-0072 etap 3).
+
+### 5 listopada 2026
+- Hala Alchemii zatrzymuje na swoich narysowanych ścianach: po cokole da się obejść halę dookoła, wejść pod daszek przed frontem i pod podest schodów, a z podestu przejść na balkon piętra (G-297, G-298). Lada i stojak pod daszkiem oraz policzek schodów są twarde: nie da się przez nie przejść ani zejść bokiem z biegu.
+- Zewnętrzne schody hali Alchemii dają się przejść tak, jak są narysowane: od bruku za halą przez cokół na podest pod drzwiami piętra, bez niewidzialnej ściany pod biegiem (G-288).
+- Przed frontem hali Alchemii są stopnie z bruku na cokół, jak przy stoiskach: pod daszek przed zamkniętymi drzwiami wchodzi się od placu (G-299).
+- Do drzwi stoisk Alchemii od Świętoduskiej prowadzą betonowe stopnie z niskimi murkami po bokach, zamiast progów 0,6–1,9 m nad brukiem (G-287).
+- Menu otwarte klawiszem I zaraz po starcie gry zwalnia kursor także wtedy, gdy przeglądarka przyzna blokadę z opóźnieniem; kliknięcia trafiają w ekwipunek, nie w canvas (G-306).
+- Strzelba, karabin i SMG w TPP są trzymane oburącz: prawa dłoń zaciska się na rękojeści, lewa podtrzymuje łoże, przy celowaniu kolba opiera się o bark, a przy biodrze broń leży skośnie przed ciałem. Postać z bronią w dłoni zamyka palce na rękojeści, również przy pistolecie i rewolwerze. Tak samo wygląda to u gracza i u NPC (G-282).
+- Drabiny bez teleportów: wejście od dołu i od góry oraz zejście na dach płynnie, broń w kaburze na czas wspinania (ADR-0021).
+- W ekwipunku jest pasek zdrowia jak w HUD-zie, a wybrany posiłek albo apteczka podświetla na nim, ile HP przywróci (lista użytkownika z 4.11).
+- Hana przyjmuje paczkę od Kaito także przy wrogiej postawie ulicy, kurs nie przepada (G-304, ADR-0070).
+- Podpowiedzi klawiszy w HUD (pierwsze kroki, dash, przyciski akcji) mówią w języku gracza: przy angielskim ustawieniu „Mouse” i „Space” zamiast „Mysz” i „Spacja”.
+- Przechodzień, który boi się Seki, staje między 7 a 9 m i patrzy na nią, zamiast drgać na granicy ucieczki (ADR-0070 etap 1).
+- Rewolwer, strzelba i karabin mają własne modele z paczki Quaterniusa zamiast powiększonego pistoletu albo SMG, każda broń jest trzymana za rękojeść i celuje lufą do przodu, w TPP i w FPP (G-282).
+- Plama reflektora niskiego patrolu leży na bruku tak, jak go rysuje miasto, i świeci jednolitym kręgiem, bez ciemnego środka i wcięć (G-293).
+- Podejrzliwy wróg nie obraca się już za Seki, której nie widzi, tylko patrzy tam, gdzie ją ostatnio widział (G-294).
+- Na granicy chunków ziemia pod wiaduktem Zamkowej i mostami Mełgiewskiej jest znowu pomostem, a nie terenem półtora metra niżej (G-278).
+- Przy nieufności przechodnie ustępują Seki krokiem na 3,5 m bez komunikatu, uciekają dopiero przy wrogości, a sprzedawcy i postacie z rozmową zostają na miejscu, więc stragan Oyajiego działa (ADR-0070 etap 2, G-305).
+- Wrogowie słyszą kroki Seki: sprint z 9 m, chód z 3,5 m, lądowanie z 6 m, kucanie wcale; usłyszawszy, robią się podejrzliwi i idą sprawdzić, ale sam hałas nie podnosi alarmu (ADR-0069 etap 2).
+- Wróg, który już widzi biegnącą Seki, nie dostaje za jej kroki dodatkowego podejrzenia, tylko trop: Kagami i ochrona Tessen znów potrzebują ok. 0,6–0,7 s na sprint z 10 m (ADR-0069 etap 3).
+- Scalony toast „×N” zostaje pełne 4,5 s od ostatniego identycznego powiadomienia, a toast z flagą `keep` nie scala się ze zwykłym (G-286).
+- Wróg, który idzie sprawdzić hałas albo trop, patrzy przed siebie, a nie idzie tyłem z oczami na posterunek; usłyszawszy sprint za plecami, odwraca się po drodze i widzi Seki (ADR-0069 etap 3).
+
+### 4 listopada 2026
+- Alchemia 2077 na Placu Ofiar Getta: hala food hallu z neonem ALCHEMIA na dachu i pięć stoisk wzdłuż Świętoduskiej, na razie z zewnątrz (ADR-0063 etap 4).
+- Widok z oczu pokazuje broń, którą postać trzyma: SMG, strzelba i karabin mają w FPP model SMG w rozmiarze jak w TPP zamiast pistoletu, a każda broń ma własną pozycję z biodra i przy celowaniu, która nie zasłania celownika (G-282).
+- Napisy rozmowy stoją w lewym dolnym rogu, obok koła odpowiedzi, i pokazują tylko bieżącą kwestię czytaną od góry, bez skoku przewijania; każdy krok rozmów mieści się bez przewijania na komputerze (1280×720), a na telefonie poza dwoma zakończeniami aktów, przy których strzałka pokazuje, że tekst ciągnie się niżej. Na czas rozmowy znikają imię z paskiem zdrowia, minimapa i pasek broni, więc nic z HUD nie prześwituje spod napisów. Wcześniejsze kwestie otwiera zakładka „Wcześniejsze kwestie” (G-283).
+- Przy złej reputacji tłum nie zasypuje już ekranu powiadomieniami: uciekający przechodnie dają jedno powiadomienie z licznikiem, potem 30 s ciszy, a jednakowe powiadomienia scalają się w jedno (G-281).
+- Kamera nie przechyla się już po trafieniu w biegu ani po jeździe metrem: obrót myszą lub gałką znowu obraca widok w poziomie zamiast kręcić całym obrazem (G-279).
+- Każdy wróg z AI gangera (Hebi, Kagami, Tessen) widzi w stożku przed sobą, kucającą Seki z połowy zasięgu i potrzebuje chwili patrzenia przed alarmem, więc od tyłu w kucaniu da się podejść i obezwładnić także gangera Hebi (ADR-0069 etap 1, G-285).
+- Zryw w przebraniu słabiej zwraca uwagę strażników: pojedynczy zryw nie demaskuje przebrania na żadnym poziomie trudności, a zryw za zrywem pod okiem strażnika nadal je zdradza, choć dużo wolniej niż sprint (G-280).
+
 ### 2 listopada 2026
+- Nad deptakiem Krakowskiego Przedmieścia (przy Placu Litewskim i Bramie Krakowskiej), Rynkiem, Rybną przy Placu po Farze, Karmelicką, Zamkową i Szkolną co jakiś czas pojawiają się niskie drony policyjne: schodzą pionowo z wysoka, gdzie ich nie widać, przelatują 4–6 m nad głowami ze światłami czerwono-niebieskimi, zawisają na minutę lub dłużej z plamą reflektora, która rośnie na bruku, gdy dron schodzi, i odlatują w górę; nad Starym Miastem rzadziej, nad deptakiem i placami częściej; na telefonie (jakość niska) ich nie ma (ADR-0058 etap 7b).
+- Drzwi mają widoczne futryny: jasną kamienną (kamienice, klatki) albo aluminiową (sklepy, banki) ościeżnicę z nadprożem i progiem, odcinającą się od ciemnego skrzydła i tynku; takie samo obramowanie dostały drzwi kliniki, Neon Koi i wejście pokoju kapsułowego (G-270).
+- Kable i lampiony przęseł nad ulicami wiszą co najmniej 3,5 m nad nawierzchnią także na zboczach: nie wchodzą już pod ziemię ani nie zwisają na wysokości głowy przechodnia (G-268).
+- W FPP pistolet przy celowaniu siedzi pod celownikiem, a odrzut przy celowaniu idzie prosto w tył, więc broń i dłoń nie zasłaniają celu z bliska; w TPP postać, która zasłania widok tuż przed kamerą, przechodzi w półton kropek; klawisz G (na padzie lewa gałka przy celowaniu) i opcja w ustawieniach przenoszą kamerę na drugie ramię razem z linią strzału (G-275).
+- Lampa pokoju kapsułowego przy Jezuickiej 14 świeci tylko w pokoju: nie rozjaśnia już bruku i fasady przed budynkiem, a w drodze do pokoju rozjaśnia się płynnie, bez skoku na 45 m (G-263).
+- Schody z wiaduktu Zamkowej schodzą równo od pomostu do placu: bez ściany 2,9 m na krawędzi pomostu, bez wznoszenia pod prąd i bez płyty stopni na wysokości pomostu obok biegu (G-255).
 - Budynki ceglane z mapy (Donżon, Baszta Gotycka, Kaplica Trójcy) mają ściany z gołej cegły zamiast tynku, a budynki z kolorem fasady w OSM (m.in. Urząd Miasta, Trybunał Koronny, Archikatedra, Zamek) dostają najbliższy mu tynk z palety (G-244).
 - Na deptaku Krakowskiego Przedmieścia świecą same pastorały: znika 16 nowoczesnych słupów, które stały metr od nich, i 2 latarnie drogowe u wylotów bocznych ulic; generator nie stawia zwykłej latarni bliżej niż 8 m od stylizowanej (G-259).
 - Na pierzei Krakowskiego Przedmieścia przy Placu Litewskim stoją same pastorały, od zachodniego końca placu do Kapucyńskiej: 8 nowoczesnych słupów ustępuje pastorałom w rozstawie deptaka, słupy zostają na alejkach placu (G-266).

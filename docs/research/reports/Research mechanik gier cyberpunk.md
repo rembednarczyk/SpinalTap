@@ -216,3 +216,13 @@ Edytor braindance w CP2077 ma trzy warstwy (wizualną, audio, termiczną) i oś 
 Najważniejsza obserwacja z tego badania dotyczy kolejności wdrożenia: Cyberpunk 2077 przez trzy lata poprawiał w patchach te same rzeczy, które Seki Senshi może zaprojektować od razu poprawnie, czyli policję bez teleportu, telefon bez spamu, minimapę zależną od prędkości, hakowanie bez przymusowej minigry i dostępność w osobnej zakładce. Kopiowanie stanu po 2.1 zamiast stanu z premiery oszczędza najwięcej pracy. Druga obserwacja: w tej architekturze determinizm jest atutem projektowym. Karta podsumowania, telefon świadka, generator zleceń ze stałym zużyciem losowości i braindance z replayu są tańsze i bardziej testowalne niż w typowym silniku, bo `sim` zna każde zdarzenie i potrafi je odtworzyć.
 
 Niepewności są konkretne. Brakuje oficjalnych liczb CDPR i Rockstara dla czasów wygasania heat, promieni poszukiwań i zachowań tłumu, więc wszystkie progi w tym raporcie trzeba ustalić w playtestach. Koszt SSR, cząsteczek GPU i nowych materiałów na telefonach i w SwiftShaderze nie jest nigdzie opublikowany i musi wyjść z `e2e/npr-perf.spec.ts`. Wartości capacity cyberware pochodzą z jednego poradnika. Ostatnie ryzyko jest projektowe: heat i świadkowie mogą uczynić głośną grę zbyt karzącą, co spotkało Chaos w Dishonored. Dlatego oba systemy powinny być jawne w HUD, odwracalne i nagradzać styl gry przez reputację fixera obok kar za hałas.
+
+## Notatki źródłowe
+
+Raport powstał z pięciu notatek tematycznych w `docs/research/research_notes/Research mechanik gier cyberpunk/`:
+
+- [cyberpunk2077_systems.md](<../research_notes/Research mechanik gier cyberpunk/cyberpunk2077_systems.md>): systemy Cyberpunka 2077;
+- [gig_design_loop.md](<../research_notes/Research mechanik gier cyberpunk/gig_design_loop.md>): zlecenia i pętla rozgrywki;
+- [stealth_hacking_crowds.md](<../research_notes/Research mechanik gier cyberpunk/stealth_hacking_crowds.md>): skradanie, hakowanie, tłum;
+- [ux_hud.md](<../research_notes/Research mechanik gier cyberpunk/ux_hud.md>): UX i HUD;
+- [visuals_webgl.md](<../research_notes/Research mechanik gier cyberpunk/visuals_webgl.md>): wizualia w WebGL.

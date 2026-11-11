@@ -4,7 +4,8 @@ Pełny kontekst: `docs/seki-senshi-plan.md` (§11–13) i `docs/adr/`.
 
 ## Start nowej sesji
 Sesje w chmurze nie mają pamięci między sobą: trwałe jest tylko to, co jest wypchnięte do repo. Na starcie przeczytaj:
-- `docs/backlog.md` (sekcja „Następne”): kolejność prac i decyzje użytkownika;
+- `docs/backlog.md` (sekcja „Następne”): otwarte prace i ich kolejność;
+- `docs/decyzje.md`: stałe decyzje użytkownika o sposobie pracy i produkcie (zamknięte pozycje backlogu są w `docs/backlog-archiwum.md`, czytanym tylko w razie potrzeby);
 - `docs/glitches.md`: statusy glitchy, w tym „w naprawie” i „w PR #…”;
 - `.claude/agents/orchestrator.md` („Lekcje z pracy”), jeśli prowadzisz agentów;
 - otwarte PR-y w GitHubie.
