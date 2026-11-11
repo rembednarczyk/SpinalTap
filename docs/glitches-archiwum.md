@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-536 Goła ziemia na placu przy Nowym Placu Targowym, Nadstawnej i na podwórzach Podzamcza (podzamcze-1-1)
+- Status: naprawione (PR #408, 11.11; 22 obszary T-246/*: 15 kostki, 7 trawników i rabat; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; kurator ODSTĘPSTWO CELOWE T-246 po rundzie 2; obszary pocięte, żeby nie poszerzać siatek ziemi komórek: `krakowskie-tpp` 164 siatki jak na main)
+- Ważność: S3 · Zasięg: 93 kwadraty 10 × 10 m `landuse-bare`, ok. 2005 m² (8021 próbek 0,5 m) w 28 skupieniach; największe (m², x, z): 680 (747..800; 446..490) przy parkingach w227698438 i w227698440, postoju taxi w227698439 i sklepie w73833921; 221 (735..750; 452..511) za Nova w66264174; 159 (815..841; 450..485) przy kioskach w73833930/31/32; 153 (742..769; 513..536) przy skraju Ruskiej; 121 i 107 (848..868; 507..526) przy Szkolnej; 110 (769..808; 501..526); 98 (807..828; 458..490); 91 (860..878; 487..498); dziewięć największych to ok. 88%; 60% próbek w `landuse=commercial` w1305996965 bez `surface`, 37% w pasie do 5 m od ścian; zrzuty dzienne `shots/opiekun-p11/d-d1-d.png`, `d-b1-b.png`, `d-a2-plac-e.png`; przyczyna jak G-513, G-521, G-527; test przyjęcia: `landuse-bare` w komórce do ≤ 10% z bazą obniżoną w tym samym commicie
+- Pakiet właściciela: tools/osm-import (korekty nawierzchni)
+
+### G-540 Goła ziemia na podwórzach i placach Podzamcza: Lubartowska, Probostwo, Nowy Plac Targowy, Ruska (podzamcze-0-1)
+- Status: naprawione (PR #408, 11.11; 22 obszary T-246/*: 15 kostki, 7 trawników i rabat; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; kurator ODSTĘPSTWO CELOWE T-246 po rundzie 2; obszary pocięte, żeby nie poszerzać siatek ziemi komórek: `krakowskie-tpp` 164 siatki jak na main)
+- Ważność: S3 · Zasięg: 81 kwadratów 10 × 10 m `landuse-bare`, ok. 1743 m² (6972 próbki 0,5 m; pierwotnie zaniżone do 2180 przez błąd zaokrąglenia) w 28 skupieniach; największe (m², x, z): 208 (609..662; 386..457) wzdłuż Lubartowskiej i przy Nowym Placu Targowym, 48 (606..630; 398..461), 38 (636..650; 559..580) przy parkingu w227679484, 37 (520..530; 427..447), 34 (676..715; 567..580) przy Ruskiej; kontekst OSM: 36% w `landuse=retail` w291844839 bez `surface`, 20% w `landuse=commercial` w1094207955, 7% w `landuse=retail` w1547216431, 35% poza wielokątami; zrzuty `shots/opiekun-p01/d-s3-slope2.png`, `d-a1-big-w.png`, `d-a2-big-n.png`; przyczyna jak G-513, G-521, G-527, G-536; przy okazji w komórce `kerb-gap-bare` 116 trafień (G-522) i 7 znanych `lane-dead-end`, G-508 tu to prawdziwe skarpy NMT (największa 548..570 × 538..560, 33°)
+- Pakiet właściciela: tools/osm-import (korekty nawierzchni)
+
 ### G-059 Testy sesji `m2-schedules` i `m3-loop` trwają ok. 5 s i przekraczają limit vitest pod obciążeniem
 - Status: odrzucone (pomiar, 31.10)
 - Ustalenie orkiestratora: główny `vitest.config.ts` daje `testTimeout: 20_000` właśnie dla testów całych aktów. Limit 5 s działa tylko przy vitest puszczonym z katalogu pakietu, bez głównej konfiguracji. Z roota przy load 30: najdłuższy test 7,6 s (zegar HUD, 3600 klatek), wszystkie 10 zielonych. Testy uruchamiamy z roota repo
