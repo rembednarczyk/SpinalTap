@@ -68,6 +68,7 @@ import { cityBricks, plasteredWalls } from "./wall-materials";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { correctedLine } from "../../osm-import/src/corrections.ts";
+import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
@@ -171,11 +172,7 @@ const underVault = (p: (typeof PASSAGES)[number], x: number, z: number): { s: nu
   return passageRings(p.building).some((r) => pointInRing(axis, r)) ? { s, off } : null;
 };
 
-/** The landmarks of the curator's audits (docs/topografia.md): buildings by map id, and the statues of Plac Litewski. */
-const LANDMARK_BUILDINGS = [
-  ...["r7224409", "w66286371", "w66286341", "w66264159", "w66264120", "w232362876", "w66286338", "r2366732"],
-  ...["w48500136", "w450180469", "w66258167", "w67508958", "w66330578"],
-];
+/** The statues of Plac Litewski among the landmarks of the curator's audits; the buildings are `LANDMARK_BUILDINGS` of the import. */
 const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 
 /** The surfaces a lamp of the plan stands on or beside (`lamp-off-band`). */

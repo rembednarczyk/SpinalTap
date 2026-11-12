@@ -10,13 +10,14 @@
  * Only for a building matched one to one by footprint (IoU ≥ `LOD1_MIN_IOU`) whose height was
  * `default` or `levels`. Kept as they are: a measured `height` of the map or a correction, churches
  * and historic buildings (gates, castles, cloisters: their towers and helmets are not a prism),
- * towers, the landmarks of the curator's audits, buildings crowned by parts of their own and the
+ * towers, the landmarks of the list (`landmark-ids.ts`), buildings crowned by parts of their own and the
  * parts themselves, buildings whose storeys or roof a correction sets by hand, and areas added by hand.
  */
 import { type Lod1Building } from "../../gugik/src/extracts.ts";
 import { BoxIndex, type Footprint, footprint, iou } from "../../gugik/src/overlap.ts";
 import { SHOP_STOREY, STOREY } from "./building-tags.ts";
 import { TAG_CORRECTIONS } from "./corrections.ts";
+import { isListedLandmark } from "./landmark-ids.ts";
 import { type Pt, r1 } from "./geometry.ts";
 import { type BuildingOut } from "./model.ts";
 
@@ -38,15 +39,6 @@ const HEIGHT_TAGS = ["height", "building:height", "building:levels", "roof:heigh
 /** Map ids whose height, storeys or roof a correction sets by hand (`corrections.ts`). */
 export const HAND_HEIGHTS: ReadonlySet<string> = new Set(TAG_CORRECTIONS.filter((c) => HEIGHT_TAGS.some((k) => c.tags[k] !== undefined)).map((c) => c.id));
 
-/**
- * The landmarks of the curator's audits (`docs/topografia.md`, the glitch scan's `LANDMARK_BUILDINGS`)
- * and of the renderer's recipes (`landmarks/recipes.ts`): their silhouettes stay as reviewed.
- */
-export const LOD1_LANDMARKS: ReadonlySet<string> = new Set([
-  ...["r7224409", "w66286371", "w66286341", "w66264159", "w66264120", "w232362876", "w66286338", "r2366732"],
-  ...["w48500136", "w450180469", "w66258167", "w67508958", "w66330578", "w617597407", "w617878341"],
-]);
-
 type Candidate = Pick<BuildingOut, "id" | "soffit" | "tower" | "mappedTower"> & { readonly use: string };
 
 /**
@@ -58,7 +50,7 @@ export const lod1Exempt = (b: Candidate, crowned = false): string | undefined =>
   if (crowned) return "parts";
   if (b.use === "church" || b.use === "historic") return b.use;
   if (b.tower || b.mappedTower) return "tower";
-  if (LOD1_LANDMARKS.has(b.id.split("/")[0]!)) return "landmark";
+  if (isListedLandmark(b.id)) return "landmark";
   if (!/^[wr]\d/.test(b.id)) return "added";
   if (HAND_HEIGHTS.has(b.id.split("/")[0]!)) return "hand";
   return undefined;
