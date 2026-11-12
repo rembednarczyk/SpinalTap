@@ -1581,11 +1581,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `areaSurface` zwraca null dla `highway=service` + `area=yes`, więc asfalt tych obszarów nie powstaje; 4 obszary, ok. 2 970 m²: w232464419 (410 m²), w283151244 (1 567 m²), w294902807 (864 m²), w1022724910 (131 m², pętla podjazdu kliniki Radziwiłłowska 13); propozycja kontroli `highway-area-undrawn`, baza 4
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
-- Status: w PR #422 (12.11; limit 120 s, weryfikator PRZYJĘTE; czeka na CI)
-- Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
-- Pakiet właściciela: packages/engine (renderer: modele)
-
 ### G-565 Jezdnia Ruskiej przy Szkolnej i przy Targu na Ruskiej węższa od prawdziwej
 - Status: zgłoszone (8.11, kurator przeglądu #408; T-249)
 - Ważność: S4 · Zasięg: przy przystanku Szkolna (x 845–880, z 486–520) i przy sklepach obok Targu na Ruskiej (x 676–714, z 565–575) pas jezdni kończy się 2–3 m przed prawdziwym krawężnikiem; przy Szkolnej zewnętrzny asfaltowy pas ze strzałkami (ok. 2 m) leży pod kostką `zatoka-szkolna`; OSM w732251517 bez `lanes`, w213515733 `lanes=3`; na ortofoto ok. 20 m od krawężnika do krawężnika
@@ -1722,7 +1717,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, packages/engine (receptury landmarków)
 
 ### G-634 `ModelLibrary.load` nie sprawdza `response.ok`
-- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g634` (12.11, weryfikator PRZYJĘTE; PR po scaleniu #422)
+- Status: w PR #423 (12.11, weryfikator PRZYJĘTE)
 - Ważność: S4 · Zasięg: odpowiedź 404 albo 500 trafia do parsera jako GLB i pada dopiero przy parsowaniu z mylącym błędem; `.gltf` po URL (`LoadAssetContainerAsync`) i dynamiczny import pluginu glTF nadal bez limitu czasu (dziś nieużywane, manifest ma `.vrm`)
 - Pakiet właściciela: packages/engine (renderer: modele)
 

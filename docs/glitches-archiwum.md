@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
+- Status: naprawione w #422 (12.11; limit 120 s, `fetchModelBytes` z AbortController i wyścigiem z zegarem; dalszy ciąg G-637)
+- Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+
 ### G-628 `tools/orto report --area` wybiera raster po pierwszym wierzchołku obszaru
 - Status: naprawione w #421 (12.11; `coverOfRing` wybiera raster pokrywający najwięcej wierzchołków)
 - Ważność: S4 · Zasięg: `report.ts --area T-245/zielen-litevski` zwraca „brak rastra”, bo pierwszy wierzchołek (x −201) leży tuż przed rastrem Krakowskiego (od x −200); poprawka: wybór rastra po środku obszaru albo po dowolnym punkcie na rastrze
