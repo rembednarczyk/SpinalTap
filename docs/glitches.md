@@ -1642,7 +1642,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (tłum), tools/osm-import
 
 ### G-625 Ganger staje przy długim płocie albo murze, gdy w oknie sterowania nie ma drogi
-- Status: w PR #426, runda 1 NIE PRZYJĘTE (12.11; koszt: pamięć okna `wide` 2 rastry, przy 3 gangerach z różnymi tropami ok. 100 ms na krok wobec budżetu 4 ms z ADR-0043; runda 2 u autora)
+- Status: w PR #426, runda 2 PRZYJĘTE (12.11; cel pościgu w zapisie v37, najwyżej jeden plan `wide` na krok, mediana 0,17–0,29 ms; dług w ADR-0046, dalej G-643–G-645; czeka na CI)
 - Ważność: S3 · Zasięg: `planDetour` (`steering.ts`) zwraca „off-field”, gdy w oknie 80 m nie ma objazdu; ganger dochodzi do przeszkody i stoi, gracz za nią bezpieczny (sonda 30 s: 0 strzałów); np. płot (11,83; −251,22), mur 3 m (214; −28,13); bariery z #418 uwidaczniają to w wielu miejscach; test `barrier-ai.test.ts` („moved > 1”) przeszedłby też z gangerem stojącym przy płocie; poprawka: dłuższy objazd (nawigacja po grafie poziomu albo większe okno), a gdy drogi nie ma, przejście do osłony lub szukania
 - Pakiet właściciela: packages/sim (systems/ai, steering)
 
@@ -1710,6 +1710,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, naprawiacz G-625)
 - Ważność: S4 · Zasięg: `teleportPlayer(sim, { x, y: 0, z })` na wysokim terenie daje 155–217 pkt w nogę w pierwszym kroku (wschód mapy); `barrier-ai.test.ts` (l. 34) robi to samo, dziś na niskim terenie; testy powinny brać `ground(x, z)` jak `barrier-detour.test.ts`, inaczej „gracz traci zdrowie” może przejść z niewłaściwego powodu
 - Pakiet właściciela: packages/sim (testy)
+
+### G-643 Budowa rastra i pola okna `wide` w jednym kroku symulacji
+- Status: zgłoszone (12.11, weryfikator #426; dług w ADR-0046)
+- Ważność: S3 · Zasięg: nowy plan objazdu w oknie `wide` buduje pole ok. 15 ms, a przy zmianie komórki 32 m także raster ok. 37 ms w jednym kroku (budżet ADR-0043: 4 ms); przy jednym odciętym gangerze w pościgu za biegnącym graczem przestój 15–50 ms co 1,5–2 s; poprawka: budowa rozłożona na kilka kroków (ganger idzie starą drogą do gotowego planu)
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-644 Kilkanaście pościgów naraz przepełnia pamięć rastrów okna `near`
+- Status: zgłoszone (12.11, weryfikator #426)
+- Ważność: S3 · Zasięg: odcięty ganger z planem `wide` nadal co krok pyta okno `near` przez `head(to)` (`ganger-walk.ts:191`); przy ok. 12 pościgach z różnymi celami pamięć `near` (8 rastrów) wypada bez końca: mediana 31,6 ms na krok, 600/600 kroków > 16 ms (main w tym scenariuszu 0,39 ms, 163 kroki > 16 ms tylko na starcie); poprawka: ganger z ważnym planem `wide` nie pyta `near`, albo klucz `near` niezależny od `from`
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-645 Po wczytaniu zapisu wszystkie pościgi `wide` przebudowują rastry w jednym kroku
+- Status: zgłoszone (12.11, weryfikator #426)
+- Ważność: S4 · Zasięg: pamięć `chases` (`steering.ts:660`) nie trafia do zapisu, a `chaseDetour` nie podlega limitowi `mayPlan`; pierwszy krok po wczytaniu buduje rastry `wide` wszystkich gangerów z `chase` naraz (54,7 ms na okno, przy kilku oknach N razy więcej); to samo przy zmianie `floor|reach`; determinizm bez zmian
+- Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
