@@ -5,7 +5,9 @@ import { furnitureClearance } from "./furniture-index";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { SEAT_KINDS, type SeatSpot, seatGroups } from "./lublin/seats";
 import { groundY } from "./lublin/terrain";
-import { WORLD_CHUNKS, WORLD_STREET_PROPS } from "./world-map";
+import { MAP_CHUNKS } from "./lublin/sites";
+// Not from `world-map`: its chunks lay the map's barriers clear of the crowd (ADR-0077), whose seats these are.
+import { GAME_ACTORS, WORLD_STREET_PROPS } from "./street-props";
 
 /**
  * The residents' places at the street furniture (ADR-0050): sitting on the benches and in the
@@ -33,7 +35,8 @@ const hashOf = (x: number, z: number): number => {
   return (h ^ (h >>> 15)) >>> 0;
 };
 
-const named = WORLD_CHUNKS.flatMap((c) => c.actors.map((a) => a.spawn.position)).filter((p) => Math.abs(p.y - groundY(p.x, p.z)) < 1);
+/** The game's characters, each in the chunk of the map nearest it (`world-map`), on the ground. */
+const named = GAME_ACTORS.map((a) => a.spawn.position).filter((p) => Math.abs(p.y - groundY(p.x, p.z)) < 1);
 
 const spotFits = (s: SeatSpot, bounds: { minX: number; maxX: number; minZ: number; maxZ: number }): boolean =>
   s.x >= bounds.minX &&
@@ -65,4 +68,4 @@ const chunkSpots = (chunk: string, bounds: { minX: number; maxX: number; minZ: n
 };
 
 /** The furniture's crowd spots of every chunk, in the chunk table's order. */
-export const SEAT_SPOTS: readonly CrowdSpot[] = WORLD_CHUNKS.flatMap((c) => chunkSpots(c.id, c.bounds, WORLD_STREET_PROPS[c.id] ?? []));
+export const SEAT_SPOTS: readonly CrowdSpot[] = MAP_CHUNKS.flatMap((c) => chunkSpots(c.id, c.bounds, WORLD_STREET_PROPS[c.id] ?? []));

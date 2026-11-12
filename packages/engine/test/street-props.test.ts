@@ -1,5 +1,5 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
-import type { StreetPropItem, StreetPropKind } from "@seki/core";
+import { type StreetPropItem, type StreetPropKind, barrierVariant } from "@seki/core";
 import { BOLLARD, chainDir, chainVariant } from "@seki/sim";
 import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS } from "@seki/sim/lublin";
 import { describe, expect, it } from "vitest";
@@ -19,7 +19,8 @@ const valid = (s: MeshSink): boolean =>
 
 describe("street furniture models (ADR-0047)", () => {
   it("has a valid model for every kind and shape, and the same variant always gives the same geometry", () => {
-    expect(PROP_KINDS).toHaveLength(48);
+    // 49 with the map's barriers (ADR-0077), a wall stretch in the gallery.
+    expect(PROP_KINDS).toHaveLength(49);
     for (const kind of PROP_KINDS) {
       for (let s = 0; s < (PROP_SHAPES[kind] ?? 1); s++) {
         const a = buildPropModel(kind, s);
@@ -132,6 +133,18 @@ describe("street props in the scene (ADR-0047)", () => {
     props.update({ x: 10, y: 2, z: 0 });
     expect(props.stats.pieces).toBe(0);
     expect(props.stats.drawn).toEqual({});
+  });
+
+  it("bakes the map's barriers into the furniture's blocks, a block of barriers alone into the nearest furnished one (ADR-0077)", () => {
+    const props = make();
+    props.spawn(1, [item("bench", 300, -100)], { x: 0, y: 0, z: 0 });
+    const wall = barrierVariant({ kind: "wall", length: 3, height: 1, rise: 0, material: "plain" });
+    props.spawn(2, [item("barrier", 300, -120, wall), item("barrier", 300, -265, wall)], { x: 0, y: 0, z: 0 });
+    props.flush();
+    expect(props.stats.cells).toBe(1);
+    props.update({ x: 300, y: 2, z: -150 });
+    expect(props.stats.drawn).toEqual({ bench: 1, barrier: 2 });
+    expect(props.stats.groups).toBe(1);
   });
 
   it("draws the generated Lublin within its budget of meshes", () => {

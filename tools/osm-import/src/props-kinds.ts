@@ -51,7 +51,6 @@ const SAME: readonly StreetPropKind[] = [
 export const MAPPED: Readonly<Record<string, { readonly prop: StreetPropKind; readonly why: string }>> = {
   "trolley-wire": { prop: "trolley-pole", why: "the line is the street under the wires; count is the number of poles and hangers" },
   "tree-row": { prop: "tree", why: "a row of trees along the line" },
-  hedge: { prop: "shrubs", why: "clipped shrubs along the line" },
   "lamp-memorial": { prop: "lamp-pastoral", why: "the pre-war lantern on a post shares the pastoral's lantern" },
   "street-lamp": { prop: "lamp-road", why: "OSM street lamps past the Old Town's walls are road lamps; inside them pastorals (G-264)" },
   "flagpole-tall": { prop: "flagpole", why: "the 35 m Maszt Niepodległości, the tall shape of the flagpole" },
@@ -84,6 +83,7 @@ export const SKIPPED: Readonly<Record<string, string>> = {
   "retaining-wall": "walls need their own geometry along the way",
   "city-wall": "walls need their own geometry along the way",
   fence: "fences need their own geometry along the way",
+  hedge: "the map's hedges are its barriers (ADR-0077): drawn and solid along their line, not as rows of shrubs",
   "pedestrian-railing": "railings need their own geometry along the way",
   "construction-fence": "temporary, picked per building by the game",
   gate: "gates belong to fences and walls",

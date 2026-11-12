@@ -43,6 +43,12 @@ export interface Entity {
    * camera looks past it (a lamp post between the camera and the player does not pull it in).
    */
   seeThrough?: true;
+  /**
+   * A fence or a hedge of the map (ADR-0077): a solid for bodies, shots and the AI's walking, but
+   * the eye sees through it (`clearSight`): an enemy notices the player behind it, and goes round
+   * it for a clear shot. Only the walls stop the eye.
+   */
+  sightThrough?: true;
   /** Sloped top of the solid (stairs, ramps, stair railings). */
   slope?: Slope;
   /** Vertical speed while airborne (a fall, or a jump while positive), m/s. Transient, not saved. */

@@ -33,6 +33,13 @@ for (const s of stats) {
 console.log(
   `venues ${venues.total}: ${venues.signed} signed, ${venues.named} named from the table, ${venues.total - venues.named} generic; colour from osm ${venues.colourOsm}, table ${venues.colourTable}, kind ${venues.colourKind}`,
 );
+const walls = new Map<string, { n: number; m: number }>();
+for (const b of chunks.flatMap((c) => c.barriers ?? [])) {
+  const e = walls.get(b.kind) ?? { n: 0, m: 0 };
+  for (let i = 0; i + 3 < b.line.length; i += 2) e.m += Math.hypot(b.line[i + 2]! - b.line[i]!, b.line[i + 3]! - b.line[i + 1]!);
+  walls.set(b.kind, { n: e.n + 1, m: e.m });
+}
+console.log(`barriers (ADR-0077): ${[...walls].sort().map(([k, e]) => `${k} ${e.n} pieces ${e.m.toFixed(0)} m`).join(", ")}`);
 if (process.argv.includes("--landmarks")) {
   for (const c of chunks) {
     for (const b of c.buildings) {

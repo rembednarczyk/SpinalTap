@@ -26,7 +26,7 @@ const XML = `<?xml version="1.0" encoding="UTF-8"?>
  </way>
  <way id="11">
   <nd ref="5"/>
-  <tag k="barrier" v="fence"/>
+  <tag k="barrier" v="kerb"/>
  </way>
  <relation id="20">
   <member type="way" ref="10" role="outer"/>
@@ -55,12 +55,27 @@ describe("OSM data", () => {
     expect(serializeOsm(back, { test: true })).toBe(text);
   });
 
-  it("keeps walls for the scan's steps between walls (G-203), not fences", () => {
-    const xml = XML.replace('<tag k="barrier" v="fence"/>', '<tag k="barrier" v="wall"/>');
+  it("keeps walls for the scan's steps between walls (G-203), not kerbs", () => {
+    const xml = XML.replace('<tag k="barrier" v="kerb"/>', '<tag k="barrier" v="wall"/>');
     const f = filterOsm(parseOsmXml(xml));
     expect(f.ways.get(11)!.tags).toEqual({ barrier: "wall" });
     expect(f.nodes.has(5)).toBe(true);
     expect(filterOsm(parseOsmXml(xml.replace('v="wall"', 'v="retaining_wall"'))).ways.has(11)).toBe(true);
+  });
+
+  it("keeps the barriers the game builds with their height, material and fence type (ADR-0077)", () => {
+    for (const kind of ["fence", "hedge", "gate", "lift_gate", "city_wall"]) {
+      const tags = `<tag k="barrier" v="${kind}"/><tag k="height" v="1.8"/><tag k="material" v="metal"/><tag k="fence_type" v="railing"/>`;
+      const f = filterOsm(parseOsmXml(XML.replace('<tag k="barrier" v="kerb"/>', tags)));
+      expect(f.ways.get(11)!.tags, kind).toEqual({ barrier: kind, fence_type: "railing", height: "1.8", material: "metal" });
+    }
+    expect(filterOsm(parseOsmXml(XML.replace('v="kerb"', 'v="bollard"'))).ways.has(11)).toBe(false);
+  });
+
+  it("keeps a gate on a kept way as a node with its barrier and width", () => {
+    const xml = XML.replace('<node id="2" lat="51.2480" lon="22.5610"/>', '<node id="2" lat="51.2480" lon="22.5610"><tag k="barrier" v="gate"/><tag k="width" v="3"/><tag k="access" v="private"/></node>');
+    expect(filterOsm(parseOsmXml(xml)).nodes.get(2)!.tags).toEqual({ barrier: "gate", width: "3" });
+    expect(filterOsm(parseOsmXml(xml.replace('v="gate"', 'v="bollard"'))).nodes.get(2)!.tags).toBeUndefined();
   });
 
   it("assembles multipolygon rings from pieces in any direction", () => {

@@ -11,6 +11,9 @@
  * ADR-0029: an alerted ganger that lost sight of the player chases the last known position,
  * not the player; once there it stops fighting and looks around (`HasLead`), as does one sent
  * to check a lead (a distraction, a camera, a trace, the heat), and then goes back to its post.
+ *
+ * ADR-0077: it sees through a fence or a hedge, but its shot does not pass a fence: it fires
+ * only with a clear line to the player (`HasClearShot`), else it chases and walks round.
  */
 export const GANGER_TREE = `root {
   selector {
@@ -18,6 +21,7 @@ export const GANGER_TREE = `root {
       condition [IsAlerted]
       condition [SeesPlayer]
       condition [PlayerInAttackRange]
+      condition [HasClearShot]
       action [ShootAtPlayer]
     }
     sequence {

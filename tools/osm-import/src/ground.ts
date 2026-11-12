@@ -212,6 +212,9 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
 export const CROSSING_ALONG = 3;
 
 /** A footway's or a cycleway's stretch across a carriageway (`footway=crossing`). */
+/** A way laid as a carriageway band of its own (`lineBands`): a road by type, not an area, not under ground. */
+export const isCarriageway = (t: Tags): boolean => ROAD_WIDTH[t.highway ?? ""] !== undefined && t.area !== "yes" && !underground(t);
+
 export const crossingWay = (t: Tags): boolean => t.footway === "crossing" || t.cycleway === "crossing" || t.path === "crossing";
 const UNMARKED = new Set(["unmarked", "no", "informal"]);
 

@@ -21,10 +21,13 @@ import { GROUND_DECKS } from "./lublin/decks";
 import type { GroundDeck } from "../world/deck";
 import { furnitureProps } from "./lublin/furniture";
 import { basinRimProps } from "./lublin/basins";
+import { barrierProps } from "./lublin/barriers";
+import { WORLD_BARRIERS } from "./world-barriers";
 import { GAME_ACTORS, GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
 import { PARKED_CARS, parkedProp, parkedView } from "./parked-cars";
 
 export { WORLD_STREET_PROPS } from "./street-props";
+export { WORLD_BARRIERS } from "./world-barriers";
 
 /** The districts of Lublin 2077 (ADR-0042); the ids are the game's from before the move. */
 export const DISTRICTS = {
@@ -147,6 +150,8 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
         ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp),
         // The cars in the bays of Alchemia's P-1 (ADR-0074 stage 4), after the street's, so their ids stay.
         ...(c.id === ALCHEMIA_CHUNK ? P1_CARS.map(p1CarProp) : []),
+        // The map's walls, fences and hedges (ADR-0077) last, so the ids before them stay.
+        ...barrierProps(WORLD_BARRIERS[c.id] ?? []),
       ],
       ...(roomsOf(c.id).length > 0 ? { rooms: roomsOf(c.id) } : {}),
       ...(c.id === ALCHEMIA_CHUNK ? { cuts: ALCHEMIA_CUTS, vaults: ALCHEMIA_VAULTS } : {}),
@@ -172,6 +177,8 @@ export const WORLD_SCENERY: readonly SceneryItem[] = [
   ...PARKED_CARS.map((p): SceneryItem => ({ chunk: p.chunk, view: parkedView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
   // And those in the bays of Alchemia's P-1 under its car park (ADR-0074 stage 4).
   ...P1_CARS.map((p): SceneryItem => ({ chunk: ALCHEMIA_CHUNK, view: p1CarView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
+  // The map's walls, fences and hedges (ADR-0077), drawn with the furniture, last so the ids above stay.
+  ...Object.entries(WORLD_BARRIERS).map(([chunk, items]): SceneryItem => ({ chunk, view: { kind: "street-props", items }, at: { x: 0, y: 0, z: 0 } })),
 ];
 
 /** Cameras and hackable devices (ADR-0029); each one names its chunk above. */
