@@ -11,6 +11,7 @@ import { landmarkAt } from "../../../packages/engine/src/renderer/mapcity/landma
 import { mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
 import { BinIndex } from "../../../packages/engine/src/renderer/mapcity/map-index";
 import { boundsOf, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
+import { TerrainEntries } from "../../../packages/engine/src/renderer/mapcity/terrain-index";
 import { type VenueBoard, venueBoards } from "../../../packages/engine/src/renderer/mapcity/venue-plan";
 import { WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import type { BoardSpan } from "./props-boards.ts";
@@ -62,7 +63,15 @@ const frameViews = (views: readonly DrawnView[]): FramedBuilding[] => {
     }
     return top;
   };
-  return buildings.map((b, i) => ({ frame: facadeFrame(mapBuilding(i + 1, b, () => null), neighbour), view: b.view, at: b.at, landmark: landmarkAt(b.at.x, b.at.z, b.view.outline.length) !== null }));
+  // The map city's terrains, so a wall on the map's edge stands blind here as in the game (G-556).
+  const terrains = new TerrainEntries();
+  views.forEach(({ view }, i) => {
+    if (view.kind !== "terrain") return;
+    const g = view.grid;
+    terrains.set(i + 1, { grid: g, open: view.open, bounds: { minX: g.originX, maxX: g.originX + (g.cols - 1) * g.cell, minZ: g.originZ, maxZ: g.originZ + (g.rows - 1) * g.cell }, mesh: null });
+  });
+  const edge = (a: { x: number; z: number }, c: { x: number; z: number }) => terrains.onMapEdge(a, c);
+  return buildings.map((b, i) => ({ frame: facadeFrame(mapBuilding(i + 1, b, () => null), neighbour, () => null, edge), view: b.view, at: b.at, landmark: landmarkAt(b.at.x, b.at.z, b.view.outline.length) !== null }));
 };
 
 const BOARDS = new WeakMap<FramedBuilding, VenueBoard[]>();

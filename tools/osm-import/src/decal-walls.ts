@@ -48,7 +48,8 @@ export const cityDecalWalls = (views: readonly DrawnView[]): DecalWall[] => {
     const boards = b.landmark ? [] : framedBoards(b);
     const building = `${b.at.x.toFixed(1)},${b.at.z.toFixed(1)}`;
     return f.walls.flatMap((w): DecalWall[] => {
-      if (hiddenWall(f, w)) return [];
+      // A wall on the map's edge faces nothing: no decal there (G-556).
+      if (hiddenWall(f, w) || w.edge) return [];
       return [
         {
           building,

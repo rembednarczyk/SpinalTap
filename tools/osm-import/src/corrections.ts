@@ -9,7 +9,7 @@ import { type Pt, centroid } from "./geometry.ts";
 import { ALCHEMIA_AREAS } from "./corrections-alchemia.ts";
 import { CZECHOWICZA_AREAS } from "./corrections-czechowicza.ts";
 import { ADDED_AREAS_TAIL, TAG_CORRECTIONS_TAIL } from "./corrections-kerb.ts";
-import { DWORZEC_EAST_AREAS } from "./corrections-dworzec.ts";
+import { PODZAMCZE_AREAS } from "./corrections-podzamcze.ts";
 import { type Tags } from "./osm.ts";
 
 export interface TagCorrection {
@@ -668,7 +668,7 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     reason: "trawnik przed pawilonami przy Dworcu Autobusowym na ortofoto PZGiK, w OSM bez obszaru",
     ref: "T-170",
   },
-  ...DWORZEC_EAST_AREAS,
+  ...PODZAMCZE_AREAS,
   ...CZECHOWICZA_AREAS,
   ...ALCHEMIA_AREAS,
   ...ADDED_AREAS_TAIL,

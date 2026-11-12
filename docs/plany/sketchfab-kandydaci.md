@@ -1,5 +1,7 @@
 # Kandydaci ze Sketchfaba do ściągnięcia (31.10)
 
+> **Status: wykonany (31.10).** Użytkownik pobrał 27 modeli z tej listy. Inwentarz, licencje i dalsze etapy są w [assety-paczka-2.md](assety-paczka-2.md), zasady w ADR-0063. Dokument zostaje jako zapis wyboru.
+
 Wyszukiwanie przez publiczne API Sketchfaba: modele do pobrania, licencja CC-BY 4.0 (z podpisem, ADR-0063), do 60 tys. trójkątów, posortowane po polubieniach. Odrzucone: modele z cudzą marką albo projektem z innej gry lub filmu (np. K-2SO, Cyberpunk 2077, NCPD, DOOM), logo firm (Bitcoin ATM), rzeczy spoza klimatu (czołg, pociąg z Sydney, dioramy). Wszystkie przejdą przez potok z ADR-0063 (paleta, uproszczenie, bez tekstur), a kurator topografii sprawdzi, gdzie stoją.
 
 | Do czego | Model | Autor | Trójkąty | Link |

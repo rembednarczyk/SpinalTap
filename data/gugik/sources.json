@@ -1,0 +1,26 @@
+{
+ "lod1": {
+  "url": "https://opendata.geoportal.gov.pl/InneDane/Budynki3D/LOD1/2024/06/0663.zip",
+  "fetched": "2026-11-11",
+  "lastModified": "Wed, 26 Mar 2025 09:01:24 GMT",
+  "bytes": 13214637,
+  "sha256": "218c50e99e4fdc162adf745f3bafc2f6aebcba217665558ca9a0bba5d6148392",
+  "license": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), Główny Urząd Geodezji i Kartografii"
+ },
+ "lod2": {
+  "url": "https://opendata.geoportal.gov.pl/InneDane/Budynki3D/LOD2/0663_gml.zip",
+  "fetched": "2026-11-11",
+  "lastModified": "Thu, 21 Jun 2018 09:19:24 GMT",
+  "bytes": 24497031,
+  "sha256": "2a447162c9e6ba7ff9be5880778beb466822f0bff9058087a42e6876ba7edd83",
+  "license": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), Główny Urząd Geodezji i Kartografii"
+ },
+ "bdot": {
+  "url": "https://opendata.geoportal.gov.pl/bdot10k/schemat2021/GPKG/06/0663_GPKG.zip",
+  "fetched": "2026-11-11",
+  "lastModified": "Sat, 03 Oct 2026 00:43:28 GMT",
+  "bytes": 22235674,
+  "sha256": "2be1b16b7303e2faba3a4a7881a1bab92b0b33a921c4eb5179bfc4fc8be7963c",
+  "license": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), Główny Urząd Geodezji i Kartografii"
+ }
+}

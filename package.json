@@ -26,6 +26,9 @@
     "osm:hydrants": "node tools/osm-import/src/fetch-hydrants.ts",
     "osm:entrances": "node tools/osm-import/src/fetch-entrances.ts",
     "osm:trees": "node tools/osm-import/src/fetch-trees.ts",
+    "gugik:fetch": "NODE_USE_ENV_PROXY=1 node tools/gugik/src/fetch.ts",
+    "gugik:extract": "node tools/gugik/src/extract.ts",
+    "gugik:report": "node tools/gugik/src/report.ts",
     "changelog": "node tools/changelog/changelog.mjs"
   },
   "devDependencies": {

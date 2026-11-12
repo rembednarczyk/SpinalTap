@@ -1,1 +1,0 @@
-Pad ma promieniową martwą strefę 0,12 bez „krzyża” na skosach, krzywą obrotu (klasyczna domyślnie, liniowa i precyzyjna w opcjach) i własną czułość w zakładce „Dotyk i pad”; mysz, dotyk i pad obracają widok każde ze swoją czułością (ADR-0072 etap 4).

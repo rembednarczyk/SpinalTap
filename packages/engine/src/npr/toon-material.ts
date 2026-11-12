@@ -121,8 +121,21 @@ export class ToonMaterials {
     for (const m of this.materials.values()) this.look.applyShadowMatrix(m);
   }
 
-  get materialCount(): number {
-    return this.materials.size;
+  /**
+   * Disposes the imported materials painted with these textures (`forImported`, key
+   * `imp:<preset>:<base>:<texture id>…`): a model file let go of (ADR-0076 stage 4b).
+   */
+  releaseTextures(textures: Iterable<BaseTexture>): number {
+    const ids = new Set<string>();
+    for (const t of textures) ids.add(String(t.uniqueId));
+    let released = 0;
+    for (const [key, m] of this.materials) {
+      if (!key.startsWith("imp:") || !ids.has(key.split(":")[3] ?? "")) continue;
+      this.materials.delete(key);
+      m.dispose(false, false);
+      released++;
+    }
+    return released;
   }
 
   private cached(key: string, make: () => ShaderMaterial): ShaderMaterial {

@@ -1,8 +1,9 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { loadToonModel } from "../src/renderer/model-loader";
+import { readModelFile } from "./game-models";
 
 /** A single red triangle as an embedded glTF 2.0 document. */
 export const triangleGltf = (material = "red"): string => {
@@ -88,5 +89,30 @@ describe("ModelLibrary", () => {
     expect(source?.preset).toBe("importedCharacter");
     expect(source?.source.garment).toBe("torso");
     expect(toonSourceOf(b.meshes.find((m) => m.getTotalVertices() > 0)!)?.source.garment).toBeNull();
+  });
+});
+
+describe("ModelLibrary after a failed fetch (G-562)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("fetches the file again on the next ask instead of keeping the failure", async () => {
+    const { ModelLibrary } = await import("../src/renderer/model-library");
+    const asked: string[] = [];
+    vi.stubGlobal("fetch", (url: string) => {
+      asked.push(url);
+      if (asked.length === 1) return Promise.reject(new Error("offline"));
+      const b = readModelFile(url);
+      return Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)) });
+    });
+    const scene = new Scene(new NullEngine());
+    const library = new ModelLibrary(scene, new ToonMaterials(scene));
+    await expect(library.preload({ url: "kurosawa.vrm" })).rejects.toThrow("offline");
+    expect(library.isLoaded("kurosawa.vrm")).toBe(false);
+    const model = await library.instantiate({ url: "kurosawa.vrm" }, "k");
+    expect(asked).toEqual(["kurosawa.vrm", "kurosawa.vrm"]);
+    expect(library.isLoaded("kurosawa.vrm")).toBe(true);
+    expect(model.meshes.length).toBeGreaterThan(0);
   });
 });

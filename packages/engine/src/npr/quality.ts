@@ -23,12 +23,18 @@ export interface QualityTier {
   readonly wetProbe: number | null;
   /** The character preview redraws every frame. */
   readonly livePreview: boolean;
+  /**
+   * Character model files in memory at once (ADR-0076 §4, stage 4b): about 45 MiB of textures a
+   * VRoid file, so a phone keeps 5 (about 225 MiB) and a computer 11 (about 500 MiB). Over it the
+   * file unused longest, outside the donors, goes.
+   */
+  readonly modelFiles: number;
 }
 
 export const QUALITY_TIERS: Readonly<Record<RenderQuality, QualityTier>> = {
-  low: { shadowMap: 1024, lineArt: false, splashes: false, wetProbe: null, livePreview: false },
-  medium: { shadowMap: 1024, lineArt: true, splashes: false, wetProbe: 128, livePreview: true },
-  high: { shadowMap: 2048, lineArt: true, splashes: true, wetProbe: 256, livePreview: true },
+  low: { shadowMap: 1024, lineArt: false, splashes: false, wetProbe: null, livePreview: false, modelFiles: 5 },
+  medium: { shadowMap: 1024, lineArt: true, splashes: false, wetProbe: 128, livePreview: true, modelFiles: 11 },
+  high: { shadowMap: 2048, lineArt: true, splashes: true, wetProbe: 256, livePreview: true, modelFiles: 11 },
 };
 
 export const qualityTier = (q: RenderQuality | undefined): QualityTier => QUALITY_TIERS[q ?? "high"];

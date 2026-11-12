@@ -47,6 +47,7 @@ import { metroLineProtected } from "./metro-line";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
+import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
 import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
@@ -1384,13 +1385,15 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A small building standing on its own (under `SMALL_ALONE_AREA`, no other outline within 1 m:
    * a pavilion, a kiosk, a shed) raised to the district's default houses when the map gives it no
-   * height (G-127: Bar Centralny by Pedet, 4 storeys for a round one-storey pavilion).
+   * height (G-127: Bar Centralny by Pedet, 4 storeys for a round one-storey pavilion). A building
+   * the map's edge cuts (G-556) is as small as the whole of it in OSM, not as its piece on the map.
    */
   "small-freestanding-tall": () => {
     const all = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
     const areas = all.map((b) => ({ id: b.id, tags: {}, ring: worldOutline(b), holes: 0 }) as unknown as Parameters<typeof smallAlone>[0][number]);
     const alone = smallAlone(areas);
-    return all.filter((b) => alone.has(b.id) && b.source === "default" && b.levels > 1).map((b) => ({ at: near(b.x, b.z), what: `${b.id} ${b.levels} storeys on ${SMALL_ALONE_AREA} m² or less` }));
+    const whole = offMapAreas(osmBuildings(SOURCE_OSM), MAP_CHUNKS.map((c) => c.bounds));
+    return all.filter((b) => alone.has(b.id) && (whole.get(b.id) ?? 0) < SMALL_ALONE_AREA && b.source === "default" && b.levels > 1).map((b) => ({ at: near(b.x, b.z), what: `${b.id} ${b.levels} storeys on ${SMALL_ALONE_AREA} m² or less` }));
   },
   /**
    * A building the map puts under ground (`location=underground`: a cellar, a shelter, G-077)
@@ -1824,6 +1827,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "metro-exit-bare": () => metroExitBare(),
   /** A ray of sight between the street out of a metro pavilion's opening and its hall stopped by the terrain in the air of the shaft (G-377). */
   "metro-shaft-ray": () => metroShaftRay(),
+  /**
+   * A building of OSM centred off the map with over 2 m² of it on a chunk, not in the game and not
+   * left off on purpose (`edge-buildings.ts`, G-556): the map's edge dropped it whole.
+   */
+  "edge-building-dropped": () => edgeBuildingsDropped(osmBuildings(SOURCE_OSM), LUBLIN_CHUNKS.map((c) => c.bounds), new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => b.id)))),
   /** A point of a 0.5 m grid on bare terrain in a shops' or market's area, by a shop's or public building's walls or at a stop (`landuse-bare.ts`, decision 5.11). */
   "landuse-bare": () => landuseBare(cityLanduseWorld(SOURCE_OSM)),
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */

@@ -5,9 +5,14 @@ const KEYS: readonly CharacterModelKey[] = ["heroine", "fixer", "civilian", "rip
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
-/** An entry with its URL resolved against the manifest; null without a URL. */
+/**
+ * An entry with its URL resolved against the manifest; null without a URL, or with a `lends` that
+ * is no boolean (G-580, as a bad `weight`): `lends: "true"` must not pass for a file that lends
+ * nothing, since the donors (`donorFiles`, ADR-0076 stage 4a) decide the background's cloth.
+ */
 const specOf = (entry: unknown, base: string): CharacterModelSpec | null => {
   if (!isObject(entry) || typeof entry.url !== "string") return null;
+  if (entry.lends !== undefined && typeof entry.lends !== "boolean") return null;
   return { ...(entry as Partial<CharacterModelSpec>), url: new URL(entry.url, base).href };
 };
 

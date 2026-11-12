@@ -1,6 +1,6 @@
 # ADR-0073: Ikony przedmiotów i wygląd ubrań
 
-Status: proponowany (6.11), z decyzjami użytkownika z 6.11 (sekcja „Decyzje użytkownika”). Pozycja stałego slotu assetów „ubrania i ikony przedmiotów” (decyzja użytkownika 1.11, backlog „[plan, 31.10] Assety ubrań i ekwipunku”). Etap 1 jest w tym samym PR-ze co ADR.
+Status: zaakceptowany (6.11), z decyzjami użytkownika z 6.11 (sekcja „Decyzje użytkownika”). Pozycja stałego slotu assetów „ubrania i ikony przedmiotów” (decyzja użytkownika 1.11, backlog „[plan, 31.10] Assety ubrań i ekwipunku”). Etap 1 jest w tym samym PR-ze co ADR.
 
 ## Kontekst
 Stan na `origin/main` aca80ad.
