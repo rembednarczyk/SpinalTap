@@ -1779,7 +1779,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
 
 ### G-686 Uskok 0,52 m na zakręcie schodów z wiaduktu Zamkowej blokuje gangera
-- Status: zgłoszone (12.11, naprawiacz G-643; także na main)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g686); wcześniej: zgłoszone (12.11, naprawiacz G-643; także na main)
 - Ważność: S3 · Zasięg: (732,7; 151,4)–(734,2; 152,8), górny stopień schodów w294098693 na styku z południowym końcem pomostu wiaduktu Zamkowej (T-166). Wysokość chodzenia skacze tam o 0,51–0,54 m na całej szerokości pasa, a skan liczy to jako `steps-riser-tall` (732; 151) 0,51 m. Na schodach w56965515 (dawne (729,5; 163,9), czyli x zakrętu i z krawędzi pomostu) na osi biegów nie ma uskoku powyżej 0,3 m. Przyczyna ta sama co G-339 (pomost poziomy w poprzek na NMT końca osi). Poprawka G-339 w tym punkcie powinna usunąć oba objawy, test G-686 (nawigacja) zostaje osobno; uskok niewidoczny dla `straightWalk` i pól nawigacji; ganger stoi tam wciśnięty na zawsze, na main przechodzi tylko, gdy jest akurat w powietrzu
 - Pakiet właściciela: packages/sim (systems/ai, nawigacja), ewentualnie treść schodów
 
