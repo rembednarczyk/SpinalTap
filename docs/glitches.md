@@ -1696,11 +1696,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: `LITEVSKI_GREEN` i `SCHOOL_GREEN` w `tools/osm-import/src/corrections-zn.ts` (runda 2 #405) kładą trawę na asfalcie i kostce: pas x −201…−197, z 27–45 (54 m², zieleń 13%) i pas wzdłuż w80139555 do Cichej 4 (104 m², zieleń 4%); krakowskie-0-1; poprawka wg ADR-0077: trawa tylko na płatach zieleni z nakładki ortofoto (domknięcie 1 m, płat od 4 m²), reszta kostką jak T-243; kryterium: trawnik Litevski ≥ 70% zieleni, szkoły ≥ 55%, nowa kostka ≤ 15%; `cover-truth.test.ts` próg 0,55 → 0,7 (trawniki kuratora są prawdą klasyfikatora); nowa kontrola skanu `added-grass-off-green` (ręczne trawniki z zielenią < 50%: 11 z 20, 1 133 m²; do sprawdzenia też T-241 trawnik-wschod, trawnik-bajkowskiego, T-245 trawnik-3-maja-klinika, rabaty przy Collegium, T-246 trawnik-nadstawna-3)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-628 `tools/orto report --area` wybiera raster po pierwszym wierzchołku obszaru
-- Status: w PR #421 (12.11)
-- Ważność: S4 · Zasięg: `report.ts --area T-245/zielen-litevski` zwraca „brak rastra”, bo pierwszy wierzchołek (x −201) leży tuż przed rastrem Krakowskiego (od x −200); poprawka: wybór rastra po środku obszaru albo po dowolnym punkcie na rastrze
-- Pakiet właściciela: tools/orto
-
 ### G-629 Na skarpie cokół NMT połyka kondygnacje z tagu (Kowalska)
 - Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1) ; runda 2 gałęzi heights
 - Ważność: S3 · Zasięg: reguła `MIN_STOREY` w `lod1-heights.ts` liczy ściany od wierzchu cokołu; przy cokole 9–12 m Kowalska 7 spada z 4 kondygnacji do 1, Kowalska 9, 11, 13 z 3 do 1, od ulicy ślepy mur z jednym rzędem okien; 15 budynków (T-252); poprawka: kondygnacje z tagu zostają, gdy `height ≥ levels × 2,6`, cokół do `height − levels × STOREY`

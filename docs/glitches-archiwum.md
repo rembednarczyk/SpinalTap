@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-628 `tools/orto report --area` wybiera raster po pierwszym wierzchołku obszaru
+- Status: naprawione w #421 (12.11; `coverOfRing` wybiera raster pokrywający najwięcej wierzchołków)
+- Ważność: S4 · Zasięg: `report.ts --area T-245/zielen-litevski` zwraca „brak rastra”, bo pierwszy wierzchołek (x −201) leży tuż przed rastrem Krakowskiego (od x −200); poprawka: wybór rastra po środku obszaru albo po dowolnym punkcie na rastrze
+- Pakiet właściciela: tools/orto
+
+
 ### G-621 `ModelMemory` bez testu kolejności zwalniania
 - Status: naprawione w #420 (12.11; test jednostkowy `model-memory.test.ts`, pada 3/5 przy odwróconym sortowaniu)
 - Ważność: S4 · Zasięg: przypadek telefonu w `model-release.test.ts` przechodzi także z odwróconym sortowaniem w `ModelMemory.sweep` (naraz jeden kandydat); brak testu jednostkowego „najdłużej nieużywany idzie pierwszy”
