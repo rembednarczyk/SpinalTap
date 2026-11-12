@@ -47,3 +47,4 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 ## Tokeny przy mapowaniu (12.11)
 - Decyzja użytkownika: (1) powtarzane sondy przejść (obrysy wobec LoD2 po IoU, przechył nalotów, podwórza i przedpola z gołego terenu, odległość od ścian) stają się stałymi sekcjami raportu `tools/orto/src/report.ts --cell`, przed kolejnymi przejściami komórek; (2) kurator tylko dla nowych znalezisk, komórki z samymi znanymi rodzajami zamyka opiekun, kurator przegląda je paczką; (3) opiekun na tańszym modelu, gdy raport będzie skryptowy.
 - Reguła stała: gdy orkiestrator albo agent widzi miejsce, gdzie tokeny idą na powtarzaną pracę (te same sondy, ta sama analiza dwa razy, odtwarzanie raportów), od razu proponuje i wdraża skrypt, sekcję raportu albo zmianę procesu.
+- **Wspomaganie celowania a ganger idący po ofiarę (12.11):** decyzja użytkownika: ganger z `ai.victim` (ochrona, ADR-0018) jest celem wspomagania od razu, także przed alarmem (ADR-0072).
