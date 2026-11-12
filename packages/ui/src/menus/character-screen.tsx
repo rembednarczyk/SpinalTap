@@ -9,6 +9,7 @@ import { useT, useText } from "../i18n/use-t";
 import type { CharacterTab } from "../store/ui-store";
 import { useCharacterIntents, useUi } from "../use-ui";
 import { CharacterPanel } from "./character-panel";
+import { useFitScale } from "./use-fit-scale";
 import { ProgressTab } from "../progress/progress-tab";
 import { useUnspentPoints } from "../hud/xp-hud";
 
@@ -88,6 +89,11 @@ export const CharacterScreen = () => {
   const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null);
   const eddies = useUi((s) => s.eddies);
   const intents = useCharacterIntents();
+  const ammo = useUi((s) => s.ammo);
+  const frame = useRef<HTMLDivElement>(null);
+  const bar = useRef<HTMLElement>(null);
+  // The whole menu shrinks when the top bar (tabs, wallet, a long row of ammo kinds) would push the close button out.
+  useFitScale(frame, bar, `${tab ?? ""}|${eddies}|${AMMO_ORDER.filter((id) => (ammo[id] ?? 0) > 0).join(",")}`);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -117,8 +123,8 @@ export const CharacterScreen = () => {
   if (tab === null) return null;
   return (
     <div className={`cscreen cscreen--${tab}`} data-testid="character-screen" role="dialog" aria-label={t("character.label")}>
-      <div className="cscreen__frame">
-        <header className="cscreen__bar">
+      <div className="cscreen__frame" ref={frame}>
+        <header className="cscreen__bar" ref={bar}>
           <ScreenTabs tab={tab} show={show} />
           <div className="cscreen__wallet" data-testid="menu-eddies">
             <span className="hud__currency">€$</span> {formatNumber(locale, eddies)}
