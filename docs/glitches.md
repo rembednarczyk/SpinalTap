@@ -1582,7 +1582,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
-- Status: w PR #410 (8.11, ADR-0076 etap 4b)
+- Status: zgłoszone (8.11; #410 scalony bez tej poprawki, naprawa w toku 12.11)
 - Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
 - Pakiet właściciela: packages/engine (renderer: modele)
 
