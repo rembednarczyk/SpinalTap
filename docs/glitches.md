@@ -1637,7 +1637,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-639 Płaska bryła na wysokości LoD1 przy stromym dachu wypada na kalenicy
-- Status: poprawione na gałęzi ccr-ec2c4269-ilh8k8-g639 (12.11; 79 budynków z dachem z LoD2, `flat-over-lod2-roof` 22 → 2; scalenie main i przegląd kuratora w toku)
+- Status: w PR #459, kurator NIE PRZYJĘTE (12.11: kalenica prostopadła do rzeczywistej w 5 z 14 dachów dwuspadowych, m.in. Muzeum Czechowicza; okap Złotej 5 z połaci 3,1 m²); runda 2 u autora
 - Ważność: S3 · Zasięg: budynki bez tagów dachu stoją płasko na wysokości LoD1, a przy stromym dachu LoD1 leży prawie na kalenicy; np. Pałac Parysów w66330695 w grze 18,1 m i 5 rzędów okien, w LoD2 okap 10,7 m i kalenica 18,2 m (przed zmianą 11,1 m); ok. 59 budynków (płaski dach w grze, dach LoD2 > 4 m, okap gry > 3 m nad okapem LoD2; liczba przybliżona, okap LoD2 bywa okapem przybudówki); poprawka: gdy LoD2 ma okap i kalenicę, a OSM nie ma tagów dachu, okap i dach z LoD2; kontrola `flat-over-lod2-roof` (baza ok. 59); luka pokrewna: `church-over-nmpt` nie wykrywa kościoła za niskiego
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1820,6 +1820,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g694; decyzja użytkownika: osobna poprawka po #455)
 - Ważność: S3 · Zasięg: po #455 (G-643) ganger bez starej drogi czeka na swój plan w kolejce: przy N różnych celach do ok. 13·N kroków (3,4 s przy 18 pościgach, 5,3 s przy liderach rozrzuconych do 60 m; na main do 16 kroków); poprawka: w czasie czekania ruch w stronę celu (krok w bok przy przeszkodzie, jak przy odklejaniu), priorytet w kolejce dla gangera bez żadnej drogi; także `planChase` z `{ chase: made }` nie zeruje własnego `chaseNext`
 - Pakiet właściciela: packages/sim (systems/ai)
+
+### G-695 Okap od ulicy z najniższej połaci powłoki LoD2
+- Status: zgłoszone (12.11, kurator przeglądu #459)
+- Ważność: S3 · Zasięg: reguła dachów z LoD2 (#459) bierze okap jako najniższy punkt powłoki głównej bryły, więc fasada od ulicy wychodzi za nisko: Złota 3 −4,1 m, Lubartowska 23 w66309793 −3,6 m, Rybna 6 w66293219 −2,7 m, Centrum Kultury −1,5 m (skrzydła 12,7 do 15,6 m, środkowy trakt do 18,4 m); poprawka: okap od strony ulicy z `addr:street` (azymut ±50°) albo per część; kontrola `lod2-street-eaves` (baza 3)
+- Pakiet właściciela: tools/osm-import, tools/gugik, tools/glitch-scan
+
+### G-696 Dachy LoD2: mansarda jako czterospadowy, pałace z kondygnacjami kamienic, Narutowicza 4 jednym obrysem
+- Status: zgłoszone (12.11, kurator przeglądu #459; niski priorytet)
+- Ważność: S4 · Zasięg: Pałac Parysów w66330695 ma w LoD2 mansardę (połacie 60° do 15,6 m, 16° do 18,2 m), w grze czterospadowy (`roofType` 1130); pałace bez `building:levels` (Czartoryskich, Parysów, Potockich) dostają kondygnacje po 2,7–3,3 m zamiast 2 wysokich; Narutowicza 4 (WBP): zabytkowe skrzydło od ulicy płasko na 14 m, w rzeczywistości okap ok. 8,5 m i kalenica 12,4 m (jeden obrys OSM, do podziału na części)
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
