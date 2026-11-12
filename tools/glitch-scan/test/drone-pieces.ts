@@ -1,4 +1,5 @@
 import type { GroundSurface, Vec3, ViewDescriptor } from "../../../packages/core/src";
+import { segmentDistance } from "../../../packages/core/src";
 import { DRONE_KINDS, DRONE_SIZE, type DroneKind, BOB, dronePose, loopLength } from "../../../packages/engine/src/renderer/drones/drone-flight";
 import { type DroneLane, type DroneWorld, planDroneLanes } from "../../../packages/engine/src/renderer/drones/drone-lanes";
 import { droneWorldOf } from "../../../packages/engine/src/renderer/drones/drone-world";
@@ -49,10 +50,7 @@ const gapTo = (p: P2, ring: readonly P2[]): number => {
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const a = ring[j] as P2;
     const b = ring[i] as P2;
-    const dx = b.x - a.x;
-    const dz = b.z - a.z;
-    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-    best = Math.min(best, Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z));
+    best = Math.min(best, segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z));
   }
   return best;
 };
