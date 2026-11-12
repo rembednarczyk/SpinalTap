@@ -1716,11 +1716,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: Podzamcze, x 1101–1120, z 239,7–252, ok. 55 m² gołe od G-647 (wcześniej przykryte trawnikiem r11978659); ortofoto: jasna nawierzchnia placu; poprawka: kostka lub płyty do krawędzi garażu albo reguła gołej ziemi z ortofoto (ADR-0077 krok 1.1)
 - Pakiet właściciela: tools/osm-import
 
-### G-662 Trójkąt garażu VIVO nad ziemią bez bryły
-- Status: w PR #447 (12.11; kurator PRZYJĘTE, 11 m mieści się w 10–11,4 m; do scalenia main i uzupełnienia T-261)
-- Ważność: S3 · Zasięg: w173070505, x 1105,8–1120, z 228–239,7: na trzech nalotach ortofoto dach z sedum i świetlikami ok. 5–10 m nad chodnikiem (cień do z 244–251), w grze trawnik na poziomie gruntu; G-600 usunął całą bryłę garażu; poprawka: niska bryła o wysokości dachu w miejsce trawników T-258 i G-647
-- Pakiet właściciela: tools/osm-import
-
 ### G-663 Drogi `segregated=yes` za wąskie
 - Status: zgłoszone (12.11, kurator przeglądu G-647; T-262)
 - Ważność: S4 · Zasięg: 62 drogi `highway=path` z `segregated=yes` (Podzamcze, Nabrzeże) mają pas 2 m (`PATHS.path`); np. w65351890 przy (1038; 305): kostka ok. 4 m i asfalt rowerowy ok. 2,4 m; poprawka: szerokość z `footway:width` + `cycleway:width` albo domyślnie ok. 2,5 + 2 m, dwie nawierzchnie; kontrola skanu `path-segregated-width`
@@ -1767,7 +1762,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-677 Kontrola skanu: ręczna bryła nad drogą z OSM
-- Status: w PR #452 (szkic, 12.11; baza 0 na main; po scaleniu #447 dopisać wyjątek T-261/garaz-vivo, gotowy w scratchpadzie g677-wyjatek-po-447.md)
+- Status: w PR #452 (12.11; wyjątek T-261/garaz-vivo dopisany po #447, baza 0)
 - Ważność: S4 · Zasięg: brak kontroli, która łapie ręczny obszar `ADDED_AREAS` z `building=*`, którego pierścień (także poza mapą) przecina `highway=*` bez `tunnel` ani `covered`; dziś 1 przypadek: `T-261/garaz-vivo` zamyka schody w376043570 i chodnik w295849313 (wejście do VIVO pod dachem garażu, x 1121–1146, poza mapą, ukryte przycięciem na x = 1120); kontrola `added-solid-over-way` z bazą 1 i wyjątkiem z odsyłaczem do topografii do czasu poszerzenia mapy
 - Pakiet właściciela: tools/glitch-scan
 
