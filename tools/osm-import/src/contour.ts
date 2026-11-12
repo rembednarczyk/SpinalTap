@@ -93,6 +93,18 @@ const straight = (ring: readonly Pt[]): Pt[] => {
   return out;
 };
 
+/**
+ * The lattices' buffers, reused from call to call and cleared each (the bare ground rule traces
+ * some 1500 tiles a city): fresh ones for each would be some 100 MB for the collector.
+ */
+const POOL = { next: new Int32Array(0), pad: new Uint8Array(0), any: new Uint8Array(0), done: new Uint8Array(0) };
+const pooled = <K extends keyof typeof POOL>(key: K, n: number, value: number): (typeof POOL)[K] => {
+  if (POOL[key].length < n) POOL[key] = (key === "next" ? new Int32Array(n) : new Uint8Array(n)) as (typeof POOL)[K];
+  const out = POOL[key].subarray(0, n) as (typeof POOL)[K];
+  out.fill(value);
+  return out;
+};
+
 /** The closed outlines of the class on the lattice. */
 export const contours = (l: Lattice): Pt[][] => {
   const w = l.nx + 2;
@@ -101,7 +113,7 @@ export const contours = (l: Lattice): Pt[][] => {
   const edgeId = (i: number, j: number, north: boolean) => ((j + 1) * w + (i + 1)) * 2 + (north ? 1 : 0);
   // The edge the contour runs on to from each edge it crosses, by edge id, in the order found.
   const size = w * (l.nz + 2) * 2;
-  const next = new Int32Array(size).fill(-1);
+  const next = pooled("next", size, -1);
   const order: number[] = [];
   const edgeOf = (i: number, j: number, k: number): number => {
     const e = EDGE[k]!;
@@ -123,14 +135,15 @@ export const contours = (l: Lattice): Pt[][] => {
     return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
   };
   // The class padded by a sample out of it all round: sample (i, j) at (j + 1) * w + i + 1.
-  const pad = new Uint8Array(w * (l.nz + 2));
+  const pad = pooled("pad", w * (l.nz + 2), 0);
   // Whether a row has any sample in the class: a square between two rows without one is skipped.
-  const any = new Uint8Array(l.nz + 2);
-  for (let j = 0; j < l.nz; j++) {
-    const row = l.inside.subarray(j * l.nx, (j + 1) * l.nx);
-    pad.set(row, (j + 1) * w + 1);
-    any[j + 1] = row.includes(1) ? 1 : 0;
-  }
+  const any = pooled("any", l.nz + 2, 0);
+  for (let j = 0; j < l.nz; j++)
+    for (let i = 0; i < l.nx; i++) {
+      const v = l.inside[j * l.nx + i]!;
+      pad[(j + 1) * w + i + 1] = v;
+      if (v === 1) any[j + 1] = 1;
+    }
   for (let j = -1; j < l.nz; j++)
     for (let i = -1; i < l.nx && (any[j + 1] || any[j + 2]); i++) {
       const k = (j + 1) * w + i + 1;
@@ -144,7 +157,7 @@ export const contours = (l: Lattice): Pt[][] => {
       }
     }
   const rings: Pt[][] = [];
-  const done = new Uint8Array(size);
+  const done = pooled("done", size, 0);
   for (const start of order) {
     if (done[start]) continue;
     const ring: Pt[] = [];
