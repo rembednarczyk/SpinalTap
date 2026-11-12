@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-719 Test `venues` „sign nearly all of the city's venues” przekracza 20 s w CI
+- Status: naprawiony w #474 (12.11, fc15a6b: venues 14,5 → 6,9 s na shardzie 2/2, tabele bez zmian)
+- Ważność: S3 (czerwone CI na PR-ach, które nie dotykają importu) · Zasięg: shard „Unit tests (2)”: #463 (engine) i #468 (geometria 2D) padły na tym samym teście, `Test timed out in 20000ms`, `tools/osm-import/test/venues.test.ts:218`, `generatedCity()` bez pamięci miasta; main zielony, więc test jest blisko limitu. Krok 1.1 ADR-0077 dokłada +13,5% do tego testu. Podniesienie limitu nie jest poprawką: najpierw pomiar, gdzie idzie czas (import tabel, `generate()`, kolejność plików w projekcie `shared`)
+- Pakiet właściciela: tools/osm-import (test), konfiguracja vitest w root
+
 ### G-082 Domyślna szerokość jezdni wycina zmapowane chodniki
 - Status: scalone w klasę G-728 (12.11, porządki rejestru; pełny opis tutaj); wcześniej: częściowo naprawione (#98: 262 → 131 m); zostaje otwarte do 0 (Zielona, Podwale przy 4,5 m, Łęczyńska przy skrzyżowaniu); przesunięcie jezdni od chodnika jednostronnego: G-113
 - Gdzie: Podwale w40052391/w305027452, Staszica w1150131461, w232805965, Zielona w173533827, Łęczyńska w85717509

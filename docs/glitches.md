@@ -1641,13 +1641,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (korekty wysokości z NMPT, jak `CHURCH_SURFACE`; Rybna 13: podział obrysu albo wysokość części; w232362965 i w364575978: wierzch na poziomie podwórzy, bez kondygnacji nad nim; oficyna: korekta obrysu z LoD2)
 - Test przyjęcia: proponowana kontrola `height-vs-nmpt` w stare-miasto-1-1 3 → 0; `bare-enclosed-yard` bez składowej (701..711; 101..114)
 
-### G-719 Test `venues` „sign nearly all of the city's venues” przekracza 20 s w CI
-- Status: w PR #474 (12.11; generate pod pokryciem: venues 14,5 → 6,9 s na shardzie 2/2, tabele bez zmian)
-- Ważność: S3 (czerwone CI na PR-ach, które nie dotykają importu) · Zasięg: shard „Unit tests (2)”: #463 (engine) i #468 (geometria 2D) padły na tym samym teście, `Test timed out in 20000ms`, `tools/osm-import/test/venues.test.ts:218`, `generatedCity()` bez pamięci miasta; main zielony, więc test jest blisko limitu. Krok 1.1 ADR-0077 dokłada +13,5% do tego testu. Podniesienie limitu nie jest poprawką: najpierw pomiar, gdzie idzie czas (import tabel, `generate()`, kolejność plików w projekcie `shared`)
-- Pakiet właściciela: tools/osm-import (test), konfiguracja vitest w root
-
 ### G-720 `corrections.test.ts` trwa w CI ok. 27 s jako plik
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g720 (12.11, 39f79d1; plik 10,1 → 2,6 s pod pokryciem, asercje bez zmian; PR po scaleniu #474)
+- Status: w PR #475 (12.11; plik 10,1 → 2,6 s pod pokryciem, asercje bez zmian)
 - Ważność: S4 · Zasięg: następny kandydat do limitu czasu w shardzie testów jednostkowych; przy G-719 pamięć wygenerowanego miasta (ADR-0046) w CI nie trafia: CI nie zachowuje `node_modules/.cache`, a klucz obejmuje całe `packages/{core,sim,engine}/src`; `generatedCity()` woła `generate` bez lod1/lod2, więc test liczy inne miasto niż tabele. Do decyzji: węższy klucz i `actions/cache` w CI
 - Pakiet właściciela: tools/osm-import (testy), .github (cache)
 
