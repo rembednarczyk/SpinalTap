@@ -1751,20 +1751,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: w914787972 i w331453920, x −87…−40: goły pas 1–2,8 m między północną krawędzią asfaltu (z 119,1–119,7) a trawnikiem w1011367949; ortofoto 2025-04: asfalt do z ≈ 120,3–121,0, dalej trawa; BDOT10k: oś północnej jezdni 117,1 przy x −70, nawierzchnia 7 m; trawnik w OSM 0,3–1,5 m za daleko na północ; poprawka: krawędź jezdni po stronie bez chodnika dociągnąć do `landuse=grass`, gdy ten leży bliżej niż 3 m; kontrola `kerb-strip-bare` (181) spadnie
 - Pakiet właściciela: tools/osm-import
 
-### G-675 Przeskok oznakowania na styku zwężonych kawałków jezdni
-- Status: w PR #454 (12.11; kurator PRZYJĘTE; marking-step 3 → 0)
-- Ważność: S4 · Zasięg: Radziwiłłowska przy x −66 (`fitLanes`, #437): linia środkowa skacze z 113,7 na 112,9, linia między pasami z 116,6 na 116,2; w rzeczywistości linia środkowa ciągła na z ≈ 114,0–114,5 (w grze 112,9–113,7, wcześniej na main 112,2–113,2); kontrola `marking-step` (skok > 0,3 m na wspólnym węźle kawałków jednej ulicy), baza ≥ 2
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-676 Uskok 6,2 m między dachem VIVO a dachem garażu
 - Status: zgłoszone (12.11, kurator przeglądu G-662; niski priorytet)
 - Ważność: S4 · Zasięg: VIVO r5601275 przy ukośnej ścianie NE (x 1106–1120, z 228–240): w grze dach VIVO 17,2 m (jedna wysokość LoD1 dla całej galerii), garaż 11 m; w rzeczywistości uskok < ok. 1 m (garaż jasny na całej szerokości na nalocie 2025-04, uskok 6 m dałby cień ok. 5,8 m; trawnik r11978659 ciągnie się po obu dachach, tarasowy dach „Tarasy Zamkowe”); przy cyplu NW krawędź garażu prawdopodobnie obniża się do ok. 7–8 m
 - Pakiet właściciela: tools/osm-import
-
-### G-677 Kontrola skanu: ręczna bryła nad drogą z OSM
-- Status: w PR #452 (12.11; wyjątek T-261/garaz-vivo dopisany po #447, baza 0)
-- Ważność: S4 · Zasięg: brak kontroli, która łapie ręczny obszar `ADDED_AREAS` z `building=*`, którego pierścień (także poza mapą) przecina `highway=*` bez `tunnel` ani `covered`; dziś 1 przypadek: `T-261/garaz-vivo` zamyka schody w376043570 i chodnik w295849313 (wejście do VIVO pod dachem garażu, x 1121–1146, poza mapą, ukryte przycięciem na x = 1120); kontrola `added-solid-over-way` z bazą 1 i wyjątkiem z odsyłaczem do topografii do czasu poszerzenia mapy
-- Pakiet właściciela: tools/glitch-scan
 
 ### G-679 Trzy pary identycznych kawałków nawierzchni placów na Krakowskim
 - Status: zgłoszone (12.11, ADR-0078 etap 1)

@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-677 Kontrola skanu: ręczna bryła nad drogą z OSM
+- Status: naprawiony (PR #452, 2513ea4)
+- Ważność: S4 · Zasięg: brak kontroli, która łapie ręczny obszar `ADDED_AREAS` z `building=*`, którego pierścień (także poza mapą) przecina `highway=*` bez `tunnel` ani `covered`; dziś 1 przypadek: `T-261/garaz-vivo` zamyka schody w376043570 i chodnik w295849313 (wejście do VIVO pod dachem garażu, x 1121–1146, poza mapą, ukryte przycięciem na x = 1120); kontrola `added-solid-over-way` z bazą 1 i wyjątkiem z odsyłaczem do topografii do czasu poszerzenia mapy
+- Pakiet właściciela: tools/glitch-scan
+
+### G-675 Przeskok oznakowania na styku zwężonych kawałków jezdni
+- Status: naprawiony (PR #454, 389e0aa)
+- Ważność: S4 · Zasięg: Radziwiłłowska przy x −66 (`fitLanes`, #437): linia środkowa skacze z 113,7 na 112,9, linia między pasami z 116,6 na 116,2; w rzeczywistości linia środkowa ciągła na z ≈ 114,0–114,5 (w grze 112,9–113,7, wcześniej na main 112,2–113,2); kontrola `marking-step` (skok > 0,3 m na wspólnym węźle kawałków jednej ulicy), baza ≥ 2
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
 ### G-678 Budynki z OSM przykrywają drogi bez `covered` ani `tunnel`
 - Status: odrzucone (12.11, triage łowcy: 16 z 857 to fałszywe alarmy sondy: 4 drogi `layer=-1` pod garażami, 4 dziedzińce i otwór bramy w multipolygonach, VIVO już prowadzone, 5 budynków bez bryły w grze albo poza mapą; żadna droga nie wchodzi w ścianę; skan `lane-in-building`, `passage-blocked`, `building-underground-solid` na 0)
 - Ważność: S4 · Zasięg: sonda: 16 z 857 budynków OSM w mapie przykrywa linię `highway=*` bez `tunnel`/`covered`, głównie `service` przez przejazdy bramowe; garaż w173070505 przykrywa 11 dróg wejścia do VIVO (poza grą od G-600); w grze droga może wchodzić w ścianę zamiast przejazdu; do sprawdzenia, które to przejazdy (`tunnel=building_passage`) brakujące w OSM, i rozszerzenia kontroli `added-solid-over-way` na budynki z OSM
