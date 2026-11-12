@@ -1933,6 +1933,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; ground)
 - Test przyjęcia: goły teren w klasie przedpola i szczelin w raporcie komórki 10 składowych / 2474 m² -> 0 (poza zielenią ortofoto); `kerb-strip-bare` w nabrzeze-0-1 2 próbki -> 0. Baza skanu spada w tym samym commicie
 
+### G-719 Test `venues` „sign nearly all of the city's venues” przekracza 20 s w CI
+- Status: zgłoszone (12.11, orkiestrator; w naprawie)
+- Ważność: S3 (czerwone CI na PR-ach, które nie dotykają importu) · Zasięg: shard „Unit tests (2)”: #463 (engine) i #468 (geometria 2D) padły na tym samym teście, `Test timed out in 20000ms`, `tools/osm-import/test/venues.test.ts:218`, `generatedCity()` bez pamięci miasta; main zielony, więc test jest blisko limitu. Krok 1.1 ADR-0077 dokłada +13,5% do tego testu. Podniesienie limitu nie jest poprawką: najpierw pomiar, gdzie idzie czas (import tabel, `generate()`, kolejność plików w projekcie `shared`)
+- Pakiet właściciela: tools/osm-import (test), konfiguracja vitest w root
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
