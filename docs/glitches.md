@@ -1782,12 +1782,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
 
 ### G-684 Fałszywy alarm `levels-tag-lost` na Bramie Krakowskiej
-- Status: potwierdzony fałszywy alarm (12.11, kurator); poprawka w `levelsTagLost`: obrys z częściami z `soffit` porównywać z najwyższą liczbą kondygnacji części albo pominąć; baza 4 → 3
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g684); potwierdzony fałszywy alarm (12.11, kurator); poprawka w `levelsTagLost`: obrys z częściami z `soffit` porównywać z najwyższą liczbą kondygnacji części albo pominąć; baza 4 → 3
 - Ważność: S4 · Zasięg: r7224409 (473; −91): „2 storeys of building:levels=5”; obrys ma `height` 10 m i części `building:part` (wieża 5 kond., przedbramie 2 kond., T-007 rozwiązane); kontrola liczy obrys bez części; poprawka: wyjątek dla budynków z częściami, baza 4 → 3
 - Pakiet właściciela: tools/glitch-scan
 
 ### G-685 Raport ortofoto liczy bariery z tabeli mebli zamiast z `chunk.barriers`
-- Status: zgłoszone (12.11, kurator, przegląd stare-miasto-0-0)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g685); zgłoszone (12.11, kurator, przegląd stare-miasto-0-0)
 - Ważność: S4 (narzędzie, nie gra) · Zasięg: `tools/orto/src/barriers.ts` (`barrierReport`, `game` i `notDrawn`). W stare-miasto-0-0 raport podaje 9 linii „nierysowanych” (np. mur miejski w609951474), a wszystkie są w `stare-miasto.generated.ts` (`barriers`) i w grze (ADR-0077 p. 4). Komentarz modułu („the game draws none of them”) jest nieaktualny.
 - Pakiet właściciela: tools/orto
 - Test przyjęcia: raport dla stare-miasto-0-0 ma `notDrawn` 0 (bariery z `MAP_CHUNKS[].barriers`)
