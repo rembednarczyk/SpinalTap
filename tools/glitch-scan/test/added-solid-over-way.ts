@@ -26,7 +26,9 @@ const CELL = 16;
 export const EDGE_TOL = 0.05;
 
 /** The added solids over a way on purpose or until the map is widened, by id, with the entry of `docs/topografia.md` and why (G-677). */
-export const SOLID_OVER_WAY_KNOWN: Readonly<Record<string, string>> = {};
+export const SOLID_OVER_WAY_KNOWN: Readonly<Record<string, string>> = {
+  "T-261/garaz-vivo": "T-261: the entrance to VIVO under the garage's roof, steps w376043570 and footway w295849313 at x 1121-1146, off the map: to settle with the map's widening",
+};
 
 const isOpen = (v: string | undefined): boolean => v === undefined || v === "no";
 
