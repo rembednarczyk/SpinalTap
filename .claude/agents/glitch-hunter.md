@@ -20,7 +20,7 @@ Szukasz glitchy w jednym obszarze, który wskazał orkiestrator, i zgłaszasz je
 
    Pliki `zz-*` usuń przed końcem pracy.
 3. **Zrzuty z gry:**
-   - `pnpm build`, potem `SHOTS=<katalog> pnpm e2e e2e/glitch-shots.spec.ts` z punktami w `GLITCH_SPOTS` (JSON: `[[nazwa, x, z, yaw, pitch], ...]`);
+   - `pnpm build`, potem `SHOTS=<katalog> pnpm e2e e2e/glitch-shots.spec.ts` z punktami w `GLITCH_SPOTS` (JSON: `[[nazwa, x, z, yaw, pitch], ...]`), w dzień gry z `SHOT_HOUR=12` (bez niej noc startu);
    - obejrzyj każdy zrzut;
    - teleport do wnętrza bryły daje czarny kadr, a to nie jest glitch.
 4. **Dane źródłowe:** tagi OSM w `data/osm/*.json` i plan mebli `docs/world/lublin-props.todo.json`. Pozwalają odróżnić błąd importu od prawdziwego stanu miasta.

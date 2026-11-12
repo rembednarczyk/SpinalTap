@@ -24,7 +24,7 @@ export const edgeGap = (ring: readonly Pt[], x: number, z: number): number => {
 };
 
 /** Indices (row · width + col) of the samples inside the ring, `inset` metres or more from its edges. */
-export const samplesIn = (h: CoverHeader, ring: readonly Pt[], inset = 0): number[] => {
+export const samplesIn = (h: Pick<CoverHeader, "x0" | "z1" | "step" | "width" | "height">, ring: readonly Pt[], inset = 0): number[] => {
   const out: number[] = [];
   if (ring.length < 3) return out;
   const zs = ring.map((p) => p.z);
