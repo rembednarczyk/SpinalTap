@@ -11,7 +11,9 @@ import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podza
 import { LUBLIN_PROP_TABLE } from "../../../packages/sim/src/content/lublin/props.generated.ts";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
+import type * as Sites from "../../../packages/sim/src/content/lublin/sites.ts";
 import type * as LanduseBare from "../../glitch-scan/test/landuse-bare.ts";
+import { type Rect } from "../../osm-import/src/geometry.ts";
 import { type OsmData } from "../../osm-import/src/osm.ts";
 import { REPO } from "./config.ts";
 
@@ -22,4 +24,10 @@ export const PROP_TABLE = LUBLIN_PROP_TABLE;
 export const loadLanduseBareAt = async (osm: OsmData): Promise<(x: number, z: number) => boolean> => {
   const { module } = await runnerImport<typeof LanduseBare>(join(REPO, "tools/glitch-scan/test/landuse-bare.ts"), { root: REPO, configFile: false, logLevel: "warn" });
   return module.landuseBareAt(module.cityLanduseWorld(osm));
+};
+
+/** The rectangles where the map's buildings give way to a set piece (`CLEARED_BUILDINGS`), through the module runner as the scan's check. */
+export const loadClearedBuildings = async (): Promise<readonly Rect[]> => {
+  const { module } = await runnerImport<typeof Sites>(join(REPO, "packages/sim/src/content/lublin/sites.ts"), { root: REPO, configFile: false, logLevel: "warn" });
+  return module.CLEARED_BUILDINGS;
 };

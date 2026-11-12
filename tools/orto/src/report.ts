@@ -5,6 +5,8 @@
  *   surfaces against the cover, the added areas in it, the street furniture by kind (OSM or the
  *   generator) with the pavements left empty, and the barriers of the map against the game's;
  * - an added area (`ADDED_AREAS`), or all of them: m² by cover class.
+ * A cell's report ends with the fixed sections of `sections.ts`: footprints against LoD2, the
+ * flights' lean, the bare ground in parts, the buildings the game lacks and the scan's known kinds.
  */
 import { writeFileSync } from "node:fs";
 import { ADDED_AREAS } from "../../osm-import/src/corrections.ts";
@@ -14,10 +16,11 @@ import { barrierReport } from "./barriers.ts";
 import { CELLS, cellById } from "./config.ts";
 import { type Cover, coverFor, emptyCover, readCover } from "./cover.ts";
 import { EMPTY_RUN, emptyRuns, furnitureCounts, osmPlanPoints, piecesOf } from "./furniture.ts";
-import { CHUNKS, PROP_TABLE, loadLanduseBareAt } from "./game.ts";
+import { CHUNKS, PROP_TABLE, loadClearedBuildings, loadLanduseBareAt } from "./game.ts";
 import { MAP_REGIONS } from "./region.ts";
 import { cellOverlay, ringOverlay } from "./overlay.ts";
 import { type ClassCounts } from "./rings.ts";
+import { cellSections, sectionsText } from "./sections.ts";
 import { THRESHOLDS } from "./thresholds.ts";
 import { loadOsm } from "./truth.ts";
 
@@ -35,7 +38,7 @@ const inside = (ring: readonly { x: number; z: number }[], r: Rect) => ring.some
 const addedOverlay = (rect?: Rect) =>
   ADDED_AREAS.filter((a) => !rect || inside(a.ring, rect)).map((a) => ({ id: a.id, ref: a.ref, tags: a.tags, m2: ringOverlay(covers, a.ring) ?? null }));
 
-const cellReport = (id: string, osm: OsmData, landuseBareAt: (x: number, z: number) => boolean) => {
+const cellReport = (id: string, osm: OsmData, landuseBareAt: (x: number, z: number) => boolean, cleared: readonly Rect[]) => {
   const cell = cellById(id);
   const chunk = CHUNKS.find((c) => c.id === id);
   const cover = coverFor(covers, { x: (cell.rect.minX + cell.rect.maxX) / 2, z: (cell.rect.minZ + cell.rect.maxZ) / 2 });
@@ -52,6 +55,7 @@ const cellReport = (id: string, osm: OsmData, landuseBareAt: (x: number, z: numb
     furniture: furnitureCounts(pieces, osmPlanPoints(), cell.rect),
     emptyPavements: { over: EMPTY_RUN, count: runs.length, metres: runs.reduce((s, r) => s + r.length, 0), longest: runs.slice(0, 8) },
     barriers: { kinds: barriers.kinds, notDrawnCount: barriers.notDrawn.length, notDrawn: barriers.notDrawn },
+    sections: cellSections({ cell, ...(cover ? { cover } : {}), landuseBareAt, cleared }),
   };
 };
 
@@ -72,6 +76,7 @@ const cellText = (r: CellReport): string[] => {
   out.push(`chodniki bez mebli > ${r.emptyPavements.over} m: ${r.emptyPavements.count} odcinków, ${r.emptyPavements.metres} m${r.emptyPavements.longest.slice(0, 3).map((x) => `; ${x.street} (${x.side}) ${x.length} m od ${x.from.x},${x.from.z}`).join("")}`);
   const b = Object.entries(r.barriers.kinds).filter(([, v]) => v.osmLines + v.osmPoints + v.game > 0);
   out.push(`bariery OSM (linie/m/punkty, gra): ${b.length ? b.map(([k, v]) => `${k} ${v.osmLines}/${v.osmMetres}/${v.osmPoints}, gra ${v.game}`).join("; ") : "brak"}; nierysowane linie ${r.barriers.notDrawnCount}`);
+  out.push(...sectionsText(r.sections));
   return out;
 };
 
@@ -89,7 +94,8 @@ const main = async () => {
   if (!ids[0]) throw new Error("usage: report.ts --cell <id> | --all | --area <id> | --added [--out FILE]");
   const osm = loadOsm();
   const landuseBareAt = await loadLanduseBareAt(osm);
-  const cells = ids.map((id) => cellReport(id, osm, landuseBareAt));
+  const cleared = await loadClearedBuildings();
+  const cells = ids.map((id) => cellReport(id, osm, landuseBareAt, cleared));
   for (const r of cells) console.log(cellText(r).join("\n"));
   const total = (pick: (r: CellReport) => ClassCounts | undefined) =>
     cells.reduce<Record<string, number>>((s, r) => {
