@@ -238,6 +238,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przegląd kuratora (921e44d): UWAGI, T-062/G-112 (zwężenie całej ulicy z próbek przy skrzyżowaniu) i T-063/G-113 (dwukierunkowe poniżej 4,5 m, zwężenie symetryczne); Podwale w305027452 ma 4,3 m, nie 3 m
 - Przejście krakowskie-1-0 (12.11): `footway-on-carriageway` 121 na w288178957 (`highway=footway` bez `footway=sidewalk`; Peowiaków 79, Kościuszki 35, Plac Czechowicza 7), niewidoczne, bo chodnik leży nad jezdnią; poprawka przy G-471
 - (przejście krakowskie-2-0, 12.11): `sidewalk-under-carriageway` nowe miejsce Dolna Panny Marii w796560163 nad chodnikiem w690581646 (327; -230..-238), 9 próbek; Zielona w173533827 51 próbek (T-046); `footway-on-carriageway` w67508850 na Zielonej (276..285; -23..-29), 31 próbek.
+- krakowskie-2-1 (12.11): `sidewalk-under-carriageway` 15 próbek: Zielona w1054482101 pod w173533827 (262..273; -16..-9) 14, w232805935 pod w770589493 (262; 80) 1; `footway-on-carriageway` w67508850 na Zielonej (243..266; -16..-1) 29 próbek (T-046); ciąg dalszy wpisu z krakowskie-2-0.
 
 ### G-083 Drogi dla aut bez nazwy i łącznice bez pasów ruchu
 - Status: odłożone (samochody na później, decyzja użytkownika 31.10); zgłoszone (audyt dróg) (T-047) · Ważność: S3 · Zasięg: 7 dróg bez nazwy + 3 łącznice, ok. 550 m · Koszt: mały–średni
@@ -546,7 +547,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-190 Puste pasy postojowe OSM
 - Status: częściowo naprawione: skan w main (1.11, #169: `kerb-strip-no-car-street` baza 3, `bay-strip-empty-known` baza 4, `bay-strip-sparse` 0); zostaje poprawka generatora: łatka zatok przy ulicach dostaw (`docs/plany/g190-zatoki-przy-ulicach-dostaw.patch`) razem z G-133; Łęczyńska w1159135271 (OSM `capacity=23`, w grze 0: obrys płytszy niż auto w poprzek) do decyzji, np. nadwozie nad krawężnikiem
-- Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133)
+- Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133); krakowskie-2-1 (12.11): `bay-strip-empty-known` w1514058885 Świętoduska (375; 2): pas postojowy bez aut na spadku ponad LEVEL_DROP (G-133).
 - Poprawka: płytki pas z tagiem `diagonal`/`perpendicular` → mniejszy kąt albo krótszy model; spadek przez G-133 (pochylenie aut); `bay-strip-sparse` dziś pomija pasy bez auta
 - Kurator #162: także odcinek Kowalskiej w232362980 x 644..668 bez zatok, bo ulica ma `use: deliveries`, a `bayCars` bierze tylko `CAR_STREETS` (T-107); zatoka w1544340690 s=24,8 (689,2; 171,8) odrzucona przez odstęp od chodnika w173566578, a na ortofoto stoi tam auto. Proponowane kontrole: `kerb-strip-no-car-street` (baza ≥ 1) i `bay-strip-sparse` także dla pasów bez aut (baza ≥ 5)
 - Pakiet właściciela: packages/sim (kerb-bays), tools/glitch-scan
@@ -1310,7 +1311,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-446 Starsze pady zmieniają teren na drogach i chodnikach (`pad-on-road` baza 8; T-051, T-002)
 - Status: zgłoszone (7.11, naprawiacz rundy 3 PR #343; kontrola `pad-on-road` z tego PR)
-- Ważność: S4 · Zasięg: pad T-051 przy Bajkowskiego zmienia teren na 7 drogach i chodnikach o 0,5–1,5 m (w40052294 +1,52 m); pad T-002 przy (2515; 387) obniża ścieżkę w972606056 o 1,80 m; także rampa zachodnia Alchemii nachodzi na chodnik w232464426 przy z 52–56 (przypadkiem w tolerancji); krakowskie-2-0 (12.11): `pad-on-road` 3 to pad myjni T-051 (385..415; −50..−21), celowa scena.
+- Ważność: S4 · Zasięg: pad T-051 przy Bajkowskiego zmienia teren na 7 drogach i chodnikach o 0,5–1,5 m (w40052294 +1,52 m); pad T-002 przy (2515; 387) obniża ścieżkę w972606056 o 1,80 m; także rampa zachodnia Alchemii nachodzi na chodnik w232464426 przy z 52–56 (przypadkiem w tolerancji); krakowskie-2-0 (12.11): `pad-on-road` 3 to pad myjni T-051 (385..415; −50..−21), celowa scena.; krakowskie-2-1 (12.11): `pad-on-road` 3 próbki to znów pad myjni T-051: w40052294 (384; -17) +1,52 m na 40 m, w173531768 (398; -17) 1,02 m na 13 m, w232805957 (385; -16) 1,54 m na 8 m; celowa scena.
 - Pakiet właściciela: packages/sim (content, pady), tools/glitch-scan
 
 ### G-448 `traffic.test.ts` „takes turns at crossings by the market” przekracza 5 s pod obciążeniem
@@ -1320,7 +1321,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-451 Klin gołego terenu między chodnikiem a jezdnią Kościuszki (T-222)
 - Status: zgłoszone (7.11, kurator, przegląd G-440)
-- Ważność: S4 · Zasięg: zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²; poprawka: lokalnie domknąć jezdnię do krawędzi chodnika; kontrola `kerb-gap-bare` (baza 35 631 próbek 0,25 m); przejście krakowskie-1-0 (12.11): `kerb-gap-bare` 1508 próbek w komórce, m.in. Narutowicza w40051033 (199..217; −197..−188) 62 m² (szczelina 0,6 m), w215824205 (84..94; −269..−262) 37 m² i 33 mniejsze; Peowiaków należy do G-471
+- Ważność: S4 · Zasięg: zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²; poprawka: lokalnie domknąć jezdnię do krawędzi chodnika; kontrola `kerb-gap-bare` (baza 35 631 próbek 0,25 m); przejście krakowskie-1-0 (12.11): `kerb-gap-bare` 1508 próbek w komórce, m.in. Narutowicza w40051033 (199..217; −197..−188) 62 m² (szczelina 0,6 m), w215824205 (84..94; −269..−262) 37 m² i 33 mniejsze; Peowiaków należy do G-471; krakowskie-2-1 (12.11): `kerb-gap-bare` 71 kwadratów (3097 próbek 0,25 m, szczelina do 2,75 m, 898 próbek > 1 m); skupiska (360..400; 0..80), (400..440; 80..160), (240..280; 80..120).
 - Pakiet właściciela: tools/osm-import (ground)
 
 ### G-452 Szczeliny 1–15 cm między przylegającymi budynkami z OSM (T-223)
@@ -1740,7 +1741,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-674 Północny krawężnik Radziwiłłowskiej przy Placu Litewskim przed trawnikiem OSM
 - Status: zgłoszone (12.11, kurator przeglądu #437; także na main)
-- Ważność: S4 · Zasięg: w914787972 i w331453920, x −87…−40: goły pas 1–2,8 m między północną krawędzią asfaltu (z 119,1–119,7) a trawnikiem w1011367949; ortofoto 2025-04: asfalt do z ≈ 120,3–121,0, dalej trawa; BDOT10k: oś północnej jezdni 117,1 przy x −70, nawierzchnia 7 m; trawnik w OSM 0,3–1,5 m za daleko na północ; poprawka: krawędź jezdni po stronie bez chodnika dociągnąć do `landuse=grass`, gdy ten leży bliżej niż 3 m; kontrola `kerb-strip-bare` (181) spadnie; (krakowskie-2-0): `kerb-strip-bare` Dolna Panny Marii w796560163: 1,3 m (329; -193), 3,8 m (337; -186) gołego pasa za krawężnikiem; ta sama klasa.
+- Ważność: S4 · Zasięg: w914787972 i w331453920, x −87…−40: goły pas 1–2,8 m między północną krawędzią asfaltu (z 119,1–119,7) a trawnikiem w1011367949; ortofoto 2025-04: asfalt do z ≈ 120,3–121,0, dalej trawa; BDOT10k: oś północnej jezdni 117,1 przy x −70, nawierzchnia 7 m; trawnik w OSM 0,3–1,5 m za daleko na północ; poprawka: krawędź jezdni po stronie bez chodnika dociągnąć do `landuse=grass`, gdy ten leży bliżej niż 3 m; kontrola `kerb-strip-bare` (181) spadnie; (krakowskie-2-0): `kerb-strip-bare` Dolna Panny Marii w796560163: 1,3 m (329; -193), 3,8 m (337; -186) gołego pasa za krawężnikiem; ta sama klasa.; krakowskie-2-1 (12.11): `kerb-strip-bare` Zielona w173533827: 1,7..1,8 m gołego pasa za krawężnikiem, 4 próbki (262..265; -11..-9); ta sama klasa (T-063).
 - Pakiet właściciela: tools/osm-import
 
 ### G-676 Uskok 6,2 m między dachem VIVO a dachem garażu
@@ -1790,7 +1791,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-690 Siedem linii barier z OSM nieobecnych w grze; bramy 4 → 2 w stare-miasto-0-0
 - Status: zgłoszone (12.11, naprawiacz G-685; do triage)
-- Ważność: S4 · Zasięg: poprawiony raport `tools/orto --all`: w783241007 (płot, 202 m i 93 m w dwóch komórkach), w295849311 (mur, 114 m), w296752323, w292125943, w296750495, w1395539925, w618560965 nie mają barier w danych gry; w stare-miasto-0-0 mapa ma 4 punkty `gate`, gra 2; możliwy glitch importera (#418) albo celowe pominięcie
+- Ważność: S4 · Zasięg: poprawiony raport `tools/orto --all`: w783241007 (płot, 202 m i 93 m w dwóch komórkach), w295849311 (mur, 114 m), w296752323, w292125943, w296750495, w1395539925, w618560965 nie mają barier w danych gry; w stare-miasto-0-0 mapa ma 4 punkty `gate`, gra 2; możliwy glitch importera (#418) albo celowe pominięcie; krakowskie-2-1 (12.11): raport komórki: nierysowana linia bariery w783241007 (płot 202 m); bez nowych id.
 - Pakiet właściciela: tools/osm-import
 
 ### G-691 Zapadka bazy skanu przepuszcza zawyżoną bazę po scaleniu z innej podstawy
@@ -1885,6 +1886,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna (przypuszczalna): jak G-513, G-527, G-704, G-705: OSM nie ma obszarów nawierzchni podwórzy i przedpoli; szczeliny > `KERB_REACH` poza zasięgiem wypełnień (T-247); dwa budynki LoD2 nie są w OSM
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2025-04, tam gdzie przechył większy 2024-06)
 - Test przyjęcia: `landuse-bare` w krakowskie-2-0 160 -> najwyżej wartość z pozostawionym deptakiem T-045; goły teren w klasach podwórza i przedpola w raporcie komórki -> 0 (poza zielenią ortofoto); dwa budynki LoD2 w grze albo uzasadnione pominięcie. Baza skanu spada w tym samym commicie
+
+### G-710 Goły teren w krakowskie-2-1: przedpola przy fasadach i szczeliny przy jezdni (T-271)
+- Status: zgłoszone (12.11, opiekun mapy, raport komórki krakowskie-2-1)
+- Ważność: S3 (jak G-705, G-709, G-527) · Zasięg: krakowskie-2-1, goły teren 10063 m²: przedpola 13 / 5222 m² (twarde 70%), szczeliny przy jezdni > 3 m 2 / 2780 m² (twarde 66%), podwórza 1 / 85 m², w obrysie LoD2 1 / 169 m² (pawilon T-230, celowy), inne 2 / 143 m²; `landuse-bare` 14 kwadratów 10 m (693 próbki) w komórce; położenia w T-271
+- Dowód: `node tools/orto/src/report.ts --cell krakowskie-2-1` (sekcja gołego terenu), skan `landuse-bare` 14 kwadratów w komórce; ortofoto 2024-06, przechył (0,5; 0) m
+- Przyczyna (przypuszczalna): jak G-513, G-527, G-704, G-705: OSM nie ma obszarów nawierzchni przedpoli; szczeliny > `KERB_REACH` poza zasięgiem wypełnień (T-247); największa szczelina (267..348; 53..125) leży w połowie pod dachami LoD2 z trzech budynków już rozebranych (niepotwierdzone, raport nie podaje ich położenia)
+- Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2024-06)
+- Test przyjęcia: `landuse-bare` w krakowskie-2-1 14 kwadratów -> najwyżej wartość z pozostawionymi pasami T-247; goły teren w klasie przedpola w raporcie komórki -> 0 (poza zielenią ortofoto, 39% zieleni przy (350..410; 113..153)). Baza skanu spada w tym samym commicie
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
