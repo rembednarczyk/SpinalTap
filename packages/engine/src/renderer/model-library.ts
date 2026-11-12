@@ -280,7 +280,10 @@ export const outlineModelMeshes = (meshes: readonly AbstractMesh[], enabled: boo
  */
 export const MODEL_FETCH_TIMEOUT_MS = 120_000;
 
-/** The file's bytes, or a rejection once `MODEL_FETCH_TIMEOUT_MS` passes, with the fetch aborted. */
+/**
+ * The file's bytes, or a rejection once `MODEL_FETCH_TIMEOUT_MS` passes (with the fetch aborted) or
+ * when the server answers with an error status: the error page is not a model (G-634).
+ */
 const fetchModelBytes = async (url: string): Promise<ArrayBuffer> => {
   const abort = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -293,7 +296,11 @@ const fetchModelBytes = async (url: string): Promise<ArrayBuffer> => {
     }, MODEL_FETCH_TIMEOUT_MS);
   });
   try {
-    return await Promise.race([fetch(url, { signal: abort.signal }).then((r) => r.arrayBuffer()), timeout]);
+    const read = fetch(url, { signal: abort.signal }).then((r) => {
+      if (!r.ok) throw new Error(`Model ${url} could not be downloaded: HTTP ${r.status}${r.statusText ? ` ${r.statusText}` : ""}`);
+      return r.arrayBuffer();
+    });
+    return await Promise.race([read, timeout]);
   } finally {
     clearTimeout(timer);
   }
