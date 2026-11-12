@@ -45,12 +45,17 @@ const levelsOf = (v: string | undefined): number[] | null => {
  * A building wholly under ground, with nothing over the street above it (G-077, G-600): a cellar,
  * a shelter, a garage (`location=underground`, or every floor of its `level` below the ground's 0).
  * Not `layer` < 0 alone: a layer orders a building under a bridge or a viaduct, it does not sink it.
+ * Nor a `level` below 0 on a building with storeys or a height over the street (G-651): there the
+ * level names the floor of a part, a shop or an entrance, and the building itself stands up.
  */
 export const belowGround = (tags: Tags): boolean => {
   if (tags.location === "underground") return true;
   const levels = levelsOf(tags.level);
-  return levels !== null && levels.every((l) => l < 0);
+  return levels !== null && levels.every((l) => l < 0) && !standsAbove(tags);
 };
+
+const standsAbove = (tags: Tags): boolean =>
+  parseLength(tags.height ?? tags["building:height"]) !== null || (parseLevels(tags["building:levels"]) ?? 0) > 0 || (parseLevels(tags["roof:levels"]) ?? 0) > 0;
 
 const CHURCH = new Set(["church", "cathedral", "chapel", "basilica", "religious"]);
 // A monastery or a convent is the cloister by the church, not the church: no towers of its own (G-067).
