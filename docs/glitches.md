@@ -1741,11 +1741,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `chase` gangera (`ganger-walk.ts`) zostaje, dopóki cel jest w `CHASE_DRIFT` (8 m) od starego; gdy gracz przeskoczy płot w tym promieniu, ganger może dojść do starego celu i stać po złej stronie bariery
 - Pakiet właściciela: packages/sim (systems/ai)
 
-### G-667 Trawnik `T-245/trawnik-3-maja-klinika` leży na chodniku
-- Status: w PR #444 (12.11; kurator PRZYJĘTE; baza added-grass-off-green po #441: 5 → 4)
-- Ważność: S4 · Zasięg: Krakowskie, x −95…−92, z 131–155, 49 m², zieleń 2%: jasny chodnik 3 Maja ze słupkami i latarniami, zieleń w pasach przy x −97 i x −91; poprawka: trawnik na pasy zieleni albo kostka; kryterium zieleń ≥ 55%; wiersz T-245 do uzupełnienia o ten trawnik jako otwarty
-- Pakiet właściciela: tools/osm-import
-
 ### G-668 Trawnik `T-246/trawnik-nadstawna-3` leży na dachu
 - Status: zgłoszone (12.11, kurator przeglądu G-627)
 - Ważność: S4 · Zasięg: Podzamcze, x 814–823, z 474–489, przy zachodniej ścianie w73833932 (5,6 m): na obu nalotach krawędź dachu ok. 2,5 m na zachód od obrysu OSM, zarośla przy x 812–818; najpierw sprawdzić obrys w73833932, potem przesunąć trawnik

@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-667 Trawnik `T-245/trawnik-3-maja-klinika` leży na chodniku
+- Status: naprawiony (PR #444, f7a18f0; kurator PRZYJĘTE)
+- Ważność: S4 · Zasięg: Krakowskie, x −95…−92, z 131–155, 49 m², zieleń 2%: jasny chodnik 3 Maja ze słupkami i latarniami, zieleń w pasach przy x −97 i x −91; poprawka: trawnik na pasy zieleni albo kostka; kryterium zieleń ≥ 55%; wiersz T-245 do uzupełnienia o ten trawnik jako otwarty
+- Pakiet właściciela: tools/osm-import
+
 ### G-664 Zieleń z `layer>0` ukrywa gołą ziemię przed skanem `landuse-bare`
 - Status: naprawiony (PR #443, e4189a1; landuse-bare 69019 → 69214, odsłonięty pas G-661)
 - Ważność: S4 · Zasięg: `landuse-bare` pomija punkty w obrysie trawnika z mapy, także trawnika na dachu (r11978659), więc goły pas z G-661 nie zmienił bazy 69019; poprawka: zieleń z `layer>0` albo `location=roof` nie zwalnia próbek, nowa baza z przebiegu
