@@ -8,9 +8,8 @@ import { type Area, type Line } from "./features.ts";
 import { type Pt, centroid } from "./geometry.ts";
 import { ALCHEMIA_AREAS } from "./corrections-alchemia.ts";
 import { CZECHOWICZA_AREAS } from "./corrections-czechowicza.ts";
-import { DEPTAKI_CORRECTIONS } from "./corrections-deptaki.ts";
+import { ADDED_AREAS_TAIL, TAG_CORRECTIONS_TAIL } from "./corrections-kerb.ts";
 import { PODZAMCZE_AREAS } from "./corrections-podzamcze.ts";
-import { KRAKOWSKIE_ADDED_AREAS } from "./corrections-radziwillowska.ts";
 import { type Tags } from "./osm.ts";
 
 export interface TagCorrection {
@@ -163,7 +162,7 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
   // stand 9.6..10.1 m apart (centre lines), about 11 m with the balustrades on the orthophoto.
   ...stairs(["w1435832499", "w1305940836", "w1305889408", "w1305940837", "w1306105687"], "biegi"),
   ...stairs(["w1435832498", "w56965512", "w1305889407", "w1305940838", "w48500135", "w1306105686"], "podesty"),
-  ...DEPTAKI_CORRECTIONS,
+  ...TAG_CORRECTIONS_TAIL,
 ];
 
 /**
@@ -672,7 +671,7 @@ export const ADDED_AREAS: readonly AddedArea[] = [
   ...PODZAMCZE_AREAS,
   ...CZECHOWICZA_AREAS,
   ...ALCHEMIA_AREAS,
-  ...KRAKOWSKIE_ADDED_AREAS,
+  ...ADDED_AREAS_TAIL,
 ];
 
 /** The added areas as the import reads the map's. */

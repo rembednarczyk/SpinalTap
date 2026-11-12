@@ -4,6 +4,7 @@
  */
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
+import { parseLength } from "./building-tags.ts";
 import { smallAlone } from "./building-alone.ts";
 import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
 import { type WorldBarrier, chunkBarriers, worldBarriers } from "./barriers.ts";
@@ -20,6 +21,7 @@ import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewal
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
+import { FILL_MARGIN, kerbFills, stretchZebras } from "./kerb-fill.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
@@ -101,7 +103,7 @@ const KERB_MARGIN = 0.5;
 const MIN_KERB_SAMPLES = 5;
 
 /** A coarse spatial hash of points along mapped sidewalks (`footway=sidewalk`), with their direction. */
-const sidewalkIndex = (lines: readonly Line[]) => {
+export const sidewalkIndex = (lines: readonly Line[]) => {
   const cell = 10;
   const grid = new Map<string, SidewalkPoint[]>();
   const key = (x: number, z: number) => `${Math.floor(x / cell)},${Math.floor(z / cell)}`;
@@ -280,11 +282,20 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const partAreas = areas.filter(isPart);
   const orphans = new Set(orphanParts(outlines, partAreas));
   const buildings = [...outlines, ...[...orphans].map(asBuilding)];
-  const near = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, 1)));
+  // The chunks' rects grown once, and each outline's box taken once, not once a chunk: the whole city's outlines are tested.
+  const grown = (m: number) => chunks.map((c) => grow(c.rect, m));
+  const [rects1, rectsFill] = [grown(1), grown(FILL_MARGIN)];
+  const nearAny = (pts: readonly Pt[], rs: readonly Rect[]) => {
+    const box = ringBounds(pts);
+    return rs.some((r) => rectsOverlap(box, r));
+  };
+  const near = (pts: readonly Pt[]) => nearAny(pts, rects1);
+  // The ground is laid as far past the chunks as the kerbs' fills in them read it (G-522).
+  const nearGround = (pts: readonly Pt[]) => nearAny(pts, rectsFill);
   const areaBands: (Band & { box: Rect })[] = [];
   for (const a of areas) {
     const b = areaBand(a);
-    if (b && near(b.ring)) areaBands.push({ ...b, box: ringBounds(b.ring) });
+    if (b && nearGround(b.ring)) areaBands.push({ ...b, box: ringBounds(b.ring) });
   }
   const holed = new Set(areas.filter((a) => a.holes > 0).map((a) => a.id));
   const bands = openPavings(areaBands, (b) => !holed.has(b.source));
@@ -298,7 +309,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   // So is a street's stretch over a tunnel it dips over (G-088): a deck, as on a bridge.
   const tunnelWays = tunnelLines(lines);
   for (const [k, l] of toAbutments(lines, areas).entries()) {
-    if (!near(l.line)) continue;
+    if (!nearGround(l.line)) continue;
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
     const mapped = l.tags.highway ? sidewalks.along(mapLines[k]!) : false;
     for (const piece of overTunnels(l, tunnelWays, src)) for (const b of lineBands(piece, mapped, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
@@ -318,6 +329,8 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   // A laid sidewalk stops at the kerb of the street it meets (ADR-0042): cut where it runs over another carriageway.
   const carriageways = bands.filter((b) => b.carriageway);
   const laid = bands.filter((b) => b.along);
+  // The sidewalks whole, where they run over the asphalt too: no carriageway is widened over one (G-082).
+  const walks = laid.filter((b) => !b.bridge).map((b) => b.ring);
   for (const b of laid) {
     const others = carriageways.filter((c) => c.source !== b.source && rectsOverlap(c.box, b.box));
     const pieces = cutSidewalk(b, (p) => others.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring)));
@@ -325,6 +338,15 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   }
   // A bridge is one deck: its outline fills the gap between its sidewalk and its carriageway (G-340).
   for (const b of bridgeFills(areas, bands)) bands.push({ ...b, box: ringBounds(b.ring) });
+  // A pavement reaches the kerb (G-522): the bare strip between a carriageway and its paving is
+  // closed, by the carriageway itself where the map gives it no width (G-570), its zebras with it.
+  // A street fitted to its mapped sidewalks (T-046) has its width from them, as a measured one.
+  const measured = new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id));
+  const kerbs = kerbFills(bands, buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), (source) => !measured.has(source), walks);
+  for (const [b, { ring, runs }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, box: ringBounds([...b.ring, ...ring]) });
+  for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
+  const nodeZebras = bands.filter((b) => b.surface === "crossing" && b.source.startsWith("n"));
+  stretchZebras(nodeZebras, [...kerbs.widened.values()].map((w) => w.ring)).forEach((z, i) => bands.splice(bands.indexOf(nodeZebras[i]!), 1, { ...z, box: ringBounds(z.ring) }));
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
   const zebras = bands.filter((b) => b.surface === "crossing");
   const onOther = (p: Pt, source: string) => carriageways.some((c) => c.source !== source && p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));
