@@ -1,4 +1,4 @@
-import { VEHICLE_SIZE } from "../../../packages/core/src";
+import { VEHICLE_SIZE, segmentDistance } from "../../../packages/core/src";
 import { pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { type Area, extractFeatures } from "../../osm-import/src/features.ts";
 import { type OsmData } from "../../osm-import/src/osm.ts";
@@ -18,12 +18,7 @@ type Finding = { readonly at: string; readonly what: string };
 
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
 
-const segmentGap = (p: P, a: P, b: P) => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
-};
+const segmentGap = (p: P, a: P, b: P) => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 const ringGap = (p: P, ring: readonly P[]) => Math.min(...ring.map((a, i) => segmentGap(p, a, ring[(i + 1) % ring.length]!)));
 
 export const kerbParksOf = (osm: OsmData): Area[] =>

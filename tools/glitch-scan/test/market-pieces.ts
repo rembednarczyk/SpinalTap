@@ -1,4 +1,5 @@
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src";
+import { pointInRingEvenOdd, segmentDistance } from "../../../packages/core/src";
 import { FOOD_STALL, distanceToPiece, furniturePrisms, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
 import { belowGround } from "../../osm-import/src/building-tags.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
@@ -36,27 +37,14 @@ const BOOTH_PAVEMENT = 2;
 
 const near = (p: Pt): string => `${p.x.toFixed(0)},${p.z.toFixed(0)}`;
 
-const segGap = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z);
-};
+const segGap = (p: Pt, a: Pt, b: Pt): number => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 const lineGap = (p: Pt, line: readonly Pt[], closed = false): number => {
   let best = Infinity;
   const n = closed ? line.length : line.length - 1;
   for (let i = 0; i < n; i++) best = Math.min(best, segGap(p, line[i]!, line[(i + 1) % line.length]!));
   return best;
 };
-const inRing = (p: Pt, ring: readonly Pt[]): boolean => {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i]!;
-    const b = ring[j]!;
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-};
+const inRing = (p: Pt, ring: readonly Pt[]): boolean => pointInRingEvenOdd(p.x, p.z, ring);
 
 /** Points of a piece's solid, every 0.25 m. */
 export const solidPoints = (i: StreetPropItem): Pt[] =>

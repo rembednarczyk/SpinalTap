@@ -5,12 +5,16 @@
  * (`CLEARED_BUILDINGS`): standing if LoD1 2024 covers `LOD1` of it or more, else likely pulled down
  * since 2017 (counted, not listed). The game's heights against the surface model (NMPT) need the
  * model in the repository's data; without it the check is skipped and the report says so.
+ *
+ * The other way round (`gameOnlySection`): the game's buildings with the centroid in the cell under
+ * less than `GAME` of LoD2, with the nearest LoD1 2024 building within `NEAR` m. These lower the
+ * footprints' IoU without any shift (LoD2's extract lacks them, or the building is new or gone).
  */
-import { type Pt, type Rect, ringBounds } from "../../osm-import/src/geometry.ts";
+import { type Pt, type Rect, centroid, pointInRing, ringBounds } from "../../osm-import/src/geometry.ts";
 import { gridOver, ringMask } from "./grid.ts";
 import { samplesIn } from "./rings.ts";
 
-export const ABSENT = { MIN_AREA: 30, GAME: 0.25, LOD1: 0.5, STEP: 0.5 } as const;
+export const ABSENT = { MIN_AREA: 30, GAME: 0.25, LOD1: 0.5, STEP: 0.5, NEAR: 12 } as const;
 
 export interface Lod2Like {
   readonly id: string;
@@ -99,5 +103,84 @@ export const absentText = (s: AbsentSection): string[] => [
   `-- budynki LoD2 ≥ ${ABSENT.MIN_AREA} m² z LoD1 2024 ≥ ${ABSENT.LOD1 * 100}%, budynki gry < ${ABSENT.GAME * 100}%`,
   ...s.standing.slice(0, 10).map((b) => `  ${b.id} (${b.box.minX}..${b.box.maxX}; ${b.box.minZ}..${b.box.maxZ}) ${b.m2} m², gra ${b.game}%, LoD1 2024 ${b.lod1}% (${b.lod1Height} m), okap ${b.eaves ?? "-"} m, kalenica ${b.ridge ?? "-"} m`),
   `bez LoD1 2024 (rozebrane od 2017?): ${s.gone.count}, ${s.gone.m2} m²; NMPT: ${s.nmpt}`,
+  `werdykt: ${s.verdict}`,
+];
+
+export interface GameOnlyBuilding {
+  readonly id: string;
+  /** The outline's centroid, rounded to metres. */
+  readonly at: Pt;
+  readonly m2: number;
+  /** Per cent of it under LoD2. */
+  readonly lod2: number;
+  /** The nearest LoD1 2024 building within `ABSENT.NEAR` m: its id, m² and distance (0 overlapping). */
+  readonly lod1?: { readonly id: string; readonly m2: number; readonly distance: number };
+}
+
+export interface GameOnlySection {
+  readonly buildings: readonly GameOnlyBuilding[];
+  readonly verdict: string;
+}
+
+const segDistance = (p: Pt, a: Pt, b: Pt) => {
+  const [dx, dz] = [b.x - a.x, b.z - a.z];
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+  return Math.hypot(a.x + t * dx - p.x, a.z + t * dz - p.z);
+};
+
+/** The least distance between two outlines (0 when one has a corner inside the other). */
+export const ringDistance = (a: readonly Pt[], b: readonly Pt[]): number => {
+  if (a.some((p) => pointInRing(p, b)) || b.some((p) => pointInRing(p, a))) return 0;
+  let d = Infinity;
+  for (const [u, v] of [[a, b], [b, a]] as const) for (const p of u) for (let i = 0; i < v.length; i++) d = Math.min(d, segDistance(p, v[i]!, v[(i + 1) % v.length]!));
+  return d;
+};
+
+const grownBy = (r: Rect, d: number): Rect => ({ minX: r.minX - d, minZ: r.minZ - d, maxX: r.maxX + d, maxZ: r.maxZ + d });
+
+/** The game's buildings in the cell (centroid) under less than `ABSENT.GAME` of LoD2, largest first. */
+export const gameOnlySection = (
+  rect: Rect,
+  game: readonly { readonly id: string; readonly ring: readonly Pt[] }[],
+  lod2: readonly (readonly Pt[])[],
+  lod1: readonly { readonly id: string; readonly ring: readonly Pt[] }[],
+): GameOnlySection => {
+  const g = gridOver(rect, ABSENT.STEP, 30);
+  const inLod2 = ringMask(g, lod2);
+  const lod1Boxes = lod1.map((b) => ringBounds(b.ring));
+  const buildings: GameOnlyBuilding[] = [];
+  for (const b of game) {
+    const c = centroid(b.ring);
+    if (c.x < rect.minX || c.x >= rect.maxX || c.z < rect.minZ || c.z >= rect.maxZ) continue;
+    const ks = samplesIn(g, b.ring);
+    if (!ks.length) continue;
+    const share = ks.filter((k) => inLod2[k]).length / ks.length;
+    if (share >= ABSENT.GAME) continue;
+    const near = grownBy(ringBounds(b.ring), ABSENT.NEAR);
+    let best: GameOnlyBuilding["lod1"];
+    lod1.forEach((l, i) => {
+      if (!overlaps(near, lod1Boxes[i]!)) return;
+      const d = ringDistance(b.ring, l.ring);
+      if (d <= ABSENT.NEAR && (!best || d < best.distance)) best = { id: l.id, m2: Math.round(samplesIn(g, l.ring).length * ABSENT.STEP * ABSENT.STEP), distance: Math.round(d * 10) / 10 };
+    });
+    buildings.push({ id: b.id, at: { x: Math.round(c.x), z: Math.round(c.z) }, m2: Math.round(ks.length * ABSENT.STEP * ABSENT.STEP), lod2: Math.round(share * 100), ...(best ? { lod1: best } : {}) });
+  }
+  buildings.sort((a, b) => b.m2 - a.m2);
+  const bare = buildings.filter((b) => !b.lod1).map((b) => b.id);
+  const m2 = buildings.reduce((s, b) => s + b.m2, 0);
+  return {
+    buildings,
+    verdict: buildings.length
+      ? `budynki gry bez LoD2: ${buildings.length} (${m2} m²), z LoD1 2024 w ${ABSENT.NEAR} m ${buildings.length - bare.length} (niepełny wyciąg LoD2)${bare.length ? `; bez LoD1 i LoD2: ${bare.join(", ")} (sprawdź, czy stoi)` : ""}`
+      : "każdy budynek gry w komórce leży na LoD2",
+  };
+};
+
+const comma = (v: number) => String(v).replace(".", ",");
+
+export const gameOnlyText = (s: GameOnlySection): string[] => [
+  `-- budynki gry bez LoD2 (LoD2 < ${ABSENT.GAME * 100}% obrysu; najbliższy LoD1 2024 w ${ABSENT.NEAR} m)`,
+  ...s.buildings.slice(0, 10).map((b) => `  ${b.id} (${b.at.x}; ${b.at.z}) ${b.m2} m², LoD2 ${b.lod2}%, LoD1 2024 ${b.lod1 ? `${b.lod1.id} ${b.lod1.m2} m² w ${comma(b.lod1.distance)} m` : "brak"}`),
+  ...(s.buildings.length > 10 ? [`  i ${s.buildings.length - 10} więcej`] : []),
   `werdykt: ${s.verdict}`,
 ];

@@ -22,11 +22,13 @@ export interface AimCandidate {
 }
 
 /**
- * Fighting the player: alerted (ADR-0029), or a sniper (no `ai`, ADR-0024) aiming at her with
- * its laser on (user decision 6.11); alive and on its feet. Not a civilian, a neutral patrol, an
- * unaware guard (ADR-0069) or a sniper resting, moving or idle.
+ * Fighting the player or the one she protects: alerted (ADR-0029), sent after an NPC (`ai.victim`,
+ * ADR-0018) even before it notices her (user decision 12.11), or a sniper (no `ai`, ADR-0024)
+ * aiming at her with its laser on (user decision 6.11); alive and on its feet. Not a civilian, a
+ * neutral patrol, an unaware guard (ADR-0069) or a sniper resting, moving or idle.
  */
-const inCombat = (e: Entity): boolean => (!!e.ai?.alerted || e.sniper?.phase === "aim") && !e.unconscious && (e.health?.current ?? 0) > 0 && !!e.body;
+const hostile = (e: Entity): boolean => !!e.ai?.alerted || !!e.ai?.victim || e.sniper?.phase === "aim";
+const inCombat = (e: Entity): boolean => hostile(e) && !e.unconscious && (e.health?.current ?? 0) > 0 && !!e.body;
 
 /**
  * Who the aim assist may pull to (ADR-0072, stages 2 and 3): the enemies fighting the player, within

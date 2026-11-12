@@ -5,6 +5,7 @@
  * across the street: the walker coming off the street stops at the deck's edge, a car jumps on.
  * Not a way under the bridge: the terrain there lies more than the headroom under the deck (G-062).
  */
+import { pointInRingEvenOdd } from "../../../packages/core/src";
 
 type Pt = { readonly x: number; readonly z: number };
 type Piece = { readonly ring: readonly Pt[] };
@@ -17,15 +18,7 @@ export const ABUTMENT_OUT = 0.3;
 /** A step more than this between the deck and the street beyond is a glitch (m): a kerb is 0.15. */
 export const ABUTMENT_STEP = 0.25;
 
-const inside = (ring: readonly Pt[], x: number, z: number): boolean => {
-  let c = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i]!;
-    const b = ring[j]!;
-    if (a.z > z !== b.z > z && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) c = !c;
-  }
-  return c;
-};
+const inside = (ring: readonly Pt[], x: number, z: number): boolean => pointInRingEvenOdd(x, z, ring);
 
 /** What the scan reads off the world. */
 export interface AbutmentWorld<T extends Piece> {

@@ -1,4 +1,5 @@
 import type { StreetPropItem } from "../../../packages/core/src";
+import { segmentDistance } from "../../../packages/core/src";
 import type { Line } from "../../osm-import/src/features.ts";
 import type { BoardSpan } from "../../osm-import/src/props-boards.ts";
 import { type DrawnView, cityFrames } from "../../osm-import/src/venue-boards.ts";
@@ -25,12 +26,7 @@ const BOARD = 1;
 const STREET_KINDS = new Set(["primary", "secondary", "tertiary", "unclassified", "residential", "living_street", "pedestrian", "service", "footway", "steps", "path"]);
 const TENEMENTS = new Set(["residential", "historic"]);
 
-const segGap = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z);
-};
+const segGap = (p: Pt, a: Pt, b: Pt): number => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 const lineGap = (p: Pt, line: readonly Pt[]): number => Math.min(Infinity, ...line.slice(1).map((b, i) => segGap(p, line[i]!, b)));
 
 /** Under ground or in a tunnel by its tags; a gateway's `building_passage` runs at street level. */

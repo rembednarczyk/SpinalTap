@@ -11,7 +11,7 @@ import { partTier } from "../src/building-parts.ts";
 import { ADDED_AREAS, TAG_CORRECTIONS, addedAreas, corrected, correctedLine } from "../src/corrections.ts";
 import { withoutReplaced } from "../src/corrections-alchemia.ts";
 import { type Area, type Line, extractFeatures } from "../src/features.ts";
-import { type Pt, pointInRing } from "../src/geometry.ts";
+import { type Pt, inRect, pointInRing, ringBounds } from "../src/geometry.ts";
 import { areaSurface } from "../src/ground.ts";
 import { mergeOsm, parseExtract } from "../src/osm.ts";
 import { geoToWorld } from "../src/project.ts";
@@ -114,15 +114,44 @@ describe("tag corrections (ADR-0042)", () => {
     [824.9, 240.1, 829.2, 239.5], // w1306105687
   ];
   const ground = PODZAMCZE_CHUNKS.flatMap((c) => c.ground);
+  // Each outline's bounds, kept by the outline: the tests sample tens of thousands of points against
+  // a thousand pieces, and under coverage the full crossing test of each was most of the file's time.
+  const bounds = new WeakMap<readonly number[], readonly [number, number, number, number]>();
+  const boundsOf = (o: readonly number[]) => {
+    let b = bounds.get(o);
+    if (!b) {
+      const xs = o.filter((_, i) => i % 2 === 0);
+      const zs = o.filter((_, i) => i % 2 === 1);
+      b = [Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs)];
+      bounds.set(o, b);
+    }
+    return b;
+  };
+  // A point outside the bounds crosses no edge to its left an odd number of times.
   const inside = (x: number, z: number, o: readonly number[]) => {
+    const b = boundsOf(o);
+    if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) return false;
     let hit = false;
     for (let i = 0, j = o.length - 2; i < o.length; j = i, i += 2) {
       if (o[i + 1]! > z !== o[j + 1]! > z && x < ((o[j]! - o[i]!) * (z - o[i + 1]!)) / (o[j + 1]! - o[i + 1]!) + o[i]!) hit = !hit;
     }
     return hit;
   };
+  // The pieces by 8 m cells of their bounds, each cell's in draw order.
+  const CELL = 8;
+  const cells = new Map<number, (typeof ground)[number][]>();
+  for (const g of ground) {
+    const [x0, z0, x1, z1] = boundsOf(g.outline);
+    for (let x = Math.floor(x0 / CELL); x <= Math.floor(x1 / CELL); x++)
+      for (let z = Math.floor(z0 / CELL); z <= Math.floor(z1 / CELL); z++) {
+        const key = x * 100003 + z;
+        if (!cells.has(key)) cells.set(key, []);
+        cells.get(key)!.push(g);
+      }
+  }
+  const cellOf = (x: number, z: number) => cells.get(Math.floor(x / CELL) * 100003 + Math.floor(z / CELL)) ?? [];
   /** The surface drawn on top at (x, z): the last piece in draw order, or null for bare terrain. */
-  const surfaceAt = (x: number, z: number) => ground.reduce<string | null>((s, g) => (inside(x, z, g.outline) ? g.surface : s), null);
+  const surfaceAt = (x: number, z: number) => cellOf(x, z).reduce<string | null>((s, g) => (inside(x, z, g.outline) ? g.surface : s), null);
 
   it("lays each flight of the castle stairs at least 9.5 m wide, as its walls stand (G-203)", () => {
     for (const [x0, z0, x1, z1] of FLIGHTS) {
@@ -334,7 +363,7 @@ describe("tag corrections (ADR-0042)", () => {
     const walls = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z))).filter(box);
     let bare = 0;
     for (let x = 672.05; x < 727; x += 0.1)
-      for (let z = 434.05; z < 449; z += 0.1) if (![...walls, ...pieces].some((o) => inside(x, z, o))) bare++;
+      for (let z = 434.05; z < 449; z += 0.1) if (!walls.some((o) => inside(x, z, o)) && !pieces.some((o) => inside(x, z, o))) bare++;
     expect(bare * 0.01).toBeLessThanOrEqual(0.5);
     expect(surfaceAt(700, 445)).toBe("road");
     expect(surfaceAt(700, 448.2)).toBe("road");
@@ -433,7 +462,7 @@ describe("tag corrections (ADR-0042)", () => {
     const walls = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z))).filter(box);
     let bare = 0;
     for (let x = 870.05; x < 915; x += 0.1)
-      for (let z = 364.55; z < 386; z += 0.1) if (![...walls, ...pieces].some((o) => inside(x, z, o))) bare++;
+      for (let z = 364.55; z < 386; z += 0.1) if (!walls.some((o) => inside(x, z, o)) && !pieces.some((o) => inside(x, z, o))) bare++;
     expect(bare * 0.01).toBeLessThanOrEqual(0.5);
     expect(surfaceAt(876, 367)).toBe("square");
     expect(surfaceAt(890, 379)).toBe("square");
@@ -492,7 +521,9 @@ describe("tag corrections (ADR-0042)", () => {
   // As a tag correction stays until OSM agrees, an added area goes once OSM maps a paving there.
   it("adds no area where OSM maps a paving of its own: the added area is to go once it does", () => {
     // The ways a set piece replaces are not the map's paving any more: the import leaves them out (T-241).
-    const mapped = withoutReplaced(extractFeatures(osm)).areas.filter((a) => PAVED.has(areaSurface(a.tags) ?? ""));
+    const mapped = withoutReplaced(extractFeatures(osm))
+      .areas.filter((a) => PAVED.has(areaSurface(a.tags) ?? ""))
+      .map((a) => ({ ...a, bounds: ringBounds(a.ring) }));
     for (const a of ADDED_AREAS) {
       const xs = a.ring.map((p) => p.x);
       const zs = a.ring.map((p) => p.z);
@@ -500,7 +531,7 @@ describe("tag corrections (ADR-0042)", () => {
       for (let x = Math.min(...xs) + 0.5; x < Math.max(...xs); x += 1)
         for (let z = Math.min(...zs) + 0.5; z < Math.max(...zs); z += 1) {
           if (!pointInRing({ x, z }, a.ring)) continue;
-          const by = mapped.find((m) => pointInRing({ x, z }, m.ring));
+          const by = mapped.find((m) => inRect({ x, z }, m.bounds) && pointInRing({ x, z }, m.ring));
           if (by) covered.push(`${x},${z} ${by.id}`);
         }
       expect(covered.join(" "), a.id).toEqual("");

@@ -1,4 +1,4 @@
-import { BARRIER_OPENINGS, SpatialHash, segmentDistance } from "@seki/core";
+import { BARRIER_OPENINGS, SpatialHash, segmentDistance, segmentParam } from "@seki/core";
 import { MAP_CHUNKS } from "./lublin/sites";
 import { SegmentGrid, sineOf } from "./segment-grid";
 import { BODY_RADIUS, WALKER_SIDE } from "./walker-size";
@@ -49,7 +49,7 @@ const shiftAt = (x: number, z: number, nx: number, nz: number): number => {
     if (Math.abs(sineOf({ x: -nz, z: nx }, { x: b.x - a.x, z: b.z - a.z })) >= ALONG_SINE) return;
     const dx = b.x - a.x;
     const dz = b.z - a.z;
-    const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+    const t = segmentParam(x, z, a.x, a.z, b.x, b.z);
     // Where the barrier is: ahead of the point into the loop (+) or behind it, out of the loop (-).
     const s = Math.sign((a.x + dx * t - x) * nx + (a.z + dz * t - z) * nz) * segmentDistance(x, z, a.x, a.z, b.x, b.z);
     if (s > -ALONG_ROOM && s < INSIDE_REACH) need = Math.max(need, s + ALONG_ROOM);
@@ -108,8 +108,9 @@ const LOOP_CELL = 4;
  * The first crossing of a segment with a moved end and another segment of the loop, not its
  * neighbour. The loop's segments lie in a `SpatialHash` by their boxes; `some` walks the cells
  * of a segment's box in the same order as the hand-made cells did, so the same crossing comes first.
+ * Exported for its test.
  */
-const firstCrossing = (pts: readonly Pt[], flags: readonly boolean[]): { i: number; j: number; at: Pt } | null => {
+export const firstCrossing = (pts: readonly Pt[], flags: readonly boolean[]): { i: number; j: number; at: Pt } | null => {
   const n = pts.length;
   const grid = new SpatialHash<number>(LOOP_CELL);
   for (let j = 0; j < n; j++) {

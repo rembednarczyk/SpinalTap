@@ -1,4 +1,4 @@
-import { DECAL_KINDS, DRAIN_GRATE, HOUSE_PLATE, doorLayout, STICKER_HOSTS, type StreetPropItem, WALL_DECALS, grateLayout, graffitiLayout, hostFaces, plateLayout, stickerLayout } from "../../../packages/core/src";
+import { DECAL_KINDS, DRAIN_GRATE, HOUSE_PLATE, doorLayout, STICKER_HOSTS, type StreetPropItem, WALL_DECALS, grateLayout, graffitiLayout, hostFaces, plateLayout, stickerLayout, pointInRingEvenOdd, segmentDistance } from "../../../packages/core/src";
 import { type Wall, frameWallMeta, hiddenWall, plinthBand } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { shaderGlass } from "../../../packages/engine/test/facade-glass-mask";
 import { holoMayHang, shopBoardHeight, shopBoardOn } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
@@ -61,22 +61,9 @@ export interface DecalWorld {
   readonly blockOf: (p: Pt) => string;
 }
 
-const inRing = (p: Pt, ring: readonly Pt[]): boolean => {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i]!;
-    const b = ring[j]!;
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-};
+const inRing = (p: Pt, ring: readonly Pt[]): boolean => pointInRingEvenOdd(p.x, p.z, ring);
 
-const segGap = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z);
-};
+const segGap = (p: Pt, a: Pt, b: Pt): number => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 
 /** A wall decal on its wall: the building, the wall, its middle along it, its half width, its bottom and top (world y). */
 interface OnWall {
