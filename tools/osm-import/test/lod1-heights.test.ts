@@ -114,9 +114,22 @@ describe("the import's heights", () => {
     expect(b.height - b.plinth).toBeGreaterThanOrEqual(4 * 3.2 - 1e-9);
   });
 
-  it("leaves Teatr Osterwy (a landmark) and a measured church as the tags have them", () => {
-    expect(game("w67508958").source).toBe("default");
-    expect(game("w66264159").source).toBe("levels");
+  it("stands Trybunał Koronny no lower than the Rynek's tenements round it (G-631)", () => {
+    const t = game("w66264159");
+    const round = tables.filter((b) => b.id !== t.id && b.soffit === undefined && Math.hypot(b.x - t.x, b.z - t.z) < 45);
+    expect(round.length).toBeGreaterThanOrEqual(5);
+    const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!;
+    expect(t.y + t.height).toBeGreaterThanOrEqual(median(round.map((b) => b.y + b.height)));
+    expect(t.y + t.height + (t.roof ?? 0)).toBeGreaterThanOrEqual(median(round.map((b) => b.y + b.height + (b.roof ?? 0))));
+    // Its eaves at LoD2's 16.4 m over the foot, the middle of its roof within 3 m of LoD1.
+    expect(t.height).toBeCloseTo(16.4, 1);
+    expect(Math.abs(t.height + (t.roof ?? 0) / 2 - measured(t)!)).toBeLessThan(3);
+  });
+
+  it("leaves Teatr Osterwy at its corrected height and a measured church as the tags have them", () => {
+    const teatr = game("w67508958");
+    expect(teatr.source).toBe("height");
+    expect(teatr.height).toBeCloseTo(measured(teatr)!, 0);
     expect(game("w66264082").source).toBe("height");
   });
 });

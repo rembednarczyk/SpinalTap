@@ -70,7 +70,7 @@
   "ramp-car-off-lane": 0,
   "cut-on-road": 0,
   "landmark-missing": 0,
-  "landmark-default-height": 1,
+  "landmark-default-height": 0,
   "osm-tower-default-height": 1,
   "tower-area-missing": 0,
   "church-over-nmpt": 0,
