@@ -29,6 +29,29 @@ export const parseLevels = (v: string | undefined): number | null => {
   return parts.length > 0 ? Math.max(...parts) : null;
 };
 
+/** The floors of an OSM `level` (`-2`, `-2;-1`, a range `-2--1` or `-1-0`); null when it names none. */
+const levelsOf = (v: string | undefined): number[] | null => {
+  if (v === undefined) return null;
+  const out: number[] = [];
+  for (const part of v.split(";")) {
+    const m = /^\s*(-?\d+(?:\.\d+)?)\s*(?:-\s*(-?\d+(?:\.\d+)?))?\s*$/.exec(part);
+    if (!m) return null;
+    out.push(Number(m[1]), ...(m[2] === undefined ? [] : [Number(m[2])]));
+  }
+  return out;
+};
+
+/**
+ * A building wholly under ground, with nothing over the street above it (G-077, G-600): a cellar,
+ * a shelter, a garage (`location=underground`, or every floor of its `level` below the ground's 0).
+ * Not `layer` < 0 alone: a layer orders a building under a bridge or a viaduct, it does not sink it.
+ */
+export const belowGround = (tags: Tags): boolean => {
+  if (tags.location === "underground") return true;
+  const levels = levelsOf(tags.level);
+  return levels !== null && levels.every((l) => l < 0);
+};
+
 const CHURCH = new Set(["church", "cathedral", "chapel", "basilica", "religious"]);
 // A monastery or a convent is the cloister by the church, not the church: no towers of its own (G-067).
 const HISTORIC = new Set(["monastery", "convent", "castle", "city_gate", "tower", "monument", "fort", "citywalls", "city_walls"]);

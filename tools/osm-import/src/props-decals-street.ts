@@ -10,10 +10,10 @@
  *    zebra crossing. A grate lies `KERB_GAP` off the road's edge where a pavement runs beside it,
  *    wholly on the carriageway and off the crossings' bands, `ROAD_ROOM` from a manhole or a
  *    bollard and `GRATE_SPACING` from another grate; the road's fall under it is in its variant,
- *    up to `MAX_GRATE_SLOPE`.
+ *    up to `MAX_GRATE_SLOPE`, and its corners lie on that plane within `GRATE_PLANE`.
  */
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
-import { DRAIN_GRATE, MAX_GRATE_SLOPE, STICKER, STICKER_DESIGNS, STICKER_HOSTS, grateVariant, hostFaces, stickerVariant } from "../../../packages/core/src/world/decals.ts";
+import { DRAIN_GRATE, MAX_GRATE_SLOPE, STICKER, STICKER_DESIGNS, STICKER_HOSTS, grateLayout, grateVariant, hostFaces, stickerVariant } from "../../../packages/core/src/world/decals.ts";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
 import type { Pt } from "./geometry.ts";
 import type { DecalContext } from "./props-decals.ts";
@@ -43,6 +43,12 @@ const KERB_REACH = 14;
 export const KERB_LOOK = 0.15;
 export const ROAD_ROOM = 0.8;
 export const GRATE_SPACING = 5;
+/**
+ * The most the terrain under a grate's corner may lie off the plane its variant lays it on (m), as
+ * the glitch scan's `decal-floating` measures: where the terrain's grid bends under the grate (a
+ * cell's edge across it), its rounded fall leaves a corner floating or sunk (G-522).
+ */
+export const GRATE_PLANE = 0.012;
 const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
 
 export interface StreetDecal {
@@ -134,7 +140,7 @@ const grateAt = (site: Site, sidewalks: Site, ctx: DecalContext, p: Pt, n: Pt, t
   const slopeX = fall(dir);
   const slopeZ = fall(n);
   if (Math.abs(slopeX) > MAX_GRATE_SLOPE || Math.abs(slopeZ) > MAX_GRATE_SLOPE) return "slope";
-  return {
+  const grate: StreetPropItem = {
     prop: "drain-grate",
     x: r2(c.x),
     y: r2(y),
@@ -146,6 +152,20 @@ const grateAt = (site: Site, sidewalks: Site, ctx: DecalContext, p: Pt, n: Pt, t
       slopeZ,
     }),
   };
+  return offPlane(grate, ctx) > GRATE_PLANE ? "plane" : grate;
+};
+
+/** How far the terrain under the grate's middle and corners lies off the plane of its variant, as laid (m). */
+const offPlane = (g: StreetPropItem, ctx: DecalContext): number => {
+  const { slopeX, slopeZ } = grateLayout(g.variant);
+  const [cos, sin] = [Math.cos(g.yaw), Math.sin(g.yaw)];
+  let off = Math.abs(g.y - ctx.groundY(g));
+  for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]] as const) {
+    const [lx, lz] = [(a * DRAIN_GRATE.length) / 2, (b * DRAIN_GRATE.width) / 2];
+    const q = { x: g.x + lx * cos + lz * sin, z: g.z - lx * sin + lz * cos };
+    off = Math.max(off, Math.abs(ctx.groundY(q) - (g.y + slopeX * lx + slopeZ * lz)));
+  }
+  return off;
 };
 
 /** The stations of the grates: along the drained streets on both sides, and before and after each zebra. */

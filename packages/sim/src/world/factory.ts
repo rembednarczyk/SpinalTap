@@ -2,6 +2,7 @@ import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, sightOf, type EntityId, ty
 import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/district-doki";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
+import { BODY_RADIUS } from "../content/walker-size";
 import { castViewOf } from "../content/cast";
 import { type DeviceDef, deviceView } from "../content/devices";
 import { DOOR_CLOSE_DELAY } from "../content/doors";
@@ -13,7 +14,7 @@ import { isEnforcer } from "./enforcer";
 import { bodySnapshotOf } from "./bodies";
 import { type EnemyScaling, enemyMaxHp, gradeEnemy } from "./enemy-grade";
 
-export const BODY = { radius: 0.38, height: 1.8 } as const;
+export const BODY = { radius: BODY_RADIUS, height: 1.8 } as const;
 
 export const GANGER_MAX_HP = 80;
 export const PLAYER_MAX_HP = 100;

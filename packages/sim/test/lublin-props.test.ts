@@ -21,8 +21,10 @@ describe("street furniture of Lublin (ADR-0047)", () => {
       expect(items.length, c.id).toBeGreaterThan(0);
       for (const i of items) {
         expect(i.x >= c.bounds.minX - 0.05 && i.x <= c.bounds.maxX + 0.05 && i.z >= c.bounds.minZ - 0.05 && i.z <= c.bounds.maxZ + 0.05).toBe(true);
-        // A still figure (ADR-0058 stage 8) is measured on the game's shaped terrain (a pad may lift it 2 m off the map's).
-        const ground = i.prop === "figure" ? groundY(i.x, i.z) : terrainHeightAt(c.terrain, i.x, i.z);
+        // A still figure (ADR-0058 stage 8) is measured on the game's shaped terrain (a pad may lift it 2 m off the map's),
+        // and so is a wall decal: `props-decals.ts` stands it on `groundY` (graffiti at 325, -99.85 0.27 m under the map's terrain).
+        const shaped = i.prop === "figure" || i.prop === "graffiti" || i.prop === "house-plate";
+        const ground = shaped ? groundY(i.x, i.z) : terrainHeightAt(c.terrain, i.x, i.z);
         // A lamp of the plan over a bridge's span stands on its deck, its basket and stickers with it (G-503).
         const deck = i.prop.startsWith("lamp-") || i.prop === "hanging-basket" || i.prop === "sticker" ? bridgeDeckAt(i.x, i.z) : null;
         expect(Math.min(Math.abs(i.y - ground), Math.abs(i.y - (deck ?? Infinity))), `${i.prop} at ${i.x}, ${i.z}`).toBeLessThan(0.2);

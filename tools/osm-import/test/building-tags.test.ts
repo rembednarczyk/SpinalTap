@@ -1,9 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { buildingUse, landmarkName, lookOf, massing, parseLength, parseLevels, roofHeight, roofShapeOf } from "../src/building-tags.ts";
+import { belowGround, buildingUse, landmarkName, lookOf, massing, parseLength, parseLevels, roofHeight, roofShapeOf } from "../src/building-tags.ts";
 import { partTier } from "../src/building-parts.ts";
 import { type Area } from "../src/features.ts";
 
 const opts = { area: 200, shops: false, range: [3, 4] as const, look: 0 };
+
+describe("a building under ground (G-077, G-600)", () => {
+  it("is one the map puts under ground or on floors below 0 only", () => {
+    expect(belowGround({ building: "yes", location: "underground" })).toBe(true);
+    expect(belowGround({ building: "yes", level: "-2", layer: "2" })).toBe(true);
+    expect(belowGround({ building: "yes", level: "-2;-1" })).toBe(true);
+    expect(belowGround({ building: "yes", level: "-2--1" })).toBe(true);
+  });
+
+  it("is not one reaching floor 0 or above, one with no floor read, nor one only layered under a bridge", () => {
+    expect(belowGround({ building: "yes" })).toBe(false);
+    expect(belowGround({ building: "yes", level: "0" })).toBe(false);
+    expect(belowGround({ building: "yes", level: "-1;0" })).toBe(false);
+    expect(belowGround({ building: "yes", level: "-1-1" })).toBe(false);
+    expect(belowGround({ building: "yes", level: "basement" })).toBe(false);
+    expect(belowGround({ building: "yes", layer: "-1" })).toBe(false);
+  });
+});
 
 describe("heights from tags", () => {
   it("parses lengths and levels", () => {
