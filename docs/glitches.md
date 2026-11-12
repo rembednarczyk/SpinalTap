@@ -27,7 +27,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-024 Jednokierunkowe pasy kończą się przed ulicą dla dostaw (Lubartowska, Kowalska, Świętoduska)
 - Status: przyjęte, decyzja użytkownika ponownie: skręty (opcja B) niemożliwe, w zasięgu 16 m brak ulicy dla aut (najbliższe pasy aut: Lubartowska#37 ok. 100 m, Kowalska#76 56 m, Świętoduska#20 48 m; spotykają je tylko ulice dla dostaw). Zostaje opcja A (dalej ulicą dla dostaw) albo pozostawienie
-- Ważność: S3 · Zasięg: lokalny (6 końców) · Koszt: średni
+- Ważność: S3 · Zasięg: lokalny (6 końców) · Koszt: średni; stare-miasto-0-1 (12.11): `lane-dead-end` 2 trafienia to dokładnie opisane końce: Lubartowska#37 (460, 56) (pas z Wacława Bajkowskiego#36:0, trafienie (462; 56)) i Kowalska#76 (568, 160) (trafienie (567; 159)); bez nowych końców.
 - Gdzie: Lubartowska#37:0/1 (460, 56), Kowalska#76:0/1 (568, 160), Świętoduska#20:0/1 (350, −48)
 - Dowód: naprawiacz G-023: oba pasy jadą w tę samą stronę, nie ma pasa powrotnego do zawrotki; zawrotka oznaczałaby jazdę pod prąd (regres G-105) albo czołowe zatory.
 - Opcje: A) pasy jadą dalej przez następną ulicę dla dostaw (Kowalska#67 60 m do Furmańskiej#77; Zielona 172 m do Staszica#35; Lubartowska#68 112 m); B) skręty w boczne ulice (G-006).
@@ -547,7 +547,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-190 Puste pasy postojowe OSM
 - Status: częściowo naprawione: skan w main (1.11, #169: `kerb-strip-no-car-street` baza 3, `bay-strip-empty-known` baza 4, `bay-strip-sparse` 0); zostaje poprawka generatora: łatka zatok przy ulicach dostaw (`docs/plany/g190-zatoki-przy-ulicach-dostaw.patch`) razem z G-133; Łęczyńska w1159135271 (OSM `capacity=23`, w grze 0: obrys płytszy niż auto w poprzek) do decyzji, np. nadwozie nad krawężnikiem
-- Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133); krakowskie-2-1 (12.11): `bay-strip-empty-known` w1514058885 Świętoduska (375; 2): pas postojowy bez aut na spadku ponad LEVEL_DROP (G-133).
+- Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133); krakowskie-2-1 (12.11): `bay-strip-empty-known` w1514058885 Świętoduska (375; 2): pas postojowy bez aut na spadku ponad LEVEL_DROP (G-133).; stare-miasto-0-1 (12.11): `kerb-strip-no-car-street` 2 trafienia: parking w232362978 (572; 155) 54,5 m i w895572841 (556; 74) 23,5 m, oba przy ulicy dla dostaw bez aut; ta sama klasa co T-107.
 - Poprawka: płytki pas z tagiem `diagonal`/`perpendicular` → mniejszy kąt albo krótszy model; spadek przez G-133 (pochylenie aut); `bay-strip-sparse` dziś pomija pasy bez auta
 - Kurator #162: także odcinek Kowalskiej w232362980 x 644..668 bez zatok, bo ulica ma `use: deliveries`, a `bayCars` bierze tylko `CAR_STREETS` (T-107); zatoka w1544340690 s=24,8 (689,2; 171,8) odrzucona przez odstęp od chodnika w173566578, a na ortofoto stoi tam auto. Proponowane kontrole: `kerb-strip-no-car-street` (baza ≥ 1) i `bay-strip-sparse` także dla pasów bez aut (baza ≥ 5)
 - Pakiet właściciela: packages/sim (kerb-bays), tools/glitch-scan
@@ -1321,7 +1321,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-451 Klin gołego terenu między chodnikiem a jezdnią Kościuszki (T-222)
 - Status: zgłoszone (7.11, kurator, przegląd G-440)
-- Ważność: S4 · Zasięg: zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²; poprawka: lokalnie domknąć jezdnię do krawędzi chodnika; kontrola `kerb-gap-bare` (baza 35 631 próbek 0,25 m); przejście krakowskie-1-0 (12.11): `kerb-gap-bare` 1508 próbek w komórce, m.in. Narutowicza w40051033 (199..217; −197..−188) 62 m² (szczelina 0,6 m), w215824205 (84..94; −269..−262) 37 m² i 33 mniejsze; Peowiaków należy do G-471; krakowskie-2-1 (12.11): `kerb-gap-bare` 71 kwadratów (3097 próbek 0,25 m, szczelina do 2,75 m, 898 próbek > 1 m); skupiska (360..400; 0..80), (400..440; 80..160), (240..280; 80..120).
+- Ważność: S4 · Zasięg: zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²; poprawka: lokalnie domknąć jezdnię do krawędzi chodnika; kontrola `kerb-gap-bare` (baza 35 631 próbek 0,25 m); przejście krakowskie-1-0 (12.11): `kerb-gap-bare` 1508 próbek w komórce, m.in. Narutowicza w40051033 (199..217; −197..−188) 62 m² (szczelina 0,6 m), w215824205 (84..94; −269..−262) 37 m² i 33 mniejsze; Peowiaków należy do G-471; krakowskie-2-1 (12.11): `kerb-gap-bare` 71 kwadratów (3097 próbek 0,25 m, szczelina do 2,75 m, 898 próbek > 1 m); skupiska (360..400; 0..80), (400..440; 80..160), (240..280; 80..120).; stare-miasto-0-1 (12.11): `kerb-gap-bare` 26 kwadratów (543 próbki); skupiska (570,150) 75, (460,40) 74, (600,140) 67, (560,150) 65, (580,140) 46, (470,70) 41.
 - Pakiet właściciela: tools/osm-import (ground)
 
 ### G-452 Szczeliny 1–15 cm między przylegającymi budynkami z OSM (T-223)
@@ -1351,7 +1351,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-462 Inne ruiny z OSM rysowane jak budynki
 - Status: zgłoszone (7.11, kurator przeglądu #357; poza w66286396, które zamyka #357)
-- Ważność: S4 · Zasięg: w232362881 (`ruins=yes`), `building=ruins` w67498742, w813194693, w1330433247; do rozważenia razem z G-053
+- Ważność: S4 · Zasięg: w232362881 (`ruins=yes`), `building=ruins` w67498742, w813194693, w1330433247; do rozważenia razem z G-053; stare-miasto-0-1 (12.11): ruina Rybna 12 w232362881 (539,6; 113,7) ma w LoD2 i LoD1 2024 budynek 385 m² (okap 6,4, kalenica 12 m, LoD1 9,2 m), w grze 0%; ten sam przypadek co T-015.
 - Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
 
 ### G-463 Złote hashe nie obejmują XP zleceń, premii za brak wykrycia i wrogów powyżej poziomu 1
@@ -1636,7 +1636,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-636 Bariera leżąca na ścianie budynku liczy się w skanie jako wycięta
 - Status: zgłoszone (12.11, scalenie #418 z main; baza `barrier-parallel-cut` 14 → 15 opisana w commicie 529888c)
-- Ważność: S4 · Zasięg: mur oporowy w227679479 na Podzamczu (539; 517) biegnie po południowej ścianie garażu w444375263, który stoi w grze od G-556; `inBuilding` w `barrier-room.ts` słusznie go tnie, a kontrola liczy odcinek jako „cut”; poprawka: import pomija odcinek bariery leżący na ścianie budynku albo kontrola go nie liczy; po niej baza wraca do 14; (krakowskie-2-0): `barrier-parallel-cut` płot w173531574 (387; -27) 8 z 16 m; tnie go myjnia T-051 (scena celowa), nie ściana budynku; kontrola liczy go jak G-636.
+- Ważność: S4 · Zasięg: mur oporowy w227679479 na Podzamczu (539; 517) biegnie po południowej ścianie garażu w444375263, który stoi w grze od G-556; `inBuilding` w `barrier-room.ts` słusznie go tnie, a kontrola liczy odcinek jako „cut”; poprawka: import pomija odcinek bariery leżący na ścianie budynku albo kontrola go nie liczy; po niej baza wraca do 14; (krakowskie-2-0): `barrier-parallel-cut` płot w173531574 (387; -27) 8 z 16 m; tnie go myjnia T-051 (scena celowa), nie ściana budynku; kontrola liczy go jak G-636.; stare-miasto-0-1 (12.11): `barrier-parallel-cut` mur w436266757 (558; 100), odcinek 2 z 5 m; ta sama klasa (niepotwierdzone, że leży na ścianie budynku).
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-640 Raster AI bierze koniec niskiego pomostu za płaski teren
@@ -1791,7 +1791,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-690 Siedem linii barier z OSM nieobecnych w grze; bramy 4 → 2 w stare-miasto-0-0
 - Status: zgłoszone (12.11, naprawiacz G-685; do triage)
-- Ważność: S4 · Zasięg: poprawiony raport `tools/orto --all`: w783241007 (płot, 202 m i 93 m w dwóch komórkach), w295849311 (mur, 114 m), w296752323, w292125943, w296750495, w1395539925, w618560965 nie mają barier w danych gry; w stare-miasto-0-0 mapa ma 4 punkty `gate`, gra 2; możliwy glitch importera (#418) albo celowe pominięcie; krakowskie-2-1 (12.11): raport komórki: nierysowana linia bariery w783241007 (płot 202 m); bez nowych id.
+- Ważność: S4 · Zasięg: poprawiony raport `tools/orto --all`: w783241007 (płot, 202 m i 93 m w dwóch komórkach), w295849311 (mur, 114 m), w296752323, w292125943, w296750495, w1395539925, w618560965 nie mają barier w danych gry; w stare-miasto-0-0 mapa ma 4 punkty `gate`, gra 2; możliwy glitch importera (#418) albo celowe pominięcie; krakowskie-2-1 (12.11): raport komórki: nierysowana linia bariery w783241007 (płot 202 m); bez nowych id.; stare-miasto-0-1 (12.11): raport komórki: nierysowany płot w783241007, 92,8 m (część w tej komórce); bez nowych id.
 - Pakiet właściciela: tools/osm-import
 
 ### G-691 Zapadka bazy skanu przepuszcza zawyżoną bazę po scaleniu z innej podstawy
@@ -1894,6 +1894,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna (przypuszczalna): jak G-513, G-527, G-704, G-705: OSM nie ma obszarów nawierzchni przedpoli; szczeliny > `KERB_REACH` poza zasięgiem wypełnień (T-247); największa szczelina (267..348; 53..125) leży w połowie pod dachami LoD2 z trzech budynków już rozebranych (niepotwierdzone, raport nie podaje ich położenia)
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2024-06)
 - Test przyjęcia: `landuse-bare` w krakowskie-2-1 14 kwadratów -> najwyżej wartość z pozostawionymi pasami T-247; goły teren w klasie przedpola w raporcie komórki -> 0 (poza zielenią ortofoto, 39% zieleni przy (350..410; 113..153)). Baza skanu spada w tym samym commicie
+
+### G-711 Goły teren w stare-miasto-0-1: podwórza i przedpola przy Rybnej, Lubartowskiej i Kowalskiej (T-272)
+- Status: zgłoszone (12.11, opiekun mapy, raport komórki stare-miasto-0-1)
+- Ważność: S3 (jak G-704, G-705, G-527) · Zasięg: stare-miasto-0-1, goły teren 6600 m²: podwórza 7 / 4223 m² (twarde 100%), przedpola 4 / 1344 m² (twarde 100%), szczeliny, obrys LoD2 i inne 0; `landuse-bare` 2 kwadraty 10 m (10 próbek); położenia w T-272
+- Dowód: `node tools/orto/src/report.ts --cell stare-miasto-0-1` (sekcja gołego terenu), skan `landuse-bare` 2 kwadraty w komórce; ortofoto 2024-06, przechył (0; 0) m
+- Przyczyna (przypuszczalna): jak G-513, G-527, G-704, G-705: OSM nie ma obszarów nawierzchni podwórzy i przedpoli; największe podwórze (495..557; 80..150) obejmuje ruinę w232362881 (385 m² w LoD2 i LoD1 2024, T-015), którą import pomija (`SKIP_BUILDING`)
+- Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2024-06)
+- Test przyjęcia: goły teren w klasach podwórza i przedpola w raporcie komórki 11 składowych / 5567 m² -> 0 (poza ruiną T-015 do decyzji z G-053); `landuse-bare` w stare-miasto-0-1 2 kwadraty -> 0. Baza skanu spada w tym samym commicie
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
