@@ -1732,7 +1732,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-662 Trójkąt garażu VIVO nad ziemią bez bryły
-- Status: zgłoszone (12.11, kurator przeglądu G-647; T-261, T-258 do zmiany na „do poprawy”)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g662)
 - Ważność: S3 · Zasięg: w173070505, x 1105,8–1120, z 228–239,7: na trzech nalotach ortofoto dach z sedum i świetlikami ok. 5–10 m nad chodnikiem (cień do z 244–251), w grze trawnik na poziomie gruntu; G-600 usunął całą bryłę garażu; poprawka: niska bryła o wysokości dachu w miejsce trawników T-258 i G-647
 - Pakiet właściciela: tools/osm-import
 
