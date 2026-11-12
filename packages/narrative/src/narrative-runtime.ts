@@ -8,6 +8,7 @@ import {
   DEFAULT_LOCALE,
   CONTRACT_SITES,
   FACTION_IDS,
+  LruMap,
   QUEST_DEFINITIONS,
   STORY_CHOICES,
   type StoryChoiceId,
@@ -62,10 +63,11 @@ export const compileInk = (source: string): Story => {
   return story;
 };
 
-/** How many compiled stories `loadInk` keeps; the game has one source per language. */
-const COMPILED_LIMIT = 8;
-/** Compiled stories as ink JSON by their source (each language has its own source, so its own entry). */
-const compiled = new Map<string, string>();
+/**
+ * Compiled stories as ink JSON by their source (each language has its own source, so its own
+ * entry); `loadInk` keeps eight, the game has one source per language.
+ */
+const compiled = new LruMap<string, string>(8);
 
 /**
  * A fresh story of `source`, compiled once per source (G-325): compiling takes about ten times
@@ -77,8 +79,6 @@ export const loadInk = (source: string): Story => {
   let json = compiled.get(source);
   if (json === undefined) {
     json = compileInk(source).ToJson() ?? "";
-    const oldest = compiled.keys().next();
-    if (compiled.size >= COMPILED_LIMIT && !oldest.done) compiled.delete(oldest.value);
     compiled.set(source, json);
   }
   return new Story(json);

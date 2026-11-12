@@ -57,6 +57,7 @@ import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
+import { kerbStripBare } from "./kerb-strip-bare";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
 import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
@@ -80,8 +81,9 @@ import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alon
 import { belowGround } from "../../osm-import/src/building-tags.ts";
 import { isTowerTags } from "../../osm-import/src/building-towers.ts";
 import { ADDED_AREAS, TAG_CORRECTIONS, correctedLine } from "../../osm-import/src/corrections.ts";
+import { withoutReplaced } from "../../osm-import/src/corrections-alchemia.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
-import { extractFeatures } from "../../osm-import/src/features.ts";
+import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
@@ -1838,6 +1840,24 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     });
   },
   /**
+   * A metre of a footway mapped on its own (`highway=footway`, not a crossing, off bridges and
+   * tunnels, 3 m and more inside the chunks) that the asphalt of the street it runs along covers
+   * (G-655): the nearest carriageway within 15 m runs parallel to it (|cos| > 0.9), its axis is
+   * closer than half the street's width from the map's tags, and the game's ground there is road
+   * and the footway's paving at once. One finding per metre.
+   */
+  "footway-on-carriageway": () => footwaysOnCarriageway(),
+  /** A metre of a fitted street's edge (T-046, G-655) with a metre and more of bare ground before the lawn or pavement past it (`kerb-strip-bare.ts`). */
+  "kerb-strip-bare": () =>
+    kerbStripBare({
+      lines: withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)),
+      carriageways: CARRIAGEWAYS,
+      roadWidth,
+      surfacesAt,
+      inBuilding,
+      deep: (x, z) => MAP_CHUNKS.some(({ bounds: b }) => x > b.minX + 3 && x < b.maxX - 3 && z > b.minZ + 3 && z < b.maxZ - 3),
+    }),
+  /**
    * A street narrowed to its mapped sidewalks (G-082) although they run along less than half of it
    * on either side (G-112): the width came from where a sidewalk turns in to a junction's crossing.
    */
@@ -1973,6 +1993,54 @@ const PLAIN_BUILDING = new Set(["yes", "public", "government", "civic"]);
 
 /** The carriageways of the map's lines, by `highway` (the importer's `ROAD_WIDTH`). */
 const CARRIAGEWAYS = new Set(["motorway", "trunk", "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified", "residential", "living_street", "service", "busway", "road"]);
+
+/** The metres of the map's footways under the asphalt of the street they run along (`footway-on-carriageway`). */
+const footwaysOnCarriageway = (): Finding[] => {
+  const lines = extractFeatures(SOURCE_OSM).lines;
+  const roads = lines.filter((l) => CARRIAGEWAYS.has(l.tags.highway ?? "") && l.tags.area !== "yes" && l.tags.tunnel === undefined && Number(l.tags.layer ?? 0) >= 0);
+  const cell = 15;
+  const grid = new Map<string, { l: Line; a: Pt; b: Pt }[]>();
+  for (const l of roads)
+    for (let i = 0; i + 1 < l.line.length; i++) {
+      const [a, b] = [l.line[i]!, l.line[i + 1]!];
+      for (let gx = Math.floor(Math.min(a.x, b.x) / cell); gx <= Math.floor(Math.max(a.x, b.x) / cell); gx++)
+        for (let gz = Math.floor(Math.min(a.z, b.z) / cell); gz <= Math.floor(Math.max(a.z, b.z) / cell); gz++) grid.set(`${gx},${gz}`, [...(grid.get(`${gx},${gz}`) ?? []), { l, a, b }]);
+    }
+  const nearest = (x: number, z: number) => {
+    let best: { d: number; road: Line; tx: number; tz: number } | null = null;
+    for (let gx = Math.floor(x / cell) - 1; gx <= Math.floor(x / cell) + 1; gx++)
+      for (let gz = Math.floor(z / cell) - 1; gz <= Math.floor(z / cell) + 1; gz++)
+        for (const { l, a, b } of grid.get(`${gx},${gz}`) ?? []) {
+          const [dx, dz] = [b.x - a.x, b.z - a.z];
+          const len = Math.hypot(dx, dz);
+          if (len < 1e-3) continue;
+          const k = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (len * len)));
+          const d = Math.hypot(a.x + dx * k - x, a.z + dz * k - z);
+          if (d <= 15 && (!best || d < best.d)) best = { d, road: l, tx: dx / len, tz: dz / len };
+        }
+    return best;
+  };
+  const deep = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x > b.minX + 3 && x < b.maxX - 3 && z > b.minZ + 3 && z < b.maxZ - 3);
+  return lines.flatMap((l) => {
+    const t = l.tags;
+    if (t.highway !== "footway" || t.footway === "crossing" || t.area === "yes" || t.tunnel !== undefined || Number(t.layer ?? 0) < 0 || (t.bridge !== undefined && t.bridge !== "no")) return [];
+    return l.line.slice(1).flatMap((b, i) => {
+      const a = l.line[i]!;
+      const len = Math.hypot(b.x - a.x, b.z - a.z);
+      const out: Finding[] = [];
+      for (let s = 0.5; s < len; s += 1) {
+        const [x, z] = [a.x + ((b.x - a.x) * s) / len, a.z + ((b.z - a.z) * s) / len];
+        if (!deep(x, z)) continue;
+        const surfaces = surfacesAt(x, z);
+        if (surfaces.includes("crossing") || !surfaces.includes("road") || !(surfaces.includes("sidewalk") || surfaces.includes("footway"))) continue;
+        const n = nearest(x, z);
+        if (!n || Math.abs(((b.x - a.x) * n.tx + (b.z - a.z) * n.tz) / len) < 0.9 || n.d >= roadWidth(n.road.tags) / 2) continue;
+        out.push({ at: near(x, z), what: `${l.id} on ${n.road.id} ${n.road.tags.name ?? ""}` });
+      }
+      return out;
+    });
+  });
+};
 
 /**
  * The map's streets without `width` or `lanes` whose asphalt in the game is narrower than the

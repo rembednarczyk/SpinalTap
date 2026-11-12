@@ -25,6 +25,12 @@ const coverOfRing = (covers: readonly Cover[], ring: readonly Pt[]): Cover | und
   return [...votes].sort((a, b) => b[1] - a[1])[0]?.[0];
 };
 
+/** Samples by class in a ring, from the raster holding most of its vertices. */
+export const ringCounts = (covers: readonly Cover[], ring: readonly Pt[]): ClassCounts | undefined => {
+  const cover = coverOfRing(covers, ring);
+  return cover ? countAt(cover, samplesIn(cover.header, ring)) : undefined;
+};
+
 /** m² by class in a ring, from the raster holding most of its vertices. */
 export const ringOverlay = (covers: readonly Cover[], ring: readonly Pt[]): ClassCounts | undefined => {
   const cover = coverOfRing(covers, ring);

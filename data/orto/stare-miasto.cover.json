@@ -11,7 +11,8 @@
     "paving",
     "asphalt",
     "shadow",
-    "unknown"
+    "unknown",
+    "canopy"
   ],
   "source": "Ortofotomapa PZGiK (GUGiK, geoportal.gov.pl), WMS ORTO HighResolution / StandardResolution, EPSG:2180",
   "tiles": [
@@ -92,6 +93,7 @@
     "smooth": 1,
     "shadowL": 50,
     "greenExg": 0.026,
+    "leafOffExg": 0.026,
     "hardS": 0.4,
     "pavingL": 115
   }
