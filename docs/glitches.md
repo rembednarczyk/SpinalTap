@@ -1637,7 +1637,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-639 Płaska bryła na wysokości LoD1 przy stromym dachu wypada na kalenicy
-- Status: w PR #459, kurator NIE PRZYJĘTE (12.11: kalenica prostopadła do rzeczywistej w 5 z 14 dachów dwuspadowych, m.in. Muzeum Czechowicza; okap Złotej 5 z połaci 3,1 m²); runda 2 u autora
+- Status: w PR #459, runda 2 (12.11; kalenice z LoD2, `lod2-ridge-across` 5 → 0, `lod2-sliver-eaves` 1 → 0, 80 budynków `lod2`); ponowny przegląd kuratora
 - Ważność: S3 · Zasięg: budynki bez tagów dachu stoją płasko na wysokości LoD1, a przy stromym dachu LoD1 leży prawie na kalenicy; np. Pałac Parysów w66330695 w grze 18,1 m i 5 rzędów okien, w LoD2 okap 10,7 m i kalenica 18,2 m (przed zmianą 11,1 m); ok. 59 budynków (płaski dach w grze, dach LoD2 > 4 m, okap gry > 3 m nad okapem LoD2; liczba przybliżona, okap LoD2 bywa okapem przybudówki); poprawka: gdy LoD2 ma okap i kalenicę, a OSM nie ma tagów dachu, okap i dach z LoD2; kontrola `flat-over-lod2-roof` (baza ok. 59); luka pokrewna: `church-over-nmpt` nie wykrywa kościoła za niskiego
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1830,6 +1830,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, przejście komórki podzamcze-1-0; czeka na kuratora)
 - Ważność: S4 · Zasięg: (721,0–723,5; 289,8–292,6), ok. 6,8 m²; `metro-exit-bare` = 27 (cała baza miasta, wpisu G nie było); front pawilonu (x 720,2–723,8, z 282,4–289,6) poza pierścieniami nawierzchni, kostka kończy się na z 289,0; ortofoto 2025-04: jasna nawierzchnia; ręczny plac z G-332 obejmuje tylko wyjście B; test przyjęcia: `metro-exit-bare` 27 → 0
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+
+### G-698 Kuria Metropolitalna płasko na 13,1 m: LoD2 dzieli ją na dwa budynki
+- Status: zgłoszone (12.11, autor G-639)
+- Ważność: S4 · Zasięg: w66293168: LoD2 ma dwa budynki o IoU 0,45 i 0,50 z obrysem OSM, więc reguła dachów z LoD2 (#459, dopasowanie 1:1, IoU ≥ 0,7) jej nie obejmuje; LoD1 2024 ma ją w całości (IoU 0,91), płasko 13,1 m przy LoD2 10,8–15,5 m; poprawka: dopasowanie wielu budynków LoD2 do jednego obrysu (części)
+- Pakiet właściciela: tools/osm-import, tools/gugik
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
