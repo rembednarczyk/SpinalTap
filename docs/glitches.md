@@ -1526,11 +1526,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: x −122…−100, z −64…−13; na ortofoto zachodni krawężnik ok. 3–4 m dalej na zachód niż krawędź jezdni w grze (−113,8 przy z −40); w grze ten pas to chodnik i kostka T-243 (wcześniej goła ziemia), w rzeczywistości lewy pas ruchu i asfalt skrzyżowania; por. T-094
 - Pakiet właściciela: tools/osm-import
 
-### G-522 Klinowe szczeliny bez nawierzchni między jezdnią a chodnikiem Krakowskiego
-- Status: krok 1 scalony w #400, krok 2 w PR #409, gotowy po scaleniu z main 12.11 (`kerb-gap-bare` 100 723 → 29 702; budżet reference 199/85 z wpisem w ADR-0046; czeka na CI) (reguła `kerbFills`, `kerb-gap-bare` 103 204 → 32 148; kurator runda 1 DO POPRAWY: G-570, T-247; runda 3 @ ef78842: asfalt jako osobne kawałki jezdni, `kerb-gap-bare` 30 482, kurator runda 3 ZGODNE (T-247); czeka na G-595 (budżet reference)) (8.11, kontrola `kerb-gap-bare`, baza 103 982 próbek = 6 499 m² w 2 155 skupieniach; przyczyna systemowa: import kładzie jezdnię krócej niż chodnik wzdłuż ulic, pas 1–2,5 m; krok 2: reguła importu, po scaleniu #397)
-- Ważność: S3 · Zasięg: (−120,5..−114; 54,5..101) 128 m², (−104,5..−102,5; −6,5..13) 48 m², (−121,5..−120,5; 74,5..100,5) 27 m², także części nieliczone skanem; zrzuty `kp-strip-g`, `s-strip-l`, `wedge`; przyczyna: jezdnia i chodnik się nie schodzą; propozycja `kerb-gap-bare` z przeglądu G-440 (baza ok. 35 631 próbek 0,25 m w mieście)
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-523 Dół 3,7 m w dziedzińcu pod w55897055 (krakowskie-0-1)
 - Status: zgłoszone (8.11, opiekun mapy; do oceny kuratora: prawdziwy dół czy artefakt NMT)
 - Ważność: S4 · Zasięg: teren spada z 0,6 do −3,5 m na ok. 25 × 15 m (x −175..−150, z −5..10), najgłębiej (−160; 5); czarny cokół ściany 3–4 m od dna (`pit-e`, `pit-f`, `pit-g`); `SHAPED_TERRAIN` bez `PADS`; to tu 4 krawędzie terenu > 20° (G-508); przy okazji: `steps-band-hidden` na krawędzi chunka (−200; 125), pasmo 3 × 0,2 m, niewidoczne dla gracza
@@ -1590,11 +1585,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, kurator przeglądu #408; T-248)
 - Ważność: S4 · Zasięg: obrys w73833921 (x 758–781, z 464–491) ma w OSM 9 m przerwy na zachód między (761; 464,9) a (758,1; 474); w grze dostępny dziedziniec wyłożony kostką, na ortofoto dach zamknięty skrzydłami budynku; zrzut `topo-408-shots/notch.png`
 - Pakiet właściciela: tools/osm-import (korekty budynków)
-
-### G-570 Wypełnienie G-522 kładzie chodnik na pasach postojowych, zatokach i pasie ruchu
-- Status: w PR #409 (poprawka w rundzie 2, przyjęta przez kuratora; czeka na CI 12.11)
-- Ważność: S3 · Zasięg: 12 z 19 miejsc ortofoto, ok. 63% z 5 855 m² wypełnień przy ulicach z `lanes`; krawężnik 1–3 m wewnątrz prawdziwej jezdni (Ruska, Kapucyńska, Niecała, Peowiaków, Lubartowska przy przystanku Brama Krakowska 01, Unii Lubelskiej, Turystyczna, 3 Maja, Dolna Panny Marii, Zesłańców Sybiru); trawnik jako chodnik przy Andersa; przyczyna: szerokość z `lanes` × 3,25 lub typu nie obejmuje postoju, `fitToKerb` (T-046) tylko zwęża; poprawka: pas przy ulicy o szacowanej szerokości i szczelinie ≥ 1 m jako jezdnia z krawężnikiem przy nawierzchni pieszej, zebry do nowego krawężnika, trawniki przez korekty; kontrole `bus-stop-on-fill` i `kerb-fill-wide-estimated`
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-576 `donorsOf` po `setManifest` wpisuje dawców starego manifestu
 - Status: zgłoszone (8.11, weryfikator #407; istniało na main)

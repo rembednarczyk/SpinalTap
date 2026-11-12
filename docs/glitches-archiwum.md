@@ -2,6 +2,18 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-522 Klinowe szczeliny bez nawierzchni między jezdnią a chodnikiem Krakowskiego
+- Status: naprawione: krok 1 w #400, krok 2 w #409 (12.11; reguła `kerbFills` z indeksem `RingBins`, `kerb-gap-bare` 103 204 → 29 702; budżet reference 199/85 z wpisem w ADR-0046; T-247)
+- Ważność: S3 · Zasięg: (−120,5..−114; 54,5..101) 128 m², (−104,5..−102,5; −6,5..13) 48 m², (−121,5..−120,5; 74,5..100,5) 27 m², także części nieliczone skanem; zrzuty `kp-strip-g`, `s-strip-l`, `wedge`; przyczyna: jezdnia i chodnik się nie schodzą; propozycja `kerb-gap-bare` z przeglądu G-440 (baza ok. 35 631 próbek 0,25 m w mieście)
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+
+### G-570 Wypełnienie G-522 kładzie chodnik na pasach postojowych, zatokach i pasie ruchu
+- Status: naprawione w #409 (12.11; asfalt jako osobne kawałki jezdni, kurator runda 3 ZGODNE)
+- Ważność: S3 · Zasięg: 12 z 19 miejsc ortofoto, ok. 63% z 5 855 m² wypełnień przy ulicach z `lanes`; krawężnik 1–3 m wewnątrz prawdziwej jezdni (Ruska, Kapucyńska, Niecała, Peowiaków, Lubartowska przy przystanku Brama Krakowska 01, Unii Lubelskiej, Turystyczna, 3 Maja, Dolna Panny Marii, Zesłańców Sybiru); trawnik jako chodnik przy Andersa; przyczyna: szerokość z `lanes` × 3,25 lub typu nie obejmuje postoju, `fitToKerb` (T-046) tylko zwęża; poprawka: pas przy ulicy o szacowanej szerokości i szczelinie ≥ 1 m jako jezdnia z krawężnikiem przy nawierzchni pieszej, zebry do nowego krawężnika, trawniki przez korekty; kontrole `bus-stop-on-fill` i `kerb-fill-wide-estimated`
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+
 ### G-605 Fundamenty fary na Placu po Farze stoją jako murki 1,0 m zamiast ok. 0,5 m
 - Status: naprawione w #418 (12.11; bariery z OSM, runda 2 przyjęta przez kuratora i weryfikatora)
 - Ważność: S3 · Zasięg: r18507551, r18507552, w1348806697–708 (431 m w grze), NMPT − otoczenie: mediana 0,45 m, p75 0,78 m; przy 1,0 m zamknięty labirynt; poprawka: korekta wysokości 0,5 m (bez w1348806709, taras przy Rynku 11); kontrola `ruin-wall-height`
