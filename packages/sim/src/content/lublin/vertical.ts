@@ -1,4 +1,4 @@
-import type { BuildingVertical } from "@seki/core";
+import { type BuildingVertical, segmentDistance } from "@seki/core";
 import type { LublinBuildingData, LublinChunkData } from "./types";
 
 /**
@@ -95,10 +95,7 @@ const cornersTo = (a: Ring, b: Ring): number => {
     for (let i = 0; i < b.pts.length; i++) {
       const [x0, z0] = b.pts[i]!;
       const [x1, z1] = b.pts[(i + 1) % b.pts.length]!;
-      const dx = x1 - x0;
-      const dz = z1 - z0;
-      const t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / (dx * dx + dz * dz || 1)));
-      d = Math.min(d, Math.hypot(x0 + dx * t - x, z0 + dz * t - z));
+      d = Math.min(d, segmentDistance(x, z, x0, z0, x1, z1));
     }
   }
   return d;
