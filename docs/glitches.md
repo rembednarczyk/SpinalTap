@@ -1676,11 +1676,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: pamięć `chases` (`steering.ts:660`) nie trafia do zapisu, a `chaseDetour` nie podlega limitowi `mayPlan`; pierwszy krok po wczytaniu buduje rastry `wide` wszystkich gangerów z `chase` naraz (54,7 ms na okno, przy kilku oknach N razy więcej); to samo przy zmianie `floor|reach`; determinizm bez zmian
 - Pakiet właściciela: packages/sim (systems/ai)
 
-### G-647 Trawnik na dachu VIVO rysowany na ziemi
-- Status: w PR #436 (12.11; kurator PRZYJĘTE)
-- Ważność: S4 · Zasięg: trawnik r11978659 (`landuse=grass`, `layer=4`) to zieleń na dachu VIVO, a import kładzie go na ziemi pod budynkiem i na pasie nad jezdnią na północy (z 240–244, na ortofoto asfalt); część poza VIVO (x 1112–1120, z 230–239) to strop garażu ze świetlikami i zielenią, trawa tam zostaje; goła ziemia przy zachodniej ścianie (x 1100–1105, z 225–242, na ortofoto kostka chodnika i pas zieleni) do reguły gołej ziemi z ortofoto (ADR-0077 krok 1.1)
-- Pakiet właściciela: tools/osm-import
-
 ### G-648 Budynek z relacji bierze użytek tylko z relacji, nie z obrysu
 - Status: zgłoszone (12.11, kurator przeglądu G-600)
 - Ważność: S4 · Zasięg: VIVO ma w grze `use` = residential, bo relacja ma `building=yes`, a obrys w376043568 (`building=retail`, `shop=mall`) jest pomijany; poprawka: `buildingUse` bierze też tagi obrysu (`role=outline`); kontrola `building-use-vs-outline` (co najmniej 1 trafienie)
@@ -1705,11 +1700,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, runda wydajności #426)
 - Ważność: S4 · Zasięg: gdy ani okno `near`, ani `wide` nie prowadzi do celu, ganger na ulicy wraca na posterunek bez `routeAcrossLevels` (jak na main); droga kładką lub schodami nad barierą nie jest szukana; pytanie co krok kosztowało 2,7 s na test (4790 wywołań, `attach` liczy wzrok do wszystkich węzłów), więc jeśli ma wrócić, to rzadko (np. raz na cel w komórce 32 m) i z limitem na krok
 - Pakiet właściciela: packages/sim (systems/ai)
-
-### G-654 Trasa placu `krakowskie-2-0-square-1` przecina samą siebie
-- Status: w PR #433 (12.11; kurator PRZYJĘTE)
-- Ważność: S4 · Zasięg: przy (368; −223) odcinki 0×3 i 0×5 trasy się przecinają, także na main; test samoprzecięć w `crowd-square-barriers.test.ts` (#428) pomija tę trasę; po poprawce wyjątek z testu do usunięcia
-- Pakiet właściciela: packages/sim (tłum)
 
 ### G-655 Jezdnia z tagiem `lanes` nie jest dociągana do osobno zmapowanego chodnika
 - Status: w PR #437 (12.11; przegląd kuratora do zrobienia; nie zamyka G-650 ani G-656)
@@ -1757,7 +1747,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-664 Zieleń z `layer>0` ukrywa gołą ziemię przed skanem `landuse-bare`
-- Status: zgłoszone (12.11, kurator przeglądu G-647)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g664)
 - Ważność: S4 · Zasięg: `landuse-bare` pomija punkty w obrysie trawnika z mapy, także trawnika na dachu (r11978659), więc goły pas z G-661 nie zmienił bazy 69019; poprawka: zieleń z `layer>0` albo `location=roof` nie zwalnia próbek, nowa baza z przebiegu
 - Pakiet właściciela: tools/glitch-scan
 

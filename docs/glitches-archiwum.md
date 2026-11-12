@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-654 Trasa placu `krakowskie-2-0-square-1` przecina samą siebie
+- Status: naprawiony (PR #433, aa534cb)
+- Ważność: S4 · Zasięg: przy (368; −223) odcinki 0×3 i 0×5 trasy się przecinają, także na main; test samoprzecięć w `crowd-square-barriers.test.ts` (#428) pomija tę trasę; po poprawce wyjątek z testu do usunięcia
+- Pakiet właściciela: packages/sim (tłum)
+
+### G-647 Trawnik na dachu VIVO rysowany na ziemi
+- Status: naprawiony (PR #436, 3157e23)
+- Ważność: S4 · Zasięg: trawnik r11978659 (`landuse=grass`, `layer=4`) to zieleń na dachu VIVO, a import kładzie go na ziemi pod budynkiem i na pasie nad jezdnią na północy (z 240–244, na ortofoto asfalt); część poza VIVO (x 1112–1120, z 230–239) to strop garażu ze świetlikami i zielenią, trawa tam zostaje; goła ziemia przy zachodniej ścianie (x 1100–1105, z 225–242, na ortofoto kostka chodnika i pas zieleni) do reguły gołej ziemi z ortofoto (ADR-0077 krok 1.1)
+- Pakiet właściciela: tools/osm-import
+
 ### G-625 Ganger staje przy długim płocie albo murze, gdy w oknie sterowania nie ma drogi
 - Status: naprawiony (PR #426, 5888292)
 - Ważność: S3 · Zasięg: `planDetour` (`steering.ts`) zwraca „off-field”, gdy w oknie 80 m nie ma objazdu; ganger dochodzi do przeszkody i stoi, gracz za nią bezpieczny (sonda 30 s: 0 strzałów); np. płot (11,83; −251,22), mur 3 m (214; −28,13); bariery z #418 uwidaczniają to w wielu miejscach; test `barrier-ai.test.ts` („moved > 1”) przeszedłby też z gangerem stojącym przy płocie; poprawka: dłuższy objazd (nawigacja po grafie poziomu albo większe okno), a gdy drogi nie ma, przejście do osłony lub szukania
