@@ -1782,12 +1782,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
 
 ### G-684 Fałszywy alarm `levels-tag-lost` na Bramie Krakowskiej
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g684); potwierdzony fałszywy alarm (12.11, kurator); poprawka w `levelsTagLost`: obrys z częściami z `soffit` porównywać z najwyższą liczbą kondygnacji części albo pominąć; baza 4 → 3
+- Status: w PR #456 (12.11)
 - Ważność: S4 · Zasięg: r7224409 (473; −91): „2 storeys of building:levels=5”; obrys ma `height` 10 m i części `building:part` (wieża 5 kond., przedbramie 2 kond., T-007 rozwiązane); kontrola liczy obrys bez części; poprawka: wyjątek dla budynków z częściami, baza 4 → 3
 - Pakiet właściciela: tools/glitch-scan
 
 ### G-685 Raport ortofoto liczy bariery z tabeli mebli zamiast z `chunk.barriers`
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g685); zgłoszone (12.11, kurator, przegląd stare-miasto-0-0)
+- Status: w PR #457 (12.11)
 - Ważność: S4 (narzędzie, nie gra) · Zasięg: `tools/orto/src/barriers.ts` (`barrierReport`, `game` i `notDrawn`). W stare-miasto-0-0 raport podaje 9 linii „nierysowanych” (np. mur miejski w609951474), a wszystkie są w `stare-miasto.generated.ts` (`barriers`) i w grze (ADR-0077 p. 4). Komentarz modułu („the game draws none of them”) jest nieaktualny.
 - Pakiet właściciela: tools/orto
 - Test przyjęcia: raport dla stare-miasto-0-0 ma `notDrawn` 0 (bariery z `MAP_CHUNKS[].barriers`)
@@ -1806,6 +1806,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, naprawiacz G-643; także na main)
 - Ważność: S3 · Zasięg: pierwszy krok pościgu buduje rastry near wszystkich celów naraz (133–187 ms przy 18 pościgach); pierwszy krok po wczytaniu buduje wszystkie trzymane drogi wide od razu (do 1,6 mln komórek); poprawka: ta sama kolejka z budżetem co w G-643 (#455); powiązane z G-645
 - Pakiet właściciela: packages/sim (systems/ai)
+
+### G-689 Bazy `ground-strip-overlap` i `ground-strip-gap` nieaktualne albo niedeterministyczne
+- Status: zgłoszone (12.11, naprawiacz G-684)
+- Ważność: S4 · Zasięg: `GLITCH_BASELINE=update` na main (389e0aa) daje `ground-strip-overlap` 93 727 → 93 726 i `ground-strip-gap` 4 105 → 4 100 bez zmiany nawierzchni; ustalić, czy zmieniły je scalenia po #453 (np. #454), czy kontrola zależy od kolejności; jeśli niedeterministyczna, ustalić przyczynę (zaokrąglenia rastra, kolejność kawałków)
+- Pakiet właściciela: tools/glitch-scan
+
+### G-690 Siedem linii barier z OSM nieobecnych w grze; bramy 4 → 2 w stare-miasto-0-0
+- Status: zgłoszone (12.11, naprawiacz G-685; do triage)
+- Ważność: S4 · Zasięg: poprawiony raport `tools/orto --all`: w783241007 (płot, 202 m i 93 m w dwóch komórkach), w295849311 (mur, 114 m), w296752323, w292125943, w296750495, w1395539925, w618560965 nie mają barier w danych gry; w stare-miasto-0-0 mapa ma 4 punkty `gate`, gra 2; możliwy glitch importera (#418) albo celowe pominięcie
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
