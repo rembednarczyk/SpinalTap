@@ -87,7 +87,7 @@ export const cellSections = (inp: SectionsInput): Sections => {
     }),
   );
   const absent = timed("absent", () => absentSection(rect, lod2, loadLod1(tiles).filter((b) => near(b.ring)), game.map((b) => b.ring), inp.cleared));
-  const known = timed("known", () => loadKnown(inp.cell.id));
+  const known = timed("known", () => loadKnown(inp.cell.id, rect));
   return { footprints, lean, bare, absent, known, ms };
 };
 

@@ -9,7 +9,7 @@ import { cellById, defaultCache } from "../src/config.ts";
 import { coverFor, readCover } from "../src/cover.ts";
 import { fitSection } from "../src/fit.ts";
 import { bestOverlap, components, depthOf, gridOver, opening, rectMask, ringMask } from "../src/grid.ts";
-import { glitchesNaming, knownSection, refsInText, rowsNaming } from "../src/known.ts";
+import { type Registers, knownSection, placesIn, readRegisters, refsInText } from "../src/known.ts";
 import { leanSection } from "../src/lean.ts";
 import { MAP_REGIONS } from "../src/region.ts";
 import { cellSections } from "../src/sections.ts";
@@ -134,25 +134,50 @@ describe("the cell report's sections on made-up cells", () => {
     expect(s.nmpt).toMatch(/NMPT/);
   });
 
-  it("links the scan's kinds to the glitches and T rows the registers name", () => {
-    const note = "trafienia znane (Podwale: sidewalk-under-carriageway 36 i footway-on-carriageway 19 to T-046/G-082, kerb-strip-bare 7 to T-063/G-113; landuse-bare przy Złotej T-045).";
+  it("links the scan's kinds to the glitches and T rows anywhere in the registers, the cell's first", () => {
+    const rect: Rect = { minX: 610, maxX: 760, minZ: -240, maxZ: -40 };
+    const note = "trafienia znane (Podwale: sidewalk-under-carriageway 36 i footway-on-carriageway 19 to T-046/G-082, kerb-strip-bare 7 to T-063/G-113; kerb-gap 372: G-451; landuse-bare przy Złotej T-045).";
     expect(refsInText(note, "sidewalk-under-carriageway")).toEqual(["T-046", "G-082"]);
-    expect(refsInText(note, "kerb-strip-bare")).toEqual(["T-063", "G-113"]);
     expect(refsInText(note, "kerb-strip")).toEqual([]);
-    const md = "### G-703 Schody\n- Zasięg: `steps-riser-tall` w stare-miasto-1-0\n### G-704 Podwórza\n- `steps-riser-tall` gdzie indziej\n";
-    expect(glitchesNaming(md, "steps-riser-tall", "stare-miasto-1-0")).toEqual(["G-703"]);
-    const s = knownSection("stare-miasto-1-0", { findings: 9, kinds: { "landuse-bare": 3, "steps-riser-tall": 2, "new-kind": 1 } }, note, md);
-    expect(s.kinds).toEqual([
-      { kind: "landuse-bare", hits: 3, refs: ["T-045"] },
-      { kind: "steps-riser-tall", hits: 2, refs: ["G-703"] },
-      { kind: "new-kind", hits: 1, refs: [] },
+    expect(refsInText(note, "kerb-gap-bare")).toEqual(["G-451"]);
+    expect(placesIn("(732,7; 151,4) i (613..760, −220..−150)")).toEqual([
+      { minX: 732.7, maxX: 732.7, minZ: 151.4, maxZ: 151.4 },
+      { minX: 613, maxX: 760, minZ: -220, maxZ: -150 },
     ]);
-    expect(s.verdict).toMatch(/new-kind/);
-    const rows = { "T-049": "| T-049 | schody na brzegu | `steps-riser-tall` 20 m |", "T-063": "| T-063 | Podwale | kerb-strip-bare-x |" };
-    expect(rowsNaming(rows, "steps-riser-tall")).toEqual(["T-049"]);
-    expect(rowsNaming(rows, "kerb-strip-bare")).toEqual([]);
-    expect(knownSection("c", { findings: 1, kinds: { "steps-riser-tall": 1 } }, "", "", rows).kinds[0]!.refs).toEqual(["T-049"]);
-    expect(knownSection("x", undefined, "", "").missing).toMatch(/map-coverage-hits/);
+    const reg: Registers = {
+      glitches: [
+        "### G-703 Schody\n- Zasięg: `steps-riser-tall` (760; −210)\n",
+        "### G-686 Schody\n- Zasięg: `steps-riser-tall` (732,7; 151,4)\n",
+        "### G-801 Gdzie indziej\n- `new-elsewhere` (2658; 60)\n",
+        "## Proponowane kontrole skanu\n| `table-kind` | baza 3 | G-802 |\n",
+      ].join(""),
+      topography: "| T-049 | schody na brzegu | `steps-riser-tall` 20 m |\n",
+      notes: [{ cell: "stare-miasto-1-0", text: note }],
+      scan: '  /** A gap (ADR-0078 stage 5). */\n  "only-scan": () => 0,\n',
+    };
+    const hits = { findings: 9, kinds: { "steps-riser-tall": 4, "landuse-bare": 3, "kerb-gap-bare": 2, "new-elsewhere": 1, "table-kind": 1, "only-scan": 1, "new-kind": 1 } };
+    const s = knownSection("stare-miasto-1-0", rect, hits, reg);
+    const refs = Object.fromEntries(s.kinds.map((k) => [k.kind, k.refs.map((r) => `${r.id}${r.inCell ? "*" : ""}`)]));
+    // The entry in the cell first, then the others in the registers' order: three at most.
+    expect(refs).toEqual({
+      "steps-riser-tall": ["G-703*", "G-686", "T-049"],
+      "landuse-bare": ["T-045*"],
+      "kerb-gap-bare": ["G-451*"],
+      "new-elsewhere": ["G-801"],
+      "table-kind": ["G-802"],
+      "only-scan": ["ADR-0078"],
+      "new-kind": [],
+    });
+    expect(s.verdict).toMatch(/bez odsyłacza w rejestrach: new-kind;/);
+    expect(s.verdict).toMatch(/w tej komórce .*: new-elsewhere, only-scan, table-kind/);
+    expect(knownSection("x", rect, undefined, reg).missing).toMatch(/map-coverage-hits/);
+  });
+
+  // The checkout's own registers, on main and on the registers' branch: a cell nobody walked still gets the city's references.
+  it("finds references for an unwalked cell's kinds in the checkout's registers", () => {
+    const hits = { findings: 3, kinds: { "landuse-bare": 160, "kerb-gap-bare": 77, "ground-strip-overlap": 180 } };
+    const s = knownSection("krakowskie-2-0", cellById("krakowskie-2-0").rect, hits, readRegisters());
+    for (const k of s.kinds) expect(k.refs.length, k.kind).toBeGreaterThan(0);
   });
 });
 
