@@ -54,7 +54,7 @@ import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
 import { lampsBesideDeck } from "./lamp-deck";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
-import { heightsOffLod1, lod1Under } from "./height-lod1";
+import { heightsOffLod1, landmarksOffLod1, levelsTagLost, lod1Under } from "./height-lod1";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
 import { stepsInclineAgainst } from "./steps-incline";
@@ -67,7 +67,7 @@ import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers,
 import { cityBricks, plasteredWalls } from "./wall-materials";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
-import { correctedLine } from "../../osm-import/src/corrections.ts";
+import { TAG_CORRECTIONS, correctedLine } from "../../osm-import/src/corrections.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
@@ -1316,13 +1316,24 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "church-over-nmpt": () => churchesOverSurface(CHURCH_SURFACE, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
   /**
    * A building off its GUGiK LoD1 2024 height by more than 3 m (ADR-0077 step 3, `height-lod1.ts`):
-   * matched at IoU 0.7 and more, not among the import's exceptions (churches, historic buildings,
-   * towers, parts, hand corrections). What stays: mapped heights LoD1 disagrees with and changes
-   * cut at 10 m.
+   * matched at IoU 0.7 and more, not among the import's exceptions (churches, towers, the listed
+   * landmarks, parts, hand corrections), historic buildings included (G-632). What stays: mapped
+   * heights LoD1 disagrees with and changes cut at 10 m.
    */
   "height-vs-lod1": () => {
     const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
     return heightsOffLod1(buildings, lod1Under(buildings), (id) => osmTags(id)["building:part"] !== undefined && osmTags(id)["building"] === undefined);
+  },
+  /** A landmark of the list off its LoD1 height by more than 3 m (G-631): its height reviewed against the wrong source, or not at all. */
+  "landmark-vs-lod1": () => {
+    const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    return landmarksOffLod1(buildings, lod1Under(buildings));
+  },
+  /** A building drawn with fewer storeys than its `building:levels`, corrections included (G-629): the Kowalska houses on the scarp. */
+  "levels-tag-lost": () => {
+    const corrections = new Map(TAG_CORRECTIONS.map((c) => [c.id, c.tags]));
+    const tagsOf = (id: string) => ({ ...osmTags(id), ...corrections.get(id.split("/")[0]!) });
+    return levelsTagLost(MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))), tagsOf);
   },
   /** A landmark of the list the map shows whole and without a tower, crowned by the renderer's bell towers (G-210). */
   "landmark-fake-tower": () => cityFakeTowers(LANDMARK_BUILDINGS, SOURCE_OSM),
@@ -1989,6 +2000,21 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(heightsOffLod1([house], lod1, () => true)).toEqual([]);
     const helmet = { ...house, id: "w3", outline: [-1, -1, 1, -1, 1, 1, -1, 1], soffit: 13 };
     expect(heightsOffLod1([house, helmet], lod1, plain)).toEqual([]);
+    // A historic building takes LoD1 like the rest (G-632); a landmark of the list is the landmarks' check's.
+    expect(heightsOffLod1([{ ...house, use: "historic" }], lod1, plain)).toHaveLength(1);
+    const teatr = { ...house, id: "w67508958", use: "civic" };
+    expect(heightsOffLod1([teatr], lod1, plain)).toEqual([]);
+    expect(landmarksOffLod1([teatr, house, { ...teatr, use: "church" }], lod1)).toEqual([{ at: "100,50", what: "w67508958 default: middle of the roof 14.0 m, LoD1 7 m (IoU 1.00)" }]);
+  });
+
+  it("finds a building drawn with fewer storeys than its building:levels, and none with them all or with no tag (G-629)", () => {
+    const house = { id: "w1", x: 613, z: 129, outline: [], height: 15.3, use: "residential", source: "lod1", levels: 1 };
+    const tags = (levels?: string) => (): Readonly<Record<string, string>> => (levels === undefined ? {} : { "building:levels": levels });
+    expect(levelsTagLost([house], tags("4"))).toEqual([{ at: "613,129", what: "w1 lod1: 1 storeys of building:levels=4" }]);
+    expect(levelsTagLost([{ ...house, levels: 4 }], tags("4"))).toEqual([]);
+    expect(levelsTagLost([{ ...house, levels: 4 }], tags("4.5"))).toEqual([]);
+    expect(levelsTagLost([house], tags())).toEqual([]);
+    expect(levelsTagLost([{ ...house, soffit: 10 }], tags("4"))).toEqual([]);
   });
 
   it("finds a tower of the map without a height at a default one, and none with a height mapped or measured, nor a plain building (G-224)", () => {
