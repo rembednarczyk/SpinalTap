@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-638 `fetch` bez sprawdzenia `res.ok` w zestawie miasta i dźwiękach
+- Status: nie odtwarza się (12.11; wszystkie trzy miejsca sprawdzają `res.ok` w linii po `fetch` od fe802ea i 51d54c7, zgłoszenie wskazało same wywołania; błąd idzie do zastępstwa: fasady proceduralne, synteza dźwięku)
+- Ważność: S4 · Zasięg: `city-kit-loader.ts:108`, `city-kit.ts:167` i `audio/samples.ts:62` pobierają bez sprawdzenia statusu, więc 404 trafia do parsera albo dekodera z mylącym błędem (ten sam wzorzec co G-634)
+- Pakiet właściciela: packages/engine (renderer, audio)
+
+
 ### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
 - Status: naprawione w #422 (12.11; limit 120 s, `fetchModelBytes` z AbortController i wyścigiem z zegarem; dalszy ciąg G-637)
 - Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
