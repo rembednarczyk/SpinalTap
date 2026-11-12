@@ -14,7 +14,7 @@ import { cityLanduseWorld, landuseBare } from "./landuse-bare";
  * ADR-0077 step 1.1: the import lays the bare ground the orthophoto shows green or light paving as
  * a lawn or paving (`tools/osm-import/src/bare-cover.ts`), everywhere in a town's paved places.
  * Before the rule `landuse-bare` counted 39 094 such samples (12.11.2026: 9 775 m², 2 015 of them
- * green, 7 760 paving); the rule leaves some 7 450, by the kerbs, the bridges and the outlines' edges.
+ * green, 7 760 paving); the rule leaves some 5 930, by the kerbs, the bridges and the outlines' edges.
  */
 const MAX_LEFT = 10_000;
 
