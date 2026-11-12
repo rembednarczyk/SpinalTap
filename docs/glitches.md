@@ -1844,7 +1844,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai), packages/persistence
 
 ### G-703 Schody przycięte brzegiem mapy: ostatnia podstopnica do y 0 za brzegiem (ściana do 23,7 m)
-- Status: w PR #463 (12.11, weryfikacja w toku; zgłoszone przez kuratora, przegląd stare-miasto-1-0; T-049)
+- Status: w PR #463 (12.11, weryfikacja: NIE PRZYJĘTE, zgubione `surfaceAt` i normalne na szwach chunków; runda 2 autora; zgłoszone przez kuratora, przegląd stare-miasto-1-0; T-049)
 - Ważność: S3 (pionowa szara ściana 20 m, widoczna z ulicy i znad dachów) · Zasięg: 5 z 6 trafień `steps-riser-tall` w mieście. Stare Miasto: w481462067 (760; −210) 20,03 m i w888479969 (760; −148) 5,63 m. Podzamcze: (1090–1092; 160) 23,70 m (2 pasy). Nabrzeże: (2658; 60) 18,21 m. `groundY` poza chunkami zwraca 0 (`terrain.ts`), a `planSteps` dla pasa przyciętego do brzegu bierze wysokość tuż za brzegiem. Zrzuty `sm10d-schody-210`, `sm10d-kuria-podworze`
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (`steps-plan`), ewentualnie tools/osm-import (przycięcie pasa schodów odrobinę przed brzegiem) albo `groundY` za brzegiem z wysokością brzegu
 - Test przyjęcia: `steps-riser-tall` 6 → 1 (zostaje G-686 przy (732; 151)); pas schodów przy x = 760 kończy się na wysokości terenu brzegu (−20,1 i −6,3)
