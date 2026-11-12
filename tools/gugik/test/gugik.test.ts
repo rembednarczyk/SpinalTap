@@ -71,6 +71,16 @@ describe("grid transform and coding", () => {
     expect(iou(footprint(lower), footprint(upper))).toBeLessThan(0.01);
   });
 
+  it("with a least IoU, gives 0 for a pair under it and the same value for a pair over it", () => {
+    const sq = (x: number, z: number, s = 10) => footprint([{ x, z }, { x: x + s, z }, { x: x + s, z: z + s }, { x, z: z + s }]);
+    // Under on the areas alone (the bound before sampling), under after sampling, over.
+    expect(iou(sq(0, 0), sq(0, 0, 5))).toBeCloseTo(0.25, 2);
+    expect(iou(sq(0, 0), sq(0, 0, 5), 0.7)).toBe(0);
+    expect(iou(sq(0, 0), sq(2, 2), 0.5)).toBe(0);
+    expect(iou(sq(0, 0), sq(1, 0), 0.7)).toBe(iou(sq(0, 0), sq(1, 0)));
+    expect(iou(sq(0, 0), sq(1, 0))).toBeCloseTo(9 / 11, 2);
+  });
+
   it("delta-codes outlines in decimetres and reads them back", () => {
     const pts = [{ x: 162.94, z: 25.71 }, { x: -3.2, z: 40 }, { x: 0, z: -0.04 }];
     expect(decode(encode(pts))).toEqual([{ x: 162.9, z: 25.7 }, { x: -3.2, z: 40 }, { x: 0, z: 0 }]);

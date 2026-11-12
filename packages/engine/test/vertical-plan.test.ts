@@ -20,15 +20,20 @@ const flat = () => 0;
 const tenement = (extra: Partial<MapBuilding> = {}): MapBuilding => ({ id: 3, ring: rect(0, 0, 24, 14), base: 0, foot: 0, height: 13, levels: 4, use: "residential", look: 0x2077, rise: 15, clutter: 0.8, ...extra });
 
 /** Every view of the generated centre as measured frames (no terrain, no neighbours). */
-const lublin = (): FacadeFrame[] =>
-  LUBLIN_CHUNKS.flatMap((c) =>
-    c.buildings.map((b, i) => {
+const lublin = (): FacadeFrame[] => {
+  // One id per building of the whole city, as the renderer's entity ids are: an id per chunk made
+  // the index below keep only the last building of each id (78 of 705 seen).
+  let id = 0;
+  return LUBLIN_CHUNKS.flatMap((c) =>
+    c.buildings.map((b) => {
+      id += 1;
       const view = buildingView(b, c.district);
       if (view.kind !== "building") throw new Error("not a building");
       const at = { x: b.x, y: b.y, z: b.z };
-      return facadeFrame(mapBuilding(i + 1, { ring: cleanRing(view.outline.map((p) => ({ x: p.x + at.x, z: p.z + at.z }))), view, at }, () => null), none);
+      return facadeFrame(mapBuilding(id, { ring: cleanRing(view.outline.map((p) => ({ x: p.x + at.x, z: p.z + at.z }))), view, at }, () => null), none);
     }),
   );
+};
 
 const positions = (s: MeshSink): number[] => s.positions;
 

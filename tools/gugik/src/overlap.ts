@@ -19,17 +19,62 @@ const boxesOverlap = (a: Rect, b: Rect) => a.minX < b.maxX && b.minX < a.maxX &&
 /** Sample step for a pair: 0.25 m, coarser for big outlines so a pair costs at most ~40 000 samples. */
 const stepFor = (box: Rect) => Math.max(0.25, Math.sqrt(((box.maxX - box.minX) * (box.maxZ - box.minZ)) / 40000));
 
-/** Intersection over union of two footprints, 0 when their boxes do not overlap. */
-export const iou = (a: Footprint, b: Footprint): number => {
+/**
+ * The sampled intersection overruns the true one by its grid's error, well under this share of
+ * the bound; a pair is skipped only below `min` by more, so the pairs kept sample as before.
+ */
+const BOUND_SLACK = 1.1;
+
+/** Where a ring's edges cross the line at `z`, sorted: the crossings of `pointInRing`'s ray. */
+const crossings = (ring: readonly Pt[], z: number): number[] => {
+  const out: number[] = [];
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i]!;
+    const b = ring[j]!;
+    if (a.z > z !== b.z > z) out.push(((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x);
+  }
+  return out.sort((u, v) => u - v);
+};
+
+/** Samples along one side of a box at `step`, as the sampling loops take them. */
+const samples = (lo: number, hi: number, step: number): number => {
+  let n = 0;
+  for (let v = lo + step / 2; v < hi; v += step) n++;
+  return n;
+};
+
+/**
+ * Intersection over union of two footprints, 0 when their boxes do not overlap. With `min`, 0 also
+ * for a pair that cannot reach it (the match wants no value under it): before sampling when the
+ * intersection, at most the smaller area and the common box, is too small, and while sampling once
+ * the samples left could not make up what is missing.
+ */
+export const iou = (a: Footprint, b: Footprint, min = 0): number => {
   if (!boxesOverlap(a.box, b.box)) return 0;
   const box = { minX: Math.max(a.box.minX, b.box.minX), maxX: Math.min(a.box.maxX, b.box.maxX), minZ: Math.max(a.box.minZ, b.box.minZ), maxZ: Math.min(a.box.maxZ, b.box.maxZ) };
+  const most = Math.min(a.area, b.area, (box.maxX - box.minX) * (box.maxZ - box.minZ)) * BOUND_SLACK;
+  if (min > 0 && most < min * (a.area + b.area - most)) return 0;
   const step = stepFor(box);
+  // IoU ≥ min takes an intersection of min / (1 + min) of the two areas; a hair under it, for the rounding.
+  const need = min > 0 ? ((min * (a.area + b.area)) / (1 + min) / (step * step)) * (1 - 1e-9) : 0;
+  const row = samples(box.minX, box.maxX, step);
+  let left = samples(box.minZ, box.maxZ, step) * row;
   let both = 0;
-  for (let x = box.minX + step / 2; x < box.maxX; x += step)
-    for (let z = box.minZ + step / 2; z < box.maxZ; z += step) {
-      const p = { x, z };
-      if (pointInRing(p, a.ring) && pointInRing(p, b.ring)) both++;
+  // Row by row: where each ring's edges cross the row, as `pointInRing` reckons it, so a sample is
+  // inside a ring when an odd number of crossings lies past it. The same samples, the same count.
+  for (let z = box.minZ + step / 2; z < box.maxZ; z += step) {
+    const ca = crossings(a.ring, z);
+    const cb = crossings(b.ring, z);
+    let ia = 0;
+    let ib = 0;
+    for (let x = box.minX + step / 2; x < box.maxX; x += step) {
+      while (ia < ca.length && ca[ia]! <= x) ia++;
+      while (ib < cb.length && cb[ib]! <= x) ib++;
+      if ((ca.length - ia) % 2 === 1 && (cb.length - ib) % 2 === 1) both++;
     }
+    left -= row;
+    if (both + left < need) return 0;
+  }
   const inter = both * step * step;
   const union = a.area + b.area - inter;
   return union > 0 ? Math.min(1, inter / union) : 0;

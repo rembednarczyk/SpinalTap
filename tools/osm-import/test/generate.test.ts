@@ -107,6 +107,17 @@ describe("generator", () => {
     expect(generate(cellar, slope, tinyChunk).chunks[0]!.buildings).toEqual([]);
   });
 
+  it("builds nothing of a building on floors under the ground only, but one reaching up from them (G-600)", () => {
+    const map = tinyMap();
+    const house = map.ways.get(100)!;
+    const on = (tags: Record<string, string>) => generate({ ...map, ways: new Map([...map.ways, [100, { ...house, tags: { ...house.tags, ...tags } }]]) }, slope, tinyChunk).chunks[0]!.buildings;
+    // VIVO's garage w173070505: `level=-2` with `layer=2`, the layer the mall's own.
+    expect(on({ level: "-2", layer: "2" })).toEqual([]);
+    expect(on({ level: "-2;-1" })).toEqual([]);
+    expect(on({ level: "-1-0" })).toHaveLength(1);
+    expect(on({ level: "0" })).toHaveLength(1);
+  });
+
   it("makes a plain building around a theatre, library, court or town hall a public building at the same address (G-097)", () => {
     const withPoint = (point: Record<string, string>, building: Record<string, string> = {}) => {
       const map = tinyMap();
@@ -206,8 +217,9 @@ describe("generator", () => {
     const inputs = loadInputs();
     const d = DISTRICTS.find((x) => x.slug === "stare-miasto")!;
     const specs = chunksOf(d);
-    const first = emitDistrict(d.slug, d.name, generate(inputs.osm, inputs.src, specs).chunks);
-    const second = emitDistrict(d.slug, d.name, generate(loadInputs().osm, inputs.src, specs).chunks);
+    const first = emitDistrict(d.slug, d.name, generate(inputs.osm, inputs.src, specs, undefined, inputs.lod1).chunks);
+    const again = loadInputs();
+    const second = emitDistrict(d.slug, d.name, generate(again.osm, inputs.src, specs, undefined, again.lod1).chunks);
     expect(second).toBe(first);
     expect(first).toBe(readFileSync(join(REPO, "packages/sim/src/content/lublin/stare-miasto.generated.ts"), "utf8"));
   });
