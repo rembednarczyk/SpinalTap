@@ -34,9 +34,13 @@ export class SpatialHash<T> {
   private count = 0;
   private next = 0;
 
-  /** `cell`: side of a cell (m), above 0. */
-  constructor(readonly cell: number) {
+  /** Side of a cell (m). */
+  readonly cell: number;
+
+  /** `cell`: side of a cell (m), above 0. A plain field, not a parameter property: the tools run with types only stripped. */
+  constructor(cell: number) {
     if (!(cell > 0)) throw new Error(`SpatialHash: cell ${cell} must be above 0`);
+    this.cell = cell;
   }
 
   /** Items in the grid. */
