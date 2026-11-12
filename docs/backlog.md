@@ -120,7 +120,7 @@ Otwarte zadania: zgłoszone, w toku albo odłożone. Kolejność to propozycja, 
   - **Gdzie u nas:** ogrodzony nieużytek w OSM w1559354343 (`landuse=brownfield`, `proposed:landuse=retail`, ok. 4,4 tys. m²) w środku Placu Ofiar Getta (relacja r2316893, 6,7 tys. m²), środek ok. (448, 93) we współrzędnych gry, Krakowskie. Na południe parking powierzchniowy w173531008 (2 tys. m², wjazd od Przystankowej). Mapa: [`docs/plany/alchemia-mapa.svg`](plany/alchemia-mapa.svg). W grze dziś trawa placu i pusta działka.
   - **Uwaga topograficzna:** teren to stanowisko archeologiczne (w1559354344, średniowieczna osada). Budynek jest celowym odstępstwem z przyszłości (wpis T-0xx z powodem); w świecie gry wykopaliska mogą być wątkiem (podziemie, artefakty pod parkingiem).
   - **Zakres do rozpisania (ADR):** bryła food hallu z neonami i stoiskami (assety z ADR-0058 etap 3), wnętrze z autozapisem przy wejściu (ADR-0061), zjazd do parkingu podziemnego jako wnętrze wielopoziomowe, plac z wydarzeniami (koncerty, targi nocne, tłum z ADR-0060). Kandydat na hub fixerów lub frakcji. Przegląd kuratora topografii przed importem.
-- **[decyzja użytkownika] G-024.** Sześć końców pasów jednokierunkowych (Lubartowska, Kowalska, Świętoduska) nie ma ulicy dla aut w zasięgu skrętu. Opcje: auta jadą dalej ulicą dla dostaw albo zostaje jak jest.
+- **[decyzja użytkownika] G-024.** Sześć końców pasów jednokierunkowych (Lubartowska, Kowalska, Świętoduska) nie ma ulicy dla aut w zasięgu skrętu. Opcje: auta jadą dalej ulicą dla dostaw albo zostaje jak jest. Decyzja użytkownika 12.11: zostaje jak jest, nowe końce z przejść komórek dopisane do G-024 jako ta sama klasa.
 
 ## Zrobione (porządki 12.11)
 

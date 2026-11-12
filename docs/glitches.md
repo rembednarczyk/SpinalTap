@@ -33,6 +33,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opcje: A) pasy jadą dalej przez następną ulicę dla dostaw (Kowalska#67 60 m do Furmańskiej#77; Zielona 172 m do Staszica#35; Lubartowska#68 112 m); B) skręty w boczne ulice (G-006).
 - Pakiet właściciela: packages/sim (`content/traffic.ts`), ewentualnie `useOf` w `content/lublin`
 - Test przyjęcia: `lane-dead-end` spada o 6.
+- Decyzja użytkownika 12.11: zostaje jak jest (ruch aut odłożony od 31.10). Ta sama klasa (ślepy koniec pasa jednokierunkowego bez ulicy dla aut w zasięgu skrętu) obejmuje końce znalezione w przejściach komórek 12.11: Lubartowska#38:1 (581; 361), Furmańska#77:1 (631; 242), Furmańska#77:0>Cyrulicza#79:1 (555; 277), Furmańska#78:0>Cyrulicza#79:0 (556; 280) (podzamcze-0-0); Lubartowska#14>Aleja Tysiąclecia#80 (1041; 284) (podzamcze-2-0); Cerkiewna#90:b (930; 472), Podzamcze#107>Ruska#110 (1000; 461) (podzamcze-2-1); Mełgiewska#114:t (2456; 245) (nabrzeze-0-0); Turystyczna#122:0 (2487; 303), Andersa#127 (2399; 284) (nabrzeze-0-1). Bez osobnych zgłoszeń; mechanizm każdego nie był sprawdzany sondą.
 
 ### G-025 Istniejące zawrotki na Alei Tysiąclecia wychodzą poza nawierzchnię
 - Status: zgłoszone (do potwierdzenia)
