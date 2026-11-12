@@ -108,6 +108,7 @@
   "sidewalk-under-carriageway": 131,
   "footway-on-carriageway": 471,
   "kerb-strip-bare": 181,
+  "marking-step": 0,
   "kerb-fit-sparse": 0,
   "two-way-fit-narrow": 0,
   "venue-board-in-neighbour": 0,
