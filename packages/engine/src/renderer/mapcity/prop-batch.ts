@@ -25,7 +25,8 @@ export interface WorldProp {
   readonly pole?: boolean;
   /**
    * A door's variant: its model and size (ADR-0058 stage 9, `doorLayout`); a decal's layout (stage 6,
-   * `decals.ts` in `@seki/core`); a still figure's pose, seat and look (stage 8, `figureLayout`).
+   * `decals.ts` in `@seki/core`); a still figure's pose, seat and look (stage 8, `figureLayout`); a
+   * barrier's kind, length, height, rise and material (ADR-0077, `barrierLayout`).
    */
   readonly variant?: number;
 }
@@ -40,7 +41,7 @@ export const toWorld = (items: readonly StreetPropItem[], at: Vec3): WorldProp[]
     shape: shapeOf(i.prop, i.variant),
     scale: scaleOf(i.prop, i.variant),
     chains: bollardChains(i),
-    ...(i.prop === "door" || i.prop === "figure" || DECAL_KINDS.has(i.prop) ? { variant: i.variant } : {}),
+    ...(i.prop === "door" || i.prop === "figure" || i.prop === "barrier" || DECAL_KINDS.has(i.prop) ? { variant: i.variant } : {}),
   }));
 
 /** One instanced mesh per kind and shape. */

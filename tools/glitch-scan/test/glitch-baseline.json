@@ -172,5 +172,15 @@
   "figure-in-piece": 0,
   "figure-off-seat": 0,
   "figure-floating": 0,
-  "figure-in-crowd": 0
+  "figure-in-crowd": 0,
+  "barrier-blocks-door": 0,
+  "barrier-on-road": 0,
+  "barrier-on-steps": 0,
+  "barrier-in-building": 0,
+  "barrier-on-crowd-lane": 0,
+  "barrier-in-furniture": 0,
+  "barrier-on-seat": 0,
+  "barrier-parallel-cut": 15,
+  "city-wall-kept": 14,
+  "ruin-wall-height": 0
 }

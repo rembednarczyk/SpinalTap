@@ -17,6 +17,7 @@ import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
 import { FaceRig } from "./face";
+import { fetchModelBytes } from "./model-fetch";
 import type { VariantDress } from "./model-variant";
 import { type VrmExpressions, type VrmSprings, isVrm, readGlbJson, readVrmExpressions, readVrmSprings } from "./vrm-meta";
 
@@ -269,40 +270,6 @@ export const outlineModelMeshes = (meshes: readonly AbstractMesh[], enabled: boo
   if (!enabled) return;
   for (const m of meshes) {
     if ((m.metadata as { toonOutline?: boolean } | null)?.toonOutline !== false && m.getTotalVertices() > 0) applyOutline(m, IMPORTED_OUTLINE_WIDTH);
-  }
-};
-
-/**
- * How long a model file may take to download before it counts as failed (G-562 path: the character
- * keeps its stand-in and the next ask fetches it again). The largest VRM is about 8 MB, which a phone
- * on slow 3G (0.75 Mbit/s) gets in about 90 s; the rest is room for a start file sharing the link with
- * another. Past that the fetch has hung rather than crawled (G-561).
- */
-export const MODEL_FETCH_TIMEOUT_MS = 120_000;
-
-/**
- * The file's bytes, or a rejection once `MODEL_FETCH_TIMEOUT_MS` passes (with the fetch aborted) or
- * when the server answers with an error status: the error page is not a model (G-634).
- */
-const fetchModelBytes = async (url: string): Promise<ArrayBuffer> => {
-  const abort = new AbortController();
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  // Raced as well as aborted: a stalled body or a fetch that ignores the signal must not hang the load.
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      const err = new Error(`Model ${url} did not download within ${MODEL_FETCH_TIMEOUT_MS / 1000} s`);
-      abort.abort(err);
-      reject(err);
-    }, MODEL_FETCH_TIMEOUT_MS);
-  });
-  try {
-    const read = fetch(url, { signal: abort.signal }).then((r) => {
-      if (!r.ok) throw new Error(`Model ${url} could not be downloaded: HTTP ${r.status}${r.statusText ? ` ${r.statusText}` : ""}`);
-      return r.arrayBuffer();
-    });
-    return await Promise.race([read, timeout]);
-  } finally {
-    clearTimeout(timer);
   }
 };
 

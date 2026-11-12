@@ -7,3 +7,4 @@ export * from "./decals";
 export * from "./doors";
 export * from "./figures";
 export * from "./trees";
+export * from "./barriers";

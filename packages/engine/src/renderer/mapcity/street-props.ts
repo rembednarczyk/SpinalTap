@@ -4,6 +4,7 @@ import type { RenderQuality } from "../../npr/quality";
 import type { ToonMaterials } from "../../npr/toon-material";
 import type { CityProps } from "../city-props";
 import type { Obstacle } from "./facade-props";
+import { barrierBlock } from "./barrier-models";
 import { LampHalos } from "./lamp-halos";
 import { cellKey } from "./map-index";
 import { type WorldProp, toWorld } from "./prop-batch";
@@ -85,7 +86,10 @@ export class StreetProps {
     const byBlock = new Map<string, WorldProp[]>();
     for (const w of toWorld(items, at)) {
       const p = isPoleLamp(w) ? { ...w, pole: true } : w;
-      const k = cellKey(p.x, p.z, PROP_BLOCK);
+      // The map's barriers (ADR-0077) go with the furniture's blocks: the scenery comes whole and in
+      // its order (`RenderSync` spawns it once, again whole after a reset), the furniture before them,
+      // so a piece always lands in the same block.
+      const k = p.prop === "barrier" ? barrierBlock(p.x, p.z, PROP_BLOCK, (key) => this.furnished(key)) : cellKey(p.x, p.z, PROP_BLOCK);
       const list = byBlock.get(k);
       if (list) list.push(p);
       else byBlock.set(k, [p]);
@@ -206,6 +210,14 @@ export class StreetProps {
     const halo = this.halos.mesh;
     if (halo) out.push(halo);
     return out;
+  }
+
+  /** Does the block at `key` hold furniture, not barriers alone? */
+  private furnished(key: string): boolean {
+    const b = this.blocks.get(key);
+    if (!b) return false;
+    for (const list of b.pieces.values()) if (list.some((p) => p.prop !== "barrier")) return true;
+    return false;
   }
 
   private blockOf(key: string): PropBlock {

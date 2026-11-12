@@ -31,7 +31,7 @@ import {
 } from "@seki/core";
 import type { DeviceKind, Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
-import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
+import { chestOf, eyeOf, clearSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { grantQuickhackXp, ramMaxOf } from "../world/progression-ops";
 import { securityKey } from "../world/reinforcements";
@@ -92,7 +92,7 @@ export const scanFocus = (ctx: SimContext, player: Entity): Entity | null => {
     const angle = Math.acos(Math.max(-1, Math.min(1, (dx * dir.x + dy * dir.y + dz * dir.z) / distance)));
     if (angle > SCAN_CONE || angle > bestAngle + 1e-9) continue;
     if (Math.abs(angle - bestAngle) <= 1e-9 && distance >= bestDistance) continue;
-    if (!lineOfSight(ctx.world, eye, p)) continue;
+    if (!clearSight(ctx.world, eye, p)) continue;
     best = e;
     bestAngle = angle;
     bestDistance = distance;
@@ -192,7 +192,7 @@ const watchers = (ctx: SimContext, player: Entity, except: Entity | null): Entit
     if (stance === "friendly" && !(heat.level > 0 && heat.faction === g.faction)) continue;
     const distance = Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z);
     const sight = effectiveAggroRange(g.ai.aggroRange, stance);
-    if (distance > sight || !lineOfSight(ctx.world, eyeOf(g), chest)) continue;
+    if (distance > sight || !clearSight(ctx.world, eyeOf(g), chest)) continue;
     if (!enemySees(g, player, distance, true, sight)) continue;
     out.push(g);
   }
@@ -279,7 +279,7 @@ const chainTarget = (ctx: SimContext, player: Entity, first: Entity, radius: num
   for (const e of inCreationOrder([...ctx.world.with("device"), ...ctx.world.with("body")])) {
     if (e === first || e === player || hackTargetKind(e) !== kind || (e.health && e.health.current <= 0) || (e.device?.broken ?? 0) > 0) continue;
     const distance = Math.hypot(e.position.x - first.position.x, e.position.z - first.position.z);
-    if (distance > radius || distance >= bestDistance || !lineOfSight(ctx.world, from, scanPoint(e))) continue;
+    if (distance > radius || distance >= bestDistance || !clearSight(ctx.world, from, scanPoint(e))) continue;
     best = e;
     bestDistance = distance;
   }
