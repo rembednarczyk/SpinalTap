@@ -6,6 +6,7 @@
  * road: the carriageway fell 2.4 m along the bridge while its sidewalk beside it stayed level.
  * The bridge's outline (`man_made=bridge`) shows where the structure ends.
  */
+import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type Area, type Line } from "./features.ts";
 import { type Pt, pointInRing } from "./geometry.ts";
 
@@ -36,10 +37,7 @@ const edgeDistance = (p: Pt, ring: readonly Pt[]): number => {
   for (let i = 0; i < ring.length; i++) {
     const a = ring[i]!;
     const b = ring[(i + 1) % ring.length]!;
-    const dx = b.x - a.x;
-    const dz = b.z - a.z;
-    const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-    best = Math.min(best, Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z));
+    best = Math.min(best, segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z));
   }
   return best;
 };

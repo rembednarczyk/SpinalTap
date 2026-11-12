@@ -1,3 +1,4 @@
+import { segmentDistance } from "../../../packages/core/src";
 import { SpatialHash } from "../../../packages/core/src/math/spatial-hash";
 import type { AddedArea } from "../../osm-import/src/corrections.ts";
 import { type Line } from "../../osm-import/src/features.ts";
@@ -50,11 +51,7 @@ const segmentGrid = (lines: readonly Line[]): SpatialHash<Segment> => {
   return grid;
 };
 
-const distToSegment = (p: Pt, a: Pt, b: Pt): number => {
-  const [dx, dz] = [b.x - a.x, b.z - a.z];
-  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(p.x - (a.x + dx * t), p.z - (a.z + dz * t));
-};
+const distToSegment = (p: Pt, a: Pt, b: Pt): number => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 
 /** Where along a→b (0-1) it meets the ring's edges, its ends included. */
 const cutsOf = (a: Pt, b: Pt, ring: readonly Pt[]): number[] => {

@@ -1,4 +1,4 @@
-import { FIGURE_SEAT, FIGURE_SOLES, type FigureLayout, type StreetPropItem, figureFootprint, figureLayout, isSitting, seatAt } from "../../../packages/core/src";
+import { FIGURE_SEAT, FIGURE_SOLES, type FigureLayout, type StreetPropItem, figureFootprint, figureLayout, isSitting, seatAt, segmentDistance } from "../../../packages/core/src";
 import { distanceToPiece, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
 
 /**
@@ -41,12 +41,7 @@ const OFF_TURN = 0.05;
 
 const near = (p: Pt): string => `${p.x.toFixed(0)},${p.z.toFixed(0)}`;
 
-const segGap = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z);
-};
+const segGap = (p: Pt, a: Pt, b: Pt): number => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 const lineGap = (p: Pt, line: readonly Pt[]): number => {
   let best = Infinity;
   for (let i = 0; i + 1 < line.length; i++) best = Math.min(best, segGap(p, line[i]!, line[i + 1]!));

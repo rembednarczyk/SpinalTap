@@ -85,6 +85,7 @@ const alongside = (line: readonly Pt[], q: Pt, dir: Pt): boolean => {
     const [a, b] = [line[i]!, line[i + 1]!];
     const [dx, dz] = [b.x - a.x, b.z - a.z];
     const len = Math.hypot(dx, dz) || 1;
+    // Not `segmentDistance` of core: the parameter divides by `len * len` of the rounded length, another rounding than `dx * dx + dz * dz`.
     const t = Math.max(0, Math.min(1, ((q.x - a.x) * dx + (q.z - a.z) * dz) / (len * len)));
     const d = Math.hypot(a.x + dx * t - q.x, a.z + dz * t - q.z);
     if (!best || d < best.d) best = { d, cos: Math.abs((dx * dir.x + dz * dir.z) / len) };

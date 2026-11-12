@@ -8,6 +8,7 @@ import {
   pointInRingEvenOdd,
   polylineTangent,
   segmentDistance,
+  segmentParam,
   signedArea,
 } from "../src";
 
@@ -67,6 +68,12 @@ const parkedSegmentDistance = (x: number, z: number, a: PairXZ, b: PairXZ): numb
   const len2 = dx * dx + dz * dz || 1;
   const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / len2));
   return Math.hypot(x - (a[0] + dx * t), z - (a[1] + dz * t));
+};
+// The foot's parameter as crowd-barriers' `shiftAt` and the deck's `deckHeight` had it (the same text).
+const barriersFootParam = (x: number, z: number, a: PointXZ, b: PointXZ): number => {
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  return Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
 };
 const oldSignedArea = (ring: readonly PointXZ[]): number => {
   let s = 0;
@@ -152,6 +159,31 @@ describe("segmentDistance", () => {
     distancesAgree(p, a, b);
     expect(segmentDistance(1, 0, 0, 0, 5e-7, 0, 1e-12)).toBe(1);
     expect(segmentDistance(1, 0, 0, 0, 5e-7, 0)).toBe(1 - 5e-7);
+  });
+});
+
+describe("segmentParam", () => {
+  it("matches the old copy on random points and segments, at a vertex and on a degenerate segment", () => {
+    const agrees = (p: PointXZ, a: PointXZ, b: PointXZ): void => {
+      const t = segmentParam(p.x, p.z, a.x, a.z, b.x, b.z);
+      expect(same(t, barriersFootParam(p.x, p.z, a, b)), `${JSON.stringify([p, a, b])}: ${t}`).toBe(true);
+    };
+    random((rng, grid) => agrees(pt(rng, grid), pt(rng, grid), pt(rng, grid)));
+    const a = { x: 1, z: 2 };
+    const b = { x: 4, z: 6 };
+    for (const p of [a, b, { x: 2.5, z: 4 }, { x: -3, z: -1 }, { x: 9, z: 1 }]) {
+      agrees(p, a, b);
+      agrees(p, a, a);
+    }
+  });
+
+  it("clamps the foot to the segment and gives 0 under `minLen2`", () => {
+    expect(segmentParam(2.5, 4, 1, 2, 4, 6)).toBe(0.5);
+    expect(segmentParam(-3, -1, 1, 2, 4, 6)).toBe(0);
+    expect(segmentParam(10, 10, 1, 2, 4, 6)).toBe(1);
+    expect(segmentParam(4, 6, 1, 2, 1, 2)).toBe(0);
+    expect(segmentParam(1, 0, 0, 0, 5e-7, 0)).toBe(1);
+    expect(segmentParam(1, 0, 0, 0, 5e-7, 0, 1e-12)).toBe(0);
   });
 });
 

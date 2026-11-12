@@ -30,6 +30,7 @@
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
 import { GRAFFITI_DESIGNS, GRAFFITI_MAX_LIFT, HOUSE_PLATE, PLATE_MAX_LIFT, graffitiVariant, parseHouseNumber, plateVariant } from "../../../packages/core/src/world/decals.ts";
 import { doorLayout } from "../../../packages/core/src/world/doors.ts";
+import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import type { Pt } from "./geometry.ts";
 import type { Tags } from "./osm.ts";
 import { addStreetDecals } from "./props-decals-street.ts";
@@ -281,10 +282,7 @@ export const streetsInFront = (site: Site, w: DecalWall): Set<string> => {
       for (let k = 0; k + 1 < st.line.length; k++) {
         const a = st.line[k]!;
         const b = st.line[k + 1]!;
-        const dx = b.x - a.x;
-        const dz = b.z - a.z;
-        const t = Math.max(0, Math.min(1, ((q.x - a.x) * dx + (q.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-        if (st.name && Math.hypot(a.x + dx * t - q.x, a.z + dz * t - q.z) < 1) out.add(st.name);
+        if (st.name && segmentDistance(q.x, q.z, a.x, a.z, b.x, b.z) < 1) out.add(st.name);
       }
     }
   }

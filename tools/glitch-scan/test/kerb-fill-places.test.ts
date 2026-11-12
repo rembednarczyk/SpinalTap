@@ -5,6 +5,7 @@ import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
  * G-570: the curator's places along the kerbs of G-522's fills, on the orthophoto (PZGiK), read off
  * the city's ground as generated: the surfaces drawn at a point of each, in draw order.
  */
+// Not `pointInRingEvenOdd` of core: the same rule, but on the flat outline `[x0, z0, …]` as the chunk keeps it.
 const inRing = (x: number, z: number, o: readonly number[]): boolean => {
   let r = false;
   for (let i = 0, j = o.length - 2; i < o.length; j = i, i += 2) {
