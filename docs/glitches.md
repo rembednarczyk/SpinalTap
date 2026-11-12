@@ -1702,7 +1702,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-628 `tools/orto report --area` wybiera raster po pierwszym wierzchołku obszaru
-- Status: zgłoszone (12.11, kurator przeglądu T-245)
+- Status: w PR #421 (12.11)
 - Ważność: S4 · Zasięg: `report.ts --area T-245/zielen-litevski` zwraca „brak rastra”, bo pierwszy wierzchołek (x −201) leży tuż przed rastrem Krakowskiego (od x −200); poprawka: wybór rastra po środku obszaru albo po dowolnym punkcie na rastrze
 - Pakiet właściciela: tools/orto
 
