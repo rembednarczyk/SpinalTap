@@ -45,8 +45,8 @@ export interface BuildingOut {
   readonly material?: WallMaterial;
   /** `building:colour` of its own element as `#rrggbb` (G-244). */
   readonly colour?: string;
-  /** Where the height came from. */
-  readonly source: "height" | "levels" | "default";
+  /** Where the height came from: the `height` tag, `building:levels`, the defaults, or GUGiK LoD1 (`lod1-heights.ts`). */
+  readonly source: "height" | "levels" | "default" | "lod1";
   /** Venues in or at it (ADR-0064 stage 4), relative to (x, z), with their 2077 names. */
   readonly venues?: readonly VenueOut[];
 }

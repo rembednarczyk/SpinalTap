@@ -3,6 +3,7 @@
  * input gives the same chunks, byte for byte, whatever order the files were read in.
  */
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
+import { type Lod1Building } from "../../gugik/src/extracts.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { smallAlone } from "./building-alone.ts";
 import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
@@ -23,6 +24,7 @@ import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chun
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
 import { type ChunkOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
+import { lod1Index, withLod1Height } from "./lod1-heights.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
 import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
 import { type WorldVenue, allVenues, assignVenues, venueOut } from "./venues.ts";
@@ -32,6 +34,8 @@ export interface ChunkStats {
   readonly buildings: number;
   readonly fromHeight: number;
   readonly fromLevels: number;
+  /** Heights from GUGiK LoD1 2024 (ADR-0077 step 3). */
+  readonly fromLod1: number;
   readonly skipped: number;
   readonly withHoles: number;
   readonly ground: number;
@@ -179,6 +183,7 @@ const generateChunk = (
   towered: ReadonlySet<string>,
   venues: ReadonlyMap<string, readonly WorldVenue[]>,
   kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[] },
+  heights: { readonly lod1?: ReturnType<typeof lod1Index>; readonly orphans: ReadonlySet<string> },
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
@@ -198,8 +203,10 @@ const generateChunk = (
       continue;
     }
     if (a.holes > 0) withHoles++;
+    const crowned = heights.orphans.has(a.id) || (parts.get(a.id)?.length ?? 0) > 0;
+    const built = withLod1Height(r.ok, heights.lod1, crowned);
     const signs = venues.get(a.id);
-    const ok = signs ? { ...r.ok, venues: signs.map((v) => venueOut(v, r.ok)) } : r.ok;
+    const ok = signs ? { ...built, venues: signs.map((v) => venueOut(v, built)) } : built;
     // A building's parts follow it, in its chunk, wherever their own centroids fall.
     out.push(ok, ...r.lifted);
   }
@@ -239,6 +246,7 @@ const generateChunk = (
     buildings: out.length,
     fromHeight: out.filter((b) => b.source === "height").length,
     fromLevels: out.filter((b) => b.source === "levels").length,
+    fromLod1: out.filter((b) => b.source === "lod1").length,
     skipped,
     withHoles,
     ground: ground.length,
@@ -259,7 +267,8 @@ const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
   return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
 };
 
-export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS, added?: readonly AddedArea[]): Generated => {
+/** `lod1`: GUGiK LoD1 2024 buildings (`Inputs.lod1`) for the heights the map lacks (`lod1-heights.ts`); without, the tags' heights. */
+export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS, added?: readonly AddedArea[], lod1?: readonly Lod1Building[]): Generated => {
   // The ways a set piece of the game replaces (ADR-0074 stage 7) are left out before anything reads them.
   const features = withoutReplaced(extractFeatures(data));
   // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), before anything reads them.
@@ -340,7 +349,8 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const venues = assignVenues(allVenues(data, areas), buildings.map((b) => ({ id: b.id, ring: b.ring })));
   const mapped = allVenues(data, areas).filter((v) => chunks.some((c) => inRect(v.at, c.rect)));
   const kerb = { carParks: areas, busStops: busStopPosts(data, mapLines, areas) };
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb));
+  const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
+  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, heights));
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
   const venueStats: VenueStats = {
     total: mapped.length,
