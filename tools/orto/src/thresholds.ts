@@ -15,6 +15,11 @@ export interface Thresholds {
   readonly shadowL: number;
   /** Green: the flights' mean ExG at or over this. */
   readonly greenExg: number;
+  /**
+   * Green also on the ground: the current (leaf-off) image's own ExG at or over this; under it, green
+   * under crowns (G-672). As `greenExg`: paving under the crowns by Ruska keeps 4% of it, 0.02 kept 20%.
+   */
+  readonly leafOffExg: number;
   /** A hard surface more saturated than this in the current image is something else (a coloured roof, a car, a court): unknown. */
   readonly hardS: number;
   /** Light paving: the current image's L at or over this; darker is asphalt. */
@@ -25,6 +30,7 @@ export const THRESHOLDS: Thresholds = {
   smooth: 1,
   shadowL: 50,
   greenExg: 0.026,
+  leafOffExg: 0.026,
   hardS: 0.4,
   pavingL: 115,
 };
