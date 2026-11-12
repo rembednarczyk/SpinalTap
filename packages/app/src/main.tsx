@@ -1,3 +1,4 @@
+import "./fonts";
 import { degToRad } from "@seki/core";
 import { BabylonRenderer, BrowserInput, PerfProbe, PreviewStage, Stage, SynthAudio } from "@seki/engine";
 import { audioSampleManifest } from "./audio-manifest";
