@@ -30,13 +30,6 @@ export const scratch = {
   i32: (name: string, n: number, value = 0): Int32Array => pooled(name, n, value, (m) => new Int32Array(m)),
 };
 
-const segmentGap = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z);
-};
-
 /** The chunk's raster: a cell's centre at (minX + (i + 0.5) step, minZ + (j + 0.5) step). */
 export class Cells {
   readonly nx: number;
@@ -179,11 +172,17 @@ export class Cells {
       const i1 = Math.min(this.nx - 1, Math.ceil((Math.max(a.x, c.x) + d - this.rect.minX) / STEP));
       const j0 = Math.max(0, Math.floor((Math.min(a.z, c.z) - d - this.rect.minZ) / STEP));
       const j1 = Math.min(this.nz - 1, Math.ceil((Math.max(a.z, c.z) + d - this.rect.minZ) / STEP));
-      for (let j = j0; j <= j1; j++)
+      const [dx, dz] = [c.x - a.x, c.z - a.z];
+      const len2 = dx * dx + dz * dz || 1;
+      for (let j = j0; j <= j1; j++) {
+        const pz = this.rect.minZ + (j + 0.5) * STEP;
         for (let i = i0; i <= i1; i++) {
-          const p = this.at(i, j);
-          if (segmentGap(p, a, c) <= d) set(j * this.nx + i);
+          // As `segmentGap`, the cell's centre inline.
+          const px = this.rect.minX + (i + 0.5) * STEP;
+          const t = Math.max(0, Math.min(1, ((px - a.x) * dx + (pz - a.z) * dz) / len2));
+          if (Math.hypot(a.x + dx * t - px, a.z + dz * t - pz) <= d) set(j * this.nx + i);
         }
+      }
     }
   }
 }

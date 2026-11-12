@@ -12,11 +12,18 @@ const BLOCK = 4;
  * holding one, grown by as many blocks as cover `r` and one more. More cells than the exact reach,
  * never fewer.
  */
-const nearFill = (cells: Cells, r: number): ((k: number) => boolean) => {
+const nearFill = (cells: Cells, r: number): Uint8Array => {
   const { nx, nz, label } = cells;
   const [bx, bz] = [Math.ceil(nx / BLOCK), Math.ceil(nz / BLOCK)];
   const has = new Uint8Array(bx * bz);
-  for (let k = 0; k < nx * nz; k++) if (label[k] === LABEL.grass || label[k] === LABEL.square) has[Math.floor(k / nx / BLOCK) * bx + Math.floor((k % nx) / BLOCK)] = 1;
+  for (let j = 0; j < nz; j++) {
+    const o = j * nx;
+    const row = Math.floor(j / BLOCK) * bx;
+    for (let i = 0; i < nx; i++) {
+      const l = label[o + i];
+      if (l === LABEL.grass || l === LABEL.square) has[row + Math.floor(i / BLOCK)] = 1;
+    }
+  }
   const g = Math.ceil(r / BLOCK) + 1;
   const near = new Uint8Array(bx * bz);
   for (let j = 0; j < bz; j++)
@@ -24,7 +31,13 @@ const nearFill = (cells: Cells, r: number): ((k: number) => boolean) => {
       if (!has[j * bx + i]) continue;
       for (let jj = Math.max(0, j - g); jj <= Math.min(bz - 1, j + g); jj++) near.fill(1, jj * bx + Math.max(0, i - g), jj * bx + Math.min(bx - 1, i + g) + 1);
     }
-  return (k) => near[Math.floor(k / nx / BLOCK) * bx + Math.floor((k % nx) / BLOCK)] === 1;
+  // Per cell, a row of blocks at a time.
+  const out = scratch.u8("kerbs.near", nx * nz);
+  for (let j = 0; j < nz; j++) {
+    const row = Math.floor(j / BLOCK) * bx;
+    for (let i = 0; i < nx; i++) out[j * nx + i] = near[row + Math.floor(i / BLOCK)]!;
+  }
+  return out;
 };
 
 /**
@@ -60,7 +73,7 @@ export const keepKerbs = (cells: Cells, band: number): void => {
   const near = nearFill(cells, reach);
   const seeds = new Map<number, number[]>();
   for (let k = 0; k < nx * nz; k++) {
-    if (!road[k] || !near(k)) continue;
+    if (!road[k] || !near[k]) continue;
     const n = around(k);
     let edge = false;
     for (let r = 0; r < n && !edge; r++) edge = free(round[r]!);
@@ -88,7 +101,7 @@ export const keepKerbs = (cells: Cells, band: number): void => {
       for (let r = 0; r < c; r++) {
         const m = round[r]!;
         // Only near a fill: a walk from the kerb to one never leaves its reach.
-        if (depth[m]! >= 0 || !free(m) || !near(m)) continue;
+        if (depth[m]! >= 0 || !free(m) || !near[m]) continue;
         depth[m] = depth[k]! + 1;
         src[m] = src[k]!;
         const s0 = src[m]!;

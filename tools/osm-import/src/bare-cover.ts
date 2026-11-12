@@ -33,7 +33,7 @@ import { contours } from "./contour.ts";
 import { type Area } from "./features.ts";
 import { type OsmData } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
-import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, selfIntersects, signedArea, simplifyRing } from "./geometry.ts";
+import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, signedArea, simplifyRing } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
 
 /** The rule's settings, measured on the four districts (ADR-0077 step 1.1). */
@@ -111,25 +111,32 @@ const readCover = (cells: Cells, cover: Cover): void => {
   }
 };
 
-/** A summed-area table of the cells of `label`: entry (i, j) counts those west and south of (i, j). */
-const summed = (cells: Cells, label: number): Int32Array => {
-  const { nx, nz } = cells;
-  const s = scratch.i32(`summed.${label}`, (nx + 1) * (nz + 1));
+/** Summed-area tables of the grass, square and other cells, one pass: entry (i, j) counts those west and south of (i, j). */
+const summed = (cells: Cells): [Int32Array, Int32Array, Int32Array] => {
+  const { nx, nz, label } = cells;
+  const n = (nx + 1) * (nz + 1);
+  const [sg, ss, so] = [scratch.i32("summed.g", n), scratch.i32("summed.s", n), scratch.i32("summed.o", n)];
   for (let j = 0; j < nz; j++) {
-    let n = 0;
+    let [g, q, o] = [0, 0, 0];
+    const [row, up] = [(j + 1) * (nx + 1) + 1, j * (nx + 1) + 1];
     for (let i = 0; i < nx; i++) {
-      if (cells.label[j * nx + i] === label) n++;
-      s[(j + 1) * (nx + 1) + i + 1] = n + s[j * (nx + 1) + i + 1]!;
+      const l = label[j * nx + i];
+      if (l === LABEL.grass) g++;
+      else if (l === LABEL.square) q++;
+      else if (l === LABEL.other) o++;
+      sg[row + i] = g + sg[up + i]!;
+      ss[row + i] = q + ss[up + i]!;
+      so[row + i] = o + so[up + i]!;
     }
   }
-  return s;
+  return [sg, ss, so];
 };
 
 /** Shade and crowns take the class most of the free cells `FILL.around` round them have, by a summed-area table a class. */
 const resolveMixed = (cells: Cells): void => {
   const { nx, nz, label } = cells;
   if (!label.includes(LABEL.mixed)) return;
-  const [sg, ss, so] = [summed(cells, LABEL.grass), summed(cells, LABEL.square), summed(cells, LABEL.other)];
+  const [sg, ss, so] = summed(cells);
   const r = FILL.around;
   const next = scratch.u8("mixed.next", label.length);
   next.set(label);
@@ -283,14 +290,43 @@ const CLIP_SCALE = 100;
  * under them ends exactly on their edges, no overlap and no seam. A hole the cut leaves (a piece
  * under 0.5 m² inside a fill) is not cut: the fill runs under it.
  */
+const toPath = (r: readonly Pt[]): Path64 => r.map((p) => ({ x: Math.round(p.x * CLIP_SCALE), y: Math.round(p.z * CLIP_SCALE) }));
+/** The pieces' paths, made once a piece however many tiles it meets. */
+const PATHS = new WeakMap<readonly Pt[], Path64>();
+const pathOf = (r: readonly Pt[]): Path64 => {
+  let p = PATHS.get(r);
+  if (!p) PATHS.set(r, (p = toPath(r)));
+  return p;
+};
+
+/** Whether two non-adjacent edges of the ring properly cross (`selfIntersects`), the edges swept along x. */
+const crossesItself = (ring: readonly Pt[]): boolean => {
+  const n = ring.length;
+  const lo = (i: number) => Math.min(ring[i]!.x, ring[(i + 1) % n]!.x);
+  const hi = (i: number) => Math.max(ring[i]!.x, ring[(i + 1) % n]!.x);
+  const order = Array.from({ length: n }, (_, i) => i).sort((p, q) => lo(p) - lo(q));
+  const side = (a: Pt, b: Pt, c: Pt) => (b.x - a.x) * (c.z - a.z) - (b.z - a.z) * (c.x - a.x);
+  for (let s = 0; s < n; s++) {
+    const i = order[s]!;
+    for (let t = s + 1; t < n && lo(order[t]!) <= hi(i); t++) {
+      const j = order[t]!;
+      const [u, v] = [Math.min(i, j), Math.max(i, j)];
+      if (v - u < 2 || (u === 0 && v === n - 1)) continue;
+      const [a, b, c, d] = [ring[u]!, ring[(u + 1) % n]!, ring[v]!, ring[(v + 1) % n]!];
+      const [d1, d2, d3, d4] = [side(c, d, a), side(c, d, b), side(a, b, c), side(a, b, d)];
+      if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
+    }
+  }
+  return false;
+};
+
 const cutByPieces = (fills: readonly (readonly Pt[])[], pieces: readonly (readonly Pt[])[]): Pt[][] => {
-  const path = (r: readonly Pt[]): Path64 => r.map((p) => ({ x: Math.round(p.x * CLIP_SCALE), y: Math.round(p.z * CLIP_SCALE) }));
-  const cut = pieces.length > 0 ? difference(fills.map(path), pieces.map(path), FillRule.NonZero) : fills.map(path);
+  const cut = pieces.length > 0 ? difference(fills.map(toPath), pieces.map(pathOf), FillRule.NonZero) : fills.map(toPath);
   // A sliver the cut leaves crossing itself is dropped: it would draw no ground the scan agrees with.
   return cut
     .filter((p) => isPositive(p))
     .map((p) => ccw(removeCollinear(p.map((q) => ({ x: q.x / CLIP_SCALE, z: q.y / CLIP_SCALE })), 0.005)))
-    .filter((r) => !selfIntersects(r));
+    .filter((r) => !crossesItself(r));
 };
 
 /**
@@ -327,7 +363,11 @@ export const townPlaces = (data: OsmData, areas: readonly Area[]): Omit<TownPlac
  */
 export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls: readonly (readonly Pt[])[], town: TownPlaces = NO_PLACES): GroundOut[] => {
   const cells = new Cells(rect);
-  const ringOf = (flat: readonly number[]) => Array.from({ length: flat.length / 2 }, (_, k) => ({ x: flat[2 * k]!, z: flat[2 * k + 1]! }));
+  const ringOf = (flat: readonly number[]) => {
+    const ring: Pt[] = [];
+    for (let k = 0; k + 1 < flat.length; k += 2) ring.push({ x: flat[k]!, z: flat[k + 1]! });
+    return ring;
+  };
   const boxOf = (r: Rect): Pt[] => [
     { x: r.minX, z: r.minZ },
     { x: r.maxX, z: r.minZ },
