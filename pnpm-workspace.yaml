@@ -6,3 +6,4 @@ packages:
   - "tools/gugik"
   - "tools/i18n-scan"
   - "tools/code-health"
+  - "tools/test-time"

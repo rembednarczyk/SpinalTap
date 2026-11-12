@@ -59,10 +59,19 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # The default reporter prints failures in the log; the blob report feeds the merge.
-      - run: pnpm exec vitest run --coverage --reporter=default --reporter=blob --shard=${{ matrix.shard }}/2
+      # The default reporter prints failures in the log; the blob report feeds the merge; the
+      # test-time reporter writes the time of every file for the time gate (job test-time).
+      - run: pnpm exec vitest run --coverage --reporter=default --reporter=blob --reporter=./tools/test-time/src/reporter.ts --shard=${{ matrix.shard }}/2
         env:
           VITEST_COVERAGE_SHARD: "1"
+          TEST_TIME_OUTPUT: reports/unit-times/unit-times-${{ matrix.shard }}.json
+      # Only a passing shard: a red run is no reference. On main the times are the reference for
+      # the pull requests that follow, so they stay longer than the copy of a pull request.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unit-times-${{ matrix.shard }}
+          path: reports/unit-times
+          retention-days: ${{ github.event_name == 'push' && 30 || 3 }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -99,6 +108,55 @@ jobs:
         with:
           name: coverage
           path: reports/coverage
+
+  # Time gate of the unit tests (ADR-0046, user decision 12.11): a test file more than 50% and
+  # more than 2 s slower than on the last green run of main gets a warning, not a red check. Its
+  # own small job after the shards, beside the checks, so it adds nothing to the critical path:
+  # no pnpm install, Node runs the tool's TypeScript directly.
+  test-time:
+    name: Unit test time (warning only)
+    needs: [changes, unit]
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: tools/test-time
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: unit-times-*
+          path: ${{ runner.temp }}/times/head
+          merge-multiple: true
+      # The newest green push run of main that has the times (a docs-only run has none). Reading
+      # artifacts of other runs needs only the run's own token with actions: read.
+      - name: Download the times of the last green run of main
+        id: main
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/times/main"
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --event push --status success --limit 20 \
+            --json databaseId,headSha --jq '.[] | "\(.databaseId) \(.headSha[0:7])"' > "$RUNNER_TEMP/main-runs"
+          while read -r id sha; do
+            [ "$id" = "$GITHUB_RUN_ID" ] && continue
+            if gh run download "$id" --repo "$GITHUB_REPOSITORY" --pattern 'unit-times-*' --dir "$RUNNER_TEMP/times/main" < /dev/null; then
+              echo "reference=main $sha, run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$id" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done < "$RUNNER_TEMP/main-runs"
+          echo "No green run of main with unit test times among the last 20."
+      - name: Compare with main
+        env:
+          REFERENCE: ${{ steps.main.outputs.reference }}
+        run: node tools/test-time/src/compare.ts "$RUNNER_TEMP/times/head" "$RUNNER_TEMP/times/main" "$REFERENCE"
 
   # ADR-0046: two shards in parallel with the checks; each builds once and runs half of the
   # specs (a single job took 40 min, most of it cold boots under SwiftShader). Setup is about
