@@ -36,6 +36,17 @@ Surowe dane, z których `tools/osm-import` generuje Lublin 2077 (ADR-0042). Pobi
   - Obecnie nieużywane: wszystkie dystrykty mają NMT.
 - **Źródło:** EU-DEM v1.1, Copernicus Land Monitoring Service, Europejska Agencja Środowiska. Produced using Copernicus data and information funded by the European Union.
 
+## Ortofotomapa PZGiK: pokrycie terenu (ADR-0077)
+
+- **Pliki:** `data/orto/<obszar>.cover.png`, `data/orto/<obszar>.cover.json` i `data/orto/sources.json`.
+  - Raster klas pokrycia co 0,5 m w układzie gry, paleta 4-bitowa: brak zdjęcia, zieleń, jasna nawierzchnia, asfalt, cień, nieznane. Obok nagłówek rastra.
+  - Manifest: usługi i warstwa, arkusze i daty nalotów, data pobrania, progi i wersja klasyfikatora.
+  - Wynik pochodny klasyfikacji kolorów ortofotomapy (`tools/orto`). Surowe zdjęcia zostają w pamięci podręcznej narzędzia, poza repozytorium.
+  - Pobrane przez WMS `PZGIK/ORTO/WMS/HighResolution` (obraz bieżący) i `PZGIK/ORTO/WMS/StandardResolutionTime` (naloty archiwalne, parametr `TIME`), warstwa `Raster`, EPSG:2180. Daty nalotów ze skorowidza `SkorowidzeWgAktualnosci`.
+- **Źródło:** Główny Urząd Geodezji i Kartografii, państwowy zasób geodezyjny i kartograficzny (geoportal.gov.pl), ortofotomapa.
+  - Dane udostępniane bezpłatnie, do dowolnego wykorzystania (art. 40a ustawy Prawo geodezyjne i kartograficzne).
+  - Regulamin: https://www.geoportal.gov.pl/pl/o-geoportalu/regulamin/
+
 ## Budynki 3D i BDOT10k: GUGiK (ADR-0077)
 
 - **Pliki:** `data/gugik/` (wyciągi pochodne dla całego miasta, kafle 1 km w układzie gry; format w `data/gugik/index.json`), manifest paczek `data/gugik/sources.json` (adres, data pobrania, `Last-Modified`, rozmiar, sha256) i próbki `tools/gugik/test/fixtures/*.gml` (Collegium Maximum).

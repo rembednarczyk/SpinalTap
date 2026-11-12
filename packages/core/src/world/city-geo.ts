@@ -123,7 +123,8 @@ export type RoadMarkingKind = "centre-dash" | "centre-double" | "lane-dash" | "e
  * `house-plate` with the map's house number, `sticker` on a pole or a cabinet, `drain-grate` at the kerb.
  * ADR-0058 stage 8 adds the still crowd, drawn only (`figures.ts`): a `figure` sitting on a bench or a
  * stool, queueing at a booth, waiting at a stop or smoking by a door; its variant holds its pose, build,
- * seat and look (`figureVariant`).
+ * seat and look (`figureVariant`). ADR-0077 adds the map's walls, fences, hedges and gates, a `barrier`
+ * a straight stretch of one (`barriers.ts`): its variant holds the kind, length, height and rise.
  */
 export type StreetPropKind =
   | "lamp-pastoral"
@@ -173,7 +174,8 @@ export type StreetPropKind =
   | "sticker"
   | "drain-grate"
   | "door"
-  | "figure";
+  | "figure"
+  | "barrier";
 
 /** One piece of street furniture, in world metres relative to its chunk entity's position. */
 export interface StreetPropItem {

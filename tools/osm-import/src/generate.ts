@@ -5,20 +5,24 @@
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { type Lod1Building } from "../../gugik/src/extracts.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
+import { parseLength } from "./building-tags.ts";
 import { smallAlone } from "./building-alone.ts";
 import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
+import { type WorldBarrier, chunkBarriers, worldBarriers } from "./barriers.ts";
 import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills } from "./bridge-fill.ts";
+import { type EdgeCut, edgeOutlines, partsWithin } from "./building-edge.ts";
 import { makeBuilding } from "./buildings.ts";
 import { type AddedArea, addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { withoutReplaced } from "./corrections-alchemia.ts";
-import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
+import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
 import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, lineBands, markedCrossing, openPavings, roadWidth } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
+import { FILL_MARGIN, kerbFills, stretchZebras } from "./kerb-fill.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
@@ -103,7 +107,7 @@ const KERB_MARGIN = 0.5;
 const MIN_KERB_SAMPLES = 5;
 
 /** A coarse spatial hash of points along mapped sidewalks (`footway=sidewalk`), with their direction. */
-const sidewalkIndex = (lines: readonly Line[]) => {
+export const sidewalkIndex = (lines: readonly Line[]) => {
   const cell = 10;
   const grid = new Map<string, SidewalkPoint[]>();
   const key = (x: number, z: number) => `${Math.floor(x / cell)},${Math.floor(z / cell)}`;
@@ -172,7 +176,7 @@ const grow = (r: Rect, m: number): Rect => ({ minX: r.minX - m, minZ: r.minZ - m
 const generateChunk = (
   spec: ChunkSpec,
   src: HeightSource,
-  buildings: readonly Area[],
+  buildings: readonly (Area & { readonly edge?: EdgeCut })[],
   bands: readonly (Band & { box: Rect })[],
   lines: readonly Line[],
   pois: ReturnType<typeof allPois>,
@@ -183,6 +187,7 @@ const generateChunk = (
   towered: ReadonlySet<string>,
   venues: ReadonlyMap<string, readonly WorldVenue[]>,
   kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[] },
+  barriers: readonly WorldBarrier[],
   heights: { readonly lod1?: ReturnType<typeof lod1Index>; readonly orphans: ReadonlySet<string> },
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
@@ -196,8 +201,9 @@ const generateChunk = (
   let skipped = 0;
   let withHoles = 0;
   for (const a of buildings) {
-    if (!inRect(centroid(a.ring), spec.rect)) continue;
-    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints, civicPoints, alone, towered }, parts.get(a.id));
+    if (!inRect(centroid(a.edge?.ring ?? a.ring), spec.rect)) continue;
+    const own = a.edge ? partsWithin(parts.get(a.id) ?? [], a.edge.rect) : parts.get(a.id);
+    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints, civicPoints, alone, towered }, own, a.edge?.ring);
     if ("skipped" in r) {
       skipped++;
       continue;
@@ -205,8 +211,10 @@ const generateChunk = (
     if (a.holes > 0) withHoles++;
     const crowned = heights.orphans.has(a.id) || (parts.get(a.id)?.length ?? 0) > 0;
     const built = withLod1Height(r.ok, heights.lod1, crowned);
-    const signs = venues.get(a.id);
-    const ok = signs ? { ...built, venues: signs.map((v) => venueOut(v, built)) } : built;
+    // A building cut at the map's edge signs only the venues on its part on the map (G-556).
+    const edge = a.edge?.rect;
+    const signs = edge ? venues.get(a.id)?.filter((v) => inRect(v.at, edge)) : venues.get(a.id);
+    const ok = signs?.length ? { ...built, venues: signs.map((v) => venueOut(v, built)) } : built;
     // A building's parts follow it, in its chunk, wherever their own centroids fall.
     out.push(ok, ...r.lifted);
   }
@@ -223,6 +231,7 @@ const generateChunk = (
   const parks = chunkCarParks(kerb.carParks, spec.rect);
   const stops = chunkBusStops(kerb.busStops, spec.rect);
   const wide = chunkMultiLaneWays(lines, spec.rect);
+  const walls = chunkBarriers(barriers, spec.rect);
   const chunk: ChunkOut = {
     id: spec.id,
     district: spec.district.id,
@@ -240,6 +249,7 @@ const generateChunk = (
     ...(parks.length > 0 ? { carParks: parks } : {}),
     ...(stops.length > 0 ? { busStops: stops } : {}),
     ...(wide.length > 0 ? { multiLaneWays: wide } : {}),
+    ...(walls.length > 0 ? { barriers: walls } : {}),
   };
   const stats: ChunkStats = {
     id: spec.id,
@@ -281,11 +291,20 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const partAreas = areas.filter(isPart);
   const orphans = new Set(orphanParts(outlines, partAreas));
   const buildings = [...outlines, ...[...orphans].map(asBuilding)];
-  const near = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, 1)));
+  // The chunks' rects grown once, and each outline's box taken once, not once a chunk: the whole city's outlines are tested.
+  const grown = (m: number) => chunks.map((c) => grow(c.rect, m));
+  const [rects1, rectsFill] = [grown(1), grown(FILL_MARGIN)];
+  const nearAny = (pts: readonly Pt[], rs: readonly Rect[]) => {
+    const box = ringBounds(pts);
+    return rs.some((r) => rectsOverlap(box, r));
+  };
+  const near = (pts: readonly Pt[]) => nearAny(pts, rects1);
+  // The ground is laid as far past the chunks as the kerbs' fills in them read it (G-522).
+  const nearGround = (pts: readonly Pt[]) => nearAny(pts, rectsFill);
   const areaBands: (Band & { box: Rect })[] = [];
   for (const a of areas) {
     const b = areaBand(a);
-    if (b && near(b.ring)) areaBands.push({ ...b, box: ringBounds(b.ring) });
+    if (b && nearGround(b.ring)) areaBands.push({ ...b, box: ringBounds(b.ring) });
   }
   const holed = new Set(areas.filter((a) => a.holes > 0).map((a) => a.id));
   const bands = openPavings(areaBands, (b) => !holed.has(b.source));
@@ -299,7 +318,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   // So is a street's stretch over a tunnel it dips over (G-088): a deck, as on a bridge.
   const tunnelWays = tunnelLines(lines);
   for (const [k, l] of toAbutments(lines, areas).entries()) {
-    if (!near(l.line)) continue;
+    if (!nearGround(l.line)) continue;
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
     const mapped = l.tags.highway ? sidewalks.along(mapLines[k]!) : false;
     for (const piece of overTunnels(l, tunnelWays, src)) for (const b of lineBands(piece, mapped, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
@@ -319,6 +338,8 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   // A laid sidewalk stops at the kerb of the street it meets (ADR-0042): cut where it runs over another carriageway.
   const carriageways = bands.filter((b) => b.carriageway);
   const laid = bands.filter((b) => b.along);
+  // The sidewalks whole, where they run over the asphalt too: no carriageway is widened over one (G-082).
+  const walks = laid.filter((b) => !b.bridge).map((b) => b.ring);
   for (const b of laid) {
     const others = carriageways.filter((c) => c.source !== b.source && rectsOverlap(c.box, b.box));
     const pieces = cutSidewalk(b, (p) => others.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring)));
@@ -326,6 +347,15 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   }
   // A bridge is one deck: its outline fills the gap between its sidewalk and its carriageway (G-340).
   for (const b of bridgeFills(areas, bands)) bands.push({ ...b, box: ringBounds(b.ring) });
+  // A pavement reaches the kerb (G-522): the bare strip between a carriageway and its paving is
+  // closed, by the carriageway itself where the map gives it no width (G-570), its zebras with it.
+  // A street fitted to its mapped sidewalks (T-046) has its width from them, as a measured one.
+  const measured = new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id));
+  const kerbs = kerbFills(bands, buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), (source) => !measured.has(source), walks);
+  for (const [b, { ring, runs }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, box: ringBounds([...b.ring, ...ring]) });
+  for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
+  const nodeZebras = bands.filter((b) => b.surface === "crossing" && b.source.startsWith("n"));
+  stretchZebras(nodeZebras, [...kerbs.widened.values()].map((w) => w.ring)).forEach((z, i) => bands.splice(bands.indexOf(nodeZebras[i]!), 1, { ...z, box: ringBounds(z.ring) }));
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
   const zebras = bands.filter((b) => b.surface === "crossing");
   const onOther = (p: Pt, source: string) => carriageways.some((c) => c.source !== source && p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));
@@ -349,8 +379,17 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const venues = assignVenues(allVenues(data, areas), buildings.map((b) => ({ id: b.id, ring: b.ring })));
   const mapped = allVenues(data, areas).filter((v) => chunks.some((c) => inRect(v.at, c.rect)));
   const kerb = { carParks: areas, busStops: busStopPosts(data, mapLines, areas) };
+  // A building across the map's edge, centred off it, is cut at the edge rather than dropped (G-556);
+  // the whole map's districts, so it is cut the same whichever chunks are built.
+  const cut = edgeOutlines(buildings, DISTRICTS.map((d) => d.rect));
+  const placed = buildings.map((b) => {
+    const edge = cut.get(b.id);
+    return edge ? { ...b, edge } : b;
+  });
+  // Walls, fences and hedges (ADR-0077) clear of the buildings, carriageways, steps and the ways through them.
+  const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
   const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, heights));
+  const results = chunks.map((c) => generateChunk(c, src, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights));
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
   const venueStats: VenueStats = {
     total: mapped.length,

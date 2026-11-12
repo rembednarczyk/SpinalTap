@@ -75,8 +75,12 @@ export const hitscan = (world: World<Entity>, origin: Vec3, dir: Vec3, maxDist: 
   };
 };
 
-/** True when nothing static (solids, and the terrain unless `terrain` is false) blocks the segment between two points. */
-export const lineOfSight = (world: World<Entity>, from: Vec3, to: Vec3, terrain = true): boolean => {
+/**
+ * True when nothing static (solids, and the terrain unless `terrain` is false) blocks the segment
+ * between two points; `sight` lets it through the fences and hedges (ADR-0077), which stop a body
+ * only. A walk's clearance leaves `sight` off, the eye turns it on (`clearSight`).
+ */
+export const lineOfSight = (world: World<Entity>, from: Vec3, to: Vec3, terrain = true, sight = false): boolean => {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const dz = to.z - from.z;
@@ -84,10 +88,14 @@ export const lineOfSight = (world: World<Entity>, from: Vec3, to: Vec3, terrain 
   if (len < 1e-6) return true;
   const dir = { x: dx / len, y: dy / len, z: dz / len };
   for (const e of solidIndexOf(world).alongSegment(from, to)) {
+    if (sight && e.sightThrough) continue;
     if (raySolidEntity(from, dir, e, len) !== null) return false;
   }
   return !terrain || groundOf(world).rayHit(from, dir, len) === null;
 };
+
+/** Does the eye at `from` see `to`: nothing static between but the fences and hedges (ADR-0077)? */
+export const clearSight = (world: World<Entity>, from: Vec3, to: Vec3): boolean => lineOfSight(world, from, to, true, true);
 
 export const EYE_HEIGHT = 1.62;
 /**

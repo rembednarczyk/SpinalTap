@@ -1,7 +1,7 @@
 import { CIVILIAN_SIGHT, type Vec3 } from "@seki/core";
 import type { DownedBody, Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
-import { eyeOf, lineOfSight } from "../../world/hitscan";
+import { eyeOf, clearSight } from "../../world/hitscan";
 import { inCreationOrder } from "../../world/ordering";
 import { disturb } from "../../world/street";
 import { incapacitated } from "../../world/takedown";
@@ -36,14 +36,14 @@ const aiSeesBody = (ctx: SimContext, g: Entity, b: Entity): boolean => {
   const distance = Math.hypot(b.position.x - g.position.x, b.position.z - g.position.z);
   if (distance > g.ai.aggroRange) return false;
   if (!g.ai.alerted && !inSightCone(g, b.position.x, b.position.z, distance)) return false;
-  return lineOfSight(ctx.world, eyeOf(g), lyingAt(b));
+  return clearSight(ctx.world, eyeOf(g), lyingAt(b));
 };
 
 const civilianSeesBody = (ctx: SimContext, c: Entity, b: Entity): boolean =>
   !c.unconscious &&
   (c.health?.current ?? 1) > 0 &&
   Math.hypot(b.position.x - c.position.x, b.position.z - c.position.z) <= CIVILIAN_SIGHT &&
-  lineOfSight(ctx.world, eyeOf(c), lyingAt(b));
+  clearSight(ctx.world, eyeOf(c), lyingAt(b));
 
 /** Where the search starts: the heat's last known position while it is up, else where she stood. */
 const searchFrom = (ctx: SimContext, b: Body): Vec3 => {

@@ -17,6 +17,7 @@ import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
 import { FaceRig } from "./face";
+import { fetchModelBytes } from "./model-fetch";
 import type { VariantDress } from "./model-variant";
 import { type VrmExpressions, type VrmSprings, isVrm, readGlbJson, readVrmExpressions, readVrmSprings } from "./vrm-meta";
 
@@ -391,7 +392,7 @@ export class ModelLibrary {
         let vrm = false;
         let source: string | Uint8Array = spec.url;
         if (extension === ".glb" || /\.glb(\?|#|$)/i.test(spec.url)) {
-          const bytes = await (await fetch(spec.url)).arrayBuffer();
+          const bytes = await fetchModelBytes(spec.url);
           const json = readGlbJson(bytes);
           springs = json ? readVrmSprings(json) : null;
           expressions = json ? readVrmExpressions(json) : null;

@@ -3,6 +3,7 @@
  * (the importer does not import sim, the sim test checks the generated files against its types).
  * Point lists are flat `[x0, z0, x1, z1, …]` in metres rounded to 0.1.
  */
+import { type BarrierOut } from "./barriers.ts";
 import { type MarkingOut } from "./markings.ts";
 import { type PassageOut } from "./passages.ts";
 import { type VenueOut } from "./venues.ts";
@@ -143,4 +144,6 @@ export interface ChunkOut {
   readonly busStops?: readonly number[];
   /** Streets of two lanes or more a way (G-155), when it has any. */
   readonly multiLaneWays?: readonly MultiLaneWayOut[];
+  /** Walls, fences, hedges and their gates (ADR-0077), clipped to it, when it has any. */
+  readonly barriers?: readonly BarrierOut[];
 }

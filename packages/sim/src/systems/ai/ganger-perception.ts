@@ -1,7 +1,7 @@
 import { type AwarenessState, DISGUISE_FACTION, type DomainState, type FactionStance, type SightProfile, type Vec3, angleTo, factionStance, sightOf } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext } from "../../world/context";
-import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
+import { chestOf, clearSight, eyeOf, lineOfSight } from "../../world/hitscan";
 import { LEVEL_GAP } from "../../world/nav";
 import { noteDetected } from "../../world/street";
 import { coveredFrom } from "../../world/disguise";
@@ -198,7 +198,7 @@ const sightLine = (ctx: SimContext, g: Ganger, player: Entity | null, reputation
   const stance = factionStance(reputation, g.faction ?? "hebi");
   const aggro = effectiveAggroRange(g.ai.aggroRange, stance);
   const blind = (g.hackFx?.blind ?? 0) > 0;
-  const inSight = !blind && !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
+  const inSight = !blind && !!player && distance <= aggro && clearSight(ctx.world, eyeOf(g), chestOf(player));
   return { distance, stance, aggro, inSight };
 };
 

@@ -98,7 +98,8 @@ const furniturePosts = (items: readonly Item[], near: (x: number, z: number) => 
     if (view.kind !== "street-props") continue;
     for (const item of view.items) {
       // The still crowd stands under the patrols and the decals are flat on the walls and the paving.
-      if (item.prop === "figure" || DECAL_KINDS.has(item.prop)) continue;
+      // The map's walls and fences (ADR-0077) stand lower still than the furniture the patrols clear.
+      if (item.prop === "figure" || item.prop === "barrier" || DECAL_KINDS.has(item.prop)) continue;
       if (item.prop !== "lamp-road" && !near(item.x + at.x, item.z + at.z)) continue;
       const w = toWorld([item], at)[0] as WorldProp;
       if (isPoleLamp(w)) {
@@ -149,7 +150,7 @@ const buildingAir = (items: readonly Item[], near: (x: number, z: number) => boo
   for (const [id, e] of entries.buildings) {
     const b = e.bounds;
     if (![b.minX, b.maxX].some((x) => [b.minZ, b.maxZ].some((z) => near(x, z)))) continue;
-    const f = withLandmark(facadeFrame(entries.building(id, e), entries.neighbourAt, entries.neighboursNear), e.landmark);
+    const f = withLandmark(facadeFrame(entries.building(id, e), entries.neighbourAt, entries.neighboursNear, entries.mapEdgeAt), e.landmark);
     if (isLandmarkFrame(f)) {
       for (const r of cableRuns(f)) posts.push(...runPosts((t) => cablePoint(r, t), Math.hypot(r.b.x - r.a.x, r.b.z - r.a.z), CABLE_R, 0));
       continue;

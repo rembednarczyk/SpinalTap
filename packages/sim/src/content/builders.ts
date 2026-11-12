@@ -27,6 +27,8 @@ export interface StaticProp {
   readonly scenery?: true;
   /** Street furniture (ADR-0050): the TPP camera's rays pass it. */
   readonly seeThrough?: true;
+  /** A fence or a hedge of the map (ADR-0077): it stops a body and a shot, not the eye. */
+  readonly sightThrough?: true;
   /** A hiding place for one body (ADR-0065): a container, a dumpster, a locker. */
   readonly hide?: HideKind;
 }

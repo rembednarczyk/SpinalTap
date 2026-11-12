@@ -45,6 +45,12 @@ export const REPLACED_WAYS: readonly ReplacedWay[] = [
     reason: "zachodnia pętla alejek parkingu: bez aut na T0 zostaje plac z trawnikiem i pergolą (decyzja użytkownika 7.11)",
     ref: "T-241",
   },
+  {
+    id: "w783241007",
+    by: "Alchemia, Arkady i plac T0",
+    reason: "płot działki nieużytku (1,6 m, ADR-0077): Alchemia stoi na działce otwartej na plac T0, Lubartowską i Świętoduską; płot zamknąłby wejścia hali i Arkad",
+    ref: "T-145",
+  },
 ];
 
 const REPLACED_IDS: ReadonlySet<string> = new Set(REPLACED_WAYS.map((w) => w.id));

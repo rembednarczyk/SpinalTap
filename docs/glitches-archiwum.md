@@ -2,6 +2,57 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-634 `ModelLibrary.load` nie sprawdza `response.ok`
+- Status: naprawione w #423 (12.11; `r.ok` sprawdzane przed parserem)
+- Ważność: S4 · Zasięg: odpowiedź 404 albo 500 trafia do parsera jako GLB i pada dopiero przy parsowaniu z mylącym błędem; `.gltf` po URL (`LoadAssetContainerAsync`) i dynamiczny import pluginu glTF nadal bez limitu czasu (dziś nieużywane, manifest ma `.vrm`)
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+
+### G-638 `fetch` bez sprawdzenia `res.ok` w zestawie miasta i dźwiękach
+- Status: nie odtwarza się (12.11; wszystkie trzy miejsca sprawdzają `res.ok` w linii po `fetch` od fe802ea i 51d54c7, zgłoszenie wskazało same wywołania; błąd idzie do zastępstwa: fasady proceduralne, synteza dźwięku)
+- Ważność: S4 · Zasięg: `city-kit-loader.ts:108`, `city-kit.ts:167` i `audio/samples.ts:62` pobierają bez sprawdzenia statusu, więc 404 trafia do parsera albo dekodera z mylącym błędem (ten sam wzorzec co G-634)
+- Pakiet właściciela: packages/engine (renderer, audio)
+
+
+### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
+- Status: naprawione w #422 (12.11; limit 120 s, `fetchModelBytes` z AbortController i wyścigiem z zegarem; dalszy ciąg G-637)
+- Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+
+### G-628 `tools/orto report --area` wybiera raster po pierwszym wierzchołku obszaru
+- Status: naprawione w #421 (12.11; `coverOfRing` wybiera raster pokrywający najwięcej wierzchołków)
+- Ważność: S4 · Zasięg: `report.ts --area T-245/zielen-litevski` zwraca „brak rastra”, bo pierwszy wierzchołek (x −201) leży tuż przed rastrem Krakowskiego (od x −200); poprawka: wybór rastra po środku obszaru albo po dowolnym punkcie na rastrze
+- Pakiet właściciela: tools/orto
+
+
+### G-621 `ModelMemory` bez testu kolejności zwalniania
+- Status: naprawione w #420 (12.11; test jednostkowy `model-memory.test.ts`, pada 3/5 przy odwróconym sortowaniu)
+- Ważność: S4 · Zasięg: przypadek telefonu w `model-release.test.ts` przechodzi także z odwróconym sortowaniem w `ModelMemory.sweep` (naraz jeden kandydat); brak testu jednostkowego „najdłużej nieużywany idzie pierwszy”
+- Pakiet właściciela: packages/engine (testy)
+
+
+### G-556 Budynek ze środkiem poza mapą znika w całości, także w części leżącej w chunku
+- Status: naprawione w #414 (12.11; budynki przycięte do brzegu mapy ze ślepą ścianą; budżety reference 196/84 i krakowskie-tpp 165 z wpisem w ADR-0046; reszta za brzegiem w backlogu „Poszerzanie mapy”, T-250)
+- Ważność: S3 · Zasięg: w mieście 50 budynków, ok. 10 100 m²; w krakowskie-0-1 Cicha 3, 5, 6 i 8 (281 m²), które w grze dają gołą ziemię w pasie Cichej i przy ogrodzie na zachód od Cichej 4; Ordynacki i Kuria już w T-058/G-096; propozycja kontroli `edge-building-dropped` (część w chunku > 2 m², środek poza mapą, poza rejestrem), baza 50 albo 48 bez T-058
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+
+### G-620 Test zwalniania modeli przekracza w CI limit 20 s
+- Status: naprawione (PR #419, 11.11; testy zwalniają `NullEngine` w `afterEach`, przypadek telefonu na lekkim pliku pod siedmioma nazwami; 6,3 → 1,8 s, pod obciążeniem 9,7 → 4,3 s; limity czasu bez zmian)
+- Ważność: S2 · Zasięg: `packages/engine/test/model-release.test.ts` › „keeps no more files than a phone's limit” (#410) wczytuje sześć pełnych plików VRM przez NullEngine i w CI kończy się `Test timed out in 20000ms`; czerwieni shard „Unit tests (1)” w #416, #417, #418 (lokalnie przechodzi); limitu nie podnosimy, test do odchudzenia
+- Pakiet właściciela: packages/engine (testy)
+
+### G-536 Goła ziemia na placu przy Nowym Placu Targowym, Nadstawnej i na podwórzach Podzamcza (podzamcze-1-1)
+- Status: naprawione (PR #408, 11.11; 22 obszary T-246/*: 15 kostki, 7 trawników i rabat; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; kurator ODSTĘPSTWO CELOWE T-246 po rundzie 2; obszary pocięte, żeby nie poszerzać siatek ziemi komórek: `krakowskie-tpp` 164 siatki jak na main)
+- Ważność: S3 · Zasięg: 93 kwadraty 10 × 10 m `landuse-bare`, ok. 2005 m² (8021 próbek 0,5 m) w 28 skupieniach; największe (m², x, z): 680 (747..800; 446..490) przy parkingach w227698438 i w227698440, postoju taxi w227698439 i sklepie w73833921; 221 (735..750; 452..511) za Nova w66264174; 159 (815..841; 450..485) przy kioskach w73833930/31/32; 153 (742..769; 513..536) przy skraju Ruskiej; 121 i 107 (848..868; 507..526) przy Szkolnej; 110 (769..808; 501..526); 98 (807..828; 458..490); 91 (860..878; 487..498); dziewięć największych to ok. 88%; 60% próbek w `landuse=commercial` w1305996965 bez `surface`, 37% w pasie do 5 m od ścian; zrzuty dzienne `shots/opiekun-p11/d-d1-d.png`, `d-b1-b.png`, `d-a2-plac-e.png`; przyczyna jak G-513, G-521, G-527; test przyjęcia: `landuse-bare` w komórce do ≤ 10% z bazą obniżoną w tym samym commicie
+- Pakiet właściciela: tools/osm-import (korekty nawierzchni)
+
+### G-540 Goła ziemia na podwórzach i placach Podzamcza: Lubartowska, Probostwo, Nowy Plac Targowy, Ruska (podzamcze-0-1)
+- Status: naprawione (PR #408, 11.11; 22 obszary T-246/*: 15 kostki, 7 trawników i rabat; `landuse-bare` podzamcze-1-1 8021 → 188, podzamcze-0-1 6972 → 222; kurator ODSTĘPSTWO CELOWE T-246 po rundzie 2; obszary pocięte, żeby nie poszerzać siatek ziemi komórek: `krakowskie-tpp` 164 siatki jak na main)
+- Ważność: S3 · Zasięg: 81 kwadratów 10 × 10 m `landuse-bare`, ok. 1743 m² (6972 próbki 0,5 m; pierwotnie zaniżone do 2180 przez błąd zaokrąglenia) w 28 skupieniach; największe (m², x, z): 208 (609..662; 386..457) wzdłuż Lubartowskiej i przy Nowym Placu Targowym, 48 (606..630; 398..461), 38 (636..650; 559..580) przy parkingu w227679484, 37 (520..530; 427..447), 34 (676..715; 567..580) przy Ruskiej; kontekst OSM: 36% w `landuse=retail` w291844839 bez `surface`, 20% w `landuse=commercial` w1094207955, 7% w `landuse=retail` w1547216431, 35% poza wielokątami; zrzuty `shots/opiekun-p01/d-s3-slope2.png`, `d-a1-big-w.png`, `d-a2-big-n.png`; przyczyna jak G-513, G-521, G-527, G-536; przy okazji w komórce `kerb-gap-bare` 116 trafień (G-522) i 7 znanych `lane-dead-end`, G-508 tu to prawdziwe skarpy NMT (największa 548..570 × 538..560, 33°)
+- Pakiet właściciela: tools/osm-import (korekty nawierzchni)
+
 ### G-059 Testy sesji `m2-schedules` i `m3-loop` trwają ok. 5 s i przekraczają limit vitest pod obciążeniem
 - Status: odrzucone (pomiar, 31.10)
 - Ustalenie orkiestratora: główny `vitest.config.ts` daje `testTimeout: 20_000` właśnie dla testów całych aktów. Limit 5 s działa tylko przy vitest puszczonym z katalogu pakietu, bez głównej konfiguracji. Z roota przy load 30: najdłuższy test 7,6 s (zegar HUD, 3600 klatek), wszystkie 10 zielonych. Testy uruchamiamy z roota repo

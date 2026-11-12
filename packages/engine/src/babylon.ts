@@ -8,6 +8,7 @@ export { Scene } from "@babylonjs/core/scene";
 export { Viewport } from "@babylonjs/core/Maths/math.viewport";
 export { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 export { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+export type { Plane } from "@babylonjs/core/Maths/math.plane";
 export { GlowLayer } from "@babylonjs/core/Layers/glowLayer";
 export { ShaderMaterial } from "@babylonjs/core/Materials/shaderMaterial";
 export { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";

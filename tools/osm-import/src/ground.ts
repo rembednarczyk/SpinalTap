@@ -7,6 +7,7 @@ import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts
 import { parseLength } from "./building-tags.ts";
 import { type Area, type Line } from "./features.ts";
 import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, lineLength, offsetLine, pointAlong, pointInRing, r1, removeCollinear, signedArea, simplifyLine, simplifyRing, sliceLine, stripAlong } from "./geometry.ts";
+import { type WidenRun, widenPieces } from "./kerb-widen.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
 import { cutHoles, holeFits, holesApart, notchOut } from "./ring-holes.ts";
@@ -136,9 +137,16 @@ export interface Band {
   readonly carriageway?: true;
   /** A sidewalk's line (laid along a road, or mapped on its own): `width` wide from `from` metres off `line`. */
   readonly along?: { readonly line: readonly Pt[]; readonly from: number; readonly width: number };
+  /** A carriageway's axis and half its width: where its kerbs run (`kerbFills`, G-522). */
+  readonly kerb?: { readonly line: readonly Pt[]; readonly half: number };
+  /** A carriageway's stretches widened to its paving (`kerbFills`, G-570): laid in a chunk as pieces of their own along its piece (`widenPieces`). */
+  readonly widen?: readonly WidenRun[];
   /** A band of steps' run, end to end: what its pieces in a chunk are cut along (`flightStrips`). */
   readonly run?: readonly [Pt, Pt];
-  /** Paving with holes, or a lawn cut out of it (`openPavings`), simplified already: simplifying it again in a chunk would part the lawn from its hole. */
+  /**
+   * Paving with holes, or a lawn cut out of it (`openPavings`), simplified already: simplifying it
+   * again in a chunk would part the lawn from its hole. So is a kerb's fill (`kerbFills`), finer.
+   */
   readonly holed?: true;
 }
 
@@ -174,14 +182,14 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
   const bridge = t.bridge !== undefined && t.bridge !== "no";
   const deck = bridge ? ([l.line[0]!, l.line[l.line.length - 1]!] as const) : undefined;
   const out: Band[] = [];
-  const add = (surface: GroundSurface, ring: Pt[], extra: Pick<Band, "carriageway" | "along" | "run"> = {}) => {
+  const add = (surface: GroundSurface, ring: Pt[], extra: Pick<Band, "carriageway" | "kerb" | "along" | "run"> = {}) => {
     if (ring.length >= 3) out.push({ surface, ring, bridge, ...(deck ? { deck } : {}), source: l.id, ...extra });
   };
   const hw = t.highway;
   if (hw && t.area !== "yes") {
     if (ROAD_WIDTH[hw] !== undefined) {
       const w = roadWidth(t);
-      add(cobbled(t) ? "cobble" : "road", bufferLine(l.line, w), { carriageway: true });
+      add(cobbled(t) ? "cobble" : "road", bufferLine(l.line, w), { carriageway: true, kerb: { line: l.line, half: w / 2 } });
       const sides = sidewalkSides(t, mappedSidewalkNear);
       const sw = parseLength(t["sidewalk:width"]) ?? (hw === "primary" || hw === "secondary" ? 3 : 2.5);
       if (sides.left) add("sidewalk", stripAlong(l.line, w / 2, sw), { along: { line: l.line, from: w / 2, width: sw } });
@@ -212,6 +220,9 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
 export const CROSSING_ALONG = 3;
 
 /** A footway's or a cycleway's stretch across a carriageway (`footway=crossing`). */
+/** A way laid as a carriageway band of its own (`lineBands`): a road by type, not an area, not under ground. */
+export const isCarriageway = (t: Tags): boolean => ROAD_WIDTH[t.highway ?? ""] !== undefined && t.area !== "yes" && !underground(t);
+
 export const crossingWay = (t: Tags): boolean => t.footway === "crossing" || t.cycleway === "crossing" || t.path === "crossing";
 const UNMARKED = new Set(["unmarked", "no", "informal"]);
 
@@ -344,9 +355,12 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
   const round = (ring: readonly Pt[]) => removeCollinear(ring.map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02);
   bands.forEach((b, k) => {
     const clipped = clipRingToRect(ccw(b.ring), rect);
-    if (clipped.length < 3) return;
+    const widen = (ring: readonly Pt[] | null) => {
+      for (const w of b.widen ? widenPieces(ring, b.widen, rect) : []) out.push({ g: { surface: b.surface, outline: w.flatMap((q) => [q.x, q.z]) }, order: ORDER[b.surface], source: b.source, k });
+    };
+    if (clipped.length < 3) return widen(null);
     const simple = b.holed ? clipped : simplifyRing(clipped, 0.3);
-    if (Math.abs(signedArea(round(simple))) < 0.5) return;
+    if (Math.abs(signedArea(round(simple))) < 0.5) return widen(null);
     // Steps are cut into strips in the chunk, so a piece its edge cuts short is cut too; the
     // strips of a piece kept are all kept, however small, or the flight would have gaps.
     const pieces = b.run ? flightStrips(simple, ...b.run).map(round) : [round(simple)];
@@ -356,6 +370,8 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
       const ring = ccw(p);
       out.push({ g: { surface: b.surface, outline: ring.flatMap((q) => [q.x, q.z]), ...(b.bridge ? { bridge: true as const } : {}), ...deck }, order: ORDER[b.surface], source: b.source, k });
     }
+    // Along the carriageway's piece as the chunk keeps it: its widening shares that edge (G-570).
+    widen(pieces.length === 1 && pieces[0]!.length >= 3 ? ccw(pieces[0]!) : null);
   });
   out.sort((a, b) => a.order - b.order || (a.source < b.source ? -1 : a.source > b.source ? 1 : a.k - b.k));
   return out.map((o) => o.g);

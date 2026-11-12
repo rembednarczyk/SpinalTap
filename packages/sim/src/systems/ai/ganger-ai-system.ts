@@ -8,6 +8,7 @@ import { incapacitated } from "../../world/takedown";
 import { followSchedule } from "../../world/schedule";
 import { worldTimeScale } from "../ability-system";
 import { knockbackVelocity } from "../../world/knockback";
+import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
 import { GANGER_TREE } from "./ganger-tree";
 import { GANGER_SPEED, GangerWalk } from "./ganger-walk";
 import { attack, faceTowards } from "./ganger-fight";
@@ -85,6 +86,15 @@ class GangerAgent {
     if (!self || !seen.player || seen.distance > self.ai.attackRange) return false;
     // A blade does not reach a floor above or below.
     return !self.combatant?.stats?.melee || Math.abs(seen.player.position.y - self.position.y) <= MELEE_REACH_Y;
+  };
+  /**
+   * Nothing between its eye and the player's chest that stops a shot (ADR-0077): seen through a
+   * fence, the player behind it is not a target yet, and the ganger goes round instead of firing
+   * into the bars (G-610).
+   */
+  HasClearShot = (): boolean => {
+    const { ctx, self, seen } = this;
+    return !!ctx && !!self && !!seen.player && lineOfSight(ctx.world, eyeOf(self), chestOf(seen.player));
   };
   HasVictim = (): boolean => this.target.victim !== null;
   VictimInAttackRange = (): boolean => !!this.self && this.target.visible && this.target.distance <= this.self.ai.attackRange;

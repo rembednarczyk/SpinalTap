@@ -8,6 +8,7 @@ import { bakePavilion, bakePavilionFar, pavilionsIn } from "../metro/pavilion-ba
 import { alchemiaIn, arkadyIn, bakeAlchemiaStandIn, bakeArkadyStandIn } from "../alchemia/alchemia-far";
 import { bakePavilionStandIn, pavilionIn } from "../alchemia/pavilion-far";
 import { bakeParkingStandIn, parkingIn } from "../alchemia/parking-far";
+import { bakeBarrier } from "./barrier-models";
 import { FINE_DECALS, bakeDecal } from "./decal-models";
 import { bakeDoor } from "./door-models";
 import { bakeFigure } from "./figure-models";
@@ -73,6 +74,8 @@ const blockMesh = (deps: PropBakeDeps, name: string, sink: MeshSink): Mesh | nul
 export const buildFar = (deps: PropBakeDeps, block: PropBlock): void => {
   const far = new MeshSink();
   for (const p of sortedPieces(block)) {
+    // The map's barriers (ADR-0077) are drawn near only.
+    if (p.prop === "barrier") continue;
     const f = deps.poles.isPole(p) ? deps.poles.far : farModel(p.prop, p.shape);
     if (f) bake(far, f, p);
   }
@@ -121,6 +124,11 @@ export const nearSink = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: P
     // A door on a facade (ADR-0058 stage 9) at its own size, its leaf a model where they have loaded.
     if (p.prop === "door") {
       bakeDoor(sink, models, p);
+      continue;
+    }
+    // A wall, fence, hedge or gate of the map (ADR-0077), baked at its own length, height and rise.
+    if (p.prop === "barrier") {
+      bakeBarrier(sink, p, deps.quality);
       continue;
     }
     // A still figure (ADR-0058 stage 8): a model of the crowd's file on every quality, nobody before it loads.

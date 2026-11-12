@@ -365,6 +365,29 @@ const SCHOOL_GREEN: AddedArea = t245(
   [...Array<null>(6).fill(null), "w80139555", null],
 );
 
+/**
+ * The lane of Cicha north of the school (orthophoto, PZGiK: paving with cars parked on it) between the
+ * east walls of Cicha 6 and 8, cut at the map's edge (G-556), and `SCHOOL_GREEN`'s strip, to the
+ * carriageway of Cicha and the map's edge z = 160.
+ */
+const CICHA_LANE: AddedArea = t245(
+  "pas-cichej",
+  SETTS,
+  [
+    { x: -198.6, z: 131.0 },
+    { x: -193.1, z: 131.0 },
+    { x: -188.42, z: 147.5 },
+    { x: -191.0, z: 151.0 },
+    { x: -191.0, z: 160.0 },
+    { x: -200.0, z: 160.0 },
+    { x: -199.6, z: 159.6 },
+    { x: -196.6, z: 159.1 },
+    { x: -198.9, z: 138.8 },
+    { x: -196.9, z: 138.0 },
+  ],
+  "kostka pasa Cichej z parkującymi autami między ścianami Cichej 6 i 8 a zielenią przy szkole, do jezdni Cichej i brzegu mapy, na ortofoto PZGiK; w OSM bez obszaru (G-556)",
+);
+
 /** The added areas of this file, in draw order. */
 export const ZN_AREAS: readonly AddedArea[] = [
   YARD_LITEVSKI,
@@ -378,4 +401,5 @@ export const ZN_AREAS: readonly AddedArea[] = [
   STOP_3MAJA,
   BLOCK_ZN3,
   SCHOOL_GREEN,
+  CICHA_LANE,
 ];

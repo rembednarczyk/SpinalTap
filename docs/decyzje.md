@@ -4,6 +4,8 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 
 ## Sposób pracy
 
+- **Budżet sceny `reference` (11.11):** siatki w stożku kamery Neon Koi za ścianami (auta na nowych pasach postojowych z #409) idą jako wyjątek z wpisem w ADR-0046, do czasu przesłaniania dla kamery we wnętrzu (backlog).
+- **Dane na rozszerzenie mapy (11.11):** wyciągi wektorowe GUGiK (LoD1, LoD2, BDOT10k) zapisujemy w `data/` dla całego Lublina, z manifestem źródeł (adres, data, sha256, licencja). Surowe paczki i ortofoto zostają poza repo i pobieramy je ponownie. Narzędzia przyjmują dowolny prostokąt, a klasyfikację ortofoto liczymy tylko dla obecnej mapy.
 - **Pokrycie mapy z danych (11.11, ADR-0077):** najpierw narzędzia, potem reguły dla całego miasta, na końcu przejścia po komórkach. Ręczne obszary nawierzchni tylko jako wyjątek z nakładką liczbową. Źródła wskazuje agent `source-scout` (Haiku).
 - **Porządek w dokumentach (11.11):** zamknięte pozycje backlogu trafiają do [backlog-archiwum.md](backlog-archiwum.md), czytanego tylko w razie potrzeby. Stałe decyzje trafiają tutaj. Wykonane plany w `docs/plany` mają na górze nagłówek ze statusem i odnośnikiem do ADR-u.
 - **Brzeg mapy (8.11):** wszystko, co wypada za obecną mapę, trafia do sekcji „Poszerzanie mapy” w backlogu, a glitch dostaje status „odłożone: poszerzanie mapy”. Mapy na razie nie poszerzamy. Części leżące w mapie naprawiamy normalnie.

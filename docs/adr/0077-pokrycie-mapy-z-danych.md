@@ -63,5 +63,6 @@ Ustalenia `source-scout` (11.11), wszystkie zbiory na licencji CC BY 4.0, do atr
   - 5–6 reguł po 0,5–0,8 mln;
   - przejścia reszty po 50–100 tys.
 - **Wierność:** rodzaje policzalne przez skan schodzą do 0 albo do opisanej reszty w całym mieście, także w komórkach jeszcze nieprzejrzanych. Elewacje i obiekty za brzegiem mapy nie będą wierne.
+- **Na rozszerzenie mapy (decyzja użytkownika 11.11):** zwarte wyciągi wektorowe GUGiK trafiają do `data/gugik/` dla całego miasta, z manifestem źródeł (adres, data, sha256, licencja). Narzędzia przyjmują dowolny prostokąt. Klasyfikację ortofoto liczymy tylko dla obecnej mapy, bo dla całego miasta byłaby za duża i zestarzałaby się do czasu rozszerzenia.
 - **Dane:** surowe ortofoto zostaje w pamięci podręcznej narzędzia poza repo. W repo trafiają tylko wyniki pochodne (raster klasyfikacji, próbki kolorów) z atrybucją w `data/osm/ATTRIBUTION.md` (sekcja PZGiK).
 - **Ryzyko:** klasyfikacja RGB myli zieleń w cieniu i jasne dachy z nawierzchnią. Dlatego kurator sprawdza próbkę, a progi ustala na kilku dzielnicach przed zastosowaniem w całym mieście. Zmiana nawierzchni w wielu miejscach naraz zmienia hash podłoża i migawkę NPR; zmieniamy je świadomie, z uzasadnieniem.

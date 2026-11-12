@@ -1,10 +1,11 @@
-import { type StreetPropKind, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "@seki/core";
+import { type StreetPropKind, barrierVariant, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "@seki/core";
 import { MeshSink } from "../mesh-sink";
 import { decalModel } from "./decal-models";
 import { busShelter, busStop, cafeGarden, farMonument, fountainJets, kiosk, marketStall, monument, ticketMachine, vendingMachine } from "./prop-civic";
 import { atm, bikeRackWithBikes, container, foodCart, hydrant } from "./prop-e2";
 import { farTree, hangingBasket, planter, shrubs, tree } from "./prop-green";
 import { doorOfShape } from "./prop-door";
+import { barrierModel } from "./barrier-models";
 import { figureStandIn } from "./figure-models";
 import { foodStall, marketGoods } from "./prop-market";
 import { glow, paint, v3 } from "./prop-kit";
@@ -69,6 +70,8 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   door: (s) => plain(doorOfShape(s)),
   // ADR-0058 stage 8: the city bakes a still figure only as a model of `crowd-props.glb` (`figure-models.ts`); this is the gallery's stand-in.
   figure: () => plain(figureStandIn()),
+  // ADR-0077: the city bakes each barrier piece at its own length and height (`barrier-models.ts`); this is the gallery's 2 m wall.
+  barrier: () => plain(barrierModel(barrierVariant({ kind: "wall", length: 2, height: 1, rise: 0, material: "plain" }), "high")),
 };
 
 /** Every kind of the contract, in the order of `StreetPropKind` (the gallery's row). */

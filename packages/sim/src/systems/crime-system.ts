@@ -28,7 +28,7 @@ import type { Entity, WitnessCall } from "../world/components";
 import type { Offence, SimContext, StreetDisturbance, System } from "../world/context";
 import { reinforcementEntity } from "../world/reinforcements";
 import { enemyScalingIn } from "../world/enemy-scaling";
-import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
+import { chestOf, clearSight, eyeOf } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { codeKnown } from "../world/hook-tracker";
 import { disturb, noteAlarm, noteDetected } from "../world/street";
@@ -79,7 +79,7 @@ export const cameraSeesPoint = (ctx: SimContext, cam: Entity, p: Vec3): boolean 
   if (!d || d.kind !== "camera" || d.broken > 0 || (cam.hackFx?.blind ?? 0) > 0) return false;
   if (Math.hypot(p.x - cam.position.x, p.y - cam.position.y, p.z - cam.position.z) > CAMERA_RANGE) return false;
   if (Math.abs(angleTo({ x: cam.position.x, z: cam.position.z, yaw: cam.yaw }, p.x, p.z)) > CAMERA_CONE) return false;
-  return lineOfSight(ctx.world, cam.position, p);
+  return clearSight(ctx.world, cam.position, p);
 };
 
 /** Does this camera see the player right now? */
@@ -88,12 +88,12 @@ export const cameraSees = (ctx: SimContext, cam: Entity, player: Entity): boolea
 /** Is the point in front of the player and in plain sight (where the camera of the game looks)? */
 export const inPlayerView = (ctx: SimContext, player: Entity, p: Vec3): boolean => {
   if (Math.abs(angleTo({ x: player.position.x, z: player.position.z, yaw: player.yaw }, p.x, p.z)) > VIEW_HALF_ANGLE) return false;
-  return lineOfSight(ctx.world, eyeOf(player), { x: p.x, y: p.y + 1.25, z: p.z });
+  return clearSight(ctx.world, eyeOf(player), { x: p.x, y: p.y + 1.25, z: p.z });
 };
 
 /** Does a civilian see the player (all round, close enough, nothing solid in between)? */
 const civilianSees = (ctx: SimContext, c: Entity, player: Entity): boolean =>
-  Math.hypot(player.position.x - c.position.x, player.position.z - c.position.z) <= CIVILIAN_SIGHT && lineOfSight(ctx.world, eyeOf(c), chestOf(player));
+  Math.hypot(player.position.x - c.position.x, player.position.z - c.position.z) <= CIVILIAN_SIGHT && clearSight(ctx.world, eyeOf(c), chestOf(player));
 
 /** Does a member of the security see the player (its sight range, its cone until alerted, ADR-0069)? */
 const patrolSees = (ctx: SimContext, g: Entity, player: Entity): boolean => {
@@ -101,7 +101,7 @@ const patrolSees = (ctx: SimContext, g: Entity, player: Entity): boolean => {
   const stance = factionStance(ctx.state.domain.reputation, g.faction ?? "hebi");
   const sight = effectiveAggroRange(g.ai.aggroRange, stance);
   const distance = Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z);
-  if (distance > sight || !lineOfSight(ctx.world, eyeOf(g), chestOf(player))) return false;
+  if (distance > sight || !clearSight(ctx.world, eyeOf(g), chestOf(player))) return false;
   return enemySees(g, player, distance, true, sight);
 };
 
