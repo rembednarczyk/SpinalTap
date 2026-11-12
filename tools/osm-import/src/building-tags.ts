@@ -8,6 +8,8 @@ import { type Tags } from "./osm.ts";
 
 export const STOREY = 3.2;
 export const SHOP_STOREY = 4;
+/** The lowest storey `building:levels` keeps where a measured height leaves less room: lower walls take fewer storeys. */
+export const MIN_STOREY = 2.6;
 
 /** Parses an OSM length (`12`, `12 m`, `12,5`, `12.5m`); feet and garbage give null. */
 export const parseLength = (v: string | undefined): number | null => {

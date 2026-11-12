@@ -16,8 +16,9 @@
  */
 import { type Lod1Building } from "../../gugik/src/extracts.ts";
 import { BoxIndex, type Footprint, footprint, iou } from "../../gugik/src/overlap.ts";
-import { SHOP_STOREY, STOREY } from "./building-tags.ts";
+import { MIN_STOREY, SHOP_STOREY, STOREY } from "./building-tags.ts";
 import { TAG_CORRECTIONS } from "./corrections.ts";
+import { SURFACE_TOPS } from "./corrections-surface.ts";
 import { isListedLandmark } from "./landmark-ids.ts";
 import { type Pt, r1 } from "./geometry.ts";
 import { type BuildingOut } from "./model.ts";
@@ -34,13 +35,11 @@ export const LOD1_MAX_CHANGE = 10;
  * model, LoD1 14.2 m, four storeys seen from the street, G-629); other houses keep a storey over it.
  */
 const MIN_WALLS = STOREY;
-/** The lowest storey `building:levels` keeps: lower walls take fewer storeys. */
-export const MIN_STOREY = 2.6;
 
 const HEIGHT_TAGS = ["height", "building:height", "building:levels", "roof:height", "roof:levels", "min_height"];
 
-/** Map ids whose height, storeys or roof a correction sets by hand (`corrections.ts`). */
-export const HAND_HEIGHTS: ReadonlySet<string> = new Set(TAG_CORRECTIONS.filter((c) => HEIGHT_TAGS.some((k) => c.tags[k] !== undefined)).map((c) => c.id));
+/** Map ids whose height, storeys or roof a correction sets by hand (`corrections.ts`), or whose top the surface model does (`corrections-surface.ts`). */
+export const HAND_HEIGHTS: ReadonlySet<string> = new Set([...TAG_CORRECTIONS.filter((c) => HEIGHT_TAGS.some((k) => c.tags[k] !== undefined)).map((c) => c.id), ...SURFACE_TOPS.map((s) => s.id)]);
 
 type Candidate = Pick<BuildingOut, "id" | "soffit" | "tower" | "mappedTower"> & { readonly use: string };
 

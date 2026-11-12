@@ -31,6 +31,7 @@ import { type ChunkOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { lod1Index, withLod1Height } from "./lod1-heights.ts";
 import { lod2Index, withLod2Roof } from "./lod2-roofs.ts";
+import { withSurfaceTop } from "./corrections-surface.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
 import { groundRaisedGreen, raisedGreen } from "./raised-green.ts";
 import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
@@ -245,7 +246,7 @@ const generateChunk = (
     if (a.holes > 0) withHoles++;
     const crowned = heights.orphans.has(a.id) || (parts.get(a.id)?.length ?? 0) > 0;
     const lod1 = withLod1Height(r.ok, heights.lod1, crowned, a.edge && a.ring);
-    const built = withLod2Roof(lod1, {
+    const roofed = withLod2Roof(lod1, {
       ...(heights.lod2 ? { lod2: heights.lod2 } : {}),
       ...(heights.lod1 ? { lod1: heights.lod1 } : {}),
       tags: a.tags,
@@ -253,6 +254,7 @@ const generateChunk = (
       ...(r.ok.source === "levels" ? { tagged: r.ok.levels } : {}),
       ...(a.edge ? { whole: a.ring } : {}),
     });
+    const built = withSurfaceTop(roofed);
     // A building cut at the map's edge signs only the venues on its part on the map (G-556).
     const edge = a.edge?.rect;
     const signs = edge ? venues.get(a.id)?.filter((v) => inRect(v.at, edge)) : venues.get(a.id);
