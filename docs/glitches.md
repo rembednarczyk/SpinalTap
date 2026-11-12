@@ -1727,7 +1727,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (tłum)
 
 ### G-651 `belowGround` zdjęłoby budynek naziemny z `level=-1` i piętrami nad ziemią
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g651)
+- Status: w PR #432 (12.11)
 - Ważność: S4 · Zasięg: `tools/osm-import/src/building-tags.ts` `belowGround`: `level=-1` przy `building:levels=3`, `height=20` albo `roof:levels=1` daje `true`, więc budynek naziemny zniknąłby; w danych dziś takiego nie ma, ryzyko na przyszłość; poprawka: budynek z dodatnimi piętrami lub wysokością nie jest podziemny
 - Pakiet właściciela: tools/osm-import
 
