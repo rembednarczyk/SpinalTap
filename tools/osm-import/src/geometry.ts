@@ -1,4 +1,5 @@
 /** Plane geometry of the importer: rings, simplification, clipping and buffering in world metres. */
+import { pointInRingEvenOdd, segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 
 export interface Pt {
   readonly x: number;
@@ -54,13 +55,7 @@ export const centroid = (ring: readonly Pt[]): Pt => {
   return { x: cx / (6 * a), z: cz / (6 * a) };
 };
 
-const segDist = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const l2 = dx * dx + dz * dz;
-  const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2));
-  return Math.hypot(p.x - (a.x + t * dx), p.z - (a.z + t * dz));
-};
+const segDist = (p: Pt, a: Pt, b: Pt): number => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 
 /** Douglas-Peucker on an open polyline; the end points stay. */
 export const simplifyLine = (pts: readonly Pt[], tolerance: number): Pt[] => {
@@ -148,15 +143,8 @@ export const selfIntersects = (ring: readonly Pt[]): boolean => {
   return false;
 };
 
-export const pointInRing = (p: Pt, ring: readonly Pt[]): boolean => {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i]!;
-    const b = ring[j]!;
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-};
+/** Is `p` inside the ring (crossing number, even-odd: `pointInRingEvenOdd` of core)? */
+export const pointInRing = (p: Pt, ring: readonly Pt[]): boolean => pointInRingEvenOdd(p.x, p.z, ring);
 
 export const ringBounds = (pts: readonly Pt[]): Rect => ({
   minX: Math.min(...pts.map((p) => p.x)),

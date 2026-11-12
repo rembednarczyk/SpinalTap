@@ -65,6 +65,7 @@ export const projectOn = (pts: readonly Pt[], x: number, z: number): { s: number
     const dz = b[1] - a[1];
     const len2 = dx * dx + dz * dz;
     const len = Math.sqrt(len2);
+    // Not `segmentParam` of core with `minLen2`: here a segment of exactly 1e-12 m² counts as its start too (`>`, there `<`).
     const t = len2 > 1e-12 ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / len2)) : 0;
     const px = a[0] + dx * t;
     const pz = a[1] + dz * t;

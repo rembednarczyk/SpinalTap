@@ -1,3 +1,4 @@
+import { pointInRingEvenOdd } from "../../../packages/core/src";
 import { PAVILION_CENTRE, PAVILION_LADDER, PAVILION_OUTLINE, PAVILION_PROPS } from "../../../packages/sim/src/content/alchemia";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 
@@ -74,6 +75,7 @@ export interface PavingInputs {
 const MARGIN = 0.3;
 const CARRIAGEWAY = 4;
 
+// Not `segmentDistance` of core: `p - a - d·t` rounds differently from its `p - (a + d·t)`.
 const toSegment = (p: GroundPoint, a: GroundPoint, b: GroundPoint): number => {
   const dx = b.x - a.x;
   const dz = b.z - a.z;
@@ -88,15 +90,7 @@ const toLine = (p: GroundPoint, line: readonly GroundPoint[]): number => {
   return d;
 };
 
-const inRing = (p: GroundPoint, ring: readonly GroundPoint[]): boolean => {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i]!;
-    const b = ring[j]!;
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-};
+const inRing = (p: GroundPoint, ring: readonly GroundPoint[]): boolean => pointInRingEvenOdd(p.x, p.z, ring);
 
 /** Points along the outline every 0.25 m. */
 const along = (outline: readonly GroundPoint[]): GroundPoint[] =>

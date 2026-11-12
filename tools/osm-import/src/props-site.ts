@@ -196,6 +196,7 @@ export class Site {
         const dx = b.x - a.x;
         const dz = b.z - a.z;
         const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+        // Not `segmentDistance` of core: `p - a - d·t` rounds differently from its `p - (a + d·t)`, and the way off the wall takes the same terms.
         const d = Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t);
         if (d < bestD && d > 1e-6) {
           bestD = d;

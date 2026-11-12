@@ -198,6 +198,7 @@ export const distanceToPiece = (item: StreetPropItem, x: number, z: number): num
       const cross = dx * (z - az) - dz * (x - ax);
       if (sign === 0 && cross !== 0) sign = Math.sign(cross);
       else if (cross * sign < 0) inside = false;
+      // Not `segmentDistance` of core: `dx` comes from the local corners, not from the moved ends `b - a` it would take (another rounding).
       const len2 = dx * dx + dz * dz || 1;
       const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / len2));
       edge = Math.min(edge, Math.hypot(x - (ax + dx * t), z - (az + dz * t)));

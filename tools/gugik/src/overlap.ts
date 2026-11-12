@@ -108,6 +108,7 @@ export const distToLine = (p: Pt, line: readonly Pt[]): number => {
     const dz = b.z - a.z;
     const len2 = dx * dx + dz * dz;
     const t = len2 > 0 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / len2)) : 0;
+    // Not `segmentDistance` of core: `p - a - t·d` rounds differently from its `p - (a + d·t)`.
     best = Math.min(best, Math.hypot(p.x - a.x - t * dx, p.z - a.z - t * dz));
   }
   return best;

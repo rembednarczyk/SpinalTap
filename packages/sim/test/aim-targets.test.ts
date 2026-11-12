@@ -17,8 +17,8 @@ const square = (seed = 7): Simulation => {
   return sim;
 };
 
-const ganger = (sim: Simulation, id: number, dx: number, dz: number, alerted = true): Entity => {
-  const g = gangerEntity(id, { key: `aim-${id}`, position: offset(sim, dx, dz), yaw: Math.PI }, null, 80, sim.player()!.chunk ?? "");
+const ganger = (sim: Simulation, id: number, dx: number, dz: number, alerted = true, victim?: string): Entity => {
+  const g = gangerEntity(id, { key: `aim-${id}`, position: offset(sim, dx, dz), yaw: Math.PI }, null, 80, sim.player()!.chunk ?? "", victim);
   g.ai = { ...g.ai!, alerted };
   return sim.world.add(g);
 };
@@ -84,6 +84,28 @@ describe("aimTargets (ADR-0072)", () => {
     const sim = square();
     const g = ganger(sim, 4100, 0, 12, false);
     g.ai!.suspicion = 0.9;
+    expect(ids(sim)).toEqual([]);
+  });
+
+  it("a ganger sent after a victim is a target before any alarm (user decision 12.11), without one it is not", () => {
+    for (const seed of [7, 23]) {
+      const sim = square(seed);
+      const hunter = ganger(sim, 4100, -2, 12, false, "oyaji");
+      const idle = ganger(sim, 4101, 2, 12, false);
+      expect(hunter.ai!.alerted).toBe(false);
+      expect(hunter.ai!.victim).toBe("oyaji");
+      expect(idle.ai!.victim).toBeUndefined();
+      expect(ids(sim)).toEqual([hunter.id]);
+    }
+  });
+
+  it("a ganger after a victim behind a wall, out of reach, knocked out or dead is not a target", () => {
+    const sim = square();
+    ganger(sim, 4100, 0, 12, false, "oyaji");
+    wall(sim, 6);
+    ganger(sim, 4101, 8, AIM_ASSIST_RANGE + 3, false, "oyaji");
+    ganger(sim, 4102, 8, 12, false, "oyaji").unconscious = true;
+    ganger(sim, 4103, -8, 12, false, "oyaji").health = { current: 0, max: 80 };
     expect(ids(sim)).toEqual([]);
   });
 

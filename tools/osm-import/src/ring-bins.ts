@@ -29,6 +29,7 @@ const cellEdges = (ring: readonly Pt[], i: number, k: number): readonly number[]
   return out;
 };
 
+// Not `pointInRingEvenOdd` of core: the same rule, but over a flat list of edges of several rings (ax, az, bx, bz), not one ring's points.
 const inside = (x: number, z: number, e: readonly number[]): boolean => {
   let odd = false;
   for (let n = 0; n < e.length; n += 4) {

@@ -14,6 +14,7 @@ const along = (line: readonly Pt[], p: Pt): { readonly s: number; readonly off: 
   for (let i = line.length - 1; i > 0; i--) {
     const [a, b] = [line[i]!, line[i - 1]!];
     const len = Math.hypot(b.x - a.x, b.z - a.z);
+    // Not `segmentDistance` of core: `len * len` of the rounded length and `p - a - t·d`, other roundings than its.
     const t = Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.z - a.z) * (b.z - a.z)) / (len * len)));
     const off = Math.hypot(p.x - a.x - t * (b.x - a.x), p.z - a.z - t * (b.z - a.z));
     if (off < best.off) best = { s: s + t * len, off };

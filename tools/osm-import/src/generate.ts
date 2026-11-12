@@ -3,6 +3,7 @@
  * input gives the same chunks, byte for byte, whatever order the files were read in.
  */
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
+import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type Lod1Building, type Lod2Building } from "../../gugik/src/extracts.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { belowGround, parseLength } from "./building-tags.ts";
@@ -31,6 +32,7 @@ import { type ChunkOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { lod1Index, withLod1Height } from "./lod1-heights.ts";
 import { lod2Index, withLod2Roof } from "./lod2-roofs.ts";
+import { RingBins } from "./ring-bins.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
 import { groundRaisedGreen, raisedGreen } from "./raised-green.ts";
 import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
@@ -312,14 +314,6 @@ const generateChunk = (
   return { chunk, stats };
 };
 
-/** Distance from p to the segment a-b. */
-const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
-};
-
 /**
  * `lod1`: GUGiK LoD1 2024 buildings (`Inputs.lod1`) for the heights the map lacks (`lod1-heights.ts`);
  * `lod2`: GUGiK LoD2 2017 buildings (`Inputs.lod2`) for the roofs it lacks (`lod2-roofs.ts`); without, the tags' heights and roofs.
@@ -389,7 +383,7 @@ export const generate = (
   const roads = lines.flatMap(carriageway).filter((l) => l.tags.highway !== undefined && near(l.line));
   // A crossing node a mapped crossing way runs through is striped by that way already.
   const crossingWays = roads.filter((l) => crossingWay(l.tags));
-  const onCrossingWay = (p: Pt) => crossingWays.some((l) => l.line.some((q, i) => i + 1 < l.line.length && segmentDistance(p, q, l.line[i + 1]!) < 1.5));
+  const onCrossingWay = (p: Pt) => crossingWays.some((l) => l.line.some((q, i) => i + 1 < l.line.length && segmentDistance(p.x, p.z, q.x, q.z, l.line[i + 1]!.x, l.line[i + 1]!.z) < 1.5));
   for (const n of [...data.nodes.values()].sort((a, b) => a.id - b.id)) {
     if (!n.tags || !markedCrossing(n.tags)) continue;
     const at = geoToWorld(n.lat, n.lon);
@@ -424,8 +418,10 @@ export const generate = (
   stretchZebras(nodeZebras, [...kerbs.widened.values()].map((w) => w.ring)).forEach((z, i) => bands.splice(bands.indexOf(nodeZebras[i]!), 1, { ...z, box: ringBounds(z.ring) }));
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
   const zebras = bands.filter((b) => b.surface === "crossing");
-  const onOther = (p: Pt, source: string) => carriageways.some((c) => c.source !== source && p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));
-  const onZebra = (p: Pt) => zebras.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));
+  // By the cells round the point, not every carriageway of the city for every half metre of every line (G-719).
+  const [carriagewayBins, zebraBins] = [new RingBins(carriageways), new RingBins(zebras)];
+  const onOther = (p: Pt, source: string) => carriagewayBins.scan(p.x, p.z, (c) => c.source !== source);
+  const onZebra = (p: Pt) => zebraBins.holds(p.x, p.z);
   const markings: Marking[] = [];
   // A fitted street's lines run on from piece to piece and on to the next way (G-675).
   for (const m of taperedJoins(roads.flatMap(roadMarkings), new Set(fittedLanes.keys()))) for (const piece of cutLine(m.line, (p) => onOther(p, m.source) || onZebra(p))) markings.push({ ...m, line: piece });

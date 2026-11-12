@@ -12,7 +12,7 @@ import { writeFileSync } from "node:fs";
 import { ADDED_AREAS } from "../../osm-import/src/corrections.ts";
 import { type Rect } from "../../osm-import/src/geometry.ts";
 import { type OsmData } from "../../osm-import/src/osm.ts";
-import { barrierReport } from "./barriers.ts";
+import { barrierReport, notDrawnText } from "./barriers.ts";
 import { CELLS, cellById } from "./config.ts";
 import { type Cover, coverFor, emptyCover, readCover } from "./cover.ts";
 import { EMPTY_RUN, emptyRuns, furnitureCounts, osmPlanPoints, piecesOf } from "./furniture.ts";
@@ -75,7 +75,7 @@ const cellText = (r: CellReport): string[] => {
   out.push(`meble (razem/OSM/generator): ${Object.entries(r.furniture).map(([k, c]) => `${k} ${c.total}/${c.osm}/${c.generator}`).join(", ")}`);
   out.push(`chodniki bez mebli > ${r.emptyPavements.over} m: ${r.emptyPavements.count} odcinków, ${r.emptyPavements.metres} m${r.emptyPavements.longest.slice(0, 3).map((x) => `; ${x.street} (${x.side}) ${x.length} m od ${x.from.x},${x.from.z}`).join("")}`);
   const b = Object.entries(r.barriers.kinds).filter(([, v]) => v.osmLines + v.osmPoints + v.game > 0);
-  out.push(`bariery OSM (linie/m/punkty, gra): ${b.length ? b.map(([k, v]) => `${k} ${v.osmLines}/${v.osmMetres}/${v.osmPoints}, gra ${v.game}`).join("; ") : "brak"}; nierysowane linie ${r.barriers.notDrawnCount}`);
+  out.push(`bariery OSM (linie/m/punkty, gra): ${b.length ? b.map(([k, v]) => `${k} ${v.osmLines}/${v.osmMetres}/${v.osmPoints}, gra ${v.game}`).join("; ") : "brak"}; nierysowane linie ${r.barriers.notDrawnCount}${r.barriers.notDrawnCount ? `: ${notDrawnText(r.barriers.notDrawn)}` : ""}`);
   out.push(...sectionsText(r.sections));
   return out;
 };

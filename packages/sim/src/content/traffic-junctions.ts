@@ -1,3 +1,4 @@
+import { segmentDistance } from "@seki/core";
 import { type Pt, polylineLength, surfacesAt } from "./lublin/roads";
 import { inBuilding } from "./lublin/places";
 import { MAP_CHUNKS } from "./lublin/sites";
@@ -239,9 +240,7 @@ const distanceTo = (pts: readonly Pt[], x: number, z: number): number => {
   let best = Infinity;
   for (let i = 1; i < pts.length; i++) {
     const [a, b] = [pts[i - 1]!, pts[i]!];
-    const [dx, dz] = [b[0] - a[0], b[1] - a[1]];
-    const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / (dx * dx + dz * dz || 1)));
-    best = Math.min(best, Math.hypot(a[0] + dx * t - x, a[1] + dz * t - z));
+    best = Math.min(best, segmentDistance(x, z, a[0], a[1], b[0], b[1]));
   }
   return best;
 };

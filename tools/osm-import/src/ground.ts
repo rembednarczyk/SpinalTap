@@ -278,6 +278,7 @@ export const crossingBand = (source: string, at: Pt, roads: readonly Line[]): Ba
       const dz = b.z - a.z;
       const len = Math.hypot(dx, dz);
       if (len < 0.1) continue;
+      // Not `segmentDistance` of core: the parameter divides by `len * len` of the rounded length, another rounding than `dx * dx + dz * dz`.
       const k = Math.max(0, Math.min(1, ((at.x - a.x) * dx + (at.z - a.z) * dz) / (len * len)));
       const d = Math.hypot(a.x + dx * k - at.x, a.z + dz * k - at.z);
       if (d < 1 && (!best || d < best.d)) best = { d, tx: dx / len, tz: dz / len, w: roadWidth(t), bridge: t.bridge !== undefined && t.bridge !== "no" };
