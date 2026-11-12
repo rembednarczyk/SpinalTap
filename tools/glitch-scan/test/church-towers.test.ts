@@ -35,9 +35,9 @@ describe("church-fake-tower (G-215)", () => {
 describe("church-tower-off-nmpt (G-215)", () => {
   it("reads one apex per tower with its height, not the walls' corners", () => {
     const two = towerApexes(entry({ towers: [tower, { ...tower, x: 5030, tip: 30 }] }).frame);
-    expect(two.map((a) => [Math.round(a.x), Math.round(a.z), Math.round(a.y)]).sort()).toEqual([
-      [5005, 5015, 35],
-      [5030, 5015, 30],
+    expect(two.map((a) => [Math.round(a.x), Math.round(a.z), Math.round(a.y), Math.round(a.crown)]).sort()).toEqual([
+      [5005, 5015, 35, 25],
+      [5030, 5015, 30, 25],
     ]);
   });
 
@@ -48,6 +48,14 @@ describe("church-tower-off-nmpt (G-215)", () => {
     expect(towersOffNmpt([entry({ towers: [] })], [], [real]).map((f) => f.what)).toEqual(["w1: no tower to y 35 where NMPT has one"]);
     // A church not listed is no business of this check: `church-fake-tower` is.
     expect(towersOffNmpt([entry({}, { id: "w2" })], [], [real])).toHaveLength(1);
+  });
+
+  it("finds a tower at its real one with its cornice over 0.75 m off NMPT's, none within it or with no cornice measured", () => {
+    const measured = { ...real, top: 25 };
+    expect(towersOffNmpt([entry()], [], [measured])).toEqual([]);
+    expect(towersOffNmpt([entry({ towers: [{ ...tower, top: 25.7 }] })], [], [measured])).toEqual([]);
+    expect(towersOffNmpt([entry({ towers: [{ ...tower, top: 24 }] })], [], [measured]).map((f) => f.what)).toEqual(["w1: a tower of the renderer's with its cornice at y 24.0, NMPT's 25"]);
+    expect(towersOffNmpt([entry({ towers: [{ ...tower, top: 24 }] })], [], [real])).toEqual([]);
   });
 
   it("takes a building of the data standing there to the height as the real tower", () => {

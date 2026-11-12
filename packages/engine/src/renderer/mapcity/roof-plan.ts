@@ -169,8 +169,9 @@ export const addTowers = (sink: MeshSink, f: FacadeFrame, p: Palette, near: bool
   // A church with such parts takes its shape from the map (G-057): towers made up beside them match nothing there.
   if (f.b.lifted || f.b.carriesParts) return;
   const rand = prng((f.b.look ^ 0x70e4) >>> 0);
-  const helmet = rand() < 0.5;
+  const chance = rand() < 0.5;
   for (const t of f.b.towers ?? []) {
+    const helmet = t.helmet ?? chance;
     const at = inBox(f, t);
     const ring = towerRing(f, at.u, at.v, t.half);
     // The data's tower must stand on its church, not on the grass by it (G-212).

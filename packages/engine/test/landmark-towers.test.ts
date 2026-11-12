@@ -159,4 +159,17 @@ describe("the renderer's bell towers (G-212)", () => {
     expect(tips).toHaveLength(1);
     expect(tips.every((t) => pointInRing(t, bent))).toBe(true);
   });
+
+  it("take the helmet's shape from the data whatever the look, and leave it to the look only where the data is silent (G-215)", () => {
+    const nearCount = (b: MapBuilding): number => {
+      const sink = new MeshSink();
+      addTowers(sink, facadeFrame(b, () => null), { wall: GREY, trim: GREY, plinth: GREY, roof: GREY }, true);
+      return sink.vertexCount;
+    };
+    const counts = (helmet?: boolean) => new Set(Array.from({ length: 16 }, (_, look) => nearCount({ ...church, look, towers: towers.slice(0, 1).map((t) => (helmet === undefined ? t : { ...t, helmet })) })));
+    expect(counts(true).size).toBe(1);
+    expect(counts(false).size).toBe(1);
+    expect([...counts(true)][0]).not.toBe([...counts(false)][0]);
+    expect(counts().size, "both shapes by chance").toBe(2);
+  });
 });
