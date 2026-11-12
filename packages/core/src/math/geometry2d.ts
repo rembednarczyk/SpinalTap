@@ -28,12 +28,16 @@ export const segmentParam = (px: number, pz: number, ax: number, az: number, bx:
 };
 
 /**
- * Distance from (px, pz) to the segment a-b: to the foot at `segmentParam`, so a segment whose
- * squared length is 0, or below `minLen2`, counts as its end `a`.
+ * Distance from (px, pz) to the segment a-b: to the foot at `segmentParam` (the same terms, written
+ * out: a call less in the hot loops), so a segment whose squared length is 0, or below `minLen2`,
+ * counts as its end `a`.
  */
 export const segmentDistance = (px: number, pz: number, ax: number, az: number, bx: number, bz: number, minLen2 = 0): number => {
-  const t = segmentParam(px, pz, ax, az, bx, bz, minLen2);
-  return Math.hypot(px - (ax + (bx - ax) * t), pz - (az + (bz - az) * t));
+  const dx = bx - ax;
+  const dz = bz - az;
+  const len2 = dx * dx + dz * dz;
+  const t = len2 < minLen2 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / (len2 || 1)));
+  return Math.hypot(px - (ax + dx * t), pz - (az + dz * t));
 };
 
 /**
@@ -67,13 +71,16 @@ export const pointInRingEvenOdd = (x: number, z: number, ring: readonly PointXZ[
   return inside;
 };
 
-/** `pointInRingEvenOdd` for a ring of `[x, z]` pairs: the same rule on the same edges. */
+/**
+ * `pointInRingEvenOdd` for a ring of `[x, z]` pairs: the same rule on the same edges. Indexed, not
+ * destructured: a destructured pair walks the array iterator, several times slower in a hot loop.
+ */
 export const pointInPairRingEvenOdd = (x: number, z: number, ring: readonly PairXZ[]): boolean => {
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [ax, az] = ring[i] as PairXZ;
-    const [bx, bz] = ring[j] as PairXZ;
-    if (az > z !== bz > z && x < ((bx - ax) * (z - az)) / (bz - az) + ax) inside = !inside;
+    const a = ring[i] as PairXZ;
+    const b = ring[j] as PairXZ;
+    if (a[1] > z !== b[1] > z && x < ((b[0] - a[0]) * (z - a[1])) / (b[1] - a[1]) + a[0]) inside = !inside;
   }
   return inside;
 };
