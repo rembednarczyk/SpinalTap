@@ -50,6 +50,7 @@ import { metroLineProtected } from "./metro-line";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
+import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
@@ -72,6 +73,8 @@ import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers,
 import { cityBricks, plasteredWalls } from "./wall-materials";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
+import { belowGround } from "../../osm-import/src/building-tags.ts";
+import { isTowerTags } from "../../osm-import/src/building-towers.ts";
 import { TAG_CORRECTIONS, correctedLine } from "../../osm-import/src/corrections.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
@@ -1419,15 +1422,26 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     return all.filter((b) => alone.has(b.id) && (whole.get(b.id) ?? 0) < SMALL_ALONE_AREA && b.source === "default" && b.levels > 1).map((b) => ({ at: near(b.x, b.z), what: `${b.id} ${b.levels} storeys on ${SMALL_ALONE_AREA} m² or less` }));
   },
   /**
-   * A building the map puts under ground (`location=underground`: a cellar, a shelter, G-077)
-   * standing as a solid on the street over it.
+   * A building the map puts under ground (`location=underground`: a cellar, a shelter, G-077; every
+   * floor of its `level` below 0: VIVO's garage, G-600) standing as a solid on the street over it.
    */
   "building-underground-solid": () => {
     const under = new Set([
-      ...[...SOURCE_OSM.ways.values()].filter((w) => w.tags?.building !== undefined && w.tags.location === "underground").map((w) => `w${w.id}`),
-      ...[...SOURCE_OSM.relations.values()].filter((r) => r.tags?.building !== undefined && r.tags.location === "underground").map((r) => `r${r.id}`),
+      ...[...SOURCE_OSM.ways.values()].filter((w) => w.tags?.building !== undefined && belowGround(w.tags)).map((w) => `w${w.id}`),
+      ...[...SOURCE_OSM.relations.values()].filter((r) => r.tags?.building !== undefined && belowGround(r.tags)).map((r) => `r${r.id}`),
     ]);
     return MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b) && under.has(b.id.split("/")[0]!))).map((b) => ({ at: near(b.x, b.z), what: `${b.id} under ground, ${b.height} m over the street` }));
+  },
+  /**
+   * Two buildings' solids in much the same outline (G-600, `building-duplicate.ts`). A part and a
+   * tower the map draws in a church's or a gate's outline are their own solids on purpose (G-210).
+   */
+  "building-duplicate": () => {
+    const own = (id: string) => {
+      const t = osmTags(id);
+      return t["building:part"] === undefined && !isTowerTags(t);
+    };
+    return duplicateSolids(MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b) && own(b.id)).map((b) => ({ id: b.id, ring: worldOutline(b) }))));
   },
   /**
    * A passage whose way the map signs with a clearance (`maxheight`, in metres or `below_default`,

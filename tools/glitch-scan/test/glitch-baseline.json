@@ -86,6 +86,7 @@
   "passage-blocked": 0,
   "small-freestanding-tall": 0,
   "building-underground-solid": 0,
+  "building-duplicate": 0,
   "passage-maxheight": 0,
   "gate-mouth-off-axis": 3,
   "vehicle-outside-passage": 0,
@@ -183,7 +184,7 @@
   "barrier-on-crowd-lane": 0,
   "barrier-in-furniture": 0,
   "barrier-on-seat": 0,
-  "barrier-parallel-cut": 15,
+  "barrier-parallel-cut": 12,
   "city-wall-kept": 14,
   "ruin-wall-height": 0
 }

@@ -5,7 +5,7 @@
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { type Lod1Building } from "../../gugik/src/extracts.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
-import { parseLength } from "./building-tags.ts";
+import { belowGround, parseLength } from "./building-tags.ts";
 import { smallAlone } from "./building-alone.ts";
 import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
 import { type WorldBarrier, chunkBarriers, worldBarriers } from "./barriers.ts";
@@ -77,8 +77,7 @@ const buildingAreas = (areas: readonly Area[], data: OsmData): Area[] => {
     if (r.tags?.building === undefined) continue;
     for (const m of r.members) if (m.type === "way" && m.role !== "inner") inRelation.add(`w${m.ref}`);
   }
-  // A building under ground (a cellar, a shelter, G-077) has nothing over the street above it.
-  return areas.filter((a) => a.tags.building !== undefined && !SKIP_BUILDING.has(a.tags.building) && a.tags.location !== "underground" && !inRelation.has(a.id));
+  return areas.filter((a) => a.tags.building !== undefined && !SKIP_BUILDING.has(a.tags.building) && !belowGround(a.tags) && !inRelation.has(a.id));
 };
 
 type SidewalkPoint = Pt & { readonly tx: number; readonly tz: number };
