@@ -8,15 +8,16 @@ import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrze
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
 import { REPO } from "../src/paths.ts";
-import { type PropsPlan, generateProps } from "../src/props-gen.ts";
+import type { PropsPlan } from "../src/props-gen.ts";
 import { propOf } from "../src/props-kinds.ts";
 import { Site } from "../src/props-site.ts";
+import { cityProps } from "./city.ts";
 
 /** The street furniture of ADR-0058 stage 2 as the generator places it. */
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
 const PLAN = JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
-const { byChunk } = generateProps(PLAN, CHUNKS);
+const { byChunk } = cityProps();
 const site = new Site(CHUNKS);
 const pieces = [...byChunk.values()].flat();
 const of = (prop: string) => pieces.filter((i) => i.prop === prop);

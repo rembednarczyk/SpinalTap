@@ -19,6 +19,7 @@ import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
 import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
 import { SolidIndex, clearSpot } from "../src/props-solid.ts";
+import { cityProps } from "./city.ts";
 import { gameDoors } from "../src/game-doors.ts";
 import { loadCarriageways, loadUndergroundWays } from "../src/props-roads.ts";
 import { lublinVenueBoards } from "../src/venue-boards.ts";
@@ -319,7 +320,7 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(offRoad(site, { x: 40, z: 30 }, 2)).toBeNull();
     // Over the whole city: only covers and bollards stand where the cars drive. A road lamp in front
     // of a car park's cars, on its asphalt strip with no kerb (T-172), is not where they drive.
-    const { byChunk } = generateProps(PLAN, CHUNKS);
+    const { byChunk } = cityProps();
     const city = new Site(CHUNKS);
     const onRoad = [...byChunk.values()].flat().filter((i) => city.surfaceAt({ x: i.x, z: i.z }) === "road" && !(i.prop === "lamp-road" && city.byLot({ x: i.x, z: i.z }, 2)));
     expect(onRoad.filter((i) => i.prop !== "manhole" && i.prop !== "bollard").length).toBeLessThanOrEqual(1);
@@ -341,7 +342,7 @@ describe("street furniture generator (ADR-0047)", () => {
         expect(v).toBeLessThanOrEqual(0xffff);
       }
     }
-    const out = generateProps(PLAN, CHUNKS);
+    const out = cityProps();
     const unia = [...out.byChunk.values()].flat().find((i) => i.prop === "monument" && Math.abs(i.x - 47.8) < 0.2 && Math.abs(i.z + 25.7) < 0.2);
     expect(unia && unia.variant % (SHAPES.monument ?? 1)).toBe(0);
   });
