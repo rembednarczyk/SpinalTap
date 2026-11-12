@@ -27,7 +27,7 @@ import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
 import { type ChunkOut } from "./model.ts";
-import { type OsmData } from "./osm.ts";
+import { type OsmData, type Tags } from "./osm.ts";
 import { lod1Index, withLod1Height } from "./lod1-heights.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
 import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
@@ -80,7 +80,8 @@ const buildingAreas = (areas: readonly Area[], data: OsmData): Area[] => {
   return areas.filter((a) => a.tags.building !== undefined && !SKIP_BUILDING.has(a.tags.building) && !belowGround(a.tags) && !inRelation.has(a.id));
 };
 
-type SidewalkPoint = Pt & { readonly tx: number; readonly tz: number };
+/** `plain`: a point of a footway without `footway=sidewalk` (`kerb` reads it on a street's side tagged `separate`). */
+type SidewalkPoint = Pt & { readonly tx: number; readonly tz: number; readonly plain?: true };
 
 /** Samples along a line every `step` metres, with the line's direction there. */
 const samplesAlong = (line: readonly Pt[], step: number): (Pt & { tx: number; tz: number })[] => {
@@ -105,19 +106,33 @@ const KERB_MARGIN = 0.5;
 /** A street side's mapped sidewalk counts as running along it over this many samples (2 m apart) and more. */
 const MIN_KERB_SAMPLES = 5;
 
-/** A coarse spatial hash of points along mapped sidewalks (`footway=sidewalk`), with their direction. */
+/**
+ * Whether a footway without `footway=sidewalk` is a street's sidewalk where that street's side
+ * says its sidewalk is mapped `separate`ly: Lublin maps many sidewalks as plain footways (the one
+ * along Radziwiłłowska by Plac Litewski, G-655). A crossing and a paved area are not.
+ */
+const plainFootway = (t: Tags): boolean => t.highway === "footway" && t.footway !== "sidewalk" && t.footway !== "crossing" && t.area !== "yes";
+
+/** The sides of a street (left, right of its direction) whose sidewalks the map says are separate ways. */
+const separateSides = (t: Tags): [boolean, boolean] => {
+  const all = t.sidewalk === "separate" || t["sidewalk:both"] === "separate";
+  return [all || t["sidewalk:left"] === "separate", all || t["sidewalk:right"] === "separate"];
+};
+
+/** A coarse spatial hash of points along mapped sidewalks (`footway=sidewalk`, and plain footways: `plainFootway`), with their direction. */
 export const sidewalkIndex = (lines: readonly Line[]) => {
   const cell = 10;
   const grid = new Map<string, SidewalkPoint[]>();
   const key = (x: number, z: number) => `${Math.floor(x / cell)},${Math.floor(z / cell)}`;
   for (const l of lines) {
-    if (l.tags.footway !== "sidewalk") continue;
-    const pts = samplesAlong(l.line, 3);
+    const plain = plainFootway(l.tags);
+    if (l.tags.footway !== "sidewalk" && !plain) continue;
+    const pts: SidewalkPoint[] = samplesAlong(l.line, 3);
     const end = pts[pts.length - 1];
     if (end) pts.push({ ...l.line[l.line.length - 1]!, tx: end.tx, tz: end.tz });
     for (const p of pts) {
       const list = grid.get(key(p.x, p.z)) ?? [];
-      list.push(p);
+      list.push(plain ? { ...p, plain } : p);
       grid.set(key(p.x, p.z), list);
     }
   }
@@ -126,12 +141,34 @@ export const sidewalkIndex = (lines: readonly Line[]) => {
     for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) out.push(...(grid.get(`${Math.floor(p.x / cell) + dx},${Math.floor(p.z / cell) + dz}`) ?? []));
     return out;
   };
+  /** `kerb` from the sidewalks, and from the plain footways on the sides `plain` says. */
+  const kerbOf = (road: Line, plain: readonly [boolean, boolean]): number | null => {
+    const reach = roadWidth(road.tags) / 2;
+    const sides: [number[], number[]] = [[], []];
+    const samples = samplesAlong(road.line, 2);
+    for (const p of samples) {
+      const best = [Infinity, Infinity];
+      for (const q of around(p)) {
+        const along = (q.x - p.x) * p.tx + (q.z - p.z) * p.tz;
+        const across = (q.z - p.z) * p.tx - (q.x - p.x) * p.tz;
+        if (Math.abs(along) > 2 || Math.abs(across) >= reach || Math.abs(q.tx * p.tx + q.tz * p.tz) < 0.9) continue;
+        const side = across >= 0 ? 0 : 1;
+        if (q.plain && !plain[side]) continue;
+        best[side] = Math.min(best[side]!, Math.abs(across) - KERB_MARGIN);
+      }
+      best.forEach((b, side) => {
+        if (Number.isFinite(b)) sides[side]!.push(b);
+      });
+    }
+    const medians = sides.filter((s) => s.length >= MIN_KERB_SAMPLES && s.length * 2 >= samples.length).map((s) => [...s].sort((a, b) => a - b)[Math.floor(s.length / 2)]!);
+    return medians.length > 0 ? Math.min(...medians) : null;
+  };
   return {
     /** True when separate sidewalks run along at least a third of the road. */
     along: (road: Line): boolean => {
       const reach = roadWidth(road.tags) / 2 + 7;
       const samples = samplesAlong(road.line, 8);
-      const near = samples.filter((p) => around(p).some((q) => Math.hypot(q.x - p.x, q.z - p.z) <= reach)).length;
+      const near = samples.filter((p) => around(p).some((q) => !q.plain && Math.hypot(q.x - p.x, q.z - p.z) <= reach)).length;
       return samples.length > 0 && near / samples.length >= 1 / 3;
     },
     /**
@@ -140,26 +177,14 @@ export const sidewalkIndex = (lines: readonly Line[]) => {
      * by type: the median on each side, the nearer side's. Only a side whose sidewalk runs along
      * half the road and more counts (`MIN_KERB_SAMPLES` at least): a sidewalk turning in to a
      * crossing at a junction says nothing of the rest of the street (T-062). Null without one.
+     * On a street of mapped `lanes` (G-655) a plain footway counts too, on a side tagged
+     * `separate` (`plainFootway`), and only ever narrows it further: the streets of default width
+     * keep the fit T-046 reviewed, to the sidewalks alone.
      */
     kerb: (road: Line): number | null => {
-      const reach = roadWidth(road.tags) / 2;
-      const sides: [number[], number[]] = [[], []];
-      const samples = samplesAlong(road.line, 2);
-      for (const p of samples) {
-        const best = [Infinity, Infinity];
-        for (const q of around(p)) {
-          const along = (q.x - p.x) * p.tx + (q.z - p.z) * p.tz;
-          const across = (q.z - p.z) * p.tx - (q.x - p.x) * p.tz;
-          if (Math.abs(along) > 2 || Math.abs(across) >= reach || Math.abs(q.tx * p.tx + q.tz * p.tz) < 0.9) continue;
-          const side = across >= 0 ? 0 : 1;
-          best[side] = Math.min(best[side]!, Math.abs(across) - KERB_MARGIN);
-        }
-        best.forEach((b, side) => {
-          if (Number.isFinite(b)) sides[side]!.push(b);
-        });
-      }
-      const medians = sides.filter((s) => s.length >= MIN_KERB_SAMPLES && s.length * 2 >= samples.length).map((s) => [...s].sort((a, b) => a - b)[Math.floor(s.length / 2)]!);
-      return medians.length > 0 ? Math.min(...medians) : null;
+      const own = kerbOf(road, [false, false]);
+      const plain = Number(road.tags.lanes) > 0 ? kerbOf(road, separateSides(road.tags)) : null;
+      return own === null ? plain : plain === null ? own : Math.min(own, plain);
     },
   };
 };

@@ -113,16 +113,20 @@ export const roadWidth = (t: Tags): number => {
 
 /** The narrowest carriageway a street's mapped sidewalks narrow it to, metres: one-way, and two-way (two 2.25 m lanes, T-063). */
 const MIN_FITTED = { oneway: 3, twoWay: 4.5 };
+/** The narrowest lane a fitted street of mapped `lanes` keeps, metres: as the two of a two-way street (T-063). */
+const MIN_LANE = 2.25;
 
 /**
- * A street the map gives no width (no `width`, no `lanes`) narrowed to `kerb` metres each side of
- * its axis, short of its separately mapped sidewalks (T-046): the width by type would lay the
- * asphalt over their middle and `cutSidewalk` would drop them. The fitted width goes to
+ * A street the map gives no width (no `width`) narrowed to `kerb` metres each side of its axis,
+ * short of its separately mapped sidewalks (T-046): the width by type, or its `lanes` at 3.25 m
+ * (G-655), would lay the asphalt over their middle and `cutSidewalk` would drop them. Its mapped
+ * lanes keep `MIN_LANE` each, so the markings paint them all. The fitted width goes to
  * `width:carriageway`, so the bands, markings and zebras all read the same one.
  */
 export const fitToKerb = (t: Tags, kerb: number | null, oneway: boolean): Tags => {
-  if (kerb === null || ROAD_WIDTH[t.highway ?? ""] === undefined || parseLength(t.width ?? t["width:carriageway"]) !== null || Number(t.lanes) > 0) return t;
-  const w = Math.max(oneway ? MIN_FITTED.oneway : MIN_FITTED.twoWay, Math.round(2 * kerb * 10) / 10);
+  if (kerb === null || ROAD_WIDTH[t.highway ?? ""] === undefined || parseLength(t.width ?? t["width:carriageway"]) !== null) return t;
+  const lanes = Number(t.lanes) > 0 ? Math.round(Number(t.lanes)) * MIN_LANE : 0;
+  const w = Math.max(oneway ? MIN_FITTED.oneway : MIN_FITTED.twoWay, lanes, Math.round(2 * kerb * 10) / 10);
   return w < roadWidth(t) ? { ...t, "width:carriageway": String(w) } : t;
 };
 

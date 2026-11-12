@@ -3,8 +3,13 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ALL_CHUNKS, DISTRICTS, chunksOf } from "../src/config.ts";
 import { emitDistrict } from "../src/emit.ts";
-import { generate } from "../src/generate.ts";
+import { correctedLine } from "../src/corrections.ts";
+import { withoutReplaced } from "../src/corrections-alchemia.ts";
+import { extractFeatures } from "../src/features.ts";
+import { generate, sidewalkIndex } from "../src/generate.ts";
+import { fitToKerb, roadWidth } from "../src/ground.ts";
 import { loadInputs } from "../src/load.ts";
+import { lanesOf, oneway } from "../src/markings.ts";
 import { parseOsmXml } from "../src/osm.ts";
 import { REPO } from "../src/paths.ts";
 import { worldToGeo } from "../src/project.ts";
@@ -175,9 +180,71 @@ describe("generator", () => {
     const twoWay = ground({});
     expect(surface(twoWay, "sidewalk")).toBeCloseTo(500, -1);
     expect(surface(twoWay, "road")).toBeCloseTo(450, -1);
-    // A width or lanes from the map stay as they are, whatever they cover.
+    // A width from the map stays as it is, whatever it covers.
     expect(surface(ground({ width: "6" }), "road")).toBeCloseTo(600, -1);
-    expect(surface(ground({ lanes: "2" }), "road")).toBeCloseTo(650, -1);
+    // Mapped lanes are fitted too (G-655), no narrower than 2.25 m each: two 4.5 m, three one way 6.75 m (6.8 as the outlines round it).
+    expect(surface(ground({ lanes: "2" }), "sidewalk")).toBeCloseTo(500, -1);
+    expect(surface(ground({ lanes: "2" }), "road")).toBeCloseTo(450, -1);
+    expect(surface(ground({ lanes: "3", oneway: "yes" }), "road")).toBeCloseTo(680, -1);
+  });
+
+  it("narrows a street of mapped lanes to the plain footways on its sides tagged separate (G-655)", () => {
+    const node = (id: number, x: number, z: number) => {
+      const g = worldToGeo({ x, z });
+      return ` <node id="${id}" lat="${g.lat}" lon="${g.lon}"/>`;
+    };
+    const way = (id: number, a: number, b: number, tags: Record<string, string>) =>
+      ` <way id="${id}"><nd ref="${a}"/><nd ref="${b}"/>${Object.entries(tags).map(([k, v]) => `<tag k="${k}" v="${v}"/>`).join("")}</way>`;
+    // Radziwiłłowska by Plac Litewski: three lanes (9.75 m by `lanes`), a plain footway 4 m off the axis each side.
+    const width = (street: Record<string, string>, footway: Record<string, string> = { highway: "footway" }) => {
+      const map = parseOsmXml(
+        ["<osm>", node(1, 0, 0), node(2, 100, 0), node(3, 0, 4), node(4, 100, 4), node(5, 0, -4), node(6, 100, -4),
+          way(10, 1, 2, { highway: "residential", lanes: "3", "lanes:forward": "2", "lanes:backward": "1", ...street }),
+          way(11, 3, 4, footway),
+          way(12, 5, 6, footway),
+          "</osm>"].join("\n"),
+      );
+      const road = generate(map, slope, tinyChunk).chunks[0]!.ground.find((g) => g.surface === "road")!;
+      const zs = road.outline.filter((_, i) => i % 2 === 1);
+      return Math.max(...zs) - Math.min(...zs);
+    };
+    // Half a metre short of the footways' axes: 7 m, its three lanes 2.33 m each.
+    expect(width({ sidewalk: "separate" })).toBeCloseTo(7, 1);
+    expect(width({ "sidewalk:left": "separate" })).toBeCloseTo(7, 1);
+    expect(width({ sidewalk: "separate" }, { highway: "footway", footway: "sidewalk" })).toBeCloseTo(7, 1);
+    // A footway the street does not call its sidewalk, or a crossing, says nothing of its kerb: 9.75 m (9.8 rounded).
+    expect(width({})).toBeCloseTo(9.8, 1);
+    expect(width({ sidewalk: "both" })).toBeCloseTo(9.8, 1);
+    expect(width({ sidewalk: "separate" }, { highway: "footway", footway: "crossing" })).toBeCloseTo(9.8, 1);
+  });
+
+  it("keeps Radziwiłłowska's asphalt off the footway along Plac Litewski, its three lanes 2.25 m wide and more (G-655)", () => {
+    const lines = withoutReplaced(extractFeatures(loadInputs().osm)).lines.map((l) => correctedLine(l));
+    const index = sidewalkIndex(lines);
+    const footway = lines.find((l) => l.id === "w232805936")!;
+    for (const id of ["w331453920", "w914787972"]) {
+      const road = lines.find((l) => l.id === id)!;
+      const fitted = fitToKerb(road.tags, index.kerb(road), oneway(road.tags));
+      const w = roadWidth(fitted);
+      const [back, fwd] = lanesOf(fitted, w);
+      expect(back + fwd).toBe(3);
+      expect(w / 3).toBeGreaterThanOrEqual(2.25);
+      // The footway's points beside the street, off its axis by less than half its width by `lanes`, lie beyond the fitted kerb.
+      // Both ways are straight, two nodes each; the footway sampled every metre.
+      const [a, b] = [road.line[0]!, road.line[road.line.length - 1]!];
+      const len = Math.hypot(b.x - a.x, b.z - a.z);
+      const beside = footway.line.flatMap((p, i) => {
+        const q = footway.line[i + 1];
+        const n = q ? Math.ceil(Math.hypot(q.x - p.x, q.z - p.z)) : 0;
+        return Array.from({ length: n }, (_, k) => ({ x: p.x + ((q!.x - p.x) * k) / n, z: p.z + ((q!.z - p.z) * k) / n }));
+      }).flatMap((p) => {
+        const along = ((p.x - a.x) * (b.x - a.x) + (p.z - a.z) * (b.z - a.z)) / len;
+        const across = Math.abs(((p.z - a.z) * (b.x - a.x) - (p.x - a.x) * (b.z - a.z)) / len);
+        return along > 0 && along < len && across < roadWidth(road.tags) / 2 ? [across] : [];
+      });
+      expect(beside.length).toBeGreaterThan(10);
+      expect(Math.min(...beside)).toBeGreaterThan(w / 2);
+    }
   });
 
   it("keeps a street's default width where a sidewalk runs on it only by a junction (G-112)", () => {
