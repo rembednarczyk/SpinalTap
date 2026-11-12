@@ -69,3 +69,36 @@ czyli tyle, ile workerów vitest). Czasy z `TestModule.diagnostic()` (własny re
 Wniosek: większość czasu to powtarzany import tych samych modułów, nie same testy. Pełne
 `generate(...)` miasta woła tylko `tools/osm-import/test/venues.test.ts` (raz); reszta testów
 generatora buduje małe mapy albo kilka chunków.
+
+## Zmiany i pomiar po
+
+Ten sam pomiar (pełne `vitest run --coverage`, 4 rdzenie, load na starcie 2–3, pamięć miasta
+zimna jak w CI):
+
+| Stan | Ściana [s] | Import, suma [s] | Testy, suma [s] |
+|---|---:|---:|---:|
+| przed (b6b9365) | 1116 | 1897 | 1274 |
+| `isolate: false` dla core, sim, engine, persistence, tools | 697 (-38%) | 655 | 1327 |
+| + wspólna pamięć miasta (`tools/osm-import/test/city.ts`) | 660 (-41%) | 595 | 1280 |
+
+Testy te same: 5422, wszystkie zielone, ta sama lista nazw. Pokrycie bez spadku (gałęzie
+92,66% -> 92,68%).
+
+- **Bez izolacji** (projekt `shared` w `vitest.config.ts`): core, sim, engine, persistence i
+  tools. Każdy pakiet 3 razy z `--sequence.shuffle` i raz w całym zestawie. Suma czasu plików:
+  sim 1476 -> 697 s, engine 633 -> 279 s, glitch-scan 178 -> 90 s, osm-import 100 -> 78 s,
+  core 5,0 -> 1,1 s, persistence 5,1 -> 0,6 s.
+- **Z izolacją** (projekt `isolated`): ui i app (jsdom, React; app to dziś największy import,
+  529 s sumy, do sprawdzenia osobno), narrative (`ink-cache.test.ts` liczy kompilacje inkjs
+  przez `vi.mock`, a wspólny worker trzymałby już skompilowane historie z innych plików) i każdy
+  nowy pakiet.
+- **Pamięć miasta**: pełne `generate` (venues) i `generateProps` planu (props, props-e2,
+  props-rows, props-market) liczone raz na proces, między procesami z
+  `node_modules/.cache/seki-city`. W CI pamięć jest zimna, więc zysk to tylko powtórzenia w
+  procesie: osm-import 78 -> 66 s sumy. Lokalnie przy ciepłej pamięci venues 8 s -> 0,04 s.
+
+Shardy jak w CI (`--shard=i/2`, `VITEST_COVERAGE_SHARD=1`), lokalnie: shard 1 627 s z izolacją,
+379 s po zmianach; shard 2 286 s po zmianach. Podział vitest jest po skrócie ścieżki, nie po
+czasie: shard 1 ma dwa najdłuższe pliki (traffic-junction-drive 86 s, glitch-scan 66 s), stąd
+różnica 93 s. W CI shard 1 trwał 905–1001 s, czyli ok. 1,5 raza dłużej niż lokalnie; po
+zmianach to ok. 570 s (9,5 min) i 430 s (7 min), poniżej 15 min.
