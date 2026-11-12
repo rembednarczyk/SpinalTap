@@ -381,6 +381,9 @@ export const cutSidewalk = (b: Band, onRoad: (p: Pt) => boolean): Band[] => {
 /** Draw order: big areas first, then roads, cobbles, sidewalks, paths and rails on top. */
 const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, road: 3, cobble: 4, crossing: 5, sidewalk: 6, footway: 7, steps: 8, rail: 9, basin: 10 };
 
+/** The least share of a lawn laid `holed` a chunk keeps (m²): a cell of the 0.1 m grid, and not turned over by the rounding. */
+const MIN_SHARE = 0.01;
+
 /** Clips bands to a chunk, simplifies and rounds them, in draw order then by source id. */
 export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => {
   const out: { g: GroundOut; order: number; source: string; k: number }[] = [];
@@ -392,7 +395,11 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
     };
     if (clipped.length < 3) return widen(null);
     const simple = b.holed ? clipped : simplifyRing(clipped, 0.3);
-    if (Math.abs(signedArea(round(simple))) < 0.5) return widen(null);
+    // A lawn laid in pieces that share their edges (`holed`: a raised lawn's, a paving's hole)
+    // keeps its share however small: a chunk's edge cutting a strip of it short would leave a gap
+    // by the next piece (G-665).
+    const area = signedArea(round(simple));
+    if (b.holed && b.surface === "grass" ? area < MIN_SHARE : Math.abs(area) < 0.5) return widen(null);
     // Steps are cut into strips in the chunk, so a piece its edge cuts short is cut too; the
     // strips of a piece kept are all kept, however small, or the flight would have gaps.
     const pieces = b.run ? flightStrips(simple, ...b.run).map(round) : [round(simple)];

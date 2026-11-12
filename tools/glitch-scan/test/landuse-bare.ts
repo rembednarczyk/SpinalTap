@@ -3,6 +3,7 @@ import { extractFeatures } from "../../osm-import/src/features.ts";
 import { areaSurface } from "../../osm-import/src/ground.ts";
 import type { OsmData, Tags } from "../../osm-import/src/osm.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
+import { raisedGreen } from "../../osm-import/src/raised-green.ts";
 
 /**
  * Bare terrain where a town has paving (`landuse-bare`, decision 5.11 on the bare strips of S4):
@@ -11,6 +12,8 @@ import { geoToWorld } from "../../osm-import/src/project.ts";
  * is not drawn, T-025), within `NEAR` of a shop's or a public building's walls (a stop's shelter
  * among them) or within `STOP_REACH` of a stop. Points in a building, and in the map's lawns, beds
  * and water (drawn or not), are left out: a bed bare of paving is the photograph's, not a glitch.
+ * A lawn mapped above the ground (`layer` > 0 or on a roof, G-664) is not: the ground under a
+ * roof's green is no bed of the map's, and only the lawn's pieces drawn on the ground cover it.
  * The grid is rasterised once for the whole city, so the scan stays well under a second.
  */
 
@@ -186,7 +189,7 @@ export const cityLanduseWorld = (osm: OsmData): LanduseWorld => {
     stops: [...osm.nodes.values()].filter((n) => n.tags?.highway === "bus_stop" || n.tags?.railway === "tram_stop" || n.tags?.public_transport === "platform").map((n) => geoToWorld(n.lat, n.lon)),
     buildings: buildings.map((b) => flatRing(b.outline, b.x, b.z)),
     ground: MAP_CHUNKS.flatMap((c) => c.ground.map((g) => flatRing(g.outline))),
-    green: areas.filter((a) => GREEN.has(areaSurface(a.tags) ?? "")).map((a) => a.ring),
+    green: areas.filter((a) => GREEN.has(areaSurface(a.tags) ?? "") && !raisedGreen(a.tags)).map((a) => a.ring),
     chunks: MAP_CHUNKS.map((c) => c.bounds),
   };
 };

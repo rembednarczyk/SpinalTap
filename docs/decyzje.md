@@ -4,6 +4,7 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 
 ## Sposób pracy
 
+- **Wzorce i standardy (12.11):** przy każdej prośbie szukamy gotowych wzorców projektowych i standardów branżowych i podajemy je, a nasze rozwiązanie dopasowujemy do rynkowego standardu; odstępstwa opisujemy. Reguła w `CLAUDE.md` („Wzorce i standardy”).
 - **Budżet sceny `reference` (11.11):** siatki w stożku kamery Neon Koi za ścianami (auta na nowych pasach postojowych z #409) idą jako wyjątek z wpisem w ADR-0046, do czasu przesłaniania dla kamery we wnętrzu (backlog).
 - **Dane na rozszerzenie mapy (11.11):** wyciągi wektorowe GUGiK (LoD1, LoD2, BDOT10k) zapisujemy w `data/` dla całego Lublina, z manifestem źródeł (adres, data, sha256, licencja). Surowe paczki i ortofoto zostają poza repo i pobieramy je ponownie. Narzędzia przyjmują dowolny prostokąt, a klasyfikację ortofoto liczymy tylko dla obecnej mapy.
 - **Pokrycie mapy z danych (11.11, ADR-0077):** najpierw narzędzia, potem reguły dla całego miasta, na końcu przejścia po komórkach. Ręczne obszary nawierzchni tylko jako wyjątek z nakładką liczbową. Źródła wskazuje agent `source-scout` (Haiku).
@@ -32,3 +33,6 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 ## Produkt
 
 - **Ustawienia domyślne (decyzja użytkownika 1.11):** grafika High na każdym urządzeniu, liczby obrażeń przy trafieniu, przycisk Ustawienia na ekranie tytułowym; jednorazowa migracja starych wpisów ustawień (`rev: 2`); w main (#121).
+
+## Czas testów w CI (12.11)
+- Decyzja użytkownika: najpierw pomiar najwolniejszych testów, `isolate: false` tam, gdzie bezpieczne (`core`, `sim`, `tools`, pakiet po pakiecie z przebiegiem kontrolnym), i wspólna pamięć wygenerowanego miasta z kluczem z sumy kontrolnej wejścia; potem bramka czasu w CI (ostrzeżenie przy pliku wolniejszym o > 50% od main). Testy tylko dotkniętych pakietów w PR-ach i trzeci shard później albo wcale. Limitu 20 min na shard nie podnosimy (ADR-0046).
