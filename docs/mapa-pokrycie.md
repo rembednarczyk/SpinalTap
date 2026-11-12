@@ -48,7 +48,7 @@ Raport podaje procent komórek w każdym statusie dla miasta i dzielnic oraz kol
 
 ## Stan 12.11
 
-Wszystkie 20 komórek ma status `przejrzane`. Sześć przeszło starą metodą z kuratorem (krakowskie-0-0, krakowskie-0-1, krakowskie-1-1, stare-miasto-0-0, podzamcze-0-1, podzamcze-1-1 wcześniej; 12.11: podzamcze-1-0, stare-miasto-1-0, krakowskie-1-0, stare-miasto-1-1), dziesięć metodą raportu komórki bez osobnego przeglądu kuratora (krakowskie-2-0, krakowskie-2-1, stare-miasto-0-1, podzamcze-0-0, podzamcze-2-0, podzamcze-2-1, nabrzeze-0-0, nabrzeze-0-1, nabrzeze-1-0, nabrzeze-1-1). Koszt przejścia: stara metoda 350–500 tys. tokenów na komórkę, metoda raportu 68–105 tys., dwie sąsiednie komórki jednym opiekunem ok. 35–45 tys. na komórkę.
+Wszystkie 20 komórek ma status `przejrzane`. Dziesięć przeszło starą metodą z kuratorem (przed 12.11: krakowskie-0-0, krakowskie-0-1, krakowskie-1-1, stare-miasto-0-0, podzamcze-0-1, podzamcze-1-1; 12.11: podzamcze-1-0, stare-miasto-1-0, krakowskie-1-0, stare-miasto-1-1), dziesięć metodą raportu komórki bez osobnego przeglądu kuratora (krakowskie-2-0, krakowskie-2-1, stare-miasto-0-1, podzamcze-0-0, podzamcze-2-0, podzamcze-2-1, nabrzeze-0-0, nabrzeze-0-1, nabrzeze-1-0, nabrzeze-1-1). Koszt przejścia: stara metoda 350–500 tys. tokenów na komórkę, metoda raportu 68–105 tys., dwie sąsiednie komórki jednym opiekunem ok. 35–45 tys. na komórkę.
 
 Goły teren każdej komórki jest jednym wpisem (G-704, G-705, G-709–G-718, wiersze T-266–T-279); poprawka całościowa idzie regułami ADR-0077 (krok 1.1 i dalsze), nie ręcznymi obszarami.
 
@@ -57,7 +57,7 @@ Paczka do przeglądu kuratora (komórki zamknięte bez niego, sprawy zebrane w a
 - niskie IoU obrysów z braku LoD2 (podzamcze-2-0, podzamcze-2-1), w73822962 bez LoD1 i LoD2;
 - pady wnętrz kliniki i Neon Koi bez wiersza T (G-432), mur w436266757 (G-636), `levels-tag-lost` w1561106313;
 - chodniki na bezpasowej w169832249 (T-047, czy G-082), pas (920..975; 183..263) jako ciąg G-699/T-265, VIVO w obszarze T-260/T-261;
-- wiersze T w `rozwiazane` komórek mimo statusu „do poprawy” w `docs/topografia.md` (lista: `tools`-owy wydruk orkiestratora z 12.11; m.in. T-121 tam, gdzie kościoły nie mają fałszywych wież, T-059, T-163, T-064).
+- wiersze T w `rozwiazane` komórek mimo statusu „do poprawy” w `docs/topografia.md` (12.11: T-059, T-074, T-154, T-163 w krakowskie-1-0; T-163 w krakowskie-1-1; T-064 w krakowskie-2-0; T-121 w krakowskie-2-1 i podzamcze-2-1, gdzie kościoły nie mają fałszywych wież; część z nich po porządkach rejestru ma już status „poprawione”).
 
 Porządki rejestru 12.11: statusy 22 wierszy T zaczynały się od „do poprawy (G-…)”, choć wszystkie wymienione glitche są w archiwum jako naprawione; mają teraz „poprawione (porządki rejestru 12.11 …)”. Wiersze, które komórki trzymają w `otwarte`, zostały bez zmian.
 
