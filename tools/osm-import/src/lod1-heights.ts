@@ -80,7 +80,7 @@ export const lod1Match = (index: BoxIndex<Indexed>, ring: readonly Pt[], min = L
   const f = footprint(ring);
   let best: { lod1: Lod1Building; iou: number } | undefined;
   for (const c of index.near(f.box)) {
-    const v = iou(f, c);
+    const v = iou(f, c, min);
     if (v >= min && (!best || v > best.iou || (v === best.iou && c.lod1.id < best.lod1.id))) best = { lod1: c.lod1, iou: v };
   }
   return best;
