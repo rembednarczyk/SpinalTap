@@ -3,7 +3,9 @@ import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/t
 import type { OsmData } from "../../osm-import/src/osm.ts";
 import { worldToGeo } from "../../osm-import/src/project.ts";
 import { barrierReport } from "../src/barriers.ts";
+import { COVER } from "../src/classify.ts";
 import { emptyCover } from "../src/cover.ts";
+import { ringOverlay } from "../src/overlay.ts";
 import { emptyRuns, furnitureCounts } from "../src/furniture.ts";
 import { THRESHOLDS } from "../src/thresholds.ts";
 
@@ -43,5 +45,20 @@ describe("the cell report's furniture and barriers", () => {
     expect(r.kinds.gate!.osmPoints).toBe(1);
     // The fence's one segment has its middle off the cell.
     expect(r.notDrawn.map((l) => l.id)).toEqual(["w7"]);
+  });
+});
+
+describe("the raster of an area", () => {
+  it("is the one under most of the outline, not the one under its first vertex", () => {
+    const at = (x: number) => emptyCover("t", { minX: x, minZ: 0, maxX: x + 20, maxZ: 20 }, THRESHOLDS);
+    const left = at(-100);
+    const right = at(0);
+    right.cls.fill(COVER.green);
+    // The first vertex lies at x -1, just off the right raster (from x 0); the rest are on it.
+    const ring = [{ x: -1, z: 10 }, { x: 5, z: 5 }, { x: 15, z: 5 }, { x: 15, z: 15 }, { x: 5, z: 15 }];
+    const counts = ringOverlay([left, right], ring);
+    expect(counts).toBeDefined();
+    expect(counts!.green).toBeGreaterThan(0);
+    expect(ringOverlay([left], [{ x: 50, z: 50 }])).toBeUndefined();
   });
 });
