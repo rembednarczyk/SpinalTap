@@ -1611,11 +1611,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: zaparkowane auta są we wspólnej siatce floty z zasięgiem rysowania 240 m (`VEHICLE_LOD` w `vehicle-views.ts`); jedno nowe auto 170 m od kamery (Kapucyńska, (153,7; −147,9)) poszerza obrys siatki tak, że przecina stożek widoku sceny `reference`, i cała flota staje się aktywna, choć auta w kadrze nie ma: 193/82 → 196/83; poprawka: podział floty na komórki albo obrys liczony z aut w zasięgu, bez podnoszenia budżetu; blokuje #409
 - Pakiet właściciela: packages/engine (renderer: pojazdy)
 
-### G-600 Podwójna bryła VIVO: garaż podziemny `level=-2` rysowany jako budynek
-- Status: w PR #427 (12.11; kurator ZGODNE, weryfikator PRZYJĘTE; test `map-edge-wall` 38 → 37 budynków przyciętych na brzegu po zdjęciu garażu; czeka na CI)
-- Ważność: S3 · Zasięg: w173070505 (`building=yes`, `level=-2`, `layer=2`) ma prawie ten sam obrys co VIVO r5601275; po G-556 obie bryły wracają przycięte, nakładają się na 1732 m², dachy dzieli 0,1 m (y −12,5 i −12,6), ryzyko migotania; Podzamcze x 1088–1120, z 160–240; poprawka: pomijać w imporcie budynki, których wszystkie `level` są ujemne (jak `location=underground`); garaż wystaje poza VIVO, więc po usunięciu odsłania ok. 149 próbek gołej ziemi (do wyłożenia według ortofoto); skan: ta sama reguła w `edge-buildings.ts` i `building-underground-solid`, nowa kontrola `building-duplicate` (nakładanie > 50% pola mniejszego, bez `building:part`)
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-601 Budynki na brzegu mapy z domyślną wysokością niezgodną z NMPT
 - Status: w PR #429 (12.11; LoD1 dla 27 z 39 budynków przyciętych na brzegu, pełnym obrysem OSM)
 - Ważność: S4 · Zasięg: Cicha 6 w grze ok. 15 m przy ok. 7 m w rzeczywistości, Cicha 8 ok. 11,2 m przy ok. 17,5 m, XVI LO ok. 6 m za niskie, Pałac Ordynacki bez dachu spadzistego (jak G-122), narożnik Cichej 5 do sprawdzenia; T-250; także VIVO r5601275: 11,1 m z `building:levels=3` w relacji, LoD1 17,2 m (po scaleniu heights sprawdzić, że LoD1 trafia do VIVO, nie do zdjętego garażu w173070505)

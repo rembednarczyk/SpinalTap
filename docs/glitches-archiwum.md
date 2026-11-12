@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-600 Podwójna bryła VIVO: garaż podziemny `level=-2` rysowany jako budynek
+- Status: naprawiony (PR #427, a6cef32)
+- Ważność: S3 · Zasięg: w173070505 (`building=yes`, `level=-2`, `layer=2`) ma prawie ten sam obrys co VIVO r5601275; po G-556 obie bryły wracają przycięte, nakładają się na 1732 m², dachy dzieli 0,1 m (y −12,5 i −12,6), ryzyko migotania; Podzamcze x 1088–1120, z 160–240; poprawka: pomijać w imporcie budynki, których wszystkie `level` są ujemne (jak `location=underground`); garaż wystaje poza VIVO, więc po usunięciu odsłania ok. 149 próbek gołej ziemi (do wyłożenia według ortofoto); skan: ta sama reguła w `edge-buildings.ts` i `building-underground-solid`, nowa kontrola `building-duplicate` (nakładanie > 50% pola mniejszego, bez `building:part`)
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
 ### G-613 Trasy tłumu przy Podwalu biegną po linii muru oporowego zamiast osią chodnika
 - Status: naprawione w #428 (12.11; `offBarriers` odsuwa trasy placów 1 m od barier wzdłuż, `unloop`; mur w67626198 179/183 m)
 - Ważność: S3 · Zasięg: trasy `stare-miasto-1-0-square-0` i `stare-miasto-1-1-square-0` idą w medianie 0,5 m od muru w67626198, a oś chodnika w56965511 jest 0,65–1,95 m od muru (zwykle 1,7 m); przez to 61 m dwumetrowego muru skarpy pod Archikatedrą wycięte (x 673–693, 701–705, 731–743, 753–760 przy z −200…−161 i x 745–760 przy z −15…12); kryterium: trasy co najmniej 1,0 m od muru i mur w grze ponad 170 z 183 m; T-251
