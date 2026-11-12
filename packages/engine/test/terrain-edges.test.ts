@@ -78,6 +78,29 @@ describe("outdoor steps", () => {
     }
   });
 
+  // Bands the map's edge cuts slantwise: schody w481462067 at Stare Miasto's edge x = 760 and the
+  // flight at Nabrzeże's edge z = 60. Each cut band's box runs about 1 m past the edge, where the
+  // ground, off every chunk, is 0; on the map it slopes, lowest at the edge.
+  const CUT = [
+    { ring: [{ x: 757.3, z: -213.3 }, { x: 760, z: -210.9 }, { x: 760, z: -206.9 }, { x: 755.3, z: -211 }], ground: (x: number) => (x > 760 ? 0 : -20.1 + (760 - x) * 0.5), edge: -20.1 },
+    { ring: [{ x: 2660.4, z: 60 }, { x: 2656.5, z: 63.4 }, { x: 2654.5, z: 61.1 }, { x: 2655.8, z: 60 }], ground: (_: number, z: number) => (z < 60 ? 0 : -18.2 + (z - 60) * 0.5), edge: -18.2 },
+  ];
+  it.each(CUT)("end on the ground of the map where the map's edge cuts the band, not on the void past it (G-703)", ({ ring, ground, edge }) => {
+    const sink = new MeshSink();
+    planSteps(sink, ring, ground);
+    let tallest = 0;
+    for (let q = 0; q + 3 < sink.vertexCount; q += 4) {
+      if (Math.abs(sink.normals[q * 3 + 1] ?? 0) > 0.5) continue;
+      const ys = [0, 1, 2, 3].map((k) => sink.positions[(q + k) * 3 + 1] ?? 0);
+      tallest = Math.max(tallest, Math.max(...ys) - Math.min(...ys));
+    }
+    expect(tallest).toBeLessThan(0.5);
+    // The lower end stands on the ground at the edge.
+    let low = Infinity;
+    for (let v = 0; v < sink.vertexCount; v++) low = Math.min(low, sink.positions[v * 3 + 1] ?? 0);
+    expect(low).toBeCloseTo(edge, 1);
+  });
+
   it("leave a flat run as level treads, with only the kerb at either end", () => {
     const sink = new MeshSink();
     planSteps(sink, [{ x: 0, z: 0 }, { x: 3, z: 0 }, { x: 3, z: 2 }, { x: 0, z: 2 }], () => 0);

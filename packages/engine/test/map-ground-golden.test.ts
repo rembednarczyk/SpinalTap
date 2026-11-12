@@ -93,8 +93,10 @@ describe("the ground the map city lays (G-444)", () => {
     }
     // The map's data, not the laying, moved it last: the strips between the carriageways and their
     // paving closed (G-522), by asphalt of its own along a street of estimated width (G-570), and two
-    // footways that loop back on a node of their own laid as simple pieces (G-654).
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 22, vertices: 131782, hash: "21e445de" });
+    // footways that loop back on a node of their own laid as simple pieces (G-654). The laying moved
+    // it with G-703: a band of steps cut at a chunk's edge reads its ground on its side of the cut,
+    // here the sliver at (730, 160) on the edge of these chunks, which had a riser down to 0 past it.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 22, vertices: 131759, hash: "6bed7d3d" });
     scene.dispose();
   });
 

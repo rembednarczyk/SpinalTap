@@ -1,5 +1,5 @@
 import { DRESS_FLAG, type MeshSink, hexColor } from "../mesh-sink";
-import { type HeightAt, drape } from "./ground-plan";
+import { DRAPE_GRID, type HeightAt, drape } from "./ground-plan";
 import { type P2, orientedBox } from "./polygon";
 import { quadUv } from "./sink-ops";
 
@@ -18,14 +18,33 @@ const LIFT = 0.05;
 export const MIN_RISER = 0.045;
 
 /**
+ * The ground `terrain` read on the band's side of the chunk's edge that cut it, if one did: the
+ * import cuts a way at a chunk's edge, which lies on a line of the drape's grid, so a side of the
+ * band running along such a line at its bounds is that cut. A band the map's edge cuts slantwise
+ * has a box running past the edge, and a drape's normals look 0.75 m past its vertices; the
+ * ground there, off every chunk, is 0, and a riser down to it was a wall of 20 m (G-703).
+ */
+const onItsSide = (ring: readonly P2[], terrain: HeightAt): HeightAt => {
+  const onGrid = (v: number) => Math.abs(v / DRAPE_GRID - Math.round(v / DRAPE_GRID)) < 1e-6;
+  const cutAt = (of: (p: P2) => number, side: number) => {
+    const v = side * Math.max(...ring.map((p) => side * of(p)));
+    const along = ring.some((p, i) => of(p) === v && of(ring[(i + 1) % ring.length] as P2) === v);
+    return along && onGrid(v) ? v : side * Infinity;
+  };
+  const [x0, x1, z0, z1] = [cutAt((p) => p.x, -1), cutAt((p) => p.x, 1), cutAt((p) => p.z, -1), cutAt((p) => p.z, 1)];
+  return (x, z) => terrain(Math.min(x1, Math.max(x0, x)), Math.min(z1, Math.max(z0, z)));
+};
+
+/**
  * A flight of outdoor steps (ADR-0044) on one straight run of a map's `highway=steps`: the band's
  * long side is the run, cut into treads `STEP_DEPTH` deep. Each tread is level at the terrain
  * height at its higher end and a riser joins it to the next, so the flight follows the slope in
  * steps instead of lying on it as a ramp or sinking into it. A run on ground too gentle for
  * `MIN_RISER` lies on it as paving instead.
  */
-export const planSteps = (sink: MeshSink, ring: readonly P2[], h: HeightAt): void => {
+export const planSteps = (sink: MeshSink, ring: readonly P2[], terrain: HeightAt): void => {
   if (ring.length < 3) return;
+  const h = onItsSide(ring, terrain);
   const box = orientedBox(ring);
   const length = box.halfLong * 2;
   if (length < STEP_DEPTH || box.halfShort < 0.2) return;
