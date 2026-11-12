@@ -150,6 +150,8 @@ kbd {
   border-left: 3px solid var(--magenta);
   font-size: 17px;
 }
+.hud__objective-open { display: block; width: 100%; padding: 0; margin: 0; color: inherit; font: inherit; text-align: left; background: none; border: 0; cursor: pointer; touch-action: manipulation; }
+.hud__objective-open:hover .hud__quest-title, .hud__objective-open:focus-visible .hud__quest-title { text-decoration: underline; }
 .hud__quest-title { font-size: 12px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--magenta); }
 
 .hud__camera {

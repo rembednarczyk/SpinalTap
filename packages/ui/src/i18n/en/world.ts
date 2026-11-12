@@ -249,6 +249,7 @@ export const enWorld = {
   "dash.cooldown": "Dash in {seconds} s",
   "contract.hooks": "Leads found",
   "hud.health": "Health",
+  "hud.openJournal": "Open the journal",
   "hud.ability.ready": "ready",
   "hud.medkits": "Medkits × {count}",
   "contract.untitled": "Job",
