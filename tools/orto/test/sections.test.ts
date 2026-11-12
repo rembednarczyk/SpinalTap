@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { type Pt, type Rect } from "../../osm-import/src/geometry.ts";
 import { puwgFrame } from "../../osm-import/src/project.ts";
-import { absentSection } from "../src/absent.ts";
+import { absentSection, gameOnlySection, gameOnlyText } from "../src/absent.ts";
 import { partsSection } from "../src/bare-parts.ts";
 import { cellById, defaultCache } from "../src/config.ts";
 import { coverFor, readCover } from "../src/cover.ts";
@@ -132,6 +132,49 @@ describe("the cell report's sections on made-up cells", () => {
     expect(s.standing.map((b) => [b.id, b.m2, b.lod1, b.lod1Height, b.eaves])).toEqual([["standing", 100, 100, 7.5, 6]]);
     expect(s.gone).toEqual({ count: 1, m2: 100 });
     expect(s.nmpt).toMatch(/NMPT/);
+  });
+
+  it("lists the game's buildings LoD2 lacks, with LoD1 2024 within 12 m or none", () => {
+    const game = [
+      { id: "on-lod2", ring: box(5, 5, 15, 15) },
+      { id: "lod1-near", ring: box(30, 5, 40, 15) },
+      { id: "bare", ring: box(5, 40, 13, 48) },
+      { id: "off-cell", ring: box(70, 5, 80, 15) },
+      { id: "lod1-far", ring: box(40, 40, 50, 50) },
+    ];
+    // "bare" has an eighth of it under LoD2, below the quarter; L2 lies 12.04 m from "lod1-far".
+    const lod2 = [box(4, 4, 16, 16), box(5, 40, 6, 48)];
+    const lod1 = [
+      { id: "L1", ring: box(45, 5, 52, 15) },
+      { id: "L2", ring: box(30, 30, 32, 31) },
+    ];
+    const s = gameOnlySection(CELL, game, lod2, lod1);
+    expect(s.buildings.map((b) => [b.id, b.at, b.m2, b.lod2, b.lod1?.id, b.lod1?.distance])).toEqual([
+      ["lod1-near", { x: 35, z: 10 }, 100, 0, "L1", 5],
+      ["lod1-far", { x: 45, z: 45 }, 100, 0, undefined, undefined],
+      ["bare", { x: 9, z: 44 }, 64, 13, undefined, undefined],
+    ]);
+    expect(s.verdict).toBe("budynki gry bez LoD2: 3 (264 m²), z LoD1 2024 w 12 m 1 (niepełny wyciąg LoD2); bez LoD1 i LoD2: lod1-far, bare (sprawdź, czy stoi)");
+    // A quarter under LoD2 is enough.
+    expect(gameOnlySection(CELL, game, [...lod2, box(5, 40, 7, 48)], lod1).buildings.map((b) => b.id)).not.toContain("bare");
+    expect(gameOnlySection(CELL, game.slice(0, 1), lod2, lod1).verdict).toBe("każdy budynek gry w komórce leży na LoD2");
+    expect(gameOnlyText(s)[1]).toBe("  lod1-near (35; 10) 100 m², LoD2 0%, LoD1 2024 L1 70 m² w 5 m");
+  });
+
+  it("calls a low IoU no shift when the best shift gains under 0.02, naming the game's buildings without LoD2", () => {
+    const game = HOUSES.map((ring, i) => ({ id: `g${i}`, ring }));
+    // LoD2 has two of the six houses, one in place and one longer eastwards (its pair 3 m off):
+    // the IoU is low at (0; 0) and no shift helps (podzamcze-2-0: IoU 0.115, pairs 3.47 m).
+    const lod2 = [
+      { id: "l0", ring: box(5, 5, 23, 13) },
+      { id: "l3", ring: HOUSES[3]! },
+    ];
+    const s = fitSection(CELL, game, lod2, 4);
+    expect(s.best.iou - s.iouZero).toBeLessThan(0.02);
+    expect(s.verdict).toMatch(/^niskie IoU z braku danych LoD2 pod 4 budynkami gry/);
+    expect(s.verdict).not.toMatch(/możliwe przesunięcie/);
+    // The same with all of LoD2 shifted by 3 m still reads as a shift.
+    expect(fitSection(CELL, game, HOUSES.map((ring, i) => ({ id: `l${i}`, ring: moved(ring, 3, 0) })), 4).verdict).toMatch(/możliwe przesunięcie/);
   });
 
   it("links the scan's kinds to the glitches and T rows anywhere in the registers, the cell's first", () => {
