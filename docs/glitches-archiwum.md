@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-664 Zieleń z `layer>0` ukrywa gołą ziemię przed skanem `landuse-bare`
+- Status: naprawiony (PR #443, e4189a1; landuse-bare 69019 → 69214, odsłonięty pas G-661)
+- Ważność: S4 · Zasięg: `landuse-bare` pomija punkty w obrysie trawnika z mapy, także trawnika na dachu (r11978659), więc goły pas z G-661 nie zmienił bazy 69019; poprawka: zieleń z `layer>0` albo `location=roof` nie zwalnia próbek, nowa baza z przebiegu
+- Pakiet właściciela: tools/glitch-scan
+
 ### G-670 Kontrola `added-grass-off-green` bez listy wyjątków celowych i bez lustra dla kostki
 - Status: naprawiony (PR #441, 7cd9adb)
 - Ważność: S4 · Zasięg: baza 10 liczy też celowe trawniki T-241 (`trawnik-zachod`, `trawnik-wschod`, `trawnik-bajkowskiego`, plan inwestora ADR-0074) i błędy klasyfikatora (`T-243/ck-zachod-trawnik`, `T-245/rabata-kolegium-poludnie`): lista wyjątków z odsyłaczem T-NNN, baza 10 → 5; nowa kontrola `added-paving-on-green` (ręczna kostka z zielenią ≥ 50%, kandydaci `T-245/zn2-wschod-trawnik` 71%, `zn2-wschod-srodek` 40%); do sprawdzenia też pas zieleni ok. 22 m² pod `podworze-litevski` (x −194,5…−192, z 28–39)

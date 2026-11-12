@@ -1736,11 +1736,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 62 drogi `highway=path` z `segregated=yes` (Podzamcze, Nabrzeże) mają pas 2 m (`PATHS.path`); np. w65351890 przy (1038; 305): kostka ok. 4 m i asfalt rowerowy ok. 2,4 m; poprawka: szerokość z `footway:width` + `cycleway:width` albo domyślnie ok. 2,5 + 2 m, dwie nawierzchnie; kontrola skanu `path-segregated-width`
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-664 Zieleń z `layer>0` ukrywa gołą ziemię przed skanem `landuse-bare`
-- Status: w PR #443 (12.11; landuse-bare 69019 → 69214, cały wzrost przy VIVO)
-- Ważność: S4 · Zasięg: `landuse-bare` pomija punkty w obrysie trawnika z mapy, także trawnika na dachu (r11978659), więc goły pas z G-661 nie zmienił bazy 69019; poprawka: zieleń z `layer>0` albo `location=roof` nie zwalnia próbek, nowa baza z przebiegu
-- Pakiet właściciela: tools/glitch-scan
-
 ### G-666 Pamięć pościgu `chase` nie jest czyszczona, gdy cel przejdzie przez barierę
 - Status: zgłoszone (12.11, naprawiacz G-644; także na main)
 - Ważność: S4 · Zasięg: `chase` gangera (`ganger-walk.ts`) zostaje, dopóki cel jest w `CHASE_DRIFT` (8 m) od starego; gdy gracz przeskoczy płot w tym promieniu, ganger może dojść do starego celu i stać po złej stronie bariery
