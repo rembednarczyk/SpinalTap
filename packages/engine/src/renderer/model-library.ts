@@ -273,6 +273,33 @@ export const outlineModelMeshes = (meshes: readonly AbstractMesh[], enabled: boo
 };
 
 /**
+ * How long a model file may take to download before it counts as failed (G-562 path: the character
+ * keeps its stand-in and the next ask fetches it again). The largest VRM is about 8 MB, which a phone
+ * on slow 3G (0.75 Mbit/s) gets in about 90 s; the rest is room for a start file sharing the link with
+ * another. Past that the fetch has hung rather than crawled (G-561).
+ */
+export const MODEL_FETCH_TIMEOUT_MS = 120_000;
+
+/** The file's bytes, or a rejection once `MODEL_FETCH_TIMEOUT_MS` passes, with the fetch aborted. */
+const fetchModelBytes = async (url: string): Promise<ArrayBuffer> => {
+  const abort = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  // Raced as well as aborted: a stalled body or a fetch that ignores the signal must not hang the load.
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      const err = new Error(`Model ${url} did not download within ${MODEL_FETCH_TIMEOUT_MS / 1000} s`);
+      abort.abort(err);
+      reject(err);
+    }, MODEL_FETCH_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([fetch(url, { signal: abort.signal }).then((r) => r.arrayBuffer()), timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+/**
  * Loads each model file once (as an asset container whose materials are converted to the
  * toon materials) and hands out independent instances with their own skeletons and
  * animation groups.
@@ -391,7 +418,7 @@ export class ModelLibrary {
         let vrm = false;
         let source: string | Uint8Array = spec.url;
         if (extension === ".glb" || /\.glb(\?|#|$)/i.test(spec.url)) {
-          const bytes = await (await fetch(spec.url)).arrayBuffer();
+          const bytes = await fetchModelBytes(spec.url);
           const json = readGlbJson(bytes);
           springs = json ? readVrmSprings(json) : null;
           expressions = json ? readVrmExpressions(json) : null;
