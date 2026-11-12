@@ -1,4 +1,4 @@
-import type { GroundPoint, Vec3 } from "@seki/core";
+import { type GroundPoint, type Vec3, signedArea } from "@seki/core";
 import type { Aabb } from "./collision";
 
 /**
@@ -26,16 +26,6 @@ export interface PrismDef {
 }
 
 const EPS = 1e-9;
-
-const signedArea = (pts: readonly GroundPoint[]): number => {
-  let a = 0;
-  for (let i = 0; i < pts.length; i++) {
-    const p = pts[i] as GroundPoint;
-    const q = pts[(i + 1) % pts.length] as GroundPoint;
-    a += p.x * q.z - q.x * p.z;
-  }
-  return a / 2;
-};
 
 /** Drops repeated corners and corners on a straight edge. */
 const simplify = (pts: readonly GroundPoint[]): GroundPoint[] => {

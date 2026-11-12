@@ -7,6 +7,10 @@
  * edge with direction (dx, dz) is (dz, -dx).
  */
 
+import { signedArea } from "@seki/core";
+
+export { signedArea };
+
 export interface P2 {
   readonly x: number;
   readonly z: number;
@@ -18,16 +22,6 @@ export interface Box2 {
   readonly minZ: number;
   readonly maxZ: number;
 }
-
-export const signedArea = (ring: readonly P2[]): number => {
-  let s = 0;
-  for (let i = 0; i < ring.length; i++) {
-    const a = ring[i] as P2;
-    const b = ring[(i + 1) % ring.length] as P2;
-    s += a.x * b.z - b.x * a.z;
-  }
-  return s / 2;
-};
 
 const cross = (o: P2, a: P2, b: P2): number => (a.x - o.x) * (b.z - o.z) - (a.z - o.z) * (b.x - o.x);
 
