@@ -23,7 +23,7 @@ import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { FILL_MARGIN, kerbFills, stretchZebras } from "./kerb-fill.ts";
-import { type KerbSample, fitLanes } from "./lane-fit.ts";
+import { type KerbSample, fitLanes, taperedJoins } from "./lane-fit.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
@@ -405,7 +405,8 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const onOther = (p: Pt, source: string) => carriageways.some((c) => c.source !== source && p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));
   const onZebra = (p: Pt) => zebras.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));
   const markings: Marking[] = [];
-  for (const l of roads) for (const m of roadMarkings(l)) for (const piece of cutLine(m.line, (p) => onOther(p, m.source) || onZebra(p))) markings.push({ ...m, line: piece });
+  // A fitted street's lines run on from piece to piece and on to the next way (G-675).
+  for (const m of taperedJoins(roads.flatMap(roadMarkings), new Set(fittedLanes.keys()))) for (const piece of cutLine(m.line, (p) => onOther(p, m.source) || onZebra(p))) markings.push({ ...m, line: piece });
   for (const n of [...data.nodes.values()].sort((a, b) => a.id - b.id)) {
     if (n.tags?.highway !== "traffic_signals") continue;
     const at = geoToWorld(n.lat, n.lon);

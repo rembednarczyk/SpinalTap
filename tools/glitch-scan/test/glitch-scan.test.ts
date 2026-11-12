@@ -58,6 +58,7 @@ import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { kerbStripBare } from "./kerb-strip-bare";
+import { markingSteps } from "./marking-step";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
 import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
@@ -1858,6 +1859,18 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       deep: (x, z) => MAP_CHUNKS.some(({ bounds: b }) => x > b.minX + 3 && x < b.maxX - 3 && z > b.minZ + 3 && z < b.maxZ - 3),
     }),
   /**
+   * A centre or lane line stepping 0.3 m and more sideways where it goes on along one street (G-675,
+   * `marking-step.ts`): one street by the nearest map carriageway's name (its way when unnamed) within its half width and a metre.
+   */
+  "marking-step": () => {
+    const nearest = nearestAxis(streetRoads(withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l))));
+    const street = (p: Pt) => {
+      const n = nearest(p.x, p.z);
+      return n && n.d <= roadWidth(n.road.tags) / 2 + 1 ? (n.road.tags.name ?? n.road.id) : null;
+    };
+    return markingSteps(LUBLIN_CHUNKS.flatMap((c) => c.markings), street);
+  },
+  /**
    * A street narrowed to its mapped sidewalks (G-082) although they run along less than half of it
    * on either side (G-112): the width came from where a sidewalk turns in to a junction's crossing.
    */
@@ -1994,10 +2007,8 @@ const PLAIN_BUILDING = new Set(["yes", "public", "government", "civic"]);
 /** The carriageways of the map's lines, by `highway` (the importer's `ROAD_WIDTH`). */
 const CARRIAGEWAYS = new Set(["motorway", "trunk", "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified", "residential", "living_street", "service", "busway", "road"]);
 
-/** The metres of the map's footways under the asphalt of the street they run along (`footway-on-carriageway`). */
-const footwaysOnCarriageway = (): Finding[] => {
-  const lines = extractFeatures(SOURCE_OSM).lines;
-  const roads = lines.filter((l) => CARRIAGEWAYS.has(l.tags.highway ?? "") && l.tags.area !== "yes" && l.tags.tunnel === undefined && Number(l.tags.layer ?? 0) >= 0);
+/** The nearest of `roads`' axes to a point within 15 m: the road, its distance and direction there. */
+const nearestAxis = (roads: readonly Line[]) => {
   const cell = 15;
   const grid = new Map<string, { l: Line; a: Pt; b: Pt }[]>();
   for (const l of roads)
@@ -2006,7 +2017,7 @@ const footwaysOnCarriageway = (): Finding[] => {
       for (let gx = Math.floor(Math.min(a.x, b.x) / cell); gx <= Math.floor(Math.max(a.x, b.x) / cell); gx++)
         for (let gz = Math.floor(Math.min(a.z, b.z) / cell); gz <= Math.floor(Math.max(a.z, b.z) / cell); gz++) grid.set(`${gx},${gz}`, [...(grid.get(`${gx},${gz}`) ?? []), { l, a, b }]);
     }
-  const nearest = (x: number, z: number) => {
+  return (x: number, z: number) => {
     let best: { d: number; road: Line; tx: number; tz: number } | null = null;
     for (let gx = Math.floor(x / cell) - 1; gx <= Math.floor(x / cell) + 1; gx++)
       for (let gz = Math.floor(z / cell) - 1; gz <= Math.floor(z / cell) + 1; gz++)
@@ -2020,6 +2031,15 @@ const footwaysOnCarriageway = (): Finding[] => {
         }
     return best;
   };
+};
+
+/** The map's carriageways at street level, off tunnels. */
+const streetRoads = (lines: readonly Line[]) => lines.filter((l) => CARRIAGEWAYS.has(l.tags.highway ?? "") && l.tags.area !== "yes" && l.tags.tunnel === undefined && Number(l.tags.layer ?? 0) >= 0);
+
+/** The metres of the map's footways under the asphalt of the street they run along (`footway-on-carriageway`). */
+const footwaysOnCarriageway = (): Finding[] => {
+  const lines = extractFeatures(SOURCE_OSM).lines;
+  const nearest = nearestAxis(streetRoads(lines));
   const deep = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x > b.minX + 3 && x < b.maxX - 3 && z > b.minZ + 3 && z < b.maxZ - 3);
   return lines.flatMap((l) => {
     const t = l.tags;
