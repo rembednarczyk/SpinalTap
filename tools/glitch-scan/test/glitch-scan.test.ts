@@ -69,6 +69,7 @@ import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
 import { lampsBesideDeck } from "./lamp-deck";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { heightsOffLod1, landmarksOffLod1, levelsTagLost, lod1Under } from "./height-lod1";
+import { flatOverLod2Roof, lod2RidgeAcross, lod2SliverEaves, lod2Under } from "./roof-lod2";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
 import { stepsInclineAgainst } from "./steps-incline";
@@ -1348,6 +1349,26 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
     return heightsOffLod1(buildings, lod1Under(buildings), (id) => osmTags(id)["building:part"] !== undefined && osmTags(id)["building"] === undefined);
   },
+  /**
+   * A building drawn flat at the height of its ridge (G-639, ADR-0077 step 4, `roof-lod2.ts`): LoD2's
+   * main roof rises over 4 m and the game's top stands over 3 m above its eaves. What stays:
+   * mapped heights and roof tags LoD2 disagrees with, and buildings changed since 2017.
+   */
+  "flat-over-lod2-roof": () => {
+    const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    return flatOverLod2Roof(buildings, lod2Under(buildings), (id) => osmTags(id)["building:part"] !== undefined && osmTags(id)["building"] === undefined);
+  },
+  /** A LoD2 roof with a ridge drawn over 45° off LoD2's main ridge (G-639, `roof-lod2.ts`). */
+  "lod2-ridge-across": () => {
+    const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    return lod2RidgeAcross(buildings, lod2Under(buildings));
+  },
+  /** A building the LoD2 roof rule takes standing off its main eaves where a sliver of the roof lies lower (G-639, `roof-lod2.ts`). */
+  "lod2-sliver-eaves": () => {
+    const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    const part = (id: string) => osmTags(id)["building:part"] !== undefined && osmTags(id)["building"] === undefined;
+    return lod2SliverEaves(buildings, lod2Under(buildings), part, (id) => Object.keys(osmTags(id)).some((k) => k.startsWith("roof:")));
+  },
   /** A landmark of the list off its LoD1 height by more than 3 m (G-631): its height reviewed against the wrong source, or not at all. */
   "landmark-vs-lod1": () => {
     const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
@@ -1787,13 +1808,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * A building or a lifted part with fractional `building:levels` and no height whose walls over
    * its plinth (a part's from the building's base, as the map counts its storeys) top the storeys'
    * `levels × 3.2 m` (a shop floor 0.8 m more) by more than 0.5 m: the half storey rounded up to a
-   * whole one (G-116). A height measured in GUGiK LoD1 (`source: "lod1"`) is not counted in storeys.
+   * whole one (G-116). A height measured in GUGiK LoD1 or LoD2 (`source: "lod1"`, `"lod2"`) is not counted in storeys.
    */
   "fractional-levels-rounded": () =>
     MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))).flatMap((b) => {
       const t = osmTags(b.id);
       const levels = Number((t["building:levels"] ?? "").replace(",", "."));
-      if (b.source === "lod1" || t.height !== undefined || t["building:height"] !== undefined || !Number.isFinite(levels) || Number.isInteger(levels)) return [];
+      if (b.source === "lod1" || b.source === "lod2" || t.height !== undefined || t["building:height"] !== undefined || !Number.isFinite(levels) || Number.isInteger(levels)) return [];
       const walls = b.height - b.plinth;
       const shop = b.use === "commercial" || b.shopfront === true ? 0.8 : 0;
       return walls > levels * 3.2 + shop + 0.5 ? [{ at: near(b.x, b.z), what: `${b.id} building:levels=${t["building:levels"]}: walls ${walls.toFixed(1)} m` }] : [];
@@ -2177,6 +2198,43 @@ describe("the glitch scan (ADR-0054)", () => {
     const teatr = { ...house, id: "w67508958", use: "civic" };
     expect(heightsOffLod1([teatr], lod1, plain)).toEqual([]);
     expect(landmarksOffLod1([teatr, house, { ...teatr, use: "church" }], lod1)).toEqual([{ at: "100,50", what: "w67508958 default: middle of the roof 14.0 m, LoD1 7 m (IoU 1.00)" }]);
+  });
+
+  it("finds a flat building over 3 m above its LoD2 eaves under a steep roof, and none with a roof, a gentle LoD2 roof or among the exceptions (G-639)", () => {
+    const square = [-5, -5, 5, -5, 5, 5, -5, 5];
+    const ring = [0, 2, 4, 6].map((i) => ({ x: square[i]! + 100, z: square[i + 1]! + 50 }));
+    const lod2 = [{ id: "L2", ground: 200, eaves: 5, ridge: 18.2, mainEaves: 10.7, mainRidge: 18.2, roofType: 1130, ring }];
+    const palace = { id: "w1", x: 100, z: 50, outline: square, height: 18.1, use: "historic", source: "lod1" };
+    const plain = () => false;
+    expect(flatOverLod2Roof([palace], lod2, plain)).toEqual([{ at: "100,50", what: "w1 lod1: flat at 18.1 m, LoD2 eaves 10.7 m, ridge 18.2 m (IoU 1.00)" }]);
+    // The main mass's eaves count, not an annex's: 13 m stands within 3 m of 10.7.
+    expect(flatOverLod2Roof([{ ...palace, height: 13 }], lod2, plain)).toEqual([]);
+    expect(flatOverLod2Roof([{ ...palace, height: 10.7, roof: 7.5, roofShape: "hipped" }], lod2, plain)).toEqual([]);
+    expect(flatOverLod2Roof([palace], [{ ...lod2[0]!, mainEaves: 15 }], plain)).toEqual([]);
+    expect(flatOverLod2Roof([{ ...palace, use: "church" }, { ...palace, id: "w67508958" }], lod2, plain)).toEqual([]);
+    expect(flatOverLod2Roof([palace], lod2, () => true)).toEqual([]);
+    // A building with its eaves and ridge from LoD2: LoD1 anywhere between them is no finding.
+    const lod1 = [{ id: "L1", height: 18.1, ground: 200, ring }];
+    expect(heightsOffLod1([{ ...palace, height: 10.7, roof: 7.5, source: "lod2" }], lod1, plain)).toEqual([]);
+    expect(heightsOffLod1([{ ...palace, height: 10.7, roof: 3, source: "lod2" }], lod1, plain)).toEqual([{ at: "100,50", what: "w1 lod2: eaves 10.7 m, ridge 13.7 m, LoD1 18.1 m (IoU 1.00)" }]);
+  });
+
+  it("finds a LoD2 ridge drawn across LoD2's and a building off its main eaves set by a sliver, none when right (G-639)", () => {
+    const long = [-10, -5, 10, -5, 10, 5, -10, 5];
+    const ring = [0, 2, 4, 6].map((i) => ({ x: long[i]! + 100, z: long[i + 1]! + 50 }));
+    const lod2 = [{ id: "L2", ground: 200, eaves: 11.3, ridge: 18, mainEaves: 13, mainRidge: 18, shellEaves: 11.3, ridgeDir: 90, roofType: 1030, ring }];
+    const house = { id: "w1", x: 100, z: 50, outline: long, height: 13, roof: 5, roofShape: "gabled", use: "residential", source: "lod2" };
+    // The outline's long axis runs along x (0°), LoD2's ridge along z (90°).
+    expect(lod2RidgeAcross([house], lod2)).toEqual([{ at: "100,50", what: "w1 gabled: ridge 90° off LoD2's" }]);
+    expect(lod2RidgeAcross([{ ...house, roofAcross: true as const }], lod2)).toEqual([]);
+    expect(lod2RidgeAcross([{ ...house, roofShape: "hipped" }, { ...house, source: "lod1" }], lod2)).toEqual([]);
+    const plain = () => false;
+    expect(lod2SliverEaves([house], lod2, plain, plain)).toEqual([]);
+    const flat = { ...house, height: 15.6, roof: 0, source: "lod1" };
+    expect(lod2SliverEaves([flat], lod2, plain, plain)).toEqual([{ at: "100,50", what: "w1 lod1: at 15.6 m, LoD2 eaves 13 m, sliver 11.3 m" }]);
+    expect(lod2SliverEaves([{ ...house, height: 11.3 }], lod2, plain, plain)).toHaveLength(1);
+    expect(lod2SliverEaves([flat], lod2, plain, () => true)).toEqual([]);
+    expect(lod2SliverEaves([flat], [{ ...lod2[0]!, shellEaves: 12.5 }], plain, plain)).toEqual([]);
   });
 
   it("finds a building drawn with fewer storeys than its building:levels, and none with them all or with no tag (G-629)", () => {

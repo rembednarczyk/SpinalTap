@@ -60,8 +60,8 @@ export interface LublinBuildingData {
   readonly material?: "brick" | "stone" | "plaster";
   /** OSM `building:colour` of its own element as `#rrggbb` (G-244): the renderer's wall colour nearest it. */
   readonly colour?: string;
-  /** Where the height came from: the `height` tag, `building:levels`, the district's defaults, or GUGiK LoD1 2024 (ADR-0077). */
-  readonly source: "height" | "levels" | "default" | "lod1";
+  /** Where the height came from: the `height` tag, `building:levels`, the district's defaults, GUGiK LoD1 2024, or the walls and roof from GUGiK LoD2 2017 (ADR-0077). */
+  readonly source: "height" | "levels" | "default" | "lod1" | "lod2";
   /** Venues in or at it (ADR-0064 stage 4): a point relative to (x, z), the kind, the 2077 name and the neon. */
   readonly venues?: readonly LublinVenueData[];
 }
