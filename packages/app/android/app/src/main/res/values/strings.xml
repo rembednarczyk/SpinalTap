@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Seki Senshi</string>
+    <string name="title_activity_main">Seki Senshi</string>
+    <string name="package_name">pl.sekisenshi.game</string>
+    <string name="custom_url_scheme">pl.sekisenshi.game</string>
+</resources>

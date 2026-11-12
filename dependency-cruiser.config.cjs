@@ -66,7 +66,8 @@ module.exports = {
   ],
   options: {
     doNotFollow: { path: "node_modules" },
-    exclude: { path: ["/dist/", "/test/", "\\.test\\.tsx?$", "vite\\.config\\.ts$"] },
+    // packages/app/android holds a copy of the web build after `cap sync` (ADR-0079), like dist.
+    exclude: { path: ["/dist/", "^packages/app/android/", "/test/", "\\.test\\.tsx?$", "vite\\.config\\.ts$"] },
     tsPreCompilationDeps: true,
     combinedDependencies: true,
     preserveSymlinks: false,
