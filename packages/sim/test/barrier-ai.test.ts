@@ -7,7 +7,8 @@ import { teleportPlayer } from "./helpers";
 /**
  * An alerted ganger and the player on two sides of a fence of the map (ADR-0077, G-610): it sees
  * her through the bars, but its shot would stop in them, so it does not stand and fire into the
- * fence; it goes round, or finds a clear shot.
+ * fence; it goes round, or finds a clear shot. Not standing at the fence either (G-625): moving a
+ * metre along it is no way round.
  */
 
 const all = Object.entries(WORLD_BARRIERS).flatMap(([chunk, items]) => items.map((item) => ({ chunk, item })));
@@ -25,7 +26,7 @@ const lone = all.filter(
 );
 
 describe("a ganger and the player on two sides of a fence (G-610)", () => {
-  it("does not stand firing into the fence: the player loses health or the ganger moves", () => {
+  it("does not stand firing into the fence: the player loses health or the ganger leaves the fence", () => {
     expect(lone.length).toBeGreaterThan(1);
     for (const { chunk, item } of lone.slice(0, 2)) {
       const sim = Simulation.create({ seed: 2 });
@@ -44,11 +45,10 @@ describe("a ganger and the player on two sides of a fence (G-610)", () => {
       sim.bus.on("ShotFired" as never, () => {
         shots++;
       });
-      const start = { ...g.position };
       for (let i = 0; i < 60 * 12; i++) sim.step();
-      const moved = Math.hypot(g.position.x - start.x, g.position.z - start.z);
+      const away = distanceToBarrier(item, g.position.x, g.position.z);
       const lost = hp - p.health!.current;
-      expect(lost > 0 || moved > 1, `fence at ${item.x}, ${item.z}: moved ${moved.toFixed(2)} m, ${shots} shots, ${lost} health`).toBe(true);
+      expect(lost > 0 || away > 2, `fence at ${item.x}, ${item.z}: ${away.toFixed(2)} m off it, ${shots} shots, ${lost} health`).toBe(true);
       // No volley into the bars: whatever it fired, some of it got through.
       if (shots > 3) expect(lost, `fence at ${item.x}, ${item.z}: ${shots} shots into the fence`).toBeGreaterThan(0);
     }

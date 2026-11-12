@@ -5,6 +5,8 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v37: a chasing ganger's walk keeps the goal of its wide way round a long barrier (`walk.chase`,
+ * optional, G-625).
  * v36: P-1 under Alchemia's car park (ADR-0074 stage 4): no new fields, but an older save may have
  * the player on the ground its ramp's trench and its stair core's house took; the migration wakes
  * her on the car park by the ramp's top with the bags left there, and drops Sachiko's state (her
@@ -69,7 +71,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 36;
+export const SAVE_SCHEMA_VERSION = 37;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -131,6 +133,8 @@ export interface WalkSnapshot {
   readonly side: 1 | -1;
   /** The repath made when it got stuck: from where, to where, round which characters (at most `MOST_AVOIDED`). */
   readonly plan?: WalkPlanSnapshot;
+  /** The goal of a chase's wide way round a long barrier (v37, G-625). */
+  readonly chase?: Vec3;
 }
 
 /**
