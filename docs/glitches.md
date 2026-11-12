@@ -1722,7 +1722,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
 ### G-660 `save-load-micro-body` przekracza 20 s pod obciążeniem
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g660)
+- Status: w PR (12.11; test czeka na stan gry, 6450 → 2670 kroków, 1,7 → 1,1 s; dalej koszt CALM 720 kroków, opis stałej nie zgadza się ze stanem tłumu)
 - Ważność: S4 · Zasięg: `packages/sim/test/save-load-micro-body.test.ts` „won, knocked out…” (G-242) przekroczył limit 20 s przy load 11–13 na 4 rdzeniach; kandydat na test niestabilny; najpierw pomiar przyczyny, limitu nie podnosimy (ADR-0046)
 - Pakiet właściciela: packages/sim
 
