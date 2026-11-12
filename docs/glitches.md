@@ -1702,7 +1702,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-646 Skan `market-pieces` ma własną regułę podziemia
-- Status: zgłoszone (12.11, naprawiacz G-600; potwierdzone w kodzie)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g646)
 - Ważność: S4 · Zasięg: `tools/glitch-scan/test/market-pieces.ts:96` `const isBuilding = (t: Tags): boolean => t.building !== undefined && t.building !== "roof" && t.location !== "underground" && Number(t.layer ?? 0) >= 0;`: garaż z `level=-2`, `layer=2` liczy jako budynek, a samo `layer<0` (budynek pod wiaduktem) jako podziemie; do ujednolicenia z `belowGround` (G-600)
 - Pakiet właściciela: tools/glitch-scan
 
@@ -1727,7 +1727,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (tłum)
 
 ### G-651 `belowGround` zdjęłoby budynek naziemny z `level=-1` i piętrami nad ziemią
-- Status: zgłoszone (12.11, weryfikator G-600)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g651)
 - Ważność: S4 · Zasięg: `tools/osm-import/src/building-tags.ts` `belowGround`: `level=-1` przy `building:levels=3`, `height=20` albo `roof:levels=1` daje `true`, więc budynek naziemny zniknąłby; w danych dziś takiego nie ma, ryzyko na przyszłość; poprawka: budynek z dodatnimi piętrami lub wysokością nie jest podziemny
 - Pakiet właściciela: tools/osm-import
 
@@ -1742,7 +1742,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-654 Trasa placu `krakowskie-2-0-square-1` przecina samą siebie
-- Status: zgłoszone (12.11, naprawiacz G-613)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g654)
 - Ważność: S4 · Zasięg: przy (368; −223) odcinki 0×3 i 0×5 trasy się przecinają, także na main; test samoprzecięć w `crowd-square-barriers.test.ts` (#428) pomija tę trasę; po poprawce wyjątek z testu do usunięcia
 - Pakiet właściciela: packages/sim (tłum)
 
