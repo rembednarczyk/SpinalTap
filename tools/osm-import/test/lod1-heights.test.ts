@@ -17,17 +17,26 @@ describe("the eaves from LoD1 measuredHeight", () => {
   const house = { height: 13.2, plinth: 0, levels: 4, source: "default" as const };
 
   it("puts the middle of the roof at measuredHeight, storeys from the walls", () => {
-    expect(lod1Massing(house, 7)).toEqual({ height: 7, levels: 2 });
-    expect(lod1Massing({ ...house, roof: 4 }, 17.5)).toEqual({ height: 15.5, levels: 5 });
+    expect(lod1Massing(house, 7)).toEqual({ height: 7, levels: 2, plinth: 0 });
+    expect(lod1Massing({ ...house, roof: 4 }, 17.5)).toEqual({ height: 15.5, levels: 5, plinth: 0 });
     // A shop floor of 4 m first.
-    expect(lod1Massing({ ...house, shopfront: true }, 10.4)).toEqual({ height: 10.4, levels: 3 });
+    expect(lod1Massing({ ...house, shopfront: true }, 10.4)).toEqual({ height: 10.4, levels: 3, plinth: 0 });
   });
 
   it(`moves the eaves at most ${LOD1_MAX_CHANGE} m and keeps a storey over the plinth`, () => {
     expect(lod1Massing(house, 30).height).toBe(23.2);
     expect(lod1Massing(house, 1).height).toBe(3.2);
-    // Kowalska 7 on the Old Town's scarp: LoD1 counts from the lowest ground, the plinth included.
-    expect(lod1Massing({ height: 24.9, plinth: 12.1, levels: 4, source: "levels" }, 14.2)).toEqual({ height: 15.3, levels: 1 });
+    expect(lod1Massing({ ...house, plinth: 6 }, 7)).toEqual({ height: 9.2, levels: 1, plinth: 6 });
+  });
+
+  it("keeps the map's storeys that fit from the foot, the plinth cut under them (G-629)", () => {
+    // Kowalska 7 on the Old Town's scarp: LoD1 counts from the lowest ground, the plinth included;
+    // four storeys seen from Kowalska, the rest of the 12.1 m plinth buried in the scarp.
+    expect(lod1Massing({ height: 24.9, plinth: 12.1, levels: 4, source: "levels" }, 14.2)).toEqual({ height: 14.9, levels: 4, plinth: 2.1 });
+    // A storey over the plinth would top LoD1: the house stands at LoD1, its storey from the foot.
+    expect(lod1Massing({ height: 7.3, plinth: 4.1, levels: 1, source: "levels" }, 4)).toEqual({ height: 4, levels: 1, plinth: 0.8 });
+    // Walls taller than the storeys keep their plinth.
+    expect(lod1Massing({ height: 10, plinth: 1, levels: 2, source: "levels" }, 12)).toEqual({ height: 12, levels: 2, plinth: 1 });
   });
 
   it("keeps the map's building:levels unless a storey would come out under 2.6 m", () => {
@@ -47,7 +56,7 @@ describe("what keeps its own height", () => {
     expect(lod1Exempt({ ...plain, mappedTower: true })).toBe("tower");
     expect(lod1Exempt({ ...plain, soffit: 10 })).toBe("part");
     expect(lod1Exempt(plain, true)).toBe("parts");
-    // Teatr Osterwy and Trybunał Koronny: landmarks of the curator's audits, a split piece by its whole's id.
+    // Teatr Osterwy and Trybunał Koronny: landmarks of the list, a split piece by its whole's id.
     expect(lod1Exempt({ ...plain, id: "w67508958", use: "civic" })).toBe("landmark");
     expect(lod1Exempt({ ...plain, id: "w66264159/1", use: "civic" })).toBe("landmark");
   });
@@ -96,6 +105,13 @@ describe("the import's heights", () => {
     const b = game(id);
     expect(b.source).toBe("lod1");
     expect(b.height + (b.roof ?? 0) / 2).toBeCloseTo(measured(b)!, 0);
+  });
+
+  it("shows Kowalska 7's four storeys from the street on the scarp (G-629)", () => {
+    const b = game("w66309807");
+    expect(b.source).toBe("lod1");
+    expect(b.levels).toBe(4);
+    expect(b.height - b.plinth).toBeGreaterThanOrEqual(4 * 3.2 - 1e-9);
   });
 
   it("leaves Teatr Osterwy (a landmark) and a measured church as the tags have them", () => {
