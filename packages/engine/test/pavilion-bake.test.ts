@@ -28,6 +28,49 @@ const amber = (rgba: readonly number[]): boolean => {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255].every((c, i) => Math.abs(rgba[i]! - c / 255) < 1e-6);
 };
 
+/**
+ * Pairs of a pavilion's upright faces of different colours lying in one plane and overlapping:
+ * they flicker against each other (z-fighting). Faces on a horizontal plane are left out: the
+ * only ones that meet are the frames' and the panes' tops, hidden under the roof's slab.
+ */
+const flushUprights = (sink: MeshSink): string[] => {
+  type Tri = { lo: [number, number]; hi: [number, number]; color: string };
+  const planes = new Map<string, Tri[]>();
+  const at = (i: number): [number, number, number] => [sink.positions[i * 3]!, sink.positions[i * 3 + 1]!, sink.positions[i * 3 + 2]!];
+  for (let t = 0; t < sink.indices.length / 3; t++) {
+    const ids = [0, 1, 2].map((k) => sink.indices[t * 3 + k]!);
+    const [a, b, c] = ids.map(at) as [[number, number, number], [number, number, number], [number, number, number]];
+    const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    const v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    const n = [u[1]! * v[2]! - u[2]! * v[1]!, u[2]! * v[0]! - u[0]! * v[2]!, u[0]! * v[1]! - u[1]! * v[0]!];
+    const len = Math.hypot(...n);
+    if (len < 1e-9 || Math.abs(n[1]! / len) > 0.5) continue;
+    const [nx, nz] = [n[0]! / len, n[2]! / len];
+    // Along the plane: the horizontal tangent and the height.
+    const coords = [a, b, c].map((p): [number, number] => [p[0] * nz - p[2] * nx, p[1]]);
+    const key = `${nx.toFixed(3)},${nz.toFixed(3)}|${(nx * a[0] + nz * a[2]).toFixed(3)}`;
+    const tri: Tri = {
+      lo: [Math.min(...coords.map((q) => q[0])), Math.min(...coords.map((q) => q[1]))],
+      hi: [Math.max(...coords.map((q) => q[0])), Math.max(...coords.map((q) => q[1]))],
+      color: sink.colors.slice(ids[0]! * 4, ids[0]! * 4 + 3).map((x) => x.toFixed(3)).join(","),
+    };
+    planes.set(key, [...(planes.get(key) ?? []), tri]);
+  }
+  const found: string[] = [];
+  for (const [key, tris] of planes) {
+    for (let i = 0; i < tris.length; i++) {
+      for (let j = i + 1; j < tris.length; j++) {
+        const [p, q] = [tris[i]!, tris[j]!];
+        if (p.color === q.color) continue;
+        const across = Math.min(p.hi[0], q.hi[0]) - Math.max(p.lo[0], q.lo[0]);
+        const up = Math.min(p.hi[1], q.hi[1]) - Math.max(p.lo[1], q.lo[1]);
+        if (across > 0.01 && up > 0.01) found.push(`${key}: ${p.color} and ${q.color}`);
+      }
+    }
+  }
+  return found;
+};
+
 describe("the metro's pavilions in the furniture's blocks (ADR-0071 stages 2 and 3)", () => {
   it("bakes each one under its budget of triangles, near and far", () => {
     for (const e of METRO_ENTRANCES) {
@@ -67,6 +110,12 @@ describe("the metro's pavilions in the furniture's blocks (ADR-0071 stages 2 and
     // Four strokes on each of four faces, a stroke a box of 24 corners.
     expect(m.length).toBe(4 * 4 * 24);
     for (const v of m) expect(v.y).toBeLessThan(e.street + PYLON.height);
+  });
+
+  it.each(ENTRANCES)("%s: no upright face of the frames shares a plane with the glass (no flicker)", (_n, e) => {
+    const sink = new MeshSink();
+    bakePavilion(sink, e);
+    expect(flushUprights(sink)).toEqual([]);
   });
 
   it("leaves the reflections off the glass on the phone (ADR-0071)", () => {
