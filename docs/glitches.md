@@ -1959,7 +1959,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: goły teren w klasie przedpola i szczelin w raporcie komórki 7 składowych / 5017 m² -> 0 (poza zielenią ortofoto); `kerb-strip-bare` w nabrzeze-1-1 9 kwadratów -> 0. Baza skanu spada w tym samym commicie
 
 ### G-720 `corrections.test.ts` trwa w CI ok. 27 s jako plik
-- Status: zgłoszone (12.11, z naprawy G-719)
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g720 (12.11, 39f79d1; plik 10,1 → 2,6 s pod pokryciem, asercje bez zmian; PR po scaleniu #474)
 - Ważność: S4 · Zasięg: następny kandydat do limitu czasu w shardzie testów jednostkowych; przy G-719 pamięć wygenerowanego miasta (ADR-0046) w CI nie trafia: CI nie zachowuje `node_modules/.cache`, a klucz obejmuje całe `packages/{core,sim,engine}/src`; `generatedCity()` woła `generate` bez lod1/lod2, więc test liczy inne miasto niż tabele. Do decyzji: węższy klucz i `actions/cache` w CI
 - Pakiet właściciela: tools/osm-import (testy), .github (cache)
 
@@ -1980,6 +1980,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
   - test planu: `SURFACE_COLOR.square` do `grass` ma jasność ≥ 1,8, `cobble` w zakresie ±5% jasności `square`;
   - migawka NPR odświeżona i obejrzana;
   - zrzut 12:00 z `pl-oczy-krakowskie` obejrzany przez kuratora.
+
+### G-722 Pamięć wygenerowanego miasta w CI nie trafia
+- Status: zgłoszone (12.11, z naprawy G-719 i G-720)
+- Ważność: S4 · Zasięg: tylko `venues.test.ts` (przez `test/city.ts`) korzysta z pamięci miasta (ADR-0046); CI nie zachowuje `node_modules/.cache`, a klucz obejmuje całe `packages/{core,sim,engine}/src`, więc nie trafiłby nawet przy zachowaniu; `generatedCity()` woła `generate` bez lod1/lod2, więc test liczy inne miasto niż tabele. Po G-719 test ma zapas (ok. 9 s w CI przy limicie 20 s); do zrobienia przy następnym spowolnieniu importu: węższy klucz i `actions/cache`
+- Pakiet właściciela: tools/osm-import (test/city.ts), .github
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
