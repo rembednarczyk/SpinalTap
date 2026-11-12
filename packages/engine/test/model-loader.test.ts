@@ -308,3 +308,27 @@ describe("fetchModelBytes with an idle limit (G-637)", () => {
     expect(read).not.toHaveBeenCalled();
   });
 });
+
+describe("ModelLibrary with an error status (G-634)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("fails the file with its URL and status instead of parsing the error page, and asks again next time", async () => {
+    await loadGltfPlugin();
+    const { ModelLibrary } = await import("../src/renderer/model-library");
+    const asked: string[] = [];
+    // The body is what a server sends with a 404: text, not a GLB.
+    vi.stubGlobal("fetch", (url: string) => {
+      asked.push(url);
+      const page = new TextEncoder().encode("<html>Not found</html>");
+      return Promise.resolve({ ok: false, status: 404, statusText: "Not Found", arrayBuffer: () => Promise.resolve(page.buffer) });
+    });
+    // The parser would need the scene: a file that is refused before it never touches it.
+    const library = new ModelLibrary({} as Scene, {} as ToonMaterials);
+    await expect(library.preload({ url: "missing.vrm" })).rejects.toThrow(/missing\.vrm.*404/);
+    expect(library.isLoaded("missing.vrm")).toBe(false);
+    await expect(library.preload({ url: "missing.vrm" })).rejects.toThrow(/404/);
+    expect(asked).toEqual(["missing.vrm", "missing.vrm"]);
+  });
+});
