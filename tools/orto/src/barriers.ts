@@ -80,3 +80,6 @@ export const barrierReport = (osm: OsmData, rect: Rect, game: readonly LublinBar
   }
   return { kinds, notDrawn: lines.filter((l) => !drawn.has(l.id)).sort((a, b) => b.length - a.length) };
 };
+
+/** The lines the game does not draw for the report's text: `w783241007 fence 92,8 m`, each one. */
+export const notDrawnText = (lines: readonly BarrierLine[]): string => lines.map((l) => `${l.id} ${l.barrier} ${String(l.length).replace(".", ",")} m`).join(", ");
