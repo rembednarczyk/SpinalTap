@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-634 `ModelLibrary.load` nie sprawdza `response.ok`
+- Status: naprawione w #423 (12.11; `r.ok` sprawdzane przed parserem)
+- Ważność: S4 · Zasięg: odpowiedź 404 albo 500 trafia do parsera jako GLB i pada dopiero przy parsowaniu z mylącym błędem; `.gltf` po URL (`LoadAssetContainerAsync`) i dynamiczny import pluginu glTF nadal bez limitu czasu (dziś nieużywane, manifest ma `.vrm`)
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+
 ### G-638 `fetch` bez sprawdzenia `res.ok` w zestawie miasta i dźwiękach
 - Status: nie odtwarza się (12.11; wszystkie trzy miejsca sprawdzają `res.ok` w linii po `fetch` od fe802ea i 51d54c7, zgłoszenie wskazało same wywołania; błąd idzie do zastępstwa: fasady proceduralne, synteza dźwięku)
 - Ważność: S4 · Zasięg: `city-kit-loader.ts:108`, `city-kit.ts:167` i `audio/samples.ts:62` pobierają bez sprawdzenia statusu, więc 404 trafia do parsera albo dekodera z mylącym błędem (ten sam wzorzec co G-634)

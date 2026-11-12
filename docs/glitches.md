@@ -1716,11 +1716,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: środek dachu 30,9 m wobec 25,8 m w LoD1; poza zmianą heights, wynik sondy kuratora
 - Pakiet właściciela: tools/osm-import, packages/engine (receptury landmarków)
 
-### G-634 `ModelLibrary.load` nie sprawdza `response.ok`
-- Status: w PR #423 (12.11, weryfikator PRZYJĘTE)
-- Ważność: S4 · Zasięg: odpowiedź 404 albo 500 trafia do parsera jako GLB i pada dopiero przy parsowaniu z mylącym błędem; `.gltf` po URL (`LoadAssetContainerAsync`) i dynamiczny import pluginu glTF nadal bez limitu czasu (dziś nieużywane, manifest ma `.vrm`)
-- Pakiet właściciela: packages/engine (renderer: modele)
-
 ### G-635 Trzy próbki `kerb-fill-wide-estimated` przy nowych skrawkach chodnika na Podzamczu
 - Status: zgłoszone (12.11, naprawiacz scalenia #409)
 - Ważność: S4 · Zasięg: (879,5; 490,5) i (860,5; 497,5): wypełnienia krawężników z #409 łączą się z `PODZAMCZE_AREAS` z main (`DWORZEC_EAST_AREAS`) w dwa małe skrawki chodnika; licznik 3624 → 3627 po scaleniu
@@ -1732,7 +1727,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-637 Limit pobierania modelu liczy cały czas, nie bezczynność
-- Status: zgłoszone (12.11, weryfikator #422)
+- Status: w PR #424 (12.11; limit bezczynności 30 s, weryfikator PRZYJĘTE)
 - Ważność: S4 · Zasięg: `MODEL_FETCH_TIMEOUT_MS` (120 s) przerywa całe pobieranie; przy łączu wolniejszym niż ok. 0,5 Mbit/s plik 8 MB (kaito.vrm) nigdy się nie załaduje, bo każda próba zaczyna od zera; poprawka: limit bezczynności (brak nowych bajtów przez N s) zamiast całkowitego; przy okazji: pełny zestaw engine+app+code-health trwa ok. 507 s (import 55%), do rozważenia `isolate: false` albo podział
 - Pakiet właściciela: packages/engine (renderer: modele)
 
