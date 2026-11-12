@@ -2,6 +2,17 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-684 Fałszywy alarm `levels-tag-lost` na Bramie Krakowskiej
+- Status: naprawiony (PR #456, 4c3b230)
+- Ważność: S4 · Zasięg: r7224409 (473; −91): „2 storeys of building:levels=5”; obrys ma `height` 10 m i części `building:part` (wieża 5 kond., przedbramie 2 kond., T-007 rozwiązane); kontrola liczy obrys bez części; poprawka: wyjątek dla budynków z częściami, baza 4 → 3
+- Pakiet właściciela: tools/glitch-scan
+
+### G-685 Raport ortofoto liczy bariery z tabeli mebli zamiast z `chunk.barriers`
+- Status: naprawiony (PR #457, 1af1024)
+- Ważność: S4 (narzędzie, nie gra) · Zasięg: `tools/orto/src/barriers.ts` (`barrierReport`, `game` i `notDrawn`). W stare-miasto-0-0 raport podaje 9 linii „nierysowanych” (np. mur miejski w609951474), a wszystkie są w `stare-miasto.generated.ts` (`barriers`) i w grze (ADR-0077 p. 4). Komentarz modułu („the game draws none of them”) jest nieaktualny.
+- Pakiet właściciela: tools/orto
+- Test przyjęcia: raport dla stare-miasto-0-0 ma `notDrawn` 0 (bariery z `MAP_CHUNKS[].barriers`)
+
 ### G-677 Kontrola skanu: ręczna bryła nad drogą z OSM
 - Status: naprawiony (PR #452, 2513ea4)
 - Ważność: S4 · Zasięg: brak kontroli, która łapie ręczny obszar `ADDED_AREAS` z `building=*`, którego pierścień (także poza mapą) przecina `highway=*` bez `tunnel` ani `covered`; dziś 1 przypadek: `T-261/garaz-vivo` zamyka schody w376043570 i chodnik w295849313 (wejście do VIVO pod dachem garażu, x 1121–1146, poza mapą, ukryte przycięciem na x = 1120); kontrola `added-solid-over-way` z bazą 1 i wyjątkiem z odsyłaczem do topografii do czasu poszerzenia mapy

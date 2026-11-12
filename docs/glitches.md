@@ -1781,17 +1781,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `gate-mouth-off-axis` = 3 (cała baza miasta w tej komórce): (463; −94) −1,80 m od środka frontu 7,47 m; (587; −140) −0,81 m z 5,90 m; (588; −154) −4,44 m z 15,84 m (ten może być fałszywy: front obejmuje sąsiednią ścianę); G-136 (Brama Grodzka) zapowiadał pomiar Krakowskiej; najpierw pomiar z OSM i ortofoto
 - Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
 
-### G-684 Fałszywy alarm `levels-tag-lost` na Bramie Krakowskiej
-- Status: w PR #456 (12.11)
-- Ważność: S4 · Zasięg: r7224409 (473; −91): „2 storeys of building:levels=5”; obrys ma `height` 10 m i części `building:part` (wieża 5 kond., przedbramie 2 kond., T-007 rozwiązane); kontrola liczy obrys bez części; poprawka: wyjątek dla budynków z częściami, baza 4 → 3
-- Pakiet właściciela: tools/glitch-scan
-
-### G-685 Raport ortofoto liczy bariery z tabeli mebli zamiast z `chunk.barriers`
-- Status: w PR #457 (12.11)
-- Ważność: S4 (narzędzie, nie gra) · Zasięg: `tools/orto/src/barriers.ts` (`barrierReport`, `game` i `notDrawn`). W stare-miasto-0-0 raport podaje 9 linii „nierysowanych” (np. mur miejski w609951474), a wszystkie są w `stare-miasto.generated.ts` (`barriers`) i w grze (ADR-0077 p. 4). Komentarz modułu („the game draws none of them”) jest nieaktualny.
-- Pakiet właściciela: tools/orto
-- Test przyjęcia: raport dla stare-miasto-0-0 ma `notDrawn` 0 (bariery z `MAP_CHUNKS[].barriers`)
-
 ### G-686 Uskok 0,52 m na zakręcie schodów z wiaduktu Zamkowej blokuje gangera
 - Status: zgłoszone (12.11, naprawiacz G-643; także na main)
 - Ważność: S3 · Zasięg: (729,5; 163,9): uskok niewidoczny dla `straightWalk` i pól nawigacji; ganger stoi tam wciśnięty na zawsze, na main przechodzi tylko, gdy jest akurat w powietrzu
