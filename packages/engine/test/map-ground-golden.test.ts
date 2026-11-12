@@ -93,8 +93,10 @@ describe("the ground the map city lays (G-444)", () => {
     }
     // The map's data, not the laying, moved it last: the strips between the carriageways and their
     // paving closed (G-522), by asphalt of its own along a street of estimated width (G-570), and two
-    // footways that loop back on a node of their own laid as simple pieces (G-654).
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 22, vertices: 131782, hash: "21e445de" });
+    // footways that loop back on a node of their own laid as simple pieces (G-654). The laying moved
+    // it once: steps at the map's edge read the ground on its side (G-703), and here, with only these
+    // four chunks, the flight at (20; 9) on krakowskie-1-1's west side has no terrain past it.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 22, vertices: 131782, hash: "e6325d6a" });
     scene.dispose();
   });
 
