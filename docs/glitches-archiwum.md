@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-665 Szczelina między kawałkami trawnika na garażu VIVO
+- Status: naprawiony (PR #440, e90590b; kurator PRZYJĘTE)
+- Ważność: S4 · Zasięg: próbka (1119,75; 238,75), 0,057 m wewnątrz krawędzi garażu w173070505, w pasie ok. 0,1–0,2 m² między kawałkami trawnika z `groundRaisedGreen` (G-647, #436); test G-600 „leaves none of the garage's outline past the mall bare” pada po poprawce skanu G-664; przyczyna prawdopodobnie w cięciu po częściach wypukłych albo przycięciu do granicy chunku x = 1120
+- Pakiet właściciela: tools/osm-import
+
 ### G-627 Ręczne trawniki T-245 leżą częściowo na nawierzchni
 - Status: naprawiony (PR #438, 3503ce7; kurator PRZYJĘTE)
 - Ważność: S3 · Zasięg: `LITEVSKI_GREEN` i `SCHOOL_GREEN` w `tools/osm-import/src/corrections-zn.ts` (runda 2 #405) kładą trawę na asfalcie i kostce: pas x −201…−197, z 27–45 (54 m², zieleń 13%) i pas wzdłuż w80139555 do Cichej 4 (104 m², zieleń 4%); krakowskie-0-1; poprawka wg ADR-0077: trawa tylko na płatach zieleni z nakładki ortofoto (domknięcie 1 m, płat od 4 m²), reszta kostką jak T-243; kryterium: trawnik Litevski ≥ 70% zieleni, szkoły ≥ 55%, nowa kostka ≤ 15%; `cover-truth.test.ts` próg 0,55 → 0,7 (trawniki kuratora są prawdą klasyfikatora); nowa kontrola skanu `added-grass-off-green` (ręczne trawniki z zielenią < 50%: 11 z 20, 1 133 m²; do sprawdzenia też T-241 trawnik-wschod, trawnik-bajkowskiego, T-245 trawnik-3-maja-klinika, rabaty przy Collegium, T-246 trawnik-nadstawna-3)

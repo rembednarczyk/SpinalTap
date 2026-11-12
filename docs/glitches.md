@@ -1742,14 +1742,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-664 Zieleń z `layer>0` ukrywa gołą ziemię przed skanem `landuse-bare`
-- Status: poprawione na gałęzi ccr-ec2c4269-ilh8k8-g664 @ 74cc6d0 (12.11; z G-665 skan zielony, landuse-bare 69019 → 69214, cały wzrost przy VIVO; PR po scaleniu #440)
+- Status: w PR #443 (12.11; landuse-bare 69019 → 69214, cały wzrost przy VIVO)
 - Ważność: S4 · Zasięg: `landuse-bare` pomija punkty w obrysie trawnika z mapy, także trawnika na dachu (r11978659), więc goły pas z G-661 nie zmienił bazy 69019; poprawka: zieleń z `layer>0` albo `location=roof` nie zwalnia próbek, nowa baza z przebiegu
 - Pakiet właściciela: tools/glitch-scan
-
-### G-665 Szczelina między kawałkami trawnika na garażu VIVO
-- Status: w PR #440 (12.11; kurator PRZYJĘTE)
-- Ważność: S4 · Zasięg: próbka (1119,75; 238,75), 0,057 m wewnątrz krawędzi garażu w173070505, w pasie ok. 0,1–0,2 m² między kawałkami trawnika z `groundRaisedGreen` (G-647, #436); test G-600 „leaves none of the garage's outline past the mall bare” pada po poprawce skanu G-664; przyczyna prawdopodobnie w cięciu po częściach wypukłych albo przycięciu do granicy chunku x = 1120
-- Pakiet właściciela: tools/osm-import
 
 ### G-666 Pamięć pościgu `chase` nie jest czyszczona, gdy cel przejdzie przez barierę
 - Status: zgłoszone (12.11, naprawiacz G-644; także na main)
