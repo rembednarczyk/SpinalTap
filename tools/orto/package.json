@@ -1,0 +1,10 @@
+{
+  "name": "@seki/orto",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PZGiK orthophoto cache, land-cover classifier and the import-versus-cover overlay (ADR-0077).",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

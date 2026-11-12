@@ -1,0 +1,937 @@
+{
+  "about": "Pokrycie terenu z ortofotomapy PZGiK (ADR-0077): rastry data/orto/<obszar>.cover.png, narzędzie tools/orto. Atrybucja: data/osm/ATTRIBUTION.md.",
+  "license": "Ortofotomapa PZGiK (Główny Urząd Geodezji i Kartografii): udostępniana bezpłatnie, do dowolnego wykorzystania (art. 40a ustawy Prawo geodezyjne i kartograficzne), regulamin: https://www.geoportal.gov.pl/pl/o-geoportalu/regulamin/",
+  "services": {
+    "current": [
+      {
+        "id": "HighResolution",
+        "url": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/HighResolution"
+      },
+      {
+        "id": "StandardResolution",
+        "url": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution"
+      }
+    ],
+    "archive": {
+      "id": "StandardResolutionTime",
+      "url": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolutionTime"
+    },
+    "sheetIndex": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/SkorowidzeWgAktualnosci",
+    "layer": "Raster",
+    "crs": "EPSG:2180",
+    "format": "image/png",
+    "userAgent": "SekiSenshi-topo/1.0"
+  },
+  "requestedPixel": 0.25,
+  "flights": [
+    {
+      "id": "2025-04",
+      "indexYears": [
+        2026,
+        2025
+      ],
+      "photographed": [
+        "2025-04-12"
+      ],
+      "sheetPixel": [
+        0.05
+      ],
+      "sheets": [
+        "M-34-34-A-a-4-3",
+        "M-34-34-A-a-4-4",
+        "M-34-34-A-c-1-2",
+        "M-34-34-A-c-2-1",
+        "M-34-34-A-c-2-2"
+      ]
+    },
+    {
+      "id": "2024-06",
+      "time": "2024-06-01T00:00:00.000Z",
+      "indexYears": [
+        2024
+      ],
+      "photographed": [
+        "2024-06-21"
+      ],
+      "sheetPixel": [
+        0.25
+      ],
+      "sheets": [
+        "M-34-34-A-a-4-3",
+        "M-34-34-A-a-4-4",
+        "M-34-34-A-c-1-2",
+        "M-34-34-A-c-2-1",
+        "M-34-34-A-c-2-2"
+      ]
+    },
+    {
+      "id": "2023-09",
+      "time": "2023-09-01T00:00:00.000Z",
+      "indexYears": [
+        2023
+      ],
+      "photographed": [
+        "2023-09-11"
+      ],
+      "sheetPixel": [
+        0.05
+      ],
+      "sheets": [
+        "M-34-34-A-a-4-3",
+        "M-34-34-A-a-4-4",
+        "M-34-34-A-c-1-2",
+        "M-34-34-A-c-2-1",
+        "M-34-34-A-c-2-2"
+      ]
+    }
+  ],
+  "classifier": {
+    "version": 1,
+    "grid": 0.5,
+    "classes": [
+      "none",
+      "green",
+      "paving",
+      "asphalt",
+      "shadow",
+      "unknown"
+    ],
+    "thresholds": {
+      "smooth": 1,
+      "shadowL": 50,
+      "greenExg": 0.026,
+      "hardS": 0.4,
+      "pavingL": 115
+    }
+  },
+  "covers": [
+    {
+      "slug": "krakowskie",
+      "rect": {
+        "minX": -200,
+        "minZ": -270,
+        "maxX": 460,
+        "maxZ": 160
+      },
+      "bytes": 69885,
+      "cells": [
+        "krakowskie-0-0",
+        "krakowskie-1-0",
+        "krakowskie-2-0",
+        "krakowskie-0-1",
+        "krakowskie-1-1",
+        "krakowskie-2-1"
+      ],
+      "tiles": [
+        {
+          "cell": "krakowskie-0-0",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-0-0",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-0-0",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-1-0",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-1-0",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-1-0",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-2-0",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-2-0",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-2-0",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-0-1",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-0-1",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-0-1",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-1-1",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-1-1",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-1-1",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-1-2",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-2-1",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-2-1",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "krakowskie-2-1",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        }
+      ],
+      "samples": {
+        "none": 0,
+        "green": 214513,
+        "paving": 626779,
+        "asphalt": 280056,
+        "shadow": 1737,
+        "unknown": 12115
+      }
+    },
+    {
+      "slug": "nabrzeze",
+      "rect": {
+        "minX": 2300,
+        "minZ": 60,
+        "maxX": 2700,
+        "maxZ": 480
+      },
+      "bytes": 28271,
+      "cells": [
+        "nabrzeze-0-0",
+        "nabrzeze-1-0",
+        "nabrzeze-0-1",
+        "nabrzeze-1-1"
+      ],
+      "tiles": [
+        {
+          "cell": "nabrzeze-0-0",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-2",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "nabrzeze-0-0",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-2",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "nabrzeze-0-0",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-2",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "nabrzeze-1-0",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-2",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "nabrzeze-1-0",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-2",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "nabrzeze-1-0",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-2",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "nabrzeze-0-1",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-4",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "nabrzeze-0-1",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-4",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "nabrzeze-0-1",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-4",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "nabrzeze-1-1",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-4",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "nabrzeze-1-1",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-4",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "nabrzeze-1-1",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-4",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        }
+      ],
+      "samples": {
+        "none": 0,
+        "green": 444416,
+        "paving": 184051,
+        "asphalt": 42236,
+        "shadow": 1222,
+        "unknown": 75
+      }
+    },
+    {
+      "slug": "podzamcze",
+      "rect": {
+        "minX": 520,
+        "minZ": 160,
+        "maxX": 1120,
+        "maxZ": 580
+      },
+      "bytes": 53443,
+      "cells": [
+        "podzamcze-0-0",
+        "podzamcze-1-0",
+        "podzamcze-2-0",
+        "podzamcze-0-1",
+        "podzamcze-1-1",
+        "podzamcze-2-1"
+      ],
+      "tiles": [
+        {
+          "cell": "podzamcze-0-0",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-0-0",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-0-0",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-1-0",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-1-0",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-1-0",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-2-0",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-2-0",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-2-0",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-0-1",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-0-1",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-0-1",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-1-1",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-1-1",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-1-1",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-2-1",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-2-1",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-2-1",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        }
+      ],
+      "samples": {
+        "none": 0,
+        "green": 325332,
+        "paving": 513534,
+        "asphalt": 158966,
+        "shadow": 1073,
+        "unknown": 9095
+      }
+    },
+    {
+      "slug": "stare-miasto",
+      "rect": {
+        "minX": 460,
+        "minZ": -240,
+        "maxX": 760,
+        "maxZ": 160
+      },
+      "bytes": 33740,
+      "cells": [
+        "stare-miasto-0-0",
+        "stare-miasto-1-0",
+        "stare-miasto-0-1",
+        "stare-miasto-1-1"
+      ],
+      "tiles": [
+        {
+          "cell": "stare-miasto-0-0",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-0-0",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-0-0",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-1-0",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-1-0",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-1-0",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-0-1",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-0-1",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-0-1",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-1-1",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-1-1",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-1-1",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-11",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        }
+      ],
+      "samples": {
+        "none": 0,
+        "green": 91119,
+        "paving": 208725,
+        "asphalt": 171753,
+        "shadow": 612,
+        "unknown": 7791
+      }
+    }
+  ]
+}

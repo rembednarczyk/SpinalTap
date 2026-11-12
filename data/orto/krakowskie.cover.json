@@ -1,0 +1,134 @@
+{
+  "district": "krakowskie",
+  "x0": -200,
+  "z1": 160,
+  "step": 0.5,
+  "width": 1320,
+  "height": 860,
+  "classes": [
+    "none",
+    "green",
+    "paving",
+    "asphalt",
+    "shadow",
+    "unknown"
+  ],
+  "source": "Ortofotomapa PZGiK (GUGiK, geoportal.gov.pl), WMS ORTO HighResolution / StandardResolution, EPSG:2180",
+  "tiles": [
+    {
+      "cell": "krakowskie-0-0",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-0-0",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-0-0",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-1-0",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-1-0",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-1-0",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-2-0",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-2-0",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-2-0",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-0-1",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-0-1",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-0-1",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-1-1",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-1-1",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-1-1",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-2-1",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-2-1",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "krakowskie-2-1",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    }
+  ],
+  "thresholds": {
+    "smooth": 1,
+    "shadowL": 50,
+    "greenExg": 0.026,
+    "hardS": 0.4,
+    "pavingL": 115
+  }
+}

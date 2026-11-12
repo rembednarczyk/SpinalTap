@@ -1,0 +1,98 @@
+{
+  "district": "nabrzeze",
+  "x0": 2300,
+  "z1": 480,
+  "step": 0.5,
+  "width": 800,
+  "height": 840,
+  "classes": [
+    "none",
+    "green",
+    "paving",
+    "asphalt",
+    "shadow",
+    "unknown"
+  ],
+  "source": "Ortofotomapa PZGiK (GUGiK, geoportal.gov.pl), WMS ORTO HighResolution / StandardResolution, EPSG:2180",
+  "tiles": [
+    {
+      "cell": "nabrzeze-0-0",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "nabrzeze-0-0",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "nabrzeze-0-0",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "nabrzeze-1-0",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "nabrzeze-1-0",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "nabrzeze-1-0",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "nabrzeze-0-1",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "nabrzeze-0-1",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "nabrzeze-0-1",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "nabrzeze-1-1",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "nabrzeze-1-1",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    },
+    {
+      "cell": "nabrzeze-1-1",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-11"
+    }
+  ],
+  "thresholds": {
+    "smooth": 1,
+    "shadowL": 50,
+    "greenExg": 0.026,
+    "hardS": 0.4,
+    "pavingL": 115
+  }
+}
