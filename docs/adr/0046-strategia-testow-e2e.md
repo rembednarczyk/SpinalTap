@@ -66,6 +66,7 @@ Po falach 2 i 3 oraz przy przenosinach do Lublina e2e blokowały pracę i niewie
 
 ## Dług: limity podniesione przed tym ADR
 Zostają do czasu przeniesienia lub przyspieszenia, potem do usunięcia:
+- (12.11) Punkty o budżecie `reference` niżej mieszczą się w progach docelowych z [ADR-0079](0079-urzadzenie-docelowe-i-apk.md) (+40%). Zostają jako opis przyczyn; przesłanianie dla kamery we wnętrzu dalej w backlogu jako optymalizacja.
 - `test.setTimeout(180_000)` w `smoke` (dwa zimne starty), `touch` i `touch-layout`; `test.setTimeout(150_000)` w `models`.
 - Budżet sceny `reference` w `tools/perf-budgets.json` podniesiony z 184 / 76 do 194 / 81 (G-052, 31.10). Krakowskie sięga do z = −270, a kamera wewnątrz Neon Koi patrzy na południowy zachód: za ścianami w stożku widzenia jest nowy pas (map-ground +2, map-far +1, map-near +1, map-signs +1). Zmierzone 181 / 76 → 191 / 81, pozostałe sceny bez zmian. Do usunięcia, gdy wnętrze zasłoni miasto za ścianami (np. occlusion query albo wyłączanie chunków spoza wnętrza).
 - Aktywne siatki tego samego budżetu `reference` podniesione z 81 do 82 (ADR-0058 etap 7, 2.11): wspólna siatka dronów nad deptakiem jest w stożku widzenia kamery w Neon Koi za ścianami, poza obrazem (migawka bez zmian). Zmierzone 191 / 81 → 193 / 82; wywołania mieszczą się w 194. Do usunięcia razem z punktem wyżej.
