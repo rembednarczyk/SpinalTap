@@ -478,7 +478,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: najwyższy wierzchołek bryły w promieniu 4 m od (378,1; −247,7) ma y 39,2 ± 1, poza nim nic nie przekracza y 32; dziś pada (brak wieży, kalenica 30,1)
 
 ### G-215 Proceduralne wieże na kościołach, które ich nie mają albo mają inne
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g215 (12.11, 1dc2bc5: wieże tylko z tabeli danych; `church-fake-tower` 4 → 0, `church-tower-off-nmpt` 6 → 1 = G-214; przegląd kuratora ZGODNE Z UWAGAMI; runda 2: gzyms Św. Ducha 18,1 z NMPT, kształt hełmu z tabeli, kontrola gzymsu); wcześniej: zgłoszone (2.11, kurator, przegląd #190)
+- Status: w PR #478 (12.11, 944714c); naprawione na gałęzi ccr-ec2c4269-ilh8k8-g215 (12.11, 1dc2bc5: wieże tylko z tabeli danych; `church-fake-tower` 4 → 0, `church-tower-off-nmpt` 6 → 1 = G-214; przegląd kuratora ZGODNE Z UWAGAMI; runda 2: gzyms Św. Ducha 18,1 z NMPT, kształt hełmu z tabeli, kontrola gzymsu); wcześniej: zgłoszone (2.11, kurator, przegląd #190)
 - Ważność: S3 (proponowana) · Zasięg: szeroki (7 kościołów, m.in. deptak: Kapucyni i Świętego Ducha) · Koszt: średni; 12.11 (przejście stare-miasto-1-1): św. Wojciecha w61102109 dalej ma wieżę z iglicą (zrzut `sm11-b`). T-121 trzeba przenieść do `otwarte` w stare-miasto-1-1, krakowskie-0-1, krakowskie-1-0 i stare-miasto-0-0.
 - Priorytet (kurator, przegląd #208): wyżej. Wieże skalują się ze ścianami, więc po G-216 Niecała 4 w232674421 ma wieżę do y ok. 13 na budynku ok. 3,7 m (ponad trzy razy wyżej niż budynek bez wieży), a Świętego Ducha dwie wieże do y 28,5 przy kalenicy 20,4. Najtańszy pierwszy krok: kościoły bez wieży w rzeczywistości (Niecała 4, Kapucyni, św. Piotra, św. Wojciecha) na liście bez wieży, z odsyłaczem T-121
 - Gdzie: T-121: Kapucyni w67508932, Karmelici r5420467 (poprawione w #198: wieże poza obrysem zdjęte), św. Piotra w66335226, św. Wojciecha w61102109, Niecała 4 w232674421, Świętego Ducha w66264126 (2 wieże zamiast 1 smukłej na narożu SW do y 26,5), cerkiew Przemienienia w66264148 (wieża 13 m za wysoka)
@@ -1565,7 +1565,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
 
 ### G-686 Uskok 0,52 m na zakręcie schodów z wiaduktu Zamkowej blokuje gangera
-- Status: w PR #476 (12.11, 11e9a8d: rampa terenu pod górnym biegiem, `steps-riser-tall` 1 → 0, ganger przechodzi; czeka na przegląd kuratora); wcześniej: zgłoszone (12.11, naprawiacz G-643; także na main)
+- Status: w PR #476 (12.11, 11e9a8d: rampa terenu pod górnym biegiem, `steps-riser-tall` 1 → 0, ganger przechodzi; przegląd kuratora ZGODNE Z UWAGAMI, blokuje łata terenu nad pomostem w (730,25..732,25; 151,75..154,5), 49 próbek do 0,033 m; runda 2 w toku: teren ≥ 0,05 m pod pomostem, test `groundY > deckAt` 86 → 37); wcześniej: zgłoszone (12.11, naprawiacz G-643; także na main)
 - Ważność: S3 · Zasięg: (732,7; 151,4)–(734,2; 152,8), górny stopień schodów w294098693 na styku z południowym końcem pomostu wiaduktu Zamkowej (T-166). Wysokość chodzenia skacze tam o 0,51–0,54 m na całej szerokości pasa, a skan liczy to jako `steps-riser-tall` (732; 151) 0,51 m. Na schodach w56965515 (dawne (729,5; 163,9), czyli x zakrętu i z krawędzi pomostu) na osi biegów nie ma uskoku powyżej 0,3 m. Przyczyna ta sama co G-339 (pomost poziomy w poprzek na NMT końca osi). Poprawka G-339 w tym punkcie powinna usunąć oba objawy, test G-686 (nawigacja) zostaje osobno; uskok niewidoczny dla `straightWalk` i pól nawigacji; ganger stoi tam wciśnięty na zawsze, na main przechodzi tylko, gdy jest akurat w powietrzu
 - Pakiet właściciela: packages/sim (systems/ai, nawigacja), ewentualnie treść schodów
 
@@ -1636,7 +1636,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (drape)
 
 ### G-708 Trzy budynki przy Grodzkiej i Rybnej o 9–12 m wyższe niż w NMPT; oficyna bez OSM (T-269)
-- Status: zgłoszone (12.11, kurator, przegląd stare-miasto-1-1)
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g708 (12.11, 990a49b; przegląd kuratora ZGODNE Z UWAGAMI; oficyna (682..691; 72..80) skreślona, to studnia doświetlająca; runda 2 w toku: scalenie #474, kontrola `height-vs-nmpt` na 55 budynków, wierzch tarasu w232362965 ok. −8,4, atrybucja NMPT); wcześniej: zgłoszone (12.11, kurator, przegląd stare-miasto-1-1)
 - Ważność: S3 (sylwetka skarpy nad Podwalem w widoku od Zamku; płyta 16 m zamiast niskiej zabudowy na Rybnej) · Zasięg: stare-miasto-1-1. Środek dachu gry minus mediana NMPT GUGiK 0,5 m w obrysie: Rybna 13 w66293276 (613,5; 95,6) +11,6 m (gra 16,1 m z LoD1 na całym obrysie 528 m²; NMPT: 25% przy ziemi, 68% na 2–8 m, 7% ≥ 8 m); w232362965 (708,1; 100,7) +10,0 m (16,7 m z wartości domyślnej, cokół 7,1; NMPT: dach na poziomie podwórzy Grodzkiej, y −8,9); w364575978 (703,4; 89,6) +8,6 m (14,6 m: cokół 5 i 3 kondygnacje z tagu; NMPT p90 y −4,3). Obu ostatnich nie ma w LoD1 2024 ani w LoD2. Pozostałe 52 budynki komórki: mediana +0,24 m, p90 +1,0. Do tego oficyna (682..691; 72..80), 52 m², która jest w LoD2 (okap 11,9) i w NMPT, a w OSM jej nie ma. Nakładki `topo-sm11-img/panas.png` i `rybna13.png`
 - Pakiet właściciela: tools/osm-import (korekty wysokości z NMPT, jak `CHURCH_SURFACE`; Rybna 13: podział obrysu albo wysokość części; w232362965 i w364575978: wierzch na poziomie podwórzy, bez kondygnacji nad nim; oficyna: korekta obrysu z LoD2)
 - Test przyjęcia: proponowana kontrola `height-vs-nmpt` w stare-miasto-1-1 3 → 0; `bare-enclosed-yard` bez składowej (701..711; 101..114)
@@ -1777,6 +1777,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, kurator, przegląd G-721)
 - Ważność: S4 · Zasięg: wszystkie chodniki miasta (#6a6d73); ortofoto: chodnik do trawy 1,46–1,58; poprawka: 0,9 × square (ok. #868378) tą samą regułą co G-721; kontrola `paving-albedo-drift` (plan/trawa wobec mediany ortofoto > 0,25)
 - Pakiet właściciela: packages/engine (`ground-plan.ts`)
+
+### G-735 Narożne słupki pawilonów metra migoczą z szybami (z-fighting)
+- Ważność: S3 (widoczne z bliska przy każdym wejściu metra, na telefonie); zgłoszenie gracza 12.11 z dwoma nagraniami (Plac Litewski)
+- Opis: pierwszy i ostatni słupek ramy ścian bocznych kończył się w płaszczyźnie końców szyb (przy wejściu i z tyłu), więc pas 0,6 m na całą wysokość przeszklenia migotał między szkłem a stalą.
+- Status: w PR #477 (12.11, a027aaa: słupki 1 cm przed szkłem; test płaszczyzn w `pavilion-bake.test.ts` pada na main dla 5 wejść; zrzuty przed/po obejrzane)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
