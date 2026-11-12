@@ -8,7 +8,7 @@ interface LandmarkBuilding {
   readonly id: string;
   readonly x: number;
   readonly z: number;
-  readonly source: "height" | "levels" | "default";
+  readonly source: "height" | "levels" | "default" | "lod1";
   readonly name?: string;
 }
 

@@ -1,5 +1,6 @@
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src";
 import { FOOD_STALL, distanceToPiece, furniturePrisms, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
+import { belowGround } from "../../osm-import/src/building-tags.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
 import type { OsmData, Tags } from "../../osm-import/src/osm.ts";
@@ -93,7 +94,8 @@ const byPiece = <T>(f: (i: StreetPropItem) => T): ((i: StreetPropItem) => T) => 
   };
 };
 
-const isBuilding = (t: Tags): boolean => t.building !== undefined && t.building !== "roof" && t.location !== "underground" && Number(t.layer ?? 0) >= 0;
+/** A building over the ground by the importer's own rule (G-646): a layer under a viaduct does not sink it. */
+const isBuilding = (t: Tags): boolean => t.building !== undefined && t.building !== "roof" && !belowGround(t);
 
 /** The checks over the pieces `all` (every piece of the city), the map data `osm` and the crowd's lanes. */
 export const marketChecks = (osm: OsmData, all: readonly StreetPropItem[], lanes: readonly { readonly id: string; readonly points: readonly (readonly [number, number])[] }[]): Record<string, () => Finding[]> => {
