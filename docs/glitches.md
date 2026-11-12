@@ -1706,6 +1706,31 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `report.ts --area T-245/zielen-litevski` zwraca „brak rastra”, bo pierwszy wierzchołek (x −201) leży tuż przed rastrem Krakowskiego (od x −200); poprawka: wybór rastra po środku obszaru albo po dowolnym punkcie na rastrze
 - Pakiet właściciela: tools/orto
 
+### G-629 Na skarpie cokół NMT połyka kondygnacje z tagu (Kowalska)
+- Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1) ; runda 2 gałęzi heights
+- Ważność: S3 · Zasięg: reguła `MIN_STOREY` w `lod1-heights.ts` liczy ściany od wierzchu cokołu; przy cokole 9–12 m Kowalska 7 spada z 4 kondygnacji do 1, Kowalska 9, 11, 13 z 3 do 1, od ulicy ślepy mur z jednym rzędem okien; 15 budynków (T-252); poprawka: kondygnacje z tagu zostają, gdy `height ≥ levels × 2,6`, cokół do `height − levels × STOREY`
+- Pakiet właściciela: tools/osm-import
+
+### G-630 Budynki LoD1 dopasowane luźno (IoU 0,5–0,7) zostają przy starej wysokości
+- Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1) ; osobny PR po heights
+- Ważność: S4 · Zasięg: 25 budynków z różnicą > 3 m, np. Kowalska 5 (w66309797) 24,5 m wobec LoD1 14,8 m obok Kowalskiej 7 z 15,3 m (uskok 9 m), Kuratorium Oświaty (T-253); proponowana kontrola `lod1-loose-match` (baza 25)
+- Pakiet właściciela: tools/osm-import
+
+### G-631 Trybunał Koronny i Teatr Osterwy poniżej LoD1, Trybunał niższy od kamienic Rynku
+- Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1) ; runda 2 gałęzi heights
+- Ważność: S3 · Zasięg: oba w `LOD1_LANDMARKS` zostają przy starych wysokościach; Trybunał okap 11,4 m wobec LoD1 17,5 m i LoD2 ok. 16,4 m, po zmianie kamienice Rynku mają okapy 4–8 m wyżej (odwrócona relacja); Teatr 16,3 wobec 19,5 m (T-254); poprawka: korekta w `TAG_CORRECTIONS` zgodna z LoD1 i NMPT; kontrola `landmark-vs-lod1` (baza 3 z Klasztorem Dominikanów, G-633)
+- Pakiet właściciela: tools/osm-import
+
+### G-632 Wyjątek `historic` wyjmuje z LoD1 pałace spoza listy punktów orientacyjnych
+- Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1) ; runda 2 gałęzi heights
+- Ważność: S3 · Zasięg: `use === "historic"` w `lod1Exempt`: Pałac Zylbera 10,1 m wobec LoD1 19,4 m (okap LoD2 17,7), Pałac Parysów 11,1 wobec 18,1, Złota 3, Rynek 11, Pałac Pawęczkowskiego, DPS im. Michelisowej (T-255); poprawka: usunąć ten warunek, punkty orientacyjne mają własną listę; kontrola `height-vs-lod1` z historic (baza 10)
+- Pakiet właściciela: tools/osm-import
+
+### G-633 Klasztor Dominikanów: środek dachu 5 m nad LoD1
+- Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1)
+- Ważność: S4 · Zasięg: środek dachu 30,9 m wobec 25,8 m w LoD1; poza zmianą heights, wynik sondy kuratora
+- Pakiet właściciela: tools/osm-import, packages/engine (receptury landmarków)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
