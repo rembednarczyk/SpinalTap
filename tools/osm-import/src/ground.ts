@@ -112,13 +112,14 @@ export const roadWidth = (t: Tags): number => {
 };
 
 /** The narrowest carriageway a street's mapped sidewalks narrow it to, metres: one-way, and two-way (two 2.25 m lanes, T-063). */
-const MIN_FITTED = { oneway: 3, twoWay: 4.5 };
+export const MIN_FITTED = { oneway: 3, twoWay: 4.5 };
 
 /**
  * A street the map gives no width (no `width`, no `lanes`) narrowed to `kerb` metres each side of
  * its axis, short of its separately mapped sidewalks (T-046): the width by type would lay the
  * asphalt over their middle and `cutSidewalk` would drop them. The fitted width goes to
- * `width:carriageway`, so the bands, markings and zebras all read the same one.
+ * `width:carriageway`, so the bands, markings and zebras all read the same one. A street of
+ * mapped `lanes` is fitted side by side instead (`fitLanes`, G-655).
  */
 export const fitToKerb = (t: Tags, kerb: number | null, oneway: boolean): Tags => {
   if (kerb === null || ROAD_WIDTH[t.highway ?? ""] === undefined || parseLength(t.width ?? t["width:carriageway"]) !== null || Number(t.lanes) > 0) return t;
