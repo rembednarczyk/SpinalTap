@@ -1672,7 +1672,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, tools/glitch-scan
 
 ### G-621 `ModelMemory` bez testu kolejności zwalniania
-- Status: zgłoszone (11.11, naprawiacz G-620)
+- Status: w PR #420 (12.11; test jednostkowy, pada 3/5 przy odwróconym sortowaniu)
 - Ważność: S4 · Zasięg: przypadek telefonu w `model-release.test.ts` przechodzi także z odwróconym sortowaniem w `ModelMemory.sweep` (naraz jeden kandydat); brak testu jednostkowego „najdłużej nieużywany idzie pierwszy”
 - Pakiet właściciela: packages/engine (testy)
 
