@@ -1617,7 +1617,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-627 Ręczne trawniki T-245 leżą częściowo na nawierzchni
-- Status: w PR #438 (12.11; przegląd kuratora w toku)
+- Status: w PR #438 (12.11; kurator PRZYJĘTE, trawnik północny z 41–48,5 potwierdzony)
 - Ważność: S3 · Zasięg: `LITEVSKI_GREEN` i `SCHOOL_GREEN` w `tools/osm-import/src/corrections-zn.ts` (runda 2 #405) kładą trawę na asfalcie i kostce: pas x −201…−197, z 27–45 (54 m², zieleń 13%) i pas wzdłuż w80139555 do Cichej 4 (104 m², zieleń 4%); krakowskie-0-1; poprawka wg ADR-0077: trawa tylko na płatach zieleni z nakładki ortofoto (domknięcie 1 m, płat od 4 m²), reszta kostką jak T-243; kryterium: trawnik Litevski ≥ 70% zieleni, szkoły ≥ 55%, nowa kostka ≤ 15%; `cover-truth.test.ts` próg 0,55 → 0,7 (trawniki kuratora są prawdą klasyfikatora); nowa kontrola skanu `added-grass-off-green` (ręczne trawniki z zielenią < 50%: 11 z 20, 1 133 m²; do sprawdzenia też T-241 trawnik-wschod, trawnik-bajkowskiego, T-245 trawnik-3-maja-klinika, rabaty przy Collegium, T-246 trawnik-nadstawna-3)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1760,6 +1760,26 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, naprawiacz G-644; także na main)
 - Ważność: S4 · Zasięg: `chase` gangera (`ganger-walk.ts`) zostaje, dopóki cel jest w `CHASE_DRIFT` (8 m) od starego; gdy gracz przeskoczy płot w tym promieniu, ganger może dojść do starego celu i stać po złej stronie bariery
 - Pakiet właściciela: packages/sim (systems/ai)
+
+### G-667 Trawnik `T-245/trawnik-3-maja-klinika` leży na chodniku
+- Status: zgłoszone (12.11, kurator przeglądu G-627)
+- Ważność: S4 · Zasięg: Krakowskie, x −95…−92, z 131–155, 49 m², zieleń 2%: jasny chodnik 3 Maja ze słupkami i latarniami, zieleń w pasach przy x −97 i x −91; poprawka: trawnik na pasy zieleni albo kostka; kryterium zieleń ≥ 55%; wiersz T-245 do uzupełnienia o ten trawnik jako otwarty
+- Pakiet właściciela: tools/osm-import
+
+### G-668 Trawnik `T-246/trawnik-nadstawna-3` leży na dachu
+- Status: zgłoszone (12.11, kurator przeglądu G-627)
+- Ważność: S4 · Zasięg: Podzamcze, x 814–823, z 474–489, przy zachodniej ścianie w73833932 (5,6 m): na obu nalotach krawędź dachu ok. 2,5 m na zachód od obrysu OSM, zarośla przy x 812–818; najpierw sprawdzić obrys w73833932, potem przesunąć trawnik
+- Pakiet właściciela: tools/osm-import
+
+### G-669 `T-170/trawnik-pawilonow` sięga na kostkę z misami drzew
+- Status: zgłoszone (12.11, kurator przeglądu G-627)
+- Ważność: S4 · Zasięg: Podzamcze, x 840–870, z 361–369: południowe 3–4 m trawnika do ścieżki w227698420 to kostka z misami drzew; niski priorytet
+- Pakiet właściciela: tools/osm-import
+
+### G-670 Kontrola `added-grass-off-green` bez listy wyjątków celowych i bez lustra dla kostki
+- Status: zgłoszone (12.11, kurator przeglądu G-627)
+- Ważność: S4 · Zasięg: baza 10 liczy też celowe trawniki T-241 (`trawnik-zachod`, `trawnik-wschod`, `trawnik-bajkowskiego`, plan inwestora ADR-0074) i błędy klasyfikatora (`T-243/ck-zachod-trawnik`, `T-245/rabata-kolegium-poludnie`): lista wyjątków z odsyłaczem T-NNN, baza 10 → 5; nowa kontrola `added-paving-on-green` (ręczna kostka z zielenią ≥ 50%, kandydaci `T-245/zn2-wschod-trawnik` 71%, `zn2-wschod-srodek` 40%); do sprawdzenia też pas zieleni ok. 22 m² pod `podworze-litevski` (x −194,5…−192, z 28–39)
+- Pakiet właściciela: tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
