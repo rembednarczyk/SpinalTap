@@ -1,4 +1,4 @@
-import type { Vec3 } from "@seki/core";
+import { type Vec3, segmentDistance } from "@seki/core";
 import type { System } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
 
@@ -11,13 +11,8 @@ const ARRIVE = 0.4;
 
 const flat = (a: Vec3, b: Vec3): number => Math.hypot(a.x - b.x, a.z - b.z);
 
-const segmentDistance = (p: Vec3, a: Vec3, b: Vec3): number => {
-  const abx = b.x - a.x;
-  const abz = b.z - a.z;
-  const len2 = abx * abx + abz * abz;
-  const t = len2 < 1e-12 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * abx + (p.z - a.z) * abz) / len2));
-  return Math.hypot(a.x + abx * t - p.x, a.z + abz * t - p.z);
-};
+/** A route's segment shorter than this squared (m²) counts as its start point. */
+const MIN_SEGMENT2 = 1e-12;
 
 /**
  * Where to walk next along a route, or null at its end. Stateless: the segment nearest to
@@ -31,7 +26,7 @@ export const nextOnRoute = (route: readonly Vec3[], at: Vec3): Vec3 | null => {
     const a = route[i];
     const b = route[i + 1];
     if (!a || !b) continue;
-    const d = segmentDistance(at, a, b);
+    const d = segmentDistance(at.x, at.z, a.x, a.z, b.x, b.z, MIN_SEGMENT2);
     if (d < best - 1e-9) {
       best = d;
       seg = i;
