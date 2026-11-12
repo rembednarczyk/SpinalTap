@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
+import { footprint } from "../../gugik/src/overlap.ts";
 import { DISTRICTS } from "../src/config.ts";
+import { extractFeatures } from "../src/features.ts";
 import { generate } from "../src/generate.ts";
 import { loadInputs } from "../src/load.ts";
 import { HAND_HEIGHTS, LOD1_MAX_CHANGE, lod1Exempt, lod1Index, lod1Massing, lod1Match, worldRing } from "../src/lod1-heights.ts";
@@ -11,6 +13,7 @@ import { HAND_HEIGHTS, LOD1_MAX_CHANGE, lod1Exempt, lod1Index, lod1Massing, lod1
 
 const inputs = loadInputs();
 const index = lod1Index(inputs.lod1);
+const areas = extractFeatures(inputs.osm).areas;
 const measured = (b: { x: number; z: number; outline: readonly number[] }) => lod1Match(index, worldRing(b))?.lod1.height;
 
 describe("the eaves from LoD1 measuredHeight", () => {
@@ -83,7 +86,10 @@ describe("the import's heights", () => {
   ])("%s: from the tags' guess to LoD1", (_, id, x, z) => {
     const before = built(id, x, z);
     const after = built(id, x, z, inputs.lod1);
-    const m = measured(after)!;
+    // Cut at the map's edge (G-556): LoD1 holds the whole building, matched by the map's whole outline.
+    const whole = areas.find((a) => a.id === id)!.ring;
+    expect(footprint(worldRing(after)).area).toBeLessThan(footprint(whole).area * 0.8);
+    const m = lod1Match(index, whole)!.lod1.height;
     expect(Math.abs(before.height + (before.roof ?? 0) / 2 - m)).toBeGreaterThan(3);
     expect(after.source).toBe("lod1");
     expect(after.height + (after.roof ?? 0) / 2).toBeCloseTo(m, 0);

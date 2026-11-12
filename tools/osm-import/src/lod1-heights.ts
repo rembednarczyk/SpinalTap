@@ -113,9 +113,13 @@ export const lod1Massing = (
   return { height, levels, plinth: b.plinth };
 };
 
-/** A building with its height from LoD1 (`source: "lod1"`) where the rule above takes it, else as it is. */
-export const withLod1Height = (b: BuildingOut, index: BoxIndex<Indexed> | undefined, crowned: boolean): BuildingOut => {
+/**
+ * A building with its height from LoD1 (`source: "lod1"`) where the rule above takes it, else as it
+ * is. `whole` is the map's outline of a building cut at the map's edge (G-556): LoD1 holds the whole
+ * building, so the match is on it, the height going to the part on the map.
+ */
+export const withLod1Height = (b: BuildingOut, index: BoxIndex<Indexed> | undefined, crowned: boolean, whole?: readonly Pt[]): BuildingOut => {
   if (!index || (b.source !== "default" && b.source !== "levels") || lod1Exempt(b, crowned) !== undefined) return b;
-  const m = lod1Match(index, worldRing(b));
+  const m = lod1Match(index, whole ?? worldRing(b));
   return m ? { ...b, ...lod1Massing(b, m.lod1.height), source: "lod1" } : b;
 };
