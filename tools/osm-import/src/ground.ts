@@ -145,7 +145,8 @@ export interface Band {
   readonly run?: readonly [Pt, Pt];
   /**
    * Paving with holes, or a lawn cut out of it (`openPavings`), simplified already: simplifying it
-   * again in a chunk would part the lawn from its hole. So is a kerb's fill (`kerbFills`), finer.
+   * again in a chunk would part the lawn from its hole. So is a kerb's fill (`kerbFills`), finer, and
+   * a raised lawn's piece on the ground (`groundRaisedGreen`), which shares its cut edges with the next.
    */
   readonly holed?: true;
 }
