@@ -27,7 +27,7 @@ import { patrolChecks } from "./patrol-pieces";
 import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
-import { addedGrassOffGreen } from "./added-grass";
+import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
 import { readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { cityRaisedGreenWorld, raisedGreenOnGround } from "./raised-green";
@@ -1913,6 +1913,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "grass-under-paving": () => grassUnderPavingFindings(WORLD_SCENERY),
   /** A lawn or a bed the curator added to the map with under half of it green on the orthophoto cover (G-627, `added-grass.ts`). */
   "added-grass-off-green": () => addedGrassOffGreen(ADDED_AREAS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** An area of paving or asphalt the curator added to the map with half of it or more green on the orthophoto cover (G-670, `added-grass.ts`). */
+  "added-paving-on-green": () => addedPavingOnGreen(ADDED_AREAS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A point of a 0.5 m grid of drawn grass of a lawn the map lays above the ground, in a building or off the garage under it: VIVO's roof garden (G-647, `raised-green.ts`). */
   "raised-green-on-ground": () => raisedGreenOnGround(cityRaisedGreenWorld(SOURCE_OSM)),
   /** Road markings, zebras and flights on a bridge's deck drawn under its carriageway (G-301, `deck-paint.ts`). */
