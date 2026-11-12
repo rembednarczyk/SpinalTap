@@ -1,15 +1,17 @@
 /**
- * Land cover from the orthophoto's colour (ADR-0077): green, light paving, asphalt, shadow or
- * unknown. Green from the excess green of RGB averaged over the flights (`FLIGHTS`), shadow from
- * their mean brightness, and a hard surface split by the current image's brightness and
- * saturation, which shows the ground under the trees (thresholds in `thresholds.ts`).
+ * Land cover from the orthophoto's colour (ADR-0077): green, green under crowns, light paving,
+ * asphalt, shadow or unknown. Green from the excess green of RGB averaged over the flights
+ * (`FLIGHTS`), shadow from their mean brightness, and a hard surface split by the current image's
+ * brightness and saturation, which shows the ground under the trees (thresholds in `thresholds.ts`).
+ * Green the leaf-off current image does not show is `canopy` (G-672): the two summer flights' crowns
+ * lift the mean over paving under trees as well as over a lawn in their shade or still brown in April.
  */
 import { THRESHOLDS, type Thresholds } from "./thresholds.ts";
 
 /** Palette indices of the cover raster. */
-export const COVER = { none: 0, green: 1, paving: 2, asphalt: 3, shadow: 4, unknown: 5 } as const;
+export const COVER = { none: 0, green: 1, paving: 2, asphalt: 3, shadow: 4, unknown: 5, canopy: 6 } as const;
 export type CoverClass = (typeof COVER)[keyof typeof COVER];
-export const COVER_NAMES = ["none", "green", "paving", "asphalt", "shadow", "unknown"] as const;
+export const COVER_NAMES = ["none", "green", "paving", "asphalt", "shadow", "unknown", "canopy"] as const;
 export type CoverName = (typeof COVER_NAMES)[number];
 /** Colours of the classes in the PNG: what a person opening it sees. */
 export const COVER_PALETTE: readonly (readonly [number, number, number])[] = [
@@ -19,6 +21,7 @@ export const COVER_PALETTE: readonly (readonly [number, number, number])[] = [
   [70, 70, 80],
   [20, 20, 60],
   [200, 60, 200],
+  [30, 100, 40],
 ];
 
 export type Colour = readonly [r: number, g: number, b: number];
@@ -45,8 +48,8 @@ export const classify = (flights: readonly Colour[], t: Thresholds = THRESHOLDS)
   const l = stats.reduce((s, c) => s + c.l, 0) / stats.length;
   const exg = stats.reduce((s, c) => s + c.exg, 0) / stats.length;
   if (l < t.shadowL) return COVER.shadow;
-  if (exg >= t.greenExg) return COVER.green;
   const now = stats[0]!;
+  if (exg >= t.greenExg) return now.exg >= t.leafOffExg ? COVER.green : COVER.canopy;
   if (now.s > t.hardS) return COVER.unknown;
   return now.l >= t.pavingL ? COVER.paving : COVER.asphalt;
 };

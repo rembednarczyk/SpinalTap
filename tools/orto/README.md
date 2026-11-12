@@ -13,6 +13,6 @@ Narzędzie ma trzy kroki: pamięć podręczną ortofoto PZGiK, klasyfikator pokr
    - `--area <id>` albo `--added` liczy m² obszarów z `ADDED_AREAS`.
 
 ## Klasy i progi
-- Klasy: zieleń, jasna nawierzchnia, asfalt, cień, nieznane, brak zdjęcia.
+- Klasy: zieleń, zieleń pod koronami (zielona tylko na letnich nalotach, nie na nalocie bez liści 2025-04; G-672), jasna nawierzchnia, asfalt, cień, nieznane, brak zdjęcia.
 - Progi są w `src/thresholds.ts`, a zgodność z prawdą trzyma `test/cover-truth.test.ts`.
 - Po zmianie progów puść `build.ts`, podbij `CLASSIFIER_VERSION` w `src/manifest.ts` i commituj rastry razem z progami.
