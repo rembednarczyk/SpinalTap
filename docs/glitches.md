@@ -1037,7 +1037,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-365 Wyjście pawilonu metra `targ` A prowadzi na rabatę zamiast na bruk (T-158)
 - Status: zgłoszone (6.11, kurator, przegląd #303; zaległość z T-158)
-- Ważność: S4 · Zasięg: otwór (722; 286) wychodzi na rabatę z 289,6–292,6; według T-158 otwór miał dostać stronę parkingu albo pawilon miał się przesunąć · Koszt: mały
+- Ważność: S4 · Zasięg: otwór (722; 286) wychodzi na rabatę z 289,6–292,6; według T-158 otwór miał dostać stronę parkingu albo pawilon miał się przesunąć · Koszt: mały; `metro-exit-bare` 27 (cała baza miasta) to próbki tej rabaty (przegląd podzamcze-1-0, 12.11); test przyjęcia: `metro-exit-bare` 27 → 0 bez brukowania rabaty
 - Pakiet właściciela: packages/sim (`content/metro.ts`); przegląd kuratora
 - Test przyjęcia: wyjście pawilonu na nawierzchni `square`/`sidewalk`, nie na rabacie
 
@@ -1826,15 +1826,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: Pałac Parysów w66330695 ma w LoD2 mansardę (połacie 60° do 15,6 m, 16° do 18,2 m), w grze czterospadowy (`roofType` 1130); pałace bez `building:levels` (Czartoryskich, Parysów, Potockich) dostają kondygnacje po 2,7–3,3 m zamiast 2 wysokich; Narutowicza 4 (WBP): zabytkowe skrzydło od ulicy płasko na 14 m, w rzeczywistości okap ok. 8,5 m i kalenica 12,4 m (jeden obrys OSM, do podziału na części)
 - Pakiet właściciela: tools/osm-import
 
-### G-697 Goły teren przed wyjściem A metra „Plac Zamkowy”
-- Status: zgłoszone (12.11, przejście komórki podzamcze-1-0; czeka na kuratora)
-- Ważność: S4 · Zasięg: (721,0–723,5; 289,8–292,6), ok. 6,8 m²; `metro-exit-bare` = 27 (cała baza miasta, wpisu G nie było); front pawilonu (x 720,2–723,8, z 282,4–289,6) poza pierścieniami nawierzchni, kostka kończy się na z 289,0; ortofoto 2025-04: jasna nawierzchnia; ręczny plac z G-332 obejmuje tylko wyjście B; test przyjęcia: `metro-exit-bare` 27 → 0
-- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
-
 ### G-698 Kuria Metropolitalna płasko na 13,1 m: LoD2 dzieli ją na dwa budynki
 - Status: zgłoszone (12.11, autor G-639)
 - Ważność: S4 · Zasięg: w66293168: LoD2 ma dwa budynki o IoU 0,45 i 0,50 z obrysem OSM, więc reguła dachów z LoD2 (#459, dopasowanie 1:1, IoU ≥ 0,7) jej nie obejmuje; LoD1 2024 ma ją w całości (IoU 0,91), płasko 13,1 m przy LoD2 10,8–15,5 m; poprawka: dopasowanie wielu budynków LoD2 do jednego obrysu (części)
 - Pakiet właściciela: tools/osm-import, tools/gugik
+
+### G-699 Podjazd i taras przy Zamku węższe niż w Lublinie: goły teren między pasem drogi a licem (T-265)
+- Status: zgłoszone (12.11, kurator, przegląd podzamcze-1-0)
+- Ważność: S4 · Zasięg: Podzamcze, Zamek w48500136. Od północy (844..920; 262..273) ok. 382 m² gołego terenu między pasem 4 m drogi w66258158 a licem, a na ortofoto asfaltowy podjazd ok. 10 m z parkowaniem. Od południa (830..920; 202..209) ok. 130 m² przy licu i taras (882..900; 193..200) ok. 89 m², na ortofoto kostka. Zrzuty `pz10d-pn-podjazd`, `pz10d-pd-taras`
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS` albo korekta `width`)
+- Test przyjęcia: `landuse-bare` w (844..920; 255..273) 1527 → mniej niż 100, w (830..920; 202..212) i na tarasie 873 → mniej niż 100; zbocze z trawą bez nawierzchni
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

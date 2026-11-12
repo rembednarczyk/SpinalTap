@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-697 Goły teren przed wyjściem A metra „Plac Zamkowy”
+- Status: odrzucone, duplikat G-365 (12.11, kurator, przegląd podzamcze-1-0): przed otworem pawilonu A jest rabata (T-158), nie nawierzchnia; nie brukować
+- Ważność: S4 · Zasięg: (721,0–723,5; 289,8–292,6), ok. 6,8 m²; `metro-exit-bare` = 27 (cała baza miasta, wpisu G nie było); front pawilonu (x 720,2–723,8, z 282,4–289,6) poza pierścieniami nawierzchni, kostka kończy się na z 289,0; ortofoto 2025-04: jasna nawierzchnia; ręczny plac z G-332 obejmuje tylko wyjście B; test przyjęcia: `metro-exit-bare` 27 → 0
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+
 ### G-689 Bazy `ground-strip-overlap` i `ground-strip-gap` nieaktualne albo niedeterministyczne
 - Status: naprawiony (PR #458, 56a13cb; kontrole deterministyczne, baza z #453 liczona sprzed #447)
 - Ważność: S4 · Zasięg: `GLITCH_BASELINE=update` na main (389e0aa) daje `ground-strip-overlap` 93 727 → 93 726 i `ground-strip-gap` 4 105 → 4 100 bez zmiany nawierzchni; ustalić, czy zmieniły je scalenia po #453 (np. #454), czy kontrola zależy od kolejności; jeśli niedeterministyczna, ustalić przyczynę (zaokrąglenia rastra, kolejność kawałków)
