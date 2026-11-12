@@ -8,7 +8,7 @@
 | [0004](0004-webgl2-baseline.md) | Cel renderowania: WebGL2, WebGPU później | Zaakceptowana |
 | [0005](0005-automat-questow-reczny.md) | Questy i dialogi bez XState | Zaakceptowana |
 | [0006](0006-assety-proceduralne-w-m0.md) | Assety: proceduralne w M0, glTF + meshopt + KTX2 od M1 | Zaakceptowana |
-| [0007](0007-budzety-wydajnosci.md) | Budżety wydajności M0 | Zaakceptowana (do rewizji po profilowaniu na sprzęcie) |
+| [0007](0007-budzety-wydajnosci.md) | Budżety wydajności M0 | Zaakceptowana (rewizja 2 przez ADR-0079, 12.11; wcześniej: do rewizji po profilowaniu na sprzęcie) |
 | [0008](0008-kolizje-deterministyczne-havok-odlozony.md) | Kolizje w `sim`, Havok odłożony | Zaakceptowana |
 | [0009](0009-audio-syntezowane.md) | Audio syntezowane w WebAudio | Zaakceptowana |
 | [0010](0010-petla-m1-kontrakty-cyberware.md) | Pętla M1: kontrakty, klinika, zdolność aktywna | Zaakceptowana |
