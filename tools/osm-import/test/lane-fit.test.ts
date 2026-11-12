@@ -11,6 +11,23 @@ import { type GroundOut } from "../src/model.ts";
 import { parseOsmXml } from "../src/osm.ts";
 import { worldToGeo } from "../src/project.ts";
 
+/**
+ * Where a line goes on from the end of another of its run within a metre along, the sideways
+ * steps of 0.1 m and more between them, rounded to 0.1 m: none where the paint runs on.
+ */
+const markingSteps = (lines: readonly Pt[][]): string[] =>
+  lines.flatMap((a) =>
+    lines.flatMap((b) => {
+      if (a === b) return [];
+      const [p, q, r] = [a[a.length - 1]!, a[a.length - 2]!, b[0]!];
+      const len = Math.hypot(p.x - q.x, p.z - q.z);
+      const [ux, uz] = [(p.x - q.x) / len, (p.z - q.z) / len];
+      const along = (r.x - p.x) * ux + (r.z - p.z) * uz;
+      const across = Math.abs((r.x - p.x) * uz - (r.z - p.z) * ux);
+      return along > -0.5 && along < 1 && across >= 0.1 && across < 1.5 ? [`${p.x.toFixed(1)},${p.z.toFixed(1)}: ${across.toFixed(1)} m`] : [];
+    }),
+  );
+
 const ring = (flat: readonly number[]): Pt[] => Array.from({ length: flat.length / 2 }, (_, i) => ({ x: flat[2 * i]!, z: flat[2 * i + 1]! }));
 
 /** The game's ground at a point: the surfaces of the pieces over it. */
@@ -72,6 +89,24 @@ describe("a street of mapped lanes fitted to its sidewalks (G-655)", () => {
     expect(reach({ "sidewalk:right": "separate" }, 80, { highway: "footway" }, 60)).toEqual([4.9, 4.9]);
   });
 
+  it("runs its centre and lane lines on where a fitted stretch meets the map's (G-675)", () => {
+    // The right footway ends at x 60: the fitted piece's lines step 0.5 and 0.9 m there unless they shift over a taper.
+    const map = parseOsmXml(
+      ["<osm>", node(1, 0, 0), node(2, 100, 0), node(3, 0, 4), node(4, 100, 4), node(5, 0, -4), node(6, 60, -4),
+        way(10, 1, 2, { highway: "residential", lanes: "3", "lanes:forward": "2", "lanes:backward": "1", "sidewalk:right": "separate" }),
+        way(11, 3, 4, { highway: "footway" }),
+        way(12, 5, 6, { highway: "footway" }),
+        "</osm>"].join("\n"),
+    );
+    const lines = generate(map, () => 190, tinyChunk).chunks[0]!.markings.filter((m) => m.kind !== "edge").map((m) => ring(m.line));
+    expect(lines.length).toBeGreaterThan(0);
+    expect(markingSteps(lines)).toEqual([]);
+    // Off the taper (x 55 to 65) the lines lie where each piece's lanes put them: the fitted piece's
+    // axis 0.68 m left of the map's, its lanes 2.8 m wide, then 3.25 m on the map's axis.
+    const zAt = (x: number) => lines.flatMap((l) => l.slice(1).flatMap((b, i) => (l[i]!.x <= x && b.x >= x ? [l[i]!.z] : []))).sort((a, b) => a - b);
+    expect([zAt(20), zAt(50), zAt(70), zAt(90)]).toEqual([[-0.7, 2.1], [-0.7, 2.1], [-1.6, 1.6], [-1.6, 1.6]]);
+  });
+
   it("keeps each of its lanes 2.25 m wide and more", () => {
     // Footways 4 m off the axis both sides of a five-lane street: 7 m would make 1.4 m lanes; 11.25 m it is.
     const [left, right] = reach({ sidewalk: "separate", lanes: "5", "lanes:forward": "3", "lanes:backward": "2" }, 50);
@@ -116,6 +151,13 @@ describe("Radziwiłłowska by Plac Litewski on the map (G-655)", () => {
       return k.bare >= 1 ? [`${p.x.toFixed(0)}: ${k.bare.toFixed(2)} m`] : [];
     });
     expect(bare).toEqual([]);
+  });
+
+  it("runs its centre and lane lines on where its fitted pieces meet, at x -19 and -66 (G-675)", () => {
+    const markings = generate(inputs.osm, () => 190, [{ id: "t-0-0", district: DISTRICTS[0]!, rect: { minX: -100, minZ: 95, maxX: 0, maxZ: 135 } }]).chunks[0]!.markings;
+    const lines = markings.filter((m) => m.kind === "centre-dash" || m.kind === "lane-dash").map((m) => ring(m.line));
+    expect(lines.filter((l) => l.some((p) => p.x < -60) && l.some((p) => p.x > -70)).length).toBeGreaterThan(0);
+    expect(markingSteps(lines)).toEqual([]);
   });
 
   it("is not narrowed past where the footway turns off south, and its asphalt fills the kerb there", () => {

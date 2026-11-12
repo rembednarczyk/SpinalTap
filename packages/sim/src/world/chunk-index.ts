@@ -22,6 +22,9 @@ const farthest = (r: Rect, cell: Rect): number =>
  * in a bucket of a fixed grid; outside every chunk the nearest one, the first among equals, the
  * shafts left out. The nearest is looked for among the candidates of the point's cell of the
  * plane, found once per cell (G-391): a ray far off the map asked every chunk at every step.
+ * Not core's `SpatialHash`, on purpose: the ground is asked at every step of every ray, so the
+ * buckets are a dense array anchored at the chunks' corner, read without a hash or an allocation,
+ * and each cell of the plane keeps its nearest candidates, a state a grid of items has no place for.
  */
 export class ChunkIndex {
   private readonly x0: number;
