@@ -189,6 +189,20 @@ describe("grass-under-paving (G-421)", () => {
     expect(drawnAt(WORLD_SCENERY, boxOf(ring("w470555118")))({ x: 482, z: -5 })).toBe("square");
   });
 
+  // T-245's lawns west of Litevski Art Residence and north of the school ran over asphalt and light
+  // paving the orthophoto shows (PZGiK): 54 m² behind the fence at x -201...-197, z 27-45, and 104 m²
+  // from the footway w80139555 to Cicha 4's west wall (G-627). Those strips are paved; the trees by them stay lawns.
+  it("lays no lawn on the paving behind Litevski's fence and along Cicha 4 (G-627)", () => {
+    const fence = rect(-200, 27, -197, 40.5);
+    const cicha4: P2[] = [{ x: -188.32, z: 125.25 }, { x: -193.63, z: 125.57 }, { x: -193.1, z: 131 }, { x: -188.42, z: 147.5 }, { x: -185.16, z: 144.38 }];
+    const grass = (ring: readonly P2[]) => topSurfaces(WORLD_SCENERY, ring).get("grass") ?? 0;
+    expect([grass(fence), grass(cicha4)]).toEqual([0, 0]);
+    expect(topSurfaces(WORLD_SCENERY, fence).get("square") ?? 0).toBeGreaterThan(35);
+    // The trees south-west of Litevski and west of the school.
+    expect(grass(rect(-200, 6, -195, 24))).toBeGreaterThan(75);
+    expect(grass(rect(-200, 115, -195, 124))).toBeGreaterThan(40);
+  });
+
   it("lays every piece of paving with holes as the triangles of its own area", () => {
     const wrong = WORLD_SCENERY.flatMap(({ view, at }) => {
       if (view.kind !== "ground" || (view.surface !== "square" && view.surface !== "cobble")) return [];

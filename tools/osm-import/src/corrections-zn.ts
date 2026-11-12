@@ -30,7 +30,7 @@ export const t245 = (name: string, tags: AddedArea["tags"], ring: readonly Pt[],
 
 /**
  * The grounds of Litevski Art Residence (Żołnierzy Niepodległej 4) round its west, north and east walls:
- * the driveway w181172336 to its garage on the west (to x -197, where `LITEVSKI_GREEN` begins), the
+ * the driveway w181172336 to its garage on the west (to x -197, where `LITEVSKI_WEST` begins), the
  * forecourt to the footway w233257773's axis and the passage with the driveway w181172345 to Żołnierzy
  * Niepodległej 2. South of the line of its south wall `ZN2_SOUTH` takes over.
  */
@@ -60,24 +60,59 @@ const YARD_LITEVSKI: AddedArea = t245(
 );
 
 /**
- * The green west of Litevski Art Residence (orthophoto, PZGiK): the strip of grass and shrubs along the
- * chunk's west edge from the footway w233257773's axis to the trees south-west of the building, west of
- * its garage ramp, and the trees on to Żołnierzy Niepodległej 6's north wall.
+ * The green west of Litevski Art Residence (orthophoto, PZGiK): the trees south-west of the building, west
+ * of its garage ramp, on to Żołnierzy Niepodległej 6's north wall. North of z 24.6 lies asphalt
+ * (`LITEVSKI_WEST`, G-627).
  */
 const LITEVSKI_GREEN: AddedArea = t245(
   "zielen-litevski",
   GRASS,
   [
     { x: -201.0, z: 5.23 },
-    { x: -201.0, z: 51.61 },
-    { x: -197.0, z: 51.29 },
-    { x: -197.0, z: 27.0 },
-    { x: -194.5, z: 27.0 },
+    { x: -201.0, z: 24.6 },
+    { x: -194.5, z: 24.6 },
     { x: -194.5, z: 14.5 },
     { x: -192.0, z: 14.5 },
     { x: -192.0, z: 5.53 },
   ],
-  "pas trawy z krzewami i drzewa na zachód i południowy zachód od Litevski Art Residence do ściany Żołnierzy Niepodległej 6 na ortofoto PZGiK, w OSM goła ziemia",
+  "drzewa na zachód i południowy zachód od Litevski Art Residence do ściany Żołnierzy Niepodległej 6 na ortofoto PZGiK, w OSM goła ziemia",
+);
+
+/** The patch of grass at the chunk's west edge behind the fence north-west of Litevski Art Residence (orthophoto, PZGiK). */
+const LITEVSKI_WEST_GREEN: AddedArea = t245(
+  "zielen-litevski-polnoc",
+  GRASS,
+  [
+    { x: -201.0, z: 41.0 },
+    { x: -201.0, z: 48.5 },
+    { x: -198.0, z: 48.5 },
+    { x: -198.0, z: 41.0 },
+  ],
+  "płat trawy za płotem na północny zachód od Litevski Art Residence na ortofoto PZGiK, w OSM goła ziemia",
+);
+
+/**
+ * West of the fence of Litevski Art Residence's plot (x -197), on the neighbour's (`landuse=commercial`
+ * w1306444439): the asphalt from the driveway w181172336's line on to the chunk's west edge and north to
+ * the footway w233257773's axis, round `LITEVSKI_WEST_GREEN`. The orthophoto shows dark paving there,
+ * not the lawn laid over it before (G-627).
+ */
+const LITEVSKI_WEST: AddedArea = t245(
+  "kostka-litevski-zachod",
+  SETTS,
+  [
+    { x: -201.0, z: 24.6 },
+    { x: -201.0, z: 41.0 },
+    { x: -198.0, z: 41.0 },
+    { x: -198.0, z: 48.5 },
+    { x: -201.0, z: 48.5 },
+    { x: -201.0, z: 51.61 },
+    { x: -197.0, z: 51.29 },
+    { x: -197.0, z: 27.0 },
+    { x: -194.5, z: 27.0 },
+    { x: -194.5, z: 24.6 },
+  ],
+  "utwardzony pas za płotem działki Litevski Art Residence do osi chodnika w233257773 (asfalt na ortofoto PZGiK), w OSM goła ziemia",
 );
 
 /**
@@ -344,30 +379,47 @@ const BLOCK_ZN3: AddedArea = t245(
   "utwardzone podwórza kwartału Żołnierzy Niepodległej 1–3, szkoły, 3 Maja 6–10 i Cichej 4 z bramą do ul. Cichej, w OSM bez obszaru",
 );
 
-/**
- * The green west and north of the school w185132729 (orthophoto, PZGiK): the trees in its north-west
- * corner and the shrubs between the footway w80139555 and Cicha 4's west wall.
- */
+/** The green west of the school w185132729 (orthophoto, PZGiK): the trees in its north-west corner. */
 const SCHOOL_GREEN: AddedArea = t245(
   "zielen-szkola",
   GRASS,
   [
-    { x: -188.32, z: 125.25 },
-    { x: -193.63, z: 125.57 },
     { x: -194.23, z: 114.39 },
     { x: -201.0, z: 114.59 },
+    { x: -201.0, z: 128.3 },
+    { x: -196.5, z: 128.3 },
+    { x: -196.5, z: 125.5 },
+    { x: -193.63, z: 125.57 },
+  ],
+  "zieleń pod drzewami na zachód od szkoły na ortofoto PZGiK, w OSM goła ziemia",
+);
+
+/**
+ * North of the school's trees (`SCHOOL_GREEN`) to Cicha's lane, and the strip from the footway
+ * w80139555's axis to Cicha 4's west wall: light paving and asphalt on the orthophoto, with a row of
+ * shrubs under a metre wide along the wall, not the lawn laid over it before (G-627).
+ */
+const SCHOOL_NORTH: AddedArea = t245(
+  "kostka-szkola-cicha-4",
+  SETTS,
+  [
+    { x: -188.32, z: 125.25 },
+    { x: -193.63, z: 125.57 },
+    { x: -196.5, z: 125.5 },
+    { x: -196.5, z: 128.3 },
+    { x: -201.0, z: 128.3 },
     { x: -201.0, z: 131.0 },
     { x: -193.1, z: 131.0 },
     { x: -188.42, z: 147.5 },
     { x: -185.16, z: 144.38 },
   ],
-  "zieleń pod drzewami na zachód od szkoły i krzewy między chodnikiem w80139555 a Cichą 4 na ortofoto PZGiK, w OSM goła ziemia",
-  [...Array<null>(6).fill(null), "w80139555", null],
+  "utwardzony pas na północ od zieleni szkoły i między chodnikiem w80139555 a zachodnią ścianą Cichej 4 na ortofoto PZGiK, w OSM goła ziemia",
+  [...Array<null>(7).fill(null), "w80139555", null],
 );
 
 /**
  * The lane of Cicha north of the school (orthophoto, PZGiK: paving with cars parked on it) between the
- * east walls of Cicha 6 and 8, cut at the map's edge (G-556), and `SCHOOL_GREEN`'s strip, to the
+ * east walls of Cicha 6 and 8, cut at the map's edge (G-556), and `SCHOOL_NORTH`'s strip, to the
  * carriageway of Cicha and the map's edge z = 160.
  */
 const CICHA_LANE: AddedArea = t245(
@@ -392,6 +444,8 @@ const CICHA_LANE: AddedArea = t245(
 export const ZN_AREAS: readonly AddedArea[] = [
   YARD_LITEVSKI,
   LITEVSKI_GREEN,
+  LITEVSKI_WEST_GREEN,
+  LITEVSKI_WEST,
   ZN2_SOUTH,
   ZN2_EAST_SOUTH,
   ZN2_EAST_WEST,
@@ -401,5 +455,6 @@ export const ZN_AREAS: readonly AddedArea[] = [
   STOP_3MAJA,
   BLOCK_ZN3,
   SCHOOL_GREEN,
+  SCHOOL_NORTH,
   CICHA_LANE,
 ];
