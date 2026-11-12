@@ -1642,7 +1642,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (tłum), tools/osm-import
 
 ### G-625 Ganger staje przy długim płocie albo murze, gdy w oknie sterowania nie ma drogi
-- Status: w PR #426 (12.11; okno `wide` 192 m, brak drogi → powrót na posterunek; weryfikacja w toku)
+- Status: w PR #426, runda 1 NIE PRZYJĘTE (12.11; koszt: pamięć okna `wide` 2 rastry, przy 3 gangerach z różnymi tropami ok. 100 ms na krok wobec budżetu 4 ms z ADR-0043; runda 2 u autora)
 - Ważność: S3 · Zasięg: `planDetour` (`steering.ts`) zwraca „off-field”, gdy w oknie 80 m nie ma objazdu; ganger dochodzi do przeszkody i stoi, gracz za nią bezpieczny (sonda 30 s: 0 strzałów); np. płot (11,83; −251,22), mur 3 m (214; −28,13); bariery z #418 uwidaczniają to w wielu miejscach; test `barrier-ai.test.ts` („moved > 1”) przeszedłby też z gangerem stojącym przy płocie; poprawka: dłuższy objazd (nawigacja po grafie poziomu albo większe okno), a gdy drogi nie ma, przejście do osłony lub szukania
 - Pakiet właściciela: packages/sim (systems/ai, steering)
 
