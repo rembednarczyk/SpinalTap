@@ -1772,19 +1772,25 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-682 Goły teren na nawierzchni wzdłuż Królewskiej
-- Status: zgłoszone (12.11, przejście komórki stare-miasto-0-0; niepotwierdzone wizualnie; czeka na kuratora)
+- Status: potwierdzone (12.11, kurator: ortofoto i 2 zrzuty; T-263); dodatkowo 12 próbek `kerb-fill-wide-estimated` (496..500; −202..−201) przy w40052496 (Królewska, `lanes=2`, bez `width`; korekta T-247 obejmuje tylko w66829063); udział ortofoto w pasie przy SE ścianie w66286377 to dach przechylony o 4–5 m, a nie nawierzchnia
 - Ważność: S3 · Zasięg: pas ukośny od ok. (478; −195) do (525; −145) i (505..525; −195..−215), 29 kwadratów, 2576 próbek `landuse-bare` (ok. 644 m²); nakładka ortofoto: 340 m² jasna nawierzchnia, 257 m² asfalt, 35 m² zieleń; pasy między jezdnią a chodnikami przy krzywiźnie Królewskiej i placu; kandydat do kroku 1.1 ADR-0077 (goła ziemia z ortofoto, w toku)
 - Pakiet właściciela: tools/osm-import
 
 ### G-683 Wylot bramy poza osią frontu: Brama Krakowska i Wieża Trynitarska
-- Status: zgłoszone (12.11, przejście komórki stare-miasto-0-0; niepotwierdzone wizualnie)
+- Status: potwierdzone dla (463; −94) (12.11, kurator; zrzut `sm00-krakowska-zach`; OSM −0,74 m, gra −1,80 m); poprawka: oś przejazdu łamana jak w OSM (w491869410 i w66264116, po ok. 21°) albo wylot w środku frontu przedbramia; Trynitarska liczona względem obrysu OSM, który LoD2 przesuwa o ok. 4 m (T-264), do potwierdzenia zdjęciem
 - Ważność: S4 · Zasięg: `gate-mouth-off-axis` = 3 (cała baza miasta w tej komórce): (463; −94) −1,80 m od środka frontu 7,47 m; (587; −140) −0,81 m z 5,90 m; (588; −154) −4,44 m z 15,84 m (ten może być fałszywy: front obejmuje sąsiednią ścianę); G-136 (Brama Grodzka) zapowiadał pomiar Krakowskiej; najpierw pomiar z OSM i ortofoto
 - Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
 
 ### G-684 Fałszywy alarm `levels-tag-lost` na Bramie Krakowskiej
-- Status: zgłoszone (12.11, przejście komórki stare-miasto-0-0)
+- Status: potwierdzony fałszywy alarm (12.11, kurator); poprawka w `levelsTagLost`: obrys z częściami z `soffit` porównywać z najwyższą liczbą kondygnacji części albo pominąć; baza 4 → 3
 - Ważność: S4 · Zasięg: r7224409 (473; −91): „2 storeys of building:levels=5”; obrys ma `height` 10 m i części `building:part` (wieża 5 kond., przedbramie 2 kond., T-007 rozwiązane); kontrola liczy obrys bez części; poprawka: wyjątek dla budynków z częściami, baza 4 → 3
 - Pakiet właściciela: tools/glitch-scan
+
+### G-685 Raport ortofoto liczy bariery z tabeli mebli zamiast z `chunk.barriers`
+- Status: zgłoszone (12.11, kurator, przegląd stare-miasto-0-0)
+- Ważność: S4 (narzędzie, nie gra) · Zasięg: `tools/orto/src/barriers.ts` (`barrierReport`, `game` i `notDrawn`). W stare-miasto-0-0 raport podaje 9 linii „nierysowanych” (np. mur miejski w609951474), a wszystkie są w `stare-miasto.generated.ts` (`barriers`) i w grze (ADR-0077 p. 4). Komentarz modułu („the game draws none of them”) jest nieaktualny.
+- Pakiet właściciela: tools/orto
+- Test przyjęcia: raport dla stare-miasto-0-0 ma `notDrawn` 0 (bariery z `MAP_CHUNKS[].barriers`)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
