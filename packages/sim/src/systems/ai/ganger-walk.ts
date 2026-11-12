@@ -107,7 +107,6 @@ export class GangerWalk {
     const gap = heightApart(ctx.world, to, from);
     const apart = gap > LEVEL_GAP;
     const raised = aboveGround(ctx.world, from) > LEVEL_GAP || aboveGround(ctx.world, to) > LEVEL_GAP;
-    let cutOff = false;
     if (!apart) {
       // Under the street (a vault, its heights plain y) more than a floor's height apart but less
       // than a level's: the lower end of Alchemia's car park ramp beside the deck it comes down to
@@ -128,15 +127,22 @@ export class GangerWalk {
         this.moveTowards((step ?? to).x, (step ?? to).z);
         return;
       }
-      // A way straight there that only the stuck check set aside is still a way.
-      cutOff = !vaulted && !raised && !straightWalk(ctx.world, from, to);
+      if (!vaulted && !raised) {
+        // On the street the level graph is no way round a barrier (it never was): asked by every
+        // cut-off ganger every step, at its post too, its sight lines to all nodes cost more than
+        // the whole rest of the step. A way straight there that only the stuck check set aside is
+        // still a way; not stuck, `head` found the straight walk blocked already.
+        if (this.unsticking() && straightWalk(ctx.world, from, to)) this.moveTowards(to.x, to.z);
+        else this.backToPost();
+        return;
+      }
     }
     const route = routeAcrossLevels(ctx.world, ctx.streamer.nav, from, to);
     const shot = self.combatant?.stats?.melee || !apart ? null : firingPosition(ctx.world, ctx.streamer.nav, from, to, self.ai.attackRange);
     const way = shot && (!route || shot.cost < route.cost) ? shot : route;
     if (way && Math.hypot(way.next.x - from.x, way.next.z - from.z) < 0.05) self.velocity = { x: 0, y: 0, z: 0 };
     else if (way) this.walkTo(way.next);
-    else if (apart || cutOff) this.backToPost();
+    else if (apart) this.backToPost();
     else this.moveTowards(to.x, to.z);
   }
 

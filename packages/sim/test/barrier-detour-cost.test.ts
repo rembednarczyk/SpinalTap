@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { Vec3 } from "@seki/core";
 import { Simulation, gangerEntity, giveLead, ground } from "../src";
 import { wideBuilds } from "../src/systems/ai/steering";
+import type * as Nav from "../src/world/nav";
 import { off, pieceAt, standOff } from "./barrier-standoff";
 import { teleportPlayer } from "./helpers";
 
@@ -9,6 +11,19 @@ import { teleportPlayer } from "./helpers";
  * a field 15. A step makes at most one raster, and gangers keep the goal they planned for, so
  * they do not make them again every step round a corner of the windows' grid, (2352, 432).
  */
+
+/** Where the walkers stood that asked the level graph for a way (`from`: the walker's own position). */
+const routed: Vec3[] = [];
+vi.mock("../src/world/nav", async (actual) => {
+  const nav = await actual<typeof Nav>();
+  return {
+    ...nav,
+    routeAcrossLevels: (...args: Parameters<typeof nav.routeAcrossLevels>) => {
+      routed.push(args[2]);
+      return nav.routeAcrossLevels(...args);
+    },
+  };
+});
 
 /** Steps `sim` for `steps`, `each` before every one: the most wide rasters a step made, and all rasters and fields made. */
 const builds = (sim: Simulation, steps: number, each: (i: number) => void = () => {}) => {
@@ -50,5 +65,19 @@ describe("the cost of the wide way round a long barrier (G-625)", () => {
     };
     // One wide way for the goal it planned for: she never gets `CHASE_DRIFT` (8 m) from it.
     expect(builds(sim, 60 * 5, hop)).toEqual({ most: 1, rasters: 1, fields: 1 });
+  }, 120_000);
+
+  it("does not ask the level graph for a way round on the street every step: it never leads round a barrier there", () => {
+    // A walled yard on Krakowskie: no way round, the ganger goes back to its post and stands there.
+    const { sim, ganger } = standOff(214, -28.13, 1);
+    routed.length = 0;
+    for (let i = 0; i < 60 * 10; i++) sim.step();
+    expect(routed.filter((from) => from === ganger.position)).toEqual([]);
+  }, 120_000);
+
+  it("makes no wide raster for a ganger left far outside its window: its way would start off the field", () => {
+    const { sim, player } = standOff(2359.33, 445.19, 1);
+    teleportPlayer(sim, ground(player.position.x + 130, player.position.z));
+    expect(builds(sim, 60 * 3)).toEqual({ most: 0, rasters: 0, fields: 0 });
   }, 120_000);
 });

@@ -637,6 +637,17 @@ export const planDetour = (world: World<Entity>, from: Vec3, goal: Vec3, avoid: 
   return { goal, field: avoid.length > 0 ? withBodies(field, avoid, ground) : field };
 };
 
+/**
+ * Is `from` a cell or more outside the window round `goal`? Its way would start off the field
+ * (`followDetour` null) whatever the raster: a ganger left 400 m behind by a player who ran on
+ * built a wide raster of empty land for nothing, once per goal and again after a load.
+ */
+const outsideWindow = (win: Window, from: Vec3, goal: Vec3): boolean => {
+  const cx = Math.round(goal.x / win.snap) * win.snap;
+  const cz = Math.round(goal.z / win.snap) * win.snap;
+  return Math.max(Math.abs(from.x - cx), Math.abs(from.z - cz)) > win.half + NAV_CELL;
+};
+
 /** The wide ways of the chases, kept with their goals: by the floor and the decks' reach they were made for. */
 const chases = new WeakMap<Vec3, { readonly key: string; readonly detour: Detour | null }>();
 
@@ -648,7 +659,7 @@ const chases = new WeakMap<Vec3, { readonly key: string; readonly detour: Detour
  * pure function of the static solids, the floor and the goal, as `planDetour`.
  */
 export const chaseDetour = (world: World<Entity>, from: Vec3, goal: Vec3): Detour | null => {
-  if (heightApart(world, goal, from) > SAME_FLOOR) return null;
+  if (heightApart(world, goal, from) > SAME_FLOOR || outsideWindow(WIDE_WINDOW, from, goal)) return null;
   const ground = groundOf(world);
   const floor = floorOf(from.y, ground.heightAt(from.x, from.z, from.y + STEP_HEIGHT));
   const reach = deckReach(ground, from, goal);
