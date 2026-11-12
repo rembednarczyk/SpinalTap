@@ -4,9 +4,9 @@ import type { SimContext } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
 import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
 import { type Detour, SAME_FLOOR, chaseDetour, detourStep, followDetour, cutOffNear, planDetour, straightWalk } from "./steering";
+import { CHASE_DRIFT, planChase } from "./chase-plan";
 import type { Ganger } from "./ganger-perception";
-import type { Entity, WalkPlan } from "../../world/components";
-import type { World } from "miniplex";
+import type { WalkPlan, WalkProgress } from "../../world/components";
 
 /*
  * How a ganger gets somewhere (ADR-0021, ADR-0025): straight or round the obstacle on its floor,
@@ -32,23 +32,8 @@ const CROWD_RADIUS = 8;
 const PLAN_DRIFT = 2;
 /** At its post within this (m), as `HoldPosition` has it. */
 const POST_ARRIVE = 0.3;
-/** A chase keeps the goal of its wide way (G-625) until its target is further than this from it (m). */
-const CHASE_DRIFT = 8;
-/** A ganger that may not plan a wide way this step: it stands and waits for the next. */
+/** A ganger with no wide way yet: it stands and waits for one. */
 const WAIT = "wait";
-
-/**
- * New wide ways planned in a world this step (G-625): one at most, whoever asks first in the
- * gangers' creation order; the others wait a step. A wide raster costs some 37 ms and its field
- * 15, so a step pays for at most one. Only within a step: a save falls between two.
- */
-const planned = new WeakMap<World<Entity>, number>();
-
-const mayPlan = (ctx: SimContext): boolean => {
-  if (planned.get(ctx.world) === ctx.tick) return false;
-  planned.set(ctx.world, ctx.tick);
-  return true;
-};
 
 /** Who acts this step: the blackboard rebinds it to the current entity. */
 export interface GangerBinding {
@@ -104,6 +89,9 @@ export class GangerWalk {
     const { ctx, self } = this.at;
     if (!ctx || !self) return;
     const from = self.position;
+    // Its new wide way ready: in its place before anything asks for the old one (G-643).
+    const next = self.walk?.chaseNext;
+    if (next && ctx.tick >= next.ready) this.keep(ctx, self, { chase: next.goal, chaseNext: null });
     const gap = heightApart(ctx.world, to, from);
     const apart = gap > LEVEL_GAP;
     const raised = aboveGround(ctx.world, from) > LEVEL_GAP || aboveGround(ctx.world, to) > LEVEL_GAP;
@@ -113,14 +101,17 @@ export class GangerWalk {
       // (ADR-0074 stage 4). There is no way round on this floor there: the level graph's way.
       const ground = groundOf(ctx.world);
       const vaulted = gap > SAME_FLOOR && (ground.underStreet(to) || ground.underStreet(from));
-      let step = vaulted ? null : (this.wideWay(to) ?? this.head(to));
+      let step = vaulted ? null : (this.wideWay(to) ?? (this.awaiting(to) ? null : this.head(to)));
       if (!step && !vaulted) {
         const chase = this.chase(to);
-        if (chase === WAIT) {
+        // Its first wide way being made (G-643), it waits standing; getting unstuck, it keeps to its
+        // sidestep towards the goal meanwhile. Standing there on the flight off Zamkowa's viaduct
+        // (G-255) it settled at the foot of a rise more than a step high that its way then led into.
+        if (chase === WAIT && !(self.walk?.chaseNext && this.unsticking())) {
           self.velocity = { x: 0, y: 0, z: 0 };
           return;
         }
-        step = chase;
+        step = chase === WAIT ? to : chase;
       }
       if (step || (!raised && vaulted)) {
         this.goal = to;
@@ -183,25 +174,30 @@ export class GangerWalk {
 
   /**
    * A chase the near window does not lead (G-625): the step along the wide way to the goal it
-   * keeps (`WalkProgress.chase`, saved), planned anew when its target moved `CHASE_DRIFT` away, if
-   * this step lets it (`mayPlan`); else along the old way, or it waits with none. Null when the
-   * wide way does not lead there either. Only a chase: a walk home or to a node keeps to the near
-   * window, which got it there so far; the wide way of a calm guard's walk home in the docks ran
-   * onto the end of a pier, a step the raster takes for level ground and the legs do not climb
-   * (as G-339), and it stood there for good.
+   * keeps (`WalkProgress.chase`, saved), planned anew when its target moved `CHASE_DRIFT` away
+   * (`planChase`); along the old way until the new one is ready (`chaseNext`), or it waits with
+   * none. Null when the wide way does not lead there either. Only a chase: a walk home or to a node
+   * keeps to the near window, which got it there so far; the wide way of a calm guard's walk home
+   * in the docks ran onto the end of a pier, a step the raster takes for level ground and the legs
+   * do not climb (as G-339), and it stood there for good.
    */
   private chase(goal: Vec3): Vec3 | null | typeof WAIT {
     const { ctx, self } = this.at;
     if (!ctx || !self) return null;
-    let held = self.walk?.chase ?? null;
-    if ((!held || Math.hypot(held.x - goal.x, held.z - goal.z) > CHASE_DRIFT) && mayPlan(ctx)) {
-      held = { x: goal.x, y: goal.y, z: goal.z };
-      const { x, z } = self.position;
-      self.walk = self.walk ? { ...self.walk, chase: held } : { x, z, since: ctx.tick, unstickUntil: 0, side: firstSide(self), plan: null, chase: held };
+    const drifted = (g: Vec3 | null | undefined) => !g || Math.hypot(g.x - goal.x, g.z - goal.z) > CHASE_DRIFT;
+    if (drifted(self.walk?.chase) && drifted(self.walk?.chaseNext?.goal)) {
+      const patch = planChase(ctx, self.position, goal);
+      if (patch) this.keep(ctx, self, patch);
     }
-    if (!held) return WAIT;
-    const detour = chaseDetour(ctx.world, self.position, held);
+    const way = self.walk?.chase ?? null;
+    if (!way) return WAIT;
+    const detour = chaseDetour(ctx.world, self.position, way);
     return detour ? followDetour(detour, self.position) : null;
+  }
+
+  private keep(ctx: SimContext, self: Ganger, patch: Pick<WalkProgress, "chase" | "chaseNext">): void {
+    const { x, z } = self.position;
+    self.walk = { ...(self.walk ?? { x, z, since: ctx.tick, unstickUntil: 0, side: firstSide(self), plan: null }), ...patch };
   }
 
   /**
@@ -218,6 +214,21 @@ export class GangerWalk {
     const detour = chaseDetour(ctx.world, self.position, held);
     if (!detour || !cutOffNear(detour, self.position, goal) || straightWalk(ctx.world, self.position, goal)) return null;
     return followDetour(detour, self.position);
+  }
+
+  /**
+   * Is the wide way to about `goal` being made for it, with the straight walk blocked (G-643)? It
+   * waits for it on the way it has, or standing, without asking the near window, which found the
+   * goal cut off when it asked for it: a dozen of them after a dozen goals, asking it every step
+   * while they wait, pushed its rasters out of the memo (G-644). With no way yet it stands even
+   * while getting unstuck: on the sidestep it took for those steps, by the bend of the flight off
+   * Zamkowa's viaduct (G-255), it pressed itself into a corner that neither way leads out of.
+   */
+  private awaiting(goal: Vec3): boolean {
+    const { ctx, self } = this.at;
+    const next = self?.walk?.chaseNext;
+    if (!ctx || !self || !next || next.ready <= ctx.tick || (this.unsticking() && self.walk?.chase)) return false;
+    return Math.hypot(next.goal.x - goal.x, next.goal.z - goal.z) <= CHASE_DRIFT && !straightWalk(ctx.world, self.position, goal);
   }
 
   private unsticking(): boolean {
@@ -262,7 +273,7 @@ export class GangerWalk {
     const { x, z } = self.position;
     const p = self.walk;
     if (!this.walking || !p) {
-      self.walk = { x, z, since: ctx.tick, unstickUntil: p?.unstickUntil ?? 0, side: p?.side ?? firstSide(self), plan: p?.plan ?? null, chase: p?.chase ?? null };
+      self.walk = { x, z, since: ctx.tick, unstickUntil: p?.unstickUntil ?? 0, side: p?.side ?? firstSide(self), plan: p?.plan ?? null, chase: p?.chase ?? null, chaseNext: p?.chaseNext ?? null };
       return;
     }
     if (Math.hypot(x - p.x, z - p.z) >= STUCK_DISTANCE) {
