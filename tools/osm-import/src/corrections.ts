@@ -9,6 +9,7 @@ import { type Pt, centroid } from "./geometry.ts";
 import { ALCHEMIA_AREAS } from "./corrections-alchemia.ts";
 import { CZECHOWICZA_AREAS } from "./corrections-czechowicza.ts";
 import { ADDED_AREAS_TAIL, TAG_CORRECTIONS_TAIL } from "./corrections-kerb.ts";
+import { LANDMARK_HEIGHT_CORRECTIONS } from "./corrections-landmarks.ts";
 import { PODZAMCZE_AREAS } from "./corrections-podzamcze.ts";
 import { type Tags } from "./osm.ts";
 
@@ -119,12 +120,7 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
   // them in the palace's body (G-098). NMPT GUGiK has both tops flat at y 17.8..17.9; a part's
   // `height` counts over the palace's base, the top of its plinth at y -1.1. Their outlines lie
   // 2-4 m east of the surface model's: OSM's data, left as mapped.
-  ...["w1002739983", "w1002739984"].map((id) => ({
-    id,
-    tags: { height: "19", "roof:shape": "flat" },
-    reason: "wieża Pałacu Lubomirskich: płaski wierzch y 17,9 z NMPT, w OSM bez wysokości",
-    ref: "T-136",
-  })),
+  ...["w1002739983", "w1002739984"].map((id) => ({ id, tags: { height: "19", "roof:shape": "flat" }, reason: "wieża Pałacu Lubomirskich: płaski wierzch y 17,9 z NMPT, w OSM bez wysokości", ref: "T-136" })),
   {
     // The palace's annex on its south side: `building=yes` and `layer=1` with no height, so it stood
     // at the district's default 4 storeys with a flat top at y 11.6, over the palace's eaves (y 11.0).
@@ -163,6 +159,7 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
   ...stairs(["w1435832499", "w1305940836", "w1305889408", "w1305940837", "w1306105687"], "biegi"),
   ...stairs(["w1435832498", "w56965512", "w1305889407", "w1305940838", "w48500135", "w1306105686"], "podesty"),
   ...TAG_CORRECTIONS_TAIL,
+  ...LANDMARK_HEIGHT_CORRECTIONS,
 ];
 
 /**
