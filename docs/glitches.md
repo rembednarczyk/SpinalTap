@@ -1581,11 +1581,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `areaSurface` zwraca null dla `highway=service` + `area=yes`, więc asfalt tych obszarów nie powstaje; 4 obszary, ok. 2 970 m²: w232464419 (410 m²), w283151244 (1 567 m²), w294902807 (864 m²), w1022724910 (131 m², pętla podjazdu kliniki Radziwiłłowska 13); propozycja kontroli `highway-area-undrawn`, baza 4
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-556 Budynek ze środkiem poza mapą znika w całości, także w części leżącej w chunku
-- Status: zgłoszone (8.11, kurator przeglądu #405)
-- Ważność: S3 · Zasięg: w mieście 50 budynków, ok. 10 100 m²; w krakowskie-0-1 Cicha 3, 5, 6 i 8 (281 m²), które w grze dają gołą ziemię w pasie Cichej i przy ogrodzie na zachód od Cichej 4; Ordynacki i Kuria już w T-058/G-096; propozycja kontroli `edge-building-dropped` (część w chunku > 2 m², środek poza mapą, poza rejestrem), baza 50 albo 48 bez T-058
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
 - Status: w PR #410 (8.11, ADR-0076 etap 4b)
 - Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
@@ -1627,12 +1622,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-595 Cała flota zaparkowanych aut jest aktywna, gdy jej obrys zahacza o stożek widoku
-- Status: częściowo naprawione: odcinanie floty po stożku w PR #417 (rynek-tpp 232/91 → 229/90); budżet #409 to przesłanianie za ścianami, nie stożek (diagnoza w zgłoszeniu błędna), decyzja użytkownika 11.11: wyjątek w ADR-0046 i przesłanianie w backlogu
+- Status: częściowo naprawione: odcinanie floty po stożku scalone w #417 (12.11) (rynek-tpp 232/91 → 229/90); budżet #409 to przesłanianie za ścianami, nie stożek (diagnoza w zgłoszeniu błędna), decyzja użytkownika 11.11: wyjątek w ADR-0046 i przesłanianie w backlogu
 - Ważność: S3 · Zasięg: zaparkowane auta są we wspólnej siatce floty z zasięgiem rysowania 240 m (`VEHICLE_LOD` w `vehicle-views.ts`); jedno nowe auto 170 m od kamery (Kapucyńska, (153,7; −147,9)) poszerza obrys siatki tak, że przecina stożek widoku sceny `reference`, i cała flota staje się aktywna, choć auta w kadrze nie ma: 193/82 → 196/83; poprawka: podział floty na komórki albo obrys liczony z aut w zasięgu, bez podnoszenia budżetu; blokuje #409
 - Pakiet właściciela: packages/engine (renderer: pojazdy)
 
 ### G-600 Podwójna bryła VIVO: garaż podziemny `level=-2` rysowany jako budynek
-- Status: zgłoszone (11.11, kurator przeglądu #414; do naprawy zaraz po scaleniu #414)
+- Status: zgłoszone (11.11, kurator przeglądu #414; #414 scalony 12.11, naprawa po #418, bo oba zmieniają `generate.ts`)
 - Ważność: S3 · Zasięg: w173070505 (`building=yes`, `level=-2`, `layer=2`) ma prawie ten sam obrys co VIVO r5601275; po G-556 obie bryły wracają przycięte, nakładają się na 1732 m², dachy dzieli 0,1 m (y −12,5 i −12,6), ryzyko migotania; Podzamcze x 1088–1120, z 160–240; poprawka: pomijać w imporcie budynki, których wszystkie `level` są ujemne (jak `location=underground`); garaż wystaje poza VIVO, więc po usunięciu odsłania ok. 149 próbek gołej ziemi (do wyłożenia według ortofoto); skan: ta sama reguła w `edge-buildings.ts` i `building-underground-solid`, nowa kontrola `building-duplicate` (nakładanie > 50% pola mniejszego, bez `building:part`)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 

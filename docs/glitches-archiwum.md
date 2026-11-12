@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-556 Budynek ze środkiem poza mapą znika w całości, także w części leżącej w chunku
+- Status: naprawione w #414 (12.11; budynki przycięte do brzegu mapy ze ślepą ścianą; budżety reference 196/84 i krakowskie-tpp 165 z wpisem w ADR-0046; reszta za brzegiem w backlogu „Poszerzanie mapy”, T-250)
+- Ważność: S3 · Zasięg: w mieście 50 budynków, ok. 10 100 m²; w krakowskie-0-1 Cicha 3, 5, 6 i 8 (281 m²), które w grze dają gołą ziemię w pasie Cichej i przy ogrodzie na zachód od Cichej 4; Ordynacki i Kuria już w T-058/G-096; propozycja kontroli `edge-building-dropped` (część w chunku > 2 m², środek poza mapą, poza rejestrem), baza 50 albo 48 bez T-058
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+
 ### G-620 Test zwalniania modeli przekracza w CI limit 20 s
 - Status: naprawione (PR #419, 11.11; testy zwalniają `NullEngine` w `afterEach`, przypadek telefonu na lekkim pliku pod siedmioma nazwami; 6,3 → 1,8 s, pod obciążeniem 9,7 → 4,3 s; limity czasu bez zmian)
 - Ważność: S2 · Zasięg: `packages/engine/test/model-release.test.ts` › „keeps no more files than a phone's limit” (#410) wczytuje sześć pełnych plików VRM przez NullEngine i w CI kończy się `Test timed out in 20000ms`; czerwieni shard „Unit tests (1)” w #416, #417, #418 (lokalnie przechodzi); limitu nie podnosimy, test do odchudzenia
