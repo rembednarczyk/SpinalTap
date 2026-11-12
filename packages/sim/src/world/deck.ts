@@ -1,4 +1,4 @@
-import type { GroundPoint } from "@seki/core";
+import { type GroundPoint, pointInRingEvenOdd, segmentParam } from "@seki/core";
 
 /**
  * A bridge's deck (ADR-0053): a piece of a road or path on a bridge, level from abutment to
@@ -22,25 +22,10 @@ export interface GroundDeck {
   readonly flight?: boolean;
 }
 
-const insideRing = (ring: readonly GroundPoint[], x: number, z: number): boolean => {
-  let c = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i]!;
-    const b = ring[j]!;
-    if (a.z > z !== b.z > z && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) c = !c;
-  }
-  return c;
-};
-
-const over = (d: GroundDeck, x: number, z: number): boolean => x >= d.box.minX && x <= d.box.maxX && z >= d.box.minZ && z <= d.box.maxZ && insideRing(d.ring, x, z);
+const over = (d: GroundDeck, x: number, z: number): boolean => x >= d.box.minX && x <= d.box.maxX && z >= d.box.minZ && z <= d.box.maxZ && pointInRingEvenOdd(x, z, d.ring);
 
 /** The deck's height over (x, z), level across its axis and clamped at its abutments. */
-export const deckHeight = (d: GroundDeck, x: number, z: number): number => {
-  const dx = d.b.x - d.a.x;
-  const dz = d.b.z - d.a.z;
-  const t = Math.max(0, Math.min(1, ((x - d.a.x) * dx + (z - d.a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return d.ya + (d.yb - d.ya) * t;
-};
+export const deckHeight = (d: GroundDeck, x: number, z: number): number => d.ya + (d.yb - d.ya) * segmentParam(x, z, d.a.x, d.a.z, d.b.x, d.b.z);
 
 /**
  * A deck more than this over the terrain under it leaves room to walk under (G-062): Podwale under
@@ -169,7 +154,7 @@ export const deckDepth = (deck: number, terrain: number): number => {
 export const deckCeiling = (decks: readonly GroundDeck[], x: number, z: number, head: number, terrain: number): number => {
   let ceiling = Infinity;
   for (const d of decks) {
-    if (x < d.box.minX || x > d.box.maxX || z < d.box.minZ || z > d.box.maxZ || !insideRing(d.ring, x, z)) continue;
+    if (x < d.box.minX || x > d.box.maxX || z < d.box.minZ || z > d.box.maxZ || !pointInRingEvenOdd(x, z, d.ring)) continue;
     const y = deckHeight(d, x, z);
     const under = y - deckDepth(y, terrain);
     if (under >= head - 1e-6 && under < ceiling) ceiling = under;
