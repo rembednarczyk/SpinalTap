@@ -15,9 +15,19 @@ export const flatRing = (flat: readonly number[], ox = 0, oz = 0): Pt[] => {
   return ring;
 };
 
-/** m² by class in a ring, from the raster holding its first point. */
+/** The raster holding most of a ring's vertices (the first may lie just off it). */
+const coverOfRing = (covers: readonly Cover[], ring: readonly Pt[]): Cover | undefined => {
+  const votes = new Map<Cover, number>();
+  for (const p of ring) {
+    const c = coverFor(covers, p);
+    if (c) votes.set(c, (votes.get(c) ?? 0) + 1);
+  }
+  return [...votes].sort((a, b) => b[1] - a[1])[0]?.[0];
+};
+
+/** m² by class in a ring, from the raster holding most of its vertices. */
 export const ringOverlay = (covers: readonly Cover[], ring: readonly Pt[]): ClassCounts | undefined => {
-  const cover = ring[0] && coverFor(covers, ring[0]);
+  const cover = coverOfRing(covers, ring);
   return cover ? areaOf(countAt(cover, samplesIn(cover.header, ring)), cover.header.step) : undefined;
 };
 
