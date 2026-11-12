@@ -1657,7 +1657,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (testy)
 
 ### G-643 Budowa rastra i pola okna `wide` w jednym kroku symulacji
-- Status: w PR #455 (12.11; time-slicing z budżetem 12 000 komórek na krok, p95 18 pościgów 16,4 → 3,4 ms; zapis v38; weryfikacja w toku)
+- Status: w PR #455 (12.11; weryfikator PRZYJĘTE z zastrzeżeniem: przy N różnych celach ostatni ganger bez starej drogi stoi do ok. 13·N kroków, 3,4 s przy 18 pościgach, 5,3 s przy rozrzucie 60 m; decyzja użytkownika)
 - Ważność: S3 · Zasięg: nowy plan objazdu w oknie `wide` buduje pole ok. 15 ms, a przy zmianie komórki 32 m także raster ok. 37 ms w jednym kroku (budżet ADR-0043: 4 ms); przy jednym odciętym gangerze w pościgu za biegnącym graczem przestój 15–50 ms co 1,5–2 s; poprawka: budowa rozłożona na kilka kroków (ganger idzie starą drogą do gotowego planu)
 - Pakiet właściciela: packages/sim (systems/ai)
 
@@ -1820,6 +1820,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, autor G-639)
 - Ważność: S4 · Zasięg: dach głównej bryły w LoD2 ma równo 4,0 m, a reguła dachów z LoD2 (#G-639) bierze dach > 4 m; do decyzji próg ≥ 4 m albo wyjątek
 - Pakiet właściciela: tools/osm-import
+
+### G-694 Ganger czekający na plan objazdu stoi w miejscu
+- Status: zgłoszone (12.11, weryfikator #455)
+- Ważność: S3 · Zasięg: po #455 (G-643) ganger bez starej drogi czeka na swój plan w kolejce: przy N różnych celach do ok. 13·N kroków (3,4 s przy 18 pościgach, 5,3 s przy liderach rozrzuconych do 60 m; na main do 16 kroków); poprawka: w czasie czekania ruch w stronę celu (krok w bok przy przeszkodzie, jak przy odklejaniu), priorytet w kolejce dla gangera bez żadnej drogi; także `planChase` z `{ chase: made }` nie zeruje własnego `chaseNext`
+- Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
