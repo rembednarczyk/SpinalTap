@@ -1612,13 +1612,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: pojazdy)
 
 ### G-600 Podwójna bryła VIVO: garaż podziemny `level=-2` rysowany jako budynek
-- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g600` (12.11, 835cd63; `belowGround` z `level`, kontrola `building-duplicate`, trawnik T-258 nad garażem; przegląd kuratora w toku)
+- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g600` (12.11, 835cd63; `belowGround` z `level`, kontrola `building-duplicate`, trawnik T-258 nad garażem; kurator ZGODNE, T-258 celowe; weryfikacja w toku)
 - Ważność: S3 · Zasięg: w173070505 (`building=yes`, `level=-2`, `layer=2`) ma prawie ten sam obrys co VIVO r5601275; po G-556 obie bryły wracają przycięte, nakładają się na 1732 m², dachy dzieli 0,1 m (y −12,5 i −12,6), ryzyko migotania; Podzamcze x 1088–1120, z 160–240; poprawka: pomijać w imporcie budynki, których wszystkie `level` są ujemne (jak `location=underground`); garaż wystaje poza VIVO, więc po usunięciu odsłania ok. 149 próbek gołej ziemi (do wyłożenia według ortofoto); skan: ta sama reguła w `edge-buildings.ts` i `building-underground-solid`, nowa kontrola `building-duplicate` (nakładanie > 50% pola mniejszego, bez `building:part`)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-601 Budynki na brzegu mapy z domyślną wysokością niezgodną z NMPT
 - Status: zgłoszone (11.11, kurator przeglądu #414; do reguły wysokości z LoD1 2024, ADR-0077)
-- Ważność: S4 · Zasięg: Cicha 6 w grze ok. 15 m przy ok. 7 m w rzeczywistości, Cicha 8 ok. 11,2 m przy ok. 17,5 m, XVI LO ok. 6 m za niskie, Pałac Ordynacki bez dachu spadzistego (jak G-122), narożnik Cichej 5 do sprawdzenia; T-250
+- Ważność: S4 · Zasięg: Cicha 6 w grze ok. 15 m przy ok. 7 m w rzeczywistości, Cicha 8 ok. 11,2 m przy ok. 17,5 m, XVI LO ok. 6 m za niskie, Pałac Ordynacki bez dachu spadzistego (jak G-122), narożnik Cichej 5 do sprawdzenia; T-250; także VIVO r5601275: 11,1 m z `building:levels=3` w relacji, LoD1 17,2 m (po scaleniu heights sprawdzić, że LoD1 trafia do VIVO, nie do zdjętego garażu w173070505)
 - Pakiet właściciela: tools/osm-import
 
 ### G-622 Loader glTF liczy pozycje skóry na CPU dla każdego prymitywu
@@ -1722,8 +1722,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan
 
 ### G-647 Trawnik na dachu VIVO rysowany na ziemi
-- Status: zgłoszone (12.11, naprawiacz G-600; do przeglądu kuratora)
-- Ważność: S4 · Zasięg: r11978659 (`landuse=grass`, `layer=4`) to zieleń na dachu, a import kładzie ją jako nawierzchnię na ziemi; część poza VIVO (ok. x 1112–1120, z 230–239) leży na ortofoto na kostce; obok na zachód (x 1104–1105, z 233–239) goła ziemia (zieleń i kostka na ortofoto)
+- Status: zgłoszone (12.11, naprawiacz G-600; zawężone przez kuratora przeglądu G-600)
+- Ważność: S4 · Zasięg: trawnik r11978659 (`landuse=grass`, `layer=4`) to zieleń na dachu VIVO, a import kładzie go na ziemi pod budynkiem i na pasie nad jezdnią na północy (z 240–244, na ortofoto asfalt); część poza VIVO (x 1112–1120, z 230–239) to strop garażu ze świetlikami i zielenią, trawa tam zostaje; goła ziemia przy zachodniej ścianie (x 1100–1105, z 225–242, na ortofoto kostka chodnika i pas zieleni) do reguły gołej ziemi z ortofoto (ADR-0077 krok 1.1)
+- Pakiet właściciela: tools/osm-import
+
+### G-648 Budynek z relacji bierze użytek tylko z relacji, nie z obrysu
+- Status: zgłoszone (12.11, kurator przeglądu G-600)
+- Ważność: S4 · Zasięg: VIVO ma w grze `use` = residential, bo relacja ma `building=yes`, a obrys w376043568 (`building=retail`, `shop=mall`) jest pomijany; poprawka: `buildingUse` bierze też tagi obrysu (`role=outline`); kontrola `building-use-vs-outline` (co najmniej 1 trafienie)
 - Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
