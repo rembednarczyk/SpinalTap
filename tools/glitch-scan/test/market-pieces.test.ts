@@ -87,6 +87,31 @@ describe("the market's furniture in the glitch scan (ADR-0058 stage 3)", () => {
     expect(f["market-piece-on-crowd-lane"]).toEqual(["food-stall on lane"]);
   });
 
+  it("takes a building under ground by the importer's rule: its levels, not its layer (G-646)", () => {
+    // A garage every floor of which is under the ground (`level=-2`, `layer=2`, the VIVO garage of
+    // G-600) at x 0..10, z 200..210, and a house under a viaduct (`layer=-1`) at x 30..40, z 200..210.
+    const map = { nodes: new Map(nodes), ways: new Map(ways), relations: new Map() };
+    for (const [x0, tags] of [
+      [0, { building: "garage", level: "-2", layer: "2" }],
+      [30, { building: "yes", layer: "-1" }],
+    ] as const) {
+      const ids = [
+        [x0, 200],
+        [x0 + 10, 200],
+        [x0 + 10, 210],
+        [x0, 210],
+      ].map(([x, z]) => {
+        const id = nextId++;
+        map.nodes.set(id, { id, ...worldToGeo({ x: x!, z: z! }) });
+        return id;
+      });
+      const id = nextId++;
+      map.ways.set(id, { id, nodes: [...ids, ids[0]!], tags });
+    }
+    const hits = marketChecks(map, [piece("food-stall", 5, 205), piece("food-stall", 35, 205)], LANES)["market-piece-in-building"]!().map((f) => f.at);
+    expect(hits).toEqual(["35,205"]);
+  });
+
   it("finds a booth whose stools come within 2 m of a carriageway's edge, and not one 2.5 m off", () => {
     // The street's carriageway (residential, 6.5 m) has its edge at z -16.75; the booth faces it (-z),
     // its stools' front 1.03 m before its middle.
