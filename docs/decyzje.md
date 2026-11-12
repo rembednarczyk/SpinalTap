@@ -4,7 +4,7 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 
 ## Sposób pracy
 
-- **Kolejność 12.11:** najpierw kończymy mapowanie Lublina (ADR-0077, ADR-0078, przejścia komórek), dopiero potem prace wizualne spoza mapy (np. drzwi kliniki i Neon Koi).
+- **Kolejność 12.11:** priorytet to mapowanie Lublina (ADR-0077, przejścia komórek) razem z refaktorem pod wzorce (ADR-0078, moduł geometrii, dalsze `SpatialHash`); po refaktorze dalej mapowanie. Prace wizualne spoza mapy (np. drzwi kliniki i Neon Koi) dopiero po mapowaniu. Wolne sloty bierze najpierw mapowanie i refaktor.
 - **ADR-0078 przyjęty (12.11):** operacje na wielokątach importu na `clipper2-ts`, migracja w 6 etapach; start od etapu 1 (kontrole w skanie) i 2 (bufor linii z łączeniami), każdy etap osobnym PR-em.
 - **Wyrównanie do wzorców (12.11, przegląd repo):** (3) jeden generator mulberry32 w `core/math` i (5) jeden `LruMap` zamiast kopii, jako małe refaktory bez zmiany zachowania (złote hashe bez zmian); (2) jeden `SpatialHash<T>` zamiast sześciu siatek kubełkowych, osobnym PR-em; (1) operacje na wielokątach w imporcie na bibliotece (Clipper2 albo polygon-clipping), najpierw ADR z pomiarem na jednej dzielnicy.
 - **Budżet sceny `reference` (11.11):** siatki w stożku kamery Neon Koi za ścianami (auta na nowych pasach postojowych z #409) idą jako wyjątek z wpisem w ADR-0046, do czasu przesłaniania dla kamery we wnętrzu (backlog).
