@@ -2,6 +2,18 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-613 Trasy tłumu przy Podwalu biegną po linii muru oporowego zamiast osią chodnika
+- Status: naprawione w #428 (12.11; `offBarriers` odsuwa trasy placów 1 m od barier wzdłuż, `unloop`; mur w67626198 179/183 m)
+- Ważność: S3 · Zasięg: trasy `stare-miasto-1-0-square-0` i `stare-miasto-1-1-square-0` idą w medianie 0,5 m od muru w67626198, a oś chodnika w56965511 jest 0,65–1,95 m od muru (zwykle 1,7 m); przez to 61 m dwumetrowego muru skarpy pod Archikatedrą wycięte (x 673–693, 701–705, 731–743, 753–760 przy z −200…−161 i x 745–760 przy z −15…12); kryterium: trasy co najmniej 1,0 m od muru i mur w grze ponad 170 z 183 m; T-251
+- Pakiet właściciela: packages/sim (tłum), tools/osm-import
+
+
+### G-626 Piesi tłumu wchodzą w bariery biegnące wzdłuż ich trasy
+- Status: naprawione w #428 razem z G-613 (12.11; `CROWD_LINE` 0,70 m, `barrier-on-crowd-lane` 0, `barrier-parallel-cut` 15 → 12)
+- Ważność: S4 · Zasięg: `barrier-room.ts` (`CROWD_LINE` 0,3 m) przy pieszych idących 0,28 m od linii trasy bez kolizji z bryłami; 45 kawałków, 149 m (21 płotów, 7 żywopłotów, 1 mur, 16 murów oporowych), najgłębiej ponad 0,2 m, np. płot (729,5; 93,0); skan `barrier-on-crowd-lane` ma próg `ALONG` 0,2 m zamiast 0,58 m; łączy się z G-613 (trasy tłumu z dala od barier)
+- Pakiet właściciela: packages/sim (tłum), tools/glitch-scan
+
+
 ### G-522 Klinowe szczeliny bez nawierzchni między jezdnią a chodnikiem Krakowskiego
 - Status: naprawione: krok 1 w #400, krok 2 w #409 (12.11; reguła `kerbFills` z indeksem `RingBins`, `kerb-gap-bare` 103 204 → 29 702; budżet reference 199/85 z wpisem w ADR-0046; T-247)
 - Ważność: S3 · Zasięg: (−120,5..−114; 54,5..101) 128 m², (−104,5..−102,5; −6,5..13) 48 m², (−121,5..−120,5; 74,5..100,5) 27 m², także części nieliczone skanem; zrzuty `kp-strip-g`, `s-strip-l`, `wedge`; przyczyna: jezdnia i chodnik się nie schodzą; propozycja `kerb-gap-bare` z przeglądu G-440 (baza ok. 35 631 próbek 0,25 m w mieście)

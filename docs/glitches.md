@@ -1617,7 +1617,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-601 Budynki na brzegu mapy z domyślną wysokością niezgodną z NMPT
-- Status: zgłoszone (11.11, kurator przeglądu #414; do reguły wysokości z LoD1 2024, ADR-0077)
+- Status: w PR #429 (12.11; LoD1 dla 27 z 39 budynków przyciętych na brzegu, pełnym obrysem OSM)
 - Ważność: S4 · Zasięg: Cicha 6 w grze ok. 15 m przy ok. 7 m w rzeczywistości, Cicha 8 ok. 11,2 m przy ok. 17,5 m, XVI LO ok. 6 m za niskie, Pałac Ordynacki bez dachu spadzistego (jak G-122), narożnik Cichej 5 do sprawdzenia; T-250; także VIVO r5601275: 11,1 m z `building:levels=3` w relacji, LoD1 17,2 m (po scaleniu heights sprawdzić, że LoD1 trafia do VIVO, nie do zdjętego garażu w173070505)
 - Pakiet właściciela: tools/osm-import
 
@@ -1626,20 +1626,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `refreshBoundingInfo(true, true)` przy wczytywaniu VRM kosztuje 40–450 ms na plik w NullEngine; jeśli tak samo w przeglądarce, wydłuża wczytywanie postaci; inne testy modeli (`model-textures`, `model-cast-colours`, `model-donors`, `model-figure*`) też nie zwalniają silników
 - Pakiet właściciela: packages/engine (renderer: modele)
 
-### G-613 Trasy tłumu przy Podwalu biegną po linii muru oporowego zamiast osią chodnika
-- Status: w PR #428 (12.11; kurator ZGODNE, weryfikator PRZYJĘTE, runda 2 bez samoprzecięć; czeka na CI)
-- Ważność: S3 · Zasięg: trasy `stare-miasto-1-0-square-0` i `stare-miasto-1-1-square-0` idą w medianie 0,5 m od muru w67626198, a oś chodnika w56965511 jest 0,65–1,95 m od muru (zwykle 1,7 m); przez to 61 m dwumetrowego muru skarpy pod Archikatedrą wycięte (x 673–693, 701–705, 731–743, 753–760 przy z −200…−161 i x 745–760 przy z −15…12); kryterium: trasy co najmniej 1,0 m od muru i mur w grze ponad 170 z 183 m; T-251
-- Pakiet właściciela: packages/sim (tłum), tools/osm-import
-
 ### G-625 Ganger staje przy długim płocie albo murze, gdy w oknie sterowania nie ma drogi
 - Status: w PR #426, runda 2 PRZYJĘTE; runda wydajności 73f2ac4 (12.11): testy zapisu micro i hack wróciły do main (+6%, −7%); czeka na CI
 - Ważność: S3 · Zasięg: `planDetour` (`steering.ts`) zwraca „off-field”, gdy w oknie 80 m nie ma objazdu; ganger dochodzi do przeszkody i stoi, gracz za nią bezpieczny (sonda 30 s: 0 strzałów); np. płot (11,83; −251,22), mur 3 m (214; −28,13); bariery z #418 uwidaczniają to w wielu miejscach; test `barrier-ai.test.ts` („moved > 1”) przeszedłby też z gangerem stojącym przy płocie; poprawka: dłuższy objazd (nawigacja po grafie poziomu albo większe okno), a gdy drogi nie ma, przejście do osłony lub szukania
 - Pakiet właściciela: packages/sim (systems/ai, steering)
-
-### G-626 Piesi tłumu wchodzą w bariery biegnące wzdłuż ich trasy
-- Status: w PR #428 razem z G-613 (12.11)
-- Ważność: S4 · Zasięg: `barrier-room.ts` (`CROWD_LINE` 0,3 m) przy pieszych idących 0,28 m od linii trasy bez kolizji z bryłami; 45 kawałków, 149 m (21 płotów, 7 żywopłotów, 1 mur, 16 murów oporowych), najgłębiej ponad 0,2 m, np. płot (729,5; 93,0); skan `barrier-on-crowd-lane` ma próg `ALONG` 0,2 m zamiast 0,58 m; łączy się z G-613 (trasy tłumu z dala od barier)
-- Pakiet właściciela: packages/sim (tłum), tools/glitch-scan
 
 ### G-627 Ręczne trawniki T-245 leżą częściowo na nawierzchni
 - Status: zgłoszone (12.11, przegląd zieleni T-245 kuratora; naprawa po scaleniu #416)
@@ -1647,7 +1637,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-629 Na skarpie cokół NMT połyka kondygnacje z tagu (Kowalska)
-- Status: poprawione na gałęzi heights, kurator runda 2 ZGODNE; scalona z main f157870 (12.11), runda 2 scalenia w toku: LoD1 dla budynków przyciętych na brzegu, czas dopasowania, kładki `vertical-plan`
+- Status: w PR #429 (12.11; kurator rundy 1–3 ZGODNE, weryfikator PRZYJĘTE; czeka na CI)
 - Ważność: S3 · Zasięg: reguła `MIN_STOREY` w `lod1-heights.ts` liczy ściany od wierzchu cokołu; przy cokole 9–12 m Kowalska 7 spada z 4 kondygnacji do 1, Kowalska 9, 11, 13 z 3 do 1, od ulicy ślepy mur z jednym rzędem okien; 15 budynków (T-252); poprawka: kondygnacje z tagu zostają, gdy `height ≥ levels × 2,6`, cokół do `height − levels × STOREY`
 - Pakiet właściciela: tools/osm-import
 
@@ -1657,12 +1647,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-631 Trybunał Koronny i Teatr Osterwy poniżej LoD1, Trybunał niższy od kamienic Rynku
-- Status: poprawione na gałęzi heights, kurator runda 2 ZGODNE; scalona z main f157870 (12.11), runda 2 scalenia w toku: LoD1 dla budynków przyciętych na brzegu, czas dopasowania, kładki `vertical-plan`
+- Status: w PR #429 (12.11; kurator rundy 1–3 ZGODNE, weryfikator PRZYJĘTE; czeka na CI)
 - Ważność: S3 · Zasięg: oba w `LOD1_LANDMARKS` zostają przy starych wysokościach; Trybunał okap 11,4 m wobec LoD1 17,5 m i LoD2 ok. 16,4 m, po zmianie kamienice Rynku mają okapy 4–8 m wyżej (odwrócona relacja); Teatr 16,3 wobec 19,5 m (T-254); poprawka: korekta w `TAG_CORRECTIONS` zgodna z LoD1 i NMPT; kontrola `landmark-vs-lod1` (baza 3 z Klasztorem Dominikanów, G-633)
 - Pakiet właściciela: tools/osm-import
 
 ### G-632 Wyjątek `historic` wyjmuje z LoD1 pałace spoza listy punktów orientacyjnych
-- Status: poprawione na gałęzi heights, kurator runda 2 ZGODNE; scalona z main f157870 (12.11), runda 2 scalenia w toku: LoD1 dla budynków przyciętych na brzegu, czas dopasowania, kładki `vertical-plan`
+- Status: w PR #429 (12.11; kurator rundy 1–3 ZGODNE, weryfikator PRZYJĘTE; czeka na CI)
 - Ważność: S3 · Zasięg: `use === "historic"` w `lod1Exempt`: Pałac Zylbera 10,1 m wobec LoD1 19,4 m (okap LoD2 17,7), Pałac Parysów 11,1 wobec 18,1, Złota 3, Rynek 11, Pałac Pawęczkowskiego, DPS im. Michelisowej (T-255); poprawka: usunąć ten warunek, punkty orientacyjne mają własną listę; kontrola `height-vs-lod1` z historic (baza 10)
 - Pakiet właściciela: tools/osm-import
 
