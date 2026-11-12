@@ -168,6 +168,8 @@
   "paving-overlap-step": 0,
   "paving-coplanar": 0,
   "grass-under-paving": 0,
+  "added-grass-off-green": 10,
+  "raised-green-on-ground": 0,
   "paint-under-deck": 0,
   "paint-lifted-by-deck": 0,
   "drone-low-pop": 0,

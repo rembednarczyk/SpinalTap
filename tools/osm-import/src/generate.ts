@@ -30,6 +30,7 @@ import { type ChunkOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
 import { lod1Index, withLod1Height } from "./lod1-heights.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
+import { groundRaisedGreen, raisedGreen } from "./raised-green.ts";
 import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
 import { type WorldVenue, allVenues, assignVenues, venueOut } from "./venues.ts";
 
@@ -344,6 +345,10 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     const pieces = cutSidewalk(b, (p) => others.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring)));
     bands.splice(bands.indexOf(b), 1, ...pieces.map((x) => ({ ...x, box: ringBounds(x.ring) })));
   }
+  // A lawn mapped above the ground lies on the roof of a structure under it, off the buildings and carriageways (G-647).
+  const raised = new Set(areas.filter((a) => raisedGreen(a.tags)).map((a) => a.id));
+  const decks = areas.filter((a) => a.tags.building !== undefined && a.tags.building !== "no" && belowGround(a.tags)).map((a) => a.ring);
+  bands.splice(0, bands.length, ...groundRaisedGreen(bands, raised, decks, buildings.map((a) => a.ring)));
   // A bridge is one deck: its outline fills the gap between its sidewalk and its carriageway (G-340).
   for (const b of bridgeFills(areas, bands)) bands.push({ ...b, box: ringBounds(b.ring) });
   // A pavement reaches the kerb (G-522): the bare strip between a carriageway and its paving is
