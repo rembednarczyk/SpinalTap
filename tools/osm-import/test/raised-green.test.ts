@@ -75,6 +75,24 @@ describe("a lawn mapped above the ground (G-647)", () => {
     for (const p of [{ x: 40, z: 15 }, { x: 15, z: 15 }, { x: 40, z: 35 }]) expect(grassAt(chunks, p)).toBe(true);
   });
 
+  it("covers the garage's roof to its edge where a chunk's edge cuts a strip of it short (G-665)", () => {
+    // A strip 0.2 m wide between the building and the garage's edge: the chunk's edge at x 58
+    // leaves 0.4 m² of it in the next chunk, under the 0.5 m² a band's sliver is dropped below.
+    const map = mapOf([
+      { ring: rect(0, 0, 60, 45), tags: { landuse: "grass", layer: "4" } },
+      { ring: rect(0, 0, 60, 39.8), tags: { building: "retail", layer: "2" } },
+      { ring: rect(0, 0, 60, 40), tags: { building: "yes", layer: "2", level: "-2" } },
+    ]);
+    const two = [
+      { id: "test-0-0", district: DISTRICTS[0]!, rect: { minX: -50, minZ: -50, maxX: 58, maxZ: 150 } },
+      { id: "test-1-0", district: DISTRICTS[0]!, rect: { minX: 58, minZ: -50, maxX: 150, maxZ: 150 } },
+    ];
+    const { chunks } = generate(map, flat, two, []);
+    expect(grassAt(chunks, { x: 30, z: 39.9 })).toBe(true);
+    expect(grassAt(chunks, { x: 59, z: 39.9 })).toBe(true);
+    expect(grassAt(chunks, { x: 59, z: 39.5 })).toBe(false);
+  });
+
   it("lays none of VIVO's roof garden (r11978659) on the ground: off the mall it is the roof of the garage's solid (G-662)", () => {
     const inputs = loadInputs();
     const at = ALL_CHUNKS.filter((c) => c.rect.maxX === 1120 && c.rect.minZ <= 240 && c.rect.maxZ >= 240);
