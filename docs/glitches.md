@@ -1565,7 +1565,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
 
 ### G-686 Uskok 0,52 m na zakręcie schodów z wiaduktu Zamkowej blokuje gangera
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g686); wcześniej: zgłoszone (12.11, naprawiacz G-643; także na main)
+- Status: w PR #476 (12.11, 11e9a8d: rampa terenu pod górnym biegiem, `steps-riser-tall` 1 → 0, ganger przechodzi; czeka na przegląd kuratora); wcześniej: zgłoszone (12.11, naprawiacz G-643; także na main)
 - Ważność: S3 · Zasięg: (732,7; 151,4)–(734,2; 152,8), górny stopień schodów w294098693 na styku z południowym końcem pomostu wiaduktu Zamkowej (T-166). Wysokość chodzenia skacze tam o 0,51–0,54 m na całej szerokości pasa, a skan liczy to jako `steps-riser-tall` (732; 151) 0,51 m. Na schodach w56965515 (dawne (729,5; 163,9), czyli x zakrętu i z krawędzi pomostu) na osi biegów nie ma uskoku powyżej 0,3 m. Przyczyna ta sama co G-339 (pomost poziomy w poprzek na NMT końca osi). Poprawka G-339 w tym punkcie powinna usunąć oba objawy, test G-686 (nawigacja) zostaje osobno; uskok niewidoczny dla `straightWalk` i pól nawigacji; ganger stoi tam wciśnięty na zawsze, na main przechodzi tylko, gdy jest akurat w powietrzu
 - Pakiet właściciela: packages/sim (systems/ai, nawigacja), ewentualnie treść schodów
 
@@ -1647,7 +1647,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (testy), .github (cache)
 
 ### G-721 Plac Litewski ciemniejszy i bardziej szary niż w Lublinie: barwa kostki i bruku, kontrast z trawą (T-281)
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g721); zgłoszone (12.11, kurator, przegląd paczki; decyzja użytkownika 12.11 w `docs/decyzje.md`)
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g721 (12.11, eeabcf7: barwy nawierzchni z mediany ortofoto, kostka/trawa 1,28 → 1,90, dno fontann jasne; przegląd kuratora w toku); zgłoszone (12.11, kurator, przegląd paczki; decyzja użytkownika 12.11 w `docs/decyzje.md`)
 - Ważność: S4 (proponowana; plac główny, więc zasięg szeroki) · Zasięg: szeroki (każdy plac i deptak z `square`, `footway`, `cobble`) · Koszt: mały–średni
 - Gdzie: Plac Litewski r7690183 (−105…121; −87…92), także deptak Krakowskiego Przedmieścia
 - Dowód: ortofoto 2025-04 i 2024-06, średnie RGB próbek na placu według klasy ortofoto i nawierzchni gry. Kostka do trawy: gra 1,34, ortofoto 1,9 i 2,1. Bruk gry ok. 15% ciemniejszy od kostki, na ortofoto ten sam odcień. Zrzuty `plac-litewski/pl-oczy-krakowskie.png`, `pl-z-gory.png`.
