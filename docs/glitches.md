@@ -1612,7 +1612,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: pojazdy)
 
 ### G-600 Podwójna bryła VIVO: garaż podziemny `level=-2` rysowany jako budynek
-- Status: w PR #427 (12.11; kurator ZGODNE, weryfikator PRZYJĘTE; czeka na CI)
+- Status: w PR #427 (12.11; kurator ZGODNE, weryfikator PRZYJĘTE; test `map-edge-wall` 38 → 37 budynków przyciętych na brzegu po zdjęciu garażu; czeka na CI)
 - Ważność: S3 · Zasięg: w173070505 (`building=yes`, `level=-2`, `layer=2`) ma prawie ten sam obrys co VIVO r5601275; po G-556 obie bryły wracają przycięte, nakładają się na 1732 m², dachy dzieli 0,1 m (y −12,5 i −12,6), ryzyko migotania; Podzamcze x 1088–1120, z 160–240; poprawka: pomijać w imporcie budynki, których wszystkie `level` są ujemne (jak `location=underground`); garaż wystaje poza VIVO, więc po usunięciu odsłania ok. 149 próbek gołej ziemi (do wyłożenia według ortofoto); skan: ta sama reguła w `edge-buildings.ts` i `building-underground-solid`, nowa kontrola `building-duplicate` (nakładanie > 50% pola mniejszego, bez `building:part`)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1627,7 +1627,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-613 Trasy tłumu przy Podwalu biegną po linii muru oporowego zamiast osią chodnika
-- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g613` (12.11, e49f753; `offBarriers` odsuwa trasy placów 1 m od barier wzdłuż, mur w67626198 179/183 m; kurator ZGODNE, weryfikator PRZYJĘTE z wadą: 4 samoprzecięcia `stare-miasto-1-1-square-0` przy (759,3; −11,5) z `pushIn`; runda 2 u autora)
+- Status: w PR #428 (12.11; kurator ZGODNE, weryfikator PRZYJĘTE, runda 2 bez samoprzecięć; czeka na CI)
 - Ważność: S3 · Zasięg: trasy `stare-miasto-1-0-square-0` i `stare-miasto-1-1-square-0` idą w medianie 0,5 m od muru w67626198, a oś chodnika w56965511 jest 0,65–1,95 m od muru (zwykle 1,7 m); przez to 61 m dwumetrowego muru skarpy pod Archikatedrą wycięte (x 673–693, 701–705, 731–743, 753–760 przy z −200…−161 i x 745–760 przy z −15…12); kryterium: trasy co najmniej 1,0 m od muru i mur w grze ponad 170 z 183 m; T-251
 - Pakiet właściciela: packages/sim (tłum), tools/osm-import
 
@@ -1637,7 +1637,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai, steering)
 
 ### G-626 Piesi tłumu wchodzą w bariery biegnące wzdłuż ich trasy
-- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g613` razem z G-613 (12.11; `barrier-on-crowd-lane` 0, `barrier-parallel-cut` 15 → 12 bez podnoszenia bazy)
+- Status: w PR #428 razem z G-613 (12.11)
 - Ważność: S4 · Zasięg: `barrier-room.ts` (`CROWD_LINE` 0,3 m) przy pieszych idących 0,28 m od linii trasy bez kolizji z bryłami; 45 kawałków, 149 m (21 płotów, 7 żywopłotów, 1 mur, 16 murów oporowych), najgłębiej ponad 0,2 m, np. płot (729,5; 93,0); skan `barrier-on-crowd-lane` ma próg `ALONG` 0,2 m zamiast 0,58 m; łączy się z G-613 (trasy tłumu z dala od barier)
 - Pakiet właściciela: packages/sim (tłum), tools/glitch-scan
 
@@ -1755,6 +1755,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, runda wydajności #426)
 - Ważność: S4 · Zasięg: gdy ani okno `near`, ani `wide` nie prowadzi do celu, ganger na ulicy wraca na posterunek bez `routeAcrossLevels` (jak na main); droga kładką lub schodami nad barierą nie jest szukana; pytanie co krok kosztowało 2,7 s na test (4790 wywołań, `attach` liczy wzrok do wszystkich węzłów), więc jeśli ma wrócić, to rzadko (np. raz na cel w komórce 32 m) i z limitem na krok
 - Pakiet właściciela: packages/sim (systems/ai)
+
+### G-654 Trasa placu `krakowskie-2-0-square-1` przecina samą siebie
+- Status: zgłoszone (12.11, naprawiacz G-613)
+- Ważność: S4 · Zasięg: przy (368; −223) odcinki 0×3 i 0×5 trasy się przecinają, także na main; test samoprzecięć w `crowd-square-barriers.test.ts` (#428) pomija tę trasę; po poprawce wyjątek z testu do usunięcia
+- Pakiet właściciela: packages/sim (tłum)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
