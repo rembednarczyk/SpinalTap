@@ -32,3 +32,6 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 ## Produkt
 
 - **Ustawienia domyślne (decyzja użytkownika 1.11):** grafika High na każdym urządzeniu, liczby obrażeń przy trafieniu, przycisk Ustawienia na ekranie tytułowym; jednorazowa migracja starych wpisów ustawień (`rev: 2`); w main (#121).
+
+## Czas testów w CI (12.11)
+- Decyzja użytkownika: najpierw pomiar najwolniejszych testów, `isolate: false` tam, gdzie bezpieczne (`core`, `sim`, `tools`, pakiet po pakiecie z przebiegiem kontrolnym), i wspólna pamięć wygenerowanego miasta z kluczem z sumy kontrolnej wejścia; potem bramka czasu w CI (ostrzeżenie przy pliku wolniejszym o > 50% od main). Testy tylko dotkniętych pakietów w PR-ach i trzeci shard później albo wcale. Limitu 20 min na shard nie podnosimy (ADR-0046).

@@ -1526,11 +1526,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: x −122…−100, z −64…−13; na ortofoto zachodni krawężnik ok. 3–4 m dalej na zachód niż krawędź jezdni w grze (−113,8 przy z −40); w grze ten pas to chodnik i kostka T-243 (wcześniej goła ziemia), w rzeczywistości lewy pas ruchu i asfalt skrzyżowania; por. T-094
 - Pakiet właściciela: tools/osm-import
 
-### G-522 Klinowe szczeliny bez nawierzchni między jezdnią a chodnikiem Krakowskiego
-- Status: krok 1 scalony w #400, krok 2 w PR #409, gotowy po scaleniu z main 12.11 (`kerb-gap-bare` 100 723 → 29 702; budżet reference 199/85 z wpisem w ADR-0046; czeka na CI) (reguła `kerbFills`, `kerb-gap-bare` 103 204 → 32 148; kurator runda 1 DO POPRAWY: G-570, T-247; runda 3 @ ef78842: asfalt jako osobne kawałki jezdni, `kerb-gap-bare` 30 482, kurator runda 3 ZGODNE (T-247); czeka na G-595 (budżet reference)) (8.11, kontrola `kerb-gap-bare`, baza 103 982 próbek = 6 499 m² w 2 155 skupieniach; przyczyna systemowa: import kładzie jezdnię krócej niż chodnik wzdłuż ulic, pas 1–2,5 m; krok 2: reguła importu, po scaleniu #397)
-- Ważność: S3 · Zasięg: (−120,5..−114; 54,5..101) 128 m², (−104,5..−102,5; −6,5..13) 48 m², (−121,5..−120,5; 74,5..100,5) 27 m², także części nieliczone skanem; zrzuty `kp-strip-g`, `s-strip-l`, `wedge`; przyczyna: jezdnia i chodnik się nie schodzą; propozycja `kerb-gap-bare` z przeglądu G-440 (baza ok. 35 631 próbek 0,25 m w mieście)
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-523 Dół 3,7 m w dziedzińcu pod w55897055 (krakowskie-0-1)
 - Status: zgłoszone (8.11, opiekun mapy; do oceny kuratora: prawdziwy dół czy artefakt NMT)
 - Ważność: S4 · Zasięg: teren spada z 0,6 do −3,5 m na ok. 25 × 15 m (x −175..−150, z −5..10), najgłębiej (−160; 5); czarny cokół ściany 3–4 m od dna (`pit-e`, `pit-f`, `pit-g`); `SHAPED_TERRAIN` bez `PADS`; to tu 4 krawędzie terenu > 20° (G-508); przy okazji: `steps-band-hidden` na krawędzi chunka (−200; 125), pasmo 3 × 0,2 m, niewidoczne dla gracza
@@ -1591,11 +1586,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: obrys w73833921 (x 758–781, z 464–491) ma w OSM 9 m przerwy na zachód między (761; 464,9) a (758,1; 474); w grze dostępny dziedziniec wyłożony kostką, na ortofoto dach zamknięty skrzydłami budynku; zrzut `topo-408-shots/notch.png`
 - Pakiet właściciela: tools/osm-import (korekty budynków)
 
-### G-570 Wypełnienie G-522 kładzie chodnik na pasach postojowych, zatokach i pasie ruchu
-- Status: w PR #409 (poprawka w rundzie 2, przyjęta przez kuratora; czeka na CI 12.11)
-- Ważność: S3 · Zasięg: 12 z 19 miejsc ortofoto, ok. 63% z 5 855 m² wypełnień przy ulicach z `lanes`; krawężnik 1–3 m wewnątrz prawdziwej jezdni (Ruska, Kapucyńska, Niecała, Peowiaków, Lubartowska przy przystanku Brama Krakowska 01, Unii Lubelskiej, Turystyczna, 3 Maja, Dolna Panny Marii, Zesłańców Sybiru); trawnik jako chodnik przy Andersa; przyczyna: szerokość z `lanes` × 3,25 lub typu nie obejmuje postoju, `fitToKerb` (T-046) tylko zwęża; poprawka: pas przy ulicy o szacowanej szerokości i szczelinie ≥ 1 m jako jezdnia z krawężnikiem przy nawierzchni pieszej, zebry do nowego krawężnika, trawniki przez korekty; kontrole `bus-stop-on-fill` i `kerb-fill-wide-estimated`
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-576 `donorsOf` po `setManifest` wpisuje dawców starego manifestu
 - Status: zgłoszone (8.11, weryfikator #407; istniało na main)
 - Ważność: S4 · Zasięg: obietnica dla starego manifestu rozstrzyga się po `clear()` i wpisuje `donorsReady`; w grze manifest ustawia się raz, skutek teoretyczny
@@ -1621,94 +1611,19 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: zaparkowane auta są we wspólnej siatce floty z zasięgiem rysowania 240 m (`VEHICLE_LOD` w `vehicle-views.ts`); jedno nowe auto 170 m od kamery (Kapucyńska, (153,7; −147,9)) poszerza obrys siatki tak, że przecina stożek widoku sceny `reference`, i cała flota staje się aktywna, choć auta w kadrze nie ma: 193/82 → 196/83; poprawka: podział floty na komórki albo obrys liczony z aut w zasięgu, bez podnoszenia budżetu; blokuje #409
 - Pakiet właściciela: packages/engine (renderer: pojazdy)
 
-### G-600 Podwójna bryła VIVO: garaż podziemny `level=-2` rysowany jako budynek
-- Status: zgłoszone (11.11, kurator przeglądu #414; #414 scalony 12.11, naprawa po #418, bo oba zmieniają `generate.ts`)
-- Ważność: S3 · Zasięg: w173070505 (`building=yes`, `level=-2`, `layer=2`) ma prawie ten sam obrys co VIVO r5601275; po G-556 obie bryły wracają przycięte, nakładają się na 1732 m², dachy dzieli 0,1 m (y −12,5 i −12,6), ryzyko migotania; Podzamcze x 1088–1120, z 160–240; poprawka: pomijać w imporcie budynki, których wszystkie `level` są ujemne (jak `location=underground`); garaż wystaje poza VIVO, więc po usunięciu odsłania ok. 149 próbek gołej ziemi (do wyłożenia według ortofoto); skan: ta sama reguła w `edge-buildings.ts` i `building-underground-solid`, nowa kontrola `building-duplicate` (nakładanie > 50% pola mniejszego, bez `building:part`)
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
-### G-601 Budynki na brzegu mapy z domyślną wysokością niezgodną z NMPT
-- Status: zgłoszone (11.11, kurator przeglądu #414; do reguły wysokości z LoD1 2024, ADR-0077)
-- Ważność: S4 · Zasięg: Cicha 6 w grze ok. 15 m przy ok. 7 m w rzeczywistości, Cicha 8 ok. 11,2 m przy ok. 17,5 m, XVI LO ok. 6 m za niskie, Pałac Ordynacki bez dachu spadzistego (jak G-122), narożnik Cichej 5 do sprawdzenia; T-250
-- Pakiet właściciela: tools/osm-import
-
-### G-605 Fundamenty fary na Placu po Farze stoją jako murki 1,0 m zamiast ok. 0,5 m
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S3 · Zasięg: r18507551, r18507552, w1348806697–708 (431 m w grze), NMPT − otoczenie: mediana 0,45 m, p75 0,78 m; przy 1,0 m zamknięty labirynt; poprawka: korekta wysokości 0,5 m (bez w1348806709, taras przy Rynku 11); kontrola `ruin-wall-height`
-- Pakiet właściciela: tools/osm-import
-
-### G-606 Symulacja tnie bariery, wzdłuż których biegnie trasa tłumu
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S3 · Zasięg: 21 odcinków ≥ 3 m, ok. 397 m, m.in. 127 m z ok. 152 m dwumetrowego muru oporowego skarpy pod Archikatedrą w67626198 (Podwale), ogrodzenie w231832115 (70 m), żywopłot w828140561; trasa 0,9 m od muru zostawia 0,4 m luzu; poprawka: ciąć tylko przy przecięciu (kąt jak `CROSS_SINE`) albo mniejszy `CROWD_ROOM`; kontrola `barrier-parallel-cut`
-- Pakiet właściciela: packages/sim, tools/osm-import
-
-### G-607 Przy schodach znikają mury po obu stronach biegu
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S3 · Zasięg: Zaułek Panasa w179264861: mur miejski w232362994 z 40 m zostaje 7 m (`FLIGHT_ROOM` 1,9 m), mur oporowy w232362995 traci 40 m w imporcie i 37 m w sim; balustrada w231832095 na podeście w Podzamczu (785; 248); poprawka: mur na krawędzi biegu zostaje (ewentualnie odsunięty na krawędź pasa), odstęp z szerokości biegu; kontrola `city-wall-kept`
-- Pakiet właściciela: tools/osm-import, packages/sim
-
-### G-608 Import tnie bariery biegnące wzdłuż krawędzi pasa jezdni
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S4 · Zasięg: pas z `roadWidth` szerszy niż jezdnia na ortofoto, więc mur przy krawężniku leży „na jezdni”: w232806008 (51 m, 389; 153), w886723051 (48 m, 220; −196), płot w73811517 przy Zamkowej (985; 281), murek w227679479 (28 m, 534; 517), koniec w67626198 (29 m); poprawka: reguła kąta jak dla dróg, bariery wzdłuż krawędzi przesunąć poza pas
-- Pakiet właściciela: tools/osm-import
-
-### G-610 Gracz za płotem jest nietykalny: ganger widzi przez płot i strzela w niego bez końca
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S2 · Zasięg: `inSight` (`ganger-perception.ts:201`) przez `clearSight` przepuszcza wzrok przez płot, a strzał płot zatrzymuje; `ShootAtPlayer` zeruje prędkość, `ChasePlayer` i `firingPosition` się nie włączają; sonda: 11 strzałów, 0 HP straty przy trzech płotach; 1359 płotów w grze
-- Pakiet właściciela: packages/sim (systems/ai)
-
-### G-611 Świadkowie przestępstwa nie widzą przez płot i żywopłot, obserwatorzy ciał widzą
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S4 · Zasięg: `crime-system.ts:82-104` (kamera, świadek, patrol, `inPlayerView`) używa `lineOfSight`, a reszta wzroku `clearSight`
-- Pakiet właściciela: packages/sim
-
-### G-612 Mury przecinają ogródki kawiarniane i siedziska tłumu
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S3 · Zasięg: `furnitureClearance` (`world-barriers.ts:513`) pomija meble niesolidne, `CROWD_SPOTS` i `SEAT_SPOTS` nie biorą udziału w cięciu; cafe-garden (629,5; 117,2) 31 ze 168 próbek w murze, (583,7; 24,5), siedziska #286 i #287 z murem 0,05–0,14 m przed twarzą
-- Pakiet właściciela: packages/sim, tools/glitch-scan
-
 ### G-622 Loader glTF liczy pozycje skóry na CPU dla każdego prymitywu
 - Status: zgłoszone (11.11, naprawiacz G-620; do sprawdzenia w przeglądarce)
 - Ważność: S4 · Zasięg: `refreshBoundingInfo(true, true)` przy wczytywaniu VRM kosztuje 40–450 ms na plik w NullEngine; jeśli tak samo w przeglądarce, wydłuża wczytywanie postaci; inne testy modeli (`model-textures`, `model-cast-colours`, `model-donors`, `model-figure*`) też nie zwalniają silników
 - Pakiet właściciela: packages/engine (renderer: modele)
 
-### G-613 Trasy tłumu przy Podwalu biegną po linii muru oporowego zamiast osią chodnika
-- Status: w naprawie (12.11, gałąź `ccr-ec2c4269-ilh8k8-g613` razem z G-626; trasy placów i alejek odsunięte od barier wzdłuż nich, `crowd-barriers.ts`; mur w67626198 w grze 179 z 183 m; do przeglądu kuratora)
-- Ważność: S3 · Zasięg: trasy `stare-miasto-1-0-square-0` i `stare-miasto-1-1-square-0` idą w medianie 0,5 m od muru w67626198, a oś chodnika w56965511 jest 0,65–1,95 m od muru (zwykle 1,7 m); przez to 61 m dwumetrowego muru skarpy pod Archikatedrą wycięte (x 673–693, 701–705, 731–743, 753–760 przy z −200…−161 i x 745–760 przy z −15…12); kryterium: trasy co najmniej 1,0 m od muru i mur w grze ponad 170 z 183 m; T-251
-- Pakiet właściciela: packages/sim (tłum), tools/osm-import
-
-### G-625 Ganger staje przy długim płocie albo murze, gdy w oknie sterowania nie ma drogi
-- Status: zgłoszone (11.11, weryfikator #418 runda 2)
-- Ważność: S3 · Zasięg: `planDetour` (`steering.ts`) zwraca „off-field”, gdy w oknie 80 m nie ma objazdu; ganger dochodzi do przeszkody i stoi, gracz za nią bezpieczny (sonda 30 s: 0 strzałów); np. płot (11,83; −251,22), mur 3 m (214; −28,13); bariery z #418 uwidaczniają to w wielu miejscach; test `barrier-ai.test.ts` („moved > 1”) przeszedłby też z gangerem stojącym przy płocie; poprawka: dłuższy objazd (nawigacja po grafie poziomu albo większe okno), a gdy drogi nie ma, przejście do osłony lub szukania
-- Pakiet właściciela: packages/sim (systems/ai, steering)
-
-### G-626 Piesi tłumu wchodzą w bariery biegnące wzdłuż ich trasy
-- Status: w naprawie (12.11, gałąź `ccr-ec2c4269-ilh8k8-g613` razem z G-613; `CROWD_LINE` 0,70 m, `barrier-on-crowd-lane` 49 → 0)
-- Ważność: S4 · Zasięg: `barrier-room.ts` (`CROWD_LINE` 0,3 m) przy pieszych idących 0,28 m od linii trasy bez kolizji z bryłami; 45 kawałków, 149 m (21 płotów, 7 żywopłotów, 1 mur, 16 murów oporowych), najgłębiej ponad 0,2 m, np. płot (729,5; 93,0); skan `barrier-on-crowd-lane` ma próg `ALONG` 0,2 m zamiast 0,58 m; łączy się z G-613 (trasy tłumu z dala od barier)
-- Pakiet właściciela: packages/sim (tłum), tools/glitch-scan
-
 ### G-627 Ręczne trawniki T-245 leżą częściowo na nawierzchni
-- Status: zgłoszone (12.11, przegląd zieleni T-245 kuratora; naprawa po scaleniu #416)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g627)
 - Ważność: S3 · Zasięg: `LITEVSKI_GREEN` i `SCHOOL_GREEN` w `tools/osm-import/src/corrections-zn.ts` (runda 2 #405) kładą trawę na asfalcie i kostce: pas x −201…−197, z 27–45 (54 m², zieleń 13%) i pas wzdłuż w80139555 do Cichej 4 (104 m², zieleń 4%); krakowskie-0-1; poprawka wg ADR-0077: trawa tylko na płatach zieleni z nakładki ortofoto (domknięcie 1 m, płat od 4 m²), reszta kostką jak T-243; kryterium: trawnik Litevski ≥ 70% zieleni, szkoły ≥ 55%, nowa kostka ≤ 15%; `cover-truth.test.ts` próg 0,55 → 0,7 (trawniki kuratora są prawdą klasyfikatora); nowa kontrola skanu `added-grass-off-green` (ręczne trawniki z zielenią < 50%: 11 z 20, 1 133 m²; do sprawdzenia też T-241 trawnik-wschod, trawnik-bajkowskiego, T-245 trawnik-3-maja-klinika, rabaty przy Collegium, T-246 trawnik-nadstawna-3)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
-### G-629 Na skarpie cokół NMT połyka kondygnacje z tagu (Kowalska)
-- Status: poprawione na gałęzi heights @ e9c91d1, kurator runda 2 ZGODNE (12.11; czeka na scalenie main po #418 i #409, potem weryfikator)
-- Ważność: S3 · Zasięg: reguła `MIN_STOREY` w `lod1-heights.ts` liczy ściany od wierzchu cokołu; przy cokole 9–12 m Kowalska 7 spada z 4 kondygnacji do 1, Kowalska 9, 11, 13 z 3 do 1, od ulicy ślepy mur z jednym rzędem okien; 15 budynków (T-252); poprawka: kondygnacje z tagu zostają, gdy `height ≥ levels × 2,6`, cokół do `height − levels × STOREY`
-- Pakiet właściciela: tools/osm-import
 
 ### G-630 Budynki LoD1 dopasowane luźno (IoU 0,5–0,7) zostają przy starej wysokości
 - Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1) ; osobny PR po heights
 - Ważność: S4 · Zasięg: 25 budynków z różnicą > 3 m, np. Kowalska 5 (w66309797) 24,5 m wobec LoD1 14,8 m obok Kowalskiej 7 z 15,3 m (uskok 9 m), Kuratorium Oświaty (T-253); proponowana kontrola `lod1-loose-match` (baza 25)
-- Pakiet właściciela: tools/osm-import
-
-### G-631 Trybunał Koronny i Teatr Osterwy poniżej LoD1, Trybunał niższy od kamienic Rynku
-- Status: poprawione na gałęzi heights @ e9c91d1, kurator runda 2 ZGODNE (12.11; czeka na scalenie main po #418 i #409, potem weryfikator)
-- Ważność: S3 · Zasięg: oba w `LOD1_LANDMARKS` zostają przy starych wysokościach; Trybunał okap 11,4 m wobec LoD1 17,5 m i LoD2 ok. 16,4 m, po zmianie kamienice Rynku mają okapy 4–8 m wyżej (odwrócona relacja); Teatr 16,3 wobec 19,5 m (T-254); poprawka: korekta w `TAG_CORRECTIONS` zgodna z LoD1 i NMPT; kontrola `landmark-vs-lod1` (baza 3 z Klasztorem Dominikanów, G-633)
-- Pakiet właściciela: tools/osm-import
-
-### G-632 Wyjątek `historic` wyjmuje z LoD1 pałace spoza listy punktów orientacyjnych
-- Status: poprawione na gałęzi heights @ e9c91d1, kurator runda 2 ZGODNE (12.11; czeka na scalenie main po #418 i #409, potem weryfikator)
-- Ważność: S3 · Zasięg: `use === "historic"` w `lod1Exempt`: Pałac Zylbera 10,1 m wobec LoD1 19,4 m (okap LoD2 17,7), Pałac Parysów 11,1 wobec 18,1, Złota 3, Rynek 11, Pałac Pawęczkowskiego, DPS im. Michelisowej (T-255); poprawka: usunąć ten warunek, punkty orientacyjne mają własną listę; kontrola `height-vs-lod1` z historic (baza 10)
 - Pakiet właściciela: tools/osm-import
 
 ### G-633 Klasztor Dominikanów: środek dachu 5 m nad LoD1
@@ -1726,15 +1641,115 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: mur oporowy w227679479 na Podzamczu (539; 517) biegnie po południowej ścianie garażu w444375263, który stoi w grze od G-556; `inBuilding` w `barrier-room.ts` słusznie go tnie, a kontrola liczy odcinek jako „cut”; poprawka: import pomija odcinek bariery leżący na ścianie budynku albo kontrola go nie liczy; po niej baza wraca do 14
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-637 Limit pobierania modelu liczy cały czas, nie bezczynność
-- Status: w PR #424 (12.11; limit bezczynności 30 s, weryfikator PRZYJĘTE)
-- Ważność: S4 · Zasięg: `MODEL_FETCH_TIMEOUT_MS` (120 s) przerywa całe pobieranie; przy łączu wolniejszym niż ok. 0,5 Mbit/s plik 8 MB (kaito.vrm) nigdy się nie załaduje, bo każda próba zaczyna od zera; poprawka: limit bezczynności (brak nowych bajtów przez N s) zamiast całkowitego; przy okazji: pełny zestaw engine+app+code-health trwa ok. 507 s (import 55%), do rozważenia `isolate: false` albo podział
-- Pakiet właściciela: packages/engine (renderer: modele)
-
 ### G-639 Płaska bryła na wysokości LoD1 przy stromym dachu wypada na kalenicy
 - Status: zgłoszone (12.11, kurator rundy 2 wysokości LoD1, T-257; do kroku „dachy z LoD2” ADR-0077)
 - Ważność: S3 · Zasięg: budynki bez tagów dachu stoją płasko na wysokości LoD1, a przy stromym dachu LoD1 leży prawie na kalenicy; np. Pałac Parysów w66330695 w grze 18,1 m i 5 rzędów okien, w LoD2 okap 10,7 m i kalenica 18,2 m (przed zmianą 11,1 m); ok. 59 budynków (płaski dach w grze, dach LoD2 > 4 m, okap gry > 3 m nad okapem LoD2; liczba przybliżona, okap LoD2 bywa okapem przybudówki); poprawka: gdy LoD2 ma okap i kalenicę, a OSM nie ma tagów dachu, okap i dach z LoD2; kontrola `flat-over-lod2-roof` (baza ok. 59); luka pokrewna: `church-over-nmpt` nie wykrywa kościoła za niskiego
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-640 Raster AI bierze koniec niskiego pomostu za płaski teren
+- Status: zgłoszone (12.11, naprawiacz G-625; potwierdzone w kodzie)
+- Ważność: S3 · Zasięg: `ledgesOf` liczy uskoki pomostu tylko w oknie ze schodami (`steering.ts:313` `const ledges = base && flight ? ledgesOf(...) : null;`, warunek w `:266`); w doku przy (2477,2; 407,8) teren −27,24, pomost −26,88 (`onLowDeck`), uskok 0,37 m, którego ruch nie pokonuje, a raster widzi płasko; ganger w pościgu przy dokach może tam utknąć; rodzina G-339
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-641 Po utknięciu ganger planuje z tego samego pola i bez kroku w bok
+- Status: zgłoszone (12.11, naprawiacz G-625; potwierdzone w kodzie)
+- Ważność: S4 · Zasięg: `ganger-walk.ts:157` `if (p && !p.plan && this.unsticking())`: gdy raster nie zgadza się z ruchem, ponowny plan daje tę samą drogę i ganger stoi bez końca zamiast spróbować prostej drogi albo kroku w bok
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-642 Testy AI teleportują gracza na y = 0 i zadają mu obrażenia od upadku
+- Status: zgłoszone (12.11, naprawiacz G-625)
+- Ważność: S4 · Zasięg: `teleportPlayer(sim, { x, y: 0, z })` na wysokim terenie daje 155–217 pkt w nogę w pierwszym kroku (wschód mapy); `barrier-ai.test.ts` (l. 34) robi to samo, dziś na niskim terenie; testy powinny brać `ground(x, z)` jak `barrier-detour.test.ts`, inaczej „gracz traci zdrowie” może przejść z niewłaściwego powodu
+- Pakiet właściciela: packages/sim (testy)
+
+### G-643 Budowa rastra i pola okna `wide` w jednym kroku symulacji
+- Status: zgłoszone (12.11, weryfikator #426; dług w ADR-0046)
+- Ważność: S3 · Zasięg: nowy plan objazdu w oknie `wide` buduje pole ok. 15 ms, a przy zmianie komórki 32 m także raster ok. 37 ms w jednym kroku (budżet ADR-0043: 4 ms); przy jednym odciętym gangerze w pościgu za biegnącym graczem przestój 15–50 ms co 1,5–2 s; poprawka: budowa rozłożona na kilka kroków (ganger idzie starą drogą do gotowego planu)
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-644 Kilkanaście pościgów naraz przepełnia pamięć rastrów okna `near`
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g644)
+- Ważność: S3 · Zasięg: odcięty ganger z planem `wide` nadal co krok pyta okno `near` przez `head(to)` (`ganger-walk.ts:191`); przy ok. 12 pościgach z różnymi celami pamięć `near` (8 rastrów) wypada bez końca: mediana 31,6 ms na krok, 600/600 kroków > 16 ms (main w tym scenariuszu 0,39 ms, 163 kroki > 16 ms tylko na starcie); poprawka: ganger z ważnym planem `wide` nie pyta `near`, albo klucz `near` niezależny od `from`
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-645 Po wczytaniu zapisu wszystkie pościgi `wide` przebudowują rastry w jednym kroku
+- Status: zgłoszone (12.11, weryfikator #426)
+- Ważność: S4 · Zasięg: pamięć `chases` (`steering.ts:660`) nie trafia do zapisu, a `chaseDetour` nie podlega limitowi `mayPlan`; pierwszy krok po wczytaniu buduje rastry `wide` wszystkich gangerów z `chase` naraz (54,7 ms na okno, przy kilku oknach N razy więcej); to samo przy zmianie `floor|reach`; determinizm bez zmian
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-648 Budynek z relacji bierze użytek tylko z relacji, nie z obrysu
+- Status: zgłoszone (12.11, kurator przeglądu G-600)
+- Ważność: S4 · Zasięg: VIVO ma w grze `use` = residential, bo relacja ma `building=yes`, a obrys w376043568 (`building=retail`, `shop=mall`) jest pomijany; poprawka: `buildingUse` bierze też tagi obrysu (`role=outline`); kontrola `building-use-vs-outline` (co najmniej 1 trafienie)
+- Pakiet właściciela: tools/osm-import
+
+### G-649 Mur oporowy i chodnik przy Podwalu przesunięte o 1,8–3 m na północ
+- Status: zgłoszone (12.11, kurator przeglądu G-613, T-259)
+- Ważność: S3 · Zasięg: x 695–760: mur w67626198 i oś chodnika w56965511 z OSM leżą 1,8–3 m na północ od rzeczywistości; ściana oporowa w BDOT10k (`OT_BUUO_L`, przez (739,2; −178,6), (726,2; −184,5), (706,5; −191,2)) pokrywa się ze stopniem NMT, ortofoto ma kostkę od 1,8–2,4 m na południe od osi do ścian domów; trasa tłumu idzie przez to po skarpie (NMT 1,5–2 m nad chodnikiem, x 735: 182,7 wobec 180,6 m); poprawka: geometria muru i chodnika według BDOT10k; kontrola `barrier-vs-bdot` (mur oporowy OSM > 1,5 m od linii BDOT10k, baza ≥ 1)
+- Pakiet właściciela: tools/osm-import
+
+### G-650 Dwie alejki przy Radziwiłłowskiej bez tras tłumu po G-613
+- Status: zablokowane przez G-655 (12.11; kryterium ≥ 1 m od płotu niemożliwe bez osłabienia `walker-on-car-lane`: oś pasa ruchu Radziwiłłowskiej 2,8–3,7 m od płotu, bo jezdnia zachodzi na chodnik; kontrola alejek bez tras liczona dosłownie daje 17, przy 3 największych alejkach chunku 2)
+- Ważność: S4 · Zasięg: po odsunięciu tras od płotów alejki przy w232805994 (x 45–80, z ok. 105, Pałac Lubomirskich, Plac Litewski 3) i w232805996 (x −63…−11, Plac Litewski 5) zostały bez przechodniów, w promieniu 30 m brak trasy; kryterium: trasa ≥ 1 m od płotu, a gdy pętla jest za wąska, jedna linia zamiast zniknięcia; kontrola `footway-alley-unwalked` (alejka powyżej `ALLEY_AREA` bez próbki trasy w 5 m, baza 2)
+- Pakiet właściciela: packages/sim (tłum)
+
+### G-652 `glitch-scan.test.ts` ma 2236 linii i rośnie
+- Status: zgłoszone (12.11, weryfikator G-600)
+- Ważność: S4 · Zasięg: `tools/glitch-scan/test/glitch-scan.test.ts` (wyjątek spoza reguły ESLint o 500 liniach, ADR-0031) dostaje kolejne kontrole przy każdej zmianie mapy; podział na pliki według rodzaju kontroli
+- Pakiet właściciela: tools/glitch-scan
+
+### G-653 Odcięty ganger na ulicy nie szuka drogi przez graf poziomów
+- Status: zgłoszone (12.11, runda wydajności #426)
+- Ważność: S4 · Zasięg: gdy ani okno `near`, ani `wide` nie prowadzi do celu, ganger na ulicy wraca na posterunek bez `routeAcrossLevels` (jak na main); droga kładką lub schodami nad barierą nie jest szukana; pytanie co krok kosztowało 2,7 s na test (4790 wywołań, `attach` liczy wzrok do wszystkich węzłów), więc jeśli ma wrócić, to rzadko (np. raz na cel w komórce 32 m) i z limitem na krok
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-655 Jezdnia z tagiem `lanes` nie jest dociągana do osobno zmapowanego chodnika
+- Status: w PR #437 (12.11; przegląd kuratora do zrobienia; nie zamyka G-650 ani G-656)
+- Ważność: S3 · Zasięg: `fitToKerb` (`tools/osm-import/src/ground.ts:123–126`, `|| Number(t.lanes) > 0) return t;`) pomija ulice z `lanes`; przy `sidewalk=separate` `roadWidth` = `lanes × 3,25`, np. Radziwiłłowska `lanes=3` (w331453920, w356402586, w914787972) 9,75 m, więc jezdnia i zewnętrzny pas ruchu zachodzą na chodnik (pas `footway` ma nawierzchnię „road” i „footway” naraz); po dociągnięciu oś pasa ok. 4 m od płotów w232805994 i w232805996, co odblokowuje G-650; zmiana całego miasta z regeneracją i przeglądem kuratora; zmierzyć czas `generate`
+- Pakiet właściciela: tools/osm-import
+
+### G-656 Alejka z donicami w krakowskie-1-1 zapada się w `unloop` i zostaje bez trasy
+- Status: zgłoszone (12.11, naprawiacz G-650)
+- Ważność: S4 · Zasięg: pas x 199…229, z 83…104 przy murach oporowych w1365971524/25/27/31: po G-613 `unloop` zjada pętlę z 180 do 69 próbek, reszta leży na ścianach i budynku, alejka bez przechodniów; rozwiązanie razem z G-650 (jedna linia zamiast zapadniętej pętli)
+- Pakiet właściciela: packages/sim (tłum)
+
+### G-657 Skan `walker-on-car-lane` sprawdza tylko wierzchołki tras
+- Status: zgłoszone (12.11, naprawiacz G-650)
+- Ważność: S4 · Zasięg: `tools/glitch-scan/test/glitch-scan.test.ts:606–608` bierze `l.points` zamiast próbek co metr, więc długi odcinek trasy blisko pasa ruchu może umknąć; poprawka: próbkowanie odcinków, nowa baza z przebiegu (wzrost to odsłonięte trafienia, nie regres)
+- Pakiet właściciela: tools/glitch-scan
+
+### G-658 Jezdnie w kształcie „lizaka” mają samoprzecinający się obrys
+- Status: zgłoszone (12.11, naprawiacz G-654)
+- Ważność: S4 · Zasięg: w173489056, w179269926, w296752325, w360030910, w1561106064 (drogi serwisowe z pętlą zamkniętą na własnym węźle); `simplePieces` z #433 celowo ich nie tnie, bo pocięcie odsłania lukę w cięciu chodnika w Nabrzeżu przy (2696; 299), +1 próbka `landuse-bare`; razem z tym wypełnienie zewnętrznych rogów na stykach kawałków dróg (proste końce `bufferLine`, do 1 m² na róg)
+- Pakiet właściciela: tools/osm-import
+
+### G-659 30 samoprzecinających się obrysów nawierzchni bez kontroli w skanie
+- Status: zgłoszone (12.11, naprawiacz G-654)
+- Ważność: S4 · Zasięg: place przycięte na krawędzi kawałka mapy przy (20; −20), pętle zamkniętych ścieżek w Podzamczu i Nabrzeżu; skan nie liczy tego rodzaju; poprawka: kontrola w `tools/glitch-scan` z bazą z przebiegu (i wpis w `docs/mapa-pokrycie.json`), potem naprawy; propozycja kuratora (przegląd #433): `ground-ring-self-cross`, baza 30 (Krakowskie 15, w tym 6 placów przy (20; −20), Nabrzeże 5, Podzamcze 5, Stare Miasto 5)
+- Pakiet właściciela: tools/glitch-scan, tools/osm-import
+
+### G-660 `save-load-micro-body` przekracza 20 s pod obciążeniem
+- Status: zgłoszone (12.11, agent bramki czasu testów)
+- Ważność: S4 · Zasięg: `packages/sim/test/save-load-micro-body.test.ts` „won, knocked out…” (G-242) przekroczył limit 20 s przy load 11–13 na 4 rdzeniach; kandydat na test niestabilny; najpierw pomiar przyczyny, limitu nie podnosimy (ADR-0046)
+- Pakiet właściciela: packages/sim
+
+### G-661 Goły plac na północ od VIVO
+- Status: zgłoszone (12.11, kurator przeglądu G-647; T-260)
+- Ważność: S4 · Zasięg: Podzamcze, x 1101–1120, z 239,7–252, ok. 55 m² gołe od G-647 (wcześniej przykryte trawnikiem r11978659); ortofoto: jasna nawierzchnia placu; poprawka: kostka lub płyty do krawędzi garażu albo reguła gołej ziemi z ortofoto (ADR-0077 krok 1.1)
+- Pakiet właściciela: tools/osm-import
+
+### G-662 Trójkąt garażu VIVO nad ziemią bez bryły
+- Status: zgłoszone (12.11, kurator przeglądu G-647; T-261, T-258 do zmiany na „do poprawy”)
+- Ważność: S3 · Zasięg: w173070505, x 1105,8–1120, z 228–239,7: na trzech nalotach ortofoto dach z sedum i świetlikami ok. 5–10 m nad chodnikiem (cień do z 244–251), w grze trawnik na poziomie gruntu; G-600 usunął całą bryłę garażu; poprawka: niska bryła o wysokości dachu w miejsce trawników T-258 i G-647
+- Pakiet właściciela: tools/osm-import
+
+### G-663 Drogi `segregated=yes` za wąskie
+- Status: zgłoszone (12.11, kurator przeglądu G-647; T-262)
+- Ważność: S4 · Zasięg: 62 drogi `highway=path` z `segregated=yes` (Podzamcze, Nabrzeże) mają pas 2 m (`PATHS.path`); np. w65351890 przy (1038; 305): kostka ok. 4 m i asfalt rowerowy ok. 2,4 m; poprawka: szerokość z `footway:width` + `cycleway:width` albo domyślnie ok. 2,5 + 2 m, dwie nawierzchnie; kontrola skanu `path-segregated-width`
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-664 Zieleń z `layer>0` ukrywa gołą ziemię przed skanem `landuse-bare`
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g664)
+- Ważność: S4 · Zasięg: `landuse-bare` pomija punkty w obrysie trawnika z mapy, także trawnika na dachu (r11978659), więc goły pas z G-661 nie zmienił bazy 69019; poprawka: zieleń z `layer>0` albo `location=roof` nie zwalnia próbek, nowa baza z przebiegu
+- Pakiet właściciela: tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
