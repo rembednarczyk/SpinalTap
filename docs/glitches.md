@@ -1844,7 +1844,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai), packages/persistence
 
 ### G-703 Schody przycięte brzegiem mapy: ostatnia podstopnica do y 0 za brzegiem (ściana do 23,7 m)
-- Status: w PR #463 (12.11, runda 2 autora 479aa57: `surfaceAt` i szwy poprawione; ponowna weryfikacja w toku; zgłoszone przez kuratora, przegląd stare-miasto-1-0; T-049)
+- Status: w PR #463 (12.11, druga weryfikacja NIE PRZYJĘTE: renderer nie przycina, bo `onMap` z `heightAt` ma margines 0,01 m, a skan liczy po swojemu i daje fałszywe 6 → 1; trzecia runda, nowy autor: jedna funkcja dla renderera i skanu; zgłoszone przez kuratora, przegląd stare-miasto-1-0; T-049)
 - Ważność: S3 (pionowa szara ściana 20 m, widoczna z ulicy i znad dachów) · Zasięg: 5 z 6 trafień `steps-riser-tall` w mieście. Stare Miasto: w481462067 (760; −210) 20,03 m i w888479969 (760; −148) 5,63 m. Podzamcze: (1090–1092; 160) 23,70 m (2 pasy). Nabrzeże: (2658; 60) 18,21 m. `groundY` poza chunkami zwraca 0 (`terrain.ts`), a `planSteps` dla pasa przyciętego do brzegu bierze wysokość tuż za brzegiem. Zrzuty `sm10d-schody-210`, `sm10d-kuria-podworze`
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (`steps-plan`), ewentualnie tools/osm-import (przycięcie pasa schodów odrobinę przed brzegiem) albo `groundY` za brzegiem z wysokością brzegu
 - Test przyjęcia: `steps-riser-tall` 6 → 1 (zostaje G-686 przy (732; 151)); pas schodów przy x = 760 kończy się na wysokości terenu brzegu (−20,1 i −6,3)
@@ -1865,6 +1865,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, z naprawy G-703)
 - Ważność: S4 · Zasięg: `groundNormal` drape'a próbkuje ±0,75 m, więc przy brzegu mapy każda nawierzchnia przycięta brzegiem (nie tylko schody) dostaje normalną liczoną z terenem 0 za brzegiem; skutek: złe cieniowanie pasa przy brzegu (nie zmierzone); G-703 (#463) poprawia to tylko dla schodów (`onItsSide` w `steps-plan.ts`); do tego stopnie pasa przyciętego skośnie rysują się na pełnym prostokącie, ok. 1 m za brzegiem, na poprawnej wysokości
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (drape)
+
+### G-707 Pas schodów na szwie chunków może nie przebudować się po wczytaniu sąsiada
+- Status: zgłoszone (12.11, z weryfikacji #463; niesprawdzone, dotyczy też main)
+- Ważność: S4 · Zasięg: przy strumieniowaniu `TerrainEntries.heightAt` zwraca null na wewnętrznym szwie, gdy sąsiedni chunk nie jest wczytany; komórka podłoża z pasem przy szwie może zostać zbudowana jak przy brzegu mapy i nie przebudować się po wczytaniu sąsiada; do sprawdzenia sondą strumieniowania
+- Pakiet właściciela: packages/engine/src/renderer/mapcity
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
