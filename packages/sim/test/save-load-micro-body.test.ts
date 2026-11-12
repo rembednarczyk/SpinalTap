@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SaveSnapshot } from "@seki/core";
-import { SIM_HZ, Simulation, WAKE_TIME, stateHash, type Entity } from "../src";
+import { SEARCH_SECONDS, SIM_HZ, Simulation, WAKE_TIME, stateHash, type Entity } from "../src";
 import { isEngaged } from "../src/world/street";
 import { run, teleportPlayer } from "./helpers";
 import { enterKanal } from "./micro-scenes";
@@ -131,9 +131,22 @@ describe("the body of a micro-event's mugger in the save (G-233)", () => {
     // Blinded by her hack, it loses her; past giving up the search it calms down in both: no longer
     // fighting, so hitting it is an assault.
     for (const s of [sim, loaded]) woken(s).hackFx = { pinged: 0, blind: 60, crippled: 0 };
-    run(sim, ticks(40), CROUCH);
-    run(loaded, ticks(40), CROUCH);
-    expect([woken(sim), woken(loaded)].map((e) => [e.ai?.alerted, isEngaged(e)])).toEqual([
+    const states = () => [woken(sim), woken(loaded)].map((e) => [e.ai?.alerted, isEngaged(e)]);
+    // Stepped together up to the moment it calms down (G-660: not a fixed 40 s, most of the test's
+    // time), so both games calm on the same step; then past its search it is still calm.
+    for (let i = 0, now = states(); i < ticks(40) && now.some(([alerted]) => alerted); i++, now = states()) {
+      expect(now[0]).toEqual(now[1]);
+      sim.step(CROUCH);
+      loaded.step(CROUCH);
+    }
+    expect(states()).toEqual([
+      [false, false],
+      [false, false],
+    ]);
+    expect(hash(loaded)).toBe(hash(sim));
+    run(sim, ticks(SEARCH_SECONDS + 1), CROUCH);
+    run(loaded, ticks(SEARCH_SECONDS + 1), CROUCH);
+    expect(states()).toEqual([
       [false, false],
       [false, false],
     ]);

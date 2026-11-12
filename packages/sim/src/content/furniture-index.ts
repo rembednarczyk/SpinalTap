@@ -29,7 +29,12 @@ for (const items of Object.values(WORLD_STREET_PROPS)) {
   }
 }
 
-/** The pieces in the cells round (x, z): every piece within 16 m, and some further. */
+/**
+ * The pieces in the cells round (x, z): every piece within 16 m, and some further. Not core's
+ * `SpatialHash`: the answer is the 3 x 3 cells round the point's, not a box round it, and the
+ * further pieces it takes in (a big footprint 17 m off) count in the clearance, so a box query
+ * would change the tables.
+ */
 export const furnitureNear = (x: number, z: number): FurniturePiece[] => {
   const out: FurniturePiece[] = [];
   const cx = Math.floor(x / CELL);

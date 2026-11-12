@@ -20,7 +20,7 @@ import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
 import { byStyledLamp, oldTownLook } from "./props-lamp-looks.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
-import { SolidIndex, clearSpot } from "./props-solid.ts";
+import { PropSolidIndex, clearSpot } from "./props-solid.ts";
 import { BASKET, BASKET_LAMPS, nearTraffic, placeStreetGroup } from "./props-streets.ts";
 import { treeVariant } from "./tree-heights.ts";
 import { treeSpeciesOf } from "./tree-species.ts";
@@ -396,7 +396,7 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   const perKind: Record<string, number> = {};
   const perDistrict: Record<string, number> = {};
   const kept = new Map<StreetPropKind, Pt[]>();
-  const solids = new SolidIndex();
+  const solids = new PropSolidIndex();
   const perItem: Record<string, [number, number]> = {};
   for (const item of plan.items) if (propOf(item.kind)) perItem[item.id] = [item.count ?? 0, 0];
   // The plan's bollards (not the drinking fountains drawn as one), to string into rows.

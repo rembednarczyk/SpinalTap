@@ -177,9 +177,12 @@ describe("generator", () => {
     const twoWay = ground({});
     expect(surface(twoWay, "sidewalk")).toBeCloseTo(500, -1);
     expect(surface(twoWay, "road")).toBeCloseTo(450, -1);
-    // A width or lanes from the map stay as they are, whatever they cover.
+    // A width from the map stays as it is, whatever it covers.
     expect(surface(ground({ width: "6" }), "road")).toBeCloseTo(600, -1);
-    expect(surface(ground({ lanes: "2" }), "road")).toBeCloseTo(650, -1);
+    // Mapped lanes are fitted too (G-655), no narrower than 2.25 m each: two 4.5 m, three one way 6.75 m (6.8 as the outlines round it).
+    expect(surface(ground({ lanes: "2" }), "sidewalk")).toBeCloseTo(500, -1);
+    expect(surface(ground({ lanes: "2" }), "road")).toBeCloseTo(450, -1);
+    expect(surface(ground({ lanes: "3", oneway: "yes" }), "road")).toBeCloseTo(680, -1);
   });
 
   it("keeps a street's default width where a sidewalk runs on it only by a junction (G-112)", () => {
@@ -219,9 +222,9 @@ describe("generator", () => {
     const inputs = loadInputs();
     const d = DISTRICTS.find((x) => x.slug === "stare-miasto")!;
     const specs = chunksOf(d);
-    const first = emitDistrict(d.slug, d.name, generate(inputs.osm, inputs.src, specs, undefined, inputs.lod1).chunks);
+    const first = emitDistrict(d.slug, d.name, generate(inputs.osm, inputs.src, specs, undefined, inputs.lod1, inputs.lod2).chunks);
     const again = loadInputs();
-    const second = emitDistrict(d.slug, d.name, generate(again.osm, inputs.src, specs, undefined, again.lod1).chunks);
+    const second = emitDistrict(d.slug, d.name, generate(again.osm, inputs.src, specs, undefined, again.lod1, again.lod2).chunks);
     expect(second).toBe(first);
     expect(first).toBe(readFileSync(join(REPO, "packages/sim/src/content/lublin/stare-miasto.generated.ts"), "utf8"));
   });

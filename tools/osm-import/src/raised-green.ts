@@ -3,7 +3,9 @@
  * deck (VIVO's, r11978659, `layer=4`). Laid on the ground whole, such a lawn ran under the building
  * whose roof it is and past the deck's edge onto the street. Where it reaches over a structure
  * under the ground (a garage, whose roof is the ground's level) it lies on that roof only; nowhere
- * where a building stands or a carriageway runs on the ground under it. The cutting is done in
+ * where a building stands or a carriageway runs on the ground under it. VIVO's lawn lies on no ground
+ * of the map: past the mall its garage stands over the street, a solid of its own (G-662, T-261),
+ * and the rest of the garage is under the mall. The cutting is done in
  * convex pieces (`convexParts`): the lawn's, the decks' and the buildings' parts, a carriageway's
  * quads segment by segment.
  */

@@ -63,4 +63,17 @@ describe("a walker's stuck check in a save and asleep (G-208)", () => {
     applyEntitySnapshot(loaded, entitySnapshotOf(guard(stuck(null))));
     expect(loaded.walk!.chase).toBeNull();
   });
+
+  it("keeps the next wide way of a chase being made (G-643) through a save, a copy of it, and none without one", () => {
+    const chaseNext = { goal: { x: 30, y: 0.5, z: 22 }, ready: 140 };
+    const saved = entitySnapshotOf(guard({ ...stuck(null), chaseNext })).walk!;
+    expect(saved.chaseNext).toEqual(chaseNext);
+    expect(saved.chaseNext!.goal).not.toBe(chaseNext.goal);
+    expect(entitySnapshotOf(guard(stuck(null))).walk!.chaseNext).toBeUndefined();
+    const loaded = guard(stuck(null));
+    applyEntitySnapshot(loaded, entitySnapshotOf(guard({ ...stuck(null), chaseNext })));
+    expect(loaded.walk!.chaseNext).toEqual(chaseNext);
+    applyEntitySnapshot(loaded, entitySnapshotOf(guard(stuck(null))));
+    expect(loaded.walk!.chaseNext).toBeNull();
+  });
 });

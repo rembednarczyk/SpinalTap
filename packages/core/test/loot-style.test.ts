@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  mulberry32,
   BASE_LOOT_GRADE,
   LOOT_TABLES,
   type LootLine,
@@ -34,18 +35,7 @@ const counting = (values: number[]) => {
 };
 
 /** A small deterministic stream (mulberry32), the same for every run of the test. */
-const seeded = (seed: number): RandomPort => {
-  let a = seed >>> 0;
-  return {
-    next() {
-      a = (a + 0x6d2b79f5) >>> 0;
-      let t = a;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    },
-  };
-};
+const seeded = (seed: number): RandomPort => ({ next: mulberry32(seed) });
 
 const all = (kind: StyleKind, n = STYLE_WINDOW): StyleKind[] => Array.from({ length: n }, () => kind);
 const weightOf = (entries: ReturnType<typeof styledEntries>, item: string) => entries.find((e) => e.item === item)!.weight;

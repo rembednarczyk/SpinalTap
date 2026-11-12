@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SAVE_SCHEMA_VERSION, type EntitySnapshot, type WalkSnapshot } from "@seki/core";
+import { MOST_PLAN_STEPS, SAVE_SCHEMA_VERSION, type EntitySnapshot, type WalkSnapshot } from "@seki/core";
 import { MIGRATIONS, decodeSave, encodeSave, findSchemaError } from "../src";
 import { snapshot } from "./fixtures";
 
@@ -29,6 +29,33 @@ describe("a chase's wide way in the save (v36 to v37, G-625)", () => {
     expect(errorOf(WALK)).toBeNull();
     for (const bad of [{ ...WALK, chase: null }, { ...WALK, chase: { x: 1, z: 2 } }, { ...WALK, chase: { x: Number.NaN, y: 0, z: 0 } }]) {
       expect(errorOf(bad)).toBe("entity guard walk");
+    }
+  });
+});
+
+/** The next wide way of a chase while it is made a slice a step (G-643): schema v38 and the v37 -> v38 migration. */
+describe("a chase's next wide way in the save (v37 to v38, G-643)", () => {
+  const NEXT: WalkSnapshot = { ...WALK, chaseNext: { goal: { x: 2352.4, y: -28.4, z: 431.6 }, ready: 930 } };
+
+  it("is schema v38 or later", () => {
+    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(38);
+  });
+
+  it("a v37 save changes only the version: a chase walks the way it has, or asks for one on its first step", () => {
+    const old = { version: 37, tick: 5, entities: [GUARD] };
+    expect(MIGRATIONS[37]!(old)).toEqual({ ...old, version: 38 });
+  });
+
+  it("keeps it through the codec", () => {
+    const guard = { ...GUARD, walk: NEXT };
+    expect(decodeSave("slot", encodeSave(snapshot({ tick: 900, entities: [guard] }))).entities).toEqual([guard]);
+  });
+
+  it("refuses one that is not a point and a step at most MOST_PLAN_STEPS past the save's", () => {
+    expect(errorOf(NEXT)).toBeNull();
+    expect(errorOf({ ...NEXT, chaseNext: { ...NEXT.chaseNext, ready: 900 + MOST_PLAN_STEPS } })).toBeNull();
+    for (const chaseNext of [null, { goal: { x: 1, z: 2 }, ready: 930 }, { goal: NEXT.chaseNext!.goal, ready: 930.5 }, { goal: NEXT.chaseNext!.goal, ready: -1 }, { goal: NEXT.chaseNext!.goal, ready: 901 + MOST_PLAN_STEPS }]) {
+      expect(errorOf({ ...NEXT, chaseNext })).toBe("entity guard walk");
     }
   });
 });

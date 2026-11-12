@@ -28,7 +28,7 @@ const val = (name: string) => {
 };
 
 const covers: Cover[] = MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined);
-const m2 = (c: ClassCounts | undefined) => (c ? `zieleń ${c.green}, jasna ${c.paving}, asfalt ${c.asphalt}, cień ${c.shadow}, nieznane ${c.unknown}${c.none ? `, bez zdjęcia ${c.none}` : ""}` : "brak rastra");
+const m2 = (c: ClassCounts | undefined) => (c ? `zieleń ${c.green}, pod koronami ${c.canopy}, jasna ${c.paving}, asfalt ${c.asphalt}, cień ${c.shadow}, nieznane ${c.unknown}${c.none ? `, bez zdjęcia ${c.none}` : ""}` : "brak rastra");
 const hard = (c: ClassCounts) => Math.round((c.paving + c.asphalt) * 10) / 10;
 const inside = (ring: readonly { x: number; z: number }[], r: Rect) => ring.some((p) => p.x > r.minX && p.x < r.maxX && p.z > r.minZ && p.z < r.maxZ);
 
@@ -43,7 +43,7 @@ const cellReport = (id: string, osm: OsmData, landuseBareAt: (x: number, z: numb
   // The pavements need the grid only: a district without a raster gets an empty one.
   const region = MAP_REGIONS.find((r) => r.slug === cell.slug)!;
   const runs = chunk ? emptyRuns((cover ?? emptyCover(region.slug, region.rect, THRESHOLDS)).header, chunk, pieces) : [];
-  const barriers = barrierReport(osm, cell.rect, pieces);
+  const barriers = barrierReport(osm, cell.rect, CHUNKS.flatMap((c) => c.barriers ?? []));
   return {
     cell: id,
     rect: cell.rect,
@@ -66,7 +66,7 @@ const cellText = (r: CellReport): string[] => {
     const grass = g.surfaces.grass;
     const paved = Object.entries(g.surfaces).filter(([s]) => s !== "grass" && s !== "water" && s !== "basin" && s !== "rail");
     if (grass) out.push(`trawa importu na nawierzchni ortofoto: ${hard(grass)} m² z ${Math.round(Object.values(grass).reduce((s, v) => s + v, 0))} m²`);
-    out.push(`nawierzchnia importu na zieleni ortofoto: ${Math.round(paved.reduce((s, [, c]) => s + c.green, 0) * 10) / 10} m²`);
+    out.push(`nawierzchnia importu na zieleni ortofoto: ${Math.round(paved.reduce((s, [, c]) => s + c.green + c.canopy, 0) * 10) / 10} m²`);
   } else out.push("brak rastra pokrycia");
   out.push(`meble (razem/OSM/generator): ${Object.entries(r.furniture).map(([k, c]) => `${k} ${c.total}/${c.osm}/${c.generator}`).join(", ")}`);
   out.push(`chodniki bez mebli > ${r.emptyPavements.over} m: ${r.emptyPavements.count} odcinków, ${r.emptyPavements.metres} m${r.emptyPavements.longest.slice(0, 3).map((x) => `; ${x.street} (${x.side}) ${x.length} m od ${x.from.x},${x.from.z}`).join("")}`);

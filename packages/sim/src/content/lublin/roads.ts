@@ -1,4 +1,4 @@
-import { type GroundSurface, SURFACE_LIFT } from "@seki/core";
+import { type GroundSurface, SURFACE_LIFT, SpatialHash } from "@seki/core";
 import { MAP_CHUNKS } from "./sites";
 import type { LublinChunkData } from "./types";
 
@@ -141,18 +141,9 @@ const AREAS: readonly Area[] = MAP_CHUNKS.flatMap((c) =>
   }),
 );
 
-const CELL = 32;
-const areaCells = new Map<string, Area[]>();
-for (const a of AREAS) {
-  for (let ix = Math.floor(a.minX / CELL); ix <= Math.floor(a.maxX / CELL); ix++) {
-    for (let iz = Math.floor(a.minZ / CELL); iz <= Math.floor(a.maxZ / CELL); iz++) {
-      const k = `${ix}:${iz}`;
-      const list = areaCells.get(k);
-      if (list) list.push(a);
-      else areaCells.set(k, [a]);
-    }
-  }
-}
+/** The areas in a 32 m `SpatialHash` by their boxes: `at` gives those whose box holds a point, in draw order. */
+const areaGrid = new SpatialHash<Area>(32);
+for (const a of AREAS) areaGrid.insert(a, a.minX, a.minZ, a.maxX, a.maxZ);
 
 const inside = (x: number, z: number, pts: readonly Pt[]): boolean => {
   let r = false;
@@ -165,7 +156,7 @@ const inside = (x: number, z: number, pts: readonly Pt[]): boolean => {
 };
 
 const areasAt = (x: number, z: number): Area[] =>
-  (areaCells.get(`${Math.floor(x / CELL)}:${Math.floor(z / CELL)}`) ?? []).filter((a) => x >= a.minX && x <= a.maxX && z >= a.minZ && z <= a.maxZ && inside(x, z, a.pts));
+  areaGrid.at(x, z).filter((a) => inside(x, z, a.pts));
 
 /** The surfaces of the map under (x, z), in draw order. */
 export const surfacesAt = (x: number, z: number): GroundSurface[] => areasAt(x, z).map((a) => a.surface);

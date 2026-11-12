@@ -1,4 +1,4 @@
-import type { ActivityId, Vec3 } from "@seki/core";
+import { type ActivityId, SpatialHash, type Vec3 } from "@seki/core";
 import { placeAt, v } from "./builders";
 import { DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_PROPS } from "./district-kanal";
@@ -143,31 +143,25 @@ const MIN_RUN = 25;
 
 /** How close to a car or trolleybus lane's line a walker of a square counts as on the carriageway (m). */
 const CAR_LANE_REACH = 2.6;
-const CAR_CELL = 16;
-/** The traffic's lane segments by grid cell, for the carriageway test. */
+/**
+ * The traffic's lane segments in a 16 m `SpatialHash`, each by its box widened by `CAR_LANE_REACH`,
+ * for the carriageway test: a point outside that box lies further than the reach from the line.
+ */
 const carSegments = (() => {
-  const cells = new Map<string, (readonly [number, number, number, number])[]>();
+  const grid = new SpatialHash<readonly [number, number, number, number]>(16);
   for (const r of TRAFFIC_ROUTES) {
     if (r.use === "deliveries") continue;
     // At the street's level: Alchemia's ramp routes go under the car park, off it (ADR-0074 §4).
     for (const [[ax, az], [bx, bz]] of streetSegments(r)) {
-      const seg = [ax, az, bx, bz] as const;
-      for (let cx = Math.floor((Math.min(ax, bx) - CAR_LANE_REACH) / CAR_CELL); cx <= Math.floor((Math.max(ax, bx) + CAR_LANE_REACH) / CAR_CELL); cx++) {
-        for (let cz = Math.floor((Math.min(az, bz) - CAR_LANE_REACH) / CAR_CELL); cz <= Math.floor((Math.max(az, bz) + CAR_LANE_REACH) / CAR_CELL); cz++) {
-          const key = `${cx},${cz}`;
-          const list = cells.get(key) ?? [];
-          list.push(seg);
-          cells.set(key, list);
-        }
-      }
+      grid.insert([ax, az, bx, bz], Math.min(ax, bx) - CAR_LANE_REACH, Math.min(az, bz) - CAR_LANE_REACH, Math.max(ax, bx) + CAR_LANE_REACH, Math.max(az, bz) + CAR_LANE_REACH);
     }
   }
-  return cells;
+  return grid;
 })();
 
 /** Is (x, z) on a carriageway the traffic drives (within `CAR_LANE_REACH` of a lane's line)? */
 const onCarLane = (x: number, z: number): boolean =>
-  (carSegments.get(`${Math.floor(x / CAR_CELL)},${Math.floor(z / CAR_CELL)}`) ?? []).some(([ax, az, bx, bz]) => {
+  carSegments.some(x, z, x, z, ([ax, az, bx, bz]) => {
     const dx = bx - ax;
     const dz = bz - az;
     const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1)));

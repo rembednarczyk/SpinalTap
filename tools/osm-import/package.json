@@ -5,6 +5,10 @@
   "type": "module",
   "description": "Offline importer of Lublin's centre from OpenStreetMap and the GUGiK terrain model (ADR-0042).",
   "scripts": {
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "bench:ground": "vitest run --config bench/vitest.config.ts"
+  },
+  "devDependencies": {
+    "clipper2-ts": "2.0.1-19"
   }
 }

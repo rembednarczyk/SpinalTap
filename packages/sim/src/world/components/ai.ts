@@ -115,6 +115,16 @@ export interface WalkProgress {
    * itself is made again from that. Null without one.
    */
   chase?: Vec3 | null;
+  /**
+   * The next wide way of the chase while it is made, a slice a step (G-643): its goal and the tick
+   * it is ready at, when it takes the place of `chase`. Null without one.
+   */
+  chaseNext?: ChaseNext | null;
+}
+
+export interface ChaseNext {
+  readonly goal: Vec3;
+  readonly ready: number;
 }
 
 /** What a repath is made of: from where, to where, round which characters. */

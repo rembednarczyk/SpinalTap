@@ -1,5 +1,5 @@
 /**
- * How well the cover agrees with the truth (ADR-0077): the share of green samples on the lawns and
+ * How well the cover agrees with the truth (ADR-0077): the share of green samples (under crowns too) on the lawns and
  * of hard surface (light paving or asphalt) on the paved areas, each area's samples at least
  * `TRUTH_INSET` from its edges (the photograph's lean and the 0.5 m grid blur them). Shadow and
  * samples off the raster are left out of the shares and counted on their own.
@@ -13,7 +13,7 @@ import { type TruthArea, type TruthKind } from "./truth.ts";
 /** How far inside a truth area its samples lie (m). */
 export const TRUTH_INSET = 1;
 
-export const WANTED: Readonly<Record<TruthKind, readonly CoverName[]>> = { lawn: ["green"], paving: ["paving", "asphalt"] };
+export const WANTED: Readonly<Record<TruthKind, readonly CoverName[]>> = { lawn: ["green", "canopy"], paving: ["paving", "asphalt"] };
 
 export interface Agreement {
   readonly samples: number;
@@ -39,7 +39,7 @@ export const agreement = (cover: Cover, areas: readonly TruthArea[], kind: Truth
     const c = countAt(cover, ks);
     for (const n of Object.keys(c) as CoverName[]) counts[n] += c[n];
   }
-  const lit = counts.green + counts.paving + counts.asphalt + counts.unknown;
+  const lit = counts.green + counts.canopy + counts.paving + counts.asphalt + counts.unknown;
   const onRaster = lit + counts.shadow;
   return {
     samples: onRaster,

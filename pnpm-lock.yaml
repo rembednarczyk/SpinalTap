@@ -178,7 +178,11 @@ importers:
 
   tools/orto: {}
 
-  tools/osm-import: {}
+  tools/osm-import:
+    devDependencies:
+      clipper2-ts:
+        specifier: 2.0.1-19
+        version: 2.0.1-19
 
   tools/test-time:
     devDependencies:
@@ -701,6 +705,10 @@ packages:
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
+
+  clipper2-ts@2.0.1-19:
+    resolution: {integrity: sha512-hBdoBBda/a/iLdpDckbDjEGAq5GRhHTRAv/Ys9f2oTBuixRy9uLZukG8pO5txtbf9wZTpBD3KFHuoLrEkI3r7g==}
+    engines: {node: '>=14.0.0'}
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -1950,6 +1958,8 @@ snapshots:
     dependencies:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
+
+  clipper2-ts@2.0.1-19: {}
 
   color-convert@2.0.1:
     dependencies:

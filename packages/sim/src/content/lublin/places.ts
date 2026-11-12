@@ -1,4 +1,4 @@
-import type { GroundPoint, Vec3 } from "@seki/core";
+import { type GroundPoint, SpatialHash, type Vec3 } from "@seki/core";
 import { clearedBuilding } from "../cleared-buildings";
 import { MAP_CHUNKS } from "./sites";
 import { groundY } from "./terrain";
@@ -40,7 +40,11 @@ const CELL = 16;
 const cellOf = (v: number): number => Math.floor(v / CELL);
 const key = (cx: number, cz: number): number => cx * 100003 + cz;
 
-/** Indexes into `list` by the grid cells their bounds touch, in ascending order per cell. */
+/**
+ * Indexes into `list` by the grid cells their bounds touch, in ascending order per cell. The walls'
+ * own grid, not core's `SpatialHash`: the nearest-wall search walks it ring by ring of cells
+ * (`ringWalls`), which a box query does not give.
+ */
 const gridOf = (list: readonly (readonly GroundPoint[])[]): Map<number, number[]> => {
   const grid = new Map<number, number[]>();
   list.forEach((pts, i) => {
@@ -58,13 +62,19 @@ const gridOf = (list: readonly (readonly GroundPoint[])[]): Map<number, number[]
   return grid;
 };
 
-const OUTLINE_GRID = gridOf(OUTLINES);
+/** The outlines in a `SpatialHash` by their bounds: a point in an outline lies in its bounds. */
+const OUTLINE_GRID = new SpatialHash<readonly GroundPoint[]>(CELL);
+for (const pts of OUTLINES) {
+  const xs = pts.map((p) => p.x);
+  const zs = pts.map((p) => p.z);
+  OUTLINE_GRID.insert(pts, Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs));
+}
 const WALL_GRID = gridOf(WALLS.map((w) => [w.a, w.b]));
 /** Furthest ring of cells the wall search looks in before it falls back to every wall. */
 const MAX_RING = 40;
 
 /** Is (x, z) inside a building of the map? */
-export const inBuilding = (x: number, z: number): boolean => (OUTLINE_GRID.get(key(cellOf(x), cellOf(z))) ?? []).some((i) => insideOutline(x, z, OUTLINES[i] as readonly GroundPoint[]));
+export const inBuilding = (x: number, z: number): boolean => OUTLINE_GRID.some(x, z, x, z, (pts) => insideOutline(x, z, pts));
 
 /** The walls whose cells lie on ring `r` (Chebyshev distance in cells) round (cx, cz). */
 const ringWalls = (cx: number, cz: number, r: number, out: Set<number>): void => {

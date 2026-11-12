@@ -42,6 +42,11 @@ describe("the orthophoto tool's parts", () => {
     expect(classify([])).toBe(COVER.none);
   });
 
+  it("tells green under crowns, grey on the leaf-off flight, from green on the ground (G-672)", () => {
+    expect(classify([[150, 150, 145], [50, 110, 40], [55, 115, 45]])).toBe(COVER.canopy);
+    expect(classify([[110, 118, 95], [50, 110, 40], [55, 115, 45]])).toBe(COVER.green);
+  });
+
   it("counts the samples of a ring, optionally away from its edges", () => {
     const c: Cover = emptyCover("t", { minX: 0, minZ: 0, maxX: 10, maxZ: 10 }, THRESHOLDS);
     c.cls.fill(COVER.green);

@@ -40,6 +40,11 @@ describe("CityGML reader", () => {
     expect(b.roofType).toBe(1130);
     expect(b.eaves! - b.ground).toBeGreaterThan(10);
     expect(b.ridge!).toBeGreaterThan(b.eaves!);
+    // The main mass's eaves and ridge (G-639) lie within the whole roof's.
+    expect(b.main!.shellEaves).toBeGreaterThanOrEqual(b.eaves!);
+    expect(b.main!.eaves).toBeGreaterThanOrEqual(b.main!.shellEaves);
+    expect(b.main!.ridge).toBeLessThanOrEqual(b.ridge!);
+    expect(b.main!.ridge).toBeGreaterThan(b.main!.eaves);
     expect(b.footprint.length).toBeGreaterThan(0);
   });
 });

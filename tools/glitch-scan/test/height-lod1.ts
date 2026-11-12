@@ -2,9 +2,12 @@
  * Buildings whose height GUGiK LoD1 2024 does not bear out (ADR-0077 step 3): matched one to one
  * by footprint (IoU ≥ `LOD1_MIN_IOU`), not among the import's exceptions (`lod1Exempt`:
  * churches, towers, the listed landmarks, parts and what they crown, corrections by hand), with
- * the middle of the roof (`height + roof / 2`) over `LOD1_DIFF` metres off `measuredHeight`. The
- * import takes LoD1 for default and `building:levels` heights, so what stays is a mapped
- * `height` LoD1 disagrees with and a change cut at `LOD1_MAX_CHANGE`.
+ * the middle of the roof (`height + roof / 2`) over `LOD1_DIFF` metres off `measuredHeight`. A
+ * building with its eaves and ridge from LoD2 (`source: "lod2"`, G-639) is off when LoD1 lies over
+ * `LOD1_DIFF` outside them: LoD1's prism stands anywhere from the eaves to the ridge (Pałac
+ * Parysów: eaves 10.7 m, ridge 18.2 m, LoD1 18.1 m). The import takes LoD1 for default and
+ * `building:levels` heights, so what stays is a mapped `height` LoD1 disagrees with and a change
+ * cut at `LOD1_MAX_CHANGE`.
  */
 import { type Lod1Building, loadLod1, tilesOf } from "../../gugik/src/extracts.ts";
 import { centroid, pointInRing, ringBounds } from "../../osm-import/src/geometry.ts";
@@ -46,9 +49,16 @@ const offLod1 = (buildings: readonly Building[], lod1: readonly Lod1Building[], 
     if (!keep(b, parts.some((p) => pointInRing(p, ring)))) return [];
     const m = lod1Match(index, ring);
     if (!m) return [];
+    const at = `${b.x.toFixed(0)},${b.z.toFixed(0)}`;
+    // Eaves and ridge measured in LoD2 (G-639): LoD1's prism may stand anywhere between them.
+    if (b.source === "lod2") {
+      const top = b.height + (b.roof ?? 0);
+      if (m.lod1.height >= b.height - LOD1_DIFF && m.lod1.height <= top + LOD1_DIFF) return [];
+      return [{ at, what: `${b.id} lod2: eaves ${b.height.toFixed(1)} m, ridge ${top.toFixed(1)} m, LoD1 ${m.lod1.height} m (IoU ${m.iou.toFixed(2)})` }];
+    }
     const d = b.height + (b.roof ?? 0) / 2 - m.lod1.height;
     if (Math.abs(d) <= LOD1_DIFF) return [];
-    return [{ at: `${b.x.toFixed(0)},${b.z.toFixed(0)}`, what: `${b.id} ${b.source}: middle of the roof ${(b.height + (b.roof ?? 0) / 2).toFixed(1)} m, LoD1 ${m.lod1.height} m (IoU ${m.iou.toFixed(2)})` }];
+    return [{ at, what: `${b.id} ${b.source}: middle of the roof ${(b.height + (b.roof ?? 0) / 2).toFixed(1)} m, LoD1 ${m.lod1.height} m (IoU ${m.iou.toFixed(2)})` }];
   });
 };
 
@@ -78,10 +88,16 @@ const tagStoreys = (v: string | undefined): number | null => {
 /**
  * Each building (not a lifted part) drawn with fewer rows of windows than its `building:levels`,
  * corrections included (G-629): storeys the map has, lost to a height that left no room for them.
+ * A building crowned by lifted parts (centroid in its outline) counts the most storeys of it and
+ * them: the outline's tag may count a tower standing on it (G-684, Brama Krakowska's five).
  */
-export const levelsTagLost = (buildings: readonly (Building & { readonly levels: number })[], tagsOf: (id: string) => Readonly<Record<string, string>>): Finding[] =>
-  buildings.flatMap((b) => {
+export const levelsTagLost = (buildings: readonly (Building & { readonly levels: number })[], tagsOf: (id: string) => Readonly<Record<string, string>>): Finding[] => {
+  const parts = buildings.filter((b) => b.soffit !== undefined).map((p) => ({ at: centroid(worldRing(p)), levels: p.levels }));
+  return buildings.flatMap((b) => {
     const tagged = b.soffit === undefined ? tagStoreys(tagsOf(b.id)["building:levels"]) : null;
     if (tagged === null || b.levels >= tagged) return [];
+    const ring = worldRing(b);
+    if (parts.some((p) => p.levels >= tagged && pointInRing(p.at, ring))) return [];
     return [{ at: `${b.x.toFixed(0)},${b.z.toFixed(0)}`, what: `${b.id} ${b.source}: ${b.levels} storeys of building:levels=${tagsOf(b.id)["building:levels"]}` }];
   });
+};

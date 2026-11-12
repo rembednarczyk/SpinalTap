@@ -1,3 +1,4 @@
+import { pointInPairRingEvenOdd } from "@seki/core";
 import { MAP_CHUNKS } from "./lublin/sites";
 
 /**
@@ -28,16 +29,6 @@ const KERB_STRIPS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).map(
     return { ring, minX: Math.min(...xs) - m, maxX: Math.max(...xs) + m, minZ: Math.min(...zs) - m, maxZ: Math.max(...zs) + m };
   });
 
-const inRing = (x: number, z: number, ring: readonly Pt[]): boolean => {
-  let on = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [ax, az] = ring[i]!;
-    const [bx, bz] = ring[j]!;
-    if (az > z !== bz > z && x < ((bx - ax) * (z - az)) / (bz - az) + ax) on = !on;
-  }
-  return on;
-};
-
 /** The point of a ring's outline nearest (x, z), how far it is, and the outline's way there. */
 const nearestOnRing = (x: number, z: number, ring: readonly Pt[]) => {
   let best = { x: 0, z: 0, d: Infinity, tx: 1, tz: 0 };
@@ -56,19 +47,19 @@ const near = (s: (typeof KERB_STRIPS)[number], x: number, z: number) => x >= s.m
 
 /** Is (x, z) in a kerb car park, or nearer its outline than a loop is drawn? */
 export const onKerbPark = (x: number, z: number): boolean =>
-  KERB_STRIPS.some((s) => near(s, x, z) && (inRing(x, z, s.ring) || nearestOnRing(x, z, s.ring).d < KERB_PARK_REACH - SLACK));
+  KERB_STRIPS.some((s) => near(s, x, z) && (pointInPairRingEvenOdd(x, z, s.ring) || nearestOnRing(x, z, s.ring).d < KERB_PARK_REACH - SLACK));
 
 /** A point pushed out of every kerb car park it is in or too near, straight away from the nearest stretch of its outline. */
 const pushOff = (p: Pt): Pt => {
   let [x, z] = p;
   for (const s of KERB_STRIPS) {
     if (!near(s, x, z)) continue;
-    const inside = inRing(x, z, s.ring);
+    const inside = pointInPairRingEvenOdd(x, z, s.ring);
     const q = nearestOnRing(x, z, s.ring);
     if (!inside && q.d >= KERB_PARK_REACH) continue;
     // Outside, straight away from its nearest point (round a corner too); inside, out across the nearest stretch, on the side of its normal off the ring.
     const [nx, nz] =
-      !inside && q.d > 1e-3 ? [(x - q.x) / q.d, (z - q.z) / q.d] : inRing(q.x - q.tz * 0.05, q.z + q.tx * 0.05, s.ring) ? [q.tz, -q.tx] : [-q.tz, q.tx];
+      !inside && q.d > 1e-3 ? [(x - q.x) / q.d, (z - q.z) / q.d] : pointInPairRingEvenOdd(q.x - q.tz * 0.05, q.z + q.tx * 0.05, s.ring) ? [q.tz, -q.tx] : [-q.tz, q.tx];
     x = q.x + nx * KERB_PARK_REACH;
     z = q.z + nz * KERB_PARK_REACH;
   }

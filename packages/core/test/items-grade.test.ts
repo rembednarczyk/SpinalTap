@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  mulberry32,
   BASE_LOOT_GRADE,
   EMPTY_EQUIPMENT,
   EMPTY_INVENTORY,
@@ -33,19 +34,8 @@ import {
   traitsFit,
 } from "../src";
 
-/** mulberry32: a seeded stream for the distribution tests (core has no RNG of its own). */
-const seeded = (seed: number): RandomPort => {
-  let a = seed >>> 0;
-  return {
-    next() {
-      a = (a + 0x6d2b79f5) >>> 0;
-      let t = a;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    },
-  };
-};
+/** A seeded stream (mulberry32) for the distribution tests. */
+const seeded = (seed: number): RandomPort => ({ next: mulberry32(seed) });
 
 const counting = (values: number[]) => {
   let i = 0;
