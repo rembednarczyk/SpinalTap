@@ -1632,7 +1632,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (tłum), tools/osm-import
 
 ### G-625 Ganger staje przy długim płocie albo murze, gdy w oknie sterowania nie ma drogi
-- Status: w PR #426, runda 2 PRZYJĘTE (12.11; cel pościgu w zapisie v37, najwyżej jeden plan `wide` na krok, mediana 0,17–0,29 ms; dług w ADR-0046, dalej G-643–G-645; czeka na CI)
+- Status: w PR #426, runda 2 PRZYJĘTE; runda wydajności 73f2ac4 (12.11): testy zapisu micro i hack wróciły do main (+6%, −7%); czeka na CI
 - Ważność: S3 · Zasięg: `planDetour` (`steering.ts`) zwraca „off-field”, gdy w oknie 80 m nie ma objazdu; ganger dochodzi do przeszkody i stoi, gracz za nią bezpieczny (sonda 30 s: 0 strzałów); np. płot (11,83; −251,22), mur 3 m (214; −28,13); bariery z #418 uwidaczniają to w wielu miejscach; test `barrier-ai.test.ts` („moved > 1”) przeszedłby też z gangerem stojącym przy płocie; poprawka: dłuższy objazd (nawigacja po grafie poziomu albo większe okno), a gdy drogi nie ma, przejście do osłony lub szukania
 - Pakiet właściciela: packages/sim (systems/ai, steering)
 
@@ -1750,6 +1750,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, weryfikator G-600)
 - Ważność: S4 · Zasięg: `tools/glitch-scan/test/glitch-scan.test.ts` (wyjątek spoza reguły ESLint o 500 liniach, ADR-0031) dostaje kolejne kontrole przy każdej zmianie mapy; podział na pliki według rodzaju kontroli
 - Pakiet właściciela: tools/glitch-scan
+
+### G-653 Odcięty ganger na ulicy nie szuka drogi przez graf poziomów
+- Status: zgłoszone (12.11, runda wydajności #426)
+- Ważność: S4 · Zasięg: gdy ani okno `near`, ani `wide` nie prowadzi do celu, ganger na ulicy wraca na posterunek bez `routeAcrossLevels` (jak na main); droga kładką lub schodami nad barierą nie jest szukana; pytanie co krok kosztowało 2,7 s na test (4790 wywołań, `attach` liczy wzrok do wszystkich węzłów), więc jeśli ma wrócić, to rzadko (np. raz na cel w komórce 32 m) i z limitem na krok
+- Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
