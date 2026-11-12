@@ -1755,6 +1755,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (szyldy lokali, `venue-names.ts`, rozstawienie szyldów na fasadzie) albo packages/engine (szyldy NPR), zależnie od przyczyny
 - Test przyjęcia: kontrola skanu nakładania szyldów sąsiednich fasad (nowy rodzaj, np. `sign-overlap`, baza policzona na main) w tym miejscu 0; zrzut dzienny i nocny z deptaka przed Neon Koi bez nakładania
 
+### G-730 Rekwizyty przed Trybunałem Koronnym stoją w wejściu do budynku
+- Status: odłożone po mapowaniu (12.11, zgłoszenie użytkownika; pozycja „Ogródki Rynku przy lokalach” w backlogu)
+- Ważność: S3 (zablokowane albo zasłonięte wejście zabytku w środku Rynku) · Zasięg: Rynek, Trybunał Koronny; rekwizyty (stoliki, parasole albo inne meble) postawione na wejściu do budynku; do sprawdzenia, czy kontrola skanu wejść (`door-*`, meble przy drzwiach) to łapie
+- Pakiet właściciela: tools/osm-import (rozstawienie rekwizytów, `props-*`)
+- Test przyjęcia: brak rekwizytów w strefie wejść Trybunału i innych zabytków Rynku (kontrola skanu dla stref wejść, baza obniżona); zrzut dzienny przed/po
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
