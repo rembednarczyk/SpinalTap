@@ -1,4 +1,4 @@
-import { type GroundPoint, SpatialHash, type Vec3 } from "@seki/core";
+import { type GroundPoint, SpatialHash, type Vec3, pointInRingEvenOdd, segmentParam } from "@seki/core";
 import { clearedBuilding } from "../cleared-buildings";
 import { MAP_CHUNKS } from "./sites";
 import { groundY } from "./terrain";
@@ -24,16 +24,6 @@ const OUTLINES: readonly (readonly GroundPoint[])[] = MAP_CHUNKS.flatMap((c) =>
 );
 
 const WALLS: readonly Wall[] = OUTLINES.flatMap((pts) => pts.map((a, i) => ({ a, b: pts[(i + 1) % pts.length] as GroundPoint })));
-
-const insideOutline = (x: number, z: number, pts: readonly GroundPoint[]): boolean => {
-  let inside = false;
-  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-    const pi = pts[i] as GroundPoint;
-    const pj = pts[j] as GroundPoint;
-    if (pi.z > z !== pj.z > z && x < ((pj.x - pi.x) * (z - pi.z)) / (pj.z - pi.z) + pi.x) inside = !inside;
-  }
-  return inside;
-};
 
 /** Grid cell of the indexes below (m). */
 const CELL = 16;
@@ -74,7 +64,7 @@ const WALL_GRID = gridOf(WALLS.map((w) => [w.a, w.b]));
 const MAX_RING = 40;
 
 /** Is (x, z) inside a building of the map? */
-export const inBuilding = (x: number, z: number): boolean => OUTLINE_GRID.some(x, z, x, z, (pts) => insideOutline(x, z, pts));
+export const inBuilding = (x: number, z: number): boolean => OUTLINE_GRID.some(x, z, x, z, (pts) => pointInRingEvenOdd(x, z, pts));
 
 /** The walls whose cells lie on ring `r` (Chebyshev distance in cells) round (cx, cz). */
 const ringWalls = (cx: number, cz: number, r: number, out: Set<number>): void => {
@@ -100,7 +90,7 @@ export const nearestWall = (x: number, z: number, facing = false): { readonly p:
     const dz = w.b.z - w.a.z;
     const len2 = dx * dx + dz * dz;
     if (len2 < 1e-9) return;
-    const t = Math.max(0, Math.min(1, ((x - w.a.x) * dx + (z - w.a.z) * dz) / len2));
+    const t = segmentParam(x, z, w.a.x, w.a.z, w.b.x, w.b.z);
     const px = w.a.x + dx * t;
     const pz = w.a.z + dz * t;
     const d = Math.hypot(x - px, z - pz);
