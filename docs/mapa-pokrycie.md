@@ -19,7 +19,7 @@ Jedna komórka na chunk importu miasta (`MAP_CHUNKS`, 20 prostokątów od ok. 15
 | `przeglady` | audyty i przeglądy kuratora, które dotknęły komórki, krótko |
 | `notatka` | co sprawdzono, czego nie, co dalej |
 
-Wiersz T z kilkoma miejscami trafia do każdej komórki, w której ma miejsce. Wiersze `celowe` nie są wpisywane.
+Wiersz T z kilkoma miejscami trafia do każdej komórki, w której ma miejsce. Wiersze `celowe` z miejscem w komórce trafiają do `rozwiazane` (praktyka przeglądów od 12.11).
 
 ## Statusy
 

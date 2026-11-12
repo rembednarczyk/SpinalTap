@@ -77,7 +77,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (ADR-0052 „Na później”)
 
 ### G-053 Plac po Farze bez fundamentów fary; ruiny z OSM pominięte
-- Status: zgłoszone
+- Status: częściowo naprawione: fundamenty fary jako bariery 0,5 m od #418 (r18507552, r18507551, odcinki w1348806xxx; T-251); zostają ruiny `building=ruins` (w232362881, w1330433247, w813194693), które pomija `SKIP_BUILDING`. W1330433247 ma 3,3 m w LoD1 (NMPT wierzch y 3,75). Test przyjęcia zawęzić do ruin: 3 obrysy jako niskie mury z wysokością z LoD1 albo NMPT.
 - Ważność: S4 (proponowana) · Zasięg: lokalny (Plac po Farze na trasie Grodzkiej) · Koszt: średni (nowa bryła niskiego muru w imporcie i rendererze)
 - Gdzie: w173519315 (672.8, 43.2) i 3 budynki `building=ruins` (T-015); ile w mieście: 4 w dwóch dzielnicach
 - Dowód: `SKIP_BUILDING` w generate.ts; `props-kinds.ts` „ruins: structures (later)”
@@ -614,7 +614,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-215 Proceduralne wieże na kościołach, które ich nie mają albo mają inne
 - Status: zgłoszone (2.11, kurator, przegląd #190)
-- Ważność: S3 (proponowana) · Zasięg: szeroki (7 kościołów, m.in. deptak: Kapucyni i Świętego Ducha) · Koszt: średni
+- Ważność: S3 (proponowana) · Zasięg: szeroki (7 kościołów, m.in. deptak: Kapucyni i Świętego Ducha) · Koszt: średni; 12.11 (przejście stare-miasto-1-1): św. Wojciecha w61102109 dalej ma wieżę z iglicą (zrzut `sm11-b`). T-121 trzeba przenieść do `otwarte` w stare-miasto-1-1, krakowskie-0-1, krakowskie-1-0 i stare-miasto-0-0.
 - Priorytet (kurator, przegląd #208): wyżej. Wieże skalują się ze ścianami, więc po G-216 Niecała 4 w232674421 ma wieżę do y ok. 13 na budynku ok. 3,7 m (ponad trzy razy wyżej niż budynek bez wieży), a Świętego Ducha dwie wieże do y 28,5 przy kalenicy 20,4. Najtańszy pierwszy krok: kościoły bez wieży w rzeczywistości (Niecała 4, Kapucyni, św. Piotra, św. Wojciecha) na liście bez wieży, z odsyłaczem T-121
 - Gdzie: T-121: Kapucyni w67508932, Karmelici r5420467 (poprawione w #198: wieże poza obrysem zdjęte), św. Piotra w66335226, św. Wojciecha w61102109, Niecała 4 w232674421, Świętego Ducha w66264126 (2 wieże zamiast 1 smukłej na narożu SW do y 26,5), cerkiew Przemienienia w66264148 (wieża 13 m za wysoka)
 - Dowód: sonda `topo-g210-probe` (towerSpots w świecie) i NMPT GUGiK 0,5 m, wartości w T-121
@@ -956,7 +956,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-339 Uskok na końcach pomostów: pomost poziomy w poprzek, droga obok na terenie (T-166)
 - Status: zgłoszone (5.11, kurator, przegląd G-330)
-- Ważność: S4 · Zasięg: 8 końców (Mełgiewska, wiadukt Zamkowej, kładka Podzamcza) · Koszt: średni
+- Ważność: S4 · Zasięg: 8 końców (Mełgiewska, wiadukt Zamkowej, kładka Podzamcza) · Koszt: średni; 12.11 (przejście stare-miasto-1-1): koniec (732,2; 151,7) to styk z górnym stopniem w294098693: uskok chodzenia 0,51–0,54 m na całej szerokości pasa (G-686, `steps-riser-tall` (732; 151)). Na końcu NW (727,9..728,9; 156,0..158,4) `deck-abutment-step` do 1,73 m.
 - Gdzie: (2456,5; 296,6) 0,45 m; (2408,5; 280,0) 0,35 m; (2446,2; 246) 0,25 m; (727,7; 157,5) 0,89 m; (763,6; 182,7) 0,36 m; (1073,8; 161,6) 0,29 m
 - Przyczyna (przypuszczalna): `makeDeck` bierze `rawHeight` końców osi i robi pomost poziomy w poprzek; droga obok idzie za poprzecznym spadkiem NMT
 - Pakiet właściciela: packages/sim (content/lublin decks, terrain PADS/RAMPS)
@@ -1774,7 +1774,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-686 Uskok 0,52 m na zakręcie schodów z wiaduktu Zamkowej blokuje gangera
 - Status: zgłoszone (12.11, naprawiacz G-643; także na main)
-- Ważność: S3 · Zasięg: (729,5; 163,9): uskok niewidoczny dla `straightWalk` i pól nawigacji; ganger stoi tam wciśnięty na zawsze, na main przechodzi tylko, gdy jest akurat w powietrzu
+- Ważność: S3 · Zasięg: (732,7; 151,4)–(734,2; 152,8), górny stopień schodów w294098693 na styku z południowym końcem pomostu wiaduktu Zamkowej (T-166). Wysokość chodzenia skacze tam o 0,51–0,54 m na całej szerokości pasa, a skan liczy to jako `steps-riser-tall` (732; 151) 0,51 m. Na schodach w56965515 (dawne (729,5; 163,9), czyli x zakrętu i z krawędzi pomostu) na osi biegów nie ma uskoku powyżej 0,3 m. Przyczyna ta sama co G-339 (pomost poziomy w poprzek na NMT końca osi). Poprawka G-339 w tym punkcie powinna usunąć oba objawy, test G-686 (nawigacja) zostaje osobno; uskok niewidoczny dla `straightWalk` i pól nawigacji; ganger stoi tam wciśnięty na zawsze, na main przechodzi tylko, gdy jest akurat w powietrzu
 - Pakiet właściciela: packages/sim (systems/ai, nawigacja), ewentualnie treść schodów
 
 ### G-687 `startOf` wybiera komórkę za cienkim płotem
@@ -1849,9 +1849,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (`steps-plan`), ewentualnie tools/osm-import (przycięcie pasa schodów odrobinę przed brzegiem) albo `groundY` za brzegiem z wysokością brzegu
 - Test przyjęcia: `steps-riser-tall` 6 → 1 (zostaje G-686 przy (732; 151)); pas schodów przy x = 760 kończy się na wysokości terenu brzegu (−20,1 i −6,3)
 
-### G-704 Podwórza Starego Miasta przy Archikatedrze i Dominikanach to goła ziemia (T-266)
+### G-704 Podwórza Starego Miasta przy Archikatedrze, Dominikanach, Farze i Podwalu to goła ziemia (T-266, T-268)
 - Status: zgłoszone (12.11, kurator, przegląd stare-miasto-1-0)
-- Ważność: S3 (jak G-527) · Zasięg: stare-miasto-1-0, 7 podwórzy, ok. 2500 m² gołego terenu, w tym 1960 m² twardej nawierzchni na ortofoto: (627..666; −107..−63) 768 m², (699..740; −240..−204) 737 m², (610..654; −132..−101) 431 m², (696..716; −121..−88) 351 m², (691..726; −53..−40) 94 m², (654..673; −159..−146) 123 m². Przyczyna jak G-513 i G-527: OSM nie ma obszarów nawierzchni podwórzy. `landuse-bare` ich nie liczy, bo nie leżą w `landuse`. Zrzut `sm10d-kuria-podworze`. Ortofoto do korekt: 2024-06 (2025-04 ma tu przechył 4–5 m)
+- Ważność: S3 (jak G-527) · Zasięg: stare-miasto-1-0, 7 podwórzy, ok. 2500 m² gołego terenu, w tym 1960 m² twardej nawierzchni na ortofoto: (627..666; −107..−63) 768 m², (699..740; −240..−204) 737 m², (610..654; −132..−101) 431 m², (696..716; −121..−88) 351 m², (691..726; −53..−40) 94 m², (654..673; −159..−146) 123 m². Przyczyna jak G-513 i G-527: OSM nie ma obszarów nawierzchni podwórzy. `landuse-bare` ich nie liczy, bo nie leżą w `landuse`. Zrzut `sm10d-kuria-podworze`. Ortofoto do korekt: 2024-06 (2025-04 ma tu przechył 4–5 m); Przejście stare-miasto-1-1 (12.11, kurator): ta sama klasa w sąsiedniej komórce. 6 podwórzy, ok. 1690 m², twarde ok. 1530 m²: (628..681; −40..13) 1091 m², wnętrze kwartału Grodzka–Złota–Archidiakońska, przejazdem do z −49 w stare-miasto-1-0; (747..760; 107..126) 185 m², dziedziniec Domu na Podwalu w598840139 (OSM i NMPT otwarty, LoD2 wypełnia go dachem); (610..626; 65..79) 154 m²; (621..637; 84..97) 132 m²; (719..728; 125..135) 68 m²; (646..657; 116..125) 57 m². Test przyjęcia w stare-miasto-1-1: `bare-enclosed-yard` z otwarciem 1 m 7 → 0, przy czym siódma składowa (701..711; 101..114) to taras przy Zaułku Panasa i znika z G-708.
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077)
 - Test przyjęcia: proponowana kontrola `bare-enclosed-yard` (niżej) w komórce 7 → 0, bez nawierzchni na rabatach i trawnikach podwórzy (zielone na 2024-06); Test przyjęcia”: „Kontrola `bare-enclosed-yard` w krakowskie-1-0 (12.11): 17 składowych, 6222 m². Dwie z nich nie są podwórzami: (60..151; −228..−166) 938 m² łączy wąskim pasem front i zaplecze Teatru, a (37..102; −113..−76) 465 m² to pas wzdłuż alejki. Przed liczeniem składowych potrzebny warunek szerokości: otwarcie maski o 1 m i składowa po otwarciu ≥ 50 m². Podwórza `landuse-bare` tej komórki (KP 23, zaplecze Teatru) naprawia G-705
 
@@ -1870,6 +1870,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, z weryfikacji #463; niesprawdzone, dotyczy też main)
 - Ważność: S4 · Zasięg: przy strumieniowaniu `TerrainEntries.heightAt` zwraca null na wewnętrznym szwie, gdy sąsiedni chunk nie jest wczytany; komórka podłoża z pasem przy szwie może zostać zbudowana jak przy brzegu mapy i nie przebudować się po wczytaniu sąsiada; do sprawdzenia sondą strumieniowania
 - Pakiet właściciela: packages/engine/src/renderer/mapcity
+
+### G-708 Trzy budynki przy Grodzkiej i Rybnej o 9–12 m wyższe niż w NMPT; oficyna bez OSM (T-269)
+- Status: zgłoszone (12.11, kurator, przegląd stare-miasto-1-1)
+- Ważność: S3 (sylwetka skarpy nad Podwalem w widoku od Zamku; płyta 16 m zamiast niskiej zabudowy na Rybnej) · Zasięg: stare-miasto-1-1. Środek dachu gry minus mediana NMPT GUGiK 0,5 m w obrysie: Rybna 13 w66293276 (613,5; 95,6) +11,6 m (gra 16,1 m z LoD1 na całym obrysie 528 m²; NMPT: 25% przy ziemi, 68% na 2–8 m, 7% ≥ 8 m); w232362965 (708,1; 100,7) +10,0 m (16,7 m z wartości domyślnej, cokół 7,1; NMPT: dach na poziomie podwórzy Grodzkiej, y −8,9); w364575978 (703,4; 89,6) +8,6 m (14,6 m: cokół 5 i 3 kondygnacje z tagu; NMPT p90 y −4,3). Obu ostatnich nie ma w LoD1 2024 ani w LoD2. Pozostałe 52 budynki komórki: mediana +0,24 m, p90 +1,0. Do tego oficyna (682..691; 72..80), 52 m², która jest w LoD2 (okap 11,9) i w NMPT, a w OSM jej nie ma. Nakładki `topo-sm11-img/panas.png` i `rybna13.png`
+- Pakiet właściciela: tools/osm-import (korekty wysokości z NMPT, jak `CHURCH_SURFACE`; Rybna 13: podział obrysu albo wysokość części; w232362965 i w364575978: wierzch na poziomie podwórzy, bez kondygnacji nad nim; oficyna: korekta obrysu z LoD2)
+- Test przyjęcia: proponowana kontrola `height-vs-nmpt` w stare-miasto-1-1 3 → 0; `bare-enclosed-yard` bez składowej (701..711; 101..114)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
