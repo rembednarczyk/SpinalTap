@@ -1845,7 +1845,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai), packages/persistence
 
 ### G-703 Schody przycięte brzegiem mapy: ostatnia podstopnica do y 0 za brzegiem (ściana do 23,7 m)
-- Status: w PR #463 (12.11, trzecia runda 3b1e3cd: jedna funkcja brzegu `onMapEdge` dla renderera i skanu, test na ścieżce renderera; ściany 20–24 m → ≤ 0,12 m, 171 pasów jak main; weryfikacja w toku; zgłoszone przez kuratora, przegląd stare-miasto-1-0; T-049)
+- Status: w PR #463 (12.11, trzecia runda 3b1e3cd PRZYJĘTA przez weryfikatora: ściany 20–24 m → ≤ 0,12 m na ścieżce renderera, 171 pasów jak main, jedna funkcja brzegu dla renderera i skanu; czeka na CI; zgłoszone przez kuratora, przegląd stare-miasto-1-0; T-049)
 - Ważność: S3 (pionowa szara ściana 20 m, widoczna z ulicy i znad dachów) · Zasięg: 5 z 6 trafień `steps-riser-tall` w mieście. Stare Miasto: w481462067 (760; −210) 20,03 m i w888479969 (760; −148) 5,63 m. Podzamcze: (1090–1092; 160) 23,70 m (2 pasy). Nabrzeże: (2658; 60) 18,21 m. `groundY` poza chunkami zwraca 0 (`terrain.ts`), a `planSteps` dla pasa przyciętego do brzegu bierze wysokość tuż za brzegiem. Zrzuty `sm10d-schody-210`, `sm10d-kuria-podworze`
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (`steps-plan`), ewentualnie tools/osm-import (przycięcie pasa schodów odrobinę przed brzegiem) albo `groundY` za brzegiem z wysokością brzegu
 - Test przyjęcia: `steps-riser-tall` 6 → 1 (zostaje G-686 przy (732; 151)); pas schodów przy x = 760 kończy się na wysokości terenu brzegu (−20,1 i −6,3)
@@ -1868,7 +1868,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (drape)
 
 ### G-707 Pas schodów na szwie chunków może nie przebudować się po wczytaniu sąsiada
-- Status: zgłoszone (12.11, z weryfikacji #463; niesprawdzone, dotyczy też main)
+- Status: zgłoszone (12.11, z weryfikacji #463); sprawdzone przy #463 dla schodów: `MapCells.touch` przebudowuje komórkę po wczytaniu sąsiada, siatka jak przy obu wczytanych od razu; zostaje do zamknięcia po scaleniu #463
 - Ważność: S4 · Zasięg: przy strumieniowaniu `TerrainEntries.heightAt` zwraca null na wewnętrznym szwie, gdy sąsiedni chunk nie jest wczytany; komórka podłoża z pasem przy szwie może zostać zbudowana jak przy brzegu mapy i nie przebudować się po wczytaniu sąsiada; do sprawdzenia sondą strumieniowania
 - Pakiet właściciela: packages/engine/src/renderer/mapcity
 
