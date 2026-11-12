@@ -3,7 +3,7 @@
  * input gives the same chunks, byte for byte, whatever order the files were read in.
  */
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
-import { type Lod1Building } from "../../gugik/src/extracts.ts";
+import { type Lod1Building, type Lod2Building } from "../../gugik/src/extracts.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { belowGround, parseLength } from "./building-tags.ts";
 import { smallAlone } from "./building-alone.ts";
@@ -30,6 +30,7 @@ import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passage
 import { type ChunkOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { lod1Index, withLod1Height } from "./lod1-heights.ts";
+import { lod2Index, withLod2Roof } from "./lod2-roofs.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
 import { groundRaisedGreen, raisedGreen } from "./raised-green.ts";
 import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
@@ -42,6 +43,8 @@ export interface ChunkStats {
   readonly fromLevels: number;
   /** Heights from GUGiK LoD1 2024 (ADR-0077 step 3). */
   readonly fromLod1: number;
+  /** Walls and roofs from GUGiK LoD2 2017 (ADR-0077 step 4). */
+  readonly fromLod2: number;
   readonly skipped: number;
   readonly withHoles: number;
   readonly ground: number;
@@ -219,7 +222,7 @@ const generateChunk = (
   venues: ReadonlyMap<string, readonly WorldVenue[]>,
   kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[] },
   barriers: readonly WorldBarrier[],
-  heights: { readonly lod1?: ReturnType<typeof lod1Index>; readonly orphans: ReadonlySet<string> },
+  heights: { readonly lod1?: ReturnType<typeof lod1Index>; readonly lod2?: ReturnType<typeof lod2Index>; readonly orphans: ReadonlySet<string> },
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
@@ -241,7 +244,15 @@ const generateChunk = (
     }
     if (a.holes > 0) withHoles++;
     const crowned = heights.orphans.has(a.id) || (parts.get(a.id)?.length ?? 0) > 0;
-    const built = withLod1Height(r.ok, heights.lod1, crowned, a.edge && a.ring);
+    const lod1 = withLod1Height(r.ok, heights.lod1, crowned, a.edge && a.ring);
+    const built = withLod2Roof(lod1, {
+      ...(heights.lod2 ? { lod2: heights.lod2 } : {}),
+      ...(heights.lod1 ? { lod1: heights.lod1 } : {}),
+      tags: a.tags,
+      crowned,
+      ...(r.ok.source === "levels" ? { tagged: r.ok.levels } : {}),
+      ...(a.edge ? { whole: a.ring } : {}),
+    });
     // A building cut at the map's edge signs only the venues on its part on the map (G-556).
     const edge = a.edge?.rect;
     const signs = edge ? venues.get(a.id)?.filter((v) => inRect(v.at, edge)) : venues.get(a.id);
@@ -288,6 +299,7 @@ const generateChunk = (
     fromHeight: out.filter((b) => b.source === "height").length,
     fromLevels: out.filter((b) => b.source === "levels").length,
     fromLod1: out.filter((b) => b.source === "lod1").length,
+    fromLod2: out.filter((b) => b.source === "lod2").length,
     skipped,
     withHoles,
     ground: ground.length,
@@ -308,8 +320,18 @@ const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
   return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
 };
 
-/** `lod1`: GUGiK LoD1 2024 buildings (`Inputs.lod1`) for the heights the map lacks (`lod1-heights.ts`); without, the tags' heights. */
-export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS, added?: readonly AddedArea[], lod1?: readonly Lod1Building[]): Generated => {
+/**
+ * `lod1`: GUGiK LoD1 2024 buildings (`Inputs.lod1`) for the heights the map lacks (`lod1-heights.ts`);
+ * `lod2`: GUGiK LoD2 2017 buildings (`Inputs.lod2`) for the roofs it lacks (`lod2-roofs.ts`); without, the tags' heights and roofs.
+ */
+export const generate = (
+  data: OsmData,
+  src: HeightSource,
+  chunks: readonly ChunkSpec[] = ALL_CHUNKS,
+  added?: readonly AddedArea[],
+  lod1?: readonly Lod1Building[],
+  lod2?: readonly Lod2Building[],
+): Generated => {
   // The ways a set piece of the game replaces (ADR-0074 stage 7) are left out before anything reads them.
   const features = withoutReplaced(extractFeatures(data));
   // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), before anything reads them.
@@ -432,7 +454,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   });
   // Walls, fences and hedges (ADR-0077) clear of the buildings, carriageways, steps and the ways through them.
   const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
-  const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
+  const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), ...(lod2 ? { lod2: lod2Index(lod2) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
   const results = chunks.map((c) => generateChunk(c, src, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights));
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
   const venueStats: VenueStats = {

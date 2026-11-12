@@ -1,7 +1,7 @@
 /** Reads the committed raw data (`data/osm`, `data/terrain`, `data/gugik`): offline, no network. */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { type Lod1Building, loadLod1, tilesOf } from "../../gugik/src/extracts.ts";
+import { type Lod1Building, type Lod2Building, loadLod1, loadLod2, tilesOf } from "../../gugik/src/extracts.ts";
 import { ALL_CHUNKS, DISTRICTS } from "./config.ts";
 import { type Dtm, type DtmHeader, type HeightSource, type Lattice, dtmFromBytes, heightSource } from "./dtm.ts";
 import { type OsmData, mergeOsm, parseExtract } from "./osm.ts";
@@ -15,6 +15,8 @@ export interface Inputs {
   readonly terrain: "nmt" | "eu-dem";
   /** GUGiK LoD1 2024 buildings of the tiles under the chunks (ADR-0077 step 3). */
   readonly lod1: readonly Lod1Building[];
+  /** GUGiK LoD2 2017 buildings of the same tiles (ADR-0077 step 4). */
+  readonly lod2: readonly Lod2Building[];
 }
 
 /** The LoD1 tiles meeting any chunk of the import, 50 m round it (a tile holds a building by its centroid). */
@@ -37,5 +39,5 @@ export const loadInputs = (root = REPO): Inputs => {
     fallback ??= JSON.parse(readFileSync(eu, "utf8")) as Lattice;
     terrain = "eu-dem";
   }
-  return { osm, dtms, src: heightSource(dtms, fallback), terrain, lod1: loadLod1(lod1Tiles(), join(root, "data/gugik")) };
+  return { osm, dtms, src: heightSource(dtms, fallback), terrain, lod1: loadLod1(lod1Tiles(), join(root, "data/gugik")), lod2: loadLod2(lod1Tiles(), join(root, "data/gugik")) };
 };
