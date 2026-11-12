@@ -4,6 +4,7 @@ Zamknięte pozycje [backlogu](backlog.md) (zrobione, w main albo zastąpione now
 
 ## Przeniesione 12.11
 
+- **Raport komórki, uzupełnienia (z przejść 12.11, oszczędność tokenów):** nazwy i id nierysowanych barier; sekcja „budynki gry bez LoD2 i LoD1” przy niskim IoU obrysów i werdykt bez „możliwego przesunięcia”, gdy przesunięcie nie poprawia IoU (podzamcze-2-0: 0,115, podzamcze-2-1: 0,582, w obu niepełny wyciąg LoD2); położenia trafień skanu w sekcji „znane rodzaje” (opiekunowie czytają je osobno z `reports/glitch-scan.json`). [archiwum 12.11: w main #472]
 - **Zrzuty dzienne w `glitch-shots`** [w main, #464]: spec nie miał ustawienia godziny gry, łowcy i weryfikatorzy robią tymczasowe kopie z `__seki.wait(900)`; dodać zmienną `SHOT_HOUR` (z weryfikacji #463, 12.11).
 - **[zrobione: ADR-0072 etapy 1–4 w main (#322, #326, #333, #329); 12.11 decyzja o gangerze z `ai.victim` w toku] [plan, 31.10] Celowanie na telefonie: wspomaganie i celowanie ze strzałem jednym kciukiem.** Dziś nie da się jednocześnie trzymać celowania i strzelać jednym palcem. Do ADR-u:
   - lekkie wspomaganie celowania tylko na dotyku: spowolnienie obrotu nad celem i delikatne przyciąganie przy wejściu w celowanie, wyłączalne w ustawieniach, bez wpływu na symulację (to warstwa wejścia: `engine/input`, pad dotykowy);
