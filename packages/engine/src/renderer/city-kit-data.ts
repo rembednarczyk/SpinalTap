@@ -1,4 +1,4 @@
-import type { BlockSkin, BlockStyle, BlockFront, Vec3 } from "@seki/core";
+import { type BlockSkin, type BlockStyle, type BlockFront, type Vec3, mulberry32 } from "@seki/core";
 
 /**
  * The city kit (ADR-0022): buildings, vehicles and street props baked by tools/city_kit.py
@@ -238,17 +238,8 @@ const WALL_TINTS: Readonly<Record<string, readonly string[]>> = {
   car: ["#a8255f", "#178a90", "#c4c8d0", "#323a4c", "#d8a640", "#7c2430", "#5a6470"],
 };
 
-/** Small deterministic PRNG (mulberry32): the same block always gets the same look. */
-export const prng = (seed: number): (() => number) => {
-  let s = seed >>> 0;
-  return () => {
-    s = (s + 0x6d2b79f5) >>> 0;
-    let t = s;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-};
+/** Small deterministic PRNG (mulberry32 from `@seki/core`): the same block always gets the same look. */
+export const prng: (seed: number) => () => number = mulberry32;
 
 export const seedOf = (center: Vec3): number => (Math.imul(Math.round(center.x * 10), 73856093) ^ Math.imul(Math.round(center.z * 10), 19349663) ^ Math.imul(Math.round(center.y * 10), 83492791)) >>> 0;
 

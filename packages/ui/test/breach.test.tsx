@@ -1,18 +1,14 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { mulberry32 } from "@seki/core";
 import { DEFAULT_SETTINGS, type UiIntents, type UiState, createUiStore } from "../src";
 import { BreachPanel } from "../src/breach/breach-panel";
 import { type BreachCell, type BreachPuzzle, autoSolve, bufferOf, contains, generateBreach, isFinished, isLegal, legalCells, solvedDaemons } from "../src/breach/breach-logic";
 import { UiContext } from "../src/use-ui";
 
 /** mulberry32: a seeded [0, 1) source, so the layouts under test are fixed. */
-const seeded = (seed: number) => () => {
-  let t = (seed += 0x6d2b79f5);
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-};
+const seeded = mulberry32;
 
 const ALL = ["icepick", "datamine", "mass_vulnerability"] as const;
 

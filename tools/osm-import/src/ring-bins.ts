@@ -4,6 +4,10 @@
  * ring only the edges a ray from one of its points to +x may cross, so a long carriageway's or a
  * park's ring is not walked whole for every point; the test on the edges kept is `pointInRing`'s,
  * the answer the same.
+ *
+ * Not core's `SpatialHash`, on purpose: the cells are a dense array over the items' extent (a
+ * hash map's lookup was much of a march's time) and each keeps a state of its own, the clipped
+ * edges, that a grid of items has no place for.
  */
 import { type Pt, type Rect } from "./geometry.ts";
 
