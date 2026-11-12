@@ -1,6 +1,6 @@
 import type { BuildingPassage, EntityId, Vec3, ViewDescriptor } from "@seki/core";
 import type { MapBuilding, WorldPassage } from "./facade-frame";
-import { towerAt, towerlessAt, wallAt } from "./landmarks/match";
+import { bellTowersAt, towerAt, wallAt } from "./landmarks/match";
 import { type P2, centroid, pointInRing } from "./polygon";
 
 /** A building view of the map city, with its clean ring in world metres. */
@@ -37,6 +37,7 @@ const carriesPart = (e: BuildingSource, around: Iterable<BuildingSource>): boole
 export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: number, z: number) => number | null, around: Iterable<BuildingSource> = []): MapBuilding => {
   const v = e.view;
   const base = e.at.y;
+  const towers = bellTowersAt(e.at.x, e.at.z, v.outline.length);
   const plinth = v.soffit !== undefined ? 0 : Math.min(Math.max(v.plinth ?? 0, 0), v.height - 2);
   let foot = v.soffit !== undefined ? base + Math.min(Math.max(v.soffit, 0), v.height - 1) : base;
   if (v.soffit === undefined) for (const p of e.ring) foot = Math.min(foot, heightAt(p.x, p.z) ?? base);
@@ -58,7 +59,7 @@ export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: numbe
     ...(v.passages?.length ? { passages: v.passages.map((p) => worldPassage(p, e.at)) } : {}),
     ...(v.soffit !== undefined ? { lifted: true } : {}),
     ...(carriesPart(e, around) ? { carriesParts: true } : {}),
-    ...(towerlessAt(e.at.x, e.at.z, v.outline.length) ? { towerless: true } : {}),
+    ...(towers.length > 0 ? { towers } : {}),
     ...(towerAt(e.at.x, e.at.z, v.outline.length) ? { freeTower: true } : {}),
     ...wallAt(e.at.x, e.at.z, v.outline.length),
     ...(v.signs === "bracket" ? { bracketSigns: true } : {}),

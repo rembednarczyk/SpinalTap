@@ -1,6 +1,7 @@
 import { prng } from "../city-kit-data";
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
 import { type FacadeFrame, type Palette, roofMeta, trimMeta, wallMeta } from "./facade-frame";
+import type { BellTower } from "./landmarks/bell-towers";
 import { DOWN, band, slab, wallQuad } from "./facade-parts";
 import { WINDOW_STYLE } from "./facade-style";
 import { type P2, centroid, offsetRing, perimeter, pointInRing, signedArea } from "./polygon";
@@ -136,21 +137,12 @@ const towerRing = (f: FacadeFrame, cu: number, cv: number, half: number): P2[] =
   return [at(cu - half, cv - half), at(cu + half, cv - half), at(cu + half, cv + half), at(cu - half, cv + half)];
 };
 
-/** Where the towers of a church stand: at its west end (the facade), one or two across. */
-export const towerSpots = (f: FacadeFrame): { readonly u: number; readonly v: number; readonly half: number; readonly height: number }[] => {
-  const box = f.box;
-  const half = Math.min(Math.max(box.halfShort * 0.42, 2), 4.5);
-  const westward = Math.abs(box.ux) > 0.3 ? (box.ux > 0 ? -1 : 1) : box.uz > 0 ? -1 : 1;
-  const u = westward * Math.max(box.halfLong - half - 0.3, 0);
-  const height = Math.min(Math.max(f.b.height * 1.7, f.b.height + 12), 65);
-  if (box.halfShort * 2 > 22) {
-    const v = box.halfShort - half - 0.3;
-    return [
-      { u, v, half, height },
-      { u, v: -v, half, height },
-    ];
-  }
-  return [{ u, v: 0, half, height }];
+/** A bell tower's middle in the frame's box (u along the long side, v across): `towerRing`'s inverse. */
+const inBox = (f: FacadeFrame, t: BellTower): { readonly u: number; readonly v: number } => {
+  const { cx, cz, ux, uz } = f.box;
+  const dx = t.x - cx;
+  const dz = t.z - cz;
+  return { u: dx * ux + dz * uz, v: -dx * uz + dz * ux };
 };
 
 const spire = (sink: MeshSink, ring: readonly P2[], y: number, h: number, color: Rgba, meta: Uv): void => {
@@ -171,19 +163,20 @@ const spire = (sink: MeshSink, ring: readonly P2[], y: number, h: number, color:
   }
 };
 
-/** Bell towers: walls with belfry windows, a cornice and a spire or a baroque helmet. */
+/** Bell towers from the data (`BELL_TOWERS`, G-215): walls with belfry windows, a cornice and a spire or a baroque helmet to the tip. */
 export const addTowers = (sink: MeshSink, f: FacadeFrame, p: Palette, near: boolean): void => {
   // A lifted part of a church (its nave or a chapel, G-049) stands on the church: the towers are the church's.
   // A church with such parts takes its shape from the map (G-057): towers made up beside them match nothing there.
-  // A landmark the map shows whole without one (G-210), or with its tower beside it (G-212), keeps the silhouette the map gives it.
-  if (f.b.lifted || f.b.carriesParts || f.b.towerless) return;
+  if (f.b.lifted || f.b.carriesParts) return;
   const rand = prng((f.b.look ^ 0x70e4) >>> 0);
   const helmet = rand() < 0.5;
-  for (const t of towerSpots(f)) {
-    const ring = towerRing(f, t.u, t.v, t.half);
-    // The outline's oriented box overhangs a bent or L-shaped outline: a tower there would stand on the grass (G-212).
+  for (const t of f.b.towers ?? []) {
+    const at = inBox(f, t);
+    const ring = towerRing(f, at.u, at.v, t.half);
+    // The data's tower must stand on its church, not on the grass by it (G-212).
     if (!pointInRing(centroid(ring), f.b.ring)) continue;
-    const top = f.b.base + t.height;
+    const top = t.top;
+    const rise = Math.max(t.tip - top, 0.5);
     const meta = wallMeta(4.6, t.half, WINDOW_STYLE.civic, f.style.seed);
     for (let i = 0; i < 4; i++) {
       const a = ring[i] as P2;
@@ -193,7 +186,7 @@ export const addTowers = (sink: MeshSink, f: FacadeFrame, p: Palette, near: bool
     }
     const roofMetaT = roofMeta(f.style.seed);
     if (!near) {
-      spire(sink, ring, top, t.half * 3, p.roof, roofMetaT);
+      spire(sink, ring, top, rise, p.roof, roofMetaT);
       continue;
     }
     const trim = trimMeta(f.style.seed);
@@ -202,7 +195,7 @@ export const addTowers = (sink: MeshSink, f: FacadeFrame, p: Palette, near: bool
     if (helmet) {
       const c = centroid(ring);
       const r = t.half * 1.05;
-      const s = t.half * 2;
+      const s = rise / 2.6;
       lathe(sink, { x: c.x, y: top, z: c.z }, [
         [r, 0],
         [r * 1.12, s * 0.35],
@@ -214,7 +207,7 @@ export const addTowers = (sink: MeshSink, f: FacadeFrame, p: Palette, near: bool
         [0.03, s * 2.6],
       ], 8, p.roof, roofMetaT);
     } else {
-      spire(sink, ring, top, t.half * 4.2, p.roof, roofMetaT);
+      spire(sink, ring, top, rise, p.roof, roofMetaT);
     }
   }
 };

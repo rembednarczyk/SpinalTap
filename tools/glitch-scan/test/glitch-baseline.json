@@ -83,6 +83,8 @@
   "landmark-fake-tower": 0,
   "landmark-double-tower": 0,
   "church-tower-off-building": 0,
+  "church-fake-tower": 0,
+  "church-tower-off-nmpt": 1,
   "tower-dwelling-windows": 0,
   "brick-plastered": 0,
   "monument-shape-off-tags": 0,

@@ -212,30 +212,34 @@ describe("a building without roof:shape (ADR-0064: unchanged)", () => {
   });
 });
 
-/** Measured on the renderer before ADR-0064 (the hipped roof and the chance dome). */
+/**
+ * Measured on the renderer before ADR-0064 (the hipped roof and the chance dome). The churches'
+ * (look 1, 4, 7, 10) without their bell towers since G-215: a church takes towers only from the
+ * renderer's table (`BELL_TOWERS`), and this one is in no place of it; its roof is as before.
+ */
 const UNTAGGED: readonly string[] = [
   "2268:82731.547",
   "60:1890.000",
-  "1596:62221.195",
-  "204:7286.913",
+  "588:18679.513",
+  "108:3713.813",
   "732:22357.394",
   "108:3713.813",
   "984:31076.047",
   "108:3713.813",
-  "1848:70808.839",
-  "204:7286.913",
+  "840:27267.157",
+  "108:3713.813",
   "732:22357.394",
   "108:3713.813",
   "984:30947.442",
   "108:3713.813",
-  "1596:62221.195",
-  "204:7286.913",
-  "732:22357.394",
+  "588:18679.513",
   "108:3713.813",
   "732:22357.394",
   "108:3713.813",
-  "972:31864.633",
-  "204:7286.913",
+  "732:22357.394",
+  "108:3713.813",
+  "588:18679.513",
+  "108:3713.813",
   "732:22357.394",
   "108:3713.813",
 ];
