@@ -93,11 +93,13 @@ const CLINIC_DRIVE: AddedArea = t245(
 );
 
 /**
- * The lawn between 3 Maja's east sidewalk w232674453 (its axis) and the strip w1011367940, on their nodes.
+ * 3 Maja's east sidewalk by the clinic, from w232674453's axis to the strip w1011367940, on their nodes.
+ * Setts: a lawn here lay on the sidewalk's light paving, its bollards and lamps (orthophoto, PZGiK, 2% green,
+ * G-667); the green is in the strips west of the sidewalk and along w1011367940.
  */
-const LAWN_3MAJA_CLINIC: AddedArea = t245(
-  "trawnik-3-maja-klinika",
-  GRASS,
+const SIDEWALK_3MAJA_CLINIC: AddedArea = t245(
+  "kostka-3-maja-klinika",
+  SETTS,
   [
     { x: -93.32, z: 130.96 },
     { x: -91.75, z: 155.21 },
@@ -106,7 +108,7 @@ const LAWN_3MAJA_CLINIC: AddedArea = t245(
     { x: -94.6, z: 142.98 },
     { x: -95.13, z: 132.68 },
   ],
-  "trawnik między osią chodnika w232674453 a pasem trawy w1011367940, w OSM goła ziemia",
+  "kostka chodnika 3 Maja od osi w232674453 do pasa trawy w1011367940 (wcześniej trawnik, G-667), w OSM goła ziemia",
   ["w1011367940", "w1011367940", null, "w232674453", "w232674453", "w232674453"],
 );
 
@@ -229,7 +231,7 @@ const COLLEGIUM_SOUTH_BED: AddedArea = t245(
 );
 
 /** T-245's added areas in draw order: `corrections-zn.ts`'s, then this file's. */
-export const T245_AREAS: readonly AddedArea[] = [...ZN_AREAS, CLINIC_LAWN, CLINIC_DRIVE, LAWN_3MAJA_CLINIC, COLLEGIUM_NORTH, COLLEGIUM_NORTH_BED, COLLEGIUM_EAST, COLLEGIUM_SOUTH, COLLEGIUM_SOUTH_BED];
+export const T245_AREAS: readonly AddedArea[] = [...ZN_AREAS, CLINIC_LAWN, CLINIC_DRIVE, SIDEWALK_3MAJA_CLINIC, COLLEGIUM_NORTH, COLLEGIUM_NORTH_BED, COLLEGIUM_EAST, COLLEGIUM_SOUTH, COLLEGIUM_SOUTH_BED];
 
 /** Krakowskie Przedmieście's added areas in draw order, the tail of `ADDED_AREAS`: T-243's, then T-245's. */
 export const KRAKOWSKIE_ADDED_AREAS: readonly AddedArea[] = [...T243_AREAS, ...T245_AREAS];
