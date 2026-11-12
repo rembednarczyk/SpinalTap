@@ -1,4 +1,4 @@
-import { BARRIER_OPENINGS } from "@seki/core";
+import { BARRIER_OPENINGS, SpatialHash } from "@seki/core";
 import { MAP_CHUNKS } from "./lublin/sites";
 import { SegmentGrid, segmentDistance, sineOf } from "./segment-grid";
 import { BODY_RADIUS, WALKER_SIDE } from "./walker-size";
@@ -104,38 +104,30 @@ const crossing = (a: Pt, b: Pt, c: Pt, d: Pt): Pt | null => {
 /** Cells of this size (m) bucket a loop's segments for the crossing test. */
 const LOOP_CELL = 4;
 
-/** The cells a segment's box touches. */
-const cellsOf = (a: Pt, b: Pt): string[] => {
-  const out: string[] = [];
-  for (let i = Math.floor(Math.min(a[0], b[0]) / LOOP_CELL); i <= Math.floor(Math.max(a[0], b[0]) / LOOP_CELL); i++) {
-    for (let k = Math.floor(Math.min(a[1], b[1]) / LOOP_CELL); k <= Math.floor(Math.max(a[1], b[1]) / LOOP_CELL); k++) out.push(`${i}:${k}`);
-  }
-  return out;
-};
-
-/** The first crossing of a segment with a moved end and another segment of the loop, not its neighbour. */
+/**
+ * The first crossing of a segment with a moved end and another segment of the loop, not its
+ * neighbour. The loop's segments lie in a `SpatialHash` by their boxes; `some` walks the cells
+ * of a segment's box in the same order as the hand-made cells did, so the same crossing comes first.
+ */
 const firstCrossing = (pts: readonly Pt[], flags: readonly boolean[]): { i: number; j: number; at: Pt } | null => {
   const n = pts.length;
-  const cells = new Map<string, number[]>();
+  const grid = new SpatialHash<number>(LOOP_CELL);
   for (let j = 0; j < n; j++) {
-    for (const key of cellsOf(pts[j] as Pt, pts[(j + 1) % n] as Pt)) {
-      const list = cells.get(key);
-      if (list) list.push(j);
-      else cells.set(key, [j]);
-    }
+    const [a, b] = [pts[j] as Pt, pts[(j + 1) % n] as Pt];
+    grid.insert(j, Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1]));
   }
-  for (let i = 0; i < n; i++) {
+  let cut: { i: number; j: number; at: Pt } | null = null;
+  for (let i = 0; i < n && !cut; i++) {
     if (!flags[i] && !flags[(i + 1) % n]) continue;
     const [a, b] = [pts[i] as Pt, pts[(i + 1) % n] as Pt];
-    for (const key of cellsOf(a, b)) {
-      for (const j of cells.get(key) ?? []) {
-        if (Math.abs(i - j) < 2 || Math.abs(i - j) === n - 1) continue;
-        const at = crossing(a, b, pts[j] as Pt, pts[(j + 1) % n] as Pt);
-        if (at) return { i: Math.min(i, j), j: Math.max(i, j), at };
-      }
-    }
+    grid.some(Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1]), (j) => {
+      if (Math.abs(i - j) < 2 || Math.abs(i - j) === n - 1) return false;
+      const at = crossing(a, b, pts[j] as Pt, pts[(j + 1) % n] as Pt);
+      if (at) cut = { i: Math.min(i, j), j: Math.max(i, j), at };
+      return at !== null;
+    });
   }
-  return null;
+  return cut;
 };
 
 /**
