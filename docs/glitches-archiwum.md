@@ -2,6 +2,128 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-654 Trasa placu `krakowskie-2-0-square-1` przecina samą siebie
+- Status: naprawiony (PR #433, aa534cb)
+- Ważność: S4 · Zasięg: przy (368; −223) odcinki 0×3 i 0×5 trasy się przecinają, także na main; test samoprzecięć w `crowd-square-barriers.test.ts` (#428) pomija tę trasę; po poprawce wyjątek z testu do usunięcia
+- Pakiet właściciela: packages/sim (tłum)
+
+### G-647 Trawnik na dachu VIVO rysowany na ziemi
+- Status: naprawiony (PR #436, 3157e23)
+- Ważność: S4 · Zasięg: trawnik r11978659 (`landuse=grass`, `layer=4`) to zieleń na dachu VIVO, a import kładzie go na ziemi pod budynkiem i na pasie nad jezdnią na północy (z 240–244, na ortofoto asfalt); część poza VIVO (x 1112–1120, z 230–239) to strop garażu ze świetlikami i zielenią, trawa tam zostaje; goła ziemia przy zachodniej ścianie (x 1100–1105, z 225–242, na ortofoto kostka chodnika i pas zieleni) do reguły gołej ziemi z ortofoto (ADR-0077 krok 1.1)
+- Pakiet właściciela: tools/osm-import
+
+### G-625 Ganger staje przy długim płocie albo murze, gdy w oknie sterowania nie ma drogi
+- Status: naprawiony (PR #426, 5888292)
+- Ważność: S3 · Zasięg: `planDetour` (`steering.ts`) zwraca „off-field”, gdy w oknie 80 m nie ma objazdu; ganger dochodzi do przeszkody i stoi, gracz za nią bezpieczny (sonda 30 s: 0 strzałów); np. płot (11,83; −251,22), mur 3 m (214; −28,13); bariery z #418 uwidaczniają to w wielu miejscach; test `barrier-ai.test.ts` („moved > 1”) przeszedłby też z gangerem stojącym przy płocie; poprawka: dłuższy objazd (nawigacja po grafie poziomu albo większe okno), a gdy drogi nie ma, przejście do osłony lub szukania
+- Pakiet właściciela: packages/sim (systems/ai, steering)
+
+### G-651 `belowGround` zdjęłoby budynek naziemny z `level=-1` i piętrami nad ziemią
+- Status: naprawiony (PR #432, f0cad0b)
+- Ważność: S4 · Zasięg: `tools/osm-import/src/building-tags.ts` `belowGround`: `level=-1` przy `building:levels=3`, `height=20` albo `roof:levels=1` daje `true`, więc budynek naziemny zniknąłby; w danych dziś takiego nie ma, ryzyko na przyszłość; poprawka: budynek z dodatnimi piętrami lub wysokością nie jest podziemny
+- Pakiet właściciela: tools/osm-import
+
+### G-646 Skan `market-pieces` ma własną regułę podziemia
+- Status: naprawiony (PR #431, 71841c5)
+- Ważność: S4 · Zasięg: `tools/glitch-scan/test/market-pieces.ts:96` `const isBuilding = (t: Tags): boolean => t.building !== undefined && t.building !== "roof" && t.location !== "underground" && Number(t.layer ?? 0) >= 0;`: garaż z `level=-2`, `layer=2` liczy jako budynek, a samo `layer<0` (budynek pod wiaduktem) jako podziemie; do ujednolicenia z `belowGround` (G-600)
+- Pakiet właściciela: tools/glitch-scan
+
+### G-601 Budynki na brzegu mapy z domyślną wysokością niezgodną z NMPT
+- Status: naprawiony (PR #429, e8bbea5)
+- Ważność: S4 · Zasięg: Cicha 6 w grze ok. 15 m przy ok. 7 m w rzeczywistości, Cicha 8 ok. 11,2 m przy ok. 17,5 m, XVI LO ok. 6 m za niskie, Pałac Ordynacki bez dachu spadzistego (jak G-122), narożnik Cichej 5 do sprawdzenia; T-250; także VIVO r5601275: 11,1 m z `building:levels=3` w relacji, LoD1 17,2 m (po scaleniu heights sprawdzić, że LoD1 trafia do VIVO, nie do zdjętego garażu w173070505)
+- Pakiet właściciela: tools/osm-import
+
+### G-629 Na skarpie cokół NMT połyka kondygnacje z tagu (Kowalska)
+- Status: naprawiony (PR #429, e8bbea5)
+- Ważność: S3 · Zasięg: reguła `MIN_STOREY` w `lod1-heights.ts` liczy ściany od wierzchu cokołu; przy cokole 9–12 m Kowalska 7 spada z 4 kondygnacji do 1, Kowalska 9, 11, 13 z 3 do 1, od ulicy ślepy mur z jednym rzędem okien; 15 budynków (T-252); poprawka: kondygnacje z tagu zostają, gdy `height ≥ levels × 2,6`, cokół do `height − levels × STOREY`
+- Pakiet właściciela: tools/osm-import
+
+### G-631 Trybunał Koronny i Teatr Osterwy poniżej LoD1, Trybunał niższy od kamienic Rynku
+- Status: naprawiony (PR #429, e8bbea5)
+- Ważność: S3 · Zasięg: oba w `LOD1_LANDMARKS` zostają przy starych wysokościach; Trybunał okap 11,4 m wobec LoD1 17,5 m i LoD2 ok. 16,4 m, po zmianie kamienice Rynku mają okapy 4–8 m wyżej (odwrócona relacja); Teatr 16,3 wobec 19,5 m (T-254); poprawka: korekta w `TAG_CORRECTIONS` zgodna z LoD1 i NMPT; kontrola `landmark-vs-lod1` (baza 3 z Klasztorem Dominikanów, G-633)
+- Pakiet właściciela: tools/osm-import
+
+### G-632 Wyjątek `historic` wyjmuje z LoD1 pałace spoza listy punktów orientacyjnych
+- Status: naprawiony (PR #429, e8bbea5)
+- Ważność: S3 · Zasięg: `use === "historic"` w `lod1Exempt`: Pałac Zylbera 10,1 m wobec LoD1 19,4 m (okap LoD2 17,7), Pałac Parysów 11,1 wobec 18,1, Złota 3, Rynek 11, Pałac Pawęczkowskiego, DPS im. Michelisowej (T-255); poprawka: usunąć ten warunek, punkty orientacyjne mają własną listę; kontrola `height-vs-lod1` z historic (baza 10)
+- Pakiet właściciela: tools/osm-import
+
+### G-600 Podwójna bryła VIVO: garaż podziemny `level=-2` rysowany jako budynek
+- Status: naprawiony (PR #427, a6cef32)
+- Ważność: S3 · Zasięg: w173070505 (`building=yes`, `level=-2`, `layer=2`) ma prawie ten sam obrys co VIVO r5601275; po G-556 obie bryły wracają przycięte, nakładają się na 1732 m², dachy dzieli 0,1 m (y −12,5 i −12,6), ryzyko migotania; Podzamcze x 1088–1120, z 160–240; poprawka: pomijać w imporcie budynki, których wszystkie `level` są ujemne (jak `location=underground`); garaż wystaje poza VIVO, więc po usunięciu odsłania ok. 149 próbek gołej ziemi (do wyłożenia według ortofoto); skan: ta sama reguła w `edge-buildings.ts` i `building-underground-solid`, nowa kontrola `building-duplicate` (nakładanie > 50% pola mniejszego, bez `building:part`)
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-613 Trasy tłumu przy Podwalu biegną po linii muru oporowego zamiast osią chodnika
+- Status: naprawione w #428 (12.11; `offBarriers` odsuwa trasy placów 1 m od barier wzdłuż, `unloop`; mur w67626198 179/183 m)
+- Ważność: S3 · Zasięg: trasy `stare-miasto-1-0-square-0` i `stare-miasto-1-1-square-0` idą w medianie 0,5 m od muru w67626198, a oś chodnika w56965511 jest 0,65–1,95 m od muru (zwykle 1,7 m); przez to 61 m dwumetrowego muru skarpy pod Archikatedrą wycięte (x 673–693, 701–705, 731–743, 753–760 przy z −200…−161 i x 745–760 przy z −15…12); kryterium: trasy co najmniej 1,0 m od muru i mur w grze ponad 170 z 183 m; T-251
+- Pakiet właściciela: packages/sim (tłum), tools/osm-import
+
+
+### G-626 Piesi tłumu wchodzą w bariery biegnące wzdłuż ich trasy
+- Status: naprawione w #428 razem z G-613 (12.11; `CROWD_LINE` 0,70 m, `barrier-on-crowd-lane` 0, `barrier-parallel-cut` 15 → 12)
+- Ważność: S4 · Zasięg: `barrier-room.ts` (`CROWD_LINE` 0,3 m) przy pieszych idących 0,28 m od linii trasy bez kolizji z bryłami; 45 kawałków, 149 m (21 płotów, 7 żywopłotów, 1 mur, 16 murów oporowych), najgłębiej ponad 0,2 m, np. płot (729,5; 93,0); skan `barrier-on-crowd-lane` ma próg `ALONG` 0,2 m zamiast 0,58 m; łączy się z G-613 (trasy tłumu z dala od barier)
+- Pakiet właściciela: packages/sim (tłum), tools/glitch-scan
+
+
+### G-522 Klinowe szczeliny bez nawierzchni między jezdnią a chodnikiem Krakowskiego
+- Status: naprawione: krok 1 w #400, krok 2 w #409 (12.11; reguła `kerbFills` z indeksem `RingBins`, `kerb-gap-bare` 103 204 → 29 702; budżet reference 199/85 z wpisem w ADR-0046; T-247)
+- Ważność: S3 · Zasięg: (−120,5..−114; 54,5..101) 128 m², (−104,5..−102,5; −6,5..13) 48 m², (−121,5..−120,5; 74,5..100,5) 27 m², także części nieliczone skanem; zrzuty `kp-strip-g`, `s-strip-l`, `wedge`; przyczyna: jezdnia i chodnik się nie schodzą; propozycja `kerb-gap-bare` z przeglądu G-440 (baza ok. 35 631 próbek 0,25 m w mieście)
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+
+### G-570 Wypełnienie G-522 kładzie chodnik na pasach postojowych, zatokach i pasie ruchu
+- Status: naprawione w #409 (12.11; asfalt jako osobne kawałki jezdni, kurator runda 3 ZGODNE)
+- Ważność: S3 · Zasięg: 12 z 19 miejsc ortofoto, ok. 63% z 5 855 m² wypełnień przy ulicach z `lanes`; krawężnik 1–3 m wewnątrz prawdziwej jezdni (Ruska, Kapucyńska, Niecała, Peowiaków, Lubartowska przy przystanku Brama Krakowska 01, Unii Lubelskiej, Turystyczna, 3 Maja, Dolna Panny Marii, Zesłańców Sybiru); trawnik jako chodnik przy Andersa; przyczyna: szerokość z `lanes` × 3,25 lub typu nie obejmuje postoju, `fitToKerb` (T-046) tylko zwęża; poprawka: pas przy ulicy o szacowanej szerokości i szczelinie ≥ 1 m jako jezdnia z krawężnikiem przy nawierzchni pieszej, zebry do nowego krawężnika, trawniki przez korekty; kontrole `bus-stop-on-fill` i `kerb-fill-wide-estimated`
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+
+### G-605 Fundamenty fary na Placu po Farze stoją jako murki 1,0 m zamiast ok. 0,5 m
+- Status: naprawione w #418 (12.11; bariery z OSM, runda 2 przyjęta przez kuratora i weryfikatora)
+- Ważność: S3 · Zasięg: r18507551, r18507552, w1348806697–708 (431 m w grze), NMPT − otoczenie: mediana 0,45 m, p75 0,78 m; przy 1,0 m zamknięty labirynt; poprawka: korekta wysokości 0,5 m (bez w1348806709, taras przy Rynku 11); kontrola `ruin-wall-height`
+- Pakiet właściciela: tools/osm-import
+
+
+### G-606 Symulacja tnie bariery, wzdłuż których biegnie trasa tłumu
+- Status: naprawione w #418 (12.11; bariery z OSM, runda 2 przyjęta przez kuratora i weryfikatora)
+- Ważność: S3 · Zasięg: 21 odcinków ≥ 3 m, ok. 397 m, m.in. 127 m z ok. 152 m dwumetrowego muru oporowego skarpy pod Archikatedrą w67626198 (Podwale), ogrodzenie w231832115 (70 m), żywopłot w828140561; trasa 0,9 m od muru zostawia 0,4 m luzu; poprawka: ciąć tylko przy przecięciu (kąt jak `CROSS_SINE`) albo mniejszy `CROWD_ROOM`; kontrola `barrier-parallel-cut`
+- Pakiet właściciela: packages/sim, tools/osm-import
+
+
+### G-607 Przy schodach znikają mury po obu stronach biegu
+- Status: naprawione w #418 (12.11; bariery z OSM, runda 2 przyjęta przez kuratora i weryfikatora)
+- Ważność: S3 · Zasięg: Zaułek Panasa w179264861: mur miejski w232362994 z 40 m zostaje 7 m (`FLIGHT_ROOM` 1,9 m), mur oporowy w232362995 traci 40 m w imporcie i 37 m w sim; balustrada w231832095 na podeście w Podzamczu (785; 248); poprawka: mur na krawędzi biegu zostaje (ewentualnie odsunięty na krawędź pasa), odstęp z szerokości biegu; kontrola `city-wall-kept`
+- Pakiet właściciela: tools/osm-import, packages/sim
+
+
+### G-608 Import tnie bariery biegnące wzdłuż krawędzi pasa jezdni
+- Status: naprawione w #418 (12.11; bariery z OSM, runda 2 przyjęta przez kuratora i weryfikatora)
+- Ważność: S4 · Zasięg: pas z `roadWidth` szerszy niż jezdnia na ortofoto, więc mur przy krawężniku leży „na jezdni”: w232806008 (51 m, 389; 153), w886723051 (48 m, 220; −196), płot w73811517 przy Zamkowej (985; 281), murek w227679479 (28 m, 534; 517), koniec w67626198 (29 m); poprawka: reguła kąta jak dla dróg, bariery wzdłuż krawędzi przesunąć poza pas
+- Pakiet właściciela: tools/osm-import
+
+
+### G-610 Gracz za płotem jest nietykalny: ganger widzi przez płot i strzela w niego bez końca
+- Status: naprawione w #418 (12.11; bariery z OSM, runda 2 przyjęta przez kuratora i weryfikatora)
+- Ważność: S2 · Zasięg: `inSight` (`ganger-perception.ts:201`) przez `clearSight` przepuszcza wzrok przez płot, a strzał płot zatrzymuje; `ShootAtPlayer` zeruje prędkość, `ChasePlayer` i `firingPosition` się nie włączają; sonda: 11 strzałów, 0 HP straty przy trzech płotach; 1359 płotów w grze
+- Pakiet właściciela: packages/sim (systems/ai)
+
+
+### G-611 Świadkowie przestępstwa nie widzą przez płot i żywopłot, obserwatorzy ciał widzą
+- Status: naprawione w #418 (12.11; bariery z OSM, runda 2 przyjęta przez kuratora i weryfikatora)
+- Ważność: S4 · Zasięg: `crime-system.ts:82-104` (kamera, świadek, patrol, `inPlayerView`) używa `lineOfSight`, a reszta wzroku `clearSight`
+- Pakiet właściciela: packages/sim
+
+
+### G-612 Mury przecinają ogródki kawiarniane i siedziska tłumu
+- Status: naprawione w #418 (12.11; bariery z OSM, runda 2 przyjęta przez kuratora i weryfikatora)
+- Ważność: S3 · Zasięg: `furnitureClearance` (`world-barriers.ts:513`) pomija meble niesolidne, `CROWD_SPOTS` i `SEAT_SPOTS` nie biorą udziału w cięciu; cafe-garden (629,5; 117,2) 31 ze 168 próbek w murze, (583,7; 24,5), siedziska #286 i #287 z murem 0,05–0,14 m przed twarzą
+- Pakiet właściciela: packages/sim, tools/glitch-scan
+
+
+### G-637 Limit pobierania modelu liczy cały czas, nie bezczynność
+- Status: naprawione w #424 (12.11; limit bezczynności 30 s, strumień zwalniany po porażce)
+- Ważność: S4 · Zasięg: `MODEL_FETCH_TIMEOUT_MS` (120 s) przerywa całe pobieranie; przy łączu wolniejszym niż ok. 0,5 Mbit/s plik 8 MB (kaito.vrm) nigdy się nie załaduje, bo każda próba zaczyna od zera; poprawka: limit bezczynności (brak nowych bajtów przez N s) zamiast całkowitego; przy okazji: pełny zestaw engine+app+code-health trwa ok. 507 s (import 55%), do rozważenia `isolate: false` albo podział
+- Pakiet właściciela: packages/engine (renderer: modele)
+
+
 ### G-634 `ModelLibrary.load` nie sprawdza `response.ok`
 - Status: naprawione w #423 (12.11; `r.ok` sprawdzane przed parserem)
 - Ważność: S4 · Zasięg: odpowiedź 404 albo 500 trafia do parsera jako GLB i pada dopiero przy parsowaniu z mylącym błędem; `.gltf` po URL (`LoadAssetContainerAsync`) i dynamiczny import pluginu glTF nadal bez limitu czasu (dziś nieużywane, manifest ma `.vrm`)
