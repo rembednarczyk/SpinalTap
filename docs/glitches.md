@@ -1642,7 +1642,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (tłum), tools/osm-import
 
 ### G-625 Ganger staje przy długim płocie albo murze, gdy w oknie sterowania nie ma drogi
-- Status: zgłoszone (11.11, weryfikator #418 runda 2)
+- Status: w PR #426 (12.11; okno `wide` 192 m, brak drogi → powrót na posterunek; weryfikacja w toku)
 - Ważność: S3 · Zasięg: `planDetour` (`steering.ts`) zwraca „off-field”, gdy w oknie 80 m nie ma objazdu; ganger dochodzi do przeszkody i stoi, gracz za nią bezpieczny (sonda 30 s: 0 strzałów); np. płot (11,83; −251,22), mur 3 m (214; −28,13); bariery z #418 uwidaczniają to w wielu miejscach; test `barrier-ai.test.ts` („moved > 1”) przeszedłby też z gangerem stojącym przy płocie; poprawka: dłuższy objazd (nawigacja po grafie poziomu albo większe okno), a gdy drogi nie ma, przejście do osłony lub szukania
 - Pakiet właściciela: packages/sim (systems/ai, steering)
 
@@ -1695,6 +1695,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, kurator rundy 2 wysokości LoD1, T-257; do kroku „dachy z LoD2” ADR-0077)
 - Ważność: S3 · Zasięg: budynki bez tagów dachu stoją płasko na wysokości LoD1, a przy stromym dachu LoD1 leży prawie na kalenicy; np. Pałac Parysów w66330695 w grze 18,1 m i 5 rzędów okien, w LoD2 okap 10,7 m i kalenica 18,2 m (przed zmianą 11,1 m); ok. 59 budynków (płaski dach w grze, dach LoD2 > 4 m, okap gry > 3 m nad okapem LoD2; liczba przybliżona, okap LoD2 bywa okapem przybudówki); poprawka: gdy LoD2 ma okap i kalenicę, a OSM nie ma tagów dachu, okap i dach z LoD2; kontrola `flat-over-lod2-roof` (baza ok. 59); luka pokrewna: `church-over-nmpt` nie wykrywa kościoła za niskiego
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-640 Raster AI bierze koniec niskiego pomostu za płaski teren
+- Status: zgłoszone (12.11, naprawiacz G-625; potwierdzone w kodzie)
+- Ważność: S3 · Zasięg: `ledgesOf` liczy uskoki pomostu tylko w oknie ze schodami (`steering.ts:313` `const ledges = base && flight ? ledgesOf(...) : null;`, warunek w `:266`); w doku przy (2477,2; 407,8) teren −27,24, pomost −26,88 (`onLowDeck`), uskok 0,37 m, którego ruch nie pokonuje, a raster widzi płasko; ganger w pościgu przy dokach może tam utknąć; rodzina G-339
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-641 Po utknięciu ganger planuje z tego samego pola i bez kroku w bok
+- Status: zgłoszone (12.11, naprawiacz G-625; potwierdzone w kodzie)
+- Ważność: S4 · Zasięg: `ganger-walk.ts:157` `if (p && !p.plan && this.unsticking())`: gdy raster nie zgadza się z ruchem, ponowny plan daje tę samą drogę i ganger stoi bez końca zamiast spróbować prostej drogi albo kroku w bok
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-642 Testy AI teleportują gracza na y = 0 i zadają mu obrażenia od upadku
+- Status: zgłoszone (12.11, naprawiacz G-625)
+- Ważność: S4 · Zasięg: `teleportPlayer(sim, { x, y: 0, z })` na wysokim terenie daje 155–217 pkt w nogę w pierwszym kroku (wschód mapy); `barrier-ai.test.ts` (l. 34) robi to samo, dziś na niskim terenie; testy powinny brać `ground(x, z)` jak `barrier-detour.test.ts`, inaczej „gracz traci zdrowie” może przejść z niewłaściwego powodu
+- Pakiet właściciela: packages/sim (testy)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
