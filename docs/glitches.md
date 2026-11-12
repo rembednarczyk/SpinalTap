@@ -1627,7 +1627,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-613 Trasy tłumu przy Podwalu biegną po linii muru oporowego zamiast osią chodnika
-- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g613` (12.11, e49f753; `offBarriers` odsuwa trasy placów 1 m od barier wzdłuż, mur w67626198 179/183 m; kurator ZGODNE; weryfikacja w toku)
+- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g613` (12.11, e49f753; `offBarriers` odsuwa trasy placów 1 m od barier wzdłuż, mur w67626198 179/183 m; kurator ZGODNE, weryfikator PRZYJĘTE z wadą: 4 samoprzecięcia `stare-miasto-1-1-square-0` przy (759,3; −11,5) z `pushIn`; runda 2 u autora)
 - Ważność: S3 · Zasięg: trasy `stare-miasto-1-0-square-0` i `stare-miasto-1-1-square-0` idą w medianie 0,5 m od muru w67626198, a oś chodnika w56965511 jest 0,65–1,95 m od muru (zwykle 1,7 m); przez to 61 m dwumetrowego muru skarpy pod Archikatedrą wycięte (x 673–693, 701–705, 731–743, 753–760 przy z −200…−161 i x 745–760 przy z −15…12); kryterium: trasy co najmniej 1,0 m od muru i mur w grze ponad 170 z 183 m; T-251
 - Pakiet właściciela: packages/sim (tłum), tools/osm-import
 
