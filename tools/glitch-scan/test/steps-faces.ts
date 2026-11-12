@@ -6,6 +6,7 @@
  */
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
+import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 
 type Pt = { readonly x: number; readonly z: number };
 type P3 = { readonly x: number; readonly y: number; readonly z: number };
@@ -16,10 +17,13 @@ export interface StepFace {
   readonly up: boolean;
 }
 
+/** Whether a chunk of the map holds (x, z), as the renderer has a terrain there. */
+const onMap = (x: number, z: number): boolean => MAP_CHUNKS.some((c) => x >= c.bounds.minX && x <= c.bounds.maxX && z >= c.bounds.minZ && z <= c.bounds.maxZ);
+
 /** The triangles of the band `ring` drawn on the ground `h`. */
 export const stepFaces = (ring: readonly Pt[], h: (x: number, z: number) => number): StepFace[] => {
   const sink = new MeshSink();
-  planSteps(sink, ring, h);
+  planSteps(sink, ring, h, onMap);
   const at = (i: number): P3 => ({ x: sink.positions[i * 3]!, y: sink.positions[i * 3 + 1]!, z: sink.positions[i * 3 + 2]! });
   const out: StepFace[] = [];
   for (let t = 0; t + 2 < sink.indices.length; t += 3) {
