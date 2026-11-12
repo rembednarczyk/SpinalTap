@@ -23,6 +23,7 @@
  * `FILL.kerbBand` of a carriageway a fill gives way behind bare ground on the kerb (`keepKerbs`):
  * the kerbs' strips are the next rule's (step 1.2), and a fill past one would make it a counted gap.
  */
+import { FillRule, type Path64, difference, isPositive } from "clipper2-ts";
 import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
 import { COVER } from "../../orto/src/classify.ts";
 import { type Cover, coverFor } from "../../orto/src/cover.ts";
@@ -32,7 +33,7 @@ import { contours } from "./contour.ts";
 import { type Area } from "./features.ts";
 import { type OsmData } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
-import { type Pt, type Rect, ccw, r1, rectsOverlap, removeCollinear, ringBounds, signedArea, simplifyRing } from "./geometry.ts";
+import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, selfIntersects, signedArea, simplifyRing } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
 
 /** The rule's settings, measured on the four districts (ADR-0077 step 1.1). */
@@ -63,6 +64,11 @@ export const FILL = {
   forecourt: 5,
   /** How far round a stop its platform reaches (m), as `landuse-bare` reads it. */
   platform: 10,
+  /**
+   * How far past a town's paved place its fill reaches (m): the wider gaps `ground-strip-gap` counts
+   * (up to 1.25 m), so the place's edge leaves no strip of bare ground between its fill and a piece.
+   */
+  zoneMargin: 3,
   /** How far off a carriageway a fill must reach it with nothing bare between (m): `kerb-strip-bare` looks 5 m past the kerb. */
   kerbBand: 5,
 } as const;
@@ -75,9 +81,6 @@ export const FILL_CLEARED: readonly Rect[] = [
   { minX: 2520, maxX: 2594, minZ: 390, maxZ: 450 },
   { minX: 2520, maxX: 2594, minZ: 452, maxZ: 500 },
 ];
-
-/** The surfaces drawn over both fills (a higher lift, `SURFACE_LIFT`), not water, steps, lawns, squares or setts. */
-const OVER: ReadonlySet<GroundSurface> = new Set(["footway", "road", "rail", "crossing", "sidewalk"]);
 
 const LAID: readonly { readonly label: number; readonly surface: GroundSurface }[] = [
   { label: LABEL.grass, surface: "grass" },
@@ -218,9 +221,9 @@ const dropLoose = (cells: Cells): void =>
   );
 
 /**
- * The cells a label's fills are drawn on: its own, and under a piece drawn over it (a carriageway,
- * a pavement) next to them one cell more, so no seam of bare ground runs by a kerb, nor a corner
- * is cut off at it.
+ * The cells a label's fills are traced on: its own, and one cell more under the map's pieces and
+ * walls next to them, which then cut the fill on their edges (`cutByPieces`): no seam of bare
+ * ground and no overlap where they meet.
  */
 const drawnCells = (cells: Cells, label: number): Uint8Array => {
   const { nx, nz } = cells;
@@ -232,15 +235,14 @@ const drawnCells = (cells: Cells, label: number): Uint8Array => {
     for (let dj = -1; dj <= 1; dj++)
       for (let di = -1; di <= 1; di++) {
         const m = k + dj * nx + di;
-        if (i + di >= 0 && i + di < nx && m >= 0 && m < nx * nz && cells.over[m] === 1) drawn[m] = 1;
+        if (i + di >= 0 && i + di < nx && m >= 0 && m < nx * nz && cells.label[m] === LABEL.covered) drawn[m] = 1;
       }
   }
   return drawn;
 };
 
 const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: GroundSurface, i0: number, j0: number, i1: number, j1: number): GroundOut[] => {
-  const { nx, nz } = cells;
-  const own = (i: number, j: number) => i >= 0 && j >= 0 && i < nx && j < nz && cells.label[j * nx + i] === label;
+  const { nx } = cells;
   let any = false;
   for (let j = j0; j < j1 && !any; j++) any = cells.label.subarray(j * nx + i0, j * nx + i1).includes(label);
   if (!any) return [];
@@ -251,12 +253,8 @@ const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: Gro
     nz: j1 - j0,
     inside,
     at: (i, j) => cells.at(i + i0, j + j0),
-    cross: (ai, aj, bi, bj) => {
-      const gi = bi + i0;
-      const gj = bj + j0;
-      if (!own(ai + i0, aj + j0) || !cells.has(gi, gj) || cells.label[gj * nx + gi] !== LABEL.covered) return 0.5;
-      return cells.enter(cells.at(ai + i0, aj + j0), cells.at(gi, gj));
-    },
+    // Half way: where a fill meets the map's pieces, the pieces themselves cut it (`cutByPieces`).
+    cross: () => 0.5,
   });
   // A hole (a shed in a yard, a lawn in a paved one) splits the tile through it, across its longer
   // side: the hole's cells then reach the halves' edges, notches of their pieces, not holes.
@@ -270,12 +268,29 @@ const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: Gro
     const r = Math.min(j1 - 1, Math.max(j0 + 1, Math.round(((b.minZ + b.maxZ) / 2 - cells.rect.minZ) / STEP - 0.5)));
     return [...tilePieces(cells, label, drawn, surface, i0, j0, i1, r), ...tilePieces(cells, label, drawn, surface, i0, r, i1, j1)];
   }
-  const round = (ring: readonly Pt[]) => removeCollinear(ring.map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02);
-  return rings
-    .filter((r) => signedArea(r) >= FILL.minArea)
-    .map((r) => ccw(round(simplifyRing(r, FILL.simplify))))
+  const simple = rings.filter((r) => signedArea(r) >= FILL.minArea).map((r) => simplifyRing(r, FILL.simplify));
+  const tile = { minX: cells.rect.minX + i0 * STEP - 1, minZ: cells.rect.minZ + j0 * STEP - 1, maxX: cells.rect.minX + i1 * STEP + 1, maxZ: cells.rect.minZ + j1 * STEP + 1 };
+  return cutByPieces(simple, cells.coversNear(tile))
     .filter((r) => r.length >= 3 && signedArea(r) >= FILL.minArea)
     .map((r) => ({ surface, outline: r.flatMap((p) => [p.x, p.z]) }));
+};
+
+/** Clipper2's integer grid (1 cm): the pieces of the tables lie on 0.1 m. */
+const CLIP_SCALE = 100;
+
+/**
+ * The fills less the map's pieces and walls over them (Clipper2, ADR-0078): a fill laid a cell
+ * under them ends exactly on their edges, no overlap and no seam. A hole the cut leaves (a piece
+ * under 0.5 m² inside a fill) is not cut: the fill runs under it.
+ */
+const cutByPieces = (fills: readonly (readonly Pt[])[], pieces: readonly (readonly Pt[])[]): Pt[][] => {
+  const path = (r: readonly Pt[]): Path64 => r.map((p) => ({ x: Math.round(p.x * CLIP_SCALE), y: Math.round(p.z * CLIP_SCALE) }));
+  const cut = pieces.length > 0 ? difference(fills.map(path), pieces.map(path), FillRule.NonZero) : fills.map(path);
+  // A sliver the cut leaves crossing itself is dropped: it would draw no ground the scan agrees with.
+  return cut
+    .filter((p) => isPositive(p))
+    .map((p) => ccw(removeCollinear(p.map((q) => ({ x: q.x / CLIP_SCALE, z: q.y / CLIP_SCALE })), 0.005)))
+    .filter((r) => !selfIntersects(r));
 };
 
 /**
@@ -319,13 +334,14 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
     { x: r.maxX, z: r.maxZ },
     { x: r.minX, z: r.maxZ },
   ];
-  ground.forEach((g, i) => cells.cover(ringOf(g.outline), g.surface === "road" ? i + 1 : 0, OVER.has(g.surface)));
+  ground.forEach((g, i) => cells.cover(ringOf(g.outline), g.surface === "road" ? i + 1 : 0));
   for (const w of walls) cells.cover(w);
   for (const g of ground) if (g.bridge) cells.block(ringOf(g.outline), FILL.bridge);
   for (const r of FILL_CLEARED) if (rectsOverlap(r, rect)) cells.cover(boxOf(r));
   for (const a of town.areas) cells.zoneIn(a);
   for (const s of town.shops) cells.zoneNear(s, FILL.forecourt);
   for (const p of town.stops) cells.zoneNear([p], FILL.platform);
+  cells.growZone(FILL.zoneMargin);
   readCover(cells, cover);
   resolveMixed(cells);
   joinSpecks(cells);

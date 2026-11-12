@@ -93,14 +93,16 @@ describe("a lawn mapped above the ground (G-647)", () => {
     expect(grassAt(chunks, { x: 59, z: 39.5 })).toBe(false);
   });
 
-  it("keeps VIVO's roof garden (r11978659) on the garage's roof by its north-east corner only", () => {
+  it("lays none of VIVO's roof garden (r11978659) on the ground: off the mall it is the roof of the garage's solid (G-662)", () => {
     const inputs = loadInputs();
     const at = ALL_CHUNKS.filter((c) => c.rect.maxX === 1120 && c.rect.minZ <= 240 && c.rect.maxZ >= 240);
     expect(at).toHaveLength(1);
     const vivo = generate(inputs.osm, inputs.src, at).chunks;
-    // On the garage's roof, off VIVO's outline.
-    expect(grassAt(vivo, { x: 1118.5, z: 234 })).toBe(true);
-    expect(grassAt(vivo, { x: 1112, z: 237.5 })).toBe(true);
+    // The garage's part past the mall's north-east wall stands 11 m over the street (T-261): its
+    // roof is the lawn's, the ground under it has none. With G-647 alone it lay there on the ground.
+    expect(vivo[0]!.buildings.some((b) => b.id === "T-261/garaz-vivo")).toBe(true);
+    expect(grassAt(vivo, { x: 1118.5, z: 234 })).toBe(false);
+    expect(grassAt(vivo, { x: 1112, z: 237.5 })).toBe(false);
     // In VIVO, and on the asphalt north of it.
     expect(grassAt(vivo, { x: 1110, z: 200 })).toBe(false);
     expect(grassAt(vivo, { x: 1112, z: 242 })).toBe(false);

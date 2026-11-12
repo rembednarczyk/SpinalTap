@@ -45,17 +45,17 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
     const fills = coverFills(RECT, cover(), [road], [shed], TOWN);
     for (const p of samples({ minX: 0, minZ: 0, maxX: 8, maxZ: 20 }).filter((q) => !pointInRing(q, shed))) expect(surfaceAt(fills, p), `${p.x},${p.z}`).toEqual(["grass"]);
     for (const p of samples({ minX: 12, minZ: 0, maxX: 20, maxZ: 20 })) expect(surfaceAt(fills, p), `${p.x},${p.z}`).toEqual(["square"]);
-    // Under the road the fill runs on one cell, its kerb's: the rest of the road and the shed stay bare.
-    for (const p of [...samples({ minX: 8.5, minZ: 0, maxX: 11.5, maxZ: 20 }), ...samples({ minX: 3, minZ: 8, maxX: 6, maxZ: 11 })]) expect(surfaceAt(fills, p), `${p.x},${p.z}`).toEqual([]);
+    // The road and the shed cut the fills on their edges: none under them.
+    for (const p of [...samples({ minX: 8, minZ: 0, maxX: 12, maxZ: 20 }), ...samples({ minX: 3, minZ: 8, maxX: 6, maxZ: 11 })]) expect(surfaceAt(fills, p), `${p.x},${p.z}`).toEqual([]);
   });
 
   it("lays pieces without holes: a shed in a lawn splits it", () => {
     const fills = coverFills(RECT, cover(), [road], [shed], TOWN);
     for (const f of fills) expect(signedArea(ringOf(f))).toBeGreaterThan(0);
     const lawn = fills.filter((f) => f.surface === "grass").reduce((s, f) => s + signedArea(ringOf(f)), 0);
-    // 8 by 20 m less the shed's 9 m², and the cell it runs on under the road.
-    expect(lawn).toBeGreaterThan(155);
-    expect(lawn).toBeLessThan(163);
+    // 8 by 20 m less the shed's 9 m²: the road and the shed cut it on their edges.
+    expect(lawn).toBeGreaterThan(149);
+    expect(lawn).toBeLessThan(152);
   });
 
   it("ends a fill where the map's piece begins, between the samples", () => {

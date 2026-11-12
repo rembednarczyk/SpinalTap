@@ -11,6 +11,7 @@ import { knockbackVelocity } from "../../world/knockback";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
 import { GANGER_TREE } from "./ganger-tree";
 import { GANGER_SPEED, GangerWalk } from "./ganger-walk";
+import { advanceChasePlans } from "./chase-plan";
 import { attack, faceTowards } from "./ganger-fight";
 import { type AwarenessState } from "@seki/core";
 import {
@@ -239,6 +240,7 @@ export const createGangerAiSystem = (): System => {
       const victims = victimsOf(ctx);
       // Her steps this step (ADR-0069): heard before anyone looks.
       if (player) hearNoise(ctx, player.position, footstepNoise(player));
+      advanceChasePlans(ctx);
       for (const g of inCreationOrder(ctx.world.with("ai", "velocity"))) {
         alive.add(g.id);
         // Knocked out or held in a takedown (ADR-0065): it sees, hears and does nothing.

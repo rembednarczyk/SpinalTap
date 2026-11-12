@@ -221,14 +221,34 @@ const RUSKA_B = area("ruska-b", SETTS, [
 ], "pas kostki i miejsc postojowych przed sklepami przy Ruskiej na ortofoto PZGiK, w OSM bez nawierzchni");
 
 /**
- * The lawn over VIVO's underground garage w173070505 (`level=-2`, G-600) past the mall's north-east
- * wall: the garage is no solid, and OSM maps no surface between the wall and the lawn r11978659 east
- * of it. Green on the orthophoto (144 of the 149 samples it left bare, 5 paving at its north tip),
- * 0.4-0.5 m under the wall, its east edge on r11978659's.
+ * VIVO's garage w173070505 (`level=-2`, `layer=2`) past the mall's north-east wall (G-662): over the
+ * street, not under it, a green roof with skylights. The garage is no solid since G-600 and LoD1 and
+ * EGiB have no building there, so the part of it off the mall (its north edge, the mall's wall, cut
+ * at the map's edge x = 1120) stands on its own. The roof's lawn r11978659 (`layer=4`) lies on it,
+ * none on the ground (`raised-green.ts`), and no bed of the map either (T-258 was one).
+ *
+ * Its height from the wall's shadow on the 2025-04 orthophoto (the flight at noon: the shadow's
+ * west edge runs due north): 10.25 m north of the wall (z 238.8-239.7) over x 1110-1122, at
+ * 0.92-0.96 m a metre of height by the north walls of four LoD1 buildings of Podzamcze on the same
+ * flight (cot 47.2°, the sun at noon on 12 April, is 0.926); so 11 m to the top of the parapet,
+ * 10-11.4 m within the error. The other two flights are not at noon (T-261).
  */
-const LAWN_VIVO = area("trawnik-nad-garazem-vivo", LAWN, [
-  1114.5, 228.15, 1118.8, 227.75, 1109.45, 239.47, 1105.4, 239.4,
-], "trawnik nad garażem podziemnym VIVO w173070505 przy północno-wschodniej ścianie na ortofoto PZGiK, w OSM bez obszaru", "T-258");
+const GARAGE_VIVO: AddedArea = {
+  id: "T-261/garaz-vivo",
+  tags: { building: "parking", height: "11", "roof:shape": "flat" },
+  ring: [
+    { x: 1105.77, z: 239.74 },
+    { x: 1114.86, z: 228.54 },
+    { x: 1128.31, z: 227.28 },
+    { x: 1139.76, z: 226.22 },
+    { x: 1141.62, z: 226.04 },
+    { x: 1145.76, z: 237.07 },
+    { x: 1129.47, z: 238.16 },
+  ],
+  nodesOf: ["w173070505", "w376043568", "w376043568", "w376043568", "w376043568", "w173070505", "w173070505"],
+  reason: "część garażu VIVO w173070505 poza obrysem galerii: dach z sedum i świetlikami 11 m nad chodnikiem (cień na ortofoto PZGiK 2025-04), w OSM level=-2, w LoD1 i EGiB bez budynku",
+  ref: "T-261",
+};
 
 /** The added areas east of the Dworzec Autobusowy, then those of this file. */
 export const PODZAMCZE_AREAS: readonly AddedArea[] = [
@@ -260,5 +280,5 @@ export const PODZAMCZE_AREAS: readonly AddedArea[] = [
   LAWN_KIOSKS,
   FRONT_KIOSKS,
   RUSKA_B,
-  LAWN_VIVO,
+  GARAGE_VIVO,
 ];

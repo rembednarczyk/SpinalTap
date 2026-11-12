@@ -27,7 +27,9 @@ import { patrolChecks } from "./patrol-pieces";
 import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
+import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
 import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
+import { addedSolidOverWay } from "./added-solid-over-way";
 import { readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { cityRaisedGreenWorld, raisedGreenOnGround } from "./raised-green";
@@ -59,6 +61,7 @@ import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { kerbStripBare } from "./kerb-strip-bare";
+import { markingSteps } from "./marking-step";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
 import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
@@ -144,6 +147,9 @@ const SOURCE_OSM = mergeOsm(
 /** The kerb fills' world (`kerb-fill.ts`), built once for both of its checks. */
 let fillWorld: ReturnType<typeof cityFillWorld> | undefined;
 const FILL_WORLD = () => (fillWorld ??= cityFillWorld(SOURCE_OSM));
+/** The chunks' ground on the 0.25 m raster of ADR-0078 (`ground-strips.ts`), laid once for both of its checks. */
+let stripRasters: ReturnType<typeof stripRaster>[] | undefined;
+const STRIP_RASTERS = () => (stripRasters ??= MAP_CHUNKS.map(stripRaster));
 const cars = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries");
 /** The car lanes one by one, before the junctions join them into routes (ADR-0055): sampled from each lane's own start. */
 const carLanes = TRAFFIC_LANES.filter((r) => r.use !== "deliveries");
@@ -1859,6 +1865,18 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       deep: (x, z) => MAP_CHUNKS.some(({ bounds: b }) => x > b.minX + 3 && x < b.maxX - 3 && z > b.minZ + 3 && z < b.maxZ - 3),
     }),
   /**
+   * A centre or lane line stepping 0.3 m and more sideways where it goes on along one street (G-675,
+   * `marking-step.ts`): one street by the nearest map carriageway's name (its way when unnamed) within its half width and a metre.
+   */
+  "marking-step": () => {
+    const nearest = nearestAxis(streetRoads(withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l))));
+    const street = (p: Pt) => {
+      const n = nearest(p.x, p.z);
+      return n && n.d <= roadWidth(n.road.tags) / 2 + 1 ? (n.road.tags.name ?? n.road.id) : null;
+    };
+    return markingSteps(LUBLIN_CHUNKS.flatMap((c) => c.markings), street);
+  },
+  /**
    * A street narrowed to its mapped sidewalks (G-082) although they run along less than half of it
    * on either side (G-112): the width came from where a sidewalk turns in to a junction's crossing.
    */
@@ -1930,6 +1948,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "drone-low-pool-sunk": () => poolSunk(PATROL_LANES(), cityPatrolWorld().surfaceAt, DRAWN_PAVING()),
   /** Two overlapping pieces of the drawn paving at different heights over the ground where they meet: a step, patches and the depth flickering (G-301, `paving-overlap.ts`). */
   "paving-overlap-step": () => pavingOverlapSteps(drawnPieces(WORLD_SCENERY, groundY)),
+  /** An outline of the ground in the tables, off the bridges, two of whose edges cross, adjacent ones aside (G-659; ADR-0078 stage 2 takes it to 0, `ground-strips.ts`). */
+  "ground-ring-self-cross": () => groundRingSelfCross(MAP_CHUNKS),
+  /** A m² of the tables' ground under two pieces or more, on a 0.25 m raster: the strips laid over each other in draw order (ADR-0078 stage 3 takes it to about 0, `ground-strips.ts`). */
+  "ground-strip-overlap": () => groundStripOverlap(STRIP_RASTERS()),
+  /** A m² of bare gaps up to 1.25 m wide between the tables' ground pieces, on a 0.25 m raster (ADR-0078 stage 5 brings it down, `ground-strips.ts`). */
+  "ground-strip-gap": () => groundStripGap(STRIP_RASTERS()),
   /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */
   "paving-coplanar": () => pavingCoplanar(mapGround(WORLD_SCENERY)),
   /** A drawn lawn with over 20 m² of it under a square's or a cobbled area's paving, which lies over it: Plac Litewski's lawns (G-421, `grass-under-paving.ts`). */
@@ -1938,6 +1962,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "added-grass-off-green": () => addedGrassOffGreen(ADDED_AREAS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** An area of paving or asphalt the curator added to the map with half of it or more green on the orthophoto cover (G-670, `added-grass.ts`). */
   "added-paving-on-green": () => addedPavingOnGreen(ADDED_AREAS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A building the curator added to the map whose ring, also off the map, takes in an OSM way open to the sky: a solid across a street or a flight (G-677, `added-solid-over-way.ts`). */
+  "added-solid-over-way": () => addedSolidOverWay(ADDED_AREAS, extractFeatures(SOURCE_OSM).lines),
   /** A point of a 0.5 m grid of drawn grass of a lawn the map lays above the ground, in a building or off the garage under it: VIVO's roof garden (G-647, `raised-green.ts`). */
   "raised-green-on-ground": () => raisedGreenOnGround(cityRaisedGreenWorld(SOURCE_OSM)),
   /** Road markings, zebras and flights on a bridge's deck drawn under its carriageway (G-301, `deck-paint.ts`). */
@@ -1997,10 +2023,8 @@ const PLAIN_BUILDING = new Set(["yes", "public", "government", "civic"]);
 /** The carriageways of the map's lines, by `highway` (the importer's `ROAD_WIDTH`). */
 const CARRIAGEWAYS = new Set(["motorway", "trunk", "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified", "residential", "living_street", "service", "busway", "road"]);
 
-/** The metres of the map's footways under the asphalt of the street they run along (`footway-on-carriageway`). */
-const footwaysOnCarriageway = (): Finding[] => {
-  const lines = extractFeatures(SOURCE_OSM).lines;
-  const roads = lines.filter((l) => CARRIAGEWAYS.has(l.tags.highway ?? "") && l.tags.area !== "yes" && l.tags.tunnel === undefined && Number(l.tags.layer ?? 0) >= 0);
+/** The nearest of `roads`' axes to a point within 15 m: the road, its distance and direction there. */
+const nearestAxis = (roads: readonly Line[]) => {
   const cell = 15;
   const grid = new Map<string, { l: Line; a: Pt; b: Pt }[]>();
   for (const l of roads)
@@ -2009,7 +2033,7 @@ const footwaysOnCarriageway = (): Finding[] => {
       for (let gx = Math.floor(Math.min(a.x, b.x) / cell); gx <= Math.floor(Math.max(a.x, b.x) / cell); gx++)
         for (let gz = Math.floor(Math.min(a.z, b.z) / cell); gz <= Math.floor(Math.max(a.z, b.z) / cell); gz++) grid.set(`${gx},${gz}`, [...(grid.get(`${gx},${gz}`) ?? []), { l, a, b }]);
     }
-  const nearest = (x: number, z: number) => {
+  return (x: number, z: number) => {
     let best: { d: number; road: Line; tx: number; tz: number } | null = null;
     for (let gx = Math.floor(x / cell) - 1; gx <= Math.floor(x / cell) + 1; gx++)
       for (let gz = Math.floor(z / cell) - 1; gz <= Math.floor(z / cell) + 1; gz++)
@@ -2023,6 +2047,15 @@ const footwaysOnCarriageway = (): Finding[] => {
         }
     return best;
   };
+};
+
+/** The map's carriageways at street level, off tunnels. */
+const streetRoads = (lines: readonly Line[]) => lines.filter((l) => CARRIAGEWAYS.has(l.tags.highway ?? "") && l.tags.area !== "yes" && l.tags.tunnel === undefined && Number(l.tags.layer ?? 0) >= 0);
+
+/** The metres of the map's footways under the asphalt of the street they run along (`footway-on-carriageway`). */
+const footwaysOnCarriageway = (): Finding[] => {
+  const lines = extractFeatures(SOURCE_OSM).lines;
+  const nearest = nearestAxis(streetRoads(lines));
   const deep = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x > b.minX + 3 && x < b.maxX - 3 && z > b.minZ + 3 && z < b.maxZ - 3);
   return lines.flatMap((l) => {
     const t = l.tags;
@@ -2157,6 +2190,12 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(levelsTagLost([{ ...house, levels: 4 }], tags("4.5"))).toEqual([]);
     expect(levelsTagLost([house], tags())).toEqual([]);
     expect(levelsTagLost([{ ...house, soffit: 10 }], tags("4"))).toEqual([]);
+    // A gate's outline under its tower (G-684): the tag counts the tower's storeys, a part lifted onto it.
+    const gate = { ...house, outline: [-5, -5, 5, -5, 5, 5, -5, 5], levels: 2 };
+    const tower = { ...house, id: "w2", outline: [-2, -2, 2, -2, 2, 2, -2, 2], soffit: 10, levels: 5 };
+    expect(levelsTagLost([gate, tower], tags("5"))).toEqual([]);
+    expect(levelsTagLost([gate, { ...tower, levels: 3 }], tags("5"))).toHaveLength(1);
+    expect(levelsTagLost([gate, { ...tower, x: 640 }], tags("5"))).toHaveLength(1);
   });
 
   it("finds a tower of the map without a height at a default one, and none with a height mapped or measured, nor a plain building (G-224)", () => {

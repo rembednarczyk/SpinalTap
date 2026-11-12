@@ -1,7 +1,7 @@
 /**
  * The raster of a chunk the bare ground rule works on (ADR-0077 step 1.1, `bare-cover.ts`): a label
- * a 0.5 m cell (what is there or is to be laid), a mask of a town's paved places, and the edges of
- * the rings that cover cells, filed by bin, so an outline can end where a piece of the map begins.
+ * a 0.5 m cell (what is there or is to be laid), a mask of a town's paved places, and the rings that
+ * cover cells, so a fill can be cut where a piece of the map begins.
  */
 import { type Pt, type Rect } from "./geometry.ts";
 
@@ -30,10 +30,6 @@ export const scratch = {
   i32: (name: string, n: number, value = 0): Int32Array => pooled(name, n, value, (m) => new Int32Array(m)),
 };
 
-type Seg = readonly [Pt, Pt];
-/** The side of a bin of the ring edges (m). */
-const BIN = 2;
-
 const segmentGap = (p: Pt, a: Pt, b: Pt): number => {
   const dx = b.x - a.x;
   const dz = b.z - a.z;
@@ -51,23 +47,15 @@ export class Cells {
   readonly zone: Uint8Array;
   /** Under a carriageway or a car park (a `road` piece): its number from 1, 0 off them. */
   readonly road: Int32Array;
-  /** 1 under a piece drawn over the fills (a higher lift): a fill may run a little under it. */
-  readonly over: Uint8Array;
-  /** The ring edges by bin of `BIN` m (the chunk's bins `bx` by `bz`, one more all round). */
-  private readonly bins: (Seg[] | undefined)[];
-  private readonly bx: number;
-  private readonly bz: number;
+  /** The rings that cover cells, with their boxes. */
+  private readonly covers: { readonly ring: readonly Pt[]; readonly box: Rect }[] = [];
   constructor(rect: Rect) {
     this.rect = rect;
     this.nx = Math.round((rect.maxX - rect.minX) / STEP);
     this.nz = Math.round((rect.maxZ - rect.minZ) / STEP);
-    this.bx = Math.ceil((rect.maxX - rect.minX) / BIN);
-    this.bz = Math.ceil((rect.maxZ - rect.minZ) / BIN);
-    this.bins = new Array<Seg[] | undefined>((this.bx + 2) * (this.bz + 2)).fill(undefined);
     this.label = scratch.u8("cells.label", this.nx * this.nz, LABEL.other);
     this.zone = scratch.u8("cells.zone", this.nx * this.nz);
     this.road = scratch.i32("cells.road", this.nx * this.nz);
-    this.over = scratch.u8("cells.over", this.nx * this.nz);
   }
   at(i: number, j: number): Pt {
     return { x: this.rect.minX + (i + 0.5) * STEP, z: this.rect.minZ + (j + 0.5) * STEP };
@@ -76,16 +64,26 @@ export class Cells {
     return i >= 0 && j >= 0 && i < this.nx && j < this.nz;
   }
   /**
-   * Marks the cells whose centres lie in the ring covered (carriageway number `road`, from 1; a
-   * piece's drawn over the fills, if `over`) and files its edges.
+   * Marks the cells whose centres lie in the ring covered (carriageway number `road`, from 1) and
+   * keeps the ring, so the fills can be cut by it (`coversNear`).
    */
-  cover(ring: readonly Pt[], road = 0, over = false): void {
+  cover(ring: readonly Pt[], road = 0): void {
     this.scan(ring, (from, to) => {
       this.label.fill(LABEL.covered, from, to);
       if (road) this.road.fill(road, from, to);
-      if (over) this.over.fill(1, from, to);
     });
-    for (let k = 0, m = ring.length - 1; k < ring.length; m = k++) this.file([ring[m]!, ring[k]!]);
+    let [minX, minZ, maxX, maxZ] = [Infinity, Infinity, -Infinity, -Infinity];
+    for (const p of ring) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.z < minZ) minZ = p.z;
+      if (p.z > maxZ) maxZ = p.z;
+    }
+    this.covers.push({ ring, box: { minX, minZ, maxX, maxZ } });
+  }
+  /** The rings covering cells whose boxes meet `r`. */
+  coversNear(r: Rect): (readonly Pt[])[] {
+    return this.covers.filter((c) => c.box.minX < r.maxX && r.minX < c.box.maxX && c.box.minZ < r.maxZ && r.minZ < c.box.maxZ).map((c) => c.ring);
   }
   /** Marks the cells whose centres lie in the ring part of a town's paved place. */
   zoneIn(ring: readonly Pt[]): void {
@@ -94,6 +92,38 @@ export class Cells {
   /** Marks the cells within `d` of the ring (a point is a ring of one), or in it, part of a town's paved place. */
   zoneNear(ring: readonly Pt[], d: number): void {
     this.near(ring, d, (k) => (this.zone[k] = 1));
+  }
+  /** Grows the town's paved places by `d` (m) every way (a square round each cell): the nearest one along the rows, then down the columns. */
+  growZone(d: number): void {
+    const { nx, nz, zone } = this;
+    const r = Math.round(d / STEP);
+    const FAR = 1 << 20;
+    const rows = scratch.u8("zone.rows", nx * nz);
+    for (let j = 0; j < nz; j++) {
+      const o = j * nx;
+      let last = -FAR;
+      for (let i = 0; i < nx; i++) {
+        if (zone[o + i]) last = i;
+        if (i - last <= r) rows[o + i] = 1;
+      }
+      last = FAR;
+      for (let i = nx - 1; i >= 0; i--) {
+        if (zone[o + i]) last = i;
+        if (last - i <= r) rows[o + i] = 1;
+      }
+    }
+    const last = new Int32Array(nx).fill(-FAR);
+    for (let j = 0; j < nz; j++)
+      for (let i = 0; i < nx; i++) {
+        if (rows[j * nx + i]) last[i] = j;
+        if (j - last[i]! <= r) zone[j * nx + i] = 1;
+      }
+    last.fill(FAR);
+    for (let j = nz - 1; j >= 0; j--)
+      for (let i = 0; i < nx; i++) {
+        if (rows[j * nx + i]) last[i] = j;
+        if (last[i]! - j <= r) zone[j * nx + i] = 1;
+      }
   }
   /** Marks the free cells within `d` of the ring, or in it, `BLOCKED`. */
   block(ring: readonly Pt[], d: number): void {
@@ -155,45 +185,5 @@ export class Cells {
           if (segmentGap(p, a, c) <= d) set(j * this.nx + i);
         }
     }
-  }
-  /** The bin of (bi, bj), the chunk's bins grown by one all round; -1 off them. */
-  private binKey(bi: number, bj: number): number {
-    return bi < -1 || bj < -1 || bi > this.bx || bj > this.bz ? -1 : (bj + 1) * (this.bx + 2) + bi + 1;
-  }
-  private file(s: Seg): void {
-    const x0 = Math.min(s[0].x, s[1].x);
-    const x1 = Math.max(s[0].x, s[1].x);
-    const z0 = Math.min(s[0].z, s[1].z);
-    const z1 = Math.max(s[0].z, s[1].z);
-    if (x1 < this.rect.minX - 1 || x0 > this.rect.maxX + 1 || z1 < this.rect.minZ - 1 || z0 > this.rect.maxZ + 1) return;
-    const bin = (v: number, m: number, n: number) => Math.min(n, Math.max(-1, Math.floor((v - m) / BIN)));
-    for (let bj = bin(z0, this.rect.minZ, this.bz); bj <= bin(z1, this.rect.minZ, this.bz); bj++)
-      for (let bi = bin(x0, this.rect.minX, this.bx); bi <= bin(x1, this.rect.minX, this.bx); bi++) (this.bins[this.binKey(bi, bj)] ??= []).push(s);
-  }
-  /** The share of the way from a to b where it first meets an edge of the covering rings; 0.5 without one. */
-  enter(a: Pt, b: Pt): number {
-    let best = Infinity;
-    const dx = b.x - a.x;
-    const dz = b.z - a.z;
-    const bi0 = Math.floor((Math.min(a.x, b.x) - this.rect.minX) / BIN);
-    const bj0 = Math.floor((Math.min(a.z, b.z) - this.rect.minZ) / BIN);
-    const bi1 = Math.floor((Math.max(a.x, b.x) - this.rect.minX) / BIN);
-    const bj1 = Math.floor((Math.max(a.z, b.z) - this.rect.minZ) / BIN);
-    for (let bj = bj0; bj <= bj1; bj++)
-      for (let bi = bi0; bi <= bi1; bi++) {
-        const list = this.bins[this.binKey(bi, bj)];
-        if (!list) continue;
-        for (const s of list) {
-          const p = s[0];
-          const ex = s[1].x - p.x;
-          const ez = s[1].z - p.z;
-          const den = dx * ez - dz * ex;
-          if (Math.abs(den) < 1e-12) continue;
-          const t = ((p.x - a.x) * ez - (p.z - a.z) * ex) / den;
-          const u = ((p.x - a.x) * dz - (p.z - a.z) * dx) / den;
-          if (t >= 0 && t <= 1 && u >= 0 && u <= 1 && t < best) best = t;
-        }
-      }
-    return Number.isFinite(best) ? Math.min(0.98, Math.max(0.02, best)) : 0.5;
   }
 }
