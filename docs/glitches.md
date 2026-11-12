@@ -1697,7 +1697,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-655 Jezdnia z tagiem `lanes` nie jest dociągana do osobno zmapowanego chodnika
-- Status: w PR #437, runda 2 (9bf7656, `lane-fit.ts`: zwężanie tylko od strony chodnika i tylko wzdłuż niego; bilans gołej ziemi ok. 0; kerb-strip-bare 181 jak main); ponowny przegląd kuratora w toku
+- Status: w PR #437, runda 2 kurator PRZYJĘTE (12.11; bilans gołej ziemi jak main, kerb-strip-bare 181); nie zamyka G-650 ani G-656
 - Ważność: S3 · Zasięg: `fitToKerb` (`tools/osm-import/src/ground.ts:123–126`, `|| Number(t.lanes) > 0) return t;`) pomija ulice z `lanes`; przy `sidewalk=separate` `roadWidth` = `lanes × 3,25`, np. Radziwiłłowska `lanes=3` (w331453920, w356402586, w914787972) 9,75 m, więc jezdnia i zewnętrzny pas ruchu zachodzą na chodnik (pas `footway` ma nawierzchnię „road” i „footway” naraz); po dociągnięciu oś pasa ok. 4 m od płotów w232805994 i w232805996, co odblokowuje G-650; zmiana całego miasta z regeneracją i przeglądem kuratora; zmierzyć czas `generate`
 - Pakiet właściciela: tools/osm-import
 
@@ -1770,6 +1770,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, kurator przeglądu G-667; opcjonalne)
 - Ważność: S4 · Zasięg: ścieżki biegnące przez ręczny trawnik zaniżają jego zieleń, np. `T-245/trawnik-klinika` 53% całego obrysu, a 67% tam, gdzie gra pokazuje trawę (ścieżka w1011367932 i ciemny pas przy ścianie kliniki); poprawka: liczyć po górnej nawierzchni w grze; przy okazji odsunąć południową krawędź trawnika-kliniki o ok. 1 m od ściany
 - Pakiet właściciela: tools/glitch-scan
+
+### G-674 Północny krawężnik Radziwiłłowskiej przy Placu Litewskim przed trawnikiem OSM
+- Status: zgłoszone (12.11, kurator przeglądu #437; także na main)
+- Ważność: S4 · Zasięg: w914787972 i w331453920, x −87…−40: goły pas 1–2,8 m między północną krawędzią asfaltu (z 119,1–119,7) a trawnikiem w1011367949; ortofoto 2025-04: asfalt do z ≈ 120,3–121,0, dalej trawa; BDOT10k: oś północnej jezdni 117,1 przy x −70, nawierzchnia 7 m; trawnik w OSM 0,3–1,5 m za daleko na północ; poprawka: krawędź jezdni po stronie bez chodnika dociągnąć do `landuse=grass`, gdy ten leży bliżej niż 3 m; kontrola `kerb-strip-bare` (181) spadnie
+- Pakiet właściciela: tools/osm-import
+
+### G-675 Przeskok oznakowania na styku zwężonych kawałków jezdni
+- Status: zgłoszone (12.11, kurator przeglądu #437)
+- Ważność: S4 · Zasięg: Radziwiłłowska przy x −66 (`fitLanes`, #437): linia środkowa skacze z 113,7 na 112,9, linia między pasami z 116,6 na 116,2; w rzeczywistości linia środkowa ciągła na z ≈ 114,0–114,5 (w grze 112,9–113,7, wcześniej na main 112,2–113,2); kontrola `marking-step` (skok > 0,3 m na wspólnym węźle kawałków jednej ulicy), baza ≥ 2
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
