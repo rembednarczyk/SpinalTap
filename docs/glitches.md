@@ -1846,12 +1846,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: tłum 18 zaalarmowany, gracz 6 m za płotem 2359, zapis w trakcie czekania na plan; od kroku ok. 95 pozycje odbiegają od ciągłej gry, do 1,9 m po 300 krokach; powiązane z G-645 (pamięć `chases` poza zapisem)
 - Pakiet właściciela: packages/sim (systems/ai), packages/persistence
 
-### G-703 Schody przycięte brzegiem mapy: ostatnia podstopnica do y 0 za brzegiem (ściana do 23,7 m)
-- Status: w PR #463 (12.11, trzecia runda 3b1e3cd PRZYJĘTA przez weryfikatora: ściany 20–24 m → ≤ 0,12 m na ścieżce renderera, 171 pasów jak main, jedna funkcja brzegu dla renderera i skanu; czeka na CI; zgłoszone przez kuratora, przegląd stare-miasto-1-0; T-049)
-- Ważność: S3 (pionowa szara ściana 20 m, widoczna z ulicy i znad dachów) · Zasięg: 5 z 6 trafień `steps-riser-tall` w mieście. Stare Miasto: w481462067 (760; −210) 20,03 m i w888479969 (760; −148) 5,63 m. Podzamcze: (1090–1092; 160) 23,70 m (2 pasy). Nabrzeże: (2658; 60) 18,21 m. `groundY` poza chunkami zwraca 0 (`terrain.ts`), a `planSteps` dla pasa przyciętego do brzegu bierze wysokość tuż za brzegiem. Zrzuty `sm10d-schody-210`, `sm10d-kuria-podworze`
-- Pakiet właściciela: packages/engine/src/renderer/mapcity (`steps-plan`), ewentualnie tools/osm-import (przycięcie pasa schodów odrobinę przed brzegiem) albo `groundY` za brzegiem z wysokością brzegu
-- Test przyjęcia: `steps-riser-tall` 6 → 1 (zostaje G-686 przy (732; 151)); pas schodów przy x = 760 kończy się na wysokości terenu brzegu (−20,1 i −6,3)
-
 ### G-704 Podwórza Starego Miasta przy Archikatedrze, Dominikanach, Farze i Podwalu to goła ziemia (T-266, T-268)
 - Status: zgłoszone (12.11, kurator, przegląd stare-miasto-1-0)
 - Ważność: S3 (jak G-527) · Zasięg: stare-miasto-1-0, 7 podwórzy, ok. 2500 m² gołego terenu, w tym 1960 m² twardej nawierzchni na ortofoto: (627..666; −107..−63) 768 m², (699..740; −240..−204) 737 m², (610..654; −132..−101) 431 m², (696..716; −121..−88) 351 m², (691..726; −53..−40) 94 m², (654..673; −159..−146) 123 m². Przyczyna jak G-513 i G-527: OSM nie ma obszarów nawierzchni podwórzy. `landuse-bare` ich nie liczy, bo nie leżą w `landuse`. Zrzut `sm10d-kuria-podworze`. Ortofoto do korekt: 2024-06 (2025-04 ma tu przechył 4–5 m); Przejście stare-miasto-1-1 (12.11, kurator): ta sama klasa w sąsiedniej komórce. 6 podwórzy, ok. 1690 m², twarde ok. 1530 m²: (628..681; −40..13) 1091 m², wnętrze kwartału Grodzka–Złota–Archidiakońska, przejazdem do z −49 w stare-miasto-1-0; (747..760; 107..126) 185 m², dziedziniec Domu na Podwalu w598840139 (OSM i NMPT otwarty, LoD2 wypełnia go dachem); (610..626; 65..79) 154 m²; (621..637; 84..97) 132 m²; (719..728; 125..135) 68 m²; (646..657; 116..125) 57 m². Test przyjęcia w stare-miasto-1-1: `bare-enclosed-yard` z otwarciem 1 m 7 → 0, przy czym siódma składowa (701..711; 101..114) to taras przy Zaułku Panasa i znika z G-708.
@@ -1868,11 +1862,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, z naprawy G-703)
 - Ważność: S4 · Zasięg: `groundNormal` drape'a próbkuje ±0,75 m, więc przy brzegu mapy każda nawierzchnia przycięta brzegiem (nie tylko schody) dostaje normalną liczoną z terenem 0 za brzegiem; skutek: złe cieniowanie pasa przy brzegu (nie zmierzone); G-703 (#463) poprawia to tylko dla schodów (`onItsSide` w `steps-plan.ts`); do tego stopnie pasa przyciętego skośnie rysują się na pełnym prostokącie, ok. 1 m za brzegiem, na poprawnej wysokości
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (drape)
-
-### G-707 Pas schodów na szwie chunków może nie przebudować się po wczytaniu sąsiada
-- Status: zgłoszone (12.11, z weryfikacji #463); sprawdzone przy #463 dla schodów: `MapCells.touch` przebudowuje komórkę po wczytaniu sąsiada, siatka jak przy obu wczytanych od razu; zostaje do zamknięcia po scaleniu #463
-- Ważność: S4 · Zasięg: przy strumieniowaniu `TerrainEntries.heightAt` zwraca null na wewnętrznym szwie, gdy sąsiedni chunk nie jest wczytany; komórka podłoża z pasem przy szwie może zostać zbudowana jak przy brzegu mapy i nie przebudować się po wczytaniu sąsiada; do sprawdzenia sondą strumieniowania
-- Pakiet właściciela: packages/engine/src/renderer/mapcity
 
 ### G-708 Trzy budynki przy Grodzkiej i Rybnej o 9–12 m wyższe niż w NMPT; oficyna bez OSM (T-269)
 - Status: zgłoszone (12.11, kurator, przegląd stare-miasto-1-1)
