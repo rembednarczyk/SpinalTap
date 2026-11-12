@@ -67,7 +67,7 @@ export const planGround = (ground: MeshSink, water: MeshSink, entries: MapEntrie
   }
   if (g.marking) planMarking(ground, g.marking, g.ring, h);
   else if (g.surface === "water") planWater(water, g.ring, terrain, undefined, within);
-  else if (g.surface === "basin") planBasin(water, ground, g.ring, h);
+  else if (g.surface === "basin") planBasin(ground, g.ring, h);
   else if (g.surface === "steps") planSteps(ground, g.ring, h, entries.mapEdgeAt);
   else if (g.surface === "crossing") planCrossing(ground, g.ring, h);
   else {

@@ -18,6 +18,10 @@ Narzędzie ma trzy kroki: pamięć podręczną ortofoto PZGiK, klasyfikator pokr
      5. **Znane rodzaje** (`known.ts`): trafienia skanu w komórce z `reports/map-coverage-hits.json` (najpierw `pnpm exec vitest run tools/glitch-scan/test/glitch-scan.test.ts`) z odsyłaczami z całego rejestru, nie tylko z komórki: wpisy `docs/glitches.md` i archiwum z rodzajem w backtickach (poza wpisami także wiersze tabeli proponowanych kontroli), wiersze `docs/topografia.md`, zdania notatek i przeglądów wszystkich komórek w `docs/mapa-pokrycie.json` (też ze skrótami, np. „kerb-gap”, „kerb-fill”, „ground-strip”) i komentarz kontroli w skanie. Do 3 odsyłaczy na rodzaj, najpierw te z miejscem (x; z) w komórce albo z jej id (oznaczone `*`). Werdykt wymienia rodzaje bez odsyłacza w ogóle (kandydaci na nowe znalezisko) i rodzaje znane tylko z innych miejsc.
    - Liczby sekcji dla stare-miasto-1-0 porównuje z sondami kuratorów z 12.11 `test/sections.test.ts`.
    - `--area <id>` albo `--added` liczy m² obszarów z `ADDED_AREAS`.
+4. `node tools/orto/src/albedo-report.ts [--out plik.json]` podaje medianę barwy każdej nawierzchni importu na ortofoto całej mapy, osobno dla nalotów 2025-04 i 2024-06 (`src/albedo.ts`).
+   - Liczą się próbki co najmniej 1 m wewnątrz kawałka, w klasie, którą nawierzchnia powinna mieć: jasna pod placami i ścieżkami, asfalt pod jezdniami, zieleń pod trawnikami.
+   - Raport podaje też jasność (luma Rec. 709) do trawy i udział klas pod każdą nawierzchnią.
+   - Na tych medianach stoi paleta nawierzchni renderera (`ORTHO_PAVING` w `ground-plan.ts`, G-721). Gdy mediany się zmienią, przepisz je tam.
 
 ## Klasy i progi
 - Klasy: zieleń, zieleń pod koronami (zielona tylko na letnich nalotach, nie na nalocie bez liści 2025-04; G-672), jasna nawierzchnia, asfalt, cień, nieznane, brak zdjęcia.

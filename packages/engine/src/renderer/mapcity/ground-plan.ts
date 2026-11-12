@@ -22,15 +22,53 @@ export const SURFACE_CODE = { terrain: 0, road: 1, sidewalk: 2, square: 3, cobbl
 /** Lift above the terrain per surface (m), shared with the simulation (G-130). */
 export { SURFACE_LIFT };
 
+const GRASS = hexColor("#3f5c35", DRESS_FLAG.solid);
+
+/**
+ * The paving's colour on the orthophoto (G-721, ADR-0077): the median colour of the light paving
+ * well inside each surface over the whole map in the current image (12.04.2025, no leaves: the
+ * ground under the trees), from `tools/orto/src/albedo-report.ts`. A fountain's floor is the
+ * shallow pool's light stone bottom, as the photographs show it (G-129).
+ */
+const ORTHO_PAVING = {
+  square: [188, 186, 172],
+  cobble: [176, 170, 157],
+  footway: [181, 174, 158],
+  basin: [191, 185, 164],
+} as const;
+
+/**
+ * Paving to lawn brightness (Rec. 709 luma of the colours): Plac Litewski 1.9 (April) and 2.1
+ * (June) on the orthophoto, the map's squares 1.8 in June. At 1.28 the squares read as concrete.
+ */
+const PAVING_TO_GRASS = 1.9;
+
+const luma = (c: readonly number[]): number => 0.2126 * (c[0] ?? 0) + 0.7152 * (c[1] ?? 0) + 0.0722 * (c[2] ?? 0);
+
+/**
+ * A paving's colour, one rule for all: the orthophoto's hue at `PAVING_TO_GRASS` times the lawn's
+ * brightness. Setts are told by their joints and shades (ground shader), not by a darker stone.
+ */
+const paving = (key: keyof typeof ORTHO_PAVING, flag: number): Rgba => {
+  const rgb = ORTHO_PAVING[key];
+  const k = (PAVING_TO_GRASS * luma(GRASS)) / luma(rgb);
+  return [rgb[0] * k, rgb[1] * k, rgb[2] * k, flag];
+};
+
 const SURFACE_COLOR: Readonly<Record<Exclude<GroundSurface, "water" | "basin" | "steps" | "crossing">, Rgba>> = {
   road: hexColor("#3a3d45", DRESS_FLAG.wet),
   rail: hexColor("#4d4842", DRESS_FLAG.solid),
-  square: hexColor("#6d6a66", DRESS_FLAG.solid),
-  cobble: hexColor("#5d5752", DRESS_FLAG.solid),
-  footway: hexColor("#6e685f", DRESS_FLAG.solid),
+  square: paving("square", DRESS_FLAG.solid),
+  cobble: paving("cobble", DRESS_FLAG.solid),
+  footway: paving("footway", DRESS_FLAG.solid),
   sidewalk: hexColor("#6a6d73", DRESS_FLAG.solid),
-  grass: hexColor("#3f5c35", DRESS_FLAG.solid),
+  grass: GRASS,
 };
+/**
+ * A fountain's floor under its thin film of water. Not wet: by day the wet flag mirrors the bright
+ * sky in blotches over light stone, and the pool reads as snow.
+ */
+const BASIN_FLOOR = paving("basin", DRESS_FLAG.solid);
 const KERB = hexColor("#a3a39e", DRESS_FLAG.solid);
 const TERRAIN = hexColor("#514c45", DRESS_FLAG.solid);
 export const WATER_COLOR = hexColor("#0b1822", DRESS_FLAG.wet);
@@ -394,11 +432,13 @@ const RIM = hexColor("#8f8a82", DRESS_FLAG.solid);
 export const BASIN_RIM = { top: 0.45, width: 0.35 } as const;
 
 /**
- * A fountain (ADR-0044): the water stands in the basin at `SURFACE_LIFT.basin` inside a granite
- * rim, its outer face down to the square, a ledge to sit on and the inner face down to the water.
+ * A fountain (ADR-0044): its floor at `SURFACE_LIFT.basin` inside a granite rim, its outer face
+ * down to the square, a ledge to sit on and the inner face down to the floor. The pool is shallow
+ * and clear over a light stone bottom (G-129, G-721): granite slabs under a wet film, not the
+ * river's dark water.
  */
-export const planBasin = (water: MeshSink, stone: MeshSink, ring: readonly P2[], h: HeightAt): void => {
-  planWater(water, ring, h, SURFACE_LIFT.basin);
+export const planBasin = (stone: MeshSink, ring: readonly P2[], h: HeightAt): void => {
+  drape(stone, ring, h, SURFACE_LIFT.basin, BASIN_FLOOR, (p) => [p.x, p.z], [SURFACE_CODE.square, 0]);
   const ccwRing = signedArea(ring) >= 0 ? ring : [...ring].reverse();
   const up = { x: 0, y: 1, z: 0 };
   for (let i = 0; i < ccwRing.length; i++) {
