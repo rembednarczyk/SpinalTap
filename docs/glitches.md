@@ -1677,7 +1677,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-647 Trawnik na dachu VIVO rysowany na ziemi
-- Status: w PR #436 (12.11; przegląd kuratora w toku)
+- Status: w PR #436 (12.11; kurator PRZYJĘTE)
 - Ważność: S4 · Zasięg: trawnik r11978659 (`landuse=grass`, `layer=4`) to zieleń na dachu VIVO, a import kładzie go na ziemi pod budynkiem i na pasie nad jezdnią na północy (z 240–244, na ortofoto asfalt); część poza VIVO (x 1112–1120, z 230–239) to strop garażu ze świetlikami i zielenią, trawa tam zostaje; goła ziemia przy zachodniej ścianie (x 1100–1105, z 225–242, na ortofoto kostka chodnika i pas zieleni) do reguły gołej ziemi z ortofoto (ADR-0077 krok 1.1)
 - Pakiet właściciela: tools/osm-import
 
@@ -1712,7 +1712,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (tłum)
 
 ### G-655 Jezdnia z tagiem `lanes` nie jest dociągana do osobno zmapowanego chodnika
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g655)
+- Status: w PR #437 (12.11; przegląd kuratora do zrobienia; nie zamyka G-650 ani G-656)
 - Ważność: S3 · Zasięg: `fitToKerb` (`tools/osm-import/src/ground.ts:123–126`, `|| Number(t.lanes) > 0) return t;`) pomija ulice z `lanes`; przy `sidewalk=separate` `roadWidth` = `lanes × 3,25`, np. Radziwiłłowska `lanes=3` (w331453920, w356402586, w914787972) 9,75 m, więc jezdnia i zewnętrzny pas ruchu zachodzą na chodnik (pas `footway` ma nawierzchnię „road” i „footway” naraz); po dociągnięciu oś pasa ok. 4 m od płotów w232805994 i w232805996, co odblokowuje G-650; zmiana całego miasta z regeneracją i przeglądem kuratora; zmierzyć czas `generate`
 - Pakiet właściciela: tools/osm-import
 
@@ -1740,6 +1740,26 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, agent bramki czasu testów)
 - Ważność: S4 · Zasięg: `packages/sim/test/save-load-micro-body.test.ts` „won, knocked out…” (G-242) przekroczył limit 20 s przy load 11–13 na 4 rdzeniach; kandydat na test niestabilny; najpierw pomiar przyczyny, limitu nie podnosimy (ADR-0046)
 - Pakiet właściciela: packages/sim
+
+### G-661 Goły plac na północ od VIVO
+- Status: zgłoszone (12.11, kurator przeglądu G-647; T-260)
+- Ważność: S4 · Zasięg: Podzamcze, x 1101–1120, z 239,7–252, ok. 55 m² gołe od G-647 (wcześniej przykryte trawnikiem r11978659); ortofoto: jasna nawierzchnia placu; poprawka: kostka lub płyty do krawędzi garażu albo reguła gołej ziemi z ortofoto (ADR-0077 krok 1.1)
+- Pakiet właściciela: tools/osm-import
+
+### G-662 Trójkąt garażu VIVO nad ziemią bez bryły
+- Status: zgłoszone (12.11, kurator przeglądu G-647; T-261, T-258 do zmiany na „do poprawy”)
+- Ważność: S3 · Zasięg: w173070505, x 1105,8–1120, z 228–239,7: na trzech nalotach ortofoto dach z sedum i świetlikami ok. 5–10 m nad chodnikiem (cień do z 244–251), w grze trawnik na poziomie gruntu; G-600 usunął całą bryłę garażu; poprawka: niska bryła o wysokości dachu w miejsce trawników T-258 i G-647
+- Pakiet właściciela: tools/osm-import
+
+### G-663 Drogi `segregated=yes` za wąskie
+- Status: zgłoszone (12.11, kurator przeglądu G-647; T-262)
+- Ważność: S4 · Zasięg: 62 drogi `highway=path` z `segregated=yes` (Podzamcze, Nabrzeże) mają pas 2 m (`PATHS.path`); np. w65351890 przy (1038; 305): kostka ok. 4 m i asfalt rowerowy ok. 2,4 m; poprawka: szerokość z `footway:width` + `cycleway:width` albo domyślnie ok. 2,5 + 2 m, dwie nawierzchnie; kontrola skanu `path-segregated-width`
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-664 Zieleń z `layer>0` ukrywa gołą ziemię przed skanem `landuse-bare`
+- Status: zgłoszone (12.11, kurator przeglądu G-647)
+- Ważność: S4 · Zasięg: `landuse-bare` pomija punkty w obrysie trawnika z mapy, także trawnika na dachu (r11978659), więc goły pas z G-661 nie zmienił bazy 69019; poprawka: zieleń z `layer>0` albo `location=roof` nie zwalnia próbek, nowa baza z przebiegu
+- Pakiet właściciela: tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
