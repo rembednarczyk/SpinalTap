@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-643 Budowa rastra i pola okna `wide` w jednym kroku symulacji
+- Status: naprawiony (PR #455, 503bff0; weryfikator PRZYJĘTE; czekanie na plan w tłumie: G-694; decyzja użytkownika 12.11: scalić, poprawić osobno)
+- Ważność: S3 · Zasięg: nowy plan objazdu w oknie `wide` buduje pole ok. 15 ms, a przy zmianie komórki 32 m także raster ok. 37 ms w jednym kroku (budżet ADR-0043: 4 ms); przy jednym odciętym gangerze w pościgu za biegnącym graczem przestój 15–50 ms co 1,5–2 s; poprawka: budowa rozłożona na kilka kroków (ganger idzie starą drogą do gotowego planu)
+- Pakiet właściciela: packages/sim (systems/ai)
+
 ### G-684 Fałszywy alarm `levels-tag-lost` na Bramie Krakowskiej
 - Status: naprawiony (PR #456, 4c3b230)
 - Ważność: S4 · Zasięg: r7224409 (473; −91): „2 storeys of building:levels=5”; obrys ma `height` 10 m i części `building:part` (wieża 5 kond., przedbramie 2 kond., T-007 rozwiązane); kontrola liczy obrys bez części; poprawka: wyjątek dla budynków z częściami, baza 4 → 3

@@ -1656,11 +1656,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `teleportPlayer(sim, { x, y: 0, z })` na wysokim terenie daje 155–217 pkt w nogę w pierwszym kroku (wschód mapy); `barrier-ai.test.ts` (l. 34) robi to samo, dziś na niskim terenie; testy powinny brać `ground(x, z)` jak `barrier-detour.test.ts`, inaczej „gracz traci zdrowie” może przejść z niewłaściwego powodu
 - Pakiet właściciela: packages/sim (testy)
 
-### G-643 Budowa rastra i pola okna `wide` w jednym kroku symulacji
-- Status: w PR #455 (12.11; weryfikator PRZYJĘTE z zastrzeżeniem: przy N różnych celach ostatni ganger bez starej drogi stoi do ok. 13·N kroków, 3,4 s przy 18 pościgach, 5,3 s przy rozrzucie 60 m; decyzja użytkownika)
-- Ważność: S3 · Zasięg: nowy plan objazdu w oknie `wide` buduje pole ok. 15 ms, a przy zmianie komórki 32 m także raster ok. 37 ms w jednym kroku (budżet ADR-0043: 4 ms); przy jednym odciętym gangerze w pościgu za biegnącym graczem przestój 15–50 ms co 1,5–2 s; poprawka: budowa rozłożona na kilka kroków (ganger idzie starą drogą do gotowego planu)
-- Pakiet właściciela: packages/sim (systems/ai)
-
 ### G-645 Po wczytaniu zapisu wszystkie pościgi `wide` przebudowują rastry w jednym kroku
 - Status: zgłoszone (12.11, weryfikator #426)
 - Ważność: S4 · Zasięg: pamięć `chases` (`steering.ts:660`) nie trafia do zapisu, a `chaseDetour` nie podlega limitowi `mayPlan`; pierwszy krok po wczytaniu buduje rastry `wide` wszystkich gangerów z `chase` naraz (54,7 ms na okno, przy kilku oknach N razy więcej); to samo przy zmianie `floor|reach`; determinizm bez zmian
@@ -1822,7 +1817,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-694 Ganger czekający na plan objazdu stoi w miejscu
-- Status: zgłoszone (12.11, weryfikator #455)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g694; decyzja użytkownika: osobna poprawka po #455)
 - Ważność: S3 · Zasięg: po #455 (G-643) ganger bez starej drogi czeka na swój plan w kolejce: przy N różnych celach do ok. 13·N kroków (3,4 s przy 18 pościgach, 5,3 s przy liderach rozrzuconych do 60 m; na main do 16 kroków); poprawka: w czasie czekania ruch w stronę celu (krok w bok przy przeszkodzie, jak przy odklejaniu), priorytet w kolejce dla gangera bez żadnej drogi; także `planChase` z `{ chase: made }` nie zeruje własnego `chaseNext`
 - Pakiet właściciela: packages/sim (systems/ai)
 
