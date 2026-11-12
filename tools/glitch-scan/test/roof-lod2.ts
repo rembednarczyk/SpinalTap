@@ -1,10 +1,10 @@
 /**
- * Buildings drawn flat whose GUGiK LoD2 2017 roof is steep (G-639, ADR-0077 step 4): matched one
+ * Buildings drawn flat whose GUGiK LoD2 roof (ALS 2011) is steep (G-639, ADR-0077 step 4): matched one
  * to one by footprint (IoU ≥ `LOD1_MIN_IOU`), not among the import's exceptions (`lod1Exempt`),
  * LoD2's main roof (`mainRoof` in `tools/gugik/src/citygml.ts`) rising over `LOD2_MIN_ROOF` and
  * the game's eaves over `ROOF_DIFF` above LoD2's main eaves: a flat block at the height of the
  * ridge, its walls and storeys too tall. What stays: mapped heights and `roof:*` tags LoD2
- * disagrees with, and buildings LoD1 2024 says have changed since 2017.
+ * disagrees with, and buildings LoD1 2024 says have changed since 2011.
  */
 import { type Lod2Building, loadLod2, tilesOf } from "../../gugik/src/extracts.ts";
 import { centroid, pointInRing, ringBounds } from "../../osm-import/src/geometry.ts";

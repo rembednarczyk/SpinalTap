@@ -7,6 +7,8 @@ import { DISTRICTS } from "../src/config.ts";
 import { generate } from "../src/generate.ts";
 import { loadInputs } from "../src/load.ts";
 import { lod1Index, lod1Match, worldRing } from "../src/lod1-heights.ts";
+import { orientedBox } from "../../../packages/engine/src/renderer/mapcity/polygon.ts";
+import { lineAngle, longAxisDegrees } from "../src/long-axis.ts";
 import { hasRoofTags, lod2Index, lod2Massing, lod2Match, lod2Shape, withLod2Roof } from "../src/lod2-roofs.ts";
 import { type BuildingOut } from "../src/model.ts";
 
@@ -123,9 +125,34 @@ describe("the import's roofs", () => {
   it("leaves the landmarks, buildings with roof tags and a mapped height, and LoD2 at odds with the map's storeys", () => {
     // Teatr Osterwy: a landmark of the list at its corrected height.
     expect(game("w67508958").source).toBe("height");
-    // Kamienica Złota 5: five storeys in the map, LoD2's eaves at 11.3 m.
-    expect(game("w66293771").source).toBe("lod1");
+    // w66309802: two storeys in the map, LoD2's eaves at 5.0 m.
+    expect(game("w66309802").source).toBe("lod1");
     for (const b of tables.filter((t) => t.source === "lod2")) expect(hasRoofTags(inputs.osm.ways.get(Number(b.id.slice(1)))?.tags ?? {}), b.id).toBe(false);
+  });
+
+  it.each([
+    // The curator's five (round 2): the ridge across the outline, as LoD2 has it.
+    ["Złota 3 / Muzeum Czechowicza", "w66293679"],
+    ["Rybna 5", "w66293246"],
+    ["Rybna 3", "w66293248"],
+    ["Archidiakońska 5", "w66293640"],
+    ["Kowalska 14", "w66324567"],
+  ])("lays %s's ridge the way LoD2's runs, not across it", (_, id) => {
+    const b = game(id);
+    const dir = lod2Match(index2, worldRing(b))!.lod2.ridgeDir!;
+    expect(b.roofShape).toBe("gabled");
+    expect(lineAngle(longAxisDegrees(worldRing(b)) + (b.roofAcross ? 90 : 0), dir)).toBeLessThan(20);
+  });
+
+  it("gives Złota 5 its roof from its slopes' eaves, not a sliver's: five storeys fit (G-639 round 2)", () => {
+    expect(game("w66293771")).toMatchObject({ source: "lod2", height: 13, levels: 5, roofShape: "hipped" });
+  });
+
+  it("takes the long axis the renderer takes", () => {
+    for (const b of tables.slice(0, 300)) {
+      const box = orientedBox(worldRing(b));
+      expect(lineAngle(longAxisDegrees(worldRing(b)), (Math.atan2(box.uz, box.ux) * 180) / Math.PI), b.id).toBeLessThan(1e-6);
+    }
   });
 
   it("keeps LoD1's height where LoD1 2024 lies outside LoD2 2017's eaves to ridge: the building changed", () => {

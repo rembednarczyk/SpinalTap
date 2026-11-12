@@ -1,5 +1,5 @@
 /**
- * Roofs from GUGiK LoD2 2017 (ADR-0077 step 4, G-639). A building the map gives no roof stood flat
+ * Roofs from GUGiK LoD2, roofs from the 2011 ALS scan (`aktZrodla`; ADR-0077 step 4, G-639). A building the map gives no roof stood flat
  * at its LoD1 height, which under a steep roof lies near the ridge: Pałac Parysów w66330695 at
  * 18.1 m and five rows of windows, its LoD2 eaves at 10.7 m and ridge at 18.2 m.
  *
@@ -17,7 +17,7 @@
  * Only for a building LoD1's rule may take (`lod1Exempt`: not a church, a tower, a landmark of the
  * list, a part or what parts crown, a correction by hand or an area added by hand), whose height
  * is not a mapped `height`, with no `roof:*` tag of its own, matched one to one by footprint (IoU ≥
- * `LOD1_MIN_IOU`) with a LoD2 building whose main roof rises over `LOD2_MIN_ROOF`. LoD2 is of 2017
+ * `LOD1_MIN_IOU`) with a LoD2 building whose main roof rises over `LOD2_MIN_ROOF`. LoD2's roofs are of 2011
  * and LoD1 of 2024: where LoD1 lies over `LOD2_LOD1_SLACK` outside LoD2's eaves to ridge, the
  * building has changed since and keeps LoD1's height; so does one whose `building:levels` do not
  * fit under LoD2's eaves (kamienica Złota 5: five storeys, eaves at 11.3 m).
@@ -33,7 +33,7 @@ import { type BuildingOut } from "./model.ts";
 
 /** The least rise of LoD2's main roof, eaves to ridge, for the building to take it, metres. */
 export const LOD2_MIN_ROOF = 4;
-/** How far LoD1 2024 may lie outside LoD2 2017's eaves to ridge for the roof to stand, metres. */
+/** How far LoD1 2024 may lie outside LoD2's eaves to ridge for the roof to stand, metres. */
 export const LOD2_LOD1_SLACK = 3;
 
 /** LoD2 `roofType` codes (SIG3D, `ROOF_TYPES` in `citygml.ts`) to the renderer's shapes; others hipped, flat (1000) none. */
@@ -132,5 +132,6 @@ export const withLod2Roof = (b: BuildingOut, ctx: Lod2Context): BuildingOut => {
   if (ctx.tagged !== undefined && eaves < ctx.tagged * MIN_STOREY - 1e-9) return b;
   const measured = ctx.lod1 && lod1Match(ctx.lod1, ring)?.lod1.height;
   if (measured !== undefined && (measured < eaves - LOD2_LOD1_SLACK || measured > ridge + LOD2_LOD1_SLACK)) return b;
-  return { ...b, ...lod2Massing(b, { eaves, ridge, shape }, ctx.tagged), source: "lod2" };
+  const across = lod2Across(shape, m?.lod2.ridgeDir, worldRing(b));
+  return { ...b, ...lod2Massing(b, { eaves, ridge, shape }, ctx.tagged), ...(across ? { roofAcross: true as const } : {}), source: "lod2" };
 };
