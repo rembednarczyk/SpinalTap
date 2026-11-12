@@ -180,6 +180,12 @@ importers:
 
   tools/osm-import: {}
 
+  tools/test-time:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
 packages:
 
   '@asamuzakjp/css-color@7.1.9':
