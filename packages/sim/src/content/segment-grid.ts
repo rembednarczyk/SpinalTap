@@ -1,14 +1,6 @@
-import { type GroundPoint, SpatialHash } from "@seki/core";
+import { type GroundPoint, SpatialHash, segmentDistance } from "@seki/core";
 
 type Pt = GroundPoint;
-
-/** Horizontal distance from (x, z) to the segment a..b. */
-export const segmentDistance = (x: number, z: number, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(x - (a.x + dx * t), z - (a.z + dz * t));
-};
 
 /** A line crosses another at 30 degrees and more (the import's rule for a way through a barrier, ADR-0077). */
 const CROSS_SINE = 0.5;
@@ -39,7 +31,7 @@ export class SegmentGrid {
   near(x: number, z: number, r: number, across?: Pt): boolean {
     return this.grid.some(x - r, z - r, x + r, z + r, ([a, b]) => {
       if (across && Math.abs(sineOf(across, { x: b.x - a.x, z: b.z - a.z })) < CROSS_SINE) return false;
-      return segmentDistance(x, z, a, b) < r;
+      return segmentDistance(x, z, a.x, a.z, b.x, b.z) < r;
     });
   }
 }

@@ -1,4 +1,4 @@
-import { VEHICLE_SIZE, type VehicleModel } from "@seki/core";
+import { VEHICLE_SIZE, type VehicleModel, offsetPolylineRight, polylineTangent } from "@seki/core";
 import { type Pt, ROAD_CHAINS, type RoadChain, onRoad, polylineLength } from "./lublin/roads";
 import { inBuilding } from "./lublin/places";
 import { MAP_CHUNKS, PASSAGES } from "./lublin/sites";
@@ -72,19 +72,9 @@ export const MIN_ROUTE = 45;
 /** A one-way street keeps one lane if a tenth of it is too narrow for two. */
 const NARROW_Q = 0.1;
 
-const dirAt = (pts: readonly Pt[], i: number): Pt => {
-  const a = pts[Math.max(0, i - 1)]!;
-  const b = pts[Math.min(pts.length - 1, i + 1)]!;
-  const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-  return [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
-};
-
-/** The polyline moved `off` metres to its right (+x east, +z north: heading north, right is east). */
+/** The polyline moved `off` metres to its right (+x east, +z north: heading north, right is east), to the centimetre. */
 export const offsetLine = (pts: readonly Pt[], off: number): Pt[] =>
-  pts.map((p, i) => {
-    const [tx, tz] = dirAt(pts, i);
-    return [Math.round((p[0] + tz * off) * 100) / 100, Math.round((p[1] - tx * off) * 100) / 100] as const;
-  });
+  offsetPolylineRight(pts, off).map(([x, z]) => [Math.round(x * 100) / 100, Math.round(z * 100) / 100] as const);
 
 /** How far the carriageway reaches to the right of the polyline at arc length `s`, to 9 m (m; 0 off the road). */
 const reachAt = (pts: readonly Pt[], s: number, side: 1 | -1): number => {
@@ -170,7 +160,7 @@ const offsetAlong = (pts: readonly Pt[], at: readonly number[], off: readonly nu
       });
       acc += seg;
     }
-    const [tx, tz] = dirAt(pts, i);
+    const [tx, tz] = polylineTangent(pts, i);
     const o = offAt(acc);
     out.push([round(p[0] + tz * o), round(p[1] - tx * o)]);
   });

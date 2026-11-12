@@ -1,10 +1,10 @@
-import { type GroundSurface, VEHICLE_SIZE, type VehicleModel, type ViewDescriptor } from "@seki/core";
+import { type GroundSurface, VEHICLE_SIZE, type VehicleModel, type ViewDescriptor, pointInPairRingEvenOdd } from "@seki/core";
 import type { StaticProp } from "./builders";
-import { BAY_STEP, type BayLayout, bayDepth, bayLayouts, bayReach, bayYaw, inRing, stripCut, stripDepth } from "./kerb-bays";
+import { BAY_STEP, type BayLayout, bayDepth, bayLayouts, bayReach, bayYaw, stripCut, stripDepth } from "./kerb-bays";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "./lublin/roads";
 import { MAP_CHUNKS } from "./lublin/sites";
-import { footprint, segmentDistance, segmentsGap } from "./parked-geometry";
+import { footprint, pairSegmentDistance, segmentsGap } from "./parked-geometry";
 import { type KerbStrip, clearOfFurniture, clearOfKeptWays } from "./parked-room";
 import { groundY, restingY, surfaceY } from "./lublin/terrain";
 import { clearOfGame } from "./street-props";
@@ -178,7 +178,7 @@ const CAR_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).map((p
 /** Car parks along a street's kerb: a strip beside the carriageway, a parking lane, half on the pavement. */
 const KERB_PARKS = CAR_PARKS.filter((p) => p.kind === "street_side" || p.kind === "lane" || p.kind === "half_on_kerb");
 /** Is (x, z) in a kerb car park? Its bays are `bayCars`', set out as the map draws them, not along the street's median kerb line. */
-const inKerbPark = (x: number, z: number): boolean => KERB_PARKS.some((p) => inRing(x, z, p.ring));
+const inKerbPark = (x: number, z: number): boolean => KERB_PARKS.some((p) => pointInPairRingEvenOdd(x, z, p.ring));
 
 /**
  * A street of two lanes or more a way has no room at its kerb: a car parked there stands on the
@@ -198,8 +198,8 @@ const MULTI_LANE_SEGMENTS = MAP_CHUNKS.flatMap((c) => c.multiLaneWays ?? []).fla
 /** Is a car at (x, z), facing yaw, off every multi-lane street's kerb, or in a car park the map draws there? */
 const offMultiLaneKerbs = (x: number, z: number, yaw: number): boolean =>
   MULTI_LANE_SEGMENTS.every(
-    (s) => Math.abs(s.tx * Math.sin(yaw) + s.tz * Math.cos(yaw)) < Math.cos((20 * Math.PI) / 180) || segmentDistance(x, z, s.a, s.b) >= MULTI_LANE_REACH,
-  ) || CAR_PARKS.some((p) => inRing(x, z, p.ring));
+    (s) => Math.abs(s.tx * Math.sin(yaw) + s.tz * Math.cos(yaw)) < Math.cos((20 * Math.PI) / 180) || pairSegmentDistance(x, z, s.a, s.b) >= MULTI_LANE_REACH,
+  ) || CAR_PARKS.some((p) => pointInPairRingEvenOdd(x, z, p.ring));
 
 /**
  * Is a car's footprint at (x, z), facing yaw, wholly on a carriageway or a square and free of
@@ -317,7 +317,7 @@ const stripCars = (park: KerbPark, c: RoadChain, side: 1 | -1, layout: BayLayout
         .flatMap((a) => BAY_NUDGE.map((d) => car(a, d)))
         .find(
           (k) =>
-            footprint(k.x, k.z, yaw, model, -0.1).every(([x, z]) => inRing(x, z, park.ring)) &&
+            footprint(k.x, k.z, yaw, model, -0.1).every(([x, z]) => pointInPairRingEvenOdd(x, z, park.ring)) &&
             fits(k.x, k.z, yaw, model, undefined, { ring: park.ring, axis: c.points, side }) &&
             (layout === "parallel" || endsOffLanes(k.x, k.z, yaw, model)) &&
             ![...taken, ...out].some((o) => Math.hypot(o.x - k.x, o.z - k.z) < 8 && overlap(o, k)),
@@ -360,7 +360,7 @@ const ROW_STEP = [6, 12] as const;
 /** The square's own street (its ring) stays a free way round the bays. */
 const RING = ROAD_CHAINS.filter((c) => c.name === "Plac Zamkowy");
 const nearRing = (x: number, z: number): boolean =>
-  RING.some((c) => c.points.some((p, i) => i > 0 && segmentDistance(x, z, c.points[i - 1]!, p) < 4.5));
+  RING.some((c) => c.points.some((p, i) => i > 0 && pairSegmentDistance(x, z, c.points[i - 1]!, p) < 4.5));
 
 const squareCars = (): ParkedCar[] => {
   const out: ParkedCar[] = [];
