@@ -8,7 +8,8 @@ const nondeterminism = [
 ];
 
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/coverage/**", "reports/**", "playwright-report/**", "test-results/**", "node_modules/**", ".claude/**"] },
+  // packages/app/android: the native project of the APK; `cap sync` copies the web build into it (ADR-0079).
+  { ignores: ["**/dist/**", "packages/app/android/**", "**/coverage/**", "reports/**", "playwright-report/**", "test-results/**", "node_modules/**", ".claude/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

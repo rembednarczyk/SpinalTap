@@ -30,6 +30,30 @@ Parametry URL:
 | `?audio=off` | czysta synteza zamiast nagrań |
 | `?touch` | sterowanie dotykowe na komputerze |
 
+## Instalacja na telefonie
+
+Na Androidzie gra działa jako aplikacja (APK): pliki gry, modele i miasto są w paczce, ekran jest pełny i poziomy, bez paska przeglądarki ([ADR-0079](docs/adr/0079-urzadzenie-docelowe-i-apk.md)). Silnikiem jest systemowy Android System WebView (Chromium), więc wydajność jest podobna jak w Chrome.
+
+**Skąd pobrać.** APK buduje workflow [`android.yml`](.github/workflows/android.yml) przy tagu większego wydania (`v*`, np. `v0.2.0`) i dołącza plik `seki-senshi-<wersja>-release.apk` (albo `-debug.apk`) do wydania w zakładce *Releases* repozytorium. Workflow można też uruchomić ręcznie (*Actions → Android APK → Run workflow*); wtedy APK jest tylko artefaktem przebiegu (`seki-senshi-apk`, 30 dni).
+
+**Instalacja.**
+1. Pobierz plik `.apk` na telefon.
+2. Otwórz go z menedżera plików albo z pobranych w przeglądarce. Android zapyta o zgodę na instalację z nieznanych źródeł dla tej aplikacji (*Ustawienia → Aplikacje → Dostęp specjalny → Instalowanie nieznanych aplikacji*); zezwól tylko jej i tylko na czas instalacji.
+3. Nowsze wydanie instaluje się na poprzednim, gdy oba są podpisane tym samym kluczem. APK debugowe każdy przebieg podpisuje innym kluczem: przed instalacją nowego odinstaluj poprzednie (zapis gry w aplikacji zniknie razem z nią).
+
+**Podpis wydania.** Bez sekretów workflow buduje APK debugowe. Podpisane `assembleRelease` powstaje, gdy w *Settings → Secrets and variables → Actions* repozytorium są cztery sekrety:
+
+| Sekret | Zawartość |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | plik keystore w base64 (`base64 -w0 release.keystore`) |
+| `ANDROID_KEYSTORE_PASSWORD` | hasło keystore |
+| `ANDROID_KEY_ALIAS` | alias klucza |
+| `ANDROID_KEY_PASSWORD` | hasło klucza |
+
+Keystore tworzy się raz, np. `keytool -genkeypair -v -keystore release.keystore -alias <alias> -keyalg RSA -keysize 4096 -validity 10000`, i trzyma poza repozytorium. Utrata klucza oznacza, że kolejne wydania trzeba instalować po odinstalowaniu starego.
+
+**Build lokalny** (Android SDK i JDK 21): `pnpm build`, potem w `packages/app` `pnpm exec cap sync android` i `cd android && ./gradlew assembleDebug`.
+
 ## Co jest w grze
 
 - **Miasto.** Krakowskie Przedmieście, Stare Miasto, Podzamcze z targiem pod wiaduktem i Nabrzeże Bystrzycy z danych mapowych:

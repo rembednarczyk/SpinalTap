@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import type { OsmData } from "../../osm-import/src/osm.ts";
 import { worldToGeo } from "../../osm-import/src/project.ts";
-import { barrierReport } from "../src/barriers.ts";
+import { barrierReport, notDrawnText } from "../src/barriers.ts";
 import { COVER } from "../src/classify.ts";
 import { cellById } from "../src/config.ts";
 import { emptyCover } from "../src/cover.ts";
@@ -49,6 +49,9 @@ describe("the cell report's furniture and barriers", () => {
     expect(r.kinds.gate!.osmPoints).toBe(1);
     // The fence's one segment has its middle off the cell.
     expect(r.notDrawn.map((l) => l.id)).toEqual(["w7"]);
+    // The text names each line the game lacks with its kind and metres in the cell.
+    expect(notDrawnText(r.notDrawn)).toBe("w7 wall 20 m");
+    expect(notDrawnText([{ id: "w783241007", barrier: "fence", length: 92.8 }, ...r.notDrawn])).toBe("w783241007 fence 92,8 m, w7 wall 20 m");
     // The game's wall, cut in two by a chunk's edge, is one line drawn; a fence of the game's off the cell is not counted.
     const wall = { id: "w7", kind: "wall", height: 1.5, line: [10, 10, 20, 10] } as const;
     const drawn = barrierReport(osm, rect, [wall, { ...wall, line: [20, 10, 30, 10] }, { id: "w8", kind: "fence", height: 1, line: [200, 10, 300, 10] }]);

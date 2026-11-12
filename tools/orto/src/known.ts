@@ -11,11 +11,14 @@
  * - the check's own comment in `tools/glitch-scan/test/glitch-scan.test.ts` (G, T and ADR ids).
  * Up to `SHOWN` references a kind, those whose place (x; z) lies in the cell (or which name it)
  * first. A kind without any is new to the registers; one with none in the cell may be new here.
+ * With the scan's findings (`reports/glitch-scan.json`) each kind also gets its squares with the
+ * most samples and the ids its findings name (`places.ts`).
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { type Rect } from "../../osm-import/src/geometry.ts";
 import { REPO } from "./config.ts";
+import { type Finding, type KindPlaces, SQUARE, TOP_SQUARES, placesOf, placesText } from "./places.ts";
 
 export const SHOWN = 3;
 
@@ -41,6 +44,8 @@ export interface KnownKind {
   readonly refs: readonly Ref[];
   /** All the references the registers have for the kind. */
   readonly total: number;
+  /** Where its findings lie in the cell, when the scan's findings were read. */
+  readonly places?: KindPlaces;
 }
 
 export interface KnownSection {
@@ -153,13 +158,13 @@ export const refsOf = (reg: Registers, kind: string, cell: string, rect: Rect): 
   return [...seen.values()].sort((a, b) => Number(b.inCell) - Number(a.inCell));
 };
 
-export const knownSection = (cell: string, rect: Rect, hits: CellHitsLike | undefined, reg: Registers): KnownSection => {
+export const knownSection = (cell: string, rect: Rect, hits: CellHitsLike | undefined, reg: Registers, found?: Readonly<Record<string, readonly Finding[]>>): KnownSection => {
   if (!hits) return { missing: "brak reports/map-coverage-hits.json: puść `pnpm exec vitest run tools/glitch-scan/test/glitch-scan.test.ts`", findings: 0, kinds: [], verdict: "trafień skanu nie sprawdzono" };
   const kinds = Object.entries(hits.kinds)
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([kind, n]) => {
       const refs = refsOf(reg, kind, cell, rect);
-      return { kind, hits: n, refs: refs.slice(0, SHOWN), total: refs.length };
+      return { kind, hits: n, refs: refs.slice(0, SHOWN), total: refs.length, ...(found ? { places: placesOf(found[kind] ?? [], rect) } : {}) };
     });
   const none = kinds.filter((k) => !k.total).map((k) => k.kind);
   const elsewhere = kinds.filter((k) => k.total && !k.refs.some((r) => r.inCell)).map((k) => k.kind);
@@ -183,15 +188,32 @@ export const readRegisters = (repo = REPO): Registers => {
   };
 };
 
-/** The section from the files in the checkout (the scan's hits and the registers). */
+/** The scan's findings by kind, read once a checkout (17 MB: `--all` would parse them a cell). */
+const findings = new Map<string, Record<string, readonly Finding[]> | undefined>();
+const readFindings = (repo: string) => {
+  if (!findings.has(repo)) {
+    const file = read(join(repo, "reports/glitch-scan.json"));
+    findings.set(repo, file ? (JSON.parse(file) as { found: Record<string, readonly Finding[]> }).found : undefined);
+  }
+  return findings.get(repo);
+};
+
+/** The section from the files in the checkout (the scan's hits and findings, and the registers). */
 export const loadKnown = (cell: string, rect: Rect, repo = REPO): KnownSection => {
   const hitsFile = read(join(repo, "reports/map-coverage-hits.json"));
   const hits = hitsFile ? ((JSON.parse(hitsFile) as { cells: Record<string, CellHitsLike> }).cells[cell] ?? { findings: 0, kinds: {} }) : undefined;
-  return knownSection(cell, rect, hits, readRegisters(repo));
+  return knownSection(cell, rect, hits, readRegisters(repo), readFindings(repo));
+};
+
+const placesLines = (s: KnownSection): string[] => {
+  if (s.missing || !s.kinds.length) return [];
+  if (!s.kinds.some((k) => k.places)) return ["położeń brak: nie ma reports/glitch-scan.json (puść skan)"];
+  return [`położenia (do ${TOP_SQUARES} kwadratów ${SQUARE} m: róg (x; z) i próbki; id ze skanu i próbki):`, ...s.kinds.map((k) => placesText(k.kind, k.places ?? { squares: [], ids: [] }))];
 };
 
 export const knownText = (s: KnownSection): string[] => [
   `-- znane rodzaje (trafienia skanu w komórce, kwadraty 10 m; do ${SHOWN} odsyłaczy, * = miejsce w komórce)`,
   ...(s.missing ? [s.missing] : [`znalezisk ${s.findings}; ${s.kinds.map((k) => `${k.kind} ${k.hits}${k.total ? ` (${k.refs.map((r) => `${r.id}${r.inCell ? "*" : ""}`).join(", ")}${k.total > k.refs.length ? ` z ${k.total}` : ""})` : " (bez odsyłacza)"}`).join("; ") || "brak trafień"}`]),
+  ...placesLines(s),
   `werdykt: ${s.verdict}`,
 ];

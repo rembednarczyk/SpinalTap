@@ -33,6 +33,7 @@ import { type BuildingOut, type ChunkOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { lod1Index, withLod1Height } from "./lod1-heights.ts";
 import { lod2Index, withLod2Roof } from "./lod2-roofs.ts";
+import { RingBins } from "./ring-bins.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
 import { groundRaisedGreen, raisedGreen } from "./raised-green.ts";
 import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
@@ -437,8 +438,10 @@ export const generate = (
   stretchZebras(nodeZebras, [...kerbs.widened.values()].map((w) => w.ring)).forEach((z, i) => bands.splice(bands.indexOf(nodeZebras[i]!), 1, { ...z, box: ringBounds(z.ring) }));
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
   const zebras = bands.filter((b) => b.surface === "crossing");
-  const onOther = (p: Pt, source: string) => carriageways.some((c) => c.source !== source && p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));
-  const onZebra = (p: Pt) => zebras.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));
+  // By the cells round the point, not every carriageway of the city for every half metre of every line (G-719).
+  const [carriagewayBins, zebraBins] = [new RingBins(carriageways), new RingBins(zebras)];
+  const onOther = (p: Pt, source: string) => carriagewayBins.scan(p.x, p.z, (c) => c.source !== source);
+  const onZebra = (p: Pt) => zebraBins.holds(p.x, p.z);
   const markings: Marking[] = [];
   // A fitted street's lines run on from piece to piece and on to the next way (G-675).
   for (const m of taperedJoins(roads.flatMap(roadMarkings), new Set(fittedLanes.keys()))) for (const piece of cutLine(m.line, (p) => onOther(p, m.source) || onZebra(p))) markings.push({ ...m, line: piece });

@@ -35,22 +35,30 @@ export const blur = (f: Field, sigma: number): Field => {
   for (let i = -rad; i <= rad; i++) k.push(Math.exp(-(i * i) / (2 * sigma * sigma)));
   const sum = k.reduce((a, b) => a + b, 0);
   const w = k.map((x) => x / sum);
-  const pass = (src: Float64Array, horizontal: boolean): Float64Array => {
-    const out = new Float64Array(src.length);
-    for (let r = 0; r < f.rows; r++) {
-      for (let c = 0; c < f.cols; c++) {
-        let s = 0;
-        for (let i = -rad; i <= rad; i++) {
-          const cc = horizontal ? Math.min(Math.max(c + i, 0), f.cols - 1) : c;
-          const rr = horizontal ? r : Math.min(Math.max(r + i, 0), f.rows - 1);
-          s += w[i + rad]! * src[rr * f.cols + cc]!;
-        }
-        out[r * f.cols + c] = s;
+  // One line of the lattice at a time, `n` values `step` apart from `at`. The inner loop runs for
+  // every tap of every 1 m point of the city, and coverage counts each of its blocks: a branch a
+  // tap made the blur the slowest step of `generate` under coverage (G-719). So the taps clamp
+  // only within `rad` of the line's ends, and inside it four go to a block. The same taps in the
+  // same order, added left to right: the same sums to the bit.
+  const line = (src: Float64Array, out: Float64Array, at: number, step: number, n: number): void => {
+    for (let c = 0; c < n; c++) {
+      let s = 0;
+      if (c >= rad && c < n - rad) {
+        let j = 0;
+        let p = at + (c - rad) * step;
+        for (; j + 3 < w.length; j += 4, p += 4 * step) s = s + w[j]! * src[p]! + w[j + 1]! * src[p + step]! + w[j + 2]! * src[p + 2 * step]! + w[j + 3]! * src[p + 3 * step]!;
+        for (; j < w.length; j++, p += step) s += w[j]! * src[p]!;
+      } else {
+        for (let i = -rad; i <= rad; i++) s += w[i + rad]! * src[at + Math.min(Math.max(c + i, 0), n - 1) * step]!;
       }
+      out[at + c * step] = s;
     }
-    return out;
   };
-  return { ...f, v: pass(pass(f.v, true), false) };
+  const rows = new Float64Array(f.v.length);
+  for (let r = 0; r < f.rows; r++) line(f.v, rows, r * f.cols, 1, f.cols);
+  const out = new Float64Array(f.v.length);
+  for (let c = 0; c < f.cols; c++) line(rows, out, c, f.cols, f.rows);
+  return { ...f, v: out };
 };
 
 /** Bilinear value of the field at a world point (clamped). */
@@ -112,11 +120,13 @@ export const chunkTerrain = (raw: Field, rect: Rect, altitude: number): ChunkTer
   for (const cell of cells) {
     const smooth = cell * 0.4 > BASE_SIGMA ? blur(raw, cell * 0.4) : truth;
     const grid = gridFrom(smooth, rect, cell, altitude);
-    const errors: number[] = [];
+    // A typed array sorts by value with no comparator called for each pair compared (G-719).
+    const errors = new Float64Array((Math.floor(w) + 1) * (Math.floor(h) + 1));
+    let n = 0;
     for (let z = rect.minZ; z <= rect.maxZ; z++) {
-      for (let x = rect.minX; x <= rect.maxX; x++) errors.push(Math.abs(gridAt(grid, x, z) - (fieldAt(truth, x, z) - altitude)));
+      for (let x = rect.minX; x <= rect.maxX; x++) errors[n++] = Math.abs(gridAt(grid, x, z) - (fieldAt(truth, x, z) - altitude));
     }
-    errors.sort((a, b) => a - b);
+    errors.sort();
     best = { grid, maxError: errors[errors.length - 1]!, p99Error: errors[Math.floor(0.99 * (errors.length - 1))]! };
     if (best.maxError <= TERRAIN_TOLERANCE.max && best.p99Error <= TERRAIN_TOLERANCE.p99) return best;
   }

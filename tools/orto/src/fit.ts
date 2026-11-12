@@ -4,7 +4,9 @@
  * IoU is measured over the cell at (0; 0), at the best shift of LoD2 within ±`RANGE` m and over each
  * half of the cell; then the buildings are paired one to one by IoU (`matchFootprints`, IoU ≥ 0.3)
  * and the pairs' centroids compared. A whole-cell shift shows as a best shift away from (0; 0) and
- * a median pair offset of metres; outlines merged or split differently only lower the IoU.
+ * a median pair offset of metres; outlines merged or split differently only lower the IoU. A best
+ * shift gaining under `SHIFT_GAIN` of IoU is no shift: the verdict then names the game's buildings
+ * without LoD2 under them (the extract's gaps), not a possible shift.
  */
 import { type Pt, type Rect, centroid } from "../../osm-import/src/geometry.ts";
 import { matchFootprints } from "../../gugik/src/match.ts";
@@ -16,7 +18,7 @@ export interface Keyed {
 }
 
 /** The shifts tried (m each way), the grid (m), how far past the cell the buildings are picked (m), the pairs' least IoU. */
-export const FIT = { RANGE: 8, STEP: 0.5, PICK: 30, PAIR_IOU: 0.3 } as const;
+export const FIT = { RANGE: 8, STEP: 0.5, PICK: 30, PAIR_IOU: 0.3, SHIFT_GAIN: 0.02 } as const;
 
 export interface FitSection {
   readonly game: number;
@@ -70,15 +72,21 @@ const pairsOf = (rect: Rect, game: readonly Keyed[], lod2: readonly Keyed[]): Fi
   return { count: off.length, of: g.length, medianOffset: r2(median(off)), medianDx: r2(median(dxs)), medianDz: r2(median(dzs)) };
 };
 
-const verdictOf = (s: Omit<FitSection, "verdict">): string => {
+const verdictOf = (s: Omit<FitSection, "verdict">, gameOnly: number): string => {
   const shift = Math.hypot(s.best.dx, s.best.dz);
   if (!s.game || !s.lod2) return "za mało budynków do porównania";
   if (shift <= FIT.STEP && (!s.pairs.count || s.pairs.medianOffset < 1))
     return `obrysy zgodne z LoD2: najlepsze IoU przy (${s.best.dx}; ${s.best.dz}), pary ${s.pairs.medianOffset} m; rozbieżności to inny podział budynków, nie przesunięcie`;
+  // A shift gaining under `SHIFT_GAIN` explains nothing: the IoU is low from what one set lacks.
+  if (s.best.iou - s.iouZero < FIT.SHIFT_GAIN)
+    return gameOnly
+      ? `niskie IoU z braku danych LoD2 pod ${gameOnly} budynkami gry (IoU ${s.iouZero} przy (0; 0), przesunięcie poprawia o ${r3(s.best.iou - s.iouZero)}); bez przesunięcia obrysów`
+      : `bez przesunięcia obrysów: przesunięcie poprawia IoU o ${r3(s.best.iou - s.iouZero)} (IoU ${s.iouZero} przy (0; 0)); rozbieżności to inny podział budynków`;
   return `możliwe przesunięcie obrysów: najlepsze IoU ${s.best.iou} przy (${s.best.dx}; ${s.best.dz}) wobec ${s.iouZero} przy (0; 0), pary ${s.pairs.medianOffset} m (dx ${s.pairs.medianDx}, dz ${s.pairs.medianDz})`;
 };
 
-export const fitSection = (rect: Rect, game: readonly Keyed[], lod2: readonly Keyed[]): FitSection => {
+/** `withoutLod2`: the game's buildings in the cell LoD2 lacks (`absent.ts`), named by the verdict when a shift gains nothing. */
+export const fitSection = (rect: Rect, game: readonly Keyed[], lod2: readonly Keyed[], withoutLod2 = 0): FitSection => {
   const [g, l] = [game.filter(within(rect, FIT.PICK)), lod2.filter(within(rect, FIT.PICK))];
   const grid: Grid = gridOver(rect, FIT.STEP, FIT.RANGE + 4);
   const [a, b] = [ringMask(grid, g.map((x) => x.ring)), ringMask(grid, l.map((x) => x.ring))];
@@ -101,7 +109,7 @@ export const fitSection = (rect: Rect, game: readonly Keyed[], lod2: readonly Ke
     lod2Only: Math.round(lod2Only * FIT.STEP * FIT.STEP),
     pairs: pairsOf(rect, game, lod2),
   };
-  return { ...s, verdict: verdictOf(s) };
+  return { ...s, verdict: verdictOf(s, withoutLod2) };
 };
 
 export const fitText = (s: FitSection): string[] => [
