@@ -1746,6 +1746,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: place przycięte na krawędzi kawałka mapy przy (20; −20), pętle zamkniętych ścieżek w Podzamczu i Nabrzeżu; skan nie liczy tego rodzaju; poprawka: kontrola w `tools/glitch-scan` z bazą z przebiegu (i wpis w `docs/mapa-pokrycie.json`), potem naprawy; propozycja kuratora (przegląd #433): `ground-ring-self-cross`, baza 30 (Krakowskie 15, w tym 6 placów przy (20; −20), Nabrzeże 5, Podzamcze 5, Stare Miasto 5)
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
+### G-660 `save-load-micro-body` przekracza 20 s pod obciążeniem
+- Status: zgłoszone (12.11, agent bramki czasu testów)
+- Ważność: S4 · Zasięg: `packages/sim/test/save-load-micro-body.test.ts` „won, knocked out…” (G-242) przekroczył limit 20 s przy load 11–13 na 4 rdzeniach; kandydat na test niestabilny; najpierw pomiar przyczyny, limitu nie podnosimy (ADR-0046)
+- Pakiet właściciela: packages/sim
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
