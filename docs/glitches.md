@@ -1612,7 +1612,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: pojazdy)
 
 ### G-600 Podwójna bryła VIVO: garaż podziemny `level=-2` rysowany jako budynek
-- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g600` (12.11, 835cd63; `belowGround` z `level`, kontrola `building-duplicate`, trawnik T-258 nad garażem; kurator ZGODNE, T-258 celowe; weryfikacja w toku)
+- Status: w PR #427 (12.11; kurator ZGODNE, weryfikator PRZYJĘTE; czeka na CI)
 - Ważność: S3 · Zasięg: w173070505 (`building=yes`, `level=-2`, `layer=2`) ma prawie ten sam obrys co VIVO r5601275; po G-556 obie bryły wracają przycięte, nakładają się na 1732 m², dachy dzieli 0,1 m (y −12,5 i −12,6), ryzyko migotania; Podzamcze x 1088–1120, z 160–240; poprawka: pomijać w imporcie budynki, których wszystkie `level` są ujemne (jak `location=underground`); garaż wystaje poza VIVO, więc po usunięciu odsłania ok. 149 próbek gołej ziemi (do wyłożenia według ortofoto); skan: ta sama reguła w `edge-buildings.ts` i `building-underground-solid`, nowa kontrola `building-duplicate` (nakładanie > 50% pola mniejszego, bez `building:part`)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1740,6 +1740,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, kurator przeglądu G-613)
 - Ważność: S4 · Zasięg: po odsunięciu tras od płotów alejki przy w232805994 (x 45–80, z ok. 105, Pałac Lubomirskich, Plac Litewski 3) i w232805996 (x −63…−11, Plac Litewski 5) zostały bez przechodniów, w promieniu 30 m brak trasy; kryterium: trasa ≥ 1 m od płotu, a gdy pętla jest za wąska, jedna linia zamiast zniknięcia; kontrola `footway-alley-unwalked` (alejka powyżej `ALLEY_AREA` bez próbki trasy w 5 m, baza 2)
 - Pakiet właściciela: packages/sim (tłum)
+
+### G-651 `belowGround` zdjęłoby budynek naziemny z `level=-1` i piętrami nad ziemią
+- Status: zgłoszone (12.11, weryfikator G-600)
+- Ważność: S4 · Zasięg: `tools/osm-import/src/building-tags.ts` `belowGround`: `level=-1` przy `building:levels=3`, `height=20` albo `roof:levels=1` daje `true`, więc budynek naziemny zniknąłby; w danych dziś takiego nie ma, ryzyko na przyszłość; poprawka: budynek z dodatnimi piętrami lub wysokością nie jest podziemny
+- Pakiet właściciela: tools/osm-import
+
+### G-652 `glitch-scan.test.ts` ma 2236 linii i rośnie
+- Status: zgłoszone (12.11, weryfikator G-600)
+- Ważność: S4 · Zasięg: `tools/glitch-scan/test/glitch-scan.test.ts` (wyjątek spoza reguły ESLint o 500 liniach, ADR-0031) dostaje kolejne kontrole przy każdej zmianie mapy; podział na pliki według rodzaju kontroli
+- Pakiet właściciela: tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
