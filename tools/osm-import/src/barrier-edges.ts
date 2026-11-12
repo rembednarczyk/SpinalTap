@@ -5,6 +5,7 @@
  * would go; so a barrier running along the band (under 30 degrees to its axis) is moved out to
  * its edge, its face `EDGE_MARGIN` past it, and only one crossing the band is cut.
  */
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { BARRIER_THICKNESS, type BarrierKind } from "../../../packages/core/src/world/barriers.ts";
 import { type Line } from "./features.ts";
 import { type Pt, type Rect, lineLength, pointAlong, ringBounds, simplifyLine } from "./geometry.ts";
@@ -45,28 +46,14 @@ export const bandAxes = (lines: readonly Line[]): BandAxis[] => {
 const CELL = 32;
 
 /**
- * The axes whose boxes may meet a box, in their order in `axes` (a barrier moves off them one
- * after another, so the order is kept): looked up by `CELL` grid cells, not over the whole map.
+ * The axes whose boxes meet a box, in their order in `axes` (a barrier moves off them one after
+ * another, so the order is kept): looked up in core's `SpatialHash` of `CELL` m, not over the
+ * whole map. `outOfBands` takes the same closed test of the boxes, so it keeps every one.
  */
 export const axesNear = (axes: readonly BandAxis[]): ((box: Rect) => BandAxis[]) => {
-  const cells = new Map<string, number[]>();
-  axes.forEach((x, i) => {
-    for (let cx = Math.floor(x.box.minX / CELL); cx <= Math.floor(x.box.maxX / CELL); cx++) {
-      for (let cz = Math.floor(x.box.minZ / CELL); cz <= Math.floor(x.box.maxZ / CELL); cz++) {
-        const k = `${cx}:${cz}`;
-        const cell = cells.get(k);
-        if (cell) cell.push(i);
-        else cells.set(k, [i]);
-      }
-    }
-  });
-  return (box) => {
-    const found = new Set<number>();
-    for (let cx = Math.floor(box.minX / CELL); cx <= Math.floor(box.maxX / CELL); cx++) {
-      for (let cz = Math.floor(box.minZ / CELL); cz <= Math.floor(box.maxZ / CELL); cz++) for (const i of cells.get(`${cx}:${cz}`) ?? []) found.add(i);
-    }
-    return [...found].sort((a, b) => a - b).map((i) => axes[i]!);
-  };
+  const grid = new SpatialHash<BandAxis>(CELL);
+  for (const x of axes) grid.insert(x, x.box.minX, x.box.minZ, x.box.maxX, x.box.maxZ);
+  return (box) => grid.query(box.minX, box.minZ, box.maxX, box.maxZ);
 };
 
 /** The point of segment a-b nearest p. */

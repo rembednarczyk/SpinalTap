@@ -1,3 +1,5 @@
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash";
+
 /**
  * Lamps of two looks side by side (G-259): a plain town lamp (a road lamp, a modern pole) standing
  * by a styled one (a pastoral, a candelabrum, a wall lantern) doubles the light point, and where
@@ -30,25 +32,18 @@ type Way = { readonly id: number; readonly pts: readonly { readonly x: number; r
  * stand at their mouths). One OSM way is one street of one kind, lit one way.
  */
 export const mixedLampWays = (ways: readonly Way[], props: readonly Lamp[], reach: number, endGap: number): { readonly at: string; readonly what: string }[] => {
-  // The lamps in cells of `CELL` m (G-409): a way asks only those within `reach` of its points'
-  // bounds, in the props' order, instead of every lamp of the city.
+  // The lamps in core's `SpatialHash` of `CELL` m (G-409): a way asks only those within `reach` of
+  // its points' bounds, in the props' order, instead of every lamp of the city.
   const lamps = props.filter((i) => PLAIN.has(i.prop) || STYLED.has(i.prop));
-  const cells = new Map<string, number[]>();
-  lamps.forEach((i, n) => {
-    const key = `${Math.floor(i.x / CELL)}:${Math.floor(i.z / CELL)}`;
-    const cell = cells.get(key);
-    if (cell) cell.push(n);
-    else cells.set(key, [n]);
-  });
+  const cells = new SpatialHash<Lamp>(CELL);
+  for (const i of lamps) cells.insertPoint(i, i.x, i.z);
   // A metre over the reach, past any rounding of the bounds.
   const room = reach + 1;
   const near = (pts: readonly { readonly x: number; readonly z: number }[]): Lamp[] => {
     if (pts.length === 0) return [];
-    const [x0, x1] = [Math.floor((Math.min(...pts.map((p) => p.x)) - room) / CELL), Math.floor((Math.max(...pts.map((p) => p.x)) + room) / CELL)];
-    const [z0, z1] = [Math.floor((Math.min(...pts.map((p) => p.z)) - room) / CELL), Math.floor((Math.max(...pts.map((p) => p.z)) + room) / CELL)];
-    const found: number[] = [];
-    for (let cx = x0; cx <= x1; cx++) for (let cz = z0; cz <= z1; cz++) found.push(...(cells.get(`${cx}:${cz}`) ?? []));
-    return found.sort((a, b) => a - b).map((n) => lamps[n]!);
+    const [x0, x1] = [Math.min(...pts.map((p) => p.x)) - room, Math.max(...pts.map((p) => p.x)) + room];
+    const [z0, z1] = [Math.min(...pts.map((p) => p.z)) - room, Math.max(...pts.map((p) => p.z)) + room];
+    return cells.query(x0, z0, x1, z1);
   };
   return ways.flatMap((w) => {
     const inner = w.pts.filter((p) => Math.hypot(p.x - w.pts[0]!.x, p.z - w.pts[0]!.z) > endGap && Math.hypot(p.x - w.pts[w.pts.length - 1]!.x, p.z - w.pts[w.pts.length - 1]!.z) > endGap);

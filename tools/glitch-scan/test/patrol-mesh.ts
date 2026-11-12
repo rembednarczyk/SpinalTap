@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import type { Vec3, ViewDescriptor } from "../../../packages/core/src";
+import { SpatialHash, type Vec3, type ViewDescriptor } from "../../../packages/core/src";
 import { type CityProps, mergeCityProps, parseCityProps } from "../../../packages/engine/src/renderer/city-props";
 import { findSpans, planNearCanyon } from "../../../packages/engine/src/renderer/mapcity/canyon-plan";
 import { planCanyonSigns } from "../../../packages/engine/src/renderer/mapcity/canyon-signs";
@@ -27,7 +27,7 @@ import { SCENERY_ID_BASE } from "../../../packages/sim/src/presentation/render-s
  * layer over the streets (cables, lanterns, billboards, footbridges, curtains) and the street
  * furniture's detailed blocks (lamps, trees, parasols, stalls, poles and their cables). The light
  * that is not a solid (the billboards' beams, the canyon mist, the reflections in the paving) is
- * left out. Triangles in 4 m bins, each with what drew it.
+ * left out. Triangles in 4 m bins (core's `SpatialHash`), each with what drew it.
  */
 
 export interface AirMesh {
@@ -102,7 +102,7 @@ export const airMesh = (items: readonly Item[], zones: readonly Box2[], props: C
     sinks.push({ sink: signs, what: `signs of building ${ids[k]}`, signs: true });
   });
   const tris: { tri: Float32Array; what: string; box: Box2; bottom: number; top: number }[] = [];
-  const bins = new Map<string, number[]>();
+  const bins = new SpatialHash<number>(BIN);
   for (const { sink, what, signs } of sinks) {
     const pos = sink.positions;
     for (let t = 0; t + 2 < sink.indices.length; t += 3) {
@@ -113,24 +113,20 @@ export const airMesh = (items: readonly Item[], zones: readonly Box2[], props: C
       const box = { minX: Math.min(tri[0]!, tri[3]!, tri[6]!), maxX: Math.max(tri[0]!, tri[3]!, tri[6]!), minZ: Math.min(tri[2]!, tri[5]!, tri[8]!), maxZ: Math.max(tri[2]!, tri[5]!, tri[8]!) };
       if (!inZone(box)) continue;
       const n = tris.push({ tri, what, box, bottom: Math.min(tri[1]!, tri[4]!, tri[7]!), top: Math.max(tri[1]!, tri[4]!, tri[7]!) }) - 1;
-      for (let i = Math.floor(box.minX / BIN); i <= Math.floor(box.maxX / BIN); i++) {
-        for (let j = Math.floor(box.minZ / BIN); j <= Math.floor(box.maxZ / BIN); j++) {
-          const k = `${i}:${j}`;
-          const list = bins.get(k);
-          if (list) list.push(n);
-          else bins.set(k, [n]);
-        }
-      }
+      bins.insert(n, box.minX, box.minZ, box.maxX, box.maxZ);
     }
   }
   return {
     triangles: tris.length,
+    // Cell by cell (`some`, not `query`): `boxHit` names the first triangle met, so the order stays the cells'.
     near: (box, bottom, top) => {
-      const seen = new Set<number>();
-      for (let i = Math.floor(box.minX / BIN); i <= Math.floor(box.maxX / BIN); i++) {
-        for (let j = Math.floor(box.minZ / BIN); j <= Math.floor(box.maxZ / BIN); j++) for (const n of bins.get(`${i}:${j}`) ?? []) seen.add(n);
-      }
-      return [...seen].map((n) => tris[n]!).filter((t) => t.bottom <= top && t.top >= bottom && meets(t.box, box));
+      const out: (typeof tris)[number][] = [];
+      bins.some(box.minX, box.minZ, box.maxX, box.maxZ, (n) => {
+        const t = tris[n]!;
+        if (t.bottom <= top && t.top >= bottom) out.push(t);
+        return false;
+      });
+      return out;
     },
   };
 };

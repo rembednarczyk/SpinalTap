@@ -1,3 +1,4 @@
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { parseLength } from "../../osm-import/src/building-tags.ts";
 import { addedAreas, corrected, correctedLine } from "../../osm-import/src/corrections.ts";
@@ -61,23 +62,14 @@ const inRing = (p: Pt, ring: Ring): boolean => {
   return r;
 };
 
-/** Rings by the 8 m cells their boxes reach. */
+/** Rings by the 8 m cells their boxes reach, in core's `SpatialHash`. */
 class Bins<T extends Boxed> {
-  private readonly cells = new Map<string, T[]>();
+  private readonly grid = new SpatialHash<T>(8);
   constructor(items: readonly T[]) {
-    for (const it of items)
-      for (let i = Math.floor(it.box.minX / 8); i <= Math.floor(it.box.maxX / 8); i++)
-        for (let k = Math.floor(it.box.minZ / 8); k <= Math.floor(it.box.maxZ / 8); k++) {
-          const list = this.cells.get(`${i},${k}`);
-          if (list) list.push(it);
-          else this.cells.set(`${i},${k}`, [it]);
-        }
-  }
-  near(p: Pt): readonly T[] {
-    return this.cells.get(`${Math.floor(p.x / 8)},${Math.floor(p.z / 8)}`) ?? [];
+    for (const it of items) this.grid.insert(it, it.box.minX, it.box.minZ, it.box.maxX, it.box.maxZ);
   }
   has(p: Pt): boolean {
-    return this.near(p).some((b) => p.x >= b.box.minX && p.x <= b.box.maxX && p.z >= b.box.minZ && p.z <= b.box.maxZ && inRing(p, b.ring));
+    return this.grid.some(p.x, p.z, p.x, p.z, (b) => inRing(p, b.ring));
   }
 }
 

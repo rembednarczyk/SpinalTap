@@ -3,6 +3,7 @@
  * chunks (surfaces, building outlines, streets, terrain), for the placement rules in
  * `props-place.ts`. Built from `LublinChunkData`, the same tables the game and renderer read.
  */
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { type GroundSurface, terrainHeightAt } from "../../../packages/core/src/world/city-geo.ts";
 import { GATE_PASSAGES } from "../../../packages/sim/src/content/lublin/gate-passages.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
@@ -13,6 +14,7 @@ export type SiteSurface = "building" | "road" | "walk" | "green" | "water" | "ra
 
 const WALK: ReadonlySet<GroundSurface> = new Set(["sidewalk", "square", "cobble", "footway"]);
 
+/** Side of the cells of the shapes' `SpatialHash` (m). */
 const BIN = 32;
 
 /** How far past the building's fronts a hand-cut gate's mouth reaches along its axis (m). */
@@ -53,9 +55,10 @@ const surfaceOf = (s: GroundSurface): SiteSurface => (s === "road" || s === "cro
 export class Site {
   readonly chunks: readonly LublinChunkData[];
   readonly streets: readonly SiteStreet[];
-  private readonly bins = new Map<string, Shape[]>();
+  /** The buildings and the ground by their boxes, in the chunks' order: `at` gives a point's in that order. */
+  private readonly bins = new SpatialHash<Shape>(BIN);
   /** The bridges' ground, kept apart: a deck is no ground to stand things on, but a street's paving runs over it. */
-  private readonly decks = new Map<string, Shape[]>();
+  private readonly decks = new SpatialHash<Shape>(BIN);
   /** The passages through the chunks' buildings (ADR-0048), along their axes. */
   private readonly passages: readonly (readonly [Pt, Pt])[];
   /** The gates the game cuts by hand, along their axes under their buildings and the mouths. */
@@ -95,14 +98,7 @@ export class Site {
   private add(s: Shape, bins = this.bins): void {
     if (s.ring.length < 3) return;
     const shape = { ...s, box: ringBounds(s.ring) };
-    for (let i = Math.floor(shape.box.minX / BIN); i <= Math.floor(shape.box.maxX / BIN); i++) {
-      for (let j = Math.floor(shape.box.minZ / BIN); j <= Math.floor(shape.box.maxZ / BIN); j++) {
-        const k = `${i}:${j}`;
-        const list = bins.get(k);
-        if (list) list.push(shape);
-        else bins.set(k, [shape]);
-      }
-    }
+    bins.insert(shape, shape.box.minX, shape.box.minZ, shape.box.maxX, shape.box.maxZ);
   }
 
   /** The chunk whose rectangle holds p (half-open, so a point on a shared edge has one owner). */
@@ -133,7 +129,7 @@ export class Site {
   /** The height of the highest deck at p, straight from abutment to abutment as the sim lays it (`deckHeight`); null off every deck. */
   deckHeightAt(p: Pt): number | null {
     let top: number | null = null;
-    for (const s of this.decks.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`) ?? []) {
+    for (const s of this.decks.at(p.x, p.z)) {
       if (!s.deck || !inRect(p, s.box) || !pointInRing(p, s.ring)) continue;
       const { a, b, ya, yb } = s.deck;
       const [dx, dz] = [b.x - a.x, b.z - a.z];
@@ -143,12 +139,10 @@ export class Site {
     return top;
   }
 
-  private surfaceIn(bins: ReadonlyMap<string, readonly Shape[]>, p: Pt): SiteSurface {
-    const list = bins.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`);
-    if (!list) return null;
+  private surfaceIn(bins: SpatialHash<Shape>, p: Pt): SiteSurface {
     let found: SiteSurface = null;
-    for (const s of list) {
-      if (p.x < s.box.minX || p.x > s.box.maxX || p.z < s.box.minZ || p.z > s.box.maxZ || !pointInRing(p, s.ring)) continue;
+    for (const s of bins.at(p.x, p.z)) {
+      if (!pointInRing(p, s.ring)) continue;
       if (s.surface === "building") return "building";
       if (RANK[s.surface ?? "none"]! > RANK[found ?? "none"]!) found = s.surface;
     }
@@ -157,8 +151,10 @@ export class Site {
 
   /** The outlines of the road ground at p (a street's band under its axis). */
   roadsAt(p: Pt): (readonly Pt[])[] {
-    const list = this.bins.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`) ?? [];
-    return list.filter((s) => s.surface === "road" && inRect(p, s.box) && pointInRing(p, s.ring)).map((s) => s.ring);
+    return this.bins
+      .at(p.x, p.z)
+      .filter((s) => s.surface === "road" && inRect(p, s.box) && pointInRing(p, s.ring))
+      .map((s) => s.ring);
   }
 
   /** Whether p lies in a car park laid out as a lot. */
@@ -179,40 +175,35 @@ export class Site {
 
   /** Whether p lies on a footpath's outline (a market's aisle in the map data, a path across a square). */
   onPath(p: Pt): boolean {
-    const list = this.bins.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`) ?? [];
-    return list.some((s) => s.path === true && p.x >= s.box.minX && p.x <= s.box.maxX && p.z >= s.box.minZ && p.z <= s.box.maxZ && pointInRing(p, s.ring));
+    return this.bins.some(p.x, p.z, p.x, p.z, (s) => s.path === true && pointInRing(p, s.ring));
   }
 
   /** Whether p lies on a flight of steps. */
   onSteps(p: Pt): boolean {
-    const list = this.bins.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`) ?? [];
-    return list.some((s) => s.steps === true && p.x >= s.box.minX && p.x <= s.box.maxX && p.z >= s.box.minZ && p.z <= s.box.maxZ && pointInRing(p, s.ring));
+    return this.bins.some(p.x, p.z, p.x, p.z, (s) => s.steps === true && pointInRing(p, s.ring));
   }
 
   /** Unit vector from the nearest building wall within `reach` metres out to p (a wall lantern's arm), or null. */
   awayFromWall(p: Pt, reach = 2): Pt | null {
     let best: Pt | null = null;
     let bestD = reach;
-    const seen = new Set<Shape>();
-    for (let i = Math.floor((p.x - reach) / BIN); i <= Math.floor((p.x + reach) / BIN); i++) {
-      for (let j = Math.floor((p.z - reach) / BIN); j <= Math.floor((p.z + reach) / BIN); j++) {
-        for (const s of this.bins.get(`${i}:${j}`) ?? []) {
-          if (s.surface !== "building" || seen.has(s)) continue;
-          seen.add(s);
-          s.ring.forEach((a, k) => {
-            const b = s.ring[(k + 1) % s.ring.length]!;
-            const dx = b.x - a.x;
-            const dz = b.z - a.z;
-            const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-            const d = Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t);
-            if (d < bestD && d > 1e-6) {
-              bestD = d;
-              best = { x: (p.x - a.x - dx * t) / d, z: (p.z - a.z - dz * t) / d };
-            }
-          });
+    // Cell by cell, each building once (`some`: the order the nearest of equals is picked in); a
+    // building whose box misses the square of `reach` round p has no wall within it.
+    this.bins.some(p.x - reach, p.z - reach, p.x + reach, p.z + reach, (s) => {
+      if (s.surface !== "building") return false;
+      s.ring.forEach((a, k) => {
+        const b = s.ring[(k + 1) % s.ring.length]!;
+        const dx = b.x - a.x;
+        const dz = b.z - a.z;
+        const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+        const d = Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t);
+        if (d < bestD && d > 1e-6) {
+          bestD = d;
+          best = { x: (p.x - a.x - dx * t) / d, z: (p.z - a.z - dz * t) / d };
         }
-      }
-    }
+      });
+      return false;
+    });
     return best;
   }
 

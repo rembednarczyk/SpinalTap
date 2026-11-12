@@ -1,3 +1,4 @@
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash";
 import type { AddedArea } from "../../osm-import/src/corrections.ts";
 import { type Line } from "../../osm-import/src/features.ts";
 import { type Pt, centroid, pointInRing } from "../../osm-import/src/geometry.ts";
@@ -11,10 +12,10 @@ import { type Pt, centroid, pointInRing } from "../../osm-import/src/geometry.ts
  * data and `ADDED_AREAS`, none of the game's tables.
  *
  * The pattern: segment-polygon intersection over a spatial index. The ways' segments go into a grid
- * of `CELL` m, and a ring looks only at the segments of the cells its bounds cover, not at every way
- * of the city. A segment is cut at its crossings with the ring's edges; a piece counts when its
- * middle lies in the ring over `EDGE_TOL` from its edges, so a way laid along the ring's edge (the
- * garage's corners stand on the footways' nodes) or touching a corner does not.
+ * of `CELL` m (core's `SpatialHash`), and a ring looks only at the segments whose boxes meet its
+ * bounds, not at every way of the city. A segment is cut at its crossings with the ring's edges; a
+ * piece counts when its middle lies in the ring over `EDGE_TOL` from its edges, so a way laid along
+ * the ring's edge (the garage's corners stand on the footways' nodes) or touching a corner does not.
  */
 
 type Finding = { readonly at: string; readonly what: string };
@@ -37,22 +38,13 @@ export const isOpenWay = (l: Line): boolean => l.tags.highway !== undefined && i
 
 type Segment = { readonly way: number; readonly a: Pt; readonly b: Pt };
 
-const cellsOf = (minX: number, minZ: number, maxX: number, maxZ: number): string[] => {
-  const out: string[] = [];
-  for (let i = Math.floor(minX / CELL); i <= Math.floor(maxX / CELL); i++) for (let j = Math.floor(minZ / CELL); j <= Math.floor(maxZ / CELL); j++) out.push(`${i}:${j}`);
-  return out;
-};
-
-const segmentGrid = (lines: readonly Line[]): Map<string, Segment[]> => {
-  const grid = new Map<string, Segment[]>();
+/** The ways' segments in core's `SpatialHash` by their boxes. */
+const segmentGrid = (lines: readonly Line[]): SpatialHash<Segment> => {
+  const grid = new SpatialHash<Segment>(CELL);
   lines.forEach((l, way) => {
     for (let k = 1; k < l.line.length; k++) {
       const s = { way, a: l.line[k - 1]!, b: l.line[k]! };
-      for (const c of cellsOf(Math.min(s.a.x, s.b.x), Math.min(s.a.z, s.b.z), Math.max(s.a.x, s.b.x), Math.max(s.a.z, s.b.z))) {
-        const bucket = grid.get(c);
-        if (bucket) bucket.push(s);
-        else grid.set(c, [s]);
-      }
+      grid.insert(s, Math.min(s.a.x, s.b.x), Math.min(s.a.z, s.b.z), Math.max(s.a.x, s.b.x), Math.max(s.a.z, s.b.z));
     }
   });
   return grid;
@@ -101,9 +93,8 @@ export const addedSolidOverWay = (areas: readonly AddedArea[], lines: readonly L
     const xs = a.ring.map((p) => p.x);
     const zs = a.ring.map((p) => p.z);
     const hit = new Set<number>();
-    for (const c of cellsOf(Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs))) {
-      for (const s of grid.get(c) ?? []) if (!hit.has(s.way) && segmentInRing(s.a, s.b, a.ring)) hit.add(s.way);
-    }
+    // A segment whose box misses the ring's has no piece in it: its middle would lie in both boxes.
+    for (const s of grid.query(Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs))) if (!hit.has(s.way) && segmentInRing(s.a, s.b, a.ring)) hit.add(s.way);
     if (hit.size === 0) return [];
     const c = centroid(a.ring);
     const over = [...hit].sort((p, q) => p - q).map((w) => `${ways[w]!.id} (highway=${ways[w]!.tags.highway})`);

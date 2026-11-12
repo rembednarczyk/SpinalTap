@@ -26,7 +26,10 @@ const key = (i: number, k: number): number => (i + 1.5e4) * 3e4 + k + 1.5e4;
  * The chunks' terrains, in the order they were spawned, and the ground height from them. A city
  * holds a few dozen and the drape asks millions of points (G-444): each is looked up in the bins
  * its box touches instead of in every terrain. The bins keep the order, so a point on the edge
- * two chunks share takes the height of the first, as a walk through all of them would.
+ * two chunks share takes the height of the first, as a walk through all of them would. Not core's
+ * `SpatialHash`, on purpose: the bins are filled lazily, on the first point after the terrains
+ * change (spawned in and out one by one with the streaming), and a point is read from its one
+ * bin's list as is, with no array handed back per point of the millions.
  */
 export class TerrainEntries extends Map<EntityId, TerrainEntry> {
   private bins: Map<number, TerrainEntry[]> | null = null;
