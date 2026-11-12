@@ -168,6 +168,8 @@ importers:
 
   tools/glitch-scan: {}
 
+  tools/gugik: {}
+
   tools/i18n-scan:
     devDependencies:
       typescript:

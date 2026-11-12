@@ -35,3 +35,13 @@ Surowe dane, z których `tools/osm-import` generuje Lublin 2077 (ADR-0042). Pobi
   - Pobiera je `pnpm osm:fetch --eudem` z `api.opentopodata.org`.
   - Obecnie nieużywane: wszystkie dystrykty mają NMT.
 - **Źródło:** EU-DEM v1.1, Copernicus Land Monitoring Service, Europejska Agencja Środowiska. Produced using Copernicus data and information funded by the European Union.
+
+## Budynki 3D i BDOT10k: GUGiK (ADR-0077)
+
+- **Pliki:** `data/gugik/` (wyciągi pochodne dla całego miasta, kafle 1 km w układzie gry; format w `data/gugik/index.json`), manifest paczek `data/gugik/sources.json` (adres, data pobrania, `Last-Modified`, rozmiar, sha256) i próbki `tools/gugik/test/fixtures/*.gml` (Collegium Maximum).
+  - Modele 3D budynków LoD1 (stan 2024, `measuredHeight`): `opendata.geoportal.gov.pl/InneDane/Budynki3D/LOD1/2024/06/0663.zip`.
+  - Modele 3D budynków LoD2 (CityGML 2.0, stan 2017, kształty dachów): `opendata.geoportal.gov.pl/InneDane/Budynki3D/LOD2/0663_gml.zip`.
+  - Baza Danych Obiektów Topograficznych BDOT10k powiatu 0663 (GeoPackage): `opendata.geoportal.gov.pl/bdot10k/schemat2021/GPKG/06/0663_GPKG.zip`; w wyciągu tylko linie ścian oporowych, umocnień brzegu, murów historycznych, ekranów akustycznych i żywopłotów.
+  - Pobiera je `pnpm gugik:fetch` do pamięci podręcznej poza repo (`${XDG_CACHE_HOME:-~/.cache}/seki-gugik`), wyciągi tworzy `pnpm gugik:extract`. Surowe paczki nie trafiają do repo.
+- **Źródło i licencja:** Główny Urząd Geodezji i Kartografii (geoportal.gov.pl), dane na licencji Creative Commons Uznanie autorstwa 4.0 (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/.
+  - Wyciągi są przetworzone: współrzędne przeliczone z PUWG 1992 (EPSG:2180) do układu gry, obrysy zaokrąglone do 0,1 m, wysokości dachów liczone z powierzchni LoD2.

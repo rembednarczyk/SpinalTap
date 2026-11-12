@@ -1,0 +1,10 @@
+{
+  "name": "@seki/gugik",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "GUGiK building models (LoD1, LoD2) and BDOT10k lines for Lublin: download, compact extracts and the match against the game's buildings (ADR-0077).",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}
