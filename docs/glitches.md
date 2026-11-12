@@ -1662,7 +1662,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-644 Kilkanaście pościgów naraz przepełnia pamięć rastrów okna `near`
-- Status: w PR #439 (12.11; 12 pościgów 45,8 → 0,60 ms mediany kroku; weryfikacja w toku)
+- Status: w PR #439, weryfikator NIE PRZYJĘTE (12.11: wideWay prowadzi drogą wide do starego celu, gdy cel przeszedł na stronę gangera w 8 m; 5/100 wariantów wolniej, 202 → 634 kroki); runda 2 u autora
 - Ważność: S3 · Zasięg: odcięty ganger z planem `wide` nadal co krok pyta okno `near` przez `head(to)` (`ganger-walk.ts:191`); przy ok. 12 pościgach z różnymi celami pamięć `near` (8 rastrów) wypada bez końca: mediana 31,6 ms na krok, 600/600 kroków > 16 ms (main w tym scenariuszu 0,39 ms, 163 kroki > 16 ms tylko na starcie); poprawka: ganger z ważnym planem `wide` nie pyta `near`, albo klucz `near` niezależny od `from`
 - Pakiet właściciela: packages/sim (systems/ai)
 
