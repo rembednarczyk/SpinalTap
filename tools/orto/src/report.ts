@@ -43,7 +43,7 @@ const cellReport = (id: string, osm: OsmData, landuseBareAt: (x: number, z: numb
   // The pavements need the grid only: a district without a raster gets an empty one.
   const region = MAP_REGIONS.find((r) => r.slug === cell.slug)!;
   const runs = chunk ? emptyRuns((cover ?? emptyCover(region.slug, region.rect, THRESHOLDS)).header, chunk, pieces) : [];
-  const barriers = barrierReport(osm, cell.rect, pieces);
+  const barriers = barrierReport(osm, cell.rect, CHUNKS.flatMap((c) => c.barriers ?? []));
   return {
     cell: id,
     rect: cell.rect,
