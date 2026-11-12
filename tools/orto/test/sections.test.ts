@@ -3,13 +3,14 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { type Pt, type Rect } from "../../osm-import/src/geometry.ts";
 import { puwgFrame } from "../../osm-import/src/project.ts";
-import { absentSection } from "../src/absent.ts";
+import { absentSection, gameOnlySection, gameOnlyText } from "../src/absent.ts";
 import { partsSection } from "../src/bare-parts.ts";
 import { cellById, defaultCache } from "../src/config.ts";
 import { coverFor, readCover } from "../src/cover.ts";
 import { fitSection } from "../src/fit.ts";
 import { bestOverlap, components, depthOf, gridOver, opening, rectMask, ringMask } from "../src/grid.ts";
-import { type Registers, knownSection, placesIn, readRegisters, refsInText } from "../src/known.ts";
+import { type Registers, knownSection, knownText, placesIn, readRegisters, refsInText } from "../src/known.ts";
+import { idsOf, placesOf, placesText } from "../src/places.ts";
 import { leanSection } from "../src/lean.ts";
 import { MAP_REGIONS } from "../src/region.ts";
 import { cellSections } from "../src/sections.ts";
@@ -134,6 +135,49 @@ describe("the cell report's sections on made-up cells", () => {
     expect(s.nmpt).toMatch(/NMPT/);
   });
 
+  it("lists the game's buildings LoD2 lacks, with LoD1 2024 within 12 m or none", () => {
+    const game = [
+      { id: "on-lod2", ring: box(5, 5, 15, 15) },
+      { id: "lod1-near", ring: box(30, 5, 40, 15) },
+      { id: "bare", ring: box(5, 40, 13, 48) },
+      { id: "off-cell", ring: box(70, 5, 80, 15) },
+      { id: "lod1-far", ring: box(40, 40, 50, 50) },
+    ];
+    // "bare" has an eighth of it under LoD2, below the quarter; L2 lies 12.04 m from "lod1-far".
+    const lod2 = [box(4, 4, 16, 16), box(5, 40, 6, 48)];
+    const lod1 = [
+      { id: "L1", ring: box(45, 5, 52, 15) },
+      { id: "L2", ring: box(30, 30, 32, 31) },
+    ];
+    const s = gameOnlySection(CELL, game, lod2, lod1);
+    expect(s.buildings.map((b) => [b.id, b.at, b.m2, b.lod2, b.lod1?.id, b.lod1?.distance])).toEqual([
+      ["lod1-near", { x: 35, z: 10 }, 100, 0, "L1", 5],
+      ["lod1-far", { x: 45, z: 45 }, 100, 0, undefined, undefined],
+      ["bare", { x: 9, z: 44 }, 64, 13, undefined, undefined],
+    ]);
+    expect(s.verdict).toBe("budynki gry bez LoD2: 3 (264 m²), z LoD1 2024 w 12 m 1 (niepełny wyciąg LoD2); bez LoD1 i LoD2: lod1-far, bare (sprawdź, czy stoi)");
+    // A quarter under LoD2 is enough.
+    expect(gameOnlySection(CELL, game, [...lod2, box(5, 40, 7, 48)], lod1).buildings.map((b) => b.id)).not.toContain("bare");
+    expect(gameOnlySection(CELL, game.slice(0, 1), lod2, lod1).verdict).toBe("każdy budynek gry w komórce leży na LoD2");
+    expect(gameOnlyText(s)[1]).toBe("  lod1-near (35; 10) 100 m², LoD2 0%, LoD1 2024 L1 70 m² w 5 m");
+  });
+
+  it("calls a low IoU no shift when the best shift gains under 0.02, naming the game's buildings without LoD2", () => {
+    const game = HOUSES.map((ring, i) => ({ id: `g${i}`, ring }));
+    // LoD2 has two of the six houses, one in place and one longer eastwards (its pair 3 m off):
+    // the IoU is low at (0; 0) and no shift helps (podzamcze-2-0: IoU 0.115, pairs 3.47 m).
+    const lod2 = [
+      { id: "l0", ring: box(5, 5, 23, 13) },
+      { id: "l3", ring: HOUSES[3]! },
+    ];
+    const s = fitSection(CELL, game, lod2, 4);
+    expect(s.best.iou - s.iouZero).toBeLessThan(0.02);
+    expect(s.verdict).toMatch(/^niskie IoU z braku danych LoD2 pod 4 budynkami gry/);
+    expect(s.verdict).not.toMatch(/możliwe przesunięcie/);
+    // The same with all of LoD2 shifted by 3 m still reads as a shift.
+    expect(fitSection(CELL, game, HOUSES.map((ring, i) => ({ id: `l${i}`, ring: moved(ring, 3, 0) })), 4).verdict).toMatch(/możliwe przesunięcie/);
+  });
+
   it("links the scan's kinds to the glitches and T rows anywhere in the registers, the cell's first", () => {
     const rect: Rect = { minX: 610, maxX: 760, minZ: -240, maxZ: -40 };
     const note = "trafienia znane (Podwale: sidewalk-under-carriageway 36 i footway-on-carriageway 19 to T-046/G-082, kerb-strip-bare 7 to T-063/G-113; kerb-gap 372: G-451; landuse-bare przy Złotej T-045).";
@@ -171,6 +215,38 @@ describe("the cell report's sections on made-up cells", () => {
     expect(s.verdict).toMatch(/bez odsyłacza w rejestrach: new-kind;/);
     expect(s.verdict).toMatch(/w tej komórce .*: new-elsewhere, only-scan, table-kind/);
     expect(knownSection("x", rect, undefined, reg).missing).toMatch(/map-coverage-hits/);
+  });
+
+  it("places each kind's findings in the cell by 10 m square and names the lanes and elements", () => {
+    const rect: Rect = { minX: 920, maxX: 1120, minZ: 370, maxZ: 580 };
+    expect(idsOf("Podzamcze#107:1>Ruska#110:1 at 12.5")).toEqual(["Podzamcze#107:1>Ruska#110:1"]);
+    expect(idsOf("pad T-002 moves w972606056 (path) by -1.80 m")).toEqual(["w972606056", "T-002"]);
+    expect(idsOf("w179264852 under w40052391 Podwale")).toEqual(["w179264852"]);
+    expect(idsOf("kerb gap 1001.1,461.2, 0.33 m off the road")).toEqual([]);
+    const fill = (n: number, x: number, z: number) => Array.from({ length: n }, () => ({ at: `${x},${z}`, what: `fill at ${x},${z}` }));
+    const found = {
+      "kerb-fill-wide-estimated": [...fill(3, 1001, 461), ...fill(5, 1009.9, 455), ...fill(1, 1020, 470), ...fill(4, 1200, 461), ...[1, 2, 3, 4, 5, 6].flatMap((i) => fill(1, 930 + i * 20, 400))],
+      "lane-dead-end": [
+        { at: "930.4,472.1", what: "Cerkiewna#90:b" },
+        { at: "1000,461", what: "Podzamcze#107:1>Ruska#110:1 at 3.2" },
+        { at: "1000,580", what: "Off#1:0" },
+      ],
+    };
+    const p = placesOf(found["kerb-fill-wide-estimated"], rect);
+    // The square (1000; 450) has 5 samples, (1000; 460) 3; the one off the cell is left out; five squares at most.
+    expect(p.squares.slice(0, 2)).toEqual([
+      { x: 1000, z: 450, samples: 5 },
+      { x: 1000, z: 460, samples: 3 },
+    ]);
+    expect(p.squares).toHaveLength(5);
+    expect(p.ids).toEqual([]);
+    const lanes = placesOf(found["lane-dead-end"], rect);
+    expect(placesText("lane-dead-end", lanes)).toBe("  lane-dead-end: (930; 470) 1, (1000; 460) 1; Cerkiewna#90:b 1, Podzamcze#107:1>Ruska#110:1 1");
+    const reg: Registers = { glitches: "", topography: "", notes: [], scan: "" };
+    const s = knownSection("podzamcze-2-1", rect, { findings: 5, kinds: { "lane-dead-end": 2, "kerb-fill-wide-estimated": 8 } }, reg, found);
+    expect(s.kinds.find((k) => k.kind === "lane-dead-end")!.places).toEqual(lanes);
+    expect(knownText(s)).toContain("  lane-dead-end: (930; 470) 1, (1000; 460) 1; Cerkiewna#90:b 1, Podzamcze#107:1>Ruska#110:1 1");
+    expect(knownText(knownSection("podzamcze-2-1", rect, { findings: 1, kinds: { "lane-dead-end": 1 } }, reg)).join("\n")).toMatch(/nie ma reports\/glitch-scan.json/);
   });
 
   // The checkout's own registers, on main and on the registers' branch: a cell nobody walked still gets the city's references.
