@@ -1,6 +1,6 @@
-import { VEHICLE_SIZE, type VehicleModel } from "@seki/core";
+import { VEHICLE_SIZE, type VehicleModel, pointInPairRingEvenOdd } from "@seki/core";
 import { furnitureNear } from "./furniture-index";
-import { inRing, stripCut } from "./kerb-bays";
+import { stripCut } from "./kerb-bays";
 import { distanceToPiece } from "./lublin/furniture";
 import type { Pt } from "./lublin/roads";
 import { MAP_CHUNKS } from "./lublin/sites";
@@ -58,7 +58,7 @@ export interface KerbStrip {
  * outline, so the car may stand at the kerb but not over it. Infinity for any other point.
  */
 const roomBeyond = (q: Pt, strip: KerbStrip | undefined): number => {
-  if (!strip || inRing(q[0], q[1], strip.ring)) return Infinity;
+  if (!strip || pointInPairRingEvenOdd(q[0], q[1], strip.ring)) return Infinity;
   const on = projectOn(strip.axis, q[0], q[1]);
   if (Math.sign(on.side) !== strip.side) return Infinity;
   const p = pointAt(strip.axis, on.s);

@@ -7,7 +7,7 @@
  * edge with direction (dx, dz) is (dz, -dx).
  */
 
-import { signedArea } from "@seki/core";
+import { pointInRingEvenOdd, signedArea } from "@seki/core";
 
 export { signedArea };
 
@@ -102,15 +102,8 @@ export const triangulate = (ring: readonly P2[]): number[] => {
   return out;
 };
 
-export const pointInRing = (p: P2, ring: readonly P2[]): boolean => {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i] as P2;
-    const b = ring[j] as P2;
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-};
+/** Is `p` inside the ring (crossing number, even-odd: `pointInRingEvenOdd`)? */
+export const pointInRing = (p: P2, ring: readonly P2[]): boolean => pointInRingEvenOdd(p.x, p.z, ring);
 
 export const boundsOf = (ring: readonly P2[]): Box2 => {
   let minX = Infinity;

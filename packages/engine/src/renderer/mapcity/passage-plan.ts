@@ -1,3 +1,4 @@
+import { pointInRingEvenOdd } from "@seki/core";
 import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
 import { darken } from "./facade-style";
 import { type FacadeFrame, type WorldPassage, trimMeta } from "./facade-frame";
@@ -44,16 +45,6 @@ const frameOf = (p: WorldPassage): Frame | null => {
   return { o: p.from, u, n: { x: -u.z, z: u.x }, length };
 };
 
-const pointInRing = (ring: readonly P2[], x: number, z: number): boolean => {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i] as P2;
-    const b = ring[j] as P2;
-    if (a.z > z !== b.z > z && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-};
-
 /**
  * The stretch of the line `s` metres to the left of the passage's axis that lies under the
  * building, as distances along the axis: from the first crossing of the outline (or the start,
@@ -74,8 +65,8 @@ export const spanAt = (ring: readonly P2[], f: Frame, s: number): readonly [numb
     const k = ((a.x - ox) * f.u.z - (a.z - oz) * f.u.x) / den;
     if (k >= 0 && k <= 1 && t > 0 && t < f.length) hits.push(t);
   }
-  const t0 = pointInRing(ring, ox, oz) ? 0 : Math.min(...hits);
-  const t1 = pointInRing(ring, ox + f.u.x * f.length, oz + f.u.z * f.length) ? f.length : Math.max(...hits);
+  const t0 = pointInRingEvenOdd(ox, oz, ring) ? 0 : Math.min(...hits);
+  const t1 = pointInRingEvenOdd(ox + f.u.x * f.length, oz + f.u.z * f.length, ring) ? f.length : Math.max(...hits);
   return Number.isFinite(t0) && Number.isFinite(t1) && t1 > t0 ? [t0, t1] : null;
 };
 
@@ -185,7 +176,7 @@ const ends = (sink: MeshSink, ring: readonly P2[], f: Frame, p: WorldPassage, c:
       const span = spanAt(ring, f, s);
       return span ? span[end] + (end === 0 ? -0.01 : 0.01) : null;
     };
-    const mouth = !pointInRing(ring, f.o.x + f.u.x * f.length * end, f.o.z + f.u.z * f.length * end);
+    const mouth = !pointInRingEvenOdd(f.o.x + f.u.x * f.length * end, f.o.z + f.u.z * f.length * end, ring);
     for (let k = 0; k + 1 < pts.length; k++) {
       const a = pts[k] as { s: number; y: number };
       const b = pts[k + 1] as { s: number; y: number };
