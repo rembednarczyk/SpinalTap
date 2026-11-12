@@ -50,7 +50,7 @@ Raport podaje procent komórek w każdym statusie dla miasta i dzielnic oraz kol
 
 Wszystkie 20 komórek ma status `przejrzane`. Dziesięć przeszło starą metodą z kuratorem (przed 12.11: krakowskie-0-0, krakowskie-0-1, krakowskie-1-1, stare-miasto-0-0, podzamcze-0-1, podzamcze-1-1; 12.11: podzamcze-1-0, stare-miasto-1-0, krakowskie-1-0, stare-miasto-1-1), dziesięć metodą raportu komórki bez osobnego przeglądu kuratora (krakowskie-2-0, krakowskie-2-1, stare-miasto-0-1, podzamcze-0-0, podzamcze-2-0, podzamcze-2-1, nabrzeze-0-0, nabrzeze-0-1, nabrzeze-1-0, nabrzeze-1-1). Koszt przejścia: stara metoda 350–500 tys. tokenów na komórkę, metoda raportu 68–105 tys., dwie sąsiednie komórki jednym opiekunem ok. 35–45 tys. na komórkę.
 
-Goły teren każdej komórki jest jednym wpisem (G-704, G-705, G-709–G-718, wiersze T-266–T-279); poprawka całościowa idzie regułami ADR-0077 (krok 1.1 i dalsze), nie ręcznymi obszarami.
+Goły teren każdej komórki jest jednym wpisem (G-704, G-705, G-709–G-718, od porządków 12.11 w klasie G-726; wiersze T-266–T-279); poprawka całościowa idzie regułami ADR-0077 (krok 1.1 i dalsze), nie ręcznymi obszarami.
 
 Paczka do przeglądu kuratora (komórki zamknięte bez niego, sprawy zebrane w akapitach przejść w `docs/topografia.md`):
 - końce pasów `lane-dead-end` bez opisu w G-022/G-024: Lubartowska, Furmańska, Cyrulicza (podzamcze-0-0), Lubartowska>Aleja Tysiąclecia (podzamcze-2-0), Cerkiewna, Podzamcze>Ruska (podzamcze-2-1), Mełgiewska (nabrzeze-0-0), Turystyczna, Andersa (nabrzeze-0-1);
