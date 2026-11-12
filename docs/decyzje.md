@@ -42,3 +42,7 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 ## Urządzenie docelowe i APK (12.11)
 - Decyzja użytkownika: urządzeniem odniesienia jest mocny telefon klasy Xiaomi 15T Pro. Nowe progi są docelowe, nie tymczasowe: wierzchołki całego miasta w pamięci do 2,5 mln (było 1 mln), budżety wywołań rysowania i aktywnych siatek scen +40%. Scena `phone-low` (słabsze telefony) bez zmian. Dalsze optymalizacje (doładowywanie, dłuższe ładowanie na starcie) później, gdy będą potrzebne.
 - Decyzja użytkownika: ograniczenia przeglądarki rozwiązujemy instalacją gry na telefonie jako `.apk`. APK budowany przy każdym większym wydaniu. Szczegóły w ADR-0079.
+
+## Tokeny przy mapowaniu (12.11)
+- Decyzja użytkownika: (1) powtarzane sondy przejść (obrysy wobec LoD2 po IoU, przechył nalotów, podwórza i przedpola z gołego terenu, odległość od ścian) stają się stałymi sekcjami raportu `tools/orto/src/report.ts --cell`, przed kolejnymi przejściami komórek; (2) kurator tylko dla nowych znalezisk, komórki z samymi znanymi rodzajami zamyka opiekun, kurator przegląda je paczką; (3) opiekun na tańszym modelu, gdy raport będzie skryptowy.
+- Reguła stała: gdy orkiestrator albo agent widzi miejsce, gdzie tokeny idą na powtarzaną pracę (te same sondy, ta sama analiza dwa razy, odtwarzanie raportów), od razu proponuje i wdraża skrypt, sekcję raportu albo zmianę procesu.
