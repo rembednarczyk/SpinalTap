@@ -1761,6 +1761,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (rozstawienie rekwizytów, `props-*`)
 - Test przyjęcia: brak rekwizytów w strefie wejść Trybunału i innych zabytków Rynku (kontrola skanu dla stref wejść, baza obniżona); zrzut dzienny przed/po
 
+### G-731 NPC stoją w pozie z rękami do góry
+- Status: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu” (po mapowaniu, pierwszy priorytet)
+- Ważność: S3 (widoczne na każdym kroku, wiele postaci) · Zasięg: domyślna poza części NPC z modelami VRM to ręce do góry, czyli T-/A-poza pliku modelu; przypuszczalnie przeniesienie pozy z riga (`HumanoidRetarget`, ADR-0076, decyzja „ramiona opuszczone zamiast T-pozy pliku”) nie działa albo działa za późno w części przypadków — możliwa regresja; do ustalenia: które postacie, kiedy (wczytanie, podmiana modelu, LOD, poza aktywności)
+- Pakiet właściciela: packages/engine (renderer: modele postaci, retarget)
+- Test przyjęcia: test renderera, że żadna postać z modelem nie ma w żadnej klatce kąta ramion T-/A-pozy (poza zamierzonymi pozami); zrzut tłumu przed/po
+
+### G-732 NPC w pozie siedzącej idzie, nogi niewidoczne
+- Status: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu”
+- Ważność: S3 · Zasięg: część NPC z modelami przesuwa się w pozie siedzenia (ADR-0040 aktywności, ADR-0058 etap 8 pozy przy ławkach), a nogi nie są widoczne; przypuszczalnie poza aktywności `sit` zostaje po wyjściu z miejsca siedzenia albo ukrycie nóg pod siedziskiem nie jest zdejmowane przy ruchu; to błąd przełączania stanu (siedzi albo idzie), nie brak klipu
+- Pakiet właściciela: packages/engine (`activity-poses.ts`, modele postaci), ewentualnie packages/sim (stan aktywności)
+- Test przyjęcia: test sesji, że postać w ruchu (prędkość > 0) nigdy nie ma pozy `sit` ani ukrytych nóg; przejście siad → wstawanie → chód w kolejności; zrzut przed/po
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
