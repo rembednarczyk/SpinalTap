@@ -18,14 +18,60 @@ const LIFT = 0.05;
 export const MIN_RISER = 0.045;
 
 /**
+ * Whether the side a-c of a band runs along the map's edge, a side of a chunk's terrain with no
+ * terrain past it: the renderer's and the glitch scan's `TerrainEntries.onMapEdge`, which looks
+ * for a terrain `EDGE_PROBE` past the side. Not "a terrain at the side plus a hair", which every
+ * terrain answers within its margin, so it never saw the edge (G-703).
+ */
+export type MapEdgeAt = (a: P2, c: P2) => boolean;
+
+/**
+ * The ground `terrain` read on the map's side of its edge where the edge cut the band: the import
+ * cuts a way along a chunk's edge, so a side of the band at its bounds may be the map's edge. A
+ * band the edge cuts slantwise has a box running past the edge, and a drape's normals look 0.75 m
+ * past its vertices; the ground there, off every chunk, is 0, and a riser down to it was a wall
+ * of 20 m (G-703). At a seam between chunks the ground goes on and is read as it is, so the bands
+ * on both sides share it. The surface under a point (`surfaceAt`, a bridge's deck, G-301) is read
+ * with the same cut.
+ */
+const onItsSide = (ring: readonly P2[], terrain: HeightAt, mapEdgeAt: MapEdgeAt): HeightAt => {
+  const cutAt = (of: (p: P2) => number, side: number) => {
+    const v = side * Math.max(...ring.map((p) => side * of(p)));
+    const cut = ring.some((p, i) => {
+      const q = ring[(i + 1) % ring.length] as P2;
+      return of(p) === v && of(q) === v && mapEdgeAt(p, q);
+    });
+    return cut ? v : side * Infinity;
+  };
+  const [x0, x1] = [-1, 1].map((side) => cutAt((p) => p.x, side)) as [number, number];
+  const [z0, z1] = [-1, 1].map((side) => cutAt((p) => p.z, side)) as [number, number];
+  if (x0 === -Infinity && x1 === Infinity && z0 === -Infinity && z1 === Infinity) return terrain;
+  const clampX = (x: number) => Math.min(x1, Math.max(x0, x));
+  const clampZ = (z: number) => Math.min(z1, Math.max(z0, z));
+  const cut = (surface: HeightAt): HeightAt => (x, z) => surface(clampX(x), clampZ(z));
+  const under = terrain.surfaceAt;
+  if (!under) return cut(terrain);
+  // The drape reads each surface once per corner of its grid, by the surface: one cut per surface.
+  const cuts = new Map<HeightAt, HeightAt>();
+  const surfaceAt = (x: number, z: number): HeightAt => {
+    const s = under(clampX(x), clampZ(z));
+    let c = cuts.get(s);
+    if (!c) cuts.set(s, (c = cut(s)));
+    return c;
+  };
+  return Object.assign(cut(terrain), { surfaceAt });
+};
+
+/**
  * A flight of outdoor steps (ADR-0044) on one straight run of a map's `highway=steps`: the band's
  * long side is the run, cut into treads `STEP_DEPTH` deep. Each tread is level at the terrain
  * height at its higher end and a riser joins it to the next, so the flight follows the slope in
  * steps instead of lying on it as a ramp or sinking into it. A run on ground too gentle for
- * `MIN_RISER` lies on it as paving instead.
+ * `MIN_RISER` lies on it as paving instead. `mapEdgeAt` tells where the map's edge cut the band (G-703).
  */
-export const planSteps = (sink: MeshSink, ring: readonly P2[], h: HeightAt): void => {
+export const planSteps = (sink: MeshSink, ring: readonly P2[], terrain: HeightAt, mapEdgeAt: MapEdgeAt = () => false): void => {
   if (ring.length < 3) return;
+  const h = onItsSide(ring, terrain, mapEdgeAt);
   const box = orientedBox(ring);
   const length = box.halfLong * 2;
   if (length < STEP_DEPTH || box.halfShort < 0.2) return;
