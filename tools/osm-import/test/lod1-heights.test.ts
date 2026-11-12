@@ -109,15 +109,22 @@ describe("the import's heights", () => {
     ["Pałac Zylbera", "w55897095"],
   ])("%s stands in the committed tables at its LoD1 height", (_, id) => {
     const b = game(id);
+    // Żołnierzy Niepodległej 3 and 3 Maja 12 have their eaves and ridge from LoD2 (G-639): LoD1 lies between them.
+    if (b.source === "lod2") {
+      expect(measured(b)!).toBeGreaterThanOrEqual(b.height - 3);
+      expect(measured(b)!).toBeLessThanOrEqual(b.height + b.roof! + 3);
+      return;
+    }
     expect(b.source).toBe("lod1");
     expect(b.height + (b.roof ?? 0) / 2).toBeCloseTo(measured(b)!, 0);
   });
 
   it("shows Kowalska 7's four storeys from the street on the scarp (G-629)", () => {
     const b = game("w66309807");
-    expect(b.source).toBe("lod1");
+    // Its eaves from LoD2 at 11.1 m over the foot (G-639): four storeys of 2.6 m and more.
+    expect(b.source).toBe("lod2");
     expect(b.levels).toBe(4);
-    expect(b.height - b.plinth).toBeGreaterThanOrEqual(4 * 3.2 - 1e-9);
+    expect(b.height - b.plinth).toBeGreaterThanOrEqual(4 * 2.6 - 1e-9);
   });
 
   it("stands Trybunał Koronny no lower than the Rynek's tenements round it (G-631)", () => {

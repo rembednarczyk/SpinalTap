@@ -204,8 +204,8 @@ describe("map city batches (ADR-0044)", () => {
     expect(city.lodAt(0, 0)).toBe("near");
     expect(s.near).toBeGreaterThan(0);
     expect(s.far).toBeGreaterThan(0);
-    // Everything resident at once stays under a million vertices.
-    expect(s.vertices).toBeLessThan(1_000_000);
+    // Everything resident at once stays under the target device's budget (ADR-0079: 2.5 million).
+    expect(s.vertices).toBeLessThan(2_500_000);
   });
 
   it("takes a church's towers away while a part from the map stands on it, in whatever cell (G-057)", () => {

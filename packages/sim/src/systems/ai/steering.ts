@@ -515,14 +515,18 @@ export const chaseWork = (world: World<Entity>, from: Vec3, goal: Vec3, raster: 
 /**
  * Starts making the wide way of a chase to `goal` for a walker at `from` (G-643), which
  * `advanceChaseDetours` goes on with a slice a step; `chaseDetour` asked for it before it is made
- * makes the rest at once.
+ * makes the rest at once. Before the first started one that `before` holds for (G-694), else last.
  */
-export const startChaseDetour = (world: World<Entity>, from: Vec3, goal: Vec3): void => {
+export const startChaseDetour = (world: World<Entity>, from: Vec3, goal: Vec3, before: (goal: Vec3) => boolean = () => false): void => {
   const { floor, reach, key } = chaseKey(world, from, goal);
   let started = jobs.get(world);
   if (!started) jobs.set(world, (started = []));
-  started.push({ goal, key, steps: fieldSteps(world, WIDE_WINDOW, floor, reach, goal) });
+  const at = started.findIndex((j) => before(j.goal));
+  started.splice(at < 0 ? started.length : at, 0, { goal, key, steps: fieldSteps(world, WIDE_WINDOW, floor, reach, goal) });
 };
+
+/** Would walkers at `a` and at `b` after `goal` share its wide way (the floor and the decks' reach it is kept by)? */
+export const sameChaseKey = (world: World<Entity>, a: Vec3, b: Vec3, goal: Vec3): boolean => chaseKey(world, a, goal).key === chaseKey(world, b, goal).key;
 
 /**
  * Makes up to about `budget` units of the wide ways started (G-643), the first started first, two

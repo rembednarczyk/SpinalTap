@@ -4,7 +4,7 @@ import type { SimContext } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
 import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
 import { type Detour, SAME_FLOOR, chaseDetour, detourStep, followDetour, cutOffNear, planDetour, straightWalk } from "./steering";
-import { CHASE_DRIFT, planChase } from "./chase-plan";
+import { CHASE_DRIFT, lentChase, planChase } from "./chase-plan";
 import type { Ganger } from "./ganger-perception";
 import type { WalkPlan, WalkProgress } from "../../world/components";
 
@@ -26,6 +26,8 @@ const STUCK_DISTANCE = 0.4;
 const UNSTICK_TIME = 1.2;
 /** Sideways share of the walk while getting unstuck. */
 const SIDESTEP = 0.6;
+/** How far ahead the walk of a ganger waiting for its wide way must be free (G-694, m). */
+const FEELER = 1.5;
 /** Characters this close count as obstacles in the repath of a stuck walker. */
 const CROWD_RADIUS = 8;
 /** The repath is for this goal; a goal that moved further than this needs the ordinary way. */
@@ -104,14 +106,20 @@ export class GangerWalk {
       let step = vaulted ? null : (this.wideWay(to) ?? (this.awaiting(to) ? null : this.head(to)));
       if (!step && !vaulted) {
         const chase = this.chase(to);
-        // Its first wide way being made (G-643), it waits standing; getting unstuck, it keeps to its
-        // sidestep towards the goal meanwhile. Standing there on the flight off Zamkowa's viaduct
-        // (G-255) it settled at the foot of a rise more than a step high that its way then led into.
-        if (chase === WAIT && !(self.walk?.chaseNext && this.unsticking())) {
+        // Its first wide way being made (G-643), it walks meanwhile (G-694): along another's made one
+        // (`chase`), else towards the goal so long as the walk ahead is free (`seek`). It stood there
+        // for as long as all the ways asked before its own took, some 13 steps a goal; walking blind
+        // up to the barrier, by the bend of the flight off Zamkowa's viaduct (G-255) or pressed against
+        // a thin fence, it got where neither way led it off.
+        if (chase === WAIT && !self.walk?.chaseNext) {
           self.velocity = { x: 0, y: 0, z: 0 };
           return;
         }
-        step = chase === WAIT ? to : chase;
+        if (chase === WAIT) {
+          if (!this.seek(to)) self.velocity = { x: 0, y: 0, z: 0 };
+          return;
+        }
+        step = chase;
       }
       if (step || (!raised && vaulted)) {
         this.goal = to;
@@ -175,8 +183,8 @@ export class GangerWalk {
   /**
    * A chase the near window does not lead (G-625): the step along the wide way to the goal it
    * keeps (`WalkProgress.chase`, saved), planned anew when its target moved `CHASE_DRIFT` away
-   * (`planChase`); along the old way until the new one is ready (`chaseNext`), or it waits with
-   * none. Null when the wide way does not lead there either. Only a chase: a walk home or to a node
+   * (`planChase`); along the old way until the new one is ready (`chaseNext`), or with none along
+   * another's that brings it nearer (`lentChase`, G-694), or it waits. Null when the wide way does not lead there either. Only a chase: a walk home or to a node
    * keeps to the near window, which got it there so far; the wide way of a calm guard's walk home
    * in the docks ran onto the end of a pier, a step the raster takes for level ground and the legs
    * do not climb (as G-339), and it stood there for good.
@@ -186,11 +194,16 @@ export class GangerWalk {
     if (!ctx || !self) return null;
     const drifted = (g: Vec3 | null | undefined) => !g || Math.hypot(g.x - goal.x, g.z - goal.z) > CHASE_DRIFT;
     if (drifted(self.walk?.chase) && drifted(self.walk?.chaseNext?.goal)) {
-      const patch = planChase(ctx, self.position, goal);
+      const patch = planChase(ctx, self.position, goal, !self.walk?.chase);
       if (patch) this.keep(ctx, self, patch);
     }
     const way = self.walk?.chase ?? null;
-    if (!way) return WAIT;
+    if (!way) {
+      // Its own being made (G-694): meanwhile along another's made way that brings it nearer.
+      const lent = lentChase(ctx, self.position, goal);
+      const detour = lent ? chaseDetour(ctx.world, self.position, lent) : null;
+      return (detour && followDetour(detour, self.position)) ?? WAIT;
+    }
     const detour = chaseDetour(ctx.world, self.position, way);
     return detour ? followDetour(detour, self.position) : null;
   }
@@ -220,9 +233,9 @@ export class GangerWalk {
    * Is the wide way to about `goal` being made for it, with the straight walk blocked (G-643)? It
    * waits for it on the way it has, or standing, without asking the near window, which found the
    * goal cut off when it asked for it: a dozen of them after a dozen goals, asking it every step
-   * while they wait, pushed its rasters out of the memo (G-644). With no way yet it stands even
-   * while getting unstuck: on the sidestep it took for those steps, by the bend of the flight off
-   * Zamkowa's viaduct (G-255), it pressed itself into a corner that neither way leads out of.
+   * while they wait, pushed its rasters out of the memo (G-644). With no way yet, getting unstuck
+   * too, it walks as `chase` has it: on the sidestep it took for those steps, by the bend of the
+   * flight off Zamkowa's viaduct (G-255), it pressed itself into a corner that neither way leads out of.
    */
   private awaiting(goal: Vec3): boolean {
     const { ctx, self } = this.at;
@@ -231,13 +244,39 @@ export class GangerWalk {
     return Math.hypot(next.goal.x - goal.x, next.goal.z - goal.z) <= CHASE_DRIFT && !straightWalk(ctx.world, self.position, goal);
   }
 
+  /**
+   * With no way yet to walk while its own is made (G-694): towards `goal`, leaning to its side as
+   * when it gets unstuck, or to the other, so long as the straight walk `FEELER` ahead is free. Not
+   * up to the barrier: pressed against a thin fence the near window takes a cell behind it for its
+   * own, and neither way led it off there. False, standing, with both sides blocked.
+   */
+  private seek(goal: Vec3): boolean {
+    const { ctx, self } = this.at;
+    if (!ctx || !self) return false;
+    const from = self.position;
+    const d = Math.hypot(goal.x - from.x, goal.z - from.z);
+    if (d < 1e-6) return false;
+    const [dx, dz] = [(goal.x - from.x) / d, (goal.z - from.z) / d];
+    const side = self.walk?.side ?? firstSide(self);
+    for (const s of [side, -side]) {
+      const [x, z] = [dx - dz * s * SIDESTEP, dz + dx * s * SIDESTEP];
+      const k = FEELER / Math.hypot(x, z);
+      const ahead = { x: from.x + x * k, y: from.y, z: from.z + z * k };
+      if (!straightWalk(ctx.world, from, ahead)) continue;
+      this.goal = goal;
+      this.moveTowards(ahead.x, ahead.z, false);
+      return true;
+    }
+    return false;
+  }
+
   private unsticking(): boolean {
     const { ctx, self } = this.at;
     const progress = self?.walk;
     return !!ctx && !!progress && ctx.tick < progress.unstickUntil;
   }
 
-  private moveTowards(x: number, z: number): void {
+  private moveTowards(x: number, z: number, sidestep = true): void {
     const self = this.at.self;
     if (!self) return;
     const dx = x - self.position.x;
@@ -252,7 +291,7 @@ export class GangerWalk {
     let ux = dx / d;
     let uz = dz / d;
     const p = self.walk;
-    if (p && !p.plan && this.unsticking()) {
+    if (sidestep && p && !p.plan && this.unsticking()) {
       // Getting unstuck: lean to one side of the way, so two walkers jammed in a gap part.
       const sx = ux + -uz * p.side * SIDESTEP;
       const sz = uz + ux * p.side * SIDESTEP;

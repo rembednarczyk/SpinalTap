@@ -4,6 +4,7 @@
  * near-touching neighbours all come out right, to well under 1 % at the grid used), and the
  * distance from a point to a polyline for the barrier buffer.
  */
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { pointInRing, type Pt, type Rect, ringBounds, signedArea } from "../../osm-import/src/geometry.ts";
 
 export interface Footprint {
@@ -112,22 +113,16 @@ export const distToLine = (p: Pt, line: readonly Pt[]): number => {
   return best;
 };
 
-/** A spatial bin index of boxes, 50 m cells. */
+/** A spatial index of boxes in core's `SpatialHash`, 50 m cells. */
 export class BoxIndex<T extends { readonly box: Rect }> {
-  private readonly bins = new Map<string, T[]>();
-  private readonly cell: number;
+  private readonly grid: SpatialHash<T>;
   constructor(items: readonly T[], cell = 50) {
-    this.cell = cell;
-    for (const it of items) for (const k of this.keys(it.box)) (this.bins.get(k) ?? this.bins.set(k, []).get(k)!).push(it);
+    this.grid = new SpatialHash<T>(cell);
+    for (const it of items) this.grid.insert(it, it.box.minX, it.box.minZ, it.box.maxX, it.box.maxZ);
   }
-  private *keys(b: Rect) {
-    for (let i = Math.floor(b.minX / this.cell); i <= Math.floor(b.maxX / this.cell); i++)
-      for (let j = Math.floor(b.minZ / this.cell); j <= Math.floor(b.maxZ / this.cell); j++) yield `${i},${j}`;
-  }
+  /** The items whose boxes overlap `b` grown by `pad` (not only touch it), each once, in their order. */
   near(b: Rect, pad = 0): T[] {
     const q = { minX: b.minX - pad, maxX: b.maxX + pad, minZ: b.minZ - pad, maxZ: b.maxZ + pad };
-    const out = new Set<T>();
-    for (const k of this.keys(q)) for (const it of this.bins.get(k) ?? []) if (boxesOverlap(q, it.box)) out.add(it);
-    return [...out];
+    return this.grid.query(q.minX, q.minZ, q.maxX, q.maxZ).filter((it) => boxesOverlap(q, it.box));
   }
 }

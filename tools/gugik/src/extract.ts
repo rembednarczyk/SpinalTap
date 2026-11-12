@@ -114,6 +114,17 @@ writeTiles(
   byTile(lod1.map(({ b, ring, tile }) => ({ tile, row: [b.id, r1(b.measuredHeight ?? (b.top ?? b.ground) - b.ground), r1(b.ground), encode(ring)] satisfies Lod1Row }))),
 );
 
+/** LoD2 roof types with a ridge the renderer lays along an axis: skillion, double saltbox, gabled, half-hipped, mansard. */
+const RIDGED = new Set([1010, 1020, 1030, 1050, 1060]);
+
+/** The ridge's direction in the world, degrees from +x towards +z in [0, 180): across the fall, measured at `at`. */
+const ridgeDegrees = (at: readonly [number, number, number], fall: { readonly e: number; readonly n: number }): number => {
+  const a = puwgToWorld(at[0], at[1]);
+  const b = puwgToWorld(at[0] + fall.e * 10, at[1] + fall.n * 10);
+  const deg = (Math.atan2(b.z - a.z, b.x - a.x) * 180) / Math.PI + 90;
+  return Math.round(((deg % 180) + 180) % 180) % 180;
+};
+
 // A LoD2 footprint that is its LoD1 footprint (same BDOT10k id, IoU ≥ 0.9) is stored once, in LoD1's tile.
 const lod1ById = new Map(lod1.map((p) => [p.b.id, p]));
 let shared = 0;
@@ -129,6 +140,18 @@ const lod2 = buildings("lod2", parseLod2).map(({ b, ring, tile }) => {
     b.ridge !== undefined ? r1(b.ridge - b.ground) : null,
     same ? null : encode(ring),
   ];
+  // The main mass (G-639): eaves and ridge where not the whole roof's, the ridge's direction for
+  // the roofs with one, the shell's eaves where a sliver sets them lower.
+  const m = b.main;
+  if (m) {
+    const eaves = r1(m.eaves - b.ground);
+    const ridge = r1(m.ridge - b.ground);
+    const shell = r1(m.shellEaves - b.ground);
+    const dir = m.fall && RIDGED.has(b.roofType ?? 0) ? ridgeDegrees(b.footprint[0]![0]!, m.fall) : null;
+    const tail = [eaves !== row[3] ? eaves : null, ridge !== row[4] ? ridge : null, dir, shell !== eaves ? shell : null];
+    while (tail.length > 0 && tail[tail.length - 1] === null) tail.pop();
+    row.push(...tail);
+  }
   return { tile: same ? twin.tile : tile, row };
 });
 writeTiles("lod2", byTile(lod2));
@@ -152,7 +175,7 @@ const index = {
   tile: "1 km world tiles <tx>_<tz>: centroid x in [tx, tx + 1) km, z in [tz, tz + 1) km",
   outline: "counter-clockwise ring, decimetres, delta-coded [x0, z0, dx1, dz1, ...]",
   lod1: { heights: "PL-EVRF2007-NH", row: "[buildingId, measuredHeight, ground, outline]", tiles: count("lod1") },
-  lod2: { heights: "PL-KRON86-NH", row: "[buildingId, roofType, ground, eaves over ground, ridge over ground, outline | null = the LoD1 outline of the same id]", tiles: count("lod2") },
+  lod2: { heights: "PL-KRON86-NH", row: "[buildingId, roofType, ground, eaves over ground, ridge over ground, outline | null = the LoD1 outline of the same id, main eaves | null, main ridge | null (over ground, null: the whole roof's), ridge direction | null (degrees from +x towards +z, gabled-like roofs), main shell's eaves with slivers when lower]", tiles: count("lod2") },
   bdot: { row: "[LOKALNYID, RODZAJ, line]", file: "bdot.json" },
 };
 writeFileSync(join(OUT, "index.json"), `${JSON.stringify(index, null, 1)}\n`);

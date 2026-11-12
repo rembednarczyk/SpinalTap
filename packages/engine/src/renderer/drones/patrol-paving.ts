@@ -14,7 +14,12 @@ const cellOf = (x: number, z: number): number => pairKey(Math.floor(x / CELL), M
 /** At most this many corners' ground heights are kept. */
 const CORNERS_KEPT = 50_000;
 
-/** A ring's triangles (`triangulate`, three corners each) by the cells their boxes touch. */
+/**
+ * A ring's triangles (`triangulate`, three corners each) by the cells their boxes touch. Not core's
+ * `SpatialHash`, on purpose: it is laid lazily, a piece's when a point first falls on it, a cell
+ * holds the corners themselves, flat, and one cell key serves every piece under the point, so the
+ * pool's 585 reads walk the lists as they are, with no boxes, handles or array per read.
+ */
 const trianglesByCell = (ring: readonly P2[]): Map<number, number[]> => {
   const tris = triangulate(ring);
   const cells = new Map<number, number[]>();

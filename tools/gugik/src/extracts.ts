@@ -9,9 +9,13 @@
  * - `index.json`: header (sources, licence, frame, row formats) and the tiles with their counts;
  * - `lod1/<tile>.json`: `[id, measuredHeight, ground, outline]`, ground in m above sea level
  *   (PL-EVRF2007-NH);
- * - `lod2/<tile>.json`: `[id, roofType, ground, eaves, ridge, outline]`, eaves and ridge in metres
- *   over the ground (PL-KRON86-NH), `null` without roof surfaces; outline `null` when it is the
- *   LoD1 outline of the same id (the same BDOT10k footprint, IoU ≥ 0.9), then in the same tile;
+ * - `lod2/<tile>.json`: `[id, roofType, ground, eaves, ridge, outline, mainEaves?, mainRidge?, ridgeDir?, shellEaves?]`, eaves and
+ *   ridge in metres over the ground (PL-KRON86-NH), `null` without roof surfaces; outline `null`
+ *   when it is the LoD1 outline of the same id (the same BDOT10k footprint, IoU ≥ 0.9), then in
+ *   the same tile; `mainEaves`, `mainRidge` those of the main mass (`citygml.ts` `mainRoof`),
+ *   null where they are the whole roof's; `ridgeDir` the main ridge's direction in degrees from
+ *   +x towards +z, [0, 180), for skillion, gabled, half-hipped and mansard roofs; `shellEaves` the
+ *   main shell's lowest point where a sliver sets it under `mainEaves`; trailing nulls left out;
  * - `bdot.json`: `[id, kind, line]` for the whole city, kind the BDOT10k `RODZAJ`, line delta-coded.
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -23,7 +27,7 @@ export const DATA_DIR = join(REPO, "data/gugik");
 export const TILE = 1000;
 
 export type Lod1Row = [id: string, measuredHeight: number, ground: number, outline: number[]];
-export type Lod2Row = [id: string, roofType: number | null, ground: number, eaves: number | null, ridge: number | null, outline: number[] | null];
+export type Lod2Row = [id: string, roofType: number | null, ground: number, eaves: number | null, ridge: number | null, outline: number[] | null, mainEaves?: number | null, mainRidge?: number | null, ridgeDir?: number | null, shellEaves?: number | null];
 export type BdotRow = [id: string, kind: string, line: number[]];
 
 export interface Lod1Building {
@@ -39,6 +43,13 @@ export interface Lod2Building {
   readonly ground: number;
   readonly eaves?: number;
   readonly ridge?: number;
+  /** The eaves and the ridge of the main mass over the ground (`citygml.ts` `mainRoof`): the whole roof's when absent from the row. */
+  readonly mainEaves?: number;
+  readonly mainRidge?: number;
+  /** The main ridge's direction, degrees from +x towards +z in [0, 180) (gabled-like roofs). */
+  readonly ridgeDir?: number;
+  /** The main shell's eaves with its slivers, where lower than `mainEaves`. */
+  readonly shellEaves?: number;
   readonly ring: Pt[];
 }
 
@@ -107,7 +118,7 @@ export const loadLod1 = (tiles?: readonly string[], dir = DATA_DIR): Lod1Buildin
 export const loadLod2 = (tiles?: readonly string[], dir = DATA_DIR): Lod2Building[] =>
   tileFiles(join(dir, "lod2"), tiles).flatMap((f) => {
     const lod1 = new Map(rows<Lod1Row>(f.replace(/lod2([/\\][^/\\]+)$/, "lod1$1"), "buildings").map((r) => [r[0], r[3]]));
-    return rows<Lod2Row>(f, "buildings").flatMap(([id, roofType, ground, eaves, ridge, o]) => {
+    return rows<Lod2Row>(f, "buildings").flatMap(([id, roofType, ground, eaves, ridge, o, mainEaves, mainRidge, ridgeDir, shellEaves]) => {
       const outline = o ?? lod1.get(id);
       if (!outline) return [];
       return [
@@ -118,6 +129,10 @@ export const loadLod2 = (tiles?: readonly string[], dir = DATA_DIR): Lod2Buildin
           ...(roofType !== null ? { roofType } : {}),
           ...(eaves !== null ? { eaves } : {}),
           ...(ridge !== null ? { ridge } : {}),
+          ...(mainEaves != null ? { mainEaves } : eaves !== null ? { mainEaves: eaves } : {}),
+          ...(mainRidge != null ? { mainRidge } : ridge !== null ? { mainRidge: ridge } : {}),
+          ...(ridgeDir != null ? { ridgeDir } : {}),
+          ...(shellEaves != null ? { shellEaves } : {}),
         },
       ];
     });

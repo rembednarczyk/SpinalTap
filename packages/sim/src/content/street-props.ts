@@ -1,4 +1,4 @@
-import { FIGURE_HOSTS, FIGURE_REACH, type StreetPropItem, figureLayout, isSitting, seatAt } from "@seki/core";
+import { FIGURE_HOSTS, FIGURE_REACH, type StreetPropItem, figureLayout, isSitting, seatAt, segmentDistance } from "@seki/core";
 import type { ActorDef, Rect, StaticProp } from "./builders";
 import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_ACTORS, KANAL_PROPS } from "./district-kanal";
@@ -32,15 +32,6 @@ const gameBlocks: readonly Rect[] = GAME_PROPS.flatMap((p) =>
 ).concat(METRO_FOOTPRINTS);
 
 type Pt = { readonly x: number; readonly z: number };
-
-/** Horizontal distance from (x, z) to the segment a..b. */
-const segmentDistance = (x: number, z: number, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const len2 = dx * dx + dz * dz || 1;
-  const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / len2));
-  return Math.hypot(x - (a.x + dx * t), z - (a.z + dz * t));
-};
 
 /** Plac Łokietka on foot: from the deptak across the square to the mouth of Brama Krakowska (ADR-0045). */
 const GATE_WALK: readonly Pt[] = [
@@ -96,7 +87,7 @@ export const clearOfGame = (x: number, z: number, r: number, pad = 0): boolean =
   !CLEARED_BUILDINGS.some((c) => distanceToRect(x, z, c) < 2 + pad) &&
   !gameBlocks.some((b) => distanceToRect(x, z, b) < FURNITURE_CLEARANCE + pad) &&
   !GAME_ACTORS.some((a) => Math.hypot(a.spawn.position.x - x, a.spawn.position.z - z) < FURNITURE_CLEARANCE + pad) &&
-  !KEEP_CLEAR.some(([a, b]) => segmentDistance(x, z, a, b) < r + 0.7) &&
+  !KEEP_CLEAR.some(([a, b]) => segmentDistance(x, z, a.x, a.z, b.x, b.z) < r + 0.7) &&
   !inPassage(x, z, r);
 
 /** How far a stall's stock stands from it (ADR-0058 stage 3, `props-food.ts`: beside its canvas), at most. */

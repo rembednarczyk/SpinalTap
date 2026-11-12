@@ -77,7 +77,7 @@ export const cityPlan = (): PropsPlan => JSON.parse(readFileSync(join(REPO, "doc
 export const generatedCity = (): Generated =>
   cached("generate", () => {
     const inputs = loadInputs();
-    return generate(inputs.osm, inputs.src, undefined, undefined, undefined, inputs.covers);
+    return generate(inputs.osm, inputs.src, undefined, undefined, undefined, undefined, inputs.covers);
   });
 
 /** `generateProps` of the plan over the committed tables, with no node tags, boards or market. */
