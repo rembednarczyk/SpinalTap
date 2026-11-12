@@ -39,10 +39,10 @@ describe("the eaves from LoD1 measuredHeight", () => {
 describe("what keeps its own height", () => {
   const plain = { id: "w1", use: "residential" as const };
 
-  it("churches, historic buildings, towers, parts and buildings crowned by them", () => {
+  it("churches, towers, parts and buildings crowned by them; not historic buildings (G-632)", () => {
     expect(lod1Exempt(plain)).toBeUndefined();
     expect(lod1Exempt({ ...plain, use: "church" })).toBe("church");
-    expect(lod1Exempt({ ...plain, use: "historic" })).toBe("historic");
+    expect(lod1Exempt({ ...plain, use: "historic" })).toBeUndefined();
     expect(lod1Exempt({ ...plain, tower: true })).toBe("tower");
     expect(lod1Exempt({ ...plain, mappedTower: true })).toBe("tower");
     expect(lod1Exempt({ ...plain, soffit: 10 })).toBe("part");
@@ -90,14 +90,15 @@ describe("the import's heights", () => {
     ["3 Maja 12", "w55897061"],
     ["Cyrulicza 3", "w232362892"],
     ["a yard building off Krakowskie Przedmieście", "w67508896"],
+    // A historic building without a tower (G-632).
+    ["Pałac Zylbera", "w55897095"],
   ])("%s stands in the committed tables at its LoD1 height", (_, id) => {
     const b = game(id);
     expect(b.source).toBe("lod1");
     expect(b.height + (b.roof ?? 0) / 2).toBeCloseTo(measured(b)!, 0);
   });
 
-  it("leaves Pałac Zylbera (historic), Teatr Osterwy (a landmark) and a measured church as the tags have them", () => {
-    expect(game("w55897095").source).toBe("default");
+  it("leaves Teatr Osterwy (a landmark) and a measured church as the tags have them", () => {
     expect(game("w67508958").source).toBe("default");
     expect(game("w66264159").source).toBe("levels");
     expect(game("w66264082").source).toBe("height");

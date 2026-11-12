@@ -9,9 +9,10 @@
  *
  * Only for a building matched one to one by footprint (IoU ≥ `LOD1_MIN_IOU`) whose height was
  * `default` or `levels`. Kept as they are: a measured `height` of the map or a correction, churches
- * and historic buildings (gates, castles, cloisters: their towers and helmets are not a prism),
- * towers, the landmarks of the list (`landmark-ids.ts`), buildings crowned by parts of their own and the
- * parts themselves, buildings whose storeys or roof a correction sets by hand, and areas added by hand.
+ * (their towers and helmets are not a prism), towers, the landmarks of the list (`landmark-ids.ts`),
+ * buildings crowned by parts of their own and the parts themselves, buildings whose storeys or roof
+ * a correction sets by hand, and areas added by hand. Historic buildings without a tower (palaces,
+ * tenements of the Rynek, G-632) take LoD1 like the rest.
  */
 import { type Lod1Building } from "../../gugik/src/extracts.ts";
 import { BoxIndex, type Footprint, footprint, iou } from "../../gugik/src/overlap.ts";
@@ -48,7 +49,7 @@ type Candidate = Pick<BuildingOut, "id" | "soffit" | "tower" | "mappedTower"> & 
 export const lod1Exempt = (b: Candidate, crowned = false): string | undefined => {
   if (b.soffit !== undefined) return "part";
   if (crowned) return "parts";
-  if (b.use === "church" || b.use === "historic") return b.use;
+  if (b.use === "church") return b.use;
   if (b.tower || b.mappedTower) return "tower";
   if (isListedLandmark(b.id)) return "landmark";
   if (!/^[wr]\d/.test(b.id)) return "added";
