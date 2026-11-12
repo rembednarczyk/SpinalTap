@@ -1661,11 +1661,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: nowy plan objazdu w oknie `wide` buduje pole ok. 15 ms, a przy zmianie komórki 32 m także raster ok. 37 ms w jednym kroku (budżet ADR-0043: 4 ms); przy jednym odciętym gangerze w pościgu za biegnącym graczem przestój 15–50 ms co 1,5–2 s; poprawka: budowa rozłożona na kilka kroków (ganger idzie starą drogą do gotowego planu)
 - Pakiet właściciela: packages/sim (systems/ai)
 
-### G-644 Kilkanaście pościgów naraz przepełnia pamięć rastrów okna `near`
-- Status: w PR #439, runda 2 (8d4679f: cutOffNear z dolnym ograniczeniem drogi do celu; 100/100 wariantów jak main); druga weryfikacja w toku
-- Ważność: S3 · Zasięg: odcięty ganger z planem `wide` nadal co krok pyta okno `near` przez `head(to)` (`ganger-walk.ts:191`); przy ok. 12 pościgach z różnymi celami pamięć `near` (8 rastrów) wypada bez końca: mediana 31,6 ms na krok, 600/600 kroków > 16 ms (main w tym scenariuszu 0,39 ms, 163 kroki > 16 ms tylko na starcie); poprawka: ganger z ważnym planem `wide` nie pyta `near`, albo klucz `near` niezależny od `from`
-- Pakiet właściciela: packages/sim (systems/ai)
-
 ### G-645 Po wczytaniu zapisu wszystkie pościgi `wide` przebudowują rastry w jednym kroku
 - Status: zgłoszone (12.11, weryfikator #426)
 - Ważność: S4 · Zasięg: pamięć `chases` (`steering.ts:660`) nie trafia do zapisu, a `chaseDetour` nie podlega limitowi `mayPlan`; pierwszy krok po wczytaniu buduje rastry `wide` wszystkich gangerów z `chase` naraz (54,7 ms na okno, przy kilku oknach N razy więcej); to samo przy zmianie `floor|reach`; determinizm bez zmian

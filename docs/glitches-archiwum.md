@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-644 Kilkanaście pościgów naraz przepełnia pamięć rastrów okna `near`
+- Status: naprawiony (PR #439, cfd7d3e; weryfikator PRZYJĘTE w rundzie 2: 134 warianty jak main, 0 przebudów rastrów po rozruchu, 18 pościgów mediana 0,8 ms)
+- Ważność: S3 · Zasięg: odcięty ganger z planem `wide` nadal co krok pyta okno `near` przez `head(to)` (`ganger-walk.ts:191`); przy ok. 12 pościgach z różnymi celami pamięć `near` (8 rastrów) wypada bez końca: mediana 31,6 ms na krok, 600/600 kroków > 16 ms (main w tym scenariuszu 0,39 ms, 163 kroki > 16 ms tylko na starcie); poprawka: ganger z ważnym planem `wide` nie pyta `near`, albo klucz `near` niezależny od `from`
+- Pakiet właściciela: packages/sim (systems/ai)
+
 ### G-667 Trawnik `T-245/trawnik-3-maja-klinika` leży na chodniku
 - Status: naprawiony (PR #444, f7a18f0; kurator PRZYJĘTE)
 - Ważność: S4 · Zasięg: Krakowskie, x −95…−92, z 131–155, 49 m², zieleń 2%: jasny chodnik 3 Maja ze słupkami i latarniami, zieleń w pasach przy x −97 i x −91; poprawka: trawnik na pasy zieleni albo kostka; kryterium zieleń ≥ 55%; wiersz T-245 do uzupełnienia o ten trawnik jako otwarty
