@@ -1627,7 +1627,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-613 Trasy tłumu przy Podwalu biegną po linii muru oporowego zamiast osią chodnika
-- Status: zgłoszone (11.11, kurator przeglądu #418, runda 2); następne po scaleniu #409, razem z G-626 (gałąź g626)
+- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g613` (12.11, e49f753; `offBarriers` odsuwa trasy placów 1 m od barier wzdłuż, mur w67626198 179/183 m; przegląd kuratora w toku)
 - Ważność: S3 · Zasięg: trasy `stare-miasto-1-0-square-0` i `stare-miasto-1-1-square-0` idą w medianie 0,5 m od muru w67626198, a oś chodnika w56965511 jest 0,65–1,95 m od muru (zwykle 1,7 m); przez to 61 m dwumetrowego muru skarpy pod Archikatedrą wycięte (x 673–693, 701–705, 731–743, 753–760 przy z −200…−161 i x 745–760 przy z −15…12); kryterium: trasy co najmniej 1,0 m od muru i mur w grze ponad 170 z 183 m; T-251
 - Pakiet właściciela: packages/sim (tłum), tools/osm-import
 
@@ -1637,7 +1637,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai, steering)
 
 ### G-626 Piesi tłumu wchodzą w bariery biegnące wzdłuż ich trasy
-- Status: wstrzymane (12.11): poprawka na gałęzi `ccr-ec2c4269-ilh8k8-g626` (a603b9c, `CROWD_LINE` 0,70 m z `walker-size.ts`, `ALONG` 0,66 m, `barrier-on-crowd-lane` 49 → 0) wycina w całości mur oporowy w67626198 pod Archikatedrą (97 m) i podnosi `barrier-parallel-cut` 15 → 18 (w32362993, w67626198, w364575143); idzie razem z G-613 po scaleniu #409: najpierw trasy tłumu na oś chodnika, potem wycięcie bez straty muru i bez wzrostu bazy
+- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g613` razem z G-613 (12.11; `barrier-on-crowd-lane` 0, `barrier-parallel-cut` 15 → 12 bez podnoszenia bazy)
 - Ważność: S4 · Zasięg: `barrier-room.ts` (`CROWD_LINE` 0,3 m) przy pieszych idących 0,28 m od linii trasy bez kolizji z bryłami; 45 kawałków, 149 m (21 płotów, 7 żywopłotów, 1 mur, 16 murów oporowych), najgłębiej ponad 0,2 m, np. płot (729,5; 93,0); skan `barrier-on-crowd-lane` ma próg `ALONG` 0,2 m zamiast 0,58 m; łączy się z G-613 (trasy tłumu z dala od barier)
 - Pakiet właściciela: packages/sim (tłum), tools/glitch-scan
 
