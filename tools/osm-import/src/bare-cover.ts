@@ -268,17 +268,13 @@ const drawnCells = (cells: Cells, label: number): Uint8Array => {
   return drawn;
 };
 
-/** Whether a cell of the tile (columns `i0` to past `i1`, rows `j0` to past `j1`) has the label. */
-const tileHas = (labels: Uint8Array, nx: number, label: number, i0: number, j0: number, i1: number, j1: number): boolean => {
-  for (let j = j0; j < j1; j++) for (let k = j * nx + i0; k < j * nx + i1; k++) if (labels[k] === label) return true;
-  return false;
-};
-
 const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: GroundSurface, i0: number, j0: number, i1: number, j1: number): GroundOut[] => {
   const { nx } = cells;
-  if (!tileHas(cells.label, nx, label, i0, j0, i1, j1)) return [];
-  const inside = scratch.u8("tile.inside", (i1 - i0) * (j1 - j0), null);
-  for (let j = j0, o = 0; j < j1; j++) for (let k = j * nx + i0; k < j * nx + i1; k++) inside[o++] = drawn[k]!;
+  let any = false;
+  for (let j = j0; j < j1 && !any; j++) any = cells.label.subarray(j * nx + i0, j * nx + i1).includes(label);
+  if (!any) return [];
+  const inside = new Uint8Array((i1 - i0) * (j1 - j0));
+  for (let j = j0; j < j1; j++) inside.set(drawn.subarray(j * nx + i0, j * nx + i1), (j - j0) * (i1 - i0));
   const rings = contours({
     nx: i1 - i0,
     nz: j1 - j0,

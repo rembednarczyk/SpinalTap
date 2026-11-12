@@ -147,39 +147,27 @@ export class Cells {
     const j0 = Math.max(0, Math.ceil((minZ - this.rect.minZ) / STEP - 0.5));
     const j1 = Math.min(this.nz - 1, Math.floor((maxZ - this.rect.minZ) / STEP - 0.5));
     if (j1 < j0) return 0;
-    // Each edge's crossings of the rows' centre lines, row by row: counted, then laid out a row after another.
-    const rows = j1 - j0 + 1;
-    const at = grown(SCAN, "at", rows + 1, Int32Array);
-    at.fill(0, 0, rows + 1);
-    const { minX: x0, minZ: z0 } = this.rect;
-    for (let pass = 0; pass < 2; pass++) {
-      const xs = pass === 0 ? null : grown(SCAN, "xs", at[rows]!, Float64Array);
-      for (let k = 0, m = ring.length - 1; k < ring.length; m = k++) {
-        const p = ring[m]!;
-        const q = ring[k]!;
-        const lo = Math.max(j0, Math.ceil((Math.min(p.z, q.z) - z0) / STEP - 0.5));
-        const hi = Math.min(j1, Math.floor((Math.max(p.z, q.z) - z0) / STEP - 0.5));
-        for (let j = lo; j <= hi; j++) {
-          const z = z0 + (j + 0.5) * STEP;
-          if (p.z > z === q.z > z) continue;
-          if (xs) xs[at[j - j0]!++] = p.x + ((z - p.z) * (q.x - p.x)) / (q.z - p.z);
-          else at[j - j0 + 1]!++;
-        }
+    // Each edge's crossings of the rows' centre lines, row by row.
+    const rows: number[][] = Array.from({ length: j1 - j0 + 1 }, () => []);
+    for (let k = 0, m = ring.length - 1; k < ring.length; m = k++) {
+      const p = ring[m]!;
+      const q = ring[k]!;
+      const lo = Math.max(j0, Math.ceil((Math.min(p.z, q.z) - this.rect.minZ) / STEP - 0.5));
+      const hi = Math.min(j1, Math.floor((Math.max(p.z, q.z) - this.rect.minZ) / STEP - 0.5));
+      for (let j = lo; j <= hi; j++) {
+        const z = this.rect.minZ + (j + 0.5) * STEP;
+        if (p.z > z !== q.z > z) rows[j - j0]!.push(p.x + ((z - p.z) * (q.x - p.x)) / (q.z - p.z));
       }
-      // Counts to where each row begins; the second pass leaves each where the next row begins.
-      if (pass === 0) for (let r = 0; r < rows; r++) at[r + 1]! += at[r]!;
-      else for (let r = rows; r > 0; r--) at[r] = at[r - 1]!;
-      if (pass === 1) at[0] = 0;
     }
-    const xs = SCAN.xs;
     let n = 0;
     for (let j = j0; j <= j1; j++) {
-      const [from, to] = [at[j - j0]!, at[j - j0 + 1]!];
-      if (to - from < 2) continue;
-      sortRun(xs, from, to);
-      for (let k = from; k + 1 < to; k += 2) {
-        const i0 = Math.max(0, Math.ceil((xs[k]! - x0) / STEP - 0.5));
-        const i1 = Math.min(this.nx - 1, Math.floor((xs[k + 1]! - x0) / STEP - 0.5));
+      const xs = rows[j - j0]!;
+      if (xs.length < 2) continue;
+      if (xs.length > 2) xs.sort((p, q) => p - q);
+      else if (xs[0]! > xs[1]!) xs.reverse();
+      for (let k = 0; k + 1 < xs.length; k += 2) {
+        const i0 = Math.max(0, Math.ceil((xs[k]! - this.rect.minX) / STEP - 0.5));
+        const i1 = Math.min(this.nx - 1, Math.floor((xs[k + 1]! - this.rect.minX) / STEP - 0.5));
         if (i1 < i0) continue;
         if (2 * n + 2 > this.runs.length) {
           const more = new Int32Array(2 * this.runs.length);
@@ -204,52 +192,25 @@ export class Cells {
     }
     // Each edge's cells within `d` of it (a point is an edge of no length).
     for (let e = 0; e < ring.length; e++) {
-      const [a, c] = [ring[e]!, ring[(e + 1) % ring.length]!];
-      nearEdge(to, value, keep, this.nx, this.nz, this.rect, a.x, a.z, c.x, c.z, d);
+      const a = ring[e]!;
+      const c = ring[(e + 1) % ring.length]!;
+      const i0 = Math.max(0, Math.floor((Math.min(a.x, c.x) - d - this.rect.minX) / STEP));
+      const i1 = Math.min(this.nx - 1, Math.ceil((Math.max(a.x, c.x) + d - this.rect.minX) / STEP));
+      const j0 = Math.max(0, Math.floor((Math.min(a.z, c.z) - d - this.rect.minZ) / STEP));
+      const j1 = Math.min(this.nz - 1, Math.ceil((Math.max(a.z, c.z) + d - this.rect.minZ) / STEP));
+      const [dx, dz] = [c.x - a.x, c.z - a.z];
+      const len2 = dx * dx + dz * dz || 1;
+      for (let j = j0; j <= j1; j++) {
+        const pz = this.rect.minZ + (j + 0.5) * STEP;
+        for (let i = i0; i <= i1; i++) {
+          const k = j * this.nx + i;
+          if (to[k] === value || to[k] === keep) continue;
+          // As `segmentGap`, the cell's centre inline.
+          const px = this.rect.minX + (i + 0.5) * STEP;
+          const t = Math.max(0, Math.min(1, ((px - a.x) * dx + (pz - a.z) * dz) / len2));
+          if (Math.hypot(a.x + dx * t - px, a.z + dz * t - pz) <= d) to[k] = value;
+        }
+      }
     }
   }
 }
-
-/** Buffers of `scan`, reused from ring to ring. */
-const SCAN = { at: new Int32Array(64), xs: new Float64Array(256) };
-
-/** `pool[key]`, grown to `n` and more when short. */
-const grown = <K extends keyof typeof SCAN>(pool: typeof SCAN, key: K, n: number, make: new (n: number) => (typeof SCAN)[K]): (typeof SCAN)[K] => {
-  if (pool[key].length < n) pool[key] = new make(Math.max(n, 2 * pool[key].length));
-  return pool[key];
-};
-
-/** Sorts `xs` from `from` to past `to` ascending: a row's crossings, mostly two. */
-const sortRun = (xs: Float64Array, from: number, to: number): void => {
-  for (let k = from + 1; k < to; k++) {
-    const x = xs[k]!;
-    let m = k - 1;
-    for (; m >= from && xs[m]! > x; m--) xs[m + 1] = xs[m]!;
-    xs[m + 1] = x;
-  }
-};
-
-/**
- * Sets `to[k]` to `value` in the cells of the raster (`nx` by `nz` on `rect`) within `d` of the edge
- * from (ax, az) to (cx, cz), but where it is `keep` or `value` already (those are not measured).
- */
-const nearEdge = (to: Uint8Array, value: number, keep: number, nx: number, nz: number, rect: Rect, ax: number, az: number, cx: number, cz: number, d: number): void => {
-  const i0 = Math.max(0, Math.floor((Math.min(ax, cx) - d - rect.minX) / STEP));
-  const i1 = Math.min(nx - 1, Math.ceil((Math.max(ax, cx) + d - rect.minX) / STEP));
-  const j0 = Math.max(0, Math.floor((Math.min(az, cz) - d - rect.minZ) / STEP));
-  const j1 = Math.min(nz - 1, Math.ceil((Math.max(az, cz) + d - rect.minZ) / STEP));
-  const dx = cx - ax;
-  const dz = cz - az;
-  const len2 = dx * dx + dz * dz || 1;
-  for (let j = j0; j <= j1; j++) {
-    const pz = rect.minZ + (j + 0.5) * STEP;
-    for (let i = i0; i <= i1; i++) {
-      const k = j * nx + i;
-      if (to[k] === value || to[k] === keep) continue;
-      // As `segmentGap`, the cell's centre inline.
-      const px = rect.minX + (i + 0.5) * STEP;
-      const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / len2));
-      if (Math.hypot(ax + dx * t - px, az + dz * t - pz) <= d) to[k] = value;
-    }
-  }
-};
