@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, MOST_UNSTICK_STEPS, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, MOST_PLAN_STEPS, MOST_UNSTICK_STEPS, npcWeapon } from "@seki/core";
 
 type Json = Record<string, unknown>;
 
@@ -21,6 +21,9 @@ const isSniper = (v: unknown): boolean => isObject(v) && SNIPER_PHASES.includes(
 const isTick = (v: unknown): boolean => Number.isInteger(v) && (v as number) >= 0;
 const isPlan = (v: unknown): boolean =>
   isObject(v) && isVec(v.from) && isVec(v.goal) && Array.isArray(v.avoid) && v.avoid.length <= MOST_AVOIDED && v.avoid.every(isVec);
+/** G-643: the next wide way of a chase being made, ready no further past the save's tick than any is. */
+const isChaseNext = (v: unknown, tick: number): boolean => isObject(v) && isVec(v.goal) && isTick(v.ready) && (v.ready as number) <= tick + MOST_PLAN_STEPS;
+
 /**
  * G-208: a walker's stuck check: where and when its stretch began (not after the save's `tick`),
  * until when it gets unstuck (not longer than any NPC does), its side, its repath.
@@ -35,7 +38,8 @@ const isWalk = (v: unknown, tick: number): boolean =>
   (v.unstickUntil as number) <= tick + MOST_UNSTICK_STEPS &&
   (v.side === 1 || v.side === -1) &&
   (v.plan === undefined || isPlan(v.plan)) &&
-  (v.chase === undefined || isVec(v.chase));
+  (v.chase === undefined || isVec(v.chase)) &&
+  (v.chaseNext === undefined || isChaseNext(v.chaseNext, tick));
 
 const BODY_FLAGS = ["fought", "found", "reported", "dead", "carried", "hidden"] as const;
 

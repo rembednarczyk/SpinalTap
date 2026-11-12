@@ -454,6 +454,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v36 -> v37 (G-625): a chasing ganger keeps the goal of its wide way round a long barrier
   // (`walk.chase`, optional). An older save has none: it plans one on its first step, if it needs it.
   36: (old) => ({ ...old, version: 37 }),
+  // v37 -> v38 (G-643): a chasing ganger keeps the next wide way being made for it (`walk.chaseNext`,
+  // optional). An older save has none: it walks the one it has, or starts one on its first step.
+  37: (old) => ({ ...old, version: 38 }),
 };
 
 export class MigrationError extends Error {}

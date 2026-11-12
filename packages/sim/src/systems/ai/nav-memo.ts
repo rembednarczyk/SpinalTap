@@ -6,8 +6,8 @@ export interface NavMemo<R, F extends { readonly raster: R }> {
   readonly rasters: Map<string, R>;
   /** Keyed by their raster's key and the source cell: `${rasterKey}|${source}`. */
   readonly fields: Map<string, F>;
-  /** Rasters made and fields grown so far: what the misses cost. */
-  readonly built: { rasters: number; fields: number };
+  /** Rasters made and fields grown so far, and the cells they went through: what the misses cost. */
+  readonly built: { rasters: number; fields: number; units: number };
 }
 
 /** Least recently used out once the map is full (Map keeps insertion order). */

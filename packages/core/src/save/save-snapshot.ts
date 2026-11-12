@@ -5,6 +5,8 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v38: a chasing ganger's walk keeps the next wide way being made for it, its goal and the step it
+ * is ready at (`walk.chaseNext`, optional, G-643).
  * v37: a chasing ganger's walk keeps the goal of its wide way round a long barrier (`walk.chase`,
  * optional, G-625).
  * v36: P-1 under Alchemia's car park (ADR-0074 stage 4): no new fields, but an older save may have
@@ -71,7 +73,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 37;
+export const SAVE_SCHEMA_VERSION = 38;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -135,6 +137,8 @@ export interface WalkSnapshot {
   readonly plan?: WalkPlanSnapshot;
   /** The goal of a chase's wide way round a long barrier (v37, G-625). */
   readonly chase?: Vec3;
+  /** The next one being made, and the tick it is ready at, at most `MOST_PLAN_STEPS` past the save's (v38, G-643). */
+  readonly chaseNext?: { readonly goal: Vec3; readonly ready: number };
 }
 
 /**
@@ -142,6 +146,13 @@ export interface WalkSnapshot {
  * at the slowest time of the overdrive. A save's `unstickUntil` is no further past its `tick`.
  */
 export const MOST_UNSTICK_STEPS = 3600;
+
+/**
+ * The longest a chase waits for its next wide way, in steps (G-643): ten seconds, past the some
+ * thirty steps a wide raster and its field take made a slice a step. A save's `chaseNext.ready`
+ * is no further past its `tick`.
+ */
+export const MOST_PLAN_STEPS = 600;
 
 /** The most characters a saved repath goes round (G-208): those within a few metres of a stuck walker. */
 export const MOST_AVOIDED = 256;
