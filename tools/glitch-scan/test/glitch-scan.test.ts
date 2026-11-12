@@ -2187,6 +2187,12 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(levelsTagLost([{ ...house, levels: 4 }], tags("4.5"))).toEqual([]);
     expect(levelsTagLost([house], tags())).toEqual([]);
     expect(levelsTagLost([{ ...house, soffit: 10 }], tags("4"))).toEqual([]);
+    // A gate's outline under its tower (G-684): the tag counts the tower's storeys, a part lifted onto it.
+    const gate = { ...house, outline: [-5, -5, 5, -5, 5, 5, -5, 5], levels: 2 };
+    const tower = { ...house, id: "w2", outline: [-2, -2, 2, -2, 2, 2, -2, 2], soffit: 10, levels: 5 };
+    expect(levelsTagLost([gate, tower], tags("5"))).toEqual([]);
+    expect(levelsTagLost([gate, { ...tower, levels: 3 }], tags("5"))).toHaveLength(1);
+    expect(levelsTagLost([gate, { ...tower, x: 640 }], tags("5"))).toHaveLength(1);
   });
 
   it("finds a tower of the map without a height at a default one, and none with a height mapped or measured, nor a plain building (G-224)", () => {

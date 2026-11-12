@@ -78,10 +78,16 @@ const tagStoreys = (v: string | undefined): number | null => {
 /**
  * Each building (not a lifted part) drawn with fewer rows of windows than its `building:levels`,
  * corrections included (G-629): storeys the map has, lost to a height that left no room for them.
+ * A building crowned by lifted parts (centroid in its outline) counts the most storeys of it and
+ * them: the outline's tag may count a tower standing on it (G-684, Brama Krakowska's five).
  */
-export const levelsTagLost = (buildings: readonly (Building & { readonly levels: number })[], tagsOf: (id: string) => Readonly<Record<string, string>>): Finding[] =>
-  buildings.flatMap((b) => {
+export const levelsTagLost = (buildings: readonly (Building & { readonly levels: number })[], tagsOf: (id: string) => Readonly<Record<string, string>>): Finding[] => {
+  const parts = buildings.filter((b) => b.soffit !== undefined).map((p) => ({ at: centroid(worldRing(p)), levels: p.levels }));
+  return buildings.flatMap((b) => {
     const tagged = b.soffit === undefined ? tagStoreys(tagsOf(b.id)["building:levels"]) : null;
     if (tagged === null || b.levels >= tagged) return [];
+    const ring = worldRing(b);
+    if (parts.some((p) => p.levels >= tagged && pointInRing(p.at, ring))) return [];
     return [{ at: `${b.x.toFixed(0)},${b.z.toFixed(0)}`, what: `${b.id} ${b.source}: ${b.levels} storeys of building:levels=${tagsOf(b.id)["building:levels"]}` }];
   });
+};
