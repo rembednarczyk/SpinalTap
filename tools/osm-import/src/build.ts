@@ -13,7 +13,7 @@ import { REPO } from "./paths.ts";
 const OUT = join(REPO, "packages/sim/src/content/lublin");
 
 const inputs = loadInputs();
-const { chunks, stats, venues } = generate(inputs.osm, inputs.src);
+const { chunks, stats, venues } = generate(inputs.osm, inputs.src, undefined, undefined, inputs.lod1);
 mkdirSync(OUT, { recursive: true });
 let total = 0;
 for (const d of DISTRICTS) {
@@ -24,10 +24,10 @@ for (const d of DISTRICTS) {
   console.log(`${d.slug}.generated.ts: ${(size / 1024).toFixed(0)} KiB`);
 }
 console.log(`total ${(total / 1024).toFixed(0)} KiB, terrain from ${inputs.terrain}`);
-console.log("chunk | buildings | height tag | levels tag | skipped | with holes | ground | cell | max err | p99 err | min y | max y");
+console.log("chunk | buildings | height tag | levels tag | lod1 | skipped | with holes | ground | cell | max err | p99 err | min y | max y");
 for (const s of stats) {
   console.log(
-    [s.id, s.buildings, s.fromHeight, s.fromLevels, s.skipped, s.withHoles, s.ground, s.cell, s.terrainError.max.toFixed(2), s.terrainError.p99.toFixed(2), s.minY, s.maxY].join(" | "),
+    [s.id, s.buildings, s.fromHeight, s.fromLevels, s.fromLod1, s.skipped, s.withHoles, s.ground, s.cell, s.terrainError.max.toFixed(2), s.terrainError.p99.toFixed(2), s.minY, s.maxY].join(" | "),
   );
 }
 console.log(

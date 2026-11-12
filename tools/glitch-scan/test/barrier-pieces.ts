@@ -1,5 +1,7 @@
 import { BARRIER_THICKNESS, type StreetPropItem, barrierLayout, doorLayout } from "../../../packages/core/src";
 import { barrierPrism } from "../../../packages/sim/src/content/lublin/barriers";
+import { LANE_HALF_GAP } from "../../../packages/sim/src/world/crowd";
+import { BODY } from "../../../packages/sim/src/world/factory";
 
 /**
  * The map's walls, fences and hedges of ADR-0077 checked against what the game draws and runs:
@@ -40,8 +42,8 @@ export interface BarrierWorld {
 /** A door's way out stays clear this far (m); a walker reaches this far off its lane, a car's side this far off its line. */
 const DOOR_OUT = 1.2;
 const WALKER = 0.58;
-/** A route along a barrier may pass it this close (its walkers brush past, G-606); a resident keeps this round its place. */
-const ALONG = 0.2;
+/** A route along a barrier keeps its line this far off the barrier's line: a walker's side and its body (G-626); a resident keeps SEAT round its place. */
+const ALONG = LANE_HALF_GAP + BODY.radius;
 const SEAT = 0.5;
 const CAR = 1.2;
 /** A barrier may run this far into a building's wall, where it meets it (m). */

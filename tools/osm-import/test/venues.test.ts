@@ -3,6 +3,7 @@ import { isSignText } from "../../../packages/core/src/world/venues.ts";
 import { DISTRICTS } from "../src/config.ts";
 import { generate } from "../src/generate.ts";
 import { loadInputs } from "../src/load.ts";
+import { generatedCity } from "./city.ts";
 import { parseOsmXml } from "../src/osm.ts";
 import { worldToGeo } from "../src/project.ts";
 import { GENERIC_NAMES, VENUE_NAMES, venueEntry } from "../src/venue-names.ts";
@@ -215,7 +216,7 @@ describe("venues on the facades", () => {
   });
 
   it("sign nearly all of the city's venues", () => {
-    const g = generate(inputs.osm, inputs.src);
+    const g = generatedCity();
     expect(g.venues.total).toBeGreaterThan(300);
     expect(g.venues.signed / g.venues.total).toBeGreaterThan(0.97);
     expect(g.chunks.filter((c) => DISTRICTS.some((d) => d.id === c.district)).flatMap((c) => c.buildings.flatMap((b) => b.venues ?? [])).length).toBe(g.venues.signed);
