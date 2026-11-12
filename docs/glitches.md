@@ -1772,7 +1772,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-670 Kontrola `added-grass-off-green` bez listy wyjątków celowych i bez lustra dla kostki
-- Status: runda 2 (12.11): kurator: 3 trafienia added-paving-on-green to korony drzew nad kostką (nalot bez liści 2025-04: 2%, 4%, 0%), lista PAVING_ON_GREEN_KNOWN, baza 3 → 0; trwale lepiej: zieleń liczona też z nalotu bez liści (osobny glitch)
+- Status: w PR #441 (12.11; added-grass-off-green 10 → 5, added-paving-on-green 0 z 3 wyjątkami kuratora)
 - Ważność: S4 · Zasięg: baza 10 liczy też celowe trawniki T-241 (`trawnik-zachod`, `trawnik-wschod`, `trawnik-bajkowskiego`, plan inwestora ADR-0074) i błędy klasyfikatora (`T-243/ck-zachod-trawnik`, `T-245/rabata-kolegium-poludnie`): lista wyjątków z odsyłaczem T-NNN, baza 10 → 5; nowa kontrola `added-paving-on-green` (ręczna kostka z zielenią ≥ 50%, kandydaci `T-245/zn2-wschod-trawnik` 71%, `zn2-wschod-srodek` 40%); do sprawdzenia też pas zieleni ok. 22 m² pod `podworze-litevski` (x −194,5…−192, z 28–39)
 - Pakiet właściciela: tools/glitch-scan
 
