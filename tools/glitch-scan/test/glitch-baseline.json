@@ -180,7 +180,7 @@
   "barrier-on-crowd-lane": 0,
   "barrier-in-furniture": 0,
   "barrier-on-seat": 0,
-  "barrier-parallel-cut": 15,
+  "barrier-parallel-cut": 18,
   "city-wall-kept": 14,
   "ruin-wall-height": 0
 }
