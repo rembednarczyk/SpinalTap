@@ -1662,7 +1662,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-644 Kilkanaście pościgów naraz przepełnia pamięć rastrów okna `near`
-- Status: w PR #439, weryfikator NIE PRZYJĘTE (12.11: wideWay prowadzi drogą wide do starego celu, gdy cel przeszedł na stronę gangera w 8 m; 5/100 wariantów wolniej, 202 → 634 kroki); runda 2 u autora
+- Status: w PR #439, runda 2 (8d4679f: cutOffNear z dolnym ograniczeniem drogi do celu; 100/100 wariantów jak main); druga weryfikacja w toku
 - Ważność: S3 · Zasięg: odcięty ganger z planem `wide` nadal co krok pyta okno `near` przez `head(to)` (`ganger-walk.ts:191`); przy ok. 12 pościgach z różnymi celami pamięć `near` (8 rastrów) wypada bez końca: mediana 31,6 ms na krok, 600/600 kroków > 16 ms (main w tym scenariuszu 0,39 ms, 163 kroki > 16 ms tylko na starcie); poprawka: ganger z ważnym planem `wide` nie pyta `near`, albo klucz `near` niezależny od `from`
 - Pakiet właściciela: packages/sim (systems/ai)
 
@@ -1721,11 +1721,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: place przycięte na krawędzi kawałka mapy przy (20; −20), pętle zamkniętych ścieżek w Podzamczu i Nabrzeżu; skan nie liczy tego rodzaju; poprawka: kontrola w `tools/glitch-scan` z bazą z przebiegu (i wpis w `docs/mapa-pokrycie.json`), potem naprawy; propozycja kuratora (przegląd #433): `ground-ring-self-cross`, baza 30 (Krakowskie 15, w tym 6 placów przy (20; −20), Nabrzeże 5, Podzamcze 5, Stare Miasto 5)
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
-### G-660 `save-load-micro-body` przekracza 20 s pod obciążeniem
-- Status: w PR (12.11; test czeka na stan gry, 6450 → 2670 kroków, 1,7 → 1,1 s; dalej koszt CALM 720 kroków, opis stałej nie zgadza się ze stanem tłumu)
-- Ważność: S4 · Zasięg: `packages/sim/test/save-load-micro-body.test.ts` „won, knocked out…” (G-242) przekroczył limit 20 s przy load 11–13 na 4 rdzeniach; kandydat na test niestabilny; najpierw pomiar przyczyny, limitu nie podnosimy (ADR-0046)
-- Pakiet właściciela: packages/sim
-
 ### G-661 Goły plac na północ od VIVO
 - Status: zgłoszone (12.11, kurator przeglądu G-647; T-260)
 - Ważność: S4 · Zasięg: Podzamcze, x 1101–1120, z 239,7–252, ok. 55 m² gołe od G-647 (wcześniej przykryte trawnikiem r11978659); ortofoto: jasna nawierzchnia placu; poprawka: kostka lub płyty do krawędzi garażu albo reguła gołej ziemi z ortofoto (ADR-0077 krok 1.1)
@@ -1752,7 +1747,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-667 Trawnik `T-245/trawnik-3-maja-klinika` leży na chodniku
-- Status: w PR #444 (12.11; trawnik zamieniony na kostkę, przegląd kuratora w toku)
+- Status: w PR #444 (12.11; kurator PRZYJĘTE; baza added-grass-off-green po #441: 5 → 4)
 - Ważność: S4 · Zasięg: Krakowskie, x −95…−92, z 131–155, 49 m², zieleń 2%: jasny chodnik 3 Maja ze słupkami i latarniami, zieleń w pasach przy x −97 i x −91; poprawka: trawnik na pasy zieleni albo kostka; kryterium zieleń ≥ 55%; wiersz T-245 do uzupełnienia o ten trawnik jako otwarty
 - Pakiet właściciela: tools/osm-import
 
@@ -1766,11 +1761,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: Podzamcze, x 840–870, z 361–369: południowe 3–4 m trawnika do ścieżki w227698420 to kostka z misami drzew; niski priorytet
 - Pakiet właściciela: tools/osm-import
 
-### G-670 Kontrola `added-grass-off-green` bez listy wyjątków celowych i bez lustra dla kostki
-- Status: w PR #441 (12.11; added-grass-off-green 10 → 5, added-paving-on-green 0 z 3 wyjątkami kuratora)
-- Ważność: S4 · Zasięg: baza 10 liczy też celowe trawniki T-241 (`trawnik-zachod`, `trawnik-wschod`, `trawnik-bajkowskiego`, plan inwestora ADR-0074) i błędy klasyfikatora (`T-243/ck-zachod-trawnik`, `T-245/rabata-kolegium-poludnie`): lista wyjątków z odsyłaczem T-NNN, baza 10 → 5; nowa kontrola `added-paving-on-green` (ręczna kostka z zielenią ≥ 50%, kandydaci `T-245/zn2-wschod-trawnik` 71%, `zn2-wschod-srodek` 40%); do sprawdzenia też pas zieleni ok. 22 m² pod `podworze-litevski` (x −194,5…−192, z 28–39)
-- Pakiet właściciela: tools/glitch-scan
-
 ### G-671 Próg 0,5 m² w `chunkGround` gubi małe wycinki wypełnień krawężnikowych na granicach chunków
 - Status: zgłoszone (12.11, naprawiacz G-665)
 - Ważność: S4 · Zasięg: `tools/osm-import/src/ground.ts` `chunkGround`: wycinki pasm `holed` (wypełnienia chodnika przy krawężniku) poniżej 0,5 m² w chunku są odrzucane; wariant zachowujący je dla wszystkich pasm `holed` dokłada 114 kawałków chodnika i obniża `kerb-gap-bare` o 195, ale podnosi `kerb-fill-wide-estimated` o 15 i daje 22 nowe próbki `kerb-gap-bare` (x≈747, z≈155–160 i (376; −11)), bo wypełnienia G-570 robią się ciągłe; do rozwiązania razem
@@ -1780,6 +1770,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, kurator przeglądu G-670)
 - Ważność: S4 · Zasięg: `tools/orto` uśrednia nadmiar zieleni z trzech nalotów, więc dwa letnie (2023-09, 2024-06) zawyżają zieleń pod koronami; np. T-246/ruska-a 61% przy 2% na nalocie bez liści 2025-04; propozycja: kostka liczy się jako „na zieleni” tylko przy zieleni także na nalocie 2025-04 (np. ≥ 20%), próg sprawdzić na trawnikach z `truth.ts` (w kwietniu część trawników brązowa)
 - Pakiet właściciela: tools/orto, tools/glitch-scan
+
+### G-673 `added-grass-off-green` liczy cały obrys trawnika, nie widoczną trawę
+- Status: zgłoszone (12.11, kurator przeglądu G-667; opcjonalne)
+- Ważność: S4 · Zasięg: ścieżki biegnące przez ręczny trawnik zaniżają jego zieleń, np. `T-245/trawnik-klinika` 53% całego obrysu, a 67% tam, gdzie gra pokazuje trawę (ścieżka w1011367932 i ciemny pas przy ścianie kliniki); poprawka: liczyć po górnej nawierzchni w grze; przy okazji odsunąć południową krawędź trawnika-kliniki o ok. 1 m od ściany
+- Pakiet właściciela: tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
