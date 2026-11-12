@@ -1707,7 +1707,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-659 30 samoprzecinających się obrysów nawierzchni bez kontroli w skanie
-- Status: zgłoszone (12.11, naprawiacz G-654)
+- Status: kontrola w PR #453 (12.11, ADR-0078 etap 1: `ground-ring-self-cross` baza 30, 15/5/5/5); naprawa w etapie 2–3 ADR-0078
 - Ważność: S4 · Zasięg: place przycięte na krawędzi kawałka mapy przy (20; −20), pętle zamkniętych ścieżek w Podzamczu i Nabrzeżu; skan nie liczy tego rodzaju; poprawka: kontrola w `tools/glitch-scan` z bazą z przebiegu (i wpis w `docs/mapa-pokrycie.json`), potem naprawy; propozycja kuratora (przegląd #433): `ground-ring-self-cross`, baza 30 (Krakowskie 15, w tym 6 placów przy (20; −20), Nabrzeże 5, Podzamcze 5, Stare Miasto 5)
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
@@ -1769,6 +1769,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-678 Budynki z OSM przykrywają drogi bez `covered` ani `tunnel`
 - Status: zgłoszone (12.11, naprawiacz G-677; do triage)
 - Ważność: S4 · Zasięg: sonda: 16 z 857 budynków OSM w mapie przykrywa linię `highway=*` bez `tunnel`/`covered`, głównie `service` przez przejazdy bramowe; garaż w173070505 przykrywa 11 dróg wejścia do VIVO (poza grą od G-600); w grze droga może wchodzić w ścianę zamiast przejazdu; do sprawdzenia, które to przejazdy (`tunnel=building_passage`) brakujące w OSM, i rozszerzenia kontroli `added-solid-over-way` na budynki z OSM
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-679 Trzy pary identycznych kawałków nawierzchni placów na Krakowskim
+- Status: zgłoszone (12.11, ADR-0078 etap 1)
+- Ważność: S4 · Zasięg: tabele `krakowskie.generated.ts`: 3 pary identycznych obrysów placów w krakowskie-1-0, 0-1 i 1-1 (centroidy (56; −46), (−48; 43), (66; 33)), podwójne rysowanie i podwójne samoprzecięcia w `ground-ring-self-cross`; kandydat na kontrolę duplikatów nawierzchni
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
