@@ -236,6 +236,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Propozycja: zwęzić domyślną jezdnię do 2 × (odległość osi od chodnika − pół chodnika), min. 3 m
 - Pakiet: tools/osm-import · Test przyjęcia: `sidewalk-under-carriageway` 262 → 0
 - Przegląd kuratora (921e44d): UWAGI, T-062/G-112 (zwężenie całej ulicy z próbek przy skrzyżowaniu) i T-063/G-113 (dwukierunkowe poniżej 4,5 m, zwężenie symetryczne); Podwale w305027452 ma 4,3 m, nie 3 m
+- Przejście krakowskie-1-0 (12.11): `footway-on-carriageway` 121 na w288178957 (`highway=footway` bez `footway=sidewalk`; Peowiaków 79, Kościuszki 35, Plac Czechowicza 7), niewidoczne, bo chodnik leży nad jezdnią; poprawka przy G-471
 
 ### G-083 Drogi dla aut bez nazwy i łącznice bez pasów ruchu
 - Status: odłożone (samochody na później, decyzja użytkownika 31.10); zgłoszone (audyt dróg) (T-047) · Ważność: S3 · Zasięg: 7 dróg bez nazwy + 3 łącznice, ok. 550 m · Koszt: mały–średni
@@ -368,13 +369,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: wysokość z LOD2 albo NMPT (mediana w obrysie) i dach z LOD2; rozbieżność > 20% z OSM do przeglądu kuratora
 
 ### G-126 Pedet z domyślną wysokością `commercial` i fasadą kamienicy
-- Status: później (czeka na źródło wysokości: ADR-0064 etap 11 (LOD2) albo 14 (NMPT), albo zdjęcie; bez tego poprawka byłaby zgadywaniem). Zgłoszenie użytkownika 31.10: „brakuje rozbudowania galerii Pedet”
+- Status: zgłoszone (12.11, przejście krakowskie-1-0: wysokość naprawiona w #429: 19,8 m, 4 kondygnacje, `source: lod1`, LoD2 okap 20,7, kalenica główna 21,4; zostaje fasada `shop=mall`). Zgłoszenie użytkownika 31.10: „brakuje rozbudowania galerii Pedet”
 - Ważność: S3 (proponowana; punkt orientacyjny Krakowskiego z podpisem) · Zasięg: 1 (zasada dotyczy też innych `building=retail` bez `building:levels`) · Koszt: mały (wysokość), średni (fasada domu towarowego)
 - Gdzie: w67508935 (124.1, −128.1), Krakowskie Przedmieście 40; T-073
 - Dowód: OSM `building=retail`, `shop=mall`, bez `building:levels`, `height` i `building:part`. W grze `levels: 3`, `source: "default"`, ściany 10,4 m nad najwyższym terenem; zrzuty `pedet-ne.png`, `pedet-east.png`, `pedet-north.png`, `pedet-sw.png` (scratchpad kuratora) pokazują trzykondygnacyjną fasadę kamienicy z siatką okien, bez witryn
 - Przyczyna: `defaultLevels` w `tools/osm-import/src/building-tags.ts` daje każdemu `commercial` 3 kondygnacje, a renderer rysuje go jak kamienicę z witryną
 - Pakiet właściciela: tools/osm-import (wysokość: `corrections.ts` z wpisem T-073 albo dane LOD2/NMPT); packages/engine/src/renderer/mapcity (fasada `shop=mall`/`department_store`: pasy witryn i pełne ściany pięter handlowych zamiast okien mieszkań)
-- Test przyjęcia: wysokość Pedetu z LOD2/NMPT albo potwierdzona zdjęciem (rozbieżność > 20% z wpisem do przeglądu kuratora); `shop=mall` dostaje fasadę handlową (test planu fasady w engine); baza `landmark-overbuilt` bez wzrostu
+- Test przyjęcia: `shop=mall` dostaje fasadę handlową (test planu fasady w engine); baza `landmark-overbuilt` bez wzrostu
 
 ### G-128 Pomniki Placu Litewskiego jako ta sama stojąca postać (Piłsudski bez konia)
 - Status: zgłoszone (audyt Placu Litewskiego, kurator 31.10). Zgłoszenie użytkownika: „brakuje pomnika Józefa Piłsudskiego”
@@ -1318,7 +1319,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-451 Klin gołego terenu między chodnikiem a jezdnią Kościuszki (T-222)
 - Status: zgłoszone (7.11, kurator, przegląd G-440)
-- Ważność: S4 · Zasięg: zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²; poprawka: lokalnie domknąć jezdnię do krawędzi chodnika; kontrola `kerb-gap-bare` (baza 35 631 próbek 0,25 m)
+- Ważność: S4 · Zasięg: zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²; poprawka: lokalnie domknąć jezdnię do krawędzi chodnika; kontrola `kerb-gap-bare` (baza 35 631 próbek 0,25 m); przejście krakowskie-1-0 (12.11): `kerb-gap-bare` 1508 próbek w komórce, m.in. Narutowicza w40051033 (199..217; −197..−188) 62 m² (szczelina 0,6 m), w215824205 (84..94; −269..−262) 37 m² i 33 mniejsze; Peowiaków należy do G-471
 - Pakiet właściciela: tools/osm-import (ground)
 
 ### G-452 Szczeliny 1–15 cm między przylegającymi budynkami z OSM (T-223)
@@ -1378,12 +1379,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-471 Szczelina przy południowym krawężniku Peowiaków (T-228)
 - Status: zgłoszone (7.11, kurator, przegląd G-450)
-- Ważność: S4 · Zasięg: x −44…57, 1134 próbki; ta sama klasa co G-451 (`kerb-gap-bare`)
+- Ważność: S4 · Zasięg: x −44…57, 1134 próbki; ta sama klasa co G-451 (`kerb-gap-bare`); przejście krakowskie-1-0 (12.11): dalej na wschód do x 102, `kerb-gap-bare` 73 m² (68..102; −238..−216) i `kerb-strip-bare` 21 (88..109; −238..−222; 1,1–4,8 m). Przyczyna wspólna z `footway-on-carriageway` 79 na w288178957 (T-046): jezdnia +3,25/−4,25 m od osi OSM, a chodnik północny ma oś +3,23 m, chodnik południowy zaczyna się 4,75 m od osi. Prawdziwa jezdnia ma ok. 6,75 m, jej środek leży ok. 1,4 m na południe od osi. Poprawka: `fitToKerb` traktuje równoległy `highway=footway` w zasięgu jak `sidewalk`. Test: `kerb-strip-bare` −21, `footway-on-carriageway` −79
 - Pakiet właściciela: tools/osm-import (ground)
 
 ### G-472 Luki OSM przy Peowiaków: przesmyk z budynkiem i plac (T-227, T-229)
 - Status: zgłoszone (7.11, kurator, przegląd G-450; do weryfikacji)
-- Ważność: S4 · Zasięg: niski budynek z dachem dwuspadowym i brukowany przesmyk (x −1…21) oraz utwardzony plac 283 m² (x 61–78) bez danych w OSM
+- Ważność: S4 · Zasięg: niski budynek z dachem dwuspadowym i brukowany przesmyk (x −1…21) oraz utwardzony plac 283 m² (x 61–78) bez danych w OSM; przejście krakowskie-1-0 (12.11): na placu T-229 LoD2 i LoD1 2024 mają niski budynek (61..74; −207..−191), 111 m², okap 2,7, kalenica 3,6 m. Za Teatrem Osterwy stoi dobudówka (132..147; −190..−176), 136 m², okap 3,9, kalenica 5,4 m (LoD1 4,1), na ortofoto 2025-04 jasny płaski dach, w OSM nic; leży w niej 67 m² `landuse-bare`. Dwa budynki LoD2 bez OSM (82..89; −156..−134) i (86..105; −178..−157) zostały rozebrane (parking, brak w LoD1 2024). Poprawka: `ADDED_BUILDINGS` z obrysem LoD2 i wysokością LoD1, albo wpis do OSM
 - Pakiet właściciela: tools/osm-import (korekty)
 
 ### G-473 Na telefonie dwa toasty naraz zasłaniają „Użyj” i skok
@@ -1852,7 +1853,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, kurator, przegląd stare-miasto-1-0)
 - Ważność: S3 (jak G-527) · Zasięg: stare-miasto-1-0, 7 podwórzy, ok. 2500 m² gołego terenu, w tym 1960 m² twardej nawierzchni na ortofoto: (627..666; −107..−63) 768 m², (699..740; −240..−204) 737 m², (610..654; −132..−101) 431 m², (696..716; −121..−88) 351 m², (691..726; −53..−40) 94 m², (654..673; −159..−146) 123 m². Przyczyna jak G-513 i G-527: OSM nie ma obszarów nawierzchni podwórzy. `landuse-bare` ich nie liczy, bo nie leżą w `landuse`. Zrzut `sm10d-kuria-podworze`. Ortofoto do korekt: 2024-06 (2025-04 ma tu przechył 4–5 m)
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077)
-- Test przyjęcia: proponowana kontrola `bare-enclosed-yard` (niżej) w komórce 7 → 0, bez nawierzchni na rabatach i trawnikach podwórzy (zielone na 2024-06)
+- Test przyjęcia: proponowana kontrola `bare-enclosed-yard` (niżej) w komórce 7 → 0, bez nawierzchni na rabatach i trawnikach podwórzy (zielone na 2024-06); Test przyjęcia”: „Kontrola `bare-enclosed-yard` w krakowskie-1-0 (12.11): 17 składowych, 6222 m². Dwie z nich nie są podwórzami: (60..151; −228..−166) 938 m² łączy wąskim pasem front i zaplecze Teatru, a (37..102; −113..−76) 465 m² to pas wzdłuż alejki. Przed liczeniem składowych potrzebny warunek szerokości: otwarcie maski o 1 m i składowa po otwarciu ≥ 50 m². Podwórza `landuse-bare` tej komórki (KP 23, zaplecze Teatru) naprawia G-705
+
+### G-705 Goły teren przy gmachach i sklepach Krakowskiego (krakowskie-1-0): Pedet, Teatr Osterwy, Urszulanki, Narutowicza (T-267)
+- Status: zgłoszone (12.11, kurator, przegląd krakowskie-1-0)
+- Ważność: S3 (jak G-513, G-527) · Zasięg: krakowskie-1-0, `landuse-bare` 6144 próbki (1536 m²), z czego ok. 1300 m² do poprawy. Pedet w67508935 (108..142; −161..−98) 340 m²; Teatr w67508958: front (82..155; −229..−190) 218 m², zaplecze (81..154; −224..−183) 208 m²; w177528398 (188..215; −233..−203) 134 m²; Urszulanki r14476826 (157..225; −270..−248) 94 m²; podwórze KP 23 w67499325 (192..218; −40..−20) 144 m²; Narutowicza w40051033 (224..240; −190..−158) ok. 160 m², gdzie szczeliny 3,5–5 m leżą poza `KERB_REACH`. Ortofoto 2025-04 jest tu prawie pionowe (dachy na obrysach LoD2 co do ok. 1 m, przy KP 23 3 m): 76–98% twardej nawierzchni. Zrzuty `k10-b-teatr`, `k10-c-pedet`, `k10-f-narutowicza`. Poza zakresem: deptak przed KP 23 (95 m², T-045/G-081), dobudówka za Teatrem (G-472), pasy do 1 m przy kościele Urszulanek w obrysie LoD2
+- Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2025-04, przy KP 23 2024-06)
+- Test przyjęcia: `landuse-bare` w krakowskie-1-0 6144 → najwyżej 1000 (zostają deptak T-045 ok. 380 i próbki w obrysach LoD2 ok. 540). Bez nawierzchni na zieleni (ortofoto 2025-04). Baza miasta spada w tym samym commicie
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
