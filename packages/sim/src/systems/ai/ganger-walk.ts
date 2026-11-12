@@ -3,9 +3,10 @@ import { aboveGround, groundOf, heightApart } from "../../world/ground";
 import type { SimContext } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
 import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
-import { type Detour, SAME_FLOOR, detourStep, followDetour, planDetour, straightWalk } from "./steering";
+import { type Detour, SAME_FLOOR, chaseDetour, detourStep, followDetour, planDetour, straightWalk } from "./steering";
 import type { Ganger } from "./ganger-perception";
-import type { WalkPlan } from "../../world/components";
+import type { Entity, WalkPlan } from "../../world/components";
+import type { World } from "miniplex";
 
 /*
  * How a ganger gets somewhere (ADR-0021, ADR-0025): straight or round the obstacle on its floor,
@@ -31,6 +32,23 @@ const CROWD_RADIUS = 8;
 const PLAN_DRIFT = 2;
 /** At its post within this (m), as `HoldPosition` has it. */
 const POST_ARRIVE = 0.3;
+/** A chase keeps the goal of its wide way (G-625) until its target is further than this from it (m). */
+const CHASE_DRIFT = 8;
+/** A ganger that may not plan a wide way this step: it stands and waits for the next. */
+const WAIT = "wait";
+
+/**
+ * New wide ways planned in a world this step (G-625): one at most, whoever asks first in the
+ * gangers' creation order; the others wait a step. A wide raster costs some 37 ms and its field
+ * 15, so a step pays for at most one. Only within a step: a save falls between two.
+ */
+const planned = new WeakMap<World<Entity>, number>();
+
+const mayPlan = (ctx: SimContext): boolean => {
+  if (planned.get(ctx.world) === ctx.tick) return false;
+  planned.set(ctx.world, ctx.tick);
+  return true;
+};
 
 /** Who acts this step: the blackboard rebinds it to the current entity. */
 export interface GangerBinding {
@@ -50,7 +68,7 @@ const detourOf = (ctx: SimContext, plan: WalkPlan | null): Detour | null => {
   if (!plan) return null;
   let detour = detours.get(plan);
   if (detour === undefined) {
-    detour = planDetour(ctx.world, plan.from, plan.goal, plan.avoid, true);
+    detour = planDetour(ctx.world, plan.from, plan.goal, plan.avoid);
     detours.set(plan, detour);
   }
   return detour;
@@ -96,7 +114,15 @@ export class GangerWalk {
       // (ADR-0074 stage 4). There is no way round on this floor there: the level graph's way.
       const ground = groundOf(ctx.world);
       const vaulted = gap > SAME_FLOOR && (ground.underStreet(to) || ground.underStreet(from));
-      const step = vaulted ? null : this.head(to, true);
+      let step = vaulted ? null : this.head(to);
+      if (!step && !vaulted) {
+        const chase = this.chase(to);
+        if (chase === WAIT) {
+          self.velocity = { x: 0, y: 0, z: 0 };
+          return;
+        }
+        step = chase;
+      }
       if (step || (!raised && vaulted)) {
         this.goal = to;
         this.moveTowards((step ?? to).x, (step ?? to).z);
@@ -133,13 +159,9 @@ export class GangerWalk {
   /**
    * The point to head for on the way to `goal` (ADR-0025): the goal itself when the knee-high
    * line is free (or the goal is on another floor), a point round the obstacle otherwise, the
-   * repath while getting unstuck. Null when this floor does not lead there. `wide`: a chase,
-   * which looks for its way in the wide window too when the near one does not lead there (G-625);
-   * a walk home or to a node keeps to the near one, which got it there so far: the wide way of a
-   * calm guard's walk home in the docks runs onto the end of a pier, a step the raster takes for
-   * level ground and the legs do not climb (as G-339), and it stood there for good.
+   * repath while getting unstuck. Null when this floor does not lead there.
    */
-  private head(goal: Vec3, wide = false): Vec3 | null {
+  private head(goal: Vec3): Vec3 | null {
     const { ctx, self } = this.at;
     if (!ctx || !self) return null;
     const from = self.position;
@@ -150,7 +172,30 @@ export class GangerWalk {
       if (p) return p;
     }
     if (!this.unsticking() && straightWalk(ctx.world, from, goal)) return goal;
-    return detourStep(ctx.world, from, goal, wide);
+    return detourStep(ctx.world, from, goal);
+  }
+
+  /**
+   * A chase the near window does not lead (G-625): the step along the wide way to the goal it
+   * keeps (`WalkProgress.chase`, saved), planned anew when its target moved `CHASE_DRIFT` away, if
+   * this step lets it (`mayPlan`); else along the old way, or it waits with none. Null when the
+   * wide way does not lead there either. Only a chase: a walk home or to a node keeps to the near
+   * window, which got it there so far; the wide way of a calm guard's walk home in the docks ran
+   * onto the end of a pier, a step the raster takes for level ground and the legs do not climb
+   * (as G-339), and it stood there for good.
+   */
+  private chase(goal: Vec3): Vec3 | null | typeof WAIT {
+    const { ctx, self } = this.at;
+    if (!ctx || !self) return null;
+    let held = self.walk?.chase ?? null;
+    if ((!held || Math.hypot(held.x - goal.x, held.z - goal.z) > CHASE_DRIFT) && mayPlan(ctx)) {
+      held = { x: goal.x, y: goal.y, z: goal.z };
+      const { x, z } = self.position;
+      self.walk = self.walk ? { ...self.walk, chase: held } : { x, z, since: ctx.tick, unstickUntil: 0, side: firstSide(self), plan: null, chase: held };
+    }
+    if (!held) return WAIT;
+    const detour = chaseDetour(ctx.world, self.position, held);
+    return detour ? followDetour(detour, self.position) : null;
   }
 
   private unsticking(): boolean {
@@ -195,7 +240,7 @@ export class GangerWalk {
     const { x, z } = self.position;
     const p = self.walk;
     if (!this.walking || !p) {
-      self.walk = { x, z, since: ctx.tick, unstickUntil: p?.unstickUntil ?? 0, side: p?.side ?? firstSide(self), plan: p?.plan ?? null };
+      self.walk = { x, z, since: ctx.tick, unstickUntil: p?.unstickUntil ?? 0, side: p?.side ?? firstSide(self), plan: p?.plan ?? null, chase: p?.chase ?? null };
       return;
     }
     if (Math.hypot(x - p.x, z - p.z) >= STUCK_DISTANCE) {
@@ -215,7 +260,7 @@ export class GangerWalk {
       crowd.push({ ...e.position });
     }
     const plan = this.goal ? { from: { ...self.position }, goal: { ...this.goal }, avoid: crowd } : null;
-    const detour = plan ? planDetour(ctx.world, plan.from, plan.goal, plan.avoid, true) : null;
+    const detour = plan ? planDetour(ctx.world, plan.from, plan.goal, plan.avoid) : null;
     // Only a repath that leads somewhere is kept: without one it leans to the side instead.
     p.plan = detour ? plan : null;
     if (plan && detour) detours.set(plan, detour);

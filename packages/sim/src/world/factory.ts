@@ -348,8 +348,8 @@ const withFight = (e: Entity, s: EntitySnapshot): EntitySnapshot => {
  * save holds no more than `MOST_AVOIDED` characters round which it repaths, the nearest ones.
  */
 const walkSnapshotOf = (w: WalkProgress): WalkSnapshot => {
-  const { x, z, since, unstickUntil, side, plan } = w;
-  const s = { x, z, since, unstickUntil, side };
+  const { x, z, since, unstickUntil, side, plan, chase } = w;
+  const s = { x, z, since, unstickUntil, side, ...(chase ? { chase: { ...chase } } : {}) };
   if (!plan) return s;
   const near = (a: Vec3) => Math.hypot(a.x - plan.from.x, a.z - plan.from.z);
   const avoid = plan.avoid.length > MOST_AVOIDED ? [...plan.avoid].sort((a, b) => near(a) - near(b)).slice(0, MOST_AVOIDED) : plan.avoid;
@@ -358,7 +358,7 @@ const walkSnapshotOf = (w: WalkProgress): WalkSnapshot => {
 
 const walkOf = (s: WalkSnapshot): WalkProgress => {
   const plan = s.plan ? { from: { ...s.plan.from }, goal: { ...s.plan.goal }, avoid: s.plan.avoid.map((a) => ({ ...a })) } : null;
-  return { x: s.x, z: s.z, since: s.since, unstickUntil: s.unstickUntil, side: s.side, plan };
+  return { x: s.x, z: s.z, since: s.since, unstickUntil: s.unstickUntil, side: s.side, plan, chase: s.chase ? { ...s.chase } : null };
 };
 
 /** The saveable state of a keyed entity. */

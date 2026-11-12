@@ -51,12 +51,13 @@ const windowOf = (name: string, half: number, snap: number, rasters: number, fie
 const NEAR_WINDOW = windowOf("near", 40, 8, 8, 16);
 /**
  * A ganger cut off from its target in `NEAR_WINDOW` (a long fence or a wall of a yard, G-625)
- * looks again in this one, 192 m a side: a raster and its field cost some four times a near
- * one's (about 40 ms against 11), paid only by a walker the near one does not lead anywhere, and
- * kept for few goals. Of the long barriers the near window leaves cut off, a 128 m one leads round
- * a quarter, this one two fifths, a 256 m one hardly more at twice its cost.
+ * looks again in this one, 192 m a side (`chaseDetour`): a raster costs some 37 ms and a field
+ * some 15 (a near one's 20 and 3), so the ganger keeps the goal it planned for and plans anew
+ * seldom (`GangerWalk`). Of the long barriers the near window leaves cut off, a 128 m one leads
+ * round a quarter, this one two fifths, a 256 m one hardly more at twice its cost. Four rasters:
+ * the four round a corner of the `snap` grid, where goals a step apart fall into different ones.
  */
-const WIDE_WINDOW = windowOf("wide", 96, 32, 2, 4);
+const WIDE_WINDOW = windowOf("wide", 96, 32, 4, 8);
 /** Body radius (0.38) plus a margin: the way keeps off walls instead of scraping along them. */
 const CLEARANCE = 0.48;
 const BODY_HEIGHT = 1.8;
@@ -104,6 +105,8 @@ interface Field {
 interface Memo {
   readonly rasters: Map<string, Raster>;
   readonly fields: Map<string, Field>;
+  /** Rasters made and fields grown so far: what the misses cost. */
+  readonly built: { rasters: number; fields: number };
 }
 
 const memos = new WeakMap<World<Entity>, Map<string, Memo>>();
@@ -116,7 +119,7 @@ const memoOf = (world: World<Entity>, win: Window): Memo => {
   }
   let m = byWindow.get(win.name);
   if (!m) {
-    m = { rasters: new Map(), fields: new Map() };
+    m = { rasters: new Map(), fields: new Map(), built: { rasters: 0, fields: 0 } };
     byWindow.set(win.name, m);
   }
   return m;
@@ -525,16 +528,24 @@ const fieldFor = (world: World<Entity>, win: Window, floor: number, reach: numbe
   const solids = staticSolidsIn(world, x0 - CLEARANCE, z0 - CLEARANCE, x0 + 2 * half + CLEARANCE, z0 + 2 * half + CLEARANCE);
   const memo = memoOf(world, win);
   const rasterKey = `${floor}|${reach}|${cx}|${cz}|${signature(solids)}`;
-  const raster =
-    recall(memo.rasters, rasterKey) ??
-    remember(memo.rasters, rasterKey, rasterise(collidersOf(solids), floor, reach, x0, z0, groundOf(world), cells), win.rasters);
+  let raster = recall(memo.rasters, rasterKey);
+  if (!raster) {
+    memo.built.rasters++;
+    raster = remember(memo.rasters, rasterKey, rasterise(collidersOf(solids), floor, reach, x0, z0, groundOf(world), cells), win.rasters);
+  }
   const goalCell = cellIndex(raster, goal.x, goal.z);
   if (goalCell < 0) return null;
   const source = nearest(goalCell, GOAL_SEARCH, cells, (n) => raster.open[n] === 1);
   if (source < 0) return null;
   const fieldKey = `${rasterKey}|${source}`;
-  return recall(memo.fields, fieldKey) ?? remember(memo.fields, fieldKey, grow(raster, source), win.fields);
+  const field = recall(memo.fields, fieldKey);
+  if (field) return field;
+  memo.built.fields++;
+  return remember(memo.fields, fieldKey, grow(raster, source), win.fields);
 };
+
+/** How many rasters of the wide window a world made and fields it grew so far (G-625: their cost is what a step pays). */
+export const wideBuilds = (world: World<Entity>): { readonly rasters: number; readonly fields: number } => ({ ...memoOf(world, WIDE_WINDOW).built });
 
 /** Is the straight walk from `from` to `to` free at knee height (ADR-0021's walk test)? */
 export const KNEE_HEIGHT = 0.6;
@@ -616,18 +627,38 @@ const startOf = (field: Field, from: Vec3): number => {
  * The way round from `from` to `goal` on this floor, or null when the goal is on another
  * floor, outside the window or not reachable here (the caller then falls back on the level
  * graph or on a straight line). With `avoid`, other characters count as obstacles too: a fresh
- * field, not memoised, for a walker that got stuck behind its own people. `wide`: when the near
- * window does not lead from `from` to the goal, the wide one is asked (G-625).
+ * field, not memoised, for a walker that got stuck behind its own people.
  */
-export const planDetour = (world: World<Entity>, from: Vec3, goal: Vec3, avoid: readonly Vec3[] = [], wide = false): Detour | null => {
+export const planDetour = (world: World<Entity>, from: Vec3, goal: Vec3, avoid: readonly Vec3[] = []): Detour | null => {
+  if (heightApart(world, goal, from) > SAME_FLOOR) return null;
+  const ground = groundOf(world);
+  const field = fieldFor(world, NEAR_WINDOW, floorOf(from.y, ground.heightAt(from.x, from.z, from.y + STEP_HEIGHT)), deckReach(ground, from, goal), goal);
+  if (!field) return null;
+  return { goal, field: avoid.length > 0 ? withBodies(field, avoid, ground) : field };
+};
+
+/** The wide ways of the chases, kept with their goals: by the floor and the decks' reach they were made for. */
+const chases = new WeakMap<Vec3, { readonly key: string; readonly detour: Detour | null }>();
+
+/**
+ * The way round to the goal of a chase in `WIDE_WINDOW` (G-625), or null when it has none from
+ * this floor. Kept with the goal object itself, not only in the memo: a ganger holds its goal
+ * (`WalkProgress.chase`) for many steps, and a few of them round a corner of the window grid
+ * would otherwise push each other's rasters out of the memo and make them again every step. A
+ * pure function of the static solids, the floor and the goal, as `planDetour`.
+ */
+export const chaseDetour = (world: World<Entity>, from: Vec3, goal: Vec3): Detour | null => {
   if (heightApart(world, goal, from) > SAME_FLOOR) return null;
   const ground = groundOf(world);
   const floor = floorOf(from.y, ground.heightAt(from.x, from.z, from.y + STEP_HEIGHT));
   const reach = deckReach(ground, from, goal);
-  let field = fieldFor(world, NEAR_WINDOW, floor, reach, goal);
-  if (wide && (!field || startOf(field, from) < 0)) field = fieldFor(world, WIDE_WINDOW, floor, reach, goal) ?? field;
-  if (!field) return null;
-  return { goal, field: avoid.length > 0 ? withBodies(field, avoid, ground) : field };
+  const key = `${floor}|${reach}`;
+  const held = chases.get(goal);
+  if (held?.key === key) return held.detour;
+  const field = fieldFor(world, WIDE_WINDOW, floor, reach, goal);
+  const detour = field ? { goal, field } : null;
+  chases.set(goal, { key, detour });
+  return detour;
 };
 
 /**
@@ -664,8 +695,8 @@ export const followDetour = (detour: Detour, from: Vec3): Vec3 | null => {
 };
 
 /** `planDetour` and `followDetour` in one: the step round the static obstacles. */
-export const detourStep = (world: World<Entity>, from: Vec3, goal: Vec3, wide = false): Vec3 | null => {
-  const d = planDetour(world, from, goal, [], wide);
+export const detourStep = (world: World<Entity>, from: Vec3, goal: Vec3): Vec3 | null => {
+  const d = planDetour(world, from, goal);
   return d ? followDetour(d, from) : null;
 };
 
