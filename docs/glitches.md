@@ -1691,11 +1691,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: gdy ani okno `near`, ani `wide` nie prowadzi do celu, ganger na ulicy wraca na posterunek bez `routeAcrossLevels` (jak na main); droga kładką lub schodami nad barierą nie jest szukana; pytanie co krok kosztowało 2,7 s na test (4790 wywołań, `attach` liczy wzrok do wszystkich węzłów), więc jeśli ma wrócić, to rzadko (np. raz na cel w komórce 32 m) i z limitem na krok
 - Pakiet właściciela: packages/sim (systems/ai)
 
-### G-655 Jezdnia z tagiem `lanes` nie jest dociągana do osobno zmapowanego chodnika
-- Status: w PR #437, runda 2 kurator PRZYJĘTE (12.11; bilans gołej ziemi jak main, kerb-strip-bare 181); nie zamyka G-650 ani G-656
-- Ważność: S3 · Zasięg: `fitToKerb` (`tools/osm-import/src/ground.ts:123–126`, `|| Number(t.lanes) > 0) return t;`) pomija ulice z `lanes`; przy `sidewalk=separate` `roadWidth` = `lanes × 3,25`, np. Radziwiłłowska `lanes=3` (w331453920, w356402586, w914787972) 9,75 m, więc jezdnia i zewnętrzny pas ruchu zachodzą na chodnik (pas `footway` ma nawierzchnię „road” i „footway” naraz); po dociągnięciu oś pasa ok. 4 m od płotów w232805994 i w232805996, co odblokowuje G-650; zmiana całego miasta z regeneracją i przeglądem kuratora; zmierzyć czas `generate`
-- Pakiet właściciela: tools/osm-import
-
 ### G-656 Alejka z donicami w krakowskie-1-1 zapada się w `unloop` i zostaje bez trasy
 - Status: zgłoszone (12.11, naprawiacz G-650)
 - Ważność: S4 · Zasięg: pas x 199…229, z 83…104 przy murach oporowych w1365971524/25/27/31: po G-613 `unloop` zjada pętlę z 180 do 69 próbek, reszta leży na ścianach i budynku, alejka bez przechodniów; rozwiązanie razem z G-650 (jedna linia zamiast zapadniętej pętli)
@@ -1750,11 +1745,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, naprawiacz G-665)
 - Ważność: S4 · Zasięg: `tools/osm-import/src/ground.ts` `chunkGround`: wycinki pasm `holed` (wypełnienia chodnika przy krawężniku) poniżej 0,5 m² w chunku są odrzucane; wariant zachowujący je dla wszystkich pasm `holed` dokłada 114 kawałków chodnika i obniża `kerb-gap-bare` o 195, ale podnosi `kerb-fill-wide-estimated` o 15 i daje 22 nowe próbki `kerb-gap-bare` (x≈747, z≈155–160 i (376; −11)), bo wypełnienia G-570 robią się ciągłe; do rozwiązania razem
 - Pakiet właściciela: tools/osm-import
-
-### G-672 Klasyfikator pokrycia liczy korony drzew jako zieleń pod nimi
-- Status: w PR (12.11; klasa canopy z nalotu bez liści, próg 15%, wyjątki PAVING_ON_GREEN_KNOWN usunięte)
-- Ważność: S4 · Zasięg: `tools/orto` uśrednia nadmiar zieleni z trzech nalotów, więc dwa letnie (2023-09, 2024-06) zawyżają zieleń pod koronami; np. T-246/ruska-a 61% przy 2% na nalocie bez liści 2025-04; propozycja: kostka liczy się jako „na zieleni” tylko przy zieleni także na nalocie 2025-04 (np. ≥ 20%), próg sprawdzić na trawnikach z `truth.ts` (w kwietniu część trawników brązowa)
-- Pakiet właściciela: tools/orto, tools/glitch-scan
 
 ### G-673 `added-grass-off-green` liczy cały obrys trawnika, nie widoczną trawę
 - Status: zgłoszone (12.11, kurator przeglądu G-667; opcjonalne)

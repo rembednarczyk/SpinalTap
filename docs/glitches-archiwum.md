@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-655 Jezdnia z tagiem `lanes` nie jest dociągana do osobno zmapowanego chodnika
+- Status: naprawiony (PR #437, 59daf02)
+- Ważność: S3 · Zasięg: `fitToKerb` (`tools/osm-import/src/ground.ts:123–126`, `|| Number(t.lanes) > 0) return t;`) pomija ulice z `lanes`; przy `sidewalk=separate` `roadWidth` = `lanes × 3,25`, np. Radziwiłłowska `lanes=3` (w331453920, w356402586, w914787972) 9,75 m, więc jezdnia i zewnętrzny pas ruchu zachodzą na chodnik (pas `footway` ma nawierzchnię „road” i „footway” naraz); po dociągnięciu oś pasa ok. 4 m od płotów w232805994 i w232805996, co odblokowuje G-650; zmiana całego miasta z regeneracją i przeglądem kuratora; zmierzyć czas `generate`
+- Pakiet właściciela: tools/osm-import
+
+### G-672 Klasyfikator pokrycia liczy korony drzew jako zieleń pod nimi
+- Status: naprawiony (PR #446, bbb5a80)
+- Ważność: S4 · Zasięg: `tools/orto` uśrednia nadmiar zieleni z trzech nalotów, więc dwa letnie (2023-09, 2024-06) zawyżają zieleń pod koronami; np. T-246/ruska-a 61% przy 2% na nalocie bez liści 2025-04; propozycja: kostka liczy się jako „na zieleni” tylko przy zieleni także na nalocie 2025-04 (np. ≥ 20%), próg sprawdzić na trawnikach z `truth.ts` (w kwietniu część trawników brązowa)
+- Pakiet właściciela: tools/orto, tools/glitch-scan
+
 ### G-644 Kilkanaście pościgów naraz przepełnia pamięć rastrów okna `near`
 - Status: naprawiony (PR #439, cfd7d3e; weryfikator PRZYJĘTE w rundzie 2: 134 warianty jak main, 0 przebudów rastrów po rozruchu, 18 pościgów mediana 0,8 ms)
 - Ważność: S3 · Zasięg: odcięty ganger z planem `wide` nadal co krok pyta okno `near` przez `head(to)` (`ganger-walk.ts:191`); przy ok. 12 pościgach z różnymi celami pamięć `near` (8 rastrów) wypada bez końca: mediana 31,6 ms na krok, 600/600 kroków > 16 ms (main w tym scenariuszu 0,39 ms, 163 kroki > 16 ms tylko na starcie); poprawka: ganger z ważnym planem `wide` nie pyta `near`, albo klucz `near` niezależny od `from`
