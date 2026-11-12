@@ -32,6 +32,16 @@ export const GRASS_OFF_GREEN_KNOWN: Readonly<Record<string, string>> = {
   "T-245/rabata-kolegium-poludnie": "T-245: the bed lies in the shadow of the Collegium's wall: the classifier's fault",
 };
 
+/**
+ * The added paving green on the orthophoto by the classifier's fault, by id, with the entry of
+ * `docs/topografia.md` and why (G-670): crowns of trees over it, as the leaf-off flight shows.
+ */
+export const PAVING_ON_GREEN_KNOWN: Readonly<Record<string, string>> = {
+  "T-246/ruska-a": "T-246: paving under the crowns of the trees by Ruska, grey on the leaf-off flight 2025-04: the classifier's fault",
+  "T-246/ruska-b": "T-246: paving and parking bays under the crowns by Ruska, no green on the leaf-off flight 2025-04: the classifier's fault",
+  "T-245/zn2-wschod-trawnik": "T-245: paving under the crown of the tree on the lawn w1380056204, no green on the leaf-off flight 2025-04: the classifier's fault",
+};
+
 const isGrass = (a: AddedArea): boolean => a.tags.landuse === "grass" || a.tags.landuse === "flowerbed";
 
 const isPaving = (a: AddedArea): boolean => a.tags["area:highway"] !== undefined;
@@ -56,5 +66,9 @@ export const addedGrassOffGreen = (areas: readonly AddedArea[], covers: readonly
     (green) => green < MIN_GREEN,
   );
 
-export const addedPavingOnGreen = (areas: readonly AddedArea[], covers: readonly Cover[]): Finding[] =>
-  byGreen(areas.filter(isPaving), covers, (green) => green >= MIN_GREEN);
+export const addedPavingOnGreen = (areas: readonly AddedArea[], covers: readonly Cover[], known: Readonly<Record<string, string>> = PAVING_ON_GREEN_KNOWN): Finding[] =>
+  byGreen(
+    areas.filter((a) => isPaving(a) && known[a.id] === undefined),
+    covers,
+    (green) => green >= MIN_GREEN,
+  );

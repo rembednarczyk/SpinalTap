@@ -3,7 +3,7 @@ import { ADDED_AREAS, type AddedArea } from "../../osm-import/src/corrections.ts
 import { COVER } from "../../orto/src/classify.ts";
 import { emptyCover } from "../../orto/src/cover.ts";
 import { THRESHOLDS } from "../../orto/src/thresholds.ts";
-import { GRASS_OFF_GREEN_KNOWN, addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
+import { GRASS_OFF_GREEN_KNOWN, PAVING_ON_GREEN_KNOWN, addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
 
 /** A 10 × 10 m cover, green on its west half (x < 5) and paving on its east. */
 const cover = () => {
@@ -35,19 +35,29 @@ describe("added-grass-off-green and added-paving-on-green (G-627, G-670)", () =>
   });
 
   it("finds paving with half of it or more green, and keeps paving on paving and lawns out", () => {
-    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 1, 4)], [cover()]).map((f) => f.what)).toEqual(["T-1/kostka: 100% green on the orthophoto"]);
-    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 3, 7)], [cover()])).toHaveLength(1);
-    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 3.5, 7)], [cover()])).toEqual([]);
-    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 6, 9)], [cover()])).toEqual([]);
-    expect(addedPavingOnGreen([area("T-1/trawnik", LAWN, 1, 4)], [cover()])).toEqual([]);
-    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 20, 24)], [cover()])).toEqual([]);
+    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 1, 4)], [cover()], {}).map((f) => f.what)).toEqual(["T-1/kostka: 100% green on the orthophoto"]);
+    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 3, 7)], [cover()], {})).toHaveLength(1);
+    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 3.5, 7)], [cover()], {})).toEqual([]);
+    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 6, 9)], [cover()], {})).toEqual([]);
+    expect(addedPavingOnGreen([area("T-1/trawnik", LAWN, 1, 4)], [cover()], {})).toEqual([]);
+    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 20, 24)], [cover()], {})).toEqual([]);
+    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 1, 4)], [cover()], { "T-1/kostka": "T-1: crowns" })).toEqual([]);
+    expect(addedPavingOnGreen([area("T-1/kostka", PAVING, 1, 4)], [cover()], { "T-1/inna": "T-1: crowns" })).toHaveLength(1);
   });
 
-  it("lists as known only lawns of ADDED_AREAS, each with its T-NNN entry and a reason", () => {
-    const lawns = new Set(ADDED_AREAS.filter((a) => a.tags.landuse === "grass" || a.tags.landuse === "flowerbed").map((a) => a.id));
-    for (const [id, why] of Object.entries(GRASS_OFF_GREEN_KNOWN)) {
-      expect(lawns.has(id), id).toBe(true);
+  const listedIn = (known: Readonly<Record<string, string>>, of: (a: AddedArea) => boolean) => {
+    const ids = new Set(ADDED_AREAS.filter(of).map((a) => a.id));
+    for (const [id, why] of Object.entries(known)) {
+      expect(ids.has(id), id).toBe(true);
       expect(why.startsWith(`${id.split("/")[0]}: `), id).toBe(true);
     }
+  };
+
+  it("lists as known only lawns of ADDED_AREAS, each with its T-NNN entry and a reason", () => {
+    listedIn(GRASS_OFF_GREEN_KNOWN, (a) => a.tags.landuse === "grass" || a.tags.landuse === "flowerbed");
+  });
+
+  it("lists as known only paving of ADDED_AREAS, each with its T-NNN entry and a reason", () => {
+    listedIn(PAVING_ON_GREEN_KNOWN, (a) => a.tags["area:highway"] !== undefined);
   });
 });
