@@ -8,7 +8,9 @@
  * (`building:levels`) count to the eaves. Eaves and ridge are those of the main mass
  * (`mainRoof` in `tools/gugik/src/citygml.ts`): the roof shell joined to its largest surface, so
  * a low annex's or a porch's roof does not set the eaves (Teatr Osterwy 5.3 m, Lublinianka 4.3 m,
- * T-257). The shape is LoD2's `roofType` where the renderer draws it; a combination of shapes
+ * T-257). The shape is LoD2's `roofType` where the renderer draws it, a gabled, half-hipped,
+ * mansard or skillion roof turned across the outline (`roofAcross`) where LoD2's ridge runs nearer
+ * its short axis; a combination of shapes
  * (`1130`, most of the old town) and the rest take a hipped roof, which the renderer lays over any
  * outline.
  *
@@ -26,6 +28,7 @@ import { BoxIndex, type Footprint, footprint, iou } from "../../gugik/src/overla
 import { STOREY } from "./building-tags.ts";
 import { type Pt, r1 } from "./geometry.ts";
 import { LOD1_MIN_IOU, MIN_STOREY, lod1Exempt, lod1Match, type lod1Index, storeysOf, worldRing } from "./lod1-heights.ts";
+import { lineAngle, longAxisDegrees } from "./long-axis.ts";
 import { type BuildingOut } from "./model.ts";
 
 /** The least rise of LoD2's main roof, eaves to ridge, for the building to take it, metres. */
@@ -89,6 +92,17 @@ export const lod2Massing = (
   const levels = tagged ?? storeysOf(height - plinth, b.shopfront === true);
   return { height, roof: r1(Math.max(0, roof.ridge - height)), roofShape: roof.shape, levels, plinth };
 };
+
+/** The shapes whose ridge the renderer lays along the outline's long axis, or across it (`roofAcross`). */
+export const RIDGED_SHAPES: ReadonlySet<RoofShape> = new Set(["gabled", "half-hipped", "mansard", "skillion"]);
+
+/**
+ * Whether LoD2's ridge (`ridgeDir`, degrees) lies nearer the outline's short axis than its long
+ * one, so the renderer's ridge must turn across (G-639: Złota 3's ridge along the street, not
+ * across it).
+ */
+export const lod2Across = (shape: RoofShape, ridgeDir: number | undefined, ring: readonly Pt[]): boolean =>
+  RIDGED_SHAPES.has(shape) && ridgeDir !== undefined && lineAngle(ridgeDir, longAxisDegrees(ring)) > 45;
 
 /** What the rule needs of the map's element: its tags and whether parts crown it. */
 export interface Lod2Context {

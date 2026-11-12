@@ -69,7 +69,7 @@ import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
 import { lampsBesideDeck } from "./lamp-deck";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { heightsOffLod1, landmarksOffLod1, levelsTagLost, lod1Under } from "./height-lod1";
-import { flatOverLod2Roof, lod2Under } from "./roof-lod2";
+import { flatOverLod2Roof, lod2RidgeAcross, lod2SliverEaves, lod2Under } from "./roof-lod2";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
 import { stepsInclineAgainst } from "./steps-incline";
@@ -1358,6 +1358,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
     return flatOverLod2Roof(buildings, lod2Under(buildings), (id) => osmTags(id)["building:part"] !== undefined && osmTags(id)["building"] === undefined);
   },
+  /** A LoD2 roof with a ridge drawn over 45° off LoD2's main ridge (G-639, `roof-lod2.ts`). */
+  "lod2-ridge-across": () => {
+    const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    return lod2RidgeAcross(buildings, lod2Under(buildings));
+  },
+  /** A building the LoD2 roof rule takes standing off its main eaves where a sliver of the roof lies lower (G-639, `roof-lod2.ts`). */
+  "lod2-sliver-eaves": () => {
+    const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    const part = (id: string) => osmTags(id)["building:part"] !== undefined && osmTags(id)["building"] === undefined;
+    return lod2SliverEaves(buildings, lod2Under(buildings), part, (id) => Object.keys(osmTags(id)).some((k) => k.startsWith("roof:")));
+  },
   /** A landmark of the list off its LoD1 height by more than 3 m (G-631): its height reviewed against the wrong source, or not at all. */
   "landmark-vs-lod1": () => {
     const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
@@ -2206,6 +2217,24 @@ describe("the glitch scan (ADR-0054)", () => {
     const lod1 = [{ id: "L1", height: 18.1, ground: 200, ring }];
     expect(heightsOffLod1([{ ...palace, height: 10.7, roof: 7.5, source: "lod2" }], lod1, plain)).toEqual([]);
     expect(heightsOffLod1([{ ...palace, height: 10.7, roof: 3, source: "lod2" }], lod1, plain)).toEqual([{ at: "100,50", what: "w1 lod2: eaves 10.7 m, ridge 13.7 m, LoD1 18.1 m (IoU 1.00)" }]);
+  });
+
+  it("finds a LoD2 ridge drawn across LoD2's and a building off its main eaves set by a sliver, none when right (G-639)", () => {
+    const long = [-10, -5, 10, -5, 10, 5, -10, 5];
+    const ring = [0, 2, 4, 6].map((i) => ({ x: long[i]! + 100, z: long[i + 1]! + 50 }));
+    const lod2 = [{ id: "L2", ground: 200, eaves: 11.3, ridge: 18, mainEaves: 13, mainRidge: 18, shellEaves: 11.3, ridgeDir: 90, roofType: 1030, ring }];
+    const house = { id: "w1", x: 100, z: 50, outline: long, height: 13, roof: 5, roofShape: "gabled", use: "residential", source: "lod2" };
+    // The outline's long axis runs along x (0°), LoD2's ridge along z (90°).
+    expect(lod2RidgeAcross([house], lod2)).toEqual([{ at: "100,50", what: "w1 gabled: ridge 90° off LoD2's" }]);
+    expect(lod2RidgeAcross([{ ...house, roofAcross: true as const }], lod2)).toEqual([]);
+    expect(lod2RidgeAcross([{ ...house, roofShape: "hipped" }, { ...house, source: "lod1" }], lod2)).toEqual([]);
+    const plain = () => false;
+    expect(lod2SliverEaves([house], lod2, plain, plain)).toEqual([]);
+    const flat = { ...house, height: 15.6, roof: 0, source: "lod1" };
+    expect(lod2SliverEaves([flat], lod2, plain, plain)).toEqual([{ at: "100,50", what: "w1 lod1: at 15.6 m, LoD2 eaves 13 m, sliver 11.3 m" }]);
+    expect(lod2SliverEaves([{ ...house, height: 11.3 }], lod2, plain, plain)).toHaveLength(1);
+    expect(lod2SliverEaves([flat], lod2, plain, () => true)).toEqual([]);
+    expect(lod2SliverEaves([flat], [{ ...lod2[0]!, shellEaves: 12.5 }], plain, plain)).toEqual([]);
   });
 
   it("finds a building drawn with fewer storeys than its building:levels, and none with them all or with no tag (G-629)", () => {

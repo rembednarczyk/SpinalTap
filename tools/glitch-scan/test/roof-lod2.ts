@@ -9,7 +9,9 @@
 import { type Lod2Building, loadLod2, tilesOf } from "../../gugik/src/extracts.ts";
 import { centroid, pointInRing, ringBounds } from "../../osm-import/src/geometry.ts";
 import { lod1Exempt, worldRing } from "../../osm-import/src/lod1-heights.ts";
-import { LOD2_MIN_ROOF, lod2Index, lod2Match } from "../../osm-import/src/lod2-roofs.ts";
+import { lineAngle, longAxisDegrees } from "../../osm-import/src/long-axis.ts";
+import { LOD2_MIN_ROOF, RIDGED_SHAPES, lod2Index, lod2Match } from "../../osm-import/src/lod2-roofs.ts";
+import type { RoofShape } from "../../../packages/core/src/ports/types.ts";
 
 /** How far over LoD2's eaves the game's flat top may stand, metres (`LOD1_DIFF`). */
 export const ROOF_DIFF = 3;
@@ -22,6 +24,8 @@ interface Building {
   readonly height: number;
   readonly roof?: number;
   readonly roofShape?: string;
+  readonly roofAcross?: true;
+  readonly plinth?: number;
   readonly use: string;
   readonly source: string;
   readonly soffit?: number;
@@ -55,5 +59,48 @@ export const flatOverLod2Roof = (buildings: readonly Building[], lod2: readonly 
     const ridge = m?.lod2.mainRidge;
     if (eaves === undefined || ridge === undefined || ridge - eaves <= LOD2_MIN_ROOF || b.height <= eaves + ROOF_DIFF) return [];
     return [{ at: `${b.x.toFixed(0)},${b.z.toFixed(0)}`, what: `${b.id} ${b.source}: flat at ${b.height.toFixed(1)} m, LoD2 eaves ${eaves} m, ridge ${ridge} m (IoU ${m!.iou.toFixed(2)})` }];
+  });
+};
+
+type Finding = { readonly at: string; readonly what: string };
+const at = (b: Building) => `${b.x.toFixed(0)},${b.z.toFixed(0)}`;
+
+/**
+ * Each building with its roof from LoD2 (`source: "lod2"`) of a shape with a ridge (gabled,
+ * half-hipped, mansard, skillion) whose drawn ridge (the outline's long axis, or its short one
+ * with `roofAcross`) lies over 45° off LoD2's main ridge (G-639: Złota 3 at 86°).
+ */
+export const lod2RidgeAcross = (buildings: readonly Building[], lod2: readonly Lod2Building[]): Finding[] => {
+  const index = lod2Index(lod2);
+  return buildings.flatMap((b) => {
+    if (b.source !== "lod2" || !RIDGED_SHAPES.has(b.roofShape as RoofShape)) return [];
+    const ring = worldRing(b);
+    const dir = lod2Match(index, ring)?.lod2.ridgeDir;
+    if (dir === undefined) return [];
+    const drawn = longAxisDegrees(ring) + (b.roofAcross ? 90 : 0);
+    const off = lineAngle(drawn, dir);
+    return off > 45 ? [{ at: at(b), what: `${b.id} ${b.roofShape}: ridge ${off.toFixed(0)}° off LoD2's` }] : [];
+  });
+};
+
+/**
+ * Each building the LoD2 roof rule may take (not among `lod1Exempt`, no mapped `height`, no
+ * `roof:*` tag, the main roof rising over `LOD2_MIN_ROOF`) whose main shell's lowest point is a
+ * sliver over 1 m under the main eaves (`shellEaves`), and which does not stand at the main
+ * eaves: flat, or at the sliver's (G-639: Złota 5, eaves 11.3 m from 3.1 m², 13.0 m from its slopes).
+ */
+export const lod2SliverEaves = (buildings: readonly Building[], lod2: readonly Lod2Building[], isPart: (id: string) => boolean, roofTagged: (id: string) => boolean): Finding[] => {
+  const index = lod2Index(lod2);
+  const parts = buildings.filter((b) => b.soffit !== undefined).map((p) => centroid(worldRing(p)));
+  return buildings.flatMap((b) => {
+    if (b.source === "height" || roofTagged(b.id)) return [];
+    const ring = worldRing(b);
+    if (lod1Exempt(b, isPart(b.id) || parts.some((p) => pointInRing(p, ring))) !== undefined) return [];
+    const l = lod2Match(index, ring)?.lod2;
+    if (!l || l.shellEaves === undefined || l.mainEaves === undefined || l.mainRidge === undefined) return [];
+    if (l.mainEaves - l.shellEaves <= 1 || l.mainRidge - l.mainEaves <= LOD2_MIN_ROOF) return [];
+    const floor = (b.plinth ?? 0) + 3.2;
+    if (b.source === "lod2" && (Math.abs(b.height - l.mainEaves) <= 1 || (floor > l.mainEaves && Math.abs(b.height - floor) <= 0.1))) return [];
+    return [{ at: at(b), what: `${b.id} ${b.source}: at ${b.height.toFixed(1)} m, LoD2 eaves ${l.mainEaves} m, sliver ${l.shellEaves} m` }];
   });
 };

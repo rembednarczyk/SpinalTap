@@ -27,14 +27,32 @@ describe("the main mass of a LoD2 roof", () => {
     // Pałac Parysów's shape: steep lower slopes 10.7 → 15.0 m under a gentle roof 15.0 → 18.2 m.
     const lower = slope(0, 1, 0, 20, 10.7, 15);
     const upper = slope(1, 8, 0, 20, 15, 18.2);
-    expect(mainRoof([lower, upper])).toEqual({ eaves: 10.7, ridge: 18.2 });
+    expect(mainRoof([lower, upper])).toMatchObject({ eaves: 10.7, ridge: 18.2 });
   });
 
   it("leaves out the roof of an annex meeting the main mass's walls (T-257: Lublinianka 4.3 m)", () => {
     const main = slope(0, 10, 0, 30, 17, 21);
     const annex = slope(20, 25, 0, 10, 4.3, 4.5);
-    expect(mainRoof([annex, main])).toEqual({ eaves: 17, ridge: 21 });
+    expect(mainRoof([annex, main])).toMatchObject({ eaves: 17, ridge: 21, shellEaves: 17 });
     expect(mainRoof([])).toBeUndefined();
+  });
+
+  it("does not take the eaves from a sliver of the shell (Złota 5: 3.1 m² at 11.3 m, slopes from 13.0 m)", () => {
+    const main = slope(0, 8, 0, 20, 13, 18);
+    const sliver: Ring3 = [
+      [0, 0, 13],
+      [0, 20, 13],
+      [-0.1, 10, 11.3],
+    ];
+    expect(mainRoof([main, sliver])).toMatchObject({ eaves: 13, ridge: 18, shellEaves: 11.3 });
+  });
+
+  it("gives the fall of the largest surface: the ridge runs across it", () => {
+    // Rising to the east: falling to the west; flat: no fall.
+    const fall = mainRoof([slope(0, 8, 0, 20, 13, 18)])!.fall!;
+    expect(fall.e).toBeCloseTo(-1, 6);
+    expect(fall.n).toBeCloseTo(0, 6);
+    expect(mainRoof([slope(0, 8, 0, 20, 13, 13.2)])!.fall).toBeUndefined();
   });
 });
 
