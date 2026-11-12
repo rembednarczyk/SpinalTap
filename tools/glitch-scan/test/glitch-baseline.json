@@ -83,6 +83,7 @@
   "passage-blocked": 0,
   "small-freestanding-tall": 0,
   "building-underground-solid": 0,
+  "building-duplicate": 0,
   "passage-maxheight": 0,
   "gate-mouth-off-axis": 3,
   "vehicle-outside-passage": 0,

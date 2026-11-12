@@ -32,10 +32,10 @@ const SETTS = { "area:highway": "pedestrian", surface: "paving_stones" } as cons
 /** A lawn, as a bed of the map. */
 const LAWN = { landuse: "flowerbed" } as const;
 
-/** An added area of T-246 from its corners, x and z in turn. */
-const area = (name: string, tags: Tags, flat: readonly number[], reason: string): AddedArea => {
+/** An added area (of T-246 unless named) from its corners, x and z in turn. */
+const area = (name: string, tags: Tags, flat: readonly number[], reason: string, ref = "T-246"): AddedArea => {
   const ring = Array.from({ length: flat.length / 2 }, (_, i) => ({ x: flat[2 * i]!, z: flat[2 * i + 1]! }));
-  return { id: `T-246/${name}`, tags, ring, nodesOf: ring.map(() => null), reason, ref: "T-246" };
+  return { id: `${ref}/${name}`, tags, ring, nodesOf: ring.map(() => null), reason, ref };
 };
 
 /**
@@ -226,6 +226,16 @@ const RUSKA_B = area("ruska-b", SETTS, [
   578.75, 712.25, 575.5, 709.75, 576.75, 709.5, 581, 686, 581, 685.25, 580, 684.75, 580, 684, 581, 675, 581, 674.25, 580.5,
 ], "pas kostki i miejsc postojowych przed sklepami przy Ruskiej na ortofoto PZGiK, w OSM bez nawierzchni");
 
+/**
+ * The lawn over VIVO's underground garage w173070505 (`level=-2`, G-600) past the mall's north-east
+ * wall: the garage is no solid, and OSM maps no surface between the wall and the lawn r11978659 east
+ * of it. Green on the orthophoto (144 of the 149 samples it left bare, 5 paving at its north tip),
+ * 0.4-0.5 m under the wall, its east edge on r11978659's.
+ */
+const LAWN_VIVO = area("trawnik-nad-garazem-vivo", LAWN, [
+  1114.5, 228.15, 1118.8, 227.75, 1109.45, 239.47, 1105.4, 239.4,
+], "trawnik nad garażem podziemnym VIVO w173070505 przy północno-wschodniej ścianie na ortofoto PZGiK, w OSM bez obszaru", "T-258");
+
 /** The added areas east of the Dworzec Autobusowy, then those of this file. */
 export const PODZAMCZE_AREAS: readonly AddedArea[] = [
   ...DWORZEC_EAST_AREAS,
@@ -257,4 +267,5 @@ export const PODZAMCZE_AREAS: readonly AddedArea[] = [
   FRONT_KIOSKS,
   RUSKA_A,
   RUSKA_B,
+  LAWN_VIVO,
 ];
