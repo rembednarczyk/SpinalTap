@@ -1,4 +1,5 @@
 import { type ActivityId, type EntityId, GAME_SECONDS_PER_REAL_SECOND, type GameClock, type Vec3, hourOf } from "@seki/core";
+import { WALKER_SIDE } from "../content/walker-size";
 import { CROWD_BY_HOUR, CROWD_CHUNKS, CROWD_LANES, CROWD_SPOTS, type CrowdLane, type CrowdSpot } from "../content/crowd";
 import { deriveRandom } from "../rng/derive-random";
 import type { LaneWalk } from "./activity-types";
@@ -20,7 +21,7 @@ export const CROWD_ID_BASE = 1_000_000;
 const IDS_PER_CHUNK = 1_000;
 
 /** Walkers keep left: each way round a lane walks this far to its own left of the line (m). */
-export const LANE_HALF_GAP = 0.28;
+export const LANE_HALF_GAP = WALKER_SIDE;
 
 export type ResidentRole =
   | { readonly kind: "walker"; readonly lane: CrowdLane; readonly phase: number; readonly speed: number; readonly dir: 1 | -1 }
