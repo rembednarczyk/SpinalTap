@@ -29,6 +29,8 @@ const SIDESTEP = 0.6;
 const CROWD_RADIUS = 8;
 /** The repath is for this goal; a goal that moved further than this needs the ordinary way. */
 const PLAN_DRIFT = 2;
+/** At its post within this (m), as `HoldPosition` has it. */
+const POST_ARRIVE = 0.3;
 
 /** Who acts this step: the blackboard rebinds it to the current entity. */
 export interface GangerBinding {
@@ -48,7 +50,7 @@ const detourOf = (ctx: SimContext, plan: WalkPlan | null): Detour | null => {
   if (!plan) return null;
   let detour = detours.get(plan);
   if (detour === undefined) {
-    detour = planDetour(ctx.world, plan.from, plan.goal, plan.avoid);
+    detour = planDetour(ctx.world, plan.from, plan.goal, plan.avoid, true);
     detours.set(plan, detour);
   }
   return detour;
@@ -76,7 +78,9 @@ export class GangerWalk {
    * floor, it takes the stairs through the district's transition graph; a gunner instead heads
    * for the nearest point that gives it a shot, when that is closer than the way up. With
    * neither (a roof reached by a ladder, seen from nowhere) it goes back to its post rather
-   * than wait under the target's feet. Lifts and ladders are for the player.
+   * than wait under the target's feet, and so it does on the street when no way round leads
+   * there (a yard walled in, a fence longer than the wide window, G-625): pressed against the
+   * fence it would only stand there. Lifts and ladders are for the player.
    */
   pursueTo(to: Vec3): void {
     const { ctx, self } = this.at;
@@ -85,26 +89,38 @@ export class GangerWalk {
     const gap = heightApart(ctx.world, to, from);
     const apart = gap > LEVEL_GAP;
     const raised = aboveGround(ctx.world, from) > LEVEL_GAP || aboveGround(ctx.world, to) > LEVEL_GAP;
+    let cutOff = false;
     if (!apart) {
       // Under the street (a vault, its heights plain y) more than a floor's height apart but less
       // than a level's: the lower end of Alchemia's car park ramp beside the deck it comes down to
       // (ADR-0074 stage 4). There is no way round on this floor there: the level graph's way.
       const ground = groundOf(ctx.world);
       const vaulted = gap > SAME_FLOOR && (ground.underStreet(to) || ground.underStreet(from));
-      const step = vaulted ? null : this.head(to);
-      if (step || !raised) {
+      const step = vaulted ? null : this.head(to, true);
+      if (step || (!raised && vaulted)) {
         this.goal = to;
         this.moveTowards((step ?? to).x, (step ?? to).z);
         return;
       }
+      // A way straight there that only the stuck check set aside is still a way.
+      cutOff = !vaulted && !raised && !straightWalk(ctx.world, from, to);
     }
     const route = routeAcrossLevels(ctx.world, ctx.streamer.nav, from, to);
     const shot = self.combatant?.stats?.melee || !apart ? null : firingPosition(ctx.world, ctx.streamer.nav, from, to, self.ai.attackRange);
     const way = shot && (!route || shot.cost < route.cost) ? shot : route;
     if (way && Math.hypot(way.next.x - from.x, way.next.z - from.z) < 0.05) self.velocity = { x: 0, y: 0, z: 0 };
     else if (way) this.walkTo(way.next);
-    else if (apart) this.walkTo(self.ai.home);
+    else if (apart || cutOff) this.backToPost();
     else this.moveTowards(to.x, to.z);
+  }
+
+  /** Back to its post, and stops there (`HoldPosition`'s rule), not pacing round the point. */
+  private backToPost(): void {
+    const self = this.at.self;
+    if (!self) return;
+    const home = self.ai.home;
+    if (Math.hypot(home.x - self.position.x, home.z - self.position.z) > POST_ARRIVE) this.walkTo(home);
+    else self.velocity = { x: 0, y: 0, z: 0 };
   }
 
   /** Walks towards a point on its floor, around obstacles when the straight line is blocked. */
@@ -117,9 +133,13 @@ export class GangerWalk {
   /**
    * The point to head for on the way to `goal` (ADR-0025): the goal itself when the knee-high
    * line is free (or the goal is on another floor), a point round the obstacle otherwise, the
-   * repath while getting unstuck. Null when this floor does not lead there.
+   * repath while getting unstuck. Null when this floor does not lead there. `wide`: a chase,
+   * which looks for its way in the wide window too when the near one does not lead there (G-625);
+   * a walk home or to a node keeps to the near one, which got it there so far: the wide way of a
+   * calm guard's walk home in the docks runs onto the end of a pier, a step the raster takes for
+   * level ground and the legs do not climb (as G-339), and it stood there for good.
    */
-  private head(goal: Vec3): Vec3 | null {
+  private head(goal: Vec3, wide = false): Vec3 | null {
     const { ctx, self } = this.at;
     if (!ctx || !self) return null;
     const from = self.position;
@@ -130,7 +150,7 @@ export class GangerWalk {
       if (p) return p;
     }
     if (!this.unsticking() && straightWalk(ctx.world, from, goal)) return goal;
-    return detourStep(ctx.world, from, goal);
+    return detourStep(ctx.world, from, goal, wide);
   }
 
   private unsticking(): boolean {
@@ -195,7 +215,7 @@ export class GangerWalk {
       crowd.push({ ...e.position });
     }
     const plan = this.goal ? { from: { ...self.position }, goal: { ...this.goal }, avoid: crowd } : null;
-    const detour = plan ? planDetour(ctx.world, plan.from, plan.goal, plan.avoid) : null;
+    const detour = plan ? planDetour(ctx.world, plan.from, plan.goal, plan.avoid, true) : null;
     // Only a repath that leads somewhere is kept: without one it leans to the side instead.
     p.plan = detour ? plan : null;
     if (plan && detour) detours.set(plan, detour);
