@@ -10,6 +10,7 @@ import { FLIGHT_RAMPS, MAP_CHUNKS } from "./lublin/sites";
 import { PARKED_CARS } from "./parked-cars";
 import { WORLD_STREET_PROPS, clearOfGame } from "./street-props";
 import { inBuilding } from "./lublin/places";
+import { BODY_RADIUS, WALKER_SIDE } from "./walker-size";
 import { SegmentGrid } from "./segment-grid";
 import { TRAFFIC_ROUTES } from "./traffic";
 
@@ -26,12 +27,15 @@ type Pt = GroundPoint;
 
 /**
  * A barrier crossing a crowd's route keeps this far from its line (its walkers' side, 0.28 m, and
- * a body, 0.3 m); one running along a route only stays off the line itself, `CROWD_LINE`
- * (G-606: a route by a wall leaves the wall, its walkers brush past it). A barrier keeps
- * `CAR_ROOM` from a car lane's line (half a delivery van and a margin), metres.
+ * a body, 0.3 m); one running along a route keeps `CROWD_LINE` from it: a walker's side and
+ * its body's radius, so that nobody walks into the solid (G-606: a route by a wall leaves
+ * the wall; G-626: the walkers have no collision with solids, so the barrier gives way).
+ * A barrier keeps `CAR_ROOM` from a car lane's line (half a delivery van and a margin), metres.
  */
 const CROWD_ROOM = 0.65;
-const CROWD_LINE = 0.3;
+/** A little over, for the cut is tested every quarter metre and the piece rounded to the centimetre (m). */
+const LINE_MARGIN = 0.04;
+const CROWD_LINE = WALKER_SIDE + BODY_RADIUS + LINE_MARGIN;
 const CAR_ROOM = 1.2;
 /** In front of a door the way stays clear this far out, and this much wider than the door either side (m). */
 const DOOR_OUT = 2.2;
