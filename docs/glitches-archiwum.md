@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-689 Bazy `ground-strip-overlap` i `ground-strip-gap` nieaktualne albo niedeterministyczne
+- Status: naprawiony (PR #458, 56a13cb; kontrole deterministyczne, baza z #453 liczona sprzed #447)
+- Ważność: S4 · Zasięg: `GLITCH_BASELINE=update` na main (389e0aa) daje `ground-strip-overlap` 93 727 → 93 726 i `ground-strip-gap` 4 105 → 4 100 bez zmiany nawierzchni; ustalić, czy zmieniły je scalenia po #453 (np. #454), czy kontrola zależy od kolejności; jeśli niedeterministyczna, ustalić przyczynę (zaokrąglenia rastra, kolejność kawałków)
+- Pakiet właściciela: tools/glitch-scan
+
 ### G-643 Budowa rastra i pola okna `wide` w jednym kroku symulacji
 - Status: naprawiony (PR #455, 503bff0; weryfikator PRZYJĘTE; czekanie na plan w tłumie: G-694; decyzja użytkownika 12.11: scalić, poprawić osobno)
 - Ważność: S3 · Zasięg: nowy plan objazdu w oknie `wide` buduje pole ok. 15 ms, a przy zmianie komórki 32 m także raster ok. 37 ms w jednym kroku (budżet ADR-0043: 4 ms); przy jednym odciętym gangerze w pościgu za biegnącym graczem przestój 15–50 ms co 1,5–2 s; poprawka: budowa rozłożona na kilka kroków (ganger idzie starą drogą do gotowego planu)
