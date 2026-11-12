@@ -1,6 +1,6 @@
-import type { RandomPort } from "@seki/core";
+import { type RandomPort, mulberry32Advance, mulberry32Output } from "@seki/core";
 
-/** mulberry32: tiny, fast, 32-bit state. The whole state fits in one number, so it is trivially saveable. */
+/** mulberry32 (`@seki/core`) stepped on a 32-bit state. The whole state fits in one number, so it is trivially saveable. */
 export class SeededRandom implements RandomPort {
   private state: number;
 
@@ -9,11 +9,8 @@ export class SeededRandom implements RandomPort {
   }
 
   next(): number {
-    this.state = (this.state + 0x6d2b79f5) >>> 0;
-    let t = this.state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    this.state = mulberry32Advance(this.state);
+    return mulberry32Output(this.state);
   }
 
   getState(): number {

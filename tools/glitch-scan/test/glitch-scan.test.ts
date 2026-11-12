@@ -27,6 +27,7 @@ import { patrolChecks } from "./patrol-pieces";
 import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
+import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
 import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
 import { addedSolidOverWay } from "./added-solid-over-way";
 import { readCover } from "../../orto/src/cover.ts";
@@ -144,6 +145,9 @@ const SOURCE_OSM = mergeOsm(
 /** The kerb fills' world (`kerb-fill.ts`), built once for both of its checks. */
 let fillWorld: ReturnType<typeof cityFillWorld> | undefined;
 const FILL_WORLD = () => (fillWorld ??= cityFillWorld(SOURCE_OSM));
+/** The chunks' ground on the 0.25 m raster of ADR-0078 (`ground-strips.ts`), laid once for both of its checks. */
+let stripRasters: ReturnType<typeof stripRaster>[] | undefined;
+const STRIP_RASTERS = () => (stripRasters ??= MAP_CHUNKS.map(stripRaster));
 const cars = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries");
 /** The car lanes one by one, before the junctions join them into routes (ADR-0055): sampled from each lane's own start. */
 const carLanes = TRAFFIC_LANES.filter((r) => r.use !== "deliveries");
@@ -1928,6 +1932,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "drone-low-pool-sunk": () => poolSunk(PATROL_LANES(), cityPatrolWorld().surfaceAt, DRAWN_PAVING()),
   /** Two overlapping pieces of the drawn paving at different heights over the ground where they meet: a step, patches and the depth flickering (G-301, `paving-overlap.ts`). */
   "paving-overlap-step": () => pavingOverlapSteps(drawnPieces(WORLD_SCENERY, groundY)),
+  /** An outline of the ground in the tables, off the bridges, two of whose edges cross, adjacent ones aside (G-659; ADR-0078 stage 2 takes it to 0, `ground-strips.ts`). */
+  "ground-ring-self-cross": () => groundRingSelfCross(MAP_CHUNKS),
+  /** A m² of the tables' ground under two pieces or more, on a 0.25 m raster: the strips laid over each other in draw order (ADR-0078 stage 3 takes it to about 0, `ground-strips.ts`). */
+  "ground-strip-overlap": () => groundStripOverlap(STRIP_RASTERS()),
+  /** A m² of bare gaps up to 1.25 m wide between the tables' ground pieces, on a 0.25 m raster (ADR-0078 stage 5 brings it down, `ground-strips.ts`). */
+  "ground-strip-gap": () => groundStripGap(STRIP_RASTERS()),
   /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */
   "paving-coplanar": () => pavingCoplanar(mapGround(WORLD_SCENERY)),
   /** A drawn lawn with over 20 m² of it under a square's or a cobbled area's paving, which lies over it: Plac Litewski's lawns (G-421, `grass-under-paving.ts`). */

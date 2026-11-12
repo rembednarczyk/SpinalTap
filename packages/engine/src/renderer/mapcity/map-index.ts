@@ -1,3 +1,4 @@
+import { SpatialHash } from "@seki/core";
 import type { Box2 } from "./polygon";
 
 /** Side of the batching cells of the map city (m): one facade, signs and ground mesh each. */
@@ -24,54 +25,33 @@ export const cellBounds = (key: string, size = MAP_CELL): Box2 => {
 
 export const grow = (b: Box2, d: number): Box2 => ({ minX: b.minX - d, maxX: b.maxX + d, minZ: b.minZ - d, maxZ: b.maxZ + d });
 
-/** Ids by the 32 m bins their boxes touch: candidates for point queries. */
+/**
+ * Ids by the 32 m bins their boxes touch, core's `SpatialHash`: candidates for point queries.
+ * Each id is in once; adding it again moves it.
+ */
 export class BinIndex {
-  private readonly bins = new Map<string, Set<number>>();
-  private readonly boxes = new Map<number, Box2>();
+  private readonly grid = new SpatialHash<number>(BIN);
+  private readonly handles = new Map<number, number>();
 
   add(id: number, box: Box2): void {
     this.remove(id);
-    this.boxes.set(id, box);
-    for (const k of cellsOf(box, BIN)) {
-      let s = this.bins.get(k);
-      if (!s) {
-        s = new Set();
-        this.bins.set(k, s);
-      }
-      s.add(id);
-    }
+    this.handles.set(id, this.grid.insert(id, box.minX, box.minZ, box.maxX, box.maxZ));
   }
 
   remove(id: number): void {
-    const box = this.boxes.get(id);
-    if (!box) return;
-    this.boxes.delete(id);
-    for (const k of cellsOf(box, BIN)) {
-      const s = this.bins.get(k);
-      s?.delete(id);
-      if (s && s.size === 0) this.bins.delete(k);
-    }
+    const handle = this.handles.get(id);
+    if (handle === undefined) return;
+    this.handles.delete(id);
+    this.grid.remove(handle);
   }
 
-  /** Ids whose box contains (x, z). */
-  *at(x: number, z: number): Iterable<number> {
-    const s = this.bins.get(cellKey(x, z, BIN));
-    if (!s) return;
-    for (const id of s) {
-      const b = this.boxes.get(id);
-      if (b && x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ) yield id;
-    }
+  /** Ids whose box contains (x, z), in the order they were added. */
+  at(x: number, z: number): Iterable<number> {
+    return this.grid.at(x, z);
   }
 
-  /** Ids whose box meets `box`, each once. */
+  /** Ids whose box meets `box`, each once, in the order they were added. */
   within(box: Box2): Set<number> {
-    const out = new Set<number>();
-    for (const k of cellsOf(box, BIN)) {
-      for (const id of this.bins.get(k) ?? []) {
-        const b = this.boxes.get(id);
-        if (b && b.minX <= box.maxX && b.maxX >= box.minX && b.minZ <= box.maxZ && b.maxZ >= box.minZ) out.add(id);
-      }
-    }
-    return out;
+    return new Set(this.grid.query(box.minX, box.minZ, box.maxX, box.maxZ));
   }
 }

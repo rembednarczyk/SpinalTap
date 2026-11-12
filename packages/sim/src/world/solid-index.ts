@@ -1,26 +1,23 @@
-import type { Vec3 } from "@seki/core";
+import { SpatialHash, type Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity } from "./components";
 import { type Collider, type SolidEntity, collidersOf } from "./solids";
 
 /** Edge of a bucket of the index, metres. */
 const CELL = 16;
-const key = (ix: number, iz: number): number => (ix + 32768) * 65536 + (iz + 32768);
 
 /**
- * A uniform grid over the static solids of a world (ADR-0043): who might be near a point or a
- * ray, so a city of hundreds of prisms costs what a street of a few dozen boxes did. Kinematic
- * solids (lifts, gates, sliding doors) are few and move: every query returns all of them.
- * Rebuilt lazily when a solid enters or leaves the world (streaming). Queries come back in
- * creation order, the order the movement system has always pushed out in.
+ * A uniform grid over the static solids of a world (ADR-0043), core's `SpatialHash`: who might
+ * be near a point or a ray, so a city of hundreds of prisms costs what a street of a few dozen
+ * boxes did. Kinematic solids (lifts, gates, sliding doors) are few and move: every query
+ * returns all of them. Rebuilt lazily when a solid enters or leaves the world (streaming).
+ * Colliders come back in creation order, the order the movement system has always pushed out in.
  */
 export class SolidIndex {
   private dirty = true;
-  private readonly buckets = new Map<number, SolidEntity[]>();
+  private readonly grid = new SpatialHash<SolidEntity>(CELL);
   private kinematic: SolidEntity[] = [];
   private readonly parts = new WeakMap<SolidEntity, readonly Collider[]>();
-  private stamp = 0;
-  private readonly seen = new WeakMap<SolidEntity, number>();
   /** Queries answered and solids handed back, for the cost check in tests (ADR-0046). */
   readonly stats = { queries: 0, candidates: 0 };
 
@@ -36,48 +33,25 @@ export class SolidIndex {
 
   private rebuild(): void {
     this.dirty = false;
-    this.buckets.clear();
+    this.grid.clear();
     this.kinematic = [];
     for (const e of this.world.with("solid")) {
-      if (e.velocity) {
-        this.kinematic.push(e);
-        continue;
-      }
-      const b = e.solid;
-      for (let ix = Math.floor(b.min.x / CELL); ix <= Math.floor(b.max.x / CELL); ix++) {
-        for (let iz = Math.floor(b.min.z / CELL); iz <= Math.floor(b.max.z / CELL); iz++) {
-          const k = key(ix, iz);
-          const list = this.buckets.get(k);
-          if (list) list.push(e);
-          else this.buckets.set(k, [e]);
-        }
-      }
+      if (e.velocity) this.kinematic.push(e);
+      else this.grid.insert(e, e.solid.min.x, e.solid.min.z, e.solid.max.x, e.solid.max.z);
     }
   }
 
-  /** Solids whose box may overlap the rectangle on the XZ plane (static ones only when `staticOnly`), unordered. */
+  /** Solids whose box may overlap the rectangle on the XZ plane (static ones only when `staticOnly`): the static ones in the world's order, then the kinematic. */
   near(minX: number, minZ: number, maxX: number, maxZ: number, staticOnly = false): SolidEntity[] {
     if (this.dirty) this.rebuild();
-    const stamp = ++this.stamp;
-    const out: SolidEntity[] = [];
-    for (let ix = Math.floor(minX / CELL); ix <= Math.floor(maxX / CELL); ix++) {
-      for (let iz = Math.floor(minZ / CELL); iz <= Math.floor(maxZ / CELL); iz++) {
-        for (const e of this.buckets.get(key(ix, iz)) ?? []) {
-          if (this.seen.get(e) === stamp) continue;
-          this.seen.set(e, stamp);
-          const b = e.solid;
-          if (b.max.x < minX || b.min.x > maxX || b.max.z < minZ || b.min.z > maxZ) continue;
-          out.push(e);
-        }
-      }
-    }
+    const out = this.grid.query(minX, minZ, maxX, maxZ);
     if (!staticOnly) out.push(...this.kinematic);
     this.stats.queries++;
     this.stats.candidates += out.length;
     return out;
   }
 
-  /** Solids a segment from `a` to `b` may cross, unordered. */
+  /** Solids a segment from `a` to `b` may cross, in the order of `near`. */
   alongSegment(a: Vec3, b: Vec3): SolidEntity[] {
     return this.near(Math.min(a.x, b.x), Math.min(a.z, b.z), Math.max(a.x, b.x), Math.max(a.z, b.z));
   }
