@@ -1781,6 +1781,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: Krakowskie, x −88…−20, z ok. 113: w grze 113,0–113,6, w rzeczywistości ok. 113,7 (wschód) i 114,0–114,5 (zachód) według ortofoto 2025-04; linia idzie osią drogi z OSM przesuniętą przez `fitLanes`, nie osią malowania; mniej niż 1/3 pasa; odsyłacz G-655, G-675
 - Pakiet właściciela: tools/osm-import
 
+### G-682 Goły teren na nawierzchni wzdłuż Królewskiej
+- Status: zgłoszone (12.11, przejście komórki stare-miasto-0-0; niepotwierdzone wizualnie; czeka na kuratora)
+- Ważność: S3 · Zasięg: pas ukośny od ok. (478; −195) do (525; −145) i (505..525; −195..−215), 29 kwadratów, 2576 próbek `landuse-bare` (ok. 644 m²); nakładka ortofoto: 340 m² jasna nawierzchnia, 257 m² asfalt, 35 m² zieleń; pasy między jezdnią a chodnikami przy krzywiźnie Królewskiej i placu; kandydat do kroku 1.1 ADR-0077 (goła ziemia z ortofoto, w toku)
+- Pakiet właściciela: tools/osm-import
+
+### G-683 Wylot bramy poza osią frontu: Brama Krakowska i Wieża Trynitarska
+- Status: zgłoszone (12.11, przejście komórki stare-miasto-0-0; niepotwierdzone wizualnie)
+- Ważność: S4 · Zasięg: `gate-mouth-off-axis` = 3 (cała baza miasta w tej komórce): (463; −94) −1,80 m od środka frontu 7,47 m; (587; −140) −0,81 m z 5,90 m; (588; −154) −4,44 m z 15,84 m (ten może być fałszywy: front obejmuje sąsiednią ścianę); G-136 (Brama Grodzka) zapowiadał pomiar Krakowskiej; najpierw pomiar z OSM i ortofoto
+- Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
+
+### G-684 Fałszywy alarm `levels-tag-lost` na Bramie Krakowskiej
+- Status: zgłoszone (12.11, przejście komórki stare-miasto-0-0)
+- Ważność: S4 · Zasięg: r7224409 (473; −91): „2 storeys of building:levels=5”; obrys ma `height` 10 m i części `building:part` (wieża 5 kond., przedbramie 2 kond., T-007 rozwiązane); kontrola liczy obrys bez części; poprawka: wyjątek dla budynków z częściami, baza 4 → 3
+- Pakiet właściciela: tools/glitch-scan
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
