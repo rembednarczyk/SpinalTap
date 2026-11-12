@@ -54,6 +54,7 @@ import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
+import { kerbStripBare } from "./kerb-strip-bare";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
 import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
@@ -77,6 +78,7 @@ import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alon
 import { belowGround } from "../../osm-import/src/building-tags.ts";
 import { isTowerTags } from "../../osm-import/src/building-towers.ts";
 import { TAG_CORRECTIONS, correctedLine } from "../../osm-import/src/corrections.ts";
+import { withoutReplaced } from "../../osm-import/src/corrections-alchemia.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
@@ -1842,6 +1844,16 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * and the footway's paving at once. One finding per metre.
    */
   "footway-on-carriageway": () => footwaysOnCarriageway(),
+  /** A metre of a fitted street's edge (T-046, G-655) with a metre and more of bare ground before the lawn or pavement past it (`kerb-strip-bare.ts`). */
+  "kerb-strip-bare": () =>
+    kerbStripBare({
+      lines: withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)),
+      carriageways: CARRIAGEWAYS,
+      roadWidth,
+      surfacesAt,
+      inBuilding,
+      deep: (x, z) => MAP_CHUNKS.some(({ bounds: b }) => x > b.minX + 3 && x < b.maxX - 3 && z > b.minZ + 3 && z < b.maxZ - 3),
+    }),
   /**
    * A street narrowed to its mapped sidewalks (G-082) although they run along less than half of it
    * on either side (G-112): the width came from where a sidewalk turns in to a junction's crossing.
