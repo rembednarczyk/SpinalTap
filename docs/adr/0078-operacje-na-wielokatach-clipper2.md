@@ -1,6 +1,6 @@
 # ADR-0078: Operacje na wielokątach w imporcie mapy na Clipper2
 
-Status: Proponowany (12.11). Wynika z decyzji użytkownika z 12.11 (`docs/decyzje.md`, „Wyrównanie do wzorców”, punkt 1) i z reguły „Wzorce i standardy” w `CLAUDE.md`. Dotyczy ADR-0042 (import OSM i NMT), ADR-0077 (pokrycie mapy z danych) i ADR-0054 (glitche). Stan kodu: `origin/main` f7a18f0. Kod produkcyjny importu w tym kroku się nie zmienia: jest ten ADR, zależność deweloperska w `tools/osm-import` i prototyp pomiarowy w `tools/osm-import/bench`.
+Status: Zaakceptowany (12.11, decyzja użytkownika: „przyjmuję, lecimy”; start od etapów 1–2). Wynika z decyzji użytkownika z 12.11 (`docs/decyzje.md`, „Wyrównanie do wzorców”, punkt 1) i z reguły „Wzorce i standardy” w `CLAUDE.md`. Dotyczy ADR-0042 (import OSM i NMT), ADR-0077 (pokrycie mapy z danych) i ADR-0054 (glitche). Stan kodu: `origin/main` f7a18f0. Kod produkcyjny importu w tym kroku się nie zmienia: jest ten ADR, zależność deweloperska w `tools/osm-import` i prototyp pomiarowy w `tools/osm-import/bench`.
 
 ## Kontekst
 
