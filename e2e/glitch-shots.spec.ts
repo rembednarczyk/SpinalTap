@@ -8,7 +8,9 @@ import { freeze, step, teleport, newGame, waitForGame, waitForPlay } from "./hel
  * `GLITCH_SPOTS` a JSON list of [name, x, z, yaw, pitch, y?] (y: a floor over or under the ground,
  * the stairs of a metro pavilion; without it the ground), or the path of a .json file holding it.
  * Skipped without them, so the full suite in CI passes over it. Next to each `<name>.png` goes
- * `<name>.json` with the player and the camera at the moment of the shot.
+ * `<name>.json` with the player and the camera at the moment of the shot. `SHOT_HOUR` (0-23) lets
+ * game time pass to that full hour before the first shot, e.g. 12 for daylight; without it the game
+ * keeps its starting time (night).
  */
 const listed = process.env.GLITCH_SPOTS ?? "[]";
 const spots = JSON.parse(listed.endsWith(".json") ? readFileSync(listed, "utf8") : listed) as [string, number, number, number, number, number?][];
@@ -17,6 +19,16 @@ const spots = JSON.parse(listed.endsWith(".json") ? readFileSync(listed, "utf8")
 const NEAR = 3;
 /** Standing still, the camera looks exactly where the player does (no bob); a hundredth of a radian of slack. */
 const TURNED = 0.01;
+
+/** The hour of the shots, or null for the game's starting time. */
+const hour = process.env.SHOT_HOUR === undefined ? null : Number(process.env.SHOT_HOUR);
+
+/** Minutes from the clock "HH:MM" to the next full `target` hour, 1 to 1440. */
+const minutesTo = (clock: string, target: number): number => {
+  const [h, m] = clock.split(":").map(Number);
+  const left = (target * 60 - (h! * 60 + m!) + 1440) % 1440;
+  return left === 0 ? 1440 : left;
+};
 
 /** Shortest turn from `a` to `b`, radians. */
 const turn = (a: number, b: number): number => Math.atan2(Math.sin(b - a), Math.cos(b - a));
@@ -29,6 +41,14 @@ test("shots of the hunters' places", async ({ page }) => {
   await newGame(page);
   await waitForPlay(page);
   await freeze(page);
+  if (hour !== null) {
+    expect(Number.isInteger(hour) && hour >= 0 && hour <= 23, "SHOT_HOUR is a full hour, 0-23").toBe(true);
+    const clock = await page.evaluate(() => window.__seki!.state().clock);
+    await page.evaluate((minutes) => window.__seki!.wait(minutes), minutesTo(clock, hour));
+    await step(page, 1);
+    const now = await page.evaluate(() => window.__seki!.state().clock);
+    expect(Number(now.split(":")[0]), `clock ${now} after waiting for ${hour}:00`).toBe(hour);
+  }
   for (const [name, x, z, yaw, pitch, y] of spots) {
     await teleport(page, x, z, yaw, pitch, y);
     await step(page, 5);
