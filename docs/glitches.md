@@ -1754,6 +1754,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
   - G-674 (S4) Północny krawężnik Radziwiłłowskiej przy Placu Litewskim przed trawnikiem OSM — w914787972 i w331453920, x −87…−40: goły pas 1–2,8 m między północną krawędzią asfaltu (z 119,1–119,7) a trawnikiem w1011367949
 - Pakiet właściciela: tools/osm-import (ground, `fitToKerb`, `kerbFills`)
 
+### G-729 Szyld Neon Koi wchodzi na szyld BANK POWSZEDNI
+- Status: zgłoszone (12.11, zgłoszenie użytkownika; przyczyna do potwierdzenia)
+- Ważność: S3 (widoczne w głównym miejscu gry, deptak przy klinice, kadr sceny `reference`) · Zasięg: szyld baru Neon Koi i szyld lokalu BANK POWSZEDNI na sąsiednim budynku w66330644 (313,9; −102,1), Krakowskie Przedmieście. Hipoteza: #459 (dachy z LoD2, G-639) podniósł okap w66330644 z 11,5 m (domyślne) na 12,7 m i w opisie PR-a „szyld i górny rząd okien idą w górę”, więc szyld banku wjechał w szyld Neon Koi; do potwierdzenia zrzutem przed/po #459
+- Pakiet właściciela: tools/osm-import (szyldy lokali, `venue-names.ts`, rozstawienie szyldów na fasadzie) albo packages/engine (szyldy NPR), zależnie od przyczyny
+- Test przyjęcia: kontrola skanu nakładania szyldów sąsiednich fasad (nowy rodzaj, np. `sign-overlap`, baza policzona na main) w tym miejscu 0; zrzut dzienny i nocny z deptaka przed Neon Koi bez nakładania
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
