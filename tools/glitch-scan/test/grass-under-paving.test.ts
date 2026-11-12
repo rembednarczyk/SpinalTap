@@ -5,6 +5,10 @@ import { type GroundSurface, SURFACE_LIFT, type Vec3, type ViewDescriptor } from
 import { worldRing } from "../../../packages/engine/src/renderer/drones/drone-world";
 import { type P2, pointInRing, signedArea, triangulate } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
+import { readCover } from "../../orto/src/cover.ts";
+import { ringOverlay } from "../../orto/src/overlay.ts";
+import { share } from "../../orto/src/rings.ts";
+import { ADDED_AREAS } from "../../osm-import/src/corrections.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { grassUnderPaving, grassUnderPavingFindings } from "./grass-under-paving";
@@ -201,6 +205,23 @@ describe("grass-under-paving (G-421)", () => {
     // The trees south-west of Litevski and west of the school.
     expect(grass(rect(-200, 6, -195, 24))).toBeGreaterThan(75);
     expect(grass(rect(-200, 115, -195, 124))).toBeGreaterThan(40);
+  });
+
+  // T-245 laid a lawn from 3 Maja's east sidewalk w232674453's axis to the strip w1011367940 by the clinic,
+  // where the orthophoto shows the light paving of the sidewalk, with bollards and lamps: 2% green (G-667).
+  // The green is in the strips at x -97 and along w1011367940, which the game shows as lawns already.
+  it("lays no lawn on 3 Maja's east sidewalk by the clinic (G-667)", () => {
+    const sidewalk: P2[] = [{ x: -93.32, z: 130.96 }, { x: -91.75, z: 155.21 }, { x: -94.08, z: 155.21 }, { x: -94.5, z: 150.07 }, { x: -94.6, z: 142.98 }, { x: -95.13, z: 132.68 }];
+    const top = topSurfaces(WORLD_SCENERY, sidewalk);
+    expect(top.get("grass") ?? 0, JSON.stringify([...top])).toBe(0);
+    expect(top.get("square") ?? 0, JSON.stringify([...top])).toBeGreaterThan(15);
+    // Any lawn added here lies on the green of the orthophoto cover.
+    const cover = readCover("krakowskie")!;
+    const lawns = ADDED_AREAS.filter((a) => a.tags.landuse === "grass" && a.ring.some((p) => p.x > -96 && p.x < -92 && p.z > 128 && p.z < 156));
+    expect(lawns.map((a) => [a.id, share(ringOverlay([cover], a.ring)!, ["green"]) >= 0.55])).toEqual(lawns.map((a) => [a.id, true]));
+    // The two strips of green either side of it.
+    expect(topSurfaces(WORLD_SCENERY, rect(-98, 130, -96.5, 141)).get("grass") ?? 0).toBeGreaterThan(10);
+    expect(topSurfaces(WORLD_SCENERY, rect(-92.5, 133, -91.6, 148)).get("grass") ?? 0).toBeGreaterThan(10);
   });
 
   it("lays every piece of paving with holes as the triangles of its own area", () => {
