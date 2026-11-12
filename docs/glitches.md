@@ -1752,7 +1752,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-667 Trawnik `T-245/trawnik-3-maja-klinika` leży na chodniku
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g667)
+- Status: w PR #444 (12.11; trawnik zamieniony na kostkę, przegląd kuratora w toku)
 - Ważność: S4 · Zasięg: Krakowskie, x −95…−92, z 131–155, 49 m², zieleń 2%: jasny chodnik 3 Maja ze słupkami i latarniami, zieleń w pasach przy x −97 i x −91; poprawka: trawnik na pasy zieleni albo kostka; kryterium zieleń ≥ 55%; wiersz T-245 do uzupełnienia o ten trawnik jako otwarty
 - Pakiet właściciela: tools/osm-import
 
