@@ -1,3 +1,5 @@
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash";
+
 /**
  * `lamp-off-band` (G-477, T-232, T-233): a lamp the generator walked along a line of the plan
  * (`docs/world/lublin-props.todo.json`) standing more than `SLACK` off any paving. The plan's
@@ -60,23 +62,19 @@ const inRing = (p: Pt, ring: readonly Pt[]): boolean => {
 
 const BIN = 16;
 
-/** Whether a point lies on one of `rings` (the paving), over bins of `BIN` m. */
+/**
+ * Whether a point lies on one of `rings` (the paving), over core's `SpatialHash` of `BIN` m by the
+ * rings' boxes: a point in a ring lies in its box, so the boxes `some` passes over change nothing.
+ */
 export const pavedAt = (rings: readonly (readonly Pt[])[]): ((p: Pt) => boolean) => {
-  const bins = new Map<string, (readonly Pt[])[]>();
+  const bins = new SpatialHash<readonly Pt[]>(BIN);
   for (const r of rings) {
     if (r.length < 3) continue;
     const xs = r.map((p) => p.x);
     const zs = r.map((p) => p.z);
-    for (let i = Math.floor(Math.min(...xs) / BIN); i <= Math.floor(Math.max(...xs) / BIN); i++) {
-      for (let j = Math.floor(Math.min(...zs) / BIN); j <= Math.floor(Math.max(...zs) / BIN); j++) {
-        const k = `${i}:${j}`;
-        const list = bins.get(k);
-        if (list) list.push(r);
-        else bins.set(k, [r]);
-      }
-    }
+    bins.insert(r, Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs));
   }
-  return (p) => (bins.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`) ?? []).some((r) => inRing(p, r));
+  return (p) => bins.some(p.x, p.z, p.x, p.z, (r) => inRing(p, r));
 };
 
 /** The lines of the plan's kerb lamps by kind, and the plan's nodes. */
