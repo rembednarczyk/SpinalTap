@@ -75,6 +75,7 @@
   "tower-area-missing": 0,
   "church-over-nmpt": 0,
   "height-vs-lod1": 1,
+  "flat-over-lod2-roof": 22,
   "landmark-vs-lod1": 1,
   "levels-tag-lost": 4,
   "landmark-fake-tower": 0,

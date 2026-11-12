@@ -35,7 +35,7 @@ export const LOD1_MAX_CHANGE = 10;
  */
 const MIN_WALLS = STOREY;
 /** The lowest storey `building:levels` keeps: lower walls take fewer storeys. */
-const MIN_STOREY = 2.6;
+export const MIN_STOREY = 2.6;
 
 const HEIGHT_TAGS = ["height", "building:height", "building:levels", "roof:height", "roof:levels", "min_height"];
 
@@ -87,7 +87,7 @@ export const lod1Match = (index: BoxIndex<Indexed>, ring: readonly Pt[], min = L
 };
 
 /** Storeys of walls this high over the plinth, a shop floor of 4 m first when it has shops. */
-const storeysOf = (walls: number, shops: boolean): number => Math.max(1, shops && walls >= SHOP_STOREY + STOREY / 2 ? 1 + Math.round((walls - SHOP_STOREY) / STOREY) : Math.round(walls / STOREY));
+export const storeysOf = (walls: number, shops: boolean): number => Math.max(1, shops && walls >= SHOP_STOREY + STOREY / 2 ? 1 + Math.round((walls - SHOP_STOREY) / STOREY) : Math.round(walls / STOREY));
 
 /**
  * The eaves and storeys from LoD1 `measuredHeight` (`measured`): the eaves at `measured −
