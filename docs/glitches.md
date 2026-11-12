@@ -1637,7 +1637,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-639 Płaska bryła na wysokości LoD1 przy stromym dachu wypada na kalenicy
-- Status: w PR #459, runda 2 (12.11; kalenice z LoD2, `lod2-ridge-across` 5 → 0, `lod2-sliver-eaves` 1 → 0, 80 budynków `lod2`); ponowny przegląd kuratora
+- Status: w PR #459 (12.11; kurator PRZYJĘTE w rundzie 2; okap od ulicy osobno: G-695)
 - Ważność: S3 · Zasięg: budynki bez tagów dachu stoją płasko na wysokości LoD1, a przy stromym dachu LoD1 leży prawie na kalenicy; np. Pałac Parysów w66330695 w grze 18,1 m i 5 rzędów okien, w LoD2 okap 10,7 m i kalenica 18,2 m (przed zmianą 11,1 m); ok. 59 budynków (płaski dach w grze, dach LoD2 > 4 m, okap gry > 3 m nad okapem LoD2; liczba przybliżona, okap LoD2 bywa okapem przybudówki); poprawka: gdy LoD2 ma okap i kalenicę, a OSM nie ma tagów dachu, okap i dach z LoD2; kontrola `flat-over-lod2-roof` (baza ok. 59); luka pokrewna: `church-over-nmpt` nie wykrywa kościoła za niskiego
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1812,7 +1812,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-694 Ganger czekający na plan objazdu stoi w miejscu
-- Status: w PR #461 (12.11; postój 204 → 5 kroków; weryfikacja w kolejce na wolny slot)
+- Status: w PR #461 (12.11; postój 204 → 5 kroków; weryfikacja w toku)
 - Ważność: S3 · Zasięg: po #455 (G-643) ganger bez starej drogi czeka na swój plan w kolejce: przy N różnych celach do ok. 13·N kroków (3,4 s przy 18 pościgach, 5,3 s przy liderach rozrzuconych do 60 m; na main do 16 kroków); poprawka: w czasie czekania ruch w stronę celu (krok w bok przy przeszkodzie, jak przy odklejaniu), priorytet w kolejce dla gangera bez żadnej drogi; także `planChase` z `{ chase: made }` nie zeruje własnego `chaseNext`
 - Pakiet właściciela: packages/sim (systems/ai)
 
