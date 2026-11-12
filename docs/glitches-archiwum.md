@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-621 `ModelMemory` bez testu kolejności zwalniania
+- Status: naprawione w #420 (12.11; test jednostkowy `model-memory.test.ts`, pada 3/5 przy odwróconym sortowaniu)
+- Ważność: S4 · Zasięg: przypadek telefonu w `model-release.test.ts` przechodzi także z odwróconym sortowaniem w `ModelMemory.sweep` (naraz jeden kandydat); brak testu jednostkowego „najdłużej nieużywany idzie pierwszy”
+- Pakiet właściciela: packages/engine (testy)
+
+
 ### G-556 Budynek ze środkiem poza mapą znika w całości, także w części leżącej w chunku
 - Status: naprawione w #414 (12.11; budynki przycięte do brzegu mapy ze ślepą ścianą; budżety reference 196/84 i krakowskie-tpp 165 z wpisem w ADR-0046; reszta za brzegiem w backlogu „Poszerzanie mapy”, T-250)
 - Ważność: S3 · Zasięg: w mieście 50 budynków, ok. 10 100 m²; w krakowskie-0-1 Cicha 3, 5, 6 i 8 (281 m²), które w grze dają gołą ziemię w pasie Cichej i przy ogrodzie na zachód od Cichej 4; Ordynacki i Kuria już w T-058/G-096; propozycja kontroli `edge-building-dropped` (część w chunku > 2 m², środek poza mapą, poza rejestrem), baza 50 albo 48 bez T-058

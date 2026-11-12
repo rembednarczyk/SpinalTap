@@ -1671,11 +1671,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: `furnitureClearance` (`world-barriers.ts:513`) pomija meble niesolidne, `CROWD_SPOTS` i `SEAT_SPOTS` nie biorą udziału w cięciu; cafe-garden (629,5; 117,2) 31 ze 168 próbek w murze, (583,7; 24,5), siedziska #286 i #287 z murem 0,05–0,14 m przed twarzą
 - Pakiet właściciela: packages/sim, tools/glitch-scan
 
-### G-621 `ModelMemory` bez testu kolejności zwalniania
-- Status: w PR #420 (12.11; test jednostkowy, pada 3/5 przy odwróconym sortowaniu)
-- Ważność: S4 · Zasięg: przypadek telefonu w `model-release.test.ts` przechodzi także z odwróconym sortowaniem w `ModelMemory.sweep` (naraz jeden kandydat); brak testu jednostkowego „najdłużej nieużywany idzie pierwszy”
-- Pakiet właściciela: packages/engine (testy)
-
 ### G-622 Loader glTF liczy pozycje skóry na CPU dla każdego prymitywu
 - Status: zgłoszone (11.11, naprawiacz G-620; do sprawdzenia w przeglądarce)
 - Ważność: S4 · Zasięg: `refreshBoundingInfo(true, true)` przy wczytywaniu VRM kosztuje 40–450 ms na plik w NullEngine; jeśli tak samo w przeglądarce, wydłuża wczytywanie postaci; inne testy modeli (`model-textures`, `model-cast-colours`, `model-donors`, `model-figure*`) też nie zwalniają silników
