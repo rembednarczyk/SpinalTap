@@ -61,7 +61,7 @@ describe("bare terrain on the shops' land of Podzamcze (G-536, G-540)", () => {
 
 describe("bare terrain over VIVO's underground garage (G-600)", () => {
   // The garage w173070505 (`level=-2`) is no solid: past the mall's north-east wall it left 149
-  // samples bare, a lawn on the orthophoto (T-258).
+  // samples bare. Its part there stands over the street, a solid of its own (G-662, T-261).
   it("leaves none of the garage's outline past the mall bare", () => {
     const ring = (id: string) => extractFeatures(osm).areas.find((a) => a.id === id)!.ring;
     const [garage, mall] = [ring("w173070505"), ring("r5601275")];
