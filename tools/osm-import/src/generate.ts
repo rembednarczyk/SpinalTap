@@ -13,6 +13,8 @@ import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills } from "./bridge-fill.ts";
 import { type EdgeCut, edgeOutlines, partsWithin } from "./building-edge.ts";
 import { makeBuilding } from "./buildings.ts";
+import { type Cover } from "../../orto/src/cover.ts";
+import { type CoverFill, coverFiller, townPlaces, withFills } from "./bare-cover.ts";
 import { type AddedArea, addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { withoutReplaced } from "./corrections-alchemia.ts";
 import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
@@ -27,7 +29,7 @@ import { type KerbSample, fitLanes } from "./lane-fit.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
-import { type ChunkOut } from "./model.ts";
+import { type BuildingOut, type ChunkOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { lod1Index, withLod1Height } from "./lod1-heights.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
@@ -220,6 +222,7 @@ const generateChunk = (
   kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[] },
   barriers: readonly WorldBarrier[],
   heights: { readonly lod1?: ReturnType<typeof lod1Index>; readonly orphans: ReadonlySet<string> },
+  fill?: CoverFill,
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
@@ -249,10 +252,12 @@ const generateChunk = (
     // A building's parts follow it, in its chunk, wherever their own centroids fall.
     out.push(ok, ...r.lifted);
   }
-  const ground = chunkGround(
+  const laid = chunkGround(
     bands.filter((b) => rectsOverlap(b.box, spec.rect)),
     spec.rect,
   );
+  // The bare ground left laid from the orthophoto's cover (ADR-0077 step 1.1).
+  const ground = fill ? withFills(laid, fill(spec.rect, laid, shopOutlines(out, buildings))) : laid;
   const r = spec.rect;
   const own = new Set(out.map((b) => b.id));
   const through = passages.filter((p) => own.has(p.building));
@@ -308,8 +313,24 @@ const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
   return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
 };
 
-/** `lod1`: GUGiK LoD1 2024 buildings (`Inputs.lod1`) for the heights the map lacks (`lod1-heights.ts`); without, the tags' heights. */
-export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS, added?: readonly AddedArea[], lod1?: readonly Lod1Building[]): Generated => {
+/** The shops and public buildings of a chunk and the stops' shelters, as `landuse-bare` reads them: their forecourts are a town's paved places. */
+const shopOutlines = (out: readonly BuildingOut[], buildings: readonly Area[]): Pt[][] => {
+  const shelter = new Set(buildings.filter((a) => a.tags.shelter_type === "public_transport" || a.tags.public_transport !== undefined).map((a) => a.id));
+  return out.filter((b) => b.use === "commercial" || b.use === "civic" || shelter.has(b.id)).map((b) => Array.from({ length: b.outline.length / 2 }, (_, k) => ({ x: b.outline[2 * k]! + b.x, z: b.outline[2 * k + 1]! + b.z })));
+};
+
+/**
+ * `lod1`: GUGiK LoD1 2024 buildings (`Inputs.lod1`) for the heights the map lacks (`lod1-heights.ts`); without, the tags' heights.
+ * `covers`: the districts' orthophoto cover (`Inputs.covers`) the bare ground is laid from (`bare-cover.ts`); without, it stays bare.
+ */
+export const generate = (
+  data: OsmData,
+  src: HeightSource,
+  chunks: readonly ChunkSpec[] = ALL_CHUNKS,
+  added?: readonly AddedArea[],
+  lod1?: readonly Lod1Building[],
+  covers?: readonly Cover[],
+): Generated => {
   // The ways a set piece of the game replaces (ADR-0074 stage 7) are left out before anything reads them.
   const features = withoutReplaced(extractFeatures(data));
   // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), before anything reads them.
@@ -433,7 +454,8 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   // Walls, fences and hedges (ADR-0077) clear of the buildings, carriageways, steps and the ways through them.
   const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
   const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
-  const results = chunks.map((c) => generateChunk(c, src, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights));
+  const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas));
+  const results = chunks.map((c) => generateChunk(c, src, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, fill));
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
   const venueStats: VenueStats = {
     total: mapped.length,

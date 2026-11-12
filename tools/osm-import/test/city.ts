@@ -24,7 +24,7 @@ import { REPO } from "../src/paths.ts";
 import { type PropsOut, type PropsPlan, generateProps } from "../src/props-gen.ts";
 
 /** What the generators read: the raw data, the plan, and the sources they import (theirs, core, sim, engine). */
-const INPUTS = ["data/osm", "data/terrain", "docs/world/lublin-props.todo.json", "tools/osm-import/src", "packages/core/src", "packages/sim/src", "packages/engine/src"];
+const INPUTS = ["data/osm", "data/terrain", "data/orto", "tools/orto/src","docs/world/lublin-props.todo.json", "tools/osm-import/src", "packages/core/src", "packages/sim/src", "packages/engine/src"];
 const DIR = join(REPO, "node_modules/.cache/seki-city");
 
 const filesOf = (path: string): string[] =>
@@ -77,7 +77,7 @@ export const cityPlan = (): PropsPlan => JSON.parse(readFileSync(join(REPO, "doc
 export const generatedCity = (): Generated =>
   cached("generate", () => {
     const inputs = loadInputs();
-    return generate(inputs.osm, inputs.src);
+    return generate(inputs.osm, inputs.src, undefined, undefined, undefined, inputs.covers);
   });
 
 /** `generateProps` of the plan over the committed tables, with no node tags, boards or market. */

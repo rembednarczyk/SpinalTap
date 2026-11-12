@@ -91,10 +91,10 @@ describe("the ground the map city lays (G-444)", () => {
       hash.add(m.getIndices() ?? []);
       vertices += m.getTotalVertices();
     }
-    // The map's data, not the laying, moved it last: the strips between the carriageways and their
-    // paving closed (G-522), by asphalt of its own along a street of estimated width (G-570), and two
-    // footways that loop back on a node of their own laid as simple pieces (G-654).
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 22, vertices: 131782, hash: "21e445de" });
+    // The map's data, not the laying, moved it last: the bare ground of the town's paved places and
+    // the compact lawns and yards laid as grass and paving from the orthophoto's cover (ADR-0077 step
+    // 1.1), so two cells without a piece of ground before have one now.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 140589, hash: "3d01b8b7" });
     scene.dispose();
   });
 
