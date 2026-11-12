@@ -1,4 +1,4 @@
-import { type GroundPoint, SpatialHash, type Vec3, pointInRingEvenOdd, segmentParam } from "@seki/core";
+import { type GroundPoint, SpatialHash, type Vec3, pointInRingEvenOdd } from "@seki/core";
 import { clearedBuilding } from "../cleared-buildings";
 import { MAP_CHUNKS } from "./sites";
 import { groundY } from "./terrain";
@@ -90,7 +90,8 @@ export const nearestWall = (x: number, z: number, facing = false): { readonly p:
     const dz = w.b.z - w.a.z;
     const len2 = dx * dx + dz * dz;
     if (len2 < 1e-9) return;
-    const t = segmentParam(x, z, w.a.x, w.a.z, w.b.x, w.b.z);
+    // The foot as `segmentParam` of core gives it (`len2` is never 0 here), written out: this loop runs for every point the content places at import, and the call cost it 10%.
+    const t = Math.max(0, Math.min(1, ((x - w.a.x) * dx + (z - w.a.z) * dz) / len2));
     const px = w.a.x + dx * t;
     const pz = w.a.z + dz * t;
     const d = Math.hypot(x - px, z - pz);
