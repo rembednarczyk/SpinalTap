@@ -68,7 +68,7 @@ export interface ContractHookDef {
   readonly source: "bark" | "terminal" | "shard";
   /** Ink knot with the bark or the mail. */
   readonly knot: string;
-  /** One line for the tracker once found. */
+  /** Catalog key of the tracker's line once found (ADR-0056: `core` holds keys, not sentences). */
   readonly text: string;
 }
 
