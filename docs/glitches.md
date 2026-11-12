@@ -1747,9 +1747,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-664 Zieleń z `layer>0` ukrywa gołą ziemię przed skanem `landuse-bare`
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g664)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g664 @ 163a226; baza landuse-bare 69019 → 69215, wszystkie +196 przy VIVO; czeka na G-665)
 - Ważność: S4 · Zasięg: `landuse-bare` pomija punkty w obrysie trawnika z mapy, także trawnika na dachu (r11978659), więc goły pas z G-661 nie zmienił bazy 69019; poprawka: zieleń z `layer>0` albo `location=roof` nie zwalnia próbek, nowa baza z przebiegu
 - Pakiet właściciela: tools/glitch-scan
+
+### G-665 Szczelina między kawałkami trawnika na garażu VIVO
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g665; odsłonięte przez G-664)
+- Ważność: S4 · Zasięg: próbka (1119,75; 238,75), 0,057 m wewnątrz krawędzi garażu w173070505, w pasie ok. 0,1–0,2 m² między kawałkami trawnika z `groundRaisedGreen` (G-647, #436); test G-600 „leaves none of the garage's outline past the mall bare” pada po poprawce skanu G-664; przyczyna prawdopodobnie w cięciu po częściach wypukłych albo przycięciu do granicy chunku x = 1120
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
