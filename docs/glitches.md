@@ -1727,7 +1727,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
 ### G-660 `save-load-micro-body` przekracza 20 s pod obciążeniem
-- Status: zgłoszone (12.11, agent bramki czasu testów)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g660)
 - Ważność: S4 · Zasięg: `packages/sim/test/save-load-micro-body.test.ts` „won, knocked out…” (G-242) przekroczył limit 20 s przy load 11–13 na 4 rdzeniach; kandydat na test niestabilny; najpierw pomiar przyczyny, limitu nie podnosimy (ADR-0046)
 - Pakiet właściciela: packages/sim
 
@@ -1777,7 +1777,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-670 Kontrola `added-grass-off-green` bez listy wyjątków celowych i bez lustra dla kostki
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g670; po scaleniu #438)
+- Status: poprawione na gałęzi ccr-ec2c4269-ilh8k8-g670 @ a87864d (12.11; added-grass-off-green 10 → 5, nowa added-paving-on-green 3: T-246/ruska-a, T-246/ruska-b, T-245/zn2-wschod-trawnik; PR po scaleniu #438)
 - Ważność: S4 · Zasięg: baza 10 liczy też celowe trawniki T-241 (`trawnik-zachod`, `trawnik-wschod`, `trawnik-bajkowskiego`, plan inwestora ADR-0074) i błędy klasyfikatora (`T-243/ck-zachod-trawnik`, `T-245/rabata-kolegium-poludnie`): lista wyjątków z odsyłaczem T-NNN, baza 10 → 5; nowa kontrola `added-paving-on-green` (ręczna kostka z zielenią ≥ 50%, kandydaci `T-245/zn2-wschod-trawnik` 71%, `zn2-wschod-srodek` 40%); do sprawdzenia też pas zieleni ok. 22 m² pod `podworze-litevski` (x −194,5…−192, z 28–39)
 - Pakiet właściciela: tools/glitch-scan
 
