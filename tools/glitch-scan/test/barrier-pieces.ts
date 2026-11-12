@@ -1,4 +1,4 @@
-import { BARRIER_THICKNESS, type StreetPropItem, barrierLayout, doorLayout } from "../../../packages/core/src";
+import { BARRIER_THICKNESS, type StreetPropItem, barrierLayout, doorLayout, segmentDistance } from "../../../packages/core/src";
 import { barrierPrism } from "../../../packages/sim/src/content/lublin/barriers";
 import { LANE_HALF_GAP } from "../../../packages/sim/src/world/crowd";
 import { BODY } from "../../../packages/sim/src/world/factory";
@@ -64,12 +64,7 @@ const samplesOf = (i: StreetPropItem): Pt[] => {
   return out;
 };
 
-const segDistance = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(p.x - (a.x + dx * t), p.z - (a.z + dz * t));
-};
+const segDistance = (p: Pt, a: Pt, b: Pt): number => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 
 /** The sine of the angle between two directions. */
 const sine = (u: Pt, v: Pt): number => (u.x * v.z - u.z * v.x) / (Math.hypot(u.x, u.z) * Math.hypot(v.x, v.z) || 1);
