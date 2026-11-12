@@ -1667,7 +1667,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-644 Kilkanaście pościgów naraz przepełnia pamięć rastrów okna `near`
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g644)
+- Status: w PR #439 (12.11; 12 pościgów 45,8 → 0,60 ms mediany kroku; weryfikacja w toku)
 - Ważność: S3 · Zasięg: odcięty ganger z planem `wide` nadal co krok pyta okno `near` przez `head(to)` (`ganger-walk.ts:191`); przy ok. 12 pościgach z różnymi celami pamięć `near` (8 rastrów) wypada bez końca: mediana 31,6 ms na krok, 600/600 kroków > 16 ms (main w tym scenariuszu 0,39 ms, 163 kroki > 16 ms tylko na starcie); poprawka: ganger z ważnym planem `wide` nie pyta `near`, albo klucz `near` niezależny od `from`
 - Pakiet właściciela: packages/sim (systems/ai)
 
@@ -1755,6 +1755,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g665; odsłonięte przez G-664)
 - Ważność: S4 · Zasięg: próbka (1119,75; 238,75), 0,057 m wewnątrz krawędzi garażu w173070505, w pasie ok. 0,1–0,2 m² między kawałkami trawnika z `groundRaisedGreen` (G-647, #436); test G-600 „leaves none of the garage's outline past the mall bare” pada po poprawce skanu G-664; przyczyna prawdopodobnie w cięciu po częściach wypukłych albo przycięciu do granicy chunku x = 1120
 - Pakiet właściciela: tools/osm-import
+
+### G-666 Pamięć pościgu `chase` nie jest czyszczona, gdy cel przejdzie przez barierę
+- Status: zgłoszone (12.11, naprawiacz G-644; także na main)
+- Ważność: S4 · Zasięg: `chase` gangera (`ganger-walk.ts`) zostaje, dopóki cel jest w `CHASE_DRIFT` (8 m) od starego; gdy gracz przeskoczy płot w tym promieniu, ganger może dojść do starego celu i stać po złej stronie bariery
+- Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
