@@ -1657,7 +1657,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (testy)
 
 ### G-643 Budowa rastra i pola okna `wide` w jednym kroku symulacji
-- Status: zgłoszone (12.11, weryfikator #426; dług w ADR-0046)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g643)
 - Ważność: S3 · Zasięg: nowy plan objazdu w oknie `wide` buduje pole ok. 15 ms, a przy zmianie komórki 32 m także raster ok. 37 ms w jednym kroku (budżet ADR-0043: 4 ms); przy jednym odciętym gangerze w pościgu za biegnącym graczem przestój 15–50 ms co 1,5–2 s; poprawka: budowa rozłożona na kilka kroków (ganger idzie starą drogą do gotowego planu)
 - Pakiet właściciela: packages/sim (systems/ai)
 
