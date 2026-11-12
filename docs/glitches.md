@@ -469,7 +469,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-214 Kościół Bernardynów bez swojej wieży i sygnaturki, za wysoka nawa
 - Status: zgłoszone (2.11, kurator, przegląd #190)
-- Ważność: S3 (proponowana) · Zasięg: lokalny (Bernardyńska, widok z Krakowskiego Przedmieścia i Placu Wolności) · Koszt: mały
+- Ważność: S3 (proponowana) · Zasięg: lokalny (Bernardyńska, widok z Krakowskiego Przedmieścia i Placu Wolności) · Koszt: mały; 12.11 (kurator, przegląd G-215): wieżę da się dodać jednym wpisem w `BELL_TOWERS` po scaleniu G-215, bez korekty importu: w66330578, środek (378,1; −247,7), half 2,75, top ok. 32,5, tip 39,2 (rzut w obrysie OSM); sygnaturka (375,4; −240,1) do y 31,8 wymaga mniejszego rodzaju wpisu
 - Gdzie: w66330578 (364,7; −239,8), Krakowskie; T-120
 - Dowód: NMPT GUGiK 0,5 m: wieża (378,1; −247,7), ok. 5,5 × 5,5 m, hełm do y 39,2; sygnaturka (375,4; −240,1) do y 31,8; kalenica nawy y 24,5 (gra 30,1, `source: default`). Po #190 gra nie ma żadnej wieży, przed #190 miała dwie na zachodzie
 - Przyczyna: OSM nie ma wieży jako części; renderer zgaduje wieże przy zachodnim szczycie
@@ -478,7 +478,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: najwyższy wierzchołek bryły w promieniu 4 m od (378,1; −247,7) ma y 39,2 ± 1, poza nim nic nie przekracza y 32; dziś pada (brak wieży, kalenica 30,1)
 
 ### G-215 Proceduralne wieże na kościołach, które ich nie mają albo mają inne
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g215 (12.11, 1dc2bc5: wieże tylko z tabeli danych; `church-fake-tower` 4 → 0, `church-tower-off-nmpt` 6 → 1 = G-214; przegląd kuratora w toku); wcześniej: zgłoszone (2.11, kurator, przegląd #190)
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g215 (12.11, 1dc2bc5: wieże tylko z tabeli danych; `church-fake-tower` 4 → 0, `church-tower-off-nmpt` 6 → 1 = G-214; przegląd kuratora ZGODNE Z UWAGAMI; runda 2: gzyms Św. Ducha 18,1 z NMPT, kształt hełmu z tabeli, kontrola gzymsu); wcześniej: zgłoszone (2.11, kurator, przegląd #190)
 - Ważność: S3 (proponowana) · Zasięg: szeroki (7 kościołów, m.in. deptak: Kapucyni i Świętego Ducha) · Koszt: średni; 12.11 (przejście stare-miasto-1-1): św. Wojciecha w61102109 dalej ma wieżę z iglicą (zrzut `sm11-b`). T-121 trzeba przenieść do `otwarte` w stare-miasto-1-1, krakowskie-0-1, krakowskie-1-0 i stare-miasto-0-0.
 - Priorytet (kurator, przegląd #208): wyżej. Wieże skalują się ze ścianami, więc po G-216 Niecała 4 w232674421 ma wieżę do y ok. 13 na budynku ok. 3,7 m (ponad trzy razy wyżej niż budynek bez wieży), a Świętego Ducha dwie wieże do y 28,5 przy kalenicy 20,4. Najtańszy pierwszy krok: kościoły bez wieży w rzeczywistości (Niecała 4, Kapucyni, św. Piotra, św. Wojciecha) na liście bez wieży, z odsyłaczem T-121
 - Gdzie: T-121: Kapucyni w67508932, Karmelici r5420467 (poprawione w #198: wieże poza obrysem zdjęte), św. Piotra w66335226, św. Wojciecha w61102109, Niecała 4 w232674421, Świętego Ducha w66264126 (2 wieże zamiast 1 smukłej na narożu SW do y 26,5), cerkiew Przemienienia w66264148 (wieża 13 m za wysoka)
