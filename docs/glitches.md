@@ -1752,7 +1752,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-675 Przeskok oznakowania na styku zwężonych kawałków jezdni
-- Status: zgłoszone (12.11, kurator przeglądu #437)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g675)
 - Ważność: S4 · Zasięg: Radziwiłłowska przy x −66 (`fitLanes`, #437): linia środkowa skacze z 113,7 na 112,9, linia między pasami z 116,6 na 116,2; w rzeczywistości linia środkowa ciągła na z ≈ 114,0–114,5 (w grze 112,9–113,7, wcześniej na main 112,2–113,2); kontrola `marking-step` (skok > 0,3 m na wspólnym węźle kawałków jednej ulicy), baza ≥ 2
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
