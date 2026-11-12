@@ -126,14 +126,19 @@ const PLAIN = new Set(["yes", "public", "government", "civic"]);
 const civicPointIn = (a: Area, world: readonly Pt[], ctx: BuildingContext) =>
   buildingUse(a.tags) === "residential" && PLAIN.has(a.tags.building ?? "yes") ? ctx.civicPoints?.find((p) => pointInRing(p.at, world) && sameAddress(p.addr, a.tags)) : undefined;
 
-export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly Area[] = []): BuildingResult => {
-  const f = footprint(a.ring);
+/**
+ * A building of the map. `cut` is its outline cut at the map's edge (G-556): the footprint, foot
+ * and walls stand on it, while its height, roof, use, shops and name are the whole building's.
+ */
+export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly Area[] = [], cut?: readonly Pt[]): BuildingResult => {
+  const f = footprint(cut ?? a.ring);
   if (typeof f === "string") return { skipped: f };
   const { center, outline, parts } = f;
-  const area = signedArea(outline);
-  const world = outline.map((p) => ({ x: p.x + center.x, z: p.z + center.z }));
+  const drawn = outline.map((p) => ({ x: p.x + center.x, z: p.z + center.z }));
+  const world = cut ? ccw(openRing(a.ring)) : drawn;
+  const area = cut ? signedArea(world) : signedArea(outline);
   const ground = groundUnder(ctx.src, center, outline);
-  const gridMin = Math.min(...world.map((p) => terrainHeightAt(ctx.grid, p.x, p.z)), terrainHeightAt(ctx.grid, center.x, center.z));
+  const gridMin = Math.min(...drawn.map((p) => terrainHeightAt(ctx.grid, p.x, p.z)), terrainHeightAt(ctx.grid, center.x, center.z));
   // Rounded down, so the foot never floats above the terrain grid.
   const y = Math.floor(Math.min(ground.min - ctx.altitude, gridMin) * 10 + 1e-9) / 10 + 0;
   const plinth = r1(Math.max(ground.max - ctx.altitude - y, 0));

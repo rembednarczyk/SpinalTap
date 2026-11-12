@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { VEHICLE_MODELS, VEHICLE_SIZE } from "@seki/core";
 import { describe, expect, it } from "vitest";
-import { Scene } from "../src/babylon";
+import { FreeCamera, Scene, Vector3 } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { CityKit } from "../src/renderer/city-kit";
 import { parseCityKit } from "../src/renderer/city-kit-data";
@@ -95,6 +95,33 @@ describe("vehicle views (ADR-0050)", () => {
     expect(views.has(100)).toBe(true);
     views.despawn(100);
     expect(views.has(100)).toBe(false);
+  });
+
+  it("a fleet with a car 170 m behind the camera and one beside it stays out of the view (G-595)", () => {
+    const { scene, views } = setup();
+    const active = () => {
+      const list = scene.getActiveMeshes();
+      return list.data.slice(0, list.length).some((m) => m.name === "parked");
+    };
+    const camera = new FreeCamera("cam", new Vector3(0, 2, 0), scene);
+    camera.setTarget(new Vector3(0, 2, 10));
+    const parked = (id: number, x: number, z: number) => views.spawn(id, { kind: "vehicle", model: "sedan", tint: id, parked: true }, at(x, z));
+    // Both within the draw distance, neither in the frame; the box round both of them is.
+    parked(1, 0, -170);
+    parked(2, 80, 10);
+    views.update();
+    scene.render();
+    expect(views.stats.meshes).toBe(1);
+    expect(active()).toBe(false);
+    // One in front of the camera brings the fleet in.
+    parked(3, 2, 30);
+    views.update();
+    scene.render();
+    expect(active()).toBe(true);
+    views.despawn(3);
+    views.update();
+    scene.render();
+    expect(active()).toBe(false);
   });
 
   it("waits for the kit before it draws anything", () => {

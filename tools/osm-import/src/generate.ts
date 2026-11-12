@@ -9,10 +9,11 @@ import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
 import { type WorldBarrier, chunkBarriers, worldBarriers } from "./barriers.ts";
 import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills } from "./bridge-fill.ts";
+import { type EdgeCut, edgeOutlines, partsWithin } from "./building-edge.ts";
 import { makeBuilding } from "./buildings.ts";
 import { type AddedArea, addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { withoutReplaced } from "./corrections-alchemia.ts";
-import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
+import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
 import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, lineBands, markedCrossing, openPavings, roadWidth } from "./ground.ts";
@@ -169,7 +170,7 @@ const grow = (r: Rect, m: number): Rect => ({ minX: r.minX - m, minZ: r.minZ - m
 const generateChunk = (
   spec: ChunkSpec,
   src: HeightSource,
-  buildings: readonly Area[],
+  buildings: readonly (Area & { readonly edge?: EdgeCut })[],
   bands: readonly (Band & { box: Rect })[],
   lines: readonly Line[],
   pois: ReturnType<typeof allPois>,
@@ -193,15 +194,18 @@ const generateChunk = (
   let skipped = 0;
   let withHoles = 0;
   for (const a of buildings) {
-    if (!inRect(centroid(a.ring), spec.rect)) continue;
-    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints, civicPoints, alone, towered }, parts.get(a.id));
+    if (!inRect(centroid(a.edge?.ring ?? a.ring), spec.rect)) continue;
+    const own = a.edge ? partsWithin(parts.get(a.id) ?? [], a.edge.rect) : parts.get(a.id);
+    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints, civicPoints, alone, towered }, own, a.edge?.ring);
     if ("skipped" in r) {
       skipped++;
       continue;
     }
     if (a.holes > 0) withHoles++;
-    const signs = venues.get(a.id);
-    const ok = signs ? { ...r.ok, venues: signs.map((v) => venueOut(v, r.ok)) } : r.ok;
+    // A building cut at the map's edge signs only the venues on its part on the map (G-556).
+    const edge = a.edge?.rect;
+    const signs = edge ? venues.get(a.id)?.filter((v) => inRect(v.at, edge)) : venues.get(a.id);
+    const ok = signs?.length ? { ...r.ok, venues: signs.map((v) => venueOut(v, r.ok)) } : r.ok;
     // A building's parts follow it, in its chunk, wherever their own centroids fall.
     out.push(ok, ...r.lifted);
   }
@@ -344,9 +348,16 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const venues = assignVenues(allVenues(data, areas), buildings.map((b) => ({ id: b.id, ring: b.ring })));
   const mapped = allVenues(data, areas).filter((v) => chunks.some((c) => inRect(v.at, c.rect)));
   const kerb = { carParks: areas, busStops: busStopPosts(data, mapLines, areas) };
+  // A building across the map's edge, centred off it, is cut at the edge rather than dropped (G-556);
+  // the whole map's districts, so it is cut the same whichever chunks are built.
+  const cut = edgeOutlines(buildings, DISTRICTS.map((d) => d.rect));
+  const placed = buildings.map((b) => {
+    const edge = cut.get(b.id);
+    return edge ? { ...b, edge } : b;
+  });
   // Walls, fences and hedges (ADR-0077) clear of the buildings, carriageways, steps and the ways through them.
   const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers));
+  const results = chunks.map((c) => generateChunk(c, src, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers));
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
   const venueStats: VenueStats = {
     total: mapped.length,
