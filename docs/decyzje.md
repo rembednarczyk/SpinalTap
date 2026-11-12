@@ -38,3 +38,7 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 
 ## Czas testów w CI (12.11)
 - Decyzja użytkownika: najpierw pomiar najwolniejszych testów, `isolate: false` tam, gdzie bezpieczne (`core`, `sim`, `tools`, pakiet po pakiecie z przebiegiem kontrolnym), i wspólna pamięć wygenerowanego miasta z kluczem z sumy kontrolnej wejścia; potem bramka czasu w CI (ostrzeżenie przy pliku wolniejszym o > 50% od main). Testy tylko dotkniętych pakietów w PR-ach i trzeci shard później albo wcale. Limitu 20 min na shard nie podnosimy (ADR-0046).
+
+## Urządzenie docelowe i APK (12.11)
+- Decyzja użytkownika: urządzeniem odniesienia jest mocny telefon klasy Xiaomi 15T Pro. Nowe progi są docelowe, nie tymczasowe: wierzchołki całego miasta w pamięci do 2,5 mln (było 1 mln), budżety wywołań rysowania i aktywnych siatek scen +40%. Scena `phone-low` (słabsze telefony) bez zmian. Dalsze optymalizacje (doładowywanie, dłuższe ładowanie na starcie) później, gdy będą potrzebne.
+- Decyzja użytkownika: ograniczenia przeglądarki rozwiązujemy instalacją gry na telefonie jako `.apk`. APK budowany przy każdym większym wydaniu. Szczegóły w ADR-0079.
