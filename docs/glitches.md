@@ -1722,7 +1722,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, packages/engine (receptury landmarków)
 
 ### G-634 `ModelLibrary.load` nie sprawdza `response.ok`
-- Status: zgłoszone (12.11, naprawiacz G-561)
+- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g634` (12.11, weryfikator PRZYJĘTE; PR po scaleniu #422)
 - Ważność: S4 · Zasięg: odpowiedź 404 albo 500 trafia do parsera jako GLB i pada dopiero przy parsowaniu z mylącym błędem; `.gltf` po URL (`LoadAssetContainerAsync`) i dynamiczny import pluginu glTF nadal bez limitu czasu (dziś nieużywane, manifest ma `.vrm`)
 - Pakiet właściciela: packages/engine (renderer: modele)
 
@@ -1740,6 +1740,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, weryfikator #422)
 - Ważność: S4 · Zasięg: `MODEL_FETCH_TIMEOUT_MS` (120 s) przerywa całe pobieranie; przy łączu wolniejszym niż ok. 0,5 Mbit/s plik 8 MB (kaito.vrm) nigdy się nie załaduje, bo każda próba zaczyna od zera; poprawka: limit bezczynności (brak nowych bajtów przez N s) zamiast całkowitego; przy okazji: pełny zestaw engine+app+code-health trwa ok. 507 s (import 55%), do rozważenia `isolate: false` albo podział
 - Pakiet właściciela: packages/engine (renderer: modele)
+
+### G-638 `fetch` bez sprawdzenia `res.ok` w zestawie miasta i dźwiękach
+- Status: zgłoszone (12.11, weryfikator G-634)
+- Ważność: S4 · Zasięg: `city-kit-loader.ts:108`, `city-kit.ts:167` i `audio/samples.ts:62` pobierają bez sprawdzenia statusu, więc 404 trafia do parsera albo dekodera z mylącym błędem (ten sam wzorzec co G-634)
+- Pakiet właściciela: packages/engine (renderer, audio)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
