@@ -1627,7 +1627,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-613 Trasy tłumu przy Podwalu biegną po linii muru oporowego zamiast osią chodnika
-- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g613` (12.11, e49f753; `offBarriers` odsuwa trasy placów 1 m od barier wzdłuż, mur w67626198 179/183 m; przegląd kuratora w toku)
+- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g613` (12.11, e49f753; `offBarriers` odsuwa trasy placów 1 m od barier wzdłuż, mur w67626198 179/183 m; kurator ZGODNE; weryfikacja w toku)
 - Ważność: S3 · Zasięg: trasy `stare-miasto-1-0-square-0` i `stare-miasto-1-1-square-0` idą w medianie 0,5 m od muru w67626198, a oś chodnika w56965511 jest 0,65–1,95 m od muru (zwykle 1,7 m); przez to 61 m dwumetrowego muru skarpy pod Archikatedrą wycięte (x 673–693, 701–705, 731–743, 753–760 przy z −200…−161 i x 745–760 przy z −15…12); kryterium: trasy co najmniej 1,0 m od muru i mur w grze ponad 170 z 183 m; T-251
 - Pakiet właściciela: packages/sim (tłum), tools/osm-import
 
@@ -1730,6 +1730,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, kurator przeglądu G-600)
 - Ważność: S4 · Zasięg: VIVO ma w grze `use` = residential, bo relacja ma `building=yes`, a obrys w376043568 (`building=retail`, `shop=mall`) jest pomijany; poprawka: `buildingUse` bierze też tagi obrysu (`role=outline`); kontrola `building-use-vs-outline` (co najmniej 1 trafienie)
 - Pakiet właściciela: tools/osm-import
+
+### G-649 Mur oporowy i chodnik przy Podwalu przesunięte o 1,8–3 m na północ
+- Status: zgłoszone (12.11, kurator przeglądu G-613, T-259)
+- Ważność: S3 · Zasięg: x 695–760: mur w67626198 i oś chodnika w56965511 z OSM leżą 1,8–3 m na północ od rzeczywistości; ściana oporowa w BDOT10k (`OT_BUUO_L`, przez (739,2; −178,6), (726,2; −184,5), (706,5; −191,2)) pokrywa się ze stopniem NMT, ortofoto ma kostkę od 1,8–2,4 m na południe od osi do ścian domów; trasa tłumu idzie przez to po skarpie (NMT 1,5–2 m nad chodnikiem, x 735: 182,7 wobec 180,6 m); poprawka: geometria muru i chodnika według BDOT10k; kontrola `barrier-vs-bdot` (mur oporowy OSM > 1,5 m od linii BDOT10k, baza ≥ 1)
+- Pakiet właściciela: tools/osm-import
+
+### G-650 Dwie alejki przy Radziwiłłowskiej bez tras tłumu po G-613
+- Status: zgłoszone (12.11, kurator przeglądu G-613)
+- Ważność: S4 · Zasięg: po odsunięciu tras od płotów alejki przy w232805994 (x 45–80, z ok. 105, Pałac Lubomirskich, Plac Litewski 3) i w232805996 (x −63…−11, Plac Litewski 5) zostały bez przechodniów, w promieniu 30 m brak trasy; kryterium: trasa ≥ 1 m od płotu, a gdy pętla jest za wąska, jedna linia zamiast zniknięcia; kontrola `footway-alley-unwalked` (alejka powyżej `ALLEY_AREA` bez próbki trasy w 5 m, baza 2)
+- Pakiet właściciela: packages/sim (tłum)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
