@@ -1616,11 +1616,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `refreshBoundingInfo(true, true)` przy wczytywaniu VRM kosztuje 40–450 ms na plik w NullEngine; jeśli tak samo w przeglądarce, wydłuża wczytywanie postaci; inne testy modeli (`model-textures`, `model-cast-colours`, `model-donors`, `model-figure*`) też nie zwalniają silników
 - Pakiet właściciela: packages/engine (renderer: modele)
 
-### G-625 Ganger staje przy długim płocie albo murze, gdy w oknie sterowania nie ma drogi
-- Status: w PR #426, runda 2 PRZYJĘTE; runda wydajności 73f2ac4 (12.11): testy zapisu micro i hack wróciły do main (+6%, −7%); czeka na CI
-- Ważność: S3 · Zasięg: `planDetour` (`steering.ts`) zwraca „off-field”, gdy w oknie 80 m nie ma objazdu; ganger dochodzi do przeszkody i stoi, gracz za nią bezpieczny (sonda 30 s: 0 strzałów); np. płot (11,83; −251,22), mur 3 m (214; −28,13); bariery z #418 uwidaczniają to w wielu miejscach; test `barrier-ai.test.ts` („moved > 1”) przeszedłby też z gangerem stojącym przy płocie; poprawka: dłuższy objazd (nawigacja po grafie poziomu albo większe okno), a gdy drogi nie ma, przejście do osłony lub szukania
-- Pakiet właściciela: packages/sim (systems/ai, steering)
-
 ### G-627 Ręczne trawniki T-245 leżą częściowo na nawierzchni
 - Status: zgłoszone (12.11, przegląd zieleni T-245 kuratora; naprawa po scaleniu #416)
 - Ważność: S3 · Zasięg: `LITEVSKI_GREEN` i `SCHOOL_GREEN` w `tools/osm-import/src/corrections-zn.ts` (runda 2 #405) kładą trawę na asfalcie i kostce: pas x −201…−197, z 27–45 (54 m², zieleń 13%) i pas wzdłuż w80139555 do Cichej 4 (104 m², zieleń 4%); krakowskie-0-1; poprawka wg ADR-0077: trawa tylko na płatach zieleni z nakładki ortofoto (domknięcie 1 m, płat od 4 m²), reszta kostką jak T-243; kryterium: trawnik Litevski ≥ 70% zieleni, szkoły ≥ 55%, nowa kostka ≤ 15%; `cover-truth.test.ts` próg 0,55 → 0,7 (trawniki kuratora są prawdą klasyfikatora); nowa kontrola skanu `added-grass-off-green` (ręczne trawniki z zielenią < 50%: 11 z 20, 1 133 m²; do sprawdzenia też T-241 trawnik-wschod, trawnik-bajkowskiego, T-245 trawnik-3-maja-klinika, rabaty przy Collegium, T-246 trawnik-nadstawna-3)
@@ -1700,11 +1695,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zablokowane przez G-655 (12.11; kryterium ≥ 1 m od płotu niemożliwe bez osłabienia `walker-on-car-lane`: oś pasa ruchu Radziwiłłowskiej 2,8–3,7 m od płotu, bo jezdnia zachodzi na chodnik; kontrola alejek bez tras liczona dosłownie daje 17, przy 3 największych alejkach chunku 2)
 - Ważność: S4 · Zasięg: po odsunięciu tras od płotów alejki przy w232805994 (x 45–80, z ok. 105, Pałac Lubomirskich, Plac Litewski 3) i w232805996 (x −63…−11, Plac Litewski 5) zostały bez przechodniów, w promieniu 30 m brak trasy; kryterium: trasa ≥ 1 m od płotu, a gdy pętla jest za wąska, jedna linia zamiast zniknięcia; kontrola `footway-alley-unwalked` (alejka powyżej `ALLEY_AREA` bez próbki trasy w 5 m, baza 2)
 - Pakiet właściciela: packages/sim (tłum)
-
-### G-651 `belowGround` zdjęłoby budynek naziemny z `level=-1` i piętrami nad ziemią
-- Status: w PR #432 (12.11)
-- Ważność: S4 · Zasięg: `tools/osm-import/src/building-tags.ts` `belowGround`: `level=-1` przy `building:levels=3`, `height=20` albo `roof:levels=1` daje `true`, więc budynek naziemny zniknąłby; w danych dziś takiego nie ma, ryzyko na przyszłość; poprawka: budynek z dodatnimi piętrami lub wysokością nie jest podziemny
-- Pakiet właściciela: tools/osm-import
 
 ### G-652 `glitch-scan.test.ts` ma 2236 linii i rośnie
 - Status: zgłoszone (12.11, weryfikator G-600)
