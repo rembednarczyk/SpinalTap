@@ -27,6 +27,7 @@ import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts
 import { COVER } from "../../orto/src/classify.ts";
 import { type Cover, coverFor } from "../../orto/src/cover.ts";
 import { Cells, LABEL, STEP, taken } from "./bare-cells.ts";
+import { keepKerbs } from "./bare-kerbs.ts";
 import { contours } from "./contour.ts";
 import { type Area } from "./features.ts";
 import { type OsmData } from "./osm.ts";
@@ -144,14 +145,19 @@ const resolveMixed = (cells: Cells): void => {
  * themselves (they and the others are regions apart): each with its cells (in `queue`, `n` of
  * them), the free cells of each label round it (`round`) and its cell edges out of it (`edges`).
  */
-const eachRegion = (cells: Cells, apart: (k: number) => number, visit: (queue: Int32Array, n: number, round: Int32Array, edges: number) => void): void => {
+const eachRegion = (
+  cells: Cells,
+  apart: Uint8Array | null,
+  visit: (queue: Int32Array, n: number, round: Int32Array, edges: number) => void,
+  from: (k: number) => boolean = () => true,
+): void => {
   const { nx, nz, label } = cells;
   const seen = new Uint8Array(nx * nz);
   const queue = new Int32Array(nx * nz);
   const round = new Int32Array(8);
   for (let s = 0; s < nx * nz; s++) {
-    if (seen[s] || taken(label[s]!)) continue;
-    const [own, side] = [label[s]!, apart(s)];
+    if (seen[s] || taken(label[s]!) || !from(s)) continue;
+    const [own, side] = [label[s]!, apart ? apart[s]! : 0];
     let [n, edges] = [0, 0];
     queue[n++] = s;
     seen[s] = 1;
@@ -162,7 +168,7 @@ const eachRegion = (cells: Cells, apart: (k: number) => number, visit: (queue: I
       for (let d = 0; d < 4; d++) {
         const m = d === 0 ? (i + 1 < nx ? k + 1 : -1) : d === 1 ? (i > 0 ? k - 1 : -1) : d === 2 ? k + nx : k - nx;
         const l = m < 0 || m >= nx * nz ? -1 : label[m]!;
-        if (l === own && apart(m) === side) {
+        if (l === own && (apart ? apart[m]! : 0) === side) {
           if (!seen[m]) {
             seen[m] = 1;
             queue[n++] = m;
@@ -181,7 +187,7 @@ const eachRegion = (cells: Cells, apart: (k: number) => number, visit: (queue: I
 const joinSpecks = (cells: Cells): void =>
   eachRegion(
     cells,
-    () => 0,
+    null,
     (queue, n, round) => {
       if (n >= FILL.speck) return;
       // The label most of the border has, the lower one on a tie.
@@ -195,120 +201,44 @@ const joinSpecks = (cells: Cells): void =>
 const dropLoose = (cells: Cells): void =>
   eachRegion(
     cells,
-    (k) => cells.zone[k]!,
+    cells.zone,
     (queue, n, _round, edges) => {
-      const own = cells.label[queue[0]!]!;
-      if (cells.zone[queue[0]!] || (own !== LABEL.grass && own !== LABEL.square)) return;
       // Area n / 4 m², outline edges / 2 m: the mean width 2 area / outline.
       if (n / edges >= FILL.looseWidth && n * STEP * STEP >= FILL.looseArea) return;
       for (let q = 0; q < n; q++) cells.label[queue[q]!] = LABEL.other;
     },
+    (k) => !cells.zone[k] && (cells.label[k] === LABEL.grass || cells.label[k] === LABEL.square),
   );
 
 /**
- * A fill gives way within `FILL.kerbBand` of a carriageway behind bare ground on its kerb: a lawn or
- * paving short of the kerb would leave a bare strip along it with a surface past it, what
- * `kerb-gap-bare` and `kerb-strip-bare` count (the kerbs' strips are the next rule's, ADR-0077
- * step 1.2). For each carriageway piece the free cells round it are taken by their distance from it
- * (a step every way; a pavement or a wall ends the walk): one with a nearer neighbour bare, or
- * behind bare, is behind bare too, and a fill there turns bare. A fill on the kerb stays.
+ * The cells a label's fills are drawn on: its own, and under a piece drawn over it (a carriageway,
+ * a pavement) next to them one cell more, so no seam of bare ground runs by a kerb, nor a corner
+ * is cut off at it.
  */
-const keepKerbs = (cells: Cells): void => {
-  const { nx, nz, label, road } = cells;
-  const reach = Math.ceil(FILL.kerbBand / STEP);
-  const bare = (l: number) => l === LABEL.other || l === LABEL.mixed || l === LABEL.blocked;
-  const fill = (l: number) => l === LABEL.grass || l === LABEL.square;
-  const free = (k: number) => label[k] !== LABEL.covered;
-  // The cells round k (8 of them, fewer at the edge), into `round`; their number.
-  const round = new Int32Array(8);
-  const around = (k: number): number => {
+const drawnCells = (cells: Cells, label: number): Uint8Array => {
+  const { nx, nz } = cells;
+  const drawn = new Uint8Array(nx * nz);
+  for (let k = 0; k < nx * nz; k++) {
+    if (cells.label[k] !== label) continue;
+    drawn[k] = 1;
     const i = k % nx;
-    let n = 0;
     for (let dj = -1; dj <= 1; dj++)
       for (let di = -1; di <= 1; di++) {
         const m = k + dj * nx + di;
-        if ((di !== 0 || dj !== 0) && i + di >= 0 && i + di < nx && m >= 0 && m < nx * nz) round[n++] = m;
+        if (i + di >= 0 && i + di < nx && m >= 0 && m < nx * nz && cells.over[m] === 1) drawn[m] = 1;
       }
-    return n;
-  };
-  // Each carriageway's cells on its edge (a free cell round them): the walks start there.
-  const seeds = new Map<number, number[]>();
-  for (let k = 0; k < nx * nz; k++) {
-    if (!road[k]) continue;
-    const n = around(k);
-    let edge = false;
-    for (let r = 0; r < n && !edge; r++) edge = free(round[r]!);
-    if (edge) (seeds.get(road[k]!) ?? seeds.set(road[k]!, []).get(road[k]!)!).push(k);
   }
-  const depth = new Int16Array(nx * nz).fill(-1);
-  const behind = new Uint8Array(nx * nz);
-  const queue = new Int32Array(nx * nz);
-  const src = new Int32Array(nx * nz);
-  // Squared distance in cells to the cell of the carriageway the walk came from, and the cells by it.
-  const far = new Int32Array(nx * nz);
-  const byFar: number[][] = Array.from({ length: 2 * reach * reach + 1 }, () => []);
-  for (const [, from] of [...seeds].sort((a, b) => a[0] - b[0])) {
-    let n = 0;
-    let fills = 0;
-    for (const k of from) {
-      queue[n++] = k;
-      depth[k] = 0;
-      src[k] = k;
-    }
-    for (let q = 0; q < n; q++) {
-      const k = queue[q]!;
-      if (depth[k]! >= reach || (depth[k]! > 0 && !free(k))) continue;
-      const c = around(k);
-      for (let r = 0; r < c; r++) {
-        const m = round[r]!;
-        if (depth[m]! >= 0 || !free(m)) continue;
-        depth[m] = depth[k]! + 1;
-        src[m] = src[k]!;
-        const [di, dj] = [(m % nx) - (src[m]! % nx), Math.floor(m / nx) - Math.floor(src[m]! / nx)];
-        far[m] = di * di + dj * dj;
-        if (fill(label[m]!)) fills++;
-        queue[n++] = m;
-      }
-    }
-    if (fills > 0) {
-      // Nearest the carriageway first, as the crow flies.
-      for (let q = from.length; q < n; q++) byFar[Math.min(byFar.length - 1, far[queue[q]!]!)]!.push(queue[q]!);
-      for (const bucket of byFar) {
-        for (const k of bucket) {
-          const c = around(k);
-          for (let r = 0; r < c && !behind[k]; r++) {
-            const m = round[r]!;
-            if (depth[m]! > 0 && far[m]! < far[k]! && (bare(label[m]!) || behind[m] === 1)) behind[k] = 1;
-          }
-          if (behind[k] && fill(label[k]!)) label[k] = LABEL.other;
-        }
-        bucket.length = 0;
-      }
-    }
-    for (let q = 0; q < n; q++) {
-      depth[queue[q]!] = -1;
-      behind[queue[q]!] = 0;
-    }
-  }
+  return drawn;
 };
 
-/** The outlines of one label in a tile of cells, simplified, as the chunk's ground; a hole splits the tile. */
-const tilePieces = (cells: Cells, label: number, surface: GroundSurface, i0: number, j0: number, i1: number, j1: number): GroundOut[] => {
+const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: GroundSurface, i0: number, j0: number, i1: number, j1: number): GroundOut[] => {
   const { nx, nz } = cells;
   const own = (i: number, j: number) => i >= 0 && j >= 0 && i < nx && j < nz && cells.label[j * nx + i] === label;
-  const inside = new Uint8Array((i1 - i0) * (j1 - j0));
   let any = false;
-  for (let j = j0; j < j1; j++)
-    for (let i = i0; i < i1; i++) {
-      const k = j * nx + i;
-      // Under a piece drawn over the fill (a carriageway, a pavement) next to it, the fill runs on
-      // one cell: no seam of bare ground by a kerb, nor a corner cut off at it.
-      let under = false;
-      if (cells.over[k] === 1) for (let dj = -1; dj <= 1 && !under; dj++) for (let di = -1; di <= 1 && !under; di++) under = own(i + di, j + dj);
-      if (cells.label[k] === label || under) inside[(j - j0) * (i1 - i0) + i - i0] = 1;
-      if (cells.label[k] === label) any = true;
-    }
+  for (let j = j0; j < j1 && !any; j++) any = cells.label.subarray(j * nx + i0, j * nx + i1).includes(label);
   if (!any) return [];
+  const inside = new Uint8Array((i1 - i0) * (j1 - j0));
+  for (let j = j0; j < j1; j++) inside.set(drawn.subarray(j * nx + i0, j * nx + i1), (j - j0) * (i1 - i0));
   const rings = contours({
     nx: i1 - i0,
     nz: j1 - j0,
@@ -328,10 +258,10 @@ const tilePieces = (cells: Cells, label: number, surface: GroundSurface, i0: num
     const b = ringBounds(hole);
     if (i1 - i0 >= j1 - j0) {
       const c = Math.min(i1 - 1, Math.max(i0 + 1, Math.round(((b.minX + b.maxX) / 2 - cells.rect.minX) / STEP - 0.5)));
-      return [...tilePieces(cells, label, surface, i0, j0, c, j1), ...tilePieces(cells, label, surface, c, j0, i1, j1)];
+      return [...tilePieces(cells, label, drawn, surface, i0, j0, c, j1), ...tilePieces(cells, label, drawn, surface, c, j0, i1, j1)];
     }
     const r = Math.min(j1 - 1, Math.max(j0 + 1, Math.round(((b.minZ + b.maxZ) / 2 - cells.rect.minZ) / STEP - 0.5)));
-    return [...tilePieces(cells, label, surface, i0, j0, i1, r), ...tilePieces(cells, label, surface, i0, r, i1, j1)];
+    return [...tilePieces(cells, label, drawn, surface, i0, j0, i1, r), ...tilePieces(cells, label, drawn, surface, i0, r, i1, j1)];
   }
   const round = (ring: readonly Pt[]) => removeCollinear(ring.map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02);
   return rings
@@ -393,12 +323,14 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
   resolveMixed(cells);
   joinSpecks(cells);
   dropLoose(cells);
-  keepKerbs(cells);
+  keepKerbs(cells, FILL.kerbBand);
   const n = Math.round(FILL.tile / STEP);
   const out: GroundOut[] = [];
-  for (const { label, surface } of LAID)
+  for (const { label, surface } of LAID) {
+    const drawn = drawnCells(cells, label);
     for (let j0 = 0; j0 < cells.nz; j0 += n)
-      for (let i0 = 0; i0 < cells.nx; i0 += n) out.push(...tilePieces(cells, label, surface, i0, j0, Math.min(cells.nx, i0 + n), Math.min(cells.nz, j0 + n)));
+      for (let i0 = 0; i0 < cells.nx; i0 += n) out.push(...tilePieces(cells, label, drawn, surface, i0, j0, Math.min(cells.nx, i0 + n), Math.min(cells.nz, j0 + n)));
+  }
   return out;
 };
 

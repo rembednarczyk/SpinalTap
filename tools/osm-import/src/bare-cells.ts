@@ -3,7 +3,7 @@
  * a 0.5 m cell (what is there or is to be laid), a mask of a town's paved places, and the edges of
  * the rings that cover cells, filed by bin, so an outline can end where a piece of the map begins.
  */
-import { type Pt, type Rect, pointInRing, ringBounds } from "./geometry.ts";
+import { type Pt, type Rect } from "./geometry.ts";
 
 /** The cover's grid (m). */
 export const STEP = 0.5;
