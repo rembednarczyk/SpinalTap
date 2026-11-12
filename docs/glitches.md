@@ -1631,41 +1631,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: Cicha 6 w grze ok. 15 m przy ok. 7 m w rzeczywistości, Cicha 8 ok. 11,2 m przy ok. 17,5 m, XVI LO ok. 6 m za niskie, Pałac Ordynacki bez dachu spadzistego (jak G-122), narożnik Cichej 5 do sprawdzenia; T-250
 - Pakiet właściciela: tools/osm-import
 
-### G-605 Fundamenty fary na Placu po Farze stoją jako murki 1,0 m zamiast ok. 0,5 m
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S3 · Zasięg: r18507551, r18507552, w1348806697–708 (431 m w grze), NMPT − otoczenie: mediana 0,45 m, p75 0,78 m; przy 1,0 m zamknięty labirynt; poprawka: korekta wysokości 0,5 m (bez w1348806709, taras przy Rynku 11); kontrola `ruin-wall-height`
-- Pakiet właściciela: tools/osm-import
-
-### G-606 Symulacja tnie bariery, wzdłuż których biegnie trasa tłumu
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S3 · Zasięg: 21 odcinków ≥ 3 m, ok. 397 m, m.in. 127 m z ok. 152 m dwumetrowego muru oporowego skarpy pod Archikatedrą w67626198 (Podwale), ogrodzenie w231832115 (70 m), żywopłot w828140561; trasa 0,9 m od muru zostawia 0,4 m luzu; poprawka: ciąć tylko przy przecięciu (kąt jak `CROSS_SINE`) albo mniejszy `CROWD_ROOM`; kontrola `barrier-parallel-cut`
-- Pakiet właściciela: packages/sim, tools/osm-import
-
-### G-607 Przy schodach znikają mury po obu stronach biegu
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S3 · Zasięg: Zaułek Panasa w179264861: mur miejski w232362994 z 40 m zostaje 7 m (`FLIGHT_ROOM` 1,9 m), mur oporowy w232362995 traci 40 m w imporcie i 37 m w sim; balustrada w231832095 na podeście w Podzamczu (785; 248); poprawka: mur na krawędzi biegu zostaje (ewentualnie odsunięty na krawędź pasa), odstęp z szerokości biegu; kontrola `city-wall-kept`
-- Pakiet właściciela: tools/osm-import, packages/sim
-
-### G-608 Import tnie bariery biegnące wzdłuż krawędzi pasa jezdni
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S4 · Zasięg: pas z `roadWidth` szerszy niż jezdnia na ortofoto, więc mur przy krawężniku leży „na jezdni”: w232806008 (51 m, 389; 153), w886723051 (48 m, 220; −196), płot w73811517 przy Zamkowej (985; 281), murek w227679479 (28 m, 534; 517), koniec w67626198 (29 m); poprawka: reguła kąta jak dla dróg, bariery wzdłuż krawędzi przesunąć poza pas
-- Pakiet właściciela: tools/osm-import
-
-### G-610 Gracz za płotem jest nietykalny: ganger widzi przez płot i strzela w niego bez końca
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S2 · Zasięg: `inSight` (`ganger-perception.ts:201`) przez `clearSight` przepuszcza wzrok przez płot, a strzał płot zatrzymuje; `ShootAtPlayer` zeruje prędkość, `ChasePlayer` i `firingPosition` się nie włączają; sonda: 11 strzałów, 0 HP straty przy trzech płotach; 1359 płotów w grze
-- Pakiet właściciela: packages/sim (systems/ai)
-
-### G-611 Świadkowie przestępstwa nie widzą przez płot i żywopłot, obserwatorzy ciał widzą
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S4 · Zasięg: `crime-system.ts:82-104` (kamera, świadek, patrol, `inPlayerView`) używa `lineOfSight`, a reszta wzroku `clearSight`
-- Pakiet właściciela: packages/sim
-
-### G-612 Mury przecinają ogródki kawiarniane i siedziska tłumu
-- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
-- Ważność: S3 · Zasięg: `furnitureClearance` (`world-barriers.ts:513`) pomija meble niesolidne, `CROWD_SPOTS` i `SEAT_SPOTS` nie biorą udziału w cięciu; cafe-garden (629,5; 117,2) 31 ze 168 próbek w murze, (583,7; 24,5), siedziska #286 i #287 z murem 0,05–0,14 m przed twarzą
-- Pakiet właściciela: packages/sim, tools/glitch-scan
-
 ### G-622 Loader glTF liczy pozycje skóry na CPU dla każdego prymitywu
 - Status: zgłoszone (11.11, naprawiacz G-620; do sprawdzenia w przeglądarce)
 - Ważność: S4 · Zasięg: `refreshBoundingInfo(true, true)` przy wczytywaniu VRM kosztuje 40–450 ms na plik w NullEngine; jeśli tak samo w przeglądarce, wydłuża wczytywanie postaci; inne testy modeli (`model-textures`, `model-cast-colours`, `model-donors`, `model-figure*`) też nie zwalniają silników
@@ -1725,11 +1690,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, scalenie #418 z main; baza `barrier-parallel-cut` 14 → 15 opisana w commicie 529888c)
 - Ważność: S4 · Zasięg: mur oporowy w227679479 na Podzamczu (539; 517) biegnie po południowej ścianie garażu w444375263, który stoi w grze od G-556; `inBuilding` w `barrier-room.ts` słusznie go tnie, a kontrola liczy odcinek jako „cut”; poprawka: import pomija odcinek bariery leżący na ścianie budynku albo kontrola go nie liczy; po niej baza wraca do 14
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
-### G-637 Limit pobierania modelu liczy cały czas, nie bezczynność
-- Status: w PR #424 (12.11; limit bezczynności 30 s, weryfikator PRZYJĘTE)
-- Ważność: S4 · Zasięg: `MODEL_FETCH_TIMEOUT_MS` (120 s) przerywa całe pobieranie; przy łączu wolniejszym niż ok. 0,5 Mbit/s plik 8 MB (kaito.vrm) nigdy się nie załaduje, bo każda próba zaczyna od zera; poprawka: limit bezczynności (brak nowych bajtów przez N s) zamiast całkowitego; przy okazji: pełny zestaw engine+app+code-health trwa ok. 507 s (import 55%), do rozważenia `isolate: false` albo podział
-- Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-639 Płaska bryła na wysokości LoD1 przy stromym dachu wypada na kalenicy
 - Status: zgłoszone (12.11, kurator rundy 2 wysokości LoD1, T-257; do kroku „dachy z LoD2” ADR-0077)
