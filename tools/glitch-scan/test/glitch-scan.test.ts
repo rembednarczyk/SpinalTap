@@ -54,6 +54,7 @@ import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
 import { lampsBesideDeck } from "./lamp-deck";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
+import { heightsOffLod1, lod1Under } from "./height-lod1";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
 import { stepsInclineAgainst } from "./steps-incline";
@@ -1316,6 +1317,16 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A church at the default height with no measured roof, or standing clearly over the surface model's roof (G-216). */
   "church-over-nmpt": () => churchesOverSurface(CHURCH_SURFACE, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
+  /**
+   * A building off its GUGiK LoD1 2024 height by more than 3 m (ADR-0077 step 3, `height-lod1.ts`):
+   * matched at IoU 0.7 and more, not among the import's exceptions (churches, historic buildings,
+   * towers, parts, hand corrections). What stays: mapped heights LoD1 disagrees with and changes
+   * cut at 10 m.
+   */
+  "height-vs-lod1": () => {
+    const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    return heightsOffLod1(buildings, lod1Under(buildings), (id) => osmTags(id)["building:part"] !== undefined && osmTags(id)["building"] === undefined);
+  },
   /** A landmark of the list the map shows whole and without a tower, crowned by the renderer's bell towers (G-210). */
   "landmark-fake-tower": () => cityFakeTowers(LANDMARK_BUILDINGS, SOURCE_OSM),
   /** A church with a tower of the map in its outline or by its walls, crowned by the renderer's bell towers besides (G-212). */
@@ -1967,6 +1978,20 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, id: "w66258167/1" }])).toHaveLength(1);
     expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, source: "height" }, { ...chapel, source: "levels" }])).toEqual([]);
     expect(landmarksAtDefaultHeight(["w450180469"], [chapel])).toEqual([]);
+  });
+
+  it("finds a building over 3 m off its LoD1 height, and none within 3 m, unmatched or among the exceptions (ADR-0077)", () => {
+    const square = [-5, -5, 5, -5, 5, 5, -5, 5];
+    const house = { id: "w1", x: 100, z: 50, outline: square, height: 13, roof: 2, use: "residential", source: "default" };
+    const lod1 = [{ id: "L1", height: 7, ground: 200, ring: [0, 2, 4, 6].map((i) => ({ x: square[i]! + 100, z: square[i + 1]! + 50 })) }];
+    const plain = () => false;
+    expect(heightsOffLod1([house], lod1, plain)).toEqual([{ at: "100,50", what: "w1 default: middle of the roof 14.0 m, LoD1 7 m (IoU 1.00)" }]);
+    expect(heightsOffLod1([{ ...house, height: 8 }], lod1, plain)).toEqual([]);
+    expect(heightsOffLod1([{ ...house, x: 106 }], lod1, plain)).toEqual([]);
+    expect(heightsOffLod1([{ ...house, use: "church" }, { ...house, id: "w2", mappedTower: true as const }], lod1, plain)).toEqual([]);
+    expect(heightsOffLod1([house], lod1, () => true)).toEqual([]);
+    const helmet = { ...house, id: "w3", outline: [-1, -1, 1, -1, 1, 1, -1, 1], soffit: 13 };
+    expect(heightsOffLod1([house, helmet], lod1, plain)).toEqual([]);
   });
 
   it("finds a tower of the map without a height at a default one, and none with a height mapped or measured, nor a plain building (G-224)", () => {
