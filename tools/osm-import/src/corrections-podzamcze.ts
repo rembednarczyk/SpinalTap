@@ -234,10 +234,10 @@ const RUSKA_B = area("ruska-b", SETTS, [
  * none on the ground (`raised-green.ts`), and no bed of the map either (T-258 was one).
  *
  * Its height from the wall's shadow on the 2025-04 orthophoto (the flight at noon: the shadow's
- * west edge runs due north): from the wall (z 238.8-239.7) to z 249.6 over x 1110-1122, 10.5 m,
- * 0.93 m a metre of height by the north walls of four LoD1 buildings of Podzamcze on the same
- * flight (Lubartowska, the Dworzec Autobusowy's pavilions), the sun's 47° at noon on 12 April
- * giving the same; so 11 m to the top of the parapet. The other two flights are not at noon (T-261).
+ * west edge runs due north): 10.25 m north of the wall (z 238.8-239.7) over x 1110-1122, at
+ * 0.92-0.96 m a metre of height by the north walls of four LoD1 buildings of Podzamcze on the same
+ * flight (cot 47.2°, the sun at noon on 12 April, is 0.926); so 11 m to the top of the parapet,
+ * 10-11.4 m within the error. The other two flights are not at noon (T-261).
  */
 const GARAGE_VIVO: AddedArea = {
   id: "T-261/garaz-vivo",
