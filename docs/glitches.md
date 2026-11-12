@@ -1766,14 +1766,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: brak kontroli, która łapie ręczny obszar `ADDED_AREAS` z `building=*`, którego pierścień (także poza mapą) przecina `highway=*` bez `tunnel` ani `covered`; dziś 1 przypadek: `T-261/garaz-vivo` zamyka schody w376043570 i chodnik w295849313 (wejście do VIVO pod dachem garażu, x 1121–1146, poza mapą, ukryte przycięciem na x = 1120); kontrola `added-solid-over-way` z bazą 1 i wyjątkiem z odsyłaczem do topografii do czasu poszerzenia mapy
 - Pakiet właściciela: tools/glitch-scan
 
-### G-678 Budynki z OSM przykrywają drogi bez `covered` ani `tunnel`
-- Status: zgłoszone (12.11, naprawiacz G-677; do triage)
-- Ważność: S4 · Zasięg: sonda: 16 z 857 budynków OSM w mapie przykrywa linię `highway=*` bez `tunnel`/`covered`, głównie `service` przez przejazdy bramowe; garaż w173070505 przykrywa 11 dróg wejścia do VIVO (poza grą od G-600); w grze droga może wchodzić w ścianę zamiast przejazdu; do sprawdzenia, które to przejazdy (`tunnel=building_passage`) brakujące w OSM, i rozszerzenia kontroli `added-solid-over-way` na budynki z OSM
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-679 Trzy pary identycznych kawałków nawierzchni placów na Krakowskim
 - Status: zgłoszone (12.11, ADR-0078 etap 1)
 - Ważność: S4 · Zasięg: tabele `krakowskie.generated.ts`: 3 pary identycznych obrysów placów w krakowskie-1-0, 0-1 i 1-1 (centroidy (56; −46), (−48; 43), (66; 33)), podwójne rysowanie i podwójne samoprzecięcia w `ground-ring-self-cross`; kandydat na kontrolę duplikatów nawierzchni
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-680 Probostwo 11: przejazd bramowy bez tagu w OSM
+- Status: odłożone: poszerzanie mapy (12.11, triage G-678; niepotwierdzone)
+- Ważność: S4 · Zasięg: w444375185 × w252541795 (`service=driveway`, 12 m w budynku, bez `tunnel`), (468; 508), poza Podzamczem (x < 520); przy poszerzeniu mapy sprawdzić na ortofoto i ewentualnie korekta `tunnel=building_passage` w `corrections.ts`; tamże rozszerzenie `added-solid-over-way` na budynki z OSM (filtry: `layer<0`, dziury multipolygonu, `SKIP_BUILDING`/`belowGround`/`MIN_AREA`, poza chunkami; dziś po filtrach 0)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)

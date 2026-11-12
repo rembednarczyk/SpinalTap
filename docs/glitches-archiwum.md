@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-678 Budynki z OSM przykrywają drogi bez `covered` ani `tunnel`
+- Status: odrzucone (12.11, triage łowcy: 16 z 857 to fałszywe alarmy sondy: 4 drogi `layer=-1` pod garażami, 4 dziedzińce i otwór bramy w multipolygonach, VIVO już prowadzone, 5 budynków bez bryły w grze albo poza mapą; żadna droga nie wchodzi w ścianę; skan `lane-in-building`, `passage-blocked`, `building-underground-solid` na 0)
+- Ważność: S4 · Zasięg: sonda: 16 z 857 budynków OSM w mapie przykrywa linię `highway=*` bez `tunnel`/`covered`, głównie `service` przez przejazdy bramowe; garaż w173070505 przykrywa 11 dróg wejścia do VIVO (poza grą od G-600); w grze droga może wchodzić w ścianę zamiast przejazdu; do sprawdzenia, które to przejazdy (`tunnel=building_passage`) brakujące w OSM, i rozszerzenia kontroli `added-solid-over-way` na budynki z OSM
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
 ### G-662 Trójkąt garażu VIVO nad ziemią bez bryły
 - Status: naprawiony (PR #447, de64f3e; kurator PRZYJĘTE, 11 m z cienia, niepewność 10–11,4 m)
 - Ważność: S3 · Zasięg: w173070505, x 1105,8–1120, z 228–239,7: na trzech nalotach ortofoto dach z sedum i świetlikami ok. 5–10 m nad chodnikiem (cień do z 244–251), w grze trawnik na poziomie gruntu; G-600 usunął całą bryłę garażu; poprawka: niska bryła o wysokości dachu w miejsce trawników T-258 i G-647
