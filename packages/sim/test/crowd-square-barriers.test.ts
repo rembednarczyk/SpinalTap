@@ -93,8 +93,8 @@ describe("the squares' routes by the map's barriers (G-613)", () => {
   });
 
   it("moves no square's or alley's route into loops of its own", () => {
-    // krakowskie-2-0-square-1 crosses itself at (368, -223) before G-613 too (segments 0x3, 0x5): reported apart, not this rule's.
-    const crossed = CROWD_LANES.filter((l) => l.id.includes("-square-") && l.id !== "krakowskie-2-0-square-1").flatMap((l) => {
+    // A footway's way that comes back to a node of its own (w364587755, a loop on a tail) laid one band over itself (G-654).
+    const crossed = CROWD_LANES.filter((l) => l.id.includes("-square-")).flatMap((l) => {
       const pts = l.points.map(([x, z]): P => ({ x, z }));
       return crossings(pts).map(([i, j]) => `${l.id} ${i}x${j} at ${pts[i]!.x.toFixed(1)}, ${pts[i]!.z.toFixed(1)}`);
     });

@@ -149,7 +149,8 @@ export interface Band {
   readonly run?: readonly [Pt, Pt];
   /**
    * Paving with holes, or a lawn cut out of it (`openPavings`), simplified already: simplifying it
-   * again in a chunk would part the lawn from its hole. So is a kerb's fill (`kerbFills`), finer.
+   * again in a chunk would part the lawn from its hole. So is a kerb's fill (`kerbFills`), finer, and
+   * a raised lawn's piece on the ground (`groundRaisedGreen`), which shares its cut edges with the next.
    */
   readonly holed?: true;
 }
@@ -180,7 +181,37 @@ export const coveredByWater = (line: readonly Pt[], water: readonly (readonly Pt
  * line would lay a second, wider strip over the real banks. A tunnel `atStreet` (a gateway the
  * map tags `tunnel=yes`, G-076) is paved like the street it joins.
  */
-export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[] = [], atStreet = false): Band[] => {
+export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[] = [], atStreet = false): Band[] =>
+  // A carriageway stays whole for now: its pieces would cut its sidewalks anew (bare ground by a parking aisle's loop in Nabrzeże).
+  (ROAD_WIDTH[l.tags.highway ?? ""] === undefined ? simplePieces(l.line) : [[...l.line]]).flatMap((line) => pieceBands({ ...l, line }, mappedSidewalkNear, water, atStreet));
+
+/**
+ * A way cut where it comes back to a node of its own (a loop on a tail, G-654): one band laid
+ * over itself crosses itself, and a square's walkers walking an alley's outline loop round the
+ * crossing. A closed way stays whole; the pieces meet end to end like two ways at a junction.
+ */
+const simplePieces = (line: readonly Pt[]): Pt[][] => {
+  const key = (p: Pt) => `${p.x},${p.z}`;
+  const out: Pt[][] = [];
+  let cur: Pt[] = [];
+  let seen = new Set<string>();
+  line.forEach((p, i) => {
+    if (cur.length > 0 && key(p) === key(cur[cur.length - 1]!)) return;
+    const closing = i === line.length - 1 && cur.length > 2 && key(p) === key(cur[0]!);
+    if (seen.has(key(p)) && !closing) {
+      const last = cur[cur.length - 1]!;
+      out.push(cur);
+      cur = [last];
+      seen = new Set([key(last)]);
+    }
+    cur.push(p);
+    seen.add(key(p));
+  });
+  if (cur.length >= 2) out.push(cur);
+  return out;
+};
+
+const pieceBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[], atStreet: boolean): Band[] => {
   const t = l.tags;
   if ((underground(t) && !atStreet) || l.line.length < 2) return [];
   const bridge = t.bridge !== undefined && t.bridge !== "no";

@@ -31,11 +31,33 @@ import { SNAP_DOWN, STEP_HEIGHT } from "../movement-system";
 
 /** Cell edge, metres. Narrow enough that the 2.4 m gap past the market stairs has open cells. */
 export const NAV_CELL = 0.5;
-/** Half the window's edge, metres; the window is centred on the goal snapped to `WINDOW_SNAP`. */
-const WINDOW_HALF = 40;
-/** Window centres snap to this grid, so goals close to each other share a raster. */
-const WINDOW_SNAP = 8;
-const CELLS = Math.round((2 * WINDOW_HALF) / NAV_CELL);
+/**
+ * A window of the raster: `half` its half edge (m), centred on the goal snapped to `snap` (goals
+ * close to each other share a raster), `cells` a side; `rasters` and `fields` its memo's sizes
+ * per world (a few goals at a time: the player, a victim, homes).
+ */
+interface Window {
+  readonly name: string;
+  readonly half: number;
+  readonly snap: number;
+  readonly cells: number;
+  readonly rasters: number;
+  readonly fields: number;
+}
+
+const windowOf = (name: string, half: number, snap: number, rasters: number, fields: number): Window => ({ name, half, snap, cells: Math.round((2 * half) / NAV_CELL), rasters, fields });
+
+/** The window every walk plans in. */
+const NEAR_WINDOW = windowOf("near", 40, 8, 8, 16);
+/**
+ * A ganger cut off from its target in `NEAR_WINDOW` (a long fence or a wall of a yard, G-625)
+ * looks again in this one, 192 m a side (`chaseDetour`): a raster costs some 37 ms and a field
+ * some 15 (a near one's 20 and 3), so the ganger keeps the goal it planned for and plans anew
+ * seldom (`GangerWalk`). Of the long barriers the near window leaves cut off, a 128 m one leads
+ * round a quarter, this one two fifths, a 256 m one hardly more at twice its cost. Four rasters:
+ * the four round a corner of the `snap` grid, where goals a step apart fall into different ones.
+ */
+const WIDE_WINDOW = windowOf("wide", 96, 32, 4, 8);
 /** Body radius (0.38) plus a margin: the way keeps off walls instead of scraping along them. */
 const CLEARANCE = 0.48;
 const BODY_HEIGHT = 1.8;
@@ -49,13 +71,12 @@ const SAMPLE = 0.2;
 const NEAR_SKIP = 0.6;
 /** The goal's cell closed (someone at a counter): the field grows from the nearest open cell this close. */
 const GOAL_SEARCH = 4;
-/** Memo sizes per world: a few goals at a time (the player, a victim, homes). */
-const MAX_RASTERS = 8;
-const MAX_FIELDS = 16;
 
 type Solid = Entity & { solid: Aabb };
 
 interface Raster {
+  /** Cells a side (its window's). */
+  readonly cells: number;
   readonly x0: number;
   readonly z0: number;
   readonly floor: number;
@@ -84,15 +105,22 @@ interface Field {
 interface Memo {
   readonly rasters: Map<string, Raster>;
   readonly fields: Map<string, Field>;
+  /** Rasters made and fields grown so far: what the misses cost. */
+  readonly built: { rasters: number; fields: number };
 }
 
-const memos = new WeakMap<World<Entity>, Memo>();
+const memos = new WeakMap<World<Entity>, Map<string, Memo>>();
 
-const memoOf = (world: World<Entity>): Memo => {
-  let m = memos.get(world);
+const memoOf = (world: World<Entity>, win: Window): Memo => {
+  let byWindow = memos.get(world);
+  if (!byWindow) {
+    byWindow = new Map();
+    memos.set(world, byWindow);
+  }
+  let m = byWindow.get(win.name);
   if (!m) {
-    m = { rasters: new Map(), fields: new Map() };
-    memos.set(world, m);
+    m = { rasters: new Map(), fields: new Map(), built: { rasters: 0, fields: 0 } };
+    byWindow.set(win.name, m);
   }
   return m;
 };
@@ -138,9 +166,9 @@ const signature = (solids: readonly Solid[]): string => {
   return `${solids.length}:${sum}:${mix}`;
 };
 
-const cellRange = (lo: number, hi: number, origin: number): [number, number] => [
+const cellRange = (lo: number, hi: number, origin: number, cells: number): [number, number] => [
   Math.max(0, Math.ceil((lo - origin) / NAV_CELL - 0.5)),
-  Math.min(CELLS - 1, Math.floor((hi - origin) / NAV_CELL - 0.5)),
+  Math.min(cells - 1, Math.floor((hi - origin) / NAV_CELL - 0.5)),
 ];
 
 const centre = (i: number, origin: number) => origin + (i + 0.5) * NAV_CELL;
@@ -200,10 +228,10 @@ const deckReach = (ground: GroundField, a: Vec3, b: Vec3): number => {
 };
 
 /** Terrain height at every cell centre of the window, or null where the world has no terrain. */
-const terrainOf = (ground: GroundField, x0: number, z0: number, reach: number): Float64Array | null => {
+const terrainOf = (ground: GroundField, x0: number, z0: number, reach: number, cells: number): Float64Array | null => {
   if (!ground.hasTerrain) return null;
-  const base = new Float64Array(CELLS * CELLS);
-  for (let iz = 0; iz < CELLS; iz++) for (let ix = 0; ix < CELLS; ix++) base[iz * CELLS + ix] = ground.heightAt(centre(ix, x0), centre(iz, z0), reach);
+  const base = new Float64Array(cells * cells);
+  for (let iz = 0; iz < cells; iz++) for (let ix = 0; ix < cells; ix++) base[iz * cells + ix] = ground.heightAt(centre(ix, x0), centre(iz, z0), reach);
   return base;
 };
 
@@ -220,16 +248,16 @@ const ON_FLIGHT = 2;
 const FLIGHT_MARGIN = 4;
 
 /** Which cells of the window lie on or near a flight of steps hung off a bridge (G-255), or null when none is near it. */
-const flightsOf = (ground: GroundField, x0: number, z0: number): Uint8Array | null => {
-  const x1 = x0 + CELLS * NAV_CELL;
-  const z1 = z0 + CELLS * NAV_CELL;
+const flightsOf = (ground: GroundField, x0: number, z0: number, cells: number): Uint8Array | null => {
+  const x1 = x0 + cells * NAV_CELL;
+  const z1 = z0 + cells * NAV_CELL;
   if (!ground.nearFlight(x0, z0, FLIGHT_MARGIN, x1, z1)) return null;
-  const out = new Uint8Array(CELLS * CELLS);
-  for (let iz = 0; iz < CELLS; iz++) {
+  const out = new Uint8Array(cells * cells);
+  for (let iz = 0; iz < cells; iz++) {
     const z = centre(iz, z0);
-    for (let ix = 0; ix < CELLS; ix++) {
+    for (let ix = 0; ix < cells; ix++) {
       const x = centre(ix, x0);
-      if (ground.nearFlight(x, z, FLIGHT_MARGIN)) out[iz * CELLS + ix] = ground.onFlight(x, z) ? ON_FLIGHT : NEAR_FLIGHT;
+      if (ground.nearFlight(x, z, FLIGHT_MARGIN)) out[iz * cells + ix] = ground.onFlight(x, z) ? ON_FLIGHT : NEAR_FLIGHT;
     }
   }
   return out;
@@ -252,19 +280,19 @@ const ON_LEDGE = 1;
  * the cells at their foot open, so the walk does not climb onto them. The deck is looked up only
  * at such a rise.
  */
-const ledgesOf = (base: Float64Array, ground: GroundField, x0: number, z0: number): Uint8Array | null => {
+const ledgesOf = (base: Float64Array, ground: GroundField, x0: number, z0: number, cells: number): Uint8Array | null => {
   let out: Uint8Array | null = null;
-  for (let iz = 0; iz < CELLS; iz++) {
-    for (let ix = 0; ix < CELLS; ix++) {
-      const h = base[iz * CELLS + ix] ?? 0;
+  for (let iz = 0; iz < cells; iz++) {
+    for (let ix = 0; ix < cells; ix++) {
+      const h = base[iz * cells + ix] ?? 0;
       let edge = false;
       for (const [dx, dz] of STEPS) {
         const nx = ix + dx;
         const nz = iz + dz;
-        if (nx >= 0 && nz >= 0 && nx < CELLS && nz < CELLS) edge ||= h - (base[nz * CELLS + nx] ?? 0) > (dx !== 0 && dz !== 0 ? LEDGE * Math.SQRT2 : LEDGE);
+        if (nx >= 0 && nz >= 0 && nx < cells && nz < cells) edge ||= h - (base[nz * cells + nx] ?? 0) > (dx !== 0 && dz !== 0 ? LEDGE * Math.SQRT2 : LEDGE);
       }
       if (!edge || !ground.onLowDeck(centre(ix, x0), centre(iz, z0))) continue;
-      (out ??= new Uint8Array(CELLS * CELLS))[iz * CELLS + ix] = ON_LEDGE;
+      (out ??= new Uint8Array(cells * cells))[iz * cells + ix] = ON_LEDGE;
     }
   }
   return out;
@@ -276,57 +304,57 @@ const ledgesOf = (base: Float64Array, ground: GroundField, x0: number, z0: numbe
  * is a wall on one line, which the slope at the cells' middles, either side of it, does not see.
  * The edges of a bridge's deck keep the headroom rule (G-062).
  */
-const closeBanks = (open: Uint8Array, base: Float64Array, flight: Uint8Array | null, ground: GroundField, x0: number, z0: number, reach: number): void => {
+const closeBanks = (open: Uint8Array, base: Float64Array, flight: Uint8Array | null, ground: GroundField, x0: number, z0: number, reach: number, cells: number): void => {
   // A cheap test on the cell grid first (half the limit, over two cells, edges one-sided);
   // the movement system's own slope decides the rest.
   const rough = 0.5 * MAX_WALK_SLOPE * NAV_CELL;
-  const index = (ix: number, iz: number) => Math.min(CELLS - 1, Math.max(0, iz)) * CELLS + Math.min(CELLS - 1, Math.max(0, ix));
+  const index = (ix: number, iz: number) => Math.min(cells - 1, Math.max(0, iz)) * cells + Math.min(cells - 1, Math.max(0, ix));
   const at = (ix: number, iz: number) => base[index(ix, iz)] ?? 0;
   // A neighbour more than `limit` higher where it or the cell (`own`) lies on a flight: its side,
   // or a bridge's deck over its edge (G-274).
   const wall = (ix: number, iz: number, h: number, limit: number, own: boolean) => (own || flight?.[index(ix, iz)] === ON_FLIGHT) && at(ix, iz) - h > limit;
-  for (let iz = 0; iz < CELLS; iz++) {
-    for (let ix = 0; ix < CELLS; ix++) {
+  for (let iz = 0; iz < cells; iz++) {
+    for (let ix = 0; ix < cells; ix++) {
       const h = at(ix, iz);
-      const own = flight?.[iz * CELLS + ix] === ON_FLIGHT;
+      const own = flight?.[iz * cells + ix] === ON_FLIGHT;
       // Away from the flights (almost all the window) nothing to look at.
-      if ((flight?.[iz * CELLS + ix] ?? 0) > 0) {
+      if ((flight?.[iz * cells + ix] ?? 0) > 0) {
         const straight = wall(ix + 1, iz, h, STEP_HEIGHT, own) || wall(ix - 1, iz, h, STEP_HEIGHT, own) || wall(ix, iz + 1, h, STEP_HEIGHT, own) || wall(ix, iz - 1, h, STEP_HEIGHT, own);
         const diagonal = wall(ix + 1, iz + 1, h, WALL_DIAGONAL, own) || wall(ix - 1, iz + 1, h, WALL_DIAGONAL, own) || wall(ix + 1, iz - 1, h, WALL_DIAGONAL, own) || wall(ix - 1, iz - 1, h, WALL_DIAGONAL, own);
-        if (straight || diagonal) open[iz * CELLS + ix] = 0;
+        if (straight || diagonal) open[iz * cells + ix] = 0;
       }
-      if (!open[iz * CELLS + ix]) continue;
+      if (!open[iz * cells + ix]) continue;
       const gx = Math.abs(at(ix + 1, iz) - at(ix - 1, iz));
       const gz = Math.abs(at(ix, iz + 1) - at(ix, iz - 1));
       if (Math.hypot(gx, gz) < rough) continue;
-      if (ground.steepAt(centre(ix, x0), centre(iz, z0), reach)) open[iz * CELLS + ix] = 0;
+      if (ground.steepAt(centre(ix, x0), centre(iz, z0), reach)) open[iz * cells + ix] = 0;
     }
   }
 };
 
 const near = { x: 0, z: 0 };
 
-const rasterise = (solids: readonly Collider[], floor: number, reach: number, x0: number, z0: number, ground: GroundField): Raster => {
-  const open = new Uint8Array(CELLS * CELLS);
-  const base = terrainOf(ground, x0, z0, reach);
-  const flight = base && floor === 0 ? flightsOf(ground, x0, z0) : null;
-  const ledges = base && flight ? ledgesOf(base, ground, x0, z0) : null;
+const rasterise = (solids: readonly Collider[], floor: number, reach: number, x0: number, z0: number, ground: GroundField, cells: number): Raster => {
+  const open = new Uint8Array(cells * cells);
+  const base = terrainOf(ground, x0, z0, reach, cells);
+  const flight = base && floor === 0 ? flightsOf(ground, x0, z0, cells) : null;
+  const ledges = base && flight ? ledgesOf(base, ground, x0, z0, cells) : null;
   if (floor === 0) {
     open.fill(1);
-    if (base) closeBanks(open, base, flight, ground, x0, z0, reach);
+    if (base) closeBanks(open, base, flight, ground, x0, z0, reach, cells);
   } else {
     // Above the street only tops at about this height are floor; everything else is a drop.
     for (const c of solids) {
       const b = c.box;
-      const [ix0, ix1] = cellRange(b.min.x, b.max.x, x0);
-      const [iz0, iz1] = cellRange(b.min.z, b.max.z, z0);
+      const [ix0, ix1] = cellRange(b.min.x, b.max.x, x0, cells);
+      const [iz0, iz1] = cellRange(b.min.z, b.max.z, z0, cells);
       for (let iz = iz0; iz <= iz1; iz++) {
         for (let ix = ix0; ix <= ix1; ix++) {
           const x = centre(ix, x0);
           const z = centre(iz, z0);
           if (c.prism && !overCollider(c, x, z)) continue;
           const top = colliderTop(c, x, z);
-          if (top >= floor - SNAP_DOWN && top <= floor + STEP_HEIGHT) open[iz * CELLS + ix] = 1;
+          if (top >= floor - SNAP_DOWN && top <= floor + STEP_HEIGHT) open[iz * cells + ix] = 1;
         }
       }
     }
@@ -339,21 +367,21 @@ const rasterise = (solids: readonly Collider[], floor: number, reach: number, x0
   for (const c of solids) {
     const b = c.box;
     if (!relative && (b.min.y >= floor + BODY_HEIGHT || b.max.y <= floor + STEP_HEIGHT)) continue;
-    const [ix0, ix1] = cellRange(b.min.x - CLEARANCE, b.max.x + CLEARANCE, x0);
-    const [iz0, iz1] = cellRange(b.min.z - CLEARANCE, b.max.z + CLEARANCE, z0);
+    const [ix0, ix1] = cellRange(b.min.x - CLEARANCE, b.max.x + CLEARANCE, x0, cells);
+    const [iz0, iz1] = cellRange(b.min.z - CLEARANCE, b.max.z + CLEARANCE, z0, cells);
     for (let iz = iz0; iz <= iz1; iz++) {
       const z = centre(iz, z0);
       for (let ix = ix0; ix <= ix1; ix++) {
         const x = centre(ix, x0);
         const q = closestXZ(c, x, z, near);
         if ((x - q.x) ** 2 + (z - q.z) ** 2 >= r2) continue;
-        const ref = relative ? (base[iz * CELLS + ix] ?? 0) : floor;
+        const ref = relative ? (base[iz * cells + ix] ?? 0) : floor;
         if (relative && b.min.y >= ref + BODY_HEIGHT) continue;
-        if (colliderTop(c, q.x, q.z) > ref + STEP_HEIGHT) open[iz * CELLS + ix] = 0;
+        if (colliderTop(c, q.x, q.z) > ref + STEP_HEIGHT) open[iz * cells + ix] = 0;
       }
     }
   }
-  return { x0, z0, floor, reach, open, base: relative ? base : null, flight: relative ? flight : null, ledges: relative ? ledges : null };
+  return { cells, x0, z0, floor, reach, open, base: relative ? base : null, flight: relative ? flight : null, ledges: relative ? ledges : null };
 };
 
 /** Distance of a cell the field does not reach. */
@@ -373,15 +401,15 @@ const STEPS: readonly (readonly [number, number, number])[] = [
 
 /** Can a body move from cell `c` by (dx, dz)? A diagonal needs both straight neighbours open (no corner cutting). */
 const passable = (r: Raster, c: number, dx: number, dz: number, out: boolean): number => {
-  const open = r.open;
-  const ix = c % CELLS;
-  const iz = (c - ix) / CELLS;
+  const { open, cells } = r;
+  const ix = c % cells;
+  const iz = (c - ix) / cells;
   const nx = ix + dx;
   const nz = iz + dz;
-  if (nx < 0 || nz < 0 || nx >= CELLS || nz >= CELLS) return -1;
-  const n = nz * CELLS + nx;
+  if (nx < 0 || nz < 0 || nx >= cells || nz >= cells) return -1;
+  const n = nz * cells + nx;
   if (!open[n]) return -1;
-  if (dx !== 0 && dz !== 0 && (!open[iz * CELLS + nx] || !open[nz * CELLS + ix])) return -1;
+  if (dx !== 0 && dz !== 0 && (!open[iz * cells + nx] || !open[nz * cells + ix])) return -1;
   // Near a flight, not up a wall in the ground more than a step high, as a bridge's deck over the
   // terrain by its landing (G-274): the movement makes it a bank. Down it may (`out`: from `c`).
   if (r.base && r.flight && ((r.flight[c] ?? 0) > 0 || (r.flight[n] ?? 0) > 0)) {
@@ -397,7 +425,7 @@ const passable = (r: Raster, c: number, dx: number, dz: number, out: boolean): n
  * in, so the field is the same on every machine.
  */
 const grow = (raster: Raster, source: number): Field => {
-  const dist = new Int32Array(CELLS * CELLS).fill(FAR);
+  const dist = new Int32Array(raster.cells * raster.cells).fill(FAR);
   dist[source] = 0;
   const buckets: number[][] = [[source], [], [], []];
   let pending = 1;
@@ -426,20 +454,20 @@ const grow = (raster: Raster, source: number): Field => {
 const cellIndex = (r: Raster, x: number, z: number): number => {
   const ix = Math.floor((x - r.x0) / NAV_CELL);
   const iz = Math.floor((z - r.z0) / NAV_CELL);
-  return ix < 0 || iz < 0 || ix >= CELLS || iz >= CELLS ? -1 : iz * CELLS + ix;
+  return ix < 0 || iz < 0 || ix >= r.cells || iz >= r.cells ? -1 : iz * r.cells + ix;
 };
 
 const cellCentre = (r: Raster, c: number, y: number): Vec3 => {
-  const ix = c % CELLS;
-  const iz = (c - ix) / CELLS;
+  const ix = c % r.cells;
+  const iz = (c - ix) / r.cells;
   return { x: r.x0 + (ix + 0.5) * NAV_CELL, y, z: r.z0 + (iz + 0.5) * NAV_CELL };
 };
 
 /** The nearest cell around `c` (rings outwards, fixed order) that passes `ok`, or -1. */
-const nearest = (c: number, reach: number, ok: (n: number) => boolean): number => {
+const nearest = (c: number, reach: number, cells: number, ok: (n: number) => boolean): number => {
   if (ok(c)) return c;
-  const ix = c % CELLS;
-  const iz = (c - ix) / CELLS;
+  const ix = c % cells;
+  const iz = (c - ix) / cells;
   for (let ring = 1; ring <= reach; ring++) {
     let best = -1;
     let bestD = Infinity;
@@ -448,8 +476,8 @@ const nearest = (c: number, reach: number, ok: (n: number) => boolean): number =
         if (Math.max(Math.abs(dx), Math.abs(dz)) !== ring) continue;
         const nx = ix + dx;
         const nz = iz + dz;
-        if (nx < 0 || nz < 0 || nx >= CELLS || nz >= CELLS) continue;
-        const n = nz * CELLS + nx;
+        if (nx < 0 || nz < 0 || nx >= cells || nz >= cells) continue;
+        const n = nz * cells + nx;
         const d = dx * dx + dz * dz;
         if (d < bestD && ok(n)) {
           best = n;
@@ -491,24 +519,33 @@ const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   return true;
 };
 
-const fieldFor = (world: World<Entity>, floor: number, reach: number, goal: Vec3): Field | null => {
-  const cx = Math.round(goal.x / WINDOW_SNAP) * WINDOW_SNAP;
-  const cz = Math.round(goal.z / WINDOW_SNAP) * WINDOW_SNAP;
-  const x0 = cx - WINDOW_HALF;
-  const z0 = cz - WINDOW_HALF;
-  const solids = staticSolidsIn(world, x0 - CLEARANCE, z0 - CLEARANCE, x0 + 2 * WINDOW_HALF + CLEARANCE, z0 + 2 * WINDOW_HALF + CLEARANCE);
-  const memo = memoOf(world);
+const fieldFor = (world: World<Entity>, win: Window, floor: number, reach: number, goal: Vec3): Field | null => {
+  const { half, snap, cells } = win;
+  const cx = Math.round(goal.x / snap) * snap;
+  const cz = Math.round(goal.z / snap) * snap;
+  const x0 = cx - half;
+  const z0 = cz - half;
+  const solids = staticSolidsIn(world, x0 - CLEARANCE, z0 - CLEARANCE, x0 + 2 * half + CLEARANCE, z0 + 2 * half + CLEARANCE);
+  const memo = memoOf(world, win);
   const rasterKey = `${floor}|${reach}|${cx}|${cz}|${signature(solids)}`;
-  const raster =
-    recall(memo.rasters, rasterKey) ??
-    remember(memo.rasters, rasterKey, rasterise(collidersOf(solids), floor, reach, x0, z0, groundOf(world)), MAX_RASTERS);
+  let raster = recall(memo.rasters, rasterKey);
+  if (!raster) {
+    memo.built.rasters++;
+    raster = remember(memo.rasters, rasterKey, rasterise(collidersOf(solids), floor, reach, x0, z0, groundOf(world), cells), win.rasters);
+  }
   const goalCell = cellIndex(raster, goal.x, goal.z);
   if (goalCell < 0) return null;
-  const source = nearest(goalCell, GOAL_SEARCH, (n) => raster.open[n] === 1);
+  const source = nearest(goalCell, GOAL_SEARCH, cells, (n) => raster.open[n] === 1);
   if (source < 0) return null;
   const fieldKey = `${rasterKey}|${source}`;
-  return recall(memo.fields, fieldKey) ?? remember(memo.fields, fieldKey, grow(raster, source), MAX_FIELDS);
+  const field = recall(memo.fields, fieldKey);
+  if (field) return field;
+  memo.built.fields++;
+  return remember(memo.fields, fieldKey, grow(raster, source), win.fields);
 };
+
+/** How many rasters of the wide window a world made and fields it grew so far (G-625: their cost is what a step pays). */
+export const wideBuilds = (world: World<Entity>): { readonly rasters: number; readonly fields: number } => ({ ...memoOf(world, WIDE_WINDOW).built });
 
 /** Is the straight walk from `from` to `to` free at knee height (ADR-0021's walk test)? */
 export const KNEE_HEIGHT = 0.6;
@@ -560,17 +597,30 @@ const withBodies = (field: Field, avoid: readonly Vec3[], ground: GroundField): 
   const reach = 0.38 + CLEARANCE;
   for (const b of avoid) {
     if (Math.abs(b.y - (r.floor === 0 ? ground.heightAt(b.x, b.z, r.reach) : r.floor)) > SAME_FLOOR) continue;
-    const [ix0, ix1] = cellRange(b.x - reach, b.x + reach, r.x0);
-    const [iz0, iz1] = cellRange(b.z - reach, b.z + reach, r.z0);
+    const [ix0, ix1] = cellRange(b.x - reach, b.x + reach, r.x0, r.cells);
+    const [iz0, iz1] = cellRange(b.z - reach, b.z + reach, r.z0, r.cells);
     for (let iz = iz0; iz <= iz1; iz++) {
       for (let ix = ix0; ix <= ix1; ix++) {
-        const c = iz * CELLS + ix;
+        const c = iz * r.cells + ix;
         const at = cellCentre(r, c, b.y);
         if (Math.hypot(at.x - b.x, at.z - b.z) < reach && c !== field.source) open[c] = 0;
       }
     }
   }
   return grow({ ...r, open }, field.source);
+};
+
+/**
+ * The cell of the field a walker at `from` sets out from, or -1 when it is off the field (outside
+ * the window, cut off). Pressed against a wall its own cell may be closed: the best open cell next
+ * to it. Not across a wall in the ground (a flight's side, G-255): a cell within a step of the feet.
+ */
+const startOf = (field: Field, from: Vec3): number => {
+  const { raster, dist } = field;
+  const here = cellIndex(raster, from.x, from.z);
+  if (here < 0) return -1;
+  const reachable = (n: number) => (dist[n] ?? FAR) < FAR && (!raster.base || raster.flight?.[n] !== ON_FLIGHT || Math.abs((raster.base[n] ?? 0) - from.y) <= STEP_HEIGHT);
+  return (dist[here] ?? FAR) < FAR ? here : nearest(here, 2, raster.cells, reachable);
 };
 
 /**
@@ -582,9 +632,44 @@ const withBodies = (field: Field, avoid: readonly Vec3[], ground: GroundField): 
 export const planDetour = (world: World<Entity>, from: Vec3, goal: Vec3, avoid: readonly Vec3[] = []): Detour | null => {
   if (heightApart(world, goal, from) > SAME_FLOOR) return null;
   const ground = groundOf(world);
-  const field = fieldFor(world, floorOf(from.y, ground.heightAt(from.x, from.z, from.y + STEP_HEIGHT)), deckReach(ground, from, goal), goal);
+  const field = fieldFor(world, NEAR_WINDOW, floorOf(from.y, ground.heightAt(from.x, from.z, from.y + STEP_HEIGHT)), deckReach(ground, from, goal), goal);
   if (!field) return null;
   return { goal, field: avoid.length > 0 ? withBodies(field, avoid, ground) : field };
+};
+
+/**
+ * Is `from` a cell or more outside the window round `goal`? Its way would start off the field
+ * (`followDetour` null) whatever the raster: a ganger left 400 m behind by a player who ran on
+ * built a wide raster of empty land for nothing, once per goal and again after a load.
+ */
+const outsideWindow = (win: Window, from: Vec3, goal: Vec3): boolean => {
+  const cx = Math.round(goal.x / win.snap) * win.snap;
+  const cz = Math.round(goal.z / win.snap) * win.snap;
+  return Math.max(Math.abs(from.x - cx), Math.abs(from.z - cz)) > win.half + NAV_CELL;
+};
+
+/** The wide ways of the chases, kept with their goals: by the floor and the decks' reach they were made for. */
+const chases = new WeakMap<Vec3, { readonly key: string; readonly detour: Detour | null }>();
+
+/**
+ * The way round to the goal of a chase in `WIDE_WINDOW` (G-625), or null when it has none from
+ * this floor. Kept with the goal object itself, not only in the memo: a ganger holds its goal
+ * (`WalkProgress.chase`) for many steps, and a few of them round a corner of the window grid
+ * would otherwise push each other's rasters out of the memo and make them again every step. A
+ * pure function of the static solids, the floor and the goal, as `planDetour`.
+ */
+export const chaseDetour = (world: World<Entity>, from: Vec3, goal: Vec3): Detour | null => {
+  if (heightApart(world, goal, from) > SAME_FLOOR || outsideWindow(WIDE_WINDOW, from, goal)) return null;
+  const ground = groundOf(world);
+  const floor = floorOf(from.y, ground.heightAt(from.x, from.z, from.y + STEP_HEIGHT));
+  const reach = deckReach(ground, from, goal);
+  const key = `${floor}|${reach}`;
+  const held = chases.get(goal);
+  if (held?.key === key) return held.detour;
+  const field = fieldFor(world, WIDE_WINDOW, floor, reach, goal);
+  const detour = field ? { goal, field } : null;
+  chases.set(goal, { key, detour });
+  return detour;
 };
 
 /**
@@ -594,12 +679,7 @@ export const planDetour = (world: World<Entity>, from: Vec3, goal: Vec3, avoid: 
 export const followDetour = (detour: Detour, from: Vec3): Vec3 | null => {
   const { goal, field } = detour;
   const { raster, dist } = field;
-  const here = cellIndex(raster, from.x, from.z);
-  if (here < 0) return null;
-  // Pressed against a wall its own cell may be closed: start from the best open cell next to it.
-  // Not across a wall in the ground (a flight's side, G-255): a cell within a step of the feet.
-  const reachable = (n: number) => (dist[n] ?? FAR) < FAR && (!raster.base || raster.flight?.[n] !== ON_FLIGHT || Math.abs((raster.base[n] ?? 0) - from.y) <= STEP_HEIGHT);
-  const start = (dist[here] ?? FAR) < FAR ? here : nearest(here, 2, reachable);
+  const start = startOf(field, from);
   if (start < 0) return null;
   const way: number[] = [start];
   for (let c = start; way.length < LOOKAHEAD && (dist[c] ?? 0) > 0; ) {

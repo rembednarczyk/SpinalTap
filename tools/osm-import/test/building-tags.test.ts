@@ -21,6 +21,15 @@ describe("a building under ground (G-077, G-600)", () => {
     expect(belowGround({ building: "yes", level: "basement" })).toBe(false);
     expect(belowGround({ building: "yes", layer: "-1" })).toBe(false);
   });
+
+  it("is not one on floor -1 that has storeys or a height over the street (G-651)", () => {
+    expect(belowGround({ building: "yes", level: "-1", "building:levels": "3" })).toBe(false);
+    expect(belowGround({ building: "yes", level: "-1", height: "20" })).toBe(false);
+    expect(belowGround({ building: "yes", level: "-1", "building:height": "9 m" })).toBe(false);
+    expect(belowGround({ building: "yes", level: "-1", "roof:levels": "1" })).toBe(false);
+    expect(belowGround({ building: "yes", level: "-1", "building:levels": "0" })).toBe(true);
+    expect(belowGround({ building: "yes", level: "-1", "roof:levels": "0" })).toBe(true);
+  });
 });
 
 describe("heights from tags", () => {

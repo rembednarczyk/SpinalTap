@@ -27,6 +27,7 @@ import { patrolChecks } from "./patrol-pieces";
 import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
+import { cityRaisedGreenWorld, raisedGreenOnGround } from "./raised-green";
 import { isStreet, padOnRoadFindings } from "./pad-on-road";
 import { pavingCoplanar } from "./paving-coplanar";
 import { drawnPaving, poolSunk } from "./pool-paving";
@@ -1915,6 +1916,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "paving-coplanar": () => pavingCoplanar(mapGround(WORLD_SCENERY)),
   /** A drawn lawn with over 20 m² of it under a square's or a cobbled area's paving, which lies over it: Plac Litewski's lawns (G-421, `grass-under-paving.ts`). */
   "grass-under-paving": () => grassUnderPavingFindings(WORLD_SCENERY),
+  /** A point of a 0.5 m grid of drawn grass of a lawn the map lays above the ground, in a building or off the garage under it: VIVO's roof garden (G-647, `raised-green.ts`). */
+  "raised-green-on-ground": () => raisedGreenOnGround(cityRaisedGreenWorld(SOURCE_OSM)),
   /** Road markings, zebras and flights on a bridge's deck drawn under its carriageway (G-301, `deck-paint.ts`). */
   "paint-under-deck": () => DECK_PAINT().under,
   /** Road markings and zebras beside a deck pulled up off the terrain towards it (G-301, `deck-paint.ts`). */

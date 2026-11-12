@@ -10,6 +10,7 @@ import { type Pt, pointInRing } from "../src/geometry.ts";
 import { REPO } from "../src/paths.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { Site } from "../src/props-site.ts";
+import { cityProps } from "./city.ts";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
 const PLAN = JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
@@ -55,7 +56,7 @@ const stallsOf = (ring: readonly Pt[], chunk: LublinChunkData) =>
 describe("marketplace stalls (G-064)", () => {
   it("gives every marketplace of the plan at least a stall per 150 m² of its open ground", () => {
     const site = new Site(CHUNKS);
-    const stalls = [...generateProps(PLAN, CHUNKS).byChunk.values()].flat().filter((i) => i.prop === "market-stall");
+    const stalls = [...cityProps().byChunk.values()].flat().filter((i) => i.prop === "market-stall");
     const markets = PLAN.items.filter((i) => i.kind === "market" && i.polygon);
     expect(markets.map((m) => m.osm)).toEqual(["w231445090", "w182461192", "w67502759"]);
     for (const m of markets) {

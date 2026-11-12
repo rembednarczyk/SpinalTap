@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { crossingBand, crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
@@ -8,14 +6,12 @@ import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krak
 import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
-import { REPO } from "../src/paths.ts";
-import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { chainBetween, clearMouths, postRows, stringRows } from "../src/props-rows.ts";
 import { Site } from "../src/props-site.ts";
+import { cityProps } from "./city.ts";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
-const PLAN = JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
-const pieces = [...generateProps(PLAN, CHUNKS).byChunk.values()].flat();
+const pieces = [...cityProps().byChunk.values()].flat();
 const posts = pieces.filter((i) => i.prop === "bollard");
 const BANDS = crossingBands(CHUNKS);
 const site = new Site(CHUNKS);

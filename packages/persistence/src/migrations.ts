@@ -451,6 +451,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // house on it. A save made on that ground wakes on the car park by the ramp's top, its bags with
   // her; Sachiko's state is dropped (she comes back behind her counter turned to the door from P-1).
   35: digAlchemiaParking,
+  // v36 -> v37 (G-625): a chasing ganger keeps the goal of its wide way round a long barrier
+  // (`walk.chase`, optional). An older save has none: it plans one on its first step, if it needs it.
+  36: (old) => ({ ...old, version: 37 }),
 };
 
 export class MigrationError extends Error {}

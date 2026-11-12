@@ -1,0 +1,13 @@
+{
+  "name": "@seki/test-time",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Time of every unit test file in CI, compared with the last green run of main (ADR-0046): a warning, not a red test.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

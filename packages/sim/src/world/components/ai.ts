@@ -110,6 +110,11 @@ export interface WalkProgress {
    * it is made of (the way itself is made again from that), null without one.
    */
   plan: WalkPlan | null;
+  /**
+   * The goal of a chase's wide way (G-625), kept until the target moves away from it: the way
+   * itself is made again from that. Null without one.
+   */
+  chase?: Vec3 | null;
 }
 
 /** What a repath is made of: from where, to where, round which characters. */

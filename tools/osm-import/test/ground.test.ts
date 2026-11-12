@@ -186,3 +186,43 @@ describe("flights of steps (G-203, G-213)", () => {
     expect(pieces(steps(undefined, [0, 0], [4, 0])).map(box)).toEqual([{ along: 4, across: 3 }]);
   });
 });
+
+describe("a way that comes back to a node of its own (G-654)", () => {
+  type P = { x: number; z: number };
+  /** Pairs of a ring's edges that cross each other (not neighbours). */
+  const crossings = (ring: readonly P[]): number => {
+    const side = (a: P, b: P, c: P) => Math.sign((b.x - a.x) * (c.z - a.z) - (b.z - a.z) * (c.x - a.x));
+    let n = 0;
+    for (let i = 0; i < ring.length; i++) {
+      for (let j = i + 2; j < ring.length; j++) {
+        if (i === 0 && j === ring.length - 1) continue;
+        const [a, b, c, d] = [ring[i]!, ring[(i + 1) % ring.length]!, ring[j]!, ring[(j + 1) % ring.length]!];
+        if (side(a, b, c) * side(a, b, d) < 0 && side(c, d, a) * side(c, d, b) < 0) n++;
+      }
+    }
+    return n;
+  };
+  // w364587755 by the Krakowskie's square: a tail from the east into a loop that closes on the tail's second node.
+  const lollipop: Line = {
+    id: "w364587755",
+    osmId: 364587755,
+    tags: { highway: "footway" },
+    line: [[368, -223.9], [365.8, -223.7], [341.7, -221.7], [341.5, -205.7], [365.6, -207.2], [365.8, -223.7]].map(([x, z]) => ({ x: x!, z: z! })),
+  };
+
+  it("lays bands that do not cross themselves, over the whole way", () => {
+    const bands = lineBands(lollipop, false);
+    expect(bands.map((b) => crossings(b.ring))).toEqual(bands.map(() => 0));
+    expect(bands.length).toBeGreaterThan(0);
+    // Every node of the way is on some band's axis: none of the path is dropped.
+    for (const p of lollipop.line) expect(bands.some((b) => b.ring.some((q) => Math.hypot(q.x - p.x, q.z - p.z) < 2))).toBe(true);
+  });
+
+  it("keeps a closed loop and a way that never comes back in one band", () => {
+    const loop: Line = { ...lollipop, line: lollipop.line.slice(1) };
+    expect(lineBands(loop, false)).toHaveLength(1);
+    expect(lineBands({ ...lollipop, line: lollipop.line.slice(0, 5) }, false)).toHaveLength(1);
+    // A node twice in a row is one node, not a way coming back.
+    expect(lineBands({ ...lollipop, line: [...lollipop.line.slice(0, 3), ...lollipop.line.slice(2, 5)] }, false)).toHaveLength(1);
+  });
+});
