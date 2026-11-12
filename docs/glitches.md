@@ -1707,7 +1707,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-659 30 samoprzecinających się obrysów nawierzchni bez kontroli w skanie
-- Status: kontrola w PR #453 (12.11, ADR-0078 etap 1: `ground-ring-self-cross` baza 30, 15/5/5/5); naprawa w etapie 2–3 ADR-0078
+- Status: kontrola w main (#453, `ground-ring-self-cross` baza 30); naprawa w etapach 2–3 ADR-0078
 - Ważność: S4 · Zasięg: place przycięte na krawędzi kawałka mapy przy (20; −20), pętle zamkniętych ścieżek w Podzamczu i Nabrzeżu; skan nie liczy tego rodzaju; poprawka: kontrola w `tools/glitch-scan` z bazą z przebiegu (i wpis w `docs/mapa-pokrycie.json`), potem naprawy; propozycja kuratora (przegląd #433): `ground-ring-self-cross`, baza 30 (Krakowskie 15, w tym 6 placów przy (20; −20), Nabrzeże 5, Podzamcze 5, Stare Miasto 5)
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
@@ -1752,7 +1752,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-675 Przeskok oznakowania na styku zwężonych kawałków jezdni
-- Status: w PR #454 (12.11; marking-step 3 → 0; przegląd kuratora w kolejce)
+- Status: w PR #454 (12.11; kurator PRZYJĘTE; marking-step 3 → 0)
 - Ważność: S4 · Zasięg: Radziwiłłowska przy x −66 (`fitLanes`, #437): linia środkowa skacze z 113,7 na 112,9, linia między pasami z 116,6 na 116,2; w rzeczywistości linia środkowa ciągła na z ≈ 114,0–114,5 (w grze 112,9–113,7, wcześniej na main 112,2–113,2); kontrola `marking-step` (skok > 0,3 m na wspólnym węźle kawałków jednej ulicy), baza ≥ 2
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1775,6 +1775,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: odłożone: poszerzanie mapy (12.11, triage G-678; niepotwierdzone)
 - Ważność: S4 · Zasięg: w444375185 × w252541795 (`service=driveway`, 12 m w budynku, bez `tunnel`), (468; 508), poza Podzamczem (x < 520); przy poszerzeniu mapy sprawdzić na ortofoto i ewentualnie korekta `tunnel=building_passage` w `corrections.ts`; tamże rozszerzenie `added-solid-over-way` na budynki z OSM (filtry: `layer<0`, dziury multipolygonu, `SKIP_BUILDING`/`belowGround`/`MIN_AREA`, poza chunkami; dziś po filtrach 0)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-681 Linia środkowa Radziwiłłowskiej 0,2–1,5 m na południe od rzeczywistej
+- Status: zgłoszone (12.11, kurator przeglądu #454; niski priorytet)
+- Ważność: S4 · Zasięg: Krakowskie, x −88…−20, z ok. 113: w grze 113,0–113,6, w rzeczywistości ok. 113,7 (wschód) i 114,0–114,5 (zachód) według ortofoto 2025-04; linia idzie osią drogi z OSM przesuniętą przez `fitLanes`, nie osią malowania; mniej niż 1/3 pasa; odsyłacz G-655, G-675
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
