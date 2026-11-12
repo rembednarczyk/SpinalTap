@@ -15,9 +15,10 @@
  * The lanes, markings and zebras' places come from the street's axis and width as before: the
  * simulation sees no change; the zebras only reach on to the new kerb (`stretchZebras`).
  */
-import { type Pt, type Rect, ccw, lineLength, offsetLine, pointAlong, pointInRing, ringBounds, selfIntersects, simplifyRing } from "./geometry.ts";
+import { type Pt, type Rect, ccw, lineLength, offsetLine, pointInRing, ringBounds, selfIntersects, simplifyRing } from "./geometry.ts";
 import { type Band } from "./ground.ts";
 import { type WidenRun } from "./kerb-widen.ts";
+import { RingBins } from "./ring-bins.ts";
 
 /** The widest gap between a carriageway's edge and its paving closed (m), as the glitch scan's `kerb-gap-bare` counts. */
 export const KERB_REACH = 3;
@@ -58,7 +59,10 @@ const ZEBRA_REACH = KERB_REACH + INTO;
 const PAVING = new Set(["sidewalk", "footway", "square", "cobble"]);
 
 type Boxed = Band & { readonly box: Rect };
-type Block = { readonly box: Rect; readonly ring: readonly Pt[] };
+/** A building's outline, among the ground's bands. */
+type Block = { readonly box: Rect; readonly ring: readonly Pt[]; readonly block: true };
+/** What a march out from a kerb reads: the ground with the buildings, and its carriageways alone. */
+type World = { readonly lots: RingBins<Boxed | Block>; readonly roads: RingBins<Boxed> };
 /** A strip's two ends across it: on the inner and the outer line. */
 type Span = { readonly edge: Pt; readonly out: Pt };
 /**
@@ -69,24 +73,6 @@ type Span = { readonly edge: Pt; readonly out: Pt };
 type Hit = { readonly gap: number; readonly kerbed: boolean; readonly median: boolean; readonly crossed: boolean; readonly joins?: true };
 /** A point of a carriageway's edge `s` along it, the way out from it and the paving reached. */
 type Sample = { readonly k: number | null; readonly s: number; readonly edge: Pt; readonly dir: Pt; readonly hit: Hit | null };
-
-/** Rings by the 10 m cells their boxes reach. */
-class Bins<T extends { readonly box: Rect }> {
-  private readonly cells = new Map<string, T[]>();
-  constructor(items: readonly T[]) {
-    for (const it of items)
-      for (let i = Math.floor(it.box.minX / 10); i <= Math.floor(it.box.maxX / 10); i++)
-        for (let k = Math.floor(it.box.minZ / 10); k <= Math.floor(it.box.maxZ / 10); k++) {
-          const key = `${i},${k}`;
-          const list = this.cells.get(key);
-          if (list) list.push(it);
-          else this.cells.set(key, [it]);
-        }
-  }
-  at(p: Pt): readonly T[] {
-    return this.cells.get(`${Math.floor(p.x / 10)},${Math.floor(p.z / 10)}`) ?? [];
-  }
-}
 
 const inBox = (p: Pt, b: Rect) => p.x >= b.minX && p.x <= b.maxX && p.z >= b.minZ && p.z <= b.maxZ;
 const isPaving = (b: Band) => PAVING.has(b.surface) && !b.carriageway && !b.bridge;
@@ -113,34 +99,51 @@ const alongside = (line: readonly Pt[], q: Pt, dir: Pt): boolean => {
  * the strip is, so the march goes on over it (G-090), and says so (`crossed`): a sidewalk is not
  * laid over one.
  */
-const pavingOut = (edge: Pt, dir: Pt, bands: Bins<Boxed>, blocks: Bins<Block>): Hit | null => {
+const pavingOut = (edge: Pt, dir: Pt, { lots, roads }: World): Hit | null => {
   let crossed = false;
-  const what = (q: Pt): "bare" | "paving" | "kerbed" | "road" | "other" => {
-    if (blocks.at(q).some((b) => inBox(q, b.box) && pointInRing(q, b.ring))) return "other";
-    const all = bands.at(q).filter((b) => inBox(q, b.box) && pointInRing(q, b.ring));
-    const on = all.filter((b) => b.surface !== "crossing");
-    if (on.length === 0) {
-      crossed ||= all.length > 0;
+  // What lies at a point: a building, or but the zebras none, a carriageway among it, all of it
+  // paving, a sidewalk among it. One visitor for the whole march, so a step allocates nothing: the
+  // city takes some two million steps, and their garbage was a good part of the import's time.
+  const at = { block: false, any: false, zebra: false, road: false, paving: true, sidewalk: false };
+  const visit = (b: Boxed | Block) => {
+    if ("block" in b) return (at.block = true);
+    if (b.surface === "crossing") at.zebra = true;
+    else {
+      at.any = true;
+      at.road ||= b.carriageway === true;
+      at.paving &&= isPaving(b);
+      at.sidewalk ||= b.surface === "sidewalk";
+    }
+    return false;
+  };
+  const what = (t: number): "bare" | "paving" | "kerbed" | "road" | "other" => {
+    const x = edge.x + dir.x * t;
+    const z = edge.z + dir.z * t;
+    at.block = at.any = at.zebra = at.road = at.sidewalk = false;
+    at.paving = true;
+    lots.scan(x, z, visit);
+    if (at.block) return "other";
+    if (!at.any) {
+      crossed ||= at.zebra;
       return "bare";
     }
-    if (on.some((b) => b.carriageway === true)) return "road";
-    if (!on.every(isPaving)) return "other";
-    return on.some((b) => b.surface === "sidewalk") ? "kerbed" : "paving";
+    if (at.road) return "road";
+    if (!at.paving) return "other";
+    return at.sidewalk ? "kerbed" : "paving";
   };
-  const carriageway = (q: Pt) => bands.at(q).some((b) => b.carriageway === true && inBox(q, b.box) && pointInRing(q, b.ring));
   for (let t = ACROSS / 2; t <= KERB_REACH; t += ACROSS) {
-    const got = what(along(edge, dir, t));
+    const got = what(t);
     if (got === "bare") continue;
     if (got === "other" || t < ACROSS) return null;
     let [lo, hi] = [t - ACROSS, t];
     for (let k = 0; k < REFINE; k++) {
       const mid = (lo + hi) / 2;
-      if (what(along(edge, dir, mid)) === "bare") lo = mid;
+      if (what(mid) === "bare") lo = mid;
       else hi = mid;
     }
     if (got === "road") return { gap: hi, kerbed: true, median: false, crossed, joins: true };
     let median = false;
-    for (let u = hi + ACROSS / 2; u <= hi + MEDIAN_REACH && !median; u += ACROSS) median = carriageway(along(edge, dir, u));
+    for (let u = hi + ACROSS / 2; u <= hi + MEDIAN_REACH && !median; u += ACROSS) median = roads.holds(edge.x + dir.x * u, edge.z + dir.z * u);
     return { gap: hi, kerbed: got === "kerbed", median, crossed };
   }
   return null;
@@ -160,18 +163,30 @@ const runRings = (run: readonly Span[]): Pt[][] => {
  * The samples along one edge of a carriageway, `side` 1 its left (`offsetLine`'s positive offset),
  * -1 its right, each with the step it is at (the edge's last point none) and the paving reached.
  */
-const edgeSamples = (line: readonly Pt[], offset: number, side: number, bands: Bins<Boxed>, blocks: Bins<Block>): { edge: Pt[]; samples: Sample[] } => {
+const edgeSamples = (line: readonly Pt[], offset: number, side: number, world: World): { edge: Pt[]; samples: Sample[] } => {
   const edge = offsetLine(line, offset);
+  // `pointAlong` with the segments' lengths taken once: every sample walked the edge from its start.
+  const lens = edge.slice(1).map((b, i) => Math.hypot(b.x - edge[i]!.x, b.z - edge[i]!.z));
+  const at = (s: number): Pt => {
+    let left = Math.max(0, s);
+    for (let i = 0; i < lens.length; i++) {
+      const [a, b, len] = [edge[i]!, edge[i + 1]!, lens[i]!];
+      if (left <= len) return { x: a.x + ((b.x - a.x) * left) / (len || 1), z: a.z + ((b.z - a.z) * left) / (len || 1) };
+      left -= len;
+    }
+    return edge[edge.length - 1] ?? { x: 0, z: 0 };
+  };
   const out: Sample[] = [];
-  const sample = (k: number | null, s: number, p: Pt, dir: Pt) => out.push({ k, s, edge: p, dir, hit: pavingOut(p, dir, bands, blocks) });
+  const sample = (k: number | null, s: number, p: Pt, dir: Pt) => out.push({ k, s, edge: p, dir, hit: pavingOut(p, dir, world) });
   const normal = (a: Pt, b: Pt, len: number) => ({ x: (-(b.z - a.z) / len) * side, z: ((b.x - a.x) / len) * side });
   let s0 = 0;
   for (let i = 0; i + 1 < edge.length; i++) {
     const [a, b] = [edge[i]!, edge[i + 1]!];
-    const len = Math.hypot(b.x - a.x, b.z - a.z);
+    const len = lens[i]!;
     if (len < 1e-6) continue;
     // Samples at the steps of the whole edge's length, so a short segment gets its share.
-    for (let k = Math.ceil(s0 / ALONG); k * ALONG < s0 + len; k++) sample(k, k * ALONG, pointAlong(edge, k * ALONG), normal(a, b, len));
+    const dir = normal(a, b, len);
+    for (let k = Math.ceil(s0 / ALONG); k * ALONG < s0 + len; k++) sample(k, k * ALONG, at(k * ALONG), dir);
     s0 += len;
   }
   const [a, b] = [edge[edge.length - 2]!, edge[edge.length - 1]!];
@@ -284,21 +299,22 @@ const easedReach = (side: readonly Sample[], wide: (s: Sample) => boolean): numb
 export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly Pt[])[], estimated: (source: string) => boolean, walks: readonly (readonly Pt[])[] = []): KerbFills => {
   // The sidewalks laid and mapped, whole: a stretch cut off where it ran over a carriageway is paving the march stops at too.
   const whole = walks.map((ring): Boxed => ({ surface: "sidewalk", ring, bridge: false, source: "", box: ringBounds(ring) }));
-  const ground = new Bins([...bands.filter((b) => !b.bridge), ...whole]);
-  const blocks = new Bins(buildings.map((ring) => ({ ring, box: ringBounds(ring) })));
+  const laid = [...bands.filter((b) => !b.bridge), ...whole];
+  const blocks = buildings.map((ring): Block => ({ ring, box: ringBounds(ring), block: true }));
+  const world: World = { lots: new RingBins<Boxed | Block>([...laid, ...blocks]), roads: new RingBins(laid.filter((b) => b.carriageway === true)) };
   const fills: Band[] = [];
   const widened = new Map<Band, { ring: readonly Pt[]; runs: readonly WidenRun[] }>();
   for (const road of bands) {
     if (!road.kerb || road.bridge || lineLength(road.kerb.line) < ALONG) continue;
     const { line, half } = road.kerb;
-    const [r, l] = [edgeSamples(line, -half, -1, ground, blocks), edgeSamples(line, half, 1, ground, blocks)];
+    const [r, l] = [edgeSamples(line, -half, -1, world), edgeSamples(line, half, 1, world)];
     const [right, left] = [r.samples, l.samples];
     // Where another carriageway running alongside covers this one past its axis (the two of a dual road
     // running into one), the kerb is theirs too: widened, it made a kerb for cars parked across the
     // other carriageway (Ruska by Podzamcze, G-570). A side street's mouth runs across: no matter.
     const merged = (s: Sample) => {
       const q = along(s.edge, s.dir, -half - MERGE_AXIS);
-      return ground.at(q).some((b) => b !== road && b.carriageway === true && b.kerb !== undefined && inBox(q, b.box) && pointInRing(q, b.ring) && alongside(b.kerb.line, q, s.dir));
+      return world.roads.scan(q.x, q.z, (b) => b !== road && b.kerb !== undefined && alongside(b.kerb.line, q, s.dir));
     };
     const own = (s: Sample) => estimated(road.source) && s.hit !== null && !s.hit.joins && s.hit.gap >= ROAD_GAP && !s.hit.median && !merged(s);
     // The corner between a widened stretch and a side street it meets is asphalt too: left bare,
@@ -312,7 +328,10 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
     }
     const wide = (s: Sample) => wideSet.has(s);
     const reach = new Map<Sample, number>();
-    for (const side of [right, left]) side.forEach((s, i) => reach.set(s, easedReach(side, wide)[i]!));
+    for (const side of [right, left]) {
+      const eased = easedReach(side, wide);
+      side.forEach((s, i) => reach.set(s, eased[i]!));
+    }
     let asRoad = wideSet.size > 0;
     if (asRoad) {
       const out = (s: Sample) => (reach.get(s)! > 0 ? along(s.edge, s.dir, reach.get(s)!) : null);

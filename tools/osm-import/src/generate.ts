@@ -278,9 +278,16 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const partAreas = areas.filter(isPart);
   const orphans = new Set(orphanParts(outlines, partAreas));
   const buildings = [...outlines, ...[...orphans].map(asBuilding)];
-  const near = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, 1)));
+  // The chunks' rects grown once, and each outline's box taken once, not once a chunk: the whole city's outlines are tested.
+  const grown = (m: number) => chunks.map((c) => grow(c.rect, m));
+  const [rects1, rectsFill] = [grown(1), grown(FILL_MARGIN)];
+  const nearAny = (pts: readonly Pt[], rs: readonly Rect[]) => {
+    const box = ringBounds(pts);
+    return rs.some((r) => rectsOverlap(box, r));
+  };
+  const near = (pts: readonly Pt[]) => nearAny(pts, rects1);
   // The ground is laid as far past the chunks as the kerbs' fills in them read it (G-522).
-  const nearGround = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, FILL_MARGIN)));
+  const nearGround = (pts: readonly Pt[]) => nearAny(pts, rectsFill);
   const areaBands: (Band & { box: Rect })[] = [];
   for (const a of areas) {
     const b = areaBand(a);
