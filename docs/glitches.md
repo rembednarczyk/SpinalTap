@@ -1612,7 +1612,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: pojazdy)
 
 ### G-600 Podwójna bryła VIVO: garaż podziemny `level=-2` rysowany jako budynek
-- Status: zgłoszone (11.11, kurator przeglądu #414; #414 scalony 12.11, naprawa po #418, bo oba zmieniają `generate.ts`)
+- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g600` (12.11, 835cd63; `belowGround` z `level`, kontrola `building-duplicate`, trawnik T-258 nad garażem; przegląd kuratora w toku)
 - Ważność: S3 · Zasięg: w173070505 (`building=yes`, `level=-2`, `layer=2`) ma prawie ten sam obrys co VIVO r5601275; po G-556 obie bryły wracają przycięte, nakładają się na 1732 m², dachy dzieli 0,1 m (y −12,5 i −12,6), ryzyko migotania; Podzamcze x 1088–1120, z 160–240; poprawka: pomijać w imporcie budynki, których wszystkie `level` są ujemne (jak `location=underground`); garaż wystaje poza VIVO, więc po usunięciu odsłania ok. 149 próbek gołej ziemi (do wyłożenia według ortofoto); skan: ta sama reguła w `edge-buildings.ts` i `building-underground-solid`, nowa kontrola `building-duplicate` (nakładanie > 50% pola mniejszego, bez `building:part`)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1715,6 +1715,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, weryfikator #426)
 - Ważność: S4 · Zasięg: pamięć `chases` (`steering.ts:660`) nie trafia do zapisu, a `chaseDetour` nie podlega limitowi `mayPlan`; pierwszy krok po wczytaniu buduje rastry `wide` wszystkich gangerów z `chase` naraz (54,7 ms na okno, przy kilku oknach N razy więcej); to samo przy zmianie `floor|reach`; determinizm bez zmian
 - Pakiet właściciela: packages/sim (systems/ai)
+
+### G-646 Skan `market-pieces` ma własną regułę podziemia
+- Status: zgłoszone (12.11, naprawiacz G-600; potwierdzone w kodzie)
+- Ważność: S4 · Zasięg: `tools/glitch-scan/test/market-pieces.ts:96` `const isBuilding = (t: Tags): boolean => t.building !== undefined && t.building !== "roof" && t.location !== "underground" && Number(t.layer ?? 0) >= 0;`: garaż z `level=-2`, `layer=2` liczy jako budynek, a samo `layer<0` (budynek pod wiaduktem) jako podziemie; do ujednolicenia z `belowGround` (G-600)
+- Pakiet właściciela: tools/glitch-scan
+
+### G-647 Trawnik na dachu VIVO rysowany na ziemi
+- Status: zgłoszone (12.11, naprawiacz G-600; do przeglądu kuratora)
+- Ważność: S4 · Zasięg: r11978659 (`landuse=grass`, `layer=4`) to zieleń na dachu, a import kładzie ją jako nawierzchnię na ziemi; część poza VIVO (ok. x 1112–1120, z 230–239) leży na ortofoto na kostce; obok na zachód (x 1104–1105, z 233–239) goła ziemia (zieleń i kostka na ortofoto)
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
