@@ -1637,7 +1637,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-639 Płaska bryła na wysokości LoD1 przy stromym dachu wypada na kalenicy
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g639, ADR-0077 krok 4: dachy z LoD2)
+- Status: poprawione na gałęzi ccr-ec2c4269-ilh8k8-g639 (12.11; 79 budynków z dachem z LoD2, `flat-over-lod2-roof` 22 → 2; scalenie main i przegląd kuratora w toku)
 - Ważność: S3 · Zasięg: budynki bez tagów dachu stoją płasko na wysokości LoD1, a przy stromym dachu LoD1 leży prawie na kalenicy; np. Pałac Parysów w66330695 w grze 18,1 m i 5 rzędów okien, w LoD2 okap 10,7 m i kalenica 18,2 m (przed zmianą 11,1 m); ok. 59 budynków (płaski dach w grze, dach LoD2 > 4 m, okap gry > 3 m nad okapem LoD2; liczba przybliżona, okap LoD2 bywa okapem przybudówki); poprawka: gdy LoD2 ma okap i kalenicę, a OSM nie ma tagów dachu, okap i dach z LoD2; kontrola `flat-over-lod2-roof` (baza ok. 59); luka pokrewna: `church-over-nmpt` nie wykrywa kościoła za niskiego
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1810,6 +1810,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, naprawiacz G-689)
 - Ważność: S4 · Zasięg: `glitch-scan.test.ts` sprawdza tylko „znaleziono ≤ baza”; gałąź liczona na starszej podstawie wnosi bazę wyższą niż stan main po scaleniu (tak było z #453 po #447) i nikt tego nie widzi; poprawka: ostrzeżenie (albo czerwony test w CI na main) przy bazie wyższej niż wynik, przynajmniej dla kontroli-miar ADR-0078; jak z bramką czasu: ostrzeżenie w podsumowaniu CI
 - Pakiet właściciela: tools/glitch-scan, .github
+
+### G-692 Budynek z domyślną wysokością 13,2 m przy kalenicy LoD2 6 m (w67504382)
+- Status: zgłoszone (12.11, autor G-639)
+- Ważność: S4 · Zasięg: w67504382: wysokość domyślna 13,2 m, LoD2 przy IoU 1,00 daje kalenicę 6 m, LoD1 niedopasowany; żadna kontrola tego nie łapie; propozycja: kontrola wysokości domyślnej wobec LoD2, gdy LoD1 brak
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-693 Lublinianka płaska na 19 m przy okapie LoD2 17,1 m
+- Status: zgłoszone (12.11, autor G-639)
+- Ważność: S4 · Zasięg: dach głównej bryły w LoD2 ma równo 4,0 m, a reguła dachów z LoD2 (#G-639) bierze dach > 4 m; do decyzji próg ≥ 4 m albo wyjątek
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
