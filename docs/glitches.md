@@ -1722,7 +1722,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-654 Trasa placu `krakowskie-2-0-square-1` przecina samą siebie
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g654)
+- Status: w PR #433 (12.11; przegląd kuratora)
 - Ważność: S4 · Zasięg: przy (368; −223) odcinki 0×3 i 0×5 trasy się przecinają, także na main; test samoprzecięć w `crowd-square-barriers.test.ts` (#428) pomija tę trasę; po poprawce wyjątek z testu do usunięcia
 - Pakiet właściciela: packages/sim (tłum)
 
@@ -1740,6 +1740,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, naprawiacz G-650)
 - Ważność: S4 · Zasięg: `tools/glitch-scan/test/glitch-scan.test.ts:606–608` bierze `l.points` zamiast próbek co metr, więc długi odcinek trasy blisko pasa ruchu może umknąć; poprawka: próbkowanie odcinków, nowa baza z przebiegu (wzrost to odsłonięte trafienia, nie regres)
 - Pakiet właściciela: tools/glitch-scan
+
+### G-658 Jezdnie w kształcie „lizaka” mają samoprzecinający się obrys
+- Status: zgłoszone (12.11, naprawiacz G-654)
+- Ważność: S4 · Zasięg: w173489056, w179269926, w296752325, w360030910, w1561106064 (drogi serwisowe z pętlą zamkniętą na własnym węźle); `simplePieces` z #433 celowo ich nie tnie, bo pocięcie odsłania lukę w cięciu chodnika w Nabrzeżu przy (2696; 299), +1 próbka `landuse-bare`
+- Pakiet właściciela: tools/osm-import
+
+### G-659 30 samoprzecinających się obrysów nawierzchni bez kontroli w skanie
+- Status: zgłoszone (12.11, naprawiacz G-654)
+- Ważność: S4 · Zasięg: place przycięte na krawędzi kawałka mapy przy (20; −20), pętle zamkniętych ścieżek w Podzamczu i Nabrzeżu; skan nie liczy tego rodzaju; poprawka: kontrola w `tools/glitch-scan` z bazą z przebiegu (i wpis w `docs/mapa-pokrycie.json`), potem naprawy
+- Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
