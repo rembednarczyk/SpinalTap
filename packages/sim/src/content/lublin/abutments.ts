@@ -1,4 +1,4 @@
-import type { GroundPoint } from "@seki/core";
+import { type GroundPoint, segmentDistance } from "@seki/core";
 import { type GroundDeck, deckAt, makeDeck } from "../../world/deck";
 import { type Ramp, mapHeight } from "./shape";
 import type { LublinChunkData } from "./types";
@@ -31,12 +31,6 @@ const MIN_SPAN = 4 * INTO;
 
 type Segment = readonly [GroundPoint, GroundPoint];
 
-const segmentDistance = (p: GroundPoint, a: GroundPoint, b: GroundPoint): number => {
-  const [dx, dz] = [b.x - a.x, b.z - a.z];
-  const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
-};
-
 /** The ends of a deck (its axis, from `a` and from `b`) that lie on a bank falling under the bridge, as abutments' ramps. */
 const endRamps = (d: GroundDeck, decks: readonly GroundDeck[], flights: readonly Segment[], height: (x: number, z: number) => number): Ramp[] => {
   const len = Math.hypot(d.b.x - d.a.x, d.b.z - d.a.z);
@@ -49,7 +43,7 @@ const endRamps = (d: GroundDeck, decks: readonly GroundDeck[], flights: readonly
   // Not a bridge with a flight of steps hung off it (the viaduct of Zamkowa): its ground there is
   // the flight's (G-255, G-274), and the AI's ways over and under it keep to its abutments' walls.
   const reach = (hi - lo) / 2 + SIDE + INTO;
-  if (flights.some(([p, q]) => segmentDistance(p, d.a, d.b) < reach || segmentDistance(q, d.a, d.b) < reach)) return [];
+  if (flights.some(([p, q]) => segmentDistance(p.x, p.z, d.a.x, d.a.z, d.b.x, d.b.z) < reach || segmentDistance(q.x, q.z, d.a.x, d.a.z, d.b.x, d.b.z) < reach)) return [];
   const out: Ramp[] = [];
   for (const [end, y, sign] of [[d.a, d.ya, -1], [d.b, d.yb, 1]] as const) {
     const c = { x: end.x + n.x * mid, z: end.z + n.z * mid };

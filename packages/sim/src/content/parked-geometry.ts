@@ -1,4 +1,4 @@
-import { VEHICLE_SIZE, type VehicleModel } from "@seki/core";
+import { VEHICLE_SIZE, type VehicleModel, segmentDistance } from "@seki/core";
 import type { Pt } from "./lublin/roads";
 
 /** Plane geometry of a parked car's body: its footprint and the gaps between it and segments. */
@@ -18,19 +18,14 @@ export const footprint = (x: number, z: number, yaw: number, model: VehicleModel
   ];
 };
 
-export const segmentDistance = (x: number, z: number, a: Pt, b: Pt): number => {
-  const dx = b[0] - a[0];
-  const dz = b[1] - a[1];
-  const len2 = dx * dx + dz * dz || 1;
-  const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / len2));
-  return Math.hypot(x - (a[0] + dx * t), z - (a[1] + dz * t));
-};
+/** Distance from (x, z) to the segment a..b of `[x, z]` pairs. */
+export const pairSegmentDistance = (x: number, z: number, a: Pt, b: Pt): number => segmentDistance(x, z, a[0], a[1], b[0], b[1]);
 
 export const cross = (o: Pt, a: Pt, b: Pt): number => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
 
 export const segmentsGap = (a: Pt, b: Pt, c: Pt, d: Pt): number => {
   if (cross(a, b, c) * cross(a, b, d) < 0 && cross(c, d, a) * cross(c, d, b) < 0) return 0;
-  return Math.min(segmentDistance(a[0], a[1], c, d), segmentDistance(b[0], b[1], c, d), segmentDistance(c[0], c[1], a, b), segmentDistance(d[0], d[1], a, b));
+  return Math.min(pairSegmentDistance(a[0], a[1], c, d), pairSegmentDistance(b[0], b[1], c, d), pairSegmentDistance(c[0], c[1], a, b), pairSegmentDistance(d[0], d[1], a, b));
 };
 
 /** Is p inside a convex polygon (either winding)? */

@@ -1,4 +1,4 @@
-import { VEHICLE_SIZE, type VehicleModel } from "@seki/core";
+import { VEHICLE_SIZE, type VehicleModel, pointInPairRingEvenOdd } from "@seki/core";
 import { type Pt, polylineLength } from "./lublin/roads";
 import { pointAt } from "./traffic-lane";
 
@@ -8,16 +8,6 @@ import { pointAt } from "./traffic-lane";
  * (along the kerb or across it) and where in the strip a car's middle goes. Pure geometry; which
  * bays are taken and whether a car fits there is `parked-cars`'.
  */
-
-export const inRing = (x: number, z: number, ring: readonly Pt[]): boolean => {
-  let on = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [ax, az] = ring[i]!;
-    const [bx, bz] = ring[j]!;
-    if (az > z !== bz > z && x < ((bx - ax) * (z - az)) / (bz - az) + ax) on = !on;
-  }
-  return on;
-};
 
 export type BayLayout = "parallel" | "perpendicular" | "diagonal";
 
@@ -87,7 +77,7 @@ const SAMPLE = 0.25;
 export const stripCut = (ring: readonly Pt[], across: (d: number) => { x: number; z: number }, reach: number): StripCut | null => {
   const inside = (d: number) => {
     const q = across(d);
-    return inRing(q.x, q.z, ring);
+    return pointInPairRingEvenOdd(q.x, q.z, ring);
   };
   let from = -1;
   let to = -1;
