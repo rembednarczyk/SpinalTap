@@ -1817,7 +1817,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-694 Ganger czekający na plan objazdu stoi w miejscu
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g694; decyzja użytkownika: osobna poprawka po #455)
+- Status: w PR #461 (12.11; postój 204 → 5 kroków; weryfikacja w kolejce na wolny slot)
 - Ważność: S3 · Zasięg: po #455 (G-643) ganger bez starej drogi czeka na swój plan w kolejce: przy N różnych celach do ok. 13·N kroków (3,4 s przy 18 pościgach, 5,3 s przy liderach rozrzuconych do 60 m; na main do 16 kroków); poprawka: w czasie czekania ruch w stronę celu (krok w bok przy przeszkodzie, jak przy odklejaniu), priorytet w kolejce dla gangera bez żadnej drogi; także `planChase` z `{ chase: made }` nie zeruje własnego `chaseNext`
 - Pakiet właściciela: packages/sim (systems/ai)
 
