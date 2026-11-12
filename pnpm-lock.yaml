@@ -168,11 +168,15 @@ importers:
 
   tools/glitch-scan: {}
 
+  tools/gugik: {}
+
   tools/i18n-scan:
     devDependencies:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+
+  tools/orto: {}
 
   tools/osm-import: {}
 

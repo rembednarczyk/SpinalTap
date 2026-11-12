@@ -1,0 +1,126 @@
+/**
+ * A small reader of the GUGiK CityGML 2.0 building files (ADR-0077), as plain text: it never
+ * resolves entities, schemas or links, it only cuts `<bldg:Building>` elements and reads the
+ * attributes and coordinates the extracts need. Coordinates stay in the file's grid (EPSG:2180,
+ * easting first) with heights; `frame.ts` maps them to the world.
+ *
+ * - LoD1 2024 (`lod1Solid`): a prism; the footprint is the face whose points all lie at the
+ *   lowest height, `measuredHeight` the prism's height.
+ * - LoD2 2017 (`boundedBy` surfaces): the footprint is the `GroundSurface`, the eaves the
+ *   lowest and the ridge the highest point of the `RoofSurface`s, `roofType` the roof's code.
+ */
+
+/** A ring of grid points: easting, northing, height. */
+export type Ring3 = readonly (readonly [number, number, number])[];
+
+export interface GmlBuilding {
+  /** BDOT10k building id (`buildingId`, a UUID). */
+  readonly id: string;
+  /** Exterior rings of the footprint (more than one when the ground is split). */
+  readonly footprint: readonly Ring3[];
+  readonly ground: number;
+  readonly measuredHeight?: number;
+  readonly roofType?: number;
+  /** LoD2: lowest and highest point of the roof surfaces, metres above sea level. */
+  readonly eaves?: number;
+  readonly ridge?: number;
+  /** LoD1: top of the prism, metres above sea level. */
+  readonly top?: number;
+}
+
+const BUILDING_OPEN = "<bldg:Building ";
+const BUILDING_CLOSE = "</bldg:Building>";
+
+/** Each `<bldg:Building …>…</bldg:Building>` element of a file, as text. */
+export function* buildingElements(xml: string): Generator<string> {
+  let at = 0;
+  for (;;) {
+    const start = xml.indexOf(BUILDING_OPEN, at);
+    if (start < 0) return;
+    const end = xml.indexOf(BUILDING_CLOSE, start);
+    if (end < 0) return;
+    yield xml.slice(start, end + BUILDING_CLOSE.length);
+    at = end + BUILDING_CLOSE.length;
+  }
+}
+
+const attr = (el: string, name: string): string | undefined => new RegExp(`name="${name}">\\s*<gen:value>([^<]*)</gen:value>`).exec(el)?.[1]?.trim();
+
+const num = (el: string, tag: string): number | undefined => {
+  const m = new RegExp(`<${tag}(?:\\s[^>]*)?>\\s*([-0-9.eE+]+)\\s*</${tag}>`).exec(el);
+  return m ? Number(m[1]) : undefined;
+};
+
+/** Points of a ring: one `posList` or a run of `pos`. */
+const ringPoints = (ring: string): Ring3 => {
+  const values: number[] = [];
+  for (const m of ring.matchAll(/<gml:pos(?:List)?(?:\s[^>]*)?>([^<]*)<\/gml:pos(?:List)?>/g)) for (const v of m[1]!.trim().split(/\s+/)) values.push(Number(v));
+  const pts: [number, number, number][] = [];
+  for (let i = 0; i + 2 < values.length; i += 3) pts.push([values[i]!, values[i + 1]!, values[i + 2]!]);
+  return pts;
+};
+
+/** Exterior rings of all polygons in a piece of GML (interior rings, the holes, are skipped). */
+export const exteriorRings = (gml: string): Ring3[] => {
+  const rings: Ring3[] = [];
+  for (const m of gml.matchAll(/<gml:exterior>\s*<gml:LinearRing(?:\s[^>]*)?>([\s\S]*?)<\/gml:LinearRing>/g)) {
+    const pts = ringPoints(m[1]!);
+    if (pts.length >= 3) rings.push(pts);
+  }
+  return rings;
+};
+
+/** The pieces of an element under one kind of `boundedBy` surface (`RoofSurface`, `GroundSurface`). */
+const surfaces = (el: string, kind: string): string[] => [...el.matchAll(new RegExp(`<bldg:${kind}[\\s>][\\s\\S]*?</bldg:${kind}>`, "g"))].map((m) => m[0]);
+
+const zRange = (rings: readonly Ring3[]) => {
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const r of rings)
+    for (const p of r) {
+      lo = Math.min(lo, p[2]);
+      hi = Math.max(hi, p[2]);
+    }
+  return { lo, hi };
+};
+
+/** One building element of a LoD1 2024 file. */
+export const parseLod1 = (el: string): GmlBuilding | undefined => {
+  const id = attr(el, "buildingId");
+  const rings = exteriorRings(el);
+  if (!id || rings.length === 0) return undefined;
+  const { lo, hi } = zRange(rings);
+  const footprint = rings.filter((r) => r.every((p) => Math.abs(p[2] - lo) < 0.005));
+  const mh = num(el, "bldg:measuredHeight");
+  return { id, footprint: footprint.length ? footprint : [rings[0]!], ground: lo, top: hi, ...(mh !== undefined ? { measuredHeight: mh } : {}) };
+};
+
+/** One building element of a LoD2 2017 file. */
+export const parseLod2 = (el: string): GmlBuilding | undefined => {
+  const id = attr(el, "buildingId");
+  const ground = surfaces(el, "GroundSurface").flatMap(exteriorRings);
+  const roof = surfaces(el, "RoofSurface").flatMap(exteriorRings);
+  if (!id || ground.length === 0) return undefined;
+  const g = zRange(ground);
+  const r = roof.length ? zRange(roof) : undefined;
+  const roofType = num(el, "bldg:roofType");
+  return { id, footprint: ground, ground: g.lo, ...(roofType !== undefined ? { roofType } : {}), ...(r ? { eaves: r.lo, ridge: r.hi } : {}) };
+};
+
+/** CityGML `RoofTypeType` codes (SIG3D list, used by GUGiK) as OSM `roof:shape` values. */
+export const ROOF_TYPES: Readonly<Record<number, string>> = {
+  1000: "flat",
+  1010: "skillion",
+  1020: "double_saltbox",
+  1030: "gabled",
+  1040: "hipped",
+  1050: "half-hipped",
+  1060: "mansard",
+  1070: "pyramidal",
+  1080: "cone",
+  1090: "dome",
+  1100: "sawtooth",
+  1110: "round",
+  1120: "pyramidal",
+  1130: "combination",
+};

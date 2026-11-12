@@ -1,5 +1,5 @@
 import type { EntityId, Transform, ViewDescriptor } from "@seki/core";
-import { type GlowLayer, type Mesh, MeshClass, type Scene, Vector3, VertexBuffer } from "../babylon";
+import { type GlowLayer, type Mesh, MeshClass, type Plane, type Scene, Vector3, VertexBuffer } from "../babylon";
 import type { RenderQuality } from "../npr/quality";
 import type { CityKit } from "./city-kit";
 import { type VehicleTemplate, paintOf, vehicleTemplates } from "./vehicle-models";
@@ -44,6 +44,18 @@ export interface VehicleViewsDeps {
 
 /** Room round a vehicle for the mesh's bounds (m). */
 const PAD = 7;
+/** A vehicle's box for the view test: half its height and its centre above its position (m), 1 below to 7 above. */
+const HALF_HEIGHT = 4;
+const MID_HEIGHT = 3;
+
+/** Whether the box round a vehicle at `x, y, z` reaches into the view the planes bound (Babylon's: inside is `≥ 0`). */
+const boxInView = (planes: readonly Plane[], x: number, y: number, z: number): boolean => {
+  const cy = y + MID_HEIGHT;
+  for (const { normal: n, d } of planes) {
+    if (n.x * x + n.y * cy + n.z * z + d + (Math.abs(n.x) + Math.abs(n.z)) * PAD + Math.abs(n.y) * HALF_HEIGHT < 0) return false;
+  }
+  return true;
+};
 
 /**
  * Vehicles sharing one mesh: each is a slot of its buffers (its near and its far geometry), the
@@ -59,6 +71,8 @@ class Fleet {
   private normals = new Float32Array(0);
   private readonly min = new Vector3();
   private readonly max = new Vector3();
+  /** Positions of the vehicles drawn now, x y z each: what the view test looks at. */
+  private readonly drawn: number[] = [];
   private kitSeen: CityKit | null = null;
   private propsSeen: CityKit["loadedProps"] = null;
 
@@ -145,6 +159,7 @@ class Fleet {
     this.max.set(-Infinity, -Infinity, -Infinity);
     let any = false;
     let wrote = false;
+    this.drawn.length = 0;
     for (const m of this.members.values()) {
       const pair = m.pair;
       if (!pair) continue;
@@ -160,6 +175,7 @@ class Fleet {
       }
       if (want === "none") continue;
       any = true;
+      this.drawn.push(p.x, p.y, p.z);
       if (changed || !m.view.parked) {
         wrote = true;
         if (want === "near") this.place(pair.near, m.offset, m.transform);
@@ -264,8 +280,18 @@ class Fleet {
     mesh.doNotSyncBoundingInfo = true;
     mesh.freezeWorldMatrix();
     this.deps.glow?.addIncludedOnlyMesh(mesh);
+    // The bounds hold every vehicle in range, and their sphere (Babylon's default test) reaches into
+    // the view with cars far behind the camera and to its sides (G-595): the fleet is in the view
+    // only when one of its vehicles is.
+    mesh.isInFrustum = (planes) => this.inView(planes);
     this.mesh = mesh;
     return mesh;
+  }
+
+  private inView(planes: readonly Plane[]): boolean {
+    const d = this.drawn;
+    for (let i = 0; i < d.length; i += 3) if (boxInView(planes, d[i] as number, d[i + 1] as number, d[i + 2] as number)) return true;
+    return false;
   }
 }
 

@@ -1,7 +1,6 @@
-import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import type { EntityId, ViewDescriptor } from "@seki/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { type AbstractMesh, Scene, type TransformNode, Vector3 } from "../src/babylon";
+import { type AbstractMesh, type Scene, type TransformNode, Vector3 } from "../src/babylon";
 import type { CameraRig } from "../src/camera/camera-rig";
 import type { MoonShadow } from "../src/npr/moon-shadow";
 import { ToonMaterials } from "../src/npr/toon-material";
@@ -9,7 +8,7 @@ import { CharacterViews } from "../src/renderer/character-views";
 import { type CharacterModelManifest, toonSourceOf } from "../src/renderer/model-library";
 import { findHumanoidBones } from "../src/renderer/model-rig";
 import { backgroundVariantOf, variantOf } from "../src/renderer/model-variant";
-import { readModelFile } from "./game-models";
+import { disposeModelScenes, modelScene, readModelFile } from "./game-models";
 
 /**
  * Loading the character models in the background (ADR-0076 stage 4a, G-547): the loading screen
@@ -91,13 +90,14 @@ const borrowingLook = (): number => {
 };
 
 afterEach(() => {
+  disposeModelScenes();
   vi.unstubAllGlobals();
 });
 
 describe("character models in the background (ADR-0076 stage 4a)", () => {
   it("loads the files of the start's scene and its donors behind the loading screen, not kurosawa.vrm (G-547, G-560)", async () => {
     const { fetched } = serve();
-    const views = viewsOn(new Scene(new NullEngine()));
+    const views = viewsOn(modelScene());
     spawnAll(views, NEW_GAME);
     views.setCharacterModels(GAME);
     await Promise.all(views.modelLoading.start());
@@ -111,7 +111,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
 
   it("dresses the scene of a new game without fetching kurosawa.vrm for its cloth (G-547)", async () => {
     const { fetched } = serve();
-    const views = viewsOn(new Scene(new NullEngine()));
+    const views = viewsOn(modelScene());
     spawnAll(views, NEW_GAME);
     views.setCharacterModels(GAME);
     await settled(views);
@@ -121,7 +121,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
 
   it("fetches the background roles' and the donors' files after the start, one at a time, and Kurosawa's only when he comes", async () => {
     const { fetched } = serve();
-    const views = viewsOn(new Scene(new NullEngine()));
+    const views = viewsOn(modelScene());
     // Seki with Kaito alone: no look to borrow for, so the start waits for their two files.
     spawnAll(views, NEW_GAME.slice(0, 2));
     views.setCharacterModels(GAME);
@@ -141,7 +141,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
 
   it("stands a character whose file is on its way as its rig, then swaps the model in, posed as the rig", async () => {
     const { release } = serve(["kurosawa.vrm"]);
-    const scene = new Scene(new NullEngine());
+    const scene = modelScene();
     const views = viewsOn(scene);
     views.setCharacterModels(GAME);
     views.spawn(3, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
@@ -169,7 +169,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
 
   it("dresses a look in the same cloth whichever files have loaded: after the rest, Kurosawa's and a new start (G-560)", async () => {
     const { fetched } = serve();
-    const views = viewsOn(new Scene(new NullEngine()));
+    const views = viewsOn(modelScene());
     views.setCharacterModels(GAME);
     // A ganger whose look borrows trousers, alone with Seki.
     const look = borrowingLook();
@@ -201,7 +201,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
 
   it("borrows from the donor files only: not Kurosawa's, loaded first or not (G-560)", async () => {
     serve();
-    const views = viewsOn(new Scene(new NullEngine()));
+    const views = viewsOn(modelScene());
     // Base_Male with the last donor's trousers, of the fixed set sorted by name.
     const borrower = { url: "ganger.vrm", variant: 150, dress: { bottomFrom: 0.99, topFrom: null } };
     views.setCharacterModels({ ...GAME, cast: { ...GAME.cast, tetsu: borrower } });
@@ -216,7 +216,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
 
   it("dresses a loaded game's scene while the old one's files still load in the background", async () => {
     const { fetched, release } = serve(["mori.vrm"]);
-    const views = viewsOn(new Scene(new NullEngine()));
+    const views = viewsOn(modelScene());
     spawnAll(views, NEW_GAME.slice(0, 2));
     views.setCharacterModels(GAME);
     await Promise.all(views.modelLoading.start());

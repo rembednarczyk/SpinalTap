@@ -58,7 +58,7 @@ export class CellBuilder {
     const ids = [...cell.buildings].sort((a, b) => a - b);
     cell.frames = ids.flatMap((id) => {
       const e = entries.buildings.get(id);
-      return e ? [withLandmark(facadeFrame(entries.building(id, e), entries.neighbourAt, entries.neighboursNear), e.landmark)] : [];
+      return e ? [withLandmark(facadeFrame(entries.building(id, e), entries.neighbourAt, entries.neighboursNear, entries.mapEdgeAt), e.landmark)] : [];
     });
     cell.spans = cell.frames.flatMap((f) => findSpans(f, entries.acrossAt));
     const far = new MeshSink();

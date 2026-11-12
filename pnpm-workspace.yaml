@@ -2,5 +2,7 @@ packages:
   - "packages/*"
   - "tools/osm-import"
   - "tools/glitch-scan"
+  - "tools/orto"
+  - "tools/gugik"
   - "tools/i18n-scan"
   - "tools/code-health"

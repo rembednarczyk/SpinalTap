@@ -1,0 +1,1 @@
+Plik modelu postaci, na który serwer odpowiada błędem (404, 500), jest odrzucany czytelnym komunikatem z adresem i statusem, zamiast trafiać do parsera jako GLB; postać zostaje z zastępstwem, a następna potrzeba pobiera plik od nowa (G-634).

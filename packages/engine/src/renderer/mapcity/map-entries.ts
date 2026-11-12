@@ -159,6 +159,9 @@ export class MapEntries {
     return top;
   };
 
+  /** Whether a wall runs along the map's edge, with no terrain past it (G-556). */
+  readonly mapEdgeAt = (a: P2, c: P2): boolean => this.terrains.onMapEdge(a, c);
+
   /** The bounds of the other buildings that meet the box: `neighbourAt` finds none outside them. */
   readonly neighboursNear = (box: Box2, self: number): Box2[] => {
     const out: Box2[] = [];
