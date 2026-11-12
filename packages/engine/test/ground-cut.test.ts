@@ -42,8 +42,8 @@ const CUT_BEFORE: Readonly<Record<string, string>> = {
   "nabrzeze-1-1": "6 bd68b5c7",
   "stare-miasto-0-0": "0 58512eb9",
   "krakowskie-0-0": "0 0825c6ea",
-  // The same cuts; the paving's colour from the orthophoto (G-721).
-  square: "13 2284f5e4",
+  // The same cuts; the paving's colour from the orthophoto (G-721, after the curator's review).
+  square: "13 c2c46b0d",
 };
 
 /** XZ area of the sink's triangles that face up, and whether any lies over (x, z). */

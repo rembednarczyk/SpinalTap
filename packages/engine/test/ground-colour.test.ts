@@ -7,10 +7,11 @@ import { MeshSink } from "../src/renderer/mesh-sink";
 
 /**
  * The paving against the lawns by day (G-721, T-281; decision of 12.11: the squares no greyer than
- * in Lublin). On the orthophoto Plac Litewski's granite is 1.9 to 2.1 times as bright as its lawns,
- * its setts the same stone as its slabs, and its fountains' shallow pools light (G-129). The colours
- * are read off what the map city lays, the fountain's floor included: the water material draws
- * whatever it gets near-black by day.
+ * in Lublin). On the orthophoto the map's squares are 1.66 (April) to 1.80 (June) times as bright
+ * as its lawns, Plac Litewski's granite up to 2.1; brighter still burns out in the sun. The Old
+ * Town's setts are 0.85 of its slabs, the paths 0.91-0.98, the fountains' shallow pools 0.87-0.91
+ * (G-129). The colours are read off what the map city lays, the fountain's floor included: the
+ * water material draws whatever it gets near-black by day.
  */
 
 const rect = (x0: number, z0: number, x1: number, z1: number): P2[] => [{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }];
@@ -34,25 +35,23 @@ const laidColour = (surface: GroundSurface, lift: (y: number) => boolean = () =>
 };
 
 const luma = ([r, g, b]: readonly number[]): number => 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
-const chroma = (c: readonly number[]): number[] => c.map((v) => v / (c[0]! + c[1]! + c[2]!));
 
 describe("the paving's colour by day (G-721)", () => {
-  it("is at least 1.8 times as bright as the lawn", () => {
-    expect(luma(laidColour("square")) / luma(laidColour("grass"))).toBeGreaterThanOrEqual(1.8);
+  it("is 1.70 to 1.85 times as bright as the lawn: light, not burnt out in the sun", () => {
+    const k = luma(laidColour("square")) / luma(laidColour("grass"));
+    expect(k).toBeGreaterThanOrEqual(1.7);
+    expect(k).toBeLessThanOrEqual(1.85);
   });
 
-  it("lays setts and paths in the slabs' stone: brightness within 5%, the same hue", () => {
-    const square = laidColour("square");
-    for (const s of ["cobble", "footway"] as const) {
-      const c = laidColour(s);
-      expect(Math.abs(luma(c) / luma(square) - 1), s).toBeLessThanOrEqual(0.05);
-      chroma(c).forEach((v, i) => expect(Math.abs(v - chroma(square)[i]!), s).toBeLessThanOrEqual(0.01));
-    }
-  });
-
-  it("gives a fountain's shallow pool a light floor, at least 0.7 of the square (G-129)", () => {
+  it("lays setts, paths and a fountain's floor a little darker than the slabs, as the orthophoto shows", () => {
+    const square = luma(laidColour("square"));
+    const within = (k: number, lo: number, hi: number, what: string) => {
+      expect(k, what).toBeGreaterThanOrEqual(lo);
+      expect(k, what).toBeLessThanOrEqual(hi);
+    };
+    within(luma(laidColour("cobble")) / square, 0.82, 0.92, "cobble");
+    within(luma(laidColour("footway")) / square, 0.88, 0.96, "footway");
     // The floor, not the rim's ledge: below the rim's top.
-    const floor = laidColour("basin", (y) => y > 0.2 && y < 0.4);
-    expect(luma(floor) / luma(laidColour("square"))).toBeGreaterThanOrEqual(0.7);
+    within(luma(laidColour("basin", (y) => y > 0.2 && y < 0.4)) / square, 0.85, 0.95, "basin");
   });
 });

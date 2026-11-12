@@ -97,7 +97,7 @@ describe("the ground the map city lays (G-444)", () => {
     // it once: steps at the map's edge read the ground on its side (G-703), and here, with only these
     // four chunks, the flight at (20; 9) on krakowskie-1-1's west side has no terrain past it. The
     // colours moved it alone: the paving's from the orthophoto (G-721), no vertex moved.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 22, vertices: 131782, hash: "907709ce" });
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 22, vertices: 131782, hash: "30ea0c41" });
     scene.dispose();
   });
 
@@ -114,6 +114,6 @@ describe("the ground the map city lays (G-444)", () => {
       }
     }
     // The paving's colours from the orthophoto (G-721) moved it, not the laying.
-    expect(hash.hex).toBe("3ed0015a");
+    expect(hash.hex).toBe("01337f90");
   });
 });

@@ -25,33 +25,35 @@ export { SURFACE_LIFT };
 const GRASS = hexColor("#3f5c35", DRESS_FLAG.solid);
 
 /**
- * The paving's colour on the orthophoto (G-721, ADR-0077): the median colour of the light paving
- * well inside each surface over the whole map in the current image (12.04.2025, no leaves: the
- * ground under the trees), from `tools/orto/src/albedo-report.ts`. A fountain's floor is the
- * shallow pool's light stone bottom, as the photographs show it (G-129).
+ * The paving's colour on the orthophoto (G-721, ADR-0077), from `tools/orto/src/albedo-report.ts`
+ * in the current image (12.04.2025, no leaves: the ground under the trees): the hue of each surface
+ * and its brightness against the square's. The square, the paths and the fountains' floors take the
+ * median of the light paving over the map; the setts the median of the Old Town's hard ground (light
+ * paving and asphalt classes, the curator's probe of 12.11), dark stones and all: the light paving
+ * alone left them as light as Plac Litewski's granite. A fountain's floor is the shallow pool's
+ * light stone bottom, a little darker than the square (G-129).
  */
 const ORTHO_PAVING = {
-  square: [188, 186, 172],
-  cobble: [176, 170, 157],
-  footway: [181, 174, 158],
-  basin: [191, 185, 164],
+  square: { rgb: [188, 186, 172], toSquare: 1 },
+  cobble: { rgb: [143, 136, 127], toSquare: 0.87 },
+  footway: { rgb: [181, 174, 158], toSquare: 0.92 },
+  basin: { rgb: [191, 185, 164], toSquare: 0.9 },
 } as const;
 
 /**
- * Paving to lawn brightness (Rec. 709 luma of the colours): Plac Litewski 1.9 (April) and 2.1
- * (June) on the orthophoto, the map's squares 1.8 in June. At 1.28 the squares read as concrete.
+ * Square to lawn brightness (Rec. 709 luma of the colours): the map's squares 1.66 (April) and 1.80
+ * (June) on the orthophoto, Plac Litewski up to 2.1. At 1.28 the squares read as concrete. Over
+ * 1.7 the sunlit slabs burn out to white under the day's light (at 1.9 a fifth of the ground in
+ * view at Plac Litewski, at 1.75 still a twentieth).
  */
-const PAVING_TO_GRASS = 1.9;
+const SQUARE_TO_GRASS = 1.7;
 
 const luma = (c: readonly number[]): number => 0.2126 * (c[0] ?? 0) + 0.7152 * (c[1] ?? 0) + 0.0722 * (c[2] ?? 0);
 
-/**
- * A paving's colour, one rule for all: the orthophoto's hue at `PAVING_TO_GRASS` times the lawn's
- * brightness. Setts are told by their joints and shades (ground shader), not by a darker stone.
- */
+/** A paving's colour, one rule for all: the orthophoto's hue at its brightness against the square, the square's against the lawn. */
 const paving = (key: keyof typeof ORTHO_PAVING, flag: number): Rgba => {
-  const rgb = ORTHO_PAVING[key];
-  const k = (PAVING_TO_GRASS * luma(GRASS)) / luma(rgb);
+  const { rgb, toSquare } = ORTHO_PAVING[key];
+  const k = (toSquare * SQUARE_TO_GRASS * luma(GRASS)) / luma(rgb);
   return [rgb[0] * k, rgb[1] * k, rgb[2] * k, flag];
 };
 
