@@ -83,12 +83,33 @@ describe("SpatialHash", () => {
     grid.remove(a);
     expect(grid.size).toBe(1);
     expect(grid.query(-10, -10, 20, 20)).toEqual(["b"]);
-    grid.insert("a", 0, 0, 10, 1);
+    expect(grid.insert("a", 0, 0, 10, 1)).toBe(a);
     expect(grid.query(-10, -10, 20, 20)).toEqual(["b", "a"]);
     expect(grid.at(1.5, 0.5)).toEqual(["b", "a"]);
+    grid.insert("c", -3, -3, 3, 3);
+    expect(grid.query(-10, -10, 20, 20)).toEqual(["b", "a", "c"]);
     grid.clear();
     expect(grid.size).toBe(0);
     expect(grid.query(-10, -10, 20, 20)).toEqual([]);
+  });
+
+  it("keeps the order things went in through items streamed in and out", () => {
+    const grid = new SpatialHash<Box>(8);
+    const live: { box: Box; handle: number }[] = [];
+    const next = sequence(11);
+    for (const box of boxes(600, 12)) {
+      if (live.length > 0 && next() < 0.4) {
+        const [gone] = live.splice(Math.floor(next() * live.length), 1);
+        if (gone) grid.remove(gone.handle);
+      }
+      live.push({ box, handle: grid.insert(box, box.minX, box.minZ, box.maxX, box.maxZ) });
+    }
+    expect(grid.size).toBe(live.length);
+    for (let q = 0; q < 100; q++) {
+      const [x, z] = [(next() - 0.5) * 450, (next() - 0.5) * 450];
+      expect(grid.query(x, z, x + 50, z + 30)).toEqual(live.map((l) => l.box).filter((b) => meets(b, x, z, x + 50, z + 30)));
+      expect(grid.at(x, z)).toEqual(live.map((l) => l.box).filter((b) => meets(b, x, z, x, z)));
+    }
   });
 
   it("stops at the first item `some` is told to, and works far off the origin", () => {

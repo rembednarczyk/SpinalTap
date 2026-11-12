@@ -19,15 +19,20 @@ type Key = number | string;
 const keyOf = (i: number, k: number): Key => (i > -NEAR && i < NEAR && k > -NEAR && k < NEAR ? (i + NEAR) * 2 * NEAR + (k + NEAR) : `${i}:${k}`);
 
 export class SpatialHash<T> {
-  /** The handles of the items in each cell, ascending: the order they went in. */
+  /** The handles of the items in each cell, in the order the items went in. */
   private readonly cells = new Map<Key, number[]>();
   private readonly items: (T | undefined)[] = [];
   /** minX, minZ, maxX, maxZ of each handle; NaN once removed. */
   private readonly boxes: number[] = [];
+  /** When each handle's item went in: handles of removed items are handed out again, so they do not tell. */
+  private readonly order: number[] = [];
   /** The query each handle was last seen by, so an item in many cells comes back once. */
   private readonly seen: number[] = [];
+  /** Handles of removed items, for the next ones in: a grid streamed in and out keeps its size. */
+  private readonly free: number[] = [];
   private stamp = 0;
   private count = 0;
+  private next = 0;
 
   /** `cell`: side of a cell (m), above 0. */
   constructor(readonly cell: number) {
@@ -39,12 +44,17 @@ export class SpatialHash<T> {
     return this.count;
   }
 
-  /** Puts `item` in every cell its box touches; the handle `remove` takes. */
+  /** Puts `item` in every cell its box touches; the handle `remove` takes, the caller's until then. */
   insert(item: T, minX: number, minZ: number, maxX: number, maxZ: number): number {
-    const h = this.items.length;
-    this.items.push(item);
-    this.boxes.push(minX, minZ, maxX, maxZ);
-    this.seen.push(0);
+    const h = this.free.pop() ?? this.items.length;
+    const b = this.boxes;
+    this.items[h] = item;
+    b[4 * h] = minX;
+    b[4 * h + 1] = minZ;
+    b[4 * h + 2] = maxX;
+    b[4 * h + 3] = maxZ;
+    this.order[h] = this.next++;
+    this.seen[h] ??= 0;
     this.count++;
     const c = this.cell;
     for (let i = Math.floor(minX / c); i <= Math.floor(maxX / c); i++) {
@@ -63,7 +73,7 @@ export class SpatialHash<T> {
     return this.insert(item, x, z, x, z);
   }
 
-  /** Takes out the item of `handle` (a handle once removed is ignored). */
+  /** Takes out the item of `handle`; again, before an insert hands the handle out anew, nothing. */
   remove(handle: number): void {
     const b = this.boxes;
     const minX = b[4 * handle];
@@ -82,17 +92,17 @@ export class SpatialHash<T> {
     }
     this.items[handle] = undefined;
     this.count--;
+    this.free.push(handle);
     b[4 * handle] = b[4 * handle + 1] = b[4 * handle + 2] = b[4 * handle + 3] = NaN;
   }
 
   /** Empties the grid; handles start again from 0. */
   clear(): void {
     this.cells.clear();
-    this.items.length = 0;
-    this.boxes.length = 0;
-    this.seen.length = 0;
+    for (const list of [this.items, this.boxes, this.order, this.seen, this.free]) list.length = 0;
     this.stamp = 0;
     this.count = 0;
+    this.next = 0;
   }
 
   /** Items whose boxes hold the point (`x`, `z`), in the order they went in. */
@@ -115,8 +125,9 @@ export class SpatialHash<T> {
       found.push(h);
       return false;
     });
-    // One cell's handles are ascending already; from more, they are sorted back into order.
-    if (cells > 1 && found.length > 1) found.sort((p, q) => p - q);
+    // One cell's handles are in order already; from more, they are sorted back into it.
+    const order = this.order;
+    if (cells > 1 && found.length > 1) found.sort((p, q) => (order[p] as number) - (order[q] as number));
     return found.map((h) => this.items[h] as T);
   }
 
