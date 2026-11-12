@@ -1,9 +1,9 @@
 /**
  * Computational geometry on the ground plane (x east, z north), the one copy in the project:
- * distance from a point to a segment, the signed area of a ring (shoelace formula), the
- * point-in-ring test (crossing number, even-odd rule) and a polyline moved aside. In the spirit
- * of turf's `pointToLineDistance`, `area` and `booleanPointInPolygon`; points come as `{ x, z }`
- * or as `[x, z]` pairs, hot loops take scalars.
+ * the foot of the perpendicular on a segment and the distance to it, the signed area of a ring
+ * (shoelace formula), the point-in-ring test (crossing number, even-odd rule) and a polyline
+ * moved aside. In the spirit of turf's `nearestPointOnLine`, `pointToLineDistance`, `area` and
+ * `booleanPointInPolygon`; points come as `{ x, z }` or as `[x, z]` pairs, hot loops take scalars.
  */
 
 /** A point on the ground plane (any `{ x, z }`, a `GroundPoint` or a `Vec3`). */
@@ -16,15 +16,24 @@ export interface PointXZ {
 export type PairXZ = readonly [number, number];
 
 /**
- * Distance from (px, pz) to the segment a-b. The foot of the perpendicular is clamped to the
- * segment; a segment whose squared length is 0, or below `minLen2`, counts as its end `a`.
+ * Where the foot of the perpendicular from (px, pz) falls on the segment a-b: the orthogonal
+ * projection's parameter along a→b, clamped to [0, 1] (the foot is `a + (b - a) * t`). A segment
+ * whose squared length is 0, or below `minLen2`, gives 0, its end `a`.
  */
-export const segmentDistance = (px: number, pz: number, ax: number, az: number, bx: number, bz: number, minLen2 = 0): number => {
+export const segmentParam = (px: number, pz: number, ax: number, az: number, bx: number, bz: number, minLen2 = 0): number => {
   const dx = bx - ax;
   const dz = bz - az;
   const len2 = dx * dx + dz * dz;
-  const t = len2 < minLen2 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / (len2 || 1)));
-  return Math.hypot(px - (ax + dx * t), pz - (az + dz * t));
+  return len2 < minLen2 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / (len2 || 1)));
+};
+
+/**
+ * Distance from (px, pz) to the segment a-b: to the foot at `segmentParam`, so a segment whose
+ * squared length is 0, or below `minLen2`, counts as its end `a`.
+ */
+export const segmentDistance = (px: number, pz: number, ax: number, az: number, bx: number, bz: number, minLen2 = 0): number => {
+  const t = segmentParam(px, pz, ax, az, bx, bz, minLen2);
+  return Math.hypot(px - (ax + (bx - ax) * t), pz - (az + (bz - az) * t));
 };
 
 /**
