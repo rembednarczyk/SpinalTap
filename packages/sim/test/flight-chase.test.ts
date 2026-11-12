@@ -87,6 +87,23 @@ describe("chasing the player over the steps from the viaduct of Zamkowa (G-255)"
     }
   }, 120_000);
 
+  // Up the steps w294098693 from their foot by Podwale onto the viaduct's south-west corner: on
+  // main the terrain under their top run met the deck 0.5 m under it (G-686), and a brawler
+  // heading up their eastern half stood pressed against that wall at (732.1, 151.5) for good.
+  it("gets up the steps w294098693 onto the viaduct's deck and back, across the whole band (G-686)", () => {
+    const DECK = { x: 734.5, z: 154.5 };
+    for (const [from, to] of [
+      [{ x: 739, z: 141.7 }, DECK],
+      [{ x: 734.9, z: 148.8 }, DECK],
+      [DECK, { x: 734.9, z: 148.8 }],
+      [{ x: 739, z: 141.7 }, { x: 730.4, z: 156 }],
+    ] as const) {
+      const c = chase(from, to, "stare-miasto-1-1", 20);
+      expect(c.time, `(${from.x}, ${from.z}) → (${to.x}, ${to.z})`).not.toBeNull();
+      expect(c.sunk).toBeLessThan(0.05);
+    }
+  }, 120_000);
+
   // Under the viaduct from the street south-east of it to the one north-west: on main about
   // 8-12 s (under the deck, so below the ground drawn there). The deck's edges at its abutments
   // are walls more than a step high; a way that climbs them stops on the eastern abutment.

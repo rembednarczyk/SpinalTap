@@ -1,6 +1,6 @@
 import { type GroundPoint, segmentDistance } from "@seki/core";
-import { type GroundDeck, deckAt, makeDeck } from "../../world/deck";
-import { type Ramp, mapHeight } from "./shape";
+import { DECK_DEPTH, type GroundDeck, deckAt, makeDeck } from "../../world/deck";
+import { FLIGHT_CELL, type Ramp, mapHeight } from "./shape";
 import type { LublinChunkData } from "./types";
 
 /**
@@ -56,14 +56,11 @@ const endRamps = (d: GroundDeck, decks: readonly GroundDeck[], flights: readonly
   return out;
 };
 
-/** The level ground before the bridges' free ends (`endRamps`), lowest first: where two meet, the higher holds. */
-export const abutmentRamps = (chunks: readonly LublinChunkData[]): Ramp[] => {
-  const height = (x: number, z: number) => mapHeight(chunks, x, z);
+/** The decks of the map's bridges, each once, on the terrain's height at their axes' ends. */
+const mapDecks = (chunks: readonly LublinChunkData[], height: (x: number, z: number) => number): GroundDeck[] => {
   const seen = new Set<string>();
   const decks: GroundDeck[] = [];
-  const flights: Segment[] = [];
   for (const c of chunks) {
-    for (const f of c.flights ?? []) for (let i = 0; i + 3 < f.line.length; i += 2) flights.push([{ x: f.line[i]!, z: f.line[i + 1]! }, { x: f.line[i + 2]!, z: f.line[i + 3]! }]);
     for (const g of c.ground) {
       if (!g.deck) continue;
       const key = g.outline.join(",");
@@ -72,5 +69,81 @@ export const abutmentRamps = (chunks: readonly LublinChunkData[]): Ramp[] => {
       decks.push(makeDeck(g.outline, g.deck, height));
     }
   }
+  return decks;
+};
+
+/** The level ground before the bridges' free ends (`endRamps`), lowest first: where two meet, the higher holds. */
+export const abutmentRamps = (chunks: readonly LublinChunkData[]): Ramp[] => {
+  const height = (x: number, z: number) => mapHeight(chunks, x, z);
+  const flights: Segment[] = [];
+  for (const c of chunks) for (const f of c.flights ?? []) for (let i = 0; i + 3 < f.line.length; i += 2) flights.push([{ x: f.line[i]!, z: f.line[i + 1]! }, { x: f.line[i + 2]!, z: f.line[i + 3]! }]);
+  const decks = mapDecks(chunks, height);
   return decks.flatMap((d) => endRamps(d, decks, flights, height)).sort((p, q) => p.ya - q.ya);
+};
+
+/** How close the crossing of a flight's axis onto a deck is found (m). */
+const CROSSING = 0.01;
+
+/** Where along the run from `p` to `q`, from 0 to 1, its axis first gets onto one of `decks`. */
+const onto = (decks: readonly GroundDeck[], p: GroundPoint, q: GroundPoint): number => {
+  let [lo, hi] = [0, 1];
+  while ((hi - lo) * Math.hypot(q.x - p.x, q.z - p.z) > CROSSING) {
+    const t = (lo + hi) / 2;
+    if (deckAt(decks, p.x + (q.x - p.x) * t, p.z + (q.z - p.z) * t) === null) lo = t;
+    else hi = t;
+  }
+  return hi;
+};
+
+/**
+ * Ramps up a flight of steps that climbs from the terrain onto a bridge's deck by its end
+ * (G-686): w294098693 onto the south-west corner of the viaduct of Zamkowa. The deck is level
+ * across its axis at the NMT's height on the axis's end, while the NMT along the end falls towards
+ * that corner, so the band met the deck 0.5 m under it, a wall across its whole width the feet
+ * stopped at. Its last two runs get an even grade from the terrain at their foot up to the deck's
+ * height half the band's width before the deck's edge, level with the deck from there to the
+ * top: the terrain is bilinear on its grid, so it meets the deck's edge only where it is level
+ * before it (as at G-349's abutments), and the top run alone would climb steeper than a walker
+ * does (ADR-0043). Two cells either side of the band the terrain is filled up to the ramp, never
+ * cut: else the cells by the band's edges sag under it, and the street beside the top run, higher,
+ * stays as it is. Not a flight hung off a deck far over the terrain (G-255): that one is a deck of
+ * its own (`decks.ts`).
+ */
+export const flightTopRamps = (chunks: readonly LublinChunkData[], width = 3): Ramp[] => {
+  const height = (x: number, z: number) => mapHeight(chunks, x, z);
+  const decks = mapDecks(chunks, height);
+  const seen = new Set<string>();
+  const out: Ramp[] = [];
+  for (const f of chunks.flatMap((c) => c.flights ?? [])) {
+    if (seen.has(f.id)) continue;
+    seen.add(f.id);
+    const pts: GroundPoint[] = [];
+    for (let i = 0; i + 1 < f.line.length; i += 2) pts.push({ x: f.line[i]!, z: f.line[i + 1]! });
+    let k = pts.length;
+    while (k > 0 && deckAt(decks, pts[k - 1]!.x, pts[k - 1]!.z) !== null) k--;
+    if (k === 0 || k === pts.length) continue;
+    const top = pts[pts.length - 1]!;
+    if (deckAt(decks, top.x, top.z)! - height(top.x, top.z) > DECK_DEPTH) continue;
+    const [p, q] = [pts[k - 1]!, pts[k]!];
+    const t = onto(decks, p, q);
+    const y = deckAt(decks, p.x + (q.x - p.x) * t, p.z + (q.z - p.z) * t)!;
+    if (y <= height(p.x + (q.x - p.x) * t, p.z + (q.z - p.z) * t)) continue;
+    // Level from half the band's width before the deck's edge, where the axis gets onto it.
+    const len = Math.hypot(q.x - p.x, q.z - p.z);
+    const u = Math.max(0, t - width / 2 / len);
+    const level = { x: p.x + (q.x - p.x) * u, z: p.z + (q.z - p.z) * u };
+    // The grade from the foot of the run below the top one, if there is one.
+    const run = [...pts.slice(Math.max(0, k - 2), k), level];
+    const along = run.map((_, i) => run.slice(1, i + 1).reduce((l, r, j) => l + Math.hypot(r.x - run[j]!.x, r.z - run[j]!.z), 0));
+    const y0 = height(run[0]!.x, run[0]!.z);
+    if (along[along.length - 1]! <= 0) continue;
+    const at = (i: number) => y0 + ((y - y0) * along[i]!) / along[along.length - 1]!;
+    const grade = run.slice(1).map((b, i) => ({ a: run[i]!, b, ya: at(i), yb: at(i + 1) }));
+    const landing = [[level, q], ...pts.slice(k, -1).map((r, i) => [r, pts[k + i + 1]!] as const)].map(([a, b]) => ({ a, b, ya: y, yb: y }));
+    for (const r of [...grade, ...landing]) out.push({ ...r, width: width + 2 * FLIGHT_CELL, blend: 0, square: true, fill: true });
+    // Round at the bend below the top run, square elsewhere: else the ends reach over the runs before and after.
+    out.push({ ...grade[grade.length - 1]!, width, blend: 0 });
+    for (const r of [...landing, ...grade.slice(0, -1)]) out.push({ ...r, width, blend: 0, square: true });
+  }
+  return out;
 };
