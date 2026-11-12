@@ -243,6 +243,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - podzamcze-0-0 (12.11): `footway-on-carriageway` 188 próbek w 30 kwadratach: w232362926 na bezpasowej w169832249 (652..693; 176..294) 142, w232362941 na w169832249 (639..690; 180..305) 26, w232362922 na Lubartowskiej w263054588 (576..580; 331..342) 13, w173566578 na Kowalskiej w438384687 (668..673; 163..165) 7; ta sama klasa (niepotwierdzone, że ta sama przyczyna dla w169832249).
 - nabrzeze-1-0 (12.11): `sidewalk-under-carriageway` 4 kwadraty (16 próbek): chodnik w1159135272 pod w85717509 Łęczyńska (2659; 93) 15 próbek i pod w152220692 (2663; 98) 1; `footway-on-carriageway` ten sam chodnik (2655; 89) 2 próbki.
 - nabrzeze-1-1 (12.11): `footway-on-carriageway` 4 kwadraty (23 próbki), Turystyczna w300709307 na w210273910 (2632; 351).
+- 12.11 (kurator, przegląd paczki): przyczyna dla w169832249 potwierdzona. Droga `residential`, `oneway=yes`, bez `width`, ma w grze domyślne 6,5 m (±3,2 m), a chodniki w232362926 i w232362941 leżą 2,0–3,6 m i 2,3–5,8 m od osi. Według propozycji G-082 jezdnia ok. 3 m (minimum). T-047 (brak pasa) osobno.
 
 ### G-083 Drogi dla aut bez nazwy i łącznice bez pasów ruchu
 - Status: odłożone (samochody na później, decyzja użytkownika 31.10); zgłoszone (audyt dróg) (T-047) · Ważność: S3 · Zasięg: 7 dróg bez nazwy + 3 łącznice, ok. 550 m · Koszt: mały–średni
@@ -393,7 +394,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-129 Fontanna multimedialna na Placu Litewskim bez strumieni, czaszy i pokazu
 - Status: zgłoszone (audyt Placu Litewskiego, kurator 31.10). Prośba użytkownika: „fontanna na Litewskim powinna być spektakularna”
-- Ważność: S3 (proponowana; najważniejsza atrakcja placu) · Zasięg: 1 (zasada dotyczy też kaskady w503047622 i fontanny z wieżą ciśnień w256406832) · Koszt: średni
+- Ważność: S3 (proponowana; najważniejsza atrakcja placu) · Zasięg: 1 (zasada dotyczy też kaskady w503047622 i fontanny z wieżą ciśnień w256406832) · Koszt: średni; 12.11 (kurator, przegląd paczki, T-281): woda w niecce płytka i przejrzysta, dno jasne (granit). Test przyjęcia: w dzień niecka ma jasność ≥ 0,7 jasności kostki placu; kaskada w503047622 schodkowa z jasnego kamienia.
 - Gdzie: w503047621 (x −35..−4.7, z 18.9..56.6); T-076; zrzuty `fountain.png`, `fountain-wide.png`
 - Dowód: 16 dysz `fountain-jets` (`JETS["fountain-multimedia"] = 16` w `props-gen.ts`), każda to rurka 1 m z kulką (`fountainJets` w `prop-civic.ts`); woda w niecce płaska, bez czaszy w środku, balustrady i stopni-siedzisk
 - Propozycja (NPR, 2077, bez nowych siatek): (1) dysze w siatce mebli bloku jako 3 pierścienie po obrysie (np. 48 + 32 + 16) i pióropusz w środku; strumienie to pionowe wstęgi z przecięciem w kształcie krzyża (2 quady, bez przezroczystości sortowanej), wysokości 1–4 m, w środku 8–12 m; (2) czasza z balustradą i drewniane stopnie z obrysu w siatce terenu, jak obrzeże `planBasin`; (3) poświata w siatce halo miasta (już jedna): kolory strumieni z palety neonu ADR-0051 (cyjan, magenta, bursztyn), nocą mocniejsze; (4) pokaz: wieczorem (21:00, w grze codziennie albo w piątki i soboty z `ClockPort`) wysokość i kolor z fazy w atrybucie wierzchołka, czytany przez istniejący materiał w shaderze; bez animacji CPU na wierzchołkach; (5) mgła z dysz jako istniejące cząsteczki pary (`STEAM_VENTS`), do 2 źródeł. Holo nad strumieniami (ADR-0051) opcjonalnie, w warstwie reklam
@@ -1270,7 +1271,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-432 Kontrola `pad-unregistered` sprawdza tylko format `T-NNN`, nie istnienie wiersza; scena `alchemia-tpp` patrzy obok hali
 - Status: zgłoszone (6.11, weryfikator PR #343)
-- Ważność: S4 · Zasięg: rejestr topografii jest na gałęzi sesji, więc kontrola w main nie może sprawdzić wiersza (rozważyć przeniesienie `docs/topografia.md` do main albo listę T w danych); budżet `alchemia-tpp` słabo mierzy halę; `raid_north` startuje z zachodu T1 do czasu T2 (etap 2); (krakowskie-2-0): dwa `pad-unregistered` to pady wnętrz `CLINIC_SITE` (w67499277, 322; -68) i `KOI_SITE` (w66330644, 316; -99) z `ROOM_SITES`, bez `row`; do wiersza T albo wyjątku przy naprawie.
+- Ważność: S4 · Zasięg: rejestr topografii jest na gałęzi sesji, więc kontrola w main nie może sprawdzić wiersza (rozważyć przeniesienie `docs/topografia.md` do main albo listę T w danych); budżet `alchemia-tpp` słabo mierzy halę; `raid_north` startuje z zachodu T1 do czasu T2 (etap 2); (krakowskie-2-0): dwa `pad-unregistered` to pady wnętrz `CLINIC_SITE` (w67499277, 322; -68) i `KOI_SITE` (w66330644, 316; -99) z `ROOM_SITES`, bez `row`; do wiersza T albo wyjątku przy naprawie.; 12.11 (kurator, przegląd paczki): pady `ROOM_SITES` są celowe, wiersz T-280. Poprawka: `row: "T-280"` przy padzie w `sites.ts`, `pad-unregistered` −2.
 - Pakiet właściciela: tools/glitch-scan, e2e
 
 ### G-435 Zapisane ustawienia z K przypisanym do sterowania zostają (`sanitizeBindings` nie odrzuca `RESERVED_KEYS`)
@@ -1640,7 +1641,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-636 Bariera leżąca na ścianie budynku liczy się w skanie jako wycięta
 - Status: zgłoszone (12.11, scalenie #418 z main; baza `barrier-parallel-cut` 14 → 15 opisana w commicie 529888c)
-- Ważność: S4 · Zasięg: mur oporowy w227679479 na Podzamczu (539; 517) biegnie po południowej ścianie garażu w444375263, który stoi w grze od G-556; `inBuilding` w `barrier-room.ts` słusznie go tnie, a kontrola liczy odcinek jako „cut”; poprawka: import pomija odcinek bariery leżący na ścianie budynku albo kontrola go nie liczy; po niej baza wraca do 14; (krakowskie-2-0): `barrier-parallel-cut` płot w173531574 (387; -27) 8 z 16 m; tnie go myjnia T-051 (scena celowa), nie ściana budynku; kontrola liczy go jak G-636.; stare-miasto-0-1 (12.11): `barrier-parallel-cut` mur w436266757 (558; 100), odcinek 2 z 5 m; ta sama klasa (niepotwierdzone, że leży na ścianie budynku).
+- Ważność: S4 · Zasięg: mur oporowy w227679479 na Podzamczu (539; 517) biegnie po południowej ścianie garażu w444375263, który stoi w grze od G-556; `inBuilding` w `barrier-room.ts` słusznie go tnie, a kontrola liczy odcinek jako „cut”; poprawka: import pomija odcinek bariery leżący na ścianie budynku albo kontrola go nie liczy; po niej baza wraca do 14; (krakowskie-2-0): `barrier-parallel-cut` płot w173531574 (387; -27) 8 z 16 m; tnie go myjnia T-051 (scena celowa), nie ściana budynku; kontrola liczy go jak G-636.; stare-miasto-0-1 (12.11): `barrier-parallel-cut` mur w436266757 (558; 100), odcinek 2 z 5 m; ta sama klasa (niepotwierdzone, że leży na ścianie budynku).; 12.11 (kurator, przegląd paczki): mur w436266757 (555..561; 100) to inna przyczyna, nie ściana budynku: najbliższa ściana gry (r6477272) jest 7,2 m dalej. Odcinek tnie trasa wzdłuż muru (cięcia w `crowd-barriers.ts`), czyli przypadek, który kontrola ma łapać. Do rozstrzygnięcia przy naprawie: trasę odsunąć albo przyjąć cięcie jako celowe z wierszem T.
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-640 Raster AI bierze koniec niskiego pomostu za płaski teren
@@ -1830,7 +1831,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-699 Podjazd i taras przy Zamku węższe niż w Lublinie: goły teren między pasem drogi a licem (T-265)
 - Status: zgłoszone (12.11, kurator, przegląd podzamcze-1-0)
-- Ważność: S4 · Zasięg: Podzamcze, Zamek w48500136. Od północy (844..920; 262..273) ok. 382 m² gołego terenu między pasem 4 m drogi w66258158 a licem, a na ortofoto asfaltowy podjazd ok. 10 m z parkowaniem. Od południa (830..920; 202..209) ok. 130 m² przy licu i taras (882..900; 193..200) ok. 89 m², na ortofoto kostka. Zrzuty `pz10d-pn-podjazd`, `pz10d-pd-taras`; podzamcze-2-0 (12.11): `landuse-bare` 865 próbek w x 920..930 (z 160..370) tuż za granicą komórki podzamcze-1-0; niepotwierdzone, że to ciąg pasów przy Zamku z wpisu.
+- Ważność: S4 · Zasięg: Podzamcze, Zamek w48500136. Od północy (844..920; 262..273) ok. 382 m² gołego terenu między pasem 4 m drogi w66258158 a licem, a na ortofoto asfaltowy podjazd ok. 10 m z parkowaniem. Od południa (830..920; 202..209) ok. 130 m² przy licu i taras (882..900; 193..200) ok. 89 m², na ortofoto kostka. Zrzuty `pz10d-pn-podjazd`, `pz10d-pd-taras`; podzamcze-2-0 (12.11): `landuse-bare` 865 próbek w x 920..930 (z 160..370) tuż za granicą komórki podzamcze-1-0; niepotwierdzone, że to ciąg pasów przy Zamku z wpisu.; 12.11 (kurator, przegląd paczki): pas (920..975; 183..263) w podzamcze-2-0 jest ciągiem wpisu. Droga w66258158 okrąża wschodni koniec Zamku przy Kaplicy Trójcy, a goły teren między jezdnią a licem i kaplicą przechodzi przez x = 920 bez przerwy (wycinek `topo-paczka/crop/pz20w.png`). Do poprawy przedpola (920..960; 227..262) i (944..959; 195..229), twarde 70% i 97%. Zieleń zbocza na wschód od drogi to T-117 i zostaje. Test przyjęcia uzupełnić o `landuse-bare` w (920..975; 183..263) bez próbek zieleni ortofoto < 100.” Z T-274 i G-713 usunąć zastrzeżenie „niepotwierdzone, że ciąg
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS` albo korekta `width`)
 - Test przyjęcia: `landuse-bare` w (844..920; 255..273) 1527 → mniej niż 100, w (830..920; 202..212) i na tarasie 873 → mniej niż 100; zbocze z trawą bez nawierzchni
 
@@ -1874,7 +1875,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-709 Goły teren w krakowskie-2-0: podwórza, przedpola Dolnej Panny Marii i deptaka, szczeliny przy jezdni i dwa budynki bez gry (T-270)
 - Status: zgłoszone (12.11, opiekun mapy, raport komórki krakowskie-2-0)
-- Ważność: S3 (jak G-704, G-705, G-527) · Zasięg: krakowskie-2-0, goły teren 16083 m²: podwórza 14 / 4655 m² (twarde 80%), przedpola 15 / 7101 m² (twarde 88%), szczeliny przy jezdni > 3 m 11 / 1224 m² (twarde 93%), w obrysie LoD2 1 / 845 m² (twarde 92%); `landuse-bare` 160 kwadratów 10 m w komórce; położenia w T-270. Dwa budynki LoD2 i LoD1 2024 bez budynku gry: 26780F22-118A-DA8A-E053-CC2BA8C01EC0 (386..412; -217..-197), 26780F22-3E04-DA8A-E053-CC2BA8C01EC0 (407..426; -205..-184), 431 m² (klasa G-472)
+- Ważność: S3 (jak G-704, G-705, G-527) · Zasięg: krakowskie-2-0, goły teren 16083 m²: podwórza 14 / 4655 m² (twarde 80%), przedpola 15 / 7101 m² (twarde 88%), szczeliny przy jezdni > 3 m 11 / 1224 m² (twarde 93%), w obrysie LoD2 1 / 845 m² (twarde 92%); `landuse-bare` 160 kwadratów 10 m w komórce; położenia w T-270. Dwa budynki LoD2 i LoD1 2024 bez budynku gry: 26780F22-118A-DA8A-E053-CC2BA8C01EC0 (386..412; -217..-197), 26780F22-3E04-DA8A-E053-CC2BA8C01EC0 (407..426; -205..-184), 431 m² (klasa G-472); 12.11 (kurator, przegląd paczki): reguła ważności dla wszystkich wpisów gołego terenu komórek jest jedna: S3, gdy twardej nawierzchni ortofoto (jasna + asfalt) w podwórzach, przedpolach i szczelinach jest co najmniej ok. 1000 m², poniżej S4. Do poprawy tylko część twarda; zieleń i próbki pod koronami zostają (ADR-0077 krok 1.1).
 - Dowód: `node tools/orto/src/report.ts --cell krakowskie-2-0` (sekcje gołego terenu i budynków bez gry), skan `landuse-bare` 160 w komórce; ortofoto 2025-04, przechył (0; 0,75) m
 - Przyczyna (przypuszczalna): jak G-513, G-527, G-704, G-705: OSM nie ma obszarów nawierzchni podwórzy i przedpoli; szczeliny > `KERB_REACH` poza zasięgiem wypełnień (T-247); dwa budynki LoD2 nie są w OSM
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2025-04, tam gdzie przechył większy 2024-06)
@@ -1882,7 +1883,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-710 Goły teren w krakowskie-2-1: przedpola przy fasadach i szczeliny przy jezdni (T-271)
 - Status: zgłoszone (12.11, opiekun mapy, raport komórki krakowskie-2-1)
-- Ważność: S3 (jak G-705, G-709, G-527) · Zasięg: krakowskie-2-1, goły teren 10063 m²: przedpola 13 / 5222 m² (twarde 70%), szczeliny przy jezdni > 3 m 2 / 2780 m² (twarde 66%), podwórza 1 / 85 m², w obrysie LoD2 1 / 169 m² (pawilon T-230, celowy), inne 2 / 143 m²; `landuse-bare` 14 kwadratów 10 m (693 próbki) w komórce; położenia w T-271
+- Ważność: S3 (jak G-705, G-709, G-527) · Zasięg: krakowskie-2-1, goły teren 10063 m²: przedpola 13 / 5222 m² (twarde 70%), szczeliny przy jezdni > 3 m 2 / 2780 m² (twarde 66%), podwórza 1 / 85 m², w obrysie LoD2 1 / 169 m² (pawilon T-230, celowy), inne 2 / 143 m²; `landuse-bare` 14 kwadratów 10 m (693 próbki) w komórce; położenia w T-271; 12.11 (kurator, przegląd paczki): reguła ważności dla wszystkich wpisów gołego terenu komórek jest jedna: S3, gdy twardej nawierzchni ortofoto (jasna + asfalt) w podwórzach, przedpolach i szczelinach jest co najmniej ok. 1000 m², poniżej S4. Do poprawy tylko część twarda; zieleń i próbki pod koronami zostają (ADR-0077 krok 1.1).
 - Dowód: `node tools/orto/src/report.ts --cell krakowskie-2-1` (sekcja gołego terenu), skan `landuse-bare` 14 kwadratów w komórce; ortofoto 2024-06, przechył (0,5; 0) m
 - Przyczyna (przypuszczalna): jak G-513, G-527, G-704, G-705: OSM nie ma obszarów nawierzchni przedpoli; szczeliny > `KERB_REACH` poza zasięgiem wypełnień (T-247); największa szczelina (267..348; 53..125) leży w połowie pod dachami LoD2 z trzech budynków już rozebranych (niepotwierdzone, raport nie podaje ich położenia)
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2024-06)
@@ -1890,7 +1891,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-711 Goły teren w stare-miasto-0-1: podwórza i przedpola przy Rybnej, Lubartowskiej i Kowalskiej (T-272)
 - Status: zgłoszone (12.11, opiekun mapy, raport komórki stare-miasto-0-1)
-- Ważność: S3 (jak G-704, G-705, G-527) · Zasięg: stare-miasto-0-1, goły teren 6600 m²: podwórza 7 / 4223 m² (twarde 100%), przedpola 4 / 1344 m² (twarde 100%), szczeliny, obrys LoD2 i inne 0; `landuse-bare` 2 kwadraty 10 m (10 próbek); położenia w T-272
+- Ważność: S3 (jak G-704, G-705, G-527) · Zasięg: stare-miasto-0-1, goły teren 6600 m²: podwórza 7 / 4223 m² (twarde 100%), przedpola 4 / 1344 m² (twarde 100%), szczeliny, obrys LoD2 i inne 0; `landuse-bare` 2 kwadraty 10 m (10 próbek); położenia w T-272; 12.11 (kurator, przegląd paczki): reguła ważności dla wszystkich wpisów gołego terenu komórek jest jedna: S3, gdy twardej nawierzchni ortofoto (jasna + asfalt) w podwórzach, przedpolach i szczelinach jest co najmniej ok. 1000 m², poniżej S4. Do poprawy tylko część twarda; zieleń i próbki pod koronami zostają (ADR-0077 krok 1.1).
 - Dowód: `node tools/orto/src/report.ts --cell stare-miasto-0-1` (sekcja gołego terenu), skan `landuse-bare` 2 kwadraty w komórce; ortofoto 2024-06, przechył (0; 0) m
 - Przyczyna (przypuszczalna): jak G-513, G-527, G-704, G-705: OSM nie ma obszarów nawierzchni podwórzy i przedpoli; największe podwórze (495..557; 80..150) obejmuje ruinę w232362881 (385 m² w LoD2 i LoD1 2024, T-015), którą import pomija (`SKIP_BUILDING`)
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2024-06)
@@ -1898,7 +1899,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-712 Goły teren w podzamcze-0-0: podwórza, przedpola i szczeliny przy Kowalskiej, Furmańskiej i Alei Tysiąclecia (T-273)
 - Status: zgłoszone (12.11, opiekun mapy, raport komórki podzamcze-0-0)
-- Ważność: S3 (jak G-704, G-705, G-527) · Zasięg: podzamcze-0-0, goły teren 10945 m²: podwórza 10 / 5958 m² (twarde 89%), przedpola 10 / 1620 m² (twarde 79%), szczeliny przy jezdni > 3 m 2 / 809 m² (twarde 87%), inne 6 / 781 m², w obrysie LoD2 0; `landuse-bare` 72 kwadraty 10 m (7261 próbek) w komórce; położenia w T-273
+- Ważność: S3 (jak G-704, G-705, G-527) · Zasięg: podzamcze-0-0, goły teren 10945 m²: podwórza 10 / 5958 m² (twarde 89%), przedpola 10 / 1620 m² (twarde 79%), szczeliny przy jezdni > 3 m 2 / 809 m² (twarde 87%), inne 6 / 781 m², w obrysie LoD2 0; `landuse-bare` 72 kwadraty 10 m (7261 próbek) w komórce; położenia w T-273; 12.11 (kurator, przegląd paczki): reguła ważności dla wszystkich wpisów gołego terenu komórek jest jedna: S3, gdy twardej nawierzchni ortofoto (jasna + asfalt) w podwórzach, przedpolach i szczelinach jest co najmniej ok. 1000 m², poniżej S4. Do poprawy tylko część twarda; zieleń i próbki pod koronami zostają (ADR-0077 krok 1.1).
 - Dowód: `node tools/orto/src/report.ts --cell podzamcze-0-0` (sekcja gołego terenu), skan `landuse-bare` 72 kwadraty w komórce; ortofoto 2025-04, przechył (0,25; 0) m
 - Przyczyna (przypuszczalna): jak G-513, G-527, G-704, G-705: OSM nie ma obszarów nawierzchni podwórzy i przedpoli; szczeliny > `KERB_REACH` poza zasięgiem wypełnień (T-247)
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2025-04)
@@ -1906,7 +1907,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-713 Goły teren w podzamcze-2-0: przedpola i szczeliny przy wschodnim Wzgórzu Zamkowym, Alei Tysiąclecia i VIVO (T-274)
 - Status: zgłoszone (12.11, opiekun mapy, raport komórki podzamcze-2-0)
-- Ważność: S3 (jak G-705, G-712, G-527) · Zasięg: podzamcze-2-0, goły teren 7147 m²: przedpola 5 / 1263 m² (twarde 77%), szczeliny przy jezdni > 3 m 16 / 2941 m² (twarde 73%), inne 5 / 1166 m², podwórza 0, w obrysie LoD2 0; `landuse-bare` 62 kwadraty 10 m (7532 próbki) w komórce; położenia w T-274
+- Ważność: S3 (jak G-705, G-712, G-527) · Zasięg: podzamcze-2-0, goły teren 7147 m²: przedpola 5 / 1263 m² (twarde 77%), szczeliny przy jezdni > 3 m 16 / 2941 m² (twarde 73%), inne 5 / 1166 m², podwórza 0, w obrysie LoD2 0; `landuse-bare` 62 kwadraty 10 m (7532 próbki) w komórce; położenia w T-274; 12.11 (kurator, przegląd paczki): reguła ważności dla wszystkich wpisów gołego terenu komórek jest jedna: S3, gdy twardej nawierzchni ortofoto (jasna + asfalt) w podwórzach, przedpolach i szczelinach jest co najmniej ok. 1000 m², poniżej S4. Do poprawy tylko część twarda; zieleń i próbki pod koronami zostają (ADR-0077 krok 1.1).
 - Dowód: `node tools/orto/src/report.ts --cell podzamcze-2-0` (sekcja gołego terenu), skan `landuse-bare` 62 kwadraty w komórce; ortofoto 2025-04, przechył (0,25; 0) m
 - Przyczyna (przypuszczalna): jak G-513, G-527, G-705, G-712: OSM nie ma obszarów nawierzchni przedpoli; szczeliny > `KERB_REACH` poza zasięgiem wypełnień (T-247); część pasa (920..975; 183..263) może być ciągiem G-699/T-265 z podzamcze-1-0 (niepotwierdzone)
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2025-04)
@@ -1914,7 +1915,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-714 Goły teren w podzamcze-2-1: przedpola i szczeliny przy Ruskiej, Podzamczu i Cerkiewnej (T-275)
 - Status: zgłoszone (12.11, opiekun mapy, raport komórki podzamcze-2-1)
-- Ważność: S4 (S3 jak G-705 dopiero, gdy ortofoto potwierdzi nawierzchnię na przedpolach: twarde tylko 39%, zieleń ok. 70% przy dwóch największych; `landuse-bare` 5 kwadratów) · Zasięg: podzamcze-2-1, goły teren 9543 m²: przedpola 7 / 5009 m² (twarde 39%), szczeliny przy jezdni > 3 m 16 / 1624 m² (twarde 85%), inne 4 / 569 m², podwórza 0, w obrysie LoD2 0; `landuse-bare` 5 kwadratów 10 m (558 próbek, ok. 140 m²) w (1095..1108; 561..580); położenia w T-275
+- Ważność: S3 (reguła przeglądu paczki 12.11: ok. 3 300 m² twardej nawierzchni; wcześniej S4) (S3 jak G-705 dopiero, gdy ortofoto potwierdzi nawierzchnię na przedpolach: twarde tylko 39%, zieleń ok. 70% przy dwóch największych; `landuse-bare` 5 kwadratów) · Zasięg: podzamcze-2-1, goły teren 9543 m²: przedpola 7 / 5009 m² (twarde 39%), szczeliny przy jezdni > 3 m 16 / 1624 m² (twarde 85%), inne 4 / 569 m², podwórza 0, w obrysie LoD2 0; `landuse-bare` 5 kwadratów 10 m (558 próbek, ok. 140 m²) w (1095..1108; 561..580); położenia w T-275; 12.11 (kurator, przegląd paczki): reguła ważności dla wszystkich wpisów gołego terenu komórek jest jedna: S3, gdy twardej nawierzchni ortofoto (jasna + asfalt) w podwórzach, przedpolach i szczelinach jest co najmniej ok. 1000 m², poniżej S4. Do poprawy tylko część twarda; zieleń i próbki pod koronami zostają (ADR-0077 krok 1.1).
 - Dowód: `node tools/orto/src/report.ts --cell podzamcze-2-1` (sekcja gołego terenu), skan `landuse-bare` 5 kwadratów w komórce; ortofoto 2025-04, przechył (0,25; 0) m
 - Przyczyna (przypuszczalna): jak G-513, G-527, G-704, G-705: OSM nie ma obszarów nawierzchni przedpoli; szczeliny > `KERB_REACH` poza zasięgiem wypełnień (T-247)
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2025-04)
@@ -1922,7 +1923,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-715 Goły teren w nabrzeze-0-0: szczeliny przy jezdni Mełgiewskiej i bulwaru (T-276)
 - Status: zgłoszone (12.11, opiekun mapy, raport komórki nabrzeze-0-0)
-- Ważność: S4 (mała powierzchnia, jak G-451; reszta gołego terenu komórki to zieleń) · Zasięg: nabrzeze-0-0, szczeliny przy jezdni > 3 m 3 / 526 m² (twarde 77%); inne 4 / 2177 m² to zieleń ortofoto (92..100%) i nie wchodzi; podwórza, przedpola i obrys LoD2 0; `landuse-bare` 0; położenia w T-276
+- Ważność: S4 (mała powierzchnia, jak G-451; reszta gołego terenu komórki to zieleń) · Zasięg: nabrzeze-0-0, szczeliny przy jezdni > 3 m 3 / 526 m² (twarde 77%); inne 4 / 2177 m² to zieleń ortofoto (92..100%) i nie wchodzi; podwórza, przedpola i obrys LoD2 0; `landuse-bare` 0; położenia w T-276; 12.11 (kurator, przegląd paczki): reguła ważności dla wszystkich wpisów gołego terenu komórek jest jedna: S3, gdy twardej nawierzchni ortofoto (jasna + asfalt) w podwórzach, przedpolach i szczelinach jest co najmniej ok. 1000 m², poniżej S4. Do poprawy tylko część twarda; zieleń i próbki pod koronami zostają (ADR-0077 krok 1.1).
 - Dowód: `node tools/orto/src/report.ts --cell nabrzeze-0-0` (sekcja gołego terenu); skan `kerb-gap-bare` 10 kwadratów (164 próbki) w komórce; przechył nalotów niepewny (3 m² krawędzi LoD2)
 - Przyczyna (przypuszczalna): szczeliny > `KERB_REACH` poza zasięgiem wypełnień krawężnikowych (T-247), nawierzchnia pieszych bez obszarów w OSM
 - Pakiet właściciela: tools/osm-import (ground, `kerb-widen.ts`)
@@ -1930,7 +1931,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-716 Goły teren w nabrzeze-0-1: przedpole DPS "Kalina" i szczeliny przy jezdniach Andersa, Towarowej i Kalinowszczyzny (T-277)
 - Status: zgłoszone (12.11, opiekun mapy, raport komórki nabrzeze-0-1)
-- Ważność: S4 (twarde tylko 23% przedpola i 48% szczelin, reszta zieleń; mniejsze niż G-705) · Zasięg: nabrzeze-0-1, goły teren 6567 m²: przedpola 2 / 1725 m² (twarde 23%), szczeliny przy jezdni > 3 m 8 / 749 m² (twarde 48%), inne 7 / 908 m², podwórza i obrys LoD2 0; `landuse-bare` 0; `kerb-gap-bare` 46 kwadratów (1150 próbek); położenia w T-277
+- Ważność: S4 (twarde tylko 23% przedpola i 48% szczelin, reszta zieleń; mniejsze niż G-705) · Zasięg: nabrzeze-0-1, goły teren 6567 m²: przedpola 2 / 1725 m² (twarde 23%), szczeliny przy jezdni > 3 m 8 / 749 m² (twarde 48%), inne 7 / 908 m², podwórza i obrys LoD2 0; `landuse-bare` 0; `kerb-gap-bare` 46 kwadratów (1150 próbek); położenia w T-277; 12.11 (kurator, przegląd paczki): reguła ważności dla wszystkich wpisów gołego terenu komórek jest jedna: S3, gdy twardej nawierzchni ortofoto (jasna + asfalt) w podwórzach, przedpolach i szczelinach jest co najmniej ok. 1000 m², poniżej S4. Do poprawy tylko część twarda; zieleń i próbki pod koronami zostają (ADR-0077 krok 1.1).
 - Dowód: `node tools/orto/src/report.ts --cell nabrzeze-0-1` (sekcja gołego terenu); skan `kerb-gap-bare` 46 kwadratów i `kerb-strip-bare` 2 próbki (Towarowa) w komórce; przechył nalotów niepewny
 - Przyczyna (przypuszczalna): jak G-705 i T-247: OSM nie ma obszarów nawierzchni przedpoli, szczeliny > `KERB_REACH` poza zasięgiem wypełnień; część składowych to prawdziwa zieleń (trawa), niepotwierdzone zrzutem
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; ground)
@@ -1943,7 +1944,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-717 Goły teren w nabrzeze-1-0: przedpola przy fasadach i szczeliny przy jezdniach Łęczyńskiej i Mełgiewskiej (T-278)
 - Status: zgłoszone (12.11, opiekun mapy, raport komórki nabrzeze-1-0)
-- Ważność: S3 (jak G-705, G-709, G-527: trzy szczeliny z twardym 90..99%, razem 1027 m²; przedpola w większości zieleń, twarde 15%) · Zasięg: nabrzeze-1-0, goły teren 10164 m²: przedpola 9 / 5935 m² (twarde 15%), szczeliny przy jezdni > 3 m 10 / 1958 m² (twarde 65%), inne 2 / 263 m², podwórza i obrys LoD2 0; `landuse-bare` 54 kwadraty (7023 próbki); `kerb-gap-bare` 51 kwadratów; położenia w T-278
+- Ważność: S3 (jak G-705, G-709, G-527: trzy szczeliny z twardym 90..99%, razem 1027 m²; przedpola w większości zieleń, twarde 15%) · Zasięg: nabrzeze-1-0, goły teren 10164 m²: przedpola 9 / 5935 m² (twarde 15%), szczeliny przy jezdni > 3 m 10 / 1958 m² (twarde 65%), inne 2 / 263 m², podwórza i obrys LoD2 0; `landuse-bare` 54 kwadraty (7023 próbki); `kerb-gap-bare` 51 kwadratów; położenia w T-278; 12.11 (kurator, przegląd paczki): reguła ważności dla wszystkich wpisów gołego terenu komórek jest jedna: S3, gdy twardej nawierzchni ortofoto (jasna + asfalt) w podwórzach, przedpolach i szczelinach jest co najmniej ok. 1000 m², poniżej S4. Do poprawy tylko część twarda; zieleń i próbki pod koronami zostają (ADR-0077 krok 1.1).
 - Dowód: `node tools/orto/src/report.ts --cell nabrzeze-1-0` (sekcja gołego terenu, klasy z nalotu 2024-06); skan `landuse-bare` 54 kwadraty, `kerb-gap-bare` 51 kwadratów (ok. 737 próbek) w komórce; obrysy zgodne z LoD2 (IoU 0,876), więc klasy ortofoto wiarygodne
 - Przyczyna (przypuszczalna): jak G-705 i T-247: OSM nie ma obszarów nawierzchni przedpoli, szczeliny > `KERB_REACH` poza zasięgiem wypełnień; część składowych to prawdziwa zieleń (trawa), niepotwierdzone zrzutem
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; ground)
@@ -1951,7 +1952,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-718 Goły teren w nabrzeze-1-1: przedpole przy fasadach i szczeliny przy jezdni Turystycznej (T-279)
 - Status: zgłoszone (12.11, opiekun mapy, raport komórki nabrzeze-1-1)
-- Ważność: S3 (jak G-705: przedpole 3104 m² z twardym 44% i pięć szczelin z twardym 55..95%; część składowych to zieleń) · Zasięg: nabrzeze-1-1, goły teren 6779 m²: przedpole 1 / 3104 m² (twarde 44%), szczeliny przy jezdni > 3 m 6 / 1913 m² (twarde 60%), inne 1 / 113 m² (zieleń), podwórza i obrys LoD2 0; `landuse-bare` 48 kwadratów (5823 próbki); `kerb-gap-bare` 18 kwadratów; `kerb-strip-bare` 9 kwadratów (40 próbek, Turystyczna); położenia w T-279
+- Ważność: S3 (jak G-705: przedpole 3104 m² z twardym 44% i pięć szczelin z twardym 55..95%; część składowych to zieleń) · Zasięg: nabrzeze-1-1, goły teren 6779 m²: przedpole 1 / 3104 m² (twarde 44%), szczeliny przy jezdni > 3 m 6 / 1913 m² (twarde 60%), inne 1 / 113 m² (zieleń), podwórza i obrys LoD2 0; `landuse-bare` 48 kwadratów (5823 próbki); `kerb-gap-bare` 18 kwadratów; `kerb-strip-bare` 9 kwadratów (40 próbek, Turystyczna); położenia w T-279; 12.11 (kurator, przegląd paczki): reguła ważności dla wszystkich wpisów gołego terenu komórek jest jedna: S3, gdy twardej nawierzchni ortofoto (jasna + asfalt) w podwórzach, przedpolach i szczelinach jest co najmniej ok. 1000 m², poniżej S4. Do poprawy tylko część twarda; zieleń i próbki pod koronami zostają (ADR-0077 krok 1.1).
 - Dowód: `node tools/orto/src/report.ts --cell nabrzeze-1-1` (sekcja gołego terenu, klasy z nalotu 2023-09); skan `landuse-bare` 48 kwadratów i `kerb-strip-bare` 9 kwadratów w komórce; przechył nalotów niepewny (2024-06 odstaje, 5 budynków LoD2)
 - Przyczyna (przypuszczalna): jak G-705 i T-247: OSM nie ma obszarów nawierzchni przedpola, szczeliny > `KERB_REACH` poza zasięgiem wypełnień; część składowych to prawdziwa zieleń (trawa), niepotwierdzone zrzutem
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; ground)
@@ -1961,6 +1962,24 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, z naprawy G-719)
 - Ważność: S4 · Zasięg: następny kandydat do limitu czasu w shardzie testów jednostkowych; przy G-719 pamięć wygenerowanego miasta (ADR-0046) w CI nie trafia: CI nie zachowuje `node_modules/.cache`, a klucz obejmuje całe `packages/{core,sim,engine}/src`; `generatedCity()` woła `generate` bez lod1/lod2, więc test liczy inne miasto niż tabele. Do decyzji: węższy klucz i `actions/cache` w CI
 - Pakiet właściciela: tools/osm-import (testy), .github (cache)
+
+### G-721 Plac Litewski ciemniejszy i bardziej szary niż w Lublinie: barwa kostki i bruku, kontrast z trawą (T-281)
+- Status: zgłoszone (12.11, kurator, przegląd paczki; decyzja użytkownika 12.11 w `docs/decyzje.md`)
+- Ważność: S4 (proponowana; plac główny, więc zasięg szeroki) · Zasięg: szeroki (każdy plac i deptak z `square`, `footway`, `cobble`) · Koszt: mały–średni
+- Gdzie: Plac Litewski r7690183 (−105…121; −87…92), także deptak Krakowskiego Przedmieścia
+- Dowód: ortofoto 2025-04 i 2024-06, średnie RGB próbek na placu według klasy ortofoto i nawierzchni gry. Kostka do trawy: gra 1,34, ortofoto 1,9 i 2,1. Bruk gry ok. 15% ciemniejszy od kostki, na ortofoto ten sam odcień. Zrzuty `plac-litewski/pl-oczy-krakowskie.png`, `pl-z-gory.png`.
+- Przyczyna (przypuszczalna): stałe `SURFACE_COLOR` w `ground-plan.ts` dobrane do nocnej palety, wspólne dla całego miasta i bez związku z materiałem z OSM (`surface=paving_stones`, `sett`, `granite`).
+- Propozycja (ADR-0077, reguła z danych, bez ręcznych obszarów):
+  - Odcień nawierzchni dla pieszych bierze się z tagu `surface`/`material`.
+  - Jasność skalibrować na ortofoto: mediana koloru klasy „jasna” pod `square`/`footway` w rastrach pokrycia miasta, a `tools/orto` podaje ją w raporcie.
+  - Stosunek jasności kostki do trawy podnieść do ok. 1,8–2,0.
+  - `cobble` w tym samym odcieniu co `square`, wyróżniony fakturą, nie ciemniejszym kolorem.
+  - Neony i noc bez zmian (warstwa 2077 leży na tym).
+- Pakiet właściciela: packages/engine (renderer: mapcity, NPR), tools/orto (mediana barwy)
+- Test przyjęcia:
+  - test planu: `SURFACE_COLOR.square` do `grass` ma jasność ≥ 1,8, `cobble` w zakresie ±5% jasności `square`;
+  - migawka NPR odświeżona i obejrzana;
+  - zrzut 12:00 z `pl-oczy-krakowskie` obejrzany przez kuratora.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
