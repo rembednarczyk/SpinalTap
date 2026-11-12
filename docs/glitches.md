@@ -1767,7 +1767,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-672 Klasyfikator pokrycia liczy korony drzew jako zieleń pod nimi
-- Status: zgłoszone (12.11, kurator przeglądu G-670)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g672)
 - Ważność: S4 · Zasięg: `tools/orto` uśrednia nadmiar zieleni z trzech nalotów, więc dwa letnie (2023-09, 2024-06) zawyżają zieleń pod koronami; np. T-246/ruska-a 61% przy 2% na nalocie bez liści 2025-04; propozycja: kostka liczy się jako „na zieleni” tylko przy zieleni także na nalocie 2025-04 (np. ≥ 20%), próg sprawdzić na trawnikach z `truth.ts` (w kwietniu część trawników brązowa)
 - Pakiet właściciela: tools/orto, tools/glitch-scan
 
