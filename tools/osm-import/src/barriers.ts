@@ -7,7 +7,7 @@
  * (doors, the crowd's routes, the set pieces) the simulation cuts on top (`barriers.ts` in sim).
  */
 import type { BarrierKind } from "../../../packages/core/src/world/barriers.ts";
-import { bandAxes, outOfBands } from "./barrier-edges.ts";
+import { axesNear, bandAxes, outOfBands } from "./barrier-edges.ts";
 import { parseLength } from "./building-tags.ts";
 import { type Area, type Line } from "./features.ts";
 import { type Pt, type Rect, clipLineToRect, inRect, lineLength, pointAlong, pointInRing, r1, ringBounds, simplifyLine, sliceLine } from "./geometry.ts";
@@ -106,6 +106,15 @@ interface Indexed {
 const indexed = (rings: readonly { readonly ring: readonly Pt[] }[]): Indexed[] => rings.map((r) => ({ ring: r.ring, box: ringBounds(r.ring) }));
 const inAny = (p: Pt, list: readonly Indexed[]): boolean => list.some((r) => p.x >= r.box.minX && p.x <= r.box.maxX && p.z >= r.box.minZ && p.z <= r.box.maxZ && pointInRing(p, r.ring));
 
+/** Is box `b` within `margin` of box `a`? */
+const near = (a: Rect, b: Rect, margin: number): boolean => b.minX <= a.maxX + margin && b.maxX >= a.minX - margin && b.minZ <= a.maxZ + margin && b.maxZ >= a.minZ - margin;
+/**
+ * The rings whose bounds come within 1 m of a barrier's: only they can hold a point of it, so the
+ * cut tests a handful instead of the whole map's at every sample (the margin covers the rounding of
+ * a point interpolated on the line).
+ */
+const nearRings = (list: readonly Indexed[], box: Rect): Indexed[] => list.filter((r) => near(box, r.box, 1));
+
 /** Where segment a-b meets segment c-d, or null. */
 const crossing = (a: Pt, b: Pt, c: Pt, d: Pt): Pt | null => {
   const r = { x: b.x - a.x, z: b.z - a.z };
@@ -139,11 +148,10 @@ const wayWidth = (t: Readonly<Record<string, string>>): number => {
 };
 
 /** The openings where the ways of the map cross a barrier or end at it. */
-const wayGaps = (line: readonly Pt[], ways: readonly Line[]): Gap[] => {
+const wayGaps = (line: readonly Pt[], ways: readonly { readonly w: Line; readonly box: Rect }[]): Gap[] => {
   const out: Gap[] = [];
   const box = ringBounds(line);
-  for (const w of ways) {
-    const wb = ringBounds(w.line);
+  for (const { w, box: wb } of ways) {
     if (wb.minX > box.maxX + 1 || wb.maxX < box.minX - 1 || wb.minZ > box.maxZ + 1 || wb.maxZ < box.minZ - 1) continue;
     const half = Math.max(MIN_GAP, wayWidth(w.tags) + GAP_MARGIN) / 2;
     for (let i = 0; i + 1 < line.length; i++) {
@@ -158,9 +166,24 @@ const wayGaps = (line: readonly Pt[], ways: readonly Line[]): Gap[] => {
   return out;
 };
 
+/**
+ * `pointAlong` with the segments' lengths measured once: the same subtractions in the same order,
+ * so the same point to the last bit, without a `Math.hypot` per segment for every sample.
+ */
+const pointAt = (line: readonly Pt[], lens: readonly number[], s: number): Pt => {
+  let left = Math.max(0, s);
+  for (let i = 0; i < lens.length; i++) {
+    const [a, b, len] = [line[i]!, line[i + 1]!, lens[i]!];
+    if (left <= len) return { x: a.x + ((b.x - a.x) * left) / (len || 1), z: a.z + ((b.z - a.z) * left) / (len || 1) };
+    left -= len;
+  }
+  return line[line.length - 1] ?? { x: 0, z: 0 };
+};
+
 /** Pieces of a polyline clear of `blocked`, tested every `STEP` metres. */
 export const cutBarrier = (line: readonly Pt[], blocked: (p: Pt) => boolean): Pt[][] => {
   const total = lineLength(line);
+  const lens = line.slice(1).map((b, i) => Math.hypot(b.x - line[i]!.x, b.z - line[i]!.z));
   const out: Pt[][] = [];
   let start: number | null = null;
   const close = (end: number) => {
@@ -170,7 +193,7 @@ export const cutBarrier = (line: readonly Pt[], blocked: (p: Pt) => boolean): Pt
   const n = Math.max(1, Math.ceil(total / STEP));
   for (let k = 0; k <= n; k++) {
     const s = (total * k) / n;
-    const free = !blocked(pointAlong(line, s));
+    const free = !blocked(pointAt(line, lens, s));
     if (free && start === null) start = s;
     if (!free) close(s - total / n);
   }
@@ -253,6 +276,7 @@ export const worldBarriers = (data: OsmData, lines: readonly Line[], areas: read
   const buildings = indexed(cuts.buildings);
   const paved = indexed(cuts.bands.filter((b) => b.carriageway || b.surface === "crossing" || b.surface === "steps"));
   const ways = cuts.lines.filter((l) => l.tags.highway !== undefined && l.tags.highway !== "proposed" && l.tags.highway !== "construction" && l.tags.tunnel === undefined);
+  const wayBoxes = ways.map((w) => ({ w, box: ringBounds(w.line) }));
   const barrierLines: Line[] = [
     ...lines.filter((l) => barrierKind(l.tags) && l.tags.building === undefined),
     ...areas.filter((a) => barrierKind(a.tags) && a.tags.building === undefined).map((a) => ({ id: a.id, osmId: a.osmId, tags: a.tags, line: [...a.ring, a.ring[0]!] })),
@@ -260,7 +284,7 @@ export const worldBarriers = (data: OsmData, lines: readonly Line[], areas: read
   const gates = gateNodes(data, barrierLines, ways);
   const streams = cuts.lines.filter((l) => l.tags.waterway !== undefined && l.tags.tunnel === undefined && l.tags.covered !== "yes");
   const ruins = areas.filter((a) => a.tags.historic === "ruins" && a.tags.building === undefined).map((a) => a.ring);
-  const axes = bandAxes(cuts.lines);
+  const axes = axesNear(bandAxes(cuts.lines));
   const out: WorldBarrier[] = [];
   for (const l of barrierLines) {
     // A ring of walls round a stream is its channel's lining: the water and its banks are drawn on their own.
@@ -275,9 +299,11 @@ export const worldBarriers = (data: OsmData, lines: readonly Line[], areas: read
       continue;
     }
     // Along a carriageway or a flight, out of its band to its edge; across it, cut (G-607, G-608).
-    const line = outOfBands(l.line, kind, axes);
-    const gaps = [...wayGaps(line, ways), ...gates.map((g) => g.gap)];
-    const blocked = (p: Pt) => inAny(p, buildings) || inAny(p, paved) || gaps.some((g) => Math.hypot(p.x - g.at.x, p.z - g.at.z) < g.half);
+    const line = outOfBands(l.line, kind, axes(ringBounds(l.line)));
+    const box = ringBounds(line);
+    const gaps = [...wayGaps(line, wayBoxes), ...gates.map((g) => g.gap)].filter((g) => near(box, { minX: g.at.x, maxX: g.at.x, minZ: g.at.z, maxZ: g.at.z }, g.half + 1));
+    const [inBuildings, inPaved] = [nearRings(buildings, box), nearRings(paved, box)];
+    const blocked = (p: Pt) => inAny(p, inBuildings) || inAny(p, inPaved) || gaps.some((g) => Math.hypot(p.x - g.at.x, p.z - g.at.z) < g.half);
     for (const piece of cutBarrier(line, blocked)) out.push({ id: l.id, kind, height, line: piece, ...extra });
   }
   for (const g of gates) {

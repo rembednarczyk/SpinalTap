@@ -41,6 +41,34 @@ export const bandAxes = (lines: readonly Line[]): BandAxis[] => {
   return out;
 };
 
+/** Grid cell of `axesNear` (m). */
+const CELL = 32;
+
+/**
+ * The axes whose boxes may meet a box, in their order in `axes` (a barrier moves off them one
+ * after another, so the order is kept): looked up by `CELL` grid cells, not over the whole map.
+ */
+export const axesNear = (axes: readonly BandAxis[]): ((box: Rect) => BandAxis[]) => {
+  const cells = new Map<string, number[]>();
+  axes.forEach((x, i) => {
+    for (let cx = Math.floor(x.box.minX / CELL); cx <= Math.floor(x.box.maxX / CELL); cx++) {
+      for (let cz = Math.floor(x.box.minZ / CELL); cz <= Math.floor(x.box.maxZ / CELL); cz++) {
+        const k = `${cx}:${cz}`;
+        const cell = cells.get(k);
+        if (cell) cell.push(i);
+        else cells.set(k, [i]);
+      }
+    }
+  });
+  return (box) => {
+    const found = new Set<number>();
+    for (let cx = Math.floor(box.minX / CELL); cx <= Math.floor(box.maxX / CELL); cx++) {
+      for (let cz = Math.floor(box.minZ / CELL); cz <= Math.floor(box.maxZ / CELL); cz++) for (const i of cells.get(`${cx}:${cz}`) ?? []) found.add(i);
+    }
+    return [...found].sort((a, b) => a - b).map((i) => axes[i]!);
+  };
+};
+
 /** The point of segment a-b nearest p. */
 const foot = (p: Pt, a: Pt, b: Pt): Pt => {
   const [dx, dz] = [b.x - a.x, b.z - a.z];
