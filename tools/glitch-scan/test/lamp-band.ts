@@ -1,3 +1,4 @@
+import { pointInRingEvenOdd } from "../../../packages/core/src";
 import { SpatialHash } from "../../../packages/core/src/math/spatial-hash";
 
 /**
@@ -46,19 +47,13 @@ export const toLine = (p: Pt, line: readonly Pt[]): number => {
     const [a, b] = [line[i]!, line[i + 1]!];
     const [dx, dz] = [b.x - a.x, b.z - a.z];
     const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+    // Not `segmentDistance` of core: `p - a - d·t` rounds differently from its `p - (a + d·t)`.
     best = Math.min(best, Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t));
   }
   return best;
 };
 
-const inRing = (p: Pt, ring: readonly Pt[]): boolean => {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [a, b] = [ring[i]!, ring[j]!];
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-};
+const inRing = (p: Pt, ring: readonly Pt[]): boolean => pointInRingEvenOdd(p.x, p.z, ring);
 
 const BIN = 16;
 
