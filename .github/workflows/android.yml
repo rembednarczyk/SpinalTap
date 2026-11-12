@@ -7,6 +7,14 @@ name: Android APK
 on:
   push:
     tags: ["v*"]
+  # A change to the app shell or this workflow builds the APK in its PR too (artifact only), so the
+  # build is checked before it lands; workflow_dispatch works only once the file is on main.
+  pull_request:
+    paths:
+      - "packages/app/android/**"
+      - "packages/app/capacitor.config.ts"
+      - "packages/app/package.json"
+      - ".github/workflows/android.yml"
   workflow_dispatch:
 
 concurrency:
