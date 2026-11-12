@@ -1,0 +1,1 @@
+Plik modelu postaci, którego pobieranie stoi dłużej niż dwie minuty, jest przerywany i traktowany jak nieudany: postacie tła nie zostają już na stałe figurą bez ubrania, a gra próbuje pobrać plik ponownie przy następnej potrzebie (G-561).

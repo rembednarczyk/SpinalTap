@@ -1,7 +1,8 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Scene } from "../src/babylon";
+import { Scene, loadGltfPlugin } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
+import type { CharacterModelsDeps } from "../src/renderer/character-models";
 import { loadToonModel } from "../src/renderer/model-loader";
 import { readModelFile } from "./game-models";
 
@@ -114,5 +115,80 @@ describe("ModelLibrary after a failed fetch (G-562)", () => {
     expect(asked).toEqual(["kurosawa.vrm", "kurosawa.vrm"]);
     expect(library.isLoaded("kurosawa.vrm")).toBe(true);
     expect(model.meshes.length).toBeGreaterThan(0);
+  });
+});
+
+describe("ModelLibrary with a fetch that never ends (G-561)", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("aborts the download after the time limit, fails the file like a failed fetch and fetches it again next time", async () => {
+    // The glTF plugin arrives by a dynamic import, in real time: in before the clock is faked.
+    await loadGltfPlugin();
+    vi.useFakeTimers();
+    const { MODEL_FETCH_TIMEOUT_MS, ModelLibrary } = await import("../src/renderer/model-library");
+    const { CharacterModels } = await import("../src/renderer/character-models");
+    const signals: AbortSignal[] = [];
+    // Never answers, as a stalled connection; rejects on abort like the browser's fetch.
+    vi.stubGlobal("fetch", (_url: string, init?: { signal?: AbortSignal }) => {
+      const signal = init?.signal;
+      if (signal) signals.push(signal);
+      return new Promise((_, reject) => signal?.addEventListener("abort", () => reject(signal.reason as Error)));
+    });
+    // No file gets past the fetch, so the scene and the materials are never touched.
+    const library = new ModelLibrary({} as Scene, {} as ToonMaterials);
+    const models = new CharacterModels({ library } as CharacterModelsDeps);
+    models.setManifest({ civilian: { url: "civilian.vrm", lends: true } });
+    // Outcomes are recorded, not awaited: a load that never settles fails the test instead of hanging it.
+    const settled = new Map<string, string>();
+    const watch = (key: string, p: Promise<unknown>) =>
+      void p.then(
+        () => settled.set(key, "loaded"),
+        (e: unknown) => settled.set(key, e instanceof Error ? e.message : "failed"),
+      );
+    watch("preload", library.preload({ url: "kurosawa.vrm" }));
+    watch("cloth", library.clothOf({ url: "civilian.vrm" }));
+    watch("prefetch", models.prefetch());
+    await vi.advanceTimersByTimeAsync(MODEL_FETCH_TIMEOUT_MS - 1);
+    expect(settled.size).toBe(0);
+    expect(signals.some((s) => s.aborted)).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(settled.get("preload")).toMatch(/kurosawa\.vrm did not download/);
+    expect(settled.get("cloth")).toMatch(/civilian\.vrm did not download/);
+    // The background fetch of the donors moves on: a character waiting for the cloth keeps its stand-in.
+    expect(settled.get("prefetch")).toBe("loaded");
+    expect(signals.length).toBe(2);
+    expect(signals.every((s) => s.aborted)).toBe(true);
+    expect(library.isLoaded("kurosawa.vrm")).toBe(false);
+    watch("again", library.preload({ url: "kurosawa.vrm" }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(signals.length).toBe(3);
+    await vi.advanceTimersByTimeAsync(MODEL_FETCH_TIMEOUT_MS);
+  });
+});
+
+describe("ModelLibrary with an error status (G-634)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("fails the file with its URL and status instead of parsing the error page, and asks again next time", async () => {
+    await loadGltfPlugin();
+    const { ModelLibrary } = await import("../src/renderer/model-library");
+    const asked: string[] = [];
+    // The body is what a server sends with a 404: text, not a GLB.
+    vi.stubGlobal("fetch", (url: string) => {
+      asked.push(url);
+      const page = new TextEncoder().encode("<html>Not found</html>");
+      return Promise.resolve({ ok: false, status: 404, statusText: "Not Found", arrayBuffer: () => Promise.resolve(page.buffer) });
+    });
+    // The parser would need the scene: a file that is refused before it never touches it.
+    const library = new ModelLibrary({} as Scene, {} as ToonMaterials);
+    await expect(library.preload({ url: "missing.vrm" })).rejects.toThrow(/missing\.vrm.*404/);
+    expect(library.isLoaded("missing.vrm")).toBe(false);
+    await expect(library.preload({ url: "missing.vrm" })).rejects.toThrow(/404/);
+    expect(asked).toEqual(["missing.vrm", "missing.vrm"]);
   });
 });
