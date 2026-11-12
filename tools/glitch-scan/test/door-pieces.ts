@@ -1,4 +1,4 @@
-import { type StreetPropItem, type ViewDescriptor, doorLayout } from "../../../packages/core/src";
+import { type StreetPropItem, type ViewDescriptor, doorLayout, segmentDistance } from "../../../packages/core/src";
 import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { S7_DOORS } from "../../../packages/sim/src/content/interiors";
 import { shaderGlass } from "../../../packages/engine/test/facade-glass-mask";
@@ -41,12 +41,7 @@ interface DoorOnWall {
   readonly top: number;
 }
 
-const segGap = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z);
-};
+const segGap = (p: Pt, a: Pt, b: Pt): number => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 
 /** The drawn wall a door stands on: its back's middle and both jambs within `OFF_FACE` of the wall's face, facing out along its normal; or null. */
 export const wallOf = (frames: readonly FacadeFrame[], i: StreetPropItem): DoorOnWall | null => {

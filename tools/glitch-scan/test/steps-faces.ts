@@ -4,6 +4,7 @@
  * shares vertices between triangles, so reading the sink four vertices at a time runs past a
  * triangle's three (G-255: the NaN of a three-point band).
  */
+import { pointInRingEvenOdd } from "../../../packages/core/src";
 import type { TerrainEntries } from "../../../packages/engine/src/renderer/mapcity/terrain-index";
 import { type MapEdgeAt, planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
@@ -98,12 +99,4 @@ export const flightUnderpass = (
     return worst ? [{ at: `${worst.x.toFixed(0)},${worst.z.toFixed(0)}`, what: `${id} feet ${worst.gap.toFixed(2)} m under the drawn steps` }] : [];
   });
 
-const inRing = (p: Pt, ring: readonly Pt[]): boolean => {
-  let c = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i]!;
-    const b = ring[j]!;
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) c = !c;
-  }
-  return c;
-};
+const inRing = (p: Pt, ring: readonly Pt[]): boolean => pointInRingEvenOdd(p.x, p.z, ring);

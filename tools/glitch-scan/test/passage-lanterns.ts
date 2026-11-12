@@ -7,6 +7,7 @@
  * street well past its fronts (4.6 to 8.7 m), where the lanterns hang on the next houses' walls,
  * so only its stretch under the passage's own building counts, with half a metre of mouth.
  */
+import { pointInRingEvenOdd } from "../../../packages/core/src";
 
 interface P {
   readonly x: number;
@@ -34,15 +35,7 @@ export const PASSAGE_LANTERN_REACH = 2;
 /** How far past the building's fronts the mouth of a passage reaches along its axis (m). */
 export const PASSAGE_MOUTH = 0.5;
 
-const inRing = (p: P, ring: readonly P[]): boolean => {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i]!;
-    const b = ring[j]!;
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-};
+const inRing = (p: P, ring: readonly P[]): boolean => pointInRingEvenOdd(p.x, p.z, ring);
 
 /** The stretch of the axis under the passage's building, as arc lengths from `from` (sampled every 0.25 m), or null. */
 const vaultSpan = (p: PassageAxis, len: number): readonly [number, number] | null => {

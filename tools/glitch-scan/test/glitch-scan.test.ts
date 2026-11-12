@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../packages/core/src";
+import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
 import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
@@ -175,10 +175,7 @@ const along = (r: TrafficRoute, step: number) => {
 /** Is (x, z) in a passage cut through a building (ADR-0048)? */
 const inPassage = (x: number, z: number) =>
   PASSAGES.some((p) => {
-    const dx = p.to.x - p.from.x;
-    const dz = p.to.z - p.from.z;
-    const t = Math.max(0, Math.min(1, ((x - p.from.x) * dx + (z - p.from.z) * dz) / (dx * dx + dz * dz || 1)));
-    return Math.hypot(p.from.x + dx * t - x, p.from.z + dz * t - z) < p.width / 2;
+    return segmentDistance(x, z, p.from.x, p.from.z, p.to.x, p.to.z) < p.width / 2;
   });
 
 /** The outlines of a passage's building (worked out on first use: `worldOutline` comes later in the file). */
@@ -219,16 +216,12 @@ const onChunk = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x >
 /** How far the import's simplified axis of a footway (`simplifyLine`, 0.5 m) lies off the mapped one in the city (m): 0.09 m at most by the parked cars. */
 const AXIS_SLACK = 0.1;
 /** Distance from (x, z) to the segment a-b. */
-const segmentGap = (x: number, z: number, a: { x: number; z: number }, b: { x: number; z: number }) => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const k = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * k - x, a.z + dz * k - z);
-};
+const segmentGap = (x: number, z: number, a: { x: number; z: number }, b: { x: number; z: number }) => segmentDistance(x, z, a.x, a.z, b.x, b.z);
 /** Is (x, z) more than `m` from the map's edge (the chunks' seams inside it aside)? */
 const deepInMap = (x: number, z: number, m: number) => [-m, 0, m].every((a) => [-m, 0, m].every((b) => onChunk(x + a, z + b)));
 
 /** Is (x, z) inside a flat outline `[x0, z0, …]` placed at (ox, oz)? */
+// Not `pointInRingEvenOdd` of core: the same rule, but on a flat outline moved by (ox, oz) as it goes, without a ring of points made for it.
 const inOutline = (x: number, z: number, flat: readonly number[], ox: number, oz: number) => {
   let inside = false;
   for (let i = 0, j = flat.length - 2; i < flat.length; j = i, i += 2) {
@@ -324,10 +317,7 @@ const outlineGap = (a: Poly, b: Poly) => {
       for (let k = 0; k < to.length; k++) {
         const q = to[k]!;
         const r = to[(k + 1) % to.length]!;
-        const dx = r.x - q.x;
-        const dz = r.z - q.z;
-        const t = Math.max(0, Math.min(1, ((p.x - q.x) * dx + (p.z - q.z) * dz) / (dx * dx + dz * dz || 1)));
-        d = Math.min(d, Math.hypot(q.x + dx * t - p.x, q.z + dz * t - p.z));
+        d = Math.min(d, segmentDistance(p.x, p.z, q.x, q.z, r.x, r.z));
       }
   return d;
 };
@@ -1494,10 +1484,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         Math.min(
           ...pts.slice(1).map((b, i) => {
             const a = pts[i]!;
-            const dx = b.x - a.x;
-            const dz = b.z - a.z;
-            const u = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-            return Math.hypot(a.x + dx * u - p.x, a.z + dz * u - p.z);
+            return segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
           }),
         );
       const tooHigh = (h: number) => (t.maxheight === "below_default" ? h >= max : h > max + 0.01);
@@ -1840,6 +1827,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         const dz = b.z - a.z;
         const len = Math.hypot(dx, dz);
         if (len < 1e-3) continue;
+        // Not `segmentDistance` of core: the parameter divides by `len * len` of the rounded length, another rounding than `dx * dx + dz * dz`.
         const k = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (len * len)));
         const d = Math.hypot(a.x + dx * k - x, a.z + dz * k - z);
         if (d <= 15 && (!best || d < best.d)) best = { d, road: l, tx: dx / len, tz: dz / len };
@@ -2062,6 +2050,7 @@ const nearestAxis = (roads: readonly Line[]) => {
           const [dx, dz] = [b.x - a.x, b.z - a.z];
           const len = Math.hypot(dx, dz);
           if (len < 1e-3) continue;
+          // Not `segmentDistance` of core: the parameter divides by `len * len` of the rounded length, another rounding than `dx * dx + dz * dz`.
           const k = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (len * len)));
           const d = Math.hypot(a.x + dx * k - x, a.z + dz * k - z);
           if (d <= 15 && (!best || d < best.d)) best = { d, road: l, tx: dx / len, tz: dz / len };

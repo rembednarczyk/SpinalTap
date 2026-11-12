@@ -1,4 +1,5 @@
 /** Towers the map draws at a church (G-210, G-212): in its tags, or a tower way of its own in its outline or by its walls. */
+import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type Area } from "./features.ts";
 import { type Pt, openRing, pointInRing } from "./geometry.ts";
 import { type OsmData, type Tags } from "./osm.ts";
@@ -36,10 +37,7 @@ const edgeGap = (p: Pt, ring: readonly Pt[]): number => {
   for (let i = 0; i < ring.length; i++) {
     const a = ring[i]!;
     const b = ring[(i + 1) % ring.length]!;
-    const dx = b.x - a.x;
-    const dz = b.z - a.z;
-    const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-    best = Math.min(best, Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z));
+    best = Math.min(best, segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z));
   }
   return best;
 };

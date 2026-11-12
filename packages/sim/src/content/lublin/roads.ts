@@ -1,4 +1,4 @@
-import { type GroundSurface, SURFACE_LIFT, SpatialHash } from "@seki/core";
+import { type GroundSurface, SURFACE_LIFT, SpatialHash, pointInPairRingEvenOdd } from "@seki/core";
 import { MAP_CHUNKS } from "./sites";
 import type { LublinChunkData } from "./types";
 
@@ -145,18 +145,8 @@ const AREAS: readonly Area[] = MAP_CHUNKS.flatMap((c) =>
 const areaGrid = new SpatialHash<Area>(32);
 for (const a of AREAS) areaGrid.insert(a, a.minX, a.minZ, a.maxX, a.maxZ);
 
-const inside = (x: number, z: number, pts: readonly Pt[]): boolean => {
-  let r = false;
-  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-    const a = pts[i]!;
-    const b = pts[j]!;
-    if (a[1] > z !== b[1] > z && x < ((b[0] - a[0]) * (z - a[1])) / (b[1] - a[1]) + a[0]) r = !r;
-  }
-  return r;
-};
-
 const areasAt = (x: number, z: number): Area[] =>
-  areaGrid.at(x, z).filter((a) => inside(x, z, a.pts));
+  areaGrid.at(x, z).filter((a) => pointInPairRingEvenOdd(x, z, a.pts));
 
 /** The surfaces of the map under (x, z), in draw order. */
 export const surfacesAt = (x: number, z: number): GroundSurface[] => areasAt(x, z).map((a) => a.surface);

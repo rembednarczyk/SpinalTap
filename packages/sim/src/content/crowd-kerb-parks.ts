@@ -34,6 +34,7 @@ const nearestOnRing = (x: number, z: number, ring: readonly Pt[]) => {
   let best = { x: 0, z: 0, d: Infinity, tx: 1, tz: 0 };
   ring.forEach(([ax, az], i) => {
     const [bx, bz] = ring[(i + 1) % ring.length]!;
+    // Not `segmentParam`/`segmentDistance` of core: the parameter divides by `len * len` of the rounded length, another rounding than `dx * dx + dz * dz`.
     const len = Math.hypot(bx - ax, bz - az) || 1;
     const t = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (z - az) * (bz - az)) / (len * len)));
     const q = { x: ax + (bx - ax) * t, z: az + (bz - az) * t };

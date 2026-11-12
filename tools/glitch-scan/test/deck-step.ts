@@ -5,6 +5,7 @@
  * from the lower piece walks under the higher one as under a bridge (G-062), on the terrain.
  * One bridge's carriageway and sidewalk lie level within a kerb.
  */
+import { pointInRingEvenOdd } from "../../../packages/core/src";
 
 type Pt = { readonly x: number; readonly z: number };
 type Piece = { readonly ring: readonly Pt[] };
@@ -17,15 +18,7 @@ export const STEP_OUT = 0.3;
 /** A drop more than this to the other piece is a step, not a kerb (m): the renderer's face. */
 export const STEP_FACE = 0.3;
 
-const inside = (ring: readonly Pt[], x: number, z: number): boolean => {
-  let c = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i]!;
-    const b = ring[j]!;
-    if (a.z > z !== b.z > z && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) c = !c;
-  }
-  return c;
-};
+const inside = (ring: readonly Pt[], x: number, z: number): boolean => pointInRingEvenOdd(x, z, ring);
 
 /**
  * The steps along the edges of `pieces`: `height(piece, x, z)` the piece's own deck there,
