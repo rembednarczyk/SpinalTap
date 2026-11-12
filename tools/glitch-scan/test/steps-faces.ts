@@ -4,9 +4,11 @@
  * shares vertices between triangles, so reading the sink four vertices at a time runs past a
  * triangle's three (G-255: the NaN of a three-point band).
  */
-import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
+import type { TerrainEntries } from "../../../packages/engine/src/renderer/mapcity/terrain-index";
+import { type MapEdgeAt, planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
-import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
+import { WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
+import { mapGround } from "./deck-paint";
 
 type Pt = { readonly x: number; readonly z: number };
 type P3 = { readonly x: number; readonly y: number; readonly z: number };
@@ -17,13 +19,15 @@ export interface StepFace {
   readonly up: boolean;
 }
 
-/** Whether a chunk of the map holds (x, z), as the renderer has a terrain there. */
-const onMap = (x: number, z: number): boolean => MAP_CHUNKS.some((c) => x >= c.bounds.minX && x <= c.bounds.maxX && z >= c.bounds.minZ && z <= c.bounds.maxZ);
+/** The city's terrains as the map city holds them, laid on the first band's need. */
+let terrains: TerrainEntries | null = null;
+/** Where a band's side lies on the map's edge, told as the renderer tells it (G-703). */
+const mapEdgeAt: MapEdgeAt = (a, c) => (terrains ??= mapGround(WORLD_SCENERY.filter((i) => i.view.kind === "terrain")).terrains).onMapEdge(a, c);
 
 /** The triangles of the band `ring` drawn on the ground `h`. */
 export const stepFaces = (ring: readonly Pt[], h: (x: number, z: number) => number): StepFace[] => {
   const sink = new MeshSink();
-  planSteps(sink, ring, h, onMap);
+  planSteps(sink, ring, h, mapEdgeAt);
   const at = (i: number): P3 => ({ x: sink.positions[i * 3]!, y: sink.positions[i * 3 + 1]!, z: sink.positions[i * 3 + 2]! });
   const out: StepFace[] = [];
   for (let t = 0; t + 2 < sink.indices.length; t += 3) {

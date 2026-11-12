@@ -50,7 +50,7 @@ const paintOf = (entries: MapEntries, g: GroundEntry): MeshSink | null => {
   const h = entries.groundHeight(g);
   if (g.marking) planMarking(sink, g.marking, g.ring, h);
   else if (g.surface === "crossing") planCrossing(sink, g.ring, h);
-  else if (g.surface === "steps") planSteps(sink, g.ring, h, (x, z) => entries.heightAt(x, z) !== null);
+  else if (g.surface === "steps") planSteps(sink, g.ring, h, entries.mapEdgeAt);
   else return null;
   return sink;
 };

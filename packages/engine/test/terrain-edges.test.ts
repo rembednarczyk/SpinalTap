@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { STEP_DEPTH, planSteps } from "../src/renderer/mapcity/steps-plan";
 import { BASIN_RIM, SURFACE_LIFT, TERRAIN_APRON, planBasin, planTerrain } from "../src/renderer/mapcity/ground-plan";
+import type { P2 } from "../src/renderer/mapcity/polygon";
 
 const grid = { originX: 0, originZ: 0, cell: 10, cols: 3, rows: 3, heights: [0, 0, 0, 1, 1, 1, 2, 2, 2] };
 
@@ -82,12 +83,12 @@ describe("outdoor steps", () => {
   // flight at Nabrzeże's edge z = 60. Each cut band's box runs about 1 m past the edge, where the
   // ground, off every chunk, is 0; on the map it slopes, lowest at the edge.
   const CUT = [
-    { ring: [{ x: 757.3, z: -213.3 }, { x: 760, z: -210.9 }, { x: 760, z: -206.9 }, { x: 755.3, z: -211 }], ground: (x: number) => (x > 760 ? 0 : -20.1 + (760 - x) * 0.5), onMap: (x: number) => x <= 760, edge: -20.1 },
-    { ring: [{ x: 2660.4, z: 60 }, { x: 2656.5, z: 63.4 }, { x: 2654.5, z: 61.1 }, { x: 2655.8, z: 60 }], ground: (_: number, z: number) => (z < 60 ? 0 : -18.2 + (z - 60) * 0.5), onMap: (_: number, z: number) => z >= 60, edge: -18.2 },
+    { ring: [{ x: 757.3, z: -213.3 }, { x: 760, z: -210.9 }, { x: 760, z: -206.9 }, { x: 755.3, z: -211 }], ground: (x: number) => (x > 760 ? 0 : -20.1 + (760 - x) * 0.5), mapEdgeAt: (a: P2, c: P2) => a.x === 760 && c.x === 760, edge: -20.1 },
+    { ring: [{ x: 2660.4, z: 60 }, { x: 2656.5, z: 63.4 }, { x: 2654.5, z: 61.1 }, { x: 2655.8, z: 60 }], ground: (_: number, z: number) => (z < 60 ? 0 : -18.2 + (z - 60) * 0.5), mapEdgeAt: (a: P2, c: P2) => a.z === 60 && c.z === 60, edge: -18.2 },
   ];
-  it.each(CUT)("end on the ground of the map where the map's edge cuts the band, not on the void past it (G-703)", ({ ring, ground, onMap, edge }) => {
+  it.each(CUT)("end on the ground of the map where the map's edge cuts the band, not on the void past it (G-703)", ({ ring, ground, mapEdgeAt, edge }) => {
     const sink = new MeshSink();
-    planSteps(sink, ring, ground, onMap);
+    planSteps(sink, ring, ground, mapEdgeAt);
     let tallest = 0;
     for (let q = 0; q + 3 < sink.vertexCount; q += 4) {
       if (Math.abs(sink.normals[q * 3 + 1] ?? 0) > 0.5) continue;
@@ -105,13 +106,13 @@ describe("outdoor steps", () => {
   // The drape reads the surface under each point (`surfaceAt`, G-301), the terrain here, not the
   // deck the ground's corners round it reach: with or without a cut at the map's edge (x = 0).
   it.each([
-    { name: "inside the map", onMap: () => true },
-    { name: "cut at the map's edge", onMap: (x: number) => x >= 0 },
-  ])("lie on the surface under them beside a bridge's deck, not on the deck ($name)", ({ onMap }) => {
+    { name: "inside the map", mapEdgeAt: () => false },
+    { name: "cut at the map's edge", mapEdgeAt: (a: P2, c: P2) => a.x === 0 && c.x === 0 },
+  ])("lie on the surface under them beside a bridge's deck, not on the deck ($name)", ({ mapEdgeAt }) => {
     const terrain = (x: number) => 0.01 * x;
     const h = Object.assign((x: number) => (x > 6.2 ? 3 : terrain(x)), { surfaceAt: () => terrain });
     const sink = new MeshSink();
-    planSteps(sink, [{ x: 0, z: 0.3 }, { x: 6.1, z: 0.3 }, { x: 6.1, z: 2.1 }, { x: 0, z: 2.1 }], h, onMap);
+    planSteps(sink, [{ x: 0, z: 0.3 }, { x: 6.1, z: 0.3 }, { x: 6.1, z: 2.1 }, { x: 0, z: 2.1 }], h, mapEdgeAt);
     let top = -Infinity;
     for (let v = 0; v < sink.vertexCount; v++) top = Math.max(top, sink.positions[v * 3 + 1] ?? 0);
     expect(top).toBeLessThan(0.12);
@@ -121,7 +122,7 @@ describe("outdoor steps", () => {
     const ground = (x: number, z: number) => 0.01 * x + 0.004 * x * x + 0.02 * z;
     const lay = (ring: { x: number; z: number }[]) => {
       const sink = new MeshSink();
-      planSteps(sink, ring, ground, () => true);
+      planSteps(sink, ring, ground, () => false);
       const at = new Map<string, number[]>();
       for (let v = 0; v < sink.vertexCount; v++) {
         const key = [0, 1, 2].map((k) => (sink.positions[v * 3 + k] ?? 0).toFixed(4)).join(",");
