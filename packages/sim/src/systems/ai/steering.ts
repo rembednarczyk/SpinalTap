@@ -8,6 +8,7 @@ import { lineOfSight } from "../../world/hitscan";
 import { solidIndexOf } from "../../world/solid-index";
 import { type Collider, closestXZ, collidersOf, colliderTop, overCollider } from "../../world/solids";
 import { SNAP_DOWN, STEP_HEIGHT } from "../movement-system";
+import { type NavMemo, heldRaster, recall, remember } from "./nav-memo";
 
 /**
  * Walking around obstacles on one floor (ADR-0025). The level graph (ADR-0021) says which
@@ -102,12 +103,7 @@ interface Field {
   readonly source: number;
 }
 
-interface Memo {
-  readonly rasters: Map<string, Raster>;
-  readonly fields: Map<string, Field>;
-  /** Rasters made and fields grown so far: what the misses cost. */
-  readonly built: { rasters: number; fields: number };
-}
+type Memo = NavMemo<Raster, Field>;
 
 const memos = new WeakMap<World<Entity>, Map<string, Memo>>();
 
@@ -123,27 +119,6 @@ const memoOf = (world: World<Entity>, win: Window): Memo => {
     byWindow.set(win.name, m);
   }
   return m;
-};
-
-/** Least recently used out once the map is full (Map keeps insertion order). */
-const remember = <T>(map: Map<string, T>, key: string, value: T, max: number): T => {
-  map.delete(key);
-  map.set(key, value);
-  while (map.size > max) {
-    const first = map.keys().next();
-    if (first.done) break;
-    map.delete(first.value);
-  }
-  return value;
-};
-
-const recall = <T>(map: Map<string, T>, key: string): T | undefined => {
-  const v = map.get(key);
-  if (v !== undefined) {
-    map.delete(key);
-    map.set(key, v);
-  }
-  return v;
 };
 
 /**
@@ -528,11 +503,12 @@ const fieldFor = (world: World<Entity>, win: Window, floor: number, reach: numbe
   const solids = staticSolidsIn(world, x0 - CLEARANCE, z0 - CLEARANCE, x0 + 2 * half + CLEARANCE, z0 + 2 * half + CLEARANCE);
   const memo = memoOf(world, win);
   const rasterKey = `${floor}|${reach}|${cx}|${cz}|${signature(solids)}`;
-  let raster = recall(memo.rasters, rasterKey);
+  let raster = recall(memo.rasters, rasterKey) ?? heldRaster(memo.fields, rasterKey);
   if (!raster) {
     memo.built.rasters++;
-    raster = remember(memo.rasters, rasterKey, rasterise(collidersOf(solids), floor, reach, x0, z0, groundOf(world), cells), win.rasters);
+    raster = rasterise(collidersOf(solids), floor, reach, x0, z0, groundOf(world), cells);
   }
+  remember(memo.rasters, rasterKey, raster, win.rasters);
   const goalCell = cellIndex(raster, goal.x, goal.z);
   if (goalCell < 0) return null;
   const source = nearest(goalCell, GOAL_SEARCH, cells, (n) => raster.open[n] === 1);
@@ -546,6 +522,8 @@ const fieldFor = (world: World<Entity>, win: Window, floor: number, reach: numbe
 
 /** How many rasters of the wide window a world made and fields it grew so far (G-625: their cost is what a step pays). */
 export const wideBuilds = (world: World<Entity>): { readonly rasters: number; readonly fields: number } => ({ ...memoOf(world, WIDE_WINDOW).built });
+/** The same of the near window (G-644: a raster pushed out of its memo is made again). */
+export const nearBuilds = (world: World<Entity>): { readonly rasters: number; readonly fields: number } => ({ ...memoOf(world, NEAR_WINDOW).built });
 
 /** Is the straight walk from `from` to `to` free at knee height (ADR-0021's walk test)? */
 export const KNEE_HEIGHT = 0.6;
@@ -672,6 +650,60 @@ export const chaseDetour = (world: World<Entity>, from: Vec3, goal: Vec3): Detou
   return detour;
 };
 
+/** The next cell down the field from `c` towards its goal, or -1 at the bottom. */
+const downhill = (field: Field, c: number): number => {
+  const { raster, dist } = field;
+  let next = -1;
+  let best = dist[c] ?? FAR;
+  for (const [dx, dz] of STEPS) {
+    const n = passable(raster, c, dx, dz, true);
+    if (n >= 0 && (dist[n] ?? FAR) < best) {
+      next = n;
+      best = dist[n] ?? FAR;
+    }
+  }
+  return next;
+};
+
+/**
+ * How much longer than the straight line (times it, plus metres) the walk from a ganger to its goal
+ * is at least, by the wide field, before `cutOffNear` takes the goal for cut off: a near way
+ * round a box or a stall is longer by a metre or two, a way round a long fence by tens of metres.
+ */
+const CUT_OFF_RATIO = 1.2;
+const CUT_OFF_SLACK = 2;
+
+/**
+ * Is `goal` cut off from `from` in the near window round it, by the way of `detour` (G-644)? A
+ * ganger on such a way round a long barrier follows it without asking that window, which would
+ * only find it cut off again and, a dozen of them after a dozen goals, push its rasters out of the
+ * memo every step. Two signs, both needed. The walk from `from` to `goal` is at least the
+ * difference of their distances down the field (to the goal the field was grown for, a few metres
+ * from `goal`): far more than the straight line, `goal` lies behind the barrier. Not when it is on
+ * the ganger's side of it (the target came round): the near window then leads, shortly, and this
+ * way would take it round the barrier to the old goal (round 2 of G-644). And the way leaves the
+ * near window round `goal`, where the near window cannot follow it. Walking down the field costs
+ * some cells, not a raster; and as a pure function of the field it gives a loaded game the same
+ * answer.
+ */
+export const cutOffNear = (detour: Detour, from: Vec3, goal: Vec3): boolean => {
+  const { field } = detour;
+  const here = startOf(field, from);
+  const there = startOf(field, goal);
+  if (here < 0 || there < 0) return false;
+  // Half cells to metres.
+  const apart = (((field.dist[here] ?? FAR) - (field.dist[there] ?? FAR)) * NAV_CELL) / 2;
+  if (apart <= CUT_OFF_RATIO * Math.hypot(goal.x - from.x, goal.z - from.z) + CUT_OFF_SLACK) return false;
+  const { snap, half } = NEAR_WINDOW;
+  const cx = Math.round(goal.x / snap) * snap;
+  const cz = Math.round(goal.z / snap) * snap;
+  for (let c = here; c >= 0; c = downhill(field, c)) {
+    const at = cellCentre(field.raster, c, from.y);
+    if (Math.max(Math.abs(at.x - cx), Math.abs(at.z - cz)) > half) return true;
+  }
+  return false;
+};
+
 /**
  * Where to walk this step along a detour: a point on the shortest open way, as far along it as
  * a straight walk reaches. Null when `from` is off the field (outside the window, cut off).
@@ -683,15 +715,7 @@ export const followDetour = (detour: Detour, from: Vec3): Vec3 | null => {
   if (start < 0) return null;
   const way: number[] = [start];
   for (let c = start; way.length < LOOKAHEAD && (dist[c] ?? 0) > 0; ) {
-    let next = -1;
-    let best = dist[c] ?? FAR;
-    for (const [dx, dz] of STEPS) {
-      const n = passable(raster, c, dx, dz, true);
-      if (n >= 0 && (dist[n] ?? FAR) < best) {
-        next = n;
-        best = dist[n] ?? FAR;
-      }
-    }
+    const next = downhill(field, c);
     if (next < 0) break;
     way.push(next);
     c = next;
