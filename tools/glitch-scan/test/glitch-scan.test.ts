@@ -29,6 +29,7 @@ import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
 import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
 import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
+import { addedSolidOverWay } from "./added-solid-over-way";
 import { readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { cityRaisedGreenWorld, raisedGreenOnGround } from "./raised-green";
@@ -1945,6 +1946,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "added-grass-off-green": () => addedGrassOffGreen(ADDED_AREAS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** An area of paving or asphalt the curator added to the map with half of it or more green on the orthophoto cover (G-670, `added-grass.ts`). */
   "added-paving-on-green": () => addedPavingOnGreen(ADDED_AREAS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A building the curator added to the map whose ring, also off the map, takes in an OSM way open to the sky: a solid across a street or a flight (G-677, `added-solid-over-way.ts`). */
+  "added-solid-over-way": () => addedSolidOverWay(ADDED_AREAS, extractFeatures(SOURCE_OSM).lines),
   /** A point of a 0.5 m grid of drawn grass of a lawn the map lays above the ground, in a building or off the garage under it: VIVO's roof garden (G-647, `raised-green.ts`). */
   "raised-green-on-ground": () => raisedGreenOnGround(cityRaisedGreenWorld(SOURCE_OSM)),
   /** Road markings, zebras and flights on a bridge's deck drawn under its carriageway (G-301, `deck-paint.ts`). */
