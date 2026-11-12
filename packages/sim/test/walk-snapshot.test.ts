@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { World } from "miniplex";
 import { MOST_AVOIDED, MOST_UNSTICK_STEPS, type EntitySnapshot, type Vec3 } from "@seki/core";
 import { SIM_DT, gangerEntity } from "../src";
-import { entitySnapshotOf } from "../src/world/factory";
+import { applyEntitySnapshot, entitySnapshotOf } from "../src/world/factory";
 import type { Entity, WalkProgress } from "../src/world/components";
 import type { SimContext } from "../src/world/context";
 import type { StreamState } from "../src/world/actor-spawner";
@@ -48,5 +48,19 @@ describe("a walker's stuck check in a save and asleep (G-208)", () => {
     legs.checkProgress();
     expect(self.walk.unstickUntil).toBeGreaterThan(tick);
     expect(self.walk.unstickUntil).toBeLessThanOrEqual(tick + MOST_UNSTICK_STEPS);
+  });
+
+  it("keeps the goal of a chase's wide way (G-625) through a save, a copy of it, and none without one", () => {
+    const chase = { x: 30, y: 0.5, z: 20 };
+    const walk = { ...stuck(null), chase };
+    const saved = entitySnapshotOf(guard(walk)).walk!;
+    expect(saved.chase).toEqual(chase);
+    expect(saved.chase).not.toBe(chase);
+    expect(entitySnapshotOf(guard(stuck(null))).walk!.chase).toBeUndefined();
+    const loaded = guard(stuck(null));
+    applyEntitySnapshot(loaded, entitySnapshotOf(guard(walk)));
+    expect(loaded.walk!.chase).toEqual(chase);
+    applyEntitySnapshot(loaded, entitySnapshotOf(guard(stuck(null))));
+    expect(loaded.walk!.chase).toBeNull();
   });
 });

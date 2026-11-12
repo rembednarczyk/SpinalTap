@@ -34,7 +34,8 @@ const isWalk = (v: unknown, tick: number): boolean =>
   isTick(v.unstickUntil) &&
   (v.unstickUntil as number) <= tick + MOST_UNSTICK_STEPS &&
   (v.side === 1 || v.side === -1) &&
-  (v.plan === undefined || isPlan(v.plan));
+  (v.plan === undefined || isPlan(v.plan)) &&
+  (v.chase === undefined || isVec(v.chase));
 
 const BODY_FLAGS = ["fought", "found", "reported", "dead", "carried", "hidden"] as const;
 

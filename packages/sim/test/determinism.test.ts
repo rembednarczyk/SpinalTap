@@ -226,7 +226,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"5deb94af"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"a2ccbfe6"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -273,6 +273,10 @@ describe("determinism", () => {
     // car park (ADR-0074 stage 4): a migration, no new field; its solids, ramp and cars take ids
     // from ROOM_ID_BASE and STREET_ID_BASE after the others', and with the version at 35 the runs
     // hash to the v35 goldens (c839b064, 4689e661, 5716d8d1), so only the version changed them.
+    // Re-recorded (all of them, "hard" and the duel too) for the v37 version (G-625): a chasing
+    // ganger's wide way round a long barrier (`walk.chase`, optional). No ganger of the runs is cut
+    // off from its target, so none has one; with the version at 36 the runs hash to the v36
+    // goldens (5deb94af, 980794a8, db17fe1c), so only the version changed them.
     expect(v31HashOf(sim)).toBe("8a184ff0");
     expect(v30HashOf(sim)).toBe("7dd4e4ad");
     expect(v17HashOf(sim)).toBe("1ce01d19");
@@ -292,7 +296,7 @@ describe("determinism", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"980794a8"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"47025ceb"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
     expect(v31HashOf(sim)).toBe("13a15bf5");
     expect(v30HashOf(sim)).toBe("30834a04");
@@ -385,8 +389,8 @@ describe("determinism", () => {
     // and progression tests cover them).
     // On top of that, re-recorded for the v34 version (ADR-0074 stage 2, see the first golden test):
     // b036f5d7 before it; for the v35 version (stage 3): f0ccb612 before it; and for the v36
-    // version (stage 4): 5716d8d1 before it.
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"db17fe1c"`);
+    // version (stage 4): 5716d8d1 before it; for the v37 version (G-625): db17fe1c before it.
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"c72ec923"`);
     expect(v31HashOf(sim)).toBe("5ce46e55");
     expect(v30HashOf(sim)).toBe("ae6c21d0");
     expect(v17HashOf(sim)).toBe("3e78c5b2");
