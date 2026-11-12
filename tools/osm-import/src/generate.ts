@@ -3,6 +3,7 @@
  * input gives the same chunks, byte for byte, whatever order the files were read in.
  */
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
+import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type Lod1Building, type Lod2Building } from "../../gugik/src/extracts.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { belowGround, parseLength } from "./building-tags.ts";
@@ -312,14 +313,6 @@ const generateChunk = (
   return { chunk, stats };
 };
 
-/** Distance from p to the segment a-b. */
-const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
-};
-
 /**
  * `lod1`: GUGiK LoD1 2024 buildings (`Inputs.lod1`) for the heights the map lacks (`lod1-heights.ts`);
  * `lod2`: GUGiK LoD2 2017 buildings (`Inputs.lod2`) for the roofs it lacks (`lod2-roofs.ts`); without, the tags' heights and roofs.
@@ -389,7 +382,7 @@ export const generate = (
   const roads = lines.flatMap(carriageway).filter((l) => l.tags.highway !== undefined && near(l.line));
   // A crossing node a mapped crossing way runs through is striped by that way already.
   const crossingWays = roads.filter((l) => crossingWay(l.tags));
-  const onCrossingWay = (p: Pt) => crossingWays.some((l) => l.line.some((q, i) => i + 1 < l.line.length && segmentDistance(p, q, l.line[i + 1]!) < 1.5));
+  const onCrossingWay = (p: Pt) => crossingWays.some((l) => l.line.some((q, i) => i + 1 < l.line.length && segmentDistance(p.x, p.z, q.x, q.z, l.line[i + 1]!.x, l.line[i + 1]!.z) < 1.5));
   for (const n of [...data.nodes.values()].sort((a, b) => a.id - b.id)) {
     if (!n.tags || !markedCrossing(n.tags)) continue;
     const at = geoToWorld(n.lat, n.lon);
