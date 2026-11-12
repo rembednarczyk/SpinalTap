@@ -3,10 +3,14 @@
  * a 0.5 m cell (what is there or is to be laid), a mask of a town's paved places, and the rings that
  * cover cells, so a fill can be cut where a piece of the map begins.
  */
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { type Pt, type Rect } from "./geometry.ts";
 
 /** The cover's grid (m). */
 export const STEP = 0.5;
+
+/** Side of the cells of the grid the covering rings are found by (m): a tile of fills (36 m) meets some 16 of them. */
+const COVER_CELL = 12;
 
 /** Labels of a cell: what the rule lays there (`COVERED`: a piece or a wall is there; `BLOCKED`: by a bridge, left bare). */
 export const LABEL = { covered: 0, grass: 1, square: 2, other: 3, mixed: 4, blocked: 5 } as const;
@@ -14,20 +18,21 @@ export const taken = (label: number): boolean => label === LABEL.covered || labe
 
 /**
  * Typed arrays the rule reuses from chunk to chunk by name, so the city's 20 chunks of some 190 000
- * cells do not leave the collector a few hundred MB to sweep. Each comes filled with `value`.
+ * cells do not leave the collector a few hundred MB to sweep. Each comes filled with `value`, or
+ * as the last user left it with `null` (for one written all over before it is read).
  */
 const POOL = new Map<string, Int32Array | Int16Array | Uint8Array>();
-const pooled = <T extends Int32Array | Int16Array | Uint8Array>(name: string, n: number, value: number, make: (n: number) => T): T => {
+const pooled = <T extends Int32Array | Int16Array | Uint8Array>(name: string, n: number, value: number | null, make: (n: number) => T): T => {
   let a = POOL.get(name) as T | undefined;
   if (!a || a.length < n) POOL.set(name, (a = make(n)));
   const out = a.subarray(0, n) as T;
-  out.fill(value);
+  if (value !== null) out.fill(value);
   return out;
 };
 export const scratch = {
-  u8: (name: string, n: number, value = 0): Uint8Array => pooled(name, n, value, (m) => new Uint8Array(m)),
-  i16: (name: string, n: number, value = 0): Int16Array => pooled(name, n, value, (m) => new Int16Array(m)),
-  i32: (name: string, n: number, value = 0): Int32Array => pooled(name, n, value, (m) => new Int32Array(m)),
+  u8: (name: string, n: number, value: number | null = 0): Uint8Array => pooled(name, n, value, (m) => new Uint8Array(m)),
+  i16: (name: string, n: number, value: number | null = 0): Int16Array => pooled(name, n, value, (m) => new Int16Array(m)),
+  i32: (name: string, n: number, value: number | null = 0): Int32Array => pooled(name, n, value, (m) => new Int32Array(m)),
 };
 
 /** The chunk's raster: a cell's centre at (minX + (i + 0.5) step, minZ + (j + 0.5) step). */
@@ -40,8 +45,10 @@ export class Cells {
   readonly zone: Uint8Array;
   /** Under a carriageway or a car park (a `road` piece): its number from 1, 0 off them. */
   readonly road: Int32Array;
-  /** The rings that cover cells, with their boxes. */
-  private readonly covers: { readonly ring: readonly Pt[]; readonly box: Rect }[] = [];
+  /** The rings that cover cells, with their boxes, by the cells of a grid (broad phase of `coversNear`). */
+  /** Runs of cells the last `scan` found: from and past the last, a pair a run. */
+  private runs = new Int32Array(256);
+  private readonly covers = new SpatialHash<{ readonly ring: readonly Pt[]; readonly box: Rect }>(COVER_CELL);
   constructor(rect: Rect) {
     this.rect = rect;
     this.nx = Math.round((rect.maxX - rect.minX) / STEP);
@@ -61,10 +68,12 @@ export class Cells {
    * keeps the ring, so the fills can be cut by it (`coversNear`).
    */
   cover(ring: readonly Pt[], road = 0): void {
-    this.scan(ring, (from, to) => {
-      this.label.fill(LABEL.covered, from, to);
-      if (road) this.road.fill(road, from, to);
-    });
+    const runs = this.scan(ring);
+    const r = this.runs;
+    for (let k = 0; k < runs; k++) {
+      this.label.fill(LABEL.covered, r[2 * k]!, r[2 * k + 1]!);
+      if (road) this.road.fill(road, r[2 * k]!, r[2 * k + 1]!);
+    }
     let [minX, minZ, maxX, maxZ] = [Infinity, Infinity, -Infinity, -Infinity];
     for (const p of ring) {
       if (p.x < minX) minX = p.x;
@@ -72,19 +81,20 @@ export class Cells {
       if (p.z < minZ) minZ = p.z;
       if (p.z > maxZ) maxZ = p.z;
     }
-    this.covers.push({ ring, box: { minX, minZ, maxX, maxZ } });
+    this.covers.insert({ ring, box: { minX, minZ, maxX, maxZ } }, minX, minZ, maxX, maxZ);
   }
-  /** The rings covering cells whose boxes meet `r`. */
-  coversNear(r: Rect): (readonly Pt[])[] {
-    return this.covers.filter((c) => c.box.minX < r.maxX && r.minX < c.box.maxX && c.box.minZ < r.maxZ && r.minZ < c.box.maxZ).map((c) => c.ring);
+  /** The rings covering cells whose boxes meet `r`, with their boxes. */
+  coversNear(r: Rect): { readonly ring: readonly Pt[]; readonly box: Rect }[] {
+    return this.covers.query(r.minX, r.minZ, r.maxX, r.maxZ).filter((c) => c.box.minX < r.maxX && r.minX < c.box.maxX && c.box.minZ < r.maxZ && r.minZ < c.box.maxZ);
   }
   /** Marks the cells whose centres lie in the ring part of a town's paved place. */
   zoneIn(ring: readonly Pt[]): void {
-    this.scan(ring, (from, to) => this.zone.fill(1, from, to));
+    const runs = this.scan(ring);
+    for (let k = 0; k < runs; k++) this.zone.fill(1, this.runs[2 * k]!, this.runs[2 * k + 1]!);
   }
   /** Marks the cells within `d` of the ring (a point is a ring of one), or in it, part of a town's paved place. */
   zoneNear(ring: readonly Pt[], d: number): void {
-    this.near(ring, d, (k) => (this.zone[k] = 1));
+    this.near(ring, d, this.zone, 1, -1);
   }
   /** Grows the town's paved places by `d` (m) every way (a square round each cell): the nearest one along the rows, then down the columns. */
   growZone(d: number): void {
@@ -120,12 +130,14 @@ export class Cells {
   }
   /** Marks the free cells within `d` of the ring, or in it, `BLOCKED`. */
   block(ring: readonly Pt[], d: number): void {
-    this.near(ring, d, (k) => {
-      if (this.label[k] !== LABEL.covered) this.label[k] = LABEL.blocked;
-    });
+    this.near(ring, d, this.label, LABEL.blocked, LABEL.covered);
   }
-  /** The cells whose centres lie in the ring (even-odd, a scanline a row), a run of a row at a time: `span(from, to)`, `to` past the last. */
-  private scan(ring: readonly Pt[], span: (from: number, to: number) => void): void {
+  /**
+   * The cells whose centres lie in the ring (even-odd, a scanline a row), a run of a row at a time
+   * into `runs`; their number. Runs, not a callback a run: one call site a use keeps V8's code of
+   * each monomorphic.
+   */
+  private scan(ring: readonly Pt[]): number {
     let minZ = Infinity;
     let maxZ = -Infinity;
     for (const p of ring) {
@@ -134,7 +146,7 @@ export class Cells {
     }
     const j0 = Math.max(0, Math.ceil((minZ - this.rect.minZ) / STEP - 0.5));
     const j1 = Math.min(this.nz - 1, Math.floor((maxZ - this.rect.minZ) / STEP - 0.5));
-    if (j1 < j0) return;
+    if (j1 < j0) return 0;
     // Each edge's crossings of the rows' centre lines, row by row.
     const rows: number[][] = Array.from({ length: j1 - j0 + 1 }, () => []);
     for (let k = 0, m = ring.length - 1; k < ring.length; m = k++) {
@@ -147,23 +159,37 @@ export class Cells {
         if (p.z > z !== q.z > z) rows[j - j0]!.push(p.x + ((z - p.z) * (q.x - p.x)) / (q.z - p.z));
       }
     }
+    let n = 0;
     for (let j = j0; j <= j1; j++) {
       const xs = rows[j - j0]!;
       if (xs.length < 2) continue;
-      xs.sort((p, q) => p - q);
+      if (xs.length > 2) xs.sort((p, q) => p - q);
+      else if (xs[0]! > xs[1]!) xs.reverse();
       for (let k = 0; k + 1 < xs.length; k += 2) {
         const i0 = Math.max(0, Math.ceil((xs[k]! - this.rect.minX) / STEP - 0.5));
         const i1 = Math.min(this.nx - 1, Math.floor((xs[k + 1]! - this.rect.minX) / STEP - 0.5));
-        if (i1 >= i0) span(j * this.nx + i0, j * this.nx + i1 + 1);
+        if (i1 < i0) continue;
+        if (2 * n + 2 > this.runs.length) {
+          const more = new Int32Array(2 * this.runs.length);
+          more.set(this.runs);
+          this.runs = more;
+        }
+        this.runs[2 * n] = j * this.nx + i0;
+        this.runs[2 * n + 1] = j * this.nx + i1 + 1;
+        n++;
       }
     }
+    return n;
   }
-  /** The cells within `d` of the ring's edges, or in it. */
-  private near(ring: readonly Pt[], d: number, set: (k: number) => void): void {
-    if (ring.length >= 3)
-      this.scan(ring, (from, to) => {
-        for (let k = from; k < to; k++) set(k);
-      });
+  /**
+   * Sets `to[k]` to `value` in the cells within `d` of the ring's edges, or in it, but where it is
+   * `keep`; a cell already so is not measured.
+   */
+  private near(ring: readonly Pt[], d: number, to: Uint8Array, value: number, keep: number): void {
+    if (ring.length >= 3) {
+      const runs = this.scan(ring);
+      for (let r = 0; r < runs; r++) for (let k = this.runs[2 * r]!; k < this.runs[2 * r + 1]!; k++) if (to[k] !== keep) to[k] = value;
+    }
     // Each edge's cells within `d` of it (a point is an edge of no length).
     for (let e = 0; e < ring.length; e++) {
       const a = ring[e]!;
@@ -177,10 +203,12 @@ export class Cells {
       for (let j = j0; j <= j1; j++) {
         const pz = this.rect.minZ + (j + 0.5) * STEP;
         for (let i = i0; i <= i1; i++) {
+          const k = j * this.nx + i;
+          if (to[k] === value || to[k] === keep) continue;
           // As `segmentGap`, the cell's centre inline.
           const px = this.rect.minX + (i + 0.5) * STEP;
           const t = Math.max(0, Math.min(1, ((px - a.x) * dx + (pz - a.z) * dz) / len2));
-          if (Math.hypot(a.x + dx * t - px, a.z + dz * t - pz) <= d) set(j * this.nx + i);
+          if (Math.hypot(a.x + dx * t - px, a.z + dz * t - pz) <= d) to[k] = value;
         }
       }
     }

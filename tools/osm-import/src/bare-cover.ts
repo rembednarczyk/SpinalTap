@@ -25,9 +25,10 @@
  */
 import { FillRule, type Path64, difference, isPositive } from "clipper2-ts";
 import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { COVER } from "../../orto/src/classify.ts";
 import { type Cover, coverFor } from "../../orto/src/cover.ts";
-import { Cells, LABEL, STEP, scratch, taken } from "./bare-cells.ts";
+import { Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch, taken as cellTaken } from "./bare-cells.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
 import { contours } from "./contour.ts";
 import { type Area } from "./features.ts";
@@ -35,6 +36,12 @@ import { type OsmData } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
 import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, signedArea, simplifyRing } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
+
+// Module-local copies of what the cell loops read: Vitest's module runner reads an imported binding
+// through a getter of the module's namespace, which a loop of 190 000 cells would pay at each cell.
+const LABEL = { ...CELL_LABEL } as const;
+const STEP = CELL_STEP;
+const taken = cellTaken;
 
 /** The rule's settings, measured on the four districts (ADR-0077 step 1.1). */
 export const FILL = {
@@ -115,7 +122,12 @@ const readCover = (cells: Cells, cover: Cover): void => {
 const summed = (cells: Cells): [Int32Array, Int32Array, Int32Array] => {
   const { nx, nz, label } = cells;
   const n = (nx + 1) * (nz + 1);
-  const [sg, ss, so] = [scratch.i32("summed.g", n), scratch.i32("summed.s", n), scratch.i32("summed.o", n)];
+  const [sg, ss, so] = [scratch.i32("summed.g", n, null), scratch.i32("summed.s", n, null), scratch.i32("summed.o", n, null)];
+  // Row 0 and column 0 count nothing; the rest is written below.
+  for (const t of [sg, ss, so]) {
+    t.fill(0, 0, nx + 1);
+    for (let j = 1; j <= nz; j++) t[j * (nx + 1)] = 0;
+  }
   for (let j = 0; j < nz; j++) {
     let [g, q, o] = [0, 0, 0];
     const [row, up] = [(j + 1) * (nx + 1) + 1, j * (nx + 1) + 1];
@@ -138,7 +150,7 @@ const resolveMixed = (cells: Cells): void => {
   if (!label.includes(LABEL.mixed)) return;
   const [sg, ss, so] = summed(cells);
   const r = FILL.around;
-  const next = scratch.u8("mixed.next", label.length);
+  const next = scratch.u8("mixed.next", label.length, null);
   next.set(label);
   for (let j = 0; j < nz; j++) {
     const lo = Math.max(0, j - r) * (nx + 1);
@@ -157,75 +169,79 @@ const resolveMixed = (cells: Cells): void => {
   label.set(next);
 };
 
+/** The scratch a walk of regions keeps: which cells it has seen, the cells of a region, the free cells of each label round it. */
+interface RegionWalk {
+  readonly seen: Uint8Array;
+  readonly queue: Int32Array;
+  readonly round: Int32Array;
+}
+
+const regionWalk = (cells: Cells): RegionWalk => ({
+  seen: scratch.u8("region.seen", cells.nx * cells.nz),
+  queue: scratch.i32("region.queue", cells.nx * cells.nz, null),
+  round: new Int32Array(8),
+});
+
 /**
- * The 4-connected regions of free cells of one label, `apart` telling which cells keep to
- * themselves (they and the others are regions apart): each with its cells (in `queue`, `n` of
- * them), the free cells of each label round it (`round`) and its cell edges out of it (`edges`).
+ * The 4-connected region of free cells of one label from cell `s`, `apart` telling which cells
+ * keep to themselves (they and the others are regions apart): its cells (in `queue`, as many as it
+ * returns), the free cells of each label round it (`round`) and its cell edges out of it (`edges`).
  */
-const eachRegion = (
-  cells: Cells,
-  apart: Uint8Array | null,
-  visit: (queue: Int32Array, n: number, round: Int32Array, edges: number) => void,
-  from: (k: number) => boolean = () => true,
-): void => {
+const regionFrom = (cells: Cells, apart: Uint8Array | null, w: RegionWalk, s: number): { n: number; edges: number } => {
   const { nx, nz, label } = cells;
-  const seen = scratch.u8("region.seen", nx * nz);
-  const queue = scratch.i32("region.queue", nx * nz);
-  const round = new Int32Array(8);
-  for (let s = 0; s < nx * nz; s++) {
-    if (seen[s] || taken(label[s]!) || !from(s)) continue;
-    const [own, side] = [label[s]!, apart ? apart[s]! : 0];
-    let [n, edges] = [0, 0];
-    queue[n++] = s;
-    seen[s] = 1;
-    round.fill(0);
-    for (let q = 0; q < n; q++) {
-      const k = queue[q]!;
-      const i = k % nx;
-      for (let d = 0; d < 4; d++) {
-        const m = d === 0 ? (i + 1 < nx ? k + 1 : -1) : d === 1 ? (i > 0 ? k - 1 : -1) : d === 2 ? k + nx : k - nx;
-        const l = m < 0 || m >= nx * nz ? -1 : label[m]!;
-        if (l === own && (apart ? apart[m]! : 0) === side) {
-          if (!seen[m]) {
-            seen[m] = 1;
-            queue[n++] = m;
-          }
-          continue;
+  const { seen, queue, round } = w;
+  const [own, side] = [label[s]!, apart ? apart[s]! : 0];
+  let [n, edges] = [0, 0];
+  queue[n++] = s;
+  seen[s] = 1;
+  round.fill(0);
+  for (let q = 0; q < n; q++) {
+    const k = queue[q]!;
+    const i = k % nx;
+    for (let d = 0; d < 4; d++) {
+      const m = d === 0 ? (i + 1 < nx ? k + 1 : -1) : d === 1 ? (i > 0 ? k - 1 : -1) : d === 2 ? k + nx : k - nx;
+      const l = m < 0 || m >= nx * nz ? -1 : label[m]!;
+      if (l === own && (apart ? apart[m]! : 0) === side) {
+        if (!seen[m]) {
+          seen[m] = 1;
+          queue[n++] = m;
         }
-        if (l !== own) edges++;
-        if (l >= 0 && l !== own && !taken(l)) round[l]!++;
+        continue;
       }
+      if (l !== own) edges++;
+      if (l >= 0 && l !== own && !taken(l)) round[l]!++;
     }
-    visit(queue, n, round, edges);
   }
+  return { n, edges };
 };
 
 /** Regions of one label under `FILL.speck` cells take the label most of the free cells round them have. */
-const joinSpecks = (cells: Cells): void =>
-  eachRegion(
-    cells,
-    null,
-    (queue, n, round) => {
-      if (n >= FILL.speck) return;
-      // The label most of the border has, the lower one on a tie.
-      let to = -1;
-      for (let l = 0; l < round.length; l++) if (round[l]! > 0 && (to < 0 || round[l]! > round[to]!)) to = l;
-      if (to >= 0) for (let q = 0; q < n; q++) cells.label[queue[q]!] = to;
-    },
-  );
+const joinSpecks = (cells: Cells): void => {
+  const { label } = cells;
+  const w = regionWalk(cells);
+  for (let s = 0; s < label.length; s++) {
+    if (w.seen[s] || taken(label[s]!)) continue;
+    const { n } = regionFrom(cells, null, w, s);
+    if (n >= FILL.speck) continue;
+    // The label most of the border has, the lower one on a tie.
+    let to = -1;
+    for (let l = 0; l < w.round.length; l++) if (w.round[l]! > 0 && (to < 0 || w.round[l]! > w.round[to]!)) to = l;
+    if (to >= 0) for (let q = 0; q < n; q++) label[w.queue[q]!] = to;
+  }
+};
 
 /** Off a town's paved places, a region of lawn or paving narrower than `FILL.looseWidth` on the average or under `FILL.looseArea` stays bare. */
-const dropLoose = (cells: Cells): void =>
-  eachRegion(
-    cells,
-    cells.zone,
-    (queue, n, _round, edges) => {
-      // Area n / 4 m², outline edges / 2 m: the mean width 2 area / outline.
-      if (n / edges >= FILL.looseWidth && n * STEP * STEP >= FILL.looseArea) return;
-      for (let q = 0; q < n; q++) cells.label[queue[q]!] = LABEL.other;
-    },
-    (k) => !cells.zone[k] && (cells.label[k] === LABEL.grass || cells.label[k] === LABEL.square),
-  );
+const dropLoose = (cells: Cells): void => {
+  const { label, zone } = cells;
+  const w = regionWalk(cells);
+  for (let s = 0; s < label.length; s++) {
+    if (w.seen[s] || zone[s] || (label[s] !== LABEL.grass && label[s] !== LABEL.square)) continue;
+    const { n, edges } = regionFrom(cells, zone, w, s);
+    // Area n / 4 m², outline edges / 2 m: the mean width 2 area / outline.
+    if (n / edges >= FILL.looseWidth && n * STEP * STEP >= FILL.looseArea) continue;
+    for (let q = 0; q < n; q++) label[w.queue[q]!] = LABEL.other;
+  }
+};
 
 /**
  * The cells a label's fills are traced on: its own, and one cell more under the map's pieces and
@@ -234,17 +250,21 @@ const dropLoose = (cells: Cells): void =>
  */
 const drawnCells = (cells: Cells, label: number): Uint8Array => {
   const { nx, nz } = cells;
-  const drawn = scratch.u8(`drawn.${label}`, nx * nz);
-  for (let k = 0; k < nx * nz; k++) {
-    if (cells.label[k] !== label) continue;
-    drawn[k] = 1;
-    const i = k % nx;
-    for (let dj = -1; dj <= 1; dj++)
-      for (let di = -1; di <= 1; di++) {
-        const m = k + dj * nx + di;
-        if (i + di >= 0 && i + di < nx && m >= 0 && m < nx * nz && cells.label[m] === LABEL.covered) drawn[m] = 1;
-      }
+  const n = nx * nz;
+  const lab = cells.label;
+  const drawn = scratch.u8(`drawn.${label}`, n);
+  // The cells of the label and those beside them along their rows; a covered cell is drawn with one of them in its row, the row south or the row north.
+  const beside = scratch.u8("drawn.beside", n);
+  for (let j = 0; j < nz; j++) {
+    const o = j * nx;
+    for (let i = 0; i < nx; i++) {
+      if (lab[o + i] !== label) continue;
+      drawn[o + i] = beside[o + i] = 1;
+      if (i > 0) beside[o + i - 1] = 1;
+      if (i + 1 < nx) beside[o + i + 1] = 1;
+    }
   }
+  for (let k = 0; k < n; k++) if (lab[k] === LABEL.covered && (beside[k] || (k >= nx && beside[k - nx]) || (k + nx < n && beside[k + nx]))) drawn[k] = 1;
   return drawn;
 };
 
@@ -277,7 +297,7 @@ const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: Gro
   }
   const simple = rings.filter((r) => signedArea(r) >= FILL.minArea).map((r) => simplifyRing(r, FILL.simplify));
   const tile = { minX: cells.rect.minX + i0 * STEP - 1, minZ: cells.rect.minZ + j0 * STEP - 1, maxX: cells.rect.minX + i1 * STEP + 1, maxZ: cells.rect.minZ + j1 * STEP + 1 };
-  return cutByPieces(simple, cells.coversNear(tile))
+  return cutByPieces(simple, cells.coversNear(tile).map((c) => c.ring))
     .filter((r) => r.length >= 3 && signedArea(r) >= FILL.minArea)
     .map((r) => ({ surface, outline: r.flatMap((p) => [p.x, p.z]) }));
 };
@@ -400,20 +420,31 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
 /** What a chunk's fills are laid from: its rect, its pieces and the shops and public buildings among its buildings. */
 export type CoverFill = (rect: Rect, ground: readonly GroundOut[], shops: readonly (readonly Pt[])[]) => GroundOut[];
 
+/** Side of the cells of the grid the walls and areas round a chunk are found by (m). */
+const FILLER_CELL = 50;
+
 /**
  * The fills of each chunk from its district's cover (`covers`), round `walls` (every building's
  * outline, any chunk's) and in the paved places of `town` (the whole map's areas and stops).
  */
 export const coverFiller = (covers: readonly Cover[], walls: readonly (readonly Pt[])[], town: Omit<TownPlaces, "shops">): CoverFill => {
-  const boxed = <T>(items: readonly T[], ring: (t: T) => readonly Pt[]) => items.map((t) => ({ t, box: ringBounds(ring(t)) }));
-  const [wallBoxes, areaBoxes] = [boxed(walls, (w) => w), boxed(town.areas, (a) => a)];
+  // Broad phase: the rings by the cells of a grid, each with its box (`rectsOverlap` the narrow phase).
+  const grid = (rings: readonly (readonly Pt[])[]) => {
+    const g = new SpatialHash<{ readonly ring: readonly Pt[]; readonly box: Rect }>(FILLER_CELL);
+    for (const ring of rings) {
+      const box = ringBounds(ring);
+      g.insert({ ring, box }, box.minX, box.minZ, box.maxX, box.maxZ);
+    }
+    return g;
+  };
+  const [wallGrid, areaGrid] = [grid(walls), grid(town.areas)];
   return (rect, ground, shops) => {
     const cover = coverFor(covers, { x: (rect.minX + rect.maxX) / 2, z: (rect.minZ + rect.maxZ) / 2 });
     if (!cover) return [];
-    const near = (m: number) => ({ minX: rect.minX - m, minZ: rect.minZ - m, maxX: rect.maxX + m, maxZ: rect.maxZ + m });
-    const pick = <T>(items: readonly { t: T; box: Rect }[], m: number) => items.filter((w) => rectsOverlap(w.box, near(m))).map((w) => w.t);
+    const near = { minX: rect.minX - 1, minZ: rect.minZ - 1, maxX: rect.maxX + 1, maxZ: rect.maxZ + 1 };
+    const pick = (g: ReturnType<typeof grid>) => g.query(near.minX, near.minZ, near.maxX, near.maxZ).filter((w) => rectsOverlap(w.box, near)).map((w) => w.ring);
     const stops = town.stops.filter((p) => p.x > rect.minX - FILL.platform && p.x < rect.maxX + FILL.platform && p.z > rect.minZ - FILL.platform && p.z < rect.maxZ + FILL.platform);
-    return coverFills(rect, cover, ground, pick(wallBoxes, 1), { areas: pick(areaBoxes, 1), stops, shops });
+    return coverFills(rect, cover, ground, pick(wallGrid), { areas: pick(areaGrid), stops, shops });
   };
 };
 
