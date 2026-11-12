@@ -666,18 +666,38 @@ const downhill = (field: Field, c: number): number => {
 };
 
 /**
- * Does the way of `detour` from `from` leave the near window round `goal` (G-644)? A ganger on
- * such a way round a long barrier follows it without asking that window, which would only find
- * it cut off again and, a dozen of them after a dozen goals, push its rasters out of the memo
- * every step. Walking down the field costs some cells, not a raster; and as a pure function of
- * the field it gives a loaded game the same answer.
+ * How much longer than the straight line (times it, plus metres) the walk from a ganger to its goal
+ * is at least, by the wide field, before `cutOffNear` takes the goal for cut off: a near way
+ * round a box or a stall is longer by a metre or two, a way round a long fence by tens of metres.
  */
-export const leavesNearWindow = (detour: Detour, from: Vec3, goal: Vec3): boolean => {
+const CUT_OFF_RATIO = 1.2;
+const CUT_OFF_SLACK = 2;
+
+/**
+ * Is `goal` cut off from `from` in the near window round it, by the way of `detour` (G-644)? A
+ * ganger on such a way round a long barrier follows it without asking that window, which would
+ * only find it cut off again and, a dozen of them after a dozen goals, push its rasters out of the
+ * memo every step. Two signs, both needed. The walk from `from` to `goal` is at least the
+ * difference of their distances down the field (to the goal the field was grown for, a few metres
+ * from `goal`): far more than the straight line, `goal` lies behind the barrier. Not when it is on
+ * the ganger's side of it (the target came round): the near window then leads, shortly, and this
+ * way would take it round the barrier to the old goal (round 2 of G-644). And the way leaves the
+ * near window round `goal`, where the near window cannot follow it. Walking down the field costs
+ * some cells, not a raster; and as a pure function of the field it gives a loaded game the same
+ * answer.
+ */
+export const cutOffNear = (detour: Detour, from: Vec3, goal: Vec3): boolean => {
   const { field } = detour;
+  const here = startOf(field, from);
+  const there = startOf(field, goal);
+  if (here < 0 || there < 0) return false;
+  // Half cells to metres.
+  const apart = (((field.dist[here] ?? FAR) - (field.dist[there] ?? FAR)) * NAV_CELL) / 2;
+  if (apart <= CUT_OFF_RATIO * Math.hypot(goal.x - from.x, goal.z - from.z) + CUT_OFF_SLACK) return false;
   const { snap, half } = NEAR_WINDOW;
   const cx = Math.round(goal.x / snap) * snap;
   const cz = Math.round(goal.z / snap) * snap;
-  for (let c = startOf(field, from); c >= 0; c = downhill(field, c)) {
+  for (let c = here; c >= 0; c = downhill(field, c)) {
     const at = cellCentre(field.raster, c, from.y);
     if (Math.max(Math.abs(at.x - cx), Math.abs(at.z - cz)) > half) return true;
   }

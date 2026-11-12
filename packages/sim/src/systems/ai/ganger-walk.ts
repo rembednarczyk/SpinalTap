@@ -3,7 +3,7 @@ import { aboveGround, groundOf, heightApart } from "../../world/ground";
 import type { SimContext } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
 import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
-import { type Detour, SAME_FLOOR, chaseDetour, detourStep, followDetour, leavesNearWindow, planDetour, straightWalk } from "./steering";
+import { type Detour, SAME_FLOOR, chaseDetour, detourStep, followDetour, cutOffNear, planDetour, straightWalk } from "./steering";
 import type { Ganger } from "./ganger-perception";
 import type { Entity, WalkPlan } from "../../world/components";
 import type { World } from "miniplex";
@@ -205,17 +205,18 @@ export class GangerWalk {
   }
 
   /**
-   * The step along the wide way of the chase it keeps, while that way leaves the near window
-   * round `goal` (G-644): there the near window does not lead either, and asked every step by a
-   * dozen gangers after a dozen goals it made its rasters again every step. Null for `head` to
-   * decide: no such way, a free straight walk, getting unstuck, or the way's end in the window.
+   * The step along the wide way of the chase it keeps, while `goal` is cut off from it in the
+   * near window by that way (`cutOffNear`, G-644): there the near window does not lead either, and
+   * asked every step by a dozen gangers after a dozen goals it made its rasters again every step.
+   * Null for `head` to decide: no such way, a free straight walk, getting unstuck, a goal come to
+   * its side of the barrier, or the way's end in the window.
    */
   private wideWay(goal: Vec3): Vec3 | null {
     const { ctx, self } = this.at;
     const held = self?.walk?.chase;
     if (!ctx || !self || !held || this.unsticking() || Math.hypot(held.x - goal.x, held.z - goal.z) > CHASE_DRIFT) return null;
     const detour = chaseDetour(ctx.world, self.position, held);
-    if (!detour || !leavesNearWindow(detour, self.position, goal) || straightWalk(ctx.world, self.position, goal)) return null;
+    if (!detour || !cutOffNear(detour, self.position, goal) || straightWalk(ctx.world, self.position, goal)) return null;
     return followDetour(detour, self.position);
   }
 
