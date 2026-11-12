@@ -46,6 +46,21 @@ python3 -I tools/glitch-scan/coverage_board.py reports/map-coverage.json <katalo
 
 Raport podaje procent komórek w każdym statusie dla miasta i dzielnic oraz kolejkę 10 komórek: najmniej przejrzane najpierw, potem najwięcej trafień, potem najwięcej otwartych wierszy T. Plansza rysuje komórki w kolorach statusów, z trafieniami, otwartymi wierszami T, najczęstszymi rodzajami i miejscem w kolejce. Planszy nie commitujemy.
 
+## Stan 12.11
+
+Wszystkie 20 komórek ma status `przejrzane`. Sześć przeszło starą metodą z kuratorem (krakowskie-0-0, krakowskie-0-1, krakowskie-1-1, stare-miasto-0-0, podzamcze-0-1, podzamcze-1-1 wcześniej; 12.11: podzamcze-1-0, stare-miasto-1-0, krakowskie-1-0, stare-miasto-1-1), dziesięć metodą raportu komórki bez osobnego przeglądu kuratora (krakowskie-2-0, krakowskie-2-1, stare-miasto-0-1, podzamcze-0-0, podzamcze-2-0, podzamcze-2-1, nabrzeze-0-0, nabrzeze-0-1, nabrzeze-1-0, nabrzeze-1-1). Koszt przejścia: stara metoda 350–500 tys. tokenów na komórkę, metoda raportu 68–105 tys., dwie sąsiednie komórki jednym opiekunem ok. 35–45 tys. na komórkę.
+
+Goły teren każdej komórki jest jednym wpisem (G-704, G-705, G-709–G-718, wiersze T-266–T-279); poprawka całościowa idzie regułami ADR-0077 (krok 1.1 i dalsze), nie ręcznymi obszarami.
+
+Paczka do przeglądu kuratora (komórki zamknięte bez niego, sprawy zebrane w akapitach przejść w `docs/topografia.md`):
+- końce pasów `lane-dead-end` bez opisu w G-022/G-024: Lubartowska, Furmańska, Cyrulicza (podzamcze-0-0), Lubartowska>Aleja Tysiąclecia (podzamcze-2-0), Cerkiewna, Podzamcze>Ruska (podzamcze-2-1), Mełgiewska (nabrzeze-0-0), Turystyczna, Andersa (nabrzeze-0-1);
+- niskie IoU obrysów z braku LoD2 (podzamcze-2-0, podzamcze-2-1), w73822962 bez LoD1 i LoD2;
+- pady wnętrz kliniki i Neon Koi bez wiersza T (G-432), mur w436266757 (G-636), `levels-tag-lost` w1561106313;
+- chodniki na bezpasowej w169832249 (T-047, czy G-082), pas (920..975; 183..263) jako ciąg G-699/T-265, VIVO w obszarze T-260/T-261;
+- wiersze T w `rozwiazane` komórek mimo statusu „do poprawy” w `docs/topografia.md` (lista: `tools`-owy wydruk orkiestratora z 12.11; m.in. T-121 tam, gdzie kościoły nie mają fałszywych wież, T-059, T-163, T-064).
+
+Porządki rejestru 12.11: statusy 22 wierszy T zaczynały się od „do poprawy (G-…)”, choć wszystkie wymienione glitche są w archiwum jako naprawione; mają teraz „poprawione (porządki rejestru 12.11 …)”. Wiersze, które komórki trzymają w `otwarte`, zostały bez zmian.
+
 ## Instrukcja dla opiekuna mapy
 
 Stały slot (prośba użytkownika 7.11): kiedy slot jest wolny, opiekun bierze komórkę z kolejki.
