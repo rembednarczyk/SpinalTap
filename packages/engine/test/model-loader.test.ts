@@ -195,11 +195,12 @@ describe("ModelLibrary with an error status (G-634)", () => {
 });
 
 /** A response whose body hands out `chunks` one per `read()`, as the network delivers them; aborts like fetch. */
-const streamOf = (signal: AbortSignal | undefined, next: () => Promise<Uint8Array | null>) => ({
+const streamOf = (signal: AbortSignal | undefined, next: () => Promise<Uint8Array | null>, cancel = vi.fn(() => Promise.resolve())) => ({
   ok: true,
   status: 200,
   body: {
     getReader: () => ({
+      cancel,
       read: () =>
         Promise.race([
           next().then((value) => (value ? { done: false as const, value } : { done: true as const, value: undefined })),
@@ -271,5 +272,39 @@ describe("fetchModelBytes with an idle limit (G-637)", () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(await outcome).toMatch(/nobody\.vrm did not download/);
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("releases the stream and arms no timer when a late chunk arrives after a fetch that ignored the abort", async () => {
+    vi.useFakeTimers();
+    const { MODEL_FETCH_IDLE_MS, fetchModelBytes } = await import("../src/renderer/model-fetch");
+    const cancel = vi.fn(() => Promise.resolve());
+    let late: (v: Uint8Array) => void = () => undefined;
+    // Ignores the abort signal: the read only ends when the late chunk comes.
+    const body = {
+      ok: true,
+      status: 200,
+      body: { getReader: () => ({ cancel, read: () => new Promise((r) => (late = (value) => r({ done: false, value }))) }) },
+    };
+    vi.stubGlobal("fetch", () => Promise.resolve(body));
+    const outcome = fetchModelBytes("deaf.vrm").then(
+      () => "loaded",
+      (e: unknown) => (e as Error).message,
+    );
+    await vi.advanceTimersByTimeAsync(MODEL_FETCH_IDLE_MS);
+    expect(await outcome).toMatch(/deaf\.vrm did not download/);
+    expect(cancel).toHaveBeenCalled();
+    late(new Uint8Array([1]));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("cancels the body of an error response without reading it", async () => {
+    const { fetchModelBytes } = await import("../src/renderer/model-fetch");
+    const cancel = vi.fn(() => Promise.resolve());
+    const read = vi.fn();
+    vi.stubGlobal("fetch", () => Promise.resolve({ ok: false, status: 404, statusText: "Not Found", body: { cancel, getReader: () => ({ read }) } }));
+    await expect(fetchModelBytes("gone.vrm")).rejects.toThrow(/404/);
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(read).not.toHaveBeenCalled();
   });
 });

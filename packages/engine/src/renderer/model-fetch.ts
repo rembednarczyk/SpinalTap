@@ -23,7 +23,11 @@ export const fetchModelBytes = async (url: string): Promise<ArrayBuffer> => {
   const timeout = new Promise<never>((_, reject) => {
     giveUp = reject;
   });
+  let finished = false;
+  let reader: { cancel: () => Promise<void> } | undefined;
   const arm = (ms: number): void => {
+    // After the end (failure included) a late chunk must not start a clock nobody clears.
+    if (finished) return;
     clearTimeout(timer);
     timer = setTimeout(() => {
       const err = new Error(`Model ${url} did not download: ${ms === MODEL_FETCH_TIMEOUT_MS ? `not finished within ${ms / 1000} s` : `no data for ${ms / 1000} s`}`);
@@ -34,17 +38,21 @@ export const fetchModelBytes = async (url: string): Promise<ArrayBuffer> => {
   const read = async (): Promise<ArrayBuffer> => {
     arm(MODEL_FETCH_IDLE_MS);
     const r = await fetch(url, { signal: abort.signal });
-    if (!r.ok) throw new Error(`Model ${url} could not be downloaded: HTTP ${r.status}${r.statusText ? ` ${r.statusText}` : ""}`);
+    if (!r.ok) {
+      r.body?.cancel().catch(() => undefined);
+      throw new Error(`Model ${url} could not be downloaded: HTTP ${r.status}${r.statusText ? ` ${r.statusText}` : ""}`);
+    }
     if (!r.body) {
       arm(MODEL_FETCH_TIMEOUT_MS);
       return r.arrayBuffer();
     }
-    const reader = r.body.getReader();
+    const body = r.body.getReader();
+    reader = body;
     const chunks: Uint8Array[] = [];
     let size = 0;
     for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      const { done, value } = await body.read();
+      if (done || finished) break;
       chunks.push(value);
       size += value.byteLength;
       arm(MODEL_FETCH_IDLE_MS);
@@ -60,6 +68,9 @@ export const fetchModelBytes = async (url: string): Promise<ArrayBuffer> => {
   try {
     return await Promise.race([read(), timeout]);
   } finally {
+    finished = true;
     clearTimeout(timer);
+    // The read loop may still be parked on a fetch that ignored the abort: release the connection.
+    reader?.cancel().catch(() => undefined);
   }
 };
