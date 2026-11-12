@@ -1747,12 +1747,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-664 Zieleń z `layer>0` ukrywa gołą ziemię przed skanem `landuse-bare`
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g664 @ 163a226; baza landuse-bare 69019 → 69215, wszystkie +196 przy VIVO; czeka na G-665)
+- Status: poprawione na gałęzi ccr-ec2c4269-ilh8k8-g664 @ 74cc6d0 (12.11; z G-665 skan zielony, landuse-bare 69019 → 69214, cały wzrost przy VIVO; PR po scaleniu #440)
 - Ważność: S4 · Zasięg: `landuse-bare` pomija punkty w obrysie trawnika z mapy, także trawnika na dachu (r11978659), więc goły pas z G-661 nie zmienił bazy 69019; poprawka: zieleń z `layer>0` albo `location=roof` nie zwalnia próbek, nowa baza z przebiegu
 - Pakiet właściciela: tools/glitch-scan
 
 ### G-665 Szczelina między kawałkami trawnika na garażu VIVO
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g665; odsłonięte przez G-664)
+- Status: w PR #440 (12.11; przegląd kuratora w toku)
 - Ważność: S4 · Zasięg: próbka (1119,75; 238,75), 0,057 m wewnątrz krawędzi garażu w173070505, w pasie ok. 0,1–0,2 m² między kawałkami trawnika z `groundRaisedGreen` (G-647, #436); test G-600 „leaves none of the garage's outline past the mall bare” pada po poprawce skanu G-664; przyczyna prawdopodobnie w cięciu po częściach wypukłych albo przycięciu do granicy chunku x = 1120
 - Pakiet właściciela: tools/osm-import
 
@@ -1780,6 +1780,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: poprawione na gałęzi ccr-ec2c4269-ilh8k8-g670 @ a87864d (12.11; added-grass-off-green 10 → 5, nowa added-paving-on-green 3: T-246/ruska-a, T-246/ruska-b, T-245/zn2-wschod-trawnik; PR po scaleniu #438)
 - Ważność: S4 · Zasięg: baza 10 liczy też celowe trawniki T-241 (`trawnik-zachod`, `trawnik-wschod`, `trawnik-bajkowskiego`, plan inwestora ADR-0074) i błędy klasyfikatora (`T-243/ck-zachod-trawnik`, `T-245/rabata-kolegium-poludnie`): lista wyjątków z odsyłaczem T-NNN, baza 10 → 5; nowa kontrola `added-paving-on-green` (ręczna kostka z zielenią ≥ 50%, kandydaci `T-245/zn2-wschod-trawnik` 71%, `zn2-wschod-srodek` 40%); do sprawdzenia też pas zieleni ok. 22 m² pod `podworze-litevski` (x −194,5…−192, z 28–39)
 - Pakiet właściciela: tools/glitch-scan
+
+### G-671 Próg 0,5 m² w `chunkGround` gubi małe wycinki wypełnień krawężnikowych na granicach chunków
+- Status: zgłoszone (12.11, naprawiacz G-665)
+- Ważność: S4 · Zasięg: `tools/osm-import/src/ground.ts` `chunkGround`: wycinki pasm `holed` (wypełnienia chodnika przy krawężniku) poniżej 0,5 m² w chunku są odrzucane; wariant zachowujący je dla wszystkich pasm `holed` dokłada 114 kawałków chodnika i obniża `kerb-gap-bare` o 195, ale podnosi `kerb-fill-wide-estimated` o 15 i daje 22 nowe próbki `kerb-gap-bare` (x≈747, z≈155–160 i (376; −11)), bo wypełnienia G-570 robią się ciągłe; do rozwiązania razem
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
