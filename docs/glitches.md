@@ -1806,11 +1806,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: dach głównej bryły w LoD2 ma równo 4,0 m, a reguła dachów z LoD2 (#G-639) bierze dach > 4 m; do decyzji próg ≥ 4 m albo wyjątek
 - Pakiet właściciela: tools/osm-import
 
-### G-694 Ganger czekający na plan objazdu stoi w miejscu
-- Status: w PR #461 (12.11; postój 204 → 5 kroków; weryfikacja w toku)
-- Ważność: S3 · Zasięg: po #455 (G-643) ganger bez starej drogi czeka na swój plan w kolejce: przy N różnych celach do ok. 13·N kroków (3,4 s przy 18 pościgach, 5,3 s przy liderach rozrzuconych do 60 m; na main do 16 kroków); poprawka: w czasie czekania ruch w stronę celu (krok w bok przy przeszkodzie, jak przy odklejaniu), priorytet w kolejce dla gangera bez żadnej drogi; także `planChase` z `{ chase: made }` nie zeruje własnego `chaseNext`
-- Pakiet właściciela: packages/sim (systems/ai)
-
 ### G-695 Okap od ulicy z najniższej połaci powłoki LoD2
 - Status: zgłoszone (12.11, kurator przeglądu #459)
 - Ważność: S3 · Zasięg: reguła dachów z LoD2 (#459) bierze okap jako najniższy punkt powłoki głównej bryły, więc fasada od ulicy wychodzi za nisko: Złota 3 −4,1 m, Lubartowska 23 w66309793 −3,6 m, Rybna 6 w66293219 −2,7 m, Centrum Kultury −1,5 m (skrzydła 12,7 do 15,6 m, środkowy trakt do 18,4 m); poprawka: okap od strony ulicy z `addr:street` (azymut ±50°) albo per część; kontrola `lod2-street-eaves` (baza 3)
@@ -1831,6 +1826,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: Podzamcze, Zamek w48500136. Od północy (844..920; 262..273) ok. 382 m² gołego terenu między pasem 4 m drogi w66258158 a licem, a na ortofoto asfaltowy podjazd ok. 10 m z parkowaniem. Od południa (830..920; 202..209) ok. 130 m² przy licu i taras (882..900; 193..200) ok. 89 m², na ortofoto kostka. Zrzuty `pz10d-pn-podjazd`, `pz10d-pd-taras`
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS` albo korekta `width`)
 - Test przyjęcia: `landuse-bare` w (844..920; 255..273) 1527 → mniej niż 100, w (830..920; 202..212) i na tarasie 873 → mniej niż 100; zbocze z trawą bez nawierzchni
+
+### G-700 Ganger w `seek` podchodzi do bariery na 0,4 m
+- Status: nowy (12.11, z weryfikacji #461)
+- Ważność: S4 · Zasięg: czujnik `FEELER` z #461 to linia ze środka ciała bez promienia 0,38 m, więc przy ruchu prawie równoległym do bariery ganger dochodzi do 0,38 m (cienki płot 114.7,85.3, strona -1, g11) i 0,41 m (mur 214,-28); na 503bff0 2,3–2,6 m; wydostaje się, na końcu przebiegu ponad 2 m; poprawka: czujnik jako kapsuła z promieniem ciała (dwie równoległe linie)
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-701 Przy cienkim płocie i murze ganger dalej stoi, czekając na plan
+- Status: nowy (12.11, z weryfikacji #461)
+- Ważność: S4 · Zasięg: płot 114.7,85.3 (n12, strona +1) i mur 214,-28 (strona -1): postój 245 i 103 kroki, jak przed #461, bo `FEELER` jest zablokowany z obu stron; reszta G-694; poprawka: przy obu stronach zablokowanych krok wzdłuż bariery albo pierwszeństwo w kolejce
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-702 Wczytanie przy zaalarmowanym tłumie za płotem rozjeżdża się po ok. 95 krokach
+- Status: nowy (12.11, z weryfikacji #461; tak samo na 503bff0)
+- Ważność: S4 · Zasięg: tłum 18 zaalarmowany, gracz 6 m za płotem 2359, zapis w trakcie czekania na plan; od kroku ok. 95 pozycje odbiegają od ciągłej gry, do 1,9 m po 300 krokach; powiązane z G-645 (pamięć `chases` poza zapisem)
+- Pakiet właściciela: packages/sim (systems/ai), packages/persistence
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
