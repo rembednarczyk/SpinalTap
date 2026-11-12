@@ -1623,7 +1623,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-633 Klasztor Dominikanów: środek dachu 5 m nad LoD1
 - Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1)
-- Ważność: S4 · Zasięg: środek dachu 30,9 m wobec 25,8 m w LoD1; poza zmianą heights, wynik sondy kuratora
+- Ważność: S4 · Zasięg: środek dachu 30,9 m wobec 25,8 m w LoD1; poza zmianą heights, wynik sondy kuratora; przejście stare-miasto-1-0 (12.11): `landmark-vs-lod1` 1 w komórce to ten sam przypadek (30,9/25,8 m, IoU 0,90); po #459 bez zmian
 - Pakiet właściciela: tools/osm-import, packages/engine (receptury landmarków)
 
 ### G-635 Trzy próbki `kerb-fill-wide-estimated` przy nowych skrawkach chodnika na Podzamczu
@@ -1828,19 +1828,31 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: `landuse-bare` w (844..920; 255..273) 1527 → mniej niż 100, w (830..920; 202..212) i na tarasie 873 → mniej niż 100; zbocze z trawą bez nawierzchni
 
 ### G-700 Ganger w `seek` podchodzi do bariery na 0,4 m
-- Status: nowy (12.11, z weryfikacji #461)
+- Status: zgłoszone (12.11, z weryfikacji #461)
 - Ważność: S4 · Zasięg: czujnik `FEELER` z #461 to linia ze środka ciała bez promienia 0,38 m, więc przy ruchu prawie równoległym do bariery ganger dochodzi do 0,38 m (cienki płot 114.7,85.3, strona -1, g11) i 0,41 m (mur 214,-28); na 503bff0 2,3–2,6 m; wydostaje się, na końcu przebiegu ponad 2 m; poprawka: czujnik jako kapsuła z promieniem ciała (dwie równoległe linie)
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-701 Przy cienkim płocie i murze ganger dalej stoi, czekając na plan
-- Status: nowy (12.11, z weryfikacji #461)
+- Status: zgłoszone (12.11, z weryfikacji #461)
 - Ważność: S4 · Zasięg: płot 114.7,85.3 (n12, strona +1) i mur 214,-28 (strona -1): postój 245 i 103 kroki, jak przed #461, bo `FEELER` jest zablokowany z obu stron; reszta G-694; poprawka: przy obu stronach zablokowanych krok wzdłuż bariery albo pierwszeństwo w kolejce
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-702 Wczytanie przy zaalarmowanym tłumie za płotem rozjeżdża się po ok. 95 krokach
-- Status: nowy (12.11, z weryfikacji #461; tak samo na 503bff0)
+- Status: zgłoszone (12.11, z weryfikacji #461; tak samo na 503bff0)
 - Ważność: S4 · Zasięg: tłum 18 zaalarmowany, gracz 6 m za płotem 2359, zapis w trakcie czekania na plan; od kroku ok. 95 pozycje odbiegają od ciągłej gry, do 1,9 m po 300 krokach; powiązane z G-645 (pamięć `chases` poza zapisem)
 - Pakiet właściciela: packages/sim (systems/ai), packages/persistence
+
+### G-703 Schody przycięte brzegiem mapy: ostatnia podstopnica do y 0 za brzegiem (ściana do 23,7 m)
+- Status: zgłoszone (12.11, kurator, przegląd stare-miasto-1-0; T-049)
+- Ważność: S3 (pionowa szara ściana 20 m, widoczna z ulicy i znad dachów) · Zasięg: 5 z 6 trafień `steps-riser-tall` w mieście. Stare Miasto: w481462067 (760; −210) 20,03 m i w888479969 (760; −148) 5,63 m. Podzamcze: (1090–1092; 160) 23,70 m (2 pasy). Nabrzeże: (2658; 60) 18,21 m. `groundY` poza chunkami zwraca 0 (`terrain.ts`), a `planSteps` dla pasa przyciętego do brzegu bierze wysokość tuż za brzegiem. Zrzuty `sm10d-schody-210`, `sm10d-kuria-podworze`
+- Pakiet właściciela: packages/engine/src/renderer/mapcity (`steps-plan`), ewentualnie tools/osm-import (przycięcie pasa schodów odrobinę przed brzegiem) albo `groundY` za brzegiem z wysokością brzegu
+- Test przyjęcia: `steps-riser-tall` 6 → 1 (zostaje G-686 przy (732; 151)); pas schodów przy x = 760 kończy się na wysokości terenu brzegu (−20,1 i −6,3)
+
+### G-704 Podwórza Starego Miasta przy Archikatedrze i Dominikanach to goła ziemia (T-266)
+- Status: zgłoszone (12.11, kurator, przegląd stare-miasto-1-0)
+- Ważność: S3 (jak G-527) · Zasięg: stare-miasto-1-0, 7 podwórzy, ok. 2500 m² gołego terenu, w tym 1960 m² twardej nawierzchni na ortofoto: (627..666; −107..−63) 768 m², (699..740; −240..−204) 737 m², (610..654; −132..−101) 431 m², (696..716; −121..−88) 351 m², (691..726; −53..−40) 94 m², (654..673; −159..−146) 123 m². Przyczyna jak G-513 i G-527: OSM nie ma obszarów nawierzchni podwórzy. `landuse-bare` ich nie liczy, bo nie leżą w `landuse`. Zrzut `sm10d-kuria-podworze`. Ortofoto do korekt: 2024-06 (2025-04 ma tu przechył 4–5 m)
+- Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077)
+- Test przyjęcia: proponowana kontrola `bare-enclosed-yard` (niżej) w komórce 7 → 0, bez nawierzchni na rabatach i trawnikach podwórzy (zielone na 2024-06)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
