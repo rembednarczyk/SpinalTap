@@ -13,7 +13,7 @@ import { teleportPlayer } from "./helpers";
  * and its field (some 15) were made whole in the step that asked for them, one a step, and the
  * start of a few chases round a long barrier made steps of 150 to 190 ms against the 4 of
  * ADR-0043. Now a step makes a slice of them, `PLAN_WORK` cells, and the ganger walks the way it
- * has, or waits, until its new one is ready. Counted in cells and in the terrain's heights looked
+ * has until its new one is ready: its old one, another's made already, or towards the goal (G-694). Counted in cells and in the terrain's heights looked
  * up, not in ms: the clock is only reported.
  */
 
@@ -25,6 +25,12 @@ const SLICE = PLAN_WORK + 2 * 384;
  */
 const HEIGHTS = 100_000;
 const LEADS = 18;
+/**
+ * The most steps a chasing ganger stands still (G-694). Waiting for its own wide way while those
+ * asked before it were made, the last of eighteen stood 204 steps, some 13 a goal; now it walks
+ * meanwhile, along another's made way or towards its goal.
+ */
+const STANDS = 40;
 
 const host = globalThis as { console?: { info(s: string): void }; performance?: { now(): number } };
 const now = (): number => host.performance?.now() ?? 0;
@@ -61,13 +67,21 @@ describe("the wide ways of many chases starting at once (G-643)", () => {
     const units: number[] = [];
     const looked: number[] = [];
     const times: number[] = [];
+    const still = gangers.map(() => 0);
+    const stood = gangers.map(() => 0);
     for (let i = 0; i < 60 * 10; i++) {
       const before = wideBuilds(sim.world).units;
+      const at = gangers.map((g) => ({ ...g.position }));
       heights = 0;
       const t = now();
       sim.step();
       times.push(now() - t);
       units.push(wideBuilds(sim.world).units - before);
+      gangers.forEach((g, k) => {
+        const moved = Math.hypot(g.position.x - at[k]!.x, g.position.z - at[k]!.z) > 1e-4;
+        still[k] = moved ? 0 : still[k]! + 1;
+        stood[k] = Math.max(stood[k]!, still[k]!);
+      });
       // The first step makes the near rasters of all the leads (ten of them), as before.
       if (i > 0) looked.push(heights);
     }
@@ -76,6 +90,8 @@ describe("the wide ways of many chases starting at once (G-643)", () => {
     host.console?.info(
       `[G-643] ${LEADS} chases: the first step ${quantile(times.slice(0, 1), 0)} ms, then ${quantile(later, 0.5)} ms in the median, ${quantile(later, 0.95)} ms p95, ${quantile(later, 1)} ms at most; ${Math.max(...looked)} heights and ${Math.max(...units)} wide cells a step at most`,
     );
+    // None reaches its lead in these ten seconds: every step of them is one of the chase.
+    expect(Math.max(...stood), `steps stood still: ${stood.join(", ")}`).toBeLessThanOrEqual(STANDS);
     expect(Math.max(...looked)).toBeLessThanOrEqual(HEIGHTS);
     expect(Math.max(...units)).toBeLessThanOrEqual(SLICE);
     // Each one on a wide way of its own or of another's, ready: none left waiting.
@@ -104,8 +120,8 @@ describe("the wide ways of many chases starting at once (G-643)", () => {
       }
     }
     expect(ways[1]).toEqual(ways[0]);
-    // It waited, standing, and set out once the way was ready.
-    expect(ways[0]![0]).toBe(ways[0]![1]);
-    expect(ways[0]![ways[0]!.length - 1]).not.toBe(ways[0]![0]);
+    // It walked while it waited (G-694), and on.
+    expect(ways[0]![1]).not.toBe(ways[0]![0]);
+    expect(ways[0]![ways[0]!.length - 1]).not.toBe(ways[0]![1]);
   }, 120_000);
 });
