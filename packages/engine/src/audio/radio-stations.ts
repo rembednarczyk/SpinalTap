@@ -1,4 +1,3 @@
-import { mulberry32 } from "./music";
 
 /**
  * Radio of wave 2 (ADR-0036): three stations as parameter sets of the procedural sequencer of
@@ -7,7 +6,7 @@ import { mulberry32 } from "./music";
  * Pure data and a pure generator, so the stations are tested without WebAudio.
  */
 
-import type { RadioStationId } from "@seki/core";
+import { type RadioStationId, mulberry32 } from "@seki/core";
 
 export type { RadioStationId };
 

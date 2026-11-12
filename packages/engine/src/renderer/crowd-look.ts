@@ -1,3 +1,5 @@
+import { mulberry32 } from "@seki/core";
+
 /**
  * The look of a resident of the city (ADR-0041) from its seed: build, hair, clothes and their
  * colours, a neon trim now and then, a bag, the umbrella's colour. Pure and stable: the same seed
@@ -46,19 +48,10 @@ const UMBRELLAS = ["#d9e3ea", "#d9e3ea", "#c23b4f", "#15171d", "#2f5f8a", "#e0b2
 export const BAGS = ["#1a1c21", "#3b2f25", "#5a1f2a", "#2a3a4a"] as const;
 
 /**
- * A small, fast generator over the seed (mulberry32): looks never touch any other randomness.
+ * A small, fast generator over the seed (mulberry32 from `@seki/core`): looks never touch any other randomness.
  * The palettes above are shared with the variants of the imported models (ADR-0076).
  */
-export const lookStream = (seed: number): (() => number) => {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-};
+export const lookStream: (seed: number) => () => number = mulberry32;
 
 export const pick = <T>(rand: () => number, list: readonly T[]): T => list[Math.min(list.length - 1, Math.floor(rand() * list.length))] as T;
 
