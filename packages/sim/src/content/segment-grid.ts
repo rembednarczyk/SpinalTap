@@ -1,4 +1,4 @@
-import type { GroundPoint } from "@seki/core";
+import { type GroundPoint, SpatialHash } from "@seki/core";
 
 type Pt = GroundPoint;
 
@@ -13,49 +13,34 @@ export const segmentDistance = (x: number, z: number, a: Pt, b: Pt): number => {
 /** A line crosses another at 30 degrees and more (the import's rule for a way through a barrier, ADR-0077). */
 const CROSS_SINE = 0.5;
 
-/** Segments bucketed by 8 m, for the distance from a point to the nearest (the content's routes, lanes and flights). */
+/** Edge of a cell of the grid, metres. */
+const CELL = 8;
+
+/**
+ * Segments in an 8 m `SpatialHash` by their boxes, for the distance from a point to the nearest
+ * (the content's routes, lanes and flights).
+ */
 export class SegmentGrid {
-  private readonly cells = new Map<string, [Pt, Pt][]>();
-  private static readonly CELL = 8;
+  private readonly grid = new SpatialHash<readonly [Pt, Pt]>(CELL);
 
   add(a: Pt, b: Pt): void {
-    const c = SegmentGrid.CELL;
-    for (let i = Math.floor(Math.min(a.x, b.x) / c); i <= Math.floor(Math.max(a.x, b.x) / c); i++) {
-      for (let k = Math.floor(Math.min(a.z, b.z) / c); k <= Math.floor(Math.max(a.z, b.z) / c); k++) {
-        const key = `${i}:${k}`;
-        const list = this.cells.get(key);
-        if (list) list.push([a, b]);
-        else this.cells.set(key, [[a, b]]);
-      }
-    }
+    this.grid.insert([a, b], Math.min(a.x, b.x), Math.min(a.z, b.z), Math.max(a.x, b.x), Math.max(a.z, b.z));
   }
 
-  /** Calls `visit` with each segment in the cells round (x, z): every one within a cell of it, some twice. */
+  /** Calls `visit` once with each segment whose box comes within a cell of (x, z), every one within a cell of it among them. */
   eachNear(x: number, z: number, visit: (a: Pt, b: Pt) => void): void {
-    const c = SegmentGrid.CELL;
-    const cx = Math.floor(x / c);
-    const cz = Math.floor(z / c);
-    for (let i = cx - 1; i <= cx + 1; i++) {
-      for (let k = cz - 1; k <= cz + 1; k++) {
-        for (const [a, b] of this.cells.get(`${i}:${k}`) ?? []) visit(a, b);
-      }
-    }
+    this.grid.some(x - CELL, z - CELL, x + CELL, z + CELL, ([a, b]) => {
+      visit(a, b);
+      return false;
+    });
   }
 
   /** Is (x, z) closer than `r` (at most a cell) to a segment; with `across`, only to one crossing that direction at 30 degrees and more? */
   near(x: number, z: number, r: number, across?: Pt): boolean {
-    const c = SegmentGrid.CELL;
-    const cx = Math.floor(x / c);
-    const cz = Math.floor(z / c);
-    for (let i = cx - 1; i <= cx + 1; i++) {
-      for (let k = cz - 1; k <= cz + 1; k++) {
-        for (const [a, b] of this.cells.get(`${i}:${k}`) ?? []) {
-          if (across && Math.abs(sineOf(across, { x: b.x - a.x, z: b.z - a.z })) < CROSS_SINE) continue;
-          if (segmentDistance(x, z, a, b) < r) return true;
-        }
-      }
-    }
-    return false;
+    return this.grid.some(x - r, z - r, x + r, z + r, ([a, b]) => {
+      if (across && Math.abs(sineOf(across, { x: b.x - a.x, z: b.z - a.z })) < CROSS_SINE) return false;
+      return segmentDistance(x, z, a, b) < r;
+    });
   }
 }
 
