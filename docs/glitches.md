@@ -1672,7 +1672,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-613 Trasy tłumu przy Podwalu biegną po linii muru oporowego zamiast osią chodnika
-- Status: zgłoszone (11.11, kurator przeglądu #418, runda 2; osobny PR)
+- Status: w naprawie (12.11, gałąź `ccr-ec2c4269-ilh8k8-g613` razem z G-626; trasy placów i alejek odsunięte od barier wzdłuż nich, `crowd-barriers.ts`; mur w67626198 w grze 179 z 183 m; do przeglądu kuratora)
 - Ważność: S3 · Zasięg: trasy `stare-miasto-1-0-square-0` i `stare-miasto-1-1-square-0` idą w medianie 0,5 m od muru w67626198, a oś chodnika w56965511 jest 0,65–1,95 m od muru (zwykle 1,7 m); przez to 61 m dwumetrowego muru skarpy pod Archikatedrą wycięte (x 673–693, 701–705, 731–743, 753–760 przy z −200…−161 i x 745–760 przy z −15…12); kryterium: trasy co najmniej 1,0 m od muru i mur w grze ponad 170 z 183 m; T-251
 - Pakiet właściciela: packages/sim (tłum), tools/osm-import
 
@@ -1682,7 +1682,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai, steering)
 
 ### G-626 Piesi tłumu wchodzą w bariery biegnące wzdłuż ich trasy
-- Status: zgłoszone (11.11, weryfikator #418 runda 2)
+- Status: w naprawie (12.11, gałąź `ccr-ec2c4269-ilh8k8-g613` razem z G-613; `CROWD_LINE` 0,70 m, `barrier-on-crowd-lane` 49 → 0)
 - Ważność: S4 · Zasięg: `barrier-room.ts` (`CROWD_LINE` 0,3 m) przy pieszych idących 0,28 m od linii trasy bez kolizji z bryłami; 45 kawałków, 149 m (21 płotów, 7 żywopłotów, 1 mur, 16 murów oporowych), najgłębiej ponad 0,2 m, np. płot (729,5; 93,0); skan `barrier-on-crowd-lane` ma próg `ALONG` 0,2 m zamiast 0,58 m; łączy się z G-613 (trasy tłumu z dala od barier)
 - Pakiet właściciela: packages/sim (tłum), tools/glitch-scan
 
