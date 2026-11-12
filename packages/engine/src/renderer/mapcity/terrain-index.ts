@@ -1,6 +1,6 @@
 import { type EntityId, type TerrainGrid, type TerrainOpenSides, terrainHeightAt } from "@seki/core";
 import type { Mesh } from "../../babylon";
-import type { Box2 } from "./polygon";
+import type { Box2, P2 } from "./polygon";
 
 export interface TerrainEntry {
   readonly grid: TerrainGrid;
@@ -12,6 +12,10 @@ export interface TerrainEntry {
 
 /** How far past its bounds a terrain still answers for the ground (m). */
 const MARGIN = 0.01;
+/** How far off an open side of its terrain a wall still lies on it (m): outlines are rounded to 0.1 m. */
+const EDGE_TOLERANCE = 0.15;
+/** How far past a terrain's side the next terrain is looked for (m). */
+const EDGE_PROBE = 0.6;
 /** Side of the bins the terrains are sorted into (m). */
 const BIN = 64;
 
@@ -50,6 +54,28 @@ export class TerrainEntries extends Map<EntityId, TerrainEntry> {
       if (x >= b.minX - MARGIN && x <= b.maxX + MARGIN && z >= b.minZ - MARGIN && z <= b.maxZ + MARGIN) return terrainHeightAt(t.grid, x, z);
     }
     return null;
+  }
+
+  /**
+   * Whether the segment a-c runs along a side of a terrain with no terrain past it: the edge of
+   * the map data, where the importer cut a building (G-556). Read off the terrains present, not
+   * their `open` sides, which only the preview's views carry.
+   */
+  onMapEdge(a: P2, c: P2): boolean {
+    const along = (u: number, v: number, at: number) => Math.abs(u - at) <= EDGE_TOLERANCE && Math.abs(v - at) <= EDGE_TOLERANCE;
+    const within = (u: number, v: number, lo: number, hi: number) => Math.min(u, v) >= lo - EDGE_TOLERANCE && Math.max(u, v) <= hi + EDGE_TOLERANCE;
+    const [mx, mz] = [(a.x + c.x) / 2, (a.z + c.z) / 2];
+    for (const { bounds: b } of [...this.values()]) {
+      const acrossX = within(a.x, c.x, b.minX, b.maxX);
+      const acrossZ = within(a.z, c.z, b.minZ, b.maxZ);
+      const past =
+        acrossX && along(a.z, c.z, b.minZ) ? { x: mx, z: b.minZ - EDGE_PROBE } :
+        acrossX && along(a.z, c.z, b.maxZ) ? { x: mx, z: b.maxZ + EDGE_PROBE } :
+        acrossZ && along(a.x, c.x, b.minX) ? { x: b.minX - EDGE_PROBE, z: mz } :
+        acrossZ && along(a.x, c.x, b.maxX) ? { x: b.maxX + EDGE_PROBE, z: mz } : null;
+      if (past && this.heightAt(past.x, past.z) === null) return true;
+    }
+    return false;
   }
 
   private sort(): Map<number, TerrainEntry[]> {
