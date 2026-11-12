@@ -7,7 +7,8 @@
  * - LoD1 2024 (`lod1Solid`): a prism; the footprint is the face whose points all lie at the
  *   lowest height, `measuredHeight` the prism's height.
  * - LoD2 2017 (`boundedBy` surfaces): the footprint is the `GroundSurface`, the eaves the
- *   lowest and the ridge the highest point of the `RoofSurface`s, `roofType` the roof's code.
+ *   lowest and the ridge the highest point of the `RoofSurface`s, `roofType` the roof's code,
+ *   the main eaves and ridge those of the main mass (`mainRoof`).
  */
 
 /** A ring of grid points: easting, northing, height. */
@@ -24,6 +25,9 @@ export interface GmlBuilding {
   /** LoD2: lowest and highest point of the roof surfaces, metres above sea level. */
   readonly eaves?: number;
   readonly ridge?: number;
+  /** LoD2: the eaves and the ridge of the main mass (`mainRoof`), metres above sea level. */
+  readonly mainEaves?: number;
+  readonly mainRidge?: number;
   /** LoD1: top of the prism, metres above sea level. */
   readonly top?: number;
 }
@@ -95,6 +99,52 @@ export const parseLod1 = (el: string): GmlBuilding | undefined => {
   return { id, footprint: footprint.length ? footprint : [rings[0]!], ground: lo, top: hi, ...(mh !== undefined ? { measuredHeight: mh } : {}) };
 };
 
+/** A point's key at a centimetre: surfaces of one shell share their edges' points exactly. */
+const pointKey = (p: readonly [number, number, number]) => `${p[0].toFixed(2)} ${p[1].toFixed(2)} ${p[2].toFixed(2)}`;
+
+const planArea = (r: Ring3) => {
+  let a = 0;
+  for (let i = 0; i < r.length; i++) {
+    const p = r[i]!;
+    const q = r[(i + 1) % r.length]!;
+    a += p[0] * q[1] - q[0] * p[1];
+  }
+  return Math.abs(a) / 2;
+};
+
+/**
+ * The eaves and the ridge of a roof's main mass (G-639): the lowest and the highest point of the
+ * shell of roof surfaces joined edge to edge (two points or more in common) with the surface of
+ * the largest plan area. A mansard's steep lower slopes and the slopes of a hipped or a gabled
+ * roof join the shell; the roof of a low annex, a porch or a lower wing meets the main mass's
+ * walls, not its roof, and stays out (Lublinianka: 4.3 m the annex's eaves; Pałac Parysów:
+ * 10.7 m the eaves under its mansard, 15.0 m its break).
+ */
+export const mainRoof = (roofs: readonly Ring3[]): { readonly eaves: number; readonly ridge: number } | undefined => {
+  if (roofs.length === 0) return undefined;
+  const keys = roofs.map((r) => new Set(r.map(pointKey)));
+  const areas = roofs.map(planArea);
+  const seed = areas.indexOf(Math.max(...areas));
+  const shell = new Set([seed]);
+  for (let grown = true; grown; ) {
+    grown = false;
+    for (let i = 0; i < roofs.length; i++) {
+      if (shell.has(i)) continue;
+      const touches = [...shell].some((j) => {
+        let common = 0;
+        for (const k of keys[i]!) if (keys[j]!.has(k) && ++common >= 2) return true;
+        return false;
+      });
+      if (touches) {
+        shell.add(i);
+        grown = true;
+      }
+    }
+  }
+  const z = zRange([...shell].map((i) => roofs[i]!));
+  return { eaves: z.lo, ridge: z.hi };
+};
+
 /** One building element of a LoD2 2017 file. */
 export const parseLod2 = (el: string): GmlBuilding | undefined => {
   const id = attr(el, "buildingId");
@@ -104,7 +154,8 @@ export const parseLod2 = (el: string): GmlBuilding | undefined => {
   const g = zRange(ground);
   const r = roof.length ? zRange(roof) : undefined;
   const roofType = num(el, "bldg:roofType");
-  return { id, footprint: ground, ground: g.lo, ...(roofType !== undefined ? { roofType } : {}), ...(r ? { eaves: r.lo, ridge: r.hi } : {}) };
+  const main = mainRoof(roof);
+  return { id, footprint: ground, ground: g.lo, ...(roofType !== undefined ? { roofType } : {}), ...(r ? { eaves: r.lo, ridge: r.hi } : {}), ...(main ? { mainEaves: main.eaves, mainRidge: main.ridge } : {}) };
 };
 
 /** CityGML `RoofTypeType` codes (SIG3D list, used by GUGiK) as OSM `roof:shape` values. */

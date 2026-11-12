@@ -129,6 +129,11 @@ const lod2 = buildings("lod2", parseLod2).map(({ b, ring, tile }) => {
     b.ridge !== undefined ? r1(b.ridge - b.ground) : null,
     same ? null : encode(ring),
   ];
+  // The main mass's eaves and ridge only where they are not the whole roof's (G-639).
+  if (b.mainEaves !== undefined && b.mainRidge !== undefined) {
+    const main = [r1(b.mainEaves - b.ground), r1(b.mainRidge - b.ground)] as const;
+    if (main[0] !== row[3] || main[1] !== row[4]) row.push(...main);
+  }
   return { tile: same ? twin.tile : tile, row };
 });
 writeTiles("lod2", byTile(lod2));
@@ -152,7 +157,7 @@ const index = {
   tile: "1 km world tiles <tx>_<tz>: centroid x in [tx, tx + 1) km, z in [tz, tz + 1) km",
   outline: "counter-clockwise ring, decimetres, delta-coded [x0, z0, dx1, dz1, ...]",
   lod1: { heights: "PL-EVRF2007-NH", row: "[buildingId, measuredHeight, ground, outline]", tiles: count("lod1") },
-  lod2: { heights: "PL-KRON86-NH", row: "[buildingId, roofType, ground, eaves over ground, ridge over ground, outline | null = the LoD1 outline of the same id]", tiles: count("lod2") },
+  lod2: { heights: "PL-KRON86-NH", row: "[buildingId, roofType, ground, eaves over ground, ridge over ground, outline | null = the LoD1 outline of the same id, main eaves, main ridge over ground when not the whole roof's]", tiles: count("lod2") },
   bdot: { row: "[LOKALNYID, RODZAJ, line]", file: "bdot.json" },
 };
 writeFileSync(join(OUT, "index.json"), `${JSON.stringify(index, null, 1)}\n`);

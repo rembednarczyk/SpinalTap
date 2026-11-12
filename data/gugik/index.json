@@ -199,7 +199,7 @@
  },
  "lod2": {
   "heights": "PL-KRON86-NH",
-  "row": "[buildingId, roofType, ground, eaves over ground, ridge over ground, outline | null = the LoD1 outline of the same id]",
+  "row": "[buildingId, roofType, ground, eaves over ground, ridge over ground, outline | null = the LoD1 outline of the same id, main eaves, main ridge over ground when not the whole roof's]",
   "tiles": {
    "-1_-1": 630,
    "-1_-2": 491,
