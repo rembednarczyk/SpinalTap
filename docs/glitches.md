@@ -1582,7 +1582,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-561 Model, którego pobieranie się nie kończy, zostawia postacie tła z pożyczką ubrania jako figurę riga na stałe
-- Status: zgłoszone (8.11; #410 scalony bez tej poprawki, naprawa w toku 12.11)
+- Status: w PR #422 (12.11; limit 120 s, weryfikacja w toku)
 - Ważność: S3 · Zasięg: `ModelLibrary.load` nie ma limitu czasu, więc zawieszony fetch blokuje `settled()` i `clothOf`
 - Pakiet właściciela: packages/engine (renderer: modele)
 
@@ -1725,6 +1725,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1)
 - Ważność: S4 · Zasięg: środek dachu 30,9 m wobec 25,8 m w LoD1; poza zmianą heights, wynik sondy kuratora
 - Pakiet właściciela: tools/osm-import, packages/engine (receptury landmarków)
+
+### G-634 `ModelLibrary.load` nie sprawdza `response.ok`
+- Status: zgłoszone (12.11, naprawiacz G-561)
+- Ważność: S4 · Zasięg: odpowiedź 404 albo 500 trafia do parsera jako GLB i pada dopiero przy parsowaniu z mylącym błędem; `.gltf` po URL (`LoadAssetContainerAsync`) i dynamiczny import pluginu glTF nadal bez limitu czasu (dziś nieużywane, manifest ma `.vrm`)
+- Pakiet właściciela: packages/engine (renderer: modele)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
