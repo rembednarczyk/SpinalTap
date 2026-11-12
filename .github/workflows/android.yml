@@ -1,0 +1,136 @@
+name: Android APK
+
+# ADR-0079, stage 2: the game as an Android app (Capacitor WebView, the web build inside the APK).
+# A tag of a larger release (v*) builds the APK and attaches it to the GitHub release of the tag;
+# workflow_dispatch builds it on any branch, as an artifact only. With the four signing secrets the
+# APK is a signed release; without them a debug APK for manual installation (README).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      # Creating the release of a tag and uploading the APK to it.
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # Copies packages/app/dist (game code, models, city, audio) into the native project: the APK
+      # holds every file and downloads nothing at start.
+      - name: Copy the web build into the Android project
+        working-directory: packages/app
+        run: pnpm exec cap sync android
+      # Capacitor 8 builds with JDK 21; the runner image carries the Android SDK (ANDROID_HOME).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      # Caches Gradle and checks the wrapper jar against the published checksums.
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Version
+        id: version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$REF_TYPE" = "tag" ]; then
+            name="${REF_NAME#v}"
+          else
+            name="$(node -p 'require("./packages/app/package.json").version')-${GITHUB_SHA::7}"
+          fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      # The keystore exists only in the runner's temp directory, decoded from a secret; the
+      # secrets are masked in the log and nothing here prints them.
+      - name: Signing key
+        id: key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "kind=release" >> "$GITHUB_OUTPUT"
+          else
+            echo "No signing secrets: building a debug APK (ADR-0079)."
+            echo "kind=debug" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Signed release APK
+        if: steps.key.outputs.kind == 'release'
+        working-directory: packages/app/android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          APP_VERSION_CODE: ${{ github.run_number }}
+          APP_VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Debug APK
+        if: steps.key.outputs.kind == 'debug'
+        working-directory: packages/app/android
+        env:
+          APP_VERSION_CODE: ${{ github.run_number }}
+          APP_VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Remove the keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.keystore"
+
+      - name: Name the APK
+        id: apk
+        env:
+          KIND: ${{ steps.key.outputs.kind }}
+          NAME: ${{ steps.version.outputs.name }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/apk"
+          out="$RUNNER_TEMP/apk/seki-senshi-$NAME-$KIND.apk"
+          cp "packages/app/android/app/build/outputs/apk/$KIND/app-$KIND.apk" "$out"
+          ls -l "$out"
+          echo "path=$out" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seki-senshi-apk
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          # An APK is a zip already.
+          compression-level: 0
+          retention-days: 30
+
+      - name: Attach the APK to the release of the tag
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          APK: ${{ steps.apk.outputs.path }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" --clobber
+          else
+            gh release create "$TAG" "$APK" --title "$TAG" --generate-notes --verify-tag
+          fi
