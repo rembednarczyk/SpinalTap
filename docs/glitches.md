@@ -18,7 +18,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-022 Pas aut kończy się przed krótkim łańcuchem tej samej jezdni, który nie dostaje pasa
 - Status: przyjęte (po G-020 i G-021, te same pliki)
-- Ważność: S3 · Zasięg: lokalny (6 miejsc, 8 ślepych końców) · Koszt: średni; podzamcze-0-0 (12.11): `lane-dead-end` Lubartowska#38:1 (581; 361), ten sam pas co (588; 379) we wpisie; niepotwierdzone, że ten sam koniec (19 m dalej).
+- Ważność: S3 · Zasięg: lokalny (6 miejsc, 8 ślepych końców) · Koszt: średni; podzamcze-0-0 (12.11): `lane-dead-end` Lubartowska#38:1 (581; 361), ten sam pas co (588; 379) we wpisie; niepotwierdzone, że ten sam koniec (19 m dalej).; podzamcze-2-0 (12.11): `lane-dead-end` Aleja Unii Lubelskiej#95:0 (1098; 266) i #95:1 (1095; 268) leżą 4–6 m od opisanego końca Aleja Unii Lubelskiej#96 (1099; 272); niepotwierdzone, że ten sam koniec (inny numer pasa). Dodatkowo Lubartowska#14:bt>Aleja Tysiąclecia#80:t (1041; 284), nieopisany; niepotwierdzone, że ten sam mechanizm.
 - Gdzie: Lubartowska#38:1 (588, 379): dwa pasy jednokierunkowe schodzą w jeden dwukierunkowej (po G-021); Cerkiewna#92 (912, 346) → pętla #90 (44,4 m); Aleja Unii Lubelskiej#96 (1099, 272) → Aleja Tysiąclecia#84 (21 m); Kalinowszczyzna#131 (2361, 430); Łęczyńska#121 (2659, 95); Kapucyńska#10 (150, −160); Kołłątaja#2 / Peowiaków#0 (−100, −169) → Zesłańców Sybiru#5 (35 m)
 - Dowód: łowca: koniec łańcucha z pasami dotyka (≤ 8 m) łańcucha aut < 45 m z 0 pasami.
 - Przyczyna (przypuszczalna): klucz łączenia w `roads.ts:71` zawiera `oneway`; `MIN_ROUTE` (`traffic.ts:83`) liczony dla łańcucha, nie dla ciągu łańcuchów.
@@ -959,7 +959,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-339 Uskok na końcach pomostów: pomost poziomy w poprzek, droga obok na terenie (T-166)
 - Status: zgłoszone (5.11, kurator, przegląd G-330)
-- Ważność: S4 · Zasięg: 8 końców (Mełgiewska, wiadukt Zamkowej, kładka Podzamcza) · Koszt: średni; 12.11 (przejście stare-miasto-1-1): koniec (732,2; 151,7) to styk z górnym stopniem w294098693: uskok chodzenia 0,51–0,54 m na całej szerokości pasa (G-686, `steps-riser-tall` (732; 151)). Na końcu NW (727,9..728,9; 156,0..158,4) `deck-abutment-step` do 1,73 m.
+- Ważność: S4 · Zasięg: 8 końców (Mełgiewska, wiadukt Zamkowej, kładka Podzamcza) · Koszt: średni; 12.11 (przejście stare-miasto-1-1): koniec (732,2; 151,7) to styk z górnym stopniem w294098693: uskok chodzenia 0,51–0,54 m na całej szerokości pasa (G-686, `steps-riser-tall` (732; 151)). Na końcu NW (727,9..728,9; 156,0..158,4) `deck-abutment-step` do 1,73 m.; podzamcze-2-0 (12.11): `deck-abutment-step` 1 kwadrat (3 próbki): kładka (1073,8; 161,7), (1073,8; 161,1), (1073,9; 160,6), pomost -25,66 wobec gruntu 0,3 m dalej; to ten sam koniec co w T-166 (1073,8; 161,6), bez nowych końców.
 - Gdzie: (2456,5; 296,6) 0,45 m; (2408,5; 280,0) 0,35 m; (2446,2; 246) 0,25 m; (727,7; 157,5) 0,89 m; (763,6; 182,7) 0,36 m; (1073,8; 161,6) 0,29 m
 - Przyczyna (przypuszczalna): `makeDeck` bierze `rawHeight` końców osi i robi pomost poziomy w poprzek; droga obok idzie za poprzecznym spadkiem NMT
 - Pakiet właściciela: packages/sim (content/lublin decks, terrain PADS/RAMPS)
@@ -1322,7 +1322,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-451 Klin gołego terenu między chodnikiem a jezdnią Kościuszki (T-222)
 - Status: zgłoszone (7.11, kurator, przegląd G-440)
-- Ważność: S4 · Zasięg: zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²; poprawka: lokalnie domknąć jezdnię do krawędzi chodnika; kontrola `kerb-gap-bare` (baza 35 631 próbek 0,25 m); przejście krakowskie-1-0 (12.11): `kerb-gap-bare` 1508 próbek w komórce, m.in. Narutowicza w40051033 (199..217; −197..−188) 62 m² (szczelina 0,6 m), w215824205 (84..94; −269..−262) 37 m² i 33 mniejsze; Peowiaków należy do G-471; krakowskie-2-1 (12.11): `kerb-gap-bare` 71 kwadratów (3097 próbek 0,25 m, szczelina do 2,75 m, 898 próbek > 1 m); skupiska (360..400; 0..80), (400..440; 80..160), (240..280; 80..120).; stare-miasto-0-1 (12.11): `kerb-gap-bare` 26 kwadratów (543 próbki); skupiska (570,150) 75, (460,40) 74, (600,140) 67, (560,150) 65, (580,140) 46, (470,70) 41.; podzamcze-0-0 (12.11): `kerb-gap-bare` 46 kwadratów (629 próbek); skupiska (690; 160) 84, (550; 160) 62, (540; 160) 55, (520; 180) 33, (710; 180) 32, (710; 190) 30.
+- Ważność: S4 · Zasięg: zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²; poprawka: lokalnie domknąć jezdnię do krawędzi chodnika; kontrola `kerb-gap-bare` (baza 35 631 próbek 0,25 m); przejście krakowskie-1-0 (12.11): `kerb-gap-bare` 1508 próbek w komórce, m.in. Narutowicza w40051033 (199..217; −197..−188) 62 m² (szczelina 0,6 m), w215824205 (84..94; −269..−262) 37 m² i 33 mniejsze; Peowiaków należy do G-471; krakowskie-2-1 (12.11): `kerb-gap-bare` 71 kwadratów (3097 próbek 0,25 m, szczelina do 2,75 m, 898 próbek > 1 m); skupiska (360..400; 0..80), (400..440; 80..160), (240..280; 80..120).; stare-miasto-0-1 (12.11): `kerb-gap-bare` 26 kwadratów (543 próbki); skupiska (570,150) 75, (460,40) 74, (600,140) 67, (560,150) 65, (580,140) 46, (470,70) 41.; podzamcze-0-0 (12.11): `kerb-gap-bare` 46 kwadratów (629 próbek); skupiska (690; 160) 84, (550; 160) 62, (540; 160) 55, (520; 180) 33, (710; 180) 32, (710; 190) 30.; podzamcze-2-0 (12.11): `kerb-gap-bare` 27 kwadratów (819 próbek); skupiska (1020; 220) 297, (1020; 200) 269, (1020; 240) 130, (940; 340) 25 (pola 20 m, próbki).
 - Pakiet właściciela: tools/osm-import (ground)
 
 ### G-452 Szczeliny 1–15 cm między przylegającymi budynkami z OSM (T-223)
@@ -1632,7 +1632,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-635 Trzy próbki `kerb-fill-wide-estimated` przy nowych skrawkach chodnika na Podzamczu
 - Status: zgłoszone (12.11, naprawiacz scalenia #409)
-- Ważność: S4 · Zasięg: (879,5; 490,5) i (860,5; 497,5): wypełnienia krawężników z #409 łączą się z `PODZAMCZE_AREAS` z main (`DWORZEC_EAST_AREAS`) w dwa małe skrawki chodnika; licznik 3624 → 3627 po scaleniu
+- Ważność: S4 · Zasięg: (879,5; 490,5) i (860,5; 497,5): wypełnienia krawężników z #409 łączą się z `PODZAMCZE_AREAS` z main (`DWORZEC_EAST_AREAS`) w dwa małe skrawki chodnika; licznik 3624 → 3627 po scaleniu; podzamcze-2-0 (12.11): `kerb-fill-wide-estimated` 1 próbka: wypełnienie 1,60 m przy (996,1; 292,4), 7,5 m od osi o szacowanej szerokości; inne miejsce niż wpis ((879,5; 490,5), (860,5; 497,5)), ta sama klasa.
 - Pakiet właściciela: tools/osm-import
 
 ### G-636 Bariera leżąca na ścianie budynku liczy się w skanie jako wycięta
@@ -1827,7 +1827,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-699 Podjazd i taras przy Zamku węższe niż w Lublinie: goły teren między pasem drogi a licem (T-265)
 - Status: zgłoszone (12.11, kurator, przegląd podzamcze-1-0)
-- Ważność: S4 · Zasięg: Podzamcze, Zamek w48500136. Od północy (844..920; 262..273) ok. 382 m² gołego terenu między pasem 4 m drogi w66258158 a licem, a na ortofoto asfaltowy podjazd ok. 10 m z parkowaniem. Od południa (830..920; 202..209) ok. 130 m² przy licu i taras (882..900; 193..200) ok. 89 m², na ortofoto kostka. Zrzuty `pz10d-pn-podjazd`, `pz10d-pd-taras`
+- Ważność: S4 · Zasięg: Podzamcze, Zamek w48500136. Od północy (844..920; 262..273) ok. 382 m² gołego terenu między pasem 4 m drogi w66258158 a licem, a na ortofoto asfaltowy podjazd ok. 10 m z parkowaniem. Od południa (830..920; 202..209) ok. 130 m² przy licu i taras (882..900; 193..200) ok. 89 m², na ortofoto kostka. Zrzuty `pz10d-pn-podjazd`, `pz10d-pd-taras`; podzamcze-2-0 (12.11): `landuse-bare` 865 próbek w x 920..930 (z 160..370) tuż za granicą komórki podzamcze-1-0; niepotwierdzone, że to ciąg pasów przy Zamku z wpisu.
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS` albo korekta `width`)
 - Test przyjęcia: `landuse-bare` w (844..920; 255..273) 1527 → mniej niż 100, w (830..920; 202..212) i na tarasie 873 → mniej niż 100; zbocze z trawą bez nawierzchni
 
@@ -1854,7 +1854,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-705 Goły teren przy gmachach i sklepach Krakowskiego (krakowskie-1-0): Pedet, Teatr Osterwy, Urszulanki, Narutowicza (T-267)
 - Status: zgłoszone (12.11, kurator, przegląd krakowskie-1-0)
-- Ważność: S3 (jak G-513, G-527) · Zasięg: krakowskie-1-0, `landuse-bare` 6144 próbki (1536 m²), z czego ok. 1300 m² do poprawy. Pedet w67508935 (108..142; −161..−98) 340 m²; Teatr w67508958: front (82..155; −229..−190) 218 m², zaplecze (81..154; −224..−183) 208 m²; w177528398 (188..215; −233..−203) 134 m²; Urszulanki r14476826 (157..225; −270..−248) 94 m²; podwórze KP 23 w67499325 (192..218; −40..−20) 144 m²; Narutowicza w40051033 (224..240; −190..−158) ok. 160 m², gdzie szczeliny 3,5–5 m leżą poza `KERB_REACH`. Ortofoto 2025-04 jest tu prawie pionowe (dachy na obrysach LoD2 co do ok. 1 m, przy KP 23 3 m): 76–98% twardej nawierzchni. Zrzuty `k10-b-teatr`, `k10-c-pedet`, `k10-f-narutowicza`. Poza zakresem: deptak przed KP 23 (95 m², T-045/G-081), dobudówka za Teatrem (G-472), pasy do 1 m przy kościele Urszulanek w obrysie LoD2
+- Ważność: S3 (jak G-513, G-527) · Zasięg: krakowskie-1-0, `landuse-bare` 6144 próbki (1536 m²), z czego ok. 1300 m² do poprawy. Pedet w67508935 (108..142; −161..−98) 340 m²; Teatr w67508958: front (82..155; −229..−190) 218 m², zaplecze (81..154; −224..−183) 208 m²; w177528398 (188..215; −233..−203) 134 m²; Urszulanki r14476826 (157..225; −270..−248) 94 m²; podwórze KP 23 w67499325 (192..218; −40..−20) 144 m²; Narutowicza w40051033 (224..240; −190..−158) ok. 160 m², gdzie szczeliny 3,5–5 m leżą poza `KERB_REACH`. Ortofoto 2025-04 jest tu prawie pionowe (dachy na obrysach LoD2 co do ok. 1 m, przy KP 23 3 m): 76–98% twardej nawierzchni. Zrzuty `k10-b-teatr`, `k10-c-pedet`, `k10-f-narutowicza`. Poza zakresem: deptak przed KP 23 (95 m², T-045/G-081), dobudówka za Teatrem (G-472), pasy do 1 m przy kościele Urszulanek w obrysie LoD2; podzamcze-2-0 (12.11): przedpola 5 / 1263 m² (twarde 77%) w podzamcze-2-0, m.in. (1087..1120; 168..252) 436 m²; ta sama klasa, wpis zbiorczy G-713.
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2025-04, przy KP 23 2024-06)
 - Test przyjęcia: `landuse-bare` w krakowskie-1-0 6144 → najwyżej 1000 (zostają deptak T-045 ok. 380 i próbki w obrysach LoD2 ok. 540). Bez nawierzchni na zieleni (ortofoto 2025-04). Baza miasta spada w tym samym commicie
 
@@ -1900,6 +1900,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna (przypuszczalna): jak G-513, G-527, G-704, G-705: OSM nie ma obszarów nawierzchni podwórzy i przedpoli; szczeliny > `KERB_REACH` poza zasięgiem wypełnień (T-247)
 - Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2025-04)
 - Test przyjęcia: `landuse-bare` w podzamcze-0-0 72 kwadraty -> najwyżej wartość z pozostawionymi pasami T-247; goły teren w klasach podwórza i przedpola w raporcie komórki 20 składowych / 7578 m² -> 0 (poza zielenią ortofoto: 83% zieleni przy (645..672; 268..280), 14% przy (536..623; 172..261)). Baza skanu spada w tym samym commicie
+
+### G-713 Goły teren w podzamcze-2-0: przedpola i szczeliny przy wschodnim Wzgórzu Zamkowym, Alei Tysiąclecia i VIVO (T-274)
+- Status: zgłoszone (12.11, opiekun mapy, raport komórki podzamcze-2-0)
+- Ważność: S3 (jak G-705, G-712, G-527) · Zasięg: podzamcze-2-0, goły teren 7147 m²: przedpola 5 / 1263 m² (twarde 77%), szczeliny przy jezdni > 3 m 16 / 2941 m² (twarde 73%), inne 5 / 1166 m², podwórza 0, w obrysie LoD2 0; `landuse-bare` 62 kwadraty 10 m (7532 próbki) w komórce; położenia w T-274
+- Dowód: `node tools/orto/src/report.ts --cell podzamcze-2-0` (sekcja gołego terenu), skan `landuse-bare` 62 kwadraty w komórce; ortofoto 2025-04, przechył (0,25; 0) m
+- Przyczyna (przypuszczalna): jak G-513, G-527, G-705, G-712: OSM nie ma obszarów nawierzchni przedpoli; szczeliny > `KERB_REACH` poza zasięgiem wypełnień (T-247); część pasa (920..975; 183..263) może być ciągiem G-699/T-265 z podzamcze-1-0 (niepotwierdzone)
+- Pakiet właściciela: tools/osm-import (korekty, krok 1.1 ADR-0077; nalot 2025-04)
+- Test przyjęcia: `landuse-bare` w podzamcze-2-0 62 kwadraty -> najwyżej wartość z pozostawionymi pasami T-247; goły teren w klasie przedpola w raporcie komórki 5 składowych / 1263 m² -> 0 (poza zielenią ortofoto). Baza skanu spada w tym samym commicie
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
