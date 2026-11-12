@@ -1,4 +1,4 @@
-import { type ActivityId, type EntityId, type GameClock, type RandomPort, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from "@seki/core";
+import { type ActivityId, type EntityId, type GameClock, LruMap, type RandomPort, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from "@seki/core";
 import { ACTIVITY_SPOTS, SPOT_ACTIVITIES, spotWeightsAt } from "../content/activity-spots";
 import { castViewOf } from "../content/cast";
 import { deriveRandom } from "../rng/derive-random";
@@ -74,8 +74,8 @@ export const routineOf = (seed: number, chunk: string, count: number, slot: numb
  */
 export const slotOf = (clock: GameClock): number => Math.floor(clock.seconds / ROUTINE_SLOT_SECONDS);
 
-const memo = new Map<string, RoutineStop[]>();
-const MEMO_SIZE = 64;
+/** The routines of the last 64 chunk slots asked for; pure results, so a drop costs only time. */
+const memo = new LruMap<string, RoutineStop[]>(64);
 
 /** The stop of passer-by `index` of `chunk` at the clock's time. Memoised; a miss gives what a hit would. */
 export const passerbyStop = (seed: number, chunk: string, index: number, count: number, clock: GameClock): RoutineStop | null => {
@@ -85,7 +85,6 @@ export const passerbyStop = (seed: number, chunk: string, index: number, count: 
   if (!plan) {
     plan = routineOf(seed, chunk, count, slot);
     memo.set(key, plan);
-    if (memo.size > MEMO_SIZE) memo.delete(memo.keys().next().value ?? key);
   }
   return plan[index] ?? null;
 };
