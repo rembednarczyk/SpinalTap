@@ -1657,7 +1657,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (testy)
 
 ### G-643 Budowa rastra i pola okna `wide` w jednym kroku symulacji
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g643)
+- Status: w PR #455 (12.11; time-slicing z budżetem 12 000 komórek na krok, p95 18 pościgów 16,4 → 3,4 ms; zapis v38; weryfikacja w toku)
 - Ważność: S3 · Zasięg: nowy plan objazdu w oknie `wide` buduje pole ok. 15 ms, a przy zmianie komórki 32 m także raster ok. 37 ms w jednym kroku (budżet ADR-0043: 4 ms); przy jednym odciętym gangerze w pościgu za biegnącym graczem przestój 15–50 ms co 1,5–2 s; poprawka: budowa rozłożona na kilka kroków (ganger idzie starą drogą do gotowego planu)
 - Pakiet właściciela: packages/sim (systems/ai)
 
@@ -1791,6 +1791,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (narzędzie, nie gra) · Zasięg: `tools/orto/src/barriers.ts` (`barrierReport`, `game` i `notDrawn`). W stare-miasto-0-0 raport podaje 9 linii „nierysowanych” (np. mur miejski w609951474), a wszystkie są w `stare-miasto.generated.ts` (`barriers`) i w grze (ADR-0077 p. 4). Komentarz modułu („the game draws none of them”) jest nieaktualny.
 - Pakiet właściciela: tools/orto
 - Test przyjęcia: raport dla stare-miasto-0-0 ma `notDrawn` 0 (bariery z `MAP_CHUNKS[].barriers`)
+
+### G-686 Uskok 0,52 m na zakręcie schodów z wiaduktu Zamkowej blokuje gangera
+- Status: zgłoszone (12.11, naprawiacz G-643; także na main)
+- Ważność: S3 · Zasięg: (729,5; 163,9): uskok niewidoczny dla `straightWalk` i pól nawigacji; ganger stoi tam wciśnięty na zawsze, na main przechodzi tylko, gdy jest akurat w powietrzu
+- Pakiet właściciela: packages/sim (systems/ai, nawigacja), ewentualnie treść schodów
+
+### G-687 `startOf` wybiera komórkę za cienkim płotem
+- Status: zgłoszone (12.11, naprawiacz G-643; także na main)
+- Ważność: S4 · Zasięg: szukanie komórki startowej w promieniu 2 (`steering.ts`) bierze komórkę po drugiej stronie płotu; ganger przy płocie podwórka (114,7; 85,3) dostaje drogę „przez” płot
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-688 Pierwszy krok pościgów i pierwszy krok po wczytaniu budują wszystko naraz
+- Status: zgłoszone (12.11, naprawiacz G-643; także na main)
+- Ważność: S3 · Zasięg: pierwszy krok pościgu buduje rastry near wszystkich celów naraz (133–187 ms przy 18 pościgach); pierwszy krok po wczytaniu buduje wszystkie trzymane drogi wide od razu (do 1,6 mln komórek); poprawka: ta sama kolejka z budżetem co w G-643 (#455); powiązane z G-645
+- Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
