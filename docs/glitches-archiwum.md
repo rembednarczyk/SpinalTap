@@ -2,6 +2,26 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-601 Budynki na brzegu mapy z domyślną wysokością niezgodną z NMPT
+- Status: naprawiony (PR #429, e8bbea5)
+- Ważność: S4 · Zasięg: Cicha 6 w grze ok. 15 m przy ok. 7 m w rzeczywistości, Cicha 8 ok. 11,2 m przy ok. 17,5 m, XVI LO ok. 6 m za niskie, Pałac Ordynacki bez dachu spadzistego (jak G-122), narożnik Cichej 5 do sprawdzenia; T-250; także VIVO r5601275: 11,1 m z `building:levels=3` w relacji, LoD1 17,2 m (po scaleniu heights sprawdzić, że LoD1 trafia do VIVO, nie do zdjętego garażu w173070505)
+- Pakiet właściciela: tools/osm-import
+
+### G-629 Na skarpie cokół NMT połyka kondygnacje z tagu (Kowalska)
+- Status: naprawiony (PR #429, e8bbea5)
+- Ważność: S3 · Zasięg: reguła `MIN_STOREY` w `lod1-heights.ts` liczy ściany od wierzchu cokołu; przy cokole 9–12 m Kowalska 7 spada z 4 kondygnacji do 1, Kowalska 9, 11, 13 z 3 do 1, od ulicy ślepy mur z jednym rzędem okien; 15 budynków (T-252); poprawka: kondygnacje z tagu zostają, gdy `height ≥ levels × 2,6`, cokół do `height − levels × STOREY`
+- Pakiet właściciela: tools/osm-import
+
+### G-631 Trybunał Koronny i Teatr Osterwy poniżej LoD1, Trybunał niższy od kamienic Rynku
+- Status: naprawiony (PR #429, e8bbea5)
+- Ważność: S3 · Zasięg: oba w `LOD1_LANDMARKS` zostają przy starych wysokościach; Trybunał okap 11,4 m wobec LoD1 17,5 m i LoD2 ok. 16,4 m, po zmianie kamienice Rynku mają okapy 4–8 m wyżej (odwrócona relacja); Teatr 16,3 wobec 19,5 m (T-254); poprawka: korekta w `TAG_CORRECTIONS` zgodna z LoD1 i NMPT; kontrola `landmark-vs-lod1` (baza 3 z Klasztorem Dominikanów, G-633)
+- Pakiet właściciela: tools/osm-import
+
+### G-632 Wyjątek `historic` wyjmuje z LoD1 pałace spoza listy punktów orientacyjnych
+- Status: naprawiony (PR #429, e8bbea5)
+- Ważność: S3 · Zasięg: `use === "historic"` w `lod1Exempt`: Pałac Zylbera 10,1 m wobec LoD1 19,4 m (okap LoD2 17,7), Pałac Parysów 11,1 wobec 18,1, Złota 3, Rynek 11, Pałac Pawęczkowskiego, DPS im. Michelisowej (T-255); poprawka: usunąć ten warunek, punkty orientacyjne mają własną listę; kontrola `height-vs-lod1` z historic (baza 10)
+- Pakiet właściciela: tools/osm-import
+
 ### G-600 Podwójna bryła VIVO: garaż podziemny `level=-2` rysowany jako budynek
 - Status: naprawiony (PR #427, a6cef32)
 - Ważność: S3 · Zasięg: w173070505 (`building=yes`, `level=-2`, `layer=2`) ma prawie ten sam obrys co VIVO r5601275; po G-556 obie bryły wracają przycięte, nakładają się na 1732 m², dachy dzieli 0,1 m (y −12,5 i −12,6), ryzyko migotania; Podzamcze x 1088–1120, z 160–240; poprawka: pomijać w imporcie budynki, których wszystkie `level` są ujemne (jak `location=underground`); garaż wystaje poza VIVO, więc po usunięciu odsłania ok. 149 próbek gołej ziemi (do wyłożenia według ortofoto); skan: ta sama reguła w `edge-buildings.ts` i `building-underground-solid`, nowa kontrola `building-duplicate` (nakładanie > 50% pola mniejszego, bez `building:part`)

@@ -1611,11 +1611,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: zaparkowane auta są we wspólnej siatce floty z zasięgiem rysowania 240 m (`VEHICLE_LOD` w `vehicle-views.ts`); jedno nowe auto 170 m od kamery (Kapucyńska, (153,7; −147,9)) poszerza obrys siatki tak, że przecina stożek widoku sceny `reference`, i cała flota staje się aktywna, choć auta w kadrze nie ma: 193/82 → 196/83; poprawka: podział floty na komórki albo obrys liczony z aut w zasięgu, bez podnoszenia budżetu; blokuje #409
 - Pakiet właściciela: packages/engine (renderer: pojazdy)
 
-### G-601 Budynki na brzegu mapy z domyślną wysokością niezgodną z NMPT
-- Status: w PR #429 (12.11; LoD1 dla 27 z 39 budynków przyciętych na brzegu, pełnym obrysem OSM)
-- Ważność: S4 · Zasięg: Cicha 6 w grze ok. 15 m przy ok. 7 m w rzeczywistości, Cicha 8 ok. 11,2 m przy ok. 17,5 m, XVI LO ok. 6 m za niskie, Pałac Ordynacki bez dachu spadzistego (jak G-122), narożnik Cichej 5 do sprawdzenia; T-250; także VIVO r5601275: 11,1 m z `building:levels=3` w relacji, LoD1 17,2 m (po scaleniu heights sprawdzić, że LoD1 trafia do VIVO, nie do zdjętego garażu w173070505)
-- Pakiet właściciela: tools/osm-import
-
 ### G-622 Loader glTF liczy pozycje skóry na CPU dla każdego prymitywu
 - Status: zgłoszone (11.11, naprawiacz G-620; do sprawdzenia w przeglądarce)
 - Ważność: S4 · Zasięg: `refreshBoundingInfo(true, true)` przy wczytywaniu VRM kosztuje 40–450 ms na plik w NullEngine; jeśli tak samo w przeglądarce, wydłuża wczytywanie postaci; inne testy modeli (`model-textures`, `model-cast-colours`, `model-donors`, `model-figure*`) też nie zwalniają silników
@@ -1631,24 +1626,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: `LITEVSKI_GREEN` i `SCHOOL_GREEN` w `tools/osm-import/src/corrections-zn.ts` (runda 2 #405) kładą trawę na asfalcie i kostce: pas x −201…−197, z 27–45 (54 m², zieleń 13%) i pas wzdłuż w80139555 do Cichej 4 (104 m², zieleń 4%); krakowskie-0-1; poprawka wg ADR-0077: trawa tylko na płatach zieleni z nakładki ortofoto (domknięcie 1 m, płat od 4 m²), reszta kostką jak T-243; kryterium: trawnik Litevski ≥ 70% zieleni, szkoły ≥ 55%, nowa kostka ≤ 15%; `cover-truth.test.ts` próg 0,55 → 0,7 (trawniki kuratora są prawdą klasyfikatora); nowa kontrola skanu `added-grass-off-green` (ręczne trawniki z zielenią < 50%: 11 z 20, 1 133 m²; do sprawdzenia też T-241 trawnik-wschod, trawnik-bajkowskiego, T-245 trawnik-3-maja-klinika, rabaty przy Collegium, T-246 trawnik-nadstawna-3)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-629 Na skarpie cokół NMT połyka kondygnacje z tagu (Kowalska)
-- Status: w PR #429 (12.11; kurator rundy 1–3 ZGODNE, weryfikator PRZYJĘTE; czeka na CI)
-- Ważność: S3 · Zasięg: reguła `MIN_STOREY` w `lod1-heights.ts` liczy ściany od wierzchu cokołu; przy cokole 9–12 m Kowalska 7 spada z 4 kondygnacji do 1, Kowalska 9, 11, 13 z 3 do 1, od ulicy ślepy mur z jednym rzędem okien; 15 budynków (T-252); poprawka: kondygnacje z tagu zostają, gdy `height ≥ levels × 2,6`, cokół do `height − levels × STOREY`
-- Pakiet właściciela: tools/osm-import
-
 ### G-630 Budynki LoD1 dopasowane luźno (IoU 0,5–0,7) zostają przy starej wysokości
 - Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1) ; osobny PR po heights
 - Ważność: S4 · Zasięg: 25 budynków z różnicą > 3 m, np. Kowalska 5 (w66309797) 24,5 m wobec LoD1 14,8 m obok Kowalskiej 7 z 15,3 m (uskok 9 m), Kuratorium Oświaty (T-253); proponowana kontrola `lod1-loose-match` (baza 25)
-- Pakiet właściciela: tools/osm-import
-
-### G-631 Trybunał Koronny i Teatr Osterwy poniżej LoD1, Trybunał niższy od kamienic Rynku
-- Status: w PR #429 (12.11; kurator rundy 1–3 ZGODNE, weryfikator PRZYJĘTE; czeka na CI)
-- Ważność: S3 · Zasięg: oba w `LOD1_LANDMARKS` zostają przy starych wysokościach; Trybunał okap 11,4 m wobec LoD1 17,5 m i LoD2 ok. 16,4 m, po zmianie kamienice Rynku mają okapy 4–8 m wyżej (odwrócona relacja); Teatr 16,3 wobec 19,5 m (T-254); poprawka: korekta w `TAG_CORRECTIONS` zgodna z LoD1 i NMPT; kontrola `landmark-vs-lod1` (baza 3 z Klasztorem Dominikanów, G-633)
-- Pakiet właściciela: tools/osm-import
-
-### G-632 Wyjątek `historic` wyjmuje z LoD1 pałace spoza listy punktów orientacyjnych
-- Status: w PR #429 (12.11; kurator rundy 1–3 ZGODNE, weryfikator PRZYJĘTE; czeka na CI)
-- Ważność: S3 · Zasięg: `use === "historic"` w `lod1Exempt`: Pałac Zylbera 10,1 m wobec LoD1 19,4 m (okap LoD2 17,7), Pałac Parysów 11,1 wobec 18,1, Złota 3, Rynek 11, Pałac Pawęczkowskiego, DPS im. Michelisowej (T-255); poprawka: usunąć ten warunek, punkty orientacyjne mają własną listę; kontrola `height-vs-lod1` z historic (baza 10)
 - Pakiet właściciela: tools/osm-import
 
 ### G-633 Klasztor Dominikanów: środek dachu 5 m nad LoD1
@@ -1707,7 +1687,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan
 
 ### G-647 Trawnik na dachu VIVO rysowany na ziemi
-- Status: zgłoszone (12.11, naprawiacz G-600; zawężone przez kuratora przeglądu G-600)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g647)
 - Ważność: S4 · Zasięg: trawnik r11978659 (`landuse=grass`, `layer=4`) to zieleń na dachu VIVO, a import kładzie go na ziemi pod budynkiem i na pasie nad jezdnią na północy (z 240–244, na ortofoto asfalt); część poza VIVO (x 1112–1120, z 230–239) to strop garażu ze świetlikami i zielenią, trawa tam zostaje; goła ziemia przy zachodniej ścianie (x 1100–1105, z 225–242, na ortofoto kostka chodnika i pas zieleni) do reguły gołej ziemi z ortofoto (ADR-0077 krok 1.1)
 - Pakiet właściciela: tools/osm-import
 
@@ -1747,7 +1727,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (tłum)
 
 ### G-655 Jezdnia z tagiem `lanes` nie jest dociągana do osobno zmapowanego chodnika
-- Status: zgłoszone (12.11, naprawiacz G-650; potwierdzone w kodzie; po scaleniu #429)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g655)
 - Ważność: S3 · Zasięg: `fitToKerb` (`tools/osm-import/src/ground.ts:123–126`, `|| Number(t.lanes) > 0) return t;`) pomija ulice z `lanes`; przy `sidewalk=separate` `roadWidth` = `lanes × 3,25`, np. Radziwiłłowska `lanes=3` (w331453920, w356402586, w914787972) 9,75 m, więc jezdnia i zewnętrzny pas ruchu zachodzą na chodnik (pas `footway` ma nawierzchnię „road” i „footway” naraz); po dociągnięciu oś pasa ok. 4 m od płotów w232805994 i w232805996, co odblokowuje G-650; zmiana całego miasta z regeneracją i przeglądem kuratora; zmierzyć czas `generate`
 - Pakiet właściciela: tools/osm-import
 
