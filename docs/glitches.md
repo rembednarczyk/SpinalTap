@@ -1642,37 +1642,37 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-605 Fundamenty fary na Placu po Farze stoją jako murki 1,0 m zamiast ok. 0,5 m
-- Status: poprawione w gałęzi #418, runda 2 (11.11; ponowny przegląd w toku)
+- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
 - Ważność: S3 · Zasięg: r18507551, r18507552, w1348806697–708 (431 m w grze), NMPT − otoczenie: mediana 0,45 m, p75 0,78 m; przy 1,0 m zamknięty labirynt; poprawka: korekta wysokości 0,5 m (bez w1348806709, taras przy Rynku 11); kontrola `ruin-wall-height`
 - Pakiet właściciela: tools/osm-import
 
 ### G-606 Symulacja tnie bariery, wzdłuż których biegnie trasa tłumu
-- Status: poprawione w gałęzi #418, runda 2 (11.11; ponowny przegląd w toku)
+- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
 - Ważność: S3 · Zasięg: 21 odcinków ≥ 3 m, ok. 397 m, m.in. 127 m z ok. 152 m dwumetrowego muru oporowego skarpy pod Archikatedrą w67626198 (Podwale), ogrodzenie w231832115 (70 m), żywopłot w828140561; trasa 0,9 m od muru zostawia 0,4 m luzu; poprawka: ciąć tylko przy przecięciu (kąt jak `CROSS_SINE`) albo mniejszy `CROWD_ROOM`; kontrola `barrier-parallel-cut`
 - Pakiet właściciela: packages/sim, tools/osm-import
 
 ### G-607 Przy schodach znikają mury po obu stronach biegu
-- Status: poprawione w gałęzi #418, runda 2 (11.11; ponowny przegląd w toku)
+- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
 - Ważność: S3 · Zasięg: Zaułek Panasa w179264861: mur miejski w232362994 z 40 m zostaje 7 m (`FLIGHT_ROOM` 1,9 m), mur oporowy w232362995 traci 40 m w imporcie i 37 m w sim; balustrada w231832095 na podeście w Podzamczu (785; 248); poprawka: mur na krawędzi biegu zostaje (ewentualnie odsunięty na krawędź pasa), odstęp z szerokości biegu; kontrola `city-wall-kept`
 - Pakiet właściciela: tools/osm-import, packages/sim
 
 ### G-608 Import tnie bariery biegnące wzdłuż krawędzi pasa jezdni
-- Status: poprawione w gałęzi #418, runda 2 (11.11; ponowny przegląd w toku)
+- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
 - Ważność: S4 · Zasięg: pas z `roadWidth` szerszy niż jezdnia na ortofoto, więc mur przy krawężniku leży „na jezdni”: w232806008 (51 m, 389; 153), w886723051 (48 m, 220; −196), płot w73811517 przy Zamkowej (985; 281), murek w227679479 (28 m, 534; 517), koniec w67626198 (29 m); poprawka: reguła kąta jak dla dróg, bariery wzdłuż krawędzi przesunąć poza pas
 - Pakiet właściciela: tools/osm-import
 
 ### G-610 Gracz za płotem jest nietykalny: ganger widzi przez płot i strzela w niego bez końca
-- Status: poprawione w gałęzi #418, runda 2 (11.11; ponowny przegląd w toku)
+- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
 - Ważność: S2 · Zasięg: `inSight` (`ganger-perception.ts:201`) przez `clearSight` przepuszcza wzrok przez płot, a strzał płot zatrzymuje; `ShootAtPlayer` zeruje prędkość, `ChasePlayer` i `firingPosition` się nie włączają; sonda: 11 strzałów, 0 HP straty przy trzech płotach; 1359 płotów w grze
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-611 Świadkowie przestępstwa nie widzą przez płot i żywopłot, obserwatorzy ciał widzą
-- Status: poprawione w gałęzi #418, runda 2 (11.11; ponowny przegląd w toku)
+- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
 - Ważność: S4 · Zasięg: `crime-system.ts:82-104` (kamera, świadek, patrol, `inPlayerView`) używa `lineOfSight`, a reszta wzroku `clearSight`
 - Pakiet właściciela: packages/sim
 
 ### G-612 Mury przecinają ogródki kawiarniane i siedziska tłumu
-- Status: poprawione w gałęzi #418, runda 2 (11.11; ponowny przegląd w toku)
+- Status: poprawione w gałęzi #418, runda 2 przyjęta przez kuratora i weryfikatora (11.11; czeka na CI)
 - Ważność: S3 · Zasięg: `furnitureClearance` (`world-barriers.ts:513`) pomija meble niesolidne, `CROWD_SPOTS` i `SEAT_SPOTS` nie biorą udziału w cięciu; cafe-garden (629,5; 117,2) 31 ze 168 próbek w murze, (583,7; 24,5), siedziska #286 i #287 z murem 0,05–0,14 m przed twarzą
 - Pakiet właściciela: packages/sim, tools/glitch-scan
 
@@ -1690,6 +1690,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (11.11, kurator przeglądu #418, runda 2; osobny PR)
 - Ważność: S3 · Zasięg: trasy `stare-miasto-1-0-square-0` i `stare-miasto-1-1-square-0` idą w medianie 0,5 m od muru w67626198, a oś chodnika w56965511 jest 0,65–1,95 m od muru (zwykle 1,7 m); przez to 61 m dwumetrowego muru skarpy pod Archikatedrą wycięte (x 673–693, 701–705, 731–743, 753–760 przy z −200…−161 i x 745–760 przy z −15…12); kryterium: trasy co najmniej 1,0 m od muru i mur w grze ponad 170 z 183 m; T-251
 - Pakiet właściciela: packages/sim (tłum), tools/osm-import
+
+### G-625 Ganger staje przy długim płocie albo murze, gdy w oknie sterowania nie ma drogi
+- Status: zgłoszone (11.11, weryfikator #418 runda 2)
+- Ważność: S3 · Zasięg: `planDetour` (`steering.ts`) zwraca „off-field”, gdy w oknie 80 m nie ma objazdu; ganger dochodzi do przeszkody i stoi, gracz za nią bezpieczny (sonda 30 s: 0 strzałów); np. płot (11,83; −251,22), mur 3 m (214; −28,13); bariery z #418 uwidaczniają to w wielu miejscach; test `barrier-ai.test.ts` („moved > 1”) przeszedłby też z gangerem stojącym przy płocie; poprawka: dłuższy objazd (nawigacja po grafie poziomu albo większe okno), a gdy drogi nie ma, przejście do osłony lub szukania
+- Pakiet właściciela: packages/sim (systems/ai, steering)
+
+### G-626 Piesi tłumu wchodzą w bariery biegnące wzdłuż ich trasy
+- Status: zgłoszone (11.11, weryfikator #418 runda 2)
+- Ważność: S4 · Zasięg: `barrier-room.ts` (`CROWD_LINE` 0,3 m) przy pieszych idących 0,28 m od linii trasy bez kolizji z bryłami; 45 kawałków, 149 m (21 płotów, 7 żywopłotów, 1 mur, 16 murów oporowych), najgłębiej ponad 0,2 m, np. płot (729,5; 93,0); skan `barrier-on-crowd-lane` ma próg `ALONG` 0,2 m zamiast 0,58 m; łączy się z G-613 (trasy tłumu z dala od barier)
+- Pakiet właściciela: packages/sim (tłum), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
