@@ -1681,11 +1681,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: pamięć `chases` (`steering.ts:660`) nie trafia do zapisu, a `chaseDetour` nie podlega limitowi `mayPlan`; pierwszy krok po wczytaniu buduje rastry `wide` wszystkich gangerów z `chase` naraz (54,7 ms na okno, przy kilku oknach N razy więcej); to samo przy zmianie `floor|reach`; determinizm bez zmian
 - Pakiet właściciela: packages/sim (systems/ai)
 
-### G-646 Skan `market-pieces` ma własną regułę podziemia
-- Status: w PR #431 (12.11)
-- Ważność: S4 · Zasięg: `tools/glitch-scan/test/market-pieces.ts:96` `const isBuilding = (t: Tags): boolean => t.building !== undefined && t.building !== "roof" && t.location !== "underground" && Number(t.layer ?? 0) >= 0;`: garaż z `level=-2`, `layer=2` liczy jako budynek, a samo `layer<0` (budynek pod wiaduktem) jako podziemie; do ujednolicenia z `belowGround` (G-600)
-- Pakiet właściciela: tools/glitch-scan
-
 ### G-647 Trawnik na dachu VIVO rysowany na ziemi
 - Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g647)
 - Ważność: S4 · Zasięg: trawnik r11978659 (`landuse=grass`, `layer=4`) to zieleń na dachu VIVO, a import kładzie go na ziemi pod budynkiem i na pasie nad jezdnią na północy (z 240–244, na ortofoto asfalt); część poza VIVO (x 1112–1120, z 230–239) to strop garażu ze świetlikami i zielenią, trawa tam zostaje; goła ziemia przy zachodniej ścianie (x 1100–1105, z 225–242, na ortofoto kostka chodnika i pas zieleni) do reguły gołej ziemi z ortofoto (ADR-0077 krok 1.1)

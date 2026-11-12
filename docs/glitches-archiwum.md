@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-646 Skan `market-pieces` ma własną regułę podziemia
+- Status: naprawiony (PR #431, 71841c5)
+- Ważność: S4 · Zasięg: `tools/glitch-scan/test/market-pieces.ts:96` `const isBuilding = (t: Tags): boolean => t.building !== undefined && t.building !== "roof" && t.location !== "underground" && Number(t.layer ?? 0) >= 0;`: garaż z `level=-2`, `layer=2` liczy jako budynek, a samo `layer<0` (budynek pod wiaduktem) jako podziemie; do ujednolicenia z `belowGround` (G-600)
+- Pakiet właściciela: tools/glitch-scan
+
 ### G-601 Budynki na brzegu mapy z domyślną wysokością niezgodną z NMPT
 - Status: naprawiony (PR #429, e8bbea5)
 - Ważność: S4 · Zasięg: Cicha 6 w grze ok. 15 m przy ok. 7 m w rzeczywistości, Cicha 8 ok. 11,2 m przy ok. 17,5 m, XVI LO ok. 6 m za niskie, Pałac Ordynacki bez dachu spadzistego (jak G-122), narożnik Cichej 5 do sprawdzenia; T-250; także VIVO r5601275: 11,1 m z `building:levels=3` w relacji, LoD1 17,2 m (po scaleniu heights sprawdzić, że LoD1 trafia do VIVO, nie do zdjętego garażu w173070505)
