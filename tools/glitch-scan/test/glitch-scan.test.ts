@@ -53,6 +53,7 @@ import { type CoverageRegister, hitsPerCell, registerProblems } from "../src/map
 import { metroLineProtected } from "./metro-line";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
+import { bareOnCover } from "./bare-on-cover";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
@@ -1895,6 +1896,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "edge-building-dropped": () => edgeBuildingsDropped(osmBuildings(SOURCE_OSM), LUBLIN_CHUNKS.map((c) => c.bounds), new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => b.id)))),
   /** A point of a 0.5 m grid on bare terrain in a shops' or market's area, by a shop's or public building's walls or at a stop (`landuse-bare.ts`, decision 5.11). */
   "landuse-bare": () => landuseBare(cityLanduseWorld(SOURCE_OSM)),
+  /** A `landuse-bare` sample the orthophoto's cover shows green or light paving: what the import lays a lawn or paving on (ADR-0077 step 1.1, `bare-on-cover.ts`). */
+  "bare-on-cover": () => bareOnCover(landuseBare(cityLanduseWorld(SOURCE_OSM)), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => kerbGapBare(cityKerbWorld(SOURCE_OSM)),
   /** A point of a 0.25 m grid in a pavement no paving of the map explains, a metre wide and more, by a carriageway the map gives no width: its asphalt laid as a pavement (`kerb-fill.ts`, G-570). */
