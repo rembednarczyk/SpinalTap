@@ -3,6 +3,7 @@
  * the plan is placed: a piece placed later must not stand in one placed before (a bin in a
  * tree's trunk, a road lamp in a trolley pole).
  */
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import type { Pt } from "./geometry.ts";
@@ -63,9 +64,10 @@ const solidOf = (item: StreetPropItem): Solid => ({
 /** Kinds left out: bollards stand in tight rows of their own, a cover has no solid. */
 const LOOSE: ReadonlySet<string> = new Set(["bollard", "manhole"]);
 
-/** The solids placed so far, in a grid of 4 m cells. */
-export class SolidIndex {
-  private readonly cells = new Map<string, Solid[]>();
+/** The solids of the pieces placed so far, in a grid of 4 m cells (`SolidIndex` is the simulation's). */
+export class PropSolidIndex {
+  /** The solids by their centres: one further than the reach of the largest is no clash. */
+  private readonly grid = new SpatialHash<Solid>(CELL);
   private reach = 0;
 
   /** Does the piece's solid run into one already kept? */
@@ -73,16 +75,10 @@ export class SolidIndex {
     if (LOOSE.has(item.prop)) return false;
     const s = solidOf(item);
     if (s.r === 0) return false;
-    const span = Math.ceil((s.r + this.reach) / CELL);
-    const cx = Math.floor(s.p.x / CELL);
-    const cz = Math.floor(s.p.z / CELL);
-    for (let i = cx - span; i <= cx + span; i++)
-      for (let j = cz - span; j <= cz + span; j++)
-        for (const o of this.cells.get(`${i}:${j}`) ?? []) {
-          if (Math.hypot(o.p.x - s.p.x, o.p.z - s.p.z) >= o.r + s.r) continue;
-          if (o.parts.some((a) => s.parts.some((b) => depth(a, b) > 0))) return true;
-        }
-    return false;
+    return this.grid.some(s.p.x - s.r - this.reach, s.p.z - s.r - this.reach, s.p.x + s.r + this.reach, s.p.z + s.r + this.reach, (o) => {
+      if (Math.hypot(o.p.x - s.p.x, o.p.z - s.p.z) >= o.r + s.r) return false;
+      return o.parts.some((a) => s.parts.some((b) => depth(a, b) > 0));
+    });
   }
 
   add(item: StreetPropItem): void {
@@ -90,8 +86,7 @@ export class SolidIndex {
     const s = solidOf(item);
     if (s.r === 0) return;
     this.reach = Math.max(this.reach, s.r);
-    const k = `${Math.floor(s.p.x / CELL)}:${Math.floor(s.p.z / CELL)}`;
-    this.cells.set(k, [...(this.cells.get(k) ?? []), s]);
+    this.grid.insertPoint(s, s.p.x, s.p.z);
   }
 }
 
@@ -102,7 +97,7 @@ const SLIDES = [0.4, -0.4, 0.8, -0.8, 1.2, -1.2, 1.6, -1.6];
  * The piece where its solid keeps out of the kept ones: where it stands, else slid to the
  * nearest spot `fits` accepts, at the 0.1 m the chunks keep; null when none is clear.
  */
-export const clearSpot = (solids: SolidIndex, item: StreetPropItem, fits: (p: Pt) => boolean): StreetPropItem | null => {
+export const clearSpot = (solids: PropSolidIndex, item: StreetPropItem, fits: (p: Pt) => boolean): StreetPropItem | null => {
   if (!solids.clashes(item)) return item;
   // The renderer's frame: the front is +z turned by the yaw, the side +x.
   const side = { x: Math.cos(item.yaw), z: -Math.sin(item.yaw) };

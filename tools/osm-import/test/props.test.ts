@@ -18,7 +18,7 @@ import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
 import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
-import { SolidIndex, clearSpot } from "../src/props-solid.ts";
+import { PropSolidIndex, clearSpot } from "../src/props-solid.ts";
 import { cityProps } from "./city.ts";
 import { gameDoors } from "../src/game-doors.ts";
 import { loadCarriageways, loadUndergroundWays } from "../src/props-roads.ts";
@@ -348,7 +348,7 @@ describe("street furniture generator (ADR-0047)", () => {
   });
 
   it("steps a piece placed later out of the solids placed before it, or drops it with no room (G-012)", () => {
-    const solids = new SolidIndex();
+    const solids = new PropSolidIndex();
     solids.add({ prop: "tree", x: 0, y: 0, z: 0, yaw: 0, variant: 0 });
     const bin = { prop: "waste-bin" as const, x: 0.1, y: 0, z: 0.1, yaw: 0, variant: 0 };
     expect(solids.clashes(bin)).toBe(true);
