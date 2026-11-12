@@ -26,7 +26,7 @@
 import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
 import { COVER } from "../../orto/src/classify.ts";
 import { type Cover, coverFor } from "../../orto/src/cover.ts";
-import { Cells, LABEL, STEP, taken } from "./bare-cells.ts";
+import { Cells, LABEL, STEP, scratch, taken } from "./bare-cells.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
 import { contours } from "./contour.ts";
 import { type Area } from "./features.ts";
@@ -90,14 +90,20 @@ const labelOf = (cls: number): number =>
 /** The free cells' labels from the cover; covered ones stay covered. */
 const readCover = (cells: Cells, cover: Cover): void => {
   const h = cover.header;
+  // Each class's label, and each column's column of the raster (-1 off it).
+  const labels = Uint8Array.from({ length: 16 }, (_, c) => labelOf(c));
+  const cols = Int32Array.from({ length: cells.nx }, (_, i) => {
+    const col = Math.floor((cells.rect.minX + (i + 0.5) * STEP - h.x0) / h.step);
+    return col < 0 || col >= h.width ? -1 : col;
+  });
   for (let j = 0; j < cells.nz; j++) {
     const row = Math.floor((h.z1 - (cells.rect.minZ + (j + 0.5) * STEP)) / h.step);
+    const off = row < 0 || row >= h.height;
     for (let i = 0; i < cells.nx; i++) {
       const k = j * cells.nx + i;
       if (taken(cells.label[k]!)) continue;
-      const col = Math.floor((cells.rect.minX + (i + 0.5) * STEP - h.x0) / h.step);
-      const cls = col < 0 || row < 0 || col >= h.width || row >= h.height ? COVER.none : cover.cls[row * h.width + col]!;
-      cells.label[k] = labelOf(cls);
+      const col = cols[i]!;
+      cells.label[k] = labels[off || col < 0 ? COVER.none : cover.cls[row * h.width + col]!]!;
     }
   }
 };
@@ -105,7 +111,7 @@ const readCover = (cells: Cells, cover: Cover): void => {
 /** A summed-area table of the cells of `label`: entry (i, j) counts those west and south of (i, j). */
 const summed = (cells: Cells, label: number): Int32Array => {
   const { nx, nz } = cells;
-  const s = new Int32Array((nx + 1) * (nz + 1));
+  const s = scratch.i32(`summed.${label}`, (nx + 1) * (nz + 1));
   for (let j = 0; j < nz; j++) {
     let n = 0;
     for (let i = 0; i < nx; i++) {
@@ -122,7 +128,8 @@ const resolveMixed = (cells: Cells): void => {
   if (!label.includes(LABEL.mixed)) return;
   const [sg, ss, so] = [summed(cells, LABEL.grass), summed(cells, LABEL.square), summed(cells, LABEL.other)];
   const r = FILL.around;
-  const next = Uint8Array.from(label);
+  const next = scratch.u8("mixed.next", label.length);
+  next.set(label);
   for (let j = 0; j < nz; j++) {
     const lo = Math.max(0, j - r) * (nx + 1);
     const hi = Math.min(nz, j + r + 1) * (nx + 1);
@@ -152,8 +159,8 @@ const eachRegion = (
   from: (k: number) => boolean = () => true,
 ): void => {
   const { nx, nz, label } = cells;
-  const seen = new Uint8Array(nx * nz);
-  const queue = new Int32Array(nx * nz);
+  const seen = scratch.u8("region.seen", nx * nz);
+  const queue = scratch.i32("region.queue", nx * nz);
   const round = new Int32Array(8);
   for (let s = 0; s < nx * nz; s++) {
     if (seen[s] || taken(label[s]!) || !from(s)) continue;
@@ -217,7 +224,7 @@ const dropLoose = (cells: Cells): void =>
  */
 const drawnCells = (cells: Cells, label: number): Uint8Array => {
   const { nx, nz } = cells;
-  const drawn = new Uint8Array(nx * nz);
+  const drawn = scratch.u8(`drawn.${label}`, nx * nz);
   for (let k = 0; k < nx * nz; k++) {
     if (cells.label[k] !== label) continue;
     drawn[k] = 1;
