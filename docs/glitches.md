@@ -1702,7 +1702,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/ai)
 
 ### G-646 Skan `market-pieces` ma własną regułę podziemia
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g646)
+- Status: w PR #431 (12.11)
 - Ważność: S4 · Zasięg: `tools/glitch-scan/test/market-pieces.ts:96` `const isBuilding = (t: Tags): boolean => t.building !== undefined && t.building !== "roof" && t.location !== "underground" && Number(t.layer ?? 0) >= 0;`: garaż z `level=-2`, `layer=2` liczy jako budynek, a samo `layer<0` (budynek pod wiaduktem) jako podziemie; do ujednolicenia z `belowGround` (G-600)
 - Pakiet właściciela: tools/glitch-scan
 
