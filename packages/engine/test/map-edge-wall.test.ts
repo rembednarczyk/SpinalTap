@@ -70,8 +70,10 @@ describe("a wall on the map's edge (G-556)", () => {
     expect(edgeWalls("w55897093").map(([a, c]) => [a!.x, c!.x])).toEqual([[-200, -200]]);
     // The Brigittines' church, whole in Krakowskie: no wall on the edge.
     expect(edgeWalls("w66264082")).toEqual([]);
-    // Only the 37 buildings the importer cut there (G-556) have one; the underground garage of
-    // VIVO (w173070505) was the 38th until it stopped being a solid (G-600).
-    expect(LUBLIN_CHUNKS.flatMap((c) => c.buildings).filter((b) => edgeWalls(b.id).length > 0)).toHaveLength(37);
+    // Only the 38 buildings the importer cut there (G-556) have one. The 38th is the part of VIVO's
+    // garage past the mall, over the street (G-662), cut at x 1120; the whole garage w173070505,
+    // under the mall too, was one until it stopped being a solid (G-600).
+    expect(edgeWalls("T-261/garaz-vivo").map(([a, c]) => [a!.x, c!.x])).toEqual([[1120, 1120]]);
+    expect(LUBLIN_CHUNKS.flatMap((c) => c.buildings).filter((b) => edgeWalls(b.id).length > 0)).toHaveLength(38);
   });
 });
