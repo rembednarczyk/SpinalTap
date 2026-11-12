@@ -1616,11 +1616,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `refreshBoundingInfo(true, true)` przy wczytywaniu VRM kosztuje 40–450 ms na plik w NullEngine; jeśli tak samo w przeglądarce, wydłuża wczytywanie postaci; inne testy modeli (`model-textures`, `model-cast-colours`, `model-donors`, `model-figure*`) też nie zwalniają silników
 - Pakiet właściciela: packages/engine (renderer: modele)
 
-### G-627 Ręczne trawniki T-245 leżą częściowo na nawierzchni
-- Status: w PR #438 (12.11; kurator PRZYJĘTE, trawnik północny z 41–48,5 potwierdzony)
-- Ważność: S3 · Zasięg: `LITEVSKI_GREEN` i `SCHOOL_GREEN` w `tools/osm-import/src/corrections-zn.ts` (runda 2 #405) kładą trawę na asfalcie i kostce: pas x −201…−197, z 27–45 (54 m², zieleń 13%) i pas wzdłuż w80139555 do Cichej 4 (104 m², zieleń 4%); krakowskie-0-1; poprawka wg ADR-0077: trawa tylko na płatach zieleni z nakładki ortofoto (domknięcie 1 m, płat od 4 m²), reszta kostką jak T-243; kryterium: trawnik Litevski ≥ 70% zieleni, szkoły ≥ 55%, nowa kostka ≤ 15%; `cover-truth.test.ts` próg 0,55 → 0,7 (trawniki kuratora są prawdą klasyfikatora); nowa kontrola skanu `added-grass-off-green` (ręczne trawniki z zielenią < 50%: 11 z 20, 1 133 m²; do sprawdzenia też T-241 trawnik-wschod, trawnik-bajkowskiego, T-245 trawnik-3-maja-klinika, rabaty przy Collegium, T-246 trawnik-nadstawna-3)
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-630 Budynki LoD1 dopasowane luźno (IoU 0,5–0,7) zostają przy starej wysokości
 - Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1) ; osobny PR po heights
 - Ważność: S4 · Zasięg: 25 budynków z różnicą > 3 m, np. Kowalska 5 (w66309797) 24,5 m wobec LoD1 14,8 m obok Kowalskiej 7 z 15,3 m (uskok 9 m), Kuratorium Oświaty (T-253); proponowana kontrola `lod1-loose-match` (baza 25)
@@ -1752,7 +1747,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan
 
 ### G-665 Szczelina między kawałkami trawnika na garażu VIVO
-- Status: w PR #440 (12.11; przegląd kuratora w toku)
+- Status: w PR #440 (12.11; kurator PRZYJĘTE)
 - Ważność: S4 · Zasięg: próbka (1119,75; 238,75), 0,057 m wewnątrz krawędzi garażu w173070505, w pasie ok. 0,1–0,2 m² między kawałkami trawnika z `groundRaisedGreen` (G-647, #436); test G-600 „leaves none of the garage's outline past the mall bare” pada po poprawce skanu G-664; przyczyna prawdopodobnie w cięciu po częściach wypukłych albo przycięciu do granicy chunku x = 1120
 - Pakiet właściciela: tools/osm-import
 
@@ -1777,7 +1772,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-670 Kontrola `added-grass-off-green` bez listy wyjątków celowych i bez lustra dla kostki
-- Status: poprawione na gałęzi ccr-ec2c4269-ilh8k8-g670 @ a87864d (12.11; added-grass-off-green 10 → 5, nowa added-paving-on-green 3: T-246/ruska-a, T-246/ruska-b, T-245/zn2-wschod-trawnik; PR po scaleniu #438)
+- Status: runda 2 (12.11): kurator: 3 trafienia added-paving-on-green to korony drzew nad kostką (nalot bez liści 2025-04: 2%, 4%, 0%), lista PAVING_ON_GREEN_KNOWN, baza 3 → 0; trwale lepiej: zieleń liczona też z nalotu bez liści (osobny glitch)
 - Ważność: S4 · Zasięg: baza 10 liczy też celowe trawniki T-241 (`trawnik-zachod`, `trawnik-wschod`, `trawnik-bajkowskiego`, plan inwestora ADR-0074) i błędy klasyfikatora (`T-243/ck-zachod-trawnik`, `T-245/rabata-kolegium-poludnie`): lista wyjątków z odsyłaczem T-NNN, baza 10 → 5; nowa kontrola `added-paving-on-green` (ręczna kostka z zielenią ≥ 50%, kandydaci `T-245/zn2-wschod-trawnik` 71%, `zn2-wschod-srodek` 40%); do sprawdzenia też pas zieleni ok. 22 m² pod `podworze-litevski` (x −194,5…−192, z 28–39)
 - Pakiet właściciela: tools/glitch-scan
 
@@ -1785,6 +1780,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, naprawiacz G-665)
 - Ważność: S4 · Zasięg: `tools/osm-import/src/ground.ts` `chunkGround`: wycinki pasm `holed` (wypełnienia chodnika przy krawężniku) poniżej 0,5 m² w chunku są odrzucane; wariant zachowujący je dla wszystkich pasm `holed` dokłada 114 kawałków chodnika i obniża `kerb-gap-bare` o 195, ale podnosi `kerb-fill-wide-estimated` o 15 i daje 22 nowe próbki `kerb-gap-bare` (x≈747, z≈155–160 i (376; −11)), bo wypełnienia G-570 robią się ciągłe; do rozwiązania razem
 - Pakiet właściciela: tools/osm-import
+
+### G-672 Klasyfikator pokrycia liczy korony drzew jako zieleń pod nimi
+- Status: zgłoszone (12.11, kurator przeglądu G-670)
+- Ważność: S4 · Zasięg: `tools/orto` uśrednia nadmiar zieleni z trzech nalotów, więc dwa letnie (2023-09, 2024-06) zawyżają zieleń pod koronami; np. T-246/ruska-a 61% przy 2% na nalocie bez liści 2025-04; propozycja: kostka liczy się jako „na zieleni” tylko przy zieleni także na nalocie 2025-04 (np. ≥ 20%), próg sprawdzić na trawnikach z `truth.ts` (w kwietniu część trawników brązowa)
+- Pakiet właściciela: tools/orto, tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
