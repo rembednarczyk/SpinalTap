@@ -1767,7 +1767,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-677 Kontrola skanu: ręczna bryła nad drogą z OSM
-- Status: zgłoszone (12.11, kurator przeglądu G-662)
+- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g677)
 - Ważność: S4 · Zasięg: brak kontroli, która łapie ręczny obszar `ADDED_AREAS` z `building=*`, którego pierścień (także poza mapą) przecina `highway=*` bez `tunnel` ani `covered`; dziś 1 przypadek: `T-261/garaz-vivo` zamyka schody w376043570 i chodnik w295849313 (wejście do VIVO pod dachem garażu, x 1121–1146, poza mapą, ukryte przycięciem na x = 1120); kontrola `added-solid-over-way` z bazą 1 i wyjątkiem z odsyłaczem do topografii do czasu poszerzenia mapy
 - Pakiet właściciela: tools/glitch-scan
 
