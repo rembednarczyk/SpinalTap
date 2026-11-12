@@ -62,6 +62,23 @@ const nearestAlong = (laneIds: (id: string) => boolean, lines: ReturnType<typeof
   return worst;
 };
 
+/** The pairs of a closed route's segments that cross each other (not neighbours, not lying on each other: a route walked there and back). */
+const crossings = (pts: readonly P[]): [number, number][] => {
+  const side = (a: P, b: P, c: P): number => Math.sign((b.x - a.x) * (c.z - a.z) - (b.z - a.z) * (c.x - a.x));
+  const n = pts.length;
+  const out: [number, number][] = [];
+  for (let i = 0; i < n; i++) {
+    const [a, b] = [pts[i]!, pts[(i + 1) % n]!];
+    for (let j = i + 2; j < n; j++) {
+      if (i === 0 && j === n - 1) continue;
+      const [c, d] = [pts[j]!, pts[(j + 1) % n]!];
+      if (Math.max(a.x, b.x) < Math.min(c.x, d.x) || Math.max(c.x, d.x) < Math.min(a.x, b.x) || Math.max(a.z, b.z) < Math.min(c.z, d.z) || Math.max(c.z, d.z) < Math.min(a.z, b.z)) continue;
+      if (side(a, b, c) * side(a, b, d) < 0 && side(c, d, a) * side(c, d, b) < 0) out.push([i, j]);
+    }
+  }
+  return out;
+};
+
 describe("the squares' routes by the map's barriers (G-613)", () => {
   it("walks Podwale's footway at least 1 m off the retaining wall w67626198", () => {
     // Short of the map's east edge at x 760, which cuts the wall and the footway (T-049): the routes turn back there.
@@ -73,6 +90,15 @@ describe("the squares' routes by the map's barriers (G-613)", () => {
     // 2777 quarter metres within 0.7 m before G-613; what is left under 1 m are turns round a planter's corner (krakowskie-1-1) and the map's edge.
     const w = nearestAlong((id) => id.includes("-square-"), barrierLines(() => true), () => true);
     expect(w.d, `a route at ${w.at} is ${w.d.toFixed(2)} m from ${w.id}`).toBeGreaterThan(0.6);
+  });
+
+  it("moves no square's or alley's route into loops of its own", () => {
+    // krakowskie-2-0-square-1 crosses itself at (368, -223) before G-613 too (segments 0x3, 0x5): reported apart, not this rule's.
+    const crossed = CROWD_LANES.filter((l) => l.id.includes("-square-") && l.id !== "krakowskie-2-0-square-1").flatMap((l) => {
+      const pts = l.points.map(([x, z]): P => ({ x, z }));
+      return crossings(pts).map(([i, j]) => `${l.id} ${i}x${j} at ${pts[i]!.x.toFixed(1)}, ${pts[i]!.z.toFixed(1)}`);
+    });
+    expect(crossed).toEqual([]);
   });
 
   it("keeps the wall under the Archikatedra in the game over 170 of its 183 m", () => {

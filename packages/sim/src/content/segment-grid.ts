@@ -30,16 +30,16 @@ export class SegmentGrid {
     }
   }
 
-  /** The segments in the cells round (x, z): every one within a cell of it. */
-  nearby(x: number, z: number): [Pt, Pt][] {
+  /** Calls `visit` with each segment in the cells round (x, z): every one within a cell of it, some twice. */
+  eachNear(x: number, z: number, visit: (a: Pt, b: Pt) => void): void {
     const c = SegmentGrid.CELL;
     const cx = Math.floor(x / c);
     const cz = Math.floor(z / c);
-    const out: [Pt, Pt][] = [];
     for (let i = cx - 1; i <= cx + 1; i++) {
-      for (let k = cz - 1; k <= cz + 1; k++) out.push(...(this.cells.get(`${i}:${k}`) ?? []));
+      for (let k = cz - 1; k <= cz + 1; k++) {
+        for (const [a, b] of this.cells.get(`${i}:${k}`) ?? []) visit(a, b);
+      }
     }
-    return out;
   }
 
   /** Is (x, z) closer than `r` (at most a cell) to a segment; with `across`, only to one crossing that direction at 30 degrees and more? */
