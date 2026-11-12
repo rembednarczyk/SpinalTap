@@ -1636,11 +1636,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: mur oporowy w227679479 na Podzamczu (539; 517) biegnie po południowej ścianie garażu w444375263, który stoi w grze od G-556; `inBuilding` w `barrier-room.ts` słusznie go tnie, a kontrola liczy odcinek jako „cut”; poprawka: import pomija odcinek bariery leżący na ścianie budynku albo kontrola go nie liczy; po niej baza wraca do 14
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-639 Płaska bryła na wysokości LoD1 przy stromym dachu wypada na kalenicy
-- Status: w PR #459 (12.11; kurator PRZYJĘTE w rundzie 2; okap od ulicy osobno: G-695)
-- Ważność: S3 · Zasięg: budynki bez tagów dachu stoją płasko na wysokości LoD1, a przy stromym dachu LoD1 leży prawie na kalenicy; np. Pałac Parysów w66330695 w grze 18,1 m i 5 rzędów okien, w LoD2 okap 10,7 m i kalenica 18,2 m (przed zmianą 11,1 m); ok. 59 budynków (płaski dach w grze, dach LoD2 > 4 m, okap gry > 3 m nad okapem LoD2; liczba przybliżona, okap LoD2 bywa okapem przybudówki); poprawka: gdy LoD2 ma okap i kalenicę, a OSM nie ma tagów dachu, okap i dach z LoD2; kontrola `flat-over-lod2-roof` (baza ok. 59); luka pokrewna: `church-over-nmpt` nie wykrywa kościoła za niskiego
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-640 Raster AI bierze koniec niskiego pomostu za płaski teren
 - Status: zgłoszone (12.11, naprawiacz G-625; potwierdzone w kodzie)
 - Ważność: S3 · Zasięg: `ledgesOf` liczy uskoki pomostu tylko w oknie ze schodami (`steering.ts:313` `const ledges = base && flight ? ledgesOf(...) : null;`, warunek w `:266`); w doku przy (2477,2; 407,8) teren −27,24, pomost −26,88 (`onLowDeck`), uskok 0,37 m, którego ruch nie pokonuje, a raster widzi płasko; ganger w pościgu przy dokach może tam utknąć; rodzina G-339
