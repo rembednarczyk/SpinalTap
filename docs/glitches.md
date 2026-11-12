@@ -1727,7 +1727,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-662 Trójkąt garażu VIVO nad ziemią bez bryły
-- Status: w PR #447 (12.11; bryła 11 m z cienia na nalocie 2025-04; przegląd kuratora w toku)
+- Status: w PR #447 (12.11; kurator PRZYJĘTE, 11 m mieści się w 10–11,4 m; do scalenia main i uzupełnienia T-261)
 - Ważność: S3 · Zasięg: w173070505, x 1105,8–1120, z 228–239,7: na trzech nalotach ortofoto dach z sedum i świetlikami ok. 5–10 m nad chodnikiem (cień do z 244–251), w grze trawnik na poziomie gruntu; G-600 usunął całą bryłę garażu; poprawka: niska bryła o wysokości dachu w miejsce trawników T-258 i G-647
 - Pakiet właściciela: tools/osm-import
 
@@ -1775,6 +1775,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, kurator przeglądu #437)
 - Ważność: S4 · Zasięg: Radziwiłłowska przy x −66 (`fitLanes`, #437): linia środkowa skacze z 113,7 na 112,9, linia między pasami z 116,6 na 116,2; w rzeczywistości linia środkowa ciągła na z ≈ 114,0–114,5 (w grze 112,9–113,7, wcześniej na main 112,2–113,2); kontrola `marking-step` (skok > 0,3 m na wspólnym węźle kawałków jednej ulicy), baza ≥ 2
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-676 Uskok 6,2 m między dachem VIVO a dachem garażu
+- Status: zgłoszone (12.11, kurator przeglądu G-662; niski priorytet)
+- Ważność: S4 · Zasięg: VIVO r5601275 przy ukośnej ścianie NE (x 1106–1120, z 228–240): w grze dach VIVO 17,2 m (jedna wysokość LoD1 dla całej galerii), garaż 11 m; w rzeczywistości uskok < ok. 1 m (garaż jasny na całej szerokości na nalocie 2025-04, uskok 6 m dałby cień ok. 5,8 m; trawnik r11978659 ciągnie się po obu dachach, tarasowy dach „Tarasy Zamkowe”); przy cyplu NW krawędź garażu prawdopodobnie obniża się do ok. 7–8 m
+- Pakiet właściciela: tools/osm-import
+
+### G-677 Kontrola skanu: ręczna bryła nad drogą z OSM
+- Status: zgłoszone (12.11, kurator przeglądu G-662)
+- Ważność: S4 · Zasięg: brak kontroli, która łapie ręczny obszar `ADDED_AREAS` z `building=*`, którego pierścień (także poza mapą) przecina `highway=*` bez `tunnel` ani `covered`; dziś 1 przypadek: `T-261/garaz-vivo` zamyka schody w376043570 i chodnik w295849313 (wejście do VIVO pod dachem garażu, x 1121–1146, poza mapą, ukryte przycięciem na x = 1120); kontrola `added-solid-over-way` z bazą 1 i wyjątkiem z odsyłaczem do topografii do czasu poszerzenia mapy
+- Pakiet właściciela: tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
