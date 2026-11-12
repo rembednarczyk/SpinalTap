@@ -108,8 +108,9 @@ const LOOP_CELL = 4;
  * The first crossing of a segment with a moved end and another segment of the loop, not its
  * neighbour. The loop's segments lie in a `SpatialHash` by their boxes; `some` walks the cells
  * of a segment's box in the same order as the hand-made cells did, so the same crossing comes first.
+ * Exported for its test.
  */
-const firstCrossing = (pts: readonly Pt[], flags: readonly boolean[]): { i: number; j: number; at: Pt } | null => {
+export const firstCrossing = (pts: readonly Pt[], flags: readonly boolean[]): { i: number; j: number; at: Pt } | null => {
   const n = pts.length;
   const grid = new SpatialHash<number>(LOOP_CELL);
   for (let j = 0; j < n; j++) {
