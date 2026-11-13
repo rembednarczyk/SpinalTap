@@ -855,6 +855,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`, wysokość końca pomostu), packages/sim (`abutments.ts`)
 - Propozycja: wysokość końca pomostu z NMT przed przyczółkiem (pas OUT), gdy wyższy niż na końcu osi; podnosić pomost zamiast obniżać plac. Kontrola skanu `abutment-cut` (teren w zasięgu ramp przyczółków poza pomostem > 0,3 m pod NMT; baza 7)
 - Test przyjęcia: na (2440; 437,5) teren nie niżej niż NMT − 0,3 m
+- 13.11: poprawione na gałęzi ccr-ec2c4269-ilh8k8-g739 (ae90173): kładka przy moście Lutosławskiego (2440,9; 434,7) → (2439,4; 435,6), koniec −27,32 → −26,74; ortofoto: nowy koniec na utwardzeniu przy zachodnim narożu pomostu; zamknąć po scaleniu
 
 ### G-363 Pawilon metra w komórce bez szyldów (Nabrzeże) bez nazwy stacji i litery wejścia
 - Status: zgłoszone (6.11, weryfikator PR #303)
@@ -1751,7 +1752,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`, wysokości pomostów)
 
 ### G-739 Koniec kładki Podzamcza (1073,9; 160,5) leży na skarpie rowu Czechówki, pomost o 2,7 m za nisko (T-166)
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g739 (13.11, ae90173: koniec pomostu na skarpie przesuwany wzdłuż drogi do szczytu skarpy; kładka −23,04…−23,91, ok. 3,8°; `bridge-end-in-slope` 3 → 0, `ground-over-deck` 397 → 395; przy okazji G-362 koniec +0,58 m; czeka na G-741 i przegląd kuratora); wcześniej: zgłoszone (13.11, kurator, ortofoto 2025-04 i 2024-06, NMT)
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g739 (13.11, ae90173: koniec pomostu na skarpie przesuwany wzdłuż drogi do szczytu skarpy; kładka −23,04…−23,91, ok. 3,8°; `bridge-end-in-slope` 3 → 0, `ground-over-deck` 397 → 395; przy okazji G-362 koniec +0,58 m; przegląd kuratora ZGODNE Z UWAGAMI 13.11; czeka na G-741 i G-743); wcześniej: zgłoszone (13.11, kurator, ortofoto 2025-04 i 2024-06, NMT)
 - Ważność: S3 · Zasięg: 1 pomost (podzamcze-2-0, kładka w295849307, 8 m): gracz i AI przechodzą po zjeździe 2,2 m na 8,3 m (15°) zamiast po poziomym przęśle · Koszt: mały
 - Gdzie: (1073,9; 160,5) pomost −25,63, chodnik zachodni −22,9, teren na x 1071–1073 od −22,9 do −23,4; 2 próbki `ground-over-deck` (0,054 m); 3 próbki `deck-abutment-step` (1073,8; 161,7), (1073,8; 161,1), (1073,9; 160,6)
 - Dowód: nakładki ortofoto w scratchpadzie sesji (`topo-kladka-orto-2025-04.png`, `-2024-06.png`): przęsło poziome, ciągłe z chodnikiem, bez schodów; NMT wzdłuż z = 160,6: krawędź rowu x≈1072,5 (−22,9), skarpa 45° do dna −27,7; koniec osi 1,4 m w głąb skarpy. Drugi koniec (1082,2; 160,9) zgodny (−23,47)
@@ -1777,6 +1778,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: ujęcia z chodników przy Placu Litewskim (-91;127) i (-89;-199) o 12:00; przepalenie z białych fasad, nie z nawierzchni; próg przyjęty przy G-721: ≤ 3%
 - Status: zgłoszone (13.11, naprawiacz G-734)
 - Pakiet właściciela: packages/engine (barwy fasad, światło dnia)
+
+### G-743 Fascja i spód pomostu: nieciągła grubość daje zęby i skośne trójkąty nad skarpą (T-166)
+- Ważność: S4 · Zasięg: pomosty nad skarpą, gdzie prześwit pod pokładem przechodzi przez 2–2,8 m; przykład kładka podzamcze-2-0 po G-739, (1074; 161,8) i (1079; 161,8); błąd istniał (G-062), G-739 go odsłania
+- Opis: `deckDepth` (`packages/sim/src/world/deck.ts`) skacze nieciągle: przy prześwicie ≤ 2 m 0,9 m, tuż powyżej 0,2 m, potem rośnie do 0,9 m przy ok. 2,8 m. Fascja (`planDeckEdges`, `packages/engine/src/renderer/mapcity/deck-plan.ts`) bierze grubość co ok. 1,9 m, a spód (`planDeckUnderside`) tylko w narożach pierścienia (wszędzie 0,9 m), więc płaski spód wystaje poniżej cienkich odcinków fascji
+- Status: w naprawie (13.11, zgłoszone przez kuratora przy przeglądzie G-739)
+- Pakiet właściciela: packages/engine (`deck-plan.ts`), packages/sim (`deckDepth`)
+- Test przyjęcia: grubość fascji ciągła względem prześwitu; spód nigdy nie wystaje poniżej fascji (test na siatce pomostu); zrzut kładki z dołu bez trójkątów
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
