@@ -116,8 +116,9 @@ export class CharacterModels {
   }
 
   /**
-   * Starts loading the files the start needs, one promise per file (ADR-0057): the heroine's and
-   * those `choices` (the characters in the scene) wear. Not every file of the manifest (G-547).
+   * Starts loading the files the start needs, one promise per file (ADR-0057): the heroine's always,
+   * in every view (her body in TPP, her hands in FPP; the user's decision of 13.11), and those
+   * `choices` (the characters in the scene) wear. Not every file of the manifest (G-547).
    */
   preload(choices: Iterable<ModelChoice | null>): Promise<unknown>[] {
     const files = startFiles(this.manifest, choices);
