@@ -759,6 +759,7 @@ stare-miasto-1-0 710,-190
 stare-miasto-1-0 720,-190
 stare-miasto-1-0 730,-190
 stare-miasto-1-0 750,-180
+stare-miasto-1-0 620,-130
 stare-miasto-1-0 630,-130
 stare-miasto-1-1 750,0
 stare-miasto-1-1 750,10

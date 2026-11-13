@@ -63,6 +63,7 @@ import { lanternsByPassages } from "./passage-lanterns";
 import { bareOnCover } from "./bare-on-cover";
 import { fillAreaMismatch } from "./fill-area";
 import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
+import { groundUnderPlinth, steepWayCut } from "./terrain-cuts";
 import { generatedCity } from "../../osm-import/test/city.ts";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
@@ -221,6 +222,9 @@ const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 /** The surfaces a lamp of the plan stands on or beside (`lamp-off-band`). */
 const PAVED: ReadonlySet<string> = new Set(["road", "crossing", "sidewalk", "square", "cobble", "footway", "steps"]);
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
+/** The game's ground, NaN off the map's chunks (where `groundY` is 0, no ground of the map). */
+const onMapGround = (x: number, z: number): number =>
+  MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ) ? groundY(x, z) : Number.NaN;
 
 /** The wall lantern's model, plate and arm and lantern, in the piece's frame. */
 const LANTERN_MODEL = (() => {
@@ -820,7 +824,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return carStreets.flatMap((r) => {
         if (r === by) return [];
         const q = projectOn(r.points, c.x, c.z);
-        return q.d < roadHalfWidth(r.points, q.side >= 0 ? 1 : -1) + 0.5 ? [{ at: near(c.x, c.z), what: `${c.model} by ${by.name} ${q.d.toFixed(1)} m from ${r.name}` }] : [];
+        return q.d < roadHalfWidth(r, q.side >= 0 ? 1 : -1) + 0.5 ? [{ at: near(c.x, c.z), what: `${c.model} by ${by.name} ${q.d.toFixed(1)} m from ${r.name}` }] : [];
       });
     }),
   /**
@@ -1204,6 +1208,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       (p) => groundY(p.x, p.z),
       (p) => onChunk(p.x, p.z),
     ),
+  /**
+   * A point of a building's outline where the game's ground lies over 0.05 m under its foot (the
+   * lowest NMT point under it): a terrain cut beside a building leaves it floating (G-755 review).
+   */
+  "ground-under-plinth": () => groundUnderPlinth([...new Map(MAP_CHUNKS.flatMap((c) => c.buildings).map((b) => [b.id, b])).values()], onMapGround),
+  /** A stretch of a way laid at an even grade (G-755) cut over 2 m under the NMT, on its axis or its band 5 m wide (`terrain-cuts.ts`). */
+  "steep-way-cut": () => steepWayCut([...new Map(MAP_CHUNKS.flatMap((c) => c.steepWays ?? []).map((w) => [w.id, w])).values()], onMapGround, rawHeight, [-2.5, -1.25, 0, 1.25, 2.5]),
   /**
    * A flight's ramp (G-236) lifting the terrain over 2 m above the map's at an end: a wrong
    * `incline` in a new extract (`osm:fetch`) would raise a mound up the flight unnoticed.

@@ -93,6 +93,11 @@ export interface LublinStreetData {
   readonly kind: string;
   /** World polyline, clipped to the chunk. */
   readonly line: FlatPoints;
+  /**
+   * How far its carriageway reaches left and right of `line` at each of its points, `[l0, r0, l1, r1…]`
+   * (m; 0 off its asphalt), as the import widths it: what the traffic's lanes and the kerbs' cars read (ADR-0080).
+   */
+  readonly half?: FlatPoints;
   /** Driven one way only, the way the line runs (`oneway=-1` already turned round). */
   readonly oneway?: true;
   /** A passage under a building closed to motor vehicles in OSM: no lane, not even for deliveries (G-002). */
@@ -158,6 +163,15 @@ export interface LublinFlightData {
   readonly steps?: number;
 }
 
+/**
+ * A stretch of a way walked on foot the terrain makes too steep to walk (G-755): `<way>/<k>`,
+ * its world polyline from its foot to its top, in every chunk it reaches into.
+ */
+export interface LublinSteepWayData {
+  readonly id: string;
+  readonly line: FlatPoints;
+}
+
 /** A car park mapped as an area (on the ground): the kerbs and yards where the map says cars park. */
 export interface LublinCarParkData {
   /** Its map id; one reaching over a chunk's edge is in both chunks. */
@@ -209,6 +223,8 @@ export interface LublinChunkData {
   readonly footWays?: readonly LublinFootWayData[];
   /** Flights of steps with a mapped `incline` reaching into it, when it has any. */
   readonly flights?: readonly LublinFlightData[];
+  /** Stretches of the ways walked on foot too steep on the terrain reaching into it (G-755), when it has any. */
+  readonly steepWays?: readonly LublinSteepWayData[];
   /** Car parks reaching into it, when it has any. */
   readonly carParks?: readonly LublinCarParkData[];
   /** Bus stops' posts by it (and up to 25 m past its edge), when it has any: no car parks 15 m either side of one (G-156). */
