@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-746 `steering.ts` ma 717 linii, ponad limit 500 z ADR-0031
+- Ważność: S4 · Zasięg: packages/sim/src/systems/ai/steering.ts (686 → 717 po G-741), wyjątek w lincie
+- Opis: plik nawigacji urósł przy G-738/G-741; kandydat do podziału (planer, pole odległości, sprawdzanie krawędzi)
+- Status: naprawione (13.11, #505 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-g746, 5f19528): steering.ts 707 → 186 linii, podział na nav-field.ts (259), straight-walk.ts (187), chase-detour.ts (118); hashe bez zmian; wcześniej: zgłoszone (13.11, naprawiacz G-741); po scaleniu G-740 i G-741
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: plik ≤ 500 linii bez wyjątku w lincie, złoty hash bez zmian
+
 ### G-756 Klucze rodzajów próbkowanych w bazie skanu przesuwają się przy zmianie tablic, choć suma maleje
 - Ważność: S3 · Zasięg: `ground-strip-gap`, `ground-strip-overlap` (i pewnie inne z `SAMPLED_KINDS`); przy G-739 (2 pomosty w podzamcze-2-0) +49/−53 i +145/−155 kwadratów w podzamcze-0-1 i 2-0, z dala od zmiany
 - Opis: siatka próbek tych kontroli zależy od zawartości kawałka (np. obrysu albo kolejności kawałków nawierzchni), więc lokalna zmiana przesuwa próbki w całym kawałku i nowe klucze wymagają `GLITCH_BASELINE=accept`; zakotwiczyć siatkę próbek w układzie świata (wielokrotności kroku), żeby klucze zmieniały się tylko tam, gdzie zmienia się mapa

@@ -1747,13 +1747,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/traffic)
 - Test przyjęcia: `traffic-junction-drive` zielony na gałęzi etapu 2 (12/12 ziaren), probe seedów 1–40 bez kolizji na main i na gałęzi; złoty hash świadomie
 
-### G-746 `steering.ts` ma 717 linii, ponad limit 500 z ADR-0031
-- Ważność: S4 · Zasięg: packages/sim/src/systems/ai/steering.ts (686 → 717 po G-741), wyjątek w lincie
-- Opis: plik nawigacji urósł przy G-738/G-741; kandydat do podziału (planer, pole odległości, sprawdzanie krawędzi)
-- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-g746, 5f19528): steering.ts 707 → 186 linii, podział na nav-field.ts (259), straight-walk.ts (187), chase-detour.ts (118); hashe bez zmian; wcześniej: zgłoszone (13.11, naprawiacz G-741); po scaleniu G-740 i G-741
-- Pakiet właściciela: packages/sim/src/systems/ai
-- Test przyjęcia: plik ≤ 500 linii bez wyjątku w lincie, złoty hash bez zmian
-
 ### G-747 `followDetour` bez osiągalnej komórki w linii prostej kieruje gangera do `way[1]`, nawet nieosiągalnej
 - Ważność: S3 · Zasięg: planer pościgu w terenie ze skarpami; możliwe źródło części z 14 z 30 nieudanych dojść przy przyczółkach Mełgiewskiej (G-741), np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)
 - Opis: gdy żadna linia z punktu gangera nie przechodzi, fallback wybiera następny punkt drogi bez sprawdzenia osiągalności; ganger napiera na skarpę albo krąży w kieszeni
