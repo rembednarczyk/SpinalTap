@@ -57,3 +57,4 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 - **Dziennik z HUD (13.11):** prośba użytkownika: kliknięcie w śledzony quest otwiera dziennik (PR #480).
 - **Animacje, źródło (13.11):** decyzja użytkownika: plików z Mixamo chwilowo nie będzie; po modelowaniu mapy zaczynamy od innych źródeł (Quaternius UAL, CC0; braki z CMU mocap). Mixamo zostaje opcją na później.
 - **Krok 1.1 ADR-0077 (13.11):** decyzja użytkownika: przyjąć regułę gołej ziemi z kosztem +15,0% czasu testu podpisów miasta (w CI ok. 9,5 s przy celu 12 s); koszt w długu ADR-0046. Odrzucone na teraz: artefakt `osm:build` (ADR) i zmiana Clippera (tablice o 1 cm).
+- **Deterministyczność procesu (13.11):** prośba użytkownika: sprawdzić, co dziś robimy niedeterministycznie, a da się oskryptować z powtarzalnym wynikiem; cel pośredni oszczędność tokenów. Plan w backlogu (9 punktów), start od narzędzia rejestrów i stałego bloku briefów.
