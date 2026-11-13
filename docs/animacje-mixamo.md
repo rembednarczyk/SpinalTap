@@ -1,6 +1,6 @@
 # Animacje z Mixamo: lista do pobrania
 
-Decyzja użytkownika 12.11: źródłem animacji ruchu jest Mixamo (konto Adobe użytkownika). Pozycja w [backlogu](backlog.md) „Animacje ruchu”, realizacja po mapowaniu, pierwszy priorytet; szczegóły techniczne trafią do ADR-u.
+Decyzja użytkownika 12.11: źródłem animacji ruchu jest Mixamo (konto Adobe użytkownika). Zmiana 13.11: plików z Mixamo chwilowo nie będzie, zaczynamy od Quaternius UAL (CC0) i CMU mocap; ta lista zostaje jako spis potrzebnych klipów dla każdego źródła. Pozycja w [backlogu](backlog.md) „Animacje ruchu”, realizacja po mapowaniu, pierwszy priorytet; szczegóły techniczne trafią do ADR-u.
 
 Nazwy to hasła do wyszukania w Mixamo: biblioteka bywa zmieniana, więc jeśli dokładnej nazwy nie ma, bierzemy najbliższy wariant i zapisujemy, co pobrano (plik `tools/animations/manifest.json` przy imporcie). Licencja: animacje wolno używać w grze, nie wolno udostępniać samych plików animacji; przy imporcie sprawdzamy aktualny regulamin Adobe i trzymamy pliki wyłącznie w buildzie gry.
 

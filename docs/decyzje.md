@@ -55,3 +55,4 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 - **Animacje ruchu (12.11):** decyzja użytkownika: chód w bok/w poprzek i chód w kucki zaraz po mapowaniu, jako pierwszy priorytet; źródła i licencja do ADR-u ; źródło: Mixamo (decyzja 12.11, konto Adobe użytkownika), lista w `docs/animacje-mixamo.md`, format docelowy `.vrma`.
 - **Plac Litewski, fontanna (13.11):** decyzja użytkownika przy G-721: nawierzchnie jaśnieją według ortofoto (kostka 1,70 × trawa), ale niecka fontanny zostaje ciemną wodą, choć ortofoto pokazuje jasne dno płytkiej niecki.
 - **Dziennik z HUD (13.11):** prośba użytkownika: kliknięcie w śledzony quest otwiera dziennik (PR #480).
+- **Animacje, źródło (13.11):** decyzja użytkownika: plików z Mixamo chwilowo nie będzie; po modelowaniu mapy zaczynamy od innych źródeł (Quaternius UAL, CC0; braki z CMU mocap). Mixamo zostaje opcją na później.
