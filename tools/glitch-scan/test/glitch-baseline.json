@@ -43,6 +43,7 @@
   "deck-slot": 0,
   "deck-step-face": 0,
   "deck-abutment-step": 8,
+  "ground-over-deck": 860,
   "steps-narrower-than-walls": 0,
   "steps-across-run": 1,
   "steps-run-bare": 0,

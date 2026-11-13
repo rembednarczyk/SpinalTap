@@ -95,6 +95,30 @@ const onto = (decks: readonly GroundDeck[], p: GroundPoint, q: GroundPoint): num
   return hi;
 };
 
+/** How far under a deck's edge a flight's top ramps keep the ground (m): else it shows through the deck's paving (G-686). */
+const UNDER = 0.05;
+/** How much more per metre in from the edge (m/m). */
+const FALL = 0.1;
+
+/**
+ * The highest a flight's top ramps lay the ground at (x, z): under a deck, `UNDER` beneath it at
+ * its edge and falling in from there; off one, no bound. Not level `UNDER` beneath it: the
+ * terrain is bilinear on its grid, so between a point under the deck and the street off its
+ * corner, higher than the deck (Zamkowa by w294098693), it still came through the deck's paving.
+ */
+const underDeck = (decks: readonly GroundDeck[], x: number, z: number): number => {
+  const y = deckAt(decks, x, z);
+  if (y === null) return Infinity;
+  let depth = Infinity;
+  for (const d of decks) {
+    for (let i = 0; i < d.ring.length; i++) {
+      const [a, b] = [d.ring[i]!, d.ring[(i + 1) % d.ring.length]!];
+      depth = Math.min(depth, segmentDistance(x, z, a.x, a.z, b.x, b.z));
+    }
+  }
+  return y - UNDER - FALL * depth;
+};
+
 /**
  * Ramps up a flight of steps that climbs from the terrain onto a bridge's deck by its end
  * (G-686): w294098693 onto the south-west corner of the viaduct of Zamkowa. The deck is level
@@ -106,12 +130,13 @@ const onto = (decks: readonly GroundDeck[], p: GroundPoint, q: GroundPoint): num
  * before it (as at G-349's abutments), and the top run alone would climb steeper than a walker
  * does (ADR-0043). Two cells either side of the band the terrain is filled up to the ramp, never
  * cut: else the cells by the band's edges sag under it, and the street beside the top run, higher,
- * stays as it is. Not a flight hung off a deck far over the terrain (G-255): that one is a deck of
+ * stays as it is. Under the deck itself they keep the ground beneath it (`underDeck`). Not a flight hung off a deck far over the terrain (G-255): that one is a deck of
  * its own (`decks.ts`).
  */
 export const flightTopRamps = (chunks: readonly LublinChunkData[], width = 3): Ramp[] => {
   const height = (x: number, z: number) => mapHeight(chunks, x, z);
   const decks = mapDecks(chunks, height);
+  const ceiling = (x: number, z: number) => underDeck(decks, x, z);
   const seen = new Set<string>();
   const out: Ramp[] = [];
   for (const f of chunks.flatMap((c) => c.flights ?? [])) {
@@ -140,10 +165,10 @@ export const flightTopRamps = (chunks: readonly LublinChunkData[], width = 3): R
     const at = (i: number) => y0 + ((y - y0) * along[i]!) / along[along.length - 1]!;
     const grade = run.slice(1).map((b, i) => ({ a: run[i]!, b, ya: at(i), yb: at(i + 1) }));
     const landing = [[level, q], ...pts.slice(k, -1).map((r, i) => [r, pts[k + i + 1]!] as const)].map(([a, b]) => ({ a, b, ya: y, yb: y }));
-    for (const r of [...grade, ...landing]) out.push({ ...r, width: width + 2 * FLIGHT_CELL, blend: 0, square: true, fill: true });
+    for (const r of [...grade, ...landing]) out.push({ ...r, width: width + 2 * FLIGHT_CELL, blend: 0, square: true, fill: true, ceiling });
     // Round at the bend below the top run, square elsewhere: else the ends reach over the runs before and after.
-    out.push({ ...grade[grade.length - 1]!, width, blend: 0 });
-    for (const r of [...landing, ...grade.slice(0, -1)]) out.push({ ...r, width, blend: 0, square: true });
+    out.push({ ...grade[grade.length - 1]!, width, blend: 0, ceiling });
+    for (const r of [...landing, ...grade.slice(0, -1)]) out.push({ ...r, width, blend: 0, square: true, ceiling });
   }
   return out;
 };

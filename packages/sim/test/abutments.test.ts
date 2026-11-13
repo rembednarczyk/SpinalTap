@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { abutmentRamps } from "../src/content/lublin/abutments";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
+import { bridgeDeckAt } from "../src/content/lublin/decks";
 import { groundY } from "../src/content/lublin/terrain";
 import { type Ramp, shapeHeight } from "../src/content/lublin/shape";
 
@@ -45,5 +46,19 @@ describe("the bridges' abutments (G-349)", () => {
       if (most >= 0.15) steps.push(`${s} m off the axis: ${most.toFixed(2)} m`);
     }
     expect(steps).toEqual([]);
+  });
+
+  it("keep the terrain under the viaduct of Zamkowa's deck by the steps w294098693 (G-686)", () => {
+    // The ramps up their top run levelled the grid's points under the deck's south-west corner
+    // with it, and the bilinear terrain between them and Zamkowa off the corner, higher, came
+    // through the deck's paving: 49 samples up to 0.033 m over it in (730.25-732.25, 151.75-154.5).
+    const through: string[] = [];
+    for (let x = 726; x <= 745; x += 0.25) {
+      for (let z = 148; z <= 165; z += 0.25) {
+        const deck = bridgeDeckAt(x, z);
+        if (deck !== null && groundY(x, z) > deck) through.push(`(${x}, ${z}) ${(groundY(x, z) - deck).toFixed(3)} m`);
+      }
+    }
+    expect(through).toEqual([]);
   });
 });
