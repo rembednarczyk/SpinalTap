@@ -1,7 +1,7 @@
 import type { Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity } from "../../world/components";
-import { type GroundField, groundOf, heightApart } from "../../world/ground";
+import { type GroundField, MAX_WALK_SLOPE, groundOf, heightApart } from "../../world/ground";
 import { STEP_HEIGHT } from "../movement-system";
 import { type Detour, FAR, type Field, NEAR_WINDOW, downhill, fieldFor, grow, nearest, outsideWindow } from "./nav-field";
 import { CLEARANCE, NAV_CELL, ON_FLIGHT, type Raster, byLedge, cellCentre, cellIndex, cellRange } from "./nav-raster";
@@ -159,8 +159,55 @@ export const followDetour = (detour: Detour, from: Vec3): Vec3 | null => {
     const at = cellCentre(raster, way[i] ?? start, from.y);
     if (walkable(raster, from, at)) return at;
   }
-  return cellCentre(raster, way[1] ?? start, from.y);
+  const round = reachableLower(field, from, start);
+  return cellCentre(raster, round >= 0 ? round : (way[1] ?? start), from.y);
 };
+
+/** How far round the feet (cells) `reachableLower` looks: two metres. */
+const REACH_AROUND = 4;
+
+/**
+ * With no cell of the way a straight walk from `from` (G-747): the cell round the feet lowest
+ * down the field below the way's start (the nearest of equals) that the feet get to, a straight
+ * walk away on their level; -1 when there is none. The way's next cell, the old answer, often lies
+ * up a bank or a deck's edge the walk does not climb: beside the bridge of podzamcze-1-0 the walker
+ * pressed against the bank for good, with a cell further down the way a straight walk away 1.5 m
+ * aside. With none, the way's next cell is still the answer: from a pocket the field does not
+ * show, the stuck check's sidestep gets the walker out (by the west end of Mełgiewska's lower
+ * bridge only that way).
+ */
+const reachableLower = (field: Field, from: Vec3, start: number): number => {
+  const { raster, dist } = field;
+  const here = cellIndex(raster, from.x, from.z);
+  if (here < 0) return -1;
+  const ix = here % raster.cells;
+  const iz = (here - ix) / raster.cells;
+  let [best, bestDist, bestSq] = [-1, dist[start] ?? FAR, Infinity];
+  for (let dz = -REACH_AROUND; dz <= REACH_AROUND; dz++) {
+    for (let dx = -REACH_AROUND; dx <= REACH_AROUND; dx++) {
+      const [nx, nz] = [ix + dx, iz + dz];
+      if (nx < 0 || nz < 0 || nx >= raster.cells || nz >= raster.cells) continue;
+      const n = nz * raster.cells + nx;
+      const d = dist[n] ?? FAR;
+      const sq = dx * dx + dz * dz;
+      if (d > bestDist || (d === bestDist && (best < 0 || sq >= bestSq))) continue;
+      const at = cellCentre(raster, n, from.y);
+      if (offLevel(raster, n, from, at) || !walkable(raster, from, at)) continue;
+      [best, bestDist, bestSq] = [n, d, sq];
+    }
+  }
+  return best;
+};
+
+/**
+ * Does cell `n` (at `at`) lie above or below the feet at `from` by more than a step and a walkable
+ * slope over the way there? `walkable` asks the rise only by a flight or a deck's edge, and the
+ * cells only past its first metres: by the west end of Mełgiewska's lower bridge it let the walker
+ * at the foot of the abutment's wall take a cell on top of it, three metres up, and on the steps
+ * off Zamkowa's viaduct one on the square beside them, three metres down over their side.
+ */
+const offLevel = (r: Raster, n: number, from: Vec3, at: Vec3): boolean =>
+  !!r.base && Math.abs((r.base[n] ?? from.y) - from.y) > STEP_HEIGHT + MAX_WALK_SLOPE * Math.hypot(at.x - from.x, at.z - from.z);
 
 /**
  * `planDetour` and `followDetour` in one: the step round the static obstacles. None from outside

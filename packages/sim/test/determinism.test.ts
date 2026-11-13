@@ -226,7 +226,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"d8da2e11"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"f1f4e916"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -281,40 +281,43 @@ describe("determinism", () => {
     // way of a chase while it is made a slice a step (`walk.chaseNext`, optional). None of the runs
     // has one; with the version at 37 the runs hash to the v37 goldens (a2ccbfe6, 47025ceb,
     // c72ec923), so only the version changed them.
-    expect(v31HashOf(sim)).toBe("8a184ff0");
-    expect(v30HashOf(sim)).toBe("7dd4e4ad");
-    expect(v17HashOf(sim)).toBe("1ce01d19");
-    expect(v19HashOf(sim)).toBe("6c657123");
-    expect(v20HashOf(sim)).toBe("e3f6e797");
-    expect(v21HashOf(sim)).toBe("0b324838");
-    expect(v22HashOf(sim)).toBe("16a7e7d5");
-    expect(v23HashOf(sim)).toBe("ac734ccd");
-    expect(v24HashOf(sim)).toBe("90600c96");
-    expect(v25HashOf(sim)).toBe("94c21ad3");
-    expect(v26HashOf(sim)).toBe("b8d0ace2");
-    expect(v27HashOf(sim)).toBe("ef0f8c1e");
-    expect(v28HashOf(sim)).toBe("0dfb20ef");
+    // Re-recorded (all of them, "hard" and the duel too) for G-754, the content, no rule: the car
+    // wash's yard is levelled short of Bajkowskiego, which is back on the NMT, and its dumpster,
+    // parked car and lamp stand on the level ground (the world's terrain and solids changed).
+    expect(v31HashOf(sim)).toBe("7ac80873");
+    expect(v30HashOf(sim)).toBe("c6512570");
+    expect(v17HashOf(sim)).toBe("89bd87b6");
+    expect(v19HashOf(sim)).toBe("2fd47226");
+    expect(v20HashOf(sim)).toBe("f4980b5a");
+    expect(v21HashOf(sim)).toBe("ed979fe9");
+    expect(v22HashOf(sim)).toBe("f0fff990");
+    expect(v23HashOf(sim)).toBe("1ba5e2da");
+    expect(v24HashOf(sim)).toBe("aa41ab9d");
+    expect(v25HashOf(sim)).toBe("16425c5c");
+    expect(v26HashOf(sim)).toBe("70f11b65");
+    expect(v27HashOf(sim)).toBe("8f9e9cff");
+    expect(v28HashOf(sim)).toBe("31f0c4fe");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"85ed948a"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"d0fa165b"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
-    expect(v31HashOf(sim)).toBe("13a15bf5");
-    expect(v30HashOf(sim)).toBe("30834a04");
+    expect(v31HashOf(sim)).toBe("a2e44574");
+    expect(v30HashOf(sim)).toBe("dbbc2817");
     expect(v17HashOf(sim)).not.toBe("1ce01d19");
-    expect(v19HashOf(sim)).toBe("01e929be");
-    expect(v20HashOf(sim)).toBe("93e8e16a");
-    expect(v21HashOf(sim)).toBe("7e76b28b");
-    expect(v22HashOf(sim)).toBe("b3ca81f8");
-    expect(v23HashOf(sim)).toBe("3f2c0e82");
-    expect(v24HashOf(sim)).toBe("a995b57b");
-    expect(v25HashOf(sim)).toBe("76e283bc");
-    expect(v26HashOf(sim)).toBe("be1e9237");
-    expect(v27HashOf(sim)).toBe("3aa62e95");
-    expect(v28HashOf(sim)).toBe("5250f136");
+    expect(v19HashOf(sim)).toBe("dcf05c81");
+    expect(v20HashOf(sim)).toBe("338a337d");
+    expect(v21HashOf(sim)).toBe("ef7316a4");
+    expect(v22HashOf(sim)).toBe("115ca3e3");
+    expect(v23HashOf(sim)).toBe("d4178a87");
+    expect(v24HashOf(sim)).toBe("5d6c3f92");
+    expect(v25HashOf(sim)).toBe("96c35971");
+    expect(v26HashOf(sim)).toBe("f8989b9e");
+    expect(v27HashOf(sim)).toBe("f4353806");
+    expect(v28HashOf(sim)).toBe("fd6b5c75");
   });
 
   // One case per density: three full replays in one case ran close to the 20 s limit under coverage.
@@ -342,7 +345,7 @@ describe("determinism", () => {
     // in a cone and fill a suspicion before the alarm. Re-recorded for G-343: fleeing bystanders
     // no longer turn back and forth. Re-recorded for ADR-0059, stage 5: the gangers keep up with
     // the player's level 2 in Krakowskie's band.
-    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("d100771d");
+    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("d8343630");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
@@ -395,20 +398,20 @@ describe("determinism", () => {
     // b036f5d7 before it; for the v35 version (stage 3): f0ccb612 before it; and for the v36
     // version (stage 4): 5716d8d1 before it; for the v37 version (G-625): db17fe1c before it; for
     // the v38 version (G-643): c72ec923 before it.
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"00533c1e"`);
-    expect(v31HashOf(sim)).toBe("5ce46e55");
-    expect(v30HashOf(sim)).toBe("ae6c21d0");
-    expect(v17HashOf(sim)).toBe("3e78c5b2");
-    expect(v19HashOf(sim)).toBe("6ebebd7e");
-    expect(v20HashOf(sim)).toBe("116f9cfa");
-    expect(v21HashOf(sim)).toBe("ce560791");
-    expect(v22HashOf(sim)).toBe("7c4d11bc");
-    expect(v23HashOf(sim)).toBe("9398eab3");
-    expect(v24HashOf(sim)).toBe("2cbf3696");
-    expect(v25HashOf(sim)).toBe("66d7b85d");
-    expect(v26HashOf(sim)).toBe("94efe6f8");
-    expect(v27HashOf(sim)).toBe("de01c1cf");
-    expect(v28HashOf(sim)).toBe("402f2952");
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"c44a6fc5"`);
+    expect(v31HashOf(sim)).toBe("56c7329e");
+    expect(v30HashOf(sim)).toBe("8aef54e7");
+    expect(v17HashOf(sim)).toBe("2428227f");
+    expect(v19HashOf(sim)).toBe("415fcdb5");
+    expect(v20HashOf(sim)).toBe("b2c3f2f1");
+    expect(v21HashOf(sim)).toBe("83789c92");
+    expect(v22HashOf(sim)).toBe("ce57416b");
+    expect(v23HashOf(sim)).toBe("0c00c844");
+    expect(v24HashOf(sim)).toBe("b3c5a78d");
+    expect(v25HashOf(sim)).toBe("2f7cf97e");
+    expect(v26HashOf(sim)).toBe("7a792277");
+    expect(v27HashOf(sim)).toBe("09ed96a0");
+    expect(v28HashOf(sim)).toBe("9664da69");
   });
 
   it("restores killed NPCs as absent", () => {
