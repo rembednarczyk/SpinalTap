@@ -95,8 +95,9 @@ describe("the ground the map city lays (G-444)", () => {
     // the compact lawns and yards laid as grass and paving from the orthophoto's cover (ADR-0077 step
     // 1.1), so two cells without a piece of ground before have one now. The laying moved it once:
     // steps at the map's edge read the ground on its side (G-703), and here, with only these four
-    // chunks, the flight at (20; 9) on krakowskie-1-1's west side has no terrain past it.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 142538, hash: "0d1ea449" });
+    // chunks, the flight at (20; 9) on krakowskie-1-1's west side has no terrain past it. The
+    // colours moved it alone: the paving's from the orthophoto (G-721), no vertex moved.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 142538, hash: "c93c98f2" });
     scene.dispose();
   });
 
@@ -112,6 +113,7 @@ describe("the ground the map city lays (G-444)", () => {
         addSink(hash, water);
       }
     }
-    expect(hash.hex).toBe("6538ff17");
+    // The paving's colours from the orthophoto (G-721) moved it, not the laying.
+    expect(hash.hex).toBe("01337f90");
   });
 });

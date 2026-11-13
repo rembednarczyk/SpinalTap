@@ -69,6 +69,7 @@ import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
 import { lampsBesideDeck } from "./lamp-deck";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
+import { BUILDING_SURFACE, buildingsOverSurface } from "./surface-heights";
 import { heightsOffLod1, landmarksOffLod1, levelsTagLost, lod1Under } from "./height-lod1";
 import { flatOverLod2Roof, lod2RidgeAcross, lod2SliverEaves, lod2Under } from "./roof-lod2";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
@@ -1337,6 +1338,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A church at the default height with no measured roof, or standing clearly over the surface model's roof (G-216). */
   "church-over-nmpt": () => churchesOverSurface(CHURCH_SURFACE, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
+  /** A measured building whose middle of the roof stands over 4 m above the surface model's median in its outline (G-708, T-269). */
+  "height-vs-nmpt": () => buildingsOverSurface(BUILDING_SURFACE, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
   /**
    * A building off its GUGiK LoD1 2024 height by more than 3 m (ADR-0077 step 3, `height-lod1.ts`):
    * matched at IoU 0.7 and more, not among the import's exceptions (churches, towers, the listed
@@ -2182,6 +2185,21 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, id: "w66258167/1" }])).toHaveLength(1);
     expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, source: "height" }, { ...chapel, source: "levels" }])).toEqual([]);
     expect(landmarksAtDefaultHeight(["w450180469"], [chapel])).toEqual([]);
+  });
+
+  it("finds a measured building over 4 m above the surface model, and none within 4 m or unmeasured (G-708)", () => {
+    const terrace = { id: "w232362965", x: 708.1, z: 100.7, y: -15.6, height: 16.7 };
+    expect(buildingsOverSurface(BUILDING_SURFACE, [terrace])).toEqual([{ at: "708,101", what: "w232362965: middle of the roof y 1.1, surface y -8.9" }]);
+    expect(buildingsOverSurface(BUILDING_SURFACE, [{ ...terrace, id: "w232362965/1" }])).toHaveLength(1);
+    expect(buildingsOverSurface(BUILDING_SURFACE, [{ ...terrace, height: 10.6 }, { ...terrace, height: 6, roof: 4 }])).toEqual([]);
+    expect(buildingsOverSurface(BUILDING_SURFACE, [{ ...terrace, height: 6, roof: 20 }])).toHaveLength(1);
+    expect(buildingsOverSurface(BUILDING_SURFACE, [{ ...terrace, id: "w1" }])).toEqual([]);
+  });
+
+  it("measures the surface model under every building of stare-miasto-1-1, not only the corrected ones (G-708)", () => {
+    const cell = MAP_CHUNKS.find((c) => c.id === "stare-miasto-1-1")!.buildings.map((b) => b.id.split("/")[0]!);
+    expect(cell).toHaveLength(55);
+    expect(cell.filter((id) => BUILDING_SURFACE[id] === undefined)).toEqual([]);
   });
 
   it("finds a building over 3 m off its LoD1 height, and none within 3 m, unmatched or among the exceptions (ADR-0077)", () => {

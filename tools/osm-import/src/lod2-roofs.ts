@@ -25,9 +25,9 @@
 import type { RoofShape } from "../../../packages/core/src/ports/types.ts";
 import { type Lod2Building } from "../../gugik/src/extracts.ts";
 import { BoxIndex, type Footprint, footprint, iou } from "../../gugik/src/overlap.ts";
-import { STOREY } from "./building-tags.ts";
+import { MIN_STOREY, STOREY } from "./building-tags.ts";
 import { type Pt, r1 } from "./geometry.ts";
-import { LOD1_MIN_IOU, MIN_STOREY, lod1Exempt, lod1Match, type lod1Index, storeysOf, worldRing } from "./lod1-heights.ts";
+import { LOD1_MIN_IOU, lod1Exempt, lod1Match, type lod1Index, storeysOf, worldRing } from "./lod1-heights.ts";
 import { lineAngle, longAxisDegrees } from "./long-axis.ts";
 import { type BuildingOut } from "./model.ts";
 
