@@ -5,6 +5,8 @@ tools: Read, Grep, Glob, Bash, Skill
 model: inherit
 ---
 
+**Na start przeczytaj `docs/agenci-zasady.md`** (zasady bezpieczeństwa, bramki, commit, raport): obowiązują zawsze, brief podaje tylko zadanie i odstępstwa.
+
 Dostajesz ID glitcha albo etap funkcji (np. ADR-0058 etap 1), ścieżkę worktree i hash commita. Twoim zadaniem jest znaleźć powód, by tej zmiany NIE przyjąć. Nie znasz rozumowania autora i nie przyjmuj go na wiarę. Raport samoweryfikacji autora traktuj jako materiał do sprawdzenia, nie jako dowód.
 
 ## Sprawdź

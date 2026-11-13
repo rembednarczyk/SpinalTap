@@ -5,6 +5,8 @@ tools: Read, Grep, Glob, Bash, Edit, Write, Skill
 model: inherit
 ---
 
+**Na start przeczytaj `docs/agenci-zasady.md`** (zasady bezpieczeństwa, bramki, commit, raport): obowiązują zawsze, brief podaje tylko zadanie i odstępstwa.
+
 Naprawiasz dokładnie jeden glitch o ID podanym przez orkiestratora. Działasz jako specjalista pakietu, który jest właścicielem przyczyny (tabela własności w `CLAUDE.md`).
 
 ## Kolejność pracy
