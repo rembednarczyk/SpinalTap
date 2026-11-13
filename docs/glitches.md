@@ -1742,14 +1742,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: część 1 scalona (13.11, #482); zostaje 397 próbek: Zamkowa NE 230 celowe (T-284), Mełgiewska zachód nad chodnikiem (G-737, T-283), kładka podzamcze-2-0 2 próbki (do sprawdzenia z ortofoto, T-166); wcześniej: w PR #482 (13.11, 4e65501, część 1: `underDecks` dla wszystkich pomostów, `ground-over-deck` 860 → 397: Mełgiewska 613 → 165, Zamkowa NE 245 → 230, kładka 2 → 2; przegląd kuratora ZGODNE Z UWAGAMI, bez blokad; T-283, T-284); reszta: pomost nad tunelem w66258159 (`tunnel-decks.ts`) pod garbem terenu, do poprawy u źródła w imporcie; wcześniej: zgłoszone (13.11, naprawiacz G-686)
 - Pakiet właściciela: packages/sim (content/lublin abutments)
 
-### G-744 Pasy ruchu biorą odsunięcie od zmierzonego zasięgu asfaltu: przesunięcie krawędzi jezdni o centymetry daje kolizje aut
-- Ważność: S3 · Zasięg: ruch w całym mieście; ujawnione przez etap 2 ADR-0078 (łuki łączeń zmieniają zasięg asfaltu o kilka cm, pasy przesuwają się do 12 cm): `traffic-junction-drive` przy 3 Maja (1 ziarno z 12), Kołłątaja/Zesłańców Sybiru (−108; −149) seed 10, Cicha seed 30; na main 0
-- Opis: `reachAt`/`roadHalfWidth` w `sim/content/traffic.ts` liczą odsunięcie pasów od zmierzonego asfaltu, bez minimalnego odstępu przeciwnych pasów; kruche wobec każdej zmiany geometrii nawierzchni
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g744 (13.11, 18967c1, na etapie 2 ADR-0078: przyczyną obrót auta na załamaniu pasa i brak sprawdzania brył z naprzeciwka, nie przesunięcie pasów; `traffic-bodies.ts` z pierwszeństwem, spawn bez kolizji z nadjeżdżającym; seedy 1–40 w 3 miejscach 0/120; czas testów ruchu +5–10%; do scalenia razem z etapem 2); wcześniej: w naprawie (13.11, zgłoszone przez budowniczego etapu 2 ADR-0078); blokuje scalenie etapu 2
-- Pakiet właściciela: packages/sim (content/traffic)
-- Test przyjęcia: `traffic-junction-drive` zielony na gałęzi etapu 2 (12/12 ziaren), probe seedów 1–40 bez kolizji na main i na gałęzi; złoty hash świadomie
-- Gałąź zsynchronizowana z main (bf81314): hashes zgodne, skan 7412 -> 7159, wzrosty tylko sidewalk-under-carriageway +4 (Podwale x2, Dolna PM, Bernardyńska 390,-240 z footway-on-carriageway) i car-lane-off-road +1 (G-760); dług czasu w ADR-0046
-
 ### G-747 `followDetour` bez osiągalnej komórki w linii prostej kieruje gangera do `way[1]`, nawet nieosiągalnej
 - Ważność: S3 · Zasięg: planer pościgu w terenie ze skarpami; możliwe źródło części z 14 z 30 nieudanych dojść przy przyczółkach Mełgiewskiej (G-741), np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)
 - Opis: gdy żadna linia z punktu gangera nie przechodzi, fallback wybiera następny punkt drogi bez sprawdzenia osiągalności; ganger napiera na skarpę albo krąży w kieszeni
@@ -1801,14 +1793,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, kurator, przegląd walk-blocked)
 - Pakiet właściciela: packages/sim (content/lublin teren)
 - Test przyjęcia: `walk-blocked` bez kluczy na osi w179264855; postać przechodzi
-
-### G-757 Chodnik w295849309 przy kładce w295849307 ponad tg 35° wzdłuż osi
-- Ważność: S4 · Zasięg: Podzamcze 1070..1080,160..170; 44 pary `walk-blocked`
-- Opis: oś chodnika do zachodniego końca kładki spada ponad 0,7 na 2 m (skarpa rowu Czechówki); prawdopodobnie ustąpi po G-739 (#501: koniec pomostu na szczycie skarpy) — sprawdzić po scaleniu
-- Status: zgłoszone (13.11, budowniczy walk-blocked)
-- Pakiet właściciela: packages/sim (content/lublin teren, pomosty)
-- Test przyjęcia: `walk-blocked` bez kluczy przy 1070,160 po G-739
-- Po scaleniu main do gałęzi G-744 (141d155) klucz walk-blocked podzamcze-2-0 1070,160 zniknął po scan:update; do archiwum razem z PR G-744
 
 ### G-758 Import wybiera komórki terenu 4 i 8 m niepodzielne przez 2,5 i 5 m sąsiadów
 - Ważność: S3 · Zasięg: krakowskie-2-1 i inne kawałki siatki 4/8 m; szwy zostają 0,51 / 0,225 / 0,18 m po G-748
