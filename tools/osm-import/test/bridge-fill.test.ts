@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bridgeFills } from "../src/bridge-fill.ts";
+import { bridgeFills, onCarriagewayDecks } from "../src/bridge-fill.ts";
 import { type Area, type Line } from "../src/features.ts";
 import { lineBands } from "../src/ground.ts";
 
@@ -44,5 +44,25 @@ describe("one deck across a bridge (G-340)", () => {
     };
     for (const deg of [0, 14, -14, 180 + 14]) expect(bridgeFills([bridge], bands(road, turned(deg))), `${deg}°`).toHaveLength(1);
     for (const deg of [16, -16, 180 + 16]) expect(bridgeFills([bridge], bands(road, turned(deg))), `${deg}°`).toEqual([]);
+  });
+});
+
+describe("a bridge's sidewalk on its carriageway's deck (G-737)", () => {
+  const axis = (b: { readonly deck?: readonly { x: number; z: number }[] }) => b.deck!.map((p) => `${p.x},${p.z}`).join(" ");
+  const walkDecks = (areas: Area[], ...ls: Line[]) => onCarriagewayDecks(areas, bands(...ls)).filter((b) => !b.carriageway).map(axis);
+
+  it("lays a sidewalk beside the carriageway on the carriageway's axis, so the two are level in each cross-section", () => {
+    // The sidewalk's ends 1–2 m off the carriageway's along the bridge, as the map's ways end at the abutments.
+    const skew = line(2, { highway: "footway", bridge: "yes" }, [-1, -10], [42, -10]);
+    expect(walkDecks([bridge], road, skew)).toEqual(["0,0 40,0"]);
+    expect(walkDecks([bridge], road, walk(-7.75))).toEqual(["0,0 40,0"]);
+    expect(onCarriagewayDecks([bridge], bands(road, skew)).filter((b) => b.carriageway).map(axis)).toEqual(["0,0 40,0"]);
+  });
+
+  it("leaves a sidewalk on its own deck off a bridge's outline, alone on it, across the carriageway or too far off", () => {
+    expect(walkDecks([outline({ building: "yes" }, [0, -15], [40, -15], [40, 10], [0, 10])], road, walk(-10))).toEqual(["0,-10 40,-10"]);
+    expect(walkDecks([bridge], walk(-10))).toEqual(["0,-10 40,-10"]);
+    expect(walkDecks([bridge], road, line(2, { highway: "footway", bridge: "yes" }, [5, -14], [35, -2]))).toEqual(["5,-14 35,-2"]);
+    expect(walkDecks([bridge], road, walk(-13))).toEqual(["0,-13 40,-13"]);
   });
 });
