@@ -1824,9 +1824,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-762 startOf wybiera komórkę startową 3 m nad stopami u muru przyczółka dolnego mostu Mełgiewskiej
 - Ważność: S3 · Zasięg: planer pościgu przy murach przyczółków, np. (2415; 280)
 - Opis: u stopy muru przyczółka komórka stóp zamknięta (stroma); startOf bierze sąsiada na murze 3,4 m wyżej, a wallOnWay nie widzi ściany ze stromej komórki; droga prowadzi po murze, ganger napiera na niego, dalej idzie tylko po bocznym kroku kontroli utknięcia
-- Status: zgłoszone (13.11, naprawiacz G-747)
+- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g762, b4b7410); wcześniej: zgłoszone (13.11, naprawiacz G-747)
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: pościg z (2414,5; 280,1) na pomost nabrzeze-0-1/0 przy t=0,1 bez napierania na mur; startOf nie wybiera komórki wyżej niż krok + stok
+- startOf: komórka startowa nie wyżej nad stopami niż krok + stok (aboveLevel); stopa muru: krok w bok kontroli utknięcia 18/30 -> 0/30, najgorszy czas 19,7 -> 6,1 s; sonda G-741 129/150 -> 129/150, 14 prób szybszych
 
 ### G-764 Trawnik pod koronami drzew na kostce (reguła koron, ADR-0077 krok 1.2)
 - Ważność: S4 · Zasięg: 4 dzielnice, ok. 474–670 m², m.in. promenada nad Czechówką przy VIVO (x 1090, z 185), Furmańska (x 646, z 257)
