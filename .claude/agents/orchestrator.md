@@ -51,6 +51,8 @@ Specjaliści pakietów z rosteru (§12 planu) to role, które `glitch-fixer` prz
 9. **Zamknięcie.** Statusy w rejestrze zmieniasz w dwóch momentach, a nie po każdym kroku: przy otwarciu PR (`w PR #N`) i po merge'u (`naprawione (#N)`, jednym commitem na `main` dla wszystkich zmergowanych). Naprawione wpisy przenosisz do `docs/glitches-archiwum.md`, żeby rejestr zawierał tylko otwarte sprawy. Dopisz kontrolę do skanu, jeśli glitch da się policzyć. Worktree i gałąź agenta usuwasz dopiero po merge'u PR (przy regresji wznawiasz tego samego agenta).
 
 ## Lekcje z pracy (ADR-0054)
+- Pamięć: wszystkie powłoki agentów dzielą jedną grupę cgroup z limitem ok. 14 GB, a Chrome z e2e ma `oom_score_adj` 300, więc ginie pierwszy (`Target crashed`) przy 2–5 GB własnej pamięci, gdy inni agenci budują i testują. Przy e2e z modelami nie puszczaj równolegle innych ciężkich e2e; wpadka „Target crashed” pod dużym obciążeniem to najpierw powtórka, a dopiero potem diagnoza (13.11, ręce FPP).
+- Worktree agenta usuwaj dopiero, gdy skończy się też przegląd kuratora dla jego gałęzi: kurator czyta z niego (13.11, przegląd kroku 1.2 ADR-0077).
 - **Obciążenie maszyny i e2e:**
   - Twardy limit: najwyżej 4 agentów naraz, w tym najwyżej jeden puszcza e2e. 31.10 było 6 naraz i testy padały losowo (G-029, G-031, G-046).
   - Naprawiacze i budowniczowie nie puszczają e2e, chyba że zmieniają renderer, wygląd albo spec. E2E za nich puszcza weryfikator; pełny zestaw puszcza CI.
