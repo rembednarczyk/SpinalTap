@@ -61,12 +61,15 @@ describe("utility poles over the side streets (ADR-0063)", () => {
     expect(poles.length).toBeLessThan(lamps.length / 2);
   });
 
-  it("stand clear of the buildings with the whole pole, not just its foot: Ciasna's lamp by the wall stays a lamp", () => {
+  it("stand clear of the buildings with the whole pole, not just its foot: Ciasna's lamp, off the wall now, takes one", () => {
     const fitting = poles.filter((p) => poleFits(pole, p));
     expect(fitting.length).toBeGreaterThan(40);
-    const ciasna = poles.find((p) => Math.hypot(p.x - 634.9, p.z - 538.0) < 0.5);
+    // Ciasna's lamp stood at (634.9; 538.0), its pole's arm in the wall, and stayed a lamp. The kerb
+    // it keeps off runs round the street's bend since ADR-0078 step 2 (the band's round join), which
+    // moved it 0.2 m to (635.1; 538.1), clear of the wall: the pole fits there, the check below holds it.
+    const ciasna = poles.find((p) => Math.hypot(p.x - 635.1, p.z - 538.1) < 0.5);
     expect(ciasna).toBeDefined();
-    expect(poleFits(pole, ciasna!)).toBe(false);
+    expect(poleFits(pole, ciasna!)).toBe(true);
     for (const p of fitting) {
       const { positions } = transformProp(pole, poleXform(p));
       for (let i = 0; i < positions.length; i += 3) expect(inBuilding(positions[i]!, positions[i + 2]!)).toBe(false);
