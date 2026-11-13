@@ -1801,19 +1801,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan (walk-blocked)
 - Test przyjęcia: `walk-blocked` bez kluczy pod płytami Arkad
 
-### G-760 Dziury 5–20 cm w nawierzchni jezdni pod pasami aut
-- Ważność: S3 · Zasięg: car-lane-off-road i lane-off-ground po G-756: 930,15,329,81 (Al. Tysiąclecia#81:1), 1080,10,564,02 (Podzamcze#107:0), 2525,7,357,5 i 2505,04,331,52 (Turystyczna#122:0), 26,18,−102,66 (Kościuszki#4, pod pasem plac zamiast jezdni)
-- Opis: siatka próbek w układzie świata (G-756) trafia w małe dziury nawierzchni pod pasem, które stara siatka po łuku omijała
-- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g760, merge 74a981d); wcześniej: wstrzymane: przyczyna w kodzie G-744/ADR-0078 etap 2 (końce pasów w złączach); wcześniej: zgłoszone (13.11, naprawiacz G-756)
-- Pakiet właściciela: packages/sim (content/lublin nawierzchnie), tools/osm-import
-- Test przyjęcia: `car-lane-off-road` i `lane-off-ground` bez tych kluczy
-- Przyczyna: proste ucięcia pasów jezdni dwóch dróg we wspólnym węźle nie pokrywają się (wierzchołki zaokrąglane osobno do 0,1 m, różne szerokości, klin na zakręcie); szczeliny 5-10 cm. Kościuszki#4 to ta sama szczelina, plac tylko prześwituje. Na danych g744 zostają 4 z 5 miejsc (i dziury ok. 25 cm przy ~2526,356): roundJoints pomija kawałki < SLIVER 0,1 m / MIN_CAP 0,3 m² i liczy przed zaokrągleniem do 0,1 m. Naprawa po scaleniu g744, w line-buffer.ts (złącze po zaokrągleniu albo nakładka w złączu); test: odcinek między ucięciami pasów ze wspólnym węzłem leży na road. Sonda: scratchpad g760-probe.test.ts.
-- Skan car-lane-off-road nabrzeze-0-1 2340,420 (Kalinowszczyzna#131:f, 2340,427): dziura w jezdni 5-10 cm przy przejściu ścieżki, przyjęta do bazy w 8179d72 na gałęzi G-744; po poprawce scan:update ją usuwa
-- Łaty szczelin i klinów w złączach (line-buffer.ts gapFills, osobne wstęgi). Skan: car-lane-off-road 5->0, lane-off-ground 3->0; ground-strip-overlap +20, kerb-gap-bare +2 przyjęte z uzasadnieniem. map-ground-golden 155341/1117bd89. orto:diff 49,8 m² do kuratora.
-- 13.11 przegląd kuratora 74a981d: ZGODNE Z UWAGAMI. footway +17,5 m² to łaty szczelin ścieżek (gołe 7,4, schody 5,3, plac 4,9, chodnik 1,4, trawa 0,9); jezdnia na zieleni ortofoto 0,3 m²; kliny jezdni do 4,3 m² na kostce ortofoto; przejścia leżą wyżej (0,13). Uwagi do rundy 2: łaty ścieżek na schodach (10 miejsc, 5,3 m²), zniknięcie 2 kratek ściekowych (126,89;100,89) i (2349,39;314,29), 2 jasne kropki na zrzucie Podzamcza; propozycja kontroli patch-on-steps.
-- Runda 2 (#514, 9f0bad0): łaty nie wchodzą na schody i zebry (test), krawężniki i wypełnienia z ortofoto czytają ziemię bez łat (kratki jak w main), Podzamcze 0 dziurek w rastrze 0,1 m. Skan: ground-strip-overlap +18, kerb-gap-bare +1 przyjęte; map-ground-golden 171653/2f66bb82; bench +8,4% / +11,9%.
-- Kolejna szczelina 1–2 cm w poprzek jezdni Narutowicza przy 239,-172.9 (krakowskie-1-0); pas trafia w nią przy przesunięciu o 8 mm (ADR-0080 PR 3, wariant odrzucony)
-
 ### G-761 Trawniki w pierścieniu skweru na Podzamczu pod kostką ścieżki
 - Ważność: S4 · Zasięg: w804709919, w804709920 (1045, 424), 46 m²; podobnie zieleń pod footway w pętlach w1343050082 (58,-83) 19 m², w154012559 15 m², w515648305 10 m²
 - Opis: Pas footway pierścienia (szerokość domyślna) leży na półksiężycach trawnika widocznych na ortofoto; skwer traci rysunek. Proponowana kontrola skanu loop-paving-on-green (m² kostki na zieleni wewnątrz pętli ścieżek, baza 5 pętli).
@@ -1821,14 +1808,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: zieleń z ortofoto pod footway/square wewnątrz pętli w804709919 < 5 m²
 - Wiersz topografii: T-286.
-
-### G-762 startOf wybiera komórkę startową 3 m nad stopami u muru przyczółka dolnego mostu Mełgiewskiej
-- Ważność: S3 · Zasięg: planer pościgu przy murach przyczółków, np. (2415; 280)
-- Opis: u stopy muru przyczółka komórka stóp zamknięta (stroma); startOf bierze sąsiada na murze 3,4 m wyżej, a wallOnWay nie widzi ściany ze stromej komórki; droga prowadzi po murze, ganger napiera na niego, dalej idzie tylko po bocznym kroku kontroli utknięcia
-- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g762, b4b7410); wcześniej: zgłoszone (13.11, naprawiacz G-747)
-- Pakiet właściciela: packages/sim/src/systems/ai
-- Test przyjęcia: pościg z (2414,5; 280,1) na pomost nabrzeze-0-1/0 przy t=0,1 bez napierania na mur; startOf nie wybiera komórki wyżej niż krok + stok
-- startOf: komórka startowa nie wyżej nad stopami niż krok + stok (aboveLevel); stopa muru: krok w bok kontroli utknięcia 18/30 -> 0/30, najgorszy czas 19,7 -> 6,1 s; sonda G-741 129/150 -> 129/150, 14 prób szybszych
 
 ### G-764 Trawnik pod koronami drzew na kostce (reguła koron, ADR-0077 krok 1.2)
 - Ważność: S4 · Zasięg: 4 dzielnice, ok. 474–670 m², m.in. promenada nad Czechówką przy VIVO (x 1090, z 185), Furmańska (x 646, z 257)
