@@ -78,8 +78,9 @@ describe("the bridges' abutments (G-349)", () => {
       return n;
     });
     // Left where the ground before the end is higher than the deck there, level with the rest of
-    // the street (Zamkowa's deck falling into the tunnel's cut, Mełgiewska's sidewalk under its
-    // carriageway): lowered, the ground before the deck would fall under it, a step (G-736).
-    expect(through).toEqual([230, 77, 55, 0]);
+    // the street (Zamkowa's deck falling into the tunnel's cut): lowered, the ground before the
+    // deck would fall under it, a step (G-736). Mełgiewska's sidewalks lie level with their
+    // carriageways since G-737 (77 and 55 before): the ground before their ends is too.
+    expect(through).toEqual([230, 1, 0, 0]);
   });
 });

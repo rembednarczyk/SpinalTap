@@ -46,6 +46,8 @@ export interface Raster {
   readonly flight: Uint8Array | null;
   /** With `base`, `ON_LEDGE` where a cell tops the edge of a bridge's deck with no room under it (`ledgesOf`), else 0; null when none is in the window. */
   readonly ledges: Uint8Array | null;
+  /** The ground it was made on: the walk's first steps are checked on it, as the movement has them (G-738). */
+  readonly ground: GroundField;
 }
 
 export const cellRange = (lo: number, hi: number, origin: number, cells: number): [number, number] => [
@@ -272,5 +274,5 @@ export function* rasterise(solids: readonly Collider[], floor: number, reach: nu
   } else yield* openFloor(open, solids, base, floor, x0, z0, cells);
   yield* closeSolids(open, solids, base, floor, x0, z0, cells);
   const relative = floor === 0 && base !== null;
-  return { cells, x0, z0, floor, reach, open, base: relative ? base : null, flight: relative ? flight : null, ledges: relative ? ledges : null };
+  return { cells, x0, z0, floor, reach, open, base: relative ? base : null, flight: relative ? flight : null, ledges: relative ? ledges : null, ground };
 }
