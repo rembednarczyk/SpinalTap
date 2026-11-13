@@ -6,6 +6,7 @@ import { STARE_MIASTO_CHUNKS } from "./stare-miasto.generated";
 import { GATE_PASSAGES, type PassageSite } from "./gate-passages";
 import { abutmentRamps, flightTopRamps } from "./abutments";
 import { type GroundRect, type Pad, type Ramp, flightRamps, mapHeight, stepRamps } from "./shape";
+import { type SteepWay, steepWays } from "./steep-ways";
 import type { LublinChunkData } from "./types";
 import { ALCHEMIA_PADS, ALCHEMIA_RAMPS } from "../alchemia/terraces";
 
@@ -166,3 +167,5 @@ export const PADS: readonly Pad[] = [
 export const RAMPS: readonly Ramp[] = [...stepRamps(MAP_CHUNKS), ...abutmentRamps(MAP_CHUNKS), ...flightTopRamps(MAP_CHUNKS), ...ALCHEMIA_RAMPS];
 /** Ramps along the flights the terrain climbs against their `incline` (G-236, T-131), laid last on a finer grid (`terrain.ts`). */
 export const FLIGHT_RAMPS: readonly Ramp[] = flightRamps(MAP_CHUNKS);
+/** The stretches of the ways walked on foot too steep on the terrain (G-755), laid last at an even grade on the flights' finer grid (`terrain.ts`). */
+export const STEEP_WAYS: readonly SteepWay[] = steepWays(MAP_CHUNKS);

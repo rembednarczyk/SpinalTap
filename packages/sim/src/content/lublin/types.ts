@@ -158,6 +158,15 @@ export interface LublinFlightData {
   readonly steps?: number;
 }
 
+/**
+ * A stretch of a way walked on foot the terrain makes too steep to walk (G-755): `<way>/<k>`,
+ * its world polyline from its foot to its top, in every chunk it reaches into.
+ */
+export interface LublinSteepWayData {
+  readonly id: string;
+  readonly line: FlatPoints;
+}
+
 /** A car park mapped as an area (on the ground): the kerbs and yards where the map says cars park. */
 export interface LublinCarParkData {
   /** Its map id; one reaching over a chunk's edge is in both chunks. */
@@ -209,6 +218,8 @@ export interface LublinChunkData {
   readonly footWays?: readonly LublinFootWayData[];
   /** Flights of steps with a mapped `incline` reaching into it, when it has any. */
   readonly flights?: readonly LublinFlightData[];
+  /** Stretches of the ways walked on foot too steep on the terrain reaching into it (G-755), when it has any. */
+  readonly steepWays?: readonly LublinSteepWayData[];
   /** Car parks reaching into it, when it has any. */
   readonly carParks?: readonly LublinCarParkData[];
   /** Bus stops' posts by it (and up to 25 m past its edge), when it has any: no car parks 15 m either side of one (G-156). */

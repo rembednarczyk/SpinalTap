@@ -31,13 +31,14 @@ import { roundJoints } from "./line-buffer.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
-import { type BuildingOut, type ChunkOut } from "./model.ts";
+import { type BuildingOut, type ChunkOut, type SteepWayOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { lod1Index, withLod1Height } from "./lod1-heights.ts";
 import { lod2Index, withLod2Roof } from "./lod2-roofs.ts";
 import { withSurfaceTop } from "./corrections-surface.ts";
 import { RingBins } from "./ring-bins.ts";
 import { type ChunkTerrain, chunkTerrain, gridsHeight, sampleField } from "./terrain.ts";
+import { chunkSteepWays, steepWays } from "./steep-ways.ts";
 import { groundRaisedGreen, raisedGreen } from "./raised-green.ts";
 import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
 import { type WorldVenue, allVenues, assignVenues, venueOut } from "./venues.ts";
@@ -230,6 +231,7 @@ const generateChunk = (
   kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[] },
   barriers: readonly WorldBarrier[],
   heights: { readonly lod1?: ReturnType<typeof lod1Index>; readonly lod2?: ReturnType<typeof lod2Index>; readonly orphans: ReadonlySet<string> },
+  steep: readonly SteepWayOut[],
   fill?: CoverFill,
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
@@ -280,6 +282,7 @@ const generateChunk = (
   const service = chunkServiceWays(lines, spec.rect);
   const foot = chunkFootWays(lines, spec.rect);
   const flights = chunkFlights(lines, spec.rect);
+  const steepWays = chunkSteepWays(steep, spec.rect);
   const parks = chunkCarParks(kerb.carParks, spec.rect);
   const stops = chunkBusStops(kerb.busStops, spec.rect);
   const wide = chunkMultiLaneWays(lines, spec.rect);
@@ -298,6 +301,7 @@ const generateChunk = (
     ...(service.length > 0 ? { serviceWays: service } : {}),
     ...(foot.length > 0 ? { footWays: foot } : {}),
     ...(flights.length > 0 ? { flights } : {}),
+    ...(steepWays.length > 0 ? { steepWays } : {}),
     ...(parks.length > 0 ? { carParks: parks } : {}),
     ...(stops.length > 0 ? { busStops: stops } : {}),
     ...(wide.length > 0 ? { multiLaneWays: wide } : {}),
@@ -477,7 +481,9 @@ export const generate = (
   const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
   const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), ...(lod2 ? { lod2: lod2Index(lod2) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
   const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas, pathLoops(lines)));
-  const results = chunks.map((c, i) => generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, fill));
+  // On the ways as laid: a stretch on a deck over a tunnel is no bank (G-088).
+  const steep = steepWays(laidLines.map((l) => l.piece), gridsHeight(terrains));
+  const results = chunks.map((c, i) => generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, steep, fill));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats), venues: venueStatsOf(mapped, results.reduce((n, r) => n + r.stats.venues, 0)) };
 };
 
