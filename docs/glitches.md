@@ -1138,6 +1138,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, naprawiacz rundy 3 PR #343; kontrola `pad-on-road` z tego PR)
 - Ważność: S4 · Zasięg: pad T-051 przy Bajkowskiego zmienia teren na 7 drogach i chodnikach o 0,5–1,5 m (w40052294 +1,52 m); pad T-002 przy (2515; 387) obniża ścieżkę w972606056 o 1,80 m; także rampa zachodnia Alchemii nachodzi na chodnik w232464426 przy z 52–56 (przypadkiem w tolerancji); krakowskie-2-0 (12.11): `pad-on-road` 3 to pad myjni T-051 (385..415; −50..−21), celowa scena.; krakowskie-2-1 (12.11): `pad-on-road` 3 próbki to znów pad myjni T-051: w40052294 (384; -17) +1,52 m na 40 m, w173531768 (398; -17) 1,02 m na 13 m, w232805957 (385; -16) 1,54 m na 8 m; celowa scena.; nabrzeze-1-1 (12.11): `pad-on-road` pad T-002 przesuwa ścieżkę w972606056 o -1,80 m na 18 m (2515; 387); znane.
 - Pakiet właściciela: packages/sim (content, pady), tools/glitch-scan
+- część T-051 usunięta w G-754 (f395319); zostaje krakowskie-2-0 415,-40 (alejka w1208186144 pod maszynownią, wewnątrz sceny) i T-002 nabrzeze-1-1 2515,387
 
 ### G-448 `traffic.test.ts` „takes turns at crossings by the market” przekracza 5 s pod obciążeniem
 - Status: zgłoszone (7.11, naprawiacz G-334)
@@ -1784,10 +1785,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-754 Podkład myjni (T-051) tworzy skarpę 1,19 m na Bajkowskiego i przejściu
 - Ważność: S3 · Zasięg: Krakowskie 380..390, -30..-10; 10 par `walk-blocked`
 - Opis: podkład CAR_WASH_AREA (blend 3 m) podnosi teren o 1,3 m; NMT 0,04, w grze 1,19 na ulicy Wacława Bajkowskiego i przejściu; błąd zrobiony przez grę
-- Status: zgłoszone (13.11, kurator, przegląd walk-blocked)
+- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g754, f395319); wcześniej: zgłoszone (13.11, kurator, przegląd walk-blocked)
 - Pakiet właściciela: packages/sim (content/lublin teren, podkłady)
 - Test przyjęcia: `walk-blocked` bez kluczy przy 380,-20; teren ulicy w ±0,1 m od NMT
 - 13.11: walk-blocked 1,19 przy 380,-20 to był artefakt błędu pamięci skanu (fix c17fcb5 w #497); po poprawce brak zablokowanych par, zostaje odstępstwo terenu ulicy od NMT o 1,31 m (topografia, nie przejście)
+- 13.11 f395319: pad T-051 x 388..422, z -41..-27; Bajkowskiego i przejścia ≤0,1 m od NMT; pad-on-road krakowskie 7→1, seam-gap 1→0; złote hashe determinism, reinforcement-sidestep i ground-cut krakowskie-2-0 zmienione świadomie (treść)
 
 ### G-755 Droga pieszo-rowerowa w179264855 w grze za stroma (0,8–0,92) przy (667–682; 134–141)
 - Ważność: S3 · Zasięg: zejście ze Starego Miasta na Podzamcze; ok. 1 440 par `walk-blocked` (kwadraty 670,130 i 670,140)
@@ -1805,6 +1807,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Do zrobienia razem z kontrolą `seam-gap` z przeglądu #502 (kurator 13.11).
 - Kontrola seam-gap (gałąź ccr-ec2c4269-ilh8k8-seam-gap, 29f7b55): baza main 16 kluczy / 210 próbek; po #502 zostaje 1 (myjnia 380,-20); (240;114) w obrysie budynku, x=460 pod płytami Arkad – nie liczone
 - Kontrola seam-gap w main (#507, 13.11): baza 1 klucz (krakowskie-2-1 380,-20, myjnia); G-754 w toku.
+- seam-gap krakowskie-2-1 380,-20 to był pad myjni; po G-754 baza seam-gap 0
 
 ### G-759 walk-blocked nie widzi płyt chodnika i podestu Arkad
 - Ważność: S4 · Zasięg: klucze `stare-miasto-0-1 460,100/110/120`, `krakowskie-2-1 450,*`; ok. 500 stromych par po G-748
