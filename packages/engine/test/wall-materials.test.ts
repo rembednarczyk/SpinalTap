@@ -70,7 +70,9 @@ describe("brick walls of the map (G-244)", () => {
   it("a colour of the map picks the nearest plaster, a stone wall stays stone", () => {
     const beige = facadeStyle({ use: "residential", levels: 3, height: 12, look: 7, area: 120, width: 8, colour: "#f5f5dc" });
     expect(PLASTERS.has(beige.plaster)).toBe(true);
-    expect(hsv(beige.plaster)[2], "beige is a light plaster").toBeGreaterThan(0.8);
+    // A pale plaster, as light as the day sun lets one be without burning out (G-742).
+    expect(hsv(beige.plaster)[1], "beige is a pale plaster").toBeLessThan(0.15);
+    expect(hsv(beige.plaster)[2], "beige is a light plaster").toBeGreaterThan(0.7);
     const green = facadeStyle({ use: "residential", levels: 3, height: 12, look: 7, area: 120, width: 8, colour: "#008000" });
     const [h, , v] = hsv(green.plaster);
     expect(h > 90 && h < 150 && v > 0.6, `green is a mint plaster: ${green.plaster}`).toBe(true);

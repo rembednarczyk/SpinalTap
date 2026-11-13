@@ -30,13 +30,16 @@ const GRASS = hexColor("#3f5c35", DRESS_FLAG.solid);
  * and its brightness against the square's. The square, the paths and the fountains' floors take the
  * median of the light paving over the map; the setts the median of the Old Town's hard ground (light
  * paving and asphalt classes, the curator's probe of 12.11), dark stones and all: the light paving
- * alone left them as light as Plac Litewski's granite. The fountains keep their dark water: the
- * player's decision of 13.11, though the orthophoto shows the shallow pools' light floor (G-129).
+ * alone left them as light as Plac Litewski's granite. The sidewalks are 0.95 of the square on the
+ * orthophoto (G-734), laid as light as the paths, a step below the slabs.
+ * The fountains keep their dark water: the player's decision of 13.11, though the orthophoto shows
+ * the shallow pools' light floor (G-129).
  */
 const ORTHO_PAVING = {
   square: { rgb: [188, 186, 172], toSquare: 1 },
   cobble: { rgb: [143, 136, 127], toSquare: 0.87 },
   footway: { rgb: [181, 174, 158], toSquare: 0.92 },
+  sidewalk: { rgb: [181, 177, 162], toSquare: 0.92 },
 } as const;
 
 /**
@@ -62,7 +65,7 @@ const SURFACE_COLOR: Readonly<Record<Exclude<GroundSurface, "water" | "basin" | 
   square: paving("square", DRESS_FLAG.solid),
   cobble: paving("cobble", DRESS_FLAG.solid),
   footway: paving("footway", DRESS_FLAG.solid),
-  sidewalk: hexColor("#6a6d73", DRESS_FLAG.solid),
+  sidewalk: paving("sidewalk", DRESS_FLAG.solid),
   grass: GRASS,
 };
 const KERB = hexColor("#a3a39e", DRESS_FLAG.solid);

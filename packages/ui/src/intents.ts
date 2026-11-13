@@ -161,7 +161,8 @@ export type UiIntents = SessionIntents &
   JournalIntents &
   HackIntents &
   MetroIntents &
-  RadioIntents;
+  RadioIntents &
+  WaitIntents;
 
 // ---- Wave 2 (ADR-0035) ----
 
@@ -182,3 +183,12 @@ export interface RadioIntents {
   nextRadioStation(): void;
 }
 
+
+/** Waiting: the window that lets game hours pass, from the pause menu or its key (the `wait` command). */
+export interface WaitIntents {
+  /** Opens the window; refused (the reason as a toast) in a fight, an alarm, a pursuit or with another panel up. */
+  openWait(): void;
+  closeWait(): void;
+  /** Lets `hours` (whole, 1 to 24) pass at once and closes the window. */
+  waitHours(hours: number): void;
+}

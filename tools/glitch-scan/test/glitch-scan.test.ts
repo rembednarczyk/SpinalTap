@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
@@ -52,6 +52,8 @@ import { cutOnRoadInGame } from "./cut-on-road";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { type CoverageRegister, hitsPerCell, registerProblems } from "../src/map-coverage.ts";
+import { type FoundKey, type KindDiff, accepted, describeKey, diffKind, fails, formatDiff, keysOf, pruned } from "../src/scan-keys.ts";
+import { baseKinds, dropKind, readKind, writeKind } from "../src/scan-base.ts";
 import { metroLineProtected } from "./metro-line";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
@@ -132,16 +134,19 @@ import { rampCarsOffLane } from "./ramp-cars";
 import { CAR_MODELS, CITY_ROUTES, MIN_ROUTE, TRAFFIC_LANES, TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
 
 /**
- * The glitch scan (ADR-0054): the map's known kinds of glitch counted over the whole city, each
- * against its baseline in `glitch-baseline.json`. A count over its baseline is a regression and
- * fails; a count under it is a fix, and the baseline comes down with it (`GLITCH_BASELINE=update
- * pnpm vitest run tools/glitch-scan`), so it only ever ratchets down.
+ * The glitch scan (ADR-0054): the map's known kinds of glitch found over the whole city, each
+ * finding keyed by its place (`src/scan-keys.ts`: the chunk and the place on the kind's grid) and
+ * checked against the kind's known keys in `baseline/<kind>.txt`. A new key fails, even when the
+ * kind's sum comes down; a key gone is a fix, and `GLITCH_BASELINE=update` removes it from the
+ * base (it never adds one); `GLITCH_BASELINE=accept` takes the new keys in and prints them, for a
+ * raise made on purpose (README.md).
  * Each finding's place goes to `reports/glitch-scan.json` for the hunters (ADR-0054).
  */
 
 type Finding = { readonly at: string; readonly what: string };
 
-const BASELINE = join(__dirname, "glitch-baseline.json");
+/** The scan's base, a file of known keys a kind (`src/scan-base.ts`). */
+const BASE = join(__dirname, "baseline");
 /** The map data the city is generated from (ADR-0042), for what the import may lose. */
 const OSM_DIR = join(__dirname, "../../../data/osm");
 const SOURCE_OSM = mergeOsm(
@@ -2467,24 +2472,39 @@ describe("the glitch scan (ADR-0054)", () => {
 /**
  * The ratchet: one test per kind, so each stays far under the time limit on a loaded CI runner,
  * where the whole scan in a single test went over 20 s under coverage (PR #80, 7.5 s alone).
- * The report and an updated baseline are written once all kinds have run.
+ * The report and the base's files are written once the kinds have run: with `-t <kind>` only
+ * that kind's file.
  */
 describe("the glitch scan against its baseline (ADR-0054)", () => {
-  const update = process.env.GLITCH_BASELINE === "update" || !existsSync(BASELINE);
-  const baseline = update ? {} : (JSON.parse(readFileSync(BASELINE, "utf8")) as Record<string, number>);
+  const mode = process.env.GLITCH_BASELINE;
   const found: Record<string, Finding[]> = {};
+  const diffs: { d: KindDiff; keys: Map<string, FoundKey>; base: Map<string, number> }[] = [];
   afterAll(() => {
     const counts = Object.fromEntries(Object.entries(found).map(([k, f]) => [k, f.length]));
+    const keys = Object.fromEntries(diffs.map(({ d, keys: m }) => [d.kind, Object.fromEntries([...m].map(([key, f]) => [key, f.n]))]));
+    const lines = diffs.flatMap(({ d }) => formatDiff(d, Infinity));
     mkdirSync("reports", { recursive: true });
-    writeFileSync("reports/glitch-scan.json", JSON.stringify({ counts, found }, null, 2));
-    if (update && Object.keys(found).length === Object.keys(CHECKS).length) writeFileSync(BASELINE, `${JSON.stringify(counts, null, 2)}\n`);
+    writeFileSync("reports/glitch-scan.json", JSON.stringify({ counts, keys, found }, null, 2));
+    writeFileSync("reports/glitch-scan-diff.txt", lines.length ? `${lines.join("\n")}\n` : "");
+    if (mode === "update" || mode === "accept") {
+      for (const { d, keys: m, base } of diffs) writeKind(BASE, d.kind, mode === "accept" ? accepted(m) : pruned(base, m));
+      if (diffs.length === Object.keys(CHECKS).length) for (const k of baseKinds(BASE)) if (!(k in CHECKS)) dropKind(BASE, k);
+      const added = diffs.flatMap(({ d }) => (mode === "accept" ? d.added.map((a) => `  + ${describeKey(d.kind, a.key)}: ${a.what}`) : []));
+      const removed = diffs.reduce((n, { d }) => n + d.removed.length, 0);
+      process.stdout.write(`GLITCH_BASELINE=${mode}: ${removed} key(s) removed or come down${added.length ? `, ${added.length} added:\n${added.join("\n")}` : ""}\n`);
+    }
+    if (lines.length) process.stdout.write(`The scan against its base (all in reports/glitch-scan-diff.txt):\n${diffs.flatMap(({ d }) => formatDiff(d)).join("\n")}\n`);
     // The hits per cell of the map's coverage register (docs/mapa-pokrycie.md), for its report.
     writeFileSync("reports/map-coverage-hits.json", JSON.stringify(hitsPerCell(found, MAP_CHUNKS), null, 2));
   });
   for (const [k, check] of Object.entries(CHECKS)) {
-    it(`finds no more ${k} than its baseline`, () => {
+    it(`finds no new place of ${k} (baseline/${k}.txt)`, () => {
       found[k] = check();
-      if (!update) expect(found[k].length, `${k}: ${found[k].length} found, baseline ${baseline[k] ?? 0} (see reports/glitch-scan.json)`).toBeLessThanOrEqual(baseline[k] ?? 0);
+      const keys = keysOf(k, found[k], MAP_CHUNKS);
+      const base = readKind(BASE, k);
+      const d = diffKind(k, base, keys);
+      diffs.push({ d, keys, base });
+      if (mode !== "accept" && fails(d)) expect.fail(`${formatDiff(d).join("\n")}\n(a new place of a glitch: fix it, or take it in on purpose with GLITCH_BASELINE=accept, README.md)`);
     });
   }
   // After every kind has run: a cell of the coverage register is `czyste` only with no hit of the scan in it.

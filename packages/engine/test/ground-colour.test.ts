@@ -52,6 +52,14 @@ describe("the paving's colour by day (G-721)", () => {
     within(luma(laidColour("footway")) / square, 0.88, 0.96, "footway");
   });
 
+  it("lays the sidewalks as light as the orthophoto's, a little darker than the slabs (G-734)", () => {
+    // Orthophoto medians (2025-04): sidewalk 0.95-0.97 of the square, 1.58 of the lawn (1.85 in June).
+    const sidewalk = luma(laidColour("sidewalk"));
+    expect(sidewalk / luma(laidColour("square"))).toBeGreaterThanOrEqual(0.88);
+    expect(sidewalk / luma(laidColour("square"))).toBeLessThanOrEqual(0.97);
+    expect(sidewalk / luma(laidColour("grass"))).toBeGreaterThanOrEqual(1.46);
+  });
+
   it("keeps a fountain's water dark, not a light floor (decision of 13.11)", () => {
     const water = new MeshSink();
     const e = new MapEntries();

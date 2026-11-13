@@ -1,0 +1,28 @@
+# ground-ring-self-cross: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-0-0 -162,-266
+krakowskie-0-0 13,-264
+krakowskie-0-0 2,-76
+krakowskie-0-1 -48,43 *2
+krakowskie-0-1 -9,89
+krakowskie-1-0 131,-254
+krakowskie-1-0 26,-81
+krakowskie-1-0 127,-47
+krakowskie-1-0 56,-46 *2
+krakowskie-1-1 66,33 *2
+krakowskie-1-1 162,63
+krakowskie-2-0 291,-172
+nabrzeze-0-0 2483,137
+nabrzeze-0-0 2488,144
+nabrzeze-0-1 2427,451
+nabrzeze-1-0 2599,263
+nabrzeze-1-1 2685,280
+podzamcze-1-0 767,236
+podzamcze-2-1 1045,424
+podzamcze-2-1 1046,424
+podzamcze-2-1 1057,504
+podzamcze-2-1 961,538
+stare-miasto-1-0 715,-239
+stare-miasto-1-0 659,-225
+stare-miasto-1-0 742,-97
+stare-miasto-1-0 613,-49
+stare-miasto-1-1 753,76

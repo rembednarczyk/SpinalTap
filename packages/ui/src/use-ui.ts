@@ -17,6 +17,7 @@ import type {
   SettingsIntents,
   ShopIntents,
   UiIntents,
+  WaitIntents,
 } from "./intents";
 import type { UiState, UiStore } from "./store/ui-store";
 
@@ -48,3 +49,4 @@ export const useJournalIntents = (): JournalIntents => useUiContext().intents;
 export const useHackIntents = (): HackIntents => useUiContext().intents;
 export const useMetroIntents = (): MetroIntents => useUiContext().intents;
 export const useRadioIntents = (): RadioIntents => useUiContext().intents;
+export const useWaitIntents = (): WaitIntents => useUiContext().intents;
