@@ -1,6 +1,6 @@
 # ADR-0081: Mieszkańcy: tożsamość, plan dnia, wiedza i scena jako okno
 
-Status: Proponowany (13.11). Prośba użytkownika z 13.11 (`docs/decyzje.md`, „Mieszkańcy”; backlog, „Mieszkańcy: tożsamość, plan dnia, wiedza i scena jako okno”). Rozbudowuje ADR-0017 (zegar, harmonogramy), ADR-0040 (rutyny, przechodnie tła), ADR-0041 i ADR-0050 (mieszkańcy, tłum), ADR-0029 (świadkowie, heat), ADR-0070 (reputacja), ADR-0076 (modele, obsada, pula tła); nie zmienia ADR-0058 etap 8 (postacie w pozach tylko do rysowania). Stan kodu: `origin/main` db52080.
+Status: Zaakceptowany (13.11, odpowiedzi użytkownika na końcu). Prośba użytkownika z 13.11 (`docs/decyzje.md`, „Mieszkańcy”; backlog, „Mieszkańcy: tożsamość, plan dnia, wiedza i scena jako okno”). Rozbudowuje ADR-0017 (zegar, harmonogramy), ADR-0040 (rutyny, przechodnie tła), ADR-0041 i ADR-0050 (mieszkańcy, tłum), ADR-0029 (świadkowie, heat), ADR-0070 (reputacja), ADR-0076 (modele, obsada, pula tła); nie zmienia ADR-0058 etap 8 (postacie w pozach tylko do rysowania). Stan kodu: `origin/main` db52080.
 
 ## Kontekst
 
@@ -216,9 +216,9 @@ Sloty tłumu z ADR-0041 i przechodniów z ADR-0040 dostają twarze z rejestru: n
 - **Rozjazd z treścią fabuły** (wiek i rodzina nazwanych). Test zgodności `RESIDENT_OVERRIDES` z `cast` i ADR-0076 (wiek, płeć); przegląd ink.
 - **Rozmiar zapisu.** Test ≤ 64 KB przy pełnych limitach.
 
-## Otwarte pytania do użytkownika
+## Odpowiedzi użytkownika (13.11)
 
-1. Ilu mieszkańców: proponuję 1 200 jako stałą wersji rejestru, czy raczej „każde mieszkanie z mapy”? To drugie daje ok. 3–4 tys. osób i więcej pamięci i CPU poziomu B.
-2. Imiona i ksywy: japońskie jak obecna obsada, polskie, czy mieszane według dzielnicy lub pochodzenia rodziny?
-3. Pogoda: dziś sim jej nie ma, a parasole losuje ziarno (35%). Czy w PR 3 wprowadzić deterministyczną pogodę dnia (zmienia też renderer i parasole), czy na start plan dnia ma pominąć pogodę?
-4. Kolejność wobec mapowania: domyślnie po mapowaniu jak inne funkcje, czy PR 1–3 mogą iść wcześniej? Nie zmieniają złotych hashy ani zapisu.
+1. Liczba mieszkańców: 1 200 jako stała wersji rejestru.
+2. Imiona i ksywy mieszane: polskie i japońskie według pochodzenia rodziny i dzielnicy, w klimacie Lublina 2077 i obecnej obsady.
+3. Pogoda dnia (deterministyczna, deszcz albo sucho) wchodzi w PR 3 razem z planem dnia; parasole z pogody zamiast 35% z ziarna.
+4. Budowa po mapowaniu, jak inne funkcje (także PR 1–3).
