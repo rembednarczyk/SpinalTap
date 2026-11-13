@@ -8,3 +8,4 @@ packages:
   - "tools/code-health"
   - "tools/test-time"
   - "tools/shots"
+  - "tools/bench-ab"

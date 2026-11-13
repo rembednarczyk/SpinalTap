@@ -1,0 +1,13 @@
+{
+  "name": "@seki/bench-ab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A/B timing of two refs: interleaved pairs in rotating order, each pair under a load gate, median and spread.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
