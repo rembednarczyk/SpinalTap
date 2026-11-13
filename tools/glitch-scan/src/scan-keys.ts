@@ -44,6 +44,7 @@ export const SAMPLED_KINDS: ReadonlySet<string> = new Set([
   "deck-step-face",
   "deck-abutment-step",
   "deck-kerb-step",
+  "walk-blocked",
   "metro-exit-bare",
   "metro-shaft-ray",
 ]);

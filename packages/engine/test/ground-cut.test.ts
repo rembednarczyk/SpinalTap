@@ -40,7 +40,8 @@ const CUT_BEFORE: Readonly<Record<string, string>> = {
   // Zamkowa's causeway 6.5 m wide instead of 8 (G-428): the same cuts, its terrain shaped to the band.
   // The terrain kept under the viaduct's north-east end (G-736): the same cuts, its points lower.
   // The abutment ramps at the ends of the decks' pieces with the bridge's sidewalk on its carriageway (G-737): the same cuts.
-  "podzamcze-1-0": "12 492a8a61",
+  // Its points on the seam x = 720 on podzamcze-0-0's 5 m grid (G-748): the same cuts, up to 0.1 m lower or higher there.
+  "podzamcze-1-0": "12 e5265875",
   "nabrzeze-1-1": "6 bd68b5c7",
   "stare-miasto-0-0": "0 58512eb9",
   "krakowskie-0-0": "0 0825c6ea",
