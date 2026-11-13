@@ -1734,7 +1734,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (pole w danych ziemi), packages/engine (`ground-plan.ts`)
 
 ### G-734 `sidewalk` za ciemny wobec trawy (1,31 zamiast 1,46–1,58)
-- Status: zgłoszone (12.11, kurator, przegląd G-721)
+- Status: w PR #488 (13.11, cffd922: `sidewalk` z mediany ortofoto, #858277, chodnik/trawa w planie 1,31 → 1,56; kontrola `paving-albedo-drift` odłożona: mediany wymagają danych ortofoto spoza repo); wcześniej: zgłoszone (12.11, kurator, przegląd G-721)
 - Ważność: S4 · Zasięg: wszystkie chodniki miasta (#6a6d73); ortofoto: chodnik do trawy 1,46–1,58; poprawka: 0,9 × square (ok. #868378) tą samą regułą co G-721; kontrola `paving-albedo-drift` (plan/trawa wobec mediany ortofoto > 0,25)
 - Pakiet właściciela: packages/engine (`ground-plan.ts`)
 
@@ -1772,6 +1772,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w naprawie (13.11, zgłoszone przez naprawiacza G-739); blokuje scalenie G-739
 - Pakiet właściciela: packages/sim/src/systems/ai (`nav-raster.ts`)
 - Test przyjęcia: `bridge-edges-ai` przechodzi na gałęzi G-739; nowy test na main z boku innego pomostu nad niższym terenem
+
+### G-742 Białe fasady przepalają się w słońcu (4,6–4,8% dolnej połowy kadru)
+- Ważność: S4 · Zasięg: ujęcia z chodników przy Placu Litewskim (-91;127) i (-89;-199) o 12:00; przepalenie z białych fasad, nie z nawierzchni; próg przyjęty przy G-721: ≤ 3%
+- Status: zgłoszone (13.11, naprawiacz G-734)
+- Pakiet właściciela: packages/engine (barwy fasad, światło dnia)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
