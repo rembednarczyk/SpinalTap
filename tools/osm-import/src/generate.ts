@@ -270,12 +270,13 @@ const generateChunk = (
     // A building's parts follow it, in its chunk, wherever their own centroids fall.
     out.push(ok, ...r.lifted);
   }
-  const laid = chunkGround(
-    bands.filter((b) => rectsOverlap(b.box, spec.rect)),
-    spec.rect,
-  );
-  // The bare ground left laid from the orthophoto's cover (ADR-0077 step 1.1).
-  const fills = fill ? fill(spec.rect, laid, shopOutlines(out, buildings)) : [];
+  const inChunk = bands.filter((b) => rectsOverlap(b.box, spec.rect));
+  const laid = chunkGround(inChunk, spec.rect);
+  // The bare ground left laid from the orthophoto's cover (ADR-0077 step 1.1). Read off the ground
+  // without the joints' patches (G-760): a patch laps over a fill's edge, it does not cut the fill
+  // to a speck that is then dropped.
+  const plain = inChunk.some((b) => b.patch) ? chunkGround(inChunk.filter((b) => !b.patch), spec.rect) : laid;
+  const fills = fill ? fill(spec.rect, plain, shopOutlines(out, buildings)) : [];
   const ground = fill ? withFills(laid, fills) : laid;
   const r = spec.rect;
   const own = new Set(out.map((b) => b.id));
@@ -404,7 +405,9 @@ export const generate = (
   // A band's end is round where its way meets another on the ground, as far as nothing else covers it: the corner square ends left bare (ADR-0078, G-658).
   const joined = groundJoints(laidLines);
   for (const { piece, mapped, atStreet: at } of laidLines) for (const b of lineBands(piece, mapped, water, at, joined)) bands.push({ ...b, box: ringBounds(b.ring) });
-  bands.splice(0, bands.length, ...roundJoints(bands).map((b, i) => (b === bands[i] ? b : { ...b, box: ringBounds(b.ring) })));
+  // A gap's patch is no carriageway, sidewalk or kerb: only the ground of its band (G-760).
+  const patch = (of: Band, ring: Pt[]) => ({ surface: of.surface, ring, bridge: false, source: of.source, holed: true as const, patch: true as const });
+  bands.splice(0, bands.length, ...roundJoints(bands, patch).map((b) => ({ ...b, box: ringBounds(b.ring) })));
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.flatMap(carriageway).filter((l) => l.tags.highway !== undefined && near(l.line));
   // A crossing node a mapped crossing way runs through is striped by that way already.
@@ -439,7 +442,8 @@ export const generate = (
   // closed, by the carriageway itself where the map gives it no width (G-570), its zebras with it.
   // A street fitted to its mapped sidewalks (T-046) has its width from them, as a measured one.
   const measured = new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id));
-  const kerbs = kerbFills(bands, buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), (source) => !measured.has(source), walks);
+  // A joint's patch laps over the next street: the kerbs are read off the bands without it, as its lap is no kerb's (G-760).
+  const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), (source) => !measured.has(source), walks);
   for (const [b, { ring, runs }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
   const nodeZebras = bands.filter((b) => b.surface === "crossing" && b.source.startsWith("n"));
