@@ -29,12 +29,6 @@
       "fetched": "2026-11-11"
     },
     {
-      "cell": "stare-miasto-0-0",
-      "flight": "2023-09",
-      "service": "StandardResolutionTime",
-      "fetched": "2026-11-11"
-    },
-    {
       "cell": "stare-miasto-1-0",
       "flight": "2025-04",
       "service": "HighResolution",
@@ -56,12 +50,6 @@
       "cell": "stare-miasto-0-1",
       "flight": "2025-04",
       "service": "HighResolution",
-      "fetched": "2026-11-11"
-    },
-    {
-      "cell": "stare-miasto-0-1",
-      "flight": "2024-06",
-      "service": "StandardResolutionTime",
       "fetched": "2026-11-11"
     },
     {
