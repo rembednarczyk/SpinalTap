@@ -1,4 +1,4 @@
-import { type GroundPoint, type Vec3, signedArea } from "@seki/core";
+import { type GroundPoint, type Vec3, segmentParam, signedArea } from "@seki/core";
 import type { Aabb } from "./collision";
 
 /**
@@ -149,7 +149,8 @@ export const closestOnPrism = (p: Prism, x: number, z: number, out: { x: number;
     const b = pts[(i + 1) % pts.length] as GroundPoint;
     const ex = b.x - a.x;
     const ez = b.z - a.z;
-    const t = Math.max(0, Math.min(1, ((x - a.x) * ex + (z - a.z) * ez) / (ex * ex + ez * ez)));
+    // `makePrism` drops an edge whose ends are within 1e-7 on both axes, so the divisor `len2 || 1` of `segmentParam` is always `len2` here.
+    const t = segmentParam(x, z, a.x, a.z, b.x, b.z);
     const qx = a.x + ex * t;
     const qz = a.z + ez * t;
     const d = (x - qx) ** 2 + (z - qz) ** 2;
