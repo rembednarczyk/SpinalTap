@@ -1812,6 +1812,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Łaty szczelin i klinów w złączach (line-buffer.ts gapFills, osobne wstęgi). Skan: car-lane-off-road 5->0, lane-off-ground 3->0; ground-strip-overlap +20, kerb-gap-bare +2 przyjęte z uzasadnieniem. map-ground-golden 155341/1117bd89. orto:diff 49,8 m² do kuratora.
 - 13.11 przegląd kuratora 74a981d: ZGODNE Z UWAGAMI. footway +17,5 m² to łaty szczelin ścieżek (gołe 7,4, schody 5,3, plac 4,9, chodnik 1,4, trawa 0,9); jezdnia na zieleni ortofoto 0,3 m²; kliny jezdni do 4,3 m² na kostce ortofoto; przejścia leżą wyżej (0,13). Uwagi do rundy 2: łaty ścieżek na schodach (10 miejsc, 5,3 m²), zniknięcie 2 kratek ściekowych (126,89;100,89) i (2349,39;314,29), 2 jasne kropki na zrzucie Podzamcza; propozycja kontroli patch-on-steps.
 - Runda 2 (#514, 9f0bad0): łaty nie wchodzą na schody i zebry (test), krawężniki i wypełnienia z ortofoto czytają ziemię bez łat (kratki jak w main), Podzamcze 0 dziurek w rastrze 0,1 m. Skan: ground-strip-overlap +18, kerb-gap-bare +1 przyjęte; map-ground-golden 171653/2f66bb82; bench +8,4% / +11,9%.
+- Kolejna szczelina 1–2 cm w poprzek jezdni Narutowicza przy 239,-172.9 (krakowskie-1-0); pas trafia w nią przy przesunięciu o 8 mm (ADR-0080 PR 3, wariant odrzucony)
 
 ### G-761 Trawniki w pierścieniu skweru na Podzamczu pod kostką ścieżki
 - Ważność: S4 · Zasięg: w804709919, w804709920 (1045, 424), 46 m²; podobnie zieleń pod footway w pętlach w1343050082 (58,-83) 19 m², w154012559 15 m², w515648305 10 m²
@@ -1857,6 +1858,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: test pod --coverage < 10 s lokalnie, wynik generowania bajt w bajt, bez podnoszenia limitu
 - Poboczne: kerbStrips i steps w bare-strips.ts startują BFS od wszystkich komórek jezdni i chodnika (także wnętrza bez wolnych sąsiadów) — do przyspieszenia osobno.
+
+### G-768 Ustępowanie nadwozi G-744 kruche w zakręcie Kołłątaja przy Zesłańców Sybiru
+- Ważność: S3 · Zasięg: -108,-150; ziarna 10/13/15/38 przy pasach przesuniętych o 5–10 cm
+- Opis: bodiesMeet daje odległość spotkania na przemian z próbek co 1 m i z próbki za zakrętem, goesFirst zmienia decyzję, auto 9,9 m/s nie hamuje, oba są już za późno
+- Status: zgłoszone (13.11, budowniczy ADR-0080 PR 3)
+- Pakiet właściciela: packages/sim/src/systems
+- Test przyjęcia: przemiatanie ziaren 1–40 w zakręcie bez kolizji przy pasach ±0,1 m
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
