@@ -44,7 +44,7 @@ export interface QualityTier {
 export const QUALITY_TIERS: Readonly<Record<RenderQuality, QualityTier>> = {
   low: { shadowMap: 1024, lineArt: false, splashes: false, wetProbe: null, livePreview: false, modelFiles: 5, msaa: 1, sharpen: 0, contactShade: false },
   medium: { shadowMap: 1024, lineArt: true, splashes: false, wetProbe: 128, livePreview: true, modelFiles: 11, msaa: 2, sharpen: 0, contactShade: false },
-  high: { shadowMap: 2048, lineArt: true, splashes: true, wetProbe: 256, livePreview: true, modelFiles: 11, msaa: 4, sharpen: 0.25, contactShade: true },
+  high: { shadowMap: 2048, lineArt: true, splashes: true, wetProbe: 256, livePreview: true, modelFiles: 11, msaa: 2, sharpen: 0.25, contactShade: true },
 };
 
 export const qualityTier = (q: RenderQuality | undefined): QualityTier => QUALITY_TIERS[q ?? "high"];
