@@ -29,7 +29,8 @@
     "gugik:fetch": "NODE_USE_ENV_PROXY=1 node tools/gugik/src/fetch.ts",
     "gugik:extract": "node tools/gugik/src/extract.ts",
     "gugik:report": "node tools/gugik/src/report.ts",
-    "changelog": "node tools/changelog/changelog.mjs"
+    "changelog": "node tools/changelog/changelog.mjs",
+    "shots:compare": "node tools/shots/src/compare.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
