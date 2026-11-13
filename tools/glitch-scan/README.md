@@ -53,3 +53,10 @@ Gałąź, która obniżała starą bazę `glitch-baseline.json`, po scaleniu z m
 git rm tools/glitch-scan/test/glitch-baseline.json && pnpm scan:update
 ```
 `update` usuwa klucze miejsc, które gałąź naprawiła. Jeśli gałąź dodała nowe miejsce, test je wypisze.
+
+## Przejście: `walk-blocked` (ADR-0080)
+Jedna kontrola przejścia po powierzchniach do chodzenia (`test/walk-blocked.ts`, predykat `walkStep` w `packages/sim/src/world/walk.ts`): raster 0,25 m, znalezisko to para sąsiednich komórek z uskokiem `groundY` ponad 0,45 m w górę albo 0,35 m w dół, albo z nachyleniem ponad tg 35° poza schodami. Szczelinę do 1,25 m między dwoma pomostami przechodzi jak zwykły grunt (G-340). Zamierzone krawędzie (ściany, bariery, boki pomostu nad niższym terenem, pomost nad drogą pod nim, T-147) nie są znaleziskiem. Do PR 9 stoi obok sześciu starych kontroli uskoków; pokrycie ich kluczy:
+```
+pnpm scan:walk-coverage           # klucze z bazy
+pnpm scan:walk-coverage report    # klucze ostatniego przebiegu skanu
+```
