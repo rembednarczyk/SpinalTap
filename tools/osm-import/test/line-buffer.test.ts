@@ -89,6 +89,28 @@ describe("bands along lines on Clipper2 (ADR-0078, step 2)", () => {
     expect(gaps).toEqual([]);
   });
 
+  it("lays no gap's patch over a flight of steps ending at the joint (G-760)", () => {
+    // Two footways bending on a node off the grid, a flight of steps up from it between them: the
+    // footways' crack and wedge reach under the steps, which cover them.
+    const [x, z] = [569.33, 258.09];
+    const a = line("w1", { highway: "footway", width: "2.26" }, [[553.38, 270.16], [x, z]]);
+    const b = line("w2", { highway: "footway", width: "2.99" }, [[x, z], [582.74, 243.26]]);
+    const s = line("w3", { highway: "steps", width: "2.37" }, [[x, z], [576.54, 261.55]]);
+    const joined = joinedPoints([a, b, s]);
+    const bands = [a, b, s].flatMap((l) => lineBands(l, false, [], false, joined));
+    const steps = bands.filter((r) => r.surface === "steps").map((r) => r.ring);
+    const out = roundJoints(bands, (of, ring) => ({ surface: of.surface, ring, bridge: false, source: `patch ${of.source}` }));
+    const patches = out.filter((r) => r.source.startsWith("patch")).map((r) => r.ring.map((p) => ({ x: r1(p.x), z: r1(p.z) })));
+    const over: string[] = [];
+    for (let i = -30; i <= 30; i++) {
+      for (let k = -30; k <= 30; k++) {
+        const p = { x: x + i * 0.1 + 0.05, z: z + k * 0.1 + 0.05 };
+        if (covered(steps, p) && covered(patches, p)) over.push(`${p.x.toFixed(2)},${p.z.toFixed(2)}`);
+      }
+    }
+    expect(over).toEqual([]);
+  });
+
   it("lays a sidewalk's inner edge on its carriageway's edge round a bend, with no gap", () => {
     const axis = pts([[0, 0], [30, 0], [50, 15]]);
     const road = bufferBand(axis, 6);

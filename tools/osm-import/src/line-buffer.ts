@@ -168,6 +168,9 @@ const gapFills = (end: RoundEnd, same: Paths64, all: Paths64): Paths64 => {
 const touches = (bit: Path64, ring: Paths64): boolean =>
   intersect(inflatePaths([bit], 0.02 * SCALE, JoinType.Miter, EndType.Polygon), ring, FillRule.NonZero).reduce((s, p) => s + Math.abs(areaOf(p)), 0) >= 0.02 * TOUCH * SCALE * SCALE;
 
+/** What lies over the paving round it: a crack under it is covered, and no patch is laid onto it. */
+const OVER: ReadonlySet<string> = new Set(["steps", "crossing"]);
+
 /** A band laid over a gap in a joint (`gapFills`), of the band `of` whose end it joins (its surface). */
 export type Patch<B> = (of: B, ring: Pt[]) => B;
 
@@ -232,16 +235,23 @@ export const roundJoints = <B extends JointBand>(bands: readonly B[], patch?: Pa
     const meeting = [...new Set(list.map((e) => e.i))];
     if (meeting.length < 2) continue;
     // As the tables round them: the bands meeting here of each surface, every band near (a sidewalk,
-    // a square's area: a wedge under it is no gap), and the patches laid on them before.
+    // a square's area: a wedge under it is no gap), and the patches laid on them before. Steps and
+    // zebras near cover a crack of any surface, and no patch laps onto them: they lie a few
+    // centimetres over the paving, a patch raised as a band (0.09 m) would break through (G-760).
     const reach = Math.max(...list.map((e) => e.end.half)) + SLIVER;
     const { x, z } = list[0]!.end.at;
-    let all = laidOf(grid.query(x - reach, z - reach, x + reach, z + reach).sort((p, q) => p - q));
+    const near = grid.query(x - reach, z - reach, x + reach, z + reach).sort((p, q) => p - q);
+    const over = near.filter((k) => OVER.has(bands[k]!.surface ?? ""));
+    // Grown by the grid: the patch rounded after it (0.07 m at most) stays off them.
+    const above = inflatePaths(laidOf(over), SLIVER * SCALE, JoinType.Miter, EndType.Polygon, 2);
+    let all = laidOf(near);
     const same = new Map<string | undefined, Paths64>();
     for (const { i, end } of list) {
       if (end.square) continue;
       const surface = bands[i]!.surface;
-      const own = same.get(surface) ?? laidOf(meeting.filter((k) => bands[k]!.surface === surface));
-      const fills = gapFills(roundEnd(list, i, end), own, all).filter((f) => touches(f, rings.get(i)!));
+      const own = same.get(surface) ?? laidOf([...meeting.filter((k) => bands[k]!.surface === surface), ...over]);
+      const gaps = gapFills(roundEnd(list, i, end), own, all);
+      const fills = (over.length > 0 ? difference(gaps, above, FillRule.NonZero).filter((f) => isPositive(f)) : gaps).filter((f) => touches(f, rings.get(i)!));
       // On the grid before the union: a thin patch rounded after it would cross itself.
       const kept = asRings(union(fills.map(onGrid), FillRule.NonZero)).filter((r) => !selfIntersects(r.map((p) => ({ x: r1(p.x), z: r1(p.z) }))));
       const on = kept.map((r) => onGrid(toPath(r)));
