@@ -19,6 +19,7 @@ krakowskie-0-0 -90,-260
 krakowskie-0-0 -200,-250
 krakowskie-0-0 -190,-250
 krakowskie-0-0 -180,-250
+krakowskie-0-0 -110,-250
 krakowskie-0-0 -100,-250
 krakowskie-0-0 -90,-250
 krakowskie-0-0 -200,-240
@@ -30,6 +31,7 @@ krakowskie-0-0 -90,-240
 krakowskie-0-0 -80,-240
 krakowskie-0-0 -200,-230
 krakowskie-0-0 -190,-230
+krakowskie-0-0 -180,-230
 krakowskie-0-0 -170,-230
 krakowskie-0-0 -100,-230
 krakowskie-0-0 -90,-230
@@ -41,11 +43,13 @@ krakowskie-0-0 -90,-220
 krakowskie-0-0 -80,-220
 krakowskie-0-0 -200,-210
 krakowskie-0-0 -190,-210
+krakowskie-0-0 -180,-210
 krakowskie-0-0 -170,-210
 krakowskie-0-0 -120,-210
 krakowskie-0-0 -110,-210
 krakowskie-0-0 -100,-210
 krakowskie-0-0 -90,-210
+krakowskie-0-0 -80,-210
 krakowskie-0-0 -70,-210
 krakowskie-0-0 -200,-200
 krakowskie-0-0 -190,-200
@@ -74,6 +78,7 @@ krakowskie-0-0 -10,-190
 krakowskie-0-0 0,-190
 krakowskie-0-0 10,-190
 krakowskie-0-0 -190,-180
+krakowskie-0-0 -180,-180
 krakowskie-0-0 -170,-180
 krakowskie-0-0 -160,-180
 krakowskie-0-0 -150,-180
@@ -83,6 +88,7 @@ krakowskie-0-0 -120,-180
 krakowskie-0-0 -110,-180
 krakowskie-0-0 -100,-180
 krakowskie-0-0 -90,-180
+krakowskie-0-0 -70,-180
 krakowskie-0-0 -60,-180
 krakowskie-0-0 -50,-180
 krakowskie-0-0 -40,-180
@@ -448,6 +454,7 @@ krakowskie-0-1 -10,70
 krakowskie-0-1 0,70
 krakowskie-0-1 10,70
 krakowskie-0-1 -120,80
+krakowskie-0-1 -110,80
 krakowskie-0-1 -100,80
 krakowskie-0-1 -90,80
 krakowskie-0-1 -80,80
@@ -548,6 +555,7 @@ krakowskie-0-1 -80,150
 krakowskie-0-1 -70,150
 krakowskie-0-1 -60,150
 krakowskie-0-1 -50,150
+krakowskie-0-1 -40,150
 krakowskie-0-1 -30,150
 krakowskie-0-1 -20,150
 krakowskie-0-1 -10,150
@@ -555,6 +563,7 @@ krakowskie-0-1 0,150
 krakowskie-0-1 10,150
 krakowskie-1-0 60,-270
 krakowskie-1-0 70,-270
+krakowskie-1-0 90,-270
 krakowskie-1-0 120,-270
 krakowskie-1-0 130,-270
 krakowskie-1-0 140,-270
@@ -586,6 +595,7 @@ krakowskie-1-0 80,-230
 krakowskie-1-0 90,-230
 krakowskie-1-0 100,-230
 krakowskie-1-0 110,-230
+krakowskie-1-0 120,-230
 krakowskie-1-0 130,-230
 krakowskie-1-0 140,-230
 krakowskie-1-0 150,-230
@@ -616,6 +626,7 @@ krakowskie-1-0 160,-210
 krakowskie-1-0 170,-210
 krakowskie-1-0 180,-210
 krakowskie-1-0 190,-210
+krakowskie-1-0 200,-210
 krakowskie-1-0 210,-210
 krakowskie-1-0 220,-210
 krakowskie-1-0 20,-200
@@ -634,6 +645,7 @@ krakowskie-1-0 220,-190
 krakowskie-1-0 20,-180
 krakowskie-1-0 150,-180
 krakowskie-1-0 20,-170
+krakowskie-1-0 120,-170
 krakowskie-1-0 140,-170
 krakowskie-1-0 150,-170
 krakowskie-1-0 20,-160
@@ -658,6 +670,7 @@ krakowskie-1-0 20,-110
 krakowskie-1-0 30,-110
 krakowskie-1-0 100,-110
 krakowskie-1-0 110,-110
+krakowskie-1-0 130,-110
 krakowskie-1-0 140,-110
 krakowskie-1-0 20,-100
 krakowskie-1-0 30,-100
@@ -702,6 +715,7 @@ krakowskie-1-0 110,-70
 krakowskie-1-0 120,-70
 krakowskie-1-0 130,-70
 krakowskie-1-0 140,-70
+krakowskie-1-0 150,-70
 krakowskie-1-0 20,-60
 krakowskie-1-0 30,-60
 krakowskie-1-0 40,-60
@@ -749,6 +763,7 @@ krakowskie-1-0 120,-40
 krakowskie-1-0 130,-40
 krakowskie-1-0 140,-40
 krakowskie-1-0 150,-40
+krakowskie-1-0 180,-40
 krakowskie-1-0 190,-40
 krakowskie-1-0 20,-30
 krakowskie-1-0 30,-30
@@ -795,6 +810,7 @@ krakowskie-1-1 140,0
 krakowskie-1-1 180,0
 krakowskie-1-1 190,0
 krakowskie-1-1 200,0
+krakowskie-1-1 220,0
 krakowskie-1-1 230,0
 krakowskie-1-1 20,10
 krakowskie-1-1 30,10
@@ -814,6 +830,7 @@ krakowskie-1-1 210,10
 krakowskie-1-1 220,10
 krakowskie-1-1 230,10
 krakowskie-1-1 20,20
+krakowskie-1-1 50,20
 krakowskie-1-1 60,20
 krakowskie-1-1 70,20
 krakowskie-1-1 80,20
@@ -827,6 +844,7 @@ krakowskie-1-1 70,30
 krakowskie-1-1 80,30
 krakowskie-1-1 90,30
 krakowskie-1-1 100,30
+krakowskie-1-1 160,30
 krakowskie-1-1 190,30
 krakowskie-1-1 200,30
 krakowskie-1-1 20,40
@@ -837,6 +855,7 @@ krakowskie-1-1 90,40
 krakowskie-1-1 100,40
 krakowskie-1-1 110,40
 krakowskie-1-1 130,40
+krakowskie-1-1 140,40
 krakowskie-1-1 150,40
 krakowskie-1-1 160,40
 krakowskie-1-1 170,40
@@ -888,6 +907,7 @@ krakowskie-1-1 170,70
 krakowskie-1-1 180,70
 krakowskie-1-1 30,80
 krakowskie-1-1 40,80
+krakowskie-1-1 50,80
 krakowskie-1-1 100,80
 krakowskie-1-1 110,80
 krakowskie-1-1 140,80
@@ -922,6 +942,7 @@ krakowskie-1-1 70,100
 krakowskie-1-1 80,100
 krakowskie-1-1 90,100
 krakowskie-1-1 100,100
+krakowskie-1-1 110,100
 krakowskie-1-1 120,100
 krakowskie-1-1 130,100
 krakowskie-1-1 190,100
@@ -990,6 +1011,7 @@ krakowskie-2-0 360,-220
 krakowskie-2-0 370,-220
 krakowskie-2-0 380,-220
 krakowskie-2-0 390,-220
+krakowskie-2-0 240,-210
 krakowskie-2-0 250,-210
 krakowskie-2-0 320,-210
 krakowskie-2-0 330,-210
@@ -1001,11 +1023,13 @@ krakowskie-2-0 380,-210
 krakowskie-2-0 410,-210
 krakowskie-2-0 420,-210
 krakowskie-2-0 250,-200
+krakowskie-2-0 320,-200
 krakowskie-2-0 330,-200
 krakowskie-2-0 350,-200
 krakowskie-2-0 360,-200
 krakowskie-2-0 370,-200
 krakowskie-2-0 290,-190
+krakowskie-2-0 300,-190
 krakowskie-2-0 310,-190
 krakowskie-2-0 320,-190
 krakowskie-2-0 330,-190
@@ -1046,6 +1070,7 @@ krakowskie-2-0 310,-160
 krakowskie-2-0 320,-160
 krakowskie-2-0 330,-160
 krakowskie-2-0 360,-160
+krakowskie-2-0 370,-160
 krakowskie-2-0 440,-160
 krakowskie-2-0 450,-160
 krakowskie-2-0 270,-150
@@ -1053,6 +1078,8 @@ krakowskie-2-0 280,-150
 krakowskie-2-0 290,-150
 krakowskie-2-0 300,-150
 krakowskie-2-0 360,-150
+krakowskie-2-0 380,-150
+krakowskie-2-0 390,-150
 krakowskie-2-0 440,-150
 krakowskie-2-0 450,-150
 krakowskie-2-0 270,-140
@@ -1089,7 +1116,10 @@ krakowskie-2-0 430,-90
 krakowskie-2-0 440,-90
 krakowskie-2-0 450,-90
 krakowskie-2-0 280,-80
+krakowskie-2-0 290,-80
 krakowskie-2-0 450,-80
+krakowskie-2-0 350,-70
+krakowskie-2-0 400,-70
 krakowskie-2-0 450,-70
 krakowskie-2-0 340,-60
 krakowskie-2-0 350,-60
@@ -1098,6 +1128,7 @@ krakowskie-2-0 320,-50
 krakowskie-2-0 330,-50
 krakowskie-2-0 340,-50
 krakowskie-2-0 350,-50
+krakowskie-2-0 390,-50
 krakowskie-2-0 400,-50
 krakowskie-2-0 410,-50
 krakowskie-2-0 280,-40
@@ -1114,7 +1145,9 @@ krakowskie-2-0 440,-40
 krakowskie-2-0 450,-40
 krakowskie-2-0 270,-30
 krakowskie-2-0 280,-30
+krakowskie-2-0 290,-30
 krakowskie-2-0 350,-30
+krakowskie-2-0 370,-30
 krakowskie-2-0 380,-30
 krakowskie-2-0 390,-30
 krakowskie-2-0 400,-30
@@ -1124,6 +1157,9 @@ krakowskie-2-0 430,-30
 krakowskie-2-1 250,-20
 krakowskie-2-1 260,-20
 krakowskie-2-1 270,-20
+krakowskie-2-1 350,-20
+krakowskie-2-1 360,-20
+krakowskie-2-1 370,-20
 krakowskie-2-1 380,-20
 krakowskie-2-1 390,-20
 krakowskie-2-1 400,-20
@@ -1141,6 +1177,7 @@ krakowskie-2-1 430,-10
 krakowskie-2-1 440,-10
 krakowskie-2-1 240,0
 krakowskie-2-1 370,0
+krakowskie-2-1 430,0
 krakowskie-2-1 450,0
 krakowskie-2-1 370,10
 krakowskie-2-1 380,10
@@ -1191,6 +1228,7 @@ krakowskie-2-1 410,70
 krakowskie-2-1 450,70
 krakowskie-2-1 240,80
 krakowskie-2-1 260,80
+krakowskie-2-1 270,80
 krakowskie-2-1 280,80
 krakowskie-2-1 350,80
 krakowskie-2-1 360,80
@@ -1203,6 +1241,7 @@ krakowskie-2-1 250,90
 krakowskie-2-1 260,90
 krakowskie-2-1 340,90
 krakowskie-2-1 350,90
+krakowskie-2-1 360,90
 krakowskie-2-1 400,90
 krakowskie-2-1 410,90
 krakowskie-2-1 420,90
@@ -1217,6 +1256,7 @@ krakowskie-2-1 300,110
 krakowskie-2-1 400,110
 krakowskie-2-1 410,110
 krakowskie-2-1 420,110
+krakowskie-2-1 430,110
 krakowskie-2-1 270,120
 krakowskie-2-1 280,120
 krakowskie-2-1 290,120
@@ -1228,6 +1268,7 @@ krakowskie-2-1 260,130
 krakowskie-2-1 270,130
 krakowskie-2-1 280,130
 krakowskie-2-1 410,130
+krakowskie-2-1 420,130
 krakowskie-2-1 430,130
 krakowskie-2-1 440,130
 krakowskie-2-1 450,130
@@ -1243,6 +1284,7 @@ krakowskie-2-1 300,150
 krakowskie-2-1 310,150
 krakowskie-2-1 430,150
 krakowskie-2-1 440,150
+nabrzeze-0-0 2300,60
 nabrzeze-0-0 2310,60
 nabrzeze-0-0 2320,60
 nabrzeze-0-0 2440,60
@@ -1287,6 +1329,7 @@ nabrzeze-0-0 2480,130
 nabrzeze-0-0 2300,140
 nabrzeze-0-0 2310,140
 nabrzeze-0-0 2340,140
+nabrzeze-0-0 2420,140
 nabrzeze-0-0 2430,140
 nabrzeze-0-0 2470,140
 nabrzeze-0-0 2480,140
@@ -1297,11 +1340,13 @@ nabrzeze-0-0 2340,150
 nabrzeze-0-0 2350,150
 nabrzeze-0-0 2420,150
 nabrzeze-0-0 2430,150
+nabrzeze-0-0 2450,150
 nabrzeze-0-0 2460,150
 nabrzeze-0-0 2470,150
 nabrzeze-0-0 2480,150
 nabrzeze-0-0 2300,160
 nabrzeze-0-0 2310,160
+nabrzeze-0-0 2320,160
 nabrzeze-0-0 2340,160
 nabrzeze-0-0 2350,160
 nabrzeze-0-0 2420,160
@@ -1335,6 +1380,7 @@ nabrzeze-0-0 2490,200
 nabrzeze-0-0 2320,210
 nabrzeze-0-0 2330,210
 nabrzeze-0-0 2340,210
+nabrzeze-0-0 2370,210
 nabrzeze-0-0 2450,210
 nabrzeze-0-0 2470,210
 nabrzeze-0-0 2480,210
@@ -1383,6 +1429,7 @@ nabrzeze-0-0 2370,250
 nabrzeze-0-0 2460,250
 nabrzeze-0-0 2480,250
 nabrzeze-0-0 2490,250
+nabrzeze-0-0 2460,260
 nabrzeze-0-0 2490,260
 nabrzeze-0-1 2350,270
 nabrzeze-0-1 2360,270
@@ -1395,6 +1442,7 @@ nabrzeze-0-1 2310,280
 nabrzeze-0-1 2330,280
 nabrzeze-0-1 2340,280
 nabrzeze-0-1 2350,280
+nabrzeze-0-1 2370,280
 nabrzeze-0-1 2390,280
 nabrzeze-0-1 2400,280
 nabrzeze-0-1 2470,280
@@ -1408,6 +1456,7 @@ nabrzeze-0-1 2350,290
 nabrzeze-0-1 2470,290
 nabrzeze-0-1 2480,290
 nabrzeze-0-1 2490,290
+nabrzeze-0-1 2300,300
 nabrzeze-0-1 2310,300
 nabrzeze-0-1 2320,300
 nabrzeze-0-1 2330,300
@@ -1415,6 +1464,7 @@ nabrzeze-0-1 2340,300
 nabrzeze-0-1 2350,300
 nabrzeze-0-1 2480,300
 nabrzeze-0-1 2490,300
+nabrzeze-0-1 2310,310
 nabrzeze-0-1 2320,310
 nabrzeze-0-1 2350,310
 nabrzeze-0-1 2360,310
@@ -1552,9 +1602,11 @@ nabrzeze-1-0 2660,80
 nabrzeze-1-0 2670,80
 nabrzeze-1-0 2680,80
 nabrzeze-1-0 2690,80
+nabrzeze-1-0 2640,90
 nabrzeze-1-0 2650,90
 nabrzeze-1-0 2660,90
 nabrzeze-1-0 2690,90
+nabrzeze-1-0 2550,100
 nabrzeze-1-0 2580,100
 nabrzeze-1-0 2590,100
 nabrzeze-1-0 2600,100
@@ -1596,6 +1648,7 @@ nabrzeze-1-0 2550,140
 nabrzeze-1-0 2560,140
 nabrzeze-1-0 2570,140
 nabrzeze-1-0 2580,140
+nabrzeze-1-0 2590,140
 nabrzeze-1-0 2640,140
 nabrzeze-1-0 2650,140
 nabrzeze-1-0 2660,140
@@ -1603,7 +1656,9 @@ nabrzeze-1-0 2510,150
 nabrzeze-1-0 2540,150
 nabrzeze-1-0 2550,150
 nabrzeze-1-0 2560,150
+nabrzeze-1-0 2620,150
 nabrzeze-1-0 2630,150
+nabrzeze-1-0 2640,150
 nabrzeze-1-0 2660,150
 nabrzeze-1-0 2670,150
 nabrzeze-1-0 2680,150
@@ -1615,6 +1670,7 @@ nabrzeze-1-0 2610,160
 nabrzeze-1-0 2620,160
 nabrzeze-1-0 2660,160
 nabrzeze-1-0 2670,160
+nabrzeze-1-0 2680,160
 nabrzeze-1-0 2690,160
 nabrzeze-1-0 2540,170
 nabrzeze-1-0 2550,170
@@ -1633,12 +1689,14 @@ nabrzeze-1-0 2660,180
 nabrzeze-1-0 2670,180
 nabrzeze-1-0 2520,190
 nabrzeze-1-0 2530,190
+nabrzeze-1-0 2590,190
 nabrzeze-1-0 2660,190
 nabrzeze-1-0 2670,190
 nabrzeze-1-0 2500,200
 nabrzeze-1-0 2510,200
 nabrzeze-1-0 2520,200
 nabrzeze-1-0 2580,200
+nabrzeze-1-0 2600,200
 nabrzeze-1-0 2660,200
 nabrzeze-1-0 2670,200
 nabrzeze-1-0 2500,210
@@ -1647,6 +1705,7 @@ nabrzeze-1-0 2520,210
 nabrzeze-1-0 2580,210
 nabrzeze-1-0 2590,210
 nabrzeze-1-0 2610,210
+nabrzeze-1-0 2650,210
 nabrzeze-1-0 2670,210
 nabrzeze-1-0 2500,220
 nabrzeze-1-0 2510,220
@@ -1687,6 +1746,7 @@ nabrzeze-1-0 2590,260
 nabrzeze-1-0 2600,260
 nabrzeze-1-0 2640,260
 nabrzeze-1-0 2650,260
+nabrzeze-1-1 2520,270
 nabrzeze-1-1 2530,270
 nabrzeze-1-1 2540,270
 nabrzeze-1-1 2600,270
@@ -1695,12 +1755,14 @@ nabrzeze-1-1 2670,270
 nabrzeze-1-1 2520,280
 nabrzeze-1-1 2530,280
 nabrzeze-1-1 2600,280
+nabrzeze-1-1 2620,280
 nabrzeze-1-1 2660,280
 nabrzeze-1-1 2670,280
 nabrzeze-1-1 2680,280
 nabrzeze-1-1 2500,290
 nabrzeze-1-1 2510,290
 nabrzeze-1-1 2520,290
+nabrzeze-1-1 2590,290
 nabrzeze-1-1 2600,290
 nabrzeze-1-1 2610,290
 nabrzeze-1-1 2680,290
@@ -1717,17 +1779,22 @@ nabrzeze-1-1 2560,310
 nabrzeze-1-1 2570,310
 nabrzeze-1-1 2580,310
 nabrzeze-1-1 2620,310
+nabrzeze-1-1 2630,310
+nabrzeze-1-1 2660,310
 nabrzeze-1-1 2670,310
 nabrzeze-1-1 2510,320
 nabrzeze-1-1 2520,320
 nabrzeze-1-1 2550,320
 nabrzeze-1-1 2560,320
+nabrzeze-1-1 2570,320
 nabrzeze-1-1 2600,320
 nabrzeze-1-1 2610,320
 nabrzeze-1-1 2620,320
 nabrzeze-1-1 2630,320
+nabrzeze-1-1 2650,320
 nabrzeze-1-1 2670,320
 nabrzeze-1-1 2680,320
+nabrzeze-1-1 2690,320
 nabrzeze-1-1 2500,330
 nabrzeze-1-1 2510,330
 nabrzeze-1-1 2520,330
@@ -1738,6 +1805,7 @@ nabrzeze-1-1 2600,330
 nabrzeze-1-1 2610,330
 nabrzeze-1-1 2620,330
 nabrzeze-1-1 2630,330
+nabrzeze-1-1 2660,330
 nabrzeze-1-1 2680,330
 nabrzeze-1-1 2690,330
 nabrzeze-1-1 2520,340
@@ -1753,6 +1821,7 @@ nabrzeze-1-1 2690,340
 nabrzeze-1-1 2630,350
 nabrzeze-1-1 2640,350
 nabrzeze-1-1 2650,350
+nabrzeze-1-1 2660,350
 nabrzeze-1-1 2680,350
 nabrzeze-1-1 2690,350
 nabrzeze-1-1 2640,360
@@ -1867,6 +1936,7 @@ podzamcze-0-0 650,230
 podzamcze-0-0 660,230
 podzamcze-0-0 670,230
 podzamcze-0-0 680,230
+podzamcze-0-0 690,230
 podzamcze-0-0 710,230
 podzamcze-0-0 530,240
 podzamcze-0-0 540,240
@@ -1906,6 +1976,7 @@ podzamcze-0-0 550,270
 podzamcze-0-0 560,270
 podzamcze-0-0 570,270
 podzamcze-0-0 580,270
+podzamcze-0-0 590,270
 podzamcze-0-0 630,270
 podzamcze-0-0 640,270
 podzamcze-0-0 670,270
@@ -1920,6 +1991,7 @@ podzamcze-0-0 670,280
 podzamcze-0-0 680,280
 podzamcze-0-0 690,280
 podzamcze-0-0 700,280
+podzamcze-0-0 540,290
 podzamcze-0-0 550,290
 podzamcze-0-0 560,290
 podzamcze-0-0 630,290
@@ -1954,6 +2026,7 @@ podzamcze-0-0 650,330
 podzamcze-0-0 690,330
 podzamcze-0-0 570,340
 podzamcze-0-0 580,340
+podzamcze-0-0 600,340
 podzamcze-0-0 610,340
 podzamcze-0-0 630,340
 podzamcze-0-0 650,340
@@ -1994,6 +2067,7 @@ podzamcze-0-1 560,380
 podzamcze-0-1 570,380
 podzamcze-0-1 580,380
 podzamcze-0-1 590,380
+podzamcze-0-1 610,380
 podzamcze-0-1 620,380
 podzamcze-0-1 630,380
 podzamcze-0-1 640,380
@@ -2023,6 +2097,7 @@ podzamcze-0-1 690,390
 podzamcze-0-1 700,390
 podzamcze-0-1 710,390
 podzamcze-0-1 530,400
+podzamcze-0-1 540,400
 podzamcze-0-1 570,400
 podzamcze-0-1 590,400
 podzamcze-0-1 600,400
@@ -2112,6 +2187,7 @@ podzamcze-0-1 520,470
 podzamcze-0-1 530,470
 podzamcze-0-1 540,470
 podzamcze-0-1 550,470
+podzamcze-0-1 580,470
 podzamcze-0-1 590,470
 podzamcze-0-1 600,470
 podzamcze-0-1 610,470
@@ -2138,6 +2214,7 @@ podzamcze-0-1 520,510
 podzamcze-0-1 530,510
 podzamcze-0-1 540,510
 podzamcze-0-1 640,510
+podzamcze-0-1 710,510
 podzamcze-0-1 520,520
 podzamcze-0-1 670,520
 podzamcze-0-1 680,520
@@ -2148,6 +2225,7 @@ podzamcze-0-1 630,530
 podzamcze-0-1 640,530
 podzamcze-0-1 650,530
 podzamcze-0-1 680,530
+podzamcze-0-1 710,530
 podzamcze-0-1 620,540
 podzamcze-0-1 630,540
 podzamcze-0-1 640,540
@@ -2171,6 +2249,7 @@ podzamcze-0-1 670,560
 podzamcze-0-1 680,560
 podzamcze-0-1 690,560
 podzamcze-0-1 700,560
+podzamcze-0-1 630,570
 podzamcze-0-1 640,570
 podzamcze-0-1 650,570
 podzamcze-0-1 660,570
@@ -2185,9 +2264,11 @@ podzamcze-1-0 760,160
 podzamcze-1-0 790,160
 podzamcze-1-0 810,160
 podzamcze-1-0 720,170
+podzamcze-1-0 730,170
 podzamcze-1-0 740,170
 podzamcze-1-0 760,170
 podzamcze-1-0 770,170
+podzamcze-1-0 780,170
 podzamcze-1-0 790,170
 podzamcze-1-0 810,170
 podzamcze-1-0 820,170
@@ -2201,6 +2282,7 @@ podzamcze-1-0 730,190
 podzamcze-1-0 740,190
 podzamcze-1-0 750,190
 podzamcze-1-0 760,190
+podzamcze-1-0 770,190
 podzamcze-1-0 780,190
 podzamcze-1-0 790,190
 podzamcze-1-0 720,200
@@ -2213,6 +2295,7 @@ podzamcze-1-0 790,200
 podzamcze-1-0 800,200
 podzamcze-1-0 820,200
 podzamcze-1-0 830,200
+podzamcze-1-0 870,200
 podzamcze-1-0 720,210
 podzamcze-1-0 730,210
 podzamcze-1-0 740,210
@@ -2278,7 +2361,9 @@ podzamcze-1-0 880,240
 podzamcze-1-0 890,240
 podzamcze-1-0 900,240
 podzamcze-1-0 910,240
+podzamcze-1-0 720,250
 podzamcze-1-0 740,250
+podzamcze-1-0 760,250
 podzamcze-1-0 780,250
 podzamcze-1-0 790,250
 podzamcze-1-0 800,250
@@ -2330,6 +2415,7 @@ podzamcze-1-0 900,280
 podzamcze-1-0 910,280
 podzamcze-1-0 730,290
 podzamcze-1-0 740,290
+podzamcze-1-0 760,290
 podzamcze-1-0 770,290
 podzamcze-1-0 780,290
 podzamcze-1-0 790,290
@@ -2385,6 +2471,7 @@ podzamcze-1-0 830,340
 podzamcze-1-0 840,340
 podzamcze-1-0 850,340
 podzamcze-1-0 860,340
+podzamcze-1-0 870,340
 podzamcze-1-0 890,340
 podzamcze-1-0 900,340
 podzamcze-1-0 910,340
@@ -2580,6 +2667,7 @@ podzamcze-1-1 870,450
 podzamcze-1-1 880,450
 podzamcze-1-1 910,450
 podzamcze-1-1 740,460
+podzamcze-1-1 750,460
 podzamcze-1-1 780,460
 podzamcze-1-1 790,460
 podzamcze-1-1 800,460
@@ -2631,6 +2719,7 @@ podzamcze-1-1 820,500
 podzamcze-1-1 830,500
 podzamcze-1-1 850,500
 podzamcze-1-1 860,500
+podzamcze-1-1 730,510
 podzamcze-1-1 740,510
 podzamcze-1-1 750,510
 podzamcze-1-1 760,510
@@ -2655,6 +2744,7 @@ podzamcze-1-1 820,520
 podzamcze-1-1 830,520
 podzamcze-1-1 840,520
 podzamcze-1-1 850,520
+podzamcze-1-1 860,520
 podzamcze-1-1 740,530
 podzamcze-1-1 750,530
 podzamcze-1-1 760,530
@@ -2663,10 +2753,13 @@ podzamcze-1-1 780,530
 podzamcze-1-1 790,530
 podzamcze-1-1 800,530
 podzamcze-1-1 830,530
+podzamcze-1-1 880,530
 podzamcze-1-1 720,540
+podzamcze-1-1 740,540
 podzamcze-1-1 750,540
 podzamcze-1-1 760,540
 podzamcze-1-1 770,540
+podzamcze-1-1 780,540
 podzamcze-1-1 830,540
 podzamcze-1-1 720,550
 podzamcze-1-1 830,550
@@ -2708,17 +2801,21 @@ podzamcze-2-0 940,230
 podzamcze-2-0 960,230
 podzamcze-2-0 1050,230
 podzamcze-2-0 1090,230
+podzamcze-2-0 1100,230
 podzamcze-2-0 920,240
 podzamcze-2-0 930,240
 podzamcze-2-0 1050,240
 podzamcze-2-0 1100,240
 podzamcze-2-0 1030,250
 podzamcze-2-0 1050,250
+podzamcze-2-0 1060,250
 podzamcze-2-0 1070,250
 podzamcze-2-0 1080,250
 podzamcze-2-0 1090,250
 podzamcze-2-0 1100,250
 podzamcze-2-0 1110,250
+podzamcze-2-0 950,260
+podzamcze-2-0 960,260
 podzamcze-2-0 1030,260
 podzamcze-2-0 1040,260
 podzamcze-2-0 1050,260
@@ -2754,6 +2851,7 @@ podzamcze-2-0 950,290
 podzamcze-2-0 960,290
 podzamcze-2-0 980,290
 podzamcze-2-0 990,290
+podzamcze-2-0 1020,290
 podzamcze-2-0 1030,290
 podzamcze-2-0 1040,290
 podzamcze-2-0 1050,290
@@ -2791,6 +2889,7 @@ podzamcze-2-0 1110,330
 podzamcze-2-0 920,340
 podzamcze-2-0 960,340
 podzamcze-2-0 970,340
+podzamcze-2-0 1040,340
 podzamcze-2-0 1060,340
 podzamcze-2-0 1070,340
 podzamcze-2-0 1080,340
@@ -2803,6 +2902,7 @@ podzamcze-2-0 940,350
 podzamcze-2-0 950,350
 podzamcze-2-0 960,350
 podzamcze-2-0 970,350
+podzamcze-2-0 980,350
 podzamcze-2-0 1040,350
 podzamcze-2-0 1060,350
 podzamcze-2-0 1070,350
@@ -2850,6 +2950,7 @@ podzamcze-2-1 990,410
 podzamcze-2-1 1000,410
 podzamcze-2-1 1010,410
 podzamcze-2-1 1020,410
+podzamcze-2-1 1040,410
 podzamcze-2-1 1050,410
 podzamcze-2-1 1070,410
 podzamcze-2-1 920,420
@@ -2857,6 +2958,7 @@ podzamcze-2-1 930,420
 podzamcze-2-1 940,420
 podzamcze-2-1 950,420
 podzamcze-2-1 960,420
+podzamcze-2-1 970,420
 podzamcze-2-1 1010,420
 podzamcze-2-1 1020,420
 podzamcze-2-1 1030,420
@@ -2867,14 +2969,17 @@ podzamcze-2-1 920,430
 podzamcze-2-1 930,430
 podzamcze-2-1 940,430
 podzamcze-2-1 970,430
+podzamcze-2-1 990,430
 podzamcze-2-1 1020,430
 podzamcze-2-1 1030,430
 podzamcze-2-1 1050,430
 podzamcze-2-1 1070,430
+podzamcze-2-1 1080,430
 podzamcze-2-1 920,440
 podzamcze-2-1 940,440
 podzamcze-2-1 960,440
 podzamcze-2-1 970,440
+podzamcze-2-1 990,440
 podzamcze-2-1 1000,440
 podzamcze-2-1 1010,440
 podzamcze-2-1 1020,440
@@ -2885,6 +2990,8 @@ podzamcze-2-1 1080,440
 podzamcze-2-1 920,450
 podzamcze-2-1 930,450
 podzamcze-2-1 940,450
+podzamcze-2-1 960,450
+podzamcze-2-1 970,450
 podzamcze-2-1 980,450
 podzamcze-2-1 1000,450
 podzamcze-2-1 1010,450
@@ -2914,6 +3021,7 @@ podzamcze-2-1 920,470
 podzamcze-2-1 930,470
 podzamcze-2-1 950,470
 podzamcze-2-1 960,470
+podzamcze-2-1 1000,470
 podzamcze-2-1 1030,470
 podzamcze-2-1 1040,470
 podzamcze-2-1 1060,470
@@ -2926,6 +3034,7 @@ podzamcze-2-1 1060,480
 podzamcze-2-1 1070,480
 podzamcze-2-1 1080,480
 podzamcze-2-1 1090,480
+podzamcze-2-1 1100,480
 podzamcze-2-1 1110,480
 podzamcze-2-1 1030,490
 podzamcze-2-1 1040,490
@@ -2936,6 +3045,7 @@ podzamcze-2-1 1080,490
 podzamcze-2-1 1090,490
 podzamcze-2-1 1100,490
 podzamcze-2-1 1110,490
+podzamcze-2-1 980,500
 podzamcze-2-1 1030,500
 podzamcze-2-1 1040,500
 podzamcze-2-1 1050,500
@@ -2943,6 +3053,7 @@ podzamcze-2-1 1060,500
 podzamcze-2-1 1070,500
 podzamcze-2-1 1100,500
 podzamcze-2-1 1110,500
+podzamcze-2-1 980,510
 podzamcze-2-1 1030,510
 podzamcze-2-1 1040,510
 podzamcze-2-1 1050,510
@@ -2983,10 +3094,15 @@ podzamcze-2-1 930,570
 podzamcze-2-1 1110,570
 poza 760,-230
 poza 760,-150
+poza 760,60
 poza 760,90
 poza 760,140
+poza -100,160
+poza -10,160
 poza 0,160
 poza 220,160
+poza 430,160
+poza 470,160
 poza 500,160
 poza 1120,260
 poza 1120,320
@@ -2994,6 +3110,8 @@ poza 1120,340
 poza 2700,340
 poza 1120,350
 poza 2700,350
+poza 2700,380
+poza 1120,440
 poza 1120,450
 poza 1120,480
 poza 2560,480
@@ -3051,6 +3169,7 @@ stare-miasto-0-0 580,-170
 stare-miasto-0-0 590,-170
 stare-miasto-0-0 460,-160
 stare-miasto-0-0 470,-160
+stare-miasto-0-0 580,-160
 stare-miasto-0-0 590,-160
 stare-miasto-0-0 460,-150
 stare-miasto-0-0 580,-150
@@ -3108,6 +3227,7 @@ stare-miasto-0-1 550,-40
 stare-miasto-0-1 560,-40
 stare-miasto-0-1 570,-40
 stare-miasto-0-1 580,-40
+stare-miasto-0-1 590,-40
 stare-miasto-0-1 470,-30
 stare-miasto-0-1 560,-30
 stare-miasto-0-1 570,-30
@@ -3124,6 +3244,7 @@ stare-miasto-0-1 480,30
 stare-miasto-0-1 490,30
 stare-miasto-0-1 460,40
 stare-miasto-0-1 590,50
+stare-miasto-0-1 600,50
 stare-miasto-0-1 460,60
 stare-miasto-0-1 540,60
 stare-miasto-0-1 550,60
@@ -3156,9 +3277,12 @@ stare-miasto-0-1 570,100
 stare-miasto-0-1 580,100
 stare-miasto-0-1 590,100
 stare-miasto-0-1 470,110
+stare-miasto-0-1 480,110
+stare-miasto-0-1 550,110
 stare-miasto-0-1 560,110
 stare-miasto-0-1 470,120
 stare-miasto-0-1 480,120
+stare-miasto-0-1 560,120
 stare-miasto-0-1 470,130
 stare-miasto-0-1 480,130
 stare-miasto-0-1 490,130
@@ -3184,6 +3308,7 @@ stare-miasto-0-1 600,150
 stare-miasto-1-0 610,-240
 stare-miasto-1-0 630,-240
 stare-miasto-1-0 640,-240
+stare-miasto-1-0 660,-240
 stare-miasto-1-0 680,-240
 stare-miasto-1-0 710,-240
 stare-miasto-1-0 720,-240
@@ -3210,12 +3335,14 @@ stare-miasto-1-0 670,-210
 stare-miasto-1-0 680,-210
 stare-miasto-1-0 690,-210
 stare-miasto-1-0 750,-210
+stare-miasto-1-0 660,-200
 stare-miasto-1-0 670,-200
 stare-miasto-1-0 680,-200
 stare-miasto-1-0 690,-200
 stare-miasto-1-0 700,-200
 stare-miasto-1-0 680,-190
 stare-miasto-1-0 690,-190
+stare-miasto-1-0 720,-190
 stare-miasto-1-0 730,-190
 stare-miasto-1-0 740,-190
 stare-miasto-1-0 680,-180
@@ -3258,9 +3385,12 @@ stare-miasto-1-0 670,-60
 stare-miasto-1-0 680,-60
 stare-miasto-1-0 690,-60
 stare-miasto-1-0 610,-50
+stare-miasto-1-1 650,-40
 stare-miasto-1-1 750,-20
 stare-miasto-1-1 750,-10
+stare-miasto-1-1 670,0
 stare-miasto-1-1 680,0
+stare-miasto-1-1 740,0
 stare-miasto-1-1 750,0
 stare-miasto-1-1 680,10
 stare-miasto-1-1 730,10
@@ -3275,6 +3405,7 @@ stare-miasto-1-1 730,20
 stare-miasto-1-1 740,20
 stare-miasto-1-1 750,20
 stare-miasto-1-1 620,30
+stare-miasto-1-1 630,30
 stare-miasto-1-1 640,30
 stare-miasto-1-1 650,30
 stare-miasto-1-1 660,30
@@ -3306,6 +3437,7 @@ stare-miasto-1-1 650,60
 stare-miasto-1-1 660,60
 stare-miasto-1-1 670,60
 stare-miasto-1-1 680,60
+stare-miasto-1-1 700,60
 stare-miasto-1-1 720,60
 stare-miasto-1-1 730,60
 stare-miasto-1-1 740,60
