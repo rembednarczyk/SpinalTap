@@ -36,33 +36,52 @@ const PISTOL: ViewmodelPose = {
 };
 
 /**
+ * The weapon this much nearer the eye than the poses below were drawn (the user's wish of 13.11,
+ * round 4): from the hip along the line from the eye, so it stays where it was on the screen, only
+ * bigger; aimed in so that the far end of its sights keeps its angle under the crosshair.
+ */
+const NEARER = 0.85;
+
+const nearer = (pose: ViewmodelPose, k = NEARER): ViewmodelPose => {
+  const { hip, ads, top, muzzle } = pose;
+  // The far end of the sights (over the muzzle) keeps its angle under the crosshair (G-275).
+  const far = (ads.y + top) / (ads.z + muzzle.z);
+  const z = ads.z * k;
+  return { ...pose, hip: { x: hip.x * k, y: hip.y * k, z: hip.z * k }, ads: { x: ads.x * k, y: far * (z + muzzle.z) - top, z } };
+};
+
+/**
  * One pose per weapon model (G-282). The hand holds each gun at its grip (`GRIP` in
  * weapon-mount.ts), so the muzzle sits where the file's barrel ends, and the longer and taller the
  * gun above the hand, the lower it is aimed: the tall front sight of the rifle stands 0.17 m above
  * the grip, the pistol's slide 0.09 m.
  */
 const POSES: Readonly<Partial<Record<WeaponLook, ViewmodelPose>>> = {
-  pistol: PISTOL,
-  revolver: { ...PISTOL, ads: { x: 0, y: -0.14, z: 0.4 }, muzzle: { x: 0, y: 0.076, z: 0.225 }, top: 0.105 },
+  pistol: nearer(PISTOL),
+  revolver: nearer({ ...PISTOL, ads: { x: 0, y: -0.14, z: 0.4 }, muzzle: { x: 0, y: 0.076, z: 0.225 }, top: 0.105 }),
   // The long guns keep the left hand on the fore-end in the frame (`LONG_GUN`); the right one's grip may go under it.
-  smg: { hip: { x: 0.2, y: -0.25, z: 0.6 }, ads: { x: 0, y: -0.2, z: 0.42 }, muzzle: { x: 0, y: 0.103, z: 0.34 }, top: 0.15, low: { y: 0, z: 0.19 } },
-  shotgun: { hip: { x: 0.21, y: -0.25, z: 0.5 }, ads: { x: 0, y: -0.18, z: 0.45 }, muzzle: { x: 0, y: 0.092, z: 0.595 }, top: 0.13, low: { y: -0.04, z: 0.37 } },
-  // From the hip both hands show: the gun out on the right, far enough for the eye to see past the
-  // stock to the right fist on the grip, its forearm coming in from the frame's corner, the butt
-  // going out under it towards the shoulder, the barrel ahead, turned a little in.
+  smg: nearer({ hip: { x: 0.2, y: -0.25, z: 0.6 }, ads: { x: 0, y: -0.2, z: 0.42 }, muzzle: { x: 0, y: 0.103, z: 0.34 }, top: 0.15, low: { y: 0, z: 0.19 } }),
+  shotgun: nearer({ hip: { x: 0.21, y: -0.25, z: 0.5 }, ads: { x: 0, y: -0.18, z: 0.45 }, muzzle: { x: 0, y: 0.092, z: 0.595 }, top: 0.13, low: { y: -0.04, z: 0.37 } }),
+  // The butt on the collarbone (round 4): the grip 0.36 m ahead of the eye, the stock (0.27 m
+  // behind it) coming in at the frame's bottom right corner by the shoulder; from the hip the gun
+  // out on the right, the right fist on the grip, its forearm in from the corner, the barrel ahead,
+  // turned a little in; the right fist's knuckles in the frame, its little finger may go under it. Aimed,
+  // the grip as near (0.34 m), the front sight 3.3 degrees under the crosshair.
   rifle: {
-    hip: { x: 0.2, y: -0.17, z: 0.5 },
-    ads: { x: 0, y: -0.22, z: 0.44 },
+    hip: { x: 0.19, y: -0.3, z: 0.36 },
+    ads: { x: 0, y: -0.215, z: 0.34 },
     muzzle: { x: 0, y: 0.096, z: 0.53 },
     top: 0.17,
-    low: { y: -0.03, z: 0.03 },
+    low: { y: 0, z: 0.03 },
     // Aimed, the left hand's lowest knuckles, a little over the grip's height and well ahead of it.
     adsLow: { y: 0.04, z: 0.26 },
     yaw: 0.04,
   },
-  // Melee weapons stand where the pistol does, the fist on the handle; the sword's second fist lower, at the pommel.
-  baton: { ...PISTOL, low: { y: -0.08, z: 0 } },
-  blade: { ...PISTOL, low: { y: -0.13, z: -0.09 } },
+  // Melee weapons stand ready, upright (`VIEW_MELEE_TILT`), the fist low in front of the body at
+  // the frame's bottom edge (`fitPose` lifts it just into the frame); the sword's in both fists,
+  // nearer the middle, the second fist lower, at the pommel.
+  baton: { ...PISTOL, hip: { x: 0.15, y: -0.5, z: 0.5 }, low: { y: -0.06, z: 0 } },
+  blade: { ...PISTOL, hip: { x: 0.14, y: -0.5, z: 0.45 }, low: { y: -0.12, z: 0 } },
 };
 
 /** The pose for a weapon in hand; an empty hand takes the pistol's. */
@@ -74,7 +93,7 @@ const MARGIN = 0.96;
  * Aimed in, the weapon goes at most this much further out to keep the hands in the frame. Deep in
  * the DMR's zoom on a phone, little more would show of the left hand, and the weapon would shrink.
  */
-const ADS_REACH = 1.3;
+const ADS_REACH = 1.7;
 
 /**
  * The tangents of half the vertical field of view the viewmodel is drawn with (FPP hands, round

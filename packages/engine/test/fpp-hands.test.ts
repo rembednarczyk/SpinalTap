@@ -208,7 +208,8 @@ describe("FPP hands from Seki's model (13.11)", () => {
         const tan = Math.tan(camera.camera.fov / 2);
         for (const side of sides) {
           const hand = kit.hands.handBone(side)!;
-          for (const n of ["Middle1", "Little1", "Little2"]) {
+          // The rifle from the hip, its butt on the shoulder: the right fist's knuckles show, its little finger may go under the frame.
+          for (const n of look === "rifle" && aim === 0 && side === "r" ? ["Middle1"] : ["Middle1", "Little1", "Little2"]) {
             const p = Vector3.TransformCoordinates(bone(hand, n).getAbsolutePosition(), inv);
             expect(p.y / p.z, `${look} ${zoom} aim ${aim}: ${side} ${n} under the frame`).toBeGreaterThan(-tan);
             expect(Math.abs(p.x / p.z), `${look} ${zoom} aim ${aim}: ${side} ${n} beside the frame`).toBeLessThan(tan * (size[0] / size[1]));
@@ -248,6 +249,13 @@ describe("FPP hands from Seki's model (13.11)", () => {
     expect(butt.x).toBeGreaterThan(0.1);
     const sight = at(0, 0.17, 0.45);
     expect(sight.y / sight.z).toBeLessThan(0.05 * tan);
+    // The butt on the collarbone (round 4): close by the eye from the hip and aimed.
+    expect(butt.z).toBeLessThan(0.12);
+    settle({ ...standing, aim: 1, aimZoom: 0.55 });
+    camera.weaponMount.computeWorldMatrix(true);
+    const aimedInv = camera.camera.getWorldMatrix().clone().invert();
+    const aimedButt = Vector3.TransformCoordinates(Vector3.TransformCoordinates(new Vector3(0, 0.05, -0.27), camera.weaponMount.getWorldMatrix()), aimedInv);
+    expect(aimedButt.z).toBeLessThan(0.12);
   }, 60_000);
 
   it("draws the weapon and the hands with their own field of view: aimed with the DMR's zoom (0.38) the weapon is as big on the screen as with no zoom, its sights over 3 degrees under the crosshair in the world", async () => {
@@ -294,6 +302,14 @@ describe("FPP hands from Seki's model (13.11)", () => {
     expect(at("Middle3_end").x).toBeLessThan(0);
     expect(at("Index3_end").z).toBeGreaterThan(0.06);
     expect(at("Thumb3_end").x).toBeLessThan(-0.012);
+    // A firm grip in both hands (round 4): the right fingers tight round the grip's front, the left's
+    // closed hard over them.
+    expect(at("Middle3_end").length()).toBeLessThan(0.045);
+    const left = kit.hands.handBone("l")!;
+    const leftTip = inFrame(camera.weaponMount, bone(left, "Middle3_end").getAbsolutePosition());
+    expect(leftTip.x, "the left fingertips round on the grip's right side").toBeGreaterThan(0.01);
+    const leftMiddle = inFrame(camera.weaponMount, bone(left, "Middle2").getAbsolutePosition());
+    expect(Vector3.Distance(leftMiddle, at("Middle2")), `${leftMiddle} ${at("Middle2")}`).toBeLessThan(0.03);
   }, 60_000);
 
   it.each(["baton", "blade"] as const)("%s: a hammer grip: a full fist on the handle, the index side towards the tip", async (look) => {
@@ -311,5 +327,13 @@ describe("FPP hands from Seki's model (13.11)", () => {
       expect(Vector3.Dot(at("Index1").subtract(at("Little1")).normalize(), handle), `${side} knuckles`).toBeGreaterThan(0.8);
       expect(at("Middle1").length(), `${side} on the handle`).toBeLessThan(0.16);
     }
+    // At the ready (round 4): the weapon upright, a little back over the shoulder, not ahead; the fist low in the frame.
+    const mount = camera.meleeMount.computeWorldMatrix(true);
+    const inv = camera.camera.getWorldMatrix().clone().invert();
+    const up = Vector3.TransformNormal(Vector3.TransformNormal(handle, mount), inv).normalize();
+    expect(up.y).toBeGreaterThan(0.95);
+    expect(up.z).toBeLessThanOrEqual(0);
+    const fist = Vector3.TransformCoordinates(kit.hands.handBone(look === "blade" ? "l" : "r")!.getAbsolutePosition(), inv);
+    expect(fist.y / fist.z).toBeLessThan(-0.5 * Math.tan(camera.camera.fov / 2));
   }, 60_000);
 });

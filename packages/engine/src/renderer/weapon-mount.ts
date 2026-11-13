@@ -55,9 +55,12 @@ export const MELEE_HOLD: Readonly<Record<MeleeKind, { readonly handle: number }>
 
 export const isMeleeKind = (kind: WeaponKind): kind is MeleeKind => kind in MELEE_HOLD;
 
-/** FPP: the melee weapon rises from the fist, its tip this far (radians) from straight up towards the view. */
-export const VIEW_MELEE_TILT = 0.95;
-/** The tip up and forward, the back towards the eye, so the edge faces what the view looks at. */
+/**
+ * FPP: the melee weapon rises from the fist, its tip this far (radians) from straight up towards
+ * the view: at the ready, upright and a little back over the shoulder (round 4).
+ */
+export const VIEW_MELEE_TILT = -0.2;
+/** The tip up, the back towards the eye, so the edge faces what the view looks at. */
 const IN_VIEW_MELEE = orient(new Vector3(0, -Math.cos(VIEW_MELEE_TILT), -Math.sin(VIEW_MELEE_TILT)), new Vector3(0, Math.sin(VIEW_MELEE_TILT), -Math.cos(VIEW_MELEE_TILT)));
 
 /**

@@ -58,7 +58,7 @@ const grasp = (at: Vector3, fore: Vector3, fingers: Vector3, palm: Vector3, curl
  * straight along the frame. Every gun hangs from its grip (`GRIP`), so one pose fits all, the long
  * guns' pistol grips too.
  */
-const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1), v(-1, 0, 0.05), 0.85, 0.2, 0.85);
+const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1), v(-1, 0, 0.05), 0.92, 0.2, 0.95);
 
 /**
  * On the rifle's pistol grip the forearm comes in from the right, the elbow out beside the stock,
@@ -66,21 +66,23 @@ const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1)
  */
 const RIGHT_ON_RIFLE_GRIP = grasp(v(0.006, 0.012, 0.012), v(-0.45, 0.25, 1), v(0, -0.06, 1), v(-1, 0, 0.05), 0.75, 0.15, 0.7);
 
-/** The left hand round the right one with a pistol: palm on the grip's left side, fingers over the right's. */
-const LEFT_ROUND_FIST = grasp(v(-0.018, 0.0, 0.004), v(0.45, 0.2, 1), v(0.55, -0.12, 1), v(1, 0.15, 0), 0.9, 0.9, 0.35);
+/**
+ * The left hand round the right one with a pistol, a firm two-handed grip: palm hard on the grip's
+ * left side, the fingers closed tight over the right's, the thumb along the frame.
+ */
+const LEFT_ROUND_FIST = grasp(v(-0.016, 0, 0.026), v(0.45, 0.2, 1), v(0.8, -0.15, 1), v(1, 0.15, -0.2), 0.5, 0.5, 0.5);
 
 /**
- * Melee weapons stand in the fist (`IN_VIEW_MELEE`) along `VIEW_MELEE_TILT`: a full hammer grip,
- * the knuckles across the handle, the thumb towards the tip, the handle carrying the forearm's
- * line on up and forward.
+ * Melee weapons stand upright in the fist (`IN_VIEW_MELEE`, `VIEW_MELEE_TILT`), at the ready: a
+ * full hammer grip, the knuckles across the handle, the thumb towards the tip, the forearm ahead.
  */
 const HANDLE = v(0, Math.cos(VIEW_MELEE_TILT), Math.sin(VIEW_MELEE_TILT));
 const across = (fore: Vector3): Vector3 => {
   const f = fore.normalizeToNew();
   return f.subtract(HANDLE.scale(Vector3.Dot(f, HANDLE))).normalize();
 };
-/** The right forearm runs on in the handle's line, steeply up from under the view, the wrist cocked to hold it. */
-const RIGHT_FORE_MELEE = v(-0.08, 0.5, 1);
+/** The right forearm comes in low and ahead from under the view, the wrist cocked up to hold the weapon upright. */
+const RIGHT_FORE_MELEE = v(-0.12, 0.3, 1);
 const RIGHT_ON_HANDLE = grasp(v(0, 0, 0), RIGHT_FORE_MELEE, across(v(0, 0, 1)), v(-1, 0, 0), 1, 1, 0.8);
 /** The sword's handle takes both fists (`shirasaya`): the left a fist's width under the right, at the pommel. */
 const LEFT_FORE_MELEE = v(0.3, 0.3, 1);
