@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-763 Ganger stoi pod krawędzią dolnego mostu Mełgiewskiej (2449,4; 258,8) i (2454,6; 293,5) mimo przejść obok
+- Ważność: S3 · Zasięg: sonda G-741, ok. 6 z 30 punktów przy pomostach nabrzeze-0-1/0 i /1
+- Opis: krawędź pomostu 0,1-0,25 m nad gruntem: raster i walkable widzą przejście, bankNear/offTheBank zatrzymuje stopy; ganger stoi od kilku sekund pościgu bez fallbacku followDetour
+- Status: naprawione (13.11, #513 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-g763, 13.11); wcześniej: zgłoszone (13.11, naprawiacz G-747)
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: sonda G-741: punkty nabrzeze-0-1 0 0.85 ±9,5 i 1 0.1 8 dochodzą
+- Przyczyna: bankNear przepuszczał poślizg wzdłuż skarpy (CREEP), a pole (passable) nie brało Raster.walls. Poprawka: każdy poślizg w pierwszych 0,6 m to brak prostego marszu; pole nie idzie w górę ściany. Sonda G-741: 94 → 129/150, bez regresji, hash bez zmian.
+- Po poprawce nadal nie dochodzą w sondzie G-741: podzamcze-2-0 0 0.5 4 i 0 0.3 5 (5/5), nabrzeze-0-1 1 0.15 -14 (5/5), 1 0.9 -12 (3/5), 1 0.15 7 (3/5, stoi w 2451,9; 299,2). Test app alchemia-ramp-traffic trwa ok. 5 s także na main (granica limitu).
+
 ### G-754 Podkład myjni (T-051) tworzy skarpę 1,19 m na Bajkowskiego i przejściu
 - Ważność: S3 · Zasięg: Krakowskie 380..390, -30..-10; 10 par `walk-blocked`
 - Opis: podkład CAR_WASH_AREA (blend 3 m) podnosi teren o 1,3 m; NMT 0,04, w grze 1,19 na ulicy Wacława Bajkowskiego i przejściu; błąd zrobiony przez grę
