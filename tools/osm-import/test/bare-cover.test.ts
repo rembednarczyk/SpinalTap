@@ -99,6 +99,27 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
     expect(surfaceAt(fills, { x: 7.75, z: 10.25 })).toEqual(["grass"]);
   });
 
+  it("lays a strip between a carriageway and the next piece past it however narrow (step 1.2)", () => {
+    // Paving east of the road: a 1.5 m strip to a pavement, and 4 m behind it.
+    const pavement = piece("sidewalk", box(13.5, 0, 16, 20));
+    const fills = coverFills(RECT, cover(), [road, pavement], []);
+    expect(surfaceAt(fills, { x: 12.75, z: 10.25 })).toEqual(["square"]);
+    expect(surfaceAt(fills, { x: 18.25, z: 10.25 })).toEqual([]);
+    // With nothing past it, or the pavement over 5 m off, the strip is a loose region again.
+    expect(surfaceAt(coverFills(RECT, cover(), [road], []), { x: 12.75, z: 10.25 })).toEqual([]);
+    expect(surfaceAt(coverFills(RECT, cover(), [road, piece("sidewalk", box(18, 0, 20, 20))], []), { x: 12.75, z: 10.25 })).toEqual([]);
+  });
+
+  it("lays crowns over paving a lawn, not paving, and leaves those over asphalt bare; a speck of green in paving stays a lawn (T-285)", () => {
+    const crown = (x: number, z: number) => (x > 14 && x < 16 && z > 8 && z < 12) || (x > 17 && x < 19 && z > 2 && z < 4);
+    const at = (x: number, z: number) => (crown(x, z) ? COVER.canopy : x > 16.5 && z < 6 ? COVER.asphalt : x > 17 && x < 18 && z > 15 && z < 16.5 ? COVER.green : undefined);
+    const fills = coverFills(RECT, cover(at), [road], [], TOWN);
+    expect(surfaceAt(fills, { x: 15.25, z: 10.25 })).toEqual(["grass"]);
+    expect(surfaceAt(fills, { x: 18.25, z: 3.25 })).toEqual([]);
+    expect(surfaceAt(fills, { x: 17.25, z: 15.75 })).toEqual(["grass"]);
+    expect(surfaceAt(fills, { x: 18.75, z: 15.75 })).toEqual(["square"]);
+  });
+
   it("puts each fill first among the pieces of its surface", () => {
     const ground = [piece("water", box(0, 0, 1, 1)), piece("grass", box(1, 0, 2, 1)), piece("square", box(2, 0, 3, 1)), piece("road", box(3, 0, 4, 1))];
     const fills = [piece("square", box(5, 0, 6, 1)), piece("grass", box(6, 0, 7, 1))];

@@ -154,6 +154,8 @@ export interface Band {
   readonly holed?: true;
   /** Where the band's end meets another way and is to be round (`roundJoints`, ADR-0078). */
   readonly roundEnds?: readonly RoundEnd[];
+  /** A gap's patch in a joint (`roundJoints`, G-760): an overlay, read by no kerb and no fill from the cover. */
+  readonly patch?: true;
 }
 
 /** Which of a line's ends meet another way. */
