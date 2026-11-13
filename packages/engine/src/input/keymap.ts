@@ -28,7 +28,8 @@ export type Action =
   | "prevWeapon"
   | "scan"
   | "dash"
-  | "swapShoulder";
+  | "swapShoulder"
+  | "wait";
 
 /**
  * Action → physical codes (KeyboardEvent.code, "Mouse0".."Mouse4", or "WheelUp"/"WheelDown").
@@ -67,6 +68,8 @@ export const DEFAULT_KEYMAP: KeyMap = {
   dash: ["AltLeft"],
   // Over the other shoulder in TPP (G-275); G sits next to V, which switches the view.
   swapShoulder: ["KeyG"],
+  // The wait window (let the hours pass); read by the UI, not by the input frame. L is free.
+  wait: ["KeyL"],
 };
 
 export const remap = (

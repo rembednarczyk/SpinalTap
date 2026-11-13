@@ -1,3 +1,4 @@
+import { segmentParam } from "@seki/core";
 import { MAP_CHUNKS, chunkAt, inBuilding } from "@seki/sim";
 import type { KitModel } from "../city-kit-data";
 import { type CityProps, type PropXform, addPropToSink, facing, transformProp } from "../city-props";
@@ -61,7 +62,7 @@ const streetSegments = (): readonly Segment[] => {
 const toSegment = (x: number, z: number, s: Segment): number => {
   const dx = s.bx - s.ax;
   const dz = s.bz - s.az;
-  const t = Math.max(0, Math.min(1, ((x - s.ax) * dx + (z - s.az) * dz) / (dx * dx + dz * dz || 1)));
+  const t = segmentParam(x, z, s.ax, s.az, s.bx, s.bz);
   return Math.hypot(x - s.ax - dx * t, z - s.az - dz * t);
 };
 

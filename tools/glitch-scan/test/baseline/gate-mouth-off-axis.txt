@@ -1,0 +1,4 @@
+# gate-mouth-off-axis: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+stare-miasto-0-0 588,-154
+stare-miasto-0-0 587,-140
+stare-miasto-0-0 463,-94

@@ -1,0 +1,7 @@
+# tree-height-vs-nmpt: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-1-0 89,-124
+krakowskie-1-0 94,-123
+krakowskie-1-0 99,-123
+krakowskie-1-1 22,124
+krakowskie-1-1 25,124
+krakowskie-1-1 28,124

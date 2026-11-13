@@ -1,7 +1,8 @@
+import { segmentParam } from "@seki/core";
 import type { EntityId, Vec3 } from "@seki/core";
 import { DECK_DEPTH, DECK_HEADROOM, deckDepth } from "@seki/sim";
 import { DRESS_FLAG, type MeshSink, hexColor } from "../mesh-sink";
-import { type HeightAt, SURFACE_CODE, drapeTriangles } from "./ground-plan";
+import { DRAPE_GRID, type HeightAt, SURFACE_CODE, drapeTriangles } from "./ground-plan";
 import { type Box2, type P2, boundsOf, pointInRing } from "./polygon";
 import { face, quadUv, vertex } from "./sink-ops";
 
@@ -15,15 +16,26 @@ export interface DeckAxis {
   readonly b: Vec3;
 }
 
-/** Length of the fascia's quads over a way under the bridge, where its depth follows the terrain (m). */
-const FASCIA_STEP = 2;
+/**
+ * Where an edge from `a` to `b` crosses the lines the drape's grid is cut on (`drapeTriangles`):
+ * its columns, rows and the cells' diagonals, as parameters along it from 0 to 1. The underside's
+ * outline has its corners there, so a fascia broken there too meets it all along (G-743).
+ */
+const drapeBreaks = (a: P2, b: P2): number[] => {
+  const ts = [0, 1];
+  for (const f of [(p: P2) => p.x, (p: P2) => p.z, (p: P2) => p.x - p.z]) {
+    const [fa, fb] = [f(a) / DRAPE_GRID, f(b) / DRAPE_GRID];
+    if (Math.abs(fb - fa) < 1e-9) continue;
+    for (let c = Math.floor(Math.min(fa, fb)) + 1; c < Math.max(fa, fb); c++) ts.push((c - fa) / (fb - fa));
+  }
+  ts.sort((p, q) => p - q);
+  return ts.filter((t, i) => i === 0 || t - (ts[i - 1] as number) > 1e-6);
+};
 const FASCIA = hexColor("#6f6b66", DRESS_FLAG.solid);
 
 /** The deck's height over (x, z): straight from `a` to `b` along the axis, level across it. */
 export const deckHeight = (d: DeckAxis, x: number, z: number): number => {
-  const dx = d.b.x - d.a.x;
-  const dz = d.b.z - d.a.z;
-  const t = Math.max(0, Math.min(1, ((x - d.a.x) * dx + (z - d.a.z) * dz) / (dx * dx + dz * dz || 1)));
+  const t = segmentParam(x, z, d.a.x, d.a.z, d.b.x, d.b.z);
   return d.a.y + (d.b.y - d.a.y) * t;
 };
 
@@ -86,15 +98,16 @@ export const planDeckEdges = (sink: MeshSink, ring: readonly P2[], h: HeightAt, 
     const nx = (b.z - a.z) / len;
     const nz = -(b.x - a.x) / len;
     if (onDeck((a.x + b.x) / 2 + nx * 0.3, (a.z + b.z) / 2 + nz * 0.3)) continue;
-    const n = terrain ? Math.ceil(len / FASCIA_STEP) : 1;
-    const at = (k: number) => {
-      const x = a.x + ((b.x - a.x) * k) / n;
-      const z = a.z + ((b.z - a.z) * k) / n;
+    // Over a way under the bridge the depth follows the terrain: broken where the underside is.
+    const ts = terrain ? drapeBreaks(a, b) : [0, 1];
+    const at = (t: number) => {
+      const x = a.x + (b.x - a.x) * t;
+      const z = a.z + (b.z - a.z) * t;
       const y = h(x, z);
-      return { x, z, y: y + lift, depth: terrain ? deckDepth(y, terrain(x, z)) : DECK_DEPTH, u: (len * k) / n };
+      return { x, z, y: y + lift, depth: terrain ? deckDepth(y, terrain(x, z)) : DECK_DEPTH, u: len * t };
     };
-    for (let k = 0; k < n; k++) {
-      const [p, q] = [at(k), at(k + 1)];
+    for (let k = 0; k + 1 < ts.length; k++) {
+      const [p, q] = [at(ts[k] as number), at(ts[k + 1] as number)];
       quadUv(
         sink,
         [

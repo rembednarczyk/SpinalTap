@@ -241,7 +241,7 @@ const RISE_EPS = 1e-3;
  * move is dropped, so the character slides along the bank's contour; when even that climbs
  * steeply, it stays. Feet above the terrain there (a jump, a roof) are not stopped.
  */
-const offTheBank = (field: GroundField, from: Entity["position"], x: number, z: number, feet: number): { x: number; z: number } => {
+export const offTheBank = (field: GroundField, from: Entity["position"], x: number, z: number, feet: number): { x: number; z: number } => {
   // A bridge's deck high overhead is no bank for feet under it (G-062).
   const reach = feet + STEP_HEIGHT;
   if (field.heightAt(x, z, reach) <= feet + RISE_EPS || !field.steepAt(x, z, reach)) return { x, z };

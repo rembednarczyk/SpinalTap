@@ -11,7 +11,7 @@ import { smallAlone } from "./building-alone.ts";
 import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
 import { type WorldBarrier, chunkBarriers, worldBarriers } from "./barriers.ts";
 import { toAbutments } from "./bridge-ends.ts";
-import { bridgeFills } from "./bridge-fill.ts";
+import { bridgeFills, onCarriagewayDecks } from "./bridge-fill.ts";
 import { type EdgeCut, edgeOutlines, partsWithin } from "./building-edge.ts";
 import { makeBuilding } from "./buildings.ts";
 import { type Cover } from "../../orto/src/cover.ts";
@@ -424,6 +424,8 @@ export const generate = (
   bands.splice(0, bands.length, ...groundRaisedGreen(bands, raised, decks, buildings.map((a) => a.ring)));
   // A bridge is one deck: its outline fills the gap between its sidewalk and its carriageway (G-340).
   for (const b of bridgeFills(areas, bands)) bands.push({ ...b, box: ringBounds(b.ring) });
+  // Its sidewalk level with its carriageway in every cross section (G-737), the fill too.
+  bands.splice(0, bands.length, ...onCarriagewayDecks(areas, bands));
   // A pavement reaches the kerb (G-522): the bare strip between a carriageway and its paving is
   // closed, by the carriageway itself where the map gives it no width (G-570), its zebras with it.
   // A street fitted to its mapped sidewalks (T-046) has its width from them, as a measured one.

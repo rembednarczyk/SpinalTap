@@ -1,0 +1,27 @@
+# sidewalk-under-carriageway: grid 10 m (x,z = the square's corner at its least x and z)
+krakowskie-1-1 210,130
+krakowskie-2-0 320,-240
+krakowskie-2-0 320,-230
+krakowskie-2-0 320,-50
+krakowskie-2-0 330,-50
+krakowskie-2-0 340,-50
+krakowskie-2-0 290,-40
+krakowskie-2-0 300,-40
+krakowskie-2-0 310,-40
+krakowskie-2-0 320,-40
+krakowskie-2-0 280,-30
+krakowskie-2-0 290,-30
+krakowskie-2-1 260,-20
+krakowskie-2-1 270,-20
+krakowskie-2-1 260,-10
+krakowskie-2-1 260,80
+nabrzeze-1-0 2640,80
+nabrzeze-1-0 2650,80
+nabrzeze-1-0 2650,90
+nabrzeze-1-0 2660,90
+stare-miasto-1-0 690,-200
+stare-miasto-1-0 700,-200
+stare-miasto-1-0 710,-200
+stare-miasto-1-0 720,-200
+stare-miasto-1-0 720,-190
+stare-miasto-1-0 730,-190
