@@ -143,11 +143,13 @@ const MIN_DEPTH = 0.2;
 
 /**
  * How deep the deck at `deck` hangs over the terrain at `terrain`: thinner over a way under the
- * bridge (G-062), down to MIN_DEPTH, so a walker's head keeps clear of its underside.
+ * bridge (G-062), down to MIN_DEPTH, so a walker's head keeps clear of its underside. Thinning
+ * towards the headroom from below too: a jump in depth there is a tooth in the fascia over a
+ * bank, and the underside drawn straight across it hangs below the fascia's thin part (G-743).
  */
 export const deckDepth = (deck: number, terrain: number): number => {
   const room = deck - terrain;
-  return room > DECK_HEADROOM ? Math.min(DECK_DEPTH, Math.max(MIN_DEPTH, room - HEAD_CLEARANCE)) : DECK_DEPTH;
+  return Math.min(DECK_DEPTH, room > DECK_HEADROOM ? Math.max(MIN_DEPTH, room - HEAD_CLEARANCE) : MIN_DEPTH + DECK_HEADROOM - room);
 };
 
 /** The lowest underside of a deck over (x, z) at or above `head`, or Infinity: a jump under the bridge stops there. */
