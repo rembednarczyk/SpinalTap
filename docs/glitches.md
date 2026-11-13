@@ -1773,16 +1773,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/traffic, skrzyżowania)
 - Test przyjęcia: sonda ziaren 1–40: 0 kolizji na skrzyżowaniu
 
-### G-754 Podkład myjni (T-051) tworzy skarpę 1,19 m na Bajkowskiego i przejściu
-- Ważność: S3 · Zasięg: Krakowskie 380..390, -30..-10; 10 par `walk-blocked`
-- Opis: podkład CAR_WASH_AREA (blend 3 m) podnosi teren o 1,3 m; NMT 0,04, w grze 1,19 na ulicy Wacława Bajkowskiego i przejściu; błąd zrobiony przez grę
-- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g754, f395319); wcześniej: zgłoszone (13.11, kurator, przegląd walk-blocked)
-- Pakiet właściciela: packages/sim (content/lublin teren, podkłady)
-- Test przyjęcia: `walk-blocked` bez kluczy przy 380,-20; teren ulicy w ±0,1 m od NMT
-- 13.11: walk-blocked 1,19 przy 380,-20 to był artefakt błędu pamięci skanu (fix c17fcb5 w #497); po poprawce brak zablokowanych par, zostaje odstępstwo terenu ulicy od NMT o 1,31 m (topografia, nie przejście)
-- 13.11 f395319: pad T-051 x 388..422, z -41..-27; Bajkowskiego i przejścia ≤0,1 m od NMT; pad-on-road krakowskie 7→1, seam-gap 1→0; złote hashe determinism, reinforcement-sidestep i ground-cut krakowskie-2-0 zmienione świadomie (treść)
-- 13.11 kurator: ZGODNE Z UWAGAMI; krawędź padu z −25 ≤0,18 m, z −45 = NMT, meble i auto na gruncie; T-003 zaktualizowane
-
 ### G-755 Droga pieszo-rowerowa w179264855 w grze za stroma (0,8–0,92) przy (667–682; 134–141)
 - Ważność: S3 · Zasięg: zejście ze Starego Miasta na Podzamcze; ok. 1 440 par `walk-blocked` (kwadraty 670,130 i 670,140)
 - Opis: OSM: highway=pedestrian, bicycle=yes, lit, nie schody; oś w grze spada 4,5 m na 4 m; sprawdzić NMT i zdjęcia: jeśli spadek jest łagodniejszy — wygładzić, jeśli to schody/rampa — wymusić schody (flightRamps)

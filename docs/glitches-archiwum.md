@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-754 Podkład myjni (T-051) tworzy skarpę 1,19 m na Bajkowskiego i przejściu
+- Ważność: S3 · Zasięg: Krakowskie 380..390, -30..-10; 10 par `walk-blocked`
+- Opis: podkład CAR_WASH_AREA (blend 3 m) podnosi teren o 1,3 m; NMT 0,04, w grze 1,19 na ulicy Wacława Bajkowskiego i przejściu; błąd zrobiony przez grę
+- Status: naprawione (13.11, #512 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g754, f395319); wcześniej: zgłoszone (13.11, kurator, przegląd walk-blocked)
+- Pakiet właściciela: packages/sim (content/lublin teren, podkłady)
+- Test przyjęcia: `walk-blocked` bez kluczy przy 380,-20; teren ulicy w ±0,1 m od NMT
+- 13.11: walk-blocked 1,19 przy 380,-20 to był artefakt błędu pamięci skanu (fix c17fcb5 w #497); po poprawce brak zablokowanych par, zostaje odstępstwo terenu ulicy od NMT o 1,31 m (topografia, nie przejście)
+- 13.11 f395319: pad T-051 x 388..422, z -41..-27; Bajkowskiego i przejścia ≤0,1 m od NMT; pad-on-road krakowskie 7→1, seam-gap 1→0; złote hashe determinism, reinforcement-sidestep i ground-cut krakowskie-2-0 zmienione świadomie (treść)
+- 13.11 kurator: ZGODNE Z UWAGAMI; krawędź padu z −25 ≤0,18 m, z −45 = NMT, meble i auto na gruncie; T-003 zaktualizowane
+
 ### G-747 `followDetour` bez osiągalnej komórki w linii prostej kieruje gangera do `way[1]`, nawet nieosiągalnej
 - Ważność: S3 · Zasięg: planer pościgu w terenie ze skarpami; możliwe źródło części z 14 z 30 nieudanych dojść przy przyczółkach Mełgiewskiej (G-741), np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)
 - Opis: gdy żadna linia z punktu gangera nie przechodzi, fallback wybiera następny punkt drogi bez sprawdzenia osiągalności; ganger napiera na skarpę albo krąży w kieszeni
