@@ -1,17 +1,2 @@
 # seam-gap: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-1-0 20,-230
-krakowskie-1-1 30,-20
-krakowskie-1-1 40,-20
-krakowskie-1-1 50,-20
-krakowskie-2-0 240,-100
 krakowskie-2-1 380,-20
-nabrzeze-1-0 2500,180
-nabrzeze-1-0 2500,190
-nabrzeze-1-1 2500,400
-nabrzeze-1-1 2500,410
-nabrzeze-1-1 2500,470
-podzamcze-0-0 540,160
-podzamcze-0-0 690,160
-stare-miasto-0-1 460,130
-stare-miasto-0-1 460,140
-stare-miasto-1-0 610,-240

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { chunkSeams, seamGaps } from "./seam-gap";
+import { chunkSeams } from "../../../packages/sim/src/content/lublin/seams";
+import { seamGaps } from "./seam-gap";
 
 /**
  * The glitch scan's check `seam-gap` (G-748) on two chunks side by side, a x 0..10 and b x 10..20,

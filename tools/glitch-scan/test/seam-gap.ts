@@ -7,24 +7,9 @@
  * dip round them, `arkady.ts`): there the ground is not seen nor walked.
  */
 
-type Bounds = { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
+import { type SeamChunk, chunkSeams } from "../../../packages/sim/src/content/lublin/seams";
+
 type Finding = { readonly at: string; readonly what: string };
-
-/** A chunk by its id and rectangle. */
-export interface SeamChunk {
-  readonly id: string;
-  readonly bounds: Bounds;
-}
-
-/** Where two chunks' rectangles meet: the line x (`along` "z") or z (`along` "x") at `at`, from `lo` to `hi` along it. */
-export interface Seam {
-  readonly a: string;
-  readonly b: string;
-  readonly along: "x" | "z";
-  readonly at: number;
-  readonly lo: number;
-  readonly hi: number;
-}
 
 /** How far apart the check samples a seam (m), on the world's grid: a sample at every multiple of it. */
 export const SEAM_SAMPLE = 0.25;
@@ -32,25 +17,6 @@ export const SEAM_SAMPLE = 0.25;
 export const SEAM_GAP = 0.1;
 /** Below this over `SEAM_GAP` the parting is the floats' (m): the import's heights come in tenths, and -1.9 against -2.0 is 0.10000000000000009 apart. */
 const ROUNDING = 1e-6;
-
-/**
- * The stretches where the chunks' rectangles meet side by side (a corner alone is none).
- * The same as `chunkSeams` of G-748 (PR #502, `lublin/seams.ts`), which is not on main yet.
- */
-export const chunkSeams = (chunks: readonly SeamChunk[]): Seam[] => {
-  const out: Seam[] = [];
-  for (let i = 0; i < chunks.length; i++) {
-    for (let j = i + 1; j < chunks.length; j++) {
-      const [p, q] = [chunks[i]!, chunks[j]!];
-      const [a, b] = [p.bounds, q.bounds];
-      const [zLo, zHi] = [Math.max(a.minZ, b.minZ), Math.min(a.maxZ, b.maxZ)];
-      const [xLo, xHi] = [Math.max(a.minX, b.minX), Math.min(a.maxX, b.maxX)];
-      if (zHi > zLo && (a.maxX === b.minX || a.minX === b.maxX)) out.push({ a: p.id, b: q.id, along: "z", at: a.maxX === b.minX ? a.maxX : a.minX, lo: zLo, hi: zHi });
-      if (xHi > xLo && (a.maxZ === b.minZ || a.minZ === b.maxZ)) out.push({ a: p.id, b: q.id, along: "x", at: a.maxZ === b.minZ ? a.maxZ : a.minZ, lo: xLo, hi: xHi });
-    }
-  }
-  return out;
-};
 
 /** What the check reads of the game. */
 export interface SeamWorld {

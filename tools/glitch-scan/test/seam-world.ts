@@ -10,6 +10,10 @@ import type { SeamWorld } from "./seam-gap";
  * The game's Lublin as `seam-gap` reads it (`seam-gap.ts`): each chunk's shaped terrain
  * (`SHAPED_TERRAIN`), the bridges' decks and the solids of its chunks, the map's buildings and the
  * set pieces with their rooms (the Arkady's pavement among Alchemia's), the street's furniture not.
+ * A map building covers the seam too: the terrain inside its outline is neither drawn to the eye
+ * nor walked, the walls stand on it (the ledge of 0.18 m at (240; 114) after G-748 lies in one,
+ * the orchestrator's decision of 13.11). A passage cut through a building is no cover: its vault's
+ * prism starts over the walker's head, past `DECK_HEADROOM`.
  */
 
 /** A chunk's solids as prisms: its own `prisms`, else a solid block's box. */
