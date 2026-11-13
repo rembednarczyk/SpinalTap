@@ -7,7 +7,8 @@ import { teleportPlayer } from "./helpers";
  * Chases off and onto the bridges away from any flight of steps (G-255 round 8): the way along
  * and over a deck's edge there is the one the walk always took. From the lower bridge of
  * Mełgiewska down to the street south of it (G-068), and from beside the footbridge of
- * podzamcze-2-0 and of the lower bridge of Mełgiewska onto them, round their ends (G-741).
+ * podzamcze-2-0 and of the lower bridge of Mełgiewska onto them, round their ends (G-741), and
+ * from beside the bridge of podzamcze-1-0 onto it (G-747).
  */
 
 type P = { readonly x: number; readonly z: number };
@@ -84,5 +85,16 @@ describe("chasing over the edges of the bridges away from the flights of steps (
     const u = { x: (D.b.x - D.a.x) / len, z: (D.b.z - D.a.z) / len };
     const at = (t: number, side: number): P => ({ x: D.a.x + u.x * len * t - u.z * side, z: D.a.z + u.z * len * t + u.x * side });
     expect(chase(at(0.15, -14), -Infinity, at(0.15, 0), Infinity, "nabrzeze-0-1", 20, 0.3)).not.toBeNull();
+  }, 120_000);
+
+  it("gets from beside the bridge of podzamcze-1-0 onto it, not pressed against its side when no way's cell is a straight walk away (G-747)", () => {
+    // At (772.7, 200.3), with no cell of the way a straight walk away, it walked at the way's next
+    // cell over a bank its feet stop at, pressed against it for good; a cell further down the way
+    // lay a straight walk away, 1.5 m aside.
+    const D = BRIDGE_DECKS.get("podzamcze-1-0")![0]!;
+    const len = Math.hypot(D.b.x - D.a.x, D.b.z - D.a.z);
+    const u = { x: (D.b.x - D.a.x) / len, z: (D.b.z - D.a.z) / len };
+    const at = (t: number, side: number): P => ({ x: D.a.x + u.x * len * t - u.z * side, z: D.a.z + u.z * len * t + u.x * side });
+    expect(chase(at(0.8, 6), -Infinity, at(0.8, 0), Infinity, "podzamcze-1-0", 20, 0.3)).not.toBeNull();
   }, 120_000);
 });
