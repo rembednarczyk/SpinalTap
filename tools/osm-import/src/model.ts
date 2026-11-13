@@ -66,6 +66,12 @@ export interface StreetOut {
   readonly name: string;
   readonly kind: string;
   readonly line: readonly number[];
+  /**
+   * How far its carriageway reaches left and right of `line` at each of its points, `[l0, r0, l1, r1…]`
+   * (m, to 0.05; 0 off its asphalt): the import's width after fitting and widening, which the
+   * traffic's lanes read instead of measuring the asphalt (ADR-0080 decision 4).
+   */
+  readonly half?: readonly number[];
   /** Driven one way only, the way the line runs. */
   readonly oneway?: true;
   /** A passage under a building closed to motor vehicles: no lane, not even for deliveries (G-002). */

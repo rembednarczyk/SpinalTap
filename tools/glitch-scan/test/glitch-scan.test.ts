@@ -823,7 +823,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return carStreets.flatMap((r) => {
         if (r === by) return [];
         const q = projectOn(r.points, c.x, c.z);
-        return q.d < roadHalfWidth(r.points, q.side >= 0 ? 1 : -1) + 0.5 ? [{ at: near(c.x, c.z), what: `${c.model} by ${by.name} ${q.d.toFixed(1)} m from ${r.name}` }] : [];
+        return q.d < roadHalfWidth(r, q.side >= 0 ? 1 : -1) + 0.5 ? [{ at: near(c.x, c.z), what: `${c.model} by ${by.name} ${q.d.toFixed(1)} m from ${r.name}` }] : [];
       });
     }),
   /**

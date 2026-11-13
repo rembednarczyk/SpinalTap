@@ -8,7 +8,7 @@ import { footprint, pairSegmentDistance, segmentsGap } from "./parked-geometry";
 import { type KerbStrip, clearOfFurniture, clearOfKeptWays } from "./parked-room";
 import { groundY, restingY, surfaceY } from "./lublin/terrain";
 import { clearOfGame } from "./street-props";
-import { KERB_ROOM, TRAFFIC_ROUTES, laneOffset, offsetLine, pointAt, projectOn, roadHalfWidth } from "./traffic";
+import { KERB_ROOM, TRAFFIC_ROUTES, laneOffset, offsetLine, pointAt, projectOn, roadHalfWidth, turnedRound } from "./traffic";
 
 /**
  * Cars parked along the kerbs and on Plac Zamkowy (ADR-0050), which really is a car park.
@@ -121,8 +121,8 @@ const clearOfZebras = (x: number, z: number, yaw: number, model: VehicleModel): 
 };
 
 const CAR_STREETS = ROAD_CHAINS.filter((c) => c.use === "cars");
-/** Each car road's carriageway reach right and left of its axis (m), measured once. */
-const CARRIAGEWAY = new Map(CAR_STREETS.map((c) => [c, [roadHalfWidth(c.points, 1), roadHalfWidth(c.points, -1)] as const]));
+/** Each car road's carriageway reach right and left of its axis (m), read once off its width (ADR-0080). */
+const CARRIAGEWAY = new Map(CAR_STREETS.map((c) => [c, [roadHalfWidth(c, 1), roadHalfWidth(c, -1)] as const]));
 
 /**
  * Is a car of half width `hw` at (x, z) off the carriageway of every car road but its own? A
@@ -238,10 +238,11 @@ const kerbCars = (): ParkedCar[] => {
   for (const c of ROAD_CHAINS) {
     if (c.use !== "cars" || (c.kind !== "residential" && c.kind !== "tertiary" && c.kind !== "unclassified")) continue;
     const len = polylineLength(c.points);
-    for (const pts of [c.points, [...c.points].reverse()] as const) {
+    for (const st of [c, turnedRound(c)]) {
+      const pts = st.points;
       // The far kerb of a one-way street is walked the other way, but its cars turn to the traffic's way.
-      const turned = c.oneway && pts !== c.points;
-      const half = roadHalfWidth(pts, 1);
+      const turned = c.oneway && st !== c;
+      const half = roadHalfWidth(st, 1);
       if (half < KERB_ROOM) continue;
       // By the kerb, and never closer to the axis than the lane's car leaves room for.
       const kerb: Pt[] = offsetLine(pts, Math.max(half - 1.15, laneOffset(half) + 2.2));
@@ -322,7 +323,7 @@ const stripCars = (park: KerbPark, c: RoadChain, side: 1 | -1, layout: BayLayout
         .flatMap((a) => BAY_NUDGE.map((d) => car(a, d)))
         .find(
           (k) =>
-            footprint(k.x, k.z, yaw, model, -0.1).every(([x, z]) => pointInPairRingEvenOdd(x, z, park.ring)) &&
+            footprint(k.x, k.z, yaw, model, 0).every(([x, z]) => pointInPairRingEvenOdd(x, z, park.ring)) &&
             fits(k.x, k.z, yaw, model, undefined, { ring: park.ring, axis: c.points, side }) &&
             (layout === "parallel" || endsOffLanes(k.x, k.z, yaw, model)) &&
             ![...taken, ...out].some((o) => Math.hypot(o.x - k.x, o.z - k.z) < 8 && overlap(o, k)),

@@ -93,6 +93,11 @@ export interface LublinStreetData {
   readonly kind: string;
   /** World polyline, clipped to the chunk. */
   readonly line: FlatPoints;
+  /**
+   * How far its carriageway reaches left and right of `line` at each of its points, `[l0, r0, l1, r1…]`
+   * (m; 0 off its asphalt), as the import widths it: what the traffic's lanes and the kerbs' cars read (ADR-0080).
+   */
+  readonly half?: FlatPoints;
   /** Driven one way only, the way the line runs (`oneway=-1` already turned round). */
   readonly oneway?: true;
   /** A passage under a building closed to motor vehicles in OSM: no lane, not even for deliveries (G-002). */
