@@ -81,6 +81,7 @@ import { deckSlots } from "./deck-slot";
 import { deckSteps } from "./deck-step";
 import { groundOverDeck } from "./ground-over-deck";
 import { abutmentSteps } from "./deck-abutment";
+import { kerbSteps } from "./deck-kerb";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { churchFakeTowers, dataTops, towersOffNmpt } from "./church-towers";
 import { cityBricks, plasteredWalls } from "./wall-materials";
@@ -112,13 +113,13 @@ import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, isLandmark } from "..
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
-import { CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PADS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
+import { CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PADS, PASSAGES, ROOM_SITES, ROOM_STOREY, rawHeight } from "../../../packages/sim/src/content/lublin/sites";
 import { ALCHEMIA_RAMPS } from "../../../packages/sim/src/content/alchemia/terraces";
 import { mapHeight } from "../../../packages/sim/src/content/lublin/shape";
 import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
-import { DECK_DEPTH, DECK_HEADROOM, type GroundDeck, deckAt, deckHeight } from "../../../packages/sim/src/world/deck";
+import { DECK_DEPTH, DECK_HEADROOM, type GroundDeck, deckAt, deckHeight, makeDeck } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
 import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movement-system";
@@ -1115,6 +1116,21 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * 0.01 m over the deck (G-686): the terrain shows through the deck's paving as a grey patch.
    */
   "ground-over-deck": () => groundOverDeck([...BRIDGE_DECKS.values()].flat(), bridgeDeckAt, groundY),
+  /**
+   * A point (every 0.5 m) of a bridge's sidewalk more than 0.05 m off the carriageway beside it in
+   * the same cross section (G-737): in Lublin the sidewalk behind the kerb is level with it.
+   */
+  "deck-kerb-step": () => {
+    const seen = new Set<string>();
+    const pieces = MAP_CHUNKS.flatMap((c) =>
+      c.ground.flatMap((g) => {
+        if (!g.deck || seen.has(g.outline.join(","))) return [];
+        seen.add(g.outline.join(","));
+        return [{ ...makeDeck(g.outline, g.deck, rawHeight), surface: g.surface }];
+      }),
+    );
+    return kerbSteps(pieces, deckHeight);
+  },
   /** A run of map steps between two parallel walls further apart than the steps the game lays plus 1 m (G-203). */
   "steps-narrower-than-walls": () => {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
