@@ -1834,6 +1834,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (teren), packages/sim (content/lublin)
 - Test przyjęcia: na każdym szwie różnica ≤ 0,05 m
 - Do zrobienia razem z kontrolą `seam-gap` z przeglądu #502 (kurator 13.11).
+- Kontrola seam-gap (gałąź ccr-ec2c4269-ilh8k8-seam-gap, 29f7b55): baza main 16 kluczy / 210 próbek; po #502 zostaje 1 (myjnia 380,-20); (240;114) w obrysie budynku, x=460 pod płytami Arkad – nie liczone
 
 ### G-759 walk-blocked nie widzi płyt chodnika i podestu Arkad
 - Ważność: S4 · Zasięg: klucze `stare-miasto-0-1 460,100/110/120`, `krakowskie-2-1 450,*`; ok. 500 stromych par po G-748
