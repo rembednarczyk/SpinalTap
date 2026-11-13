@@ -48,6 +48,9 @@ export class Cells {
   /** The rings that cover cells, with their boxes, by the cells of a grid (broad phase of `coversNear`). */
   /** Runs of cells the last `scan` found: from and past the last, a pair a run. */
   private runs = new Int32Array(256);
+  /** The last `scan`'s crossings of the rows, and where each row's crossings begin in them. */
+  private xs = new Float64Array(256);
+  private rowAt = new Int32Array(256);
   private readonly covers = new SpatialHash<{ readonly ring: readonly Pt[]; readonly box: Rect }>(COVER_CELL);
   constructor(rect: Rect) {
     this.rect = rect;
@@ -96,37 +99,32 @@ export class Cells {
   zoneNear(ring: readonly Pt[], d: number): void {
     this.near(ring, d, this.zone, 1, -1);
   }
-  /** Grows the town's paved places by `d` (m) every way (a square round each cell): the nearest one along the rows, then down the columns. */
+  /**
+   * Grows the town's paved places by `d` (m) every way (a square round each cell): each run of a
+   * place along a row, `d` longer at both ends, is laid on the rows within `d` of it. The runs are
+   * read first, so the grown ones are not grown again.
+   */
   growZone(d: number): void {
     const { nx, nz, zone } = this;
     const r = Math.round(d / STEP);
-    const FAR = 1 << 20;
-    const rows = scratch.u8("zone.rows", nx * nz);
-    for (let j = 0; j < nz; j++) {
-      const o = j * nx;
-      let last = -FAR;
-      for (let i = 0; i < nx; i++) {
-        if (zone[o + i]) last = i;
-        if (i - last <= r) rows[o + i] = 1;
-      }
-      last = FAR;
-      for (let i = nx - 1; i >= 0; i--) {
-        if (zone[o + i]) last = i;
-        if (last - i <= r) rows[o + i] = 1;
-      }
+    // Grown runs, a triple a run: its row, from, past its last.
+    const runs: number[] = [];
+    for (let j = 0, from = zone.indexOf(1); from >= 0; ) {
+      while (from >= (j + 1) * nx) j++;
+      const end = (j + 1) * nx;
+      let past = zone.indexOf(0, from);
+      if (past < 0 || past > end) past = end;
+      const [a, b] = [Math.max(j * nx, from - r), Math.min(end, past + r)];
+      // Runs closer than 2 r merge.
+      const n = runs.length;
+      if (n > 0 && runs[n - 3] === j && runs[n - 1]! >= a) runs[n - 1] = b;
+      else runs.push(j, a, b);
+      from = zone.indexOf(1, past);
     }
-    const last = new Int32Array(nx).fill(-FAR);
-    for (let j = 0; j < nz; j++)
-      for (let i = 0; i < nx; i++) {
-        if (rows[j * nx + i]) last[i] = j;
-        if (j - last[i]! <= r) zone[j * nx + i] = 1;
-      }
-    last.fill(FAR);
-    for (let j = nz - 1; j >= 0; j--)
-      for (let i = 0; i < nx; i++) {
-        if (rows[j * nx + i]) last[i] = j;
-        if (last[i]! - j <= r) zone[j * nx + i] = 1;
-      }
+    for (let k = 0; k < runs.length; k += 3) {
+      const [j, a, b] = [runs[k]!, runs[k + 1]!, runs[k + 2]!];
+      for (let t = Math.max(0, j - r); t <= Math.min(nz - 1, j + r); t++) zone.fill(1, a + (t - j) * nx, b + (t - j) * nx);
+    }
   }
   /** Marks the free cells within `d` of the ring, or in it, `BLOCKED`. */
   block(ring: readonly Pt[], d: number): void {
@@ -147,27 +145,50 @@ export class Cells {
     const j0 = Math.max(0, Math.ceil((minZ - this.rect.minZ) / STEP - 0.5));
     const j1 = Math.min(this.nz - 1, Math.floor((maxZ - this.rect.minZ) / STEP - 0.5));
     if (j1 < j0) return 0;
-    // Each edge's crossings of the rows' centre lines, row by row.
-    const rows: number[][] = Array.from({ length: j1 - j0 + 1 }, () => []);
+    // Each edge's crossings of the rows' centre lines, row by row: counted, then laid in one array
+    // from each row's start (`at`, then past each row's last), no list a row.
+    const rows = j1 - j0 + 1;
+    if (this.rowAt.length < rows + 1) this.rowAt = new Int32Array(2 * (rows + 1));
+    const at = this.rowAt;
+    at.fill(0, 0, rows + 1);
+    const { minZ: z0, minX: x0 } = this.rect;
     for (let k = 0, m = ring.length - 1; k < ring.length; m = k++) {
       const p = ring[m]!;
       const q = ring[k]!;
-      const lo = Math.max(j0, Math.ceil((Math.min(p.z, q.z) - this.rect.minZ) / STEP - 0.5));
-      const hi = Math.min(j1, Math.floor((Math.max(p.z, q.z) - this.rect.minZ) / STEP - 0.5));
+      const lo = Math.max(j0, Math.ceil((Math.min(p.z, q.z) - z0) / STEP - 0.5));
+      const hi = Math.min(j1, Math.floor((Math.max(p.z, q.z) - z0) / STEP - 0.5));
       for (let j = lo; j <= hi; j++) {
-        const z = this.rect.minZ + (j + 0.5) * STEP;
-        if (p.z > z !== q.z > z) rows[j - j0]!.push(p.x + ((z - p.z) * (q.x - p.x)) / (q.z - p.z));
+        const z = z0 + (j + 0.5) * STEP;
+        if (p.z > z !== q.z > z) at[j - j0 + 1]!++;
+      }
+    }
+    for (let r = 1; r <= rows; r++) at[r]! += at[r - 1]!;
+    if (this.xs.length < at[rows]!) this.xs = new Float64Array(2 * at[rows]!);
+    const xs = this.xs;
+    for (let k = 0, m = ring.length - 1; k < ring.length; m = k++) {
+      const p = ring[m]!;
+      const q = ring[k]!;
+      const lo = Math.max(j0, Math.ceil((Math.min(p.z, q.z) - z0) / STEP - 0.5));
+      const hi = Math.min(j1, Math.floor((Math.max(p.z, q.z) - z0) / STEP - 0.5));
+      for (let j = lo; j <= hi; j++) {
+        const z = z0 + (j + 0.5) * STEP;
+        if (p.z > z !== q.z > z) xs[at[j - j0]!++] = p.x + ((z - p.z) * (q.x - p.x)) / (q.z - p.z);
       }
     }
     let n = 0;
     for (let j = j0; j <= j1; j++) {
-      const xs = rows[j - j0]!;
-      if (xs.length < 2) continue;
-      if (xs.length > 2) xs.sort((p, q) => p - q);
-      else if (xs[0]! > xs[1]!) xs.reverse();
-      for (let k = 0; k + 1 < xs.length; k += 2) {
-        const i0 = Math.max(0, Math.ceil((xs[k]! - this.rect.minX) / STEP - 0.5));
-        const i1 = Math.min(this.nx - 1, Math.floor((xs[k + 1]! - this.rect.minX) / STEP - 0.5));
+      const a = j > j0 ? at[j - j0 - 1]! : 0;
+      const b = at[j - j0]!;
+      if (b - a < 2) continue;
+      if (b - a > 2) xs.subarray(a, b).sort();
+      else if (xs[a]! > xs[a + 1]!) {
+        const x = xs[a]!;
+        xs[a] = xs[a + 1]!;
+        xs[a + 1] = x;
+      }
+      for (let k = a; k + 1 < b; k += 2) {
+        const i0 = Math.max(0, Math.ceil((xs[k]! - x0) / STEP - 0.5));
+        const i1 = Math.min(this.nx - 1, Math.floor((xs[k + 1]! - x0) / STEP - 0.5));
         if (i1 < i0) continue;
         if (2 * n + 2 > this.runs.length) {
           const more = new Int32Array(2 * this.runs.length);
@@ -200,6 +221,8 @@ export class Cells {
       const j1 = Math.min(this.nz - 1, Math.ceil((Math.max(a.z, c.z) + d - this.rect.minZ) / STEP));
       const [dx, dz] = [c.x - a.x, c.z - a.z];
       const len2 = dx * dx + dz * dz || 1;
+      // The squared distance decides where it is clearly in or out (a margin far over its rounding), `Math.hypot` where it is close.
+      const [inner, outer] = [d * d * (1 - 1e-9), d * d * (1 + 1e-9)];
       for (let j = j0; j <= j1; j++) {
         const pz = this.rect.minZ + (j + 0.5) * STEP;
         for (let i = i0; i <= i1; i++) {
@@ -208,7 +231,10 @@ export class Cells {
           // As `segmentGap`, the cell's centre inline.
           const px = this.rect.minX + (i + 0.5) * STEP;
           const t = Math.max(0, Math.min(1, ((px - a.x) * dx + (pz - a.z) * dz) / len2));
-          if (Math.hypot(a.x + dx * t - px, a.z + dz * t - pz) <= d) to[k] = value;
+          const ex = a.x + dx * t - px;
+          const ez = a.z + dz * t - pz;
+          const e2 = ex * ex + ez * ez;
+          if (e2 <= inner || (e2 < outer && Math.hypot(ex, ez) <= d)) to[k] = value;
         }
       }
     }

@@ -26,9 +26,9 @@
 import { FillRule, type Path64, difference, isPositive } from "clipper2-ts";
 import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
 import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
-import { COVER } from "../../orto/src/classify.ts";
 import { type Cover, coverFor } from "../../orto/src/cover.ts";
-import { Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch, taken as cellTaken } from "./bare-cells.ts";
+import { Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch } from "./bare-cells.ts";
+import { dropLoose, joinSpecks, readCover } from "./bare-clean.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
 import { contours } from "./contour.ts";
 import { type Area } from "./features.ts";
@@ -41,7 +41,6 @@ import { type GroundOut } from "./model.ts";
 // through a getter of the module's namespace, which a loop of 190 000 cells would pay at each cell.
 const LABEL = { ...CELL_LABEL } as const;
 const STEP = CELL_STEP;
-const taken = cellTaken;
 
 /** The rule's settings, measured on the four districts (ADR-0077 step 1.1). */
 export const FILL = {
@@ -94,183 +93,96 @@ const LAID: readonly { readonly label: number; readonly surface: GroundSurface }
   { label: LABEL.square, surface: "square" },
 ];
 
-const labelOf = (cls: number): number =>
-  cls === COVER.green ? LABEL.grass : cls === COVER.paving ? LABEL.square : cls === COVER.shadow || cls === COVER.canopy ? LABEL.mixed : LABEL.other;
+/** Each laid label's bit in `drawnCells`, 0 for the rest. */
+const BIT = Uint8Array.from({ length: 8 }, (_, l) => (l === LABEL.grass ? 1 : l === LABEL.square ? 2 : 0));
 
-/** The free cells' labels from the cover; covered ones stay covered. */
-const readCover = (cells: Cells, cover: Cover): void => {
-  const h = cover.header;
-  // Each class's label, and each column's column of the raster (-1 off it).
-  const labels = Uint8Array.from({ length: 16 }, (_, c) => labelOf(c));
-  const cols = Int32Array.from({ length: cells.nx }, (_, i) => {
-    const col = Math.floor((cells.rect.minX + (i + 0.5) * STEP - h.x0) / h.step);
-    return col < 0 || col >= h.width ? -1 : col;
-  });
-  for (let j = 0; j < cells.nz; j++) {
-    const row = Math.floor((h.z1 - (cells.rect.minZ + (j + 0.5) * STEP)) / h.step);
-    const off = row < 0 || row >= h.height;
-    for (let i = 0; i < cells.nx; i++) {
-      const k = j * cells.nx + i;
-      if (taken(cells.label[k]!)) continue;
-      const col = cols[i]!;
-      cells.label[k] = labels[off || col < 0 ? COVER.none : cover.cls[row * h.width + col]!]!;
-    }
+/** The bits of the labels at and beside each cell of row `j` (`BIT`) into row `j % 3` of `beside`. */
+const besideRow = (lab: Uint8Array, nx: number, j: number, beside: Uint8Array): void => {
+  const o = j * nx;
+  const into = (j % 3) * nx;
+  let prev = 0;
+  let cur = BIT[lab[o]!]!;
+  for (let i = 0; i < nx; i++) {
+    const next = i + 1 < nx ? BIT[lab[o + i + 1]!]! : 0;
+    beside[into + i] = prev | cur | next;
+    prev = cur;
+    cur = next;
   }
 };
 
-/** Summed-area tables of the grass, square and other cells, one pass: entry (i, j) counts those west and south of (i, j). */
-const summed = (cells: Cells): [Int32Array, Int32Array, Int32Array] => {
-  const { nx, nz, label } = cells;
-  const n = (nx + 1) * (nz + 1);
-  const [sg, ss, so] = [scratch.i32("summed.g", n, null), scratch.i32("summed.s", n, null), scratch.i32("summed.o", n, null)];
-  // Row 0 and column 0 count nothing; the rest is written below.
-  for (const t of [sg, ss, so]) {
-    t.fill(0, 0, nx + 1);
-    for (let j = 1; j <= nz; j++) t[j * (nx + 1)] = 0;
-  }
-  for (let j = 0; j < nz; j++) {
-    let [g, q, o] = [0, 0, 0];
-    const [row, up] = [(j + 1) * (nx + 1) + 1, j * (nx + 1) + 1];
-    for (let i = 0; i < nx; i++) {
-      const l = label[j * nx + i];
-      if (l === LABEL.grass) g++;
-      else if (l === LABEL.square) q++;
-      else if (l === LABEL.other) o++;
-      sg[row + i] = g + sg[up + i]!;
-      ss[row + i] = q + ss[up + i]!;
-      so[row + i] = o + so[up + i]!;
-    }
-  }
-  return [sg, ss, so];
-};
+/** Each label's mask of the laid labels' bits a covered cell takes from the cells round it (`drawnCells`): all of them, none for the rest. */
+const COVERED_TAKES = Uint8Array.from({ length: 8 }, (_, l) => (l === LABEL.covered ? 3 : 0));
 
-/** Shade and crowns take the class most of the free cells `FILL.around` round them have, by a summed-area table a class. */
-const resolveMixed = (cells: Cells): void => {
-  const { nx, nz, label } = cells;
-  if (!label.includes(LABEL.mixed)) return;
-  const [sg, ss, so] = summed(cells);
-  const r = FILL.around;
-  const next = scratch.u8("mixed.next", label.length, null);
-  next.set(label);
-  for (let j = 0; j < nz; j++) {
-    const lo = Math.max(0, j - r) * (nx + 1);
-    const hi = Math.min(nz, j + r + 1) * (nx + 1);
-    for (let i = 0; i < nx; i++) {
-      if (label[j * nx + i] !== LABEL.mixed) continue;
-      const i0 = Math.max(0, i - r);
-      const i1 = Math.min(nx, i + r + 1);
-      const g = sg[hi + i1]! - sg[lo + i1]! - sg[hi + i0]! + sg[lo + i0]!;
-      const s = ss[hi + i1]! - ss[lo + i1]! - ss[hi + i0]! + ss[lo + i0]!;
-      const o = so[hi + i1]! - so[lo + i1]! - so[hi + i0]! + so[lo + i0]!;
-      // Ties and none round it stay bare.
-      next[j * nx + i] = g > s && g > o ? LABEL.grass : s > g && s > o ? LABEL.square : LABEL.other;
-    }
-  }
-  label.set(next);
-};
-
-/** The scratch a walk of regions keeps: which cells it has seen, the cells of a region, the free cells of each label round it. */
-interface RegionWalk {
-  readonly seen: Uint8Array;
-  readonly queue: Int32Array;
-  readonly round: Int32Array;
+/** What `drawnRow` works a row with: `beside` holds three rows of `besideRow` and a fourth of none, for the rows off the raster. */
+interface DrawnRows {
+  readonly lab: Uint8Array;
+  readonly nx: number;
+  readonly tile: number;
+  readonly has: Uint8Array;
+  readonly grass: Uint8Array;
+  readonly square: Uint8Array;
+  readonly beside: Uint8Array;
 }
 
-const regionWalk = (cells: Cells): RegionWalk => ({
-  seen: scratch.u8("region.seen", cells.nx * cells.nz),
-  queue: scratch.i32("region.queue", cells.nx * cells.nz, null),
-  round: new Int32Array(8),
-});
-
-/**
- * The 4-connected region of free cells of one label from cell `s`, `apart` telling which cells
- * keep to themselves (they and the others are regions apart): its cells (in `queue`, as many as it
- * returns), the free cells of each label round it (`round`) and its cell edges out of it (`edges`).
- */
-const regionFrom = (cells: Cells, apart: Uint8Array | null, w: RegionWalk, s: number): { n: number; edges: number } => {
-  const { nx, nz, label } = cells;
-  const { seen, queue, round } = w;
-  const [own, side] = [label[s]!, apart ? apart[s]! : 0];
-  let [n, edges] = [0, 0];
-  queue[n++] = s;
-  seen[s] = 1;
-  round.fill(0);
-  for (let q = 0; q < n; q++) {
-    const k = queue[q]!;
-    const i = k % nx;
-    for (let d = 0; d < 4; d++) {
-      const m = d === 0 ? (i + 1 < nx ? k + 1 : -1) : d === 1 ? (i > 0 ? k - 1 : -1) : d === 2 ? k + nx : k - nx;
-      const l = m < 0 || m >= nx * nz ? -1 : label[m]!;
-      if (l === own && (apart ? apart[m]! : 0) === side) {
-        if (!seen[m]) {
-          seen[m] = 1;
-          queue[n++] = m;
-        }
-        continue;
-      }
-      if (l !== own) edges++;
-      if (l >= 0 && l !== own && !taken(l)) round[l]!++;
+/** Row `j` of `drawnCells` (of `nz` rows), a function of its own (see `bare-clean.ts`); `row` the row of tiles in `has`. */
+const drawnRow = (d: DrawnRows, j: number, nz: number, row: number): void => {
+  const { lab, nx, tile, has, grass, square, beside } = d;
+  const o = j * nx;
+  const here = (j % 3) * nx;
+  const south = j > 0 ? ((j - 1) % 3) * nx : 3 * nx;
+  const north = j + 1 < nz ? ((j + 1) % 3) * nx : 3 * nx;
+  for (let i0 = 0, t = row; i0 < nx; i0 += tile, t++) {
+    let held = 0;
+    const end = Math.min(nx, i0 + tile);
+    for (let i = i0; i < end; i++) {
+      const l = lab[o + i]!;
+      const own = BIT[l]!;
+      held |= own;
+      const v = own | (COVERED_TAKES[l]! & (beside[here + i]! | beside[south + i]! | beside[north + i]!));
+      grass[o + i] = v & 1;
+      square[o + i] = v >> 1;
     }
-  }
-  return { n, edges };
-};
-
-/** Regions of one label under `FILL.speck` cells take the label most of the free cells round them have. */
-const joinSpecks = (cells: Cells): void => {
-  const { label } = cells;
-  const w = regionWalk(cells);
-  for (let s = 0; s < label.length; s++) {
-    if (w.seen[s] || taken(label[s]!)) continue;
-    const { n } = regionFrom(cells, null, w, s);
-    if (n >= FILL.speck) continue;
-    // The label most of the border has, the lower one on a tie.
-    let to = -1;
-    for (let l = 0; l < w.round.length; l++) if (w.round[l]! > 0 && (to < 0 || w.round[l]! > w.round[to]!)) to = l;
-    if (to >= 0) for (let q = 0; q < n; q++) label[w.queue[q]!] = to;
-  }
-};
-
-/** Off a town's paved places, a region of lawn or paving narrower than `FILL.looseWidth` on the average or under `FILL.looseArea` stays bare. */
-const dropLoose = (cells: Cells): void => {
-  const { label, zone } = cells;
-  const w = regionWalk(cells);
-  for (let s = 0; s < label.length; s++) {
-    if (w.seen[s] || zone[s] || (label[s] !== LABEL.grass && label[s] !== LABEL.square)) continue;
-    const { n, edges } = regionFrom(cells, zone, w, s);
-    // Area n / 4 m², outline edges / 2 m: the mean width 2 area / outline.
-    if (n / edges >= FILL.looseWidth && n * STEP * STEP >= FILL.looseArea) continue;
-    for (let q = 0; q < n; q++) label[w.queue[q]!] = LABEL.other;
+    has[t]! |= held;
   }
 };
 
 /**
- * The cells a label's fills are traced on: its own, and one cell more under the map's pieces and
- * walls next to them, which then cut the fill on their edges (`cutByPieces`): no seam of bare
- * ground and no overlap where they meet.
+ * The cells the laid labels' fills are traced on, a bit a label (`BIT`): its own, and one cell more
+ * under the map's pieces and walls next to them (a covered cell with one of the label among the
+ * eight round it), which then cut the fill on their edges (`cutByPieces`): no seam of bare ground
+ * and no overlap where they meet. One pass, a row at a time (`drawnRow`), the cells beside a label
+ * along the rows kept for three rows; the bits of the labels each tile of `tile` cells holds go to
+ * `has`.
  */
-const drawnCells = (cells: Cells, label: number): Uint8Array => {
+const drawnCells = (cells: Cells, tile: number, has: Uint8Array): [grass: Uint8Array, square: Uint8Array] => {
   const { nx, nz } = cells;
-  const n = nx * nz;
   const lab = cells.label;
-  const drawn = scratch.u8(`drawn.${label}`, n);
-  // The cells of the label and those beside them along their rows; a covered cell is drawn with one of them in its row, the row south or the row north.
-  const beside = scratch.u8("drawn.beside", n);
+  const d: DrawnRows = {
+    lab,
+    nx,
+    tile,
+    has,
+    grass: scratch.u8("drawn.grass", nx * nz, null),
+    square: scratch.u8("drawn.square", nx * nz, null),
+    beside: scratch.u8("drawn.beside", 4 * nx, null),
+  };
+  d.beside.fill(0, 3 * nx, 4 * nx);
+  const tx = Math.ceil(nx / tile);
+  besideRow(lab, nx, 0, d.beside);
   for (let j = 0; j < nz; j++) {
-    const o = j * nx;
-    for (let i = 0; i < nx; i++) {
-      if (lab[o + i] !== label) continue;
-      drawn[o + i] = beside[o + i] = 1;
-      if (i > 0) beside[o + i - 1] = 1;
-      if (i + 1 < nx) beside[o + i + 1] = 1;
-    }
+    if (j + 1 < nz) besideRow(lab, nx, j + 1, d.beside);
+    drawnRow(d, j, nz, Math.floor(j / tile) * tx);
   }
-  for (let k = 0; k < n; k++) if (lab[k] === LABEL.covered && (beside[k] || (k >= nx && beside[k - nx]) || (k + nx < n && beside[k + nx]))) drawn[k] = 1;
-  return drawn;
+  return [d.grass, d.square];
 };
 
-const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: GroundSurface, i0: number, j0: number, i1: number, j1: number): GroundOut[] => {
+/**
+ * The outlines of one label (`drawn` its cells, `drawnCells`) in a tile of cells, simplified, as the
+ * chunk's ground; a hole splits the tile. `held`: the tile is known to hold the label.
+ */
+const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: GroundSurface, i0: number, j0: number, i1: number, j1: number, held = false): GroundOut[] => {
   const { nx } = cells;
-  let any = false;
+  let any = held;
   for (let j = j0; j < j1 && !any; j++) any = cells.label.subarray(j * nx + i0, j * nx + i1).includes(label);
   if (!any) return [];
   const inside = new Uint8Array((i1 - i0) * (j1 - j0));
@@ -330,10 +242,17 @@ const crossesItself = (ring: readonly Pt[]): boolean => {
     const i = order[s]!;
     for (let t = s + 1; t < n && lo(order[t]!) <= hi(i); t++) {
       const j = order[t]!;
-      const [u, v] = [Math.min(i, j), Math.max(i, j)];
+      const u = Math.min(i, j);
+      const v = Math.max(i, j);
       if (v - u < 2 || (u === 0 && v === n - 1)) continue;
-      const [a, b, c, d] = [ring[u]!, ring[(u + 1) % n]!, ring[v]!, ring[(v + 1) % n]!];
-      const [d1, d2, d3, d4] = [side(c, d, a), side(c, d, b), side(a, b, c), side(a, b, d)];
+      const a = ring[u]!;
+      const b = ring[(u + 1) % n]!;
+      const c = ring[v]!;
+      const d = ring[(v + 1) % n]!;
+      const d1 = side(c, d, a);
+      const d2 = side(c, d, b);
+      const d3 = side(a, b, c);
+      const d4 = side(a, b, d);
       if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
     }
   }
@@ -402,18 +321,19 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
   for (const s of town.shops) cells.zoneNear(s, FILL.forecourt);
   for (const p of town.stops) cells.zoneNear([p], FILL.platform);
   cells.growZone(FILL.zoneMargin);
-  readCover(cells, cover);
-  resolveMixed(cells);
-  joinSpecks(cells);
-  dropLoose(cells);
+  readCover(cells, cover, FILL.around);
+  joinSpecks(cells, FILL.speck);
+  dropLoose(cells, FILL.looseWidth, FILL.looseArea);
   keepKerbs(cells, FILL.kerbBand);
   const n = Math.round(FILL.tile / STEP);
   const out: GroundOut[] = [];
-  for (const { label, surface } of LAID) {
-    const drawn = drawnCells(cells, label);
-    for (let j0 = 0; j0 < cells.nz; j0 += n)
-      for (let i0 = 0; i0 < cells.nx; i0 += n) out.push(...tilePieces(cells, label, drawn, surface, i0, j0, Math.min(cells.nx, i0 + n), Math.min(cells.nz, j0 + n)));
-  }
+  const has = new Uint8Array(Math.ceil(cells.nx / n) * Math.ceil(cells.nz / n));
+  const drawn = drawnCells(cells, n, has);
+  LAID.forEach(({ label, surface }, d) => {
+    for (let j0 = 0, t = 0; j0 < cells.nz; j0 += n)
+      for (let i0 = 0; i0 < cells.nx; i0 += n, t++)
+        if (has[t]! & BIT[label]!) out.push(...tilePieces(cells, label, drawn[d]!, surface, i0, j0, Math.min(cells.nx, i0 + n), Math.min(cells.nz, j0 + n), true));
+  });
   return out;
 };
 

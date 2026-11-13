@@ -93,20 +93,49 @@ const straight = (ring: readonly Pt[]): Pt[] => {
   return out;
 };
 
+/**
+ * The id of edge `k` of square (i, j) on the lattice padded by one sample all round, `w` samples a
+ * row (`contours`): its south-west sample and whether it runs north.
+ */
+const edgeOf = (w: number, i: number, j: number, k: number): number => {
+  const e = EDGE[k]!;
+  return ((j + 1 + e[1]) * w + (i + 1 + e[0])) * 2 + (e[0] === e[2] ? 1 : 0);
+};
+
+/**
+ * The squares between rows j and j + 1 of the padded lattice `pad` (`w` a row) a contour crosses:
+ * each segment's edges into `next`, the edge it starts at into `order`. A function of its own,
+ * called a row at a time, the samples of the square's west side kept from the square before.
+ */
+const marchRow = (pad: Uint8Array, w: number, nx: number, j: number, next: Int32Array, order: number[]): void => {
+  const k0 = (j + 1) * w;
+  let sw = pad[k0]!;
+  let nw = pad[k0 + w]!;
+  for (let i = -1; i < nx; i++) {
+    const k = k0 + i + 1;
+    const se = pad[k + 1]!;
+    const ne = pad[k + w + 1]!;
+    const mask = sw | (se << 1) | (ne << 2) | (nw << 3);
+    sw = se;
+    nw = ne;
+    if (mask === 0 || mask === 15) continue;
+    const segs = ORIENTED[mask]!;
+    for (let s = 0; s < segs.length; s++) {
+      const from = edgeOf(w, i, j, segs[s]![0]);
+      next[from] = edgeOf(w, i, j, segs[s]![1]);
+      order.push(from);
+    }
+  }
+};
+
 /** The closed outlines of the class on the lattice. */
 export const contours = (l: Lattice): Pt[][] => {
   const w = l.nx + 2;
   const inside = (i: number, j: number) => i >= 0 && j >= 0 && i < l.nx && j < l.nz && l.inside[j * l.nx + i] === 1;
-  // An edge's id: its south-west sample (the lattice padded by one) and whether it runs north.
-  const edgeId = (i: number, j: number, north: boolean) => ((j + 1) * w + (i + 1)) * 2 + (north ? 1 : 0);
   // The edge the contour runs on to from each edge it crosses, by edge id, in the order found.
   const size = w * (l.nz + 2) * 2;
   const next = new Int32Array(size).fill(-1);
   const order: number[] = [];
-  const edgeOf = (i: number, j: number, k: number): number => {
-    const e = EDGE[k]!;
-    return edgeId(i + e[0], j + e[1], e[0] === e[2]);
-  };
   /** The crossing point on the edge `id`. */
   const pointOf = (id: number): Pt => {
     const north = (id & 1) === 1;
@@ -131,18 +160,7 @@ export const contours = (l: Lattice): Pt[][] => {
     pad.set(row, (j + 1) * w + 1);
     any[j + 1] = row.includes(1) ? 1 : 0;
   }
-  for (let j = -1; j < l.nz; j++)
-    for (let i = -1; i < l.nx && (any[j + 1] || any[j + 2]); i++) {
-      const k = (j + 1) * w + i + 1;
-      const mask = pad[k]! | (pad[k + 1]! << 1) | (pad[k + w + 1]! << 2) | (pad[k + w]! << 3);
-      if (mask === 0 || mask === 15) continue;
-      const segs = ORIENTED[mask]!;
-      for (let s = 0; s < segs.length; s++) {
-        const from = edgeOf(i, j, segs[s]![0]);
-        next[from] = edgeOf(i, j, segs[s]![1]);
-        order.push(from);
-      }
-    }
+  for (let j = -1; j < l.nz; j++) if (any[j + 1] || any[j + 2]) marchRow(pad, w, l.nx, j, next, order);
   const rings: Pt[][] = [];
   const done = new Uint8Array(size);
   for (const start of order) {

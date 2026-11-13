@@ -11,36 +11,67 @@ const LABEL = { ...CELL_LABEL } as const;
 /** Blocks of cells a side, for `nearFill`. */
 const BLOCK = 4;
 
+/** 1 for the labels of a fill, 0 for the rest. */
+const FILLED = Uint8Array.from({ length: 8 }, (_, l) => (l === LABEL.grass || l === LABEL.square ? 1 : 0));
+
 /**
- * Whether a cell may be within `r` cells (a square every way) of a fill: blocks of `BLOCK` cells
- * holding one, grown by as many blocks as cover `r` and one more. More cells than the exact reach,
- * never fewer.
+ * The blocks of row `j` of cells holding a fill into `has` (`bx` blocks a row), a function of its
+ * own: called a row at a time, V8 optimises it once for all the chunks (see `bare-clean.ts`).
  */
-const nearFill = (cells: Cells, r: number): Uint8Array => {
-  const { nx, nz, label } = cells;
-  const [bx, bz] = [Math.ceil(nx / BLOCK), Math.ceil(nz / BLOCK)];
-  const has = new Uint8Array(bx * bz);
-  for (let j = 0; j < nz; j++) {
-    const o = j * nx;
-    const row = Math.floor(j / BLOCK) * bx;
-    for (let i = 0; i < nx; i++) {
-      const l = label[o + i];
-      if (l === LABEL.grass || l === LABEL.square) has[row + ((i / BLOCK) | 0)] = 1;
-    }
+const fillRow = (label: Uint8Array, nx: number, j: number, has: Uint8Array, bx: number): void => {
+  const o = j * nx;
+  const row = Math.floor(j / BLOCK) * bx;
+  for (let b = 0; b < bx; b++) {
+    let v = 0;
+    for (let i = b * BLOCK; i < Math.min(nx, (b + 1) * BLOCK); i++) v |= FILLED[label[o + i]!]!;
+    if (v) has[row + b] = 1;
   }
-  const g = Math.ceil(r / BLOCK) + 1;
+};
+
+/** The blocks of `BLOCK` cells holding a fill. */
+const fillBlocks = (cells: Cells, bx: number, bz: number): Uint8Array => {
+  const { nx, nz, label } = cells;
+  const has = new Uint8Array(bx * bz);
+  for (let j = 0; j < nz; j++) fillRow(label, nx, j, has, bx);
+  return has;
+};
+
+/** The blocks within `g` blocks (a square every way) of one in `has`. */
+const growBlocks = (has: Uint8Array, bx: number, bz: number, g: number): Uint8Array => {
   const near = new Uint8Array(bx * bz);
   for (let j = 0; j < bz; j++)
     for (let i = 0; i < bx; i++) {
       if (!has[j * bx + i]) continue;
       for (let jj = Math.max(0, j - g); jj <= Math.min(bz - 1, j + g); jj++) near.fill(1, jj * bx + Math.max(0, i - g), jj * bx + Math.min(bx - 1, i + g) + 1);
     }
-  // Per cell, a row of blocks at a time.
-  const out = scratch.u8("kerbs.near", nx * nz, null);
+  return near;
+};
+
+/** The blocks' marks of row `o / nx` of cells (`near`'s row `row` of blocks) into `out`, a function of its own (see `fillRow`). */
+const blocksRow = (near: Uint8Array, nx: number, o: number, row: number, out: Uint8Array): void => {
+  for (let i = 0; i < nx; i++) out[o + i] = near[row + ((i / BLOCK) | 0)]!;
+};
+
+/** The blocks' marks a cell (`out`): the first row of each row of blocks cell by cell, the rest copies of it. */
+const blocksToCells = (near: Uint8Array, nx: number, nz: number, bx: number, out: Uint8Array): void => {
   for (let j = 0; j < nz; j++) {
-    const row = Math.floor(j / BLOCK) * bx;
-    for (let i = 0; i < nx; i++) out[j * nx + i] = near[row + ((i / BLOCK) | 0)]!;
+    const o = j * nx;
+    if (j % BLOCK !== 0) out.copyWithin(o, o - nx, o);
+    else blocksRow(near, nx, o, Math.floor(j / BLOCK) * bx, out);
   }
+};
+
+/**
+ * Whether a cell may be within `r` cells (a square every way) of a fill: blocks of `BLOCK` cells
+ * holding one, grown by as many blocks as cover `r` and one more. More cells than the exact reach,
+ * never fewer. Each loop is a function of its own (see `Walks`).
+ */
+const nearFill = (cells: Cells, r: number): Uint8Array => {
+  const { nx, nz } = cells;
+  const [bx, bz] = [Math.ceil(nx / BLOCK), Math.ceil(nz / BLOCK)];
+  const near = growBlocks(fillBlocks(cells, bx, bz), bx, bz, Math.ceil(r / BLOCK) + 1);
+  const out = scratch.u8("kerbs.near", nx * nz, null);
+  blocksToCells(near, nx, nz, bx, out);
   return out;
 };
 
@@ -95,17 +126,22 @@ class Walks {
   }
 }
 
-/** Each carriageway's cells on its edge (a free cell round them) within reach of a fill, by its number: the walks start there. */
-const kerbSeeds = (w: Walks, road: Int32Array): Map<number, number[]> => {
-  const { label, near, round, size } = w;
-  const seeds = new Map<number, number[]>();
-  for (let k = 0; k < size; k++) {
+/** The seeds of `kerbSeeds` in cells `from` to `to` (a row), a function of its own (see `fillRow`). */
+const seedsIn = (w: Walks, road: Int32Array, from: number, to: number, seeds: Map<number, number[]>): void => {
+  const { label, near, round } = w;
+  for (let k = from; k < to; k++) {
     if (!road[k] || !near[k]) continue;
     const n = w.around(k);
     let edge = false;
     for (let r = 0; r < n && !edge; r++) edge = label[round[r]!] !== LABEL.covered;
     if (edge) (seeds.get(road[k]!) ?? seeds.set(road[k]!, []).get(road[k]!)!).push(k);
   }
+};
+
+/** Each carriageway's cells on its edge (a free cell round them) within reach of a fill, by its number: the walks start there. */
+const kerbSeeds = (w: Walks, road: Int32Array): Map<number, number[]> => {
+  const seeds = new Map<number, number[]>();
+  for (let o = 0; o < w.size; o += w.nx) seedsIn(w, road, o, o + w.nx, seeds);
   return seeds;
 };
 
@@ -128,10 +164,11 @@ const walk = (w: Walks, from: readonly number[], reach: number): { n: number; fi
       // Only near a fill: a walk from the kerb to one never leaves its reach.
       if (depth[m]! >= 0 || label[m] === LABEL.covered || !near[m]) continue;
       depth[m] = depth[k]! + 1;
-      src[m] = src[k]!;
-      const s0 = src[m]!;
-      const di = (m % nx) - (s0 % nx);
-      const dj = (m - (m % nx)) / nx - (s0 - (s0 % nx)) / nx;
+      const s0 = (src[m] = src[k]!);
+      const im = m % nx;
+      const is = s0 % nx;
+      const di = im - is;
+      const dj = (m - im) / nx - (s0 - is) / nx;
       far[m] = di * di + dj * dj;
       if (isFill(label[m]!)) fills++;
       queue[n++] = m;
