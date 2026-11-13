@@ -120,6 +120,13 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
     expect(surfaceAt(fills, { x: 18.75, z: 15.75 })).toEqual(["square"]);
   });
 
+  it("lays paving under crowns the leaf-off flight shows as paving, among paving and in a lawn alike (G-764)", () => {
+    // A 2 by 4 m pavement under trees in paving, and one in the lawn west of the road.
+    const at = (x: number, z: number) => ((x > 14 && x < 16 && z > 8 && z < 12) || (x > 3 && x < 5 && z > 2 && z < 6) ? COVER.canopyHard : undefined);
+    const fills = coverFills(RECT, cover(at), [road], [], TOWN);
+    for (const p of [...samples({ minX: 14, minZ: 8, maxX: 16, maxZ: 12 }), ...samples({ minX: 3, minZ: 2, maxX: 5, maxZ: 6 })]) expect(surfaceAt(fills, p), `${p.x},${p.z}`).toEqual(["square"]);
+  });
+
   it("puts each fill first among the pieces of its surface", () => {
     const ground = [piece("water", box(0, 0, 1, 1)), piece("grass", box(1, 0, 2, 1)), piece("square", box(2, 0, 3, 1)), piece("road", box(3, 0, 4, 1))];
     const fills = [piece("square", box(5, 0, 6, 1)), piece("grass", box(6, 0, 7, 1))];

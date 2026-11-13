@@ -61,7 +61,7 @@ import { lanePieces, segmentPieces } from "./world-samples";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { bareOnCover } from "./bare-on-cover";
-import { fillOnGreen } from "./fill-on-green";
+import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
 import { generatedCity } from "../../osm-import/test/city.ts";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
@@ -1990,6 +1990,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "bare-on-cover": () => bareOnCover(landuseBare(cityLanduseWorld(SOURCE_OSM)), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample of the orthophoto's green under the paving the bare ground rule laid: a lawn taken for a square (ADR-0077 step 1.2, T-285, `fill-on-green.ts`). */
   "fill-on-green": () => fillOnGreen(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A 0.5 m sample under a lawn the bare ground rule laid that the leaf-off flight shows as paving under crowns: a pavement under trees taken for a tree's bed (G-764, `fill-on-green.ts`). */
+  "lawn-on-leafoff-paving": () => lawnOnLeafOffPaving(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => kerbGapBare(cityKerbWorld(SOURCE_OSM)),
   /** A point of a 0.25 m grid in a pavement no paving of the map explains, a metre wide and more, by a carriageway the map gives no width: its asphalt laid as a pavement (`kerb-fill.ts`, G-570). */
