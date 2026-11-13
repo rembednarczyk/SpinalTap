@@ -1749,11 +1749,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`), packages/sim (`content/lublin/decks.ts`)
 - Test przyjęcia: `deck-abutment-step` i `ground-over-deck` = 0 przy kładce; nowa kontrola `bridge-end-in-slope` (koniec osi pomostu z NMT niższym o > 0,5 m od maksimum NMT w 2,5 m wzdłuż osi na zewnątrz) = 0 (baza 1, pozostałe końce do zmierzenia). Propozycja: wysokość końca z najbliższego węzła dojścia albo koniec osi wyniesiony do krawędzi rowu; pomost wtedy ok. −22,9…−23,5
 
-### G-742 Białe fasady przepalają się w słońcu (4,6–4,8% dolnej połowy kadru)
-- Ważność: S4 · Zasięg: ujęcia z chodników przy Placu Litewskim (-91;127) i (-89;-199) o 12:00; przepalenie z białych fasad, nie z nawierzchni; próg przyjęty przy G-721: ≤ 3%
-- Status: w PR #499 (13.11, 9f46ff4: `sunSafe()` w `facade-style.ts`, budynki przepalone 543/705 → 0; przepalenie ujęć poniżej 3%); wcześniej: zgłoszone (13.11, naprawiacz G-734)
-- Pakiet właściciela: packages/engine (barwy fasad, światło dnia)
-
 ### G-744 Pasy ruchu biorą odsunięcie od zmierzonego zasięgu asfaltu: przesunięcie krawędzi jezdni o centymetry daje kolizje aut
 - Ważność: S3 · Zasięg: ruch w całym mieście; ujawnione przez etap 2 ADR-0078 (łuki łączeń zmieniają zasięg asfaltu o kilka cm, pasy przesuwają się do 12 cm): `traffic-junction-drive` przy 3 Maja (1 ziarno z 12), Kołłątaja/Zesłańców Sybiru (−108; −149) seed 10, Cicha seed 30; na main 0
 - Opis: `reachAt`/`roadHalfWidth` w `sim/content/traffic.ts` liczą odsunięcie pasów od zmierzonego asfaltu, bez minimalnego odstępu przeciwnych pasów; kruche wobec każdej zmiany geometrii nawierzchni

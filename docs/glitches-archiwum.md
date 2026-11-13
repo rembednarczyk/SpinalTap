@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-742 Białe fasady przepalają się w słońcu (4,6–4,8% dolnej połowy kadru)
+- Ważność: S4 · Zasięg: ujęcia z chodników przy Placu Litewskim (-91;127) i (-89;-199) o 12:00; przepalenie z białych fasad, nie z nawierzchni; próg przyjęty przy G-721: ≤ 3%
+- Status: naprawione (13.11, #499 scalony); wcześniej: w PR #499 (13.11, 9f46ff4: `sunSafe()` w `facade-style.ts`, budynki przepalone 543/705 → 0; przepalenie ujęć poniżej 3%); wcześniej: zgłoszone (13.11, naprawiacz G-734)
+- Pakiet właściciela: packages/engine (barwy fasad, światło dnia)
+
 ### G-740 Ganger staje pod ścianą przyczółka mostu południowego Mełgiewskiej poza planerem pościgu (2 przypadki)
 - Ważność: S3 · Zasięg: ta sama ściana co G-738 (do 1,5 m, rampa przyczółka w50733068); po G-738 6 z 225 przebiegów siatki wokół rampy nie dochodzi, także po 90 s
 - Opis: (1) z (2410; 310) do (2449; 318): powrót na posterunek przez `straightWalk`, którego próbki co 0,5 m przeskakują ścianę, staje w (2415,6; 310,8); (2) z (2422; 310) do (2405; 318): ganger pod pomostem napiera na ścianę przyczółka, staje w (2416,5; 311,5)
