@@ -1553,11 +1553,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `gate-mouth-off-axis` = 3 (cała baza miasta w tej komórce): (463; −94) −1,80 m od środka frontu 7,47 m; (587; −140) −0,81 m z 5,90 m; (588; −154) −4,44 m z 15,84 m (ten może być fałszywy: front obejmuje sąsiednią ścianę); G-136 (Brama Grodzka) zapowiadał pomiar Krakowskiej; najpierw pomiar z OSM i ortofoto
 - Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
 
-### G-686 Uskok 0,52 m na zakręcie schodów z wiaduktu Zamkowej blokuje gangera
-- Status: w PR #476 (12.11, 11e9a8d: rampa terenu pod górnym biegiem, `steps-riser-tall` 1 → 0, ganger przechodzi; przegląd kuratora ZGODNE Z UWAGAMI, blokuje łata terenu nad pomostem w (730,25..732,25; 151,75..154,5), 49 próbek do 0,033 m; runda 2: 253613f, `Ramp.ceiling` i `underDeck`: teren 0,05 m pod pomostem przy krawędzi, niżej w głąb; łata znika, test na pomostach gry 49 → 0, uskok wzdłuż biegu 0,098 m; nowa kontrola `ground-over-deck`, baza 860 (G-736); odstępstwo celowe T-282); wcześniej: zgłoszone (12.11, naprawiacz G-643; także na main)
-- Ważność: S3 · Zasięg: (732,7; 151,4)–(734,2; 152,8), górny stopień schodów w294098693 na styku z południowym końcem pomostu wiaduktu Zamkowej (T-166). Wysokość chodzenia skacze tam o 0,51–0,54 m na całej szerokości pasa, a skan liczy to jako `steps-riser-tall` (732; 151) 0,51 m. Na schodach w56965515 (dawne (729,5; 163,9), czyli x zakrętu i z krawędzi pomostu) na osi biegów nie ma uskoku powyżej 0,3 m. Przyczyna ta sama co G-339 (pomost poziomy w poprzek na NMT końca osi). Poprawka G-339 w tym punkcie powinna usunąć oba objawy, test G-686 (nawigacja) zostaje osobno; uskok niewidoczny dla `straightWalk` i pól nawigacji; ganger stoi tam wciśnięty na zawsze, na main przechodzi tylko, gdy jest akurat w powietrzu
-- Pakiet właściciela: packages/sim (systems/ai, nawigacja), ewentualnie treść schodów
-
 ### G-687 `startOf` wybiera komórkę za cienkim płotem
 - Status: zgłoszone (12.11, naprawiacz G-643; także na main)
 - Ważność: S4 · Zasięg: szukanie komórki startowej w promieniu 2 (`steering.ts`) bierze komórkę po drugiej stronie płotu; ganger przy płocie podwórka (114,7; 85,3) dostaje drogę „przez” płot
@@ -1770,7 +1765,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-736 Teren wystaje nad pomosty wiaduktów i przyczółków (860 próbek `ground-over-deck`)
 - Ważność: S4 (szare łaty bez bruku na pomoście, do 0,25 m) · Zasięg: koniec NE wiaduktu Zamkowej (780..790; 190..206), 245 próbek do 0,25 m; przyczółki Mełgiewskiej (G-349), ok. 610 próbek do 0,155 m; kładka podzamcze-2-0, 2 próbki
 - Opis: teren pod obrysem pomostu leży wyżej niż pomost + 0,01 m i przebija przez jego nawierzchnię. Kontrola `ground-over-deck` (G-686, runda 2, 253613f) liczy próbki co 0,25 m; baza 860.
-- Status: zgłoszone (13.11, naprawiacz G-686); naprawa regułą jak `underDeck` z G-686, po scaleniu #476
+- Status: zgłoszone (13.11, naprawiacz G-686); naprawa regułą jak `underDeck` z G-686 (#476 scalony 13.11), w naprawie
 - Pakiet właściciela: packages/sim (content/lublin abutments)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
