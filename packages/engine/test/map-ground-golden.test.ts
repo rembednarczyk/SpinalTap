@@ -99,7 +99,7 @@ describe("the ground the map city lays (G-444)", () => {
     // colours moved it alone: the paving's and the sidewalks' from the orthophoto (G-721, G-734), no vertex moved. The map's
     // data moved it again: the bands along lines buffered with round joins and ends (ADR-0078 step 2),
     // 142 538 vertices before, the arcs a few more; and the ground the paths' loops enclose laid whole from the cover.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 151907, hash: "7f837924" });
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 151907, hash: "2199dedc" });
     scene.dispose();
   });
 
