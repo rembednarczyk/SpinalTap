@@ -23,6 +23,21 @@ Narzędzie ma trzy kroki: pamięć podręczną ortofoto PZGiK, klasyfikator pokr
    - Raport podaje też jasność (luma Rec. 709) do trawy i udział klas pod każdą nawierzchnią.
    - Na tych medianach stoi paleta nawierzchni renderera (`ORTHO_PAVING` w `ground-plan.ts`, G-721). Gdy mediany się zmienią, przepisz je tam.
 
+## Dwie wersje mapy: `pnpm orto:diff`
+```
+pnpm orto:diff <ref-A> <ref-B> [--cell <id>] [--box x0,z0,x1,z1] [--out plik.json] [--work katalog]
+```
+Przykład dla przeglądu `topography-curator`: `pnpm orto:diff origin/main HEAD --cell nabrzeze-0-1 --out <scratchpad>/topo-123-diff.json --work <scratchpad>/topo-123-work`.
+
+- Bez buildu i bez `node_modules` refu: `src/diff-snapshot.ts` rozpakowuje `git archive` refu (`packages/core`, `packages/sim`, `tsconfig.base.json`) do `--work` (domyślnie katalog tymczasowy systemu) i czyta przez moduły Vite tablice `*.generated.ts`, teren gry (`SHAPED_TERRAIN`) i pomosty (`GROUND_DECKS`). Katalog znika zaraz po odczycie. `HEAD` to bieżący checkout z niezatwierdzonymi zmianami.
+- `--cell` i `--box` (układ gry) zawężają wynik; oba naraz to ich część wspólna.
+- Liczby (`src/diff-map.ts`):
+  - **nawierzchnia**: próbki 0,5 m rastra pokrycia z `data/orto` (tego checkoutu), na których wierzch się zmienia. Wierzch to ostatni kawałek ziemi w kolejności importu, a budynek (`building`) przykrywa wszystko, jak w raporcie komórki. Dla każdego rodzaju nawierzchni m² dodane i usunięte na klasach (trawa, korony, kostka, asfalt, cień, nieznane, bez zdjęcia), w sumie i po komórkach.
+  - **teren**: punkty siatki `SHAPED_TERRAIN` refu B, których wysokość różni się od terenu A w tym miejscu o więcej niż 5 mm. Podaje liczbę, m² (oczko siatki na punkt), maks. i medianę |Δh|, maks. w górę i w dół oraz odstęp od NMT (siatka importu refu B) przed i po: medianę i maks. Dalej idą punkty zmienione najbardziej i punkty NMT, które zmienił sam import.
+  - **pomosty**: kawałki pomostów i schodów przy nich, parowane po obrysie (IoU prostokątów ≥ 0,3). Dla każdego przesunięcie obu końców osi, wysokości na końcach przed i po i zmiana pola. Do tego kawałki dodane i usunięte.
+- Brak rastra dzielnicy w `data/orto` narzędzie zgłasza wprost (`UWAGA …`, pole `missingCover`). Mówi też, czy kafle są tylko w pamięci podręcznej (`~/.cache/seki-orto`, wtedy zbuduj raster przez `build.ts`). Próbki takiej dzielnicy liczą się jako „bez zdjęcia”.
+- Wyjście: krótki tekst na stdout, całość w JSON do `--out`.
+
 ## Klasy i progi
 - Klasy: zieleń, zieleń pod koronami (zielona tylko na letnich nalotach, nie na nalocie bez liści 2025-04; G-672), jasna nawierzchnia, asfalt, cień, nieznane, brak zdjęcia.
 - Progi są w `src/thresholds.ts`, a zgodność z prawdą trzyma `test/cover-truth.test.ts`.

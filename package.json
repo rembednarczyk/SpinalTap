@@ -32,7 +32,8 @@
     "changelog": "node tools/changelog/changelog.mjs",
     "shots:compare": "node tools/shots/src/compare.ts",
     "bench:ab": "node tools/bench-ab/src/bench.ts",
-    "test:rerun": "node tools/test-rerun/src/rerun.ts"
+    "test:rerun": "node tools/test-rerun/src/rerun.ts",
+    "orto:diff": "node tools/orto/src/diff.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
