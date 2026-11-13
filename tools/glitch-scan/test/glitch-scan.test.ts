@@ -30,6 +30,8 @@ import { grassUnderPavingFindings } from "./grass-under-paving";
 import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
 import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
 import { addedSolidOverWay } from "./added-solid-over-way";
+import { albedoSurfaces, orthoPavingKeys, pavingAlbedoDrift, planToGrass } from "./paving-albedo";
+import { readMedians } from "../../orto/src/albedo-medians.ts";
 import { readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { cityRaisedGreenWorld, raisedGreenOnGround } from "./raised-green";
@@ -80,6 +82,7 @@ import { stepsInclineAgainst } from "./steps-incline";
 import { roadDipsOverTunnels } from "./road-tunnel";
 import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
 import { deckSlots } from "./deck-slot";
+import { bridgeEndsInSlope } from "./bridge-end-slope";
 import { deckSteps } from "./deck-step";
 import { groundOverDeck } from "./ground-over-deck";
 import { abutmentSteps } from "./deck-abutment";
@@ -1122,6 +1125,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    */
   "ground-over-deck": () => groundOverDeck([...BRIDGE_DECKS.values()].flat(), bridgeDeckAt, groundY),
   /**
+   * An end of a bridge's deck axis more than 0.5 m under the terrain within 2.5 m on past it along
+   * the axis (G-739): the end lies down the bank of the valley, and the deck, level at its ends'
+   * terrain, tilts down to it off the street's level. Not a node another deck goes on from.
+   */
+  "bridge-end-in-slope": () => bridgeEndsInSlope([...BRIDGE_DECKS.values()].flat(), rawHeight),
+  /**
    * A point (every 0.5 m) of a bridge's sidewalk more than 0.05 m off the carriageway beside it in
    * the same cross section (G-737): in Lublin the sidewalk behind the kerb is level with it.
    */
@@ -2008,6 +2017,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "added-paving-on-green": () => addedPavingOnGreen(ADDED_AREAS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A building the curator added to the map whose ring, also off the map, takes in an OSM way open to the sky: a solid across a street or a flight (G-677, `added-solid-over-way.ts`). */
   "added-solid-over-way": () => addedSolidOverWay(ADDED_AREAS, extractFeatures(SOURCE_OSM).lines),
+  /** A paving the renderer lays whose brightness against the lawns is off the orthophoto's committed medians by over 0.25, the fountains' floor aside (G-734, `paving-albedo.ts`). */
+  "paving-albedo-drift": () => {
+    const medians = readMedians();
+    return pavingAlbedoDrift(planToGrass(albedoSurfaces(orthoPavingKeys(), medians)), medians);
+  },
   /** A point of a 0.5 m grid of drawn grass of a lawn the map lays above the ground, in a building or off the garage under it: VIVO's roof garden (G-647, `raised-green.ts`). */
   "raised-green-on-ground": () => raisedGreenOnGround(cityRaisedGreenWorld(SOURCE_OSM)),
   /** Road markings, zebras and flights on a bridge's deck drawn under its carriageway (G-301, `deck-paint.ts`). */

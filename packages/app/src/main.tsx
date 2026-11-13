@@ -89,7 +89,11 @@ if (modelsParam !== "off" && (modelsParam || !reference)) {
   // The loading screen waits for the manifest and loads its files (ADR-0057).
   const manifest = loadModelManifest(modelsParam ?? "./models/manifest.json");
   renderer.loading.loadCharacterModels(manifest);
-  void manifest.then((m) => preview.setModels(m, weaponModels));
+  // The menu's preview dresses Seki now, not when the menu first opens (decision 13.11).
+  void manifest.then((m) => {
+    preview.setModels(m, weaponModels);
+    preview.warm();
+  });
   renderer.loading.setWeaponModels(weaponModels);
   preview.setModels({}, weaponModels);
 }
