@@ -30,14 +30,13 @@ const GRASS = hexColor("#3f5c35", DRESS_FLAG.solid);
  * and its brightness against the square's. The square, the paths and the fountains' floors take the
  * median of the light paving over the map; the setts the median of the Old Town's hard ground (light
  * paving and asphalt classes, the curator's probe of 12.11), dark stones and all: the light paving
- * alone left them as light as Plac Litewski's granite. A fountain's floor is the shallow pool's
- * light stone bottom, a little darker than the square (G-129).
+ * alone left them as light as Plac Litewski's granite. The fountains keep their dark water: the
+ * player's decision of 13.11, though the orthophoto shows the shallow pools' light floor (G-129).
  */
 const ORTHO_PAVING = {
   square: { rgb: [188, 186, 172], toSquare: 1 },
   cobble: { rgb: [143, 136, 127], toSquare: 0.87 },
   footway: { rgb: [181, 174, 158], toSquare: 0.92 },
-  basin: { rgb: [191, 185, 164], toSquare: 0.9 },
 } as const;
 
 /**
@@ -66,11 +65,6 @@ const SURFACE_COLOR: Readonly<Record<Exclude<GroundSurface, "water" | "basin" | 
   sidewalk: hexColor("#6a6d73", DRESS_FLAG.solid),
   grass: GRASS,
 };
-/**
- * A fountain's floor under its thin film of water. Not wet: by day the wet flag mirrors the bright
- * sky in blotches over light stone, and the pool reads as snow.
- */
-const BASIN_FLOOR = paving("basin", DRESS_FLAG.solid);
 const KERB = hexColor("#a3a39e", DRESS_FLAG.solid);
 const TERRAIN = hexColor("#514c45", DRESS_FLAG.solid);
 export const WATER_COLOR = hexColor("#0b1822", DRESS_FLAG.wet);
@@ -434,13 +428,12 @@ const RIM = hexColor("#8f8a82", DRESS_FLAG.solid);
 export const BASIN_RIM = { top: 0.45, width: 0.35 } as const;
 
 /**
- * A fountain (ADR-0044): its floor at `SURFACE_LIFT.basin` inside a granite rim, its outer face
- * down to the square, a ledge to sit on and the inner face down to the floor. The pool is shallow
- * and clear over a light stone bottom (G-129, G-721): granite slabs under a wet film, not the
- * river's dark water.
+ * A fountain (ADR-0044): the water stands in the basin at `SURFACE_LIFT.basin` inside a granite
+ * rim, its outer face down to the square, a ledge to sit on and the inner face down to the water.
+ * The water stays dark against the light square (decision of 13.11, G-721).
  */
-export const planBasin = (stone: MeshSink, ring: readonly P2[], h: HeightAt): void => {
-  drape(stone, ring, h, SURFACE_LIFT.basin, BASIN_FLOOR, (p) => [p.x, p.z], [SURFACE_CODE.square, 0]);
+export const planBasin = (water: MeshSink, stone: MeshSink, ring: readonly P2[], h: HeightAt): void => {
+  planWater(water, ring, h, SURFACE_LIFT.basin);
   const ccwRing = signedArea(ring) >= 0 ? ring : [...ring].reverse();
   const up = { x: 0, y: 1, z: 0 };
   for (let i = 0; i < ccwRing.length; i++) {

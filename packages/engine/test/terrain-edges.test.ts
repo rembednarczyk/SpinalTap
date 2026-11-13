@@ -24,7 +24,8 @@ describe("terrain at the edge of the map data", () => {
 
 
 describe("fountain basins", () => {
-  it("hold their floor above the square inside a stone rim", () => {
+  it("hold their water above the square inside a stone rim", () => {
+    const water = new MeshSink();
     const stone = new MeshSink();
     const square = [
       { x: 0, z: 0 },
@@ -32,16 +33,13 @@ describe("fountain basins", () => {
       { x: 4, z: 4 },
       { x: 0, z: 4 },
     ];
-    planBasin(stone, square, () => 1);
-    // Each side of the rim: outer face, ledge, inner face; four corners each. The floor comes first.
-    const rim = 4 * 3 * 4;
-    const ys = stone.positions.filter((_, i) => i % 3 === 1);
-    const floor = ys.slice(0, ys.length - rim);
-    expect(floor.length).toBeGreaterThanOrEqual(4);
-    expect(Math.min(...floor)).toBeCloseTo(1 + SURFACE_LIFT.basin, 6);
-    expect(Math.max(...floor)).toBeCloseTo(1 + SURFACE_LIFT.basin, 6);
-    expect(Math.max(...ys)).toBeCloseTo(1 + BASIN_RIM.top, 6);
-    expect(Math.min(...ys)).toBeCloseTo(1, 6);
+    planBasin(water, stone, square, () => 1);
+    const ys = (s: MeshSink) => s.positions.filter((_, i) => i % 3 === 1);
+    expect(Math.min(...ys(water))).toBeCloseTo(1 + SURFACE_LIFT.basin, 6);
+    expect(Math.max(...ys(stone))).toBeCloseTo(1 + BASIN_RIM.top, 6);
+    expect(Math.min(...ys(stone))).toBeCloseTo(1, 6);
+    // Each side: outer face, ledge, inner face; four corners each.
+    expect(stone.positions.length / 3).toBe(4 * 3 * 4);
   });
 });
 

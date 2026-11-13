@@ -9,9 +9,8 @@ import { MeshSink } from "../src/renderer/mesh-sink";
  * The paving against the lawns by day (G-721, T-281; decision of 12.11: the squares no greyer than
  * in Lublin). On the orthophoto the map's squares are 1.66 (April) to 1.80 (June) times as bright
  * as its lawns, Plac Litewski's granite up to 2.1; brighter still burns out in the sun. The Old
- * Town's setts are 0.85 of its slabs, the paths 0.91-0.98, the fountains' shallow pools 0.87-0.91
- * (G-129). The colours are read off what the map city lays, the fountain's floor included: the
- * water material draws whatever it gets near-black by day.
+ * Town's setts are 0.85 of its slabs, the paths 0.91-0.98. The fountains keep their dark water
+ * (decision of 13.11). The colours are read off what the map city lays.
  */
 
 const rect = (x0: number, z0: number, x1: number, z1: number): P2[] => [{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }];
@@ -43,7 +42,7 @@ describe("the paving's colour by day (G-721)", () => {
     expect(k).toBeLessThanOrEqual(1.85);
   });
 
-  it("lays setts, paths and a fountain's floor a little darker than the slabs, as the orthophoto shows", () => {
+  it("lays setts and paths a little darker than the slabs, as the orthophoto shows", () => {
     const square = luma(laidColour("square"));
     const within = (k: number, lo: number, hi: number, what: string) => {
       expect(k, what).toBeGreaterThanOrEqual(lo);
@@ -51,7 +50,15 @@ describe("the paving's colour by day (G-721)", () => {
     };
     within(luma(laidColour("cobble")) / square, 0.82, 0.92, "cobble");
     within(luma(laidColour("footway")) / square, 0.88, 0.96, "footway");
-    // The floor, not the rim's ledge: below the rim's top.
-    within(luma(laidColour("basin", (y) => y > 0.2 && y < 0.4)) / square, 0.85, 0.95, "basin");
+  });
+
+  it("keeps a fountain's water dark, not a light floor (decision of 13.11)", () => {
+    const water = new MeshSink();
+    const e = new MapEntries();
+    e.terrains.set(1, { grid: { originX: -10, originZ: -10, cell: 2.5, cols: 13, rows: 13, heights: Array(169).fill(0) }, open: undefined, bounds: { minX: -10, maxX: 20, minZ: -10, maxZ: 20 }, mesh: null });
+    const ring = rect(0, 0, 8, 6);
+    e.addGround(100, { surface: "basin", ring, y: 0, bounds: boundsOf(ring), cell: "" });
+    planGround(new MeshSink(), water, e, 100);
+    expect(water.vertexCount).toBeGreaterThan(0);
   });
 });
