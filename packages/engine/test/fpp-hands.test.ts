@@ -187,20 +187,22 @@ describe("FPP hands from Seki's model (13.11)", () => {
   it.each([
     ["desktop", [1280, 720]],
     ["phone", [844, 390]],
-  ] as const)("%s: the hands on the weapon stay in the frame: both fists round a pistol, the left on a rifle's fore-end, from the hip and aimed, the fists on a baton and a sword", async (_, size) => {
+  ] as const)("%s: the hands on the weapon stay in the frame: both fists round a pistol and on a rifle from the hip, the left on its fore-end aimed (the DMR's zoom too), the fists on a baton and a sword", async (_, size) => {
     const { kit, rig, settle, camera, library } = setup(size);
     await library.preload(heroine);
     kit.setViewArms(heroine);
+    const both = ["r", "l"] as const;
     const hands = [
-      ["pistol", 0.8, ["r", "l"]],
-      ["rifle", 0.55, ["l"]],
-      ["baton", 1, ["r"]],
-      ["blade", 1, ["r", "l"]],
+      ["pistol", 0.8, both, both],
+      ["rifle", 0.55, both, ["l"]],
+      ["rifle", 0.38, both, ["l"]],
+      ["baton", 1, ["r"], []],
+      ["blade", 1, both, []],
     ] as const;
-    for (const [look, zoom, sides] of hands) {
+    for (const [look, zoom, hip, aimed] of hands) {
       kit.arm(1, rig, "hero", armed(look));
       await ready(kit, settle);
-      for (const aim of isMelee(look) ? [0] : [0, 1]) {
+      for (const [aim, sides] of [[0, hip], [1, aimed]] as const) {
         settle({ ...standing, aim, aimZoom: zoom });
         const inv = camera.camera.getWorldMatrix().clone().invert();
         const tan = Math.tan(camera.camera.fov / 2);
@@ -208,12 +210,74 @@ describe("FPP hands from Seki's model (13.11)", () => {
           const hand = kit.hands.handBone(side)!;
           for (const n of ["Middle1", "Little1", "Little2"]) {
             const p = Vector3.TransformCoordinates(bone(hand, n).getAbsolutePosition(), inv);
-            expect(p.y / p.z, `${look} aim ${aim}: ${side} ${n} under the frame`).toBeGreaterThan(-tan);
+            expect(p.y / p.z, `${look} ${zoom} aim ${aim}: ${side} ${n} under the frame`).toBeGreaterThan(-tan);
+            expect(Math.abs(p.x / p.z), `${look} ${zoom} aim ${aim}: ${side} ${n} beside the frame`).toBeLessThan(tan * (size[0] / size[1]));
           }
+        }
+        // Only the forearms are drawn: where they end, at the elbows, stays out of the frame (the guns).
+        for (const side of isMelee(look) ? [] : (["r", "l"] as const)) {
+          const elbow = Vector3.TransformCoordinates((kit.hands.handBone(side)!.parent as TransformNode).getAbsolutePosition(), inv);
+          const out = elbow.z <= 0 || elbow.y / elbow.z < -tan * 1.05 || Math.abs(elbow.x / elbow.z) > tan * (size[0] / size[1]) * 1.05;
+          expect(out, `${look} ${zoom} aim ${aim}: ${side} elbow in the frame`).toBe(true);
         }
       }
     }
   }, 120_000);
+
+  it("rifle from the hip: the barrel ahead, the grip low on the right, the butt out under the frame's right corner towards the shoulder", async () => {
+    const { kit, rig, settle, camera, library } = setup([1280, 720]);
+    await library.preload(heroine);
+    kit.setViewArms(heroine);
+    kit.arm(1, rig, "hero", armed("rifle"));
+    await ready(kit, settle);
+    settle();
+    const mount = camera.weaponMount.computeWorldMatrix(true);
+    const inv = camera.camera.getWorldMatrix().clone().invert();
+    const at = (x: number, y: number, z: number) => Vector3.TransformCoordinates(Vector3.TransformCoordinates(new Vector3(x, y, z), mount), inv);
+    const barrel = at(0, 0, 1).subtract(at(0, 0, 0)).normalize();
+    // Ahead, turned a little in towards the view's centre: the eye looks along it, not at its side.
+    expect(barrel.z).toBeGreaterThan(0.99);
+    expect(barrel.x).toBeLessThanOrEqual(0);
+    const tan = Math.tan(camera.camera.fov / 2);
+    const grip = at(0, 0, 0);
+    expect(grip.x).toBeGreaterThan(0.1);
+    expect(grip.y / grip.z).toBeLessThan(-0.5 * tan);
+    // The butt (0.27 m behind the grip) leaves the frame low on the right; the sights stay under the crosshair's line.
+    const butt = at(0, 0.05, -0.27);
+    expect(butt.y / butt.z).toBeLessThan(-tan);
+    expect(butt.x).toBeGreaterThan(0.1);
+    const sight = at(0, 0.17, 0.45);
+    expect(sight.y / sight.z).toBeLessThan(0.05 * tan);
+  }, 60_000);
+
+  it("draws the weapon and the hands with their own field of view: aimed with the DMR's zoom (0.38) the weapon is as big on the screen as with no zoom, its sights over 3 degrees under the crosshair in the world", async () => {
+    const { kit, rig, settle, camera, library } = setup([1280, 720]);
+    await library.preload(heroine);
+    kit.setViewArms(heroine);
+    kit.arm(1, rig, "hero", armed("rifle"));
+    await ready(kit, settle);
+    const view = (zoom: number) => {
+      settle({ ...standing, aim: 1, aimZoom: zoom });
+      const inv = camera.camera.getWorldMatrix().clone().invert();
+      const tan = Math.tan(camera.camera.fov / 2);
+      const mount = camera.weaponMount.computeWorldMatrix(true);
+      const at = (x: number, y: number, z: number) => Vector3.TransformCoordinates(Vector3.TransformCoordinates(new Vector3(x, y, z), mount), inv);
+      const screen = (p: Vector3) => new Vector3(p.x / p.z / tan, p.y / p.z / tan, 0);
+      // The grip to the muzzle on the screen, and the front sight's angle under the crosshair (the camera's frame is the world's).
+      const sight = at(0, 0.17, 0.45);
+      return { size: Vector3.Distance(screen(at(0, 0, 0)), screen(at(0, 0.096, 0.53))), sight: Math.atan2(sight.y, sight.z) };
+    };
+    const plain = view(1);
+    const zoomed = view(0.38);
+    // Not smaller (lower on the screen, its perspective stretches it a little).
+    expect(zoomed.size / plain.size).toBeGreaterThan(0.97);
+    expect(zoomed.size / plain.size).toBeLessThan(1.4);
+    // The sights stay over 3 degrees under the crosshair in the world (G-275), zoomed in too.
+    expect(plain.sight).toBeLessThan(-(3 * Math.PI) / 180);
+    expect(zoomed.sight).toBeLessThan(-(3 * Math.PI) / 180);
+    // The world's view does zoom.
+    expect(camera.lookScale).toBeLessThan(0.45);
+  }, 60_000);
 
   it("holds a pistol deep: web high on the backstrap, fingers round the front, index along the frame, thumb on the left", async () => {
     const { kit, rig, settle, camera, library } = setup();

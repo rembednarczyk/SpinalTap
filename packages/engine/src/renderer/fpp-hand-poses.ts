@@ -1,7 +1,7 @@
 import type { WeaponLook } from "@seki/core";
 import { Vector3 } from "../babylon";
 import type { ViewArmsFrame } from "../camera/view-arms";
-import { GRIP, LONG_GUN, VIEW_MELEE_TILT, VIEW_SHIFT, WEAPON_MODEL } from "./weapon-mount";
+import { GRIP, LONG_GUN, VIEW_MELEE_TILT, VIEW_SHIFT, WEAPON_MODEL, type WeaponKind } from "./weapon-mount";
 
 /**
  * Where Seki's hands go in first person (`FppHands`): static poses from the bones, no clips yet.
@@ -60,6 +60,12 @@ const grasp = (at: Vector3, fore: Vector3, fingers: Vector3, palm: Vector3, curl
  */
 const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1), v(-1, 0, 0.05), 0.85, 0.2, 0.85);
 
+/**
+ * On the rifle's pistol grip the forearm comes in from the right, the elbow out beside the stock,
+ * so from the eye it shows by the butt and the wrist turns the back of the hand up.
+ */
+const RIGHT_ON_RIFLE_GRIP = grasp(v(0.006, 0.012, 0.012), v(-0.45, 0.25, 1), v(0, -0.06, 1), v(-1, 0, 0.05), 0.75, 0.15, 0.7);
+
 /** The left hand round the right one with a pistol: palm on the grip's left side, fingers over the right's. */
 const LEFT_ROUND_FIST = grasp(v(-0.018, 0.0, 0.004), v(0.45, 0.2, 1), v(0.55, -0.12, 1), v(1, 0.15, 0), 0.9, 0.9, 0.35);
 
@@ -84,6 +90,15 @@ const LEFT_ON_POMMEL = grasp(HANDLE.scale(-0.1), LEFT_FORE_MELEE, across(LEFT_FO
 const LEFT_DOWN = hand(v(-0.24, -0.46, 0.18), v(0.1, 0.25, 1), v(0.1, 0.1, 1), v(1, 0, 0), 0.4);
 
 /**
+ * In first person the left hand reaches this much further along the rifle's long fore-end (file
+ * metres): further from the eye, it stays in the frame aimed in deep zoom on a phone, where the
+ * weapon sits low (`fitPose`).
+ */
+const FORE_REACH: Partial<Record<WeaponKind, number>> = { rifle: 0.06 };
+/** The left forearm comes up to the rifle's fore-end steeply from below, its end (the elbow) under the frame. */
+const FORE_ARM: Partial<Record<WeaponKind, Vector3>> = { rifle: v(0.2, 1.1, 1) };
+
+/**
  * The left hand on a long gun's fore-end (`LONG_GUN`), the point the TPP hold puts the palm on,
  * read in the viewmodel's frame like the grip (`VIEW_SHIFT`): from the left side and under, palm
  * up and in, so the hand shows beside the fore-end from the eye.
@@ -93,9 +108,9 @@ const leftOnForeEnd = (look: WeaponLook): HandTarget | null => {
   const hold = kind ? LONG_GUN[kind] : undefined;
   if (!kind || !hold) return null;
   const scale = WEAPON_MODEL[look].scale;
-  const z = (hold.fore.x - GRIP[kind].x - VIEW_SHIFT.x) * scale;
+  const z = (hold.fore.x + (FORE_REACH[kind] ?? 0) - GRIP[kind].x - VIEW_SHIFT.x) * scale;
   const y = (hold.fore.y - GRIP[kind].y - VIEW_SHIFT.y) * scale;
-  return grasp(v(-0.012, y + 0.005, z), v(0.4, 0.25, 1), v(0.35, 0.05, 1), v(1, 0.5, 0), 0.75, 0.6, 0.4);
+  return grasp(v(-0.012, y + 0.005, z), FORE_ARM[kind] ?? v(0.4, 0.25, 1), v(0.35, 0.05, 1), v(1, 0.5, 0), 0.75, 0.6, 0.4);
 };
 
 /** `t` from the viewmodel's frame into the camera's. */
@@ -112,7 +127,7 @@ const intoCamera = (t: HandTarget, frame: { readonly position: Vector3; readonly
 /** The hands with the weapon in the viewmodel, `turn` and `position` its frame in the camera's. */
 export const weaponHands = (look: WeaponLook | null, frame: { readonly position: Vector3; readonly turn: (d: Vector3) => Vector3 }): ArmsTarget => {
   const melee = look === "baton" || look === "blade";
-  const right = intoCamera(melee ? RIGHT_ON_HANDLE : RIGHT_ON_GRIP, frame);
+  const right = intoCamera(melee ? RIGHT_ON_HANDLE : look === "rifle" ? RIGHT_ON_RIFLE_GRIP : RIGHT_ON_GRIP, frame);
   if (look === "blade") return { right, left: intoCamera(LEFT_ON_POMMEL, frame) };
   if (melee) return { right, left: LEFT_DOWN };
   const fore = look ? leftOnForeEnd(look) : null;

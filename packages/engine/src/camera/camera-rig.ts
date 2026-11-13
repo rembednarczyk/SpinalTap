@@ -7,7 +7,7 @@ import { BodyFade, bodyFadeTarget } from "./body-fade";
 import { ChokeArms } from "./choke-arms";
 import { moveOf, swingEnd, swingPhase } from "../renderer/melee-timing";
 import type { ViewArms, ViewArmsFrame } from "./view-arms";
-import { type ViewmodelPose, fitPose, viewmodelPose } from "./viewmodel-poses";
+import { type ViewmodelPose, fitPose, viewmodelPose, viewmodelScale, viewmodelView } from "./viewmodel-poses";
 import { buildViewmodelProps } from "./viewmodel-props";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
@@ -84,6 +84,11 @@ export const viewSwingOffset = (strike: number, elapsed: number, windup: number,
  */
 export class CameraRig {
   readonly camera: FreeCamera;
+  /**
+   * The viewmodel's space under the camera, scaled across the view so that the weapon and the
+   * hands are drawn with their own field of view (`viewmodelView`), whatever the camera's.
+   */
+  readonly viewSpace: TransformNode;
   private readonly viewmodel: TransformNode;
   private mode: CameraMode = "FPP";
   /** 0 = FPP, 1 = TPP; animated for a smooth switch. */
@@ -155,8 +160,10 @@ export class CameraRig {
     this.camera.updateUpVectorFromRotation = true;
     scene.activeCamera = this.camera;
 
+    this.viewSpace = new TransformNode("vm-space", scene);
+    this.viewSpace.parent = this.camera;
     this.viewmodel = new TransformNode("viewmodel", scene);
-    this.viewmodel.parent = this.camera;
+    this.viewmodel.parent = this.viewSpace;
     // The gun (box or model) and the melee weapon hang under their own holders, one shown at a time.
     this.gunHolder = new TransformNode("vm-gun-holder", scene);
     this.gunHolder.parent = this.viewmodel;
@@ -302,9 +309,18 @@ export class CameraRig {
     return viewSwingOffset(sw.strike, sw.elapsed, sw.windup, sw.recovery);
   }
 
-  /** Seki's arms follow the viewmodel; while they are drawn the procedural forearms hide. */
+  /**
+   * Seki's arms follow the viewmodel; while they are drawn the procedural forearms hide. They hang
+   * in the viewmodel's space; the choke arms, placed in the camera's, are read into it.
+   */
   private poseArms(frame: ViewArmsFrame | null): void {
-    const model = this.arms?.pose(frame) ?? false;
+    const k = this.viewSpace.scaling.x;
+    const into = (f: { readonly elbow: Vector3; readonly dir: Vector3 }) => ({
+      elbow: new Vector3(f.elbow.x / k, f.elbow.y / k, f.elbow.z),
+      dir: new Vector3(f.dir.x / k, f.dir.y / k, f.dir.z).normalize(),
+    });
+    const choke = frame?.choke && k !== 1 ? { right: into(frame.choke.right), left: into(frame.choke.left) } : (frame?.choke ?? null);
+    const model = this.arms?.pose(frame ? { ...frame, choke } : null) ?? false;
     for (const m of this.propArm) if (m.isEnabled(false) === model) m.setEnabled(!model);
     this.chokeArms.showProps(!model);
   }
@@ -362,6 +378,12 @@ export class CameraRig {
     const sprinting = target.speed > 5.2 ? motion : 0;
     this.sprintFov += (SPRINT_WIDEN * sprinting - this.sprintFov) * Math.min(1, dt * 6);
     this.camera.fov = adsFov * (1 + this.sprintFov);
+    // The weapon keeps its own field of view: the zoom and the sprint change the world's alone.
+    // Aiming down sights brings the gun to the centre with the sights on the eye line.
+    const ads = this.melee ? 0 : smooth(aim);
+    const view = viewmodelView(this.scene.getEngine().getAspectRatio(this.camera), DEFAULT_HORIZONTAL_FOV);
+    const across = viewmodelScale(Math.tan(this.camera.fov / 2), view.hip + (view.aimed - view.hip) * ads);
+    this.viewSpace.scaling.set(across, across, 1);
     this.shakeAmount = Math.max(0, this.shakeAmount - dt * 3);
     const sh = this.shakeAmount * this.shakeAmount * motion;
     const t = this.bobPhase;
@@ -384,11 +406,10 @@ export class CameraRig {
     const reloading = this.reloadTotal > 0 && this.reload > 0 ? Math.sin(Math.PI * (1 - this.reload / this.reloadTotal)) : 0;
     const away = 1 - this.draw * this.draw * (3 - 2 * this.draw) + reloading * 0.35;
     this.viewmodel.setEnabled(fpp && this.draw > 0.02);
-    // Aiming down sights brings the gun to the centre with the sights on the eye line.
-    const ads = this.melee ? 0 : smooth(aim);
     const guard = this.updateGuard(target.guard ?? 0, dt);
     const sw = this.updateSwing(dt);
-    const { hip, ads: aimed } = fitPose(this.pose, Math.tan(this.hipFov / 2), Math.tan(aimedFov(1, target.aimZoom ?? 1, this.hipFov) / 2));
+    const zoomed = viewmodelScale(Math.tan(aimedFov(1, target.aimZoom ?? 1, this.hipFov) / 2), view.aimed);
+    const { hip, ads: aimed } = fitPose(this.pose, view.hip, view.aimed, zoomed);
     const base = {
       x: hip.x + (aimed.x - hip.x) * ads + (VIEWMODEL_GUARD.x - hip.x) * guard,
       y: hip.y + (aimed.y - hip.y) * ads + (VIEWMODEL_GUARD.y - hip.y) * guard,
@@ -400,7 +421,7 @@ export class CameraRig {
     this.viewmodel.position.z = base.z - this.recoil * 0.035 * (1 - 0.5 * ads) + sw.z;
     // Aimed in, the kick goes straight back: tipping up, the muzzle would rise over the crosshair.
     this.viewmodel.rotation.x = -this.recoil * 0.25 * (1 - ads) + away * 0.9 + sw.rx;
-    this.viewmodel.rotation.y = sw.ry;
+    this.viewmodel.rotation.y = sw.ry - (this.pose.yaw ?? 0) * (1 - ads);
     // The guard turns the weapon flat across the view.
     this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7 + guard * 1.25 + sw.rz;
     this.poseArms({ viewmodel: this.viewmodel.isEnabled(false) ? this.viewmodel : null, look: this.look, choke: this.chokeArms.forearms() });

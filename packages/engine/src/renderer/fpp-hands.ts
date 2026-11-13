@@ -12,8 +12,9 @@ type Side = "l" | "r";
 const HAND_NAMES: Readonly<Record<Side, readonly string[]>> = { l: ["lhand", "lefthand", "handl"], r: ["rhand", "righthand", "handr"] };
 const MIDDLE_KNUCKLE: Readonly<Record<Side, readonly string[]>> = { l: ["lmiddle1", "lefthandmiddle1"], r: ["rmiddle1", "righthandmiddle1"] };
 /**
- * Where the upper arms come from, in the camera's frame. They are not drawn (only the forearms
- * and hands are), so this only turns the elbows; the shoulders follow the forearms wherever the
+ * Where the upper arms come from, in the viewmodel's space (`CameraRig.viewSpace`: the camera's
+ * frame, drawn with the viewmodel's own field of view). They are not drawn (only the forearms and
+ * hands are), so this only turns the elbows; the shoulders follow the forearms wherever the
  * viewmodel puts them, as the procedural forearm did.
  */
 const SHOULDER: Readonly<Record<Side, Vector3>> = { l: new Vector3(-0.2, -0.34, -0.02), r: new Vector3(0.2, -0.34, -0.02) };
@@ -87,8 +88,9 @@ const boneIndices = (skeleton: Skeleton, nodes: ReadonlySet<TransformNode>): Set
 /**
  * Seki's own forearms and hands in first person (the user's wish of 13.11), instead of the
  * camera's procedural forearm. A second instance of her model file (the one the start has loaded,
- * so nothing more is fetched) hangs under the camera with every mesh off; a new skinned mesh of
- * the triangles her forearm and hand bones move (`armMesh`) draws them: one mesh in her skin
+ * so nothing more is fetched) hangs in the viewmodel's space under the camera with every mesh
+ * off; a new skinned mesh of the triangles her forearm and hand bones move (`armMesh`) draws them:
+ * one mesh in her skin
  * material, one draw call. Each frame the arm bones are set straight from the viewmodel's pose
  * (`fpp-hand-poses`), static, with the walk sway the viewmodel already has: the right hand round
  * the grip, the left under the fore-end, the pistol or the right fist, and both on the neck in a
@@ -170,6 +172,8 @@ export class FppHands implements ViewArms {
     const target = this.targetOf(frame);
     if (this.holder.isEnabled(false) !== (target !== null)) this.holder.setEnabled(target !== null);
     if (!target) return true;
+    // The viewmodel's space has its scale for this frame's field of view (`CameraRig.viewSpace`).
+    this.camera.viewSpace.computeWorldMatrix(true);
     this.holder.computeWorldMatrix(true);
     for (const arm of this.arms) this.place(arm, arm.side === "r" ? target.right : target.left);
     return true;
@@ -200,7 +204,7 @@ export class FppHands implements ViewArms {
     b.basisT.multiplyToRef(this.b1, this.q);
     b.rest.multiplyToRef(this.q, this.m);
     if (at) this.m.setTranslation(at);
-    this.m.multiplyToRef(this.camera.camera.getWorldMatrix(), this.w);
+    this.m.multiplyToRef(this.camera.viewSpace.getWorldMatrix(), this.w);
     (b.node.parent as TransformNode).computeWorldMatrix(true).invertToRef(this.inv);
     this.w.multiplyToRef(this.inv, this.local);
     this.local.decompose(this.scale, this.rotation, this.translation);
@@ -212,12 +216,12 @@ export class FppHands implements ViewArms {
 
   private build(model: ModelInstance): boolean {
     const { root, prefix } = model;
-    this.holder.parent = this.camera.camera;
+    this.holder.parent = this.camera.viewSpace;
     root.parent = this.holder;
     root.position.setAll(0);
     const nodes = root.getDescendants(false).filter((n): n is TransformNode => "rotation" in n);
     const found = findHumanoidBones(nodes, prefix);
-    const camInv = () => this.camera.camera.getWorldMatrix().clone().invert();
+    const camInv = () => this.camera.viewSpace.computeWorldMatrix(true).clone().invert();
     const refresh = () => {
       this.holder.computeWorldMatrix(true);
       root.computeWorldMatrix(true);
