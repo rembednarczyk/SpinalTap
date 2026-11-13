@@ -13,6 +13,8 @@ const BEND: Readonly<Record<(typeof FINGERS)[number], readonly [number, number, 
 
 interface Joint {
   readonly finger: (typeof FINGERS)[number];
+  /** 1 the knuckle .. 3 the last joint. */
+  readonly at: number;
   readonly node: TransformNode;
   /** Bind rotation against the parent. */
   readonly bind: Matrix;
@@ -64,7 +66,7 @@ export class FingerCurl {
         const axis = Vector3.TransformNormal(turn.normalize(), rotationOf(parent).transpose());
         const bind = Matrix.Identity();
         (node.rotationQuaternion ?? Quaternion.FromEulerAngles(node.rotation.x, node.rotation.y, node.rotation.z)).toRotationMatrix(bind);
-        joints.push({ finger, node, bind, axis, bend: BEND[finger][i - 1]! });
+        joints.push({ finger, at: i, node, bind, axis, bend: BEND[finger][i - 1]! });
       }
     }
     return joints.length > 0 ? new FingerCurl(joints) : null;
@@ -73,13 +75,15 @@ export class FingerCurl {
   /**
    * 0 the bind pose (open) .. 1 a fist. `index` and `thumb` close those two apart (a trigger
    * finger laid along the frame, a thumb along the other side); by default as the rest.
+   * `thumbRoot` turns the thumb's root and its first knuckle apart, its last joint as `thumb`
+   * has it: a thumb swung round the back of a pistol's grip and laid straight along its other side.
    */
-  apply(amount: number, index = amount, thumb = amount): void {
-    const key = `${amount}|${index}|${thumb}`;
+  apply(amount: number, index = amount, thumb = amount, thumbRoot = thumb): void {
+    const key = `${amount}|${index}|${thumb}|${thumbRoot}`;
     if (key === this.last) return;
     this.last = key;
     for (const j of this.joints) {
-      const a = j.finger === "index" ? index : j.finger === "thumb" ? thumb : amount;
+      const a = j.finger === "index" ? index : j.finger === "thumb" ? (j.at < 3 ? thumbRoot : thumb) : amount;
       Matrix.RotationAxisToRef(j.axis, j.bend * a, this.turn);
       j.bind.multiplyToRef(this.turn, this.rotation);
       const q = j.node.rotationQuaternion ?? new Quaternion();

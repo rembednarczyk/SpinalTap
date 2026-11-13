@@ -31,7 +31,7 @@ const PISTOL: ViewmodelPose = {
   ads: { x: 0, y: -0.118, z: 0.4 },
   muzzle: { x: 0, y: 0.07, z: 0.18 },
   top: 0.09,
-  // Both fists round the grip, the left's underside.
+  // Under the fist round the grip (it was drawn with both fists, round 5; kept so the gun stays where it was).
   low: { y: -0.06, z: 0 },
 };
 

@@ -186,7 +186,7 @@ export class FppHands implements ViewArms {
     const vm = frame.viewmodel;
     if (!vm) return null;
     const turn = vm.rotationQuaternion ?? Quaternion.RotationYawPitchRoll(vm.rotation.y, vm.rotation.x, vm.rotation.z);
-    return weaponHands(frame.look, { position: vm.position, turn: (d) => d.applyRotationQuaternion(turn) }, frame.aim);
+    return weaponHands(frame.look, { position: vm.position, turn: (d) => d.applyRotationQuaternion(turn) });
   }
 
   private place(arm: Arm, t: HandTarget): void {
@@ -196,7 +196,7 @@ export class FppHands implements ViewArms {
     this.setBone(arm.upper, up, t.palm, elbow.subtract(up.scale(arm.upperLen)));
     this.setBone(arm.lower, t.fore, t.palm, null);
     this.setBone(arm.hand, t.fingers, t.palm, null);
-    arm.curl?.apply(t.curl, t.index ?? t.curl, t.thumb ?? t.curl);
+    arm.curl?.apply(t.curl, t.index ?? t.curl, t.thumb ?? t.curl, t.thumbRoot ?? t.thumb ?? t.curl);
   }
 
   /** Turns a bone so that it runs along `along` with its palm side to `hint` (camera frame), at `at` if given. */
