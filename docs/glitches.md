@@ -1744,15 +1744,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: część 1 scalona (13.11, #482); zostaje 397 próbek: Zamkowa NE 230 celowe (T-284), Mełgiewska zachód nad chodnikiem (G-737, T-283), kładka podzamcze-2-0 2 próbki (do sprawdzenia z ortofoto, T-166); wcześniej: w PR #482 (13.11, 4e65501, część 1: `underDecks` dla wszystkich pomostów, `ground-over-deck` 860 → 397: Mełgiewska 613 → 165, Zamkowa NE 245 → 230, kładka 2 → 2; przegląd kuratora ZGODNE Z UWAGAMI, bez blokad; T-283, T-284); reszta: pomost nad tunelem w66258159 (`tunnel-decks.ts`) pod garbem terenu, do poprawy u źródła w imporcie; wcześniej: zgłoszone (13.11, naprawiacz G-686)
 - Pakiet właściciela: packages/sim (content/lublin abutments)
 
-### G-747 `followDetour` bez osiągalnej komórki w linii prostej kieruje gangera do `way[1]`, nawet nieosiągalnej
-- Ważność: S3 · Zasięg: planer pościgu w terenie ze skarpami; możliwe źródło części z 14 z 30 nieudanych dojść przy przyczółkach Mełgiewskiej (G-741), np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)
-- Opis: gdy żadna linia z punktu gangera nie przechodzi, fallback wybiera następny punkt drogi bez sprawdzenia osiągalności; ganger napiera na skarpę albo krąży w kieszeni
-- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g747, 7bbafa1): fallback do osiągalnej komórki niżej w polu (walkable + poziom stóp); sonda G-741 18/30 -> 19/30, 150 prób 87 -> 94 bez regresji; hash bez zmian; wcześniej: zgłoszone (13.11, naprawiacze G-741 i G-740)
-- Pakiet właściciela: packages/sim/src/systems/ai
-- Test przyjęcia: 30 punktów przy bokach pomostów (sonda G-741): dojścia ponad 16/30 bez regresji; test z jednego z punktów wyżej pada bez poprawki
-- Po G-746: `followDetour` w `steering.ts` (l. 144), fallback `way[1]` w l. 162.
-- Punkty (2454,5; 293,7) i (2449,5; 258,9) stoją na main bez udziału fallbacku, (2481,5; 415,7) już dochodzi; test przyjęcia z punktu sondy przy podzamcze-1-0 (772,7; 200,3)
-
 ### G-750 Biały rękaw postaci w kadrze FPP przepala się w słońcu (1,3–1,6% dolnej połowy kadru)
 - Ważność: S4 · Zasięg: widok z pierwszej osoby w dzień, każde ujęcie
 - Opis: po G-742 resztę przepalenia ujęć dnia daje rękaw bohaterki; połowa progu 3% z G-721

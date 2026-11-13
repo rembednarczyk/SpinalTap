@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-747 `followDetour` bez osiągalnej komórki w linii prostej kieruje gangera do `way[1]`, nawet nieosiągalnej
+- Ważność: S3 · Zasięg: planer pościgu w terenie ze skarpami; możliwe źródło części z 14 z 30 nieudanych dojść przy przyczółkach Mełgiewskiej (G-741), np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)
+- Opis: gdy żadna linia z punktu gangera nie przechodzi, fallback wybiera następny punkt drogi bez sprawdzenia osiągalności; ganger napiera na skarpę albo krąży w kieszeni
+- Status: naprawione (13.11, #511 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g747, 7bbafa1): fallback do osiągalnej komórki niżej w polu (walkable + poziom stóp); sonda G-741 18/30 -> 19/30, 150 prób 87 -> 94 bez regresji; hash bez zmian; wcześniej: zgłoszone (13.11, naprawiacze G-741 i G-740)
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: 30 punktów przy bokach pomostów (sonda G-741): dojścia ponad 16/30 bez regresji; test z jednego z punktów wyżej pada bez poprawki
+- Po G-746: `followDetour` w `steering.ts` (l. 144), fallback `way[1]` w l. 162.
+- Punkty (2454,5; 293,7) i (2449,5; 258,9) stoją na main bez udziału fallbacku, (2481,5; 415,7) już dochodzi; test przyjęcia z punktu sondy przy podzamcze-1-0 (772,7; 200,3)
+
 ### G-757 Chodnik w295849309 przy kładce w295849307 ponad tg 35° wzdłuż osi
 - Ważność: S4 · Zasięg: Podzamcze 1070..1080,160..170; 44 pary `walk-blocked`
 - Opis: oś chodnika do zachodniego końca kładki spada ponad 0,7 na 2 m (skarpa rowu Czechówki); prawdopodobnie ustąpi po G-739 (#501: koniec pomostu na szczycie skarpy) — sprawdzić po scaleniu
