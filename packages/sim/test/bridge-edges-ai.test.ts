@@ -8,7 +8,8 @@ import { teleportPlayer } from "./helpers";
  * and over a deck's edge there is the one the walk always took. From the lower bridge of
  * Mełgiewska down to the street south of it (G-068), and from beside the footbridge of
  * podzamcze-2-0 and of the lower bridge of Mełgiewska onto them, round their ends (G-741), and
- * from beside the bridge of podzamcze-1-0 onto it (G-747).
+ * from beside the bridge of podzamcze-1-0 onto it (G-747), and from the foot of a bank beside the
+ * lower bridge of Mełgiewska onto it (G-763).
  */
 
 type P = { readonly x: number; readonly z: number };
@@ -96,5 +97,24 @@ describe("chasing over the edges of the bridges away from the flights of steps (
     const u = { x: (D.b.x - D.a.x) / len, z: (D.b.z - D.a.z) / len };
     const at = (t: number, side: number): P => ({ x: D.a.x + u.x * len * t - u.z * side, z: D.a.z + u.z * len * t + u.x * side });
     expect(chase(at(0.8, 6), -Infinity, at(0.8, 0), Infinity, "podzamcze-1-0", 20, 0.3)).not.toBeNull();
+  }, 120_000);
+
+  it("gets from beside the lower bridge of Mełgiewska onto it, not sliding to and fro at the foot of a bank (G-763)", () => {
+    // At (2449.4, 258.8), under the deck's edge 0.27 m high, and at (2454.7, 293.4), on a sheer
+    // strip of the bank, the walk aimed at two cells in turn, each a slide along the foot away from
+    // the other; a few decimetres aside the edge is 0.1 m and the bank a walk.
+    const deck = (i: number) => {
+      const D = BRIDGE_DECKS.get("nabrzeze-0-1")![i]!;
+      const len = Math.hypot(D.b.x - D.a.x, D.b.z - D.a.z);
+      const u = { x: (D.b.x - D.a.x) / len, z: (D.b.z - D.a.z) / len };
+      return (t: number, side: number): P => ({ x: D.a.x + u.x * len * t - u.z * side, z: D.a.z + u.z * len * t + u.x * side });
+    };
+    for (const [i, t, side] of [
+      [0, 0.85, 9.5],
+      [1, 0.1, 8],
+    ] as const) {
+      const at = deck(i);
+      expect(chase(at(t, side), -Infinity, at(t, 0), Infinity, "nabrzeze-0-1", 20, 0.3), `deck ${i} at ${t}, ${side} m aside`).not.toBeNull();
+    }
   }, 120_000);
 });
