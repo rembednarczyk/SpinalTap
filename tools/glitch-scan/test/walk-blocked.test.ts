@@ -97,4 +97,11 @@ describe("walk-blocked (ADR-0080)", () => {
     // The decks touching: no slot.
     expect(scan({ ground: [ground[0]!, { surface: "sidewalk", outline: rect(5, 4.5, 15, 7) }], terrain: () => -3, deckY: 0 })).toEqual([]);
   });
+
+  it("keeps the heights a cell past the east seam apart from the next row's west ones", () => {
+    // The east neighbour of a pair's cell over the seam (x 10.375) is two cells past the chunk; its
+    // height once read the cache's place of the next row's west neighbour (x -0.125), here 0.3 higher.
+    const found = scan({ ground: [{ surface: "footway", outline: rect(0, 0, 20, 10) }], terrain: (x) => (x < 0 ? 0.6 : x < 10 ? 0 : 0.3) });
+    expect(found.filter((f) => Math.abs(Number(f.at.split(",")[0]) - 10) < 1)).toEqual([]);
+  });
 });

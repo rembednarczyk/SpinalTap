@@ -136,9 +136,9 @@ const chunkFindings = (chunk: WalkChunk, raster: WalkRaster, world: WalkWorld, f
   const { w, h, cells } = raster;
   const b = chunk.bounds;
   const heightAt = world.height(chunk);
-  // Heights on the raster and a cell round it, worked out where a walked cell needs them.
-  const W = w + 2;
-  const ys = new Float64Array(W * (h + 2)).fill(Number.NaN);
+  // Heights on the raster, a cell round it and one more past the east and north seams (the slope of a pair's cell over a seam), worked out where a walked cell needs them.
+  const W = w + 3;
+  const ys = new Float64Array(W * (h + 3)).fill(Number.NaN);
   const cx = (i: number) => b.minX + (i + 0.5) * WALK_CELL;
   const cz = (j: number) => b.minZ + (j + 0.5) * WALK_CELL;
   const y = (i: number, j: number): number => {
