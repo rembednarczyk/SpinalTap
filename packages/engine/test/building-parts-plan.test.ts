@@ -102,19 +102,21 @@ describe("a church whose parts come from the map (G-057)", () => {
     }
   });
 
-  it("keeps them with no part on it: none, or a part of another church", () => {
-    const e = byId("w66286341");
+  it("keeps a church's towers of the table with no part on it: none, or a part of another church", () => {
+    // The Holy Spirit's tower (G-215); a turret lifted onto its nave would take it away.
+    const e = byId("w66264126");
     expect(blockTop(e, [])).toBeGreaterThan(roofTop(e) + 5);
     expect(blockTop(e, [byId("w617763428")])).toBeGreaterThan(roofTop(e) + 5);
+    const turret: BuildingSource = { ...e, ring: rect(e.at.x - 2, e.at.z - 2, e.at.x + 2, e.at.z + 2), view: { ...e.view, soffit: 15 } };
+    expect(blockTop(e, [turret])).toBeLessThanOrEqual(roofTop(e));
     // The parts themselves stay without towers (G-049) whatever stands round them.
-    expect(blockTop(byId("w617763433"), [e])).toBeLessThanOrEqual(roofTop(byId("w617763433")));
+    expect(blockTop(byId("w617763433"), [byId("w66286341")])).toBeLessThanOrEqual(roofTop(byId("w617763433")));
   });
 
-  it("over the whole centre: no church a part stands on keeps towers, every other church does", () => {
-    // The landmarks the map shows without a tower (G-210) and the churches the map has a tower by
-    // (G-212) keep none either: landmark-towers.test.ts. The Discalced Carmelites' outline is the
-    // whole friary, its box's west end on the grass (G-212): no tower stands there.
-    const towerless = ["w66258167", "w66330578", "w69916021", "w66258180", "w66264082", "r5420467"].map(byId);
+  it("over the whole centre: no church a part stands on keeps towers, only the churches of the table have them", () => {
+    // The Holy Spirit and the Transfiguration (G-215); every other church has none in Lublin, or
+    // its tower is a building of the map (G-210, G-212): landmark-towers.test.ts.
+    const towered = ["w66264126", "w66264148"].map(byId);
     const sources = all.map(sourceOf);
     const lifted = sources.filter((s) => s.view.soffit !== undefined);
     const churches = sources.filter((s) => s.view.use === "church" && s.view.soffit === undefined);
@@ -123,7 +125,7 @@ describe("a church whose parts come from the map (G-057)", () => {
     expect(carrying.length).toBe(3);
     for (const c of churches) {
       const top = blockTop(c, sources);
-      if (carrying.includes(c) || towerless.some((t) => t.at.x === c.at.x && t.at.z === c.at.z)) expect(top).toBeLessThanOrEqual(roofTop(c));
+      if (carrying.includes(c) || !towered.some((t) => t.at.x === c.at.x && t.at.z === c.at.z)) expect(top).toBeLessThanOrEqual(roofTop(c));
       else expect(top).toBeGreaterThan(roofTop(c));
     }
   });
