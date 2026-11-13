@@ -168,6 +168,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: r5420680, r2366732; ścieżki wirydarza i przejście w586408568 w środku bryły; T-042
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: dziedziniec z `inner` multipoligonu jest otwarty i dostępny przejściem z OSM; `runsInside` widzi dziury, więc w586408568 (wirydarz Dominikanów → Zaułek Giedroycia, `tunnel=yes`) dostaje przejście przez r2366732 (uwaga kuratora z przeglądu G-076)
+- 13.11 audyt luk SM: ta sama reguła wypełnia 22 inne dziedzińce multipoligonów (ok. 6 450 m²): SM r5420359 420, r3119721 137, r6477272 112, r18246399/400/401 69+67+26, r6477346 63, r7224409 41; Krakowskie r1071052 2 849, r1071050 819, r14476826 638, r1071051 205, r1207679 204, r1207677 155, r5420467 96, r17337408 70, r1156579 31; Podzamcze r6476362 234, r6476361 213. Jedna reguła: inner >= 20 m² otwarty, chyba że NMPT/LoD2 pokazuje dach; ważność do S3. Proponowana kontrola courtyard-filled (baza 24 pierścienie).
 
 ### G-080 Dach dwuspadowy i pulpitowy liczony od prostokąta całego obrysu
 - Status: zgłoszone (weryfikacja ADR-0064 etap 1, PR #78) · Ważność: S4 · Koszt: średni
@@ -1685,6 +1686,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (ADR-0077)
 - 13.11 krok 1.2 ADR-0077 (gałąź ccr-ec2c4269-ilh8k8-adr77-kerb): szczeliny przy jezdni kładzione z ortofoto, kerb-gap-bare -54%, kerb-strip-bare -64%; zostaje asfalt przy jezdni (etap asfaltu)
 - Krok 1.2 ADR-0077 w main (#510, 13.11).
+- 13.11 audyt luk SM: SM goły teren 19 218 m², podwórza i przedpola 48 składowych / 12 670 m², goły asfalt 9 720 m². Przyczyna w bare-cover.ts: dropLoose odrzuca regiony o średniej szerokości < FILL.looseWidth 6 m (podwórza 2,2-4,3 m), klasa asfalt niekładziona; landuse-bare ich nie liczy. Proponowana kontrola yard-bare. Kolejność: po G-771.
 
 ### G-727 Klasa: odłożone do poszerzania mapy
 - Status: zgłoszone, klasa (12.11, porządki rejestru: 2 wpisów scalonych, pełne opisy w archiwum)
@@ -1709,6 +1711,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
   - G-674 (S4) Północny krawężnik Radziwiłłowskiej przy Placu Litewskim przed trawnikiem OSM — w914787972 i w331453920, x −87…−40: goły pas 1–2,8 m między północną krawędzią asfaltu (z 119,1–119,7) a trawnikiem w1011367949
 - Pakiet właściciela: tools/osm-import (ground, `fitToKerb`, `kerbFills`)
 - 13.11 przegląd ADR-0078 etap 2 (G-744): Podwale w179264852 +7 próbek sidewalk-under-carriageway (750,-180; 690,-210) przyjęte przez GLITCH_BASELINE=accept; przyczyna jak G-082/G-113, goły pas przy elewacji 755..758 do poprawy razem z nimi (T-046).
+- 13.11 audyt luk SM: kerb-gap-bare 1 358 próbek (Podwale płd. 307, Królewska 299, Kowalska-Lubartowska 569), kerb-fill-wide-estimated 775, sidewalk-under-carriageway 52, footway-on-carriageway 65; przypisanie ADR-0080 PR 7, szerokości PR 10 po G-771.
 
 ### G-729 Szyld Neon Koi wchodzi na szyld BANK POWSZEDNI
 - Status: odłożone za priorytet mapowania i refaktoru (decyzja użytkownika 12.11: „póki co trzymaj obecne priorytety”); zgłoszone (12.11, zgłoszenie użytkownika; przyczyna do potwierdzenia)
@@ -1853,6 +1856,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, ręce FPP runda 6)
 - Pakiet właściciela: packages/engine (renderer/fpp-hand-poses.ts)
 - Test przyjęcia: test głębokości skóry dłoni w bryle broni ≤ 2 mm dla każdej broni krótkiej i wszystkich kości kciuka
+
+### G-771 Puste (białe) kafle ortofoto w pokryciu i raporcie komórek stare-miasto-0-0 i 0-1
+- Ważność: S3 · Zasięg: kafle 2023-09/stare-miasto-0-0 i 2024-06/stare-miasto-0-1 (100% białe, jedyne w mieście); w pokryciu ok. 2 740 m² zieleni i koron jako kostka/asfalt (0-0: 1 256, 0-1: 1 484) i ok. 250 m² cienia; raport wybiera pusty nalot jako najmniejszy przechył
+- Opis: fetch.ts zostawia biały kafel z ostatniej usługi; classifyRect uśrednia go jak nalot; lean.ts daje mu wynik 0. Skutek: bare-cover.ts i kontrole bare-on-cover/fill-on-green czytają zieleń jako twardą; 'twarde 100%' w notatkach 0-0 i 0-1 to artefakt (działka Rybna 12: zieleń i gruz). Proponowana kontrola cover-blank-flight (baza 2).
+- Status: zgłoszone (13.11, kurator, audyt luk SM)
+- Pakiet właściciela: tools/orto (fetch.ts, cover.ts, lean.ts), potem data/orto i osm:build
+- Test przyjęcia: nalot z bielą > 95% pominięty w klasyfikacji i w przechyle; stare-miasto.cover przeliczone; raport 0-0/0-1 wybiera nalot ze zdjęciem; orto:diff do kuratora
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
