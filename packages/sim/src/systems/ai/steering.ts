@@ -70,7 +70,10 @@ const outOfReach = (r: Raster, n: number, from: Vec3): boolean => !!r.ledges && 
  * the window, cut off). Pressed against a wall its own cell may be closed: the best open cell next
  * to it. Not across a wall in the ground (a flight's side, G-255): a cell within a step of the
  * feet; by a bridge's deck, one the feet get to (`outOfReach`, G-741); nor up a wall between cells
- * (`wallOnWay`, G-740), onto a deck by the edge the feet stand under.
+ * (`wallOnWay`, G-740), onto a deck by the edge the feet stand under; nor one higher over the feet
+ * than a walk climbs to it (`aboveLevel`, G-762): at the foot of the western abutment's wall of
+ * Mełgiewska's lower bridge the feet's own cell is closed, steep, and no wall between cells leads
+ * from it, so the walk set out from the cell on the wall 3.4 m up and pressed against it.
  */
 const startOf = (field: Field, from: Vec3): number => {
   const { raster, dist } = field;
@@ -80,6 +83,7 @@ const startOf = (field: Field, from: Vec3): number => {
     (dist[n] ?? FAR) < FAR &&
     (!raster.base || raster.flight?.[n] !== ON_FLIGHT || Math.abs((raster.base[n] ?? 0) - from.y) <= STEP_HEIGHT) &&
     !outOfReach(raster, n, from) &&
+    !aboveLevel(raster, n, from, cellCentre(raster, n, from.y)) &&
     !wallOnWay(raster, from, cellCentre(raster, n, from.y), SAMPLE);
   return (dist[here] ?? FAR) < FAR ? here : nearest(here, 2, raster.cells, reachable);
 };
@@ -208,6 +212,10 @@ const reachableLower = (field: Field, from: Vec3, start: number): number => {
  */
 const offLevel = (r: Raster, n: number, from: Vec3, at: Vec3): boolean =>
   !!r.base && Math.abs((r.base[n] ?? from.y) - from.y) > STEP_HEIGHT + MAX_WALK_SLOPE * Math.hypot(at.x - from.x, at.z - from.z);
+
+/** `offLevel` only above the feet: down, over a deck's edge, the field may lead (`passable`). */
+const aboveLevel = (r: Raster, n: number, from: Vec3, at: Vec3): boolean =>
+  !!r.base && (r.base[n] ?? from.y) - from.y > STEP_HEIGHT + MAX_WALK_SLOPE * Math.hypot(at.x - from.x, at.z - from.z);
 
 /**
  * `planDetour` and `followDetour` in one: the step round the static obstacles. None from outside
