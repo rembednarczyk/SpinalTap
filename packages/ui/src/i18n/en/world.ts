@@ -335,6 +335,7 @@ export const enWorld = {
   "death.restart": "Start over",
   "death.title": "Main menu",
   "clock.label": "Game time",
+  "clock.openWait": "open the wait window",
   "clock.day": "Day {day}",
   "clock.phase.night": "night",
   "clock.phase.dawn": "dawn",
