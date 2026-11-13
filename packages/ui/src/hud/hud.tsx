@@ -3,7 +3,7 @@ import { keyLabel } from "../menus/key-label";
 import { type ControlBindingVm, DEFAULT_HORIZONTAL_FOV, hipVerticalFov } from "../store/ui-store";
 import { type Translate } from "../i18n/t";
 import { useT } from "../i18n/use-t";
-import { useUi } from "../use-ui";
+import { useUi, useWaitIntents } from "../use-ui";
 import { AbilityWidget } from "./ability-widget";
 import { Minimap } from "./minimap";
 import { Toasts } from "./toasts";
@@ -102,13 +102,21 @@ const Clock = () => {
   const day = useUi((s) => s.day);
   const phase = useUi((s) => s.dayPhase);
   const t = useT();
+  const { openWait } = useWaitIntents();
   if (!clock) return null;
+  // A tap or a click on the clock opens the wait window (the user's idea, 13.11): on the phone there is no key for it.
   return (
-    <div className={`hud__clock hud__clock--${phase}`} data-testid="clock" aria-label={t("clock.label")}>
+    <button
+      type="button"
+      className={`hud__clock hud__clock--${phase}`}
+      data-testid="clock"
+      aria-label={`${t("clock.label")}: ${t("clock.openWait")}`}
+      onClick={openWait}
+    >
       <span className="hud__clock-day">{t("clock.day", { day })}</span>
       <span className="hud__clock-phase">{t(`clock.phase.${phase}`)}</span>
       <span className="hud__clock-time">{clock}</span>
-    </div>
+    </button>
   );
 };
 
