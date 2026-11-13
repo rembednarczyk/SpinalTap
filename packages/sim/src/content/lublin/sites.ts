@@ -144,7 +144,11 @@ const grow = (r: GroundRect, d: number, north = d): GroundRect => ({ minX: r.min
 export const PADS: readonly Pad[] = [
   { rect: grow(DOCKS_AREA, 5, 0), y: DOCKS_PLACE.y, blend: 6, row: "T-002" },
   { rect: DOCKS_BASIN, y: DOCKS_PLACE.y - 3, blend: 1.5, row: "T-002" },
-  { rect: grow(CAR_WASH_AREA, 5), y: CAR_WASH_PLACE.y, blend: 3, row: "T-051" },
+  // The car wash's yard levelled up to the streets round it, not over them (G-754): on the
+  // import's 5 m grid its level points end at z -30, behind the car park's north edge (OSM
+  // w179269921), so the blend leaves the sidewalk, the crossings and Bajkowskiego on the NMT; west
+  // and south short of the column at x 385 (the crossing) and the row at z -45 (the path south).
+  { rect: { minX: 388, maxX: CAR_WASH_AREA.maxX + 5, minZ: -41, maxZ: -27 }, y: CAR_WASH_PLACE.y, blend: 3, row: "T-051" },
   ...ROOM_SITES.map((r): Pad => ({ rect: grow(r.rect, 5), y: r.floor, blend: 2 })),
   // Dug out under the Trybunał for Trasa Podziemna (ADR-0048): level over x 575..585, z -65..-55,
   // sloping up to the Rynek over 5 m, so the slope stays inside the Trybunał's walls. In metres,
