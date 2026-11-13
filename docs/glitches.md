@@ -1787,9 +1787,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-745 `pnpm osm:props` nie jest idempotentne: wynik zależy od poprzedniego `props.generated.ts`
 - Ważność: S3 · Zasięg: generator rekwizytów czyta przez sim własny poprzedni wynik; punkt stały dopiero po drugim przebiegu (pierwszy dał `figure-in-crowd` 2 przy (−74; 160))
 - Opis: niedeterministyczny proces budowy danych: ten sam wejściowy OSM daje różne tablice zależnie od stanu pliku wyjściowego; łamie powtarzalność i porównania przed/po
-- Status: zgłoszone (13.11, budowniczy etapu 2 ADR-0078)
+- Status: w PR #494 (13.11, 60035c4: `buildProps` podaje modułom sim tabelę z bieżącego przebiegu, kolejność jawna w jednym przebiegu; test bajt w bajt z pustym i bieżącym plikiem); wcześniej: zgłoszone (13.11, budowniczy etapu 2 ADR-0078)
 - Pakiet właściciela: tools/osm-import (props), packages/sim (odczyt rekwizytów)
 - Test przyjęcia: dwa kolejne `osm:props` z tego samego wejścia i z pustego/innego `props.generated.ts` dają ten sam plik bajt w bajt (test w osm-import)
+- 13.11: do sprawdzenia, czy `barrier-report.ts` i `tools/orto/src/game.ts` (też ładują sim z zatwierdzonymi tabelami) zapisują coś do repo
 
 ### G-746 `steering.ts` ma 717 linii, ponad limit 500 z ADR-0031
 - Ważność: S4 · Zasięg: packages/sim/src/systems/ai/steering.ts (686 → 717 po G-741), wyjątek w lincie
