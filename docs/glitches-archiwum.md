@@ -5,7 +5,7 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 ### G-761 Trawniki w pierścieniu skweru na Podzamczu pod kostką ścieżki
 - Ważność: S4 · Zasięg: w804709919, w804709920 (1045, 424), 46 m²; podobnie zieleń pod footway w pętlach w1343050082 (58,-83) 19 m², w154012559 15 m², w515648305 10 m²
 - Opis: Pas footway pierścienia (szerokość domyślna) leży na półksiężycach trawnika widocznych na ortofoto; skwer traci rysunek. Proponowana kontrola skanu loop-paving-on-green (m² kostki na zieleni wewnątrz pętli ścieżek, baza 5 pętli).
-- Status: naprawione (13.11, fałszywy alarm, zob. G-773 scalony); wcześniej: fałszywy alarm (13.11, naprawiacz): zawyżenie przez raster cover, geometria zgodna z ortofoto; wcześniej: zgłoszone (13.11, kurator, przegląd ADR-0078 etap 2)
+- Status: zamknięte bez zmian (13.11, fałszywy alarm, przyczyna w rastrze: G-774); wcześniej: fałszywy alarm (13.11, naprawiacz): zawyżenie przez raster cover, geometria zgodna z ortofoto; wcześniej: zgłoszone (13.11, kurator, przegląd ADR-0078 etap 2)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: zieleń z ortofoto pod footway/square wewnątrz pętli w804709919 < 5 m²
 - Wiersz topografii: T-286.
