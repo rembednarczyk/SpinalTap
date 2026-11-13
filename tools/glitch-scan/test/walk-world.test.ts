@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
-import { CITY_WALK_WORLD } from "./walk-world";
+import { cityWalkWorld } from "./walk-world";
+
+const CITY_WALK_WORLD = cityWalkWorld([]);
 
 /** `walk-blocked` reads the game's own ground: its chunk-at-a-time heights are `groundY`'s. */
 describe("the city as walk-blocked reads it", () => {

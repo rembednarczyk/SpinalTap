@@ -7,12 +7,15 @@ import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { SHAPED_TERRAIN, groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { WORLD_BARRIERS } from "../../../packages/sim/src/content/world-barriers";
 import { DECK_HEADROOM, type GroundDeck, deckHeight, groundOver } from "../../../packages/sim/src/world/deck";
+import { roadWidth } from "../../osm-import/src/ground.ts";
+import { type WalkWay, blockedStretches, nearStretches } from "./walk-axes";
 import type { WalkChunk, WalkWorld } from "./walk-blocked";
 
 /**
  * The game's Lublin as `walk-blocked` reads it (`walk-blocked.ts`): the ground of `groundY` worked
  * out a chunk at a time (its own terrain and the decks over it), the decks that are the ground,
- * and the edges the model means (walls, barriers, T-147, Alchemia's terraces).
+ * the edges the model means (walls, barriers, T-147, Alchemia's terraces) and the stretches of
+ * the map's ways blocked along them (`walk-axes.ts`).
  */
 
 type Pt = { readonly x: number; readonly z: number };
@@ -61,7 +64,7 @@ const byBarrier = (x: number, z: number): boolean => {
 const T147_MARGIN = 0.5;
 const T147 = (p: Pt) => p.x >= 728.5 - T147_MARGIN && p.x <= 735.1 + T147_MARGIN && p.z >= 157.5 - T147_MARGIN && p.z <= 163.8 + T147_MARGIN;
 
-/** The chunk holding (x, z), or none off the map. */
+/** The chunk holding (x, z), or none off the map (past the chunks `groundY` is 0, no ground of the map). */
 const chunkAt = (x: number, z: number) => MAP_CHUNKS.find(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
 
 /**
@@ -88,12 +91,28 @@ const heightIn = (chunk: WalkChunk) => {
   };
 };
 
-export const CITY_WALK_WORLD: WalkWorld = {
-  height: heightIn,
-  deck: (x, z, y) => decksAt(x, z).find((d) => inBox(d.box, x, z) && pointInRingEvenOdd(x, z, d.ring) && Math.abs(deckHeight(d, x, z) - y) < 1e-6) ?? null,
-  headroom: DECK_HEADROOM,
-  edge: (a, b) => {
-    const mid = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
-    return T147(mid) || onAlchemia(mid) || inBuilding(a.x, a.z) || inBuilding(b.x, b.z) || byBarrier(mid.x, mid.z);
-  },
+/**
+ * How far off its axis a way's own ground goes (m): a path's is about its axis (`AXIS_REACH`, the
+ * curator's 0.6 m), a street's or a pedestrian street's half its carriageway (`roadWidth`), else
+ * a bank in the middle of w179264855 (G-755, 1-3 m off its axis) would be across it.
+ */
+const PATHS = new Set(["footway", "path", "cycleway", "bridleway", "corridor", "track"]);
+const reachOf = (t: WalkWay["tags"]): number => (PATHS.has(t.highway ?? "") ? 0 : roadWidth(t) / 2);
+
+/**
+ * The city's world for `walk-blocked`, along the map data's ways `ways` (`extractFeatures(...).lines`),
+ * their blocked stretches worked out once: their samples off the map are no ground.
+ */
+export const cityWalkWorld = (ways: readonly WalkWay[]): WalkWorld => {
+  const along = nearStretches(blockedStretches(ways, (x, z) => (chunkAt(x, z) ? groundY(x, z) : Number.NaN), reachOf));
+  return {
+    height: heightIn,
+    deck: (x, z, y) => decksAt(x, z).find((d) => inBox(d.box, x, z) && pointInRingEvenOdd(x, z, d.ring) && Math.abs(deckHeight(d, x, z) - y) < 1e-6) ?? null,
+    headroom: DECK_HEADROOM,
+    edge: (a, b) => {
+      const mid = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+      return T147(mid) || onAlchemia(mid) || inBuilding(a.x, a.z) || inBuilding(b.x, b.z) || byBarrier(mid.x, mid.z);
+    },
+    along: (a, b) => along((a.x + b.x) / 2, (a.z + b.z) / 2),
+  };
 };

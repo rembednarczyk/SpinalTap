@@ -19,6 +19,7 @@ interface Scene {
   readonly deckY?: number;
   readonly edge?: (a: Pt, b: Pt) => boolean;
   readonly decks?: (x: number, z: number) => boolean;
+  readonly along?: (a: Pt, b: Pt) => boolean;
 }
 
 const scan = (s: Scene) => {
@@ -33,6 +34,7 @@ const scan = (s: Scene) => {
     deck: (x, z, y) => (s.deckY !== undefined && decks(x, z) && y === s.deckY ? deck : null),
     headroom: 2,
     edge: s.edge ?? (() => false),
+    along: s.along ?? (() => true),
   };
   return walkBlocked(chunks, world);
 };
@@ -112,5 +114,13 @@ describe("walk-blocked (ADR-0080)", () => {
     expect(scan({ ground: [{ surface: "footway", outline: rect(0, 0, 20, 10) }], terrain })).toEqual([]);
     // A bank on the map at its edge is still one.
     expect(kinds(scan({ ground: [{ surface: "footway", outline: rect(0, 0, 20, 10) }], terrain: (x, z) => (z < 0 ? 0 : 0.8 * x) }))).toEqual(["steep # at #"]);
+  });
+
+  it("counts a blocked pair along a way blocked there itself, not across a bank beside a way (C)", () => {
+    const steep = { ground: [{ surface: "footway" as const, outline: rect(0, 0, 20, 10) }], terrain: (x: number) => 0.8 * x };
+    const found = scan({ ...steep, along: (a, b) => (a.z + b.z) / 2 < 2 });
+    expect(found.length).toBeGreaterThan(0);
+    expect(found.every((f) => Number(f.at.split(",")[1]) < 2)).toBe(true);
+    expect(scan({ ...steep, along: () => false })).toEqual([]);
   });
 });

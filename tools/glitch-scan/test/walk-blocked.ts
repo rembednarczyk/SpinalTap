@@ -10,9 +10,12 @@ import { type WalkBlock, type WalkCell, walkBoth } from "../../../packages/sim/s
  * let a walker through either way: a ledge over `STEP_HEIGHT` up or `SNAP_DOWN` down, or a bank
  * steeper than ADR-0043's `MAX_WALK_SLOPE` off a flight. The edges the model means as such are no
  * finding: the walls of buildings, barriers (ADR-0077), the sides of a bridge's deck over lower
- * ground (closed to the AI too, G-741), a deck over a way under it (G-062), the niche of T-147.
- * Off the map is no ground: a neighbour there is left out of a cell's slope (`groundY` is 0 past
- * the chunks, the curator's review of PR 4). It goes beside the six older checks of steps it is to replace (ADR-0080, PR 4); the drawing's
+ * ground (closed to the AI too, G-741), a deck over a way under it (G-062), the niche of T-147,
+ * Alchemia's terraces. A blocked pair counts along a way, not across the bank beside it in its
+ * strip: only within reach of a stretch of a map's way's axis that is itself blocked
+ * (`walk-axes.ts`). Off the map is no ground: a neighbour there is left out of a cell's slope
+ * (`groundY` is 0 past the chunks). These three after the curator's review of PR 4. It goes
+ * beside the six older checks of steps it is to replace (ADR-0080, PR 4); the drawing's
  * own checks (`ground-over-deck`, `paving-overlap-step`, `marking-step`) stay apart.
  */
 
@@ -42,8 +45,10 @@ export interface WalkWorld {
   readonly deck: (x: number, z: number, y: number) => WalkDeck | null;
   /** A deck this far over the ground beside it leaves a way under it, not an abutment (m, G-062). */
   readonly headroom: number;
-  /** Is the way between the two spots an edge the model means (a building's wall, a barrier, T-147)? */
+  /** Is the way between the two spots an edge the model means (a building's wall, a barrier, T-147, Alchemia's terraces)? */
   readonly edge: (a: Pt, b: Pt) => boolean;
+  /** Does the way between the two spots lie along a way's axis that is blocked there itself (`walk-axes.ts`), not across a bank beside it? */
+  readonly along: (a: Pt, b: Pt) => boolean;
 }
 
 /** Raster cell (m), as in ADR-0078's measurement and the AI's raster. */
@@ -198,7 +203,7 @@ export const inChunks =
 
 /** The finding's text for a blocked pair, or null when its edge is one the model means. */
 const intended = (world: WalkWorld, pa: Pt, a: WalkCell, pn: Pt, n: WalkCell, block: WalkBlock): string | null => {
-  if (world.edge(pa, pn)) return null;
+  if (world.edge(pa, pn) || !world.along(pa, pn)) return null;
   const dy = Math.abs(n.y - a.y);
   if (block === "steep") return `${stepText(a, n, block)} at ${Math.max(a.y, n.y).toFixed(2)}`;
   const [hi, lo, ph, pl] = n.y > a.y ? [n, a, pn, pa] : [a, n, pa, pn];
