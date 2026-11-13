@@ -1747,7 +1747,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-737 Chodnik mostu Mełgiewskiej przy Andersa 0,14–0,16 m pod jezdnią (T-283)
 - Ważność: S4 · Zasięg: most w50733068, chodnik w230881193 przy Andersa, (2420-2426; 323), zachodni koniec; chodnik −25,86…−25,88, jezdnia −25,72
 - Opis: pomost chodnika leży na NMT końca swojej osi, a jezdni na swojej; w poprzek mostu powstaje uskok 0,14–0,16 m poniżej progu `deck-step-face` (0,3). W Lublinie chodnik za krawężnikiem jest w poziomie jezdni.
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g737 (13.11, db84383: chodnik i wypełnienia w obrysie mostu biorą oś pomostu jezdni; `deck-kerb-step` 1201 → 0, `ground-over-deck` 397 → 233; czeka na G-738 i przegląd kuratora); wcześniej: zgłoszone (13.11, naprawiacz G-736, potwierdzone przez kuratora); propozycja kontroli skanu: różnica chodnik–jezdnia w jednym przekroju mostu > 0,05 m
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g737 (13.11, db84383: chodnik i wypełnienia w obrysie mostu biorą oś pomostu jezdni; `deck-kerb-step` 1201 → 0, `ground-over-deck` 397 → 233; przegląd kuratora ZGODNE Z UWAGAMI 13.11; czeka na G-738); wcześniej: zgłoszone (13.11, naprawiacz G-736, potwierdzone przez kuratora); propozycja kontroli skanu: różnica chodnik–jezdnia w jednym przekroju mostu > 0,05 m
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`, wysokości pomostów)
 
 ### G-738 Ganger utyka przy narożniku rampy przyczółka mostu południowego Mełgiewskiej (2415; 311)
