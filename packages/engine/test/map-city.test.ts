@@ -91,7 +91,7 @@ describe("facades of map buildings (ADR-0044)", () => {
   });
 
   it("draws a church with a tower above its roof, and the far block much lighter than the near one", () => {
-    const church = facadeFrame(tenement(20, rect(0, 0, 40, 16), { use: "church", height: 18, roof: 8 }), none);
+    const church = facadeFrame(tenement(20, rect(0, 0, 40, 16), { use: "church", height: 18, roof: 8, towers: [{ x: 4, z: 8, half: 3, top: 28, tip: 40 }] }), none);
     const near = new MeshSink();
     const far = new MeshSink();
     planNearBuilding(near, church);
@@ -210,19 +210,25 @@ describe("map city batches (ADR-0044)", () => {
 
   it("takes a church's towers away while a part from the map stands on it, in whatever cell (G-057)", () => {
     const city = makeCity();
-    // A long church: its cell (by its centre, x 140) lies beyond the cells the part at its west end touches.
-    const church: MapView = { kind: "building", outline: [{ x: -10, z: 0 }, { x: 290, z: 0 }, { x: 290, z: 20 }, { x: -10, z: 20 }], height: 14, levels: 3, use: "church", look: 77, roof: 4 };
-    const turret: MapView = { kind: "building", outline: [{ x: -5, z: 8 }, { x: -1, z: 8 }, { x: -1, z: 12 }, { x: -5, z: 12 }], height: 20, levels: 5, use: "church", look: 78, roof: 2, soffit: 14 };
+    // A long church standing where the Holy Spirit's data does, with as many corners, so it takes
+    // that church's tower of the renderer's table at its west end (G-215). Its cell (by its centre,
+    // x 521) lies beyond the cells the part at its west end touches.
+    const at = { x: 383.1, y: 0, z: -78.5 };
+    const along = Array.from({ length: 6 }, (_, i) => -12 + (i + 1) * 300 / 7);
+    const outline = [{ x: -12, z: -8 }, ...along.map((x) => ({ x, z: -8 })), { x: 288, z: -8 }, { x: 288, z: 8 }, ...along.reverse().map((x) => ({ x, z: 8 })), { x: -12, z: 8 }];
+    expect(outline).toHaveLength(LUBLIN_CHUNKS.flatMap((c) => c.buildings).find((b) => b.id === "w66264126")!.outline.length / 2);
+    const church: MapView = { kind: "building", outline, height: 14, levels: 3, use: "church", look: 77, roof: 4 };
+    const turret: MapView = { kind: "building", outline: [{ x: -10, z: -2 }, { x: -6, z: -2 }, { x: -6, z: 2 }, { x: -10, z: 2 }], height: 20, levels: 5, use: "church", look: 78, roof: 2, soffit: 14 };
     const farTop = (): number => {
       city.flush();
-      city.update(0.016, { x: 140, y: 2, z: 500 }, false);
-      expect(city.lodAt(140, 10)).toBe("far");
-      const far = city.meshes.find((m) => m.name === "map-far-1:0")!;
+      city.update(0.016, { x: 521, y: 2, z: 500 }, false);
+      expect(city.lodAt(521, -78)).toBe("far");
+      const far = city.meshes.find((m) => m.name === "map-far-4:-1")!;
       return Math.max(...far.getVerticesData("position")!.filter((_, i) => i % 3 === 1));
     };
-    city.spawn(1, church, { x: 0, y: 0, z: 0 });
+    city.spawn(1, church, at);
     expect(farTop()).toBeGreaterThan(14 + 4 + 5);
-    city.spawn(2, turret, { x: 0, y: 0, z: 0 });
+    city.spawn(2, turret, at);
     expect(farTop()).toBeLessThanOrEqual(14 + 4 + 0.5);
     city.despawn(2);
     expect(farTop()).toBeGreaterThan(14 + 4 + 5);

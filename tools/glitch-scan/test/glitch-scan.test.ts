@@ -79,6 +79,7 @@ import { deckSlots } from "./deck-slot";
 import { deckSteps } from "./deck-step";
 import { abutmentSteps } from "./deck-abutment";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
+import { churchFakeTowers, dataTops, towersOffNmpt } from "./church-towers";
 import { cityBricks, plasteredWalls } from "./wall-materials";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
@@ -1376,6 +1377,10 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "landmark-double-tower": () => doubleTowers(cityChurches(SOURCE_OSM)),
   /** A bell tower of the renderer's standing with its middle outside the church's outline, on the grass or the square (G-212). */
   "church-tower-off-building": () => towersOffBuilding(cityChurches(SOURCE_OSM)),
+  /** A church without a tower in Lublin (NMPT, OSM) crowned by the renderer's bell towers (G-215, T-121): the Capuchins, St Peter's. */
+  "church-fake-tower": () => churchFakeTowers(cityChurches(SOURCE_OSM)),
+  /** A church's tower of the renderer's off its real one in NMPT, in plan or height, or a real tower with nothing drawn there (G-215, T-121). */
+  "church-tower-off-nmpt": () => towersOffNmpt(cityChurches(SOURCE_OSM), dataTops(MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))))),
   /** A tower of the map (`man_made=tower`, `tower:type`, `building=tower`) drawn as a tenement: flats' windows or shop fronts (G-232). */
   "tower-dwelling-windows": () => dwellingTowers(cityTowers(SOURCE_OSM)),
   /** A building or a lifted part `building:material=brick` in OSM drawn in a plaster of the facades or the landmark kit (G-244). */

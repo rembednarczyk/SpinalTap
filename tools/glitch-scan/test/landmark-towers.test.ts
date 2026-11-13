@@ -21,7 +21,9 @@ const ring = cleanRing([
   { x: 5040, z: 5030 },
   { x: 5000, z: 5030 },
 ]);
-const church: MapBuilding = { id: 1, ring, base: 0, foot: 0, height: 15, levels: 4, use: "church", look: 3, roof: 6, name: "Kościół" };
+/** Its two towers across the west end, as a church's of the renderer's table stands them (G-215). */
+const westTowers = [5005, 5025].map((z) => ({ x: 5005, z, half: 3, top: 25, tip: 35 }));
+const church: MapBuilding = { id: 1, ring, base: 0, foot: 0, height: 15, levels: 4, use: "church", look: 3, roof: 6, name: "Kościół", towers: westTowers };
 const entry = (b: Partial<MapBuilding> = {}, e: Partial<TowerEntry> = {}): TowerEntry => ({ id: "w1", x: 5020, z: 5015, ring: b.ring ?? ring, frame: facadeFrame({ ...church, ...b }, () => null), parts: false, mapped: false, ...e });
 
 describe("landmark-fake-tower (G-210)", () => {
@@ -36,6 +38,7 @@ describe("landmark-fake-tower (G-210)", () => {
     expect(fakeTowers(["w1"], [entry({}, { parts: true })]), "a part, or parts on it").toEqual([]);
     expect(fakeTowers(["w1"], [entry({}, { mapped: true })]), "a tower in the map").toEqual([]);
     expect(fakeTowers(["w1"], [entry({ use: "historic" })]), "no towers from the renderer").toEqual([]);
+    expect(fakeTowers(["w1"], [entry({ towers: [] })]), "none in the renderer's table").toEqual([]);
   });
 
   it("takes a part, and a building a part stands on, as having parts", () => {
@@ -69,7 +72,7 @@ describe("landmark-fake-tower (G-210)", () => {
     expect(doubleTowers([entry()]), "no tower in the map").toEqual([]);
     expect(doubleTowers([entry({}, { ...mapped, parts: true })]), "a part, or parts on it").toEqual([]);
     expect(doubleTowers([entry({ use: "historic" }, mapped)]), "not a church").toEqual([]);
-    expect(doubleTowers([entry({ towerless: true }, mapped)]), "no towers from the renderer").toEqual([]);
+    expect(doubleTowers([entry({ towers: [] }, mapped)]), "no towers from the renderer").toEqual([]);
   });
 
   it("church-tower-off-building (G-212): finds a tower of the renderer's with its middle off the outline, none on it", () => {
