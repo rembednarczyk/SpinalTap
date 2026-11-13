@@ -1712,6 +1712,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (ground, `fitToKerb`, `kerbFills`)
 - 13.11 przegląd ADR-0078 etap 2 (G-744): Podwale w179264852 +7 próbek sidewalk-under-carriageway (750,-180; 690,-210) przyjęte przez GLITCH_BASELINE=accept; przyczyna jak G-082/G-113, goły pas przy elewacji 755..758 do poprawy razem z nimi (T-046).
 - 13.11 audyt luk SM: kerb-gap-bare 1 358 próbek (Podwale płd. 307, Królewska 299, Kowalska-Lubartowska 569), kerb-fill-wide-estimated 775, sidewalk-under-carriageway 52, footway-on-carriageway 65; przypisanie ADR-0080 PR 7, szerokości PR 10 po G-771.
+- 13.11 G-771: pokrycie SM bez pustych nalotów dodało 92 próbki kerb-gap-bare (szczeliny 0,07-0,2 m przy z -178, x 500..540) i klucze 470,70; 610,-220 Podwale; przyjęte accept
 
 ### G-729 Szyld Neon Koi wchodzi na szyld BANK POWSZEDNI
 - Status: odłożone za priorytet mapowania i refaktoru (decyzja użytkownika 12.11: „póki co trzymaj obecne priorytety”); zgłoszone (12.11, zgłoszenie użytkownika; przyczyna do potwierdzenia)
@@ -1851,9 +1852,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-771 Puste (białe) kafle ortofoto w pokryciu i raporcie komórek stare-miasto-0-0 i 0-1
 - Ważność: S3 · Zasięg: kafle 2023-09/stare-miasto-0-0 i 2024-06/stare-miasto-0-1 (100% białe, jedyne w mieście); w pokryciu ok. 2 740 m² zieleni i koron jako kostka/asfalt (0-0: 1 256, 0-1: 1 484) i ok. 250 m² cienia; raport wybiera pusty nalot jako najmniejszy przechył
 - Opis: fetch.ts zostawia biały kafel z ostatniej usługi; classifyRect uśrednia go jak nalot; lean.ts daje mu wynik 0. Skutek: bare-cover.ts i kontrole bare-on-cover/fill-on-green czytają zieleń jako twardą; 'twarde 100%' w notatkach 0-0 i 0-1 to artefakt (działka Rybna 12: zieleń i gruz). Proponowana kontrola cover-blank-flight (baza 2).
-- Status: zgłoszone (13.11, kurator, audyt luk SM)
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g771 (5c0dc65, 32c6ec6), czeka na przegląd kuratora; konflikt CLASSIFIER_VERSION z #519 (druga wchodząca daje 4 i przebudowuje data/orto); wcześniej: zgłoszone (13.11, kurator, audyt luk SM)
 - Pakiet właściciela: tools/orto (fetch.ts, cover.ts, lean.ts), potem data/orto i osm:build
 - Test przyjęcia: nalot z bielą > 95% pominięty w klasyfikacji i w przechyle; stare-miasto.cover przeliczone; raport 0-0/0-1 wybiera nalot ze zdjęciem; orto:diff do kuratora
+
+### G-772 Mediany barw z ortofoto liczone z pustego kafla 2024-06/stare-miasto-0-1
+- Ważność: S4 · Zasięg: albedo-medians.json (ALBEDO_FLIGHTS 2025-04, 2024-06), stare-miasto-0-1
+- Opis: albedo-report.ts nie pomija pustych nalotów (isBlank z G-771), biały kafel wchodzi do median barw; przeliczenie zmienia wygląd
+- Status: zgłoszone (13.11, naprawiacz G-771)
+- Pakiet właściciela: tools/orto
+- Test przyjęcia: albedo-report pomija nalot z isBlank; mediany bez kafla 2024-06/SM-0-1
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
