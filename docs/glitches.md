@@ -1772,9 +1772,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-743 Fascja i spód pomostu: nieciągła grubość daje zęby i skośne trójkąty nad skarpą (T-166)
 - Ważność: S4 · Zasięg: pomosty nad skarpą, gdzie prześwit pod pokładem przechodzi przez 2–2,8 m; przykład kładka podzamcze-2-0 po G-739, (1074; 161,8) i (1079; 161,8); błąd istniał (G-062), G-739 go odsłania
 - Opis: `deckDepth` (`packages/sim/src/world/deck.ts`) skacze nieciągle: przy prześwicie ≤ 2 m 0,9 m, tuż powyżej 0,2 m, potem rośnie do 0,9 m przy ok. 2,8 m. Fascja (`planDeckEdges`, `packages/engine/src/renderer/mapcity/deck-plan.ts`) bierze grubość co ok. 1,9 m, a spód (`planDeckUnderside`) tylko w narożach pierścienia (wszędzie 0,9 m), więc płaski spód wystaje poniżej cienkich odcinków fascji
-- Status: w naprawie (13.11, zgłoszone przez kuratora przy przeglądzie G-739)
+- Status: w PR #491 (13.11, 2192ee2: ciągła grubość `deckDepth`, fascja łamana w punktach siatki spodu; testy padają bez poprawki; zrzut spod kładki bez zębów); wcześniej: w naprawie (13.11, zgłoszone przez kuratora przy przeglądzie G-739)
 - Pakiet właściciela: packages/engine (`deck-plan.ts`), packages/sim (`deckDepth`)
 - Test przyjęcia: grubość fascji ciągła względem prześwitu; spód nigdy nie wystaje poniżej fascji (test na siatce pomostu); zrzut kładki z dołu bez trójkątów
+- 13.11: test G-062 „headroom” sprawdzał spód tylko w wierzchołkach; wnętrza spodu nie sprawdza nic (luka testowa, do rozważenia przy ADR-0080)
 
 ### G-744 Pasy ruchu biorą odsunięcie od zmierzonego zasięgu asfaltu: przesunięcie krawędzi jezdni o centymetry daje kolizje aut
 - Ważność: S3 · Zasięg: ruch w całym mieście; ujawnione przez etap 2 ADR-0078 (łuki łączeń zmieniają zasięg asfaltu o kilka cm, pasy przesuwają się do 12 cm): `traffic-junction-drive` przy 3 Maja (1 ziarno z 12), Kołłątaja/Zesłańców Sybiru (−108; −149) seed 10, Cicha seed 30; na main 0
