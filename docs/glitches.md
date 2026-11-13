@@ -1831,7 +1831,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-764 Trawnik pod koronami drzew na kostce (reguła koron, ADR-0077 krok 1.2)
 - Ważność: S4 · Zasięg: 4 dzielnice, ok. 474–670 m², m.in. promenada nad Czechówką przy VIVO (x 1090, z 185), Furmańska (x 646, z 257)
 - Opis: bare-clean.ts mixedRow zamienia koronę (klasa canopy) w trawnik, gdy g > q || s > q, także wśród samej kostki (g = 0). Nalot bezlistny 2025-04 pokazuje tam jasną kostkę (L ≥ 115, S ≤ 0,12: 474 m², z tego 199 m² było kostką na main). Propozycja: rozdzielić w tools/orto klasę canopy na koronę nad twardym i nad miękkim; nad twardym kostka, nad miękkim trawnik; kontrola skanu lawn-on-leafoff-paving. Szczegóły: scratchpad topo-adr77kerb-raport.md.
-- Status: zgłoszone (13.11, kurator, przegląd kroku 1.2)
+- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g764, e936eb2): klasa canopyHard, lawn-on-leafoff-paving 619 -> 71,5 m² (plamki < 2 m²); runda 2: ósemki w cutByPieces; potem przegląd kuratora (orto:diff, prawda bez leisure=park); wcześniej: zgłoszone (13.11, kurator, przegląd kroku 1.2)
 - Pakiet właściciela: tools/osm-import, tools/orto
 - Test przyjęcia: kontrola lawn-on-leafoff-paving < 50 m², a zarośla Nabrzeża (x 2500..2534, z 107..139) i żywopłot Podzamcza (x 551..569, z 353..359) zostają trawą
 - Wiersz topografii: T-287.
@@ -1841,6 +1841,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Bit round endu dzielący wspólną krawędź z pasem daje po unii 2 obrysy i jest odrzucany; po G-760 klin kryje osobna łata, więc pas nie ma okrągłego końca w jednym pierścieniu
 - Status: zgłoszone (13.11, naprawiacz G-760)
 - Pakiet właściciela: tools/osm-import
+
+### G-766 Kawałki fills dotykające same siebie (ósemki) triangulowane z nadmiarem
+- Ważność: S4 · Zasięg: stare-miasto-1-0 (619,94; -232,85) 2,0/1,1 m²; na main m.in. trawa podzamcze-1-1 112,4/103,9 m², nabrzeze-0-0 24,5/20,9 m²
+- Opis: cutByPieces (bare-cover.ts) przepuszcza obrysy z powtórzonym wierzchołkiem (crossesItself łapie tylko przecięcia); triangulacja daje więcej niż pole; od G-764 czerwony grass-under-paving; naprawa w rundzie 2 G-764
+- Status: w naprawie (13.11, gałąź G-764)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola fill-area-mismatch: |triangulacja - pole| <= 0,01 m² dla każdego kawałka fills
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
