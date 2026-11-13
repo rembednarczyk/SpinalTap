@@ -8,11 +8,19 @@
  * sources the generators import. A change of any of them is a new key, and the file of the old
  * key goes. Every call returns a fresh copy, so a test may change what it gets. A test of the
  * generator itself (two runs, the same result) calls the generator, not this.
+ *
+ * A missing result is computed in a node process of its own (`city-make.ts`), not in the test's:
+ * under `--coverage` V8 counts every block the generators run, and their cell loops ran 2-3 times
+ * slower for it (the whole city 10.5 s against 5 s), past the test's limit in CI, whose cache is
+ * always cold. The tools are not measured for coverage, and the code of core and sim they run is
+ * covered by its own tests.
  */
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { deserialize, serialize } from "node:v8";
+import { fileURLToPath } from "node:url";
+import { deserialize } from "node:v8";
 import { threadId } from "node:worker_threads";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
 import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
@@ -45,19 +53,21 @@ const inputKey = (): string => {
 
 const memory = new Map<string, Buffer>();
 
-/** The serialised result of `make` under `name`: from this process, from the disk, or computed and stored. */
-const cached = <T>(name: string, make: () => T): T => {
+/** The serialised result of `MAKE[name]`: from this process, from the disk, or computed by `city-make.ts` and stored. */
+const cached = <T>(name: keyof typeof MAKE): T => {
   let bytes = memory.get(name);
   if (!bytes) {
     const file = join(DIR, `${name}-${inputKey()}.bin`);
     try {
       bytes = readFileSync(file);
     } catch {
-      bytes = serialize(make());
       mkdirSync(DIR, { recursive: true });
       // Parallel workers may compute the same key: each writes its own file and renames it over.
       const tmp = `${file}.${process.pid}-${threadId}.tmp`;
-      writeFileSync(tmp, bytes);
+      const env = { ...process.env };
+      delete env.NODE_V8_COVERAGE;
+      execFileSync(process.execPath, [fileURLToPath(new URL("./city-make.ts", import.meta.url)), name, tmp], { env, stdio: ["ignore", "ignore", "pipe"] });
+      bytes = readFileSync(tmp);
       renameSync(tmp, file);
       // One file a name: those of an older key go, with their leftover temporaries.
       for (const old of readdirSync(DIR)) if (old.startsWith(`${name}-`) && !old.startsWith(`${name}-${inputKey()}.`)) rmSync(join(DIR, old), { force: true });
@@ -73,12 +83,19 @@ export const CITY_CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...POD
 /** The plan of the city's furniture. */
 export const cityPlan = (): PropsPlan => JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
 
-/** `generate` of the committed raw data over every chunk, as `pnpm osm:build` runs it. */
-export const generatedCity = (): Generated =>
-  cached("generate", () => {
+/** What `city-make.ts` computes, by the name of its cache file. */
+export const MAKE = {
+  /** `generate` of the committed raw data over every chunk, as `pnpm osm:build` runs it. */
+  generate: (): Generated => {
     const inputs = loadInputs();
     return generate(inputs.osm, inputs.src, undefined, undefined, undefined, undefined, inputs.covers);
-  });
+  },
+  /** `generateProps` of the plan over the committed tables, with no node tags, boards or market. */
+  props: (): PropsOut => generateProps(cityPlan(), CITY_CHUNKS),
+};
+
+/** `generate` of the committed raw data over every chunk, as `pnpm osm:build` runs it. */
+export const generatedCity = (): Generated => cached("generate");
 
 /** `generateProps` of the plan over the committed tables, with no node tags, boards or market. */
-export const cityProps = (): PropsOut => cached("props", () => generateProps(cityPlan(), CITY_CHUNKS));
+export const cityProps = (): PropsOut => cached("props");
