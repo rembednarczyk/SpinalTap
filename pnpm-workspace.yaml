@@ -7,3 +7,6 @@ packages:
   - "tools/i18n-scan"
   - "tools/code-health"
   - "tools/test-time"
+  - "tools/shots"
+  - "tools/bench-ab"
+  - "tools/test-rerun"
