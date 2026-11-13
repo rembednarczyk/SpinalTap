@@ -726,6 +726,7 @@ stare-miasto-0-0 460,-170
 stare-miasto-0-0 460,-150
 stare-miasto-0-1 460,40
 stare-miasto-0-1 460,50
+stare-miasto-0-1 470,70
 stare-miasto-0-1 470,80
 stare-miasto-0-1 480,80
 stare-miasto-0-1 470,90

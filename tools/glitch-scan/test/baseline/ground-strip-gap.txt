@@ -1239,6 +1239,7 @@ stare-miasto-0-0 560,-180
 stare-miasto-0-0 460,-170
 stare-miasto-0-0 470,-170
 stare-miasto-0-0 480,-170
+stare-miasto-0-0 510,-170
 stare-miasto-0-0 520,-170
 stare-miasto-0-0 530,-170
 stare-miasto-0-0 560,-170
@@ -1258,6 +1259,7 @@ stare-miasto-0-1 490,-10
 stare-miasto-0-1 480,0
 stare-miasto-0-1 480,30
 stare-miasto-0-1 460,40
+stare-miasto-0-1 470,70
 stare-miasto-0-1 460,80
 stare-miasto-0-1 470,80
 stare-miasto-0-1 460,90

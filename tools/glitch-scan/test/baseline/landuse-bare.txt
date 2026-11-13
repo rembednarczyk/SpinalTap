@@ -604,6 +604,7 @@ stare-miasto-0-0 500,-190
 stare-miasto-0-0 510,-190
 stare-miasto-0-0 500,-180
 stare-miasto-0-0 510,-180
+stare-miasto-0-0 510,-170
 stare-miasto-0-0 510,-160
 stare-miasto-0-0 520,-160
 stare-miasto-0-0 510,-150
