@@ -1792,9 +1792,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-759 walk-blocked nie widzi płyt chodnika i podestu Arkad
 - Ważność: S4 · Zasięg: klucze `stare-miasto-0-1 460,100/110/120`, `krakowskie-2-1 450,*`; ok. 500 stromych par po G-748
 - Opis: kontrola z #497 bierze tylko teren, więc obniżenie gruntu pod płytami `arkady.ts` liczy jako uskoki i strome pary
-- Status: zgłoszone (13.11, naprawiacz G-748)
+- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 6c4fc01): walk-blocked bierze wierzch płyt i brył scen (floorOver); pary na płytach Arkad 1117 -> 0 (G-758: 262 -> 0); klucze skanu 1 -> 1; czeka na poprawkę uskoków płyt Arkad (walk-review B); wcześniej: zgłoszone (13.11, naprawiacz G-748)
 - Pakiet właściciela: tools/glitch-scan (walk-blocked)
 - Test przyjęcia: `walk-blocked` bez kluczy pod płytami Arkad
+- walk-review B pada z poprawką: łapie prawdziwe uskoki płyt Arkad (G-778); osie along zostają na groundY, bo z floorOver wychodzą bryły Alchemii na chodnikach (krakowskie-2-0 416,-38 i inne). Decyzja nocna (wariant rekomendowany): najpierw naprawa uskoków, potem G-759, bez ruszania testu B.
 
 ### G-764 Trawnik pod koronami drzew na kostce (reguła koron, ADR-0077 krok 1.2)
 - Ważność: S4 · Zasięg: 4 dzielnice, ok. 474–670 m², m.in. promenada nad Czechówką przy VIVO (x 1090, z 185), Furmańska (x 646, z 257)
@@ -1869,6 +1870,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-765)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: brak gołych komórek 0,1 m między wstęgami w tarczy złącza w tych miejscach; ground-strip-gap nie rośnie
+
+### G-778 Uskoki między płytami chodnika i podestu Arkad
+- Ważność: S3 · Zasięg: stare-miasto-0-1 (465..468; 116..119), krakowskie-2-1 (448; 80)
+- Opis: arkady.ts pavement(): płyty co 2 m na maksimum terenu mapy, wierzchy a 38..44: -6,17/-6,71/-7,46 (stopnie 0,54 i 0,75 m > STEP_HEIGHT), podest -5,72 przy płycie -5,22 (0,50 m); od północy nie wejdzie się wyżej; wyszło z G-759 (walk-review B)
+- Status: zgłoszone (13.11, naprawiacz G-759)
+- Pakiet właściciela: packages/sim (content/alchemia)
+- Test przyjęcia: walk-review B zielony; między sąsiednimi płytami Arkad <= 0,45 m
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
