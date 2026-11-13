@@ -18,7 +18,7 @@ export interface ContactShade {
   readonly threshold: number;
 }
 
-export const CONTACT_SHADE: ContactShade = { radius: 1.5, strength: 0.6, threshold: 0.2 };
+export const CONTACT_SHADE: ContactShade = { radius: 1.0, strength: 0.6, threshold: 0.18 };
 
 /** Cool shadow tint the shade multiplies by (the moon shadow's family of colours). */
 export const CONTACT_SHADE_TINT = [0.42, 0.47, 0.6] as const;
@@ -50,11 +50,17 @@ float contactOcclusion(vec2 uv, float d, vec3 n) {
   float r = shadeParams.x;
   // The disc's radius on screen, as a fraction of the width and of the height.
   vec2 reach = vec2(r / (2.0 * tanHalf.x * d), r / (2.0 * tanHalf.y * d));
-  // A fixed rotation per pixel (interleaved gradient noise): the blur pass after this smooths it.
-  float spin = 6.2831853 * fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+  // A rotation from a 4x4 ordered pattern of this pass's pixels: the 4x4 blur after it averages
+  // exactly one period, so the pattern cancels instead of leaving a screen-tone grain.
+  vec2 cell = mod(floor(gl_FragCoord.xy), 4.0);
+  // Bayer 4x4 from the 2x2 one ([0 2; 3 1] = (2x + 3y) mod 4): a permutation of 0..15 over the cell.
+  vec2 lo = mod(cell, 2.0);
+  vec2 hi = floor(cell / 2.0);
+  float bayer = 4.0 * mod(2.0 * lo.x + 3.0 * lo.y, 4.0) + mod(2.0 * hi.x + 3.0 * hi.y, 4.0);
+  float spin = 6.2831853 * (bayer + 0.5) / 16.0;
   float occ = 0.0;
-  for (int i = 0; i < 16; i++) {
-    float t = (float(i) + 0.5) / 16.0;
+  for (int i = 0; i < 24; i++) {
+    float t = (float(i) + 0.5) / 24.0;
     float a = spin + float(i) * 2.3999632;
     vec2 suv = uv + vec2(cos(a), sin(a)) * reach * sqrt(t);
     float sd = depthAt(suv);
@@ -65,7 +71,7 @@ float contactOcclusion(vec2 uv, float d, vec3 n) {
     // reach: the share of such samples, not a weighted mean, so a wall's foot reaches the step.
     occ += (dot(n, v) * inversesqrt(l2 + 1e-4) > 0.3 && l2 < r * r) ? 1.0 : 0.0;
   }
-  return occ / 16.0 * (1.0 - smoothstep(shadeParams.w * 0.55, shadeParams.w, d));
+  return occ / 24.0 * (1.0 - smoothstep(shadeParams.w * 0.55, shadeParams.w, d));
 }
 `;
 
@@ -86,7 +92,7 @@ void main(void) {
 `;
 
 /**
- * Pass 2 (half resolution): a 5x5 blur that keeps to one surface (weights fall with the relative
+ * Pass 2 (half resolution): a 4x4 box blur (one period of the occlusion pass's rotation pattern) that keeps to one surface (weights fall with the relative
  * depth difference), so the shade's edge comes out smooth for the hard step without bleeding
  * across a silhouette.
  */
@@ -101,12 +107,12 @@ void main(void) {
   if (d <= 0.0) { gl_FragColor = vec4(0.0); return; }
   float sum = 0.0;
   float wsum = 0.0;
-  for (int y = -2; y <= 2; y++) {
-    for (int x = -2; x <= 2; x++) {
-      vec2 uv = vUV + vec2(float(x), float(y)) * texel * 1.5;
+  for (int y = 0; y < 4; y++) {
+    for (int x = 0; x < 4; x++) {
+      vec2 uv = vUV + (vec2(float(x), float(y)) - 1.5) * texel;
       float sd = texture2D(depthSampler, uv).r;
-      // Gaussian-ish by distance, times staying on the same surface (relative depth difference).
-      float w = exp(-0.35 * float(x * x + y * y)) * exp(-abs(sd - d) / (0.02 * d + 1e-3));
+      // Equal weights over the period, times staying on the same surface (relative depth difference).
+      float w = exp(-abs(sd - d) / (0.03 * d + 1e-3));
       sum += texture2D(textureSampler, uv).r * w;
       wsum += w;
     }

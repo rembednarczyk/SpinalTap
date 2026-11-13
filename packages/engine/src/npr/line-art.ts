@@ -2,6 +2,25 @@ import { type Camera, Color3, GeometryBufferRenderer, PostProcess, type Scene, S
 import { CONTACT_SHADE_TINT, type ContactShade } from "./contact-shade";
 import { ContactShadePass } from "./contact-shade-pass";
 
+/**
+ * Joint bilateral upsampling of the half-resolution shade: four neighbours weighed by how close
+ * their depth is to this pixel's, so the shade's edge follows the silhouettes at full resolution.
+ */
+const UPSAMPLE_GLSL = /* glsl */ `
+uniform sampler2D colorSampler;
+float upsampledShade(float d) {
+  float sum = 0.0;
+  float wsum = 1e-4;
+  for (int i = 0; i < 4; i++) {
+    vec2 o = vec2(i == 0 || i == 2 ? -1.0 : 1.0, i < 2 ? -1.0 : 1.0) * texel;
+    float w = exp(-abs(depthAt(vUV + o) - d) / (0.02 * d + 1e-3));
+    sum += texture2D(textureSampler, vUV + o).r * w;
+    wsum += w;
+  }
+  return sum / wsum;
+}
+`;
+
 /** With `shaded`, the input is the blurred contact shade and the scene's colour comes from `colorSampler`. */
 const lineArtFragment = (shaded: boolean): string => /* glsl */ `
 precision highp float;
@@ -20,7 +39,7 @@ vec3 normalAt(vec2 uv) { return normalize(texture2D(normalSampler, uv).xyz + 1e-
 uniform vec3 shadeTint;
 /** x: unused, y: strength (0 off), z: step threshold. */
 uniform vec4 shadeParams;
-${shaded ? "uniform sampler2D colorSampler;" : ""}
+${shaded ? UPSAMPLE_GLSL : ""}
 
 void main(void) {
   vec4 base = texture2D(${shaded ? "colorSampler" : "textureSampler"}, vUV);
@@ -44,7 +63,7 @@ void main(void) {
   }
   float line = max(smoothstep(lineParams.y, lineParams.y * 2.0, dEdge), smoothstep(lineParams.z, lineParams.z * 1.6, nEdge));
   line *= 1.0 - smoothstep(lineParams.w * 0.55, lineParams.w, d);
-  float occ = ${shaded ? "texture2D(textureSampler, vUV).r" : "0.0"};
+  float occ = ${shaded ? "upsampledShade(d)" : "0.0"};
   // One hard step, as a painted shadow shape; the blur before this keeps its edge clean.
   float shade = shadeParams.y * smoothstep(shadeParams.z - 0.03, shadeParams.z + 0.03, occ);
   vec3 shaded = mix(base.rgb, base.rgb * shadeTint, shade);
