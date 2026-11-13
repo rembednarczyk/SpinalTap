@@ -1,5 +1,4 @@
 # kerb-strip-bare: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-0-0 -90,-180
 krakowskie-0-0 -70,-180
 krakowskie-0-0 -60,-180
 krakowskie-0-0 -100,-170
@@ -17,7 +16,6 @@ krakowskie-0-1 -80,120
 krakowskie-0-1 -50,120
 krakowskie-1-0 90,-240
 krakowskie-1-0 100,-240
-krakowskie-1-0 80,-230
 krakowskie-1-0 90,-230
 krakowskie-1-1 200,20
 krakowskie-1-1 200,30

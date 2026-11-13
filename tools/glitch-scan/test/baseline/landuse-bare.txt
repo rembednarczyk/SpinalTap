@@ -1,6 +1,5 @@
 # landuse-bare: grid 10 m (x,z = the square's corner at its least x and z)
 krakowskie-0-0 -200,-270
-krakowskie-0-0 -170,-270
 krakowskie-0-0 -110,-270
 krakowskie-0-0 -200,-250
 krakowskie-0-0 -180,-230
@@ -110,7 +109,6 @@ krakowskie-1-0 130,-110
 krakowskie-1-0 130,-100
 krakowskie-1-0 200,-40
 krakowskie-1-0 210,-40
-krakowskie-1-0 190,-30
 krakowskie-1-0 200,-30
 krakowskie-1-1 200,-20
 krakowskie-1-1 210,-20
@@ -119,7 +117,6 @@ krakowskie-1-1 210,-10
 krakowskie-1-1 160,0
 krakowskie-1-1 170,0
 krakowskie-1-1 180,0
-krakowskie-1-1 190,0
 krakowskie-1-1 200,0
 krakowskie-1-1 210,0
 krakowskie-1-1 220,0
@@ -239,20 +236,14 @@ krakowskie-2-0 350,-190
 krakowskie-2-0 360,-190
 krakowskie-2-0 240,-180
 krakowskie-2-0 250,-180
-krakowskie-2-0 320,-180
-krakowskie-2-0 330,-180
-krakowskie-2-0 340,-180
 krakowskie-2-0 350,-180
 krakowskie-2-0 360,-180
 krakowskie-2-0 240,-170
 krakowskie-2-0 290,-170
-krakowskie-2-0 300,-170
-krakowskie-2-0 310,-170
 krakowskie-2-0 330,-170
 krakowskie-2-0 340,-170
 krakowskie-2-0 350,-170
 krakowskie-2-0 360,-170
-krakowskie-2-0 270,-160
 krakowskie-2-0 320,-160
 krakowskie-2-0 330,-160
 krakowskie-2-0 350,-160
@@ -343,7 +334,6 @@ nabrzeze-1-0 2640,170
 nabrzeze-1-0 2630,180
 nabrzeze-1-0 2640,180
 nabrzeze-1-0 2650,180
-nabrzeze-1-0 2660,180
 nabrzeze-1-0 2600,190
 nabrzeze-1-0 2610,190
 nabrzeze-1-0 2620,190
@@ -468,7 +458,6 @@ podzamcze-0-0 530,350
 podzamcze-0-0 540,350
 podzamcze-0-0 550,350
 podzamcze-0-0 560,350
-podzamcze-0-0 610,350
 podzamcze-0-0 620,350
 podzamcze-0-0 520,360
 podzamcze-0-0 530,360
@@ -486,16 +475,13 @@ podzamcze-0-1 660,440
 podzamcze-0-1 530,450
 podzamcze-0-1 520,470
 podzamcze-0-1 710,560
-podzamcze-0-1 640,570
 podzamcze-0-1 710,570
 podzamcze-1-0 720,160
 podzamcze-1-0 730,160
 podzamcze-1-0 720,170
 podzamcze-1-0 720,180
 podzamcze-1-0 890,180
-podzamcze-1-0 880,190
 podzamcze-1-0 890,190
-podzamcze-1-0 900,190
 podzamcze-1-0 880,200
 podzamcze-1-0 890,200
 podzamcze-1-0 900,200

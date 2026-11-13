@@ -9,7 +9,6 @@ krakowskie-1-0 70,-210
 krakowskie-1-0 20,-200
 krakowskie-1-0 30,-200
 krakowskie-1-0 40,-200
-krakowskie-1-0 20,-150
 krakowskie-1-0 20,-140
 krakowskie-1-0 20,-130
 krakowskie-1-0 20,-120
