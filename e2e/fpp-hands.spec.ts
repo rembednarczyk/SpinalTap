@@ -4,11 +4,15 @@ import { type Page, expect, test } from "@playwright/test";
 import { freeze, newGame, sampleNow, step, teleport, waitForGame, waitForPlay } from "./helpers";
 
 /**
- * Seki's own forearms and hands in first person (user's wish of 13.11), with the models on: a
- * shot from the hip, aimed and with the baton, on a desktop and on a phone, for a look (`SHOTS`
- * keeps them; without it they go to the test's output). The logic of the arms (shown in FPP, hidden
+ * Seki's own forearms and hands in first person (user's wish of 13.11), with the models on: the
+ * pistol and the rifle from the hip and aimed, the baton and the sword, on a desktop and on a
+ * phone, for a look (`SHOTS` keeps them; without it they go to the test's output). The logic of the arms (shown in FPP, hidden
  * in TPP, the stand-in without models, the grip in the hand) is the engine's `fpp-hands.test.ts`.
  */
+
+/** Shots of `poses`, each a settled frame of its own (up to ~35 s under load), and the start before them. */
+const SHOTS = 6;
+const TIMEOUT = 120_000 + SHOTS * 35_000;
 
 /** The deptak west of the clinic at midday, looking east along it. */
 const SPOT = { x: 270, z: -81, yaw: Math.PI / 2 } as const;
@@ -41,32 +45,45 @@ const play = async (page: Page, query: string, how: "click" | "tap"): Promise<st
   return errors;
 };
 
-/** A rifle in the primary slot and a baton in the melee one, besides the starting pistol. */
+/** A rifle in the primary slot and a baton in the melee one, besides the starting pistol; a sword in the bag. */
 const arm = (page: Page) =>
   page.evaluate(() => {
     const s = window.__seki!;
     const { inventory: inv, equipment } = s.session.saves.snapshot().domain;
     const weapon = (uid: string, def: string, loaded: number) => ({ uid, def, rarity: "common", level: 1, loaded, mods: {} });
-    const items = [...inv.items, weapon("i90", "tessen_ar5", 30), weapon("i91", "baton", 0)] as unknown as typeof inv.items;
-    s.jump({ inventory: { ...inv, items, nextUid: 92 }, equipment: { ...equipment, primary: "i90", melee: "i91" } });
+    const items = [...inv.items, weapon("i90", "tessen_ar5", 30), weapon("i91", "baton", 0), weapon("i92", "shirasaya", 0)] as unknown as typeof inv.items;
+    s.jump({ inventory: { ...inv, items, nextUid: 93 }, equipment: { ...equipment, primary: "i90", melee: "i91" } });
   });
 
-/** From the hip with the rifle, aimed in, then the pistol and the baton. */
+/** The sword (shirasaya) in the melee slot instead of the baton. */
+const sword = (page: Page) =>
+  page.evaluate(() => {
+    const s = window.__seki!;
+    const { equipment } = s.session.saves.snapshot().domain;
+    s.jump({ equipment: { ...equipment, melee: "i92" } });
+  });
+
+/** The pistol from the hip and aimed, the rifle from the hip and aimed, the baton and the sword. */
 const poses = async (page: Page, prefix: string): Promise<void> => {
   await arm(page);
   await step(page, 5);
+  await step(page, 30, { weaponSlot: 2 });
+  await shoot(page, `${prefix}-pistol-hip`);
+  await step(page, 30, { aim: true });
+  await shoot(page, `${prefix}-pistol-aim`);
   await step(page, 30, { weaponSlot: 1 });
   await shoot(page, `${prefix}-rifle-hip`);
   await step(page, 30, { aim: true });
   await shoot(page, `${prefix}-rifle-aim`);
-  await step(page, 30, { weaponSlot: 2 });
-  await shoot(page, `${prefix}-pistol-hip`);
   await step(page, 30, { weaponSlot: 3 });
   await shoot(page, `${prefix}-baton`);
+  await sword(page);
+  await step(page, 30, { weaponSlot: 3 });
+  await shoot(page, `${prefix}-blade`);
 };
 
 test("desktop: Seki's own hands hold the weapon in FPP", async ({ page }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(TIMEOUT);
   const errors = await play(page, "/?seed=7&audio=off", "click");
   await poses(page, "desktop");
   expect(errors).toEqual([]);
@@ -76,7 +93,7 @@ test.describe("phone", () => {
   test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
 
   test("phone: Seki's own hands hold the weapon in FPP", async ({ page }) => {
-    test.setTimeout(240_000);
+    test.setTimeout(TIMEOUT);
     const errors = await play(page, "/?seed=7&audio=off&touch", "tap");
     await poses(page, "phone");
     expect(errors).toEqual([]);
