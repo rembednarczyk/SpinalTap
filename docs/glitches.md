@@ -1818,6 +1818,20 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/traffic, skrzyżowania)
 - Test przyjęcia: sonda ziaren 1–40: 0 kolizji na skrzyżowaniu
 
+### G-754 Podkład myjni (T-051) tworzy skarpę 1,19 m na Bajkowskiego i przejściu
+- Ważność: S3 · Zasięg: Krakowskie 380..390, -30..-10; 10 par `walk-blocked`
+- Opis: podkład CAR_WASH_AREA (blend 3 m) podnosi teren o 1,3 m; NMT 0,04, w grze 1,19 na ulicy Wacława Bajkowskiego i przejściu; błąd zrobiony przez grę
+- Status: zgłoszone (13.11, kurator, przegląd walk-blocked)
+- Pakiet właściciela: packages/sim (content/lublin teren, podkłady)
+- Test przyjęcia: `walk-blocked` bez kluczy przy 380,-20; teren ulicy w ±0,1 m od NMT
+
+### G-755 Droga pieszo-rowerowa w179264855 w grze za stroma (0,8–0,92) przy (667–682; 134–141)
+- Ważność: S3 · Zasięg: zejście ze Starego Miasta na Podzamcze; ok. 1 440 par `walk-blocked` (kwadraty 670,130 i 670,140)
+- Opis: OSM: highway=pedestrian, bicycle=yes, lit, nie schody; oś w grze spada 4,5 m na 4 m; sprawdzić NMT i zdjęcia: jeśli spadek jest łagodniejszy — wygładzić, jeśli to schody/rampa — wymusić schody (flightRamps)
+- Status: zgłoszone (13.11, kurator, przegląd walk-blocked)
+- Pakiet właściciela: packages/sim (content/lublin teren)
+- Test przyjęcia: `walk-blocked` bez kluczy na osi w179264855; postać przechodzi
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
