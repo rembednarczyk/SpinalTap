@@ -77,6 +77,7 @@ import { roadDipsOverTunnels } from "./road-tunnel";
 import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
 import { deckSlots } from "./deck-slot";
 import { deckSteps } from "./deck-step";
+import { groundOverDeck } from "./ground-over-deck";
 import { abutmentSteps } from "./deck-abutment";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { churchFakeTowers, dataTops, towersOffNmpt } from "./church-towers";
@@ -1107,6 +1108,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       headroom: DECK_HEADROOM,
       skip: (p) => p.x >= 728.5 && p.x <= 735.1 && p.z >= 157.5 && p.z <= 163.8,
     }),
+  /**
+   * A point (every 0.25 m) under a bridge's piece where the ground the game walks is more than
+   * 0.01 m over the deck (G-686): the terrain shows through the deck's paving as a grey patch.
+   */
+  "ground-over-deck": () => groundOverDeck([...BRIDGE_DECKS.values()].flat(), bridgeDeckAt, groundY),
   /** A run of map steps between two parallel walls further apart than the steps the game lays plus 1 m (G-203). */
   "steps-narrower-than-walls": () => {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
