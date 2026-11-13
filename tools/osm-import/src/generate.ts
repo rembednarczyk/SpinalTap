@@ -400,7 +400,9 @@ export const generate = (
   // A band's end is round where its way meets another on the ground, as far as nothing else covers it: the corner square ends left bare (ADR-0078, G-658).
   const joined = groundJoints(laidLines);
   for (const { piece, mapped, atStreet: at } of laidLines) for (const b of lineBands(piece, mapped, water, at, joined)) bands.push({ ...b, box: ringBounds(b.ring) });
-  bands.splice(0, bands.length, ...roundJoints(bands).map((b, i) => (b === bands[i] ? b : { ...b, box: ringBounds(b.ring) })));
+  // A gap's patch is no carriageway, sidewalk or kerb: only the ground of its band (G-760).
+  const patch = (of: Band, ring: Pt[]) => ({ surface: of.surface, ring, bridge: false, source: of.source, holed: true as const, box: ringBounds(ring) });
+  bands.splice(0, bands.length, ...roundJoints(bands, patch).map((b) => ({ ...b, box: ringBounds(b.ring) })));
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.flatMap(carriageway).filter((l) => l.tags.highway !== undefined && near(l.line));
   // A crossing node a mapped crossing way runs through is striped by that way already.

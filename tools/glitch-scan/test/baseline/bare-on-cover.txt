@@ -12,7 +12,6 @@ krakowskie-0-0 -60,-160
 krakowskie-0-0 -80,-150
 krakowskie-0-0 -160,-120
 krakowskie-0-0 -10,-90
-krakowskie-0-0 0,-80
 krakowskie-0-0 -190,-50
 krakowskie-0-0 -190,-40
 krakowskie-0-1 -190,-20

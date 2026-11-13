@@ -595,7 +595,6 @@ podzamcze-1-0 750,160
 podzamcze-1-0 760,160
 podzamcze-1-0 720,180
 podzamcze-1-0 870,190
-podzamcze-1-0 830,200
 podzamcze-1-0 860,200
 podzamcze-1-0 870,200
 podzamcze-1-0 840,280
@@ -787,6 +786,7 @@ stare-miasto-0-0 570,-210
 stare-miasto-0-0 580,-210
 stare-miasto-0-0 590,-210
 stare-miasto-0-0 600,-210
+stare-miasto-0-0 490,-200
 stare-miasto-0-0 550,-200
 stare-miasto-0-0 560,-200
 stare-miasto-0-0 570,-200
@@ -857,6 +857,7 @@ stare-miasto-1-0 710,-190
 stare-miasto-1-0 720,-190
 stare-miasto-1-0 730,-190
 stare-miasto-1-0 750,-180
+stare-miasto-1-0 620,-130
 stare-miasto-1-0 630,-130
 stare-miasto-1-1 750,0
 stare-miasto-1-1 750,10

@@ -1,6 +1,0 @@
-# car-lane-off-road: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-1-0 20,-110
-nabrzeze-0-1 2340,420
-nabrzeze-1-1 2500,330
-podzamcze-2-0 930,330
-podzamcze-2-1 1080,560
