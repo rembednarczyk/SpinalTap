@@ -117,32 +117,35 @@ export const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
 
 /** A step of the walk checked on the ground (m): about a ganger's run in a step of 60 Hz. */
 const NEAR_STEP = 0.06;
-/** A slide along a bank getting on less than this share of the walk stops the feet too: under the stuck check's pace (0.4 m in 1.5 s, of 3.1 m/s). */
-const CREEP = 0.1;
-
 /**
  * Do the feet stop by a bank (`offTheBank`, the movement's own rule) walking from `a` towards `b`
- * in its first `NEAR_SKIP` metres, where the open cells are not asked? Sliding along it they do
- * not, unless they get on no further than a creep. The raster's cells see no wall within one:
- * by the level ground before the abutment of Mełgiewska's lower bridge (G-738), its 1.5 m edge on
- * the skew closed in cells touching at their corners, a walker by it took the way over it within
- * the skip, or through a corner, and stood at its foot for good, pressed against it. Nor do they
- * when, slid along the foot of a wall, they end below the line's ground more than a walk climbs:
- * along the deck's edge over the abutment's ramp of that bridge the slide got on, and a step
- * further the way it led along the deck was left for the one back (G-740).
+ * in its first `NEAR_SKIP` metres, where the open cells are not asked, or slide along one short of
+ * getting to `b`? The raster's cells see no wall within one: by the level ground before the
+ * abutment of Mełgiewska's lower bridge (G-738), its 1.5 m edge on the skew closed in cells
+ * touching at their corners, a walker by it took the way over it within the skip, or through a
+ * corner, and stood at its foot for good, pressed against it. A slide is no straight walk either
+ * (G-763): the feet leave the line, and the cells past the skip are asked of a line they are not
+ * on. Under the deck's edge of that bridge, 0.27 m high but steep to the movement's slope, the walk
+ * took the way along it at two cells in turn, each a slide back towards the other, and stood
+ * there; a few decimetres aside the edge was low enough to step onto. Nor when the feet end below
+ * the line's ground more than a walk climbs: along the deck's edge over the abutment's ramp of that
+ * bridge the way it led along the deck was left a step further for the one back (G-740).
  */
 export const bankNear = (ground: GroundField, a: Vec3, b: Vec3): boolean => {
   let at = a;
+  let slid = false;
   for (let walked = 0; walked < NEAR_SKIP; walked += NEAR_STEP) {
     const d = Math.hypot(b.x - at.x, b.z - at.z);
     if (d < NEAR_STEP) return false;
-    const to = offTheBank(ground, at, at.x + ((b.x - at.x) / d) * NEAR_STEP, at.z + ((b.z - at.z) / d) * NEAR_STEP, at.y);
-    if (((to.x - at.x) * (b.x - at.x) + (to.z - at.z) * (b.z - at.z)) / d < CREEP * NEAR_STEP) return true;
+    const [x, z] = [at.x + ((b.x - at.x) / d) * NEAR_STEP, at.z + ((b.z - at.z) / d) * NEAR_STEP];
+    const to = offTheBank(ground, at, x, z, at.y);
+    slid ||= to.x !== x || to.z !== z;
     // The feet on the ground there, as far down as they follow it.
     const h = ground.heightAt(to.x, to.z, at.y + STEP_HEIGHT);
     at = { x: to.x, y: h > at.y || at.y - h <= SNAP_DOWN ? h : at.y, z: to.z };
   }
-  // Slid along the foot of a wall that the line goes up (G-740): the feet are not on it.
+  if (slid) return true;
+  // On the line's ground, unless the line goes up a wall the feet are under (G-740).
   const k = Math.min(1, NEAR_SKIP / Math.hypot(b.x - a.x, b.z - a.z));
   return ground.heightAt(a.x + (b.x - a.x) * k, a.z + (b.z - a.z) * k, at.y + STEP_HEIGHT) - at.y > LEDGE;
 };
