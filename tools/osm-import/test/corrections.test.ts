@@ -322,16 +322,18 @@ describe("tag corrections (ADR-0042)", () => {
     }
     expect(bare.join(" ")).toEqual("");
     expect(surfaceAt(690, 382.2)).toBe("square");
-    // The bed stays bare; the break for the footway into the halls is paved.
-    expect(surfaceAt(670, 382.3)).toBeNull();
-    expect(surfaceAt(705, 377.5)).toBeNull();
+    // The bed of shrubs is no paving: the orthophoto shows it green and the bare ground rule lays it
+    // as a lawn (ADR-0077 step 1.1); the break for the footway into the halls is paved.
+    expect(surfaceAt(670, 382.3)).toBe("grass");
+    // Its east end under the crowns (class canopy) takes the paving round it (ADR-0077 step 1.1).
+    expect(surfaceAt(705, 377.5)).toBe("square");
     expect(surfaceAt(686.7, 380)).toBe("square");
   });
 
   // The Dworzec Autobusowy east of T-168's line x 810.6 (T-170): (a) the platform under the roof
   // w458862470, from the footway w227698409 to the stands' asphalt w66323033; (b) the pavilions'
   // block between the path w227698420 and that footway, to x 870; (c) north of the kiosk w73833929
-  // to Nowy Plac Targowy and the stands' entry (asphalt). The bed south of the path stays bare.
+  // to Nowy Plac Targowy and the stands' entry (asphalt). The bed south of the path is no paving.
   const pathAxis = (x: number) => (x <= 834.75 ? 370.14 - ((x - 806.22) * 3.88) / 28.53 : 366.26 - ((x - 834.75) * 10.14) / 74.4);
   it("paves the Dworzec Autobusowy's platform, the pavilions' block and north of the kiosk, and leaves the asphalt, the footways and the bed on top (G-345)", () => {
     const buildings = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z)));
@@ -348,7 +350,8 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(800, 443)).toBe("square");
     expect(surfaceAt(850, 395)).toBe("road");
     expect(surfaceAt(816, 437)).toBe("road");
-    expect(surfaceAt(845, 361.3)).toBeNull();
+    // The bed south of the path is no paving: green on the orthophoto, a lawn of the bare ground rule (ADR-0077 step 1.1).
+    expect(surfaceAt(845, 361.3)).toBe("grass");
     // The footways stay on top of the paving.
     expect(surfaceAt(850, 377.5)).toBe("footway");
     expect(surfaceAt(816, 438.8)).toBe("footway");

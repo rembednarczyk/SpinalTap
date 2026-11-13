@@ -13,7 +13,7 @@ import { REPO } from "./paths.ts";
 const OUT = join(REPO, "packages/sim/src/content/lublin");
 
 const inputs = loadInputs();
-const { chunks, stats, venues } = generate(inputs.osm, inputs.src, undefined, undefined, inputs.lod1, inputs.lod2);
+const { chunks, stats, venues } = generate(inputs.osm, inputs.src, undefined, undefined, inputs.lod1, inputs.lod2, inputs.covers);
 mkdirSync(OUT, { recursive: true });
 let total = 0;
 for (const d of DISTRICTS) {

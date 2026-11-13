@@ -214,12 +214,6 @@ const FRONT_KIOSKS = area("kioski-przy-parkingu", SETTS, [
 ], "kostka wokół kiosków przy parkingu w227679484 na ortofoto PZGiK, w OSM bez nawierzchni");
 
 /** The strips along the shops by Ruska (w407019272 among them), between their walls and the street. */
-const RUSKA_A = area("ruska-a", SETTS, [
-  678, 572.5, 679, 571.5, 680, 571.5, 681.5, 570.5, 685.5, 569.5, 687, 568.5, 689.5, 568, 691, 567, 692, 567, 695.5, 565.5, 699.5, 565.5, 700.5, 566.5,
-  700.5, 567.5, 699.5, 568.5, 698.5, 568.5, 697, 569.5, 696, 569.5, 695.5, 570, 693, 570.5, 691.5, 571.5, 687.5, 572.5, 686, 573.5, 683.5, 574, 680.5,
-  575.5, 678.75, 575,
-], "pas kostki i miejsc postojowych przed sklepami przy Ruskiej na ortofoto PZGiK, w OSM bez nawierzchni");
-
 const RUSKA_B = area("ruska-b", SETTS, [
   674, 579.5, 675.5, 577.75, 677, 577.5, 679.5, 576, 680.5, 576, 682.5, 575, 683.25, 575.25, 685, 574, 687.5, 573.5, 689, 572.5, 693, 571.5, 694.5,
   570.5, 697, 570, 698.5, 569, 699.5, 569, 701.5, 568, 703, 568, 704.5, 567, 705.5, 567, 709, 565.5, 710.25, 565.75, 710, 566.75, 713.75, 578, 713.5,
@@ -285,7 +279,6 @@ export const PODZAMCZE_AREAS: readonly AddedArea[] = [
   FRONT_LUBARTOWSKA_C,
   LAWN_KIOSKS,
   FRONT_KIOSKS,
-  RUSKA_A,
   RUSKA_B,
   GARAGE_VIVO,
 ];

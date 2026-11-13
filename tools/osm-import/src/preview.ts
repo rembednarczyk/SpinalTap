@@ -95,7 +95,7 @@ const svgFor = (name: string, chunks: readonly ChunkOut[]): string => {
 const dir = process.argv[2] ?? "lublin-preview";
 mkdirSync(dir, { recursive: true });
 const inputs = loadInputs();
-const { chunks } = generate(inputs.osm, inputs.src);
+const { chunks } = generate(inputs.osm, inputs.src, undefined, undefined, undefined, undefined, inputs.covers);
 for (const d of DISTRICTS) {
   const file = join(dir, `${d.slug}.svg`);
   writeFileSync(file, svgFor(d.name, chunks.filter((c) => c.district === d.id)));
