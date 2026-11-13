@@ -15,6 +15,9 @@ export interface HandTarget {
   readonly palm: Vector3;
   /** 0 open .. 1 a fist (`FingerCurl`). */
   readonly curl: number;
+  /** The index finger and the thumb apart (a trigger finger along the frame); the rest's by default. */
+  readonly index?: number;
+  readonly thumb?: number;
 }
 
 /** Both hands in the camera's frame. */
@@ -24,33 +27,66 @@ export interface ArmsTarget {
 }
 
 const v = (x: number, y: number, z: number): Vector3 => new Vector3(x, y, z);
-const hand = (wrist: Vector3, fore: Vector3, fingers: Vector3, palm: Vector3, curl: number): HandTarget => ({
+const hand = (wrist: Vector3, fore: Vector3, fingers: Vector3, palm: Vector3, curl: number, index?: number, thumb?: number): HandTarget => ({
   wrist,
   fore: fore.normalize(),
   fingers: fingers.normalize(),
   palm: palm.normalize(),
   curl,
+  ...(index !== undefined ? { index } : {}),
+  ...(thumb !== undefined ? { thumb } : {}),
 });
 
+/** From the wrist bone to the middle of the palm along the fingers, and from its axis to what the fist holds (Seki at her scale). */
+const PALM_REACH = 0.055;
+const PALM_DEPTH = 0.035;
+
 /**
- * The right hand round the grip, in the viewmodel's frame (the grip at the origin, the barrel
- * along +Z, the top up): the wrist behind and right of it, the palm on the grip's right side, the
- * fingers closing round its front. Every gun is held at its grip (`GRIP`), so one pose fits all.
+ * A hand closing on what is at `at`: the wrist back from it along the fingers and away from it
+ * against the palm, so the middle of the fist is on the point.
  */
-const RIGHT_ON_GRIP = hand(v(0.034, -0.028, -0.075), v(-0.22, 0.16, 1), v(-0.12, 0.22, 1), v(-1, 0, -0.1), 0.85);
+const grasp = (at: Vector3, fore: Vector3, fingers: Vector3, palm: Vector3, curl: number, index?: number, thumb?: number): HandTarget => {
+  const f = fingers.normalizeToNew();
+  const p = palm.normalizeToNew();
+  return hand(at.subtract(f.scale(PALM_REACH)).subtract(p.scale(PALM_DEPTH)), fore, f, p, curl, index, thumb);
+};
 
-/** The left hand under the right fist with a pistol: palm up and to the right, cupping it. */
-const LEFT_UNDER_FIST = hand(v(-0.05, -0.085, -0.05), v(0.4, 0.25, 1), v(0.45, 0.35, 1), v(0.7, 0.7, 0), 0.6);
+/**
+ * The right hand on a grip, in the viewmodel's frame (the grip at the origin, the barrel along +Z,
+ * the top up): high on the backstrap, the web between thumb and index under the bore's line, the
+ * palm on the grip's right side and the fingers closed round its front, the index finger laid
+ * straight along the frame. Every gun hangs from its grip (`GRIP`), so one pose fits all, the long
+ * guns' pistol grips too.
+ */
+const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1), v(-1, 0, 0.05), 0.85, 0.2, 0.85);
 
-/** The right fist round a baton's or blade's handle, which rises up and forward from it. */
-const RIGHT_ON_HANDLE = hand(v(0.03, 0.025, -0.045), v(-0.12, 0.45, 1), v(0, -Math.sin(VIEW_MELEE_TILT), Math.cos(VIEW_MELEE_TILT)), v(-1, 0, 0), 1);
+/** The left hand round the right one with a pistol: palm on the grip's left side, fingers over the right's. */
+const LEFT_ROUND_FIST = grasp(v(-0.018, 0.0, 0.004), v(0.45, 0.2, 1), v(0.55, -0.12, 1), v(1, 0.15, 0), 0.9, 0.9, 0.35);
 
-/** With a melee weapon the left hand hangs low, under the view (camera frame). */
+/**
+ * Melee weapons stand in the fist (`IN_VIEW_MELEE`) along `VIEW_MELEE_TILT`: a full hammer grip,
+ * the knuckles across the handle, the thumb towards the tip, the handle carrying the forearm's
+ * line on up and forward.
+ */
+const HANDLE = v(0, Math.cos(VIEW_MELEE_TILT), Math.sin(VIEW_MELEE_TILT));
+const across = (fore: Vector3): Vector3 => {
+  const f = fore.normalizeToNew();
+  return f.subtract(HANDLE.scale(Vector3.Dot(f, HANDLE))).normalize();
+};
+/** The right forearm runs on in the handle's line, steeply up from under the view, the wrist cocked to hold it. */
+const RIGHT_FORE_MELEE = v(-0.08, 0.5, 1);
+const RIGHT_ON_HANDLE = grasp(v(0, 0, 0), RIGHT_FORE_MELEE, across(v(0, 0, 1)), v(-1, 0, 0), 1, 1, 0.8);
+/** The sword's handle takes both fists (`shirasaya`): the left a fist's width under the right, at the pommel. */
+const LEFT_FORE_MELEE = v(0.3, 0.3, 1);
+const LEFT_ON_POMMEL = grasp(HANDLE.scale(-0.1), LEFT_FORE_MELEE, across(LEFT_FORE_MELEE), v(1, 0, 0), 1, 1, 0.8);
+
+/** With a one-handed melee weapon (the baton) the left hand hangs low, under the view (camera frame). */
 const LEFT_DOWN = hand(v(-0.24, -0.46, 0.18), v(0.1, 0.25, 1), v(0.1, 0.1, 1), v(1, 0, 0), 0.4);
 
 /**
- * The left hand under a long gun's fore-end (`LONG_GUN`): the point the TPP hold puts the palm
- * on, read in the viewmodel's frame like the grip (`VIEW_SHIFT`), the palm up under it.
+ * The left hand on a long gun's fore-end (`LONG_GUN`), the point the TPP hold puts the palm on,
+ * read in the viewmodel's frame like the grip (`VIEW_SHIFT`): from the left side and under, palm
+ * up and in, so the hand shows beside the fore-end from the eye.
  */
 const leftOnForeEnd = (look: WeaponLook): HandTarget | null => {
   const kind = WEAPON_MODEL[look].kind;
@@ -59,7 +95,7 @@ const leftOnForeEnd = (look: WeaponLook): HandTarget | null => {
   const scale = WEAPON_MODEL[look].scale;
   const z = (hold.fore.x - GRIP[kind].x - VIEW_SHIFT.x) * scale;
   const y = (hold.fore.y - GRIP[kind].y - VIEW_SHIFT.y) * scale;
-  return hand(v(-0.03, y - 0.05, z - 0.075), v(0.45, 0.2, 1), v(0.5, 0.15, 1), v(0.15, 1, 0), 0.55);
+  return grasp(v(-0.012, y + 0.005, z), v(0.4, 0.25, 1), v(0.35, 0.05, 1), v(1, 0.5, 0), 0.75, 0.6, 0.4);
 };
 
 /** `t` from the viewmodel's frame into the camera's. */
@@ -69,15 +105,18 @@ const intoCamera = (t: HandTarget, frame: { readonly position: Vector3; readonly
   fingers: frame.turn(t.fingers),
   palm: frame.turn(t.palm),
   curl: t.curl,
+  ...(t.index !== undefined ? { index: t.index } : {}),
+  ...(t.thumb !== undefined ? { thumb: t.thumb } : {}),
 });
 
 /** The hands with the weapon in the viewmodel, `turn` and `position` its frame in the camera's. */
 export const weaponHands = (look: WeaponLook | null, frame: { readonly position: Vector3; readonly turn: (d: Vector3) => Vector3 }): ArmsTarget => {
   const melee = look === "baton" || look === "blade";
   const right = intoCamera(melee ? RIGHT_ON_HANDLE : RIGHT_ON_GRIP, frame);
+  if (look === "blade") return { right, left: intoCamera(LEFT_ON_POMMEL, frame) };
   if (melee) return { right, left: LEFT_DOWN };
   const fore = look ? leftOnForeEnd(look) : null;
-  return { right, left: intoCamera(fore ?? LEFT_UNDER_FIST, frame) };
+  return { right, left: intoCamera(fore ?? LEFT_ROUND_FIST, frame) };
 };
 
 /** Forearm length of the procedural choke arms (`choke-arms.ts`), whose elbows the model's hands follow. */

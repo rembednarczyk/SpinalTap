@@ -1,6 +1,7 @@
 import type { AppearanceDescriptor, Transform, WeaponLook } from "@seki/core";
+import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { afterAll, describe, expect, it, vi } from "vitest";
-import { type AbstractMesh, type TransformNode, Vector3 } from "../src/babylon";
+import { type AbstractMesh, Scene, type TransformNode, Vector3 } from "../src/babylon";
 import { CameraRig } from "../src/camera/camera-rig";
 import type { MoonShadow } from "../src/npr/moon-shadow";
 import { ToonMaterials } from "../src/npr/toon-material";
@@ -9,6 +10,8 @@ import { buildHeroine } from "../src/renderer/characters";
 import { type CharacterModelManifest, ModelLibrary } from "../src/renderer/model-library";
 import { disposeModelScenes, modelScene, readModelFile, serveModels } from "./game-models";
 import { allWeaponUrls } from "./weapon-files";
+import { weaponHands } from "../src/renderer/fpp-hand-poses";
+import { VIEW_MELEE_TILT } from "../src/renderer/weapon-mount";
 
 /**
  * Seki's own forearms and hands in first person (user's wish of 13.11): from her model file once
@@ -19,8 +22,9 @@ import { allWeaponUrls } from "./weapon-files";
 const manifest = JSON.parse(new TextDecoder().decode(readModelFile("manifest.json"))) as CharacterModelManifest;
 const heroine = manifest.heroine!;
 
+const isMelee = (look: WeaponLook) => look === "baton" || look === "blade";
 const armed = (active: WeaponLook): AppearanceDescriptor => ({
-  weapons: { primary: active === "baton" ? "rifle" : active, secondary: "pistol", melee: "baton", active: active === "baton" ? "melee" : "primary" },
+  weapons: { primary: isMelee(active) ? "rifle" : active, secondary: "pistol", melee: active === "blade" ? "blade" : "baton", active: isMelee(active) ? "melee" : "primary" },
   garments: {},
   implants: [],
 });
@@ -29,15 +33,21 @@ const standing: Transform = { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, 
 
 afterAll(disposeModelScenes);
 
-const setup = () => {
+/** The camera's frame drawn at `size` (a 16:9 desktop, a phone); the null engine's own otherwise. */
+const sceneOf = (size?: readonly [number, number]): Scene =>
+  size ? new Scene(new NullEngine({ renderWidth: size[0], renderHeight: size[1], textureSize: 256, deterministicLockstep: false, lockstepMaxSteps: 1 })) : modelScene();
+
+const setup = (size?: readonly [number, number]) => {
+  const real = globalThis.fetch;
   serveModels();
   const served = globalThis.fetch;
   const fetched: string[] = [];
   vi.stubGlobal("fetch", (url: string) => {
     fetched.push(url);
-    return served(url);
+    // The weapon files come as data URLs.
+    return url.startsWith("data:") ? real(url) : served(url);
   });
-  const scene = modelScene();
+  const scene = sceneOf(size);
   const materials = new ToonMaterials(scene);
   const camera = new CameraRig(scene, materials, () => false);
   const library = new ModelLibrary(scene, materials);
@@ -60,6 +70,12 @@ const ready = async (kit: CharacterKit, settle: () => void) => {
 };
 
 const triangles = (meshes: readonly AbstractMesh[]) => meshes.reduce((n, m) => n + (m.getTotalIndices() / 3), 0);
+
+/** A bone under the hand by the end of its name, its world matrix fresh. */
+const bone = (hand: TransformNode, name: string): TransformNode => {
+  for (const n of hand.getDescendants(false) as TransformNode[]) n.computeWorldMatrix(true);
+  return hand.getDescendants(false).find((n) => n.name.endsWith(name)) as TransformNode;
+};
 
 /** Where `point` (world) lies in the frame of `node`. */
 const inFrame = (node: TransformNode, point: Vector3): Vector3 => {
@@ -124,25 +140,23 @@ describe("FPP hands from Seki's model (13.11)", () => {
     expect(props().every((m) => m.isEnabled())).toBe(true);
   });
 
-  it.each(["pistol", "rifle", "shotgun", "smg", "baton"] as const)("%s: the weapon stays fixed in the right hand's bone through hip, aim, reload and the walk", async (look) => {
+  it.each(["pistol", "revolver", "rifle", "shotgun", "smg", "baton", "blade"] as const)("%s: the weapon stays fixed in the right hand's bone through hip, aim, reload and the walk", async (look) => {
     const { kit, rig, settle, camera, library } = setup();
     await library.preload(heroine);
     kit.arm(1, rig, "hero", armed(look));
     kit.setViewArms(heroine);
     await ready(kit, settle);
     const hand = kit.hands.handBone("r")!;
-    const holder = look === "baton" ? camera.meleeMount : camera.weaponMount;
+    const holder = isMelee(look) ? camera.meleeMount : camera.weaponMount;
     const grip = () => inFrame(hand, holder.computeWorldMatrix(true).getTranslation());
     settle();
     const hip = grip();
-    if (look === "pistol") {
-      // The bones land on the pose: the wrist where the pose puts it, the knuckles the way its fingers point.
-      const wrist = inFrame(holder, hand.getAbsolutePosition());
-      expect(Vector3.Distance(wrist, new Vector3(0.034, -0.028, -0.075))).toBeLessThan(0.003);
-      const knuckle = hand.getChildren((n) => /Middle1$/.test(n.name), false)[0] as TransformNode;
-      const fingers = inFrame(holder, knuckle.getAbsolutePosition()).subtract(wrist).normalize();
-      expect(Vector3.Dot(fingers, new Vector3(-0.12, 0.22, 1).normalize())).toBeGreaterThan(0.999);
-    }
+    // The bones land on the pose: the wrist where it puts it, the knuckles the way its fingers point.
+    const pose = weaponHands(look, { position: Vector3.Zero(), turn: (d) => d.clone() }).right;
+    const wrist = inFrame(holder, hand.getAbsolutePosition());
+    expect(Vector3.Distance(wrist, pose.wrist)).toBeLessThan(0.003);
+    const fingers = inFrame(holder, bone(hand, "Middle1").getAbsolutePosition()).subtract(wrist).normalize();
+    expect(Vector3.Dot(fingers, pose.fingers)).toBeGreaterThan(0.999);
     // The grip sits in the palm: a few centimetres from the wrist bone, not across the view.
     expect(hip.length()).toBeLessThan(0.12);
     settle({ ...standing, aim: 1 });
@@ -169,5 +183,69 @@ describe("FPP hands from Seki's model (13.11)", () => {
     settle();
     const l = left();
     expect(Math.hypot(l.x, l.y, l.z)).toBeLessThan(0.15);
+  }, 60_000);
+  it.each([
+    ["desktop", [1280, 720]],
+    ["phone", [844, 390]],
+  ] as const)("%s: the hands on the weapon stay in the frame: both fists round a pistol, the left on a rifle's fore-end, from the hip and aimed, the fists on a baton and a sword", async (_, size) => {
+    const { kit, rig, settle, camera, library } = setup(size);
+    await library.preload(heroine);
+    kit.setViewArms(heroine);
+    const hands = [
+      ["pistol", 0.8, ["r", "l"]],
+      ["rifle", 0.55, ["l"]],
+      ["baton", 1, ["r"]],
+      ["blade", 1, ["r", "l"]],
+    ] as const;
+    for (const [look, zoom, sides] of hands) {
+      kit.arm(1, rig, "hero", armed(look));
+      await ready(kit, settle);
+      for (const aim of isMelee(look) ? [0] : [0, 1]) {
+        settle({ ...standing, aim, aimZoom: zoom });
+        const inv = camera.camera.getWorldMatrix().clone().invert();
+        const tan = Math.tan(camera.camera.fov / 2);
+        for (const side of sides) {
+          const hand = kit.hands.handBone(side)!;
+          for (const n of ["Middle1", "Little1", "Little2"]) {
+            const p = Vector3.TransformCoordinates(bone(hand, n).getAbsolutePosition(), inv);
+            expect(p.y / p.z, `${look} aim ${aim}: ${side} ${n} under the frame`).toBeGreaterThan(-tan);
+          }
+        }
+      }
+    }
+  }, 120_000);
+
+  it("holds a pistol deep: web high on the backstrap, fingers round the front, index along the frame, thumb on the left", async () => {
+    const { kit, rig, settle, camera, library } = setup();
+    await library.preload(heroine);
+    kit.arm(1, rig, "hero", armed("pistol"));
+    kit.setViewArms(heroine);
+    await ready(kit, settle);
+    settle();
+    const hand = kit.hands.handBone("r")!;
+    const at = (n: string) => inFrame(camera.weaponMount, bone(hand, n).getAbsolutePosition());
+    // The web between thumb and index sits high, under the slide (0.05 m over the grip point), not under the grip.
+    expect(at("Index1").y).toBeGreaterThan(0.015);
+    expect(at("Index1").y).toBeLessThan(0.06);
+    expect(at("Middle3_end").x).toBeLessThan(0);
+    expect(at("Index3_end").z).toBeGreaterThan(0.06);
+    expect(at("Thumb3_end").x).toBeLessThan(-0.012);
+  }, 60_000);
+
+  it.each(["baton", "blade"] as const)("%s: a hammer grip: a full fist on the handle, the index side towards the tip", async (look) => {
+    const { kit, rig, settle, camera, library } = setup();
+    await library.preload(heroine);
+    kit.arm(1, rig, "hero", armed(look));
+    kit.setViewArms(heroine);
+    await ready(kit, settle);
+    settle();
+    const handle = new Vector3(0, Math.cos(VIEW_MELEE_TILT), Math.sin(VIEW_MELEE_TILT));
+    // The sword takes both hands on its long handle, the baton one.
+    for (const side of look === "blade" ? (["r", "l"] as const) : (["r"] as const)) {
+      const hand = kit.hands.handBone(side)!;
+      const at = (n: string) => inFrame(camera.meleeMount, bone(hand, n).getAbsolutePosition());
+      expect(Vector3.Dot(at("Index1").subtract(at("Little1")).normalize(), handle), `${side} knuckles`).toBeGreaterThan(0.8);
+      expect(at("Middle1").length(), `${side} on the handle`).toBeLessThan(0.16);
+    }
   }, 60_000);
 });

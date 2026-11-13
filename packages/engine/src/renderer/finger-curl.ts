@@ -12,6 +12,7 @@ const BEND: Readonly<Record<(typeof FINGERS)[number], readonly [number, number, 
 };
 
 interface Joint {
+  readonly finger: (typeof FINGERS)[number];
   readonly node: TransformNode;
   /** Bind rotation against the parent. */
   readonly bind: Matrix;
@@ -33,7 +34,7 @@ const namesOf = (side: "l" | "r", finger: string, i: number): string[] => [`${si
 export class FingerCurl {
   private readonly rotation = new Matrix();
   private readonly turn = new Matrix();
-  private last = -1;
+  private last = "";
 
   private constructor(private readonly joints: readonly Joint[]) {}
 
@@ -63,18 +64,23 @@ export class FingerCurl {
         const axis = Vector3.TransformNormal(turn.normalize(), rotationOf(parent).transpose());
         const bind = Matrix.Identity();
         (node.rotationQuaternion ?? Quaternion.FromEulerAngles(node.rotation.x, node.rotation.y, node.rotation.z)).toRotationMatrix(bind);
-        joints.push({ node, bind, axis, bend: BEND[finger][i - 1]! });
+        joints.push({ finger, node, bind, axis, bend: BEND[finger][i - 1]! });
       }
     }
     return joints.length > 0 ? new FingerCurl(joints) : null;
   }
 
-  /** 0 the bind pose (open) .. 1 a fist. */
-  apply(amount: number): void {
-    if (amount === this.last) return;
-    this.last = amount;
+  /**
+   * 0 the bind pose (open) .. 1 a fist. `index` and `thumb` close those two apart (a trigger
+   * finger laid along the frame, a thumb along the other side); by default as the rest.
+   */
+  apply(amount: number, index = amount, thumb = amount): void {
+    const key = `${amount}|${index}|${thumb}`;
+    if (key === this.last) return;
+    this.last = key;
     for (const j of this.joints) {
-      Matrix.RotationAxisToRef(j.axis, j.bend * amount, this.turn);
+      const a = j.finger === "index" ? index : j.finger === "thumb" ? thumb : amount;
+      Matrix.RotationAxisToRef(j.axis, j.bend * a, this.turn);
       j.bind.multiplyToRef(this.turn, this.rotation);
       const q = j.node.rotationQuaternion ?? new Quaternion();
       Quaternion.FromRotationMatrixToRef(this.rotation, q);
