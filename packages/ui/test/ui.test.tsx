@@ -127,6 +127,12 @@ describe("HUD", () => {
     expect(screen.getByTestId("prompt").textContent).toContain("Rozmawiaj z Kaito");
   });
 
+  it("opens the journal on a click on the tracked entry", () => {
+    const { i } = mount({ screen: "playing", objective: "Wróć do Kaito", questTitle: "Pierwsze zlecenie" });
+    fireEvent.click(within(screen.getByTestId("objective")).getByRole("button", { name: "Open the journal" }));
+    expect(i.openCharacterScreen).toHaveBeenCalledWith("journal");
+  });
+
   it("shows and dismisses toasts", () => {
     const { store } = mount({ screen: "playing" });
     let id = 0;

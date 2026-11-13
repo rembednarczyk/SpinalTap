@@ -1,5 +1,6 @@
 import { LUBLIN_CHUNKS, type LublinBuildingData, type LublinChunkData } from "@seki/sim/lublin";
 import type { WallMaterial } from "../facade-style";
+import { BELL_TOWERS, type BellTower } from "./bell-towers";
 import { type P2, centroid, pointInRing } from "../polygon";
 import { type CableAnchor, type LandmarkPart, RECIPE_BY_OSM } from "./recipes";
 
@@ -46,26 +47,15 @@ export const landmarkAt = (x: number, z: number, corners: number): LandmarkPart 
   return index.get(keyOf(x, z, corners)) ?? null;
 };
 
-/**
- * Landmarks of the curator's list the map shows whole and without a tower (G-210): no
- * `building:part`, no `tower:*` and no tower mapped at them. The Trinity Chapel has none (T-119,
- * NMPT). The Bernardine church has one, but not where the renderer's would stand: by its south
- * wall where the nave meets the chancel (about (378.1, -247.7), 5.5 x 5.5 m, helmet to y 39.2 in
- * NMPT), with a ridge turret at (375.4, -240.1) to y 31.8. Without it is the lesser error than
- * two made-up towers at its west end, until the tower comes in as a part (G-214) and the entry goes.
- */
-const TOWERLESS_OSM: ReadonlySet<string> = new Set(["w66258167", "w66330578"]);
+let bellTowers: ReadonlyMap<string, readonly BellTower[]> | null = null;
 
-let towerless: ReadonlySet<string> | null = null;
-
-/**
- * Whether the map building standing at (x, z) with an outline of `corners` points takes no bell
- * towers of the renderer's: a landmark without a tower, or a church whose tower the map has by
- * it (`mappedTower`, G-212), so a made-up one would stand beside the real one.
- */
-export const towerlessAt = (x: number, z: number, corners: number): boolean => {
-  towerless ??= new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.flatMap((b) => (TOWERLESS_OSM.has(b.id) || b.mappedTower ? [keyOf(b.x, b.z, b.outline.length / 2)] : []))));
-  return towerless.has(keyOf(x, z, corners));
+/** The bell towers of the renderer's on the map building standing at (x, z) with an outline of `corners` points: a church's of `BELL_TOWERS` (G-215), else none. */
+export const bellTowersAt = (x: number, z: number, corners: number): readonly BellTower[] => {
+  bellTowers ??= new Map(LUBLIN_CHUNKS.flatMap((c) => c.buildings.flatMap((b): [string, readonly BellTower[]][] => {
+    const towers = BELL_TOWERS.get(b.id);
+    return towers ? [[keyOf(b.x, b.z, b.outline.length / 2), towers]] : [];
+  })));
+  return bellTowers.get(keyOf(x, z, corners)) ?? [];
 };
 
 let towers: ReadonlySet<string> | null = null;
