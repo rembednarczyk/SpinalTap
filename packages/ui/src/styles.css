@@ -122,7 +122,7 @@ kbd {
   border-right: 3px solid var(--amber);
 }
 .hud__currency { color: var(--amber); }
-.hud__clock {
+.hud__clock { border: 0; font: inherit; text-align: inherit; cursor: pointer; touch-action: manipulation;
   position: absolute;
   right: 28px;
   top: 72px;

@@ -41,6 +41,8 @@ export interface PreviewState {
   readonly renders: number;
   /** The imported model is on. */
   readonly dressed: boolean;
+  /** The imported heroine is on her way: the stand-in rig stays hidden until she is dressed. */
+  readonly waiting: boolean;
 }
 
 /** Colour of the menu behind the preview (the screen around the box is see-through). */
@@ -84,6 +86,8 @@ export class PreviewStage {
   private loadouts: Loadouts | null = null;
   private dressed: { model: ModelInstance; retarget: HumanoidRetarget } | null = null;
   private dressing = false;
+  /** The heroine's model failed to load or had no humanoid bones: the procedural rig shows instead. */
+  private dressFailed = false;
   private characters: CharacterModelManifest = {};
   private weaponModels: WeaponManifest = {};
   private appearance: AppearanceDescriptor | null = null;
@@ -99,6 +103,15 @@ export class PreviewStage {
     private readonly canvas: HTMLCanvasElement,
     private readonly options: PreviewStageOptions = {},
   ) {}
+
+  /**
+   * Builds the preview's scene and starts dressing the heroine now, before the menu first opens
+   * (the user's decision of 13.11: Seki's model loads with the first loading, in every view), so
+   * the menu never shows the stand-in rig while her model loads.
+   */
+  warm(): void {
+    this.ensureScene();
+  }
 
   /** Imported models, the same manifests the world renderer got. */
   setModels(characters: CharacterModelManifest, weapons: WeaponManifest = this.weaponModels): void {
@@ -152,6 +165,7 @@ export class PreviewStage {
       tinted: this.rig && this.loadouts ? this.loadouts.tinted(this.rig) : 0,
       renders: this.renders,
       dressed: this.dressed !== null,
+      waiting: this.waiting(),
     };
   }
 
@@ -178,6 +192,8 @@ export class PreviewStage {
     const scene = this.ensureScene();
     const rig = this.rig!;
     this.turntable!.rotation.y = this.yaw;
+    // While the heroine's model is on its way, nothing stands on the disc rather than the stand-in.
+    this.turntable!.setEnabled(!this.waiting());
     animateRig(rig, 0, live ? dt : 0);
     this.dressed?.retarget.update();
     this.loadouts?.update(rig);
@@ -250,6 +266,10 @@ export class PreviewStage {
     return scene;
   }
 
+  private waiting(): boolean {
+    return this.characters.heroine !== undefined && this.dressed === null && !this.dressFailed;
+  }
+
   /** Puts the imported heroine over the rig once it loads; the rig animates it from inside. */
   private dress(): void {
     const spec = this.characters.heroine;
@@ -264,6 +284,8 @@ export class PreviewStage {
         const retarget = HumanoidRetarget.create(rig, model.root, model.prefix);
         if (!retarget) {
           console.warn(`[preview] ${spec.url}: no humanoid bones, keeping the procedural heroine`);
+          this.dressFailed = true;
+          this.dirty = true;
           return model.dispose();
         }
         for (const m of rig.meshes) m.setEnabled(false);
@@ -273,6 +295,8 @@ export class PreviewStage {
       })
       .catch((err: unknown) => {
         this.dressing = false;
+        this.dressFailed = true;
+        this.dirty = true;
         console.warn(`[preview] ${spec.url} failed to load`, err);
       });
   }
