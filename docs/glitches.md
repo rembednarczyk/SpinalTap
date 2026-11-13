@@ -1780,6 +1780,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin teren)
 - Test przyjęcia: `walk-blocked` bez kluczy na osi w179264855; postać przechodzi
 - Teren gry zgodny z NMT (NMT 9 m na 10 m); reguła steepWays (import) + wayRamps (sim): odcinki dróg pieszych za strome na terenie gry kładzione równym spadkiem tg 30°; przy okazji ścieżka w202269259 (podzamcze 770,180) też poprawiona; orto:diff: teren 30 pkt, maks. 1,86 m w dół (670; 132,5)
+- Przegląd kuratora 13.11: ZGODNE Z UWAGAMI (T-288).
 
 ### G-758 Import wybiera komórki terenu 4 i 8 m niepodzielne przez 2,5 i 5 m sąsiadów
 - Ważność: S3 · Zasięg: krakowskie-2-1 i inne kawałki siatki 4/8 m; szwy zostają 0,51 / 0,225 / 0,18 m po G-748
