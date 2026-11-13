@@ -1747,13 +1747,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-737 Chodnik mostu Mełgiewskiej przy Andersa 0,14–0,16 m pod jezdnią (T-283)
 - Ważność: S4 · Zasięg: most w50733068, chodnik w230881193 przy Andersa, (2420-2426; 323), zachodni koniec; chodnik −25,86…−25,88, jezdnia −25,72
 - Opis: pomost chodnika leży na NMT końca swojej osi, a jezdni na swojej; w poprzek mostu powstaje uskok 0,14–0,16 m poniżej progu `deck-step-face` (0,3). W Lublinie chodnik za krawężnikiem jest w poziomie jezdni.
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g737 (13.11, db84383: chodnik i wypełnienia w obrysie mostu biorą oś pomostu jezdni; `deck-kerb-step` 1201 → 0, `ground-over-deck` 397 → 233; przegląd kuratora ZGODNE Z UWAGAMI 13.11; czeka na G-738); wcześniej: zgłoszone (13.11, naprawiacz G-736, potwierdzone przez kuratora); propozycja kontroli skanu: różnica chodnik–jezdnia w jednym przekroju mostu > 0,05 m
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g737 (13.11, db84383: chodnik i wypełnienia w obrysie mostu biorą oś pomostu jezdni; `deck-kerb-step` 1201 → 0, `ground-over-deck` 397 → 233; przegląd kuratora ZGODNE Z UWAGAMI 13.11; w PR #485, scalenie po #484); wcześniej: zgłoszone (13.11, naprawiacz G-736, potwierdzone przez kuratora); propozycja kontroli skanu: różnica chodnik–jezdnia w jednym przekroju mostu > 0,05 m
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`, wysokości pomostów)
 
 ### G-738 Ganger utyka przy narożniku rampy przyczółka mostu południowego Mełgiewskiej (2415; 311)
 - Ważność: S3 (pościg staje na stałe) · Zasięg: NW narożnik rampy przyczółka jezdni mostu w50733068, na dnie ściany 1,5 m; na main przy starcie pościgu z (2411,9; 296,0) albo (2414,2; 307,4)
 - Opis: plan pościgu prowadzi gangera przez narożnik rampy, gdzie utyka pod ścianą. Po G-737 (chodnik mostu w poziomie jezdni) trasa przez to miejsce staje się wybierana też w `bridge-edges-ai.test.ts` („gets from the lower bridge of Mełgiewska down to the street south of it”), więc test pada; pułapka istnieje na main niezależnie od G-737.
-- Status: w naprawie (13.11, zgłoszone przez naprawiacza G-737); blokuje scalenie G-737
+- Status: w PR #484 (13.11, 3da8ee0: `walkable` sprawdza pominięty odcinek `NEAR_SKIP` regułą ruchu `offTheBank`; siatka 25 startów × 3 cele × 3 ziarna: 192/225 → 219/225; reszta w G-740); wcześniej: zgłoszone (13.11, naprawiacz G-737); blokuje scalenie G-737 (#485)
 - Pakiet właściciela: packages/sim/src/systems/ai (nawigacja), ewentualnie dane rampy w content/lublin
 
 ### G-739 Koniec kładki Podzamcza (1073,9; 160,5) leży na skarpie rowu Czechówki, pomost o 2,7 m za nisko (T-166)
@@ -1764,6 +1764,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna: `bridge-ends.ts` (`AT_EDGE` 0,5 m) nie przedłuża końca, bo obrys `man_made=bridge` też zachodzi na skarpę (dokładność OSM ok. 1 m); `makeDeck` bierze `rawHeight` końca osi
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`), packages/sim (`content/lublin/decks.ts`)
 - Test przyjęcia: `deck-abutment-step` i `ground-over-deck` = 0 przy kładce; nowa kontrola `bridge-end-in-slope` (koniec osi pomostu z NMT niższym o > 0,5 m od maksimum NMT w 2,5 m wzdłuż osi na zewnątrz) = 0 (baza 1, pozostałe końce do zmierzenia). Propozycja: wysokość końca z najbliższego węzła dojścia albo koniec osi wyniesiony do krawędzi rowu; pomost wtedy ok. −22,9…−23,5
+
+### G-740 Ganger staje pod ścianą przyczółka mostu południowego Mełgiewskiej poza planerem pościgu (2 przypadki)
+- Ważność: S3 · Zasięg: ta sama ściana co G-738 (do 1,5 m, rampa przyczółka w50733068); po G-738 6 z 225 przebiegów siatki wokół rampy nie dochodzi, także po 90 s
+- Opis: (1) z (2410; 310) do (2449; 318): powrót na posterunek przez `straightWalk`, którego próbki co 0,5 m przeskakują ścianę, staje w (2415,6; 310,8); (2) z (2422; 310) do (2405; 318): ganger pod pomostem napiera na ścianę przyczółka, staje w (2416,5; 311,5)
+- Status: zgłoszone (13.11, naprawiacz G-738)
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: oba przypadki dochodzą (test w `bridge-edges-ai.test.ts`), siatka wokół rampy 225/225
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
