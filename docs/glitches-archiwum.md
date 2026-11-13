@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-755 Droga pieszo-rowerowa w179264855 w grze za stroma (0,8–0,92) przy (667–682; 134–141)
+- Ważność: S3 · Zasięg: zejście ze Starego Miasta na Podzamcze; ok. 1 440 par `walk-blocked` (kwadraty 670,130 i 670,140)
+- Opis: OSM: highway=pedestrian, bicycle=yes, lit, nie schody; oś w grze spada 4,5 m na 4 m; sprawdzić NMT i zdjęcia: jeśli spadek jest łagodniejszy — wygładzić, jeśli to schody/rampa — wymusić schody (flightRamps)
+- Status: naprawione (13.11, PR #515 scalony 13.11 (7877dda) scalony); wcześniej: w PR (13.11, ccr-ec2c4269-ilh8k8-g755, 7d61872; walk-blocked 5 -> 1); wcześniej: zgłoszone (13.11, kurator, przegląd walk-blocked)
+- Pakiet właściciela: packages/sim (content/lublin teren)
+- Test przyjęcia: `walk-blocked` bez kluczy na osi w179264855; postać przechodzi
+- Teren gry zgodny z NMT (NMT 9 m na 10 m); reguła steepWays (import) + wayRamps (sim): odcinki dróg pieszych za strome na terenie gry kładzione równym spadkiem tg 30°; przy okazji ścieżka w202269259 (podzamcze 770,180) też poprawiona; orto:diff: teren 30 pkt, maks. 1,86 m w dół (670; 132,5)
+- Przegląd kuratora 13.11: ZGODNE Z UWAGAMI (T-288).
+
 ### G-762 startOf wybiera komórkę startową 3 m nad stopami u muru przyczółka dolnego mostu Mełgiewskiej
 - Ważność: S3 · Zasięg: planer pościgu przy murach przyczółków, np. (2415; 280)
 - Opis: u stopy muru przyczółka komórka stóp zamknięta (stroma); startOf bierze sąsiada na murze 3,4 m wyżej, a wallOnWay nie widzi ściany ze stromej komórki; droga prowadzi po murze, ganger napiera na niego, dalej idzie tylko po bocznym kroku kontroli utknięcia
