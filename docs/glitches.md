@@ -1838,6 +1838,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola lawn-on-leafoff-paving < 50 m², a zarośla Nabrzeża (x 2500..2534, z 107..139) i żywopłot Podzamcza (x 551..569, z 353..359) zostają trawą
 - Wiersz topografii: T-287.
 - runda 2 (6b0ebb7): obrysy fills dotykające same siebie rozcinane na proste pierścienie (splitTouching); kontrola fill-area-mismatch 12 -> 0; grass-under-paving zielony; map-ground-golden 168809/f7705141
+- Przegląd topografii 13.11 (6b0ebb7): ZGODNE Z UWAGAMI (T-287); zrzut Krakowskie (297; -226) do powtórzenia.
 
 ### G-765 roundJoints odrzuca bit klinu 3,5-10 st. (dwa obrysy po mm Clippera)
 - Ważność: S4 · Zasięg: złącza dróg pod kątem 3,5-10 st.; sonda losowa: 21/400 par
