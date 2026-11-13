@@ -29,12 +29,20 @@ export interface QualityTier {
    * file unused longest, outside the donors, goes.
    */
   readonly modelFiles: number;
+  /**
+   * Multisampling of the frame the post-process chain starts from (graphics backlog 13.11, step 1).
+   * The canvas's own antialiasing never reaches the screen, because the scene renders into the first
+   * post-process's texture; 1 leaves the edges to FXAA alone.
+   */
+  readonly msaa: number;
+  /** Sharpening after FXAA, 0 off: it gives back the crispness FXAA takes from the ink lines. */
+  readonly sharpen: number;
 }
 
 export const QUALITY_TIERS: Readonly<Record<RenderQuality, QualityTier>> = {
-  low: { shadowMap: 1024, lineArt: false, splashes: false, wetProbe: null, livePreview: false, modelFiles: 5 },
-  medium: { shadowMap: 1024, lineArt: true, splashes: false, wetProbe: 128, livePreview: true, modelFiles: 11 },
-  high: { shadowMap: 2048, lineArt: true, splashes: true, wetProbe: 256, livePreview: true, modelFiles: 11 },
+  low: { shadowMap: 1024, lineArt: false, splashes: false, wetProbe: null, livePreview: false, modelFiles: 5, msaa: 1, sharpen: 0 },
+  medium: { shadowMap: 1024, lineArt: true, splashes: false, wetProbe: 128, livePreview: true, modelFiles: 11, msaa: 2, sharpen: 0 },
+  high: { shadowMap: 2048, lineArt: true, splashes: true, wetProbe: 256, livePreview: true, modelFiles: 11, msaa: 4, sharpen: 0.25 },
 };
 
 export const qualityTier = (q: RenderQuality | undefined): QualityTier => QUALITY_TIERS[q ?? "high"];

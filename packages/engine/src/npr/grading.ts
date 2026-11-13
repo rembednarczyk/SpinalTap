@@ -27,7 +27,7 @@ export class Grading {
   constructor(
     scene: Scene,
     camera: Camera,
-    options: { reference: boolean },
+    options: { reference: boolean; sharpen?: number },
     private readonly limiter: FlashLimiter = new FlashLimiter(),
   ) {
     const p = new DefaultRenderingPipeline("grading", false, scene, [camera]);
@@ -49,6 +49,13 @@ export class Grading {
     p.grainEnabled = !options.reference;
     p.grain.intensity = 6;
     p.grain.animated = !options.reference;
+    // After FXAA: gives back the crispness it takes from the ink lines (graphics backlog 13.11).
+    const sharpen = options.sharpen ?? 0;
+    p.sharpenEnabled = sharpen > 0;
+    if (sharpen > 0) {
+      p.sharpen.edgeAmount = sharpen;
+      p.sharpen.colorAmount = 1;
+    }
     this.pipeline = p;
   }
 
