@@ -1,2 +1,0 @@
-# seam-gap: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-2-1 380,-20
