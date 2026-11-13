@@ -1749,26 +1749,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`), packages/sim (`content/lublin/decks.ts`)
 - Test przyjęcia: `deck-abutment-step` i `ground-over-deck` = 0 przy kładce; nowa kontrola `bridge-end-in-slope` (koniec osi pomostu z NMT niższym o > 0,5 m od maksimum NMT w 2,5 m wzdłuż osi na zewnątrz) = 0 (baza 1, pozostałe końce do zmierzenia). Propozycja: wysokość końca z najbliższego węzła dojścia albo koniec osi wyniesiony do krawędzi rowu; pomost wtedy ok. −22,9…−23,5
 
-### G-740 Ganger staje pod ścianą przyczółka mostu południowego Mełgiewskiej poza planerem pościgu (2 przypadki)
-- Ważność: S3 · Zasięg: ta sama ściana co G-738 (do 1,5 m, rampa przyczółka w50733068); po G-738 6 z 225 przebiegów siatki wokół rampy nie dochodzi, także po 90 s
-- Opis: (1) z (2410; 310) do (2449; 318): powrót na posterunek przez `straightWalk`, którego próbki co 0,5 m przeskakują ścianę, staje w (2415,6; 310,8); (2) z (2422; 310) do (2405; 318): ganger pod pomostem napiera na ścianę przyczółka, staje w (2416,5; 311,5)
-- Status: w PR #495 (13.11, 8218817 + merge G-741: ściany między komórkami rastra z reguły `offTheBank`, `wallOnWay` w `walkable`/`startOf`/`straightWalk`; przypadki 4/4, siatka 225/225; raster w pagórkach 1,5–2× dłuższy; po #490); wcześniej: zgłoszone (13.11, naprawiacz G-738)
-- Pakiet właściciela: packages/sim/src/systems/ai
-- Test przyjęcia: oba przypadki dochodzą (test w `bridge-edges-ai.test.ts`), siatka wokół rampy 225/225
-- 13.11 (naprawiacz G-741): przy przyczółkach Mełgiewskiej 14 z 30 punktów nie dochodzi (osiłki na skarpach przy końcach pomostów, np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)); `followDetour` bez osiągalnej komórki w linii prostej kieruje do `way[1]`, nawet nieosiągalnej: źródło zakleszczeń w kieszeniach przy skarpach
-
 ### G-742 Białe fasady przepalają się w słońcu (4,6–4,8% dolnej połowy kadru)
 - Ważność: S4 · Zasięg: ujęcia z chodników przy Placu Litewskim (-91;127) i (-89;-199) o 12:00; przepalenie z białych fasad, nie z nawierzchni; próg przyjęty przy G-721: ≤ 3%
 - Status: zgłoszone (13.11, naprawiacz G-734)
 - Pakiet właściciela: packages/engine (barwy fasad, światło dnia)
-
-### G-743 Fascja i spód pomostu: nieciągła grubość daje zęby i skośne trójkąty nad skarpą (T-166)
-- Ważność: S4 · Zasięg: pomosty nad skarpą, gdzie prześwit pod pokładem przechodzi przez 2–2,8 m; przykład kładka podzamcze-2-0 po G-739, (1074; 161,8) i (1079; 161,8); błąd istniał (G-062), G-739 go odsłania
-- Opis: `deckDepth` (`packages/sim/src/world/deck.ts`) skacze nieciągle: przy prześwicie ≤ 2 m 0,9 m, tuż powyżej 0,2 m, potem rośnie do 0,9 m przy ok. 2,8 m. Fascja (`planDeckEdges`, `packages/engine/src/renderer/mapcity/deck-plan.ts`) bierze grubość co ok. 1,9 m, a spód (`planDeckUnderside`) tylko w narożach pierścienia (wszędzie 0,9 m), więc płaski spód wystaje poniżej cienkich odcinków fascji
-- Status: w PR #491 (13.11, 2192ee2: ciągła grubość `deckDepth`, fascja łamana w punktach siatki spodu; testy padają bez poprawki; zrzut spod kładki bez zębów); wcześniej: w naprawie (13.11, zgłoszone przez kuratora przy przeglądzie G-739)
-- Pakiet właściciela: packages/engine (`deck-plan.ts`), packages/sim (`deckDepth`)
-- Test przyjęcia: grubość fascji ciągła względem prześwitu; spód nigdy nie wystaje poniżej fascji (test na siatce pomostu); zrzut kładki z dołu bez trójkątów
-- 13.11: test G-062 „headroom” sprawdzał spód tylko w wierzchołkach; wnętrza spodu nie sprawdza nic (luka testowa, do rozważenia przy ADR-0080)
 
 ### G-744 Pasy ruchu biorą odsunięcie od zmierzonego zasięgu asfaltu: przesunięcie krawędzi jezdni o centymetry daje kolizje aut
 - Ważność: S3 · Zasięg: ruch w całym mieście; ujawnione przez etap 2 ADR-0078 (łuki łączeń zmieniają zasięg asfaltu o kilka cm, pasy przesuwają się do 12 cm): `traffic-junction-drive` przy 3 Maja (1 ziarno z 12), Kołłątaja/Zesłańców Sybiru (−108; −149) seed 10, Cicha seed 30; na main 0
@@ -1797,6 +1781,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, budowniczy ADR-0080 PR 4)
 - Pakiet właściciela: packages/sim (content/lublin terrain)
 - Test przyjęcia: `walk-blocked` bez kluczy na szwie x = 460; teren obu kawałków ciągły (różnica ≤ 0,05 m wzdłuż szwu)
+
+### G-749 Test `grass-under-paving` (Plac Litewski, szwy kawałków) przekracza 20 s w CI
+- Ważność: S4 · Zasięg: `tools/glitch-scan/test/grass-under-paving.test.ts` › „leaves no bare strip in Plac Litewski's lawns…”; w CI #491 (13.11) przekroczył 20 s, po ponowieniu przeszedł; lokalnie przechodzi
+- Opis: test liczy wyciąg całego obszaru placu przy każdym uruchomieniu; blisko limitu, więc pod obciążeniem runnera pada niezależnie od zmiany
+- Status: zgłoszone (13.11, orkiestrator, CI #491)
+- Pakiet właściciela: tools/glitch-scan
+- Test przyjęcia: czas testu w CI ≤ 50% limitu (pomiar `pnpm test:rerun`/raport vitest), bez podnoszenia limitu
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
