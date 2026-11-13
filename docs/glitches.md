@@ -1839,6 +1839,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Wiersz topografii: T-287.
 - runda 2 (6b0ebb7): obrysy fills dotykające same siebie rozcinane na proste pierścienie (splitTouching); kontrola fill-area-mismatch 12 -> 0; grass-under-paving zielony; map-ground-golden 168809/f7705141
 - Przegląd topografii 13.11 (6b0ebb7): ZGODNE Z UWAGAMI (T-287); zrzut Krakowskie (297; -226) do powtórzenia.
+- Ponowny zrzut (297; -226) na 6b0ebb7 potwierdza ciemny trójkąt: zgłoszony jako G-769, nie blokuje PR #519 (kurator).
 
 ### G-765 roundJoints odrzuca bit klinu 3,5-10 st. (dwa obrysy po mm Clippera)
 - Ważność: S4 · Zasięg: złącza dróg pod kątem 3,5-10 st.; sonda losowa: 21/400 par
@@ -1867,6 +1868,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, budowniczy ADR-0080 PR 3)
 - Pakiet właściciela: packages/sim/src/systems
 - Test przyjęcia: przemiatanie ziaren 1–40 w zakręcie bez kolizji przy pasach ±0,1 m
+
+### G-769 Ciemny trójkąt ok. 0,2 m w kostce na Krakowskim przy (297; -226) po G-764
+- Ważność: S4 · Zasięg: krakowskie, (297; -226); zrzut /dev/shm/g764-reshoot/pair/krakowskie-297-215.png na 6b0ebb7
+- Opis: drobna dziura w fills między nowym kawałkiem kostki z canopyHard a sąsiednim kawałkiem; widać ciemne podłoże; zauważone przez kuratora w przeglądzie G-764, potwierdzone ponownym zrzutem
+- Status: zgłoszone (13.11, kurator, przegląd G-764)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: brak dziury w fills przy (297; -226) (sonda 0,1 m), kontrola lawn-leafoff-patch lub fills-gap
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
