@@ -1751,7 +1751,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`, wysokości pomostów)
 
 ### G-739 Koniec kładki Podzamcza (1073,9; 160,5) leży na skarpie rowu Czechówki, pomost o 2,7 m za nisko (T-166)
-- Status: zgłoszone (13.11, kurator, ortofoto 2025-04 i 2024-06, NMT)
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g739 (13.11, ae90173: koniec pomostu na skarpie przesuwany wzdłuż drogi do szczytu skarpy; kładka −23,04…−23,91, ok. 3,8°; `bridge-end-in-slope` 3 → 0, `ground-over-deck` 397 → 395; przy okazji G-362 koniec +0,58 m; czeka na G-741 i przegląd kuratora); wcześniej: zgłoszone (13.11, kurator, ortofoto 2025-04 i 2024-06, NMT)
 - Ważność: S3 · Zasięg: 1 pomost (podzamcze-2-0, kładka w295849307, 8 m): gracz i AI przechodzą po zjeździe 2,2 m na 8,3 m (15°) zamiast po poziomym przęśle · Koszt: mały
 - Gdzie: (1073,9; 160,5) pomost −25,63, chodnik zachodni −22,9, teren na x 1071–1073 od −22,9 do −23,4; 2 próbki `ground-over-deck` (0,054 m); 3 próbki `deck-abutment-step` (1073,8; 161,7), (1073,8; 161,1), (1073,9; 160,6)
 - Dowód: nakładki ortofoto w scratchpadzie sesji (`topo-kladka-orto-2025-04.png`, `-2024-06.png`): przęsło poziome, ciągłe z chodnikiem, bez schodów; NMT wzdłuż z = 160,6: krawędź rowu x≈1072,5 (−22,9), skarpa 45° do dna −27,7; koniec osi 1,4 m w głąb skarpy. Drugi koniec (1082,2; 160,9) zgodny (−23,47)
@@ -1765,6 +1765,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-738)
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: oba przypadki dochodzą (test w `bridge-edges-ai.test.ts`), siatka wokół rampy 225/225
+
+### G-741 AI nie widzi boków pomostów jako ścian poza okolicą schodów
+- Ważność: S3 · Zasięg: wszystkie pomosty nad niższym terenem; `nav-raster.ts` (`ledgesOf`) zamyka krawędzie pomostów tylko przy biegach schodów, więc planer nie obchodzi pomostu przez koniec i ganger staje pod bokiem pomostu
+- Opis: po G-739 (kładka podzamcze-2-0 na poziomie ulicy) osiłek w `bridge-edges-ai.test.ts` („gets from beside the footbridge of podzamcze-2-0 onto its middle”) idzie prosto i staje pod północnym bokiem, 0,77 m niżej, 4,5 m od gracza; na main test przechodzi tylko dzięki przechyleniu pomostu z G-739
+- Status: w naprawie (13.11, zgłoszone przez naprawiacza G-739); blokuje scalenie G-739
+- Pakiet właściciela: packages/sim/src/systems/ai (`nav-raster.ts`)
+- Test przyjęcia: `bridge-edges-ai` przechodzi na gałęzi G-739; nowy test na main z boku innego pomostu nad niższym terenem
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
