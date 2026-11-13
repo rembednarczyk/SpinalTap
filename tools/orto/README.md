@@ -22,6 +22,8 @@ Narzędzie ma trzy kroki: pamięć podręczną ortofoto PZGiK, klasyfikator pokr
    - Liczą się próbki co najmniej 1 m wewnątrz kawałka, w klasie, którą nawierzchnia powinna mieć: jasna pod placami i ścieżkami, asfalt pod jezdniami, zieleń pod trawnikami.
    - Raport podaje też jasność (luma Rec. 709) do trawy i udział klas pod każdą nawierzchnią.
    - Na tych medianach stoi paleta nawierzchni renderera (`ORTHO_PAVING` w `ground-plan.ts`, G-721). Gdy mediany się zmienią, przepisz je tam.
+   - `--write-medians [plik]` zapisuje zatwierdzone mediany do `data/orto/albedo-medians.json` (`src/albedo-medians.ts`). Plik ma ok. 3 KB i jest deterministyczny: dla każdego nalotu dzień zdjęcia, a dla każdej nawierzchni medianę RGB, lumę, stosunek do trawy i liczbę próbek. Nalot odniesienia `reference` to pierwszy, bieżący obraz 2025-04, na którym skalibrowano paletę. Bez kafli w pamięci podręcznej narzędzie odmawia zapisu.
+   - Na tym pliku stoi kontrola skanu `paving-albedo-drift` (`tools/glitch-scan/test/paving-albedo.ts`). Bierze barwę, jaką renderer kładzie (`planSurface`), dla nawierzchni z `ORTHO_PAVING` i dla każdej innej kładzionej nawierzchni z medianą (np. `road`). Trafieniem jest stosunek do trawy różny od mediany nalotu odniesienia o więcej niż 0,25. Niecka fontanny (`basin`) jest wyłączona, bo zostaje ciemna z decyzji użytkownika z 13.11. Po zmianie importu albo palety puść `--write-medians` i scommituj plik razem ze zmianą.
 
 ## Dwie wersje mapy: `pnpm orto:diff`
 ```

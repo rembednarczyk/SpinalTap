@@ -35,6 +35,7 @@ const IMPORT = ["tools/osm-import/**", "tools/orto/**", "data/osm/**", "data/ter
 export const GUARDED: readonly Guarded[] = [
   { id: "lublin-tables", kind: "generated", files: ["packages/sim/src/content/lublin/*.generated.ts"], inputs: IMPORT },
   { id: "orto-cover", kind: "generated", files: ["data/orto/*.cover.*", "data/orto/sources.json"], inputs: ["tools/orto/src/**"] },
+  { id: "albedo-medians", kind: "generated", files: ["data/orto/albedo-medians.json"], inputs: ["tools/orto/src/**", "data/orto/*.cover.*", "packages/sim/src/content/lublin/*.generated.ts"] },
   { id: "determinism", kind: "golden", files: ["packages/sim/test/determinism.test.ts"], inputs: SIM },
   { id: "ground-cut", kind: "golden", files: ["packages/engine/test/ground-cut.test.ts"], inputs: MAP },
   { id: "map-ground-golden", kind: "golden", files: ["packages/engine/test/map-ground-golden.test.ts"], inputs: MAP },
