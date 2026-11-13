@@ -1,7 +1,9 @@
-import { type Camera, CameraClass, Color3, GeometryBufferRenderer, PostProcess, type Scene, ShaderStore } from "../babylon";
-import { CONTACT_SHADE_GLSL, CONTACT_SHADE_TINT, type ContactShade, halfTangents } from "./contact-shade";
+import { type Camera, Color3, GeometryBufferRenderer, PostProcess, type Scene, ShaderStore } from "../babylon";
+import { CONTACT_SHADE_TINT, type ContactShade } from "./contact-shade";
+import { ContactShadePass } from "./contact-shade-pass";
 
-const lineArtFragment = (shade: string): string => /* glsl */ `
+/** With `shaded`, the input is the blurred contact shade and the scene's colour comes from `colorSampler`. */
+const lineArtFragment = (shaded: boolean): string => /* glsl */ `
 precision highp float;
 varying vec2 vUV;
 uniform sampler2D textureSampler;
@@ -16,10 +18,12 @@ uniform float inkStrength;
 float depthAt(vec2 uv) { return texture2D(depthSampler, uv).r; }
 vec3 normalAt(vec2 uv) { return normalize(texture2D(normalSampler, uv).xyz + 1e-5); }
 uniform vec3 shadeTint;
-${shade}
+/** x: unused, y: strength (0 off), z: step threshold. */
+uniform vec4 shadeParams;
+${shaded ? "uniform sampler2D colorSampler;" : ""}
 
 void main(void) {
-  vec4 base = texture2D(textureSampler, vUV);
+  vec4 base = texture2D(${shaded ? "colorSampler" : "textureSampler"}, vUV);
   float d = depthAt(vUV);
   if (d <= 0.0) { gl_FragColor = base; return; }
   vec2 o = texel * lineParams.x;
@@ -40,7 +44,10 @@ void main(void) {
   }
   float line = max(smoothstep(lineParams.y, lineParams.y * 2.0, dEdge), smoothstep(lineParams.z, lineParams.z * 1.6, nEdge));
   line *= 1.0 - smoothstep(lineParams.w * 0.55, lineParams.w, d);
-  vec3 shaded = mix(base.rgb, base.rgb * shadeTint, contactShade(vUV, d, n));
+  float occ = ${shaded ? "texture2D(textureSampler, vUV).r" : "0.0"};
+  // One hard step, as a painted shadow shape; the blur before this keeps its edge clean.
+  float shade = shadeParams.y * smoothstep(shadeParams.z - 0.03, shadeParams.z + 0.03, occ);
+  vec3 shaded = mix(base.rgb, base.rgb * shadeTint, shade);
   gl_FragColor = vec4(mix(shaded, inkColor * shaded + inkColor * 0.15, line * inkStrength), base.a);
 }
 `;
@@ -68,7 +75,9 @@ export class LineArt {
   enabled = true;
 
   constructor(scene: Scene, camera: Camera, options: LineArtOptions = {}) {
-    ShaderStore.ShadersStore["seekiLineArtFragmentShader"] = lineArtFragment(CONTACT_SHADE_GLSL);
+    const shade = options.contactShade ?? null;
+    const shaderName = shade ? "seekiLineArtShaded" : "seekiLineArt";
+    ShaderStore.ShadersStore[`${shaderName}FragmentShader`] = lineArtFragment(shade !== null);
     const gbuffer = scene.enableGeometryBufferRenderer();
     if (!gbuffer) throw new Error("Geometry buffer unavailable");
     gbuffer.enableNormal = true;
@@ -79,12 +88,13 @@ export class LineArt {
     const params = [thickness, options.depthThreshold ?? 0.035, options.normalThreshold ?? 0.35, options.fadeDistance ?? 70] as const;
     const strength = options.strength ?? 0.92;
     const engine = scene.getEngine();
-    const shade = options.contactShade ?? null;
+    // In front of the line art on the camera, so it is built first.
+    const shadePass = shade ? new ContactShadePass(scene, camera, gbuffer, shade, params[3], () => this.enabled) : null;
     this.postProcess = new PostProcess(
       "line-art",
-      "seekiLineArt",
-      ["texel", "lineParams", "inkColor", "inkStrength", "shadeParams", "tanHalf", "shadeTint"],
-      ["depthSampler", "normalSampler"],
+      shaderName,
+      ["texel", "lineParams", "inkColor", "inkStrength", "shadeParams", "shadeTint"],
+      shade ? ["depthSampler", "normalSampler", "colorSampler"] : ["depthSampler", "normalSampler"],
       1,
       camera,
     );
@@ -98,9 +108,8 @@ export class LineArt {
       effect.setFloat4("lineParams", Math.max(1, (params[0] * h) / 720), params[1], params[2], params[3]);
       effect.setColor3("inkColor", ink);
       effect.setFloat("inkStrength", this.enabled ? strength : 0);
-      const [tx, ty] = halfTangents(camera.fov, camera.fovMode === CameraClass.FOVMODE_HORIZONTAL_FIXED, w, h);
-      effect.setFloat2("tanHalf", tx, ty);
-      effect.setFloat4("shadeParams", shade?.radius ?? 1, this.enabled && shade ? shade.strength : 0, shade?.threshold ?? 1, params[3]);
+      if (shadePass) effect.setTextureFromPostProcess("colorSampler", shadePass.colourSource);
+      effect.setFloat4("shadeParams", 0, this.enabled && shade ? shade.strength : 0, shade?.threshold ?? 1, 0);
       effect.setFloat3("shadeTint", ...CONTACT_SHADE_TINT);
     };
   }
