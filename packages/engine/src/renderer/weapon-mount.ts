@@ -77,7 +77,7 @@ export const GRIP: Readonly<Record<WeaponKind, { readonly x: number; readonly y:
 };
 
 /** The grip sits this much further back and lower in the viewmodel (file frame), where the hand is a ball. */
-const VIEW_SHIFT = { x: -0.015, y: -0.005 };
+export const VIEW_SHIFT = { x: -0.015, y: -0.005 };
 
 /**
  * Long guns go in both hands (G-282): the right fist round the middle of the grip, the left palm

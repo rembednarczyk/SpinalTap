@@ -6,7 +6,9 @@ import type { ToonMaterials } from "../npr/toon-material";
 import { BodyFade, bodyFadeTarget } from "./body-fade";
 import { ChokeArms } from "./choke-arms";
 import { moveOf, swingEnd, swingPhase } from "../renderer/melee-timing";
+import type { ViewArms, ViewArmsFrame } from "./view-arms";
 import { type ViewmodelPose, viewmodelPose } from "./viewmodel-poses";
+import { buildViewmodelProps } from "./viewmodel-props";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
 const TPP_DISTANCE = 2.2;
@@ -113,6 +115,11 @@ export class CameraRig {
   private pose: ViewmodelPose = viewmodelPose(null);
   private readonly materials: ToonMaterials;
   private readonly placeholderGun: AbstractMesh;
+  /** The procedural forearm, until Seki's own arms (`arms`) are there. */
+  private readonly propArm: readonly AbstractMesh[];
+  /** Seki's model arms in first person (`FppHands`), posed after the viewmodel; null keeps the procedural forearm. */
+  arms: ViewArms | null = null;
+  private look: WeaponLook | null = null;
   private reference: { position: Vector3; target: Vector3 } | null = null;
   private occluder: CameraOccluder | null = null;
   /**
@@ -156,32 +163,9 @@ export class CameraRig {
     this.meleeHolder = new TransformNode("vm-melee-holder", scene);
     this.meleeHolder.parent = this.viewmodel;
     this.meleeHolder.setEnabled(false);
-    // Kept compact and at least ~25 cm from the eye so perspective does not blow it up.
-    // Seki's cybernetic forearm: ivory shell, copper wrist ring, ivory hand.
-    const sleeve = MeshBuilder.CreateCylinder("vm-sleeve", { height: 0.2, diameterTop: 0.052, diameterBottom: 0.066, tessellation: 12 }, scene);
-    sleeve.material = materials.get("cyberIvory");
-    sleeve.parent = this.viewmodel;
-    sleeve.rotation.x = Math.PI / 2;
-    sleeve.position.set(0, -0.02, -0.11);
-    const wrist = MeshBuilder.CreateTorus("vm-wrist", { diameter: 0.054, thickness: 0.012, tessellation: 16 }, scene);
-    wrist.material = materials.get("cyberCopper");
-    wrist.parent = this.viewmodel;
-    wrist.rotation.x = Math.PI / 2;
-    wrist.position.set(0, -0.015, -0.01);
-    const hand = MeshBuilder.CreateSphere("vm-hand", { diameter: 0.06, segments: 10 }, scene);
-    hand.material = materials.get("cyberIvory");
-    hand.parent = this.viewmodel;
-    hand.scaling.set(0.85, 1, 1.15);
-    hand.position.set(0, 0, 0.02);
-    const gun = MeshBuilder.CreateBox("vm-gun", { width: 0.035, height: 0.065, depth: 0.19 }, scene);
-    gun.material = materials.get("gun");
-    gun.parent = this.gunHolder;
-    gun.position.set(0, 0.04, 0.07);
-    this.placeholderGun = gun;
-    for (const m of [sleeve, wrist, hand, gun]) {
-      m.isPickable = false;
-      applyOutline(m, 0.004);
-    }
+    const props = buildViewmodelProps(scene, materials, this.viewmodel, this.gunHolder);
+    this.propArm = props.arm;
+    this.placeholderGun = props.gun;
     this.viewmodel.position.set(this.pose.hip.x, this.pose.hip.y, this.pose.hip.z);
     this.chokeArms = new ChokeArms(scene, materials, this.camera);
   }
@@ -213,6 +197,7 @@ export class CameraRig {
   setHeldWeapon(look: WeaponLook | null): void {
     const melee = look === "baton" || look === "blade";
     this.melee = melee;
+    this.look = look;
     this.pose = viewmodelPose(look);
     this.gunHolder.setEnabled(!melee);
     this.meleeHolder.setEnabled(melee);
@@ -317,6 +302,13 @@ export class CameraRig {
     return viewSwingOffset(sw.strike, sw.elapsed, sw.windup, sw.recovery);
   }
 
+  /** Seki's arms follow the viewmodel; while they are drawn the procedural forearms hide. */
+  private poseArms(frame: ViewArmsFrame | null): void {
+    const model = this.arms?.pose(frame) ?? false;
+    for (const m of this.propArm) if (m.isEnabled(false) === model) m.setEnabled(!model);
+    this.chokeArms.showProps(!model);
+  }
+
   update(target: Transform | null, dt: number): void {
     if (this.reference) {
       this.camera.position.copyFrom(this.reference.position);
@@ -325,6 +317,7 @@ export class CameraRig {
       this.camera.fov = this.hipFov;
       this.viewmodel.setEnabled(false);
       this.chokeArms.update(false, undefined, dt);
+      this.poseArms(null);
       this.onBodyVisibility(true);
       this.bodyFade.update(0, 1);
       return;
@@ -410,6 +403,7 @@ export class CameraRig {
     this.viewmodel.rotation.y = sw.ry;
     // The guard turns the weapon flat across the view.
     this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7 + guard * 1.25 + sw.rz;
+    this.poseArms({ viewmodel: this.viewmodel.isEnabled(false) ? this.viewmodel : null, look: this.look, choke: this.chokeArms.forearms() });
     this.onBodyVisibility(!fpp);
     this.bodyFade.update(fpp ? 0 : bodyFadeTarget(pos, dir, p, FIGURE_HEIGHT + (FIGURE_CROUCHED - FIGURE_HEIGHT) * Math.min(1, Math.max(0, crouch))), dt);
   }
