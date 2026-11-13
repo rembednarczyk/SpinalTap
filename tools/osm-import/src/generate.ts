@@ -31,7 +31,7 @@ import { roundJoints } from "./line-buffer.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
-import { type BuildingOut, type ChunkOut } from "./model.ts";
+import { type BuildingOut, type ChunkOut, type GroundOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { lod1Index, withLod1Height } from "./lod1-heights.ts";
 import { lod2Index, withLod2Roof } from "./lod2-roofs.ts";
@@ -60,6 +60,8 @@ export interface ChunkStats {
   readonly maxY: number;
   /** Venues signed on the chunk's buildings (ADR-0064 stage 4). */
   readonly venues: number;
+  /** The pieces of its ground the orthophoto's cover laid (ADR-0077 steps 1.1 and 1.2), for the control numbers of the tests. */
+  readonly fills: readonly GroundOut[];
 }
 
 /** What became of the map's venues (ADR-0064 stage 4): the importer's control numbers. */
@@ -273,7 +275,8 @@ const generateChunk = (
     spec.rect,
   );
   // The bare ground left laid from the orthophoto's cover (ADR-0077 step 1.1).
-  const ground = fill ? withFills(laid, fill(spec.rect, laid, shopOutlines(out, buildings))) : laid;
+  const fills = fill ? fill(spec.rect, laid, shopOutlines(out, buildings)) : [];
+  const ground = fill ? withFills(laid, fills) : laid;
   const r = spec.rect;
   const own = new Set(out.map((b) => b.id));
   const through = passages.filter((p) => own.has(p.building));
@@ -318,6 +321,7 @@ const generateChunk = (
     minY: Math.min(...t.grid.heights),
     maxY: Math.max(...t.grid.heights),
     venues: out.reduce((n, b) => n + (b.venues?.length ?? 0), 0),
+    fills,
   };
   return { chunk, stats };
 };
