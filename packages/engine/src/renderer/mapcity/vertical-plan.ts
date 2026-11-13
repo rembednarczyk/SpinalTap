@@ -1,3 +1,4 @@
+import { segmentParam } from "@seki/core";
 import { prng } from "../city-kit-data";
 import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
 import { type FacadeFrame, trimMeta, wallMeta } from "./facade-frame";
@@ -55,7 +56,7 @@ const edgeDistance = (p: P2, ring: readonly P2[]): number => {
     const b = ring[(i + 1) % ring.length] as P2;
     const dx = b.x - a.x;
     const dz = b.z - a.z;
-    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+    const t = segmentParam(p.x, p.z, a.x, a.z, b.x, b.z);
     best = Math.min(best, Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t));
   }
   return best;

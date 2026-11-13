@@ -1,3 +1,4 @@
+import { segmentParam } from "@seki/core";
 import type { EntityId, Vec3 } from "@seki/core";
 import { DECK_DEPTH, DECK_HEADROOM, deckDepth } from "@seki/sim";
 import { DRESS_FLAG, type MeshSink, hexColor } from "../mesh-sink";
@@ -21,9 +22,7 @@ const FASCIA = hexColor("#6f6b66", DRESS_FLAG.solid);
 
 /** The deck's height over (x, z): straight from `a` to `b` along the axis, level across it. */
 export const deckHeight = (d: DeckAxis, x: number, z: number): number => {
-  const dx = d.b.x - d.a.x;
-  const dz = d.b.z - d.a.z;
-  const t = Math.max(0, Math.min(1, ((x - d.a.x) * dx + (z - d.a.z) * dz) / (dx * dx + dz * dz || 1)));
+  const t = segmentParam(x, z, d.a.x, d.a.z, d.b.x, d.b.z);
   return d.a.y + (d.b.y - d.a.y) * t;
 };
 
