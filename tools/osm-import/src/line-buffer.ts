@@ -117,11 +117,19 @@ export interface JointBand {
 /** Whether a band's outline crosses itself once rounded to the tables' 0.1 m (`r1`): a bit pinched on at a point does. */
 const crossesOnGrid = (paths: Paths64): boolean => asRings(paths).some((r) => selfIntersects(r.map((p) => ({ x: r1(p.x), z: r1(p.z) }))));
 
+/** A round end's disc. */
+const disc = (end: RoundEnd): Paths64 => inflatePaths([toPath([end.at])], end.half * SCALE, JoinType.Round, EndType.Round, 2, ARC * SCALE);
+
+/** Under this a round end's bare ground is no bit (m²): far under `MIN_CAP`, so a bit `bareBits` keeps is never skipped. */
+const SPECK = 0.01;
+
+/** The area of `paths` less `clip` (m²). */
+const bareArea = (paths: Paths64, clip: Paths64): number => difference(paths, clip, FillRule.NonZero).reduce((s, p) => s + areaOf(p), 0) / (SCALE * SCALE);
+
 /** The bare bits of a round end: its disc less what is covered, opened (shrunk and grown back) so no sliver along the edges it meets is left. */
 const bareBits = (end: RoundEnd, covered: Paths64): Paths64 => {
-  const disc = inflatePaths([toPath([end.at])], end.half * SCALE, JoinType.Round, EndType.Round, 2, ARC * SCALE);
   const open = (paths: Paths64, d: number) => inflatePaths(paths, d * SCALE, JoinType.Round, EndType.Polygon, 2, ARC * SCALE);
-  const bare = difference(disc, covered, FillRule.NonZero);
+  const bare = difference(disc(end), covered, FillRule.NonZero);
   // Clipped back to the bare ground, so a bit shares its edges with the band it joins.
   return intersect(open(open(bare, -SLIVER), SLIVER + 0.005), bare, FillRule.NonZero).filter((p) => isPositive(p) && areaOf(p) >= MIN_CAP * SCALE * SCALE);
 };
@@ -156,6 +164,9 @@ export const roundJoints = <B extends JointBand>(bands: readonly B[]): B[] => {
     const reach = Math.max(...list.map((e) => e.end.half));
     const { x, z } = list[0]!.end.at;
     const near = grid.query(x - reach, z - reach, x + reach, z + reach).sort((p, q) => p - q);
+    // Most round ends lie whole on the bands they meet (a way going on straight): the widest end's
+    // disc less the bands near, as they come (no union first), and nothing to do if it leaves not a speck.
+    if (bareArea(disc({ at: { x, z }, half: reach }), near.flatMap((i) => rings.get(i)!)) < SPECK) continue;
     let covered = union(near.flatMap((i) => rings.get(i)!), FillRule.NonZero);
     for (const { i, end } of list) {
       if (end.square) continue;
