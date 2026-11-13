@@ -1801,11 +1801,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-760 Dziury 5–20 cm w nawierzchni jezdni pod pasami aut
 - Ważność: S3 · Zasięg: car-lane-off-road i lane-off-ground po G-756: 930,15,329,81 (Al. Tysiąclecia#81:1), 1080,10,564,02 (Podzamcze#107:0), 2525,7,357,5 i 2505,04,331,52 (Turystyczna#122:0), 26,18,−102,66 (Kościuszki#4, pod pasem plac zamiast jezdni)
 - Opis: siatka próbek w układzie świata (G-756) trafia w małe dziury nawierzchni pod pasem, które stara siatka po łuku omijała
-- Status: wstrzymane: przyczyna w kodzie G-744/ADR-0078 etap 2 (końce pasów w złączach); wcześniej: zgłoszone (13.11, naprawiacz G-756)
+- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g760, merge 74a981d); wcześniej: wstrzymane: przyczyna w kodzie G-744/ADR-0078 etap 2 (końce pasów w złączach); wcześniej: zgłoszone (13.11, naprawiacz G-756)
 - Pakiet właściciela: packages/sim (content/lublin nawierzchnie), tools/osm-import
 - Test przyjęcia: `car-lane-off-road` i `lane-off-ground` bez tych kluczy
 - Przyczyna: proste ucięcia pasów jezdni dwóch dróg we wspólnym węźle nie pokrywają się (wierzchołki zaokrąglane osobno do 0,1 m, różne szerokości, klin na zakręcie); szczeliny 5-10 cm. Kościuszki#4 to ta sama szczelina, plac tylko prześwituje. Na danych g744 zostają 4 z 5 miejsc (i dziury ok. 25 cm przy ~2526,356): roundJoints pomija kawałki < SLIVER 0,1 m / MIN_CAP 0,3 m² i liczy przed zaokrągleniem do 0,1 m. Naprawa po scaleniu g744, w line-buffer.ts (złącze po zaokrągleniu albo nakładka w złączu); test: odcinek między ucięciami pasów ze wspólnym węzłem leży na road. Sonda: scratchpad g760-probe.test.ts.
 - Skan car-lane-off-road nabrzeze-0-1 2340,420 (Kalinowszczyzna#131:f, 2340,427): dziura w jezdni 5-10 cm przy przejściu ścieżki, przyjęta do bazy w 8179d72 na gałęzi G-744; po poprawce scan:update ją usuwa
+- Łaty szczelin i klinów w złączach (line-buffer.ts gapFills, osobne wstęgi). Skan: car-lane-off-road 5->0, lane-off-ground 3->0; ground-strip-overlap +20, kerb-gap-bare +2 przyjęte z uzasadnieniem. map-ground-golden 155341/1117bd89. orto:diff 49,8 m² do kuratora.
 
 ### G-761 Trawniki w pierścieniu skweru na Podzamczu pod kostką ścieżki
 - Ważność: S4 · Zasięg: w804709919, w804709920 (1045, 424), 46 m²; podobnie zieleń pod footway w pętlach w1343050082 (58,-83) 19 m², w154012559 15 m², w515648305 10 m²
@@ -1838,6 +1839,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/orto
 - Test przyjęcia: kontrola lawn-on-leafoff-paving < 50 m², a zarośla Nabrzeża (x 2500..2534, z 107..139) i żywopłot Podzamcza (x 551..569, z 353..359) zostają trawą
 - Wiersz topografii: T-287.
+
+### G-765 roundJoints odrzuca bit klinu 3,5-10 st. (dwa obrysy po mm Clippera)
+- Ważność: S4 · Zasięg: złącza dróg pod kątem 3,5-10 st.; sonda losowa: 21/400 par
+- Opis: Bit round endu dzielący wspólną krawędź z pasem daje po unii 2 obrysy i jest odrzucany; po G-760 klin kryje osobna łata, więc pas nie ma okrągłego końca w jednym pierścieniu
+- Status: zgłoszone (13.11, naprawiacz G-760)
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
