@@ -95,8 +95,9 @@ describe("the ground the map city lays (G-444)", () => {
     // paving closed (G-522), by asphalt of its own along a street of estimated width (G-570), and two
     // footways that loop back on a node of their own laid as simple pieces (G-654). The laying moved
     // it once: steps at the map's edge read the ground on its side (G-703), and here, with only these
-    // four chunks, the flight at (20; 9) on krakowskie-1-1's west side has no terrain past it.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 22, vertices: 131782, hash: "e6325d6a" });
+    // four chunks, the flight at (20; 9) on krakowskie-1-1's west side has no terrain past it. The
+    // colours moved it alone: the paving's from the orthophoto (G-721), no vertex moved.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 22, vertices: 131782, hash: "30ea0c41" });
     scene.dispose();
   });
 
@@ -112,6 +113,7 @@ describe("the ground the map city lays (G-444)", () => {
         addSink(hash, water);
       }
     }
-    expect(hash.hex).toBe("6538ff17");
+    // The paving's colours from the orthophoto (G-721) moved it, not the laying.
+    expect(hash.hex).toBe("01337f90");
   });
 });

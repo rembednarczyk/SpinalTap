@@ -22,14 +22,48 @@ export const SURFACE_CODE = { terrain: 0, road: 1, sidewalk: 2, square: 3, cobbl
 /** Lift above the terrain per surface (m), shared with the simulation (G-130). */
 export { SURFACE_LIFT };
 
+const GRASS = hexColor("#3f5c35", DRESS_FLAG.solid);
+
+/**
+ * The paving's colour on the orthophoto (G-721, ADR-0077), from `tools/orto/src/albedo-report.ts`
+ * in the current image (12.04.2025, no leaves: the ground under the trees): the hue of each surface
+ * and its brightness against the square's. The square, the paths and the fountains' floors take the
+ * median of the light paving over the map; the setts the median of the Old Town's hard ground (light
+ * paving and asphalt classes, the curator's probe of 12.11), dark stones and all: the light paving
+ * alone left them as light as Plac Litewski's granite. The fountains keep their dark water: the
+ * player's decision of 13.11, though the orthophoto shows the shallow pools' light floor (G-129).
+ */
+const ORTHO_PAVING = {
+  square: { rgb: [188, 186, 172], toSquare: 1 },
+  cobble: { rgb: [143, 136, 127], toSquare: 0.87 },
+  footway: { rgb: [181, 174, 158], toSquare: 0.92 },
+} as const;
+
+/**
+ * Square to lawn brightness (Rec. 709 luma of the colours): the map's squares 1.66 (April) and 1.80
+ * (June) on the orthophoto, Plac Litewski up to 2.1. At 1.28 the squares read as concrete. Over
+ * 1.7 the sunlit slabs burn out to white under the day's light (at 1.9 a fifth of the ground in
+ * view at Plac Litewski, at 1.75 still a twentieth).
+ */
+const SQUARE_TO_GRASS = 1.7;
+
+const luma = (c: readonly number[]): number => 0.2126 * (c[0] ?? 0) + 0.7152 * (c[1] ?? 0) + 0.0722 * (c[2] ?? 0);
+
+/** A paving's colour, one rule for all: the orthophoto's hue at its brightness against the square, the square's against the lawn. */
+const paving = (key: keyof typeof ORTHO_PAVING, flag: number): Rgba => {
+  const { rgb, toSquare } = ORTHO_PAVING[key];
+  const k = (toSquare * SQUARE_TO_GRASS * luma(GRASS)) / luma(rgb);
+  return [rgb[0] * k, rgb[1] * k, rgb[2] * k, flag];
+};
+
 const SURFACE_COLOR: Readonly<Record<Exclude<GroundSurface, "water" | "basin" | "steps" | "crossing">, Rgba>> = {
   road: hexColor("#3a3d45", DRESS_FLAG.wet),
   rail: hexColor("#4d4842", DRESS_FLAG.solid),
-  square: hexColor("#6d6a66", DRESS_FLAG.solid),
-  cobble: hexColor("#5d5752", DRESS_FLAG.solid),
-  footway: hexColor("#6e685f", DRESS_FLAG.solid),
+  square: paving("square", DRESS_FLAG.solid),
+  cobble: paving("cobble", DRESS_FLAG.solid),
+  footway: paving("footway", DRESS_FLAG.solid),
   sidewalk: hexColor("#6a6d73", DRESS_FLAG.solid),
-  grass: hexColor("#3f5c35", DRESS_FLAG.solid),
+  grass: GRASS,
 };
 const KERB = hexColor("#a3a39e", DRESS_FLAG.solid);
 const TERRAIN = hexColor("#514c45", DRESS_FLAG.solid);
@@ -396,6 +430,7 @@ export const BASIN_RIM = { top: 0.45, width: 0.35 } as const;
 /**
  * A fountain (ADR-0044): the water stands in the basin at `SURFACE_LIFT.basin` inside a granite
  * rim, its outer face down to the square, a ledge to sit on and the inner face down to the water.
+ * The water stays dark against the light square (decision of 13.11, G-721).
  */
 export const planBasin = (water: MeshSink, stone: MeshSink, ring: readonly P2[], h: HeightAt): void => {
   planWater(water, ring, h, SURFACE_LIFT.basin);
