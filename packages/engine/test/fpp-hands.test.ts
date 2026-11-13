@@ -11,6 +11,7 @@ import { type CharacterModelManifest, ModelLibrary } from "../src/renderer/model
 import { disposeModelScenes, modelScene, readModelFile, serveModels } from "./game-models";
 import { allWeaponUrls } from "./weapon-files";
 import { weaponHands } from "../src/renderer/fpp-hand-poses";
+import { depthInside, seenShare, skinVertices, trianglesIn } from "./mesh-depth";
 import { VIEW_MELEE_TILT } from "../src/renderer/weapon-mount";
 
 /**
@@ -343,6 +344,31 @@ describe("FPP hands from Seki's model (13.11)", () => {
     expect(leftThumb.z, `the left thumb ahead along the frame: ${leftThumb}`).toBeGreaterThan(0.9);
     // The left fingers closed over the right ones, a finger lower, round the grip's front.
     expect(Vector3.Distance(at("l", "Middle2"), at("r", "Ring2"))).toBeLessThan(0.035);
+  }, 60_000);
+
+  it("pistol (round 6): the thumbs lie on the frame's left side, not in it (2 mm at most), and the eye sees them, from the hip and aimed", async () => {
+    const { kit, rig, settle, camera, library } = setup();
+    await library.preload(heroine);
+    kit.arm(1, rig, "hero", armed("pistol"));
+    kit.setViewArms(heroine);
+    await ready(kit, settle);
+    for (const [aim, sides] of [[0, ["R"]], [1, ["R", "L"]]] as const) {
+      settle({ ...standing, aim });
+      const mount = camera.weaponMount;
+      const gun = trianglesIn(mount.getChildMeshes(false), mount);
+      expect(gun.length).toBeGreaterThan(1000);
+      const eye = inFrame(mount, camera.camera.globalPosition);
+      for (const side of sides) {
+        // The thumb's last two joints (VRoid's Thumb2 and Thumb3), as drawn: skinned, in the gun's frame.
+        const thumb = skinVertices(kit.hands.drawn[0]!, mount, (n) => new RegExp(`_${side}_Thumb[23]$`).test(n));
+        expect(thumb.length).toBeGreaterThan(40);
+        const deepest = Math.max(...thumb.map((p) => depthInside(gun, p)));
+        expect(deepest, `aim ${aim}: ${side} thumb ${(deepest * 1000).toFixed(1)} mm inside the gun`).toBeLessThan(0.002);
+        // Most of it in sight past the gun (round 5, through the slide: 0.53 from the hip, 0.30 aimed; round 6: 0.95, 0.73, the left 0.83).
+        const seen = seenShare(gun, eye, thumb);
+        expect(seen, `aim ${aim}: ${side} thumb seen past the gun`).toBeGreaterThan(0.65);
+      }
+    }
   }, 60_000);
 
   it.each(["baton", "blade"] as const)("%s: a hammer grip: a full fist on the handle, the index side towards the tip", async (look) => {

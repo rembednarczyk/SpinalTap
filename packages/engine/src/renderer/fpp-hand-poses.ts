@@ -60,10 +60,14 @@ const grasp = (at: Vector3, fore: Vector3, fingers: Vector3, palm: Vector3, curl
  */
 const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1), v(-1, 0, 0.05), 0.92, 0.2, 0.95);
 /**
- * On a handgun (round 5) the thumb closes less: laid along the frame's left side under the slide,
- * pointing ahead, not folded down round the fingers; aimed in, the left thumb lies under it.
+ * On a handgun the thumb lies along the frame's left side under the slide, pointing ahead (round
+ * 5); aimed in, the left thumb lies under it. Round 6: from the long guns' grip the thumb ran from
+ * the hand's top through the slide (12 mm inside it, out of sight), so the hand wraps the
+ * backstrap: the wrist further left behind the grip, the palm turned in round it and down, the
+ * knuckles towards the right front, which lays the thumb's root behind the frame's left side
+ * and the thumb along it, outside, where the eye sees it.
  */
-const RIGHT_ON_HANDGUN = { ...RIGHT_ON_GRIP, thumb: 0.75 };
+const RIGHT_ON_HANDGUN = grasp(v(-0.009, -0.003, 0.004), v(-0.2, 0.22, 1), v(0.37, 0.13, 1), v(-1, -0.42, -0.42), 0.92, 0.2, 0.63);
 
 /**
  * On the rifle's pistol grip the forearm comes in from the right, the elbow out beside the stock,
@@ -76,9 +80,11 @@ const RIGHT_ON_RIFLE_GRIP = grasp(v(0.006, 0.012, 0.012), v(-0.45, 0.25, 1), v(0
  * right hand's mirror, a finger's width lower and ahead, its heel hard on the grip's left side
  * under the right thumb, the knuckles down the front by the right's, the fingers closed over the
  * right's, the thumb straight ahead along the frame under the right one; the forearm up from
- * below and the left, the wrist cocked down.
+ * below and the left, the wrist cocked down. Round 6: lower, the palm turned further ahead round
+ * the grip and the thumb nearly straight, so it lies flat along the frame's side a thumb's
+ * width under the right one, outside the frame.
  */
-const LEFT_ROUND_FIST = grasp(v(-0.007, -0.014, 0.026), v(0.4, 0.4, 1), v(-0.25, -0.4, 1), v(1, 0, 0.25), 0.9, 0.85, 0.5);
+const LEFT_ROUND_FIST = grasp(v(0, -0.026, 0.013), v(0.4, 0.4, 1), v(-0.37, -0.39, 1), v(1, 0, 0.66), 0.9, 0.85, 0.3);
 
 /**
  * Melee weapons stand upright in the fist (`IN_VIEW_MELEE`, `VIEW_MELEE_TILT`), at the ready: a
