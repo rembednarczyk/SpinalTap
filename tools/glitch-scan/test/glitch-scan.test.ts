@@ -78,6 +78,7 @@ import { stepsInclineAgainst } from "./steps-incline";
 import { roadDipsOverTunnels } from "./road-tunnel";
 import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
 import { deckSlots } from "./deck-slot";
+import { bridgeEndsInSlope } from "./bridge-end-slope";
 import { deckSteps } from "./deck-step";
 import { groundOverDeck } from "./ground-over-deck";
 import { abutmentSteps } from "./deck-abutment";
@@ -112,7 +113,7 @@ import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, isLandmark } from "..
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
-import { CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PADS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
+import { CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PADS, PASSAGES, ROOM_SITES, ROOM_STOREY, rawHeight } from "../../../packages/sim/src/content/lublin/sites";
 import { ALCHEMIA_RAMPS } from "../../../packages/sim/src/content/alchemia/terraces";
 import { mapHeight } from "../../../packages/sim/src/content/lublin/shape";
 import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
@@ -1115,6 +1116,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * 0.01 m over the deck (G-686): the terrain shows through the deck's paving as a grey patch.
    */
   "ground-over-deck": () => groundOverDeck([...BRIDGE_DECKS.values()].flat(), bridgeDeckAt, groundY),
+  /**
+   * An end of a bridge's deck axis more than 0.5 m under the terrain within 2.5 m on past it along
+   * the axis (G-739): the end lies down the bank of the valley, and the deck, level at its ends'
+   * terrain, tilts down to it off the street's level. Not a node another deck goes on from.
+   */
+  "bridge-end-in-slope": () => bridgeEndsInSlope([...BRIDGE_DECKS.values()].flat(), rawHeight),
   /** A run of map steps between two parallel walls further apart than the steps the game lays plus 1 m (G-203). */
   "steps-narrower-than-walls": () => {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));

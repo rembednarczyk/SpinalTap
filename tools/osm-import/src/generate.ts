@@ -36,7 +36,7 @@ import { lod1Index, withLod1Height } from "./lod1-heights.ts";
 import { lod2Index, withLod2Roof } from "./lod2-roofs.ts";
 import { withSurfaceTop } from "./corrections-surface.ts";
 import { RingBins } from "./ring-bins.ts";
-import { chunkTerrain, sampleField } from "./terrain.ts";
+import { type ChunkTerrain, chunkTerrain, gridsHeight, sampleField } from "./terrain.ts";
 import { groundRaisedGreen, raisedGreen } from "./raised-green.ts";
 import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
 import { type WorldVenue, allVenues, assignVenues, venueOut } from "./venues.ts";
@@ -215,6 +215,7 @@ const grow = (r: Rect, m: number): Rect => ({ minX: r.minX - m, minZ: r.minZ - m
 const generateChunk = (
   spec: ChunkSpec,
   src: HeightSource,
+  t: ChunkTerrain,
   buildings: readonly (Area & { readonly edge?: EdgeCut })[],
   bands: readonly (Band & { box: Rect })[],
   lines: readonly Line[],
@@ -231,7 +232,6 @@ const generateChunk = (
   fill?: CoverFill,
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
-  const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
   const shopPoints = pois.filter((p) => p.kind === "shop" || p.kind === "food" || p.kind === "bar" || p.kind === "service").map((p) => p.at);
   const namedPoints = pois
     .filter((p) => p.kind === "hotel" || p.kind === "sight" || p.kind === "culture" || p.kind === "church")
@@ -384,10 +384,12 @@ export const generate = (
   // Paved only where it runs through a building: elsewhere it may pass under a street of its own.
   const atStreet = new Set([...tunnels].filter((id) => lines.some((l) => l.osmId === id && buildingPassages([l], buildings, rects, tunnels).length > 0)));
   // A bridge's deck reaches its abutment (G-344): level from bank to bank, not tilted down to the
-  // bank under the bridge. Its band only: the street, its markings and lanes end where the map has them.
+  // bank under the bridge, nor down the bank on the game's terrain (G-739). Its band only: the street,
+  // its markings and lanes end where the map has them.
   // So is a street's stretch over a tunnel it dips over (G-088): a deck, as on a bridge.
+  const terrains = chunks.map((c) => ({ rect: c.rect, ...chunkTerrain(sampleField(src, c.rect, 12), c.rect, LUBLIN_ANCHOR.altitude) }));
   const tunnelWays = tunnelLines(lines);
-  for (const [k, l] of toAbutments(lines, areas).entries()) {
+  for (const [k, l] of toAbutments(lines, areas, gridsHeight(terrains)).entries()) {
     if (!nearGround(l.line)) continue;
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
     const mapped = l.tags.highway ? sidewalks.along(mapLines[k]!) : false;
@@ -468,7 +470,7 @@ export const generate = (
   const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
   const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), ...(lod2 ? { lod2: lod2Index(lod2) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
   const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas));
-  const results = chunks.map((c) => generateChunk(c, src, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, fill));
+  const results = chunks.map((c, i) => generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, fill));
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
   const venueStats: VenueStats = {
     total: mapped.length,
