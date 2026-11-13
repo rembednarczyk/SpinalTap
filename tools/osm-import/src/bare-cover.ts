@@ -19,9 +19,10 @@
  * resident (budget 1 million, `map-city.test.ts`). So the rule lays everything only in a town's
  * paved places, where bare ground is a glitch (`landuse-bare`, decision 5.11: the shops' and
  * markets' land, a shop's forecourt, a stop's platform), and elsewhere only the compact regions,
- * `FILL.looseWidth` wide on the average and more: a lawn or a yard, not a strip by a wall. Within
- * `FILL.kerbBand` of a carriageway a fill gives way behind bare ground on the kerb (`keepKerbs`):
- * the kerbs' strips are the next rule's (step 1.2), and a fill past one would make it a counted gap.
+ * `FILL.looseWidth` wide on the average and more: a lawn or a yard, not a strip by a wall; but a
+ * strip between a carriageway and the next piece past it is laid however narrow (step 1.2,
+ * `bare-strips.ts`). Within `FILL.kerbBand` of a carriageway a fill gives way behind bare ground on
+ * the kerb (`keepKerbs`, the asphalt the rule leaves): a fill past it would make it a counted gap.
  */
 import { FillRule, type Path64, difference, isPositive } from "clipper2-ts";
 import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
