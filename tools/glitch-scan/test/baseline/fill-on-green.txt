@@ -1,0 +1,18 @@
+# fill-on-green: grid 10 m (x,z = the square's corner at its least x and z)
+krakowskie-0-0 -110,-270
+krakowskie-1-0 120,-230
+krakowskie-2-1 400,100
+nabrzeze-0-0 2470,220
+nabrzeze-0-1 2370,360
+nabrzeze-1-0 2630,130
+nabrzeze-1-0 2620,190
+nabrzeze-1-1 2600,320
+nabrzeze-1-1 2560,340
+podzamcze-1-0 900,190
+podzamcze-1-0 790,330
+podzamcze-1-0 890,340
+podzamcze-2-0 930,190
+podzamcze-2-0 950,250
+podzamcze-2-0 930,330
+podzamcze-2-1 1110,390
+podzamcze-2-1 1080,520
