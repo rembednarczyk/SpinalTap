@@ -1,0 +1,6 @@
+# lamp-style-change-on-way: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-1-0 80,-43
+krakowskie-1-0 105,-42
+krakowskie-1-0 84,-24
+stare-miasto-1-0 625,-211
+stare-miasto-1-1 729,126
