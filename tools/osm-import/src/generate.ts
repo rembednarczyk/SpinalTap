@@ -29,15 +29,17 @@ import { FILL_MARGIN, kerbFills, stretchZebras } from "./kerb-fill.ts";
 import { type KerbSample, fitLanes, taperedJoins } from "./lane-fit.ts";
 import { roundJoints } from "./line-buffer.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
+import { type StreetHalves, streetHalves } from "./street-half.ts";
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
-import { type BuildingOut, type ChunkOut, type GroundOut } from "./model.ts";
+import { type BuildingOut, type ChunkOut, type GroundOut, type SteepWayOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { lod1Index, withLod1Height } from "./lod1-heights.ts";
 import { lod2Index, withLod2Roof } from "./lod2-roofs.ts";
 import { withSurfaceTop } from "./corrections-surface.ts";
 import { RingBins } from "./ring-bins.ts";
 import { type ChunkTerrain, chunkTerrain, gridsHeight, sampleField } from "./terrain.ts";
+import { chunkSteepWays, steepWays } from "./steep-ways.ts";
 import { groundRaisedGreen, raisedGreen } from "./raised-green.ts";
 import { overTunnels, tunnelLines } from "./tunnel-decks.ts";
 import { type WorldVenue, allVenues, assignVenues, venueOut } from "./venues.ts";
@@ -232,6 +234,8 @@ const generateChunk = (
   kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[] },
   barriers: readonly WorldBarrier[],
   heights: { readonly lod1?: ReturnType<typeof lod1Index>; readonly lod2?: ReturnType<typeof lod2Index>; readonly orphans: ReadonlySet<string> },
+  halves: StreetHalves,
+  steep: readonly SteepWayOut[],
   fill?: CoverFill,
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
@@ -284,6 +288,7 @@ const generateChunk = (
   const service = chunkServiceWays(lines, spec.rect);
   const foot = chunkFootWays(lines, spec.rect);
   const flights = chunkFlights(lines, spec.rect);
+  const steepWays = chunkSteepWays(steep, spec.rect);
   const parks = chunkCarParks(kerb.carParks, spec.rect);
   const stops = chunkBusStops(kerb.busStops, spec.rect);
   const wide = chunkMultiLaneWays(lines, spec.rect);
@@ -295,13 +300,14 @@ const generateChunk = (
     terrain: t.grid,
     buildings: out,
     ground,
-    streets: chunkStreets(lines, spec.rect),
+    streets: chunkStreets(lines, spec.rect, halves),
     markings: chunkMarkings(markings, spec.rect),
     pois: chunkPois(pois, spec.rect),
     ...(through.length > 0 ? { passages: through } : {}),
     ...(service.length > 0 ? { serviceWays: service } : {}),
     ...(foot.length > 0 ? { footWays: foot } : {}),
     ...(flights.length > 0 ? { flights } : {}),
+    ...(steepWays.length > 0 ? { steepWays } : {}),
     ...(parks.length > 0 ? { carParks: parks } : {}),
     ...(stops.length > 0 ? { busStops: stops } : {}),
     ...(wide.length > 0 ? { multiLaneWays: wide } : {}),
@@ -446,6 +452,8 @@ export const generate = (
   const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), (source) => !measured.has(source), walks);
   for (const [b, { ring, runs }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
+  // The carriageways' reach each side of their axes, fitted and widened, for the traffic's lanes (ADR-0080).
+  const halves = streetHalves(bands);
   const nodeZebras = bands.filter((b) => b.surface === "crossing" && b.source.startsWith("n"));
   stretchZebras(nodeZebras, [...kerbs.widened.values()].map((w) => w.ring)).forEach((z, i) => bands.splice(bands.indexOf(nodeZebras[i]!), 1, { ...z, box: ringBounds(z.ring) }));
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
@@ -485,7 +493,9 @@ export const generate = (
   const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
   const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), ...(lod2 ? { lod2: lod2Index(lod2) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
   const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas, pathLoops(lines)));
-  const results = chunks.map((c, i) => generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, fill));
+  // On the ways as laid: a stretch on a deck over a tunnel is no bank (G-088).
+  const steep = steepWays(laidLines.map((l) => l.piece), gridsHeight(terrains));
+  const results = chunks.map((c, i) => generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, halves, steep, fill));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats), venues: venueStatsOf(mapped, results.reduce((n, r) => n + r.stats.venues, 0)) };
 };
 
