@@ -1,12 +1,6 @@
 # walk-blocked: grid 10 m (x,z = the square's corner at its least x and z)
 krakowskie-1-0 100,-130
 krakowskie-1-0 110,-130
-krakowskie-2-1 440,40
-krakowskie-2-1 440,50
-krakowskie-2-1 440,80
-krakowskie-2-1 450,80
-krakowskie-2-1 450,90
-krakowskie-2-1 450,100
 nabrzeze-0-0 2440,250
 podzamcze-1-0 750,180
 podzamcze-1-0 760,180
@@ -30,9 +24,6 @@ podzamcze-2-1 990,470
 podzamcze-2-1 930,480
 podzamcze-2-1 940,480
 podzamcze-2-1 950,480
-stare-miasto-0-1 460,100
-stare-miasto-0-1 460,110
-stare-miasto-0-1 460,120
 stare-miasto-0-1 550,120
 stare-miasto-0-1 550,130
 stare-miasto-0-1 550,140
