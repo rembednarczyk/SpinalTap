@@ -1,0 +1,6 @@
+# ground-under-plinth: grid 10 m (x,z = the square's corner at its least x and z)
+krakowskie-1-0 170,-150
+krakowskie-2-0 300,-100
+nabrzeze-1-1 2590,380
+nabrzeze-1-1 2590,390
+stare-miasto-0-0 600,-170
