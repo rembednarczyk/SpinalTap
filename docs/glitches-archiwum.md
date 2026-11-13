@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-741 AI nie widzi boków pomostów jako ścian poza okolicą schodów
+- Ważność: S3 · Zasięg: wszystkie pomosty nad niższym terenem; `nav-raster.ts` (`ledgesOf`) zamyka krawędzie pomostów tylko przy biegach schodów, więc planer nie obchodzi pomostu przez koniec i ganger staje pod bokiem pomostu
+- Opis: po G-739 (kładka podzamcze-2-0 na poziomie ulicy) osiłek w `bridge-edges-ai.test.ts` („gets from beside the footbridge of podzamcze-2-0 onto its middle”) idzie prosto i staje pod północnym bokiem, 0,77 m niżej, 4,5 m od gracza; na main test przechodzi tylko dzięki przechyleniu pomostu z G-739
+- Status: naprawione (13.11, #490 scalony); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g741 (13.11, 56f597f: krawędzie pomostów w każdym oknie z pomostem, `passable` nie wchodzi na krawędź, `startOf` przy krawędzi; test podzamcze-2-0 zaostrzony do 0,3 m; 30 punktów przy bokach pomostów: 11 → 16; w PR); wcześniej: w naprawie (13.11, zgłoszone przez naprawiacza G-739); blokuje scalenie G-739
+- Pakiet właściciela: packages/sim/src/systems/ai (`nav-raster.ts`)
+- Test przyjęcia: `bridge-edges-ai` przechodzi na gałęzi G-739; nowy test na main z boku innego pomostu nad niższym terenem
+
 ### G-734 `sidewalk` za ciemny wobec trawy (1,31 zamiast 1,46–1,58)
 - Status: naprawione (13.11, #488 scalony); wcześniej: w PR #488 (13.11, cffd922: `sidewalk` z mediany ortofoto, #858277, chodnik/trawa w planie 1,31 → 1,56; kontrola `paving-albedo-drift` odłożona: mediany wymagają danych ortofoto spoza repo); wcześniej: zgłoszone (12.11, kurator, przegląd G-721)
 - Ważność: S4 · Zasięg: wszystkie chodniki miasta (#6a6d73); ortofoto: chodnik do trawy 1,46–1,58; poprawka: 0,9 × square (ok. #868378) tą samą regułą co G-721; kontrola `paving-albedo-drift` (plan/trawa wobec mediany ortofoto > 0,25)
