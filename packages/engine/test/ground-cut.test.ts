@@ -39,7 +39,8 @@ const CUT_BEFORE: Readonly<Record<string, string>> = {
   // the market's levelled square on Aleja Tysiąclecia gone (ADR-0063): the same cuts, its own ground.
   // Zamkowa's causeway 6.5 m wide instead of 8 (G-428): the same cuts, its terrain shaped to the band.
   // The terrain kept under the viaduct's north-east end (G-736): the same cuts, its points lower.
-  "podzamcze-1-0": "12 d666c607",
+  // The abutment ramps at the ends of the decks' pieces with the bridge's sidewalk on its carriageway (G-737): the same cuts.
+  "podzamcze-1-0": "12 492a8a61",
   "nabrzeze-1-1": "6 bd68b5c7",
   "stare-miasto-0-0": "0 58512eb9",
   "krakowskie-0-0": "0 0825c6ea",
