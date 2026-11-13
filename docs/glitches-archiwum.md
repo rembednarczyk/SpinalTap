@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-748 Uskok terenu do 3,3 m na szwie kawałków krakowskie-2-1 | stare-miasto-0-1
+- Ważność: S3 · Zasięg: x = 460, z 104–110: teren krakowskie-2-1 −9,20, stare-miasto-0-1 −5,80…−7,12
+- Opis: teren dwóch sąsiednich kawałków rozjeżdża się na szwie; `walk-blocked` (ADR-0080 PR 4): 48 par
+- Status: naprawione (13.11, #502 scalony); wcześniej: w PR (13.11, częściowo: x=460 3,30 → 0,51 m, 12 szwów → 0; gałąź ccr-ec2c4269-ilh8k8-g748); wcześniej: zgłoszone (13.11, budowniczy ADR-0080 PR 4)
+- Pakiet właściciela: packages/sim (content/lublin terrain)
+- Test przyjęcia: `walk-blocked` bez kluczy na szwie x = 460; teren obu kawałków ciągły (różnica ≤ 0,05 m wzdłuż szwu)
+- Przegląd topografii PR #502: ZGODNE Z UWAGAMI. Względem NMT (σ 1,5) punkty szwów: mediana 0,028 → 0,035 m, maks. 0,054 → 0,43 m (sm1-1|pz0-0, z 160), w tolerancji importu. Zostają szczeliny > 0,1 m: (240; 113,75–115,25) do 0,18 m, (384,5–386,5; −20) do 0,22 m (krawędź pada myjni T-051), (460; 103–109,25) do 0,51 m pod płytami Arkad. Propozycja kuratora: kontrola skanu `seam-gap` (|h_a − h_b| na szwach co 0,25 m, > 0,1 m, poza płytami; baza 2 miejsca, 16 próbek) razem z G-758.
+
 ### G-739 Koniec kładki Podzamcza (1073,9; 160,5) leży na skarpie rowu Czechówki, pomost o 2,7 m za nisko (T-166)
 - Status: naprawione (13.11, #501 scalony); wcześniej: w PR #501 (13.11, d70ed63 po scaleniu main: skan z obiema nowymi kontrolami, tablice przegenerowane, golden +20 wierzchołków); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g739 (13.11, ae90173: koniec pomostu na skarpie przesuwany wzdłuż drogi do szczytu skarpy; kładka −23,04…−23,91, ok. 3,8°; `bridge-end-in-slope` 3 → 0, `ground-over-deck` 397 → 395; przy okazji G-362 koniec +0,58 m; przegląd kuratora ZGODNE Z UWAGAMI 13.11; czeka na G-741 i G-743); wcześniej: zgłoszone (13.11, kurator, ortofoto 2025-04 i 2024-06, NMT)
 - Ważność: S3 · Zasięg: 1 pomost (podzamcze-2-0, kładka w295849307, 8 m): gracz i AI przechodzą po zjeździe 2,2 m na 8,3 m (15°) zamiast po poziomym przęśle · Koszt: mały
