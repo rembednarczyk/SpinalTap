@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-749 Test `grass-under-paving` (Plac Litewski, szwy kawałków) przekracza 20 s w CI
+- Ważność: S4 · Zasięg: `tools/glitch-scan/test/grass-under-paving.test.ts` › „leaves no bare strip in Plac Litewski's lawns…”; w CI #491 (13.11) przekroczył 20 s, po ponowieniu przeszedł; lokalnie przechodzi
+- Opis: test liczy wyciąg całego obszaru placu przy każdym uruchomieniu; blisko limitu, więc pod obciążeniem runnera pada niezależnie od zmiany
+- Status: naprawione (13.11, #508 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g749, c424df6): pomijanie trawników po prostokącie +0,5 m; test 4631 -> 274 ms (bench:ab, 6 par, load 12-16), pod --coverage 8368 -> 337 ms; 80 940 próbek bez różnic; wcześniej: zgłoszone (13.11, orkiestrator, CI #491)
+- Pakiet właściciela: tools/glitch-scan
+- Test przyjęcia: czas testu w CI ≤ 50% limitu (pomiar `pnpm test:rerun`/raport vitest), bez podnoszenia limitu
+
 ### G-746 `steering.ts` ma 717 linii, ponad limit 500 z ADR-0031
 - Ważność: S4 · Zasięg: packages/sim/src/systems/ai/steering.ts (686 → 717 po G-741), wyjątek w lincie
 - Opis: plik nawigacji urósł przy G-738/G-741; kandydat do podziału (planer, pole odległości, sprawdzanie krawędzi)

@@ -1758,13 +1758,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: 30 punktów przy bokach pomostów (sonda G-741): dojścia ponad 16/30 bez regresji; test z jednego z punktów wyżej pada bez poprawki
 - Po G-746: `followDetour` w `steering.ts` (l. 144), fallback `way[1]` w l. 162.
 
-### G-749 Test `grass-under-paving` (Plac Litewski, szwy kawałków) przekracza 20 s w CI
-- Ważność: S4 · Zasięg: `tools/glitch-scan/test/grass-under-paving.test.ts` › „leaves no bare strip in Plac Litewski's lawns…”; w CI #491 (13.11) przekroczył 20 s, po ponowieniu przeszedł; lokalnie przechodzi
-- Opis: test liczy wyciąg całego obszaru placu przy każdym uruchomieniu; blisko limitu, więc pod obciążeniem runnera pada niezależnie od zmiany
-- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g749, c424df6): pomijanie trawników po prostokącie +0,5 m; test 4631 -> 274 ms (bench:ab, 6 par, load 12-16), pod --coverage 8368 -> 337 ms; 80 940 próbek bez różnic; wcześniej: zgłoszone (13.11, orkiestrator, CI #491)
-- Pakiet właściciela: tools/glitch-scan
-- Test przyjęcia: czas testu w CI ≤ 50% limitu (pomiar `pnpm test:rerun`/raport vitest), bez podnoszenia limitu
-
 ### G-750 Biały rękaw postaci w kadrze FPP przepala się w słońcu (1,3–1,6% dolnej połowy kadru)
 - Ważność: S4 · Zasięg: widok z pierwszej osoby w dzień, każde ujęcie
 - Opis: po G-742 resztę przepalenia ujęć dnia daje rękaw bohaterki; połowa progu 3% z G-721
@@ -1825,6 +1818,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: na każdym szwie różnica ≤ 0,05 m
 - Do zrobienia razem z kontrolą `seam-gap` z przeglądu #502 (kurator 13.11).
 - Kontrola seam-gap (gałąź ccr-ec2c4269-ilh8k8-seam-gap, 29f7b55): baza main 16 kluczy / 210 próbek; po #502 zostaje 1 (myjnia 380,-20); (240;114) w obrysie budynku, x=460 pod płytami Arkad – nie liczone
+- Kontrola seam-gap w main (#507, 13.11): baza 1 klucz (krakowskie-2-1 380,-20, myjnia); G-754 w toku.
 
 ### G-759 walk-blocked nie widzi płyt chodnika i podestu Arkad
 - Ważność: S4 · Zasięg: klucze `stare-miasto-0-1 460,100/110/120`, `krakowskie-2-1 450,*`; ok. 500 stromych par po G-748
