@@ -1752,7 +1752,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-740 Ganger staje pod ścianą przyczółka mostu południowego Mełgiewskiej poza planerem pościgu (2 przypadki)
 - Ważność: S3 · Zasięg: ta sama ściana co G-738 (do 1,5 m, rampa przyczółka w50733068); po G-738 6 z 225 przebiegów siatki wokół rampy nie dochodzi, także po 90 s
 - Opis: (1) z (2410; 310) do (2449; 318): powrót na posterunek przez `straightWalk`, którego próbki co 0,5 m przeskakują ścianę, staje w (2415,6; 310,8); (2) z (2422; 310) do (2405; 318): ganger pod pomostem napiera na ścianę przyczółka, staje w (2416,5; 311,5)
-- Status: zgłoszone (13.11, naprawiacz G-738)
+- Status: w PR #495 (13.11, 8218817 + merge G-741: ściany między komórkami rastra z reguły `offTheBank`, `wallOnWay` w `walkable`/`startOf`/`straightWalk`; przypadki 4/4, siatka 225/225; raster w pagórkach 1,5–2× dłuższy; po #490); wcześniej: zgłoszone (13.11, naprawiacz G-738)
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: oba przypadki dochodzą (test w `bridge-edges-ai.test.ts`), siatka wokół rampy 225/225
 - 13.11 (naprawiacz G-741): przy przyczółkach Mełgiewskiej 14 z 30 punktów nie dochodzi (osiłki na skarpach przy końcach pomostów, np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)); `followDetour` bez osiągalnej komórki w linii prostej kieruje do `way[1]`, nawet nieosiągalnej: źródło zakleszczeń w kieszeniach przy skarpach
@@ -1798,6 +1798,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-741); po scaleniu G-740 i G-741
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: plik ≤ 500 linii bez wyjątku w lincie, złoty hash bez zmian
+
+### G-747 `followDetour` bez osiągalnej komórki w linii prostej kieruje gangera do `way[1]`, nawet nieosiągalnej
+- Ważność: S3 · Zasięg: planer pościgu w terenie ze skarpami; możliwe źródło części z 14 z 30 nieudanych dojść przy przyczółkach Mełgiewskiej (G-741), np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)
+- Opis: gdy żadna linia z punktu gangera nie przechodzi, fallback wybiera następny punkt drogi bez sprawdzenia osiągalności; ganger napiera na skarpę albo krąży w kieszeni
+- Status: zgłoszone (13.11, naprawiacze G-741 i G-740)
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: 30 punktów przy bokach pomostów (sonda G-741): dojścia ponad 16/30 bez regresji; test z jednego z punktów wyżej pada bez poprawki
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
