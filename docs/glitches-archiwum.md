@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-738 Ganger utyka przy narożniku rampy przyczółka mostu południowego Mełgiewskiej (2415; 311)
+- Ważność: S3 (pościg staje na stałe) · Zasięg: NW narożnik rampy przyczółka jezdni mostu w50733068, na dnie ściany 1,5 m; na main przy starcie pościgu z (2411,9; 296,0) albo (2414,2; 307,4)
+- Opis: plan pościgu prowadzi gangera przez narożnik rampy, gdzie utyka pod ścianą. Po G-737 (chodnik mostu w poziomie jezdni) trasa przez to miejsce staje się wybierana też w `bridge-edges-ai.test.ts` („gets from the lower bridge of Mełgiewska down to the street south of it”), więc test pada; pułapka istnieje na main niezależnie od G-737.
+- Status: naprawione (13.11, #484 scalony); wcześniej: w PR #484 (13.11, 3da8ee0: `walkable` sprawdza pominięty odcinek `NEAR_SKIP` regułą ruchu `offTheBank`; siatka 25 startów × 3 cele × 3 ziarna: 192/225 → 219/225; reszta w G-740); wcześniej: zgłoszone (13.11, naprawiacz G-737); blokuje scalenie G-737 (#485)
+- Pakiet właściciela: packages/sim/src/systems/ai (nawigacja), ewentualnie dane rampy w content/lublin
+
 ### G-708 Trzy budynki przy Grodzkiej i Rybnej o 9–12 m wyższe niż w NMPT; oficyna bez OSM (T-269)
 - Status: naprawione (13.11, #481 scalony); wcześniej: w PR #481 (13.11, 3644e06: runda 2, `height-vs-nmpt` na 55 budynków komórki z bazą 0, taras w232362965 −8,4, teren nad dachem 51 → 0, atrybucja NMPT); naprawione na gałęzi ccr-ec2c4269-ilh8k8-g708 (12.11, 990a49b; przegląd kuratora ZGODNE Z UWAGAMI; oficyna (682..691; 72..80) skreślona, to studnia doświetlająca); wcześniej: zgłoszone (12.11, kurator, przegląd stare-miasto-1-1)
 - Ważność: S3 (sylwetka skarpy nad Podwalem w widoku od Zamku; płyta 16 m zamiast niskiej zabudowy na Rybnej) · Zasięg: stare-miasto-1-1. Środek dachu gry minus mediana NMPT GUGiK 0,5 m w obrysie: Rybna 13 w66293276 (613,5; 95,6) +11,6 m (gra 16,1 m z LoD1 na całym obrysie 528 m²; NMPT: 25% przy ziemi, 68% na 2–8 m, 7% ≥ 8 m); w232362965 (708,1; 100,7) +10,0 m (16,7 m z wartości domyślnej, cokół 7,1; NMPT: dach na poziomie podwórzy Grodzkiej, y −8,9); w364575978 (703,4; 89,6) +8,6 m (14,6 m: cokół 5 i 3 kondygnacje z tagu; NMPT p90 y −4,3). Obu ostatnich nie ma w LoD1 2024 ani w LoD2. Pozostałe 52 budynki komórki: mediana +0,24 m, p90 +1,0. Do tego oficyna (682..691; 72..80), 52 m², która jest w LoD2 (okap 11,9) i w NMPT, a w OSM jej nie ma. Nakładki `topo-sm11-img/panas.png` i `rybna13.png`
