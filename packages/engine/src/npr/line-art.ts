@@ -1,6 +1,28 @@
 import { type Camera, Color3, GeometryBufferRenderer, PostProcess, type Scene, ShaderStore } from "../babylon";
+import { CONTACT_SHADE_TINT, type ContactShade } from "./contact-shade";
+import { ContactShadePass } from "./contact-shade-pass";
 
-const LINE_ART_FRAGMENT = /* glsl */ `
+/**
+ * Joint bilateral upsampling of the half-resolution shade: four neighbours weighed by how close
+ * their depth is to this pixel's, so the shade's edge follows the silhouettes at full resolution.
+ */
+const UPSAMPLE_GLSL = /* glsl */ `
+uniform sampler2D colorSampler;
+float upsampledShade(float d) {
+  float sum = 0.0;
+  float wsum = 1e-4;
+  for (int i = 0; i < 4; i++) {
+    vec2 o = vec2(i == 0 || i == 2 ? -1.0 : 1.0, i < 2 ? -1.0 : 1.0) * texel;
+    float w = exp(-abs(depthAt(vUV + o) - d) / (0.02 * d + 1e-3));
+    sum += texture2D(textureSampler, vUV + o).r * w;
+    wsum += w;
+  }
+  return sum / wsum;
+}
+`;
+
+/** With `shaded`, the input is the blurred contact shade and the scene's colour comes from `colorSampler`. */
+const lineArtFragment = (shaded: boolean): string => /* glsl */ `
 precision highp float;
 varying vec2 vUV;
 uniform sampler2D textureSampler;
@@ -14,9 +36,13 @@ uniform float inkStrength;
 
 float depthAt(vec2 uv) { return texture2D(depthSampler, uv).r; }
 vec3 normalAt(vec2 uv) { return normalize(texture2D(normalSampler, uv).xyz + 1e-5); }
+uniform vec3 shadeTint;
+/** x: unused, y: strength (0 off), z: step threshold. */
+uniform vec4 shadeParams;
+${shaded ? UPSAMPLE_GLSL : ""}
 
 void main(void) {
-  vec4 base = texture2D(textureSampler, vUV);
+  vec4 base = texture2D(${shaded ? "colorSampler" : "textureSampler"}, vUV);
   float d = depthAt(vUV);
   if (d <= 0.0) { gl_FragColor = base; return; }
   vec2 o = texel * lineParams.x;
@@ -37,7 +63,11 @@ void main(void) {
   }
   float line = max(smoothstep(lineParams.y, lineParams.y * 2.0, dEdge), smoothstep(lineParams.z, lineParams.z * 1.6, nEdge));
   line *= 1.0 - smoothstep(lineParams.w * 0.55, lineParams.w, d);
-  gl_FragColor = vec4(mix(base.rgb, inkColor * base.rgb + inkColor * 0.15, line * inkStrength), base.a);
+  float occ = ${shaded ? "upsampledShade(d)" : "0.0"};
+  // One hard step, as a painted shadow shape; the blur before this keeps its edge clean.
+  float shade = shadeParams.y * smoothstep(shadeParams.z - 0.03, shadeParams.z + 0.03, occ);
+  vec3 shaded = mix(base.rgb, base.rgb * shadeTint, shade);
+  gl_FragColor = vec4(mix(shaded, inkColor * shaded + inkColor * 0.15, line * inkStrength), base.a);
 }
 `;
 
@@ -49,6 +79,8 @@ export interface LineArtOptions {
   readonly fadeDistance?: number;
   readonly ink?: string;
   readonly strength?: number;
+  /** Contact shade in the same pass (graphics backlog 13.11, step 2); off when absent. */
+  readonly contactShade?: ContactShade | null;
 }
 
 /**
@@ -62,7 +94,9 @@ export class LineArt {
   enabled = true;
 
   constructor(scene: Scene, camera: Camera, options: LineArtOptions = {}) {
-    ShaderStore.ShadersStore["seekiLineArtFragmentShader"] = LINE_ART_FRAGMENT;
+    const shade = options.contactShade ?? null;
+    const shaderName = shade ? "seekiLineArtShaded" : "seekiLineArt";
+    ShaderStore.ShadersStore[`${shaderName}FragmentShader`] = lineArtFragment(shade !== null);
     const gbuffer = scene.enableGeometryBufferRenderer();
     if (!gbuffer) throw new Error("Geometry buffer unavailable");
     gbuffer.enableNormal = true;
@@ -73,11 +107,13 @@ export class LineArt {
     const params = [thickness, options.depthThreshold ?? 0.035, options.normalThreshold ?? 0.35, options.fadeDistance ?? 70] as const;
     const strength = options.strength ?? 0.92;
     const engine = scene.getEngine();
+    // In front of the line art on the camera, so it is built first.
+    const shadePass = shade ? new ContactShadePass(scene, camera, gbuffer, shade, params[3], () => this.enabled) : null;
     this.postProcess = new PostProcess(
       "line-art",
-      "seekiLineArt",
-      ["texel", "lineParams", "inkColor", "inkStrength"],
-      ["depthSampler", "normalSampler"],
+      shaderName,
+      ["texel", "lineParams", "inkColor", "inkStrength", "shadeParams", "shadeTint"],
+      shade ? ["depthSampler", "normalSampler", "colorSampler"] : ["depthSampler", "normalSampler"],
       1,
       camera,
     );
@@ -91,6 +127,9 @@ export class LineArt {
       effect.setFloat4("lineParams", Math.max(1, (params[0] * h) / 720), params[1], params[2], params[3]);
       effect.setColor3("inkColor", ink);
       effect.setFloat("inkStrength", this.enabled ? strength : 0);
+      if (shadePass) effect.setTextureFromPostProcess("colorSampler", shadePass.colourSource);
+      effect.setFloat4("shadeParams", 0, this.enabled && shade ? shade.strength : 0, shade?.threshold ?? 1, 0);
+      effect.setFloat3("shadeTint", ...CONTACT_SHADE_TINT);
     };
   }
 
