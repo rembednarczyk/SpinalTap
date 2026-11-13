@@ -1756,6 +1756,15 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w naprawie (13.11, zgłoszone przez naprawiacza G-737); blokuje scalenie G-737
 - Pakiet właściciela: packages/sim/src/systems/ai (nawigacja), ewentualnie dane rampy w content/lublin
 
+### G-739 Koniec kładki Podzamcza (1073,9; 160,5) leży na skarpie rowu Czechówki, pomost o 2,7 m za nisko (T-166)
+- Status: zgłoszone (13.11, kurator, ortofoto 2025-04 i 2024-06, NMT)
+- Ważność: S3 · Zasięg: 1 pomost (podzamcze-2-0, kładka w295849307, 8 m): gracz i AI przechodzą po zjeździe 2,2 m na 8,3 m (15°) zamiast po poziomym przęśle · Koszt: mały
+- Gdzie: (1073,9; 160,5) pomost −25,63, chodnik zachodni −22,9, teren na x 1071–1073 od −22,9 do −23,4; 2 próbki `ground-over-deck` (0,054 m); 3 próbki `deck-abutment-step` (1073,8; 161,7), (1073,8; 161,1), (1073,9; 160,6)
+- Dowód: nakładki ortofoto w scratchpadzie sesji (`topo-kladka-orto-2025-04.png`, `-2024-06.png`): przęsło poziome, ciągłe z chodnikiem, bez schodów; NMT wzdłuż z = 160,6: krawędź rowu x≈1072,5 (−22,9), skarpa 45° do dna −27,7; koniec osi 1,4 m w głąb skarpy. Drugi koniec (1082,2; 160,9) zgodny (−23,47)
+- Przyczyna: `bridge-ends.ts` (`AT_EDGE` 0,5 m) nie przedłuża końca, bo obrys `man_made=bridge` też zachodzi na skarpę (dokładność OSM ok. 1 m); `makeDeck` bierze `rawHeight` końca osi
+- Pakiet właściciela: tools/osm-import (`bridge-ends.ts`), packages/sim (`content/lublin/decks.ts`)
+- Test przyjęcia: `deck-abutment-step` i `ground-over-deck` = 0 przy kładce; nowa kontrola `bridge-end-in-slope` (koniec osi pomostu z NMT niższym o > 0,5 m od maksimum NMT w 2,5 m wzdłuż osi na zewnątrz) = 0 (baza 1, pozostałe końce do zmierzenia). Propozycja: wysokość końca z najbliższego węzła dojścia albo koniec osi wyniesiony do krawędzi rowu; pomost wtedy ok. −22,9…−23,5
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
