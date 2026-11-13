@@ -1767,6 +1767,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w PR (13.11, częściowo: x=460 3,30 → 0,51 m, 12 szwów → 0; gałąź ccr-ec2c4269-ilh8k8-g748); wcześniej: zgłoszone (13.11, budowniczy ADR-0080 PR 4)
 - Pakiet właściciela: packages/sim (content/lublin terrain)
 - Test przyjęcia: `walk-blocked` bez kluczy na szwie x = 460; teren obu kawałków ciągły (różnica ≤ 0,05 m wzdłuż szwu)
+- Przegląd topografii PR #502: ZGODNE Z UWAGAMI. Względem NMT (σ 1,5) punkty szwów: mediana 0,028 → 0,035 m, maks. 0,054 → 0,43 m (sm1-1|pz0-0, z 160), w tolerancji importu. Zostają szczeliny > 0,1 m: (240; 113,75–115,25) do 0,18 m, (384,5–386,5; −20) do 0,22 m (krawędź pada myjni T-051), (460; 103–109,25) do 0,51 m pod płytami Arkad. Propozycja kuratora: kontrola skanu `seam-gap` (|h_a − h_b| na szwach co 0,25 m, > 0,1 m, poza płytami; baza 2 miejsca, 16 próbek) razem z G-758.
 
 ### G-749 Test `grass-under-paving` (Plac Litewski, szwy kawałków) przekracza 20 s w CI
 - Ważność: S4 · Zasięg: `tools/glitch-scan/test/grass-under-paving.test.ts` › „leaves no bare strip in Plac Litewski's lawns…”; w CI #491 (13.11) przekroczył 20 s, po ponowieniu przeszedł; lokalnie przechodzi
@@ -1839,6 +1840,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-748)
 - Pakiet właściciela: tools/osm-import (teren), packages/sim (content/lublin)
 - Test przyjęcia: na każdym szwie różnica ≤ 0,05 m
+- Do zrobienia razem z kontrolą `seam-gap` z przeglądu #502 (kurator 13.11).
 
 ### G-759 walk-blocked nie widzi płyt chodnika i podestu Arkad
 - Ważność: S4 · Zasięg: klucze `stare-miasto-0-1 460,100/110/120`, `krakowskie-2-1 450,*`; ok. 500 stromych par po G-748
