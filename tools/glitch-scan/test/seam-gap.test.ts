@@ -19,7 +19,7 @@ describe("a ledge in the terrain on a seam of two chunks (G-748)", () => {
     expect(chunkSeams([a, { id: "c", bounds: { minX: 10, maxX: 20, minZ: 2, maxZ: 4 } }])).toEqual([]);
   });
 
-  it("finds every point of the seam, on the world's 0.25 m grid, where the two grids part by more than 0.1 m", () => {
+  it("finds every point of the seam, on the world's 0.25 m grid, where the two grids part by more than 0.05 m", () => {
     const found = seamGaps([a, b], { height: ledge(0.3, 1.5), covered: open });
     expect(found.map((f) => f.at)).toEqual(["10.00,1.50", "10.00,1.75", "10.00,2.00"]);
     expect(found[0]!.what).toBe("a 0.000 | b 0.300: 0.300 m apart");
@@ -28,10 +28,11 @@ describe("a ledge in the terrain on a seam of two chunks (G-748)", () => {
     expect(seamGaps([{ ...a, bounds: { ...a.bounds, minZ: 0.1 } }, off], { height: ledge(0.3), covered: open }).map((f) => f.at)[0]).toBe("10.00,0.25");
   });
 
-  it("finds nothing within 0.1 m, under a cover, nor where a chunk has no terrain", () => {
-    expect(seamGaps([a, b], { height: ledge(0.1), covered: open })).toEqual([]);
-    // The import's tenths: -1.9 against -2.0 is a hair over 0.1 in floats, not a ledge.
-    expect(seamGaps([a, b], { height: (c) => (c === "b" ? -1.9 : -2), covered: open })).toEqual([]);
+  it("finds nothing within 0.05 m, under a cover, nor where a chunk has no terrain", () => {
+    expect(seamGaps([a, b], { height: ledge(0.05), covered: open })).toEqual([]);
+    // -1.95 against -2.0 is a hair over 0.05 in floats, not a ledge.
+    expect(seamGaps([a, b], { height: (c) => (c === "b" ? -1.95 : -2), covered: open })).toEqual([]);
+    expect(seamGaps([a, b], { height: ledge(0.06), covered: open })).toHaveLength(9);
     expect(seamGaps([a, b], { height: ledge(-0.3), covered: () => true })).toEqual([]);
     expect(seamGaps([a, b], { height: (c) => (c === "b" ? null : 0), covered: open })).toEqual([]);
   });
