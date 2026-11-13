@@ -7,7 +7,7 @@ import { BodyFade, bodyFadeTarget } from "./body-fade";
 import { ChokeArms } from "./choke-arms";
 import { moveOf, swingEnd, swingPhase } from "../renderer/melee-timing";
 import type { ViewArms, ViewArmsFrame } from "./view-arms";
-import { type ViewmodelPose, viewmodelPose } from "./viewmodel-poses";
+import { type ViewmodelPose, fitPose, viewmodelPose } from "./viewmodel-poses";
 import { buildViewmodelProps } from "./viewmodel-props";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
@@ -388,7 +388,7 @@ export class CameraRig {
     const ads = this.melee ? 0 : smooth(aim);
     const guard = this.updateGuard(target.guard ?? 0, dt);
     const sw = this.updateSwing(dt);
-    const { hip, ads: aimed } = this.pose;
+    const { hip, ads: aimed } = fitPose(this.pose, Math.tan(this.hipFov / 2), Math.tan(aimedFov(1, target.aimZoom ?? 1, this.hipFov) / 2));
     const base = {
       x: hip.x + (aimed.x - hip.x) * ads + (VIEWMODEL_GUARD.x - hip.x) * guard,
       y: hip.y + (aimed.y - hip.y) * ads + (VIEWMODEL_GUARD.y - hip.y) * guard,
