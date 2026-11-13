@@ -2,6 +2,17 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-758 Import wybiera komórki terenu 4 i 8 m niepodzielne przez 2,5 i 5 m sąsiadów
+- Ważność: S3 · Zasięg: krakowskie-2-1 i inne kawałki siatki 4/8 m; szwy zostają 0,51 / 0,225 / 0,18 m po G-748
+- Opis: `tools/osm-import/src/terrain.ts` `CELLS`: siatka 4 m ma z siatkami 2,5 i 5 m wspólne punkty tylko co 20 m, więc `stitchSeams` nie może jej zszyć; ADR-0043 zakłada wspólny wiersz punktów na szwach
+- Status: naprawione (13.11, PR #522 scalony 13.11 (5009251) scalony); wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (13.11); do PR; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g758, 571459c): CELLS 10/5/2,5/1,25, seam-gap 0,05 m: 2 -> 0 kluczy, szwy 0,51 -> 0 m; czeka na przegląd kuratora (orto:diff); wcześniej: zgłoszone (13.11, naprawiacz G-748)
+- Pakiet właściciela: tools/osm-import (teren), packages/sim (content/lublin)
+- Test przyjęcia: na każdym szwie różnica ≤ 0,05 m
+- Do zrobienia razem z kontrolą `seam-gap` z przeglądu #502 (kurator 13.11).
+- Kontrola seam-gap (gałąź ccr-ec2c4269-ilh8k8-seam-gap, 29f7b55): baza main 16 kluczy / 210 próbek; po #502 zostaje 1 (myjnia 380,-20); (240;114) w obrysie budynku, x=460 pod płytami Arkad – nie liczone
+- Kontrola seam-gap w main (#507, 13.11): baza 1 klucz (krakowskie-2-1 380,-20, myjnia); G-754 w toku.
+- seam-gap krakowskie-2-1 380,-20 to był pad myjni; po G-754 baza seam-gap 0
+
 ### G-765 roundJoints odrzuca bit klinu 3,5-10 st. (dwa obrysy po mm Clippera)
 - Ważność: S4 · Zasięg: złącza dróg pod kątem 3,5-10 st.; sonda losowa: 21/400 par
 - Opis: Bit round endu dzielący wspólną krawędź z pasem daje po unii 2 obrysy i jest odrzucany; po G-760 klin kryje osobna łata, więc pas nie ma okrągłego końca w jednym pierścieniu
