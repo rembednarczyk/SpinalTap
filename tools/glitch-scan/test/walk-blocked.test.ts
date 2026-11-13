@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { GroundSurface } from "../../../packages/core/src";
-import { type WalkChunk, type WalkDeck, type WalkWorld, walkBlocked } from "./walk-blocked";
+import { MAX_WALK_SLOPE } from "../../../packages/sim/src/world/ground";
+import { walkBoth, walkStep } from "../../../packages/sim/src/world/walk";
+import { OPEN_STEP, type WalkChunk, type WalkDeck, type WalkWorld, walkBlocked } from "./walk-blocked";
 
 /**
  * The glitch scan's check `walk-blocked` (ADR-0080) on a chunk x 0..20, z 0..10: a bridge's deck
@@ -122,5 +124,22 @@ describe("walk-blocked (ADR-0080)", () => {
     expect(found.length).toBeGreaterThan(0);
     expect(found.every((f) => Number(f.at.split(",")[1]) < 2)).toBe(true);
     expect(scan({ ...steep, along: () => false })).toEqual([]);
+  });
+
+  it("skips only the pairs walkStep opens both ways (OPEN_STEP)", () => {
+    // The check calls `walkBoth` only on a pair with a steep cell or more than `OPEN_STEP` between them.
+    const slopes = [0, 0.5, MAX_WALK_SLOPE - 1e-9, MAX_WALK_SLOPE, MAX_WALK_SLOPE + 1e-9, 1, 3];
+    const spots = slopes.flatMap((slope) => [false, true].map((flight) => ({ y: 0, slope, flight })));
+    const skippedButBlocked: string[] = [];
+    for (const a of spots) {
+      for (const b of spots) {
+        if (walkStep(a, a) || walkStep(b, b)) continue;
+        for (let dy = -OPEN_STEP; dy <= OPEN_STEP + 1e-12; dy += OPEN_STEP / 50) {
+          const n = { ...b, y: Math.min(dy, OPEN_STEP) };
+          if (walkBoth(a, n)) skippedButBlocked.push(`${JSON.stringify(a)} ${JSON.stringify(n)}`);
+        }
+      }
+    }
+    expect(skippedButBlocked).toEqual([]);
   });
 });

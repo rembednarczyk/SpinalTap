@@ -1,6 +1,6 @@
 import type { GroundSurface } from "../../../packages/core/src";
 import { SNAP_DOWN, STEP_HEIGHT } from "../../../packages/sim/src/systems/movement-system";
-import { type WalkBlock, type WalkCell, walkBoth } from "../../../packages/sim/src/world/walk";
+import { type WalkBlock, type WalkCell, walkBoth, walkStep } from "../../../packages/sim/src/world/walk";
 
 /**
  * The scan's one check of walking over the ground (ADR-0080, point 5): `walk-blocked`. A raster
@@ -69,6 +69,23 @@ export const SLOT_CELLS = 5;
 const WALK = 1;
 const STEPS = 2;
 
+/**
+ * The most a pair of cells may differ in height and still be open both ways when neither is
+ * steep (`walkStep`: a rise up to `STEP_HEIGHT`, a drop up to `SNAP_DOWN`). The check skips
+ * `walkBoth` on such pairs, nearly all of the city's millions: the rule's calls, its constants
+ * read through the test runner's module bindings, took a fifth of the check's time under
+ * coverage, which went over the 20 s limit on CI (PR #497). `walk-blocked.test.ts` holds this
+ * to `walkBoth`.
+ */
+export const OPEN_STEP = Math.min(STEP_HEIGHT, SNAP_DOWN);
+/** `SNAP_DOWN` read once, not through the module binding: the slope reads it four times a cell. */
+const SNAP = SNAP_DOWN;
+
+/** What the check knows of a cell (`chunkFindings`): worked out, on a flight, too steep to step onto (`walkStep` onto itself). */
+const KNOWN = 1;
+const FLIGHT = 2;
+const STEEP = 4;
+
 const pointsOf = (flat: readonly number[]): Pt[] => Array.from({ length: flat.length >> 1 }, (_, i) => ({ x: flat[2 * i]!, z: flat[2 * i + 1]! }));
 
 /** Which cells of the chunk lie on a walked surface (`WALK`), and which on steps too (`STEPS`): the outlines filled at the cells' centres. */
@@ -111,8 +128,8 @@ export const walkRaster = (chunk: WalkChunk): WalkRaster => {
  */
 const slopeOf = (here: number, east: number, west: number, north: number, south: number): number => {
   const axis = (plus: number, minus: number) => {
-    const p = Math.abs(plus - here) <= SNAP_DOWN;
-    const m = Math.abs(minus - here) <= SNAP_DOWN;
+    const p = Math.abs(plus - here) <= SNAP;
+    const m = Math.abs(minus - here) <= SNAP;
     if (p && m) return (plus - minus) / (2 * WALK_CELL);
     if (p) return (plus - here) / WALK_CELL;
     return m ? (here - minus) / WALK_CELL : 0;
@@ -143,9 +160,14 @@ const chunkFindings = (chunk: WalkChunk, raster: WalkRaster, world: WalkWorld, f
   const { w, h, cells } = raster;
   const b = chunk.bounds;
   const heightAt = world.height(chunk);
-  // Heights on the raster, a cell round it and one more past the east and north seams (the slope of a pair's cell over a seam), worked out where a walked cell needs them.
-  const W = w + 3;
-  const ys = new Float64Array(W * (h + 3)).fill(Number.NaN);
+  // Heights and cells on the raster, a cell round it and past the east and north seams as far as
+  // a pair over a seam or across a slot reaches (with the slope's neighbour), worked out once where
+  // a walked cell needs them: each cell is in up to four pairs, and its slope reads five heights.
+  const PAST = SLOT_CELLS + 3;
+  const W = w + PAST;
+  const ys = new Float64Array(W * (h + PAST)).fill(Number.NaN);
+  const slopes = new Float64Array(ys.length);
+  const marks = new Uint8Array(ys.length);
   const cx = (i: number) => b.minX + (i + 0.5) * WALK_CELL;
   const cz = (j: number) => b.minZ + (j + 0.5) * WALK_CELL;
   const inside = (i: number, j: number) => i >= 0 && j >= 0 && i < w && j < h;
@@ -155,17 +177,28 @@ const chunkFindings = (chunk: WalkChunk, raster: WalkRaster, world: WalkWorld, f
     if (!Number.isNaN(v)) return v;
     return (ys[k] = inside(i, j) || onMap(cx(i), cz(j)) ? heightAt(cx(i), cz(j)) : Infinity);
   };
-  const cell = (i: number, j: number): WalkCell => {
-    const here = y(i, j);
-    return { y: here, slope: slopeOf(here, y(i + 1, j), y(i - 1, j), y(i, j + 1), y(i, j - 1)), flight: (flag(i, j) & STEPS) !== 0 };
+  const probe = { y: 0, slope: 0, flight: false };
+  /** The cell's index in `ys`, `slopes` and `marks`, worked out on the first ask. */
+  const known = (i: number, j: number): number => {
+    const k = (j + 1) * W + i + 1;
+    if (marks[k]! & KNOWN) return k;
+    probe.y = y(i, j);
+    probe.slope = slopes[k] = slopeOf(probe.y, y(i + 1, j), y(i - 1, j), y(i, j + 1), y(i, j - 1));
+    probe.flight = (flag(i, j) & STEPS) !== 0;
+    marks[k] = KNOWN | (probe.flight ? FLIGHT : 0) | (walkStep(probe, probe) ? STEEP : 0);
+    return k;
   };
+  const cell = (k: number): WalkCell => ({ y: ys[k]!, slope: slopes[k]!, flight: (marks[k]! & FLIGHT) !== 0 });
   // A cell past the east or north seam is the next chunk's: the pairs across a seam count once.
   const flag = (i: number, j: number): number => (i < w && j < h ? cells[j * w + i]! : flagAt(cx(i), cz(j)));
   const out: Finding[] = [];
   const centre = (i: number, j: number): Pt => ({ x: cx(i), z: cz(j) });
   /** The pair (i, j)-(ni, nj): a finding when blocked, unless its edge is meant (not across a slot, `slot`). */
   const pair = (i: number, j: number, ni: number, nj: number, slot: boolean): void => {
-    const [a, n] = [cell(i, j), cell(ni, nj)];
+    const ka = known(i, j);
+    const kn = known(ni, nj);
+    if (!((marks[ka]! | marks[kn]!) & STEEP) && Math.abs(ys[kn]! - ys[ka]!) <= OPEN_STEP) return;
+    const [a, n] = [cell(ka), cell(kn)];
     const block = walkBoth(a, n);
     if (!block) return;
     const [pa, pn] = [centre(i, j), centre(ni, nj)];
@@ -186,10 +219,10 @@ const chunkFindings = (chunk: WalkChunk, raster: WalkRaster, world: WalkWorld, f
   for (let j = 0; j < h; j++) {
     for (let i = 0; i < w; i++) {
       if (!cells[j * w + i]) continue;
-      for (const [di, dj] of [[1, 0], [0, 1]] as const) {
-        if (flag(i + di, j + dj)) pair(i, j, i + di, j + dj, false);
-        else acrossSlot(i, j, di, dj);
-      }
+      if (flag(i + 1, j)) pair(i, j, i + 1, j, false);
+      else acrossSlot(i, j, 1, 0);
+      if (flag(i, j + 1)) pair(i, j, i, j + 1, false);
+      else acrossSlot(i, j, 0, 1);
     }
   }
   return out;
