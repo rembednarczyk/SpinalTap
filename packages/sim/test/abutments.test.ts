@@ -61,4 +61,25 @@ describe("the bridges' abutments (G-349)", () => {
     }
     expect(through).toEqual([]);
   });
+
+  it("keep the terrain under the decks' ends where it came through them, not sinking the ground before them (G-736)", () => {
+    // The samples every 0.25 m where the ground is over the deck by more than a centimetre. On
+    // main the abutments' level ground and the bilinear terrain under the decks' falling ends came
+    // through their paving: 245 by the north-east end of Zamkowa's deck over the footway's tunnel
+    // (G-088), 260, 117 and 141 at Mełgiewska's.
+    const through = [[780, 790, 188, 207], [2440, 2456, 240, 260], [2402, 2420, 268, 330], [2478, 2488, 404, 416]].map(([x0, x1, z0, z1]) => {
+      let n = 0;
+      for (let x = x0!; x <= x1!; x += 0.25) {
+        for (let z = z0!; z <= z1!; z += 0.25) {
+          const deck = bridgeDeckAt(x, z);
+          if (deck !== null && groundY(x, z) > deck + 0.01) n++;
+        }
+      }
+      return n;
+    });
+    // Left where the ground before the end is higher than the deck there, level with the rest of
+    // the street (Zamkowa's deck falling into the tunnel's cut, Mełgiewska's sidewalk under its
+    // carriageway): lowered, the ground before the deck would fall under it, a step (G-736).
+    expect(through).toEqual([230, 77, 55, 0]);
+  });
 });
