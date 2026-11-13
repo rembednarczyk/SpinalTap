@@ -476,14 +476,18 @@ export const generate = (
   const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), ...(lod2 ? { lod2: lod2Index(lod2) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
   const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas, pathLoops(lines)));
   const results = chunks.map((c) => generateChunk(c, src, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, fill));
+  return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats), venues: venueStatsOf(mapped, results.reduce((n, r) => n + r.stats.venues, 0)) };
+};
+
+/** The tally of the venues the map has in the built chunks (`mapped`), `signed` of them hung on a building. */
+const venueStatsOf = (mapped: readonly WorldVenue[], signed: number): VenueStats => {
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
-  const venueStats: VenueStats = {
+  return {
     total: mapped.length,
-    signed: results.reduce((n, r) => n + r.stats.venues, 0),
+    signed,
     named: count((v) => v.named),
     colourOsm: count((v) => v.colourFrom === "osm"),
     colourTable: count((v) => v.colourFrom === "table"),
     colourKind: count((v) => v.colourFrom === "kind"),
   };
-  return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats), venues: venueStats };
 };
