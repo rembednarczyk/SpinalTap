@@ -1755,11 +1755,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-738)
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: oba przypadki dochodzą (test w `bridge-edges-ai.test.ts`), siatka wokół rampy 225/225
+- 13.11 (naprawiacz G-741): przy przyczółkach Mełgiewskiej 14 z 30 punktów nie dochodzi (osiłki na skarpach przy końcach pomostów, np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)); `followDetour` bez osiągalnej komórki w linii prostej kieruje do `way[1]`, nawet nieosiągalnej: źródło zakleszczeń w kieszeniach przy skarpach
 
 ### G-741 AI nie widzi boków pomostów jako ścian poza okolicą schodów
 - Ważność: S3 · Zasięg: wszystkie pomosty nad niższym terenem; `nav-raster.ts` (`ledgesOf`) zamyka krawędzie pomostów tylko przy biegach schodów, więc planer nie obchodzi pomostu przez koniec i ganger staje pod bokiem pomostu
 - Opis: po G-739 (kładka podzamcze-2-0 na poziomie ulicy) osiłek w `bridge-edges-ai.test.ts` („gets from beside the footbridge of podzamcze-2-0 onto its middle”) idzie prosto i staje pod północnym bokiem, 0,77 m niżej, 4,5 m od gracza; na main test przechodzi tylko dzięki przechyleniu pomostu z G-739
-- Status: w naprawie (13.11, zgłoszone przez naprawiacza G-739); blokuje scalenie G-739
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g741 (13.11, 56f597f: krawędzie pomostów w każdym oknie z pomostem, `passable` nie wchodzi na krawędź, `startOf` przy krawędzi; test podzamcze-2-0 zaostrzony do 0,3 m; 30 punktów przy bokach pomostów: 11 → 16; w PR); wcześniej: w naprawie (13.11, zgłoszone przez naprawiacza G-739); blokuje scalenie G-739
 - Pakiet właściciela: packages/sim/src/systems/ai (`nav-raster.ts`)
 - Test przyjęcia: `bridge-edges-ai` przechodzi na gałęzi G-739; nowy test na main z boku innego pomostu nad niższym terenem
 
@@ -1788,6 +1789,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, budowniczy etapu 2 ADR-0078)
 - Pakiet właściciela: tools/osm-import (props), packages/sim (odczyt rekwizytów)
 - Test przyjęcia: dwa kolejne `osm:props` z tego samego wejścia i z pustego/innego `props.generated.ts` dają ten sam plik bajt w bajt (test w osm-import)
+
+### G-746 `steering.ts` ma 717 linii, ponad limit 500 z ADR-0031
+- Ważność: S4 · Zasięg: packages/sim/src/systems/ai/steering.ts (686 → 717 po G-741), wyjątek w lincie
+- Opis: plik nawigacji urósł przy G-738/G-741; kandydat do podziału (planer, pole odległości, sprawdzanie krawędzi)
+- Status: zgłoszone (13.11, naprawiacz G-741); po scaleniu G-740 i G-741
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: plik ≤ 500 linii bez wyjątku w lincie, złoty hash bez zmian
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

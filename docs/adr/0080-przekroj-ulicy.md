@@ -1,6 +1,6 @@
 # ADR-0080: Jeden przekrój ulicy, pasy ruchu z przekroju i jedna kontrola przejścia
 
-Status: Proponowany. Wynika z decyzji użytkownika z 13.11 (`docs/decyzje.md`, „Ujednolicenie ulic i skanu”, punkty 2–4; punkt 1, baza skanu po miejscach, idzie osobno jako narzędzie). Dotyczy ADR-0042 (import OSM i NMT), ADR-0043 (teren i nachylenie w symulacji), ADR-0050 i ADR-0055 (ruch, skręty pasów), ADR-0052 (oznakowanie), ADR-0053 (pomosty), ADR-0054 (glitche), ADR-0077 (pokrycie z danych) i ADR-0078 (Clipper2), którego etapy 3 i 5 doprecyzowuje jako cel. Stan kodu: `origin/main` df0cfab. Etap 1 ADR-0078 jest w main (#453), etap 2 czeka na G-744.
+Status: Zaakceptowany (13.11, odpowiedzi użytkownika na otwarte pytania na końcu). Wynika z decyzji użytkownika z 13.11 (`docs/decyzje.md`, „Ujednolicenie ulic i skanu”, punkty 2–4; punkt 1, baza skanu po miejscach, idzie osobno jako narzędzie). Dotyczy ADR-0042 (import OSM i NMT), ADR-0043 (teren i nachylenie w symulacji), ADR-0050 i ADR-0055 (ruch, skręty pasów), ADR-0052 (oznakowanie), ADR-0053 (pomosty), ADR-0054 (glitche), ADR-0077 (pokrycie z danych) i ADR-0078 (Clipper2), którego etapy 3 i 5 doprecyzowuje jako cel. Stan kodu: `origin/main` df0cfab. Etap 1 ADR-0078 jest w main (#453), etap 2 czeka na G-744.
 
 ## Kontekst
 
@@ -176,9 +176,9 @@ Odbiorcy dostają źródło: skan liczy udział `default`, a kontrola `kerb-fill
 - **`walk-blocked` może być za szeroka** (fałszywe znaleziska na skarpach i murach): PR 4 idzie obok starych kontroli; przed PR 9 raport pokrycia kluczy i ręczny przegląd 20 losowych znalezisk.
 - **Determinizm:** offset w Clipper2 na liczbach całkowitych; testy „gives the same result twice” i „reproduces the committed tables… twice” w `generate.test.ts`; G-745 (`osm:props` nieidempotentne) naprawić przed PR 6, bo psuje porównania przed/po.
 
-## Otwarte pytania do użytkownika
+## Odpowiedzi użytkownika (13.11)
 
-1. Próg uskoku: „da się przejść” w obie strony (0,35 m, `SNAP_DOWN`) czy „da się wejść” (0,45 m, `STEP_HEIGHT`)? W szkicu: w górę 0,45, w dół 0,35.
-2. Kontrole rysunku (`ground-over-deck`, `paving-overlap-step`, `marking-step`): osobno, jak w szkicu, czy jako druga miara jednej kontroli?
-3. Odrębny chodnik z OSM 1–3 m od szacowanej krawędzi jezdni: pierwszeństwo linii OSM (pas zieleni) czy ortofoto (poszerzenie asfaltu albo chodnika do krawężnika)?
-4. Szerokości z ortofoto: automatyczny pomiar zapisany jako tabela wygenerowana (PR 10) czy tylko ręczne poprawki jak T-247?
+1. Próg uskoku: w górę 0,45 m (`STEP_HEIGHT`), w dół 0,35 m (`SNAP_DOWN`), jak w szkicu.
+2. Kontrole rysunku (`ground-over-deck`, `paving-overlap-step`, `marking-step`) zostają osobno; `walk-blocked` zastępuje tylko kontrole uskoków.
+3. Odrębny chodnik z OSM 1–3 m od szacowanej krawędzi jezdni: pierwszeństwo ma ortofoto (poszerzenie asfaltu albo chodnika do krawężnika); pas zieleni tylko tam, gdzie ortofoto pokazuje zieleń. Kolejność źródeł w punkcie 2 decyzji: dla granicy jezdnia | chodnik ortofoto przed `mapped-way`.
+4. Szerokości z ortofoto: automatyczny pomiar zapisany jako tabela wygenerowana (PR 10), przegląd `topography-curator`; ręczne poprawki typu T-247 przechodzą do tabeli.
