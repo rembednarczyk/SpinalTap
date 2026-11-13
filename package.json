@@ -31,7 +31,8 @@
     "gugik:report": "node tools/gugik/src/report.ts",
     "changelog": "node tools/changelog/changelog.mjs",
     "shots:compare": "node tools/shots/src/compare.ts",
-    "bench:ab": "node tools/bench-ab/src/bench.ts"
+    "bench:ab": "node tools/bench-ab/src/bench.ts",
+    "test:rerun": "node tools/test-rerun/src/rerun.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
