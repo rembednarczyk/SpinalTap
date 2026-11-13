@@ -152,7 +152,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
     settle();
     const hip = grip();
     // The bones land on the pose: the wrist where it puts it, the knuckles the way its fingers point.
-    const pose = weaponHands(look, { position: Vector3.Zero(), turn: (d) => d.clone() }).right;
+    const pose = weaponHands(look, { position: Vector3.Zero(), turn: (d) => d.clone() }, 0).right;
     const wrist = inFrame(holder, hand.getAbsolutePosition());
     expect(Vector3.Distance(wrist, pose.wrist)).toBeLessThan(0.003);
     const fingers = inFrame(holder, bone(hand, "Middle1").getAbsolutePosition()).subtract(wrist).normalize();
@@ -168,7 +168,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
     expect(Vector3.Distance(grip(), hip)).toBeLessThan(0.002);
   }, 60_000);
 
-  it("puts the left hand under a long gun's fore-end and by the right fist with a pistol", async () => {
+  it("puts the left hand under a long gun's fore-end and by the right fist with a pistol aimed in", async () => {
     const { kit, rig, settle, camera, library } = setup();
     await library.preload(heroine);
     kit.arm(1, rig, "hero", armed("rifle"));
@@ -180,7 +180,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
     // The rifle's fore-end lies about 0.2 m ahead of the grip.
     expect(left().z).toBeGreaterThan(0.08);
     kit.arm(1, rig, "hero", armed("pistol"));
-    settle();
+    settle({ ...standing, aim: 1 });
     const l = left();
     expect(Math.hypot(l.x, l.y, l.z)).toBeLessThan(0.15);
   }, 60_000);
@@ -193,7 +193,8 @@ describe("FPP hands from Seki's model (13.11)", () => {
     kit.setViewArms(heroine);
     const both = ["r", "l"] as const;
     const hands = [
-      ["pistol", 0.8, both, both],
+      // The pistol in the right hand alone from the hip (round 5), in both aimed in.
+      ["pistol", 0.8, ["r"], both],
       ["rifle", 0.55, both, ["l"]],
       ["rifle", 0.38, both, ["l"]],
       ["baton", 1, ["r"], []],
@@ -302,14 +303,46 @@ describe("FPP hands from Seki's model (13.11)", () => {
     expect(at("Middle3_end").x).toBeLessThan(0);
     expect(at("Index3_end").z).toBeGreaterThan(0.06);
     expect(at("Thumb3_end").x).toBeLessThan(-0.012);
-    // A firm grip in both hands (round 4): the right fingers tight round the grip's front, the left's
-    // closed hard over them.
+    // A firm grip (round 4): the right fingers tight round the grip's front.
     expect(at("Middle3_end").length()).toBeLessThan(0.045);
-    const left = kit.hands.handBone("l")!;
-    const leftTip = inFrame(camera.weaponMount, bone(left, "Middle3_end").getAbsolutePosition());
-    expect(leftTip.x, "the left fingertips round on the grip's right side").toBeGreaterThan(0.01);
-    const leftMiddle = inFrame(camera.weaponMount, bone(left, "Middle2").getAbsolutePosition());
-    expect(Vector3.Distance(leftMiddle, at("Middle2")), `${leftMiddle} ${at("Middle2")}`).toBeLessThan(0.03);
+  }, 60_000);
+
+  it("pistol (round 5): from the hip in the right hand alone, its thumb along the frame's left side; aimed in, in both, the thumbs side by side along the left, the right's over the left's, the left fingers over the right's", async () => {
+    const { kit, rig, settle, camera, library } = setup();
+    await library.preload(heroine);
+    kit.arm(1, rig, "hero", armed("pistol"));
+    kit.setViewArms(heroine);
+    await ready(kit, settle);
+    const at = (side: "r" | "l", n: string) => {
+      const hand = kit.hands.handBone(side)!;
+      return inFrame(camera.weaponMount, (n ? bone(hand, n) : hand).getAbsolutePosition());
+    };
+    // The middle of the palm: halfway from the wrist bone to the middle finger's knuckle.
+    const palm = (side: "r" | "l") => Vector3.Center(at(side, ""), at(side, "Middle1"));
+    // A thumb laid on the grip: its last joint and tip left of the frame's middle, ahead of the grip, under the slide's top.
+    const thumbOnGrip = (side: "r" | "l", when: string) => {
+      for (const n of ["Thumb3", "Thumb3_end"]) {
+        const p = at(side, n);
+        expect(p.x, `${when}: ${side} ${n} ${p} on the frame's left`).toBeLessThan(-0.004);
+        expect(p.z, `${when}: ${side} ${n} ${p} ahead`).toBeGreaterThan(0.02);
+        expect(p.y, `${when}: ${side} ${n} ${p} by the frame`).toBeGreaterThan(0.01);
+        expect(p.y, `${when}: ${side} ${n} ${p} by the frame`).toBeLessThan(0.05);
+      }
+    };
+    settle();
+    expect(palm("r").length(), "hip: the right palm on the grip").toBeLessThan(0.045);
+    expect(palm("l").length(), "hip: the left hand off the gun").toBeGreaterThan(0.2);
+    thumbOnGrip("r", "hip");
+    settle({ ...standing, aim: 1 });
+    for (const side of ["r", "l"] as const) expect(palm(side).length(), `aimed: the ${side} palm on the grip`).toBeLessThan(0.045);
+    thumbOnGrip("r", "aimed");
+    thumbOnGrip("l", "aimed");
+    // Side by side, both ahead: the right one over the left one.
+    expect(at("r", "Thumb3_end").y).toBeGreaterThan(at("l", "Thumb3_end").y + 0.004);
+    const leftThumb = at("l", "Thumb3_end").subtract(at("l", "Thumb2")).normalize();
+    expect(leftThumb.z, `the left thumb ahead along the frame: ${leftThumb}`).toBeGreaterThan(0.9);
+    // The left fingers closed over the right ones, a finger lower, round the grip's front.
+    expect(Vector3.Distance(at("l", "Middle2"), at("r", "Ring2"))).toBeLessThan(0.035);
   }, 60_000);
 
   it.each(["baton", "blade"] as const)("%s: a hammer grip: a full fist on the handle, the index side towards the tip", async (look) => {

@@ -93,7 +93,8 @@ const boneIndices = (skeleton: Skeleton, nodes: ReadonlySet<TransformNode>): Set
  * one mesh in her skin
  * material, one draw call. Each frame the arm bones are set straight from the viewmodel's pose
  * (`fpp-hand-poses`), static, with the walk sway the viewmodel already has: the right hand round
- * the grip, the left under the fore-end, the pistol or the right fist, and both on the neck in a
+ * the grip, the left under the fore-end, or round the right fist with a handgun aimed in (down
+ * out of the view from the hip), the pommel, and both on the neck in a
  * takedown grab. Until the model is in, and with `?models=off`, the procedural forearm stays.
  */
 export class FppHands implements ViewArms {
@@ -185,7 +186,7 @@ export class FppHands implements ViewArms {
     const vm = frame.viewmodel;
     if (!vm) return null;
     const turn = vm.rotationQuaternion ?? Quaternion.RotationYawPitchRoll(vm.rotation.y, vm.rotation.x, vm.rotation.z);
-    return weaponHands(frame.look, { position: vm.position, turn: (d) => d.applyRotationQuaternion(turn) });
+    return weaponHands(frame.look, { position: vm.position, turn: (d) => d.applyRotationQuaternion(turn) }, frame.aim);
   }
 
   private place(arm: Arm, t: HandTarget): void {

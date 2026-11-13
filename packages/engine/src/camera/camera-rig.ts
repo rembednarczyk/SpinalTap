@@ -424,7 +424,7 @@ export class CameraRig {
     this.viewmodel.rotation.y = sw.ry - (this.pose.yaw ?? 0) * (1 - ads);
     // The guard turns the weapon flat across the view.
     this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7 + guard * 1.25 + sw.rz;
-    this.poseArms({ viewmodel: this.viewmodel.isEnabled(false) ? this.viewmodel : null, look: this.look, choke: this.chokeArms.forearms() });
+    this.poseArms({ viewmodel: this.viewmodel.isEnabled(false) ? this.viewmodel : null, look: this.look, aim: ads, choke: this.chokeArms.forearms() });
     this.onBodyVisibility(!fpp);
     this.bodyFade.update(fpp ? 0 : bodyFadeTarget(pos, dir, p, FIGURE_HEIGHT + (FIGURE_CROUCHED - FIGURE_HEIGHT) * Math.min(1, Math.max(0, crouch))), dt);
   }

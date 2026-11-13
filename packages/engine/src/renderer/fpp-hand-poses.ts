@@ -59,6 +59,11 @@ const grasp = (at: Vector3, fore: Vector3, fingers: Vector3, palm: Vector3, curl
  * guns' pistol grips too.
  */
 const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1), v(-1, 0, 0.05), 0.92, 0.2, 0.95);
+/**
+ * On a handgun (round 5) the thumb closes less: laid along the frame's left side under the slide,
+ * pointing ahead, not folded down round the fingers; aimed in, the left thumb lies under it.
+ */
+const RIGHT_ON_HANDGUN = { ...RIGHT_ON_GRIP, thumb: 0.75 };
 
 /**
  * On the rifle's pistol grip the forearm comes in from the right, the elbow out beside the stock,
@@ -67,10 +72,13 @@ const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1)
 const RIGHT_ON_RIFLE_GRIP = grasp(v(0.006, 0.012, 0.012), v(-0.45, 0.25, 1), v(0, -0.06, 1), v(-1, 0, 0.05), 0.75, 0.15, 0.7);
 
 /**
- * The left hand round the right one with a pistol, a firm two-handed grip: palm hard on the grip's
- * left side, the fingers closed tight over the right's, the thumb along the frame.
+ * The left hand round the right one with a pistol, a shooter's two-handed grip (round 5): the
+ * right hand's mirror, a finger's width lower and ahead, its heel hard on the grip's left side
+ * under the right thumb, the knuckles down the front by the right's, the fingers closed over the
+ * right's, the thumb straight ahead along the frame under the right one; the forearm up from
+ * below and the left, the wrist cocked down.
  */
-const LEFT_ROUND_FIST = grasp(v(-0.016, 0, 0.026), v(0.45, 0.2, 1), v(0.8, -0.15, 1), v(1, 0.15, -0.2), 0.5, 0.5, 0.5);
+const LEFT_ROUND_FIST = grasp(v(-0.007, -0.014, 0.026), v(0.4, 0.4, 1), v(-0.25, -0.4, 1), v(1, 0, 0.25), 0.9, 0.85, 0.5);
 
 /**
  * Melee weapons stand upright in the fist (`IN_VIEW_MELEE`, `VIEW_MELEE_TILT`), at the ready: a
@@ -126,14 +134,35 @@ const intoCamera = (t: HandTarget, frame: { readonly position: Vector3; readonly
   ...(t.thumb !== undefined ? { thumb: t.thumb } : {}),
 });
 
-/** The hands with the weapon in the viewmodel, `turn` and `position` its frame in the camera's. */
-export const weaponHands = (look: WeaponLook | null, frame: { readonly position: Vector3; readonly turn: (d: Vector3) => Vector3 }): ArmsTarget => {
+/** `a` towards `b` by `t`: the wrist along the line, the ways turned between. */
+const blend = (a: HandTarget, b: HandTarget, t: number): HandTarget => {
+  if (t <= 0) return a;
+  if (t >= 1) return b;
+  const mix = (p: number | undefined, q: number | undefined, d: number) => (p ?? d) + ((q ?? d) - (p ?? d)) * t;
+  return hand(
+    Vector3.Lerp(a.wrist, b.wrist, t),
+    Vector3.Lerp(a.fore, b.fore, t),
+    Vector3.Lerp(a.fingers, b.fingers, t),
+    Vector3.Lerp(a.palm, b.palm, t),
+    mix(a.curl, b.curl, 0),
+    mix(a.index, b.index, mix(a.curl, b.curl, 0)),
+    mix(a.thumb, b.thumb, mix(a.curl, b.curl, 0)),
+  );
+};
+
+/**
+ * The hands with the weapon in the viewmodel, `turn` and `position` its frame in the camera's,
+ * `aim` 0 from the hip .. 1 aimed down sights. A handgun (round 5) is held in the right hand alone
+ * from the hip, the left down out of the view; aimed in, the left comes up round the right fist.
+ */
+export const weaponHands = (look: WeaponLook | null, frame: { readonly position: Vector3; readonly turn: (d: Vector3) => Vector3 }, aim: number): ArmsTarget => {
   const melee = look === "baton" || look === "blade";
-  const right = intoCamera(melee ? RIGHT_ON_HANDLE : look === "rifle" ? RIGHT_ON_RIFLE_GRIP : RIGHT_ON_GRIP, frame);
+  const fore = look && !melee ? leftOnForeEnd(look) : null;
+  const right = intoCamera(melee ? RIGHT_ON_HANDLE : look === "rifle" ? RIGHT_ON_RIFLE_GRIP : fore ? RIGHT_ON_GRIP : RIGHT_ON_HANDGUN, frame);
   if (look === "blade") return { right, left: intoCamera(LEFT_ON_POMMEL, frame) };
   if (melee) return { right, left: LEFT_DOWN };
-  const fore = look ? leftOnForeEnd(look) : null;
-  return { right, left: intoCamera(fore ?? LEFT_ROUND_FIST, frame) };
+  if (fore) return { right, left: intoCamera(fore, frame) };
+  return { right, left: blend(LEFT_DOWN, intoCamera(LEFT_ROUND_FIST, frame), aim) };
 };
 
 /** Forearm length of the procedural choke arms (`choke-arms.ts`), whose elbows the model's hands follow. */

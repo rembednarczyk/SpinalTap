@@ -13,6 +13,8 @@ export interface ViewArmsFrame {
   readonly viewmodel: TransformNode | null;
   /** The weapon in hand (null: an empty hand, posed as the pistol). */
   readonly look: WeaponLook | null;
+  /** 0 from the hip .. 1 aimed down sights (the viewmodel's own blend). */
+  readonly aim: number;
   /** Both forearms on a grabbed target's neck (ADR-0075), or null outside a takedown grab. */
   readonly choke: { readonly right: Forearm; readonly left: Forearm } | null;
 }
