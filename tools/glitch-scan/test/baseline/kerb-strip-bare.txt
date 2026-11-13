@@ -21,6 +21,7 @@ krakowskie-1-0 90,-230
 krakowskie-1-1 200,20
 krakowskie-1-1 200,30
 krakowskie-1-1 170,80
+krakowskie-1-1 180,90
 krakowskie-1-1 100,100
 krakowskie-1-1 20,110
 krakowskie-1-1 30,110
@@ -46,6 +47,7 @@ podzamcze-0-0 710,170
 podzamcze-0-0 710,180
 podzamcze-0-0 570,350
 podzamcze-0-0 580,350
+podzamcze-0-0 570,360
 stare-miasto-1-0 610,-220
 stare-miasto-1-0 620,-220
 stare-miasto-1-0 730,-190

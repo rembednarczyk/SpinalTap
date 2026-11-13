@@ -68,6 +68,8 @@ podzamcze-0-0 580,340
 stare-miasto-1-0 650,-210
 stare-miasto-1-0 660,-210
 stare-miasto-1-0 670,-210
+stare-miasto-1-0 690,-210
+stare-miasto-1-0 750,-180
 stare-miasto-1-1 720,110
 stare-miasto-1-1 730,120
 stare-miasto-1-1 730,130
