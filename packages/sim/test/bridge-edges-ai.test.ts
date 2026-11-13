@@ -44,6 +44,16 @@ describe("chasing over the edges of the bridges away from the flights of steps (
     }
   }, 120_000);
 
+  it("gets past the wall of the abutment's level ground west of Mełgiewska's lower bridge, not up it (G-738)", () => {
+    // From the bank south-west of the ramp: the way round its corner, by the 1.5 m wall at its foot.
+    for (const from of [
+      { x: 2411.9, z: 296 },
+      { x: 2414.2, z: 307.4 },
+    ]) {
+      expect(chase(from, -Infinity, { x: 2447, z: 319 }, -Infinity, "nabrzeze-0-1", 20), `(${from.x}, ${from.z})`).not.toBeNull();
+    }
+  }, 120_000);
+
   it("gets from beside the footbridge of podzamcze-2-0 onto its middle", () => {
     const D = BRIDGE_DECKS.get("podzamcze-2-0")![0]!;
     const len = Math.hypot(D.b.x - D.a.x, D.b.z - D.a.z);
