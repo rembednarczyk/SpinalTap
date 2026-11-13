@@ -1,0 +1,5 @@
+# added-grass-off-green: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-0-0 -189,-257
+krakowskie-0-1 -17,146
+podzamcze-1-0 854,365
+podzamcze-1-1 819,482

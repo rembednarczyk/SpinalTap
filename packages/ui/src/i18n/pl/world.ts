@@ -333,6 +333,7 @@ export const plWorld = {
   "death.restart": "Zacznij od nowa",
   "death.title": "Menu główne",
   "clock.label": "Czas gry",
+  "clock.openWait": "otwórz okno czekania",
   "clock.day": "Dzień {day}",
   "clock.phase.night": "noc",
   "clock.phase.dawn": "świt",
