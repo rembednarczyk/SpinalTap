@@ -1795,6 +1795,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-742)
 - Pakiet właściciela: packages/engine (materiał postaci, widok FPP)
 - Test przyjęcia: `pnpm shots:compare` o 12:00: przepalenie samego rękawa < 0,5% dolnej połowy kadru
+- 13.11: rękaw to proceduralny rekwizyt `vm-sleeve` (`cyberIvory`) w `camera-rig.ts`, nie model; poprawka materiałem do czasu rąk z modelu (backlog „Animacje ruchu”)
 
 ### G-751 Pasy przeciwne Ruska/Podzamcze nachodzą na siebie (0,3–2 m)
 - Ważność: S3 · Zasięg: ok. (1000–1036; 462); ok. 64 kolizje aut na 10 ziaren (sonda G-744)
