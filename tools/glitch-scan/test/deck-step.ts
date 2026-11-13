@@ -6,12 +6,13 @@
  * One bridge's carriageway and sidewalk lie level within a kerb.
  */
 import { pointInRingEvenOdd } from "../../../packages/core/src";
+import { segmentPieces } from "./world-samples";
 
 type Pt = { readonly x: number; readonly z: number };
 type Piece = { readonly ring: readonly Pt[] };
 type Finding = { readonly at: string; readonly what: string };
 
-/** How far along an edge the scan samples (m). */
+/** The world's grid an edge is cut on (m): a sample at the middle of each piece (`world-samples.ts`, G-756). */
 export const STEP_SAMPLE = 0.5;
 /** How far beyond the edge it looks for the other piece (m): as the renderer does. */
 export const STEP_OUT = 0.3;
@@ -31,7 +32,7 @@ export const deckSteps = <T extends Piece>(
   skip: (p: Pt) => boolean = () => false,
 ): Finding[] => {
   const out: Finding[] = [];
-  // A corner is the end of two edges: counted once.
+  // Two pieces share an edge: a point counted once.
   const seen = new Set<string>();
   for (const piece of pieces) {
     const ring = piece.ring;
@@ -45,9 +46,8 @@ export const deckSteps = <T extends Piece>(
       let nz = -(b.x - a.x) / len;
       const [mx, mz] = [(a.x + b.x) / 2, (a.z + b.z) / 2];
       if (inside(ring, mx + nx * 0.01, mz + nz * 0.01)) [nx, nz] = [-nx, -nz];
-      const n = Math.max(1, Math.round(len / STEP_SAMPLE));
-      for (let k = 0; k <= n; k++) {
-        const p = { x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n };
+      for (const cut of segmentPieces(a, b, STEP_SAMPLE)) {
+        const p = { x: cut.x, z: cut.z };
         if (skip(p)) continue;
         const [qx, qz] = [p.x + nx * STEP_OUT, p.z + nz * STEP_OUT];
         if (inside(ring, qx, qz)) continue;
