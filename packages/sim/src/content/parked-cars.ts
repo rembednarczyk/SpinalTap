@@ -254,7 +254,12 @@ const kerbCars = (): ParkedCar[] => {
         const at = (a: number, d: number) => ({ x: p.x + p.tx * a + p.tz * d, z: p.z + p.tz * a - p.tx * d });
         const car = (q: { x: number; z: number }): ParkedCar => ({ chunk: chunkOf(q.x, q.z), x: Math.round(q.x * 100) / 100, y: 0, z: Math.round(q.z * 100) / 100, yaw: Math.round(yaw * 1000) / 1000, model, tint: hash(p.x, p.z, 2) });
         // A bay slid off a footway's mouth (G-143) may reach the last one's: it slides on past it instead.
-        const spot = KERB_SLIDE.flatMap((a) => KERB_NUDGE.map((d) => at(a, d))).find((q) => !inKerbPark(q.x, q.z) && fits(q.x, q.z, yaw, model, c) && !out.some((k) => Math.hypot(k.x - q.x, k.z - q.z) < 8 && overlap(k, car(q))));
+        // Tried where the car stays, its place rounded to the centimetre: a corner fitted a few millimetres
+        // inside the kerb must not end up past it (ADR-0078, the carriageway's edge as the buffer lays it).
+        const spot = KERB_SLIDE.flatMap((a) => KERB_NUDGE.map((d) => at(a, d))).find((q) => {
+          const k0 = car(q);
+          return !inKerbPark(q.x, q.z) && fits(k0.x, k0.z, k0.yaw, model, c) && !out.some((k) => Math.hypot(k.x - q.x, k.z - q.z) < 8 && overlap(k, k0));
+        });
         if (spot !== undefined) out.push(car(spot));
       }
     }
