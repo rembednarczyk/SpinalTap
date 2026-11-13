@@ -19,7 +19,7 @@ const STEP = CELL_STEP;
 const taken = cellTaken;
 
 const labelOf = (cls: number): number =>
-  cls === COVER.green ? LABEL.grass : cls === COVER.paving ? LABEL.square : cls === COVER.shadow || cls === COVER.canopy ? LABEL.mixed : LABEL.other;
+  cls === COVER.green ? LABEL.grass : cls === COVER.paving ? LABEL.square : cls === COVER.shadow ? LABEL.mixed : cls === COVER.canopy ? LABEL.crown : LABEL.other;
 
 /**
  * What a cell adds to the packed counts of `readCover`'s table: grass in bits 0-9, square in 10-19,
@@ -37,15 +37,17 @@ const mixedRow = (cells: Cells, t: Int32Array, j: number, r: number, lo: number,
   const { nx, label } = cells;
   const o = j * nx;
   for (let i = 0; i < nx; i++) {
-    if (label[o + i] !== LABEL.mixed) continue;
+    const l = label[o + i]!;
+    if (l !== LABEL.mixed && l !== LABEL.crown) continue;
     const i0 = Math.max(0, i - r);
     const i1 = Math.min(nx, i + r + 1);
     const c = (t[hi + i1]! - t[lo + i1]! - t[hi + i0]! + t[lo + i0]!) | 0;
     const g = c & 1023;
     const s = (c >> 10) & 1023;
     const q = (c >> 20) & 1023;
-    // Ties and none round it stay bare.
-    label[o + i] = g > s && g > q ? LABEL.grass : s > g && s > q ? LABEL.square : LABEL.other;
+    // Ties and none round it stay bare. A crown over lawn or paving takes a lawn (a tree's bed: paving
+    // under it would be a guess, T-285), and stays bare over asphalt.
+    label[o + i] = l === LABEL.crown ? (g > q || s > q ? LABEL.grass : LABEL.other) : g > s && g > q ? LABEL.grass : s > g && s > q ? LABEL.square : LABEL.other;
   }
 };
 
@@ -288,8 +290,10 @@ const components = (cells: Cells, loose: boolean): Components => {
 
 /**
  * Regions of one label under `speck` cells take the label most of the free cells round them have:
- * the minimum mapping unit. The regions' sizes come from their runs (`components`); a speck, in
- * the order of its first cell, is walked cell by cell for the labels round it as they are then.
+ * the minimum mapping unit; but a speck of green in paving stays a lawn (a tree's pit, a bed), not
+ * paving on the orthophoto's green (ADR-0077 step 1.2, T-285). The regions' sizes come from their
+ * runs (`components`); a speck, in the order of its first cell, is walked cell by cell for the
+ * labels round it as they are then.
  */
 export const joinSpecks = (cells: Cells, speck: number): void => {
   const { label } = cells;
@@ -305,7 +309,8 @@ export const joinSpecks = (cells: Cells, speck: number): void => {
       // The label most of the border has, the lower one on a tie.
       let to = -1;
       for (let l = 0; l < round.length; l++) if (round[l]! > 0 && (to < 0 || round[l]! > round[to]!)) to = l;
-      if (to >= 0) for (let q = 0; q < n; q++) label[queue[q]!] = to;
+      if (to < 0 || (to === LABEL.square && label[s] === LABEL.grass)) continue;
+      for (let q = 0; q < n; q++) label[queue[q]!] = to;
     }
   }
 };

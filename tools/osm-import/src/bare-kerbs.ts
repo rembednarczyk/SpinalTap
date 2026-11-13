@@ -197,8 +197,8 @@ const giveWay = (w: Walks, byFar: number[][], start: number, n: number): void =>
 /**
  * A fill gives way within `band` metres of a carriageway behind bare ground on its kerb: a lawn or
  * paving short of the kerb would leave a bare strip along it with a surface past it, what
- * `kerb-gap-bare` and `kerb-strip-bare` count (the kerbs' strips are the next rule's, ADR-0077
- * step 1.2). For each carriageway piece the free cells round it are taken by their distance from it
+ * `kerb-gap-bare` and `kerb-strip-bare` count (the strips the cover shows paved or green are laid,
+ * ADR-0077 step 1.2, `bare-strips.ts`; the asphalt stays). For each carriageway piece the free cells round it are taken by their distance from it
  * (a step every way; a pavement or a wall ends the walk): one with a nearer neighbour bare, or
  * behind bare, is behind bare too, and a fill there turns bare. A fill on the kerb stays.
  */
