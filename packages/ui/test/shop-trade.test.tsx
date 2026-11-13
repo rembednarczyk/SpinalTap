@@ -59,6 +59,9 @@ const intents = (): UiIntents => ({
   setRadioStation: vi.fn(),
   nextRadioStation: vi.fn(),
   trackQuest: vi.fn(),
+  openWait: vi.fn(),
+  closeWait: vi.fn(),
+  waitHours: vi.fn(),
 });
 
 const piece = (key: string, defId: TradeItemVm["defId"], name: string, patch: Partial<TradeItemVm> = {}): TradeItemVm => ({

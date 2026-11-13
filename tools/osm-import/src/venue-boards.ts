@@ -3,7 +3,7 @@
  * the glitch scan: every building view framed as the map city frames it (its neighbours hide
  * walls, landmarks keep their own signs) and its boards from the renderer's own `venueBoards`, so
  * the board's place has one source. It reads the renderer's modules: Node loads it through
- * Vite's module runner (`props.ts`), the tests directly.
+ * Vite's module runner (`props-build.ts`), the tests directly.
  */
 import type { Vec3, ViewDescriptor } from "../../../packages/core/src";
 import { type FacadeFrame, type Wall, facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";

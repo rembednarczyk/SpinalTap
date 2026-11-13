@@ -27,6 +27,7 @@ import { TakedownController } from "./takedown-controller";
 import { CarryController } from "./carry-controller";
 import { DifficultyController } from "./difficulty-controller";
 import { ProgressionController } from "./progression-controller";
+import { WaitController } from "./wait-controller";
 
 /** What the controllers need from the session that composes them. */
 export interface SessionHooks {
@@ -67,6 +68,8 @@ export interface Controllers {
   readonly difficulty: DifficultyController;
   // Character progression (ADR-0059).
   readonly progression: ProgressionController;
+  // Waiting (the `wait` command, ADR-0017).
+  readonly wait: WaitController;
 }
 
 /** The metro and the radio: their ink pools come from one knot renderer shared with the phone. */
@@ -161,7 +164,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     wave2,
     panels: {
       screen: s.screen,
-      talking: () => dialogue.isOpen || shop.isOpen || loot.isOpen || hack.breachOpen || phone.isOpen || travel.metro.isOpen,
+      talking: () => dialogue.isOpen || shop.isOpen || loot.isOpen || hack.breachOpen || phone.isOpen || travel.metro.isOpen || wait.isOpen,
       riding: () => travel.metro.riding,
       characterOpen: () => character.isOpen,
       loot: () => loot.lootFrame(),
@@ -193,5 +196,8 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   const carry = new CarryController(sim);
   const difficulty = new DifficultyController({ sim, ui, screen: s.screen });
   const progression = new ProgressionController({ sim, menuOpen: () => character.isOpen, syncHud: () => hud.sync() });
-  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, autosave, wave1, hud, wave2, takedown, carry, difficulty, progression, ...travel };
+  const facts = () => ({ fighting: hud.inCombat, airborne: airborne() });
+  const canOpenWait = () => free() && !character.isOpen && !hack.breachOpen && !phone.isOpen;
+  const wait: WaitController = new WaitController({ sim, ui, audio, focus, screen: s.screen, setScreen: s.setScreen, canOpen: canOpenWait, facts, syncHud: () => hud.frame() });
+  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, autosave, wave1, hud, wave2, takedown, carry, difficulty, progression, wait, ...travel };
 };
