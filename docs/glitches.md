@@ -1791,6 +1791,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: 30 punktów przy bokach pomostów (sonda G-741): dojścia ponad 16/30 bez regresji; test z jednego z punktów wyżej pada bez poprawki
 
+### G-748 Uskok terenu do 3,3 m na szwie kawałków krakowskie-2-1 | stare-miasto-0-1
+- Ważność: S3 · Zasięg: x = 460, z 104–110: teren krakowskie-2-1 −9,20, stare-miasto-0-1 −5,80…−7,12
+- Opis: teren dwóch sąsiednich kawałków rozjeżdża się na szwie; `walk-blocked` (ADR-0080 PR 4): 48 par
+- Status: zgłoszone (13.11, budowniczy ADR-0080 PR 4)
+- Pakiet właściciela: packages/sim (content/lublin terrain)
+- Test przyjęcia: `walk-blocked` bez kluczy na szwie x = 460; teren obu kawałków ciągły (różnica ≤ 0,05 m wzdłuż szwu)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
