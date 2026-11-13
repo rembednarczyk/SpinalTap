@@ -1734,11 +1734,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 55 dróg `footway`/`path` z tagiem `surface=asphalt|gravel|ground|…`, głównie Podzamcze i Nabrzeże (np. w351669238); barwa ziemi z typu drogi, nie z tagu `surface`; poprawka: pole `surface` w danych importu i barwa z mediany ortofoto dla tego `surface`; kontrola `footway-surface-mismatch` (baza 55)
 - Pakiet właściciela: tools/osm-import (pole w danych ziemi), packages/engine (`ground-plan.ts`)
 
-### G-734 `sidewalk` za ciemny wobec trawy (1,31 zamiast 1,46–1,58)
-- Status: w PR #488 (13.11, cffd922: `sidewalk` z mediany ortofoto, #858277, chodnik/trawa w planie 1,31 → 1,56; kontrola `paving-albedo-drift` odłożona: mediany wymagają danych ortofoto spoza repo); wcześniej: zgłoszone (12.11, kurator, przegląd G-721)
-- Ważność: S4 · Zasięg: wszystkie chodniki miasta (#6a6d73); ortofoto: chodnik do trawy 1,46–1,58; poprawka: 0,9 × square (ok. #868378) tą samą regułą co G-721; kontrola `paving-albedo-drift` (plan/trawa wobec mediany ortofoto > 0,25)
-- Pakiet właściciela: packages/engine (`ground-plan.ts`)
-
 ### G-736 Teren wystaje nad pomosty wiaduktów i przyczółków (860 próbek `ground-over-deck`)
 - Ważność: S4 (szare łaty bez bruku na pomoście, do 0,25 m) · Zasięg: koniec NE wiaduktu Zamkowej (780..790; 190..206), 245 próbek do 0,25 m; przyczółki Mełgiewskiej (G-349), ok. 610 próbek do 0,155 m; kładka podzamcze-2-0, 2 próbki
 - Opis: teren pod obrysem pomostu leży wyżej niż pomost + 0,01 m i przebija przez jego nawierzchnię. Kontrola `ground-over-deck` (G-686, runda 2, 253613f) liczy próbki co 0,25 m; baza 860.

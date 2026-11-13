@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-734 `sidewalk` za ciemny wobec trawy (1,31 zamiast 1,46–1,58)
+- Status: naprawione (13.11, #488 scalony); wcześniej: w PR #488 (13.11, cffd922: `sidewalk` z mediany ortofoto, #858277, chodnik/trawa w planie 1,31 → 1,56; kontrola `paving-albedo-drift` odłożona: mediany wymagają danych ortofoto spoza repo); wcześniej: zgłoszone (12.11, kurator, przegląd G-721)
+- Ważność: S4 · Zasięg: wszystkie chodniki miasta (#6a6d73); ortofoto: chodnik do trawy 1,46–1,58; poprawka: 0,9 × square (ok. #868378) tą samą regułą co G-721; kontrola `paving-albedo-drift` (plan/trawa wobec mediany ortofoto > 0,25)
+- Pakiet właściciela: packages/engine (`ground-plan.ts`)
+
 ### G-737 Chodnik mostu Mełgiewskiej przy Andersa 0,14–0,16 m pod jezdnią (T-283)
 - Ważność: S4 · Zasięg: most w50733068, chodnik w230881193 przy Andersa, (2420-2426; 323), zachodni koniec; chodnik −25,86…−25,88, jezdnia −25,72
 - Opis: pomost chodnika leży na NMT końca swojej osi, a jezdni na swojej; w poprzek mostu powstaje uskok 0,14–0,16 m poniżej progu `deck-step-face` (0,3). W Lublinie chodnik za krawężnikiem jest w poziomie jezdni.
