@@ -1,3 +1,4 @@
+import { segmentDistance } from "../../../packages/core/src";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { areaSurface } from "../../osm-import/src/ground.ts";
@@ -114,11 +115,7 @@ class Grid {
   }
 }
 
-const segmentGap = (a: Pt, b: Pt, x: number, z: number): number => {
-  const [dx, dz] = [b.x - a.x, b.z - a.z];
-  const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * t - x, a.z + dz * t - z);
-};
+const segmentGap = (a: Pt, b: Pt, x: number, z: number): number => segmentDistance(x, z, a.x, a.z, b.x, b.z);
 
 /** The world's raster: where a town has paving, and what covers it. */
 const landuseGrid = (w: LanduseWorld): Grid | undefined => {

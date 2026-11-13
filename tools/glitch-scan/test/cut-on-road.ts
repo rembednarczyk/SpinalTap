@@ -1,3 +1,4 @@
+import { pointInRingEvenOdd } from "../../../packages/core/src";
 import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import type { Line } from "../../osm-import/src/features.ts";
@@ -33,14 +34,7 @@ const STEP = 0.25;
 /** A solid rises out of the ground by more than this (m) to count: under it, it is a room in the ground. */
 const OUT = 0.05;
 
-const inRing = (p: Pt, ring: readonly Pt[]): boolean => {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [a, b] = [ring[i]!, ring[j]!];
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-};
+const inRing = (p: Pt, ring: readonly Pt[]): boolean => pointInRingEvenOdd(p.x, p.z, ring);
 
 /** A replaced way counts as replaced only with its register's row. */
 const replacedIds = (replaced: readonly ReplacedWay[]): ReadonlySet<string> => new Set(replaced.filter((w) => /^T-\d{3}$/.test(w.ref)).map((w) => w.id));

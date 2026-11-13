@@ -7,6 +7,7 @@
  * beside it. A widening piece shares the carriageway piece's edge to the vertex: neither a seam
  * between them nor an overlap of one surface in one plane (`paving-coplanar`).
  */
+import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type Pt, type Rect, ccw, clipRingToRect, r1, rectsOverlap, ringBounds, selfIntersects, signedArea } from "./geometry.ts";
 
 /** One stretch of an edge widened: its points on the edge as the map's width lays it, from where the asphalt steps out to where it is back, and the asphalt's new edge. */
@@ -77,10 +78,7 @@ const strays = (path: readonly Pt[], line: readonly Pt[]): number => {
     let d = Infinity;
     for (let i = 0; i + 1 < line.length; i++) {
       const [a, b] = [line[i]!, line[i + 1]!];
-      const [dx, dz] = [b.x - a.x, b.z - a.z];
-      const l2 = dx * dx + dz * dz;
-      const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2));
-      d = Math.min(d, Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z));
+      d = Math.min(d, segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z));
     }
     worst = Math.max(worst, d);
   }

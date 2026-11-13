@@ -5,13 +5,14 @@
  * 2. `lean.ts`: the lean of each cached orthophoto flight, the flight leaning least;
  * 3. `bare-parts.ts`: the bare ground in yards, frontages, gaps by the carriageway and LoD2 footprints,
  *    with the photograph's classes from that flight without the samples under a shifted roof;
- * 4. `absent.ts`: LoD2 and LoD1 2024 buildings the game lacks (NMPT skipped while not in `data/`);
+ * 4. `absent.ts`: LoD2 and LoD1 2024 buildings the game lacks (NMPT skipped while not in `data/`),
+ *    and the game's buildings LoD2 lacks, with LoD1 2024 near them or not;
  * 5. `known.ts`: the scan's hits in the cell with the glitches and T rows the registers name.
  * Each has a short table and a one-sentence verdict, in the report's JSON and text.
  */
 import { loadLod1, loadLod2, tilesOf } from "../../gugik/src/extracts.ts";
 import { type Pt, type Rect } from "../../osm-import/src/geometry.ts";
-import { type AbsentSection, absentSection, absentText } from "./absent.ts";
+import { type AbsentSection, type GameOnlySection, absentSection, absentText, gameOnlySection, gameOnlyText } from "./absent.ts";
 import { type PartsSection, partsSection, partsText } from "./bare-parts.ts";
 import { type CellSpec, FLIGHTS, defaultCache } from "./config.ts";
 import { type Cover } from "./cover.ts";
@@ -28,6 +29,8 @@ export interface Sections {
   readonly lean: LeanSection;
   readonly bare: PartsSection;
   readonly absent: AbsentSection;
+  /** The game's buildings without LoD2 under them (the other way round of `absent`). */
+  readonly gameOnly: GameOnlySection;
   readonly known: KnownSection;
   /** Time each section took (ms). */
   readonly ms: Readonly<Record<string, number>>;
@@ -64,7 +67,9 @@ export const cellSections = (inp: SectionsInput): Sections => {
   const lod2 = loadLod2(tiles).filter((b) => near(b.ring));
   const lod2Rings = lod2.map((b) => b.ring);
   const game = gameBuildings().filter((b) => near(b.ring));
-  const footprints = timed("footprints", () => fitSection(rect, game, lod2));
+  const lod1 = loadLod1(tiles).filter((b) => near(b.ring));
+  const gameOnly = timed("gameOnly", () => gameOnlySection(rect, game, lod2Rings, lod1));
+  const footprints = timed("footprints", () => fitSection(rect, game, lod2, gameOnly.buildings.length));
   const cache = inp.cache ?? defaultCache();
   const photos = FLIGHTS.flatMap((f) => {
     const tile = loadTile(cache, f.id, inp.cell);
@@ -86,9 +91,9 @@ export const cellSections = (inp: SectionsInput): Sections => {
       ...(inp.landuseBareAt ? { landuseBareAt: inp.landuseBareAt } : {}),
     }),
   );
-  const absent = timed("absent", () => absentSection(rect, lod2, loadLod1(tiles).filter((b) => near(b.ring)), game.map((b) => b.ring), inp.cleared));
+  const absent = timed("absent", () => absentSection(rect, lod2, lod1, game.map((b) => b.ring), inp.cleared));
   const known = timed("known", () => loadKnown(inp.cell.id, rect));
-  return { footprints, lean, bare, absent, known, ms };
+  return { footprints, lean, bare, absent, gameOnly, known, ms };
 };
 
-export const sectionsText = (s: Sections): string[] => [...fitText(s.footprints), ...leanText(s.lean), ...partsText(s.bare), ...absentText(s.absent), ...knownText(s.known)];
+export const sectionsText = (s: Sections): string[] => [...fitText(s.footprints), ...leanText(s.lean), ...partsText(s.bare), ...absentText(s.absent), ...gameOnlyText(s.gameOnly), ...knownText(s.known)];

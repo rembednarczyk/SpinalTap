@@ -1,4 +1,4 @@
-import { type ActivityId, SpatialHash, type Vec3 } from "@seki/core";
+import { type ActivityId, SpatialHash, type Vec3, pointInPairRingEvenOdd, segmentDistance } from "@seki/core";
 import { placeAt, v } from "./builders";
 import { DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_PROPS } from "./district-kanal";
@@ -161,12 +161,7 @@ const carSegments = (() => {
 
 /** Is (x, z) on a carriageway the traffic drives (within `CAR_LANE_REACH` of a lane's line)? */
 const onCarLane = (x: number, z: number): boolean =>
-  carSegments.some(x, z, x, z, ([ax, az, bx, bz]) => {
-    const dx = bx - ax;
-    const dz = bz - az;
-    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1)));
-    return Math.hypot(ax + dx * t - x, az + dz * t - z) < CAR_LANE_REACH;
-  });
+  carSegments.some(x, z, x, z, ([ax, az, bx, bz]) => segmentDistance(x, z, ax, az, bx, bz) < CAR_LANE_REACH);
 
 /** A square's or an alley's walker stays off the walls, the blocks, the carriageways and the kerbs' parking strips. */
 const clearAt = (x: number, z: number): boolean => !inBuilding(x, z) && nearestWall(x, z).d >= LANE_CLEARANCE && !nearBlock(x, z) && !onCarLane(x, z) && !onKerbPark(x, z);
@@ -276,16 +271,6 @@ const ringArea = (ring: readonly Pt[]): number => Math.abs(ring.reduce((s, p, i)
   return s + p[0] * q[1] - q[0] * p[1];
 }, 0)) / 2;
 
-const insideRing = (x: number, z: number, ring: readonly Pt[]): boolean => {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [xi, zi] = ring[i] as Pt;
-    const [xj, zj] = ring[j] as Pt;
-    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = true !== inside;
-  }
-  return inside;
-};
-
 /**
  * Loops across the big squares (Plac Litewski's alleys are paths without names, so no street
  * lane reaches them): the square's outline drawn in towards its middle, kept only where it stays
@@ -294,7 +279,7 @@ const insideRing = (x: number, z: number, ring: readonly Pt[]): boolean => {
 const squareLanes = (): CrowdLane[] =>
   MAP_CHUNKS.filter((c) => c.district === "shinsekai-7" || c.district === "kanal").flatMap((c) => {
     const water = c.ground.filter((g) => g.surface === "water" || g.surface === "basin").map((g) => ringOf(g.outline));
-    const dry = (loop: readonly Pt[]) => loop.every(([x, z]) => !water.some((w) => insideRing(x, z, w)));
+    const dry = (loop: readonly Pt[]) => loop.every(([x, z]) => !water.some((w) => pointInPairRingEvenOdd(x, z, w)));
     const squares = c.ground
       .filter((g) => g.surface === "square")
       .map((g) => ringOf(g.outline))

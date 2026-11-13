@@ -1,3 +1,4 @@
+import { pointInRingEvenOdd, segmentDistance } from "../../../packages/core/src";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { belowGround } from "../../osm-import/src/building-tags.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
@@ -45,22 +46,13 @@ const boxOf = (ring: Ring): Box => ({
 });
 const meets = (a: Box, b: Box): boolean => a.minX < b.maxX && b.minX < a.maxX && a.minZ < b.maxZ && b.minZ < a.maxZ;
 
-const inRing = (p: Pt, ring: Ring): boolean => {
-  let odd = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [a, b] = [ring[i]!, ring[j]!];
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) odd = !odd;
-  }
-  return odd;
-};
+const inRing = (p: Pt, ring: Ring): boolean => pointInRingEvenOdd(p.x, p.z, ring);
 
 const edgeGap = (p: Pt, ring: Ring): number => {
   let d = Infinity;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const [a, b] = [ring[j]!, ring[i]!];
-    const [dx, dz] = [b.x - a.x, b.z - a.z];
-    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-    d = Math.min(d, Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z));
+    d = Math.min(d, segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z));
   }
   return d;
 };

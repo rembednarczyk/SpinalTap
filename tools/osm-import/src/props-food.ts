@@ -16,6 +16,7 @@ import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/
 import { type CrossingBand, crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
 import { FOOD_STALL, distanceToPiece } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
+import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type Pt, type Rect, pointInRing, ringBounds } from "./geometry.ts";
 import type { BoardSpan } from "./props-boards.ts";
 import type { Placed } from "./props-gen.ts";
@@ -114,10 +115,7 @@ const distToLine = (p: Pt, line: readonly Pt[]): number => {
   for (let i = 0; i + 1 < line.length; i++) {
     const a = line[i]!;
     const b = line[i + 1]!;
-    const dx = b.x - a.x;
-    const dz = b.z - a.z;
-    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-    best = Math.min(best, Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z));
+    best = Math.min(best, segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z));
   }
   return best;
 };

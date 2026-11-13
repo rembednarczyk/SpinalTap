@@ -4,6 +4,7 @@
  * back (the way ear clipping takes holes). Read even-odd, as the simulation and the renderer's
  * triangulation read it, it covers the ring less its holes.
  */
+import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type Pt, ccw, pointInRing, signedArea } from "./geometry.ts";
 
 /** The least a hole keeps off the ring it is cut out of and off the other holes (m): one that touches them is no hole the seam can reach. */
@@ -11,12 +12,7 @@ const CLEAR = 0.3;
 
 const cross = (o: Pt, a: Pt, b: Pt): number => (a.x - o.x) * (b.z - o.z) - (a.z - o.z) * (b.x - o.x);
 
-const segDist = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
-};
+const segDist = (p: Pt, a: Pt, b: Pt): number => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 
 /** Whether segments a-b and c-d meet anywhere but at a shared end. */
 const segmentsMeet = (a: Pt, b: Pt, c: Pt, d: Pt): boolean => {

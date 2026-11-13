@@ -105,6 +105,7 @@ export const stopLines = (source: string, at: Pt, roads: readonly Line[], inJunc
       const a = l.line[i]!;
       const b = l.line[i + 1]!;
       const len = Math.hypot(b.x - a.x, b.z - a.z);
+      // Not `segmentDistance` of core: the parameter divides by `len * len` of the rounded length, another rounding than `dx * dx + dz * dz`.
       const k = len > 0 ? Math.max(0, Math.min(1, ((at.x - a.x) * (b.x - a.x) + (at.z - a.z) * (b.z - a.z)) / (len * len))) : 0;
       if (Math.hypot(a.x + (b.x - a.x) * k - at.x, a.z + (b.z - a.z) * k - at.z) < 1) {
         const w = roadWidth(t);

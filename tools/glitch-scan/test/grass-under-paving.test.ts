@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { type GroundSurface, SURFACE_LIFT, type Vec3, type ViewDescriptor } from "../../../packages/core/src";
+import { type GroundSurface, SURFACE_LIFT, type Vec3, type ViewDescriptor, segmentDistance } from "../../../packages/core/src";
 import { worldRing } from "../../../packages/engine/src/renderer/drones/drone-world";
 import { type P2, pointInRing, signedArea, triangulate } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
@@ -124,9 +124,7 @@ describe("grass-under-paving (G-421)", () => {
     const gap = (p: P2, r: readonly P2[]) =>
       Math.min(...r.map((a, i) => {
         const b = r[(i + 1) % r.length]!;
-        const [dx, dz] = [b.x - a.x, b.z - a.z];
-        const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-        return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
+        return segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
       }));
     const inLawn = (p: P2) => lawns.some((r) => pointInRing(p, r) || gap(p, r) < 0.5);
     const at = drawnAt(WORLD_SCENERY, boxOf(plac));
@@ -153,6 +151,7 @@ describe("grass-under-paving (G-421)", () => {
       l.slice(1).some((b, i) => {
         const a = l[i]!;
         const [dx, dz] = [b.x - a.x, b.z - a.z];
+        // Not `segmentDistance` of core: without its `|| 1` a zero-length segment gives NaN here, never near.
         const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz)));
         return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z) < 6;
       });

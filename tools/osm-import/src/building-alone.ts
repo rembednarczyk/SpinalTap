@@ -1,4 +1,5 @@
 import { type Area } from "./features.ts";
+import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type Pt, ringBounds, signedArea } from "./geometry.ts";
 
 /** Below this footprint (m²) a building standing on its own is a pavilion, a kiosk or a shed. */
@@ -6,13 +7,7 @@ export const SMALL_ALONE_AREA = 50;
 /** Closer than this (m) to another outline, a building is part of a row, not on its own. */
 const TOUCH = 1;
 
-const segDist = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const len = dx * dx + dz * dz || 1;
-  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / len));
-  return Math.hypot(p.x - (a.x + t * dx), p.z - (a.z + t * dz));
-};
+const segDist = (p: Pt, a: Pt, b: Pt): number => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 
 const near = (a: readonly Pt[], b: readonly Pt[]): boolean =>
   a.some((p) => b.some((q, i) => segDist(p, q, b[(i + 1) % b.length]!) < TOUCH)) || b.some((p) => a.some((q, i) => segDist(p, q, a[(i + 1) % a.length]!) < TOUCH));

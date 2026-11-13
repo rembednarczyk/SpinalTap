@@ -29,6 +29,7 @@ import { type DoorModel, doorLayout, doorVariant } from "../../../packages/core/
 import { distanceToPiece, furniturePrisms } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import type { Pt } from "./geometry.ts";
 import { REPO } from "./paths.ts";
 import { geoToWorld } from "./project.ts";
@@ -113,12 +114,7 @@ const r2 = (v: number): number => Math.round(v * 100) / 100 + 0;
 
 const pointOn = (w: DoorWall, u: number, out = 0): Pt => ({ x: w.a.x + ((w.b.x - w.a.x) * u) / w.length + w.nx * out, z: w.a.z + ((w.b.z - w.a.z) * u) / w.length + w.nz * out });
 
-const segGap = (p: Pt, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z);
-};
+const segGap = (p: Pt, a: Pt, b: Pt): number => segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
 
 /** The model of an entrance's door by its tags, on a slot (over a pane: the wall's own kind of door). */
 export const entranceModel = (e: Pick<Entrance, "entrance" | "door">, slot: WallSlot, shopWall: boolean): DoorModel => {

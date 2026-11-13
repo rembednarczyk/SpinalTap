@@ -1,3 +1,4 @@
+import { pointInRingEvenOdd } from "../../../packages/core/src";
 import { SpatialHash } from "../../../packages/core/src/math/spatial-hash";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { parseLength } from "../../osm-import/src/building-tags.ts";
@@ -53,14 +54,7 @@ const boxed = (ring: Ring): Boxed => ({
   box: { minX: Math.min(...ring.map((p) => p.x)), maxX: Math.max(...ring.map((p) => p.x)), minZ: Math.min(...ring.map((p) => p.z)), maxZ: Math.max(...ring.map((p) => p.z)) },
 });
 
-const inRing = (p: Pt, ring: Ring): boolean => {
-  let r = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [a, b] = [ring[i]!, ring[j]!];
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) r = !r;
-  }
-  return r;
-};
+const inRing = (p: Pt, ring: Ring): boolean => pointInRingEvenOdd(p.x, p.z, ring);
 
 /** Rings by the 8 m cells their boxes reach, in core's `SpatialHash`. */
 class Bins<T extends Boxed> {

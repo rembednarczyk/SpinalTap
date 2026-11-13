@@ -7,6 +7,7 @@
  */
 import type { StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
 import { furniturePrisms } from "../../../packages/sim/src/content/lublin/furniture.ts";
+import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type Pt, pointInRing, ringBounds } from "./geometry.ts";
 import type { Placed } from "./props-gen.ts";
 import { longAxis } from "./props-market.ts";
@@ -23,10 +24,7 @@ const toRing = (p: Pt, ring: readonly Pt[]): number => {
   for (let i = 0; i < ring.length; i++) {
     const a = ring[i]!;
     const c = ring[(i + 1) % ring.length]!;
-    const dx = c.x - a.x;
-    const dz = c.z - a.z;
-    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-    best = Math.min(best, Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z));
+    best = Math.min(best, segmentDistance(p.x, p.z, a.x, a.z, c.x, c.z));
   }
   return best;
 };
