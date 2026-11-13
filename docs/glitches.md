@@ -1844,6 +1844,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: sonda G-741: punkty nabrzeze-0-1 0 0.85 ±9,5 i 1 0.1 8 dochodzą
 
+### G-764 Trawnik pod koronami drzew na kostce (reguła koron, ADR-0077 krok 1.2)
+- Ważność: S4 · Zasięg: 4 dzielnice, ok. 474–670 m², m.in. promenada nad Czechówką przy VIVO (x 1090, z 185), Furmańska (x 646, z 257)
+- Opis: bare-clean.ts mixedRow zamienia koronę (klasa canopy) w trawnik, gdy g > q || s > q, także wśród samej kostki (g = 0). Nalot bezlistny 2025-04 pokazuje tam jasną kostkę (L ≥ 115, S ≤ 0,12: 474 m², z tego 199 m² było kostką na main). Propozycja: rozdzielić w tools/orto klasę canopy na koronę nad twardym i nad miękkim; nad twardym kostka, nad miękkim trawnik; kontrola skanu lawn-on-leafoff-paving. Szczegóły: scratchpad topo-adr77kerb-raport.md.
+- Status: zgłoszone (13.11, kurator, przegląd kroku 1.2)
+- Pakiet właściciela: tools/osm-import, tools/orto
+- Test przyjęcia: kontrola lawn-on-leafoff-paving < 50 m², a zarośla Nabrzeża (x 2500..2534, z 107..139) i żywopłot Podzamcza (x 551..569, z 353..359) zostają trawą
+- Wiersz topografii: T-287.
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
