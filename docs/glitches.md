@@ -1498,6 +1498,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: kontrola w main (#453, `ground-ring-self-cross` baza 30); naprawa w etapach 2–3 ADR-0078
 - Ważność: S4 · Zasięg: place przycięte na krawędzi kawałka mapy przy (20; −20), pętle zamkniętych ścieżek w Podzamczu i Nabrzeżu; skan nie liczy tego rodzaju; poprawka: kontrola w `tools/glitch-scan` z bazą z przebiegu (i wpis w `docs/mapa-pokrycie.json`), potem naprawy; propozycja kuratora (przegląd #433): `ground-ring-self-cross`, baza 30 (Krakowskie 15, w tym 6 placów przy (20; −20), Nabrzeże 5, Podzamcze 5, Stare Miasto 5); podzamcze-2-1 (12.11): `ground-ring-self-cross` 3 kwadraty (4 trafienia), pętle ścieżek (footway) w (961; 538) 37 punktów, (1057; 504) 34, (1046; 424) 42 i (1045; 424) 46; ta sama klasa.; nabrzeze-0-0 (12.11): `ground-ring-self-cross` 2 pętle ścieżek (footway): (2483; 137) 20 punktów i (2488; 144) 17 punktów.; nabrzeze-0-1 (12.11): `ground-ring-self-cross` pętla ścieżki (footway) (2427; 451), 42 punkty.; nabrzeze-1-0 (12.11): `ground-ring-self-cross` droga (road) nabrzeze-1-0, 10 punktów (2599; 263).
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
+- 13.11 gałąź G-744 (ADR-0078 etap 2): ground-ring-self-cross 30 -> 8, wnętrza 16 pętli ścieżek kładzione w całości (pathLoops); kurator: Podzamcze (1046,424) plac na kostce ortofoto, Nabrzeże w154012559/60 trawa na ściółce pod koronami (2025-04) zgodne.
 
 ### G-661 Goły plac na północ od VIVO
 - Status: zgłoszone (12.11, kurator przeglądu G-647; T-260)
@@ -1704,6 +1705,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
   - G-671 (S4) Próg 0,5 m² w `chunkGround` gubi małe wycinki wypełnień krawężnikowych na granicach chunków — `tools/osm-import/src/ground.ts` `chunkGround`: wycinki pasm `holed` (wypełnienia chodnika przy krawężniku) poniżej 0,5 m² w chunku są odrzu
   - G-674 (S4) Północny krawężnik Radziwiłłowskiej przy Placu Litewskim przed trawnikiem OSM — w914787972 i w331453920, x −87…−40: goły pas 1–2,8 m między północną krawędzią asfaltu (z 119,1–119,7) a trawnikiem w1011367949
 - Pakiet właściciela: tools/osm-import (ground, `fitToKerb`, `kerbFills`)
+- 13.11 przegląd ADR-0078 etap 2 (G-744): Podwale w179264852 +7 próbek sidewalk-under-carriageway (750,-180; 690,-210) przyjęte przez GLITCH_BASELINE=accept; przyczyna jak G-082/G-113, goły pas przy elewacji 755..758 do poprawy razem z nimi (T-046).
 
 ### G-729 Szyld Neon Koi wchodzi na szyld BANK POWSZEDNI
 - Status: odłożone za priorytet mapowania i refaktoru (decyzja użytkownika 12.11: „póki co trzymaj obecne priorytety”); zgłoszone (12.11, zgłoszenie użytkownika; przyczyna do potwierdzenia)
@@ -1836,6 +1838,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin nawierzchnie), tools/osm-import
 - Test przyjęcia: `car-lane-off-road` i `lane-off-ground` bez tych kluczy
 - Przyczyna: proste ucięcia pasów jezdni dwóch dróg we wspólnym węźle nie pokrywają się (wierzchołki zaokrąglane osobno do 0,1 m, różne szerokości, klin na zakręcie); szczeliny 5-10 cm. Kościuszki#4 to ta sama szczelina, plac tylko prześwituje. Na danych g744 zostają 4 z 5 miejsc (i dziury ok. 25 cm przy ~2526,356): roundJoints pomija kawałki < SLIVER 0,1 m / MIN_CAP 0,3 m² i liczy przed zaokrągleniem do 0,1 m. Naprawa po scaleniu g744, w line-buffer.ts (złącze po zaokrągleniu albo nakładka w złączu); test: odcinek między ucięciami pasów ze wspólnym węzłem leży na road. Sonda: scratchpad g760-probe.test.ts.
+
+### G-761 Trawniki w pierścieniu skweru na Podzamczu pod kostką ścieżki
+- Ważność: S4 · Zasięg: w804709919, w804709920 (1045, 424), 46 m²; podobnie zieleń pod footway w pętlach w1343050082 (58,-83) 19 m², w154012559 15 m², w515648305 10 m²
+- Opis: Pas footway pierścienia (szerokość domyślna) leży na półksiężycach trawnika widocznych na ortofoto; skwer traci rysunek. Proponowana kontrola skanu loop-paving-on-green (m² kostki na zieleni wewnątrz pętli ścieżek, baza 5 pętli).
+- Status: zgłoszone (13.11, kurator, przegląd ADR-0078 etap 2)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: zieleń z ortofoto pod footway/square wewnątrz pętli w804709919 < 5 m²
+- Wiersz topografii: T-286.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
