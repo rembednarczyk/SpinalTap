@@ -1684,6 +1684,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
   - G-718 (S3) Goły teren w nabrzeze-1-1: przedpole przy fasadach i szczeliny przy jezdni Turystycznej (T-279) — nabrzeze-1-1, goły teren 6779 m²: przedpole 1 / 3104 m² (twarde 44%), szczeliny przy jezdni > 3 m 6 / 1913 m² (twarde 60%), inne 1 / 113 m²
 - Pakiet właściciela: tools/osm-import (ADR-0077)
 - 13.11 krok 1.2 ADR-0077 (gałąź ccr-ec2c4269-ilh8k8-adr77-kerb): szczeliny przy jezdni kładzione z ortofoto, kerb-gap-bare -54%, kerb-strip-bare -64%; zostaje asfalt przy jezdni (etap asfaltu)
+- Krok 1.2 ADR-0077 w main (#510, 13.11).
 
 ### G-727 Klasa: odłożone do poszerzania mapy
 - Status: zgłoszone, klasa (12.11, porządki rejestru: 2 wpisów scalonych, pełne opisy w archiwum)
