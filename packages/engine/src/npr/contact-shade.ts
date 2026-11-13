@@ -39,6 +39,8 @@ export const CONTACT_SHADE_GLSL = /* glsl */ `
 uniform vec4 shadeParams;
 /** Tangents of half the view angles, across and up. */
 uniform vec2 tanHalf;
+/** World up in view space: the shade lands on floors only, where every contact ends. */
+uniform vec3 upView;
 
 vec3 viewPosAt(vec2 uv, float z) {
   return vec3((uv.x * 2.0 - 1.0) * tanHalf.x * z, (uv.y * 2.0 - 1.0) * tanHalf.y * z, z);
@@ -46,6 +48,10 @@ vec3 viewPosAt(vec2 uv, float z) {
 
 /** Share of the samples (0..1) that stand over the point within reach, faded with distance. */
 float contactOcclusion(vec2 uv, float d, vec3 n) {
+  // Walls, beams and steps' risers take no shade: that is where the stairs and ceilings smeared
+  // it; the foot of a wall still shades the floor in front of it.
+  float floorness = smoothstep(0.6, 0.85, dot(n, upView));
+  if (floorness <= 0.0) return 0.0;
   vec3 p = viewPosAt(uv, d);
   float r = shadeParams.x;
   // The disc's radius on screen, as a fraction of the width and of the height.
@@ -71,7 +77,7 @@ float contactOcclusion(vec2 uv, float d, vec3 n) {
     // reach: the share of such samples, not a weighted mean, so a wall's foot reaches the step.
     occ += (dot(n, v) * inversesqrt(l2 + 1e-4) > 0.3 && l2 < r * r) ? 1.0 : 0.0;
   }
-  return occ / 24.0 * (1.0 - smoothstep(shadeParams.w * 0.55, shadeParams.w, d));
+  return floorness * occ / 24.0 * (1.0 - smoothstep(shadeParams.w * 0.55, shadeParams.w, d));
 }
 `;
 
