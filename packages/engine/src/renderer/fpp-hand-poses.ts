@@ -43,7 +43,7 @@ const RIGHT_ON_GRIP = hand(v(0.034, -0.028, -0.075), v(-0.22, 0.16, 1), v(-0.12,
 const LEFT_UNDER_FIST = hand(v(-0.05, -0.085, -0.05), v(0.4, 0.25, 1), v(0.45, 0.35, 1), v(0.7, 0.7, 0), 0.6);
 
 /** The right fist round a baton's or blade's handle, which rises up and forward from it. */
-const RIGHT_ON_HANDLE = hand(v(0.03, 0.025, -0.045), v(-0.2, 0.05, 1), v(0, -Math.sin(VIEW_MELEE_TILT), Math.cos(VIEW_MELEE_TILT)), v(-1, 0, 0), 1);
+const RIGHT_ON_HANDLE = hand(v(0.03, 0.025, -0.045), v(-0.12, 0.45, 1), v(0, -Math.sin(VIEW_MELEE_TILT), Math.cos(VIEW_MELEE_TILT)), v(-1, 0, 0), 1);
 
 /** With a melee weapon the left hand hangs low, under the view (camera frame). */
 const LEFT_DOWN = hand(v(-0.24, -0.46, 0.18), v(0.1, 0.25, 1), v(0.1, 0.1, 1), v(1, 0, 0), 0.4);
