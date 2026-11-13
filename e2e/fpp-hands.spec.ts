@@ -5,13 +5,13 @@ import { freeze, newGame, sampleNow, step, teleport, waitForGame, waitForPlay } 
 
 /**
  * Seki's own forearms and hands in first person (user's wish of 13.11), with the models on: the
- * pistol and the rifle from the hip and aimed, the DMR aimed, the baton, on a desktop and on a
+ * pistol and the rifle from the hip and aimed, the DMR aimed, the baton and the sword, on a desktop and on a
  * phone, for a look (`SHOTS` keeps them; without it they go to the test's output). The logic of the arms (shown in FPP, hidden
  * in TPP, the stand-in without models, the grip in the hand) is the engine's `fpp-hands.test.ts`.
  */
 
 /** Shots of `poses`, each a settled frame of its own (up to ~35 s under load), and the start before them. */
-const SHOTS = 6;
+const SHOTS = 7;
 const TIMEOUT = 120_000 + SHOTS * 35_000;
 
 /** The deptak west of the clinic at midday, looking east along it. */
@@ -91,7 +91,7 @@ const swap = async (page: Page): Promise<void> => {
 
 /**
  * The pistol from the hip and aimed, the rifle from the hip and aimed, the DMR aimed (its zoom
- * 0.38), the baton; then the weapons changed over and over, which leaves nothing behind.
+ * 0.38), the baton and the sword; then the weapons changed over and over, which leaves nothing behind.
  */
 const poses = async (page: Page, prefix: string): Promise<void> => {
   await arm(page);
@@ -111,6 +111,9 @@ const poses = async (page: Page, prefix: string): Promise<void> => {
   await shoot(page, `${prefix}-dmr-aim`);
   await step(page, 30, { weaponSlot: 3 });
   await shoot(page, `${prefix}-baton`);
+  await equip(page, "melee", "i92");
+  await step(page, 30, { weaponSlot: 3 });
+  await shoot(page, `${prefix}-blade`);
   // Every weapon has been in hand once: its model is in.
   await swap(page);
   const first = await census(page);
