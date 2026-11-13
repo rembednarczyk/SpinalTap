@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Line } from "../src/features.ts";
-import { type Pt, pointInRing, selfIntersects } from "../src/geometry.ts";
+import { type Pt, pointInRing, r1, selfIntersects } from "../src/geometry.ts";
 import { joinedPoints, lineBands } from "../src/ground.ts";
 import { bufferBand, roundJoints, stripBand } from "../src/line-buffer.ts";
 
@@ -54,6 +54,61 @@ describe("bands along lines on Clipper2 (ADR-0078, step 2)", () => {
     const bands = [...lineBands(a, false, [], false, joined), ...lineBands(b, false, [], false, joined)];
     // Straight on: nothing bare to fill, the bands as they were.
     expect(roundJoints(bands).map((x) => x.ring)).toEqual(bands.map((x) => x.ring));
+  });
+
+  it("leaves no gap on the cuts where two carriageways meet end to end, once rounded to 0.1 m (G-760)", () => {
+    // Two streets' ends on one node, a degree or a few apart, of the same width or not, the node off
+    // the 0.1 m grid: as Podzamcze#107 (1080.1, 564.0) and Turystyczna (2505.0, 331.5) are laid.
+    const cases: (readonly [number, number, number, number, number, number])[] = [
+      [1081.25, 564.1, 89.7, 91.2, 6.5, 9.7],
+      [2506.45, 330.65, 32.5, 33.1, 9.8, 9.8],
+      [930.35, 331.45, 95.8, 92.4, 9.7, 9.8],
+      [26.62, -102.63, 88.9, 91.7, 7.9, 6.5],
+      [12.34, 56.78, 0, 2.5, 6, 6],
+      [-40.07, 18.93, 47.3, 51.1, 8, 7],
+    ];
+    const dir = (deg: number) => ({ x: Math.cos((deg * Math.PI) / 180), z: Math.sin((deg * Math.PI) / 180) });
+    const gaps: string[] = [];
+    for (const [x, z, inDeg, outDeg, wa, wb] of cases) {
+      const [u, v] = [dir(inDeg), dir(outDeg)];
+      const a = line("w1", { highway: "residential", width: String(wa), sidewalk: "no" }, [[x - 40 * u.x, z - 40 * u.z], [x, z]]);
+      const b = line("w2", { highway: "residential", width: String(wb), sidewalk: "no" }, [[x, z], [x + 40 * v.x, z + 40 * v.z]]);
+      const joined = joinedPoints([a, b]);
+      const bands = [...lineBands(a, false, [], false, joined), ...lineBands(b, false, [], false, joined)];
+      // The rings as the tables hold them, the gaps' patches with them.
+      const rings = roundJoints(bands, (of, ring) => ({ surface: of.surface, ring, bridge: false, source: of.source })).map((r) => r.ring.map((p) => ({ x: r1(p.x), z: r1(p.z) })));
+      // Each band's cut across the node, as wide as the narrower street, short of its sides.
+      const half = (Math.min(wa, wb) / 2) * 0.95;
+      for (const d of [u, v]) {
+        for (let k = -20; k <= 20; k++) {
+          const p = { x: x - (d.z * half * k) / 20, z: z + (d.x * half * k) / 20 };
+          if (!covered(rings, p)) gaps.push(`${p.x.toFixed(2)},${p.z.toFixed(2)}`);
+        }
+      }
+    }
+    expect(gaps).toEqual([]);
+  });
+
+  it("lays no gap's patch over a flight of steps ending at the joint (G-760)", () => {
+    // Two footways bending on a node off the grid, a flight of steps up from it between them: the
+    // footways' crack and wedge reach under the steps, which cover them.
+    const [x, z] = [569.33, 258.09];
+    const a = line("w1", { highway: "footway", width: "2.26" }, [[553.38, 270.16], [x, z]]);
+    const b = line("w2", { highway: "footway", width: "2.99" }, [[x, z], [582.74, 243.26]]);
+    const s = line("w3", { highway: "steps", width: "2.37" }, [[x, z], [576.54, 261.55]]);
+    const joined = joinedPoints([a, b, s]);
+    const bands = [a, b, s].flatMap((l) => lineBands(l, false, [], false, joined));
+    const steps = bands.filter((r) => r.surface === "steps").map((r) => r.ring);
+    const out = roundJoints(bands, (of, ring) => ({ surface: of.surface, ring, bridge: false, source: `patch ${of.source}` }));
+    const patches = out.filter((r) => r.source.startsWith("patch")).map((r) => r.ring.map((p) => ({ x: r1(p.x), z: r1(p.z) })));
+    const over: string[] = [];
+    for (let i = -30; i <= 30; i++) {
+      for (let k = -30; k <= 30; k++) {
+        const p = { x: x + i * 0.1 + 0.05, z: z + k * 0.1 + 0.05 };
+        if (covered(steps, p) && covered(patches, p)) over.push(`${p.x.toFixed(2)},${p.z.toFixed(2)}`);
+      }
+    }
+    expect(over).toEqual([]);
   });
 
   it("lays a sidewalk's inner edge on its carriageway's edge round a bend, with no gap", () => {
