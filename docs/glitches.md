@@ -1748,6 +1748,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g744 (13.11, 18967c1, na etapie 2 ADR-0078: przyczyną obrót auta na załamaniu pasa i brak sprawdzania brył z naprzeciwka, nie przesunięcie pasów; `traffic-bodies.ts` z pierwszeństwem, spawn bez kolizji z nadjeżdżającym; seedy 1–40 w 3 miejscach 0/120; czas testów ruchu +5–10%; do scalenia razem z etapem 2); wcześniej: w naprawie (13.11, zgłoszone przez budowniczego etapu 2 ADR-0078); blokuje scalenie etapu 2
 - Pakiet właściciela: packages/sim (content/traffic)
 - Test przyjęcia: `traffic-junction-drive` zielony na gałęzi etapu 2 (12/12 ziaren), probe seedów 1–40 bez kolizji na main i na gałęzi; złoty hash świadomie
+- Gałąź zsynchronizowana z main (bf81314): hashes zgodne, skan 7412 -> 7159, wzrosty tylko sidewalk-under-carriageway +4 (Podwale x2, Dolna PM, Bernardyńska 390,-240 z footway-on-carriageway) i car-lane-off-road +1 (G-760); dług czasu w ADR-0046
 
 ### G-747 `followDetour` bez osiągalnej komórki w linii prostej kieruje gangera do `way[1]`, nawet nieosiągalnej
 - Ważność: S3 · Zasięg: planer pościgu w terenie ze skarpami; możliwe źródło części z 14 z 30 nieudanych dojść przy przyczółkach Mełgiewskiej (G-741), np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)
@@ -1814,6 +1815,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, budowniczy walk-blocked)
 - Pakiet właściciela: packages/sim (content/lublin teren, pomosty)
 - Test przyjęcia: `walk-blocked` bez kluczy przy 1070,160 po G-739
+- Po scaleniu main do gałęzi G-744 (141d155) klucz walk-blocked podzamcze-2-0 1070,160 zniknął po scan:update; do archiwum razem z PR G-744
 
 ### G-758 Import wybiera komórki terenu 4 i 8 m niepodzielne przez 2,5 i 5 m sąsiadów
 - Ważność: S3 · Zasięg: krakowskie-2-1 i inne kawałki siatki 4/8 m; szwy zostają 0,51 / 0,225 / 0,18 m po G-748
@@ -1838,6 +1840,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin nawierzchnie), tools/osm-import
 - Test przyjęcia: `car-lane-off-road` i `lane-off-ground` bez tych kluczy
 - Przyczyna: proste ucięcia pasów jezdni dwóch dróg we wspólnym węźle nie pokrywają się (wierzchołki zaokrąglane osobno do 0,1 m, różne szerokości, klin na zakręcie); szczeliny 5-10 cm. Kościuszki#4 to ta sama szczelina, plac tylko prześwituje. Na danych g744 zostają 4 z 5 miejsc (i dziury ok. 25 cm przy ~2526,356): roundJoints pomija kawałki < SLIVER 0,1 m / MIN_CAP 0,3 m² i liczy przed zaokrągleniem do 0,1 m. Naprawa po scaleniu g744, w line-buffer.ts (złącze po zaokrągleniu albo nakładka w złączu); test: odcinek między ucięciami pasów ze wspólnym węzłem leży na road. Sonda: scratchpad g760-probe.test.ts.
+- Skan car-lane-off-road nabrzeze-0-1 2340,420 (Kalinowszczyzna#131:f, 2340,427): dziura w jezdni 5-10 cm przy przejściu ścieżki, przyjęta do bazy w 8179d72 na gałęzi G-744; po poprawce scan:update ją usuwa
 
 ### G-761 Trawniki w pierścieniu skweru na Podzamczu pod kostką ścieżki
 - Ważność: S4 · Zasięg: w804709919, w804709920 (1045, 424), 46 m²; podobnie zieleń pod footway w pętlach w1343050082 (58,-83) 19 m², w154012559 15 m², w515648305 10 m²
