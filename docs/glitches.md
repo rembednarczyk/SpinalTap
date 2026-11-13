@@ -1780,7 +1780,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-758 Import wybiera komórki terenu 4 i 8 m niepodzielne przez 2,5 i 5 m sąsiadów
 - Ważność: S3 · Zasięg: krakowskie-2-1 i inne kawałki siatki 4/8 m; szwy zostają 0,51 / 0,225 / 0,18 m po G-748
 - Opis: `tools/osm-import/src/terrain.ts` `CELLS`: siatka 4 m ma z siatkami 2,5 i 5 m wspólne punkty tylko co 20 m, więc `stitchSeams` nie może jej zszyć; ADR-0043 zakłada wspólny wiersz punktów na szwach
-- Status: zgłoszone (13.11, naprawiacz G-748)
+- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g758, 571459c): CELLS 10/5/2,5/1,25, seam-gap 0,05 m: 2 -> 0 kluczy, szwy 0,51 -> 0 m; czeka na przegląd kuratora (orto:diff); wcześniej: zgłoszone (13.11, naprawiacz G-748)
 - Pakiet właściciela: tools/osm-import (teren), packages/sim (content/lublin)
 - Test przyjęcia: na każdym szwie różnica ≤ 0,05 m
 - Do zrobienia razem z kontrolą `seam-gap` z przeglądu #502 (kurator 13.11).
