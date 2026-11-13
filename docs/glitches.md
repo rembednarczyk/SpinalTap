@@ -1757,7 +1757,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-744 Pasy ruchu biorą odsunięcie od zmierzonego zasięgu asfaltu: przesunięcie krawędzi jezdni o centymetry daje kolizje aut
 - Ważność: S3 · Zasięg: ruch w całym mieście; ujawnione przez etap 2 ADR-0078 (łuki łączeń zmieniają zasięg asfaltu o kilka cm, pasy przesuwają się do 12 cm): `traffic-junction-drive` przy 3 Maja (1 ziarno z 12), Kołłątaja/Zesłańców Sybiru (−108; −149) seed 10, Cicha seed 30; na main 0
 - Opis: `reachAt`/`roadHalfWidth` w `sim/content/traffic.ts` liczą odsunięcie pasów od zmierzonego asfaltu, bez minimalnego odstępu przeciwnych pasów; kruche wobec każdej zmiany geometrii nawierzchni
-- Status: w naprawie (13.11, zgłoszone przez budowniczego etapu 2 ADR-0078); blokuje scalenie etapu 2
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g744 (13.11, 18967c1, na etapie 2 ADR-0078: przyczyną obrót auta na załamaniu pasa i brak sprawdzania brył z naprzeciwka, nie przesunięcie pasów; `traffic-bodies.ts` z pierwszeństwem, spawn bez kolizji z nadjeżdżającym; seedy 1–40 w 3 miejscach 0/120; czas testów ruchu +5–10%; do scalenia razem z etapem 2); wcześniej: w naprawie (13.11, zgłoszone przez budowniczego etapu 2 ADR-0078); blokuje scalenie etapu 2
 - Pakiet właściciela: packages/sim (content/traffic)
 - Test przyjęcia: `traffic-junction-drive` zielony na gałęzi etapu 2 (12/12 ziaren), probe seedów 1–40 bez kolizji na main i na gałęzi; złoty hash świadomie
 
@@ -1795,6 +1795,27 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-742)
 - Pakiet właściciela: packages/engine (materiał postaci, widok FPP)
 - Test przyjęcia: `pnpm shots:compare` o 12:00: przepalenie samego rękawa < 0,5% dolnej połowy kadru
+
+### G-751 Pasy przeciwne Ruska/Podzamcze nachodzą na siebie (0,3–2 m)
+- Ważność: S3 · Zasięg: ok. (1000–1036; 462); ok. 64 kolizje aut na 10 ziaren (sonda G-744)
+- Opis: przeciwne pasy leżą 0,3–2 m od siebie, poniżej szerokości aut; reguła G-744 ustępowania nie wystarcza przy stałym nachodzeniu
+- Status: zgłoszone (13.11, naprawiacz G-744)
+- Pakiet właściciela: packages/sim (content/traffic, pasy)
+- Test przyjęcia: sonda ziaren 1–40: 0 kolizji przy Ruskiej; odstęp przeciwnych pasów ≥ szerokość auta + 0,2 m
+
+### G-752 Ciasna: dwa dostawczaki się nie mijają (pasy 2,2–2,5 m od siebie)
+- Ważność: S4 · Zasięg: ul. Ciasna; 14 kolizji na 10 ziaren (sonda G-744)
+- Opis: jezdnia za wąska na dwa pasy z dostawczakami; potrzebna reguła: ruch jednokierunkowy albo mijanie z ustępowaniem
+- Status: zgłoszone (13.11, naprawiacz G-744)
+- Pakiet właściciela: packages/sim (content/traffic)
+- Test przyjęcia: sonda ziaren: 0 kolizji na Ciasnej
+
+### G-753 Kolizje aut na przecięciu dróg przy Cerkiewnej (ok. 1098; 273)
+- Ważność: S4 · Zasięg: skrzyżowanie ok. (1098; 273)
+- Opis: auta zderzają się na przecięciu tras poza regułą G-744 (to nie ruch z naprzeciwka)
+- Status: zgłoszone (13.11, naprawiacz G-744)
+- Pakiet właściciela: packages/sim (systems/traffic, skrzyżowania)
+- Test przyjęcia: sonda ziaren 1–40: 0 kolizji na skrzyżowaniu
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
