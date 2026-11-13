@@ -194,6 +194,12 @@ importers:
 
   tools/gugik: {}
 
+  tools/hashes:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   tools/i18n-scan:
     devDependencies:
       typescript:

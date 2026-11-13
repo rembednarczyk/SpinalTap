@@ -10,4 +10,5 @@ packages:
   - "tools/shots"
   - "tools/bench-ab"
   - "tools/test-rerun"
+  - "tools/hashes"
   - "tools/pr-prep"
