@@ -1,0 +1,7 @@
+# walk-blocked: grid 10 m (x,z = the square's corner at its least x and z)
+podzamcze-1-0 770,180
+podzamcze-1-0 780,190
+podzamcze-2-0 1070,160
+stare-miasto-1-1 660,130
+stare-miasto-1-1 670,130
+stare-miasto-1-1 670,140

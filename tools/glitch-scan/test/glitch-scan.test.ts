@@ -88,6 +88,8 @@ import { deckSteps } from "./deck-step";
 import { groundOverDeck } from "./ground-over-deck";
 import { abutmentSteps } from "./deck-abutment";
 import { kerbSteps } from "./deck-kerb";
+import { walkBlocked } from "./walk-blocked";
+import { cityWalkWorld } from "./walk-world";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { churchFakeTowers, dataTops, towersOffNmpt } from "./church-towers";
 import { cityBricks, plasteredWalls } from "./wall-materials";
@@ -1120,6 +1122,14 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       headroom: DECK_HEADROOM,
       skip: (p) => p.x >= 728.5 && p.x <= 735.1 && p.z >= 157.5 && p.z <= 163.8,
     }),
+  /**
+   * A pair of neighbouring cells (raster 0.25 m) of the walked surfaces between which a walker
+   * does not get either way (`walkStep`, ADR-0080): a ledge over 0.45 m up or 0.35 m down, a bank
+   * steeper than tg 35° off steps, along a way of the map whose axis is blocked there itself
+   * (`walk-axes.ts`). Not the edges the model means: walls, barriers, a deck's sides over lower
+   * ground, a way under a deck, T-147, Alchemia's terraces (`walk-blocked.ts`, `walk-world.ts`).
+   */
+  "walk-blocked": () => walkBlocked(MAP_CHUNKS, cityWalkWorld(extractFeatures(SOURCE_OSM).lines)),
   /**
    * A point (every 0.25 m) under a bridge's piece where the ground the game walks is more than
    * 0.01 m over the deck (G-686): the terrain shows through the deck's paving as a grey patch.
