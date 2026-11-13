@@ -1746,10 +1746,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-747 `followDetour` bez osiągalnej komórki w linii prostej kieruje gangera do `way[1]`, nawet nieosiągalnej
 - Ważność: S3 · Zasięg: planer pościgu w terenie ze skarpami; możliwe źródło części z 14 z 30 nieudanych dojść przy przyczółkach Mełgiewskiej (G-741), np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)
 - Opis: gdy żadna linia z punktu gangera nie przechodzi, fallback wybiera następny punkt drogi bez sprawdzenia osiągalności; ganger napiera na skarpę albo krąży w kieszeni
-- Status: zgłoszone (13.11, naprawiacze G-741 i G-740)
+- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g747, 7bbafa1): fallback do osiągalnej komórki niżej w polu (walkable + poziom stóp); sonda G-741 18/30 -> 19/30, 150 prób 87 -> 94 bez regresji; hash bez zmian; wcześniej: zgłoszone (13.11, naprawiacze G-741 i G-740)
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: 30 punktów przy bokach pomostów (sonda G-741): dojścia ponad 16/30 bez regresji; test z jednego z punktów wyżej pada bez poprawki
 - Po G-746: `followDetour` w `steering.ts` (l. 144), fallback `way[1]` w l. 162.
+- Punkty (2454,5; 293,7) i (2449,5; 258,9) stoją na main bez udziału fallbacku, (2481,5; 415,7) już dochodzi; test przyjęcia z punktu sondy przy podzamcze-1-0 (772,7; 200,3)
 
 ### G-750 Biały rękaw postaci w kadrze FPP przepala się w słońcu (1,3–1,6% dolnej połowy kadru)
 - Ważność: S4 · Zasięg: widok z pierwszej osoby w dzień, każde ujęcie
@@ -1828,6 +1829,20 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: zieleń z ortofoto pod footway/square wewnątrz pętli w804709919 < 5 m²
 - Wiersz topografii: T-286.
+
+### G-762 startOf wybiera komórkę startową 3 m nad stopami u muru przyczółka dolnego mostu Mełgiewskiej
+- Ważność: S3 · Zasięg: planer pościgu przy murach przyczółków, np. (2415; 280)
+- Opis: u stopy muru przyczółka komórka stóp zamknięta (stroma); startOf bierze sąsiada na murze 3,4 m wyżej, a wallOnWay nie widzi ściany ze stromej komórki; droga prowadzi po murze, ganger napiera na niego, dalej idzie tylko po bocznym kroku kontroli utknięcia
+- Status: zgłoszone (13.11, naprawiacz G-747)
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: pościg z (2414,5; 280,1) na pomost nabrzeze-0-1/0 przy t=0,1 bez napierania na mur; startOf nie wybiera komórki wyżej niż krok + stok
+
+### G-763 Ganger stoi pod krawędzią dolnego mostu Mełgiewskiej (2449,4; 258,8) i (2454,6; 293,5) mimo przejść obok
+- Ważność: S3 · Zasięg: sonda G-741, ok. 6 z 30 punktów przy pomostach nabrzeze-0-1/0 i /1
+- Opis: krawędź pomostu 0,1-0,25 m nad gruntem: raster i walkable widzą przejście, bankNear/offTheBank zatrzymuje stopy; ganger stoi od kilku sekund pościgu bez fallbacku followDetour
+- Status: zgłoszone (13.11, naprawiacz G-747)
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: sonda G-741: punkty nabrzeze-0-1 0 0.85 ±9,5 i 1 0.1 8 dochodzą
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
