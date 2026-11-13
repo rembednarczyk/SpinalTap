@@ -113,7 +113,7 @@ describe("the ground the map city lays (G-444)", () => {
         addSink(hash, water);
       }
     }
-    // The paving's colours from the orthophoto (G-721) moved it, not the laying.
-    expect(hash.hex).toBe("01337f90");
+    // The bridge's fascia broken where its underside is (G-743) moved it, not the laying.
+    expect(hash.hex).toBe("00d3cd40");
   });
 });
