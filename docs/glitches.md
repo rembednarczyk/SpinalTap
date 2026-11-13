@@ -1823,7 +1823,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-756 Klucze rodzajów próbkowanych w bazie skanu przesuwają się przy zmianie tablic, choć suma maleje
 - Ważność: S3 · Zasięg: `ground-strip-gap`, `ground-strip-overlap` (i pewnie inne z `SAMPLED_KINDS`); przy G-739 (2 pomosty w podzamcze-2-0) +49/−53 i +145/−155 kwadratów w podzamcze-0-1 i 2-0, z dala od zmiany
 - Opis: siatka próbek tych kontroli zależy od zawartości kawałka (np. obrysu albo kolejności kawałków nawierzchni), więc lokalna zmiana przesuwa próbki w całym kawałku i nowe klucze wymagają `GLITCH_BASELINE=accept`; zakotwiczyć siatkę próbek w układzie świata (wielokrotności kroku), żeby klucze zmieniały się tylko tam, gdzie zmienia się mapa
-- Status: zgłoszone (13.11, orkiestrator przy scalaniu G-739)
+- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g756 @ 3b1b8d3: liczniki i próbki zakotwiczone w kwadratach świata); wcześniej: zgłoszone (13.11, orkiestrator przy scalaniu G-739)
 - Pakiet właściciela: tools/glitch-scan
 - Test przyjęcia: przesunięcie jednego pomostu w kawałku zmienia klucze tylko w kwadratach, które on dotyka (test na kopii tablic)
 
@@ -1848,6 +1848,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-748)
 - Pakiet właściciela: tools/glitch-scan (walk-blocked)
 - Test przyjęcia: `walk-blocked` bez kluczy pod płytami Arkad
+
+### G-760 Dziury 5–20 cm w nawierzchni jezdni pod pasami aut
+- Ważność: S3 · Zasięg: car-lane-off-road i lane-off-ground po G-756: 930,15,329,81 (Al. Tysiąclecia#81:1), 1080,10,564,02 (Podzamcze#107:0), 2525,7,357,5 i 2505,04,331,52 (Turystyczna#122:0), 26,18,−102,66 (Kościuszki#4, pod pasem plac zamiast jezdni)
+- Opis: siatka próbek w układzie świata (G-756) trafia w małe dziury nawierzchni pod pasem, które stara siatka po łuku omijała
+- Status: zgłoszone (13.11, naprawiacz G-756)
+- Pakiet właściciela: packages/sim (content/lublin nawierzchnie), tools/osm-import
+- Test przyjęcia: `car-lane-off-road` i `lane-off-ground` bez tych kluczy
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
