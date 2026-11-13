@@ -13,7 +13,7 @@ export type RenderQuality = "high" | "medium" | "low";
  *   write, so the toon materials would need a second G-buffer pass of their own (see the ADR).
  */
 export interface QualityTier {
-  /** Moon shadow map size. */
+  /** Moon shadow map size: 4096 on high halves the texel (2.7 → 1.4 cm over the 56 m square, step 4). */
   readonly shadowMap: number;
   /** Screen-space ink lines from the geometry buffer. */
   readonly lineArt: boolean;
@@ -46,7 +46,7 @@ export interface QualityTier {
 export const QUALITY_TIERS: Readonly<Record<RenderQuality, QualityTier>> = {
   low: { shadowMap: 1024, lineArt: false, splashes: false, wetProbe: null, livePreview: false, modelFiles: 5, msaa: 1, sharpen: 0, contactShade: false, bloom: 0 },
   medium: { shadowMap: 1024, lineArt: true, splashes: false, wetProbe: 128, livePreview: true, modelFiles: 11, msaa: 2, sharpen: 0, contactShade: false, bloom: 0 },
-  high: { shadowMap: 2048, lineArt: true, splashes: true, wetProbe: 256, livePreview: true, modelFiles: 11, msaa: 4, sharpen: 0.25, contactShade: true, bloom: 0.3 },
+  high: { shadowMap: 4096, lineArt: true, splashes: true, wetProbe: 256, livePreview: true, modelFiles: 11, msaa: 4, sharpen: 0.25, contactShade: true, bloom: 0.3 },
 };
 
 /** Luminance (0..1) above which a pixel blooms (graphics backlog 13.11, step 3). */

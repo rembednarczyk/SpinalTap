@@ -16,6 +16,9 @@ import {
 import type { LightingRig } from "./lighting";
 import { SHADOW_DEPTH_FRAGMENT, SHADOW_DEPTH_VERTEX } from "./toon-shader";
 
+/** The shadow map's size: the tier's wish, within the GPU's largest texture. */
+export const shadowMapSize = (wanted: number, gpuMax: number | undefined): number => Math.min(wanted, gpuMax ?? wanted);
+
 /** Layer only the moon camera sees: the merged static shadow proxy lives here. */
 const SHADOW_ONLY_LAYER = 0x10000000;
 
@@ -43,9 +46,11 @@ export class MoonShadow {
     private readonly scene: Scene,
     rig: LightingRig,
     private readonly halfExtent: number,
-    size = 2048,
+    wanted = 2048,
   ) {
     const caps = scene.getEngine().getCaps();
+    // A GPU that cannot hold the tier's map gets the largest it can (graphics backlog 13.11, step 4).
+    const size = shadowMapSize(wanted, caps.maxTextureSize);
     this.texture = new RenderTargetTexture("moon-shadow", size, scene, {
       generateMipMaps: false,
       type: caps.textureFloatRender ? Constants.TEXTURETYPE_FLOAT : Constants.TEXTURETYPE_HALF_FLOAT,

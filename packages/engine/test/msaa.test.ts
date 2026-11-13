@@ -40,3 +40,14 @@ describe("bloom (graphics backlog 13.11, step 3)", () => {
     expect(BLOOM_THRESHOLD).toBeGreaterThanOrEqual(0.85);
   });
 });
+
+describe("moon shadow map (graphics backlog 13.11, step 4)", () => {
+  it("is 4096 on high quality, within what the GPU holds", async () => {
+    const { shadowMapSize } = await import("../src/npr/moon-shadow");
+    expect(QUALITY_TIERS.high.shadowMap).toBe(4096);
+    expect(QUALITY_TIERS.low.shadowMap).toBe(1024);
+    expect(shadowMapSize(4096, 2048)).toBe(2048);
+    expect(shadowMapSize(4096, 16384)).toBe(4096);
+    expect(shadowMapSize(4096, undefined)).toBe(4096);
+  });
+});
