@@ -477,17 +477,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (corrections), packages/engine (lista)
 - Test przyjęcia: najwyższy wierzchołek bryły w promieniu 4 m od (378,1; −247,7) ma y 39,2 ± 1, poza nim nic nie przekracza y 32; dziś pada (brak wieży, kalenica 30,1)
 
-### G-215 Proceduralne wieże na kościołach, które ich nie mają albo mają inne
-- Status: w PR #478 (12.11, 944714c); naprawione na gałęzi ccr-ec2c4269-ilh8k8-g215 (12.11, 1dc2bc5: wieże tylko z tabeli danych; `church-fake-tower` 4 → 0, `church-tower-off-nmpt` 6 → 1 = G-214; przegląd kuratora ZGODNE Z UWAGAMI; runda 2: gzyms Św. Ducha 18,1 z NMPT, kształt hełmu z tabeli, kontrola gzymsu); wcześniej: zgłoszone (2.11, kurator, przegląd #190)
-- Ważność: S3 (proponowana) · Zasięg: szeroki (7 kościołów, m.in. deptak: Kapucyni i Świętego Ducha) · Koszt: średni; 12.11 (przejście stare-miasto-1-1): św. Wojciecha w61102109 dalej ma wieżę z iglicą (zrzut `sm11-b`). T-121 trzeba przenieść do `otwarte` w stare-miasto-1-1, krakowskie-0-1, krakowskie-1-0 i stare-miasto-0-0.
-- Priorytet (kurator, przegląd #208): wyżej. Wieże skalują się ze ścianami, więc po G-216 Niecała 4 w232674421 ma wieżę do y ok. 13 na budynku ok. 3,7 m (ponad trzy razy wyżej niż budynek bez wieży), a Świętego Ducha dwie wieże do y 28,5 przy kalenicy 20,4. Najtańszy pierwszy krok: kościoły bez wieży w rzeczywistości (Niecała 4, Kapucyni, św. Piotra, św. Wojciecha) na liście bez wieży, z odsyłaczem T-121
-- Gdzie: T-121: Kapucyni w67508932, Karmelici r5420467 (poprawione w #198: wieże poza obrysem zdjęte), św. Piotra w66335226, św. Wojciecha w61102109, Niecała 4 w232674421, Świętego Ducha w66264126 (2 wieże zamiast 1 smukłej na narożu SW do y 26,5), cerkiew Przemienienia w66264148 (wieża 13 m za wysoka)
-- Dowód: sonda `topo-g210-probe` (towerSpots w świecie) i NMPT GUGiK 0,5 m, wartości w T-121
-- Przyczyna: `roof-plan` `addTowers` stawia wieże każdemu kościołowi bez części; zachód obrysu i szerokość > 22 m decydują o liczbie i miejscu, wysokość 1,7 × ściany do 65 m
-- Poprawka: wieża proceduralna tylko dla kościołów z tabeli wież (dane: położenie, rzut, wysokość z NMPT albo `building:part` w korektach importu); pozostałe bez wieży (rozszerzyć `TOWERLESS_OSM` do odwrotnej listy); co najmniej: środek wieży w obrysie
-- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import, tools/glitch-scan
-- Test przyjęcia: kontrole `church-fake-tower` i `church-tower-off-building` (niżej) spadają do 0
-
 ### G-217 Bieg 2 i bieg przed bramą schodów zamkowych węższe niż w rzeczywistości
 - Status: zgłoszone (2.11, kurator, przegląd #194)
 - Ważność: S4 (proponowana) · Zasięg: lokalny, oś widokowa Placu Zamkowego · Koszt: mały (dane)
@@ -1642,7 +1631,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: proponowana kontrola `height-vs-nmpt` w stare-miasto-1-1 3 → 0; `bare-enclosed-yard` bez składowej (701..711; 101..114)
 
 ### G-721 Plac Litewski ciemniejszy i bardziej szary niż w Lublinie: barwa kostki i bruku, kontrast z trawą (T-281)
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g721 (12.11, eeabcf7: barwy nawierzchni z mediany ortofoto, kostka/trawa 1,28 → 1,90, dno fontann jasne; przegląd kuratora ZGODNE Z UWAGAMI; runda 2: square 1,75 × trawa, cobble 0,87, footway 0,92, dno 0,90 × square); zgłoszone (12.11, kurator, przegląd paczki; decyzja użytkownika 12.11 w `docs/decyzje.md`)
+- Status: w PR #479 (13.11, d955833: decyzja użytkownika 13.11, niecka fontanny zostaje ciemną wodą; kostka 1,70 × trawa); naprawione na gałęzi ccr-ec2c4269-ilh8k8-g721 (12.11, eeabcf7: barwy nawierzchni z mediany ortofoto, kostka/trawa 1,28 → 1,90, dno fontann jasne; przegląd kuratora ZGODNE Z UWAGAMI; runda 2: square 1,75 × trawa, cobble 0,87, footway 0,92, dno 0,90 × square); zgłoszone (12.11, kurator, przegląd paczki; decyzja użytkownika 12.11 w `docs/decyzje.md`)
 - Ważność: S4 (proponowana; plac główny, więc zasięg szeroki) · Zasięg: szeroki (każdy plac i deptak z `square`, `footway`, `cobble`) · Koszt: mały–średni
 - Gdzie: Plac Litewski r7690183 (−105…121; −87…92), także deptak Krakowskiego Przedmieścia
 - Dowód: ortofoto 2025-04 i 2024-06, średnie RGB próbek na placu według klasy ortofoto i nawierzchni gry. Kostka do trawy: gra 1,34, ortofoto 1,9 i 2,1. Bruk gry ok. 15% ciemniejszy od kostki, na ortofoto ten sam odcień. Zrzuty `plac-litewski/pl-oczy-krakowskie.png`, `pl-z-gory.png`.
@@ -1777,11 +1766,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, kurator, przegląd G-721)
 - Ważność: S4 · Zasięg: wszystkie chodniki miasta (#6a6d73); ortofoto: chodnik do trawy 1,46–1,58; poprawka: 0,9 × square (ok. #868378) tą samą regułą co G-721; kontrola `paving-albedo-drift` (plan/trawa wobec mediany ortofoto > 0,25)
 - Pakiet właściciela: packages/engine (`ground-plan.ts`)
-
-### G-735 Narożne słupki pawilonów metra migoczą z szybami (z-fighting)
-- Ważność: S3 (widoczne z bliska przy każdym wejściu metra, na telefonie); zgłoszenie gracza 12.11 z dwoma nagraniami (Plac Litewski)
-- Opis: pierwszy i ostatni słupek ramy ścian bocznych kończył się w płaszczyźnie końców szyb (przy wejściu i z tyłu), więc pas 0,6 m na całą wysokość przeszklenia migotał między szkłem a stalą.
-- Status: w PR #477 (12.11, a027aaa: słupki 1 cm przed szkłem; test płaszczyzn w `pavilion-bake.test.ts` pada na main dla 5 wejść; zrzuty przed/po obejrzane)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

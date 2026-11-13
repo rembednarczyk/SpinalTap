@@ -2,6 +2,22 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-215 Proceduralne wieże na kościołach, które ich nie mają albo mają inne
+- Status: naprawione (13.11, #478 scalony); wcześniej: w PR #478 (12.11, 944714c); naprawione na gałęzi ccr-ec2c4269-ilh8k8-g215 (12.11, 1dc2bc5: wieże tylko z tabeli danych; `church-fake-tower` 4 → 0, `church-tower-off-nmpt` 6 → 1 = G-214; przegląd kuratora ZGODNE Z UWAGAMI; runda 2: gzyms Św. Ducha 18,1 z NMPT, kształt hełmu z tabeli, kontrola gzymsu); wcześniej: zgłoszone (2.11, kurator, przegląd #190)
+- Ważność: S3 (proponowana) · Zasięg: szeroki (7 kościołów, m.in. deptak: Kapucyni i Świętego Ducha) · Koszt: średni; 12.11 (przejście stare-miasto-1-1): św. Wojciecha w61102109 dalej ma wieżę z iglicą (zrzut `sm11-b`). T-121 trzeba przenieść do `otwarte` w stare-miasto-1-1, krakowskie-0-1, krakowskie-1-0 i stare-miasto-0-0.
+- Priorytet (kurator, przegląd #208): wyżej. Wieże skalują się ze ścianami, więc po G-216 Niecała 4 w232674421 ma wieżę do y ok. 13 na budynku ok. 3,7 m (ponad trzy razy wyżej niż budynek bez wieży), a Świętego Ducha dwie wieże do y 28,5 przy kalenicy 20,4. Najtańszy pierwszy krok: kościoły bez wieży w rzeczywistości (Niecała 4, Kapucyni, św. Piotra, św. Wojciecha) na liście bez wieży, z odsyłaczem T-121
+- Gdzie: T-121: Kapucyni w67508932, Karmelici r5420467 (poprawione w #198: wieże poza obrysem zdjęte), św. Piotra w66335226, św. Wojciecha w61102109, Niecała 4 w232674421, Świętego Ducha w66264126 (2 wieże zamiast 1 smukłej na narożu SW do y 26,5), cerkiew Przemienienia w66264148 (wieża 13 m za wysoka)
+- Dowód: sonda `topo-g210-probe` (towerSpots w świecie) i NMPT GUGiK 0,5 m, wartości w T-121
+- Przyczyna: `roof-plan` `addTowers` stawia wieże każdemu kościołowi bez części; zachód obrysu i szerokość > 22 m decydują o liczbie i miejscu, wysokość 1,7 × ściany do 65 m
+- Poprawka: wieża proceduralna tylko dla kościołów z tabeli wież (dane: położenie, rzut, wysokość z NMPT albo `building:part` w korektach importu); pozostałe bez wieży (rozszerzyć `TOWERLESS_OSM` do odwrotnej listy); co najmniej: środek wieży w obrysie
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import, tools/glitch-scan
+- Test przyjęcia: kontrole `church-fake-tower` i `church-tower-off-building` (niżej) spadają do 0
+
+### G-735 Narożne słupki pawilonów metra migoczą z szybami (z-fighting)
+- Ważność: S3 (widoczne z bliska przy każdym wejściu metra, na telefonie); zgłoszenie gracza 12.11 z dwoma nagraniami (Plac Litewski)
+- Opis: pierwszy i ostatni słupek ramy ścian bocznych kończył się w płaszczyźnie końców szyb (przy wejściu i z tyłu), więc pas 0,6 m na całą wysokość przeszklenia migotał między szkłem a stalą.
+- Status: naprawione (13.11, #477 scalony); wcześniej: w PR #477 (12.11, a027aaa: słupki 1 cm przed szkłem; test płaszczyzn w `pavilion-bake.test.ts` pada na main dla 5 wejść; zrzuty przed/po obejrzane)
+
 ### G-720 `corrections.test.ts` trwa w CI ok. 27 s jako plik
 - Status: naprawiony w #475 (12.11, 1244783: plik 10,1 → 2,6 s pod pokryciem)
 - Ważność: S4 · Zasięg: następny kandydat do limitu czasu w shardzie testów jednostkowych; przy G-719 pamięć wygenerowanego miasta (ADR-0046) w CI nie trafia: CI nie zachowuje `node_modules/.cache`, a klucz obejmuje całe `packages/{core,sim,engine}/src`; `generatedCity()` woła `generate` bez lod1/lod2, więc test liczy inne miasto niż tabele. Do decyzji: węższy klucz i `actions/cache` w CI
