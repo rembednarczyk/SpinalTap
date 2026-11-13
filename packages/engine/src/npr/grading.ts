@@ -1,6 +1,7 @@
 import { Color4, ColorCurves, type Camera, DefaultRenderingPipeline, type Scene } from "../babylon";
 import { FlashLimiter } from "../effects/flash-limiter";
 import { DISTRICT_PALETTES, type DistrictPalette } from "./district-palette";
+import { BLOOM_THRESHOLD } from "./quality";
 
 /** Wobble of the memory glitch, cycles per second: under the three-flashes-a-second ceiling. */
 export const GLITCH_WOBBLE_HZ = 2.5;
@@ -27,7 +28,7 @@ export class Grading {
   constructor(
     scene: Scene,
     camera: Camera,
-    options: { reference: boolean; sharpen?: number },
+    options: { reference: boolean; sharpen?: number; bloom?: number },
     private readonly limiter: FlashLimiter = new FlashLimiter(),
   ) {
     const p = new DefaultRenderingPipeline("grading", false, scene, [camera]);
@@ -55,6 +56,16 @@ export class Grading {
     if (sharpen > 0) {
       p.sharpen.edgeAmount = sharpen;
       p.sharpen.colorAmount = 1;
+    }
+    // Only the brightest pixels (neon, lamps, screens) bloom: a high threshold keeps lit walls and
+    // the day sky clean, the halo the anime look of the neon (graphics backlog 13.11, step 3).
+    const bloom = options.bloom ?? 0;
+    p.bloomEnabled = bloom > 0;
+    if (bloom > 0) {
+      p.bloomThreshold = BLOOM_THRESHOLD;
+      p.bloomWeight = bloom;
+      p.bloomKernel = 48;
+      p.bloomScale = 0.5;
     }
     this.pipeline = p;
   }
