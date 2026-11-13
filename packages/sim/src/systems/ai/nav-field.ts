@@ -7,7 +7,7 @@ import { solidIndexOf } from "../../world/solid-index";
 import { collidersOf } from "../../world/solids";
 import { STEP_HEIGHT } from "../movement-system";
 import { type NavMemo, heldRaster, recall, remember } from "./nav-memo";
-import { CLEARANCE, LEDGE, NAV_CELL, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellIndex, finish, rasterise } from "./nav-raster";
+import { CLEARANCE, LEDGE, NAV_CELL, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellIndex, finish, rasterise, walled } from "./nav-raster";
 
 /**
  * The distance fields of the steering (ADR-0025, `steering.ts`): the windows rasterised round a
@@ -100,6 +100,15 @@ const passable = (r: Raster, c: number, dx: number, dz: number, out: boolean): n
   const n = nz * cells + nx;
   if (!open[n]) return -1;
   if (dx !== 0 && dz !== 0 && (!open[iz * cells + nx] || !open[nz * cells + ix])) return -1;
+  // Not up a wall between cells (`Raster.walls`, G-763), which `walkable` does not take either: by
+  // Mełgiewska's lower bridge and that of podzamcze-1-0 the field led up a deck's edge the feet
+  // slide along, past the low stretch of it a few decimetres aside. A diagonal goes up one when
+  // both ways round its corner do.
+  if (r.walls) {
+    const up = (from: number, to: number) => (out ? walled(r, from, to, cells) : walled(r, to, from, cells));
+    const [p, q] = [iz * cells + nx, nz * cells + ix];
+    if (dx === 0 || dz === 0 ? up(c, n) : (up(c, p) || up(p, n)) && (up(c, q) || up(q, n))) return -1;
+  }
   // Near a flight, not up a wall in the ground more than a step high, as a bridge's deck over the
   // terrain by its landing (G-274): the movement makes it a bank. Down it may (`out`: from `c`).
   if (r.base && r.flight && ((r.flight[c] ?? 0) > 0 || (r.flight[n] ?? 0) > 0)) {

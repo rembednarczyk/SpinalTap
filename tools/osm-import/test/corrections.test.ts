@@ -325,8 +325,9 @@ describe("tag corrections (ADR-0042)", () => {
     // The bed of shrubs is no paving: the orthophoto shows it green and the bare ground rule lays it
     // as a lawn (ADR-0077 step 1.1); the break for the footway into the halls is paved.
     expect(surfaceAt(670, 382.3)).toBe("grass");
-    // Its east end under the crowns (class canopy) takes the paving round it (ADR-0077 step 1.1).
-    expect(surfaceAt(705, 377.5)).toBe("square");
+    // Its east end under the crowns (class canopy) is a lawn, the trees' bed: paving under the crowns
+    // would be a guess from the cells round them (ADR-0077 step 1.2, the curator's review of #483, T-285).
+    expect(surfaceAt(705, 377.5)).toBe("grass");
     expect(surfaceAt(686.7, 380)).toBe("square");
   });
 
