@@ -5,6 +5,7 @@ import { WORLD_CHUNKS } from "@seki/sim";
 import { type CameraOccluder, CameraRig } from "../camera/camera-rig";
 import { fadeFigure } from "../npr/body-dither";
 import type { Grading } from "../npr/grading";
+import { CONTACT_SHADE } from "../npr/contact-shade";
 import { LineArt } from "../npr/line-art";
 import { SpeedLines } from "../npr/speed-lines";
 import { NIGHT_RIG } from "../npr/lighting";
@@ -191,7 +192,7 @@ export class BabylonRenderer implements RenderPort {
     const eye = this.rig.camera.position;
     this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"], lift: this.map.liftAt });
     // Line art must be attached before the grading pipeline so the ink gets graded too.
-    this.lineArt = tier.lineArt ? new LineArt(scene, this.rig.camera) : null;
+    this.lineArt = tier.lineArt ? new LineArt(scene, this.rig.camera, { contactShade: tier.contactShade ? CONTACT_SHADE : null }) : null;
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
     this.speedLines = new SpeedLines(scene, this.rig.camera);
     this.atmosphere = new Atmosphere(scene, NIGHT_RIG);
