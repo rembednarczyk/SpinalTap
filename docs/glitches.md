@@ -1827,6 +1827,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin teren)
 - Test przyjęcia: `walk-blocked` bez kluczy na osi w179264855; postać przechodzi
 
+### G-756 Klucze rodzajów próbkowanych w bazie skanu przesuwają się przy zmianie tablic, choć suma maleje
+- Ważność: S3 · Zasięg: `ground-strip-gap`, `ground-strip-overlap` (i pewnie inne z `SAMPLED_KINDS`); przy G-739 (2 pomosty w podzamcze-2-0) +49/−53 i +145/−155 kwadratów w podzamcze-0-1 i 2-0, z dala od zmiany
+- Opis: siatka próbek tych kontroli zależy od zawartości kawałka (np. obrysu albo kolejności kawałków nawierzchni), więc lokalna zmiana przesuwa próbki w całym kawałku i nowe klucze wymagają `GLITCH_BASELINE=accept`; zakotwiczyć siatkę próbek w układzie świata (wielokrotności kroku), żeby klucze zmieniały się tylko tam, gdzie zmienia się mapa
+- Status: zgłoszone (13.11, orkiestrator przy scalaniu G-739)
+- Pakiet właściciela: tools/glitch-scan
+- Test przyjęcia: przesunięcie jednego pomostu w kawałku zmienia klucze tylko w kwadratach, które on dotyka (test na kopii tablic)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
