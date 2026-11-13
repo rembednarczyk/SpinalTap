@@ -1751,7 +1751,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-742 Białe fasady przepalają się w słońcu (4,6–4,8% dolnej połowy kadru)
 - Ważność: S4 · Zasięg: ujęcia z chodników przy Placu Litewskim (-91;127) i (-89;-199) o 12:00; przepalenie z białych fasad, nie z nawierzchni; próg przyjęty przy G-721: ≤ 3%
-- Status: zgłoszone (13.11, naprawiacz G-734)
+- Status: w PR #499 (13.11, 9f46ff4: `sunSafe()` w `facade-style.ts`, budynki przepalone 543/705 → 0; przepalenie ujęć poniżej 3%); wcześniej: zgłoszone (13.11, naprawiacz G-734)
 - Pakiet właściciela: packages/engine (barwy fasad, światło dnia)
 
 ### G-744 Pasy ruchu biorą odsunięcie od zmierzonego zasięgu asfaltu: przesunięcie krawędzi jezdni o centymetry daje kolizje aut
@@ -1788,6 +1788,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, orkiestrator, CI #491)
 - Pakiet właściciela: tools/glitch-scan
 - Test przyjęcia: czas testu w CI ≤ 50% limitu (pomiar `pnpm test:rerun`/raport vitest), bez podnoszenia limitu
+
+### G-750 Biały rękaw postaci w kadrze FPP przepala się w słońcu (1,3–1,6% dolnej połowy kadru)
+- Ważność: S4 · Zasięg: widok z pierwszej osoby w dzień, każde ujęcie
+- Opis: po G-742 resztę przepalenia ujęć dnia daje rękaw bohaterki; połowa progu 3% z G-721
+- Status: zgłoszone (13.11, naprawiacz G-742)
+- Pakiet właściciela: packages/engine (materiał postaci, widok FPP)
+- Test przyjęcia: `pnpm shots:compare` o 12:00: przepalenie samego rękawa < 0,5% dolnej połowy kadru
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
