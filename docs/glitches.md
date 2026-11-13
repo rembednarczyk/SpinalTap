@@ -1835,9 +1835,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-763 Ganger stoi pod krawędzią dolnego mostu Mełgiewskiej (2449,4; 258,8) i (2454,6; 293,5) mimo przejść obok
 - Ważność: S3 · Zasięg: sonda G-741, ok. 6 z 30 punktów przy pomostach nabrzeze-0-1/0 i /1
 - Opis: krawędź pomostu 0,1-0,25 m nad gruntem: raster i walkable widzą przejście, bankNear/offTheBank zatrzymuje stopy; ganger stoi od kilku sekund pościgu bez fallbacku followDetour
-- Status: zgłoszone (13.11, naprawiacz G-747)
+- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-g763, 13.11); wcześniej: zgłoszone (13.11, naprawiacz G-747)
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: sonda G-741: punkty nabrzeze-0-1 0 0.85 ±9,5 i 1 0.1 8 dochodzą
+- Przyczyna: bankNear przepuszczał poślizg wzdłuż skarpy (CREEP), a pole (passable) nie brało Raster.walls. Poprawka: każdy poślizg w pierwszych 0,6 m to brak prostego marszu; pole nie idzie w górę ściany. Sonda G-741: 94 → 129/150, bez regresji, hash bez zmian.
+- Po poprawce nadal nie dochodzą w sondzie G-741: podzamcze-2-0 0 0.5 4 i 0 0.3 5 (5/5), nabrzeze-0-1 1 0.15 -14 (5/5), 1 0.9 -12 (3/5), 1 0.15 7 (3/5, stoi w 2451,9; 299,2). Test app alchemia-ramp-traffic trwa ok. 5 s także na main (granica limitu).
 
 ### G-764 Trawnik pod koronami drzew na kostce (reguła koron, ADR-0077 krok 1.2)
 - Ważność: S4 · Zasięg: 4 dzielnice, ok. 474–670 m², m.in. promenada nad Czechówką przy VIVO (x 1090, z 185), Furmańska (x 646, z 257)
