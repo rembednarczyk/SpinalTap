@@ -82,6 +82,7 @@ import { stepsInclineAgainst } from "./steps-incline";
 import { roadDipsOverTunnels } from "./road-tunnel";
 import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
 import { deckSlots } from "./deck-slot";
+import { bridgeEndsInSlope } from "./bridge-end-slope";
 import { deckSteps } from "./deck-step";
 import { groundOverDeck } from "./ground-over-deck";
 import { abutmentSteps } from "./deck-abutment";
@@ -1123,6 +1124,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * 0.01 m over the deck (G-686): the terrain shows through the deck's paving as a grey patch.
    */
   "ground-over-deck": () => groundOverDeck([...BRIDGE_DECKS.values()].flat(), bridgeDeckAt, groundY),
+  /**
+   * An end of a bridge's deck axis more than 0.5 m under the terrain within 2.5 m on past it along
+   * the axis (G-739): the end lies down the bank of the valley, and the deck, level at its ends'
+   * terrain, tilts down to it off the street's level. Not a node another deck goes on from.
+   */
+  "bridge-end-in-slope": () => bridgeEndsInSlope([...BRIDGE_DECKS.values()].flat(), rawHeight),
   /**
    * A point (every 0.5 m) of a bridge's sidewalk more than 0.05 m off the carriageway beside it in
    * the same cross section (G-737): in Lublin the sidewalk behind the kerb is level with it.
