@@ -130,6 +130,12 @@ describe("HUD", () => {
     expect(screen.getByTestId("prompt").textContent).toContain("Rozmawiaj z Kaito");
   });
 
+  it("opens the wait window on a tap or a click on the clock", () => {
+    const { i } = mount({ screen: "playing", clock: "21:00", day: 1 });
+    fireEvent.click(screen.getByTestId("clock"));
+    expect(i.openWait).toHaveBeenCalledTimes(1);
+  });
+
   it("opens the journal on a click on the tracked entry", () => {
     const { i } = mount({ screen: "playing", objective: "Wróć do Kaito", questTitle: "Pierwsze zlecenie" });
     fireEvent.click(within(screen.getByTestId("objective")).getByRole("button", { name: "Open the journal" }));
