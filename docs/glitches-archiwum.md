@@ -2,6 +2,30 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-708 Trzy budynki przy Grodzkiej i Rybnej o 9–12 m wyższe niż w NMPT; oficyna bez OSM (T-269)
+- Status: naprawione (13.11, #481 scalony); wcześniej: w PR #481 (13.11, 3644e06: runda 2, `height-vs-nmpt` na 55 budynków komórki z bazą 0, taras w232362965 −8,4, teren nad dachem 51 → 0, atrybucja NMPT); naprawione na gałęzi ccr-ec2c4269-ilh8k8-g708 (12.11, 990a49b; przegląd kuratora ZGODNE Z UWAGAMI; oficyna (682..691; 72..80) skreślona, to studnia doświetlająca); wcześniej: zgłoszone (12.11, kurator, przegląd stare-miasto-1-1)
+- Ważność: S3 (sylwetka skarpy nad Podwalem w widoku od Zamku; płyta 16 m zamiast niskiej zabudowy na Rybnej) · Zasięg: stare-miasto-1-1. Środek dachu gry minus mediana NMPT GUGiK 0,5 m w obrysie: Rybna 13 w66293276 (613,5; 95,6) +11,6 m (gra 16,1 m z LoD1 na całym obrysie 528 m²; NMPT: 25% przy ziemi, 68% na 2–8 m, 7% ≥ 8 m); w232362965 (708,1; 100,7) +10,0 m (16,7 m z wartości domyślnej, cokół 7,1; NMPT: dach na poziomie podwórzy Grodzkiej, y −8,9); w364575978 (703,4; 89,6) +8,6 m (14,6 m: cokół 5 i 3 kondygnacje z tagu; NMPT p90 y −4,3). Obu ostatnich nie ma w LoD1 2024 ani w LoD2. Pozostałe 52 budynki komórki: mediana +0,24 m, p90 +1,0. Do tego oficyna (682..691; 72..80), 52 m², która jest w LoD2 (okap 11,9) i w NMPT, a w OSM jej nie ma. Nakładki `topo-sm11-img/panas.png` i `rybna13.png`
+- Pakiet właściciela: tools/osm-import (korekty wysokości z NMPT, jak `CHURCH_SURFACE`; Rybna 13: podział obrysu albo wysokość części; w232362965 i w364575978: wierzch na poziomie podwórzy, bez kondygnacji nad nim; oficyna: korekta obrysu z LoD2)
+- Test przyjęcia: proponowana kontrola `height-vs-nmpt` w stare-miasto-1-1 3 → 0; `bare-enclosed-yard` bez składowej (701..711; 101..114)
+
+### G-721 Plac Litewski ciemniejszy i bardziej szary niż w Lublinie: barwa kostki i bruku, kontrast z trawą (T-281)
+- Status: naprawione (13.11, #479 scalony); wcześniej: w PR #479 (13.11, d955833: decyzja użytkownika 13.11, niecka fontanny zostaje ciemną wodą; kostka 1,70 × trawa); naprawione na gałęzi ccr-ec2c4269-ilh8k8-g721 (12.11, eeabcf7: barwy nawierzchni z mediany ortofoto, kostka/trawa 1,28 → 1,90, dno fontann jasne; przegląd kuratora ZGODNE Z UWAGAMI; runda 2: square 1,75 × trawa, cobble 0,87, footway 0,92, dno 0,90 × square); zgłoszone (12.11, kurator, przegląd paczki; decyzja użytkownika 12.11 w `docs/decyzje.md`)
+- Ważność: S4 (proponowana; plac główny, więc zasięg szeroki) · Zasięg: szeroki (każdy plac i deptak z `square`, `footway`, `cobble`) · Koszt: mały–średni
+- Gdzie: Plac Litewski r7690183 (−105…121; −87…92), także deptak Krakowskiego Przedmieścia
+- Dowód: ortofoto 2025-04 i 2024-06, średnie RGB próbek na placu według klasy ortofoto i nawierzchni gry. Kostka do trawy: gra 1,34, ortofoto 1,9 i 2,1. Bruk gry ok. 15% ciemniejszy od kostki, na ortofoto ten sam odcień. Zrzuty `plac-litewski/pl-oczy-krakowskie.png`, `pl-z-gory.png`.
+- Przyczyna (przypuszczalna): stałe `SURFACE_COLOR` w `ground-plan.ts` dobrane do nocnej palety, wspólne dla całego miasta i bez związku z materiałem z OSM (`surface=paving_stones`, `sett`, `granite`).
+- Propozycja (ADR-0077, reguła z danych, bez ręcznych obszarów):
+  - Odcień nawierzchni dla pieszych bierze się z tagu `surface`/`material`.
+  - Jasność skalibrować na ortofoto: mediana koloru klasy „jasna” pod `square`/`footway` w rastrach pokrycia miasta, a `tools/orto` podaje ją w raporcie.
+  - Stosunek jasności kostki do trawy podnieść do ok. 1,8–2,0.
+  - `cobble` w tym samym odcieniu co `square`, wyróżniony fakturą, nie ciemniejszym kolorem.
+  - Neony i noc bez zmian (warstwa 2077 leży na tym).
+- Pakiet właściciela: packages/engine (renderer: mapcity, NPR), tools/orto (mediana barwy)
+- Test przyjęcia:
+  - test planu: `SURFACE_COLOR.square` do `grass` ma jasność ≥ 1,8, `cobble` w zakresie ±5% jasności `square`;
+  - migawka NPR odświeżona i obejrzana;
+  - zrzut 12:00 z `pl-oczy-krakowskie` obejrzany przez kuratora.
+
 ### G-686 Uskok 0,52 m na zakręcie schodów z wiaduktu Zamkowej blokuje gangera
 - Status: naprawione (13.11, #476 scalony); wcześniej: w PR #476 (12.11, 11e9a8d: rampa terenu pod górnym biegiem, `steps-riser-tall` 1 → 0, ganger przechodzi; przegląd kuratora ZGODNE Z UWAGAMI, blokuje łata terenu nad pomostem w (730,25..732,25; 151,75..154,5), 49 próbek do 0,033 m; runda 2: 253613f, `Ramp.ceiling` i `underDeck`: teren 0,05 m pod pomostem przy krawędzi, niżej w głąb; łata znika, test na pomostach gry 49 → 0, uskok wzdłuż biegu 0,098 m; nowa kontrola `ground-over-deck`, baza 860 (G-736); odstępstwo celowe T-282); wcześniej: zgłoszone (12.11, naprawiacz G-643; także na main)
 - Ważność: S3 · Zasięg: (732,7; 151,4)–(734,2; 152,8), górny stopień schodów w294098693 na styku z południowym końcem pomostu wiaduktu Zamkowej (T-166). Wysokość chodzenia skacze tam o 0,51–0,54 m na całej szerokości pasa, a skan liczy to jako `steps-riser-tall` (732; 151) 0,51 m. Na schodach w56965515 (dawne (729,5; 163,9), czyli x zakrętu i z krawędzi pomostu) na osi biegów nie ma uskoku powyżej 0,3 m. Przyczyna ta sama co G-339 (pomost poziomy w poprzek na NMT końca osi). Poprawka G-339 w tym punkcie powinna usunąć oba objawy, test G-686 (nawigacja) zostaje osobno; uskok niewidoczny dla `straightWalk` i pól nawigacji; ganger stoi tam wciśnięty na zawsze, na main przechodzi tylko, gdy jest akurat w powietrzu
