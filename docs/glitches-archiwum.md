@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-745 `pnpm osm:props` nie jest idempotentne: wynik zależy od poprzedniego `props.generated.ts`
+- Ważność: S3 · Zasięg: generator rekwizytów czyta przez sim własny poprzedni wynik; punkt stały dopiero po drugim przebiegu (pierwszy dał `figure-in-crowd` 2 przy (−74; 160))
+- Opis: niedeterministyczny proces budowy danych: ten sam wejściowy OSM daje różne tablice zależnie od stanu pliku wyjściowego; łamie powtarzalność i porównania przed/po
+- Status: naprawione (13.11, #494 scalony); wcześniej: w PR #494 (13.11, 60035c4: `buildProps` podaje modułom sim tabelę z bieżącego przebiegu, kolejność jawna w jednym przebiegu; test bajt w bajt z pustym i bieżącym plikiem); wcześniej: zgłoszone (13.11, budowniczy etapu 2 ADR-0078)
+- Pakiet właściciela: tools/osm-import (props), packages/sim (odczyt rekwizytów)
+- Test przyjęcia: dwa kolejne `osm:props` z tego samego wejścia i z pustego/innego `props.generated.ts` dają ten sam plik bajt w bajt (test w osm-import)
+- 13.11: do sprawdzenia, czy `barrier-report.ts` i `tools/orto/src/game.ts` (też ładują sim z zatwierdzonymi tabelami) zapisują coś do repo
+
 ### G-741 AI nie widzi boków pomostów jako ścian poza okolicą schodów
 - Ważność: S3 · Zasięg: wszystkie pomosty nad niższym terenem; `nav-raster.ts` (`ledgesOf`) zamyka krawędzie pomostów tylko przy biegach schodów, więc planer nie obchodzi pomostu przez koniec i ganger staje pod bokiem pomostu
 - Opis: po G-739 (kładka podzamcze-2-0 na poziomie ulicy) osiłek w `bridge-edges-ai.test.ts` („gets from beside the footbridge of podzamcze-2-0 onto its middle”) idzie prosto i staje pod północnym bokiem, 0,77 m niżej, 4,5 m od gracza; na main test przechodzi tylko dzięki przechyleniu pomostu z G-739
