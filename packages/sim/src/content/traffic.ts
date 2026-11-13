@@ -86,8 +86,8 @@ const MIN_REACH = 1;
 /**
  * A lane's car keeps this far inside the kerb: half the widest car, a hand's breadth, and the 0.1 m
  * the asphalt drawn lies inside the import's width by Zesłańców Sybiru and Plac Wolności (a chunk
- * simplifies its outline by up to 0.3 m; ADR-0080). No more: by 0.2 m, Kołłątaja's two lanes came
- * 5 cm closer and two vehicles met in its bend (seed 10, G-744) (m).
+ * simplifies its outline by up to 0.3 m; ADR-0080). No more than measured: each tenth brings the
+ * two lanes of a narrow street closer, where their bodies meet in a bend (G-744) (m).
  */
 const LANE_REACH = 1.1;
 /** How fast a lane edges towards the axis where the carriageway narrows (m aside per m along). */
@@ -260,10 +260,11 @@ const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRou
     if (trolley) out.push(routeOf(`${id}:t`, c.name, "trolley", offsetLine(c.points, offsets[0]!), TROLLEY_SPEED, Math.max(1, Math.round(len / TROLLEY_SPACING))));
     return out;
   }
-  const off = laneOffset(roadHalfWidth(c, 1));
+  // Each lane by its own side's width: an axis off the carriageway's middle (Kołłątaja, 0.4 m) moved both lanes in by the narrower side's.
+  const back = turnedRound(c);
   const ways: [string, Pt[]][] = [
-    ["f", laneLine(c, off)],
-    ["b", laneLine(turnedRound(c), off)],
+    ["f", laneLine(c, laneOffset(roadHalfWidth(c, 1)))],
+    ["b", laneLine(back, laneOffset(roadHalfWidth(back, 1)))],
   ];
   for (const [w, pts] of ways) {
     out.push(routeOf(`${id}:${w}`, c.name, "cars", pts, road.speed, cars(len)));

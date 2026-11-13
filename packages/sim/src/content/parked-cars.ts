@@ -323,7 +323,7 @@ const stripCars = (park: KerbPark, c: RoadChain, side: 1 | -1, layout: BayLayout
         .flatMap((a) => BAY_NUDGE.map((d) => car(a, d)))
         .find(
           (k) =>
-            footprint(k.x, k.z, yaw, model, -0.1).every(([x, z]) => pointInPairRingEvenOdd(x, z, park.ring)) &&
+            footprint(k.x, k.z, yaw, model, 0).every(([x, z]) => pointInPairRingEvenOdd(x, z, park.ring)) &&
             fits(k.x, k.z, yaw, model, undefined, { ring: park.ring, axis: c.points, side }) &&
             (layout === "parallel" || endsOffLanes(k.x, k.z, yaw, model)) &&
             ![...taken, ...out].some((o) => Math.hypot(o.x - k.x, o.z - k.z) < 8 && overlap(o, k)),
