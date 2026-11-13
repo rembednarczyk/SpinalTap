@@ -1846,9 +1846,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-760 Dziury 5–20 cm w nawierzchni jezdni pod pasami aut
 - Ważność: S3 · Zasięg: car-lane-off-road i lane-off-ground po G-756: 930,15,329,81 (Al. Tysiąclecia#81:1), 1080,10,564,02 (Podzamcze#107:0), 2525,7,357,5 i 2505,04,331,52 (Turystyczna#122:0), 26,18,−102,66 (Kościuszki#4, pod pasem plac zamiast jezdni)
 - Opis: siatka próbek w układzie świata (G-756) trafia w małe dziury nawierzchni pod pasem, które stara siatka po łuku omijała
-- Status: zgłoszone (13.11, naprawiacz G-756)
+- Status: wstrzymane: przyczyna w kodzie G-744/ADR-0078 etap 2 (końce pasów w złączach); wcześniej: zgłoszone (13.11, naprawiacz G-756)
 - Pakiet właściciela: packages/sim (content/lublin nawierzchnie), tools/osm-import
 - Test przyjęcia: `car-lane-off-road` i `lane-off-ground` bez tych kluczy
+- Przyczyna: proste ucięcia pasów jezdni dwóch dróg we wspólnym węźle nie pokrywają się (wierzchołki zaokrąglane osobno do 0,1 m, różne szerokości, klin na zakręcie); szczeliny 5-10 cm. Kościuszki#4 to ta sama szczelina, plac tylko prześwituje. Na danych g744 zostają 4 z 5 miejsc (i dziury ok. 25 cm przy ~2526,356): roundJoints pomija kawałki < SLIVER 0,1 m / MIN_CAP 0,3 m² i liczy przed zaokrągleniem do 0,1 m. Naprawa po scaleniu g744, w line-buffer.ts (złącze po zaokrągleniu albo nakładka w złączu); test: odcinek między ucięciami pasów ze wspólnym węzłem leży na road. Sonda: scratchpad g760-probe.test.ts.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
