@@ -1,5 +1,5 @@
 # bare-on-cover: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-0-0 -170,-270
+krakowskie-0-0 -110,-270
 krakowskie-0-0 -200,-250
 krakowskie-0-0 -180,-230
 krakowskie-0-0 -170,-230
@@ -35,7 +35,6 @@ krakowskie-1-0 200,-240
 krakowskie-1-0 110,-230
 krakowskie-1-0 190,-230
 krakowskie-1-0 200,-230
-krakowskie-1-0 210,-230
 krakowskie-1-0 80,-220
 krakowskie-1-0 90,-220
 krakowskie-1-0 190,-220
@@ -44,6 +43,7 @@ krakowskie-1-0 210,-220
 krakowskie-1-0 140,-210
 krakowskie-1-0 150,-210
 krakowskie-1-0 190,-210
+krakowskie-1-0 200,-210
 krakowskie-1-0 90,-200
 krakowskie-1-0 100,-200
 krakowskie-1-0 110,-200
@@ -55,6 +55,7 @@ krakowskie-1-0 130,-190
 krakowskie-1-0 140,-190
 krakowskie-1-0 230,-180
 krakowskie-1-0 110,-170
+krakowskie-1-0 120,-170
 krakowskie-1-0 110,-160
 krakowskie-1-0 120,-160
 krakowskie-1-0 130,-160
@@ -69,14 +70,13 @@ krakowskie-1-0 110,-130
 krakowskie-1-0 130,-130
 krakowskie-1-0 130,-120
 krakowskie-1-0 130,-110
-krakowskie-1-0 190,-30
+krakowskie-1-0 190,-40
 krakowskie-1-0 200,-30
 krakowskie-1-1 200,-20
 krakowskie-1-1 210,-20
 krakowskie-1-1 200,-10
 krakowskie-1-1 210,-10
 krakowskie-1-1 180,0
-krakowskie-1-1 190,0
 krakowskie-1-1 200,0
 krakowskie-1-1 210,0
 krakowskie-1-1 130,10
@@ -91,7 +91,7 @@ krakowskie-1-1 170,20
 krakowskie-1-1 190,20
 krakowskie-1-1 110,30
 krakowskie-1-1 190,30
-krakowskie-1-1 150,100
+krakowskie-1-1 150,90
 krakowskie-1-1 100,110
 krakowskie-1-1 150,110
 krakowskie-1-1 20,120
@@ -133,15 +133,9 @@ krakowskie-2-0 270,-190
 krakowskie-2-0 310,-190
 krakowskie-2-0 360,-190
 krakowskie-2-0 240,-180
-krakowskie-2-0 320,-180
-krakowskie-2-0 330,-180
-krakowskie-2-0 340,-180
 krakowskie-2-0 290,-170
-krakowskie-2-0 300,-170
-krakowskie-2-0 310,-170
 krakowskie-2-0 340,-170
 krakowskie-2-0 360,-170
-krakowskie-2-0 270,-160
 krakowskie-2-0 320,-160
 krakowskie-2-0 330,-160
 krakowskie-2-0 280,-150
@@ -168,7 +162,6 @@ krakowskie-2-0 300,-90
 krakowskie-2-0 390,-90
 krakowskie-2-0 400,-90
 krakowskie-2-0 420,-90
-krakowskie-2-0 430,-80
 krakowskie-2-0 360,-70
 krakowskie-2-0 410,-70
 krakowskie-2-0 430,-70
@@ -243,14 +236,17 @@ nabrzeze-1-1 2650,310
 nabrzeze-1-1 2660,310
 nabrzeze-1-1 2670,310
 nabrzeze-1-1 2680,310
+nabrzeze-1-1 2640,320
 nabrzeze-1-1 2650,320
 nabrzeze-1-1 2660,320
 nabrzeze-1-1 2670,320
 nabrzeze-1-1 2680,320
+nabrzeze-1-1 2690,320
 nabrzeze-1-1 2660,330
 nabrzeze-1-1 2670,330
 nabrzeze-1-1 2680,330
 nabrzeze-1-1 2690,330
+nabrzeze-1-1 2660,340
 nabrzeze-1-1 2680,340
 nabrzeze-1-1 2690,340
 nabrzeze-1-1 2670,380
@@ -278,13 +274,13 @@ podzamcze-0-0 540,340
 podzamcze-0-0 550,340
 podzamcze-0-0 610,340
 podzamcze-0-0 620,340
-podzamcze-0-0 630,340
 podzamcze-0-0 690,340
 podzamcze-0-0 700,340
 podzamcze-0-0 520,350
 podzamcze-0-0 530,350
 podzamcze-0-0 540,350
 podzamcze-0-0 560,350
+podzamcze-0-0 620,350
 podzamcze-0-1 660,390
 podzamcze-0-1 660,400
 podzamcze-0-1 660,410
@@ -294,8 +290,7 @@ podzamcze-0-1 530,440
 podzamcze-0-1 660,440
 podzamcze-0-1 530,450
 podzamcze-0-1 520,470
-podzamcze-0-1 640,570
-podzamcze-1-0 880,190
+podzamcze-0-1 650,570
 podzamcze-1-0 900,190
 podzamcze-1-0 910,190
 podzamcze-1-0 880,200
@@ -329,6 +324,7 @@ podzamcze-1-1 750,520
 podzamcze-1-1 760,520
 podzamcze-2-0 1000,160
 podzamcze-2-0 1010,160
+podzamcze-2-0 1020,160
 podzamcze-2-0 1030,160
 podzamcze-2-0 920,190
 podzamcze-2-0 940,190
@@ -346,6 +342,7 @@ podzamcze-2-0 940,250
 podzamcze-2-0 950,250
 podzamcze-2-0 930,360
 podzamcze-2-1 1100,560
+podzamcze-2-1 1100,570
 poza 460,-270
 poza 2700,60
 poza 760,100
@@ -364,6 +361,7 @@ stare-miasto-0-0 510,-190
 stare-miasto-0-0 520,-160
 stare-miasto-0-0 520,-150
 stare-miasto-0-1 570,150
+stare-miasto-0-1 590,150
 stare-miasto-1-0 690,-90
 stare-miasto-1-0 700,-80
 stare-miasto-1-0 640,-50

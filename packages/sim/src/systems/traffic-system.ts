@@ -4,6 +4,7 @@ import { surfaceLiftAt } from "../content/lublin/roads";
 import { TRAFFIC_RANGE, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute } from "../content/traffic";
 import { ownWayRoom } from "../content/traffic-ramp";
 import { pointsAlong } from "../content/traffic-lane";
+import { bodiesMeet, cannotStop, goesFirst } from "./traffic-bodies";
 import type { Entity, VehicleState } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { VEHICLE_IDS_PER_ROUTE, halfSize, lanePose, timetable, vehicleCount, vehicleId, vehiclePlan } from "../world/traffic";
@@ -203,10 +204,29 @@ const onItsWay = (self: Vehicle, o: Vehicle, wayOf: () => readonly { x: number; 
   }
 };
 
+/** How far ahead a vehicle looks: past its stopping distance and a margin (m). */
+const reachOf = (v: Vehicle): number => v.vehicle.half.l + 4 + (v.vehicle.v * v.vehicle.v) / (2 * BRAKE);
+
+/**
+ * Gives way to an oncoming vehicle whose body would meet its own (G-744): at a bend, where a body
+ * turns at once with its lane and swings across the other, or down a narrow street. The one
+ * `goesFirst` does not choose waits short of where they meet.
+ */
+const giveWayToBody = (self: Vehicle, o: Vehicle, reach: number, out: Ahead): void => {
+  const met = bodiesMeet(self, reach, o, reachOf(o));
+  if (!met || goesFirst(self, met.a, o, met.b)) return;
+  const gap = met.a - WAY_STEP;
+  const allowed = gap <= 0 ? 0 : Math.sqrt(2 * BRAKE * gap);
+  if (allowed < out.allowed) {
+    out.allowed = allowed;
+    out.player = null;
+  }
+};
+
 /** What is in a vehicle's way: anyone with a body in front of it, the vehicle ahead going its way, and crossing traffic with right of way. */
 const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, Vehicle>, pose: { x: number; z: number; tx: number; tz: number }): Ahead => {
   const st = self.vehicle;
-  const reach = st.half.l + 4 + (st.v * st.v) / (2 * BRAKE);
+  const reach = reachOf(self);
   const out: Ahead = { allowed: Infinity, player: null, beside: null };
   const passing = st.blocked > PASS_AFTER;
   for (const b of ctx.world.with("body")) {
@@ -236,10 +256,13 @@ const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, V
     const ox = Math.sin(o.yaw);
     const oz = Math.cos(o.yaw);
     const along = ox * pose.tx + oz * pose.tz;
-    // Oncoming traffic keeps to its lane; crossing traffic (merging at a roundabout too, from
-    // 45 degrees on) takes turns at the crossing.
+    // Oncoming traffic keeps to its lane, unless their bodies meet; crossing traffic (merging at a
+    // roundabout too, from 45 degrees on) takes turns at the crossing.
     if (along < MERGE_COS) {
-      if (along <= -0.7) continue;
+      if (along <= -0.7) {
+        giveWayToBody(self, o, reach, out);
+        continue;
+      }
       const allowed = out.allowed;
       const player = out.player;
       yieldAtCrossing(self, o, pose, ox, oz, out);
@@ -359,6 +382,7 @@ const comeAndGo = (ctx: SimContext, live: Map<EntityId, Vehicle>, player: Entity
       if (!fresh && watched(ctx, player, { x: pose.x, y: focus.y, z: pose.z }, radius)) continue;
       if (crowded(live, route, s, lane)) continue;
       const v = vehicleEntity(ctx, route, i, s);
+      if (tooLateFor(live, v)) continue;
       live.set(v.id, ctx.world.add(v) as Vehicle);
       ctx.streamer.streamedOut.delete(v.id);
     }
@@ -399,6 +423,17 @@ const crowded = (live: ReadonlyMap<EntityId, Vehicle>, route: number, s: number,
   }
   return false;
 };
+
+/**
+ * Would a vehicle appearing as `v` meet the body of an oncoming one before either could stop
+ * (G-744: in a sharp bend, beside one turning, where `crowded` reads lanes and not bodies)?
+ */
+const tooLateFor = (live: ReadonlyMap<EntityId, Vehicle>, v: Vehicle): boolean =>
+  [...live.values()].some((o) => {
+    if (o.vehicle.route === v.vehicle.route || Math.sin(o.yaw) * Math.sin(v.yaw) + Math.cos(o.yaw) * Math.cos(v.yaw) > -0.7) return false;
+    const met = bodiesMeet(v, reachOf(v), o, reachOf(o));
+    return met !== null && (cannotStop(v, met.a) || cannotStop(o, met.b));
+  });
 
 /** Is the place a vehicle would jump back onto its timetable free: no other vehicle as close as `crowded` lets one appear by? */
 const freeFor = (live: ReadonlyMap<EntityId, Vehicle>, self: Vehicle, at: { x: number; z: number }): boolean =>

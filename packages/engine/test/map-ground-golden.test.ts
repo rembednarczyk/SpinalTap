@@ -97,10 +97,12 @@ describe("the ground the map city lays (G-444)", () => {
     // steps at the map's edge read the ground on its side (G-703), and here, with only these four
     // chunks, the flight at (20; 9) on krakowskie-1-1's west side has no terrain past it. The
     // colours moved it alone: the paving's and the sidewalks' from the orthophoto (G-721, G-734), no vertex moved.
-    // Two footbridges' decks run on to the top of their banks (G-739): 20 vertices more, the same meshes.
+    // Two footbridges' decks run on to the top of their banks (G-739): 20 vertices more, the same meshes. The map's
+    // data moved it again: the bands along lines buffered with round joins and ends (ADR-0078 step 2),
+    // 142 558 vertices before, the arcs a few more; and the ground the paths' loops enclose laid whole from the cover.
     // The kerbs' strips laid from the cover, lawns under the crowns and the specks of green (ADR-0077
-    // step 1.2): 142 558 -> 158 455 vertices, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 158455, hash: "5a7b8b2f" });
+    // step 1.2): 151 928 -> 168 499 vertices, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 168499, hash: "5a70663a" });
     scene.dispose();
   });
 

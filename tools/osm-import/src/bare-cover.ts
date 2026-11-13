@@ -33,7 +33,7 @@ import { dropLoose, joinSpecks, readCover } from "./bare-clean.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
 import { kerbStrips } from "./bare-strips.ts";
 import { contours } from "./contour.ts";
-import { type Area } from "./features.ts";
+import { type Area, type Line } from "./features.ts";
 import { type OsmData } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
 import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, signedArea, simplifyRing } from "./geometry.ts";
@@ -295,11 +295,30 @@ const NO_PLACES: TownPlaces = { areas: [], stops: [], shops: [] };
 const PAVED_LANDUSE: ReadonlySet<string> = new Set(["retail", "commercial"]);
 const PAVED_AMENITY: ReadonlySet<string> = new Set(["marketplace", "bus_station"]);
 
-/** The map's areas and stops of a town's paved places (`TownPlaces`, the shops come a chunk at a time). */
-export const townPlaces = (data: OsmData, areas: readonly Area[]): Omit<TownPlaces, "shops"> => ({
-  areas: areas
-    .filter((a) => PAVED_LANDUSE.has(a.tags.landuse ?? "") || PAVED_AMENITY.has(a.tags.amenity ?? "") || a.tags.public_transport === "platform" || a.tags.public_transport === "station")
-    .map((a) => a.ring),
+/** The paths a loop of which is laid whole inside (`pathLoops`). */
+const LOOP_PATHS: ReadonlySet<string> = new Set(["footway", "path", "cycleway", "pedestrian"]);
+
+/**
+ * The outlines of the map's paths closed on themselves, on the ground (a footway round a lawn, a
+ * plaza's ring): what they enclose is laid whole, as in a town's paved place. Until ADR-0078's
+ * step 2 the band of such a loop crossed itself and the renderer drew it over the ground inside
+ * too; laid right, the narrow strips between the loops' bands (Podzamcze, (1046; 424)) would
+ * otherwise stay bare under the compact regions' rule.
+ */
+export const pathLoops = (lines: readonly Line[]): Pt[][] =>
+  lines
+    .filter(({ tags: t }) => LOOP_PATHS.has(t.highway ?? "") && t.area !== "yes" && t.tunnel === undefined && (t.bridge ?? "no") === "no" && Number(t.layer ?? 0) >= 0)
+    .filter(({ line: l }) => l.length >= 4 && l[0]!.x === l[l.length - 1]!.x && l[0]!.z === l[l.length - 1]!.z)
+    .map((l) => [...l.line]);
+
+/** The map's areas and stops of a town's paved places (`TownPlaces`, the shops come a chunk at a time), and the paths' loops (`pathLoops`). */
+export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonly (readonly Pt[])[] = []): Omit<TownPlaces, "shops"> => ({
+  areas: [
+    ...areas
+      .filter((a) => PAVED_LANDUSE.has(a.tags.landuse ?? "") || PAVED_AMENITY.has(a.tags.amenity ?? "") || a.tags.public_transport === "platform" || a.tags.public_transport === "station")
+      .map((a) => a.ring),
+    ...loops,
+  ],
   stops: [...data.nodes.values()]
     .filter((n) => n.tags?.highway === "bus_stop" || n.tags?.railway === "tram_stop" || n.tags?.public_transport === "platform")
     .sort((a, b) => a.id - b.id)

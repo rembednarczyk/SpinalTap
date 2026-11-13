@@ -8,7 +8,6 @@ nabrzeze-1-0 2630,130
 nabrzeze-1-0 2620,190
 nabrzeze-1-1 2600,320
 nabrzeze-1-1 2560,340
-podzamcze-1-0 900,190
 podzamcze-1-0 790,330
 podzamcze-1-0 890,340
 podzamcze-2-0 930,190
