@@ -1813,13 +1813,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin teren)
 - Test przyjęcia: `walk-blocked` bez kluczy na osi w179264855; postać przechodzi
 
-### G-756 Klucze rodzajów próbkowanych w bazie skanu przesuwają się przy zmianie tablic, choć suma maleje
-- Ważność: S3 · Zasięg: `ground-strip-gap`, `ground-strip-overlap` (i pewnie inne z `SAMPLED_KINDS`); przy G-739 (2 pomosty w podzamcze-2-0) +49/−53 i +145/−155 kwadratów w podzamcze-0-1 i 2-0, z dala od zmiany
-- Opis: siatka próbek tych kontroli zależy od zawartości kawałka (np. obrysu albo kolejności kawałków nawierzchni), więc lokalna zmiana przesuwa próbki w całym kawałku i nowe klucze wymagają `GLITCH_BASELINE=accept`; zakotwiczyć siatkę próbek w układzie świata (wielokrotności kroku), żeby klucze zmieniały się tylko tam, gdzie zmienia się mapa
-- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g756 @ 3b1b8d3: liczniki i próbki zakotwiczone w kwadratach świata); wcześniej: zgłoszone (13.11, orkiestrator przy scalaniu G-739)
-- Pakiet właściciela: tools/glitch-scan
-- Test przyjęcia: przesunięcie jednego pomostu w kawałku zmienia klucze tylko w kwadratach, które on dotyka (test na kopii tablic)
-
 ### G-757 Chodnik w295849309 przy kładce w295849307 ponad tg 35° wzdłuż osi
 - Ważność: S4 · Zasięg: Podzamcze 1070..1080,160..170; 44 pary `walk-blocked`
 - Opis: oś chodnika do zachodniego końca kładki spada ponad 0,7 na 2 m (skarpa rowu Czechówki); prawdopodobnie ustąpi po G-739 (#501: koniec pomostu na szczycie skarpy) — sprawdzić po scaleniu

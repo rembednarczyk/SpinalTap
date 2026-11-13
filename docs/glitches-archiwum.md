@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-756 Klucze rodzajów próbkowanych w bazie skanu przesuwają się przy zmianie tablic, choć suma maleje
+- Ważność: S3 · Zasięg: `ground-strip-gap`, `ground-strip-overlap` (i pewnie inne z `SAMPLED_KINDS`); przy G-739 (2 pomosty w podzamcze-2-0) +49/−53 i +145/−155 kwadratów w podzamcze-0-1 i 2-0, z dala od zmiany
+- Opis: siatka próbek tych kontroli zależy od zawartości kawałka (np. obrysu albo kolejności kawałków nawierzchni), więc lokalna zmiana przesuwa próbki w całym kawałku i nowe klucze wymagają `GLITCH_BASELINE=accept`; zakotwiczyć siatkę próbek w układzie świata (wielokrotności kroku), żeby klucze zmieniały się tylko tam, gdzie zmienia się mapa
+- Status: naprawione (13.11, #503 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g756 @ 3b1b8d3: liczniki i próbki zakotwiczone w kwadratach świata); wcześniej: zgłoszone (13.11, orkiestrator przy scalaniu G-739)
+- Pakiet właściciela: tools/glitch-scan
+- Test przyjęcia: przesunięcie jednego pomostu w kawałku zmienia klucze tylko w kwadratach, które on dotyka (test na kopii tablic)
+
 ### G-748 Uskok terenu do 3,3 m na szwie kawałków krakowskie-2-1 | stare-miasto-0-1
 - Ważność: S3 · Zasięg: x = 460, z 104–110: teren krakowskie-2-1 −9,20, stare-miasto-0-1 −5,80…−7,12
 - Opis: teren dwóch sąsiednich kawałków rozjeżdża się na szwie; `walk-blocked` (ADR-0080 PR 4): 48 par
