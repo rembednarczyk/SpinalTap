@@ -15,7 +15,7 @@ import { bridgeFills } from "./bridge-fill.ts";
 import { type EdgeCut, edgeOutlines, partsWithin } from "./building-edge.ts";
 import { makeBuilding } from "./buildings.ts";
 import { type Cover } from "../../orto/src/cover.ts";
-import { type CoverFill, coverFiller, townPlaces, withFills } from "./bare-cover.ts";
+import { type CoverFill, coverFiller, pathLoops, townPlaces, withFills } from "./bare-cover.ts";
 import { type AddedArea, addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { withoutReplaced } from "./corrections-alchemia.ts";
 import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
@@ -472,7 +472,7 @@ export const generate = (
   // Walls, fences and hedges (ADR-0077) clear of the buildings, carriageways, steps and the ways through them.
   const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
   const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), ...(lod2 ? { lod2: lod2Index(lod2) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
-  const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas));
+  const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas, pathLoops(lines)));
   const results = chunks.map((c) => generateChunk(c, src, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, fill));
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
   const venueStats: VenueStats = {
