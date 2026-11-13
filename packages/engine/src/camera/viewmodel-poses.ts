@@ -31,7 +31,7 @@ const PISTOL: ViewmodelPose = {
   ads: { x: 0, y: -0.118, z: 0.4 },
   muzzle: { x: 0, y: 0.07, z: 0.18 },
   top: 0.09,
-  // Under the fist round the grip (it was drawn with both fists, round 5; kept so the gun stays where it was).
+  // Both fists round the grip, the left's underside.
   low: { y: -0.06, z: 0 },
 };
 
@@ -57,8 +57,9 @@ const nearer = (pose: ViewmodelPose, k = NEARER): ViewmodelPose => {
  * the grip, the pistol's slide 0.09 m.
  */
 const POSES: Readonly<Partial<Record<WeaponLook, ViewmodelPose>>> = {
-  pistol: nearer(PISTOL),
-  revolver: nearer({ ...PISTOL, ads: { x: 0, y: -0.14, z: 0.4 }, muzzle: { x: 0, y: 0.076, z: 0.225 }, top: 0.105 }),
+  // The handguns where the user chose them (round 2, e17dc2e), not nearer: low on the right, both fists round the grip.
+  pistol: PISTOL,
+  revolver: { ...PISTOL, ads: { x: 0, y: -0.14, z: 0.4 }, muzzle: { x: 0, y: 0.076, z: 0.225 }, top: 0.105 },
   // The long guns keep the left hand on the fore-end in the frame (`LONG_GUN`); the right one's grip may go under it.
   smg: nearer({ hip: { x: 0.2, y: -0.25, z: 0.6 }, ads: { x: 0, y: -0.2, z: 0.42 }, muzzle: { x: 0, y: 0.103, z: 0.34 }, top: 0.15, low: { y: 0, z: 0.19 } }),
   shotgun: nearer({ hip: { x: 0.21, y: -0.25, z: 0.5 }, ads: { x: 0, y: -0.18, z: 0.45 }, muzzle: { x: 0, y: 0.092, z: 0.595 }, top: 0.13, low: { y: -0.04, z: 0.37 } }),

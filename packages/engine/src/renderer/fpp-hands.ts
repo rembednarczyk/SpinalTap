@@ -93,9 +93,8 @@ const boneIndices = (skeleton: Skeleton, nodes: ReadonlySet<TransformNode>): Set
  * one mesh in her skin
  * material, one draw call. Each frame the arm bones are set straight from the viewmodel's pose
  * (`fpp-hand-poses`), static, with the walk sway the viewmodel already has: the right hand round
- * the grip, the left under the fore-end, or round the right fist with a handgun aimed in (down
- * out of the view from the hip), the pommel, and both on the neck in a
- * takedown grab. Until the model is in, and with `?models=off`, the procedural forearm stays.
+ * the grip, the left under the fore-end, under the right fist with a handgun, or at the
+ * pommel, and both on the neck in a takedown grab. Until the model is in, and with `?models=off`, the procedural forearm stays.
  */
 export class FppHands implements ViewArms {
   private readonly holder: TransformNode;

@@ -63,20 +63,13 @@ const grasp = (at: Vector3, fore: Vector3, fingers: Vector3, palm: Vector3, curl
  */
 const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1), v(-1, 0, 0.05), 0.92, 0.2, 0.95);
 /**
- * A handgun in one hand, as in the user's photo (13.11, round 7): the web between thumb and index
- * high on the backstrap, the knuckles at the grip's right front, the middle, ring and little
- * fingers closed tight round its front, one under the other, their tips on its left side; the
- * index finger straight along the frame's right side over the trigger guard, the thumb straight
- * along its left side, ahead (its root swung round the back of the grip, `thumbRoot`). The hand
- * is a rigid mesh: to wrap the grip with the fingers outside it, it lies a little across it, the
- * wrist behind its left, the forearm only some 14 degrees off it, on the bore's line from the
- * eye. A few vertices of the palm under the index knuckle sink up to 7 mm into the frame, out of
- * sight (`fpp-hands.test.ts`).
+ * A handgun (the pistol, the revolver) as the user chose it out of seven rounds (13.11: round 2,
+ * commit e17dc2e): the right hand round the grip, the wrist behind and right of it, the palm on
+ * the grip's right side, the fingers closing round its front, all alike; the left hand under the
+ * right fist, palm up and to the right, cupping it. The same from the hip and aimed in.
  */
-const HANDGUN_FORE = v(0.2, 0.15, 1);
-const RIGHT_ON_HANDGUN = grasp(v(-0.015, -0.0023, 0.013), HANDGUN_FORE, v(0.4243, 0.1345, 0.8955), v(-0.7858, -0.4367, 0.4379), 0.95, 0.05, 0.04, 0.47);
-/** The revolver's grip is longer and leans further back: the hand lower on it, the index along the frame beside the trigger guard, clear of the cylinder (G-770). */
-const RIGHT_ON_REVOLVER = grasp(v(-0.011, -0.0225, 0.0035), HANDGUN_FORE, v(0.431, 0.1341, 0.8923), v(-0.7447, -0.5055, 0.4357), 0.885, 0.045, 0, 0.36);
+const RIGHT_ON_HANDGUN = hand(v(0.034, -0.028, -0.075), v(-0.22, 0.16, 1), v(-0.12, 0.22, 1), v(-1, 0, -0.1), 0.85);
+const LEFT_UNDER_FIST = hand(v(-0.05, -0.085, -0.05), v(0.4, 0.25, 1), v(0.45, 0.35, 1), v(0.7, 0.7, 0), 0.6);
 
 /**
  * On the rifle's pistol grip the forearm comes in from the right, the elbow out beside the stock,
@@ -100,7 +93,7 @@ const RIGHT_ON_HANDLE = grasp(v(0, 0, 0), RIGHT_FORE_MELEE, across(v(0, 0, 1)), 
 const LEFT_FORE_MELEE = v(0.3, 0.3, 1);
 const LEFT_ON_POMMEL = grasp(HANDLE.scale(-0.1), LEFT_FORE_MELEE, across(LEFT_FORE_MELEE), v(1, 0, 0), 1, 1, 0.8);
 
-/** With a one-handed weapon (the baton, a handgun) the left hand hangs low, under the view (camera frame). */
+/** With the baton the left hand hangs low, under the view (camera frame). */
 const LEFT_DOWN = hand(v(-0.24, -0.46, 0.18), v(0.1, 0.25, 1), v(0.1, 0.1, 1), v(1, 0, 0), 0.4);
 
 /**
@@ -141,15 +134,16 @@ const intoCamera = (t: HandTarget, frame: { readonly position: Vector3; readonly
 
 /**
  * The hands with the weapon in the viewmodel, `turn` and `position` its frame in the camera's. A
- * handgun is held in the right hand alone (the user's wish of 13.11, round 7), from the hip and
- * aimed in: the left hangs down out of the view.
+ * handgun (and an empty hand, posed as the pistol) in the right fist with the left under it, from
+ * the hip and aimed in (`RIGHT_ON_HANDGUN`, `LEFT_UNDER_FIST`).
  */
 export const weaponHands = (look: WeaponLook | null, frame: { readonly position: Vector3; readonly turn: (d: Vector3) => Vector3 }): ArmsTarget => {
   const melee = look === "baton" || look === "blade";
   const fore = look && !melee ? leftOnForeEnd(look) : null;
-  const right = intoCamera(melee ? RIGHT_ON_HANDLE : look === "rifle" ? RIGHT_ON_RIFLE_GRIP : fore ? RIGHT_ON_GRIP : look === "revolver" ? RIGHT_ON_REVOLVER : RIGHT_ON_HANDGUN, frame);
+  const right = intoCamera(melee ? RIGHT_ON_HANDLE : look === "rifle" ? RIGHT_ON_RIFLE_GRIP : fore ? RIGHT_ON_GRIP : RIGHT_ON_HANDGUN, frame);
   if (look === "blade") return { right, left: intoCamera(LEFT_ON_POMMEL, frame) };
-  return { right, left: fore ? intoCamera(fore, frame) : LEFT_DOWN };
+  if (melee) return { right, left: LEFT_DOWN };
+  return { right, left: intoCamera(fore ?? LEFT_UNDER_FIST, frame) };
 };
 
 /** Forearm length of the procedural choke arms (`choke-arms.ts`), whose elbows the model's hands follow. */
