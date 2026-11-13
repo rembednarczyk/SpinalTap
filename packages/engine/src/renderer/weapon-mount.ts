@@ -138,7 +138,10 @@ export class WeaponMounts {
     if (!url) return null;
     let model: ModelInstance;
     try {
-      model = await this.library.instantiate({ url, preset: "importedProp", outline: true }, name);
+      // In FPP the inverted hull (`IMPORTED_OUTLINE_WIDTH` along the normals) stands off the gun
+      // half a metre from the eye by some 9 pixels, a dark shell round it, split at its hard edges,
+      // besides the ink lines on its own silhouette: there the line-art pass draws the one contour.
+      model = await this.library.instantiate({ url, preset: "importedProp", outline: space !== "view" }, name);
     } catch (err: unknown) {
       console.warn(`[weapons] ${url} failed to load`, err);
       return null;

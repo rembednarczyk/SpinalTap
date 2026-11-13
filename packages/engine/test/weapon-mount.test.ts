@@ -95,4 +95,16 @@ describe("WeaponMounts", () => {
     expect(scene.meshes.length).toBeGreaterThan(before);
     expect(new WeaponMounts(library).preload()).toEqual([]);
   });
+
+  it("draws one contour round the weapon in FPP: the ink lines, no inverted hull a few pixels off it; in a hand in TPP the hull stays", async () => {
+    const scene = new Scene(new NullEngine());
+    const mounts = new WeaponMounts(new ModelLibrary(scene, new ToonMaterials(scene)), allWeaponUrls());
+    for (const kind of ["pistol", "revolver", "rifle"] as const) {
+      const meshesOf = async (space: "hand" | "view") => (await mounts.mount(new TransformNode(space, scene), kind, `${kind}-${space}`, space))!.getChildMeshes(false).filter((m) => m.getTotalVertices() > 0);
+      const view = await meshesOf("view");
+      expect(view.length, kind).toBeGreaterThan(0);
+      expect(view.filter((m) => m.renderOutline).map((m) => m.name), `${kind} in FPP`).toEqual([]);
+      expect((await meshesOf("hand")).every((m) => m.renderOutline), `${kind} in a hand`).toBe(true);
+    }
+  });
 });
