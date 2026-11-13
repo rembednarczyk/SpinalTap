@@ -1807,12 +1807,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przegląd topografii 13.11 (6b0ebb7): ZGODNE Z UWAGAMI (T-287); zrzut Krakowskie (297; -226) do powtórzenia.
 - Ponowny zrzut (297; -226) na 6b0ebb7 potwierdza ciemny trójkąt: zgłoszony jako G-769, nie blokuje PR #519 (kurator).
 
-### G-765 roundJoints odrzuca bit klinu 3,5-10 st. (dwa obrysy po mm Clippera)
-- Ważność: S4 · Zasięg: złącza dróg pod kątem 3,5-10 st.; sonda losowa: 21/400 par
-- Opis: Bit round endu dzielący wspólną krawędź z pasem daje po unii 2 obrysy i jest odrzucany; po G-760 klin kryje osobna łata, więc pas nie ma okrągłego końca w jednym pierścieniu
-- Status: zgłoszone (13.11, naprawiacz G-760)
-- Pakiet właściciela: tools/osm-import
-
 ### G-766 Kawałki fills dotykające same siebie (ósemki) triangulowane z nadmiarem
 - Ważność: S4 · Zasięg: stare-miasto-1-0 (619,94; -232,85) 2,0/1,1 m²; na main m.in. trawa podzamcze-1-1 112,4/103,9 m², nabrzeze-0-0 24,5/20,9 m²
 - Opis: cutByPieces (bare-cover.ts) przepuszcza obrysy z powtórzonym wierzchołkiem (crossesItself łapie tylko przecięcia); triangulacja daje więcej niż pole; od G-764 czerwony grass-under-paving; naprawa w rundzie 2 G-764
@@ -1868,6 +1862,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, kurator, przegląd G-771)
 - Pakiet właściciela: tools/orto (classify.ts)
 - Test przyjęcia: narożnik Lubartowska/Noworybna i chodnik Królewskiej przy (608,-210) kostką; klucze 470,70 znikają
+
+### G-777 Szczeliny 10-30 cm między wstęgami różnych nawierzchni w złączach (gapFills łata tylko tę samą nawierzchnię)
+- Ważność: S4 · Zasięg: ok. 10 złączy, ok. 0,8 m²: 837,0;205,3 (chodnik/jezdnia), 949,1;230,7, 247,7;-201,0, 1014,2;450,8, 743,7;13,7 (chodnik/footway), 97,9;98,4 (jezdnia/trawa)
+- Opis: gapFills (line-buffer.ts) łata pęknięcia tylko między pasami tej samej nawierzchni, a kliny tylko szersze niż pęknięcie; wąska goła szczelina między chodnikiem a jezdnią lub footway w tarczy złącza zostaje; widać ciemny teren
+- Status: zgłoszone (13.11, naprawiacz G-765)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: brak gołych komórek 0,1 m między wstęgami w tarczy złącza w tych miejscach; ground-strip-gap nie rośnie
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

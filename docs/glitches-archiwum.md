@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-765 roundJoints odrzuca bit klinu 3,5-10 st. (dwa obrysy po mm Clippera)
+- Ważność: S4 · Zasięg: złącza dróg pod kątem 3,5-10 st.; sonda losowa: 21/400 par
+- Opis: Bit round endu dzielący wspólną krawędź z pasem daje po unii 2 obrysy i jest odrzucany; po G-760 klin kryje osobna łata, więc pas nie ma okrągłego końca w jednym pierścieniu
+- Status: naprawione (13.11, zamknięte bez zmian, fałszywy alarm co do skutku; resztki w G-776 scalony); wcześniej: fałszywy alarm co do skutku (13.11, naprawiacz): po G-760 klin kryje łata, bez skutku dla gracza i skanu; poprawka (bit +2 mm) pogarsza skan (marking-step +1, overlap +2) i daje +0,9 m² gołych komórek; wcześniej: zgłoszone (13.11, naprawiacz G-760)
+- Pakiet właściciela: tools/osm-import
+- Miasto: 74 odrzucenia / 66 bitów; w chunkach gry goło 3,0 m²: 2,2 m² koniec footway w nieutwardzone (856,5;304,6), ok. 0,8 m² szczelin między różnymi nawierzchniami (G-776); wariant ich nie zamyka. Sondy: scratchpad g765-*
+
 ### G-761 Trawniki w pierścieniu skweru na Podzamczu pod kostką ścieżki
 - Ważność: S4 · Zasięg: w804709919, w804709920 (1045, 424), 46 m²; podobnie zieleń pod footway w pętlach w1343050082 (58,-83) 19 m², w154012559 15 m², w515648305 10 m²
 - Opis: Pas footway pierścienia (szerokość domyślna) leży na półksiężycach trawnika widocznych na ortofoto; skwer traci rysunek. Proponowana kontrola skanu loop-paving-on-green (m² kostki na zieleni wewnątrz pętli ścieżek, baza 5 pętli).
