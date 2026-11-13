@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-767 Main czerwony: test venues „sign nearly all” ponad 20 s w CI po #510
+- Ważność: S2 · Zasięg: CI na main 4f42767 i wszystkie PR-y w osm-import (#514, #515)
+- Opis: czas testu rósł z kolejnymi zmianami mapy: etap 2 ADR-0078 (#509) +29% (dług ADR-0046), krok 1.2 ADR-0077 (#510) +9%; pod coverage w CI przekroczył limit 20 s
+- Status: naprawione (13.11, #517 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-venues-speed, 6fa4b7b): miasto dla testów w osobnym procesie bez pokrycia; z coverage 11–13,4 s → 3,9–6,2 s; wcześniej: w naprawie (13.11, gałąź ccr-ec2c4269-ilh8k8-venues-speed)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: test pod --coverage < 10 s lokalnie, wynik generowania bajt w bajt, bez podnoszenia limitu
+- Poboczne: kerbStrips i steps w bare-strips.ts startują BFS od wszystkich komórek jezdni i chodnika (także wnętrza bez wolnych sąsiadów) — do przyspieszenia osobno.
+
 ### G-763 Ganger stoi pod krawędzią dolnego mostu Mełgiewskiej (2449,4; 258,8) i (2454,6; 293,5) mimo przejść obok
 - Ważność: S3 · Zasięg: sonda G-741, ok. 6 z 30 punktów przy pomostach nabrzeze-0-1/0 i /1
 - Opis: krawędź pomostu 0,1-0,25 m nad gruntem: raster i walkable widzą przejście, bankNear/offTheBank zatrzymuje stopy; ganger stoi od kilku sekund pościgu bez fallbacku followDetour
