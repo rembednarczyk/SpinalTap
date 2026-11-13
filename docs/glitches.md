@@ -1847,6 +1847,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: brak dziury w fills przy (297; -226) (sonda 0,1 m), kontrola lawn-leafoff-patch lub fills-gap
 
+### G-770 Rewolwer: kciuk i palec wskazujący wchodzą w bryłę broni w FPP
+- Ważność: S4 · Zasięg: rewolwer w widoku FPP (ta sama poza co pistolet): kciuk do 9,8 mm, wskazujący do 10 mm w bryle; kłąb kciuka lewej dłoni (Thumb1) ok. 11 mm w chwycie pistoletu
+- Opis: poza RIGHT_ON_HANDGUN dobrana do szkieletu pistoletu; szerszy bęben rewolweru; test głębokości (mesh-depth.ts) obejmuje tylko pistolet i kości Thumb2/Thumb3
+- Status: zgłoszone (13.11, ręce FPP runda 6)
+- Pakiet właściciela: packages/engine (renderer/fpp-hand-poses.ts)
+- Test przyjęcia: test głębokości skóry dłoni w bryle broni ≤ 2 mm dla każdej broni krótkiej i wszystkich kości kciuka
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
