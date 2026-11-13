@@ -57,9 +57,12 @@ import { type CoverageRegister, hitsPerCell, registerProblems } from "../src/map
 import { type FoundKey, type KindDiff, accepted, describeKey, diffKind, fails, formatDiff, keysOf, pruned } from "../src/scan-keys.ts";
 import { baseKinds, dropKind, readKind, writeKind } from "../src/scan-base.ts";
 import { metroLineProtected } from "./metro-line";
+import { lanePieces, segmentPieces } from "./world-samples";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { bareOnCover } from "./bare-on-cover";
+import { fillOnGreen } from "./fill-on-green";
+import { generatedCity } from "../../osm-import/test/city.ts";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
@@ -85,8 +88,12 @@ import { deckSlots } from "./deck-slot";
 import { bridgeEndsInSlope } from "./bridge-end-slope";
 import { deckSteps } from "./deck-step";
 import { groundOverDeck } from "./ground-over-deck";
+import { seamGaps } from "./seam-gap";
+import { citySeamWorld } from "./seam-world";
 import { abutmentSteps } from "./deck-abutment";
 import { kerbSteps } from "./deck-kerb";
+import { walkBlocked } from "./walk-blocked";
+import { cityWalkWorld } from "./walk-world";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { churchFakeTowers, dataTops, towersOffNmpt } from "./church-towers";
 import { cityBricks, plasteredWalls } from "./wall-materials";
@@ -535,19 +542,19 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A car lane off every road surface (on grass, a square, a pavement), away from the map's edges.
    * Lane by lane, so a junction's join does not move the samples; the joins' arcs, straight on too,
-   * have `turn-off-road`.
+   * have `turn-off-road`. Sampled on the world's 3 m grid (`world-samples.ts`, G-756).
    */
   "car-lane-off-road": () =>
-    carLanes.flatMap((r) => along(r, 3).filter((p) => inMap(p.x, p.z) && !surfacesAt(p.x, p.z).some((s) => s === "road" || s === "crossing" || s === "cobble")).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
+    carLanes.flatMap((r) => lanePieces(r.points, 3).filter((p) => inMap(p.x, p.z) && !surfacesAt(p.x, p.z).some((s) => s === "road" || s === "crossing" || s === "cobble")).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
   /**
-   * A point of a lane (every use, every metre) with no paving under it at all, or where the
-   * ground the simulation walks (`GroundField`) and the map's `groundY` part by over 0.2 m: off
-   * the map, where the one takes the nearest chunk and the other 0 (G-138). The edges too, unlike
-   * `car-lane-off-road`.
+   * A point of a lane (every use, on the world's 1 m grid, `world-samples.ts`) with no paving
+   * under it at all, or where the ground the simulation walks (`GroundField`) and the map's
+   * `groundY` part by over 0.2 m: off the map, where the one takes the nearest chunk and the other
+   * 0 (G-138). The edges too, unlike `car-lane-off-road`.
    */
   "lane-off-ground": () =>
     TRAFFIC_LANES.flatMap((r) =>
-      along(r, 1)
+      lanePieces(r.points, 1)
         .filter((p) => surfacesAt(p.x, p.z).length === 0 || Math.abs(FIELD.heightAt(p.x, p.z) - groundY(p.x, p.z)) > 0.2)
         .map((p) => ({ at: near(p.x, p.z), what: `${r.id} at ${p.s.toFixed(0)}` })),
     ),
@@ -599,8 +606,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         );
       });
     }),
-  /** A lane through a building's solid (a delivery van too), its passages aside. */
-  "lane-in-building": () => TRAFFIC_ROUTES.flatMap((r) => along(r, 1).filter((p) => inBuilding(p.x, p.z) && !inPassage(p.x, p.z)).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
+  /** A lane through a building's solid (a delivery van too), its passages aside, on the world's 1 m grid (`world-samples.ts`). */
+  "lane-in-building": () => TRAFFIC_ROUTES.flatMap((r) => lanePieces(r.points, 1).filter((p) => inBuilding(p.x, p.z) && !inPassage(p.x, p.z)).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
   /**
    * A turn of a route (round before a block or at a dead end) or an arc from lane to lane at a
    * junction (ADR-0055, straight on too) with a point off every road surface or in a building,
@@ -1120,10 +1127,24 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       skip: (p) => p.x >= 728.5 && p.x <= 735.1 && p.z >= 157.5 && p.z <= 163.8,
     }),
   /**
+   * A pair of neighbouring cells (raster 0.25 m) of the walked surfaces between which a walker
+   * does not get either way (`walkStep`, ADR-0080): a ledge over 0.45 m up or 0.35 m down, a bank
+   * steeper than tg 35° off steps, along a way of the map whose axis is blocked there itself
+   * (`walk-axes.ts`). Not the edges the model means: walls, barriers, a deck's sides over lower
+   * ground, a way under a deck, T-147, Alchemia's terraces (`walk-blocked.ts`, `walk-world.ts`).
+   */
+  "walk-blocked": () => walkBlocked(MAP_CHUNKS, cityWalkWorld(extractFeatures(SOURCE_OSM).lines)),
+  /**
    * A point (every 0.25 m) under a bridge's piece where the ground the game walks is more than
    * 0.01 m over the deck (G-686): the terrain shows through the deck's paving as a grey patch.
    */
   "ground-over-deck": () => groundOverDeck([...BRIDGE_DECKS.values()].flat(), bridgeDeckAt, groundY),
+  /**
+   * A point (every 0.25 m on the world's grid) of a seam of two chunks where their terrain parts by
+   * more than 0.1 m (G-748, the curator's review of PR #502): a ledge or a slot in the ground. Not
+   * under a slab, a deck or a solid of a scene level with the higher side (the Arkady's pavement).
+   */
+  "seam-gap": () => seamGaps(MAP_CHUNKS, citySeamWorld()),
   /**
    * An end of a bridge's deck axis more than 0.5 m under the terrain within 2.5 m on past it along
    * the axis (G-739): the end lies down the bank of the valley, and the deck, level at its ends'
@@ -1856,7 +1877,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * more inside the chunks, off zebras) gone under the asphalt of the street it runs along (G-082):
    * the nearest carriageway within 15 m runs parallel to it (|cos| > 0.9), its axis is closer than
    * half the street's width from the map's tags, and the game's ground there is road with no
-   * sidewalk or footway on it. One finding per metre.
+   * sidewalk or footway on it. One finding per piece between the world's 1 m grid lines (`world-samples.ts`, G-756).
    */
   "sidewalk-under-carriageway": () => {
     const lines = extractFeatures(SOURCE_OSM).lines;
@@ -1885,9 +1906,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         const a = l.line[i]!;
         const len = Math.hypot(b.x - a.x, b.z - a.z);
         const out: Finding[] = [];
-        for (let s = 0.5; s < len; s += 1) {
-          const x = a.x + ((b.x - a.x) * s) / len;
-          const z = a.z + ((b.z - a.z) * s) / len;
+        for (const { x, z } of segmentPieces(a, b, 1)) {
           if (!deep(x, z)) continue;
           const surfaces = surfacesAt(x, z);
           if (surfaces.includes("crossing") || !surfaces.includes("road") || surfaces.includes("sidewalk") || surfaces.includes("footway")) continue;
@@ -1904,7 +1923,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * tunnels, 3 m and more inside the chunks) that the asphalt of the street it runs along covers
    * (G-655): the nearest carriageway within 15 m runs parallel to it (|cos| > 0.9), its axis is
    * closer than half the street's width from the map's tags, and the game's ground there is road
-   * and the footway's paving at once. One finding per metre.
+   * and the footway's paving at once. One finding per piece between the world's 1 m grid lines (`world-samples.ts`, G-756).
    */
   "footway-on-carriageway": () => footwaysOnCarriageway(),
   /** A metre of a fitted street's edge (T-046, G-655) with a metre and more of bare ground before the lawn or pavement past it (`kerb-strip-bare.ts`). */
@@ -1969,6 +1988,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "landuse-bare": () => landuseBare(cityLanduseWorld(SOURCE_OSM)),
   /** A `landuse-bare` sample the orthophoto's cover shows green or light paving: what the import lays a lawn or paving on (ADR-0077 step 1.1, `bare-on-cover.ts`). */
   "bare-on-cover": () => bareOnCover(landuseBare(cityLanduseWorld(SOURCE_OSM)), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A 0.5 m sample of the orthophoto's green under the paving the bare ground rule laid: a lawn taken for a square (ADR-0077 step 1.2, T-285, `fill-on-green.ts`). */
+  "fill-on-green": () => fillOnGreen(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => kerbGapBare(cityKerbWorld(SOURCE_OSM)),
   /** A point of a 0.25 m grid in a pavement no paving of the map explains, a metre wide and more, by a carriageway the map gives no width: its asphalt laid as a pavement (`kerb-fill.ts`, G-570). */
@@ -2123,8 +2144,7 @@ const footwaysOnCarriageway = (): Finding[] => {
       const a = l.line[i]!;
       const len = Math.hypot(b.x - a.x, b.z - a.z);
       const out: Finding[] = [];
-      for (let s = 0.5; s < len; s += 1) {
-        const [x, z] = [a.x + ((b.x - a.x) * s) / len, a.z + ((b.z - a.z) * s) / len];
+      for (const { x, z } of segmentPieces(a, b, 1)) {
         if (!deep(x, z)) continue;
         const surfaces = surfacesAt(x, z);
         if (surfaces.includes("crossing") || !surfaces.includes("road") || !(surfaces.includes("sidewalk") || surfaces.includes("footway"))) continue;

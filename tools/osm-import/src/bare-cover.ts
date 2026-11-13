@@ -19,9 +19,10 @@
  * resident (budget 1 million, `map-city.test.ts`). So the rule lays everything only in a town's
  * paved places, where bare ground is a glitch (`landuse-bare`, decision 5.11: the shops' and
  * markets' land, a shop's forecourt, a stop's platform), and elsewhere only the compact regions,
- * `FILL.looseWidth` wide on the average and more: a lawn or a yard, not a strip by a wall. Within
- * `FILL.kerbBand` of a carriageway a fill gives way behind bare ground on the kerb (`keepKerbs`):
- * the kerbs' strips are the next rule's (step 1.2), and a fill past one would make it a counted gap.
+ * `FILL.looseWidth` wide on the average and more: a lawn or a yard, not a strip by a wall; but a
+ * strip between a carriageway and the next piece past it is laid however narrow (step 1.2,
+ * `bare-strips.ts`). Within `FILL.kerbBand` of a carriageway a fill gives way behind bare ground on
+ * the kerb (`keepKerbs`, the asphalt the rule leaves): a fill past it would make it a counted gap.
  */
 import { FillRule, type Path64, difference, isPositive } from "clipper2-ts";
 import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
@@ -30,8 +31,9 @@ import { type Cover, coverFor } from "../../orto/src/cover.ts";
 import { Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch } from "./bare-cells.ts";
 import { dropLoose, joinSpecks, readCover } from "./bare-clean.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
+import { kerbStrips } from "./bare-strips.ts";
 import { contours } from "./contour.ts";
-import { type Area } from "./features.ts";
+import { type Area, type Line } from "./features.ts";
 import { type OsmData } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
 import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, signedArea, simplifyRing } from "./geometry.ts";
@@ -77,6 +79,8 @@ export const FILL = {
   zoneMargin: 3,
   /** How far off a carriageway a fill must reach it with nothing bare between (m): `kerb-strip-bare` looks 5 m past the kerb. */
   kerbBand: 5,
+  /** The widest strip between a carriageway and the next piece past it laid however narrow (m, step 1.2, `bare-strips.ts`): as far as `kerb-strip-bare` looks. */
+  kerbStrip: 5,
 } as const;
 
 /**
@@ -88,7 +92,10 @@ export const FILL_CLEARED: readonly Rect[] = [
   { minX: 2520, maxX: 2594, minZ: 452, maxZ: 500 },
 ];
 
-const LAID: readonly { readonly label: number; readonly surface: GroundSurface }[] = [
+/** The surfaces a kerb's strip between a carriageway and them is laid to (`kerbStrips`): what `kerb-gap-bare` and `kerb-strip-bare` count a strip to. */
+const STRIP_ENDS: ReadonlySet<GroundSurface> = new Set(["sidewalk", "footway", "square", "cobble", "steps", "crossing", "grass"]);
+
+const LAID: readonly [lawn: { readonly label: number; readonly surface: GroundSurface }, paving: { readonly label: number; readonly surface: GroundSurface }] = [
   { label: LABEL.grass, surface: "grass" },
   { label: LABEL.square, surface: "square" },
 ];
@@ -178,9 +185,10 @@ const drawnCells = (cells: Cells, tile: number, has: Uint8Array): [grass: Uint8A
 
 /**
  * The outlines of one label (`drawn` its cells, `drawnCells`) in a tile of cells, simplified, as the
- * chunk's ground; a hole splits the tile. `held`: the tile is known to hold the label.
+ * chunk's ground, less `over` (the other label's pieces of the tile); a hole splits the tile.
+ * `held`: the tile is known to hold the label.
  */
-const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: GroundSurface, i0: number, j0: number, i1: number, j1: number, held = false): GroundOut[] => {
+const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: GroundSurface, i0: number, j0: number, i1: number, j1: number, held = false, over: readonly (readonly Pt[])[] = []): GroundOut[] => {
   const { nx } = cells;
   let any = held;
   for (let j = j0; j < j1 && !any; j++) any = cells.label.subarray(j * nx + i0, j * nx + i1).includes(label);
@@ -202,14 +210,14 @@ const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: Gro
     const b = ringBounds(hole);
     if (i1 - i0 >= j1 - j0) {
       const c = Math.min(i1 - 1, Math.max(i0 + 1, Math.round(((b.minX + b.maxX) / 2 - cells.rect.minX) / STEP - 0.5)));
-      return [...tilePieces(cells, label, drawn, surface, i0, j0, c, j1), ...tilePieces(cells, label, drawn, surface, c, j0, i1, j1)];
+      return [...tilePieces(cells, label, drawn, surface, i0, j0, c, j1, false, over), ...tilePieces(cells, label, drawn, surface, c, j0, i1, j1, false, over)];
     }
     const r = Math.min(j1 - 1, Math.max(j0 + 1, Math.round(((b.minZ + b.maxZ) / 2 - cells.rect.minZ) / STEP - 0.5)));
-    return [...tilePieces(cells, label, drawn, surface, i0, j0, i1, r), ...tilePieces(cells, label, drawn, surface, i0, r, i1, j1)];
+    return [...tilePieces(cells, label, drawn, surface, i0, j0, i1, r, false, over), ...tilePieces(cells, label, drawn, surface, i0, r, i1, j1, false, over)];
   }
   const simple = rings.filter((r) => signedArea(r) >= FILL.minArea).map((r) => simplifyRing(r, FILL.simplify));
   const tile = { minX: cells.rect.minX + i0 * STEP - 1, minZ: cells.rect.minZ + j0 * STEP - 1, maxX: cells.rect.minX + i1 * STEP + 1, maxZ: cells.rect.minZ + j1 * STEP + 1 };
-  return cutByPieces(simple, cells.coversNear(tile).map((c) => c.ring))
+  return cutByPieces(simple, cells.coversNear(tile).map((c) => c.ring), over)
     .filter((r) => r.length >= 3 && signedArea(r) >= FILL.minArea)
     .map((r) => ({ surface, outline: r.flatMap((p) => [p.x, p.z]) }));
 };
@@ -223,11 +231,14 @@ const CLIP_SCALE = 100;
  * under 0.5 m² inside a fill) is not cut: the fill runs under it.
  */
 const toPath = (r: readonly Pt[]): Path64 => r.map((p) => ({ x: Math.round(p.x * CLIP_SCALE), y: Math.round(p.z * CLIP_SCALE) }));
-/** The pieces' paths, made once a piece however many tiles it meets. */
+/**
+ * The pieces' paths, made once a piece however many tiles it meets, counter-clockwise: a clockwise
+ * one over another would cancel its winding (`NonZero`), and the fill would run on under both.
+ */
 const PATHS = new WeakMap<readonly Pt[], Path64>();
 const pathOf = (r: readonly Pt[]): Path64 => {
   let p = PATHS.get(r);
-  if (!p) PATHS.set(r, (p = toPath(r)));
+  if (!p) PATHS.set(r, (p = toPath(signedArea(r) < 0 ? [...r].reverse() : r)));
   return p;
 };
 
@@ -259,8 +270,8 @@ const crossesItself = (ring: readonly Pt[]): boolean => {
   return false;
 };
 
-const cutByPieces = (fills: readonly (readonly Pt[])[], pieces: readonly (readonly Pt[])[]): Pt[][] => {
-  const cut = pieces.length > 0 ? difference(fills.map(toPath), pieces.map(pathOf), FillRule.NonZero) : fills.map(toPath);
+const cutByPieces = (fills: readonly (readonly Pt[])[], pieces: readonly (readonly Pt[])[], over: readonly (readonly Pt[])[] = []): Pt[][] => {
+  const cut = pieces.length + over.length > 0 ? difference(fills.map(toPath), [...pieces.map(pathOf), ...over.map(toPath)], FillRule.NonZero) : fills.map(toPath);
   // A sliver the cut leaves crossing itself is dropped: it would draw no ground the scan agrees with.
   return cut
     .filter((p) => isPositive(p))
@@ -284,11 +295,30 @@ const NO_PLACES: TownPlaces = { areas: [], stops: [], shops: [] };
 const PAVED_LANDUSE: ReadonlySet<string> = new Set(["retail", "commercial"]);
 const PAVED_AMENITY: ReadonlySet<string> = new Set(["marketplace", "bus_station"]);
 
-/** The map's areas and stops of a town's paved places (`TownPlaces`, the shops come a chunk at a time). */
-export const townPlaces = (data: OsmData, areas: readonly Area[]): Omit<TownPlaces, "shops"> => ({
-  areas: areas
-    .filter((a) => PAVED_LANDUSE.has(a.tags.landuse ?? "") || PAVED_AMENITY.has(a.tags.amenity ?? "") || a.tags.public_transport === "platform" || a.tags.public_transport === "station")
-    .map((a) => a.ring),
+/** The paths a loop of which is laid whole inside (`pathLoops`). */
+const LOOP_PATHS: ReadonlySet<string> = new Set(["footway", "path", "cycleway", "pedestrian"]);
+
+/**
+ * The outlines of the map's paths closed on themselves, on the ground (a footway round a lawn, a
+ * plaza's ring): what they enclose is laid whole, as in a town's paved place. Until ADR-0078's
+ * step 2 the band of such a loop crossed itself and the renderer drew it over the ground inside
+ * too; laid right, the narrow strips between the loops' bands (Podzamcze, (1046; 424)) would
+ * otherwise stay bare under the compact regions' rule.
+ */
+export const pathLoops = (lines: readonly Line[]): Pt[][] =>
+  lines
+    .filter(({ tags: t }) => LOOP_PATHS.has(t.highway ?? "") && t.area !== "yes" && t.tunnel === undefined && (t.bridge ?? "no") === "no" && Number(t.layer ?? 0) >= 0)
+    .filter(({ line: l }) => l.length >= 4 && l[0]!.x === l[l.length - 1]!.x && l[0]!.z === l[l.length - 1]!.z)
+    .map((l) => [...l.line]);
+
+/** The map's areas and stops of a town's paved places (`TownPlaces`, the shops come a chunk at a time), and the paths' loops (`pathLoops`). */
+export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonly (readonly Pt[])[] = []): Omit<TownPlaces, "shops"> => ({
+  areas: [
+    ...areas
+      .filter((a) => PAVED_LANDUSE.has(a.tags.landuse ?? "") || PAVED_AMENITY.has(a.tags.amenity ?? "") || a.tags.public_transport === "platform" || a.tags.public_transport === "station")
+      .map((a) => a.ring),
+    ...loops,
+  ],
   stops: [...data.nodes.values()]
     .filter((n) => n.tags?.highway === "bus_stop" || n.tags?.railway === "tram_stop" || n.tags?.public_transport === "platform")
     .sort((a, b) => a.id - b.id)
@@ -313,7 +343,7 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
     { x: r.maxX, z: r.maxZ },
     { x: r.minX, z: r.maxZ },
   ];
-  ground.forEach((g, i) => cells.cover(ringOf(g.outline), g.surface === "road" ? i + 1 : 0));
+  ground.forEach((g, i) => cells.cover(ringOf(g.outline), g.surface === "road" ? i + 1 : 0, STRIP_ENDS.has(g.surface)));
   for (const w of walls) cells.cover(w);
   for (const g of ground) if (g.bridge) cells.block(ringOf(g.outline), FILL.bridge);
   for (const r of FILL_CLEARED) if (rectsOverlap(r, rect)) cells.cover(boxOf(r));
@@ -323,18 +353,25 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
   cells.growZone(FILL.zoneMargin);
   readCover(cells, cover, FILL.around);
   joinSpecks(cells, FILL.speck);
+  kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
   dropLoose(cells, FILL.looseWidth, FILL.looseArea);
   keepKerbs(cells, FILL.kerbBand);
   const n = Math.round(FILL.tile / STEP);
   const out: GroundOut[] = [];
   const has = new Uint8Array(Math.ceil(cells.nx / n) * Math.ceil(cells.nz / n));
   const drawn = drawnCells(cells, n, has);
-  LAID.forEach(({ label, surface }, d) => {
-    for (let j0 = 0, t = 0; j0 < cells.nz; j0 += n)
-      for (let i0 = 0; i0 < cells.nx; i0 += n, t++)
-        if (has[t]! & BIT[label]!) out.push(...tilePieces(cells, label, drawn[d]!, surface, i0, j0, Math.min(cells.nx, i0 + n), Math.min(cells.nz, j0 + n), true));
-  });
-  return out;
+  const [lawn, paving] = LAID;
+  const lawns: GroundOut[] = [];
+  // Paving first, a tile at a time, and the tile's lawns less it: the two simplified apart would
+  // overlap and part along their border by up to `FILL.simplify` (`ground-strip-overlap`).
+  for (let j0 = 0, t = 0; j0 < cells.nz; j0 += n)
+    for (let i0 = 0; i0 < cells.nx; i0 += n, t++) {
+      const [i1, j1] = [Math.min(cells.nx, i0 + n), Math.min(cells.nz, j0 + n)];
+      const laid = has[t]! & BIT[paving.label]! ? tilePieces(cells, paving.label, drawn[1], paving.surface, i0, j0, i1, j1, true) : [];
+      out.push(...laid);
+      if (has[t]! & BIT[lawn.label]!) lawns.push(...tilePieces(cells, lawn.label, drawn[0], lawn.surface, i0, j0, i1, j1, true, laid.map((g) => ringOf(g.outline))));
+    }
+  return [...lawns, ...out];
 };
 
 /** What a chunk's fills are laid from: its rect, its pieces and the shops and public buildings among its buildings. */

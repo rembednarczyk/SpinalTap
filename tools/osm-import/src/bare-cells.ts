@@ -12,8 +12,11 @@ export const STEP = 0.5;
 /** Side of the cells of the grid the covering rings are found by (m): a tile of fills (36 m) meets some 16 of them. */
 const COVER_CELL = 12;
 
-/** Labels of a cell: what the rule lays there (`COVERED`: a piece or a wall is there; `BLOCKED`: by a bridge, left bare). */
-export const LABEL = { covered: 0, grass: 1, square: 2, other: 3, mixed: 4, blocked: 5 } as const;
+/**
+ * Labels of a cell: what the rule lays there (`COVERED`: a piece or a wall is there; `BLOCKED`: by a
+ * bridge, left bare; `MIXED` shade and `CROWN` crowns, until the cells round them say what they are).
+ */
+export const LABEL = { covered: 0, grass: 1, square: 2, other: 3, mixed: 4, blocked: 5, crown: 6 } as const;
 export const taken = (label: number): boolean => label === LABEL.covered || label === LABEL.blocked;
 
 /**
@@ -45,6 +48,8 @@ export class Cells {
   readonly zone: Uint8Array;
   /** Under a carriageway or a car park (a `road` piece): its number from 1, 0 off them. */
   readonly road: Int32Array;
+  /** 1 under a piece a kerb's strip ends at (a pavement, a lawn: `bare-strips.ts`). */
+  readonly side: Uint8Array;
   /** The rings that cover cells, with their boxes, by the cells of a grid (broad phase of `coversNear`). */
   /** Runs of cells the last `scan` found: from and past the last, a pair a run. */
   private runs = new Int32Array(256);
@@ -59,6 +64,7 @@ export class Cells {
     this.label = scratch.u8("cells.label", this.nx * this.nz, LABEL.other);
     this.zone = scratch.u8("cells.zone", this.nx * this.nz);
     this.road = scratch.i32("cells.road", this.nx * this.nz);
+    this.side = scratch.u8("cells.side", this.nx * this.nz);
   }
   at(i: number, j: number): Pt {
     return { x: this.rect.minX + (i + 0.5) * STEP, z: this.rect.minZ + (j + 0.5) * STEP };
@@ -67,15 +73,16 @@ export class Cells {
     return i >= 0 && j >= 0 && i < this.nx && j < this.nz;
   }
   /**
-   * Marks the cells whose centres lie in the ring covered (carriageway number `road`, from 1) and
-   * keeps the ring, so the fills can be cut by it (`coversNear`).
+   * Marks the cells whose centres lie in the ring covered (carriageway number `road`, from 1; a
+   * kerb's strip ends at it: `side`) and keeps the ring, so the fills can be cut by it (`coversNear`).
    */
-  cover(ring: readonly Pt[], road = 0): void {
+  cover(ring: readonly Pt[], road = 0, side = false): void {
     const runs = this.scan(ring);
     const r = this.runs;
     for (let k = 0; k < runs; k++) {
       this.label.fill(LABEL.covered, r[2 * k]!, r[2 * k + 1]!);
       if (road) this.road.fill(road, r[2 * k]!, r[2 * k + 1]!);
+      if (side) this.side.fill(1, r[2 * k]!, r[2 * k + 1]!);
     }
     let [minX, minZ, maxX, maxZ] = [Infinity, Infinity, -Infinity, -Infinity];
     for (const p of ring) {

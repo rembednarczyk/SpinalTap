@@ -1,4 +1,5 @@
 import type { Line } from "../../osm-import/src/features.ts";
+import { segmentPieces } from "./world-samples";
 
 /**
  * Bare ground along the kerb of a street fitted to its sidewalks (`kerb-strip-bare`, G-655, from
@@ -7,7 +8,9 @@ import type { Line } from "../../osm-import/src/features.ts";
  * footway, setts, a square, steps). The streets are those the import fits (T-046, G-655), read
  * off the map alone: no `width` or `width:carriageway`, and a mapped sidewalk (`footway=sidewalk`)
  * or, on a side the street tags `separate`, a plain footway running beside it (parallel, its axis
- * on the asphalt by the tags' width) over `MIN_BESIDE` samples 1 m apart and more. Both edges of
+ * on the asphalt by the tags' width) along `MIN_BESIDE` metres and more. The samples are the
+ * middles of the street's pieces between the world's 1 m grid lines (`world-samples.ts`, G-756),
+ * not every metre from a segment's start, which moved them all when its end moved. Both edges of
  * such a street count, all along it: a fit moves either. The asphalt and what lies past it are
  * the game's ground; a wall in the way ends the look.
  */
@@ -21,7 +24,7 @@ export const STRIP_BARE = 1;
 const LOOK = 5;
 /** The step of the look across (m). */
 const STEP = 0.05;
-/** The fewest samples with a sidewalk beside that make a street one the import fits. */
+/** The fewest metres of samples with a sidewalk beside that make a street one the import fits. */
 const MIN_BESIDE = 10;
 /** The surfaces past the kerb that end a strip: what lies along a street. */
 const OUTER = new Set(["grass", "sidewalk", "footway", "cobble", "square", "steps", "crossing"]);
@@ -80,8 +83,8 @@ export const kerbStripBare = (w: StripWorld): Finding[] => {
       const len = Math.hypot(b.x - a.x, b.z - a.z);
       if (len < 1e-3) continue;
       const [tx, tz] = [(b.x - a.x) / len, (b.z - a.z) / len];
-      for (let s = 0.5; s < len; s += 1) {
-        const p = { x: a.x + tx * s, z: a.z + tz * s };
+      for (const piece of segmentPieces(a, b, 1)) {
+        const p = { x: piece.x, z: piece.z };
         samples.push({ p, nx: -tz, nz: tx });
         const near = footways(p).some((q) => {
           const [dx, dz] = [q.b.x - q.a.x, q.b.z - q.a.z];
@@ -92,7 +95,7 @@ export const kerbStripBare = (w: StripWorld): Finding[] => {
           const across = (q.a.x + dx * k - p.x) * -tz + (q.a.z + dz * k - p.z) * tx;
           return Math.abs(across) < half && (!q.plain || separate(t, across >= 0 ? 0 : 1));
         });
-        if (near) beside++;
+        if (near) beside += piece.len;
       }
     }
     if (beside < MIN_BESIDE) continue;

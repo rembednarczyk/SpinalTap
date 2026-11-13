@@ -34,13 +34,14 @@ const CASES: Readonly<Record<string, () => MeshSink>> = {
 };
 /** What cutting each triangle of the sink in turn gave, before the boxes skipped any (G-333). */
 const CUT_BEFORE: Readonly<Record<string, string>> = {
-  "krakowskie-2-0": "6 408ae390",
+  "krakowskie-2-0": "6 7608df62",
   // Its terrain levelled at the ends of Zamkowa's deck over the tunnel (G-088), cut as before G-333;
   // the market's levelled square on Aleja Tysiąclecia gone (ADR-0063): the same cuts, its own ground.
   // Zamkowa's causeway 6.5 m wide instead of 8 (G-428): the same cuts, its terrain shaped to the band.
   // The terrain kept under the viaduct's north-east end (G-736): the same cuts, its points lower.
   // The abutment ramps at the ends of the decks' pieces with the bridge's sidewalk on its carriageway (G-737): the same cuts.
-  "podzamcze-1-0": "12 492a8a61",
+  // Its points on the seam x = 720 on podzamcze-0-0's 5 m grid (G-748): the same cuts, up to 0.1 m lower or higher there.
+  "podzamcze-1-0": "12 e5265875",
   "nabrzeze-1-1": "6 bd68b5c7",
   "stare-miasto-0-0": "0 58512eb9",
   "krakowskie-0-0": "0 0825c6ea",
