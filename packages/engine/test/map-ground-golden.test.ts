@@ -96,8 +96,10 @@ describe("the ground the map city lays (G-444)", () => {
     // 1.1), so two cells without a piece of ground before have one now. The laying moved it once:
     // steps at the map's edge read the ground on its side (G-703), and here, with only these four
     // chunks, the flight at (20; 9) on krakowskie-1-1's west side has no terrain past it. The
-    // colours moved it alone: the paving's from the orthophoto (G-721), no vertex moved.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 142538, hash: "c93c98f2" });
+    // colours moved it alone: the paving's from the orthophoto (G-721), no vertex moved. The map's
+    // data moved it again: the bands along lines buffered with round joins and ends (ADR-0078 step 2),
+    // 142 538 vertices before, the arcs a few more.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 151582, hash: "5b67df37" });
     scene.dispose();
   });
 

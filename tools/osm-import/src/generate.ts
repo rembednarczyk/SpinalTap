@@ -21,12 +21,13 @@ import { withoutReplaced } from "./corrections-alchemia.ts";
 import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
-import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, lineBands, markedCrossing, openPavings, roadWidth } from "./ground.ts";
+import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, groundJoints, lineBands, markedCrossing, openPavings, roadWidth } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { FILL_MARGIN, kerbFills, stretchZebras } from "./kerb-fill.ts";
 import { type KerbSample, fitLanes, taperedJoins } from "./lane-fit.ts";
+import { roundJoints } from "./line-buffer.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
@@ -387,13 +388,17 @@ export const generate = (
   // bank under the bridge. Its band only: the street, its markings and lanes end where the map has them.
   // So is a street's stretch over a tunnel it dips over (G-088): a deck, as on a bridge.
   const tunnelWays = tunnelLines(lines);
+  const laidLines: { piece: Line; mapped: boolean; atStreet: boolean }[] = [];
   for (const [k, l] of toAbutments(lines, areas).entries()) {
     if (!nearGround(l.line)) continue;
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
     const mapped = l.tags.highway ? sidewalks.along(mapLines[k]!) : false;
-    for (const c of carriageway(l))
-      for (const piece of overTunnels(c, tunnelWays, src)) for (const b of lineBands(piece, mapped, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
+    for (const c of carriageway(l)) for (const piece of overTunnels(c, tunnelWays, src)) laidLines.push({ piece, mapped, atStreet: atStreet.has(l.osmId) });
   }
+  // A band's end is round where its way meets another on the ground, as far as nothing else covers it: the corner square ends left bare (ADR-0078, G-658).
+  const joined = groundJoints(laidLines);
+  for (const { piece, mapped, atStreet: at } of laidLines) for (const b of lineBands(piece, mapped, water, at, joined)) bands.push({ ...b, box: ringBounds(b.ring) });
+  bands.splice(0, bands.length, ...roundJoints(bands).map((b, i) => (b === bands[i] ? b : { ...b, box: ringBounds(b.ring) })));
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.flatMap(carriageway).filter((l) => l.tags.highway !== undefined && near(l.line));
   // A crossing node a mapped crossing way runs through is striped by that way already.
