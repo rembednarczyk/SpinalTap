@@ -57,6 +57,13 @@ describe("the carriageway's reach each side of a street's axis (ADR-0080)", () =
     expect(streetHalves([road(piece, 3)])("w1", axis)).toEqual([3, 3, 3, 3, 0, 0]);
   });
 
+  it("reads no joint's gap patch as carriageway (G-760), even one keeping its band's kerb and widening", () => {
+    const own = road(axis, 3);
+    const patch = road(axis.map((p) => ({ x: p.x, z: p.z + 1 })), 3, { patch: true, widen: widened(0, 40) });
+    expect(streetHalves([own, patch])("w1", axis)).toEqual(streetHalves([own])("w1", axis));
+    expect(streetHalves([patch])("w1", axis)).toBeUndefined();
+  });
+
   it("does not move when the asphalt's drawn edge does: the ring is not read", () => {
     const ring = [
       { x: 0, z: -3 },

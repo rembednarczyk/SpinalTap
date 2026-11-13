@@ -107,7 +107,8 @@ export type StreetHalves = (way: string, line: readonly Pt[]) => number[] | unde
 export const streetHalves = (bands: readonly Band[]): StreetHalves => {
   const byWay = new Map<string, Map<readonly Pt[], { half: number; widen: Map<string, Sample[]> }>>();
   for (const b of bands) {
-    if (!b.carriageway || !b.kerb) continue;
+    // A joint's gap patch (G-760) laps over the next street: no carriageway's, whatever it was cut from.
+    if (!b.carriageway || !b.kerb || b.patch) continue;
     const pieces = byWay.get(b.source) ?? new Map();
     byWay.set(b.source, pieces);
     // A buffer of several rings is several bands of one piece: their widenings are the piece's.
