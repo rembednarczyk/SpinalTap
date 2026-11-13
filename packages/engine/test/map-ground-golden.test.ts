@@ -98,7 +98,9 @@ describe("the ground the map city lays (G-444)", () => {
     // chunks, the flight at (20; 9) on krakowskie-1-1's west side has no terrain past it. The
     // colours moved it alone: the paving's and the sidewalks' from the orthophoto (G-721, G-734), no vertex moved.
     // Two footbridges' decks run on to the top of their banks (G-739): 20 vertices more, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 142558, hash: "833d9557" });
+    // The kerbs' strips laid from the cover, lawns under the crowns and the specks of green (ADR-0077
+    // step 1.2): 142 558 -> 158 455 vertices, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 158455, hash: "5a7b8b2f" });
     scene.dispose();
   });
 

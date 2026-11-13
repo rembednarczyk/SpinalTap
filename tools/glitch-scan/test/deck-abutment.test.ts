@@ -21,9 +21,9 @@ const scan = (fall: number, paved = (x: number) => x < 0, under = 0) =>
 describe("steps at a bridge's abutments (G-349)", () => {
   it("finds the deck's end over a street falling across it more than 0.25 m, every 0.5 m", () => {
     const found = scan(0.1);
-    // The west end from z 0 to 4: the ground under the deck by more than 0.25 m from z 2.5 on (2.5, 3, 3.5, 4).
-    expect(found.map((f) => f.at)).toEqual(["0.0,4.0", "0.0,3.5", "0.0,3.0"]);
-    expect(found[0]).toEqual({ at: "0.0,4.0", what: "deck 0.00 by the ground at -0.40 0.3 m beyond" });
+    // The west end from z 0 to 4, sampled at the middles of its 0.5 m pieces: the ground under the deck by more than 0.25 m from z 2.5 on (2.75, 3.25, 3.75).
+    expect(found.map((f) => f.at)).toEqual(["0.0,3.8", "0.0,3.3", "0.0,2.8"]);
+    expect(found[0]).toEqual({ at: "0.0,3.8", what: "deck 0.00 by the ground at -0.38 0.3 m beyond" });
   });
 
   it("finds nothing at a kerb, off the streets, or over a way under the bridge", () => {

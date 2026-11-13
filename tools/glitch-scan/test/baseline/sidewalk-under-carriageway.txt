@@ -1,7 +1,6 @@
 # sidewalk-under-carriageway: grid 10 m (x,z = the square's corner at its least x and z)
 krakowskie-1-1 210,130
 krakowskie-2-0 320,-240
-krakowskie-2-0 320,-230
 krakowskie-2-0 320,-50
 krakowskie-2-0 330,-50
 krakowskie-2-0 340,-50
