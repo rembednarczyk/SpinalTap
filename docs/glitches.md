@@ -1790,6 +1790,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: `walk-blocked` bez kluczy przy 380,-20; teren ulicy w ±0,1 m od NMT
 - 13.11: walk-blocked 1,19 przy 380,-20 to był artefakt błędu pamięci skanu (fix c17fcb5 w #497); po poprawce brak zablokowanych par, zostaje odstępstwo terenu ulicy od NMT o 1,31 m (topografia, nie przejście)
 - 13.11 f395319: pad T-051 x 388..422, z -41..-27; Bajkowskiego i przejścia ≤0,1 m od NMT; pad-on-road krakowskie 7→1, seam-gap 1→0; złote hashe determinism, reinforcement-sidestep i ground-cut krakowskie-2-0 zmienione świadomie (treść)
+- 13.11 kurator: ZGODNE Z UWAGAMI; krawędź padu z −25 ≤0,18 m, z −45 = NMT, meble i auto na gruncie; T-003 zaktualizowane
 
 ### G-755 Droga pieszo-rowerowa w179264855 w grze za stroma (0,8–0,92) przy (667–682; 134–141)
 - Ważność: S3 · Zasięg: zejście ze Starego Miasta na Podzamcze; ok. 1 440 par `walk-blocked` (kwadraty 670,130 i 670,140)
