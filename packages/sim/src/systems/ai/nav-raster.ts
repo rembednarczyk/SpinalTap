@@ -1,6 +1,6 @@
 import { type GroundField, MAX_WALK_SLOPE } from "../../world/ground";
 import { type Collider, closestXZ, colliderTop, overCollider } from "../../world/solids";
-import { SNAP_DOWN, STEP_HEIGHT } from "../movement-system";
+import { SNAP_DOWN, STEP_HEIGHT, offTheBank } from "../movement-system";
 
 /*
  * The raster of a window of the steering (ADR-0025): which 0.5 m cells a body stands in, made from
@@ -46,6 +46,8 @@ export interface Raster {
   readonly flight: Uint8Array | null;
   /** With `base`, `ON_LEDGE` where a cell tops the edge of a bridge's deck with no room under it (`ledgesOf`), else 0; null when none is in the window. */
   readonly ledges: Uint8Array | null;
+  /** With `base`, where the way from a cell to a straight neighbour goes up a wall (`wallsAt`, G-740, bits `WALL_TO`); null off the ground floor. */
+  readonly walls: Uint8Array | null;
   /** The ground it was made on: the walk's first steps are checked on it, as the movement has them (G-738). */
   readonly ground: GroundField;
 }
@@ -151,7 +153,7 @@ function* ledgesOf(base: Float64Array, ground: GroundField, x0: number, z0: numb
  * is a wall on one line, which the slope at the cells' middles, either side of it, does not see.
  * The edges of a bridge's deck keep the headroom rule (G-062).
  */
-function* closeBanks(open: Uint8Array, base: Float64Array, flight: Uint8Array | null, ground: GroundField, x0: number, z0: number, reach: number, cells: number): Slices<void> {
+function* closeBanks(open: Uint8Array, walls: Uint8Array, base: Float64Array, flight: Uint8Array | null, ground: GroundField, x0: number, z0: number, reach: number, cells: number): Slices<void> {
   // A cheap test on the cell grid first (half the limit, over two cells, edges one-sided);
   // the movement system's own slope decides the rest.
   const rough = 0.5 * MAX_WALK_SLOPE * NAV_CELL;
@@ -162,6 +164,7 @@ function* closeBanks(open: Uint8Array, base: Float64Array, flight: Uint8Array | 
   const wall = (ix: number, iz: number, h: number, limit: number, own: boolean) => (own || flight?.[index(ix, iz)] === ON_FLIGHT) && at(ix, iz) - h > limit;
   for (let iz = 0; iz < cells; iz++) {
     for (let ix = 0; ix < cells; ix++) {
+      wallsAt(walls, base, flight, ground, x0, z0, ix, iz, cells, rough);
       const h = at(ix, iz);
       const own = flight?.[iz * cells + ix] === ON_FLIGHT;
       // Away from the flights (almost all the window) nothing to look at.
@@ -179,6 +182,70 @@ function* closeBanks(open: Uint8Array, base: Float64Array, flight: Uint8Array | 
     yield cells;
   }
 }
+
+/** Bits of `Raster.walls`: the way from the cell to its neighbour in +x, -x, +z, -z goes up a wall. */
+const WALL_TO = { east: 1, west: 2, north: 4, south: 8 } as const;
+
+/**
+ * Does the way from cell `from` to its straight neighbour `to` go up a wall (`Raster.walls`)?
+ */
+export const walled = (r: Pick<Raster, "walls">, from: number, to: number, cells: number): boolean => {
+  const d = to - from;
+  const bit = d === 1 ? WALL_TO.east : d === -1 ? WALL_TO.west : d === cells ? WALL_TO.north : WALL_TO.south;
+  return ((r.walls?.[from] ?? 0) & bit) !== 0;
+};
+
+/**
+ * Where the way from cell (`ix`, `iz`) of the ground floor to its neighbour in +x or +z, or back,
+ * goes up a wall: the feet on the lower one's middle, more than a little lower (`rough`), do not
+ * get to the higher one's by the movement's own rule (`stepsAcross`). A wall sheer to its foot, of
+ * the terrain or of a low deck, is steep only on a strip narrower than a cell, which the slope at
+ * the cells' middles either side of it does not show: by the deck's edge over the abutment's ramp
+ * of Mełgiewska's lower bridge (G-740) the walk took the way up it, and the feet stayed at its
+ * foot. Not by a flight, which has its own rule (`closeBanks`, `passable`).
+ */
+const wallsAt = (walls: Uint8Array, base: Float64Array, flight: Uint8Array | null, ground: GroundField, x0: number, z0: number, ix: number, iz: number, cells: number, rough: number): void => {
+  const c = iz * cells + ix;
+  const h = base[c] ?? 0;
+  for (const [dx, dz, up, down] of [
+    [1, 0, WALL_TO.east, WALL_TO.west],
+    [0, 1, WALL_TO.north, WALL_TO.south],
+  ] as const) {
+    if (ix + dx >= cells || iz + dz >= cells) continue;
+    const n = c + dx + dz * cells;
+    const hn = base[n] ?? 0;
+    if (Math.abs(hn - h) <= rough || (flight?.[c] ?? 0) > 0 || (flight?.[n] ?? 0) > 0) continue;
+    const [x, z] = [centre(ix, x0), centre(iz, z0)];
+    const [dir, bit, cell] = hn > h ? [1, up, c] : [-1, down, n];
+    const from = { x: x + (dir < 0 ? dx * NAV_CELL : 0), y: Math.min(h, hn), z: z + (dir < 0 ? dz * NAV_CELL : 0) };
+    if (!stepsAcross(ground, from, dir * dx, dir * dz)) walls[cell] = (walls[cell] ?? 0) | bit;
+  }
+};
+
+/** A step of the movement walked across (m): about a ganger's run in a step of 60 Hz. */
+const STEP = 0.06;
+
+/**
+ * Do the feet at `from` get a cell further along (`dx`, `dz`) by the movement's own rule
+ * (`offTheBank`), within a few centimetres? A slide along the bank off the way does not count.
+ * With no bank a quarter, a half and three quarters of the way they do: the movement's slope is
+ * measured over half a metre, so a sheer edge between the middles is steep at one of them.
+ */
+const stepsAcross = (ground: GroundField, from: { x: number; y: number; z: number }, dx: number, dz: number): boolean => {
+  let bank = false;
+  for (let t = 0.25; t < 1 && !bank; t += 0.25) bank = ground.steepAt(from.x + dx * t * NAV_CELL, from.z + dz * t * NAV_CELL, from.y + STEP_HEIGHT);
+  if (!bank) return true;
+  const steps = Math.ceil(NAV_CELL / STEP);
+  let at = from;
+  for (let i = 1; i <= steps; i++) {
+    const to = offTheBank(ground, at, at.x + dx * STEP, at.z + dz * STEP, at.y);
+    const h = ground.heightAt(to.x, to.z, at.y + STEP_HEIGHT);
+    at = { x: to.x, y: h > at.y || at.y - h <= SNAP_DOWN ? h : at.y, z: to.z };
+    // Too little got on so far to make it with the steps left.
+    if ((at.x - from.x) * dx + (at.z - from.z) * dz + (steps - i) * STEP <= NAV_CELL - 2 * STEP) return false;
+  }
+  return true;
+};
 
 const near = { x: 0, z: 0 };
 
@@ -268,11 +335,12 @@ export function* rasterise(solids: readonly Collider[], floor: number, reach: nu
   const base = yield* terrainOf(ground, x0, z0, reach, cells);
   const flight = base && floor === 0 ? yield* flightsOf(ground, x0, z0, cells) : null;
   const ledges = base && flight ? yield* ledgesOf(base, ground, x0, z0, cells) : null;
+  const walls = floor === 0 && base ? new Uint8Array(cells * cells) : null;
   if (floor === 0) {
     open.fill(1);
-    if (base) yield* closeBanks(open, base, flight, ground, x0, z0, reach, cells);
+    if (base && walls) yield* closeBanks(open, walls, base, flight, ground, x0, z0, reach, cells);
   } else yield* openFloor(open, solids, base, floor, x0, z0, cells);
   yield* closeSolids(open, solids, base, floor, x0, z0, cells);
   const relative = floor === 0 && base !== null;
-  return { cells, x0, z0, floor, reach, open, base: relative ? base : null, flight: relative ? flight : null, ledges: relative ? ledges : null, ground };
+  return { cells, x0, z0, floor, reach, open, base: relative ? base : null, flight: relative ? flight : null, ledges: relative ? ledges : null, walls, ground };
 }

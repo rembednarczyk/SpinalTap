@@ -9,7 +9,7 @@ import { solidIndexOf } from "../../world/solid-index";
 import { collidersOf } from "../../world/solids";
 import { SNAP_DOWN, STEP_HEIGHT, offTheBank } from "../movement-system";
 import { type NavMemo, heldRaster, recall, remember } from "./nav-memo";
-import { CLEARANCE, LEDGE, NAV_CELL, ON_FLIGHT, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellRange, finish, rasterWork, rasterise } from "./nav-raster";
+import { CLEARANCE, LEDGE, NAV_CELL, ON_FLIGHT, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellRange, finish, rasterWork, rasterise, walled } from "./nav-raster";
 
 export { NAV_CELL } from "./nav-raster";
 
@@ -282,7 +282,8 @@ const nearest = (c: number, reach: number, cells: number, ok: (n: number) => boo
  * onto a bridge's deck over its edge (`ledgesOf`) more than a walkable rise, which the open
  * cells do not show: the chase along Podwale stopped at the viaduct's western abutment by
  * w294098693 (0.56 m), and one under the viaduct at its eastern one. On terrain, the feet not
- * stopped by a bank in the skipped metres either (`bankNear`, G-738).
+ * stopped by a bank in the skipped metres either (`bankNear`, G-738), nor the way up a wall
+ * between cells (`wallOnWay`, G-740).
  */
 const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   const len = Math.hypot(b.x - a.x, b.z - a.z);
@@ -290,6 +291,7 @@ const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   // Cell to cell, the feet's own included: on a tread the feet lie off their cell's height.
   const start = cellIndex(r, a.x, a.z);
   let last = r.base && start >= 0 ? (r.base[start] ?? a.y) : a.y;
+  if (wallOnWay(r, a, b)) return false;
   for (let i = 1; i <= n; i++) {
     const t = i / n;
     const c = cellIndex(r, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t);
@@ -305,6 +307,51 @@ const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   return !r.base || !bankNear(r.ground, a, b);
 };
 
+/**
+ * Up a wall (`walled`) from cell `from` to the next one the line from `a` to `b` reaches, `to`:
+ * past a corner, by the cell it crosses between them, which the samples may step over.
+ */
+const upWall = (r: Raster, a: Vec3, b: Vec3, from: number, to: number): boolean => {
+  const { cells } = r;
+  const [fx, tx] = [from % cells, to % cells];
+  const [fz, tz] = [(from - fx) / cells, (to - tx) / cells];
+  if (fx === tx || fz === tz) return walled(r, from, to, cells);
+  // The line's crossings of the column's and the row's edges between them, 0..1 along it.
+  const sx = (r.x0 + Math.max(fx, tx) * NAV_CELL - a.x) / (b.x - a.x);
+  const sz = (r.z0 + Math.max(fz, tz) * NAV_CELL - a.z) / (b.z - a.z);
+  const by = sx < sz ? fz * cells + tx : tz * cells + fx;
+  return walled(r, from, by, cells) || walled(r, by, to, cells);
+};
+
+/**
+ * Does the line from `a` to `b` go up a wall from a cell it goes through to the next (`upWall`)?
+ * Feet lower than their own cell's middle by more than a walk climbs stand at the foot of a wall
+ * through it: the next cell is measured from the feet themselves (`aboveFeet`). By the tip of the
+ * deck over the abutment's ramp of Mełgiewska's lower bridge (G-740) the cell of feet on the ramp
+ * lies on the deck, and the way from it led along the deck's top.
+ */
+const wallOnWay = (r: Raster, a: Vec3, b: Vec3): boolean => {
+  if (!r.walls) return false;
+  const n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / SAMPLE);
+  const start = cellIndex(r, a.x, a.z);
+  const under = start >= 0 && (r.base?.[start] ?? a.y) - a.y > LEDGE;
+  let prev = start;
+  for (let i = 1; i <= n; i++) {
+    const t = i / n;
+    const c = cellIndex(r, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t);
+    if (c >= 0 && prev >= 0 && c !== prev && (prev === start && under ? aboveFeet(r, a, c) : upWall(r, a, b, prev, c))) return true;
+    prev = c;
+  }
+  return false;
+};
+
+/** Is the middle of cell `c` higher than the feet at `a` more than a walk climbs to it, as the movement sees the ground (a deck high overhead none)? */
+const aboveFeet = (r: Raster, a: Vec3, c: number): boolean => {
+  const at = cellCentre(r, c, a.y);
+  const rise = r.ground.heightAt(at.x, at.z, a.y + STEP_HEIGHT) - a.y;
+  return rise > (LEDGE / NAV_CELL) * Math.max(NAV_CELL, Math.hypot(at.x - a.x, at.z - a.z));
+};
+
 /** A step of the walk checked on the ground (m): about a ganger's run in a step of 60 Hz. */
 const NEAR_STEP = 0.06;
 /** A slide along a bank getting on less than this share of the walk stops the feet too: under the stuck check's pace (0.4 m in 1.5 s, of 3.1 m/s). */
@@ -316,7 +363,10 @@ const CREEP = 0.1;
  * not, unless they get on no further than a creep. The raster's cells see no wall within one:
  * by the level ground before the abutment of Mełgiewska's lower bridge (G-738), its 1.5 m edge on
  * the skew closed in cells touching at their corners, a walker by it took the way over it within
- * the skip, or through a corner, and stood at its foot for good, pressed against it.
+ * the skip, or through a corner, and stood at its foot for good, pressed against it. Nor do they
+ * when, slid along the foot of a wall, they end below the line's ground more than a walk climbs:
+ * along the deck's edge over the abutment's ramp of that bridge the slide got on, and a step
+ * further the way it led along the deck was left for the one back (G-740).
  */
 const bankNear = (ground: GroundField, a: Vec3, b: Vec3): boolean => {
   let at = a;
@@ -329,7 +379,9 @@ const bankNear = (ground: GroundField, a: Vec3, b: Vec3): boolean => {
     const h = ground.heightAt(to.x, to.z, at.y + STEP_HEIGHT);
     at = { x: to.x, y: h > at.y || at.y - h <= SNAP_DOWN ? h : at.y, z: to.z };
   }
-  return false;
+  // Slid along the foot of a wall that the line goes up (G-740): the feet are not on it.
+  const k = Math.min(1, NEAR_SKIP / Math.hypot(b.x - a.x, b.z - a.z));
+  return ground.heightAt(a.x + (b.x - a.x) * k, a.z + (b.z - a.z) * k, at.y + STEP_HEIGHT) - at.y > LEDGE;
 };
 
 /** The window round `goal`: its centre, its corner and the static solids in it. */
@@ -379,14 +431,16 @@ export const nearBuilds = (world: World<Entity>): { readonly rasters: number; re
 export const KNEE_HEIGHT = 0.6;
 /**
  * On terrain (ADR-0043) the knee-high line ignores the ground itself (it dips under every
- * crest) and instead the way must not cross a bank too steep to walk. `height` puts the line
- * elsewhere above the feet.
+ * crest) and instead the way must not cross a bank too steep to walk, nor stop the feet by one in
+ * its first metres (`bankNear`): its samples step over a wall sheer to its foot, and from under the
+ * deck of Mełgiewska's lower bridge the walk went straight at a goal on it, pressed against its
+ * edge (G-740). `height` puts the line elsewhere above the feet.
  */
 export const straightWalk = (world: World<Entity>, from: Vec3, to: Vec3, height = KNEE_HEIGHT): boolean => {
   const ground = groundOf(world);
   const knee = (p: Vec3) => ({ x: p.x, y: p.y + height, z: p.z });
   if (!ground.hasTerrain) return lineOfSight(world, knee(from), knee(to));
-  return lineOfSight(world, knee(from), knee(to), false) && !bankBetween(ground, from, to, deckReach(ground, from, to));
+  return lineOfSight(world, knee(from), knee(to), false) && !bankBetween(ground, from, to, deckReach(ground, from, to)) && !bankNear(ground, from, to);
 };
 
 /**
@@ -441,13 +495,15 @@ const withBodies = (field: Field, avoid: readonly Vec3[], ground: GroundField): 
 /**
  * The cell of the field a walker at `from` sets out from, or -1 when it is off the field (outside
  * the window, cut off). Pressed against a wall its own cell may be closed: the best open cell next
- * to it. Not across a wall in the ground (a flight's side, G-255): a cell within a step of the feet.
+ * to it. Not across a wall in the ground (a flight's side, G-255): a cell within a step of the feet;
+ * nor up a wall between cells (`wallOnWay`, G-740), onto a deck by the edge the feet stand under.
  */
 const startOf = (field: Field, from: Vec3): number => {
   const { raster, dist } = field;
   const here = cellIndex(raster, from.x, from.z);
   if (here < 0) return -1;
-  const reachable = (n: number) => (dist[n] ?? FAR) < FAR && (!raster.base || raster.flight?.[n] !== ON_FLIGHT || Math.abs((raster.base[n] ?? 0) - from.y) <= STEP_HEIGHT);
+  const reachable = (n: number) =>
+    (dist[n] ?? FAR) < FAR && (!raster.base || raster.flight?.[n] !== ON_FLIGHT || Math.abs((raster.base[n] ?? 0) - from.y) <= STEP_HEIGHT) && !wallOnWay(raster, from, cellCentre(raster, n, from.y));
   return (dist[here] ?? FAR) < FAR ? here : nearest(here, 2, raster.cells, reachable);
 };
 
