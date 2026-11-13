@@ -1,5 +1,5 @@
 import { type GroundPoint, type TerrainGrid, segmentDistance } from "@seki/core";
-import { DECK_DEPTH, type GroundDeck, deckAt, makeDeck } from "../../world/deck";
+import { DECK_DEPTH, type GroundDeck, deckAt, deckHeight, makeDeck } from "../../world/deck";
 import { FLIGHT_CELL, type Ramp, mapHeight } from "./shape";
 import type { LublinChunkData } from "./types";
 
@@ -31,7 +31,7 @@ const MIN_SPAN = 4 * INTO;
 
 type Segment = readonly [GroundPoint, GroundPoint];
 
-/** The ends of a deck (its axis, from `a` and from `b`) that lie on a bank falling under the bridge, as abutments' ramps. */
+/** The ends of a deck (its piece's, along its axis from `a` and `b`) that lie on a bank falling under the bridge, as abutments' ramps. */
 const endRamps = (d: GroundDeck, decks: readonly GroundDeck[], flights: readonly Segment[], height: (x: number, z: number) => number): Ramp[] => {
   const len = Math.hypot(d.b.x - d.a.x, d.b.z - d.a.z);
   if (len < MIN_SPAN) return [];
@@ -44,8 +44,13 @@ const endRamps = (d: GroundDeck, decks: readonly GroundDeck[], flights: readonly
   // the flight's (G-255, G-274), and the AI's ways over and under it keep to its abutments' walls.
   const reach = (hi - lo) / 2 + SIDE + INTO;
   if (flights.some(([p, q]) => segmentDistance(p.x, p.z, d.a.x, d.a.z, d.b.x, d.b.z) < reach || segmentDistance(q.x, q.z, d.a.x, d.a.z, d.b.x, d.b.z) < reach)) return [];
+  // A piece's own ends, not its axis's: a bridge's sidewalk lies on its carriageway's axis (G-737)
+  // and ends up to 3.5 m before or past it, its end on the deck's height in that cross section.
+  const along = d.ring.map((p) => (p.x - d.a.x) * u.x + (p.z - d.a.z) * u.z);
   const out: Ramp[] = [];
-  for (const [end, y, sign] of [[d.a, d.ya, -1], [d.b, d.yb, 1]] as const) {
+  for (const [s, sign] of [[Math.min(...along), -1], [Math.max(...along), 1]] as const) {
+    const end = { x: d.a.x + u.x * s, z: d.a.z + u.z * s };
+    const y = deckHeight(d, end.x, end.z);
     const c = { x: end.x + n.x * mid, z: end.z + n.z * mid };
     const at = (t: number) => ({ x: c.x + u.x * sign * t, z: c.z + u.z * sign * t });
     const [past, under] = [at(PAST), at(-INTO)];
