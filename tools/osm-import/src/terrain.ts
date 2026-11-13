@@ -4,9 +4,9 @@
  * castle hill, 5-10 m on the flat. The contract's `TerrainGrid` has one cell per chunk, so a
  * chunk is as fine as its steepest part.
  */
-import { type TerrainGrid } from "../../../packages/core/src/world/city-geo.ts";
+import { type TerrainGrid, terrainHeightAt } from "../../../packages/core/src/world/city-geo.ts";
 import { type HeightSource } from "./dtm.ts";
-import { type Rect, r1 } from "./geometry.ts";
+import { type Pt, type Rect, r1 } from "./geometry.ts";
 
 /** Heights on a 1 m world lattice: `v[r * cols + c]` at (x0 + c, z0 + r). */
 export interface Field {
@@ -133,3 +133,20 @@ export const chunkTerrain = (raw: Field, rect: Rect, altitude: number): ChunkTer
   if (!best) throw new Error(`no terrain cell divides ${w} × ${h}`);
   return best;
 };
+
+/**
+ * The game's terrain at a point over the chunks' grids, as the game reads it (`mapHeight`): on
+ * the first chunk holding the point, else on the nearest.
+ */
+export const gridsHeight =
+  (chunks: readonly { readonly rect: Rect; readonly grid: TerrainGrid }[]) =>
+  (p: Pt): number => {
+    let best: TerrainGrid | null = null;
+    let bestD = Infinity;
+    for (const { rect: r, grid } of chunks) {
+      const d = Math.hypot(Math.max(r.minX - p.x, 0, p.x - r.maxX), Math.max(r.minZ - p.z, 0, p.z - r.maxZ));
+      if (d === 0) return terrainHeightAt(grid, p.x, p.z);
+      if (d < bestD) [best, bestD] = [grid, d];
+    }
+    return best ? terrainHeightAt(best, p.x, p.z) : 0;
+  };

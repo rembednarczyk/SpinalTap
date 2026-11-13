@@ -1,0 +1,4 @@
+# kerb-strip-no-car-street: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+stare-miasto-0-1 556,74
+stare-miasto-0-1 572,155
+stare-miasto-1-1 644,147

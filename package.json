@@ -30,9 +30,14 @@
     "gugik:extract": "node tools/gugik/src/extract.ts",
     "gugik:report": "node tools/gugik/src/report.ts",
     "changelog": "node tools/changelog/changelog.mjs",
+    "scan:diff": "node tools/glitch-scan/src/scan-diff.ts",
+    "scan:update": "GLITCH_BASELINE=update vitest run tools/glitch-scan/test/glitch-scan.test.ts",
     "shots:compare": "node tools/shots/src/compare.ts",
     "bench:ab": "node tools/bench-ab/src/bench.ts",
-    "test:rerun": "node tools/test-rerun/src/rerun.ts"
+    "test:rerun": "node tools/test-rerun/src/rerun.ts",
+    "orto:diff": "node tools/orto/src/diff.ts",
+    "pr:prep": "node tools/pr-prep/src/prep.ts",
+    "hashes:check": "node tools/hashes/src/check.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

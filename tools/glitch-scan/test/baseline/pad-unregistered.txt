@@ -1,0 +1,3 @@
+# pad-unregistered: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-2-0 316,-99
+krakowskie-2-0 322,-68

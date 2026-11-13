@@ -1,0 +1,2 @@
+# osm-tower-default-height: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+podzamcze-1-1 879,545
