@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
+import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { SURFACE_TOPS, withSurfaceTop } from "../src/corrections-surface.ts";
+import { pointInRing } from "../src/geometry.ts";
 import { HAND_HEIGHTS } from "../src/lod1-heights.ts";
 import { type BuildingOut } from "../src/model.ts";
 
@@ -23,7 +25,7 @@ describe("tops from the surface model (G-708)", () => {
 
   it("puts the walls up to the top, the plinth cut to leave a storey over it", () => {
     // The terrace on the scarp: its top level with Grodzka's yards, a storey over the buried plinth.
-    expect(withSurfaceTop(house)).toEqual({ ...house, height: 6.9, plinth: 3.7, levels: 1, source: "height" });
+    expect(withSurfaceTop(house)).toEqual({ ...house, height: 7.2, plinth: 4, levels: 1, source: "height" });
     // A top under a storey over the foot: a storey all the same.
     expect(withSurfaceTop({ ...house, y: -5 })).toMatchObject({ height: 3.2, plinth: 0, levels: 1 });
     // The map's storeys that fit from the foot stay, the plinth cut under them; those that do not, go.
@@ -40,6 +42,22 @@ describe("tops from the surface model (G-708)", () => {
       expect(b, s.id).toBeDefined();
       expect(b!.y + b!.height + (b!.roof ?? 0) / 2, s.id).toBeCloseTo(s.top, 0);
       expect(b!.levels, s.id).toBe(STOREYS[s.id]);
+    }
+  });
+
+  it("keeps the game's ground in each outline under the top, as on the terrace by Podwale", () => {
+    // The game's terrain at the terrace's west corner stands 0.2-0.4 m over its floor in NMPT, so
+    // a top at NMPT's -8.7 left the ground through the roof (51 samples, the curator's pass 12.11).
+    const buildings = STARE_MIASTO_CHUNKS.flatMap((c) => c.buildings);
+    for (const s of SURFACE_TOPS) {
+      const b = buildings.find((o) => o.id === s.id)!;
+      const ring = Array.from({ length: b.outline.length / 2 }, (_, i) => ({ x: b.x + b.outline[2 * i]!, z: b.z + b.outline[2 * i + 1]! }));
+      const xs = ring.map((p) => p.x);
+      const zs = ring.map((p) => p.z);
+      let ground = -Infinity;
+      for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.25)
+        for (let z = Math.min(...zs); z <= Math.max(...zs); z += 0.25) if (pointInRing({ x, z }, ring)) ground = Math.max(ground, groundY(x, z));
+      expect(b.y + b.height + (b.roof ?? 0) / 2, s.id).toBeGreaterThanOrEqual(ground + 0.05);
     }
   });
 });

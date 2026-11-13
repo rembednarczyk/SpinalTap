@@ -41,10 +41,11 @@ export const SURFACE_TOPS: readonly SurfaceTop[] = [
     // Zaułek Panasa, the beer garden Ogródek pod Murami: no height in the map, so the district's
     // three storeys over a 7.1 m plinth, top at y 1.1. NMPT has a flat top at y -8.9..-8.4 (p25..p75),
     // the level of Grodzka's yards (terrain y -8.5 at its west corner): a terrace on the scarp over
-    // Podwale, the garden on it. In neither LoD1 2024 nor LoD2.
+    // Podwale, the garden on it. In neither LoD1 2024 nor LoD2. Not NMPT's -8.7 but 0.05 m over the
+    // game's ground at its west corner (y -8.46), which stands 0.2-0.4 m over NMPT's terrace there.
     id: "w232362965",
-    top: -8.7,
-    reason: "taras ogródka przy Zaułku Panasa: wierzch y −8,7 z NMPT na poziomie podwórzy Grodzkiej wobec y 1,1 z domyślnych 3 kondygnacji",
+    top: -8.4,
+    reason: "taras ogródka przy Zaułku Panasa: wierzch y −8,4 (NMPT −8,7, teren gry do −8,46) na poziomie podwórzy Grodzkiej wobec y 1,1 z domyślnych 3 kondygnacji",
     ref: "T-269",
   },
   {

@@ -2182,6 +2182,12 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(buildingsOverSurface(BUILDING_SURFACE, [{ ...terrace, id: "w1" }])).toEqual([]);
   });
 
+  it("measures the surface model under every building of stare-miasto-1-1, not only the corrected ones (G-708)", () => {
+    const cell = MAP_CHUNKS.find((c) => c.id === "stare-miasto-1-1")!.buildings.map((b) => b.id.split("/")[0]!);
+    expect(cell).toHaveLength(55);
+    expect(cell.filter((id) => BUILDING_SURFACE[id] === undefined)).toEqual([]);
+  });
+
   it("finds a building over 3 m off its LoD1 height, and none within 3 m, unmatched or among the exceptions (ADR-0077)", () => {
     const square = [-5, -5, 5, -5, 5, 5, -5, 5];
     const house = { id: "w1", x: 100, z: 50, outline: square, height: 13, roof: 2, use: "residential", source: "default" };

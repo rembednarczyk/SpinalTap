@@ -57,3 +57,12 @@ Surowe dane, z których `tools/osm-import` generuje Lublin 2077 (ADR-0042). Pobi
 - **Źródło i licencja:** Główny Urząd Geodezji i Kartografii (geoportal.gov.pl), dane na licencji Creative Commons Uznanie autorstwa 4.0 (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/.
   - Wyciągi są przetworzone: współrzędne przeliczone z PUWG 1992 (EPSG:2180) do układu gry, obrysy zaokrąglone do 0,1 m, wysokości dachów liczone z powierzchni LoD2.
   - W grze: `pnpm osm:build` bierze z LoD1 wysokość okapu budynków bez wysokości w OSM (`tools/osm-import/src/lod1-heights.ts`, ADR-0077 krok 3), a z LoD2 okap, kalenicę i kształt dachu budynków bez tagów dachu w OSM (`tools/osm-import/src/lod2-roofs.ts`, krok 4), więc tabele `packages/sim/src/content/lublin/*.generated.ts` są też pochodną LoD1 i LoD2.
+
+## Powierzchnia: NMPT GUGiK
+
+- **Pliki:** surowego NMPT nie ma w repo. Trafiają do niego tylko wartości pochodne, mierzone ręcznie w obrysach i punktach gry:
+  - wierzchy budynków `SURFACE_TOPS` w `tools/osm-import/src/corrections-surface.ts` (G-708, T-269) i wysokości drzew w `tools/osm-import/src/tree-heights.ts`;
+  - tabele kontroli skanu `tools/glitch-scan/test/surface-heights.ts` i `landmark-heights.ts` (mediany, okapy i kalenice jako world y).
+  - Numeryczny Model Pokrycia Terenu o oczku 0,5 m z lotniczego skanowania laserowego, pobrany przez WCS `DSM_PL-KRON86-NH`, układ PUWG 1992 (EPSG:2180), wysokości normalne PL-KRON86-NH.
+- **Źródło:** Główny Urząd Geodezji i Kartografii, państwowy zasób geodezyjny i kartograficzny (geoportal.gov.pl), NMPT.
+  - Dane udostępniane bezpłatnie do dowolnego celu (art. 40a ustawy Prawo geodezyjne i kartograficzne), jak NMT.
