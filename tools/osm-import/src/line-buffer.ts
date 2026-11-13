@@ -142,8 +142,9 @@ const onGrid = (p: Path64): Path64 => p.map((q) => ({ x: Math.round(r1(q.x / SCA
 /**
  * The gaps a round end leaves between the bands meeting at its point, on the 0.1 m grid the tables
  * round them to (G-760): a crack between the bands of its surface (`same`), as two streets' square
- * ends a degree or two apart, or one cut across the node rounded apart for each band, leave, under
- * a footway crossing there too; and the bare ground no band there covers (`all`) the round end's
+ * ends a degree or two apart, or one cut across the node rounded apart for each band, leave, over
+ * a footway crossing there or a square's area under the street too; and the bare ground no band
+ * near covers (`all`) the round end's
  * bit did not take, a wedge `bareBits` drops (narrower than `SLIVER`, under `MIN_CAP`) or one whose
  * bit would split its band's outline. Each is grown by `SLIVER` within the disc (and as far past
  * it, which a polygon's chords cut short), so it laps over the bands round it by more than the
@@ -230,8 +231,11 @@ export const roundJoints = <B extends JointBand>(bands: readonly B[], patch?: Pa
   for (const list of patch ? ends.values() : []) {
     const meeting = [...new Set(list.map((e) => e.i))];
     if (meeting.length < 2) continue;
-    // The bands meeting here as the tables round them, all and of each surface, and the patches laid on them before.
-    let all = laidOf(meeting);
+    // As the tables round them: the bands meeting here of each surface, every band near (a sidewalk,
+    // a square's area: a wedge under it is no gap), and the patches laid on them before.
+    const reach = Math.max(...list.map((e) => e.end.half)) + SLIVER;
+    const { x, z } = list[0]!.end.at;
+    let all = laidOf(grid.query(x - reach, z - reach, x + reach, z + reach).sort((p, q) => p - q));
     const same = new Map<string | undefined, Paths64>();
     for (const { i, end } of list) {
       if (end.square) continue;

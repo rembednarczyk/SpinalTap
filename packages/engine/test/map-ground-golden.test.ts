@@ -101,7 +101,7 @@ describe("the ground the map city lays (G-444)", () => {
     // data moved it again: the bands along lines buffered with round joins and ends (ADR-0078 step 2),
     // 142 558 vertices before, the arcs a few more; and the ground the paths' loops enclose laid whole from the cover.
     // The gaps' patches in the joints (G-760), pieces of their own: 151 928 vertices before.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 154927, hash: "399debb4" });
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 155341, hash: "1117bd89" });
     scene.dispose();
   });
 

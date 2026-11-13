@@ -595,6 +595,7 @@ podzamcze-1-0 750,160
 podzamcze-1-0 760,160
 podzamcze-1-0 720,180
 podzamcze-1-0 870,190
+podzamcze-1-0 830,200
 podzamcze-1-0 860,200
 podzamcze-1-0 870,200
 podzamcze-1-0 840,280

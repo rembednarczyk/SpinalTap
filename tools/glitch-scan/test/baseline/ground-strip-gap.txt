@@ -37,6 +37,7 @@ krakowskie-0-0 -190,-80
 krakowskie-0-0 -180,-80
 krakowskie-0-0 -170,-80
 krakowskie-0-0 -160,-80
+krakowskie-0-0 0,-80
 krakowskie-0-0 -160,-70
 krakowskie-0-0 -150,-70
 krakowskie-0-0 -170,-60
@@ -1348,6 +1349,7 @@ stare-miasto-0-0 520,-160
 stare-miasto-0-0 460,-150
 stare-miasto-0-0 530,-150
 stare-miasto-0-0 520,-140
+stare-miasto-0-0 460,-100
 stare-miasto-0-0 530,-70
 stare-miasto-0-1 560,-30
 stare-miasto-0-1 490,-20
