@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-761 Trawniki w pierścieniu skweru na Podzamczu pod kostką ścieżki
+- Ważność: S4 · Zasięg: w804709919, w804709920 (1045, 424), 46 m²; podobnie zieleń pod footway w pętlach w1343050082 (58,-83) 19 m², w154012559 15 m², w515648305 10 m²
+- Opis: Pas footway pierścienia (szerokość domyślna) leży na półksiężycach trawnika widocznych na ortofoto; skwer traci rysunek. Proponowana kontrola skanu loop-paving-on-green (m² kostki na zieleni wewnątrz pętli ścieżek, baza 5 pętli).
+- Status: naprawione (13.11, fałszywy alarm, zob. G-773 scalony); wcześniej: fałszywy alarm (13.11, naprawiacz): zawyżenie przez raster cover, geometria zgodna z ortofoto; wcześniej: zgłoszone (13.11, kurator, przegląd ADR-0078 etap 2)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: zieleń z ortofoto pod footway/square wewnątrz pętli w804709919 < 5 m²
+- Wiersz topografii: T-286.
+- 13.11 naprawiacz: ortofoto 0,1 m (ExG>0,07 na 2025-04 i 2024-06): trawnik pod footway/square w pętli w804709919 4,0 m² (<5, test przyjęcia spełniony na main), w1343050082 0, w154012559 1,9, w515648305 0. 43,75 m² z rastra to wygładzanie 1,5 m i zielonkawy bruk 2023-09. Pierścień 2,4-2,7 m na zdjęciu, domyślne 2,5 m; półksiężyce zgodne do 0,25 m.
+
 ### G-755 Droga pieszo-rowerowa w179264855 w grze za stroma (0,8–0,92) przy (667–682; 134–141)
 - Ważność: S3 · Zasięg: zejście ze Starego Miasta na Podzamcze; ok. 1 440 par `walk-blocked` (kwadraty 670,130 i 670,140)
 - Opis: OSM: highway=pedestrian, bicycle=yes, lit, nie schody; oś w grze spada 4,5 m na 4 m; sprawdzić NMT i zdjęcia: jeśli spadek jest łagodniejszy — wygładzić, jeśli to schody/rampa — wymusić schody (flightRamps)

@@ -1781,7 +1781,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-758 Import wybiera komórki terenu 4 i 8 m niepodzielne przez 2,5 i 5 m sąsiadów
 - Ważność: S3 · Zasięg: krakowskie-2-1 i inne kawałki siatki 4/8 m; szwy zostają 0,51 / 0,225 / 0,18 m po G-748
 - Opis: `tools/osm-import/src/terrain.ts` `CELLS`: siatka 4 m ma z siatkami 2,5 i 5 m wspólne punkty tylko co 20 m, więc `stitchSeams` nie może jej zszyć; ADR-0043 zakłada wspólny wiersz punktów na szwach
-- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g758, 571459c): CELLS 10/5/2,5/1,25, seam-gap 0,05 m: 2 -> 0 kluczy, szwy 0,51 -> 0 m; czeka na przegląd kuratora (orto:diff); wcześniej: zgłoszone (13.11, naprawiacz G-748)
+- Status: przegląd kuratora ZGODNE Z UWAGAMI (13.11); do PR; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g758, 571459c): CELLS 10/5/2,5/1,25, seam-gap 0,05 m: 2 -> 0 kluczy, szwy 0,51 -> 0 m; czeka na przegląd kuratora (orto:diff); wcześniej: zgłoszone (13.11, naprawiacz G-748)
 - Pakiet właściciela: tools/osm-import (teren), packages/sim (content/lublin)
 - Test przyjęcia: na każdym szwie różnica ≤ 0,05 m
 - Do zrobienia razem z kontrolą `seam-gap` z przeglądu #502 (kurator 13.11).
@@ -1795,14 +1795,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-748)
 - Pakiet właściciela: tools/glitch-scan (walk-blocked)
 - Test przyjęcia: `walk-blocked` bez kluczy pod płytami Arkad
-
-### G-761 Trawniki w pierścieniu skweru na Podzamczu pod kostką ścieżki
-- Ważność: S4 · Zasięg: w804709919, w804709920 (1045, 424), 46 m²; podobnie zieleń pod footway w pętlach w1343050082 (58,-83) 19 m², w154012559 15 m², w515648305 10 m²
-- Opis: Pas footway pierścienia (szerokość domyślna) leży na półksiężycach trawnika widocznych na ortofoto; skwer traci rysunek. Proponowana kontrola skanu loop-paving-on-green (m² kostki na zieleni wewnątrz pętli ścieżek, baza 5 pętli).
-- Status: zgłoszone (13.11, kurator, przegląd ADR-0078 etap 2)
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: zieleń z ortofoto pod footway/square wewnątrz pętli w804709919 < 5 m²
-- Wiersz topografii: T-286.
 
 ### G-764 Trawnik pod koronami drzew na kostce (reguła koron, ADR-0077 krok 1.2)
 - Ważność: S4 · Zasięg: 4 dzielnice, ok. 474–670 m², m.in. promenada nad Czechówką przy VIVO (x 1090, z 185), Furmańska (x 646, z 257)
@@ -1862,6 +1854,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-771)
 - Pakiet właściciela: tools/orto
 - Test przyjęcia: albedo-report pomija nalot z isBlank; mediany bez kafla 2024-06/SM-0-1
+
+### G-774 Raster cover poszerza trawniki na sąsiedni bruk (wygładzanie 1,5 m) i klasyfikuje zielonkawy bruk jako green
+- Ważność: S4 · Zasięg: całe miasto; np. pierścień skweru Podzamcze (1045, 424), pętle w1343050082, w154012559, w515648305
+- Opis: THRESHOLDS.smooth=1 rozlewa zieleń o ok. 0,5-0,75 m na bruk; bruk z ExG 0,05/0,03/0,15 (2023-09) przekracza średnią greenExg 0,026. Zawyża fill-on-green i reguły kładące trawę z rastra (G-761 był fałszywym alarmem z tego powodu).
+- Status: zgłoszone (13.11, naprawiacz G-761)
+- Pakiet właściciela: tools/orto
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
