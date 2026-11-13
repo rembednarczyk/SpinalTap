@@ -9,7 +9,7 @@ import { solidIndexOf } from "../../world/solid-index";
 import { collidersOf } from "../../world/solids";
 import { SNAP_DOWN, STEP_HEIGHT, offTheBank } from "../movement-system";
 import { type NavMemo, heldRaster, recall, remember } from "./nav-memo";
-import { CLEARANCE, LEDGE, NAV_CELL, ON_FLIGHT, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellRange, finish, rasterWork, rasterise } from "./nav-raster";
+import { CLEARANCE, LEDGE, NAV_CELL, ON_FLIGHT, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, byLedge, cellRange, finish, rasterWork, rasterise } from "./nav-raster";
 
 export { NAV_CELL } from "./nav-raster";
 
@@ -192,6 +192,12 @@ const passable = (r: Raster, c: number, dx: number, dz: number, out: boolean): n
     const [from, to] = out ? [c, n] : [n, c];
     if ((r.base[to] ?? 0) - (r.base[from] ?? 0) > (dx !== 0 && dz !== 0 ? WALL_DIAGONAL : STEP_HEIGHT)) return -1;
   }
+  // Not up the side of a bridge's deck over lower ground either (`ledgesOf`, G-741): round by its
+  // end. Down off it, over the edge, it may.
+  if (r.base && r.ledges?.[out ? n : c] === ON_LEDGE) {
+    const [from, to] = out ? [c, n] : [n, c];
+    if ((r.base[to] ?? 0) - (r.base[from] ?? 0) > (dx !== 0 && dz !== 0 ? LEDGE * Math.SQRT2 : LEDGE)) return -1;
+  }
   return n;
 };
 
@@ -281,7 +287,9 @@ const nearest = (c: number, reach: number, cells: number, ok: (n: number) => boo
  * two samples onto one or by it: its side (G-255, whose foot is closed only a cell wide); nor
  * onto a bridge's deck over its edge (`ledgesOf`) more than a walkable rise, which the open
  * cells do not show: the chase along Podwale stopped at the viaduct's western abutment by
- * w294098693 (0.56 m), and one under the viaduct at its eastern one. On terrain, the feet not
+ * w294098693 (0.56 m), and one under the viaduct at its eastern one; nor a smaller rise there
+ * where the movement's slope is too steep, the terrain falling along the edge (by the west end of
+ * the footbridge of podzamcze-2-0 the walk cut its corner, G-741). On terrain, the feet not
  * stopped by a bank in the skipped metres either (`bankNear`, G-738).
  */
 const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
@@ -297,7 +305,7 @@ const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
     if (r.base && (r.flight || r.ledges)) {
       const h = r.base[c] ?? 0;
       if ((r.flight?.[c] ?? 0) > 0 && h - last > STEP_HEIGHT) return false;
-      if (r.ledges?.[c] === ON_LEDGE && h - last > LEDGE) return false;
+      if (r.ledges?.[c] === ON_LEDGE && h > last && (h - last > LEDGE || r.ground.steepAt(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, r.reach))) return false;
       last = h;
     }
     if (t * len >= NEAR_SKIP && !r.open[c]) return false;
@@ -439,15 +447,26 @@ const withBodies = (field: Field, avoid: readonly Vec3[], ground: GroundField): 
 };
 
 /**
+ * By the side of a bridge's deck over lower ground (`ledgesOf`, G-741), is cell `n` above the feet
+ * at `from` where they do not get (`bankNear`, the movement's own rule)? The edge, steep where the
+ * cells meet, and the bank beside it make a pocket the cells do not show: a walker pressed into it
+ * by the east end of the footbridge of podzamcze-2-0 set out from a cell up the bank or on the
+ * deck, and stood there for good.
+ */
+const outOfReach = (r: Raster, n: number, from: Vec3): boolean => !!r.ledges && (r.base?.[n] ?? 0) > from.y && byLedge(r, n) && bankNear(r.ground, from, cellCentre(r, n, from.y));
+
+/**
  * The cell of the field a walker at `from` sets out from, or -1 when it is off the field (outside
  * the window, cut off). Pressed against a wall its own cell may be closed: the best open cell next
- * to it. Not across a wall in the ground (a flight's side, G-255): a cell within a step of the feet.
+ * to it. Not across a wall in the ground (a flight's side, G-255): a cell within a step of the
+ * feet; by a bridge's deck, one the feet get to (`outOfReach`, G-741).
  */
 const startOf = (field: Field, from: Vec3): number => {
   const { raster, dist } = field;
   const here = cellIndex(raster, from.x, from.z);
   if (here < 0) return -1;
-  const reachable = (n: number) => (dist[n] ?? FAR) < FAR && (!raster.base || raster.flight?.[n] !== ON_FLIGHT || Math.abs((raster.base[n] ?? 0) - from.y) <= STEP_HEIGHT);
+  const reachable = (n: number) =>
+    (dist[n] ?? FAR) < FAR && (!raster.base || raster.flight?.[n] !== ON_FLIGHT || Math.abs((raster.base[n] ?? 0) - from.y) <= STEP_HEIGHT) && !outOfReach(raster, n, from);
   return (dist[here] ?? FAR) < FAR ? here : nearest(here, 2, raster.cells, reachable);
 };
 

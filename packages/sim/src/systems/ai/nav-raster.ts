@@ -44,7 +44,7 @@ export interface Raster {
    * on one, `NEAR_FLIGHT` within `FLIGHT_MARGIN` of one, else 0; null when none is near the window.
    */
   readonly flight: Uint8Array | null;
-  /** With `base`, `ON_LEDGE` where a cell tops the edge of a bridge's deck with no room under it (`ledgesOf`), else 0; null when none is in the window. */
+  /** With `base`, `ON_LEDGE` where a cell tops the edge of a bridge's deck with no room under it (`ledgesOf`), else 0; null when none is in the window. A wall to walk up, as the movement has it (G-741). */
   readonly ledges: Uint8Array | null;
   /** The ground it was made on: the walk's first steps are checked on it, as the movement has them (G-738). */
   readonly ground: GroundField;
@@ -87,8 +87,8 @@ const NEAR_FLIGHT = 1;
 export const ON_FLIGHT = 2;
 /**
  * How far from a flight the walls in the ground round it are walls to the AI too (m): its sides,
- * the bridge's deck over its edge and by its landings (G-274). Elsewhere a bridge's edges keep
- * their headroom rule (G-062), and nothing is computed: one flight in the city.
+ * the bridge's deck over its edge and by its landings (G-274). Elsewhere a bridge's edges are
+ * walls only where they rise more than a walkable slope (`ledgesOf`, G-741): one flight in the city.
  */
 const FLIGHT_MARGIN = 4;
 
@@ -117,14 +117,17 @@ function* flightsOf(ground: GroundField, x0: number, z0: number, cells: number):
 export const LEDGE = MAX_WALK_SLOPE * NAV_CELL;
 export const ON_LEDGE = 1;
 
+/** Does a bridge's deck lie in the window? Almost everywhere none: no raster pays for `ledgesOf`. */
+const decksIn = (ground: GroundField, x0: number, z0: number, cells: number): boolean => ground.decksNear(x0, z0, x0 + cells * NAV_CELL, z0 + cells * NAV_CELL).length > 0;
+
 /**
  * Which cells of the window top the edge of a bridge's deck over the terrain with no room under
  * it (G-062), more than `LEDGE` (`LEDGE` · √2 diagonally) over a neighbour (`ON_LEDGE`), or null
- * when none is: by the abutments of the viaduct of Zamkowa (G-255). Only in a window with a
- * flight (`flight`): elsewhere the walk keeps its old ways along and onto the bridges' edges
- * (Mełgiewska, G-068; the footbridge of podzamcze-2-0), and no raster pays for it. The field keeps
- * the cells at their foot open, so the walk does not climb onto them. The deck is looked up only
- * at such a rise.
+ * when none is: by the abutments of the viaduct of Zamkowa (G-255), along the sides of every deck
+ * over lower ground (G-741: beside the footbridge of podzamcze-2-0, its deck level with the
+ * street, the field led straight up its side and the walker stood at its foot). The field and the
+ * walk do not climb onto them; down off them, over the edge, they go (Mełgiewska, G-068). The
+ * cells at their foot stay open. The deck is looked up only at such a rise.
  */
 function* ledgesOf(base: Float64Array, ground: GroundField, x0: number, z0: number, cells: number): Slices<Uint8Array | null> {
   let out: Uint8Array | null = null;
@@ -144,6 +147,18 @@ function* ledgesOf(base: Float64Array, ground: GroundField, x0: number, z0: numb
   }
   return out;
 }
+
+/** Is cell `n` of the raster or a neighbour of it on the edge of a bridge's deck over lower ground (`ledgesOf`)? */
+export const byLedge = (r: Raster, n: number): boolean => {
+  const ix = n % r.cells;
+  const iz = (n - ix) / r.cells;
+  if (r.ledges?.[n] === ON_LEDGE) return true;
+  for (const [dx, dz] of STEPS) {
+    const [nx, nz] = [ix + dx, iz + dz];
+    if (nx >= 0 && nz >= 0 && nx < r.cells && nz < r.cells && r.ledges?.[nz * r.cells + nx] === ON_LEDGE) return true;
+  }
+  return false;
+};
 
 /**
  * Cells of the ground floor on a bank too steep to walk (ADR-0043) are closed, and so are those
@@ -197,9 +212,10 @@ export const rasterWork = (solids: readonly Collider[], floor: number, x0: numbe
   const all = cells * cells;
   const terrain = ground.hasTerrain ? 2 * all : 0;
   const flights = terrain > 0 && floor === 0 && nearFlight(ground, x0, z0, cells) ? 2 * all : 0;
+  const ledges = terrain > 0 && floor === 0 && flights === 0 && decksIn(ground, x0, z0, cells) ? all : 0;
   let boxes = 0;
   for (const c of solids) boxes += (floor === 0 ? 1 : 2) * boxCells(c, CLEARANCE, x0, z0, cells);
-  return terrain + flights + boxes;
+  return terrain + flights + ledges + boxes;
 };
 
 /** Above the street only tops at about this height are floor; everything else is a drop. */
@@ -267,7 +283,7 @@ export function* rasterise(solids: readonly Collider[], floor: number, reach: nu
   const open = new Uint8Array(cells * cells);
   const base = yield* terrainOf(ground, x0, z0, reach, cells);
   const flight = base && floor === 0 ? yield* flightsOf(ground, x0, z0, cells) : null;
-  const ledges = base && flight ? yield* ledgesOf(base, ground, x0, z0, cells) : null;
+  const ledges = base && floor === 0 && (flight || decksIn(ground, x0, z0, cells)) ? yield* ledgesOf(base, ground, x0, z0, cells) : null;
   if (floor === 0) {
     open.fill(1);
     if (base) yield* closeBanks(open, base, flight, ground, x0, z0, reach, cells);

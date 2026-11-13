@@ -20,17 +20,18 @@ export class SessionScreen {
 
   /** True while the player is in control (playing, no dialogue, no menu). */
   get inControl(): boolean {
-    const { dialogue, shop, loot, character, phone, hack, metro } = this.deps.controllers();
-    const panel = dialogue.isOpen || shop.isOpen || loot.isOpen || character.isOpen || phone.isOpen || hack.breachOpen || metro.isOpen || metro.riding;
+    const { dialogue, shop, loot, character, phone, hack, metro, wait } = this.deps.controllers();
+    const panel = dialogue.isOpen || shop.isOpen || loot.isOpen || character.isOpen || phone.isOpen || hack.breachOpen || metro.isOpen || metro.riding || wait.isOpen;
     return this.screen === "playing" && !panel;
   }
 
   /**
    * The simulation only advances while playing; dialogue freezes the player but not the world,
-   * the character menu stops the clock.
+   * the character menu and the wait window stop the clock.
    */
   get running(): boolean {
-    return this.screen === "playing" && !this.deps.controllers().character.isOpen;
+    const c = this.deps.controllers();
+    return this.screen === "playing" && !c.character.isOpen && !c.wait.isOpen;
   }
 
   /** The character menu is open; the app draws the preview instead of the game. */
@@ -40,7 +41,10 @@ export class SessionScreen {
 
   set(screen: Screen): void {
     const c = this.deps.controllers();
-    if (screen !== "playing") c.character.closeSilently();
+    if (screen !== "playing") {
+      c.character.closeSilently();
+      c.wait.closeSilently();
+    }
     patchUi(this.deps.ui, { screen });
     c.focus.settle();
   }
@@ -60,8 +64,9 @@ export class SessionScreen {
 
   /** Every panel and the menu close without telling the simulation. */
   closePanels(): void {
-    const { dialogue, character, shop, loot, phone, hack, metro } = this.deps.controllers();
+    const { dialogue, character, shop, loot, phone, hack, metro, wait } = this.deps.controllers();
     metro.closeSilently();
+    wait.closeSilently();
     dialogue.closeSilently();
     character.closeSilently();
     shop.closeSilently();
