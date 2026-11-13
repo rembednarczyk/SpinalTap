@@ -1750,7 +1750,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-746 `steering.ts` ma 717 linii, ponad limit 500 z ADR-0031
 - Ważność: S4 · Zasięg: packages/sim/src/systems/ai/steering.ts (686 → 717 po G-741), wyjątek w lincie
 - Opis: plik nawigacji urósł przy G-738/G-741; kandydat do podziału (planer, pole odległości, sprawdzanie krawędzi)
-- Status: zgłoszone (13.11, naprawiacz G-741); po scaleniu G-740 i G-741
+- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-g746, 5f19528): steering.ts 707 → 186 linii, podział na nav-field.ts (259), straight-walk.ts (187), chase-detour.ts (118); hashe bez zmian; wcześniej: zgłoszone (13.11, naprawiacz G-741); po scaleniu G-740 i G-741
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: plik ≤ 500 linii bez wyjątku w lincie, złoty hash bez zmian
 
@@ -1760,6 +1760,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacze G-741 i G-740)
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: 30 punktów przy bokach pomostów (sonda G-741): dojścia ponad 16/30 bez regresji; test z jednego z punktów wyżej pada bez poprawki
+- Po G-746: `followDetour` w `steering.ts` (l. 144), fallback `way[1]` w l. 162.
 
 ### G-748 Uskok terenu do 3,3 m na szwie kawałków krakowskie-2-1 | stare-miasto-0-1
 - Ważność: S3 · Zasięg: x = 460, z 104–110: teren krakowskie-2-1 −9,20, stare-miasto-0-1 −5,80…−7,12
