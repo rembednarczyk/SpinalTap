@@ -45,4 +45,4 @@ Każdy agent (naprawiacz, budowniczy, łowca, weryfikator, kurator, zwiadowca) c
 ## Raport
 - Po polsku i krótko: przyczyna, zmiana, liczby (skan przed/po, hashe, czasy), ścieżki zrzutów, sha, znaleziska poboczne.
 - Bez tabel w treści, gdy wystarczy lista.
-- Nowe glitche podaj jako gotowy wpis w formacie `docs/glitches.md`. Numer nadaje orkiestrator.
+- Nowe glitche i dopiski podaj jako gotowe polecenia narzędzia rejestrów (`python3 -I tools/rejestry/rej.py g-new …`, `g-status`, `g-note`, `t-new`, `t-append`; opis w nagłówku pliku). Numer nadaje narzędzie. Rejestrów sam nie edytuj, polecenia wykonuje orkiestrator.
