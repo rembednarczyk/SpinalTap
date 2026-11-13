@@ -104,4 +104,13 @@ describe("walk-blocked (ADR-0080)", () => {
     const found = scan({ ground: [{ surface: "footway", outline: rect(0, 0, 20, 10) }], terrain: (x) => (x < 0 ? 0.6 : x < 10 ? 0 : 0.3) });
     expect(found.filter((f) => Math.abs(Number(f.at.split(",")[0]) - 10) < 1)).toEqual([]);
   });
+
+  it("leaves the ground off the map out of a cell's slope (A: groundY is 0 there)", () => {
+    // The map's ground from -0.3 sloping 0.2 down north; past its south edge (z < 0) `groundY` gives 0,
+    // within a step of the edge's cells: taken in, their slope came out 0.75.
+    const terrain = (_x: number, z: number) => (z < 0 ? 0 : -0.3 - 0.2 * z);
+    expect(scan({ ground: [{ surface: "footway", outline: rect(0, 0, 20, 10) }], terrain })).toEqual([]);
+    // A bank on the map at its edge is still one.
+    expect(kinds(scan({ ground: [{ surface: "footway", outline: rect(0, 0, 20, 10) }], terrain: (x, z) => (z < 0 ? 0 : 0.8 * x) }))).toEqual(["steep # at #"]);
+  });
 });

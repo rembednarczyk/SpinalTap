@@ -11,7 +11,8 @@ import { type WalkBlock, type WalkCell, walkBoth } from "../../../packages/sim/s
  * steeper than ADR-0043's `MAX_WALK_SLOPE` off a flight. The edges the model means as such are no
  * finding: the walls of buildings, barriers (ADR-0077), the sides of a bridge's deck over lower
  * ground (closed to the AI too, G-741), a deck over a way under it (G-062), the niche of T-147.
- * It goes beside the six older checks of steps it is to replace (ADR-0080, PR 4); the drawing's
+ * Off the map is no ground: a neighbour there is left out of a cell's slope (`groundY` is 0 past
+ * the chunks, the curator's review of PR 4). It goes beside the six older checks of steps it is to replace (ADR-0080, PR 4); the drawing's
  * own checks (`ground-over-deck`, `paving-overlap-step`, `marking-step`) stay apart.
  */
 
@@ -100,7 +101,8 @@ export const walkRaster = (chunk: WalkChunk): WalkRaster => {
 /**
  * The slope at a cell from central differences over 0.5 m (ADR-0043), each neighbour more than
  * `SNAP_DOWN` off the cell left out (a one-sided difference, as the ground does by a shaft): a
- * ledge is the pair's own finding, a rise or a drop, not a bank on both of its sides.
+ * ledge is the pair's own finding, a rise or a drop, not a bank on both of its sides. A neighbour
+ * off the map comes as `Infinity` and is left out too: `groundY` is 0 there, no ground of the map.
  */
 const slopeOf = (here: number, east: number, west: number, north: number, south: number): number => {
   const axis = (plus: number, minus: number) => {
@@ -132,7 +134,7 @@ export const overSide = (d: WalkDeck, on: Pt, off: Pt): boolean => {
 };
 
 /** One chunk's findings. */
-const chunkFindings = (chunk: WalkChunk, raster: WalkRaster, world: WalkWorld, flagAt: (x: number, z: number) => number): Finding[] => {
+const chunkFindings = (chunk: WalkChunk, raster: WalkRaster, world: WalkWorld, flagAt: (x: number, z: number) => number, onMap: (x: number, z: number) => boolean): Finding[] => {
   const { w, h, cells } = raster;
   const b = chunk.bounds;
   const heightAt = world.height(chunk);
@@ -141,10 +143,12 @@ const chunkFindings = (chunk: WalkChunk, raster: WalkRaster, world: WalkWorld, f
   const ys = new Float64Array(W * (h + 3)).fill(Number.NaN);
   const cx = (i: number) => b.minX + (i + 0.5) * WALK_CELL;
   const cz = (j: number) => b.minZ + (j + 0.5) * WALK_CELL;
+  const inside = (i: number, j: number) => i >= 0 && j >= 0 && i < w && j < h;
   const y = (i: number, j: number): number => {
     const k = (j + 1) * W + i + 1;
     const v = ys[k]!;
-    return Number.isNaN(v) ? (ys[k] = heightAt(cx(i), cz(j))) : v;
+    if (!Number.isNaN(v)) return v;
+    return (ys[k] = inside(i, j) || onMap(cx(i), cz(j)) ? heightAt(cx(i), cz(j)) : Infinity);
   };
   const cell = (i: number, j: number): WalkCell => {
     const here = y(i, j);
@@ -186,6 +190,12 @@ const chunkFindings = (chunk: WalkChunk, raster: WalkRaster, world: WalkWorld, f
   return out;
 };
 
+/** Is (x, z) in one of the chunks' bounds? */
+export const inChunks =
+  (chunks: readonly WalkChunk[]) =>
+  (x: number, z: number): boolean =>
+    chunks.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
+
 /** The finding's text for a blocked pair, or null when its edge is one the model means. */
 const intended = (world: WalkWorld, pa: Pt, a: WalkCell, pn: Pt, n: WalkCell, block: WalkBlock): string | null => {
   if (world.edge(pa, pn)) return null;
@@ -206,8 +216,8 @@ const stepText = (a: WalkCell, n: WalkCell, block: WalkBlock): string => {
   return `${dy > STEP_HEIGHT ? "ledge" : "step down"} ${dy.toFixed(2)} m`;
 };
 
-/** `walk-blocked` over the chunks. */
-export const walkBlocked = (chunks: readonly WalkChunk[], world: WalkWorld): Finding[] => {
+/** `walk-blocked` over the chunks; `onMap` is where the map has ground (by default the chunks; the whole map's when a probe scans a part of it). */
+export const walkBlocked = (chunks: readonly WalkChunk[], world: WalkWorld, onMap: (x: number, z: number) => boolean = inChunks(chunks)): Finding[] => {
   const rasters = chunks.map(walkRaster);
   const flagAt = (x: number, z: number): number => {
     for (let k = 0; k < chunks.length; k++) {
@@ -218,5 +228,5 @@ export const walkBlocked = (chunks: readonly WalkChunk[], world: WalkWorld): Fin
     }
     return 0;
   };
-  return chunks.flatMap((c, k) => chunkFindings(c, rasters[k]!, world, flagAt));
+  return chunks.flatMap((c, k) => chunkFindings(c, rasters[k]!, world, flagAt, onMap));
 };

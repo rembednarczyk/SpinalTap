@@ -1,5 +1,4 @@
 # walk-blocked: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-1-0 140,-270
 krakowskie-1-0 100,-130
 krakowskie-1-0 110,-130
 krakowskie-2-1 440,40
