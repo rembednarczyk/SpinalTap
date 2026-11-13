@@ -59,10 +59,11 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // v37 version (G-625, a chase's wide way, none in these runs): only the version; as v36 the runs
   // hash to a11206cf and bf8c66f1. Re-recorded for the v38 version (G-643, the next wide way of a
   // chase being made, none in these runs): only the version; as v37 the runs hash to 241eef9e and
-  // 5039197a.
+  // 5039197a. Re-recorded for G-754, the content: the car wash's yard levelled short of
+  // Bajkowskiego, its dumpster and parked car moved onto the level ground (the world, no rule).
   for (const [seed, level, golden, v32, v31, v30, v28, v27] of [
-    [21, 2, "0c79bc9d", "1c0d0ad3", "55a02c1c", "18d6bea3", "5e8676f5", "7e54b2a0"],
-    [5, 3, "6042a2df", "a0370c6d", "2d80f750", "b19791bb", "3a1c66f5", "11bea0a6"],
+    [21, 2, "45d8b0ce", "4ee4413c", "37063947", "ba1d2b72", "d6de4cac", "a4d60fc5"],
+    [5, 3, "f2805c32", "2cff62d8", "07580291", "936ad268", "356b9a82", "d36568dd"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
       const sim = onTheRoof(seed, level);

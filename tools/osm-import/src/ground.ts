@@ -8,6 +8,7 @@ import { parseLength } from "./building-tags.ts";
 import { type Area, type Line } from "./features.ts";
 import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, lineLength, offsetLine, pointAlong, pointInRing, r1, removeCollinear, signedArea, simplifyLine, simplifyRing, sliceLine, stripAlong } from "./geometry.ts";
 import { type WidenRun, widenPieces } from "./kerb-widen.ts";
+import { type RoundEnd, bufferBand, stripBand } from "./line-buffer.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
 import { cutHoles, holeFits, holesApart, notchOut } from "./ring-holes.ts";
@@ -148,9 +149,15 @@ export interface Band {
    * Paving with holes, or a lawn cut out of it (`openPavings`), simplified already: simplifying it
    * again in a chunk would part the lawn from its hole. So is a kerb's fill (`kerbFills`), finer, and
    * a raised lawn's piece on the ground (`groundRaisedGreen`), which shares its cut edges with the next.
+   * So is a band along a line (`bufferBand`, `stripBand`: ADR-0078), its round joins simplified finer.
    */
   readonly holed?: true;
+  /** Where the band's end meets another way and is to be round (`roundJoints`, ADR-0078). */
+  readonly roundEnds?: readonly RoundEnd[];
 }
+
+/** Which of a line's ends meet another way. */
+type JoinedEnds = { readonly start: boolean; readonly end: boolean };
 
 /** Sidewalk sides a road gets: tagged ones, or both on city streets without tags and without mapped sidewalks nearby. */
 export const sidewalkSides = (t: Tags, mappedNearby: boolean): { left: boolean; right: boolean } => {
@@ -176,11 +183,51 @@ export const coveredByWater = (line: readonly Pt[], water: readonly (readonly Pt
  * Bands from one line; `mappedSidewalkNear` tells whether separate sidewalks run along it.
  * A river whose bed is mapped as a water area gets no band of its own: the buffered centre
  * line would lay a second, wider strip over the real banks. A tunnel `atStreet` (a gateway the
- * map tags `tunnel=yes`, G-076) is paved like the street it joins.
+ * map tags `tunnel=yes`, G-076) is paved like the street it joins. The band's end is round
+ * where it lies on a point of `joined` (another way's node, `joinedPoints`) or where the way's
+ * pieces meet, square elsewhere (ADR-0078).
  */
-export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[] = [], atStreet = false): Band[] =>
+export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[] = [], atStreet = false, joined: ReadonlySet<string> = new Set()): Band[] => {
   // A carriageway stays whole for now: its pieces would cut its sidewalks anew (bare ground by a parking aisle's loop in Nabrzeże).
-  (ROAD_WIDTH[l.tags.highway ?? ""] === undefined ? simplePieces(l.line) : [[...l.line]]).flatMap((line) => pieceBands({ ...l, line }, mappedSidewalkNear, water, atStreet));
+  const pieces = ROAD_WIDTH[l.tags.highway ?? ""] === undefined ? simplePieces(l.line) : [[...l.line]];
+  return pieces.flatMap((line, k) => {
+    const ends = { start: k > 0 || joined.has(pointKey(line[0]!)), end: k < pieces.length - 1 || joined.has(pointKey(line[line.length - 1]!)) };
+    return pieceBands({ ...l, line }, mappedSidewalkNear, water, atStreet, ends);
+  });
+};
+
+/** A point's key in `joined` (`joinedPoints`): its exact coordinates. */
+export const pointKey = (p: Pt): string => `${p.x},${p.z}`;
+
+/** The points two or more ways (by id) share: a way's end there meets another way, and its band's end is round (ADR-0078). */
+export const joinedPoints = (lines: readonly Pick<Line, "id" | "line">[]): Set<string> => {
+  const seen = new Map<string, string>();
+  const out = new Set<string>();
+  for (const l of lines) {
+    for (const p of l.line) {
+      const k = pointKey(p);
+      const by = seen.get(k);
+      if (by === undefined) seen.set(k, l.id);
+      else if (by !== l.id) out.add(k);
+    }
+  }
+  return out;
+};
+
+/**
+ * The points ways laid on the ground share (`joinedPoints`): a way under it (a tunnel's mouth) or on
+ * a bridge meets none there, so a band ends square at a tunnel's mouth and at an abutment, the
+ * deck's end over it (G-344).
+ */
+export const groundJoints = (laid: readonly { readonly piece: Line; readonly atStreet: boolean }[]): Set<string> =>
+  joinedPoints(laid.filter(({ piece: { tags: t }, atStreet }) => (!underground(t) || atStreet) && (t.bridge === undefined || t.bridge === "no")).map((x) => x.piece));
+
+/**
+ * A sidewalk's strip (`stripBand`). On a bridge it is laid as before ADR-0078 (`stripAlong`), as
+ * the deck's carriageway is (`bufferLine`): the decks lie apart from the ground, read by their
+ * outline where they meet their steps and abutments, and come over in a step of their own.
+ */
+const laidStrip = (bridge: boolean, line: readonly Pt[], from: number, width: number): Pt[][] => (bridge ? [stripAlong(line, from, width)] : stripBand(line, from, width));
 
 /**
  * A way cut where it comes back to a node of its own (a loop on a tail, G-654): one band laid
@@ -208,43 +255,55 @@ const simplePieces = (line: readonly Pt[]): Pt[][] => {
   return out;
 };
 
-const pieceBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[], atStreet: boolean): Band[] => {
+const pieceBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[], atStreet: boolean, joinedEnds: JoinedEnds): Band[] => {
   const t = l.tags;
   if ((underground(t) && !atStreet) || l.line.length < 2) return [];
   const bridge = t.bridge !== undefined && t.bridge !== "no";
   const deck = bridge ? ([l.line[0]!, l.line[l.line.length - 1]!] as const) : undefined;
+  // A bridge's deck ends square at its abutment.
+  const ends = bridge ? [] : [...(joinedEnds.start ? [l.line[0]!] : []), ...(joinedEnds.end ? [l.line[l.line.length - 1]!] : [])];
   const out: Band[] = [];
-  const add = (surface: GroundSurface, ring: Pt[], extra: Pick<Band, "carriageway" | "kerb" | "along" | "run"> = {}) => {
+  const add = (surface: GroundSurface, ring: Pt[], extra: Pick<Band, "carriageway" | "kerb" | "along" | "run" | "holed" | "roundEnds"> = {}) => {
     if (ring.length >= 3) out.push({ surface, ring, bridge, ...(deck ? { deck } : {}), source: l.id, ...extra });
   };
+  // A buffer's rings are simplified already (`holed`, `line-buffer.ts`); a deck's are laid as before (`laidStrip`).
+  const buffered = (surface: GroundSurface, rings: readonly Pt[][], extra: Pick<Band, "carriageway" | "kerb" | "along" | "roundEnds"> = {}) => {
+    for (const ring of rings) add(surface, ring, { ...extra, ...(bridge ? {} : { holed: true as const }) });
+  };
+  const strip = (from: number, width: number) => laidStrip(bridge, l.line, from, width);
+  // A band that keeps its ring (steps, a zebra) ends square: as wide as it is, it bounds the round ends of the others there.
+  const squareEnds = (half: number): Pick<Band, "roundEnds"> => (ends.length > 0 ? { roundEnds: ends.map((at) => ({ at, half, square: true as const })) } : {});
+  // A band along the way's axis, its ends at other ways to be round.
+  const axial = (surface: GroundSurface, width: number, extra: Pick<Band, "carriageway" | "kerb"> = {}) =>
+    buffered(surface, bridge ? [bufferLine(l.line, width)] : bufferBand(l.line, width), { ...extra, ...(ends.length > 0 ? { roundEnds: ends.map((at) => ({ at, half: width / 2 })) } : {}) });
   const hw = t.highway;
   if (hw && t.area !== "yes") {
     if (ROAD_WIDTH[hw] !== undefined) {
       const w = roadWidth(t);
-      add(cobbled(t) ? "cobble" : "road", bufferLine(l.line, w), { carriageway: true, kerb: { line: l.line, half: w / 2 } });
+      axial(cobbled(t) ? "cobble" : "road", w, { carriageway: true, kerb: { line: l.line, half: w / 2 } });
       const sides = sidewalkSides(t, mappedSidewalkNear);
       const sw = parseLength(t["sidewalk:width"]) ?? (hw === "primary" || hw === "secondary" ? 3 : 2.5);
-      if (sides.left) add("sidewalk", stripAlong(l.line, w / 2, sw), { along: { line: l.line, from: w / 2, width: sw } });
-      if (sides.right) add("sidewalk", stripAlong(l.line, -w / 2 - sw, sw), { along: { line: l.line, from: -w / 2 - sw, width: sw } });
-    } else if (hw === "pedestrian") add(cobbled(t) ? "cobble" : "square", bufferLine(l.line, parseLength(t.width) ?? 8));
+      if (sides.left) buffered("sidewalk", strip(w / 2, sw), { along: { line: l.line, from: w / 2, width: sw } });
+      if (sides.right) buffered("sidewalk", strip(-w / 2 - sw, sw), { along: { line: l.line, from: -w / 2 - sw, width: sw } });
+    } else if (hw === "pedestrian") axial(cobbled(t) ? "cobble" : "square", parseLength(t.width) ?? 8);
     else if (PATHS[hw] !== undefined) {
       const w = pathWidth(t);
       // Steps: one band per straight run, so the renderer reads the flight's direction off it. A
       // bend of a few centimetres starts no new run: it would leave one too short to draw (G-213).
       if (hw === "steps") {
         const runs = simplifyLine(l.line, STEPS_BEND);
-        for (let i = 0; i + 1 < runs.length; i++) add("steps", bufferLine([runs[i]!, runs[i + 1]!], w), { run: [runs[i]!, runs[i + 1]!] });
+        for (let i = 0; i + 1 < runs.length; i++) add("steps", bufferLine([runs[i]!, runs[i + 1]!], w), { run: [runs[i]!, runs[i + 1]!], ...squareEnds(w / 2) });
       }
       // A path's crossing of a carriageway: a zebra where it is marked, the road itself where not.
       else if (crossingWay(t)) {
-        if (markedCrossing({ ...t, highway: "crossing" })) add("crossing", bufferLine(l.line, Math.max(w, CROSSING_ALONG)));
-      } else if (t.footway === "sidewalk") add("sidewalk", bufferLine(l.line, w), { along: { line: l.line, from: -w / 2, width: w } });
-      else add(cobbled(t) ? "cobble" : "footway", bufferLine(l.line, w));
+        if (markedCrossing({ ...t, highway: "crossing" })) add("crossing", bufferLine(l.line, Math.max(w, CROSSING_ALONG)), squareEnds(Math.max(w, CROSSING_ALONG) / 2));
+      } else if (t.footway === "sidewalk") buffered("sidewalk", strip(-w / 2, w), { along: { line: l.line, from: -w / 2, width: w } });
+      else axial(cobbled(t) ? "cobble" : "footway", w);
     }
   }
-  if (t.railway === "rail" || t.railway === "tram" || t.railway === "light_rail") add("rail", bufferLine(l.line, 3));
-  if (t.waterway === "river" && !t.tunnel && !coveredByWater(l.line, water)) add("water", bufferLine(l.line, parseLength(t.width) ?? 15));
-  if ((t.waterway === "stream" || t.waterway === "canal" || t.waterway === "ditch") && !underground(t)) add("water", bufferLine(l.line, parseLength(t.width) ?? 3));
+  if (t.railway === "rail" || t.railway === "tram" || t.railway === "light_rail") axial("rail", 3);
+  if (t.waterway === "river" && !t.tunnel && !coveredByWater(l.line, water)) axial("water", parseLength(t.width) ?? 15);
+  if ((t.waterway === "stream" || t.waterway === "canal" || t.waterway === "ditch") && !underground(t)) axial("water", parseLength(t.width) ?? 3);
   return out;
 };
 
@@ -375,7 +434,8 @@ export const cutSidewalk = (b: Band, onRoad: (p: Pt) => boolean): Band[] => {
   if (runs.length === 1 && runs[0]![0] === 0 && runs[0]![1] >= total - 1e-6) return [b];
   return runs
     .filter(([a, c]) => c - a >= MIN_SIDEWALK)
-    .map(([a, c]) => ({ surface: b.surface, ring: stripAlong(sliceLine(line, a, c), from, width), bridge: b.bridge, ...(b.deck ? { deck: b.deck } : {}), source: b.source }))
+    .flatMap(([a, c]) => laidStrip(b.bridge, sliceLine(line, a, c), from, width))
+    .map((ring) => ({ surface: b.surface, ring, bridge: b.bridge, ...(b.deck ? { deck: b.deck } : {}), source: b.source, ...(b.bridge ? {} : { holed: true as const }) }))
     .filter((r) => r.ring.length >= 3);
 };
 
