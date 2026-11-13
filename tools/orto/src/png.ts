@@ -64,6 +64,11 @@ const unfilter = (raw: Uint8Array, rows: number, stride: number, bpp: number): U
     const f = raw[r * (stride + 1)]!;
     const src = r * (stride + 1) + 1;
     const dst = r * stride;
+    // Unfiltered (as `encodeIndexed4` writes the cover rasters): the row as it is.
+    if (f === 0) {
+      out.set(raw.subarray(src, src + stride), dst);
+      continue;
+    }
     for (let i = 0; i < stride; i++) {
       const x = raw[src + i]!;
       const a = i >= bpp ? out[dst + i - bpp]! : 0;
@@ -92,6 +97,23 @@ const unpack = (data: Uint8Array, width: number, height: number, depth: number):
   const out = new Uint8Array(width * height);
   const per = 8 / depth;
   const mask = (1 << depth) - 1;
+  if (depth === 8) {
+    for (let r = 0; r < height; r++) out.set(data.subarray(r * stride, r * stride + width), r * width);
+    return out;
+  }
+  // Two pixels a byte (the cover rasters), the high nibble first.
+  if (depth === 4) {
+    for (let r = 0; r < height; r++) {
+      const [src, dst] = [r * stride, r * width];
+      for (let x = 0; x + 1 < width; x += 2) {
+        const byte = data[src + (x >> 1)]!;
+        out[dst + x] = byte >> 4;
+        out[dst + x + 1] = byte & 15;
+      }
+      if (width % 2 === 1) out[dst + width - 1] = data[src + (width >> 1)]! >> 4;
+    }
+    return out;
+  }
   for (let r = 0; r < height; r++)
     for (let x = 0; x < width; x++) {
       const byte = data[r * stride + Math.floor(x / per)]!;
