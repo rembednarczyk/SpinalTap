@@ -1764,7 +1764,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-748 Uskok terenu do 3,3 m na szwie kawałków krakowskie-2-1 | stare-miasto-0-1
 - Ważność: S3 · Zasięg: x = 460, z 104–110: teren krakowskie-2-1 −9,20, stare-miasto-0-1 −5,80…−7,12
 - Opis: teren dwóch sąsiednich kawałków rozjeżdża się na szwie; `walk-blocked` (ADR-0080 PR 4): 48 par
-- Status: zgłoszone (13.11, budowniczy ADR-0080 PR 4)
+- Status: w PR (13.11, częściowo: x=460 3,30 → 0,51 m, 12 szwów → 0; gałąź ccr-ec2c4269-ilh8k8-g748); wcześniej: zgłoszone (13.11, budowniczy ADR-0080 PR 4)
 - Pakiet właściciela: packages/sim (content/lublin terrain)
 - Test przyjęcia: `walk-blocked` bez kluczy na szwie x = 460; teren obu kawałków ciągły (różnica ≤ 0,05 m wzdłuż szwu)
 
@@ -1832,6 +1832,20 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, budowniczy walk-blocked)
 - Pakiet właściciela: packages/sim (content/lublin teren, pomosty)
 - Test przyjęcia: `walk-blocked` bez kluczy przy 1070,160 po G-739
+
+### G-758 Import wybiera komórki terenu 4 i 8 m niepodzielne przez 2,5 i 5 m sąsiadów
+- Ważność: S3 · Zasięg: krakowskie-2-1 i inne kawałki siatki 4/8 m; szwy zostają 0,51 / 0,225 / 0,18 m po G-748
+- Opis: `tools/osm-import/src/terrain.ts` `CELLS`: siatka 4 m ma z siatkami 2,5 i 5 m wspólne punkty tylko co 20 m, więc `stitchSeams` nie może jej zszyć; ADR-0043 zakłada wspólny wiersz punktów na szwach
+- Status: zgłoszone (13.11, naprawiacz G-748)
+- Pakiet właściciela: tools/osm-import (teren), packages/sim (content/lublin)
+- Test przyjęcia: na każdym szwie różnica ≤ 0,05 m
+
+### G-759 walk-blocked nie widzi płyt chodnika i podestu Arkad
+- Ważność: S4 · Zasięg: klucze `stare-miasto-0-1 460,100/110/120`, `krakowskie-2-1 450,*`; ok. 500 stromych par po G-748
+- Opis: kontrola z #497 bierze tylko teren, więc obniżenie gruntu pod płytami `arkady.ts` liczy jako uskoki i strome pary
+- Status: zgłoszone (13.11, naprawiacz G-748)
+- Pakiet właściciela: tools/glitch-scan (walk-blocked)
+- Test przyjęcia: `walk-blocked` bez kluczy pod płytami Arkad
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
