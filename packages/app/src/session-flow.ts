@@ -62,6 +62,8 @@ export class SessionFlow implements FlowIntents {
     if (!this.deps.screen.inControl) return;
     // A difficulty that waited for the end of a fight may be in force by now (ADR-0066).
     this.deps.controllers().difficulty.sync();
+    // The pause menu's Wait is off, with its reason, in a fight, an alarm or a pursuit.
+    this.deps.controllers().wait.sync();
     this.deps.screen.set("paused");
   }
 
