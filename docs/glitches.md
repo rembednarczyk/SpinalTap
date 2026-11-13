@@ -1780,6 +1780,20 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (`deck-plan.ts`), packages/sim (`deckDepth`)
 - Test przyjęcia: grubość fascji ciągła względem prześwitu; spód nigdy nie wystaje poniżej fascji (test na siatce pomostu); zrzut kładki z dołu bez trójkątów
 
+### G-744 Pasy ruchu biorą odsunięcie od zmierzonego zasięgu asfaltu: przesunięcie krawędzi jezdni o centymetry daje kolizje aut
+- Ważność: S3 · Zasięg: ruch w całym mieście; ujawnione przez etap 2 ADR-0078 (łuki łączeń zmieniają zasięg asfaltu o kilka cm, pasy przesuwają się do 12 cm): `traffic-junction-drive` przy 3 Maja (1 ziarno z 12), Kołłątaja/Zesłańców Sybiru (−108; −149) seed 10, Cicha seed 30; na main 0
+- Opis: `reachAt`/`roadHalfWidth` w `sim/content/traffic.ts` liczą odsunięcie pasów od zmierzonego asfaltu, bez minimalnego odstępu przeciwnych pasów; kruche wobec każdej zmiany geometrii nawierzchni
+- Status: w naprawie (13.11, zgłoszone przez budowniczego etapu 2 ADR-0078); blokuje scalenie etapu 2
+- Pakiet właściciela: packages/sim (content/traffic)
+- Test przyjęcia: `traffic-junction-drive` zielony na gałęzi etapu 2 (12/12 ziaren), probe seedów 1–40 bez kolizji na main i na gałęzi; złoty hash świadomie
+
+### G-745 `pnpm osm:props` nie jest idempotentne: wynik zależy od poprzedniego `props.generated.ts`
+- Ważność: S3 · Zasięg: generator rekwizytów czyta przez sim własny poprzedni wynik; punkt stały dopiero po drugim przebiegu (pierwszy dał `figure-in-crowd` 2 przy (−74; 160))
+- Opis: niedeterministyczny proces budowy danych: ten sam wejściowy OSM daje różne tablice zależnie od stanu pliku wyjściowego; łamie powtarzalność i porównania przed/po
+- Status: zgłoszone (13.11, budowniczy etapu 2 ADR-0078)
+- Pakiet właściciela: tools/osm-import (props), packages/sim (odczyt rekwizytów)
+- Test przyjęcia: dwa kolejne `osm:props` z tego samego wejścia i z pustego/innego `props.generated.ts` dają ten sam plik bajt w bajt (test w osm-import)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
