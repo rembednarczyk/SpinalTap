@@ -10,6 +10,7 @@ import { ALCHEMIA_AREAS } from "./corrections-alchemia.ts";
 import { CZECHOWICZA_AREAS } from "./corrections-czechowicza.ts";
 import { ADDED_AREAS_TAIL, TAG_CORRECTIONS_TAIL } from "./corrections-kerb.ts";
 import { LANDMARK_HEIGHT_CORRECTIONS } from "./corrections-landmarks.ts";
+import { SURFACE_STOREYS } from "./corrections-surface.ts";
 import { PODZAMCZE_AREAS } from "./corrections-podzamcze.ts";
 import { type Tags } from "./osm.ts";
 
@@ -160,6 +161,7 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
   ...stairs(["w1435832498", "w56965512", "w1305889407", "w1305940838", "w48500135", "w1306105686"], "podesty"),
   ...TAG_CORRECTIONS_TAIL,
   ...LANDMARK_HEIGHT_CORRECTIONS,
+  ...SURFACE_STOREYS,
 ];
 
 /**

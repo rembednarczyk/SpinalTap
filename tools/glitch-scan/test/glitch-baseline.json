@@ -75,6 +75,7 @@
   "osm-tower-default-height": 1,
   "tower-area-missing": 0,
   "church-over-nmpt": 0,
+  "height-vs-nmpt": 0,
   "height-vs-lod1": 1,
   "flat-over-lod2-roof": 1,
   "lod2-ridge-across": 0,
