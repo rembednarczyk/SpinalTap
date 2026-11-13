@@ -247,6 +247,7 @@ export const plWorld = {
   "dash.cooldown": "Zryw za {seconds} s",
   "contract.hooks": "Odkryte haki",
   "hud.health": "Zdrowie",
+  "hud.openJournal": "Otwórz dziennik",
   "hud.ability.ready": "gotowe",
   "hud.medkits": "Apteczki × {count}",
   "contract.untitled": "Zlecenie",

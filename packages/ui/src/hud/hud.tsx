@@ -9,15 +9,15 @@ import { Minimap } from "./minimap";
 import { Toasts } from "./toasts";
 import { WeaponStrip } from "./weapon-strip";
 import type { TouchPadSink } from "../touch/touch-pad-sink";
-import { BonusIndicator } from "./contract-card";
 import { DamageNumbers } from "./damage-numbers";
 import { ScannerHud } from "./scanner";
 import { DetectionRing, HeatStars } from "./stealth";
 import { PhoneNotice } from "../phone/phone";
-import { BuffIcons, DashIcon, DisguiseBadge, HookList, OverPoolBadge } from "./body-hud";
+import { BuffIcons, DashIcon, DisguiseBadge, OverPoolBadge } from "./body-hud";
 import { useViewportAspect } from "./use-viewport-aspect";
 import { useRecentChange } from "./use-recent-change";
 import { XpHud } from "./xp-hud";
+import { ObjectiveCard } from "./objective-card";
 
 /** Default vertical field of view of the game camera at 16:9 in radians (engine CameraRig, ADR-0049; the settings and the screen change it). */
 export const HUD_CAMERA_FOV = hipVerticalFov(DEFAULT_HORIZONTAL_FOV, 16 / 9);
@@ -133,8 +133,7 @@ const Hint = () => {
   );
 };
 
-/** Key hints such as " [E]" in an objective line; a touch screen has no keys to name (ADR-0035). */
-export const withoutKeyHints = (text: string): string => text.replace(/\s*\[[A-Za-z0-9]{1,5}\]/g, "");
+export { withoutKeyHints } from "./objective-card";
 
 export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const t = useT();
@@ -142,8 +141,6 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const maxHp = useUi((s) => s.maxHp);
   const eddies = useUi((s) => s.eddies);
   const alias = useUi((s) => s.alias);
-  const questTitle = useUi((s) => s.questTitle);
-  const objective = useUi((s) => s.objective);
   const cameraMode = useUi((s) => s.cameraMode);
   const prompt = useUi((s) => s.prompt);
   const promptHold = useUi((s) => s.promptHold);
@@ -186,14 +183,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
         <span className="hud__currency">€$</span> {eddies.toLocaleString("pl-PL")}
       </div>
       <Clock />
-      {objective && (
-        <div className="hud__objective" data-testid="objective">
-          <div className="hud__quest-title">{questTitle}</div>
-          <div>{touch ? withoutKeyHints(objective) : objective}</div>
-          <BonusIndicator />
-          <HookList />
-        </div>
-      )}
+      <ObjectiveCard touch={!!touch} />
       <HeatStars />
       <AbilityWidget />
       <DashIcon />
