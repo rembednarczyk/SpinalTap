@@ -112,6 +112,8 @@ Czas `generate` dla Krakowskiego (dziś): 1270–1960 ms. Maszyna była współd
 
 1. **Kontrole w skanie** (bez zmiany importu): `ground-ring-self-cross` (G-659, baza z przebiegu, ok. 30) i `ground-overlap-area` (pole zakładek różnych nawierzchni, dziś duże z założenia; liczone do raportu, bez bazy, dopóki krok 3 nie wejdzie).
 2. **Bufor linii:** `lineBands` na `inflatePaths` z łączeniami okrągłymi i zakończeniami jak w punkcie 3 decyzji, suma pasa (NonZero). Format `GroundOut` bez zmian: jeden pierścień, dziury szwami (`cutHoles`). Oczekiwane: `ground-ring-self-cross` 30 → 0; zamknięte G-654, G-658 i rogi z G-671. `kerb-gap-bare` spada nieznacznie (pomiar: −2…−3% szczelin).
+   - *Wykonanie (13.11, `tools/osm-import/src/line-buffer.ts`, `roundJoints`, razem z G-744):* `ground-ring-self-cross` 30 → 8, `kerb-gap-bare` 897 → 879 kluczy skanu. Koszt: `osm:build` +20%, test „sign nearly all” w `venues.test.ts` +29% (pomiar pod obciążeniem), ponad próg +15%; przyjęte decyzją użytkownika 13.11 z wpisem do długu w [ADR-0046](0046-strategia-testow-e2e.md).
+   - *Znany błąd po etapie:* G-760, szczeliny 5–10 cm w złączach pasów jezdni po zaokrągleniu do 0,1 m (np. dziura w jezdni Kalinowszczyzny przy 2340,427, klucz `car-lane-off-road`). `roundJoints` pomija kawałki mniejsze niż SLIVER i liczy pokrycie przed zaokrągleniem. Poprawka w `line-buffer.ts` osobnym PR po scaleniu etapu.
 3. **Podział płaszczyzny** w kawałku: suma nawierzchni minus suma wyższych. Przedtem trzeba przejrzeć odbiorców, którzy dziś zakładają nakładanie:
    - `surfacesAt`, `onRoad` i `surfaceLiftAt` w `packages/sim/src/content/lublin/roads.ts` (pod chodnikiem nie będzie już „road”);
    - `SURFACE_LIFT` w rendererze;
