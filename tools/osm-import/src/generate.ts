@@ -411,8 +411,8 @@ export const generate = (
   // A band's end is round where its way meets another on the ground, as far as nothing else covers it: the corner square ends left bare (ADR-0078, G-658).
   const joined = groundJoints(laidLines);
   for (const { piece, mapped, atStreet: at } of laidLines) for (const b of lineBands(piece, mapped, water, at, joined)) bands.push({ ...b, box: ringBounds(b.ring) });
-  // A gap's patch is no carriageway, sidewalk or kerb: only the ground of its band (G-760).
-  const patch = (of: Band, ring: Pt[]) => ({ surface: of.surface, ring, bridge: false, source: of.source, holed: true as const, patch: true as const });
+  // A gap's patch is no carriageway, sidewalk or kerb: only the ground of its band (G-760); a slit is laid edge to edge (G-777).
+  const patch = (of: Band, ring: Pt[], slit?: true) => ({ surface: of.surface, ring, bridge: false, source: of.source, holed: true as const, patch: true as const, ...(slit ? { slit } : {}) });
   bands.splice(0, bands.length, ...roundJoints(bands, patch).map((b) => ({ ...b, box: ringBounds(b.ring) })));
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.flatMap(carriageway).filter((l) => l.tags.highway !== undefined && near(l.line));
@@ -452,6 +452,10 @@ export const generate = (
   const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), (source) => !measured.has(source), walks);
   for (const [b, { ring, runs }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
+  // A slit a carriageway is widened over to its paving is covered: it would lie under the widening (G-777).
+  const widened = [...kerbs.widened.values()].map((w) => ({ ring: w.ring, box: ringBounds(w.ring) }));
+  const underWidened = (b: Band & { box: Rect }) => widened.some((w) => rectsOverlap(w.box, b.box) && pointInRing(centroid(b.ring), w.ring));
+  bands.splice(0, bands.length, ...bands.filter((b) => !b.slit || !underWidened(b)));
   // The carriageways' reach each side of their axes, fitted and widened, for the traffic's lanes (ADR-0080).
   const halves = streetHalves(bands);
   const nodeZebras = bands.filter((b) => b.surface === "crossing" && b.source.startsWith("n"));

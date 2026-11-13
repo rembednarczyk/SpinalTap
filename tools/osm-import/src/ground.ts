@@ -156,6 +156,8 @@ export interface Band {
   readonly roundEnds?: readonly RoundEnd[];
   /** A gap's patch in a joint (`roundJoints`, G-760): an overlay, read by no kerb and no fill from the cover. */
   readonly patch?: true;
+  /** A crack's patch laid edge to edge between bands of two surfaces (`roundJoints`, G-777): kept in a chunk however small. */
+  readonly slit?: true;
 }
 
 /** Which of a line's ends meet another way. */
@@ -462,7 +464,7 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
     // keeps its share however small: a chunk's edge cutting a strip of it short would leave a gap
     // by the next piece (G-665).
     const area = signedArea(round(simple));
-    if (b.holed && b.surface === "grass" ? area < MIN_SHARE : Math.abs(area) < 0.5) return widen(null);
+    if (b.holed && (b.surface === "grass" || b.slit) ? area < MIN_SHARE : Math.abs(area) < 0.5) return widen(null);
     // Steps are cut into strips in the chunk, so a piece its edge cuts short is cut too; the
     // strips of a piece kept are all kept, however small, or the flight would have gaps.
     const pieces = b.run ? flightStrips(simple, ...b.run).map(round) : [round(simple)];

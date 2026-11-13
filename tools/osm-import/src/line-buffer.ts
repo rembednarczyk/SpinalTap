@@ -12,7 +12,7 @@
  */
 import { EndType, FillRule, JoinType, type Path64, type Paths64, difference, inflatePaths, intersect, isPositive, simplifyPaths, union } from "clipper2-ts";
 import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
-import { type Pt, ccw, offsetLine, pointInRing, r1, ringBounds, selfIntersects, signedArea } from "./geometry.ts";
+import { type Pt, ccw, offsetLine, pointInRing, r1, removeCollinear, ringBounds, selfIntersects, signedArea } from "./geometry.ts";
 import { cutHoles } from "./ring-holes.ts";
 
 /** Clipper's grid: millimetres. */
@@ -139,6 +139,11 @@ const bareBits = (end: RoundEnd, covered: Paths64): Paths64 => {
 /** A path's points rounded to the tables' 0.1 m (`r1`), as the ground is drawn. */
 const onGrid = (p: Path64): Path64 => p.map((q) => ({ x: Math.round(r1(q.x / SCALE) * SCALE), y: Math.round(r1(q.y / SCALE) * SCALE) }));
 
+const small = (paths: Paths64) => paths.reduce((s, p) => s + areaOf(p), 0) < MIN_CAP * SCALE * SCALE;
+const grow = (paths: Paths64, d: number) => inflatePaths(paths, d * SCALE, JoinType.Round, EndType.Polygon, 2, ARC * SCALE);
+/** A crack: its part wider than `2 * SLIVER` is smaller than `MIN_CAP`. */
+const crack = (p: Path64) => small([p]) || small(grow(grow([p], -SLIVER), SLIVER));
+
 /**
  * The gaps a round end leaves between the bands meeting at its point, on the 0.1 m grid the tables
  * round them to (G-760): a crack between the bands of its surface (`same`), as two streets' square
@@ -151,11 +156,7 @@ const onGrid = (p: Path64): Path64 => p.map((q) => ({ x: Math.round(r1(q.x / SCA
  * rounding moves their edges: an overlay in the joint, not a bit edge to edge.
  */
 const gapFills = (end: RoundEnd, same: Paths64, all: Paths64): Paths64 => {
-  const grow = (paths: Paths64, d: number) => inflatePaths(paths, d * SCALE, JoinType.Round, EndType.Polygon, 2, ARC * SCALE);
   const round = disc(end);
-  const small = (paths: Paths64) => paths.reduce((s, p) => s + areaOf(p), 0) < MIN_CAP * SCALE * SCALE;
-  // A crack: its part wider than `2 * SLIVER` is smaller than `MIN_CAP`.
-  const crack = (p: Path64) => small([p]) || small(grow(grow([p], -SLIVER), SLIVER));
   const cracks = difference(round, same, FillRule.NonZero).filter((p) => isPositive(p) && crack(p));
   const wedges = difference(round, all, FillRule.NonZero).filter((p) => isPositive(p) && !crack(p));
   if (cracks.length + wedges.length === 0) return [];
@@ -163,6 +164,26 @@ const gapFills = (end: RoundEnd, same: Paths64, all: Paths64): Paths64 => {
   const lap = inflatePaths([...cracks, ...wedges], SLIVER * SCALE, JoinType.Miter, EndType.Polygon, 2);
   return intersect(lap, disc({ at: end.at, half: end.half + SLIVER }), FillRule.NonZero).filter((p) => isPositive(p));
 };
+
+/**
+ * The cracks a joint leaves bare between bands of two surfaces, its patches laid (G-777): between
+ * the cuts of a street and a square's way ending on its node a few degrees apart, or between a
+ * patch and the steps it stays off; and the narrow ends of a wider bare piece (narrower than
+ * `2 * SLIVER`), as such a crack running into the ground no band covers. `gapFills` takes a crack
+ * between bands of one surface, grown to lap over them; of two surfaces, one would lap over the
+ * other. These are laid as they are, between the bands as the tables round them: edge to edge.
+ */
+const slitFills = (end: RoundEnd, all: Paths64): Paths64 => {
+  const bare = difference(disc(end), all, FillRule.NonZero).filter((p) => isPositive(p));
+  const wide = bare.filter((p) => !crack(p));
+  return [...bare.filter(crack), ...difference(wide, grow(grow(wide, -SLIVER), SLIVER), FillRule.NonZero).filter((p) => isPositive(p))];
+};
+
+/** A slit smaller than this is dropped (m²): a speck of the rounding, five cells of the 0.1 m grid. */
+const MIN_SLIT = 0.05;
+
+/** Patches as rings, on the grid before the union: a thin patch rounded after it would cross itself. */
+const onGridRings = (fills: Paths64): Pt[][] => asRings(union(fills.map(onGrid), FillRule.NonZero)).filter((r) => !selfIntersects(r.map((p) => ({ x: r1(p.x), z: r1(p.z) }))));
 
 /** Whether `bit` joins `ring` along an edge (`TOUCH` long at least), not at a point. */
 const touches = (bit: Path64, ring: Paths64): boolean =>
@@ -172,7 +193,7 @@ const touches = (bit: Path64, ring: Paths64): boolean =>
 const OVER: ReadonlySet<string> = new Set(["steps", "crossing"]);
 
 /** A band laid over a gap in a joint (`gapFills`), of the band `of` whose end it joins (its surface). */
-export type Patch<B> = (of: B, ring: Pt[]) => B;
+export type Patch<B> = (of: B, ring: Pt[], slit?: true) => B;
 
 /**
  * The bands' ends at other ways made round, as far as nothing else covers the round end: the
@@ -229,11 +250,10 @@ export const roundJoints = <B extends JointBand>(bands: readonly B[], patch?: Pa
       }
     }
   }
-  const patches = new Map<number, Pt[][]>();
+  const patches = new Map<number, { ring: Pt[]; slit?: true }[]>();
   const laidOf = (ks: readonly number[]) => union(ks.flatMap((k) => rings.get(k)!.map(onGrid)), FillRule.NonZero);
   for (const list of patch ? ends.values() : []) {
     const meeting = [...new Set(list.map((e) => e.i))];
-    if (meeting.length < 2) continue;
     // As the tables round them: the bands meeting here of each surface, every band near (a sidewalk,
     // a square's area: a wedge under it is no gap), and the patches laid on them before. Steps and
     // zebras near cover a crack of any surface, and no patch laps onto them: they lie a few
@@ -250,19 +270,26 @@ export const roundJoints = <B extends JointBand>(bands: readonly B[], patch?: Pa
       if (end.square) continue;
       const surface = bands[i]!.surface;
       const own = same.get(surface) ?? laidOf([...meeting.filter((k) => bands[k]!.surface === surface), ...over]);
-      const gaps = gapFills(roundEnd(list, i, end), own, all);
+      // Of two bands' ends at least; a slit, of a band's end alone on another way's node too.
+      const gaps = meeting.length > 1 ? gapFills(roundEnd(list, i, end), own, all) : [];
       const fills = (over.length > 0 ? difference(gaps, above, FillRule.NonZero).filter((f) => isPositive(f)) : gaps).filter((f) => touches(f, rings.get(i)!));
-      // On the grid before the union: a thin patch rounded after it would cross itself.
-      const kept = asRings(union(fills.map(onGrid), FillRule.NonZero)).filter((r) => !selfIntersects(r.map((p) => ({ x: r1(p.x), z: r1(p.z) }))));
+      const kept = onGridRings(fills);
       const on = kept.map((r) => onGrid(toPath(r)));
       same.set(surface, union(own, on, FillRule.NonZero));
       all = union(all, on, FillRule.NonZero);
-      if (kept.length > 0) patches.set(i, [...(patches.get(i) ?? []), ...kept]);
+      const mine = union(laidOf([i]), on, FillRule.NonZero);
+      // Not a stream's: the water's areas, laid after, lie over its joints in one plane with it.
+      // As a chunk rounds them (`chunkGround`): a slit pinched at a point would cross itself there.
+      const slits = (surface === "water" ? [] : onGridRings(slitFills(roundEnd(list, i, end), all).filter((f) => touches(f, mine)))).filter(
+        (r) => Math.abs(signedArea(r)) >= MIN_SLIT && !selfIntersects(removeCollinear(r.map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02)),
+      );
+      all = union(all, slits.map((r) => onGrid(toPath(r))), FillRule.NonZero);
+      if (kept.length + slits.length > 0) patches.set(i, [...(patches.get(i) ?? []), ...kept.map((ring) => ({ ring })), ...slits.map((ring) => ({ ring, slit: true as const }))]);
     }
   }
   return bands.flatMap((b, i) => {
     const [ring] = changed.has(i) ? asRings(rings.get(i)!) : [];
     const own = ring ? { ...b, ring, holed: true as const } : b;
-    return [own, ...(patches.get(i) ?? []).map((r) => patch!(own, r))];
+    return [own, ...(patches.get(i) ?? []).map((r) => patch!(own, r.ring, r.slit))];
   });
 };

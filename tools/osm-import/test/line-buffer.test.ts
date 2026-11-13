@@ -89,6 +89,56 @@ describe("bands along lines on Clipper2 (ADR-0078, step 2)", () => {
     expect(gaps).toEqual([]);
   });
 
+  it("closes the crack between ways of two surfaces meeting end to end, the patch lapping over the other by the rounding only (G-777)", () => {
+    // A street ending on a pedestrian street's end, a footway's or a cobbled one's, a few degrees
+    // apart, the node off the 0.1 m grid: as Podzamcze (837.3, 206.5) is laid. The crack between the
+    // two cuts is too narrow for a round end's bit, and of two surfaces.
+    const cases: (readonly [number, number, number, number, Line["tags"]])[] = [
+      [837.27, 206.49, 84.1, 90.3, { highway: "pedestrian", width: "4" }],
+      [12.34, 56.78, 0, 4.5, { highway: "footway", width: "3" }],
+      [-40.07, 18.93, 47.3, 52.1, { highway: "pedestrian", surface: "sett", width: "5" }],
+      [930.35, 331.45, 95.8, 91.4, { highway: "footway", width: "2.5" }],
+    ];
+    const dir = (deg: number) => ({ x: Math.cos((deg * Math.PI) / 180), z: Math.sin((deg * Math.PI) / 180) });
+    const offEdge = (p: Pt, r: readonly Pt[]) =>
+      Math.min(
+        ...r.map((a, i) => {
+          const b = r[(i + 1) % r.length]!;
+          const t = Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.z - a.z) * (b.z - a.z)) / ((b.x - a.x) ** 2 + (b.z - a.z) ** 2 || 1)));
+          return Math.hypot(p.x - a.x - t * (b.x - a.x), p.z - a.z - t * (b.z - a.z));
+        }),
+      );
+    const bare: string[] = [];
+    const over: string[] = [];
+    for (const [x, z, inDeg, outDeg, tags] of cases) {
+      const [u, v] = [dir(inDeg), dir(outDeg)];
+      const a = line("w1", { highway: "residential", width: "7", sidewalk: "no" }, [[x - 40 * u.x, z - 40 * u.z], [x, z]]);
+      const b = line("w2", tags, [[x, z], [x + 40 * v.x, z + 40 * v.z]]);
+      const joined = joinedPoints([a, b]);
+      const bands = [...lineBands(a, false, [], false, joined), ...lineBands(b, false, [], false, joined)];
+      const out = roundJoints(bands, (of, ring) => ({ surface: of.surface, ring, bridge: false, source: `patch ${of.source}` }));
+      const rings = out.map((r) => r.ring.map((p) => ({ x: r1(p.x), z: r1(p.z) })));
+      // The 0.1 m cells in the joint, as far as the narrower way's half width (the round end's disc, its
+      // arc 0.1 m in from the circle at most): bare ones only specks of the rounding, 0.05 m² a joint
+      // at most (61 cells, 0.6 m², before); a patch over a band of another surface no farther in than a cell.
+      const half = Math.min(7, Number(tags.width)) / 2 - 0.1;
+      const specks: string[] = [];
+      for (let i = -40; i <= 40; i++) {
+        for (let k = -40; k <= 40; k++) {
+          const p = { x: Math.floor(x * 10 + i) / 10 + 0.05, z: Math.floor(z * 10 + k) / 10 + 0.05 };
+          if (Math.hypot(p.x - x, p.z - z) > half) continue;
+          const under = out.map((r, n) => ({ ...r, laid: rings[n]! })).filter((r) => pointInRing(p, r.laid));
+          if (under.length === 0) specks.push(`${p.x.toFixed(2)},${p.z.toFixed(2)}`);
+          for (const patch of under.filter((r) => r.source.startsWith("patch"))) {
+            if (under.some((r) => r.surface !== patch.surface && offEdge(p, r.laid) > 0.1)) over.push(`${p.x.toFixed(2)},${p.z.toFixed(2)}`);
+          }
+        }
+      }
+      if (specks.length > 5) bare.push(...specks);
+    }
+    expect({ bare, over }).toEqual({ bare: [], over: [] });
+  });
+
   it("lays no gap's patch over a flight of steps ending at the joint (G-760)", () => {
     // Two footways bending on a node off the grid, a flight of steps up from it between them: the
     // footways' crack and wedge reach under the steps, which cover them.
