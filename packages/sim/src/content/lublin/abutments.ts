@@ -1,4 +1,4 @@
-import { type GroundPoint, segmentDistance } from "@seki/core";
+import { type GroundPoint, type TerrainGrid, segmentDistance } from "@seki/core";
 import { DECK_DEPTH, type GroundDeck, deckAt, makeDeck } from "../../world/deck";
 import { FLIGHT_CELL, type Ramp, mapHeight } from "./shape";
 import type { LublinChunkData } from "./types";
@@ -95,16 +95,17 @@ const onto = (decks: readonly GroundDeck[], p: GroundPoint, q: GroundPoint): num
   return hi;
 };
 
-/** How far under a deck's edge a flight's top ramps keep the ground (m): else it shows through the deck's paving (G-686). */
+/** How far under a deck's edge the ground is kept (m): else it shows through the deck's paving (G-686, G-736). */
 const UNDER = 0.05;
 /** How much more per metre in from the edge (m/m). */
 const FALL = 0.1;
 
 /**
- * The highest a flight's top ramps lay the ground at (x, z): under a deck, `UNDER` beneath it at
- * its edge and falling in from there; off one, no bound. Not level `UNDER` beneath it: the
- * terrain is bilinear on its grid, so between a point under the deck and the street off its
- * corner, higher than the deck (Zamkowa by w294098693), it still came through the deck's paving.
+ * The highest a flight's top ramps and `underDecks` leave the ground at (x, z): under a deck,
+ * `UNDER` beneath it at its edge and falling in from there; off one, no bound. Not level `UNDER`
+ * beneath it: the terrain is bilinear on its grid, so between a point under the deck and the
+ * street off its corner, higher than the deck (Zamkowa by w294098693), it still came through the
+ * deck's paving.
  */
 const underDeck = (decks: readonly GroundDeck[], x: number, z: number): number => {
   const y = deckAt(decks, x, z);
@@ -117,6 +118,137 @@ const underDeck = (decks: readonly GroundDeck[], x: number, z: number): number =
     }
   }
   return y - UNDER - FALL * depth;
+};
+
+/** How finely a cell of a grid is read for the terrain over a deck (pieces a side): 0.25 m on a 2.5 m grid, as the glitch scan does. */
+const READ = 10;
+/** How much a point under a deck is lowered at a time (m). */
+const DROP = 0.01;
+/**
+ * The most the ground off the decks by their edges is lowered with the points under them below
+ * the deck, or below where it was if lower (m): the glitch scan's centimetre of the paving's lift.
+ * Lower, the deck's fascia shows along its end as a step, and the walker stops at one of 0.15 m.
+ */
+const OFF_DROP = 0.01;
+
+/** A cell of a grid by a deck: the deck's height at its samples (null off it), and its corners under a deck as world keys. */
+interface DeckCell {
+  readonly g: TerrainGrid;
+  readonly at: readonly number[];
+  readonly decks: readonly (number | null)[];
+  /** The highest of them. */
+  readonly top: number;
+  readonly corners: readonly (string | null)[];
+}
+
+/** The cells of `g` with a corner under one of `decks`. */
+const deckCells = (g: TerrainGrid, decks: readonly GroundDeck[]): DeckCell[] => {
+  const out = new Map<number, DeckCell>();
+  for (const d of decks) {
+    // A cell before the box's side has its corner in it.
+    const [i0, i1] = [Math.max(0, Math.floor((d.box.minX - g.originX) / g.cell) - 1), Math.min(g.cols - 2, Math.floor((d.box.maxX - g.originX) / g.cell))];
+    const [j0, j1] = [Math.max(0, Math.floor((d.box.minZ - g.originZ) / g.cell) - 1), Math.min(g.rows - 2, Math.floor((d.box.maxZ - g.originZ) / g.cell))];
+    for (let i = i0; i <= i1; i++) {
+      for (let j = j0; j <= j1; j++) {
+        if (out.has(j * g.cols + i)) continue;
+        const at = [j * g.cols + i, j * g.cols + i + 1, (j + 1) * g.cols + i, (j + 1) * g.cols + i + 1];
+        const corners = at.map((k) => {
+          const [x, z] = [g.originX + (k % g.cols) * g.cell, g.originZ + Math.floor(k / g.cols) * g.cell];
+          return deckAt(decks, x, z) === null ? null : `${x},${z}`;
+        });
+        if (corners.every((c) => c === null)) continue;
+        const samples: (number | null)[] = [];
+        for (let a = 0; a <= READ; a++) for (let b = 0; b <= READ; b++) samples.push(deckAt(decks, g.originX + (i + a / READ) * g.cell, g.originZ + (j + b / READ) * g.cell));
+        out.set(j * g.cols + i, { g, at, decks: samples, top: Math.max(...samples.filter((y) => y !== null)), corners });
+      }
+    }
+  }
+  return [...out.values()];
+};
+
+/**
+ * Over a cell, its corners lowered by `drop`: does the terrain lie anywhere over the deck (`over`),
+ * and how much lower than it was, or than the deck where it was over it, does it lie anywhere off
+ * the decks (`off`)? Bilinear, as `terrainHeightAt`.
+ */
+const readCell = (c: DeckCell, drop: ReadonlyMap<string, number>): { over: boolean; off: number } => {
+  const h = c.at.map((k) => c.g.heights[k]!);
+  const d = c.corners.map((key) => drop.get(key ?? "") ?? 0);
+  const at = (v: readonly number[], tx: number, tz: number) => (v[0]! * (1 - tx) + v[1]! * tx) * (1 - tz) + (v[2]! * (1 - tx) + v[3]! * tx) * tz;
+  let [over, off] = [false, 0];
+  for (let a = 0; a <= READ; a++) {
+    for (let b = 0; b <= READ; b++) {
+      const y = c.decks[a * (READ + 1) + b];
+      const [tx, tz] = [a / READ, b / READ];
+      if (y === null || y === undefined) off = Math.max(off, at(d, tx, tz) - Math.max(0, at(h, tx, tz) - c.top));
+      else if (at(h, tx, tz) - at(d, tx, tz) > y) over = true;
+    }
+  }
+  return { over, off };
+};
+
+/** How far each corner under a deck of `cells` may be lowered: down to `underDeck`, by world key. */
+const deepest = (cells: readonly DeckCell[], decks: readonly GroundDeck[]): Map<string, number> => {
+  const most = new Map<string, number>();
+  for (const c of cells) {
+    c.corners.forEach((key, n) => {
+      if (key === null || most.has(key)) return;
+      const [x, z] = key.split(",").map(Number) as [number, number];
+      most.set(key, Math.max(0, c.g.heights[c.at[n]!]! - underDeck(decks, x, z)));
+    });
+  }
+  return most;
+};
+
+/** How much each point under the decks is lowered (`underDecks`), by world key. */
+const deckDrops = (cells: readonly DeckCell[], decks: readonly GroundDeck[]): Map<string, number> => {
+  const most = deepest(cells, decks);
+  const around = new Map<string, DeckCell[]>();
+  for (const c of cells) for (const key of c.corners) if (key !== null) around.set(key, [...(around.get(key) ?? []), c]);
+  const drop = new Map<string, number>();
+  let over = cells.filter((c) => readCell(c, drop).over);
+  while (over.length > 0) {
+    let lowered = false;
+    for (const c of over) {
+      for (const key of c.corners) {
+        if (key === null) continue;
+        const was = drop.get(key) ?? 0;
+        const d = Math.min(most.get(key)!, was + DROP);
+        if (d <= was) continue;
+        drop.set(key, d);
+        if (around.get(key)!.some((n) => readCell(n, drop).off > OFF_DROP)) [drop, most].forEach((m) => m.set(key, was));
+        else lowered = true;
+      }
+    }
+    if (!lowered) break;
+    over = over.filter((c) => readCell(c, drop).over);
+  }
+  return drop;
+};
+
+/**
+ * The shaped grids of the map's chunks with the terrain kept under every bridge's deck (G-736):
+ * in a cell where it lies anywhere over a deck, its corners under the decks are lowered a
+ * centimetre at a time until it lies under it, down to `underDeck` at most. The terrain off a deck
+ * by its edge is bilinear with these points: it may come down to the deck, not `OFF_DROP` below
+ * it. Lowered to `underDeck` at once, it fell 0.19 m before Mełgiewska's west end by its sidewalk
+ * (0.16 m under the carriageway there), a step the walker stopped at, and up to 0.1 m with the
+ * fascia showing along the ends. So the terrain stays over a deck where it is level with the
+ * ground before an end lower than it, or before a deck falling steeply from its end: Zamkowa's
+ * deck over the footway's tunnel (G-088) by its north-east end, Mełgiewska's sidewalk by Andersa
+ * 0.16 m under its carriageway. Where the terrain lies under the deck it is kept, else a road
+ * drawn on to the deck lies a millimetre off its plane (G-320). By world point over all the
+ * chunks: a point two of them share is lowered in both.
+ */
+export const underDecks = (chunks: readonly LublinChunkData[], grids: ReadonlyMap<string, TerrainGrid>): Map<string, TerrainGrid> => {
+  const decks = mapDecks(chunks, (x, z) => mapHeight(chunks, x, z));
+  const drop = deckDrops([...grids.values()].flatMap((g) => deckCells(g, decks)), decks);
+  return new Map(
+    [...grids].map(([id, g]) => {
+      const heights = g.heights.map((h, k) => h - (drop.get(`${g.originX + (k % g.cols) * g.cell},${g.originZ + Math.floor(k / g.cols) * g.cell}`) ?? 0));
+      return [id, { ...g, heights }];
+    }),
+  );
 };
 
 /**

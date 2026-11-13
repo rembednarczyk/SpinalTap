@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { terrainHeightAt } from "@seki/core";
-import { FLIGHT_CELL, STEP_RISE, flightRamps, refineGrid, shapeGrid } from "../src/content/lublin/shape";
+import { FLIGHT_CELL, STEP_RISE, flightGrid, flightRamps, refineGrid, shapeGrid } from "../src/content/lublin/shape";
+import { underDecks } from "../src/content/lublin/abutments";
 import { inBuilding } from "../src/content/lublin/places";
 import { FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS } from "../src/content/lublin/sites";
 import { SHAPED_TERRAIN } from "../src/content/lublin/terrain";
 import type { LublinChunkData, LublinFlightData } from "../src/content/lublin/types";
+
+/** The chunks' terrain after the flights' ramps, before the ground is kept under the decks (`terrain.ts`). */
+const FLIGHTS_SHAPED = new Map(MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(shapeGrid(c.terrain, PADS, RAMPS), FLIGHT_RAMPS), [], FLIGHT_RAMPS)]));
 
 /**
  * Flights of steps against their map `incline` (G-236): where the terrain falls from a flight's
@@ -106,7 +110,7 @@ describe("flights' ramps in the city (G-236)", () => {
     let worst = 0;
     for (const c of MAP_CHUNKS) {
       const before = shapeGrid(c.terrain, PADS, RAMPS);
-      const after = SHAPED_TERRAIN.get(c.id)!;
+      const after = FLIGHTS_SHAPED.get(c.id)!;
       for (let x = c.bounds.minX; x <= c.bounds.maxX; x += 0.5) {
         for (let z = c.bounds.minZ; z <= c.bounds.maxZ; z += 0.5) {
           if (!near(x, z)) worst = Math.max(worst, Math.abs(terrainHeightAt(after, x, z) - terrainHeightAt(before, x, z)));
@@ -114,6 +118,10 @@ describe("flights' ramps in the city (G-236)", () => {
       }
     }
     expect(worst).toBeLessThan(1e-6);
+  });
+
+  it("are the city's terrain with the ground kept under the bridges' decks after them (G-736)", () => {
+    expect(SHAPED_TERRAIN).toEqual(underDecks(MAP_CHUNKS, FLIGHTS_SHAPED));
   });
 
   it("refines a grid by a whole factor without moving its surface", () => {
