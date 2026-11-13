@@ -21,12 +21,21 @@ Każdy agent (naprawiacz, budowniczy, łowca, weryfikator, kurator, zwiadowca) c
 - Podniesienie limitu czasu, budżetu albo bazy to nie poprawka. Najpierw ustal przyczynę. Wyjątek jest możliwy tylko z uzasadnieniem w commicie i decyzją orkiestratora.
 - Poprawka to reguła dla całego miasta, nie wyjątek dla jednego punktu. Zaczynasz od testu, który pada bez poprawki.
 - Złote hashe (`determinism`, `map-ground-golden`, `ground-cut`) zmieniaj tylko świadomie, z uzasadnieniem w commicie.
-- Bazy skanu (`GLITCH_BASELINE=update`) tylko obniżasz, w tym samym commicie co poprawka.
+- Baza skanu to lista miejsc (`tools/glitch-scan/test/baseline/`): `pnpm scan:update` usuwa poprawione miejsca w tym samym commicie co poprawka; nowe miejsce tylko przez `GLITCH_BASELINE=accept` z uzasadnieniem w commicie.
 - Gdy dotykasz cudzego obszaru (tabela własności w `CLAUDE.md`), opisz to w raporcie. Testów cudzych obszarów nie osłabiaj.
 - Lista miejsc z briefu mogła się zdezaktualizować. Sprawdź ją grepem na `origin/main`, zanim zaczniesz.
 - PR-a nie twórz: robi to orkiestrator. Gałąź wypychasz zwykłym `git push`.
 
 ## Bramki (Definition of Done dla zmiany)
+- Narzędzia zamiast skryptów pisanych od nowa (w main):
+  - `VITEST_MAX_WORKERS=2` przy każdym uruchomieniu testów (kilku agentów dzieli maszynę);
+  - `pnpm test:rerun <pakiety>` odróżnia przekroczenia czasu od asercji i powtarza pliki z samymi przekroczeniami po jednym;
+  - `pnpm shots:compare <ref-przed> <ref-po> <punkty.json> [--hour 13|--night] --work /tmp/claude-0/-home-user-SpinalTap/ddc6f520-6741-5c4a-a4fb-ad093091508f/scratchpad` daje pary zrzutów, siatkę i liczby (zmienione piksele, przepalenie);
+  - `pnpm bench:ab <A> <B> --vitest <plik> --name "<test>"` mierzy czas parami przeplatanymi przy niskim obciążeniu;
+  - `pnpm scan:diff origin/main report` pokazuje przybyłe i ubyłe miejsca skanu; `pnpm scan:update` usuwa poprawione, `GLITCH_BASELINE=accept` dodaje świadomie;
+  - `pnpm orto:diff <A> <B> [--cell] [--box]` liczy zmiany nawierzchni na klasach ortofoto, przesunięcia terenu i pomostów (do przeglądu kuratora);
+  - `pnpm hashes:check [--write]` przelicza skróty testów złotych po scaleniu main i zapisuje tylko, gdy liczby się nie zmieniły;
+  - `pnpm pr:prep <gałąź>` sprawdza scalanie z main i wspólne pliki z innymi gałęziami.
 - Typecheck uruchamiaj jako `pnpm typecheck >log; echo tc=$?`. Dalej `pnpm lint` i `pnpm depcheck`.
 - Testy dotkniętych pakietów. Przy obciążeniu maszyny testy padają na limicie 5 s. Pliki z samymi przekroczeniami czasu puść osobno z `--maxWorkers=1`. Asercje to prawdziwe błędy.
 - Determinism, skan glitchy (`tools/glitch-scan`): żaden rodzaj nie rośnie.

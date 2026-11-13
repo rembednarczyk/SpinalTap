@@ -60,7 +60,7 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
 ## Topografia Lublina
 - Miasto ma się zgadzać z prawdziwym Lublinem (OSM i NMT, ADR-0042). Cyberpunkowa warstwa leży na nim, nie zastępuje go.
 - Każde odstępstwo jest w `docs/topografia.md`: celowe z powodem, niezamierzone ze zgłoszeniem glitcha. Zmiana importu, treści `lublin`, scen, terenu albo rozstawienia w `mapcity` przechodzi przegląd agenta `topography-curator`.
-- Skan `tools/glitch-scan/test/glitch-scan.test.ts` liczy znane rodzaje glitchy w całym mieście i porównuje z `glitch-baseline.json`: wzrost to czerwony test. Poprawka obniża bazę (`GLITCH_BASELINE=update`) w tym samym commicie, a nowy policzalny rodzaj dostaje kontrolę w skanie.
+- Skan `tools/glitch-scan/test/glitch-scan.test.ts` znajduje znane rodzaje glitchy w całym mieście i porównuje ich miejsca z bazą `tools/glitch-scan/test/baseline/` (lista znanych miejsc, #493): każde nowe miejsce to czerwony test, nawet gdy suma spada. Poprawka usuwa miejsca z bazy (`pnpm scan:update`) w tym samym commicie; dodanie miejsca tylko świadomie (`GLITCH_BASELINE=accept`) z uzasadnieniem w commicie. `pnpm scan:diff origin/main report` pokazuje przybyłe i ubyłe. Nowy policzalny rodzaj dostaje kontrolę w skanie.
 - Poprawka glitcha: test pada bez niej i przechodzi z nią, jeden glitch na commit.
 
 ## Definition of Done

@@ -46,7 +46,7 @@ Rejestr przetrwa sesje.
   - auta zaparkowane w meblach;
   - rekwizyty nad i pod gruntem;
   - mosty bez pomostu.
-- Liczniki porównuje z `glitch-baseline.json`. Wzrost to czerwony test w zwykłym `pnpm test` (i w CI), spadek obniża bazę w tym samym commicie, więc zapadka działa tylko w dół.
+- Liczniki porównuje z `glitch-baseline.json`. Wzrost to czerwony test w zwykłym `pnpm test` (i w CI), spadek obniża bazę w tym samym commicie, więc zapadka działa tylko w dół. Od 13.11 (decyzja użytkownika, #493) baza to lista znanych miejsc w `tools/glitch-scan/test/baseline/`: czerwony test na każde nowe miejsce, nawet przy spadku sumy; `pnpm scan:update` tylko usuwa, `GLITCH_BASELINE=accept` dodaje świadomie.
 - Miejsca znalezisk trafiają do `reports/glitch-scan.json`.
 - Skan trwa około 4 s.
 
