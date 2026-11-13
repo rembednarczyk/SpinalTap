@@ -36,7 +36,7 @@ export class CharacterKit {
   constructor(private readonly deps: CharacterKitDeps) {
     this.weapons = new WeaponMounts(deps.library);
     this.view = new ViewWeapon(this.weapons, deps.camera);
-    this.hands = new FppHands(deps.library, deps.camera);
+    this.hands = new FppHands(deps.scene, deps.library, deps.camera);
     this.loadouts = new Loadouts(deps.scene, deps.materials, this.weapons, (meshes) => {
       for (const m of meshes) deps.shadow.addCaster(m);
     });

@@ -89,7 +89,8 @@ describe("FPP hands from Seki's model (13.11)", () => {
   }, 60_000);
 
   it("hides them in TPP and brings them back in FPP", async () => {
-    const { kit, rig, settle, camera } = setup();
+    const { kit, rig, settle, camera, library } = setup();
+    await library.preload(heroine);
     kit.arm(1, rig, "hero", armed("rifle"));
     kit.setViewArms(heroine);
     await ready(kit, settle);
@@ -101,6 +102,19 @@ describe("FPP hands from Seki's model (13.11)", () => {
     expect(kit.hands.drawn).toHaveLength(1);
   }, 60_000);
 
+  it("never fetches her file itself: until the start has loaded it, the procedural forearm stays", async () => {
+    const { kit, rig, settle, props, fetched } = setup();
+    kit.arm(1, rig, "hero", armed("pistol"));
+    kit.setViewArms(heroine);
+    for (let i = 0; i < 5; i++) {
+      settle();
+      await Promise.resolve();
+    }
+    expect(fetched.filter((u) => u.endsWith(".vrm"))).toEqual([]);
+    expect(kit.hands.drawn).toHaveLength(0);
+    expect(props().every((m) => m.isEnabled())).toBe(true);
+  });
+
   it("keeps the procedural forearm without a model (`?models=off`)", () => {
     const { kit, rig, settle, props } = setup();
     kit.arm(1, rig, "hero", armed("pistol"));
@@ -111,7 +125,8 @@ describe("FPP hands from Seki's model (13.11)", () => {
   });
 
   it.each(["pistol", "rifle", "shotgun", "smg", "baton"] as const)("%s: the weapon stays fixed in the right hand's bone through hip, aim, reload and the walk", async (look) => {
-    const { kit, rig, settle, camera } = setup();
+    const { kit, rig, settle, camera, library } = setup();
+    await library.preload(heroine);
     kit.arm(1, rig, "hero", armed(look));
     kit.setViewArms(heroine);
     await ready(kit, settle);
@@ -140,7 +155,8 @@ describe("FPP hands from Seki's model (13.11)", () => {
   }, 60_000);
 
   it("puts the left hand under a long gun's fore-end and by the right fist with a pistol", async () => {
-    const { kit, rig, settle, camera } = setup();
+    const { kit, rig, settle, camera, library } = setup();
+    await library.preload(heroine);
     kit.arm(1, rig, "hero", armed("rifle"));
     kit.setViewArms(heroine);
     await ready(kit, settle);

@@ -1,4 +1,4 @@
-import { type AbstractMesh, Matrix, type Mesh, Quaternion, type Skeleton, TransformNode, Vector3 } from "../babylon";
+import { type AbstractMesh, Matrix, type Mesh, Quaternion, type Scene, type Skeleton, TransformNode, Vector3 } from "../babylon";
 import type { CameraRig } from "../camera/camera-rig";
 import type { ViewArms, ViewArmsFrame } from "../camera/view-arms";
 import { armMesh } from "./arm-mesh";
@@ -100,6 +100,9 @@ export class FppHands implements ViewArms {
   private meshes: Mesh[] = [];
   private arms: Arm[] = [];
   private key: string | null = null;
+  private spec: CharacterModelSpec | null = null;
+  /** Her instance is on its way from the library. */
+  private pending = false;
   private generation = 0;
   private readonly b1 = new Matrix();
   private readonly q = new Matrix();
@@ -112,11 +115,11 @@ export class FppHands implements ViewArms {
   private readonly scale = new Vector3();
 
   constructor(
+    scene: Scene,
     private readonly library: ModelLibrary,
     private readonly camera: CameraRig,
   ) {
-    this.holder = new TransformNode("vm-arms", camera.camera.getScene());
-    this.holder.parent = camera.camera;
+    this.holder = new TransformNode("vm-arms", scene);
     this.holder.setEnabled(false);
     camera.arms = this;
   }
@@ -136,19 +139,33 @@ export class FppHands implements ViewArms {
     const key = spec ? `${spec.url}|${spec.scale ?? 1}` : null;
     if (key === this.key) return;
     this.key = key;
+    this.spec = spec ?? null;
     this.generation++;
     this.clear();
-    if (!spec) return;
+  }
+
+  /**
+   * Makes the arms once her file is in the library: the start loads it behind the loading screen
+   * (`startFiles`), so they never fetch it themselves nor wait on it; until then the stand-in shows.
+   */
+  private start(): void {
+    const spec = this.spec;
+    if (!spec || this.model || this.pending || !this.library.isLoaded(spec.url)) return;
     const generation = this.generation;
+    this.pending = true;
     this.library
       .instantiate(spec, "vm-arms")
       .then((model) => {
         if (generation !== this.generation || !this.build(model)) model.dispose();
       })
-      .catch((err: unknown) => console.warn(`[fpp-hands] ${spec.url} failed to load`, err));
+      .catch((err: unknown) => console.warn(`[fpp-hands] ${spec.url} failed to load`, err))
+      .finally(() => {
+        if (generation === this.generation) this.pending = false;
+      });
   }
 
   pose(frame: ViewArmsFrame | null): boolean {
+    this.start();
     if (this.meshes.length === 0) return false;
     const target = this.targetOf(frame);
     if (this.holder.isEnabled(false) !== (target !== null)) this.holder.setEnabled(target !== null);
@@ -195,6 +212,7 @@ export class FppHands implements ViewArms {
 
   private build(model: ModelInstance): boolean {
     const { root, prefix } = model;
+    this.holder.parent = this.camera.camera;
     root.parent = this.holder;
     root.position.setAll(0);
     const nodes = root.getDescendants(false).filter((n): n is TransformNode => "rotation" in n);
@@ -262,6 +280,7 @@ export class FppHands implements ViewArms {
     this.arms = [];
     this.model?.dispose();
     this.model = null;
+    this.pending = false;
     this.holder.setEnabled(false);
   }
 }
