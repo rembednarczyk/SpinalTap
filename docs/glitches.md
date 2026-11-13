@@ -1853,9 +1853,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-767 Main czerwony: test venues „sign nearly all” ponad 20 s w CI po #510
 - Ważność: S2 · Zasięg: CI na main 4f42767 i wszystkie PR-y w osm-import (#514, #515)
 - Opis: czas testu rósł z kolejnymi zmianami mapy: etap 2 ADR-0078 (#509) +29% (dług ADR-0046), krok 1.2 ADR-0077 (#510) +9%; pod coverage w CI przekroczył limit 20 s
-- Status: w naprawie (13.11, gałąź ccr-ec2c4269-ilh8k8-venues-speed)
+- Status: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-venues-speed, 6fa4b7b): miasto dla testów w osobnym procesie bez pokrycia; z coverage 11–13,4 s → 3,9–6,2 s; wcześniej: w naprawie (13.11, gałąź ccr-ec2c4269-ilh8k8-venues-speed)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: test pod --coverage < 10 s lokalnie, wynik generowania bajt w bajt, bez podnoszenia limitu
+- Poboczne: kerbStrips i steps w bare-strips.ts startują BFS od wszystkich komórek jezdni i chodnika (także wnętrza bez wolnych sąsiadów) — do przyspieszenia osobno.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
