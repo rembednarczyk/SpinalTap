@@ -40,6 +40,7 @@ export const SAMPLED_KINDS: ReadonlySet<string> = new Set([
   "ground-strip-overlap",
   "ground-strip-gap",
   "ground-over-deck",
+  "seam-gap",
   "deck-slot",
   "deck-step-face",
   "deck-abutment-step",

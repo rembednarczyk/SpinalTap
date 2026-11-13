@@ -85,6 +85,8 @@ import { deckSlots } from "./deck-slot";
 import { bridgeEndsInSlope } from "./bridge-end-slope";
 import { deckSteps } from "./deck-step";
 import { groundOverDeck } from "./ground-over-deck";
+import { seamGaps } from "./seam-gap";
+import { citySeamWorld } from "./seam-world";
 import { abutmentSteps } from "./deck-abutment";
 import { kerbSteps } from "./deck-kerb";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
@@ -1124,6 +1126,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * 0.01 m over the deck (G-686): the terrain shows through the deck's paving as a grey patch.
    */
   "ground-over-deck": () => groundOverDeck([...BRIDGE_DECKS.values()].flat(), bridgeDeckAt, groundY),
+  /**
+   * A point (every 0.25 m on the world's grid) of a seam of two chunks where their terrain parts by
+   * more than 0.1 m (G-748, the curator's review of PR #502): a ledge or a slot in the ground. Not
+   * under a slab, a deck or a solid of a scene level with the higher side (the Arkady's pavement).
+   */
+  "seam-gap": () => seamGaps(MAP_CHUNKS, citySeamWorld()),
   /**
    * An end of a bridge's deck axis more than 0.5 m under the terrain within 2.5 m on past it along
    * the axis (G-739): the end lies down the bank of the valley, and the deck, level at its ends'
