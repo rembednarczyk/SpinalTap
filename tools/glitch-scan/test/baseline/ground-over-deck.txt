@@ -1,0 +1,5 @@
+# ground-over-deck: grid 10 m (x,z = the square's corner at its least x and z)
+nabrzeze-0-0 2450,250
+podzamcze-1-0 780,190
+podzamcze-1-0 780,200
+podzamcze-2-0 1070,160
