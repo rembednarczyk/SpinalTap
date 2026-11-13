@@ -4,42 +4,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
-### G-003 Zawrót na Alei Tysiąclecia zahacza o skraj chodnika przed targiem
-- Status: przyjęte
-- Uzupełnienie (łowca, 2026-10-30): ten sam zawrót biegnie 2,5 m od linii pieszych `targ-deck` pod wiaduktem (758,4, 350,8–353,8), 5 punktów; skan pomija linie scen. Test przyjęcia obejmuje też to.
-- Ważność: S4 · Zasięg: lokalny · Koszt: mały
-- Gdzie: (758, 349), trasa `Aleja Tysiąclecia#80:1/0+…#81:1/1`
-- Dowód: skan `car-lane-off-road` = 1.
-- Pakiet: `packages/sim` (`traffic.ts`, `uTurn`)
-
 ### G-016 Auta zaparkowane do 10 m za zebrą na dwukierunkowej 3 Maja
 - Status: później (S4; pełny art. 49 PoRD dla dróg dwukierunkowych, po G-015)
 - Gdzie: (−115,58, 31,83) 3,0 m, (−103,16, −32,87) 7,75 m, (−115,53, 25,62) 9,0 m za zebrą
-
-### G-022 Pas aut kończy się przed krótkim łańcuchem tej samej jezdni, który nie dostaje pasa
-- Status: przyjęte (po G-020 i G-021, te same pliki)
-- Ważność: S3 · Zasięg: lokalny (6 miejsc, 8 ślepych końców) · Koszt: średni
-- Gdzie: Lubartowska#38:1 (588, 379): dwa pasy jednokierunkowe schodzą w jeden dwukierunkowej (po G-021); Cerkiewna#92 (912, 346) → pętla #90 (44,4 m); Aleja Unii Lubelskiej#96 (1099, 272) → Aleja Tysiąclecia#84 (21 m); Kalinowszczyzna#131 (2361, 430); Łęczyńska#121 (2659, 95); Kapucyńska#10 (150, −160); Kołłątaja#2 / Peowiaków#0 (−100, −169) → Zesłańców Sybiru#5 (35 m)
-- Dowód: łowca: koniec łańcucha z pasami dotyka (≤ 8 m) łańcucha aut < 45 m z 0 pasami.
-- Przyczyna (przypuszczalna): klucz łączenia w `roads.ts:71` zawiera `oneway`; `MIN_ROUTE` (`traffic.ts:83`) liczony dla łańcucha, nie dla ciągu łańcuchów.
-- Pakiet właściciela: packages/sim (`content/lublin/roads.ts`, `content/traffic.ts`)
-- Test przyjęcia: kontrola skanu `lane-end-at-laneless-street` daje 0; dziś 8 (bez G-020, po G-021).
-
-### G-024 Jednokierunkowe pasy kończą się przed ulicą dla dostaw (Lubartowska, Kowalska, Świętoduska)
-- Status: przyjęte, decyzja użytkownika ponownie: skręty (opcja B) niemożliwe, w zasięgu 16 m brak ulicy dla aut (najbliższe pasy aut: Lubartowska#37 ok. 100 m, Kowalska#76 56 m, Świętoduska#20 48 m; spotykają je tylko ulice dla dostaw). Zostaje opcja A (dalej ulicą dla dostaw) albo pozostawienie
-- Ważność: S3 · Zasięg: lokalny (6 końców) · Koszt: średni
-- Gdzie: Lubartowska#37:0/1 (460, 56), Kowalska#76:0/1 (568, 160), Świętoduska#20:0/1 (350, −48)
-- Dowód: naprawiacz G-023: oba pasy jadą w tę samą stronę, nie ma pasa powrotnego do zawrotki; zawrotka oznaczałaby jazdę pod prąd (regres G-105) albo czołowe zatory.
-- Opcje: A) pasy jadą dalej przez następną ulicę dla dostaw (Kowalska#67 60 m do Furmańskiej#77; Zielona 172 m do Staszica#35; Lubartowska#68 112 m); B) skręty w boczne ulice (G-006).
-- Pakiet właściciela: packages/sim (`content/traffic.ts`), ewentualnie `useOf` w `content/lublin`
-- Test przyjęcia: `lane-dead-end` spada o 6.
-
-### G-025 Istniejące zawrotki na Alei Tysiąclecia wychodzą poza nawierzchnię
-- Status: zgłoszone (do potwierdzenia)
-- Ważność: S3 (proponowana) · Zasięg: lokalny, trasa główna · Koszt: mały
-- Gdzie: Aleja Tysiąclecia #80/#81, zawrotki przy (757,8, 348,5) i (816, 340,6)
-- Dowód: naprawiacz G-023: 4–6 próbek co 0,25 m bez żadnej nawierzchni (`surfacesAt` puste). Możliwe, że to znany 1 w `car-lane-off-road`.
-- Pakiet właściciela: packages/sim (`content/traffic.ts`, `uTurn`)
 
 ### G-026 Zawrotki na wąskich ulicach mają promień ok. 1,5 m
 - Status: zgłoszone (S4 proponowana)
@@ -55,10 +22,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-036 Sąsiednie zawrotki na Alei Tysiąclecia przy targu stykają się w wierzchołku
 - Status: zgłoszone (z G-006)
 - Ważność: S3 · Gdzie: ok. (756, 345) · Dowód: naprawiacz G-006: półokręgi o różnym promieniu sięgają tego samego wierzchołka; 24 zdarzenia kolizji na seedach 1–2 już na starej bazie (rodzina G-025/G-026, `turnRound`/`uTurn`).
-
-### G-037 Pas Andersy kończy się na pasach Mełgiewskiej: auta czekają na siebie
-- Status: zgłoszone; było „w naprawie razem z G-006”, ale G-006 scalono w #47 bez zamknięcia G-037 (1.11: do sprawdzenia, czy blokada nadal występuje; ruch aut odłożony decyzją użytkownika z 31.10)
-- Ważność: S3 · Gdzie: ok. (2401, 282) · Dowód: kąt 31°, pojazdy obu tras biorą się nawzajem za „auto przed sobą”, resynchronizacja co ok. 40 m.
 
 ### G-041 Wzór bruku placu przesuwa się na granicy chunków
 - Status: zgłoszone (z G-018)
@@ -77,7 +40,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (ADR-0052 „Na później”)
 
 ### G-053 Plac po Farze bez fundamentów fary; ruiny z OSM pominięte
-- Status: zgłoszone
+- Status: częściowo naprawione: fundamenty fary jako bariery 0,5 m od #418 (r18507552, r18507551, odcinki w1348806xxx; T-251); zostają ruiny `building=ruins` (w232362881, w1330433247, w813194693), które pomija `SKIP_BUILDING`. W1330433247 ma 3,3 m w LoD1 (NMPT wierzch y 3,75). Test przyjęcia zawęzić do ruin: 3 obrysy jako niskie mury z wysokością z LoD1 albo NMPT.
 - Ważność: S4 (proponowana) · Zasięg: lokalny (Plac po Farze na trasie Grodzkiej) · Koszt: średni (nowa bryła niskiego muru w imporcie i rendererze)
 - Gdzie: w173519315 (672.8, 43.2) i 3 budynki `building=ruins` (T-015); ile w mieście: 4 w dwóch dzielnicach
 - Dowód: `SKIP_BUILDING` w generate.ts; `props-kinds.ts` „ruins: structures (later)”
@@ -194,14 +157,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props-gen)
 - Test przyjęcia: kontrola skanu „stragan na innym rekwizycie” (odstęp < 0,9 m od drzewa, stojaka, automatu, słupa), baza 8 → 0
 
-### G-074 Ślepe końce pasów po poszerzeniu Krakowskiego (Peowiaków, Kapucyńska, Dolna Panny Marii)
-- Status: odłożone do osobnego etapu ADR-0055 (decyzja użytkownika 31.10: włączenia z pierwszeństwem w systemie ruchu; ogólna reguła łączenia ślepych pasów psuje limity czekania). G-052 wchodzi z bazą `lane-dead-end` 45
-- Ważność: S3 (proponowana: auta znikają albo stają) · Zasięg: 3 skrzyżowania · Koszt: mały–średni
-- Gdzie: Peowiaków (−91, −167): skrzyżowanie trzech ulic, oba wyjazdy zajęte jazdą prosto, jednokierunkowa Peowiaków nie ma skrętu; Kapucyńska (159, −207) i Dolna Panny Marii (336, −185): skrzyżowania T w połowie pasa (znana klasa)
-- Dowód: skan `lane-dead-end` na gałęzi G-052: 44 → 45 (dwa stare końce znikają, trzy nowe)
-- Pakiet właściciela: packages/sim (traffic-junctions)
-- Test przyjęcia: `lane-dead-end` na gałęzi G-052 nie wyższy niż 44
-
 ### G-078 Brama Zamku z domyślnymi wymiarami przejazdu
 - Status: zgłoszone (audyt bram i przejazdów) · Ważność: S4 · Koszt: mały
 - Gdzie: brama wjazdowa Zamku, 2,4 × 3,4 m domyślnie; T-040
@@ -229,20 +184,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: kontrola `pedestrian-bare` 59 → ≤ 10
 
-### G-082 Domyślna szerokość jezdni wycina zmapowane chodniki
-- Status: częściowo naprawione (#98: 262 → 131 m); zostaje otwarte do 0 (Zielona, Podwale przy 4,5 m, Łęczyńska przy skrzyżowaniu); przesunięcie jezdni od chodnika jednostronnego: G-113
-- Gdzie: Podwale w40052391/w305027452, Staszica w1150131461, w232805965, Zielona w173533827, Łęczyńska w85717509
-- Przyczyna: `roadWidth` bez `width`/`lanes` = 6,5/5 m, a `cutSidewalk` usuwa chodnik, którego środek leży na cudzej jezdni
-- Propozycja: zwęzić domyślną jezdnię do 2 × (odległość osi od chodnika − pół chodnika), min. 3 m
-- Pakiet: tools/osm-import · Test przyjęcia: `sidewalk-under-carriageway` 262 → 0
-- Przegląd kuratora (921e44d): UWAGI, T-062/G-112 (zwężenie całej ulicy z próbek przy skrzyżowaniu) i T-063/G-113 (dwukierunkowe poniżej 4,5 m, zwężenie symetryczne); Podwale w305027452 ma 4,3 m, nie 3 m
-
-### G-083 Drogi dla aut bez nazwy i łącznice bez pasów ruchu
-- Status: odłożone (samochody na później, decyzja użytkownika 31.10); zgłoszone (audyt dróg) (T-047) · Ważność: S3 · Zasięg: 7 dróg bez nazwy + 3 łącznice, ok. 550 m · Koszt: mały–średni
-- Przyczyna: `labels.ts` `chunkStreets` wymaga `name`, `STREET_KINDS` nie ma `primary_link`/`secondary_link`/`tertiary_link`
-- Uwaga: po dodaniu pasów sprawdzić `lane-dead-end`, `car-road-hole`, `turn-off-road`
-- Pakiet: tools/osm-import (+ sim roads.ts klucz łączenia dla dróg bez nazwy) · Test przyjęcia: `car-way-without-lane` 10 → 0
-
 ### G-084 Place bez nazw na mapie miasta
 - Status: zgłoszone (audyt dróg) (T-048) · Ważność: S4 · Zasięg: 6 placów · Koszt: mały
 - Przyczyna: import zapisuje nazwy tylko z linii; `city-map.ts` podpisuje `streets` i budynki
@@ -263,30 +204,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/ui (`touch/ghost-click.ts`)
 - Test przyjęcia: test komponentu: kliknięcie z dotyku, który zaczął się przed otwarciem koła, nie wybiera kwestii
 
-### G-092 Ulice ok. 3–4 m z dwoma pasami: auto zachodzi na chodnik
-- Status: odłożone (samochody na później, decyzja użytkownika 31.10); zgłoszone (z naprawy G-082 i G-090)
-- Ważność: S3 (proponowana) · Zasięg: wąskie ulice dwukierunkowe (po G-082 m.in. Staszica miejscami, Łęczyńska#120) · Koszt: średni
-- Dowód: po stronie pasa mniej niż 2,1 m asfaltu; przy dolnym progu `laneOffset` (1,2 m) pół auta (0,9 m) wychodzi poza jezdnię; test G-090 celowo pomija takie odcinki
-- Przyczyna (przypuszczalna): `lanesOf` w `packages/sim/src/content/traffic.ts` zawsze daje dwa pasy ulicy dwukierunkowej, bez względu na szerokość
-- Pakiet właściciela: packages/sim (content/traffic)
-- Test przyjęcia: kontrola skanu „auto poza jezdnią” (pół szerokości auta od pasa poza `surfacesAt` jezdni) z bazą; ulica węższa niż 2 × 2,1 m dostaje jeden pas albo mijankę
-
-### G-093 Dziura w nawierzchni jezdni Narutowicza
-- Status: odłożone (samochody na później, decyzja użytkownika 31.10); zgłoszone (z naprawy G-090)
-- Ważność: S4 (proponowana) · Zasięg: lokalny · Koszt: mały
-- Gdzie: Narutowicza, ok. 62 m wzdłuż łańcucha, 1,75 m od osi: `surfacesAt` pusty
-- Dowód: sonda G-090 (`scratchpad/g090-scan.sh`); pas zwęża się przed dziurą
-- Pakiet właściciela: tools/osm-import (ground)
-- Test przyjęcia: kontrola `car-road-hole` (albo nowa) wykrywa i spada do 0
-
-### G-096 Narożnik Starego Miasta za brzegiem z = −240 (Pałac Ordynacki, Kuria)
-- Status: odłożone: poszerzanie mapy, zawężone po G-556 #414 do uskoku x = 460 i brył za z = −240 (decyzja użytkownika 8.11, `docs/backlog.md`, sekcja „Poszerzanie mapy”; zgłoszone z przeglądu kuratora G-052)
-- Ważność: S3 (proponowana) · Zasięg: lokalny, 7 budynków, 2 zabytki · Koszt: średni (prostokąt, ADR-0042, regeneracja)
-- Gdzie: x od 460 do 760, z od −240 do −270; T-058
-- Przyczyna: `stare-miasto` minZ = −240, a G-052 przesuwa Krakowskie do −270 (uskok gruntu na x = 460)
-- Pakiet właściciela: tools/osm-import (decyzja o prostokątach: Architekt, ADR-0042)
-- Test przyjęcia: w66335239 i w66293168 w `MAP_CHUNKS`, bez uskoku gruntu na x = 460; propozycja: `stare-miasto` minZ −270 z `zEdges` [−270, −40, 160] (rząd 230 m, identyfikatory chunków bez zmian); kontrola `historic-cut-by-edge` (budynek zabytkowy z obrysem w prostokącie dzielnicy i środkiem poza wszystkimi) 4 → 1 (Pałac Tarłów zostaje, T-057)
-
 ### G-099 Pas poszerzenia Krakowskiego bez mebli z planu (latarnie, obeliski)
 - Status: zgłoszone (z przeglądu kuratora G-052) · Ważność: S3 (proponowana; ciemne ulice nocą) · Zasięg: pas 660 × 70 m · Koszt: mały–średni
 - Gdzie: T-061 (Narutowicza, Peowiaków, Zesłańców Sybiru, Bernardyńska; obeliski na Placu Kochanowskiego)
@@ -300,24 +217,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna: pokój drzwi ma tylko 1 m szerokości, a fasada ma załamanie z minimum 567,21 przy z −57,7; kontrola `interior-entrance-gap` próbkuje tylko oś przejścia, a `interior-outside-building` ma tolerancję 0,3 m
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: kontrola `interior-entrance-gap` próbkuje całą szerokość przejścia (co 0,25 m) i daje 0; schodkowe pokoje wzdłuż fasady
-
-### G-112 Szerokość jezdni z chodnika przy skrzyżowaniu zwęża całą ulicę
-- Status: zgłoszone (z przeglądu kuratora G-082) (T-062)
-- Ważność: S3 (proponowana; główna ulica Nabrzeża o połowę węższa na 380 m) · Zasięg: Łęczyńska w85717509, Montażowa w40052079, 566 m · Koszt: mały
-- Dowód: sonda `topo-g082-probe2.ts`: próbki chodnika z osią na jezdni z typu to 8 z 196 (Łęczyńska) i 21 z 98 (Montażowa), w miejscach, gdzie chodnik skręca do przejścia; wzdłuż reszty oś chodnika 3,6–7,7 m od osi. Po 921e44d 4,1 i 3,6 m dwukierunkowej jezdni zamiast ok. 6–8 m
-- Przyczyna: `sidewalkIndex.kerb` (`tools/osm-import/src/generate.ts`) bierze medianę tylko z próbek w zasięgu (`MIN_KERB_SAMPLES` = 5, bez odniesienia do długości ulicy), a `fitToKerb` ustawia jedną szerokość na całą drogę
-- Propozycja: dopasowanie tylko wtedy, gdy próbki w zasięgu pokrywają co najmniej 1/3 (lepiej 1/2) próbek ulicy po tej stronie; w pozostałych wycinać chodnik lokalnie albo zwężać tylko odcinek (jak lokalna szerokość w G-090)
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: kontrola `kerb-fit-sparse` (droga z `width:carriageway` z dopasowania, gdzie próbki rozstrzygającej strony < 1/3 próbek ulicy) 2 → 0; `sidewalk-under-carriageway` może wzrosnąć najwyżej o metry przy tych skrzyżowaniach (do policzenia)
-
-### G-113 Dwukierunkowa jezdnia zwężana symetrycznie od chodnika z jednej strony
-- Status: zgłoszone (z przeglądu kuratora G-082) (T-063); związane z G-092 (auta na chodniku)
-- Ważność: S3 (proponowana; ulice węższe niż w Lublinie, auto 2 m na 1,8 m pół jezdni) · Zasięg: Podwale w40052391 3,6 m, Staszica w1150131461 4,4 m, w232805965 4,7 m (po G-111 także Łęczyńska i Montażowa, jeśli zostaną dopasowane) · Koszt: średni
-- Dowód: chodnik zmapowany tylko po jednej stronie (n po stronach [0, 44], [29, 0], [0, 24]); po drugiej asfalt kończy się 1,8–2,4 m od osi, przed terenem posesji, placem budowy albo pasem 4,7 m do budynku (Staszica)
-- Przyczyna: `fitToKerb` (`tools/osm-import/src/ground.ts`) daje 2 × kerb wokół osi OSM i to samo minimum 3 m dla dwukierunkowych i jednokierunkowych
-- Propozycja: dla ulicy dwukierunkowej minimum 4,5–5 m; gdy ogranicza tylko jedna strona, przesunąć pas jezdni od chodnika (krawędź po wolnej stronie zostaje na szerokości z typu albo do przeszkody), zamiast zwężać ją symetrycznie
-- Pakiet właściciela: tools/osm-import (+ packages/sim content/traffic, jeśli oś pasa przestaje być osią OSM)
-- Test przyjęcia: kontrola `two-way-fit-narrow` (droga bez `oneway` z dopasowaną szerokością < 4,5 m) 4 → 0 (Podwale 3,6, Montażowa 3,6, Łęczyńska 4,1, Staszica 4,4) bez wzrostu `sidewalk-under-carriageway` i `car-lane-off-road`
 
 ### G-115 Megawieża Tatar z Nabrzeża: podstawa nad horyzontem
 - Status: zgłoszone (z ADR-0063 etap 2; było już przed nim) · Ważność: S4 · Koszt: mały
@@ -368,13 +267,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: wysokość z LOD2 albo NMPT (mediana w obrysie) i dach z LOD2; rozbieżność > 20% z OSM do przeglądu kuratora
 
 ### G-126 Pedet z domyślną wysokością `commercial` i fasadą kamienicy
-- Status: później (czeka na źródło wysokości: ADR-0064 etap 11 (LOD2) albo 14 (NMPT), albo zdjęcie; bez tego poprawka byłaby zgadywaniem). Zgłoszenie użytkownika 31.10: „brakuje rozbudowania galerii Pedet”
+- Status: zgłoszone (12.11, przejście krakowskie-1-0: wysokość naprawiona w #429: 19,8 m, 4 kondygnacje, `source: lod1`, LoD2 okap 20,7, kalenica główna 21,4; zostaje fasada `shop=mall`). Zgłoszenie użytkownika 31.10: „brakuje rozbudowania galerii Pedet”
 - Ważność: S3 (proponowana; punkt orientacyjny Krakowskiego z podpisem) · Zasięg: 1 (zasada dotyczy też innych `building=retail` bez `building:levels`) · Koszt: mały (wysokość), średni (fasada domu towarowego)
 - Gdzie: w67508935 (124.1, −128.1), Krakowskie Przedmieście 40; T-073
 - Dowód: OSM `building=retail`, `shop=mall`, bez `building:levels`, `height` i `building:part`. W grze `levels: 3`, `source: "default"`, ściany 10,4 m nad najwyższym terenem; zrzuty `pedet-ne.png`, `pedet-east.png`, `pedet-north.png`, `pedet-sw.png` (scratchpad kuratora) pokazują trzykondygnacyjną fasadę kamienicy z siatką okien, bez witryn
 - Przyczyna: `defaultLevels` w `tools/osm-import/src/building-tags.ts` daje każdemu `commercial` 3 kondygnacje, a renderer rysuje go jak kamienicę z witryną
 - Pakiet właściciela: tools/osm-import (wysokość: `corrections.ts` z wpisem T-073 albo dane LOD2/NMPT); packages/engine/src/renderer/mapcity (fasada `shop=mall`/`department_store`: pasy witryn i pełne ściany pięter handlowych zamiast okien mieszkań)
-- Test przyjęcia: wysokość Pedetu z LOD2/NMPT albo potwierdzona zdjęciem (rozbieżność > 20% z wpisem do przeglądu kuratora); `shop=mall` dostaje fasadę handlową (test planu fasady w engine); baza `landmark-overbuilt` bez wzrostu
+- Test przyjęcia: `shop=mall` dostaje fasadę handlową (test planu fasady w engine); baza `landmark-overbuilt` bez wzrostu
 
 ### G-128 Pomniki Placu Litewskiego jako ta sama stojąca postać (Piłsudski bez konia)
 - Status: zgłoszone (audyt Placu Litewskiego, kurator 31.10). Zgłoszenie użytkownika: „brakuje pomnika Józefa Piłsudskiego”
@@ -386,20 +285,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-129 Fontanna multimedialna na Placu Litewskim bez strumieni, czaszy i pokazu
 - Status: zgłoszone (audyt Placu Litewskiego, kurator 31.10). Prośba użytkownika: „fontanna na Litewskim powinna być spektakularna”
-- Ważność: S3 (proponowana; najważniejsza atrakcja placu) · Zasięg: 1 (zasada dotyczy też kaskady w503047622 i fontanny z wieżą ciśnień w256406832) · Koszt: średni
+- Ważność: S3 (proponowana; najważniejsza atrakcja placu) · Zasięg: 1 (zasada dotyczy też kaskady w503047622 i fontanny z wieżą ciśnień w256406832) · Koszt: średni; 12.11 (kurator, przegląd paczki, T-281): woda w niecce płytka i przejrzysta, dno jasne (granit). Test przyjęcia: w dzień niecka ma jasność ≥ 0,7 jasności kostki placu; kaskada w503047622 schodkowa z jasnego kamienia.
 - Gdzie: w503047621 (x −35..−4.7, z 18.9..56.6); T-076; zrzuty `fountain.png`, `fountain-wide.png`
 - Dowód: 16 dysz `fountain-jets` (`JETS["fountain-multimedia"] = 16` w `props-gen.ts`), każda to rurka 1 m z kulką (`fountainJets` w `prop-civic.ts`); woda w niecce płaska, bez czaszy w środku, balustrady i stopni-siedzisk
 - Propozycja (NPR, 2077, bez nowych siatek): (1) dysze w siatce mebli bloku jako 3 pierścienie po obrysie (np. 48 + 32 + 16) i pióropusz w środku; strumienie to pionowe wstęgi z przecięciem w kształcie krzyża (2 quady, bez przezroczystości sortowanej), wysokości 1–4 m, w środku 8–12 m; (2) czasza z balustradą i drewniane stopnie z obrysu w siatce terenu, jak obrzeże `planBasin`; (3) poświata w siatce halo miasta (już jedna): kolory strumieni z palety neonu ADR-0051 (cyjan, magenta, bursztyn), nocą mocniejsze; (4) pokaz: wieczorem (21:00, w grze codziennie albo w piątki i soboty z `ClockPort`) wysokość i kolor z fazy w atrybucie wierzchołka, czytany przez istniejący materiał w shaderze; bez animacji CPU na wierzchołkach; (5) mgła z dysz jako istniejące cząsteczki pary (`STEAM_VENTS`), do 2 źródeł. Holo nad strumieniami (ADR-0051) opcjonalnie, w warstwie reklam
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (`prop-civic.ts`, `ground-plan.ts`); tools/osm-import (`props-gen.ts`: liczba i układ dysz z obrysu)
 - Test przyjęcia: test planu: fontanna multimedialna ma ≥ 96 strumieni i czaszę w środku obrysu; `npr-perf` krakowskie-tpp bez wzrostu wywołań rysowania i aktywnych siatek (dziś 386 / 164); zrzut nocny z pokazem obejrzany przez kuratora
-
-### G-133 Pojazdy na stromych ulicach bez pochylenia: dolny koniec odstaje od bruku
-- Status: zgłoszone (1.11, naprawiacz G-130); odłożone razem z pracami nad autami
-- Z G-190 (1.11): przy poprawce wcielić łatkę `docs/plany/g190-zatoki-przy-ulicach-dostaw.patch` (zatoki pasów postojowych wzdłuż wszystkich ulic, omijanie tras dostawczaków); sonda z łatką i progiem spadku 0,6 m: +6 aut Kowalska x 643..668, +2 Rybna w895572841; też w1517184173 (Ruska, północ, 46 m) pusty przez spadek 0,23–0,43 m; Kowalska x 643..655: chodnik 2,5 m zachodzi 0,25 m na pas
-- Ważność: S4 · Zasięg: 8 pojazdów odstaje ponad 0,2 m, najgorzej dostawczak (544.7, 167.7) o 0,44 m; też Plac Zamkowy, (450, 40), (550, 165), (810, 481)
-- Przyczyna: pojazdy stoją poziomo (`pitch: 0`), a po G-130 opierają się na najwyższym punkcie nawierzchni pod obrysem
-- Poprawka wymaga pochylenia i przechyłu w kontrakcie `Transform`/`SceneryItem` oraz w `VehicleViews` (zmiana kontraktu, ADR); auta jadące mają też y z terenu w środku bez `SURFACE_LIFT`
-- Pakiet właściciela: packages/core (kontrakt), packages/sim, packages/engine
 
 ### G-134 Budynek z sąsiadem spoza chunków stoi w grze samotnie, a ścieżki kondygnacji zaokrąglają różnie
 - Status: częściowo naprawione (#105: przecinek dziesiętny i zaokrąglenie w ścieżce z wysokością); przybudówki bez głównego budynku otwarte
@@ -423,20 +314,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-144 Szczeliny w asfalcie na styku dróg OSM na załamaniu
 - Status: zgłoszone (1.11, naprawiacz G-138)
-- Ważność: S4 · Zasięg: ok. 20 miejsc pod pasami ruchu poza Aleją Tysiąclecia, szczeliny 0,1–0,25 m (np. Mełgiewska 2370,285; Turystyczna 2526,357 i 2606,332)
+- Ważność: S4 · Zasięg: ok. 20 miejsc pod pasami ruchu poza Aleją Tysiąclecia, szczeliny 0,1–0,25 m (np. Mełgiewska 2370,285; Turystyczna 2526,357 i 2606,332); nabrzeze-1-1 (12.11): `lane-off-ground` Turystyczna#122:0 (2526; 357), miejsce wymienione w G-144; skan wciąż je liczy.
 - Przyczyna: bufory dróg w `tools/osm-import/src/ground.ts` (`bufferLine`) mają ścięte końce, a do tego `simplifyRing` 0,3 i zaokrąglenie do 0,1
 - Poprawka: zaokrąglone albo zachodzące końce buforów na styku dróg; tabele przez `osm:build`
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: punkty pasów co 0,1 m bez nawierzchni → 0 poza zawracaniem na Alei Tysiąclecia; `lane-off-ground` 9 → 8
 - Uwaga weryfikatora G-138: `lane-off-ground` próbkuje co 1 m, więc wynik zależy od przesunięcia próbek (7–12 przy tej samej geometrii); Mełgiewska 2370,285 i Turystyczna 2606,332 wypadły z bazy tylko przez przesunięcie. Przy poprawce próbkować co 0,1 m i liczyć skupiska; co 0,1 m jest 29 skupisk, ok. 21 poza Aleją Tysiąclecia
 - Poboczne: `groundY` daje 0 poza mapą, a `GroundField` grunt najbliższego chunka; pasy już tam nie wychodzą, inni użytkownicy obu funkcji mogą trafić na rozbieżność
-
-### G-146 `onPassageAxes` i skan przejazdów: słabe przy trasie równoległej do osi
-- Status: zgłoszone (1.11, weryfikator G-136); dziś żadna trasa tego nie wyzwala
-- Ważność: S4
-- Gdzie: `packages/sim/src/content/traffic.ts` `onPassageAxes` przesuwa tylko wierzchołki od 1 m przed wylotem do 1 m za drugim; trasa równoległa do osi, odsunięta o 1–3,5 m z gęstymi wierzchołkami, przeskakuje na oś tuż przed wylotem (narożniki dostawczaka 2,0–4,5 m od osi przy połowie przejazdu 1,7–1,8 m); bez wierzchołka pod sklepieniem nic nie przesuwa. `vehicle-outside-passage` liczy środek plus połowę szerokości, nie narożniki
-- Poprawka: dociąć trasę do osi na całej długości przejazdu z płynnym wejściem (wstawić wierzchołki na wylotach); skan liczy narożniki prostokąta pojazdu
-- Pakiet właściciela: packages/sim, tools/glitch-scan
 
 ### G-147 Stopy bliskich megawież po impostorze bliżej niż płaszczyzna panoramy
 - Status: zgłoszone (1.11, weryfikator ADR-0067); dziś niewidoczne
@@ -453,12 +337,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna (przypuszczalna): `offsetRing(ring, 0.35)` w `roof-plan.ts` i `roof-shapes.ts` daje mitrę bez ograniczenia przy ostrych kątach
 - Kontrola skanu: `roof-out-of-outline` (bez kościołów), baza 10
 - Pakiet właściciela: packages/engine (renderer/mapcity)
-
-### G-153 Skan `furniture-overlap` pomija słupki
-- Status: zgłoszone (1.11, weryfikator #124)
-- Ważność: S4 · Zasięg: np. stojak (-137.1, -52.2) z bryłą na słupku (-137.9, -53.1)
-- Poprawka: słupki w kontroli nakładania brył mebli; bryła stojaka dopasowana do rowerów (dziś hx 1,0 przy rowerach do 0,47 m)
-- Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
 ### G-154 Nieoznakowane przejścia nie chronią przed parkowaniem
 - Status: zgłoszone (1.11, weryfikator G-143); dziś bez auta przy takim przejściu
@@ -524,12 +402,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: odstęp od narożników prostokąta auta; kontrola skanu z bazą
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-176 Skan aut przy krawężniku luźniejszy niż generator
-- Status: zgłoszone (1.11, weryfikator #143)
-- Ważność: S4 (narzędzie) · Zasięg: `parked-car-multilane-kerb` zwalnia auto w każdym `amenity=parking`, także podziemnym i dachowym, a generator tylko w naziemnych; `parked-car-on-footway` liczy `pedestrian` i `cycleway`, których generator (`footWays`, `clearOfKeptWays`) nie pomija; po #143 `clearOfStops` nie zmienia tabeli (te same auta zdejmuje G-155), więc G-156 pilnuje tylko skan
-- Poprawka: wyrównać zbiory dróg i parkingów między skanem a generatorem; test generatora dla przystanku niezależny od G-155
-- Pakiet właściciela: tools/glitch-scan, tools/osm-import
-
 ### G-181 Drobne pola sesji po wczytaniu
 - Status: zgłoszone (1.11, weryfikator #145)
 - Ważność: S4 · Zasięg: (a) wczytanie w metrze gubi ofertę fixera po przyjeździe (seed 2, `met_genzo`, jazda shinsekai → doki, zapis w trakcie; oryginał dostaje `phone_genzo_offer` w kroku 658, wczytana gra nie, `watch.district` null); (b) histereza wnętrza w progu (`INTERIOR_KEEP`) nie jest odtwarzana, `interiorAt` w `session-resume.ts:23` liczy bez poprzedniego wnętrza, więc wczytanie 0,1 m za ścianą kliniki daje fałszywe `InteriorEntered`; (c) `session.lastThreat` poza zapisem (regeneracja RAM w walce), rozjazdu nie zmierzono
@@ -544,7 +416,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-190 Puste pasy postojowe OSM
 - Status: częściowo naprawione: skan w main (1.11, #169: `kerb-strip-no-car-street` baza 3, `bay-strip-empty-known` baza 4, `bay-strip-sparse` 0); zostaje poprawka generatora: łatka zatok przy ulicach dostaw (`docs/plany/g190-zatoki-przy-ulicach-dostaw.patch`) razem z G-133; Łęczyńska w1159135271 (OSM `capacity=23`, w grze 0: obrys płytszy niż auto w poprzek) do decyzji, np. nadwozie nad krawężnikiem
-- Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133)
+- Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133); krakowskie-2-1 (12.11): `bay-strip-empty-known` w1514058885 Świętoduska (375; 2): pas postojowy bez aut na spadku ponad LEVEL_DROP (G-133).; stare-miasto-0-1 (12.11): `kerb-strip-no-car-street` 2 trafienia: parking w232362978 (572; 155) 54,5 m i w895572841 (556; 74) 23,5 m, oba przy ulicy dla dostaw bez aut; ta sama klasa co T-107.; podzamcze-0-0 (12.11): `bay-strip-empty-known` w232362991 Kowalska (536; 175): skos 3,4..3,9 m za płytki na auta pod 60° (G-133); ten sam pas, który wpis już wymienia.; podzamcze-2-1 (12.11): `bay-strip-empty-known` w1517184173 Ruska, północny krawężnik (950; 466): wszystkie zatoki na spadku > `LEVEL_DROP` (G-133); ten sam pas, który G-133 już wymienia.; nabrzeze-1-0 (12.11): `bay-strip-empty-known` w1159135271 Łęczyńska (2649; 76), pas prostopadły 3,4 m za płytki dla auta; znane.
 - Poprawka: płytki pas z tagiem `diagonal`/`perpendicular` → mniejszy kąt albo krótszy model; spadek przez G-133 (pochylenie aut); `bay-strip-sparse` dziś pomija pasy bez auta
 - Kurator #162: także odcinek Kowalskiej w232362980 x 644..668 bez zatok, bo ulica ma `use: deliveries`, a `bayCars` bierze tylko `CAR_STREETS` (T-107); zatoka w1544340690 s=24,8 (689,2; 171,8) odrzucona przez odstęp od chodnika w173566578, a na ortofoto stoi tam auto. Proponowane kontrole: `kerb-strip-no-car-street` (baza ≥ 1) i `bay-strip-sparse` także dla pasów bez aut (baza ≥ 5)
 - Pakiet właściciela: packages/sim (kerb-bays), tools/glitch-scan
@@ -554,12 +426,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: gzymsy w mapcity sięgają poza obrys budynku z OSM; płaska płyta (neon, szyld) na ich wysokości wchodzi w gzyms (tak był ucięty róg SAKE przed runda 2 G-160); kontrole oparte na `inBuilding` i obrysie tego nie widzą, a przy lokalach (`ROOM_SITES`, wycięta kondygnacja) dają fałszywe trafienia
 - Poprawka: kontrola skanu „płyta znaku w bryle gzymsu” (geometria gzymsu z planu fasady); kontrole na obrysie uwzględniają fronty lokali
 - Pakiet właściciela: tools/glitch-scan, packages/engine (mapcity)
-
-### G-192 Uproszczona oś chodnika: auta kilka cm w zmapowanej szerokości
-- Status: zgłoszone (1.11, autor G-189)
-- Ważność: S4 · Zasięg: `simplifyLine` 0,5 m w imporcie przesuwa oś chodnika do ok. 0,09 m; auta z main (np. taxi (922,53; 430,5) i dwa na Kalinowszczyźnie) wchodzą o kilka cm w szerokość chodnika z OSM; skan ma margines `AXIS_SLACK` 0,1 m
-- Poprawka: dokładniejsza oś dla chodników przy pasach postojowych albo odstęp liczony od osi z OSM
-- Pakiet właściciela: tools/osm-import, packages/sim
 
 ### G-196 Ciała i powaleni posiłkowie ochrony zostają do końca sesji
 - Status: częściowo naprawione w #174 (1.11, PRZYJĘTE): powalony żywy posiłek nie znika już po końcu heatu i nie zajmuje limitu; zostaje otwarte: ciała i powaleni posiłkowie nie mają chunku, leżą do końca sesji, a `sent` rośnie w kolejnych heatach
@@ -603,24 +469,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-214 Kościół Bernardynów bez swojej wieży i sygnaturki, za wysoka nawa
 - Status: zgłoszone (2.11, kurator, przegląd #190)
-- Ważność: S3 (proponowana) · Zasięg: lokalny (Bernardyńska, widok z Krakowskiego Przedmieścia i Placu Wolności) · Koszt: mały
+- Ważność: S3 (proponowana) · Zasięg: lokalny (Bernardyńska, widok z Krakowskiego Przedmieścia i Placu Wolności) · Koszt: mały; 12.11 (kurator, przegląd G-215): wieżę da się dodać jednym wpisem w `BELL_TOWERS` po scaleniu G-215, bez korekty importu: w66330578, środek (378,1; −247,7), half 2,75, top ok. 32,5, tip 39,2 (rzut w obrysie OSM); sygnaturka (375,4; −240,1) do y 31,8 wymaga mniejszego rodzaju wpisu
 - Gdzie: w66330578 (364,7; −239,8), Krakowskie; T-120
 - Dowód: NMPT GUGiK 0,5 m: wieża (378,1; −247,7), ok. 5,5 × 5,5 m, hełm do y 39,2; sygnaturka (375,4; −240,1) do y 31,8; kalenica nawy y 24,5 (gra 30,1, `source: default`). Po #190 gra nie ma żadnej wieży, przed #190 miała dwie na zachodzie
 - Przyczyna: OSM nie ma wieży jako części; renderer zgaduje wieże przy zachodnim szczycie
 - Poprawka: korekta importu: część `building:part=tower` (korpus do y ok. 32,5, hełm do 39,2) i sygnaturka; `height`/`roof:height` nawy z NMPT; potem zdjąć w66330578 z `TOWERLESS_OSM` (G-049 sam wyłącza wieże proceduralne)
 - Pakiet właściciela: tools/osm-import (corrections), packages/engine (lista)
 - Test przyjęcia: najwyższy wierzchołek bryły w promieniu 4 m od (378,1; −247,7) ma y 39,2 ± 1, poza nim nic nie przekracza y 32; dziś pada (brak wieży, kalenica 30,1)
-
-### G-215 Proceduralne wieże na kościołach, które ich nie mają albo mają inne
-- Status: zgłoszone (2.11, kurator, przegląd #190)
-- Ważność: S3 (proponowana) · Zasięg: szeroki (7 kościołów, m.in. deptak: Kapucyni i Świętego Ducha) · Koszt: średni
-- Priorytet (kurator, przegląd #208): wyżej. Wieże skalują się ze ścianami, więc po G-216 Niecała 4 w232674421 ma wieżę do y ok. 13 na budynku ok. 3,7 m (ponad trzy razy wyżej niż budynek bez wieży), a Świętego Ducha dwie wieże do y 28,5 przy kalenicy 20,4. Najtańszy pierwszy krok: kościoły bez wieży w rzeczywistości (Niecała 4, Kapucyni, św. Piotra, św. Wojciecha) na liście bez wieży, z odsyłaczem T-121
-- Gdzie: T-121: Kapucyni w67508932, Karmelici r5420467 (poprawione w #198: wieże poza obrysem zdjęte), św. Piotra w66335226, św. Wojciecha w61102109, Niecała 4 w232674421, Świętego Ducha w66264126 (2 wieże zamiast 1 smukłej na narożu SW do y 26,5), cerkiew Przemienienia w66264148 (wieża 13 m za wysoka)
-- Dowód: sonda `topo-g210-probe` (towerSpots w świecie) i NMPT GUGiK 0,5 m, wartości w T-121
-- Przyczyna: `roof-plan` `addTowers` stawia wieże każdemu kościołowi bez części; zachód obrysu i szerokość > 22 m decydują o liczbie i miejscu, wysokość 1,7 × ściany do 65 m
-- Poprawka: wieża proceduralna tylko dla kościołów z tabeli wież (dane: położenie, rzut, wysokość z NMPT albo `building:part` w korektach importu); pozostałe bez wieży (rozszerzyć `TOWERLESS_OSM` do odwrotnej listy); co najmniej: środek wieży w obrysie
-- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import, tools/glitch-scan
-- Test przyjęcia: kontrole `church-fake-tower` i `church-tower-off-building` (niżej) spadają do 0
 
 ### G-217 Bieg 2 i bieg przed bramą schodów zamkowych węższe niż w rzeczywistości
 - Status: zgłoszone (2.11, kurator, przegląd #194)
@@ -647,24 +502,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Uwaga kuratora (#201): zdjęte drzwi (654,9; 9,0) stały na Grodzkiej 7 r3119721 (G-227), a w66293533 (ok. 664; 12,5) nie miała drzwi ani przed, ani po; jej wejście OSM n2969572872 (667,8; 15,0) na rogu od Archidiakońskiej odpada na stopniu 1,15 m (T-109). Poprawka najlepiej przez to wejście (próg albo stopień przed drzwiami), nie przez gniazda reguły klatek
 - Ważność: S4 · Zasięg: w66293533: ściana 8,9 m od Archidiakońskiej (oś 2,2 m) nie dostaje gniazda drzwi; T-110 oczekuje wejścia od Archidiakońskiej
 - Poprawka: ustalić, czemu reguły gniazd nie stawiają drzwi na ścianie od Archidiakońskiej; kontrola skanu „kamienica przy ulicy bez drzwi”
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
-### G-222 Reguła wieży z OSM: krawędzie (bok wieży, maszty, wieże różnej wysokości)
-- Status: zgłoszone (2.11, weryfikator G-212); dziś bez skutku w mieście
-- Ważność: S4 · Zasięg: `tools/osm-import/src/building-towers.ts:59` mierzy od wierzchołków wieży do ścian kościoła (wieża bokiem bliżej niż 10 m zostanie pominięta); `isTowerTags` uznaje każde `tower:type` i `man_made=tower` (maszt albo wieża ciśnień obok kościoła zdjęłaby mu wieże); `towerTips` w skanie sprawdza tylko najwyższy poziom bryły (wieże różnej wysokości ominęłyby `church-tower-off-building`)
-- Poprawka: odległość odcinek–odcinek; `tower:type` z listy (bell_tower, church) i bez `man_made=tower` z `tower:type=communication`/`water`; `towerTips` po wszystkich wieżach; testy dla każdego przypadku
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
-### G-223 Test skanu `market-piece-on-crowd-lane` przekracza 20 s przy load ponad 20
-- Status: zgłoszone (2.11, weryfikator G-212)
-- Ważność: S4 (test, nie gra) · Zasięg: `tools/glitch-scan`, kontrola `market-piece-on-crowd-lane`; sama przy load 15 przechodzi
-- Poprawka: pomiar i przyspieszenie (indeks przestrzenny jak w G-200), bez podnoszenia limitu (ADR-0046)
-- Pakiet właściciela: tools/glitch-scan
-
-### G-225 Reguła drogi pod ziemią (G-197) zdejmuje też nawierzchnię nad tunelem i przejazdy bramne
-- Status: zgłoszone (2.11, weryfikator G-197); dziś bez skutku dla drzwi
-- Ważność: S4 · Zasięg: `tools/osm-import/src/props-doors.ts:234`: odcinek ulicy z chunków pokrywający się w rzucie z drogą pod ziemią przestaje być ulicą; Rynek nad Trasą Podziemną traci 2 odcinki (609,1; −50,9)→(617,9; −48,7), Teodora Gruella w298307007 (przejazd bramny `tunnel=yes`, `layer=-1`, por. G-076) 1 odcinek. Kamienica stojąca tylko od takiego odcinka straciłaby drzwi, a `door-faces-underground` tego nie wykryje. Testy nie łapią mutacji „tylko końce” i `ALONG=0.3`
-- Poprawka: odróżniać drogę pod ziemią od nawierzchni po id/nazwie drogi (chunki niosą id OSM?), przejazdy bramne z tagiem `tunnel=yes` krótsze niż ok. 20 m pod budynkiem traktować jak `building_passage`; testy warunku środka i progu
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-227 Grodzka 7 (Warsztaty Kultury) r3119721 bez żadnych drzwi po G-197
@@ -955,16 +792,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-339 Uskok na końcach pomostów: pomost poziomy w poprzek, droga obok na terenie (T-166)
 - Status: zgłoszone (5.11, kurator, przegląd G-330)
-- Ważność: S4 · Zasięg: 8 końców (Mełgiewska, wiadukt Zamkowej, kładka Podzamcza) · Koszt: średni
+- Ważność: S4 · Zasięg: 8 końców (Mełgiewska, wiadukt Zamkowej, kładka Podzamcza) · Koszt: średni; 12.11 (przejście stare-miasto-1-1): koniec (732,2; 151,7) to styk z górnym stopniem w294098693: uskok chodzenia 0,51–0,54 m na całej szerokości pasa (G-686, `steps-riser-tall` (732; 151)). Na końcu NW (727,9..728,9; 156,0..158,4) `deck-abutment-step` do 1,73 m.; podzamcze-2-0 (12.11): `deck-abutment-step` 1 kwadrat (3 próbki): kładka (1073,8; 161,7), (1073,8; 161,1), (1073,9; 160,6), pomost -25,66 wobec gruntu 0,3 m dalej; to ten sam koniec co w T-166 (1073,8; 161,6), bez nowych końców.; 12.11 (G-686, PR #476): koniec (732,2; 151,7) i (732,5; 151,3) usunięty rampą `flightTopRamps` (`deck-abutment-step` 10 → 8, `steps-riser-tall` 1 → 0). Zostaje koniec NW (727,9..728,9; 156,0..158,4) do 1,73 m przy schodach w56965515 oraz końce Mełgiewskiej i kładki.
 - Gdzie: (2456,5; 296,6) 0,45 m; (2408,5; 280,0) 0,35 m; (2446,2; 246) 0,25 m; (727,7; 157,5) 0,89 m; (763,6; 182,7) 0,36 m; (1073,8; 161,6) 0,29 m
 - Przyczyna (przypuszczalna): `makeDeck` bierze `rawHeight` końców osi i robi pomost poziomy w poprzek; droga obok idzie za poprzecznym spadkiem NMT
 - Pakiet właściciela: packages/sim (content/lublin decks, terrain PADS/RAMPS)
 - Test przyjęcia: kontrola `deck-end-step` (różnica `groundY` 0,15 m przed i za krawędzią > 0,15 m, poza drogą pod mostem) = 0
-
-### G-346 Kontrola `deck-slot` nie widzi pomostu powyżej zasięgu stopy
-- Status: zgłoszone (5.11, weryfikator PR #293)
-- Ważność: S4 (skan) · Zasięg: `deck-slot` porównuje z `groundY`, a postać stoi na ziemi z `reach` = stopa + `STEP_HEIGHT`; upadek pod pomost przy stopniu wyższym niż `STEP_HEIGHT` daje 0; próg 15° w `bridge-fill.ts` (`SIDE_BY_SIDE`) bez testu
-- Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
 ### G-348 Długi przebieg e2e z modelami pod SwiftShaderem rośnie do 6–7 GB i kończy się OOM; zatrzymany zegar Playwrighta blokuje rysowanie
 - Status: zgłoszone (5.11, autor broni białej)
@@ -1037,7 +869,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-365 Wyjście pawilonu metra `targ` A prowadzi na rabatę zamiast na bruk (T-158)
 - Status: zgłoszone (6.11, kurator, przegląd #303; zaległość z T-158)
-- Ważność: S4 · Zasięg: otwór (722; 286) wychodzi na rabatę z 289,6–292,6; według T-158 otwór miał dostać stronę parkingu albo pawilon miał się przesunąć · Koszt: mały
+- Ważność: S4 · Zasięg: otwór (722; 286) wychodzi na rabatę z 289,6–292,6; według T-158 otwór miał dostać stronę parkingu albo pawilon miał się przesunąć · Koszt: mały; `metro-exit-bare` 27 (cała baza miasta) to próbki tej rabaty (przegląd podzamcze-1-0, 12.11); test przyjęcia: `metro-exit-bare` 27 → 0 bez brukowania rabaty
 - Pakiet właściciela: packages/sim (`content/metro.ts`); przegląd kuratora
 - Test przyjęcia: wyjście pawilonu na nawierzchni `square`/`sidewalk`, nie na rabacie
 
@@ -1051,11 +883,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: ucieczka przy graczu 1 m: 3/1002001 (0; −1) 35 skoków w drugiej połowie, 11/1002001 (1; 0) 44 (okres ok. 0,5 s); pościg 4 m/s: 43/1002008 115–163, 11/1002001 (0; −2) 239, 19/1002002 (0; 2) 29; 11/1002001 przy (310; −96) napiera na róg skrzyni 274 (sonda ±0,5 promienia ciała nie widzi rogu, pas z G-338) · Koszt: średni
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, steering)
 - Test przyjęcia: w tych przypadkach skoki w drugiej połowie ≤ 4, bez biegu w miejscu
-
-### G-370 Skan `metro-shaft-open` nie sprawdza ścian pawilonu powyżej ulicy (szkło nad cokołem)
-- Status: zgłoszone (6.11, weryfikator #309; luka sprzed etapu 4)
-- Ważność: S4 (skan) · Zasięg: wszystkie wejścia metra · Koszt: mały
-- Pakiet właściciela: tools/glitch-scan (`metro-entrances.ts`)
 
 ### G-374 Lista quickhacków w HUD pokazuje koszt RAM bez zniżki ICEpick
 - Status: zgłoszone (6.11, autor ADR-0059 etapu 3b)
@@ -1263,7 +1090,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-432 Kontrola `pad-unregistered` sprawdza tylko format `T-NNN`, nie istnienie wiersza; scena `alchemia-tpp` patrzy obok hali
 - Status: zgłoszone (6.11, weryfikator PR #343)
-- Ważność: S4 · Zasięg: rejestr topografii jest na gałęzi sesji, więc kontrola w main nie może sprawdzić wiersza (rozważyć przeniesienie `docs/topografia.md` do main albo listę T w danych); budżet `alchemia-tpp` słabo mierzy halę; `raid_north` startuje z zachodu T1 do czasu T2 (etap 2)
+- Ważność: S4 · Zasięg: rejestr topografii jest na gałęzi sesji, więc kontrola w main nie może sprawdzić wiersza (rozważyć przeniesienie `docs/topografia.md` do main albo listę T w danych); budżet `alchemia-tpp` słabo mierzy halę; `raid_north` startuje z zachodu T1 do czasu T2 (etap 2); (krakowskie-2-0): dwa `pad-unregistered` to pady wnętrz `CLINIC_SITE` (w67499277, 322; -68) i `KOI_SITE` (w66330644, 316; -99) z `ROOM_SITES`, bez `row`; do wiersza T albo wyjątku przy naprawie.; 12.11 (kurator, przegląd paczki): pady `ROOM_SITES` są celowe, wiersz T-280. Poprawka: `row: "T-280"` przy padzie w `sites.ts`, `pad-unregistered` −2.
 - Pakiet właściciela: tools/glitch-scan, e2e
 
 ### G-435 Zapisane ustawienia z K przypisanym do sterowania zostają (`sanitizeBindings` nie odrzuca `RESERVED_KEYS`)
@@ -1308,18 +1135,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-446 Starsze pady zmieniają teren na drogach i chodnikach (`pad-on-road` baza 8; T-051, T-002)
 - Status: zgłoszone (7.11, naprawiacz rundy 3 PR #343; kontrola `pad-on-road` z tego PR)
-- Ważność: S4 · Zasięg: pad T-051 przy Bajkowskiego zmienia teren na 7 drogach i chodnikach o 0,5–1,5 m (w40052294 +1,52 m); pad T-002 przy (2515; 387) obniża ścieżkę w972606056 o 1,80 m; także rampa zachodnia Alchemii nachodzi na chodnik w232464426 przy z 52–56 (przypadkiem w tolerancji)
+- Ważność: S4 · Zasięg: pad T-051 przy Bajkowskiego zmienia teren na 7 drogach i chodnikach o 0,5–1,5 m (w40052294 +1,52 m); pad T-002 przy (2515; 387) obniża ścieżkę w972606056 o 1,80 m; także rampa zachodnia Alchemii nachodzi na chodnik w232464426 przy z 52–56 (przypadkiem w tolerancji); krakowskie-2-0 (12.11): `pad-on-road` 3 to pad myjni T-051 (385..415; −50..−21), celowa scena.; krakowskie-2-1 (12.11): `pad-on-road` 3 próbki to znów pad myjni T-051: w40052294 (384; -17) +1,52 m na 40 m, w173531768 (398; -17) 1,02 m na 13 m, w232805957 (385; -16) 1,54 m na 8 m; celowa scena.; nabrzeze-1-1 (12.11): `pad-on-road` pad T-002 przesuwa ścieżkę w972606056 o -1,80 m na 18 m (2515; 387); znane.
 - Pakiet właściciela: packages/sim (content, pady), tools/glitch-scan
 
 ### G-448 `traffic.test.ts` „takes turns at crossings by the market” przekracza 5 s pod obciążeniem
 - Status: zgłoszone (7.11, naprawiacz G-334)
 - Ważność: S4 (test) · Zasięg: przy load ok. 14 pada na limicie 5000 ms, osobno przechodzi; najpierw pomiar kosztu, bez podnoszenia limitu
 - Pakiet właściciela: packages/sim (traffic)
-
-### G-451 Klin gołego terenu między chodnikiem a jezdnią Kościuszki (T-222)
-- Status: zgłoszone (7.11, kurator, przegląd G-440)
-- Ważność: S4 · Zasięg: zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²; poprawka: lokalnie domknąć jezdnię do krawędzi chodnika; kontrola `kerb-gap-bare` (baza 35 631 próbek 0,25 m)
-- Pakiet właściciela: tools/osm-import (ground)
 
 ### G-452 Szczeliny 1–15 cm między przylegającymi budynkami z OSM (T-223)
 - Status: zgłoszone (7.11, kurator, przegląd G-440; widoczność do potwierdzenia zrzutem)
@@ -1348,7 +1170,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-462 Inne ruiny z OSM rysowane jak budynki
 - Status: zgłoszone (7.11, kurator przeglądu #357; poza w66286396, które zamyka #357)
-- Ważność: S4 · Zasięg: w232362881 (`ruins=yes`), `building=ruins` w67498742, w813194693, w1330433247; do rozważenia razem z G-053
+- Ważność: S4 · Zasięg: w232362881 (`ruins=yes`), `building=ruins` w67498742, w813194693, w1330433247; do rozważenia razem z G-053; stare-miasto-0-1 (12.11): ruina Rybna 12 w232362881 (539,6; 113,7) ma w LoD2 i LoD1 2024 budynek 385 m² (okap 6,4, kalenica 12 m, LoD1 9,2 m), w grze 0%; ten sam przypadek co T-015.
 - Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
 
 ### G-463 Złote hashe nie obejmują XP zleceń, premii za brak wykrycia i wrogów powyżej poziomu 1
@@ -1376,14 +1198,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 361 próbek przy w69672573 i ok. 1000 po stronie południowej; poprawka wzorem T-211 i T-221; kontrola skanu `facade-footway-bare` (goła próbka do 3 m od osi `footway`, po stronie budynku, najwyżej 1,5 m od ściany; bazę zmierzyć w całym mieście)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-471 Szczelina przy południowym krawężniku Peowiaków (T-228)
-- Status: zgłoszone (7.11, kurator, przegląd G-450)
-- Ważność: S4 · Zasięg: x −44…57, 1134 próbki; ta sama klasa co G-451 (`kerb-gap-bare`)
-- Pakiet właściciela: tools/osm-import (ground)
-
 ### G-472 Luki OSM przy Peowiaków: przesmyk z budynkiem i plac (T-227, T-229)
 - Status: zgłoszone (7.11, kurator, przegląd G-450; do weryfikacji)
-- Ważność: S4 · Zasięg: niski budynek z dachem dwuspadowym i brukowany przesmyk (x −1…21) oraz utwardzony plac 283 m² (x 61–78) bez danych w OSM
+- Ważność: S4 · Zasięg: niski budynek z dachem dwuspadowym i brukowany przesmyk (x −1…21) oraz utwardzony plac 283 m² (x 61–78) bez danych w OSM; przejście krakowskie-1-0 (12.11): na placu T-229 LoD2 i LoD1 2024 mają niski budynek (61..74; −207..−191), 111 m², okap 2,7, kalenica 3,6 m. Za Teatrem Osterwy stoi dobudówka (132..147; −190..−176), 136 m², okap 3,9, kalenica 5,4 m (LoD1 4,1), na ortofoto 2025-04 jasny płaski dach, w OSM nic; leży w niej 67 m² `landuse-bare`. Dwa budynki LoD2 bez OSM (82..89; −156..−134) i (86..105; −178..−157) zostały rozebrane (parking, brak w LoD1 2024). Poprawka: `ADDED_BUILDINGS` z obrysem LoD2 i wysokością LoD1, albo wpis do OSM
 - Pakiet właściciela: tools/osm-import (korekty)
 
 ### G-473 Na telefonie dwa toasty naraz zasłaniają „Użyj” i skok
@@ -1462,7 +1279,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (AI, ruch)
 
 ### G-498 Kontrola `underground-level-exit` liczy krawędzie grafu zamiast wyjść
-- Status: częściowo w PR #398 (8.11; kontrola liczy wyjścia po punktach na granicy, nie krawędzie; zostaje część renderera: aktywne siatki miasta nad sceną `alchemia-p1`)
+- Status: częściowo naprawione (#398: kontrola liczy wyjścia); zostaje część renderera; wcześniej: częściowo w PR #398 (8.11; kontrola liczy wyjścia po punktach na granicy, nie krawędzie; zostaje część renderera: aktywne siatki miasta nad sceną `alchemia-p1`)
 - Ważność: S4 · Zasięg: `tools/glitch-scan/test/level-exit-checks.ts`: dwie krawędzie przez jedne drzwi dają „2 wyjścia”, więc kontrola może przepuścić poziom z jednym wyjściem; przy okazji: scena `alchemia-p1` pod ziemią ma aktywne siatki miasta nad sobą (`map-ground` 11, `map-signs` 11, `map-near` 7), brak zasłaniania dla wnętrz podziemnych to kandydat na oszczędność budżetu
 - Pakiet właściciela: tools/glitch-scan, packages/engine (renderer)
 
@@ -1496,11 +1313,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: w wielu miejscach miasta wzniesienia terenu z NMT wyglądają kanciasto (widoczne płaskie trójkąty i ostre załamania zamiast łagodnych zboczy); do ustalenia: rozdzielczość siatki terenu (4 m i skośne cięcie), wygładzanie NMT przy imporcie, normalne cieniowania (płaskie zamiast uśrednionych), krawędzie NPR na załamaniach; najpierw pomiar i zrzuty kilku miejsc, potem poprawka z testem `map-ground-golden`; pomiary opiekuna mapy: krakowskie-0-0 szum NMT przy ścianach (1 krawędź > 20° pod budynkiem), krakowskie-0-1 jeden lokalny dół (G-523: 4 krawędzie > 20°); zalecany próg kontroli `terrain-crease` 15° bez obrysów budynków
 - Pakiet właściciela: tools/osm-import (teren), packages/engine (renderer: teren)
 
-### G-510 Auta rampy P−1 jadą osią Bajkowskiego i Lubartowskiej, a auta ruchu przez nie przejeżdżają
-- Status: zgłoszone (8.11, kurator przeglądu #382)
-- Ważność: S4 · Zasięg: `parking-traffic.ts`: `IN_WAY`/`OUT_WAY` na osi jezdni (np. (407,5; −16,5)), a ruch symulacji ma na Bajkowskiego dwa pasy ±1,6 m; auto szerokości ok. 1,8 m zachodzi na oba, jedzie 2,5 m/s wobec 8 m/s ruchu, bez bryły (G-492); skręt w lewo powinien iść z lewego pasa (`turn:lanes=left|right`); pas wjazdu w `TRAFFIC_ROUTES` sim na osobny PR ze złotym hashem; kontrola `ramp-car-off-lane` (baza dziś 9 punktów)
-- Pakiet właściciela: packages/engine (renderer), packages/sim (G-492)
-
 ### G-515 Cywile w modelu VRoid trzymają lewą rękę przy twarzy bez parasola
 - Status: zgłoszone (8.11, budowniczy ADR-0076 etap 3a)
 - Ważność: S4 · Zasięg: poza parasola riga zostaje na modelu VRoid, choć parasol jest ukryty; u Ume i innych starszych mocno odmładza sylwetkę; przy okazji: pochylenie starszych na Base_Male (Sabu, Goro, Genzō) słabo czyta się z boku (głowa Sabu wysunięta o ok. 10 cm, na zrzucie prawie prosto), do podniesienia `stoop` w manifeście
@@ -1530,11 +1342,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (8.11, opiekun mapy; do oceny kuratora: prawdziwy dół czy artefakt NMT)
 - Ważność: S4 · Zasięg: teren spada z 0,6 do −3,5 m na ok. 25 × 15 m (x −175..−150, z −5..10), najgłębiej (−160; 5); czarny cokół ściany 3–4 m od dna (`pit-e`, `pit-f`, `pit-g`); `SHAPED_TERRAIN` bez `PADS`; to tu 4 krawędzie terenu > 20° (G-508); przy okazji: `steps-band-hidden` na krawędzi chunka (−200; 125), pasmo 3 × 0,2 m, niewidoczne dla gracza
 - Pakiet właściciela: tools/osm-import (teren NMT)
-
-### G-524 Złoty hash nie obejmuje ruchu aut
-- Status: zgłoszone (8.11, weryfikator #399)
-- Ważność: S4 · Zasięg: `determinism.test.ts` liczy hash z `snapshot` (zapis), a pojazdów w zapisie nie ma; test „the traffic leave the golden run as it was” celowo zakłada, że ruch hasha nie zmienia; zmiana tras miasta przeszłaby niezauważona; poprawka: złoty wzorzec przebiegu ruchu (pozycje i id aut po N krokach); przy okazji: `ramp-car-off-lane` sprawdza tylko wierzchołki trasy, nie odcinki
-- Pakiet właściciela: packages/sim (testy), tools/glitch-scan
 
 ### G-525 Objazd gracza przez auta ruchu nie zna ścian
 - Status: zgłoszone (8.11, weryfikator #399; na rampie P−1 naprawiane w #399 runda 2)
@@ -1616,11 +1423,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `refreshBoundingInfo(true, true)` przy wczytywaniu VRM kosztuje 40–450 ms na plik w NullEngine; jeśli tak samo w przeglądarce, wydłuża wczytywanie postaci; inne testy modeli (`model-textures`, `model-cast-colours`, `model-donors`, `model-figure*`) też nie zwalniają silników
 - Pakiet właściciela: packages/engine (renderer: modele)
 
-### G-627 Ręczne trawniki T-245 leżą częściowo na nawierzchni
-- Status: poprawione na gałęzi `ccr-ec2c4269-ilh8k8-g627` (12.11; czeka na weryfikatora i kuratora)
-- Ważność: S3 · Zasięg: `LITEVSKI_GREEN` i `SCHOOL_GREEN` w `tools/osm-import/src/corrections-zn.ts` (runda 2 #405) kładą trawę na asfalcie i kostce: pas x −201…−197, z 27–45 (54 m², zieleń 13%) i pas wzdłuż w80139555 do Cichej 4 (104 m², zieleń 4%); krakowskie-0-1; poprawka wg ADR-0077: trawa tylko na płatach zieleni z nakładki ortofoto (domknięcie 1 m, płat od 4 m²), reszta kostką jak T-243; kryterium: trawnik Litevski ≥ 70% zieleni, szkoły ≥ 55%, nowa kostka ≤ 15%; `cover-truth.test.ts` próg 0,55 → 0,7 (trawniki kuratora są prawdą klasyfikatora); nowa kontrola skanu `added-grass-off-green` (ręczne trawniki z zielenią < 50%: 11 z 20, 1 133 m²; do sprawdzenia też T-241 trawnik-wschod, trawnik-bajkowskiego, T-245 trawnik-3-maja-klinika, rabaty przy Collegium, T-246 trawnik-nadstawna-3)
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-630 Budynki LoD1 dopasowane luźno (IoU 0,5–0,7) zostają przy starej wysokości
 - Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1) ; osobny PR po heights
 - Ważność: S4 · Zasięg: 25 budynków z różnicą > 3 m, np. Kowalska 5 (w66309797) 24,5 m wobec LoD1 14,8 m obok Kowalskiej 7 z 15,3 m (uskok 9 m), Kuratorium Oświaty (T-253); proponowana kontrola `lod1-loose-match` (baza 25)
@@ -1628,22 +1430,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-633 Klasztor Dominikanów: środek dachu 5 m nad LoD1
 - Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1)
-- Ważność: S4 · Zasięg: środek dachu 30,9 m wobec 25,8 m w LoD1; poza zmianą heights, wynik sondy kuratora
+- Ważność: S4 · Zasięg: środek dachu 30,9 m wobec 25,8 m w LoD1; poza zmianą heights, wynik sondy kuratora; przejście stare-miasto-1-0 (12.11): `landmark-vs-lod1` 1 w komórce to ten sam przypadek (30,9/25,8 m, IoU 0,90); po #459 bez zmian
 - Pakiet właściciela: tools/osm-import, packages/engine (receptury landmarków)
-
-### G-635 Trzy próbki `kerb-fill-wide-estimated` przy nowych skrawkach chodnika na Podzamczu
-- Status: zgłoszone (12.11, naprawiacz scalenia #409)
-- Ważność: S4 · Zasięg: (879,5; 490,5) i (860,5; 497,5): wypełnienia krawężników z #409 łączą się z `PODZAMCZE_AREAS` z main (`DWORZEC_EAST_AREAS`) w dwa małe skrawki chodnika; licznik 3624 → 3627 po scaleniu
-- Pakiet właściciela: tools/osm-import
 
 ### G-636 Bariera leżąca na ścianie budynku liczy się w skanie jako wycięta
 - Status: zgłoszone (12.11, scalenie #418 z main; baza `barrier-parallel-cut` 14 → 15 opisana w commicie 529888c)
-- Ważność: S4 · Zasięg: mur oporowy w227679479 na Podzamczu (539; 517) biegnie po południowej ścianie garażu w444375263, który stoi w grze od G-556; `inBuilding` w `barrier-room.ts` słusznie go tnie, a kontrola liczy odcinek jako „cut”; poprawka: import pomija odcinek bariery leżący na ścianie budynku albo kontrola go nie liczy; po niej baza wraca do 14
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
-### G-639 Płaska bryła na wysokości LoD1 przy stromym dachu wypada na kalenicy
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g639; ADR-0077 krok 4; `flat-over-lod2-roof` 22 → 2)
-- Ważność: S3 · Zasięg: budynki bez tagów dachu stoją płasko na wysokości LoD1, a przy stromym dachu LoD1 leży prawie na kalenicy; np. Pałac Parysów w66330695 w grze 18,1 m i 5 rzędów okien, w LoD2 okap 10,7 m i kalenica 18,2 m (przed zmianą 11,1 m); ok. 59 budynków (płaski dach w grze, dach LoD2 > 4 m, okap gry > 3 m nad okapem LoD2; liczba przybliżona, okap LoD2 bywa okapem przybudówki); poprawka: gdy LoD2 ma okap i kalenicę, a OSM nie ma tagów dachu, okap i dach z LoD2; kontrola `flat-over-lod2-roof` (baza ok. 59); luka pokrewna: `church-over-nmpt` nie wykrywa kościoła za niskiego
+- Ważność: S4 · Zasięg: mur oporowy w227679479 na Podzamczu (539; 517) biegnie po południowej ścianie garażu w444375263, który stoi w grze od G-556; `inBuilding` w `barrier-room.ts` słusznie go tnie, a kontrola liczy odcinek jako „cut”; poprawka: import pomija odcinek bariery leżący na ścianie budynku albo kontrola go nie liczy; po niej baza wraca do 14; (krakowskie-2-0): `barrier-parallel-cut` płot w173531574 (387; -27) 8 z 16 m; tnie go myjnia T-051 (scena celowa), nie ściana budynku; kontrola liczy go jak G-636.; stare-miasto-0-1 (12.11): `barrier-parallel-cut` mur w436266757 (558; 100), odcinek 2 z 5 m; ta sama klasa (niepotwierdzone, że leży na ścianie budynku).; 12.11 (kurator, przegląd paczki): mur w436266757 (555..561; 100) to inna przyczyna, nie ściana budynku: najbliższa ściana gry (r6477272) jest 7,2 m dalej. Odcinek tnie trasa wzdłuż muru (cięcia w `crowd-barriers.ts`), czyli przypadek, który kontrola ma łapać. Do rozstrzygnięcia przy naprawie: trasę odsunąć albo przyjąć cięcie jako celowe z wierszem T.
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-640 Raster AI bierze koniec niskiego pomostu za płaski teren
@@ -1661,16 +1453,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `teleportPlayer(sim, { x, y: 0, z })` na wysokim terenie daje 155–217 pkt w nogę w pierwszym kroku (wschód mapy); `barrier-ai.test.ts` (l. 34) robi to samo, dziś na niskim terenie; testy powinny brać `ground(x, z)` jak `barrier-detour.test.ts`, inaczej „gracz traci zdrowie” może przejść z niewłaściwego powodu
 - Pakiet właściciela: packages/sim (testy)
 
-### G-643 Budowa rastra i pola okna `wide` w jednym kroku symulacji
-- Status: zgłoszone (12.11, weryfikator #426; dług w ADR-0046)
-- Ważność: S3 · Zasięg: nowy plan objazdu w oknie `wide` buduje pole ok. 15 ms, a przy zmianie komórki 32 m także raster ok. 37 ms w jednym kroku (budżet ADR-0043: 4 ms); przy jednym odciętym gangerze w pościgu za biegnącym graczem przestój 15–50 ms co 1,5–2 s; poprawka: budowa rozłożona na kilka kroków (ganger idzie starą drogą do gotowego planu)
-- Pakiet właściciela: packages/sim (systems/ai)
-
-### G-644 Kilkanaście pościgów naraz przepełnia pamięć rastrów okna `near`
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g644)
-- Ważność: S3 · Zasięg: odcięty ganger z planem `wide` nadal co krok pyta okno `near` przez `head(to)` (`ganger-walk.ts:191`); przy ok. 12 pościgach z różnymi celami pamięć `near` (8 rastrów) wypada bez końca: mediana 31,6 ms na krok, 600/600 kroków > 16 ms (main w tym scenariuszu 0,39 ms, 163 kroki > 16 ms tylko na starcie); poprawka: ganger z ważnym planem `wide` nie pyta `near`, albo klucz `near` niezależny od `from`
-- Pakiet właściciela: packages/sim (systems/ai)
-
 ### G-645 Po wczytaniu zapisu wszystkie pościgi `wide` przebudowują rastry w jednym kroku
 - Status: zgłoszone (12.11, weryfikator #426)
 - Ważność: S4 · Zasięg: pamięć `chases` (`steering.ts:660`) nie trafia do zapisu, a `chaseDetour` nie podlega limitowi `mayPlan`; pierwszy krok po wczytaniu buduje rastry `wide` wszystkich gangerów z `chase` naraz (54,7 ms na okno, przy kilku oknach N razy więcej); to samo przy zmianie `floor|reach`; determinizm bez zmian
@@ -1687,7 +1469,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 
 ### G-650 Dwie alejki przy Radziwiłłowskiej bez tras tłumu po G-613
-- Status: zablokowane przez G-655 (12.11; kryterium ≥ 1 m od płotu niemożliwe bez osłabienia `walker-on-car-lane`: oś pasa ruchu Radziwiłłowskiej 2,8–3,7 m od płotu, bo jezdnia zachodzi na chodnik; kontrola alejek bez tras liczona dosłownie daje 17, przy 3 największych alejkach chunku 2)
+- Status: odblokowane (12.11: G-655 naprawiony w #437); wcześniej: zablokowane przez G-655 (12.11; kryterium ≥ 1 m od płotu niemożliwe bez osłabienia `walker-on-car-lane`: oś pasa ruchu Radziwiłłowskiej 2,8–3,7 m od płotu, bo jezdnia zachodzi na chodnik; kontrola alejek bez tras liczona dosłownie daje 17, przy 3 największych alejkach chunku 2)
 - Ważność: S4 · Zasięg: po odsunięciu tras od płotów alejki przy w232805994 (x 45–80, z ok. 105, Pałac Lubomirskich, Plac Litewski 3) i w232805996 (x −63…−11, Plac Litewski 5) zostały bez przechodniów, w promieniu 30 m brak trasy; kryterium: trasa ≥ 1 m od płotu, a gdy pętla jest za wąska, jedna linia zamiast zniknięcia; kontrola `footway-alley-unwalked` (alejka powyżej `ALLEY_AREA` bez próbki trasy w 5 m, baza 2)
 - Pakiet właściciela: packages/sim (tłum)
 
@@ -1701,44 +1483,24 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: gdy ani okno `near`, ani `wide` nie prowadzi do celu, ganger na ulicy wraca na posterunek bez `routeAcrossLevels` (jak na main); droga kładką lub schodami nad barierą nie jest szukana; pytanie co krok kosztowało 2,7 s na test (4790 wywołań, `attach` liczy wzrok do wszystkich węzłów), więc jeśli ma wrócić, to rzadko (np. raz na cel w komórce 32 m) i z limitem na krok
 - Pakiet właściciela: packages/sim (systems/ai)
 
-### G-655 Jezdnia z tagiem `lanes` nie jest dociągana do osobno zmapowanego chodnika
-- Status: w PR #437 (12.11; przegląd kuratora do zrobienia; nie zamyka G-650 ani G-656)
-- Ważność: S3 · Zasięg: `fitToKerb` (`tools/osm-import/src/ground.ts:123–126`, `|| Number(t.lanes) > 0) return t;`) pomija ulice z `lanes`; przy `sidewalk=separate` `roadWidth` = `lanes × 3,25`, np. Radziwiłłowska `lanes=3` (w331453920, w356402586, w914787972) 9,75 m, więc jezdnia i zewnętrzny pas ruchu zachodzą na chodnik (pas `footway` ma nawierzchnię „road” i „footway” naraz); po dociągnięciu oś pasa ok. 4 m od płotów w232805994 i w232805996, co odblokowuje G-650; zmiana całego miasta z regeneracją i przeglądem kuratora; zmierzyć czas `generate`
-- Pakiet właściciela: tools/osm-import
-
 ### G-656 Alejka z donicami w krakowskie-1-1 zapada się w `unloop` i zostaje bez trasy
 - Status: zgłoszone (12.11, naprawiacz G-650)
 - Ważność: S4 · Zasięg: pas x 199…229, z 83…104 przy murach oporowych w1365971524/25/27/31: po G-613 `unloop` zjada pętlę z 180 do 69 próbek, reszta leży na ścianach i budynku, alejka bez przechodniów; rozwiązanie razem z G-650 (jedna linia zamiast zapadniętej pętli)
 - Pakiet właściciela: packages/sim (tłum)
 
-### G-657 Skan `walker-on-car-lane` sprawdza tylko wierzchołki tras
-- Status: zgłoszone (12.11, naprawiacz G-650)
-- Ważność: S4 · Zasięg: `tools/glitch-scan/test/glitch-scan.test.ts:606–608` bierze `l.points` zamiast próbek co metr, więc długi odcinek trasy blisko pasa ruchu może umknąć; poprawka: próbkowanie odcinków, nowa baza z przebiegu (wzrost to odsłonięte trafienia, nie regres)
-- Pakiet właściciela: tools/glitch-scan
-
 ### G-658 Jezdnie w kształcie „lizaka” mają samoprzecinający się obrys
 - Status: zgłoszone (12.11, naprawiacz G-654)
-- Ważność: S4 · Zasięg: w173489056, w179269926, w296752325, w360030910, w1561106064 (drogi serwisowe z pętlą zamkniętą na własnym węźle); `simplePieces` z #433 celowo ich nie tnie, bo pocięcie odsłania lukę w cięciu chodnika w Nabrzeżu przy (2696; 299), +1 próbka `landuse-bare`; razem z tym wypełnienie zewnętrznych rogów na stykach kawałków dróg (proste końce `bufferLine`, do 1 m² na róg)
+- Ważność: S4 · Zasięg: w173489056, w179269926, w296752325, w360030910, w1561106064 (drogi serwisowe z pętlą zamkniętą na własnym węźle); `simplePieces` z #433 celowo ich nie tnie, bo pocięcie odsłania lukę w cięciu chodnika w Nabrzeżu przy (2696; 299), +1 próbka `landuse-bare`; razem z tym wypełnienie zewnętrznych rogów na stykach kawałków dróg (proste końce `bufferLine`, do 1 m² na róg); nabrzeze-1-1 (12.11): `ground-ring-self-cross` droga (road) 14 punktów (2685; 280) i `kerb-fill-wide-estimated` 7 kwadratów (708 próbek), skupisko (2695; 300), obok miejsca (2696; 299) z G-658; niepotwierdzone, że ta sama droga.
 - Pakiet właściciela: tools/osm-import
 
 ### G-659 30 samoprzecinających się obrysów nawierzchni bez kontroli w skanie
-- Status: zgłoszone (12.11, naprawiacz G-654)
-- Ważność: S4 · Zasięg: place przycięte na krawędzi kawałka mapy przy (20; −20), pętle zamkniętych ścieżek w Podzamczu i Nabrzeżu; skan nie liczy tego rodzaju; poprawka: kontrola w `tools/glitch-scan` z bazą z przebiegu (i wpis w `docs/mapa-pokrycie.json`), potem naprawy; propozycja kuratora (przegląd #433): `ground-ring-self-cross`, baza 30 (Krakowskie 15, w tym 6 placów przy (20; −20), Nabrzeże 5, Podzamcze 5, Stare Miasto 5)
+- Status: kontrola w main (#453, `ground-ring-self-cross` baza 30); naprawa w etapach 2–3 ADR-0078
+- Ważność: S4 · Zasięg: place przycięte na krawędzi kawałka mapy przy (20; −20), pętle zamkniętych ścieżek w Podzamczu i Nabrzeżu; skan nie liczy tego rodzaju; poprawka: kontrola w `tools/glitch-scan` z bazą z przebiegu (i wpis w `docs/mapa-pokrycie.json`), potem naprawy; propozycja kuratora (przegląd #433): `ground-ring-self-cross`, baza 30 (Krakowskie 15, w tym 6 placów przy (20; −20), Nabrzeże 5, Podzamcze 5, Stare Miasto 5); podzamcze-2-1 (12.11): `ground-ring-self-cross` 3 kwadraty (4 trafienia), pętle ścieżek (footway) w (961; 538) 37 punktów, (1057; 504) 34, (1046; 424) 42 i (1045; 424) 46; ta sama klasa.; nabrzeze-0-0 (12.11): `ground-ring-self-cross` 2 pętle ścieżek (footway): (2483; 137) 20 punktów i (2488; 144) 17 punktów.; nabrzeze-0-1 (12.11): `ground-ring-self-cross` pętla ścieżki (footway) (2427; 451), 42 punkty.; nabrzeze-1-0 (12.11): `ground-ring-self-cross` droga (road) nabrzeze-1-0, 10 punktów (2599; 263).
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
-
-### G-660 `save-load-micro-body` przekracza 20 s pod obciążeniem
-- Status: zgłoszone (12.11, agent bramki czasu testów)
-- Ważność: S4 · Zasięg: `packages/sim/test/save-load-micro-body.test.ts` „won, knocked out…” (G-242) przekroczył limit 20 s przy load 11–13 na 4 rdzeniach; kandydat na test niestabilny; najpierw pomiar przyczyny, limitu nie podnosimy (ADR-0046)
-- Pakiet właściciela: packages/sim
 
 ### G-661 Goły plac na północ od VIVO
 - Status: zgłoszone (12.11, kurator przeglądu G-647; T-260)
 - Ważność: S4 · Zasięg: Podzamcze, x 1101–1120, z 239,7–252, ok. 55 m² gołe od G-647 (wcześniej przykryte trawnikiem r11978659); ortofoto: jasna nawierzchnia placu; poprawka: kostka lub płyty do krawędzi garażu albo reguła gołej ziemi z ortofoto (ADR-0077 krok 1.1)
-- Pakiet właściciela: tools/osm-import
-
-### G-662 Trójkąt garażu VIVO nad ziemią bez bryły
-- Status: zgłoszone (12.11, kurator przeglądu G-647; T-261, T-258 do zmiany na „do poprawy”)
-- Ważność: S3 · Zasięg: w173070505, x 1105,8–1120, z 228–239,7: na trzech nalotach ortofoto dach z sedum i świetlikami ok. 5–10 m nad chodnikiem (cień do z 244–251), w grze trawnik na poziomie gruntu; G-600 usunął całą bryłę garażu; poprawka: niska bryła o wysokości dachu w miejsce trawników T-258 i G-647
 - Pakiet właściciela: tools/osm-import
 
 ### G-663 Drogi `segregated=yes` za wąskie
@@ -1746,10 +1508,241 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 62 drogi `highway=path` z `segregated=yes` (Podzamcze, Nabrzeże) mają pas 2 m (`PATHS.path`); np. w65351890 przy (1038; 305): kostka ok. 4 m i asfalt rowerowy ok. 2,4 m; poprawka: szerokość z `footway:width` + `cycleway:width` albo domyślnie ok. 2,5 + 2 m, dwie nawierzchnie; kontrola skanu `path-segregated-width`
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-664 Zieleń z `layer>0` ukrywa gołą ziemię przed skanem `landuse-bare`
-- Status: w naprawie (12.11, gałąź ccr-ec2c4269-ilh8k8-g664)
-- Ważność: S4 · Zasięg: `landuse-bare` pomija punkty w obrysie trawnika z mapy, także trawnika na dachu (r11978659), więc goły pas z G-661 nie zmienił bazy 69019; poprawka: zieleń z `layer>0` albo `location=roof` nie zwalnia próbek, nowa baza z przebiegu
+### G-666 Pamięć pościgu `chase` nie jest czyszczona, gdy cel przejdzie przez barierę
+- Status: zgłoszone (12.11, naprawiacz G-644; także na main)
+- Ważność: S4 · Zasięg: `chase` gangera (`ganger-walk.ts`) zostaje, dopóki cel jest w `CHASE_DRIFT` (8 m) od starego; gdy gracz przeskoczy płot w tym promieniu, ganger może dojść do starego celu i stać po złej stronie bariery
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-668 Trawnik `T-246/trawnik-nadstawna-3` leży na dachu
+- Status: zgłoszone (12.11, kurator przeglądu G-627)
+- Ważność: S4 · Zasięg: Podzamcze, x 814–823, z 474–489, przy zachodniej ścianie w73833932 (5,6 m): na obu nalotach krawędź dachu ok. 2,5 m na zachód od obrysu OSM, zarośla przy x 812–818; najpierw sprawdzić obrys w73833932, potem przesunąć trawnik
+- Pakiet właściciela: tools/osm-import
+
+### G-669 `T-170/trawnik-pawilonow` sięga na kostkę z misami drzew
+- Status: zgłoszone (12.11, kurator przeglądu G-627)
+- Ważność: S4 · Zasięg: Podzamcze, x 840–870, z 361–369: południowe 3–4 m trawnika do ścieżki w227698420 to kostka z misami drzew; niski priorytet
+- Pakiet właściciela: tools/osm-import
+
+### G-673 `added-grass-off-green` liczy cały obrys trawnika, nie widoczną trawę
+- Status: zgłoszone (12.11, kurator przeglądu G-667; opcjonalne)
+- Ważność: S4 · Zasięg: ścieżki biegnące przez ręczny trawnik zaniżają jego zieleń, np. `T-245/trawnik-klinika` 53% całego obrysu, a 67% tam, gdzie gra pokazuje trawę (ścieżka w1011367932 i ciemny pas przy ścianie kliniki); poprawka: liczyć po górnej nawierzchni w grze; przy okazji odsunąć południową krawędź trawnika-kliniki o ok. 1 m od ściany
 - Pakiet właściciela: tools/glitch-scan
+
+### G-676 Uskok 6,2 m między dachem VIVO a dachem garażu
+- Status: zgłoszone (12.11, kurator przeglądu G-662; niski priorytet)
+- Ważność: S4 · Zasięg: VIVO r5601275 przy ukośnej ścianie NE (x 1106–1120, z 228–240): w grze dach VIVO 17,2 m (jedna wysokość LoD1 dla całej galerii), garaż 11 m; w rzeczywistości uskok < ok. 1 m (garaż jasny na całej szerokości na nalocie 2025-04, uskok 6 m dałby cień ok. 5,8 m; trawnik r11978659 ciągnie się po obu dachach, tarasowy dach „Tarasy Zamkowe”); przy cyplu NW krawędź garażu prawdopodobnie obniża się do ok. 7–8 m
+- Pakiet właściciela: tools/osm-import
+
+### G-679 Trzy pary identycznych kawałków nawierzchni placów na Krakowskim
+- Status: zgłoszone (12.11, ADR-0078 etap 1)
+- Ważność: S4 · Zasięg: tabele `krakowskie.generated.ts`: 3 pary identycznych obrysów placów w krakowskie-1-0, 0-1 i 1-1 (centroidy (56; −46), (−48; 43), (66; 33)), podwójne rysowanie i podwójne samoprzecięcia w `ground-ring-self-cross`; kandydat na kontrolę duplikatów nawierzchni
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-681 Linia środkowa Radziwiłłowskiej 0,2–1,5 m na południe od rzeczywistej
+- Status: zgłoszone (12.11, kurator przeglądu #454; niski priorytet)
+- Ważność: S4 · Zasięg: Krakowskie, x −88…−20, z ok. 113: w grze 113,0–113,6, w rzeczywistości ok. 113,7 (wschód) i 114,0–114,5 (zachód) według ortofoto 2025-04; linia idzie osią drogi z OSM przesuniętą przez `fitLanes`, nie osią malowania; mniej niż 1/3 pasa; odsyłacz G-655, G-675
+- Pakiet właściciela: tools/osm-import
+
+### G-682 Goły teren na nawierzchni wzdłuż Królewskiej
+- Status: potwierdzone (12.11, kurator: ortofoto i 2 zrzuty; T-263); dodatkowo 12 próbek `kerb-fill-wide-estimated` (496..500; −202..−201) przy w40052496 (Królewska, `lanes=2`, bez `width`; korekta T-247 obejmuje tylko w66829063); udział ortofoto w pasie przy SE ścianie w66286377 to dach przechylony o 4–5 m, a nie nawierzchnia
+- Ważność: S3 · Zasięg: pas ukośny od ok. (478; −195) do (525; −145) i (505..525; −195..−215), 29 kwadratów, 2576 próbek `landuse-bare` (ok. 644 m²); nakładka ortofoto: 340 m² jasna nawierzchnia, 257 m² asfalt, 35 m² zieleń; pasy między jezdnią a chodnikami przy krzywiźnie Królewskiej i placu; kandydat do kroku 1.1 ADR-0077 (goła ziemia z ortofoto, w toku)
+- Pakiet właściciela: tools/osm-import
+
+### G-683 Wylot bramy poza osią frontu: Brama Krakowska i Wieża Trynitarska
+- Status: potwierdzone dla (463; −94) (12.11, kurator; zrzut `sm00-krakowska-zach`; OSM −0,74 m, gra −1,80 m); poprawka: oś przejazdu łamana jak w OSM (w491869410 i w66264116, po ok. 21°) albo wylot w środku frontu przedbramia; Trynitarska liczona względem obrysu OSM, który LoD2 przesuwa o ok. 4 m (T-264), do potwierdzenia zdjęciem
+- Ważność: S4 · Zasięg: `gate-mouth-off-axis` = 3 (cała baza miasta w tej komórce): (463; −94) −1,80 m od środka frontu 7,47 m; (587; −140) −0,81 m z 5,90 m; (588; −154) −4,44 m z 15,84 m (ten może być fałszywy: front obejmuje sąsiednią ścianę); G-136 (Brama Grodzka) zapowiadał pomiar Krakowskiej; najpierw pomiar z OSM i ortofoto
+- Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
+
+### G-687 `startOf` wybiera komórkę za cienkim płotem
+- Status: zgłoszone (12.11, naprawiacz G-643; także na main)
+- Ważność: S4 · Zasięg: szukanie komórki startowej w promieniu 2 (`steering.ts`) bierze komórkę po drugiej stronie płotu; ganger przy płocie podwórka (114,7; 85,3) dostaje drogę „przez” płot
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-688 Pierwszy krok pościgów i pierwszy krok po wczytaniu budują wszystko naraz
+- Status: zgłoszone (12.11, naprawiacz G-643; także na main)
+- Ważność: S3 · Zasięg: pierwszy krok pościgu buduje rastry near wszystkich celów naraz (133–187 ms przy 18 pościgach); pierwszy krok po wczytaniu buduje wszystkie trzymane drogi wide od razu (do 1,6 mln komórek); poprawka: ta sama kolejka z budżetem co w G-643 (#455); powiązane z G-645
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-690 Siedem linii barier z OSM nieobecnych w grze; bramy 4 → 2 w stare-miasto-0-0
+- Status: zgłoszone (12.11, naprawiacz G-685; do triage)
+- Ważność: S4 · Zasięg: poprawiony raport `tools/orto --all`: w783241007 (płot, 202 m i 93 m w dwóch komórkach), w295849311 (mur, 114 m), w296752323, w292125943, w296750495, w1395539925, w618560965 nie mają barier w danych gry; w stare-miasto-0-0 mapa ma 4 punkty `gate`, gra 2; możliwy glitch importera (#418) albo celowe pominięcie; krakowskie-2-1 (12.11): raport komórki: nierysowana linia bariery w783241007 (płot 202 m); bez nowych id.; stare-miasto-0-1 (12.11): raport komórki: nierysowany płot w783241007, 92,8 m (część w tej komórce); bez nowych id.
+- Pakiet właściciela: tools/osm-import
+
+### G-692 Budynek z domyślną wysokością 13,2 m przy kalenicy LoD2 6 m (w67504382)
+- Status: zgłoszone (12.11, autor G-639)
+- Ważność: S4 · Zasięg: w67504382: wysokość domyślna 13,2 m, LoD2 przy IoU 1,00 daje kalenicę 6 m, LoD1 niedopasowany; żadna kontrola tego nie łapie; propozycja: kontrola wysokości domyślnej wobec LoD2, gdy LoD1 brak
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-693 Lublinianka płaska na 19 m przy okapie LoD2 17,1 m
+- Status: zgłoszone (12.11, autor G-639)
+- Ważność: S4 · Zasięg: dach głównej bryły w LoD2 ma równo 4,0 m, a reguła dachów z LoD2 (#G-639) bierze dach > 4 m; do decyzji próg ≥ 4 m albo wyjątek
+- Pakiet właściciela: tools/osm-import
+
+### G-695 Okap od ulicy z najniższej połaci powłoki LoD2
+- Status: zgłoszone (12.11, kurator przeglądu #459)
+- Ważność: S3 · Zasięg: reguła dachów z LoD2 (#459) bierze okap jako najniższy punkt powłoki głównej bryły, więc fasada od ulicy wychodzi za nisko: Złota 3 −4,1 m, Lubartowska 23 w66309793 −3,6 m, Rybna 6 w66293219 −2,7 m, Centrum Kultury −1,5 m (skrzydła 12,7 do 15,6 m, środkowy trakt do 18,4 m); poprawka: okap od strony ulicy z `addr:street` (azymut ±50°) albo per część; kontrola `lod2-street-eaves` (baza 3)
+- Pakiet właściciela: tools/osm-import, tools/gugik, tools/glitch-scan
+
+### G-696 Dachy LoD2: mansarda jako czterospadowy, pałace z kondygnacjami kamienic, Narutowicza 4 jednym obrysem
+- Status: zgłoszone (12.11, kurator przeglądu #459; niski priorytet)
+- Ważność: S4 · Zasięg: Pałac Parysów w66330695 ma w LoD2 mansardę (połacie 60° do 15,6 m, 16° do 18,2 m), w grze czterospadowy (`roofType` 1130); pałace bez `building:levels` (Czartoryskich, Parysów, Potockich) dostają kondygnacje po 2,7–3,3 m zamiast 2 wysokich; Narutowicza 4 (WBP): zabytkowe skrzydło od ulicy płasko na 14 m, w rzeczywistości okap ok. 8,5 m i kalenica 12,4 m (jeden obrys OSM, do podziału na części)
+- Pakiet właściciela: tools/osm-import
+
+### G-698 Kuria Metropolitalna płasko na 13,1 m: LoD2 dzieli ją na dwa budynki
+- Status: zgłoszone (12.11, autor G-639)
+- Ważność: S4 · Zasięg: w66293168: LoD2 ma dwa budynki o IoU 0,45 i 0,50 z obrysem OSM, więc reguła dachów z LoD2 (#459, dopasowanie 1:1, IoU ≥ 0,7) jej nie obejmuje; LoD1 2024 ma ją w całości (IoU 0,91), płasko 13,1 m przy LoD2 10,8–15,5 m; poprawka: dopasowanie wielu budynków LoD2 do jednego obrysu (części)
+- Pakiet właściciela: tools/osm-import, tools/gugik
+
+### G-699 Podjazd i taras przy Zamku węższe niż w Lublinie: goły teren między pasem drogi a licem (T-265)
+- Status: zgłoszone (12.11, kurator, przegląd podzamcze-1-0)
+- Ważność: S4 · Zasięg: Podzamcze, Zamek w48500136. Od północy (844..920; 262..273) ok. 382 m² gołego terenu między pasem 4 m drogi w66258158 a licem, a na ortofoto asfaltowy podjazd ok. 10 m z parkowaniem. Od południa (830..920; 202..209) ok. 130 m² przy licu i taras (882..900; 193..200) ok. 89 m², na ortofoto kostka. Zrzuty `pz10d-pn-podjazd`, `pz10d-pd-taras`; podzamcze-2-0 (12.11): `landuse-bare` 865 próbek w x 920..930 (z 160..370) tuż za granicą komórki podzamcze-1-0; niepotwierdzone, że to ciąg pasów przy Zamku z wpisu.; 12.11 (kurator, przegląd paczki): pas (920..975; 183..263) w podzamcze-2-0 jest ciągiem wpisu. Droga w66258158 okrąża wschodni koniec Zamku przy Kaplicy Trójcy, a goły teren między jezdnią a licem i kaplicą przechodzi przez x = 920 bez przerwy (wycinek `topo-paczka/crop/pz20w.png`). Do poprawy przedpola (920..960; 227..262) i (944..959; 195..229), twarde 70% i 97%. Zieleń zbocza na wschód od drogi to T-117 i zostaje. Test przyjęcia uzupełnić o `landuse-bare` w (920..975; 183..263) bez próbek zieleni ortofoto < 100.” Z T-274 i G-713 usunąć zastrzeżenie „niepotwierdzone, że ciąg
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS` albo korekta `width`)
+- Test przyjęcia: `landuse-bare` w (844..920; 255..273) 1527 → mniej niż 100, w (830..920; 202..212) i na tarasie 873 → mniej niż 100; zbocze z trawą bez nawierzchni
+
+### G-700 Ganger w `seek` podchodzi do bariery na 0,4 m
+- Status: zgłoszone (12.11, z weryfikacji #461)
+- Ważność: S4 · Zasięg: czujnik `FEELER` z #461 to linia ze środka ciała bez promienia 0,38 m, więc przy ruchu prawie równoległym do bariery ganger dochodzi do 0,38 m (cienki płot 114.7,85.3, strona -1, g11) i 0,41 m (mur 214,-28); na 503bff0 2,3–2,6 m; wydostaje się, na końcu przebiegu ponad 2 m; poprawka: czujnik jako kapsuła z promieniem ciała (dwie równoległe linie)
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-701 Przy cienkim płocie i murze ganger dalej stoi, czekając na plan
+- Status: zgłoszone (12.11, z weryfikacji #461)
+- Ważność: S4 · Zasięg: płot 114.7,85.3 (n12, strona +1) i mur 214,-28 (strona -1): postój 245 i 103 kroki, jak przed #461, bo `FEELER` jest zablokowany z obu stron; reszta G-694; poprawka: przy obu stronach zablokowanych krok wzdłuż bariery albo pierwszeństwo w kolejce
+- Pakiet właściciela: packages/sim (systems/ai)
+
+### G-702 Wczytanie przy zaalarmowanym tłumie za płotem rozjeżdża się po ok. 95 krokach
+- Status: zgłoszone (12.11, z weryfikacji #461; tak samo na 503bff0)
+- Ważność: S4 · Zasięg: tłum 18 zaalarmowany, gracz 6 m za płotem 2359, zapis w trakcie czekania na plan; od kroku ok. 95 pozycje odbiegają od ciągłej gry, do 1,9 m po 300 krokach; powiązane z G-645 (pamięć `chases` poza zapisem)
+- Pakiet właściciela: packages/sim (systems/ai), packages/persistence
+
+### G-706 Normalne nawierzchni przyciętej brzegiem mapy czytają teren 0 za brzegiem
+- Status: zgłoszone (12.11, z naprawy G-703)
+- Ważność: S4 · Zasięg: `groundNormal` drape'a próbkuje ±0,75 m, więc przy brzegu mapy każda nawierzchnia przycięta brzegiem (nie tylko schody) dostaje normalną liczoną z terenem 0 za brzegiem; skutek: złe cieniowanie pasa przy brzegu (nie zmierzone); G-703 (#463) poprawia to tylko dla schodów (`onItsSide` w `steps-plan.ts`); do tego stopnie pasa przyciętego skośnie rysują się na pełnym prostokącie, ok. 1 m za brzegiem, na poprawnej wysokości
+- Pakiet właściciela: packages/engine/src/renderer/mapcity (drape)
+
+### G-722 Pamięć wygenerowanego miasta w CI nie trafia
+- Status: zgłoszone (12.11, z naprawy G-719 i G-720)
+- Ważność: S4 · Zasięg: tylko `venues.test.ts` (przez `test/city.ts`) korzysta z pamięci miasta (ADR-0046); CI nie zachowuje `node_modules/.cache`, a klucz obejmuje całe `packages/{core,sim,engine}/src`, więc nie trafiłby nawet przy zachowaniu; `generatedCity()` woła `generate` bez lod1/lod2, więc test liczy inne miasto niż tabele. Po G-719 test ma zapas (ok. 9 s w CI przy limicie 20 s); do zrobienia przy następnym spowolnieniu importu: węższy klucz i `actions/cache`
+- Pakiet właściciela: tools/osm-import (test/city.ts), .github
+
+### G-723 Klasa: ruch aut odłożony (decyzja użytkownika 31.10, „samochody na później”)
+- Status: zgłoszone, klasa (12.11, porządki rejestru: 11 wpisów scalonych, pełne opisy w archiwum)
+- Ważność: S3 (najwyższa w klasie) · Zasięg: ruch aut i pasy jezdni (zawrotki, ślepe końce, szerokość, dziury, pochylenie aut, hash ruchu)
+- Członkowie (pełne opisy w `docs/glitches-archiwum.md`):
+  - G-003 (S4) Zawrót na Alei Tysiąclecia zahacza o skraj chodnika przed targiem — lokalny
+  - G-022 (S3) Pas aut kończy się przed krótkim łańcuchem tej samej jezdni, który nie dostaje pasa — lokalny (6 miejsc, 8 ślepych końców)
+  - G-024 (S3) Jednokierunkowe pasy kończą się przed ulicą dla dostaw (Lubartowska, Kowalska, Świętoduska) — lokalny (6 końców)
+  - G-025 (S3) Istniejące zawrotki na Alei Tysiąclecia wychodzą poza nawierzchnię — lokalny, trasa główna
+  - G-037 (S3) Pas Andersy kończy się na pasach Mełgiewskiej: auta czekają na siebie
+  - G-074 (S3) Ślepe końce pasów po poszerzeniu Krakowskiego (Peowiaków, Kapucyńska, Dolna Panny Marii) — 3 skrzyżowania
+  - G-083 (S3) Drogi dla aut bez nazwy i łącznice bez pasów ruchu — 7 dróg bez nazwy + 3 łącznice, ok. 550 m
+  - G-092 (S3) Ulice ok. 3–4 m z dwoma pasami: auto zachodzi na chodnik — wąskie ulice dwukierunkowe (po G-082 m.in. Staszica miejscami, Łęczyńska#120)
+  - G-093 (S4) Dziura w nawierzchni jezdni Narutowicza — lokalny
+  - G-133 (S4) Pojazdy na stromych ulicach bez pochylenia: dolny koniec odstaje od bruku — 8 pojazdów odstaje ponad 0,2 m, najgorzej dostawczak (544.7, 167.7) o 0,44 m
+  - G-524 (S4) Złoty hash nie obejmuje ruchu aut — `determinism.test.ts` liczy hash z `snapshot` (zapis), a pojazdów w zapisie nie ma
+- Pakiet właściciela: packages/sim (traffic), tools/osm-import (drogi)
+
+### G-724 Klasa: luki kontroli i testów skanu
+- Status: zgłoszone, klasa (12.11, porządki rejestru: 8 wpisów scalonych, pełne opisy w archiwum)
+- Ważność: S4 (najwyższa w klasie) · Zasięg: kontrola albo test skanu czegoś nie widzi lub jest za wolny; gra bez skutku, ryzyko przeoczenia przyszłych glitchy
+- Członkowie (pełne opisy w `docs/glitches-archiwum.md`):
+  - G-146 (S4) `onPassageAxes` i skan przejazdów: słabe przy trasie równoległej do osi
+  - G-153 (S4) Skan `furniture-overlap` pomija słupki — np. stojak (-137.1, -52.2) z bryłą na słupku (-137.9, -53.1)
+  - G-176 (S4) Skan aut przy krawężniku luźniejszy niż generator — `parked-car-multilane-kerb` zwalnia auto w każdym `amenity=parking`, także podziemnym i dachowym, a generator tylko w naziemnych
+  - G-223 (S4) Test skanu `market-piece-on-crowd-lane` przekracza 20 s przy load ponad 20 — `tools/glitch-scan`, kontrola `market-piece-on-crowd-lane`
+  - G-346 (S4) Kontrola `deck-slot` nie widzi pomostu powyżej zasięgu stopy — `deck-slot` porównuje z `groundY`, a postać stoi na ziemi z `reach` = stopa + `STEP_HEIGHT`
+  - G-370 (S4) Skan `metro-shaft-open` nie sprawdza ścian pawilonu powyżej ulicy (szkło nad cokołem) — wszystkie wejścia metra
+  - G-657 (S4) Skan `walker-on-car-lane` sprawdza tylko wierzchołki tras — `tools/glitch-scan/test/glitch-scan.test.ts:606–608` bierze `l.points` zamiast próbek co metr, więc długi odcinek trasy blisko pasa ruchu mo
+  - G-691 (S4) Zapadka bazy skanu przepuszcza zawyżoną bazę po scaleniu z innej podstawy — `glitch-scan.test.ts` sprawdza tylko „znaleziono ≤ baza”
+- Pakiet właściciela: tools/glitch-scan
+
+### G-725 Klasa: reguły importu bez skutku dziś (uśpione)
+- Status: zgłoszone, klasa (12.11, porządki rejestru: 2 wpisów scalonych, pełne opisy w archiwum)
+- Ważność: S4 (najwyższa w klasie) · Zasięg: reguła importu ma lukę, która dziś nie zmienia miasta; wróci przy poszerzaniu mapy albo nowych danych
+- Członkowie (pełne opisy w `docs/glitches-archiwum.md`):
+  - G-222 (S4) Reguła wieży z OSM: krawędzie (bok wieży, maszty, wieże różnej wysokości) — `tools/osm-import/src/building-towers.ts:59` mierzy od wierzchołków wieży do ścian kościoła (wieża bokiem bliżej niż 10 m zostanie pominięta
+  - G-225 (S4) Reguła drogi pod ziemią (G-197) zdejmuje też nawierzchnię nad tunelem i przejazdy bramne — `tools/osm-import/src/props-doors.ts:234`: odcinek ulicy z chunków pokrywający się w rzucie z drogą pod ziemią przestaje być ulicą
+- Pakiet właściciela: tools/osm-import
+
+### G-726 Klasa: goły teren komórek (podwórza, przedpola, szczeliny; ADR-0077)
+- Status: zgłoszone, klasa (12.11, porządki rejestru: 12 wpisów scalonych, pełne opisy w archiwum)
+- Ważność: S3 (najwyższa w klasie) · Zasięg: ziemia bez nawierzchni tam, gdzie ortofoto ma kostkę lub asfalt; jedna reguła ważności z przeglądu paczki 12.11 (S3 przy ≥ ok. 1000 m² twardej, inaczej S4); poprawka regułami ADR-0077 (krok 1.1 i dalsze), nie ręcznymi obszarami
+- Członkowie (pełne opisy w `docs/glitches-archiwum.md`):
+  - G-704 (S3) Podwórza Starego Miasta przy Archikatedrze, Dominikanach, Farze i Podwalu to goła ziemia (T-266, T-268) — stare-miasto-1-0, 7 podwórzy, ok. 2500 m² gołego terenu, w tym 1960 m² twardej nawierzchni na ortofoto: (627..666
+  - G-705 (S3) Goły teren przy gmachach i sklepach Krakowskiego (krakowskie-1-0): Pedet, Teatr Osterwy, Urszulanki, Narutowic — krakowskie-1-0, `landuse-bare` 6144 próbki (1536 m²), z czego ok. 1300 m² do poprawy. Pedet w67508935 (108..142
+  - G-709 (S3) Goły teren w krakowskie-2-0: podwórza, przedpola Dolnej Panny Marii i deptaka, szczeliny przy jezdni i dwa bud — krakowskie-2-0, goły teren 16083 m²: podwórza 14 / 4655 m² (twarde 80%), przedpola 15 / 7101 m² (twarde 88%), szczeliny przy jezdni > 3 m 11
+  - G-710 (S3) Goły teren w krakowskie-2-1: przedpola przy fasadach i szczeliny przy jezdni (T-271) — krakowskie-2-1, goły teren 10063 m²: przedpola 13 / 5222 m² (twarde 70%), szczeliny przy jezdni > 3 m 2 / 2780 m² (twarde 66%), podwórza 1 /
+  - G-711 (S3) Goły teren w stare-miasto-0-1: podwórza i przedpola przy Rybnej, Lubartowskiej i Kowalskiej (T-272) — stare-miasto-0-1, goły teren 6600 m²: podwórza 7 / 4223 m² (twarde 100%), przedpola 4 / 1344 m² (twarde 100%), szczeliny, obrys LoD2 i inne
+  - G-712 (S3) Goły teren w podzamcze-0-0: podwórza, przedpola i szczeliny przy Kowalskiej, Furmańskiej i Alei Tysiąclecia (T — podzamcze-0-0, goły teren 10945 m²: podwórza 10 / 5958 m² (twarde 89%), przedpola 10 / 1620 m² (twarde 79%), szczeliny przy jezdni > 3 m 2 /
+  - G-713 (S3) Goły teren w podzamcze-2-0: przedpola i szczeliny przy wschodnim Wzgórzu Zamkowym, Alei Tysiąclecia i VIVO (T- — podzamcze-2-0, goły teren 7147 m²: przedpola 5 / 1263 m² (twarde 77%), szczeliny przy jezdni > 3 m 16 / 2941 m² (twarde 73%), inne 5 / 1166
+  - G-714 (S3) Goły teren w podzamcze-2-1: przedpola i szczeliny przy Ruskiej, Podzamczu i Cerkiewnej (T-275) — podzamcze-2-1, goły teren 9543 m²: przedpola 7 / 5009 m² (twarde 39%), szczeliny przy jezdni > 3 m 16 / 1624 m² (twarde 85%), inne 4 / 569 m
+  - G-715 (S4) Goły teren w nabrzeze-0-0: szczeliny przy jezdni Mełgiewskiej i bulwaru (T-276) — nabrzeze-0-0, szczeliny przy jezdni > 3 m 3 / 526 m² (twarde 77%)
+  - G-716 (S4) Goły teren w nabrzeze-0-1: przedpole DPS "Kalina" i szczeliny przy jezdniach Andersa, Towarowej i Kalinowszczy — nabrzeze-0-1, goły teren 6567 m²: przedpola 2 / 1725 m² (twarde 23%), szczeliny przy jezdni > 3 m 8 / 749 m² (twarde 48%), inne 7 / 908 m²,
+  - G-717 (S3) Goły teren w nabrzeze-1-0: przedpola przy fasadach i szczeliny przy jezdniach Łęczyńskiej i Mełgiewskiej (T-27 — nabrzeze-1-0, goły teren 10164 m²: przedpola 9 / 5935 m² (twarde 15%), szczeliny przy jezdni > 3 m 10 / 1958 m² (twarde 65%), inne 2 / 263 m
+  - G-718 (S3) Goły teren w nabrzeze-1-1: przedpole przy fasadach i szczeliny przy jezdni Turystycznej (T-279) — nabrzeze-1-1, goły teren 6779 m²: przedpole 1 / 3104 m² (twarde 44%), szczeliny przy jezdni > 3 m 6 / 1913 m² (twarde 60%), inne 1 / 113 m²
+- Pakiet właściciela: tools/osm-import (ADR-0077)
+
+### G-727 Klasa: odłożone do poszerzania mapy
+- Status: zgłoszone, klasa (12.11, porządki rejestru: 2 wpisów scalonych, pełne opisy w archiwum)
+- Ważność: S3 (najwyższa w klasie) · Zasięg: sprawy za obecnym brzegiem mapy albo wymagające danych spoza obecnych komórek (decyzja użytkownika 8.11)
+- Członkowie (pełne opisy w `docs/glitches-archiwum.md`):
+  - G-096 (S3) Narożnik Starego Miasta za brzegiem z = −240 (Pałac Ordynacki, Kuria) — lokalny, 7 budynków, 2 zabytki
+  - G-680 (S4) Probostwo 11: przejazd bramowy bez tagu w OSM — w444375185 × w252541795 (`service=driveway`, 12 m w budynku, bez `tunnel`), (468
+- Pakiet właściciela: tools/osm-import
+
+### G-728 Klasa: szerokość jezdni i styk jezdnia–chodnik (krawężniki, szczeliny, wypełnienia)
+- Status: zgłoszone, klasa (12.11, porządki rejestru: 9 wpisów scalonych, pełne opisy w archiwum)
+- Ważność: S3 (najwyższa w klasie) · Zasięg: jezdnia z domyślnej szerokości albo dopasowana do chodnika tylko z jednej strony wchodzi pod chodnik lub zostawia szczelinę; kontrole `sidewalk-under-carriageway`, `footway-on-carriageway`, `kerb-gap-bare`, `kerb-strip-bare`, `kerb-fill-wide-estimated`; przegląd 12.11: footway bez `footway=sidewalk` nie wchodzi do `fitToKerb` (Peowiaków). Poprawka regułą dla całego miasta, nie po jednej ulicy
+- Członkowie (pełne opisy w `docs/glitches-archiwum.md`):
+  - G-082 (S4) Domyślna szerokość jezdni wycina zmapowane chodniki
+  - G-112 (S3) Szerokość jezdni z chodnika przy skrzyżowaniu zwęża całą ulicę — Łęczyńska w85717509, Montażowa w40052079, 566 m
+  - G-113 (S3) Dwukierunkowa jezdnia zwężana symetrycznie od chodnika z jednej strony — Podwale w40052391 3,6 m, Staszica w1150131461 4,4 m, w232805965 4,7 m (po G-111 także Łęczyńska i Montażowa, jeśli zostaną dopasowane)
+  - G-192 (S4) Uproszczona oś chodnika: auta kilka cm w zmapowanej szerokości — `simplifyLine` 0,5 m w imporcie przesuwa oś chodnika do ok. 0,09 m
+  - G-451 (S4) Klin gołego terenu między chodnikiem a jezdnią Kościuszki (T-222) — zachodni krawężnik x 9–17, z −142…−189, ok. 13 m²
+  - G-471 (S4) Szczelina przy południowym krawężniku Peowiaków (T-228) — x −44…57, 1134 próbki
+  - G-635 (S4) Trzy próbki `kerb-fill-wide-estimated` przy nowych skrawkach chodnika na Podzamczu — (879,5
+  - G-671 (S4) Próg 0,5 m² w `chunkGround` gubi małe wycinki wypełnień krawężnikowych na granicach chunków — `tools/osm-import/src/ground.ts` `chunkGround`: wycinki pasm `holed` (wypełnienia chodnika przy krawężniku) poniżej 0,5 m² w chunku są odrzu
+  - G-674 (S4) Północny krawężnik Radziwiłłowskiej przy Placu Litewskim przed trawnikiem OSM — w914787972 i w331453920, x −87…−40: goły pas 1–2,8 m między północną krawędzią asfaltu (z 119,1–119,7) a trawnikiem w1011367949
+- Pakiet właściciela: tools/osm-import (ground, `fitToKerb`, `kerbFills`)
+
+### G-729 Szyld Neon Koi wchodzi na szyld BANK POWSZEDNI
+- Status: odłożone za priorytet mapowania i refaktoru (decyzja użytkownika 12.11: „póki co trzymaj obecne priorytety”); zgłoszone (12.11, zgłoszenie użytkownika; przyczyna do potwierdzenia)
+- Ważność: S3 (widoczne w głównym miejscu gry, deptak przy klinice, kadr sceny `reference`) · Zasięg: szyld baru Neon Koi i szyld lokalu BANK POWSZEDNI na sąsiednim budynku w66330644 (313,9; −102,1), Krakowskie Przedmieście. Hipoteza: #459 (dachy z LoD2, G-639) podniósł okap w66330644 z 11,5 m (domyślne) na 12,7 m i w opisie PR-a „szyld i górny rząd okien idą w górę”, więc szyld banku wjechał w szyld Neon Koi; do potwierdzenia zrzutem przed/po #459
+- Pakiet właściciela: tools/osm-import (szyldy lokali, `venue-names.ts`, rozstawienie szyldów na fasadzie) albo packages/engine (szyldy NPR), zależnie od przyczyny
+- Test przyjęcia: kontrola skanu nakładania szyldów sąsiednich fasad (nowy rodzaj, np. `sign-overlap`, baza policzona na main) w tym miejscu 0; zrzut dzienny i nocny z deptaka przed Neon Koi bez nakładania
+
+### G-730 Rekwizyty przed Trybunałem Koronnym stoją w wejściu do budynku
+- Status: odłożone po mapowaniu (12.11, zgłoszenie użytkownika; pozycja „Ogródki Rynku przy lokalach” w backlogu)
+- Ważność: S3 (zablokowane albo zasłonięte wejście zabytku w środku Rynku) · Zasięg: Rynek, Trybunał Koronny; rekwizyty (stoliki, parasole albo inne meble) postawione na wejściu do budynku; do sprawdzenia, czy kontrola skanu wejść (`door-*`, meble przy drzwiach) to łapie
+- Pakiet właściciela: tools/osm-import (rozstawienie rekwizytów, `props-*`)
+- Test przyjęcia: brak rekwizytów w strefie wejść Trybunału i innych zabytków Rynku (kontrola skanu dla stref wejść, baza obniżona); zrzut dzienny przed/po
+
+### G-731 NPC stoją w pozie z rękami do góry
+- Status: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu” (po mapowaniu, pierwszy priorytet)
+- Ważność: S3 (widoczne na każdym kroku, wiele postaci) · Zasięg: domyślna poza części NPC z modelami VRM to ręce do góry, czyli T-/A-poza pliku modelu; przypuszczalnie przeniesienie pozy z riga (`HumanoidRetarget`, ADR-0076, decyzja „ramiona opuszczone zamiast T-pozy pliku”) nie działa albo działa za późno w części przypadków — możliwa regresja; do ustalenia: które postacie, kiedy (wczytanie, podmiana modelu, LOD, poza aktywności)
+- Pakiet właściciela: packages/engine (renderer: modele postaci, retarget)
+- Test przyjęcia: test renderera, że żadna postać z modelem nie ma w żadnej klatce kąta ramion T-/A-pozy (poza zamierzonymi pozami); zrzut tłumu przed/po
+
+### G-732 NPC w pozie siedzącej idzie, nogi niewidoczne
+- Status: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu”
+- Ważność: S3 · Zasięg: część NPC z modelami przesuwa się w pozie siedzenia (ADR-0040 aktywności, ADR-0058 etap 8 pozy przy ławkach), a nogi nie są widoczne; przypuszczalnie poza aktywności `sit` zostaje po wyjściu z miejsca siedzenia albo ukrycie nóg pod siedziskiem nie jest zdejmowane przy ruchu; to błąd przełączania stanu (siedzi albo idzie), nie brak klipu
+- Pakiet właściciela: packages/engine (`activity-poses.ts`, modele postaci), ewentualnie packages/sim (stan aktywności)
+- Test przyjęcia: test sesji, że postać w ruchu (prędkość > 0) nigdy nie ma pozy `sit` ani ukrytych nóg; przejście siad → wstawanie → chód w kolejności; zrzut przed/po
+
+### G-733 Ścieżki z `surface` asfalt, żwir lub grunt rysowane jako jasna kostka (T-282)
+- Status: zgłoszone (12.11, kurator, przegląd G-721)
+- Ważność: S4 · Zasięg: 55 dróg `footway`/`path` z tagiem `surface=asphalt|gravel|ground|…`, głównie Podzamcze i Nabrzeże (np. w351669238); barwa ziemi z typu drogi, nie z tagu `surface`; poprawka: pole `surface` w danych importu i barwa z mediany ortofoto dla tego `surface`; kontrola `footway-surface-mismatch` (baza 55)
+- Pakiet właściciela: tools/osm-import (pole w danych ziemi), packages/engine (`ground-plan.ts`)
+
+### G-734 `sidewalk` za ciemny wobec trawy (1,31 zamiast 1,46–1,58)
+- Status: zgłoszone (12.11, kurator, przegląd G-721)
+- Ważność: S4 · Zasięg: wszystkie chodniki miasta (#6a6d73); ortofoto: chodnik do trawy 1,46–1,58; poprawka: 0,9 × square (ok. #868378) tą samą regułą co G-721; kontrola `paving-albedo-drift` (plan/trawa wobec mediany ortofoto > 0,25)
+- Pakiet właściciela: packages/engine (`ground-plan.ts`)
+
+### G-736 Teren wystaje nad pomosty wiaduktów i przyczółków (860 próbek `ground-over-deck`)
+- Ważność: S4 (szare łaty bez bruku na pomoście, do 0,25 m) · Zasięg: koniec NE wiaduktu Zamkowej (780..790; 190..206), 245 próbek do 0,25 m; przyczółki Mełgiewskiej (G-349), ok. 610 próbek do 0,155 m; kładka podzamcze-2-0, 2 próbki
+- Opis: teren pod obrysem pomostu leży wyżej niż pomost + 0,01 m i przebija przez jego nawierzchnię. Kontrola `ground-over-deck` (G-686, runda 2, 253613f) liczy próbki co 0,25 m; baza 860.
+- Status: zgłoszone (13.11, naprawiacz G-686); naprawa regułą jak `underDeck` z G-686 (#476 scalony 13.11), w naprawie
+- Pakiet właściciela: packages/sim (content/lublin abutments)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

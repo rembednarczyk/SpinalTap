@@ -23,3 +23,6 @@ Doszły dwa przebiegi: mapa cieni księżyca (postacie + jedna scalona bryła st
 | street-tpp | 246 | 192 | 280 |
 
 Jakość `low` (telefony) wyłącza G-bufor i kontury ekranowe i zmniejsza mapę cieni do 1024².
+
+## Rewizja 2 (12.11): urządzenie docelowe
+Zapowiedzianą wyżej rewizję progów „po profilowaniu na GPU” zastępuje [ADR-0079](0079-urzadzenie-docelowe-i-apk.md): urządzeniem odniesienia jest telefon klasy Xiaomi 15T Pro (jakość High), budżety scen +40%, wierzchołki miasta do 2,5 mln, `phone-low` bez zmian; pomiar na prawdziwym telefonie to etap 3 ADR-0079.

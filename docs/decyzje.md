@@ -4,6 +4,9 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 
 ## Sposób pracy
 
+- **Kolejność 12.11:** priorytet to mapowanie Lublina (ADR-0077, przejścia komórek) razem z refaktorem pod wzorce (ADR-0078, moduł geometrii, dalsze `SpatialHash`); po refaktorze dalej mapowanie. Prace wizualne spoza mapy (np. drzwi kliniki i Neon Koi) dopiero po mapowaniu. Wolne sloty bierze najpierw mapowanie i refaktor.
+- **ADR-0078 przyjęty (12.11):** operacje na wielokątach importu na `clipper2-ts`, migracja w 6 etapach; start od etapu 1 (kontrole w skanie) i 2 (bufor linii z łączeniami), każdy etap osobnym PR-em.
+- **Wyrównanie do wzorców (12.11, przegląd repo):** (3) jeden generator mulberry32 w `core/math` i (5) jeden `LruMap` zamiast kopii, jako małe refaktory bez zmiany zachowania (złote hashe bez zmian); (2) jeden `SpatialHash<T>` zamiast sześciu siatek kubełkowych, osobnym PR-em; (1) operacje na wielokątach w imporcie na bibliotece (Clipper2 albo polygon-clipping), najpierw ADR z pomiarem na jednej dzielnicy.
 - **Wzorce i standardy (12.11):** przy każdej prośbie szukamy gotowych wzorców projektowych i standardów branżowych i podajemy je, a nasze rozwiązanie dopasowujemy do rynkowego standardu; odstępstwa opisujemy. Reguła w `CLAUDE.md` („Wzorce i standardy”).
 - **Budżet sceny `reference` (11.11):** siatki w stożku kamery Neon Koi za ścianami (auta na nowych pasach postojowych z #409) idą jako wyjątek z wpisem w ADR-0046, do czasu przesłaniania dla kamery we wnętrzu (backlog).
 - **Dane na rozszerzenie mapy (11.11):** wyciągi wektorowe GUGiK (LoD1, LoD2, BDOT10k) zapisujemy w `data/` dla całego Lublina, z manifestem źródeł (adres, data, sha256, licencja). Surowe paczki i ortofoto zostają poza repo i pobieramy je ponownie. Narzędzia przyjmują dowolny prostokąt, a klasyfikację ortofoto liczymy tylko dla obecnej mapy.
@@ -36,3 +39,20 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 
 ## Czas testów w CI (12.11)
 - Decyzja użytkownika: najpierw pomiar najwolniejszych testów, `isolate: false` tam, gdzie bezpieczne (`core`, `sim`, `tools`, pakiet po pakiecie z przebiegiem kontrolnym), i wspólna pamięć wygenerowanego miasta z kluczem z sumy kontrolnej wejścia; potem bramka czasu w CI (ostrzeżenie przy pliku wolniejszym o > 50% od main). Testy tylko dotkniętych pakietów w PR-ach i trzeci shard później albo wcale. Limitu 20 min na shard nie podnosimy (ADR-0046).
+
+## Urządzenie docelowe i APK (12.11)
+- Decyzja użytkownika: urządzeniem odniesienia jest mocny telefon klasy Xiaomi 15T Pro. Nowe progi są docelowe, nie tymczasowe: wierzchołki całego miasta w pamięci do 2,5 mln (było 1 mln), budżety wywołań rysowania i aktywnych siatek scen +40%. Scena `phone-low` (słabsze telefony) bez zmian. Dalsze optymalizacje (doładowywanie, dłuższe ładowanie na starcie) później, gdy będą potrzebne.
+- Decyzja użytkownika: ograniczenia przeglądarki rozwiązujemy instalacją gry na telefonie jako `.apk`. APK budowany przy każdym większym wydaniu. Szczegóły w ADR-0079.
+
+## Tokeny przy mapowaniu (12.11)
+- Decyzja użytkownika: (1) powtarzane sondy przejść (obrysy wobec LoD2 po IoU, przechył nalotów, podwórza i przedpola z gołego terenu, odległość od ścian) stają się stałymi sekcjami raportu `tools/orto/src/report.ts --cell`, przed kolejnymi przejściami komórek; (2) kurator tylko dla nowych znalezisk, komórki z samymi znanymi rodzajami zamyka opiekun, kurator przegląda je paczką; (3) opiekun na tańszym modelu, gdy raport będzie skryptowy.
+- Reguła stała: gdy orkiestrator albo agent widzi miejsce, gdzie tokeny idą na powtarzaną pracę (te same sondy, ta sama analiza dwa razy, odtwarzanie raportów), od razu proponuje i wdraża skrypt, sekcję raportu albo zmianę procesu.
+- **Wspomaganie celowania a ganger idący po ofiarę (12.11):** decyzja użytkownika: ganger z `ai.victim` (ochrona, ADR-0018) jest celem wspomagania od razu, także przed alarmem (ADR-0072).
+- **Ślepe końce pasów aut (G-024, 12.11):** decyzja użytkownika: zostaje jak jest (ruch aut odłożony); ok. 10 końców z przejść komórek dopisane do G-024 jako ta sama klasa, bez osobnych zgłoszeń.
+- **Plac Litewski (12.11):** użytkownik woli zieleń na placu. Tam, gdzie w rzeczywistości jest trawa, kwietniki i drzewa, gra ma je pokazywać wyraźnie; plac nie może wyglądać bardziej „betonowo” niż w Lublinie (kolor, tekstura, skala zieleni). Zieleni nie dorysowujemy wbrew danym bez wpisu w `docs/topografia.md`.
+- **Archiwum backlogu (12.11):** decyzja użytkownika: zrobione pozycje backlogu (wszystkie etapy w main albo decyzja podjęta i wykonana) od razu trafiają do `docs/backlog-archiwum.md`, do sekcji z datą; w backlogu nie trzymamy sekcji „Zrobione”.
+- **Kolejka 12.11 wieczór:** decyzja użytkownika: trzymamy priorytety (mapowanie i refaktor). Kolejne sloty: krok 1.1 ADR-0077 (scalenie z main, pomiar), potem ADR-0078 etap 2 i klasy G-728/G-726; zgłoszenia wizualne spoza mapowania (np. G-729 szyld Neon Koi) czekają, jak drzwi kliniki i Neon Koi.
+- **Animacje ruchu (12.11):** decyzja użytkownika: chód w bok/w poprzek i chód w kucki zaraz po mapowaniu, jako pierwszy priorytet; źródła i licencja do ADR-u ; źródło: Mixamo (decyzja 12.11, konto Adobe użytkownika), lista w `docs/animacje-mixamo.md`, format docelowy `.vrma`.
+- **Plac Litewski, fontanna (13.11):** decyzja użytkownika przy G-721: nawierzchnie jaśnieją według ortofoto (kostka 1,70 × trawa), ale niecka fontanny zostaje ciemną wodą, choć ortofoto pokazuje jasne dno płytkiej niecki.
+- **Dziennik z HUD (13.11):** prośba użytkownika: kliknięcie w śledzony quest otwiera dziennik (PR #480).
+- **Animacje, źródło (13.11):** decyzja użytkownika: plików z Mixamo chwilowo nie będzie; po modelowaniu mapy zaczynamy od innych źródeł (Quaternius UAL, CC0; braki z CMU mocap). Mixamo zostaje opcją na później.

@@ -19,7 +19,7 @@ Jedna komórka na chunk importu miasta (`MAP_CHUNKS`, 20 prostokątów od ok. 15
 | `przeglady` | audyty i przeglądy kuratora, które dotknęły komórki, krótko |
 | `notatka` | co sprawdzono, czego nie, co dalej |
 
-Wiersz T z kilkoma miejscami trafia do każdej komórki, w której ma miejsce. Wiersze `celowe` nie są wpisywane.
+Wiersz T z kilkoma miejscami trafia do każdej komórki, w której ma miejsce. Wiersze `celowe` z miejscem w komórce trafiają do `rozwiazane` (praktyka przeglądów od 12.11).
 
 ## Statusy
 
@@ -46,13 +46,28 @@ python3 -I tools/glitch-scan/coverage_board.py reports/map-coverage.json <katalo
 
 Raport podaje procent komórek w każdym statusie dla miasta i dzielnic oraz kolejkę 10 komórek: najmniej przejrzane najpierw, potem najwięcej trafień, potem najwięcej otwartych wierszy T. Plansza rysuje komórki w kolorach statusów, z trafieniami, otwartymi wierszami T, najczęstszymi rodzajami i miejscem w kolejce. Planszy nie commitujemy.
 
+## Stan 12.11
+
+Wszystkie 20 komórek ma status `przejrzane`. Dziesięć przeszło starą metodą z kuratorem (przed 12.11: krakowskie-0-0, krakowskie-0-1, krakowskie-1-1, stare-miasto-0-0, podzamcze-0-1, podzamcze-1-1; 12.11: podzamcze-1-0, stare-miasto-1-0, krakowskie-1-0, stare-miasto-1-1), dziesięć metodą raportu komórki bez osobnego przeglądu kuratora (krakowskie-2-0, krakowskie-2-1, stare-miasto-0-1, podzamcze-0-0, podzamcze-2-0, podzamcze-2-1, nabrzeze-0-0, nabrzeze-0-1, nabrzeze-1-0, nabrzeze-1-1). Koszt przejścia: stara metoda 350–500 tys. tokenów na komórkę, metoda raportu 68–105 tys., dwie sąsiednie komórki jednym opiekunem ok. 35–45 tys. na komórkę.
+
+Goły teren każdej komórki jest jednym wpisem (G-704, G-705, G-709–G-718, od porządków 12.11 w klasie G-726; wiersze T-266–T-279); poprawka całościowa idzie regułami ADR-0077 (krok 1.1 i dalsze), nie ręcznymi obszarami.
+
+Paczka do przeglądu kuratora (komórki zamknięte bez niego, sprawy zebrane w akapitach przejść w `docs/topografia.md`):
+- końce pasów `lane-dead-end` bez opisu w G-022/G-024: Lubartowska, Furmańska, Cyrulicza (podzamcze-0-0), Lubartowska>Aleja Tysiąclecia (podzamcze-2-0), Cerkiewna, Podzamcze>Ruska (podzamcze-2-1), Mełgiewska (nabrzeze-0-0), Turystyczna, Andersa (nabrzeze-0-1);
+- niskie IoU obrysów z braku LoD2 (podzamcze-2-0, podzamcze-2-1), w73822962 bez LoD1 i LoD2;
+- pady wnętrz kliniki i Neon Koi bez wiersza T (G-432), mur w436266757 (G-636), `levels-tag-lost` w1561106313;
+- chodniki na bezpasowej w169832249 (T-047, czy G-082), pas (920..975; 183..263) jako ciąg G-699/T-265, VIVO w obszarze T-260/T-261;
+- wiersze T w `rozwiazane` komórek mimo statusu „do poprawy” w `docs/topografia.md` (12.11: T-059, T-074, T-154, T-163 w krakowskie-1-0; T-163 w krakowskie-1-1; T-064 w krakowskie-2-0; T-121 w krakowskie-2-1 i podzamcze-2-1, gdzie kościoły nie mają fałszywych wież; część z nich po porządkach rejestru ma już status „poprawione”).
+
+Porządki rejestru 12.11: statusy 22 wierszy T zaczynały się od „do poprawy (G-…)”, choć wszystkie wymienione glitche są w archiwum jako naprawione; mają teraz „poprawione (porządki rejestru 12.11 …)”. Wiersze, które komórki trzymają w `otwarte`, zostały bez zmian.
+
 ## Instrukcja dla opiekuna mapy
 
 Stały slot (prośba użytkownika 7.11): kiedy slot jest wolny, opiekun bierze komórkę z kolejki.
 
 1. **Wybór.** Pierwsza komórka z kolejki raportu, chyba że orkiestrator wskaże inną. Komórkę wpisz w `docs/backlog.md` jako zajętą, żeby dwa sloty jej nie dzieliły.
 2. **Łowy** (metody agenta `glitch-hunter`): skan i `reports/glitch-scan.json` przefiltrowany do prostokąta komórki, sondy na danych gry, zrzuty z gry w siatce punktów komórki (z poziomu oczu i z góry), porównanie z OSM, NMT i ortofoto. Znaleziska zgłaszasz w `docs/glitches.md` (glitche) i `docs/topografia.md` (odstępstwa), z miejscem (x, z), żeby trafiały do komórki.
-3. **Przejście do `przejrzane`.** Po przeglądzie kuratora (`topography-curator`): status, data, nowe wiersze T w `otwarte`, wpis w `przeglady`, w notatce co obejrzano i ile zrzutów.
+3. **Przejście do `przejrzane`** (decyzja użytkownika 12.11, oszczędność tokenów). Najpierw czytaj gotowe sekcje raportu `node tools/orto/src/report.ts --cell <id>` (dopasowanie obrysów do LoD2 po IoU, przechył nalotów ortofoto, podział gołego terenu na podwórza, przedpola, szczeliny i próbki w obrysach LoD2), zamiast pisać własne sondy; własną sondę piszesz tylko na pytanie, na które raport nie odpowiada, i zgłaszasz ją jako kandydata na nową sekcję. Gdy wszystkie trafienia komórki należą do znanych glitchy i wierszy T, a raport nie pokazuje nowej klasy, opiekun sam zamyka komórkę (status, data, wiersze T, wpis w `przeglady`, notatka) bez osobnego przeglądu kuratora; kurator przegląda takie komórki paczką co kilka komórek. Nowe znalezisko (nowy glitch, nowy wiersz T, zmiana klasy) przechodzi przegląd kuratora jak dotąd.
 4. **Poprawki.** Każda poprawka to osobna gałąź i osobny PR, jeden glitch na commit, z przeglądem kuratora; poprawka kontrolowanego rodzaju obniża bazę skanu w tym samym commicie, a nowy policzalny rodzaj dostaje kontrolę w skanie (osobny PR).
 5. **Przejście do `poprawione`.** Kiedy ostatnie znalezisko przeglądu jest w main: PR-y w `pr`, wiersze z `otwarte` do `rozwiazane`.
 6. **Przejście do `czyste`.** Tylko gdy skan ma w komórce 0 trafień i nie ma otwartych wierszy T; test to sprawdza. Trafienie, które jest celowe, wymaga zmiany kontroli albo wpisu wyjątku w skanie, nie wpisu w rejestrze.

@@ -66,3 +66,13 @@ Ustalenia `source-scout` (11.11), wszystkie zbiory na licencji CC BY 4.0, do atr
 - **Na rozszerzenie mapy (decyzja użytkownika 11.11):** zwarte wyciągi wektorowe GUGiK trafiają do `data/gugik/` dla całego miasta, z manifestem źródeł (adres, data, sha256, licencja). Narzędzia przyjmują dowolny prostokąt. Klasyfikację ortofoto liczymy tylko dla obecnej mapy, bo dla całego miasta byłaby za duża i zestarzałaby się do czasu rozszerzenia.
 - **Dane:** surowe ortofoto zostaje w pamięci podręcznej narzędzia poza repo. W repo trafiają tylko wyniki pochodne (raster klasyfikacji, próbki kolorów) z atrybucją w `data/osm/ATTRIBUTION.md` (sekcja PZGiK).
 - **Ryzyko:** klasyfikacja RGB myli zieleń w cieniu i jasne dachy z nawierzchnią. Dlatego kurator sprawdza próbkę, a progi ustala na kilku dzielnicach przed zastosowaniem w całym mieście. Zmiana nawierzchni w wielu miejscach naraz zmienia hash podłoża i migawkę NPR; zmieniamy je świadomie, z uzasadnieniem.
+
+## Wynik metody (12.11, pomiar)
+Szacunek z „Konsekwencji” zakładał przejścia po 50–100 tys. tokenów. Pomiar z 12.11 (liczniki agentów, bez kontekstu orkiestratora):
+- **Przejście starą metodą** (opiekun pisze własne sondy, kurator przegląda każdą komórkę i powtarza analizę): 350–500 tys. na komórkę (krakowskie-1-0: 154 + 231 tys.; stare-miasto-1-1: 209 + 296 tys.). Każdy agent pisał od nowa te same sondy: dopasowanie obrysów do LoD2, przechył nalotów, podział gołego terenu, budynki bez gry.
+- **Narzędzie zamiast sond:** te sondy to stałe sekcje `node tools/orto/src/report.ts --cell` (#467, 5–6 s na komórkę, wyniki zgodne z pomiarami kuratorów). Opiekun czyta liczby, nie pisze kodu, a kurator dostaje tylko nowe klasy problemów; komórki z samymi znanymi rodzajami zamyka opiekun, kurator przegląda je paczką (decyzja użytkownika 12.11, `docs/mapa-pokrycie.md`).
+- **Przejście metodą raportu**, opiekun na tańszym modelu: 68–105 tys. na komórkę (6 komórek), dwie sąsiednie komórki jednym agentem (jeden skan, jedna instalacja): 69 i 87 tys. za parę, czyli ok. 35–45 tys. na komórkę. Mieści się w szacunku 50–100 tys.
+- **Wierność:** w 10 komórkach przejrzanych metodą raportu nie wyszła nowa klasa problemu; goły teren każdej komórki to jeden wpis (G-709–G-718), a pomiary obrysów i przechyłu powtarzają się z wynikami kuratorów.
+
+Reguły dla kolejnych przejść (także po poszerzeniu mapy): raport komórki przed własną sondą, jedna komórka albo para sąsiednich na agenta, kurator tylko dla nowych klas i paczką dla reszty, brakujące w raporcie dane dopisywane jako sekcja raportu (backlog: id barier, budynki bez LoD2, położenia trafień).
+
