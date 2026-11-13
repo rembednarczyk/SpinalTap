@@ -1,2 +1,4 @@
 # lane-off-ground: grid 10 m (x,z = the square's corner at its least x and z)
-nabrzeze-1-1 2520,350
+nabrzeze-1-1 2500,330
+podzamcze-2-0 930,330
+podzamcze-2-1 1080,560
