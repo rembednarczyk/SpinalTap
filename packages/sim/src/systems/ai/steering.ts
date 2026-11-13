@@ -7,7 +7,7 @@ import { type GroundField, groundOf, heightApart } from "../../world/ground";
 import { lineOfSight } from "../../world/hitscan";
 import { solidIndexOf } from "../../world/solid-index";
 import { collidersOf } from "../../world/solids";
-import { STEP_HEIGHT } from "../movement-system";
+import { SNAP_DOWN, STEP_HEIGHT, offTheBank } from "../movement-system";
 import { type NavMemo, heldRaster, recall, remember } from "./nav-memo";
 import { CLEARANCE, LEDGE, NAV_CELL, ON_FLIGHT, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellRange, finish, rasterWork, rasterise } from "./nav-raster";
 
@@ -281,7 +281,8 @@ const nearest = (c: number, reach: number, cells: number, ok: (n: number) => boo
  * two samples onto one or by it: its side (G-255, whose foot is closed only a cell wide); nor
  * onto a bridge's deck over its edge (`ledgesOf`) more than a walkable rise, which the open
  * cells do not show: the chase along Podwale stopped at the viaduct's western abutment by
- * w294098693 (0.56 m), and one under the viaduct at its eastern one.
+ * w294098693 (0.56 m), and one under the viaduct at its eastern one. On terrain, the feet not
+ * stopped by a bank in the skipped metres either (`bankNear`, G-738).
  */
 const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   const len = Math.hypot(b.x - a.x, b.z - a.z);
@@ -301,7 +302,34 @@ const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
     }
     if (t * len >= NEAR_SKIP && !r.open[c]) return false;
   }
-  return true;
+  return !r.base || !bankNear(r.ground, a, b);
+};
+
+/** A step of the walk checked on the ground (m): about a ganger's run in a step of 60 Hz. */
+const NEAR_STEP = 0.06;
+/** A slide along a bank getting on less than this share of the walk stops the feet too: under the stuck check's pace (0.4 m in 1.5 s, of 3.1 m/s). */
+const CREEP = 0.1;
+
+/**
+ * Do the feet stop by a bank (`offTheBank`, the movement's own rule) walking from `a` towards `b`
+ * in its first `NEAR_SKIP` metres, where the open cells are not asked? Sliding along it they do
+ * not, unless they get on no further than a creep. The raster's cells see no wall within one:
+ * by the level ground before the abutment of Mełgiewska's lower bridge (G-738), its 1.5 m edge on
+ * the skew closed in cells touching at their corners, a walker by it took the way over it within
+ * the skip, or through a corner, and stood at its foot for good, pressed against it.
+ */
+const bankNear = (ground: GroundField, a: Vec3, b: Vec3): boolean => {
+  let at = a;
+  for (let walked = 0; walked < NEAR_SKIP; walked += NEAR_STEP) {
+    const d = Math.hypot(b.x - at.x, b.z - at.z);
+    if (d < NEAR_STEP) return false;
+    const to = offTheBank(ground, at, at.x + ((b.x - at.x) / d) * NEAR_STEP, at.z + ((b.z - at.z) / d) * NEAR_STEP, at.y);
+    if (((to.x - at.x) * (b.x - at.x) + (to.z - at.z) * (b.z - at.z)) / d < CREEP * NEAR_STEP) return true;
+    // The feet on the ground there, as far down as they follow it.
+    const h = ground.heightAt(to.x, to.z, at.y + STEP_HEIGHT);
+    at = { x: to.x, y: h > at.y || at.y - h <= SNAP_DOWN ? h : at.y, z: to.z };
+  }
+  return false;
 };
 
 /** The window round `goal`: its centre, its corner and the static solids in it. */
