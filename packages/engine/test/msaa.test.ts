@@ -25,9 +25,9 @@ describe("msaa (graphics backlog 13.11, step 1)", () => {
     expect(only.samples).toBe(1);
   });
 
-  it("keeps phones on one sample and gives high quality four", () => {
+  it("keeps phones on one sample and gives high quality two (user: High stuttered at four)", () => {
     expect(QUALITY_TIERS.low.msaa).toBe(1);
     expect(QUALITY_TIERS.low.sharpen).toBe(0);
-    expect(QUALITY_TIERS.high.msaa).toBe(4);
+    expect(QUALITY_TIERS.high.msaa).toBe(2);
   });
 });
