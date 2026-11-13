@@ -1745,12 +1745,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: część 1 scalona (13.11, #482); zostaje 397 próbek: Zamkowa NE 230 celowe (T-284), Mełgiewska zachód nad chodnikiem (G-737, T-283), kładka podzamcze-2-0 2 próbki (do sprawdzenia z ortofoto, T-166); wcześniej: w PR #482 (13.11, 4e65501, część 1: `underDecks` dla wszystkich pomostów, `ground-over-deck` 860 → 397: Mełgiewska 613 → 165, Zamkowa NE 245 → 230, kładka 2 → 2; przegląd kuratora ZGODNE Z UWAGAMI, bez blokad; T-283, T-284); reszta: pomost nad tunelem w66258159 (`tunnel-decks.ts`) pod garbem terenu, do poprawy u źródła w imporcie; wcześniej: zgłoszone (13.11, naprawiacz G-686)
 - Pakiet właściciela: packages/sim (content/lublin abutments)
 
-### G-737 Chodnik mostu Mełgiewskiej przy Andersa 0,14–0,16 m pod jezdnią (T-283)
-- Ważność: S4 · Zasięg: most w50733068, chodnik w230881193 przy Andersa, (2420-2426; 323), zachodni koniec; chodnik −25,86…−25,88, jezdnia −25,72
-- Opis: pomost chodnika leży na NMT końca swojej osi, a jezdni na swojej; w poprzek mostu powstaje uskok 0,14–0,16 m poniżej progu `deck-step-face` (0,3). W Lublinie chodnik za krawężnikiem jest w poziomie jezdni.
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g737 (13.11, db84383: chodnik i wypełnienia w obrysie mostu biorą oś pomostu jezdni; `deck-kerb-step` 1201 → 0, `ground-over-deck` 397 → 233; przegląd kuratora ZGODNE Z UWAGAMI 13.11; w PR #485, #484 scalony, CI po aktualizacji do main); wcześniej: zgłoszone (13.11, naprawiacz G-736, potwierdzone przez kuratora); propozycja kontroli skanu: różnica chodnik–jezdnia w jednym przekroju mostu > 0,05 m
-- Pakiet właściciela: tools/osm-import (`bridge-ends.ts`, wysokości pomostów)
-
 ### G-739 Koniec kładki Podzamcza (1073,9; 160,5) leży na skarpie rowu Czechówki, pomost o 2,7 m za nisko (T-166)
 - Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g739 (13.11, ae90173: koniec pomostu na skarpie przesuwany wzdłuż drogi do szczytu skarpy; kładka −23,04…−23,91, ok. 3,8°; `bridge-end-in-slope` 3 → 0, `ground-over-deck` 397 → 395; przy okazji G-362 koniec +0,58 m; przegląd kuratora ZGODNE Z UWAGAMI 13.11; czeka na G-741 i G-743); wcześniej: zgłoszone (13.11, kurator, ortofoto 2025-04 i 2024-06, NMT)
 - Ważność: S3 · Zasięg: 1 pomost (podzamcze-2-0, kładka w295849307, 8 m): gracz i AI przechodzą po zjeździe 2,2 m na 8,3 m (15°) zamiast po poziomym przęśle · Koszt: mały
