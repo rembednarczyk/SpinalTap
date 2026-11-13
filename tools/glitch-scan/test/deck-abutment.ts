@@ -6,12 +6,13 @@
  * Not a way under the bridge: the terrain there lies more than the headroom under the deck (G-062).
  */
 import { pointInRingEvenOdd } from "../../../packages/core/src";
+import { segmentPieces } from "./world-samples";
 
 type Pt = { readonly x: number; readonly z: number };
 type Piece = { readonly ring: readonly Pt[] };
 type Finding = { readonly at: string; readonly what: string };
 
-/** How far along an edge the scan samples (m): the walker's slope is read over half a metre (ADR-0043). */
+/** The world's grid an edge is cut on (m), a sample at the middle of each piece (`world-samples.ts`, G-756): the walker's slope is read over half a metre (ADR-0043). */
 export const ABUTMENT_SAMPLE = 0.5;
 /** How far beyond the edge it reads the ground (m): as `deck-step-face` does. */
 export const ABUTMENT_OUT = 0.3;
@@ -39,7 +40,7 @@ export interface AbutmentWorld<T extends Piece> {
 /** The steps at the abutments along the edges of `pieces` (`AbutmentWorld`). */
 export const abutmentSteps = <T extends Piece>(pieces: readonly T[], world: AbutmentWorld<T>): Finding[] => {
   const out: Finding[] = [];
-  // A corner is the end of two edges, and two pieces share an edge: counted once.
+  // Two pieces share an edge: a point counted once.
   const seen = new Set<string>();
   for (const piece of pieces) {
     const ring = piece.ring;
@@ -53,9 +54,8 @@ export const abutmentSteps = <T extends Piece>(pieces: readonly T[], world: Abut
       let nz = -(b.x - a.x) / len;
       const [mx, mz] = [(a.x + b.x) / 2, (a.z + b.z) / 2];
       if (inside(ring, mx + nx * 0.01, mz + nz * 0.01)) [nx, nz] = [-nx, -nz];
-      const n = Math.max(1, Math.round(len / ABUTMENT_SAMPLE));
-      for (let k = 0; k <= n; k++) {
-        const p = { x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n };
+      for (const cut of segmentPieces(a, b, ABUTMENT_SAMPLE)) {
+        const p = { x: cut.x, z: cut.z };
         if (world.skip?.(p)) continue;
         const [qx, qz] = [p.x + nx * ABUTMENT_OUT, p.z + nz * ABUTMENT_OUT];
         if (world.deck(qx, qz) !== null || !world.paved(qx, qz)) continue;

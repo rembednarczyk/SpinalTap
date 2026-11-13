@@ -31,6 +31,7 @@
     "gugik:report": "node tools/gugik/src/report.ts",
     "changelog": "node tools/changelog/changelog.mjs",
     "scan:diff": "node tools/glitch-scan/src/scan-diff.ts",
+    "scan:walk-coverage": "node tools/glitch-scan/src/walk-coverage-cli.ts",
     "scan:update": "GLITCH_BASELINE=update vitest run tools/glitch-scan/test/glitch-scan.test.ts",
     "shots:compare": "node tools/shots/src/compare.ts",
     "bench:ab": "node tools/bench-ab/src/bench.ts",

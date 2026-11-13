@@ -5,6 +5,7 @@ import { flightGrid, shapeGrid } from "./shape";
 import { bridgeDeckAt, deckGroundAt } from "./decks";
 import { FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS } from "./sites";
 import { surfaceLiftAt } from "./roads";
+import { stitchSeams } from "./seams";
 
 /**
  * The terrain of the game's Lublin (ADR-0045): the map's grids with the pads and ramps of
@@ -12,11 +13,12 @@ import { surfaceLiftAt } from "./roads";
  * The pads and the steps' ramps are shaped on the import's grid (G-236 round 3; Trasa
  * Podziemna's dig is in metres and holds on any grid of up to 5 m, G-252); only then is a grid
  * under a flight's ramp refined, which keeps that surface as it is, and the flights' ramps laid
- * on the finer points.
+ * on the finer points. Last the seams are stitched (G-748): each grid's points by a coarser
+ * neighbour take its surface, so the chunks' terrain meets there.
  */
-export const SHAPED_TERRAIN: ReadonlyMap<string, TerrainGrid> = underDecks(
+export const SHAPED_TERRAIN: ReadonlyMap<string, TerrainGrid> = stitchSeams(
   MAP_CHUNKS,
-  new Map(MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(shapeGrid(c.terrain, PADS, RAMPS), FLIGHT_RAMPS), [], FLIGHT_RAMPS)])),
+  underDecks(MAP_CHUNKS, new Map(MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(shapeGrid(c.terrain, PADS, RAMPS), FLIGHT_RAMPS), [], FLIGHT_RAMPS)]))),
 );
 
 const inside = (b: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number): boolean => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ;
