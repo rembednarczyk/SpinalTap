@@ -1819,6 +1819,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, kurator, przegląd walk-blocked)
 - Pakiet właściciela: packages/sim (content/lublin teren, podkłady)
 - Test przyjęcia: `walk-blocked` bez kluczy przy 380,-20; teren ulicy w ±0,1 m od NMT
+- 13.11: walk-blocked 1,19 przy 380,-20 to był artefakt błędu pamięci skanu (fix c17fcb5 w #497); po poprawce brak zablokowanych par, zostaje odstępstwo terenu ulicy od NMT o 1,31 m (topografia, nie przejście)
 
 ### G-755 Droga pieszo-rowerowa w179264855 w grze za stroma (0,8–0,92) przy (667–682; 134–141)
 - Ważność: S3 · Zasięg: zejście ze Starego Miasta na Podzamcze; ok. 1 440 par `walk-blocked` (kwadraty 670,130 i 670,140)
@@ -1833,6 +1834,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, orkiestrator przy scalaniu G-739)
 - Pakiet właściciela: tools/glitch-scan
 - Test przyjęcia: przesunięcie jednego pomostu w kawałku zmienia klucze tylko w kwadratach, które on dotyka (test na kopii tablic)
+
+### G-757 Chodnik w295849309 przy kładce w295849307 ponad tg 35° wzdłuż osi
+- Ważność: S4 · Zasięg: Podzamcze 1070..1080,160..170; 44 pary `walk-blocked`
+- Opis: oś chodnika do zachodniego końca kładki spada ponad 0,7 na 2 m (skarpa rowu Czechówki); prawdopodobnie ustąpi po G-739 (#501: koniec pomostu na szczycie skarpy) — sprawdzić po scaleniu
+- Status: zgłoszone (13.11, budowniczy walk-blocked)
+- Pakiet właściciela: packages/sim (content/lublin teren, pomosty)
+- Test przyjęcia: `walk-blocked` bez kluczy przy 1070,160 po G-739
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
