@@ -1,4 +1,5 @@
 import type { BuildingUse, RoofShape } from "@seki/core";
+import type { BellTower } from "./landmarks/bell-towers";
 import { type FacadeStyle, ROOF_STYLE, SHOPFRONT_BIT, WINDOW_STYLE, type WallMaterial, facadeStyle } from "./facade-style";
 import { type Box2, type Obb, type P2, orientedBox, signedArea } from "./polygon";
 import type { Rgba } from "../mesh-sink";
@@ -36,8 +37,8 @@ export interface MapBuilding {
   readonly lifted?: boolean;
   /** Parts of it from the map stand on it, lifted (G-049): its towers and turrets are theirs. */
   readonly carriesParts?: boolean;
-  /** A landmark the map shows without a tower (G-210), or a church the map has a tower by (G-212): no bell towers of the renderer's. */
-  readonly towerless?: boolean;
+  /** The church's bell towers from the data (`BELL_TOWERS`, G-215): none where absent. */
+  readonly towers?: readonly BellTower[];
   /** A tower of the map standing as a building of its own (G-232): a tower's facade whatever its size. */
   readonly freeTower?: boolean;
   /** The walls' material and `#rrggbb` colour from the map (G-244): bare brick, not the use's plaster. */

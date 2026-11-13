@@ -8,11 +8,12 @@ import { type P2, cleanRing, pointInRing } from "../src/renderer/mapcity/polygon
 import { addTowers } from "../src/renderer/mapcity/roof-plan";
 
 /**
- * Landmarks the map shows whole and without a tower (G-210): the Trinity Chapel by the keep has
- * none, so the renderer's bell towers of a church (`roof-plan`) match nothing there. The
- * Bernardine church has a real one by its south wall (about (378.1, -247.7)), which waits for its
- * part (G-214); the renderer's two at its west end would stand in the wrong place. A church the
- * map has a tower by (G-212) keeps that one only, and no tower stands off its church.
+ * The renderer's bell towers of a church (`roof-plan`) come from its table (`BELL_TOWERS`, G-215)
+ * and stand nowhere else. Landmarks the map shows whole and without a tower (G-210): the Trinity
+ * Chapel by the keep has none. The Bernardine church has a real one by its south wall (about
+ * (378.1, -247.7)), which waits for its part (G-214). A church the map has a tower by (G-212)
+ * keeps that one only, and no tower stands off its church. The churches with no tower in Lublin
+ * (T-121) take none, the Holy Spirit and the Transfiguration theirs where NMPT has them.
  */
 
 const all = LUBLIN_CHUNKS.flatMap((c) => c.buildings);
@@ -65,10 +66,6 @@ describe("a landmark the map shows without a tower (G-210)", () => {
     for (const near of [false, true]) expect(blockTop(church, near), `near ${near}`).toBeLessThanOrEqual(roofTop(church));
   });
 
-  it("goes by the place, not the shape: the same chapel elsewhere is a church with its tower", () => {
-    const moved = sourceOf(byId(CHAPEL), 300, 0);
-    for (const near of [false, true]) expect(blockTop(moved, near), `near ${near}`).toBeGreaterThan(roofTop(moved) + 5);
-  });
 });
 
 describe("a church the map has a tower by (G-212)", () => {
@@ -82,9 +79,51 @@ describe("a church the map has a tower by (G-212)", () => {
     }
   });
 
-  it("goes by the place: the same church elsewhere, with no tower of the map by it, gets its own", () => {
-    const moved = sourceOf(byId(NICHOLAS), 300, 0);
-    for (const near of [false, true]) expect(blockTop(moved, near), `near ${near}`).toBeGreaterThan(roofTop(moved) + 5);
+});
+
+/** The churches T-121 found crowned by the renderer's towers with none in Lublin: the Capuchins, St Peter's, St Adalbert's, Niecała 4. */
+const TOWERLESS = ["w67508932", "w66335226", "w61102109", "w232674421"];
+const HOLY_SPIRIT = "w66264126";
+const TRANSFIGURATION = "w66264148";
+
+describe("the churches' bell towers from the data (G-215)", () => {
+  it("raises none over a church without a tower in Lublin", () => {
+    for (const id of TOWERLESS) {
+      const church = sourceOf(byId(id));
+      expect(church.view.use, id).toBe("church");
+      for (const near of [false, true]) expect(blockTop(church, near), `${id} near ${near}`).toBeLessThanOrEqual(roofTop(church));
+    }
+  });
+
+  it("raises the Holy Spirit's and the Transfiguration's one tower each where NMPT has it, to its height", () => {
+    // NMPT GUGiK 0.5 m (T-121): the plan and the tip's world y.
+    for (const [id, x0, x1, z0, z1, tip] of [
+      [HOLY_SPIRIT, 369, 374.5, -84, -79, 26.5],
+      [TRANSFIGURATION, 979.7, 986.2, 427.7, 434.3, 6.5],
+    ] as const) {
+      const e = sourceOf(byId(id));
+      const tips = towerTips(mapBuilding(1, e, () => null));
+      expect(tips, id).toHaveLength(1);
+      expect(tips[0]!.x, id).toBeGreaterThan(x0);
+      expect(tips[0]!.x, id).toBeLessThan(x1);
+      expect(tips[0]!.z, id).toBeGreaterThan(z0);
+      expect(tips[0]!.z, id).toBeLessThan(z1);
+      for (const near of [false, true]) expect(blockTop(e, near), `${id} near ${near}`).toBeCloseTo(tip, 0);
+    }
+  });
+
+  it("keeps the real towers the map has as buildings and parts: the Archikatedra's, St Josaphat's, the Brigittines', St Nicholas's belfry", () => {
+    for (const id of ["w617763434", "w617763435", "w1382552285", "w1090997970", "w680377807"]) {
+      const b = byId(id);
+      // At least to its walls' top: a part's roof may be drawn lower than its `roof:height`.
+      const top = b.y + b.height;
+      for (const near of [false, true]) expect(blockTop(sourceOf(b), near), `${id} near ${near}`).toBeGreaterThan(top - 0.6);
+    }
+  });
+
+  it("goes by the place, not the shape: the Holy Spirit moved 300 m takes no tower", () => {
+    const moved = sourceOf(byId(HOLY_SPIRIT), 300, 0);
+    for (const near of [false, true]) expect(blockTop(moved, near), `near ${near}`).toBeLessThanOrEqual(roofTop(moved));
   });
 });
 
@@ -110,12 +149,27 @@ describe("the renderer's bell towers (G-212)", () => {
   ]);
   // The box with its north-west corner cut off: grass where the second tower across the west end stood.
   const bent = cleanRing([...box.slice(0, 3), { x: 5014, z: 5030 }, { x: 5014, z: 5015 }, { x: 5000, z: 5015 }]);
-  const church: MapBuilding = { id: 1, ring: box, base: 0, foot: 0, height: 15, levels: 4, use: "church", look: 3, roof: 6 };
+  // Two towers across the west end, the second where the bent outline has grass.
+  const towers = [5005, 5025].map((z) => ({ x: 5005, z, half: 3, top: 25, tip: 35 }));
+  const church: MapBuilding = { id: 1, ring: box, base: 0, foot: 0, height: 15, levels: 4, use: "church", look: 3, roof: 6, towers };
 
   it("stand with their middles on the church, never on the grass by a bent outline", () => {
     expect(towerTips(church)).toHaveLength(2);
     const tips = towerTips({ ...church, ring: bent });
     expect(tips).toHaveLength(1);
     expect(tips.every((t) => pointInRing(t, bent))).toBe(true);
+  });
+
+  it("take the helmet's shape from the data whatever the look, and leave it to the look only where the data is silent (G-215)", () => {
+    const nearCount = (b: MapBuilding): number => {
+      const sink = new MeshSink();
+      addTowers(sink, facadeFrame(b, () => null), { wall: GREY, trim: GREY, plinth: GREY, roof: GREY }, true);
+      return sink.vertexCount;
+    };
+    const counts = (helmet?: boolean) => new Set(Array.from({ length: 16 }, (_, look) => nearCount({ ...church, look, towers: towers.slice(0, 1).map((t) => (helmet === undefined ? t : { ...t, helmet })) })));
+    expect(counts(true).size).toBe(1);
+    expect(counts(false).size).toBe(1);
+    expect([...counts(true)][0]).not.toBe([...counts(false)][0]);
+    expect(counts().size, "both shapes by chance").toBe(2);
   });
 });

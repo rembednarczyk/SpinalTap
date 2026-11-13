@@ -1,0 +1,1 @@
+Kościoły bez wieży w Lublinie (Kapucyni, św. Piotra, św. Wojciecha, Niecała 4) nie dostają już zmyślonych wież, a Świętego Ducha i cerkiew Przemienienia mają po jednej wieży tam, gdzie stoi prawdziwa, i tej samej wysokości (G-215).

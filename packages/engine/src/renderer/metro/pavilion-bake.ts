@@ -39,6 +39,8 @@ const BAY = 1.2;
 const FASCIA = 0.15;
 const ROOF = 0.2;
 const NOSING = 0.06;
+/** How far a frame stands out of the glass it borders, so no face of the two shares a plane. */
+const PROUD = 0.01;
 
 const inside = (b: Box2, x: number, z: number): boolean => x >= b.minX && x < b.maxX && z >= b.minZ && z < b.maxZ;
 
@@ -66,9 +68,10 @@ const bakeShell = (sink: MeshSink, f: PavilionFrame, quality: RenderQuality): vo
   frameBox(sink, f, [end, L], [-inner, inner], [s + TRANSOM, top], CLERESTORY);
   // The lintel over the opening: a steel panel the screen hangs on.
   frameBox(sink, f, [0, 0.25], [-inner, inner], [s + 2.5, top], C.steel);
-  // Mullions through the glass every bay, and round the end.
+  // Mullions through the glass every bay, and round the end. The corner posts stand a hair proud
+  // of the glass's ends: flush, their faces shared the panes' plane and flickered with them.
   for (let u = 0; u <= L + 1e-6; u += BAY) {
-    const at = Math.min(Math.max(u, BAR / 2), L - BAR / 2);
+    const at = Math.min(Math.max(u, BAR / 2 - PROUD), L - BAR / 2 + PROUD);
     for (const k of [-1, 1]) frameBox(sink, f, [at - BAR / 2, at + BAR / 2], [k * (inner - 0.02), k * (half + 0.03)], [s + PLINTH, top], C.steel);
   }
   for (const w of [-0.6, 0.6]) frameBox(sink, f, [end - 0.02, L + 0.03], [w - BAR / 2, w + BAR / 2], [s + PLINTH, top], C.steel);

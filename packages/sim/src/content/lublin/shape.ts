@@ -43,6 +43,10 @@ export interface Ramp {
    * down to T2) keeps its grade where a terrace's blend reaches over it.
    */
   readonly over?: boolean;
+  /** Only raises the ground: where it lies under the ramp (beside a flight's top, G-686), not over it. */
+  readonly fill?: boolean;
+  /** The highest it leaves the ground at (x, z), cutting it if need be: under a bridge's deck (G-686), else the terrain pokes through it. */
+  readonly ceiling?: (x: number, z: number) => number;
 }
 
 /** 1 inside, 0 beyond `blend`, smooth between. */
@@ -110,7 +114,10 @@ const rampsOver = (x: number, z: number, h: number, ramps: readonly Ramp[], over
       ? Math.hypot((along - t) * Math.sqrt(len2), Math.max(0, across - r.width / 2))
       : Math.hypot(x - r.a.x - t * dx, z - r.a.z - t * dz) - r.width / 2;
     const w = weight(d, r.blend);
-    if (w > 0) out += (r.ya + (r.yb - r.ya) * t - out) * w;
+    if (w <= 0) continue;
+    const y = r.ya + (r.yb - r.ya) * t;
+    if (!r.fill || y > out) out += (y - out) * w;
+    if (r.ceiling) out = Math.min(out, r.ceiling(x, z));
   }
   return out;
 };
