@@ -60,6 +60,9 @@ const intents = (): UiIntents => ({
   setRadioStation: vi.fn(),
   nextRadioStation: vi.fn(),
   trackQuest: vi.fn(),
+  openWait: vi.fn(),
+  closeWait: vi.fn(),
+  waitHours: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {

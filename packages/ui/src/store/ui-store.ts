@@ -63,6 +63,7 @@ import {
 import type { BuffVm, CapacityVm, ContractHookVm, DashVm, DisguiseVm, MetroRideVm } from "./wave2-vm";
 import type { MetroMapVm } from "./metro-vm";
 import { type DifficultyVm, NO_DIFFICULTY_CHANGE, type SlotVm } from "./difficulty-vm";
+import { NO_WAIT, type WaitUiState } from "./wait-vm";
 
 export * from "./hud-vm";
 export * from "./ui-vm";
@@ -70,6 +71,7 @@ export * from "./map-vm";
 export * from "./wave2-vm";
 export * from "./metro-vm";
 export * from "./difficulty-vm";
+export * from "./wait-vm";
 
 // ---- Areas of the UI state (ADR-0031) ----
 // One flat Zustand store; each area below is its own type, and the comment says who writes it.
@@ -289,7 +291,8 @@ export type UiState = SessionUiState &
   HackingUiState &
   SettingsUiState &
   MetroUiState &
-  BodyUiState;
+  BodyUiState &
+  WaitUiState;
 
 export const initialUiState: UiState = {
   screen: "title",
@@ -387,6 +390,7 @@ export const initialUiState: UiState = {
   buffs: [],
   dash: null,
   disguise: null,
+  ...NO_WAIT,
 };
 
 export type UiStore = StoreApi<UiState>;
