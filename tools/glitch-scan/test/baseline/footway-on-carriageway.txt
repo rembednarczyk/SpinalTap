@@ -9,7 +9,6 @@ krakowskie-1-0 70,-210
 krakowskie-1-0 20,-200
 krakowskie-1-0 30,-200
 krakowskie-1-0 40,-200
-krakowskie-1-0 20,-150
 krakowskie-1-0 20,-140
 krakowskie-1-0 20,-130
 krakowskie-1-0 20,-120
@@ -62,17 +61,11 @@ podzamcze-0-0 690,280
 podzamcze-0-0 690,290
 podzamcze-0-0 680,300
 podzamcze-0-0 690,300
-podzamcze-0-0 570,330
-podzamcze-0-0 570,340
-podzamcze-0-0 580,340
 stare-miasto-1-0 650,-210
 stare-miasto-1-0 660,-210
 stare-miasto-1-0 670,-210
 stare-miasto-1-0 690,-210
 stare-miasto-1-0 750,-180
-stare-miasto-1-1 720,110
-stare-miasto-1-1 730,120
-stare-miasto-1-1 730,130
 stare-miasto-1-1 740,130
 stare-miasto-1-1 740,140
 stare-miasto-1-1 750,140
