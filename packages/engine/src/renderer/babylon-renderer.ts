@@ -164,6 +164,7 @@ export class BabylonRenderer implements RenderPort {
     this.shadow = new MoonShadow(scene, NIGHT_RIG, 28, tier.shadowMap);
     this.materials.setShadow({
       texture: this.shadow.texture,
+      moving: this.shadow.movingTexture,
       matrix: this.shadow.update({ x: 0, y: 0, z: 0 }) ?? Matrix.Identity(),
       texelSize: this.shadow.texelSize,
       bias: high ? 0.0012 : 0.002,

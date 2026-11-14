@@ -106,6 +106,8 @@ uniform vec4 pointColor[${MAX_POINT_LIGHTS}];
 uniform vec4 pointClip[${MAX_POINT_LIGHTS}];
 uniform float pointCount;
 uniform sampler2D shadowSampler;
+/** The moving casters' depth while the statics are kept in shadowSampler (shadow-maps.ts). */
+uniform sampler2D shadowMovingSampler;
 /** x: depth bias, y: texel size, z: shadow strength (0 disables). */
 uniform vec3 shadowParams;
 /** Muzzle flash: xyz position, w intensity (0 = off). Warm, short range, no shadow. */
@@ -217,8 +219,9 @@ vec3 shopGlass(vec3 glow, vec3 p, vec3 n) {
 }
 #endif
 
+/** The nearer caster of the two maps: what one map drawn with every caster holds. */
 float shadowTap(vec2 uv, float d) {
-  return step(d, texture2D(shadowSampler, uv).r);
+  return step(d, min(texture2D(shadowSampler, uv).r, texture2D(shadowMovingSampler, uv).r));
 }
 
 /**
