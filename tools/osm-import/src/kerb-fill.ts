@@ -198,11 +198,12 @@ const edgeSamples = (line: readonly Pt[], offset: number, side: number, world: W
 /**
  * One edge of a widened carriageway: its own vertices where it is not widened, the samples moved
  * out to the paving where it is, stepping out and back at their ends; and those stretches alone,
- * the pieces of asphalt a chunk lays along the carriageway (`widenPieces`).
+ * the pieces of asphalt a chunk lays along the carriageway (`widenPieces`), with how far the
+ * traffic's lanes take the carriageway to reach at each moved sample (`lane`, `WidenRun.lanes`).
  */
-const widenedEdge = (edge: readonly Pt[], samples: readonly Sample[], out: (s: Sample) => Pt | null): { pts: Pt[]; runs: WidenRun[] } => {
+const widenedEdge = (edge: readonly Pt[], samples: readonly Sample[], out: (s: Sample) => Pt | null, lane: (s: Sample) => Pt): { pts: Pt[]; runs: WidenRun[] } => {
   const pts: Pt[] = [];
-  const runs: { inner: Pt[]; outer: Pt[] }[] = [];
+  const runs: { inner: Pt[]; outer: Pt[]; lanes: Pt[] }[] = [];
   let [v, at, was] = [0, 0, false];
   const vertex = () => {
     if (!was) pts.push(edge[v]!);
@@ -214,11 +215,12 @@ const widenedEdge = (edge: readonly Pt[], samples: readonly Sample[], out: (s: S
     const moved = out(s);
     if (moved && !was) {
       pts.push(s.edge);
-      runs.push({ inner: [], outer: [] });
+      runs.push({ inner: [], outer: [], lanes: [] });
     }
     if (moved) {
       pts.push(moved);
       runs[runs.length - 1]!.outer.push(moved);
+      runs[runs.length - 1]!.lanes.push(lane(s));
     } else if (was) pts.push(s.edge);
     if (moved || was) runs[runs.length - 1]!.inner.push(s.edge);
     was = moved !== null;
@@ -349,7 +351,9 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
     let asRoad = wideSet.size > 0;
     if (asRoad) {
       const out = (s: Sample) => (reach.get(s)! > 0 ? along(s.edge, s.dir, edgeAt(s)) : null);
-      const [wr, wl] = [widenedEdge(r.edge, right, out), widenedEdge(l.edge, left, out)];
+      // The traffic's lanes read the reach before the stone (`streetHalves`): the simulation as it was, parked cars and lanes included (to PR 7-8).
+      const lane = (s: Sample) => along(s.edge, s.dir, reach.get(s)!);
+      const [wr, wl] = [widenedEdge(r.edge, right, out, lane), widenedEdge(l.edge, left, out, lane)];
       const ring = ccw([...wr.pts, ...wl.pts.reverse()]);
       if (selfIntersects(ring)) asRoad = false;
       else widened.set(road, { ring, runs: [...wr.runs, ...wl.runs] });

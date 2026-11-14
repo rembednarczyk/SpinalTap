@@ -14,6 +14,8 @@ import { type Pt, type Rect, ccw, clipRingToRect, r1, rectsOverlap, ringBounds, 
 export interface WidenRun {
   readonly inner: readonly Pt[];
   readonly outer: readonly Pt[];
+  /** How far the traffic's lanes take the carriageway to reach at each point of `outer` (`streetHalves`): past it by the kerb stone where one is laid (G-803). */
+  readonly lanes?: readonly Pt[];
 }
 
 /** The smallest widening piece laid (m²): below it, float noise at a chunk's edge. */

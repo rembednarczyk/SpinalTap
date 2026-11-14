@@ -986,7 +986,7 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
       {"name":"Rybna","kind":"pedestrian","line":[551.3,70.5,556.8,99]},
       {"name":"Ku Farze","kind":"pedestrian","line":[551.3,70.5,571,67.9,599.3,54.4]},
       {"name":"Rynek","kind":"pedestrian","line":[573.4,-28,560.5,-40]},
-      {"name":"Kowalska","kind":"residential","line":[567.7,160,595,148.8,610,145.2],"half":[2.8,3.6,2.8,3.35,3.45,3.35],"oneway":true},
+      {"name":"Kowalska","kind":"residential","line":[567.7,160,595,148.8,610,145.2],"half":[2.8,3.6,2.8,3.35,3.85,3.35],"oneway":true},
       {"name":"Zaułek Hartwigów","kind":"steps","line":[557.9,102,566.6,143.3]},
       {"name":"Szambelańska","kind":"pedestrian","line":[468.3,-40,467.1,-26.8,468,-14.3,477.3,37.4]},
       {"name":"Olejna","kind":"living_street","line":[490,33.6,460,41.6],"half":[1.45,1.85,1.55,1.8],"oneway":true},
