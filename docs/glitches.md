@@ -1781,14 +1781,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/traffic, skrzyżowania)
 - Test przyjęcia: sonda ziaren 1–40: 0 kolizji na skrzyżowaniu
 
-### G-772 Mediany barw z ortofoto liczone z pustego kafla 2024-06/stare-miasto-0-1
-- Ważność: S4 · Zasięg: albedo-medians.json (ALBEDO_FLIGHTS 2025-04, 2024-06), stare-miasto-0-1
-- Opis: albedo-report.ts nie pomija pustych nalotów (isBlank z G-771), biały kafel wchodzi do median barw; przeliczenie zmienia wygląd
-- Status: w PR (14.11, gałąź ccr-ec2c4269-ilh8k8-g772, 9754068); wcześniej: zgłoszone (13.11, naprawiacz G-771)
-- Pakiet właściciela: tools/orto
-- Test przyjęcia: albedo-report pomija nalot z isBlank; mediany bez kafla 2024-06/SM-0-1
-- albedo-medians przeliczone; 2024-06 cobble do trawy 1,586→1,502; 2025-04 bez zmian od poprawki; renderer nie czyta pliku, wygląd bez zmian; plik nie jest pilnowany wobec pokryć (był nieaktualny już na main)
-
 ### G-774 Raster cover poszerza trawniki na sąsiedni bruk (wygładzanie 1,5 m) i klasyfikuje zielonkawy bruk jako green
 - Ważność: S4 · Zasięg: całe miasto; np. pierścień skweru Podzamcze (1045, 424), pętle w1343050082, w154012559, w515648305
 - Opis: THRESHOLDS.smooth=1 rozlewa zieleń o ok. 0,5-0,75 m na bruk; bruk z ExG 0,05/0,03/0,15 (2023-09) przekracza średnią greenExg 0,026. Zawyża fill-on-green i reguły kładące trawę z rastra (G-761 był fałszywym alarmem z tego powodu).
@@ -1817,16 +1809,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (14.11, naprawiacz G-777)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: brak gołych komórek 0,1 m w tarczy 97,2;98,6; ground-strip-overlap i gap nie rosną
-
-### G-781 Footway i łaty G-760 na obrysie schodów (193 klucze ground-over-steps na main)
-- Ważność: S4 · Zasięg: 193 miejsca, m.in. 950;229, Podzamcze 803-829;237-247, Krakowskie 411-421;-86..-90
-- Opis: kawałki gruntu z liftem wyższym niż schody (footway 0,09 nad 0,05) zachodzą na obrys steps ponad 0,01 m² i przebijają najniższy stopień
-- Status: w PR (14.11, bff7cdd, po przeglądzie kuratora i rundzie 2); wcześniej: w naprawie, runda 2 (14.11): przywrócić drzwi wejścia n4934217573; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g781 (768efbb), czeka na przegląd kuratora; wcześniej: zgłoszone (14.11, naprawiacz G-777)
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: ground-over-steps spada; zrzut 1009,6;447,5 bez kostki na stopniach
-- chunkGround wycina obrys schodów z gruntu wyższego od nich (steps-cut.ts), narożniki cięcia z dokładnością do mm; ground-over-steps 234 -> 0 (193 klucze -> 0), żaden rodzaj nie rośnie; map-ground-golden 170580 -> 173539 wierzchołków; ubyły drzwi (0,44;-74,64) krakowskie-0-0, ich próg wypadał na stopniach
-- Przegląd kuratora 14.11 (768efbb): ZGODNE Z UWAGAMI; brak szczelin poza krawędziami cięcia; grass +0,8 m² w orto:diff to artefakt kolejności mapy (pod stopniami); ubyte drzwi to wejście OSM n4934217573 (Poczta Główna, KP 50), odrzucone regułą ground (front ościeżnicy na pasie schodów 3 m, Site: rail). Decyzja nocna: regresja tej gałęzi, naprawa w rundzie 2 przed PR; kontrola entrance-no-door (baza main 9).
-- runda 2: drzwi Poczty Głównej (n4934217573) wróciły: ościeżnica może wychodzić na górny stopień biegu na wysokości progu (props-doors.ts); nowa kontrola entrance-no-door, baza 9 z main, gałąź 10 -> 9; props.generated.ts jak na main; bff7cdd
 
 ### G-782 roundJoints: suma NonZero pierścieni zgodnych z ruchem wskazówek zegara w fazie okrągłych końców
 - Ważność: S4 · Zasięg: 242 z 2141 pasów ma pierścień zgodny z ruchem wskazówek zegara
