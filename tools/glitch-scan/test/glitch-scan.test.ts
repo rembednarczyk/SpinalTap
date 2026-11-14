@@ -83,6 +83,11 @@ import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
 import { lampsBesideDeck } from "./lamp-deck";
+import { litStreetDark } from "./lit-dark";
+import { lampsFreestandingInCourtyard, squareStyleLeak } from "./lamp-squares";
+import { WallIndex, isCourtyard, isPedestrianSquare } from "../../osm-import/src/courtyards.ts";
+import { litWayGroups } from "../../osm-import/src/props-lit.ts";
+import { loadLitWays, loadPropsPlan } from "../../osm-import/src/props-osm.ts";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { BUILDING_SURFACE, buildingsOverSurface } from "./surface-heights";
 import { heightsOffLod1, landmarksOffLod1, levelsTagLost, lod1Under } from "./height-lod1";
@@ -226,6 +231,13 @@ const underVault = (p: (typeof PASSAGES)[number], x: number, z: number): { s: nu
 /** The statues of Plac Litewski among the landmarks of the curator's audits; the buildings are `LANDMARK_BUILDINGS` of the import. */
 const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 
+/** The groups whose lines the lamps stand along: the plan with the `lit` rule's, and every lit way the rule may lamp (`lamp-off-band`, `lamp-beside-deck`). */
+let lampPlan: PlanGroup[] | undefined;
+const LAMP_PLAN = (): PlanGroup[] => {
+  if (lampPlan) return lampPlan;
+  const plan = loadPropsPlan();
+  return (lampPlan = [...plan.items, ...litWayGroups(plan, loadLitWays())]);
+};
 /** The surfaces a lamp of the plan stands on or beside (`lamp-off-band`). */
 const PAVED: ReadonlySet<string> = new Set(["road", "crossing", "sidewalk", "square", "cobble", "footway", "steps"]);
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
@@ -1257,13 +1269,29 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A lamp of the plan's lines more than 0.5 m off the paving (G-477): on the lawn by Zamkowa's causeway, in the Carmelites' garden. */
   "lamp-off-band": () => {
     const paving = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => PAVED.has(g.surface)).map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
-    const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
-    return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, pavedAt(paving));
+    return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), LAMP_PLAN(), pavedAt(paving));
   },
   /** A lamp of the plan's line over a bridge 1.5 m or more under the deck beside it or over it (G-503, G-507): on the valley's ground by Zamkowa's viaduct, on its abutment's bank. */
-  "lamp-beside-deck": () => {
+  "lamp-beside-deck": () => lampsBesideDeck(Object.values(LUBLIN_STREET_PROPS).flat(), LAMP_PLAN(), bridgeDeckAt),
+  /**
+   * A way OSM tags `lit=yes` more than 30 m from every lamp of the game, sampled every 5 m (G-798):
+   * the `lit` rule (ADR-0064 stage 3, `props-lit.ts`) lamps the lit ways the plan's lines left dark.
+   */
+  "lit-street-dark": () => litStreetDark(loadLitWays(), Object.values(LUBLIN_STREET_PROPS).flat(), onChunk),
+  /** A lamp on a post inside a courtyard, a pedestrian square whose outline runs along the game's buildings for 70% (`lamp-squares.ts`, Dziedziniec Zamkowy). */
+  "lamp-freestanding-in-courtyard": () => {
+    const walls = new WallIndex(MAP_CHUNKS.flatMap((c) => c.buildings).map((b) => worldOutline(b)));
+    const courts = [...SOURCE_OSM.ways.values()]
+      .filter((w) => isPedestrianSquare(w.tags) && w.nodes.length >= 4 && w.nodes[0] === w.nodes[w.nodes.length - 1])
+      .map((w) => ({ id: `w${w.id}`, ring: wayPoints(w.nodes) }))
+      .filter((c) => isCourtyard(c.ring, walls));
+    return lampsFreestandingInCourtyard(Object.values(LUBLIN_STREET_PROPS).flat(), courts);
+  },
+  /** A candelabrum more than 12 m from the plan's candelabra lines: Plac Zamkowy's look carried onto the streets beside it (`lamp-squares.ts`, Podwale). */
+  "lamp-square-style-leak": () => {
     const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
-    return lampsBesideDeck(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, bridgeDeckAt);
+    const lines = plan.items.filter((g) => g.kind === "lamp-candelabra").flatMap((g) => [...(g.line ? [g.line] : []), ...(g.lines ?? [])]).map((f) => Array.from({ length: Math.floor(f.length / 2) }, (_, i) => ({ x: f[2 * i]!, z: f[2 * i + 1]! })));
+    return squareStyleLeak(Object.values(LUBLIN_STREET_PROPS).flat(), lines);
   },
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
