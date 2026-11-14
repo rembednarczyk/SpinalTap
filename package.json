@@ -29,6 +29,7 @@
     "gugik:fetch": "NODE_USE_ENV_PROXY=1 node tools/gugik/src/fetch.ts",
     "gugik:extract": "node tools/gugik/src/extract.ts",
     "gugik:report": "node tools/gugik/src/report.ts",
+    "gugik:nmpt": "NODE_USE_ENV_PROXY=1 node tools/gugik/src/nmpt-fetch.ts && node tools/gugik/src/nmpt-extract.ts",
     "changelog": "node tools/changelog/changelog.mjs",
     "scan:diff": "node tools/glitch-scan/src/scan-diff.ts",
     "scan:walk-coverage": "node tools/glitch-scan/src/walk-coverage-cli.ts",

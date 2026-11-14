@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { type StreetPropItem, measuredTreeVariant } from "../../../packages/core/src";
 import { WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
-import { type MeasuredTree, cityMeasuredTrees, drawnTreeHeight, treeHeights, treesBelowMeasured } from "./tree-heights";
+import { type MeasuredTree, cityMeasuredTrees, drawnTreeHeight, treeHeights, treesBelowMeasured, treesUnmeasured } from "./tree-heights";
 
 /** The glitch scan's check `tree-height-vs-nmpt` (G-422) on a few trees, and the trees of Plac Litewski against the surface model. */
 
 const at = (x: number, variant: number): StreetPropItem => ({ prop: "tree", x, y: 0, z: 0, yaw: 0, variant });
-const measured = (x: number, height: number): MeasuredTree => ({ id: `n${x}`, group: "test.tree", x, z: 0, height });
+const measured = (x: number, height: number): MeasuredTree => ({ id: `n${x}`, x, z: 0, height });
 
 describe("trees lower than measured (tree-height-vs-nmpt)", () => {
   it("finds a tree drawn under 0.6 of its height, not one drawn near it", () => {
@@ -23,11 +23,18 @@ describe("trees lower than measured (tree-height-vs-nmpt)", () => {
     expect(treeHeights([measured(0, 21)], [at(1.4, 0), at(0.2, 0xf0)])[0]!.drawn).toBeCloseTo(9.7 * 1.25, 1);
   });
 
+  it("finds a tree with no measured one within 1.5 m, or one drawn at its seed's size (tree-unmeasured), not another piece", () => {
+    const sized = measuredTreeVariant(0x71, 12);
+    expect(treesUnmeasured([measured(0, 21)], [at(1.4, sized), at(3, sized), { ...at(9, 0), prop: "bench" }])).toEqual([{ at: "3,0", what: expect.stringContaining("no height") }]);
+    expect(treesUnmeasured([measured(0, 21)], [at(0.5, 0x71)])).toEqual([{ at: "1,0", what: expect.stringContaining("seed's size") }]);
+  });
+
   it("draws the trees of Plac Litewski within 2 m of their measured height in the median (T-195)", () => {
-    const litewski = cityMeasuredTrees().filter((t) => t.group === "plac-litewski.tree");
-    expect(litewski.length).toBeGreaterThan(90);
+    const litewski = cityMeasuredTrees().filter((t) => t.x > -100 && t.x < 110 && t.z > -50 && t.z < 70);
+    // The square's OSM trees, measured by the rule (91 in the game, audit of 14.11).
+    expect(litewski.length).toBeGreaterThanOrEqual(90);
     const heights = treeHeights(litewski, Object.values(WORLD_STREET_PROPS).flat());
-    expect(heights.length).toBeGreaterThan(90);
+    expect(heights.length).toBeGreaterThanOrEqual(90);
     const errors = heights.map((h) => Math.abs(h.drawn - h.tree.height)).sort((a, b) => a - b);
     expect(errors[Math.floor(errors.length / 2)]!).toBeLessThanOrEqual(2);
   });

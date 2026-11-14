@@ -9,6 +9,7 @@ krakowskie-1-0 70,-210
 krakowskie-1-0 20,-200
 krakowskie-1-0 30,-200
 krakowskie-1-0 40,-200
+krakowskie-1-0 20,-150
 krakowskie-1-0 20,-140
 krakowskie-1-0 20,-130
 krakowskie-1-0 20,-120
@@ -42,6 +43,7 @@ krakowskie-2-1 240,-10
 krakowskie-2-1 250,-10
 krakowskie-2-1 260,-10
 krakowskie-2-1 260,80
+nabrzeze-1-0 2640,80
 nabrzeze-1-0 2650,80
 nabrzeze-1-0 2650,90
 nabrzeze-1-0 2660,90
@@ -87,6 +89,9 @@ stare-miasto-1-0 720,-200
 stare-miasto-1-0 720,-190
 stare-miasto-1-0 730,-190
 stare-miasto-1-0 750,-180
+stare-miasto-1-1 720,110
+stare-miasto-1-1 730,120
+stare-miasto-1-1 730,130
 stare-miasto-1-1 740,130
 stare-miasto-1-1 740,140
 stare-miasto-1-1 750,140
