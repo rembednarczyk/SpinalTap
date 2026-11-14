@@ -1801,16 +1801,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: brak gołych komórek 0,1 m w tarczy 97,2;98,6; ground-strip-overlap i gap nie rosną
 
-### G-782 roundJoints: suma NonZero pierścieni zgodnych z ruchem wskazówek zegara w fazie okrągłych końców
-- Ważność: S4 · Zasięg: 242 z 2141 pasów ma pierścień zgodny z ruchem wskazówek zegara
-- Opis: covered w pierwszej fazie roundJoints sumuje pierścienie bez obracania; obszar zgodny z ruchem wskazówek zegara znosi pasy na nim, bit końca może trafić w fałszywą dziurę
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g782 (0ab44d4, scalony main), czeka na przegląd kuratora; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g782 (482856c); test ground-over-steps pada na 3 przesuniętych kluczach; decyzja nocna: nie przyjmować accept, poczekać na #535 (G-781, ground-over-steps -> 0), scalić main i sprawdzić ponownie; potem przegląd kuratora (klin trawnika 768,211); wcześniej: zgłoszone (14.11, naprawiacz G-777)
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: pierścienie obrócone przed sumą; ground-strip-overlap i ground-over-steps nie rosną
-- Skutek potwierdzony: 51 obrysów, ok. 98 m² bitów końców drugą warstwą na obszarach; nakładki ścieżki i bruku na schodach 8,27 -> 1,20 m²; ground-over-steps 234 -> 231 (5 usuniętych, 3 klucze przesunięte: krakowskie-0-1 -4,127, podzamcze-1-0 768,211, stare-miasto-1-0 694,-176); złoty map-ground-golden 170580 -> 169847, ba4027c1; zrzuty /dev/shm/g782-shots
-- Runda 2 po G-781: map-ground-golden 173375 - 676 = 172699 (7610321b); scan:diff wobec main bez zmian (7212), ground-over-steps 0; zrzuty /dev/shm/g782-r2-shots i /dev/shm/g782-shots; ok. 98 m² czap końców znika z placów i trawników
-- Kurator topografii: ZGODNE Z UWAGAMI. orto:diff vs merge-base 5,8 m², bilans klas zamknięty, bez gołego terenu, teren i pomosty 0. Oznakowania Al. Tysiąclecia 741–745 kończą się na węźle sygnalizacji, przed zebrą 730,7. Przed PR scalić main (G-775).
-
 ### G-783 Dziury fill-gap na krawędziach chunków: obrys wypełnienia nie sięga za chunk
 - Ważność: S4 · Zasięg: nabrzeze x=2500 i z=270, podzamcze z=370 (np. 2500,295.25; 2544,269.88; 795.5,369.88)
 - Opis: obrys wypełnienia bare-cover kończy się na krawędzi chunka; sąsiedni chunk tnie po swojemu, zostaje goła szczelina

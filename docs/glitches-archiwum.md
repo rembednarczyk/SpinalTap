@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-782 roundJoints: suma NonZero pierścieni zgodnych z ruchem wskazówek zegara w fazie okrągłych końców
+- Ważność: S4 · Zasięg: 242 z 2141 pasów ma pierścień zgodny z ruchem wskazówek zegara
+- Opis: covered w pierwszej fazie roundJoints sumuje pierścienie bez obracania; obszar zgodny z ruchem wskazówek zegara znosi pasy na nim, bit końca może trafić w fałszywą dziurę
+- Status: naprawione (14.11, PR #540 scalony 14.11 scalony); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g782 (0ab44d4, scalony main), czeka na przegląd kuratora; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g782 (482856c); test ground-over-steps pada na 3 przesuniętych kluczach; decyzja nocna: nie przyjmować accept, poczekać na #535 (G-781, ground-over-steps -> 0), scalić main i sprawdzić ponownie; potem przegląd kuratora (klin trawnika 768,211); wcześniej: zgłoszone (14.11, naprawiacz G-777)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: pierścienie obrócone przed sumą; ground-strip-overlap i ground-over-steps nie rosną
+- Skutek potwierdzony: 51 obrysów, ok. 98 m² bitów końców drugą warstwą na obszarach; nakładki ścieżki i bruku na schodach 8,27 -> 1,20 m²; ground-over-steps 234 -> 231 (5 usuniętych, 3 klucze przesunięte: krakowskie-0-1 -4,127, podzamcze-1-0 768,211, stare-miasto-1-0 694,-176); złoty map-ground-golden 170580 -> 169847, ba4027c1; zrzuty /dev/shm/g782-shots
+- Runda 2 po G-781: map-ground-golden 173375 - 676 = 172699 (7610321b); scan:diff wobec main bez zmian (7212), ground-over-steps 0; zrzuty /dev/shm/g782-r2-shots i /dev/shm/g782-shots; ok. 98 m² czap końców znika z placów i trawników
+- Kurator topografii: ZGODNE Z UWAGAMI. orto:diff vs merge-base 5,8 m², bilans klas zamknięty, bez gołego terenu, teren i pomosty 0. Oznakowania Al. Tysiąclecia 741–745 kończą się na węźle sygnalizacji, przed zebrą 730,7. Przed PR scalić main (G-775).
+
 ### G-775 Beżowa kostka i patyna pomnika jako zieleń w komórkach SM z dwoma nalotami
 - Ważność: S4 · Zasięg: stare-miasto-0-1 (476..478; 75..81), stare-miasto-0-0 (607..610; -207..-212); klucze 470,70
 - Opis: Po G-771 SM-0-0/0-1 mają 2 naloty; beżowa kostka (exg 0,035 w 2025-04) i nalot letni w cieniu albo z przechyłem dają green/canopy; patyna pomnika daje green; bare-cover kładzie trawę na chodniku. Proponowana kontrola: grass-on-light-paving
