@@ -5,8 +5,8 @@ name: Map refresh
 # files go to a branch `map-refresh/<date>` and a pull request with the report as its description;
 # its verdict says whether the curator has to look (thresholds in tools/map-refresh/src/config.ts).
 #
-# A pull request opened with GITHUB_TOKEN starts no other workflow: CI does not run on it by
-# itself. See the README for the ways round it (a PAT secret, "Update branch", a CI dispatch).
+# A pull request opened with GITHUB_TOKEN starts no other workflow, so after opening it this
+# workflow starts CI itself: ci.yml by workflow_dispatch on the branch (decision of 14.11).
 on:
   schedule:
     # Mondays 03:17 UTC: off the hour, when the OSM API is least busy.
@@ -31,6 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
+      # Starting ci.yml on the branch (workflow_dispatch).
+      actions: write
       contents: write
       pull-requests: write
     steps:
@@ -91,3 +93,9 @@ jobs:
             fi
             exit 1
           fi
+          # The PR's checks: CI on the branch, since the PR's own events start nothing (GITHUB_TOKEN).
+          if ! gh workflow run ci.yml --ref "$branch"; then
+            echo "::error::The pull request is open, but CI could not be started on $branch: run the CI workflow on it by hand (Actions > CI > Run workflow)."
+            exit 1
+          fi
+          echo "CI started on $branch: its run shows among the PR's checks (same head commit)."

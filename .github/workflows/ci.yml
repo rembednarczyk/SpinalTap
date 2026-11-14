@@ -1,13 +1,18 @@
 name: CI
 # A pull request's run carries the base it was tested on, so the push to main after a merge can
 # tell whether that exact code already passed (see the "changes" job).
-run-name: ${{ github.event_name == 'pull_request' && format('{0} (#{1}) on base {2}', github.event.pull_request.title, github.event.pull_request.number, github.event.pull_request.base.sha) || github.event.head_commit.message }}
+# A workflow_dispatch run (map-refresh.yml starts one on its branch: a PR opened with GITHUB_TOKEN
+# starts no workflow) is named after its branch.
+run-name: ${{ github.event_name == 'pull_request' && format('{0} (#{1}) on base {2}', github.event.pull_request.title, github.event.pull_request.number, github.event.pull_request.base.sha) || github.event_name == 'workflow_dispatch' && format('Dispatch on {0}', github.ref_name) || github.event.head_commit.message }}
 
 on:
   push:
     branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  # By hand or from map-refresh.yml: "What changed" has no base to compare with (no PR, no
+  # `before`), so it runs everything; the skip of code already tested is for pushes only.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
