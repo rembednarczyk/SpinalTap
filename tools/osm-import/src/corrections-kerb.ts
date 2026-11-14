@@ -93,8 +93,8 @@ export const ORTHO_CORRECTIONS: readonly TagCorrection[] = ORTHO_WIDTHS.map(([id
   ref: ref || "ADR-0080",
 }));
 
-/** Metres a measured way's carriageway lies left of its axis in OSM (negative: right): half its sides' difference, 0 for a width pinned by hand. */
-export const ORTHO_OFFSETS: ReadonlyMap<string, number> = new Map(ORTHO_WIDTHS.map(([id, , left, right]) => [id, Math.round(((left - right) / 2) * 20) / 20]));
+/** Metres a measured way's carriageway lies left of its axis in OSM (negative: right): half its sides' difference to 0.1 m (the measure's step; finer is no truer), 0 for a width pinned by hand. */
+export const ORTHO_OFFSETS: ReadonlyMap<string, number> = new Map(ORTHO_WIDTHS.map(([id, , left, right]) => [id, Math.round(((left - right) / 2) * 10) / 10]));
 
 const ORTHO_BY_ID = new Map(ORTHO_WIDTHS.map((r) => [r[0], r]));
 

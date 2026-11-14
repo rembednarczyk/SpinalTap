@@ -6,6 +6,7 @@ krakowskie-0-0 -180,-230
 krakowskie-0-0 -170,-230
 krakowskie-0-0 -160,-230
 krakowskie-0-0 -100,-230
+krakowskie-0-0 -90,-230
 krakowskie-0-0 -190,-220
 krakowskie-0-0 -90,-220
 krakowskie-0-0 -160,-210
@@ -76,12 +77,14 @@ krakowskie-1-0 120,-190
 krakowskie-1-0 130,-190
 krakowskie-1-0 140,-190
 krakowskie-1-0 150,-190
+krakowskie-1-0 230,-190
 krakowskie-1-0 230,-180
 krakowskie-1-0 110,-170
 krakowskie-1-0 120,-170
 krakowskie-1-0 110,-160
 krakowskie-1-0 120,-160
 krakowskie-1-0 130,-160
+krakowskie-1-0 140,-160
 krakowskie-1-0 230,-160
 krakowskie-1-0 110,-150
 krakowskie-1-0 130,-150
@@ -139,6 +142,7 @@ krakowskie-1-1 150,30
 krakowskie-1-1 160,30
 krakowskie-1-1 170,30
 krakowskie-1-1 180,30
+krakowskie-1-1 190,30
 krakowskie-1-1 110,40
 krakowskie-1-1 120,40
 krakowskie-1-1 130,40
@@ -230,6 +234,8 @@ krakowskie-2-0 240,-180
 krakowskie-2-0 250,-180
 krakowskie-2-0 350,-180
 krakowskie-2-0 360,-180
+krakowskie-2-0 280,-170
+krakowskie-2-0 290,-170
 krakowskie-2-0 330,-170
 krakowskie-2-0 340,-170
 krakowskie-2-0 350,-170
@@ -315,6 +321,7 @@ krakowskie-2-1 250,100
 krakowskie-2-1 260,100
 krakowskie-2-1 260,110
 krakowskie-2-1 260,120
+krakowskie-2-1 270,120
 krakowskie-2-1 260,130
 nabrzeze-1-0 2670,60
 nabrzeze-1-0 2680,60
@@ -388,12 +395,14 @@ nabrzeze-1-1 2680,340
 nabrzeze-1-1 2690,340
 nabrzeze-1-1 2670,380
 nabrzeze-1-1 2670,390
+podzamcze-0-0 560,160
 podzamcze-0-0 570,160
 podzamcze-0-0 590,160
 podzamcze-0-0 600,160
 podzamcze-0-0 690,160
 podzamcze-0-0 700,160
 podzamcze-0-0 710,160
+podzamcze-0-0 550,170
 podzamcze-0-0 570,170
 podzamcze-0-0 580,170
 podzamcze-0-0 590,170
@@ -597,6 +606,7 @@ stare-miasto-0-0 510,-160
 stare-miasto-0-0 520,-160
 stare-miasto-0-0 510,-150
 stare-miasto-0-0 520,-150
+stare-miasto-0-1 570,150
 stare-miasto-0-1 590,150
 stare-miasto-1-0 690,-100
 stare-miasto-1-0 690,-90
