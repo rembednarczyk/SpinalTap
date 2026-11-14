@@ -3,6 +3,7 @@ import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { ARKADY_PAVEMENT, arkadyLocal, arkadyPoint } from "../../../packages/sim/src/content/alchemia/arkady";
+import { inBuilding } from "../../../packages/sim/src/content/lublin/places";
 import { floorOver } from "./scene-solids";
 import { inChunks, walkBlocked } from "./walk-blocked";
 import { cityWalkWorld } from "./walk-world";
@@ -70,5 +71,30 @@ describe("the Arkady's slabs as walk-blocked reads them (G-759)", () => {
       return k >= 0 && [-0.5, 0.5].every((dx) => [-0.5, 0.5].every((dz) => slabAt(x + dx, z + dz) === k));
     });
     expect(under.map((f) => `${f.at} ${f.what}`)).toEqual([]);
+  });
+});
+
+/** A map building is no floor (the review of G-778): its roof is not walked onto from the street. */
+describe("the map's buildings as walk-blocked reads them (G-759)", () => {
+  const chunk = MAP_CHUNKS.find((c) => c.id === "stare-miasto-0-1")!;
+
+  it("takes no roof of a map building for the ground in its outline", () => {
+    // The building north of the Arkady, y -9.1..-2.3.
+    expect(inBuilding(468, 124.2)).toBe(true);
+    expect(CITY_WALK_WORLD.height(chunk)(468, 124.2)).toBeCloseTo(groundY(468, 124.2), 9);
+  });
+
+  it("finds no pair from a building's roof to the street by it, no edge excused", () => {
+    const found = walkBlocked([chunk], { ...CITY_WALK_WORLD, edge: () => false, along: () => true }, inChunks(MAP_CHUNKS));
+    const height = CITY_WALK_WORLD.height(chunk);
+    // The pair's cells: a pair along x has its middle on the raster's lines of x (a multiple of 0.25 m).
+    const across = found.filter((f) => {
+      const [x, z] = f.at.split(",").map(Number) as [number, number];
+      const alongX = Math.abs(x * 4 - Math.round(x * 4)) < 1e-6;
+      const [a, b] = alongX ? [{ x: x - 0.125, z }, { x: x + 0.125, z }] : [{ x, z: z - 0.125 }, { x, z: z + 0.125 }];
+      const [hi, lo] = height(a.x, a.z) > height(b.x, b.z) ? [a, b] : [b, a];
+      return inBuilding(hi.x, hi.z) && !inBuilding(lo.x, lo.z) && height(hi.x, hi.z) - height(lo.x, lo.z) > 2;
+    });
+    expect(across.map((f) => `${f.at} ${f.what}`)).toEqual([]);
   });
 });
