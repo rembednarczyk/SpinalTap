@@ -1,6 +1,7 @@
 /**
  * `pnpm osm:props`: street furniture of Lublin 2077 (ADR-0047) from
- * `docs/world/lublin-props.todo.json` and the generated chunks into
+ * `docs/world/lublin-props.todo.json`, the OSM furniture it lacks (`data/osm/points/furniture.json`)
+ * and the generated chunks into
  * `packages/sim/src/content/lublin/props.generated.ts` (`props-build.ts`), then the control numbers.
  */
 import { statSync, writeFileSync } from "node:fs";

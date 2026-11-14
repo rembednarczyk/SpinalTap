@@ -1,6 +1,6 @@
 /**
- * The street furniture of Lublin 2077 (ADR-0047) from `docs/world/lublin-props.todo.json` and the
- * generated chunks, as `pnpm osm:props` (`props.ts`) writes it to `props.generated.ts`.
+ * The street furniture of Lublin 2077 (ADR-0047) from `docs/world/lublin-props.todo.json`, the OSM
+ * furniture it lacks (`data/osm/points/furniture.json`, `props-osm.ts`) and the generated chunks, as `pnpm osm:props` (`props.ts`) writes it to `props.generated.ts`.
  *
  * The rules read the simulation's and the renderer's modules through Vite's module runner, and the
  * simulation imports the table this builds. The runner never gets the committed table (G-745): the
@@ -16,6 +16,8 @@ import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podza
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { REPO } from "./paths.ts";
+import { loadFurniture } from "./furniture.ts";
+import { withOsmFurniture } from "./props-osm.ts";
 import { emitProps } from "./props-emit.ts";
 import { type PropsPlan, type PropsStats, generateProps } from "./props-gen.ts";
 import { loadBuildingTags, loadNodeTags } from "./props-art.ts";
@@ -56,7 +58,8 @@ export interface BuiltProps {
 
 /** The whole table, in one pass: furniture, doors, decals, then the still crowd. */
 export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltProps> => {
-  const plan = JSON.parse(readFileSync(PLAN, "utf8")) as PropsPlan;
+  // The current extract's furniture the plan lacks, after the plan's groups (ADR-0077 point 4, G-099).
+  const plan = withOsmFurniture(JSON.parse(readFileSync(PLAN, "utf8")) as PropsPlan, loadFurniture());
   const chunks = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
   // The venues' boards from the renderer's plan, whose modules Node does not load by itself, with the
   // decals' walls (ADR-0058 stage 6) from the same module runner: the city is framed once for both.
