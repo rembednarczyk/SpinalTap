@@ -3,7 +3,7 @@
  * cover rasters (`data/orto`, ADR-0077): the carriageways' widths measured on the orthophoto
  * (ADR-0080 PR 10), source `ortho` of the street's section. Do not edit; pin a width by hand in
  * `PINNED` (tools/orto/src/widths-city.ts).
- * ways 210: few-stations 77 ways 4.48 km, no-consensus 33 ways 3.72 km, ok 59 ways 7.31 km, one-side 41 ways 3.82 km; table 100 rows (1 pinned, 40 measured on one side, 4 held), axis off the middle by over 0.5 m: 50
+ * ways 210: few-stations 77 ways 4.48 km, no-consensus 33 ways 3.72 km, off-estimate 1 ways 0.05 km, ok 59 ways 7.31 km, one-side 40 ways 3.77 km; table 99 rows (1 pinned, 39 measured on one side, 4 held), axis off the middle by over 0.5 m: 49
  */
 /** Way, width (m), the carriageway's reach left and right of its axis (m), the sides measured, ref of a width pinned by hand (`WidthRow`). */
 export const ORTHO_WIDTHS: readonly (readonly [id: string, width: number, left: number, right: number, sides: string, ref: string])[] = [
@@ -49,7 +49,6 @@ export const ORTHO_WIDTHS: readonly (readonly [id: string, width: number, left: 
   ["w231037118",14.2,5.55,8.65,"lr",""],
   ["w231037230",6.8,3.75,3.05,"lr",""],
   ["w232362877",7.1,3.45,3.65,"lr",""],
-  ["w232805965",4.2,0.95,3.25,"l",""],
   ["w233288741",6.8,3.55,3.25,"l",""],
   ["w233334279",4.5,3.05,1.45,"lr",""],
   ["w233334687",11.5,6.65,4.875,"l",""],
