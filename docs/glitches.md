@@ -1935,8 +1935,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-807 Seki w grze zostaje proceduralnym szkieletem zamiast modelu seki.vrm
 - Ważność: S2 · Zasięg: postać gracza, cała gra (zgłoszenie użytkownika 14.11)
 - Opis: Użytkownik widzi w grze (APK lub Render) proceduralną Seki z brył zamiast modelu VRM. Pliki models/manifest.json i models/seki.vrm są na Renderze (HTTP 206, typy JSON i x-world/x-vrml). Do ustalenia: widok (TPP, FPP, menu), urządzenie, od kiedy; podejrzane zmiany: #504 (ręce FPP z modelu), #539 (kompilacja za ekranem ładowania), #546, ADR-0076 4b (zwalnianie plików, limit na telefonie).
-- Status: w diagnozie
+- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-g807, 903fd0e): ponawianie pobrania modelu po błędzie; wcześniej: w diagnozie
 - Pakiet właściciela: packages/engine/src/renderer (character-models, model-library), packages/app
+- Przyczyna: jedno nieudane pobranie seki.vrm zostawiało Seki proceduralną do końca sesji (CharacterModels.dress tylko ostrzegał; PreviewStage ustawiał dressFailed na stałe). Bez zakłóceń sieci nie odtwarza się; odtwarza się przy 8 Mbit/s i przerwanych żądaniach. Do potwierdzenia u użytkownika: widok i łącze; w APK pliki są lokalne.
+
+### G-808 Podgląd menu pobiera seki.vrm drugi raz (własna ModelLibrary) już na ekranie tytułowym, równolegle z miastem
+- Ważność: S3 · Zasięg: start gry, słabe łącze
+- Opis: PreviewStage ma własną ModelLibrary i pobiera 7 MB seki.vrm drugi raz równolegle z plikami miasta; dubluje transfer i zwiększa szansę na limit bezczynności (G-807).
+- Status: nowe
+- Pakiet właściciela: packages/engine/src/renderer
+
+### G-809 Limit bezczynności pobierania modelu liczy czas w kolejce przeglądarki
+- Ważność: S3 · Zasięg: słabe łącze (8 Mbit/s)
+- Opis: Zegar bezczynności w fetchModelBytes startuje przed wysłaniem żądania; czas w kolejce przeglądarki (6 połączeń na host) liczy się jako przestój, co daje fałszywe 'no data for 30 s' (G-807).
+- Status: nowe
+- Pakiet właściciela: packages/engine/src/renderer
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
