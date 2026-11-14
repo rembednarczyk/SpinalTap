@@ -33,7 +33,7 @@ export const osmFurnitureItems = (plan: PropsPlan, points: readonly FurniturePoi
     g.osm.push(f.id);
     groups.set(kind, g);
   }
-  return [...groups].sort(([a], [b]) => (a < b ? -1 : 1)).map(([kind, g]) => ({ id: `${OSM_GROUP}.${kind}`, kind, points: g.points, osm: g.osm, count: g.points.length, note: "From data/osm/points/furniture.json (pnpm osm:fetch): nodes the plan lacks." }));
+  return [...groups].sort(([a], [b]) => (a < b ? -1 : 1)).map(([kind, g]) => ({ id: `${OSM_GROUP}.${kind}`, kind, inOsm: true, points: g.points, osm: g.osm, count: g.points.length, note: "From data/osm/points/furniture.json (pnpm osm:fetch): nodes the plan lacks." }));
 };
 
 /** The plan with the extract's groups after its own. */
