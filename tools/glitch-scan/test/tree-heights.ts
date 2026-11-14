@@ -106,3 +106,21 @@ export const treesUnmeasured = (measured: readonly { readonly x: number; readonl
     if (!measured.some((m) => Math.hypot(t.x - m.x, t.z - m.z) <= REACH)) return [{ at, what: `tree drawn ${drawn} m with no height from OSM or NMPT` }];
     return plainTreeVariant(t.variant) === t.variant ? [{ at, what: `tree drawn ${drawn} m at its seed's size, though measured` }] : [];
   });
+
+/** The buffer off the buildings' outlines the roof check reads with (m): eaves reach 1-2 m past the OSM outlines. */
+const ROOF_CHECK = 2;
+/** A tree's height over its reading off the roofs by more than this (m) is a roof's. */
+const CAPTURE = 3;
+
+/**
+ * Trees of OSM sized from the surface model by a roof (`tree-roof-capture`): the import's height
+ * exceeds by over `CAPTURE` what the surface model gives with the cells within `ROOF_CHECK` of a
+ * building left out (eaves past the outline read as a crown; the seedlings of n9254081961...67).
+ */
+export const treesRoofCaptured = (): { readonly at: string; readonly what: string }[] =>
+  osmTrees().flatMap((f) => {
+    const used = measureAt(f.p, f);
+    if (!used || used.from !== "nmpt") return [];
+    const off = measureTree(citySite(), f.p, undefined, undefined, ROOF_CHECK)?.height ?? 0;
+    return used.height - off > CAPTURE ? [{ at: `${f.p.x.toFixed(0)},${f.p.z.toFixed(0)}`, what: `${f.id} measured ${used.height} m, ${off} m off the roofs` }] : [];
+  });

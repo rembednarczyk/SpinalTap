@@ -1,0 +1,18 @@
+# tree-roof-capture: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-0-0 -176,-250
+krakowskie-0-1 -177,48
+krakowskie-0-1 -188,132
+krakowskie-1-0 105,-181
+krakowskie-1-0 94,-179
+krakowskie-1-0 160,-172
+krakowskie-1-0 158,-165
+krakowskie-1-0 157,-160
+krakowskie-1-0 72,-159
+krakowskie-1-0 155,-149
+krakowskie-1-0 153,-139
+krakowskie-1-0 150,-122
+krakowskie-1-0 150,-116
+krakowskie-1-1 176,139
+krakowskie-2-0 290,-102
+krakowskie-2-0 350,-70
+stare-miasto-1-0 710,-100

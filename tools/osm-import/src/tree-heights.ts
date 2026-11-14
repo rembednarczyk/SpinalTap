@@ -41,25 +41,27 @@ export const osmTreeHeight = (tags: Tags | undefined): number | null => {
   return h > 0 && h <= NOT_A_CROWN ? h : null;
 };
 
-const AROUND_ROOF: readonly Pt[] = [
-  { x: OFF_ROOF, z: 0 },
-  { x: -OFF_ROOF, z: 0 },
-  { x: 0, z: OFF_ROOF },
-  { x: 0, z: -OFF_ROOF },
+/** Directions a cell is tried off the roofs in, at the buffer. */
+const ROOF_TRIES: readonly Pt[] = [
+  { x: 1, z: 0 },
+  { x: -1, z: 0 },
+  { x: 0, z: 1 },
+  { x: 0, z: -1 },
 ];
 
-/** Whether p lies in a building's outline or within `OFF_ROOF` of it. */
-const byRoof = (site: Site, p: Pt): boolean => site.surfaceAt(p) === "building" || AROUND_ROOF.some((d) => site.surfaceAt({ x: p.x + d.x, z: p.z + d.z }) === "building");
+/** Whether p lies in a building's outline or within `reach` of it. */
+const byRoof = (site: Site, p: Pt, reach: number): boolean =>
+  site.surfaceAt(p) === "building" || ROOF_TRIES.some((d) => site.surfaceAt({ x: p.x + d.x * reach, z: p.z + d.z * reach }) === "building");
 
 let city: Chm[] | null = null;
 /** The committed extracts of every district, read once. */
 const cityChms = (): Chm[] => (city ??= loadChms());
 
 /** The height of the tree at p with OSM `tags`, and where it comes from; null: no source has one. */
-export const measureTree = (site: Site, p: Pt, tags: Tags | undefined, chms: readonly Chm[] = cityChms()): TreeHeight | null => {
+export const measureTree = (site: Site, p: Pt, tags: Tags | undefined, chms: readonly Chm[] = cityChms(), offRoof = OFF_ROOF): TreeHeight | null => {
   const osm = osmTreeHeight(tags);
   if (osm !== null) return { height: osm, from: "osm" };
-  const top = highestAround(chms, p, CROWN_REACH, (q) => byRoof(site, q));
+  const top = highestAround(chms, p, CROWN_REACH, (q) => byRoof(site, q, offRoof));
   if (top === null || top > NOT_A_CROWN) return null;
   return { height: Math.round(Math.min(TREE_RANGE.max, Math.max(TREE_RANGE.min, top)) * 10) / 10, from: "nmpt" };
 };
