@@ -54,6 +54,9 @@ export const HELD: readonly (readonly [id: string, reason: string])[] = [
   ["w232362877", "Furmańska's other carriageway at Cyrulicza (G-006)"],
   ["w173531007", "Świętoduska's one-way end of G-024 (measured 5.35 m left, 1.25 m right of its axis)"],
   ["w335831606", "Hugona Kołłątaja: a two-way lane's car 0.8 m from the kerb (G-090)"],
+  ["w1150131461", "Staszica: the mapped sidewalks w1261814240 lie under the measured asphalt (G-802); they wait for the section's sidewalks (PR 7)"],
+  ["w296749774", "Karmelicka: the measured 6.45 m south of its axis lays its asphalt over the footway w232805935 by w232805965 and round Staszica's corner over w1261814240 (G-802)"],
+  ["w300663409", "Cicha: measured 7.05 m left of its axis, the asphalt over the pavement and its OSM ticket machine n9596788055 (G-802)"],
   ["w40052496", "Królewska east: a parking strip by the measured kerb puts parked cars in the chunks round the start, which the street furniture's streaming test reads as furniture"],
 ];
 
