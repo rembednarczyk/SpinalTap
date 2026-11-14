@@ -527,6 +527,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: bieg z `highway=steps` dostaje stopnie mimo płaskiego NMT (np. minimalna wysokość z `step_count` albo z sąsiednich podestów); kontrola skanu „schody bez stopni”
 - Także (kurator, przegląd #219, T-131): portal Archikatedry w66335060 (603,5; −184,6) po rampie G-236 wznosi się 0,76 m (`step_count` 7 daje ok. 1,12 m), a bieg jest rysowany jako bruk: 0,48 m na 19 stopniach po 0,33 m w kawałku chunka `stare-miasto-0-0`, poniżej `MIN_RISER`. Dla biegu ze `step_count` liczba i głębokość stopni z tagu (7 stopni na 6,2 m to stopnie z podestem), a nie z długości pasa
 - Pakiet właściciela: packages/engine (terrain), tools/osm-import
+- Po G-781 odsłonięte płaskie biegi Ratusza od Pl. Łokietka w1095048695/w1095048696 (step_count 9, ok. 1,4 m) w krakowskie-2-0 (411..421; -86..-90): szare płyty bez stopni 4 cm pod chodnikiem
 
 ### G-230 Mikrozdarzenie po skoku gracza o ponad 300 m zostaje w uśpionych do końca sesji
 - Status: zgłoszone (2.11, weryfikator G-219)
@@ -559,6 +560,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: szerokość schodów bez `width` z kontekstu (np. bieg przy `entrance` albo krótki ze `step_count` ≤ 12: 1,5 m; metalowe `surface=metal`: 1,2 m), korekty z ortofoto w `TAG_CORRECTIONS` dla Donżonu i w888479969; pas biegu na zakręcie przycięty do dwusiecznej kąta, bez nakładania na sąsiedni bieg
 - Pakiet właściciela: tools/osm-import (ground)
 - Test przyjęcia: pas w66258166 ≤ 1,5 m i bez części w obrysie w450180469; żaden pas schodów nie nachodzi ponad 0,1 m² na pas innego biegu tej samej drogi; kontrola `steps-runs-overlap` liczy takie pary (baza do ustalenia przy wdrożeniu)
+- Pas 3 m biegu w503077033 przy wejściu n4934217573 (0,2..3,4; -71..-74,4) wchodzi 0,2 m w ścianę Poczty i po G-781 blokuje drzwi wejścia
 
 ### G-238 Niższe części kościoła w jednym obrysie stoją na wysokości nawy
 - Status: zgłoszone (2.11, kurator, przegląd #208)
@@ -1829,10 +1831,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-781 Footway i łaty G-760 na obrysie schodów (193 klucze ground-over-steps na main)
 - Ważność: S4 · Zasięg: 193 miejsca, m.in. 950;229, Podzamcze 803-829;237-247, Krakowskie 411-421;-86..-90
 - Opis: kawałki gruntu z liftem wyższym niż schody (footway 0,09 nad 0,05) zachodzą na obrys steps ponad 0,01 m² i przebijają najniższy stopień
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g781 (768efbb), czeka na przegląd kuratora; wcześniej: zgłoszone (14.11, naprawiacz G-777)
+- Status: w naprawie, runda 2 (14.11): przywrócić drzwi wejścia n4934217573; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g781 (768efbb), czeka na przegląd kuratora; wcześniej: zgłoszone (14.11, naprawiacz G-777)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: ground-over-steps spada; zrzut 1009,6;447,5 bez kostki na stopniach
 - chunkGround wycina obrys schodów z gruntu wyższego od nich (steps-cut.ts), narożniki cięcia z dokładnością do mm; ground-over-steps 234 -> 0 (193 klucze -> 0), żaden rodzaj nie rośnie; map-ground-golden 170580 -> 173539 wierzchołków; ubyły drzwi (0,44;-74,64) krakowskie-0-0, ich próg wypadał na stopniach
+- Przegląd kuratora 14.11 (768efbb): ZGODNE Z UWAGAMI; brak szczelin poza krawędziami cięcia; grass +0,8 m² w orto:diff to artefakt kolejności mapy (pod stopniami); ubyte drzwi to wejście OSM n4934217573 (Poczta Główna, KP 50), odrzucone regułą ground (front ościeżnicy na pasie schodów 3 m, Site: rail). Decyzja nocna: regresja tej gałęzi, naprawa w rundzie 2 przed PR; kontrola entrance-no-door (baza main 9).
 
 ### G-782 roundJoints: suma NonZero pierścieni zgodnych z ruchem wskazówek zegara w fazie okrągłych końców
 - Ważność: S4 · Zasięg: 242 z 2141 pasów ma pierścień zgodny z ruchem wskazówek zegara
