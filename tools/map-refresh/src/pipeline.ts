@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { OUT_DIR, SCAN_REPORT, TABLE_DIR, WORK_DIR } from "./config.ts";
 import { fileTable, readManifests, restoreDateOnly } from "./files.ts";
-import { type HashRow, type MapState, type OrtoSummary, type Report, type StepLine, type WidthStats, buildReport, fileChanges } from "./report.ts";
+import { type HashRow, type MapState, type OrtoSummary, type Report, type StaleSource, type StepLine, type WidthStats, buildReport, fileChanges } from "./report.ts";
 import { renderReport } from "./render.ts";
 import { RateLimited, runCommand } from "./run.ts";
 import { readScanDiff } from "./scan.ts";
@@ -25,9 +25,23 @@ export interface RefreshResult {
   readonly report: Report;
   /** Seconds a step took (the console's, never in the report). */
   readonly seconds: Record<string, number>;
-  /** 0 when every step that ran succeeded, 1 otherwise. */
+  /** The exit code (`exitCodeOf`). */
   readonly code: number;
 }
+
+/** The exit codes of `pnpm map:refresh` (README.md); 3 is an HTTP 429 (`refresh.ts`). */
+export const EXIT = { done: 0, tool: 1, review: 2, rateLimited: 3 } as const;
+
+/**
+ * A report's exit code (pure): `tool` when a step other than a fetch failed (the build, the scan's
+ * run, `twice`: the report cannot be trusted), else `review` when the verdict asks the curator
+ * (a stale source among its reasons), else `done`. Codes 0 and 2 both mean a whole report.
+ */
+export const exitCodeOf = (r: Report): number => {
+  const stale = new Set(r.stale.map((s) => s.step));
+  if (r.steps.some((s) => s.status === "failed" && !stale.has(s.id))) return EXIT.tool;
+  return r.verdict.review ? EXIT.review : EXIT.done;
+};
 
 const HERE = new URL(".", import.meta.url).pathname;
 
@@ -94,17 +108,31 @@ interface Ran {
   readonly lines: StepLine[];
   readonly seconds: Record<string, number>;
   readonly ran: Set<string>;
+  readonly stale: StaleSource[];
 }
 
-/** Runs the plan in order; stops after a failed step; throws `RateLimited` at an HTTP 429. */
+/** Why a step of a source whose fetch failed does not run, or null. */
+const staleSkip = (step: Step, stale: readonly StaleSource[]): string | null => {
+  const s = stale.find((x) => x.source === step.source);
+  if (!s) return null;
+  return step.group === "fetch" ? `źródło ${s.source} nieświeże po nieudanym ${s.step}` : `po nieudanym ${s.step}: dane ${s.source} z repo, nie z niepełnej pamięci podręcznej`;
+};
+
+/**
+ * Runs the plan in order; throws `RateLimited` at an HTTP 429. A failed fetch (a dropped connection
+ * twice, an HTTP error) leaves its source stale: the rest of that source's steps are skipped, so
+ * its data stay the repo's, and the build and the checks still run. Any other failed step stops the run.
+ */
 const runPlan = async (root: string, planned: readonly Planned[], quiet: boolean): Promise<Ran> => {
   const lines: StepLine[] = [];
   const seconds: Record<string, number> = {};
   const ran = new Set<string>();
+  const stale: StaleSource[] = [];
   let stopped: string | null = null;
   for (const { step, skip } of planned) {
-    if (skip || stopped) {
-      lines.push({ id: step.id, status: "skipped", note: skip ?? `po nieudanym kroku ${stopped}` });
+    const why = skip ?? (stopped ? `po nieudanym kroku ${stopped}` : staleSkip(step, stale));
+    if (why) {
+      lines.push({ id: step.id, status: "skipped", note: why });
       continue;
     }
     if (!quiet) console.log(`\n== map:refresh: ${step.id} (${step.cmd.join(" ")})`);
@@ -115,13 +143,14 @@ const runPlan = async (root: string, planned: readonly Planned[], quiet: boolean
       throw new RateLimited(`${step.id}: HTTP 429 (Too Many Requests). Usługa prosi o przerwę: bez ponowienia, odświeżenie przerwane. Uruchom je później albo z --offline (log: ${WORK_DIR}/${step.id}.log).`);
     if (r.code !== 0 && !step.mayFail) {
       lines.push({ id: step.id, status: "failed", note: `kod ${r.code}, log ${WORK_DIR}/${step.id}.log` });
-      stopped = step.id;
+      if (step.group === "fetch" && step.source) stale.push({ source: step.source, step: step.id });
+      else stopped = step.id;
       continue;
     }
     ran.add(step.id);
     lines.push({ id: step.id, status: "ran", note: r.code !== 0 ? `kod ${r.code}: wynik w raporcie` : "" });
   }
-  return { lines, seconds, ran };
+  return { lines, seconds, ran, stale };
 };
 
 /** The build steps again: the watched files must not change (`--twice`). */
@@ -160,6 +189,7 @@ export const refresh = async (o: RefreshOptions): Promise<RefreshResult> => {
     base,
     mode: { offline: o.offline, sources: o.sources },
     steps: run.lines,
+    stale: run.stale,
     before,
     after,
     restored,
@@ -170,5 +200,5 @@ export const refresh = async (o: RefreshOptions): Promise<RefreshResult> => {
   mkdirSync(join(root, OUT_DIR), { recursive: true });
   writeFileSync(join(root, OUT_DIR, "map-refresh.json"), `${JSON.stringify(report, null, 2)}\n`);
   writeFileSync(join(root, OUT_DIR, "map-refresh.md"), renderReport(report));
-  return { report, seconds: run.seconds, code: run.lines.some((l) => l.status === "failed") ? 1 : 0 };
+  return { report, seconds: run.seconds, code: exitCodeOf(report) };
 };
