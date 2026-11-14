@@ -1782,7 +1782,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-759 walk-blocked nie widzi płyt chodnika i podestu Arkad
 - Ważność: S4 · Zasięg: klucze `stare-miasto-0-1 460,100/110/120`, `krakowskie-2-1 450,*`; ok. 500 stromych par po G-748
 - Opis: kontrola z #497 bierze tylko teren, więc obniżenie gruntu pod płytami `arkady.ts` liczy jako uskoki i strome pary
-- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 038d716): walk-blocked bierze wierzch płyt i brył scen (floorOver), bez budynków mapy i ich pokoi; pary na płytach Arkad 1117 -> 0, pary z dachów budynków 34426 -> 0; klucze skanu 1 -> 1; walk-review B zielony na scaleniu z G-778 (#526); do PR po #526; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 6c4fc01): walk-blocked bierze wierzch płyt i brył scen (floorOver); pary na płytach Arkad 1117 -> 0 (G-758: 262 -> 0); klucze skanu 1 -> 1; czeka na poprawkę uskoków płyt Arkad (walk-review B); wcześniej: zgłoszone (13.11, naprawiacz G-748)
+- Status: w PR (14.11), po G-778; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 038d716): walk-blocked bierze wierzch płyt i brył scen (floorOver), bez budynków mapy i ich pokoi; pary na płytach Arkad 1117 -> 0, pary z dachów budynków 34426 -> 0; klucze skanu 1 -> 1; walk-review B zielony na scaleniu z G-778 (#526); do PR po #526; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 6c4fc01): walk-blocked bierze wierzch płyt i brył scen (floorOver); pary na płytach Arkad 1117 -> 0 (G-758: 262 -> 0); klucze skanu 1 -> 1; czeka na poprawkę uskoków płyt Arkad (walk-review B); wcześniej: zgłoszone (13.11, naprawiacz G-748)
 - Pakiet właściciela: tools/glitch-scan (walk-blocked)
 - Test przyjęcia: `walk-blocked` bez kluczy pod płytami Arkad
 - walk-review B pada z poprawką: łapie prawdziwe uskoki płyt Arkad (G-778); osie along zostają na groundY, bo z floorOver wychodzą bryły Alchemii na chodnikach (krakowskie-2-0 416,-38 i inne). Decyzja nocna (wariant rekomendowany): najpierw naprawa uskoków, potem G-759, bez ruszania testu B.
@@ -1848,15 +1848,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: brak gołych komórek 0,1 m między wstęgami w tarczy złącza w tych miejscach; ground-strip-gap nie rośnie
 - Przegląd kuratora 14.11 (928f25a): NIEZGODNE. slitFills nie odejmuje stopni (above): 25 łat nad obrysem steps, 2,03 m² (949,0;230,4 wyszczerbia dolny stopień, 1009,6;445,4 kostka na trzech stopniach, 886,3;222,2 0,31 m²). Poprawka w tej gałęzi (runda 2); T-290; proponowana kontrola ground-over-steps
 - Przegląd kuratora 14.11 (6ccd1ba, runda 2): ZGODNE Z UWAGAMI. orto:diff wobec main 6,8 m², teren 0, pomosty 0; wiersze bazowe bez zmian. Łaty na steps najwyżej 0,0064 m². Po wycięciu 47 łat G-760 przybyło 0,026 m² gołego gruntu w 3 szczelinach poniżej MIN_SLIT: 186,3;-210,7 (0,015 m², widoczny klin ok. 1,1 m), -90,3;-75,1 (0,009), 1082,3;255,9 (0,002). Zrzuty /dev/shm/g777-cur2/grid.png
-
-### G-778 Uskoki między płytami chodnika i podestu Arkad
-- Ważność: S3 · Zasięg: stare-miasto-0-1 (465..468; 116..119), krakowskie-2-1 (448; 80)
-- Opis: arkady.ts pavement(): płyty co 2 m na maksimum terenu mapy, wierzchy a 38..44: -6,17/-6,71/-7,46 (stopnie 0,54 i 0,75 m > STEP_HEIGHT), podest -5,72 przy płycie -5,22 (0,50 m); od północy nie wejdzie się wyżej; wyszło z G-759 (walk-review B)
-- Status: przegląd kuratora ZGODNE Z UWAGAMI (14.11); do PR; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g778, 327028f), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, naprawiacz G-759)
-- Pakiet właściciela: packages/sim (content/alchemia)
-- Test przyjęcia: walk-review B zielony; między sąsiednimi płytami Arkad <= 0,45 m
-- 327028f: chodnik w dwóch pasach (ściana 2 m do a 44, zewnętrzny do a 38), komórki 0,5 m; stopnie 0,75 -> 0,25 m, krawędzie 0,6/0,48 -> 0,42/0,30 m; wierzch nad NMT maks. 1,08 -> 0,41 m; hashe i skan bez zmian; walk-review B zielony na scaleniu z g759
-- Przegląd kuratora 14.11 (327028f): ZGODNE Z UWAGAMI. Stopnie do 0,26 m (nie 0,25), krawędzie do 0,42 m, 0 punktów obwodu > 0,45 m; 18 m² na nawierzchni mapy square, bez gołego gruntu; T-206/207/219/230/231 bez zmian; dopisek do T-218.
 
 ### G-779 Łaty G-760 mniejsze niż 0,5 m² odrzucane przez chunkGround
 - Ważność: S4 · Zasięg: złącza z małymi łatami w całym mieście

@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-778 Uskoki między płytami chodnika i podestu Arkad
+- Ważność: S3 · Zasięg: stare-miasto-0-1 (465..468; 116..119), krakowskie-2-1 (448; 80)
+- Opis: arkady.ts pavement(): płyty co 2 m na maksimum terenu mapy, wierzchy a 38..44: -6,17/-6,71/-7,46 (stopnie 0,54 i 0,75 m > STEP_HEIGHT), podest -5,72 przy płycie -5,22 (0,50 m); od północy nie wejdzie się wyżej; wyszło z G-759 (walk-review B)
+- Status: naprawione (14.11, PR #526 scalony 14.11 (ebed0d2) scalony); wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (14.11); do PR; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g778, 327028f), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, naprawiacz G-759)
+- Pakiet właściciela: packages/sim (content/alchemia)
+- Test przyjęcia: walk-review B zielony; między sąsiednimi płytami Arkad <= 0,45 m
+- 327028f: chodnik w dwóch pasach (ściana 2 m do a 44, zewnętrzny do a 38), komórki 0,5 m; stopnie 0,75 -> 0,25 m, krawędzie 0,6/0,48 -> 0,42/0,30 m; wierzch nad NMT maks. 1,08 -> 0,41 m; hashe i skan bez zmian; walk-review B zielony na scaleniu z g759
+- Przegląd kuratora 14.11 (327028f): ZGODNE Z UWAGAMI. Stopnie do 0,26 m (nie 0,25), krawędzie do 0,42 m, 0 punktów obwodu > 0,45 m; 18 m² na nawierzchni mapy square, bez gołego gruntu; T-206/207/219/230/231 bez zmian; dopisek do T-218.
+
 ### G-766 Kawałki fills dotykające same siebie (ósemki) triangulowane z nadmiarem
 - Ważność: S4 · Zasięg: stare-miasto-1-0 (619,94; -232,85) 2,0/1,1 m²; na main m.in. trawa podzamcze-1-1 112,4/103,9 m², nabrzeze-0-0 24,5/20,9 m²
 - Opis: cutByPieces (bare-cover.ts) przepuszcza obrysy z powtórzonym wierzchołkiem (crossesItself łapie tylko przecięcia); triangulacja daje więcej niż pole; od G-764 czerwony grass-under-paving; naprawa w rundzie 2 G-764
