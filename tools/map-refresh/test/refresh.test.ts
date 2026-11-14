@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { refresh } from "../src/pipeline.ts";
+import { RateLimited } from "../src/run.ts";
 import type { Step } from "../src/steps.ts";
 
 /**
@@ -107,5 +108,77 @@ describe("pnpm map:refresh on a small set, offline", () => {
     const { report, code } = await refresh({ root, steps, offline: true, sources: ["osm"], fromCache: false, skip: new Set(), twice: true, quiet: true });
     expect(code).toBe(1);
     expect(report.steps.at(-1)).toEqual({ id: "twice", status: "failed", note: "drugi przebieg zmienił: data/osm/t.json" });
+  });
+});
+
+/**
+ * A fetch step that asks the orthophoto through `tools/orto/src/http.ts` over a fake network: each
+ * request takes the next answer, a reset as Node throws it (`fetch failed`, cause `read ECONNRESET`)
+ * or a status. It writes the tile into the cache only when the request succeeds.
+ */
+const HTTP = new URL("../../orto/src/http.ts", import.meta.url).pathname;
+const ortoFetch = (answers: readonly ("reset" | number)[]): Step => ({
+  id: "orto-fetch",
+  group: "fetch",
+  source: "orto",
+  cmd: [
+    "node",
+    "--input-type=module",
+    "-e",
+    `import { getPng } from ${JSON.stringify(HTTP)};
+import { mkdirSync, writeFileSync } from "node:fs";
+const answers = ${JSON.stringify(answers)};
+let n = 0;
+const fetch = async () => {
+  const a = answers[n++];
+  if (a === "reset") throw new TypeError("fetch failed", { cause: Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" }) });
+  return new Response(new Uint8Array([137, 80, 78, 71]), { status: a, headers: { "content-type": "image/png" } });
+};
+const png = await getPng("https://wms/tile", { fetch, pause: async () => {}, log: console.log });
+mkdirSync("cache", { recursive: true });
+writeFileSync("cache/tile.png", png);
+console.log("requests: " + n);`,
+  ],
+});
+const ORTO_BUILD: Step = { id: "orto-build", group: "extract", source: "orto", cmd: ["node", "-e", 'require("node:fs").writeFileSync("data/osm/orto.json", "{}")'] };
+/** The scan as it reports: no key found, against an empty base. */
+const SCAN: Step = { id: "scan", group: "check", cmd: ["node", "-e", 'const fs = require("node:fs"); fs.mkdirSync("reports", { recursive: true }); fs.writeFileSync("reports/glitch-scan.json", JSON.stringify({ keys: {} }))'], mayFail: true };
+/** Online on a fake repo whose tables an offline run built first, so only the fetch shows. */
+const online = async (root: string, answers: readonly ("reset" | number)[]) => {
+  await run(root);
+  return refresh({ root, steps: [ortoFetch(answers), ORTO_BUILD, ...STEPS.slice(1), SCAN], offline: false, sources: ["osm", "orto"], fromCache: false, skip: new Set(), twice: false, quiet: true });
+};
+
+describe("pnpm map:refresh when a fetch drops its connection", () => {
+  it("asks once more after a reset and goes on as if nothing happened", async () => {
+    const root = fakeRepo();
+    const { report: r, code } = await online(root, ["reset", 200]);
+    expect(code).toBe(0);
+    expect(readFileSync(join(root, "reports/map-refresh/orto-fetch.log"), "utf8")).toContain("requests: 2");
+    expect(r.steps.map((s) => `${s.id} ${s.status}`)).toEqual(["orto-fetch ran", "orto-build ran", "osm-build ran", "osm-props ran", "scan ran"]);
+    expect(r.stale).toEqual([]);
+    expect(r.verdict.review).toBe(false);
+  });
+
+  it("after two resets in a row fails the fetch, keeps the source's data from the repo and still runs the build and the scan", async () => {
+    const root = fakeRepo();
+    const { report: r, code } = await online(root, ["reset", "reset"]);
+    expect(code).toBe(1);
+    expect(readFileSync(join(root, "reports/map-refresh/orto-fetch.log"), "utf8")).toContain("read ECONNRESET");
+    expect(r.steps.map((s) => `${s.id} ${s.status}`)).toEqual(["orto-fetch failed", "orto-build skipped", "osm-build ran", "osm-props ran", "scan ran"]);
+    expect(r.steps[1]!.note).toBe("po nieudanym orto-fetch: dane orto z repo, nie z niepełnej pamięci podręcznej");
+    expect(r.stale).toEqual([{ source: "orto", step: "orto-fetch" }]);
+    expect(r.scan.ran).toBe(true);
+    expect(r.verdict.review).toBe(true);
+    expect(r.verdict.reasons).toEqual(["kroki nieudane: orto-fetch", "źródło nieświeże: orto (orto-fetch nieudany; dane orto z repo)"]);
+    expect(readFileSync(join(root, "reports/map-refresh.md"), "utf8")).toContain("**Źródła nieświeże** (pobranie nieudane, dane z repo, skan i testy złote liczone na nich): orto (orto-fetch).");
+  });
+
+  it("stops at HTTP 429 without asking again", async () => {
+    const root = fakeRepo();
+    await expect(online(root, [429, 200])).rejects.toBeInstanceOf(RateLimited);
+    const log = readFileSync(join(root, "reports/map-refresh/orto-fetch.log"), "utf8");
+    expect(log).toContain("HTTP 429 (no retry)");
+    expect(log).not.toContain("requests:");
   });
 });

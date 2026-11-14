@@ -20,10 +20,12 @@ Logi kroków i pliki pośrednie leżą w `reports/map-refresh/`, czasy kroków w
 - `--sources=osm,gugik,orto`: które źródła pobrać i wyciągnąć (domyślnie wszystkie).
 - `--skip=scan,hashes,orto-diff,fetch,…`: pomija kroki albo całe grupy.
 - `--twice`: po pierwszym przebiegu buduje drugi raz i sprawdza, że pliki są bajt w bajt te same (krok `twice`).
-- Kod wyjścia: 0, gdy każdy krok się udał (bez względu na werdykt), 1 po nieudanym kroku (reszta jest pomijana, raport powstaje), 3 po HTTP 429.
+- Kod wyjścia: 0, gdy każdy krok się udał (bez względu na werdykt), 1 po nieudanym kroku (po nieudanym pobraniu reszta jego źródła jest pomijana, a budowa i kontrole biegną; po innym nieudanym kroku reszta jest pomijana; raport powstaje zawsze), 3 po HTTP 429.
 
 ## Sieć
-User-Agent `SekiSenshi-topo/1.0`, bez ponowień po HTTP 429 (zasady agentów). Gdy krok pobrania padnie z 429, odświeżenie kończy się czytelnym komunikatem i kodem 3. Następna próba to następny przebieg, nie pętla. Przed pobraniem komenda sprawdza, czy `osm:fetch` w tym checkoucie spełnia te zasady. Jeśli nie, odmawia pracy online.
+User-Agent `SekiSenshi-topo/1.0`, bez ponowień po HTTP 429 (zasady agentów). Gdy krok pobrania padnie z 429, odświeżenie kończy się czytelnym komunikatem i kodem 3. Następna próba to następny przebieg, nie pętla.
+
+Zerwane połączenie (ECONNRESET, ETIMEDOUT) to nie 429: `orto-fetch` ponawia takie zapytanie raz, po 5 s (`tools/orto/src/http.ts`). Gdy krok pobrania padnie mimo to (drugie zerwanie, inny błąd HTTP), jego źródło jest **nieświeże**: pozostałe kroki tego źródła (dalsze pobrania i wyciąg) są pomijane, więc jego dane zostają takie, jak w repo, a nie z niepełnej pamięci podręcznej. Budowa, skan i testy złote przebiegają mimo to. Raport wymienia nieświeże źródła na górze i w werdykcie (zawsze „przegląd kuratora”), a kod wyjścia to 1. Nieudany krok poza pobraniem zatrzymuje resztę jak dotąd. Przed pobraniem komenda sprawdza, czy `osm:fetch` w tym checkoucie spełnia te zasady. Jeśli nie, odmawia pracy online.
 
 Manifesty `data/gugik/sources.json` i `data/orto/sources.json` dostają z powrotem stary tekst, gdy różnią się tylko datą pobrania (`fetched`). Te same pliki pobrane drugi raz nie są zmianą mapy.
 
@@ -47,4 +49,4 @@ Ograniczenia:
 - Opis PR ma limit 65 536 znaków, więc trafia do niego najwyżej 60 000 znaków raportu.
 
 ## Testy
-`tools/map-refresh/test/report.test.ts` sprawdza różnice dwóch stanów, werdykt, Markdown, przywracanie manifestów i rozpoznanie 429. `test/refresh.test.ts` puszcza całą komendę offline na małym, sztucznym repo: dwa przebiegi dają te same pliki bajt w bajt (raport też), nowe dane pokazują się w raporcie, a niedeterministyczna budowa daje nieudany krok `twice`.
+`tools/map-refresh/test/report.test.ts` sprawdza różnice dwóch stanów, werdykt, Markdown, przywracanie manifestów i rozpoznanie 429. `test/refresh.test.ts` puszcza całą komendę offline na małym, sztucznym repo: dwa przebiegi dają te same pliki bajt w bajt (raport też), nowe dane pokazują się w raporcie, a niedeterministyczna budowa daje nieudany krok `twice`. Ten sam plik puszcza krok pobrania ortofoto przez `tools/orto/src/http.ts` na fałszywej sieci: jedno zerwanie i sukces, dwa zerwania (krok nieudany, źródło nieświeże, skan przebiega) oraz 429 (bez powtórki, przerwanie).

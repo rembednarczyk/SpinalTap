@@ -62,6 +62,7 @@ export const renderReport = (r: Report): string => {
     "# Odświeżenie mapy (`pnpm map:refresh`)",
     "",
     `Baza: \`${r.base}\`. Tryb: ${r.mode.offline ? "offline (bez sieci)" : "online"}, źródła: ${r.mode.sources.join(", ")}.`,
+    ...(r.stale.length ? ["", `**Źródła nieświeże** (pobranie nieudane, dane z repo, skan i testy złote liczone na nich): ${r.stale.map((x) => `${x.source} (${x.step})`).join(", ")}.`] : []),
     "",
     `## Werdykt: ${v.review ? "**przegląd kuratora**" : "**bez przeglądu**"}`,
     "",
