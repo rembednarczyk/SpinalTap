@@ -4,6 +4,7 @@ import type { LightingRig } from "../npr/lighting";
 import { ToonMaterials } from "../npr/toon-material";
 import { type CharacterRig, animateRig, buildHeroine } from "./characters";
 import { Loadouts } from "./loadout";
+import { modelBytesOf } from "./model-bytes";
 import { type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
 import { qualityTier } from "../npr/quality";
@@ -118,6 +119,9 @@ export class PreviewStage {
   /** Imported models, the same manifests the world renderer got. */
   setModels(characters: CharacterModelManifest, weapons: WeaponManifest = this.weaponModels): void {
     this.characters = characters;
+    // The game dresses Seki from the same file: one download for both scenes (G-808). The weapons,
+    // a few small files the menu may never show, share only a download under way.
+    if (characters.heroine) modelBytesOf(this.engine).share([characters.heroine.url]);
     const weaponsChanged = weapons !== this.weaponModels;
     this.weaponModels = weapons;
     this.mounts?.setManifest(weapons);
@@ -261,7 +265,7 @@ export class PreviewStage {
     rig.drawTarget = true;
     rig.drawn = 1;
     this.rig = rig;
-    this.library = new ModelLibrary(scene, materials);
+    this.library = new ModelLibrary(scene, materials, modelBytesOf(this.engine));
     this.mounts = new WeaponMounts(this.library, this.weaponModels);
     // A weapon model that loads later needs a new picture on low quality.
     this.loadouts = new Loadouts(scene, materials, this.mounts, () => {
