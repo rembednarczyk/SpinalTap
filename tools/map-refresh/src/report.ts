@@ -46,6 +46,13 @@ export interface StepLine {
   readonly note: string;
 }
 
+/** A source whose fetch failed: its data are the repo's, not the services' of today. */
+export interface StaleSource {
+  readonly source: string;
+  /** The fetch step that failed. */
+  readonly step: string;
+}
+
 export interface Change<T> {
   readonly before: T;
   readonly after: T;
@@ -55,6 +62,8 @@ export interface Report {
   readonly base: string;
   readonly mode: { readonly offline: boolean; readonly sources: readonly string[] };
   readonly steps: readonly StepLine[];
+  /** Sources not fetched this run (a failed fetch); empty when every fetch that ran succeeded. */
+  readonly stale: readonly StaleSource[];
   readonly files: readonly { readonly path: string; readonly before: number | null; readonly after: number | null }[];
   /** Files given back their old text (only download dates differed). */
   readonly restored: readonly string[];
@@ -84,6 +93,7 @@ export interface ReportInput {
   readonly base: string;
   readonly mode: Report["mode"];
   readonly steps: readonly StepLine[];
+  readonly stale?: readonly StaleSource[];
   readonly before: MapState;
   readonly after: MapState;
   readonly restored: readonly string[];
@@ -127,6 +137,7 @@ export const verdictOf = (r: Omit<Report, "verdict">, t: Thresholds = THRESHOLDS
   const places: string[] = [];
   const failed = r.steps.filter((s) => s.status === "failed");
   if (failed.length) reasons.push(`kroki nieudane: ${failed.map((s) => s.id).join(", ")}`);
+  for (const s of r.stale) reasons.push(`źródło nieświeże: ${s.source} (${s.step} nieudany; dane ${s.source} z repo)`);
   if (!r.scan.ran) reasons.push("skan glitchy nie przebiegł");
   const serious = r.scan.kinds.filter((k) => k.severity === "S1-S3" && k.added.length > 0);
   if (serious.length) reasons.push(`nowe klucze skanu S1–S3: ${serious.map((k) => `${k.kind} +${k.added.length}`).join(", ")}`);
@@ -163,6 +174,7 @@ export const buildReport = (i: ReportInput): Report => {
     base: i.base,
     mode: i.mode,
     steps: i.steps,
+    stale: i.stale ?? [],
     files: fileChanges(i.before.files, i.after.files),
     restored: [...i.restored].sort(),
     objects: changes(a.objects, b.objects),
