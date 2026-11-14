@@ -50,6 +50,11 @@ export const HELD: readonly (readonly [id: string, reason: string])[] = [
   ["w202337368", "al. Tysiąclecia by the Dworzec, the other carriageway: its north edge with w1004769663's south one (G-350)"],
   ["w40049337", "Peowiaków: the setts of T-221 up to the frontage end at the estimated kerb"],
   ["w216497220", "Lubartowska by Bajkowskiego: the ramp and the footway of ADR-0074 stage 7 laid to the estimate"],
+  ["w173074313", "Furmańska by Cyrulicza: the turns of G-006 from both carriageways into one-way Cyrulicza"],
+  ["w232362877", "Furmańska's other carriageway at Cyrulicza (G-006)"],
+  ["w173531007", "Świętoduska's one-way end of G-024 (measured 5.35 m left, 1.25 m right of its axis)"],
+  ["w335831606", "Hugona Kołłątaja: a two-way lane's car 0.8 m from the kerb (G-090)"],
+  ["w40052496", "Królewska east: a parking strip by the measured kerb puts parked cars in the chunks round the start, which the street furniture's streaming test reads as furniture"],
 ];
 
 /** Widths measured by hand on the photograph (T-247), kept in the table over the measure: way, width (m), why. */
