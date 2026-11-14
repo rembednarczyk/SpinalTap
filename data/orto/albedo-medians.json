@@ -14,7 +14,7 @@
             164
           ],
           "luma": 184.8,
-          "toGrass": 1.656,
+          "toGrass": 1.655,
           "samples": 3197
         },
         "cobble": {
@@ -24,8 +24,8 @@
             157
           ],
           "luma": 170.1,
-          "toGrass": 1.525,
-          "samples": 27497
+          "toGrass": 1.524,
+          "samples": 27010
         },
         "footway": {
           "rgb": [
@@ -33,19 +33,19 @@
             174,
             158
           ],
-          "luma": 173.9,
+          "luma": 174,
           "toGrass": 1.558,
-          "samples": 12107
+          "samples": 11995
         },
         "grass": {
           "rgb": [
-            111,
+            112,
             114,
             89
           ],
           "luma": 111.6,
           "toGrass": 1,
-          "samples": 434393
+          "samples": 438198
         },
         "road": {
           "rgb": [
@@ -54,28 +54,28 @@
             87
           ],
           "luma": 82.5,
-          "toGrass": 0.74,
-          "samples": 46214
+          "toGrass": 0.739,
+          "samples": 45918
         },
         "sidewalk": {
           "rgb": [
             181,
             177,
-            162
+            163
           ],
-          "luma": 176.8,
-          "toGrass": 1.584,
-          "samples": 1409
+          "luma": 176.7,
+          "toGrass": 1.583,
+          "samples": 1321
         },
         "square": {
           "rgb": [
-            185,
-            183,
-            168
+            184,
+            181,
+            166
           ],
-          "luma": 182.2,
-          "toGrass": 1.633,
-          "samples": 107200
+          "luma": 180.4,
+          "toGrass": 1.616,
+          "samples": 114260
         }
       }
     },
@@ -91,68 +91,68 @@
             147
           ],
           "luma": 151.7,
-          "toGrass": 1.795,
+          "toGrass": 1.8,
           "samples": 3197
         },
         "cobble": {
           "rgb": [
-            133,
-            134,
-            135
+            124,
+            127,
+            130
           ],
-          "luma": 133.6,
-          "toGrass": 1.581,
-          "samples": 27497
+          "luma": 126.6,
+          "toGrass": 1.502,
+          "samples": 24544
         },
         "footway": {
           "rgb": [
             142,
-            142,
+            143,
             141
           ],
-          "luma": 141.8,
-          "toGrass": 1.678,
-          "samples": 12107
+          "luma": 142.3,
+          "toGrass": 1.688,
+          "samples": 11948
         },
         "grass": {
           "rgb": [
-            73,
+            72,
             89,
             78
           ],
-          "luma": 84.5,
+          "luma": 84.3,
           "toGrass": 1,
-          "samples": 434393
+          "samples": 437752
         },
         "road": {
           "rgb": [
-            70,
-            79,
-            88
+            69,
+            78,
+            87
           ],
-          "luma": 77.7,
-          "toGrass": 0.92,
-          "samples": 46214
+          "luma": 76.8,
+          "toGrass": 0.911,
+          "samples": 45448
         },
         "sidewalk": {
           "rgb": [
-            158,
-            156,
-            152
+            155,
+            154,
+            150
           ],
-          "luma": 156.2,
-          "toGrass": 1.848,
-          "samples": 1409
+          "luma": 154.1,
+          "toGrass": 1.828,
+          "samples": 1285
         },
         "square": {
           "rgb": [
-            149,
-            148,
-            148
+            144,
+            144,
+            144
           ],
-          "luma": 148.1,
-          "toGrass": 1.752,
-          "samples": 107200
+          "luma": 143.8,
+          "toGrass": 1.706,
+          "samples": 111905
         }
       }
     }
