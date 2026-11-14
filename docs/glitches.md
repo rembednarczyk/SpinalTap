@@ -212,6 +212,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (plan mebli)
 - Test przyjęcia: kontrola `lit-street-dark` (odcinki nazwanych dróg z `lit=yes` dalej niż 30 m od latarni, w metrach) w pasie 0; obeliski w promieniu 1 m od węzłów OSM. Ostrożnie z ADR-0064 etap 3 (oświetlenie z `lit`), który robi to samo w całym mieście
 - 14.11 audyt ADR-0077: przyczyna szersza: osm:props czyta statyczny plan, nie wyciągi; poprawka: data/osm/points/furniture.json z osm:fetch i kontrola osm-furniture-missing (baza 72: 70 w pasie, 2 słupki poza nim)
+- 14.11 gałąź ccr-ec2c4269-ilh8k8-furniture-osm: furniture.json z osm:fetch, grupy osm.furniture.*; pas z < −200: +28 drzew, +28 słupków, +4 ławki i inne; osm-furniture-missing 97 -> 33 (w pasie 69 -> 5; reszta to 28 węzłów planu odrzuconych przy rozstawieniu); przegląd kuratora w toku
 
 ### G-111 Resztka G-094: krawędzie przedsionka Trasy Podziemnej
 - Status: zgłoszone (z weryfikacji G-094) · Ważność: S4 · Zasięg: 1 wejście · Koszt: mały
