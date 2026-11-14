@@ -1813,14 +1813,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer/fpp-hand-poses.ts)
 - Test przyjęcia: test głębokości skóry dłoni w bryle broni ≤ 2 mm dla każdej broni krótkiej i wszystkich kości kciuka
 
-### G-771 Puste (białe) kafle ortofoto w pokryciu i raporcie komórek stare-miasto-0-0 i 0-1
-- Ważność: S3 · Zasięg: kafle 2023-09/stare-miasto-0-0 i 2024-06/stare-miasto-0-1 (100% białe, jedyne w mieście); w pokryciu ok. 2 740 m² zieleni i koron jako kostka/asfalt (0-0: 1 256, 0-1: 1 484) i ok. 250 m² cienia; raport wybiera pusty nalot jako najmniejszy przechył
-- Opis: fetch.ts zostawia biały kafel z ostatniej usługi; classifyRect uśrednia go jak nalot; lean.ts daje mu wynik 0. Skutek: bare-cover.ts i kontrole bare-on-cover/fill-on-green czytają zieleń jako twardą; 'twarde 100%' w notatkach 0-0 i 0-1 to artefakt (działka Rybna 12: zieleń i gruz). Proponowana kontrola cover-blank-flight (baza 2).
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g771 (5c0dc65, 32c6ec6, merge 4c6fe3b z #519; CLASSIFIER_VERSION 4), w PR; wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (13.11); scalać po #519 z CLASSIFIER_VERSION 4, przebudową data/orto, osm:build i scan:update; poprawić nazwy ulic w opisie PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g771 (5c0dc65, 32c6ec6), czeka na przegląd kuratora; konflikt CLASSIFIER_VERSION z #519 (druga wchodząca daje 4 i przebudowuje data/orto); wcześniej: zgłoszone (13.11, kurator, audyt luk SM)
-- Pakiet właściciela: tools/orto (fetch.ts, cover.ts, lean.ts), potem data/orto i osm:build
-- Test przyjęcia: nalot z bielą > 95% pominięty w klasyfikacji i w przechyle; stare-miasto.cover przeliczone; raport 0-0/0-1 wybiera nalot ze zdjęciem; orto:diff do kuratora
-- 13.11 przegląd kuratora: nazwy w 32c6ec6 („Rybna/Grodzka”) błędne: Królewska, narożnik Lubartowska/Noworybna, 1 m² przy Rybnej. Klucze 510,-170 i 610,-220 powinny zniknąć po #519. Klucze 470,70 to nowe odstępstwo (G-775).
-
 ### G-772 Mediany barw z ortofoto liczone z pustego kafla 2024-06/stare-miasto-0-1
 - Ważność: S4 · Zasięg: albedo-medians.json (ALBEDO_FLIGHTS 2025-04, 2024-06), stare-miasto-0-1
 - Opis: albedo-report.ts nie pomija pustych nalotów (isBlank z G-771), biały kafel wchodzi do median barw; przeliczenie zmienia wygląd
