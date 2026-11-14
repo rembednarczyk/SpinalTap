@@ -9,6 +9,7 @@ import { type Area, type Line } from "./features.ts";
 import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, lineLength, offsetLine, pointAlong, pointInRing, r1, removeCollinear, signedArea, simplifyLine, simplifyRing, sliceLine, stripAlong } from "./geometry.ts";
 import { type WidenRun, widenPieces } from "./kerb-widen.ts";
 import { type RoundEnd, bufferBand, stripBand } from "./line-buffer.ts";
+import { KERB_STONES } from "./ground-partition.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
 import { cutHoles, holeFits, holesApart, notchOut } from "./ring-holes.ts";
@@ -119,6 +120,8 @@ export interface Band {
   readonly patch?: true;
   /** A crack's patch laid edge to edge between bands of two surfaces (`roundJoints`, G-777): kept in a chunk however small. */
   readonly slit?: true;
+  /** A kerb stone a widened carriageway's asphalt reaches under (`kerbFills`, G-803): its pieces rank over the asphalt (`KERB_STONES`). */
+  readonly kerbStone?: true;
 }
 
 /** Which of a line's ends meet another way. */
@@ -420,7 +423,9 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
     for (const p of pieces) {
       if (p.length < 3) continue;
       const ring = ccw(p);
-      out.push({ g: { surface: b.surface, outline: ring.flatMap((q) => [q.x, q.z]), ...(b.bridge ? { bridge: true as const } : {}), ...deck }, order: ORDER[b.surface], source: b.source, k });
+      const g: GroundOut = { surface: b.surface, outline: ring.flatMap((q) => [q.x, q.z]), ...(b.bridge ? { bridge: true as const } : {}), ...deck };
+      if (b.kerbStone) KERB_STONES.add(g);
+      out.push({ g, order: ORDER[b.surface], source: b.source, k });
     }
     // Along the carriageway's piece as the chunk keeps it: its widening shares that edge (G-570).
     widen(pieces.length === 1 && pieces[0]!.length >= 3 ? ccw(pieces[0]!) : null);

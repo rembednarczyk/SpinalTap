@@ -12,8 +12,18 @@ const inside = (x: number, z: number, o: readonly number[]) => {
   }
   return hit;
 };
-/** The surface drawn on top at (x, z): the last piece in draw order, or null for bare terrain. */
-const surfaceAt = (x: number, z: number) => ground.reduce<string | null>((s, g) => (inside(x, z, g.outline) ? g.surface : s), null);
+/**
+ * The surface at (x, z): the piece over it, or null for bare terrain. The ground is a partition of the
+ * plane (ADR-0078 step 3): pieces share their edges, one cut along another's to the millimetre, so a
+ * sample on such an edge may fall in a hairline between the two; it takes the piece 2 mm off it then.
+ */
+const surfaceAt = (x: number, z: number): string | null => {
+  for (const [dx, dz] of [[0, 0], [0.002, 0], [-0.002, 0], [0, 0.002], [0, -0.002]] as const) {
+    const g = ground.find((p) => inside(x + dx, z + dz, p.outline));
+    if (g) return g.surface;
+  }
+  return null;
+};
 const inBuilding = (x: number, z: number) => buildings.some((o) => inside(x, z, o));
 
 describe("the paving before the Sąd Okręgowy on Plac Czechowicza (G-436)", () => {
@@ -121,7 +131,9 @@ describe("the pavement along the façades of Peowiaków by the corners with Koś
   it("leaves the footways, the streets and the driveway on top, and the façades where they are", () => {
     expect(surfaceAt(-5, -184.5)).toBe("footway");
     expect(surfaceAt(45, -200.5)).toBe("footway");
-    expect(surfaceAt(29.2, -107)).toBe("footway");
+    // The footway w288178957's band over the driveway's asphalt: the asphalt wins at a carriageway's
+    // edge (ADR-0078 step 3, the user's decision of 14.11), as the picture drew it on top before (SURFACE_LIFT).
+    expect(surfaceAt(29.2, -107)).toBe("road");
     expect(surfaceAt(-5, -188)).toBe("road");
     expect(surfaceAt(45, -203)).toBe("road");
     expect(surfaceAt(30.9, -109.5)).toBe("road");

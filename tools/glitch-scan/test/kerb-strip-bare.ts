@@ -41,6 +41,9 @@ export interface StripWorld {
   readonly deep: (x: number, z: number) => boolean;
 }
 
+/** Whether `p` is on a carriageway's piece: its asphalt or a zebra, a piece of its own since the ground is a partition (ADR-0078 step 3). */
+const carriageway = (w: StripWorld, p: Pt): boolean => w.surfacesAt(p.x, p.z).some((s) => s === "road" || s === "crossing");
+
 const separate = (t: Line["tags"], side: number): boolean =>
   t.sidewalk === "separate" || t["sidewalk:both"] === "separate" || t[side === 0 ? "sidewalk:left" : "sidewalk:right"] === "separate";
 
@@ -100,11 +103,11 @@ export const kerbStripBare = (w: StripWorld): Finding[] => {
     }
     if (beside < MIN_BESIDE) continue;
     for (const { p, nx, nz } of samples) {
-      if (!w.deep(p.x, p.z) || !w.surfacesAt(p.x, p.z).includes("road")) continue;
+      if (!w.deep(p.x, p.z) || !carriageway(w, p)) continue;
       for (const sgn of [1, -1]) {
         const at = (d: number) => ({ x: p.x + nx * sgn * d, z: p.z + nz * sgn * d });
         let edge = 0;
-        while (edge < half + LOOK && w.surfacesAt(at(edge + STEP).x, at(edge + STEP).z).includes("road")) edge += STEP;
+        while (edge < half + LOOK && carriageway(w, at(edge + STEP))) edge += STEP;
         let d = edge + STEP;
         for (; d <= edge + LOOK; d += STEP) {
           const q = at(d);
