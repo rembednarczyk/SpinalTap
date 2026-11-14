@@ -108,7 +108,9 @@ describe("the ground the map city lays (G-444)", () => {
     // The slits between bands of two surfaces in the joints (G-777), laid edge to edge, and the joints
     // read with every ring counter-clockwise, so a square's clockwise ring no longer cancels the bands
     // on it into holes the patches filled: 170 580.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 170580, hash: "71ebbf12" });
+    // The ground lifted over steps cut off the flights' outlines (G-781), its new corners where the
+    // edges cross: 173 539, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 173539, hash: "92f1ee20" });
     scene.dispose();
   });
 

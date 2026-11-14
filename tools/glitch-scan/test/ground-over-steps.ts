@@ -12,6 +12,8 @@ import type { GroundChunk } from "./ground-strips";
 export const MIN_OVER = 0.01;
 /** The sampling grid (m): the tables lie on 0.1 m, so a cell's half. */
 const SAMPLE = 0.05;
+/** A sample this near a flight's outline (m) lies on it: on an edge a paving cut off the flight shares with it (G-781), in both or neither as the sums round. */
+const ON_EDGE = 1e-6;
 
 type Pt = { readonly x: number; readonly z: number };
 type Piece = { readonly surface: string; readonly ring: Pt[]; readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
@@ -25,6 +27,14 @@ const inRing = (x: number, z: number, r: readonly Pt[]): boolean => {
   }
   return inside;
 };
+
+const onEdge = (x: number, z: number, r: readonly Pt[]): boolean =>
+  r.some((a, i) => {
+    const b = r[(i + 1) % r.length]!;
+    const [dx, dz] = [b.x - a.x, b.z - a.z];
+    const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+    return Math.hypot(a.x + dx * t - x, a.z + dz * t - z) < ON_EDGE;
+  });
 
 const pieceOf = (surface: string, flat: readonly number[]): Piece => {
   const ring = Array.from({ length: flat.length >> 1 }, (_, i) => ({ x: flat[2 * i]!, z: flat[2 * i + 1]! }));
@@ -47,7 +57,7 @@ export const groundOverSteps = (chunks: readonly GroundChunk[]): { at: string; w
         for (let i = Math.floor(minX / SAMPLE); (i + 0.5) * SAMPLE < maxX; i++) {
           for (let k = Math.floor(minZ / SAMPLE); (k + 0.5) * SAMPLE < maxZ; k++) {
             const [x, z] = [(i + 0.5) * SAMPLE, (k + 0.5) * SAMPLE];
-            if (!inRing(x, z, s.ring) || !inRing(x, z, p.ring)) continue;
+            if (!inRing(x, z, s.ring) || !inRing(x, z, p.ring) || onEdge(x, z, s.ring)) continue;
             n++;
             sx += x;
             sz += z;

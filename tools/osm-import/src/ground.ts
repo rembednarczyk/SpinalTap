@@ -12,6 +12,7 @@ import { type RoundEnd, bufferBand, stripBand } from "./line-buffer.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
 import { cutHoles, holeFits, holesApart, notchOut } from "./ring-holes.ts";
+import { offSteps } from "./steps-cut.ts";
 import { ROAD_WIDTH, laidStrips, roadSection, roadWidth } from "./street-section.ts";
 
 /** A street's width and sidewalk sides are its cross section's (ADR-0080 PR 5): read from here as before. */
@@ -425,5 +426,5 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
     widen(pieces.length === 1 && pieces[0]!.length >= 3 ? ccw(pieces[0]!) : null);
   });
   out.sort((a, b) => a.order - b.order || (a.source < b.source ? -1 : a.source > b.source ? 1 : a.k - b.k));
-  return out.map((o) => o.g);
+  return offSteps(out, (o) => o.g, (o, g) => ({ ...o, g })).map((o) => o.g);
 };
