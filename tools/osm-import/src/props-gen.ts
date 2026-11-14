@@ -39,6 +39,8 @@ export interface PlanItem {
   readonly spacing?: number;
   readonly yaw?: number;
   readonly osm?: string | readonly string[];
+  /** True: its positions are the map's (the ortho report counts its pieces as OSM, not the generator's). */
+  readonly inOsm?: boolean;
   readonly look?: string;
   readonly note?: string;
   /** False: its lamps hang no basket, and the others' baskets stay where they were (T0's square, ADR-0074 stage 7). */

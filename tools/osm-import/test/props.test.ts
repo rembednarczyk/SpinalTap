@@ -20,6 +20,7 @@ import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from ".
 import { Site } from "../src/props-site.ts";
 import { PropSolidIndex, clearSpot } from "../src/props-solid.ts";
 import { cityProps } from "./city.ts";
+import { loadPropsPlan } from "../src/props-osm.ts";
 import { gameDoors } from "../src/game-doors.ts";
 import { loadCarriageways, loadUndergroundWays } from "../src/props-roads.ts";
 import { lublinVenueBoards } from "../src/venue-boards.ts";
@@ -27,7 +28,8 @@ import { lublinDoorWalls } from "../src/door-walls.ts";
 import { addDoors, loadEntrances } from "../src/props-doors.ts";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
-const PLAN = JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
+/** The plan as `pnpm osm:props` places it: with the OSM extract's furniture it lacks (G-099). */
+const PLAN = loadPropsPlan();
 
 /** A 100 x 60 m chunk: an east-west road 8 m wide on z = 30, sidewalks 4 m on both sides, a row of houses north of it. */
 const street = (): LublinChunkData => ({

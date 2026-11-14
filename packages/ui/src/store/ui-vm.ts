@@ -383,7 +383,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   adsSensitivity: 1,
   invertY: false,
   touchSensitivity: 1,
-  touchFire: "aims",
+  touchFire: "separate",
   padSensitivity: 1,
   padDeadzone: 0.12,
   padCurve: "classic",
