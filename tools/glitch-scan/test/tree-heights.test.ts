@@ -23,8 +23,10 @@ describe("trees lower than measured (tree-height-vs-nmpt)", () => {
     expect(treeHeights([measured(0, 21)], [at(1.4, 0), at(0.2, 0xf0)])[0]!.drawn).toBeCloseTo(9.7 * 1.25, 1);
   });
 
-  it("finds a tree with no measured one within 1.5 m (tree-unmeasured), not another piece", () => {
-    expect(treesUnmeasured([measured(0, 21)], [at(1.4, 0), at(3, 0x71), { ...at(9, 0), prop: "bench" }])).toEqual([{ at: "3,0", what: expect.stringContaining("no height") }]);
+  it("finds a tree with no measured one within 1.5 m, or one drawn at its seed's size (tree-unmeasured), not another piece", () => {
+    const sized = measuredTreeVariant(0x71, 12);
+    expect(treesUnmeasured([measured(0, 21)], [at(1.4, sized), at(3, sized), { ...at(9, 0), prop: "bench" }])).toEqual([{ at: "3,0", what: expect.stringContaining("no height") }]);
+    expect(treesUnmeasured([measured(0, 21)], [at(0.5, 0x71)])).toEqual([{ at: "1,0", what: expect.stringContaining("seed's size") }]);
   });
 
   it("draws the trees of Plac Litewski within 2 m of their measured height in the median (T-195)", () => {

@@ -1,4 +1,4 @@
-import type { StreetPropItem } from "../../../packages/core/src";
+import { type StreetPropItem, plainTreeVariant } from "../../../packages/core/src";
 import { tree } from "../../../packages/engine/src/renderer/mapcity/prop-green";
 import { scaleOf, shapeOf } from "../../../packages/engine/src/renderer/mapcity/prop-shapes";
 import { LUBLIN_CHUNKS } from "../../../packages/sim/src/content/lublin";
@@ -94,10 +94,15 @@ export const cityMeasuredPieces = (pieces: readonly StreetPropItem[]): MeasuredT
   });
 
 /**
- * Trees of the game with no height from the data (audit of ADR-0077 14.11, gap 4): a tree piece
- * with no measured tree within `REACH` of it, drawn at the random size of its seed.
+ * Trees of the game drawn with no height from the data (audit of ADR-0077 14.11, gap 4): a tree
+ * piece with no measured tree within `REACH` of it, or one whose variant is still its seed's
+ * (`plainTreeVariant`: the random size), as where its crown cannot grow clear of a wall.
  */
 export const treesUnmeasured = (measured: readonly { readonly x: number; readonly z: number }[], pieces: readonly StreetPropItem[]): { readonly at: string; readonly what: string }[] =>
-  pieces
-    .filter((t) => t.prop === "tree" && !measured.some((m) => Math.hypot(t.x - m.x, t.z - m.z) <= REACH))
-    .map((t) => ({ at: `${t.x.toFixed(0)},${t.z.toFixed(0)}`, what: `tree drawn ${drawnTreeHeight(t).toFixed(1)} m with no height from OSM or NMPT` }));
+  pieces.flatMap((t) => {
+    if (t.prop !== "tree") return [];
+    const at = `${t.x.toFixed(0)},${t.z.toFixed(0)}`;
+    const drawn = drawnTreeHeight(t).toFixed(1);
+    if (!measured.some((m) => Math.hypot(t.x - m.x, t.z - m.z) <= REACH)) return [{ at, what: `tree drawn ${drawn} m with no height from OSM or NMPT` }];
+    return plainTreeVariant(t.variant) === t.variant ? [{ at, what: `tree drawn ${drawn} m at its seed's size, though measured` }] : [];
+  });
