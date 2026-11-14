@@ -1781,16 +1781,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/traffic, skrzyżowania)
 - Test przyjęcia: sonda ziaren 1–40: 0 kolizji na skrzyżowaniu
 
-### G-769 Ciemny trójkąt ok. 0,2 m w kostce na Krakowskim przy (297; -226) po G-764
-- Ważność: S4 · Zasięg: krakowskie, (297; -226); zrzut /dev/shm/g764-reshoot/pair/krakowskie-297-215.png na 6b0ebb7
-- Opis: drobna dziura w fills między nowym kawałkiem kostki z canopyHard a sąsiednim kawałkiem; widać ciemne podłoże; zauważone przez kuratora w przeglądzie G-764, potwierdzone ponownym zrzutem
-- Status: w PR #532 (14.11); wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (14.11); PR po scaleniu #528 i przegenerowaniu; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g769b (f80370a), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, kurator, przegląd G-764)
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: brak dziury w fills przy (297; -226) (sonda 0,1 m), kontrola lawn-leafoff-patch lub fills-gap
-- 14.11: #519 (G-764) w main, można naprawiać
-- 14.11: tileRings obrysowuje kafel o komórkę dalej i tnie na krawędzi; nowa kontrola fill-gap 130 -> 16; map-ground-golden 171963 -> 171799 (146ff8d4); przyjęte (decyzja nocna: rekomendowane przyjęcie, artefakty pomiaru) +1 ground-strip-gap nabrzeze-1-0 2521,96 (podzbiór gołego pola z main) i +1 kerb-gap-bare nabrzeze-0-0 2442.6,92.9 (próbka na wspólnej krawędzi, 0,4 mm)
-- 14.11 przegląd kuratora (f80370a vs ebed0d2): ZGODNE Z UWAGAMI; orto:diff 6,3 m² (trawa +4,8 na green/canopy, kostka +1,3 na paving), teren 0, pomosty 0; odsłonięte 0,44 m² (paski ≤ 3 cm), nakładki fills bez zmian; klucze 2442,6;92,9 i 2521,1;95,9 potwierdzone jako artefakty; po scaleniu z main powtórzyć osm:build, scan:diff, orto:diff
-
 ### G-772 Mediany barw z ortofoto liczone z pustego kafla 2024-06/stare-miasto-0-1
 - Ważność: S4 · Zasięg: albedo-medians.json (ALBEDO_FLIGHTS 2025-04, 2024-06), stare-miasto-0-1
 - Opis: albedo-report.ts nie pomija pustych nalotów (isBlank z G-771), biały kafel wchodzi do median barw; przeliczenie zmienia wygląd
