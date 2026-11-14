@@ -110,6 +110,7 @@ export class CameraRig {
   private guard = 0;
   private swing: { strike: number; windup: number; recovery: number; elapsed: number } | null = null;
   private melee = false;
+  private ads = 0;
   private readonly gunHolder: TransformNode;
   private readonly meleeHolder: TransformNode;
   private meleeLook: WeaponLook | null = null;
@@ -190,6 +191,11 @@ export class CameraRig {
   /** Current look speed multiplier from the aim zoom (ADR-0019); 1 from the hip. */
   get lookScale(): number {
     return lookScaleFor(this.camera.fov, this.hipFov);
+  }
+
+  /** How far the FPP viewmodel was aimed in its last frame: 0 from the hip .. 1 aimed down sights. */
+  get viewAim(): number {
+    return this.ads;
   }
 
   /** Vertical field of view from the hip on the current screen (radians). */
@@ -332,6 +338,7 @@ export class CameraRig {
       // The reference frame and the title backdrop see what the player sees from the hip.
       this.camera.fov = this.hipFov;
       this.viewmodel.setEnabled(false);
+      this.ads = 0;
       this.chokeArms.update(false, undefined, dt);
       this.poseArms(null);
       this.onBodyVisibility(true);
@@ -381,6 +388,7 @@ export class CameraRig {
     // The weapon keeps its own field of view: the zoom and the sprint change the world's alone.
     // Aiming down sights brings the gun to the centre with the sights on the eye line.
     const ads = this.melee ? 0 : smooth(aim);
+    this.ads = ads;
     const view = viewmodelView(this.scene.getEngine().getAspectRatio(this.camera), DEFAULT_HORIZONTAL_FOV);
     const across = viewmodelScale(Math.tan(this.camera.fov / 2), view.hip + (view.aimed - view.hip) * ads);
     this.viewSpace.scaling.set(across, across, 1);

@@ -13,6 +13,8 @@ export interface DebugApi {
   capture?: () => string;
   /** Where the renderer's camera stood in its last frame, yaw and pitch in radians. */
   camera?: () => { x: number; y: number; z: number; yaw: number; pitch: number };
+  /** How far the FPP viewmodel was aimed in the last frame drawn, the one `capture()` reads (0 hip .. 1 aimed). */
+  viewAim?: () => number;
   /**
    * Frames the renderer has drawn the game in. The camera and `citySettled()` follow a teleport
    * only in the next one, so a shot waits for this to grow past its value after the step.

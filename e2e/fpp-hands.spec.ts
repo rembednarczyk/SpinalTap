@@ -17,14 +17,21 @@ const TIMEOUT = 120_000 + SHOTS * 35_000;
 /** The deptak west of the clinic at midday, looking east along it. */
 const SPOT = { x: 270, z: -81, yaw: Math.PI / 2 } as const;
 
-const shoot = async (page: Page, name: string): Promise<void> => {
+/**
+ * A shot of the frame drawn after the steps, with the viewmodel as far aimed as `aim` (0 from the
+ * hip, 1 aimed in): `capture()` reads the last drawn canvas, which before a new frame is still
+ * the one before the step (a helper spec's "aimed" shots were the hip pose so). Returns the PNG.
+ */
+const shoot = async (page: Page, name: string, aim: 0 | 1 | null = null): Promise<string> => {
   const perf = await sampleNow(page);
   const png = await page.evaluate(() => window.__seki!.capture!());
+  if (aim !== null) expect(await page.evaluate(() => window.__seki!.viewAim!()), `${name}: the viewmodel's aim`).toBe(aim);
   const dir = process.env.SHOTS ?? test.info().outputPath();
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, `${name}.png`), Buffer.from(png.slice(png.indexOf(",") + 1), "base64"));
   writeFileSync(join(dir, `${name}.json`), `${JSON.stringify({ name, drawCalls: perf.drawCalls, activeMeshes: perf.activeMeshes }, null, 2)}\n`);
   test.info().annotations.push({ type: name, description: `${perf.drawCalls} draw calls, ${perf.activeMeshes} active meshes` });
+  return png;
 };
 
 const play = async (page: Page, query: string, how: "click" | "tap"): Promise<string[]> => {
@@ -43,6 +50,21 @@ const play = async (page: Page, query: string, how: "click" | "tap"): Promise<st
   await page.waitForFunction(() => window.__seki!.dressed() > 0 && window.__seki!.modelsLoading() === 0, null, { timeout: 90_000 });
   expect(await page.evaluate(() => window.__seki!.state().cameraMode)).toBe("FPP");
   return errors;
+};
+
+/**
+ * Steps with the aim held until the aim is all the way in as drawn (ADR-0046: the state, not a
+ * count): a weapon still coming up aims only once it is drawn (the DMR, 0.85 + 0.34 s, was at
+ * 0.93 after its 70 steps), and the frozen loop draws the step before the last (`prevAim`, alpha
+ * 0). Fails if it is not in within 3 s.
+ */
+const aimIn = async (page: Page): Promise<void> => {
+  const aim = await page.evaluate(() => {
+    const s = window.__seki!;
+    for (let i = 0; i < 180 && s.session.sim.player()!.posture!.prevAim < 1; i++) s.step(1, { aim: true });
+    return s.session.sim.player()!.posture!.prevAim;
+  });
+  expect(aim).toBe(1);
 };
 
 /** A rifle in the primary slot and a baton in the melee one, besides the starting pistol; a DMR and a sword in the bag. */
@@ -97,18 +119,19 @@ const poses = async (page: Page, prefix: string): Promise<void> => {
   await arm(page);
   await step(page, 5);
   await step(page, 30, { weaponSlot: 2 });
-  await shoot(page, `${prefix}-pistol-hip`);
-  await step(page, 30, { aim: true });
-  await shoot(page, `${prefix}-pistol-aim`);
+  const pistolHip = await shoot(page, `${prefix}-pistol-hip`, 0);
+  await aimIn(page);
+  // The shot drawn aimed in is not the one from the hip.
+  expect(await shoot(page, `${prefix}-pistol-aim`, 1) === pistolHip, `${prefix}: pistol aimed = from the hip`).toBe(false);
   // The rifle comes up in 0.7 s.
   await step(page, 50, { weaponSlot: 1 });
-  await shoot(page, `${prefix}-rifle-hip`);
-  await step(page, 40, { aim: true });
-  await shoot(page, `${prefix}-rifle-aim`);
+  const rifleHip = await shoot(page, `${prefix}-rifle-hip`, 0);
+  await aimIn(page);
+  expect(await shoot(page, `${prefix}-rifle-aim`, 1) === rifleHip, `${prefix}: rifle aimed = from the hip`).toBe(false);
   // The DMR comes up slower (0.85 s) and zooms the view to 0.38.
   await equip(page, "primary", "i93");
-  await step(page, 70, { aim: true });
-  await shoot(page, `${prefix}-dmr-aim`);
+  await aimIn(page);
+  await shoot(page, `${prefix}-dmr-aim`, 1);
   await step(page, 30, { weaponSlot: 3 });
   await shoot(page, `${prefix}-baton`);
   await equip(page, "melee", "i92");
