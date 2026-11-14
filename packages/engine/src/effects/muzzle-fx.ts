@@ -7,8 +7,8 @@ const FLAME_CORE = Color3.FromHexString("#fff1b0");
 /** Reduced flashes: the flame's colours this much darker. */
 const REDUCED_GLOW = 0.55;
 /** Smoke grey by day and at night (unlit, so the night's is darker, not glowing in the dark). */
-const SMOKE_DAY: readonly [number, number, number] = [0.66, 0.66, 0.68];
-const SMOKE_NIGHT: readonly [number, number, number] = [0.3, 0.31, 0.36];
+const SMOKE_DAY: readonly [number, number, number] = [0.74, 0.74, 0.76];
+const SMOKE_NIGHT: readonly [number, number, number] = [0.44, 0.45, 0.52];
 
 /**
  * One side of a flame tongue in its plane: `u` along the barrel (0 at the muzzle, 1 at the tip),

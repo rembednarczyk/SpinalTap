@@ -98,6 +98,17 @@ export const MUZZLE: Readonly<Record<GunKind, { readonly x: number; readonly y: 
   rifle: { x: 0.4, y: 0.076, flash: { length: 0.3, width: 0.16, puffs: 3 } },
 };
 
+/**
+ * The flame seen from outside, in TPP or on an NPC, this much bigger than at the FPP muzzle: two
+ * metres or more away, the pistol's 13 cm would be a few pixels on a phone.
+ */
+export const SEEN_FLASH_SCALE = 1.6;
+
+/** The flash of each gun seen from outside (`SEEN_FLASH_SCALE`); the smoke as much bigger. */
+export const SEEN_FLASH: Readonly<Record<GunKind, FlashSize>> = Object.fromEntries(
+  Object.entries(MUZZLE).map(([kind, m]) => [kind, { ...m.flash, length: m.flash.length * SEEN_FLASH_SCALE, width: m.flash.width * SEEN_FLASH_SCALE }]),
+) as Record<GunKind, FlashSize>;
+
 export const isGunKind = (kind: WeaponKind | null): kind is GunKind => kind !== null && kind in MUZZLE;
 
 /**

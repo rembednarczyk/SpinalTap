@@ -76,6 +76,7 @@ describe("muzzle flash: where the flame comes out (FPP, TPP, NPCs)", () => {
     await vi.waitFor(() => expect(vm().length).toBeGreaterThan(0));
     camera.update(stand, DT);
     const shot = place(source, player);
+    expect(source.inView).toBe(true);
     const barrel = barrelOf(vm(), gun);
     expect(barrel.max).toBeCloseTo(MUZZLE[gun].x, 3);
     expect(shot.kind).toBe(gun);
@@ -102,6 +103,7 @@ describe("muzzle flash: where the flame comes out (FPP, TPP, NPCs)", () => {
     expect(camera.muzzlePosition()).toBeNull();
     for (const id of [player, npc]) {
       const shot = place(source, id);
+      expect(source.inView).toBe(false);
       const barrel = barrelOf(held(id), gun);
       expect(shot.kind).toBe(gun);
       expect(Vector3.Distance(shot.at, barrel.at), `${id}: at the barrel's end`).toBeLessThan(0.002);

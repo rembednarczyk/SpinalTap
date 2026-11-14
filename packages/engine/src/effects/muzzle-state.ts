@@ -22,7 +22,7 @@ export const SMOKE_POOL = 32;
 /** Reduced flashes (ADR-0028): the flame this much smaller. */
 export const REDUCED_FLASH = 0.6;
 /** Opacity of a fresh puff. */
-const PUFF_ALPHA = 0.3;
+const PUFF_ALPHA = 0.36;
 /** The puff fades in over this long (seconds), so it does not pop in front of the flame. */
 const PUFF_FADE_IN = 0.06;
 

@@ -25,7 +25,7 @@ import { type ScanClass, ScanHighlight, scanClassOfTarget } from "./scan-highlig
 import type { Signage } from "./signage";
 import type { Stage } from "./stage";
 import { MuzzleSource } from "./muzzle-source";
-import { type GunKind, MUZZLE } from "./weapon-mount";
+import { type GunKind, MUZZLE, SEEN_FLASH } from "./weapon-mount";
 
 /**
  * Gameplay moments the renderer shows over the whole frame (ADR-0030). The app translates domain
@@ -197,7 +197,7 @@ export class ScreenFx {
     const dir = this.muzzleDir.set(to.x - from.x, to.y - from.y, to.z - from.z).normalize();
     const kind = this.muzzleSource.place(shooterId, at, dir);
     this.effects.tracer(at.clone(), v3(to));
-    this.muzzle.fire(shooterId, at, dir, MUZZLE[kind].flash);
+    this.muzzle.fire(shooterId, at, dir, this.muzzleSource.inView ? MUZZLE[kind].flash : SEEN_FLASH[kind]);
     if (this.isCameraTarget(shooterId)) this.deps.camera.kick();
     // The muzzle lights the whole street: one of the three flashes a second, or none.
     if (!this.reduceFlashes && this.limiter.tryFlash()) this.flash = { x: at.x, y: at.y, z: at.z, life: 0.07 };

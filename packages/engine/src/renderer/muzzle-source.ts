@@ -19,6 +19,8 @@ export interface MuzzleHolders {
 export class MuzzleSource {
   private readonly at = new Vector3();
   private readonly dir = new Vector3();
+  /** Whether the last `place` found the viewmodel's muzzle (FPP), not a hand's. */
+  inView = false;
 
   constructor(
     private readonly camera: CameraRig,
@@ -34,6 +36,7 @@ export class MuzzleSource {
     const { at: p, dir: d } = this;
     const held = this.holders.muzzleOf(id, p, d);
     const inView = this.isCameraTarget(id) ? this.camera.muzzlePosition() : null;
+    this.inView = inView !== null;
     if (inView) {
       Vector3.TransformNormalToRef(Vector3.Forward(), this.camera.weaponMount.computeWorldMatrix(true), d);
       p.copyFrom(inView);
