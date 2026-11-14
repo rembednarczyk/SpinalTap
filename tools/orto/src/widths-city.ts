@@ -23,7 +23,7 @@ import { COVER, colourStats } from "./classify.ts";
 import { CELLS, type CellSpec, FLIGHTS, REPO, defaultCache } from "./config.ts";
 import { type Cover, coverAt, coverFor } from "./cover.ts";
 import { type Tile, loadTile, pixelAt } from "./tiles.ts";
-import { type Probe, type WayMeasure, measureWay } from "./widths.ts";
+import { type Probe, type WalkAt, type WayMeasure, measureWay } from "./widths.ts";
 
 /** A way to measure: its axis as the import reads it, the width it would estimate and the points where other carriageways meet it. */
 export interface Candidate {
