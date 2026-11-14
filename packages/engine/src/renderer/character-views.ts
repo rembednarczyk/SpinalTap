@@ -140,13 +140,13 @@ export class CharacterViews implements FxActors {
     return this.views.size;
   }
 
-  get dressedCount(): number {
-    return this.models.dressedCount;
-  }
-
-  /** Models still loading for characters in the scene (tests wait for none before measuring). */
-  get loadingCount(): number {
-    return this.models.loadingCount;
+  /**
+   * Characters dressed in an imported model, and models still loading for characters in the
+   * scene (tests wait for none before measuring). One getter for both keeps the class within
+   * ADR-0031's 20 members.
+   */
+  get modelCounts(): { readonly dressed: number; readonly loading: number } {
+    return { dressed: this.models.dressedCount, loading: this.models.loadingCount };
   }
 
   ids(): EntityId[] {
