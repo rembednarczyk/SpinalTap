@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { WallIndex, alongWalls, isCourtyard, mostlyInside } from "../../osm-import/src/courtyards.ts";
+import { LUBLIN_STREET_PROPS } from "../../../packages/sim/src/content/lublin";
+import { loadLitWays, loadPlanFile } from "../../osm-import/src/props-osm.ts";
 import { lampsFreestandingInCourtyard, squareStyleLeak } from "./lamp-squares";
 
 const square = (x0: number, z0: number, x1: number, z1: number) => [
@@ -33,5 +35,17 @@ describe("lamps by the squares (G-798 review)", () => {
     const lines = [[{ x: 0, z: 0 }, { x: 100, z: 0 }]];
     const found = squareStyleLeak([{ prop: "lamp-candelabra", x: 50, z: 6 }, { prop: "lamp-candelabra", x: 50, z: 20 }, { prop: "lamp-pastoral", x: 50, z: 40 }], lines);
     expect(found).toEqual([{ at: "50.0,20.0", what: "lamp-candelabra 20.0 m from the plan's candelabra lines" }]);
+  });
+
+  it("finds no lamp on a post in Dziedziniec Zamkowy and no candelabrum off Plac Zamkowy in the city's table", () => {
+    const lamps = Object.values(LUBLIN_STREET_PROPS).flat();
+    const courts = loadLitWays().filter((w) => w.court === "square").map((w) => ({ id: `w${w.id}`, ring: w.pts }));
+    expect(courts.map((c) => c.id)).toEqual(["w383162808"]);
+    expect(lampsFreestandingInCourtyard(lamps, courts)).toEqual([]);
+    const lines = loadPlanFile()
+      .items.filter((g) => g.kind === "lamp-candelabra")
+      .flatMap((g) => [...(g.line ? [g.line] : []), ...(g.lines ?? [])])
+      .map((f) => Array.from({ length: Math.floor(f.length / 2) }, (_, i) => ({ x: f[2 * i]!, z: f[2 * i + 1]! })));
+    expect(squareStyleLeak(lamps, lines)).toEqual([]);
   });
 });

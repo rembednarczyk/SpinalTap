@@ -9,4 +9,3 @@ podzamcze-2-0 1100,170
 podzamcze-2-0 1100,180
 podzamcze-2-0 1100,190
 podzamcze-2-0 1110,200
-podzamcze-2-0 950,230
