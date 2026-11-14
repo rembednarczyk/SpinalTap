@@ -105,7 +105,10 @@ describe("the ground the map city lays (G-444)", () => {
     // The gaps' patches in the joints (G-760), pieces of their own: 168 499 vertices before.
     // Paving under crowns the leaf-off flight shows laid as paving, not a lawn (G-764), and the fills'
     // rings touching themselves cut into their lobes, laid as triangles of their own area (G-766): 171 963 vertices.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 171963, hash: "4a30c7a9" });
+    // The slits between bands of two surfaces in the joints (G-777), laid edge to edge, and the joints
+    // read with every ring counter-clockwise, so a square's clockwise ring no longer cancels the bands
+    // on it into holes the patches filled: 170 580.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 170580, hash: "71ebbf12" });
     scene.dispose();
   });
 
