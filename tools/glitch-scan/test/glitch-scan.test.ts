@@ -64,6 +64,7 @@ import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroS
 import { lanternsByPassages } from "./passage-lanterns";
 import { bareOnCover } from "./bare-on-cover";
 import { fillAreaMismatch } from "./fill-area";
+import { fillGap } from "./fill-gap";
 import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
 import { groundUnderPlinth, steepWayCut } from "./terrain-cuts";
 import { generatedCity } from "../../osm-import/test/city.ts";
@@ -2009,6 +2010,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "lawn-on-leafoff-paving": () => lawnOnLeafOffPaving(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A piece the bare ground rule laid whose triangles cover other than its area by over 0.01 m²: a ring touching itself (G-764, `fill-area.ts`). */
   "fill-area-mismatch": () => fillAreaMismatch(generatedCity().stats),
+  /** A hole under 0.5 m² between the pieces the bare ground rule laid that nothing else covers: dark terrain between two fills (G-769, `fill-gap.ts`). */
+  "fill-gap": () => {
+    const city = generatedCity();
+    return fillGap(city.stats, city.chunks);
+  },
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => kerbGapBare(cityKerbWorld(SOURCE_OSM)),
   /** A point of a 0.25 m grid in a pavement no paving of the map explains, a metre wide and more, by a carriageway the map gives no width: its asphalt laid as a pavement (`kerb-fill.ts`, G-570). */
