@@ -42,6 +42,19 @@ export const halfTangents = (fov: number, horizontalFixed: boolean, width: numbe
  */
 export const CONTACT_SAMPLES = 12;
 
+/**
+ * Weight of an occluding sample at the reach's centre (G-796); it falls linearly to 0 at the reach.
+ * Before, every sample within reach counted 1: a figure seen from above (skirt, arms, a gun held
+ * out, 0.6-1 m over the floor) kept the share round the threshold over a wide patch, and the 12
+ * samples' noise broke the hard step there into a grain of blocks. Weighed by nearness, what stands
+ * that high hardly counts, while a wall's foot (occluders a few decimetres away) keeps its band:
+ * 3 keeps it nearly as wide (the reference frame loses a 1-3 px strip at the near foot, 0.18%).
+ */
+export const CONTACT_NEAR_WEIGHT = 3;
+
+/** One occluding sample's weight at distance `l` (m) with the reach `r`, as the shader counts it. */
+export const contactWeight = (l: number, r: number): number => (l < r ? CONTACT_NEAR_WEIGHT * (1 - l / r) : 0);
+
 /** GLSL: needs `depthAt` and the uniforms `shadeParams` and `tanHalf`. */
 export const CONTACT_SHADE_GLSL = /* glsl */ `
 /** x: radius (m), y: strength (0 off), z: step threshold, w: fade-out distance (m). */
@@ -55,7 +68,7 @@ vec3 viewPosAt(vec2 uv, float z) {
   return vec3((uv.x * 2.0 - 1.0) * tanHalf.x * z, (uv.y * 2.0 - 1.0) * tanHalf.y * z, z);
 }
 
-/** Share of the samples (0..1) that stand over the point within reach, faded with distance. */
+/** Weighed share of the samples (0..1) that stand over the point within reach, faded with distance. */
 float contactOcclusion(vec2 uv, float d, vec3 n) {
   // Walls, beams and steps' risers take no shade: that is where the stairs and ceilings smeared
   // it; the foot of a wall still shades the floor in front of it.
@@ -83,10 +96,11 @@ float contactOcclusion(vec2 uv, float d, vec3 n) {
     vec3 v = viewPosAt(suv, sd) - p;
     float l2 = dot(v, v);
     // A sample shades when it stands over the surface (more than ~17 degrees up from it) within
-    // reach: the share of such samples, not a weighted mean, so a wall's foot reaches the step.
-    occ += (dot(n, v) * inversesqrt(l2 + 1e-4) > 0.3 && l2 < r * r) ? 1.0 : 0.0;
+    // reach, the more the nearer (contactWeight, G-796): a share of samples, not a mean of
+    // distances, so a wall's foot reaches the step; what stands high over the floor hardly counts.
+    occ += (dot(n, v) * inversesqrt(l2 + 1e-4) > 0.3 && l2 < r * r) ? ${CONTACT_NEAR_WEIGHT.toFixed(1)} * (1.0 - sqrt(l2) / r) : 0.0;
   }
-  return floorness * occ / ${CONTACT_SAMPLES}.0 * (1.0 - smoothstep(shadeParams.w * 0.55, shadeParams.w, d));
+  return min(1.0, floorness * occ / ${CONTACT_SAMPLES}.0) * (1.0 - smoothstep(shadeParams.w * 0.55, shadeParams.w, d));
 }
 `;
 
