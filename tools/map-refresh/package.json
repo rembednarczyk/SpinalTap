@@ -1,0 +1,13 @@
+{
+  "name": "@seki/map-refresh",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The city refreshed from its data by one deterministic command, with a report of the differences and a threshold verdict for the curator.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

@@ -38,7 +38,8 @@
     "test:rerun": "node tools/test-rerun/src/rerun.ts",
     "orto:diff": "node tools/orto/src/diff.ts",
     "pr:prep": "node tools/pr-prep/src/prep.ts",
-    "hashes:check": "node tools/hashes/src/check.ts"
+    "hashes:check": "node tools/hashes/src/check.ts",
+    "map:refresh": "node tools/map-refresh/src/refresh.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
