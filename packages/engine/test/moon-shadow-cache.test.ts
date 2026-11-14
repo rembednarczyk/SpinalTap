@@ -90,6 +90,20 @@ describe("moon shadow keeps the static casters between frames (plan 14.11, step 
     expect(t.statics()).toBe(before + 2);
   });
 
+  it("walking again clears the moving casters' map once: no shadow left where a figure stood", () => {
+    const t = setup();
+    for (let i = 0; i < 10; i++) t.frame(new Vector3(0, 0, 0));
+    let passes = 0;
+    let drawn = -1;
+    t.shadow.movingTexture.onAfterRenderObservable.add(() => {
+      passes++;
+      drawn = t.shadow.movingTexture.renderList?.length ?? -1;
+    });
+    for (let i = 1; i <= 10; i++) t.frame(new Vector3(i * 0.5, 0, 0));
+    expect(passes).toBe(1);
+    expect(drawn).toBe(0);
+  });
+
   it("a frame of no shadow update (the loading screen) still draws the moving casters", () => {
     const t = setup();
     const at = new Vector3(0, 0, 0);
