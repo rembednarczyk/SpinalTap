@@ -13,6 +13,7 @@ import type { Tags } from "./osm.ts";
 import { ART_SHAPE, artShape } from "./props-art.ts";
 import { KERB_SHY, MAPPED, MAX_MOVE, ON_BUILDINGS, WALL_REACH, WALL_ROOM, propOf, withShape } from "./props-kinds.ts";
 import { bulkyPieces } from "./props-bulky.ts";
+import { byPaving } from "./props-lit.ts";
 import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } from "./props-food.ts";
 import { marketEntrances, marketStalls } from "./props-market.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideSpot, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
@@ -43,6 +44,12 @@ export interface PlanItem {
   readonly note?: string;
   /** False: its lamps hang no basket, and the others' baskets stay where they were (T0's square, ADR-0074 stage 7). */
   readonly baskets?: false;
+  /**
+   * How far its lamps keep from a car street's axis wherever they stand (m), the kerb found or not,
+   * and at the kerb on or by the paving, not at the fallback on a lawn: the `lit` rule's (G-798),
+   * whose ways are not hand-checked as the plan's lines were.
+   */
+  readonly keepOff?: number;
 }
 
 export interface PropsPlan {
@@ -164,7 +171,7 @@ const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: rea
   // From an axis under a building (a gate, Ku Farze) a wall lantern finds the vault's wall or none
   // and would hang in the solid or the vault (G-173): it slides along the line or goes.
   const clear = (at: Pt, p: Pt) =>
-    mode === "facade" ? site.surfaceAt(p) !== "building" && !site.nearPassage(p, PASSAGE_REACH) : !blocked(obstacles, p) && (!lamp || site.surfaceAt(at) === "road" || !nearTraffic(site, p, LAMP_TRAFFIC_REACH));
+    mode === "facade" ? site.surfaceAt(p) !== "building" && !site.nearPassage(p, PASSAGE_REACH) : !blocked(obstacles, p) && (!lamp || site.surfaceAt(at) === "road" || !nearTraffic(site, p, LAMP_TRAFFIC_REACH)) && (item.keepOff === undefined || (!nearTraffic(site, p, item.keepOff) && (mode === "path" || byPaving(site, p))));
   for (const { st, side, key } of slots) {
     if (mode === "axis") {
       out.push({ prop, p: st.p, yaw: null, key });
@@ -331,6 +338,8 @@ export const FOOD_STALLS = "rule.food-stalls";
 const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
 /** Lamps set at a kerb, and how far before a car park one may stand on its asphalt (m, past `LOT_GAP` in `props-place`). */
 const KERB_LAMPS: ReadonlySet<StreetPropKind> = new Set(["lamp-road", "lamp-modern-pole"]);
+/** The free-standing lamps, which never stand on a flight of steps. */
+const LAMP_ON_STEPS: ReadonlySet<StreetPropKind> = new Set(["lamp-road", "lamp-modern-pole", "lamp-pastoral", "lamp-candelabra", "lamp-park"]);
 const LOT_REACH = 2;
 
 /** Least distance between two pieces of one kind before the later one is dropped. */
@@ -485,7 +494,8 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     const item = clearSpot(solids, { prop: x.prop, x: r1(x.p.x), y: 0, z: r1(x.p.z), yaw: r2(facingOf(site, x)), variant }, fits);
     // A piece from an OSM node that may not wander off it (a hydrant on its water main).
     const reach = MAX_MOVE[x.prop];
-    if (!item || (reach !== undefined && Math.hypot(item.x - placedAt.p.x, item.z - placedAt.p.z) > reach)) {
+    // A lamp stepped aside onto a flight of steps (G-203) goes, as one with no room.
+    if (!item || (reach !== undefined && Math.hypot(item.x - placedAt.p.x, item.z - placedAt.p.z) > reach) || (LAMP_ON_STEPS.has(x.prop) && site.onSteps(item))) {
       crowded++;
       continue;
     }
