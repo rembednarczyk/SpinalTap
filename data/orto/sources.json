@@ -86,7 +86,7 @@
     }
   ],
   "classifier": {
-    "version": 4,
+    "version": 5,
     "grid": 0.5,
     "classes": [
       "none",
@@ -104,6 +104,10 @@
       "greenExg": 0.026,
       "leafOffExg": 0.026,
       "crownHardS": 0.12,
+      "leafOffHue": 150,
+      "settsL": 150,
+      "settsS": 0.15,
+      "summerShadeL": 75,
       "hardS": 0.4,
       "pavingL": 115
     }
@@ -781,7 +785,7 @@
         "maxX": 760,
         "maxZ": 160
       },
-      "bytes": 42347,
+      "bytes": 42482,
       "cells": [
         "stare-miasto-0-0",
         "stare-miasto-1-0",
@@ -912,13 +916,13 @@
       ],
       "samples": {
         "none": 0,
-        "green": 62630,
-        "paving": 202166,
-        "asphalt": 166354,
+        "green": 61374,
+        "paving": 202462,
+        "asphalt": 166918,
         "shadow": 1627,
         "unknown": 7781,
-        "canopy": 31250,
-        "canopyHard": 8192
+        "canopy": 31185,
+        "canopyHard": 8653
       }
     }
   ]

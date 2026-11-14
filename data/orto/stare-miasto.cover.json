@@ -84,6 +84,10 @@
     "greenExg": 0.026,
     "leafOffExg": 0.026,
     "crownHardS": 0.12,
+    "leafOffHue": 150,
+    "settsL": 150,
+    "settsS": 0.15,
+    "summerShadeL": 75,
     "hardS": 0.4,
     "pavingL": 115
   }
