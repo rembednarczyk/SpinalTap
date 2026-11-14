@@ -19,7 +19,7 @@ import type { Site } from "./props-site.ts";
 /** How far from a tree's node its crown is looked for in the surface model (m): a street tree's crown. */
 export const CROWN_REACH = 3;
 /** Cells of the surface model this near a building's outline are its roof or wall (m). */
-export const OFF_ROOF = 1;
+export const OFF_ROOF = 2;
 /** The heights a measured tree is clamped to (m). */
 export const TREE_RANGE = { min: 3, max: 30 } as const;
 /** A reading over this is no tree's crown (m). */
@@ -41,17 +41,12 @@ export const osmTreeHeight = (tags: Tags | undefined): number | null => {
   return h > 0 && h <= NOT_A_CROWN ? h : null;
 };
 
-/** Directions a cell is tried off the roofs in, at the buffer. */
-const ROOF_TRIES: readonly Pt[] = [
-  { x: 1, z: 0 },
-  { x: -1, z: 0 },
-  { x: 0, z: 1 },
-  { x: 0, z: -1 },
-];
+/** Directions a cell is tried off the roofs in, at the buffer and at half of it. */
+const ROOF_TRIES: readonly Pt[] = Array.from({ length: 8 }, (_, i) => ({ x: Math.cos((i * Math.PI) / 4), z: Math.sin((i * Math.PI) / 4) }));
 
 /** Whether p lies in a building's outline or within `reach` of it. */
 const byRoof = (site: Site, p: Pt, reach: number): boolean =>
-  site.surfaceAt(p) === "building" || ROOF_TRIES.some((d) => site.surfaceAt({ x: p.x + d.x * reach, z: p.z + d.z * reach }) === "building");
+  site.surfaceAt(p) === "building" || ROOF_TRIES.some((d) => [reach, reach / 2].some((r) => site.surfaceAt({ x: p.x + d.x * r, z: p.z + d.z * r }) === "building"));
 
 let city: Chm[] | null = null;
 /** The committed extracts of every district, read once. */

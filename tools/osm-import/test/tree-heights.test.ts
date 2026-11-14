@@ -6,6 +6,8 @@ import { CHM_STEP, type Chm, NO_DATA, encodeChm } from "../../gugik/src/nmpt.ts"
 import type { Pt } from "../src/geometry.ts";
 import { worldToPuwg } from "../src/project.ts";
 import { Site } from "../src/props-site.ts";
+import { loadFurniture } from "../src/furniture.ts";
+import { LUBLIN_CHUNKS } from "../../../packages/sim/src/content/lublin";
 import { TREE_RANGE, measureTree, osmTreeHeight, treeVariant, withTreeHeights } from "../src/tree-heights.ts";
 
 /** A 100 x 60 m flat chunk with a row of houses whose south wall runs along z = 38. */
@@ -105,6 +107,19 @@ describe("tree heights by rule: OSM height, else NMPT less NMT around the node (
     expect(tags.get("n1")?.height).toBe("25");
     expect(tags.get("n2")?.height).toBe("7");
     expect(tags.has("n3")).toBe(false);
+  });
+});
+
+describe("the city's trees off the roofs (review of 14.11, tree-roof-capture)", () => {
+  it("reads the seedlings by the walls of Krakowskie as seedlings, not as the eaves 1-2 m past the OSM outline", () => {
+    const city = new Site(LUBLIN_CHUNKS);
+    const nodes = new Map(loadFurniture().map((f) => [f.id, f.p]));
+    // n9254081961: a young tree in a bed 3.5 m off the wall, 12.8 m with a buffer of 1 m.
+    for (const id of ["n9254081961", "n9254081963", "n7088942266", "n12994532915"]) {
+      const h = measureTree(city, nodes.get(id)!, undefined);
+      expect(h?.from, id).toBe("nmpt");
+      expect(h!.height, id).toBeLessThanOrEqual(5);
+    }
   });
 });
 
