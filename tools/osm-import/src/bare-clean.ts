@@ -18,8 +18,9 @@ const LABEL = { ...CELL_LABEL } as const;
 const STEP = CELL_STEP;
 const taken = cellTaken;
 
+// Paving the leaf-off image shows under the crowns (`canopyHard`, G-764) is paving, not a tree's bed.
 const labelOf = (cls: number): number =>
-  cls === COVER.green ? LABEL.grass : cls === COVER.paving ? LABEL.square : cls === COVER.shadow ? LABEL.mixed : cls === COVER.canopy ? LABEL.crown : LABEL.other;
+  cls === COVER.green ? LABEL.grass : cls === COVER.paving || cls === COVER.canopyHard ? LABEL.square : cls === COVER.shadow ? LABEL.mixed : cls === COVER.canopy ? LABEL.crown : LABEL.other;
 
 /**
  * What a cell adds to the packed counts of `readCover`'s table: grass in bits 0-9, square in 10-19,

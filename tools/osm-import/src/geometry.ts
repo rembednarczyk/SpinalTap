@@ -26,6 +26,22 @@ export const signedArea = (ring: readonly Pt[]): number => {
 
 export const ccw = (ring: readonly Pt[]): Pt[] => (signedArea(ring) < 0 ? [...ring].reverse() : [...ring]);
 
+/**
+ * A ring that touches itself (visits a vertex twice, as Clipper leaves two lobes meeting at a
+ * point) cut there into simple rings: ear clipping takes such a ring for one polygon and lays
+ * triangles over the gap between the lobes (G-764). Each ring keeps its turn, a hole's lobe too.
+ */
+export const splitTouching = (ring: readonly Pt[]): Pt[][] => {
+  const seen = new Map<string, number>();
+  for (let j = 0; j < ring.length; j++) {
+    const key = `${ring[j]!.x},${ring[j]!.z}`;
+    const i = seen.get(key);
+    if (i !== undefined) return [...splitTouching(ring.slice(i, j)), ...splitTouching([...ring.slice(j), ...ring.slice(0, i)])];
+    seen.set(key, j);
+  }
+  return ring.length >= 3 ? [[...ring]] : [];
+};
+
 /** Drops the closing point of a closed way and consecutive duplicates. */
 export const openRing = (pts: readonly Pt[], eps = 1e-6): Pt[] => {
   const out: Pt[] = [];

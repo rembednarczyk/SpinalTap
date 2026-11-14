@@ -14,7 +14,6 @@ krakowskie-2-0 349,-47
 krakowskie-2-1 459,57
 nabrzeze-0-0 2456,245
 nabrzeze-0-1 2399,284 *2
-nabrzeze-0-1 2487,303
 nabrzeze-0-1 2361,431
 nabrzeze-1-0 2659,94
 nabrzeze-1-0 2539,259
