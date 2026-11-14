@@ -37,6 +37,7 @@
     "bench:ab": "node tools/bench-ab/src/bench.ts",
     "test:rerun": "node tools/test-rerun/src/rerun.ts",
     "orto:diff": "node tools/orto/src/diff.ts",
+    "orto:widths": "node tools/orto/src/widths-build.ts",
     "pr:prep": "node tools/pr-prep/src/prep.ts",
     "hashes:check": "node tools/hashes/src/check.ts"
   },
