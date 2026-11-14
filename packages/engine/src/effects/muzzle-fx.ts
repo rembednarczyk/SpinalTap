@@ -122,11 +122,15 @@ export class MuzzleFx {
     this.smoke.thinInstanceSetBuffer("matrix", this.puffMatrices, 16, false);
     this.smoke.thinInstanceSetBuffer("color", this.puffColors, 4, false);
     for (const m of [this.flame, this.smoke]) {
-      m.thinInstanceCount = 0;
+      // Never none: a material readied with no instances keeps its defines without the
+      // instances' colour (the puffs drew opaque white), so one zero-sized instance stays.
+      m.thinInstanceCount = 1;
       m.isPickable = false;
       // The instances are all over the city; the mesh itself sits at the origin.
       m.alwaysSelectAsActiveMesh = true;
       m.setEnabled(false);
+      // Compiled now, not on the first shot: a flame lives three frames, a shader may take more.
+      m.material?.forceCompilation(m);
     }
   }
 
@@ -156,6 +160,7 @@ export class MuzzleFx {
   }
 
   private show(mesh: Mesh, count: number, buffers: readonly string[]): void {
+    // Disabled rather than no instances (see the constructor).
     if (count === 0) {
       if (mesh.isEnabled()) mesh.setEnabled(false);
       return;

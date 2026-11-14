@@ -1,7 +1,7 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import type { AppearanceDescriptor, Transform } from "@seki/core";
 import { describe, expect, it, vi } from "vitest";
-import { type AbstractMesh, GlowLayer, Scene, Vector3 } from "../src/babylon";
+import { type AbstractMesh, FreeCamera, GlowLayer, Scene, Vector3 } from "../src/babylon";
 import { CameraRig } from "../src/camera/camera-rig";
 import { viewmodelPose } from "../src/camera/viewmodel-poses";
 import { Effects } from "../src/effects/effects";
@@ -242,6 +242,22 @@ describe("muzzle flash: flame and smoke", () => {
     new Effects(scene, new GlowLayer("glow", scene));
     expect(scene.meshes.filter((m) => m.name.startsWith("fx-flash"))).toEqual([]);
     expect(scene.meshes.filter((m) => m.name.startsWith("fx-tracer")).length).toBeGreaterThan(0);
+  });
+
+  it("the puffs' grey and opacity reach the shader, whatever was drawn before the first shot", () => {
+    const scene = new Scene(new NullEngine());
+    new FreeCamera("eye", new Vector3(0, 1.4, -3), scene);
+    const fx = new MuzzleFx(scene);
+    // Drawn (or readied, as the loading screen does) before any puff.
+    for (const m of [fx.flame, fx.smoke]) m.setEnabled(true);
+    scene.render();
+    fx.update(DT, stay, view);
+    fx.fire(1, at, dir, MUZZLE.pistol.flash);
+    fx.update(DT, stay, view);
+    scene.render();
+    const defines = (fx.smoke.subMeshes[0] as unknown as { materialDefines: Record<string, unknown> }).materialDefines;
+    expect(defines["INSTANCESCOLOR"]).toBe(true);
+    expect(fx.smoke.material!.needAlphaBlendingForMesh(fx.smoke)).toBe(true);
   });
 
   it("reduced flashes darken the flame", () => {

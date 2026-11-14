@@ -22,7 +22,7 @@ export const SMOKE_POOL = 32;
 /** Reduced flashes (ADR-0028): the flame this much smaller. */
 export const REDUCED_FLASH = 0.6;
 /** Opacity of a fresh puff. */
-const PUFF_ALPHA = 0.34;
+const PUFF_ALPHA = 0.3;
 /** The puff fades in over this long (seconds), so it does not pop in front of the flame. */
 const PUFF_FADE_IN = 0.06;
 
@@ -237,7 +237,7 @@ export class MuzzleState {
       const p = this.puffs[this.puffCursor % SMOKE_POOL] as Puff;
       this.puffCursor++;
       const seed = this.puffCursor * 3.1;
-      const out = f.size.length * (0.15 + 0.5 * jitter(seed));
+      const out = f.size.length * (0.3 + 0.6 * jitter(seed));
       const speed = 0.35 + 0.5 * jitter(seed + 1);
       const sx = (jitter(seed + 2) - 0.5) * 0.35;
       const sy = (jitter(seed + 3) - 0.5) * 0.35;
@@ -250,8 +250,8 @@ export class MuzzleState {
       p.vel.z = f.dir.z * speed + x.z * sx + y.z * sy;
       p.age = 0;
       p.life = 0.5 + 0.5 * jitter(seed + 4);
-      p.size = f.size.width * 0.6;
-      p.grow = f.size.width * (1.8 + 1.2 * jitter(seed + 5));
+      p.size = f.size.width * 0.45;
+      p.grow = f.size.width * (1.1 + 0.6 * jitter(seed + 5));
       p.roll = seed;
     }
   }
