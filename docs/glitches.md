@@ -1841,7 +1841,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-777 Szczeliny 10-30 cm między wstęgami różnych nawierzchni w złączach (gapFills łata tylko tę samą nawierzchnię)
 - Ważność: S4 · Zasięg: ok. 10 złączy, ok. 0,8 m²: 837,0;205,3 (chodnik/jezdnia), 949,1;230,7, 247,7;-201,0, 1014,2;450,8, 743,7;13,7 (chodnik/footway), 97,9;98,4 (jezdnia/trawa)
 - Opis: gapFills (line-buffer.ts) łata pęknięcia tylko między pasami tej samej nawierzchni, a kliny tylko szersze niż pęknięcie; wąska goła szczelina między chodnikiem a jezdnią lub footway w tarczy złącza zostaje; widać ciemny teren
-- Status: w naprawie, runda 2 (14.11): przegląd kuratora NIEZGODNE, slitFills ma odjąć stopnie; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g777 (928f25a): komórki w tarczach 130 -> 55, w mieście między wstęgami 870 -> 528; czeka na przegląd kuratora; reszta 97,9;98,4 w osobnym wpisie; wcześniej: zgłoszone (13.11, naprawiacz G-765)
+- Status: naprawione na gałęzi (14.11, runda 2: ccr-ec2c4269-ilh8k8-g777, 1a83319; szczeliny poza schodami, kontrola ground-over-steps; komórki w tarczach 130 -> 58); do scalenia z main po #519 i ponownego przeglądu; wcześniej: w naprawie, runda 2 (14.11): przegląd kuratora NIEZGODNE, slitFills ma odjąć stopnie; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g777 (928f25a): komórki w tarczach 130 -> 55, w mieście między wstęgami 870 -> 528; czeka na przegląd kuratora; reszta 97,9;98,4 w osobnym wpisie; wcześniej: zgłoszone (13.11, naprawiacz G-765)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: brak gołych komórek 0,1 m między wstęgami w tarczy złącza w tych miejscach; ground-strip-gap nie rośnie
 - Przegląd kuratora 14.11 (928f25a): NIEZGODNE. slitFills nie odejmuje stopni (above): 25 łat nad obrysem steps, 2,03 m² (949,0;230,4 wyszczerbia dolny stopień, 1009,6;445,4 kostka na trzech stopniach, 886,3;222,2 0,31 m²). Poprawka w tej gałęzi (runda 2); T-290; proponowana kontrola ground-over-steps
@@ -1868,6 +1868,20 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (14.11, naprawiacz G-777)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: brak gołych komórek 0,1 m w tarczy 97,2;98,6; ground-strip-overlap i gap nie rosną
+
+### G-781 Footway i łaty G-760 na obrysie schodów (193 klucze ground-over-steps na main)
+- Ważność: S4 · Zasięg: 193 miejsca, m.in. 950;229, Podzamcze 803-829;237-247, Krakowskie 411-421;-86..-90
+- Opis: kawałki gruntu z liftem wyższym niż schody (footway 0,09 nad 0,05) zachodzą na obrys steps ponad 0,01 m² i przebijają najniższy stopień
+- Status: zgłoszone (14.11, naprawiacz G-777)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: ground-over-steps spada; zrzut 1009,6;447,5 bez kostki na stopniach
+
+### G-782 roundJoints: suma NonZero pierścieni zgodnych z ruchem wskazówek zegara w fazie okrągłych końców
+- Ważność: S4 · Zasięg: 242 z 2141 pasów ma pierścień zgodny z ruchem wskazówek zegara
+- Opis: covered w pierwszej fazie roundJoints sumuje pierścienie bez obracania; obszar zgodny z ruchem wskazówek zegara znosi pasy na nim, bit końca może trafić w fałszywą dziurę
+- Status: zgłoszone (14.11, naprawiacz G-777)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: pierścienie obrócone przed sumą; ground-strip-overlap i ground-over-steps nie rosną
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
