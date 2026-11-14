@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-809 Limit bezczynności pobierania modelu liczy czas w kolejce przeglądarki
+- Ważność: S3 · Zasięg: słabe łącze (8 Mbit/s)
+- Opis: Zegar bezczynności w fetchModelBytes startuje przed wysłaniem żądania; czas w kolejce przeglądarki (6 połączeń na host) liczy się jako przestój, co daje fałszywe 'no data for 30 s' (G-807).
+- Status: naprawione (14.11, #561 scalony); wcześniej: w PR #561; wcześniej: nowe
+- Pakiet właściciela: packages/engine/src/renderer
+
 ### G-807 Seki w grze zostaje proceduralnym szkieletem zamiast modelu seki.vrm
 - Ważność: S2 · Zasięg: postać gracza, cała gra (zgłoszenie użytkownika 14.11)
 - Opis: Użytkownik widzi w grze (APK lub Render) proceduralną Seki z brył zamiast modelu VRM. Pliki models/manifest.json i models/seki.vrm są na Renderze (HTTP 206, typy JSON i x-world/x-vrml). Do ustalenia: widok (TPP, FPP, menu), urządzenie, od kiedy; podejrzane zmiany: #504 (ręce FPP z modelu), #539 (kompilacja za ekranem ładowania), #546, ADR-0076 4b (zwalnianie plików, limit na telefonie).

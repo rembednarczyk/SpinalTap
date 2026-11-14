@@ -1931,12 +1931,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w PR #562; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g808); wcześniej: nowe
 - Pakiet właściciela: packages/engine/src/renderer
 
-### G-809 Limit bezczynności pobierania modelu liczy czas w kolejce przeglądarki
-- Ważność: S3 · Zasięg: słabe łącze (8 Mbit/s)
-- Opis: Zegar bezczynności w fetchModelBytes startuje przed wysłaniem żądania; czas w kolejce przeglądarki (6 połączeń na host) liczy się jako przestój, co daje fałszywe 'no data for 30 s' (G-807).
-- Status: w PR #561; wcześniej: nowe
-- Pakiet właściciela: packages/engine/src/renderer
-
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
