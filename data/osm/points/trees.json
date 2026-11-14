@@ -1,7 +1,9 @@
-{"header":{"source":"api.openstreetmap.org/api/0.6/nodes","license":"ODbL 1.0, © OpenStreetMap contributors","of":"the plan's trees with a genus, species or taxon","row":["id","genus","species","taxon","leaf_type"]},
+{"header":{"source":"api.openstreetmap.org/api/0.6/nodes","license":"ODbL 1.0, © OpenStreetMap contributors","of":"the placed trees (the plan's and the extract's furniture) with a genus, species or taxon","row":["id","genus","species","taxon","leaf_type"]},
 "trees":[
+["n12248972492","Rhamnus","Rhamnus cathartica","","broadleaved"],
 ["n1929177005","Populus","Populus alba","","broadleaved"],
 ["n4934090623","Quercus","Quercus robur","","broadleaved"],
 ["n5196773146","Populus","Populus nigra","","broadleaved"],
-["n5975805015","Quercus","Quercus robur","","broadleaved"]
+["n5975805015","Quercus","Quercus robur","","broadleaved"],
+["n7473295715","Rhamnus","Rhamnus cathartica","","broadleaved"]
 ]}
