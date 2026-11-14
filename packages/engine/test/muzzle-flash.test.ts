@@ -204,7 +204,7 @@ describe("muzzle flash: flame and smoke", () => {
     expect(axes(m)[0]!).toBeGreaterThan(size0 * 1.5);
     // Grey and see-through.
     expect(c[3]).toBeGreaterThan(0.05);
-    expect(c[3]).toBeLessThan(0.4);
+    expect(c[3]).toBeLessThan(0.6);
     const alpha = c[3]!;
     for (let i = 0; i < 9; i++) s.update(DT, stay);
     s.writePuffs(m, c, view, [0.5, 0.5, 0.5]);

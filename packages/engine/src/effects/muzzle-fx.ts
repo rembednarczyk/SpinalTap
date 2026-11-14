@@ -1,4 +1,4 @@
-import { Color3, type Mesh, MeshBuilder, MeshClass, type Scene, StandardMaterial, VertexData } from "../babylon";
+import { Color3, type Mesh, MeshClass, type Scene, StandardMaterial, VertexData } from "../babylon";
 import { FLASH_POOL, type FlashSize, MuzzleState, type Point, SMOKE_POOL } from "./muzzle-state";
 
 /** The flame's two flat colours: the outer tongue and the pale core over it (NPR, no gradient). */
@@ -7,8 +7,10 @@ const FLAME_CORE = Color3.FromHexString("#fff1b0");
 /** Reduced flashes: the flame's colours this much darker. */
 const REDUCED_GLOW = 0.55;
 /** Smoke grey by day and at night (unlit, so the night's is darker, not glowing in the dark). */
-const SMOKE_DAY: readonly [number, number, number] = [0.74, 0.74, 0.76];
-const SMOKE_NIGHT: readonly [number, number, number] = [0.44, 0.45, 0.52];
+const SMOKE_DAY: readonly [number, number, number] = [0.86, 0.86, 0.88];
+const SMOKE_NIGHT: readonly [number, number, number] = [0.58, 0.59, 0.66];
+/** A puff's edge this much darker than its middle: drawn smoke, readable on a lit street and on a dark one. */
+const PUFF_RIM = 0.45;
 
 /**
  * One side of a flame tongue in its plane: `u` along the barrel (0 at the muzzle, 1 at the tip),
@@ -71,6 +73,44 @@ export const flameShape = (): Shape => {
   return shape;
 };
 
+/**
+ * A puff at unit size facing -Z: a flat middle out to `inner` of its radius, darkening to the rim
+ * (vertex colours, multiplied by each puff's grey and opacity).
+ */
+export const puffShape = (sides = 9, inner = 0.36): Shape => {
+  const shape: Shape = { positions: [0, 0, 0], indices: [], colors: [1, 1, 1, 1] };
+  for (const [r, c] of [
+    [inner, 1],
+    [0.5, PUFF_RIM],
+  ] as const) {
+    for (let i = 0; i < sides; i++) {
+      const a = (i / sides) * Math.PI * 2;
+      shape.positions.push(Math.cos(a) * r, Math.sin(a) * r, 0);
+      shape.colors.push(c, c, c, 1);
+    }
+  }
+  for (let i = 0; i < sides; i++) {
+    const j = (i + 1) % sides;
+    shape.indices.push(0, 1 + i, 1 + j);
+    shape.indices.push(1 + i, 1 + sides + i, 1 + sides + j, 1 + i, 1 + sides + j, 1 + j);
+  }
+  return shape;
+};
+
+/** The geometry of a shape on a new mesh. */
+const meshOf = (name: string, shape: Shape, scene: Scene): Mesh => {
+  const mesh = new MeshClass(name, scene);
+  const data = new VertexData();
+  data.positions = shape.positions;
+  data.indices = shape.indices;
+  data.colors = shape.colors;
+  const normals: number[] = [];
+  VertexData.ComputeNormals(shape.positions, shape.indices, normals);
+  data.normals = normals;
+  data.applyToMesh(mesh);
+  return mesh;
+};
+
 /** The camera's axes in the world, for the smoke's billboards. */
 export interface ViewAxes {
   readonly right: Point;
@@ -95,22 +135,13 @@ export class MuzzleFx {
   private tint: [number, number, number] = [...SMOKE_NIGHT];
 
   constructor(scene: Scene) {
-    const shape = flameShape();
-    this.flame = new MeshClass("fx-muzzle-flame", scene);
-    const data = new VertexData();
-    data.positions = shape.positions;
-    data.indices = shape.indices;
-    data.colors = shape.colors;
-    const normals: number[] = [];
-    VertexData.ComputeNormals(shape.positions, shape.indices, normals);
-    data.normals = normals;
-    data.applyToMesh(this.flame);
+    this.flame = meshOf("fx-muzzle-flame", flameShape(), scene);
     this.flameMaterial = new StandardMaterial("fx-muzzle-flame", scene);
     this.flameMaterial.disableLighting = true;
     this.flameMaterial.emissiveColor = Color3.White();
     this.flameMaterial.backFaceCulling = false;
     this.flame.material = this.flameMaterial;
-    this.smoke = MeshBuilder.CreateDisc("fx-muzzle-smoke", { radius: 0.5, tessellation: 9 }, scene);
+    this.smoke = meshOf("fx-muzzle-smoke", puffShape(), scene);
     const smokeMaterial = new StandardMaterial("fx-muzzle-smoke", scene);
     smokeMaterial.disableLighting = true;
     smokeMaterial.emissiveColor = Color3.White();
@@ -129,8 +160,9 @@ export class MuzzleFx {
       // The instances are all over the city; the mesh itself sits at the origin.
       m.alwaysSelectAsActiveMesh = true;
       m.setEnabled(false);
-      // Compiled now, not on the first shot: a flame lives three frames, a shader may take more.
-      m.material?.forceCompilation(m);
+      // Compiled now, not on the first shot: a flame lives three frames, a shader may take more. As
+      // thin instances: else the puffs' vertex colours meet the instance colour undeclared (no INSTANCES).
+      m.material?.forceCompilation(m, undefined, { useInstances: true });
     }
   }
 
