@@ -166,6 +166,8 @@ const applyControls = (s: typeof settings) => {
 
 /** Frames drawn after the renderer updated its camera and city in them (debug `frames()`, G-013). */
 let framesDrawn = 0;
+/** The FPP viewmodel's aim in the last frame drawn, which `capture()` reads (not in a frame posed but skipped). */
+let drawnViewAim = 0;
 /** False while the reference frame waits for its start: the frames update the scene but draw nothing. */
 let drawScene = !reference;
 /**
@@ -210,6 +212,7 @@ const loop = new FixedStepLoop(browserClock, {
     stage.scene.render();
     if (!reference) stage.pacer.drawn();
     framesDrawn++;
+    drawnViewAim = renderer.rig.viewAim;
   },
 });
 
@@ -293,6 +296,7 @@ debug.camera = () => {
   return { x: p.x, y: p.y, z: p.z, yaw: r.y, pitch: r.x };
 };
 debug.frames = () => framesDrawn;
+debug.viewAim = () => drawnViewAim;
 debug.probeRenders = () => renderer.stats.wetProbeRenders;
 window.__seki = debug;
 

@@ -298,6 +298,7 @@ export class CharacterViews implements FxActors {
   /** Imported character models (models/manifest.json); characters on screen are dressed too. */
   setCharacterModels(manifest: CharacterModelManifest): void {
     this.models.setManifest(manifest);
+    this.kit.setViewArms(manifest.heroine);
     for (const v of this.views.values()) if (!this.models.of(v.rig)) this.models.dress(v.rig, v.model, v.name);
   }
 

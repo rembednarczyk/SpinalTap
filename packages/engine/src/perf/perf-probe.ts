@@ -9,6 +9,10 @@ export interface PerfSample {
   readonly activeTriangles: number;
   readonly totalMeshes: number;
   readonly materials: number;
+  /** Textures, skeletons and transform nodes in the scene: what a leak of model instances leaves behind. */
+  readonly textures: number;
+  readonly skeletons: number;
+  readonly nodes: number;
   readonly particles: number;
   /** Active meshes by their name without the numbers (`props`, `props-halo`, `parked`, `e`, ...): where a budget goes (ADR-0050). */
   readonly byName: Readonly<Record<string, number>>;
@@ -35,6 +39,9 @@ export class PerfProbe {
       activeTriangles: Math.round(this.scene.getActiveIndices() / 3),
       totalMeshes: this.scene.meshes.length,
       materials: this.scene.materials.length,
+      textures: this.scene.textures.length,
+      skeletons: this.scene.skeletons.length,
+      nodes: this.scene.transformNodes.length,
       particles: this.scene.particleSystems.reduce((n, ps) => n + ps.getActiveCount(), 0),
       byName: this.byName(),
     };
