@@ -310,6 +310,7 @@ krakowskie-2-1 430,140
 krakowskie-2-1 240,150
 krakowskie-2-1 440,150
 nabrzeze-0-0 2400,60
+nabrzeze-0-0 2440,90
 nabrzeze-0-0 2450,100
 nabrzeze-0-0 2420,110
 nabrzeze-0-0 2420,120

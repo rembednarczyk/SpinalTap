@@ -108,7 +108,7 @@ export class ScreenFx {
     const { stage, camera } = deps;
     const { scene } = stage;
     const tier = qualityTier(stage.options.quality);
-    this.grading = new Grading(scene, camera.camera, { reference: stage.options.reference, sharpen: tier.sharpen }, this.limiter);
+    this.grading = new Grading(scene, camera.camera, { reference: stage.options.reference, sharpen: tier.sharpen, bloom: tier.bloom }, this.limiter);
     // After the grading pipeline, so the scanner drains the graded colour.
     this.fxPost = new GameplayPost(scene, camera.camera);
     // The renderer built the line art before this, so the whole chain is on the camera now:

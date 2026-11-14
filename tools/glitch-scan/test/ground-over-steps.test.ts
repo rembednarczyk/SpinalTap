@@ -19,4 +19,10 @@ describe("ground over steps (G-777)", () => {
     expect(groundOverSteps([chunk([flight, { surface: "grass", outline: square(6, 5, 1, 1) }])])).toEqual([]);
     expect(groundOverSteps([chunk([flight, { surface: "road", outline: square(6, 5, 1, 1), bridge: true }])])).toEqual([]);
   });
+
+  it("finds none along a slanting edge a paving shares with a flight: a sample on it falls in one of them (G-781)", () => {
+    // As Krakowskie's square is cut off its flight at (-4.4, -5.8): samples fall on the edge exactly.
+    const slant = { surface: "steps" as const, outline: [-6.9, -10.9, -1.9, -0.7, -4.6, 0.6, -9.6, -9.6] };
+    expect(groundOverSteps([chunk([slant, { surface: "square", outline: [-6.9, -10.9, 0, -10.9, 0, -0.7, -1.9, -0.7] }])])).toEqual([]);
+  });
 });

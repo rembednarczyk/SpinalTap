@@ -5,10 +5,11 @@
  * renderer's ground palette is calibrated on these medians (`ground-plan.ts`): the hue of each
  * surface and the brightness of the paving against the lawns, not one square's.
  */
-import { type Pt } from "../../osm-import/src/geometry.ts";
+import { type Pt, type Rect } from "../../osm-import/src/geometry.ts";
 import { type Colour, type CoverName, COVER_NAMES } from "./classify.ts";
-import { type CoverHeader } from "./cover.ts";
+import { type CoverHeader, sampleColours } from "./cover.ts";
 import { samplesIn } from "./rings.ts";
+import { type Tile, isBlank } from "./tiles.ts";
 
 /** The class a surface's samples must have to give it a colour. */
 export const ALBEDO_CLASS: Readonly<Record<string, CoverName>> = {
@@ -85,4 +86,23 @@ export const gatherAlbedo = (
     const n = colours.n[k]!;
     b.rgb.push(colours.rgb[k * 3]! / n, colours.rgb[k * 3 + 1]! / n, colours.rgb[k * 3 + 2]! / n);
   }
+};
+
+/**
+ * Adds one cell's tile of a flight (`rect` the cell, `ks` its samples) to the flight's buckets, and
+ * the day its sheet was photographed to `days`. A blank tile (`isBlank`, G-771) is no flight there:
+ * its white is no surface's colour and its sheet no day the map was photographed (G-772).
+ */
+export const gatherTile = (
+  buckets: Map<string, AlbedoBucket>,
+  days: Set<string>,
+  tile: Tile | undefined,
+  ks: Iterable<number>,
+  surfaceOf: (k: number) => string | null,
+  cover: { readonly header: CoverHeader; readonly cls: Uint8Array },
+  rect: Rect,
+): void => {
+  if (!tile || isBlank(tile)) return;
+  if (tile.meta.sheet) days.add(tile.meta.sheet.date);
+  gatherAlbedo(buckets, ks, surfaceOf, cover.cls, sampleColours(cover.header, tile, rect));
 };
