@@ -77,6 +77,9 @@ describe("trees of the crowns (G-797)", () => {
     expect(Math.hypot(trees[0]!.p.x - 20, trees[0]!.p.z - 12)).toBeLessThan(1.5);
     expect(trees[0]!.top).toBeGreaterThan(10);
     expect(run(chm, coverOf(() => false)).trees).toEqual([]);
+    // A district without its extracts (no surface model, no cover) stands none.
+    expect(crownTrees([RECT], new Site([chunk()]), [everywhere], [], []).trees).toEqual([]);
+    expect(crownTrees([RECT], new Site([chunk()]), [], [chm], []).trees).toEqual([]);
   });
 
   it("leaves a crown with a tree of the game under it, and one lower than a tree (a hedge, a car)", () => {
