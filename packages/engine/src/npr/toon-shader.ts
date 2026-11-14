@@ -221,23 +221,35 @@ float shadowTap(vec2 uv, float d) {
   return step(d, texture2D(shadowSampler, uv).r);
 }
 
-/** 1 = lit by the moon, 0 = in shadow. Bilinear PCF, then sharpened back to a hard cel edge. */
+/**
+ * 1 = lit by the moon, 0 = in shadow. PCF over a 3-texel box (4x4 taps, bilinear weights at the
+ * rim): its half-way line runs much straighter along a slanted edge than a 2x2 one, which kept the
+ * texels' stairs. Only where the inner 2x2 taps disagree (the edge) are the outer 12 read, so the
+ * rest of the screen pays the 4 taps it always did. The result is cut back to a hard cel edge
+ * about one screen pixel wide (fwidth), not a fixed share of a texel that grew into a smear up close.
+ */
 float moonShadow() {
   if (shadowParams.z <= 0.0) return 1.0;
   vec3 p = vShadowPos.xyz / vShadowPos.w;
   vec2 uv = p.xy * 0.5 + 0.5;
-  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return 1.0;
-  float d = p.z * 0.5 + 0.5 - shadowParams.x;
+  // Outside the square: lit. No early return, fwidth below needs every pixel of the quad.
+  float outside = step(0.5, max(abs(uv.x - 0.5), abs(uv.y - 0.5)));
+  float d = mix(p.z * 0.5 + 0.5 - shadowParams.x, -1.0, outside);
   float t = shadowParams.y;
   vec2 tc = uv / t - 0.5;
   vec2 f = fract(tc);
+  vec2 g = 1.0 - f;
   vec2 base = (floor(tc) + 0.5) * t;
-  float s00 = shadowTap(base, d);
-  float s10 = shadowTap(base + vec2(t, 0.0), d);
-  float s01 = shadowTap(base + vec2(0.0, t), d);
-  float s11 = shadowTap(base + vec2(t, t), d);
-  float lit = mix(mix(s00, s10, f.x), mix(s01, s11, f.x), f.y);
-  return mix(1.0, smoothstep(0.4, 0.6, lit), shadowParams.z);
+  float inner = shadowTap(base, d) + shadowTap(base + vec2(t, 0.0), d) + shadowTap(base + vec2(0.0, t), d) + shadowTap(base + vec2(t, t), d);
+  float lit = inner * 0.25;
+  if (inner > 0.0 && inner < 4.0) {
+    float rim = g.y * (g.x * shadowTap(base + vec2(-t, -t), d) + shadowTap(base + vec2(0.0, -t), d) + shadowTap(base + vec2(t, -t), d) + f.x * shadowTap(base + vec2(2.0 * t, -t), d));
+    rim += f.y * (g.x * shadowTap(base + vec2(-t, 2.0 * t), d) + shadowTap(base + vec2(0.0, 2.0 * t), d) + shadowTap(base + vec2(t, 2.0 * t), d) + f.x * shadowTap(base + vec2(2.0 * t, 2.0 * t), d));
+    rim += g.x * (shadowTap(base + vec2(-t, 0.0), d) + shadowTap(base + vec2(-t, t), d)) + f.x * (shadowTap(base + vec2(2.0 * t, 0.0), d) + shadowTap(base + vec2(2.0 * t, t), d));
+    lit = (inner + rim) / 9.0;
+  }
+  float w = clamp(fwidth(lit) * 0.6, 0.01, 0.15);
+  return mix(1.0, smoothstep(0.5 - w, 0.5 + w, lit), shadowParams.z);
 }
 
 void main(void) {
