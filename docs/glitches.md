@@ -1800,10 +1800,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-769 Ciemny trójkąt ok. 0,2 m w kostce na Krakowskim przy (297; -226) po G-764
 - Ważność: S4 · Zasięg: krakowskie, (297; -226); zrzut /dev/shm/g764-reshoot/pair/krakowskie-297-215.png na 6b0ebb7
 - Opis: drobna dziura w fills między nowym kawałkiem kostki z canopyHard a sąsiednim kawałkiem; widać ciemne podłoże; zauważone przez kuratora w przeglądzie G-764, potwierdzone ponownym zrzutem
-- Status: zgłoszone (13.11, kurator, przegląd G-764)
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g769b (f80370a), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, kurator, przegląd G-764)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: brak dziury w fills przy (297; -226) (sonda 0,1 m), kontrola lawn-leafoff-patch lub fills-gap
 - 14.11: #519 (G-764) w main, można naprawiać
+- 14.11: tileRings obrysowuje kafel o komórkę dalej i tnie na krawędzi; nowa kontrola fill-gap 130 -> 16; map-ground-golden 171963 -> 171799 (146ff8d4); przyjęte (decyzja nocna: rekomendowane przyjęcie, artefakty pomiaru) +1 ground-strip-gap nabrzeze-1-0 2521,96 (podzbiór gołego pola z main) i +1 kerb-gap-bare nabrzeze-0-0 2442.6,92.9 (próbka na wspólnej krawędzi, 0,4 mm)
 
 ### G-770 Rewolwer: kciuk i palec wskazujący wchodzą w bryłę broni w FPP
 - Ważność: S4 · Zasięg: rewolwer w widoku FPP (ta sama poza co pistolet): kciuk do 9,8 mm, wskazujący do 10 mm w bryle; kłąb kciuka lewej dłoni (Thumb1) ok. 11 mm w chwycie pistoletu
@@ -1877,6 +1878,27 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (14.11, naprawiacz G-777)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: pierścienie obrócone przed sumą; ground-strip-overlap i ground-over-steps nie rosną
+
+### G-783 Dziury fill-gap na krawędziach chunków: obrys wypełnienia nie sięga za chunk
+- Ważność: S4 · Zasięg: nabrzeze x=2500 i z=270, podzamcze z=370 (np. 2500,295.25; 2544,269.88; 795.5,369.88)
+- Opis: obrys wypełnienia bare-cover kończy się na krawędzi chunka; sąsiedni chunk tnie po swojemu, zostaje goła szczelina
+- Status: zgłoszone (14.11, naprawiacz G-769)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: fill-gap bez miejsc na krawędziach chunków
+
+### G-784 Romb gołego terenu w siodle trawnika i kostki
+- Ważność: S4 · Zasięg: krakowskie-1-0 (110; -192.5) i podobne w bazie fill-gap
+- Opis: oba obrysy (trawnik i kostka) rozwiązują siodło siatki osobno, każdy ścina narożnik, zostaje romb gołego terenu
+- Status: zgłoszone (14.11, naprawiacz G-769)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: fill-gap bez rombów w siodłach
+
+### G-785 Trawnik poniżej 1 m² po przycięciu do kafli odrzucony, kostka zostawia dziurę na krawędzi
+- Ważność: S4 · Zasięg: krakowskie-2-0 (396.5; -90.25), stare-miasto-1-0 (699.4; -90.9)
+- Opis: kawałek trawnika po przycięciu do kafli spada poniżej progu i jest odrzucany, a kostka nie wchodzi w jego miejsce
+- Status: zgłoszone (14.11, naprawiacz G-769)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: fill-gap bez dziur po odrzuconych małych kawałkach na krawędzi kafli
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
