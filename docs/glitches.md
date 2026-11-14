@@ -1908,7 +1908,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-804 Latarnie reguły lit: strona z kierunku rysowania OSM, Narutowicza tylko z jednej strony
 - Ważność: S4 · Zasięg: ulice tertiary/residential reguły SIDE, m.in. Narutowicza, Peowiaków
 - Opis: props-lit SIDE stawia lampy po lewej względem kierunku drogi w OSM; Narutowicza ma w rzeczywistości słupy przy obu krawężnikach co ok. 34 m (ortofoto 2025-04). Propozycja: strona z przejętej linii planu, sides 2 dla ulic z chodnikami separate po obu stronach i jezdnią ponad ok. 10 m. T-297
-- Status: zgłoszone (14.11, przegląd kuratora G-798)
+- Status: w przeglądzie kuratora (gałąź ccr-ec2c4269-ilh8k8-g804, 642425d); wcześniej: zgłoszone (14.11, przegląd kuratora G-798)
 - Pakiet właściciela: tools/osm-import (props-lit)
 
 ### G-805 Styl latarni: lamp-road na deptakach Śródmieścia, lamp-park przy peronach i na chodnikach
@@ -1942,6 +1942,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Na gałęzi ccr-ec2c4269-ilh8k8-adr80-pr10 (b17eb17) strona drogi zostawiona przy szacunku (reguły: ścieżka przed krawężnikiem, strona węższa niż least/2) nie dostaje kerbFills, więc między jezdnią a chodnikiem zostaje goły pas. Do tego lawn-on-leafoff-paving 94 → 105 (trawnik na pasie zwolnionym przez węższą jezdnię, Nabrzeże). Blokuje scalenie PR 10.
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import, tools/orto
+
+### G-812 Przebieg uzupełniający lit wydłuża ciemny odcinek poza brzeg mapy i uznaje sąsiedni chodnik za oświetlony
+- Ważność: S4 · Zasięg: w185762620 / w232464409, 10 m przy (455..470; 150..160)
+- Opis: Znalezione przy G-804: linia przebiegu uzupełniającego reguły lit sięga poza brzeg mapy; chodnik obok liczy się jako oświetlony, choć latarnia tam nie staje (lit-street-dark +2 na gałęzi g804).
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (props-lit)
+
+### G-813 Pasy parkowania Świętoduskiej w1514058888/89/90 bez aut
+- Ważność: S4 · Zasięg: Świętoduska, 3 pasy (0 aut z 6,4 / 3,2 / 1,6 oczekiwanych), ten sam stan na main
+- Opis: Odsłonięte przez kontrolę bay-strip-sparse przy G-804 (nowa latarnia przy krawężniku). Prawdopodobnie ten sam spadek co w1514058885 (G-133).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
