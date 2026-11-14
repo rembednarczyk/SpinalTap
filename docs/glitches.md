@@ -211,6 +211,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna: plan `docs/world/lublin-props.todo.json` (29.10) ma pozycje tylko w starych prostokątach; reguła `lamps.krakowskie-side` nie obejmuje pasa poniżej −200
 - Pakiet właściciela: tools/osm-import (plan mebli)
 - Test przyjęcia: kontrola `lit-street-dark` (odcinki nazwanych dróg z `lit=yes` dalej niż 30 m od latarni, w metrach) w pasie 0; obeliski w promieniu 1 m od węzłów OSM. Ostrożnie z ADR-0064 etap 3 (oświetlenie z `lit`), który robi to samo w całym mieście
+- 14.11 audyt ADR-0077: przyczyna szersza: osm:props czyta statyczny plan, nie wyciągi; poprawka: data/osm/points/furniture.json z osm:fetch i kontrola osm-furniture-missing (baza 72: 70 w pasie, 2 słupki poza nim)
 
 ### G-111 Resztka G-094: krawędzie przedsionka Trasy Podziemnej
 - Status: zgłoszone (z weryfikacji G-094) · Ważność: S4 · Zasięg: 1 wejście · Koszt: mały
@@ -467,6 +468,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: reguła drzew na zboczach w zieleni (`leisure=park`, `landuse=grass`) z gęstością z ortofoto, poza ścieżkami, schodami, klifami i osią widokową schodów
 - Pakiet właściciela: tools/osm-import (rekwizyty)
 - Test przyjęcia: ≥ 1 drzewo na 150 m² zbocza obu skarp, 0 drzew na ścieżkach i schodach
+- 14.11 audyt ADR-0077: skarpy x 830..1010, z 140..300: 6500 m² korony z ortofoto, 2 drzewa w grze, pokrycie 3%; część zgłoszenia o drzewach z danych w całym mieście (G-nowy, krok 5)
 
 ### G-214 Kościół Bernardynów bez swojej wieży i sygnaturki, za wysoka nawa
 - Status: zgłoszone (2.11, kurator, przegląd #190)
@@ -1227,6 +1229,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (7.11, kurator przeglądu #366)
 - Ważność: S4 · Zasięg: murki grobli Zamkowej w294098689/w294098690 i mur ogrodu Karmelitów (brak w OSM) zostawiają goły grunt; `barrier=wall` nie jest importowane (`features.ts:66`); por. T-178; nowa kontrola `wall-unbuilt` (`barrier=wall` ≤ 5 m od osi drogi pieszej bez bryły); po G-477 latarnie grobli stoją 0,3 m za kostką, na osi przyszłych murków: postawić je na murku albo zostawić przerwę
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
+- 14.11 audyt ADR-0077: w294098689 i w294098690 są w grze jako wall (podzamcze/stare-miasto.generated.ts, od #418); do weryfikacji i zamknięcia; mur ogrodu Karmelitów (brak w OSM) zostaje
 
 ### G-480 Po podniesieniu ciała na ziemi zostaje ciemny przedmiot w miejscu głowy
 - Status: zgłoszone (7.11, budowniczy ADR-0075 etap 2)
@@ -1573,6 +1576,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (12.11, naprawiacz G-685; do triage)
 - Ważność: S4 · Zasięg: poprawiony raport `tools/orto --all`: w783241007 (płot, 202 m i 93 m w dwóch komórkach), w295849311 (mur, 114 m), w296752323, w292125943, w296750495, w1395539925, w618560965 nie mają barier w danych gry; w stare-miasto-0-0 mapa ma 4 punkty `gate`, gra 2; możliwy glitch importera (#418) albo celowe pominięcie; krakowskie-2-1 (12.11): raport komórki: nierysowana linia bariery w783241007 (płot 202 m); bez nowych id.; stare-miasto-0-1 (12.11): raport komórki: nierysowany płot w783241007, 92,8 m (część w tej komórce); bez nowych id.
 - Pakiet właściciela: tools/osm-import
+- 14.11 audyt ADR-0077, świeże OSM: 9 linii w mapie bez bariery w grze (453 m): 7 z opisu, płot w233257785 (26 m, x ≈ −204, z ≈ −47) i toll_booth w1002731074 (wartownia); 14 z 80 węzłów gate bez otworu w grze
 
 ### G-692 Budynek z domyślną wysokością 13,2 m przy kalenicy LoD2 6 m (w67504382)
 - Status: zgłoszone (12.11, autor G-639)
@@ -1880,9 +1884,30 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-796 Ziarnisty cień kontaktowy pod postacią przy kamerze z góry
 - Ważność: S3 · Zasięg: High, cień kontaktowy; zrzut użytkownika z telefonu 14.11 (rozdzielczość renderu 70%, kamera z góry)
 - Opis: pod postacią plama z widocznym ziarnem/szachownicą zamiast gładkiego cienia; podejrzenie: wzór Bayera 4x4 i rozmycie 4x4 w połowie rozdzielczości przestają się znosić przy skali renderu 0,7 albo postać (skórowana) jako zasłona daje szum; do naprawy po zmianie formatów G-buffera (gałąź gbuffer-lite)
-- Status: w naprawie (14.11): druga runda agenta od G-buffera (gałąź gbuffer-lite albo g796); wcześniej: zgłoszone (14.11, użytkownik)
+- Status: w gałęzi ccr-ec2c4269-ilh8k8-g796 (po gbuffer-lite), zrzuty do akceptacji; wcześniej: w naprawie (14.11): druga runda agenta od G-buffera (gałąź gbuffer-lite albo g796); wcześniej: zgłoszone (14.11, użytkownik)
 - Pakiet właściciela: packages/engine (npr/contact-shade*.ts)
 - Test przyjęcia: zrzut z góry nad postacią przy skali 0,7 i 1,0 bez ziarna
+
+### G-797 Drzewa tylko z węzłów OSM: 496 kwadratów korony z ortofoto bez drzewa w grze (ADR-0077 krok 5)
+- Ważność: S3 · Zasięg: całe miasto; najgorzej nabrzeże (9% korony w zasięgu drzew) i podzamcze (11%); obejmuje G-207
+- Opis: Krok 5 ADR-0077 niewdrożony: drzewa wyłącznie z natural=tree i tree_row przez plan; modele drzew GUGiK LoD1 2023 ani NMPT nie są używane. Pomiar 14.11 (audyt ADR-0077): klasy canopy/canopyHard data/orto, promień 6 m. T-292
+- Status: zgłoszone (14.11, audyt ADR-0077)
+- Pakiet właściciela: tools/osm-import (props), tools/gugik
+- Test przyjęcia: kontrola canopy-without-tree (kwadrat 10 m, ≥ 40 m² korony, ≥ 80% dalej niż 6 m od drzewa gry), baza 496, spada; 0 drzew na drogach, schodach i w budynkach
+
+### G-798 Latarnie z linii planu zamiast reguły lit: 4,4 km oświetlonych dróg bez latarni (ADR-0064 etap 3)
+- Ważność: S3 · Zasięg: całe miasto, 4390 m próbek dróg lit=yes
+- Opis: osm-import nie czyta tagu lit (1068 dróg lit=yes w wyciągach); latarnie stawiają linie lamps.* z docs/world/lublin-props.todo.json (29.10), więc nowe ulice i pas z < −200 zostają ciemne. T-293
+- Status: zgłoszone (14.11, audyt ADR-0077)
+- Pakiet właściciela: tools/osm-import (props-gen), tools/glitch-scan
+- Test przyjęcia: kontrola lit-street-dark (próbki co 5 m dróg lit=yes dalej niż 30 m od lamp-*, kwadraty 10 m), baza 4390 m, spada; kontrole lamp-* nie rosną
+
+### G-799 Hydranty nadziemne z OSM odpadają przy rozstawieniu (8 z 14)
+- Ważność: S4 · Zasięg: osm.hydrants: 14 w planie, 6 w grze
+- Opis: osm:props --items: osm.hydrants 14 asked, 6 placed; MAX_MOVE 3 m albo kolizja z budynkiem lub jezdnią (przyczyna do ustalenia)
+- Status: zgłoszone (14.11, audyt ADR-0077)
+- Pakiet właściciela: tools/osm-import (props-gen)
+- Test przyjęcia: każdy hydrant nadziemny z planu stoi ≤ 3 m od węzła albo ma powód w raporcie osm:props
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
