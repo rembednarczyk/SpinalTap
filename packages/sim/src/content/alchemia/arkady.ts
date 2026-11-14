@@ -208,29 +208,61 @@ const glazing = (): Piece[] => {
 const raw = (p: GroundPoint): number => Math.round(mapHeight([...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS], p.x, p.z) * 100) / 100;
 
 /**
- * The pavement along the east face (Lubartowska's side), in slabs 2 m along it and `PAVEMENT` wide,
- * and the landing off T1 before the south door: over the dip the arcade's grid points leave round
- * the building (`plaza.ts`). Each is level with the highest of the map's ground under it, so no
- * ground shows through it (a kerb over its lower side). The pavement runs from 2 m south of the
+ * The pavement along the east face (Lubartowska's side), in slabs up to 2 m along it and `PAVEMENT`
+ * wide, and the landing off T1 before the south door: over the dip the arcade's grid points leave
+ * round the building (`plaza.ts`). Each is level with the highest of the map's ground under it, so
+ * no ground shows through it (a kerb over its lower side). The pavement runs from 2 m south of the
  * building to 44 m along it, past the last of the dip where Lubartowska falls away to the north
  * (G-460: a 40..43, to 0.97 m under the map's ground); north of it the ground is the map's. The
  * landing reaches 2.2 m west of the building and half a metre along its corner room, over the dip
  * the first span's grid points leave at the foot of T1's slope (G-460, the scan's `pad-dip-uncovered`).
+ *
+ * The street falls there by up to half a metre a metre along and a quarter across, so a slab level
+ * with the highest ground under it stands that much over its lower edges (G-778: 2 m slabs left
+ * steps of 0.54 and 0.75 m, and the 5 m wide ones ledges of 0.6 m over the ground north of them
+ * and 0.48 m over the dip south of the first). So the pavement lies in two strips, the dip's by the
+ * wall the whole way and the outer one to `PAVEMENT_FALL`, where the street starts to fall (north
+ * of it the ground off the wall lies on the map's, no dip to cover), each stepping down in `CELL`s
+ * merged up to 2 m while their tops stay within `EVEN`.
  */
 const PAVEMENT = 5;
 const PAVEMENT_FROM = -2;
 const PAVEMENT_TO = 44;
+const PAVEMENT_FALL = 38;
+const PAVEMENT_STRIPS = [
+  { c0: 0, c1: 2, to: PAVEMENT_TO },
+  { c0: 2, c1: PAVEMENT, to: PAVEMENT_FALL },
+] as const;
+const CELL = 0.5;
+const SLAB_LONGEST = 2;
+const EVEN = 0.1;
 const LANDING = 3;
 const LANDING_WEST = 2.2;
 const LANDING_ALONG = 0.5;
 const LANDING_TOP = Math.max(...[0, 1, 2, 3].flatMap((t) => [-LANDING_WEST, -1, 0, 2, 4, 5.8].map((c) => raw(arkadyPoint(-t, c)))));
 
+/** The highest of the map's ground under the pavement from `a` a `CELL` along, `c0..c1` out from the wall. */
+const cellTop = (a: number, c0: number, c1: number): number => {
+  const across = Array.from({ length: Math.round((c1 - Math.max(c0, 0.5)) / 0.5) + 1 }, (_, i) => Math.max(c0, 0.5) + i * 0.5);
+  return Math.max(...[0, 0.25, 0.5].flatMap((t) => across.map((c) => raw(arkadyPoint(a + t, D + c)))));
+};
+
+/** A strip's slabs: runs of cells up to `SLAB_LONGEST`, their tops within `EVEN` of the first's. */
+const stripSlabs = (s: (typeof PAVEMENT_STRIPS)[number]): Box[] => {
+  const slabs: { a0: number; a1: number; first: number; top: number }[] = [];
+  for (let a = PAVEMENT_FROM; a < s.to - 1e-6; a += CELL) {
+    const top = cellTop(a, s.c0, s.c1);
+    const last = slabs.at(-1);
+    if (last && a + CELL - last.a0 <= SLAB_LONGEST + 1e-6 && Math.abs(top - last.first) <= EVEN) {
+      last.a1 = a + CELL;
+      last.top = Math.max(last.top, top);
+    } else slabs.push({ a0: a, a1: a + CELL, first: top, top });
+  }
+  return slabs.map((b) => box(b.a0, b.a1, D + s.c0, D + s.c1, b.top - 3, b.top));
+};
+
 const pavement = (): Piece[] => [
-  ...Array.from({ length: (PAVEMENT_TO - PAVEMENT_FROM) / 2 }, (_, k): Piece => {
-    const a = PAVEMENT_FROM + k * 2;
-    const top = Math.max(...[0, 1, 2].flatMap((t) => [1, 2, 3, 4, 5].map((c) => raw(arkadyPoint(a + t, D + c)))));
-    return piece(box(a, a + 2, D, D + PAVEMENT, top - 3, top), "step", false);
-  }),
+  ...PAVEMENT_STRIPS.flatMap(stripSlabs).map((b) => piece(b, "step", false)),
   piece(box(-LANDING, 0, 0, D, LANDING_TOP - 3, LANDING_TOP), "step", false),
   piece(box(-LANDING, LANDING_ALONG, -LANDING_WEST, 0, LANDING_TOP - 3, LANDING_TOP), "step", false),
 ];
