@@ -25,7 +25,7 @@ describe("contact shade (graphics backlog 13.11, step 2)", () => {
   });
 
   it("counts occluding samples in its own pass and blurs them along one surface", () => {
-    expect(CONTACT_SHADE_GLSL).toContain("i < 24");
+    expect(CONTACT_SHADE_GLSL).toContain("i < 12");
     expect(CONTACT_SHADE_GLSL).not.toMatch(/\btime\b/);
     expect(CONTACT_OCCLUSION_FRAGMENT).toContain("contactOcclusion(vUV, d, n)");
     // The blur weighs neighbours by the depth difference, so the shade does not cross a silhouette.
