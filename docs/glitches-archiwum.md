@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-800 Cień linki girlandy znika z daleka, zostają cienie samych lampek (po #542)
+- Ważność: S3 · Zasięg: wszystkie girlandy i przewody nad ulicami, noc, High; widać dopiero z bliska
+- Opis: Zgłoszenie użytkownika 14.11 (gra po #542): linka z kwadracikami rzuca cień tylko z bliska, z daleka widać same kwadraciki; to nie cień kontaktowy. Najpewniej cień księżyca: przy patrzeniu w dal kwadrat cienia wraca do 56 m (teksel 2,7 cm), a linka cieńsza niż teksel po nowym filtrze krawędzi (PCF 3 teksele, próg ok. 1 px przez fwidth) znika zamiast iść w kropki; agent G-795 wskazał to ryzyko w raporcie. Przed #542 cień linki był kropkowany.
+- Status: naprawione (14.11, #555 scalony); wcześniej: w PR #555 (test CPU 0-3% → 100%; potwierdzenie w grze do zrobienia); wcześniej: zgłoszone (14.11, użytkownik)
+- Pakiet właściciela: packages/engine/src/npr (moon-shadow, shadow-fit, toon-shader)
+- Test przyjęcia: cienka bryła (przewód 1-2 cm) rzuca w mapie cienia ciągły ślad na ziemi także przy kwadracie 56 m (udział zacienionych pikseli wzdłuż śladu ≥ 80%)
+- Ograniczenie: na Medium i Low (mapa cienia 1024) cień linki z daleka może nadal znikać. Potwierdzenie w grze na APK u użytkownika.
+
 ### G-801 Raport ortofoto liczy meble z wyciągu OSM jako postawione regułami
 - Ważność: S4 · Zasięg: raporty komórek orto, całe miasto
 - Opis: tools/orto/src/furniture.ts osmPlanPoints czyta sam plan docs/world/lublin-props.todo.json, a grupy osm.furniture.* z props-osm.ts nie mają inOsm. furnitureCounts (report.ts:55) zalicza 68 obiektów z pasa z < −200 do reguł generatora, nie do OSM.
