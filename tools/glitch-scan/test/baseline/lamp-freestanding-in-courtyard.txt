@@ -1,0 +1,6 @@
+# lamp-freestanding-in-courtyard: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+podzamcze-1-0 866,219
+podzamcze-1-0 915,228
+podzamcze-1-0 868,234
+podzamcze-1-0 892,246
+podzamcze-2-0 928,211

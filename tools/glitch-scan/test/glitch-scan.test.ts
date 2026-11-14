@@ -83,6 +83,8 @@ import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
 import { lampsBesideDeck } from "./lamp-deck";
 import { litStreetDark } from "./lit-dark";
+import { lampsFreestandingInCourtyard, squareStyleLeak } from "./lamp-squares";
+import { WallIndex, isCourtyard, isPedestrianSquare } from "../../osm-import/src/courtyards.ts";
 import { litWayGroups } from "../../osm-import/src/props-lit.ts";
 import { loadLitWays, loadPropsPlan } from "../../osm-import/src/props-osm.ts";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
@@ -1275,6 +1277,21 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * the `lit` rule (ADR-0064 stage 3, `props-lit.ts`) lamps the lit ways the plan's lines left dark.
    */
   "lit-street-dark": () => litStreetDark(loadLitWays(), Object.values(LUBLIN_STREET_PROPS).flat(), onChunk),
+  /** A lamp on a post inside a courtyard, a pedestrian square whose outline runs along the game's buildings for 70% (`lamp-squares.ts`, Dziedziniec Zamkowy). */
+  "lamp-freestanding-in-courtyard": () => {
+    const walls = new WallIndex(MAP_CHUNKS.flatMap((c) => c.buildings).map((b) => worldOutline(b)));
+    const courts = [...SOURCE_OSM.ways.values()]
+      .filter((w) => isPedestrianSquare(w.tags) && w.nodes.length >= 4 && w.nodes[0] === w.nodes[w.nodes.length - 1])
+      .map((w) => ({ id: `w${w.id}`, ring: wayPoints(w.nodes) }))
+      .filter((c) => isCourtyard(c.ring, walls));
+    return lampsFreestandingInCourtyard(Object.values(LUBLIN_STREET_PROPS).flat(), courts);
+  },
+  /** A candelabrum more than 12 m from the plan's candelabra lines: Plac Zamkowy's look carried onto the streets beside it (`lamp-squares.ts`, Podwale). */
+  "lamp-square-style-leak": () => {
+    const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
+    const lines = plan.items.filter((g) => g.kind === "lamp-candelabra").flatMap((g) => [...(g.line ? [g.line] : []), ...(g.lines ?? [])]).map((f) => Array.from({ length: Math.floor(f.length / 2) }, (_, i) => ({ x: f[2 * i]!, z: f[2 * i + 1]! })));
+    return squareStyleLeak(Object.values(LUBLIN_STREET_PROPS).flat(), lines);
+  },
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
   /**
