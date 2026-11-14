@@ -161,6 +161,29 @@ describe("bands along lines on Clipper2 (ADR-0078, step 2)", () => {
     expect(over).toEqual([]);
   });
 
+  it("lays no slit over a flight of steps ending at the joint, on a square whose ring runs clockwise (G-777)", () => {
+    // The flight and footways of the G-760 case above, on a pedestrian square mapped clockwise, as
+    // Podzamcze's by (886.9; 221.9): the square's ring must not cancel the steps it lies under.
+    const [x, z] = [569.33, 258.09];
+    const a = line("w1", { highway: "footway", width: "2.26" }, [[553.38, 270.16], [x, z]]);
+    const b = line("w2", { highway: "footway", width: "2.99" }, [[x, z], [582.74, 243.26]]);
+    const s = line("w3", { highway: "steps", width: "2.37" }, [[x, z], [576.54, 261.55]]);
+    const joined = joinedPoints([a, b, s]);
+    const square = { surface: "square", ring: pts([[560, 250], [560, 266], [580, 266], [580, 250]]), bridge: false, source: "a1" };
+    const bands = [square, ...[a, b, s].flatMap((l) => lineBands(l, false, [], false, joined))];
+    const steps = bands.filter((r) => r.surface === "steps").map((r) => r.ring);
+    const out = roundJoints(bands, (of, ring, slit) => ({ surface: of.surface, ring, bridge: false, source: `${slit ? "slit" : "patch"} ${of.source}` }));
+    const slits = out.filter((r) => r.source.startsWith("slit")).map((r) => r.ring.map((p) => ({ x: r1(p.x), z: r1(p.z) })));
+    const over: string[] = [];
+    for (let i = -40; i <= 40; i++) {
+      for (let k = -40; k <= 40; k++) {
+        const p = { x: x + i * 0.1 + 0.05, z: z + k * 0.1 + 0.05 };
+        if (covered(steps, p) && covered(slits, p)) over.push(`${p.x.toFixed(2)},${p.z.toFixed(2)}`);
+      }
+    }
+    expect(over).toEqual([]);
+  });
+
   it("lays a sidewalk's inner edge on its carriageway's edge round a bend, with no gap", () => {
     const axis = pts([[0, 0], [30, 0], [50, 15]]);
     const road = bufferBand(axis, 6);

@@ -251,7 +251,9 @@ export const roundJoints = <B extends JointBand>(bands: readonly B[], patch?: Pa
     }
   }
   const patches = new Map<number, { ring: Pt[]; slit?: true }[]>();
-  const laidOf = (ks: readonly number[]) => union(ks.flatMap((k) => rings.get(k)!.map(onGrid)), FillRule.NonZero);
+  // Each ring counter-clockwise: an area's ring may come clockwise, and with NonZero it would cancel
+  // a band it lies on (a flight of steps on a square), leaving a hole a slit is then laid in (G-777).
+  const laidOf = (ks: readonly number[]) => union(ks.flatMap((k) => rings.get(k)!.map((p) => (isPositive(p) ? onGrid(p) : onGrid([...p].reverse())))), FillRule.NonZero);
   for (const list of patch ? ends.values() : []) {
     const meeting = [...new Set(list.map((e) => e.i))];
     // As the tables round them: the bands meeting here of each surface, every band near (a sidewalk,
@@ -265,6 +267,7 @@ export const roundJoints = <B extends JointBand>(bands: readonly B[], patch?: Pa
     // Grown by the grid: the patch rounded after it (0.07 m at most) stays off them.
     const above = inflatePaths(laidOf(over), SLIVER * SCALE, JoinType.Miter, EndType.Polygon, 2);
     let all = laidOf(near);
+    const flights = laidOf(over);
     const same = new Map<string | undefined, Paths64>();
     for (const { i, end } of list) {
       if (end.square) continue;
@@ -280,8 +283,11 @@ export const roundJoints = <B extends JointBand>(bands: readonly B[], patch?: Pa
       const mine = union(laidOf([i]), on, FillRule.NonZero);
       // Not a stream's: the water's areas, laid after, lie over its joints in one plane with it.
       // As a chunk rounds them (`chunkGround`): a slit pinched at a point would cross itself there.
+      // Nor one the rounding laps onto steps or a zebra: raised as a band, it would break through
+      // the lowest tread (G-777, `ground-over-steps`).
+      const onOver = (r: Pt[]) => over.length > 0 && intersect([onGrid(toPath(r))], flights, FillRule.NonZero).reduce((s, p) => s + areaOf(p), 0) > SPECK * SCALE * SCALE;
       const slits = (surface === "water" ? [] : onGridRings(slitFills(roundEnd(list, i, end), all).filter((f) => touches(f, mine)))).filter(
-        (r) => Math.abs(signedArea(r)) >= MIN_SLIT && !selfIntersects(removeCollinear(r.map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02)),
+        (r) => Math.abs(signedArea(r)) >= MIN_SLIT && !selfIntersects(removeCollinear(r.map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02)) && !onOver(r),
       );
       all = union(all, slits.map((r) => onGrid(toPath(r))), FillRule.NonZero);
       if (kept.length + slits.length > 0) patches.set(i, [...(patches.get(i) ?? []), ...kept.map((ring) => ({ ring })), ...slits.map((ring) => ({ ring, slit: true as const }))]);

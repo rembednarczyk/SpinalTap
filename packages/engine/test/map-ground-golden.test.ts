@@ -103,8 +103,10 @@ describe("the ground the map city lays (G-444)", () => {
     // The kerbs' strips laid from the cover, lawns under the crowns and the specks of green (ADR-0077
     // step 1.2): 151 928 -> 168 499 vertices, the same meshes.
     // The gaps' patches in the joints (G-760), pieces of their own: 168 499 vertices before. The
-    // slits between bands of two surfaces in the joints (G-777), laid edge to edge: 171 653 before.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 172269, hash: "3afed5b1" });
+    // slits between bands of two surfaces in the joints (G-777), laid edge to edge: 171 653 before;
+    // and the joints read with every ring counter-clockwise, so a square's clockwise ring no longer
+    // cancels the bands on it into holes the patches filled: 172 269 -> 170 270.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 170270, hash: "0eda4e1f" });
     scene.dispose();
   });
 
