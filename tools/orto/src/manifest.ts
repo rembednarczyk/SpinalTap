@@ -14,7 +14,7 @@ import { THRESHOLDS } from "./thresholds.ts";
 export const MANIFEST = join(COVER_DIR, "sources.json");
 
 /** Raised with any change to `classify.ts`, `thresholds.ts` or the sampling in `cover.ts`. */
-export const CLASSIFIER_VERSION = 3;
+export const CLASSIFIER_VERSION = 4;
 
 export interface CoverEntry {
   readonly slug: string;

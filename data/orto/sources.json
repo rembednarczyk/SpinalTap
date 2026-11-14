@@ -86,7 +86,7 @@
     }
   ],
   "classifier": {
-    "version": 3,
+    "version": 4,
     "grid": 0.5,
     "classes": [
       "none",
@@ -781,7 +781,7 @@
         "maxX": 760,
         "maxZ": 160
       },
-      "bytes": 39929,
+      "bytes": 42347,
       "cells": [
         "stare-miasto-0-0",
         "stare-miasto-1-0",
@@ -814,18 +814,6 @@
           }
         },
         {
-          "cell": "stare-miasto-0-0",
-          "flight": "2023-09",
-          "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
-          "sheet": {
-            "sheet": "M-34-34-A-c-2-1",
-            "date": "2023-09-11",
-            "pixel": 0.05,
-            "colour": "RGB"
-          }
-        },
-        {
           "cell": "stare-miasto-1-0",
           "flight": "2025-04",
           "service": "HighResolution",
@@ -870,18 +858,6 @@
             "sheet": "M-34-34-A-c-2-1",
             "date": "2025-04-12",
             "pixel": 0.05,
-            "colour": "RGB"
-          }
-        },
-        {
-          "cell": "stare-miasto-0-1",
-          "flight": "2024-06",
-          "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
-          "sheet": {
-            "sheet": "M-34-34-A-c-2-1",
-            "date": "2024-06-21",
-            "pixel": 0.25,
             "colour": "RGB"
           }
         },
@@ -936,13 +912,13 @@
       ],
       "samples": {
         "none": 0,
-        "green": 57760,
-        "paving": 208725,
-        "asphalt": 171753,
-        "shadow": 612,
-        "unknown": 7791,
-        "canopy": 27525,
-        "canopyHard": 5834
+        "green": 62630,
+        "paving": 202166,
+        "asphalt": 166354,
+        "shadow": 1627,
+        "unknown": 7781,
+        "canopy": 31250,
+        "canopyHard": 8192
       }
     }
   ]
