@@ -59,7 +59,6 @@ krakowskie-0-1 -160,50
 krakowskie-0-1 -100,60
 krakowskie-0-1 -100,70
 krakowskie-0-1 -100,80
-krakowskie-0-1 -90,80
 krakowskie-0-1 0,90
 krakowskie-0-1 -100,100
 krakowskie-0-1 -90,100
@@ -381,7 +380,6 @@ nabrzeze-1-0 2650,90
 nabrzeze-1-0 2660,90
 nabrzeze-1-0 2690,90
 nabrzeze-1-0 2550,100
-nabrzeze-1-0 2560,100
 nabrzeze-1-0 2650,100
 nabrzeze-1-0 2660,100
 nabrzeze-1-0 2680,100
