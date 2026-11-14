@@ -128,7 +128,7 @@ describe("ModelLibrary with a fetch that never ends (G-561)", () => {
     // The glTF plugin arrives by a dynamic import, in real time: in before the clock is faked.
     await loadGltfPlugin();
     vi.useFakeTimers();
-    const { MODEL_FETCH_IDLE_MS } = await import("../src/renderer/model-fetch");
+    const { MODEL_FETCH_START_MS } = await import("../src/renderer/model-fetch");
     const { ModelLibrary } = await import("../src/renderer/model-library");
     const { CharacterModels } = await import("../src/renderer/character-models");
     const signals: AbortSignal[] = [];
@@ -152,7 +152,7 @@ describe("ModelLibrary with a fetch that never ends (G-561)", () => {
     watch("preload", library.preload({ url: "kurosawa.vrm" }));
     watch("cloth", library.clothOf({ url: "civilian.vrm" }));
     watch("prefetch", models.prefetch());
-    await vi.advanceTimersByTimeAsync(MODEL_FETCH_IDLE_MS - 1);
+    await vi.advanceTimersByTimeAsync(MODEL_FETCH_START_MS - 1);
     expect(settled.size).toBe(0);
     expect(signals.some((s) => s.aborted)).toBe(false);
     await vi.advanceTimersByTimeAsync(1);
@@ -166,7 +166,7 @@ describe("ModelLibrary with a fetch that never ends (G-561)", () => {
     watch("again", library.preload({ url: "kurosawa.vrm" }));
     await vi.advanceTimersByTimeAsync(0);
     expect(signals.length).toBe(3);
-    await vi.advanceTimersByTimeAsync(MODEL_FETCH_IDLE_MS);
+    await vi.advanceTimersByTimeAsync(MODEL_FETCH_START_MS);
   });
 });
 
@@ -295,6 +295,49 @@ describe("fetchModelBytes with an idle limit (G-637)", () => {
     expect(cancel).toHaveBeenCalled();
     late(new Uint8Array([1]));
     await vi.advanceTimersByTimeAsync(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("does not count the wait for the headers (the browser's queue) as a stalled download (G-809)", async () => {
+    vi.useFakeTimers();
+    const { MODEL_FETCH_IDLE_MS, fetchModelBytes } = await import("../src/renderer/model-fetch");
+    const queued = MODEL_FETCH_IDLE_MS * 2;
+    let sent = 0;
+    // Headers only after the files ahead of it are done; then the body streams a chunk a second.
+    vi.stubGlobal("fetch", (_url: string, init?: { signal?: AbortSignal }) =>
+      new Promise((resolve) =>
+        setTimeout(
+          () => resolve(streamOf(init?.signal, () => new Promise((r) => setTimeout(() => r(sent++ < 3 ? new Uint8Array([sent]) : null), 1_000)))),
+          queued,
+        ),
+      ),
+    );
+    const outcome = fetchModelBytes("queued.vrm").then(
+      (b) => b.byteLength,
+      (e: unknown) => (e as Error).message,
+    );
+    await vi.advanceTimersByTimeAsync(queued + 5_000);
+    expect(await outcome).toBe(3);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("gives up on a request that never gets an answer after the start limit, not the idle one", async () => {
+    vi.useFakeTimers();
+    const { MODEL_FETCH_START_MS, fetchModelBytes } = await import("../src/renderer/model-fetch");
+    const signals: AbortSignal[] = [];
+    vi.stubGlobal("fetch", (_url: string, init?: { signal?: AbortSignal }) => {
+      if (init?.signal) signals.push(init.signal);
+      return new Promise(() => undefined);
+    });
+    const outcome = fetchModelBytes("silent.vrm").then(
+      () => "loaded",
+      (e: unknown) => (e as Error).message,
+    );
+    await vi.advanceTimersByTimeAsync(MODEL_FETCH_START_MS - 1);
+    expect(signals[0]?.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await outcome).toMatch(/silent\.vrm did not download: no answer within/);
+    expect(signals[0]?.aborted).toBe(true);
     expect(vi.getTimerCount()).toBe(0);
   });
 
