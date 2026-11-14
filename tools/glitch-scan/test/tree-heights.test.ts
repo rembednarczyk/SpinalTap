@@ -6,7 +6,7 @@ import { type MeasuredTree, cityMeasuredTrees, drawnTreeHeight, treeHeights, tre
 /** The glitch scan's check `tree-height-vs-nmpt` (G-422) on a few trees, and the trees of Plac Litewski against the surface model. */
 
 const at = (x: number, variant: number): StreetPropItem => ({ prop: "tree", x, y: 0, z: 0, yaw: 0, variant });
-const measured = (x: number, height: number): MeasuredTree => ({ id: `n${x}`, group: "test.tree", x, z: 0, height });
+const measured = (x: number, height: number): MeasuredTree => ({ id: `n${x}`, x, z: 0, height });
 
 describe("trees lower than measured (tree-height-vs-nmpt)", () => {
   it("finds a tree drawn under 0.6 of its height, not one drawn near it", () => {
@@ -28,7 +28,7 @@ describe("trees lower than measured (tree-height-vs-nmpt)", () => {
   });
 
   it("draws the trees of Plac Litewski within 2 m of their measured height in the median (T-195)", () => {
-    const litewski = cityMeasuredTrees().filter((t) => t.group === "plac-litewski.tree");
+    const litewski = cityMeasuredTrees().filter((t) => t.x > -100 && t.x < 110 && t.z > -50 && t.z < 70);
     expect(litewski.length).toBeGreaterThan(90);
     const heights = treeHeights(litewski, Object.values(WORLD_STREET_PROPS).flat());
     expect(heights.length).toBeGreaterThan(90);

@@ -60,9 +60,15 @@ export const planKindOf = (f: { readonly tag: string; readonly detail: string })
   }
 };
 
-/** The detail a kind reads beside its tag: what a vending machine sells, a hydrant's type ("" when none). */
+/** The detail a kind reads beside its tag: what a vending machine sells, a hydrant's type, a tree's `height` (`tree-heights.ts`; "" when none). */
 const detailOf = (tag: string, tags: Tags): string =>
-  tag === "amenity=vending_machine" ? (tags.vending ?? "") : tag === "emergency=fire_hydrant" ? (tags["fire_hydrant:type"] ?? "") : "";
+  tag === "amenity=vending_machine"
+    ? (tags.vending ?? "")
+    : tag === "emergency=fire_hydrant"
+      ? (tags["fire_hydrant:type"] ?? "")
+      : tag === "natural=tree"
+        ? (tags.height ?? "")
+        : "";
 
 /** One point: OSM node id, position, the kept tag and its detail. */
 export type FurnitureRow = [id: number, lat: number, lon: number, tag: string, detail: string];

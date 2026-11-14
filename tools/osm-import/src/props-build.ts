@@ -16,6 +16,8 @@ import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/st
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { REPO } from "./paths.ts";
 import { loadPropsPlan } from "./props-osm.ts";
+import { loadFurniture } from "./furniture.ts";
+import { withTreeHeights } from "./tree-heights.ts";
 import { emitProps } from "./props-emit.ts";
 import { type PropsStats, generateProps } from "./props-gen.ts";
 import { loadBuildingTags, loadNodeTags } from "./props-art.ts";
@@ -64,7 +66,7 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   const decalWalls = await runWith<typeof DecalWalls>("tools/osm-import/src/decal-walls.ts", new Map(), extra);
   // The game's doors (ADR-0038) the same way: the market's furniture keeps clear of them (ADR-0058 stage 3).
   const doors = await runWith<typeof GameDoors>("tools/osm-import/src/game-doors.ts", new Map(), extra);
-  const { byChunk, stats } = generateProps(plan, chunks, loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() });
+  const { byChunk, stats } = generateProps(plan, chunks, withTreeHeights(loadNodeTags(), loadFurniture()), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() });
   const table = byChunk as Map<string, StreetPropItem[]>;
   // The doors on the facades (ADR-0058 stage 9), after the furniture, whose solids keep their fronts clear.
   const doorWalls = decalWalls.lublinDoorWalls();

@@ -53,11 +53,11 @@ describe("trees of the species OSM names (G-423)", () => {
 
   it("grows a tagged tree in the open to its measured height as its species, whatever its seed", () => {
     for (const seed of seeds) {
-      const oak = treeVariant(site, OAKS[0]!, { x: 50, z: 5 }, seed, TREE_KIND.oak);
+      const oak = treeVariant(site, { x: 50, z: 5 }, seed, TREE_KIND.oak, 20);
       expect(treeSpecies(oak)).toBe(TREE_KIND.oak);
       expect(oak).toBeLessThanOrEqual(0xffff);
       expect(Math.abs(treeHeight(oak) - 20)).toBeLessThan(0.15);
-      const poplar = treeVariant(site, BAOBAB, { x: 50, z: 5 }, seed, TREE_KIND.poplar);
+      const poplar = treeVariant(site, { x: 50, z: 5 }, seed, TREE_KIND.poplar, 10.3);
       expect(treeSpecies(poplar)).toBe(TREE_KIND.poplar);
       expect(Math.abs(treeHeight(poplar) - 10.3)).toBeLessThan(0.15);
     }
@@ -65,19 +65,19 @@ describe("trees of the species OSM names (G-423)", () => {
 
   it("keeps an unmeasured tagged tree at its seed's size, an untagged one at its seed", () => {
     for (const seed of seeds) {
-      const v = treeVariant(site, "n1", { x: 50, z: 5 }, seed, TREE_KIND.oak);
+      const v = treeVariant(site, { x: 50, z: 5 }, seed, TREE_KIND.oak, null);
       expect(treeSpecies(v)).toBe(TREE_KIND.oak);
       expect(treeScale(v)).toBeCloseTo(treeScale(seed >= 0xf000 ? seed - 0x3000 : seed), 9);
-      const lime = treeVariant(site, "n1", { x: 50, z: 5 }, seed, TREE_KIND.lime);
+      const lime = treeVariant(site, { x: 50, z: 5 }, seed, TREE_KIND.lime, null);
       expect(treeSpecies(lime)).toBe(TREE_KIND.lime);
       expect(treeScale(lime)).toBeCloseTo(treeScale(v), 9);
     }
-    expect(treeVariant(site, "n1", { x: 50, z: 5 }, 0x71)).toBe(0x71);
+    expect(treeVariant(site, { x: 50, z: 5 }, 0x71, undefined, null)).toBe(0x71);
   });
 
   it("stops an oak's broad crown short of the wall it would grow into", () => {
     // 6 m off the wall: the seed's oak reaches 4.6 m, one grown to 20 m would reach 9.6 m.
-    const v = treeVariant(site, OAKS[0]!, { x: 50, z: 32 }, 0x70, TREE_KIND.oak);
+    const v = treeVariant(site, { x: 50, z: 32 }, 0x70, TREE_KIND.oak, 20);
     expect(treeSpecies(v)).toBe(TREE_KIND.oak);
     expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v)).toBeLessThan(6);
     expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v)).toBeGreaterThan(5.5);
