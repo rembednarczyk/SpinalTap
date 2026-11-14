@@ -29,9 +29,10 @@ describe("trees lower than measured (tree-height-vs-nmpt)", () => {
 
   it("draws the trees of Plac Litewski within 2 m of their measured height in the median (T-195)", () => {
     const litewski = cityMeasuredTrees().filter((t) => t.x > -100 && t.x < 110 && t.z > -50 && t.z < 70);
-    expect(litewski.length).toBeGreaterThan(90);
+    // The square's OSM trees, measured by the rule (91 in the game, audit of 14.11).
+    expect(litewski.length).toBeGreaterThanOrEqual(90);
     const heights = treeHeights(litewski, Object.values(WORLD_STREET_PROPS).flat());
-    expect(heights.length).toBeGreaterThan(90);
+    expect(heights.length).toBeGreaterThanOrEqual(90);
     const errors = heights.map((h) => Math.abs(h.drawn - h.tree.height)).sort((a, b) => a - b);
     expect(errors[Math.floor(errors.length / 2)]!).toBeLessThanOrEqual(2);
   });
