@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-770 Rewolwer: kciuk i palec wskazujący wchodzą w bryłę broni w FPP
+- Ważność: S4 · Zasięg: rewolwer w widoku FPP (ta sama poza co pistolet): kciuk do 9,8 mm, wskazujący do 10 mm w bryle; kłąb kciuka lewej dłoni (Thumb1) ok. 11 mm w chwycie pistoletu
+- Opis: poza RIGHT_ON_HANDGUN dobrana do szkieletu pistoletu; szerszy bęben rewolweru; test głębokości (mesh-depth.ts) obejmuje tylko pistolet i kości Thumb2/Thumb3
+- Status: naprawione (14.11, PR #504 scalony 14.11 (7064224); poza R1, test G-770 w zakresie przodu chwytu (2 mm), tył chwytu do 13 mm zasłonięty pięścią scalony); wcześniej: zgłoszone (13.11, ręce FPP runda 6)
+- Pakiet właściciela: packages/engine (renderer/fpp-hand-poses.ts)
+- Test przyjęcia: test głębokości skóry dłoni w bryle broni ≤ 2 mm dla każdej broni krótkiej i wszystkich kości kciuka
+
 ### G-771 Puste (białe) kafle ortofoto w pokryciu i raporcie komórek stare-miasto-0-0 i 0-1
 - Ważność: S3 · Zasięg: kafle 2023-09/stare-miasto-0-0 i 2024-06/stare-miasto-0-1 (100% białe, jedyne w mieście); w pokryciu ok. 2 740 m² zieleni i koron jako kostka/asfalt (0-0: 1 256, 0-1: 1 484) i ok. 250 m² cienia; raport wybiera pusty nalot jako najmniejszy przechył
 - Opis: fetch.ts zostawia biały kafel z ostatniej usługi; classifyRect uśrednia go jak nalot; lean.ts daje mu wynik 0. Skutek: bare-cover.ts i kontrole bare-on-cover/fill-on-green czytają zieleń jako twardą; 'twarde 100%' w notatkach 0-0 i 0-1 to artefakt (działka Rybna 12: zieleń i gruz). Proponowana kontrola cover-blank-flight (baza 2).

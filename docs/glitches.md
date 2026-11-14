@@ -1807,13 +1807,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - 14.11: tileRings obrysowuje kafel o komórkę dalej i tnie na krawędzi; nowa kontrola fill-gap 130 -> 16; map-ground-golden 171963 -> 171799 (146ff8d4); przyjęte (decyzja nocna: rekomendowane przyjęcie, artefakty pomiaru) +1 ground-strip-gap nabrzeze-1-0 2521,96 (podzbiór gołego pola z main) i +1 kerb-gap-bare nabrzeze-0-0 2442.6,92.9 (próbka na wspólnej krawędzi, 0,4 mm)
 - 14.11 przegląd kuratora (f80370a vs ebed0d2): ZGODNE Z UWAGAMI; orto:diff 6,3 m² (trawa +4,8 na green/canopy, kostka +1,3 na paving), teren 0, pomosty 0; odsłonięte 0,44 m² (paski ≤ 3 cm), nakładki fills bez zmian; klucze 2442,6;92,9 i 2521,1;95,9 potwierdzone jako artefakty; po scaleniu z main powtórzyć osm:build, scan:diff, orto:diff
 
-### G-770 Rewolwer: kciuk i palec wskazujący wchodzą w bryłę broni w FPP
-- Ważność: S4 · Zasięg: rewolwer w widoku FPP (ta sama poza co pistolet): kciuk do 9,8 mm, wskazujący do 10 mm w bryle; kłąb kciuka lewej dłoni (Thumb1) ok. 11 mm w chwycie pistoletu
-- Opis: poza RIGHT_ON_HANDGUN dobrana do szkieletu pistoletu; szerszy bęben rewolweru; test głębokości (mesh-depth.ts) obejmuje tylko pistolet i kości Thumb2/Thumb3
-- Status: zgłoszone (13.11, ręce FPP runda 6)
-- Pakiet właściciela: packages/engine (renderer/fpp-hand-poses.ts)
-- Test przyjęcia: test głębokości skóry dłoni w bryle broni ≤ 2 mm dla każdej broni krótkiej i wszystkich kości kciuka
-
 ### G-772 Mediany barw z ortofoto liczone z pustego kafla 2024-06/stare-miasto-0-1
 - Ważność: S4 · Zasięg: albedo-medians.json (ALBEDO_FLIGHTS 2025-04, 2024-06), stare-miasto-0-1
 - Opis: albedo-report.ts nie pomija pustych nalotów (isBlank z G-771), biały kafel wchodzi do median barw; przeliczenie zmienia wygląd
