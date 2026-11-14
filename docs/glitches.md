@@ -1831,11 +1831,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-781 Footway i łaty G-760 na obrysie schodów (193 klucze ground-over-steps na main)
 - Ważność: S4 · Zasięg: 193 miejsca, m.in. 950;229, Podzamcze 803-829;237-247, Krakowskie 411-421;-86..-90
 - Opis: kawałki gruntu z liftem wyższym niż schody (footway 0,09 nad 0,05) zachodzą na obrys steps ponad 0,01 m² i przebijają najniższy stopień
-- Status: w naprawie, runda 2 (14.11): przywrócić drzwi wejścia n4934217573; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g781 (768efbb), czeka na przegląd kuratora; wcześniej: zgłoszone (14.11, naprawiacz G-777)
+- Status: w PR (14.11, bff7cdd, po przeglądzie kuratora i rundzie 2); wcześniej: w naprawie, runda 2 (14.11): przywrócić drzwi wejścia n4934217573; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g781 (768efbb), czeka na przegląd kuratora; wcześniej: zgłoszone (14.11, naprawiacz G-777)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: ground-over-steps spada; zrzut 1009,6;447,5 bez kostki na stopniach
 - chunkGround wycina obrys schodów z gruntu wyższego od nich (steps-cut.ts), narożniki cięcia z dokładnością do mm; ground-over-steps 234 -> 0 (193 klucze -> 0), żaden rodzaj nie rośnie; map-ground-golden 170580 -> 173539 wierzchołków; ubyły drzwi (0,44;-74,64) krakowskie-0-0, ich próg wypadał na stopniach
 - Przegląd kuratora 14.11 (768efbb): ZGODNE Z UWAGAMI; brak szczelin poza krawędziami cięcia; grass +0,8 m² w orto:diff to artefakt kolejności mapy (pod stopniami); ubyte drzwi to wejście OSM n4934217573 (Poczta Główna, KP 50), odrzucone regułą ground (front ościeżnicy na pasie schodów 3 m, Site: rail). Decyzja nocna: regresja tej gałęzi, naprawa w rundzie 2 przed PR; kontrola entrance-no-door (baza main 9).
+- runda 2: drzwi Poczty Głównej (n4934217573) wróciły: ościeżnica może wychodzić na górny stopień biegu na wysokości progu (props-doors.ts); nowa kontrola entrance-no-door, baza 9 z main, gałąź 10 -> 9; props.generated.ts jak na main; bff7cdd
 
 ### G-782 roundJoints: suma NonZero pierścieni zgodnych z ruchem wskazówek zegara w fazie okrągłych końców
 - Ważność: S4 · Zasięg: 242 z 2141 pasów ma pierścień zgodny z ruchem wskazówek zegara
@@ -1891,6 +1892,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (14.11, naprawiacz G-781), do łowcy
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: zrzut 1009,6;447,5 bez ciemnego trójkąta i ze zwartym rogiem biegu
+
+### G-791 Wejścia OSM bez drzwi na rysowanej ścianie (9 miejsc)
+- Ważność: S4 · Zasięg: 9 miejsc bazy entrance-no-door: krakowskie-0-1 -143,32; krakowskie-1-0 156,-265; krakowskie-2-0 427,-245 i 432,-242; podzamcze-0-1 527,437; podzamcze-1-1 748,428; stare-miasto-0-0 588,-237; stare-miasto-0-1 590,17; stare-miasto-1-1 668,15
+- Opis: wejście entrance=* w 1,5 m od ściany drzwi, reguły odrzucają wszystkie sloty, brak drzwi w 2 m
+- Status: zgłoszone (14.11, naprawiacz G-781)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: entrance-no-door spada, ground-over-steps nie rośnie
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
