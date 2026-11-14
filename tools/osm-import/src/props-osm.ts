@@ -13,7 +13,8 @@ import { type FurniturePoint, loadFurniture, planKindOf } from "./furniture.ts";
 import { type OsmData, type Tags, mergeOsm, parseExtract } from "./osm.ts";
 import { REPO } from "./paths.ts";
 import type { PlanItem, PropsPlan } from "./props-gen.ts";
-import { type LitWay, isLitWay, withLitRule } from "./props-lit.ts";
+import { type LitWay, isLitWay, markCourts, withLitRule } from "./props-lit.ts";
+import { WallIndex, isCourtyard, isPedestrianSquare } from "./courtyards.ts";
 import { geoToWorld } from "./project.ts";
 
 /** The id of the group of an OSM kind. */
@@ -54,8 +55,22 @@ export const litWaysOf = (osm: OsmData, keep: (tags: Tags | undefined) => boolea
 
 const loadDistricts = (root: string): OsmData => mergeOsm(DISTRICTS.map((d) => parseExtract(readFileSync(join(root, "data/osm", `${d.slug}.json`), "utf8"))));
 
-/** The lit ways of the districts' extracts in `data/osm`. */
-export const loadLitWays = (root = REPO): LitWay[] => litWaysOf(loadDistricts(root));
+/** The closed ways whose tags `keep` takes, as rings in the world. */
+const ringsOf = (osm: OsmData, keep: (tags: Tags | undefined) => boolean): LitWay[] => litWaysOf(osm, (tags) => keep(tags)).filter((w) => w.pts.length >= 4 && w.pts[0]!.x === w.pts[w.pts.length - 1]!.x && w.pts[0]!.z === w.pts[w.pts.length - 1]!.z);
+
+/** The courtyards of an extract (`courtyards.ts`): its pedestrian squares whose outline runs along its buildings. */
+export const courtsOf = (osm: OsmData): { id: number; ring: readonly LitWay["pts"][number][] }[] => {
+  const walls = new WallIndex(ringsOf(osm, (tags) => tags?.building !== undefined).map((w) => w.pts.slice(0, -1)));
+  return ringsOf(osm, isPedestrianSquare)
+    .map((w) => ({ id: w.id, ring: w.pts.slice(0, -1) }))
+    .filter((c) => isCourtyard(c.ring, walls));
+};
+
+/** The lit ways of the districts' extracts in `data/osm`, their courtyards marked (`markCourts`). */
+export const loadLitWays = (root = REPO): LitWay[] => {
+  const osm = loadDistricts(root);
+  return markCourts(litWaysOf(osm), courtsOf(osm));
+};
 
 /** Every street and path of the districts' extracts, for the lamps' looks along them (`styleClashes`). */
 export const loadStreetWays = (root = REPO): LitWay[] => litWaysOf(loadDistricts(root), (tags) => tags?.highway !== undefined);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PropsPlan } from "../src/props-gen.ts";
-import { CAR_COVER, COVER, isLitWay, lampLineOf, litFillItems, litItems, osmLampItems, withLitRule, yieldToRule } from "../src/props-lit.ts";
+import { CAR_COVER, COVER, isLitWay, lampLineOf, litFillItems, litItems, markCourts, osmLampItems, styleClashes, withLitRule, yieldToRule } from "../src/props-lit.ts";
 
 /** A way along x at `z`, from `x0` to `x1` (the strip of Krakowskie south of z = −200 is on the map, x −200..460). */
 const way = (id: number, tags: Record<string, string>, x0: number, x1: number, z: number) => ({ id, tags: { lit: "yes", ...tags }, pts: [{ x: x0, z }, { x: x1, z }] });
@@ -68,6 +68,28 @@ describe("the street lamps of the lit rule (G-798, ADR-0064 stage 3)", () => {
       ["lit.w3", "lamp-pastoral", 25],
     ]);
     expect(rule[1]!.lines![0]![0]).toBeGreaterThanOrEqual(300 + COVER - 2.5);
+  });
+
+  it("hangs lanterns round a courtyard and lamps no way across it (Dziedziniec Zamkowy)", () => {
+    const ring = [{ x: 300, z: -260 }, { x: 360, z: -260 }, { x: 360, z: -220 }, { x: 300, z: -220 }];
+    const square = { id: 1, tags: { highway: "pedestrian", area: "yes", lit: "yes" }, pts: [...ring, ring[0]!] };
+    const ways = markCourts([square, way(2, { highway: "path" }, 305, 355, -240), way(3, { highway: "path" }, 340, 420, -240)], [{ id: 1, ring }]);
+    expect(ways.map((w) => w.court)).toEqual(["square", "inside", undefined]);
+    const items = litItems({ items: [] }, ways);
+    expect(items.map((i) => [i.id, i.kind, i.spacing])).toEqual([
+      ["lit.w1", "lamp-wall-lantern", 15],
+      ["lit.w3", "lamp-park", 30],
+    ]);
+  });
+
+  it("carries a square's styled look onto a way only where most of it lies, and as a pastoral", () => {
+    // Plac Zamkowy's candelabra along the street's first 7.5 m of 100: the street keeps its road lamps.
+    const plan: PropsPlan = { items: [{ id: "lamps.plac", kind: "lamp-candelabra", spacing: 25, lines: [along(-60, 7.5, -240)] }] };
+    const items = litItems(plan, [way(1, { highway: "residential" }, 0, 100, -240)]);
+    expect(items.map((i) => i.kind)).toEqual(["lamp-road"]);
+    // A road lamp of the rule on a footway with a candelabrum along it turns pastoral, not candelabrum.
+    const clash = styleClashes([{ id: "lit.w1", kind: "lamp-road", spacing: 30, lines: [along(0, 100, -240)] }], [{ id: 9, tags: { highway: "footway" }, pts: [{ x: 0, z: -236 }, { x: 100, z: -236 }] }], [{ prop: "lamp-road", x: 50, z: -238 }, { prop: "lamp-candelabra", x: 70, z: -234 }]);
+    expect([...clash]).toEqual([["lit.w1", "lamp-pastoral"]]);
   });
 
   it("sets the Old Town's lamps as pastorals", () => {

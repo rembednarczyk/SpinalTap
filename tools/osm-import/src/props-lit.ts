@@ -27,12 +27,18 @@ import { OLD_TOWN_RING } from "./old-town.ts";
 import type { Tags } from "./osm.ts";
 import type { PlanItem, PropsPlan } from "./props-gen.ts";
 import { propOf } from "./props-kinds.ts";
+import { mostlyInside } from "./courtyards.ts";
 
 /** A way of the map with its tags and its points in the world. */
 export interface LitWay {
   readonly id: number;
   readonly tags: Tags;
   readonly pts: readonly Pt[];
+  /**
+   * A courtyard's square (`courtyards.ts`), lit from its facades: wall lanterns round it, no lamp on a
+   * post (Dziedziniec Zamkowy); or a way lying in one, which the facades' lanterns light.
+   */
+  readonly court?: "square" | "inside";
 }
 
 /** Ways OSM tags lit that light nothing yet: being built or only planned. */
@@ -118,8 +124,8 @@ const STEP = 2.5;
 const CELL = 20;
 /** The plan's kinds whose lines give way to the rule on lit car streets: the plain road lamp, which the rule sets in the same look. */
 const YIELDING: ReadonlySet<string> = new Set(["lamp-road"]);
-/** The class order the ways are lamped in: car streets, pedestrian streets, paths. */
-const RANK: Readonly<Record<string, number>> = { "lamp-road": 0, "lamp-modern-pole": 1, "lamp-park": 2 };
+/** The class order the ways are lamped in: car streets, pedestrian streets and courtyards, paths. */
+const RANK: Readonly<Record<string, number>> = { "lamp-road": 0, "lamp-modern-pole": 1, "lamp-wall-lantern": 1, "lamp-park": 2 };
 
 /** The kinds of the plan that light: the lamps and the kinds drawn as one. */
 const isLamp = (kind: string): boolean => propOf(kind)?.startsWith("lamp-") ?? false;
@@ -249,7 +255,14 @@ const planLamps = (plan: PropsPlan): LampIndex<LampLine | null> => {
 
 /** The kinds of the city's styled lamps (G-259), and the free-standing one a way beside them takes. */
 const STYLED: ReadonlySet<StreetPropKind> = new Set(["lamp-pastoral", "lamp-candelabra", "lamp-wall-lantern"]);
-const FREE_STANDING: Partial<Record<StreetPropKind, StreetPropKind>> = { "lamp-wall-lantern": "lamp-pastoral" };
+/**
+ * The free-standing lamp a way beside styled ones takes: the pastoral, Lublin's lamp of its old
+ * streets. The candelabrum is Plac Zamkowy's own, its look not carried onto the streets round it
+ * (Podwale, lit by pastorals: the review of G-798).
+ */
+const FREE_STANDING: Partial<Record<StreetPropKind, StreetPropKind>> = { "lamp-wall-lantern": "lamp-pastoral", "lamp-candelabra": "lamp-pastoral" };
+/** A courtyard's look: lanterns on the facades round it, every 15 m as the Old Town's (`lamps.stare-miasto-wall`). */
+const COURT: LampLine = { kind: "lamp-wall-lantern", spacing: 15, sides: 2 };
 /**
  * How near a way a styled line of the plan makes it styled (m): the scan's 8 m round a way's axis
  * (`lamp-style-change-on-way`) and a lamp's offset from its line, the wall lanterns' 4 m out on the
@@ -273,17 +286,19 @@ const mostOn = (pts: readonly Pt[], plan: LampIndex<LampLine | null>, r: number,
 };
 
 /**
- * The look of a way: the plan's line most of its points lie on (3 points at least); else a styled
- * line beside `STYLED_SHARE` of a way on foot, as the free-standing lamp of that look with the way's
- * own spacing; else its class's. A car street keeps its road lamps beside the facades' lanterns, as
+ * The look of a way: the plan's plain line most of its points lie on (3 points at least), or a styled
+ * one `STYLED_SHARE` of them lie on (3 points of Plac Zamkowy's candelabra at Podwale's end made the
+ * whole street candelabra); else a styled line beside `STYLED_SHARE` of a way on foot, as the
+ * free-standing lamp of that look with the way's own spacing; else its class's. A car street keeps its road lamps beside the facades' lanterns, as
  * the plan set them on Podwale and Królewska past the walls, and under a park lamp's path drawn
  * along it (the riverside path on Mełgiewska): a park lamp stands beside a path, not at a kerb.
  */
 const lookOf = (pts: readonly Pt[], line: LampLine, plan: LampIndex<LampLine | null>): LampLine => {
   const car = line.kind === "lamp-road";
-  const on = mostOn(pts, plan, ON_WAY, 3, (l) => !car || l.kind !== "lamp-park");
+  const least = Math.max(3, pts.length * STYLED_SHARE);
+  const on = mostOn(pts, plan, ON_WAY, 3, (l) => !STYLED.has(l.kind) && (!car || l.kind !== "lamp-park")) ?? mostOn(pts, plan, ON_WAY, least, (l) => STYLED.has(l.kind));
   if (on) return on;
-  const styled = car ? null : mostOn(pts, plan, STYLED_NEAR, Math.max(3, pts.length * STYLED_SHARE), (l) => STYLED.has(l.kind));
+  const styled = car ? null : mostOn(pts, plan, STYLED_NEAR, least, (l) => STYLED.has(l.kind));
   if (styled) return { ...line, kind: FREE_STANDING[styled.kind] ?? styled.kind };
   return lookAt(line, pts[Math.floor(pts.length / 2)]!);
 };
@@ -332,7 +347,8 @@ const litItem = (id: string, w: LitWay, look: LampLine, runs: readonly (readonly
 const lampedWays = (ways: readonly LitWay[]): { w: LitWay; line: LampLine; pts: Pt[] }[] =>
   ways
     .flatMap((w) => {
-      const line = isLitWay(w.tags) && w.pts.length >= 2 ? lampLineOf(w.tags) : null;
+      if (w.court === "inside") return [];
+      const line = isLitWay(w.tags) && w.pts.length >= 2 ? (w.court === "square" ? COURT : lampLineOf(w.tags)) : null;
       return line ? [{ w, line, pts: densify(w.pts) }] : [];
     })
     .sort((a, b) => RANK[a.line.kind]! - RANK[b.line.kind]! || a.w.id - b.w.id);
@@ -345,7 +361,7 @@ const lampDark = (plan: PropsPlan, ways: readonly LitWay[], lit: LampIndex<unkno
     const r = reach(line);
     const spans = darkSpans(pts, (p) => lit.nearest(p, r) === null);
     if (spans.length === 0) continue;
-    const look = lookOf(pts, line, planned);
+    const look = line === COURT ? COURT : lookOf(pts, line, planned);
     const runs = spans.map((s) => padded(pts, s, look.spacing));
     for (const run of runs) lit.addLine(run, true);
     items.push(litItem(id(w), w, look, runs));
@@ -446,7 +462,7 @@ export const placeLit = <T extends { readonly byChunk: ReadonlyMap<string, reado
  */
 export const litWayGroups = (plan: PropsPlan, ways: readonly LitWay[]): PlanItem[] => {
   const planned = planLamps(plan);
-  return lampedWays(ways).map(({ w, line, pts }) => litItem(`lit.w${w.id}`, w, lookOf(pts, line, planned), [w.pts]));
+  return lampedWays(ways).map(({ w, line, pts }) => litItem(`lit.w${w.id}`, w, line === COURT ? COURT : lookOf(pts, line, planned), [w.pts]));
 };
 
 /**
@@ -458,3 +474,15 @@ export const withLitRule = (plan: PropsPlan, ways: readonly LitWay[], points: re
   const withLamps: PropsPlan = { ...given.plan, items: [...given.plan.items, ...osmLampItems(given.plan, points)] };
   return { plan: { ...withLamps, items: [...withLamps.items, ...litItems(withLamps, ways)] }, yielded: given.yielded };
 };
+
+/**
+ * The lit ways with their courtyards marked (`LitWay.court`): a lit courtyard square (`courts`, the
+ * pedestrian squares whose outline runs along buildings, `courtyards.ts`) as `square`, a lit way
+ * lying mostly in one as `inside`.
+ */
+export const markCourts = (ways: readonly LitWay[], courts: readonly { readonly id: number; readonly ring: readonly Pt[] }[]): LitWay[] =>
+  ways.map((w) => {
+    if (courts.some((c) => c.id === w.id)) return { ...w, court: "square" as const };
+    const pts = densify(w.pts);
+    return courts.some((c) => mostlyInside(pts, c.ring)) ? { ...w, court: "inside" as const } : w;
+  });
