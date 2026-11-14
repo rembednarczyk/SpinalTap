@@ -55,7 +55,7 @@ const loadCovers = (): { readonly covers: Cover[]; readonly missing: string[] } 
   return { covers, missing };
 };
 
-const CLASS_PL: Record<string, string> = { green: "trawa", canopy: "korony", paving: "kostka", asphalt: "asfalt", shadow: "cień", unknown: "nieznane", none: "bez zdjęcia" };
+const CLASS_PL: Record<string, string> = { green: "trawa", canopy: "korony", canopyHard: "korony nad kostką", paving: "kostka", asphalt: "asfalt", shadow: "cień", unknown: "nieznane", none: "bez zdjęcia" };
 const classes = (c: ClassCounts): string => {
   const parts = COVER_NAMES.filter((n) => c[n] > 0).map((n) => `${CLASS_PL[n]} ${c[n]}`);
   return parts.length ? parts.join(", ") : "0";

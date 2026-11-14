@@ -86,7 +86,7 @@
     }
   ],
   "classifier": {
-    "version": 2,
+    "version": 3,
     "grid": 0.5,
     "classes": [
       "none",
@@ -95,13 +95,15 @@
       "asphalt",
       "shadow",
       "unknown",
-      "canopy"
+      "canopy",
+      "canopyHard"
     ],
     "thresholds": {
       "smooth": 1,
       "shadowL": 50,
       "greenExg": 0.026,
       "leafOffExg": 0.026,
+      "crownHardS": 0.12,
       "hardS": 0.4,
       "pavingL": 115
     }
@@ -115,7 +117,7 @@
         "maxX": 460,
         "maxZ": 160
       },
-      "bytes": 80098,
+      "bytes": 84734,
       "cells": [
         "krakowskie-0-0",
         "krakowskie-1-0",
@@ -349,7 +351,8 @@
         "asphalt": 280056,
         "shadow": 1737,
         "unknown": 12115,
-        "canopy": 94388
+        "canopy": 72827,
+        "canopyHard": 21561
       }
     },
     {
@@ -360,7 +363,7 @@
         "maxX": 2700,
         "maxZ": 480
       },
-      "bytes": 42985,
+      "bytes": 44478,
       "cells": [
         "nabrzeze-0-0",
         "nabrzeze-1-0",
@@ -520,7 +523,8 @@
         "asphalt": 42236,
         "shadow": 1222,
         "unknown": 75,
-        "canopy": 82972
+        "canopy": 77890,
+        "canopyHard": 5082
       }
     },
     {
@@ -531,7 +535,7 @@
         "maxX": 1120,
         "maxZ": 580
       },
-      "bytes": 66321,
+      "bytes": 69959,
       "cells": [
         "podzamcze-0-0",
         "podzamcze-1-0",
@@ -765,7 +769,8 @@
         "asphalt": 158966,
         "shadow": 1073,
         "unknown": 9095,
-        "canopy": 95451
+        "canopy": 80974,
+        "canopyHard": 14477
       }
     },
     {
@@ -776,7 +781,7 @@
         "maxX": 760,
         "maxZ": 160
       },
-      "bytes": 38380,
+      "bytes": 39929,
       "cells": [
         "stare-miasto-0-0",
         "stare-miasto-1-0",
@@ -936,7 +941,8 @@
         "asphalt": 171753,
         "shadow": 612,
         "unknown": 7791,
-        "canopy": 33359
+        "canopy": 27525,
+        "canopyHard": 5834
       }
     }
   ]

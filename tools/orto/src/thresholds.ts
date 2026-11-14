@@ -20,6 +20,13 @@ export interface Thresholds {
    * under crowns (G-672). As `greenExg`: paving under the crowns by Ruska keeps 4% of it, 0.02 kept 20%.
    */
   readonly leafOffExg: number;
+  /**
+   * Paving under crowns: green under crowns (`leafOffExg`) the current image shows light (`pavingL`)
+   * and no more saturated than this (G-764). The curator's sample of 13.11 over the four districts:
+   * the promenade by VIVO, Furmańska and the pavements under trees pass, the shrubs and hedges of
+   * Nabrzeże and Podzamcze (a lawn or soil in April) do not.
+   */
+  readonly crownHardS: number;
   /** A hard surface more saturated than this in the current image is something else (a coloured roof, a car, a court): unknown. */
   readonly hardS: number;
   /** Light paving: the current image's L at or over this; darker is asphalt. */
@@ -31,6 +38,7 @@ export const THRESHOLDS: Thresholds = {
   shadowL: 50,
   greenExg: 0.026,
   leafOffExg: 0.026,
+  crownHardS: 0.12,
   hardS: 0.4,
   pavingL: 115,
 };

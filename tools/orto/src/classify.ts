@@ -5,13 +5,15 @@
  * brightness and saturation, which shows the ground under the trees (thresholds in `thresholds.ts`).
  * Green the leaf-off current image does not show is `canopy` (G-672): the two summer flights' crowns
  * lift the mean over paving under trees as well as over a lawn in their shade or still brown in April.
+ * Of that, what the leaf-off image shows light and grey, as paving, is `canopyHard` (G-764): paving
+ * under bare twigs, where a lawn in April is darker or browner.
  */
 import { THRESHOLDS, type Thresholds } from "./thresholds.ts";
 
 /** Palette indices of the cover raster. */
-export const COVER = { none: 0, green: 1, paving: 2, asphalt: 3, shadow: 4, unknown: 5, canopy: 6 } as const;
+export const COVER = { none: 0, green: 1, paving: 2, asphalt: 3, shadow: 4, unknown: 5, canopy: 6, canopyHard: 7 } as const;
 export type CoverClass = (typeof COVER)[keyof typeof COVER];
-export const COVER_NAMES = ["none", "green", "paving", "asphalt", "shadow", "unknown", "canopy"] as const;
+export const COVER_NAMES = ["none", "green", "paving", "asphalt", "shadow", "unknown", "canopy", "canopyHard"] as const;
 export type CoverName = (typeof COVER_NAMES)[number];
 /** Colours of the classes in the PNG: what a person opening it sees. */
 export const COVER_PALETTE: readonly (readonly [number, number, number])[] = [
@@ -22,6 +24,7 @@ export const COVER_PALETTE: readonly (readonly [number, number, number])[] = [
   [20, 20, 60],
   [200, 60, 200],
   [30, 100, 40],
+  [150, 150, 90],
 ];
 
 export type Colour = readonly [r: number, g: number, b: number];
@@ -49,7 +52,7 @@ export const classify = (flights: readonly Colour[], t: Thresholds = THRESHOLDS)
   const exg = stats.reduce((s, c) => s + c.exg, 0) / stats.length;
   if (l < t.shadowL) return COVER.shadow;
   const now = stats[0]!;
-  if (exg >= t.greenExg) return now.exg >= t.leafOffExg ? COVER.green : COVER.canopy;
+  if (exg >= t.greenExg) return now.exg >= t.leafOffExg ? COVER.green : now.l >= t.pavingL && now.s <= t.crownHardS ? COVER.canopyHard : COVER.canopy;
   if (now.s > t.hardS) return COVER.unknown;
   return now.l >= t.pavingL ? COVER.paving : COVER.asphalt;
 };
