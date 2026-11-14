@@ -146,6 +146,16 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
     for (const p of [...samples({ minX: 14, minZ: 8, maxX: 16, maxZ: 12 }), ...samples({ minX: 3, minZ: 2, maxX: 5, maxZ: 6 })]) expect(surfaceAt(fills, p), `${p.x},${p.z}`).toEqual(["square"]);
   });
 
+  it("leaves no bare ground where a split's edge crosses a lawn's corner on the slant (G-769)", () => {
+    // A lawn in the paving, two cells wide, its south row a cell east: the paving's split through it
+    // (x = 14.5) crosses its corners, cut on the slant, as at Krakowskie (299.5; -228.1).
+    const lawn = (x: number, z: number) => ((z > 10 && z < 11 && x > 14 && x < 15) || (z > 9.5 && z < 10 && x > 14.5 && x < 15.5) ? COVER.green : undefined);
+    const fills = coverFills(RECT, cover(lawn), [road], [], TOWN);
+    const bare: string[] = [];
+    for (let x = 13.05; x < 17; x += 0.1) for (let z = 8.05; z < 12; z += 0.1) if (surfaceAt(fills, { x, z }).length === 0) bare.push(`${x.toFixed(2)},${z.toFixed(2)}`);
+    expect(bare).toEqual([]);
+  });
+
   it("puts each fill first among the pieces of its surface", () => {
     const ground = [piece("water", box(0, 0, 1, 1)), piece("grass", box(1, 0, 2, 1)), piece("square", box(2, 0, 3, 1)), piece("road", box(3, 0, 4, 1))];
     const fills = [piece("square", box(5, 0, 6, 1)), piece("grass", box(6, 0, 7, 1))];
