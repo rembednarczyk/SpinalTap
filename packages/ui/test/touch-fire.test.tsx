@@ -29,17 +29,17 @@ describe("touch fire button in the settings (ADR-0072)", () => {
     return r;
   };
 
-  it("aims and fires by default, and the aim button sits in the same tab", () => {
+  it("fires only by default (14.11), the aim button in the same tab", () => {
     openTouchTab();
     const fire = screen.getByRole("radiogroup", { name: "Fire button" });
-    expect(within(fire).getByRole("radio", { name: "Aims and fires" }).getAttribute("aria-checked")).toBe("true");
-    expect(within(fire).getByRole("radio", { name: "Fires only" }).getAttribute("aria-checked")).toBe("false");
+    expect(within(fire).getByRole("radio", { name: "Aims and fires" }).getAttribute("aria-checked")).toBe("false");
+    expect(within(fire).getByRole("radio", { name: "Fires only" }).getAttribute("aria-checked")).toBe("true");
     const aim = screen.getByRole("radiogroup", { name: "Aim button" });
     expect(within(aim).getByRole("radio", { name: "Hold" }).getAttribute("aria-checked")).toBe("true");
   });
 
   it("fires only with a toggled aim button, so a tap on it raises the sights", () => {
-    const { i } = openTouchTab();
+    const { i } = openTouchTab({ touchFire: "aims", aimMode: "hold" });
     fireEvent.click(within(screen.getByRole("radiogroup", { name: "Fire button" })).getByRole("radio", { name: "Fires only" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ touchFire: "separate", aimMode: "toggle" });
   });

@@ -9,7 +9,7 @@ import { GameSession, type SettingsHost } from "../src/game-session";
 import { buildJournal, createJournalCache } from "../src/journal";
 import { buildCityMap, readableAngle } from "../src/city-map";
 import { buildDistrictMap, createMinimapTracker } from "../src/minimap";
-import { SETTINGS_KEY, applyVolumes, loadSettings, sanitizeSettings, saveSettings, scaleLook } from "../src/settings";
+import { defaultAimMode, SETTINGS_KEY, applyVolumes, loadSettings, sanitizeSettings, saveSettings, scaleLook } from "../src/settings";
 
 const render: RenderPort = {
   spawn() {},
@@ -300,8 +300,24 @@ describe("settings", () => {
     expect(loadSettings(st)).toMatchObject({ quality: "high", damageNumbers: "hit", volume: 0.3 });
     // Chosen after it: kept.
     saveSettings(st, { ...DEFAULT_SETTINGS, quality: "low", damageNumbers: "off" });
-    expect(JSON.parse(st.data.get(SETTINGS_KEY)!)).toMatchObject({ rev: 2 });
+    expect(JSON.parse(st.data.get(SETTINGS_KEY)!)).toMatchObject({ rev: 3 });
     expect(loadSettings(st)).toMatchObject({ quality: "low", damageNumbers: "off" });
+  });
+
+  it("on the phone the fire button only fires and the aim button toggles, also for entries saved before (14.11)", () => {
+    expect(DEFAULT_SETTINGS).toMatchObject({ touchFire: "separate", aimMode: "hold" });
+    expect(defaultAimMode(true)).toBe("toggle");
+    expect(defaultAimMode(false)).toBe("hold");
+    const phone = { ...DEFAULT_SETTINGS, aimMode: defaultAimMode(true) };
+    const st = memoryStorage();
+    // Saved under revision 2, when aim-and-fire and a held aim button were the defaults.
+    st.setItem(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, touchFire: "aims", aimMode: "hold", volume: 0.3, rev: 2 }));
+    expect(loadSettings(st, phone)).toMatchObject({ touchFire: "separate", aimMode: "toggle", volume: 0.3 });
+    // A mouse keeps the held aim button.
+    expect(loadSettings(st)).toMatchObject({ touchFire: "separate", aimMode: "hold" });
+    // Chosen after it: kept.
+    saveSettings(st, { ...phone, touchFire: "aims", aimMode: "hold" });
+    expect(loadSettings(st, phone)).toMatchObject({ touchFire: "aims", aimMode: "hold" });
   });
 
   it("keeps autosave on by default and for entries saved before it existed", () => {
