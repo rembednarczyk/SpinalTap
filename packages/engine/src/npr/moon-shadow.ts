@@ -1,5 +1,6 @@
 import {
   type AbstractMesh,
+  type Camera,
   CameraClass,
   Color4,
   Constants,
@@ -13,7 +14,9 @@ import {
   VertexBuffer,
   VertexData,
 } from "../babylon";
+import { halfTangents } from "./contact-shade";
 import type { LightingRig } from "./lighting";
+import { type ShadowView, nextExtent, viewReach } from "./shadow-fit";
 import { SHADOW_DEPTH_FRAGMENT, SHADOW_DEPTH_VERTEX } from "./toon-shader";
 
 /** Layer only the moon camera sees: the merged static shadow proxy lives here. */
@@ -23,6 +26,8 @@ const SHADOW_ONLY_LAYER = 0x10000000;
  * Hard moon shadow. An orthographic camera along the moon direction follows the focus point
  * (the player), snapped to whole shadow texels so edges do not crawl while walking. Static
  * casters are merged into one shadow-only proxy mesh; moving characters render as they are.
+ * Given the view, the square shrinks to what the screen shows (a few fixed sizes, `shadow-fit`):
+ * looking down at the player, one texel covers under a centimetre instead of nearly three.
  */
 export class MoonShadow {
   readonly texture: RenderTargetTexture;
@@ -32,7 +37,8 @@ export class MoonShadow {
   private readonly dir: Vector3;
   private readonly right: Vector3;
   private readonly up: Vector3;
-  private readonly texelWorld: number;
+  private texelWorld: number;
+  private extent: number;
   private readonly dynamic = new Set<AbstractMesh>();
   private readonly statics = new Set<AbstractMesh>();
   private staticProxy: MeshClass | null = null;
@@ -43,7 +49,7 @@ export class MoonShadow {
     private readonly scene: Scene,
     rig: LightingRig,
     private readonly halfExtent: number,
-    size = 2048,
+    private readonly size = 2048,
   ) {
     const caps = scene.getEngine().getCaps();
     this.texture = new RenderTargetTexture("moon-shadow", size, scene, {
@@ -64,10 +70,6 @@ export class MoonShadow {
     this.dir = new Vector3(rig.sunDir.x, rig.sunDir.y, rig.sunDir.z).normalize();
     const cam = new FreeCamera("moon-camera", this.dir.scale(90), scene, false);
     cam.mode = CameraClass.ORTHOGRAPHIC_CAMERA;
-    cam.orthoLeft = -halfExtent;
-    cam.orthoRight = halfExtent;
-    cam.orthoTop = halfExtent;
-    cam.orthoBottom = -halfExtent;
     cam.minZ = 1;
     cam.maxZ = 200;
     cam.layerMask = 0xffffffff;
@@ -78,7 +80,9 @@ export class MoonShadow {
     this.right = cam.getDirection(Vector3.Right());
     this.up = cam.getDirection(Vector3.Up());
     this.texelSize = 1 / size;
-    this.texelWorld = (2 * halfExtent) / size;
+    this.extent = halfExtent;
+    this.texelWorld = 0;
+    this.setExtent(halfExtent);
 
     this.depthMaterial = new ShaderMaterial(
       "moon-shadow-depth",
@@ -116,17 +120,21 @@ export class MoonShadow {
   }
 
   /**
-   * Recentres the shadow on the focus point. Returns the light matrix when it changed (the
-   * caller pushes it to the receiving materials), otherwise null.
+   * Recentres the shadow on the focus point and, given the camera, fits its size to the view.
+   * Returns the light matrix when it changed (the caller pushes it to the receiving materials),
+   * otherwise null.
    */
-  update(focus: { x: number; y: number; z: number }): Matrix | null {
+  update(focus: { x: number; y: number; z: number }, view?: Camera): Matrix | null {
     if (this.staticDirty) this.rebuildStaticProxy();
+    const reach = view ? viewReach(this.viewOf(view), focus, this.right, this.up, this.halfExtent) : this.halfExtent;
+    const extent = nextExtent(this.extent, reach, this.halfExtent);
+    if (extent !== this.extent) this.setExtent(extent);
     const c = new Vector3(focus.x, focus.y, focus.z);
     const cx = Vector3.Dot(c, this.right);
     const cy = Vector3.Dot(c, this.up);
     const sx = Math.round(cx / this.texelWorld) * this.texelWorld;
     const sy = Math.round(cy / this.texelWorld) * this.texelWorld;
-    const key = `${sx.toFixed(4)}:${sy.toFixed(4)}`;
+    const key = `${extent}:${sx.toFixed(4)}:${sy.toFixed(4)}`;
     if (key === this.lastSnap) return null;
     this.lastSnap = key;
     const snapped = c.add(this.right.scale(sx - cx)).add(this.up.scale(sy - cy));
@@ -139,8 +147,31 @@ export class MoonShadow {
     return this.texture.renderList?.length ?? 0;
   }
 
+  /** Side of the square the shadow covers now (m). */
   get coverage(): number {
-    return this.halfExtent * 2;
+    return this.extent * 2;
+  }
+
+  /** One shadow texel across, in metres in the light's plane. */
+  get texelMetres(): number {
+    return this.texelWorld;
+  }
+
+  private setExtent(extent: number): void {
+    this.extent = extent;
+    this.texelWorld = (2 * extent) / this.size;
+    this.camera.orthoLeft = -extent;
+    this.camera.orthoRight = extent;
+    this.camera.orthoTop = extent;
+    this.camera.orthoBottom = -extent;
+  }
+
+  /** The camera's eye and the world directions through the corners of its screen. */
+  private viewOf(view: Camera): ShadowView {
+    const engine = this.scene.getEngine();
+    const [tx, ty] = halfTangents(view.fov, view.fovMode === CameraClass.FOVMODE_HORIZONTAL_FIXED, engine.getRenderWidth(), engine.getRenderHeight());
+    const corners = [-1, 1].flatMap((sx) => [-1, 1].map((sy) => view.getDirection(new Vector3(sx * tx, sy * ty, 1))));
+    return { eye: view.globalPosition, corners };
   }
 
   private rebuildStaticProxy(): void {

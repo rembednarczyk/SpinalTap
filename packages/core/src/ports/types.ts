@@ -406,7 +406,14 @@ export interface AppearanceDescriptor {
 
 export type AudioCue =
   | "shot"
+  // The player's shot per weapon kind; "shot" stays the pistol's (recorded sounds, 14.11).
+  | "shot-revolver"
+  | "shot-smg"
+  | "shot-shotgun"
+  | "shot-rifle"
   | "enemy-shot"
+  | "enemy-shot-shotgun"
+  | "enemy-shot-rifle"
   | "hit"
   | "critical"
   | "hurt"
@@ -421,6 +428,8 @@ export type AudioCue =
   | "overdrive"
   // Weapons, loot and trade (ADR-0015, E12).
   | "reload"
+  // One round into a tube (shotgun, per-round reload): a short click, not the full magazine change.
+  | "reload-round"
   | "weapon-switch"
   | "loot-pickup"
   | "sell"

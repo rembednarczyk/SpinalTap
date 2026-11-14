@@ -188,11 +188,15 @@ describe("shotgun: per-round reload", () => {
 
   it("loads one shell per 0.5 s until full", () => {
     const sim = setup();
+    const started = collect<{ perRound: boolean }>(sim, "ReloadStarted");
     sim.step(input({ weaponSlot: 1 }));
     run(sim, ticks(1));
     sim.step(input({ reload: true }));
     run(sim, ticks(1.05));
     expect(loaded(sim, "i4")).toBe(2);
+    // Each shell starts its own step, flagged so the sound is a click, not a magazine change.
+    expect(started.length).toBeGreaterThanOrEqual(2);
+    expect(started.every((e) => e.perRound)).toBe(true);
     run(sim, ticks(3));
     expect(loaded(sim, "i4")).toBe(6);
     expect(sim.domain.ammo["12g"]).toBe(4);
@@ -221,7 +225,7 @@ describe("NPC magazines", () => {
     expect(guard.combatant!.loaded).toBe(30);
     guard.combatant!.loaded = 0;
     sim.step();
-    expect(started).toEqual([{ entityId: guard.id, duration: 2 }]);
+    expect(started).toEqual([{ entityId: guard.id, duration: 2, perRound: false }]);
     run(sim, ticks(2));
     expect(guard.combatant!.loaded).toBe(30);
   });

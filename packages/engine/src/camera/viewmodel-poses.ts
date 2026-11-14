@@ -36,6 +36,25 @@ const PISTOL: ViewmodelPose = {
 };
 
 /**
+ * The handguns sit this much lower in the fist than round 2 drew them (the user's wish of 14.11:
+ * "lower, more in the fist", and seated, not cutting through the hand aimed in): from the hip and
+ * aimed in alike the gun goes this much lower under the hands, which close higher up its grip
+ * (`HANDGUN_FIST`, in the gun's frame), so on the screen the hands keep their height and the
+ * gun drops into them (metres). Aimed in, its sights drop as much under the crosshair (G-275 keeps
+ * their angle over 3 degrees, more is allowed).
+ */
+export const HANDGUN_DEEPER = 0.015;
+
+const deeper = (pose: ViewmodelPose): ViewmodelPose => {
+  const { hip, ads, low } = pose;
+  const d = HANDGUN_DEEPER;
+  return { ...pose, hip: { ...hip, y: hip.y - d }, ads: { ...ads, y: ads.y - d }, low: { ...low, y: low.y + d } };
+};
+
+/** The pistol as drawn, the hands deeper on its grip; an empty hand takes it too (`weaponHands`). */
+const HANDGUN = deeper(PISTOL);
+
+/**
  * The weapon this much nearer the eye than the poses below were drawn (the user's wish of 13.11,
  * round 4): from the hip along the line from the eye, so it stays where it was on the screen, only
  * bigger; aimed in so that the far end of its sights keeps its angle under the crosshair.
@@ -57,9 +76,9 @@ const nearer = (pose: ViewmodelPose, k = NEARER): ViewmodelPose => {
  * the grip, the pistol's slide 0.09 m.
  */
 const POSES: Readonly<Partial<Record<WeaponLook, ViewmodelPose>>> = {
-  // The handguns where the user chose them (round 2, e17dc2e), not nearer: low on the right, both fists round the grip.
-  pistol: PISTOL,
-  revolver: { ...PISTOL, ads: { x: 0, y: -0.14, z: 0.4 }, muzzle: { x: 0, y: 0.076, z: 0.225 }, top: 0.105 },
+  // The handguns where the user chose them (round 2, e17dc2e), not nearer: low on the right, both fists round the grip, deeper in them (14.11).
+  pistol: HANDGUN,
+  revolver: deeper({ ...PISTOL, ads: { x: 0, y: -0.14, z: 0.4 }, muzzle: { x: 0, y: 0.076, z: 0.225 }, top: 0.105 }),
   // The long guns keep the left hand on the fore-end in the frame (`LONG_GUN`); the right one's grip may go under it.
   smg: nearer({ hip: { x: 0.2, y: -0.25, z: 0.6 }, ads: { x: 0, y: -0.2, z: 0.42 }, muzzle: { x: 0, y: 0.103, z: 0.34 }, top: 0.15, low: { y: 0, z: 0.19 } }),
   shotgun: nearer({ hip: { x: 0.21, y: -0.25, z: 0.5 }, ads: { x: 0, y: -0.18, z: 0.45 }, muzzle: { x: 0, y: 0.092, z: 0.595 }, top: 0.13, low: { y: -0.04, z: 0.37 } }),
@@ -86,7 +105,7 @@ const POSES: Readonly<Partial<Record<WeaponLook, ViewmodelPose>>> = {
 };
 
 /** The pose for a weapon in hand; an empty hand takes the pistol's. */
-export const viewmodelPose = (look: WeaponLook | null): ViewmodelPose => (look ? POSES[look] : undefined) ?? PISTOL;
+export const viewmodelPose = (look: WeaponLook | null): ViewmodelPose => (look ? POSES[look] : undefined) ?? HANDGUN;
 
 /** The hands' lowest point stays this far inside the frame's bottom edge (a share of its half height). */
 const MARGIN = 0.96;
