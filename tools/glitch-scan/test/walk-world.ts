@@ -8,12 +8,14 @@ import { SHAPED_TERRAIN, groundY } from "../../../packages/sim/src/content/lubli
 import { WORLD_BARRIERS } from "../../../packages/sim/src/content/world-barriers";
 import { DECK_HEADROOM, type GroundDeck, deckHeight, groundOver } from "../../../packages/sim/src/world/deck";
 import { roadWidth } from "../../osm-import/src/ground.ts";
+import { floorOver } from "./scene-solids";
 import { type WalkWay, blockedStretches, nearStretches } from "./walk-axes";
 import type { WalkChunk, WalkWorld } from "./walk-blocked";
 
 /**
  * The game's Lublin as `walk-blocked` reads it (`walk-blocked.ts`): the ground of `groundY` worked
- * out a chunk at a time (its own terrain and the decks over it), the decks that are the ground,
+ * out a chunk at a time (its own terrain and the decks over it, the scenes' solids standing in it:
+ * the Arkady's slabs, G-759), the decks that are the ground,
  * the edges the model means (walls, barriers, T-147, Alchemia's terraces) and the stretches of
  * the map's ways blocked along them (`walk-axes.ts`).
  */
@@ -80,14 +82,17 @@ export const onAlchemia = (p: Pt): boolean => {
   return ALCHEMIA_PADS.some((d) => rectOff(d.rect, p) <= d.blend + cell) || ALCHEMIA_RAMPS.some((r) => segmentDistance(p.x, p.z, r.a.x, r.a.z, r.b.x, r.b.z) <= r.width / 2 + r.blend + cell);
 };
 
-/** The ground of a chunk's cells: `groundY` for its own terrain and the decks over it, `groundY` itself past its bounds. */
+/**
+ * The ground of a chunk's cells: `groundY` for its own terrain and the decks over it, `groundY`
+ * itself past its bounds, each raised onto a solid of a scene standing in it (`floorOver`, G-759).
+ */
 const heightIn = (chunk: WalkChunk) => {
   const grid = SHAPED_TERRAIN.get(chunk.id);
   const decks = DECKS.filter((d) => touches(d.box, chunk.bounds));
   const b = chunk.bounds;
   return (x: number, z: number): number => {
-    if (!grid || x <= b.minX || x >= b.maxX || z <= b.minZ || z >= b.maxZ) return groundY(x, z);
-    return groundOver(decks, x, z, terrainHeightAt(grid, x, z));
+    if (!grid || x <= b.minX || x >= b.maxX || z <= b.minZ || z >= b.maxZ) return floorOver(x, z, groundY(x, z));
+    return floorOver(x, z, groundOver(decks, x, z, terrainHeightAt(grid, x, z)));
   };
 };
 
