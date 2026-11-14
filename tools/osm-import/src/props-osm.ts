@@ -6,8 +6,11 @@
  * where the two meet. The plan of 29.10 stays the source of its descriptions, its hand-drawn lines and
  * areas; the lamps (the `lit` rule, G-798) and the hydrants (`osm.hydrants`) are placed by rules of their own.
  */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { DISTRICTS } from "./config.ts";
-import { type FurniturePoint, planKindOf } from "./furniture.ts";
+import { type FurniturePoint, loadFurniture, planKindOf } from "./furniture.ts";
+import { REPO } from "./paths.ts";
 import type { PlanItem, PropsPlan } from "./props-gen.ts";
 
 /** The id of the group of an OSM kind. */
@@ -35,3 +38,6 @@ export const osmFurnitureItems = (plan: PropsPlan, points: readonly FurniturePoi
 
 /** The plan with the extract's groups after its own. */
 export const withOsmFurniture = (plan: PropsPlan, points: readonly FurniturePoint[]): PropsPlan => ({ ...plan, items: [...plan.items, ...osmFurnitureItems(plan, points)] });
+
+/** The plan `pnpm osm:props` places: `docs/world/lublin-props.todo.json` with the extract's groups after its own. */
+export const loadPropsPlan = (root = REPO): PropsPlan => withOsmFurniture(JSON.parse(readFileSync(join(root, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan, loadFurniture(root));

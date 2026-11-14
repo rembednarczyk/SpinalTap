@@ -9,17 +9,15 @@
  */
 import { join } from "node:path";
 import { type Plugin, runnerImport } from "vite";
-import { readFileSync } from "node:fs";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
 import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { REPO } from "./paths.ts";
-import { loadFurniture } from "./furniture.ts";
-import { withOsmFurniture } from "./props-osm.ts";
+import { loadPropsPlan } from "./props-osm.ts";
 import { emitProps } from "./props-emit.ts";
-import { type PropsPlan, type PropsStats, generateProps } from "./props-gen.ts";
+import { type PropsStats, generateProps } from "./props-gen.ts";
 import { loadBuildingTags, loadNodeTags } from "./props-art.ts";
 import type * as DecalWalls from "./decal-walls.ts";
 import { type DecalsOut, addDecals } from "./props-decals.ts";
@@ -30,7 +28,6 @@ import { addDoors, loadEntrances } from "./props-doors.ts";
 import type * as CrowdClear from "./crowd-clear.ts";
 import { type FiguresOut, addFigures } from "./props-figures.ts";
 
-const PLAN = join(REPO, "docs/world/lublin-props.todo.json");
 /** The table the generator writes, and the simulation imports. */
 export const PROPS_OUT = join(REPO, "packages/sim/src/content/lublin/props.generated.ts");
 
@@ -59,7 +56,7 @@ export interface BuiltProps {
 /** The whole table, in one pass: furniture, doors, decals, then the still crowd. */
 export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltProps> => {
   // The current extract's furniture the plan lacks, after the plan's groups (ADR-0077 point 4, G-099).
-  const plan = withOsmFurniture(JSON.parse(readFileSync(PLAN, "utf8")) as PropsPlan, loadFurniture());
+  const plan = loadPropsPlan();
   const chunks = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
   // The venues' boards from the renderer's plan, whose modules Node does not load by itself, with the
   // decals' walls (ADR-0058 stage 6) from the same module runner: the city is framed once for both.
