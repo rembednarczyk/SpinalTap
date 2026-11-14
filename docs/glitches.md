@@ -1856,9 +1856,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-777 Szczeliny 10-30 cm między wstęgami różnych nawierzchni w złączach (gapFills łata tylko tę samą nawierzchnię)
 - Ważność: S4 · Zasięg: ok. 10 złączy, ok. 0,8 m²: 837,0;205,3 (chodnik/jezdnia), 949,1;230,7, 247,7;-201,0, 1014,2;450,8, 743,7;13,7 (chodnik/footway), 97,9;98,4 (jezdnia/trawa)
 - Opis: gapFills (line-buffer.ts) łata pęknięcia tylko między pasami tej samej nawierzchni, a kliny tylko szersze niż pęknięcie; wąska goła szczelina między chodnikiem a jezdnią lub footway w tarczy złącza zostaje; widać ciemny teren
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g777 (928f25a): komórki w tarczach 130 -> 55, w mieście między wstęgami 870 -> 528; czeka na przegląd kuratora; reszta 97,9;98,4 w osobnym wpisie; wcześniej: zgłoszone (13.11, naprawiacz G-765)
+- Status: w naprawie, runda 2 (14.11): przegląd kuratora NIEZGODNE, slitFills ma odjąć stopnie; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g777 (928f25a): komórki w tarczach 130 -> 55, w mieście między wstęgami 870 -> 528; czeka na przegląd kuratora; reszta 97,9;98,4 w osobnym wpisie; wcześniej: zgłoszone (13.11, naprawiacz G-765)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: brak gołych komórek 0,1 m między wstęgami w tarczy złącza w tych miejscach; ground-strip-gap nie rośnie
+- Przegląd kuratora 14.11 (928f25a): NIEZGODNE. slitFills nie odejmuje stopni (above): 25 łat nad obrysem steps, 2,03 m² (949,0;230,4 wyszczerbia dolny stopień, 1009,6;445,4 kostka na trzech stopniach, 886,3;222,2 0,31 m²). Poprawka w tej gałęzi (runda 2); T-290; proponowana kontrola ground-over-steps
 
 ### G-778 Uskoki między płytami chodnika i podestu Arkad
 - Ważność: S3 · Zasięg: stare-miasto-0-1 (465..468; 116..119), krakowskie-2-1 (448; 80)
