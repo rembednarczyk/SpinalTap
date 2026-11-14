@@ -1841,9 +1841,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-782 roundJoints: suma NonZero pierścieni zgodnych z ruchem wskazówek zegara w fazie okrągłych końców
 - Ważność: S4 · Zasięg: 242 z 2141 pasów ma pierścień zgodny z ruchem wskazówek zegara
 - Opis: covered w pierwszej fazie roundJoints sumuje pierścienie bez obracania; obszar zgodny z ruchem wskazówek zegara znosi pasy na nim, bit końca może trafić w fałszywą dziurę
-- Status: zgłoszone (14.11, naprawiacz G-777)
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g782 (482856c); test ground-over-steps pada na 3 przesuniętych kluczach; decyzja nocna: nie przyjmować accept, poczekać na #535 (G-781, ground-over-steps -> 0), scalić main i sprawdzić ponownie; potem przegląd kuratora (klin trawnika 768,211); wcześniej: zgłoszone (14.11, naprawiacz G-777)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: pierścienie obrócone przed sumą; ground-strip-overlap i ground-over-steps nie rosną
+- Skutek potwierdzony: 51 obrysów, ok. 98 m² bitów końców drugą warstwą na obszarach; nakładki ścieżki i bruku na schodach 8,27 -> 1,20 m²; ground-over-steps 234 -> 231 (5 usuniętych, 3 klucze przesunięte: krakowskie-0-1 -4,127, podzamcze-1-0 768,211, stare-miasto-1-0 694,-176); złoty map-ground-golden 170580 -> 169847, ba4027c1; zrzuty /dev/shm/g782-shots
 
 ### G-783 Dziury fill-gap na krawędziach chunków: obrys wypełnienia nie sięga za chunk
 - Ważność: S4 · Zasięg: nabrzeze x=2500 i z=270, podzamcze z=370 (np. 2500,295.25; 2544,269.88; 795.5,369.88)
@@ -1899,6 +1900,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (14.11, naprawiacz G-781)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: entrance-no-door spada, ground-over-steps nie rośnie
+
+### G-792 laidOf odwraca dziury pierścieni zmienionych w pierwszej fazie roundJoints
+- Ważność: S4 · Zasięg: pasy z pętlą (dziura), które dostały bit końca
+- Opis: laidOf (G-777) obraca każdą ścieżkę ujemną, także prawdziwą dziurę z union w rings; dziura pętli liczy się jako przykryta, szczelina lub łata w niej może nie powstać; niezweryfikowane sondą
+- Status: zgłoszone (14.11, naprawiacz G-782)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: laidOf obraca tylko obrysy pasów, dziury zostają dziurami
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
