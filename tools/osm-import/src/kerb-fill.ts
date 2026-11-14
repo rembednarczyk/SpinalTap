@@ -333,9 +333,22 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       const eased = easedReach(side, wide);
       side.forEach((s, i) => reach.set(s, eased[i]!));
     }
+    // Where it reaches the paving and that draws no kerb of its own, the asphalt stops short of it by
+    // the kerb stone laid between (G-803): the ground is a partition and the asphalt wins at its edge
+    // (ADR-0078 step 3), so a stone laid past the asphalt stood 0.4 m off the orthophoto's kerb, which
+    // lies 0.25–0.5 m short of the paving's mapped edge. The ease and the folds are read before, so
+    // the stretches widened are those they were; a lone sample lays no stone (a run takes two), so
+    // its asphalt goes on to the paving.
+    const stones = new Set<Sample>();
+    for (const side of [right, left]) {
+      const at = side.map((s) => wide(s) && !s.hit!.kerbed && reach.get(s)! >= s.hit!.gap + INTO - 1e-9);
+      side.forEach((s, i) => at[i] && (at[i - 1] || at[i + 1]) && stones.add(s));
+    }
+    const stone = (s: Sample) => stones.has(s);
+    const edgeAt = (s: Sample) => reach.get(s)! - (stone(s) ? KERB_STONE + INTO : 0);
     let asRoad = wideSet.size > 0;
     if (asRoad) {
-      const out = (s: Sample) => (reach.get(s)! > 0 ? along(s.edge, s.dir, reach.get(s)!) : null);
+      const out = (s: Sample) => (reach.get(s)! > 0 ? along(s.edge, s.dir, edgeAt(s)) : null);
       const [wr, wl] = [widenedEdge(r.edge, right, out), widenedEdge(l.edge, left, out)];
       const ring = ccw([...wr.pts, ...wl.pts.reverse()]);
       if (selfIntersects(ring)) asRoad = false;
@@ -350,10 +363,10 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       // From the edge, or from where the eased asphalt stops short of the paving.
       const from = (s: Sample) => (asRoad && wide(s) ? reach.get(s)! : 0);
       runsOf(side, (s) => (s.hit && !s.hit.joins && !(s.hit.crossed && !(asRoad && wide(s))) && !full(s) ? { edge: along(s.edge, s.dir, from(s)), out: along(s.edge, s.dir, s.hit.gap + INTO) } : null), lay);
-      // The kerb stones of the widened carriageway, where the paving draws no kerb of its own: on the
-      // paving past the asphalt's edge, as the ground is a partition and the asphalt wins at its edge
-      // (ADR-0078 step 3); the renderer draws the kerb on the stone's edge, the carriageway's.
-      runsOf(side, (s) => (full(s) && !s.hit!.kerbed ? { edge: along(s.edge, s.dir, reach.get(s)!), out: along(s.edge, s.dir, reach.get(s)! + KERB_STONE) } : null), lay);
+      // The kerb stones of the widened carriageway, where the paving draws no kerb of its own: from
+      // under the asphalt's edge, which wins over them, into the paving; the renderer draws the kerb
+      // on the stone's edge, the carriageway's.
+      runsOf(side, (s) => (asRoad && stone(s) ? { edge: along(s.edge, s.dir, edgeAt(s) - INTO), out: along(s.edge, s.dir, s.hit!.gap + INTO) } : null), lay);
     }
   }
   return { fills, widened };

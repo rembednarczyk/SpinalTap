@@ -90,7 +90,6 @@ krakowskie-1-1 170,20
 krakowskie-1-1 190,20
 krakowskie-1-1 110,30
 krakowskie-1-1 190,30
-krakowskie-1-1 140,90
 krakowskie-1-1 150,90
 krakowskie-1-1 100,110
 krakowskie-1-1 150,110
@@ -248,7 +247,6 @@ nabrzeze-1-1 2690,340
 nabrzeze-1-1 2670,380
 podzamcze-0-0 560,160
 podzamcze-0-0 570,160
-podzamcze-0-0 550,170
 podzamcze-0-0 700,170
 podzamcze-0-0 710,170
 podzamcze-0-0 560,180

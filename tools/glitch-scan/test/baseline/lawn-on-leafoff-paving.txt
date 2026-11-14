@@ -18,7 +18,6 @@ nabrzeze-0-0 2450,140
 nabrzeze-0-1 2360,390
 nabrzeze-0-1 2390,420
 nabrzeze-0-1 2390,430
-nabrzeze-0-1 2350,440
 nabrzeze-0-1 2390,440
 nabrzeze-0-1 2390,450
 nabrzeze-0-1 2310,460

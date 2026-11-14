@@ -149,7 +149,6 @@ krakowskie-1-1 140,40
 krakowskie-1-1 150,40
 krakowskie-1-1 160,40
 krakowskie-1-1 170,40
-krakowskie-1-1 140,90
 krakowskie-1-1 150,90
 krakowskie-1-1 140,100
 krakowskie-1-1 150,100

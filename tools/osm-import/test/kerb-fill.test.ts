@@ -89,13 +89,25 @@ describe("a carriageway of estimated width reaches the paving (G-570)", () => {
   it("takes a gap of a metre and more for its own asphalt, with a kerb stone at the footway", () => {
     const ways = [street, footway(-6)];
     for (const x of [1, 30, 50, 99]) for (const z of [-3.4, -4, -4.3]) expect(surfacesAt(ways, x, z), `${x},${z}`).toEqual(["road"]);
-    // The kerb stone on the footway past the asphalt's edge (4.85 m off the axis, the gap and 0.1 m
-    // into the footway): the ground is a partition and the asphalt wins at its edge (ADR-0078 step 3),
-    // so the stone's edge is the carriageway's, and the renderer draws the kerb on it, where the
-    // asphalt meets it (before the partition the stone lay over the asphalt, from 4.45 m out).
-    expect(surfacesAt(ways, 50, -4.7)).toEqual(["road"]);
-    expect(surfacesAt(ways, 50, -5)).toEqual(["sidewalk"]);
-    expect(surfacesAt(ways, 50, -5.4)).toEqual(["footway"]);
+    // The kerb stone on the asphalt's side of the footway's edge (4.75 m off the axis), from 4.45 m
+    // to 0.1 m into the footway: the ground is a partition and the asphalt wins at its edge
+    // (ADR-0078 step 3), so the asphalt stops at the stone, where the renderer draws the kerb (G-803).
+    expect(surfacesAt(ways, 50, -4.6)).toEqual(["sidewalk"]);
+    expect(surfacesAt(ways, 50, -5)).toEqual(["footway"]);
+  });
+
+  it("lays the kerb 0.3 m short of the footway's mapped edge all along it, as the orthophoto shows it (G-803)", () => {
+    // The footway's edge wanders from 4.75 to 5.35 m off the axis; the orthophoto puts the kerb 0.25–0.5 m
+    // short of the mapped edge (T-294). The kerb is where the asphalt ends: no step in or out along it.
+    const chunk = build([street, footway(-6, -6.6)]);
+    const rings = chunk.ground.filter((g) => g.surface === "road").map((g) => Array.from({ length: g.outline.length / 2 }, (_, i) => ({ x: g.outline[2 * i]!, z: g.outline[2 * i + 1]! })));
+    for (let x = 2; x <= 98; x += 0.5) {
+      let z = -3;
+      while (z > -7 && rings.some((r) => pointInRing({ x, z: z - 0.01 }, r))) z -= 0.01;
+      const edge = 4.75 + (0.6 * x) / 100;
+      // To the chunk's rounding of 0.1 m and the stone's simplifying (`SIMPLIFY`).
+      expect(Math.abs(-z - (edge - 0.3)), `x ${x}: ${(-z).toFixed(2)}`).toBeLessThanOrEqual(0.08);
+    }
   });
 
   it("lays the asphalt widened as a piece of its own along the carriageway's piece, as the map lays that", () => {
