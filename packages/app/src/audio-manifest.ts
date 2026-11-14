@@ -11,8 +11,15 @@ const range = (prefix: string, ids: readonly string[]): string[] => ids.map((id)
 
 const SOUNDS = {
   cues: {
-    shot: { urls: ["gun-pistol-ppq-near.ogg", "gun-pistol-1911-near.ogg", "gun-smg-m45-near.ogg"], gain: 0.55, pitch: 0.05, send: 0.55 },
+    // One recorded set per weapon kind (Free Firearm Sound Library, 14.11): near for the player, mid for others.
+    shot: { urls: ["gun-pistol-ppq-near.ogg", "gun-pistol-1911-near.ogg"], gain: 0.55, pitch: 0.05, send: 0.55 },
+    "shot-revolver": { urls: ["gun-revolver-642-near.ogg"], gain: 0.6, pitch: 0.04, send: 0.6 },
+    "shot-smg": { urls: ["gun-smg-m45-near.ogg", "gun-smg-ppsh-near.ogg"], gain: 0.5, pitch: 0.05, send: 0.5 },
+    "shot-shotgun": { urls: ["gun-shotgun-nova-near.ogg", "gun-shotgun-model12-near.ogg"], gain: 0.6, pitch: 0.04, send: 0.65 },
+    "shot-rifle": { urls: ["gun-rifle-ar15-near.ogg", "gun-rifle-ak47-near.ogg"], gain: 0.55, pitch: 0.04, send: 0.6 },
     "enemy-shot": { urls: ["gun-pistol-ppq-mid.ogg", "gun-smg-m45-mid.ogg"], gain: 0.32, pitch: 0.06, send: 0.85 },
+    "enemy-shot-shotgun": { urls: ["gun-shotgun-nova-mid.ogg"], gain: 0.34, pitch: 0.05, send: 0.85 },
+    "enemy-shot-rifle": { urls: ["gun-rifle-ar15-mid.ogg", "gun-rifle-sks-mid.ogg"], gain: 0.32, pitch: 0.05, send: 0.85 },
     hit: { urls: range("hit-punch-", ["000", "001", "002"]), gain: 0.5, pitch: 0.08, send: 0.15 },
     critical: { urls: range("crit-punch-", ["000", "001", "002"]), gain: 0.6, pitch: 0.06, send: 0.25, layerSynth: true },
     hurt: { urls: range("hurt-soft-", ["000", "001", "002"]), gain: 0.7, pitch: 0.08 },
@@ -27,7 +34,9 @@ const SOUNDS = {
     heal: { urls: ["clinic-heal-000.ogg", "clinic-heal-001.ogg"], gain: 0.4, pitch: 0.04, send: 0.35 },
     overdrive: { urls: ["cyber-overdrive.ogg"], gain: 0.35, pitch: 0.03, layerSynth: true },
     // Weapons, loot and trade (E12).
-    reload: { urls: range("reload-metal-", ["000", "001"]), gain: 0.5, pitch: 0.05, send: 0.15 },
+    // Magazine out, magazine in, slide racked (1.4 s); a per-round reload clicks a shell in.
+    reload: { urls: ["reload-handgun-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.15 },
+    "reload-round": { urls: range("reload-metal-", ["000", "001"]), gain: 0.5, pitch: 0.05, send: 0.12 },
     "weapon-switch": { urls: range("weapon-switch-", ["000", "001"]), gain: 0.4, pitch: 0.06, send: 0.1 },
     "loot-pickup": { urls: range("loot-pickup-", ["000", "001"]), gain: 0.55, pitch: 0.08 },
     // The tin clink sits on the synth's coin triad.
