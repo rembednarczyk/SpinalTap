@@ -12,14 +12,16 @@ export const SETTLE_FRAMES = 3;
  * The moon shadow's two depth maps (plan 14.11, step 6). Receivers take the nearer of the two,
  * which is what one map with every caster holds. While the square moves, `statics` gets every
  * caster each frame and `moving` stays clear. Once it has stood `SETTLE_FRAMES`, `statics` is drawn
- * once with the merged static proxy alone and kept; only `moving` (characters, cars) redraws each
- * frame. A new or released static caster, or a moved square, draws the statics again.
+ * once with the static casters alone (the merged proxy and the fixed meshes) and kept; only
+ * `moving` (characters, cars) redraws each frame. A static caster built, released, shown or hidden,
+ * or a moved square, draws the statics again.
  */
 export class ShadowMaps {
   readonly statics: RenderTargetTexture;
   readonly moving: RenderTargetTexture;
   private readonly depthMaterial: ShaderMaterial;
   private readonly casters: AbstractMesh[] = [];
+  private readonly fixed: AbstractMesh[] = [];
   private proxy: AbstractMesh | null = null;
   private split = false;
   private still = 0;
@@ -57,8 +59,22 @@ export class ShadowMaps {
   setProxy(mesh: AbstractMesh | null): void {
     this.proxy = mesh;
     if (mesh) this.statics.setMaterialForRendering(mesh, this.depthMaterial);
-    this.fill();
-    if (this.split) this.statics.resetRefreshCounter();
+    this.staticsChanged();
+  }
+
+  /** A never-moving mesh drawn as itself among the statics; shown or hidden, the statics redraw. */
+  addFixed(mesh: AbstractMesh): void {
+    if (this.fixed.includes(mesh)) return;
+    this.fixed.push(mesh);
+    this.statics.setMaterialForRendering(mesh, this.depthMaterial);
+    const shown = mesh.onEnabledStateChangedObservable.add(() => this.staticsChanged(false));
+    mesh.onDisposeObservable.addOnce(() => {
+      mesh.onEnabledStateChangedObservable.remove(shown);
+      const i = this.fixed.indexOf(mesh);
+      if (i >= 0) this.fixed.splice(i, 1);
+      this.staticsChanged();
+    });
+    this.staticsChanged();
   }
 
   /** One frame: `moved` when the light matrix changed since the last one. */
@@ -69,9 +85,9 @@ export class ShadowMaps {
     } else if (!this.split && ++this.still >= SETTLE_FRAMES) this.layout(true);
   }
 
-  /** Draw calls the shadow costs per frame: the kept statics are not among them. */
+  /** Meshes the shadow draws per frame: the kept statics are not among them. */
   get passMeshes(): number {
-    return this.split ? this.casters.length : this.casters.length + (this.proxy ? 1 : 0);
+    return this.casters.length + (this.split ? 0 : this.fixed.length + (this.proxy ? 1 : 0));
   }
 
   /** Statics kept between frames (only the moving casters redraw). */
@@ -87,8 +103,14 @@ export class ShadowMaps {
     this.moving.refreshRate = split ? RenderTargetTexture.REFRESHRATE_RENDER_ONEVERYFRAME : RenderTargetTexture.REFRESHRATE_RENDER_ONCE;
   }
 
+  /** Kept statics are drawn again on the next frame (the lists change only with `refill`). */
+  private staticsChanged(refill = true): void {
+    if (refill) this.fill();
+    if (this.split) this.statics.resetRefreshCounter();
+  }
+
   private fill(): void {
-    const statics = this.proxy ? [this.proxy] : [];
+    const statics = (this.proxy ? [this.proxy] : []).concat(this.fixed);
     this.statics.renderList = this.split ? statics : statics.concat(this.casters);
     this.moving.renderList = this.split ? this.casters.slice() : [];
   }

@@ -97,6 +97,15 @@ export class MoonShadow {
     });
   }
 
+  /**
+   * Never-moving caster drawn as itself, not merged: big meshes streamed in and out with the view
+   * (the map's detailed buildings), which re-merging on every change would cost more than drawing.
+   * Kept with the statics; shown, hidden or released, they are drawn again.
+   */
+  addFixedCaster(mesh: AbstractMesh): void {
+    this.maps.addFixed(mesh);
+  }
+
   /** A static caster changed shape: the merged proxy is rebuilt on the next update. */
   invalidateStatics(): void {
     this.staticDirty = true;

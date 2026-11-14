@@ -104,6 +104,29 @@ describe("moon shadow keeps the static casters between frames (plan 14.11, step 
     expect(drawn).toBe(0);
   });
 
+  it("the map's detailed buildings (fixed casters) are kept with the statics, and drawn again when shown or hidden", () => {
+    const t = setup();
+    const block = MeshBuilder.CreateBox("map-near-0:0", { width: 20, height: 12, depth: 10 }, t.scene);
+    block.layerMask = SHADOW_ONLY;
+    t.shadow.addFixedCaster(block);
+    let draws = 0;
+    block.onBeforeRenderObservable.add(() => draws++);
+    const at = new Vector3(0, 0, 0);
+    // With every caster until the square settles, then once with the statics alone.
+    for (let i = 0; i < 40; i++) t.frame(at);
+    expect(draws).toBe(SETTLE_FRAMES + 1);
+    block.setEnabled(false);
+    for (let i = 0; i < 5; i++) t.frame(at);
+    block.setEnabled(true);
+    for (let i = 0; i < 5; i++) t.frame(at);
+    expect(draws).toBe(SETTLE_FRAMES + 2);
+    expect(t.statics()).toBe(SETTLE_FRAMES + 3);
+    block.dispose();
+    for (let i = 0; i < 5; i++) t.frame(at);
+    expect(t.statics()).toBe(SETTLE_FRAMES + 4);
+    expect(t.dynamics()).toBe(55);
+  });
+
   it("a frame of no shadow update (the loading screen) still draws the moving casters", () => {
     const t = setup();
     const at = new Vector3(0, 0, 0);
