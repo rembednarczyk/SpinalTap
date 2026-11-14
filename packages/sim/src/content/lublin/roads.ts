@@ -176,5 +176,8 @@ export const surfacesAt = (x: number, z: number): GroundSurface[] => areasAt(x, 
 export const surfaceLiftAt = (x: number, z: number, onDeck: boolean): number =>
   areasAt(x, z).reduce((lift, a) => (a.deck === onDeck ? Math.max(lift, SURFACE_LIFT[a.surface]) : lift), 0);
 
+/** The surfaces of a carriageway: its asphalt, and a zebra on it, a piece of its own since the ground is a partition (ADR-0078 step 3). */
+export const CARRIAGEWAY: ReadonlySet<GroundSurface> = new Set<GroundSurface>(["road", "crossing"]);
+
 /** Is (x, z) on a carriageway of the map? */
-export const onRoad = (x: number, z: number): boolean => surfacesAt(x, z).includes("road");
+export const onRoad = (x: number, z: number): boolean => surfacesAt(x, z).some((s) => CARRIAGEWAY.has(s));

@@ -21,7 +21,7 @@ import { feedTouchFire } from "./touch-fire";
 import { connectWorldRays } from "./world-rays";
 import { feedAimAssist } from "./aim-assist-feed";
 import { feedLookTuning, viewLook } from "./look-tuning";
-import { type SettingsStorage, applyEffects, applyVolumes, defaultRenderResolution, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings } from "./settings";
+import { type SettingsStorage, applyEffects, applyVolumes, defaultAimMode, defaultRenderResolution, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings } from "./settings";
 
 declare global {
   interface Window {
@@ -58,7 +58,9 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matc
 // High quality everywhere by default (user decision 1.11); a phone that struggles goes to Low in the settings.
 // A dense touch screen renders a share of its pixels by default (graphics options 14.11); the reference frame all of them.
 const renderResolution = reference ? 1 : defaultRenderResolution(touchDevice, window.devicePixelRatio);
-const deviceDefaults = { ...DEFAULT_SETTINGS, hints: !reference, reduceFlashes: reducedMotion, cameraMotion: !reducedMotion, renderResolution } as const;
+// On a touch device the aim button toggles by default (user, 14.11); a mouse keeps holding it.
+const aimMode = defaultAimMode(touchDevice);
+const deviceDefaults = { ...DEFAULT_SETTINGS, hints: !reference, reduceFlashes: reducedMotion, cameraMotion: !reducedMotion, renderResolution, aimMode } as const;
 // The reference frame ignores saved settings so the NPR snapshot never depends on the profile.
 const settings = reference ? deviceDefaults : loadSettings(storage, deviceDefaults);
 const qualityParam = params.get("quality");

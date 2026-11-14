@@ -7,21 +7,26 @@
  * - Terrain: GUGiK NMT 1 m (WCS GetCoverage, GeoTIFF float32) in 500 m tiles, mosaicked per
  *   district into `data/terrain/<district>.{json,bin}`; with `--eudem` the EU-DEM 25 m lattice
  *   (opentopodata, 100 points a second) goes to `data/terrain/<district>.eudem.json` as fallback.
+ * - Street furniture and trees: the points of `furniture.ts` from the same raw tiles, before the
+ *   extracts drop unnamed nodes, into `data/osm/points/furniture.json` (written only when every
+ *   district's tiles were read, so `--only` keeps the file as it was).
  * Flags: `--refresh` refetches cached tiles, `--only=<slug>` limits to one district,
- * `--skip-osm`, `--skip-dtm`, `--eudem`.
+ * `--skip-osm`, `--skip-dtm`, `--eudem`, `--points-only` (the furniture file alone: no extract, no terrain).
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DISTRICTS, type DistrictSpec, ELEVATION_MARGIN, ELEVATION_STEP, FETCH_MARGIN, MAX_TILE_DEG, USER_AGENT } from "./config.ts";
 import { DTM_OFFSET, DTM_SCALE, type DtmHeader, dtmToBytes, encodeHeight } from "./dtm.ts";
 import { readGeoTiff } from "./geotiff.ts";
-import { filterOsm, mergeOsm, parseOsmXml, serializeOsm } from "./osm.ts";
+import { type FurnitureRow, FURNITURE_FILE, furnitureRows, serializeFurniture } from "./furniture.ts";
+import { type OsmData, filterOsm, mergeOsm, parseOsmXml, serializeOsm } from "./osm.ts";
 import { worldToGeo, worldToPuwg } from "./project.ts";
 import { REPO } from "./paths.ts";
 
 const args = new Set(process.argv.slice(2));
 const only = [...args].find((a) => a.startsWith("--only="))?.slice(7);
 const refresh = args.has("--refresh");
+const pointsOnly = args.has("--points-only");
 const OSM_DIR = join(REPO, "data/osm");
 const CACHE = join(OSM_DIR, "cache");
 const TERRAIN_DIR = join(REPO, "data/terrain");
@@ -32,7 +37,8 @@ const get = async (url: string, attempts = 3): Promise<Uint8Array> => {
   for (let i = 1; ; i++) {
     const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
     if (res.ok) return new Uint8Array(await res.arrayBuffer());
-    if (i >= attempts) throw new Error(`${res.status} ${res.statusText}: ${url}`);
+    // Too many requests: the service asks to stop, not to be asked again.
+    if (res.status === 429 || i >= attempts) throw new Error(`${res.status} ${res.statusText}: ${url}`);
     await pause(5000 * i);
   }
 };
@@ -43,6 +49,9 @@ const geoBox = (d: DistrictSpec, margin: number) => {
   const ne = worldToGeo({ x: d.rect.maxX + margin, z: d.rect.maxZ + margin });
   return { minLon: sw.lon, minLat: sw.lat, maxLon: ne.lon, maxLat: ne.lat };
 };
+
+/** The furniture of every tile read, by node id (`furniture.ts`). */
+const furniture = new Map<number, FurnitureRow>();
 
 const fetchOsm = async (d: DistrictSpec) => {
   const box = geoBox(d, FETCH_MARGIN);
@@ -64,9 +73,12 @@ const fetchOsm = async (d: DistrictSpec) => {
         writeFileSync(file, await get(`https://api.openstreetmap.org/api/0.6/map?bbox=${b.join(",")}`));
         await pause(3000);
       }
-      parts.push(filterOsm(parseOsmXml(readFileSync(file, "utf8"))));
+      const raw: OsmData = parseOsmXml(readFileSync(file, "utf8"));
+      for (const r of furnitureRows(raw.nodes.values())) furniture.set(r[0], r);
+      if (!pointsOnly) parts.push(filterOsm(raw));
     }
   }
+  if (pointsOnly) return;
   const merged = mergeOsm(parts);
   const header = { source: "api.openstreetmap.org/api/0.6/map", license: "ODbL 1.0, © OpenStreetMap contributors", district: d.slug, bbox: box, tiles: nx * nz };
   writeFileSync(join(OSM_DIR, `${d.slug}.json`), serializeOsm(merged, header));
@@ -168,10 +180,18 @@ const main = async () => {
   mkdirSync(TERRAIN_DIR, { recursive: true });
   for (const d of DISTRICTS) {
     if (only && d.slug !== only) continue;
-    if (!args.has("--skip-osm")) await fetchOsm(d);
+    if (!args.has("--skip-osm") || pointsOnly) await fetchOsm(d);
+    if (pointsOnly) continue;
     if (!args.has("--skip-dtm")) await fetchDtm(d);
     if (args.has("--eudem")) await fetchEudem(d);
   }
+  if (only || (args.has("--skip-osm") && !pointsOnly)) return;
+  const rows = [...furniture.values()].sort((a, b) => a[0] - b[0]);
+  mkdirSync(join(OSM_DIR, "points"), { recursive: true });
+  writeFileSync(join(REPO, FURNITURE_FILE), serializeFurniture(rows, { source: "api.openstreetmap.org/api/0.6/map", license: "ODbL 1.0, © OpenStreetMap contributors" }));
+  const per = new Map<string, number>();
+  for (const r of rows) per.set(r[3], (per.get(r[3]) ?? 0) + 1);
+  console.log(`furniture.json: ${rows.length} points (${[...per].map(([t, n]) => `${t} ${n}`).join(", ")})`);
 };
 
 await main();

@@ -111,7 +111,7 @@ export class PlatformViews {
     planPlatform(sink, s.e);
     const mesh = sinkToMesh(scene, `metro-platform-${s.e.station}`, sink);
     mesh.material = materials.get("dressing");
-    shadow.addCaster(mesh);
+    shadow.addFixedCaster(mesh);
     s.mesh = mesh;
     const signs = this.deps.signs();
     if (!signs) return;

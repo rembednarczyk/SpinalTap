@@ -42,12 +42,12 @@ export class RendererStats {
 
   /** Characters dressed in an imported model. */
   get dressedCount(): number {
-    return this.deps.characters.dressedCount;
+    return this.deps.characters.modelCounts.dressed;
   }
 
   /** Character models still loading. */
   get modelsLoading(): number {
-    return this.deps.characters.loadingCount;
+    return this.deps.characters.modelCounts.loading;
   }
 
   /** Activity a character plays now. */

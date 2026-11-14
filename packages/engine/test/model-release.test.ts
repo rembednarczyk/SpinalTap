@@ -56,8 +56,8 @@ const viewsOn = (scene: Scene, modelFiles?: number) =>
 const tick = () => new Promise((ok) => setTimeout(ok, 0));
 
 const settled = async (views: CharacterViews) => {
-  for (let i = 0; i < 4000 && views.loadingCount > 0; i++) await tick();
-  expect(views.loadingCount).toBe(0);
+  for (let i = 0; i < 4000 && views.modelCounts.loading > 0; i++) await tick();
+  expect(views.modelCounts.loading).toBe(0);
 };
 
 const spawnAll = (views: CharacterViews, list: readonly ViewDescriptor[], from = 1) =>
@@ -138,7 +138,7 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
     views.spawn(9, KUROSAWA, STAND);
     await settled(views);
     expect(times("kurosawa.vrm")).toBe(2);
-    expect(views.dressedCount).toBe(3);
+    expect(views.modelCounts.dressed).toBe(3);
   });
 
   it("never lets go of Seki's file or the donors', not on a phone over its limit, nor behind a new scene", async () => {
@@ -196,7 +196,7 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
     seconds(phone, MODEL_LINGER_S);
     expect(sorted(phone.modelLoading.loaded())).toEqual(["civilian.vrm", "ganger.vrm", "kaito.vrm", "seki.vrm"]);
     // Characters in the scene keep their files over the limit: nothing to let go of.
-    expect(phone.dressedCount).toBe(4);
+    expect(phone.modelCounts.dressed).toBe(4);
     const computer = await at(QUALITY_TIERS.high.modelFiles);
     expect(computer.modelLoading.loaded()).toHaveLength(7);
   });
@@ -230,13 +230,13 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
     views.setCharacterModels(GAME);
     views.spawn(2, KUROSAWA, STAND);
     await settled(views);
-    expect(views.dressedCount).toBe(0);
+    expect(views.modelCounts.dressed).toBe(0);
     // The network is back by the time he comes again.
     views.despawn(2, false);
     views.spawn(3, KUROSAWA, STAND);
     await settled(views);
     expect(times("kurosawa.vrm")).toBe(2);
-    expect(views.dressedCount).toBe(1);
+    expect(views.modelCounts.dressed).toBe(1);
   });
 
   it("loads a save away from Kurosawa and back again, his file let go of behind the first loading screen", async () => {
@@ -254,7 +254,7 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
     release("kurosawa.vrm");
     await Promise.all([...first, ...second]);
     await settled(views);
-    expect(views.dressedCount).toBe(2);
+    expect(views.modelCounts.dressed).toBe(2);
     // His file came after the new scene's start; nobody wears it, so it goes after the linger.
     expect(views.modelLoading.loaded()).toContain("kurosawa.vrm");
     seconds(views, MODEL_LINGER_S + 1);
@@ -269,7 +269,7 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
     await Promise.all(third);
     await settled(views);
     expect(times("kurosawa.vrm")).toBe(2);
-    expect(views.dressedCount).toBe(3);
+    expect(views.modelCounts.dressed).toBe(3);
     // And a save away from him again: no linger behind a loading screen, the file goes at once.
     views.clear();
     spawnAll(views, [{ kind: "heroine" }], 30);

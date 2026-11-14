@@ -41,8 +41,8 @@ const viewsOn = (scene: Scene) =>
   });
 
 const settled = async (views: CharacterViews) => {
-  for (let i = 0; i < 4000 && views.loadingCount > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
-  expect(views.loadingCount).toBe(0);
+  for (let i = 0; i < 4000 && views.modelCounts.loading > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
+  expect(views.modelCounts.loading).toBe(0);
 };
 
 const meshOf = (views: CharacterViews, id: EntityId, part: string): AbstractMesh | undefined => {

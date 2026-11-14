@@ -1,4 +1,5 @@
 import { type Camera, PostProcess, type Scene, ShaderStore } from "../babylon";
+import { PassGate } from "./pass-gate";
 
 const SPEED_LINES_FRAGMENT = /* glsl */ `
 precision highp float;
@@ -34,6 +35,8 @@ export class SpeedLines {
   intensity = 0;
   private target = 0;
   private time = 0;
+  /** Draws only while there are lines (frame profile 14.11). */
+  private readonly gate: PassGate<PostProcess>;
 
   constructor(scene: Scene, camera: Camera) {
     ShaderStore.ShadersStore["seekiSpeedLinesFragmentShader"] = SPEED_LINES_FRAGMENT;
@@ -44,6 +47,13 @@ export class SpeedLines {
       effect.setFloat("time", this.time);
       effect.setFloat("aspect", engine.getRenderWidth() / Math.max(1, engine.getRenderHeight()));
     };
+    this.gate = new PassGate<PostProcess>(camera, () => this.postProcess);
+    this.gate.set(false);
+  }
+
+  /** Whether the pass is in the camera's chain. */
+  get drawing(): boolean {
+    return this.gate.drawing;
   }
 
   /** A short burst over whatever runs (ADR-0036): decays over about a third of a second. */
@@ -64,5 +74,6 @@ export class SpeedLines {
     const target = Math.max(this.target, this.burst);
     this.intensity = this.burst > this.intensity ? this.burst : this.intensity + (target - this.intensity) * Math.min(1, dt * 5);
     if (this.intensity < 0.01 && target === 0) this.intensity = 0;
+    this.gate.set(this.intensity > 0);
   }
 }

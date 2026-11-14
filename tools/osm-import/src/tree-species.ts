@@ -47,6 +47,21 @@ export const genusOf = (tags: Tags | undefined): string | undefined => {
 /** A tree's species (`TREE_KIND`) by its tags, or undefined for one its seed picks. */
 export const treeSpeciesOf = (tags: Tags | undefined): number | undefined => GENUS[genusOf(tags) ?? ""];
 
+/**
+ * The node ids (numbers, sorted) of the trees `pnpm osm:props` places, whose tags `pnpm osm:trees`
+ * asks for: give it the plan with the extract's furniture (`loadPropsPlan`). Since PR #550 the
+ * extract's trees the plan lacks (`osm.furniture.tree`) are placed too; read from the plan's file
+ * alone they had no species even where OSM names one.
+ */
+export const treeNodeIds = (plan: { readonly items: readonly { readonly kind: string; readonly osm?: string | readonly string[] }[] }): number[] => {
+  const ids = new Set<number>();
+  for (const item of plan.items) {
+    if (item.kind !== "tree" || item.osm === undefined) continue;
+    for (const o of typeof item.osm === "string" ? [item.osm] : item.osm) if (o[0] === "n") ids.add(Number(o.slice(1)));
+  }
+  return [...ids].sort((a, b) => a - b);
+};
+
 /** The tags of the plan's trees from `data/osm/points/trees.json` by node id (`n123`). */
 export const loadTreeTags = (root = REPO): ReadonlyMap<string, Tags> => {
   const file = JSON.parse(readFileSync(join(root, "data/osm/points/trees.json"), "utf8")) as { header: { row: string[] }; trees: string[][] };
