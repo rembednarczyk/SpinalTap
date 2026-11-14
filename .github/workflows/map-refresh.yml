@@ -44,11 +44,66 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
-      # Exit 3 is an HTTP 429: the services asked to stop, and the run does (no retry).
+      # The fetch steps ask only for what their cache outside the repo lacks (orto-fetch per tile,
+      # gugik-fetch per archive), so the caches are kept between runs: a run with them asks the
+      # orthophoto service and GUGiK nothing (the first run, without them, spent ~300 s and ~20 MB
+      # on 20 of the orthophoto's 60 tiles and lost it all to one reset, run 43624113625). The
+      # orthophoto is flown about once a year: its key changes with the year and the manifest, so a
+      # new image comes with the first run of a year; the GUGiK sets with each month. An entry is
+      # named by what it holds (the fingerprint of its files) and saved after a failed run too, so a
+      # fetch cut short goes on from its last tile the next time instead of from the start.
+      - name: Cache keys
+        id: keys
+        run: |
+          echo "orto=orto-v1-$(date -u +%Y)-${{ hashFiles('data/orto/sources.json', 'tools/orto/src/config.ts') }}" >> "$GITHUB_OUTPUT"
+          echo "orto-year=orto-v1-$(date -u +%Y)-" >> "$GITHUB_OUTPUT"
+          echo "gugik=gugik-v1-$(date -u +%Y-%m)-${{ hashFiles('data/gugik/sources.json', 'tools/gugik/src/sources.ts') }}" >> "$GITHUB_OUTPUT"
+      - name: Restore the orthophoto cache
+        id: orto-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/seki-orto
+          key: ${{ steps.keys.outputs.orto }}-
+          restore-keys: |
+            ${{ steps.keys.outputs.orto }}-
+            ${{ steps.keys.outputs.orto-year }}
+      - name: Restore the GUGiK cache
+        id: gugik-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/seki-gugik/*.zip
+          key: ${{ steps.keys.outputs.gugik }}-
+          restore-keys: ${{ steps.keys.outputs.gugik }}-
+
+      # Exit 3 is an HTTP 429: the services asked to stop, and the run does (no retry). A dropped
+      # connection is asked once more; a fetch failed after that leaves its source stale (the repo's
+      # data, named in the report) while the build, the scan and the hashes still run (exit 1).
       - name: pnpm map:refresh
         env:
           SOURCES: ${{ inputs.sources || 'osm,gugik,orto' }}
         run: pnpm map:refresh --sources="$SOURCES"
+
+      # The caches' fingerprints after the run: a new entry only when their files changed.
+      - name: Cache fingerprints
+        id: prints
+        if: always()
+        run: |
+          # The files' names and sizes (tiles in a folder a flight, archives at the top), or none.
+          print() { if [ -d "$1" ] && [ -n "$(find "$1" -maxdepth "$3" -type f -name "$2" -print -quit)" ]; then find "$1" -maxdepth "$3" -type f -name "$2" -printf '%P %s\n' | sort | sha256sum | cut -c1-16; else echo none; fi; }
+          echo "orto=${{ steps.keys.outputs.orto }}-$(print "$HOME/.cache/seki-orto" '*.png' 2)" >> "$GITHUB_OUTPUT"
+          echo "gugik=${{ steps.keys.outputs.gugik }}-$(print "$HOME/.cache/seki-gugik" '*.zip' 1)" >> "$GITHUB_OUTPUT"
+      - name: Save the orthophoto cache
+        if: always() && !endsWith(steps.prints.outputs.orto, '-none') && steps.prints.outputs.orto != steps.orto-cache.outputs.cache-matched-key
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/seki-orto
+          key: ${{ steps.prints.outputs.orto }}
+      - name: Save the GUGiK cache
+        if: always() && !endsWith(steps.prints.outputs.gugik, '-none') && steps.prints.outputs.gugik != steps.gugik-cache.outputs.cache-matched-key
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/seki-gugik/*.zip
+          key: ${{ steps.prints.outputs.gugik }}
 
       - name: Report
         if: always()
