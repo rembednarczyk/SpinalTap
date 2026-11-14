@@ -33,6 +33,13 @@ export const halfTangents = (fov: number, horizontalFixed: boolean, width: numbe
   return horizontalFixed ? [t, t / aspect] : [t * aspect, t];
 };
 
+/**
+ * Samples per pixel of the occlusion pass. 12, not 24: the user reported stutter on High, and the
+ * 4x4 spin and blur keep the shade smooth at half the samples (the golden-angle spiral still
+ * covers the disc; the share steps by 1/12 under the 0.18 threshold).
+ */
+export const CONTACT_SAMPLES = 12;
+
 /** GLSL: needs `depthAt` and the uniforms `shadeParams` and `tanHalf`. */
 export const CONTACT_SHADE_GLSL = /* glsl */ `
 /** x: radius (m), y: strength (0 off), z: step threshold, w: fade-out distance (m). */
@@ -65,8 +72,8 @@ float contactOcclusion(vec2 uv, float d, vec3 n) {
   float bayer = 4.0 * mod(2.0 * lo.x + 3.0 * lo.y, 4.0) + mod(2.0 * hi.x + 3.0 * hi.y, 4.0);
   float spin = 6.2831853 * (bayer + 0.5) / 16.0;
   float occ = 0.0;
-  for (int i = 0; i < 24; i++) {
-    float t = (float(i) + 0.5) / 24.0;
+  for (int i = 0; i < ${CONTACT_SAMPLES}; i++) {
+    float t = (float(i) + 0.5) / ${CONTACT_SAMPLES}.0;
     float a = spin + float(i) * 2.3999632;
     vec2 suv = uv + vec2(cos(a), sin(a)) * reach * sqrt(t);
     float sd = depthAt(suv);
@@ -77,7 +84,7 @@ float contactOcclusion(vec2 uv, float d, vec3 n) {
     // reach: the share of such samples, not a weighted mean, so a wall's foot reaches the step.
     occ += (dot(n, v) * inversesqrt(l2 + 1e-4) > 0.3 && l2 < r * r) ? 1.0 : 0.0;
   }
-  return floorness * occ / 24.0 * (1.0 - smoothstep(shadeParams.w * 0.55, shadeParams.w, d));
+  return floorness * occ / ${CONTACT_SAMPLES}.0 * (1.0 - smoothstep(shadeParams.w * 0.55, shadeParams.w, d));
 }
 `;
 

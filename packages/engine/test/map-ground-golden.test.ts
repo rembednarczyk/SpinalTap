@@ -103,7 +103,9 @@ describe("the ground the map city lays (G-444)", () => {
     // The kerbs' strips laid from the cover, lawns under the crowns and the specks of green (ADR-0077
     // step 1.2): 151 928 -> 168 499 vertices, the same meshes.
     // The gaps' patches in the joints (G-760), pieces of their own: 168 499 vertices before.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 171653, hash: "2f66bb82" });
+    // Paving under crowns the leaf-off flight shows laid as paving, not a lawn (G-764), and the fills'
+    // rings touching themselves cut into their lobes, laid as triangles of their own area (G-766): 171 963 vertices.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 171963, hash: "4a30c7a9" });
     scene.dispose();
   });
 
