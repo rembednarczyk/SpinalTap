@@ -28,6 +28,7 @@ import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
 import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
+import { entrancesWithoutDoor } from "./entrance-no-door";
 import { groundOverSteps } from "./ground-over-steps";
 import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
 import { addedSolidOverWay } from "./added-solid-over-way";
@@ -113,7 +114,8 @@ import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
-import { loadEntrances } from "../../osm-import/src/props-doors.ts";
+import { lublinDoorWalls } from "../../osm-import/src/door-walls.ts";
+import { ENTRANCE_REACH, loadEntrances } from "../../osm-import/src/props-doors.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
 import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
@@ -2035,6 +2037,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A staircase's door on a wall facing only a way under ground, a yard's wall (G-197, `door-streets.ts`). */
   "door-faces-underground": () =>
     doorsFacingUnderground(WORLD_SCENERY, Object.values(WORLD_STREET_PROPS).flat(), cityVenueBoards(WORLD_SCENERY), extractFeatures(SOURCE_OSM).lines, loadEntrances().map((e) => e.p)),
+  /** An entrance of the map by a drawn wall a door may take, with no door within 2 m: its slots turned down (G-781, `entrance-no-door.ts`). */
+  "entrance-no-door": () => entrancesWithoutDoor(loadEntrances(), lublinDoorWalls(), Object.values(WORLD_STREET_PROPS).flat(), ENTRANCE_REACH),
   // The vehicles of ADR-0058 stage 4 as drawn against their bodies in the simulation (`vehicle-pieces.ts`).
   ...vehicleChecks(PARKED_CARS),
   // The drones of ADR-0058 stage 7 flown round the lanes the renderer plans from the scenery, and the

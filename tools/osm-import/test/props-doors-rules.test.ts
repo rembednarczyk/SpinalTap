@@ -160,6 +160,26 @@ describe("the doors on the facades (ADR-0058 stage 9)", () => {
     expect(Math.abs(d!.item.x - 10)).toBeGreaterThan(3);
   });
 
+  it("an entrance at the head of a flight: a jamb's ground on its top tread, level with the sill, not down it, nor the door's own ground (G-781)", () => {
+    // Poczta Główna's (n4934217573): the flight runs along the wall from the door's side, the paving cut off it.
+    const one = wall({ slots: SLOTS.filter((s) => s.u === 6) });
+    const site = (x: number) =>
+      new Site([
+        {
+          ...chunk(),
+          ground: [
+            { surface: "sidewalk", outline: [-30, 10, x, 10, x, 30, -30, 30] },
+            { surface: "sidewalk", outline: [17, 10, 50, 10, 50, 30, 17, 30] },
+            { surface: "sidewalk", outline: [x, 13, 17, 13, 17, 30, x, 30] },
+            { surface: "steps", outline: [x, 10, 17, 10, 17, 13, x, 13] },
+          ],
+        } as unknown as LublinChunkData,
+      ]);
+    expect(xs(placeDoors(site(14.3), [one], [entrance(14)], {}))).toEqual([14]);
+    expect(placeDoors(site(14.3), [one], [entrance(14)], { surfaceY: (p) => (p.x > 14.3 && p.z > 10.5 ? -0.3 : 0) })).toEqual([]);
+    expect(placeDoors(site(13.8), [one], [entrance(14)], {})).toEqual([]);
+  });
+
   it("needs the paving within 0.8 m of the ground floor and level across the door", () => {
     expect(doors([shop()], [], { surfaceY: () => -0.9 })).toEqual([]);
     expect(doors([shop()], [], { surfaceY: () => -0.7 })).toHaveLength(1);
