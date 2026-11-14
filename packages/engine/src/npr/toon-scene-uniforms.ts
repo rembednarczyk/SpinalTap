@@ -4,6 +4,8 @@ import { hex } from "./toon-material-factory";
 
 export interface ShadowBinding {
   readonly texture: BaseTexture;
+  /** The moving casters' map, read with `texture` (the nearer depth wins). */
+  readonly moving: BaseTexture;
   readonly matrix: Matrix;
   readonly texelSize: number;
   /** Depth bias in [0, 1] depth units. */
@@ -64,6 +66,7 @@ export class ToonSceneUniforms {
       return;
     }
     m.setTexture("shadowSampler", s.texture);
+    m.setTexture("shadowMovingSampler", s.moving);
     m.setMatrix("shadowMatrix", s.matrix);
     m.setVector3("shadowParams", { x: s.bias, y: s.texelSize, z: s.strength });
   }
