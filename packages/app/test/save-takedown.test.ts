@@ -106,7 +106,7 @@ describe("a save during a takedown (G-253)", () => {
   it("the debug jump goes through the same gate (G-256): refused in the grip, as before out of it", () => {
     const { session, ui } = behindGuard(new CountingStore());
     const loop = new FixedStepLoop({ now: () => 0 }, { update() {}, render() {} });
-    const seki = createDebugApi(session, ui, loop, () => ({ fps: 0, frameTimeMs: 0, drawCalls: 0, activeMeshes: 0, activeTriangles: 0, totalMeshes: 0, materials: 0, particles: 0, byName: {} }), () => {});
+    const seki = createDebugApi(session, ui, loop, () => ({ fps: 0, frameTimeMs: 0, drawCalls: 0, activeMeshes: 0, activeTriangles: 0, totalMeshes: 0, materials: 0, textures: 0, skeletons: 0, nodes: 0, particles: 0, byName: {} }), () => {});
     const rich = () => ({ wallet: { ...session.sim.domain.wallet, eddies: 4321 } });
     grip(session);
     const tick = session.sim.tick;

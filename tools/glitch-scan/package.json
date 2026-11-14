@@ -6,5 +6,8 @@
   "description": "The glitch scan with its ratchet (ADR-0054): known kinds of glitch counted over the whole city.",
   "scripts": {
     "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "clipper2-ts": "2.0.1-19"
   }
 }

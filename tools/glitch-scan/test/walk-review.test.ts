@@ -40,8 +40,8 @@ const pairsIn = (sq: string, world: WalkWorld = WORLD, onMap = ON_MAP) => {
 };
 
 describe("walk-blocked after the curator's review (ADR-0080 PR 4)", () => {
-  it("keeps the real ones: the way w179264855, too steep along it (G-755)", () => {
-    for (const sq of ["670,130", "670,140"]) expect(pairsIn(sq).length, sq).toBeGreaterThan(0);
+  it("finds the way w179264855 walked at an even grade down its bank (G-755)", () => {
+    for (const sq of ["660,130", "670,130", "670,140"]) expect(pairsIn(sq), sq).toEqual([]);
   });
 
   it("A: takes no slope from past the map's edge, where groundY is 0", () => {

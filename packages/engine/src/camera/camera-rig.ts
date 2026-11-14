@@ -5,8 +5,10 @@ import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 import { BodyFade, bodyFadeTarget } from "./body-fade";
 import { ChokeArms } from "./choke-arms";
-import { moveOf, swingEnd, swingPhase } from "../renderer/melee-timing";
-import { type ViewmodelPose, viewmodelPose } from "./viewmodel-poses";
+import { ViewMelee } from "./view-melee";
+import type { ViewArms, ViewArmsFrame } from "./view-arms";
+import { type ViewmodelPose, fitPose, viewmodelPose, viewmodelScale, viewmodelView } from "./viewmodel-poses";
+import { buildViewmodelProps } from "./viewmodel-props";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
 const TPP_DISTANCE = 2.2;
@@ -42,38 +44,9 @@ export const lookScaleFor = (fov: number, base: number = BASE_FOV): number => Ma
  */
 export type CameraOccluder = (origin: Vec3, dir: Vec3, maxDist: number) => number | null;
 
-interface ViewOffset {
-  x: number;
-  y: number;
-  z: number;
-  rx: number;
-  ry: number;
-  rz: number;
-}
-
 const smooth = (t: number): number => t * t * (3 - 2 * t);
 
-/** Wound-up and follow-through offsets of the FPP melee viewmodel per strike of the combo. */
-const VIEW_SWINGS: readonly { readonly cocked: ViewOffset; readonly through: ViewOffset }[] = [
-  // Forehand: from the right shoulder across to the left.
-  { cocked: { x: 0.14, y: 0.08, z: -0.08, rx: -0.4, ry: 0.5, rz: -0.9 }, through: { x: -0.42, y: -0.02, z: 0.06, rx: 0.2, ry: -0.7, rz: 0.9 } },
-  // Backhand: from the left back to the right.
-  { cocked: { x: -0.3, y: 0.04, z: -0.06, rx: -0.3, ry: -0.6, rz: 0.8 }, through: { x: 0.18, y: -0.04, z: 0.08, rx: 0.2, ry: 0.6, rz: -0.9 } },
-  // Overhead: up over the head, then down through the centre.
-  { cocked: { x: -0.06, y: 0.24, z: -0.12, rx: -1.1, ry: 0, rz: -0.1 }, through: { x: -0.1, y: -0.2, z: 0.08, rx: 1.0, ry: 0, rz: 0 } },
-];
-
-/**
- * Offset of the FPP melee viewmodel `elapsed` seconds into a swing (zero before and after), on
- * the rig's timing: half way through the sweep when the simulation lands the blow.
- */
-export const viewSwingOffset = (strike: number, elapsed: number, windup: number, recovery: number): ViewOffset => {
-  // The light strikes alternate forehand and backhand; the heavy finisher is the overhead cut.
-  const poses = VIEW_SWINGS[moveOf(strike) === "heavy" ? 2 : ((strike % 2) + 2) % 2] ?? VIEW_SWINGS[0]!;
-  const { cock, through } = swingPhase(elapsed, windup, recovery);
-  const mix = (k: keyof ViewOffset) => poses.cocked[k] * cock + (poses.through[k] - poses.cocked[k]) * through;
-  return { x: mix("x"), y: mix("y"), z: mix("z"), rx: mix("rx"), ry: mix("ry"), rz: mix("rz") };
-};
+export { type ViewOffset, viewSwingOffset } from "./view-melee";
 
 /**
  * One camera over one character rig, in two modes. FPP sits in the head and shows a weapon
@@ -82,6 +55,11 @@ export const viewSwingOffset = (strike: number, elapsed: number, windup: number,
  */
 export class CameraRig {
   readonly camera: FreeCamera;
+  /**
+   * The viewmodel's space under the camera, scaled across the view so that the weapon and the
+   * hands are drawn with their own field of view (`viewmodelView`), whatever the camera's.
+   */
+  readonly viewSpace: TransformNode;
   private readonly viewmodel: TransformNode;
   private mode: CameraMode = "FPP";
   /** 0 = FPP, 1 = TPP; animated for a smooth switch. */
@@ -99,10 +77,9 @@ export class CameraRig {
   horizontalFov = DEFAULT_HORIZONTAL_FOV;
   /** Walking bob, hit shake and the sprint widening; off for players prone to motion sickness. */
   cameraMotion = true;
-  /** Eased 0..1 guard of the FPP melee viewmodel. */
-  private guard = 0;
-  private swing: { strike: number; windup: number; recovery: number; elapsed: number } | null = null;
-  private melee = false;
+  /** The FPP melee viewmodel's guard and swing. */
+  private readonly meleeView = new ViewMelee();
+  private ads = 0;
   private readonly gunHolder: TransformNode;
   private readonly meleeHolder: TransformNode;
   private meleeLook: WeaponLook | null = null;
@@ -113,6 +90,11 @@ export class CameraRig {
   private pose: ViewmodelPose = viewmodelPose(null);
   private readonly materials: ToonMaterials;
   private readonly placeholderGun: AbstractMesh;
+  /** The procedural forearm, until Seki's own arms (`arms`) are there. */
+  private readonly propArm: readonly AbstractMesh[];
+  /** Seki's model arms in first person (`FppHands`), posed after the viewmodel; null keeps the procedural forearm. */
+  arms: ViewArms | null = null;
+  private look: WeaponLook | null = null;
   private reference: { position: Vector3; target: Vector3 } | null = null;
   private occluder: CameraOccluder | null = null;
   /**
@@ -148,40 +130,19 @@ export class CameraRig {
     this.camera.updateUpVectorFromRotation = true;
     scene.activeCamera = this.camera;
 
+    this.viewSpace = new TransformNode("vm-space", scene);
+    this.viewSpace.parent = this.camera;
     this.viewmodel = new TransformNode("viewmodel", scene);
-    this.viewmodel.parent = this.camera;
+    this.viewmodel.parent = this.viewSpace;
     // The gun (box or model) and the melee weapon hang under their own holders, one shown at a time.
     this.gunHolder = new TransformNode("vm-gun-holder", scene);
     this.gunHolder.parent = this.viewmodel;
     this.meleeHolder = new TransformNode("vm-melee-holder", scene);
     this.meleeHolder.parent = this.viewmodel;
     this.meleeHolder.setEnabled(false);
-    // Kept compact and at least ~25 cm from the eye so perspective does not blow it up.
-    // Seki's cybernetic forearm: ivory shell, copper wrist ring, ivory hand.
-    const sleeve = MeshBuilder.CreateCylinder("vm-sleeve", { height: 0.2, diameterTop: 0.052, diameterBottom: 0.066, tessellation: 12 }, scene);
-    sleeve.material = materials.get("cyberIvory");
-    sleeve.parent = this.viewmodel;
-    sleeve.rotation.x = Math.PI / 2;
-    sleeve.position.set(0, -0.02, -0.11);
-    const wrist = MeshBuilder.CreateTorus("vm-wrist", { diameter: 0.054, thickness: 0.012, tessellation: 16 }, scene);
-    wrist.material = materials.get("cyberCopper");
-    wrist.parent = this.viewmodel;
-    wrist.rotation.x = Math.PI / 2;
-    wrist.position.set(0, -0.015, -0.01);
-    const hand = MeshBuilder.CreateSphere("vm-hand", { diameter: 0.06, segments: 10 }, scene);
-    hand.material = materials.get("cyberIvory");
-    hand.parent = this.viewmodel;
-    hand.scaling.set(0.85, 1, 1.15);
-    hand.position.set(0, 0, 0.02);
-    const gun = MeshBuilder.CreateBox("vm-gun", { width: 0.035, height: 0.065, depth: 0.19 }, scene);
-    gun.material = materials.get("gun");
-    gun.parent = this.gunHolder;
-    gun.position.set(0, 0.04, 0.07);
-    this.placeholderGun = gun;
-    for (const m of [sleeve, wrist, hand, gun]) {
-      m.isPickable = false;
-      applyOutline(m, 0.004);
-    }
+    const props = buildViewmodelProps(scene, materials, this.viewmodel, this.gunHolder);
+    this.propArm = props.arm;
+    this.placeholderGun = props.gun;
     this.viewmodel.position.set(this.pose.hip.x, this.pose.hip.y, this.pose.hip.z);
     this.chokeArms = new ChokeArms(scene, materials, this.camera);
   }
@@ -201,6 +162,11 @@ export class CameraRig {
     return lookScaleFor(this.camera.fov, this.hipFov);
   }
 
+  /** How far the FPP viewmodel was aimed in its last frame: 0 from the hip .. 1 aimed down sights. */
+  get viewAim(): number {
+    return this.ads;
+  }
+
   /** Vertical field of view from the hip on the current screen (radians). */
   get hipFov(): number {
     return verticalFov(this.horizontalFov, this.scene.getEngine().getAspectRatio(this.camera));
@@ -212,7 +178,8 @@ export class CameraRig {
    */
   setHeldWeapon(look: WeaponLook | null): void {
     const melee = look === "baton" || look === "blade";
-    this.melee = melee;
+    this.meleeView.held = melee;
+    this.look = look;
     this.pose = viewmodelPose(look);
     this.gunHolder.setEnabled(!melee);
     this.meleeHolder.setEnabled(melee);
@@ -234,7 +201,7 @@ export class CameraRig {
 
   /** Plays the FPP melee swing, timed like the simulation's (ADR-0019). */
   startSwing(strike: number, windup: number, recovery: number): void {
-    this.swing = { strike, windup, recovery, elapsed: 0 };
+    this.meleeView.start(strike, windup, recovery);
   }
 
   /**
@@ -300,21 +267,20 @@ export class CameraRig {
     this.shakeAmount = Math.min(1, this.shakeAmount + amount);
   }
 
-  private updateGuard(guard: number, dt: number): number {
-    const want = this.melee && guard > 0.5 && !this.swing ? 1 : 0;
-    this.guard += (want - this.guard) * Math.min(1, dt * (want > this.guard ? 16 : 8));
-    return smooth(this.guard);
-  }
-
-  private updateSwing(dt: number): ViewOffset {
-    const sw = this.swing;
-    if (!sw || !this.melee) {
-      this.swing = null;
-      return { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 };
-    }
-    sw.elapsed += dt;
-    if (sw.elapsed >= swingEnd(sw.windup, sw.recovery)) this.swing = null;
-    return viewSwingOffset(sw.strike, sw.elapsed, sw.windup, sw.recovery);
+  /**
+   * Seki's arms follow the viewmodel; while they are drawn the procedural forearms hide. They hang
+   * in the viewmodel's space; the choke arms, placed in the camera's, are read into it.
+   */
+  private poseArms(frame: ViewArmsFrame | null): void {
+    const k = this.viewSpace.scaling.x;
+    const into = (f: { readonly elbow: Vector3; readonly dir: Vector3 }) => ({
+      elbow: new Vector3(f.elbow.x / k, f.elbow.y / k, f.elbow.z),
+      dir: new Vector3(f.dir.x / k, f.dir.y / k, f.dir.z).normalize(),
+    });
+    const choke = frame?.choke && k !== 1 ? { right: into(frame.choke.right), left: into(frame.choke.left) } : (frame?.choke ?? null);
+    const model = this.arms?.pose(frame ? { ...frame, choke } : null) ?? false;
+    for (const m of this.propArm) if (m.isEnabled(false) === model) m.setEnabled(!model);
+    this.chokeArms.showProps(!model);
   }
 
   update(target: Transform | null, dt: number): void {
@@ -324,7 +290,9 @@ export class CameraRig {
       // The reference frame and the title backdrop see what the player sees from the hip.
       this.camera.fov = this.hipFov;
       this.viewmodel.setEnabled(false);
+      this.ads = 0;
       this.chokeArms.update(false, undefined, dt);
+      this.poseArms(null);
       this.onBodyVisibility(true);
       this.bodyFade.update(0, 1);
       return;
@@ -369,6 +337,13 @@ export class CameraRig {
     const sprinting = target.speed > 5.2 ? motion : 0;
     this.sprintFov += (SPRINT_WIDEN * sprinting - this.sprintFov) * Math.min(1, dt * 6);
     this.camera.fov = adsFov * (1 + this.sprintFov);
+    // The weapon keeps its own field of view: the zoom and the sprint change the world's alone.
+    // Aiming down sights brings the gun to the centre with the sights on the eye line.
+    const ads = this.meleeView.held ? 0 : smooth(aim);
+    this.ads = ads;
+    const view = viewmodelView(this.scene.getEngine().getAspectRatio(this.camera), DEFAULT_HORIZONTAL_FOV);
+    const across = viewmodelScale(Math.tan(this.camera.fov / 2), view.hip + (view.aimed - view.hip) * ads);
+    this.viewSpace.scaling.set(across, across, 1);
     this.shakeAmount = Math.max(0, this.shakeAmount - dt * 3);
     const sh = this.shakeAmount * this.shakeAmount * motion;
     const t = this.bobPhase;
@@ -391,11 +366,9 @@ export class CameraRig {
     const reloading = this.reloadTotal > 0 && this.reload > 0 ? Math.sin(Math.PI * (1 - this.reload / this.reloadTotal)) : 0;
     const away = 1 - this.draw * this.draw * (3 - 2 * this.draw) + reloading * 0.35;
     this.viewmodel.setEnabled(fpp && this.draw > 0.02);
-    // Aiming down sights brings the gun to the centre with the sights on the eye line.
-    const ads = this.melee ? 0 : smooth(aim);
-    const guard = this.updateGuard(target.guard ?? 0, dt);
-    const sw = this.updateSwing(dt);
-    const { hip, ads: aimed } = this.pose;
+    const { guard, offset: sw } = this.meleeView.step(target.guard ?? 0, dt);
+    const zoomed = viewmodelScale(Math.tan(aimedFov(1, target.aimZoom ?? 1, this.hipFov) / 2), view.aimed);
+    const { hip, ads: aimed } = fitPose(this.pose, view.hip, view.aimed, zoomed);
     const base = {
       x: hip.x + (aimed.x - hip.x) * ads + (VIEWMODEL_GUARD.x - hip.x) * guard,
       y: hip.y + (aimed.y - hip.y) * ads + (VIEWMODEL_GUARD.y - hip.y) * guard,
@@ -407,9 +380,10 @@ export class CameraRig {
     this.viewmodel.position.z = base.z - this.recoil * 0.035 * (1 - 0.5 * ads) + sw.z;
     // Aimed in, the kick goes straight back: tipping up, the muzzle would rise over the crosshair.
     this.viewmodel.rotation.x = -this.recoil * 0.25 * (1 - ads) + away * 0.9 + sw.rx;
-    this.viewmodel.rotation.y = sw.ry;
+    this.viewmodel.rotation.y = sw.ry - (this.pose.yaw ?? 0) * (1 - ads);
     // The guard turns the weapon flat across the view.
     this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7 + guard * 1.25 + sw.rz;
+    this.poseArms({ viewmodel: this.viewmodel.isEnabled(false) ? this.viewmodel : null, look: this.look, aim: ads, choke: this.chokeArms.forearms() });
     this.onBodyVisibility(!fpp);
     this.bodyFade.update(fpp ? 0 : bodyFadeTarget(pos, dir, p, FIGURE_HEIGHT + (FIGURE_CROUCHED - FIGURE_HEIGHT) * Math.min(1, Math.max(0, crouch))), dt);
   }

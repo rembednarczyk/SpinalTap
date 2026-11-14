@@ -235,9 +235,12 @@ jobs:
           key: playwright-debs-${{ runner.os }}-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}
       - name: Mark the end of setup
         run: echo "setup $(date +%s)" >> "$RUNNER_TEMP/e2e-times"
-      - run: pnpm test:e2e --shard=${{ matrix.shard }}/2
+      # Two groups of about equal time (playwright.config.ts, E2E_GROUP), not --shard: that splits
+      # by test count and left every slow spec in shard 1.
+      - run: pnpm test:e2e
         env:
           CI: "true"
+          E2E_GROUP: ${{ matrix.shard }}
       - name: Print setup and test times
         if: always()
         run: |

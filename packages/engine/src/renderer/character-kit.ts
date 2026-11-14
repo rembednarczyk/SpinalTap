@@ -4,8 +4,9 @@ import type { CameraRig } from "../camera/camera-rig";
 import type { MoonShadow } from "../npr/moon-shadow";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { CharacterRig } from "./characters";
+import { FppHands } from "./fpp-hands";
 import { Loadouts } from "./loadout";
-import type { ModelLibrary } from "./model-library";
+import type { CharacterModelSpec, ModelLibrary } from "./model-library";
 import { ViewWeapon } from "./view-weapon";
 import { type WeaponManifest, WeaponMounts } from "./weapon-mount";
 
@@ -29,10 +30,13 @@ export class CharacterKit {
   readonly loadouts: Loadouts;
   private readonly held = new Map<EntityId, WeaponLook | null>();
   private readonly view: ViewWeapon;
+  /** Seki's own forearms and hands in the FPP view, from her model file. */
+  readonly hands: FppHands;
 
   constructor(private readonly deps: CharacterKitDeps) {
     this.weapons = new WeaponMounts(deps.library);
     this.view = new ViewWeapon(this.weapons, deps.camera);
+    this.hands = new FppHands(deps.scene, deps.library, deps.camera);
     this.loadouts = new Loadouts(deps.scene, deps.materials, this.weapons, (meshes) => {
       for (const m of meshes) deps.shadow.addCaster(m);
     });
@@ -59,6 +63,11 @@ export class CharacterKit {
     this.weapons.setManifest(manifest);
     this.loadouts.remountAll();
     this.view.reset();
+  }
+
+  /** Her model for the FPP arms (the manifest's heroine); none keeps the procedural forearm. */
+  setViewArms(spec: CharacterModelSpec | undefined): void {
+    this.hands.setModel(spec);
   }
 
   /** Starts loading every weapon file, one promise per file (ADR-0057). */

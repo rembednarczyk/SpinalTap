@@ -28,6 +28,7 @@ import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
 import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
+import { groundOverSteps } from "./ground-over-steps";
 import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
 import { addedSolidOverWay } from "./added-solid-over-way";
 import { albedoSurfaces, orthoPavingKeys, pavingAlbedoDrift, planToGrass } from "./paving-albedo";
@@ -61,7 +62,10 @@ import { lanePieces, segmentPieces } from "./world-samples";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { bareOnCover } from "./bare-on-cover";
-import { fillOnGreen } from "./fill-on-green";
+import { fillAreaMismatch } from "./fill-area";
+import { fillGap } from "./fill-gap";
+import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
+import { groundUnderPlinth, steepWayCut } from "./terrain-cuts";
 import { generatedCity } from "../../osm-import/test/city.ts";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
@@ -220,6 +224,9 @@ const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 /** The surfaces a lamp of the plan stands on or beside (`lamp-off-band`). */
 const PAVED: ReadonlySet<string> = new Set(["road", "crossing", "sidewalk", "square", "cobble", "footway", "steps"]);
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
+/** The game's ground, NaN off the map's chunks (where `groundY` is 0, no ground of the map). */
+const onMapGround = (x: number, z: number): number =>
+  MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ) ? groundY(x, z) : Number.NaN;
 
 /** The wall lantern's model, plate and arm and lantern, in the piece's frame. */
 const LANTERN_MODEL = (() => {
@@ -819,7 +826,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return carStreets.flatMap((r) => {
         if (r === by) return [];
         const q = projectOn(r.points, c.x, c.z);
-        return q.d < roadHalfWidth(r.points, q.side >= 0 ? 1 : -1) + 0.5 ? [{ at: near(c.x, c.z), what: `${c.model} by ${by.name} ${q.d.toFixed(1)} m from ${r.name}` }] : [];
+        return q.d < roadHalfWidth(r, q.side >= 0 ? 1 : -1) + 0.5 ? [{ at: near(c.x, c.z), what: `${c.model} by ${by.name} ${q.d.toFixed(1)} m from ${r.name}` }] : [];
       });
     }),
   /**
@@ -1141,7 +1148,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "ground-over-deck": () => groundOverDeck([...BRIDGE_DECKS.values()].flat(), bridgeDeckAt, groundY),
   /**
    * A point (every 0.25 m on the world's grid) of a seam of two chunks where their terrain parts by
-   * more than 0.1 m (G-748, the curator's review of PR #502): a ledge or a slot in the ground. Not
+   * more than 0.05 m (G-748, the curator's review of PR #502, G-758): a ledge or a slot in the ground. Not
    * under a slab, a deck or a solid of a scene level with the higher side (the Arkady's pavement).
    */
   "seam-gap": () => seamGaps(MAP_CHUNKS, citySeamWorld()),
@@ -1203,6 +1210,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       (p) => groundY(p.x, p.z),
       (p) => onChunk(p.x, p.z),
     ),
+  /**
+   * A point of a building's outline where the game's ground lies over 0.05 m under its foot (the
+   * lowest NMT point under it): a terrain cut beside a building leaves it floating (G-755 review).
+   */
+  "ground-under-plinth": () => groundUnderPlinth([...new Map(MAP_CHUNKS.flatMap((c) => c.buildings).map((b) => [b.id, b])).values()], onMapGround),
+  /** A stretch of a way laid at an even grade (G-755) cut over 2 m under the NMT, on its axis or its band 5 m wide (`terrain-cuts.ts`). */
+  "steep-way-cut": () => steepWayCut([...new Map(MAP_CHUNKS.flatMap((c) => c.steepWays ?? []).map((w) => [w.id, w])).values()], onMapGround, rawHeight, [-2.5, -1.25, 0, 1.25, 2.5]),
   /**
    * A flight's ramp (G-236) lifting the terrain over 2 m above the map's at an end: a wrong
    * `incline` in a new extract (`osm:fetch`) would raise a mound up the flight unnoticed.
@@ -1990,6 +2004,15 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "bare-on-cover": () => bareOnCover(landuseBare(cityLanduseWorld(SOURCE_OSM)), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample of the orthophoto's green under the paving the bare ground rule laid: a lawn taken for a square (ADR-0077 step 1.2, T-285, `fill-on-green.ts`). */
   "fill-on-green": () => fillOnGreen(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A 0.5 m sample under a lawn the bare ground rule laid that the leaf-off flight shows as paving under crowns: a pavement under trees taken for a tree's bed (G-764, `fill-on-green.ts`). */
+  "lawn-on-leafoff-paving": () => lawnOnLeafOffPaving(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A piece the bare ground rule laid whose triangles cover other than its area by over 0.01 m²: a ring touching itself (G-764, `fill-area.ts`). */
+  "fill-area-mismatch": () => fillAreaMismatch(generatedCity().stats),
+  /** A hole under 0.5 m² between the pieces the bare ground rule laid that nothing else covers: dark terrain between two fills (G-769, `fill-gap.ts`). */
+  "fill-gap": () => {
+    const city = generatedCity();
+    return fillGap(city.stats, city.chunks);
+  },
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => kerbGapBare(cityKerbWorld(SOURCE_OSM)),
   /** A point of a 0.25 m grid in a pavement no paving of the map explains, a metre wide and more, by a carriageway the map gives no width: its asphalt laid as a pavement (`kerb-fill.ts`, G-570). */
@@ -2028,6 +2051,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "ground-strip-overlap": () => groundStripOverlap(STRIP_RASTERS()),
   /** A m² of bare gaps up to 1.25 m wide between the tables' ground pieces, on a 0.25 m raster (ADR-0078 stage 5 brings it down, `ground-strips.ts`). */
   "ground-strip-gap": () => groundStripGap(STRIP_RASTERS()),
+  /** A piece of the tables' ground lifted over the steps, on a flight's outline by over 0.01 m²: it breaks through the lowest tread (G-777, `ground-over-steps.ts`). */
+  "ground-over-steps": () => groundOverSteps(MAP_CHUNKS),
   /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */
   "paving-coplanar": () => pavingCoplanar(mapGround(WORLD_SCENERY)),
   /** A drawn lawn with over 20 m² of it under a square's or a cobbled area's paving, which lies over it: Plac Litewski's lawns (G-421, `grass-under-paving.ts`). */

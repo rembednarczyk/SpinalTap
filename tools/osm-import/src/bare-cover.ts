@@ -24,7 +24,7 @@
  * `bare-strips.ts`). Within `FILL.kerbBand` of a carriageway a fill gives way behind bare ground on
  * the kerb (`keepKerbs`, the asphalt the rule leaves): a fill past it would make it a counted gap.
  */
-import { FillRule, type Path64, difference, isPositive } from "clipper2-ts";
+import { FillRule, type Path64, difference, intersect, isPositive } from "clipper2-ts";
 import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
 import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { type Cover, coverFor } from "../../orto/src/cover.ts";
@@ -36,7 +36,7 @@ import { contours } from "./contour.ts";
 import { type Area, type Line } from "./features.ts";
 import { type OsmData } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
-import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, signedArea, simplifyRing } from "./geometry.ts";
+import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, signedArea, simplifyRing, splitTouching } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
 
 // Module-local copies of what the cell loops read: Vitest's module runner reads an imported binding
@@ -184,6 +184,39 @@ const drawnCells = (cells: Cells, tile: number, has: Uint8Array): [grass: Uint8A
 };
 
 /**
+ * The outlines of `drawn` in a tile of cells (or a split's half), traced a cell past its edges and
+ * cut on them. Traced on the tile's cells alone, as if nothing lay past them, an outline crossing an
+ * edge on the slant turned along it on both sides, and the two tiles' corners left a triangle of
+ * bare ground between them and the fill of the other label (G-769). Past its edges the cells say
+ * where the outline runs, and the cut on the edge meets the next tile's exactly.
+ */
+const tileRings = (cells: Cells, drawn: Uint8Array, i0: number, j0: number, i1: number, j1: number): Pt[][] => {
+  const { nx, nz, rect } = cells;
+  const [a0, b0, a1, b1] = [Math.max(0, i0 - 1), Math.max(0, j0 - 1), Math.min(nx, i1 + 1), Math.min(nz, j1 + 1)];
+  const inside = new Uint8Array((a1 - a0) * (b1 - b0));
+  for (let j = b0; j < b1; j++) inside.set(drawn.subarray(j * nx + a0, j * nx + a1), (j - b0) * (a1 - a0));
+  const rings = contours({
+    nx: a1 - a0,
+    nz: b1 - b0,
+    inside,
+    at: (i, j) => cells.at(i + a0, j + b0),
+    // Half way: where a fill meets the map's pieces, the pieces themselves cut it (`cutByPieces`).
+    cross: () => 0.5,
+  });
+  const [x0, z0, x1, z1] = [rect.minX + i0 * STEP, rect.minZ + j0 * STEP, rect.minX + i1 * STEP, rect.minZ + j1 * STEP];
+  const within = (r: readonly Pt[]) => r.every((p) => p.x > x0 && p.x < x1 && p.z > z0 && p.z < z1);
+  if (rings.every(within)) return rings;
+  const tile = toPath([
+    { x: x0, z: z0 },
+    { x: x1, z: z0 },
+    { x: x1, z: z1 },
+    { x: x0, z: z1 },
+  ]);
+  // All the rings at once, a hole with its outline (`NonZero`): a hole the edge cuts becomes a notch.
+  return intersect(rings.map(toPath), [tile], FillRule.NonZero).map((p) => p.map((q) => ({ x: q.x / CLIP_SCALE, z: q.y / CLIP_SCALE })));
+};
+
+/**
  * The outlines of one label (`drawn` its cells, `drawnCells`) in a tile of cells, simplified, as the
  * chunk's ground, less `over` (the other label's pieces of the tile); a hole splits the tile.
  * `held`: the tile is known to hold the label.
@@ -193,16 +226,7 @@ const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: Gro
   let any = held;
   for (let j = j0; j < j1 && !any; j++) any = cells.label.subarray(j * nx + i0, j * nx + i1).includes(label);
   if (!any) return [];
-  const inside = new Uint8Array((i1 - i0) * (j1 - j0));
-  for (let j = j0; j < j1; j++) inside.set(drawn.subarray(j * nx + i0, j * nx + i1), (j - j0) * (i1 - i0));
-  const rings = contours({
-    nx: i1 - i0,
-    nz: j1 - j0,
-    inside,
-    at: (i, j) => cells.at(i + i0, j + j0),
-    // Half way: where a fill meets the map's pieces, the pieces themselves cut it (`cutByPieces`).
-    cross: () => 0.5,
-  });
+  const rings = tileRings(cells, drawn, i0, j0, i1, j1);
   // A hole (a shed in a yard, a lawn in a paved one) splits the tile through it, across its longer
   // side: the hole's cells then reach the halves' edges, notches of their pieces, not holes.
   const hole = rings.find((r) => -signedArea(r) >= FILL.minHole);
@@ -273,9 +297,13 @@ const crossesItself = (ring: readonly Pt[]): boolean => {
 const cutByPieces = (fills: readonly (readonly Pt[])[], pieces: readonly (readonly Pt[])[], over: readonly (readonly Pt[])[] = []): Pt[][] => {
   const cut = pieces.length + over.length > 0 ? difference(fills.map(toPath), [...pieces.map(pathOf), ...over.map(toPath)], FillRule.NonZero) : fills.map(toPath);
   // A sliver the cut leaves crossing itself is dropped: it would draw no ground the scan agrees with.
+  // A ring touching itself is cut into its lobes (`splitTouching`); a hole's lobe, turning the other
+  // way, goes, as the holes do.
   return cut
     .filter((p) => isPositive(p))
-    .map((p) => ccw(removeCollinear(p.map((q) => ({ x: q.x / CLIP_SCALE, z: q.y / CLIP_SCALE })), 0.005)))
+    .flatMap((p) => splitTouching(p.map((q) => ({ x: q.x / CLIP_SCALE, z: q.y / CLIP_SCALE }))))
+    .filter((r) => signedArea(r) > 0)
+    .map((r) => ccw(removeCollinear(r, 0.005)))
     .filter((r) => !crossesItself(r));
 };
 

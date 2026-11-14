@@ -12,7 +12,8 @@
     "asphalt",
     "shadow",
     "unknown",
-    "canopy"
+    "canopy",
+    "canopyHard"
   ],
   "source": "Ortofotomapa PZGiK (GUGiK, geoportal.gov.pl), WMS ORTO HighResolution / StandardResolution, EPSG:2180",
   "tiles": [
@@ -29,12 +30,6 @@
       "fetched": "2026-11-11"
     },
     {
-      "cell": "stare-miasto-0-0",
-      "flight": "2023-09",
-      "service": "StandardResolutionTime",
-      "fetched": "2026-11-11"
-    },
-    {
       "cell": "stare-miasto-1-0",
       "flight": "2025-04",
       "service": "HighResolution",
@@ -56,12 +51,6 @@
       "cell": "stare-miasto-0-1",
       "flight": "2025-04",
       "service": "HighResolution",
-      "fetched": "2026-11-11"
-    },
-    {
-      "cell": "stare-miasto-0-1",
-      "flight": "2024-06",
-      "service": "StandardResolutionTime",
       "fetched": "2026-11-11"
     },
     {
@@ -94,6 +83,7 @@
     "shadowL": 50,
     "greenExg": 0.026,
     "leafOffExg": 0.026,
+    "crownHardS": 0.12,
     "hardS": 0.4,
     "pavingL": 115
   }

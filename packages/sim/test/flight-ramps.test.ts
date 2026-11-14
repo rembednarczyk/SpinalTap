@@ -5,7 +5,8 @@ import { underDecks } from "../src/content/lublin/abutments";
 import { inBuilding } from "../src/content/lublin/places";
 import { stitchSeams } from "../src/content/lublin/seams";
 import { FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS } from "../src/content/lublin/sites";
-import { SHAPED_TERRAIN } from "../src/content/lublin/terrain";
+import { SHAPED_TERRAIN, WAY_RAMPS } from "../src/content/lublin/terrain";
+import { shapeWays, waySegments } from "../src/content/lublin/steep-ways";
 import type { LublinChunkData, LublinFlightData } from "../src/content/lublin/types";
 
 /** The chunks' terrain after the flights' ramps, before the ground is kept under the decks (`terrain.ts`). */
@@ -121,8 +122,9 @@ describe("flights' ramps in the city (G-236)", () => {
     expect(worst).toBeLessThan(1e-6);
   });
 
-  it("are the city's terrain with the ground kept under the bridges' decks after them (G-736), the seams stitched last (G-748)", () => {
-    expect(SHAPED_TERRAIN).toEqual(stitchSeams(MAP_CHUNKS, underDecks(MAP_CHUNKS, FLIGHTS_SHAPED)));
+  it("are the city's terrain with the steep ways (G-755) and the ground kept under the bridges' decks after them (G-736), the seams stitched last (G-748)", () => {
+    const ways = new Map([...FLIGHTS_SHAPED].map(([id, g]) => [id, shapeWays(flightGrid(g, waySegments(WAY_RAMPS)), WAY_RAMPS)]));
+    expect(SHAPED_TERRAIN).toEqual(stitchSeams(MAP_CHUNKS, underDecks(MAP_CHUNKS, ways)));
   });
 
   it("refines a grid by a whole factor without moving its surface", () => {
