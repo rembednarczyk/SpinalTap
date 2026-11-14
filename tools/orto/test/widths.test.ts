@@ -66,13 +66,16 @@ describe("carriageway widths on the orthophoto (ADR-0080 PR 10)", () => {
     expect(sideOf([1, 2.5, 4, 5.5, 7, "uncertain"]).median).toBeNull();
     expect(sideOf([3, 3.1, 3.2, 6, "no-kerb"]).median).toBe(3.1);
     expect(measureWay(street, axis, 20, []).reason).toBe("off-estimate");
+    // Narrower than the lanes it keeps: two mapped lanes of 2.25 m each and a 3 m one-way minimum hold 7 m.
+    expect(measureWay(street, axis, 6.5, [], 7.5).reason).toBe("off-estimate");
+    expect(measureWay(street, axis, 6.5, [], 7).reason).toBe("ok");
     expect(measureWay(street, [axis[0]!, { x: 12, z: 0 }], 6.5, []).reason).toBe("few-stations");
   });
 
   it("gives the same table twice", () => {
     const ways: Candidate[] = [
-      { id: "w2", name: "B", axis, estimate: 6.5, junctions: [] },
-      { id: "w1", name: "A", axis: [axis[1]!, axis[0]!], estimate: 8, junctions: [{ x: 50, z: 0 }] },
+      { id: "w2", name: "B", axis, estimate: 6.5, least: 4.5, junctions: [] },
+      { id: "w1", name: "A", axis: [axis[1]!, axis[0]!], estimate: 8, least: 3, junctions: [{ x: 50, z: 0 }] },
     ];
     const [a, b] = [measureCity(ways, street), measureCity(ways, street)];
     expect(tableText(a)).toBe(tableText(b));

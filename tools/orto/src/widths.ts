@@ -182,9 +182,10 @@ export const stationsOf = (length: number, blocked: (s: number) => boolean): num
 
 /**
  * The width of the carriageway along `axis` on the photograph (`probe`), against the `estimate` the
- * import would lay (m), clear of the `junctions` (points where another carriageway meets it).
+ * import would lay (m), clear of the `junctions` (points where another carriageway meets it), and
+ * no narrower than `least` (m: the lanes the street keeps, as `fitLanes`'s).
  */
-export const measureWay = (probe: Probe, axis: readonly Pt[], estimate: number, junctions: readonly Pt[]): WayMeasure => {
+export const measureWay = (probe: Probe, axis: readonly Pt[], estimate: number, junctions: readonly Pt[], least = 0): WayMeasure => {
   const length = lineLength(axis);
   const near = (s: number) => {
     const p = pointAlong(axis, s);
@@ -209,6 +210,6 @@ export const measureWay = (probe: Probe, axis: readonly Pt[], estimate: number, 
   if (left.length < MIN_SAMPLES) return out("few-stations");
   if (L.median === null && R.median === null) return out("no-consensus");
   const width = Math.round(((L.median ?? estimate / 2) + (R.median ?? estimate / 2)) * 10) / 10;
-  if (width < RATIO.min * estimate || width > RATIO.max * estimate) return out("off-estimate");
+  if (width < Math.max(least, RATIO.min * estimate) || width > RATIO.max * estimate) return out("off-estimate");
   return out(L.median !== null && R.median !== null ? "ok" : "one-side", width);
 };

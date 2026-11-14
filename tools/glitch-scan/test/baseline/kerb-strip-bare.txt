@@ -1,8 +1,15 @@
 # kerb-strip-bare: grid 10 m (x,z = the square's corner at its least x and z)
+krakowskie-0-0 -70,-180
+krakowskie-0-0 -60,-180
+krakowskie-0-0 -100,-170
 krakowskie-0-1 -80,110
 krakowskie-0-1 -70,110
 krakowskie-0-1 -60,110
 krakowskie-0-1 -90,120
+krakowskie-1-0 90,-240
+krakowskie-1-0 100,-240
+krakowskie-1-0 80,-230
+krakowskie-1-0 90,-230
 krakowskie-1-1 200,20
 krakowskie-1-1 100,100
 krakowskie-2-0 320,-240
@@ -10,7 +17,9 @@ krakowskie-2-0 320,-200
 krakowskie-2-0 330,-200
 podzamcze-0-0 710,170
 podzamcze-0-0 710,180
+podzamcze-0-0 580,350
 stare-miasto-1-0 610,-220
 stare-miasto-1-0 620,-220
 stare-miasto-1-0 730,-190
 stare-miasto-1-1 730,40
+stare-miasto-1-1 620,140

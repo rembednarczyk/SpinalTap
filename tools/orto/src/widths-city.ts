@@ -16,7 +16,8 @@ import { isCarriageway } from "../../osm-import/src/ground.ts";
 import { loadInputs } from "../../osm-import/src/load.ts";
 import { type OsmData } from "../../osm-import/src/osm.ts";
 import { parseLength } from "../../osm-import/src/building-tags.ts";
-import { roadWidth } from "../../osm-import/src/street-section.ts";
+import { oneway } from "../../osm-import/src/markings.ts";
+import { MIN_FITTED, roadWidth } from "../../osm-import/src/street-section.ts";
 import { puwgFrame } from "../../osm-import/src/project.ts";
 import { COVER, colourStats } from "./classify.ts";
 import { CELLS, type CellSpec, FLIGHTS, REPO, defaultCache } from "./config.ts";
@@ -30,6 +31,8 @@ export interface Candidate {
   readonly name: string;
   readonly axis: readonly Pt[];
   readonly estimate: number;
+  /** The narrowest width the street keeps its lanes in (m): one-way 3, two-way 4.5, 2.25 a mapped lane (`fitLanes`, T-063). */
+  readonly least: number;
   readonly junctions: readonly Pt[];
 }
 
@@ -73,7 +76,8 @@ export const candidateWays = (osm: OsmData, manual: ReadonlyMap<string, TagCorre
     const t = l.tags;
     if (t.highway === "service" || bridged(t) || held.has(l.id) || parseLength(t.width ?? t["width:carriageway"]) !== null) continue;
     const junctions = l.line.filter((p) => usedBy.get(key(p))!.size > 1);
-    out.push({ id: l.id, name: t.name ?? "", axis: l.line, estimate: roadWidth(t), junctions });
+    const least = Math.max(oneway(t) ? MIN_FITTED.oneway : MIN_FITTED.twoWay, (Math.round(Number(t.lanes)) || 0) * 2.25);
+    out.push({ id: l.id, name: t.name ?? "", axis: l.line, estimate: roadWidth(t), least, junctions });
   }
   return out.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 };
@@ -114,7 +118,7 @@ export const photoProbe = (covers: readonly Cover[], tiles: readonly { readonly 
   };
 };
 
-export const measureCity = (ways: readonly Candidate[], probe: Probe): Measured[] => ways.map((w) => ({ ...w, measure: measureWay(probe, w.axis, w.estimate, w.junctions) }));
+export const measureCity = (ways: readonly Candidate[], probe: Probe): Measured[] => ways.map((w) => ({ ...w, measure: measureWay(probe, w.axis, w.estimate, w.junctions, w.least) }));
 
 /** The generated table the import reads. */
 export const TABLE_FILE = join(REPO, "tools/osm-import/src/ortho-widths.generated.ts");
