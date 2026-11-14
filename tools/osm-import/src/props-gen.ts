@@ -13,7 +13,7 @@ import type { Tags } from "./osm.ts";
 import { ART_SHAPE, artShape } from "./props-art.ts";
 import { KERB_SHY, MAPPED, MAX_MOVE, ON_BUILDINGS, WALL_REACH, WALL_ROOM, propOf, withShape } from "./props-kinds.ts";
 import { bulkyPieces } from "./props-bulky.ts";
-import { byPaving } from "./props-lit.ts";
+import { litSpot } from "./props-lit-spot.ts";
 import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } from "./props-food.ts";
 import { marketEntrances, marketStalls } from "./props-market.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideSpot, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
@@ -45,9 +45,10 @@ export interface PlanItem {
   /** False: its lamps hang no basket, and the others' baskets stay where they were (T0's square, ADR-0074 stage 7). */
   readonly baskets?: false;
   /**
-   * How far its lamps keep from a car street's axis wherever they stand (m), the kerb found or not,
-   * and at the kerb on or by the paving, not at the fallback on a lawn: the `lit` rule's (G-798),
-   * whose ways are not hand-checked as the plan's lines were.
+   * How far its lamps keep from a car street's axis wherever they stand (m), the kerb found or not;
+   * with it, at the kerb on or by the paving, not at the fallback on a lawn, and not on the ground
+   * under a bridge's deck (`litSpot`): the `lit` rule's (G-798), whose ways are not hand-checked as
+   * the plan's lines were.
    */
   readonly keepOff?: number;
 }
@@ -170,28 +171,30 @@ const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: rea
   const lamp = prop.startsWith("lamp-") && mode !== "facade";
   // From an axis under a building (a gate, Ku Farze) a wall lantern finds the vault's wall or none
   // and would hang in the solid or the vault (G-173): it slides along the line or goes.
-  const clear = (at: Pt, p: Pt) =>
-    mode === "facade" ? site.surfaceAt(p) !== "building" && !site.nearPassage(p, PASSAGE_REACH) : !blocked(obstacles, p) && (!lamp || site.surfaceAt(at) === "road" || !nearTraffic(site, p, LAMP_TRAFFIC_REACH)) && (item.keepOff === undefined || (!nearTraffic(site, p, item.keepOff) && (mode === "path" || byPaving(site, p))));
+  const clear = (at: Pt, p: Pt, deck = false) =>
+    mode === "facade" ? site.surfaceAt(p) !== "building" && !site.nearPassage(p, PASSAGE_REACH) : !blocked(obstacles, p) && (!lamp || site.surfaceAt(at) === "road" || !nearTraffic(site, p, LAMP_TRAFFIC_REACH)) && (item.keepOff === undefined || litSpot(site, p, item.keepOff, mode === "path", deck));
   for (const { st, side, key } of slots) {
     if (mode === "axis") {
       out.push({ prop, p: st.p, yaw: null, key });
       continue;
     }
-    const n = { x: -st.dir.z * side, z: st.dir.x * side };
-    const place = (toEdge: boolean): Placed | null => {
+    const own = { x: -st.dir.z * side, z: st.dir.x * side };
+    const place = (toEdge: boolean, n = own): Placed | null => {
       for (const s of SLIDES) {
         const at = { x: st.p.x + st.dir.x * s, z: st.p.z + st.dir.z * s };
         const spot = sideSpot(site, at, n, mode, fallback, lamp, toEdge);
         if (spot === null) continue;
         const p = { x: at.x + n.x * spot.d, z: at.z + n.z * spot.d };
         // Lamps' arms, lanterns and café fronts face the street's axis.
-        if (clear(at, p)) return { prop, p, yaw: yawOf(-n.x, -n.z), key, ...(spot.deck ? { deck: true } : {}) };
+        if (clear(at, p, spot.deck)) return { prop, p, yaw: yawOf(-n.x, -n.z), key, ...(spot.deck ? { deck: true } : {}) };
       }
       return null;
     };
     // A paving's edge nearer a car street's axis than a lamp keeps (Plac Zamkowy's cobbles, where
     // cars drive the paving's middle) leaves the lamp at the fallback, as before G-477, not without one.
-    const placed = place(lamp) ?? (lamp ? place(false) : null);
+    // The rule's lamp with no room on its side (a row of trees' crowns along it, Kołłątaja) crosses to the other.
+    const other = { x: -own.x, z: -own.z };
+    const placed = place(lamp) ?? (lamp ? place(false) : null) ?? (item.keepOff !== undefined ? place(lamp, other) : null);
     if (placed) out.push(placed);
   }
   return out;

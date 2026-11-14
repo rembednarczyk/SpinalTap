@@ -106,12 +106,12 @@ export const YIELD_SHARE = 0.9;
 /** How far from the placed lamps a lit way still counts as dark in the second pass (m): short of the scan's 30 m by a lamp's slide along its line. */
 export const FILL_REACH = 25;
 /**
- * How far the rule's lamps keep from a car street's axis (m): past a two-lane street's lanes (1.6 m
- * out) by a lamp's radius and the 0.9 m the scan keeps (`furniture-in-car-lane`); where the map's
- * pavement runs into the carriageway (Staszica) the kerb found lies nearer. Short of a narrow
- * one-way street's kerb with its lamp half a metre past it (Podwale, 5 m wide).
+ * How far the rule's lamps keep from a car street's axis (m): past the nearest lanes the traffic
+ * drives (1.2 m out, sim `laneOffset`) by a road lamp's solid (0.27 m to its corner), the 0.9 m the
+ * scan keeps (`furniture-in-car-lane`) and 0.13 m to spare. Where the map's pavement runs into the
+ * carriageway the kerb found lies nearer: Staszica's lamps at 2.24 and 2.38 m stood in its lane.
  */
-export const KEEP_OFF = 2.8;
+export const KEEP_OFF = 2.5;
 /** The step a way is walked in (m). */
 const STEP = 2.5;
 /** The side of the grid cells of `LampIndex` (m). */
@@ -276,12 +276,14 @@ const mostOn = (pts: readonly Pt[], plan: LampIndex<LampLine | null>, r: number,
  * The look of a way: the plan's line most of its points lie on (3 points at least); else a styled
  * line beside `STYLED_SHARE` of a way on foot, as the free-standing lamp of that look with the way's
  * own spacing; else its class's. A car street keeps its road lamps beside the facades' lanterns, as
- * the plan set them on Podwale and Królewska past the walls.
+ * the plan set them on Podwale and Królewska past the walls, and under a park lamp's path drawn
+ * along it (the riverside path on Mełgiewska): a park lamp stands beside a path, not at a kerb.
  */
 const lookOf = (pts: readonly Pt[], line: LampLine, plan: LampIndex<LampLine | null>): LampLine => {
-  const on = mostOn(pts, plan, ON_WAY, 3, () => true);
+  const car = line.kind === "lamp-road";
+  const on = mostOn(pts, plan, ON_WAY, 3, (l) => !car || l.kind !== "lamp-park");
   if (on) return on;
-  const styled = line.kind === "lamp-road" ? null : mostOn(pts, plan, STYLED_NEAR, Math.max(3, pts.length * STYLED_SHARE), (l) => STYLED.has(l.kind));
+  const styled = car ? null : mostOn(pts, plan, STYLED_NEAR, Math.max(3, pts.length * STYLED_SHARE), (l) => STYLED.has(l.kind));
   if (styled) return { ...line, kind: FREE_STANDING[styled.kind] ?? styled.kind };
   return lookAt(line, pts[Math.floor(pts.length / 2)]!);
 };
@@ -375,19 +377,6 @@ export const litFillItems = (plan: PropsPlan, ways: readonly LitWay[], lamps: re
   return lampDark(plan, ways, lit, () => FILL_REACH, (w) => `lit.w${w.id}.fill`);
 };
 
-/** How far past the paving a lamp of the rule may stand (m): short of the scan's 1 m (`lamp-off-band`, G-477). */
-const PAVING_SLACK = 0.9;
-const AROUND = Array.from({ length: 8 }, (_, i) => ({ x: Math.sin((i * Math.PI) / 4), z: Math.cos((i * Math.PI) / 4) }));
-
-/** Whether a point lies on the paving (a pavement, a square, the carriageway) or within `PAVING_SLACK` of it. */
-export const byPaving = (site: { surfaceAt(p: Pt): string | null }, p: Pt): boolean => {
-  const paved = (q: Pt) => {
-    const s = site.surfaceAt(q);
-    return s === "walk" || s === "road";
-  };
-  return paved(p) || AROUND.some((u) => paved({ x: p.x + u.x * PAVING_SLACK, z: p.z + u.z * PAVING_SLACK }));
-};
-
 /** The plain town lamps (G-259). */
 const PLAIN: ReadonlySet<string> = new Set(["lamp-road", "lamp-modern-pole"]);
 /** How near a way's axis its lamps stand, and how far off its ends (m): the scan's `lamp-style-change-on-way` (G-266). */
@@ -437,6 +426,17 @@ export const litSecondPass = (plan: PropsPlan, lit: readonly LitWay[], streets: 
   const items = clash.size === 0 ? plan.items : plan.items.map((i) => (clash.has(i.id) ? { ...i, kind: clash.get(i.id)! } : i));
   const fill = litFillItems({ ...plan, items }, lit, lamps);
   return clash.size === 0 && fill.length === 0 ? plan.items : [...items, ...fill];
+};
+
+/**
+ * The furniture placed by `place` with the rule's second pass (`pnpm osm:props`, its test): the plan
+ * placed, then, when the second pass changes its groups, placed again with them.
+ */
+export const placeLit = <T extends { readonly byChunk: ReadonlyMap<string, readonly PlacedLamp[]> }>(plan: PropsPlan, place: (p: PropsPlan) => T, lit: readonly LitWay[], streets: readonly LitWay[]): T => {
+  const first = place(plan);
+  const lamps = [...first.byChunk.values()].flat().filter((i) => i.prop.startsWith("lamp-"));
+  const items = litSecondPass(plan, lit, streets, lamps);
+  return items === plan.items ? first : place({ ...plan, items });
 };
 
 /**
