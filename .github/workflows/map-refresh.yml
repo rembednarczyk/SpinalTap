@@ -58,6 +58,7 @@ jobs:
           echo "orto=orto-v1-$(date -u +%Y)-${{ hashFiles('data/orto/sources.json', 'tools/orto/src/config.ts') }}" >> "$GITHUB_OUTPUT"
           echo "orto-year=orto-v1-$(date -u +%Y)-" >> "$GITHUB_OUTPUT"
           echo "gugik=gugik-v1-$(date -u +%Y-%m)-${{ hashFiles('data/gugik/sources.json', 'tools/gugik/src/sources.ts') }}" >> "$GITHUB_OUTPUT"
+          echo "nmpt=nmpt-v1-${{ hashFiles('tools/gugik/src/nmpt.ts', 'tools/osm-import/src/config.ts') }}" >> "$GITHUB_OUTPUT"
       - name: Restore the orthophoto cache
         id: orto-cache
         uses: actions/cache/restore@v4
@@ -74,6 +75,16 @@ jobs:
           path: ~/.cache/seki-gugik/*.zip
           key: ${{ steps.keys.outputs.gugik }}-
           restore-keys: ${{ steps.keys.outputs.gugik }}-
+      # The surface model's tiles (nmpt-fetch, 30 tiles of 250 m, ~1 MB each): a scan flown years
+      # apart, so its key changes only with the coverage or the districts (nmpt.ts, config.ts);
+      # nmpt-fetch asks only for the tiles the cache lacks.
+      - name: Restore the NMPT cache
+        id: nmpt-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/seki-gugik/nmpt
+          key: ${{ steps.keys.outputs.nmpt }}-
+          restore-keys: ${{ steps.keys.outputs.nmpt }}-
 
       # Exit codes (tools/map-refresh/README.md): 0 a whole report without review, 2 a whole report
       # that asks the curator (a stale source too: a fetch failed after its one retry, its data are
@@ -105,6 +116,7 @@ jobs:
           print() { if [ -d "$1" ] && [ -n "$(find "$1" -maxdepth "$3" -type f -name "$2" -print -quit)" ]; then find "$1" -maxdepth "$3" -type f -name "$2" -printf '%P %s\n' | sort | sha256sum | cut -c1-16; else echo none; fi; }
           echo "orto=${{ steps.keys.outputs.orto }}-$(print "$HOME/.cache/seki-orto" '*.png' 2)" >> "$GITHUB_OUTPUT"
           echo "gugik=${{ steps.keys.outputs.gugik }}-$(print "$HOME/.cache/seki-gugik" '*.zip' 1)" >> "$GITHUB_OUTPUT"
+          echo "nmpt=${{ steps.keys.outputs.nmpt }}-$(print "$HOME/.cache/seki-gugik/nmpt" '*.f32' 1)" >> "$GITHUB_OUTPUT"
       - name: Save the orthophoto cache
         if: always() && !endsWith(steps.prints.outputs.orto, '-none') && steps.prints.outputs.orto != steps.orto-cache.outputs.cache-matched-key
         uses: actions/cache/save@v4
@@ -117,6 +129,12 @@ jobs:
         with:
           path: ~/.cache/seki-gugik/*.zip
           key: ${{ steps.prints.outputs.gugik }}
+      - name: Save the NMPT cache
+        if: always() && !endsWith(steps.prints.outputs.nmpt, '-none') && steps.prints.outputs.nmpt != steps.nmpt-cache.outputs.cache-matched-key
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/seki-gugik/nmpt
+          key: ${{ steps.prints.outputs.nmpt }}
 
       - name: Report
         if: always()
