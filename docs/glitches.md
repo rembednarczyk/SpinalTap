@@ -1806,7 +1806,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-775 Beżowa kostka i patyna pomnika jako zieleń w komórkach SM z dwoma nalotami
 - Ważność: S4 · Zasięg: stare-miasto-0-1 (476..478; 75..81), stare-miasto-0-0 (607..610; -207..-212); klucze 470,70
 - Opis: Po G-771 SM-0-0/0-1 mają 2 naloty; beżowa kostka (exg 0,035 w 2025-04) i nalot letni w cieniu albo z przechyłem dają green/canopy; patyna pomnika daje green; bare-cover kładzie trawę na chodniku. Proponowana kontrola: grass-on-light-paving
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g775 (89751b9, merge c1ad6ed), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, kurator, przegląd G-771)
+- Status: przegląd kuratora ZGODNE Z UWAGAMI (14.11); do PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g775 (89751b9, merge c1ad6ed), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, kurator, przegląd G-771)
 - Pakiet właściciela: tools/orto (classify.ts)
 - Test przyjęcia: narożnik Lubartowska/Noworybna i chodnik Królewskiej przy (608,-210) kostką; klucze 470,70 znikają
 - 14.11 G-771 runda 2 (scalenie z regułą koron #519): klucze 470,70 zniknęły; do sprawdzenia, czy zostaje tylko kępa trawy przy pomniku na Królewskiej (607..610; -207..-212)
@@ -1874,6 +1874,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (14.11, naprawiacz G-775)
 - Pakiet właściciela: tools/orto (classify.ts) + tools/osm-import (bare-cover)
 - Test przyjęcia: grass-on-light-paving poniżej 20 m², bez nowych kluczy
+
+### G-788 Przedpole kościoła św. Piotra: trawa i goły teren zamiast kostki pod przechyloną patyną dachu
+- Ważność: S4 · Zasięg: Stare Miasto, (470..480; -200..-190)
+- Opis: Po G-775 zostaje trawa 9 m² (2 kawałki) i goły teren ok. 14 m² na przedpolu kościoła św. Piotra (OSM w66335226) obok przystanku Brama Krakowska 02. Ortofoto 2024-06: kostka placu w cieniu; 2025-04: przechylony dach z patyną daje klasę asphalt/green; bare-cover zostawia asphalt gołym. Oczekiwane: square. Topografia: T-291. Zastępuje G-786.
+- Status: zgłoszone (14.11, kurator, przegląd G-775)
+- Pakiet właściciela: tools/orto, tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
