@@ -1915,7 +1915,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-801 Raport ortofoto liczy meble z wyciągu OSM jako postawione regułami
 - Ważność: S4 · Zasięg: raporty komórek orto, całe miasto
 - Opis: tools/orto/src/furniture.ts osmPlanPoints czyta sam plan docs/world/lublin-props.todo.json, a grupy osm.furniture.* z props-osm.ts nie mają inOsm. furnitureCounts (report.ts:55) zalicza 68 obiektów z pasa z < −200 do reguł generatora, nie do OSM.
-- Status: zgłoszone (przegląd kuratora 14.11)
+- Status: w PR #552; wcześniej: zgłoszone (przegląd kuratora 14.11)
 - Pakiet właściciela: tools/orto, tools/osm-import
 - Test przyjęcia: furnitureCounts dla krakowskie-0-0 i krakowskie-1-0 liczy obiekty z grup osm.furniture.* jako z OSM: osmPlanPoints bierze loadPropsPlan(), a osmFurnitureItems ustawia inOsm: true
 
