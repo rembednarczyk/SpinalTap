@@ -6,6 +6,7 @@ import { type CameraOccluder, CameraRig } from "../camera/camera-rig";
 import { fadeFigure } from "../npr/body-dither";
 import type { Grading } from "../npr/grading";
 import { CONTACT_SHADE } from "../npr/contact-shade";
+import type { GraphicsEffects } from "../npr/graphics-effects";
 import { LineArt } from "../npr/line-art";
 import { SpeedLines } from "../npr/speed-lines";
 import { NIGHT_RIG } from "../npr/lighting";
@@ -335,6 +336,20 @@ export class BabylonRenderer implements RenderPort {
     this.fx.setReduceFlashes(on);
     this.metro.setCalm(on);
     this.map.setReduceFlashes(on);
+  }
+
+  /**
+   * The player's graphics options (graphics options 14.11), at once, each when given: the switches
+   * for the High effects (each one off takes its passes out of the post-process chain; a quality
+   * without the effect ignores it) and the render resolution, 0.5..1 of the full one. One method
+   * for both keeps the facade within ADR-0031's member limit.
+   */
+  setGraphicsOptions(options: { readonly effects?: GraphicsEffects; readonly resolution?: number }): void {
+    if (options.effects) {
+      this.lineArt?.setContactShade(options.effects.contactShade);
+      this.fx.setBloom(options.effects.bloom);
+    }
+    if (options.resolution !== undefined) this.stage.setRenderResolution(options.resolution);
   }
 
   /**

@@ -25,6 +25,21 @@ export const LOW_QUALITY_MAX_RATIO = 1.5;
  */
 export const lowQualityScaling = (devicePixelRatio: number): number => 1 / Math.max(1, Math.min(devicePixelRatio || 1, LOW_QUALITY_MAX_RATIO));
 
+/** Share of the full render resolution the player's slider allows (graphics options 14.11). */
+export const RENDER_RESOLUTION_RANGE: readonly [number, number] = [0.5, 1];
+
+/**
+ * Hardware scaling level for a quality, a device pixel ratio and the player's render resolution
+ * (graphics options 14.11): 1 / (ratio × share). The ratio is the device's, as Babylon adapts to
+ * it, and on Low still capped by `lowQualityScaling`, so 100% renders exactly as before the slider.
+ */
+export const renderScaling = (quality: RenderQuality | undefined, devicePixelRatio: number, share: number): number => {
+  const ratio = quality === "low" ? 1 / lowQualityScaling(devicePixelRatio) : devicePixelRatio || 1;
+  const [min, max] = RENDER_RESOLUTION_RANGE;
+  const s = Number.isFinite(share) ? Math.min(max, Math.max(min, share)) : max;
+  return 1 / (ratio * s);
+};
+
 /** Engine + scene + glow layer. WebGL2 baseline (ADR-0004). */
 export class Stage {
   readonly engine: Engine;
@@ -50,6 +65,17 @@ export class Stage {
     this.engine.onContextLostObservable.add(() => this.pacer.reset());
     this.engine.onContextRestoredObservable.add(() => this.pacer.reset());
     window.addEventListener("resize", () => this.engine.resize());
+  }
+
+  /**
+   * The player's render resolution, 0.5..1 of the full one, at once: Babylon resizes the canvas's
+   * drawing buffer and the post-processes follow it on their next frame (High's sharpening too).
+   */
+  setRenderResolution(share: number): void {
+    const level = renderScaling(this.options.quality, window.devicePixelRatio, share);
+    if (Math.abs(level - this.engine.getHardwareScalingLevel()) < 1e-6) return;
+    this.engine.setHardwareScalingLevel(level);
+    this.engine.resize();
   }
 
   dispose(): void {
