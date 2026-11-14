@@ -27,6 +27,7 @@ import { patrolChecks } from "./patrol-pieces";
 import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
+import { cityWaterWorld, waterUnderGrass } from "./water-under-grass";
 import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
 import { entrancesWithoutDoor } from "./entrance-no-door";
 import { osmFurnitureMissing } from "./osm-furniture";
@@ -2064,6 +2065,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "ground-over-steps": () => groundOverSteps(MAP_CHUNKS),
   /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */
   "paving-coplanar": () => pavingCoplanar(mapGround(WORLD_SCENERY)),
+  /** A point of a 0.5 m grid (0.25 m²) of the map data's water the import lays as grass: the Bystrzyca by Nabrzeże (T-295, `water-under-grass.ts`). */
+  "water-under-grass": () => waterUnderGrass(cityWaterWorld(SOURCE_OSM)),
   /** A drawn lawn with over 20 m² of it under a square's or a cobbled area's paving, which lies over it: Plac Litewski's lawns (G-421, `grass-under-paving.ts`). */
   "grass-under-paving": () => grassUnderPavingFindings(WORLD_SCENERY),
   /** A lawn or a bed the curator added to the map with under half of it green on the orthophoto cover (G-627, `added-grass.ts`). */
