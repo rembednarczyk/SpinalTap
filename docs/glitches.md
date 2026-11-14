@@ -1919,6 +1919,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (street-section, orto widths)
 - Test przyjęcia: sidewalk-under-carriageway nie rośnie wobec main po zastosowaniu tabeli szerokości
 
+### G-803 Krawężnik poszerzonej jezdni 0,4 m za daleko od osi, ząbki (ADR-0078 etap 3)
+- Ważność: S3 · Zasięg: ok. 1,9 km krawężnika z kerbFills, cała mapa
+- Opis: Po podziale płaszczyzny kamień krawężnika leży za krawędzią asfaltu (reach..reach+0,3), krawężnik w u=+0,1 od chodnika OSM; ortofoto: mediana u=-0,25 (2025-04), -0,5 (oba naloty); na 3 Maja (-101; -20..-40) krawężnik z wcięciami. Zrzut scratchpad/adr78-etap3-kurator.png, T-294.
+- Status: w naprawie na gałęzi adr78-etap3 (przed scaleniem)
+- Pakiet właściciela: tools/osm-import (kerb-fill.ts)
+- Test przyjęcia: kamień w [gap-0,3; gap+0,1] na próbkach full, krawędź asfaltu bez wcięć
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
