@@ -1788,24 +1788,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - 14.11 (naprawiacz G-778): floorOver traktuje budynek mapy jako podłogę: budynek stare-miasto-0-1 (468; 124,2, y -9,1..-2,3) daje w kwadracie 460,120 pary ledge 5,7-6,6 m przy ground -2,30; test B tego kwadratu nie sprawdza. Do poprawy w gałęzi g759 przed PR.
 - runda 2 (679ef68): dachy budynków mapy i ściany pokoi nie są podłogą (budynek 468;124,2 w 460,120); test B wymaga #526 przed scaleniem
 
-### G-764 Trawnik pod koronami drzew na kostce (reguła koron, ADR-0077 krok 1.2)
-- Ważność: S4 · Zasięg: 4 dzielnice, ok. 474–670 m², m.in. promenada nad Czechówką przy VIVO (x 1090, z 185), Furmańska (x 646, z 257)
-- Opis: bare-clean.ts mixedRow zamienia koronę (klasa canopy) w trawnik, gdy g > q || s > q, także wśród samej kostki (g = 0). Nalot bezlistny 2025-04 pokazuje tam jasną kostkę (L ≥ 115, S ≤ 0,12: 474 m², z tego 199 m² było kostką na main). Propozycja: rozdzielić w tools/orto klasę canopy na koronę nad twardym i nad miękkim; nad twardym kostka, nad miękkim trawnik; kontrola skanu lawn-on-leafoff-paving. Szczegóły: scratchpad topo-adr77kerb-raport.md.
-- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g764, e936eb2): klasa canopyHard, lawn-on-leafoff-paving 619 -> 71,5 m² (plamki < 2 m²); runda 2: ósemki w cutByPieces; potem przegląd kuratora (orto:diff, prawda bez leisure=park); wcześniej: zgłoszone (13.11, kurator, przegląd kroku 1.2)
-- Pakiet właściciela: tools/osm-import, tools/orto
-- Test przyjęcia: kontrola lawn-on-leafoff-paving < 50 m², a zarośla Nabrzeża (x 2500..2534, z 107..139) i żywopłot Podzamcza (x 551..569, z 353..359) zostają trawą
-- Wiersz topografii: T-287.
-- runda 2 (6b0ebb7): obrysy fills dotykające same siebie rozcinane na proste pierścienie (splitTouching); kontrola fill-area-mismatch 12 -> 0; grass-under-paving zielony; map-ground-golden 168809/f7705141
-- Przegląd topografii 13.11 (6b0ebb7): ZGODNE Z UWAGAMI (T-287); zrzut Krakowskie (297; -226) do powtórzenia.
-- Ponowny zrzut (297; -226) na 6b0ebb7 potwierdza ciemny trójkąt: zgłoszony jako G-769, nie blokuje PR #519 (kurator).
-
-### G-766 Kawałki fills dotykające same siebie (ósemki) triangulowane z nadmiarem
-- Ważność: S4 · Zasięg: stare-miasto-1-0 (619,94; -232,85) 2,0/1,1 m²; na main m.in. trawa podzamcze-1-1 112,4/103,9 m², nabrzeze-0-0 24,5/20,9 m²
-- Opis: cutByPieces (bare-cover.ts) przepuszcza obrysy z powtórzonym wierzchołkiem (crossesItself łapie tylko przecięcia); triangulacja daje więcej niż pole; od G-764 czerwony grass-under-paving; naprawa w rundzie 2 G-764
-- Status: naprawione na gałęzi G-764 (6b0ebb7), do archiwum razem z PR G-764; wcześniej: w naprawie (13.11, gałąź G-764)
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: kontrola fill-area-mismatch: |triangulacja - pole| <= 0,01 m² dla każdego kawałka fills
-
 ### G-768 Ustępowanie nadwozi G-744 kruche w zakręcie Kołłątaja przy Zesłańców Sybiru
 - Ważność: S3 · Zasięg: -108,-150; ziarna 10/13/15/38 przy pasach przesuniętych o 5–10 cm
 - Opis: bodiesMeet daje odległość spotkania na przemian z próbek co 1 m i z próbki za zakrętem, goesFirst zmienia decyzję, auto 9,9 m/s nie hamuje, oba są już za późno
@@ -1819,6 +1801,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, kurator, przegląd G-764)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: brak dziury w fills przy (297; -226) (sonda 0,1 m), kontrola lawn-leafoff-patch lub fills-gap
+- 14.11: #519 (G-764) w main, można naprawiać
 
 ### G-770 Rewolwer: kciuk i palec wskazujący wchodzą w bryłę broni w FPP
 - Ważność: S4 · Zasięg: rewolwer w widoku FPP (ta sama poza co pistolet): kciuk do 9,8 mm, wskazujący do 10 mm w bryle; kłąb kciuka lewej dłoni (Thumb1) ok. 11 mm w chwycie pistoletu
