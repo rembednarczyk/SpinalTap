@@ -8,10 +8,10 @@
  */
 import { writeFileSync } from "node:fs";
 import { MEDIANS_FILE, type MedianRow, mediansOf, mediansText } from "./albedo-medians.ts";
-import { type AlbedoBucket, gatherAlbedo, luma, medianColour, topPieces, wellInside } from "./albedo.ts";
+import { type AlbedoBucket, gatherTile, luma, medianColour, topPieces, wellInside } from "./albedo.ts";
 import { type Colour } from "./classify.ts";
 import { CELLS, defaultCache } from "./config.ts";
-import { readCover, sampleColours } from "./cover.ts";
+import { readCover } from "./cover.ts";
 import { CHUNKS } from "./game.ts";
 import { flatRing } from "./overlay.ts";
 import { MAP_REGIONS } from "./region.ts";
@@ -41,11 +41,7 @@ for (const region of MAP_REGIONS) {
   for (const cell of CELLS.filter((c) => c.slug === region.slug)) {
     const r = cell.rect;
     const ks = samplesIn(h, [{ x: r.minX, z: r.minZ }, { x: r.maxX, z: r.minZ }, { x: r.maxX, z: r.maxZ }, { x: r.minX, z: r.maxZ }]);
-    for (const flight of ALBEDO_FLIGHTS) {
-      const tile = loadTile(cache, flight, cell);
-      if (tile?.meta.sheet) photographed.get(flight)!.add(tile.meta.sheet.date);
-      if (tile) gatherAlbedo(buckets.get(flight)!, ks, surfaceOf, cover.cls, sampleColours(h, tile, r));
-    }
+    for (const flight of ALBEDO_FLIGHTS) gatherTile(buckets.get(flight)!, photographed.get(flight)!, loadTile(cache, flight, cell), ks, surfaceOf, cover, r);
   }
 }
 
