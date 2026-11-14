@@ -1,9 +1,14 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { TREE_CROWN, TREE_KIND, treeHeight, treeScale, treeSpecies } from "../../../packages/core/src/world/trees.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
+import { REPO } from "../src/paths.ts";
 import { Site } from "../src/props-site.ts";
 import { treeVariant } from "../src/tree-heights.ts";
-import { genusOf, loadTreeTags, treeSpeciesOf } from "../src/tree-species.ts";
+import { loadPropsPlan, withOsmFurniture } from "../src/props-osm.ts";
+import type { PropsPlan } from "../src/props-gen.ts";
+import { genusOf, loadTreeTags, treeNodeIds, treeSpeciesOf } from "../src/tree-species.ts";
 
 /** A 100 x 60 m flat chunk with a row of houses whose south wall runs along z = 38. */
 const site = new Site([
@@ -81,5 +86,28 @@ describe("trees of the species OSM names (G-423)", () => {
     expect(treeSpecies(v)).toBe(TREE_KIND.oak);
     expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v)).toBeLessThan(6);
     expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v)).toBeGreaterThan(5.5);
+  });
+});
+
+describe("the trees pnpm osm:trees asks OSM about", () => {
+  it("takes every placed tree: the plan's and the extract's the plan lacks, once each, by id", () => {
+    const plan = { items: [{ id: "a.tree", kind: "tree", points: [], osm: ["n30", "n10", "w5"] }, { id: "a.bench", kind: "bench", points: [], osm: ["n20"] }, { id: "b.tree", kind: "tree", points: [], osm: "n40" }] } as unknown as PropsPlan;
+    const furniture = [
+      { id: "n10", p: { x: 0, z: 0 }, tag: "natural=tree", detail: "" },
+      { id: "n50", p: { x: 0, z: 0 }, tag: "natural=tree", detail: "" },
+      { id: "n60", p: { x: 0, z: 0 }, tag: "amenity=bench", detail: "" },
+    ];
+    expect(treeNodeIds(plan)).toEqual([10, 30, 40]);
+    expect(treeNodeIds(withOsmFurniture(plan, furniture))).toEqual([10, 30, 40, 50]);
+  });
+
+  it("asks about the city's trees of the extract too, not only the plan's 586 (PR #550)", () => {
+    const placed = treeNodeIds(loadPropsPlan());
+    const planOnly = treeNodeIds(JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan);
+    expect(planOnly).toHaveLength(586);
+    expect(placed).toEqual(expect.arrayContaining(planOnly));
+    // A buckthorn, a natural monument OSM names (`genus=Rhamnus`), placed since PR #550 but not in the plan.
+    expect(placed).toContain(7473295715);
+    expect(placed.length).toBeGreaterThan(planOnly.length);
   });
 });

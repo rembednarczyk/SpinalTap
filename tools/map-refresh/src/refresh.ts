@@ -3,14 +3,15 @@
  * the city refreshed from its data by one deterministic command, without an agent (README.md):
  * fetch (network, unless `--offline`), extract the caches into `data/`, build the tables, run the
  * glitch scan and the golden hashes, and write the report of the differences with its verdict to
- * `reports/map-refresh.{md,json}`. Exit 0 when every step that ran succeeded, 1 when one failed,
- * 3 at an HTTP 429 (stopped, never asked again in the same run).
+ * `reports/map-refresh.{md,json}`. Exit 0: a whole report, no review; 2: a whole report whose verdict
+ * asks the curator (a stale source too); 3: an HTTP 429 (stopped, never asked again in the same
+ * run); 1 or another: the tool failed (a step other than a fetch, or an error).
  */
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { WORK_DIR } from "./config.ts";
-import { refresh } from "./pipeline.ts";
+import { EXIT, refresh } from "./pipeline.ts";
 import { RateLimited } from "./run.ts";
 import { SOURCES, type Source } from "./steps.ts";
 
@@ -29,7 +30,7 @@ const sources = opt.sources.split(",").filter(Boolean);
 const unknown = sources.filter((s) => !(SOURCES as readonly string[]).includes(s));
 if (unknown.length) {
   console.error(`--sources: unknown ${unknown.join(", ")} (known: ${SOURCES.join(", ")})`);
-  process.exit(2);
+  process.exit(EXIT.tool);
 }
 
 try {
@@ -51,6 +52,6 @@ try {
 } catch (e) {
   if (e instanceof RateLimited) {
     console.error(`\nmap:refresh: ${e.message}`);
-    process.exitCode = 3;
+    process.exitCode = EXIT.rateLimited;
   } else throw e;
 }
