@@ -190,7 +190,11 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
-  tools/glitch-scan: {}
+  tools/glitch-scan:
+    devDependencies:
+      clipper2-ts:
+        specifier: 2.0.1-19
+        version: 2.0.1-19
 
   tools/gugik: {}
 

@@ -8,7 +8,8 @@ export type RenderQuality = "high" | "medium" | "low";
  * - low: the puddle mask and the reflection strips under lamps and signs (ADR-0030), nothing more;
  * - medium: plus a static reflection probe, a small cube of the neon, signs, far city and sky,
  *   rendered once when a district comes in and sampled by the wet surfaces in cel steps;
- * - high: the same probe at a higher resolution. Screen-space reflections stay off: Babylon's
+ * - high: the same probe, at the same 128 since 14.11 (the user asked for less load on High; the
+ *   probe renders when a district comes in, so 256 cost a heavier hitch there). Screen-space reflections stay off: Babylon's
  *   SSR reads reflectivity from the geometry buffer, which only standard and PBR materials
  *   write, so the toon materials would need a second G-buffer pass of their own (see the ADR).
  */
@@ -39,13 +40,18 @@ export interface QualityTier {
   readonly sharpen: number;
   /** Contact shade in the line-art pass (graphics backlog 13.11, step 2). */
   readonly contactShade: boolean;
+  /** Bloom weight over the brightest pixels (signs, lamps, screens), 0 off (graphics backlog 13.11, step 3). */
+  readonly bloom: number;
 }
 
 export const QUALITY_TIERS: Readonly<Record<RenderQuality, QualityTier>> = {
-  low: { shadowMap: 1024, lineArt: false, splashes: false, wetProbe: null, livePreview: false, modelFiles: 5, msaa: 1, sharpen: 0, contactShade: false },
-  medium: { shadowMap: 1024, lineArt: true, splashes: false, wetProbe: 128, livePreview: true, modelFiles: 11, msaa: 2, sharpen: 0, contactShade: false },
-  high: { shadowMap: 2048, lineArt: true, splashes: true, wetProbe: 256, livePreview: true, modelFiles: 11, msaa: 2, sharpen: 0.25, contactShade: true },
+  low: { shadowMap: 1024, lineArt: false, splashes: false, wetProbe: null, livePreview: false, modelFiles: 5, msaa: 1, sharpen: 0, contactShade: false, bloom: 0 },
+  medium: { shadowMap: 1024, lineArt: true, splashes: false, wetProbe: 128, livePreview: true, modelFiles: 11, msaa: 2, sharpen: 0, contactShade: false, bloom: 0 },
+  high: { shadowMap: 2048, lineArt: true, splashes: true, wetProbe: 128, livePreview: true, modelFiles: 11, msaa: 2, sharpen: 0.25, contactShade: true, bloom: 0.55 },
 };
+
+/** Luminance (0..1) above which a pixel blooms (graphics backlog 13.11, step 3). */
+export const BLOOM_THRESHOLD = 0.85;
 
 export const qualityTier = (q: RenderQuality | undefined): QualityTier => QUALITY_TIERS[q ?? "high"];
 

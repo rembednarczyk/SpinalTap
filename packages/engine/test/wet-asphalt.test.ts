@@ -7,10 +7,10 @@ import { TOON_FRAGMENT } from "../src/npr/toon-shader";
 import { PROBE_MIN_INTERVAL, ProbeSchedule, WetProbe } from "../src/renderer/wet-probe";
 
 describe("wet asphalt tiers (ADR-0036)", () => {
-  it("keep only strips on low, a probe on medium, a bigger probe on high and no SSR anywhere", () => {
+  it("keep only strips on low, a probe on medium, the same 128 probe on high (user, 14.11) and no SSR anywhere", () => {
     expect(QUALITY_TIERS.low.wetProbe).toBeNull();
     expect(QUALITY_TIERS.medium.wetProbe).toBe(128);
-    expect(QUALITY_TIERS.high.wetProbe).toBeGreaterThan(QUALITY_TIERS.medium.wetProbe!);
+    expect(QUALITY_TIERS.high.wetProbe).toBe(128);
     expect(qualityTier(undefined)).toBe(QUALITY_TIERS.high);
     // Medium keeps the line art (it is the look) and drops the costly extras.
     expect(QUALITY_TIERS.medium.lineArt).toBe(true);

@@ -28,6 +28,7 @@ import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
 import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
+import { entrancesWithoutDoor } from "./entrance-no-door";
 import { groundOverSteps } from "./ground-over-steps";
 import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
 import { addedSolidOverWay } from "./added-solid-over-way";
@@ -63,6 +64,7 @@ import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroS
 import { lanternsByPassages } from "./passage-lanterns";
 import { bareOnCover } from "./bare-on-cover";
 import { fillAreaMismatch } from "./fill-area";
+import { fillGap } from "./fill-gap";
 import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
 import { groundUnderPlinth, steepWayCut } from "./terrain-cuts";
 import { generatedCity } from "../../osm-import/test/city.ts";
@@ -112,7 +114,8 @@ import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
-import { loadEntrances } from "../../osm-import/src/props-doors.ts";
+import { lublinDoorWalls } from "../../osm-import/src/door-walls.ts";
+import { ENTRANCE_REACH, loadEntrances } from "../../osm-import/src/props-doors.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
 import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
@@ -2007,6 +2010,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "lawn-on-leafoff-paving": () => lawnOnLeafOffPaving(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A piece the bare ground rule laid whose triangles cover other than its area by over 0.01 m²: a ring touching itself (G-764, `fill-area.ts`). */
   "fill-area-mismatch": () => fillAreaMismatch(generatedCity().stats),
+  /** A hole under 0.5 m² between the pieces the bare ground rule laid that nothing else covers: dark terrain between two fills (G-769, `fill-gap.ts`). */
+  "fill-gap": () => {
+    const city = generatedCity();
+    return fillGap(city.stats, city.chunks);
+  },
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => kerbGapBare(cityKerbWorld(SOURCE_OSM)),
   /** A point of a 0.25 m grid in a pavement no paving of the map explains, a metre wide and more, by a carriageway the map gives no width: its asphalt laid as a pavement (`kerb-fill.ts`, G-570). */
@@ -2029,6 +2037,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A staircase's door on a wall facing only a way under ground, a yard's wall (G-197, `door-streets.ts`). */
   "door-faces-underground": () =>
     doorsFacingUnderground(WORLD_SCENERY, Object.values(WORLD_STREET_PROPS).flat(), cityVenueBoards(WORLD_SCENERY), extractFeatures(SOURCE_OSM).lines, loadEntrances().map((e) => e.p)),
+  /** An entrance of the map by a drawn wall a door may take, with no door within 2 m: its slots turned down (G-781, `entrance-no-door.ts`). */
+  "entrance-no-door": () => entrancesWithoutDoor(loadEntrances(), lublinDoorWalls(), Object.values(WORLD_STREET_PROPS).flat(), ENTRANCE_REACH),
   // The vehicles of ADR-0058 stage 4 as drawn against their bodies in the simulation (`vehicle-pieces.ts`).
   ...vehicleChecks(PARKED_CARS),
   // The drones of ADR-0058 stage 7 flown round the lanes the renderer plans from the scenery, and the
