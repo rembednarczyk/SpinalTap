@@ -170,17 +170,19 @@ describe("generator", () => {
     const ground = (street: Record<string, string>) => generate(map(street), slope, tinyChunk).chunks[0]!.ground;
     const surface = (g: ReturnType<typeof ground>, s: string) => g.filter((x) => x.surface === s).reduce((n, x) => n + area(x.outline), 0);
     const fitted = ground({ oneway: "yes" });
-    // Both sidewalks whole, 100 m × 2.5 m each; the asphalt ends half a metre short of their axes: 3.8 m, not 6.5 m.
-    expect(surface(fitted, "sidewalk")).toBeCloseTo(500, -1);
+    // The asphalt ends half a metre short of the sidewalks' axes: 3.8 m, not 6.5 m. The ground is a
+    // partition and the asphalt wins at its edge (ADR-0078 step 3): each sidewalk (2.5 m wide about its
+    // axis, 1.15 to 3.65 m off the street's) keeps what lies past the asphalt, from 1.9 m out, 1.75 m of it.
+    expect(surface(fitted, "sidewalk")).toBeCloseTo(2 * 100 * 1.75, -1);
     expect(surface(fitted, "road")).toBeCloseTo(380, -1);
-    // Two ways: no narrower than two 2.25 m lanes, still short of the sidewalks' middle (G-113).
+    // Two ways: no narrower than two 2.25 m lanes, still short of the sidewalks' middle (G-113): 1.4 m of each left.
     const twoWay = ground({});
-    expect(surface(twoWay, "sidewalk")).toBeCloseTo(500, -1);
+    expect(surface(twoWay, "sidewalk")).toBeCloseTo(2 * 100 * 1.4, -1);
     expect(surface(twoWay, "road")).toBeCloseTo(450, -1);
     // A width from the map stays as it is, whatever it covers.
     expect(surface(ground({ width: "6" }), "road")).toBeCloseTo(600, -1);
     // Mapped lanes are fitted too (G-655), no narrower than 2.25 m each: two 4.5 m, three one way 6.75 m (6.8 as the outlines round it).
-    expect(surface(ground({ lanes: "2" }), "sidewalk")).toBeCloseTo(500, -1);
+    expect(surface(ground({ lanes: "2" }), "sidewalk")).toBeCloseTo(2 * 100 * 1.4, -1);
     expect(surface(ground({ lanes: "2" }), "road")).toBeCloseTo(450, -1);
     expect(surface(ground({ lanes: "3", oneway: "yes" }), "road")).toBeCloseTo(680, -1);
   });

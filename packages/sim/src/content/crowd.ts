@@ -280,13 +280,14 @@ const squareLanes = (): CrowdLane[] =>
   MAP_CHUNKS.filter((c) => c.district === "shinsekai-7" || c.district === "kanal").flatMap((c) => {
     const water = c.ground.filter((g) => g.surface === "water" || g.surface === "basin").map((g) => ringOf(g.outline));
     const dry = (loop: readonly Pt[]) => loop.every(([x, z]) => !water.some((w) => pointInPairRingEvenOdd(x, z, w)));
-    const squares = c.ground
+    // The squares and alleys as mapped, not as the partition cut them (`walkAreas`).
+    const squares = (c.walkAreas ?? [])
       .filter((g) => g.surface === "square")
       .map((g) => ringOf(g.outline))
       .filter((r) => r.length >= 3 && ringArea(r) >= SQUARE_AREA)
       .sort((a, b) => ringArea(b) - ringArea(a));
     // The squares' alleys: a path's band is already a loop up one side and back down the other.
-    const alleys = c.ground
+    const alleys = (c.walkAreas ?? [])
       .filter((g) => g.surface === "footway")
       .map((g) => ringOf(g.outline))
       .filter((r) => r.length >= 4 && ringArea(r) >= ALLEY_AREA)

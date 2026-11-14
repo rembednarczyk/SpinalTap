@@ -150,8 +150,18 @@ describe("tag corrections (ADR-0042)", () => {
       }
   }
   const cellOf = (x: number, z: number) => cells.get(Math.floor(x / CELL) * 100003 + Math.floor(z / CELL)) ?? [];
-  /** The surface drawn on top at (x, z): the last piece in draw order, or null for bare terrain. */
-  const surfaceAt = (x: number, z: number) => cellOf(x, z).reduce<string | null>((s, g) => (inside(x, z, g.outline) ? g.surface : s), null);
+  /**
+   * The surface at (x, z): the piece over it, or null for bare terrain. The ground is a partition of the
+   * plane (ADR-0078 step 3): pieces share their edges, one cut along another's to the millimetre, so a
+   * sample on such an edge may fall in a hairline between the two; it takes the piece 2 mm off it then.
+   */
+  const surfaceAt = (x: number, z: number): string | null => {
+    for (const [dx, dz] of [[0, 0], [0.002, 0], [-0.002, 0], [0, 0.002], [0, -0.002]] as const) {
+      const g = cellOf(x + dx, z + dz).find((p) => inside(x + dx, z + dz, p.outline));
+      if (g) return g.surface;
+    }
+    return null;
+  };
 
   it("lays each flight of the castle stairs at least 9.5 m wide, as its walls stand (G-203)", () => {
     for (const [x0, z0, x1, z1] of FLIGHTS) {
@@ -355,7 +365,9 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(845, 361.3)).toBe("grass");
     // The footways stay on top of the paving.
     expect(surfaceAt(850, 377.5)).toBe("footway");
-    expect(surfaceAt(816, 438.8)).toBe("footway");
+    // Where a footway's band runs onto the stands' asphalt, the asphalt wins at a carriageway's edge
+    // (ADR-0078 step 3, the user's decision of 14.11), as the picture drew it on top before (SURFACE_LIFT).
+    expect(surfaceAt(816, 438.8)).toBe("road");
   });
 
   // By the car park w227698441 at the Bazar (T-172): (a) asphalt between the car park and Nowy Plac

@@ -32,14 +32,23 @@ describe("paving-overlap-step (G-301)", () => {
 
   it("lays the two squares of the report (435.3, -94.6) at one height round it", () => {
     const { pieces } = drawnPieces(WORLD_SCENERY, groundY);
-    const here = pieces.filter((p) => pointInRing({ x: 435.3, z: -94.6 }, p.ring));
-    expect(here.map((p) => p.surface)).toEqual(["square", "square"]);
-    for (let x = 433; x <= 438; x += 0.25) {
-      for (let z = -97; z <= -92; z += 0.25) {
-        const ys = here.filter((p) => pointInRing({ x, z }, p.ring)).map((p) => pieceHeightAt(p, x, z));
-        if (ys.length < 2 || ys.includes(null)) continue;
-        expect(Math.abs(ys[0]! - ys[1]!), `${x}, ${z}`).toBeLessThanOrEqual(OVERLAP_STEP);
+    // The ground a partition (ADR-0078 step 3): one square over the point, the other cut along its edge.
+    expect(pieces.filter((p) => pointInRing({ x: 435.3, z: -94.6 }, p.ring)).map((p) => p.surface)).toEqual(["square"]);
+    const at = (x: number, z: number) => pieces.find((p) => p.surface === "square" && pointInRing({ x, z }, p.ring));
+    let met = 0;
+    for (let x = 433; x <= 442; x += 0.1) {
+      for (let z = -97; z <= -88; z += 0.1) {
+        // Across the edge where the two meet (2 cm apart, the slope too little to count), a step of no more than where they lay over each other.
+        for (const [dx, dz] of [[0.02, 0], [0, 0.02]] as const) {
+          const [a, b] = [at(x, z), at(x + dx, z + dz)];
+          if (!a || !b || a === b) continue;
+          const [ya, yb] = [pieceHeightAt(a, x, z), pieceHeightAt(b, x + dx, z + dz)];
+          if (ya === null || yb === null) continue;
+          met++;
+          expect(Math.abs(ya - yb), `${x}, ${z}`).toBeLessThanOrEqual(OVERLAP_STEP);
+        }
       }
     }
+    expect(met).toBeGreaterThan(0);
   });
 });

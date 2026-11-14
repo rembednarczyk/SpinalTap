@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CITY_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, pointAt, projectOn } from "../src/content/traffic";
 import { RAMP_DOWN_X, RAMP_UP_X, alchemiaRampLanes, alchemiaRampRoutes, ownWayRoom, streetSegments } from "../src/content/traffic-ramp";
 import { P1, P1_CABINS, P1_RAMP, p1DriveFloor, p1RampY } from "../src/content/alchemia/parking";
-import { surfacesAt } from "../src/content/lublin/roads";
+import { onRoad, surfacesAt } from "../src/content/lublin/roads";
 import { vehiclePlan } from "../src/world/traffic";
 
 /** Alchemia's P-1 in the street's traffic (ADR-0074 §4, G-491, G-510). */
@@ -71,7 +71,8 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4)", () => {
       for (let t = 0; t < r.length; t += 0.5) {
         const p = pointAt(r.points, t);
         const own = r.ownWay!.some(([a, b]) => t >= a && t <= b);
-        if (!own) expect(surfacesAt(p.x, p.z), `${r.id} ${t}`).toContain("road");
+        // A zebra is a piece of the carriageway of its own (the ground a partition, ADR-0078 step 3): `onRoad`.
+        if (!own) expect(onRoad(p.x, p.z), `${r.id} ${t}: ${surfacesAt(p.x, p.z).join(",")}`).toBe(true);
         else if (p.z > P1_RAMP.top) expect(p1DriveFloor(p.x, p.z), `${r.id} ${t}`).not.toBeNull();
       }
       expect(r.turns).toEqual(expect.arrayContaining(r.ownWay!.map((w) => [...w])));

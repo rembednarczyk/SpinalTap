@@ -1,10 +1,11 @@
 /**
  * A chunk's ground as a partition of the plane (ADR-0078 step 3, ADR-0080 PR 6): the pieces of
  * different surfaces, and of one surface, no longer lie over each other in draw order; each is
- * what of it the pieces ranked over it leave, so a point of the ground lies in one piece. Not yet
- * laid by `generate`: wired in, it changes what the simulation's readers of the ground see (the
- * crowd's routes round the squares and along the alleys, the parked cars' bays, the lanes under
- * a sidewalk's lap), and which piece wins at a carriageway's edge is still to be decided (`Rank`).
+ * what of it the pieces ranked over it leave, so a point of the ground lies in one piece.
+ * `generate` lays it ranked by `carriageway` (the user's decision of 14.11): at a carriageway's
+ * edge the asphalt wins, so the lanes and the parked cars' bays keep the asphalt they had under a
+ * sidewalk's lap; the crowd's routes are drawn round the squares and alleys as laid before the cut
+ * (`walkAreas`); the kerb stones of the widened carriageways lie past the asphalt (`kerbFills`).
  *
  * The rank, either way:
  * - steps first: a flight cuts every piece it lies on, as `offSteps` does today (G-781);
@@ -30,11 +31,11 @@
  * uncut pieces' slanting edges (`chunkGround` rounds them, until ADR-0078 step 4). Holes are cut in
  * by a seam (`cutHoles`), as the ground has outlines only.
  */
-import { EndType, FillRule, JoinType, type Path64, type Paths64, difference, inflatePaths, intersect, isPositive } from "clipper2-ts";
+import { EndType, FillRule, JoinType, type Path64, type Paths64, difference, getBounds, inflatePaths, intersect, isPositive } from "clipper2-ts";
 import { SURFACE_LIFT, type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
 import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { type Pt, type Rect, ccw, pointInRing, removeCollinear, ringBounds, selfIntersects, signedArea } from "./geometry.ts";
-import { type GroundOut } from "./model.ts";
+import { type GroundOut, type WalkAreaOut } from "./model.ts";
 import { cutHoles } from "./ring-holes.ts";
 
 /** Clipper's grid, and the cut pieces' new corners: millimetres. */
@@ -111,8 +112,41 @@ const outline = (outer: Path64, holes: readonly Path64[]): Pt[] | null => {
   return null;
 };
 
-/** A difference's paths as the ground's outlines: each outer ring with the holes inside it cut in (`outline`), crumbs dropped. */
-const outlines = (paths: Paths64, opened = false): number[][] => {
+/**
+ * A ring that touches itself at a corner (Clipper gives a lobe joined at a point as one ring) as its
+ * lobes, each a ring of its own, turning as it turned in the ring (one turning back is a hole): the
+ * renderer's ear clipping lays such a ring over more than its area.
+ */
+const lobes = (ring: readonly Pt[]): Pt[][] => {
+  const seen = new Map<string, number>();
+  for (let i = 0; i < ring.length; i++) {
+    const key = `${ring[i]!.x},${ring[i]!.z}`;
+    const j = seen.get(key);
+    if (j !== undefined) return [...lobes(ring.slice(j, i)), ...lobes([...ring.slice(0, j), ...ring.slice(i)])].filter((l) => l.length >= 3);
+    seen.set(key, i);
+  }
+  return [[...ring]];
+};
+
+/** How many times a part is halved across its holes (or a crossing outline) at most; past that its holes are cut in by seams. */
+const SPLITS = 24;
+
+/** A part halved across the middle of `hole` (or of its own outer ring), along x: two parts, the hole in neither as a hole. */
+const halves = (part: Paths64, hole: Path64): Paths64[] => {
+  const b = getBounds(part.flat());
+  const h = getBounds(hole);
+  const x = Math.round((h.left + h.right) / 2);
+  const box = (x0: number, x1: number): Path64 => [{ x: x0, y: b.top }, { x: x1, y: b.top }, { x: x1, y: b.bottom }, { x: x0, y: b.bottom }];
+  return [intersect(part, [box(b.left, x)], FillRule.NonZero), intersect(part, [box(x, b.right)], FillRule.NonZero)];
+};
+
+/**
+ * A difference's paths as the ground's outlines, crumbs dropped: a part with holes halved across
+ * them until it has none (`SPLITS` at most, then its holes cut in, `outline`), one whose outline
+ * crosses itself opened of its spikes and necks and halved; no part is dropped but a crumb, so the
+ * pieces under it are not left bare where it lay.
+ */
+const outlines = (paths: Paths64, depth = 0): number[][] => {
   const outers = paths.filter((p) => isPositive(p));
   const holes = paths.filter((p) => !isPositive(p));
   // A hole is the smallest outer ring's round it.
@@ -122,10 +156,20 @@ const outlines = (paths: Paths64, opened = false): number[][] => {
     if (size[k]! < CRUMB) return [];
     const own = holes.filter((_, n) => owner[n] === k);
     const r = outline(o, own);
+    // A part whose holes no seam cuts in without crossing is halved across them.
+    if (!r && own.length > 0 && depth < SPLITS) return halves([o, ...own], own[0]!).flatMap((h) => outlines(h, depth + 1));
+    if (r && own.length > 0) return Math.abs(signedArea(r)) >= CRUMB ? [r.flatMap((p) => [p.x, p.z])] : [];
+    if (r) {
+      const parts = lobes(r);
+      // A lobe turning the other way is a hole touching the ring at a corner: halved across like a hole.
+      const hole = parts.find((l) => signedArea(l) < 0);
+      if (hole && depth < SPLITS) return halves([o], toPath(hole)).flatMap((h) => outlines(h, depth + 1));
+      return parts.filter((l) => signedArea(l) >= CRUMB).map((l) => l.flatMap((p) => [p.x, p.z]));
+    }
+    if (depth >= SPLITS) return [distinct(toPts(o)).flatMap((p) => [p.x, p.z])];
     // Its spikes and necks narrower than `NECK` opened (shrunk and grown back): gaps of a centimetre at most.
     const open = (d: number, p: Paths64) => inflatePaths(p, d * SCALE, JoinType.Miter, EndType.Polygon, 2);
-    if (!r) return opened ? [] : outlines(intersect(open(NECK, open(-NECK, [o, ...own])), [o, ...own], FillRule.NonZero), true);
-    return Math.abs(signedArea(r)) >= CRUMB ? [r.flatMap((p) => [p.x, p.z])] : [];
+    return halves(intersect(open(NECK, open(-NECK, [o])), [o], FillRule.NonZero), o).flatMap((h) => outlines(h, depth + 1));
   });
 };
 
@@ -160,3 +204,20 @@ export const partitionGround = (ground: readonly GroundOut[], rank: Rank = "draw
     return parts ? parts.map((outline) => ({ ...g, outline })) : [g];
   });
 };
+
+/** The districts the crowd walks round squares and along alleys in (`crowd.ts` `squareLanes`): only their chunks get `walkAreas`. */
+export const CROWD_DISTRICTS: ReadonlySet<string> = new Set(["shinsekai-7", "kanal"]);
+
+/**
+ * The squares of 1 350 m² and more and the footways' bands of 135 m² and more as laid over the other
+ * pieces (`chunkGround`), before the partition cut them: the crowd draws its loops round the
+ * squares and along the alleys from these (`crowd.ts`, 1 500 and 150 m² there; a tenth under, so
+ * no ring it takes is left out by a rounding). Cut, a square has a hole wherever a footway or a
+ * lawn lies on it, and an alley a notch wherever a car park's asphalt laps over it.
+ */
+export const walkAreas = (ground: readonly GroundOut[]): WalkAreaOut[] =>
+  ground.flatMap((g) => {
+    const big = g.surface === "square" ? 1350 : g.surface === "footway" ? 135 : Infinity;
+    const ring = Array.from({ length: g.outline.length >> 1 }, (_, i) => ({ x: g.outline[2 * i]!, z: g.outline[2 * i + 1]! }));
+    return (g.surface === "square" || g.surface === "footway") && Math.abs(signedArea(ring)) >= big ? [{ surface: g.surface, outline: g.outline }] : [];
+  });

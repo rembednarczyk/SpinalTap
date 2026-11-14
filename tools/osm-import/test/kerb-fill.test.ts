@@ -89,8 +89,13 @@ describe("a carriageway of estimated width reaches the paving (G-570)", () => {
   it("takes a gap of a metre and more for its own asphalt, with a kerb stone at the footway", () => {
     const ways = [street, footway(-6)];
     for (const x of [1, 30, 50, 99]) for (const z of [-3.4, -4, -4.3]) expect(surfacesAt(ways, x, z), `${x},${z}`).toEqual(["road"]);
-    // The kerb stone over the footway's edge, 4.75 m off the axis: the renderer draws the kerb on it.
-    expect(surfacesAt(ways, 50, -4.86).sort()).toEqual(["footway", "road", "sidewalk"]);
+    // The kerb stone on the footway past the asphalt's edge (4.85 m off the axis, the gap and 0.1 m
+    // into the footway): the ground is a partition and the asphalt wins at its edge (ADR-0078 step 3),
+    // so the stone's edge is the carriageway's, and the renderer draws the kerb on it, where the
+    // asphalt meets it (before the partition the stone lay over the asphalt, from 4.45 m out).
+    expect(surfacesAt(ways, 50, -4.7)).toEqual(["road"]);
+    expect(surfacesAt(ways, 50, -5)).toEqual(["sidewalk"]);
+    expect(surfacesAt(ways, 50, -5.4)).toEqual(["footway"]);
   });
 
   it("lays the asphalt widened as a piece of its own along the carriageway's piece, as the map lays that", () => {
@@ -100,7 +105,10 @@ describe("a carriageway of estimated width reaches the paving (G-570)", () => {
     const walk: Way = { tags: { highway: "footway" }, pts: pts.slice(8, 33).map(([x, z]) => [x, z - 6] as [number, number]) };
     const roads = (ways: Way[]) => build(ways).ground.filter((g) => g.surface === "road").map((g) => g.outline);
     const [own, ...widening] = roads([bend, walk]);
-    expect(own).toEqual(roads([bend])[0]);
+    // The carriageway's own piece as without the footway, but where the widening's piece, ranked over it
+    // in the partition (the smaller of one surface, ADR-0078 step 3), takes a speck of its corner at either end.
+    const area = (o: readonly number[]) => Math.abs(o.reduce((a, _, i) => (i % 2 === 0 ? a + o[i]! * o[(i + 3) % o.length]! - o[(i + 2) % o.length]! * o[i + 1]! : a), 0)) / 2;
+    expect(area(own!)).toBeCloseTo(area(roads([bend])[0]!), 1);
     expect(widening.length).toBeGreaterThan(0);
     // Across the kerb as the map lays it: one road piece at every point, neither a seam nor an overlap.
     const rings = roads([bend, walk]).map((o) => Array.from({ length: o.length / 2 }, (_, i) => ({ x: o[2 * i]!, z: o[2 * i + 1]! })));
@@ -123,7 +131,8 @@ describe("a carriageway of estimated width reaches the paving (G-570)", () => {
     expect(wide.streets).toEqual(bare.streets);
     expect(wide.markings).toEqual(bare.markings);
     expect(surfacesAt([zebra], 50, -4)).toEqual([]);
-    expect(surfacesAt([zebra, footway(-6)], 50, -4)).toEqual(["road", "crossing"]);
-    expect(surfacesAt([zebra, footway(-6)], 50, 3)).toEqual(["road", "crossing"]);
+    // The zebra a piece of the carriageway of its own, the asphalt cut under it (ADR-0078 step 3).
+    expect(surfacesAt([zebra, footway(-6)], 50, -4)).toEqual(["crossing"]);
+    expect(surfacesAt([zebra, footway(-6)], 50, 3)).toEqual(["crossing"]);
   });
 });

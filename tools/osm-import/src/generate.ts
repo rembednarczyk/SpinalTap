@@ -21,6 +21,7 @@ import { withoutReplaced } from "./corrections-alchemia.ts";
 import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
+import { CROWD_DISTRICTS, partitionGround, walkAreas } from "./ground-partition.ts";
 import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, groundJoints, isCarriageway, lineBands, markedCrossing, openPavings, roadWidth } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
@@ -284,7 +285,10 @@ const generateChunk = (
   // to a speck that is then dropped.
   const plain = inChunk.some((b) => b.patch) ? chunkGround(inChunk.filter((b) => !b.patch), spec.rect) : laid;
   const fills = fill ? fill(spec.rect, plain, shopOutlines(out, buildings)) : [];
-  const ground = fill ? withFills(laid, fills) : laid;
+  // One piece under each point of the ground (ADR-0078 step 3), the fills too; at a carriageway's edge the asphalt wins (decision 14.11).
+  const layered = fill ? withFills(laid, fills) : laid;
+  const ground = partitionGround(layered, "carriageway");
+  const walk = CROWD_DISTRICTS.has(spec.district.id) ? walkAreas(layered) : [];
   const r = spec.rect;
   const own = new Set(out.map((b) => b.id));
   const through = passages.filter((p) => own.has(p.building));
@@ -315,6 +319,7 @@ const generateChunk = (
     ...(stops.length > 0 ? { busStops: stops } : {}),
     ...(wide.length > 0 ? { multiLaneWays: wide } : {}),
     ...(walls.length > 0 ? { barriers: walls } : {}),
+    ...(walk.length > 0 ? { walkAreas: walk } : {}),
   };
   const stats: ChunkStats = {
     id: spec.id,

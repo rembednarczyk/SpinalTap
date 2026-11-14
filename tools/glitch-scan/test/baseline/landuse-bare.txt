@@ -96,7 +96,6 @@ krakowskie-1-0 140,-140
 krakowskie-1-0 100,-130
 krakowskie-1-0 110,-130
 krakowskie-1-0 130,-130
-krakowskie-1-0 100,-120
 krakowskie-1-0 110,-120
 krakowskie-1-0 130,-120
 krakowskie-1-0 110,-110
@@ -150,6 +149,7 @@ krakowskie-1-1 140,40
 krakowskie-1-1 150,40
 krakowskie-1-1 160,40
 krakowskie-1-1 170,40
+krakowskie-1-1 140,90
 krakowskie-1-1 150,90
 krakowskie-1-1 140,100
 krakowskie-1-1 150,100
@@ -235,7 +235,6 @@ krakowskie-2-0 250,-180
 krakowskie-2-0 350,-180
 krakowskie-2-0 360,-180
 krakowskie-2-0 280,-170
-krakowskie-2-0 290,-170
 krakowskie-2-0 330,-170
 krakowskie-2-0 340,-170
 krakowskie-2-0 350,-170
@@ -264,7 +263,6 @@ krakowskie-2-0 290,-120
 krakowskie-2-0 310,-120
 krakowskie-2-0 320,-120
 krakowskie-2-0 280,-110
-krakowskie-2-0 310,-110
 krakowskie-2-0 320,-110
 krakowskie-2-0 330,-110
 krakowskie-2-0 280,-100
@@ -513,7 +511,6 @@ podzamcze-1-0 820,360
 podzamcze-1-0 840,360
 podzamcze-1-0 860,360
 podzamcze-1-1 780,420
-podzamcze-1-1 790,420
 podzamcze-1-1 820,440
 podzamcze-1-1 820,450
 podzamcze-1-1 790,480
@@ -566,7 +563,6 @@ podzamcze-2-0 920,350
 podzamcze-2-0 920,360
 podzamcze-2-0 930,360
 podzamcze-2-1 1100,560
-podzamcze-2-1 1100,570
 poza 460,-270
 poza 460,-260
 poza 2700,60
@@ -610,7 +606,6 @@ stare-miasto-0-1 570,150
 stare-miasto-0-1 590,150
 stare-miasto-1-0 690,-100
 stare-miasto-1-0 690,-90
-stare-miasto-1-0 700,-80
 stare-miasto-1-0 680,-70
 stare-miasto-1-0 690,-70
 stare-miasto-1-0 690,-60

@@ -117,6 +117,9 @@ class Grid {
 
 const segmentGap = (a: Pt, b: Pt, x: number, z: number): number => segmentDistance(x, z, a.x, a.z, b.x, b.z);
 
+/** How far past its edge a ground piece covers the raster (m), along x and z: the partition's millimetres. */
+const HAIRLINE: readonly (readonly [number, number])[] = [[0.002, 0], [-0.002, 0], [0, 0.002], [0, -0.002]];
+
 /** The world's raster: where a town has paving, and what covers it. */
 const landuseGrid = (w: LanduseWorld): Grid | undefined => {
   if (w.landuse.length + w.shops.length + w.stops.length === 0) return undefined;
@@ -128,6 +131,9 @@ const landuseGrid = (w: LanduseWorld): Grid | undefined => {
   }
   for (const p of w.stops) grid.around([p], STOP_REACH, IN_REGION);
   for (const r of [...w.buildings, ...w.ground, ...w.green]) grid.fill(r, COVERED);
+  // The ground is a partition of the plane (ADR-0078 step 3): two pieces cut along each other share an
+  // edge to the millimetre, and a hairline between them is no bare terrain. Each piece covers 2 mm past its edge.
+  for (const r of w.ground) for (const [dx, dz] of HAIRLINE) grid.fill(r.map((p) => ({ x: p.x + dx, z: p.z + dz })), COVERED);
   return grid;
 };
 

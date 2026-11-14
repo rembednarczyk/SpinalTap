@@ -1938,8 +1938,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * A metre of a footway mapped on its own (`highway=footway`, not a crossing, off bridges and
    * tunnels, 3 m and more inside the chunks) that the asphalt of the street it runs along covers
    * (G-655): the nearest carriageway within 15 m runs parallel to it (|cos| > 0.9), its axis is
-   * closer than half the street's width from the map's tags, and the game's ground there is road
-   * and the footway's paving at once. One finding per piece between the world's 1 m grid lines (`world-samples.ts`, G-756).
+   * closer than half the street's width from the map's tags, and the game's ground there is the
+   * asphalt alone: the ground a partition (ADR-0078 step 3), the asphalt cut the footway's band
+   * away (before it, road and the footway's paving at once). One finding per piece between the world's 1 m grid lines (`world-samples.ts`, G-756).
    */
   "footway-on-carriageway": () => footwaysOnCarriageway(),
   /** A metre of a fitted street's edge (T-046, G-655) with a metre and more of bare ground before the lawn or pavement past it (`kerb-strip-bare.ts`). */
@@ -2158,6 +2159,9 @@ const nearestAxis = (roads: readonly Line[]) => {
   };
 };
 
+/** Whether (x, z) is on a carriageway's piece: its asphalt or a zebra, a piece of its own since the ground is a partition (ADR-0078 step 3). */
+const onCarriageway = (x: number, z: number): boolean => surfacesAt(x, z).some((s) => s === "road" || s === "crossing");
+
 /** The map's carriageways at street level, off tunnels. */
 const streetRoads = (lines: readonly Line[]) => lines.filter((l) => CARRIAGEWAYS.has(l.tags.highway ?? "") && l.tags.area !== "yes" && l.tags.tunnel === undefined && Number(l.tags.layer ?? 0) >= 0);
 
@@ -2176,7 +2180,8 @@ const footwaysOnCarriageway = (): Finding[] => {
       for (const { x, z } of segmentPieces(a, b, 1)) {
         if (!deep(x, z)) continue;
         const surfaces = surfacesAt(x, z);
-        if (surfaces.includes("crossing") || !surfaces.includes("road") || !(surfaces.includes("sidewalk") || surfaces.includes("footway"))) continue;
+        // The ground a partition (ADR-0078 step 3): the asphalt over a footway's band cuts it, so the footway's axis lies on asphalt alone.
+        if (surfaces.length !== 1 || surfaces[0] !== "road") continue;
         const n = nearest(x, z);
         if (!n || Math.abs(((b.x - a.x) * n.tx + (b.z - a.z) * n.tz) / len) < 0.9 || n.d >= roadWidth(n.road.tags) / 2) continue;
         out.push({ at: near(x, z), what: `${l.id} on ${n.road.id} ${n.road.tags.name ?? ""}` });
@@ -2229,10 +2234,10 @@ const FITTED = (() => {
             if (Math.abs(across) < w / 2) side[across >= 0 ? 0 : 1] = true;
           }
           side.forEach((on, k) => (sides[k]! += on ? 1 : 0));
-          if (!deep(x, z) || !surfacesAt(x, z).includes("road")) continue;
+          if (!deep(x, z) || !onCarriageway(x, z)) continue;
           const reach = (sgn: number) => {
             let d = 0;
-            while (d < w / 2 + 1 && surfacesAt(x - tz * sgn * (d + 0.05), z + tx * sgn * (d + 0.05)).includes("road")) d += 0.05;
+            while (d < w / 2 + 1 && onCarriageway(x - tz * sgn * (d + 0.05), z + tx * sgn * (d + 0.05))) d += 0.05;
             return d;
           };
           widths.push(reach(1) + reach(-1));

@@ -10,7 +10,7 @@
  *   map) and the gap is `ROAD_GAP` or more, the estimate missed the asphalt: lanes times 3.25 m or
  *   the width by type leave out the parking lanes and bus bays, which the orthophoto shows paved
  *   up to the footway (G-570, T-247). The carriageway's own band is widened to the paving, and a
- *   kerb stone (`KERB_STONE` of sidewalk) laid along paving that draws none of its own;
+ *   kerb stone (`KERB_STONE` of sidewalk) laid on paving that draws none of its own, along the asphalt's edge;
  * - elsewhere the strip is laid as a sidewalk, so the renderer draws its kerb at the asphalt.
  * The lanes, markings and zebras' places come from the street's axis and width as before: the
  * simulation sees no change; the zebras only reach on to the new kerb (`stretchZebras`).
@@ -350,8 +350,10 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       // From the edge, or from where the eased asphalt stops short of the paving.
       const from = (s: Sample) => (asRoad && wide(s) ? reach.get(s)! : 0);
       runsOf(side, (s) => (s.hit && !s.hit.joins && !(s.hit.crossed && !(asRoad && wide(s))) && !full(s) ? { edge: along(s.edge, s.dir, from(s)), out: along(s.edge, s.dir, s.hit.gap + INTO) } : null), lay);
-      // The kerb stones of the widened carriageway, where the paving draws no kerb of its own.
-      runsOf(side, (s) => (full(s) && !s.hit!.kerbed ? { edge: along(s.edge, s.dir, s.hit!.gap - KERB_STONE), out: along(s.edge, s.dir, s.hit!.gap + INTO) } : null), lay);
+      // The kerb stones of the widened carriageway, where the paving draws no kerb of its own: on the
+      // paving past the asphalt's edge, as the ground is a partition and the asphalt wins at its edge
+      // (ADR-0078 step 3); the renderer draws the kerb on the stone's edge, the carriageway's.
+      runsOf(side, (s) => (full(s) && !s.hit!.kerbed ? { edge: along(s.edge, s.dir, reach.get(s)!), out: along(s.edge, s.dir, reach.get(s)! + KERB_STONE) } : null), lay);
     }
   }
   return { fills, widened };

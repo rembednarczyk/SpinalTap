@@ -96,13 +96,14 @@ describe("the ground as a partition of the plane (ADR-0078 step 3)", () => {
     expect(overlap(out)).toBeLessThan(1e-3);
   });
 
-  it.each(["drawn", "carriageway"] as const)("leaves the city's ground (the committed tables) with no piece over another and no outline crossing itself, ranked by %s", (rank) => {
+  it("lays the city's ground (the committed tables) with no piece over another and no outline crossing itself", () => {
     let lapped = 0;
+    let crossed = 0;
     for (const c of MAP_CHUNKS) {
-      const out = partitionGround(c.ground, rank).filter((g) => !g.bridge);
-      for (const g of out) expect(selfIntersects(ringOf(g)), `${c.id} ${g.surface} ${g.outline.slice(0, 2)}`).toBe(selfIntersects(ringOf(c.ground.find((o) => o.outline === g.outline) ?? { surface: g.surface, outline: [] })));
-      // Pairs of pieces whose boxes meet, their shared m² in Clipper's millimetres: 93 thousand m² laid over each other before,
-      // 1.01 m² ranked by what is drawn and 0.81 m² by the carriageway after, slivers along the 0.1 m steps of slanting edges.
+      const out = c.ground.filter((g) => !g.bridge);
+      crossed += out.filter((g) => selfIntersects(ringOf(g))).length;
+      // Pairs of pieces whose boxes meet, their shared m² in Clipper's millimetres: 93 thousand m² laid over
+      // each other before the partition, 0.94 m² after, slivers along the 0.1 m steps of slanting edges.
       const boxes = out.map((g) => ringBounds(ringOf(g)));
       const paths = out.map((g) => [path(ringOf(g))]);
       for (let i = 0; i < out.length; i++)
@@ -111,7 +112,9 @@ describe("the ground as a partition of the plane (ADR-0078 step 3)", () => {
           if (a.minX < b.maxX && b.minX < a.maxX && a.minZ < b.maxZ && b.minZ < a.maxZ) lapped += m2(intersect(paths[i]!, paths[j]!, FillRule.NonZero));
         }
     }
-    expect(lapped).toBeLessThan(1.1);
+    expect(lapped).toBeLessThan(1);
+    // One piece the map lays crossing itself, uncut (Stare Miasto's square at 758.4, -101.3; four before the partition).
+    expect(crossed).toBeLessThanOrEqual(1);
   });
 
   it("gives the same pieces twice, in the order they came", () => {

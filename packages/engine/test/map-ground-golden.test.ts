@@ -114,7 +114,12 @@ describe("the ground the map city lays (G-444)", () => {
     // edges cross: 173 375, the same meshes.
     // The round ends read every ring counter-clockwise too (G-782): no round end laid over a square's
     // clockwise ring onto the way or the steps it meets there, 676 vertices fewer: 172 699.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 172699, hash: "7610321b" });
+    // The ground a partition of the plane (ADR-0078 step 3, the asphalt winning at a carriageway's edge):
+    // no piece laid under another, so no drape of the asphalt under a sidewalk's lap, of a square under its
+    // footways and lawns, of the lawns under the paving; a zebra lays its own asphalt under its stripes;
+    // the kerb stones of the widened carriageways lie past the asphalt. 172 699 - 163 504 = 9 195 vertices
+    // fewer; one mesh more, a cut piece's part on a cell of its own.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 163504, hash: "06a7fa71" });
     scene.dispose();
   });
 
