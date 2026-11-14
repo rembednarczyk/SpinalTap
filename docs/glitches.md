@@ -1880,7 +1880,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-795 Cień twardy z poszarpanymi krawędziami (teksele mapy cieni)
 - Ważność: S3 · Zasięg: cały świat, High i Medium; zrzut użytkownika z telefonu 14.11 (noc, kamera z góry, postać z bronią przy latarni)
 - Opis: schodkowe, pikselowe krawędzie cienia postaci i budynków; przyczyna do ustalenia: rozmiar mapy, zasięg frustum cienia, brak filtrowania
-- Status: w PR #542 (zrzuty do akceptacji); wcześniej: w naprawie (14.11, gałąź ccr-ec2c4269-ilh8k8-shadow-edges)
+- Status: w PR #542, zrzuty zaakceptowane przez użytkownika 14.11; scalenie po zielonym CI; wcześniej: w PR #542 (zrzuty do akceptacji); wcześniej: w naprawie (14.11, gałąź ccr-ec2c4269-ilh8k8-shadow-edges)
 - Pakiet właściciela: packages/engine (npr/moon-shadow.ts)
 - Test przyjęcia: zrzut nocny z góry bez schodków na krawędzi cienia; migawka NPR obejrzana
 
