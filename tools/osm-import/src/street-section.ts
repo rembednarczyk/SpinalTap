@@ -6,11 +6,14 @@
  * it), and a sidewalk from the tags on each side that has one. The widths are not rounded to the
  * ADR's 0.05 m yet, nor ramped between stations: that changes the outlines (PR 6 on).
  *
- * The width of a carriageway by its source (decision 2): `osm` from `width`/`width:carriageway`
- * in the map, `ortho` from a correction measured on the orthophoto (T-247, `corrections-kerb.ts`),
+ * The width of a carriageway by its source (decision 2), each side of the axis on its own: `osm`
+ * from `width`/`width:carriageway` in the map, `ortho` measured on the orthophoto (the generated
+ * table of PR 10, T-247's widths pinned in it, `corrections-kerb.ts`; a side it does not measure
+ * stays `default`) or a correction by hand,
  * `fitted` narrowed to the mapped sidewalks (`fitToKerb`, T-046; `fitLanes`, G-655), `default` by
  * `lanes` or type, and `mapped-way` where `kerbFills` widens it to the paving beside it (G-570).
- * `widthReport` tallies their share of the streets' length, which PR 10 is to halve for `default`.
+ * The orthophoto comes before the mapped ways (ADR-0080, the user's answer 3 of 13.11): a measured
+ * street is neither fitted nor widened. `widthReport` tallies their share of the streets' length.
  */
 import { parseLength } from "./building-tags.ts";
 import { type Line } from "./features.ts";
@@ -118,14 +121,15 @@ const sidewalkStrip = (t: Tags): Strip => {
  * run along it). `carriageway` says where the width comes from (`carriagewaySource`): it moves no
  * strip. Null for any other way.
  */
-export const roadSection = (l: Line, mappedNearby: boolean, carriageway: WidthSource = "default"): StreetSection | null => {
+export const roadSection = (l: Line, mappedNearby: boolean, carriageway: WidthSource | Sides = "default"): StreetSection | null => {
   const t = l.tags;
   if (ROAD_WIDTH[t.highway ?? ""] === undefined || t.area === "yes") return null;
-  const half: Strip = { kind: "carriageway", width: roadWidth(t) / 2, source: carriageway };
+  const [lsrc, rsrc] = typeof carriageway === "string" ? [carriageway, carriageway] : carriageway;
+  const half = (source: WidthSource): Strip => ({ kind: "carriageway", width: roadWidth(t) / 2, source });
   const sides = sidewalkSides(t, mappedNearby);
   const walk = sidewalkStrip(t);
   const bridge = t.bridge !== undefined && t.bridge !== "no";
-  const station: Station = { from: 0, to: lineLength(l.line), left: sides.left ? [half, walk] : [half], right: sides.right ? [half, walk] : [half] };
+  const station: Station = { from: 0, to: lineLength(l.line), left: sides.left ? [half(lsrc), walk] : [half(lsrc)], right: sides.right ? [half(rsrc), walk] : [half(rsrc)] };
   return { way: l.id, axis: l.line, ...(bridge ? { deck: [l.line[0]!, l.line[l.line.length - 1]!] as const } : {}), stations: [station] };
 };
 
@@ -149,14 +153,20 @@ export const laidStrips = (s: StreetSection): LaidStrip[] => {
   return out;
 };
 
+/** The sources of a carriageway's width on its left and its right. */
+export type Sides = readonly [WidthSource, WidthSource];
+
 /**
- * Where a laid carriageway's width comes from: the map's tags as read (`raw`), as corrected
- * (`corrected`, `corrections.ts`) and as laid (`laid`: fitted by `fitToKerb` or `fitLanes`).
+ * Where a laid carriageway's width comes from on each side: the map's tags as read (`raw`), as
+ * corrected (`corrected`, `corrections.ts`), as laid (`laid`: fitted by `fitToKerb` or `fitLanes`)
+ * and the sides the orthophoto measured (`ortho`, the generated table; the rest `default`).
  */
-export const carriagewaySource = (raw: Tags, corrected: Tags, laid: Tags): WidthSource => {
-  if (mappedWidth(raw) !== null) return "osm";
-  if (mappedWidth(corrected) !== null) return "ortho";
-  return mappedWidth(laid) !== null ? "fitted" : "default";
+export const carriagewaySource = (raw: Tags, corrected: Tags, laid: Tags, ortho?: readonly [boolean, boolean]): Sides => {
+  const both = (s: WidthSource): Sides => [s, s];
+  if (mappedWidth(raw) !== null) return both("osm");
+  if (ortho) return [ortho[0] ? "ortho" : "default", ortho[1] ? "ortho" : "default"];
+  if (mappedWidth(corrected) !== null) return both("ortho");
+  return both(mappedWidth(laid) !== null ? "fitted" : "default");
 };
 
 /** Metres of street side (each piece of a carriageway counted on its left and its right) by the source of its width. */
@@ -206,7 +216,7 @@ export interface LaidWay {
   readonly piece: Line;
   readonly mapped: boolean;
   readonly atStreet: boolean;
-  readonly width: WidthSource;
+  readonly width: WidthSource | Sides;
 }
 
 /** The streets' width sources (`widthReport`): of all, and of those not `service`, the city's streets proper. */

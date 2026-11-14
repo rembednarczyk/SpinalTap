@@ -18,6 +18,7 @@ import { type Cover } from "../../orto/src/cover.ts";
 import { type CoverFill, coverFiller, pathLoops, townPlaces, withFills } from "./bare-cover.ts";
 import { type AddedArea, addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { withoutReplaced } from "./corrections-alchemia.ts";
+import { orthoPieces, orthoSides } from "./corrections-kerb.ts";
 import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
@@ -375,9 +376,10 @@ export const generate = (
   const lines = mapLines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));
   // A street of mapped lanes ends at its sidewalks side by side and stretch by stretch (G-655): its
   // carriageway's pieces, for its bands, markings and zebras. Its axis stays the map's for the rest.
+  // So does a street measured on the orthophoto off its axis in OSM: on the asphalt (ADR-0080 PR 10).
   const fittedLanes = new Map<string, readonly Line[]>();
   for (const l of lines) {
-    const pieces = l.tags.highway ? sidewalks.lanes(l) : null;
+    const pieces = l.tags.highway ? (sidewalks.lanes(l) ?? orthoPieces(l)) : null;
     if (pieces) fittedLanes.set(l.id, pieces);
   }
   const carriageway = (l: Line): readonly Line[] => fittedLanes.get(l.id) ?? [l];
@@ -419,7 +421,7 @@ export const generate = (
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
     const mapped = l.tags.highway ? sidewalks.along(mapLines[k]!) : false;
     for (const c of carriageway(l)) {
-      const width = carriagewaySource(features.lines[k]!.tags, mapLines[k]!.tags, c.tags);
+      const width = carriagewaySource(features.lines[k]!.tags, mapLines[k]!.tags, c.tags, orthoSides(l.id));
       for (const piece of overTunnels(c, tunnelWays, src)) laidLines.push({ piece, mapped, atStreet: atStreet.has(l.osmId), width });
     }
   }

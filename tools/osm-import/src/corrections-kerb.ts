@@ -4,12 +4,15 @@
  * beside it is taken for asphalt the estimate left out (`kerbFills`): parking lanes and bus bays,
  * mostly. Where the gap is a lawn, or the estimate is the asphalt's true width and the gap a
  * pavement, the map is corrected here: a lawn the map lacks (the march to the paving stops at it),
- * or the width measured on the photograph (the street's width is then no estimate).
+ * or the width measured on the photograph (the street's width is then no estimate): the widths go
+ * to the table measured on the orthophoto (`ORTHO_CORRECTIONS`, ADR-0080 PR 10).
  */
 import type { AddedArea, TagCorrection } from "./corrections.ts";
 import { DEPTAKI_CORRECTIONS } from "./corrections-deptaki.ts";
 import { KRAKOWSKIE_ADDED_AREAS } from "./corrections-radziwillowska.ts";
-import type { Pt } from "./geometry.ts";
+import type { Line } from "./features.ts";
+import { type Pt, offsetLine } from "./geometry.ts";
+import { ORTHO_WIDTHS } from "./ortho-widths.generated.ts";
 
 /** An added area of T-247: corners off the map's nodes. */
 const t247 = (name: string, tags: AddedArea["tags"], ring: readonly Pt[], reason: string): AddedArea => ({
@@ -77,19 +80,45 @@ const AISLE_VERGE: AddedArea = t247(
 /** The tail of `ADDED_AREAS` in draw order: Krakowskie Przedmieście's (T-243, T-245), then T-247's lawns. */
 export const ADDED_AREAS_TAIL: readonly AddedArea[] = [...KRAKOWSKIE_ADDED_AREAS, ANDERSA_VERGE, AISLE_VERGE];
 
-/** T-247's widths. */
-const KERB_WIDTHS: readonly TagCorrection[] = [
-  {
-    // Królewska by the car park on Plac Zamkowy's side (x 540-590): the zebra and the centre line
-    // give 6.5-7 m of asphalt, its north kerb 0.3 m off the estimate's edge; north of it 2.6 m of
-    // paving with the lamp posts and the trees (G-570). The width the estimate gives, so the
-    // carriageway, its lanes and markings stay as they were and the gap is laid as a pavement.
-    id: "w66829063",
-    tags: { width: "6.5" },
-    reason: "Królewska: 6,5–7 m asfaltu na ortofoto PZGiK (zebra, oś), krawężnik 0,3 m od szacunku z lanes=2; pas 2,6 m na północ to chodnik z latarniami",
-    ref: "T-247",
-  },
-];
+/**
+ * The carriageways' widths measured on the orthophoto (ADR-0080 PR 10, `pnpm orto:widths`, the
+ * generated table), T-247's widths by hand pinned in it: a way's `width:carriageway`, so the street
+ * is no estimate (source `ortho`) and `kerbFills` leaves it as it is. A correction by hand of the
+ * same way keeps its own tags over it (`corrections.ts`).
+ */
+export const ORTHO_CORRECTIONS: readonly TagCorrection[] = ORTHO_WIDTHS.map(([id, width, left, right, sides, ref]) => ({
+  id,
+  tags: { "width:carriageway": String(width) },
+  reason: ref ? `szerokość ${width} m z ortofoto PZGiK, ustalona ręcznie (${ref})` : `szerokość ${width} m z ortofoto PZGiK (pomiar co 5 m, strony ${sides}: ${left} m w lewo, ${right} m w prawo od osi)`,
+  ref: ref || "ADR-0080",
+}));
 
-/** The tail of `TAG_CORRECTIONS`: the pedestrian streets' widths (T-199), then T-247's. */
-export const TAG_CORRECTIONS_TAIL: readonly TagCorrection[] = [...DEPTAKI_CORRECTIONS, ...KERB_WIDTHS];
+/** Metres a measured way's carriageway lies left of its axis in OSM (negative: right): half its sides' difference, 0 for a width pinned by hand. */
+export const ORTHO_OFFSETS: ReadonlyMap<string, number> = new Map(ORTHO_WIDTHS.map(([id, , left, right]) => [id, Math.round(((left - right) / 2) * 20) / 20]));
+
+const ORTHO_BY_ID = new Map(ORTHO_WIDTHS.map((r) => [r[0], r]));
+
+/** The sides of a way's carriageway (left, right) whose width the orthophoto gives; none for a way not in the table. */
+export const orthoSides = (id: string): readonly [boolean, boolean] | undefined => {
+  const row = ORTHO_BY_ID.get(id);
+  return row && [row[4].includes("l"), row[4].includes("r")];
+};
+
+/** A measured way's carriageway moved aside onto the asphalt (`ORTHO_OFFSETS`), as `fitLanes` lays a fitted piece; null on its axis. */
+export const orthoPieces = (l: Line): Line[] | null => {
+  const off = ORTHO_OFFSETS.get(l.id);
+  return off ? [{ ...l, line: offsetLine(l.line, off) }] : null;
+};
+
+/** The corrections by id: those by hand (`manual`), each over the width measured for the same way. */
+export const withOrtho = (manual: readonly TagCorrection[]): Map<string, TagCorrection> => {
+  const out = new Map(ORTHO_CORRECTIONS.map((c) => [c.id, c]));
+  for (const c of manual) {
+    const o = out.get(c.id);
+    out.set(c.id, o ? { ...c, tags: { ...o.tags, ...c.tags } } : c);
+  }
+  return out;
+};
+
+/** The tail of `TAG_CORRECTIONS`: the pedestrian streets' widths (T-199). */
+export const TAG_CORRECTIONS_TAIL: readonly TagCorrection[] = [...DEPTAKI_CORRECTIONS];

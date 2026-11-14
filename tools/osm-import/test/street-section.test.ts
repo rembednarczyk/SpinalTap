@@ -57,10 +57,25 @@ describe("a street's cross section (ADR-0080 PR 5)", () => {
 
   it("says where a carriageway's width comes from: the map, a correction, the fit to the sidewalks, or the estimate", () => {
     const t = { highway: "residential" };
-    expect(carriagewaySource({ ...t, width: "7" }, { ...t, width: "7" }, { ...t, width: "7" })).toBe("osm");
-    expect(carriagewaySource(t, { ...t, width: "6.5" }, { ...t, width: "6.5" })).toBe("ortho");
-    expect(carriagewaySource(t, t, { ...t, "width:carriageway": "5.2" })).toBe("fitted");
-    expect(carriagewaySource({ ...t, lanes: "2" }, { ...t, lanes: "2" }, { ...t, lanes: "2" })).toBe("default");
+    expect(carriagewaySource({ ...t, width: "7" }, { ...t, width: "7" }, { ...t, width: "7" })).toEqual(["osm", "osm"]);
+    expect(carriagewaySource(t, { ...t, width: "6.5" }, { ...t, width: "6.5" })).toEqual(["ortho", "ortho"]);
+    expect(carriagewaySource(t, t, { ...t, "width:carriageway": "5.2" })).toEqual(["fitted", "fitted"]);
+    expect(carriagewaySource({ ...t, lanes: "2" }, { ...t, lanes: "2" }, { ...t, lanes: "2" })).toEqual(["default", "default"]);
+  });
+
+  it("takes the orthophoto's sides before the fit and the estimate, and the map before both (PR 10)", () => {
+    const t = { highway: "residential" };
+    const measured = { ...t, "width:carriageway": "7.2" };
+    expect(carriagewaySource(t, measured, measured, [true, false])).toEqual(["ortho", "default"]);
+    expect(carriagewaySource(t, measured, measured, [true, true])).toEqual(["ortho", "ortho"]);
+    expect(carriagewaySource({ ...t, width: "7" }, { ...t, width: "7" }, { ...t, width: "7" }, [true, true])).toEqual(["osm", "osm"]);
+    const s = roadSection(way(measured), false, ["ortho", "default"])!;
+    expect([s.stations[0]!.left[0], s.stations[0]!.right[0]]).toEqual([
+      { kind: "carriageway", width: 3.6, source: "ortho" },
+      { kind: "carriageway", width: 3.6, source: "default" },
+    ]);
+    const r = widthReport([s], new Map([["w1", 10]]));
+    expect(r).toEqual({ osm: 0, ortho: 40, "mapped-way": 10, fitted: 0, default: 30 });
   });
 });
 
@@ -91,5 +106,7 @@ describe("the report of the streets' width sources", () => {
     expect(total(widths.streets)).toBeGreaterThan(0);
     expect(total(widths.all)).toBeGreaterThan(total(widths.streets));
     expect(Object.values(widths.all).every((v) => v >= 0)).toBe(true);
+    // The orthophoto's widths (PR 10) halve the estimated share of PR 5 (87.3% of 37.7 km): at most 43.7%.
+    expect(widths.streets.default / total(widths.streets)).toBeLessThanOrEqual(0.437);
   });
 });
