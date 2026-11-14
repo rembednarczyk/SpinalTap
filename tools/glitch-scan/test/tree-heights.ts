@@ -2,10 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { StreetPropItem } from "../../../packages/core/src";
 import { tree } from "../../../packages/engine/src/renderer/mapcity/prop-green";
-import {
-  scaleOf,
-  shapeOf,
-} from "../../../packages/engine/src/renderer/mapcity/prop-shapes";
+import { scaleOf, shapeOf } from "../../../packages/engine/src/renderer/mapcity/prop-shapes";
 import { TREE_HEIGHTS } from "../../osm-import/src/tree-heights.ts";
 
 /**
@@ -44,14 +41,10 @@ const modelTop = (shape: number): number => {
 };
 
 /** How tall the renderer draws a tree piece (m over its foot). */
-export const drawnTreeHeight = (i: StreetPropItem): number =>
-  modelTop(shapeOf("tree", i.variant)) * scaleOf("tree", i.variant);
+export const drawnTreeHeight = (i: StreetPropItem): number => modelTop(shapeOf("tree", i.variant)) * scaleOf("tree", i.variant);
 
 /** Each measured tree with the drawn tree nearest its node within `REACH`: the drawn and the measured height. */
-export const treeHeights = (
-  measured: readonly MeasuredTree[],
-  pieces: readonly StreetPropItem[],
-): { readonly tree: MeasuredTree; readonly drawn: number }[] => {
+export const treeHeights = (measured: readonly MeasuredTree[], pieces: readonly StreetPropItem[]): { readonly tree: MeasuredTree; readonly drawn: number }[] => {
   const trees = pieces.filter((i) => i.prop === "tree");
   return measured.flatMap((m) => {
     let best: StreetPropItem | null = null;
@@ -65,68 +58,33 @@ export const treeHeights = (
 };
 
 /** Measured trees the renderer draws lower than `LOW` of their height. */
-export const treesBelowMeasured = (
-  measured: readonly MeasuredTree[],
-  pieces: readonly StreetPropItem[],
-): { readonly at: string; readonly what: string }[] =>
+export const treesBelowMeasured = (measured: readonly MeasuredTree[], pieces: readonly StreetPropItem[]): { readonly at: string; readonly what: string }[] =>
   treeHeights(measured, pieces)
     .filter((h) => h.drawn < LOW * h.tree.height)
-    .map((h) => ({
-      at: `${h.tree.x.toFixed(0)},${h.tree.z.toFixed(0)}`,
-      what: `${h.tree.id} drawn ${h.drawn.toFixed(1)} m, measured ${h.tree.height} m`,
-    }));
+    .map((h) => ({ at: `${h.tree.x.toFixed(0)},${h.tree.z.toFixed(0)}`, what: `${h.tree.id} drawn ${h.drawn.toFixed(1)} m, measured ${h.tree.height} m` }));
 
 /** The plan's trees (`docs/world/lublin-props.todo.json`) with a height in `heights`, at their nodes. */
 export const measuredTrees = (
-  plan: {
-    readonly items: readonly {
-      readonly id: string;
-      readonly kind: string;
-      readonly osm?: unknown;
-      readonly points?: readonly (readonly number[])[];
-    }[];
-  },
+  plan: { readonly items: readonly { readonly id: string; readonly kind: string; readonly osm?: unknown; readonly points?: readonly (readonly number[])[] }[] },
   heights: Readonly<Record<string, number>>,
 ): MeasuredTree[] =>
   plan.items.flatMap((item) => {
-    if (item.kind !== "tree" || !Array.isArray(item.osm) || !item.points)
-      return [];
+    if (item.kind !== "tree" || !Array.isArray(item.osm) || !item.points) return [];
     const ids = item.osm as readonly string[];
     return item.points.flatMap((p, k) => {
       const h = heights[ids[k] ?? ""];
-      return h === undefined
-        ? []
-        : [{ id: ids[k]!, group: item.id, x: p[0]!, z: p[1]!, height: h }];
+      return h === undefined ? [] : [{ id: ids[k]!, group: item.id, x: p[0]!, z: p[1]!, height: h }];
     });
   });
 
 /** The city's measured trees: the plan's with a height in the import's `TREE_HEIGHTS`. */
-export const cityMeasuredTrees = (): MeasuredTree[] =>
-  measuredTrees(
-    JSON.parse(
-      readFileSync(
-        join(__dirname, "../../../docs/world/lublin-props.todo.json"),
-        "utf8",
-      ),
-    ),
-    TREE_HEIGHTS,
-  );
+export const cityMeasuredTrees = (): MeasuredTree[] => measuredTrees(JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")), TREE_HEIGHTS);
 
 /**
  * Trees of the game with no height from the data (audit of ADR-0077 14.11, gap 4): a tree piece
  * with no measured tree within `REACH` of it, drawn at the random size of its seed.
  */
-export const treesUnmeasured = (
-  measured: readonly { readonly x: number; readonly z: number }[],
-  pieces: readonly StreetPropItem[],
-): { readonly at: string; readonly what: string }[] =>
+export const treesUnmeasured = (measured: readonly { readonly x: number; readonly z: number }[], pieces: readonly StreetPropItem[]): { readonly at: string; readonly what: string }[] =>
   pieces
-    .filter(
-      (t) =>
-        t.prop === "tree" &&
-        !measured.some((m) => Math.hypot(t.x - m.x, t.z - m.z) <= REACH),
-    )
-    .map((t) => ({
-      at: `${t.x.toFixed(0)},${t.z.toFixed(0)}`,
-      what: `tree drawn ${drawnTreeHeight(t).toFixed(1)} m with no height from OSM or NMPT`,
-    }));
+    .filter((t) => t.prop === "tree" && !measured.some((m) => Math.hypot(t.x - m.x, t.z - m.z) <= REACH))
+    .map((t) => ({ at: `${t.x.toFixed(0)},${t.z.toFixed(0)}`, what: `tree drawn ${drawnTreeHeight(t).toFixed(1)} m with no height from OSM or NMPT` }));
