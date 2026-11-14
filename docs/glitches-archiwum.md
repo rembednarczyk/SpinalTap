@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-808 Podgląd menu pobiera seki.vrm drugi raz (własna ModelLibrary) już na ekranie tytułowym, równolegle z miastem
+- Ważność: S3 · Zasięg: start gry, słabe łącze
+- Opis: PreviewStage ma własną ModelLibrary i pobiera 7 MB seki.vrm drugi raz równolegle z plikami miasta; dubluje transfer i zwiększa szansę na limit bezczynności (G-807).
+- Status: naprawione (14.11, #562 scalony); wcześniej: w PR #562; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g808); wcześniej: nowe
+- Pakiet właściciela: packages/engine/src/renderer
+
 ### G-809 Limit bezczynności pobierania modelu liczy czas w kolejce przeglądarki
 - Ważność: S3 · Zasięg: słabe łącze (8 Mbit/s)
 - Opis: Zegar bezczynności w fetchModelBytes startuje przed wysłaniem żądania; czas w kolejce przeglądarki (6 połączeń na host) liczy się jako przestój, co daje fałszywe 'no data for 30 s' (G-807).
