@@ -5,7 +5,7 @@
  * A way is measured when the import would estimate its width: a carriageway (not `service`, not
  * on a bridge or in a tunnel, not an area) without `width` or `width:carriageway` in the map or in
  * the manual corrections. A width pinned by hand off the photograph (`PINNED`, the T-247 entries
- * that were corrections) takes the measure's place in the table.
+ * that were corrections) takes the measure's place in the table; a way `HELD` is left out of it.
  */
 import { join } from "node:path";
 import { TAG_CORRECTIONS, type TagCorrection, correctedLine } from "../../osm-import/src/corrections.ts";
@@ -37,6 +37,18 @@ export interface Measured extends Candidate {
   readonly measure: WayMeasure;
 }
 
+/**
+ * Ways left at the import's estimate although measured: the areas laid by hand beside them were
+ * fitted to the estimate and reviewed by the curator, so a measured kerb leaves a strip of bare
+ * ground or lays the asphalt over them. They wait for the curator's review of PR 10: way, why.
+ */
+export const HELD: readonly (readonly [id: string, reason: string])[] = [
+  ["w1004769663", "al. Tysiąclecia by the Dworzec: the north pavement of T-173 (G-350) ends at the estimated kerb"],
+  ["w202337368", "al. Tysiąclecia by the Dworzec, the other carriageway: its north edge with w1004769663's south one (G-350)"],
+  ["w40049337", "Peowiaków: the setts of T-221 up to the frontage end at the estimated kerb"],
+  ["w216497220", "Lubartowska by Bajkowskiego: the ramp and the footway of ADR-0074 stage 7 laid to the estimate"],
+];
+
 /** Widths measured by hand on the photograph (T-247), kept in the table over the measure: way, width (m), why. */
 export const PINNED: readonly (readonly [id: string, width: number, reason: string])[] = [
   ["w66829063", 6.5, "T-247 Królewska: 6,5–7 m asfaltu na ortofoto PZGiK (zebra, oś), krawężnik 0,3 m od szacunku z lanes=2; pas 2,6 m na północ to chodnik z latarniami"],
@@ -56,9 +68,10 @@ export const candidateWays = (osm: OsmData, manual: ReadonlyMap<string, TagCorre
   const usedBy = new Map<string, Set<string>>();
   for (const l of roads) for (const p of l.line) usedBy.set(key(p), (usedBy.get(key(p)) ?? new Set()).add(l.id));
   const out: Candidate[] = [];
+  const held = new Set(HELD.map(([id]) => id));
   for (const l of roads) {
     const t = l.tags;
-    if (t.highway === "service" || bridged(t) || parseLength(t.width ?? t["width:carriageway"]) !== null) continue;
+    if (t.highway === "service" || bridged(t) || held.has(l.id) || parseLength(t.width ?? t["width:carriageway"]) !== null) continue;
     const junctions = l.line.filter((p) => usedBy.get(key(p))!.size > 1);
     out.push({ id: l.id, name: t.name ?? "", axis: l.line, estimate: roadWidth(t), junctions });
   }
@@ -155,7 +168,7 @@ export const widthsReport = (measured: readonly Measured[]): string => {
   const off = rows.filter((r) => Math.abs(r[2] - r[3]) > 1).length;
   const one = rows.filter((r) => r[4].length === 1).length;
   const parts = [...by].sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, e]) => `${k} ${e.n} ways ${(e.m / 1000).toFixed(2)} km`);
-  return `ways ${measured.length}: ${parts.join(", ")}; table ${rows.length} rows (${PINNED.length} pinned, ${one} measured on one side), axis off the middle by over 0.5 m: ${off}`;
+  return `ways ${measured.length}: ${parts.join(", ")}; table ${rows.length} rows (${PINNED.length} pinned, ${one} measured on one side, ${HELD.length} held), axis off the middle by over 0.5 m: ${off}`;
 };
 
 export const tableText = (measured: readonly Measured[]): string => {

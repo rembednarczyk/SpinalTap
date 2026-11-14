@@ -41,7 +41,7 @@ export const CONFIRM = 2;
 /** Or this long and more up to shade or crowns: the shade of the wall or the tree behind the pavement (m). */
 export const CONFIRM_SHADED = 1;
 /** No station this near a junction with another carriageway (m): the asphalt turns the corner there. */
-export const JUNCTION_GAP = 10;
+export const JUNCTION_GAP = 8;
 /** Nor this near a dead end of the way (m). */
 export const END_GAP = 3;
 export const MIN_SAMPLES = 3;

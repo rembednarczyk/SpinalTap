@@ -53,7 +53,7 @@ describe("carriageway widths on the orthophoto (ADR-0080 PR 10)", () => {
 
   it("leaves the stations near a junction and off the image out, and a side without a kerb at half the estimate", () => {
     const m = measureWay(street, [axis[0]!, { x: 140, z: 0 }], 6.5, [{ x: 50, z: 0 }]);
-    // Every 5 m from 7.5 to 97.5 m (3 m from the ends, the image to x 100), less the four within 10 m of the junction.
+    // Every 5 m from 7.5 to 97.5 m (3 m from the ends, the image to x 100), less the four within 8 m of the junction.
     expect(m.left.stations).toBe(15);
     const open: Probe = (x, z) => (z < 0 ? { cls: COVER.paving, l: 125, s: 0.04 } : street(x, z));
     const one = measureWay(open, axis, 6.5, []);
