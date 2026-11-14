@@ -344,17 +344,17 @@ export class BabylonRenderer implements RenderPort {
   }
 
   /**
-   * The player's switches for the High effects (graphics toggles 14.11), at once: each one off
-   * takes its passes out of the post-process chain. A quality without the effect ignores it.
+   * The player's graphics options (graphics options 14.11), at once, each when given: the switches
+   * for the High effects (each one off takes its passes out of the post-process chain; a quality
+   * without the effect ignores it) and the render resolution, 0.5..1 of the full one. One method
+   * for both keeps the facade within ADR-0031's member limit.
    */
-  setGraphicsEffects(effects: GraphicsEffects): void {
-    this.lineArt?.setContactShade(effects.contactShade);
-    this.fx.setBloom(effects.bloom);
-  }
-
-  /** The player's render resolution, 0.5..1 of the full one, at once (graphics options 14.11). */
-  setRenderResolution(share: number): void {
-    this.stage.setRenderResolution(share);
+  setGraphicsOptions(options: { readonly effects?: GraphicsEffects; readonly resolution?: number }): void {
+    if (options.effects) {
+      this.lineArt?.setContactShade(options.effects.contactShade);
+      this.fx.setBloom(options.effects.bloom);
+    }
+    if (options.resolution !== undefined) this.stage.setRenderResolution(options.resolution);
   }
 
   /**

@@ -8,8 +8,7 @@ import { clampRenderResolution } from "../settings";
  * without (tests, a headless run) is left alone. Not on `RenderPort`: only the app's options use it.
  */
 export interface GraphicsEffectsTarget {
-  setGraphicsEffects?(effects: GraphicsEffects): void;
-  setRenderResolution?(share: number): void;
+  setGraphicsOptions?(options: { readonly effects?: GraphicsEffects; readonly resolution?: number }): void;
 }
 
 /**
@@ -49,12 +48,12 @@ export class GraphicsEffectsController implements GraphicsIntents {
     this.shown = s;
     if (s.renderResolution !== this.sentResolution) {
       this.sentResolution = s.renderResolution;
-      this.target.setRenderResolution?.(s.renderResolution);
+      this.target.setGraphicsOptions?.({ resolution: s.renderResolution });
     }
     const effects = graphicsEffectsOfSettings(s);
     if (!this.sent || this.sent.contactShade !== effects.contactShade || this.sent.bloom !== effects.bloom) {
       this.sent = effects;
-      this.target.setGraphicsEffects?.(effects);
+      this.target.setGraphicsOptions?.({ effects });
     }
     patchUi(this.ui, { graphicsEffects: graphicsEffectsVm(s) });
   }

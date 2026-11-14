@@ -12,11 +12,9 @@ import { FakeRender } from "./story-helpers";
 class SwitchingRender extends FakeRender {
   readonly graphics: GraphicsEffects[] = [];
   readonly resolutions: number[] = [];
-  setGraphicsEffects(effects: GraphicsEffects) {
-    this.graphics.push(effects);
-  }
-  setRenderResolution(share: number) {
-    this.resolutions.push(share);
+  setGraphicsOptions(options: { readonly effects?: GraphicsEffects; readonly resolution?: number }) {
+    if (options.effects) this.graphics.push(options.effects);
+    if (options.resolution !== undefined) this.resolutions.push(options.resolution);
   }
 }
 
