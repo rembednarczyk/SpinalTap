@@ -12,3 +12,4 @@ packages:
   - "tools/test-rerun"
   - "tools/hashes"
   - "tools/pr-prep"
+  - "tools/map-refresh"
