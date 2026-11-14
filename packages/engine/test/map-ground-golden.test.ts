@@ -105,7 +105,9 @@ describe("the ground the map city lays (G-444)", () => {
     // The gaps' patches in the joints (G-760), pieces of their own: 168 499 vertices before.
     // Paving under crowns the leaf-off flight shows laid as paving, not a lawn (G-764), and the fills'
     // rings touching themselves cut into their lobes, laid as triangles of their own area (G-766): 171 963 vertices.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 171963, hash: "4a30c7a9" });
+    // The fills traced a cell past their tile's edges and cut on them (G-769): no triangle of bare ground
+    // where an outline crosses a tile's or a split's edge on the slant, and fewer corners there: 171 799 vertices.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 171799, hash: "146ff8d4" });
     scene.dispose();
   });
 
