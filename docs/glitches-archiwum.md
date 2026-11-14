@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-775 Beżowa kostka i patyna pomnika jako zieleń w komórkach SM z dwoma nalotami
+- Ważność: S4 · Zasięg: stare-miasto-0-1 (476..478; 75..81), stare-miasto-0-0 (607..610; -207..-212); klucze 470,70
+- Opis: Po G-771 SM-0-0/0-1 mają 2 naloty; beżowa kostka (exg 0,035 w 2025-04) i nalot letni w cieniu albo z przechyłem dają green/canopy; patyna pomnika daje green; bare-cover kładzie trawę na chodniku. Proponowana kontrola: grass-on-light-paving
+- Status: naprawione (14.11, PR #534 scalony 14.11 scalony); wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (14.11); do PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g775 (89751b9, merge c1ad6ed), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, kurator, przegląd G-771)
+- Pakiet właściciela: tools/orto (classify.ts)
+- Test przyjęcia: narożnik Lubartowska/Noworybna i chodnik Królewskiej przy (608,-210) kostką; klucze 470,70 znikają
+- 14.11 G-771 runda 2 (scalenie z regułą koron #519): klucze 470,70 zniknęły; do sprawdzenia, czy zostaje tylko kępa trawy przy pomniku na Królewskiej (607..610; -207..-212)
+- 14.11 naprawiacz: reguły patyny i beżowej kostki w cieniu przy jednym nalocie letnim (CLASSIFIER_VERSION 5); raster tylko SM-0-0/0-1, 330 m²; orto:diff 25 m² (trawa -23,6, square +11,1); Królewska trawa 3,6 m² -> square; grass-on-light-paving 61,5 -> 38,25 m² (test z kafli, skipIf bez cache); skan bez zmian kluczy, złote bez zmian; zrzuty /dev/shm/g775-shots/grid.png
+
 ### G-772 Mediany barw z ortofoto liczone z pustego kafla 2024-06/stare-miasto-0-1
 - Ważność: S4 · Zasięg: albedo-medians.json (ALBEDO_FLIGHTS 2025-04, 2024-06), stare-miasto-0-1
 - Opis: albedo-report.ts nie pomija pustych nalotów (isBlank z G-771), biały kafel wchodzi do median barw; przeliczenie zmienia wygląd

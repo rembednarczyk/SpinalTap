@@ -1787,15 +1787,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-761)
 - Pakiet właściciela: tools/orto
 
-### G-775 Beżowa kostka i patyna pomnika jako zieleń w komórkach SM z dwoma nalotami
-- Ważność: S4 · Zasięg: stare-miasto-0-1 (476..478; 75..81), stare-miasto-0-0 (607..610; -207..-212); klucze 470,70
-- Opis: Po G-771 SM-0-0/0-1 mają 2 naloty; beżowa kostka (exg 0,035 w 2025-04) i nalot letni w cieniu albo z przechyłem dają green/canopy; patyna pomnika daje green; bare-cover kładzie trawę na chodniku. Proponowana kontrola: grass-on-light-paving
-- Status: przegląd kuratora ZGODNE Z UWAGAMI (14.11); do PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g775 (89751b9, merge c1ad6ed), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, kurator, przegląd G-771)
-- Pakiet właściciela: tools/orto (classify.ts)
-- Test przyjęcia: narożnik Lubartowska/Noworybna i chodnik Królewskiej przy (608,-210) kostką; klucze 470,70 znikają
-- 14.11 G-771 runda 2 (scalenie z regułą koron #519): klucze 470,70 zniknęły; do sprawdzenia, czy zostaje tylko kępa trawy przy pomniku na Królewskiej (607..610; -207..-212)
-- 14.11 naprawiacz: reguły patyny i beżowej kostki w cieniu przy jednym nalocie letnim (CLASSIFIER_VERSION 5); raster tylko SM-0-0/0-1, 330 m²; orto:diff 25 m² (trawa -23,6, square +11,1); Królewska trawa 3,6 m² -> square; grass-on-light-paving 61,5 -> 38,25 m² (test z kafli, skipIf bez cache); skan bez zmian kluczy, złote bez zmian; zrzuty /dev/shm/g775-shots/grid.png
-
 ### G-779 Łaty G-760 mniejsze niż 0,5 m² odrzucane przez chunkGround
 - Ważność: S4 · Zasięg: złącza z małymi łatami w całym mieście
 - Opis: chunkGround odrzuca każdy kawałek pod 0,5 m², więc część łat pęknięć i klinów G-760 nie trafia do tabel; ich zachowanie daje ground-strip-overlap +3 klucze, kerb-gap-bare -2
