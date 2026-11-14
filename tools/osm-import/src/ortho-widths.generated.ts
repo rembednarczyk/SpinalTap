@@ -3,7 +3,7 @@
  * cover rasters (`data/orto`, ADR-0077): the carriageways' widths measured on the orthophoto
  * (ADR-0080 PR 10), source `ortho` of the street's section. Do not edit; pin a width by hand in
  * `PINNED` (tools/orto/src/widths-city.ts).
- * ways 210: few-stations 77 ways 4.48 km, no-consensus 33 ways 3.72 km, off-estimate 1 ways 0.05 km, ok 59 ways 7.31 km, one-side 40 ways 3.77 km; table 99 rows (1 pinned, 39 measured on one side, 4 held), axis off the middle by over 0.5 m: 49
+ * ways 205: few-stations 77 ways 4.48 km, no-consensus 33 ways 3.72 km, off-estimate 1 ways 0.05 km, ok 56 ways 7.09 km, one-side 38 ways 3.57 km; table 94 rows (1 pinned, 37 measured on one side, 9 held), axis off the middle by over 0.5 m: 45
  */
 /** Way, width (m), the carriageway's reach left and right of its axis (m), the sides measured, ref of a width pinned by hand (`WidthRow`). */
 export const ORTHO_WIDTHS: readonly (readonly [id: string, width: number, left: number, right: number, sides: string, ref: string])[] = [
@@ -16,10 +16,8 @@ export const ORTHO_WIDTHS: readonly (readonly [id: string, width: number, left: 
   ["w154962958",11.3,4.875,6.45,"r",""],
   ["w172992308",6.8,3.15,3.65,"lr",""],
   ["w173074311",6.2,2.95,3.25,"l",""],
-  ["w173074313",5.8,2.35,3.45,"lr",""],
   ["w173074314",9.5,6.65,2.85,"lr",""],
   ["w173486239",6.9,3.65,3.25,"l",""],
-  ["w173531007",6.6,5.35,1.25,"lr",""],
   ["w174600671",8.2,4.95,3.25,"l",""],
   ["w179654711",9.1,4.25,4.875,"l",""],
   ["w184191188",10.8,7.55,3.25,"lr",""],
@@ -48,7 +46,6 @@ export const ORTHO_WIDTHS: readonly (readonly [id: string, width: number, left: 
   ["w231036854",7.9,3.05,4.875,"l",""],
   ["w231037118",14.2,5.55,8.65,"lr",""],
   ["w231037230",6.8,3.75,3.05,"lr",""],
-  ["w232362877",7.1,3.45,3.65,"lr",""],
   ["w233288741",6.8,3.55,3.25,"l",""],
   ["w233334279",4.5,3.05,1.45,"lr",""],
   ["w233334687",11.5,6.65,4.875,"l",""],
@@ -67,7 +64,6 @@ export const ORTHO_WIDTHS: readonly (readonly [id: string, width: number, left: 
   ["w330086795",13.5,6.5,6.95,"r",""],
   ["w330086796",6.7,3.55,3.15,"lr",""],
   ["w335644107",6.1,1.55,4.55,"lr",""],
-  ["w335831606",10.2,3.25,6.95,"r",""],
   ["w347398147",10,4.85,5.15,"lr",""],
   ["w364239030",11,6.75,4.25,"lr",""],
   ["w384643917",7.8,3.85,3.95,"lr",""],
@@ -88,7 +84,6 @@ export const ORTHO_WIDTHS: readonly (readonly [id: string, width: number, left: 
   ["w40052002",5.4,2.65,2.75,"lr",""],
   ["w40052079",5.5,2.25,3.25,"l",""],
   ["w40052294",7,3.25,3.75,"r",""],
-  ["w40052496",9.9,3.25,6.65,"r",""],
   ["w470936350",7.6,3.05,4.55,"lr",""],
   ["w570453823",5.5,3.65,1.85,"lr",""],
   ["w60608816",10,3.45,6.55,"lr",""],
