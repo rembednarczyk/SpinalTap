@@ -100,4 +100,5 @@ export const MAX_TILE_DEG = { lon: 0.0075, lat: 0.0045 } as const;
 export const ELEVATION_STEP = 25;
 export const ELEVATION_MARGIN = 50;
 
-export const USER_AGENT = "SekiSenshi-osm-import/0.1 (+https://github.com/rembednarczyk/SpinalTap)";
+/** Who asks the services (ADR-0042): a generic name, nothing of the user or the repository. */
+export const USER_AGENT = "SekiSenshi-topo/1.0";
