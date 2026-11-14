@@ -1,6 +1,7 @@
 import { type Camera, Color3, GeometryBufferRenderer, PostProcess, type Scene, ShaderStore } from "../babylon";
 import { CONTACT_SHADE_TINT, type ContactShade } from "./contact-shade";
 import { ContactShadePass } from "./contact-shade-pass";
+import { type GBufferCaps, gbufferBytes, gbufferFormats, normalDecodeGlsl } from "./gbuffer-formats";
 
 /**
  * Joint bilateral upsampling of the half-resolution shade: four neighbours weighed by how close
@@ -21,8 +22,11 @@ float upsampledShade(float d) {
 }
 `;
 
-/** With `shaded`, the input is the blurred contact shade and the scene's colour comes from `colorSampler`. */
-const lineArtFragment = (shaded: boolean): string => /* glsl */ `
+/**
+ * With `shaded`, the input is the blurred contact shade and the scene's colour comes from
+ * `colorSampler`; with `encodedNormals` the normals are stored as n * 0.5 + 0.5 (RGB10_A2).
+ */
+export const lineArtFragment = (shaded: boolean, encodedNormals: boolean): string => /* glsl */ `
 precision highp float;
 varying vec2 vUV;
 uniform sampler2D textureSampler;
@@ -35,7 +39,8 @@ uniform vec3 inkColor;
 uniform float inkStrength;
 
 float depthAt(vec2 uv) { return texture2D(depthSampler, uv).r; }
-vec3 normalAt(vec2 uv) { return normalize(texture2D(normalSampler, uv).xyz + 1e-5); }
+${normalDecodeGlsl(encodedNormals)}
+vec3 normalAt(vec2 uv) { return decodeNormal(texture2D(normalSampler, uv)); }
 uniform vec3 shadeTint;
 /** x: unused, y: strength (0 off), z: step threshold. */
 uniform vec4 shadeParams;
@@ -91,24 +96,32 @@ export interface LineArtOptions {
 export class LineArt {
   readonly postProcess: PostProcess;
   private readonly gbuffer: GeometryBufferRenderer;
+  /** Bytes per pixel of the depth and normal targets (frame profile 14.11). */
+  readonly gbufferBytesPerPixel: number;
   enabled = true;
 
   constructor(scene: Scene, camera: Camera, options: LineArtOptions = {}) {
     const shade = options.contactShade ?? null;
-    const shaderName = shade ? "seekiLineArtShaded" : "seekiLineArt";
-    ShaderStore.ShadersStore[`${shaderName}FragmentShader`] = lineArtFragment(shade !== null);
-    const gbuffer = scene.enableGeometryBufferRenderer();
+    const caps = gbufferCaps(scene);
+    const formats = gbufferFormats(caps);
+    // Where the lighter targets cannot be created after all, Babylon's default ones.
+    const lite = scene.enableGeometryBufferRenderer(1, undefined, formats);
+    const gbuffer = lite ?? scene.enableGeometryBufferRenderer();
     if (!gbuffer) throw new Error("Geometry buffer unavailable");
     gbuffer.enableNormal = true;
     gbuffer.enableDepth = true;
     this.gbuffer = gbuffer;
+    this.gbufferBytesPerPixel = gbufferBytes(lite ? formats : {}, caps);
+    const encoded = gbuffer.normalsAreUnsigned;
+    const shaderName = `seekiLineArt${shade ? "Shaded" : ""}${encoded ? "Enc" : ""}`;
+    ShaderStore.ShadersStore[`${shaderName}FragmentShader`] = lineArtFragment(shade !== null, encoded);
     const ink = Color3.FromHexString(options.ink ?? "#0b1016");
     const thickness = options.thickness ?? 1;
     const params = [thickness, options.depthThreshold ?? 0.035, options.normalThreshold ?? 0.35, options.fadeDistance ?? 70] as const;
     const strength = options.strength ?? 0.92;
     const engine = scene.getEngine();
     // In front of the line art on the camera, so it is built first.
-    const shadePass = shade ? new ContactShadePass(scene, camera, gbuffer, shade, params[3], () => this.enabled) : null;
+    const shadePass = shade ? new ContactShadePass(scene, camera, gbuffer, shade, params[3], () => this.enabled, encoded) : null;
     this.postProcess = new PostProcess(
       "line-art",
       shaderName,
@@ -142,3 +155,18 @@ export class LineArt {
     return this.gbuffer;
   }
 }
+
+/** The capabilities that pick the geometry buffer's formats. */
+const gbufferCaps = (scene: Scene): GBufferCaps => {
+  const engine = scene.getEngine();
+  const c = engine.getCaps();
+  const version = "webGLVersion" in engine && typeof engine.webGLVersion === "number" ? engine.webGLVersion : 1;
+  return {
+    webGLVersion: version,
+    isWebGPU: engine.isWebGPU,
+    textureFloatRender: c.textureFloatRender,
+    textureFloatLinearFiltering: c.textureFloatLinearFiltering,
+    textureHalfFloatRender: c.textureHalfFloatRender,
+    textureHalfFloatLinearFiltering: c.textureHalfFloatLinearFiltering,
+  };
+};
