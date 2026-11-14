@@ -1713,6 +1713,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - 13.11 przegląd ADR-0078 etap 2 (G-744): Podwale w179264852 +7 próbek sidewalk-under-carriageway (750,-180; 690,-210) przyjęte przez GLITCH_BASELINE=accept; przyczyna jak G-082/G-113, goły pas przy elewacji 755..758 do poprawy razem z nimi (T-046).
 - 13.11 audyt luk SM: kerb-gap-bare 1 358 próbek (Podwale płd. 307, Królewska 299, Kowalska-Lubartowska 569), kerb-fill-wide-estimated 775, sidewalk-under-carriageway 52, footway-on-carriageway 65; przypisanie ADR-0080 PR 7, szerokości PR 10 po G-771.
 - 13.11 G-771: pokrycie SM bez pustych nalotów dodało 92 próbki kerb-gap-bare (szczeliny 0,07-0,2 m przy z -178, x 500..540) i klucze 470,70; 610,-220 Podwale; przyjęte accept
+- 14.11 G-771: kerb-strip-bare SM-1-0 610,-220 (Podwale w40052391 610,-213, 3,1 m gołego asfaltu do nowego trawnika) i kerb-gap-bare SM-0-0 530,-180 (szczelina 0,15 m) przyjęte accept
 
 ### G-729 Szyld Neon Koi wchodzi na szyld BANK POWSZEDNI
 - Status: odłożone za priorytet mapowania i refaktoru (decyzja użytkownika 12.11: „póki co trzymaj obecne priorytety”); zgłoszone (12.11, zgłoszenie użytkownika; przyczyna do potwierdzenia)
@@ -1813,7 +1814,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-771 Puste (białe) kafle ortofoto w pokryciu i raporcie komórek stare-miasto-0-0 i 0-1
 - Ważność: S3 · Zasięg: kafle 2023-09/stare-miasto-0-0 i 2024-06/stare-miasto-0-1 (100% białe, jedyne w mieście); w pokryciu ok. 2 740 m² zieleni i koron jako kostka/asfalt (0-0: 1 256, 0-1: 1 484) i ok. 250 m² cienia; raport wybiera pusty nalot jako najmniejszy przechył
 - Opis: fetch.ts zostawia biały kafel z ostatniej usługi; classifyRect uśrednia go jak nalot; lean.ts daje mu wynik 0. Skutek: bare-cover.ts i kontrole bare-on-cover/fill-on-green czytają zieleń jako twardą; 'twarde 100%' w notatkach 0-0 i 0-1 to artefakt (działka Rybna 12: zieleń i gruz). Proponowana kontrola cover-blank-flight (baza 2).
-- Status: przegląd kuratora ZGODNE Z UWAGAMI (13.11); scalać po #519 z CLASSIFIER_VERSION 4, przebudową data/orto, osm:build i scan:update; poprawić nazwy ulic w opisie PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g771 (5c0dc65, 32c6ec6), czeka na przegląd kuratora; konflikt CLASSIFIER_VERSION z #519 (druga wchodząca daje 4 i przebudowuje data/orto); wcześniej: zgłoszone (13.11, kurator, audyt luk SM)
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g771 (5c0dc65, 32c6ec6, merge 4c6fe3b z #519; CLASSIFIER_VERSION 4), w PR; wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (13.11); scalać po #519 z CLASSIFIER_VERSION 4, przebudową data/orto, osm:build i scan:update; poprawić nazwy ulic w opisie PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g771 (5c0dc65, 32c6ec6), czeka na przegląd kuratora; konflikt CLASSIFIER_VERSION z #519 (druga wchodząca daje 4 i przebudowuje data/orto); wcześniej: zgłoszone (13.11, kurator, audyt luk SM)
 - Pakiet właściciela: tools/orto (fetch.ts, cover.ts, lean.ts), potem data/orto i osm:build
 - Test przyjęcia: nalot z bielą > 95% pominięty w klasyfikacji i w przechyle; stare-miasto.cover przeliczone; raport 0-0/0-1 wybiera nalot ze zdjęciem; orto:diff do kuratora
 - 13.11 przegląd kuratora: nazwy w 32c6ec6 („Rybna/Grodzka”) błędne: Królewska, narożnik Lubartowska/Noworybna, 1 m² przy Rybnej. Klucze 510,-170 i 610,-220 powinny zniknąć po #519. Klucze 470,70 to nowe odstępstwo (G-775).
@@ -1837,6 +1838,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, kurator, przegląd G-771)
 - Pakiet właściciela: tools/orto (classify.ts)
 - Test przyjęcia: narożnik Lubartowska/Noworybna i chodnik Królewskiej przy (608,-210) kostką; klucze 470,70 znikają
+- 14.11 G-771 runda 2 (scalenie z regułą koron #519): klucze 470,70 zniknęły; do sprawdzenia, czy zostaje tylko kępa trawy przy pomniku na Królewskiej (607..610; -207..-212)
 
 ### G-777 Szczeliny 10-30 cm między wstęgami różnych nawierzchni w złączach (gapFills łata tylko tę samą nawierzchnię)
 - Ważność: S4 · Zasięg: ok. 10 złączy, ok. 0,8 m²: 837,0;205,3 (chodnik/jezdnia), 949,1;230,7, 247,7;-201,0, 1014,2;450,8, 743,7;13,7 (chodnik/footway), 97,9;98,4 (jezdnia/trawa)
