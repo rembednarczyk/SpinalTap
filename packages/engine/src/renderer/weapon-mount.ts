@@ -1,5 +1,6 @@
 import { Quaternion, TransformNode, Vector3 } from "../babylon";
 import type { WeaponLook } from "@seki/core";
+import type { FlashSize } from "../effects/muzzle-state";
 import type { ModelInstance, ModelLibrary } from "./model-library";
 import type { TwoHandGrip } from "./two-hand-grip";
 
@@ -81,6 +82,35 @@ export const GRIP: Readonly<Record<WeaponKind, { readonly x: number; readonly y:
 
 /** The grip sits this much further back and lower in the viewmodel (file frame), where the hand is a ball. */
 export const VIEW_SHIFT = { x: -0.015, y: -0.005 };
+
+export type GunKind = Exclude<WeaponKind, MeleeKind>;
+
+/**
+ * Each gun's muzzle (the barrel's end, at the bore's height; file frame, metres, as `GRIP`) and
+ * its flash: small for the handguns, wider for the SMG, the long guns' the biggest, the shotgun's
+ * the widest. The FPP poses' `muzzle` is this point seen from the hand (viewmodel-poses.ts).
+ */
+export const MUZZLE: Readonly<Record<GunKind, { readonly x: number; readonly y: number; readonly flash: FlashSize }>> = {
+  pistol: { x: 0.11, y: 0.035, flash: { length: 0.13, width: 0.09, puffs: 2 } },
+  revolver: { x: 0.135, y: 0.041, flash: { length: 0.16, width: 0.11, puffs: 3 } },
+  smg: { x: 0.21, y: 0.078, flash: { length: 0.2, width: 0.12, puffs: 2 } },
+  shotgun: { x: 0.375, y: 0.057, flash: { length: 0.32, width: 0.22, puffs: 4 } },
+  rifle: { x: 0.4, y: 0.076, flash: { length: 0.3, width: 0.16, puffs: 3 } },
+};
+
+export const isGunKind = (kind: WeaponKind | null): kind is GunKind => kind !== null && kind in MUZZLE;
+
+/**
+ * Where a mount (`WeaponMounts.mount`) puts the muzzle and which way the barrel points, in the
+ * frame of what holds the gun, at scale 1: the hand's forearm frame (along -Y) or the viewmodel's (+Z).
+ */
+export const muzzleInMount = (kind: GunKind, space: MountSpace): { readonly at: Vector3; readonly dir: Vector3 } => {
+  const shift = space === "view" ? VIEW_SHIFT : { x: 0, y: 0 };
+  const m = MUZZLE[kind];
+  const q = space === "hand" ? IN_HAND : IN_VIEW;
+  const at = new Vector3(MUZZLE_X * (m.x - GRIP[kind].x - shift.x), m.y - GRIP[kind].y - shift.y, 0).applyRotationQuaternion(q);
+  return { at, dir: new Vector3(MUZZLE_X, 0, 0).applyRotationQuaternion(q) };
+};
 
 /**
  * Long guns go in both hands (G-282): the right fist round the middle of the grip, the left palm

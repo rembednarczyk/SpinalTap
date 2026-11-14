@@ -1,4 +1,4 @@
-import type { Scene } from "../babylon";
+import type { Scene, Vector3 } from "../babylon";
 import type { AppearanceDescriptor, EntityId, Transform } from "@seki/core";
 import type { CameraRig } from "../camera/camera-rig";
 import { fadeFigure } from "../npr/body-dither";
@@ -21,7 +21,7 @@ import { animateKnockout, settleKnockout } from "./knockout-pose";
 import type { HumanoidRetarget } from "./model-rig";
 import { type ScanClass, scanClassOfView } from "./scan-highlight";
 import type { FxActors, ScanVisitor } from "./screen-fx";
-import type { WeaponManifest } from "./weapon-mount";
+import type { GunKind, WeaponManifest } from "./weapon-mount";
 
 export type { CharacterDescriptor } from "./model-cast";
 
@@ -153,6 +153,12 @@ export class CharacterViews implements FxActors {
 
   transformOf(id: EntityId): Transform | null {
     return this.views.get(id)?.transform ?? null;
+  }
+
+  /** The gun in the hand of `id` and where its muzzle is (`Loadouts.muzzle`). */
+  muzzleOf(id: EntityId, at: Vector3, dir: Vector3): { readonly kind: GunKind; readonly shown: boolean } | null {
+    const rig = this.views.get(id)?.rig;
+    return rig ? this.kit.loadouts.muzzle(rig, at, dir) : null;
   }
 
   /** The FPP viewmodel shows the weapon in the hand of `id`, whom the camera now follows. */
