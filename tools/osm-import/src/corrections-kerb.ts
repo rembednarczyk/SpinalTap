@@ -11,7 +11,7 @@ import type { AddedArea, TagCorrection } from "./corrections.ts";
 import { DEPTAKI_CORRECTIONS } from "./corrections-deptaki.ts";
 import { KRAKOWSKIE_ADDED_AREAS } from "./corrections-radziwillowska.ts";
 import type { Line } from "./features.ts";
-import { type Pt, offsetLine } from "./geometry.ts";
+import { type Pt, lineLength, offsetPoints, pointAlong } from "./geometry.ts";
 import { ORTHO_WIDTHS } from "./ortho-widths.generated.ts";
 
 /** An added area of T-247: corners off the map's nodes. */
@@ -104,10 +104,26 @@ export const orthoSides = (id: string): readonly [boolean, boolean] | undefined 
   return row && [row[4].includes("l"), row[4].includes("r")];
 };
 
-/** A measured way's carriageway moved aside onto the asphalt (`ORTHO_OFFSETS`), as `fitLanes` lays a fitted piece; null on its axis. */
+/** How fast a measured carriageway moves aside from its ends (m aside per m along), as the ADR's ramp between stations. */
+const ORTHO_RAMP = 0.1;
+
+/**
+ * A measured way's carriageway moved aside onto the asphalt (`ORTHO_OFFSETS`), as `fitLanes` lays
+ * a fitted piece, but from its ends on a ramp of `ORTHO_RAMP`: its ends stay on the nodes it shares
+ * with the next ways, so their bands meet and join there (`joinedPoints`). Null on its axis.
+ */
 export const orthoPieces = (l: Line): Line[] | null => {
   const off = ORTHO_OFFSETS.get(l.id);
-  return off ? [{ ...l, line: offsetLine(l.line, off) }] : null;
+  if (!off) return null;
+  const length = lineLength(l.line);
+  const ramp = Math.min(Math.abs(off) / ORTHO_RAMP, length / 2);
+  const at: number[] = [0];
+  for (let i = 1; i < l.line.length; i++) at.push(at[i - 1]! + Math.hypot(l.line[i]!.x - l.line[i - 1]!.x, l.line[i]!.z - l.line[i - 1]!.z));
+  // The ramps' ends as points of the line, so the offset runs straight between them.
+  const cuts = [...new Set([ramp, length - ramp])].filter((s) => !at.some((a) => Math.abs(a - s) < 0.01));
+  const pts = [...l.line.map((p, i) => ({ p, s: at[i]! })), ...cuts.map((s) => ({ p: pointAlong(l.line, s), s }))].sort((a, b) => a.s - b.s);
+  const offsets = pts.map(({ s }) => (ramp > 0 ? off * Math.min(1, s / ramp, (length - s) / ramp) : 0));
+  return [{ ...l, line: offsetPoints(pts.map((x) => x.p), offsets) }];
 };
 
 /** The corrections by id: those by hand (`manual`), each over the width measured for the same way. */

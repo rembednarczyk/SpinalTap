@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ORTHO_OFFSETS, orthoPieces } from "../src/corrections-kerb.ts";
 import { type Line } from "../src/features.ts";
 import { lineBands } from "../src/ground.ts";
 import { type StreetSection, carriagewaySource, laidStrips, reportLine, roadSection, streetWidths, widthReport } from "../src/street-section.ts";
@@ -97,6 +98,28 @@ describe("the report of the streets' width sources", () => {
     const w = streetWidths(laid, () => true, [[{ source: "w1" }, { runs }]]);
     expect(w.streets).toEqual({ osm: 0, ortho: 0, "mapped-way": 15, fitted: 0, default: 65 });
     expect(w.all.default).toBe(145);
+  });
+
+  it("moves a measured carriageway onto its asphalt on a ramp from its ends, which stay on the nodes (PR 10)", () => {
+    const [id, off] = [...ORTHO_OFFSETS].find(([, o]) => Math.abs(o) >= 1)!;
+    const line = [
+      { x: 0, z: 0 },
+      { x: 50, z: 0 },
+      { x: 100, z: 0 },
+    ];
+    const piece = orthoPieces({ id, osmId: 1, tags: { highway: "residential" }, line })![0]!.line;
+    expect(piece[0]).toEqual(line[0]);
+    expect(piece[piece.length - 1]).toEqual(line[2]);
+    // The whole offset `|off| / 0.1` m from each end (0.1 m aside per m along), level between.
+    const ramp = Math.abs(off) / 0.1;
+    expect(piece.map((p) => [Math.round(p.x * 100) / 100, Math.round(p.z * 100) / 100])).toEqual([
+      [0, 0],
+      [Math.round(ramp * 100) / 100, off],
+      [50, off],
+      [Math.round((100 - ramp) * 100) / 100, off],
+      [100, 0],
+    ]);
+    expect(orthoPieces({ id: "w1", osmId: 1, tags: {}, line })).toBeNull();
   });
 
   it("of the whole city: printed, every street side counted once", () => {
