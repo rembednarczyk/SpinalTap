@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-798 Latarnie z linii planu zamiast reguły lit: 4,4 km oświetlonych dróg bez latarni (ADR-0064 etap 3)
+- Ważność: S3 · Zasięg: całe miasto, 4390 m próbek dróg lit=yes
+- Opis: osm-import nie czyta tagu lit (1068 dróg lit=yes w wyciągach); latarnie stawiają linie lamps.* z docs/world/lublin-props.todo.json (29.10), więc nowe ulice i pas z < −200 zostają ciemne. T-293
+- Status: naprawione (14.11, #557 scalony); wcześniej: w PR #557 (runda 2: P1 Dziedziniec, P2 Podwale poprawione); wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-lit-lamps, przegląd kuratora w toku; wcześniej: zgłoszone (14.11, audyt ADR-0077)
+- Pakiet właściciela: tools/osm-import (props-gen), tools/glitch-scan
+- Test przyjęcia: kontrola lit-street-dark (próbki co 5 m dróg lit=yes dalej niż 30 m od lamp-*, kwadraty 10 m), baza 4390 m, spada; kontrole lamp-* nie rosną
+- Przegląd kuratora 14.11 (946e866): NIEZGODNE, 2 poprawki przed scaleniem: (P1) Dziedziniec Zamkowy 5 lamp-park, w tym 2 na środku z w73811514 (868,2; 233,6), (915,4; 227,9); w rzeczywistości latarenki ścienne i oprawy w bruku; (P2) Podwale: 10 lamp-road planu zmienione na lamp-candelabra (lookOf: 3 punkty na linii Placu Zamkowego, styleClashes), w rzeczywistości pastorały. Kontrole: lamp-freestanding-in-courtyard (baza 5), lamp-square-style-leak (baza 11).
+
 ### G-800 Cień linki girlandy znika z daleka, zostają cienie samych lampek (po #542)
 - Ważność: S3 · Zasięg: wszystkie girlandy i przewody nad ulicami, noc, High; widać dopiero z bliska
 - Opis: Zgłoszenie użytkownika 14.11 (gra po #542): linka z kwadracikami rzuca cień tylko z bliska, z daleka widać same kwadraciki; to nie cień kontaktowy. Najpewniej cień księżyca: przy patrzeniu w dal kwadrat cienia wraca do 56 m (teksel 2,7 cm), a linka cieńsza niż teksel po nowym filtrze krawędzi (PCF 3 teksele, próg ok. 1 px przez fwidth) znika zamiast iść w kropki; agent G-795 wskazał to ryzyko w raporcie. Przed #542 cień linki był kropkowany.
