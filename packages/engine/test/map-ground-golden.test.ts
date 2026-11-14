@@ -112,7 +112,9 @@ describe("the ground the map city lays (G-444)", () => {
     // where an outline crosses a tile's or a split's edge on the slant, and fewer corners there: 170 416.
     // The ground lifted over steps cut off the flights' outlines (G-781), its new corners where the
     // edges cross: 173 375, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 173375, hash: "14775577" });
+    // The round ends read every ring counter-clockwise too (G-782): no round end laid over a square's
+    // clockwise ring onto the way or the steps it meets there, 676 vertices fewer: 172 699.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 172699, hash: "7610321b" });
     scene.dispose();
   });
 
