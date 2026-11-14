@@ -1,6 +1,27 @@
-import { Color4, ColorCurves, type Camera, DefaultRenderingPipeline, type Scene } from "../babylon";
+import { Color4, ColorCurves, type Camera, DefaultRenderingPipeline, type Scene, ShaderStore } from "../babylon";
 import { FlashLimiter } from "../effects/flash-limiter";
 import { DISTRICT_PALETTES, type DistrictPalette } from "./district-palette";
+import { BLOOM_THRESHOLD } from "./quality";
+
+/**
+ * Bloom merge with room for the halo only around bright pixels, not on them: a large lit panel
+ * seen up close keeps its colour instead of summing up to white (user's choice 13.11, option 1).
+ * Replaces Babylon's `bloomMerge` (base + blur * weight) for the whole engine.
+ */
+export const BLOOM_MERGE_FRAGMENT = /* glsl */ `
+uniform sampler2D textureSampler;
+uniform sampler2D bloomBlur;
+varying vec2 vUV;
+uniform float bloomWeight;
+#define CUSTOM_FRAGMENT_DEFINITIONS
+void main(void) {
+  vec4 base = texture2D(textureSampler, vUV);
+  vec3 blurred = texture2D(bloomBlur, vUV).rgb;
+  float lum = dot(base.rgb, vec3(0.2126, 0.7152, 0.0722));
+  float room = 1.0 - smoothstep(0.45, 0.9, lum);
+  gl_FragColor = vec4(base.rgb + blurred * bloomWeight * room, base.a);
+}
+`;
 
 /** Wobble of the memory glitch, cycles per second: under the three-flashes-a-second ceiling. */
 export const GLITCH_WOBBLE_HZ = 2.5;
@@ -27,7 +48,7 @@ export class Grading {
   constructor(
     scene: Scene,
     camera: Camera,
-    options: { reference: boolean; sharpen?: number },
+    options: { reference: boolean; sharpen?: number; bloom?: number },
     private readonly limiter: FlashLimiter = new FlashLimiter(),
   ) {
     const p = new DefaultRenderingPipeline("grading", false, scene, [camera]);
@@ -55,6 +76,17 @@ export class Grading {
     if (sharpen > 0) {
       p.sharpen.edgeAmount = sharpen;
       p.sharpen.colorAmount = 1;
+    }
+    // Only the brightest pixels (neon, lamps, screens) bloom: a high threshold keeps lit walls and
+    // the day sky clean, the halo the anime look of the neon (graphics backlog 13.11, step 3).
+    const bloom = options.bloom ?? 0;
+    if (bloom > 0) ShaderStore.ShadersStore["bloomMergePixelShader"] = BLOOM_MERGE_FRAGMENT;
+    p.bloomEnabled = bloom > 0;
+    if (bloom > 0) {
+      p.bloomThreshold = BLOOM_THRESHOLD;
+      p.bloomWeight = bloom;
+      p.bloomKernel = 32;
+      p.bloomScale = 0.5;
     }
     this.pipeline = p;
   }

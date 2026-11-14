@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyMsaa, msaaSamples } from "../src/npr/msaa";
-import { QUALITY_TIERS } from "../src/npr/quality";
+import { BLOOM_THRESHOLD, QUALITY_TIERS } from "../src/npr/quality";
 
 describe("msaa (graphics backlog 13.11, step 1)", () => {
   it("asks for the tier's samples within the GPU's limit", () => {
@@ -29,5 +29,14 @@ describe("msaa (graphics backlog 13.11, step 1)", () => {
     expect(QUALITY_TIERS.low.msaa).toBe(1);
     expect(QUALITY_TIERS.low.sharpen).toBe(0);
     expect(QUALITY_TIERS.high.msaa).toBe(2);
+  });
+});
+
+describe("bloom (graphics backlog 13.11, step 3)", () => {
+  it("blooms on high quality only, over the brightest pixels", () => {
+    expect(QUALITY_TIERS.high.bloom).toBeGreaterThan(0);
+    expect(QUALITY_TIERS.medium.bloom).toBe(0);
+    expect(QUALITY_TIERS.low.bloom).toBe(0);
+    expect(BLOOM_THRESHOLD).toBeGreaterThanOrEqual(0.85);
   });
 });
