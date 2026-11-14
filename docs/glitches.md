@@ -1931,6 +1931,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w PR #562; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g808); wcześniej: nowe
 - Pakiet właściciela: packages/engine/src/renderer
 
+### G-810 Reguła latarni lit stawia latarnię na brzegu mapy z y 0, gdy krawędź Mełgiewskiej przesunie się o 2,5 cm
+- Ważność: S3 · Zasięg: Mełgiewska w225998472, wschodni brzeg mapy (2700; 93,5)
+- Opis: Znalezione w PR 10 runda 2 (ADR-0080): przesunięcie krawędzi jezdni o 2,5 cm sprawia, że reguła lit (#557, props-lit / props-lit-spot) stawia latarnię poza terenem z y = 0; props.test pada. Mełgiewska trzymana na HELD jako obejście. Reguła powinna odrzucać punkt poza mapą albo bez wysokości terenu.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (props-lit)
+
+### G-811 kerbFills pomija stronę zmierzonej drogi zostawioną przy szacunku
+- Ważność: S3 · Zasięg: ulice ADR-0080 PR 10 z jedną stroną HELD; kerb-gap-bare 810 → 823 (127 nowych kluczy), kerb-fill-wide-estimated 71 → 72
+- Opis: Na gałęzi ccr-ec2c4269-ilh8k8-adr80-pr10 (b17eb17) strona drogi zostawiona przy szacunku (reguły: ścieżka przed krawężnikiem, strona węższa niż least/2) nie dostaje kerbFills, więc między jezdnią a chodnikiem zostaje goły pas. Do tego lawn-on-leafoff-paving 94 → 105 (trawnik na pasie zwolnionym przez węższą jezdnię, Nabrzeże). Blokuje scalenie PR 10.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import, tools/orto
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
