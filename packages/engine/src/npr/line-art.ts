@@ -1,6 +1,7 @@
 import { type Camera, Color3, GeometryBufferRenderer, PostProcess, type Scene, ShaderStore } from "../babylon";
 import { CONTACT_SHADE_TINT, type ContactShade } from "./contact-shade";
 import { ContactShadePass } from "./contact-shade-pass";
+import { type GBufferCaps, NORMAL_DECODE_GLSL, gbufferBytes, gbufferFormats, normalDefines } from "./gbuffer-formats";
 
 /**
  * Joint bilateral upsampling of the half-resolution shade: four neighbours weighed by how close
@@ -24,7 +25,8 @@ float upsampledShade(float d) {
 /**
  * With `SHADED` defined, the input is the blurred contact shade and the scene's colour comes from
  * `colorSampler`; without it the input is the scene. A define, not two shaders, so the player's
- * contact-shade setting switches the pass at once (graphics toggles 14.11).
+ * contact-shade setting switches the pass at once (graphics toggles 14.11). With
+ * `ENCODED_NORMALS` the normals are stored as n * 0.5 + 0.5 (RGB10_A2, frame profile 14.11).
  */
 export const LINE_ART_FRAGMENT = /* glsl */ `
 precision highp float;
@@ -39,7 +41,8 @@ uniform vec3 inkColor;
 uniform float inkStrength;
 
 float depthAt(vec2 uv) { return texture2D(depthSampler, uv).r; }
-vec3 normalAt(vec2 uv) { return normalize(texture2D(normalSampler, uv).xyz + 1e-5); }
+${NORMAL_DECODE_GLSL}
+vec3 normalAt(vec2 uv) { return decodeNormal(texture2D(normalSampler, uv)); }
 uniform vec3 shadeTint;
 /** x: unused, y: strength (0 off), z: step threshold. */
 uniform vec4 shadeParams;
@@ -88,6 +91,9 @@ void main(void) {
 /** The line art's defines with or without the contact shade. */
 export const shadeDefines = (on: boolean): string => (on ? "#define SHADED" : "");
 
+/** All of the line art's defines: the contact shade and the normals' encoding. */
+const lineDefines = (shade: boolean, encoded: boolean): string => [shadeDefines(shade), normalDefines(encoded)].filter((d) => d).join("\n");
+
 export interface LineArtOptions {
   /** Line weight at 720p; scaled with the render height. */
   readonly thickness?: number;
@@ -112,6 +118,10 @@ export class LineArt {
   private readonly shadePass: ContactShadePass | null;
   /** The player's contact-shade setting (graphics toggles 14.11): the passes are on the camera. */
   private shadeOn: boolean;
+  /** The geometry buffer stores the normals as n * 0.5 + 0.5. */
+  private readonly encodedNormals: boolean;
+  /** Bytes per pixel of the depth and normal targets (frame profile 14.11). */
+  readonly gbufferBytesPerPixel: number;
   enabled = true;
 
   constructor(
@@ -121,18 +131,25 @@ export class LineArt {
   ) {
     const shade = options.contactShade ?? null;
     ShaderStore.ShadersStore["seekiLineArtFragmentShader"] = LINE_ART_FRAGMENT;
-    const gbuffer = scene.enableGeometryBufferRenderer();
+    const caps = gbufferCaps(scene);
+    const formats = gbufferFormats(caps);
+    // Where the lighter targets cannot be created after all, Babylon's default ones.
+    const lite = scene.enableGeometryBufferRenderer(1, undefined, formats);
+    const gbuffer = lite ?? scene.enableGeometryBufferRenderer();
     if (!gbuffer) throw new Error("Geometry buffer unavailable");
     gbuffer.enableNormal = true;
     gbuffer.enableDepth = true;
     this.gbuffer = gbuffer;
+    this.gbufferBytesPerPixel = gbufferBytes(lite ? formats : {}, caps);
+    const encoded = gbuffer.normalsAreUnsigned;
+    this.encodedNormals = encoded;
     const ink = Color3.FromHexString(options.ink ?? "#0b1016");
     const thickness = options.thickness ?? 1;
     const params = [thickness, options.depthThreshold ?? 0.035, options.normalThreshold ?? 0.35, options.fadeDistance ?? 70] as const;
     const strength = options.strength ?? 0.92;
     const engine = scene.getEngine();
     // In front of the line art on the camera, so it is built first.
-    const shadePass = shade ? new ContactShadePass(scene, camera, gbuffer, shade, params[3], () => this.enabled) : null;
+    const shadePass = shade ? new ContactShadePass(scene, camera, gbuffer, shade, params[3], () => this.enabled, encoded) : null;
     this.shadePass = shadePass;
     this.shadeOn = shadePass !== null;
     this.postProcess = new PostProcess(
@@ -145,7 +162,7 @@ export class LineArt {
       undefined,
       undefined,
       undefined,
-      shadeDefines(this.shadeOn),
+      lineDefines(this.shadeOn, encoded),
     );
     this.postProcess.onApply = (effect) => {
       const w = engine.getRenderWidth();
@@ -190,7 +207,7 @@ export class LineArt {
       pass.colourSource.samples = 1;
       pass.detach(this.camera);
     }
-    this.postProcess.updateEffect(shadeDefines(on));
+    this.postProcess.updateEffect(lineDefines(on, this.encodedNormals));
   }
 
   /** Keeps a mesh out of the line pass (glow sprites, rain, VFX). */
@@ -202,3 +219,18 @@ export class LineArt {
     return this.gbuffer;
   }
 }
+
+/** The capabilities that pick the geometry buffer's formats. */
+const gbufferCaps = (scene: Scene): GBufferCaps => {
+  const engine = scene.getEngine();
+  const c = engine.getCaps();
+  const version = "webGLVersion" in engine && typeof engine.webGLVersion === "number" ? engine.webGLVersion : 1;
+  return {
+    webGLVersion: version,
+    isWebGPU: engine.isWebGPU,
+    textureFloatRender: c.textureFloatRender,
+    textureFloatLinearFiltering: c.textureFloatLinearFiltering,
+    textureHalfFloatRender: c.textureHalfFloatRender,
+    textureHalfFloatLinearFiltering: c.textureHalfFloatLinearFiltering,
+  };
+};

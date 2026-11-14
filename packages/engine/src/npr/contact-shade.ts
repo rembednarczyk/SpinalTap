@@ -1,3 +1,5 @@
+import { NORMAL_DECODE_GLSL } from "./gbuffer-formats";
+
 /**
  * Contact shade in the cel style (graphics backlog 13.11, step 2): corners, the feet of walls,
  * the ground under cars and benches and the underside of arcades darken in one hard step, the
@@ -88,18 +90,22 @@ float contactOcclusion(vec2 uv, float d, vec3 n) {
 }
 `;
 
-/** Pass 1 (full-resolution input, half-resolution output): the raw share of occluding samples. */
+/**
+ * Pass 1 (full-resolution input, half-resolution output): the raw share of occluding samples.
+ * With `ENCODED_NORMALS` defined the normals are stored as n * 0.5 + 0.5 (RGB10_A2).
+ */
 export const CONTACT_OCCLUSION_FRAGMENT = /* glsl */ `
 precision highp float;
 varying vec2 vUV;
 uniform sampler2D depthSampler;
 uniform sampler2D normalSampler;
 float depthAt(vec2 uv) { return texture2D(depthSampler, uv).r; }
+${NORMAL_DECODE_GLSL}
 ${CONTACT_SHADE_GLSL}
 void main(void) {
   float d = depthAt(vUV);
   if (d <= 0.0) { gl_FragColor = vec4(0.0); return; }
-  vec3 n = normalize(texture2D(normalSampler, vUV).xyz + 1e-5);
+  vec3 n = decodeNormal(texture2D(normalSampler, vUV));
   gl_FragColor = vec4(contactOcclusion(vUV, d, n), 0.0, 0.0, 1.0);
 }
 `;

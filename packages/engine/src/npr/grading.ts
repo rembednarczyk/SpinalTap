@@ -1,6 +1,7 @@
-import { Color4, ColorCurves, type Camera, DefaultRenderingPipeline, type Scene, ShaderStore } from "../babylon";
+import { Color4, ColorCurves, type Camera, DefaultRenderingPipeline, type PostProcess, type Scene, ShaderStore } from "../babylon";
 import { FlashLimiter } from "../effects/flash-limiter";
 import { DISTRICT_PALETTES, type DistrictPalette } from "./district-palette";
+import { PassGate } from "./pass-gate";
 import { BLOOM_THRESHOLD } from "./quality";
 
 /**
@@ -44,6 +45,8 @@ export class Grading {
   private glitchFlash = true;
   private reduce = false;
   private palette: DistrictPalette = DISTRICT_PALETTES["shinsekai-7"];
+  /** Chromatic aberration draws only while it shifts the channels (glitch, overdrive). */
+  private readonly chromatic: PassGate<PostProcess>;
   /** The quality's bloom weight; 0 where it builds none (Low, Medium). */
   private readonly bloomWeight: number;
 
@@ -92,6 +95,13 @@ export class Grading {
     }
     this.pipeline = p;
     this.bloomWeight = bloom;
+    this.chromatic = new PassGate<PostProcess>(camera, () => this.pipeline.chromaticAberration);
+    this.chromatic.set(false);
+  }
+
+  /** Whether the chromatic aberration pass is in the camera's chain (frame profile 14.11). */
+  get chromaticDrawing(): boolean {
+    return this.chromatic.drawing;
   }
 
   /** The quality has a bloom the player's setting can switch. */
@@ -107,6 +117,8 @@ export class Grading {
   setBloom(on: boolean): boolean {
     if (!this.hasBloom || this.pipeline.bloomEnabled === on) return false;
     this.pipeline.bloomEnabled = on;
+    // The rebuild put the aberration back on the camera; out again while it shows nothing.
+    this.chromatic.set(this.pipeline.chromaticAberration.aberrationAmount > 0);
     return true;
   }
 
@@ -158,7 +170,10 @@ export class Grading {
     this.curves.globalSaturation = this.palette.saturation - 55 * od;
     this.curves.globalHue = 200;
     this.curves.globalDensity = 30 * od;
-    this.pipeline.chromaticAberration.aberrationAmount = this.reduce ? 0 : 70 * glitch + 10 * od;
+    const aberration = this.reduce ? 0 : 70 * glitch + 10 * od;
+    this.pipeline.chromaticAberration.aberrationAmount = aberration;
+    // At amount 0 the pass is a copy of the frame; on the change only, never a pipeline rebuild.
+    this.chromatic.set(aberration > 0);
     this.pipeline.grain.intensity = 6 + (this.reduce ? 12 : 40) * glitch;
     const brighten = this.glitchFlash && !this.reduce ? 0.35 * glitch : 0;
     this.pipeline.imageProcessing.exposure = 1.08 + brighten + this.pulseTime * 0.8 * this.pulseScale;
