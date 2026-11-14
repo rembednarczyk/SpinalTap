@@ -12,6 +12,10 @@ import { type RoundEnd, bufferBand, stripBand } from "./line-buffer.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
 import { cutHoles, holeFits, holesApart, notchOut } from "./ring-holes.ts";
+import { ROAD_WIDTH, laidStrips, roadSection, roadWidth } from "./street-section.ts";
+
+/** A street's width and sidewalk sides are its cross section's (ADR-0080 PR 5): read from here as before. */
+export { MIN_FITTED, fitToKerb, roadWidth, sidewalkSides } from "./street-section.ts";
 
 const COBBLES = new Set(["sett", "cobblestone", "unhewn_cobblestone", "cobblestone:flattened"]);
 const cobbled = (t: Tags) => COBBLES.has(t.surface ?? "");
@@ -30,25 +34,6 @@ export const areaSurface = (t: Tags): GroundSurface | null => {
   return null;
 };
 
-/** Carriageway width in metres by type when neither `width` nor `lanes` says. */
-const ROAD_WIDTH: Record<string, number> = {
-  motorway: 14,
-  trunk: 14,
-  primary: 12,
-  primary_link: 6,
-  secondary: 10,
-  secondary_link: 6,
-  tertiary: 8,
-  tertiary_link: 5,
-  unclassified: 6,
-  residential: 6.5,
-  living_street: 5,
-  service: 4,
-  busway: 7,
-  road: 6,
-};
-/** Streets that get sidewalks where the map has none. */
-const URBAN = new Set(["primary", "secondary", "tertiary", "unclassified", "residential", "living_street"]);
 const PATHS: Record<string, number> = { footway: 2.5, path: 2, cycleway: 2, steps: 3, bridleway: 2 };
 /** The most a vertex of a steps way may lie off the line through its neighbours and start no new run (m). */
 const STEPS_BEND = 0.05;
@@ -103,31 +88,6 @@ export const flightStrips = (piece: readonly Pt[], a: Pt, b: Pt): Pt[][] => {
 /** A path's width (m): its `width`, else by type. */
 export const pathWidth = (t: Tags): number => parseLength(t.width) ?? PATHS[t.highway ?? ""] ?? 2;
 
-export const roadWidth = (t: Tags): number => {
-  const w = parseLength(t.width ?? t["width:carriageway"]);
-  if (w !== null) return w;
-  const lanes = Number(t.lanes);
-  if (Number.isFinite(lanes) && lanes > 0) return lanes * 3.25;
-  if (t.highway === "service" && t.service === "parking_aisle") return 5;
-  return ROAD_WIDTH[t.highway ?? ""] ?? 6;
-};
-
-/** The narrowest carriageway a street's mapped sidewalks narrow it to, metres: one-way, and two-way (two 2.25 m lanes, T-063). */
-export const MIN_FITTED = { oneway: 3, twoWay: 4.5 };
-
-/**
- * A street the map gives no width (no `width`, no `lanes`) narrowed to `kerb` metres each side of
- * its axis, short of its separately mapped sidewalks (T-046): the width by type would lay the
- * asphalt over their middle and `cutSidewalk` would drop them. The fitted width goes to
- * `width:carriageway`, so the bands, markings and zebras all read the same one. A street of
- * mapped `lanes` is fitted side by side instead (`fitLanes`, G-655).
- */
-export const fitToKerb = (t: Tags, kerb: number | null, oneway: boolean): Tags => {
-  if (kerb === null || ROAD_WIDTH[t.highway ?? ""] === undefined || parseLength(t.width ?? t["width:carriageway"]) !== null || Number(t.lanes) > 0) return t;
-  const w = Math.max(oneway ? MIN_FITTED.oneway : MIN_FITTED.twoWay, Math.round(2 * kerb * 10) / 10);
-  return w < roadWidth(t) ? { ...t, "width:carriageway": String(w) } : t;
-};
-
 export interface Band {
   readonly surface: GroundSurface;
   readonly ring: readonly Pt[];
@@ -160,19 +120,6 @@ export interface Band {
 
 /** Which of a line's ends meet another way. */
 type JoinedEnds = { readonly start: boolean; readonly end: boolean };
-
-/** Sidewalk sides a road gets: tagged ones, or both on city streets without tags and without mapped sidewalks nearby. */
-export const sidewalkSides = (t: Tags, mappedNearby: boolean): { left: boolean; right: boolean } => {
-  const s = t.sidewalk ?? (t["sidewalk:both"] === "yes" ? "both" : undefined);
-  const left = t["sidewalk:left"];
-  const right = t["sidewalk:right"];
-  if (s === "both" || s === "yes") return { left: true, right: true };
-  if (s === "left" || s === "right") return { left: s === "left", right: s === "right" };
-  if (s === "no" || s === "none" || s === "separate" || left !== undefined || right !== undefined)
-    return { left: left === "yes", right: right === "yes" };
-  if (mappedNearby || !URBAN.has(t.highway ?? "")) return { left: false, right: false };
-  return { left: true, right: true };
-};
 
 /** Whether most points of `line` lie in one of the mapped water areas (a river already drawn as a polygon). */
 export const coveredByWater = (line: readonly Pt[], water: readonly (readonly Pt[])[]): boolean => {
@@ -280,13 +227,13 @@ const pieceBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (reado
     buffered(surface, bridge ? [bufferLine(l.line, width)] : bufferBand(l.line, width), { ...extra, ...(ends.length > 0 ? { roundEnds: ends.map((at) => ({ at, half: width / 2 })) } : {}) });
   const hw = t.highway;
   if (hw && t.area !== "yes") {
-    if (ROAD_WIDTH[hw] !== undefined) {
-      const w = roadWidth(t);
-      axial(cobbled(t) ? "cobble" : "road", w, { carriageway: true, kerb: { line: l.line, half: w / 2 } });
-      const sides = sidewalkSides(t, mappedSidewalkNear);
-      const sw = parseLength(t["sidewalk:width"]) ?? (hw === "primary" || hw === "secondary" ? 3 : 2.5);
-      if (sides.left) buffered("sidewalk", strip(w / 2, sw), { along: { line: l.line, from: w / 2, width: sw } });
-      if (sides.right) buffered("sidewalk", strip(-w / 2 - sw, sw), { along: { line: l.line, from: -w / 2 - sw, width: sw } });
+    const section = roadSection(l, mappedSidewalkNear);
+    // A road by type: its carriageway and sidewalks laid off its cross section (ADR-0080).
+    if (section) {
+      for (const s of laidStrips(section)) {
+        if (s.kind === "carriageway") axial(cobbled(t) ? "cobble" : "road", s.width, { carriageway: true, kerb: { line: l.line, half: s.width / 2 } });
+        else buffered("sidewalk", strip(s.from, s.width), { along: { line: l.line, from: s.from, width: s.width } });
+      }
     } else if (hw === "pedestrian") axial(cobbled(t) ? "cobble" : "square", parseLength(t.width) ?? 8);
     else if (PATHS[hw] !== undefined) {
       const w = pathWidth(t);

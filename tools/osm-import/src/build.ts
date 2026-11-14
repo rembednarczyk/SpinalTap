@@ -9,11 +9,12 @@ import { emitDistrict } from "./emit.ts";
 import { generate } from "./generate.ts";
 import { loadInputs } from "./load.ts";
 import { REPO } from "./paths.ts";
+import { reportLine } from "./street-section.ts";
 
 const OUT = join(REPO, "packages/sim/src/content/lublin");
 
 const inputs = loadInputs();
-const { chunks, stats, venues } = generate(inputs.osm, inputs.src, undefined, undefined, inputs.lod1, inputs.lod2, inputs.covers);
+const { chunks, stats, venues, widths } = generate(inputs.osm, inputs.src, undefined, undefined, inputs.lod1, inputs.lod2, inputs.covers);
 mkdirSync(OUT, { recursive: true });
 let total = 0;
 for (const d of DISTRICTS) {
@@ -33,6 +34,7 @@ for (const s of stats) {
 console.log(
   `venues ${venues.total}: ${venues.signed} signed, ${venues.named} named from the table, ${venues.total - venues.named} generic; colour from osm ${venues.colourOsm}, table ${venues.colourTable}, kind ${venues.colourKind}`,
 );
+console.log(`carriageway widths (ADR-0080), street sides: streets ${reportLine(widths.streets)}; with service ways ${reportLine(widths.all)}`);
 const walls = new Map<string, { n: number; m: number }>();
 for (const b of chunks.flatMap((c) => c.barriers ?? [])) {
   const e = walls.get(b.kind) ?? { n: 0, m: 0 };

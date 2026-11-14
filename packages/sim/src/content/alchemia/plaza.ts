@@ -16,7 +16,7 @@ import { type Box, type Piece, T1, box, piece } from "./plan";
  *
  * T2 is pads (`docs/topografia.md` T-217): bands 4 m deep along the world's z from the square's west
  * edge to the arcade (the building lies askew), blending over 4 m into the slopes round them, and
- * the points of the terrain's grids (4 m west of x 460, 2.5 m east of it) of every cell the arcade's
+ * the points of the terrain's grids (2.5 m both sides of x 460) of every cell the arcade's
  * floor touches, each alone. Some of those lie a little past the east face, so the ground along it
  * dips under the pavement laid there (`arkady.ts`, level with the map's ground beyond it).
  * The stairs are a ramp laid over the pads (T-219): T1's blend to the north would steepen their foot.
@@ -44,7 +44,7 @@ export const T2_RECTS: readonly GroundRect[] = bands();
 
 /**
  * The arcade's floor in the building's frame: from its first pier (the south span is closed) to its
- * north end wall, and 0.3 m before the arches past the first pier (before it the 4 m grid's next
+ * north end wall, and 0.3 m before the arches past the first pier (before it the grid's next
  * cell west would pull T1's slope down by the stairs, G-460).
  */
 const ARCADE = { ...ARKADY_ARCADE_SPAN, c0: -0.3, c1: ARKADY.arcade, before: ARKADY_ARCADE_SPAN.a0 + ARKADY.pier } as const;
@@ -77,8 +77,11 @@ export const T2_PADS: readonly Pad[] = [
   ...arcadePoints().map((p): Pad => ({ rect: { minX: p.x, maxX: p.x, minZ: p.z, maxZ: p.z }, y: T2, blend: POINT_BLEND, row: "T-217" })),
 ];
 
-/** The stairs from T1 down to T2, west of the Arkady's south end. */
-export const T2_STAIRS: Ramp = { a: { x: 431, z: 76 }, b: { x: 431, z: 92 }, ya: T1, yb: T2, width: 10, blend: 2, square: true, over: true };
+/**
+ * The stairs from T1 down to T2, west of the Arkady's south end. Their ends lie on rows of the
+ * chunk's 2.5 m grid (G-758): between two rows the grid cuts the corner at the top and the foot.
+ */
+export const T2_STAIRS: Ramp = { a: { x: 431, z: 77.5 }, b: { x: 431, z: 92.5 }, ya: T1, yb: T2, width: 10, blend: 2, square: true, over: true };
 
 /** Height of the stairs' axis at z. */
 const stairsY = (z: number): number => {

@@ -37,10 +37,9 @@ export const chunkSeams = (chunks: readonly SeamChunk[]): Seam[] => {
  * chunks' terrain meets at their seams). The import samples each chunk's grid on its own cell and
  * the shaping moves each grid's own points, so where the cells differ the finer grid's points
  * between the coarser's lay up to 0.4 m off its surface, and a pad on a point of one grid alone
- * left a ledge of 3.3 m (G-748, the arcade of the Arkady on the 4 m grid by the 2.5 m one). Where
- * one cell is a multiple of the other the two then meet exactly; where not (the 4 m grid by 5 m and
- * 2.5 m ones) they meet at the coarser grid's points and between those as near as its kinks let
- * the finer grid's straight runs come (0.51 m by the Arkady, 0.23 m by the car wash). The coarsest
+ * left a ledge of 3.3 m (G-748, the arcade of the Arkady on the 4 m grid by the 2.5 m one). The
+ * import's cells are each a multiple of the finer ones (G-758), so the two then meet exactly; a
+ * 4 m grid by 5 m and 2.5 m ones met only every 20 m and kept ledges of up to 0.51 m. The coarsest
  * owners go first, so the points a seam reads are already set where a coarser seam sets them;
  * between grids of one cell the first in the table owns the seam, as it owns the ground on it
  * (`groundY`).

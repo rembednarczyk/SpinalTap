@@ -168,7 +168,7 @@ const inPavilion = (p: unknown): boolean => {
 };
 
 /** Where a save made on the ground the pavilion now stands on wakes: by the foot of its ladder on the car park, a few centimetres over the ground. */
-export const PAVILION_WAKE = { x: 423.5, y: -0.73, z: -1.75, chunk: "krakowskie-2-1" } as const;
+export const PAVILION_WAKE = { x: 423.5, y: -0.74, z: -1.75, chunk: "krakowskie-2-1" } as const;
 
 /** The Hebi bag by Ren, from the hall's green roof to the pavilion's roof (`TARG_ROOF_STASH`). */
 export const PAVILION_STASHES: Readonly<Record<string, { readonly x: number; readonly y: number; readonly z: number; readonly chunk: string }>> = {
