@@ -43,8 +43,15 @@ describe("the orthophoto tool's parts", () => {
   });
 
   it("tells green under crowns, grey on the leaf-off flight, from green on the ground (G-672)", () => {
-    expect(classify([[150, 150, 145], [50, 110, 40], [55, 115, 45]])).toBe(COVER.canopy);
+    expect(classify([[100, 102, 98], [50, 110, 40], [55, 115, 45]])).toBe(COVER.canopy);
     expect(classify([[110, 118, 95], [50, 110, 40], [55, 115, 45]])).toBe(COVER.green);
+  });
+
+  it("tells paving under crowns, light and grey on the leaf-off flight, from a lawn or soil under them (G-764)", () => {
+    expect(classify([[150, 150, 145], [50, 110, 40], [55, 115, 45]])).toBe(COVER.canopyHard);
+    // Darker than light paving, or brown: a lawn not yet green, soil, a shrub's bare twigs.
+    expect(classify([[105, 106, 100], [50, 110, 40], [55, 115, 45]])).toBe(COVER.canopy);
+    expect(classify([[150, 135, 115], [50, 110, 40], [55, 115, 45]])).toBe(COVER.canopy);
   });
 
   it("counts the samples of a ring, optionally away from its edges", () => {

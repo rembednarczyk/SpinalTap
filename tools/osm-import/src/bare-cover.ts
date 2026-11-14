@@ -36,7 +36,7 @@ import { contours } from "./contour.ts";
 import { type Area, type Line } from "./features.ts";
 import { type OsmData } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
-import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, signedArea, simplifyRing } from "./geometry.ts";
+import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, signedArea, simplifyRing, splitTouching } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
 
 // Module-local copies of what the cell loops read: Vitest's module runner reads an imported binding
@@ -273,9 +273,13 @@ const crossesItself = (ring: readonly Pt[]): boolean => {
 const cutByPieces = (fills: readonly (readonly Pt[])[], pieces: readonly (readonly Pt[])[], over: readonly (readonly Pt[])[] = []): Pt[][] => {
   const cut = pieces.length + over.length > 0 ? difference(fills.map(toPath), [...pieces.map(pathOf), ...over.map(toPath)], FillRule.NonZero) : fills.map(toPath);
   // A sliver the cut leaves crossing itself is dropped: it would draw no ground the scan agrees with.
+  // A ring touching itself is cut into its lobes (`splitTouching`); a hole's lobe, turning the other
+  // way, goes, as the holes do.
   return cut
     .filter((p) => isPositive(p))
-    .map((p) => ccw(removeCollinear(p.map((q) => ({ x: q.x / CLIP_SCALE, z: q.y / CLIP_SCALE })), 0.005)))
+    .flatMap((p) => splitTouching(p.map((q) => ({ x: q.x / CLIP_SCALE, z: q.y / CLIP_SCALE }))))
+    .filter((r) => signedArea(r) > 0)
+    .map((r) => ccw(removeCollinear(r, 0.005)))
     .filter((r) => !crossesItself(r));
 };
 
