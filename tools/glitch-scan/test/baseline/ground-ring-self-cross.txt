@@ -1,4 +1,2 @@
 # ground-ring-self-cross: grid 1 m (x,z rounded); a count after the place is how many findings hold it
-krakowskie-1-0 56,-46 *2
-krakowskie-2-0 291,-172
 stare-miasto-1-0 742,-97

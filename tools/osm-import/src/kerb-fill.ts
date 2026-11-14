@@ -10,7 +10,7 @@
  *   map) and the gap is `ROAD_GAP` or more, the estimate missed the asphalt: lanes times 3.25 m or
  *   the width by type leave out the parking lanes and bus bays, which the orthophoto shows paved
  *   up to the footway (G-570, T-247). The carriageway's own band is widened to the paving, and a
- *   kerb stone (`KERB_STONE` of sidewalk) laid along paving that draws none of its own;
+ *   kerb stone (`KERB_STONE` of sidewalk) laid over its edge where the paving draws no kerb of its own;
  * - elsewhere the strip is laid as a sidewalk, so the renderer draws its kerb at the asphalt.
  * The lanes, markings and zebras' places come from the street's axis and width as before: the
  * simulation sees no change; the zebras only reach on to the new kerb (`stretchZebras`).
@@ -342,16 +342,21 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       else widened.set(road, { ring, runs: [...wr.runs, ...wl.runs] });
     }
     const full = (s: Sample) => asRoad && wide(s) && reach.get(s)! >= s.hit!.gap + INTO - 1e-9;
-    const lay = (run: Span[]) => {
-      for (const ring of runRings(run)) fills.push({ surface: "sidewalk", ring, bridge: false, source: road.source, holed: true });
+    const lay = (run: Span[], stone?: true) => {
+      for (const ring of runRings(run)) fills.push({ surface: "sidewalk", ring, bridge: false, source: road.source, holed: true, ...(stone ? { kerbStone: stone } : {}) });
     };
     for (const side of [right, left]) {
       // The strips left as sidewalks: from the edge to the paving.
       // From the edge, or from where the eased asphalt stops short of the paving.
       const from = (s: Sample) => (asRoad && wide(s) ? reach.get(s)! : 0);
       runsOf(side, (s) => (s.hit && !s.hit.joins && !(s.hit.crossed && !(asRoad && wide(s))) && !full(s) ? { edge: along(s.edge, s.dir, from(s)), out: along(s.edge, s.dir, s.hit.gap + INTO) } : null), lay);
-      // The kerb stones of the widened carriageway, where the paving draws no kerb of its own.
-      runsOf(side, (s) => (full(s) && !s.hit!.kerbed ? { edge: along(s.edge, s.dir, s.hit!.gap - KERB_STONE), out: along(s.edge, s.dir, s.hit!.gap + INTO) } : null), lay);
+      // The kerb stones of the widened carriageway, where the paving draws no kerb of its own: on the
+      // asphalt's side of the paving's edge, ranked over the asphalt that reaches under them
+      // (`KERB_STONES`, G-803), so the kerb stands 0.3 m short of the paving's mapped edge, where the
+      // orthophoto shows it (T-294); the renderer draws the kerb on the stone's edge. A stone reaches
+      // past the asphalt's edge by `INTO`: two edges of the paving's cut a few millimetres apart
+      // left it in slivers.
+      runsOf(side, (s) => (full(s) && !s.hit!.kerbed ? { edge: along(s.edge, s.dir, s.hit!.gap - KERB_STONE), out: along(s.edge, s.dir, reach.get(s)! + INTO) } : null), (run) => lay(run, true));
     }
   }
   return { fills, widened };

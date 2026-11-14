@@ -38,6 +38,9 @@ test("desktop: contact shade and bloom switch off and on at once, without a relo
   await step(page, 1, { toggleCamera: true });
   await teleport(page, 270, -81, Math.PI / 2);
   await step(page, 30, { moveZ: 1 });
+  // Stand still first: the moon shadow keeps its statics after a few frames without moving (#553),
+  // so a frame taken while walking draws them again and counts 13 calls more than any later one.
+  await step(page, 6);
   const on = (await sampleNow(page)).drawCalls;
 
   await openSettings(page, "click");

@@ -27,6 +27,7 @@ import { patrolChecks } from "./patrol-pieces";
 import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
+import { cityWaterWorld, waterUnderGrass } from "./water-under-grass";
 import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
 import { entrancesWithoutDoor } from "./entrance-no-door";
 import { osmFurnitureMissing } from "./osm-furniture";
@@ -82,6 +83,11 @@ import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
 import { lampsBesideDeck } from "./lamp-deck";
+import { litStreetDark } from "./lit-dark";
+import { lampsFreestandingInCourtyard, squareStyleLeak } from "./lamp-squares";
+import { WallIndex, isCourtyard, isPedestrianSquare } from "../../osm-import/src/courtyards.ts";
+import { litWayGroups } from "../../osm-import/src/props-lit.ts";
+import { loadLitWays, loadPropsPlan } from "../../osm-import/src/props-osm.ts";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { BUILDING_SURFACE, buildingsOverSurface } from "./surface-heights";
 import { heightsOffLod1, landmarksOffLod1, levelsTagLost, lod1Under } from "./height-lod1";
@@ -225,6 +231,13 @@ const underVault = (p: (typeof PASSAGES)[number], x: number, z: number): { s: nu
 /** The statues of Plac Litewski among the landmarks of the curator's audits; the buildings are `LANDMARK_BUILDINGS` of the import. */
 const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 
+/** The groups whose lines the lamps stand along: the plan with the `lit` rule's, and every lit way the rule may lamp (`lamp-off-band`, `lamp-beside-deck`). */
+let lampPlan: PlanGroup[] | undefined;
+const LAMP_PLAN = (): PlanGroup[] => {
+  if (lampPlan) return lampPlan;
+  const plan = loadPropsPlan();
+  return (lampPlan = [...plan.items, ...litWayGroups(plan, loadLitWays())]);
+};
 /** The surfaces a lamp of the plan stands on or beside (`lamp-off-band`). */
 const PAVED: ReadonlySet<string> = new Set(["road", "crossing", "sidewalk", "square", "cobble", "footway", "steps"]);
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
@@ -1256,13 +1269,29 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A lamp of the plan's lines more than 0.5 m off the paving (G-477): on the lawn by Zamkowa's causeway, in the Carmelites' garden. */
   "lamp-off-band": () => {
     const paving = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => PAVED.has(g.surface)).map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
-    const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
-    return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, pavedAt(paving));
+    return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), LAMP_PLAN(), pavedAt(paving));
   },
   /** A lamp of the plan's line over a bridge 1.5 m or more under the deck beside it or over it (G-503, G-507): on the valley's ground by Zamkowa's viaduct, on its abutment's bank. */
-  "lamp-beside-deck": () => {
+  "lamp-beside-deck": () => lampsBesideDeck(Object.values(LUBLIN_STREET_PROPS).flat(), LAMP_PLAN(), bridgeDeckAt),
+  /**
+   * A way OSM tags `lit=yes` more than 30 m from every lamp of the game, sampled every 5 m (G-798):
+   * the `lit` rule (ADR-0064 stage 3, `props-lit.ts`) lamps the lit ways the plan's lines left dark.
+   */
+  "lit-street-dark": () => litStreetDark(loadLitWays(), Object.values(LUBLIN_STREET_PROPS).flat(), onChunk),
+  /** A lamp on a post inside a courtyard, a pedestrian square whose outline runs along the game's buildings for 70% (`lamp-squares.ts`, Dziedziniec Zamkowy). */
+  "lamp-freestanding-in-courtyard": () => {
+    const walls = new WallIndex(MAP_CHUNKS.flatMap((c) => c.buildings).map((b) => worldOutline(b)));
+    const courts = [...SOURCE_OSM.ways.values()]
+      .filter((w) => isPedestrianSquare(w.tags) && w.nodes.length >= 4 && w.nodes[0] === w.nodes[w.nodes.length - 1])
+      .map((w) => ({ id: `w${w.id}`, ring: wayPoints(w.nodes) }))
+      .filter((c) => isCourtyard(c.ring, walls));
+    return lampsFreestandingInCourtyard(Object.values(LUBLIN_STREET_PROPS).flat(), courts);
+  },
+  /** A candelabrum more than 12 m from the plan's candelabra lines: Plac Zamkowy's look carried onto the streets beside it (`lamp-squares.ts`, Podwale). */
+  "lamp-square-style-leak": () => {
     const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
-    return lampsBesideDeck(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, bridgeDeckAt);
+    const lines = plan.items.filter((g) => g.kind === "lamp-candelabra").flatMap((g) => [...(g.line ? [g.line] : []), ...(g.lines ?? [])]).map((f) => Array.from({ length: Math.floor(f.length / 2) }, (_, i) => ({ x: f[2 * i]!, z: f[2 * i + 1]! })));
+    return squareStyleLeak(Object.values(LUBLIN_STREET_PROPS).flat(), lines);
   },
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
@@ -1940,8 +1969,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * A metre of a footway mapped on its own (`highway=footway`, not a crossing, off bridges and
    * tunnels, 3 m and more inside the chunks) that the asphalt of the street it runs along covers
    * (G-655): the nearest carriageway within 15 m runs parallel to it (|cos| > 0.9), its axis is
-   * closer than half the street's width from the map's tags, and the game's ground there is road
-   * and the footway's paving at once. One finding per piece between the world's 1 m grid lines (`world-samples.ts`, G-756).
+   * closer than half the street's width from the map's tags, and the game's ground there is the
+   * asphalt alone: the ground a partition (ADR-0078 step 3), the asphalt cut the footway's band
+   * away (before it, road and the footway's paving at once). One finding per piece between the world's 1 m grid lines (`world-samples.ts`, G-756).
    */
   "footway-on-carriageway": () => footwaysOnCarriageway(),
   /** A metre of a fitted street's edge (T-046, G-655) with a metre and more of bare ground before the lawn or pavement past it (`kerb-strip-bare.ts`). */
@@ -2067,6 +2097,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "ground-over-steps": () => groundOverSteps(MAP_CHUNKS),
   /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */
   "paving-coplanar": () => pavingCoplanar(mapGround(WORLD_SCENERY)),
+  /** A point of a 0.5 m grid (0.25 m²) of the map data's water the import lays as grass: the Bystrzyca by Nabrzeże (T-295, `water-under-grass.ts`). */
+  "water-under-grass": () => waterUnderGrass(cityWaterWorld(SOURCE_OSM)),
   /** A drawn lawn with over 20 m² of it under a square's or a cobbled area's paving, which lies over it: Plac Litewski's lawns (G-421, `grass-under-paving.ts`). */
   "grass-under-paving": () => grassUnderPavingFindings(WORLD_SCENERY),
   /** A lawn or a bed the curator added to the map with under half of it green on the orthophoto cover (G-627, `added-grass.ts`). */
@@ -2166,6 +2198,9 @@ const nearestAxis = (roads: readonly Line[]) => {
   };
 };
 
+/** Whether (x, z) is on a carriageway's piece: its asphalt or a zebra, a piece of its own since the ground is a partition (ADR-0078 step 3). */
+const onCarriageway = (x: number, z: number): boolean => surfacesAt(x, z).some((s) => s === "road" || s === "crossing");
+
 /** The map's carriageways at street level, off tunnels. */
 const streetRoads = (lines: readonly Line[]) => lines.filter((l) => CARRIAGEWAYS.has(l.tags.highway ?? "") && l.tags.area !== "yes" && l.tags.tunnel === undefined && Number(l.tags.layer ?? 0) >= 0);
 
@@ -2184,7 +2219,8 @@ const footwaysOnCarriageway = (): Finding[] => {
       for (const { x, z } of segmentPieces(a, b, 1)) {
         if (!deep(x, z)) continue;
         const surfaces = surfacesAt(x, z);
-        if (surfaces.includes("crossing") || !surfaces.includes("road") || !(surfaces.includes("sidewalk") || surfaces.includes("footway"))) continue;
+        // The ground a partition (ADR-0078 step 3): the asphalt over a footway's band cuts it, so the footway's axis lies on asphalt alone.
+        if (surfaces.length !== 1 || surfaces[0] !== "road") continue;
         const n = nearest(x, z);
         if (!n || Math.abs(((b.x - a.x) * n.tx + (b.z - a.z) * n.tz) / len) < 0.9 || n.d >= roadWidth(n.road.tags) / 2) continue;
         out.push({ at: near(x, z), what: `${l.id} on ${n.road.id} ${n.road.tags.name ?? ""}` });
@@ -2237,10 +2273,10 @@ const FITTED = (() => {
             if (Math.abs(across) < w / 2) side[across >= 0 ? 0 : 1] = true;
           }
           side.forEach((on, k) => (sides[k]! += on ? 1 : 0));
-          if (!deep(x, z) || !surfacesAt(x, z).includes("road")) continue;
+          if (!deep(x, z) || !onCarriageway(x, z)) continue;
           const reach = (sgn: number) => {
             let d = 0;
-            while (d < w / 2 + 1 && surfacesAt(x - tz * sgn * (d + 0.05), z + tx * sgn * (d + 0.05)).includes("road")) d += 0.05;
+            while (d < w / 2 + 1 && onCarriageway(x - tz * sgn * (d + 0.05), z + tx * sgn * (d + 0.05))) d += 0.05;
             return d;
           };
           widths.push(reach(1) + reach(-1));

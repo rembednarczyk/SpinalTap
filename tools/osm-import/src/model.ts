@@ -62,6 +62,12 @@ export interface GroundOut {
   readonly deck?: readonly number[];
 }
 
+/** A square's or a footway's piece as laid over the others, before the partition cut it (`ChunkOut.walkAreas`). */
+export interface WalkAreaOut {
+  readonly surface: "square" | "footway";
+  readonly outline: readonly number[];
+}
+
 export interface StreetOut {
   readonly name: string;
   readonly kind: string;
@@ -163,4 +169,9 @@ export interface ChunkOut {
   readonly multiLaneWays?: readonly MultiLaneWayOut[];
   /** Walls, fences, hedges and their gates (ADR-0077), clipped to it, when it has any. */
   readonly barriers?: readonly BarrierOut[];
+  /**
+   * The squares and the footways' bands as laid before the ground became a partition (ADR-0078
+   * step 3), the big ones the crowd's loops are drawn round (`walkAreas`), when it has any.
+   */
+  readonly walkAreas?: readonly WalkAreaOut[];
 }

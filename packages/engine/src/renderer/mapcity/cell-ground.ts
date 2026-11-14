@@ -69,7 +69,11 @@ export const planGround = (ground: MeshSink, water: MeshSink, entries: MapEntrie
   else if (g.surface === "water") planWater(water, g.ring, terrain, undefined, within);
   else if (g.surface === "basin") planBasin(water, ground, g.ring, h);
   else if (g.surface === "steps") planSteps(ground, g.ring, h, entries.mapEdgeAt);
-  else if (g.surface === "crossing") planCrossing(ground, g.ring, h);
+  else if (g.surface === "crossing") {
+    // The asphalt under the stripes: the ground is a partition (ADR-0078 step 3), the road's piece has a hole there. On a deck the road runs on under it.
+    if (!g.deck) planSurface(ground, "road", g.ring, h, null, [], within);
+    planCrossing(ground, g.ring, h);
+  }
   else {
     const cells = within ?? cellsMeeting(g.bounds);
     const under = (near: DrapeCells) => drawnAbove(entries, id, g, (i, k) => cells(i, k) && near(i, k));

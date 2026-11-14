@@ -16,7 +16,7 @@ krakowskie-1-0 188,-226
 krakowskie-1-0 176,-192
 krakowskie-1-0 109,-178
 krakowskie-1-0 116,-173
-krakowskie-1-0 152,-131
+krakowskie-1-0 152,-132
 krakowskie-1-1 169,-15
 krakowskie-1-1 171,-11
 krakowskie-1-1 217,-8

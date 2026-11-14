@@ -233,6 +233,11 @@ export interface LublinChunkData {
   readonly multiLaneWays?: readonly { readonly line: FlatPoints }[];
   /** Walls, fences, hedges and their gates (ADR-0077), when it has any. */
   readonly barriers?: readonly LublinBarrierData[];
+  /**
+   * The big squares and footways' bands as laid before the ground became a partition (ADR-0078
+   * step 3), the crowd's loops drawn round them, when it has any: `ground` has them cut by what lies on them.
+   */
+  readonly walkAreas?: readonly { readonly surface: "square" | "footway"; readonly outline: FlatPoints }[];
 }
 
 /**
