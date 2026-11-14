@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { type AlbedoBucket, gatherAlbedo, luma, medianColour, topPieces, wellInside } from "../src/albedo.ts";
+import { type Rect } from "../../osm-import/src/geometry.ts";
+import { type AlbedoBucket, gatherAlbedo, gatherTile, luma, medianColour, topPieces, wellInside } from "../src/albedo.ts";
 import { COVER } from "../src/classify.ts";
+import { emptyCover } from "../src/cover.ts";
+import { THRESHOLDS } from "../src/thresholds.ts";
+import { type Tile, gridBox } from "../src/tiles.ts";
 
 const rect = (x0: number, z0: number, x1: number, z1: number) => [
   { x: x0, z: z0 },
@@ -56,5 +60,34 @@ describe("the surfaces' colours on the orthophoto (G-721)", () => {
     expect(square.classes.canopy).toBeGreaterThan(0);
     expect(square.rgb.length / 3).toBe(square.classes.paving);
     expect(medianColour(buckets.get("grass")!.rgb)).toEqual([100, 102, 84]);
+  });
+});
+
+/** A 20 m cell's tile of one flight in one colour, its sheet photographed on `day`. */
+const CELL: Rect = { minX: 0, minZ: 0, maxX: 20, maxZ: 20 };
+const flat = (flight: string, [r, g, b]: readonly [number, number, number], day: string): Tile => {
+  const bx = gridBox(CELL, 3, 0.25);
+  const [width, height] = [Math.round((bx.maxE - bx.minE) / 0.25), Math.round((bx.maxN - bx.minN) / 0.25)];
+  const rgb = new Uint8Array(width * height * 3);
+  for (let i = 0; i < width * height; i++) rgb.set([r, g, b], i * 3);
+  const sheet = { sheet: "t", date: day, pixel: 0.25, colour: "RGB" };
+  return { meta: { cell: "t", flight, service: "t", crs: "EPSG:2180", box: bx, width, height, fetched: "2026-11-14", sheet }, rgb, empty: new Uint8Array(width * height) };
+};
+
+describe("the report's flights (G-772)", () => {
+  it("leaves a blank tile out of the medians and of the days photographed", () => {
+    const cover = emptyCover("t", CELL, THRESHOLDS);
+    cover.cls.fill(COVER.paving);
+    const ks = Array.from({ length: cover.cls.length }, (_, k) => k);
+    const buckets = new Map<string, AlbedoBucket>();
+    const days = new Set<string>();
+    const add = (t: Tile | undefined) => gatherTile(buckets, days, t, ks, () => "square", cover, CELL);
+    add(flat("2024-06", [150, 148, 140], "2024-06-21"));
+    // The service's white outside its sheets, in a second cell of the same flight.
+    add(flat("2024-06", [255, 255, 255], "2024-06-22"));
+    add(undefined);
+    expect(medianColour(buckets.get("square")!.rgb)).toEqual([150, 148, 140]);
+    expect(buckets.get("square")!.rgb.length / 3).toBe(cover.cls.length);
+    expect([...days]).toEqual(["2024-06-21"]);
   });
 });

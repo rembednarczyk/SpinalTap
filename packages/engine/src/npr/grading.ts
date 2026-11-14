@@ -87,7 +87,7 @@ export class Grading {
     if (bloom > 0) {
       p.bloomThreshold = BLOOM_THRESHOLD;
       p.bloomWeight = bloom;
-      p.bloomKernel = 64;
+      p.bloomKernel = 32;
       p.bloomScale = 0.5;
     }
     this.pipeline = p;

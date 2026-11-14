@@ -54,6 +54,20 @@ describe("the orthophoto tool's parts", () => {
     expect(classify([[150, 135, 115], [50, 110, 40], [55, 115, 45]])).toBe(COVER.canopy);
   });
 
+  it("takes no lawn from a leaf-off green no lawn has: patina, beige setts in a summer shade (G-775)", () => {
+    // Measured with one summer flight (G-771): the monument's patina on Królewska over 2024-06's setts, the corner of Lubartowska in 2023-09's shade.
+    expect(classify([[109, 130, 126], [155, 153, 149]])).toBe(COVER.paving);
+    // Its shaded side is dark in April, but the setts under it are light in June: paving, not asphalt.
+    expect(classify([[88, 108, 109], [156, 153, 148]])).toBe(COVER.paving);
+    expect(classify([[199, 188, 157], [57, 72, 79]])).toBe(COVER.canopyHard);
+    // A green tarp the summer flight shows grey: a coloured surface, not a lawn.
+    expect(classify([[40, 140, 110], [150, 150, 150]])).toBe(COVER.unknown);
+    // Lawns: fresh and teal in April and green in June, green in April in a summer shade; a tree in blossom.
+    expect(classify([[100, 133, 129], [103, 115, 97]])).toBe(COVER.green);
+    expect(classify([[93, 114, 77], [41, 51, 60]])).toBe(COVER.green);
+    expect(classify([[195, 194, 173], [66, 88, 85]])).toBe(COVER.green);
+  });
+
   it("counts the samples of a ring, optionally away from its edges", () => {
     const c: Cover = emptyCover("t", { minX: 0, minZ: 0, maxX: 10, maxZ: 10 }, THRESHOLDS);
     c.cls.fill(COVER.green);

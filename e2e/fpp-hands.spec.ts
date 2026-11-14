@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { type Page, expect, test } from "@playwright/test";
-import { freeze, newGame, sampleNow, step, teleport, waitForGame, waitForPlay } from "./helpers";
+import { freeze, newGame, step, teleport, waitForGame, waitForPlay } from "./helpers";
 
 /**
  * Seki's own forearms and hands in first person (user's wish of 13.11), with the models on: the
@@ -20,12 +20,17 @@ const SPOT = { x: 270, z: -81, yaw: Math.PI / 2 } as const;
 /**
  * A shot of the frame drawn after the steps, with the viewmodel as far aimed as `aim` (0 from the
  * hip, 1 aimed in): `capture()` reads the last drawn canvas, which before a new frame is still
- * the one before the step (a helper spec's "aimed" shots were the hip pose so). Returns the PNG.
+ * the one before the step (a helper spec's "aimed" shots were the hip pose so). It waits for the
+ * state, not a count of frames (ADR-0046): every model in and the city settled, then one frame
+ * drawn after that, which the shot, its aim and its draw calls are read from together. (A frame
+ * under SwiftShader takes seconds: `sampleNow`'s two frames more were most of this spec's time.)
+ * Returns the PNG.
  */
 const shoot = async (page: Page, name: string, aim: 0 | 1 | null = null): Promise<string> => {
-  const perf = await sampleNow(page);
-  const png = await page.evaluate(() => window.__seki!.capture!());
-  if (aim !== null) expect(await page.evaluate(() => window.__seki!.viewAim!()), `${name}: the viewmodel's aim`).toBe(aim);
+  const ready = await page.waitForFunction(() => window.__seki!.citySettled() && window.__seki!.modelsLoading() === 0 && [window.__seki!.frames!()], null, { timeout: 60_000 });
+  await page.waitForFunction(([n]) => window.__seki!.frames!() > n!, (await ready.jsonValue()) as [number], { timeout: 30_000 });
+  const { png, viewAim, perf } = await page.evaluate(() => ({ png: window.__seki!.capture!(), viewAim: window.__seki!.viewAim!(), perf: window.__seki!.perf() }));
+  if (aim !== null) expect(viewAim, `${name}: the viewmodel's aim`).toBe(aim);
   const dir = process.env.SHOTS ?? test.info().outputPath();
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, `${name}.png`), Buffer.from(png.slice(png.indexOf(",") + 1), "base64"));
