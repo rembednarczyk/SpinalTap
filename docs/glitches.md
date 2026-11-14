@@ -1792,7 +1792,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-768 Ustępowanie nadwozi G-744 kruche w zakręcie Kołłątaja przy Zesłańców Sybiru
 - Ważność: S3 · Zasięg: -108,-150; ziarna 10/13/15/38 przy pasach przesuniętych o 5–10 cm
 - Opis: bodiesMeet daje odległość spotkania na przemian z próbek co 1 m i z próbki za zakrętem, goesFirst zmienia decyzję, auto 9,9 m/s nie hamuje, oba są już za późno
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g768 (82ace33), runda 2: skrócenie testu (100 s z własnym limitem); wcześniej: zgłoszone (13.11, budowniczy ADR-0080 PR 3)
+- Status: w PR (14.11): 82ace33, test abcd513 (12 s); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g768 (82ace33), runda 2: skrócenie testu (100 s z własnym limitem); wcześniej: zgłoszone (13.11, budowniczy ADR-0080 PR 3)
 - Pakiet właściciela: packages/sim/src/systems
 - Test przyjęcia: przemiatanie ziaren 1–40 w zakręcie bez kolizji przy pasach ±0,1 m
 - przyczyna: próbki nadwozia co 1 m liczone od pozycji pojazdu gubiły wąskie miejsce za zakrętem co drugą klatkę; kolizje 1-40 ziaren przy pasach -0,2/-0,15/-0,1/-0,05 m: 4/1/4/1 -> 0; hash determinizmu bez zmian
