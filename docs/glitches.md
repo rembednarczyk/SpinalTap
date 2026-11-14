@@ -1856,7 +1856,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-777 Szczeliny 10-30 cm między wstęgami różnych nawierzchni w złączach (gapFills łata tylko tę samą nawierzchnię)
 - Ważność: S4 · Zasięg: ok. 10 złączy, ok. 0,8 m²: 837,0;205,3 (chodnik/jezdnia), 949,1;230,7, 247,7;-201,0, 1014,2;450,8, 743,7;13,7 (chodnik/footway), 97,9;98,4 (jezdnia/trawa)
 - Opis: gapFills (line-buffer.ts) łata pęknięcia tylko między pasami tej samej nawierzchni, a kliny tylko szersze niż pęknięcie; wąska goła szczelina między chodnikiem a jezdnią lub footway w tarczy złącza zostaje; widać ciemny teren
-- Status: zgłoszone (13.11, naprawiacz G-765)
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g777 (928f25a): komórki w tarczach 130 -> 55, w mieście między wstęgami 870 -> 528; czeka na przegląd kuratora; reszta 97,9;98,4 w osobnym wpisie; wcześniej: zgłoszone (13.11, naprawiacz G-765)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: brak gołych komórek 0,1 m między wstęgami w tarczy złącza w tych miejscach; ground-strip-gap nie rośnie
 
@@ -1866,6 +1866,20 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (13.11, naprawiacz G-759)
 - Pakiet właściciela: packages/sim (content/alchemia)
 - Test przyjęcia: walk-review B zielony; między sąsiednimi płytami Arkad <= 0,45 m
+
+### G-779 Łaty G-760 mniejsze niż 0,5 m² odrzucane przez chunkGround
+- Ważność: S4 · Zasięg: złącza z małymi łatami w całym mieście
+- Opis: chunkGround odrzuca każdy kawałek pod 0,5 m², więc część łat pęknięć i klinów G-760 nie trafia do tabel; ich zachowanie daje ground-strip-overlap +3 klucze, kerb-gap-bare -2
+- Status: zgłoszone (14.11, naprawiacz G-777)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: łaty G-760 w tabelach; ground-strip-overlap nie rośnie
+
+### G-780 Goły klin przy końcu jednej jezdni na węźle innej drogi (97,9;98,4)
+- Ważność: S4 · Zasięg: 97,2;98,6 (jezdnia/trawa), ok. 0,35 m²; podobne złącza z jednym końcem
+- Opis: bit końca odrzucony (dzieli obrys pasa); łata klina nakłada się z wypełnieniem z ortofoto, które nie czyta łat (overlap +1); wypełnienie czytające łaty psuje 2693;432 (gap +1, kerb +1)
+- Status: zgłoszone (14.11, naprawiacz G-777)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: brak gołych komórek 0,1 m w tarczy 97,2;98,6; ground-strip-overlap i gap nie rosną
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
