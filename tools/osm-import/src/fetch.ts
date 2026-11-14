@@ -32,7 +32,8 @@ const get = async (url: string, attempts = 3): Promise<Uint8Array> => {
   for (let i = 1; ; i++) {
     const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
     if (res.ok) return new Uint8Array(await res.arrayBuffer());
-    if (i >= attempts) throw new Error(`${res.status} ${res.statusText}: ${url}`);
+    // Too many requests: the service asks to stop, not to be asked again.
+    if (res.status === 429 || i >= attempts) throw new Error(`${res.status} ${res.statusText}: ${url}`);
     await pause(5000 * i);
   }
 };
