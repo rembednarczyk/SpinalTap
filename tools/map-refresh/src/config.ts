@@ -1,7 +1,7 @@
 /**
- * What `pnpm map:refresh` watches and the thresholds of its verdict (README.md). The thresholds are
- * a proposal of 14.11 (backlog, strategy point 3: a lighter process): below them a refresh needs
- * no curator's review.
+ * What `pnpm map:refresh` watches and the thresholds of its verdict (README.md). The thresholds were
+ * accepted by the user on 14.11 (backlog, strategy point 3: a lighter process): below them a
+ * refresh needs no curator's review.
  */
 
 /** The files a refresh may change, by directory (recursive), repo paths. Caches are left out. */
@@ -38,7 +38,7 @@ export const THRESHOLDS: Thresholds = { objectsShare: 0.02, kindShare: 0.02, kin
 
 /**
  * The scan's kinds whose new keys alone need no review (S4, cosmetic: ADR-0054). Every other kind
- * counts as S1–S3. A proposal: a kind joins only by a decision written in docs/glitches.md.
+ * counts as S1–S3. Accepted on 14.11; a kind joins only by a decision written in docs/glitches.md.
  */
 export const S4_KINDS: ReadonlySet<string> = new Set(["lamp-style-change-on-way", "osm-tower-default-height", "levels-tag-lost", "kerb-fill-wide-estimated"]);
 

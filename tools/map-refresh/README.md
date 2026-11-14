@@ -30,23 +30,19 @@ Manifesty `data/gugik/sources.json` i `data/orto/sources.json` dostają z powrot
 ## Werdykt i progi
 „Bez przeglądu”, gdy jednocześnie:
 - wszystkie kroki się udały, a skan przebiegł;
-- nie przybył klucz skanu w rodzaju S1–S3 (rodzaje S4 w `S4_KINDS` w `src/config.ts`; to propozycja, a rodzaj trafia tam tylko decyzją zapisaną w `docs/glitches.md`);
+- nie przybył klucz skanu w rodzaju S1–S3 (rodzaje S4 w `S4_KINDS` w `src/config.ts`; nowy rodzaj trafia tam tylko decyzją zapisaną w `docs/glitches.md`);
 - obiektów razem przybyło lub ubyło mniej niż 2%, a żaden rodzaj nie zmienił się o więcej niż max(2%, 2 sztuki);
 - nawierzchnia przesunęła się o mniej niż 1 m² (suma |Δ pola| po rodzajach w tablicach i zmienione m² w `orto:diff`);
 - teren nie przesunął się o więcej niż 0,05 m, a żaden pomost się nie zmienił (`orto:diff`);
 - testy złote różnią się co najwyżej samym skrótem. Wtedy w PR wystarczy `pnpm hashes:check --write`.
 
-W przeciwnym razie werdykt to „przegląd kuratora”, z listą miejsc: klucze skanu (rodzaj, kawałek, x,z), kawałki ze zmianą nawierzchni, komórki `orto:diff`, rodzaje obiektów powyżej progu. Progi są w `THRESHOLDS` w `src/config.ts`.
+W przeciwnym razie werdykt to „przegląd kuratora”, z listą miejsc: klucze skanu (rodzaj, kawałek, x,z), kawałki ze zmianą nawierzchni, komórki `orto:diff`, rodzaje obiektów powyżej progu. Progi są w `THRESHOLDS` w `src/config.ts`. Przyjął je użytkownik 14.11 razem z listą `S4_KINDS`.
 
 ## Workflow `.github/workflows/map-refresh.yml`
 Uruchamia się co tydzień (poniedziałek 03:17 UTC) i ręcznie (`workflow_dispatch`, pole `sources`). Puszcza `pnpm map:refresh`. Gdy zmieniły się `data/` albo tablice, wypycha gałąź `map-refresh/<data>` i otwiera PR z raportem w opisie. Pełny raport i logi są artefaktem przebiegu.
 
 Ograniczenia:
-- **PR otwarty przez `GITHUB_TOKEN` nie uruchamia innych workflow**, więc CI nie ruszy sam. Możliwości (do decyzji właściciela repo):
-  1. token PAT (fine-grained, `contents` i `pull-requests` na to repo) jako sekret środowiska repo, użyty w kroku PR zamiast `github.token`. Wtedy push i PR uruchamiają CI normalnie;
-  2. ręczne „Update branch” w PR albo pusty commit przez człowieka: zdarzenie od użytkownika uruchamia CI;
-  3. `workflow_dispatch` w `ci.yml` i ręczne uruchomienie CI na gałęzi `map-refresh/…`.
-  Narzędzie nie tworzy sekretów.
+- **CI uruchamia sam workflow** (decyzja użytkownika 14.11). PR otwarty przez `GITHUB_TOKEN` nie uruchamia innych workflow, więc po otwarciu PR `map-refresh.yml` wywołuje `ci.yml` przez `workflow_dispatch` na gałęzi `map-refresh/<data>` (`gh workflow run ci.yml --ref <gałąź>`, uprawnienie `actions: write`). Przebieg dotyczy tego samego commita co głowa PR, więc jego wyniki widać w sprawdzeniach PR. Przy `workflow_dispatch` job „What changed” nie ma bazy do porównania (ani PR, ani `before`), więc puszcza wszystko. Pomijanie już przetestowanego kodu działa tylko przy pushu do main. Gdy uruchomienie CI się nie uda, krok kończy się błędem z instrukcją („Actions > CI > Run workflow”). Nowy commit człowieka w gałęzi uruchamia CI normalnie, jak w każdym PR.
 - **Ustawienie „Allow GitHub Actions to create and approve pull requests”** (Settings > Actions > General > Workflow permissions) bywa wyłączone. Wtedy gałąź jest już wypchnięta, a krok kończy się błędem z instrukcją, gdzie je włączyć albo jak otworzyć PR ręcznie.
 - Opis PR ma limit 65 536 znaków, więc trafia do niego najwyżej 60 000 znaków raportu.
 
