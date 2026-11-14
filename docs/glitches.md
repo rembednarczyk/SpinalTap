@@ -1894,7 +1894,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-798 Latarnie z linii planu zamiast reguły lit: 4,4 km oświetlonych dróg bez latarni (ADR-0064 etap 3)
 - Ważność: S3 · Zasięg: całe miasto, 4390 m próbek dróg lit=yes
 - Opis: osm-import nie czyta tagu lit (1068 dróg lit=yes w wyciągach); latarnie stawiają linie lamps.* z docs/world/lublin-props.todo.json (29.10), więc nowe ulice i pas z < −200 zostają ciemne. T-293
-- Status: zgłoszone (14.11, audyt ADR-0077)
+- Status: w gałęzi ccr-ec2c4269-ilh8k8-lit-lamps, przegląd kuratora w toku; wcześniej: zgłoszone (14.11, audyt ADR-0077)
 - Pakiet właściciela: tools/osm-import (props-gen), tools/glitch-scan
 - Test przyjęcia: kontrola lit-street-dark (próbki co 5 m dróg lit=yes dalej niż 30 m od lamp-*, kwadraty 10 m), baza 4390 m, spada; kontrole lamp-* nie rosną
 
