@@ -5,12 +5,13 @@ import { pointOn } from "../content/traffic-lane";
 /**
  * Where along two routes the bodies of their vehicles can meet at all (G-744), read once per pair
  * of routes as the vehicles first come near each other: the widest and longest vehicle of each
- * route at every half metre of both and just past every bend. Two lanes of a street that keep
- * apart never get there, so the vehicles read their bodies against each other only on those
- * stretches: at a bend, down a narrow street.
+ * route at every half metre of both and just before and past every bend, each as long as the way
+ * it covers to the samples beside it, so nothing between two samples is missed (as the vehicles
+ * read them, G-768). Two lanes of a street that keep apart never get there, so the vehicles read
+ * their bodies against each other only on those stretches: at a bend, down a narrow street.
  */
 
-/** Samples along a route (m), and how far past a bend one is taken. */
+/** Samples along a route (m), and how far before and past a bend one is taken. */
 const SAMPLE = 0.5;
 const PAST_BEND = 0.01;
 /** Room the bodies leave each other (m), as the vehicles read them. */
@@ -27,10 +28,10 @@ const modelsOf = (route: number): readonly VehicleModel[] => {
   return (r.models ?? CAR_MODELS).map(([m]) => m);
 };
 
-/** Half the widest and of the longest vehicle of a route, and a margin. */
+/** Half the widest and of the longest vehicle of a route, and a margin; as long as the way it covers to the samples beside it too. */
 const halfOf = (route: number): { readonly w: number; readonly l: number } => {
   const ms = modelsOf(route);
-  return { w: Math.max(...ms.map((m) => VEHICLE_SIZE[m].width)) / 2 + GAP / 2, l: Math.max(...ms.map((m) => VEHICLE_SIZE[m].length)) / 2 + GAP / 2 };
+  return { w: Math.max(...ms.map((m) => VEHICLE_SIZE[m].width)) / 2 + GAP / 2, l: Math.max(...ms.map((m) => VEHICLE_SIZE[m].length)) / 2 + GAP / 2 + SAMPLE / 2 };
 };
 
 /** A grid cell's key. */
@@ -44,7 +45,10 @@ const samples = (route: number) => {
   const at: number[] = [];
   for (let s = 0; s <= r.length; s += SAMPLE) at.push(s);
   let acc = 0;
-  for (let i = 1; i + 1 < r.points.length; i++) at.push((acc += Math.hypot(r.points[i]![0] - r.points[i - 1]![0], r.points[i]![1] - r.points[i - 1]![1])) + PAST_BEND);
+  for (let i = 1; i + 1 < r.points.length; i++) {
+    acc += Math.hypot(r.points[i]![0] - r.points[i - 1]![0], r.points[i]![1] - r.points[i - 1]![1]);
+    at.push(acc - PAST_BEND, acc + PAST_BEND);
+  }
   const all: Sample[] = at.map((s) => {
     const p = pointOn(r.points, s);
     return { s, x: p.x, z: p.z, fx: p.tx, fz: p.tz };

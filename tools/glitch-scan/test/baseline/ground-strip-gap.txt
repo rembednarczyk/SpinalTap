@@ -185,7 +185,6 @@ krakowskie-1-1 160,80
 krakowskie-1-1 170,80
 krakowskie-1-1 220,80
 krakowskie-1-1 230,80
-krakowskie-1-1 90,90
 krakowskie-1-1 100,90
 krakowskie-1-1 110,90
 krakowskie-1-1 190,90
@@ -1340,7 +1339,6 @@ stare-miasto-1-1 720,20
 stare-miasto-1-1 730,20
 stare-miasto-1-1 710,30
 stare-miasto-1-1 720,30
-stare-miasto-1-1 620,40
 stare-miasto-1-1 710,40
 stare-miasto-1-1 730,40
 stare-miasto-1-1 740,40
@@ -1366,7 +1364,6 @@ stare-miasto-1-1 680,120
 stare-miasto-1-1 610,140
 stare-miasto-1-1 620,140
 stare-miasto-1-1 640,140
-stare-miasto-1-1 680,140
 stare-miasto-1-1 730,140
 stare-miasto-1-1 740,140
 stare-miasto-1-1 750,140
