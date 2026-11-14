@@ -20,9 +20,9 @@ const openSettings = async (page: Page, how: "click" | "tap") => {
 const effect = (page: Page, name: "Contact shade" | "Bloom", value: "On" | "Off") => page.getByRole("radiogroup", { name }).getByRole("radio", { name: value });
 
 /** The draw calls of a frame after the game resumed with the switches as they are. */
-const drawCalls = async (page: Page) => {
+const drawCalls = async (page: Page, frames = 2) => {
   await page.evaluate(() => window.__seki!.session.resume());
-  await step(page, 2);
+  await step(page, frames);
   return (await sampleNow(page)).drawCalls;
 };
 
@@ -38,7 +38,9 @@ test("desktop: contact shade and bloom switch off and on at once, without a relo
   await step(page, 1, { toggleCamera: true });
   await teleport(page, 270, -81, Math.PI / 2);
   await step(page, 30, { moveZ: 1 });
-  const on = (await sampleNow(page)).drawCalls;
+  // Stand still first: the moon shadow keeps its statics after a few frames without moving (#553),
+  // so a frame taken while walking draws them again and counts 13 calls more than any later one.
+  const on = await drawCalls(page, 6);
 
   await openSettings(page, "click");
   await expect(effect(page, "Contact shade", "On")).toHaveAttribute("aria-checked", "true");
