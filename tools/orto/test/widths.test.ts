@@ -1,7 +1,8 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { COVER } from "../src/classify.ts";
 import { type Look, type Probe, measureWay, rayKerb, sideOf } from "../src/widths.ts";
-import { type Candidate, measureCity, tableRows, tableText } from "../src/widths-city.ts";
+import { type Candidate, TABLE_FILE, cachedImage, measureCity, measureFromCache, tableRows, tableText } from "../src/widths-city.ts";
 
 /**
  * A synthetic street along +x from x 0 to 100 (its left is +z): asphalt (L 125) from z -3 to z 4,
@@ -79,5 +80,12 @@ describe("carriageway widths on the orthophoto (ADR-0080 PR 10)", () => {
       ["w2", 7, 3.95, 3.05, "lr", ""],
       ["w1", 7, 3.05, 3.95, "lr", ""],
     ]);
+  });
+
+  // The orthophoto stays in the tool's cache, outside the repository: where it is, the committed table is what it gives.
+  it.skipIf(!cachedImage())("measures the city the same twice, as the committed table", () => {
+    const [a, b] = [tableText(measureFromCache()), tableText(measureFromCache())];
+    expect(a).toBe(b);
+    expect(a).toBe(readFileSync(TABLE_FILE, "utf8"));
   });
 });
