@@ -39,7 +39,7 @@ Każdy agent (naprawiacz, budowniczy, łowca, weryfikator, kurator, zwiadowca) c
 - Typecheck uruchamiaj jako `pnpm typecheck >log; echo tc=$?`. Dalej `pnpm lint` i `pnpm depcheck`.
 - Testy dotkniętych pakietów. Przy obciążeniu maszyny testy padają na limicie 5 s. Pliki z samymi przekroczeniami czasu puść osobno z `--maxWorkers=1`. Asercje to prawdziwe błędy.
 - Determinism, skan glitchy (`tools/glitch-scan`): żaden rodzaj nie rośnie.
-- Zmiana wyglądu: zrzuty przed i po, które oglądasz (spec `e2e/glitch-shots.spec.ts`, `SHOTS`, `GLITCH_SPOTS` jako `[[nazwa,x,z,yaw,pitch]]`, `SHOT_HOUR=13`). Zmiana NPR: migawka `--update-snapshots=all`, nową oglądasz przed commitem.
+- Zmiana wyglądu: zrzuty przed i po, które oglądasz (spec `e2e/glitch-shots.spec.ts`, `SHOTS`, `GLITCH_SPOTS` jako `[[nazwa,x,z,yaw,pitch]]`, `SHOT_HOUR=13`). Zrzuty, które trafią do użytkownika, rób z modelami postaci (`SHOT_MODELS=on`, także przez `pnpm shots:compare`); bez modeli (`models=off`) Seki i ludzie są proceduralnymi bryłami, a gra wygląda inaczej niż u gracza. Bez modeli zostają tylko pomiary i migawki testów. Zmiana NPR: migawka `--update-snapshots=all`, nową oglądasz przed commitem.
 - Zmiana importu, terenu albo pomostów: w raporcie podaj, co i o ile się przesuwa. Idzie to do przeglądu `topography-curator`.
 
 ## Commit
