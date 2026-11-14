@@ -83,7 +83,7 @@ describe("the street lamps of the lit rule (G-798, ADR-0064 stage 3)", () => {
       { id: "n3", p: { x: 100, z: -900 }, tag: "highway=street_lamp", detail: "" },
       { id: "n4", p: { x: 50, z: -240 }, tag: "natural=tree", detail: "" },
     ];
-    expect(osmLampItems(plan, points).map((i) => [i.id, i.kind, i.points, i.osm])).toEqual([["osm.street-lamps", "street-lamp", [[100, -240]], ["n2"]]]);
+    expect(osmLampItems(plan, points).map((i) => [i.id, i.kind, i.inOsm, i.points, i.osm])).toEqual([["osm.street-lamps", "street-lamp", true, [[100, -240]], ["n2"]]]);
     // The street between the two lamps, 100 m apart, is dark only in its middle.
     const rule = withLitRule(plan, [way(1, { highway: "residential" }, 0, 100, -240)], points).plan.items.filter((i) => i.id.startsWith("lit."));
     expect(rule).toHaveLength(1);

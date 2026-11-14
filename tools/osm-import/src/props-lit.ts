@@ -229,7 +229,7 @@ export const osmLampItems = (plan: PropsPlan, points: readonly FurniturePoint[])
   const lamps = points.filter((f) => f.tag === "highway=street_lamp" && !held.has(f.id) && inMap(f.p));
   if (lamps.length === 0) return [];
   const note = "From data/osm/points/furniture.json (pnpm osm:fetch): highway=street_lamp nodes the plan lacks (G-798).";
-  return [{ id: "osm.street-lamps", kind: "street-lamp", points: lamps.map((f) => [r1(f.p.x), r1(f.p.z)] as [number, number]), osm: lamps.map((f) => f.id), count: lamps.length, note }];
+  return [{ id: "osm.street-lamps", kind: "street-lamp", inOsm: true, points: lamps.map((f) => [r1(f.p.x), r1(f.p.z)] as [number, number]), osm: lamps.map((f) => f.id), count: lamps.length, note }];
 };
 
 /** The plan's lamps: lines with their look, points (OSM's lamps, single lamps) with none. */
