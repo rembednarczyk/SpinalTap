@@ -120,9 +120,10 @@ describe("the ground the map city lays (G-444)", () => {
     // the kerb stones of the widened carriageways lie past the asphalt. 172 699 - 163 504 = 9 195 vertices
     // fewer; one mesh more, a cut piece's part on a cell of its own.
     // The kerb stones back on the asphalt's side of the paving's edge, ranked over the asphalt that reaches
-    // under them, as drawn before the partition (G-803): the stones cut the asphalt, not the footway past
-    // it: 163 504 - 161 588 = 1 916 vertices fewer, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161588, hash: "28a77173" });
+    // under them, as drawn before the partition (G-803), 0.1 m past its edge: the paving past them is cut
+    // by the stones' edge alone, not by two a few millimetres apart: 163 504 - 160 810 = 2 694 vertices
+    // fewer, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 160810, hash: "081c385a" });
     scene.dispose();
   });
 

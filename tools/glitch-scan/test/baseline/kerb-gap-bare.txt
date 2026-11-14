@@ -607,6 +607,7 @@ podzamcze-1-1 860,490
 podzamcze-1-1 760,500
 podzamcze-1-1 770,500
 podzamcze-1-1 780,500
+podzamcze-1-1 830,500
 podzamcze-1-1 840,500
 podzamcze-1-1 850,500
 podzamcze-1-1 860,500

@@ -353,8 +353,10 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       // The kerb stones of the widened carriageway, where the paving draws no kerb of its own: on the
       // asphalt's side of the paving's edge, ranked over the asphalt that reaches under them
       // (`KERB_STONES`, G-803), so the kerb stands 0.3 m short of the paving's mapped edge, where the
-      // orthophoto shows it (T-294); the renderer draws the kerb on the stone's edge.
-      runsOf(side, (s) => (full(s) && !s.hit!.kerbed ? { edge: along(s.edge, s.dir, s.hit!.gap - KERB_STONE), out: along(s.edge, s.dir, s.hit!.gap + INTO) } : null), (run) => lay(run, true));
+      // orthophoto shows it (T-294); the renderer draws the kerb on the stone's edge. A stone reaches
+      // past the asphalt's edge by `INTO`: two edges of the paving's cut a few millimetres apart
+      // left it in slivers.
+      runsOf(side, (s) => (full(s) && !s.hit!.kerbed ? { edge: along(s.edge, s.dir, s.hit!.gap - KERB_STONE), out: along(s.edge, s.dir, reach.get(s)! + INTO) } : null), (run) => lay(run, true));
     }
   }
   return { fills, widened };
