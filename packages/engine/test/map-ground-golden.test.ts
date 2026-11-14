@@ -123,10 +123,10 @@ describe("the ground the map city lays (G-444)", () => {
     // under them, as drawn before the partition (G-803), 0.1 m past its edge: the paving past them is cut
     // by the stones' edge alone, not by two a few millimetres apart: 163 504 - 160 810 = 2 694 vertices
     // fewer, the same meshes.
-    // The carriageways' widths measured on the orthophoto (ADR-0080 PR 10): 94 streets laid at the
+    // The carriageways' widths measured on the orthophoto (ADR-0080 PR 10): 91 streets laid at the
     // asphalt's width and moved onto it on a ramp from their ends, none widened to the paving by the
-    // kerbs' fills (G-570): 160 810 - 160 193 = 617 vertices fewer, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 160193, hash: "7912b471" });
+    // kerbs' fills (G-570): 161 143 - 160 810 = 333 vertices more, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161143, hash: "d3825593" });
     scene.dispose();
   });
 
