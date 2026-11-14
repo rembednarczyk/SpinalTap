@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-786 Goły teren zamiast trawnika pod pochyloną patyną dachu przy (475; -195)
+- Ważność: S4 · Zasięg: stare-miasto-0-0 (470..480; -200..-190), ok. 14 m²
+- Opis: Po G-775 próbki z patyną dachu na 2025-04 i cieniem na 2024-06 mają klasę asphalt; bare-cover zostawia asfalt goły, więc pas przy budynku jest gołym terenem (wcześniej błędny trawnik)
+- Status: naprawione (14.11, duplikat G-788 (14.11, przegląd kuratora G-775) scalony); wcześniej: zgłoszone (14.11, naprawiacz G-775)
+- Pakiet właściciela: tools/orto / tools/osm-import (bare-cover)
+- Test przyjęcia: pas przy (475; -195) kostką, bez gołego terenu
+
 ### G-759 walk-blocked nie widzi płyt chodnika i podestu Arkad
 - Ważność: S4 · Zasięg: klucze `stare-miasto-0-1 460,100/110/120`, `krakowskie-2-1 450,*`; ok. 500 stromych par po G-748
 - Opis: kontrola z #497 bierze tylko teren, więc obniżenie gruntu pod płytami `arkady.ts` liczy jako uskoki i strome pary

@@ -1861,13 +1861,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: fill-gap bez dziur po odrzuconych małych kawałkach na krawędzi kafli
 
-### G-786 Goły teren zamiast trawnika pod pochyloną patyną dachu przy (475; -195)
-- Ważność: S4 · Zasięg: stare-miasto-0-0 (470..480; -200..-190), ok. 14 m²
-- Opis: Po G-775 próbki z patyną dachu na 2025-04 i cieniem na 2024-06 mają klasę asphalt; bare-cover zostawia asfalt goły, więc pas przy budynku jest gołym terenem (wcześniej błędny trawnik)
-- Status: zgłoszone (14.11, naprawiacz G-775)
-- Pakiet właściciela: tools/orto / tools/osm-import (bare-cover)
-- Test przyjęcia: pas przy (475; -195) kostką, bez gołego terenu
-
 ### G-787 Patyna, plandeki i szklane dachy jako zieleń w komórkach z dwoma nalotami letnimi
 - Ważność: S4 · Zasięg: krakowskie, podzamcze, nabrzeze, stare-miasto-1-x: ok. 2,7 tys. próbek (np. podzamcze 670,540; krakowskie 260,-210)
 - Opis: Reguła patyny z G-775 działa tylko przy jednym nalocie letnim; rozszerzona na całe miasto daje przez bare-cover 7 nowych kluczy (bare-on-cover +3, fill-on-green +2, ground-strip-gap +2)
