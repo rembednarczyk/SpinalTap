@@ -1881,13 +1881,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: kontrola skanu bez kluczy w tych miejscach
 
-### G-796 Ziarnisty cień kontaktowy pod postacią przy kamerze z góry
-- Ważność: S3 · Zasięg: High, cień kontaktowy; zrzut użytkownika z telefonu 14.11 (rozdzielczość renderu 70%, kamera z góry)
-- Opis: pod postacią plama z widocznym ziarnem/szachownicą zamiast gładkiego cienia; podejrzenie: wzór Bayera 4x4 i rozmycie 4x4 w połowie rozdzielczości przestają się znosić przy skali renderu 0,7 albo postać (skórowana) jako zasłona daje szum; do naprawy po zmianie formatów G-buffera (gałąź gbuffer-lite)
-- Status: w gałęzi ccr-ec2c4269-ilh8k8-g796 (po gbuffer-lite), zrzuty do akceptacji; wcześniej: w naprawie (14.11): druga runda agenta od G-buffera (gałąź gbuffer-lite albo g796); wcześniej: zgłoszone (14.11, użytkownik)
-- Pakiet właściciela: packages/engine (npr/contact-shade*.ts)
-- Test przyjęcia: zrzut z góry nad postacią przy skali 0,7 i 1,0 bez ziarna
-
 ### G-797 Drzewa tylko z węzłów OSM: 496 kwadratów korony z ortofoto bez drzewa w grze (ADR-0077 krok 5)
 - Ważność: S3 · Zasięg: całe miasto; najgorzej nabrzeże (9% korony w zasięgu drzew) i podzamcze (11%); obejmuje G-207
 - Opis: Krok 5 ADR-0077 niewdrożony: drzewa wyłącznie z natural=tree i tree_row przez plan; modele drzew GUGiK LoD1 2023 ani NMPT nie są używane. Pomiar 14.11 (audyt ADR-0077): klasy canopy/canopyHard data/orto, promień 6 m. T-292

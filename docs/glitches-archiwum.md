@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-796 Ziarnisty cień kontaktowy pod postacią przy kamerze z góry
+- Ważność: S3 · Zasięg: High, cień kontaktowy; zrzut użytkownika z telefonu 14.11 (rozdzielczość renderu 70%, kamera z góry)
+- Opis: pod postacią plama z widocznym ziarnem/szachownicą zamiast gładkiego cienia; podejrzenie: wzór Bayera 4x4 i rozmycie 4x4 w połowie rozdzielczości przestają się znosić przy skali renderu 0,7 albo postać (skórowana) jako zasłona daje szum; do naprawy po zmianie formatów G-buffera (gałąź gbuffer-lite)
+- Status: naprawione (14.11, #549 scalony); wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g796 (po gbuffer-lite), zrzuty do akceptacji; wcześniej: w naprawie (14.11): druga runda agenta od G-buffera (gałąź gbuffer-lite albo g796); wcześniej: zgłoszone (14.11, użytkownik)
+- Pakiet właściciela: packages/engine (npr/contact-shade*.ts)
+- Test przyjęcia: zrzut z góry nad postacią przy skali 0,7 i 1,0 bez ziarna
+
 ### G-795 Cień twardy z poszarpanymi krawędziami (teksele mapy cieni)
 - Ważność: S3 · Zasięg: cały świat, High i Medium; zrzut użytkownika z telefonu 14.11 (noc, kamera z góry, postać z bronią przy latarni)
 - Opis: schodkowe, pikselowe krawędzie cienia postaci i budynków; przyczyna do ustalenia: rozmiar mapy, zasięg frustum cienia, brak filtrowania
