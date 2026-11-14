@@ -1909,6 +1909,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props-gen)
 - Test przyjęcia: każdy hydrant nadziemny z planu stoi ≤ 3 m od węzła albo ma powód w raporcie osm:props
 
+### G-800 Cień linki girlandy znika z daleka, zostają cienie samych lampek (po #542)
+- Ważność: S3 · Zasięg: wszystkie girlandy i przewody nad ulicami, noc, High; widać dopiero z bliska
+- Opis: Zgłoszenie użytkownika 14.11 (gra po #542): linka z kwadracikami rzuca cień tylko z bliska, z daleka widać same kwadraciki; to nie cień kontaktowy. Najpewniej cień księżyca: przy patrzeniu w dal kwadrat cienia wraca do 56 m (teksel 2,7 cm), a linka cieńsza niż teksel po nowym filtrze krawędzi (PCF 3 teksele, próg ok. 1 px przez fwidth) znika zamiast iść w kropki; agent G-795 wskazał to ryzyko w raporcie. Przed #542 cień linki był kropkowany.
+- Status: zgłoszone (14.11, użytkownik)
+- Pakiet właściciela: packages/engine/src/npr (moon-shadow, shadow-fit, toon-shader)
+- Test przyjęcia: cienka bryła (przewód 1-2 cm) rzuca w mapie cienia ciągły ślad na ziemi także przy kwadracie 56 m (udział zacienionych pikseli wzdłuż śladu ≥ 80%)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
