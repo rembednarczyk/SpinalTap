@@ -10,7 +10,15 @@ import { toonSourceOf } from "./model-library";
 import type { AnchorBone, HumanoidRetarget } from "./model-rig";
 import { meleeWrist } from "./melee-poses";
 import { longGunInHands } from "./two-hand-hold";
-import { LONG_GUN, MELEE_HOLD, WEAPON_MODEL, type WeaponMounts, isMeleeKind } from "./weapon-mount";
+import { type GunKind, LONG_GUN, MELEE_HOLD, WEAPON_MODEL, type WeaponMounts, isGunKind, isMeleeKind, muzzleInMount } from "./weapon-mount";
+
+/** The node's world matrix now, its parents' first: the rig moved this frame, before the scene renders. */
+const freshWorld = (node: TransformNode) => {
+  const chain: TransformNode[] = [];
+  for (let n: TransformNode | null = node; n; n = n.parent instanceof TransformNode ? n.parent : null) chain.unshift(n);
+  for (const n of chain) n.computeWorldMatrix(true);
+  return node.getWorldMatrix();
+};
 
 type Place = "hand" | "hip" | "hipL" | "back" | "model" | "long";
 
@@ -219,6 +227,26 @@ export class Loadouts {
     const kind = w.active === "melee" && w.melee ? WEAPON_MODEL[w.melee].kind : null;
     const wrist = kind && isMeleeKind(kind) ? -meleeWrist(rig, MELEE_HOLD[kind].handle) : 0;
     for (const m of [s.mounted.hand, s.mounted.model]) if (m) m.node.rotation.x = wrist;
+  }
+
+  /**
+   * The gun in hand of a character and, while it shows, its muzzle in the world (`at`) and the
+   * barrel's direction (`dir`, unit), as the hands hold it now; null without a gun in hand.
+   */
+  muzzle(rig: CharacterRig, at: Vector3, dir: Vector3): { readonly kind: GunKind; readonly shown: boolean } | null {
+    const s = this.states.get(rig);
+    const w = s?.look.weapons;
+    const look = w ? w[w.active] : null;
+    const kind = look ? WEAPON_MODEL[look].kind : null;
+    if (!s || !look || !isGunKind(kind)) return null;
+    const held = [s.mounted.model, s.mounted.long, s.mounted.hand].find((m) => m?.look === look && m.node.isEnabled());
+    if (!held) return { kind, shown: false };
+    const world = freshWorld(held.node);
+    const local = muzzleInMount(kind, "hand");
+    Vector3.TransformCoordinatesToRef(local.at.scale(WEAPON_MODEL[look].scale), world, at);
+    Vector3.TransformNormalToRef(local.dir, world, dir);
+    dir.normalize();
+    return { kind, shown: true };
   }
 
   dispose(rig: CharacterRig): void {

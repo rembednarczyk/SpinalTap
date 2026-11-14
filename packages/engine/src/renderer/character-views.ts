@@ -1,4 +1,4 @@
-import type { AbstractMesh, Scene } from "../babylon";
+import type { AbstractMesh, Scene, Vector3 } from "../babylon";
 import type { AppearanceDescriptor, EntityId, Transform } from "@seki/core";
 import type { CameraRig } from "../camera/camera-rig";
 import { fadeFigure } from "../npr/body-dither";
@@ -21,7 +21,7 @@ import { animateKnockout, settleKnockout } from "./knockout-pose";
 import type { HumanoidRetarget } from "./model-rig";
 import { type ScanClass, scanClassOfView } from "./scan-highlight";
 import type { FxActors, ScanVisitor } from "./screen-fx";
-import type { WeaponManifest } from "./weapon-mount";
+import type { GunKind, WeaponManifest } from "./weapon-mount";
 
 export type { CharacterDescriptor } from "./model-cast";
 
@@ -140,13 +140,13 @@ export class CharacterViews implements FxActors {
     return this.views.size;
   }
 
-  get dressedCount(): number {
-    return this.models.dressedCount;
-  }
-
-  /** Models still loading for characters in the scene (tests wait for none before measuring). */
-  get loadingCount(): number {
-    return this.models.loadingCount;
+  /**
+   * Characters dressed in an imported model, and models still loading for characters in the
+   * scene (tests wait for none before measuring). One getter for both keeps the class within
+   * ADR-0031's 20 members.
+   */
+  get modelCounts(): { readonly dressed: number; readonly loading: number } {
+    return { dressed: this.models.dressedCount, loading: this.models.loadingCount };
   }
 
   ids(): EntityId[] {
@@ -159,6 +159,12 @@ export class CharacterViews implements FxActors {
 
   transformOf(id: EntityId): Transform | null {
     return this.views.get(id)?.transform ?? null;
+  }
+
+  /** The gun in the hand of `id` and where its muzzle is (`Loadouts.muzzle`). */
+  muzzleOf(id: EntityId, at: Vector3, dir: Vector3): { readonly kind: GunKind; readonly shown: boolean } | null {
+    const rig = this.views.get(id)?.rig;
+    return rig ? this.kit.loadouts.muzzle(rig, at, dir) : null;
   }
 
   /** The FPP viewmodel shows the weapon in the hand of `id`, whom the camera now follows. */

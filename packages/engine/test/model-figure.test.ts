@@ -29,8 +29,8 @@ const viewsOn = (scene: Scene) =>
   });
 
 const settled = async (views: CharacterViews) => {
-  for (let i = 0; i < 4000 && views.loadingCount > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
-  expect(views.loadingCount).toBe(0);
+  for (let i = 0; i < 4000 && views.modelCounts.loading > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
+  expect(views.modelCounts.loading).toBe(0);
 };
 
 /** A bone of character `id`'s model by its normalised name ("head", "hips", "rhand"). */
@@ -83,7 +83,7 @@ describe("figures of the variants (ADR-0076 decision 7)", () => {
     views.spawn(2, { kind: "npc", preset: "civilian", cast: "ume", umbrella: false }, STAND);
     views.spawn(3, { kind: "npc", preset: "civilian", umbrella: false }, STAND);
     await settled(views);
-    expect(views.dressedCount).toBe(2);
+    expect(views.modelCounts.dressed).toBe(2);
     // The head well ahead of the hips over a bent back; upright within a few centimetres.
     const bent = headAhead(scene, 2);
     expect(bent).toBeGreaterThan(headAhead(scene, 3) + 0.06);
