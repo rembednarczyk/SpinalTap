@@ -1,6 +1,7 @@
 import type { WeaponLook } from "@seki/core";
 import { Vector3 } from "../babylon";
 import type { ViewArmsFrame } from "../camera/view-arms";
+import { HANDGUN_DEEPER } from "../camera/viewmodel-poses";
 import { GRIP, LONG_GUN, VIEW_MELEE_TILT, VIEW_SHIFT, WEAPON_MODEL, type WeaponKind } from "./weapon-mount";
 
 /**
@@ -66,10 +67,12 @@ const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1)
  * A handgun (the pistol, the revolver) as the user chose it out of seven rounds (13.11: round 2,
  * commit e17dc2e): the right hand round the grip, the wrist behind and right of it, the palm on
  * the grip's right side, the fingers closing round its front, all alike; the left hand under the
- * right fist, palm up and to the right, cupping it. The same from the hip and aimed in.
+ * right fist, palm up and to the right, cupping it. The same from the hip and aimed in. Both
+ * hands sit higher up the grip than round 2 put them (`HANDGUN_DEEPER`, 14.11), the gun deeper in the fist.
  */
-const RIGHT_ON_HANDGUN = hand(v(0.034, -0.028, -0.075), v(-0.22, 0.16, 1), v(-0.12, 0.22, 1), v(-1, 0, -0.1), 0.85);
-const LEFT_UNDER_FIST = hand(v(-0.05, -0.085, -0.05), v(0.4, 0.25, 1), v(0.45, 0.35, 1), v(0.7, 0.7, 0), 0.6);
+const deeper = (x: number, y: number, z: number): Vector3 => v(x, y + HANDGUN_DEEPER.y, z + HANDGUN_DEEPER.z);
+const RIGHT_ON_HANDGUN = hand(deeper(0.034, -0.028, -0.075), v(-0.22, 0.16, 1), v(-0.12, 0.22, 1), v(-1, 0, -0.1), 0.85);
+const LEFT_UNDER_FIST = hand(deeper(-0.05, -0.085, -0.05), v(0.4, 0.25, 1), v(0.45, 0.35, 1), v(0.7, 0.7, 0), 0.6);
 
 /**
  * On the rifle's pistol grip the forearm comes in from the right, the elbow out beside the stock,

@@ -319,12 +319,18 @@ describe("FPP hands from Seki's model (13.11)", () => {
       };
       const grip = onScreen(Vector3.Zero());
       const [sx, sy, size] = SCREEN[look].at[aim]!;
-      expect(grip.x, `${when}: the grip across the screen`).toBeCloseTo(sx, 2);
-      expect(grip.y, `${when}: the grip up the screen`).toBeCloseTo(sy, 2);
+      // Deeper in the fist (14.11): from the hip the hands keep round 2's place on the screen, so
+      // where its grip was in the fist (15 mm up the grip, 3 mm back) shows where its grip showed and
+      // the gun's own grip lower; aimed in the gun keeps its place under the crosshair.
+      const held = aim === 0 ? onScreen(new Vector3(0, 0.015, -0.003)) : grip;
+      expect(held.x, `${when}: round 2's grip across the screen`).toBeCloseTo(sx, 2);
+      expect(held.y, `${when}: round 2's grip up the screen`).toBeCloseTo(sy, 2);
+      if (aim === 0) expect(sy - grip.y, `${when}: the grip under round 2's`).toBeGreaterThan(0.04);
       expect(Vector3.Distance(onScreen(new Vector3(0, 0.1, 0)), grip), `${when}: the gun's size on the screen`).toBeCloseTo(size, 2);
       const right = kit.hands.handBone("r")!;
       const wrist = inFrame(mount, right.getAbsolutePosition());
-      expect(Vector3.Distance(wrist, new Vector3(0.034, -0.028, -0.075)), `${when}: the right wrist`).toBeLessThan(0.003);
+      // The hands 15 mm higher up the grip than round 2 put them (0.034, -0.028, -0.075), 3 mm back.
+      expect(Vector3.Distance(wrist, new Vector3(0.034, -0.013, -0.078)), `${when}: the right wrist`).toBeLessThan(0.003);
       const knuckles = inFrame(mount, bone(right, "Middle1").getAbsolutePosition()).subtract(wrist).normalize();
       expect(Vector3.Dot(knuckles, new Vector3(-0.12, 0.22, 1).normalize()), `${when}: the right fingers`).toBeGreaterThan(0.999);
       // The left hand under the right fist, near the grip, not hanging out of the view.
@@ -334,8 +340,8 @@ describe("FPP hands from Seki's model (13.11)", () => {
       // The right hand as drawn, skinned. Ahead of the grip's back (the frame, the trigger guard,
       // the revolver's cylinder: G-770) no vertex more than 2 mm inside the gun. The fist is a
       // rigid mesh round the grip: behind it, in the grip's back half under the web and the palm,
-      // it sinks up to 12.2 mm (round 2 as chosen: the pistol 11.7 mm, the revolver 12.2 mm), out
-      // of sight inside the fist; no deeper.
+      // it sinks up to 12.2 mm (round 2 as chosen: the pistol 11.7 mm, the revolver 12.2 mm; 15 mm
+      // deeper in the fist, 14.11: 11.7 and 11.8 mm), out of sight inside the fist; no deeper.
       const gun = trianglesIn(mount.getChildMeshes(false), mount);
       expect(gun.length).toBeGreaterThan(1000);
       const skin = skinVertices(kit.hands.drawn[0]!, mount, (n) => /_R_(Hand|Thumb\d|Index\d|Middle\d|Ring\d|Little\d)$/.test(n));
@@ -343,6 +349,36 @@ describe("FPP hands from Seki's model (13.11)", () => {
       const depth = (ahead: boolean) => Math.max(...skin.filter((p) => p.z > 0 === ahead).map((p) => depthInside(gun, p)));
       expect(depth(true), `${when}: the hand ${(depth(true) * 1000).toFixed(1)} mm inside the gun ahead of the grip`).toBeLessThan(0.002);
       expect(depth(false), `${when}: the hand ${(depth(false) * 1000).toFixed(1)} mm inside the grip`).toBeLessThan(0.013);
+      // The fingers closed on the grip, not off it: their joints touch it (round 2 and 14.11: 2.7 to 4.1 mm in).
+      const fingers = skinVertices(kit.hands.drawn[0]!, mount, (n) => /_R_(Index|Middle|Ring|Little)[23]$/.test(n));
+      const touch = Math.max(...fingers.map((p) => depthInside(gun, p)));
+      expect(touch, `${when}: the fingers ${(touch * 1000).toFixed(1)} mm into the grip`).toBeGreaterThan(-0.001);
+      expect(touch, `${when}: the fingers ${(touch * 1000).toFixed(1)} mm into the grip`).toBeLessThan(0.005);
+    }
+  }, 60_000);
+
+  /**
+   * The user's wish of 14.11 ("a little lower, more in the fist"): both hands close 15 mm higher
+   * up a handgun's grip than round 2 (main before it: the right wrist at (0.034, -0.028, -0.075),
+   * the left under it at (-0.05, -0.085, -0.05) in the gun's frame), so less of the grip shows
+   * over the fingers, on a desktop and a phone, from the hip and aimed in (where on the screen:
+   * the round 2 test above).
+   */
+  it.each([
+    ["pistol", [1280, 720]],
+    ["revolver", [844, 390]],
+  ] as const)("%s at %j: the gun 15 mm deeper in both fists than round 2, from the hip and aimed in", async (look, size) => {
+    const { kit, rig, settle, camera, library } = setup(size);
+    await library.preload(heroine);
+    kit.arm(1, rig, "hero", armed(look));
+    kit.setViewArms(heroine);
+    await ready(kit, settle);
+    const at = (side: "r" | "l") => inFrame(camera.weaponMount, kit.hands.handBone(side)!.getAbsolutePosition());
+    for (const aim of [0, 1]) {
+      settle({ ...standing, aim });
+      expect(at("r").y - -0.028, `aim ${aim}: the right hand up the grip`).toBeCloseTo(0.015, 3);
+      expect(at("l").y - -0.085, `aim ${aim}: the left hand up the grip`).toBeCloseTo(0.015, 3);
+      expect(at("r").z - -0.075, `aim ${aim}: the right hand back`).toBeCloseTo(-0.003, 3);
     }
   }, 60_000);
 
