@@ -1897,6 +1897,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w gałęzi ccr-ec2c4269-ilh8k8-lit-lamps, przegląd kuratora w toku; wcześniej: zgłoszone (14.11, audyt ADR-0077)
 - Pakiet właściciela: tools/osm-import (props-gen), tools/glitch-scan
 - Test przyjęcia: kontrola lit-street-dark (próbki co 5 m dróg lit=yes dalej niż 30 m od lamp-*, kwadraty 10 m), baza 4390 m, spada; kontrole lamp-* nie rosną
+- Przegląd kuratora 14.11 (946e866): NIEZGODNE, 2 poprawki przed scaleniem: (P1) Dziedziniec Zamkowy 5 lamp-park, w tym 2 na środku z w73811514 (868,2; 233,6), (915,4; 227,9); w rzeczywistości latarenki ścienne i oprawy w bruku; (P2) Podwale: 10 lamp-road planu zmienione na lamp-candelabra (lookOf: 3 punkty na linii Placu Zamkowego, styleClashes), w rzeczywistości pastorały. Kontrole: lamp-freestanding-in-courtyard (baza 5), lamp-square-style-leak (baza 11).
 
 ### G-799 Hydranty nadziemne z OSM odpadają przy rozstawieniu (8 z 14)
 - Ważność: S4 · Zasięg: osm.hydrants: 14 w planie, 6 w grze
@@ -1925,6 +1926,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w naprawie na gałęzi adr78-etap3 (przed scaleniem)
 - Pakiet właściciela: tools/osm-import (kerb-fill.ts)
 - Test przyjęcia: kamień w [gap-0,3; gap+0,1] na próbkach full, krawędź asfaltu bez wcięć
+
+### G-804 Latarnie reguły lit: strona z kierunku rysowania OSM, Narutowicza tylko z jednej strony
+- Ważność: S4 · Zasięg: ulice tertiary/residential reguły SIDE, m.in. Narutowicza, Peowiaków
+- Opis: props-lit SIDE stawia lampy po lewej względem kierunku drogi w OSM; Narutowicza ma w rzeczywistości słupy przy obu krawężnikach co ok. 34 m (ortofoto 2025-04). Propozycja: strona z przejętej linii planu, sides 2 dla ulic z chodnikami separate po obu stronach i jezdnią ponad ok. 10 m. T-297
+- Status: zgłoszone (14.11, przegląd kuratora G-798)
+- Pakiet właściciela: tools/osm-import (props-lit)
+
+### G-805 Styl latarni: lamp-road na deptakach Śródmieścia, lamp-park przy peronach i na chodnikach
+- Ważność: S4 · Zasięg: 7 linii krakowskie-side, ok. 14 lamp na Dworcu Podzamcze, 8 chodników footway=sidewalk
+- Opis: YIELDING przejmuje tylko linie na ulicach samochodowych, więc deptaki lit=yes zostają z lamp-road z planu; PATH stawia lamp-park przy peronach i na chodnikach ulic. W rzeczywistości przy deptaku stoją latarnie stylizowane (Peowiaków, Commons 2009). T-298
+- Status: zgłoszone (14.11, przegląd kuratora G-798)
+- Pakiet właściciela: tools/osm-import (props-lit), docs/world/lublin-props.todo.json
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
