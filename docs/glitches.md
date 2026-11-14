@@ -1872,6 +1872,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: laidOf obraca tylko obrysy pasów, dziury zostają dziurami
 
+### G-793 Przycięcie przy zmianie dzielnicy: budowa kawałków miasta w jednej klatce
+- Ważność: S3 · Zasięg: każda zmiana dzielnicy; 30–35 MB buforów wierzchołków; pod SwiftShaderem klatki 0,5–8 s
+- Opis: bufferData i _createVertexBuffer kawałków miasta w jednej klatce przy wejściu do dzielnicy; do rozważenia budowa rozłożona na klatki albo dociąganie przy granicy dzielnicy (całe miasto w ładowaniu przekracza budżet ADR-0079); też dynamiczne bufory (updateVerticesData) potrafią zablokować klatkę
+- Status: zgłoszone (14.11, pomiar ładowania wstępnego)
+- Pakiet właściciela: packages/engine (renderer)
+- Test przyjęcia: zmiana dzielnicy bez klatki > 100 ms w raporcie hitch-report
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
