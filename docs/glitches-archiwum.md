@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-807 Seki w grze zostaje proceduralnym szkieletem zamiast modelu seki.vrm
+- Ważność: S2 · Zasięg: postać gracza, cała gra (zgłoszenie użytkownika 14.11)
+- Opis: Użytkownik widzi w grze (APK lub Render) proceduralną Seki z brył zamiast modelu VRM. Pliki models/manifest.json i models/seki.vrm są na Renderze (HTTP 206, typy JSON i x-world/x-vrml). Do ustalenia: widok (TPP, FPP, menu), urządzenie, od kiedy; podejrzane zmiany: #504 (ręce FPP z modelu), #539 (kompilacja za ekranem ładowania), #546, ADR-0076 4b (zwalnianie plików, limit na telefonie).
+- Status: naprawione (14.11, #560 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-g807, 903fd0e): ponawianie pobrania modelu po błędzie; wcześniej: w diagnozie
+- Pakiet właściciela: packages/engine/src/renderer (character-models, model-library), packages/app
+- Przyczyna: jedno nieudane pobranie seki.vrm zostawiało Seki proceduralną do końca sesji (CharacterModels.dress tylko ostrzegał; PreviewStage ustawiał dressFailed na stałe). Bez zakłóceń sieci nie odtwarza się; odtwarza się przy 8 Mbit/s i przerwanych żądaniach. Do potwierdzenia u użytkownika: widok i łącze; w APK pliki są lokalne.
+
 ### G-803 Krawężnik poszerzonej jezdni 0,4 m za daleko od osi, ząbki (ADR-0078 etap 3)
 - Ważność: S3 · Zasięg: ok. 1,9 km krawężnika z kerbFills, cała mapa
 - Opis: Po podziale płaszczyzny kamień krawężnika leży za krawędzią asfaltu (reach..reach+0,3), krawężnik w u=+0,1 od chodnika OSM; ortofoto: mediana u=-0,25 (2025-04), -0,5 (oba naloty); na 3 Maja (-101; -20..-40) krawężnik z wcięciami. Zrzut scratchpad/adr78-etap3-kurator.png, T-294.
