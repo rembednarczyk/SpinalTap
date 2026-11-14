@@ -1785,6 +1785,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan (walk-blocked)
 - Test przyjęcia: `walk-blocked` bez kluczy pod płytami Arkad
 - walk-review B pada z poprawką: łapie prawdziwe uskoki płyt Arkad (G-778); osie along zostają na groundY, bo z floorOver wychodzą bryły Alchemii na chodnikach (krakowskie-2-0 416,-38 i inne). Decyzja nocna (wariant rekomendowany): najpierw naprawa uskoków, potem G-759, bez ruszania testu B.
+- 14.11 (naprawiacz G-778): floorOver traktuje budynek mapy jako podłogę: budynek stare-miasto-0-1 (468; 124,2, y -9,1..-2,3) daje w kwadracie 460,120 pary ledge 5,7-6,6 m przy ground -2,30; test B tego kwadratu nie sprawdza. Do poprawy w gałęzi g759 przed PR.
 
 ### G-764 Trawnik pod koronami drzew na kostce (reguła koron, ADR-0077 krok 1.2)
 - Ważność: S4 · Zasięg: 4 dzielnice, ok. 474–670 m², m.in. promenada nad Czechówką przy VIVO (x 1090, z 185), Furmańska (x 646, z 257)
@@ -1864,9 +1865,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-778 Uskoki między płytami chodnika i podestu Arkad
 - Ważność: S3 · Zasięg: stare-miasto-0-1 (465..468; 116..119), krakowskie-2-1 (448; 80)
 - Opis: arkady.ts pavement(): płyty co 2 m na maksimum terenu mapy, wierzchy a 38..44: -6,17/-6,71/-7,46 (stopnie 0,54 i 0,75 m > STEP_HEIGHT), podest -5,72 przy płycie -5,22 (0,50 m); od północy nie wejdzie się wyżej; wyszło z G-759 (walk-review B)
-- Status: zgłoszone (13.11, naprawiacz G-759)
+- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g778, 327028f), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, naprawiacz G-759)
 - Pakiet właściciela: packages/sim (content/alchemia)
 - Test przyjęcia: walk-review B zielony; między sąsiednimi płytami Arkad <= 0,45 m
+- 327028f: chodnik w dwóch pasach (ściana 2 m do a 44, zewnętrzny do a 38), komórki 0,5 m; stopnie 0,75 -> 0,25 m, krawędzie 0,6/0,48 -> 0,42/0,30 m; wierzch nad NMT maks. 1,08 -> 0,41 m; hashe i skan bez zmian; walk-review B zielony na scaleniu z g759
 
 ### G-779 Łaty G-760 mniejsze niż 0,5 m² odrzucane przez chunkGround
 - Ważność: S4 · Zasięg: złącza z małymi łatami w całym mieście
