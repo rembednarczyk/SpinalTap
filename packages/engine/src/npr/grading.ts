@@ -44,6 +44,8 @@ export class Grading {
   private glitchFlash = true;
   private reduce = false;
   private palette: DistrictPalette = DISTRICT_PALETTES["shinsekai-7"];
+  /** The quality's bloom weight; 0 where it builds none (Low, Medium). */
+  private readonly bloomWeight: number;
 
   constructor(
     scene: Scene,
@@ -89,6 +91,23 @@ export class Grading {
       p.bloomScale = 0.5;
     }
     this.pipeline = p;
+    this.bloomWeight = bloom;
+  }
+
+  /** The quality has a bloom the player's setting can switch. */
+  get hasBloom(): boolean {
+    return this.bloomWeight > 0;
+  }
+
+  /**
+   * The player's bloom setting, at once (graphics toggles 14.11). Babylon rebuilds the pipeline
+   * and puts its post-processes back at the end of the camera's chain, so whatever must follow
+   * the grade is moved behind it again by the caller. Returns whether the chain changed.
+   */
+  setBloom(on: boolean): boolean {
+    if (!this.hasBloom || this.pipeline.bloomEnabled === on) return false;
+    this.pipeline.bloomEnabled = on;
+    return true;
   }
 
   glitch(): void {

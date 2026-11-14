@@ -6,6 +6,7 @@ import { type CameraOccluder, CameraRig } from "../camera/camera-rig";
 import { fadeFigure } from "../npr/body-dither";
 import type { Grading } from "../npr/grading";
 import { CONTACT_SHADE } from "../npr/contact-shade";
+import type { GraphicsEffects } from "../npr/graphics-effects";
 import { LineArt } from "../npr/line-art";
 import { SpeedLines } from "../npr/speed-lines";
 import { NIGHT_RIG } from "../npr/lighting";
@@ -340,6 +341,15 @@ export class BabylonRenderer implements RenderPort {
     this.fx.setReduceFlashes(on);
     this.metro.setCalm(on);
     this.map.setReduceFlashes(on);
+  }
+
+  /**
+   * The player's switches for the High effects (graphics toggles 14.11), at once: each one off
+   * takes its passes out of the post-process chain. A quality without the effect ignores it.
+   */
+  setGraphicsEffects(effects: GraphicsEffects): void {
+    this.lineArt?.setContactShade(effects.contactShade);
+    this.fx.setBloom(effects.bloom);
   }
 
   /**
