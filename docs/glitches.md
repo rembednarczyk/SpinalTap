@@ -1940,6 +1940,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: tree-height-vs-nmpt wraca do ≤ 6 bez nowych kluczy tree-unmeasured
 - Kurator 14.11: 15 z 18 kluczy to realne drzewa przy ścianach (NMPT przy pniu ≥ 9 m), zgoda na osobne zadanie; 3 klucze (−123,24) n2416068304, (176,139) n2410102295 i (160,155) n2410102343 to błędy pomiaru (sąsiad lub dach), schodzą z poprawką bufora dachu przed scaleniem.
 
+### G-807 Seki w grze zostaje proceduralnym szkieletem zamiast modelu seki.vrm
+- Ważność: S2 · Zasięg: postać gracza, cała gra (zgłoszenie użytkownika 14.11)
+- Opis: Użytkownik widzi w grze (APK lub Render) proceduralną Seki z brył zamiast modelu VRM. Pliki models/manifest.json i models/seki.vrm są na Renderze (HTTP 206, typy JSON i x-world/x-vrml). Do ustalenia: widok (TPP, FPP, menu), urządzenie, od kiedy; podejrzane zmiany: #504 (ręce FPP z modelu), #539 (kompilacja za ekranem ładowania), #546, ADR-0076 4b (zwalnianie plików, limit na telefonie).
+- Status: w diagnozie
+- Pakiet właściciela: packages/engine/src/renderer (character-models, model-library), packages/app
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
