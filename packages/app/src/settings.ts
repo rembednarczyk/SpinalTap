@@ -25,11 +25,16 @@ export const SETTINGS_KEY = "seki.settings.v1";
  * Revision of the defaults an entry was saved under. Revision 2 (1.11) made High quality and
  * damage numbers per hit the defaults; an older entry takes them once, as if never chosen,
  * because the old defaults (Low on phones, no numbers) were saved with every change.
+ * Revision 3 (14.11, the user's choice for the phone): the fire button only fires and the aim
+ * button toggles the sights.
  */
-export const SETTINGS_REV = 2;
+export const SETTINGS_REV = 3;
 
 /** Fields whose default changed in each revision; older entries drop them on load. */
-const CHANGED_DEFAULTS: readonly (readonly [number, readonly string[]])[] = [[2, ["quality", "damageNumbers"]]];
+const CHANGED_DEFAULTS: readonly (readonly [number, readonly string[]])[] = [
+  [2, ["quality", "damageNumbers"]],
+  [3, ["aimMode", "touchFire"]],
+];
 
 const withNewDefaults = (raw: unknown): unknown => {
   if (typeof raw !== "object" || raw === null) return raw;

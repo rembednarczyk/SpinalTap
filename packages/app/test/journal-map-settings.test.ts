@@ -199,7 +199,7 @@ describe("settings", () => {
   it("round-trips through storage and survives broken or missing storage", () => {
     const st = memoryStorage();
     expect(loadSettings(st)).toEqual(DEFAULT_SETTINGS);
-    const custom = { ...DEFAULT_SETTINGS, quality: "low", aimMode: "toggle", crouchMode: "hold", invertY: true, horizontalFov: 90, mouseSensitivity: 2, touchSensitivity: 0.5, volume: 0.3, bindings: { jump: ["KeyJ"] } } as const;
+    const custom = { ...DEFAULT_SETTINGS, quality: "low", aimMode: "hold", crouchMode: "hold", invertY: true, horizontalFov: 90, mouseSensitivity: 2, touchSensitivity: 0.5, volume: 0.3, bindings: { jump: ["KeyJ"] } } as const;
     expect(saveSettings(st, custom)).toBe(true);
     expect(loadSettings(st)).toEqual(custom);
     st.data.set(SETTINGS_KEY, "{not json");
@@ -224,7 +224,7 @@ describe("settings", () => {
     ).toEqual({
       ...DEFAULT_SETTINGS,
       quality: "high",
-      aimMode: "hold",
+      aimMode: "toggle",
       mouseSensitivity: 3,
       touchSensitivity: 1,
       volume: 0,
@@ -300,8 +300,19 @@ describe("settings", () => {
     expect(loadSettings(st)).toMatchObject({ quality: "high", damageNumbers: "hit", volume: 0.3 });
     // Chosen after it: kept.
     saveSettings(st, { ...DEFAULT_SETTINGS, quality: "low", damageNumbers: "off" });
-    expect(JSON.parse(st.data.get(SETTINGS_KEY)!)).toMatchObject({ rev: 2 });
+    expect(JSON.parse(st.data.get(SETTINGS_KEY)!)).toMatchObject({ rev: 3 });
     expect(loadSettings(st)).toMatchObject({ quality: "low", damageNumbers: "off" });
+  });
+
+  it("on the phone the fire button only fires and the aim button toggles, also for entries saved before (14.11)", () => {
+    expect(DEFAULT_SETTINGS).toMatchObject({ touchFire: "separate", aimMode: "toggle" });
+    const st = memoryStorage();
+    // Saved under revision 2, when aim-and-fire and a held aim button were the defaults.
+    st.setItem(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, touchFire: "aims", aimMode: "hold", volume: 0.3, rev: 2 }));
+    expect(loadSettings(st)).toMatchObject({ touchFire: "separate", aimMode: "toggle", volume: 0.3 });
+    // Chosen after it: kept.
+    saveSettings(st, { ...DEFAULT_SETTINGS, touchFire: "aims", aimMode: "hold" });
+    expect(loadSettings(st)).toMatchObject({ touchFire: "aims", aimMode: "hold" });
   });
 
   it("keeps autosave on by default and for entries saved before it existed", () => {
