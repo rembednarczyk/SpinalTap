@@ -352,6 +352,11 @@ export class BabylonRenderer implements RenderPort {
     this.fx.setBloom(effects.bloom);
   }
 
+  /** The player's render resolution, 0.5..1 of the full one, at once (graphics options 14.11). */
+  setRenderResolution(share: number): void {
+    this.stage.setRenderResolution(share);
+  }
+
   /**
    * A metro ride (ADR-0036; proposed as an optional `RenderPort` method): the inside of a car with
    * the city sliding past and a few riders, from `MetroDeparted` until null on `MetroArrived`.
