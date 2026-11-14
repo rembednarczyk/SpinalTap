@@ -1809,6 +1809,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: pierścienie obrócone przed sumą; ground-strip-overlap i ground-over-steps nie rosną
 - Skutek potwierdzony: 51 obrysów, ok. 98 m² bitów końców drugą warstwą na obszarach; nakładki ścieżki i bruku na schodach 8,27 -> 1,20 m²; ground-over-steps 234 -> 231 (5 usuniętych, 3 klucze przesunięte: krakowskie-0-1 -4,127, podzamcze-1-0 768,211, stare-miasto-1-0 694,-176); złoty map-ground-golden 170580 -> 169847, ba4027c1; zrzuty /dev/shm/g782-shots
 - Runda 2 po G-781: map-ground-golden 173375 - 676 = 172699 (7610321b); scan:diff wobec main bez zmian (7212), ground-over-steps 0; zrzuty /dev/shm/g782-r2-shots i /dev/shm/g782-shots; ok. 98 m² czap końców znika z placów i trawników
+- Kurator topografii: ZGODNE Z UWAGAMI. orto:diff vs merge-base 5,8 m², bilans klas zamknięty, bez gołego terenu, teren i pomosty 0. Oznakowania Al. Tysiąclecia 741–745 kończą się na węźle sygnalizacji, przed zebrą 730,7. Przed PR scalić main (G-775).
 
 ### G-783 Dziury fill-gap na krawędziach chunków: obrys wypełnienia nie sięga za chunk
 - Ważność: S4 · Zasięg: nabrzeze x=2500 i z=270, podzamcze z=370 (np. 2500,295.25; 2544,269.88; 795.5,369.88)
@@ -1878,6 +1879,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (14.11, pomiar ładowania wstępnego)
 - Pakiet właściciela: packages/engine (renderer)
 - Test przyjęcia: zmiana dzielnicy bez klatki > 100 ms w raporcie hitch-report
+
+### G-794 Linie pasa wchodzą w skrzyżowanie i przecinają linię zatrzymania
+- Ważność: S4 · Zasięg: Krakowskie (-109,8; 115) lane-dash 3 Maja ok. 4,5 m w pas Radziwiłłowskiej; Podzamcze (741–745; 356–361) lane-dash za linią zatrzymania do zebry
+- Opis: linie pasa biegną do węzła OSM zamiast kończyć się na krawędzi skrzyżowania albo przed linią zatrzymania (P-12); stan sprzed G-782; proponowana kontrola: lane-dash/edge przecinające stop tej samej jezdni albo wchodzące > 1 m w cudzą jezdnię w obrębie węzła
+- Status: zgłoszone (14.11, kurator, przegląd G-782), do audytu dróg
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola skanu bez kluczy w tych miejscach
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
