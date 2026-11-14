@@ -1,5 +1,6 @@
 import { type Camera, CameraClass, GeometryBufferRenderer, PostProcess, type Scene, ShaderStore, Vector3 } from "../babylon";
-import { CONTACT_BLUR_FRAGMENT, type ContactShade, contactOcclusionFragment, halfTangents } from "./contact-shade";
+import { CONTACT_BLUR_FRAGMENT, CONTACT_OCCLUSION_FRAGMENT, type ContactShade, halfTangents } from "./contact-shade";
+import { normalDefines } from "./gbuffer-formats";
 
 /**
  * The two passes in front of the line art (graphics backlog 13.11, step 2): occlusion from the
@@ -21,14 +22,24 @@ export class ContactShadePass {
     active: () => boolean,
     encodedNormals: boolean,
   ) {
-    const occlusion = encodedNormals ? "seekiContactOcclusionEnc" : "seekiContactOcclusion";
-    ShaderStore.ShadersStore[`${occlusion}FragmentShader`] = contactOcclusionFragment(encodedNormals);
+    ShaderStore.ShadersStore["seekiContactOcclusionFragmentShader"] = CONTACT_OCCLUSION_FRAGMENT;
     ShaderStore.ShadersStore["seekiContactBlurFragmentShader"] = CONTACT_BLUR_FRAGMENT;
     const engine = scene.getEngine();
     const depth = (): ReturnType<GeometryBufferRenderer["getGBuffer"]>["textures"][number] | null =>
       gbuffer.getGBuffer().textures[gbuffer.getTextureIndex(GeometryBufferRenderer.DEPTH_TEXTURE_TYPE)] ?? null;
     // Full-resolution input (the scene renders into it), so ratio 1; it draws into the blur's half-size input.
-    this.colourSource = new PostProcess("contact-occlusion", occlusion, ["shadeParams", "tanHalf", "upView"], ["depthSampler", "normalSampler"], 1, camera);
+    this.colourSource = new PostProcess(
+      "contact-occlusion",
+      "seekiContactOcclusion",
+      ["shadeParams", "tanHalf", "upView"],
+      ["depthSampler", "normalSampler"],
+      1,
+      camera,
+      undefined,
+      undefined,
+      undefined,
+      normalDefines(encodedNormals),
+    );
     this.colourSource.onApply = (effect) => {
       const w = engine.getRenderWidth();
       const h = engine.getRenderHeight();
@@ -46,5 +57,22 @@ export class ContactShadePass {
       effect.setTexture("depthSampler", depth());
       effect.setFloat2("texel", 2 / engine.getRenderWidth(), 2 / engine.getRenderHeight());
     };
+  }
+
+  /** Both passes off the camera (the player's setting, graphics toggles 14.11); their slots stay empty. */
+  detach(camera: Camera): void {
+    camera.detachPostProcess(this.colourSource);
+    camera.detachPostProcess(this.blur);
+  }
+
+  /** Both passes back right in front of `before` (the line art), in their order. */
+  attach(camera: Camera, before: PostProcess): void {
+    const chain = camera._postProcesses;
+    const at = chain.indexOf(before);
+    if (at < 0) return;
+    // Their own empty slots when nothing moved in between, so the chain does not grow.
+    const free = at >= 2 && chain[at - 2] === null && chain[at - 1] === null;
+    camera.attachPostProcess(this.colourSource, free ? at - 2 : at);
+    camera.attachPostProcess(this.blur, free ? at - 1 : at + 1);
   }
 }

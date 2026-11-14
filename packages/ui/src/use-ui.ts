@@ -5,6 +5,7 @@ import type {
   CharacterIntents,
   ContractIntents,
   DifficultyIntents,
+  GraphicsIntents,
   JournalIntents,
   DialogueIntents,
   HackIntents,
@@ -43,6 +44,7 @@ export const useProgressionIntents = (): ProgressionIntents => useUiContext().in
 export const useSettingsIntents = (): SettingsIntents => useUiContext().intents;
 export const useDifficultyIntents = (): DifficultyIntents => useUiContext().intents;
 export const useCameraIntents = (): CameraIntents => useUiContext().intents;
+export const useGraphicsIntents = (): GraphicsIntents => useUiContext().intents;
 export const usePhoneIntents = (): PhoneIntents => useUiContext().intents;
 export const useContractIntents = (): ContractIntents => useUiContext().intents;
 export const useJournalIntents = (): JournalIntents => useUiContext().intents;

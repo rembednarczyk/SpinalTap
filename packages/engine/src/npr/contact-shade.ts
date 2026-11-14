@@ -1,4 +1,4 @@
-import { normalDecodeGlsl } from "./gbuffer-formats";
+import { NORMAL_DECODE_GLSL } from "./gbuffer-formats";
 
 /**
  * Contact shade in the cel style (graphics backlog 13.11, step 2): corners, the feet of walls,
@@ -92,15 +92,15 @@ float contactOcclusion(vec2 uv, float d, vec3 n) {
 
 /**
  * Pass 1 (full-resolution input, half-resolution output): the raw share of occluding samples.
- * With `encodedNormals` the normals are stored as n * 0.5 + 0.5 (RGB10_A2).
+ * With `ENCODED_NORMALS` defined the normals are stored as n * 0.5 + 0.5 (RGB10_A2).
  */
-export const contactOcclusionFragment = (encodedNormals: boolean): string => /* glsl */ `
+export const CONTACT_OCCLUSION_FRAGMENT = /* glsl */ `
 precision highp float;
 varying vec2 vUV;
 uniform sampler2D depthSampler;
 uniform sampler2D normalSampler;
 float depthAt(vec2 uv) { return texture2D(depthSampler, uv).r; }
-${normalDecodeGlsl(encodedNormals)}
+${NORMAL_DECODE_GLSL}
 ${CONTACT_SHADE_GLSL}
 void main(void) {
   float d = depthAt(vUV);

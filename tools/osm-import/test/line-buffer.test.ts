@@ -184,6 +184,20 @@ describe("bands along lines on Clipper2 (ADR-0078, step 2)", () => {
     expect(over).toEqual([]);
   });
 
+  it("lays no round end over the way it meets on a square whose ring runs clockwise (G-782)", () => {
+    // Two streets turning a corner on a square mapped clockwise: the square covers the corner, and
+    // its ring must not cancel the streets on it, leaving a hole a round end is then laid in.
+    const a = line("w1", { highway: "residential", sidewalk: "no" }, [[-30, 0], [0, 0]]);
+    const b = line("w2", { highway: "residential", sidewalk: "no" }, [[0, 0], [0, 30]]);
+    const joined = joinedPoints([a, b]);
+    const streets = [...lineBands(a, false, [], false, joined), ...lineBands(b, false, [], false, joined)];
+    for (const xs of [[[-10, -10], [-10, 10], [10, 10], [10, -10]], [[-10, -10], [10, -10], [10, 10], [-10, 10]]] as const) {
+      const square = { surface: "square", ring: pts(xs), bridge: false, source: "a1" };
+      const bands = [square, ...streets];
+      expect(roundJoints(bands).map((x) => x.ring)).toEqual(bands.map((x) => x.ring));
+    }
+  });
+
   it("lays a sidewalk's inner edge on its carriageway's edge round a bend, with no gap", () => {
     const axis = pts([[0, 0], [30, 0], [50, 15]]);
     const road = bufferBand(axis, 6);

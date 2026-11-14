@@ -214,7 +214,9 @@ export const roundJoints = <B extends JointBand>(bands: readonly B[], patch?: Pa
     const r = ringBounds(bands[i]!.ring);
     grid.insert(i, r.minX, r.minZ, r.maxX, r.maxZ);
   }
-  const rings = new Map<number, Paths64>(all.map((i) => [i, [toPath(bands[i]!.ring)]]));
+  // Each ring counter-clockwise: an area's ring may come clockwise, and with NonZero it would cancel
+  // the bands it lies on (a square under two streets' corner), leaving a hole a round end is laid in (G-782).
+  const rings = new Map<number, Paths64>(all.map((i) => [i, [toPath(ccw(bands[i]!.ring))]]));
   const ends = new Map<string, { i: number; end: RoundEnd }[]>();
   for (const i of all.filter((k) => !bands[k]!.bridge)) {
     for (const end of bands[i]!.roundEnds ?? []) {

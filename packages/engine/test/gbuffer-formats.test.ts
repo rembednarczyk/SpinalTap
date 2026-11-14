@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { Constants } from "../src/babylon";
-import { contactOcclusionFragment } from "../src/npr/contact-shade";
-import { GB_FORMAT, GB_TYPE, type GBufferCaps, gbufferBytes, gbufferFormats, normalDecodeGlsl } from "../src/npr/gbuffer-formats";
-import { lineArtFragment } from "../src/npr/line-art";
+import { CONTACT_OCCLUSION_FRAGMENT } from "../src/npr/contact-shade";
+import { GB_FORMAT, GB_TYPE, type GBufferCaps, NORMAL_DECODE_GLSL, gbufferBytes, gbufferFormats, normalDefines } from "../src/npr/gbuffer-formats";
+import { LINE_ART_FRAGMENT } from "../src/npr/line-art";
 
 const DESKTOP: GBufferCaps = {
   webGLVersion: 2,
@@ -64,8 +64,9 @@ const store = (n: readonly [number, number, number]): [number, number, number] =
 
 describe("normal encoding", () => {
   it("decodes n * 0.5 + 0.5 back to the signed normal within the crease test's step", () => {
-    expect(normalDecodeGlsl(true)).toContain("t.xyz * 2.0 - 1.0");
-    expect(normalDecodeGlsl(false)).not.toContain("* 2.0 - 1.0");
+    expect(NORMAL_DECODE_GLSL).toMatch(/#ifdef ENCODED_NORMALS\s+return normalize\(t\.xyz \* 2\.0 - 1\.0 \+ 1e-5\);\s+#else\s+return normalize\(t\.xyz \+ 1e-5\);/);
+    expect(normalDefines(true)).toBe("#define ENCODED_NORMALS");
+    expect(normalDefines(false)).toBe("");
     for (const n of [
       [0, 1, 0],
       [0, 0, -1],
@@ -80,13 +81,11 @@ describe("normal encoding", () => {
   });
 
   it("decodes in both shaders that read normals", () => {
-    for (const encoded of [false, true]) {
-      const expected = normalDecodeGlsl(encoded).trim();
-      expect(lineArtFragment(false, encoded)).toContain(expected);
-      expect(lineArtFragment(true, encoded)).toContain(expected);
-      expect(contactOcclusionFragment(encoded)).toContain(expected);
+    for (const shader of [LINE_ART_FRAGMENT, CONTACT_OCCLUSION_FRAGMENT]) {
+      expect(shader).toContain(NORMAL_DECODE_GLSL.trim());
+      expect(shader).not.toMatch(/normalize\(texture2D\(normalSampler/);
     }
-    expect(lineArtFragment(true, true)).toContain("decodeNormal(texture2D(normalSampler, uv))");
-    expect(contactOcclusionFragment(true)).toContain("decodeNormal(texture2D(normalSampler, vUV))");
+    expect(LINE_ART_FRAGMENT).toContain("decodeNormal(texture2D(normalSampler, uv))");
+    expect(CONTACT_OCCLUSION_FRAGMENT).toContain("decodeNormal(texture2D(normalSampler, vUV))");
   });
 });

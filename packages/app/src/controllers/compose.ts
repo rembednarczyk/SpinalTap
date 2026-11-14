@@ -21,6 +21,7 @@ import { autosaveView } from "../presenters/autosave";
 import { AutosaveController } from "./autosave-controller";
 import { SaveController } from "./save-controller";
 import { SettingsController } from "./settings-controller";
+import { GraphicsEffectsController } from "./graphics-effects-controller";
 import { type Focus, type SimRef, focusOf, pushToastTimed } from "./shared";
 import { ShopController } from "./shop-controller";
 import { TakedownController } from "./takedown-controller";
@@ -51,6 +52,7 @@ export interface Controllers {
   readonly loot: LootController;
   readonly character: CharacterMenuController;
   readonly settings: SettingsController;
+  readonly graphics: GraphicsEffectsController;
   readonly phone: PhoneController;
   readonly hack: HackController;
   readonly saves: SaveController;
@@ -151,6 +153,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   // Playing, and no conversation, shop, bag or kiosk on screen.
   free = () => s.screen() === "playing" && !dialogue.isOpen && !shop.isOpen && !loot.isOpen && !metro?.isOpen && !metro?.riding;
   const settings = new SettingsController(ui, deps.settings);
+  const graphics = new GraphicsEffectsController(ui, settings, render);
   const travel = createTravel(deps, s, lines, focus, settings, wave1, () => free());
   metro = travel.metro;
   const hack = new HackController({ sim, ui, audio, focus, inControl: s.inControl });
@@ -199,5 +202,5 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   const facts = () => ({ fighting: hud.inCombat, airborne: airborne() });
   const canOpenWait = () => free() && !character.isOpen && !hack.breachOpen && !phone.isOpen;
   const wait: WaitController = new WaitController({ sim, ui, audio, focus, screen: s.screen, setScreen: s.setScreen, canOpen: canOpenWait, facts, syncHud: () => hud.frame() });
-  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, autosave, wave1, hud, wave2, takedown, carry, difficulty, progression, wait, ...travel };
+  return { focus, hints, dialogue, shop, loot, character, settings, graphics, phone, hack, saves, autosave, wave1, hud, wave2, takedown, carry, difficulty, progression, wait, ...travel };
 };

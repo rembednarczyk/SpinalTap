@@ -67,6 +67,20 @@ describe("empty full-screen passes stay out of the chain (frame profile 14.11)",
     expect(grading.chromaticDrawing).toBe(false);
   });
 
+  it("takes the aberration out again after the player's bloom setting rebuilt the pipeline", () => {
+    const scene = new Scene(new NullEngine());
+    const camera = new FreeCamera("cam", new Vector3(0, 1.6, 0), scene);
+    new PostProcess("line-art", "pass", [], [], 1, camera);
+    const grading = new Grading(scene, camera, { reference: false, sharpen: 0.25, bloom: 0.55 });
+    expect(grading.setBloom(false)).toBe(true);
+    expect(grading.chromaticDrawing).toBe(false);
+    grading.glitch();
+    grading.update(0.1);
+    expect(grading.chromaticDrawing).toBe(true);
+    expect(grading.setBloom(true)).toBe(true);
+    expect(grading.chromaticDrawing).toBe(true);
+  });
+
   it("draws speed lines from a dash until they fade, in front of the grading", () => {
     const { camera, speed } = chain();
     speed.pulse(1);

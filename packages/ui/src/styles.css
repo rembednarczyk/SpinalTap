@@ -633,6 +633,9 @@ kbd {
 }
 .settings__option--on { color: var(--ink); border-color: var(--cyan); background: rgba(95, 242, 255, 0.14); }
 .settings__note { font-size: 14px; color: var(--amber); }
+.settings__hint { margin: -4px 0 0; font-size: 13px; color: var(--ink-dim); }
+.settings__row--off .settings__label { opacity: 0.5; }
+.settings__option:disabled { opacity: 0.4; cursor: default; }
 .settings__tabs { display: flex; gap: 6px; flex-wrap: wrap; }
 .keys { display: flex; flex-direction: column; gap: 8px; }
 .keys__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; max-height: 46vh; overflow-y: auto; pointer-events: auto; }

@@ -71,9 +71,19 @@ export const gbufferBytes = (formats: GBufferFormats, caps: GBufferCaps): number
   targetBytes(formats[DEPTH_INDEX], caps) + targetBytes(formats[NORMAL_INDEX], caps);
 
 /**
- * GLSL `decodeNormal`: the view-space normal from the stored one. With `encoded` the buffer holds
- * n * 0.5 + 0.5; the small offset keeps an empty (sky) texel from normalising a zero vector.
+ * GLSL `decodeNormal`: the view-space normal from the stored one. With `ENCODED_NORMALS` defined
+ * the buffer holds n * 0.5 + 0.5; the small offset keeps an empty (sky) texel from normalising a
+ * zero vector. A define, so the passes keep one shader text each.
  */
-export const normalDecodeGlsl = (encoded: boolean): string => /* glsl */ `
-vec3 decodeNormal(vec4 t) { return normalize(${encoded ? "t.xyz * 2.0 - 1.0" : "t.xyz"} + 1e-5); }
+export const NORMAL_DECODE_GLSL = /* glsl */ `
+vec3 decodeNormal(vec4 t) {
+#ifdef ENCODED_NORMALS
+  return normalize(t.xyz * 2.0 - 1.0 + 1e-5);
+#else
+  return normalize(t.xyz + 1e-5);
+#endif
+}
 `;
+
+/** The define `NORMAL_DECODE_GLSL` needs for the geometry buffer's normals. */
+export const normalDefines = (encoded: boolean): string => (encoded ? "#define ENCODED_NORMALS" : "");

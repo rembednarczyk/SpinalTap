@@ -116,6 +116,13 @@ export class GameplayPost {
     this.setActive(active);
   }
 
+  /** Back to the end of the chain, after the grade that a rebuilt pipeline put behind it. */
+  moveToEnd(): void {
+    if (!this.attached) return;
+    this.camera.detachPostProcess(this.postProcess);
+    this.camera.attachPostProcess(this.postProcess);
+  }
+
   private setActive(on: boolean): void {
     if (on === this.attached) return;
     this.attached = on;

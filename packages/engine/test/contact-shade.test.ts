@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONTACT_BLUR_FRAGMENT, CONTACT_SHADE, CONTACT_SHADE_GLSL, contactOcclusionFragment, halfTangents } from "../src/npr/contact-shade";
+import { CONTACT_BLUR_FRAGMENT, CONTACT_OCCLUSION_FRAGMENT, CONTACT_SHADE, CONTACT_SHADE_GLSL, halfTangents } from "../src/npr/contact-shade";
 import { QUALITY_TIERS } from "../src/npr/quality";
 
 describe("contact shade (graphics backlog 13.11, step 2)", () => {
@@ -27,7 +27,7 @@ describe("contact shade (graphics backlog 13.11, step 2)", () => {
   it("counts occluding samples in its own pass and blurs them along one surface", () => {
     expect(CONTACT_SHADE_GLSL).toContain("i < 12");
     expect(CONTACT_SHADE_GLSL).not.toMatch(/\btime\b/);
-    for (const encoded of [false, true]) expect(contactOcclusionFragment(encoded)).toContain("contactOcclusion(vUV, d, n)");
+    expect(CONTACT_OCCLUSION_FRAGMENT).toContain("contactOcclusion(vUV, d, n)");
     // The blur weighs neighbours by the depth difference, so the shade does not cross a silhouette.
     expect(CONTACT_BLUR_FRAGMENT).toContain("abs(sd - d)");
   });
