@@ -108,6 +108,7 @@ import { belowGround } from "../../osm-import/src/building-tags.ts";
 import { isTowerTags } from "../../osm-import/src/building-towers.ts";
 import { ADDED_AREAS, TAG_CORRECTIONS, correctedLine } from "../../osm-import/src/corrections.ts";
 import { withoutReplaced } from "../../osm-import/src/corrections-alchemia.ts";
+import { orthoSides } from "../../osm-import/src/corrections-kerb.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
@@ -1967,8 +1968,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A street narrowed to its mapped sidewalks (G-082) although they run along less than half of it
    * on either side (G-112): the width came from where a sidewalk turns in to a junction's crossing.
+   * A width measured on the orthophoto (ADR-0080 PR 10) is no fit to the sidewalks.
    */
-  "kerb-fit-sparse": () => FITTED().flatMap((r) => (r.cover * 2 < 1 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m, sidewalks along ${(r.cover * 100).toFixed(0)} %` }] : [])),
+  "kerb-fit-sparse": () => FITTED().flatMap((r) => (r.cover * 2 < 1 && !orthoSides(r.id) ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m, sidewalks along ${(r.cover * 100).toFixed(0)} %` }] : [])),
   /** A two-way street (no `oneway`) narrowed to its mapped sidewalks below two 2.25 m lanes (G-113). */
   "two-way-fit-narrow": () => FITTED().flatMap((r) => (!r.oneway && r.width < 4.4 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m` }] : [])),
   /** A venue's board (ADR-0064 stage 4) reaching into the building next door, which stands out in front of its wall (G-159). */
