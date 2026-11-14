@@ -52,6 +52,22 @@ describe("weapon, loot and trade cues (E12)", () => {
     expect(cues).toEqual(["reload", "reload-round", "reload-round"]);
   });
 
+  it("every weapon kind fires its own recorded shot; others are heard from further away", () => {
+    const { bus, cues } = setup();
+    const at = { x: 0, y: 1, z: 0 };
+    for (const look of ["pistol", "revolver", "smg", "shotgun", "rifle"] as const) {
+      bus.emit("ShotFired", { shooterId: PLAYER, from: at, to: at, hitEntity: null, look });
+      bus.emit("ShotFired", { shooterId: NPC, from: at, to: at, hitEntity: null, look });
+    }
+    expect(cues).toEqual([
+      "shot", "enemy-shot",
+      "shot-revolver", "enemy-shot",
+      "shot-smg", "enemy-shot",
+      "shot-shotgun", "enemy-shot-shotgun",
+      "shot-rifle", "enemy-shot-rifle",
+    ]);
+  });
+
   it("other people's reloads and weapon changes stay silent; an empty take too", () => {
     const { bus, cues } = setup();
     bus.emit("ReloadStarted", { entityId: NPC, duration: 2, perRound: false });

@@ -406,7 +406,14 @@ export interface AppearanceDescriptor {
 
 export type AudioCue =
   | "shot"
+  // The player's shot per weapon kind; "shot" stays the pistol's (recorded sounds, 14.11).
+  | "shot-revolver"
+  | "shot-smg"
+  | "shot-shotgun"
+  | "shot-rifle"
   | "enemy-shot"
+  | "enemy-shot-shotgun"
+  | "enemy-shot-rifle"
   | "hit"
   | "critical"
   | "hurt"
