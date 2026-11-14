@@ -1912,13 +1912,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine/src/npr (moon-shadow, shadow-fit, toon-shader)
 - Test przyjęcia: cienka bryła (przewód 1-2 cm) rzuca w mapie cienia ciągły ślad na ziemi także przy kwadracie 56 m (udział zacienionych pikseli wzdłuż śladu ≥ 80%)
 
-### G-801 Raport ortofoto liczy meble z wyciągu OSM jako postawione regułami
-- Ważność: S4 · Zasięg: raporty komórek orto, całe miasto
-- Opis: tools/orto/src/furniture.ts osmPlanPoints czyta sam plan docs/world/lublin-props.todo.json, a grupy osm.furniture.* z props-osm.ts nie mają inOsm. furnitureCounts (report.ts:55) zalicza 68 obiektów z pasa z < −200 do reguł generatora, nie do OSM.
-- Status: w PR #552; wcześniej: zgłoszone (przegląd kuratora 14.11)
-- Pakiet właściciela: tools/orto, tools/osm-import
-- Test przyjęcia: furnitureCounts dla krakowskie-0-0 i krakowskie-1-0 liczy obiekty z grup osm.furniture.* jako z OSM: osmPlanPoints bierze loadPropsPlan(), a osmFurnitureItems ustawia inOsm: true
-
 ### G-802 Staszica: chodniki OSM pod zmierzonym asfaltem po szerokościach z ortofoto (gałąź ADR-0080 PR 10)
 - Ważność: S2 · Zasięg: Staszica i ulice, gdzie chodnik OSM leży bliżej osi niż krawężnik na ortofoto; sidewalk-under-carriageway 29 -> 34
 - Opis: Gałąź ccr-ec2c4269-ilh8k8-adr80-pr10: zmierzona jezdnia 8,3 m przykrywa oba chodniki (w1261814240 bliżej osi niż krawężnik). Wg odpowiedzi użytkownika 13.11 pierwszeństwo ma ortofoto, więc chodnik powinien przesunąć się na krawężnik, co jest zakresem ADR-0080 PR 7; do tego czasu takie ulice zostają w HELD.
