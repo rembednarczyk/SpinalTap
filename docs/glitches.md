@@ -1810,9 +1810,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-772 Mediany barw z ortofoto liczone z pustego kafla 2024-06/stare-miasto-0-1
 - Ważność: S4 · Zasięg: albedo-medians.json (ALBEDO_FLIGHTS 2025-04, 2024-06), stare-miasto-0-1
 - Opis: albedo-report.ts nie pomija pustych nalotów (isBlank z G-771), biały kafel wchodzi do median barw; przeliczenie zmienia wygląd
-- Status: zgłoszone (13.11, naprawiacz G-771)
+- Status: w PR (14.11, gałąź ccr-ec2c4269-ilh8k8-g772, 9754068); wcześniej: zgłoszone (13.11, naprawiacz G-771)
 - Pakiet właściciela: tools/orto
 - Test przyjęcia: albedo-report pomija nalot z isBlank; mediany bez kafla 2024-06/SM-0-1
+- albedo-medians przeliczone; 2024-06 cobble do trawy 1,586→1,502; 2025-04 bez zmian od poprawki; renderer nie czyta pliku, wygląd bez zmian; plik nie jest pilnowany wobec pokryć (był nieaktualny już na main)
 
 ### G-774 Raster cover poszerza trawniki na sąsiedni bruk (wygładzanie 1,5 m) i klasyfikuje zielonkawy bruk jako green
 - Ważność: S4 · Zasięg: całe miasto; np. pierścień skweru Podzamcze (1045, 424), pętle w1343050082, w154012559, w515648305
