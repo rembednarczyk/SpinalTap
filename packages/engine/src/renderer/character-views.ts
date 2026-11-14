@@ -12,6 +12,7 @@ import { type CharacterRig, animateRig, buildCivilian, buildCorpo, buildFixer, b
 import { markEnforcer } from "./enforcer-mark";
 import { easeLift, groundLift } from "./ground-lift";
 import type { LadderRungs } from "./ladder-hands";
+import { modelBytesOf } from "./model-bytes";
 import { type CharacterModelManifest, ModelLibrary } from "./model-library";
 import { type CharacterDescriptor, type ModelChoice, modelChoiceOf } from "./model-cast";
 import { type WallProbe, layBody, placeLaid } from "./body-lay";
@@ -126,7 +127,7 @@ export class CharacterViews implements FxActors {
   private readonly library: ModelLibrary;
 
   constructor(private readonly deps: CharacterViewsDeps) {
-    const library = new ModelLibrary(deps.scene, deps.materials);
+    const library = new ModelLibrary(deps.scene, deps.materials, modelBytesOf(deps.scene.getEngine()));
     this.library = library;
     this.kit = new CharacterKit({ ...deps, library });
     this.models = new CharacterModels({ library, loadouts: this.kit.loadouts, addCaster: (m) => deps.shadow.addCaster(m), scene: deps.scene, materials: deps.materials, ...(deps.modelFiles !== undefined ? { modelFiles: deps.modelFiles } : {}) });
