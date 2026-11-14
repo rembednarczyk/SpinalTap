@@ -46,66 +46,95 @@ const check = async (page: Page, w: number, h: number) => {
   expect(clashes).toEqual([]);
 };
 
-for (const [w, h] of [
-  [800, 370],
-  [667, 375],
-] as const) {
-  test.describe(`phone ${w}x${h}`, () => {
-    test.use({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+/**
+ * Every size of a case runs in one page, the viewport set to each in turn (ADR-0046): the HUD
+ * and the pad lay out by the window, and a start per size was nearly all of this spec's time
+ * under SwiftShader. Each size gets the same checks it had in a page of its own.
+ */
+const resize = (page: Page, w: number, h: number) => page.setViewportSize({ width: w, height: h });
 
-    test(`nothing overlaps at ${w}x${h}`, async ({ page }) => {
-      test.setTimeout(180_000);
-      await page.goto("/?seed=7&models=off&audio=off&touch");
-      await waitForGame(page);
-      // The loading screen (ADR-0057) is measured by the page the moment it shows: its heading,
-      // bar and stage on screen and apart, whatever time the loading takes.
-      await page.evaluate(() => {
-        const w = window as unknown as { __loadingBoxes: { name: string; x: number; y: number; width: number; height: number }[] | null };
-        w.__loadingBoxes = null;
-        const seen = new MutationObserver(() => {
-          const screen = document.querySelector("[data-testid=loading-screen]");
-          if (!screen) return;
-          seen.disconnect();
-          w.__loadingBoxes = [".screen__heading", ".loading__bar", ".loading__stage"].map((sel) => {
-            const r = screen.querySelector(sel)!.getBoundingClientRect();
-            return { name: `loading:${sel}`, x: r.x, y: r.y, width: r.width, height: r.height };
-          });
-        });
-        seen.observe(document.body, { childList: true, subtree: true });
+/**
+ * The loading screen (ADR-0057) is measured by the page the moment it shows: its heading, bar
+ * and stage, whatever time the loading takes. `loadingFits` reads them after the start.
+ */
+const watchLoading = (page: Page) =>
+  page.evaluate(() => {
+    const w = window as unknown as { __loadingBoxes: { name: string; x: number; y: number; width: number; height: number }[] | null };
+    w.__loadingBoxes = null;
+    const seen = new MutationObserver(() => {
+      const screen = document.querySelector("[data-testid=loading-screen]");
+      if (!screen) return;
+      seen.disconnect();
+      w.__loadingBoxes = [".screen__heading", ".loading__bar", ".loading__stage"].map((sel) => {
+        const r = screen.querySelector(sel)!.getBoundingClientRect();
+        return { name: `loading:${sel}`, x: r.x, y: r.y, width: r.width, height: r.height };
       });
-      await newGame(page, "tap");
-      await waitForPlay(page);
-      const loading = await page.evaluate(() => (window as unknown as { __loadingBoxes: Box[] | null }).__loadingBoxes);
-      expect(loading).not.toBeNull();
-      for (const b of loading!) expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= w + 0.5 && b.y + b.height <= h + 0.5 && b.width > 0, `${b.name} on screen`).toBe(true);
-      for (let i = 1; i < loading!.length; i++) expect(overlap(loading![i - 1]!, loading![i]!), `${loading![i]!.name} apart`).toBe(false);
-      await freeze(page);
-      // A new game wakes in the clinic (ADR-0038); the bare layout is checked out on the deptak
-      // in front of the clinic (ADR-0045).
-      await teleport(page, 321.4, -80);
-      await step(page, 1);
-      await expect(page.getByTestId("touch-controls")).toBeVisible();
-      // No key hints on a touch screen.
-      await expect(page.getByTestId("objective")).not.toContainText("[E]");
-      await expect(page.getByTestId("touch-use")).toHaveCount(0);
-      await check(page, w, h);
-      // The character menu replaces the pad; its box is where the canvas draws the 3D preview.
-      await page.getByRole("button", { name: "Character" }).tap();
-      await expect(page.getByTestId("character-screen")).toBeVisible();
-      await expect(page.getByTestId("touch-controls")).toBeHidden();
-      const preview = (await page.getByTestId("character-preview").boundingBox())!;
-      expect(preview.width).toBeGreaterThan(100);
-      expect(preview.height).toBeGreaterThan(150);
-      await page.getByRole("button", { name: "Close the character menu" }).tap();
-      await expect(page.getByTestId("touch-controls")).toBeVisible();
-      await page.evaluate(() => window.__seki!.emit("InteractionFocusChanged", { targetId: 1, prompt: "Porozmawiaj z Kaito" }));
-      await expect(page.getByTestId("touch-use")).toContainText("Porozmawiaj z Kaito");
-      await page.getByTestId("touch-more").tap();
-      await expect(page.getByTestId("touch-more-actions")).toBeVisible();
-      await check(page, w, h);
     });
+    seen.observe(document.body, { childList: true, subtree: true });
   });
-}
+
+/** The loading screen's heading, bar and stage were on screen and apart at `w`x`h`. */
+const loadingFits = async (page: Page, w: number, h: number) => {
+  const loading = await page.evaluate(() => (window as unknown as { __loadingBoxes: Box[] | null }).__loadingBoxes);
+  expect(loading, `${w}x${h}: the loading screen shown`).not.toBeNull();
+  for (const b of loading!) expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= w + 0.5 && b.y + b.height <= h + 0.5 && b.width > 0, `${w}x${h}: ${b.name} on screen`).toBe(true);
+  for (let i = 1; i < loading!.length; i++) expect(overlap(loading![i - 1]!, loading![i]!), `${w}x${h}: ${loading![i]!.name} apart`).toBe(false);
+};
+
+/** The bare layout, the character menu over the pad, then "Use" up and the "more" row unfolded. */
+const bareLayout = async (page: Page, w: number, h: number) => {
+  await freeze(page);
+  // A new game wakes in the clinic (ADR-0038); the bare layout is checked out on the deptak
+  // in front of the clinic (ADR-0045).
+  await teleport(page, 321.4, -80);
+  await step(page, 1);
+  await expect(page.getByTestId("touch-controls")).toBeVisible();
+  // No key hints on a touch screen.
+  await expect(page.getByTestId("objective")).not.toContainText("[E]");
+  await expect(page.getByTestId("touch-use")).toHaveCount(0);
+  await check(page, w, h);
+  // The character menu replaces the pad; its box is where the canvas draws the 3D preview.
+  await page.getByRole("button", { name: "Character" }).tap();
+  await expect(page.getByTestId("character-screen")).toBeVisible();
+  await expect(page.getByTestId("touch-controls")).toBeHidden();
+  const preview = (await page.getByTestId("character-preview").boundingBox())!;
+  expect(preview.width).toBeGreaterThan(100);
+  expect(preview.height).toBeGreaterThan(150);
+  await page.getByRole("button", { name: "Close the character menu" }).tap();
+  await expect(page.getByTestId("touch-controls")).toBeVisible();
+  await page.evaluate(() => window.__seki!.emit("InteractionFocusChanged", { targetId: 1, prompt: "Porozmawiaj z Kaito" }));
+  await expect(page.getByTestId("touch-use")).toContainText("Porozmawiaj z Kaito");
+  await page.getByTestId("touch-more").tap();
+  await expect(page.getByTestId("touch-more-actions")).toBeVisible();
+  await check(page, w, h);
+};
+
+test.describe("phone 800x370 and 667x375", () => {
+  test.use({ viewport: { width: 800, height: 370 }, isMobile: true, hasTouch: true });
+
+  test("nothing overlaps at 800x370 and 667x375", async ({ page }) => {
+    test.setTimeout(180_000);
+    await page.goto("/?seed=7&models=off&audio=off&touch");
+    await waitForGame(page);
+    await watchLoading(page);
+    await newGame(page, "tap");
+    await waitForPlay(page);
+    await loadingFits(page, 800, 370);
+    await bareLayout(page, 800, 370);
+    // The second size loads the same game again from its own snapshot: the loading screen shows
+    // at that size, and the pad comes back folded with no "Use" up, as in a page of its own.
+    await resize(page, 667, 375);
+    await watchLoading(page);
+    await page.evaluate(() => {
+      const s = window.__seki!;
+      s.setPaused(false);
+      s.session.restore(s.session.saves.snapshot());
+    });
+    await waitForPlay(page);
+    await loadingFits(page, 667, 375);
+    await bareLayout(page, 667, 375);
+  });
+});
 
 /** What a card on a phone covers of the weapon strip, the move hints, the minimap and the pad's buttons, with the overlap in px. */
 const coveredBy = async (page: Page, card: Box): Promise<string[]> => {
@@ -130,90 +159,95 @@ const coveredBy = async (page: Page, card: Box): Promise<string[]> => {
  * stays off the weapon strip, the move hints (the first-run line and the stick's ring), the
  * minimap and the pad's buttons.
  */
-for (const [w, h] of [
-  [844, 390],
-  [800, 370],
-  [667, 375],
-] as const) {
-  test.describe(`phone ${w}x${h} scan card`, () => {
-    test.use({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+test.describe("phone scan card", () => {
+  test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
 
-    test(`phone: the scan card covers nothing at ${w}x${h}`, async ({ page }) => {
-      test.setTimeout(180_000);
-      await page.goto("/?seed=7&models=off&audio=off&touch");
-      await waitForGame(page);
-      await newGame(page, "tap");
-      await waitForPlay(page);
-      await freeze(page);
-      await teleport(page, 321.4, -80);
-      await page.evaluate(() => window.__seki!.session.intents.changeSettings({ locale: "pl" }));
-      await step(page, 1);
-      await expect(page.getByTestId("hint")).toBeVisible();
-      await page.getByTestId("touch-scan").tap();
-      await step(page, 1);
-      await expect(page.getByTestId("scanner")).toBeVisible();
-      // Every enemy in reach dressed as the longest card: the name, the faction and a level of two digits.
-      const ids = await page.evaluate(() => {
-        const out: number[] = [];
-        for (const e of window.__seki!.session.sim.world as unknown as Iterable<{ id: number; faction?: string; enemy?: { type: string; level?: number } }>) {
-          if (!e.enemy) continue;
-          e.enemy.type = "kagami_cleaner";
-          e.enemy.level = 10;
-          e.faction = "civilians";
-          out.push(e.id);
-        }
-        return out;
-      });
-      expect(ids.length).toBeGreaterThan(0);
-      const covered: string[] = [];
+  test("phone: the scan card covers nothing at 844x390, 800x370 and 667x375", async ({ page }) => {
+    test.setTimeout(180_000);
+    await page.goto("/?seed=7&models=off&audio=off&touch");
+    await waitForGame(page);
+    await newGame(page, "tap");
+    await waitForPlay(page);
+    await freeze(page);
+    await teleport(page, 321.4, -80);
+    await page.evaluate(() => window.__seki!.session.intents.changeSettings({ locale: "pl" }));
+    await step(page, 1);
+    await expect(page.getByTestId("hint")).toBeVisible();
+    await page.getByTestId("touch-scan").tap();
+    await step(page, 1);
+    await expect(page.getByTestId("scanner")).toBeVisible();
+    // Every enemy in reach dressed as the longest card: the name, the faction and a level of two digits.
+    const ids = await page.evaluate(() => {
+      const out: number[] = [];
+      for (const e of window.__seki!.session.sim.world as unknown as Iterable<{ id: number; faction?: string; enemy?: { type: string; level?: number } }>) {
+        if (!e.enemy) continue;
+        e.enemy.type = "kagami_cleaner";
+        e.enemy.level = 10;
+        e.faction = "civilians";
+        out.push(e.id);
+      }
+      return out;
+    });
+    expect(ids.length).toBeGreaterThan(0);
+    const covered: string[] = [];
+    for (const [w, h] of [
+      [844, 390],
+      [800, 370],
+      [667, 375],
+    ] as const) {
+      await resize(page, w, h);
       for (const id of ids) {
         await page.evaluate((targetId) => window.__seki!.emit("ScanFocusChanged", { targetId, kind: "person" }), id);
         await step(page, 1);
         await expect(page.getByTestId("scan-level")).toContainText("Poziom 10");
         await expect(page.getByTestId("hint")).toBeVisible();
         const card = { name: "scan-card", ...(await page.getByTestId("scan-card").boundingBox())! };
-        expect(card.y >= 0 && card.y + card.height <= h + 0.5, `card ${id} on screen`).toBe(true);
+        expect(card.y >= 0 && card.y + card.height <= h + 0.5, `${w}x${h}: card ${id} on screen`).toBe(true);
         // A shorter card, not smaller targets: every hack a 44 px button with its whole name.
         for (const hack of await page.locator("[data-testid=scan-card] .hacks__btn").all()) {
           const b = (await hack.boundingBox())!;
-          expect(Math.min(b.width, b.height), `${await hack.getAttribute("aria-label")} at least 44 px`).toBeGreaterThanOrEqual(43.5);
+          expect(Math.min(b.width, b.height), `${w}x${h}: ${await hack.getAttribute("aria-label")} at least 44 px`).toBeGreaterThanOrEqual(43.5);
         }
-        expect(await page.locator("[data-testid=scan-card] .hacks__title").evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth).map((e) => e.textContent))).toEqual([]);
-        for (const hit of await coveredBy(page, card)) covered.push(`${id} × ${hit}`);
+        expect(await page.locator("[data-testid=scan-card] .hacks__title").evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth).map((e) => e.textContent)), `${w}x${h}: whole hack names`).toEqual([]);
+        for (const hit of await coveredBy(page, card)) covered.push(`${w}x${h} ${id} × ${hit}`);
       }
       if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, `touch-scan-${w}x${h}.png`) });
-      expect(covered).toEqual([]);
-    });
+    }
+    expect(covered).toEqual([]);
   });
-}
+});
 
 /**
  * The Progress tab on a phone held sideways (ADR-0059, stage 7): after a real level up the menu
  * button wears the points, the tab's columns sit side by side on the screen, and every button in
  * it is a 44 px target that spends by tap. The pad and the HUD stay clear while the menu is open.
  */
-for (const [w, h] of [
-  [844, 390],
-  [800, 370],
-] as const) {
-  test.describe(`phone ${w}x${h} progress`, () => {
-    test.use({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+test.describe("phone progress", () => {
+  test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
 
-    test(`phone: the Progress tab fits and spends by tap at ${w}x${h}`, async ({ page }) => {
-      test.setTimeout(180_000);
-      await page.goto("/?seed=7&models=off&audio=off&touch");
-      await waitForGame(page);
-      await newGame(page, "tap");
-      await waitForPlay(page);
-      await freeze(page);
-      await teleport(page, 321.4, -80);
-      await step(page, 1);
-      // The fixer met, the courier down and the pay collected: three levels, six points.
-      await page.evaluate(() => {
-        for (const flag of ["met_fixer", "killed:hebi_courier", "reported_back"]) window.__seki!.session.sim.enqueue({ type: "set-flag", flag } as never);
-      });
-      await step(page, 2);
-      await expect(page.getByTestId("touch-character-points")).toHaveText("6");
+  test("phone: the Progress tab fits and spends by tap at 844x390 and 800x370", async ({ page }) => {
+    test.setTimeout(180_000);
+    await page.goto("/?seed=7&models=off&audio=off&touch");
+    await waitForGame(page);
+    await newGame(page, "tap");
+    await waitForPlay(page);
+    await freeze(page);
+    await teleport(page, 321.4, -80);
+    await step(page, 1);
+    // The fixer met, the courier down and the pay collected: three levels, six points.
+    await page.evaluate(() => {
+      for (const flag of ["met_fixer", "killed:hebi_courier", "reported_back"]) window.__seki!.session.sim.enqueue({ type: "set-flag", flag } as never);
+    });
+    await step(page, 2);
+    await expect(page.getByTestId("touch-character-points")).toHaveText("6");
+    // Each size spends an attribute point and a perk point of the three and three.
+    for (const [round, [w, h]] of (
+      [
+        [844, 390],
+        [800, 370],
+      ] as const
+    ).entries()) {
+      await resize(page, w, h);
       // The HUD with the XP row and the badge: nothing overlaps.
       await check(page, w, h);
       // With points to spend the menu button opens straight on Progress (decision of 6.11).
@@ -222,12 +256,12 @@ for (const [w, h] of [
       await expect(page.getByTestId("touch-controls")).toBeHidden();
       for (const tab of await page.getByRole("tab").all()) {
         const b = (await tab.boundingBox())!;
-        expect(b.x >= -0.5 && b.x + b.width <= w + 0.5 && b.height >= 43.5, `tab ${await tab.textContent()} on screen`).toBe(true);
+        expect(b.x >= -0.5 && b.x + b.width <= w + 0.5 && b.height >= 43.5, `${w}x${h}: tab ${await tab.textContent()} on screen`).toBe(true);
       }
       const left = (await page.locator(".progress__left").boundingBox())!;
       const tree = (await page.locator(".progress__tree").boundingBox())!;
-      for (const b of [left, tree]) expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= w + 0.5 && b.y + b.height <= h + 0.5, "column on screen").toBe(true);
-      expect(overlap({ name: "left", ...left }, { name: "tree", ...tree })).toBe(false);
+      for (const b of [left, tree]) expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= w + 0.5 && b.y + b.height <= h + 0.5, `${w}x${h}: column on screen`).toBe(true);
+      expect(overlap({ name: "left", ...left }, { name: "tree", ...tree }), `${w}x${h}: columns apart`).toBe(false);
       // Every button of the tab is a touch target, inside the screen once scrolled to.
       const buttons = page.getByTestId("progress-tab").getByRole("button");
       expect(await buttons.count()).toBeGreaterThan(5);
@@ -235,24 +269,27 @@ for (const [w, h] of [
         await button.scrollIntoViewIfNeeded();
         const b = (await button.boundingBox())!;
         const name = (await button.getAttribute("aria-label")) ?? "";
-        expect(Math.min(b.width, b.height), `${name} at least 44 px`).toBeGreaterThanOrEqual(43.5);
-        expect(b.x >= -0.5 && b.y >= -0.5 && b.x + b.width <= w + 0.5 && b.y + b.height <= h + 0.5, `${name} on screen`).toBe(true);
+        expect(Math.min(b.width, b.height), `${w}x${h}: ${name} at least 44 px`).toBeGreaterThanOrEqual(43.5);
+        expect(b.x >= -0.5 && b.y >= -0.5 && b.x + b.width <= w + 0.5 && b.y + b.height <= h + 0.5, `${w}x${h}: ${name} on screen`).toBe(true);
       }
-      // A point into Might opens its first tier; a rank bought by tap.
+      // A point into Might (the first opens its first tier); a rank bought by tap.
       await page.getByRole("button", { name: "Raise Might" }).tap();
       await page.getByTestId("attribute-tree-might").tap();
       const buy = page.getByRole("button", { name: "Buy Thick Skin" });
       await buy.scrollIntoViewIfNeeded();
       await buy.tap();
-      await expect(page.getByTestId("perk-might_tough")).toContainText("Rank 1/3");
-      await expect(page.getByTestId("progress-tab-points")).toHaveText("4");
+      await expect(page.getByTestId("perk-might_tough")).toContainText(`Rank ${round + 1}/3`);
+      await expect(page.getByTestId("progress-tab-points")).toHaveText(String(4 - 2 * round));
       // Polish counts the points in its plural forms: 2 attribute points left, then 1.
       await page.evaluate(() => window.__seki!.session.intents.changeSettings({ locale: "pl" }));
-      await expect(page.getByTestId("attribute-points")).toHaveText("2 punkty atrybutów do rozdania");
+      await expect(page.getByTestId("attribute-points")).toHaveText(round === 0 ? "2 punkty atrybutów do rozdania" : "1 punkt atrybutu do rozdania");
       if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, `touch-progress-${w}x${h}.png`) });
-    });
+      await page.evaluate(() => window.__seki!.session.intents.changeSettings({ locale: "en" }));
+      await page.getByRole("button", { name: "Close the character menu" }).tap();
+      await expect(page.getByTestId("touch-controls")).toBeVisible();
+    }
   });
-}
+});
 
 test.describe("phone 844x390 settings", () => {
   test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
@@ -444,41 +481,44 @@ test.describe("phone 800x370 title credit", () => {
  * text stays off the pad's buttons ("Use" up), the stick's ring, the move hint, the weapon strip
  * and the minimap, in English and in Polish; switched to Polish while up, it reads Polish at once.
  */
-for (const [w, h] of [
-  [844, 390],
-  [800, 370],
-  [667, 375],
-] as const) {
-  for (const locale of ["en", "pl"] as const) {
-    test.describe(`phone ${w}x${h} district card ${locale}`, () => {
-      test.use({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+test.describe("phone district card", () => {
+  test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
 
-      test(`phone: the district card covers nothing at ${w}x${h} in ${locale}`, async ({ page }) => {
-        test.setTimeout(180_000);
-        // The card's own 4.5 s could run out on a loaded machine before it is measured: toasts stay up here.
-        await page.addInitScript(() => {
-          const real = window.setTimeout;
-          window.setTimeout = ((fn: TimerHandler, ms?: number, ...args: unknown[]) => (ms === 4500 ? 0 : real(fn, ms, ...args))) as typeof window.setTimeout;
-        });
-        await page.goto("/?seed=7&models=off&audio=off&touch");
-        await waitForGame(page);
-        await newGame(page, "tap");
-        await waitForPlay(page);
-        await freeze(page);
-        await teleport(page, 321.4, -80);
-        const card = page.locator(".toast", { hasText: "Krakowskie Przedmieście" });
-        await expect(card).toContainText("You wake up");
-        if (locale === "pl") await page.evaluate(() => window.__seki!.session.intents.changeSettings({ locale: "pl" }));
+  test("phone: the district card covers nothing at 844x390, 800x370 and 667x375 in en and pl", async ({ page }) => {
+    test.setTimeout(180_000);
+    // The card's own 4.5 s could run out on a loaded machine before it is measured: toasts stay up here.
+    await page.addInitScript(() => {
+      const real = window.setTimeout;
+      window.setTimeout = ((fn: TimerHandler, ms?: number, ...args: unknown[]) => (ms === 4500 ? 0 : real(fn, ms, ...args))) as typeof window.setTimeout;
+    });
+    await page.goto("/?seed=7&models=off&audio=off&touch");
+    await waitForGame(page);
+    await newGame(page, "tap");
+    await waitForPlay(page);
+    await freeze(page);
+    await teleport(page, 321.4, -80);
+    const card = page.locator(".toast", { hasText: "Krakowskie Przedmieście" });
+    await expect(card).toContainText("You wake up");
+    const covered: string[] = [];
+    for (const [w, h] of [
+      [844, 390],
+      [800, 370],
+      [667, 375],
+    ] as const) {
+      await resize(page, w, h);
+      for (const locale of ["en", "pl"] as const) {
+        await page.evaluate((l) => window.__seki!.session.intents.changeSettings({ locale: l }), locale);
         await page.evaluate(() => window.__seki!.emit("InteractionFocusChanged", { targetId: 1, prompt: "Porozmawiaj z Kaito" }));
         await step(page, 1);
         await expect(page.getByTestId("touch-use")).toBeVisible();
         await expect(page.getByTestId("hint")).toBeVisible();
         await expect.soft(card).toContainText(locale === "pl" ? "Budzisz się" : "You wake up");
         const box = { name: "card", ...(await card.boundingBox())! };
-        expect(box.x >= 0 && box.y >= 0 && box.x + box.width <= w + 0.5 && box.y + box.height <= h + 0.5, "card on screen").toBe(true);
+        expect(box.x >= 0 && box.y >= 0 && box.x + box.width <= w + 0.5 && box.y + box.height <= h + 0.5, `${w}x${h} ${locale}: card on screen`).toBe(true);
         if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, `touch-district-${w}x${h}-${locale}.png`) });
-        expect(await coveredBy(page, box)).toEqual([]);
-      });
-    });
-  }
-}
+        for (const hit of await coveredBy(page, box)) covered.push(`${w}x${h} ${locale}: ${hit}`);
+      }
+    }
+    expect(covered).toEqual([]);
+  });
+});
