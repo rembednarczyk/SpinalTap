@@ -59,8 +59,8 @@ const viewsOn = (scene: Scene) =>
 const tick = () => new Promise((ok) => setTimeout(ok, 0));
 
 const settled = async (views: CharacterViews) => {
-  for (let i = 0; i < 4000 && views.loadingCount > 0; i++) await tick();
-  expect(views.loadingCount).toBe(0);
+  for (let i = 0; i < 4000 && views.modelCounts.loading > 0; i++) await tick();
+  expect(views.modelCounts.loading).toBe(0);
 };
 
 const spawnAll = (views: CharacterViews, list: readonly ViewDescriptor[], from = 1) =>
@@ -104,7 +104,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
     // The gangers' looks may borrow: the donors' mori.vrm comes with the scene's files.
     expect([...new Set(fetched)].sort()).toEqual(["base-female.vrm", "civilian.vrm", "ganger.vrm", "kaito.vrm", "mori.vrm", "seki.vrm"]);
     await settled(views);
-    expect(views.dressedCount).toBe(NEW_GAME.length);
+    expect(views.modelCounts.dressed).toBe(NEW_GAME.length);
     // Every file once, though nine characters and their donors asked for them.
     expect(fetched).toHaveLength(new Set(fetched).size);
   });
@@ -115,7 +115,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
     spawnAll(views, NEW_GAME);
     views.setCharacterModels(GAME);
     await settled(views);
-    expect(views.dressedCount).toBe(NEW_GAME.length);
+    expect(views.modelCounts.dressed).toBe(NEW_GAME.length);
     expect(fetched).not.toContain("kurosawa.vrm");
   });
 
@@ -136,7 +136,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
     views.spawn(20, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
     await settled(views);
     expect(fetched.filter((u) => u === "kurosawa.vrm")).toHaveLength(1);
-    expect(views.dressedCount).toBe(3);
+    expect(views.modelCounts.dressed).toBe(3);
   });
 
   it("stands a character whose file is on its way as its rig, then swaps the model in, posed as the rig", async () => {
@@ -150,12 +150,12 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
     for (let i = 0; i < 10; i++) views.update(1 / 30);
     for (let i = 0; i < 50; i++) await tick();
     const rig = views.rigOf(3)!;
-    expect(views.loadingCount).toBe(1);
-    expect(views.dressedCount).toBe(0);
+    expect(views.modelCounts.loading).toBe(1);
+    expect(views.modelCounts.dressed).toBe(0);
     expect(rig.meshes.every((m) => m.isEnabled(false))).toBe(true);
     release("kurosawa.vrm");
     await settled(views);
-    expect(views.dressedCount).toBe(1);
+    expect(views.modelCounts.dressed).toBe(1);
     expect(rig.meshes.some((m) => m.isEnabled(false))).toBe(false);
     const bones = findHumanoidBones(scene.transformNodes.filter((n) => n.name.startsWith("e3-m-")) as TransformNode[], "e3-m-");
     const along = (from: TransformNode, to: TransformNode) => to.getAbsolutePosition().subtract(from.getAbsolutePosition()).normalize();
@@ -233,7 +233,7 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
     await Promise.all(start);
     await prefetch;
     await settled(views);
-    expect(views.dressedCount).toBe(3);
+    expect(views.modelCounts.dressed).toBe(3);
     expect(fetched).toHaveLength(new Set(fetched).size);
   });
 });

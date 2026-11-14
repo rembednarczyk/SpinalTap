@@ -24,8 +24,8 @@ const viewsOn = (scene: Scene) =>
   });
 
 const settled = async (views: CharacterViews) => {
-  for (let i = 0; i < 4000 && views.loadingCount > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
-  expect(views.loadingCount).toBe(0);
+  for (let i = 0; i < 4000 && views.modelCounts.loading > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
+  expect(views.modelCounts.loading).toBe(0);
 };
 
 const meshesOf = (views: CharacterViews, id: EntityId): AbstractMesh[] => {
@@ -56,7 +56,7 @@ describe("Kurosawa's model (ADR-0076 stage 3)", () => {
     views.spawn(2, { kind: "npc", preset: "fixer", cast: "kaito" }, STAND);
     views.spawn(3, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
     await settled(views);
-    expect(views.dressedCount).toBe(2);
+    expect(views.modelCounts.dressed).toBe(2);
     for (const part of ["hair", "skin", "torso", "legs"]) {
       const own = texturesOf(views, 3, part).own;
       expect(own, part).not.toBeNull();
