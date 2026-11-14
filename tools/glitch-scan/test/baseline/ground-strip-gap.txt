@@ -1224,6 +1224,7 @@ stare-miasto-0-0 590,-200
 stare-miasto-0-0 460,-190
 stare-miasto-0-0 470,-190
 stare-miasto-0-0 480,-190
+stare-miasto-0-0 500,-190
 stare-miasto-0-0 460,-180
 stare-miasto-0-0 500,-180
 stare-miasto-0-0 510,-180

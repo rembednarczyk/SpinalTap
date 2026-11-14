@@ -11,7 +11,7 @@ import { COVER_NAMES } from "./classify.ts";
 import { MAP_REGIONS, regionsOf } from "./region.ts";
 import { type CoverEntry, MANIFEST, manifest } from "./manifest.ts";
 import { THRESHOLDS } from "./thresholds.ts";
-import { loadTile } from "./tiles.ts";
+import { loadTile, usableTiles } from "./tiles.ts";
 
 const argv = process.argv.slice(2);
 const cache = argv.includes("--cache") ? argv[argv.indexOf("--cache") + 1]! : defaultCache();
@@ -28,8 +28,11 @@ for (const asked of regionsOf(argv)) {
       if (have.length) console.log(`${cell.id}: ${have.length} of ${FLIGHTS.length} flights cached, left out`);
       continue;
     }
-    classifyRect(cover, have, cell.rect);
-    for (const t of have) tiles.push({ cell: cell.id, flight: t.meta.flight, service: t.meta.service, fetched: t.meta.fetched, ...(t.meta.sheet ? { sheet: t.meta.sheet } : {}) });
+    const used = usableTiles(have);
+    if (used.length < have.length) console.log(`${cell.id}: blank tiles of ${have.filter((t) => !used.includes(t)).map((t) => t.meta.flight).join(", ")} left out (G-771)`);
+    if (!used.length) continue;
+    classifyRect(cover, used, cell.rect);
+    for (const t of used) tiles.push({ cell: cell.id, flight: t.meta.flight, service: t.meta.service, fetched: t.meta.fetched, ...(t.meta.sheet ? { sheet: t.meta.sheet } : {}) });
   }
   if (!tiles.length) {
     console.log(`${region.slug}: no cached tiles`);
@@ -41,7 +44,7 @@ for (const asked of regionsOf(argv)) {
   writeFileSync(f.header, out.header);
   const counts = Object.fromEntries(COVER_NAMES.map((name, k) => [name, cover.cls.reduce((s, v) => s + (v === k ? 1 : 0), 0)]));
   built.set(region.slug, { slug: region.slug, rect: region.rect, bytes: out.png.length, cells: [...new Set(tiles.map((t) => t.cell))], tiles, samples: counts });
-  console.log(`${region.slug}: ${tiles.length / FLIGHTS.length} cells, ${(out.png.length / 1024).toFixed(0)} KiB; ${JSON.stringify(counts)}`);
+  console.log(`${region.slug}: ${new Set(tiles.map((t) => t.cell)).size} cells, ${(out.png.length / 1024).toFixed(0)} KiB; ${JSON.stringify(counts)}`);
 }
 
 // The covers built before and not now keep their entries, as long as their rasters are there.

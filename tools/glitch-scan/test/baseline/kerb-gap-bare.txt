@@ -715,6 +715,7 @@ stare-miasto-0-0 490,-190
 stare-miasto-0-0 500,-190
 stare-miasto-0-0 510,-180
 stare-miasto-0-0 520,-180
+stare-miasto-0-0 530,-180
 stare-miasto-0-0 540,-180
 stare-miasto-0-0 460,-170
 stare-miasto-0-0 460,-150

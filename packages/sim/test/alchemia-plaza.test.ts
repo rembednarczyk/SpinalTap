@@ -4,6 +4,7 @@ import {
   ALCHEMIA_PROPS,
   ALCHEMIA_T1,
   ALCHEMIA_T2,
+  type AlchemiaBox,
   ARKADY,
   ARKADY_ARCADE_FLOOR,
   ARKADY_ARCADE_SPAN,
@@ -26,6 +27,7 @@ import {
   groundY,
 } from "../src";
 import { DEVICES } from "../src/content/devices";
+import { STEP_HEIGHT } from "../src/systems/movement-system";
 import { chunkBuildings } from "../src/content/lublin/city";
 import { SITE_PLANS } from "../src/content/contract-plans";
 import { MAP_CHUNKS, PADS, RAMPS, rawHeight } from "../src/content/lublin/sites";
@@ -95,6 +97,33 @@ describe("T2 and the Arkady (ADR-0074 stage 2)", () => {
       }
     }
     expect(seen).toBeGreaterThan(500);
+  });
+
+  it("steps the pavement and the landing down with Lubartowska, no ledge between them nor onto the ground off them (G-778)", () => {
+    const slabs = ARKADY_PAVEMENT.map((p) => p.box);
+    const meet = (u0: number, u1: number, v0: number, v1: number) => Math.min(u1, v1) - Math.max(u0, v0) > 1e-6;
+    const touch = (p: AlchemiaBox, q: AlchemiaBox) =>
+      ((Math.abs(p.x1 - q.x0) < 1e-6 || Math.abs(q.x1 - p.x0) < 1e-6) && meet(p.z0, p.z1, q.z0, q.z1)) ||
+      ((Math.abs(p.z1 - q.z0) < 1e-6 || Math.abs(q.z1 - p.z0) < 1e-6) && meet(p.x0, p.x1, q.x0, q.x1));
+    let pairs = 0;
+    for (const [i, p] of slabs.entries()) {
+      for (const q of slabs.slice(i + 1).filter((s) => touch(p, s))) {
+        pairs++;
+        expect(Math.abs(p.y1 - q.y1), `${p.x0}..${p.x1} at ${p.y1}, ${q.x0}..${q.x1} at ${q.y1}`).toBeLessThanOrEqual(STEP_HEIGHT);
+      }
+    }
+    expect(pairs).toBeGreaterThan(slabs.length - 2);
+    // Onto the pavement off the map's ground round it (not the building's wall nor the landing, T1's terrace): from the north as from Lubartowska.
+    const on = (a: number, c: number) => slabs.some((b) => a >= b.x0 && a <= b.x1 && c >= b.z0 && c <= b.z1) || (a >= 0 && a <= ARKADY.length && c >= 0 && c <= ARKADY.depth);
+    for (const b of slabs.filter((s) => s.z0 >= ARKADY.depth - 1e-6)) {
+      const rim: [number, number][] = [];
+      for (let a = b.x0; a <= b.x1; a += 0.25) rim.push([a, b.z0 - 0.15], [a, b.z1 + 0.15]);
+      for (let c = b.z0; c <= b.z1; c += 0.25) rim.push([b.x0 - 0.15, c], [b.x1 + 0.15, c]);
+      for (const [a, c] of rim.filter(([a, c]) => !on(a, c))) {
+        const p = arkadyPoint(a, c);
+        expect(b.y1 - groundY(p.x, p.z), `a ${a.toFixed(2)}, c ${c.toFixed(2)}`).toBeLessThanOrEqual(STEP_HEIGHT);
+      }
+    }
   });
 
   it("keeps the arcade's floor level on T2 under its paving, from its first pier to its north end", () => {
