@@ -13,7 +13,7 @@ import { type FurniturePoint, loadFurniture, planKindOf } from "./furniture.ts";
 import { type OsmData, type Tags, mergeOsm, parseExtract } from "./osm.ts";
 import { REPO } from "./paths.ts";
 import type { PlanItem, PropsPlan } from "./props-gen.ts";
-import { type LitWay, isLitWay } from "./props-lit.ts";
+import { type LitWay, isLitWay, withLitRule } from "./props-lit.ts";
 import { geoToWorld } from "./project.ts";
 
 /** The id of the group of an OSM kind. */
@@ -63,5 +63,11 @@ export const loadStreetWays = (root = REPO): LitWay[] => litWaysOf(loadDistricts
 /** The plan as its file has it, before the extract's groups and the `lit` rule. */
 export const loadPlanFile = (root = REPO): PropsPlan => JSON.parse(readFileSync(join(root, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
 
-/** The plan `pnpm osm:props` places: `docs/world/lublin-props.todo.json` with the extract's groups after its own. */
-export const loadPropsPlan = (root = REPO): PropsPlan => withOsmFurniture(loadPlanFile(root), loadFurniture(root));
+/**
+ * The plan `pnpm osm:props` places: `docs/world/lublin-props.todo.json` with the extract's groups
+ * after its own, then the street lamps of the `lit` rule's first pass (`props-lit.ts`, G-798).
+ */
+export const loadPropsPlan = (root = REPO): PropsPlan => {
+  const furniture = loadFurniture(root);
+  return withLitRule(withOsmFurniture(loadPlanFile(root), furniture), loadLitWays(root), furniture).plan;
+};
