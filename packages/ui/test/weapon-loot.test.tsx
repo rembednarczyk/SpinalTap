@@ -26,6 +26,7 @@ const intents = (): UiIntents => ({
   changeSettings: vi.fn(),
   setDifficulty: vi.fn(),
   setFieldOfView: vi.fn(),
+  setGraphicsEffect: vi.fn(),
   bindKey: vi.fn(),
   resetControls: vi.fn(),
   reload: vi.fn(),

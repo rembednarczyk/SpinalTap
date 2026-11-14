@@ -1,5 +1,5 @@
 import type { AttributeId, BreachDaemonId, CyberwareId, CyberwareSlot, DifficultyProfile, EquipSlot, ItemRef, MetroStationId, ModSlot, PerkId, QuickhackSlotInput, ShopItemId } from "@seki/core";
-import type { CharacterTab, RadioStationId, SettingsVm } from "./store/ui-store";
+import type { CharacterTab, GraphicsEffectId, RadioStationId, SettingsVm } from "./store/ui-store";
 
 /** Where the 3D preview of the character screen is drawn, in CSS pixels of the page. */
 export interface PreviewRect {
@@ -112,6 +112,12 @@ export interface CameraIntents {
   setFieldOfView(degrees: number): void;
 }
 
+/** The graphics switches (graphics toggles 14.11): an effect of the High quality on or off, at once. */
+export interface GraphicsIntents {
+  /** Saves the choice; a quality without the effect keeps it off. */
+  setGraphicsEffect(effect: GraphicsEffectId, on: boolean): void;
+}
+
 /** The phone (ADR-0028). */
 export interface PhoneIntents {
   /** The phone (T or the touch button): the inbox with a thread per contact. */
@@ -156,6 +162,7 @@ export type UiIntents = SessionIntents &
   SettingsIntents &
   DifficultyIntents &
   CameraIntents &
+  GraphicsIntents &
   PhoneIntents &
   ContractIntents &
   JournalIntents &

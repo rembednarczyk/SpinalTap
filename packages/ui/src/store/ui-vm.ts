@@ -274,6 +274,10 @@ export type AimAssistMode = "off" | "light" | "standard";
 
 export interface SettingsVm {
   readonly quality: GraphicsQuality;
+  /** Contact shade under objects where the quality has it (High); false switches it off at once. */
+  readonly contactShade: boolean;
+  /** Bloom of signs and lamps where the quality has it (High); false switches it off at once. */
+  readonly bloom: boolean;
   readonly aimMode: AimMode;
   /** Crouch key: held, or pressed once to crouch and again to stand (PC default). */
   readonly crouchMode: AimMode;
@@ -363,6 +367,8 @@ export const hipVerticalFov = (horizontalDegrees: number, aspect: number): numbe
 
 export const DEFAULT_SETTINGS: SettingsVm = {
   quality: "high",
+  contactShade: true,
+  bloom: true,
   aimMode: "hold",
   crouchMode: "toggle",
   sprintMode: "hold",

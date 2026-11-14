@@ -4,6 +4,7 @@ import type {
   ContractIntents,
   DialogueIntents,
   DifficultyIntents,
+  GraphicsIntents,
   HackIntents,
   JournalIntents,
   LootIntents,
@@ -72,6 +73,7 @@ const PROGRESSION: Keys<ProgressionIntents> = { spendAttributePoint: true, spend
 const SETTINGS: Keys<SettingsIntents> = { changeSettings: true, bindKey: true, resetControls: true, reload: true };
 const DIFFICULTY: Keys<DifficultyIntents> = { setDifficulty: true };
 const CAMERA: Keys<CameraIntents> = { setFieldOfView: true };
+const GRAPHICS: Keys<GraphicsIntents> = { setGraphicsEffect: true };
 const PHONE: Keys<PhoneIntents> = { openPhone: true, closePhone: true, readThread: true };
 const CONTRACT: Keys<ContractIntents> = { dismissDebrief: true };
 const HACK: Keys<HackIntents> = { setScan: true, pickQuickhack: true, submitBreach: true };
@@ -93,6 +95,7 @@ export const controllerIntents = (c: Controllers, sim: SimRef): ControllerIntent
   ...part<ProgressionIntents>(c.progression, PROGRESSION),
   ...part<SettingsIntents>(c.settings, SETTINGS),
   ...part<CameraIntents>(c.settings, CAMERA),
+  ...part<GraphicsIntents>(c.graphics, GRAPHICS),
   ...part<DifficultyIntents>(c.difficulty, DIFFICULTY),
   ...part<PhoneIntents>(c.phone, PHONE),
   ...part<ContractIntents>(c.hud, CONTRACT),

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { LOCALES, type Locale } from "@seki/core";
-import type { MessageKey } from "../i18n/en";
 import { type Translate, isMessageKey } from "../i18n/t";
 import { useT } from "../i18n/use-t";
 import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE, SUBTITLE_SCALE_RANGE } from "../store/hud-vm";
@@ -9,9 +8,8 @@ import { TOKENS } from "../hud/tokens";
 import { useSettingsIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
 import { useFieldOfView } from "./use-field-of-view";
-
-/** A choice's values with the catalog keys of their names (ADR-0056). */
-type Options<T extends string> = readonly (readonly [T, MessageKey])[];
+import { GraphicsEffectSwitches } from "./graphics-effects";
+import { Choice, type Options, Toggle } from "./settings-choice";
 
 const QUALITY: Options<GraphicsQuality> = [
   ["high", "settings.quality.high"],
@@ -96,31 +94,6 @@ const FieldOfViewSlider = () => {
   return <Slider id="horizontalFov" label={t("settings.fov")} value={fov.degrees} min={fov.min} max={fov.max} step={1} format={degrees} onChange={fov.set} />;
 };
 
-const Choice = <T extends string>({ label, value, options, onChange }: { label: MessageKey; value: T; options: Options<T>; onChange: (v: T) => void }) => {
-  const t = useT();
-  return (
-    <div className="settings__row">
-      <span className="settings__label">{t(label)}</span>
-      <div className="settings__choice" role="radiogroup" aria-label={t(label)}>
-        {options.map(([v, text]) => (
-          <button key={v} type="button" role="radio" aria-checked={value === v} className={`settings__option${value === v ? " settings__option--on" : ""}`} onClick={() => onChange(v)}>
-            {t(text)}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const ON_OFF: Options<"on" | "off"> = [
-  ["off", "settings.off"],
-  ["on", "settings.on"],
-];
-
-/** A yes-or-no setting as a choice of two. */
-const Toggle = ({ label, on, onChange }: { label: MessageKey; on: boolean; onChange: (on: boolean) => void }) => (
-  <Choice label={label} value={on ? "on" : "off"} options={ON_OFF} onChange={(v) => onChange(v === "on")} />
-);
 
 type Section = "general" | "mouse" | "touch" | "keys" | "access";
 const SECTIONS: Options<Section> = [
@@ -187,6 +160,7 @@ const General = ({ settings, set }: SectionProps) => {
     <>
       <Choice label="settings.language" value={settings.locale} options={LANGUAGES} onChange={(locale) => set({ locale })} />
       <Choice label="settings.quality" value={settings.quality} options={QUALITY} onChange={(quality) => set({ quality })} />
+      <GraphicsEffectSwitches />
       <Slider id="volume" label={t("settings.volume")} value={settings.volume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ volume: v })} />
       <Slider id="musicVolume" label={t("settings.musicVolume")} value={settings.musicVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ musicVolume: v })} />
       <Slider id="sfxVolume" label={t("settings.sfxVolume")} value={settings.sfxVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ sfxVolume: v })} />

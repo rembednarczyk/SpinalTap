@@ -88,6 +88,9 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
   const r = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
   return {
     quality: isQuality(r.quality) ? r.quality : defaults.quality,
+    // Graphics toggles 14.11: new fields, so SETTINGS_REV stays; old entries keep both High effects on.
+    contactShade: bool(r.contactShade, defaults.contactShade),
+    bloom: bool(r.bloom, defaults.bloom),
     aimMode: isAimMode(r.aimMode) ? r.aimMode : defaults.aimMode,
     crouchMode: isAimMode(r.crouchMode) ? r.crouchMode : defaults.crouchMode,
     sprintMode: isAimMode(r.sprintMode) ? r.sprintMode : defaults.sprintMode,
