@@ -13,9 +13,9 @@ type Finding = { readonly at: string; readonly what: string };
 
 /** How far apart the check samples a seam (m), on the world's grid: a sample at every multiple of it. */
 export const SEAM_SAMPLE = 0.25;
-/** The two grids parting by more than this on a seam is a ledge (m): the curator's 0.1 m, over the 0.05 m G-758 asks. */
-export const SEAM_GAP = 0.1;
-/** Below this over `SEAM_GAP` the parting is the floats' (m): the import's heights come in tenths, and -1.9 against -2.0 is 0.10000000000000009 apart. */
+/** The two grids parting by more than this on a seam is a ledge (m): G-758's test of acceptance, under the curator's 0.1 m. */
+export const SEAM_GAP = 0.05;
+/** Below this over `SEAM_GAP` the parting is the floats' (m): -1.95 against -2.0 is 0.050000000000000044 apart. */
 const ROUNDING = 1e-6;
 
 /** What the check reads of the game. */
