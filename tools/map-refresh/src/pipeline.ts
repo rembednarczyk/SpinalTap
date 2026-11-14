@@ -25,9 +25,23 @@ export interface RefreshResult {
   readonly report: Report;
   /** Seconds a step took (the console's, never in the report). */
   readonly seconds: Record<string, number>;
-  /** 0 when every step that ran succeeded, 1 otherwise. */
+  /** The exit code (`exitCodeOf`). */
   readonly code: number;
 }
+
+/** The exit codes of `pnpm map:refresh` (README.md); 3 is an HTTP 429 (`refresh.ts`). */
+export const EXIT = { done: 0, tool: 1, review: 2, rateLimited: 3 } as const;
+
+/**
+ * A report's exit code (pure): `tool` when a step other than a fetch failed (the build, the scan's
+ * run, `twice`: the report cannot be trusted), else `review` when the verdict asks the curator
+ * (a stale source among its reasons), else `done`. Codes 0 and 2 both mean a whole report.
+ */
+export const exitCodeOf = (r: Report): number => {
+  const stale = new Set(r.stale.map((s) => s.step));
+  if (r.steps.some((s) => s.status === "failed" && !stale.has(s.id))) return EXIT.tool;
+  return r.verdict.review ? EXIT.review : EXIT.done;
+};
 
 const HERE = new URL(".", import.meta.url).pathname;
 
@@ -186,5 +200,5 @@ export const refresh = async (o: RefreshOptions): Promise<RefreshResult> => {
   mkdirSync(join(root, OUT_DIR), { recursive: true });
   writeFileSync(join(root, OUT_DIR, "map-refresh.json"), `${JSON.stringify(report, null, 2)}\n`);
   writeFileSync(join(root, OUT_DIR, "map-refresh.md"), renderReport(report));
-  return { report, seconds: run.seconds, code: run.lines.some((l) => l.status === "failed") ? 1 : 0 };
+  return { report, seconds: run.seconds, code: exitCodeOf(report) };
 };

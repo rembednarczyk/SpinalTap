@@ -75,13 +75,26 @@ jobs:
           key: ${{ steps.keys.outputs.gugik }}-
           restore-keys: ${{ steps.keys.outputs.gugik }}-
 
-      # Exit 3 is an HTTP 429: the services asked to stop, and the run does (no retry). A dropped
-      # connection is asked once more; a fetch failed after that leaves its source stale (the repo's
-      # data, named in the report) while the build, the scan and the hashes still run (exit 1).
+      # Exit codes (tools/map-refresh/README.md): 0 a whole report without review, 2 a whole report
+      # that asks the curator (a stale source too: a fetch failed after its one retry, its data are
+      # the repo's, the scan and the hashes ran), 3 an HTTP 429 (stopped, no retry), any other a
+      # failure of the tool. 0 and 2 go on to the pull request; 3 and the others end the job red.
       - name: pnpm map:refresh
+        id: refresh
         env:
           SOURCES: ${{ inputs.sources || 'osm,gugik,orto' }}
-        run: pnpm map:refresh --sources="$SOURCES"
+        run: |
+          set +e
+          pnpm map:refresh --sources="$SOURCES"
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          case "$code" in
+            0) echo "Report whole, verdict: bez przeglądu." ;;
+            2) echo "::warning::Report whole, verdict: przegląd kuratora (reasons at the top of reports/map-refresh.md). The pull request opens with it." ;;
+            3) echo "::error::HTTP 429: a service asked to stop. Nothing asked again and no pull request; the next run tries again."; exit 3 ;;
+            *) echo "::error::map:refresh failed (exit $code): a step other than a fetch failed or the tool broke. No pull request; logs in the artifact map-refresh-report (reports/map-refresh/)."; exit "$code" ;;
+          esac
 
       # The caches' fingerprints after the run: a new entry only when their files changed.
       - name: Cache fingerprints
@@ -116,7 +129,9 @@ jobs:
             reports/map-refresh/
           if-no-files-found: ignore
 
+      # Only after a whole report (exit 0 or 2), whatever its verdict: the title says it.
       - name: Branch and pull request
+        if: steps.refresh.outputs.code == '0' || steps.refresh.outputs.code == '2'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -134,7 +149,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
           git add -- "${paths[@]}"
-          verdict="$(node -p 'JSON.parse(require("fs").readFileSync("reports/map-refresh.json","utf8")).verdict.review ? "przegląd kuratora" : "bez przeglądu"')"
+          # "bez przeglądu" or "przegląd kuratora", with the stale sources named (a fetch that failed).
+          verdict="$(node -p 'const r = JSON.parse(require("fs").readFileSync("reports/map-refresh.json", "utf8")); (r.verdict.review ? "przegląd kuratora" : "bez przeglądu") + (r.stale.length ? ", nieświeże: " + r.stale.map((s) => s.source).join(", ") : "")')"
           git commit -q -m "chore(map): odświeżenie mapy z danych ($verdict)" -m "pnpm map:refresh, przebieg $GITHUB_RUN_ID; raport w opisie PR."
           git push -q origin "$branch"
           # The description's limit is 65 536 characters; the full report is the run's artifact.
