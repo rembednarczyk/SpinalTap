@@ -1779,28 +1779,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systems/traffic, skrzyżowania)
 - Test przyjęcia: sonda ziaren 1–40: 0 kolizji na skrzyżowaniu
 
-### G-759 walk-blocked nie widzi płyt chodnika i podestu Arkad
-- Ważność: S4 · Zasięg: klucze `stare-miasto-0-1 460,100/110/120`, `krakowskie-2-1 450,*`; ok. 500 stromych par po G-748
-- Opis: kontrola z #497 bierze tylko teren, więc obniżenie gruntu pod płytami `arkady.ts` liczy jako uskoki i strome pary
-- Status: w PR (14.11), po G-778; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 038d716): walk-blocked bierze wierzch płyt i brył scen (floorOver), bez budynków mapy i ich pokoi; pary na płytach Arkad 1117 -> 0, pary z dachów budynków 34426 -> 0; klucze skanu 1 -> 1; walk-review B zielony na scaleniu z G-778 (#526); do PR po #526; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 6c4fc01): walk-blocked bierze wierzch płyt i brył scen (floorOver); pary na płytach Arkad 1117 -> 0 (G-758: 262 -> 0); klucze skanu 1 -> 1; czeka na poprawkę uskoków płyt Arkad (walk-review B); wcześniej: zgłoszone (13.11, naprawiacz G-748)
-- Pakiet właściciela: tools/glitch-scan (walk-blocked)
-- Test przyjęcia: `walk-blocked` bez kluczy pod płytami Arkad
-- walk-review B pada z poprawką: łapie prawdziwe uskoki płyt Arkad (G-778); osie along zostają na groundY, bo z floorOver wychodzą bryły Alchemii na chodnikach (krakowskie-2-0 416,-38 i inne). Decyzja nocna (wariant rekomendowany): najpierw naprawa uskoków, potem G-759, bez ruszania testu B.
-- 14.11 (naprawiacz G-778): floorOver traktuje budynek mapy jako podłogę: budynek stare-miasto-0-1 (468; 124,2, y -9,1..-2,3) daje w kwadracie 460,120 pary ledge 5,7-6,6 m przy ground -2,30; test B tego kwadratu nie sprawdza. Do poprawy w gałęzi g759 przed PR.
-- runda 2 (679ef68): dachy budynków mapy i ściany pokoi nie są podłogą (budynek 468;124,2 w 460,120); test B wymaga #526 przed scaleniem
-
-### G-768 Ustępowanie nadwozi G-744 kruche w zakręcie Kołłątaja przy Zesłańców Sybiru
-- Ważność: S3 · Zasięg: -108,-150; ziarna 10/13/15/38 przy pasach przesuniętych o 5–10 cm
-- Opis: bodiesMeet daje odległość spotkania na przemian z próbek co 1 m i z próbki za zakrętem, goesFirst zmienia decyzję, auto 9,9 m/s nie hamuje, oba są już za późno
-- Status: w PR (14.11): 82ace33, test abcd513 (12 s); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g768 (82ace33), runda 2: skrócenie testu (100 s z własnym limitem); wcześniej: zgłoszone (13.11, budowniczy ADR-0080 PR 3)
-- Pakiet właściciela: packages/sim/src/systems
-- Test przyjęcia: przemiatanie ziaren 1–40 w zakręcie bez kolizji przy pasach ±0,1 m
-- przyczyna: próbki nadwozia co 1 m liczone od pozycji pojazdu gubiły wąskie miejsce za zakrętem co drugą klatkę; kolizje 1-40 ziaren przy pasach -0,2/-0,15/-0,1/-0,05 m: 4/1/4/1 -> 0; hash determinizmu bez zmian
-
 ### G-769 Ciemny trójkąt ok. 0,2 m w kostce na Krakowskim przy (297; -226) po G-764
 - Ważność: S4 · Zasięg: krakowskie, (297; -226); zrzut /dev/shm/g764-reshoot/pair/krakowskie-297-215.png na 6b0ebb7
 - Opis: drobna dziura w fills między nowym kawałkiem kostki z canopyHard a sąsiednim kawałkiem; widać ciemne podłoże; zauważone przez kuratora w przeglądzie G-764, potwierdzone ponownym zrzutem
-- Status: przegląd kuratora ZGODNE Z UWAGAMI (14.11); PR po scaleniu #528 i przegenerowaniu; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g769b (f80370a), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, kurator, przegląd G-764)
+- Status: w PR #532 (14.11); wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (14.11); PR po scaleniu #528 i przegenerowaniu; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g769b (f80370a), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, kurator, przegląd G-764)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: brak dziury w fills przy (297; -226) (sonda 0,1 m), kontrola lawn-leafoff-patch lub fills-gap
 - 14.11: #519 (G-764) w main, można naprawiać
@@ -1828,15 +1810,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/orto (classify.ts)
 - Test przyjęcia: narożnik Lubartowska/Noworybna i chodnik Królewskiej przy (608,-210) kostką; klucze 470,70 znikają
 - 14.11 G-771 runda 2 (scalenie z regułą koron #519): klucze 470,70 zniknęły; do sprawdzenia, czy zostaje tylko kępa trawy przy pomniku na Królewskiej (607..610; -207..-212)
-
-### G-777 Szczeliny 10-30 cm między wstęgami różnych nawierzchni w złączach (gapFills łata tylko tę samą nawierzchnię)
-- Ważność: S4 · Zasięg: ok. 10 złączy, ok. 0,8 m²: 837,0;205,3 (chodnik/jezdnia), 949,1;230,7, 247,7;-201,0, 1014,2;450,8, 743,7;13,7 (chodnik/footway), 97,9;98,4 (jezdnia/trawa)
-- Opis: gapFills (line-buffer.ts) łata pęknięcia tylko między pasami tej samej nawierzchni, a kliny tylko szersze niż pęknięcie; wąska goła szczelina między chodnikiem a jezdnią lub footway w tarczy złącza zostaje; widać ciemny teren
-- Status: przegląd kuratora ZGODNE Z UWAGAMI (14.11, runda 2), w PR; wcześniej: naprawione na gałęzi (14.11, runda 2: ccr-ec2c4269-ilh8k8-g777, 1a83319; szczeliny poza schodami, kontrola ground-over-steps; komórki w tarczach 130 -> 58); do scalenia z main po #519 i ponownego przeglądu; wcześniej: w naprawie, runda 2 (14.11): przegląd kuratora NIEZGODNE, slitFills ma odjąć stopnie; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g777 (928f25a): komórki w tarczach 130 -> 55, w mieście między wstęgami 870 -> 528; czeka na przegląd kuratora; reszta 97,9;98,4 w osobnym wpisie; wcześniej: zgłoszone (13.11, naprawiacz G-765)
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: brak gołych komórek 0,1 m między wstęgami w tarczy złącza w tych miejscach; ground-strip-gap nie rośnie
-- Przegląd kuratora 14.11 (928f25a): NIEZGODNE. slitFills nie odejmuje stopni (above): 25 łat nad obrysem steps, 2,03 m² (949,0;230,4 wyszczerbia dolny stopień, 1009,6;445,4 kostka na trzech stopniach, 886,3;222,2 0,31 m²). Poprawka w tej gałęzi (runda 2); T-290; proponowana kontrola ground-over-steps
-- Przegląd kuratora 14.11 (6ccd1ba, runda 2): ZGODNE Z UWAGAMI. orto:diff wobec main 6,8 m², teren 0, pomosty 0; wiersze bazowe bez zmian. Łaty na steps najwyżej 0,0064 m². Po wycięciu 47 łat G-760 przybyło 0,026 m² gołego gruntu w 3 szczelinach poniżej MIN_SLIT: 186,3;-210,7 (0,015 m², widoczny klin ok. 1,1 m), -90,3;-75,1 (0,009), 1082,3;255,9 (0,002). Zrzuty /dev/shm/g777-cur2/grid.png
 
 ### G-779 Łaty G-760 mniejsze niż 0,5 m² odrzucane przez chunkGround
 - Ważność: S4 · Zasięg: złącza z małymi łatami w całym mieście
