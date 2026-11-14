@@ -248,6 +248,7 @@ krakowskie-2-0 450,-170
 krakowskie-2-0 270,-160
 krakowskie-2-0 270,-150
 krakowskie-2-0 440,-150
+krakowskie-2-0 450,-150
 krakowskie-2-0 420,-140
 krakowskie-2-0 430,-140
 krakowskie-2-0 300,-130
@@ -268,6 +269,7 @@ krakowskie-2-0 430,-70
 krakowskie-2-0 350,-60
 krakowskie-2-0 370,-60
 krakowskie-2-0 400,-60
+krakowskie-2-0 360,-30
 krakowskie-2-0 420,-30
 krakowskie-2-0 430,-30
 krakowskie-2-1 360,-20
@@ -1053,6 +1055,8 @@ stare-miasto-0-0 580,-210
 stare-miasto-0-0 600,-210
 stare-miasto-0-0 470,-200
 stare-miasto-0-0 480,-200
+stare-miasto-0-0 490,-200
+stare-miasto-0-0 500,-200
 stare-miasto-0-0 530,-200
 stare-miasto-0-0 580,-200
 stare-miasto-0-0 590,-200

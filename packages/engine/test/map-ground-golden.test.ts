@@ -114,10 +114,10 @@ describe("the ground the map city lays (G-444)", () => {
     // edges cross: 173 375, the same meshes.
     // The round ends read every ring counter-clockwise too (G-782): no round end laid over a square's
     // clockwise ring onto the way or the steps it meets there, 676 vertices fewer: 172 699.
-    // The carriageways' widths measured on the orthophoto (ADR-0080 PR 10): 100 streets laid at the
+    // The carriageways' widths measured on the orthophoto (ADR-0080 PR 10): 94 streets laid at the
     // asphalt's width and moved onto it on a ramp from their ends, none widened to the paving by the
-    // kerbs' fills (G-570): 228 vertices fewer, 172 471, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 172471, hash: "2d5ce583" });
+    // kerbs' fills (G-570): 184 vertices fewer, 172 515, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 172515, hash: "a34c4b35" });
     scene.dispose();
   });
 

@@ -7,11 +7,14 @@ krakowskie-0-1 -114,141
 krakowskie-1-0 159,-207
 krakowskie-1-1 42,118
 krakowskie-2-0 336,-185
+krakowskie-2-0 353,-48
+krakowskie-2-0 349,-47
 krakowskie-2-1 459,57
 nabrzeze-0-0 2456,245
 nabrzeze-0-1 2361,431
 nabrzeze-1-0 2539,259
 podzamcze-0-0 568,161
+podzamcze-0-0 631,242
 podzamcze-0-0 555,277
 podzamcze-0-0 556,280
 podzamcze-0-0 581,361
