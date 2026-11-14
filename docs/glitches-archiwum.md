@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-803 Krawężnik poszerzonej jezdni 0,4 m za daleko od osi, ząbki (ADR-0078 etap 3)
+- Ważność: S3 · Zasięg: ok. 1,9 km krawężnika z kerbFills, cała mapa
+- Opis: Po podziale płaszczyzny kamień krawężnika leży za krawędzią asfaltu (reach..reach+0,3), krawężnik w u=+0,1 od chodnika OSM; ortofoto: mediana u=-0,25 (2025-04), -0,5 (oba naloty); na 3 Maja (-101; -20..-40) krawężnik z wcięciami. Zrzut scratchpad/adr78-etap3-kurator.png, T-294.
+- Status: naprawione (14.11, #559 scalony); wcześniej: w naprawie na gałęzi adr78-etap3 (przed scaleniem)
+- Pakiet właściciela: tools/osm-import (kerb-fill.ts)
+- Test przyjęcia: kamień w [gap-0,3; gap+0,1] na próbkach full, krawędź asfaltu bez wcięć
+
 ### G-798 Latarnie z linii planu zamiast reguły lit: 4,4 km oświetlonych dróg bez latarni (ADR-0064 etap 3)
 - Ważność: S3 · Zasięg: całe miasto, 4390 m próbek dróg lit=yes
 - Opis: osm-import nie czyta tagu lit (1068 dróg lit=yes w wyciągach); latarnie stawiają linie lamps.* z docs/world/lublin-props.todo.json (29.10), więc nowe ulice i pas z < −200 zostają ciemne. T-293
