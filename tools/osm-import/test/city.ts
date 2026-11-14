@@ -30,6 +30,7 @@ import { type Generated, generate } from "../src/generate.ts";
 import { loadInputs } from "../src/load.ts";
 import { REPO } from "../src/paths.ts";
 import { type PropsOut, type PropsPlan, generateProps } from "../src/props-gen.ts";
+import { loadPropsPlan } from "../src/props-osm.ts";
 
 /** What the generators read: the raw data, the plan, and the sources they import (theirs, core, sim, engine). */
 const INPUTS = ["data/osm", "data/terrain", "data/orto", "tools/orto/src","docs/world/lublin-props.todo.json", "tools/osm-import/src", "packages/core/src", "packages/sim/src", "packages/engine/src"];
@@ -81,7 +82,7 @@ const cached = <T>(name: keyof typeof MAKE): T => {
 export const CITY_CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
 
 /** The plan of the city's furniture. */
-export const cityPlan = (): PropsPlan => JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
+export const cityPlan = (): PropsPlan => loadPropsPlan();
 
 /** What `city-make.ts` computes, by the name of its cache file. */
 export const MAKE = {
