@@ -108,7 +108,9 @@ describe("the ground the map city lays (G-444)", () => {
     // The slits between bands of two surfaces in the joints (G-777), laid edge to edge, and the joints
     // read with every ring counter-clockwise, so a square's clockwise ring no longer cancels the bands
     // on it into holes the patches filled: 170 580.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 170580, hash: "71ebbf12" });
+    // The round ends read every ring counter-clockwise too (G-782): no round end laid over a square's
+    // clockwise ring onto the way or the steps it meets there: 169 847.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 24, vertices: 169847, hash: "ba4027c1" });
     scene.dispose();
   });
 
