@@ -169,6 +169,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: dziedziniec z `inner` multipoligonu jest otwarty i dostępny przejściem z OSM; `runsInside` widzi dziury, więc w586408568 (wirydarz Dominikanów → Zaułek Giedroycia, `tunnel=yes`) dostaje przejście przez r2366732 (uwaga kuratora z przeglądu G-076)
 - 13.11 audyt luk SM: ta sama reguła wypełnia 22 inne dziedzińce multipoligonów (ok. 6 450 m²): SM r5420359 420, r3119721 137, r6477272 112, r18246399/400/401 69+67+26, r6477346 63, r7224409 41; Krakowskie r1071052 2 849, r1071050 819, r14476826 638, r1071051 205, r1207679 204, r1207677 155, r5420467 96, r17337408 70, r1156579 31; Podzamcze r6476362 234, r6476361 213. Jedna reguła: inner >= 20 m² otwarty, chyba że NMPT/LoD2 pokazuje dach; ważność do S3. Proponowana kontrola courtyard-filled (baza 24 pierścienie).
+- 14.11: zakres poszerzony o dziedzińce Centrum Kultury r1071050 i Szkoły Urszulanek r14476826 (T-042). Test przyjęcia obejmuje też 4 drzewa z OSM (n7261650288…90, n9992771464), które mają wrócić do gry po otwarciu dziedzińców, czyli spadek osm-furniture-missing o 4.
 
 ### G-080 Dach dwuspadowy i pulpitowy liczony od prostokąta całego obrysu
 - Status: zgłoszone (weryfikacja ADR-0064 etap 1, PR #78) · Ważność: S4 · Koszt: średni
@@ -213,6 +214,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `lit-street-dark` (odcinki nazwanych dróg z `lit=yes` dalej niż 30 m od latarni, w metrach) w pasie 0; obeliski w promieniu 1 m od węzłów OSM. Ostrożnie z ADR-0064 etap 3 (oświetlenie z `lit`), który robi to samo w całym mieście
 - 14.11 audyt ADR-0077: przyczyna szersza: osm:props czyta statyczny plan, nie wyciągi; poprawka: data/osm/points/furniture.json z osm:fetch i kontrola osm-furniture-missing (baza 72: 70 w pasie, 2 słupki poza nim)
 - 14.11 gałąź ccr-ec2c4269-ilh8k8-furniture-osm: furniture.json z osm:fetch, grupy osm.furniture.*; pas z < −200: +28 drzew, +28 słupków, +4 ławki i inne; osm-furniture-missing 97 -> 33 (w pasie 69 -> 5; reszta to 28 węzłów planu odrzuconych przy rozstawieniu); przegląd kuratora w toku
+- 14.11: meble i drzewa w pasie z < −200 przyszły z wyciągu OSM (gałąź furniture-osm, przegląd kuratora ZGODNE Z UWAGAMI). Do zrobienia zostają latarnie, obeliski n481952883 i n7788786232 oraz tablice n11407618262 i n13589357167.
 
 ### G-111 Resztka G-094: krawędzie przedsionka Trasy Podziemnej
 - Status: zgłoszone (z weryfikacji G-094) · Ważność: S4 · Zasięg: 1 wejście · Koszt: mały
@@ -1909,6 +1911,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (14.11, użytkownik)
 - Pakiet właściciela: packages/engine/src/npr (moon-shadow, shadow-fit, toon-shader)
 - Test przyjęcia: cienka bryła (przewód 1-2 cm) rzuca w mapie cienia ciągły ślad na ziemi także przy kwadracie 56 m (udział zacienionych pikseli wzdłuż śladu ≥ 80%)
+
+### G-801 Raport ortofoto liczy meble z wyciągu OSM jako postawione regułami
+- Ważność: S4 · Zasięg: raporty komórek orto, całe miasto
+- Opis: tools/orto/src/furniture.ts osmPlanPoints czyta sam plan docs/world/lublin-props.todo.json, a grupy osm.furniture.* z props-osm.ts nie mają inOsm. furnitureCounts (report.ts:55) zalicza 68 obiektów z pasa z < −200 do reguł generatora, nie do OSM.
+- Status: zgłoszone (przegląd kuratora 14.11)
+- Pakiet właściciela: tools/orto, tools/osm-import
+- Test przyjęcia: furnitureCounts dla krakowskie-0-0 i krakowskie-1-0 liczy obiekty z grup osm.furniture.* jako z OSM: osmPlanPoints bierze loadPropsPlan(), a osmFurnitureItems ustawia inOsm: true
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
