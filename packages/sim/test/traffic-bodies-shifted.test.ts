@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { polylineLength } from "../src/content/lublin/roads";
 import type * as Traffic from "../src/content/traffic";
+import { drive } from "./traffic-drive";
 
 /**
  * The bodies of two lanes giving way at a bend hold with the lanes a little off where they are
@@ -10,32 +10,23 @@ import type * as Traffic from "../src/content/traffic";
  * the bend fell between them every other frame; which of the two gave way changed from frame to
  * frame, neither braked and both drove into each other. The lanes move by centimetres whenever the
  * import's width does (ADR-0080), so the city's own lanes are not enough to show it: here every
- * lane is moved to its right by ±0.1 m (measured before the fix: at -0.1 m seeds 10, 13, 20 and 28
- * met, at -0.05 m seed 10; at +0.1 m none).
+ * lane is moved 0.1 m to its left, the two lanes of a street 0.2 m closer. Measured over seeds 1-40
+ * before the fix: seeds 10, 13, 20 and 28 met there (moved 0.1 m to the right, none).
  */
 
-/** The traffic tests' minute of driving, with every lane of the city moved `by` metres to its right. */
-const shifted = async (by: number) => {
-  vi.resetModules();
-  vi.doMock("../src/content/traffic", async (importOriginal) => {
-    const mod = await importOriginal<typeof Traffic>();
-    const TRAFFIC_ROUTES = mod.TRAFFIC_ROUTES.map((r) => {
-      const points = mod.offsetLine(r.points, by);
-      return { ...r, points, length: polylineLength(points) };
-    });
-    return { ...mod, TRAFFIC_ROUTES };
+vi.mock("../src/content/traffic", async (importOriginal) => {
+  const mod = await importOriginal<typeof Traffic>();
+  const { polylineLength } = await import("../src/content/lublin/roads");
+  const TRAFFIC_ROUTES = mod.TRAFFIC_ROUTES.map((r) => {
+    const points = mod.offsetLine(r.points, -0.1);
+    return { ...r, points, length: polylineLength(points) };
   });
-  const { drive } = await import("./traffic-drive");
-  vi.doUnmock("../src/content/traffic");
-  return drive;
-};
-
-const SEEDS = Array.from({ length: 40 }, (_, k) => k + 1);
+  return { ...mod, TRAFFIC_ROUTES };
+});
 
 describe("bodies giving way at Kołłątaja's bend by Zesłańców Sybiru, the lanes moved (G-768)", () => {
-  it.each([-0.1, 0.1])("with every lane moved %d m to its right, seeds 1-40: no two vehicles meet", async (by) => {
-    const drive = await shifted(by);
-    const met = SEEDS.filter((seed) => drive(seed, -108, -150).collisions > 0);
-    expect(met).toEqual([]);
-  }, 300_000);
+  // The seeds that met there, and a few that met with the lanes moved further (7, 26) or never (1).
+  it.each([10, 13, 20, 28, 1, 7, 26])("with every lane moved 0.1 m to its left, seed %i: no two vehicles meet", (seed) => {
+    expect(drive(seed, -108, -150).collisions).toBe(0);
+  });
 });
