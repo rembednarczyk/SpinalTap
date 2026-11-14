@@ -2,37 +2,19 @@
  * `node tools/orto/src/fetch.ts --cell krakowskie-0-1 | --only <district> | --all | --bbox … [--flight ID]
  * [--cache DIR] [--refresh]` (regions as in `region.ts`): the PZGiK orthophoto (ADR-0077) of the map's cells, each flight of `FLIGHTS` (or one), through
  * WMS GetMap into the cache outside the repository (default `${XDG_CACHE_HOME:-~/.cache}/seki-orto`,
- * a folder a flight). One request at a time with a pause, never retried after HTTP 429. The current
- * image from the high-resolution service, the standard one where it has no image; an archived
+ * a folder a flight). One request at a time with a pause, never retried after HTTP 429; a dropped
+ * connection is asked once more (`http.ts`). The current image from the high-resolution service, the standard one where it has no image; an archived
  * flight from the archive's service by its `TIME`. Network, by hand, never in a test or the build.
  */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { type CellSpec, FLIGHTS, type Flight, MAX_SIDE, ORTHO_STEP, PAUSE_MS, USER_AGENT, WMS_LAYER, WMS_SERVICES, WMS_TIME_SERVICE, defaultCache } from "./config.ts";
+import { type CellSpec, FLIGHTS, type Flight, MAX_SIDE, ORTHO_STEP, PAUSE_MS, WMS_LAYER, WMS_SERVICES, WMS_TIME_SERVICE, defaultCache } from "./config.ts";
+import { getPng, getText } from "./http.ts";
 import { decodeRgb } from "./png.ts";
 import { regionsOf } from "./region.ts";
 import { type Sheet, featureInfoUrl, indexLayer, parseSheets, sheetOf } from "./sheets.ts";
 import { BLANK_MAX, type GridBox, blankShare, getMapUrl, gridBox, type TileMeta, tileFiles } from "./tiles.ts";
 
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-class RateLimited extends Error {}
-
-const getPng = async (url: string): Promise<Uint8Array> => {
-  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
-  if (res.status === 429) throw new RateLimited(`HTTP 429 (no retry): ${url}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}: ${url}`);
-  const type = res.headers.get("content-type") ?? "";
-  const body = new Uint8Array(await res.arrayBuffer());
-  if (!type.startsWith("image/png")) throw new Error(`${type}: ${new TextDecoder().decode(body.subarray(0, 300))}`);
-  return body;
-};
-
-const getText = async (url: string): Promise<string> => {
-  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
-  if (res.status === 429) throw new RateLimited(`HTTP 429 (no retry): ${url}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}: ${url}`);
-  return res.text();
-};
 
 /** The sheet the tile shows, from the index's years of the flight. */
 const lookUpSheet = async (flight: Flight, box: GridBox): Promise<Sheet | undefined> => {

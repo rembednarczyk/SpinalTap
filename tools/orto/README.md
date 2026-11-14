@@ -6,7 +6,7 @@ Narzędzie ma trzy kroki: pamięć podręczną ortofoto PZGiK, klasyfikator pokr
 1. `node tools/orto/src/fetch.ts --cell krakowskie-0-1` pobiera kafle przez WMS do `${XDG_CACHE_HOME:-~/.cache}/seki-orto/<nalot>/` (inny katalog: `--cache`).
    - Komórka jest jednym kaflem 0,25 m/px na każdy nalot z `FLIGHTS` (`config.ts`).
    - Obszar podajesz jednym z parametrów: `--cell`, `--only <dzielnica>`, `--all`, `--bbox minX,minZ,maxX,maxZ` (układ gry) albo `--bbox-2180 minE,minN,maxE,maxN` (PUWG 1992), a dla prostokąta także `--name <nazwa>`.
-   - Zapytania idą po jednym, z przerwą, bez ponowień po HTTP 429.
+   - Zapytania idą po jednym, z przerwą, bez ponowień po HTTP 429. Zerwane połączenie (ECONNRESET, ETIMEDOUT) jest ponawiane raz, po 5 s (`src/http.ts`); drugie zerwanie kończy pobieranie.
 2. `node tools/orto/src/build.ts` klasyfikuje kafle offline do `data/orto/<obszar>.cover.{png,json}` i pisze manifest `data/orto/sources.json`.
 3. `node tools/orto/src/report.ts --cell krakowskie-0-1 [--out plik.json]` daje raport komórki: gołą ziemię importu rozbitą na klasy, powierzchnie importu kontra zdjęcie, meble uliczne (OSM albo generator), puste chodniki i bariery (każda linia OSM, której gra nie rysuje, z id, rodzajem i metrami w komórce).
    - `--all` robi raport wszystkich komórek mapy.
