@@ -23,7 +23,7 @@ const startReload = (ctx: SimContext, e: Armed): boolean => {
   // Quick Reload (ADR-0059) is the player's.
   const duration = plan.duration * (e.player ? reloadTimeScale(ctx.state.domain.progression.perks) : 1);
   c.reloading = duration;
-  ctx.bus.emit("ReloadStarted", { entityId: e.id, duration });
+  ctx.bus.emit("ReloadStarted", { entityId: e.id, duration, perRound: c.stats.reloadMode === "per-round" });
   return true;
 };
 

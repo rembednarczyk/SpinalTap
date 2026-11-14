@@ -421,6 +421,8 @@ export type AudioCue =
   | "overdrive"
   // Weapons, loot and trade (ADR-0015, E12).
   | "reload"
+  // One round into a tube (shotgun, per-round reload): a short click, not the full magazine change.
+  | "reload-round"
   | "weapon-switch"
   | "loot-pickup"
   | "sell"

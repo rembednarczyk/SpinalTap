@@ -25,7 +25,7 @@ export const presentCombat: Presenter = ({ bus, render, audio, ui, isPlayer }) =
   bus.on("Staggered", (e) => render.playEffect({ kind: "stagger", entityId: e.entityId, duration: e.duration })),
   bus.on("ReloadStarted", (e) => {
     render.playEffect({ kind: "reload", entityId: e.entityId, duration: e.duration });
-    if (isPlayer(e.entityId)) audio.play("reload");
+    if (isPlayer(e.entityId)) audio.play(e.perRound ? "reload-round" : "reload");
   }),
   bus.on("DamageDealt", (e) => {
     render.playEffect({ kind: "hit-spark", at: e.at, critical: e.critical });

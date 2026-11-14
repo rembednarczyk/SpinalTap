@@ -94,7 +94,8 @@ export interface DomainEvents {
   /** Something did not fit: the item stays where it was (loot bag, weapon). */
   InventoryFull: { defId: ItemDefId };
   WeaponSwitched: { entityId: EntityId; slot: WeaponSlot; weapon: WeaponId };
-  ReloadStarted: { entityId: EntityId; duration: number };
+  /** `perRound`: one round into a tube (shotgun), not a whole magazine. */
+  ReloadStarted: { entityId: EntityId; duration: number; perRound: boolean };
   ReloadFinished: { entityId: EntityId; loaded: number };
   // Melee (ADR-0019).
   /** A swing started; it lands after `windup` seconds and is followed by `recovery`. */
