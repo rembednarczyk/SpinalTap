@@ -375,7 +375,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   contactShade: true,
   bloom: true,
   renderResolution: 1,
-  aimMode: "toggle",
+  aimMode: "hold",
   crouchMode: "toggle",
   sprintMode: "hold",
   shoulder: "right",

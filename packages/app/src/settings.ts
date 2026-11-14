@@ -25,8 +25,8 @@ export const SETTINGS_KEY = "seki.settings.v1";
  * Revision of the defaults an entry was saved under. Revision 2 (1.11) made High quality and
  * damage numbers per hit the defaults; an older entry takes them once, as if never chosen,
  * because the old defaults (Low on phones, no numbers) were saved with every change.
- * Revision 3 (14.11, the user's choice for the phone): the fire button only fires and the aim
- * button toggles the sights.
+ * Revision 3 (14.11, the user's choice for the phone): the fire button only fires and, on a
+ * touch device, the aim button toggles the sights (`defaultAimMode`; the mouse keeps holding).
  */
 export const SETTINGS_REV = 3;
 
@@ -85,6 +85,9 @@ export const clampFieldOfView = (degrees: unknown, fallback: number = DEFAULT_SE
  * Elsewhere the default is the full resolution.
  */
 export const TOUCH_HIDPI_RENDER_RESOLUTION = 0.7;
+
+/** The aim button by default: a toggle on a touch device (user, 14.11), held with a mouse or a pad. */
+export const defaultAimMode = (touch: boolean): AimMode => (touch ? "toggle" : "hold");
 
 /** The device's default render resolution: `TOUCH_HIDPI_RENDER_RESOLUTION` on a dense touch screen, else 100%. */
 export const defaultRenderResolution = (touch: boolean, devicePixelRatio: number): number => (touch && devicePixelRatio >= 2 ? TOUCH_HIDPI_RENDER_RESOLUTION : 1);
