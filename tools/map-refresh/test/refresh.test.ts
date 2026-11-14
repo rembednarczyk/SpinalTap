@@ -148,7 +148,17 @@ const SCAN: Step = { id: "scan", group: "check", cmd: ["node", "-e", 'const fs =
 /** Online on a fake repo whose tables an offline run built first, so only the fetch shows. */
 const online = async (root: string, answers: readonly ("reset" | number)[]) => {
   await run(root);
-  return refresh({ root, steps: [ortoFetch(answers), ORTO_BUILD, ...STEPS.slice(1), SCAN], offline: false, sources: ["osm", "orto"], fromCache: false, skip: new Set(), twice: false, quiet: true });
+  // Its own orto cache: the pipeline skips orto-build when the machine has none (a CI runner).
+  const cache = mkdtempSync(join(tmpdir(), "map-refresh-orto-"));
+  const before = process.env.SEKI_ORTO_CACHE;
+  process.env.SEKI_ORTO_CACHE = cache;
+  try {
+    return await refresh({ root, steps: [ortoFetch(answers), ORTO_BUILD, ...STEPS.slice(1), SCAN], offline: false, sources: ["osm", "orto"], fromCache: false, skip: new Set(), twice: false, quiet: true });
+  } finally {
+    if (before === undefined) delete process.env.SEKI_ORTO_CACHE;
+    else process.env.SEKI_ORTO_CACHE = before;
+    rmSync(cache, { recursive: true, force: true });
+  }
 };
 
 describe("pnpm map:refresh when a fetch drops its connection", () => {
