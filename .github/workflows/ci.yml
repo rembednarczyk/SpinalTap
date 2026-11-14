@@ -1,4 +1,7 @@
 name: CI
+# A pull request's run carries the base it was tested on, so the push to main after a merge can
+# tell whether that exact code already passed (see the "changes" job).
+run-name: ${{ github.event_name == 'pull_request' && format('{0} (#{1}) on base {2}', github.event.pull_request.title, github.event.pull_request.number, github.event.pull_request.base.sha) || github.event.head_commit.message }}
 
 on:
   push:
@@ -19,14 +22,40 @@ jobs:
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
     outputs:
       code: ${{ steps.diff.outputs.code }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # A push to main from a merge whose pull request passed CI on this same base (the main
+      # before the push) holds exactly the code that run tested: a squash merge of the PR's head
+      # onto that base. It runs nothing again (saves a full run per merge). A merge onto a main
+      # that moved since the PR's run (another PR in between) runs everything, as before.
+      - id: tested
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          head=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '[.[] | select(.merged_at != null)][0].head.sha // empty' || true)
+          if [ -z "$head" ] || [ -z "$BEFORE" ]; then echo "same=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          runs=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?event=pull_request&head_sha=$head&status=success&per_page=50" \
+            --jq "[.workflow_runs[] | select(.display_title | endswith(\"on base $BEFORE\"))] | length" || echo 0)
+          echo "PR head $head, base $BEFORE: $runs green run(s) on this base"
+          if [ "${runs:-0}" -gt 0 ]; then echo "same=true" >> "$GITHUB_OUTPUT"; else echo "same=false" >> "$GITHUB_OUTPUT"; fi
       - id: diff
         run: |
+          if [ "${{ steps.tested.outputs.same }}" = "true" ]; then
+            echo "The merged code passed CI in its pull request on this base: nothing runs again."
+            echo "code=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             files=$(git -c core.quotePath=false diff --name-only "origin/${{ github.base_ref }}...HEAD")
           elif [ -n "${{ github.event.before }}" ] && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
