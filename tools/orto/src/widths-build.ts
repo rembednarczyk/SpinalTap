@@ -16,7 +16,7 @@ const text = tableText(measured);
 console.log(widthsReport(measured));
 if (argv.includes("--list")) {
   for (const { id, name, estimate, measure: m } of measured) {
-    const side = (s: typeof m.left) => `${s.median ?? "-"} (${s.agree}/${s.kept}/${s.stations})`;
+    const side = (s: typeof m.left) => `${s.median ?? "-"} (${s.agree}/${s.kept}/${s.stations}, walk ${s.walked})`;
     console.log(`${id} ${name} est ${estimate} ${m.reason} ${m.width ?? "-"} L ${side(m.left)} R ${side(m.right)}`);
   }
 }

@@ -51,6 +51,16 @@ export const CONSENSUS = 1;
 export const MIN_SHARE = 0.4;
 /** The measured width kept within these shares of the estimate. */
 export const RATIO = { min: 0.5, max: 1.8 } as const;
+/**
+ * A mapped footway or sidewalk this far inside a side's measured kerb (m) lies under its asphalt
+ * (G-802): where it does at `WALK_SHARE` of the side's stations and more, the side keeps the
+ * estimate, until the section lays its sidewalks from the kerb (ADR-0080 PR 7).
+ */
+export const WALK_CLEAR = 0.3;
+export const WALK_SHARE = 0.3;
+/** Whether a mapped walk crosses the ray from `p` along `n` within `reach` m (`measureWay`). */
+export type WalkAt = (p: Pt, n: Pt, reach: number) => boolean;
+
 /** How far past half the estimate a ray looks for the kerb (m). */
 export const REACH_PAST = 6;
 
@@ -135,6 +145,8 @@ export interface SideMeasure {
   readonly uncertain: number;
   readonly noKerb: number;
   readonly agree: number;
+  /** Stations whose measured kerb has a mapped walk inside it (`WALK_CLEAR`). */
+  readonly walked: number;
   readonly median: number | null;
 }
 
@@ -169,6 +181,7 @@ export const sideOf = (samples: readonly RaySample[]): SideMeasure => {
     uncertain: samples.filter((s) => s === "uncertain").length,
     noKerb: samples.filter((s) => s === "no-kerb").length,
     agree: agree.length,
+    walked: 0,
     median: enough ? agree[Math.floor((agree.length - 1) / 2)]! : null,
   };
 };
@@ -185,7 +198,7 @@ export const stationsOf = (length: number, blocked: (s: number) => boolean): num
  * import would lay (m), clear of the `junctions` (points where another carriageway meets it), and
  * no narrower than `least` (m: the lanes the street keeps, as `fitLanes`'s).
  */
-export const measureWay = (probe: Probe, axis: readonly Pt[], estimate: number, junctions: readonly Pt[], least = 0): WayMeasure => {
+export const measureWay = (probe: Probe, axis: readonly Pt[], estimate: number, junctions: readonly Pt[], least = 0, walkAt: WalkAt = () => false): WayMeasure => {
   const length = lineLength(axis);
   const near = (s: number) => {
     const p = pointAlong(axis, s);
@@ -194,6 +207,11 @@ export const measureWay = (probe: Probe, axis: readonly Pt[], estimate: number, 
   const reach = estimate / 2 + REACH_PAST;
   const left: RaySample[] = [];
   const right: RaySample[] = [];
+  const walked = [0, 0];
+  const walkIn = (k: number, p: Pt, n: Pt, sample: RaySample) => {
+    if (typeof sample === "number" && sample > WALK_CLEAR && walkAt(p, n, sample - WALK_CLEAR)) walked[k]!++;
+    return sample;
+  };
   for (const s of stationsOf(length, near)) {
     const p = pointAlong(axis, s);
     // Off the photograph (past the map's cells): no station.
@@ -202,10 +220,15 @@ export const measureWay = (probe: Probe, axis: readonly Pt[], estimate: number, 
     const l = Math.hypot(b.x - a.x, b.z - a.z) || 1;
     const n = { x: -(b.z - a.z) / l, z: (b.x - a.x) / l };
     const ref = referenceAt(probe, p, n);
-    left.push(ref ? rayKerb(probe, ref, p, n, reach) : "uncertain");
-    right.push(ref ? rayKerb(probe, ref, p, { x: -n.x, z: -n.z }, reach) : "uncertain");
+    const back = { x: -n.x, z: -n.z };
+    left.push(walkIn(0, p, n, ref ? rayKerb(probe, ref, p, n, reach) : "uncertain"));
+    right.push(walkIn(1, p, back, ref ? rayKerb(probe, ref, p, back, reach) : "uncertain"));
   }
-  const [L, R] = [sideOf(left), sideOf(right)];
+  // A side whose kerb lies past a mapped walk keeps the estimate (G-802).
+  // So does a side narrower than half the lanes the street keeps (`least`): its kerb is something on the asphalt.
+  const walkedOut = (m: SideMeasure, k: number): SideMeasure =>
+    ({ ...m, walked: walked[k]!, median: walked[k]! >= Math.max(1, WALK_SHARE * m.stations) || (m.median ?? Infinity) < least / 2 ? null : m.median });
+  const [L, R] = [walkedOut(sideOf(left), 0), walkedOut(sideOf(right), 1)];
   const out = (reason: WayMeasure["reason"], width: number | null = null): WayMeasure => ({ left: L, right: R, width, reason });
   if (left.length < MIN_SAMPLES) return out("few-stations");
   if (L.median === null && R.median === null) return out("no-consensus");

@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { TAG_CORRECTIONS, type TagCorrection, correctedLine } from "../../osm-import/src/corrections.ts";
 import { withoutReplaced } from "../../osm-import/src/corrections-alchemia.ts";
 import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
-import { type Pt, lineLength } from "../../osm-import/src/geometry.ts";
+import { type Pt, lineLength, ringBounds } from "../../osm-import/src/geometry.ts";
 import { isCarriageway } from "../../osm-import/src/ground.ts";
 import { loadInputs } from "../../osm-import/src/load.ts";
 import { type OsmData } from "../../osm-import/src/osm.ts";
@@ -34,6 +34,8 @@ export interface Candidate {
   /** The narrowest width the street keeps its lanes in (m): one-way 3, two-way 4.5, 2.25 a mapped lane (`fitLanes`, T-063). */
   readonly least: number;
   readonly junctions: readonly Pt[];
+  /** The mapped walks (footways, paths, sidewalks) near it, as segments: under the asphalt a measure would lay (G-802). */
+  readonly walks?: readonly (readonly [Pt, Pt])[];
 }
 
 export interface Measured extends Candidate {
@@ -57,6 +59,9 @@ export const HELD: readonly (readonly [id: string, reason: string])[] = [
   ["w1150131461", "Staszica: the mapped sidewalks w1261814240 lie under the measured asphalt (G-802); they wait for the section's sidewalks (PR 7)"],
   ["w296749774", "Karmelicka: the measured 6.45 m south of its axis lays its asphalt over the footway w232805935 by w232805965 and round Staszica's corner over w1261814240 (G-802)"],
   ["w300663409", "Cicha: measured 7.05 m left of its axis, the asphalt over the pavement and its OSM ticket machine n9596788055 (G-802)"],
+  ["w174600671", "Kościuszki: the measured 4.95 m left of its axis lays the asphalt over the footways before the Sąd Okręgowy and the façades (G-436, G-440; G-802)"],
+  ["w1150131460", "Staszica south: its tagged sidewalk's ring on the moved carriageway crosses itself at 184, 46 (ground-partition, ground-ring-self-cross)"],
+  ["w225998472", "Mełgiewska: measured as estimated (9.7 m against 9.75), but the 2.5 cm move puts a lamp of the lit rule on the map's east edge at y 0 (2700, 93.5)"],
   ["w40052496", "Królewska east: a parking strip by the measured kerb puts parked cars in the chunks round the start, which the street furniture's streaming test reads as furniture"],
 ];
 
@@ -80,12 +85,16 @@ export const candidateWays = (osm: OsmData, manual: ReadonlyMap<string, TagCorre
   for (const l of roads) for (const p of l.line) usedBy.set(key(p), (usedBy.get(key(p)) ?? new Set()).add(l.id));
   const out: Candidate[] = [];
   const held = new Set(HELD.map(([id]) => id));
+  const walks = lines.filter((l) => WALKS.has(l.tags.highway ?? "") && l.tags.footway !== "crossing" && l.tags.path !== "crossing").flatMap((l) => l.line.slice(1).map((b, i) => [l.line[i]!, b] as const));
   for (const l of roads) {
     const t = l.tags;
     if (t.highway === "service" || bridged(t) || held.has(l.id) || parseLength(t.width ?? t["width:carriageway"]) !== null) continue;
     const junctions = l.line.filter((p) => usedBy.get(key(p))!.size > 1);
     const least = Math.max(oneway(t) ? MIN_FITTED.oneway : MIN_FITTED.twoWay, (Math.round(Number(t.lanes)) || 0) * 2.25);
-    out.push({ id: l.id, name: t.name ?? "", axis: l.line, estimate: roadWidth(t), least, junctions });
+    const box = ringBounds(l.line);
+    const reach = roadWidth(t) / 2 + 8;
+    const near = walks.filter(([a, b]) => Math.max(a.x, b.x) > box.minX - reach && Math.min(a.x, b.x) < box.maxX + reach && Math.max(a.z, b.z) > box.minZ - reach && Math.min(a.z, b.z) < box.maxZ + reach);
+    out.push({ id: l.id, name: t.name ?? "", axis: l.line, estimate: roadWidth(t), least, junctions, walks: near });
   }
   return out.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 };
@@ -126,7 +135,24 @@ export const photoProbe = (covers: readonly Cover[], tiles: readonly { readonly 
   };
 };
 
-export const measureCity = (ways: readonly Candidate[], probe: Probe): Measured[] => ways.map((w) => ({ ...w, measure: measureWay(probe, w.axis, w.estimate, w.junctions, w.least) }));
+/** The footways a measure's ray may cross: walks along a street, not its crossings (`candidateWays`). */
+const WALKS: ReadonlySet<string> = new Set(["footway", "path", "pedestrian", "cycleway"]);
+
+/** Whether one of `walks` runs along the ray from `p` along `n` (within 30° of the street) and crosses it within `reach` m. */
+export const walkAcross = (walks: readonly (readonly [Pt, Pt])[]): WalkAt => (p, n, reach) =>
+  walks.some(([a, b]) => {
+    const [dx, dz] = [b.x - a.x, b.z - a.z];
+    const len = Math.hypot(dx, dz);
+    if (len < 1e-6 || Math.abs((dx * n.x + dz * n.z) / len) > 0.5) return false;
+    // p + t n = a + u (b - a): t along the ray, u along the segment.
+    const den = n.x * dz - n.z * dx;
+    const t = ((a.x - p.x) * dz - (a.z - p.z) * dx) / den;
+    const u = ((a.x - p.x) * n.z - (a.z - p.z) * n.x) / den;
+    return t > 0 && t < reach && u >= 0 && u <= 1;
+  });
+
+export const measureCity = (ways: readonly Candidate[], probe: Probe): Measured[] =>
+  ways.map((w) => ({ ...w, measure: measureWay(probe, w.axis, w.estimate, w.junctions, w.least, walkAcross(w.walks ?? [])) }));
 
 /** The generated table the import reads. */
 export const TABLE_FILE = join(REPO, "tools/osm-import/src/ortho-widths.generated.ts");

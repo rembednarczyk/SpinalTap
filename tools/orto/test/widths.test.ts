@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { COVER } from "../src/classify.ts";
 import { type Look, type Probe, measureWay, rayKerb, sideOf } from "../src/widths.ts";
-import { type Candidate, TABLE_FILE, cachedImage, measureCity, measureFromCache, tableRows, tableText } from "../src/widths-city.ts";
+import { type Candidate, TABLE_FILE, cachedImage, measureCity, measureFromCache, tableRows, tableText, walkAcross } from "../src/widths-city.ts";
 
 /**
  * A synthetic street along +x from x 0 to 100 (its left is +z): asphalt (L 125) from z -3 to z 4,
@@ -68,8 +68,26 @@ describe("carriageway widths on the orthophoto (ADR-0080 PR 10)", () => {
     expect(measureWay(street, axis, 20, []).reason).toBe("off-estimate");
     // Narrower than the lanes it keeps: two mapped lanes of 2.25 m each and a 3 m one-way minimum hold 7 m.
     expect(measureWay(street, axis, 6.5, [], 7.5).reason).toBe("off-estimate");
-    expect(measureWay(street, axis, 6.5, [], 7).reason).toBe("ok");
+    expect(measureWay(street, axis, 6.5, [], 6).reason).toBe("ok");
+    // A side under half of that is no kerb of the street's: the right one (3.05 m) under 6.5 / 2 keeps the estimate.
+    const half = measureWay(street, axis, 6.5, [], 6.5);
+    expect([half.reason, half.right.median, half.width]).toEqual(["one-side", null, 7.2]);
     expect(measureWay(street, [axis[0]!, { x: 12, z: 0 }], 6.5, []).reason).toBe("few-stations");
+  });
+
+  it("leaves a side at the estimate where a mapped walk lies inside its measured kerb (G-802)", () => {
+    // A footway mapped along the north side at z 3.5, 0.45 m inside the kerb the photograph shows at 3.95.
+    const walk = walkAcross([[{ x: 0, z: 3.5 }, { x: 100, z: 3.5 }]]);
+    const m = measureWay(street, axis, 6.5, [], 0, walk);
+    expect(m.left.median).toBeNull();
+    // Every station but the three by the parked car, whose sample stops short of the walk.
+    expect(m.left.walked).toBe(m.left.stations - 3);
+    expect(m.reason).toBe("one-side");
+    expect(m.width).toBe(6.3);
+    // Past the kerb (z 4.5) it lies on the pavement: the side is measured.
+    expect(measureWay(street, axis, 6.5, [], 0, walkAcross([[{ x: 0, z: 4.5 }, { x: 100, z: 4.5 }]])).left.median).toBe(3.95);
+    // Across the street (a crossing) it says nothing of the side.
+    expect(measureWay(street, axis, 6.5, [], 0, walkAcross([[{ x: 50, z: -8 }, { x: 50, z: 8 }]])).reason).toBe("ok");
   });
 
   it("gives the same table twice", () => {
