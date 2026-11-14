@@ -96,3 +96,9 @@ Szacunek z „Konsekwencji” zakładał przejścia po 50–100 tys. tokenów. P
 
 Reguły dla kolejnych przejść (także po poszerzeniu mapy): raport komórki przed własną sondą, jedna komórka albo para sąsiednich na agenta, kurator tylko dla nowych klas i paczką dla reszty, brakujące w raporcie dane dopisywane jako sekcja raportu (backlog: id barier, budynki bez LoD2, położenia trafień).
 
+
+## Odświeżenie jedną komendą (14.11)
+Decyzja użytkownika z 14.11 (strategia, punkt 3: lżejszy proces): `pnpm map:refresh` (`tools/map-refresh/README.md`) puszcza bez agenta pobranie (OSM, GUGiK, ortofoto; `--offline` bez sieci), wyciągi, `osm:build`, `osm:props`, skan glitchy i `hashes:check`. Potem pisze `reports/map-refresh.{md,json}` z werdyktem progowym. Workflow `.github/workflows/map-refresh.yml` robi to co tydzień i otwiera PR z raportem.
+- **Kurator tylko powyżej progu.** Werdykt „bez przeglądu” wymaga, żeby nie przybył żaden klucz skanu S1–S3, obiekty zmieniły się o mniej niż 2% razem i o najwyżej max(2%, 2) w każdym rodzaju, a nawierzchnia przesunęła się o mniej niż 1 m² (w tablicach i w `orto:diff`). Do tego teren może się przesunąć najwyżej o 0,05 m, żaden pomost nie może się zmienić, a testy złote mogą się różnić tylko samym skrótem. W przeciwnym razie raport podaje miejsca dla kuratora. Progi są propozycją z 14.11 i leżą w `tools/map-refresh/src/config.ts`.
+- **Determinizm:** te same dane dają te same pliki bajt w bajt (test na małym repo, `--twice` na prawdziwej budowie). Raport nie zawiera czasu ani ścieżek. Manifesty, które różnią się tylko datą pobrania, wracają do starego tekstu.
+- **Pomiar 14.11** (load 4,6–6,1): offline 154 s (budowa 27 s, skan 67 s, hashes 27 s, reszta to drugi przebieg `--twice`), online 280 s (`osm:fetch` z NMT 108 s). Pierwszy przebieg online na main dał 7 zmienionych plików (OSM zmienił się od ostatniego pobrania: −1 POI, −1 drzwi) i werdykt „bez przeglądu”.
