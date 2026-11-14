@@ -5,7 +5,7 @@ import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 import { BodyFade, bodyFadeTarget } from "./body-fade";
 import { ChokeArms } from "./choke-arms";
-import { moveOf, swingEnd, swingPhase } from "../renderer/melee-timing";
+import { ViewMelee } from "./view-melee";
 import type { ViewArms, ViewArmsFrame } from "./view-arms";
 import { type ViewmodelPose, fitPose, viewmodelPose, viewmodelScale, viewmodelView } from "./viewmodel-poses";
 import { buildViewmodelProps } from "./viewmodel-props";
@@ -44,38 +44,9 @@ export const lookScaleFor = (fov: number, base: number = BASE_FOV): number => Ma
  */
 export type CameraOccluder = (origin: Vec3, dir: Vec3, maxDist: number) => number | null;
 
-interface ViewOffset {
-  x: number;
-  y: number;
-  z: number;
-  rx: number;
-  ry: number;
-  rz: number;
-}
-
 const smooth = (t: number): number => t * t * (3 - 2 * t);
 
-/** Wound-up and follow-through offsets of the FPP melee viewmodel per strike of the combo. */
-const VIEW_SWINGS: readonly { readonly cocked: ViewOffset; readonly through: ViewOffset }[] = [
-  // Forehand: from the right shoulder across to the left.
-  { cocked: { x: 0.14, y: 0.08, z: -0.08, rx: -0.4, ry: 0.5, rz: -0.9 }, through: { x: -0.42, y: -0.02, z: 0.06, rx: 0.2, ry: -0.7, rz: 0.9 } },
-  // Backhand: from the left back to the right.
-  { cocked: { x: -0.3, y: 0.04, z: -0.06, rx: -0.3, ry: -0.6, rz: 0.8 }, through: { x: 0.18, y: -0.04, z: 0.08, rx: 0.2, ry: 0.6, rz: -0.9 } },
-  // Overhead: up over the head, then down through the centre.
-  { cocked: { x: -0.06, y: 0.24, z: -0.12, rx: -1.1, ry: 0, rz: -0.1 }, through: { x: -0.1, y: -0.2, z: 0.08, rx: 1.0, ry: 0, rz: 0 } },
-];
-
-/**
- * Offset of the FPP melee viewmodel `elapsed` seconds into a swing (zero before and after), on
- * the rig's timing: half way through the sweep when the simulation lands the blow.
- */
-export const viewSwingOffset = (strike: number, elapsed: number, windup: number, recovery: number): ViewOffset => {
-  // The light strikes alternate forehand and backhand; the heavy finisher is the overhead cut.
-  const poses = VIEW_SWINGS[moveOf(strike) === "heavy" ? 2 : ((strike % 2) + 2) % 2] ?? VIEW_SWINGS[0]!;
-  const { cock, through } = swingPhase(elapsed, windup, recovery);
-  const mix = (k: keyof ViewOffset) => poses.cocked[k] * cock + (poses.through[k] - poses.cocked[k]) * through;
-  return { x: mix("x"), y: mix("y"), z: mix("z"), rx: mix("rx"), ry: mix("ry"), rz: mix("rz") };
-};
+export { type ViewOffset, viewSwingOffset } from "./view-melee";
 
 /**
  * One camera over one character rig, in two modes. FPP sits in the head and shows a weapon
@@ -106,10 +77,8 @@ export class CameraRig {
   horizontalFov = DEFAULT_HORIZONTAL_FOV;
   /** Walking bob, hit shake and the sprint widening; off for players prone to motion sickness. */
   cameraMotion = true;
-  /** Eased 0..1 guard of the FPP melee viewmodel. */
-  private guard = 0;
-  private swing: { strike: number; windup: number; recovery: number; elapsed: number } | null = null;
-  private melee = false;
+  /** The FPP melee viewmodel's guard and swing. */
+  private readonly meleeView = new ViewMelee();
   private ads = 0;
   private readonly gunHolder: TransformNode;
   private readonly meleeHolder: TransformNode;
@@ -209,7 +178,7 @@ export class CameraRig {
    */
   setHeldWeapon(look: WeaponLook | null): void {
     const melee = look === "baton" || look === "blade";
-    this.melee = melee;
+    this.meleeView.held = melee;
     this.look = look;
     this.pose = viewmodelPose(look);
     this.gunHolder.setEnabled(!melee);
@@ -232,7 +201,7 @@ export class CameraRig {
 
   /** Plays the FPP melee swing, timed like the simulation's (ADR-0019). */
   startSwing(strike: number, windup: number, recovery: number): void {
-    this.swing = { strike, windup, recovery, elapsed: 0 };
+    this.meleeView.start(strike, windup, recovery);
   }
 
   /**
@@ -296,23 +265,6 @@ export class CameraRig {
   /** Short camera shake, e.g. when the player is hit. */
   shake(amount: number): void {
     this.shakeAmount = Math.min(1, this.shakeAmount + amount);
-  }
-
-  private updateGuard(guard: number, dt: number): number {
-    const want = this.melee && guard > 0.5 && !this.swing ? 1 : 0;
-    this.guard += (want - this.guard) * Math.min(1, dt * (want > this.guard ? 16 : 8));
-    return smooth(this.guard);
-  }
-
-  private updateSwing(dt: number): ViewOffset {
-    const sw = this.swing;
-    if (!sw || !this.melee) {
-      this.swing = null;
-      return { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 };
-    }
-    sw.elapsed += dt;
-    if (sw.elapsed >= swingEnd(sw.windup, sw.recovery)) this.swing = null;
-    return viewSwingOffset(sw.strike, sw.elapsed, sw.windup, sw.recovery);
   }
 
   /**
@@ -387,7 +339,7 @@ export class CameraRig {
     this.camera.fov = adsFov * (1 + this.sprintFov);
     // The weapon keeps its own field of view: the zoom and the sprint change the world's alone.
     // Aiming down sights brings the gun to the centre with the sights on the eye line.
-    const ads = this.melee ? 0 : smooth(aim);
+    const ads = this.meleeView.held ? 0 : smooth(aim);
     this.ads = ads;
     const view = viewmodelView(this.scene.getEngine().getAspectRatio(this.camera), DEFAULT_HORIZONTAL_FOV);
     const across = viewmodelScale(Math.tan(this.camera.fov / 2), view.hip + (view.aimed - view.hip) * ads);
@@ -414,8 +366,7 @@ export class CameraRig {
     const reloading = this.reloadTotal > 0 && this.reload > 0 ? Math.sin(Math.PI * (1 - this.reload / this.reloadTotal)) : 0;
     const away = 1 - this.draw * this.draw * (3 - 2 * this.draw) + reloading * 0.35;
     this.viewmodel.setEnabled(fpp && this.draw > 0.02);
-    const guard = this.updateGuard(target.guard ?? 0, dt);
-    const sw = this.updateSwing(dt);
+    const { guard, offset: sw } = this.meleeView.step(target.guard ?? 0, dt);
     const zoomed = viewmodelScale(Math.tan(aimedFov(1, target.aimZoom ?? 1, this.hipFov) / 2), view.aimed);
     const { hip, ads: aimed } = fitPose(this.pose, view.hip, view.aimed, zoomed);
     const base = {
