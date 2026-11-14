@@ -1,11 +1,33 @@
+import type { AudioCue, WeaponLook } from "@seki/core";
 import { patchUi } from "@seki/ui";
 import type { Presenter } from "./context";
+
+/** The player's shot per weapon kind (melee kinds never fire). */
+const PLAYER_SHOT: Readonly<Record<WeaponLook, AudioCue>> = {
+  pistol: "shot",
+  revolver: "shot-revolver",
+  smg: "shot-smg",
+  shotgun: "shot-shotgun",
+  rifle: "shot-rifle",
+  baton: "shot",
+  blade: "shot",
+};
+/** Someone else's shot, heard from further away: handguns and SMGs share one set. */
+const ENEMY_SHOT: Readonly<Record<WeaponLook, AudioCue>> = {
+  pistol: "enemy-shot",
+  revolver: "enemy-shot",
+  smg: "enemy-shot",
+  shotgun: "enemy-shot-shotgun",
+  rifle: "enemy-shot-rifle",
+  baton: "enemy-shot",
+  blade: "enemy-shot",
+};
 
 /** Combat: shots, weapons, melee, hits and kills, the sniper's laser and the overdrive. */
 export const presentCombat: Presenter = ({ bus, render, audio, ui, isPlayer }) => [
   bus.on("ShotFired", (e) => {
     render.playEffect({ kind: "muzzle-flash", shooterId: e.shooterId, from: e.from, to: e.to });
-    audio.play(isPlayer(e.shooterId) ? "shot" : "enemy-shot");
+    audio.play((isPlayer(e.shooterId) ? PLAYER_SHOT : ENEMY_SHOT)[e.look]);
   }),
   bus.on("WeaponToggled", (e) => {
     render.playEffect({ kind: "weapon", entityId: e.entityId, drawn: e.drawn });
@@ -25,7 +47,7 @@ export const presentCombat: Presenter = ({ bus, render, audio, ui, isPlayer }) =
   bus.on("Staggered", (e) => render.playEffect({ kind: "stagger", entityId: e.entityId, duration: e.duration })),
   bus.on("ReloadStarted", (e) => {
     render.playEffect({ kind: "reload", entityId: e.entityId, duration: e.duration });
-    if (isPlayer(e.entityId)) audio.play("reload");
+    if (isPlayer(e.entityId)) audio.play(e.perRound ? "reload-round" : "reload");
   }),
   bus.on("DamageDealt", (e) => {
     render.playEffect({ kind: "hit-spark", at: e.at, critical: e.critical });
