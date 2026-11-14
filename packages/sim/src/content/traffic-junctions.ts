@@ -1,5 +1,5 @@
 import { segmentDistance } from "@seki/core";
-import { type Pt, polylineLength, surfacesAt } from "./lublin/roads";
+import { type Pt, onRoad, polylineLength } from "./lublin/roads";
 import { inBuilding } from "./lublin/places";
 import { MAP_CHUNKS } from "./lublin/sites";
 import { TURN_SPEED, type TrafficRoute, pointAt, slice } from "./traffic-lane";
@@ -113,7 +113,7 @@ const onCarriageway = (pts: readonly Pt[]): boolean => {
   const len = polylineLength(pts);
   for (let s = 0; s <= len; s += PROBE) {
     const p = pointAt(pts, s);
-    if (!surfacesAt(p.x, p.z).includes("road") || inBuilding(p.x, p.z)) return false;
+    if (!onRoad(p.x, p.z) || inBuilding(p.x, p.z)) return false;
   }
   return true;
 };
