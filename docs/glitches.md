@@ -1781,11 +1781,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-759 walk-blocked nie widzi płyt chodnika i podestu Arkad
 - Ważność: S4 · Zasięg: klucze `stare-miasto-0-1 460,100/110/120`, `krakowskie-2-1 450,*`; ok. 500 stromych par po G-748
 - Opis: kontrola z #497 bierze tylko teren, więc obniżenie gruntu pod płytami `arkady.ts` liczy jako uskoki i strome pary
-- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 6c4fc01): walk-blocked bierze wierzch płyt i brył scen (floorOver); pary na płytach Arkad 1117 -> 0 (G-758: 262 -> 0); klucze skanu 1 -> 1; czeka na poprawkę uskoków płyt Arkad (walk-review B); wcześniej: zgłoszone (13.11, naprawiacz G-748)
+- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 038d716): walk-blocked bierze wierzch płyt i brył scen (floorOver), bez budynków mapy i ich pokoi; pary na płytach Arkad 1117 -> 0, pary z dachów budynków 34426 -> 0; klucze skanu 1 -> 1; walk-review B zielony na scaleniu z G-778 (#526); do PR po #526; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 6c4fc01): walk-blocked bierze wierzch płyt i brył scen (floorOver); pary na płytach Arkad 1117 -> 0 (G-758: 262 -> 0); klucze skanu 1 -> 1; czeka na poprawkę uskoków płyt Arkad (walk-review B); wcześniej: zgłoszone (13.11, naprawiacz G-748)
 - Pakiet właściciela: tools/glitch-scan (walk-blocked)
 - Test przyjęcia: `walk-blocked` bez kluczy pod płytami Arkad
 - walk-review B pada z poprawką: łapie prawdziwe uskoki płyt Arkad (G-778); osie along zostają na groundY, bo z floorOver wychodzą bryły Alchemii na chodnikach (krakowskie-2-0 416,-38 i inne). Decyzja nocna (wariant rekomendowany): najpierw naprawa uskoków, potem G-759, bez ruszania testu B.
 - 14.11 (naprawiacz G-778): floorOver traktuje budynek mapy jako podłogę: budynek stare-miasto-0-1 (468; 124,2, y -9,1..-2,3) daje w kwadracie 460,120 pary ledge 5,7-6,6 m przy ground -2,30; test B tego kwadratu nie sprawdza. Do poprawy w gałęzi g759 przed PR.
+- runda 2 (679ef68): dachy budynków mapy i ściany pokoi nie są podłogą (budynek 468;124,2 w 460,120); test B wymaga #526 przed scaleniem
 
 ### G-764 Trawnik pod koronami drzew na kostce (reguła koron, ADR-0077 krok 1.2)
 - Ważność: S4 · Zasięg: 4 dzielnice, ok. 474–670 m², m.in. promenada nad Czechówką przy VIVO (x 1090, z 185), Furmańska (x 646, z 257)
