@@ -125,5 +125,6 @@ export const CREDITS: readonly Credit[] = [
   // CC BY 3.0 (ADR-0063, ADR-0073 stage 2): the icons of implants and consumables, redrawn into icons/game-icon-paths.ts.
   { id: "game-icons-lorc", section: "icons", title: gameIcons("Lorc"), author: "Lorc", authorUrl: "http://lorcblog.blogspot.com", url: "https://game-icons.net", license: "CC-BY-3.0", files: [], changed: true },
   { id: "game-icons-delapouite", section: "icons", title: gameIcons("Delapouite"), author: "Delapouite", authorUrl: "http://delapouite.com", url: "https://game-icons.net", license: "CC-BY-3.0", files: [], changed: true },
+  { id: "zer0-sol-handgun-reload", section: "audio", title: "Handgun Reload Sound Effect", author: "zer0_sol", url: "https://opengameart.org/content/handgun-reload-sound-effect", license: "CC0-1.0", files: ["audio/reload-handgun-000.ogg"], changed: true },
   { id: "ylmir-rain-loopable", section: "audio", title: "Rain (loopable)", author: "Ylmir", url: "https://opengameart.org/content/rain-loopable", license: "CC0-1.0", files: ["audio/rain-loop.ogg"], changed: false },
 ];

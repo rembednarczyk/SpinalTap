@@ -27,7 +27,9 @@ const SOUNDS = {
     heal: { urls: ["clinic-heal-000.ogg", "clinic-heal-001.ogg"], gain: 0.4, pitch: 0.04, send: 0.35 },
     overdrive: { urls: ["cyber-overdrive.ogg"], gain: 0.35, pitch: 0.03, layerSynth: true },
     // Weapons, loot and trade (E12).
-    reload: { urls: range("reload-metal-", ["000", "001"]), gain: 0.5, pitch: 0.05, send: 0.15 },
+    // Magazine out, magazine in, slide racked (1.4 s); a per-round reload clicks a shell in.
+    reload: { urls: ["reload-handgun-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.15 },
+    "reload-round": { urls: range("reload-metal-", ["000", "001"]), gain: 0.5, pitch: 0.05, send: 0.12 },
     "weapon-switch": { urls: range("weapon-switch-", ["000", "001"]), gain: 0.4, pitch: 0.06, send: 0.1 },
     "loot-pickup": { urls: range("loot-pickup-", ["000", "001"]), gain: 0.55, pitch: 0.08 },
     // The tin clink sits on the synth's coin triad.

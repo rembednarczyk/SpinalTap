@@ -147,6 +147,14 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "square", freq: 640, to: 380, start: 0.22, dur: 0.04, gain: 0.06, filter: 2400, attack: 0.001 },
     ],
   },
+  // One shell into the tube: the first click of the magazine change, alone.
+  "reload-round": {
+    send: 0.12,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.04, gain: 0.16, filter: 1900, filterType: "bandpass", q: 3, attack: 0.001 },
+      { type: "square", freq: 640, to: 380, dur: 0.04, gain: 0.06, filter: 2400, attack: 0.001 },
+    ],
+  },
   "weapon-switch": {
     send: 0.1,
     voices: [
