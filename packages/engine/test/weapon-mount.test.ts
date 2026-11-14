@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { Scene, TransformNode, Vector3 } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { ModelLibrary } from "../src/renderer/model-library";
-import { GRIP, type WeaponKind, WeaponMounts } from "../src/renderer/weapon-mount";
+import { viewmodelPose } from "../src/camera/viewmodel-poses";
+import { GRIP, type WeaponKind, WeaponMounts, isMeleeKind } from "../src/renderer/weapon-mount";
 import { triangleGltf } from "./model-loader.test";
 import { allWeaponUrls } from "./weapon-files";
 
@@ -53,9 +54,19 @@ describe("WeaponMounts", () => {
         const back = inHolder(minimum.x, 0);
         // The grip is on the holding point (the ball hand of the viewmodel sits 2 cm off it).
         expect(grip.length(), `${space} grip`).toBeLessThan(space === "hand" ? 1e-6 : 0.02);
-        // Before: the glTF root mirrors X, so every gun pointed its muzzle back at the elbow.
-        expect(forward(muzzle), `${space} muzzle`).toBeGreaterThan(0.08);
-        expect(forward(back), `${space} butt`).toBeLessThan(0);
+        if (space === "view" && isMeleeKind(kind)) {
+          // In FPP a melee weapon stands at the ready, upright (the user's decision of 13.11, FPP
+          // hands round 4, `VIEW_MELEE_TILT`): the tip well over the fist, within 35 degrees of upright (leaning back),
+          // never behind the eye (the fist is `hip.z` ahead of it); the pommel under the fist.
+          expect(muzzle.y, `${space} tip over the fist`).toBeGreaterThan(0.08);
+          expect(Math.abs(muzzle.z), `${space} tip upright`).toBeLessThan(0.7 * muzzle.y);
+          expect(muzzle.z + viewmodelPose(kind).hip.z, `${space} tip ahead of the eye`).toBeGreaterThan(0);
+          expect(back.y, `${space} pommel`).toBeLessThan(0);
+        } else {
+          // Before: the glTF root mirrors X, so every gun pointed its muzzle back at the elbow.
+          expect(forward(muzzle), `${space} muzzle`).toBeGreaterThan(0.08);
+          expect(forward(back), `${space} butt`).toBeLessThan(0);
+        }
         expect(maximum.x - minimum.x).toBeCloseTo(LENGTH[kind], 3);
       }
     },
@@ -83,5 +94,17 @@ describe("WeaponMounts", () => {
     expect(await mounts.mount(new TransformNode("hand", scene), "pistol", "h", "hand")).not.toBeNull();
     expect(scene.meshes.length).toBeGreaterThan(before);
     expect(new WeaponMounts(library).preload()).toEqual([]);
+  });
+
+  it("draws one contour round the weapon in FPP: the ink lines, no inverted hull a few pixels off it; in a hand in TPP the hull stays", async () => {
+    const scene = new Scene(new NullEngine());
+    const mounts = new WeaponMounts(new ModelLibrary(scene, new ToonMaterials(scene)), allWeaponUrls());
+    for (const kind of ["pistol", "revolver", "rifle"] as const) {
+      const meshesOf = async (space: "hand" | "view") => (await mounts.mount(new TransformNode(space, scene), kind, `${kind}-${space}`, space))!.getChildMeshes(false).filter((m) => m.getTotalVertices() > 0);
+      const view = await meshesOf("view");
+      expect(view.length, kind).toBeGreaterThan(0);
+      expect(view.filter((m) => m.renderOutline).map((m) => m.name), `${kind} in FPP`).toEqual([]);
+      expect((await meshesOf("hand")).every((m) => m.renderOutline), `${kind} in a hand`).toBe(true);
+    }
   });
 });

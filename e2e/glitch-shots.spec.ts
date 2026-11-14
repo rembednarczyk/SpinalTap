@@ -8,9 +8,11 @@ import { freeze, step, teleport, newGame, waitForGame, waitForPlay } from "./hel
  * `GLITCH_SPOTS` a JSON list of [name, x, z, yaw, pitch, y?] (y: a floor over or under the ground,
  * the stairs of a metro pavilion; without it the ground), or the path of a .json file holding it.
  * Skipped without them, so the full suite in CI passes over it. Next to each `<name>.png` goes
- * `<name>.json` with the player and the camera at the moment of the shot. `SHOT_HOUR` (0-23) lets
- * game time pass to that full hour before the first shot, e.g. 12 for daylight; without it the game
- * keeps its starting time (night).
+ * `<name>.json` with the player, the camera and the frame's draw calls at the moment of the shot.
+ * `SHOT_HOUR` (0-23) lets game time pass to that full hour before the first shot, e.g. 12 for
+ * daylight; without it the game keeps its starting time (night). `SHOT_MODELS=on` takes them with
+ * the character models (Seki's own hands in FPP among them), once every character in range is
+ * dressed; without it the models are off.
  */
 const listed = process.env.GLITCH_SPOTS ?? "[]";
 const spots = JSON.parse(listed.endsWith(".json") ? readFileSync(listed, "utf8") : listed) as [string, number, number, number, number, number?][];
@@ -19,6 +21,9 @@ const spots = JSON.parse(listed.endsWith(".json") ? readFileSync(listed, "utf8")
 const NEAR = 3;
 /** Standing still, the camera looks exactly where the player does (no bob); a hundredth of a radian of slack. */
 const TURNED = 0.01;
+
+/** The character models on (`SHOT_MODELS=on`) or off, as the shots always were. */
+const models = process.env.SHOT_MODELS === "on";
 
 /** The hour of the shots, or null for the game's starting time. */
 const hour = process.env.SHOT_HOUR === undefined ? null : Number(process.env.SHOT_HOUR);
@@ -36,11 +41,12 @@ const turn = (a: number, b: number): number => Math.atan2(Math.sin(b - a), Math.
 test("shots of the hunters' places", async ({ page }) => {
   test.skip(!process.env.SHOTS || spots.length === 0, "SHOTS and GLITCH_SPOTS not set");
   test.setTimeout(60_000 + spots.length * 40_000);
-  await page.goto("/?seed=7&models=off");
+  await page.goto(models ? "/?seed=7" : "/?seed=7&models=off");
   await waitForGame(page);
   await newGame(page);
   await waitForPlay(page);
   await freeze(page);
+  if (models) await page.waitForFunction(() => window.__seki!.dressed() > 0 && window.__seki!.modelsLoading() === 0, null, { timeout: 90_000 });
   if (hour !== null) {
     expect(Number.isInteger(hour) && hour >= 0 && hour <= 23, "SHOT_HOUR is a full hour, 0-23").toBe(true);
     const clock = await page.evaluate(() => window.__seki!.state().clock);
@@ -63,7 +69,9 @@ test("shots of the hunters' places", async ({ page }) => {
     const shot = await page.evaluate(() => {
       const s = window.__seki!;
       const png = s.capture!();
-      return { png, player: s.state().player, camera: s.camera!() };
+      // The frame's draw calls, meshes and triangles, to set a change's cost beside its look.
+      const { drawCalls, activeMeshes, activeTriangles, byName } = s.perf();
+      return { png, player: s.state().player, camera: s.camera!(), perf: { drawCalls, activeMeshes, activeTriangles, byName } };
     });
     const { png, ...where } = shot;
     writeFileSync(join(process.env.SHOTS!, `${name}.png`), Buffer.from(png.slice(png.indexOf(",") + 1), "base64"));

@@ -55,9 +55,12 @@ export const MELEE_HOLD: Readonly<Record<MeleeKind, { readonly handle: number }>
 
 export const isMeleeKind = (kind: WeaponKind): kind is MeleeKind => kind in MELEE_HOLD;
 
-/** FPP: the melee weapon rises from the fist, its tip this far (radians) from straight up towards the view. */
-export const VIEW_MELEE_TILT = 0.55;
-/** The tip up and forward, the back towards the eye, so the edge faces what the view looks at. */
+/**
+ * FPP: the melee weapon rises from the fist, its tip this far (radians) from straight up towards
+ * the view: at the ready, upright and a little back over the shoulder (round 4).
+ */
+export const VIEW_MELEE_TILT = -0.2;
+/** The tip up, the back towards the eye, so the edge faces what the view looks at. */
 const IN_VIEW_MELEE = orient(new Vector3(0, -Math.cos(VIEW_MELEE_TILT), -Math.sin(VIEW_MELEE_TILT)), new Vector3(0, Math.sin(VIEW_MELEE_TILT), -Math.cos(VIEW_MELEE_TILT)));
 
 /**
@@ -77,7 +80,7 @@ export const GRIP: Readonly<Record<WeaponKind, { readonly x: number; readonly y:
 };
 
 /** The grip sits this much further back and lower in the viewmodel (file frame), where the hand is a ball. */
-const VIEW_SHIFT = { x: -0.015, y: -0.005 };
+export const VIEW_SHIFT = { x: -0.015, y: -0.005 };
 
 /**
  * Long guns go in both hands (G-282): the right fist round the middle of the grip, the left palm
@@ -135,7 +138,10 @@ export class WeaponMounts {
     if (!url) return null;
     let model: ModelInstance;
     try {
-      model = await this.library.instantiate({ url, preset: "importedProp", outline: true }, name);
+      // In FPP the inverted hull (`IMPORTED_OUTLINE_WIDTH` along the normals) stands off the gun
+      // half a metre from the eye by some 9 pixels, a dark shell round it, split at its hard edges,
+      // besides the ink lines on its own silhouette: there the line-art pass draws the one contour.
+      model = await this.library.instantiate({ url, preset: "importedProp", outline: space !== "view" }, name);
     } catch (err: unknown) {
       console.warn(`[weapons] ${url} failed to load`, err);
       return null;

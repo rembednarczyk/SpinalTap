@@ -347,6 +347,15 @@ const shopOutlines = (out: readonly BuildingOut[], buildings: readonly Area[]): 
  * `lod2`: GUGiK LoD2 2017 buildings (`Inputs.lod2`) for the roofs it lacks (`lod2-roofs.ts`); without, the tags' heights and roofs.
  * `covers`: the districts' orthophoto cover (`Inputs.covers`) the bare ground is laid from (`bare-cover.ts`); without, it stays bare.
  */
+/** A gap's patch is no carriageway, sidewalk or kerb: only the ground of its band (G-760); a slit is laid edge to edge (G-777). */
+const patchBand = (of: Band, ring: Pt[], slit?: true): Band => ({ surface: of.surface, ring, bridge: false, source: of.source, holed: true, patch: true, ...(slit ? { slit } : {}) });
+
+/** The bands less the slits a carriageway is widened over to its paving: the widening covers them, a slit would lie under it (G-777). */
+const slitsOffWidened = <B extends Band & { box: Rect }>(bands: readonly B[], widened: readonly (readonly Pt[])[]): B[] => {
+  const wide = widened.map((ring) => ({ ring, box: ringBounds(ring) }));
+  return bands.filter((b) => !b.slit || !wide.some((w) => rectsOverlap(w.box, b.box) && pointInRing(centroid(b.ring), w.ring)));
+};
+
 export const generate = (
   data: OsmData,
   src: HeightSource,
@@ -417,9 +426,7 @@ export const generate = (
   // A band's end is round where its way meets another on the ground, as far as nothing else covers it: the corner square ends left bare (ADR-0078, G-658).
   const joined = groundJoints(laidLines);
   for (const { piece, mapped, atStreet: at } of laidLines) for (const b of lineBands(piece, mapped, water, at, joined)) bands.push({ ...b, box: ringBounds(b.ring) });
-  // A gap's patch is no carriageway, sidewalk or kerb: only the ground of its band (G-760).
-  const patch = (of: Band, ring: Pt[]) => ({ surface: of.surface, ring, bridge: false, source: of.source, holed: true as const, patch: true as const });
-  bands.splice(0, bands.length, ...roundJoints(bands, patch).map((b) => ({ ...b, box: ringBounds(b.ring) })));
+  bands.splice(0, bands.length, ...roundJoints(bands, patchBand).map((b) => ({ ...b, box: ringBounds(b.ring) })));
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.flatMap(carriageway).filter((l) => l.tags.highway !== undefined && near(l.line));
   // A crossing node a mapped crossing way runs through is striped by that way already.
@@ -458,6 +465,7 @@ export const generate = (
   const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), (source) => !measured.has(source), walks);
   for (const [b, { ring, runs }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
+  bands.splice(0, bands.length, ...slitsOffWidened(bands, [...kerbs.widened.values()].map((w) => w.ring)));
   // The carriageways' reach each side of their axes, fitted and widened, for the traffic's lanes (ADR-0080).
   const halves = streetHalves(bands);
   const widths = streetWidths(laidLines, (w) => isCarriageway(w.piece.tags) || w.atStreet, kerbs.widened);

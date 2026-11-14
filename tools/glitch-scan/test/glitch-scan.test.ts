@@ -28,6 +28,7 @@ import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
 import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
+import { groundOverSteps } from "./ground-over-steps";
 import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
 import { addedSolidOverWay } from "./added-solid-over-way";
 import { albedoSurfaces, orthoPavingKeys, pavingAlbedoDrift, planToGrass } from "./paving-albedo";
@@ -2050,6 +2051,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "ground-strip-overlap": () => groundStripOverlap(STRIP_RASTERS()),
   /** A m² of bare gaps up to 1.25 m wide between the tables' ground pieces, on a 0.25 m raster (ADR-0078 stage 5 brings it down, `ground-strips.ts`). */
   "ground-strip-gap": () => groundStripGap(STRIP_RASTERS()),
+  /** A piece of the tables' ground lifted over the steps, on a flight's outline by over 0.01 m²: it breaks through the lowest tread (G-777, `ground-over-steps.ts`). */
+  "ground-over-steps": () => groundOverSteps(MAP_CHUNKS),
   /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */
   "paving-coplanar": () => pavingCoplanar(mapGround(WORLD_SCENERY)),
   /** A drawn lawn with over 20 m² of it under a square's or a cobbled area's paving, which lies over it: Plac Litewski's lawns (G-421, `grass-under-paving.ts`). */

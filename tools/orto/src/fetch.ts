@@ -11,20 +11,9 @@ import { type CellSpec, FLIGHTS, type Flight, MAX_SIDE, ORTHO_STEP, PAUSE_MS, US
 import { decodeRgb } from "./png.ts";
 import { regionsOf } from "./region.ts";
 import { type Sheet, featureInfoUrl, indexLayer, parseSheets, sheetOf } from "./sheets.ts";
-import { type GridBox, getMapUrl, gridBox, type TileMeta, tileFiles } from "./tiles.ts";
+import { BLANK_MAX, type GridBox, blankShare, getMapUrl, gridBox, type TileMeta, tileFiles } from "./tiles.ts";
 
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-/** The share of a WMS image with no photograph: transparent, or the blank white of a service outside its sheets. */
-const blankShare = (png: Uint8Array): number => {
-  const img = decodeRgb(png);
-  let blank = 0;
-  for (let i = 0; i < img.empty.length; i++) {
-    const [r, g, b] = [img.rgb[i * 3]!, img.rgb[i * 3 + 1]!, img.rgb[i * 3 + 2]!];
-    if (img.empty[i] || (r === 255 && g === 255 && b === 255)) blank++;
-  }
-  return blank / img.empty.length;
-};
 
 class RateLimited extends Error {}
 
@@ -67,11 +56,13 @@ const fetchCell = async (cache: string, flight: Flight, cell: CellSpec): Promise
   for (const [k, s] of services.entries()) {
     if (k > 0) await pause(PAUSE_MS);
     const png = await getPng(getMapUrl(s.url, WMS_LAYER, box, width, height, time));
-    const blank = blankShare(png);
+    const blank = blankShare(decodeRgb(png));
     console.log(`${flight.id} ${cell.id}: ${s.id} ${width}×${height}, ${(png.length / 1e6).toFixed(2)} MB, blank ${(blank * 100).toFixed(1)}%`);
     if (blank > 0.05 && k < services.length - 1) continue;
+    // Cached so it is not asked for again, but marked: no service has this flight here (G-771).
+    if (blank > BLANK_MAX) console.log(`${flight.id} ${cell.id}: no image in any service, cached as blank, left out of the cover and the lean`);
     const sheet = await lookUpSheet(flight, box);
-    const meta: TileMeta = { cell: cell.id, flight: flight.id, service: s.id, ...(time ? { time } : {}), crs: "EPSG:2180", box, width, height, fetched: new Date().toISOString().slice(0, 10), ...(sheet ? { sheet } : {}) };
+    const meta: TileMeta = { cell: cell.id, flight: flight.id, service: s.id, ...(time ? { time } : {}), crs: "EPSG:2180", box, width, height, fetched: new Date().toISOString().slice(0, 10), ...(sheet ? { sheet } : {}), ...(blank > BLANK_MAX ? { blank } : {}) };
     const f = tileFiles(cache, flight.id, cell.id);
     mkdirSync(f.dir, { recursive: true });
     writeFileSync(f.png, png);

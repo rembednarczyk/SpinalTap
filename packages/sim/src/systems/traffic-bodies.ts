@@ -21,13 +21,17 @@ const STEP = 1;
 /** A body is read this far past a bend too (m). */
 const PAST_BEND = 0.01;
 
-/** A body `at` metres ahead along its route: its centre and the way it faces. */
-type Body = { readonly at: number; readonly x: number; readonly z: number; readonly fx: number; readonly fz: number };
+/**
+ * A body `at` metres ahead along its route: the centre of the box it sweeps on its way from halfway
+ * back to the body before to halfway on to the next, the way it faces, and how much longer than the
+ * body that box reaches each way (m).
+ */
+type Body = { readonly at: number; readonly x: number; readonly z: number; readonly fx: number; readonly fz: number; readonly more: number };
 type Half = VehicleState["half"];
 
 /** How far a body reaches along the unit axis (ux, uz) from its centre. */
 const radius = (b: Body, h: Half, ux: number, uz: number): number =>
-  (h.l + BODY_GAP / 2) * Math.abs(b.fx * ux + b.fz * uz) + (h.w + BODY_GAP / 2) * Math.abs(b.fz * ux - b.fx * uz);
+  (h.l + b.more + BODY_GAP / 2) * Math.abs(b.fx * ux + b.fz * uz) + (h.w + BODY_GAP / 2) * Math.abs(b.fz * ux - b.fx * uz);
 
 /** Is (ux, uz) an axis that separates the two bodies? */
 const separates = (p: Body, hp: Half, q: Body, hq: Half, ux: number, uz: number): boolean =>
@@ -76,23 +80,36 @@ interface Sweep {
 const sweeps = new WeakMap<Vehicle, Sweep>();
 
 /**
- * A vehicle's bodies along its route, `at` metres ahead of it: every `STEP` from where it is to
- * `to` metres ahead, and just past each bend, where its body has turned and swings out most.
+ * A vehicle's bodies along its route, `at` metres ahead of it: where it is, at every `STEP` of its
+ * route up to `to` metres ahead, and just before and past each bend, where its body has turned and
+ * swings out most. The steps lie where they lie on the route, not where it is: read from where it
+ * happens to be, a narrow place where two bodies meet (one just past a bend) fell between the steps
+ * every other frame, the place they met jumped by metres, and which of the two gave way changed
+ * from frame to frame (G-768). Each body is as long as the way it covers to the bodies beside it,
+ * so no place between two of them is missed either.
  */
 const bodiesAhead = (v: Vehicle, to: number): Sweep => {
   const st = v.vehicle;
   const known = sweeps.get(v);
   if (known && known.s === st.s && known.aside === st.aside && known.to === to && known.x === v.position.x && known.z === v.position.z) return known;
   const lane = TRAFFIC_ROUTES[st.route]!;
-  const out: Body[] = [{ at: 0, x: v.position.x, z: v.position.z, fx: Math.sin(v.yaw), fz: Math.cos(v.yaw) }];
-  const add = (at: number) => {
-    const p = lanePose(lane, st.s + at, st.aside);
-    out.push({ at, x: p.x, z: p.z, fx: p.tx, fz: p.tz });
-  };
   const end = Math.min(st.s + to, lane.length);
-  for (let k = STEP; st.s + k <= end; k += STEP) add(k);
+  const ats: number[] = [];
+  for (let k = Math.floor(st.s / STEP) + 1; k * STEP <= end; k++) ats.push(k * STEP - st.s);
   const at = bends(st.route);
-  for (let i = firstPast(at, st.s - PAST_BEND); i < at.length && at[i]! + PAST_BEND <= end; i++) add(at[i]! + PAST_BEND - st.s);
+  for (let i = firstPast(at, st.s - PAST_BEND); i < at.length && at[i]! + PAST_BEND <= end; i++) {
+    if (at[i]! - PAST_BEND > st.s) ats.push(at[i]! - PAST_BEND - st.s);
+    ats.push(at[i]! + PAST_BEND - st.s);
+  }
+  ats.sort((p, q) => p - q);
+  const out: Body[] = [];
+  const add = (ahead: number, x: number, z: number, fx: number, fz: number, back: number, on: number) =>
+    out.push({ at: ahead, x: x + (fx * (on - back)) / 2, z: z + (fz * (on - back)) / 2, fx, fz, more: (back + on) / 2 });
+  add(0, v.position.x, v.position.z, Math.sin(v.yaw), Math.cos(v.yaw), 0, (ats[0] ?? 0) / 2);
+  ats.forEach((a, i) => {
+    const p = lanePose(lane, st.s + a, st.aside);
+    add(a, p.x, p.z, p.tx, p.tz, (a - (ats[i - 1] ?? 0)) / 2, ((ats[i + 1] ?? a) - a) / 2);
+  });
   const box = { minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity };
   for (const b of out) {
     box.minX = Math.min(box.minX, b.x);
@@ -111,8 +128,8 @@ const bodiesAhead = (v: Vehicle, to: number): Sweep => {
  */
 export const bodiesMeet = (a: Vehicle, reachA: number, b: Vehicle, reachB: number): { readonly a: number; readonly b: number } | null => {
   const [ha, hb] = [a.vehicle.half, b.vehicle.half];
-  // Two bodies whose centres lie farther apart than both their half diagonals do not touch.
-  const apart = Math.hypot(ha.l, ha.w) + Math.hypot(hb.l, hb.w) + BODY_GAP;
+  // Two bodies whose centres lie farther apart than both their half diagonals, each a `STEP` longer, do not touch.
+  const apart = Math.hypot(ha.l + STEP / 2, ha.w) + Math.hypot(hb.l + STEP / 2, hb.w) + BODY_GAP;
   if (Math.hypot(a.position.x - b.position.x, a.position.z - b.position.z) > reachA + reachB + apart) return null;
   // Off the stretches where the two routes' bodies meet at all (stepped aside, a vehicle leaves its lane's).
   const [sa, sb] = [a.vehicle, b.vehicle];

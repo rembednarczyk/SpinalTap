@@ -9,7 +9,7 @@
 import { type Pt, type Rect } from "../../osm-import/src/geometry.ts";
 import { puwgFrame, worldToPuwg } from "../../osm-import/src/project.ts";
 import { type Grid, gridOver, outlineMask, rectMask } from "./grid.ts";
-import { type Tile, pixelAt } from "./tiles.ts";
+import { type Tile, isBlank, pixelAt } from "./tiles.ts";
 
 /** Shifts tried (m each way), the image's sample (m), the fewest outline samples in the cell for a lean to count (about 220 m of outline). */
 export const LEAN = { RANGE: 8, STEP: 0.25, MIN_EDGE: 2000 } as const;
@@ -98,7 +98,11 @@ export const bestLean = (g: Grid, grad: Float32Array, edge: readonly number[], r
 const r2 = (v: number) => Math.round(v * 100) / 100 + 0;
 
 /** The lean of each flight's tile of the cell against the LoD2 outlines near it. */
-export const leanSection = (rect: Rect, lod2: readonly (readonly Pt[])[], tiles: readonly { readonly flight: string; readonly tile: Tile }[]): LeanSection => {
+export const leanSection = (rect: Rect, lod2: readonly (readonly Pt[])[], photos: readonly { readonly flight: string; readonly tile: Tile }[]): LeanSection => {
+  // A blank tile has no edges: it would lean (0; 0) and be recommended (G-771).
+  const tiles = photos.filter((p) => !isBlank(p.tile));
+  const blank = photos.filter((p) => isBlank(p.tile)).map((p) => `; pusty nalot ${p.flight} pominięty`).join("");
+  if (!tiles.length && blank) return { flights: [], edge: 0, verdict: `brak nalotów z obrazem${blank}: przechyłu nie zmierzono` };
   if (!tiles.length) return { flights: [], edge: 0, verdict: "brak kafli ortofoto w pamięci podręcznej (`fetch.ts --cell`): przechyłu nie zmierzono" };
   const g = gridOver(rect, LEAN.STEP, LEAN.RANGE + 2);
   const lines = outlineMask(g, lod2, 1);
@@ -109,10 +113,10 @@ export const leanSection = (rect: Rect, lod2: readonly (readonly Pt[])[], tiles:
     const b = bestLean(g, gradient(g, brightness(g, tile)), edge);
     return { flight, ...(tile.meta.sheet ? { sheet: `${tile.meta.sheet.sheet} ${tile.meta.sheet.date}` } : {}), dx: b.dx, dz: b.dz, score: r2(b.score), scoreZero: r2(b.scoreZero) };
   });
-  if (edge.length < LEAN.MIN_EDGE) return { flights, edge: edge.length, verdict: `za mało obrysów LoD2 w komórce (${edge.length} próbek krawędzi < ${LEAN.MIN_EDGE}): przechył niepewny, nalotu nie zalecam` };
+  if (edge.length < LEAN.MIN_EDGE) return { flights, edge: edge.length, verdict: `za mało obrysów LoD2 w komórce (${edge.length} próbek krawędzi < ${LEAN.MIN_EDGE}): przechył niepewny, nalotu nie zalecam${blank}` };
   const rec = [...flights].sort((a, b) => Math.hypot(a.dx, a.dz) - Math.hypot(b.dx, b.dz))[0]!;
   const others = flights.filter((f) => f !== rec).map((f) => `${f.flight} (${f.dx}; ${f.dz})`);
-  return { flights, recommended: rec.flight, edge: edge.length, verdict: `najmniejszy przechył ma ${rec.flight} (${rec.dx}; ${rec.dz}) m${others.length ? `, pozostałe ${others.join(", ")}` : ""}: goły teren i dachy czytaj z ${rec.flight}` };
+  return { flights, recommended: rec.flight, edge: edge.length, verdict: `najmniejszy przechył ma ${rec.flight} (${rec.dx}; ${rec.dz}) m${others.length ? `, pozostałe ${others.join(", ")}` : ""}: goły teren i dachy czytaj z ${rec.flight}${blank}` };
 };
 
 export const leanText = (s: LeanSection): string[] => [
