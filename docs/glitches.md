@@ -1877,13 +1877,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: kontrola skanu bez kluczy w tych miejscach
 
-### G-795 Cień twardy z poszarpanymi krawędziami (teksele mapy cieni)
-- Ważność: S3 · Zasięg: cały świat, High i Medium; zrzut użytkownika z telefonu 14.11 (noc, kamera z góry, postać z bronią przy latarni)
-- Opis: schodkowe, pikselowe krawędzie cienia postaci i budynków; przyczyna do ustalenia: rozmiar mapy, zasięg frustum cienia, brak filtrowania
-- Status: w PR #542, zrzuty zaakceptowane przez użytkownika 14.11; scalenie po zielonym CI; wcześniej: w PR #542 (zrzuty do akceptacji); wcześniej: w naprawie (14.11, gałąź ccr-ec2c4269-ilh8k8-shadow-edges)
-- Pakiet właściciela: packages/engine (npr/moon-shadow.ts)
-- Test przyjęcia: zrzut nocny z góry bez schodków na krawędzi cienia; migawka NPR obejrzana
-
 ### G-796 Ziarnisty cień kontaktowy pod postacią przy kamerze z góry
 - Ważność: S3 · Zasięg: High, cień kontaktowy; zrzut użytkownika z telefonu 14.11 (rozdzielczość renderu 70%, kamera z góry)
 - Opis: pod postacią plama z widocznym ziarnem/szachownicą zamiast gładkiego cienia; podejrzenie: wzór Bayera 4x4 i rozmycie 4x4 w połowie rozdzielczości przestają się znosić przy skali renderu 0,7 albo postać (skórowana) jako zasłona daje szum; do naprawy po zmianie formatów G-buffera (gałąź gbuffer-lite)

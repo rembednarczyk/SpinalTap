@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-795 Cień twardy z poszarpanymi krawędziami (teksele mapy cieni)
+- Ważność: S3 · Zasięg: cały świat, High i Medium; zrzut użytkownika z telefonu 14.11 (noc, kamera z góry, postać z bronią przy latarni)
+- Opis: schodkowe, pikselowe krawędzie cienia postaci i budynków; przyczyna do ustalenia: rozmiar mapy, zasięg frustum cienia, brak filtrowania
+- Status: naprawione (14.11, #542 scalony); wcześniej: w PR #542, zrzuty zaakceptowane przez użytkownika 14.11; scalenie po zielonym CI; wcześniej: w PR #542 (zrzuty do akceptacji); wcześniej: w naprawie (14.11, gałąź ccr-ec2c4269-ilh8k8-shadow-edges)
+- Pakiet właściciela: packages/engine (npr/moon-shadow.ts)
+- Test przyjęcia: zrzut nocny z góry bez schodków na krawędzi cienia; migawka NPR obejrzana
+
 ### G-782 roundJoints: suma NonZero pierścieni zgodnych z ruchem wskazówek zegara w fazie okrągłych końców
 - Ważność: S4 · Zasięg: 242 z 2141 pasów ma pierścień zgodny z ruchem wskazówek zegara
 - Opis: covered w pierwszej fazie roundJoints sumuje pierścienie bez obracania; obszar zgodny z ruchem wskazówek zegara znosi pasy na nim, bit końca może trafić w fałszywą dziurę
