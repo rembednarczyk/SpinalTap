@@ -88,6 +88,8 @@ export class PreviewStage {
   private dressing = false;
   /** The heroine's model failed to load or had no humanoid bones: the procedural rig shows instead. */
   private dressFailed = false;
+  /** Her file failed to download: the menu asks again when it next opens (G-807). */
+  private downloadFailed = false;
   private characters: CharacterModelManifest = {};
   private weaponModels: WeaponManifest = {};
   private appearance: AppearanceDescriptor | null = null;
@@ -131,6 +133,10 @@ export class PreviewStage {
     if (r === rect || (r && rect && r.x === rect.x && r.y === rect.y && r.width === rect.width && r.height === rect.height)) return;
     this.rect = rect;
     this.dirty = true;
+    if (rect && !r && this.downloadFailed) {
+      this.downloadFailed = false;
+      this.dress();
+    }
   }
 
   setAppearance(appearance: AppearanceDescriptor): void {
@@ -296,6 +302,7 @@ export class PreviewStage {
       .catch((err: unknown) => {
         this.dressing = false;
         this.dressFailed = true;
+        this.downloadFailed = true;
         this.dirty = true;
         console.warn(`[preview] ${spec.url} failed to load`, err);
       });

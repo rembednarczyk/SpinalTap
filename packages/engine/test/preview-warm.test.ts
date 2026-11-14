@@ -1,11 +1,17 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PreviewStage } from "../src/renderer/preview-stage";
-import { serveModels } from "./game-models";
+import { readModelFile, serveModels } from "./game-models";
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
+
+/** The game's file from disk, as `serveModels` answers it. */
+const serveFile = (url: string) => {
+  const b = readModelFile(url);
+  return Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)) });
+};
 
 const canvas = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }) } as unknown as HTMLCanvasElement;
 
@@ -35,6 +41,24 @@ describe("the character menu's preview", () => {
     expect(preview.state.dressed).toBe(false);
     preview.dispose();
   });
+
+  it("dresses Seki when the menu opens after her first download failed (G-807)", async () => {
+    let failing = true;
+    vi.stubGlobal("fetch", (url: string) => {
+      if (!failing) return serveFile(url);
+      failing = false;
+      return Promise.reject(new Error("offline"));
+    });
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const preview = new PreviewStage(new NullEngine(), canvas);
+    preview.setModels({ heroine: { url: "seki.vrm" } });
+    preview.warm();
+    await vi.waitFor(() => expect(preview.state.waiting).toBe(false));
+    expect(preview.state.dressed).toBe(false);
+    preview.setViewport({ x: 0, y: 0, width: 400, height: 600 });
+    await vi.waitFor(() => expect(preview.state.dressed).toBe(true), { timeout: 20_000 });
+    preview.dispose();
+  }, 30_000);
 
   it("has nothing to wait for without a model manifest", () => {
     const preview = new PreviewStage(new NullEngine(), canvas);

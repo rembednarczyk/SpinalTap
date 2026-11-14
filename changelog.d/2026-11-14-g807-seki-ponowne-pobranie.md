@@ -1,0 +1,1 @@
+Seki nie zostaje już na całą grę figurą z brył, gdy pobieranie jej modelu raz się nie uda (zerwane połączenie, przestój sieci na telefonie): gra pyta o plik ponownie po 5 s, potem coraz rzadziej, a menu postaci próbuje znowu przy następnym otwarciu (G-807).

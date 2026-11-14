@@ -239,6 +239,48 @@ describe("letting go of character model files (ADR-0076 stage 4b)", () => {
     expect(views.modelCounts.dressed).toBe(1);
   });
 
+  it("dresses Seki after her file failed to download once, though she never comes again (G-807)", async () => {
+    const { times } = serve({ fail: ["seki.vrm"] });
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const views = viewsOn(modelScene());
+    views.setCharacterModels(GAME);
+    views.spawn(1, { kind: "heroine" }, STAND);
+    await settled(views);
+    expect(views.modelCounts.dressed).toBe(0);
+    // The player is never spawned again in the game, so the rig itself asks once more.
+    for (let s = 0; s < 30 && views.modelCounts.dressed === 0; s++) {
+      seconds(views, 1);
+      await settled(views);
+    }
+    expect(times("seki.vrm")).toBe(2);
+    expect(views.modelCounts.dressed).toBe(1);
+  });
+
+  it("asks a missing file again less and less often, and stops for a character gone (G-807)", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    let asked = 0;
+    vi.stubGlobal("fetch", () => {
+      asked++;
+      return Promise.reject(new Error("offline"));
+    });
+    const views = viewsOn(modelScene());
+    views.setCharacterModels(GAME);
+    views.spawn(1, { kind: "heroine" }, STAND);
+    await settled(views);
+    for (let s = 0; s < 120; s++) {
+      seconds(views, 1);
+      await settled(views);
+    }
+    // 5, 10, 20, 40 s apart and then once a minute: a handful in two minutes, not one a second.
+    expect(asked).toBeGreaterThan(2);
+    expect(asked).toBeLessThan(8);
+    const before = asked;
+    views.despawn(1, false);
+    for (let s = 0; s < 120; s++) seconds(views, 1);
+    await settled(views);
+    expect(asked).toBe(before);
+  });
+
   it("loads a save away from Kurosawa and back again, his file let go of behind the first loading screen", async () => {
     const { times, release } = serve({ hold: ["kurosawa.vrm"] });
     const scene = modelScene();
