@@ -36,20 +36,19 @@ const PISTOL: ViewmodelPose = {
 };
 
 /**
- * The handguns sit this much deeper in the fist than round 2 drew them (the user's wish of 14.11:
- * "a little lower, more in the fist"): the hands close this much higher up the grip (and a little
- * back, the web up under the slide's tail, the fingers off the trigger guard: G-770) in the gun's
- * frame (`RIGHT_ON_HANDGUN`; metres, y up, z ahead). From the hip the gun goes as much lower and
- * ahead under them, so the hands keep their place on the screen and the gun drops in the fist.
- * Aimed in the gun keeps its place under the crosshair (its sights' angle, G-275, and its size, as
- * fitted to the hands' old lowest point), and the hands come up its grip instead.
+ * The handguns sit this much lower in the fist than round 2 drew them (the user's wish of 14.11:
+ * "lower, more in the fist", and seated, not cutting through the hand aimed in): from the hip and
+ * aimed in alike the gun goes this much lower under the hands, which close higher up its grip
+ * (`HANDGUN_FIST`, in the gun's frame), so on the screen the hands keep their height and the
+ * gun drops into them (metres). Aimed in, its sights drop as much under the crosshair (G-275 keeps
+ * their angle over 3 degrees, more is allowed).
  */
-export const HANDGUN_DEEPER = { y: 0.015, z: -0.003 } as const;
+export const HANDGUN_DEEPER = 0.015;
 
 const deeper = (pose: ViewmodelPose): ViewmodelPose => {
-  const { y, z } = HANDGUN_DEEPER;
-  const { hip, low } = pose;
-  return { ...pose, hip: { ...hip, y: hip.y - y, z: hip.z - z }, low: { y: low.y + y, z: low.z + z }, adsLow: low };
+  const { hip, ads, low } = pose;
+  const d = HANDGUN_DEEPER;
+  return { ...pose, hip: { ...hip, y: hip.y - d }, ads: { ...ads, y: ads.y - d }, low: { ...low, y: low.y + d } };
 };
 
 /** The pistol as drawn, the hands deeper on its grip; an empty hand takes it too (`weaponHands`). */

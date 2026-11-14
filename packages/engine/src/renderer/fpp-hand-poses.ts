@@ -1,7 +1,6 @@
 import type { WeaponLook } from "@seki/core";
 import { Vector3 } from "../babylon";
 import type { ViewArmsFrame } from "../camera/view-arms";
-import { HANDGUN_DEEPER } from "../camera/viewmodel-poses";
 import { GRIP, LONG_GUN, VIEW_MELEE_TILT, VIEW_SHIFT, WEAPON_MODEL, type WeaponKind } from "./weapon-mount";
 
 /**
@@ -66,13 +65,22 @@ const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1)
 /**
  * A handgun (the pistol, the revolver) as the user chose it out of seven rounds (13.11: round 2,
  * commit e17dc2e): the right hand round the grip, the wrist behind and right of it, the palm on
- * the grip's right side, the fingers closing round its front, all alike; the left hand under the
- * right fist, palm up and to the right, cupping it. The same from the hip and aimed in. Both
- * hands sit higher up the grip than round 2 put them (`HANDGUN_DEEPER`, 14.11), the gun deeper in the fist.
+ * the grip's right side, the fingers closing round its front; the left hand under the right fist,
+ * palm up and to the right, cupping it. The same from the hip and aimed in.
+ * Seated (14.11, the user on PR #537: lower in the fist, not cutting through the hand): the gun
+ * hangs `HANDGUN_DEEPER` lower in the view, so the fist closes that much higher up its short grip
+ * (round 2's wrist at (0.034, -0.028, -0.075)), and 2 cm further forward, the fingers a little
+ * more open round its front, the left hand a little more open under it: no finger of either hand
+ * more than 2 mm into the gun (round 2 sank them up to 11 mm through the grip). Read off the
+ * skinned hand against each gun's triangles, its own pose for the revolver's rounder grip. The
+ * rigid fist's thumb root still sinks into the top of the grip under the web (12 mm, as round 2):
+ * laid straight to clear it, the thumb stood up beside the slide.
  */
-const deeper = (x: number, y: number, z: number): Vector3 => v(x, y + HANDGUN_DEEPER.y, z + HANDGUN_DEEPER.z);
-const RIGHT_ON_HANDGUN = hand(deeper(0.034, -0.028, -0.075), v(-0.22, 0.16, 1), v(-0.12, 0.22, 1), v(-1, 0, -0.1), 0.85);
-const LEFT_UNDER_FIST = hand(deeper(-0.05, -0.085, -0.05), v(0.4, 0.25, 1), v(0.45, 0.35, 1), v(0.7, 0.7, 0), 0.6);
+const HANDGUN_FIST: Readonly<Record<"pistol" | "revolver", HandTarget>> = {
+  pistol: hand(v(0.041, -0.012, -0.056), v(-0.22, 0.16, 1), v(-0.12, 0.22, 1), v(-0.995, 0.078, -0.116), 0.8, 0.56),
+  revolver: hand(v(0.0417, -0.0181, -0.0608), v(-0.22, 0.16, 1), v(-0.0215, 0.1081, 1.025), v(-0.9981, 0.1163, -0.0137), 0.755, 0.635),
+};
+const LEFT_UNDER_FIST = hand(v(-0.05, -0.07, -0.031), v(0.4, 0.25, 1), v(0.45, 0.35, 1), v(0.7, 0.7, 0), 0.5);
 
 /**
  * On the rifle's pistol grip the forearm comes in from the right, the elbow out beside the stock,
@@ -138,12 +146,12 @@ const intoCamera = (t: HandTarget, frame: { readonly position: Vector3; readonly
 /**
  * The hands with the weapon in the viewmodel, `turn` and `position` its frame in the camera's. A
  * handgun (and an empty hand, posed as the pistol) in the right fist with the left under it, from
- * the hip and aimed in (`RIGHT_ON_HANDGUN`, `LEFT_UNDER_FIST`).
+ * the hip and aimed in (`HANDGUN_FIST`, `LEFT_UNDER_FIST`).
  */
 export const weaponHands = (look: WeaponLook | null, frame: { readonly position: Vector3; readonly turn: (d: Vector3) => Vector3 }): ArmsTarget => {
   const melee = look === "baton" || look === "blade";
   const fore = look && !melee ? leftOnForeEnd(look) : null;
-  const right = intoCamera(melee ? RIGHT_ON_HANDLE : look === "rifle" ? RIGHT_ON_RIFLE_GRIP : fore ? RIGHT_ON_GRIP : RIGHT_ON_HANDGUN, frame);
+  const right = intoCamera(melee ? RIGHT_ON_HANDLE : look === "rifle" ? RIGHT_ON_RIFLE_GRIP : fore ? RIGHT_ON_GRIP : HANDGUN_FIST[look === "revolver" ? "revolver" : "pistol"], frame);
   if (look === "blade") return { right, left: intoCamera(LEFT_ON_POMMEL, frame) };
   if (melee) return { right, left: LEFT_DOWN };
   return { right, left: intoCamera(fore ?? LEFT_UNDER_FIST, frame) };
