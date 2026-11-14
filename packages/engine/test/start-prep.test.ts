@@ -139,6 +139,29 @@ describe("StartPrep", () => {
     expect(over).toBe(true);
   });
 
+  it("keeps warming up until the passes the scene's readiness leaves out compiled, asking them every frame", async () => {
+    let passes = false;
+    let asked = 0;
+    const { deps, log } = fakeDeps({ passesReady: () => (asked++, passes) });
+    const prep = new StartPrep(deps);
+    const { seen, onProgress } = record();
+    let over = false;
+    void prep.run(onProgress).then(() => (over = true));
+    await flush(10);
+    for (let i = 0; i < 10; i++) {
+      prep.tick();
+      await flush();
+    }
+    // The scene is ready, the line art of a hidden body or a model file's mesh is not.
+    expect(over).toBe(false);
+    expect(asked).toBe(log.drawn);
+    expect(log.drawn).toBeGreaterThan(3);
+    passes = true;
+    await drive(prep, () => over);
+    expect(over).toBe(true);
+    expect(seen.at(-1)).toEqual({ done: expect.closeTo(1, 9), stage: "shaders" });
+  });
+
   it("a newer run ends the older one, which reports nothing more", async () => {
     const { deps, log } = fakeDeps();
     log.waiting = 5;

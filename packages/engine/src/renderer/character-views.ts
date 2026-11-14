@@ -1,4 +1,4 @@
-import type { Scene } from "../babylon";
+import type { AbstractMesh, Scene } from "../babylon";
 import type { AppearanceDescriptor, EntityId, Transform } from "@seki/core";
 import type { CameraRig } from "../camera/camera-rig";
 import { fadeFigure } from "../npr/body-dither";
@@ -87,6 +87,8 @@ export interface ModelLoading {
   rest(live?: () => boolean): Promise<void>;
   /** Model files in memory now, weapons' too; a file nobody wears goes after a while (ADR-0076 stage 4b). */
   loaded(): string[];
+  /** The loaded files' own meshes (characters' and weapons'), whose effects their instances share. */
+  meshes(): AbstractMesh[];
 }
 
 /** The followed character has a body on her shoulder. */
@@ -120,8 +122,12 @@ export class CharacterViews implements FxActors {
   /** The character the followed one holds in a takedown grab, kept while her clip eases out. */
   private held: EntityId | null = null;
 
+  /** Model files, loaded once for characters and weapons alike. */
+  private readonly library: ModelLibrary;
+
   constructor(private readonly deps: CharacterViewsDeps) {
     const library = new ModelLibrary(deps.scene, deps.materials);
+    this.library = library;
     this.kit = new CharacterKit({ ...deps, library });
     this.models = new CharacterModels({ library, loadouts: this.kit.loadouts, addCaster: (m) => deps.shadow.addCaster(m), scene: deps.scene, materials: deps.materials, ...(deps.modelFiles !== undefined ? { modelFiles: deps.modelFiles } : {}) });
   }
@@ -308,6 +314,7 @@ export class CharacterViews implements FxActors {
       start: () => [...this.models.preload([...this.views.values()].map((v) => v.model)), ...this.kit.preload()],
       rest: (live) => this.models.prefetch(live),
       loaded: () => this.models.loadedFiles(),
+      meshes: () => this.library.templateMeshes(),
     };
   }
 }

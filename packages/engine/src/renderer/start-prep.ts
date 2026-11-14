@@ -16,6 +16,11 @@ export interface StartPrepDeps {
   readonly sceneReady: () => Promise<unknown>;
   /** The scene is still ready after the last drawn frame (`scene.isReady(true)`). */
   readonly isReady: () => boolean;
+  /**
+   * The passes `isReady` leaves out (line art, outline) have compiled for every mesh, the hidden
+   * ones and the model files' own too (`scenePassesReady`); asked once a warm-up frame. True without it.
+   */
+  readonly passesReady?: () => boolean;
   /** The GPU has caught up enough for another frame (`GpuPacer.canDraw`, G-029). */
   readonly canDraw: () => boolean;
   /** Draws one frame under the loading screen and marks it for the pacer. */
@@ -132,7 +137,9 @@ export class StartPrep {
       this.deps.draw();
       drawn++;
       report("shaders", 0.5 + 0.5 * Math.min(1, drawn / WARM_FRAMES));
-      return drawn >= WARM_FRAMES && this.deps.isReady();
+      // Every frame asks the passes, so their compiles start with the first one.
+      const passes = this.deps.passesReady?.() ?? true;
+      return drawn >= WARM_FRAMES && passes && this.deps.isReady();
     });
   }
 
@@ -169,15 +176,17 @@ export interface StartPrepHost {
   readonly modelFiles: StartPrepDeps["modelFiles"];
   readonly cityKit: StartPrepDeps["cityKit"];
   readonly cityWaiting: StartPrepDeps["cityWaiting"];
+  readonly passesReady?: StartPrepDeps["passesReady"];
 }
 
 /** The renderer's preparation over its Babylon scene: its readiness, its pacer and its frames. */
-export const sceneStartPrep = ({ stage, modelFiles, cityKit, cityWaiting }: StartPrepHost): StartPrep => {
+export const sceneStartPrep = ({ stage, modelFiles, cityKit, cityWaiting, passesReady }: StartPrepHost): StartPrep => {
   const { scene, pacer } = stage;
   return new StartPrep({
     modelFiles,
     cityKit,
     cityWaiting,
+    ...(passesReady ? { passesReady } : {}),
     sceneReady: () => scene.whenReadyAsync(true),
     isReady: () => scene.isReady(true),
     canDraw: () => pacer.canDraw,
