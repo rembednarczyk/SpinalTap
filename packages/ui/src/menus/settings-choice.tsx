@@ -1,5 +1,44 @@
 import type { MessageKey } from "../i18n/en";
 import { useT } from "../i18n/use-t";
+import type { SettingsVm } from "../store/ui-store";
+
+/** A setting on a range, with its value as text beside it. */
+export const Slider = ({
+  id,
+  label,
+  value,
+  min,
+  max,
+  step,
+  format,
+  onChange,
+}: {
+  id: keyof SettingsVm;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  format: (v: number) => string;
+  onChange: (v: number) => void;
+}) => (
+  <label className="settings__row" htmlFor={`setting-${id}`}>
+    <span className="settings__label">{label}</span>
+    <input
+      id={`setting-${id}`}
+      className="settings__slider"
+      type="range"
+      min={min}
+      max={max}
+      step={step}
+      value={value}
+      onChange={(e) => onChange(Number(e.currentTarget.value))}
+    />
+    <span className="settings__value">{format(value)}</span>
+  </label>
+);
+
+export const percent = (v: number) => `${Math.round(v * 100)}%`;
 
 /** A choice's values with the catalog keys of their names (ADR-0056). */
 export type Options<T extends string> = readonly (readonly [T, MessageKey])[];

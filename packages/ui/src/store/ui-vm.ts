@@ -278,6 +278,8 @@ export interface SettingsVm {
   readonly contactShade: boolean;
   /** Bloom of signs and lamps where the quality has it (High); false switches it off at once. */
   readonly bloom: boolean;
+  /** Share of the full render resolution on every quality, `RENDER_RESOLUTION_SETTING_RANGE`; applies at once. */
+  readonly renderResolution: number;
   readonly aimMode: AimMode;
   /** Crouch key: held, or pressed once to crouch and again to stand (PC default). */
   readonly crouchMode: AimMode;
@@ -362,6 +364,9 @@ export const DEFAULT_HORIZONTAL_FOV = 80;
 /** Horizontal field of view the settings allow, degrees. */
 export const HORIZONTAL_FOV_RANGE: readonly [number, number] = [70, 100];
 
+/** Render resolution the settings allow, as a share of the full one (the engine's RENDER_RESOLUTION_RANGE), in steps of 5%. */
+export const RENDER_RESOLUTION_SETTING_RANGE: readonly [number, number] = [0.5, 1];
+
 /** Vertical field of view from the hip (radians) for the setting on a screen of `aspect`, as the camera does it. */
 export const hipVerticalFov = (horizontalDegrees: number, aspect: number): number => verticalFov(degToRad(horizontalDegrees), aspect);
 
@@ -369,6 +374,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   quality: "high",
   contactShade: true,
   bloom: true,
+  renderResolution: 1,
   aimMode: "hold",
   crouchMode: "toggle",
   sprintMode: "hold",

@@ -116,6 +116,8 @@ export interface CameraIntents {
 export interface GraphicsIntents {
   /** Saves the choice; a quality without the effect keeps it off. */
   setGraphicsEffect(effect: GraphicsEffectId, on: boolean): void;
+  /** Share of the full render resolution, 0.5..1; the app clamps it to steps of 5% and saves it. */
+  setRenderResolution(share: number): void;
 }
 
 /** The phone (ADR-0028). */

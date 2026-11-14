@@ -60,10 +60,21 @@ describe("graphics switches (graphics toggles 14.11)", () => {
     expect(screen.getByTestId("graphics-effects-note").textContent).toMatch(/only drawn on High/);
   });
 
+  it("shows the render resolution as a slider of 50-100% in steps of 5%, on every quality", () => {
+    const i = openSettings(OFF_QUALITY, { quality: "low", renderResolution: 0.7 });
+    const slider = screen.getByRole("slider", { name: /^Render resolution/ }) as HTMLInputElement;
+    expect(slider).toMatchObject({ min: "0.5", max: "1", step: "0.05", value: "0.7", disabled: false });
+    expect(slider.parentElement?.textContent).toContain("70%");
+    fireEvent.change(slider, { target: { value: "0.55" } });
+    expect(i.setRenderResolution).toHaveBeenCalledWith(0.55);
+    expect(i.changeSettings).not.toHaveBeenCalled();
+  });
+
   it("speaks Polish with the Polish setting", () => {
     openSettings(OFF_QUALITY, { locale: "pl", quality: "low" });
     expect(radio("Cień kontaktowy", "Nie").getAttribute("aria-checked")).toBe("true");
     expect(radio("Poświata (bloom)", "Tak").disabled).toBe(true);
+    expect(screen.getByRole("slider", { name: /^Rozdzielczość renderu/ })).toBeTruthy();
     expect(screen.getByTestId("graphics-effects-note").textContent).toMatch(/tylko na wysokiej jakości/);
   });
 });

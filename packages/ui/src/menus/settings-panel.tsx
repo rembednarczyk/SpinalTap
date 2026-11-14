@@ -9,7 +9,7 @@ import { useSettingsIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
 import { useFieldOfView } from "./use-field-of-view";
 import { GraphicsEffectSwitches } from "./graphics-effects";
-import { Choice, type Options, Toggle } from "./settings-choice";
+import { Choice, type Options, Slider, Toggle, percent } from "./settings-choice";
 
 const QUALITY: Options<GraphicsQuality> = [
   ["high", "settings.quality.high"],
@@ -47,44 +47,8 @@ const SHOULDERS: Options<CameraShoulder> = [
 
 const LANGUAGES: Options<Locale> = LOCALES.map((l) => [l, `settings.language.${l}`] as const);
 
-const Slider = ({
-  id,
-  label,
-  value,
-  min,
-  max,
-  step,
-  format,
-  onChange,
-}: {
-  id: keyof SettingsVm;
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  format: (v: number) => string;
-  onChange: (v: number) => void;
-}) => (
-  <label className="settings__row" htmlFor={`setting-${id}`}>
-    <span className="settings__label">{label}</span>
-    <input
-      id={`setting-${id}`}
-      className="settings__slider"
-      type="range"
-      min={min}
-      max={max}
-      step={step}
-      value={value}
-      onChange={(e) => onChange(Number(e.currentTarget.value))}
-    />
-    <span className="settings__value">{format(value)}</span>
-  </label>
-);
-
 /** One decimal as before (`toFixed` rounding); only the separator follows the language. */
 const times = (locale: Locale) => (v: number) => `${locale === "pl" ? v.toFixed(1).replace(".", ",") : v.toFixed(1)}×`;
-const percent = (v: number) => `${Math.round(v * 100)}%`;
 const degrees = (v: number) => `${Math.round(v)}°`;
 
 /** Horizontal field of view from the hip (ADR-0049); the same width of the street on any screen. */
