@@ -23,7 +23,7 @@ import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
 import { PropSolidIndex, clearSpot } from "./props-solid.ts";
 import { BASKET, BASKET_LAMPS, nearTraffic, placeStreetGroup } from "./props-streets.ts";
-import { treeVariant } from "./tree-heights.ts";
+import { measureTree, treeVariant } from "./tree-heights.ts";
 import { treeSpeciesOf } from "./tree-species.ts";
 
 /** One group of the plan, as far as placement reads it. */
@@ -490,7 +490,7 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     const hash = fnv(x.key) & 0xffff;
     // A bollard's variant is its chain (none until its row is strung), not a hash; a tree's holds its species from OSM (G-423) and measured height (G-422).
     const seed = x.shape === undefined ? hash : withShape(hash, x.prop, x.shape);
-    const variant = x.prop === "bollard" ? 0 : x.prop === "tree" ? treeVariant(site, x.key, x.p, seed, treeSpeciesOf(tags.get(x.key))) : seed;
+    const variant = x.prop === "bollard" ? 0 : x.prop === "tree" ? treeVariant(site, x.p, seed, treeSpeciesOf(tags.get(x.key)), measureTree(site, x.p, tags.get(x.key))?.height ?? null) : seed;
     // Earlier groups win: a bin beside a bench steps aside from a tree's trunk, on the same ground.
     const surface = site.surfaceAt(x.p);
     // A lantern stepped aside from a solid keeps off the boards too.

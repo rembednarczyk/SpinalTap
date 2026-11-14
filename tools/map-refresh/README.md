@@ -7,8 +7,8 @@ pnpm map:refresh [--offline] [--sources=osm,gugik,orto] [--from-cache] [--skip=<
 ```
 
 ## Kroki (w tej kolejności)
-1. **Pobranie** (sieć, grupa `fetch`): `osm-fetch` (`tools/osm-import/src/fetch.ts --refresh`: wyciągi dzielnic i NMT, od PR #550 także `data/osm/points/furniture.json`), `osm-hydrants`, `osm-entrances`, `osm-trees`, `gugik-fetch` (LoD1, LoD2, BDOT10k do pamięci podręcznej poza repo), `orto-fetch --all` (kafle ortofoto do pamięci podręcznej, tylko brakujące).
-2. **Wyciągi** (grupa `extract`, bez sieci): `gugik-extract` i `orto-build` z pamięci podręcznych do `data/gugik` i `data/orto`. Krok bez pamięci podręcznej jest pomijany, więc nie zeruje danych w repo.
+1. **Pobranie** (sieć, grupa `fetch`): `osm-fetch` (`tools/osm-import/src/fetch.ts --refresh`: wyciągi dzielnic i NMT, od PR #550 także `data/osm/points/furniture.json`), `osm-hydrants`, `osm-entrances`, `osm-trees`, `gugik-fetch` (LoD1, LoD2, BDOT10k do pamięci podręcznej poza repo), `nmpt-fetch` (NMPT 0,5 m z WCS geoportalu, kafle 250 m do `seki-gugik/nmpt`, tylko brakujące), `orto-fetch --all` (kafle ortofoto do pamięci podręcznej, tylko brakujące).
+2. **Wyciągi** (grupa `extract`, bez sieci): `gugik-extract`, `nmpt-extract` (NMPT − NMT do `data/gugik/nmpt`, wysokości drzew) i `orto-build` z pamięci podręcznych do `data/gugik` i `data/orto`. Krok bez pamięci podręcznej jest pomijany, więc nie zeruje danych w repo.
 3. **Budowa** (grupa `build`): `osm-build` (z `--stats`, liczby szerokości jezdni i barier) i `osm-props`.
 4. **Kontrole** (grupa `check`): skan glitchy bez zmiany bazy (`GLITCH_BASELINE` pusty) i `hashes:check` bez zapisu. Ich niezerowy kod to wynik, nie błąd.
 5. **Raport** `reports/map-refresh.md` i `.json`: zmienione pliki z rozmiarami, liczba obiektów według rodzaju (listy kawałków i rodzaje mebli `prop:*`), pola nawierzchni według rodzaju i kawałka, klucze skanu przybyłe i ubyłe według rodzaju, testy złote, które by się zmieniły, źródła szerokości jezdni przed i po oraz `orto:diff` bazy z drzewem roboczym, gdy tablice się zmieniły. Na końcu werdykt.

@@ -78,7 +78,7 @@ import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { kerbStripBare } from "./kerb-strip-bare";
 import { markingSteps } from "./marking-step";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
-import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
+import { cityMeasuredPieces, cityMeasuredTrees, treesBelowMeasured, treesRoofCaptured, treesUnmeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
@@ -2058,6 +2058,10 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * baseline's are by walls: their crowns grow only as far as clear of the facades.
    */
   "tree-height-vs-nmpt": () => treesBelowMeasured(cityMeasuredTrees(), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A tree drawn at the random size of its seed: no OSM `height` and no surface model over it (`tree-heights.ts`, audit of ADR-0077 gap 4). */
+  /** A tree sized by the eaves of a building past its OSM outline, not by its crown: its height over the reading 2 m off the outlines by more than 3 m (`tree-heights.ts`). */
+  "tree-roof-capture": () => treesRoofCaptured(),
+  "tree-unmeasured": () => treesUnmeasured(cityMeasuredPieces(Object.values(WORLD_STREET_PROPS).flat()), Object.values(WORLD_STREET_PROPS).flat()),
   /** A tree OSM names a genus of the renderer's models (`genus`, `species`: Quercus, Populus...) drawn as another one: the oaks and the "Baobab" of Plac Litewski as limes and maples (G-423, `tree-species.ts`). */
   "tree-species-ignored": () => treesOfOtherSpecies(cityNamedTrees(), Object.values(WORLD_STREET_PROPS).flat()),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
