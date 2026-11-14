@@ -1,0 +1,93 @@
+name: Map refresh
+
+# `pnpm map:refresh` (tools/map-refresh/README.md): the city refreshed from OSM, GUGiK and the
+# orthophoto by one deterministic command, once a week and by hand. When the data changed, the
+# files go to a branch `map-refresh/<date>` and a pull request with the report as its description;
+# its verdict says whether the curator has to look (thresholds in tools/map-refresh/src/config.ts).
+#
+# A pull request opened with GITHUB_TOKEN starts no other workflow: CI does not run on it by
+# itself. See the README for the ways round it (a PAT secret, "Update branch", a CI dispatch).
+on:
+  schedule:
+    # Mondays 03:17 UTC: off the hour, when the OSM API is least busy.
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: "Sources to fetch (osm,gugik,orto)"
+        default: "osm,gugik,orto"
+        required: false
+
+concurrency:
+  group: map-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    name: Refresh the map
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Exit 3 is an HTTP 429: the services asked to stop, and the run does (no retry).
+      - name: pnpm map:refresh
+        env:
+          SOURCES: ${{ inputs.sources || 'osm,gugik,orto' }}
+        run: pnpm map:refresh --sources="$SOURCES"
+
+      - name: Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: map-refresh-report
+          path: |
+            reports/map-refresh.md
+            reports/map-refresh.json
+            reports/map-refresh/
+          if-no-files-found: ignore
+
+      - name: Branch and pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          paths=(data packages/sim/src/content/lublin)
+          if [ -z "$(git status --porcelain -- "${paths[@]}")" ]; then
+            echo "No change of the map's data or tables: nothing to open."
+            exit 0
+          fi
+          branch="map-refresh/$(date -u +%Y-%m-%d)"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            branch="$branch-$GITHUB_RUN_NUMBER"
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add -- "${paths[@]}"
+          verdict="$(node -p 'JSON.parse(require("fs").readFileSync("reports/map-refresh.json","utf8")).verdict.review ? "przegląd kuratora" : "bez przeglądu"')"
+          git commit -q -m "chore(map): odświeżenie mapy z danych ($verdict)" -m "pnpm map:refresh, przebieg $GITHUB_RUN_ID; raport w opisie PR."
+          git push -q origin "$branch"
+          # The description's limit is 65 536 characters; the full report is the run's artifact.
+          head -c 60000 reports/map-refresh.md > "$RUNNER_TEMP/body.md"
+          if ! gh pr create --base "${GITHUB_REF_NAME}" --head "$branch" --title "chore(map): odświeżenie mapy $(date -u +%Y-%m-%d) ($verdict)" --body-file "$RUNNER_TEMP/body.md" 2> "$RUNNER_TEMP/pr.err"; then
+            cat "$RUNNER_TEMP/pr.err"
+            if grep -qi "not permitted to create or approve pull requests" "$RUNNER_TEMP/pr.err"; then
+              echo "::error::The branch $branch is pushed, but the repository does not let GitHub Actions open pull requests. Turn on Settings > Actions > General > Workflow permissions > 'Allow GitHub Actions to create and approve pull requests', or open the PR from $branch by hand."
+            else
+              echo "::error::The branch $branch is pushed, but the pull request could not be opened (above)."
+            fi
+            exit 1
+          fi
