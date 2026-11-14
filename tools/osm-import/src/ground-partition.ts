@@ -57,6 +57,15 @@ const OF_ONE_LIFT: Readonly<Partial<Record<GroundSurface, number>>> = { cobble: 
 /** With `carriageway`: a zebra over its asphalt, both over all but the steps. */
 const CARRIAGEWAY: Readonly<Partial<Record<GroundSurface, number>>> = { crossing: 2, road: 1 };
 
+/**
+ * The kerb stones of the widened carriageways (`chunkGround` marks them, `kerbFills` lays them,
+ * G-803): ranked over the asphalt, which reaches under them to the paving, as the picture drew
+ * them before the partition. The kerb is where the stone starts, 0.3 m short of the paving's
+ * mapped edge, as the orthophoto shows it (T-294); the asphalt under it closes the corners where
+ * a run of stones ends.
+ */
+export const KERB_STONES = new WeakSet<GroundOut>();
+
 const ringOf = (flat: readonly number[]): Pt[] => Array.from({ length: flat.length >> 1 }, (_, i) => ({ x: flat[2 * i]!, z: flat[2 * i + 1]! }));
 const toPath = (r: readonly Pt[]): Path64 => r.map((p) => ({ x: Math.round(p.x * SCALE), y: Math.round(p.z * SCALE) }));
 const toPts = (p: Path64): Pt[] => p.map((q) => ({ x: q.x / SCALE, z: q.y / SCALE }));
@@ -77,6 +86,8 @@ const before =
   (a: Ranked, b: Ranked): number => {
     const steps = Number(b.g.surface === "steps") - Number(a.g.surface === "steps");
     if (steps !== 0) return steps;
+    const stone = rank === "carriageway" ? Number(KERB_STONES.has(b.g)) - Number(KERB_STONES.has(a.g)) : 0;
+    if (stone !== 0) return stone;
     const way = rank === "carriageway" ? (CARRIAGEWAY[b.g.surface] ?? 0) - (CARRIAGEWAY[a.g.surface] ?? 0) : 0;
     if (way !== 0) return way;
     const lift = SURFACE_LIFT[b.g.surface] - SURFACE_LIFT[a.g.surface];

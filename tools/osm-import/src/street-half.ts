@@ -115,7 +115,7 @@ export const streetHalves = (bands: readonly Band[]): StreetHalves => {
     const piece = pieces.get(b.kerb.line) ?? { half: b.kerb.half, widen: new Map() };
     pieces.set(b.kerb.line, piece);
     for (const r of b.widen ?? [])
-      (r.lanes ?? r.outer).forEach((o, i) => {
+      r.outer.forEach((o, i) => {
         const at = r.inner[i]!;
         const list = piece.widen.get(cell(at.x, at.z)) ?? [];
         list.push({ at, reach: Math.hypot(o.x - at.x, o.z - at.z) });

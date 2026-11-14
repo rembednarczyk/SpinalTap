@@ -90,8 +90,8 @@ describe("a carriageway of estimated width reaches the paving (G-570)", () => {
     const ways = [street, footway(-6)];
     for (const x of [1, 30, 50, 99]) for (const z of [-3.4, -4, -4.3]) expect(surfacesAt(ways, x, z), `${x},${z}`).toEqual(["road"]);
     // The kerb stone on the asphalt's side of the footway's edge (4.75 m off the axis), from 4.45 m
-    // to 0.1 m into the footway: the ground is a partition and the asphalt wins at its edge
-    // (ADR-0078 step 3), so the asphalt stops at the stone, where the renderer draws the kerb (G-803).
+    // to 0.1 m into the footway, ranked over the asphalt that reaches under it (G-803): the renderer
+    // draws the kerb where the stone starts, as before the partition (ADR-0078 step 3).
     expect(surfacesAt(ways, 50, -4.6)).toEqual(["sidewalk"]);
     expect(surfacesAt(ways, 50, -5)).toEqual(["footway"]);
   });

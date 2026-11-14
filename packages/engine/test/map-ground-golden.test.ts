@@ -119,10 +119,10 @@ describe("the ground the map city lays (G-444)", () => {
     // footways and lawns, of the lawns under the paving; a zebra lays its own asphalt under its stripes;
     // the kerb stones of the widened carriageways lie past the asphalt. 172 699 - 163 504 = 9 195 vertices
     // fewer; one mesh more, a cut piece's part on a cell of its own.
-    // The kerb stones back on the asphalt's side of the paving's edge (G-803): the widened asphalt stops
-    // 0.4 m short of where it went, over the stone's inner 0.1 m, which it cuts: 163 611 - 163 504 = 107
-    // vertices more, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 163611, hash: "8f5ec0e3" });
+    // The kerb stones back on the asphalt's side of the paving's edge, ranked over the asphalt that reaches
+    // under them, as drawn before the partition (G-803): the stones cut the asphalt, not the footway past
+    // it: 163 504 - 161 588 = 1 916 vertices fewer, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161588, hash: "28a77173" });
     scene.dispose();
   });
 
