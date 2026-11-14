@@ -6,6 +6,7 @@ import { type CameraOccluder, CameraRig } from "../camera/camera-rig";
 import { fadeFigure } from "../npr/body-dither";
 import type { Grading } from "../npr/grading";
 import { CONTACT_SHADE } from "../npr/contact-shade";
+import type { GraphicsEffects } from "../npr/graphics-effects";
 import { LineArt } from "../npr/line-art";
 import { SpeedLines } from "../npr/speed-lines";
 import { NIGHT_RIG } from "../npr/lighting";
@@ -263,14 +264,9 @@ export class BabylonRenderer implements RenderPort {
     this.effects = this.fx;
     this.metro = new MetroRide({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cast: rideCast(this.characters, this.activities) });
     if (options.cityKit) this.cityKit.load(options.cityKit, options.cityProps ?? null);
-    this.loading = new RendererLoading({
-      stage,
-      materials: this.materials,
-      shadow: this.shadow,
-      characters: this.characters,
-      cityKit: () => this.cityKit.ready,
-      cityWaiting: () => this.map.current?.waiting ?? 0,
-    });
+    const { materials, shadow } = this;
+    const gbuffer = this.lineArt?.geometryBuffer ?? null;
+    this.loading = new RendererLoading({ stage, materials, shadow, characters: this.characters, gbuffer, cityKit: () => this.cityKit.ready, cityWaiting: () => this.map.current?.waiting ?? 0 });
     const { characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet } = this;
     this.stats = new RendererStats({ characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet });
   }
@@ -343,6 +339,20 @@ export class BabylonRenderer implements RenderPort {
   }
 
   /**
+   * The player's graphics options (graphics options 14.11), at once, each when given: the switches
+   * for the High effects (each one off takes its passes out of the post-process chain; a quality
+   * without the effect ignores it) and the render resolution, 0.5..1 of the full one. One method
+   * for both keeps the facade within ADR-0031's member limit.
+   */
+  setGraphicsOptions(options: { readonly effects?: GraphicsEffects; readonly resolution?: number }): void {
+    if (options.effects) {
+      this.lineArt?.setContactShade(options.effects.contactShade);
+      this.fx.setBloom(options.effects.bloom);
+    }
+    if (options.resolution !== undefined) this.stage.setRenderResolution(options.resolution);
+  }
+
+  /**
    * A metro ride (ADR-0036; proposed as an optional `RenderPort` method): the inside of a car with
    * the city sliding past and a few riders, from `MetroDeparted` until null on `MetroArrived`.
    * The world keeps streaming behind it.
@@ -389,9 +399,10 @@ export class BabylonRenderer implements RenderPort {
     this.metro.afterCamera();
     city?.update(dt, this.rig.camera.position, this.stage.options.reference);
     if (city) this.props.updateGlow(this.rig.camera.position, this.map.sight);
-    // Shadow follows what the camera looks at: the player, the metro car or the fixed reference view.
+    // Shadow follows what the camera looks at (the player, the metro car or the fixed reference
+    // view) and shrinks to what it shows.
     const focus = target && !this.metro.active ? target.position : this.rig.camera.position;
-    const moved = this.shadow.update(focus);
+    const moved = this.shadow.update(focus, this.rig.camera);
     this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z);
     if (moved) this.materials.setShadowMatrix(moved);
     this.fx.update(dt);

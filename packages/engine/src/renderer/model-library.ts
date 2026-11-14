@@ -336,6 +336,11 @@ export class ModelLibrary {
     return this.ready.has(url);
   }
 
+  /** The loaded files' own meshes, which their instances clone: the loading screen compiles their passes (ADR-0057). */
+  templateMeshes(): AbstractMesh[] {
+    return [...this.ready.values()].flatMap((l) => l.container.meshes);
+  }
+
   /** The files loaded now, in the order they finished. */
   loadedFiles(): string[] {
     return [...this.ready.keys()];

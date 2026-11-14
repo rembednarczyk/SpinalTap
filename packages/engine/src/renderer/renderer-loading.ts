@@ -1,8 +1,10 @@
 import type { PrepareStage, Vec3 } from "@seki/core";
+import type { GeometryBufferRenderer } from "../babylon";
 import type { MoonShadow } from "../npr/moon-shadow";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { CharacterViews } from "./character-views";
 import type { CharacterModelManifest } from "./model-library";
+import { scenePassesReady } from "./pass-warmup";
 import { type StartPrep, sceneStartPrep } from "./start-prep";
 import type { Stage } from "./stage";
 import type { WeaponManifest } from "./weapon-mount";
@@ -16,6 +18,8 @@ export interface RendererLoadingDeps {
   readonly cityKit: () => Promise<unknown>;
   /** Near cells of the map city still waiting for their detailed buildings. */
   readonly cityWaiting: () => number;
+  /** The line art's geometry buffer, if the quality draws it: its effects compile behind the loading screen too. */
+  readonly gbuffer: GeometryBufferRenderer | null;
 }
 
 /**
@@ -30,7 +34,8 @@ export class RendererLoading {
 
   constructor(private readonly deps: RendererLoadingDeps) {
     const modelFiles = () => this.modelManifest.then(() => deps.characters.modelLoading.start());
-    this.prep = sceneStartPrep({ stage: deps.stage, modelFiles, cityKit: deps.cityKit, cityWaiting: deps.cityWaiting });
+    const passesReady = scenePassesReady(deps.stage.scene, deps.gbuffer, () => deps.characters.modelLoading.meshes());
+    this.prep = sceneStartPrep({ stage: deps.stage, modelFiles, cityKit: deps.cityKit, cityWaiting: deps.cityWaiting, passesReady });
   }
 
   /** The start of a game behind the loading screen (ADR-0057); the moon shadow goes on `at` first. */

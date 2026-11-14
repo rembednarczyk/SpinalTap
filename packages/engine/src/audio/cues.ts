@@ -30,22 +30,33 @@ export interface Recipe {
   readonly priority?: number;
 }
 
+/** Synth fallback of every shot (recorded per weapon kind in the app's manifest). */
+const SHOT: Recipe = {
+  send: 0.7,
+  voices: [
+    { type: "noise", freq: 0, dur: 0.09, gain: 0.55, filter: 5200, filterTo: 1400, attack: 0.001 },
+    { type: "square", freq: 160, to: 45, dur: 0.12, gain: 0.3, filter: 1800, attack: 0.001 },
+    { type: "sine", freq: 70, to: 38, dur: 0.18, gain: 0.35, attack: 0.002 },
+  ],
+};
+
+const ENEMY_SHOT: Recipe = {
+  send: 0.85,
+  voices: [
+    { type: "noise", freq: 0, dur: 0.08, gain: 0.24, filter: 3200, filterTo: 900, attack: 0.001 },
+    { type: "sine", freq: 90, to: 40, dur: 0.12, gain: 0.14 },
+  ],
+};
+
 export const CUES: Readonly<Record<AudioCue, Recipe>> = {
-  shot: {
-    send: 0.7,
-    voices: [
-      { type: "noise", freq: 0, dur: 0.09, gain: 0.55, filter: 5200, filterTo: 1400, attack: 0.001 },
-      { type: "square", freq: 160, to: 45, dur: 0.12, gain: 0.3, filter: 1800, attack: 0.001 },
-      { type: "sine", freq: 70, to: 38, dur: 0.18, gain: 0.35, attack: 0.002 },
-    ],
-  },
-  "enemy-shot": {
-    send: 0.85,
-    voices: [
-      { type: "noise", freq: 0, dur: 0.08, gain: 0.24, filter: 3200, filterTo: 900, attack: 0.001 },
-      { type: "sine", freq: 90, to: 40, dur: 0.12, gain: 0.14 },
-    ],
-  },
+  shot: SHOT,
+  "shot-revolver": SHOT,
+  "shot-smg": SHOT,
+  "shot-shotgun": SHOT,
+  "shot-rifle": SHOT,
+  "enemy-shot": ENEMY_SHOT,
+  "enemy-shot-shotgun": ENEMY_SHOT,
+  "enemy-shot-rifle": ENEMY_SHOT,
   hit: {
     send: 0.15,
     voices: [
@@ -145,6 +156,14 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "square", freq: 820, to: 520, dur: 0.03, gain: 0.05, filter: 3000, attack: 0.001 },
       { type: "noise", freq: 0, start: 0.22, dur: 0.04, gain: 0.18, filter: 1900, filterType: "bandpass", q: 3, attack: 0.001 },
       { type: "square", freq: 640, to: 380, start: 0.22, dur: 0.04, gain: 0.06, filter: 2400, attack: 0.001 },
+    ],
+  },
+  // One shell into the tube: the first click of the magazine change, alone.
+  "reload-round": {
+    send: 0.12,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.04, gain: 0.16, filter: 1900, filterType: "bandpass", q: 3, attack: 0.001 },
+      { type: "square", freq: 640, to: 380, dur: 0.04, gain: 0.06, filter: 2400, attack: 0.001 },
     ],
   },
   "weapon-switch": {

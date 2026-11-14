@@ -7,7 +7,7 @@ import type { PurchaseFailure } from "../shop/ripperdoc";
 import type { ShopId, ShopItemId } from "../shop/shops";
 import type { Contract, ContractFailure } from "../contracts/contracts";
 import type { ActTwoEndingId, EndingId, StoryChoiceId, StoryOption } from "../story/story";
-import type { ConsumableId, EquipSlot, ItemDefId, ItemRef, LootLine, ModSlot, Rarity, WeaponId, WeaponSlot } from "../items/types";
+import type { ConsumableId, EquipSlot, ItemDefId, ItemRef, LootLine, ModSlot, Rarity, WeaponId, WeaponLook, WeaponSlot } from "../items/types";
 import type { GameClock } from "../time/game-clock";
 import type { BreachDaemonId, HackTargetKind, QuickhackFailure, QuickhackId } from "../hacking/quickhacks";
 import type { CrimeKind, CrowdState, DisturbanceKind, HeatLevel, WitnessChannel } from "../crime/heat";
@@ -17,7 +17,8 @@ import type { MetroRefusal } from "../world/metro";
 import type { XpSource } from "../progression/xp-sources";
 
 export interface DomainEvents {
-  ShotFired: { shooterId: EntityId; from: Vec3; to: Vec3; hitEntity: EntityId | null };
+  /** `look`: the weapon's kind, for its sound. */
+  ShotFired: { shooterId: EntityId; from: Vec3; to: Vec3; hitEntity: EntityId | null; look: WeaponLook };
   /** Weapon holstered (drawn: false) or being drawn (ready after DRAW_TIME). */
   WeaponToggled: { entityId: EntityId; drawn: boolean };
   /** `zone` is the body part the shot landed on (ADR-0016). */
@@ -94,7 +95,8 @@ export interface DomainEvents {
   /** Something did not fit: the item stays where it was (loot bag, weapon). */
   InventoryFull: { defId: ItemDefId };
   WeaponSwitched: { entityId: EntityId; slot: WeaponSlot; weapon: WeaponId };
-  ReloadStarted: { entityId: EntityId; duration: number };
+  /** `perRound`: one round into a tube (shotgun), not a whole magazine. */
+  ReloadStarted: { entityId: EntityId; duration: number; perRound: boolean };
   ReloadFinished: { entityId: EntityId; loaded: number };
   // Melee (ADR-0019).
   /** A swing started; it lands after `windup` seconds and is followed by `recovery`. */

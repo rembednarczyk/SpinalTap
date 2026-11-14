@@ -295,6 +295,14 @@ export class ScreenFx {
     this.deps.atmosphere.reduceFlicker = on;
   }
 
+  /**
+   * The player's bloom setting (graphics toggles 14.11): the rebuilt grade goes to the end of the
+   * chain, so the scanner and the hurt overlay are put behind it again.
+   */
+  setBloom(on: boolean): void {
+    if (this.grading.setBloom(on)) this.fxPost.moveToEnd();
+  }
+
   /** A gameplay moment over the whole frame (ADR-0030): a hit, a quickhack, heat. */
   gameplayFx(e: GameplayFxEvent): void {
     switch (e.kind) {

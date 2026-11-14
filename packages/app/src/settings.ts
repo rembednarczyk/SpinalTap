@@ -11,6 +11,7 @@ import {
   HUD_SCALE_RANGE,
   PAD_DEADZONE_SETTING_RANGE,
   PAD_SENSITIVITY_RANGE,
+  RENDER_RESOLUTION_SETTING_RANGE,
   type PadCurveMode,
   SUBTITLE_SCALE_RANGE,
   type SettingsVm,
@@ -73,6 +74,20 @@ const horizontalFovOf16x9 = (r: Record<string, unknown>): unknown => {
 export const clampFieldOfView = (degrees: unknown, fallback: number = DEFAULT_SETTINGS.horizontalFov): number =>
   Math.round(clamp(degrees, HORIZONTAL_FOV_RANGE[0], HORIZONTAL_FOV_RANGE[1], fallback));
 
+/**
+ * Render resolution by default on a touch device with a dense screen (device pixel ratio 2 or
+ * more), graphics options 14.11: a first guess, the final one comes after measuring on phones.
+ * Elsewhere the default is the full resolution.
+ */
+export const TOUCH_HIDPI_RENDER_RESOLUTION = 0.7;
+
+/** The device's default render resolution: `TOUCH_HIDPI_RENDER_RESOLUTION` on a dense touch screen, else 100%. */
+export const defaultRenderResolution = (touch: boolean, devicePixelRatio: number): number => (touch && devicePixelRatio >= 2 ? TOUCH_HIDPI_RENDER_RESOLUTION : 1);
+
+/** Clamps a render resolution request to 50-100% in steps of 5%. */
+export const clampRenderResolution = (share: unknown, fallback: number = DEFAULT_SETTINGS.renderResolution): number =>
+  Math.round(clamp(share, RENDER_RESOLUTION_SETTING_RANGE[0], RENDER_RESOLUTION_SETTING_RANGE[1], fallback) * 20) / 20;
+
 /** Only string lists of at most three codes per action survive. */
 const sanitizeBindings = (raw: unknown): Record<string, readonly string[]> => {
   if (typeof raw !== "object" || raw === null) return {};
@@ -88,6 +103,11 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
   const r = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
   return {
     quality: isQuality(r.quality) ? r.quality : defaults.quality,
+    // Graphics toggles 14.11: new fields, so SETTINGS_REV stays; old entries keep both High effects on.
+    contactShade: bool(r.contactShade, defaults.contactShade),
+    bloom: bool(r.bloom, defaults.bloom),
+    // New field too: old entries take the device's default (`defaultRenderResolution`).
+    renderResolution: clampRenderResolution(r.renderResolution, defaults.renderResolution),
     aimMode: isAimMode(r.aimMode) ? r.aimMode : defaults.aimMode,
     crouchMode: isAimMode(r.crouchMode) ? r.crouchMode : defaults.crouchMode,
     sprintMode: isAimMode(r.sprintMode) ? r.sprintMode : defaults.sprintMode,

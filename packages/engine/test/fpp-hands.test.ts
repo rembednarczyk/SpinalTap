@@ -13,6 +13,7 @@ import { allWeaponUrls } from "./weapon-files";
 import { weaponHands } from "../src/renderer/fpp-hand-poses";
 import { depthInside, skinVertices, trianglesIn } from "./mesh-depth";
 import { VIEW_MELEE_TILT } from "../src/renderer/weapon-mount";
+import { viewmodelPose } from "../src/camera/viewmodel-poses";
 
 /**
  * Seki's own forearms and hands in first person (user's wish of 13.11): from her model file once
@@ -299,6 +300,12 @@ describe("FPP hands from Seki's model (13.11)", () => {
     pistol: { zoom: 0.8, at: [[0.683, -0.752, 0.342], [0, -0.652, 0.513]] },
     revolver: { zoom: 0.78, at: [[0.683, -0.752, 0.342], [0, -0.7, 0.434]] },
   } as const;
+  /** Seated (14.11): aimed in, round 2's grip point this much lower than round 2 (the sights' line steeper) and the gun this much smaller (further out to keep the hands in the frame). */
+  const DROP = { pistol: [0, 0.011], revolver: [0, 0.016] } as const;
+  const SHRINK = { pistol: [1, 0.965], revolver: [1, 0.939] } as const;
+  /** The right wrist and the way to its knuckles in the gun's frame (`HANDGUN_FIST`). */
+  const WRIST = { pistol: new Vector3(0.041, -0.012, -0.056), revolver: new Vector3(0.0417, -0.0181, -0.0608) };
+  const KNUCKLES = { pistol: new Vector3(-0.12, 0.22, 1), revolver: new Vector3(-0.0215, 0.1081, 1.025) };
   it.each(["pistol", "revolver"] as const)("%s: the user's chosen grip (round 2): the right fist round the grip, the left under it, from the hip and aimed in, the fingers outside the gun (G-770)", async (look) => {
     const { kit, rig, settle, camera, library } = setup([1280, 720]);
     await library.preload(heroine);
@@ -319,30 +326,101 @@ describe("FPP hands from Seki's model (13.11)", () => {
       };
       const grip = onScreen(Vector3.Zero());
       const [sx, sy, size] = SCREEN[look].at[aim]!;
-      expect(grip.x, `${when}: the grip across the screen`).toBeCloseTo(sx, 2);
-      expect(grip.y, `${when}: the grip up the screen`).toBeCloseTo(sy, 2);
-      expect(Vector3.Distance(onScreen(new Vector3(0, 0.1, 0)), grip), `${when}: the gun's size on the screen`).toBeCloseTo(size, 2);
+      // Seated (14.11): the gun 15 mm lower under the hands than round 2, from the hip and aimed in.
+      // Round 2's grip point, 15 mm up the grip now, shows where round 2's grip showed from the hip;
+      // aimed in the sights keep their angle, so it drops a little more (DROP).
+      const held = onScreen(new Vector3(0, 0.015, 0));
+      expect(held.x, `${when}: round 2's grip across the screen`).toBeCloseTo(sx, 2);
+      expect(held.y, `${when}: round 2's grip up the screen`).toBeCloseTo(sy - DROP[look][aim]!, 2);
+      expect(sy - grip.y, `${when}: the grip under round 2's`).toBeGreaterThan(0.04);
+      expect(Vector3.Distance(onScreen(new Vector3(0, 0.1, 0)), grip), `${when}: the gun's size on the screen`).toBeCloseTo(size * SHRINK[look][aim]!, 2);
       const right = kit.hands.handBone("r")!;
       const wrist = inFrame(mount, right.getAbsolutePosition());
-      expect(Vector3.Distance(wrist, new Vector3(0.034, -0.028, -0.075)), `${when}: the right wrist`).toBeLessThan(0.003);
+      expect(Vector3.Distance(wrist, WRIST[look]), `${when}: the right wrist`).toBeLessThan(0.003);
       const knuckles = inFrame(mount, bone(right, "Middle1").getAbsolutePosition()).subtract(wrist).normalize();
-      expect(Vector3.Dot(knuckles, new Vector3(-0.12, 0.22, 1).normalize()), `${when}: the right fingers`).toBeGreaterThan(0.999);
+      expect(Vector3.Dot(knuckles, KNUCKLES[look].normalizeToNew()), `${when}: the right fingers`).toBeGreaterThan(0.999);
       // The left hand under the right fist, near the grip, not hanging out of the view.
       const left = inFrame(mount, kit.hands.handBone("l")!.getAbsolutePosition());
       expect(left.length(), `${when}: the left hand by the grip`).toBeLessThan(0.15);
       expect(left.y, `${when}: the left hand under the fist`).toBeLessThan(wrist.y);
-      // The right hand as drawn, skinned. Ahead of the grip's back (the frame, the trigger guard,
-      // the revolver's cylinder: G-770) no vertex more than 2 mm inside the gun. The fist is a
-      // rigid mesh round the grip: behind it, in the grip's back half under the web and the palm,
-      // it sinks up to 12.2 mm (round 2 as chosen: the pistol 11.7 mm, the revolver 12.2 mm), out
-      // of sight inside the fist; no deeper.
+      // The right hand as drawn, skinned. Its fingers, all their joints, no more than 2 mm inside
+      // the gun (the seated test below, both hands); its palm ahead of the grip's back (the frame,
+      // the trigger guard, the revolver's cylinder: G-770) no more than 2.5 mm (the pistol 2.3).
+      // The thumb is the rigid fist's compromise: closed, its root sinks into the top of the grip
+      // and the frame under the web, up to 12 mm (round 2: 11.7 behind the grip's front; seated,
+      // 14.11, 2 cm further forward: pistol 9.3 ahead and 11.8 behind it, revolver 10.8 and 9.3);
+      // laid straight to clear it, it stood up beside the slide. Behind, the fist no deeper than 13 mm.
       const gun = trianglesIn(mount.getChildMeshes(false), mount);
       expect(gun.length).toBeGreaterThan(1000);
-      const skin = skinVertices(kit.hands.drawn[0]!, mount, (n) => /_R_(Hand|Thumb\d|Index\d|Middle\d|Ring\d|Little\d)$/.test(n));
-      expect(skin.length).toBeGreaterThan(500);
-      const depth = (ahead: boolean) => Math.max(...skin.filter((p) => p.z > 0 === ahead).map((p) => depthInside(gun, p)));
-      expect(depth(true), `${when}: the hand ${(depth(true) * 1000).toFixed(1)} mm inside the gun ahead of the grip`).toBeLessThan(0.002);
-      expect(depth(false), `${when}: the hand ${(depth(false) * 1000).toFixed(1)} mm inside the grip`).toBeLessThan(0.013);
+      const skinOf = (bones: RegExp) => skinVertices(kit.hands.drawn[0]!, mount, (n) => bones.test(n));
+      const deepest = (points: readonly Vector3[]) => Math.max(...points.map((p) => depthInside(gun, p)));
+      const hand = skinOf(/_R_(Hand|Index\d|Middle\d|Ring\d|Little\d)$/);
+      const thumb = skinOf(/_R_Thumb\d$/);
+      expect(hand.length).toBeGreaterThan(500);
+      const ahead = deepest(hand.filter((p) => p.z > 0));
+      expect(ahead, `${when}: the hand ${(ahead * 1000).toFixed(1)} mm inside the gun ahead of the grip`).toBeLessThan(0.0025);
+      const behind = deepest([...hand, ...thumb].filter((p) => p.z <= 0));
+      expect(behind, `${when}: the hand ${(behind * 1000).toFixed(1)} mm inside the grip`).toBeLessThan(0.013);
+      const root = deepest(thumb);
+      expect(root, `${when}: the thumb ${(root * 1000).toFixed(1)} mm inside the gun`).toBeLessThan(0.012);
+      // The fingers closed on the grip, not off it: their joints touch it (round 2: 2.7 to 4.1 mm in, seated 0 to 0.6).
+      const touch = deepest(skinOf(/_R_(Index|Middle|Ring|Little)[23]$/));
+      expect(touch, `${when}: the fingers ${(touch * 1000).toFixed(1)} mm into the grip`).toBeGreaterThan(-0.001);
+      expect(touch, `${when}: the fingers ${(touch * 1000).toFixed(1)} mm into the grip`).toBeLessThan(0.002);
+    }
+  }, 60_000);
+
+  /**
+   * The user's wish of 14.11 ("lower, more in the fist"): the handguns hang 15 mm lower in the view
+   * than round 2 (main before it: the pistol from the hip at y -0.22, aimed in -0.118; the revolver
+   * aimed in -0.14), from the hip and aimed in, and the hands close as much higher up their grips
+   * (round 2: the right wrist at y -0.028, the left -0.085 in the gun's frame), on a desktop and a phone.
+   */
+  it.each([
+    ["pistol", [1280, 720]],
+    ["revolver", [844, 390]],
+  ] as const)("%s at %j: the gun 15 mm lower in the view and in both fists than round 2, from the hip and aimed in", async (look, size) => {
+    const pose = viewmodelPose(look);
+    expect(pose.hip.y - -0.22, "from the hip").toBeCloseTo(-0.015, 6);
+    expect(pose.ads.y - (look === "pistol" ? -0.118 : -0.14), "aimed in").toBeCloseTo(-0.015, 6);
+    const { kit, rig, settle, camera, library } = setup(size);
+    await library.preload(heroine);
+    kit.arm(1, rig, "hero", armed(look));
+    kit.setViewArms(heroine);
+    await ready(kit, settle);
+    const at = (side: "r" | "l") => inFrame(camera.weaponMount, kit.hands.handBone(side)!.getAbsolutePosition());
+    for (const aim of [0, 1]) {
+      settle({ ...standing, aim });
+      // The revolver's fist a little lower on its longer, rounder grip.
+      expect(at("r").y - -0.028, `aim ${aim}: the right hand up the grip`).toBeGreaterThan(look === "pistol" ? 0.015 : 0.009);
+      expect(at("l").y - -0.085, `aim ${aim}: the left hand up the grip`).toBeCloseTo(0.015, 3);
+    }
+  }, 60_000);
+
+  /**
+   * Round 2 of 14.11 (the user on PR #537: aimed in, "the pistol goes into the hand; seat it so it
+   * does not clip"): no finger of either hand, any joint, more than 2 mm inside the gun, from the
+   * hip and aimed in. At 07ee12a the right index finger sank 9.5 mm (the revolver 11.0), the left
+   * one 11.3 mm (10.7), through the grip, and aimed in the grip showed across the fingers.
+   */
+  it.each(["pistol", "revolver"] as const)("%s: the gun seated in the fists, no finger through it, from the hip and aimed in", async (look) => {
+    const { kit, rig, settle, camera, library } = setup([1280, 720]);
+    await library.preload(heroine);
+    kit.arm(1, rig, "hero", armed(look));
+    kit.setViewArms(heroine);
+    await ready(kit, settle);
+    for (const aim of [0, 1]) {
+      settle({ ...standing, aim, aimZoom: SCREEN[look].zoom });
+      const mount = camera.weaponMount;
+      const gun = trianglesIn(mount.getChildMeshes(false), mount);
+      for (const side of ["R", "L"] as const) {
+        for (const finger of ["Index", "Middle", "Ring", "Little"]) {
+          const skin = skinVertices(kit.hands.drawn[0]!, mount, (n) => new RegExp(`_${side}_${finger}\\d$`).test(n));
+          expect(skin.length).toBeGreaterThan(20);
+          const depth = Math.max(...skin.map((p) => depthInside(gun, p)));
+          expect(depth, `${look} aim ${aim}: ${side} ${finger} ${(depth * 1000).toFixed(1)} mm inside the gun`).toBeLessThan(0.002);
+        }
+      }
     }
   }, 60_000);
 
