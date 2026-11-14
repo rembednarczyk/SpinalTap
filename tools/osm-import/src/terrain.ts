@@ -1,6 +1,6 @@
 /**
  * Chunk terrain (ADR-0042): the NMT 1 m resampled on the world grid, smoothed, then sampled at
- * the coarsest cell that still follows it: about 2-4 m on the scarps of the Old Town and the
+ * the coarsest cell that still follows it: about 2.5 m on the scarps of the Old Town and the
  * castle hill, 5-10 m on the flat. The contract's `TerrainGrid` has one cell per chunk, so a
  * chunk is as fine as its steepest part.
  */
@@ -73,8 +73,15 @@ export const fieldAt = (f: Field, x: number, z: number): number => {
   return (g(r0, c0) * (1 - tx) + g(r0, c0 + 1) * tx) * (1 - tz) + (g(r0 + 1, c0) * (1 - tx) + g(r0 + 1, c0 + 1) * tx) * tz;
 };
 
-/** Cells tried, coarsest first; a cell must divide the chunk's sides so neighbours meet on a node. */
-export const CELLS = [10, 8, 5, 4, 2.5, 2] as const;
+/**
+ * Cells tried, coarsest first; a cell must divide the chunk's sides so neighbours meet on a node.
+ * Each is a multiple of every finer one, so on a seam of two chunks every point of the coarser
+ * grid is one of the finer's and `stitchSeams` can lay the finer on it. A 4 m grid by a 5 m or a
+ * 2.5 m one shared a point only every 20 m and kept ledges of up to 0.51 m (G-758).
+ */
+export const CELLS = [10, 5, 2.5, 1.25] as const;
+/** The cell of a chunk none of `CELLS` divides (the city's sides are whole tens; a test's may not be): 1 m, a divisor of 10 and 5. */
+const ODD_CELL = 1;
 /**
  * How closely the grid must follow the smoothed terrain (metres): 99 % of the 1 m points within
  * `p99`, none beyond `max`. Retaining walls and stairs are what usually breaks it.
@@ -115,7 +122,8 @@ export const chunkTerrain = (raw: Field, rect: Rect, altitude: number): ChunkTer
   const truth = blur(raw, BASE_SIGMA);
   const w = rect.maxX - rect.minX;
   const h = rect.maxZ - rect.minZ;
-  const cells = CELLS.filter((c) => divides(w, c) && divides(h, c));
+  const chain = CELLS.filter((c) => divides(w, c) && divides(h, c));
+  const cells = chain.length > 0 ? chain : [ODD_CELL].filter((c) => divides(w, c) && divides(h, c));
   let best: ChunkTerrain | null = null;
   for (const cell of cells) {
     const smooth = cell * 0.4 > BASE_SIGMA ? blur(raw, cell * 0.4) : truth;

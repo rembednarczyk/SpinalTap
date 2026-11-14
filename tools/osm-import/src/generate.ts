@@ -21,7 +21,7 @@ import { withoutReplaced } from "./corrections-alchemia.ts";
 import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
-import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, groundJoints, lineBands, markedCrossing, openPavings, roadWidth } from "./ground.ts";
+import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, groundJoints, isCarriageway, lineBands, markedCrossing, openPavings, roadWidth } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
@@ -30,6 +30,7 @@ import { type KerbSample, fitLanes, taperedJoins } from "./lane-fit.ts";
 import { roundJoints } from "./line-buffer.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { type StreetHalves, streetHalves } from "./street-half.ts";
+import { type LaidWay, type StreetWidths, carriagewaySource, streetWidths } from "./street-section.ts";
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
 import { type BuildingOut, type ChunkOut, type GroundOut, type SteepWayOut } from "./model.ts";
@@ -82,6 +83,8 @@ export interface Generated {
   readonly chunks: readonly ChunkOut[];
   readonly stats: readonly ChunkStats[];
   readonly venues: VenueStats;
+  /** Where the streets' carriageway widths come from (ADR-0080 decision 2): the importer's control numbers. */
+  readonly widths: StreetWidths;
 }
 
 const SKIP_BUILDING = new Set(["no", "construction", "roof", "ruins", "demolished", "proposed"]);
@@ -401,12 +404,15 @@ export const generate = (
   // So is a street's stretch over a tunnel it dips over (G-088): a deck, as on a bridge.
   const terrains = chunks.map((c) => ({ rect: c.rect, ...chunkTerrain(sampleField(src, c.rect, 12), c.rect, LUBLIN_ANCHOR.altitude) }));
   const tunnelWays = tunnelLines(lines);
-  const laidLines: { piece: Line; mapped: boolean; atStreet: boolean }[] = [];
+  const laidLines: LaidWay[] = [];
   for (const [k, l] of toAbutments(lines, areas, gridsHeight(terrains)).entries()) {
     if (!nearGround(l.line)) continue;
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
     const mapped = l.tags.highway ? sidewalks.along(mapLines[k]!) : false;
-    for (const c of carriageway(l)) for (const piece of overTunnels(c, tunnelWays, src)) laidLines.push({ piece, mapped, atStreet: atStreet.has(l.osmId) });
+    for (const c of carriageway(l)) {
+      const width = carriagewaySource(features.lines[k]!.tags, mapLines[k]!.tags, c.tags);
+      for (const piece of overTunnels(c, tunnelWays, src)) laidLines.push({ piece, mapped, atStreet: atStreet.has(l.osmId), width });
+    }
   }
   // A band's end is round where its way meets another on the ground, as far as nothing else covers it: the corner square ends left bare (ADR-0078, G-658).
   const joined = groundJoints(laidLines);
@@ -458,6 +464,7 @@ export const generate = (
   bands.splice(0, bands.length, ...bands.filter((b) => !b.slit || !underWidened(b)));
   // The carriageways' reach each side of their axes, fitted and widened, for the traffic's lanes (ADR-0080).
   const halves = streetHalves(bands);
+  const widths = streetWidths(laidLines, (w) => isCarriageway(w.piece.tags) || w.atStreet, kerbs.widened);
   const nodeZebras = bands.filter((b) => b.surface === "crossing" && b.source.startsWith("n"));
   stretchZebras(nodeZebras, [...kerbs.widened.values()].map((w) => w.ring)).forEach((z, i) => bands.splice(bands.indexOf(nodeZebras[i]!), 1, { ...z, box: ringBounds(z.ring) }));
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
@@ -500,7 +507,7 @@ export const generate = (
   // On the ways as laid: a stretch on a deck over a tunnel is no bank (G-088).
   const steep = steepWays(laidLines.map((l) => l.piece), gridsHeight(terrains));
   const results = chunks.map((c, i) => generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, halves, steep, fill));
-  return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats), venues: venueStatsOf(mapped, results.reduce((n, r) => n + r.stats.venues, 0)) };
+  return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats), venues: venueStatsOf(mapped, results.reduce((n, r) => n + r.stats.venues, 0)), widths };
 };
 
 /** The tally of the venues the map has in the built chunks (`mapped`), `signed` of them hung on a building. */

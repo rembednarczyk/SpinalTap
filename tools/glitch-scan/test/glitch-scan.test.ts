@@ -1145,7 +1145,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "ground-over-deck": () => groundOverDeck([...BRIDGE_DECKS.values()].flat(), bridgeDeckAt, groundY),
   /**
    * A point (every 0.25 m on the world's grid) of a seam of two chunks where their terrain parts by
-   * more than 0.1 m (G-748, the curator's review of PR #502): a ledge or a slot in the ground. Not
+   * more than 0.05 m (G-748, the curator's review of PR #502, G-758): a ledge or a slot in the ground. Not
    * under a slab, a deck or a solid of a scene level with the higher side (the Arkady's pavement).
    */
   "seam-gap": () => seamGaps(MAP_CHUNKS, citySeamWorld()),
