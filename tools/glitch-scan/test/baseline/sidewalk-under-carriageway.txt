@@ -16,7 +16,6 @@ krakowskie-2-1 260,-20
 krakowskie-2-1 270,-20
 krakowskie-2-1 260,-10
 krakowskie-2-1 260,80
-nabrzeze-1-0 2640,80
 nabrzeze-1-0 2650,80
 nabrzeze-1-0 2650,90
 nabrzeze-1-0 2660,90
