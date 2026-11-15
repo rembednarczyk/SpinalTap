@@ -58,22 +58,23 @@ const annulus = (sink: MeshSink, w: Wall, u: number, y: number, r0: number, r1: 
 /** A rose window: a square shaded panel, the dark disc, its moulded ring, eight spokes of tracery and the eye. */
 const rose = (sink: MeshSink, w: Wall, u: number, y: number, r: number, trim: Rgba, meta: Uv): void => {
   panel(sink, w, u - r - 0.3, u + r + 0.3, y - r - 0.3, y + r + 0.3, 0.015, solid(SWATCH.ivoryNiche), meta);
-  annulus(sink, w, u, y, 0, r, 0.03, solid(SWATCH.rose), meta);
-  annulus(sink, w, u, y, r, r + 0.18, 0.04, trim, meta);
-  annulus(sink, w, u, y, r * 0.18, r * 0.3, 0.045, trim, meta);
+  annulus(sink, w, u, y, 0, r, 0.045, solid(SWATCH.rose), meta);
+  annulus(sink, w, u, y, r, r + 0.18, 0.06, trim, meta);
+  annulus(sink, w, u, y, r * 0.18, r * 0.3, 0.08, trim, meta);
   for (let k = 0; k < 8; k++) {
     const a = (k * Math.PI) / 4;
     const c = { u: u + Math.cos(a) * r * 0.65, y: y + Math.sin(a) * r * 0.65 };
     const s = { u: -Math.sin(a) * 0.045, y: Math.cos(a) * 0.045 };
     const e = { u: Math.cos(a) * r * 0.35, y: Math.sin(a) * r * 0.35 };
-    quadUv(sink, [onWall(w, c.u - e.u - s.u, c.y - e.y - s.y, 0.045), onWall(w, c.u - e.u + s.u, c.y - e.y + s.y, 0.045), onWall(w, c.u + e.u + s.u, c.y + e.y + s.y, 0.045), onWall(w, c.u + e.u - s.u, c.y + e.y - s.y, 0.045)], { x: w.nx, y: 0, z: w.nz }, trim, [[0, 0], [1, 0], [1, 1], [0, 1]], meta);
+    quadUv(sink, [onWall(w, c.u - e.u - s.u, c.y - e.y - s.y, 0.075), onWall(w, c.u - e.u + s.u, c.y - e.y + s.y, 0.075), onWall(w, c.u + e.u + s.u, c.y + e.y + s.y, 0.075), onWall(w, c.u + e.u - s.u, c.y + e.y - s.y, 0.075)], { x: w.nx, y: 0, z: w.nz }, trim, [[0, 0], [1, 0], [1, 1], [0, 1]], meta);
   }
 };
 
 /** A lancet at u from sill to head: its moulded frame and the dark glass. */
 const lancet = (sink: MeshSink, w: Wall, u: number, width: number, sill: number, head: number, trim: Rgba, meta: Uv): void => {
-  archPanel(sink, w, u, width + 0.24, sill - 0.12, head + 0.12, 0.02, trim, meta, true);
-  archPanel(sink, w, u, width, sill, head, 0.035, solid(SWATCH.opening), meta, true);
+  // The glass well in front of its frame: a centimetre apart they fight in the depth buffer from the plaza.
+  archPanel(sink, w, u, width + 0.24, sill - 0.12, head + 0.12, 0.025, trim, meta, true);
+  archPanel(sink, w, u, width, sill, head, 0.07, solid(SWATCH.opening), meta, true);
 };
 
 /** Whether a strip of the wall from u0 to u1 reaches into a neighbouring building of the data (the Donżon, the chapel). */

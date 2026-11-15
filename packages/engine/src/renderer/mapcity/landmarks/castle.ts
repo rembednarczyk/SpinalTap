@@ -4,7 +4,7 @@ import { slab } from "../facade-parts";
 import { doorwaysOn } from "../facade-plan";
 import { type P2, cross } from "../polygon";
 import { type Uv, face, quadUv, vertex } from "../sink-ops";
-import { SWATCH, onWall, revolve, shownWalls, slabRing, solid } from "./kit";
+import { SWATCH, archPanel, onWall, revolve, shownWalls, slabRing, solid } from "./kit";
 import { alongWall } from "./elevation";
 import { corniceLights, sideOf } from "./layer2077";
 import type { LandmarkFrame } from "./landmark-frame";
@@ -126,6 +126,24 @@ const turret = (sink: MeshSink, f: LandmarkFrame, c: P2, face0: Wall, spec: Cast
   const ring = Array.from({ length: 8 }, (_, j) => ({ x: c.x + Math.cos(phase + (j * Math.PI) / 4) * k, z: c.z + Math.sin(phase + (j * Math.PI) / 4) * k }));
   slabRing(sink, ring, foot.y + body, solid(SWATCH.stone), meta);
   if (!near) return;
+  // A string course at the wings' walk and narrow lancets on the facets facing out from the gate's wall.
+  const walk = top - spec.rise - spec.merlon - foot.y;
+  revolve(sink, foot, [[r, walk - 0.25], [r + 0.08, walk - 0.25], [r + 0.08, walk], [r, walk]], 8, phase, color, meta);
+  for (let j = 0; j < 8; j++) {
+    const a0 = phase + (j * Math.PI) / 4;
+    const a1 = phase + ((j + 1) * Math.PI) / 4;
+    const am = (a0 + a1) / 2;
+    if (Math.cos(am) * face0.nx + Math.sin(am) * face0.nz < 0.3) continue;
+    const fa = { x: c.x + Math.cos(a0) * r, z: c.z + Math.sin(a0) * r };
+    const fb = { x: c.x + Math.cos(a1) * r, z: c.z + Math.sin(a1) * r };
+    const facet: Wall = { a: fb, b: fa, length: Math.hypot(fb.x - fa.x, fb.z - fa.z), nx: Math.cos(am), nz: Math.sin(am), blind: false, coveredTo: -Infinity, bay: 0 };
+    for (const [y0, y1] of [
+      [walk - 4.6, walk - 3],
+      [walk + 0.4, walk + 1.6],
+    ] as const) {
+      archPanel(sink, facet, facet.length / 2, 0.3, foot.y + y0, foot.y + y1, 0.03, solid(SWATCH.opening), meta, true);
+    }
+  }
   const side = 2 * k * Math.sin(Math.PI / 8);
   for (let j = 0; j < 8; j++) {
     const a = phase + ((j + 0.5) * Math.PI) / 4;

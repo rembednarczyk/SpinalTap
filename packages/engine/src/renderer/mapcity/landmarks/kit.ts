@@ -35,7 +35,7 @@ export const SWATCH = {
   sandPanel: "#c8ad78",
   // Zamek Lubelski's cream plaster (`building:colour=beige`, the photograph's warm off-white),
   // the shade of its portal's recess and the dark tracery of its rose windows (G-841).
-  ivory: "#e6dbb6",
+  ivory: "#e8d6a8",
   ivoryNiche: "#cfc096",
   rose: "#3a4050",
   // Its main door's dark oak.
