@@ -50,11 +50,15 @@ export const MIN_HIT_PX = 44;
 /**
  * The tightest pitch of the pad's 44 px targets at scale 1, centre to centre: the top row and the
  * "more" row, 44 px buttons 6 px apart. Pulled toward its corner the pad keeps this pitch at least
- * `MIN_HIT_PX` on screen, so the 44 px targets of neighbours touch at most (ADR-0085). Every other
- * pair has room to spare: the arc's 48 px buttons 4 px apart need 0.846, the fire button and the arc 0.753.
+ * `MIN_HIT_PX` and `HIT_CLEARANCE_PX` on screen, so the 44 px targets of neighbours never meet
+ * (ADR-0085). The browser snaps a scaled target's hit area to whole px, about 1 px out to the left
+ * and top (measured at 0.8 on 844x390): targets that only touched took each other's edge.
+ * Every other pair has room to spare: the arc's 48 px buttons 4 px apart need 0.885, the fire
+ * button and the arc 0.753.
  */
 export const PAD_PITCH = 50;
-export const MIN_TOUCH_SPREAD = MIN_HIT_PX / PAD_PITCH;
+export const HIT_CLEARANCE_PX = 2;
+export const MIN_TOUCH_SPREAD = (MIN_HIT_PX + HIT_CLEARANCE_PX) / PAD_PITCH;
 
 /** The compact layout's screens, as the styles' `(max-height: 500px), (max-width: 760px)`. */
 export const isCompact = (screen: ScreenBox): boolean => screen.height <= 500 || screen.width <= 760;

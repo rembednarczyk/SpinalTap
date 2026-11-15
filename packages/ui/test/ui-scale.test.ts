@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HUD_SCALE_RANGE } from "../src";
-import { COMPACT_ROOM, DESKTOP_ROOM, MIN_HIT_PX, MIN_TOUCH_SCALE, MIN_TOUCH_SPREAD, PAD_PITCH, isCompact, uiScale } from "../src/scale/ui-scale";
+import { COMPACT_ROOM, DESKTOP_ROOM, HIT_CLEARANCE_PX, MIN_HIT_PX, MIN_TOUCH_SCALE, MIN_TOUCH_SPREAD, PAD_PITCH, isCompact, uiScale } from "../src/scale/ui-scale";
 
 const [MIN, MAX] = HUD_SCALE_RANGE;
 
@@ -13,17 +13,18 @@ describe("interface scale (ADR-0085)", () => {
       { width: 390, height: 844 },
     ]) {
       expect(uiScale(MIN, screen).ui).toBe(MIN);
-      expect(uiScale(MIN, screen, undefined, true)).toEqual({ ui: MIN, touch: MIN_TOUCH_SCALE, touchLook: MIN, touchSpread: 0.88 });
+      expect(uiScale(MIN, screen, undefined, true)).toEqual({ ui: MIN, touch: MIN_TOUCH_SCALE, touchLook: MIN, touchSpread: 0.92 });
     }
   });
 
   it("pulls the pad toward its corners as far as the interface shrinks, but never so far that its 44 px targets meet", () => {
     const phone = { width: 844, height: 390 };
-    // The tightest pitch of 44 px targets stays 44 px on screen.
-    expect(MIN_TOUCH_SPREAD * PAD_PITCH).toBeCloseTo(MIN_HIT_PX, 6);
-    expect(uiScale(0.8, phone, undefined, true).touchSpread).toBe(0.88);
-    expect(uiScale(0.85, phone, undefined, true).touchSpread).toBe(0.88);
-    expect(uiScale(0.9, phone, undefined, true).touchSpread).toBe(0.9);
+    // The tightest pitch of 44 px targets stays 44 px on screen and a little more, for the
+    // browser's snapping of hit areas to whole px.
+    expect(MIN_TOUCH_SPREAD * PAD_PITCH).toBeCloseTo(MIN_HIT_PX + HIT_CLEARANCE_PX, 6);
+    expect(uiScale(0.8, phone, undefined, true).touchSpread).toBe(0.92);
+    expect(uiScale(0.9, phone, undefined, true).touchSpread).toBe(0.92);
+    expect(uiScale(0.95, phone, undefined, true).touchSpread).toBe(0.95);
     // At 1 and above the pad's groups stay where they were.
     expect(uiScale(1, phone, undefined, true).touchSpread).toBe(1);
     expect(uiScale(1.4, phone, undefined, true).touchSpread).toBe(1);

@@ -53,7 +53,7 @@ describe("interface scale on every layer (ADR-0085)", () => {
     expect(root().getPropertyValue("--ui-scale")).toBe("0.8");
     expect(root().getPropertyValue("--ui-touch-scale")).toBe("1");
     expect(root().getPropertyValue("--ui-touch-look")).toBe("0.8");
-    expect(root().getPropertyValue("--ui-touch-spread")).toBe("0.88");
+    expect(root().getPropertyValue("--ui-touch-spread")).toBe("0.92");
   });
 
   it("pulls the top row and the action cluster toward their corners under 1, not at 1", () => {
@@ -65,9 +65,9 @@ describe("interface scale on every layer (ADR-0085)", () => {
     expect([top().transform, actions().transform]).toEqual(["", ""]);
     act(() => patchUi(store, { settings: { ...DEFAULT_SETTINGS, hudScale: 0.8 } }));
     // At 0.8 each group, its gaps and its distance to the corner shrink toward its screen corner:
-    // a button 100 px from the corner at 1 is 88 px from it at 0.8, not drawn smaller in place.
-    expect([top().transform, top().transformOrigin]).toEqual(["scale(0.88)", "100% 0%"]);
-    expect([actions().transform, actions().transformOrigin]).toEqual(["scale(0.88)", "100% 100%"]);
+    // a button 100 px from the corner at 1 is 92 px from it at 0.8, not drawn smaller in place.
+    expect([top().transform, top().transformOrigin]).toEqual(["scale(0.92)", "100% 0%"]);
+    expect([actions().transform, actions().transformOrigin]).toEqual(["scale(0.92)", "100% 100%"]);
     const fromCorner = (offset: number) => offset * Number.parseFloat(actions().transform.slice(6));
     expect(fromCorner(100)).toBeLessThan(100);
     // Up from 1, as before.
