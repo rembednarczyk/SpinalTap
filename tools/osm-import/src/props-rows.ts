@@ -5,6 +5,7 @@
  * posts' `variant` (`bollardChains` of the simulation reads them). No post and no chain stands
  * in the mouth of a zebra crossing.
  */
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { type CrossingBand, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
 import { BOLLARD, POLE_SHAFT, alongSegment, chainThrough, chainVariant, distanceToPiece, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture.ts";
@@ -26,8 +27,11 @@ const ROW_TURN = (35 * Math.PI) / 180;
  */
 export const postRows = (posts: readonly Pt[], blocked: (a: number, b: number) => boolean = () => false): number[][] => {
   const edges: [number, number, number][] = [];
+  // The near pairs from a grid, not every pair of the thousands of posts.
+  const grid = pointHash(posts);
   for (let a = 0; a < posts.length; a++)
-    for (let b = a + 1; b < posts.length; b++) {
+    for (const b of grid.queryRadius(posts[a]!.x, posts[a]!.z, ROW_GAP)) {
+      if (b <= a) continue;
       const d = Math.hypot(posts[b]!.x - posts[a]!.x, posts[b]!.z - posts[a]!.z);
       if (d <= ROW_GAP && d > 0) edges.push([d, a, b]);
     }
@@ -65,6 +69,13 @@ export const postRows = (posts: readonly Pt[], blocked: (a: number, b: number) =
     rows.push(before(row[0]!, row[row.length - 1]!) <= 0 ? row : row.reverse());
   }
   return rows.sort((a, b) => before(a[0]!, b[0]!));
+};
+
+/** The indices of the points in a grid of `ROW_GAP` cells, in their order. */
+const pointHash = (pts: readonly Pt[]): SpatialHash<number> => {
+  const h = new SpatialHash<number>(ROW_GAP);
+  pts.forEach((p, k) => h.insertPoint(k, p.x, p.z));
+  return h;
 };
 
 const r2 = (v: number): number => Math.round(v * 100) / 100 + 0;
@@ -172,32 +183,49 @@ export interface BollardRef {
 
 /**
  * The plan's bollards strung into rows in the table (G-032), out of the zebras' mouths, their
- * chains on the lamps of the rows and clear of every other piece. Returns the refs of the posts
+ * chains on the lamps of the rows and clear of every other piece; a post `bare` takes holds none. Returns the refs of the posts
  * that had to go, their places in the table left empty (undefined) for the caller to drop.
  */
-export const stringBollards = <R extends BollardRef>(site: Site, byChunk: Map<string, (StreetPropItem | undefined)[]>, refs: readonly R[], bands: readonly CrossingBand[]): R[] => {
+export const stringBollards = <R extends BollardRef>(site: Site, byChunk: Map<string, (StreetPropItem | undefined)[]>, refs: readonly R[], bands: readonly CrossingBand[], bare: (r: R) => boolean = () => false): R[] => {
   const posts = refs.map((b) => byChunk.get(b.chunk)![b.index]!);
   const others = [...byChunk.values()].flat().filter((i): i is StreetPropItem => i !== undefined && i.prop !== "bollard" && furnitureRadius(i) > 0);
   const close = (o: StreetPropItem, p: Pt, r: number) => Math.abs(o.x - p.x) < r && Math.abs(o.z - p.z) < r;
+  // The pieces and the posts near a spot from grids, in their order (the first pole in a chain's way holds it).
+  const grid = new SpatialHash<StreetPropItem>(4);
+  for (const o of others) grid.insertPoint(o, o.x, o.z);
+  const othersNear = (p: Pt, r: number) => grid.query(p.x - r, p.z - r, p.x + r, p.z + r).filter((o) => close(o, p, r));
   const along = (p: Pt) => {
     const t = towardsStreet(site, p);
     return t && { x: -t.z, z: t.x };
   };
   const fits = (p: StreetPropItem, q: Pt) =>
-    site.chunkAt(q) === site.chunkAt(p) && site.surfaceAt(q) === site.surfaceAt(p) && !others.some((o) => close(o, q, 3) && distanceToPiece(o, q.x, q.z) < 2 * BOLLARD.radius);
+    site.chunkAt(q) === site.chunkAt(p) && site.surfaceAt(q) === site.surfaceAt(p) && !othersNear(q, 3).some((o) => distanceToPiece(o, q.x, q.z) < 2 * BOLLARD.radius);
   const kept = clearMouths(posts, bands, along, fits);
   const live = kept.flatMap((p, k) => (p ? [{ p, k }] : []));
+  const bandGrid = new SpatialHash<CrossingBand>(8);
+  for (const b of bands) {
+    // A point in a band is within its half extents of the centre either way; a centimetre's slack for a direction a hair off unit length.
+    const r = b.along + b.across + 0.01;
+    bandGrid.insert(b, b.c.x - r, b.c.z - r, b.c.x + r, b.c.z + r);
+  }
+  const liveGrid = new SpatialHash<StreetPropItem>(4);
+  for (const { p } of live) liveGrid.insertPoint(p, p.x, p.z);
+  // The posts that hold no chain (G-820: the row of a narrow pavement): a link to one hangs none.
+  const chainless = new Set(live.filter(({ k }) => bare(refs[k]!)).map(({ p }) => p));
   const inWay = (a: StreetPropItem, b: StreetPropItem) => {
     const { from, to } = chainBetween(a, b);
-    return others.filter((o) => close(o, a, ROW_GAP + 2) && chainThrough(from, to, o));
+    return othersNear(a, ROW_GAP + 2).filter((o) => chainThrough(from, to, o));
   };
   // A chain stops short of a bench or a bin in the row, a third post, a wall and a zebra's mouth; it hangs on one lamp at most.
   const blocked = (a: StreetPropItem, b: StreetPropItem) => {
+    if (chainless.has(a) || chainless.has(b)) return true;
     const { from, to } = chainBetween(a, b);
-    if (alongSegment(from, to, 0.1).some((q) => site.surfaceAt(q) === "building" || bands.some((bd) => inCrossingBand(bd, q)))) return true;
-    if (live.some(({ p }) => p !== a && p !== b && close(p, a, ROW_GAP + 1) && chainThrough(from, to, p))) return true;
+    const r = ROW_GAP + 1;
+    if (liveGrid.query(a.x - r, a.z - r, a.x + r, a.z + r).some((p) => p !== a && p !== b && close(p, a, r) && chainThrough(from, to, p))) return true;
     const way = inWay(a, b);
-    return way.some((o) => !isPole(o)) || way.length > 1;
+    if (way.some((o) => !isPole(o)) || way.length > 1) return true;
+    // The ground under the chain last: it is read every 10 cm.
+    return alongSegment(from, to, 0.1).some((q) => site.surfaceAt(q) === "building" || bandGrid.at(q.x, q.z).some((bd) => inCrossingBand(bd, q)));
   };
   const strung = stringRows(
     live.map(({ p }) => p),

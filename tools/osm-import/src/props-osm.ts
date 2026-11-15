@@ -13,6 +13,11 @@ import { type FurniturePoint, loadBollardLines, loadFurniture, planKindOf } from
 import { type DriveWay, withBollardLines } from "./props-bollard-lines.ts";
 import { type OsmData, type Tags, mergeOsm, parseExtract } from "./osm.ts";
 import { REPO } from "./paths.ts";
+import type { Pt } from "./geometry.ts";
+import { COVER } from "../../orto/src/classify.ts";
+import { coverAt, readCover } from "../../orto/src/cover.ts";
+import { ROW_DISTRICTS } from "./props-kerb-lines.ts";
+import type { KerbRuleContext } from "./props-kerb-bollards.ts";
 import type { PlanItem, PropsPlan } from "./props-gen.ts";
 import { type LitWay, isLitWay, lampLineOf, markCourts, withLitRule } from "./props-lit.ts";
 import { SidewalkIndex, kerbsOf } from "./props-lit-sides.ts";
@@ -96,6 +101,24 @@ const CAR_WAYS: ReadonlySet<string> = new Set(["primary", "secondary", "tertiary
 export const driveWaysOf = (ways: readonly LitWay[]): DriveWay[] =>
   ways.filter((w) => CAR_WAYS.has(w.tags.highway ?? "")).map((w) => ({ pts: w.pts, width: Number.parseFloat(w.tags.width ?? "") || (w.tags.highway === "service" ? 3.5 : 6) }));
 
+/** The taxi ranks of the districts' extracts (`amenity=taxi` areas) as rings: the kerb rows break by them (G-820). */
+export const loadTaxiRanks = (root = REPO): Pt[][] => ringsOf(loadDistricts(root), (tags) => tags?.amenity === "taxi").map((w) => w.pts.slice(0, -1));
+
+/**
+ * The orthophoto's cover of the kerb rule's districts (`data/orto/<slug>.cover.png`, ADR-0077) as
+ * asphalt or not at a point, null off it: the bays of cars across the pavement the map lacks (G-820 P2).
+ */
+export const loadOrtoAsphalt = (dir?: string): ((p: Pt) => boolean | null) => {
+  const covers = ROW_DISTRICTS.flatMap((slug) => readCover(slug, dir) ?? []);
+  return (p) => {
+    for (const c of covers) {
+      const k = coverAt(c, p.x, p.z);
+      if (k !== COVER.none) return k === COVER.asphalt;
+    }
+    return null;
+  };
+};
+
 /** The plan as its file has it, before the extract's groups and the `lit` rule. */
 export const loadPlanFile = (root = REPO): PropsPlan => JSON.parse(readFileSync(join(root, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
 
@@ -109,3 +132,6 @@ export const loadPropsPlan = (root = REPO): PropsPlan => {
   const plan = withBollardLines(withOsmFurniture(loadPlanFile(root), furniture), loadBollardLines(root), driveWaysOf(loadStreetWays(root)), inMap);
   return withLitRule(plan, loadLitWays(root), furniture).plan;
 };
+
+/** What the kerb rows' rule (G-820) reads beyond the chunks: OSM's taxi ranks and the orthophoto's asphalt. */
+export const loadKerbRule = (root = REPO): KerbRuleContext => ({ taxis: loadTaxiRanks(root), asphalt: loadOrtoAsphalt() });

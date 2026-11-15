@@ -19,6 +19,10 @@ console.log("per district:", Object.entries(stats.perDistrict).map(([k, n]) => `
 console.log(`dropped: ${stats.outside} outside the chunks, ${stats.inBuilding} inside building outlines, ${stats.onRoad} on a road with no pavement near, ${stats.merged} too close to the same kind, ${stats.crowded} with no room beside a solid placed before`);
 console.log(`moved off the road onto the pavement or away from a wall: ${stats.offRoad}`);
 console.log(`trees of the crowns (G-797): ${crowns.cells} crown cells, ${crowns.tops} tops, ${crowns.nearTree} under a tree before, ${crowns.noGround} with no ground for a trunk, ${crowns.eave} on an eave, ${crowns.byWall} by walls even their narrowest crown reaches, ${crowns.placed} placed`);
+if (stats.kerbRows) {
+  const k = stats.kerbRows;
+  console.log(`kerb rows (G-820): ${k.posts} posts, ${k.posts - k.bare} with chains along ${k.metres} m, ${k.bare} without along ${k.bareMetres} m`);
+}
 console.log("decals (ADR-0058 stage 6):", Object.entries(decals.per).map(([k, by]) => `${k} ${Object.entries(by).map(([d, n]) => `${d} ${n}`).join(" ")}`).join("; "));
 console.log("  spots turned down:", Object.entries(decals.rejected).sort().map(([k, n]) => `${k} ${n}`).join(", "));
 console.log("doors (ADR-0058 stage 9):", Object.entries(doors.per).sort().map(([k, n]) => `${k} ${n}`).join(", "));
