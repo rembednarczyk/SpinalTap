@@ -19,6 +19,12 @@ Przyczyny:
 3. **Wspólna pamięć miasta.** Kosztowne struktury (świat z treści `lublin`, grunt, indeksy skanu) liczone raz na proces robotnika i zapisywane w `node_modules/.cache/seki-city/<odcisk>`; testy biorą je stamtąd. Odcisk z kroku 1 jest kluczem, więc pamięć nie może się zestarzeć.
 4. **Osobny projekt „city”.** Testy `tools/*` i testy całego miasta w `sim` (skan, ruch, determinizm) idą w osobnym jobie bez instrumentacji pokrycia, równolegle do shardów. Ich straż przed zawieszeniem to 120 s na test, a właściwą bramką jest krok 2 (trend i połowa budżetu tego projektu). To zmiana granic, nie podniesienie limitu: wpis do długu w ADR-0046 z pomiarem przed i po.
 
+### Kalibracja bramki czasu (15.11, decyzja użytkownika)
+Pierwsze przebiegi pokazały, że ten sam test na wspólnej maszynie CI waha się o 20–30%: w #585, bez zmian w symulacji, dwa testy tłumu wyszły 10,4 i 11,2 s przy progu 10 s. Odtąd próg połowy limitu dotyczy tylko nowych testów (których nie mają przebiegi main); każdy test pada powyżej 75% limitu; test, który main zna, pilnuje wzrost wobec mediany main (+30% i +1 s). Bez żadnego przebiegu main obowiązuje tylko 75% (PR #585).
+
+### Zakres odcisku tablic (15.11, PR #585)
+Odcisk w nagłówku obejmuje tylko wejścia mapy (`OWNED`) i dane; zmianę w `sim` czy `engine`, która zmienia tablice, łapie job Map tables, uruchamiany przy każdej zmianie kodu.
+
 ## Konsekwencje
 - Krok 1 i 2 to ok. dzień pracy jednego agenta, bez zmian gry, zapisu i hashy; kroki 3 i 4 po pomiarze kroków 1–2.
 - Tablice: nagłówek z odciskiem zmienia jeden wiersz `*.generated.ts`; `pnpm merge:main` przelicza je jak dotąd.
