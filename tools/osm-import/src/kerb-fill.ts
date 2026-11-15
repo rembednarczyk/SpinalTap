@@ -13,9 +13,9 @@
  *   kerb stone (`KERB_STONE` of sidewalk) laid over its edge where the paving draws no kerb of its own;
  * - elsewhere the strip is laid as a sidewalk, so the renderer draws its kerb at the asphalt.
  * The lanes, markings and zebras' places come from the street's axis and width as before: the
- * simulation sees no change; the zebras only reach on to the new kerb (`stretchZebras`).
+ * simulation sees no change; the zebras only reach on to the new kerb (`fitZebras`).
  */
-import { type Pt, type Rect, ccw, lineLength, offsetLine, pointInRing, ringBounds, selfIntersects, simplifyRing } from "./geometry.ts";
+import { type Pt, type Rect, ccw, lineLength, offsetLine, ringBounds, selfIntersects, simplifyRing } from "./geometry.ts";
 import { type Band } from "./ground.ts";
 import { type WidenRun } from "./kerb-widen.ts";
 import { RingBins } from "./ring-bins.ts";
@@ -54,8 +54,6 @@ const MEDIAN_REACH = KERB_REACH;
 const MIN_RUN = 1;
 /** The kerb stone laid between a widened carriageway and paving with no kerb of its own (m): the renderer draws kerbs on sidewalks only. */
 const KERB_STONE = 0.3;
-/** How far a zebra may reach on past the carriageway's estimated edge (m). */
-const ZEBRA_REACH = KERB_REACH + INTO;
 
 /** The surfaces a fill leads to. */
 const PAVING = new Set(["sidewalk", "footway", "square", "cobble"]);
@@ -76,7 +74,6 @@ type Hit = { readonly gap: number; readonly kerbed: boolean; readonly median: bo
 /** A point of a carriageway's edge `s` along it, the way out from it and the paving reached. */
 type Sample = { readonly k: number | null; readonly s: number; readonly edge: Pt; readonly dir: Pt; readonly hit: Hit | null };
 
-const inBox = (p: Pt, b: Rect) => p.x >= b.minX && p.x <= b.maxX && p.z >= b.minZ && p.z <= b.maxZ;
 const isPaving = (b: Band) => PAVING.has(b.surface) && !b.carriageway && !b.bridge;
 const along = (p: Pt, d: Pt, t: number): Pt => ({ x: p.x + d.x * t, z: p.z + d.z * t });
 
@@ -369,30 +366,4 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
     }
   }
   return { fills, widened };
-};
-
-/**
- * The zebras at the crossing nodes (`crossingBand`'s four corners, across the road from the
- * second corner to the third) reaching on over the widened carriageways to their new kerbs: each
- * end moved out as far as its middle stays on one of `roads`' rings.
- */
-export const stretchZebras = <B extends Band>(zebras: readonly B[], roads: readonly (readonly Pt[])[]): B[] => {
-  const rings = roads.map((ring) => ({ ring, box: ringBounds(ring) }));
-  const onRoad = (p: Pt) => rings.some((r) => inBox(p, r.box) && pointInRing(p, r.ring));
-  return zebras.map((z) => {
-    if (z.ring.length !== 4 || rings.length === 0) return z;
-    const [c0, c1, c2, c3] = z.ring as [Pt, Pt, Pt, Pt];
-    const len = Math.hypot(c2.x - c1.x, c2.z - c1.z) || 1;
-    const dir = { x: (c2.x - c1.x) / len, z: (c2.z - c1.z) / len };
-    const reach = (from: Pt, d: Pt): number => {
-      let t = 0;
-      while (t < ZEBRA_REACH && onRoad(along(from, d, t + ACROSS / 2))) t += ACROSS / 2;
-      return t;
-    };
-    const back = { x: -dir.x, z: -dir.z };
-    const low = reach({ x: (c0.x + c1.x) / 2, z: (c0.z + c1.z) / 2 }, back);
-    const high = reach({ x: (c2.x + c3.x) / 2, z: (c2.z + c3.z) / 2 }, dir);
-    if (low === 0 && high === 0) return z;
-    return { ...z, ring: [along(c0, back, low), along(c1, back, low), along(c2, dir, high), along(c3, dir, high)] };
-  });
 };
