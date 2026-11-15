@@ -60,6 +60,15 @@ describe("street furniture in the game (ADR-0050)", () => {
     expect(turnLocal(Math.PI / 2, 0, 1).x).toBeCloseTo(1);
   });
 
+  it("a cast-iron bollard is a slim round post, its solid from its shaft (G-819)", () => {
+    const post: StreetPropItem = { prop: "bollard", x: 0, y: 0, z: 0, yaw: 0.4, variant: 0 };
+    const [p] = furniturePrisms(post);
+    // Lublin's black posts (Plac Łokietka, Plac Wolności): a 0.10 m shaft on a 0.15 m foot, 0.95 m tall.
+    for (const q of p!.points) expect(Math.hypot(q.x, q.z)).toBeCloseTo(0.08, 3);
+    expect(p!.top).toBeCloseTo(0.95, 3);
+    expect(distanceToPiece(post, 0.5, 0)).toBeGreaterThan(0.41);
+  });
+
   it("stream in with their chunk as solids with ids of their own, out with it", () => {
     const sim = Simulation.create({ seed: 1 });
     const pieces = [...sim.world].filter((e) => e.id >= STREET_ID_BASE && e.id < STREET_ID_BASE + 1_000_000);
