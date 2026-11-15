@@ -163,12 +163,14 @@ export const fitZebras = <B extends Band>(
   });
 };
 
-/**
- * The ground's `bands` with each zebra fitted (`fitZebras`) in its place: across the carriageways
- * and their widened stretches (`kerbs`), short of the kerb stones laid over their edges.
- */
 type Laid = Band & { readonly box: Rect };
 
+/**
+ * The ground's `bands` with each zebra fitted (`fitZebras`) in its place: across the carriageways
+ * and their widened stretches (`kerbs`), short of the kerb stones laid over their edges. A crossing
+ * way fitted keeps its band as a footway under them: the path from the pavement to the kerb, which
+ * its zebra paved before (the asphalt, the zebra and the sidewalks rank over it, `partitionGround`).
+ */
 export const laidZebras = (
   bands: readonly Laid[],
   kerbs: ReturnType<typeof kerbFills>,
@@ -183,5 +185,10 @@ export const laidZebras = (
   const fitted = new Map(fitZebras(zebras, spots, roads, aside, asphalt, stones).map((rings, i) => [zebras[i]!, rings]));
   // A rectangle: a crossing way's ends at the footways it meets (`roundEnds`) are no ends of it.
   const laid = ({ roundEnds: _, ...b }: Laid, ring: Pt[]): Laid => ({ ...b, ring, box: ringBounds(ring) });
-  return bands.flatMap((b) => fitted.get(b)?.map((ring) => laid(b, ring)) ?? [b]);
+  return bands.flatMap((b) => {
+    const rings = fitted.get(b);
+    if (!rings) return [b];
+    const path: Laid[] = b.source.startsWith("w") ? [{ ...b, surface: "footway" }] : [];
+    return [...path, ...rings.map((ring) => laid(b, ring))];
+  });
 };
