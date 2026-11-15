@@ -128,6 +128,10 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
     // No frontage: the strips by the walls are loose regions, the asphalt bare.
     const none = coverFills(RECT, cover(at), [street], walls);
     for (const z of [13.75, 6.25]) expect(surfaceAt(none, { x: 10.25, z }), `${z}`).toEqual([]);
+    // Walls past the reach: the strip the reach's edge leaves before them joins the frontage.
+    const far = frontages([line("pedestrian", 1)]);
+    const wide = coverFills(RECT, cover(() => COVER.asphalt), [piece("square", box(0, 0, 20, 2))], [box(0, 15, 20, 20)], { areas: [], stops: [], shops: [], fronts: far });
+    for (const z of [6.25, 12.75, 14.75]) expect(surfaceAt(wide, { x: 10.25, z }), `${z}`).toEqual(["square"]);
     // A residential street has a frontage only inside the Old Town's walls, a carriageway none.
     expect(frontages([line("residential", 10), line("tertiary", 10), { ...line("pedestrian", 10), tags: { highway: "pedestrian", tunnel: "yes" } }])).toEqual([]);
     expect(frontages([{ ...line("residential", 0), line: [{ x: 560, z: -60 }, { x: 600, z: -60 }, { x: 900, z: -60 }] }]).map((f) => [f.line.length, f.reach])).toEqual([[3, 6]]);

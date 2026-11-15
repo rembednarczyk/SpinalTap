@@ -383,7 +383,7 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
   for (const s of town.shops) cells.zoneNear(s, FILL.forecourt);
   for (const p of town.stops) cells.zoneNear([p], FILL.platform);
   cells.growZone(FILL.zoneMargin);
-  zoneFronts(cells, town.fronts ?? [], FILL.zoneMargin);
+  zoneFronts(cells, town.fronts ?? [], FILL.zoneMargin, { width: FILL.looseWidth, area: FILL.looseArea });
   readCover(cells, cover, FILL.around);
   paveFronts(cells);
   joinSpecks(cells, FILL.speck);

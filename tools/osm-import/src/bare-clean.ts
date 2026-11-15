@@ -35,7 +35,7 @@ const PACKED = Int32Array.from({ length: 8 }, (_, l) => (l === LABEL.grass ? 1 :
  * where its rows j - r and j + r + 1 (within the raster) begin in it.
  */
 const mixedRow = (cells: Cells, t: Int32Array, j: number, r: number, lo: number, hi: number): void => {
-  const { nx, label } = cells;
+  const { nx, label, front } = cells;
   const o = j * nx;
   for (let i = 0; i < nx; i++) {
     const l = label[o + i]!;
@@ -47,8 +47,9 @@ const mixedRow = (cells: Cells, t: Int32Array, j: number, r: number, lo: number,
     const s = (c >> 10) & 1023;
     const q = (c >> 20) & 1023;
     // Ties and none round it stay bare. A crown over lawn or paving takes a lawn (a tree's bed: paving
-    // under it would be a guess, T-285), and stays bare over asphalt.
-    label[o + i] = l === LABEL.crown ? (g > q || s > q ? LABEL.grass : LABEL.other) : g > s && g > q ? LABEL.grass : s > g && s > q ? LABEL.square : LABEL.other;
+    // under it would be a guess, T-285), and stays bare over asphalt; in a pedestrian street's
+    // frontage the street's paving runs on under it (`bare-fronts.ts`, G-853).
+    label[o + i] = l === LABEL.crown ? (front[o + i] ? LABEL.square : g > q || s > q ? LABEL.grass : LABEL.other) : g > s && g > q ? LABEL.grass : s > g && s > q ? LABEL.square : LABEL.other;
   }
 };
 
