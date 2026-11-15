@@ -411,7 +411,7 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
     paveSpecks(cells, lawns);
   } else kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
   dropLoose(cells, FILL.looseWidth, FILL.looseArea);
-  keepKerbs(cells, FILL.kerbBand);
+  if (!base) keepKerbs(cells, FILL.kerbBand);
   const n = Math.round(FILL.tile / STEP);
   const out: GroundOut[] = [];
   const has = new Uint8Array(Math.ceil(cells.nx / n) * Math.ceil(cells.nz / n));

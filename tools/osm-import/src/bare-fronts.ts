@@ -197,8 +197,16 @@ export const paveSpecks = (cells: Cells, lawns: Uint8Array): void => {
   }
 };
 
-/** The free cells off the frontages left bare: the frontages' pass lays nothing else (`coverFills`). */
+/**
+ * The free cells off the frontages left bare: the frontages' pass lays nothing else (`coverFills`).
+ * In them what shade or crowns left unread (no cell round them a lawn or paving) is paved as the
+ * street: no class, the deptak's setts.
+ */
 export const offFronts = (cells: Cells): void => {
   const { label, front } = cells;
-  for (let k = 0; k < label.length; k++) if (!front[k] && label[k] !== COVERED && label[k] !== BLOCKED) label[k] = OTHER;
+  for (let k = 0; k < label.length; k++) {
+    if (label[k] === COVERED || label[k] === BLOCKED) continue;
+    if (!front[k]) label[k] = OTHER;
+    else if (label[k] === OTHER) label[k] = SQUARE;
+  }
 };
