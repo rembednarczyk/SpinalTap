@@ -1890,6 +1890,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w przeglądzie kuratora (gałąź ccr-ec2c4269-ilh8k8-g797, dffa980): canopy-without-tree 481 → 112, drzewa 640 → 1812; wcześniej: zgłoszone (14.11, audyt ADR-0077)
 - Pakiet właściciela: tools/osm-import (props), tools/gugik
 - Test przyjęcia: kontrola canopy-without-tree (kwadrat 10 m, ≥ 40 m² korony, ≥ 80% dalej niż 6 m od drzewa gry), baza 496, spada; 0 drzew na drogach, schodach i w budynkach
+- Przegląd kuratora 15.11 (dffa980): NIEZGODNE z poprawkami. Próbka 32 drzew: 26 zgodnych, 1 na dachu, 3 na okapach, 2 wątpliwe. Skarpa N Zamku 2 → 44 drzew (korony rysowane 36% wobec CHM 46%), skarpa S 0 → 49 (29% wobec 36%), Plac Litewski 100 → 131 (29% wobec 26%), nabrzeże zgodne. Zabytki niezasłonięte (Brama Krakowska, Trybunał, Brama Grodzka, Kaplica, Donżon: 0 nowych w 10 m). Ruiny Rybna 12 zarośnięte, zgodne. Poprawki: P1 okapy i dachy podwórek, P2 budowy (landuse/building=construction), P3 kryty targ (amenity=marketplace), P4 odstęp 2 m od pomostów — wszystkie w G-815 / T-300; P5 wykluczyć CLEARED_BUILDINGS (112 drzew w dokach T-002 usuwa dopiero clearOfGame, a liczą się w 1812 i w skanie). Raport scratchpad/topo-g797-raport.md, nakładki scratchpad/topo-g797/.
 
 ### G-799 Hydranty nadziemne z OSM odpadają przy rozstawieniu (8 z 14)
 - Ważność: S4 · Zasięg: osm.hydrants: 14 w planie, 6 w grze
@@ -1948,6 +1949,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: treeVariant (#558) wraca do plainTreeVariant, gdy korona z pomiaru nie mieści się przy ścianach; reguła koron pomija przez to duże drzewa przy budynkach, np. (700, 570).
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import (tree-heights)
+
+### G-815 Drzewa reguły koron na okapach, dachach podwórek, budowach, krytym targu i krawędziach pomostów (T-300)
+- Ważność: S3 · Zasięg: ok. 28 drzew na okapach/dachach (z 57 wskazanych przez sondę), 20 w landuse=construction (12 na stanie surowym Zielona 5a), 3 w Targu „Bazar” w67502759, 3 przy pomostach; wszystkie dzielnice
+- Opis: Reguła crown-trees.ts (G-797) stawia drzewo na wierzchołku korony liczonym tylko po komórkach dopuszczonych, więc piksel okapu przy wyższym dachu (NMPT = maks. z 4 komórek 0,5 m; obrys OSM 1–3 m mniejszy niż dach; przybudówki spoza OSM) staje się wierzchołkiem, a ortofoto daje canopy na miedzi, mchu, pnączach i cieniu podwórek. Przykłady: c152 (117,5; 72,5) 9,4 m na miedzianym dachu, c81 (375,5; −262,5), c86 (385,5; −139,5) przybudówka z pnączem, c273 (497,5; 13,5), c595 (608,5; 569,5). Budowa Zielona 5a (w770678456, w1382552286): drzewa 6–16 m na płaskowyżu stanu surowego. Targ „Bazar”: c592, c593, c594 po 4,0 m w alejkach między dachami straganów. Pomosty: c441, c452 (kładka ok. x 778, z 202), c937 (most nad Bystrzycą x 2451, z 421) — CHM = pomost. Nakładki: scratchpad/topo-g797/eave0.png, eave1.png, budowy.png, targ.png, decks.png, zoom2.png; raport scratchpad/topo-g797-raport.md
+- Status: nowe (przegląd kuratora G-797, 15.11); do poprawy w gałęzi G-797 przed scaleniem albo osobno
+- Pakiet właściciela: tools/osm-import (crown-trees.ts, crown-ground.ts)
+- Test przyjęcia: drzewa reguły: żaden pień w obrysie OSM building (bez ruins), landuse=construction, amenity=marketplace (kontrola K1, baza 27 → 0); żaden do 2 m od pomostu (K3, baza 5 → 0); wierzchołek nie łączy się plateau CHM (bez spadku o 1 m) z obrysem budynku w 3,5 m albo ma lokalne maksimum surowego CHM — lista z raportu: c13, c51, c81, c86, c152, c159, c165, c198, c221, c244, c273, c595 znikają, a c345, c350, c357, c585, c623, c639 zostają
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
