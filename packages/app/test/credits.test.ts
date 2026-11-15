@@ -1,7 +1,8 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
-import { CREDITS } from "@seki/ui";
+import { CREDITS, type CreditLicense, LICENSES } from "@seki/ui";
 import { describe, expect, it } from "vitest";
+import { ASSET_FILE } from "./asset-licenses";
 
 /**
  * Credits (ADR-0063): the list of the "Credits" screen (`packages/ui/src/credits/credits.ts`), the
@@ -15,10 +16,10 @@ const SOURCES = JSON.parse(readFileSync(join(import.meta.dirname, "../../../tool
 };
 
 const walk = (dir: string): string[] => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? walk(join(dir, f)) : [join(dir, f)]));
-/** Every model and sound under `public`, as `city/city-props.glb`. */
+/** Every model, sound and image under `public`, as `city/city-props.glb`. */
 const ASSETS = walk(PUBLIC)
   .map((f) => relative(PUBLIC, f).split("\\").join("/"))
-  .filter((f) => /\.(glb|vrm|ogg)$/.test(f));
+  .filter((f) => ASSET_FILE.test(f));
 
 const readme = (file: string): string => readFileSync(join(PUBLIC, dirname(file), "README.md"), "utf8");
 
@@ -31,7 +32,7 @@ const creditsIn = (file: string): string[] => {
 };
 
 describe("credits (ADR-0063)", () => {
-  it("credits every model and sound that ships, and names only files that do", () => {
+  it("credits every model, sound and image that ships, and names only files that do", () => {
     const credited = new Set(CREDITS.flatMap((c) => c.files));
     for (const f of ASSETS) expect(credited.has(f), `${f} has no entry in credits.ts`).toBe(true);
     for (const f of credited) expect(ASSETS.includes(f), `${f} of credits.ts is not in public`).toBe(true);
@@ -109,9 +110,10 @@ describe("credits (ADR-0063)", () => {
     }
   });
 
-  it("credits every source of sources.json the game uses; all of them CC0, CC-BY 4.0 or (game-icons.net) CC BY 3.0", () => {
+  it("credits every source of sources.json the game uses; all of them CC0, CC-BY 4.0, CC BY-NC(-SA) 4.0 or (game-icons.net) CC BY 3.0", () => {
     for (const s of SOURCES.sources) {
-      expect(["CC0", "CC-BY-4.0", "CC-BY-3.0"], s.id).toContain(s.license);
+      expect(["CC0", "CC-BY-4.0", "CC-BY-3.0", "CC-BY-NC-4.0", "CC-BY-NC-SA-4.0"], s.id).toContain(s.license);
+      if (s.license.startsWith("CC-BY-NC")) expect(s.licenseUrl, s.id).toBe(LICENSES[s.license as CreditLicense].url);
       if (s.license === "CC-BY-4.0") expect(s.licenseUrl).toBe("https://creativecommons.org/licenses/by/4.0/");
       if (s.license === "CC-BY-3.0") expect(s.id, "CC BY 3.0 only for game-icons.net").toMatch(/^game-icons-/);
       // A source marked unused (`"used": []`) waits for a later stage of ADR-0063.
