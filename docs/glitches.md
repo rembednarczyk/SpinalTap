@@ -1948,6 +1948,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import (tree-heights)
 - Runda 2 G-797: 41 wierzchołków prawdziwych drzew przy ścianach nadal pomijanych (z listy kuratora zostały 2 z 16).
+- Kurator r2 (2b26e13): z 22 prawdziwych drzew przy ścianach z rundy 1 zostaje 8 (c92, c345, c350, c357, c585, c623, c626, c639), 2 zastąpione drzewem w 3 m (c641, c1159); bez drzewa: (351,5; −64,5), (409,5; 145,5), (406,5; 148,5), (740,5; −190,5), (530,5; 128,5), (530,5; 110,5), (530,5; 515,5), (577,5; 418,5), (832,5; 488,5), (2555,5; 84,5), (2349,5; 465,5), (2317,5; 444,5) — kandydaci na test przyjęcia.
 
 ### G-815 Drzewa reguły koron na okapach, dachach podwórek, budowach, krytym targu i krawędziach pomostów (T-300)
 - Ważność: S3 · Zasięg: ok. 28 drzew na okapach/dachach (z 57 wskazanych przez sondę), 20 w landuse=construction (12 na stanie surowym Zielona 5a), 3 w Targu „Bazar” w67502759, 3 przy pomostach; wszystkie dzielnice
@@ -1955,6 +1956,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w ponownym przeglądzie (gałąź ccr-ec2c4269-ilh8k8-g797, 2b26e13): K1 28 → 1, K3 5 → 0, lista kuratora: 12 znika, 6 zostaje; wcześniej: nowe (przegląd kuratora G-797, 15.11); do poprawy w gałęzi G-797 przed scaleniem albo osobno
 - Pakiet właściciela: tools/osm-import (crown-trees.ts, crown-ground.ts)
 - Test przyjęcia: drzewa reguły: żaden pień w obrysie OSM building (bez ruins), landuse=construction, amenity=marketplace (kontrola K1, baza 27 → 0); żaden do 2 m od pomostu (K3, baza 5 → 0); wierzchołek nie łączy się plateau CHM (bez spadku o 1 m) z obrysem budynku w 3,5 m albo ma lokalne maksimum surowego CHM — lista z raportu: c13, c51, c81, c86, c152, c159, c165, c198, c221, c244, c273, c595 znikają, a c345, c350, c357, c585, c623, c639 zostają
+- Przegląd kuratora r2 15.11 (2b26e13): ZGODNE z uwagami. Test przyjęcia spełniony: c13, c51, c81, c86, c152, c159, c165, c198, c221, c244, c273, c595 znikają; c345, c350, c357, c585, c623, c639 zostają. Z 29 dachów/okapów rundy 1 zostają 3: c134 (−173,5; −14,5) to jednak małe drzewo w podwórzu (ortofoto 2024-06), c575 wątpliwe, c588 dach garaży; resztki w G-827. Targ, Zielona 5a, pomosty, doki: 0 drzew. Raport scratchpad/topo-g797r2-raport.md.
 
 ### G-816 Odcinek reguły lit bez stacji liczy się jako oświetlony; przebieg uzupełniający powtarza stację, która właśnie odpadła
 - Ważność: S4 · Zasięg: SW róg Krakowskiego (-160..-130; -270..-260), rząd drzew w1550442735
@@ -2026,6 +2028,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: bare-cover kładzie bruk na prawdziwym asfalcie; kontrola lamp-on-orto-carriageway (baza 146) ma przez to słabą moc. Poprawić klasyfikator albo porównywać z jezdnią poszerzoną o łącznice i placement.
 - Status: zgłoszone
 - Pakiet właściciela: tools/orto
+
+### G-827 Drzewa reguły koron: resztki po G-815 — dach garaży spoza OSM, drugie drzewo na koronie drzewa OSM, pary wierzchołków co 2,2 m
+- Ważność: S4 · Zasięg: 2 drzewa na dachach/okapach, 3 drzewa 2,4–2,8 m od drzewa OSM, 5 par drzew reguły w odstępie 2,2 m; Krakowskie, Podzamcze, Nabrzeże
+- Opis: Po rundzie 2 G-797 (2b26e13). Dachy: (552,5; 428,5) 5,9 m na pasie dachów garaży w podwórzu, których nie ma w OSM (CHM 4–6 m, ortofoto bez korony); (580,5; 516,5) 6 m na narożniku dachu, korona krzewu obok (wątpliwe). Drugie drzewo na koronie drzewa OSM w zasięgu rysowanej korony: (564,5; 118,5) przy OSM (564,3; 115,7), (1074,5; 562,5) przy (1073,6; 560,3), (2683,5; 82,5) przy (2685,9; 83,1); zasięg przy stawianiu liczony z wierzchołka CHM, rysowany z wariantu. Pary 2,2 m na jednej plamie CHM: (417,5; −198,5), (520,5; 342,5), (2482,5; 95,5), (2514,5; 96,5), (2658,5; 73,5). Nakładki scratchpad/topo-g797r2/rf.png, s1.png, s2.png.
+- Status: zgłoszone (przegląd kuratora G-797 r2, 15.11)
+- Pakiet właściciela: tools/osm-import (crown-trees.ts, crown-grid.ts)
+- Test przyjęcia: drzewo reguły dalej od drzewa gry niż jego rysowana korona; brak drzewa reguły na (552,5; 428,5)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
