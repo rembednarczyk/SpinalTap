@@ -42,6 +42,13 @@ export const GROWTH_FLOOR_MS = 1000;
 /** How many green runs of main the median is taken over, at most (`ci.yml` downloads them). */
 export const REFERENCE_RUNS = 5;
 
+/**
+ * The growth gate compares with a median of at least this many runs of main: one run is one
+ * draw of a shared runner's noise (15.11, #588: an import change failed a sim and an app test at
+ * +46% and +62% against a single run of main). With fewer runs only the limits hold (ADR-0083).
+ */
+export const MIN_GROWTH_RUNS = 3;
+
 export interface Exception {
   /** A test's id (`testId`), or a test file for each of its tests. */
   readonly test: string;
@@ -95,7 +102,7 @@ export const gateTests = (head: TestTimes, base: readonly TestTimes[], exception
     const m = medians.get(id);
     const share = m === undefined && base.length > 0 ? LIMIT_SHARE : HARD_SHARE;
     if (t.ms > t.limitMs * share) found.push({ test: id, kind: "limit", head: t });
-    if (m && t.ms > m.ms * (1 + GROWTH) && t.ms - m.ms > GROWTH_FLOOR_MS) found.push({ test: id, kind: "growth", head: t, medianMs: m.ms, runs: m.runs });
+    if (m && m.runs >= MIN_GROWTH_RUNS && t.ms > m.ms * (1 + GROWTH) && t.ms - m.ms > GROWTH_FLOOR_MS) found.push({ test: id, kind: "growth", head: t, medianMs: m.ms, runs: m.runs });
   }
   const breaches: Breach[] = [];
   const excused: (Breach & { reason: string })[] = [];
