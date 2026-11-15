@@ -75,6 +75,7 @@ import { generatedCity } from "../../osm-import/test/city.ts";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
+import { constructionBuilt, lod1UnderSites } from "./construction-built";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { crossingGlow, crossingKerb, crossingOverhang, crossingSkew } from "./crossing-shape";
 import { kerbJag } from "./kerb-jag";
@@ -2100,6 +2101,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * left off on purpose (`edge-buildings.ts`, G-556): the map's edge dropped it whole.
    */
   "edge-building-dropped": () => edgeBuildingsDropped(osmBuildings(SOURCE_OSM), LUBLIN_CHUNKS.map((c) => c.bounds), new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => b.id)))),
+  /** An outline OSM tags `building=construction` that LoD1 2024 covers for half its area or more, with no solid in the game: a finished building the map has not caught up with (`construction-built.ts`, G-872). */
+  "osm-construction-built": () => {
+    const areas = extractFeatures(SOURCE_OSM).areas;
+    return constructionBuilt(areas, lod1UnderSites(areas), new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => b.id))));
+  },
   /** A point of a 0.5 m grid on bare terrain in a shops' or market's area, by a shop's or public building's walls or at a stop (`landuse-bare.ts`, decision 5.11). */
   "landuse-bare": () => landuseBare(cityLanduseWorld(SOURCE_OSM)),
   /** A `landuse-bare` sample the orthophoto's cover shows green or light paving: what the import lays a lawn or paving on (ADR-0077 step 1.1, `bare-on-cover.ts`). */
