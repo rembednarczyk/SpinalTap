@@ -13,6 +13,7 @@ import { type FurniturePoint, loadBollardLines, loadFurniture, planKindOf } from
 import { type DriveWay, withBollardLines } from "./props-bollard-lines.ts";
 import { type OsmData, type Tags, mergeOsm, parseExtract } from "./osm.ts";
 import { REPO } from "./paths.ts";
+import type { Pt } from "./geometry.ts";
 import type { PlanItem, PropsPlan } from "./props-gen.ts";
 import { type LitWay, isLitWay, lampLineOf, markCourts, withLitRule } from "./props-lit.ts";
 import { SidewalkIndex, kerbsOf } from "./props-lit-sides.ts";
@@ -91,6 +92,9 @@ export const loadStreetWays = (root = REPO): LitWay[] => litWaysOf(loadDistricts
 const CAR_WAYS: ReadonlySet<string> = new Set(["primary", "secondary", "tertiary", "unclassified", "residential", "living_street", "service", "primary_link", "secondary_link", "tertiary_link"]);
 export const driveWaysOf = (ways: readonly LitWay[]): DriveWay[] =>
   ways.filter((w) => CAR_WAYS.has(w.tags.highway ?? "")).map((w) => ({ pts: w.pts, width: Number.parseFloat(w.tags.width ?? "") || (w.tags.highway === "service" ? 3.5 : 6) }));
+
+/** The taxi ranks of the districts' extracts (`amenity=taxi` areas) as rings: the kerb rows break by them (G-820). */
+export const loadTaxiRanks = (root = REPO): Pt[][] => ringsOf(loadDistricts(root), (tags) => tags?.amenity === "taxi").map((w) => w.pts.slice(0, -1));
 
 /** The plan as its file has it, before the extract's groups and the `lit` rule. */
 export const loadPlanFile = (root = REPO): PropsPlan => JSON.parse(readFileSync(join(root, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;

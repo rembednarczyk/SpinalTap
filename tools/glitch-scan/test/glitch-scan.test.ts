@@ -90,7 +90,9 @@ import { lampWideStreetOneSide } from "./lamp-sides";
 import { SidewalkIndex, kerbsOf } from "../../osm-import/src/props-lit-sides.ts";
 import { WallIndex, isCourtyard, isPedestrianSquare } from "../../osm-import/src/courtyards.ts";
 import { isLitWay, lampLineOf, litWayGroups } from "../../osm-import/src/props-lit.ts";
-import { litWaysOf, loadLitWays, loadPropsPlan } from "../../osm-import/src/props-osm.ts";
+import { litWaysOf, loadLitWays, loadPropsPlan, loadTaxiRanks } from "../../osm-import/src/props-osm.ts";
+import { Site } from "../../osm-import/src/props-site.ts";
+import { bollardBlocksMouth, kerbBollardGap } from "./kerb-bollards";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { BUILDING_SURFACE, buildingsOverSurface } from "./surface-heights";
 import { heightsOffLod1, landmarksOffLod1, levelsTagLost, lod1Under } from "./height-lod1";
@@ -154,7 +156,7 @@ import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
 import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movement-system";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
-import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
+import { GAME_PROPS, WORLD_STREET_PROPS, clearOfGame } from "../../../packages/sim/src/content/street-props";
 import { WORLD_BARRIERS } from "../../../packages/sim/src/content/world-barriers";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
 import { alchemiaRampLanes, streetSegments } from "../../../packages/sim/src/content/traffic-ramp";
@@ -757,6 +759,10 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         const chain = chainSegments(i).some((s) => close.some((b) => alongSegment(s.from, s.to, 0.1).some((p) => inCrossingBand(b, p))));
         return post || chain ? [{ at: near(i.x, i.z), what: post ? "bollard" : "chain" }] : [];
       }),
+  /** A bollard or its chain in the mouth of a drive, a passage, a gate, a door or a bus stop's vehicles (G-820, `kerb-bollards.ts`). */
+  "bollard-blocks-mouth": () => bollardBlocksMouth(new Site(MAP_CHUNKS), MAP_CHUNKS, Object.values(WORLD_STREET_PROPS).flat()),
+  /** A stretch of a car street's kerb in the centre over 6 m with no bollard and no reason of the rule to break its row (G-820, `kerb-bollards.ts`). */
+  "kerb-bollard-gap": () => kerbBollardGap(new Site(MAP_CHUNKS), MAP_CHUNKS, Object.values(WORLD_STREET_PROPS).flat(), BANDS, loadTaxiRanks(), (p) => !clearOfGame(p.x, p.z, BOLLARD.radius)),
   /** A piece of furniture (wall lanterns aside, they hang on a facade) standing more than 0.5 m inside a building. */
   "furniture-in-building": () =>
     Object.values(WORLD_STREET_PROPS)
