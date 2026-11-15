@@ -8,7 +8,10 @@ import { toonSourceOf } from "./model-library";
  * along their normals onto the same skeleton, so the apron lies on the body, bends with it and
  * stays behind the hands. One mesh, painted by vertex colour. The vest of the older characters
  * (ADR-0076 decision 7) is the same shell cut differently: the whole torso of the top, front,
- * sides and back, without the sleeves.
+ * sides and back, without the sleeves. The ballistic vest (`vest-plate`, G-870) is a plate carrier
+ * cut from it again: a front and a back panel from the breastbone to the waist, open at the sides,
+ * joined by straps over the shoulders, standing further off so that the bust and the cloth's folds
+ * stay under it in every pose.
  */
 
 /** Which triangles of the cloth a shell copies. */
@@ -22,14 +25,24 @@ interface Cut {
   readonly facing: number;
   /** The trousers too, or only the top. */
   readonly legs: boolean;
+  /** `facing` for the back too: front and back panels, open at the sides. */
+  readonly panels?: boolean;
+  /** Straps above the bib, over the shoulders up to `top`: their inner and outer edge off the centre line, against the model's height. */
+  readonly straps?: { readonly inner: number; readonly outer: number; readonly top: number };
+  /** How far it stands off the cloth, in the mesh's units (metres in VRoid files). */
+  readonly lift: number;
 }
 
 /** Hem just under the crotch (clear of a seated keeper's thighs), bib at the chest, about 15 cm half-width on a 1.7 m figure. */
-const APRON: Cut = { hem: 0.48, bib: 0.74, halfWidth: 0.09, facing: 0.35, legs: true };
+const APRON: Cut = { hem: 0.48, bib: 0.74, halfWidth: 0.09, facing: 0.35, legs: true, lift: 0.012 };
 /** From the waist to the armpits, round the body, narrower than the arms hanging at its sides. */
-const VEST: Cut = { hem: 0.53, bib: 0.79, halfWidth: 0.105, facing: -1, legs: false };
-/** How far it stands off the cloth, in the mesh's units (metres in VRoid files). */
-const LIFT = 0.012;
+const VEST: Cut = { hem: 0.53, bib: 0.79, halfWidth: 0.105, facing: -1, legs: false, lift: 0.012 };
+/**
+ * The plate carrier: waist to breastbone, about 12 cm half-width on a 1.7 m figure (inside the
+ * arms when they come forward to aim), straps 5 to 10 cm off the centre line over the shoulders, under the collar.
+ * Two and a half centimetres off the cloth: the skin under a VRoid top comes up to it at the bust.
+ */
+const PLATE: Cut = { hem: 0.575, bib: 0.775, halfWidth: 0.072, facing: 0.4, legs: false, panels: true, straps: { inner: 0.03, outer: 0.058, top: 0.82 }, lift: 0.025 };
 
 const SKIN_KINDS = [VertexBuffer.MatricesIndicesKind, VertexBuffer.MatricesWeightsKind, VertexBuffer.MatricesIndicesExtraKind, VertexBuffer.MatricesWeightsExtraKind] as const;
 
@@ -92,7 +105,19 @@ const copyCut = (src: Mesh, into: Mesh, f: Frame, cut: Cut, out: Shell): void =>
   const wp = (i: number) => Vector3.TransformCoordinatesFromFloatsToRef(pos[i * 3]!, pos[i * 3 + 1]!, pos[i * 3 + 2]!, world, new Vector3());
   const inside = (p: Vector3): boolean => {
     const h = (p.y - f.up) / f.height;
-    return h >= cut.hem && h <= cut.bib && Math.abs(Vector3.Dot(p.subtract(f.centre), f.right)) <= cut.halfWidth * f.height;
+    const x = Math.abs(Vector3.Dot(p.subtract(f.centre), f.right)) / f.height;
+    if (h < cut.hem) return false;
+    return h <= cut.bib ? x <= cut.halfWidth : strap(h, x);
+  };
+  const strap = (h: number, x: number): boolean => cut.straps !== undefined && h > cut.bib && h <= cut.straps.top && x >= cut.straps.inner && x <= cut.straps.outer;
+  // Panels face out on their own side, front or back, and the straps up over the shoulders: never
+  // the lining of a collar, whose normals point at the neck and would push the shell into it.
+  const facesOut = (p: Vector3, n: Vector3): boolean => {
+    const ahead = Vector3.Dot(n, f.forward);
+    if (!cut.panels) return ahead >= cut.facing;
+    const side = Vector3.Dot(p.subtract(f.centre), f.forward) < 0 ? -1 : 1;
+    const over = strap((p.y - f.up) / f.height, Math.abs(Vector3.Dot(p.subtract(f.centre), f.right)) / f.height);
+    return ahead * side >= cut.facing || (over && n.y >= cut.facing);
   };
   const taken = new Map<number, number>();
   const take = (i: number): number => {
@@ -101,7 +126,7 @@ const copyCut = (src: Mesh, into: Mesh, f: Frame, cut: Cut, out: Shell): void =>
     j = out.positions.length / 3;
     taken.set(i, j);
     const n = new Vector3(nor[i * 3]!, nor[i * 3 + 1]!, nor[i * 3 + 2]!);
-    const p = new Vector3(pos[i * 3]!, pos[i * 3 + 1]!, pos[i * 3 + 2]!).addInPlace(n.scale(LIFT));
+    const p = new Vector3(pos[i * 3]!, pos[i * 3 + 1]!, pos[i * 3 + 2]!).addInPlace(n.scale(cut.lift));
     const pi = Vector3.TransformCoordinates(p, toInto);
     const ni = Vector3.TransformNormal(n, toInto).normalize();
     out.positions.push(pi.x, pi.y, pi.z);
@@ -122,12 +147,16 @@ const copyCut = (src: Mesh, into: Mesh, f: Frame, cut: Cut, out: Shell): void =>
     const length = normal.length();
     // Degenerate triangles out; facing by the vertex normal (the sense of the winding depends on the mirrored glTF root).
     const facing = Vector3.TransformNormal(new Vector3(nor[a * 3]!, nor[a * 3 + 1]!, nor[a * 3 + 2]!), world).normalize();
-    if (length < 1e-9 || Vector3.Dot(facing, f.forward) < cut.facing) continue;
+    if (length < 1e-9 || !facesOut(pa, facing)) continue;
     // Both windings: the apron takes the shared vertex-colour material, which culls back faces, and the
     // file's cloth may be double-sided under a mirrored root (glTF). The far copy hides in the body.
     out.indices.push(take(a), take(b), take(c), take(a), take(c), take(b));
   }
 };
+
+/** The ballistic vest over a dressed model's top in its own material (no vertex colour), or null when the model has none. */
+export const buildPlate = (scene: Scene, name: string, meshes: readonly AbstractMesh[], body: TransformNode): Mesh | null =>
+  buildShell(scene, name, meshes, body, null, PLATE);
 
 /** The apron over a dressed model's cloth, or null when the model has no cloth to follow. */
 export const buildApron = (scene: Scene, name: string, meshes: readonly AbstractMesh[], body: TransformNode, colour: string): Mesh | null =>
@@ -137,7 +166,7 @@ export const buildApron = (scene: Scene, name: string, meshes: readonly Abstract
 export const buildVest = (scene: Scene, name: string, meshes: readonly AbstractMesh[], body: TransformNode, colour: string): Mesh | null =>
   buildShell(scene, name, meshes, body, colour, VEST);
 
-const buildShell = (scene: Scene, name: string, meshes: readonly AbstractMesh[], body: TransformNode, colour: string, cut: Cut): Mesh | null => {
+const buildShell = (scene: Scene, name: string, meshes: readonly AbstractMesh[], body: TransformNode, colour: string | null, cut: Cut): Mesh | null => {
   const all = meshes.filter((m): m is Mesh => m instanceof MeshClass && m.getTotalVertices() > 0);
   const cloth = all.filter((m) => {
     const part = toonSourceOf(m)?.source.part;
@@ -156,10 +185,12 @@ const buildShell = (scene: Scene, name: string, meshes: readonly AbstractMesh[],
   data.indices = shell.indices;
   data.applyToMesh(apron);
   for (const [kind, list] of shell.skin) apron.setVerticesData(kind, list, false, 4);
-  const c = Color3.FromHexString(colour);
-  const colours: number[] = [];
-  for (let i = 0; i < shell.positions.length / 3; i++) colours.push(c.r, c.g, c.b, 1);
-  apron.setVerticesData(VertexBuffer.ColorKind, colours);
+  if (colour) {
+    const c = Color3.FromHexString(colour);
+    const colours: number[] = [];
+    for (let i = 0; i < shell.positions.length / 3; i++) colours.push(c.r, c.g, c.b, 1);
+    apron.setVerticesData(VertexBuffer.ColorKind, colours);
+  }
   apron.skeleton = into.skeleton;
   apron.numBoneInfluencers = into.numBoneInfluencers;
   apron.parent = into.parent;
