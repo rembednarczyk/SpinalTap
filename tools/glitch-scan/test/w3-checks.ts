@@ -74,7 +74,8 @@ export const propsInWater = (
   onDeck: (x: number, z: number) => boolean,
 ): Finding[] =>
   items.flatMap((i) => {
-    if (i.prop === "barrier" || onDeck(i.x, i.z) || i.y > terrainAt(i.x, i.z) + ON_TERRAIN) return [];
+    // A fountain's jets stand in its basin's water by design.
+    if (i.prop === "barrier" || i.prop === "fountain-jets" || onDeck(i.x, i.z) || i.y > terrainAt(i.x, i.z) + ON_TERRAIN) return [];
     const w = water.find((a) => inRing(a.ring, i.x, i.z));
     return w ? [{ at: near(i.x, i.z), what: `${i.prop} at ${r1(i.x)},${r1(i.z)} (y ${r1(i.y)}) in the water ${w.id}` }] : [];
   });

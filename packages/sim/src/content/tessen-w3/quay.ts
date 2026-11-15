@@ -115,20 +115,27 @@ const railings = (): StreetPropItem[] => WATER_EDGES.flatMap((line) => barrierLi
 /** The barriers of W-3's edges, drawn with the furniture. */
 export const W3_EDGE_BARRIERS: readonly StreetPropItem[] = [...fences(), ...railings()];
 
+/** How deep a solid's foot goes into the ground under it (m). */
+const SINK = 0.25;
+/** The middle of the basin's quay wall (its face over the water at z 452), the pickup yard's paved edge before it. */
+const BASIN_WALL = 451.75;
+
 /** The quay's wall, the pier on its piles with the armoured car, the basin's quay wall, the water. */
 const quayAndPier = (): StaticProp[] => {
   const w = W3_QUAY_WALL;
   const p = W3_PIER;
-  const bench = (x: number, z: number) => groundY(x, z) - W3_Y;
-  const piles = [2468, 2472.5].flatMap((x) => [428, 436].map((z) => box(x - 0.25, x + 0.25, W3_WATER_Y - W3_Y - 0.8, -0.4, z - 0.25, z + 0.25, "concrete")));
+  // Each solid's foot sunk a little into the ground under its middle (the scan's prop-off-ground).
+  const foot = (x: number, z: number) => groundY(x, z) - W3_Y - SINK;
+  const piles = [2468, 2472.5].flatMap((x) => [428, 436].map((z) => box(x - 0.25, x + 0.25, foot(x, z), -0.4, z - 0.25, z + 0.25, "concrete")));
   return [
-    box(w.minX, w.maxX, Math.min(bench(w.minX, w.minZ), bench(w.minX, w.maxZ)) - 0.3, 0, w.minZ, w.maxZ, "concrete"),
+    box(w.minX, w.maxX, foot((w.minX + w.maxX) / 2, (w.minZ + w.maxZ) / 2), 0, w.minZ, w.maxZ, "concrete"),
     slabTop(p.minX, p.maxX, p.minZ, p.maxZ, 0, 0.4, "concrete"),
     ...piles,
     // The armoured car on the pier: cover.
     ...placeProps({ x: 0, y: W3_Y, z: 0 }, [crate(2471, 432, 2.4, 2.4, 5.4, skin("van", "z-"))]),
     // The basin's quay wall: the pickup yard's edge over the water.
-    box(W3_BASIN.minX, W3_BASIN.maxX, W3_WATER_Y - W3_Y - 1, 0, 450, W3_BASIN.minZ, "concrete"),
+    box(W3_BASIN.minX, W3_BASIN.maxX, foot(2550, BASIN_WALL), 0, BASIN_WALL - 0.25, W3_BASIN.minZ, "concrete"),
+    slabTop(W3_BASIN.minX, W3_BASIN.maxX, 450, BASIN_WALL - 0.25, 0, 0.3, "concrete"),
     water(W3_BASIN.minX, W3_BASIN.maxX, W3_BASIN.minZ, W3_BASIN.maxZ + 1.5, W3_WATER_Y),
   ];
 };

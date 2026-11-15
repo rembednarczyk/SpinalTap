@@ -98,7 +98,7 @@ export const W3_PIPES: W3Rect = { minX: 2442, maxX: 2486, minZ: 442, maxZ: 444 }
 export const W3_TRESTLES: readonly number[] = [2444, 2465, 2484];
 /** The basin dug off the river (P9): its mouth along the north-west corner, where it meets the river. */
 export const W3_BASIN: W3Rect = { minX: 2508, maxX: 2592, minZ: 452, maxZ: 478 };
-export const W3_BASIN_MOUTH: W3Rect = { minX: 2508, maxX: 2532, minZ: 466, maxZ: 480 };
+export const W3_BASIN_MOUTH: W3Rect = { minX: 2506, maxX: 2534, minZ: 464, maxZ: 480 };
 /** The pickup yard along the basin and the east yard (parking, the gatehouse). */
 export const W3_PICKUP: W3Rect = { minX: 2500, maxX: 2606, minZ: 440, maxZ: 452 };
 export const W3_EAST_YARD: W3Rect = { minX: 2572, maxX: 2606, minZ: 392, maxZ: 440 };
@@ -113,7 +113,8 @@ export const W3_FENCE = 2.7;
 
 /**
  * The zone in rectangles, for the pads and the clearing: bands 2.5 m wide (the terrain's cell)
- * stepping along the path's fence from x 2487.5 to 2515, each from 0.3 m inside the fence, then
+ * stepping along the path's fence from x 2487.5 to 2515, each from 0.3 m inside the fence (0.9 m
+ * from x 2497.5, where the path w972606056 runs nearest, scan's pad-on-road), then
  * the rest of the zone from x 2515. The bands west of x 2492.5 end at the tower's north face
  * (z 446), the rest at the basin's quay (z 452). Exact numbers, so `tools/osm-import` can copy them.
  */
@@ -122,13 +123,13 @@ export const W3_ZONE_RECTS: readonly W3Rect[] = [
   { minX: 2490, maxX: 2492.5, minZ: 411.2, maxZ: 446 },
   { minX: 2492.5, maxX: 2495, minZ: 409.1, maxZ: 452 },
   { minX: 2495, maxX: 2497.5, minZ: 406.9, maxZ: 452 },
-  { minX: 2497.5, maxX: 2500, minZ: 404.7, maxZ: 452 },
-  { minX: 2500, maxX: 2502.5, minZ: 402.6, maxZ: 452 },
-  { minX: 2502.5, maxX: 2505, minZ: 400.8, maxZ: 452 },
-  { minX: 2505, maxX: 2507.5, minZ: 399.1, maxZ: 452 },
-  { minX: 2507.5, maxX: 2510, minZ: 397.4, maxZ: 452 },
-  { minX: 2510, maxX: 2512.5, minZ: 395.7, maxZ: 452 },
-  { minX: 2512.5, maxX: 2515, minZ: 394, maxZ: 452 },
+  { minX: 2497.5, maxX: 2500, minZ: 405.3, maxZ: 452 },
+  { minX: 2500, maxX: 2502.5, minZ: 403.2, maxZ: 452 },
+  { minX: 2502.5, maxX: 2505, minZ: 401.4, maxZ: 452 },
+  { minX: 2505, maxX: 2507.5, minZ: 399.7, maxZ: 452 },
+  { minX: 2507.5, maxX: 2510, minZ: 398, maxZ: 452 },
+  { minX: 2510, maxX: 2512.5, minZ: 396.3, maxZ: 452 },
+  { minX: 2512.5, maxX: 2515, minZ: 394.6, maxZ: 452 },
   { minX: 2515, maxX: 2606, minZ: 392.3, maxZ: 452 },
 ];
 

@@ -21,7 +21,7 @@ export const GENZO_SPOT: Vec3 = ground(2491, 386);
 
 export const W3_PUBLIC_PROPS: readonly StaticProp[] = [
   // Genzō's container office KAIUN, its door to the north-west; a fire barrel, a sign, a lamp.
-  onGround(building(2495.5, 384.5, 6, 2.8, 3, "metal", skin("shop", "z+", { signs: false })), 0.35),
+  onGround(building(2495.5, 384.5, 6, 2.8, 3, "metal", skin("shop", "z+", { signs: false })), 0.25),
   onGround(crate(2492.6, 383.2, 0.7, 0.9, 0.7)),
   onGround(neon(2495.5, 2.3, 386.1, v(3.2, 0.7, 0.15), "#ffb000", "KAIUN")),
   onGround(lamp(2498.6, 387.2, SODIUM), 0),

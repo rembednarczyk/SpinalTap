@@ -152,7 +152,7 @@ import { W3_BASIN, W3_BASIN_MOUTH } from "../../../packages/sim/src/content/tess
 import { isWater, padsInWater, pathsCutByCleared, propsInWater } from "./w3-checks";
 import { ALCHEMIA_RAMPS } from "../../../packages/sim/src/content/alchemia/terraces";
 import { mapHeight } from "../../../packages/sim/src/content/lublin/shape";
-import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
+import { groundY, surfaceY, w3Grid } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import { DECK_DEPTH, DECK_HEADROOM, type GroundDeck, deckAt, deckHeight, makeDeck } from "../../../packages/sim/src/world/deck";
@@ -1376,7 +1376,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "pad-on-road": () =>
     padOnRoadFindings(
       [...PADS.map((p, i) => ({ name: `pad ${p.row ?? i}`, pads: [p], ramps: [] })), ...ALCHEMIA_RAMPS.map((r, i) => ({ name: `Alchemia's ramp ${i}`, pads: [], ramps: [r] }))],
-      MAP_CHUNKS,
+      // The grids the game shapes: refined under W-3 first (ADR-0082, `terrain.ts`).
+      MAP_CHUNKS.map((c) => ({ bounds: c.bounds, terrain: w3Grid(c.terrain) })),
       extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags)),
     ),
   /** A pad, with its blend, over the map's water off W-3's basin mouth (ADR-0082, audit before stage 1). */

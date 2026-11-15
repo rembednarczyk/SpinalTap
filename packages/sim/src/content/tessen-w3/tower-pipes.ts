@@ -133,7 +133,7 @@ export const W3_PIPE_LADDER = { key: "w3-pipe", x: 2444, z: LANDING.minZ - 0.4 }
 const pipeline = (): StaticProp[] => {
   const { minX, maxX } = W3_PIPES;
   const trestles = W3_TRESTLES.flatMap((x): StaticProp[] => {
-    const foot = Math.min(groundY(x, W3_PIPES.minZ), groundY(x, W3_PIPES.maxZ)) - W3_Y - 0.3;
+    const foot = groundY(x, (W3_PIPES.minZ + W3_PIPES.maxZ) / 2) - W3_Y - 0.25;
     return [box(x - 0.5, x + 0.5, foot, P - 0.3, W3_PIPES.minZ + 0.2, W3_PIPES.maxZ - 0.2, "metal")];
   });
   const ladder = W3_PIPE_LADDER;
@@ -148,7 +148,7 @@ const pipeline = (): StaticProp[] => {
     railing(l.minX - 0.15, l.minX, l.minZ, WALK.maxZ, P),
     railing(l.maxX, l.maxX + 0.15, l.minZ, l.maxZ - 0.15, P),
     // The landing's post, the ladder up its south face.
-    box(ladder.x - 0.4, ladder.x + 0.4, bottom - W3_Y - 0.3, P - 0.3, l.minZ, l.minZ + 0.3, "metal"),
+    box(ladder.x - 0.4, ladder.x + 0.4, groundY(ladder.x, l.minZ + 0.15) - W3_Y - 0.25, P - 0.3, l.minZ, l.minZ + 0.3, "metal"),
     ...trestles,
     ...ladderParts({ key: ladder.key, x: ladder.x, z: ladder.z, yaw: 0, bottom, top: W3_Y + P, exit: v(ladder.x, W3_Y + P, l.minZ + 0.8) }),
   ];
