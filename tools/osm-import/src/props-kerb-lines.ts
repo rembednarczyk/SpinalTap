@@ -43,12 +43,15 @@ export interface KerbLine {
   readonly name: string;
   readonly kind: string;
   readonly side: 1 | -1;
+  /** Driven one way only, the way the line runs. */
+  readonly oneway?: boolean;
   readonly samples: readonly KerbSample[];
 }
 
 interface Piece {
   pts: Pt[];
   half: number[];
+  oneway?: boolean;
 }
 
 const flat = (f: readonly number[]): Pt[] => {
@@ -61,13 +64,13 @@ const same = (a: Pt, b: Pt): boolean => Math.abs(a.x - b.x) < 0.05 && Math.abs(a
 
 /** The pieces of a street the chunks clipped, joined end to start (they keep the way's direction). */
 export const joinPieces = (pieces: readonly Piece[]): Piece[] => {
-  const chains = pieces.map((p) => ({ pts: [...p.pts], half: [...p.half] }));
+  const chains: Piece[] = pieces.map((p) => ({ pts: [...p.pts], half: [...p.half], oneway: p.oneway === true }));
   for (let joined = true; joined; ) {
     joined = false;
     for (let a = 0; a < chains.length && !joined; a++)
       for (let b = 0; b < chains.length && !joined; b++) {
         if (a === b || !same(chains[a]!.pts[chains[a]!.pts.length - 1]!, chains[b]!.pts[0]!)) continue;
-        chains[a] = { pts: [...chains[a]!.pts, ...chains[b]!.pts.slice(1)], half: [...chains[a]!.half, ...chains[b]!.half.slice(2)] };
+        chains[a] = { pts: [...chains[a]!.pts, ...chains[b]!.pts.slice(1)], half: [...chains[a]!.half, ...chains[b]!.half.slice(2)], oneway: chains[a]!.oneway === true || chains[b]!.oneway === true };
         chains.splice(b, 1);
         joined = true;
       }
@@ -138,14 +141,14 @@ export const kerbLines = (chunks: readonly LublinChunkData[]): KerbLine[] => {
     for (const s of c.streets) {
       if (!ROW_CLASSES.has(s.kind) || !s.half) continue;
       const key = `${s.name}|${s.kind}`;
-      byStreet.set(key, [...(byStreet.get(key) ?? []), { pts: flat(s.line), half: [...s.half] }]);
+      byStreet.set(key, [...(byStreet.get(key) ?? []), { pts: flat(s.line), half: [...s.half], oneway: s.oneway === true }]);
     }
   const out: KerbLine[] = [];
   for (const [key, pieces] of byStreet) {
     const [name, kind] = key.split("|") as [string, string];
     joinPieces(pieces).forEach((piece, k) => {
       if (!piece.pts.some(inRowArea)) return;
-      for (const side of [1, -1] as const) out.push({ id: `${key}#${k}:${side === 1 ? "l" : "r"}`, name, kind, side, samples: sampleSide(piece, side) });
+      for (const side of [1, -1] as const) out.push({ id: `${key}#${k}:${side === 1 ? "l" : "r"}`, name, kind, side, oneway: piece.oneway === true, samples: sampleSide(piece, side) });
     });
   }
   return out;

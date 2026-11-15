@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { bollardChains } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import { LUBLIN_STREET_PROPS } from "../../../packages/sim/src/content/lublin/index.ts";
-import { loadFurniture } from "../src/furniture.ts";
+import { loadBollardLines, loadFurniture } from "../src/furniture.ts";
+import { kerbBollardDoubleRow } from "../../glitch-scan/test/kerb-bollards.ts";
 import { BARE_SPACING, GAP_INSET, SPACING, stretchPosts } from "../src/props-kerb-bollards.ts";
 import { KERB_SET, inRowArea, joinPieces, onGround, sampleSide } from "../src/props-kerb-lines.ts";
 
@@ -82,5 +83,34 @@ describe("the kerb rows in the committed table (G-820, T-303)", () => {
     expect(kept.length / nodes.length).toBeGreaterThan(0.95);
     const here = posts.filter(square);
     for (const p of here) expect(here.filter((q) => q !== p && Math.hypot(q.x - p.x, q.z - p.z) < 0.9), `${p.x},${p.z}`).toEqual([]);
+  });
+});
+
+describe("the kerb rows after the review of 15.11 (G-820 round 2)", () => {
+  it("lays no second row beside a row OSM maps off the kerb line (P1)", () => {
+    const found = kerbBollardDoubleRow(
+      posts,
+      loadFurniture()
+        .filter((f) => f.tag === "barrier=bollard")
+        .map((f) => f.p),
+      loadBollardLines().map((l) => l.pts),
+      inRowArea,
+    );
+    // The two left stand on main already: the plan's posts of 29.10 by Brama Krakowska (483,5; −169,4), (487,6; −173,0).
+    expect(found.map((f) => f.at).sort()).toEqual(["484,-169", "488,-173"]);
+  });
+
+  it("keeps an 18 m trolleybus's kerb clear back from the stop's post against the traffic (P3, Lubartowska (454; 16))", () => {
+    expect(posts.filter(inBox(446, 453, -2, 4))).toEqual([]);
+  });
+
+  it("hangs no chain on Wyszyńskiego's west side, 2 m of paving and no ground to the houses (P4)", () => {
+    const west = posts.filter(inBox(604, 614, -240, -220));
+    expect(west.length).toBeGreaterThan(5);
+    expect(chained(west)).toBe(0);
+  });
+
+  it("runs Plac Wolności's chained row on to the corner of Dolna Panny Marii by the square (P5)", () => {
+    expect(posts.filter((i) => Math.hypot(i.x - 329.5, i.z + 181) < 2 && bollardChains(i).length > 0).length).toBeGreaterThanOrEqual(2);
   });
 });

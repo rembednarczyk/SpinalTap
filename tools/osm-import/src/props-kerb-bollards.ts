@@ -9,9 +9,10 @@
  *   walls, and the row breaks where people or cars cross the kerb: a zebra's band with `CROSSING_ROOM`
  *   either side; a drive, a footway, a pedestrian or living street or a passage meeting the kerb
  *   (`MOUTH_ROOM` past half its width); a gate behind the kerb; a junction, `CORNER` metres past
- *   the other street's carriageway (the tangent of the corner's curve); a bus stop over `STOP_REACH`
- *   either way of its post (a platform and 5 m); a taxi rank and a car park along the kerb; a tree
+ *   the other street's carriageway (the tangent of the corner's curve); a bus stop from `STOP_BEHIND`
+ *   back against the traffic to `STOP_AHEAD` on from its post (an 18 m trolleybus); a taxi rank and a car park along the kerb; a tree
  *   or a solid piece in the row (a bench, a kiosk, a café's garden in it);
+ * - a row OSM maps (nodes, G-818's lines) within `OSM_ROW` of the kerb line is the row there;
  * - the posts stand evenly between the breaks, about `SPACING` apart, the first and the last
  *   `GAP_INSET` off a break; a lamp, a trolley pole or a bollard of OSM standing in the row is one
  *   of its posts (its chain hangs on it, G-032), and a rule post within `NODE_ROOM` of an OSM
@@ -28,6 +29,7 @@ import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/t
 import { type Pt, pointInRing } from "./geometry.ts";
 import { type KerbLine, type KerbSample, LEAST_HALF, inRowArea, kerbLines, onGround } from "./props-kerb-lines.ts";
 import type { Site } from "./props-site.ts";
+import { type CornerWorld, cornerCurve, cornerEnds, cornerPairs, cornerPosts, isSquareStreet } from "./props-kerb-corners.ts";
 
 /** Spacing of a row with chains, its range, and of a row without (m). */
 export const SPACING = 1.8;
@@ -38,16 +40,24 @@ export const GAP_INSET = 0.5;
 export const CROSSING_ROOM = 0.5;
 export const MOUTH_ROOM = 0.5;
 export const CORNER = 2.5;
-/** A bus stop's platform and 5 m either way of its post (m), on its kerb within `STOP_SIDE` of the post. */
-export const STOP_REACH = 11;
+/**
+ * A bus stop's kerb on its post's side (within `STOP_SIDE` of it, m): `STOP_BEHIND` back against the
+ * traffic, where an 18 m trolleybus stands with its front at the post, and `STOP_AHEAD` on with it (5 m and the front door's room `bollard-blocks-mouth` keeps).
+ */
+export const STOP_BEHIND = 20;
+export const STOP_AHEAD = 7;
 export const STOP_SIDE = 6;
 /** How far in from a post a car park along the kerb breaks its row (m): the post and 2 m of carriageway. */
 export const PARK_REACH = 2.5;
 /** A pole or a bollard this near the row's line is one of its posts (m); a rule post this near an OSM bollard gives way to it. */
 export const ANCHOR_REACH = 0.6;
 export const NODE_ROOM = 1;
+/** A post placed before (OSM's node, a line of G-818) this near the kerb line takes the row there (m): OSM draws its rows up to 2 m off it. */
+export const OSM_ROW = 2.5;
 /** The pavement behind a row with chains, kerb to wall (m), and the steepest street with chains. */
 export const WIDE = 3;
+/** How far behind the kerb a wall makes the ground not drawn before it part of the street's edge, not of an open yard (m). */
+export const BEHIND = 6;
 export const STEEP = 0.06;
 /** A stretch of one look shorter than this takes its neighbour's (m): no chain coming and going. */
 const LOOK_MIN = 6;
@@ -57,6 +67,8 @@ const MOUTH_ANGLE = Math.sin((30 * Math.PI) / 180);
 /** What the rule needs beyond the chunks: the taxi ranks of OSM as rings. */
 export interface KerbRuleContext {
   readonly taxis?: readonly (readonly Pt[])[];
+  /** The orthophoto's cover at a point: asphalt or not, null where it has none (`ortoAsphalt`). */
+  readonly asphalt?: (p: Pt) => boolean | null;
 }
 
 /** A post of the rule: its spot, its key, and whether it holds no chain. */
@@ -171,7 +183,7 @@ const placedOf = (items: readonly StreetPropItem[]): Placed => {
 };
 
 /** Everything the rule reads, indexed once. */
-interface World {
+export interface World {
   readonly site: Site;
   readonly bands: readonly CrossingBand[];
   readonly mouths: SpatialHash<Way>;
@@ -179,6 +191,7 @@ interface World {
   readonly squares: readonly (readonly Pt[])[];
   readonly stops: readonly Pt[];
   readonly taxis: readonly (readonly Pt[])[];
+  readonly asphalt: (p: Pt) => boolean | null;
   readonly placed: Placed;
 }
 
@@ -191,6 +204,8 @@ export const gapAt = (w: World, s: KerbSample, along: Pt): string | null => {
   const surface = w.site.surfaceAt(p);
   if (surface === "road") return "road";
   if (surface !== "walk" || w.site.onSteps(p)) return "ground";
+  // A row OSM maps (its nodes, G-818's lines) up to `OSM_ROW` off the kerb line is the row there: the rule lays none beside it (G-820 P1).
+  if (w.placed.posts.queryRadius(p.x, p.z, OSM_ROW).some((q) => Math.hypot(q.x - p.x, q.z - p.z) <= OSM_ROW)) return "osm";
   if (w.mouths.at(p.x, p.z).some((m) => toSegment(p, m.a, m.b) < m.room && meets(m, along))) return "mouth";
   const inner = { x: s.kerb.x - s.out.x * 0.5, z: s.kerb.z - s.out.z * 0.5 };
   // A car park along the kerb, its bays within `PARK_REACH` in from the post (a strip drawn off the ground's kerb, Świętoduska).
@@ -210,19 +225,27 @@ const meets = (m: Way, along: Pt): boolean => {
 
 /** How far the pavement reaches from the kerb out to a wall, a fence or a hedge, up to `WIDE` (m). */
 const pavementAt = (w: World, s: KerbSample): number => {
-  const far = { x: s.kerb.x + s.out.x * WIDE, z: s.kerb.z + s.out.z * WIDE };
-  let best = WIDE;
+  const far = { x: s.kerb.x + s.out.x * BEHIND, z: s.kerb.z + s.out.z * BEHIND };
+  let wall = BEHIND;
   for (const b of w.walls.query(Math.min(s.kerb.x, far.x), Math.min(s.kerb.z, far.z), Math.max(s.kerb.x, far.x), Math.max(s.kerb.z, far.z)))
-    if (crosses(s.kerb, far, b.a, b.b)) best = Math.min(best, toSegment(s.kerb, b.a, b.b));
-  for (let d = 0.5; d < best; d += 0.25) {
+    if (crosses(s.kerb, far, b.a, b.b)) wall = Math.min(wall, toSegment(s.kerb, b.a, b.b));
+  let bare: number | null = null;
+  for (let d = 0.5; d < wall; d += 0.25) {
     const q = { x: s.kerb.x + s.out.x * d, z: s.kerb.z + s.out.z * d };
     const surface = w.site.surfaceAt(q);
-    if (surface === "building" || surface === "water" || surface === "rail") return d;
+    if (surface === "building" || surface === "water" || surface === "rail") {
+      wall = d;
+      break;
+    }
+    if (surface === null) bare ??= d;
   }
-  return best;
+  // Ground not drawn between the paving and a wall near (Wyszyńskiego's west side: 2 m of paving, a gap, the houses 5 m
+  // off the kerb behind the railing GSV shows; G-820 P4) is no pavement: it ends where the paving does.
+  const width = wall < BEHIND && bare !== null && bare < wall ? bare : wall;
+  return Math.min(width, WIDE);
 };
 
-const bySquare = (w: World, s: KerbSample): boolean =>
+export const bySquare = (w: World, s: KerbSample): boolean =>
   [1, 2.5].some((d) => {
     const q = { x: s.kerb.x + s.out.x * d, z: s.kerb.z + s.out.z * d };
     return w.squares.some((r) => pointInRing(q, r));
@@ -238,22 +261,57 @@ const chainedAt = (w: World, samples: readonly KerbSample[], i: number): boolean
 };
 
 /** The direction of a line at sample i. */
-const alongAt = (samples: readonly KerbSample[], i: number): Pt => {
+export const alongAt = (samples: readonly KerbSample[], i: number): Pt => {
   const [a, b] = [samples[Math.max(0, i - 1)]!, samples[Math.min(samples.length - 1, i + 1)]!];
   const l = Math.hypot(b.p.x - a.p.x, b.p.z - a.p.z) || 1;
   return { x: (b.p.x - a.p.x) / l, z: (b.p.z - a.p.z) / l };
 };
 
 /** The samples' gaps, a junction's grown `CORNER` along the line past the other carriageway. */
-const gapsOf = (w: World, samples: readonly KerbSample[]): (string | null)[] => {
+const gapsOf = (w: World, samples: readonly KerbSample[], square = false): (string | null)[] => {
   const gaps = samples.map((s, i) => gapAt(w, s, alongAt(samples, i)));
   const grown = [...gaps];
   samples.forEach((s, i) => {
     if (gaps[i] !== "road") return;
-    for (let j = i - 1; j >= 0 && s.arc - samples[j]!.arc <= CORNER; j--) grown[j] ??= "corner";
-    for (let j = i + 1; j < samples.length && samples[j]!.arc - s.arc <= CORNER; j++) grown[j] ??= "corner";
+    // By a square the row runs on to the carriageway and round the corner (`props-kerb-corners.ts`, G-820 P5).
+    const grow = (j: number) => {
+      if (grown[j] === null && !square && !bySquare(w, samples[j]!)) grown[j] = "corner";
+    };
+    for (let j = i - 1; j >= 0 && s.arc - samples[j]!.arc <= CORNER; j--) grow(j);
+    for (let j = i + 1; j < samples.length && samples[j]!.arc - s.arc <= CORNER; j++) grow(j);
   });
-  return grown;
+  const bays = baysOf(w, samples);
+  return grown.map((g, i) => g ?? (bays[i] ? "bays" : null));
+};
+
+/** The depth behind the kerb line the orthophoto is read to for cars parked across the pavement (m). */
+const BAY_DEPTHS = [0, 0.75, 1.5, 2.5];
+/** A sample's share of asphalt over those depths for a bay, and the share of such samples `BAY_WINDOW` either way of one for a row of bays. */
+export const BAY_ASPHALT = 1;
+export const BAY_SHARE = 0.8;
+export const BAY_WINDOW = 4;
+
+/**
+ * The samples in a row of bays the map does not draw (G-820 P2): cars parked across or aslant the
+ * pavement, or on it (Karmelicka, Cicha, Peowiaków; no OSM tag maps them), where the orthophoto
+ * shows asphalt (the cars and the dark bays between them) `BAY_DEPTHS` deep behind the kerb line on
+ * most samples round it. A row of parallel bays on the carriageway leaves the paving behind the
+ * kerb (Kapucyńska, Lubartowska): no gap.
+ */
+const baysOf = (w: World, samples: readonly KerbSample[]): boolean[] => {
+  const flagged = samples.map((s) => {
+    const seen = BAY_DEPTHS.map((d) => ({ x: s.p.x + s.out.x * d, z: s.p.z + s.out.z * d }))
+      .filter((q) => w.site.surfaceAt(q) !== "building")
+      .map((q) => w.asphalt(q))
+      .filter((a): a is boolean => a !== null);
+    return seen.length >= 3 && seen.filter(Boolean).length / seen.length >= BAY_ASPHALT;
+  });
+  return samples.map((s, i) => {
+    let [n, k] = [0, 0];
+    for (let j = i; j >= 0 && s.arc - samples[j]!.arc <= BAY_WINDOW; j--) [n, k] = [n + 1, k + (flagged[j] ? 1 : 0)];
+    for (let j = i + 1; j < samples.length && samples[j]!.arc - s.arc <= BAY_WINDOW; j++) [n, k] = [n + 1, k + (flagged[j] ? 1 : 0)];
+    return k / n >= BAY_SHARE;
+  });
 };
 
 /** The point at `arc` along the samples. */
@@ -300,11 +358,12 @@ export const ruleWorld = (site: Site, chunks: readonly LublinChunkData[], items:
     squares: chunks.flatMap((c) => (c.walkAreas ?? []).filter((a) => a.surface === "square").map((a) => flat(a.outline))),
     stops: [...stops.values()],
     taxis: ctx.taxis ?? [],
+    asphalt: ctx.asphalt ?? (() => null),
     placed: placedOf(items),
   };
 };
 
-/** The samples of each line by a bus stop's post (the line nearest it, within `STOP_SIDE`), `STOP_REACH` either way of it. */
+/** The samples of each line by a bus stop's post (the line nearest it, within `STOP_SIDE`): `STOP_BEHIND` against the traffic, where the vehicle stands, `STOP_AHEAD` with it. */
 const byStops = (lines: readonly KerbLine[], stops: readonly Pt[]): Set<KerbSample> => {
   const out = new Set<KerbSample>();
   for (const stop of stops) {
@@ -317,7 +376,12 @@ const byStops = (lines: readonly KerbLine[], stops: readonly Pt[]): Set<KerbSamp
     if (best === null) continue;
     const { l, i } = best as { l: KerbLine; i: number };
     const at = l.samples[i]!.arc;
-    for (const s of l.samples) if (Math.abs(s.arc - at) <= STOP_REACH) out.add(s);
+    // Right-hand traffic: the left kerb of a two-way street is driven against the line, the right one and a one-way street's with it.
+    const flow = l.oneway === true || l.side === -1 ? 1 : -1;
+    for (const s of l.samples) {
+      const ahead = (s.arc - at) * flow;
+      if (ahead >= -STOP_BEHIND && ahead <= STOP_AHEAD) out.add(s);
+    }
   }
   return out;
 };
@@ -388,7 +452,7 @@ export const groundLines = (site: Site, chunks: readonly LublinChunkData[]): Ker
 /** Why each sample of the lines has no post (null: one may stand there), a bus stop's kerb with the rest. */
 export const lineGaps = (w: World, lines: readonly KerbLine[]): (string | null)[][] => {
   const stopped = byStops(lines, w.stops);
-  return lines.map((line) => gapsOf(w, line.samples).map((g, i) => g ?? (stopped.has(line.samples[i]!) ? "stop" : null)));
+  return lines.map((line) => gapsOf(w, line.samples, isSquareStreet(line)).map((g, i) => g ?? (stopped.has(line.samples[i]!) ? "stop" : null)));
 };
 
 /**
@@ -402,10 +466,18 @@ export const kerbBollards = (site: Site, chunks: readonly LublinChunkData[], ite
   const lengths = { metres: 0, bareMetres: 0 };
   const raw: KerbPost[] = [];
   lines.forEach((line, k) => linePosts(line, looksOf(w, line.samples, gaps[k]!), anchorsOf(w, line.samples, gaps[k]!), raw, lengths));
+  // Round the squares' corners (G-820 P5): the rows of the two streets joined along the curve of the kerb.
+  const cw: CornerWorld = { isRoad: (p) => site.surfaceAt(p) === "road", bySquare: (s) => bySquare(w, s), blocked: (s, along) => gapAt(w, s, along) !== null };
+  for (const [a, b] of cornerPairs(lines.flatMap((line, k) => cornerEnds(cw, line, gaps[k]!)))) {
+    const curve = cornerCurve(cw, a, b);
+    cornerPosts(cw, curve, SPACING, GAP_INSET).forEach((p, n) => raw.push({ p, key: `kc:${a.line}~${b.line}@${n}`, bare: false }));
+    lengths.metres += curve.at(-1)?.arc ?? 0;
+  }
   const kept = new SpatialHash<Pt>(4);
-  const near = (h: SpatialHash<Pt>, p: Pt) => h.queryRadius(p.x, p.z, NODE_ROOM).some((q) => Math.hypot(q.x - p.x, q.z - p.z) < NODE_ROOM - 1e-9);
+  // Clear of the posts placed before by `OSM_ROW` (a row OSM maps off the kerb line, G-820 P1) and of the rule's own by `NODE_ROOM`.
+  const near = (h: SpatialHash<Pt>, p: Pt, r: number) => h.queryRadius(p.x, p.z, r).some((q) => Math.hypot(q.x - p.x, q.z - p.z) < r - 1e-9);
   const posts = raw.filter((k) => {
-    if (!site.chunkAt(k.p) || near(w.placed.posts, k.p) || near(kept, k.p)) return false;
+    if (!site.chunkAt(k.p) || near(w.placed.posts, k.p, OSM_ROW) || near(kept, k.p, NODE_ROOM)) return false;
     kept.insertPoint(k.p, k.p.x, k.p.z);
     return true;
   });

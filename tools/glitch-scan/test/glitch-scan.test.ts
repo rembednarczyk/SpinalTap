@@ -90,7 +90,7 @@ import { lampWideStreetOneSide } from "./lamp-sides";
 import { SidewalkIndex, kerbsOf } from "../../osm-import/src/props-lit-sides.ts";
 import { WallIndex, isCourtyard, isPedestrianSquare } from "../../osm-import/src/courtyards.ts";
 import { isLitWay, lampLineOf, litWayGroups } from "../../osm-import/src/props-lit.ts";
-import { litWaysOf, loadLitWays, loadPropsPlan, loadTaxiRanks } from "../../osm-import/src/props-osm.ts";
+import { litWaysOf, loadLitWays, loadKerbRule, loadPropsPlan } from "../../osm-import/src/props-osm.ts";
 import { Site } from "../../osm-import/src/props-site.ts";
 import { bollardBlocksMouth, kerbBollardDoubleRow, kerbBollardGap } from "./kerb-bollards";
 import { inRowArea } from "../../osm-import/src/props-kerb-lines.ts";
@@ -763,7 +763,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A bollard or its chain in the mouth of a drive, a passage, a gate, a door or a bus stop's vehicles (G-820, `kerb-bollards.ts`). */
   "bollard-blocks-mouth": () => bollardBlocksMouth(new Site(MAP_CHUNKS), MAP_CHUNKS, Object.values(WORLD_STREET_PROPS).flat()),
   /** A stretch of a car street's kerb in the centre over 6 m with no bollard and no reason of the rule to break its row (G-820, `kerb-bollards.ts`). */
-  "kerb-bollard-gap": () => kerbBollardGap(new Site(MAP_CHUNKS), MAP_CHUNKS, Object.values(WORLD_STREET_PROPS).flat(), BANDS, loadTaxiRanks(), (p) => !clearOfGame(p.x, p.z, BOLLARD.radius)),
+  "kerb-bollard-gap": () => kerbBollardGap(new Site(MAP_CHUNKS), MAP_CHUNKS, Object.values(WORLD_STREET_PROPS).flat(), BANDS, loadKerbRule(), (p) => !clearOfGame(p.x, p.z, BOLLARD.radius)),
   /** A post of the kerb rule 1–2.5 m beside a row of OSM's posts: two rows where OSM maps one (G-820 P1, `kerb-bollards.ts`). */
   "kerb-bollard-double-row": () =>
     kerbBollardDoubleRow(

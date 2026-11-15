@@ -4,7 +4,7 @@ import type { CrossingBand } from "../../../packages/sim/src/content/lublin/cros
 import { BOLLARD, alongSegment, chainSegments } from "../../../packages/sim/src/content/lublin/furniture";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types";
 import type { Pt } from "../../osm-import/src/geometry.ts";
-import { groundLines, lineGaps, ruleWorld } from "../../osm-import/src/props-kerb-bollards.ts";
+import { type KerbRuleContext, groundLines, lineGaps, ruleWorld } from "../../osm-import/src/props-kerb-bollards.ts";
 import type { Site } from "../../osm-import/src/props-site.ts";
 
 /**
@@ -40,12 +40,12 @@ export const kerbBollardGap = (
   chunks: readonly LublinChunkData[],
   items: readonly StreetPropItem[],
   bands: readonly CrossingBand[],
-  taxis: readonly (readonly Pt[])[],
+  rule: KerbRuleContext,
   gameOwns: (p: Pt) => boolean = () => false,
 ): Finding[] => {
   const posts = postsOf(items);
   const lines = groundLines(site, chunks);
-  const gaps = lineGaps(ruleWorld(site, chunks, items, bands, { taxis }), lines);
+  const gaps = lineGaps(ruleWorld(site, chunks, items, bands, rule), lines);
   const covered = (p: Pt) => posts.queryRadius(p.x, p.z, COVER).some((q) => Math.hypot(q.x - p.x, q.z - p.z) <= COVER);
   const out: Finding[] = [];
   lines.forEach((line, k) => {
