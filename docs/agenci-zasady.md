@@ -25,6 +25,8 @@ Każdy agent (naprawiacz, budowniczy, łowca, weryfikator, kurator, zwiadowca) c
 - Gdy dotykasz cudzego obszaru (tabela własności w `CLAUDE.md`), opisz to w raporcie. Testów cudzych obszarów nie osłabiaj.
 - Lista miejsc z briefu mogła się zdezaktualizować. Sprawdź ją grepem na `origin/main`, zanim zaczniesz.
 - PR-a nie twórz: robi to orkiestrator. Gałąź wypychasz zwykłym `git push`.
+- Ciężkie zadania (`pnpm build`, `pnpm e2e`, `shots:compare`, pełne `test:rerun` kilku pakietów) uruchamiaj przez zamek `flock /tmp/seki-heavy.lock <polecenie>`, żeby naraz szło najwyżej jedno na maszynę (refleksja 15.11: cztery równoległe buildy dawały load 30, przekroczenia czasu i brak pamięci). Lekkie testy jednego pliku idą bez zamka.
+- Zanim wypuścisz kolejną rundę po przeglądzie kuratora, sprawdź te same rodzaje błędów sam: nakładka zmienionych obiektów na ortofoto z cache i kontrole skanu z poprzednich przeglądów (drzewo w budynku, podwójny rząd, latarnia na asfalcie, obiekt na budowie, przy pomoście).
 
 ## Bramki (Definition of Done dla zmiany)
 - Narzędzia zamiast skryptów pisanych od nowa (w main):
@@ -52,6 +54,6 @@ Każdy agent (naprawiacz, budowniczy, łowca, weryfikator, kurator, zwiadowca) c
   Sesja w trailerze to sesja orkiestratora, który cię uruchomił. Jeśli brief podaje inną, użyj tej z briefu.
 
 ## Raport
-- Po polsku i krótko: przyczyna, zmiana, liczby (skan przed/po, hashe, czasy), ścieżki zrzutów, sha, znaleziska poboczne.
+- Po polsku, najwyżej ok. 250 słów, w tej kolejności: wynik jednym zdaniem; zmiana (2–4 punkty); liczby przed/po (skan, hashe, czasy, budżety); sha i gałąź; ścieżki zrzutów; ryzyka i znaleziska poboczne (po jednym zdaniu); gotowe polecenia `rej.py` dla orkiestratora. Szczegóły (listy kluczy, profile, logi) zapisz do pliku w scratchpadzie i podaj ścieżkę zamiast wklejać je do raportu.
 - Bez tabel w treści, gdy wystarczy lista.
 - Nowe glitche i dopiski podaj jako gotowe polecenia narzędzia rejestrów (`python3 -I tools/rejestry/rej.py g-new …`, `g-status`, `g-note`, `t-new`, `t-append`; opis w nagłówku pliku). Numer nadaje narzędzie. Rejestrów sam nie edytuj, polecenia wykonuje orkiestrator.
