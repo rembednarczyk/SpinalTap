@@ -2210,6 +2210,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: packages/engine
 
+### G-868 touch-layout:503 flaky: karta dzielnicy zakrywa minimapę o 16×74 px
+- Ważność: S4 · Zasięg: e2e/touch-layout.spec.ts:503, 844x390 i 800x370, en i pl
+- Opis: Pada sporadycznie, także na czystym main e839d94; przechodzi w retry. W śladzie porażki na ekranie tylko karta dzielnicy, przyczyna nieustalona.
+- Status: nowy
+- Pakiet właściciela: packages/ui
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
