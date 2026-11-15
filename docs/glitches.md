@@ -2127,6 +2127,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Przegląd kuratora r2 (e3175f7): NIEZGODNE z jedną poprawką (cover-fixes wpis 2, plac budowy Zielona 5A); fronty i wpis 1 przyjęte (wpisy T); bs-291-pn: przyciemnienie nieodtwarzalne (148 na e3175f7); plamę trawnika użytkownik przyjął; e3175f7 to pusty commit
 - r3 (aed9fb4): cover-fixes wpis 2 usunięty, front omija place budowy, fill-on-construction 3059→0, map-ground-golden e520204b; drzwi i graffiti: wysokość z kostki frontu (+0,08 m), zamierzone
+- r3 (aed9fb4) przegląd kuratora: ZGODNE; place budowy wracają do stanu main (Zielona 5A 1464 m² gołej ziemi, ortofoto 2025-04 budowa); klucze 330,50 (T-314) i 0,90/0,100 (wykop muzeum 2025-04) uzasadnione; drzwi/figury +0,08 m tylko na froncie
 
 ### G-854 Plamy gołej ziemi przy Bramie Krakowskiej i wschodnich ulicach Starego Miasta
 - Ważność: S4 · Zasięg: (503,0;−69,3) 90 m², (663,5;−38,0) 226 m², (664,8;−119,4) 86 m²; Stare Miasto ≤6 m od ulic 948 m²
@@ -2207,6 +2208,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Przegląd kuratora G-853 r2: drugi wpis COVER_FIXES opiera się na złym odczycie ortofoto (2025-04 budowa, 2024-06 działka, 2023-09 korony; OSM building=construction w1382552286, landuse=construction w770678456). Usunąć wpis i wyłączyć landuse=construction z frontów jak trawniki OSM. Proponowana kontrola fill-on-construction (baza co najmniej 1). Naprawa w ramach G-853 r3.
 - Status: do przeglądu kuratora (aed9fb4); wcześniej: w naprawie
 - Pakiet właściciela: tools/orto, tools/osm-import
+- r3 (aed9fb4): wpis cover-fixes 2 usunięty, front omija landuse/building=construction, fill-on-construction 3059 -> 0; przegląd kuratora ZGODNE
 
 ### G-867 glitch-shots: ta sama treść daje raz klatkę w cieniu (jasność 49), raz w słońcu (148)
 - Ważność: S4 · Zasięg: bs-291-pn (291; −78), przebieg naprawiacza G-853 r2 na e04c860 wobec dwóch przebiegów kuratora na e3175f7 (to samo drzewo)
@@ -2236,6 +2238,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-871 Front ulicy pieszej przechodzi przez mur OSM na podwórze przy Zielonej
 - Ważność: S4 · Zasięg: Zielona (296–310; −33..−20), podwórze za murem w503177989
 - Opis: Front ulicy pieszej przechodzi przez barrier=wall OSM (inSight zatrzymują tylko ściany budynków) i kładzie kostkę na podwórzu z wjazdem w503177990; uwaga kuratora G-853 r2
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+
+### G-872 Karmelicka 7: stojący budynek z building=construction pominięty przez SKIP_BUILDING
+- Ważność: S3 · Zasięg: w1134342880 (311..335; 56..98), Krakowskie
+- Opis: Ortofoto 2023-09, 2024-06 i 2025-04 pokazuje dach budynku; OSM building=construction, construction=commercial; w grze goła ziemia bez bryły (SKIP_BUILDING w generate.ts). Znalezione w przeglądzie kuratora G-853 r3. Test: bryła Karmelicka 7 z wysokością z LoD1/NMPT; proponowana kontrola osm-construction-built 1 -> 0.
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
 
