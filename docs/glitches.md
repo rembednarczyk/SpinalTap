@@ -1887,7 +1887,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-797 Drzewa tylko z węzłów OSM: 496 kwadratów korony z ortofoto bez drzewa w grze (ADR-0077 krok 5)
 - Ważność: S3 · Zasięg: całe miasto; najgorzej nabrzeże (9% korony w zasięgu drzew) i podzamcze (11%); obejmuje G-207
 - Opis: Krok 5 ADR-0077 niewdrożony: drzewa wyłącznie z natural=tree i tree_row przez plan; modele drzew GUGiK LoD1 2023 ani NMPT nie są używane. Pomiar 14.11 (audyt ADR-0077): klasy canopy/canopyHard data/orto, promień 6 m. T-292
-- Status: zgłoszone (14.11, audyt ADR-0077)
+- Status: w przeglądzie kuratora (gałąź ccr-ec2c4269-ilh8k8-g797, dffa980): canopy-without-tree 481 → 112, drzewa 640 → 1812; wcześniej: zgłoszone (14.11, audyt ADR-0077)
 - Pakiet właściciela: tools/osm-import (props), tools/gugik
 - Test przyjęcia: kontrola canopy-without-tree (kwadrat 10 m, ≥ 40 m² korony, ≥ 80% dalej niż 6 m od drzewa gry), baza 496, spada; 0 drzew na drogach, schodach i w budynkach
 
@@ -1942,6 +1942,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Odsłonięte przez kontrolę bay-strip-sparse przy G-804 (nowa latarnia przy krawężniku). Prawdopodobnie ten sam spadek co w1514058885 (G-133).
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
+
+### G-814 Drzewo przy ścianie rysowane w rozmiarze z ziarna zamiast największej korony, która się mieści
+- Ważność: S4 · Zasięg: 35 drzew OSM (tree-unmeasured) i 79 wierzchołków reguły koron (G-797)
+- Opis: treeVariant (#558) wraca do plainTreeVariant, gdy korona z pomiaru nie mieści się przy ścianach; reguła koron pomija przez to duże drzewa przy budynkach, np. (700, 570).
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (tree-heights)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
