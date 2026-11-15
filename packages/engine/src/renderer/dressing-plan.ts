@@ -1,5 +1,6 @@
 import type { BlockFront, BlockSkin, Vec3 } from "@seki/core";
 import { SIGN_COLORS, prng, seedOf } from "./city-kit-data";
+import { standingWater } from "../npr/water-mask";
 import { DRESS_FLAG, MeshSink, type Rgba, hexColor } from "./mesh-sink";
 
 /**
@@ -404,17 +405,26 @@ const dressDeck = (sink: MeshSink, b: DressBlock): void => {
   for (let s = -L / 2 + 3; s < L / 2 - 2; s += 9) sink.box(at(s, 0, yb - 0.2), 0.35, 0.4, W - 1, C(PALETTE.girder), { rotY: rot });
 };
 
-/** Wet asphalt: puddles that catch the lights and, on long narrow streets, a dashed centre line. */
+/** Puddles on one block of asphalt at most: as many as the old random scatter laid on a large one. */
+const PUDDLES_MAX = 24;
+
+/**
+ * Wet asphalt: puddles where the street's water mask (ADR-0084) says the water stands, the
+ * block's edges taken for kerbs, and on long narrow streets a dashed centre line.
+ */
 const dressGround = (sink: MeshSink, b: DressBlock): void => {
-  const rand = prng(seedOf(b.center) ^ 0xa5a5);
   const y = top(b) + 0.008;
-  const area = b.size.x * b.size.z;
-  const count = Math.min(18, Math.floor(area / 110));
-  for (let i = 0; i < count; i++) {
-    const x = b.center.x + (rand() - 0.5) * (b.size.x - 2);
-    const z = b.center.z + (rand() - 0.5) * (b.size.z - 2);
-    const r = 0.7 + rand() * 1.4;
-    sink.disc({ x, y, z }, r * (1 + rand()), r, 14, C(PALETTE.puddle, DRESS_FLAG.wet));
+  const step = 1.2;
+  let count = 0;
+  for (let u = -b.size.x / 2 + step / 2; u < b.size.x / 2 && count < PUDDLES_MAX; u += step) {
+    for (let w = -b.size.z / 2 + step / 2; w < b.size.z / 2 && count < PUDDLES_MAX; w += step) {
+      const x = b.center.x + u;
+      const z = b.center.z + w;
+      const kerb = Math.min(b.size.x / 2 - Math.abs(u), b.size.z / 2 - Math.abs(w));
+      if (standingWater(kerb, 0, x, z) < 1) continue;
+      sink.disc({ x, y, z }, step * 0.6, step * 0.45, 10, C(PALETTE.puddle, DRESS_FLAG.wet));
+      count++;
+    }
   }
   const long = Math.max(b.size.x, b.size.z);
   const short = Math.min(b.size.x, b.size.z);

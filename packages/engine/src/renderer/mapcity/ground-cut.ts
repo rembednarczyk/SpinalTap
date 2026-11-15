@@ -76,6 +76,8 @@ const blend = (sink: MeshSink, tri: readonly [number, number, number], w: readon
     const arr = sink[key];
     for (let k = 0; k < size; k++) arr.push(w[0] * (arr[tri[0] * size + k] ?? 0) + w[1] * (arr[tri[1] * size + k] ?? 0) + w[2] * (arr[tri[2] * size + k] ?? 0));
   }
+  // A corner where water never stands (a steep one) keeps it off the cut point too, not a share of it.
+  if (field && tri.some((c, k) => (w[k] ?? 0) > 1e-9 && (sink.uvs3[c * 2 + 1] ?? 0) < -0.5)) sink.uvs3[index * 2 + 1] = -1;
   return index;
 };
 

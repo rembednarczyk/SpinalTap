@@ -4,6 +4,7 @@ import { prng } from "../city-kit-data";
 import { drawGlyph } from "../signage";
 import { AD_BANNERS, AD_LANDSCAPE } from "./canyon-signs";
 import { LANDMARK_TEXTS } from "./landmarks/recipes";
+import { WATER_GLSL } from "../../npr/water-mask";
 import { MAP_SIGN_BLADES, MAP_SIGN_BOARDS } from "./sign-plan";
 
 const VERTEX = /* glsl */ `
@@ -13,6 +14,8 @@ attribute vec3 normal;
 attribute vec4 color;
 attribute vec2 uv;
 attribute vec2 uv2;
+/** The water field of the ground under a streak (ADR-0084), none elsewhere. */
+attribute vec2 uv3;
 uniform mat4 viewProjection;
 uniform vec3 cameraPosition;
 varying vec2 vUV;
@@ -20,8 +23,10 @@ varying vec4 vColor;
 varying vec2 vMeta;
 varying vec3 vWorld;
 varying float vFacing;
+varying vec2 vWater;
 void main(void) {
   vUV = uv;
+  vWater = uv3;
   vColor = color;
   vMeta = uv2;
   vWorld = position;
@@ -43,6 +48,7 @@ varying vec4 vColor;
 varying vec2 vMeta;
 varying vec3 vWorld;
 varying float vFacing;
+varying vec2 vWater;
 uniform sampler2D atlas;
 uniform sampler2D names;
 uniform sampler2D ads;
@@ -59,6 +65,7 @@ float noise(vec2 p) {
   f = f * f * (3.0 - 2.0 * f);
   return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
 }
+${WATER_GLSL}
 void main(void) {
   float kind = floor(vMeta.y + 0.5);
   float seed = vMeta.x;
@@ -167,8 +174,9 @@ void main(void) {
     float x = uv.x * 22.0;
     float h = mix(hash(vec2(floor(x), seed)), hash(vec2(floor(x) + 1.0, seed)), smoothstep(0.0, 1.0, fract(x)));
     float ripple = 0.65 + 0.35 * sin(uv.y * 40.0 + h * 6.28 + time * 1.5 * (1.0 - reduce));
-    float puddle = smoothstep(0.42, 0.62, noise(vWorld.xz * 0.45 + seed * 13.0));
-    a = pow(acrossK, 1.5) * pow(1.0 - uv.y, 1.3) * mix(0.25, 1.0, h * h) * ripple * mix(0.3, 1.0, puddle);
+    // Faint on the wet street, bright in the standing water the ground's mask shows (ADR-0084).
+    float puddle = waterStanding(vWater, vWorld.xz);
+    a = pow(acrossK, 1.5) * pow(1.0 - uv.y, 1.3) * mix(0.25, 1.0, h * h) * ripple * mix(0.22, 1.25, puddle);
   }
   float dist = length(cameraPosition - vWorld);
   float fog = 1.0 - exp(-pow(dist * fogDensity * 0.6, 2.0));
@@ -347,7 +355,7 @@ export class MapSignMaterial {
    */
   constructor(scene: Scene, atlas?: BaseTexture, glyphSize = 1024) {
     const m = new ShaderMaterial("map-signs", scene, { vertexSource: VERTEX, fragmentSource: FRAGMENT }, {
-      attributes: ["position", "normal", "color", "uv", "uv2"],
+      attributes: ["position", "normal", "color", "uv", "uv2", "uv3"],
       uniforms: ["viewProjection", "cameraPosition", "time", "intensity", "fogDensity", "reduce"],
       samplers: ["atlas", "names", "ads", "glyphs"],
       needAlphaBlending: true,
