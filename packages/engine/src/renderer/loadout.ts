@@ -5,6 +5,8 @@ import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { CharacterRig } from "./characters";
 import { ADD_ONS } from "./garment-addons";
+import { GarmentAssets, type SkinnedGarmentId, isSkinnedGarment } from "./garment-assets";
+import { GarmentWear } from "./garment-wear";
 import { recolorSkin } from "./character-skin";
 import { toonSourceOf } from "./model-library";
 import type { AnchorBone, HumanoidRetarget } from "./model-rig";
@@ -128,13 +130,18 @@ export class Loadouts {
   private readonly states = new Map<CharacterRig, State>();
   /** Models that arrived before the character's first look. */
   private readonly pending = new Map<CharacterRig, DressedModel>();
+  /** Skinned garments on the imported models (ADR-0086). */
+  private readonly wear: GarmentWear;
 
   constructor(
     private readonly scene: Scene,
     private readonly materials: ToonMaterials,
     private readonly mounts: WeaponMounts,
     private readonly onMeshes: (meshes: AbstractMesh[]) => void,
-  ) {}
+    garments: GarmentAssets = new GarmentAssets(scene, materials),
+  ) {
+    this.wear = new GarmentWear(garments, (key) => GARMENT_TINT[key], onMeshes);
+  }
 
   set(rig: CharacterRig, look: AppearanceDescriptor, name: string): void {
     let s = this.states.get(rig);
@@ -172,6 +179,7 @@ export class Loadouts {
     this.tint(s);
     this.tintRig(rig, s);
     this.implant(rig, s);
+    this.wear.sync(rig, name, look, s.model?.model.meshes ?? null);
   }
 
   /** The imported model over the rig (or null when it is taken off). Nothing of it is kept. */
@@ -190,6 +198,7 @@ export class Loadouts {
     this.attach(rig, s);
     this.tint(s);
     this.implant(rig, s);
+    this.wear.sync(rig, s.name, s.look, model?.meshes ?? null);
   }
 
   has(rig: CharacterRig): boolean {
@@ -199,6 +208,16 @@ export class Loadouts {
   /** Garment add-ons on a character, and whether they hang on the imported model's bones. */
   attachments(rig: CharacterRig): { id: GarmentMeshId; onModel: boolean }[] {
     return (this.states.get(rig)?.attachments ?? []).map(({ id, onModel }) => ({ id, onModel }));
+  }
+
+  /** Skinned garments (ADR-0086) on the character's model now; they arrive once their file has loaded. */
+  garments(rig: CharacterRig): SkinnedGarmentId[] {
+    return this.wear.worn(rig);
+  }
+
+  /** Resolves once the skinned garments on their way have arrived (tests). */
+  garmentsSettled(): Promise<void> {
+    return this.wear.settled();
   }
 
   /** Model meshes recoloured by a garment tint right now. */
@@ -258,6 +277,7 @@ export class Loadouts {
     s.attachments = [];
     for (const m of s.implants) m.dispose();
     s.implants = [];
+    this.wear.drop(rig);
     this.dropModel(s);
     s.holsterR.dispose();
     s.holsterL.dispose();
@@ -376,6 +396,7 @@ export class Loadouts {
     s.attachments = [];
     for (const garment of Object.values(s.look.garments)) {
       for (const a of garment?.attachments ?? []) {
+        if (isSkinnedGarment(a.mesh)) continue;
         const spec = ADD_ONS[a.mesh];
         const anchor = s.model?.anchors[spec.model.bone];
         const mesh = spec.build(this.scene, `${s.name}-${a.mesh}`);

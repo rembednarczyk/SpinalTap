@@ -228,7 +228,8 @@ export const GARMENT_CATALOG = {
     slot: "torso",
     armor: { torso: 3, arm: 2 },
     value: 600,
-    look: { tint: "jacket-hebi" },
+    // The long techwear jacket on imported models (ADR-0086), in the gang's green.
+    look: { tint: "jacket-hebi", attachments: [{ point: "chest", mesh: "jacket-techwear" }] },
     disguise: "hebi",
   },
   ballistic_vest: {

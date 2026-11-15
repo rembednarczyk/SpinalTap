@@ -71,7 +71,12 @@ export type WeaponLook = "pistol" | "revolver" | "smg" | "shotgun" | "rifle" | "
 /** Colour slot of the procedural rig that a garment recolours. */
 export type PaletteKey = "jacket-seki" | "jacket-hebi" | "jacket-tessen" | "cargo" | "kevlar" | "vest";
 export type AttachPoint = "head" | "eyes" | "chest" | "back" | "hipR" | "hipL" | "thighL" | "handR";
-export type GarmentMeshId = "visor" | "helmet" | "vest-plate";
+/**
+ * What a garment hangs on the character (ADR-0015): a rigid add-on on a bone ("visor", "helmet",
+ * "vest-plate") or, on an imported VRoid model, a skinned garment asset of its own that bends with
+ * the body (ADR-0086, "jacket-techwear"); the procedural rig shows only the tint of the latter.
+ */
+export type GarmentMeshId = "visor" | "helmet" | "vest-plate" | "jacket-techwear";
 
 export interface GarmentLook {
   readonly tint?: PaletteKey;
