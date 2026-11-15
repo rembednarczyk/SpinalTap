@@ -31,9 +31,9 @@ import { type Chm, chmAt } from "../../gugik/src/nmpt.ts";
 import { type KeepOut, trunkGround } from "./crown-ground.ts";
 import { type Pt, type Rect, inRect } from "./geometry.ts";
 import type { Site } from "./props-site.ts";
-import { worldToPuwg } from "./project.ts";
+import { geoToPuwg, worldToGeo, worldToPuwg } from "./project.ts";
 import type { StructureIndex } from "./structures.ts";
-import { NOT_A_CROWN, OFF_ROOF } from "./tree-heights.ts";
+import { NOT_A_CROWN, OFF_ROOF, byRoof } from "./tree-heights.ts";
 
 /** The lowest crown a tree is set under (m): lower is a hedge, a bush or a car. */
 export const MIN_TOP = 4;
@@ -100,16 +100,6 @@ export const chmOf = (chms: readonly Chm[], p: Pt): number => {
   return chmAt(chms, q.e, q.n);
 };
 
-/** Whether p lies in a building's outline or within `reach` of it, on the eight ways at `reach` and half of it. */
-const byRoof = (site: Site, p: Pt, reach: number): boolean => {
-  if (site.surfaceAt(p) === "building") return true;
-  for (let i = 0; i < 8; i++) {
-    const [dx, dz] = [Math.cos((i * Math.PI) / 4), Math.sin((i * Math.PI) / 4)];
-    for (const r of [reach, reach / 2]) if (site.surfaceAt({ x: p.x + dx * r, z: p.z + dz * r }) === "building") return true;
-  }
-  return false;
-};
-
 export const centreOf = (g: CrownGrid, i: number): Pt => ({ x: g.rect.minX + (i % g.cols) * CELL + CELL / 2, z: g.rect.minZ + Math.floor(i / g.cols) * CELL + CELL / 2 });
 
 /** The crown cells of `rect` and where a trunk may stand in them. */
@@ -117,9 +107,13 @@ export const crownGrid = (rect: Rect, ctx: CrownContext): CrownGrid => {
   const cols = Math.round((rect.maxX - rect.minX) / CELL);
   const rows = Math.round((rect.maxZ - rect.minZ) / CELL);
   const g: CrownGrid = { rect, cols, rows, raw: new Float32Array(cols * rows).fill(Number.NaN), h: new Float32Array(cols * rows).fill(Number.NaN), stand: new Uint8Array(cols * rows) };
+  // `chmOf` by the cells' latitudes and longitudes, each once: a row's latitude is its z's, a column's longitude its x's.
+  const lats = Array.from({ length: rows }, (_, r) => worldToGeo(centreOf(g, r * cols)).lat);
+  const lons = Array.from({ length: cols }, (_, c) => worldToGeo(centreOf(g, c)).lon);
   for (let i = 0; i < cols * rows; i++) {
     const p = centreOf(g, i);
-    const h = chmOf(ctx.chms, p);
+    const q = geoToPuwg(lats[Math.floor(i / cols)]!, lons[i % cols]!);
+    const h = chmAt(ctx.chms, q.e, q.n);
     if (!(h >= MIN_TOP && h <= NOT_A_CROWN) || CROWN_CLEARED.some((r) => inRect(p, r)) || ctx.structures.at(p) || byRoof(ctx.site, p, OFF_ROOF)) continue;
     g.raw[i] = h;
     const cover = coverFor(ctx.covers, p);
@@ -130,17 +124,26 @@ export const crownGrid = (rect: Rect, ctx: CrownContext): CrownGrid => {
   return g;
 };
 
+/** The offsets (columns, rows) within `reach` of a cell but itself, in index order: once a reach. */
+const OFFSETS = new Map<number, readonly (readonly [number, number])[]>();
+const offsetsOf = (reach: number): readonly (readonly [number, number])[] => {
+  let out = OFFSETS.get(reach);
+  if (out) return out;
+  const r = Math.ceil(reach / CELL);
+  const list: [number, number][] = [];
+  for (let dr = -r; dr <= r; dr++) for (let dc = -r; dc <= r; dc++) if (!(dc === 0 && dr === 0) && (dc * dc + dr * dr) * CELL * CELL <= reach * reach) list.push([dc, dr]);
+  OFFSETS.set(reach, (out = list));
+  return out;
+};
+
 /** The cells within `reach` of cell i, by offsets, in index order. */
 const around = (g: CrownGrid, i: number, reach: number): number[] => {
-  const r = Math.ceil(reach / CELL);
   const [c, row] = [i % g.cols, Math.floor(i / g.cols)];
   const out: number[] = [];
-  for (let dr = -r; dr <= r; dr++)
-    for (let dc = -r; dc <= r; dc++) {
-      const [cc, rr] = [c + dc, row + dr];
-      if ((dc === 0 && dr === 0) || cc < 0 || rr < 0 || cc >= g.cols || rr >= g.rows || (dc * dc + dr * dr) * CELL * CELL > reach * reach) continue;
-      out.push(rr * g.cols + cc);
-    }
+  for (const [dc, dr] of offsetsOf(reach)) {
+    const [cc, rr] = [c + dc, row + dr];
+    if (cc >= 0 && rr >= 0 && cc < g.cols && rr < g.rows) out.push(rr * g.cols + cc);
+  }
   return out;
 };
 

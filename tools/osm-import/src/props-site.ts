@@ -59,6 +59,8 @@ export class Site {
   private readonly bins = new SpatialHash<Shape>(BIN);
   /** The bridges' ground, kept apart: a deck is no ground to stand things on, but a street's paving runs over it. */
   private readonly decks = new SpatialHash<Shape>(BIN);
+  /** The buildings' outlines of `bins` alone, for the many samples of `inBuilding` and `buildingNear`. */
+  private readonly buildings = new SpatialHash<readonly Pt[]>(BIN);
   /** The passages through the chunks' buildings (ADR-0048), along their axes. */
   private readonly passages: readonly (readonly [Pt, Pt])[];
   /** The gates the game cuts by hand, along their axes under their buildings and the mouths. */
@@ -72,7 +74,13 @@ export class Site {
     this.chunks = chunks;
     const streets: SiteStreet[] = [];
     for (const c of chunks) {
-      for (const b of c.buildings) this.add({ ring: flat(b.outline, b.x, b.z), surface: "building", box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
+      for (const b of c.buildings) {
+        const ring = flat(b.outline, b.x, b.z);
+        this.add({ ring, surface: "building", box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
+        if (ring.length < 3) continue;
+        const box = ringBounds(ring);
+        this.buildings.insert(ring, box.minX, box.minZ, box.maxX, box.maxZ);
+      }
       for (const g of c.ground) {
         const [a, b] = g.deck ? flat(g.deck) : [];
         const deck = a && b ? { a, b, ya: this.heightAt(a), yb: this.heightAt(b) } : undefined;
@@ -107,10 +115,7 @@ export class Site {
 
   /** The chunk whose rectangle holds p (half-open, so a point on a shared edge has one owner). */
   chunkAt(p: Pt): LublinChunkData | null {
-    for (const c of this.chunks) {
-      const b = c.bounds;
-      if (inRect(p, { minX: b.minX, minZ: b.minZ, maxX: b.maxX, maxZ: b.maxZ })) return c;
-    }
+    for (const c of this.chunks) if (inRect(p, c.bounds)) return c;
     return null;
   }
 
@@ -123,6 +128,18 @@ export class Site {
   /** What lies at p: a building wins, then a road, then the other surfaces in their draw order. */
   surfaceAt(p: Pt): SiteSurface {
     return this.surfaceIn(this.bins, p);
+  }
+
+  /** Whether p lies in a building's outline: `surfaceAt(p) === "building"`, asking the buildings alone. */
+  inBuilding(p: Pt): boolean {
+    for (const ring of this.buildings.at(p.x, p.z)) if (pointInRing(p, ring)) return true;
+    return false;
+  }
+
+  /** Whether a building's box comes within `reach` of p (a centimetre to spare): with none, no point that near is in a building. */
+  buildingNear(p: Pt, reach: number): boolean {
+    const r = reach + 0.01;
+    return this.buildings.some(p.x - r, p.z - r, p.x + r, p.z + r, () => true);
   }
 
   /** What a bridge's deck carries at p (its road or walk), null off every deck. */
