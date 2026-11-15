@@ -2036,6 +2036,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (crown-trees.ts, crown-grid.ts)
 - Test przyjęcia: drzewo reguły dalej od drzewa gry niż jego rysowana korona; brak drzewa reguły na (552,5; 428,5)
 
+### G-828 Kontrole skanu wolne pod obciążeniem CI (paving-overlap, kerb-fill-wide-estimated)
+- Ważność: S3 · Zasięg: CI shard testów jednostkowych; main 76cd282 i PR #564
+- Opis: Po #559 i #565 kawałków gruntu przybyło, a kontrole przeglądają liniowo listy całego miasta; paving-overlap G-301 naprawione w #566 (4,9 s → 0,1 s), kerb-fill-wide-estimated ok. 11 s lokalnie i ponad 20 s w CI. Poprawka: indeks przestrzenny, bez podnoszenia limitów.
+- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-scan-speed)
+- Pakiet właściciela: tools/glitch-scan
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
