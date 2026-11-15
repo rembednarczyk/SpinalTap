@@ -78,6 +78,8 @@ import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
+import { crossingGlow, crossingKerb, crossingOverhang, crossingSkew } from "./crossing-shape";
+import { kerbJag } from "./kerb-jag";
 import { kerbStripBare } from "./kerb-strip-bare";
 import { markingSteps } from "./marking-step";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
@@ -1993,6 +1995,20 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * away (before it, road and the footway's paving at once). One finding per piece between the world's 1 m grid lines (`world-samples.ts`, G-756).
    */
   "footway-on-carriageway": () => footwaysOnCarriageway(),
+  /**
+   * A zigzag or step of 0.1 m and more within 3 m of arc in the kerb the game draws (the edges of
+   * the sidewalk pieces facing a carriageway), off the places where the map's street axis zigzags
+   * itself (`kerb-jag.ts`, the user's question of 15.11). One finding a vertex, in 10 m squares.
+   */
+  "kerb-jag": () => kerbJag(MAP_CHUNKS, ROAD_CHAINS.map((c) => c.points)),
+  /** A carriageway zebra more than 5 degrees off the perpendicular to its street (`crossing-shape.ts`). */
+  "crossing-shape-skew": () => crossingSkew(MAP_CHUNKS, ROAD_CHAINS.map((c) => c.points)),
+  /** A zebra whose stripes (0.3 m2 and more) lie outside its piece (`crossing-shape.ts`). */
+  "crossing-shape-overhang": () => crossingOverhang(MAP_CHUNKS),
+  /** A zebra whose cyan edge lines (3 m and more) lie off the carriageway, cobbles and squares (`crossing-shape.ts`). */
+  "crossing-shape-glow": () => crossingGlow(MAP_CHUNKS),
+  /** A zebra whose end is more than 0.15 m off the kerb along its axis (`crossing-shape.ts`). */
+  "crossing-shape-kerb": () => crossingKerb(MAP_CHUNKS),
   /** A metre of a fitted street's edge (T-046, G-655) with a metre and more of bare ground before the lawn or pavement past it (`kerb-strip-bare.ts`). */
   "kerb-strip-bare": () =>
     kerbStripBare({

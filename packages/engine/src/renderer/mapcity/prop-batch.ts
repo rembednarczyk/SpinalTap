@@ -105,21 +105,37 @@ export const countByKind = (groups: ReadonlyMap<string, Float32Array>): Record<s
   return out;
 };
 
-/** Appends a model's triangles at a piece's place (the far mesh of a cell). */
+/**
+ * Appends a model's triangles at a piece's place (the far mesh of a cell, the near blocks), its UVs
+ * zero. The same numbers as `placePoint` per vertex, in one tight loop: a near block bakes some
+ * hundred thousand vertices in a frame.
+ */
 export const bake = (sink: MeshSink, model: MeshSink, p: WorldProp): void => {
   const base = sink.vertexCount;
   const c = Math.cos(p.yaw);
   const s = Math.sin(p.yaw);
-  for (let i = 0; i < model.vertexCount; i++) {
-    const at = placePoint(p, { x: model.positions[i * 3]!, y: model.positions[i * 3 + 1]!, z: model.positions[i * 3 + 2]! });
-    // A narrowed piece's normals lean out by the inverse of its spread, as a squeezed surface's do.
-    const w = p.spread ?? 1;
-    const [nx, ny, nz] = [model.normals[i * 3]! / w, model.normals[i * 3 + 1]!, model.normals[i * 3 + 2]! / w];
-    const k = w === 1 ? 1 : 1 / Math.hypot(nx, ny, nz);
-    const n = { x: (nx * c + nz * s) * k, y: ny * k, z: (-nx * s + nz * c) * k };
-    vertex(sink, at, n, [model.colors[i * 4]!, model.colors[i * 4 + 1]!, model.colors[i * 4 + 2]!, model.colors[i * 4 + 3]!]);
+  const k = p.scale;
+  // A narrowed piece is squeezed across by its spread; its normals lean out by the inverse.
+  const w = p.spread ?? 1;
+  const across = k * w;
+  const { positions: mp, normals: mn, colors: mc } = model;
+  const { positions, normals, colors, uvs, uvs2 } = sink;
+  const n = model.vertexCount;
+  for (let i = 0; i < n; i++) {
+    const x = mp[i * 3]!;
+    const z = mp[i * 3 + 2]!;
+    positions.push(p.x + (x * c + z * s) * across, p.y + mp[i * 3 + 1]! * k, p.z + (-x * s + z * c) * across);
+    const nx = mn[i * 3]! / w;
+    const ny = mn[i * 3 + 1]!;
+    const nz = mn[i * 3 + 2]! / w;
+    const r = w === 1 ? 1 : 1 / Math.hypot(nx, ny, nz);
+    normals.push((nx * c + nz * s) * r, ny * r, (-nx * s + nz * c) * r);
+    colors.push(mc[i * 4]!, mc[i * 4 + 1]!, mc[i * 4 + 2]!, mc[i * 4 + 3]!);
+    uvs.push(0, 0);
+    uvs2.push(0, 0);
   }
-  for (const i of model.indices) sink.indices.push(base + i);
+  const indices = sink.indices;
+  for (const i of model.indices) indices.push(base + i);
 };
 
 const hex = (h: string): [number, number, number] => {
