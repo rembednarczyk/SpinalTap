@@ -2058,7 +2058,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-840 Schody bez wspólnej normy stopnia: płytkie stopnie Placu Zamkowego z daleka jako czarna plama
 - Ważność: S3 · Zasięg: wszystkie biegi schodów z mapy (steps-plan.ts); najbardziej schody na Wzgórze Zamkowe z Placu Zamkowego
 - Opis: Zgłoszenie użytkownika 15.11 ze zdjęciem: schody na Podzamczu są bardzo płytkie i z daleka widać je jako czarną plamę. steps-plan.ts tnie bieg na stopnie o stałej głębokości STEP_DEPTH 0,33 m, a wysokość wynika ze spadku wygładzonego NMT (od MIN_RISER 0,045 m w górę), więc wysokości są różne między biegami i często bardzo małe. Ciemne podstopnie (#4f4b46) co 0,33 m zlewają się z daleka w czarną plamę (aliasing). Propozycja użytkownika: jedna norma stopnia w całej grze, pilnowana skanem. Do zrobienia: (1) norma: podstopień 0,15 m (0,12–0,17), stopnica 0,32 m (2h+s 0,60–0,66), liczba stopni z całkowitej różnicy wysokości końców biegu (NMT/LOD2, nie z wygładzonego gruntu na każdej stopnicy), spoczniki co najwyżej co 10–12 stopni zamiast rozciągania stopnic; (2) z daleka (od ok. 40 m) bieg jako jedna pochylnia z uśrednionym kolorem, bez linii podstopni; (3) kontrola skanu steps-riser-norm (podstopień i stopnica poza normą, nierówne stopnie w biegu) z bazą. Referencja: schody Placu Zamkowego, dwa biegi ze spocznikiem, szerokie granitowe stopnie (zdjęcie użytkownika w scratchpadzie ref/, tylko jako referencja wizualna).
-- Status: nowy
+- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g840, 4f65035), do przeglądu kuratora; wcześniej: nowy
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (steps-plan), tools/glitch-scan
 
 ### G-841 Zamek Lubelski bez przepisu zabytku: fasada od Placu Zamkowego jak zwykły gmach
@@ -2090,6 +2090,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Sonda e2e agenta skalowania 15.11; poza zakresem ADR-0085 (PR #587)
 - Status: nowy
 - Pakiet właściciela: packages/ui
+
+### G-847 Schody bez policzków: stopnice normy do 0,40 m nad terenem z boku pasa
+- Ważność: S4 · Zasięg: biegi z mapy, najwięcej strome i ściśnięte (Plac Zamkowy)
+- Opis: Po G-840 stopnice stoją nad terenem do 0,40 m (wcześniej do 1,49), boków brak; przerwa widoczna z boku. Propozycja: policzki w siatce gruntu, z wyłączeniem w kontrolach podstopni
+- Status: nowy
+- Pakiet właściciela: packages/engine/src/renderer/mapcity (steps-plan)
+
+### G-848 Sim STEP_RISE 0,16 poza normą stopnia 0,15
+- Ważność: S4 · Zasięg: flightRamps (packages/sim/src/content/lublin/shape.ts)
+- Opis: STEP_RISE 0.16 zamiast STEP_NORM.riser z G-840; zmiana ruszy złoty hash determinizmu
+- Status: nowy
+- Pakiet właściciela: packages/sim
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
