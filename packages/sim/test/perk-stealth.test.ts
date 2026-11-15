@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type DomainEvents, type PerkId, contractTag, findItem, updateItem } from "@seki/core";
-import { GENZO_SPOT, SIM_HZ, Simulation, TAKEDOWN_TIME, docks, gangerEntity, ground, type Entity } from "../src";
+import { GENZO_SPOT, SIM_HZ, Simulation, TAKEDOWN_TIME, w3, gangerEntity, ground, type Entity } from "../src";
 import { byKey, collect, input, run, streetSim, teleportPlayer } from "./helpers";
 import { emptySquare, enemyAt } from "./stealth-scenes";
 import { CROUCH, quietStreet, takeDown, ticks, victim } from "./takedown-scenes";
@@ -20,7 +20,7 @@ const hackScene = (perks: Perks, bought: boolean, second = false): { sim: Simula
   const sim = Simulation.fromSnapshot(base.snapshot(null, "t", ""));
   for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
   withPerks(sim, perks, bought);
-  teleportPlayer(sim, docks(16, 0, 97), -Math.PI / 2);
+  teleportPlayer(sim, w3(2590, 0, 418), -Math.PI / 2);
   sim.step();
   const p = sim.player()!.position;
   const guard = (id: number, dz: number) => sim.world.add(gangerEntity(id, { key: `guard-${id}`, position: { ...p, x: p.x - 8, z: p.z + dz }, yaw: Math.PI / 2 }, null, 1e6, "nabrzeze-1-1", undefined, "tessen_guard"));

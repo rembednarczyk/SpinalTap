@@ -11,13 +11,13 @@ import {
   PLAYER_SPAWN,
   SIM_HZ,
   Simulation,
-  TESSEN_OFFICE_DOOR,
+  W3_OFFICE_DOOR,
   type DoorDef,
   type Entity,
   doorParts,
   gangerEntity,
   clinicPoint,
-  docks,
+  w3,
   ground,
   koiPoint,
   stateHash,
@@ -143,22 +143,22 @@ describe("automatic doors (ADR-0038)", () => {
 });
 
 describe("the coded door of Tessen's office (ADR-0038, the hook of ADR-0034)", () => {
-  const outside = docks(-16.6, 0, 132);
+  const outside = w3(2497.4, 0, 443);
 
   it("stays shut for the player without the code; a Tessen guard opens it", () => {
     const sim = withJob(INFILTRATION, outside);
     run(sim, SIM_HZ);
-    expect(openness(sim, TESSEN_OFFICE_DOOR)).toBe(0);
-    const guard = sim.world.add(gangerEntity(9100, { key: "test-guard", position: docks(-19.5, 0, 132), yaw: Math.PI / 2 }, null, 100, "nabrzeze-1-1", undefined, "tessen_guard"));
+    expect(openness(sim, W3_OFFICE_DOOR)).toBe(0);
+    const guard = sim.world.add(gangerEntity(9100, { key: "test-guard", position: w3(2494.4, 0, 443), yaw: Math.PI / 2 }, null, 100, "nabrzeze-1-1", undefined, "tessen_guard"));
     guard.ai!.alerted = false;
     run(sim, Math.ceil(DOOR_MOVE_TIME * SIM_HZ) + 1);
-    expect(openness(sim, TESSEN_OFFICE_DOOR)).toBe(1);
+    expect(openness(sim, W3_OFFICE_DOOR)).toBe(1);
   });
 
   it("opens for the player with the code from the hook", () => {
     const sim = withJob(INFILTRATION, outside, ["hook_infiltrate_1"]);
     run(sim, Math.ceil(DOOR_MOVE_TIME * SIM_HZ) + 1);
-    expect(openness(sim, TESSEN_OFFICE_DOOR)).toBe(1);
+    expect(openness(sim, W3_OFFICE_DOOR)).toBe(1);
     // The panel has nothing to offer then.
     expect([...sim.world.with("doorPanel")][0]?.interactable).toBeUndefined();
   });
@@ -166,21 +166,21 @@ describe("the coded door of Tessen's office (ADR-0038, the hook of ADR-0034)", (
   it("is locked outside the job; during it the panel breaks the lock and raises the alarm", () => {
     const idle = withJob({ ...INFILTRATION, kind: "hack", siteId: "quay_terminal" }, outside);
     run(idle, 2);
-    expect(openness(idle, TESSEN_OFFICE_DOOR)).toBe(0);
+    expect(openness(idle, W3_OFFICE_DOOR)).toBe(0);
     idle.step(input({ interact: true }));
     run(idle, SIM_HZ);
-    expect(openness(idle, TESSEN_OFFICE_DOOR)).toBe(0);
+    expect(openness(idle, W3_OFFICE_DOOR)).toBe(0);
 
-    const sim = withJob(INFILTRATION, docks(-17.4, 0, 133.6), []);
+    const sim = withJob(INFILTRATION, w3(2497, 0, 444.6), []);
     const alarms = collect(sim, "ContractAlarm");
     run(sim, 1);
     expect(sim.session.focusPrompt).toBe("prompt.door.force");
     sim.step(input({ interact: true }));
-    expect(sim.domain.flags).toContain(doorForcedFlag(TESSEN_OFFICE_DOOR.key, INFILTRATION));
+    expect(sim.domain.flags).toContain(doorForcedFlag(W3_OFFICE_DOOR.key, INFILTRATION));
     expect(sim.domain.flags).toContain(contractAlarmFlag(INFILTRATION.id));
     expect(alarms).toHaveLength(1);
     run(sim, Math.ceil(DOOR_MOVE_TIME * SIM_HZ) + 1);
-    expect(openness(sim, TESSEN_OFFICE_DOOR)).toBe(1);
+    expect(openness(sim, W3_OFFICE_DOOR)).toBe(1);
   });
 });
 

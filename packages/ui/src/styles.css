@@ -213,7 +213,9 @@ kbd {
   padding: 10px 14px;
   background: var(--panel);
   border-right: 3px solid var(--cyan);
-  animation: toast-in 240ms ease-out;
+  /* Fades in where it stands: a 30 px slide from the right drew it past the screen edge in a
+     talk, where the toasts keep only the edge's margin (16 px on a phone). */
+  animation: toast-fade 240ms ease-out;
 }
 .toast--memory { border-color: var(--magenta); box-shadow: 0 0 18px rgba(255, 61, 139, 0.25); }
 .toast--money { border-color: var(--amber); }
@@ -222,6 +224,7 @@ kbd {
 .toast__title { font-weight: 700; letter-spacing: 0.06em; }
 .toast__text { font-size: 14px; color: var(--ink-dim); margin-top: 2px; }
 @keyframes toast-in { from { transform: translateX(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes toast-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* Minimap */
 .minimap {

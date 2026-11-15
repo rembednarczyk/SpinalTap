@@ -212,9 +212,9 @@ export const enDomain = {
   "contract.site.hebi_stash": "the Hebi stash by the ruin behind Alchemia's stalls",
   "contract.site.raid_north": "Oyaji's stall in Alchemia, the Hebi coming down the path from Świętoduska",
   "contract.site.raid_east": "Oyaji's stall in Alchemia, the Hebi coming across the square from Lubartowska",
-  "contract.site.docks_escort": "from the container yard on the Nabrzeże to the pier, to the boat",
-  "contract.site.tessen_office": "the Tessen office on Nabrzeże Bystrzycy",
-  "contract.site.quay_terminal": "the Tessen terminal under the crane by the river",
+  "contract.site.docks_escort": "from Genzō's container down the riverside path to the river",
+  "contract.site.tessen_office": "the pass office in the Tessen control tower on Nabrzeże Bystrzycy",
+  "contract.site.quay_terminal": "the Tessen terminal on the quay by the pier",
   // The giver as "go back to … for your pay" names them.
   "contract.giver.kaito": "Kaito",
   "contract.giver.hana": "Hana",

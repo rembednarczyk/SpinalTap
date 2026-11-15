@@ -18,7 +18,7 @@ import {
   undetectedXp,
 } from "@seki/core";
 import { deriveRandom } from "../rng/derive-random";
-import { DOKI_TERMINAL_SPOTS } from "../content/district-doki";
+import { W3_TERMINAL_SPOTS } from "../content/tessen-w3";
 import { oyajiStallOpen } from "../content/schedules";
 import { HACK_RANGE } from "../systems/contract-system";
 import { deadFlag } from "../systems/death-system";
@@ -130,7 +130,7 @@ export const applyBreach = (ctx: SimContext, { terminalKey, daemons: won }: Comm
   const contract = domain.contracts.active;
   if (contract?.status !== "active" || contractKind(contract) !== "hack" || contract.breach || contract.progress === undefined) return;
   if (terminalKey !== contractTerminalKey(contract.id)) return;
-  const spot = DOKI_TERMINAL_SPOTS[contract.siteId];
+  const spot = W3_TERMINAL_SPOTS[contract.siteId];
   const p = ctx.world.with("player").first;
   if (!spot || !p || Math.hypot(p.position.x - spot.x, p.position.z - spot.z) > HACK_RANGE) return;
   const daemons = BREACH_DAEMONS.filter((d) => won.includes(d));

@@ -103,12 +103,12 @@ describe("Lublin in the session (ADR-0045)", () => {
     const text = () => (ui.getState().dialogue?.lines ?? []).map((l) => l.text).join("\n");
     expect(text()).toContain("Pływam nocą");
     const pick = (start: string) => session.intents.choose(ui.getState().dialogue!.choices.find((c) => c.text.startsWith(start))!.index);
-    pick("Kogo trzeba przeprowadzić");
-    expect(text()).toContain("Mika");
+    pick("Co trzeba wynieść z biura Tessen");
+    expect(text()).toContain("wieży kontrolnej");
     session.intents.closeDialogue();
     steps(session, 2);
     expect(session.sim.domain.flags).toContain("met_genzo");
-    expect(ui.getState().toasts.map((t) => `${t.title}`)).toContain("New contract: Escort");
+    expect(ui.getState().toasts.map((t) => `${t.title}`)).toContain("New contract: Infiltration");
   });
 
   it("Hana at the market in Alchemia hands out a job through the dialogue (ADR-0063)", () => {

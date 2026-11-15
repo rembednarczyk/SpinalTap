@@ -17,14 +17,13 @@ import {
 import {
   BREACH_DATAMINE_EDDIES,
   BREACH_ICEPICK_SECONDS,
-  DOCKS_PLACE,
   type Entity,
-  DOKI_TERMINAL_SPOTS,
+  W3_TERMINAL_SPOTS,
   GENZO_SPOT,
   SIM_HZ,
   Simulation,
   cameraSees,
-  docks,
+  w3,
   gangerEntity,
   ground,
   HANA_SPOT,
@@ -35,11 +34,14 @@ import {
 import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 import { scanName } from "../src/systems/scanner-system";
 
-/** A point of the docks in their own coordinates, moved to Nabrzeże Bystrzycy by ADR-0045. */
-const at = (x: number, z: number, y = 0): Vec3 => docks(x, y, z);
+/**
+ * A point of the old docks' yard in its own coordinates, put on W-3's east yard (ADR-0082): the
+ * yard's open corner by Genzō (16, 97) is the east yard's middle, the rest round it as it was.
+ */
+const at = (x: number, z: number, y = 0): Vec3 => w3(2574 + x, y, 321 + z);
 /** The chunk the docks stand in, and a point on its floor in world coordinates. */
 const DOCKS_CHUNK = "nabrzeze-1-1";
-const onDocks = (x: number, z: number): Vec3 => ({ x, y: DOCKS_PLACE.y, z });
+const onDocks = (x: number, z: number): Vec3 => ground(x, z);
 /** The market's floor (Hana's district) and the Old Town just outside it. */
 const IN_MARKET = ground(HANA_SPOT.x - 1.5, HANA_SPOT.z);
 const OLD_TOWN = ground(600, 0);
@@ -169,7 +171,8 @@ describe("quickhacks (ADR-0028, ADR-0029)", () => {
   it("reboot optics on a camera: it sees nothing for a while", () => {
     const { sim } = yard({ guardAt: at(28, 120) });
     const cam = byKey(sim, "dev:doki-yard-cam")!;
-    teleportPlayer(sim, at(-8, 98), -Math.PI / 2);
+    // Six metres in front of it, turned to it.
+    teleportPlayer(sim, onDocks(cam.position.x + Math.sin(cam.yaw) * 6, cam.position.z + Math.cos(cam.yaw) * 6), cam.yaw + Math.PI);
     sim.step();
     expect(cameraSees({ world: sim.world } as never, cam, sim.player()!)).toBe(true);
     lookAt(sim, cam.position);
@@ -262,7 +265,8 @@ describe("cameras (ADR-0029)", () => {
     const { sim } = yard({ guardAt: at(28, 120) });
     const reports = collect<DomainEvents["CrimeReported"]>(sim, "CrimeReported");
     const cam = byKey(sim, "dev:doki-yard-cam")!;
-    teleportPlayer(sim, at(-8, 98), -Math.PI / 2);
+    // Six metres in front of it, turned to it.
+    teleportPlayer(sim, onDocks(cam.position.x + Math.sin(cam.yaw) * 6, cam.position.z + Math.cos(cam.yaw) * 6), cam.yaw + Math.PI);
     sim.step();
     sim.player()!.pitch = -0.6;
     sim.step(input({ fire: true }));
@@ -403,7 +407,7 @@ describe("Breach Protocol on the docks terminal (ADR-0029)", () => {
     sim.step();
     tough(sim);
     const c = take(sim, "hack");
-    const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
+    const t = W3_TERMINAL_SPOTS.quay_terminal!;
     const breach = collect<DomainEvents["BreachCompleted"]>(sim, "BreachCompleted");
     const opened = collect<DomainEvents["BreachStarted"]>(sim, "BreachStarted");
     // Not before the hack has started.
@@ -445,7 +449,7 @@ describe("breach without daemons and kill markers (ADR-0028 contract changes)", 
     sim.step();
     tough(sim);
     const c = take(sim, "hack");
-    const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
+    const t = W3_TERMINAL_SPOTS.quay_terminal!;
     const opened = collect<DomainEvents["BreachStarted"]>(sim, "BreachStarted");
     const breach = collect<DomainEvents["BreachCompleted"]>(sim, "BreachCompleted");
     teleportPlayer(sim, { x: t.x, y: t.y, z: t.z - 1.4 }, 0);

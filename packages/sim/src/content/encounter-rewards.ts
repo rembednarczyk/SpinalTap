@@ -1,7 +1,7 @@
 import type { StackableId, Vec3 } from "@seki/core";
 import type { DistrictId } from "./world-map";
-import { docks } from "./district-doki";
 import { spotNear } from "./lublin/places";
+import { ground } from "./lublin/terrain";
 
 /**
  * What a street encounter pays (ADR-0034). The ink of an encounter ends by raising a flag
@@ -41,5 +41,6 @@ export const MICRO_SPOTS: Readonly<Record<DistrictId, readonly Vec3[]>> = {
   kanal: [spotNear(528, -58), spotNear(620, 26), spotNear(688, 110)],
   // Podzamcze without its market (ADR-0063): Plac Zamkowy and the squares along Aleja Tysiąclecia by the bus station.
   targ: [spotNear(740, 306), spotNear(778, 372), spotNear(806, 360)],
-  doki: [docks(0, 0, 100), docks(20, 0, 112), docks(-10, 0, 112)],
+  // The public strip by W-3's fence (ADR-0082): past the metro, east of it, by the bridge's path.
+  doki: [ground(2540, 387), ground(2570, 386.5), ground(2478, 390.5)],
 };
