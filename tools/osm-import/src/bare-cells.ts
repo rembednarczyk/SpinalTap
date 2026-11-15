@@ -46,7 +46,7 @@ export class Cells {
   readonly label: Uint8Array;
   /** 1 in a town's paved place (`bare-cover.ts`, `TownPlaces`). */
   readonly zone: Uint8Array;
-  /** 1 in a pedestrian street's frontage (`bare-fronts.ts`): paved where the cover gives no lawn or paving; 2 on a lawn's rim in it. */
+  /** 1 in a pedestrian street's frontage (`bare-fronts.ts`): paved where the cover gives no lawn or paving. */
   readonly front: Uint8Array;
   /** 1 under a building's walls (`cover`'s `wall`): a frontage ends at them. */
   readonly wall: Uint8Array;

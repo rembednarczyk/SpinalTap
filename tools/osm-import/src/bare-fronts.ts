@@ -144,29 +144,10 @@ const joinLoose = (cells: Cells, green: Uint8Array, width: number, area: number)
 };
 
 /**
- * The frontage's cells beside a lawn of the map (`green`) become a rim of the lawn (`front` 2,
- * read as a lawn by `coverRow`, or left bare where the cover shows paving): a fill is traced half
- * a cell past its last cell (`tileRings`) and cut by the lawn's piece as drawn, rounded to 0.1 m,
- * so paving beside a lawn would lap over its mapped outline in slivers along it (T-199: no paving
- * over the lawns along a pedestrian way).
- */
-const rimLawns = (cells: Cells, green: Uint8Array): void => {
-  const { nx, nz, front } = cells;
-  for (let j = 0; j < nz; j++)
-    for (let i = 0; i < nx; i++) {
-      const k = j * nx + i;
-      if (front[k] !== 1) continue;
-      let by = false;
-      for (let jj = Math.max(0, j - 1); jj <= Math.min(nz - 1, j + 1) && !by; jj++) for (let ii = Math.max(0, i - 1); ii <= Math.min(nx - 1, i + 1) && !by; ii++) by = green[jj * nx + ii] === 1;
-      if (by) front[k] = 2;
-    }
-};
-
-/**
  * Marks the cells of the frontages (`margin` past their reach, as a town's paved place grows, and
  * the strips they leave, `joinLoose`) a frontage and a paved place, but in the map's lawns, beds
- * and water (`greens`), and a rim of lawn beside them (`rimLawns`): the walls and pieces must be
- * covered (`Cells.cover`) first.
+ * and water (`greens`, which the frontages' pass also cuts its fills by: `coverFills`): the walls
+ * and pieces must be covered (`Cells.cover`) first.
  */
 export const zoneFronts = (cells: Cells, fronts: readonly Frontage[], greens: readonly (readonly Pt[])[], margin: number, specks: number): void => {
   if (fronts.length === 0) return;
@@ -176,7 +157,6 @@ export const zoneFronts = (cells: Cells, fronts: readonly Frontage[], greens: re
   for (const { line, reach } of fronts) for (let k = 0; k + 1 < line.length; k++) frontNear(cells, line[k]!, line[k + 1]!, reach + margin);
   for (let k = 0; k < front.length; k++) if (green[k]) front[k] = 0;
   joinLoose(cells, green, FRONT.strip, specks);
-  rimLawns(cells, green);
   for (let k = 0; k < front.length; k++) if (front[k]) zone[k] = 1;
 };
 

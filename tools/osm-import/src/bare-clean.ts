@@ -55,7 +55,7 @@ const mixedRow = (cells: Cells, t: Int32Array, j: number, r: number, lo: number,
 /** What `coverRow` reads a row from: `base` the row's start in the raster's classes (`cls`), -1 off it. */
 interface CoverRow {
   readonly label: Uint8Array;
-  /** A pedestrian street's frontage (`bare-fronts.ts`): what the cover shows as neither a lawn nor paving is read as paving, its lawns' rims (2) as a lawn. */
+  /** A pedestrian street's frontage (`bare-fronts.ts`): what the cover shows as neither a lawn nor paving is read as paving. */
   readonly front: Uint8Array;
   readonly nx: number;
   readonly cols: Int32Array;
@@ -80,11 +80,8 @@ const coverRow = (r: CoverRow, j: number, up: number, here: number): void => {
     if (!taken(l)) {
       const col = cols[i]!;
       l = labels[base < 0 || col < 0 ? none : cls[base + col]!]!;
-      // Asphalt, a dark sett, no class: a walker's street is paved to its walls (G-853). Beside a lawn
-      // of the map its rim is lawn, but where the cover shows paving it stays bare: neither paving over
-      // the lawn's outline (T-199) nor a lawn on the photograph's setts (G-775).
-      if (front[o + i] === 2) l = l === LABEL.square ? LABEL.other : LABEL.grass;
-      else if (l === LABEL.other && front[o + i]) l = LABEL.square;
+      // Asphalt, a dark sett, no class: a walker's street is paved to its walls (G-853).
+      if (l === LABEL.other && front[o + i]) l = LABEL.square;
       label[o + i] = l;
     }
     run = (run + PACKED[l]!) | 0;
@@ -318,9 +315,10 @@ export const joinSpecks = (cells: Cells, speck: number): void => {
       // The label most of the border has, the lower one on a tie.
       let to = -1;
       for (let l = 0; l < round.length; l++) if (round[l]! > 0 && (to < 0 || round[l]! > round[to]!)) to = l;
-      // In a pedestrian street's frontage a speck of paving in a crown's bed stays paving too: the
-      // leaf-off flight's setts under the trees (G-853, `lawn-on-leafoff-paving`).
-      if (to < 0 || (to === LABEL.square && label[s] === LABEL.grass) || (to === LABEL.grass && label[s] === LABEL.square && cells.front[s])) continue;
+      // In a pedestrian street's frontage a speck of paving in a crown's bed stays paving too, from
+      // the least piece laid (1 m², 4 cells) up: the leaf-off flight's setts under the trees (G-853,
+      // `lawn-on-leafoff-paving`); a smaller one would leave a hole in the lawn.
+      if (to < 0 || (to === LABEL.square && label[s] === LABEL.grass) || (to === LABEL.grass && label[s] === LABEL.square && cells.front[s] && n >= 4)) continue;
       for (let q = 0; q < n; q++) label[queue[q]!] = to;
     }
   }

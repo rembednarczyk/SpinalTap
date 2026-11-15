@@ -393,6 +393,9 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
   for (const w of walls) cells.cover(w, 0, false, true);
   for (const g of ground) if (g.bridge) cells.block(ringOf(g.outline), FILL.bridge);
   for (const r of FILL_CLEARED) if (rectsOverlap(r, rect)) cells.cover(boxOf(r));
+  // The frontages' fills end on the map's lawns, beds and water exactly, drawn or not: no paving laps
+  // over a lawn's outline by the half cell a fill is traced past its last (T-199, G-853).
+  if (base) for (const g of town.greens ?? []) cells.cover(g);
   for (const a of town.areas) cells.zoneIn(a);
   for (const s of town.shops) cells.zoneNear(s, FILL.forecourt);
   for (const p of town.stops) cells.zoneNear([p], FILL.platform);
@@ -403,6 +406,7 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
   if (base) {
     const lawns = scratch.u8("fronts.lawns", cells.label.length);
     for (const g of base) if (g.surface === "grass") cells.mark(ringOf(g.outline), lawns);
+    for (const g of town.greens ?? []) cells.mark(g, lawns);
     offFronts(cells);
     paveSpecks(cells, lawns);
   } else kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
