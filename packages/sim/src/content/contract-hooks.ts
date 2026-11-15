@@ -1,5 +1,5 @@
 import type { ContractHookDef, Vec3 } from "@seki/core";
-import { docks } from "./district-doki";
+import { w3 } from "./tessen-w3/site";
 import { ground } from "./lublin/terrain";
 import { spotNear } from "./lublin/places";
 
@@ -124,7 +124,7 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     source: "terminal",
     knot: "hook_escort_2",
     text: "hook.escort_2",
-    carrier: { at: docks(10, 0, 98.5) },
+    carrier: { at: ground(2500, 389) },
     reveal: { kind: "rotation_gap", post: 3, period: DAY, from: at(1), to: at(3) },
   },
   {
@@ -133,7 +133,7 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     source: "terminal",
     knot: "hook_infiltrate_1",
     text: "hook.infiltrate_1",
-    carrier: { at: docks(-15.4, 0, 126.6) },
+    carrier: { at: w3(2498.8, 0, 438) },
     reveal: { kind: "code" },
   },
   {

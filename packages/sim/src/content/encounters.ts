@@ -1,5 +1,4 @@
 import type { EncounterDef } from "@seki/core";
-import { DOCKS_PLACE } from "./lublin/sites";
 
 /**
  * Street encounters (ADR-0032): short ink scenes, three to five per district, that start when
@@ -8,7 +7,6 @@ import { DOCKS_PLACE } from "./lublin/sites";
  * The knots live in `packages/narrative/ink/enc-<district>.ink`.
  */
 /** The (x, z) of a point of the docks, from their own coordinates. */
-const inDocks = (x: number, z: number) => ({ x: x + DOCKS_PLACE.x, z: z + DOCKS_PLACE.z });
 
 export const ENCOUNTERS: readonly EncounterDef[] = [
   // Krakowskie Przedmieście: the deptak from Plac Litewski to Plac Łokietka.
@@ -43,11 +41,11 @@ export const ENCOUNTERS: readonly EncounterDef[] = [
   // Riko sings on the square further east along the avenue in the evening.
   { id: "targ_idol", district: "targ", knot: "enc_targ_idol", fromHour: 19, toHour: 23, at: { x: 790, z: 362 }, radius: 5, npcKey: "enc-riko", once: true },
 
-  // Nabrzeże Bystrzycy: the container yard and the quay.
-  // Tomo, laid off by an algorithm, smokes at the north end of the yard in the morning.
-  { id: "doki_laidoff", district: "doki", knot: "enc_doki_laidoff", fromHour: 5, toHour: 11, at: inDocks(16, 119), radius: 4, npcKey: "enc-tomo", once: true },
+  // Nabrzeże Bystrzycy: the public strip by W-3's fence and its quay (ADR-0082).
+  // Tomo, laid off by an algorithm, smokes on the strip past the metro in the morning.
+  { id: "doki_laidoff", district: "doki", knot: "enc_doki_laidoff", fromHour: 5, toHour: 11, at: { x: 2538, z: 388 }, radius: 4, npcKey: "enc-tomo", once: true },
   // A Tessen guard against a cyber gull on the quay, by day.
-  { id: "doki_gull", district: "doki", knot: "enc_doki_gull", fromHour: 10, toHour: 17, at: inDocks(2, 132), radius: 5, npcKey: "enc-gull-guard", once: true },
-  // Knocking from a sealed container on the east side of the yard, at night; nobody to spawn.
-  { id: "doki_container", district: "doki", knot: "enc_doki_container", fromHour: 22, toHour: 4, at: inDocks(17, 106), radius: 3, once: true },
+  { id: "doki_gull", district: "doki", knot: "enc_doki_gull", fromHour: 10, toHour: 17, at: { x: 2482.5, z: 434 }, radius: 5, npcKey: "enc-gull-guard", once: true },
+  // Knocking from a sealed container on the pickup yard, at night; nobody to spawn.
+  { id: "doki_container", district: "doki", knot: "enc_doki_container", fromHour: 22, toHour: 4, at: { x: 2530, z: 445 }, radius: 3, once: true },
 ];

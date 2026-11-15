@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { type Contract, type DifficultyProfile, type DomainEvents, type DomainState, type Vec3, ENEMY_TYPES, MICRO_EVENT_CHANCE, SECONDS_PER_HOUR, contractTag, enemyScale } from "@seki/core";
 import {
-  DOKI_TERMINAL_SPOTS,
+  W3_TERMINAL_SPOTS,
   GANGER_MAX_HP,
   GENZO_SPOT,
   REINFORCE_INTERVAL,
@@ -15,7 +15,7 @@ import {
   ground,
   sniperEntity,
 } from "../src";
-import { byKey, collect, input, run, streetSim, teleportPlayer } from "./helpers";
+import { byKey, collect, input, run, standInFront, streetSim, teleportPlayer } from "./helpers";
 import { DOCKS_CHUNK, profile, roundTrip, setProfile, tough, yardFight } from "./difficulty-scenes";
 
 /*
@@ -83,7 +83,7 @@ describe("awareness: how fast NPCs and cameras notice (ADR-0066)", () => {
     const suspicion = (patch: Partial<DifficultyProfile>) => {
       const { sim, c } = infiltration(patch);
       const door = byKey(sim, `${c.id}-g1`)!;
-      teleportPlayer(sim, ground(door.position.x + 8, door.position.z), -Math.PI / 2);
+      standInFront(sim, door, 8);
       sim.step();
       return door.ai!.suspicion ?? 0;
     };
@@ -272,7 +272,7 @@ describe("snipeTell and npcAccuracy of a sniper (ADR-0066)", () => {
     sim.world.add(s);
     const aims = collect<DomainEvents["SniperAimed"]>(sim, "SniperAimed");
     const shots = collect<DomainEvents["ShotFired"]>(sim, "ShotFired");
-    const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
+    const t = W3_TERMINAL_SPOTS.quay_terminal!;
     teleportPlayer(sim, ground(t.x, t.z - 1.4), 0);
     sim.step();
     /** Steps from the laser to the shot. */

@@ -105,7 +105,7 @@ export const METRO_STATIONS: readonly MetroStationDef[] = [
   // Nabrzeże Bystrzycy: outside the Tessen yard, its back to the yard's south wall (the old kiosk stood in the
   // 2.8 m between that wall and the warehouse), open east to the yard's gate. The wall stands 0.2 m off its north
   // side (z 390.0): the eaves stop short of it there (T-160).
-  station("doki", "Nabrzeże Bystrzycy", "doki", { x: 2527, z: 388 }, [entrance("A", "Nabrzeże", { x: 2527, z: 388, along: "x", opens: 1, wall: { side: 1, gap: 0.2 } }, SPAN)]),
+  station("doki", "Nabrzeże Bystrzycy", "doki", { x: 2527, z: 388 }, [entrance("A", "Nabrzeże", { x: 2527, z: 388, along: "x", opens: 1 }, SPAN)]),
 ];
 
 export const metroStation = (id: MetroStationId): MetroStationDef => {
