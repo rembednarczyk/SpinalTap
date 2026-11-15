@@ -233,6 +233,8 @@ const pavementAt = (w: World, s: KerbSample): number => {
     if (crosses(s.kerb, far, b.a, b.b)) wall = Math.min(wall, toSegment(s.kerb, b.a, b.b));
   let bare: number | null = null;
   for (let d = 0.5; d < wall; d += 0.25) {
+    // `WIDE` of paving with no gap: whatever lies further, the pavement is that wide.
+    if (d >= WIDE && bare === null) return WIDE;
     const q = { x: s.kerb.x + s.out.x * d, z: s.kerb.z + s.out.z * d };
     const surface = w.site.surfaceAt(q);
     if (surface === "building" || surface === "water" || surface === "rail") {
@@ -302,10 +304,11 @@ export const BAY_WINDOW = 4;
  */
 const baysOf = (w: World, samples: readonly KerbSample[]): boolean[] => {
   const flagged = samples.map((s) => {
+    // The orthophoto first: where it has no cover, the ground under it is not read.
     const seen = BAY_DEPTHS.map((d) => ({ x: s.p.x + s.out.x * d, z: s.p.z + s.out.z * d }))
-      .filter((q) => w.site.surfaceAt(q) !== "building")
-      .map((q) => w.asphalt(q))
-      .filter((a): a is boolean => a !== null);
+      .map((q) => ({ q, a: w.asphalt(q) }))
+      .filter(({ q, a }) => a !== null && w.site.surfaceAt(q) !== "building")
+      .map(({ a }) => a === true);
     return seen.length >= 3 && seen.filter(Boolean).length / seen.length >= BAY_ASPHALT;
   });
   return samples.map((s, i) => {
