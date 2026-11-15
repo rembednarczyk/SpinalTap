@@ -66,7 +66,7 @@ export const waterLevel = (kerb: number, hold: number): number => {
   let rut = 0;
   for (const c of TRACKS) rut = Math.max(rut, 1 - smoothstep(0.1, 0.28, Math.abs(t - c)));
   rut *= smoothstep(0.8, 1.2, kerb) * (1 - smoothstep(9, 11, kerb));
-  return 0.5 * gutter + 0.2 * rut + 0.45 * hold;
+  return 0.46 * gutter + 0.2 * rut + 0.45 * hold;
 };
 
 /** The puddles' shapes: many small, a few large, the same at a point on every run. */
@@ -102,7 +102,7 @@ float waterLevel(vec2 field) {
   float t = mod(field.x - 0.4, ${LANE.toFixed(1)});
   float rut = max(1.0 - smoothstep(0.1, 0.28, abs(t - ${TRACKS[0]})), 1.0 - smoothstep(0.1, 0.28, abs(t - ${TRACKS[1]})));
   rut *= smoothstep(0.8, 1.2, field.x) * (1.0 - smoothstep(9.0, 11.0, field.x));
-  return 0.5 * gutter + 0.2 * rut + 0.45 * field.y;
+  return 0.46 * gutter + 0.2 * rut + 0.45 * field.y;
 }
 float waterStanding(vec2 field, vec2 xz) {
   float n = 0.62 * waterValue(xz * 0.8) + 0.38 * waterValue(xz * 2.6 + 17.0);

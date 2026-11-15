@@ -203,6 +203,14 @@ export class WaterField {
     return [carriageway ? this.kerbDistance(x, z) : WATER_FAR, this.hold(x, z, !carriageway)];
   }
 
+  /** Whether (x, y, z) lies on a bridge's deck: a piece lifted onto it drains like the deck. */
+  private onDeck(x: number, y: number, z: number): boolean {
+    const decks = this.entries.decks;
+    if (!decks.near(x, z)) return false;
+    const deck = decks.heightAt(x, z, y);
+    return deck !== null && y > deck - 0.5;
+  }
+
   /**
    * Bakes the field of the vertices `sink` has past its third UV channel, laid for `g`: none on
    * a zebra, a bridge's deck or steps, by the surface code of each vertex elsewhere.
@@ -211,7 +219,9 @@ export class WaterField {
     const never = !g || g.deck !== undefined || g.surface === "crossing" || g.surface === "steps" || g.surface === "water" || g.surface === "basin";
     const p = sink.positions;
     for (let v = sink.uvs3.length / 2; v < sink.vertexCount; v++) {
-      const f = never ? [WATER_FAR, WATER_NEVER] : this.at(p[v * 3] ?? 0, p[v * 3 + 2] ?? 0, Math.round(sink.uvs2[v * 2] ?? 0), sink.normals[v * 3 + 1] ?? 0);
+      const x = p[v * 3] ?? 0;
+      const z = p[v * 3 + 2] ?? 0;
+      const f = never || this.onDeck(x, p[v * 3 + 1] ?? 0, z) ? [WATER_FAR, WATER_NEVER] : this.at(x, z, Math.round(sink.uvs2[v * 2] ?? 0), sink.normals[v * 3 + 1] ?? 0);
       sink.uvs3.push(f[0] ?? WATER_FAR, f[1] ?? WATER_NEVER);
     }
   }

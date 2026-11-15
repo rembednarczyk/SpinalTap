@@ -6,6 +6,7 @@ import { ToonMaterials } from "../src/npr/toon-material";
 import { TOON_FRAGMENT } from "../src/npr/toon-shader";
 import { WATER_FAR, WATER_NEVER, standingWater, waterLevel } from "../src/npr/water-mask";
 import { planDressing } from "../src/renderer/dressing-plan";
+import { deckHeight } from "../src/renderer/mapcity/deck-plan";
 import { SURFACE_CODE } from "../src/renderer/mapcity/ground-plan";
 import { MapCity, type MapView } from "../src/renderer/mapcity/map-city";
 import type { MapEntries } from "../src/renderer/mapcity/map-entries";
@@ -109,9 +110,10 @@ describe("the water on the streets (ADR-0084)", () => {
   });
 
   it("never stands on zebras, decks, kerbs, walls or lawns", () => {
-    const zebras = [...ground.entries.grounds.values()].filter((g) => g.surface === "crossing" || g.deck).map((g) => g.ring);
+    const zebras = [...ground.entries.grounds.values()].filter((g) => g.surface === "crossing" || g.deck);
     expect(zebras.length).toBeGreaterThan(0);
-    const inZebra = (p: P2) => zebras.some((r) => pointInRing(p, r));
+    // On a deck, not on the way under it.
+    const inZebra = (p: P2, y: number) => zebras.some((g) => pointInRing(p, g.ring) && (!g.deck || y > deckHeight(g.deck, p.x, p.z) - 0.5));
     let checked = 0;
     for (const m of ground.meshes) {
       const p = m.getVerticesData("position") ?? [];
@@ -122,10 +124,11 @@ describe("the water on the streets (ADR-0084)", () => {
       for (let v = 0; v < p.length / 3; v++) {
         const code = Math.round(meta[v * 2] ?? 0);
         const never = (n[v * 3 + 1] ?? 0) < 0.9 || code === SURFACE_CODE.kerb || code === SURFACE_CODE.grass;
-        // A vertex well inside a zebra or a deck (its edge is shared with the asphalt round it).
+        // A vertex of the asphalt well inside a zebra or on a deck (the edge is shared with the asphalt round it).
         const x = p[v * 3] ?? 0;
         const z = p[v * 3 + 2] ?? 0;
-        const inside = [[0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3]].every(([dx, dz]) => inZebra({ x: x + (dx ?? 0), z: z + (dz ?? 0) }));
+        // Only the carriageway's own vertices: paving laid over a zebra's outline keeps its own field.
+        const inside = code === SURFACE_CODE.road && [[0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3]].every(([dx, dz]) => inZebra({ x: x + (dx ?? 0), z: z + (dz ?? 0) }, p[v * 3 + 1] ?? 0));
         if (!never && !inside) continue;
         checked++;
         expect(f[v * 2 + 1], `${m.name} vertex ${v}`).toBe(WATER_NEVER);
