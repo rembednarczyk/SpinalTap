@@ -13,7 +13,7 @@ import {
 } from "@seki/core";
 import { CONTRACT_SITE_SPAWNS, contractSpawnYaw } from "../content/district-m0";
 import { CONTRACT_ITEM_SPOTS } from "../content/alchemia/market";
-import { DOKI_CONTRACT_POSTS, DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, ESCORT_ROUTE } from "../content/district-doki";
+import { ESCORT_ROUTE, W3_CONTRACT_POSTS, W3_ITEM_SPOTS, W3_TERMINAL_SPOTS } from "../content/tessen-w3";
 import { type ChunkDef, chunkAt } from "../content/world-map";
 import { decorateTarget, planExtras, targetPresence, targetSpot, targetType } from "./contract-plan";
 import type { Entity } from "./components";
@@ -39,7 +39,7 @@ const targetTemplates = (ids: IdAllocator, chunk: string, contract: Contract): T
   const kind = contractKind(contract);
   // A protection wave is sent at Oyaji, an escort's ambush at the defector; everyone else holds the site.
   const victim = kind === "protect" ? PROTECTEE_KEY : kind === "escort" ? contractEscortKey(contract.id) : undefined;
-  const posts = DOKI_CONTRACT_POSTS[contract.siteId];
+  const posts = W3_CONTRACT_POSTS[contract.siteId];
   const tag = contractTag(contract.id);
   for (let i = 0; i < contract.targets; i++) {
     // The variation (ADR-0034) may move a target (the lookout, a swapped mark).
@@ -82,7 +82,7 @@ const targetTemplates = (ids: IdAllocator, chunk: string, contract: Contract): T
 const objectTemplates = (ids: IdAllocator, chunk: string, contract: Contract): Template[] => {
   const out: Template[] = [];
   const kind = contractKind(contract);
-  const crate = kind === "retrieve" ? CONTRACT_ITEM_SPOTS[contract.siteId] : kind === "infiltrate" ? DOKI_ITEM_SPOTS[contract.siteId] : undefined;
+  const crate = kind === "retrieve" ? CONTRACT_ITEM_SPOTS[contract.siteId] : kind === "infiltrate" ? W3_ITEM_SPOTS[contract.siteId] : undefined;
   if (crate) {
     const id = ids.take();
     const key = contractItemKey(contract.id);
@@ -93,7 +93,7 @@ const objectTemplates = (ids: IdAllocator, chunk: string, contract: Contract): T
     const key = contractEscortKey(contract.id);
     out.push({ id, chunk, key, make: () => escortEntity(id, key, ESCORT_ROUTE, chunk) });
   }
-  const terminal = kind === "hack" ? DOKI_TERMINAL_SPOTS[contract.siteId] : undefined;
+  const terminal = kind === "hack" ? W3_TERMINAL_SPOTS[contract.siteId] : undefined;
   if (terminal) {
     const id = ids.take();
     const key = contractTerminalKey(contract.id);
@@ -104,7 +104,7 @@ const objectTemplates = (ids: IdAllocator, chunk: string, contract: Contract): T
 
 /** The variation's extras (ADR-0034); each may stand in a neighbouring chunk and spawns with it. */
 const extraTemplates = (ids: IdAllocator, chunks: readonly ChunkDef[], chunk: string, contract: Contract): Template[] => {
-  const docks = DOKI_CONTRACT_POSTS[contract.siteId] !== undefined;
+  const docks = W3_CONTRACT_POSTS[contract.siteId] !== undefined;
   const extra = {
     chunk,
     hp: docks ? docksGuardHp("tessen_guard") : GANGER_MAX_HP,

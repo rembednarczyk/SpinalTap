@@ -8,7 +8,7 @@ import { TRASA_PODZIEMNA_BOUNDS, TRASA_PODZIEMNA_CHUNK, TRASA_PODZIEMNA_PROPS, T
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
 import { METRO_NAV } from "./metro-nav";
 import { CLINIC_DOOR, KOI_DOOR, S7_NAV } from "./interiors";
-import { DOKI_NAV } from "./district-doki";
+import { W3_NAV, W3_SCENERY } from "./tessen-w3";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
@@ -179,6 +179,8 @@ export const WORLD_SCENERY: readonly SceneryItem[] = [
   ...P1_CARS.map((p): SceneryItem => ({ chunk: ALCHEMIA_CHUNK, view: p1CarView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
   // The map's walls, fences and hedges (ADR-0077), drawn with the furniture, last so the ids above stay.
   ...Object.entries(WORLD_BARRIERS).map(([chunk, items]): SceneryItem => ({ chunk, view: { kind: "street-props", items }, at: { x: 0, y: 0, z: 0 } })),
+  // W-3's paving, its hall's walls and its fences (ADR-0082), after the city's, so its ids stay.
+  ...W3_SCENERY.map((s): SceneryItem => ({ chunk: mapChunkOf(s.in.x, s.in.z), view: s.view, at: s.at })),
 ];
 
 /** Cameras and hackable devices (ADR-0029); each one names its chunk above. */
@@ -188,12 +190,12 @@ export const WORLD_DEVICES: readonly DeviceDef[] = DEVICES;
 export const WORLD_METRO: readonly MetroStationDef[] = METRO_STATIONS;
 
 /**
- * Level graph of the whole city (ADR-0021): the docks' roofs and crane,
+ * Level graph of the whole city (ADR-0021): W-3's tower, roof and pipe walk (ADR-0082),
  * the interiors of Krakowskie Przedmieście (ADR-0038), the metro's stairs (ADR-0071) and
  * Alchemia's food hall under its terrace (ADR-0074). The streets themselves are one level
  * on the terrain.
  */
-export const WORLD_NAV: NavGraph = mergeNav(DOKI_NAV, S7_NAV, METRO_NAV, ALCHEMIA_NAV);
+export const WORLD_NAV: NavGraph = mergeNav(W3_NAV, S7_NAV, METRO_NAV, ALCHEMIA_NAV);
 
 /** Stashes placed once when the player first comes near: on roofs (ADR-0021), in alleys and dead ends (ADR-0026). */
 export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH, ...S7_STASHES, KANAL_ALLEY_STASH, TARG_OVERPASS_STASH, TRASA_PODZIEMNA_STASH];

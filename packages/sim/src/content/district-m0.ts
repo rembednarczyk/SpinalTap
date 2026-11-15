@@ -3,7 +3,7 @@ import { M0_TARGET_TAG } from "@seki/core";
 import { KANAL_CONTRACT_SITE_SPAWNS } from "./district-kanal";
 import { type RoofStash, TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./alchemia/market";
 import { CAR_WASH_PROPS } from "./district-car-wash";
-import { DOKI_CONTRACT_SITE_SPAWNS } from "./district-doki";
+import { W3_CONTRACT_SITE_SPAWNS } from "./tessen-w3";
 import {
   type ActorDef,
   type ActorSpawn,
@@ -107,7 +107,7 @@ export const RIPPERDOC_SPAWN: ActorSpawn = MORI_SPAWN;
 /** Spawn points for procedural contracts (up to four gangers per site), the other districts' included. */
 export const CONTRACT_SITE_SPAWNS: Readonly<Record<ContractSiteId, readonly Vec3[]>> = {
   ...TARG_CONTRACT_SITE_SPAWNS,
-  ...DOKI_CONTRACT_SITE_SPAWNS,
+  ...W3_CONTRACT_SITE_SPAWNS,
   ...KANAL_CONTRACT_SITE_SPAWNS,
   east_lot: [on(EAST_LOT, 10.5, -15.5), on(EAST_LOT, 13.5, -8.5), on(EAST_LOT, 16, -14), on(EAST_LOT, 9.5, -9)],
   koi_back: [on(KOI_BACK, 3, 12), on(KOI_BACK, -3, 14.5), on(KOI_BACK, 5, 17), on(KOI_BACK, -1, 10)],
