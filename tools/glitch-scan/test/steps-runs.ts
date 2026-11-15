@@ -3,7 +3,7 @@
  * for the run (`planSteps`), so a band laid on a run of `highway=steps` shorter than the band is
  * wide gets its treads along the run, a walker climbing them sideways.
  */
-import { STEP_DEPTH } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
+import { MIN_FLIGHT } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { orientedBox } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { type MapWay } from "./steps-walls";
 
@@ -35,7 +35,7 @@ const onRun = (p: Pt, u: Pt, r: Run): { readonly on: boolean; readonly along: bo
 export const drawnFlight = (ring: readonly Pt[]): boolean => {
   if (ring.length < 3) return false;
   const box = orientedBox(ring);
-  return box.halfLong * 2 >= STEP_DEPTH && box.halfShort >= 0.2;
+  return box.halfLong * 2 >= MIN_FLIGHT && box.halfShort >= 0.2;
 };
 
 /** Each steps band (world ring) the renderer leaves out as a sliver: a hole in its flight, or steps of the map not drawn. */

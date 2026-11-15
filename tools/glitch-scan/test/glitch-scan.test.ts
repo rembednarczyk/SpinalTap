@@ -103,6 +103,7 @@ import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-ru
 import { stepsInclineAgainst } from "./steps-incline";
 import { roadDipsOverTunnels } from "./road-tunnel";
 import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
+import { flightOffNorm } from "./steps-norm";
 import { deckSlots } from "./deck-slot";
 import { bridgeEndsInSlope } from "./bridge-end-slope";
 import { deckSteps } from "./deck-step";
@@ -1062,6 +1063,22 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
           const risers = riserHeights(g.outline);
           const low = risers.filter((h) => h < 0.045).length;
           return low * 2 > risers.length ? [{ at: near(g.outline[0]!, g.outline[1]!), what: `${c.id} ${low} of ${risers.length} risers under 4.5 cm` }] : [];
+        }),
+    ),
+  /**
+   * A flight of map steps off the one norm of a step as the renderer draws it on the game's ground
+   * (G-840, `STEP_NORM`): a riser out of 0.12-0.17 m, a tread out of the stride and too short for a
+   * landing, unequal risers in one flight, or more than 12 risers with no landing. One per band.
+   */
+  "steps-riser-norm": () =>
+    MAP_CHUNKS.flatMap((c) =>
+      c.ground
+        .filter((g) => g.surface === "steps")
+        .flatMap((g) => {
+          const ring: Pt[] = [];
+          for (let i = 0; i + 1 < g.outline.length; i += 2) ring.push({ x: g.outline[i]!, z: g.outline[i + 1]! });
+          const off = flightOffNorm(stepFaces(ring, groundY), ring);
+          return off ? [{ at: near(g.outline[0]!, g.outline[1]!), what: `${c.id} ${off}` }] : [];
         }),
     ),
   /**

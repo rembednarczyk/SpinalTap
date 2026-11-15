@@ -1,4 +1,4 @@
-import { FACADE_GLSL, GROUND_GLSL } from "./toon-city";
+import { FACADE_GLSL, GROUND_GLSL, STEPS_VERTEX_GLSL } from "./toon-city";
 
 /** Number of point lights the toon shader evaluates per fragment. */
 export const MAX_POINT_LIGHTS = 8;
@@ -33,6 +33,7 @@ uniform mat4 shadowMatrix;
 varying vec3 vWorldPos;
 varying vec3 vNormal;
 varying vec4 vShadowPos;
+${STEPS_VERTEX_GLSL}
 
 void main(void) {
   // Face expressions of imported models (blink, mouth) move positions only.
@@ -43,8 +44,14 @@ void main(void) {
 #include<instancesVertex>
 #include<bonesVertex>
   vec4 wp = finalWorld * vec4(positionUpdated, 1.0);
+  vec3 nw = mat3(finalWorld) * normalUpdated;
+#ifdef MAP_GROUND
+  vec3 onRamp = wp.xyz;
+  stepsMorph(onRamp, nw, uv2);
+  wp = vec4(onRamp, wp.w);
+#endif
   vWorldPos = wp.xyz;
-  vNormal = normalize(mat3(finalWorld) * normalUpdated);
+  vNormal = normalize(nw);
   vShadowPos = shadowMatrix * wp;
 #ifdef UV1
   vUV = uv;
