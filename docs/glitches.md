@@ -2260,8 +2260,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-872 Karmelicka 7: stojący budynek z building=construction pominięty przez SKIP_BUILDING
 - Ważność: S3 · Zasięg: w1134342880 (311..335; 56..98), Krakowskie
 - Opis: Ortofoto 2023-09, 2024-06 i 2025-04 pokazuje dach budynku; OSM building=construction, construction=commercial; w grze goła ziemia bez bryły (SKIP_BUILDING w generate.ts). Znalezione w przeglądzie kuratora G-853 r3. Test: bryła Karmelicka 7 z wysokością z LoD1/NMPT; proponowana kontrola osm-construction-built 1 -> 0.
-- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g872); wcześniej: nowy
+- Status: do przeglądu kuratora (6bbd199), skan czerwony: +15/+10/+5 kluczy przy bryle; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g872); wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
+- builtSites (cfec849, 6bbd199): building=construction pod LoD1 2024 (IoU>=0,7) jako budynek, bryła 19,7 m commercial; osm-construction-built 1->0; przy bryle +15 landuse-bare, +10 bare-on-cover, +5 ground-strip-gap (goła ziemia sprzed poprawki, teraz przedpole sklepu); baza nie podniesiona, czeka na przegląd kuratora i decyzję
 
 ### G-873 Graf poziomów: brak testu, że krawędzie nie przekraczają REACH 120 m
 - Ważność: S4 · Zasięg: packages/sim/src/world/nav.ts (REACH), graf W-3, S7, metro, Alchemia
