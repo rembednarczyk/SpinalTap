@@ -277,16 +277,18 @@ const carriagewayPieces = (lines: readonly Line[], sidewalks: ReturnType<typeof 
   const places = lanePlaces(lines.filter((l) => l.tags.highway), own);
   const fittedLanes = new Map<string, readonly Line[]>();
   const aside = new Map<string, number>();
+  const moved = new Set<string>();
   for (const l of lines) {
     if (!l.tags.highway) continue;
     const fitted = sidewalks.lanes(l) ?? orthoPieces(l);
     const place = places.get(l.id);
     const pieces = placedPieces(l, fitted ?? [l], fitted ? 0 : own(l), place, own(l));
     if (fitted || pieces[0] !== l) fittedLanes.set(l.id, pieces);
-    const moved = Math.max(Math.abs(ORTHO_OFFSETS.get(l.id) ?? 0), Math.abs(own(l)), ...[place?.start, place?.end].map((e) => Math.abs(e?.centre ?? 0)));
-    if (moved > 0) aside.set(l.id, moved);
+    if (pieces[0] !== (fitted ?? [l])[0]) moved.add(l.id);
+    const most = Math.max(Math.abs(ORTHO_OFFSETS.get(l.id) ?? 0), Math.abs(own(l)), ...[place?.start, place?.end].map((e) => Math.abs(e?.centre ?? 0)));
+    if (most > 0) aside.set(l.id, most);
   }
-  return { fittedLanes, aside };
+  return { fittedLanes, aside, moved };
 };
 
 export const generate = (
@@ -306,7 +308,7 @@ export const generate = (
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
   const sidewalks = sidewalkIndex(mapLines);
   const lines = mapLines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));
-  const { fittedLanes, aside } = carriagewayPieces(lines, sidewalks);
+  const { fittedLanes, aside, moved } = carriagewayPieces(lines, sidewalks);
   const carriageway = (l: Line): readonly Line[] => fittedLanes.get(l.id) ?? [l];
   const outlines = buildingAreas(areas, data);
   const partAreas = areas.filter(isPart);
@@ -389,7 +391,7 @@ export const generate = (
   // A street fitted to its mapped sidewalks (T-046) has its width from them, as a measured one.
   const measured = new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id));
   // A joint's patch laps over the next street: the kerbs are read off the bands without it, as its lap is no kerb's (G-760).
-  const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks);
+  const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks, moved);
   for (const [b, { ring, runs }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
   bands.splice(0, bands.length, ...slitsOffWidened(bands, [...kerbs.widened.values()].map((w) => w.ring)));

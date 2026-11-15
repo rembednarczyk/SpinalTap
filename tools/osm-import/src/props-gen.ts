@@ -17,7 +17,7 @@ import { litSpot } from "./props-lit-spot.ts";
 import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } from "./props-food.ts";
 import { marketEntrances, marketStalls } from "./props-market.ts";
 import { onKerb } from "./props-bollard-lines.ts";
-import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideSpot, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
+import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideSpot, signalSide, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
 import { byStyledLamp, oldTownLook } from "./props-lamp-looks.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
@@ -445,7 +445,7 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     // A kerb lamp in front of a car park's cars, on asphalt with no kerb (T-172), stays there.
     const byLot = KERB_LAMPS.has(placedAt.prop) && site.byLot(at, LOT_REACH);
     // A lamp on a bridge's deck stands on its paving whatever road runs under it.
-    const off = ON_ROAD.has(placedAt.prop) || byLot || placedAt.deck ? onKerb(site, at, placedAt.key) : offRoad(site, at);
+    const off = ON_ROAD.has(placedAt.prop) || byLot || placedAt.deck ? onKerb(site, at, placedAt.key) : offRoad(site, at, undefined, undefined, placedAt.prop === "traffic-signal" ? signalSide(site, at) : undefined);
     if (!off) {
       onRoad++;
       continue;

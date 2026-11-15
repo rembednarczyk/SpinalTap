@@ -144,26 +144,33 @@ export const lanePlaces = (lines: readonly Line[], own: (l: Line) => number): Ma
     const centres = new Map<Arm, number>();
     const total = sorted.reduce((n, a) => n + a.lanes, 0);
     if (total === single.lanes) {
-      // The single way's lanes shared out from its left edge.
+      // The single way's lanes shared out from its left edge. The way going straight on is laid
+      // halfway between its lanes' place and its own line: the map's node of a split lies on the
+      // single way's line, which mappers draw along its middle or along the lanes going straight
+      // on (Al. Solidarności's w762599273 2 m off its middle at the node, G-825 r2).
       let edge = single.own + (single.lanes * single.w) / 2;
       for (const a of sorted) {
-        centres.set(a, edge - (a.lanes * single.w) / 2);
+        const c = edge - (a.lanes * single.w) / 2;
+        centres.set(a, a === through ? (c + a.own) / 2 : c);
         edge -= a.lanes * single.w;
       }
     } else if (total > single.lanes) {
-      // Lanes ending or beginning at the node taper there beside the way going straight on: their
-      // middle on its edge, half the lane past it, as the taper's middle.
+      // Lanes beginning at the node (a link going off) lie beside the way going straight on, their
+      // middle on its edge, the deceleration lane's wedge; lanes ending there (a link joining) have
+      // tapered to nothing: inside it, their outer edge on its edge, as the merge's wedge closes on
+      // the kerb (G-825 r2).
       const k = sorted.indexOf(through);
+      const inward = single.out ? 1 : 0;
       centres.set(through, through.own);
       let edge = through.own + (through.lanes * through.w) / 2;
       for (const a of sorted.slice(0, k).reverse()) {
-        centres.set(a, edge);
-        edge += a.lanes * a.w;
+        centres.set(a, edge - (inward * a.lanes * a.w) / 2);
+        edge += (1 - 2 * inward) * a.lanes * a.w;
       }
       edge = through.own - (through.lanes * through.w) / 2;
       for (const a of sorted.slice(k + 1)) {
-        centres.set(a, edge);
-        edge -= a.lanes * a.w;
+        centres.set(a, edge + (inward * a.lanes * a.w) / 2);
+        edge -= (1 - 2 * inward) * a.lanes * a.w;
       }
     } else continue;
     for (const [a, c] of centres) {

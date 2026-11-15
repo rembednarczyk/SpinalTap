@@ -272,19 +272,42 @@ const AROUND = Array.from({ length: 32 }, (_, i) => ({ x: Math.sin((i * Math.PI)
 
 /**
  * p itself off the carriageway; on it (a traffic light's node in the road's axis), the nearest
- * pavement, green or bare ground within `reach` metres, `inset` metres in from its edge; null when none is.
+ * pavement, green or bare ground within `reach` metres, `inset` metres in from its edge, in the
+ * directions `towards` takes first when it gives any; null when there is none.
  */
-export const offRoad = (site: Site, p: Pt, reach = 12, inset = 0.6): Pt | null => {
+export const offRoad = (site: Site, p: Pt, reach = 12, inset = 0.6, towards?: (d: Pt) => boolean): Pt | null => {
   if (site.surfaceAt(p) !== "road") return p;
-  for (let r = 0.5; r <= reach; r += 0.5) {
-    for (const d of AROUND) {
-      if (!beside(site.surfaceAt({ x: p.x + d.x * r, z: p.z + d.z * r }))) continue;
-      const q = { x: p.x + d.x * (r + inset), z: p.z + d.z * (r + inset) };
-      if (beside(site.surfaceAt(q))) return q;
+  for (const only of towards ? [towards, () => true] : [() => true])
+    for (let r = 0.5; r <= reach; r += 0.5) {
+      for (const d of AROUND) {
+        if (!only(d) || !beside(site.surfaceAt({ x: p.x + d.x * r, z: p.z + d.z * r }))) continue;
+        const q = { x: p.x + d.x * (r + inset), z: p.z + d.z * (r + inset) };
+        if (beside(site.surfaceAt(q))) return q;
+      }
     }
-  }
   return null;
 };
+
+/**
+ * Where a traffic light from a node on the road stands first (G-825 r2, T-031): on the right of
+ * the one-way streets driven up to the node, as Poland drives, where their traffic stops at it.
+ * Undefined at a node no one-way street arrives at: any side.
+ */
+export const signalSide = (site: Site, p: Pt): ((d: Pt) => boolean) | undefined => {
+  const rights: Pt[] = [];
+  for (const s of site.streets) {
+    if (!s.oneway) continue;
+    for (let i = 1; i < s.line.length; i++) {
+      const [a, b] = [s.line[i - 1]!, s.line[i]!];
+      const l = Math.hypot(b.x - a.x, b.z - a.z);
+      if (l > 1e-6 && Math.hypot(b.x - p.x, b.z - p.z) < NODE_NEAR) rights.push({ x: (b.z - a.z) / l, z: -(b.x - a.x) / l });
+    }
+  }
+  return rights.length ? (d) => rights.some((r) => d.x * r.x + d.z * r.z > 0) : undefined;
+};
+
+/** A street's point this near a node is on it (m): the chunks keep 0.1 m. */
+const NODE_NEAR = 0.5;
 
 /** Does a circle of radius `r` round p reach into a building (sampled at its centre and 16 points round it)? */
 const touchesBuilding = (site: Site, p: Pt, r: number): boolean =>

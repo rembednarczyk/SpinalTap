@@ -40,6 +40,8 @@ export interface SiteStreet {
   readonly kind: string;
   readonly line: readonly Pt[];
   readonly chunk: string;
+  /** Driven one way only, the way the line runs. */
+  readonly oneway?: true;
 }
 
 const flat = (f: readonly number[], dx = 0, dz = 0): Pt[] => {
@@ -87,7 +89,7 @@ export class Site {
         const shape = { ring: flat(g.outline), surface: surfaceOf(g.surface), path: g.surface === "footway", steps: g.surface === "steps", deck, box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } };
         this.add(shape, g.bridge ? this.decks : this.bins);
       }
-      for (const s of c.streets) streets.push({ name: s.name, kind: s.kind, line: flat(s.line), chunk: c.id });
+      for (const s of c.streets) streets.push({ name: s.name, kind: s.kind, line: flat(s.line), chunk: c.id, ...(s.oneway ? { oneway: true as const } : {}) });
     }
     this.streets = streets;
     const lots = new Map(chunks.flatMap((c) => (c.carParks ?? []).filter((k) => k.kind === "surface").map((k) => [k.id, flat(k.outline)] as const)));
