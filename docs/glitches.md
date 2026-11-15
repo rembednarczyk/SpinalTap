@@ -2025,6 +2025,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g836, c52dde6, do przeglądu kuratora); wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 - 15.11: skew 19->5, overhang 26->9, glow 54->5, kerb 55->44; reszta: wyloty skrzyżowań, brzeg mapy, oś pasma vs ROAD_CHAINS; droga przejścia jako footway pod zebrą; zmieniony test G-811 (chodnik pod zebrą)
+- Przegląd kuratora 15.11 @ c52dde6: NIEZGODNE. P1 (2361,432) n4087364975 zebra obrócona o 35° (regresja), oś wzdłuż w406693442 N–S, ok. 10 m; P2 (927,468) w1054556913 zebra 6,5 m, asfalt gry dalej o 6,2/≥11,9 m, na ortofoto ok. 22 m (regresja); P3 (913,345) n4586176953 zebra ok. 50° skośnie, ma biec W–E przez w739432830, ok. 11 m. Reguła: zebra węzła na skrzyżowaniu wzdłuż drogi pieszej OSM przez węzeł; zasięg po asfalcie gry do krawężnika. Kontrole: crossing-off-path (baza 9), crossing-short-of-asphalt (baza 16). Klucz lamp-on-orto-carriageway (−128,−65) przyjąć z powodem: cień budynku na chodniku, krawężnik z ≈ −64,4. Runda 2.
 
 ### G-837 Zygzaki i schodki krawędzi chodnika przy jezdni i zebrze
 - Ważność: S3 · Zasięg: kerb-jag 55 trafień w 42 kwadratach 10 m; Podzamcze 18, Krakowskie 16, Nabrzeże 6, Stare Miasto 2
@@ -2079,6 +2080,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: runRings z 1–3 próbek o skoku szczeliny 0,3–2,8 m na styku dwóch jezdni; znalezione przy G-837 (zrzuty f7, f8)
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
+- 15.11 (przegląd G-836): kliny V między drogą przejścia a chodnikiem na końcach zebr: kerb-gap-bare (−100,−70), (180,70), (2390,330), (2670,100), (650,550), (1060,460); kerb-jag (−125,45), (225,155), (2655,115)
 
 ### G-846 Karta podsumowania zlecenia zakrywa komunikaty i cel, na 1024x600 wychodzi poza ekran
 - Ważność: S3 · Zasięg: HUD przy skali 1: desktop 1280x720 przecina komunikat; telefon przecina cel, drążek i komunikat; 1024x600 poza ekranem
@@ -2152,6 +2154,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Fałszywe trafienia kontroli z #581, znalezione przy G-836
 - Status: nowy
 - Pakiet właściciela: tools/glitch-scan
+- Kurator 15.11 (G-836): (913,345) nie jest fałszywe, to zebra węzła n4586176953 skośna o ok. 50° (P3 G-836); prawdziwe są też (927,468) i (2361,432). Klucze kerb-gap-bare (−160,50) i (2680,360) bez zmiany nawierzchni w kwadracie: szum progu
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
