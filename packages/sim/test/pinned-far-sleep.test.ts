@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Contract, contractFailedFlag } from "@seki/core";
-import { DOKI_ITEM_SPOTS, PINNED_AWAY_SECONDS, SIM_HZ, type Simulation, docks, ground } from "../src";
+import { W3_ITEM_SPOTS, PINNED_AWAY_SECONDS, SIM_HZ, type Simulation, w3, ground } from "../src";
 import { AWAY, byKey, input, run, teleportPlayer } from "./helpers";
 import { alarmed, hash, peopleOf, reload, taken } from "./contract-save-helpers";
 import { IdAllocator } from "../src/world/factory";
@@ -27,7 +27,7 @@ const neverGivesUp = (sim: Simulation, key: string): void => {
 };
 
 const backAtDocks = (sim: Simulation): void => {
-  teleportPlayer(sim, docks(0, 0, 120));
+  teleportPlayer(sim, w3(2492, 0, 418));
   run(sim, 30);
 };
 
@@ -223,8 +223,8 @@ describe("an alerted guard far from the player falls asleep (G-188)", () => {
 describe("a paid job's guard far from the player is gone (G-188 with G-195)", () => {
   /** Seed 8: the office's data taken unseen and the job paid; then one of its guards alerted. */
   const paidAlerted = (): { sim: Simulation; c: Contract; key: string } => {
-    const { sim, c } = taken(8, 0, docks(0, 0, 120), "infiltrate");
-    const spot = DOKI_ITEM_SPOTS.tessen_office!;
+    const { sim, c } = taken(8, 0, w3(2492, 0, 418), "infiltrate");
+    const spot = W3_ITEM_SPOTS.tessen_office!;
     teleportPlayer(sim, ground(spot.x + 1.1, spot.z), -Math.PI / 2);
     sim.step(input({ interact: true, crouch: true }));
     sim.enqueue({ type: "complete-contract" });

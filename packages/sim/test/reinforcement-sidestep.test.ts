@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { HeatLevel, HeatState, SaveSnapshot } from "@seki/core";
-import { Simulation, docks, stateHash } from "../src";
+import { Simulation, w3, stateHash } from "../src";
 import { alleySim, teleportPlayer } from "./helpers";
 
 /**
@@ -10,7 +10,7 @@ import { alleySim, teleportPlayer } from "./helpers";
  * lean to the side, so the rule shows in the game without any save.
  */
 
-const ROOF = docks(-28, 9, 107);
+const ROOF = w3(2540, 10.4, 401);
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
 
 /** The snapshot as v30 wrote it, before the style and bad luck (ADR-0059, stage 6): the progression without them. */

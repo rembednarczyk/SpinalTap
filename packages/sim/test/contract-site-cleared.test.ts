@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Contract, type SaveSnapshot, contractFailedFlag } from "@seki/core";
-import { DOKI_ITEM_SPOTS, GENZO_SPOT, Simulation, docks, ground } from "../src";
+import { W3_ITEM_SPOTS, GENZO_SPOT, Simulation, w3, ground } from "../src";
 import { byKey, input, run, teleportPlayer } from "./helpers";
 import { takeDown } from "./takedown-scenes";
 import { expectSameAfterLoad, peopleOf, reload, roundTrip, taken } from "./contract-save-helpers";
@@ -15,8 +15,8 @@ const guardsOf = (sim: Simulation, id: string): string[] => peopleOf(sim, id).fi
 
 /** Seed and jobs done before; the office's data taken unseen, so the job is cleared, its guards calm. */
 const cleared = (seed: number, completed: number): { sim: Simulation; c: Contract } => {
-  const { sim, c } = taken(seed, completed, docks(0, 0, 120), "infiltrate");
-  const spot = DOKI_ITEM_SPOTS.tessen_office!;
+  const { sim, c } = taken(seed, completed, w3(2492, 0, 418), "infiltrate");
+  const spot = W3_ITEM_SPOTS.tessen_office!;
   teleportPlayer(sim, ground(spot.x + 1.1, spot.z), -Math.PI / 2);
   sim.step(input({ interact: true, crouch: true }));
   expect(sim.domain.contracts.active?.status).toBe("cleared");
@@ -34,11 +34,11 @@ const pay = (sim: Simulation): void => {
 const goAway = (sim: Simulation): void => {
   teleportPlayer(sim, ground(GENZO_SPOT.x + 2000, GENZO_SPOT.z));
   run(sim, 120);
-  expect(sim.streamer.isLoaded(sim.streamer.chunkIdAt(DOKI_ITEM_SPOTS.tessen_office!))).toBe(false);
+  expect(sim.streamer.isLoaded(sim.streamer.chunkIdAt(W3_ITEM_SPOTS.tessen_office!))).toBe(false);
 };
 
 const comeBack = (sim: Simulation): void => {
-  teleportPlayer(sim, docks(0, 0, 120));
+  teleportPlayer(sim, w3(2492, 0, 418));
   run(sim, 30);
 };
 
@@ -172,7 +172,7 @@ describe("the site of a job done is cleared (G-195)", () => {
   });
 
   it("a job lost with nobody alerted keeps its guards at the site, as before", () => {
-    const { sim, c } = taken(4242, 5, docks(0, 0, 120), "infiltrate");
+    const { sim, c } = taken(4242, 5, w3(2492, 0, 418), "infiltrate");
     const snap = roundTrip(sim.snapshot(null, "t", ""));
     const late = { ...snap, domain: { ...snap.domain, contracts: { ...snap.domain.contracts, active: { ...c, deadlineTick: snap.tick + 2 } } } };
     const timed = Simulation.fromSnapshot(late);

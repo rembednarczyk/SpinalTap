@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type DomainEvents } from "@seki/core";
-import { CLINIC_WAKE_SPOT, INTERIORS, Simulation, TRASA_PODZIEMNA_WALK, clinicPoint, docks, groundY, interiorAt, koiPoint, stateHash } from "../src";
+import { CLINIC_WAKE_SPOT, INTERIORS, Simulation, TRASA_PODZIEMNA_WALK, clinicPoint, w3, groundY, interiorAt, koiPoint, stateHash } from "../src";
 import { inBuilding } from "../src/content/lublin/places";
 import { TRASA_PODZIEMNA } from "../src/content/lublin/sites";
 import { INTERIOR_KEEP } from "../src/systems/interior-system";
@@ -52,9 +52,9 @@ describe("interiors as areas (ADR-0061)", () => {
     expect(interiorAt(CLINIC_WAKE_SPOT)?.id).toBe("clinic");
     expect(interiorAt(clinicPoint(-10, 0, 6.6))?.id).toBe("clinic");
     expect(interiorAt(koiPoint(12.6, 0, 1.2))?.id).toBe("neon-koi");
-    expect(interiorAt(docks(-24, 0, 133))?.id).toBe("tessen-office");
+    expect(interiorAt(w3(2491, 0, 441))?.id).toBe("tessen-office");
     expect(interiorAt(clinicPoint(-5.6, 0, 4.4))).toBeNull();
-    expect(interiorAt(docks(-16.6, 0, 132))).toBeNull();
+    expect(interiorAt(w3(2497.4, 0, 443))).toBeNull();
     // A storey above the clinic is not in it.
     expect(interiorAt(clinicPoint(-10, 4.5, 6.6))).toBeNull();
   });
