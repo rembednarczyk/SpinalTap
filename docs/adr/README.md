@@ -86,5 +86,6 @@
 | [0082](0082-tessen-w3-wycinek-dwie-drogi.md) | Sektor W-3 Tessen, wycinek „Dwie drogi” | Zaakceptowany (15.11) |
 | [0083](0083-testy-miasta-bez-wyscigu-z-limitem.md) | Testy całego miasta bez wyścigu z limitem 20 s: odcisk wejść tablic zamiast ponownego generowania (job `tables`), bramka połowy limitu i trendu w PR, wspólna pamięć miasta, osobny projekt „city” bez pokrycia | Zaakceptowany (15.11) |
 | [0084](0084-woda-na-ulicach.md) | Woda na ulicach (prośba użytkownika 15.11): maska wody pieczona z geometrii (rynsztok przy krawężniku, dołki NMT, koleiny, spoiny bruku) zamiast szumu; trzy strefy sucho / mokro / stojąca woda; odbicia według jakości (low: pasy przycięte do maski, medium: sonda z paralaksą i Fresnel, high: własne SSR wody); kręgi deszczu, rozbryzgi, wysychanie; 4 PR-y | Zaakceptowany (15.11) |
+| [0086](0086-ubrania-jako-assety.md) | Ubrania jako osobne assety na postaciach VRoid (G-870, prośba użytkownika 15.11): źródła CC0/CC-BY i VRoid Studio, BOOTH wykluczony; docelowo osobne skinned meshe na szkielecie `J_Bip_*`, powłoki z ubrania modelu dla drobnych rzeczy; 8 pytań do użytkownika | Proponowany (15.11) |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
