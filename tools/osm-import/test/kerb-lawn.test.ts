@@ -4,11 +4,11 @@ import { generate } from "../src/generate.ts";
 import { type Pt, pointInRing } from "../src/geometry.ts";
 import { loadInputs } from "../src/load.ts";
 
-describe("a moved carriageway's strip to a lawn (G-825 r3, r4)", () => {
+describe("a moved carriageway's strip to a lawn (G-825 r3-r5)", () => {
   const inputs = loadInputs();
   const chunk = (id: string, minX: number, minZ: number, maxX: number, maxZ: number) => ({ id, district: DISTRICTS[0]!, rect: { minX, minZ, maxX, maxZ } });
   // Lwowska's east kerb by Rondo Mohyły, Al. Tysiąclecia's north-east corner at Lwowska, and Lwowska's west kerb north of it.
-  const chunks = [chunk("mohyly", 1080, 450, 1100, 480), chunk("tysiaclecia", 1105, 268, 1125, 282), chunk("lwowska", 1100, 330, 1130, 450)];
+  const chunks = [chunk("mohyly", 1080, 450, 1100, 480), chunk("tysiaclecia", 1105, 268, 1125, 282), chunk("lwowska", 1100, 330, 1130, 450), chunk("ruska", 1055, 425, 1080, 452)];
   const ground = generate(inputs.osm, () => 190, chunks, undefined, undefined, undefined, inputs.covers)
     .chunks.flatMap((c) => c.ground)
     .map((g) => ({ surface: g.surface, ring: Array.from({ length: g.outline.length / 2 }, (_, i) => ({ x: g.outline[2 * i]!, z: g.outline[2 * i + 1]! })) }));
@@ -55,5 +55,12 @@ describe("a moved carriageway's strip to a lawn (G-825 r3, r4)", () => {
     const west = [...along(338.5, 347.5), ...along(354.5, 364.5), ...along(392.5, 441)].filter((z) => pastKerb(z, 1105, 0.05) !== "square");
     const east = along(455.5, 471.5).filter((z) => pastKerb(z, 1095, -0.05) !== "square");
     expect({ west, east }).toEqual({ west: [], east: [] });
+  });
+
+  it("lays the lawn of Ruska's link from its kerb, and a square only by its zebra", () => {
+    // PZGiK 2023-09, 2024-06 and 2025-04: the lawn from the link's edge (z 432-444); paving only by
+    // the zebra at its north end (z 444-447.5). The stretch went a square 1.0-1.8 m wide for its five
+    // samples of paving, four of them by the zebra.
+    expect({ lawn: on("grass")({ x: 1070.5, z: 438.5 }), zebra: on("square")({ x: 1063.5, z: 446 }) }).toEqual({ lawn: true, zebra: true });
   });
 });

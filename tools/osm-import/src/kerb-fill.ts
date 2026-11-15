@@ -365,12 +365,31 @@ const easedReach = (side: readonly Sample[], wide: (s: Sample) => boolean): numb
   return side.map(() => 0);
 };
 
+/** The most of a stretch's samples that may show paving past the kerb for it to be the lawn's: the orthophoto's noise. */
+const HARD_SHARE = 0.2;
+
+/**
+ * The length of the run at the start of `stretch` that shows paving (`hard`): up to its last hard
+ * sample with hard ones half of it or more, a sidewalk's end at a zebra or a node.
+ */
+const hardEnd = (stretch: readonly Sample[], hard: (s: Sample) => boolean): number => {
+  let n = 0;
+  for (let k = 0, h = 0; k < stretch.length; k++) {
+    if (!hard(stretch[k]!)) continue;
+    h++;
+    if (2 * h >= k + 1) n = k + 1;
+  }
+  return n;
+};
+
 /**
  * The samples of `side` whose strip to a lawn is laid as the lawn's: a stretch of samples reaching
- * a lawn is one surface, the lawn's where most of its samples are `green` and none is `hard`, else
- * a square. Chosen sample by sample, the light kerb and the orthophoto's noise flipped the strip
- * between grass and square every 1-3 m along one lawn behind one kerb (Lwowska by Rondo Mohyły,
- * G-825 r4); by the most alone, grass went over the paving the stretch's other samples showed.
+ * a lawn is one surface, the lawn's where most of its samples are `green` and at most `HARD_SHARE`
+ * of them `hard`, else a square; a lawn's stretch keeps the paving at its ends (by a zebra) a square.
+ * Chosen sample by sample, the light kerb and the orthophoto's noise flipped the strip between
+ * grass and square every 1-3 m along one lawn behind one kerb (Lwowska by Rondo Mohyły, G-825 r4);
+ * by the most alone, grass went over the paving the stretch's other samples showed; with no hard
+ * sample at all, a square went over the lawn of Ruska's link for a sidewalk's end at its zebra (r5).
  */
 const lawnStretches = (side: readonly Sample[], green: (s: Sample) => boolean, hard: (s: Sample) => boolean): Set<Sample> => {
   const out = new Set<Sample>();
@@ -378,7 +397,10 @@ const lawnStretches = (side: readonly Sample[], green: (s: Sample) => boolean, h
     let j = i;
     while (j < side.length && side[j]!.hit?.lawn) j++;
     const stretch = side.slice(i, j);
-    if (2 * stretch.filter(green).length > stretch.length && !stretch.some(hard)) for (const s of stretch) out.add(s);
+    if (2 * stretch.filter(green).length > stretch.length && stretch.filter(hard).length <= HARD_SHARE * stretch.length) {
+      const [head, tail] = [hardEnd(stretch, hard), hardEnd([...stretch].reverse(), hard)];
+      for (const s of stretch.slice(head, stretch.length - tail)) out.add(s);
+    }
     i = Math.max(j, i + 1);
   }
   return out;
