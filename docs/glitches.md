@@ -2113,6 +2113,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
 
+### G-852 touch-layout: karta dzielnicy raz zachodzi na minimapę przy 844×390 en
+- Ważność: S4 · Zasięg: e2e touch-layout, phone district card, skala 1
+- Opis: Jedno przecięcie 16×74 px przy obciążeniu maszyny, powtórka zielona; możliwy flake e2e albo wyścig układu przy wczytaniu karty (znalezione przy PR #587)
+- Status: nowy
+- Pakiet właściciela: e2e, packages/ui
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
