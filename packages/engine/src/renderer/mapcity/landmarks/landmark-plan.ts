@@ -12,6 +12,8 @@ import { camera, corniceLights, facing, helmLeds, mast, scanner, screenFrame, si
 import { TABLET, courseAndKeystones, dataRoof, gableOver, gableTrim, rustication, stringCourse, windowRows } from "./classicist";
 import type { LandmarkFrame } from "./landmark-frame";
 import { balconyFloor, palaceFront } from "./palace";
+import { atticLights, castleCrown } from "./castle";
+import { castleFront } from "./castle-front";
 import { planPortico } from "./portico";
 import type { GableFace, LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
 
@@ -172,6 +174,10 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
   const c = part.crown;
   const roof = f.b.roof ?? 0;
   const meta = trimMeta(f.style.seed);
+  if (c.kind === "crenel" && c.attic) {
+    castleCrown(sink, f, c.merlon, c.pitch, part.tier.castle, near, solid(wallOf(part.tier)));
+    return;
+  }
   if (c.kind === "crenel" && near) {
     battlements(sink, f, c.merlon, c.pitch, solid(wallOf(part.tier)), solid(SWATCH.stone));
     return;
@@ -200,8 +206,8 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
   else sink.box({ x: base.c.x, y: f.top + roof - 0.15, z: base.c.z }, 0.3, 0.3, 0.3, lit("#ff2a2a"));
 };
 
-/** Top of a part's walls: under the merlons of battlements, else the top. */
-const wallTop = (f: LandmarkFrame): number => (f.landmark.part.crown.kind === "crenel" ? f.top - f.landmark.part.crown.merlon : f.top);
+/** Top of a part's walls: under the merlons of battlements (an attic's stand over the top), else the top. */
+const wallTop = (f: LandmarkFrame): number => (f.landmark.part.crown.kind === "crenel" && !f.landmark.part.crown.attic ? f.top - f.landmark.part.crown.merlon : f.top);
 
 /** Lublin 2077's lit geometry on the walls: cornice lines, the screen's frame, the camera, uplights, the scanner. */
 const layerOn = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe): void => {
@@ -209,6 +215,7 @@ const layerOn = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe): void => {
   const meta = trimMeta(f.style.seed);
   const t = part.tier;
   if (t.cornice) corniceLights(sink, f, f.top - 0.44, 0.33, layer);
+  else if (part.crown.kind === "crenel" && part.crown.attic) atticLights(sink, f, part.crown.merlon);
   else if (part.crown.kind === "crenel") corniceLights(sink, f, wallTop(f) - 0.12, 0.03, layer);
   // On the string course between two zones, else on the base moulding.
   if (t.split) corniceLights(sink, f, f.b.foot + t.split - 0.01, 0.13, layer);
@@ -329,6 +336,7 @@ export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
     const course = palaceFront(sink, f, t.palace, (w, u0, u1) => !intoNeighbour(f, w, u0, u1, 0.35));
     if (course !== null) planPortico(sink, f, balconyFloor(f, t.palace));
   }
+  if (t.castle) castleFront(sink, f, t.castle, trim);
   faces(sink, f, part);
   crown(sink, f, part, true);
   layerOn(sink, f, part);

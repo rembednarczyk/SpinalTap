@@ -7,6 +7,7 @@ import { onWall } from "./kit";
 import { type LandmarkFrame, clockSpot, clockWalls, litMouths, mouthWall, screenOn, tabletOn, uplights } from "./landmark-plan";
 import { passageAxis } from "./layer2077";
 import { balconyFloor } from "./palace";
+import { castleSignOn } from "./castle-front";
 import { nameplateOn } from "./portico";
 
 /**
@@ -74,6 +75,10 @@ export const planLandmarkSigns = (sink: MeshSink, f: LandmarkFrame, nameSlot: (n
   const date = tabletOn(f);
   const dateSlot = date ? nameSlot(date.text) : null;
   if (date && dateSlot !== null) flat(sink, date.w, date.u, date.y, 0.08, date.width - 0.16, date.height - 0.08, tint("#f0d49a", 0.85), [dateSlot, MAP_SIGN_KIND.name]);
+  // The museum's gilt letters on the castle's tympanum, over the gate.
+  const museum = castleSignOn(f);
+  const museumSlot = museum ? nameSlot(museum.text) : null;
+  if (museum && museumSlot !== null) flat(sink, museum.w, museum.u, museum.y, 0.06, museum.width, museum.height, tint("#f0d49a", 0.9), [museumSlot, MAP_SIGN_KIND.name]);
   // The data's name in light letters on the portico's entablature (Nowy Ratusz).
   const palace = f.landmark.part.tier.palace;
   const plate = palace ? nameplateOn(f, balconyFloor(f, palace)) : null;

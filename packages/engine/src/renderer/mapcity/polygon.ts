@@ -23,7 +23,7 @@ export interface Box2 {
   readonly maxZ: number;
 }
 
-const cross = (o: P2, a: P2, b: P2): number => (a.x - o.x) * (b.z - o.z) - (a.z - o.z) * (b.x - o.x);
+export const cross = (o: P2, a: P2, b: P2): number => (a.x - o.x) * (b.z - o.z) - (a.z - o.z) * (b.x - o.x);
 
 /**
  * A clean counter-clockwise ring: no repeated closing point, no duplicate neighbours, no
