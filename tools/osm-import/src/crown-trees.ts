@@ -1,15 +1,18 @@
 /**
  * The trees OSM has no node for (G-797, T-292, ADR-0077 step 5), by one rule for the whole city
  * rather than lines drawn into the plan: a tree stands under each crown of the surface model that
- * the orthophoto shows as one. The grid, its crown cells and tops are `crown-grid.ts`'s: a crown
- * cell is crown on the orthophoto and 4 to 35 m over the ground in NMPT less NMT, off the roofs,
- * the map's structures (buildings, building sites, markets: G-815) and the game's cleared set
- * pieces, where a trunk may stand (`crown-ground.ts`: open ground off the roads, paths, steps, car
- * parks, barriers and decks); a top tops the crown cells within 2.5 m.
+ * the orthophoto shows as one. The grid, its crown cells, tops and trunks are `crown-grid.ts`'s:
+ * the surface is NMPT less NMT 4 to 35 m over the ground, off the roofs, the map's structures
+ * (buildings, building sites, markets: G-815) and the game's cleared set pieces; a top tops the
+ * surface within 2 m with crown on the orthophoto round it; the trunk stands at the top or at the
+ * highest crown cell within the crown's reach where a trunk may (`crown-ground.ts`: open ground
+ * off the roads, paths, steps, car parks, barriers and decks).
  *
  * The tops are taken highest first, each where no tree of the game (OSM's, the plan's rows) and no
  * tree taken before stands within the larger of the two crowns' reach (`crownReach`: the drawn
- * crown of a tree of that height), and where the import draws it at its measured height: a crown the walls stop from growing past its seed's
+ * crown of a tree of that height); where it is not an eave's (a roof's plateau joined to a
+ * building's outline) with too little crown on the orthophoto (`onEave`, `crownShare`); and where
+ * the import draws it at its measured height: a crown the walls stop from growing past its seed's
  * size (`treeVariant`) is a tree in a yard's corner the game cannot draw, and none stands. Going
  * over the crowns again for their cells out of every tree's reach (probe of 14.11) took 2317
  * trees instead of 1423 for 56 squares of `canopy-without-tree` instead of 68: once is enough.
@@ -21,7 +24,7 @@ import { PLAIN_SPECIES, TREE_CROWN, TREE_TOP, plainTreeVariant } from "../../../
 import type { Cover } from "../../orto/src/cover.ts";
 import type { Chm } from "../../gugik/src/nmpt.ts";
 import { KeepOut } from "./crown-ground.ts";
-import { type CrownContext, centreOf, crownGrid, topsOf } from "./crown-grid.ts";
+import { type CrownContext, EAVE_SHARE, centreOf, crownGrid, crownShare, onEave, topsOf, trunkOf } from "./crown-grid.ts";
 import type { Pt, Rect } from "./geometry.ts";
 import type { PlanItem } from "./props-gen.ts";
 import { fnv } from "./props-place.ts";
@@ -58,6 +61,10 @@ export interface CrownStats {
   readonly tops: number;
   /** Under the crown of a tree of the game or one taken before. */
   readonly nearTree: number;
+  /** No cell a trunk may stand in under it. */
+  readonly noGround: number;
+  /** An eave's plateau with too little crown on the orthophoto. */
+  readonly eave: number;
   /** A crown the walls stop at its seed's size. */
   readonly byWall: number;
 }
@@ -106,16 +113,22 @@ export const crownTrees = (
 ): { trees: CrownTree[]; stats: CrownStats } => {
   const ctx: CrownContext = { site, keep: new KeepOut(site), structures: new StructureIndex(structures), covers, chms };
   const grids = rects.map((r) => crownGrid(r, ctx));
-  const tops = grids.flatMap((g) => topsOf(g).map((i) => ({ g, i, p: centreOf(g, i), top: g.h[i]! })));
+  const tops = grids.flatMap((g) => topsOf(g, ctx).map((i) => ({ g, i, p: centreOf(g, i), top: g.raw[i]! })));
   tops.sort((a, b) => b.top - a.top || a.p.z - b.p.z || a.p.x - b.p.x);
   const near = new TreeGrid();
   for (const t of trees) near.add(t);
   const out: CrownTree[] = [];
-  const stats = { cells: grids.reduce((n, g) => n + g.h.filter((h) => !Number.isNaN(h)).length, 0), tops: tops.length, nearTree: 0, byWall: 0 };
+  const stats = { cells: grids.reduce((n, g) => n + g.h.filter((h) => !Number.isNaN(h)).length, 0), tops: tops.length, nearTree: 0, noGround: 0, eave: 0, byWall: 0 };
   for (const t of tops) {
     const reach = crownReach(t.top);
-    const p = t.p;
+    const at = trunkOf(t.g, t.i, reach);
+    if (at === null) {
+      stats.noGround++;
+      continue;
+    }
+    const p = centreOf(t.g, at);
     if (near.near(p, reach)) stats.nearTree++;
+    else if (onEave(ctx, t.p, t.top) && crownShare(covers, t.p, reach) < EAVE_SHARE) stats.eave++;
     else if (!drawnMeasured(site, p, chms)) stats.byWall++;
     else {
       out.push({ p, top: t.top });

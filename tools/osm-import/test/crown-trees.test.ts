@@ -98,10 +98,11 @@ describe("trees of the crowns (G-797)", () => {
     expect(near).toHaveLength(1);
   });
 
-  it("puts the trunks of a crown over the road at the road's edges, never on it, by the roofs nowhere", () => {
-    // Its top over the road's axis: the highest of it off the road on either side, 7 m apart, as the rows of a street's trees.
+  it("puts the trunk of a crown over the road at the road's edge, never on it, by the roofs nowhere", () => {
+    // Its top over the road's axis: the trunk at the highest of it off the road, within the crown's reach.
     const { trees } = run(chmOf(highest(crown({ x: 50, z: 30 }, 12, 6))));
-    expect(trees.map((t) => t.p.z).sort()).toEqual([26.5, 33.5]);
+    expect(trees).toHaveLength(1);
+    expect([26.5, 33.5]).toContain(trees[0]!.p.z);
     // A crown against the houses' wall (z = 50) is read 2 m off it at the least, and its eaves stand no tree.
     expect(run(chmOf(highest(crown({ x: 70, z: 50.5 }, 9, 2)))).trees).toEqual([]);
   });
@@ -140,6 +141,23 @@ describe("trees of the crowns (G-797)", () => {
 
   it("clears the game's set pieces as the simulation does (G-815 P5)", () => {
     expect(CROWN_CLEARED).toEqual(CLEARED_BUILDINGS);
+  });
+
+  it("takes no crown's top beside a higher surface: a moss-grown edge of a shed OSM lacks (G-815 P1)", () => {
+    // A shed 6 m high, x 60..70, z 10..20, not in the map; its east edge green on the orthophoto, 5.5 m.
+    const chm = chmOf((p) => (p.z >= 10 && p.z < 20 ? (p.x >= 60 && p.x < 70 ? 6 : p.x >= 70 && p.x < 72 ? 5.5 : 0.2) : 0.2));
+    expect(run(chm, coverOf((p) => p.x >= 70 && p.x < 72 && p.z >= 10 && p.z < 20)).trees).toEqual([]);
+  });
+
+  it("stands no tree on an eave the surface model joins to the roof with little crown on the orthophoto, one where the crown is whole (G-815 P1)", () => {
+    // The houses' roof (outline from z = 50) reaches 4 m past the outline at 10 m, as the surface model reads it.
+    const chm = chmOf((p) => (p.z >= 46 && p.x >= 40 && p.x < 50 ? 10 : 0.2));
+    // Moss or copper on the overhang alone: no tree.
+    expect(run(chm, coverOf((p) => p.z >= 45 && p.z < 48 && p.x >= 40 && p.x < 50)).trees).toEqual([]);
+    // A crown over the wall, the orthophoto green all round: a tree under it, off the roof.
+    const whole = run(chm, everywhere).trees;
+    expect(whole).toHaveLength(1);
+    expect(whole[0]!.p.z).toBeLessThan(48);
   });
 
   it("gives the plan a group of the trees keyed by their places", () => {
