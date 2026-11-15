@@ -6,6 +6,7 @@
  */
 import { pointInRingEvenOdd } from "../../../packages/core/src";
 import type { TerrainEntries } from "../../../packages/engine/src/renderer/mapcity/terrain-index";
+import { osmStepCount } from "../../../packages/engine/src/renderer/mapcity/steps-osm";
 import { type MapEdgeAt, planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
@@ -44,7 +45,7 @@ const facesUp = ([a, b, c]: readonly [P3, P3, P3], ny: number): boolean => {
 /** The triangles of the band `ring` drawn on the ground `h`. */
 export const stepFaces = (ring: readonly Pt[], h: (x: number, z: number) => number): StepFace[] => {
   const sink = new MeshSink();
-  planSteps(sink, ring, h, mapEdgeAt);
+  planSteps(sink, ring, h, mapEdgeAt, osmStepCount(ring));
   const at = (i: number): P3 => ({ x: sink.positions[i * 3]!, y: sink.positions[i * 3 + 1]!, z: sink.positions[i * 3 + 2]! });
   const out: StepFace[] = [];
   for (let t = 0; t + 2 < sink.indices.length; t += 3) {

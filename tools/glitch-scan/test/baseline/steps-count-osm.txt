@@ -1,0 +1,15 @@
+# steps-count-osm: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-2-0 429,-248
+krakowskie-2-0 449,-244
+krakowskie-2-0 459,-173
+krakowskie-2-0 412,-90
+krakowskie-2-0 416,-90
+krakowskie-2-0 420,-89
+podzamcze-1-0 887,222
+stare-miasto-0-0 584,-199
+stare-miasto-0-0 469,-184
+stare-miasto-0-0 466,-180
+stare-miasto-0-0 461,-176
+stare-miasto-0-0 574,-71
+stare-miasto-1-1 690,32
+stare-miasto-1-1 731,155

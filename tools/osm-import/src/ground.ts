@@ -38,9 +38,9 @@ export const areaSurface = (t: Tags): GroundSurface | null => {
 
 const PATHS: Record<string, number> = { footway: 2.5, path: 2, cycleway: 2, steps: 3, bridleway: 2 };
 /** The most a vertex of a steps way may lie off the line through its neighbours and start no new run (m). */
-const STEPS_BEND = 0.05;
+export const STEPS_BEND = 0.05;
 
-const underground = (t: Tags) => t.tunnel === "yes" || t.tunnel === "culvert" || t.indoor === "yes" || Number(t.layer ?? 0) < 0 || t.location === "underground";
+export const underground = (t: Tags): boolean => t.tunnel === "yes" || t.tunnel === "culvert" || t.indoor === "yes" || Number(t.layer ?? 0) < 0 || t.location === "underground";
 
 /**
  * The narrowest strip of steps (m): the renderer draws no flight on a band under 0.4 m wide

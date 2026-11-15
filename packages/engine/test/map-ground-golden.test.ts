@@ -132,8 +132,10 @@ describe("the ground the map city lays (G-444)", () => {
     // The flights of steps by the one norm of a step (G-840): risers of 0.12-0.17 m from the rise
     // between a run's ends, landings and level stretches for the rest, so fewer treads and risers
     // than one every 0.33 m; their normals the ramp's and uv2 their lift onto it from far:
-    // 161 914 - 160 043 = 1 871 vertices fewer, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 160043, hash: "a3bcbb93" });
+    // 161 914 - 160 043 = 1 871 vertices fewer, the same meshes. Round 2: a run the map counts the
+    // steps of (`step_count`) laid by that many in one flight, no tread more than 0.02 m under the
+    // ground and paving over a crest: 160 305, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 160305, hash: "5c4f5b7e" });
     scene.dispose();
   });
 

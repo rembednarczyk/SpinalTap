@@ -3,7 +3,7 @@ import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mes
 import { type HeightAt, drape } from "./ground-plan";
 import { type P2, orientedBox } from "./polygon";
 import { type Uv, face, quadUv, vertex } from "./sink-ops";
-import { layFlight } from "./steps-flight";
+import { humped, layFlight } from "./steps-flight";
 
 const TREAD = hexColor(STEP_LOOK.tread, DRESS_FLAG.solid);
 const RISER = hexColor(STEP_LOOK.riser, DRESS_FLAG.solid);
@@ -77,9 +77,10 @@ const stepQuad = (sink: MeshSink, c: readonly [Vec, Vec, Vec, Vec], facing: Vec,
  * them (`layFlight`), each tread level and on or over the ground across the band, what the run is
  * longer than its treads lying in landings and level stretches at its foot and top. A run whose
  * ends lie less than a riser of the norm apart lies on the ground as paving; a level one keeps a
- * level slab with a kerb at each end. `mapEdgeAt` tells where the map's edge cut the band (G-703).
+ * level slab with a kerb at each end. `mapEdgeAt` tells where the map's edge cut the band (G-703);
+ * `osm` is how many steps the map counts on it (`osmStepCount`).
  */
-export const planSteps = (sink: MeshSink, ring: readonly P2[], terrain: HeightAt, mapEdgeAt: MapEdgeAt = () => false): void => {
+export const planSteps = (sink: MeshSink, ring: readonly P2[], terrain: HeightAt, mapEdgeAt: MapEdgeAt = () => false, osm?: number): void => {
   if (ring.length < 3) return;
   const h = onItsSide(ring, terrain, mapEdgeAt);
   const box = orientedBox(ring);
@@ -95,9 +96,12 @@ export const planSteps = (sink: MeshSink, ring: readonly P2[], terrain: HeightAt
   // Along the run from its low end: `t` from 0 at the foot to `length` at the top.
   const up = ground(box.halfLong) >= ground(-box.halfLong) ? 1 : -1;
   const uOf = (t: number) => up * (t - box.halfLong);
-  const flight = layFlight(length, (t) => ground(uOf(t)));
+  const along = (t: number) => ground(uOf(t));
+  // Over a crest or a hollow no level tread keeps on the ground: paving, as on a gentle run.
+  const hump = humped(length, along);
+  const flight = hump ? null : layFlight(length, along, osm);
   const base = ground(uOf(0)) + LIFT;
-  if (!flight && ground(uOf(length)) + LIFT - base >= 0.01) {
+  if (!flight && (hump || ground(uOf(length)) + LIFT - base >= 0.01)) {
     drape(sink, ring, h, LIFT, TREAD, (p) => [p.x, p.z], [0, 0]);
     return;
   }
@@ -123,7 +127,8 @@ export const planSteps = (sink: MeshSink, ring: readonly P2[], terrain: HeightAt
     if (t1 - t0 < 1e-6) continue;
     // The tread's back edge rises onto the next nosing from far; the top's stays.
     const lift = j < risers.length ? r : 0;
-    const n = ramp(lift / (t1 - t0));
+    // No steeper than 45°: a sliver of a tread at a foot would crease against the next in the geometry buffer.
+    const n = ramp(Math.min(1, lift / (t1 - t0)));
     stepQuad(sink, [p3(t0, -w, y), p3(t1, -w, y), p3(t1, w, y), p3(t0, w, y)], upN, n, TREAD, STEP_LOOK.code.tread, [0, lift, lift, 0]);
     below = n;
   }

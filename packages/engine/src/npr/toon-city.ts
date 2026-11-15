@@ -142,13 +142,13 @@ const rgb = (hex: string): readonly [number, number, number] => {
  * A flight of the map's steps (G-840): its colours, its surface codes and where it turns into
  * one ramp. Past `far` (m from the camera) the vertex stage lifts each tread's back edge and each
  * riser's foot by uv2.y, up the flight's nosings, and the treads take the mean colour of a tread
- * and a riser of the norm: no row of dark risers, no ink line on each, from about 40 m on.
+ * and a riser of the norm: no row of dark risers, no ink line on each, from about 70 m on (the steps of a flight read clearly to some 60 m).
  */
 export const STEP_LOOK = {
   tread: "#77736c",
   riser: "#4f4b46",
   code: { tread: 9, riser: 10 },
-  far: [35, 45],
+  far: [65, 75],
 } as const;
 
 const glslVec3 = (c: readonly number[]): string => `vec3(${c.map((v) => v.toFixed(4)).join(", ")})`;

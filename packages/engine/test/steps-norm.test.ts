@@ -38,7 +38,7 @@ const quads = (s: MeshSink, ring: readonly P2[], lifted = false): Q[] => {
 const height = (q: Q) => Math.max(...q.ys) - Math.min(...q.ys);
 
 /** What of the flight on `ring` breaks the norm, read off its risers (not the kerbs at its ends), or null. */
-const offNorm = (s: MeshSink, ring: readonly P2[]): string | null => {
+const offNorm = (s: MeshSink, ring: readonly P2[], counted = false): string | null => {
   const half = orientedBox(ring).halfLong;
   const risers = quads(s, ring)
     .filter((q) => !q.up && q.along && height(q) > 1e-6 && half - Math.abs(q.u) > 0.02)
@@ -53,9 +53,25 @@ const offNorm = (s: MeshSink, ring: readonly P2[]): string | null => {
     const stride = 2 * hs[i]! + tread;
     if (tread >= STEP_NORM.landingMin - 1e-6) run = 1;
     else if (stride < STEP_NORM.strideMin - 1e-6 || stride > STEP_NORM.strideMax + 1e-6) return `tread ${tread.toFixed(3)}, stride ${stride.toFixed(3)}`;
-    else if (++run > STEP_NORM.maxRun) return `${run} risers with no landing`;
+    else if (++run > STEP_NORM.maxRun && !counted) return `${run} risers with no landing`;
   }
   return null;
+};
+
+/** The risers of the flight on `ring`, a step at either end too: not the kerbs there, the treads' lift of 0.05 m. */
+const risersOf = (s: MeshSink, ring: readonly P2[]): Q[] => quads(s, ring).filter((q) => !q.up && q.along && height(q) > 0.06);
+
+/** How far the treads of the flight on `ring` lie under the ground `h` along its axis at most, less their lift of 0.05 m. */
+const sunkUnder = (s: MeshSink, ring: readonly P2[], h: (x: number, z: number) => number): number => {
+  const box = orientedBox(ring);
+  let worst = 0;
+  for (let q = 0; q + 3 < s.vertexCount; q += 4) {
+    const ys = [0, 1, 2, 3].map((k) => s.positions[(q + k) * 3 + 1] ?? 0);
+    if (Math.max(...ys) - Math.min(...ys) > 1e-9) continue;
+    const us = [0, 1, 2, 3].map((k) => ((s.positions[(q + k) * 3] ?? 0) - box.cx) * box.ux + ((s.positions[(q + k) * 3 + 2] ?? 0) - box.cz) * box.uz);
+    for (let u = Math.min(...us); u <= Math.max(...us); u += 0.02) worst = Math.max(worst, h(box.cx + box.ux * u, box.cz + box.uz * u) - (ys[0]! - 0.05));
+  }
+  return worst;
 };
 
 /** The landings of the flight on `ring`: level stretches between two risers at least `landingMin` long. */
@@ -69,7 +85,7 @@ const landings = (s: MeshSink, ring: readonly P2[]): number => {
 };
 
 /** The steps of the map's chunk `chunk` laid the way the map city lays them, every chunk's terrain under them. */
-const mapFlights = (chunk: string, at: (box: ReturnType<typeof orientedBox>) => boolean): { ring: P2[]; sink: MeshSink }[] => {
+const mapFlights = (chunk: string, at: (box: ReturnType<typeof orientedBox>) => boolean): { ring: P2[]; sink: MeshSink; h: (x: number, z: number) => number }[] => {
   const e = new MapEntries();
   let id = 1;
   for (const c of LUBLIN_CHUNKS) {
@@ -78,7 +94,7 @@ const mapFlights = (chunk: string, at: (box: ReturnType<typeof orientedBox>) => 
   }
   const c = LUBLIN_CHUNKS.find((k) => k.id === chunk);
   if (!c) throw new Error(chunk);
-  const out: { ring: P2[]; sink: MeshSink }[] = [];
+  const out: { ring: P2[]; sink: MeshSink; h: (x: number, z: number) => number }[] = [];
   for (const g of c.ground) {
     const view = groundView(g);
     if (g.surface !== "steps" || view.kind !== "ground") continue;
@@ -87,7 +103,8 @@ const mapFlights = (chunk: string, at: (box: ReturnType<typeof orientedBox>) => 
     e.addGround(++id, { surface: "steps", ring, y: 0, bounds: boundsOf(ring), cell: "" });
     const sink = new MeshSink();
     planGround(sink, new MeshSink(), e, id);
-    out.push({ ring, sink });
+    const entry = e.grounds.get(id)!;
+    out.push({ ring, sink, h: e.groundHeight(entry, e.terrainOf(entry)) });
   }
   return out;
 };
@@ -96,19 +113,28 @@ describe("the flight from Plac Zamkowy up to the castle (G-840, T-113)", () => {
   // The main run w1305889408 between the balustrades, 15.7 m long, 5.3 m up.
   const [main] = mapFlights("podzamcze-1-0", (b) => Math.hypot(b.cx - 792.5, b.cz - 243) < 1);
 
-  it("climbs by risers of the norm, all of one height, with landings", () => {
+  it("climbs its 40 mapped steps (step_count) in one flight of the norm's stride, no landing (round 2)", () => {
     expect(main).toBeDefined();
     const { ring, sink } = main!;
-    expect(offNorm(sink, ring)).toBeNull();
-    // 5.3 m by risers of at most 0.17 m is 31 at least: three landings at least for runs of 12.
-    expect(landings(sink, ring)).toBeGreaterThanOrEqual(2);
+    expect(risersOf(sink, ring)).toHaveLength(40);
+    // 5.25 m by 40 is 0.131, a tread 15.73 / 40 = 0.39: 2h + s 0.65, in the norm with no landing.
+    expect(offNorm(sink, ring, true)).toBeNull();
+    expect(landings(sink, ring)).toBe(0);
+  });
+
+  it("keeps every tread on the ground, at most 0.02 m (less its lift) under it on the axis (round 2)", () => {
+    const { ring, sink } = main!;
+    expect(sunkUnder(sink, ring, main!.h)).toBeLessThanOrEqual(0.02 + 1e-6);
   });
 
   it("lies from far on one ramp: no upright face, no crease the line art inks", () => {
     const { ring, sink } = main!;
     const far = quads(sink, ring, true).filter((q) => q.along && !q.up);
     // Every riser shrinks to nothing on the ramp through the nosings.
-    for (const q of quads(sink, ring, true)) if (!q.up && q.along && orientedBox(ring).halfLong - Math.abs(q.u) > 0.02) expect(height(q)).toBeLessThan(1e-6);
+    const near = quads(sink, ring);
+    quads(sink, ring, true).forEach((q, i) => {
+      if (!near[i]!.up && near[i]!.along && orientedBox(ring).halfLong - Math.abs(q.u) > 0.02) expect(height(q), `riser at ${q.u.toFixed(3)}`).toBeLessThan(1e-6);
+    });
     expect(far.length).toBeGreaterThan(0);
     // The geometry buffer's normals: the ramp's on tread and riser alike, no crease between them
     // (the line art inks one where 1 - n·n' passes 0.35).
@@ -142,6 +168,23 @@ describe("any flight on a run of steps (G-840)", () => {
     planSteps(sink, ring, ground);
     // Steeper than the norm at the foot, the flight starts there; it never tilts its risers or treads for it.
     expect(offNorm(sink, ring), `run ${length.toFixed(2)} m`).toBeNull();
+  });
+
+  it.each(runs.map((r, i) => ({ i, ...r })))("lies at most 0.02 m under the ground on its axis (round 2): run $i", ({ length, ground }) => {
+    const ring = [{ x: 0, z: 0 }, { x: length, z: 0 }, { x: length, z: 3 }, { x: 0, z: 3 }];
+    const sink = new MeshSink();
+    planSteps(sink, ring, ground);
+    expect(sunkUnder(sink, ring, ground)).toBeLessThanOrEqual(0.02 + 1e-6);
+  });
+
+  it("lays as many steps as its map counts, in one flight with no landing every 12 (round 2)", () => {
+    // 40 steps on a run 15.7 m long rising 5.25 m: 0.131 on treads of 0.39, as the castle stairs.
+    const ring = [{ x: 0, z: 0 }, { x: 15.73, z: 0 }, { x: 15.73, z: 10 }, { x: 0, z: 10 }];
+    const sink = new MeshSink();
+    planSteps(sink, ring, (x) => (x / 15.73) * 5.25, () => false, 40);
+    expect(risersOf(sink, ring)).toHaveLength(40);
+    expect(landings(sink, ring)).toBe(0);
+    expect(offNorm(sink, ring, true)).toBeNull();
   });
 
   it("lies as paving where its ends lie less than the norm's lowest riser apart", () => {

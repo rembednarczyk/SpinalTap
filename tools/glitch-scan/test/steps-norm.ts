@@ -30,8 +30,11 @@ const risersAlong = (faces: readonly StepFace[], ring: readonly Pt[]): { u: numb
   return [...byU].sort((a, b) => a[0] - b[0]).map(([k, r]) => ({ u: k / 1000, h: r.hi - r.lo, end: Math.abs(Math.abs(k / 1000) - box.halfLong) < END }));
 };
 
-/** What of the flight drawn as `faces` on the band `ring` breaks the norm, or null when it keeps it (or is no flight). */
-export const flightOffNorm = (faces: readonly StepFace[], ring: readonly Pt[]): string | null => {
+/**
+ * What of the flight drawn as `faces` on the band `ring` breaks the norm, or null when it keeps it
+ * (or is no flight). A flight whose steps the map counts (`counted`) runs them all with no landing.
+ */
+export const flightOffNorm = (faces: readonly StepFace[], ring: readonly Pt[], counted = false): string | null => {
   const risers = risersAlong(faces, ring).filter((r) => !r.end);
   if (risers.length === 0) return null;
   const hs = risers.map((r) => r.h);
@@ -47,7 +50,7 @@ export const flightOffNorm = (faces: readonly StepFace[], ring: readonly Pt[]): 
       continue;
     }
     if (2 * h + s < STEP_NORM.strideMin - 1e-3 || 2 * h + s > STEP_NORM.strideMax + 1e-3) return `tread ${s.toFixed(2)} m on a riser ${h.toFixed(3)} m: stride ${(2 * h + s).toFixed(2)} out of ${STEP_NORM.strideMin}-${STEP_NORM.strideMax}`;
-    if (++run > STEP_NORM.maxRun) return `${run} risers with no landing`;
+    if (++run > STEP_NORM.maxRun && !counted) return `${run} risers with no landing`;
   }
   return null;
 };
