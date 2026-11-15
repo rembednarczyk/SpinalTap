@@ -61,6 +61,8 @@ export class Site {
   private readonly decks = new SpatialHash<Shape>(BIN);
   /** The buildings' outlines of `bins` alone, for the many samples of `inBuilding` and `buildingNear`. */
   private readonly buildings = new SpatialHash<readonly Pt[]>(BIN);
+  /** The chunks by their bounds, in their order (the first holding a point is its chunk). */
+  private readonly chunkBins = new SpatialHash<LublinChunkData>(BIN);
   /** The passages through the chunks' buildings (ADR-0048), along their axes. */
   private readonly passages: readonly (readonly [Pt, Pt])[];
   /** The gates the game cuts by hand, along their axes under their buildings and the mouths. */
@@ -72,6 +74,7 @@ export class Site {
 
   constructor(chunks: readonly LublinChunkData[]) {
     this.chunks = chunks;
+    for (const c of chunks) this.chunkBins.insert(c, c.bounds.minX, c.bounds.minZ, c.bounds.maxX, c.bounds.maxZ);
     const streets: SiteStreet[] = [];
     for (const c of chunks) {
       for (const b of c.buildings) {
@@ -115,7 +118,7 @@ export class Site {
 
   /** The chunk whose rectangle holds p (half-open, so a point on a shared edge has one owner). */
   chunkAt(p: Pt): LublinChunkData | null {
-    for (const c of this.chunks) if (inRect(p, c.bounds)) return c;
+    for (const c of this.chunkBins.at(p.x, p.z)) if (inRect(p, c.bounds)) return c;
     return null;
   }
 

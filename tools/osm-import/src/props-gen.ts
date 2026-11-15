@@ -163,8 +163,13 @@ interface Obstacle {
   readonly r: number;
 }
 
-const blocked = (obstacles: readonly Obstacle[], p: Pt, extra = 0): boolean =>
-  obstacles.some((q) => Math.abs(q.x - p.x) < q.r + extra && Math.abs(q.z - p.z) < q.r + extra && Math.hypot(q.x - p.x, q.z - p.z) < q.r + extra);
+/** The obstacles placed so far in a grid: a spot is tried against those near it, not every one. */
+type Obstacles = SpatialHash<Obstacle>;
+
+const blocked = (obstacles: Obstacles, p: Pt, extra = 0): boolean => {
+  const r = OBSTACLE_REACH + extra;
+  return obstacles.some(p.x - r, p.z - r, p.x + r, p.z + r, (q) => Math.abs(q.x - p.x) < q.r + extra && Math.abs(q.z - p.z) < q.r + extra && Math.hypot(q.x - p.x, q.z - p.z) < q.r + extra);
+};
 
 /** Slides along the line, a few metres either way, to where nothing placed stands in the way. */
 const SLIDES = [0, 2.5, -2.5, 5, -5];
@@ -175,7 +180,7 @@ const LAMP_TRAFFIC_REACH = 3.6;
 /** How far a wall lantern keeps from a passage's axis (m): past half the widest passage. */
 const PASSAGE_REACH = 2;
 
-const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: readonly Slot[], obstacles: readonly Obstacle[]): Placed[] => {
+const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: readonly Slot[], obstacles: Obstacles): Placed[] => {
   const { mode } = lineMode(item, prop);
   const out: Placed[] = [];
   const fallback = FALLBACK[prop] ?? 2;
@@ -213,7 +218,7 @@ const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: rea
   return out;
 };
 
-const onLines = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[]): Placed[] => {
+const onLines = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: Obstacles): Placed[] => {
   const lines = linesOf(item);
   const spacing = item.spacing ?? ROW_SPACING[prop];
   const { sides, mode } = lineMode(item, prop);
@@ -265,7 +270,7 @@ const bulkyItems = (placed: readonly Placed[]): StreetPropItem[] =>
 /** Long pieces set on an outline by their whole footprint (ADR-0058 stage 2), not scattered. */
 const BULKY: ReadonlySet<StreetPropKind> = new Set(["food-cart", "container"]);
 
-const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[], placed: readonly Placed[]): Placed[] => {
+const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: Obstacles, placed: readonly Placed[]): Placed[] => {
   if (item.position) return [{ prop, p: item.position, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: typeof item.osm === "string" ? item.osm : item.id }];
   // A group of points with a yaw faces that way, as a single position does (the benches of Alchemia's T0 towards their lawns).
   if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: osmAt(item, i) }));
@@ -304,7 +309,7 @@ const PLACE_FILL: Readonly<Record<string, { readonly ring: readonly Pt[]; readon
 };
 
 
-const fillPlace = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[]): Placed[] => {
+const fillPlace = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: Obstacles): Placed[] => {
   const f = PLACE_FILL[item.id];
   if (!f) return [];
   const open = (p: Pt) => site.surfaceAt(p) === "walk" && !blocked(obstacles, p, 1);
@@ -314,6 +319,7 @@ const fillPlace = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
 
 /** What a lamp beside a line keeps clear of, and how far (m): trees by their crowns. */
 const OBSTACLE: Partial<Record<StreetPropKind, number>> = { tree: 3.4, bench: 1.8, "advertising-column": 1.8, kiosk: 2.5, "bus-shelter": 2.5, monument: 2.5, artwork: 1.8, "cafe-garden": 3, "fountain-jets": 1.8 };
+const OBSTACLE_REACH = Math.max(...Object.values(OBSTACLE));
 
 /**
  * Shapes pinned down: the tall mast, the yellow column, and every monument and artwork by its
@@ -367,6 +373,13 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
   const clear = new Clearances(site.chunks, market);
   const fromLine = new Set<Placed>();
   const deferred: PlanItem[] = [];
+  // The obstacles of the pieces placed so far, each added as it is placed.
+  const obstacles: Obstacles = new SpatialHash<Obstacle>(4);
+  const push = (x: Placed) => {
+    placed.push(x);
+    const r = OBSTACLE[x.prop];
+    if (r) obstacles.insertPoint({ x: x.p.x, z: x.p.z, r }, x.p.x, x.p.z);
+  };
   for (const item of plan.items) {
     const prop = propOf(item.kind);
     if (!prop) {
@@ -378,7 +391,6 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
       deferred.push(item);
       continue;
     }
-    const obstacles = placed.flatMap((x) => (OBSTACLE[x.prop] ? [{ x: x.p.x, z: x.p.z, r: OBSTACLE[x.prop]! }] : []));
     for (const at of placeItem(site, item, prop, obstacles, placed)) {
       const x = { ...at, prop: oldTownLook(item.kind, at.prop, at.p) };
       const shape = shapeOf(item, prop, x.key, tags);
@@ -387,7 +399,7 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
         continue;
       }
       const p = { ...x, ...(shape === undefined ? {} : { shape }), from: item.id, ...(item.baskets === false ? { bare: true as const } : {}) };
-      placed.push(p);
+      push(p);
       if (item.line || item.lines) fromLine.add(p);
     }
     // The stock beside a market's stalls (ADR-0058 stage 3), within its outline.
@@ -398,7 +410,7 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
         if (x.from === item.id && x.yaw === null) placed[k] = { ...x, yaw: facingOf(site, x) };
       });
       const stalls = placed.filter((x) => x.from === item.id);
-      for (const g of stallGoods(site, clear, stalls, ring, marketEntrances(site, ring), placed)) placed.push({ ...g, from: item.id });
+      for (const g of stallGoods(site, clear, stalls, ring, marketEntrances(site, ring), placed)) push({ ...g, from: item.id });
     }
   }
   // Baskets hang on the lamps, the street groups follow the streets and the benches.
