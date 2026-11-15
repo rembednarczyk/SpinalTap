@@ -1,5 +1,4 @@
 # lawn-on-leafoff-paving: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-0-0 -80,-200
 krakowskie-0-0 -90,-170
 krakowskie-0-1 0,100
 krakowskie-1-0 230,-200
@@ -12,9 +11,15 @@ krakowskie-2-0 290,-190
 krakowskie-2-1 340,70
 krakowskie-2-1 340,80
 krakowskie-2-1 350,150
-nabrzeze-0-0 2440,120
-nabrzeze-0-0 2450,130
 nabrzeze-0-0 2450,140
+nabrzeze-0-0 2470,220
+nabrzeze-0-0 2480,220
+nabrzeze-0-0 2460,230
+nabrzeze-0-1 2320,300
+nabrzeze-0-1 2380,310
+nabrzeze-0-1 2390,310
+nabrzeze-0-1 2490,320
+nabrzeze-0-1 2490,330
 nabrzeze-0-1 2360,390
 nabrzeze-0-1 2390,420
 nabrzeze-0-1 2390,430
@@ -23,12 +28,18 @@ nabrzeze-0-1 2390,440
 nabrzeze-0-1 2390,450
 nabrzeze-0-1 2310,460
 nabrzeze-0-1 2390,460
-nabrzeze-0-1 2400,470
+nabrzeze-0-1 2380,470
 nabrzeze-1-0 2560,100
 nabrzeze-1-0 2640,180
+nabrzeze-1-0 2540,230
 nabrzeze-1-0 2540,240
 nabrzeze-1-0 2580,250
-nabrzeze-1-1 2520,340
+nabrzeze-1-1 2530,280
+nabrzeze-1-1 2540,290
+nabrzeze-1-1 2540,300
+nabrzeze-1-1 2510,320
+nabrzeze-1-1 2500,330
+nabrzeze-1-1 2540,350
 nabrzeze-1-1 2650,410
 nabrzeze-1-1 2690,410
 nabrzeze-1-1 2660,420
@@ -56,7 +67,6 @@ podzamcze-1-1 860,480
 podzamcze-1-1 850,490
 podzamcze-1-1 860,490
 podzamcze-2-0 1000,160
-podzamcze-2-0 1050,160
 podzamcze-2-0 950,190
 podzamcze-2-0 940,200
 podzamcze-2-0 950,200
@@ -66,6 +76,7 @@ podzamcze-2-0 950,220
 podzamcze-2-0 960,220
 podzamcze-2-0 960,240
 podzamcze-2-0 1100,240
+podzamcze-2-0 1070,280
 podzamcze-2-1 970,440
 podzamcze-2-1 1060,440
 podzamcze-2-1 990,460
