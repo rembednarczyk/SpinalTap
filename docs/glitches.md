@@ -1947,11 +1947,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: treeVariant (#558) wraca do plainTreeVariant, gdy korona z pomiaru nie mieści się przy ścianach; reguła koron pomija przez to duże drzewa przy budynkach, np. (700, 570).
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import (tree-heights)
+- Runda 2 G-797: 41 wierzchołków prawdziwych drzew przy ścianach nadal pomijanych (z listy kuratora zostały 2 z 16).
 
 ### G-815 Drzewa reguły koron na okapach, dachach podwórek, budowach, krytym targu i krawędziach pomostów (T-300)
 - Ważność: S3 · Zasięg: ok. 28 drzew na okapach/dachach (z 57 wskazanych przez sondę), 20 w landuse=construction (12 na stanie surowym Zielona 5a), 3 w Targu „Bazar” w67502759, 3 przy pomostach; wszystkie dzielnice
 - Opis: Reguła crown-trees.ts (G-797) stawia drzewo na wierzchołku korony liczonym tylko po komórkach dopuszczonych, więc piksel okapu przy wyższym dachu (NMPT = maks. z 4 komórek 0,5 m; obrys OSM 1–3 m mniejszy niż dach; przybudówki spoza OSM) staje się wierzchołkiem, a ortofoto daje canopy na miedzi, mchu, pnączach i cieniu podwórek. Przykłady: c152 (117,5; 72,5) 9,4 m na miedzianym dachu, c81 (375,5; −262,5), c86 (385,5; −139,5) przybudówka z pnączem, c273 (497,5; 13,5), c595 (608,5; 569,5). Budowa Zielona 5a (w770678456, w1382552286): drzewa 6–16 m na płaskowyżu stanu surowego. Targ „Bazar”: c592, c593, c594 po 4,0 m w alejkach między dachami straganów. Pomosty: c441, c452 (kładka ok. x 778, z 202), c937 (most nad Bystrzycą x 2451, z 421) — CHM = pomost. Nakładki: scratchpad/topo-g797/eave0.png, eave1.png, budowy.png, targ.png, decks.png, zoom2.png; raport scratchpad/topo-g797-raport.md
-- Status: nowe (przegląd kuratora G-797, 15.11); do poprawy w gałęzi G-797 przed scaleniem albo osobno
+- Status: w ponownym przeglądzie (gałąź ccr-ec2c4269-ilh8k8-g797, 2b26e13): K1 28 → 1, K3 5 → 0, lista kuratora: 12 znika, 6 zostaje; wcześniej: nowe (przegląd kuratora G-797, 15.11); do poprawy w gałęzi G-797 przed scaleniem albo osobno
 - Pakiet właściciela: tools/osm-import (crown-trees.ts, crown-ground.ts)
 - Test przyjęcia: drzewa reguły: żaden pień w obrysie OSM building (bez ruins), landuse=construction, amenity=marketplace (kontrola K1, baza 27 → 0); żaden do 2 m od pomostu (K3, baza 5 → 0); wierzchołek nie łączy się plateau CHM (bez spadku o 1 m) z obrysem budynku w 3,5 m albo ma lokalne maksimum surowego CHM — lista z raportu: c13, c51, c81, c86, c152, c159, c165, c198, c221, c244, c273, c595 znikają, a c345, c350, c357, c585, c623, c639 zostają
 
