@@ -6,13 +6,20 @@
  * same group; a way no group holds goes to a group of its own, `osm.bollard-lines`. A post of the
  * line within `NODE_ROOM` of a bollard mapped as a node gives way to it (the node anchors the row),
  * and none stands where the line crosses a way cars take (a drive into a yard, a street): the row
- * breaks there for the way's width and `DRIVE_ROOM` on either side. Zebras need no rule here: their
- * mouths stay clear by `stringBollards`. `stringBollards` then strings the posts into rows with their chains (G-032), out of the
- * zebras' mouths, on the lamps of the rows.
+ * breaks there for the way's width and `DRIVE_ROOM` on either side. `stringBollards` then strings
+ * the posts into rows with their chains (G-032), out of the zebras' mouths (no rule for zebras
+ * here), on the lamps of the rows.
+ *
+ * OSM draws a row along a kerb a few decimetres off it, often over the carriageway the map measured
+ * on the orthophoto (Plac Łokietka's east row 0.3-0.4 m in it): a post of a line on the carriageway
+ * steps onto the pavement within `KERB_REACH` (`onKerb`); with none so near it stays, as a bollard
+ * from a node does.
  */
 import type { BollardLine } from "./furniture.ts";
 import type { Pt } from "./geometry.ts";
 import type { PlanItem, PropsPlan } from "./props-gen.ts";
+import { offRoad } from "./props-place.ts";
+import type { Site } from "./props-site.ts";
 
 /** Spacing of a line's posts (m): Plac Łokietka and Plac Wolności keep 1.5 to 1.8 m (orthophoto 2025-04, GSV 2025). */
 export const LINE_SPACING = 1.8;
@@ -28,6 +35,16 @@ export interface DriveWay {
   readonly pts: readonly Pt[];
   readonly width: number;
 }
+
+/** How far a line's post on the carriageway looks for the pavement, and how far onto it it steps (m). */
+export const KERB_REACH = 1.5;
+export const KERB_INSET = 0.15;
+
+/** Is `key` a post of a line (`w<id>#<n>`)? */
+export const isLinePost = (key: string): boolean => /^w\d+#\d+$/.test(key);
+
+/** Where a post stands: a line's on the carriageway on the pavement beside it, if any is near; the rest where they are. */
+export const onKerb = (site: Site, p: Pt, key: string): Pt => (isLinePost(key) ? (offRoad(site, p, KERB_REACH, KERB_INSET) ?? p) : p);
 
 /** The group of the lines no group of the plan holds. */
 export const LINE_GROUP = "osm.bollard-lines";

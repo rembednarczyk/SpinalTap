@@ -4,6 +4,9 @@ import { bollardChains, chainSegments } from "../../../packages/sim/src/content/
 import { loadBollardLines } from "../src/furniture.ts";
 import { LINE_GROUP, linePosts, withBollardLines } from "../src/props-bollard-lines.ts";
 import type { PropsPlan } from "../src/props-gen.ts";
+import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
+import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
+import { Site } from "../src/props-site.ts";
 import { cityProps } from "./city.ts";
 
 const posts = [...cityProps().byChunk.values()].flat().filter((i) => i.prop === "bollard");
@@ -82,5 +85,16 @@ describe("rows of bollards OSM maps as lines (G-818)", () => {
     const chained = row.filter((i) => bollardChains(i).length > 0);
     expect(chained.length).toBeGreaterThanOrEqual(row.length - 4);
     for (const i of row) for (const s of chainSegments(i)) expect(s.to.z > -96 && s.from.z < -93, `${i.x},${i.z}`).toBe(false);
+  });
+
+  it("stands a line's posts on the pavement by the kerb, not on the carriageway OSM's line runs over", () => {
+    const site = new Site([...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS]);
+    // Plac Łokietka's east row (w1514057823, x ≈ 446.2-446.5): OSM's line lies 0.3-0.4 m in the measured carriageway.
+    const east = along(loadBollardLines().find((l) => l.id === "w1514057823")!.pts);
+    expect(east.length).toBeGreaterThanOrEqual(11);
+    expect(east.filter((i) => site.surfaceAt(i) === "road")).toEqual([]);
+    const lines = loadBollardLines();
+    const onRoad = lines.flatMap((l) => along(l.pts)).filter((i) => site.surfaceAt(i) === "road");
+    expect(onRoad.length).toBeLessThanOrEqual(2);
   });
 });
