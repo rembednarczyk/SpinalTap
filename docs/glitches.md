@@ -1923,7 +1923,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-810 Reguła latarni lit stawia latarnię na brzegu mapy z y 0, gdy krawędź Mełgiewskiej przesunie się o 2,5 cm
 - Ważność: S3 · Zasięg: Mełgiewska w225998472, wschodni brzeg mapy (2700; 93,5)
 - Opis: Znalezione w PR 10 runda 2 (ADR-0080): przesunięcie krawędzi jezdni o 2,5 cm sprawia, że reguła lit (#557, props-lit / props-lit-spot) stawia latarnię poza terenem z y = 0; props.test pada. Mełgiewska trzymana na HELD jako obejście. Reguła powinna odrzucać punkt poza mapą albo bez wysokości terenu.
-- Status: zgłoszone
+- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-lit-edge, 0c0c5fd): chunk sprawdzany po zaokrągleniu punktu; wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import (props-lit)
 
 ### G-811 kerbFills pomija stronę zmierzonej drogi zostawioną przy szacunku
@@ -1935,7 +1935,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-812 Przebieg uzupełniający lit wydłuża ciemny odcinek poza brzeg mapy i uznaje sąsiedni chodnik za oświetlony
 - Ważność: S4 · Zasięg: w185762620 / w232464409, 10 m przy (455..470; 150..160)
 - Opis: Znalezione przy G-804: linia przebiegu uzupełniającego reguły lit sięga poza brzeg mapy; chodnik obok liczy się jako oświetlony, choć latarnia tam nie staje (lit-street-dark +2 na gałęzi g804).
-- Status: zgłoszone
+- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-lit-edge, 406efb1): padded tylko po punktach na mapie; wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import (props-lit)
 
 ### G-813 Pasy parkowania Świętoduskiej w1514058888/89/90 bez aut
@@ -1956,6 +1956,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowe (przegląd kuratora G-797, 15.11); do poprawy w gałęzi G-797 przed scaleniem albo osobno
 - Pakiet właściciela: tools/osm-import (crown-trees.ts, crown-ground.ts)
 - Test przyjęcia: drzewa reguły: żaden pień w obrysie OSM building (bez ruins), landuse=construction, amenity=marketplace (kontrola K1, baza 27 → 0); żaden do 2 m od pomostu (K3, baza 5 → 0); wierzchołek nie łączy się plateau CHM (bez spadku o 1 m) z obrysem budynku w 3,5 m albo ma lokalne maksimum surowego CHM — lista z raportu: c13, c51, c81, c86, c152, c159, c165, c198, c221, c244, c273, c595 znikają, a c345, c350, c357, c585, c623, c639 zostają
+
+### G-816 Odcinek reguły lit bez stacji liczy się jako oświetlony; przebieg uzupełniający powtarza stację, która właśnie odpadła
+- Ważność: S4 · Zasięg: SW róg Krakowskiego (-160..-130; -270..-260), rząd drzew w1550442735
+- Opis: Znalezione przy G-812: odcinek krótszy niż pół rozstawu nie dostaje stacji, a liczy się jako oświetlony; drugi przebieg powtarza tę samą zablokowaną stację.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (props-lit)
+
+### G-817 Latarnia z linii przesunięta z jezdni lub ściany traci 7 m odstępu scalania
+- Ważność: S4 · Zasięg: linie latarni planu przy offRoad/offWall; widoczność w mieście niesprawdzona
+- Opis: fromLine w props-gen działa po tożsamości obiektu, więc latarnia przesunięta przez offRoad/offWall dostaje odstęp 0,3 m zamiast 7 m.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (props-gen)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
