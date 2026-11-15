@@ -330,12 +330,16 @@ const darkSpans = (pts: readonly Pt[], dark: (p: Pt) => boolean): [number, numbe
 /**
  * A dark stretch grown along its way, both ways in turn, to a lamp's spacing: a line shorter than
  * half of it gets no station (`stations` starts half a spacing in), so a short gap would stay dark.
+ * It grows on the map only: past its edge the lamps go (no chunk), and the line grown there lit the
+ * sidewalk beside it for the ways after (Świętoduska's 4 m at z = 160 grown 26 m north, G-812).
  */
 const padded = (pts: readonly Pt[], [a, b]: [number, number], spacing: number): Pt[] => {
   let [i, j] = [a, b];
-  while (lengthOf(pts.slice(i, j + 1)) < spacing && (i > 0 || j < pts.length - 1)) {
-    if (i > 0) i--;
-    if (j < pts.length - 1 && lengthOf(pts.slice(i, j + 1)) < spacing) j++;
+  const back = () => i > 0 && inMap(pts[i - 1]!);
+  const on = () => j < pts.length - 1 && inMap(pts[j + 1]!);
+  while (lengthOf(pts.slice(i, j + 1)) < spacing && (back() || on())) {
+    if (back()) i--;
+    if (on() && lengthOf(pts.slice(i, j + 1)) < spacing) j++;
   }
   return pts.slice(i, j + 1);
 };

@@ -123,6 +123,17 @@ describe("the street lamps of the lit rule (G-798, ADR-0064 stage 3)", () => {
     expect(line[line.length - 2]! - line[0]!).toBeGreaterThanOrEqual(30);
   });
 
+  it("grows a dark stretch on the map only, so its line past the edge lights no way beside it (G-812)", () => {
+    // Krakowskie's north edge is z = 160. Way 1 runs 20 m onto the map; way 2 2 m, from off it to the north-east
+    // (Świętoduska); a footway along the edge, more than COVER from way 2's 2 m, within it of the 30 m it grew to.
+    const onto = (id: number, from: readonly [number, number], to: readonly [number, number]) => ({ id, tags: { lit: "yes", highway: "residential" }, pts: [{ x: from[0], z: from[1] }, { x: to[0], z: to[1] }] });
+    const items = litItems({ items: [] }, [onto(1, [-100, 200], [-100, 140]), onto(2, [160, 200], [100, 158]), way(3, { highway: "footway" }, 110, 190, 159.5)]);
+    const zs = items.filter((i) => i.id !== "lit.w3").flatMap((i) => i.lines!.flatMap((l) => l.filter((_, k) => k % 2 === 1)));
+    expect(Math.max(...zs)).toBeLessThanOrEqual(160);
+    const footway = items.find((i) => i.id === "lit.w3")!.lines!;
+    expect(footway.map((l) => [l[0], l[l.length - 2]])).toEqual([[120, 190]]);
+  });
+
   it("lamps in its second pass what the placed lamps left dark", () => {
     const plan: PropsPlan = { items: [] };
     const ways = [way(1, { highway: "residential" }, 0, 120, -240)];
