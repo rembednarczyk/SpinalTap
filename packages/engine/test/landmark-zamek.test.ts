@@ -10,7 +10,7 @@ import { along, before, cityAround, colored, crosses, data, near3, outside, pass
  * Zamek Lubelski from the landmark kit (ADR-0062 stage 5, G-841, T-112): the neo-Gothic west
  * front over Plac Zamkowy after the user's photograph (Street View 2025) and the curator's audit
  * (`docs/plany/zamek-lubelski.md`): cream plaster, an attic with battlements over the outer
- * walls up to NMPT's crown, the gate's risalit between two turrets with flags, its stepped
+ * walls up to NMPT's crown, the gate's risalit between two turrets with dark spires, its stepped
  * parapet, two rose windows over the pointed portal, rows of lancets.
  */
 

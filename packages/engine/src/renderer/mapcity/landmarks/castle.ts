@@ -14,7 +14,7 @@ import type { CastleFront, Layer2077 } from "./recipes";
  * A castle's solid from its recipe (ADR-0062 stage 5, G-841): the walls to the data's eaves, an
  * attic over the outer walls up to the data's peak with battlements on it, the roof hidden behind
  * it as a walk at the eaves, and on the gate's front (the wall with the passage's mouth on the
- * Old Town's side) the risalit's stepped parapet between two octagonal turrets with flags.
+ * Old Town's side) the risalit's stepped parapet between two octagonal turrets with dark spires, pinnacles on the outer corners.
  */
 
 /** How thick the attic and its merlons are, metres. */
@@ -114,7 +114,7 @@ const triangle = (sink: MeshSink, w: Wall, u: number, half: number, y0: number, 
   }
 };
 
-/** An octagonal turret round c from the foot to `top` (merlons included), a mast with a flag on it when near. */
+/** An octagonal turret round c from the foot to `top` (merlons included), a dark metal spire with a small pennant on it when near. */
 const turret = (sink: MeshSink, f: LandmarkFrame, c: P2, face0: Wall, spec: CastleFront["turret"], top: number, near: boolean, color: Rgba): void => {
   const meta = trimMeta(f.style.seed);
   const r = spec.radius;
