@@ -25,6 +25,7 @@ Każdy agent (naprawiacz, budowniczy, łowca, weryfikator, kurator, zwiadowca) c
 - Gdy dotykasz cudzego obszaru (tabela własności w `CLAUDE.md`), opisz to w raporcie. Testów cudzych obszarów nie osłabiaj.
 - Lista miejsc z briefu mogła się zdezaktualizować. Sprawdź ją grepem na `origin/main`, zanim zaczniesz.
 - PR-a nie twórz: robi to orkiestrator. Gałąź wypychasz zwykłym `git push`.
+- Kontener może się zrestartować bez ostrzeżenia (15.11 ok. 11:30 zatrzymał 4 agenty w połowie pracy). Co ok. 30 minut albo po każdym ukończonym kroku rób commit (także `wip(...)` z opisem stanu) i zwykły push na swoją gałąź; niewypchnięta praca ginie z kontenerem.
 - Ciężkie zadania (`pnpm build`, `pnpm e2e`, `shots:compare`, pełne `test:rerun` kilku pakietów) uruchamiaj przez zamek `flock /tmp/seki-heavy.lock <polecenie>`, żeby naraz szło najwyżej jedno na maszynę (refleksja 15.11: cztery równoległe buildy dawały load 30, przekroczenia czasu i brak pamięci). Lekkie testy jednego pliku idą bez zamka.
 - Zanim wypuścisz kolejną rundę po przeglądzie kuratora, sprawdź te same rodzaje błędów sam: nakładka zmienionych obiektów na ortofoto z cache i kontrole skanu z poprzednich przeglądów (drzewo w budynku, podwójny rząd, latarnia na asfalcie, obiekt na budowie, przy pomoście).
 
