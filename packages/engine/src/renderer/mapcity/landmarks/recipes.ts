@@ -110,16 +110,28 @@ export interface Tier {
  * round the building), the crowns over the attic's top (the data's peak), metres.
  */
 export interface CastleFront {
-  /** Octagonal turrets on the outline's short runs at both ends of the gate's wall, a mast with a flag on each. */
-  readonly turret: { readonly radius: number; readonly rise: number; readonly merlon: number; readonly mast: number; readonly flag: readonly string[] };
+  /** Octagonal turrets on the outline's short runs at both ends of the gate's wall, a dark metal spire with a small pennant on each. */
+  readonly turret: { readonly radius: number; readonly rise: number; readonly merlon: number; readonly mast: number };
   /** The risalit's parapet between the turrets: over the attic, its triangular merlons' height and pitch. */
   readonly parapet: { readonly rise: number; readonly merlon: number; readonly pitch: number };
   /** Two rose windows over the portal: radius, centre over the floor, apart from the axis. */
   readonly rose: { readonly r: number; readonly at: number; readonly off: number };
   /** The pointed portal framing the passage's mouth: outer width and apex over the floor. */
   readonly portal: { readonly width: number; readonly apex: number };
-  /** Rows of lancets, [sill, head] over the floor, `pitch` metres apart at most; a row fits under the wall's top or is left out. */
-  readonly lancets: { readonly rows: readonly (readonly [number, number])[]; readonly pitch: number; readonly width: number };
+  /**
+   * Rows of lancets, [sill, head] over the floor, in bays `pitch` metres apart at most; `courtyard`
+   * rows on the courtyard's walls only; a row fits under the wall's top or is left out.
+   */
+  readonly lancets: {
+    readonly rows: readonly (readonly [number, number])[];
+    readonly courtyard: readonly (readonly [number, number])[];
+    readonly pitch: number;
+    readonly width: number;
+  };
+  /** Over the outer walls' lancets: a round window of radius `r` at `oculus` over the floor in each bay, a frieze of arcades `frieze` tall under the battlements, `pitch` apart. */
+  readonly upper: { readonly oculus: number; readonly r: number; readonly frieze: number; readonly pitch: number };
+  /** Pinnacles on the outer corners (the outline's convex hull) off the turrets: radius, rise over the attic. */
+  readonly pinnacle: { readonly radius: number; readonly rise: number };
   /** The museum's sign on the portal's tympanum (an in-world sign, ADR-0056). */
   readonly sign: string;
 }
@@ -365,9 +377,10 @@ const NOWY_RATUSZ: LandmarkRecipe = {
  * with battlements over every outer wall up to NMPT's crown (y 7.5, the data's peak after the
  * import's correction), the skillion behind it down to the courtyard's eaves (y 3.3). The west
  * front's risalit with the gate: two octagonal turrets on the outline's short runs either side,
- * with merlons to about y 10 (NMPT) and masts with flags, a stepped parapet of triangular merlons
- * between them, two rose windows over a pointed portal round the passage, lancets either side.
- * The wings: two rows of lancets and small ones under the attic. The Old Town's subdued layer
+ * with merlons to about y 12 (NMPT) and dark metal spires with pennants, a stepped parapet of
+ * triangular merlons between them, two rose windows over a pointed portal round the passage,
+ * lancets either side. The wings: lancets on the ground floor, lesenes, round windows and a frieze
+ * of pointed arcades under the battlements; pinnacles on the corners. The Old Town's subdued layer
  * (the user's answer 1.11: the plaza's side subdued), the camera at the gate.
  */
 const ZAMEK: LandmarkRecipe = {
@@ -386,19 +399,15 @@ const ZAMEK: LandmarkRecipe = {
         openings: false,
         clock: false,
         castle: {
-          turret: { radius: 1.8, rise: 2.5, merlon: 0.6, mast: 3, flag: ["#f4f4f0", "#d4213d"] },
-          parapet: { rise: 0.5, merlon: 1.2, pitch: 1.5 },
-          rose: { r: 1.1, at: 10.6, off: 2.8 },
+          // NMPT (the curator's review of round 1): the turrets' flat tops y 12.0-12.4, the spires to
+          // about y 15.5, the parapet's peaks y 10.0-10.4 over the wings' crown at y 7.5.
+          turret: { radius: 1.8, rise: 4.7, merlon: 0.6, mast: 3.3 },
+          parapet: { rise: 1.6, merlon: 1.2, pitch: 1.5 },
+          rose: { r: 1.7, at: 10.6, off: 3.4 },
           portal: { width: 4.4, apex: 7.4 },
-          lancets: {
-            rows: [
-              [1.6, 4.4],
-              [6.6, 9.2],
-              [11.2, 12.6],
-            ],
-            pitch: 3.6,
-            width: 1,
-          },
+          lancets: { rows: [[1.6, 4.4]], courtyard: [[6.6, 9.2]], pitch: 4.7, width: 1 },
+          upper: { oculus: 10, r: 0.45, frieze: 0.8, pitch: 0.9 },
+          pinnacle: { radius: 0.35, rise: 1.8 },
           sign: "MUZEUM",
         },
       },

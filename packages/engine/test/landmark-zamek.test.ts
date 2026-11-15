@@ -68,20 +68,23 @@ describe("Zamek Lubelski from the landmark kit (G-841)", () => {
     for (const p of pts) if (TURRETS.every((t) => Math.hypot(p.x - t.x, p.z - t.z) > 2.2)) expect(outside(f.b.ring, p), `${p.x}, ${p.z}`).toBeLessThan(0.6);
   });
 
-  it("stands two turrets with merlons and flags either side of the gate, to about y 10 (NMPT)", () => {
+  it("stands two turrets with merlons either side of the gate to NMPT's flat tops (y 12.0-12.4), dark spires to about y 15.5", () => {
     const f = castle();
     const d = data(CASTLE);
     const crown = d.y + d.height + d.roof!;
-    const high = points(near3(f)).filter((p) => p.y > crown + 2);
+    // Over the parapet's peaks (y 10.0-10.4): the turrets and their spires only.
+    const high = points(near3(f)).filter((p) => p.y > crown + 3.2);
     expect(high.length).toBeGreaterThan(50);
     for (const p of high) expect(Math.min(...TURRETS.map((t) => Math.hypot(p.x - t.x, p.z - t.z))), `${p.x}, ${p.z}`).toBeLessThan(2.8);
     for (const t of TURRETS) {
       const body = high.filter((p) => Math.hypot(p.x - t.x, p.z - t.z) > 1.2 && Math.hypot(p.x - t.x, p.z - t.z) < 2.8);
-      expect(Math.max(...body.map((p) => p.y))).toBeGreaterThan(9.6);
-      expect(Math.max(...body.map((p) => p.y))).toBeLessThan(10.4);
-      // The mast with its flag over the turret.
-      expect(Math.max(...high.filter((p) => Math.hypot(p.x - t.x, p.z - t.z) < 1.2).map((p) => p.y))).toBeGreaterThan(12);
-      expect(colored(near3(f), "#d4213d").some((p) => Math.hypot(p.x - t.x, p.z - t.z) < 2)).toBe(true);
+      expect(Math.max(...body.map((p) => p.y))).toBeGreaterThan(12);
+      expect(Math.max(...body.map((p) => p.y))).toBeLessThan(12.4);
+      // The spire with its pennant: dark metal, no flag in colours.
+      const spire = colored(near3(f), SWATCH.metal).filter((p) => Math.hypot(p.x - t.x, p.z - t.z) < 0.7 && p.y > crown + 3.2);
+      expect(Math.max(...spire.map((p) => p.y))).toBeGreaterThan(15.2);
+      expect(Math.max(...spire.map((p) => p.y))).toBeLessThan(15.8);
+      expect(colored(near3(f), "#d4213d").some((p) => Math.hypot(p.x - t.x, p.z - t.z) < 2)).toBe(false);
     }
   });
 
@@ -99,19 +102,33 @@ describe("Zamek Lubelski from the landmark kit (G-841)", () => {
     const head = colored(sink, SWATCH.plasterTrim).filter((p) => Math.abs(before(gate.w, p)) < 0.2 && Math.abs(along(gate.w, p) - mid) < 0.3);
     expect(Math.max(...head.map((p) => p.y))).toBeGreaterThan(gate.top + 2);
     expect(passageOpen(sink, f)).toEqual([]);
-    // Triangular merlons: the parapet's peaks between the turrets stand over the wings' merlons.
-    const d = data(CASTLE);
-    const crown = d.y + d.height + d.roof!;
-    const peaks = points(sink).filter((p) => p.y > crown + 1 && Math.abs(before(gate.w, p)) < 0.6 && along(gate.w, p) > 1.5 && along(gate.w, p) < gate.w.length - 1.5);
-    expect(peaks.length).toBeGreaterThan(5);
+    // Triangular merlons: the parapet's peaks between the turrets at NMPT's y 10.0-10.4.
+    const peaks = points(sink).filter((p) => Math.abs(before(gate.w, p)) < 0.6 && along(gate.w, p) > 1.5 && along(gate.w, p) < gate.w.length - 1.5);
+    expect(peaks.filter((p) => p.y > 10).length).toBeGreaterThan(5);
+    expect(Math.max(...peaks.map((p) => p.y))).toBeLessThan(10.4);
+    // Rose windows of about 1.7 m radius: their dark glass spans over 3 m.
+    const left = roses.filter((p) => along(gate.w, p) < mid);
+    expect(Math.max(...left.map((p) => p.y)) - Math.min(...left.map((p) => p.y))).toBeGreaterThan(3.2);
   });
 
-  it("puts rows of lancets on the wings and the museum's sign over the gate", () => {
+  it("puts one row of lancets on the wings, round windows about 10 m over the forecourt and a frieze of arcades under the crown, and the museum's sign over the gate", () => {
     const f = castle();
     const sink = near3(f);
+    // The gate's floor at the west mouth (the first doorway of the data).
+    const floor = f.b.doorways![0]!.bottom;
+    const d = data(CASTLE);
+    const crown = d.y + d.height + d.roof!;
     const wing = f.walls.find((w) => Math.abs(w.a.x - 842) < 0.2 && Math.abs(w.a.z - 263.9) < 0.2)!;
     const glass = colored(sink, SWATCH.opening).filter((p) => Math.abs(before(wing, p)) < 0.1);
-    expect(new Set(glass.map((p) => Math.round(along(wing, p)))).size).toBeGreaterThan(4);
+    const lancets = glass.filter((p) => p.y < floor + 5);
+    expect(new Set(lancets.map((p) => Math.round(along(wing, p)))).size).toBeGreaterThan(2);
+    // Nothing dark between the lancets and the round windows (no second row), the round windows at 10 m.
+    expect(glass.filter((p) => p.y > floor + 5 && p.y < floor + 9.4)).toEqual([]);
+    const round = glass.filter((p) => p.y >= floor + 9.4);
+    expect(round.length).toBeGreaterThan(0);
+    expect(Math.max(...round.map((p) => p.y))).toBeLessThan(floor + 10.6);
+    const frieze = colored(sink, SWATCH.ivoryNiche).filter((p) => Math.abs(before(wing, p)) < 0.1 && p.y > crown - 2);
+    expect(new Set(frieze.map((p) => Math.round(along(wing, p) / 0.9))).size).toBeGreaterThan(10);
     expect(LANDMARK_TEXTS).toContain("MUZEUM");
     const slots: string[] = [];
     planLandmarkSigns(new MeshSink(), f, (name) => slots.push(name) - 1);

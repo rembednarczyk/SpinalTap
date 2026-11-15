@@ -140,6 +140,7 @@ const turret = (sink: MeshSink, f: LandmarkFrame, c: P2, face0: Wall, spec: Cast
     for (const [y0, y1] of [
       [walk - 4.6, walk - 3],
       [walk + 0.4, walk + 1.6],
+      [walk + 2.4, walk + 3.6],
     ] as const) {
       archPanel(sink, facet, facet.length / 2, 0.3, foot.y + y0, foot.y + y1, 0.03, solid(SWATCH.opening), meta, true);
     }
@@ -150,15 +151,33 @@ const turret = (sink: MeshSink, f: LandmarkFrame, c: P2, face0: Wall, spec: Cast
     const d = k * Math.cos(Math.PI / 8) - 0.15;
     sink.box({ x: c.x + Math.cos(a) * d, y: top - spec.merlon / 2, z: c.z + Math.sin(a) * d }, side * 0.55, spec.merlon, 0.3, color, { rotY: Math.atan2(-Math.cos(a), -Math.sin(a)), bottom: false, uv2: meta });
   }
-  sink.box({ x: c.x, y: top + spec.mast / 2 - 0.3, z: c.z }, 0.08, spec.mast + 0.6, 0.08, solid(SWATCH.metal), { bottom: false, uv2: meta });
-  // The flag across the gate's front, seen whole from the plaza; both faces.
+  // A dark metal spire with a small pennant across the gate's front (the photograph), both faces.
+  const metal = solid(SWATCH.metal);
+  sink.prism({ x: c.x, y: top - 0.3, z: c.z }, 0.09, spec.mast + 0.3, 6, metal, false, 0.02);
   const t = { x: (face0.b.x - face0.a.x) / face0.length, z: (face0.b.z - face0.a.z) / face0.length };
-  const stripe = 0.6 / Math.max(spec.flag.length, 1);
-  spec.flag.forEach((hex, s) => {
-    const y1 = top + spec.mast - 0.15 - s * stripe;
-    const q = (u: number, y: number): Vec => ({ x: c.x + t.x * u, y, z: c.z + t.z * u });
-    for (const n of [1, -1]) quadUv(sink, [q(0.05, y1 - stripe), q(0.95, y1 - stripe), q(0.95, y1), q(0.05, y1)], { x: face0.nx * n, y: 0, z: face0.nz * n }, solid(hex), [[0, 0], [1, 0], [1, 1], [0, 1]], meta);
-  });
+  const q = (u: number, y: number): Vec => ({ x: c.x + t.x * u, y, z: c.z + t.z * u });
+  const y1 = top + spec.mast - 0.5;
+  for (const k of [1, -1]) {
+    const n = { x: face0.nx * k, y: 0, z: face0.nz * k };
+    face(sink, vertex(sink, q(0.05, y1), n, metal, [0, 1], meta), vertex(sink, q(0.05, y1 - 0.32), n, metal, [0, 0], meta), vertex(sink, q(0.55, y1 - 0.16), n, metal, [1, 0.5], meta), n);
+  }
+};
+
+/** Pinnacles on the outer corners: the outline's convex hull's corners, a corner's points within 3 m as one, off the turrets. */
+const pinnacles = (sink: MeshSink, f: LandmarkFrame, spec: CastleFront["pinnacle"], turrets: readonly P2[], merlon: number, color: Rgba): void => {
+  const groups: P2[][] = [];
+  for (const p of hull(f.b.ring)) {
+    const g = groups.find((q) => Math.hypot((q[0] as P2).x - p.x, (q[0] as P2).z - p.z) < 3);
+    if (g) g.push(p);
+    else groups.push([p]);
+  }
+  const crown = atticTop(f);
+  for (const g of groups) {
+    const c = { x: g.reduce((s, p) => s + p.x, 0) / g.length, z: g.reduce((s, p) => s + p.z, 0) / g.length };
+    if (turrets.some((t) => Math.hypot(t.x - c.x, t.z - c.z) < 4)) continue;
+    sink.prism({ x: c.x, y: crown - merlon, z: c.z }, spec.radius, spec.rise + merlon - 0.7, 8, color, false);
+    sink.prism({ x: c.x, y: crown + spec.rise - 0.7, z: c.z }, spec.radius * 1.15, 0.7, 8, color, false, 0);
+  }
 };
 
 /**
@@ -187,6 +206,7 @@ export const castleCrown = (sink: MeshSink, f: LandmarkFrame, merlon: number, pi
     for (let k = 0; k < n; k++) triangle(sink, w, (w.length * (k + 0.5)) / n, (w.length / n) * 0.4, to, parapet.merlon, color, meta);
   }
   if (gate && front) for (const c of turrets) turret(sink, f, c, gate.w, front.turret, crown + front.turret.rise, near, color);
+  if (front && near) pinnacles(sink, f, front.pinnacle, turrets, merlon, color);
 };
 
 /** Lublin 2077's warm lines under the battlements of the outer walls and under the eaves of the courtyard's. */

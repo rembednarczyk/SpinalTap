@@ -81,26 +81,46 @@ const lancet = (sink: MeshSink, w: Wall, u: number, width: number, sill: number,
 const intoNeighbour = (f: LandmarkFrame, w: Wall, u0: number, u1: number): boolean =>
   (f.landmark.nearby ?? []).some((r: readonly P2[]) => [u0, (u0 + u1) / 2, u1].some((u) => [0.05, 0.35].some((o) => pointInRing(onWall(w, u, 0, o), r))));
 
-/** Rows of lancets on every shown wall but the gate's, off the doorways and the neighbours, under the wall's top and over its ground. */
-const lancetRows = (sink: MeshSink, f: LandmarkFrame, spec: CastleFront["lancets"], floor: number, gate: Wall, trim: Rgba): void => {
+/**
+ * The bays of every shown wall but the gate's, `pitch` apart, off the doorways and the neighbours:
+ * lancets on the ground floor and, on the courtyard's walls, a row over them. On the outer walls
+ * over the lancets: lesenes between the bays, a small round window in each and a frieze of
+ * pointed arcades under the battlements (the photograph's wings).
+ */
+const bays = (sink: MeshSink, f: LandmarkFrame, spec: CastleFront, floor: number, gate: Wall, trim: Rgba): void => {
   const meta = trimMeta(f.style.seed);
   const inner = courtyardWalls(f);
   const merlon = f.landmark.part.crown.kind === "crenel" ? f.landmark.part.crown.merlon : 0;
+  const { lancets, upper } = spec;
+  const frieze = atticTop(f) - merlon - 0.25;
   for (const w of [...outerWalls(f), ...[...inner].filter((x) => !x.blind)]) {
     if (w === gate) continue;
-    const top = inner.has(w) ? f.top : atticTop(f) - merlon;
+    const outer = !inner.has(w);
+    const top = outer ? atticTop(f) - merlon : f.top;
+    const rows = outer ? lancets.rows : [...lancets.rows, ...lancets.courtyard];
     for (const [u0, u1] of clearOf(f, w, 0.6)) {
-      const n = Math.floor((u1 - u0) / spec.pitch);
+      const n = Math.floor((u1 - u0) / lancets.pitch);
       for (let k = 0; k < n; k++) {
         const u = u0 + ((u1 - u0) * (k + 0.5)) / n;
-        if (intoNeighbour(f, w, u - spec.width, u + spec.width)) continue;
+        if (intoNeighbour(f, w, u - lancets.width, u + lancets.width)) continue;
         const at = onWall(w, u, 0, 0.3);
-        spec.rows.forEach(([s, h], row) => {
-          const width = row === spec.rows.length - 1 && row > 0 ? spec.width * 0.7 : spec.width;
-          if (floor + h + 0.6 < top && floor + s > groundY(at.x, at.z) + 0.4) lancet(sink, w, u, width, floor + s, floor + h, trim, meta);
-        });
+        const ground = groundY(at.x, at.z) + 0.4;
+        for (const [s, h] of rows) if (floor + h + 0.6 < top && floor + s > ground) lancet(sink, w, u, lancets.width, floor + s, floor + h, trim, meta);
+        if (!outer) continue;
+        const y = floor + upper.oculus;
+        if (y - upper.r > ground && y + upper.r + 0.5 < frieze - upper.frieze) {
+          annulus(sink, w, u, y, upper.r, upper.r + 0.14, 0.03, trim, meta);
+          annulus(sink, w, u, y, 0, upper.r, 0.05, solid(SWATCH.opening), meta);
+        }
+        const ul = u0 + ((u1 - u0) * k) / n;
+        if (k > 0 && floor + 5 > ground) panel(sink, w, ul - 0.22, ul + 0.22, floor + 5, frieze - upper.frieze - 0.14, 0.03, trim, meta);
       }
     }
+    if (!outer || w.length < upper.pitch) continue;
+    // The frieze: a moulding and blind pointed arcades over it, the length of the wall.
+    panel(sink, w, 0, w.length, frieze - upper.frieze - 0.14, frieze - upper.frieze, 0.035, trim, meta);
+    const m = Math.floor(w.length / upper.pitch);
+    for (let k = 0; k < m; k++) archPanel(sink, w, (w.length * (k + 0.5)) / m, upper.pitch * 0.62, frieze - upper.frieze, frieze, 0.02, solid(SWATCH.ivoryNiche), meta, true);
   }
 };
 
@@ -112,7 +132,7 @@ export const castleSignOn = (f: LandmarkFrame): { w: Wall; u: number; y: number;
   return { w: gate.w, u: (gate.u0 + gate.u1) / 2, y: gate.top + 0.42, width: 1.8, height: 0.36, text: spec.sign };
 };
 
-/** The castle's front from its recipe: the portal, the rose windows and the lancets. */
+/** The castle's front from its recipe: the portal, the rose windows, the lancets and the wings' bays. */
 export const castleFront = (sink: MeshSink, f: LandmarkFrame, spec: CastleFront, trim: Rgba): void => {
   const gate = gateWall(f, f.landmark.recipe.layer);
   if (!gate) return;
@@ -124,5 +144,5 @@ export const castleFront = (sink: MeshSink, f: LandmarkFrame, spec: CastleFront,
   const [sill, head] = spec.lancets.rows[0] ?? [1.6, 4.4];
   const off = spec.portal.width / 2 + 1.6;
   for (const s of [-1, 1]) if (mid + s * off > 0.8 && mid + s * off < gate.w.length - 0.8) lancet(sink, gate.w, mid + s * off, spec.lancets.width, gate.floor + sill, gate.floor + head, trim, meta);
-  lancetRows(sink, f, spec.lancets, gate.floor, gate.w, trim);
+  bays(sink, f, spec, gate.floor, gate.w, trim);
 };
