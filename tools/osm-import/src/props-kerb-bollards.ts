@@ -186,10 +186,11 @@ interface World {
 export const gapAt = (w: World, s: KerbSample, along: Pt): string | null => {
   const { p } = s;
   if (s.half < LEAST_HALF || !inRowArea(p)) return "off";
+  // A zebra's band before the carriageway: the kerb line dips onto its ramp, which is no junction to grow by `CORNER`.
+  if (w.bands.some((b) => inCrossingBand(b, p, CROSSING_ROOM + BOLLARD.radius))) return "crossing";
   const surface = w.site.surfaceAt(p);
   if (surface === "road") return "road";
   if (surface !== "walk" || w.site.onSteps(p)) return "ground";
-  if (w.bands.some((b) => inCrossingBand(b, p, CROSSING_ROOM + BOLLARD.radius))) return "crossing";
   if (w.mouths.at(p.x, p.z).some((m) => toSegment(p, m.a, m.b) < m.room && meets(m, along))) return "mouth";
   const inner = { x: s.kerb.x - s.out.x * 0.5, z: s.kerb.z - s.out.z * 0.5 };
   // A car park along the kerb, its bays within `PARK_REACH` in from the post (a strip drawn off the ground's kerb, Świętoduska).
