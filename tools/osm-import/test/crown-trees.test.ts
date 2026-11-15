@@ -12,6 +12,8 @@ import { Site } from "../src/props-site.ts";
 import type { Structure } from "../src/structures.ts";
 import { CLEARED_BUILDINGS } from "../../../packages/sim/src/content/lublin/sites.ts";
 import { CROWN_CLEARED } from "../src/crown-grid.ts";
+import { KeepOut, PORTICO_OFF } from "../src/crown-ground.ts";
+import { PORTICOES } from "../../../packages/sim/src/content/lublin/porticoes.ts";
 
 /** The rule of the crowns' trees (G-797) on a 100 x 60 m chunk: a lawn, a road along z = 30, houses north of z = 50, a car park and a wall. */
 
@@ -141,6 +143,15 @@ describe("trees of the crowns (G-797)", () => {
 
   it("clears the game's set pieces as the simulation does (G-815 P5)", () => {
     expect(CROWN_CLEARED).toEqual(CLEARED_BUILDINGS);
+  });
+
+  it("keeps the trunks off a portico's columns, under the balcony the surface model reads as a crown (G-814)", () => {
+    const keep = new KeepOut(new Site([chunk()]));
+    const [a, b] = [PORTICOES[0]!.columns[0]!, PORTICOES[0]!.columns[1]!];
+    // Nowy Ratusz: a crown's tree stood 0.8 m before the second column once the walls only narrowed its crown.
+    expect(keep.near({ x: 413.5, z: -87.5 })).toBe(true);
+    expect(keep.near({ x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 - PORTICO_OFF + 0.1 })).toBe(true);
+    expect(keep.near({ x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 - PORTICO_OFF - 0.5 })).toBe(false);
   });
 
   it("takes no crown's top beside a higher surface: a moss-grown edge of a shed OSM lacks (G-815 P1)", () => {
