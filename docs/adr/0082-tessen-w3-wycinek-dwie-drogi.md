@@ -1,6 +1,6 @@
 # ADR-0082: Sektor W-3, hale montowni dronów Tessen: pionowy wycinek „Dwie drogi”
 
-Status: szkic (propozycja), czeka na decyzje użytkownika (pytania na końcu).
+Status: przyjęty (decyzje użytkownika 15.11): wariant A „Brama nad korytem”, zleceniodawca Genzō, zapis startowy wycinka na poziomie 12 i pasmo W-3 10–30, eskorta Miki wycofana do czasu łodzi; panorama Starego Miasta i Zamku jako sylwetki w skyline (rekomendacja, do potwierdzenia na zrzutach etapu 1).
 
 ## Kontekst
 - **Decyzje użytkownika 15.11 (backlog):** strategia 14.11 pkt 4 każe zrobić pionowy wycinek, czyli jedną misję od początku do końca, dopracowaną na telefonie, z bramką wydajności. Doki nad Bystrzycą (ADR-0024, ADR-0045, T-002) są „ani budynek, ani miasto” i idą do przebudowy na Sektor W-3, czyli zakłady militarne Tessen z montownią dronów bojowych. Wycinek to wariant C „Dwie drogi”: sabotaż linii montażu przed odbiorem partii przez wojsko. Wejście ciche prowadzi przez serwerownię (wirus przestawia kalibrację, wyjście niezauważone, wyższa stawka, Tessen neutralny). Wejście głośne prowadzi przez zbrojownię (broń i ładunki na stanowiskach, walka i ucieczka, Tessen wrogi w mieście). W pierwszej wersji nie ma dronów bojowych ani łodzi.
