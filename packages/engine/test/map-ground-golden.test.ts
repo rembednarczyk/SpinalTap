@@ -131,7 +131,7 @@ describe("the ground the map city lays (G-444)", () => {
     // asphalt where it lies (G-811): 161 914 - 161 182 = 732 vertices more, the same meshes.
     // The water field in the ground's third UV channel (ADR-0084 stage 1), hashed with the rest:
     // no vertex moved, the same meshes and vertices.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161914, hash: "1c277672" });
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161914, hash: "ca877e18" });
     scene.dispose();
   });
 

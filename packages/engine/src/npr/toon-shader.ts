@@ -389,7 +389,7 @@ void main(void) {
   // surfaces (puddles of the dressing, the harbour) are standing water and the rest wet.
 #ifdef WATER_MASK
   wetK = max(wetK, standing);
-  float puddle = mix(0.12, 1.0, standing);
+  float puddle = mix(0.35, 1.0, standing);
 #else
   float puddle = mix(0.15, 1.0, step(1.5, g));
 #endif
