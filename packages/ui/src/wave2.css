@@ -113,12 +113,6 @@
    beside it; "Use" only while there is something to use. Top right: one row of menu, phone and
    pause, the wallet and the clock to its left, the minimap under it. Left: the objective on top,
    the move stick, health only when it matters. No key hints anywhere. Every target is 44 px+. */
-.touch-mode .touch__actions {
-  right: max(16px, env(safe-area-inset-right, 0px));
-  bottom: max(10px, env(safe-area-inset-bottom, 0px));
-  width: 400px;
-  height: 200px;
-}
 .touch-mode .touch__btn--fire { right: 8px; bottom: 12px; width: 88px; height: 88px; }
 .touch__arc { position: absolute; inset: 0; pointer-events: none; }
 /* Around the fire button, upper left of it, 4 px apart so no two targets share a square. */
@@ -157,45 +151,37 @@
 .touch__more .touch__btn { position: relative; right: auto; bottom: auto; width: 44px; height: 44px; font-size: 16px; }
 .touch__more .touch__btn--h { color: var(--ok); }
 
-/* Top right: one row of buttons, the wallet and clock left of it, the minimap under it. */
-.touch-mode .touch__top { top: max(8px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); gap: 6px; }
-.touch-mode .minimap { top: max(60px, calc(env(safe-area-inset-top, 0px) + 52px)); right: max(16px, env(safe-area-inset-right, 0px)); width: 88px; height: 88px; }
-.touch-mode .hud__wallet { top: max(8px, env(safe-area-inset-top, 0px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 152px); font-size: 15px; padding: 4px 10px; }
-.touch-mode .hud__clock { top: max(44px, calc(env(safe-area-inset-top, 0px) + 36px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 152px); font-size: 12px; padding: 2px 8px; }
-/* Wide and short: the arrival card's three sentences in a 260 px column ran down over "Use", the
-   jump button and the move hint of a phone held sideways (G-466). Left of the minimap's column. */
-.touch-mode .toasts { top: max(76px, calc(env(safe-area-inset-top, 0px) + 68px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 104px); width: min(400px, calc(100vw - 280px)); gap: 4px; }
-/* In a talk the pad is gone and the subtitles grow up the left side to under the objective: the
-   wide column would reach over them, so it narrows back to clear the box. */
-.touch-mode .toasts--talk { width: min(260px, 36vw); }
+/* Top right: one row of buttons, the wallet and clock left of it, the minimap under it; placed by scale/zones.css. */
+.touch-mode .hud__wallet { font-size: 15px; padding: 4px 10px; }
+.touch-mode .hud__clock { font-size: 12px; padding: 2px 8px; }
+.touch-mode .toasts { gap: 4px; }
 .touch-mode .toast { padding: 4px 8px; }
 .touch-mode .toast:nth-last-child(n + 3) { display: none; }
 
 /* Left: the objective, the stick, health only when it matters, the active weapon. */
-.touch-mode .hud__objective { left: max(16px, env(safe-area-inset-left, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); max-width: calc(100vw - 380px); font-size: 13px; padding: 4px 10px; }
+.touch-mode .hud__objective { font-size: 13px; padding: 4px 10px; }
 .touch-mode .hud__quest-title { font-size: 10px; }
 /* 160 px with its padding and border: the weapon strip starts 172 px in (it overlapped by 7 px as 160 px of content). */
-.touch-mode .hud__identity { box-sizing: border-box; left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); width: 160px; padding: 4px 8px; }
+.touch-mode .hud__identity { box-sizing: border-box; width: 160px; padding: 4px 8px; }
 .touch-mode .hud__identity--calm { display: none; }
 .touch-mode .hud__name { display: none; }
 .touch-mode .hud__hp { margin-top: 0; }
 .touch-mode .hud__hp-label { font-size: 11px; }
-.touch-mode .touch__stick-hint { bottom: max(80px, calc(env(safe-area-inset-bottom, 0px) + 70px)); }
-.touch-mode .weapon-strip { left: calc(max(16px, env(safe-area-inset-left, 0px)) + 172px); right: auto; bottom: max(10px, env(safe-area-inset-bottom, 0px)); align-items: flex-start; }
+
 .touch-mode .weapon-strip__slot:not(.weapon-strip__slot--active) { display: none; }
 .touch-mode .weapon-strip__key { display: none; }
 
 /* Fewer things at once, and no keys to name on a touch screen. */
 .touch-mode .gear, .touch-mode .dash, .touch-mode .hud__prompt { display: none; }
 .touch-mode .hud kbd { display: none; }
-.touch-mode .buffs { left: max(16px, env(safe-area-inset-left, 0px)); right: auto; top: max(84px, calc(env(safe-area-inset-top, 0px) + 76px)); bottom: auto; flex-direction: row; }
+.touch-mode .buffs { flex-direction: row; }
 .touch-mode .buff { grid-template-columns: auto; padding: 2px 6px 4px; }
 .touch-mode .buff__name { display: none; }
 .touch-mode .buff__icon { grid-row: auto; }
 
 
 @media (max-height: 500px), (max-width: 760px) {
-  .buffs { left: calc(max(16px, env(safe-area-inset-left, 0px)) + 132px); bottom: 76px; }
+  .buffs { left: calc(max(16px, var(--safe-left)) + 132px); bottom: 76px; }
   .metro { padding: 12px 16px; }
   .metro__stop { min-height: 46px; }
 }

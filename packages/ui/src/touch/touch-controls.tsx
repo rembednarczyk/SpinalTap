@@ -4,8 +4,10 @@ import { useHackIntents, usePhoneIntents, useSessionIntents, useUi } from "../us
 import { useUnspentPoints } from "../hud/xp-hud";
 import { ActionArc, FireButton, MoreActions, UseButton } from "./action-arc";
 import { PadButtonView, useLookDrag } from "./pad-button";
+import { useUiScale } from "../scale/use-ui-scale";
 import type { TouchPadSink } from "./touch-pad-sink";
 
+/** How far the knob travels, in the pad's px (on screen, times the pad's scale). */
 const STICK_RADIUS = 56;
 
 interface Drag {
@@ -14,9 +16,14 @@ interface Drag {
   y: number;
 }
 
-/** Floating stick: appears where the left thumb lands. */
+/**
+ * Floating stick: appears where the left thumb lands. The pad is a scaled layer (ADR-0085): the
+ * finger's screen px become the layer's px, and the knob's reach grows with the ring.
+ */
 const Stick = ({ pad }: { pad: TouchPadSink }) => {
   const t = useT();
+  const scale = useUiScale(true).touch;
+  const reach = STICK_RADIUS * scale;
   const [origin, setOrigin] = useState<Drag | null>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   // The scanner's card takes the left column of a phone held sideways (G-433); the stick still works.
@@ -42,18 +49,18 @@ const Stick = ({ pad }: { pad: TouchPadSink }) => {
         let dx = e.clientX - origin.x;
         let dy = e.clientY - origin.y;
         const len = Math.hypot(dx, dy);
-        if (len > STICK_RADIUS) {
-          dx = (dx / len) * STICK_RADIUS;
-          dy = (dy / len) * STICK_RADIUS;
+        if (len > reach) {
+          dx = (dx / len) * reach;
+          dy = (dy / len) * reach;
         }
-        setKnob({ x: dx, y: dy });
-        pad.setStick(dx / STICK_RADIUS, -dy / STICK_RADIUS);
+        setKnob({ x: dx / scale, y: dy / scale });
+        pad.setStick(dx / reach, -dy / reach);
       }}
       onPointerUp={(e) => origin?.id === e.pointerId && end()}
       onPointerCancel={(e) => origin?.id === e.pointerId && end()}
     >
       {origin && (
-        <div className="touch__stick" style={{ left: origin.x, top: origin.y }}>
+        <div className="touch__stick" style={{ left: origin.x / scale, top: origin.y / scale }}>
           <div className="touch__knob" style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }} />
         </div>
       )}
@@ -119,7 +126,7 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
   );
 
   return (
-    <div className="touch" data-testid="touch-controls">
+    <div className="touch ui-layer ui-layer--touch" data-testid="touch-controls">
       <div
         className="touch__look-zone"
         onPointerDown={(e) => {

@@ -21,19 +21,10 @@
   --tone-optional: #9fd8ff;
 }
 
-/* The layer covers the screen and scales with the HUD (--hud-scale), like .hud. On a phone the
-   scale is capped, so six options still fit between the top and bottom edge. */
-.dialogue {
-  --s: var(--hud-scale, 1);
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: calc(100% / var(--s));
-  height: calc(100% / var(--s));
-  transform: scale(var(--s));
-  transform-origin: 0 0;
-  pointer-events: none;
-}
+/* The layer is a scaled layer like the HUD (scale/layers.css, ADR-0085); `--s` is its scale. On a
+   phone the scale stops where the compact layout runs out of room, so six options still fit
+   between the top and bottom edge. */
+.dialogue { --s: var(--layer-scale, 1); }
 
 /* The rest of the HUD steps back while the wheel is up (it stays readable, as in CP2077). */
 #ui-root:has(.dialogue) .hud { opacity: 0.35; transition: opacity 150ms ease-out; }
@@ -218,17 +209,16 @@
 /* Phones in landscape: the subtitles go to the bottom left, the wheel takes the right half
    from top to bottom, so neither covers the other. */
 @media (max-height: 500px), (max-width: 760px) {
-  .dialogue { --s: min(var(--hud-scale, 1), 1.1); }
   .wheel {
-    --wheel-room: calc(56vw / var(--s) - 16px - env(safe-area-inset-right, 0px));
+    --wheel-room: calc(56vw / var(--s) - 16px - var(--safe-right));
     left: 44%;
     top: 50%;
   }
   .wheel__opt { font-size: 14px; gap: 8px; padding: 3px 10px 3px 8px; }
   .subs {
-    left: max(12px, env(safe-area-inset-left, 0px));
+    left: max(12px, var(--safe-left));
     bottom: 8px;
-    width: calc(44% - 28px - max(12px, env(safe-area-inset-left, 0px)));
+    width: calc(44% - 28px - max(12px, var(--safe-left)));
   }
   /* Up to just under the objective: the pad hides during a talk. */
   .subs__scroll { max-height: calc(100vh / var(--s) - 8px - 52px); padding: 8px 10px 2px; }

@@ -1,0 +1,87 @@
+// @vitest-environment jsdom
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_SETTINGS, type DialogueVm, GameUi, type UiIntents, type UiState, createUiStore, patchUi } from "../src";
+
+/**
+ * One interface scale for every layer (ADR-0085): the root carries the scale `uiScale` gives for
+ * the setting and the screen, and the HUD, the pad, the dialogue and the contract card each draw
+ * as a scaled layer that reads it.
+ */
+const intents = new Proxy({} as UiIntents, { get: () => vi.fn() });
+const pad = { setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn(), selectWeaponSlot: vi.fn() };
+
+const resize = (width: number, height: number) =>
+  act(() => {
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
+    Object.defineProperty(window, "innerHeight", { configurable: true, value: height });
+    window.dispatchEvent(new Event("resize"));
+  });
+
+const mount = (state: Partial<UiState>, touch: boolean) => {
+  const store = createUiStore({ screen: "playing", ...state });
+  render(<GameUi store={store} intents={intents} touch={touch ? pad : undefined} />);
+  return store;
+};
+
+const root = () => document.documentElement.style;
+
+const dialogue: DialogueVm = { lines: [{ speaker: "Kaito", text: "Robota czeka." }], choices: [{ index: 0, text: "Biorę robotę.", tone: "main" }], ended: false };
+const debrief = { contractId: "c1", title: "Job", fixer: "Kaito", badges: [], rank: "B", reward: 1200, bonus: 0, styleBonus: 0, seconds: 95 } as const;
+
+afterEach(() => {
+  cleanup();
+  resize(1024, 768);
+});
+
+describe("interface scale on every layer (ADR-0085)", () => {
+  it("puts the scale for the screen on the root and follows the setting and resizes", () => {
+    resize(1920, 1080);
+    const store = mount({ settings: { ...DEFAULT_SETTINGS, hudScale: 1.4 } }, false);
+    expect(root().getPropertyValue("--ui-scale")).toBe("1.4");
+    expect(root().getPropertyValue("--ui-touch-scale")).toBe("1.4");
+    // 1280x720 holds the desktop layout's room up to 1.2.
+    resize(1280, 720);
+    expect(root().getPropertyValue("--ui-scale")).toBe("1.2");
+    act(() => patchUi(store, { settings: { ...DEFAULT_SETTINGS, hudScale: 0.8 } }));
+    expect(root().getPropertyValue("--ui-scale")).toBe("0.8");
+  });
+
+  it("keeps the pad at its floor while the HUD shrinks on a phone", () => {
+    resize(844, 390);
+    mount({ settings: { ...DEFAULT_SETTINGS, hudScale: 0.8 } }, true);
+    expect(root().getPropertyValue("--ui-scale")).toBe("0.8");
+    expect(root().getPropertyValue("--ui-touch-scale")).toBe("1");
+  });
+
+  it("draws the HUD, the pad, the dialogue and the contract card as scaled layers", () => {
+    resize(844, 390);
+    const store = mount({ settings: { ...DEFAULT_SETTINGS, hudScale: 0.8 } }, true);
+    expect(screen.getByTestId("hud").classList).toContain("ui-layer");
+    const touch = screen.getByTestId("touch-controls").classList;
+    expect([touch.contains("ui-layer"), touch.contains("ui-layer--touch")]).toEqual([true, true]);
+    act(() => patchUi(store, { debrief }));
+    expect(screen.getByTestId("debrief").parentElement?.classList).toContain("ui-layer");
+    act(() => patchUi(store, { debrief: null, dialogue }));
+    expect(screen.getByTestId("dialogue").classList).toContain("ui-layer");
+    // The toasts are the HUD's: they scale with it.
+    act(() => patchUi(store, { dialogue: null, toasts: [{ id: 1, kind: "system", title: "Hi", text: "" }] }));
+    expect(screen.getByTestId("hud").querySelector(".toast")).not.toBeNull();
+  });
+
+  it("puts the stick under the finger in the pad's own px when the pad is scaled", () => {
+    resize(844, 390);
+    mount({ settings: { ...DEFAULT_SETTINGS, hudScale: 1.4 } }, true);
+    // 390 / 370: the compact layout's room.
+    expect(root().getPropertyValue("--ui-touch-scale")).toBe("1.054");
+    const zone = screen.getByTestId("touch-stick");
+    fireEvent.pointerDown(zone, { pointerId: 1, clientX: 210.8, clientY: 316.2 });
+    const stick = zone.querySelector<HTMLElement>(".touch__stick")!;
+    expect([stick.style.left, stick.style.top]).toEqual(["200px", "300px"]);
+    // Pulled 200 px to the right: the knob stops at the ring's edge, the stick reads full right.
+    pad.setStick.mockClear();
+    fireEvent.pointerMove(zone, { pointerId: 1, clientX: 410.8, clientY: 316.2 });
+    expect(pad.setStick).toHaveBeenLastCalledWith(1, -0);
+    expect(stick.querySelector<HTMLElement>(".touch__knob")!.style.transform).toBe("translate(56px, 0px)");
+  });
+});
