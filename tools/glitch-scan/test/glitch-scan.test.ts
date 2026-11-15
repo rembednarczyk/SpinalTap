@@ -95,7 +95,10 @@ import { lampWideStreetOneSide } from "./lamp-sides";
 import { SidewalkIndex, kerbsOf } from "../../osm-import/src/props-lit-sides.ts";
 import { WallIndex, isCourtyard, isPedestrianSquare } from "../../osm-import/src/courtyards.ts";
 import { isLitWay, lampLineOf, litWayGroups } from "../../osm-import/src/props-lit.ts";
-import { litWaysOf, loadLitWays, loadPropsPlan } from "../../osm-import/src/props-osm.ts";
+import { litWaysOf, loadLitWays, loadKerbRule, loadPropsPlan } from "../../osm-import/src/props-osm.ts";
+import { Site } from "../../osm-import/src/props-site.ts";
+import { bollardBlocksMouth, kerbBollardDoubleRow, kerbBollardGap } from "./kerb-bollards";
+import { inRowArea } from "../../osm-import/src/props-kerb-lines.ts";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { BUILDING_SURFACE, buildingsOverSurface } from "./surface-heights";
 import { heightsOffLod1, landmarksOffLod1, levelsTagLost, lod1Under } from "./height-lod1";
@@ -162,7 +165,7 @@ import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
 import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movement-system";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
-import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
+import { GAME_PROPS, WORLD_STREET_PROPS, clearOfGame } from "../../../packages/sim/src/content/street-props";
 import { WORLD_BARRIERS } from "../../../packages/sim/src/content/world-barriers";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
 import { alchemiaRampLanes, streetSegments } from "../../../packages/sim/src/content/traffic-ramp";
@@ -742,10 +745,27 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const pieces = Object.values(WORLD_STREET_PROPS).flat();
     // Other furniture and other posts than the one holding the chain and the one it ends at.
     const solids = pieces.filter((i) => furnitureRadius(i) > 0);
+    // A grid of the solids (5 m cells): a chain asks only the cells within its reach, not all of
+    // the city's furniture (with the kerb rows of G-820 the whole list ran past the test's limit).
+    const CELL = 5;
+    const reach = 4 + Math.max(0, ...solids.map(furnitureRadius));
+    const grid = new Map<string, typeof solids>();
+    for (const o of solids) {
+      const k = `${Math.floor(o.x / CELL)},${Math.floor(o.z / CELL)}`;
+      const cell = grid.get(k);
+      if (cell) cell.push(o);
+      else grid.set(k, [o]);
+    }
+    const nearSolids = (x: number, z: number): typeof solids => {
+      const out: typeof solids = [];
+      for (let cx = Math.floor((x - reach) / CELL); cx <= Math.floor((x + reach) / CELL); cx++)
+        for (let cz = Math.floor((z - reach) / CELL); cz <= Math.floor((z + reach) / CELL); cz++) out.push(...(grid.get(`${cx},${cz}`) ?? []));
+      return out;
+    };
     return pieces.flatMap((i) =>
       chainSegments(i).flatMap(({ from, to }) => {
         const wall = alongSegment(from, to, 0.1).find((p) => inBuilding(p.x, p.z));
-        const hit = solids
+        const hit = nearSolids(i.x, i.z)
           // The post or the lamp a chain hangs on is its end, not in its way.
           .filter((o) => o !== i && !(o.prop === "bollard" ? distanceToPiece(o, to.x, to.z) <= 0.2 : anchors(o, to)))
           .filter((o) => Math.hypot(o.x - i.x, o.z - i.z) < 4 + furnitureRadius(o) && chainThrough(from, to, o))
@@ -765,6 +785,20 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         const chain = chainSegments(i).some((s) => close.some((b) => alongSegment(s.from, s.to, 0.1).some((p) => inCrossingBand(b, p))));
         return post || chain ? [{ at: near(i.x, i.z), what: post ? "bollard" : "chain" }] : [];
       }),
+  /** A bollard or its chain in the mouth of a drive, a passage, a gate, a door or a bus stop's vehicles (G-820, `kerb-bollards.ts`). */
+  "bollard-blocks-mouth": () => bollardBlocksMouth(new Site(MAP_CHUNKS), MAP_CHUNKS, Object.values(WORLD_STREET_PROPS).flat()),
+  /** A stretch of a car street's kerb in the centre over 6 m with no bollard and no reason of the rule to break its row (G-820, `kerb-bollards.ts`). */
+  "kerb-bollard-gap": () => kerbBollardGap(new Site(MAP_CHUNKS), MAP_CHUNKS, Object.values(WORLD_STREET_PROPS).flat(), BANDS, loadKerbRule(), (p) => !clearOfGame(p.x, p.z, BOLLARD.radius)),
+  /** A post of the kerb rule 1–2.5 m beside a row of OSM's posts: two rows where OSM maps one (G-820 P1, `kerb-bollards.ts`). */
+  "kerb-bollard-double-row": () =>
+    kerbBollardDoubleRow(
+      Object.values(WORLD_STREET_PROPS).flat(),
+      loadFurniture()
+        .filter((f) => f.tag === "barrier=bollard")
+        .map((f) => f.p),
+      loadBollardLines().map((l) => l.pts),
+      inRowArea,
+    ),
   /** A piece of furniture (wall lanterns aside, they hang on a facade) standing more than 0.5 m inside a building. */
   "furniture-in-building": () =>
     Object.values(WORLD_STREET_PROPS)

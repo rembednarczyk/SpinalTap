@@ -31,4 +31,5 @@ export const EXCEPTIONS: readonly Exception[] = [
   { test: "packages/sim/test/save-load-micro-body.test.ts > the body of a micro-event's mugger in the save (G-233) > won, knocked out: woken after a load or without one, the mugger is the same (G-242)", reason: KNOWN_SLOW, only: "limit" },
   { test: "tools/glitch-scan/test/glitch-scan.test.ts > the glitch scan against its baseline (ADR-0054) > finds no new place of walk-blocked (baseline/walk-blocked.txt)", reason: KNOWN_SLOW, only: "limit" },
   { test: "tools/osm-import/test/generate.test.ts > generator > generates the same tables from the committed raw data twice", reason: KNOWN_SLOW, only: "limit" },
+  { test: "packages/sim/test/crowd.test.ts > the crowd in the simulation > a shot sends them running; calm again, they walk back to the route and carry on", reason: "23,1 s z 30 s na CI (77%) już na main 15.11, z limitem 30 s ustawionym w teście; do przyspieszenia w kroku 3 ADR-0083; wzrost wobec main nadal pilnowany", only: "limit" },
 ];

@@ -55,6 +55,7 @@ export const SAMPLED_KINDS: ReadonlySet<string> = new Set([
   "metro-shaft-ray",
   "water-under-grass",
   "lit-street-dark",
+  "kerb-bollard-gap",
   "canopy-without-tree",
 ]);
 

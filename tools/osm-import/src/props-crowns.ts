@@ -33,10 +33,13 @@ export const loadCrownData = (): CrownData => ({
   structures: loadStructures(),
 });
 
-/** The plan placed by `place` with the `lit` rule's passes and the crowns' trees, and the rule's control numbers. */
+/**
+ * The plan placed by `place` with the `lit` rule's passes and the crowns' trees, and the rule's control numbers.
+ * Of each pass only the lamps or the trees are read, so only the last is finished (`PropsDraft`: its bollards strung).
+ */
 export const placeWithCrowns = <T extends { readonly byChunk: ReadonlyMap<string, readonly StreetPropItem[]> }>(
   plan: PropsPlan,
-  place: (p: PropsPlan) => T,
+  place: (p: PropsPlan) => { readonly byChunk: ReadonlyMap<string, readonly StreetPropItem[]>; readonly finish: () => T },
   lit: readonly LitWay[],
   streets: readonly LitWay[],
   site: Site,
@@ -54,8 +57,8 @@ export const placeWithCrowns = <T extends { readonly byChunk: ReadonlyMap<string
   );
   const trees = [...lamped.byChunk.values()].flat().flatMap((i) => (i.prop === "tree" ? [{ p: { x: i.x, z: i.z }, reach: crownReach(treeHeight(i.variant)) }] : []));
   const found = crownTrees(data.rects, site, data.covers, data.chms, trees, data.structures);
-  if (found.trees.length === 0) return { ...lamped, crowns: { ...found.stats, placed: 0 } };
-  const out = place({ ...last, items: [...last.items, crownTreeItem(found.trees)] });
+  if (found.trees.length === 0) return { ...lamped.finish(), crowns: { ...found.stats, placed: 0 } };
+  const out = place({ ...last, items: [...last.items, crownTreeItem(found.trees)] }).finish();
   const placed = [...out.byChunk.values()].flat().filter((i) => i.prop === "tree").length - trees.length;
   return { ...out, crowns: { ...found.stats, placed } };
 };
