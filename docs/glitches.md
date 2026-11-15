@@ -2049,6 +2049,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
 
+### G-830 Pl. Łokietka: wschodni rząd słupków (w1514057823) 0,4–0,5 m od rzędu z ortofoto, bo jezdnia w grze zachodzi na krawężnik
+- Ważność: S4 · Zasięg: Krakowskie, Lubartowska przy Pl. Łokietka x 446,4–447,0, z −61…−36 (15 słupków)
+- Opis: Po G-818 (gałąź ccr-ec2c4269-ilh8k8-g818, 01170dc) słupki linii w1514057823 przesunięte z jezdni na chodnik o 0,40–0,54 m na wschód (KERB_REACH). Ortofoto 2025-04 (krakowskie-2-0, 0,25 m/px, profil poprzeczny i zbliżenie 48 px/m) pokazuje rząd dokładnie na linii OSM, na granicy szarej jezdni i jasnej kostki, czyli na krawężniku: jezdnia w grze sięga tu ok. 0,4 m za krawężnik, a słupki stoją na chodniku obok prawdziwego rzędu. Do tego rozstaw na ortofoto ok. 1,5 m (72 px przy 48 px/m), w grze 1,8 m: 15 słupków zamiast ok. 17. Poprawka: krawędź jezdni Lubartowskiej przy Pl. Łokietka z ortofoto (szerokość albo oś), po niej słupki wracają na linię OSM bez przesunięcia; rozstaw linii z ortofoto. Zachodni rząd w1514057822 zgodny (odchyłka do 0,2 m). Zrzut: scratchpad topo-g818r/zoom-1514057823-2025-04-8.png. T-301
+- Status: nowy
+- Pakiet właściciela: tools/osm-import (Infra / Build)
+- Test przyjęcia: kontrola skanu: słupek linii OSM dalej niż 0,3 m od linii (baza 23 przesunięcia z G-818); krawędź jezdni a rząd słupków z OSM przy krawężniku
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
