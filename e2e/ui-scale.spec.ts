@@ -111,11 +111,11 @@ const run = async (page: Page, sizes: readonly (readonly [number, number])[], to
   await start(page, touch);
   const found: string[] = [];
   const scales: string[] = [];
-  const check = async (layers: readonly ("hud" | "touch" | "dialogue")[]) => {
+  const check = async (layers: readonly ("hud" | "touch" | "dialogue")[], tag: string) => {
     for (const [w, h] of sizes) {
       await page.setViewportSize({ width: w, height: h });
       for (const s of [MIN, MAX]) {
-        found.push(...(await faults(page, w, h, s, label)));
+        found.push(...(await faults(page, w, h, s, `${label}-${tag}`)));
         const want = uiScale(s, { width: w, height: h }, undefined, touch);
         const got = await layerScales(page);
         for (const layer of layers) {
@@ -125,9 +125,9 @@ const run = async (page: Page, sizes: readonly (readonly [number, number])[], to
       }
     }
   };
-  await check(touch ? ["hud", "touch"] : ["hud"]);
+  await check(touch ? ["hud", "touch"] : ["hud"], "play");
   await openTalk(page);
-  await check(["dialogue"]);
+  await check(["dialogue"], "talk");
   expect(scales).toEqual([]);
   expect(found).toEqual([]);
 };
