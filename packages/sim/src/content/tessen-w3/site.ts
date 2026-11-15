@@ -133,6 +133,14 @@ export const W3_ZONE_RECTS: readonly W3Rect[] = [
   { minX: 2515, maxX: 2606, minZ: 392.3, maxZ: 452 },
 ];
 
+/**
+ * W-3's own chunk (ADR-0082), as Trasa Podziemna's (ADR-0048): its solids and boxes stream in
+ * together whenever the player is near the site, wherever along it she stands; it lies over
+ * Nabrzeże's chunks and is last in the table, so the ground and the district there stay theirs.
+ */
+export const W3_CHUNK = "nabrzeze-w3";
+export const W3_BOUNDS: W3Rect = { minX: 2440, maxX: 2606, minZ: 380, maxZ: 480 };
+
 /** Is (x, z) inside a polygon (even-odd)? */
 export const insidePolygon = (ring: readonly GroundPoint[], x: number, z: number): boolean => {
   let inside = false;

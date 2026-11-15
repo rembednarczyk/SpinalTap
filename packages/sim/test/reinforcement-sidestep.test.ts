@@ -65,8 +65,8 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // on its tower's platform instead of the warehouse's roof (the reinforcements come up the tower's
   // stair and lean there), and the v39 version.
   for (const [seed, level, golden, v32, v31, v30, v28, v27] of [
-    [21, 2, "f5fcc452", "3d303923", "6ec6053a", "b37cc00b", "78f73259", "35dcc37e"],
-    [5, 3, "ca8e9bb5", "0c4f881a", "a5f9149d", "fcf55138", "486ddf2a", "22fdcccb"],
+    [21, 2, "229028b8", "3a966f3d", "c5bbf8f0", "73c44db1", "0720a3eb", "ada07884"],
+    [5, 3, "b9fef5a3", "254f844c", "9a14605b", "5911d666", "327cfe9c", "312b87f1"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);

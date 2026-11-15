@@ -108,7 +108,7 @@ test("Tessen's W-3 from the Lutosławski bridge at night in TPP stays within the
   // On the bridge's deck (+1.8 over W-3's floor), walking east along it towards the wagon gate:
   // the tower, the pier, the quay and the hall's shell over the river (ADR-0082).
   await tppAt(page, { x: 2460.2, z: 422.5, y: -26.75, yaw: 2.11, walk: 30 });
-  expect([...(await gameState(page)).loadedChunks].sort()).toEqual(["nabrzeze-0-1", "nabrzeze-1-1"]);
+  expect([...(await gameState(page)).loadedChunks].sort()).toEqual(["nabrzeze-0-1", "nabrzeze-w3"]);
   within("w3-zewnatrz", await sampleNow(page));
 });
 

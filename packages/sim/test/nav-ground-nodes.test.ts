@@ -40,7 +40,9 @@ describe("ground nodes of the level graphs (ADR-0025)", () => {
   it("from anywhere in W-3's yards and on its quay a guard finds the way up onto row N's roof", () => {
     // The west yard and the quay, the gap by the tower, the pickup and the east yards (not the
     // strip south of the hall, cut off from them by the hall's corner on the fence, P1).
-    expect(coverage(inDocks, inDocks(2540, 446), inDocks(2530, 435, W3_ROOF), 2480, 2604, 416, 450)).toBe(1);
+    expect(coverage(inDocks, inDocks(2540, 446), inDocks(2530, 435, W3_ROOF), 2480, 2604, 416, 438)).toBe(1);
+    // North of the quay's fence (z 440) and of the tower (z 446) the shore is outside the zone: the pickup yard only.
+    expect(coverage(inDocks, inDocks(2540, 446), inDocks(2530, 435, W3_ROOF), 2494, 2604, 440, 450)).toBe(1);
   });
 
   it("from almost anywhere on the old market's floor (the test floor), behind the stalls too, the way up to the overpass", () => {

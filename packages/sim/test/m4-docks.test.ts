@@ -23,6 +23,7 @@ import {
   W3_ITEM_SPOTS,
   W3_PLATFORM,
   W3_ROOF,
+  W3_CHUNK,
   W3_TERMINAL_SPOTS,
   W3_Y,
   WORLD_CHUNKS,
@@ -86,7 +87,7 @@ describe("streaming into the docks (ADR-0024, W-3 since ADR-0082)", () => {
     expect(sim.district).toBe("doki");
     teleportPlayer(sim, at(2562, 446), Math.PI);
     sim.step();
-    expect(sim.streamer.loadedChunks).toEqual(["nabrzeze-1-1"]);
+    expect(sim.streamer.loadedChunks).toEqual(["nabrzeze-1-1", W3_CHUNK]);
     expect(byKey(sim, "doker")).toBeDefined();
     // Back in town the docks sleep; by the metro again, Genzō is where he was.
     teleportPlayer(sim, w(300, -84), 0);
@@ -98,9 +99,14 @@ describe("streaming into the docks (ADR-0024, W-3 since ADR-0082)", () => {
 
   it("the docks lie in chunks of the riverside that overlap no other; W-3's level graph leads in through the gate", () => {
     const docksChunks = WORLD_CHUNKS.filter((c) => c.district === "doki");
-    expect(docksChunks.map((c) => c.id)).toEqual(["nabrzeze-0-0", "nabrzeze-1-0", "nabrzeze-0-1", "nabrzeze-1-1"]);
+    expect(docksChunks.map((c) => c.id)).toEqual(["nabrzeze-0-0", "nabrzeze-1-0", "nabrzeze-0-1", "nabrzeze-1-1", W3_CHUNK]);
     const overlap = (a: Rect, b: Rect) => a.minX < b.maxX && b.minX < a.maxX && a.minZ < b.maxZ && b.minZ < a.maxZ;
-    for (const d of docksChunks) for (const c of WORLD_CHUNKS) if (c !== d) expect(overlap(d.bounds, c.bounds), `${d.id} / ${c.id}`).toBe(false);
+    // The map's chunks overlap no other; W-3's own (ADR-0082) lies over two of them only, after them.
+    const map = docksChunks.filter((c) => c.id !== W3_CHUNK);
+    for (const d of map) for (const c of WORLD_CHUNKS) if (c !== d && c.id !== W3_CHUNK) expect(overlap(d.bounds, c.bounds), `${d.id} / ${c.id}`).toBe(false);
+    const w3 = docksChunks.at(-1)!;
+    expect(WORLD_CHUNKS.filter((c) => c !== w3 && overlap(c.bounds, w3.bounds)).map((c) => c.id)).toEqual(["nabrzeze-0-1", "nabrzeze-1-1"]);
+    expect(WORLD_CHUNKS.indexOf(w3)).toBeGreaterThan(WORLD_CHUNKS.findIndex((c) => c.id === "nabrzeze-1-1"));
     const sim = Simulation.create({ seed: 2 });
     teleportPlayer(sim, w(2550, 386), 0);
     sim.step();
