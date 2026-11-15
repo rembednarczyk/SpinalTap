@@ -12,6 +12,7 @@ export { ESCORT_AMBUSH_Z, ESCORT_ROUTE, SNIPER_PERCHES, W3_CONTRACT_POSTS, W3_CO
 export { GENZO_SPOT } from "./public";
 export { W3_OFFICE, W3_OFFICE_DOOR, W3_PIPE_LADDER, W3_TOWER_STAIR } from "./tower-pipes";
 export { W3_BRIDGE_Z } from "./hall";
+export { W3_UNSEEN_WALLS } from "./quay";
 
 /** W-3's props in the world (ADR-0082 stage 1): the hall's shell, the tower and the pipeline, the edges, the public strip. */
 export const W3_PROPS: readonly StaticProp[] = [...W3_HALL_PROPS, ...W3_TOWER_PROPS, ...W3_EDGE_PROPS, ...W3_YARD_PROPS, ...W3_PUBLIC_PROPS];

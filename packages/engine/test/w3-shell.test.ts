@@ -48,6 +48,15 @@ describe("the castle group in the skyline (ADR-0082)", () => {
     }
   });
 
+  it("stands the chapel on the map's, its walls and its roof's ridge as tall", () => {
+    const chapel = building("w66258167");
+    const [walls, ridge] = SKYLINE_LANDMARKS.find((l) => l.name === "Kaplica")!.parts;
+    expect(Math.hypot(walls!.x - chapel.x, walls!.z - chapel.z)).toBeLessThan(1.5);
+    expect(walls!.y0).toBeCloseTo(chapel.y, 1);
+    expect(walls!.y1).toBeCloseTo(chapel.y + chapel.height, 1);
+    expect(ridge!.y1).toBeCloseTo(chapel.y + chapel.height + (chapel.roof ?? 0), 1);
+  });
+
   it("is in the skyline's towers' mesh after the towers, marked so its vertices go within 600 m of it", () => {
     expect([...planSkyline().towers.uvs2].some((v, i) => i % 2 === 0 && v < -1.5)).toBe(false);
     const plan = addLandmarks(planSkyline());

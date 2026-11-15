@@ -9,7 +9,7 @@ import { type GroundRect, type Pad, type Ramp, flightRamps, mapHeight, stepRamps
 import { type SteepWay, steepWays } from "./steep-ways";
 import type { LublinChunkData } from "./types";
 import { ALCHEMIA_PADS, ALCHEMIA_RAMPS } from "../alchemia/terraces";
-import { W3_BASIN, W3_BASIN_FLOOR, W3_PIER, W3_PIPES, W3_QUAY, W3_TOWER, W3_Y, W3_ZONE_RECTS } from "../tessen-w3/site";
+import { W3_BASIN, W3_BASIN_FLOOR, W3_CLEAR_RECTS, W3_PIER, W3_PIPES, W3_QUAY, W3_TOWER, W3_Y, W3_ZONE_RECTS } from "../tessen-w3/site";
 
 /**
  * Where the game's places stand in Lublin (ADR-0045): the hand-made set pieces moved into the
@@ -141,7 +141,7 @@ const W3_PIPE_CORRIDOR: GroundRect = { minX: W3_PIPES.minX - 2, maxX: W3_PIPES.m
  * pipeline's corridor, the strip's one building, the car wash. Not the rest of the public strip:
  * its trees and the lamp by the lit path stay (P12).
  */
-export const CLEARED_BUILDINGS: readonly GroundRect[] = [...W3_ZONE_RECTS, W3_QUAY, W3_TOWER, W3_PIER, W3_BASIN, W3_PIPE_CORRIDOR, W3_STRIP_BUILDING, CAR_WASH_AREA];
+export const CLEARED_BUILDINGS: readonly GroundRect[] = [...W3_CLEAR_RECTS, W3_QUAY, W3_TOWER, W3_PIER, W3_BASIN, W3_PIPE_CORRIDOR, W3_STRIP_BUILDING, CAR_WASH_AREA];
 
 /** A rectangle grown by `d` metres on every side (or by `d` and `north` on the north side). */
 const grow = (r: GroundRect, d: number, north = d): GroundRect => ({ minX: r.minX - d, maxX: r.maxX + d, minZ: r.minZ - d, maxZ: r.maxZ + north });

@@ -49,31 +49,41 @@ export const EAVE_REACH = 3.5;
 const EAVE_FALL = 1;
 /** The share of crown on the orthophoto within its reach an eave's top needs. */
 export const EAVE_SHARE = 0.6;
-/**
- * The rectangles the game clears of the map's furniture for its set pieces (`CLEARED_BUILDINGS` of
- * `packages/sim/src/content/lublin/sites.ts`: W-3's zone in bands along its fence, its quay, tower,
- * pier, basin and pipeline's corridor, the strip's one building (ADR-0082), the car wash; the test
- * holds them equal): no tree of the rule stands there to be taken away again.
- */
-export const CROWN_CLEARED: readonly Rect[] = [
-  { minX: 2487.5, maxX: 2490, minZ: 413.3, maxZ: 446 },
-  { minX: 2490, maxX: 2492.5, minZ: 411.2, maxZ: 446 },
-  { minX: 2492.5, maxX: 2495, minZ: 409.1, maxZ: 452 },
-  { minX: 2495, maxX: 2497.5, minZ: 406.9, maxZ: 452 },
-  { minX: 2497.5, maxX: 2500, minZ: 405.3, maxZ: 452 },
-  { minX: 2500, maxX: 2502.5, minZ: 403.2, maxZ: 452 },
-  { minX: 2502.5, maxX: 2505, minZ: 401.4, maxZ: 452 },
-  { minX: 2505, maxX: 2507.5, minZ: 399.7, maxZ: 452 },
-  { minX: 2507.5, maxX: 2510, minZ: 398, maxZ: 452 },
-  { minX: 2510, maxX: 2512.5, minZ: 396.3, maxZ: 452 },
-  { minX: 2512.5, maxX: 2515, minZ: 394.6, maxZ: 452 },
-  { minX: 2515, maxX: 2606, minZ: 392.3, maxZ: 452 },
-  { minX: 2479, maxX: 2487.5, minZ: 418.5, maxZ: 440 },
+/** W-3's rectangles of `CLEARED_BUILDINGS` (ADR-0082): its zone in bands 2 m in from its fence, its quay, tower, pier, basin, pipeline's corridor and the strip's one building. */
+const W3_CLEARED: readonly Rect[] = [
+  { minX: 2488, maxX: 2490, minZ: 413.8, maxZ: 446 },
+  { minX: 2490, maxX: 2492.5, minZ: 411.7, maxZ: 446 },
+  { minX: 2492.5, maxX: 2495, minZ: 409.6, maxZ: 452 },
+  { minX: 2495, maxX: 2497.5, minZ: 407.4, maxZ: 452 },
+  { minX: 2497.5, maxX: 2500, minZ: 405.8, maxZ: 452 },
+  { minX: 2500, maxX: 2502.5, minZ: 403.7, maxZ: 452 },
+  { minX: 2502.5, maxX: 2505, minZ: 401.9, maxZ: 452 },
+  { minX: 2505, maxX: 2507.5, minZ: 400.2, maxZ: 452 },
+  { minX: 2507.5, maxX: 2510, minZ: 398.5, maxZ: 452 },
+  { minX: 2510, maxX: 2512.5, minZ: 396.8, maxZ: 452 },
+  { minX: 2512.5, maxX: 2515, minZ: 395.1, maxZ: 452 },
+  { minX: 2515, maxX: 2606, minZ: 392.8, maxZ: 452 },
+  { minX: 2480, maxX: 2487.5, minZ: 418.5, maxZ: 440 },
   { minX: 2486, maxX: 2496, minZ: 436, maxZ: 446 },
   { minX: 2466, maxX: 2477, minZ: 426, maxZ: 438 },
   { minX: 2508, maxX: 2592, minZ: 452, maxZ: 478 },
   { minX: 2440, maxX: 2486, minZ: 441, maxZ: 445 },
   { minX: 2586, maxX: 2606, minZ: 380, maxZ: 395 },
+];
+/**
+ * Crown cells this far round W-3's rectangles count as cut away (review round 2): the game's 2 m
+ * clearance and the fence's 1.5 m. A crown the fence cuts then tops where it did on main, a few
+ * metres out, not just outside the fence, where the game would take its tree away again.
+ */
+export const W3_CROWN_OFF = 3.5;
+const grownBy = (r: Rect, d: number): Rect => ({ minX: r.minX - d, maxX: r.maxX + d, minZ: r.minZ - d, maxZ: r.maxZ + d });
+
+/**
+ * The rectangles the game clears of the map's furniture for its set pieces (`CLEARED_BUILDINGS` of
+ * `packages/sim/src/content/lublin/sites.ts`; the test holds them equal): no tree of the rule stands
+ * there to be taken away again. W-3's grown by `W3_CROWN_OFF`.
+ */
+export const CROWN_CLEARED: readonly Rect[] = [...W3_CLEARED.map((r) => grownBy(r, W3_CROWN_OFF)),
   { minX: 389, maxX: 417, minZ: -44, maxZ: -20 },
 ];
 

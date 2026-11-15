@@ -10,7 +10,8 @@ import type { Tags } from "../../osm-import/src/osm.ts";
  * - `prop-in-water`: a piece of street furniture standing in that water on the terrain, not on a
  *   bridge's deck (G-835: three lamps in the Bystrzyca);
  * - `path-cut-by-cleared`: a street or a footway of the map running into the ground a set piece
- *   clears (`CLEARED`, its basin) or across its fence where it has no gate.
+ *   clears (`CLEARED`, its basin) or across its fence where it has no gate;
+ * - after the curator's review round 2: `pad-not-level` and `unseen-wall-on-deck` (below).
  */
 
 type Finding = { readonly at: string; readonly what: string };
@@ -128,3 +129,64 @@ export const pathsCutByCleared = (ways: readonly Line[], cleared: readonly Groun
   }
   return out;
 };
+
+/** A box of the game's solids on the ground plan, with its top (world y). */
+export interface SolidBox {
+  readonly minX: number;
+  readonly maxX: number;
+  readonly minZ: number;
+  readonly maxZ: number;
+  readonly top: number;
+}
+
+/** Sampling of a pad (m). */
+const PAD_STEP = 0.5;
+/** How far a pad's ground may lie off its level (m). */
+const LEVEL = 0.1;
+/** A floor-level solid this near makes a pad's dip a groove beside it (m). */
+const BESIDE = 1.5;
+
+/**
+ * `pad-not-level` (ADR-0082, review round 2 of stage 1): ground inside a pad's rectangle more than
+ * 0.1 m off its level, out from under the game's solids, within 1.5 m of a solid whose top is the
+ * pad's floor (a quay's wall, a deck): a groove along it, the side of the solid bare. One finding a
+ * pad, with the area (0.25 m² a sample) and the worst dip.
+ */
+export const padsNotLevel = (pads: readonly Pad[], groundAt: (x: number, z: number) => number, solids: readonly SolidBox[]): Finding[] =>
+  pads.flatMap((p, i) => {
+    const r = p.rect;
+    const around = solids.filter((s) => s.maxX > r.minX - BESIDE && s.minX < r.maxX + BESIDE && s.maxZ > r.minZ - BESIDE && s.minZ < r.maxZ + BESIDE);
+    const floors = around.filter((s) => Math.abs(s.top - p.y) <= LEVEL);
+    if (floors.length === 0) return [];
+    let area = 0;
+    let worst = 0;
+    let at: P | null = null;
+    for (let x = r.minX + PAD_STEP / 2; x < r.maxX; x += PAD_STEP) {
+      for (let z = r.minZ + PAD_STEP / 2; z < r.maxZ; z += PAD_STEP) {
+        const d = groundAt(x, z) - p.y;
+        if (Math.abs(d) <= LEVEL) continue;
+        if (around.some((s) => s.top >= p.y - LEVEL && x >= s.minX && x <= s.maxX && z >= s.minZ && z <= s.maxZ)) continue;
+        const dist = (s: SolidBox) => Math.hypot(Math.max(s.minX - x, 0, x - s.maxX), Math.max(s.minZ - z, 0, z - s.maxZ));
+        if (!floors.some((s) => dist(s) <= BESIDE)) continue;
+        area += PAD_STEP * PAD_STEP;
+        if (Math.abs(d) > Math.abs(worst)) [worst, at] = [d, { x, z }];
+      }
+    }
+    return at && area >= LEAST_AREA ? [{ at: near(at.x, at.z), what: `pad ${p.row ?? i} off its level by up to ${r1(worst)} m over ${r1(area)} m² beside a floor` }] : [];
+  });
+
+/**
+ * `unseen-wall-on-deck` (ADR-0082, review round 2 of stage 1): an unseen wall of the game whose
+ * footprint reaches onto a bridge's deck and whose top stands over it: an invisible post on the bridge.
+ */
+export const unseenWallsOnDeck = (walls: readonly { readonly center: { x: number; y: number; z: number }; readonly prisms?: readonly { readonly points: readonly P[]; readonly top: number }[] }[], deckAt: (x: number, z: number) => number | null): Finding[] =>
+  walls.flatMap((w) =>
+    (w.prisms ?? []).flatMap((q) => {
+      const mid = { x: q.points.reduce((s, c) => s + c.x, 0) / q.points.length, z: q.points.reduce((s, c) => s + c.z, 0) / q.points.length };
+      const on = [...q.points, mid].map((c) => ({ x: w.center.x + c.x, z: w.center.z + c.z })).find((c) => {
+        const deck = deckAt(c.x, c.z);
+        return deck !== null && w.center.y + q.top > deck;
+      });
+      return on ? [{ at: near(on.x, on.z), what: `unseen wall to ${r1(w.center.y + q.top)} over the deck at ${r1(on.x)},${r1(on.z)}` }] : [];
+    }),
+  );

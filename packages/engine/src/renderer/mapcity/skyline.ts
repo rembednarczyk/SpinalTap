@@ -65,7 +65,7 @@ export interface SkylineLandmark {
 /**
  * The castle group (OSM w48500136 "Zamek w Lublinie", walls 12.8 m from -9.4, its hipped roof 3 m;
  * w450180469 "Wieża Zamkowa Donżon", 24.3 m from -7.4): the castle's west, south and north wings
- * and the keep, round. The audit before W-3 (docs/plany/tessen-w3-audyt.md) keeps the Old Town's
+ * and the keep, round; the Holy Trinity chapel by the castle's east end, its roof as a ridge. The audit before W-3 (docs/plany/tessen-w3-audyt.md) keeps the Old Town's
  * towers out: from the Nabrzeże the real buildings 8-12 m tall in 340-430 m hide them.
  */
 export const SKYLINE_LANDMARKS: readonly SkylineLandmark[] = [
@@ -76,6 +76,14 @@ export const SKYLINE_LANDMARKS: readonly SkylineLandmark[] = [
       { x: 892, z: 203.5, w: 106, d: 13, y0: -9.4, y1: 5.4 },
       { x: 895.5, z: 253.5, w: 103, d: 23, y0: -9.4, y1: 5.4 },
       { x: 893.1, z: 214.6, w: 15, d: 15, y0: -7.4, y1: 16.9, octagon: true },
+    ],
+  },
+  {
+    // w66258167 "Kaplica pw. Świętej Trójcy": walls 14.6 m from -7.6, a gabled roof 8.3 m (review round 2).
+    name: "Kaplica",
+    parts: [
+      { x: 941.2, z: 215.5, w: 22.6, d: 11.2, y0: -7.6, y1: 7 },
+      { x: 941.2, z: 215.5, w: 22, d: 4, y0: 7, y1: 15.3 },
     ],
   },
 ];

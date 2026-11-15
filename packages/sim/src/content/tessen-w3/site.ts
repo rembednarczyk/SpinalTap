@@ -89,8 +89,12 @@ export const W3_TOWER: W3Rect = { minX: 2486, maxX: 2496, minZ: 436, maxZ: 446 }
 /** The tower's platform: the roof of its lower part, joined to the pipe walk and the bridge onto row N. */
 export const W3_PLATFORM = 10;
 /** The quay: its strip behind the wall, the wall (from the river's bench up to the floor, P4), the pier (P7). */
-export const W3_QUAY: W3Rect = { minX: 2479, maxX: 2487.5, minZ: 418.5, maxZ: 440 };
-export const W3_QUAY_WALL: W3Rect = { minX: 2477, maxX: 2479, minZ: 418.5, maxZ: 438.5 };
+export const W3_QUAY: W3Rect = { minX: 2480, maxX: 2487.5, minZ: 418.5, maxZ: 440 };
+/**
+ * The quay's wall to x 2480, on the terrain's grid line, so its top is the floor wherever the pad's
+ * edge still slopes (review round 2); along z to the quay's north fence.
+ */
+export const W3_QUAY_WALL: W3Rect = { minX: 2477, maxX: 2480, minZ: 418.5, maxZ: 440 };
 export const W3_PIER: W3Rect = { minX: 2466, maxX: 2477, minZ: 426, maxZ: 438 };
 /** The pipeline over the river (P8) and its service walk on top. */
 export const W3_PIPES: W3Rect = { minX: 2442, maxX: 2486, minZ: 442, maxZ: 444 };
@@ -140,6 +144,15 @@ export const W3_ZONE_RECTS: readonly W3Rect[] = [
  */
 export const W3_CHUNK = "nabrzeze-w3";
 export const W3_BOUNDS: W3Rect = { minX: 2440, maxX: 2606, minZ: 380, maxZ: 480 };
+
+/**
+ * The zone's rectangles for clearing the map's buildings and trees (review round 2): drawn back
+ * 0.5 m more from the path's fence and the south fence, so the furniture's 2 m clearance
+ * (`clearOfGame`) ends about 1.2 m outside them: a tree hugging the fence goes, the trees of the
+ * terrace and the strip past it stay, as on main.
+ */
+const CLEAR_IN = 0.5;
+export const W3_CLEAR_RECTS: readonly W3Rect[] = W3_ZONE_RECTS.map((r, i) => ({ ...r, minX: i === 0 ? r.minX + CLEAR_IN : r.minX, minZ: r.minZ + CLEAR_IN }));
 
 /** Is (x, z) inside a polygon (even-odd)? */
 export const insidePolygon = (ring: readonly GroundPoint[], x: number, z: number): boolean => {

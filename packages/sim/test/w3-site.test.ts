@@ -11,6 +11,7 @@ import {
   W3_BASIN_FLOOR,
   W3_NAV,
   W3_PIPE_LADDER,
+  W3_UNSEEN_WALLS,
   W3_WATER_Y,
   W3_Y,
   W3_ZONE,
@@ -18,12 +19,13 @@ import {
   groundY,
   inW3Zone,
   rawHeight,
+  w3,
 } from "../src";
 import { insidePolygon } from "../src/content/tessen-w3/site";
 import { shapeHeight } from "../src/content/lublin/shape";
 import { bridgeDeckAt } from "../src/content/lublin/decks";
 import { straightWalk } from "../src/systems/ai/steering";
-import { teleportPlayer } from "./helpers";
+import { input, teleportPlayer } from "./helpers";
 
 /**
  * Sector W-3's ground (ADR-0082 stage 1, with the curator's corrections P1-P13): the zone's floor
@@ -152,5 +154,60 @@ describe("W-3's level graph (ADR-0082 stage 1)", () => {
     const ladder = [...sim.world.with("ladder")].find((e) => e.ladder.key === W3_PIPE_LADDER.key);
     expect(ladder?.ladder.top).toBeCloseTo(W3_Y + 10, 5);
     expect(ladder?.ladder.bottom).toBeCloseTo(groundY(W3_PIPE_LADDER.x, W3_PIPE_LADDER.z), 5);
+  });
+});
+
+describe("W-3's edges on the river (ADR-0082 stage 1, curator's review round 2)", () => {
+  /** A game with the player near the quay, everyone else gone. */
+  const quaySim = (): Simulation => {
+    const sim = Simulation.create({ seed: 3 });
+    teleportPlayer(sim, w3(2482, 0, 428));
+    sim.step();
+    for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
+    return sim;
+  };
+
+  it("keeps the quay's floor level up to the railing over the water, wall and pad alike (P3)", () => {
+    const sim = quaySim();
+    for (let x = 2477.4; x <= 2486.6; x += 0.4) {
+      // From a terrain cell in from the quay's south end (z 418.5): south of it the zone's corner by the bridge keeps the NMT.
+      for (const z of [421, 425, 431, 436, 439.6]) {
+        teleportPlayer(sim, w3(x, 0.3, z));
+        delete sim.player()!.fall;
+        for (let i = 0; i < 30; i++) sim.step();
+        expect(Math.abs(sim.player()!.position.y - W3_Y), `${x.toFixed(1)},${z}`).toBeLessThanOrEqual(0.05);
+      }
+    }
+  });
+
+  it("puts no unseen wall over the Lutosławski bridge's deck (P7)", () => {
+    for (const p of W3_UNSEEN_WALLS) {
+      for (const q of p.prisms ?? []) {
+        const top = p.center.y + q.top;
+        const pts = [...q.points, { x: q.points.reduce((s, c) => s + c.x, 0) / q.points.length, z: q.points.reduce((s, c) => s + c.z, 0) / q.points.length }];
+        for (const c of pts) {
+          const deck = bridgeDeckAt(p.center.x + c.x, p.center.z + c.z);
+          if (deck !== null) expect(top, `${(p.center.x + c.x).toFixed(1)},${(p.center.z + c.z).toFixed(1)}`).toBeLessThanOrEqual(deck);
+        }
+      }
+    }
+  });
+
+  it("lets no jump from the bridge's deck land behind the fence, onto the pier (P7)", () => {
+    for (const x of [2462.2, 2463.5, 2465, 2465.8]) {
+      const sim = quaySim();
+      const edge = 439.4 - 0.594 * (x - 2441.7);
+      const start = { x, y: groundY(x, edge - 1.2), z: edge - 1.2 };
+      for (const yaw of [0, 0.5, -0.4]) {
+        teleportPlayer(sim, start, yaw);
+        delete sim.player()!.fall;
+        sim.step();
+        sim.step(input({ moveZ: 1, sprint: true }));
+        sim.step(input({ moveZ: 1, sprint: true, jump: true }));
+        for (let i = 0; i < 90; i++) sim.step(input({ moveZ: 1, sprint: true }));
+        const p = sim.player()!.position;
+        expect(inW3Zone(p.x, p.z), `${x},${yaw}: ${p.x.toFixed(1)},${p.z.toFixed(1)}`).toBe(false);
+      }
+    }
   });
 });

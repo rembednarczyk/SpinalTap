@@ -91,7 +91,7 @@ const fences = (): StreetPropItem[] => {
 /** Railings over the water: the quay's edge either side of the pier, round the pier, along the basin's quay. */
 const WATER_EDGES: readonly (readonly GroundPoint[])[] = [
   [
-    { x: W3_QUAY_WALL.minX + 0.1, z: 440 },
+    { x: W3_QUAY_WALL.minX + 0.1, z: W3_QUAY_WALL.maxZ },
     { x: W3_QUAY_WALL.minX + 0.1, z: W3_PIER.maxZ },
   ],
   [
@@ -100,14 +100,62 @@ const WATER_EDGES: readonly (readonly GroundPoint[])[] = [
     { x: W3_PIER.minX + 0.1, z: W3_PIER.minZ + 0.1 },
     { x: W3_PIER.maxX, z: W3_PIER.minZ + 0.1 },
   ],
+  // Off the bridge's deck: its north edge is at z 418.37 by x 2477.
   [
     { x: W3_QUAY_WALL.minX + 0.1, z: W3_PIER.minZ },
-    { x: W3_QUAY_WALL.minX + 0.1, z: 417.6 },
+    { x: W3_QUAY_WALL.minX + 0.1, z: W3_QUAY_WALL.minZ },
   ],
   [
     { x: W3_BASIN.maxX, z: 451.9 },
     { x: W3_BASIN.minX, z: 451.9 },
   ],
+];
+
+/**
+ * The pier's west and south edges face the bridge's deck, 1.8 m over the floor and 1-4 m off: its
+ * unseen wall rises to the bridge fence's top over the deck (+4.5), past any jump from the deck
+ * (review round 2: a jump's peak is 1.225 m). Just off the pier's edge, so nobody stands on the
+ * deck's rim outside it.
+ */
+const PIER_BRIDGE_SIDE: readonly GroundPoint[] = [
+  { x: W3_PIER.minX - 0.15, z: W3_PIER.maxZ },
+  { x: W3_PIER.minX - 0.15, z: W3_PIER.minZ - 0.15 },
+  { x: W3_PIER.maxX, z: W3_PIER.minZ - 0.15 },
+];
+/** Over the bridge's deck (+1.8) as high as its fence. */
+const OVER_DECK = 4.6;
+
+/** The unseen walls go down past the river's bed: nobody in the water walks under one onto the pier. */
+const UNDER = 3;
+
+/** The unseen walls over the water's edges (a body stops, the eye passes). */
+/**
+ * The water's edges again, just off the floor's rim (0.15 m out): the wall stands where nobody in the
+ * water can stand on the rim outside it. The quay's edge, the pier's north side, the basin's quay.
+ */
+const OUT = 0.15;
+const UNSEEN_EDGES: readonly (readonly GroundPoint[])[] = [
+  [
+    { x: W3_QUAY_WALL.minX - OUT, z: W3_QUAY_WALL.maxZ },
+    { x: W3_QUAY_WALL.minX - OUT, z: W3_PIER.maxZ + OUT },
+    { x: W3_PIER.minX - OUT, z: W3_PIER.maxZ + OUT },
+    { x: W3_PIER.minX - OUT, z: W3_PIER.maxZ },
+  ],
+  [
+    { x: W3_PIER.maxX, z: W3_PIER.minZ - OUT },
+    { x: W3_QUAY_WALL.minX - OUT, z: W3_PIER.minZ - OUT },
+    // Short of the bridge's deck (its north edge at z 418.52 there).
+    { x: W3_QUAY_WALL.minX - OUT, z: W3_QUAY_WALL.minZ + 0.2 },
+  ],
+  [
+    { x: W3_BASIN.maxX, z: W3_BASIN.minZ + OUT },
+    { x: W3_BASIN.minX, z: W3_BASIN.minZ + OUT },
+  ],
+];
+
+export const W3_UNSEEN_WALLS: readonly StaticProp[] = [
+  ...UNSEEN_EDGES.flatMap((line) => unseenWall(line, W3_Y - UNDER, W3_FENCE + UNDER)),
+  ...unseenWall(PIER_BRIDGE_SIDE, W3_Y - UNDER, OVER_DECK + UNDER),
 ];
 
 const railings = (): StreetPropItem[] => WATER_EDGES.flatMap((line) => barrierLine("fence", RAILING, line, () => W3_Y));
@@ -144,5 +192,5 @@ const quayAndPier = (): StaticProp[] => {
 export const W3_EDGE_PROPS: readonly StaticProp[] = [
   ...quayAndPier(),
   ...barrierSolids(W3_EDGE_BARRIERS),
-  ...WATER_EDGES.flatMap((line) => unseenWall(line, W3_Y, W3_FENCE)),
+  ...W3_UNSEEN_WALLS,
 ];
