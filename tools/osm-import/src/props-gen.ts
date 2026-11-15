@@ -485,7 +485,8 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       continue;
     }
     const same = kept.get(x.prop) ?? [];
-    const gap = minGap(x.prop, fromLine.has(x));
+    // Asked of the piece as placed: moved off the road or a wall it is another object, and a line's lamp kept 0.3 m (G-817).
+    const gap = minGap(x.prop, fromLine.has(piece));
     if (same.some((q) => Math.hypot(q.x - x.p.x, q.z - x.p.z) < gap) || styledBy(x.prop, x.p)) {
       merged++;
       continue;

@@ -8,6 +8,13 @@
  * The inputs of a table, by an explicit list: the generator's entry modules with every module they
  * import (followed through the sources, `moduleClosure`), and the data it reads (`data`). The
  * tables it writes are no input of their own.
+ *
+ * The fingerprint in the header covers only the inputs the map owns (`OWNED`: the import's and the
+ * orthophoto's tools, the content of `lublin`, the data). The rest of the closure (through the
+ * barrels of `@seki/sim` and `@seki/engine`, about 800 modules) would make every change of the
+ * simulation or the renderer ask for the tables again with the same bytes and a new header, and
+ * conflict in every branch (15.11, PR #582). A change there that does shape the tables is caught
+ * byte for byte by CI's "Map tables" job, which runs on every change of code.
  */
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
@@ -48,6 +55,9 @@ export const TABLES = {
 } as const satisfies Record<string, TableInputs>;
 
 export type TableName = keyof typeof TABLES;
+
+/** The modules of the closure the map owns, by their path's start: the header's fingerprint covers these and the data. */
+export const OWNED = ["tools/osm-import/", "tools/orto/", "tools/gugik/", `${LUBLIN}/`] as const;
 
 // `import … from "x"`, `export … from "x"`, `import "x"` and `import("x")`; not `import type` / `export type`, which leave nothing at run time.
 const SPECIFIERS = /(?:^|[\s;}])(?:import|export)(?!\s+type[\s{])(?:[^"'`;]*?\sfrom)?\s*["']([^"']+)["']|\bimport\(\s*["']([^"']+)["']\s*\)/g;
@@ -136,7 +146,13 @@ export const fingerprintOf = (files: readonly string[], root = REPO): string => 
   return h.digest("hex");
 };
 
-export const tableFingerprint = (name: TableName, root = REPO): string => fingerprintOf(inputFiles(TABLES[name], root), root);
+/** The inputs the header's fingerprint covers: the data and the modules the map owns (`OWNED`). */
+export const fingerprintFiles = (t: TableInputs, root = REPO): string[] => {
+  const data = t.data;
+  return inputFiles(t, root).filter((f) => OWNED.some((o) => f.startsWith(o)) || data.some((d) => f === d || f.startsWith(`${d}/`)));
+};
+
+export const tableFingerprint = (name: TableName, root = REPO): string => fingerprintOf(fingerprintFiles(TABLES[name], root), root);
 
 const LINE = /^\/\/ Inputs: sha1 ([0-9a-f]{40}) \(`[^`]+`, ADR-0083\)\.$/m;
 

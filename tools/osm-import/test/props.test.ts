@@ -202,6 +202,18 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(at("test-0-0")).toEqual([["lamp-road", 40, 24]]);
   });
 
+  it("keeps a line's lamp moved off the road 7 m from another of its kind, as one where it was placed (G-817)", () => {
+    // The park lamps' line runs on the carriageway, so `offRoad` moves each station onto the pavement (12.5, 34.6) and on.
+    const line = { id: "line", kind: "lamp-park", lines: [[0, 30, 100, 30]], spacing: 25 };
+    const lamp = { id: "lamp", kind: "lamp-park", position: { x: 16, z: 36 } };
+    const lamps = (plan: PropsPlan) => generateProps(plan, [street()]).byChunk.get("test-0-0")!.filter((i) => i.prop === "lamp-park");
+    expect(lamps({ items: [line] }).map((i) => [i.x, i.z])).toContainEqual([12.5, 34.6]);
+    const both = lamps({ items: [lamp, line] });
+    expect(both.map((i) => [i.x, i.z])).toContainEqual([16, 36]);
+    for (const l of both) if (l.x !== 16) expect(Math.hypot(l.x - 16, l.z - 36), `lamp at ${l.x}, ${l.z}`).toBeGreaterThanOrEqual(7);
+    expect(both).toHaveLength(4);
+  });
+
   it("hangs a basket only on a lamp that stays, where it stands (G-004)", () => {
     // The second row runs 3 m behind the first, so its lamps are merged away; the baskets were picked from both.
     const plan: PropsPlan = {
