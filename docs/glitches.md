@@ -1951,6 +1951,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - 15.11 przegląd kuratora (41ddd97): NIEZGODNE. Placement zgodne z ortofoto; zwężenie przy węźle kładzie pół pasa łącznicy za krawężnik: Ruska w216655518 (1071..1074; 428..437) jezdnia na trawie ok. 12 m², Andersa w40051729 (2316..2322; 312..321) jezdnia i chodnik na trawie ok. 12 m², Solidarności w215609082 s 0-6 krawędź 7,7 m wobec 6,3 (ok. 5 m² na szpicu trawnika). kerb-fill-wide-estimated (1113,353) to fałszywy alarm (kostka dojścia do przejścia). Runda 2 naprawiacza.
 - 15.11 runda 2: 4f9cf2f + merge ed53299; skan 3842 → 3833, nowa kontrola lane-place-on-green (baza 0); do ponownego przeglądu kuratora, w tym 5 sygnalizatorów przestawionych przy remisach
 - Przegląd kuratora r2 (15.11, ed53299): NIEZGODNE. Ruska, Andersa (trawa), Solidarności i szwy zgodne. Do poprawy: pas trawnika z kerbFills na bruku i asfalcie (1088,9-1091,5; 456-472) +21,8 m² i (1110,5-1119; 274,35-276) +13,1 m²; reguła remisu sygnalizatorów pogarsza (-104,3;121) i (-104,1;49,7); n1946478264 (1104,1;264,7) 3,6 m w jezdni łuku (krawężnik placu z≈261,0, 2024-06). Runda 3 nowym agentem. Szczegóły: scratchpad/topo-g825-r2-raport.md
+- 15.11 r3 7bfd370: pas do trawnika tylko przy szczelinie ≤ 0,6 m albo przy zieleni na ortofoto, szerszy jako square; reguła remisu sygnalizatorów wycofana (17 z 18 jak na main); kontrola lawn-strip-on-paving, baza 0. n1946478264 zostaje na klinie (1094,5; 279) jak w r1: obie pozycje docelowe wymagają nowej reguły, decyzja orkiestratora: sprawa G-842. Czeka na przegląd kuratora (Lwowska z 397–439 plamista, grządka 1110–1119; 514–522 jako square).
 
 ### G-826 Pokrycie ortofoto 2025-04 klasuje jasny asfalt jezdni jako paving
 - Ważność: S3 · Zasięg: m.in. pod latarniami G-821; kontrola lamp-on-orto-carriageway ich nie widzi
@@ -2062,6 +2063,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: offRoad wybiera square we wnętrzu skrzyżowania, który na ortofoto jest asfaltem; łuk prawoskrętu przy Rondzie Dmowskiego (1095-1110; 261-265,8) ma w grze square zamiast jezdni. Narusza T-031. Proponowana kontrola signal-in-junction
 - Status: nowy
 - Pakiet właściciela: tools/osm-import (props-place)
+- 15.11: n1946478264 po G-825 r3 stoi na klinie (1094,5; 279), który na ortofoto jest jezdnią; cel ok. (1104; 260,3) na placu za krawężnikiem (13 m od węzła, poza zasięgiem 12 m)
 
 ### G-843 Obrys zebry zachodzi pod chodnik
 - Ważność: S4 · Zasięg: krakowskie-0-1 (434,3; -10,3)
@@ -2104,6 +2106,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Stopnica #77736c (do trawy gry 1,39), podstopień #4f4b46 (0,91), z daleka ok. 1,23; ortofoto bieg główny Placu Zamkowego 1,67 (2025-04) / 1,92 (2024-06), plac obok to samo; paleta square 1,7. Oczekiwane: stopnica ≈ square (luminancja ok. 141), podstopień ciemniejszy tylko cieniowaniem. Proponowana kontrola steps-albedo-drift (baza 1). Zgłoszenie użytkownika 15.11: jasny granit na zdjęciu
 - Status: nowy
 - Pakiet właściciela: packages/engine/src/npr (toon-city.ts), steps-plan
+
+### G-851 Szwy 0,1–0,25 m kerb-gap-bare na końcach pasów square po G-825
+- Ważność: S4 · Zasięg: podzamcze-0-1 (530,390), podzamcze-2-0 (1110,330)
+- Opis: Przyjęte w r3 G-825 (7bfd370); szczelina między końcem pasu square a krawędzią przesuniętej jezdni
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
