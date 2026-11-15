@@ -119,7 +119,7 @@ void main(void) {
   float h = mix(hash(lane), hash(lane + 1.0), k);
   float ripple = 0.6 + 0.4 * sin(vUV.y * 52.0 + h * 6.28 + time * 1.7);
   float streaks = mix(0.25, 1.0, h * h) * ripple;
-  float wet = mix(0.3, 1.25, waterStanding(${STREET_FIELD_GLSL}, vGround));
+  float wet = mix(0.85, 1.4, waterStanding(${STREET_FIELD_GLSL}, vGround));
   float a = pow(across, 1.6) * pow(along, 1.4) * streaks * wet * intensity;
   gl_FragColor = vec4(lightColor * a, a);
 }

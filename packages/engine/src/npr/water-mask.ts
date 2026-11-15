@@ -132,14 +132,17 @@ float settJoint(vec2 w, float dist) {
 
 /**
  * What the merely wet street mirrors of the probe (`envSampler`, toon shader): no sky and no
- * haze, at night only the lights themselves, drawn out towards the eye into streaks by three
- * taps along the reflection's height; `night` 0 by day.
+ * haze, at night only the lights themselves. A light is brighter than the probe beside it, a
+ * wash of haze or neon is not: what stands above two taps to its sides is kept, drawn out
+ * towards the eye into a streak by three taps along the reflection's height; `night` 0 by day.
  */
 export const WET_STREAKS_GLSL = /* glsl */ `
 vec3 wetStreaks(vec3 r, float night) {
   vec3 e = textureCube(envSampler, r).rgb;
   e = max(e, textureCube(envSampler, normalize(vec3(r.x, r.y * 0.45, r.z))).rgb);
   e = max(e, textureCube(envSampler, normalize(vec3(r.x, r.y * 2.2, r.z))).rgb);
-  return max(e - vec3(0.42), vec3(0.0)) * 1.7 * night;
+  vec3 side = normalize(vec3(-r.z, 0.0, r.x) + vec3(0.0001, 0.0, 0.0)) * 0.6;
+  vec3 wash = 0.5 * (textureCube(envSampler, normalize(r + side)).rgb + textureCube(envSampler, normalize(r - side)).rgb);
+  return max(e - max(wash, vec3(0.16)), vec3(0.0)) * 2.0 * night;
 }
 `;
