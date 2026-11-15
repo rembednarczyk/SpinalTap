@@ -2040,7 +2040,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: cutSidewalk tnie chodnik próbkowaniem co 0,5 m, a krawężnik składa się z pasów kerbFills/widened: schodki i zygzaki, zwłaszcza przy zebrach i narożnikach. Kontrola w PR #581; zrzuty scratchpad/jag/final/f7–f10
 - Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g837, 906eb3d, czeka na przegląd kuratora); wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
-- 15.11: kerb-jag 55 -> 16 (14 kwadratów); kontrola liczy łuk między wierzchołkami obrysu, po dogęszczeniu co 0,5 m wzdłuż krawężnika 81 -> 43, przy zebrach 123 -> 109; kontrolę trzeba dogęścić (PR #581) przed scaleniem; zostają zebry (G-836) i kliny narożników (G-844); 30 obiektów przy krawężniku przesuniętych o 0,2–1,0 m do przeglądu kuratora
+- 15.11: kerb-jag 55 -> 16 (14 kwadratów); kontrola liczy łuk między wierzchołkami obrysu, po dogęszczeniu co 0,5 m wzdłuż krawężnika 81 -> 43, przy zebrach 123 -> 109; kontrolę trzeba dogęścić (PR #581) przed scaleniem; zostają zebry (G-836) i kliny narożników (G-845); 30 obiektów przy krawężniku przesuniętych o 0,2–1,0 m do przeglądu kuratora
 
 ### G-838 Szczelina 0,12 m między kwadratem reguły gołej ziemi a przesuniętą krawędzią Lwowskiej w139586648
 - Ważność: S4 · Zasięg: kerb-gap-bare podzamcze-2-1 1110,440
