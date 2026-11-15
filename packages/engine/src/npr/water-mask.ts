@@ -110,3 +110,13 @@ float waterStanding(vec2 field, vec2 xz) {
   return (step(0.15, s) + step(0.85, s)) * 0.5;
 }
 `;
+
+/** Rain in the joints of the Old Town's setts (their grid as `groundPaint` lays it), near the eye. */
+export const SETT_JOINT_GLSL = /* glsl */ `
+float settJoint(vec2 w, float dist) {
+  vec2 g = vec2(w.x / 0.2 + 0.5 * step(0.5, fract(w.y / 0.24)), w.y / 0.12);
+  vec2 f = fract(g);
+  float joint = 1.0 - step(0.12, min(min(f.x, 1.0 - f.x) * 1.6, min(f.y, 1.0 - f.y) * 0.9));
+  return joint * (1.0 - smoothstep(12.0, 35.0, dist));
+}
+`;
