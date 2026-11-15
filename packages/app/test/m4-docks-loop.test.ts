@@ -11,7 +11,7 @@ import {
 } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, GENZO_SPOT, SIM_HZ, ground } from "@seki/sim";
+import { GENZO_SPOT, SIM_HZ, W3_ITEM_SPOTS, W3_TERMINAL_SPOTS, ground } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
@@ -124,7 +124,7 @@ describe("M4 acceptance: the docks", () => {
     // The terminal is on the minimap.
     expect(ui.getState().mapMarkers.some((m) => m.id === `${hack.id}-terminal` && m.kind === "target")).toBe(true);
 
-    const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
+    const t = W3_TERMINAL_SPOTS.quay_terminal!;
     teleport(session, t.x, t.z - 1.4, 0);
     steps(session, 1, frame({ interact: true }));
     expect(toasts(ui)).toContain("Alarm on Nabrzeże: Hold the terminal, security is on its way");
@@ -154,7 +154,7 @@ describe("M4 acceptance: the docks", () => {
     close(session);
     const job = session.sim.domain.contracts.active!;
     expect(job.kind).toBe("infiltrate");
-    const desk = DOKI_ITEM_SPOTS.tessen_office!;
+    const desk = W3_ITEM_SPOTS.tessen_office!;
     teleport(session, desk.x + 1.1, desk.z, -Math.PI / 2);
     steps(session, 1, frame({ interact: true, crouch: true }));
     expect(ui.getState().objective).toBe("Data copied. Go back to Genzō for your pay");
@@ -170,7 +170,7 @@ describe("M4 acceptance: the docks", () => {
     talkToGenzo(session);
     choose(session, ui, "Który terminal mam złamać?");
     close(session);
-    const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
+    const t = W3_TERMINAL_SPOTS.quay_terminal!;
     teleport(session, t.x, t.z - 1.4, 0);
     effects.length = 0;
     steps(session, 1, frame({ interact: true }));

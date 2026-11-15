@@ -6,9 +6,12 @@
 #   bash tools/heavy.sh <polecenie> [argumenty...]   (kopia poza repo: /home/user/bin/seki-heavy)
 set -u
 [ $# -gt 0 ] || { echo "użycie: tools/heavy.sh <polecenie> [argumenty...]" >&2; exit 2; }
+# Already inside a slot (a heavy script calling heavy steps, or `seki-heavy pnpm topo:review`):
+# run directly. Taking a second slot from inside the first waited on itself (15.11, topo:review).
+if [ -n "${SEKI_HEAVY_SLOT:-}" ]; then exec "$@"; fi
 while :; do
   for lock in /tmp/seki-heavy.lock /tmp/seki-heavy-2.lock; do
-    flock -n -E 200 "$lock" "$@"
+    SEKI_HEAVY_SLOT="$lock" flock -n -E 200 "$lock" "$@"
     rc=$?
     [ "$rc" -ne 200 ] && exit "$rc"
   done

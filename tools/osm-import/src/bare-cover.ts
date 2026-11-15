@@ -85,11 +85,21 @@ export const FILL = {
 
 /**
  * The set pieces' rectangles where the map's surfaces give way (`CLEARED` in
- * `packages/sim/src/content/lublin/sites.ts`: the docks and their basin; the test holds them equal).
+ * `packages/sim/src/content/lublin/sites.ts`: W-3's zone in bands along its fence, ADR-0082; the test holds them equal).
  */
 export const FILL_CLEARED: readonly Rect[] = [
-  { minX: 2520, maxX: 2594, minZ: 390, maxZ: 450 },
-  { minX: 2520, maxX: 2594, minZ: 452, maxZ: 500 },
+  { minX: 2487.5, maxX: 2490, minZ: 413.3, maxZ: 446 },
+  { minX: 2490, maxX: 2492.5, minZ: 411.2, maxZ: 446 },
+  { minX: 2492.5, maxX: 2495, minZ: 409.1, maxZ: 452 },
+  { minX: 2495, maxX: 2497.5, minZ: 406.9, maxZ: 452 },
+  { minX: 2497.5, maxX: 2500, minZ: 405.3, maxZ: 452 },
+  { minX: 2500, maxX: 2502.5, minZ: 403.2, maxZ: 452 },
+  { minX: 2502.5, maxX: 2505, minZ: 401.4, maxZ: 452 },
+  { minX: 2505, maxX: 2507.5, minZ: 399.7, maxZ: 452 },
+  { minX: 2507.5, maxX: 2510, minZ: 398, maxZ: 452 },
+  { minX: 2510, maxX: 2512.5, minZ: 396.3, maxZ: 452 },
+  { minX: 2512.5, maxX: 2515, minZ: 394.6, maxZ: 452 },
+  { minX: 2515, maxX: 2606, minZ: 392.3, maxZ: 452 },
 ];
 
 /** The surfaces a kerb's strip between a carriageway and them is laid to (`kerbStrips`): what `kerb-gap-bare` and `kerb-strip-bare` count a strip to. */

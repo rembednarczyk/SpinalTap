@@ -1,12 +1,13 @@
 import type { Vec3 } from "@seki/core";
-import { placeRect } from "./builders";
 import { ROOM_CEILING, clinicPoint, koiPoint } from "./interiors";
 import { TRASA_PODZIEMNA_ROOMS } from "./kanal-underground";
 import { CAPSULE_INTERIOR_ROOM, CAPSULE_SITE } from "./capsule-room";
 import { METRO_PLATFORMS } from "./metro";
 import { FOODHALL_ROOM } from "./alchemia/foodhall";
 import { P1_ROOMS } from "./alchemia/parking";
-import { CLINIC_SITE, DOCKS_PLACE, KOI_SITE, TRASA_PODZIEMNA } from "./lublin/sites";
+import { CLINIC_SITE, KOI_SITE, TRASA_PODZIEMNA } from "./lublin/sites";
+import { W3_OFFICE } from "./tessen-w3/tower-pipes";
+import { W3_Y } from "./tessen-w3/site";
 
 /**
  * Interiors as areas (ADR-0061): where the player counts as inside a place, for the
@@ -42,11 +43,14 @@ const oldRoom = (point: (x: number, y: number, z: number) => Vec3, x0: number, x
   return { minX: Math.min(a.x, b.x), maxX: Math.max(a.x, b.x), minZ: Math.min(a.z, b.z), maxZ: Math.max(a.z, b.z), bottom: floor, top: floor + ROOM_CEILING };
 };
 
-/** Tessen's office on the quay, inside its walls (`district-doki.ts`), up to the roof deck. */
+/** Tessen's pass office on the ground floor of W-3's tower (ADR-0082), inside its walls, up to its ceiling. */
 const TESSEN_OFFICE_ROOM: InteriorRoom = {
-  ...placeRect(DOCKS_PLACE, { minX: -29.7, maxX: -18.3, minZ: 128.3, maxZ: 137.7 }),
-  bottom: DOCKS_PLACE.y,
-  top: DOCKS_PLACE.y + 3.6,
+  minX: W3_OFFICE.minX,
+  maxX: W3_OFFICE.maxX,
+  minZ: W3_OFFICE.minZ,
+  maxZ: W3_OFFICE.maxZ,
+  bottom: W3_Y,
+  top: W3_Y + W3_OFFICE.top,
 };
 
 /** Every interior the player can walk into. A new one is one more entry (ADR-0061). */
