@@ -2027,6 +2027,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
 
+### G-836 Zebry z węzłów: kąt do jezdni, koniec poza krawężnikiem, paski i poświata na chodniku
+- Ważność: S3 · Zasięg: crossing-shape: skew 19, overhang 26, glow 54, kerb 55; Podzamcze, Krakowskie, Nabrzeże, Stare Miasto
+- Opis: crossingBand (ground.ts) i stretchZebras (kerb-fill.ts) kładą prostokąt o stałych wymiarach wokół węzła z osią najbliższego segmentu OSM, niedopasowany do poszerzonej jezdni (kerbFills, widened). Kontrole w PR #581; zrzuty scratchpad/jag/final/f1–f6
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+
+### G-837 Zygzaki i schodki krawędzi chodnika przy jezdni i zebrze
+- Ważność: S3 · Zasięg: kerb-jag 55 trafień w 42 kwadratach 10 m; Podzamcze 18, Krakowskie 16, Nabrzeże 6, Stare Miasto 2
+- Opis: cutSidewalk tnie chodnik próbkowaniem co 0,5 m, a krawężnik składa się z pasów kerbFills/widened: schodki i zygzaki, zwłaszcza przy zebrach i narożnikach. Kontrola w PR #581; zrzuty scratchpad/jag/final/f7–f10
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl

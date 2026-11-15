@@ -1,6 +1,6 @@
 # ADR-0083: Testy całego miasta bez wyścigu z limitem czasu
 
-Status: proponowany (15.11, prośba użytkownika: „wymyśl sposób na krótsze testy, aby unikać timeoutów, bo to stale wraca”). Uzupełnia ADR-0046 (testy) i `docs/plany/czas-testow.md`.
+Status: przyjęty (15.11, kroki 1–2 od razu, 3–4 po pomiarze; prośba użytkownika: „wymyśl sposób na krótsze testy, aby unikać timeoutów, bo to stale wraca”). Uzupełnia ADR-0046 (testy) i `docs/plany/czas-testow.md`.
 
 ## Kontekst
 Limit 20 s na test (`vitest.config.ts`) chroni przed zawieszeniem, ale testy całego miasta rosną z każdą regułą importu i co kilka dni któryś go przekracza: paving-overlap (#566), kerb-fill-wide-estimated (#568), a 15.11 `props.test > matches the committed table` (20,5 s na main, blokuje #573, #574, #578, #579). Każdy raz to ręczne przyspieszanie po fakcie, w cudzym PR.
