@@ -195,12 +195,32 @@ const across = (c: Pt, n: Pt, t: Pt, cap: number, on: (p: Pt) => boolean): [numb
   return [edge(mid, found, -1, cap), edge(mid, found, 1, cap)];
 };
 
+/** How much shorter than its middle a zebra's side may reach for the zebra to end where the side does (m). */
+const SIDE_SHORT = 1;
+
+/**
+ * The span across of the zebra's middle, each end pulled in to its sides' where they end on a
+ * sidewalk up to `SIDE_SHORT` short of it (`walk`: just past the side's end): a kerb a little askew
+ * to the zebra, where its corner ran out over the sidewalk and cut a notch in its kerb (G-837's
+ * Kapucyńska). Not a mouth's, metres short or onto other ground (`across`).
+ */
+const short = (mid: [number, number], sides: readonly ([number, number] | null)[], walk: (side: number, u: number) => boolean): [number, number] => {
+  let [lo, hi] = mid;
+  sides.forEach((side, k) => {
+    if (!side) return;
+    if (side[0] > lo && side[0] - lo <= SIDE_SHORT && walk(k, side[0] - 2 * STEP)) lo = side[0];
+    if (side[1] < hi && hi - side[1] <= SIDE_SHORT && walk(k, side[1] + 2 * STEP)) hi = side[1];
+  });
+  return [lo, hi];
+};
+
 type Boxed = { readonly box: Rect; readonly ring: readonly Pt[] };
 
 /**
  * The zebras across the carriageways at `spots`, a band's each: a rectangle square to the street's
  * axis, `along` along it, from kerb to kerb of the `asphalt` rings, short of the kerb stones laid
- * over their edge (`over`, ranked over the asphalt: the kerb is where they start). Null where the
+ * over their edge (`over`, ranked over the asphalt: the kerb is where they start), and short of the
+ * `pavement` where a side meets it first (`short`). Null where the
  * band stays as it is (no spot, or none across asphalt); a crossing way's other bands get none,
  * its first all.
  */
@@ -211,8 +231,9 @@ export const fitZebras = <B extends Band>(
   aside: (l: Line) => number,
   asphalt: readonly Boxed[],
   over: readonly Boxed[],
+  pavement: readonly Boxed[] = [],
 ): (Pt[][] | null)[] => {
-  const [bins, kerbs] = [new RingBins(asphalt), new RingBins(over)];
+  const [bins, kerbs, walks] = [new RingBins(asphalt), new RingBins(over), new RingBins(pavement)];
   const on = (p: Pt) => bins.holds(p.x, p.z) && !kerbs.holds(p.x, p.z);
   const done = new Set<string>();
   return zebras.map((z) => {
@@ -228,7 +249,9 @@ export const fitZebras = <B extends Band>(
       const span = across(foot.foot, n, t, FAR, on);
       if (!span || span[1] - span[0] < MIN_ACROSS) return [];
       const corner = (a: number, u: number): Pt => ({ x: foot.foot.x + t.x * a + n.x * u, z: foot.foot.z + t.z * a + n.z * u });
-      const [lo, hi] = span;
+      const sides = [-h, h];
+      const walk = (k: number, u: number) => walks.holds(foot.foot.x + t.x * sides[k]! + n.x * u, foot.foot.z + t.z * sides[k]! + n.z * u);
+      const [lo, hi] = short(span, sides.map((a) => across({ x: foot.foot.x + t.x * a, z: foot.foot.z + t.z * a }, n, t, FAR, on)), walk);
       return [[corner(-h, lo), corner(h, lo), corner(h, hi), corner(-h, hi)]];
     });
     if (rings.length === 0) return null;
@@ -259,7 +282,8 @@ export const laidZebras = (
   const paved = (b: Laid) => b.surface === "road" || b.surface === "cobble";
   const asphalt = [...bands.filter((b) => b.carriageway || ((b.patch || roadAreas.has(b.source)) && paved(b))), ...[...kerbs.widened.values()].map((w) => ({ ring: w.ring, box: ringBounds(w.ring) }))];
   const stones = kerbs.fills.filter((f) => f.kerbStone).map((f) => ({ ring: f.ring, box: ringBounds(f.ring) }));
-  const fitted = new Map(fitZebras(zebras, spots, roads, aside, asphalt, stones).map((rings, i) => [zebras[i]!, rings]));
+  const walks = [...bands.filter((b) => b.surface === "sidewalk"), ...kerbs.fills.filter((f) => f.surface === "sidewalk").map((f) => ({ ring: f.ring, box: ringBounds(f.ring) }))];
+  const fitted = new Map(fitZebras(zebras, spots, roads, aside, asphalt, stones, walks).map((rings, i) => [zebras[i]!, rings]));
   // A rectangle: a crossing way's ends at the footways it meets (`roundEnds`) are no ends of it.
   const laid = ({ roundEnds: _, ...b }: Laid, ring: Pt[]): Laid => ({ ...b, ring, box: ringBounds(ring) });
   return bands.flatMap((b) => {

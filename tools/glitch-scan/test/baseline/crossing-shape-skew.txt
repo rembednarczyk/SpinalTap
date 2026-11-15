@@ -1,7 +1,5 @@
 # crossing-shape-skew: grid 1 m (x,z rounded); a count after the place is how many findings hold it
 krakowskie-0-0 -100,-72
-krakowskie-1-1 225,159
-nabrzeze-0-1 2363,336
 podzamcze-0-1 538,416
 podzamcze-1-0 741,325
 podzamcze-1-0 731,359

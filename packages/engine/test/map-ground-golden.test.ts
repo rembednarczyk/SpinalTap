@@ -137,7 +137,9 @@ describe("the ground the map city lays (G-444)", () => {
     // A junction's zebra along its foot path, every zebra on its axis to the kerb of the game's asphalt,
     // a road area's mouth too (G-836, the curator's round 2): 161 268 - 161 200 = 68 vertices more.
     // Both on one ground (the G-837 kerbs' smoothing with the zebras of G-836): 161 229, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161229, hash: "f8679ac4" });
+    // A zebra's end where its side meets a sidewalk up to 1 m short of its middle, no notch cut in the
+    // kerb by its corner (G-836 round 3, G-837's Kapucyńska): the same vertices, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161229, hash: "848f41e3" });
     scene.dispose();
   });
 

@@ -105,6 +105,19 @@ describe("a zebra from kerb to kerb, square to its street (G-836)", () => {
     expect(s.to).toBeCloseTo(5, 1);
   });
 
+  it("ends where its side meets a sidewalk a little short of its middle, not where a mouth runs off metres short", () => {
+    const road = { id: "w1", osmId: 1, tags: { highway: "residential" }, line: [{ x: 0, z: 0 }, { x: 100, z: 0 }] };
+    const ring = (pts: [number, number][]) => ({ ring: pts.map(([x, z]) => ({ x, z })), box: { minX: Math.min(...pts.map((p) => p[0])), maxX: Math.max(...pts.map((p) => p[0])), minZ: Math.min(...pts.map((p) => p[1])), maxZ: Math.max(...pts.map((p) => p[1])) } });
+    const zebra = { surface: "crossing" as const, ring: [], bridge: false, source: "n1" };
+    // The kerb at z 4 runs askew: 4.6 m off the axis at x 48.5, 4 m at x 51.5; a sidewalk past it.
+    const asphalt = [ring([[0, -4], [100, -4], [100, 4], [51.5, 4], [48.5, 4.6], [0, 4.6]])];
+    const walk = [ring([[0, 4.6], [48.5, 4.6], [51.5, 4], [100, 4], [100, 8], [0, 8]])];
+    const fit = (walks: typeof walk) => shape(fitZebras([zebra], () => [{ at: { x: 50, z: 0 }, along: 3 }], [road], () => 0, asphalt, [], walks)[0]![0]!);
+    expect(fit(walk).to).toBeCloseTo(4, 1);
+    // Off a sidewalk (a mouth's ground, or nothing): to the kerb on its middle.
+    expect(fit([]).to).toBeCloseTo(4.3, 1);
+  });
+
   it("bridges the seam where two ways' bands end at the crossing node, under the zebra's middle", () => {
     const road = { id: "w1", osmId: 1, tags: { highway: "residential" }, line: [{ x: 0, z: 0 }, { x: 100, z: 0 }] };
     const box = (x0: number, x1: number, z0: number, z1: number) => ({ ring: [{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }], box: { minX: x0, maxX: x1, minZ: z0, maxZ: z1 } });
