@@ -1,5 +1,5 @@
 import { FACADE_GLSL, GROUND_GLSL } from "./toon-city";
-import { SETT_JOINT_GLSL, WATER_GLSL, WET_DARKEN, WET_STREAKS_GLSL } from "./water-mask";
+import { SETT_JOINT_GLSL, STREET_FIELD_GLSL, WATER_GLSL, WET_DARKEN, WET_STREAKS_GLSL } from "./water-mask";
 
 /** Number of point lights the toon shader evaluates per fragment. */
 export const MAX_POINT_LIGHTS = 8;
@@ -163,8 +163,9 @@ float gridLine(float x, float period, float w) {
   return 1.0 - step(w, d);
 }
 ${FACADE_GLSL}${GROUND_GLSL}
+${WATER_GLSL}
 #ifdef WATER_MASK
-${WATER_GLSL}${SETT_JOINT_GLSL}
+${SETT_JOINT_GLSL}
 #ifdef ENV_REFLECT
 ${WET_STREAKS_GLSL}
 #endif
@@ -389,7 +390,8 @@ void main(void) {
   wetK = max(wetK, standing);
   float puddle = mix(0.7, 1.0, standing);
 #else
-  float puddle = mix(0.15, 1.0, step(1.5, g));
+  // The game's own asphalt (no field baked): the street's mask, the lamps' glow clear on all of it.
+  float puddle = max(step(1.5, g), mix(0.45, 1.0, waterStanding(${STREET_FIELD_GLSL}, vWorldPos.xz)));
 #endif
   if (wetK > 0.4 && n.y > 0.6 && envStrength > 0.0) {
     vec3 r = reflect(-v, n);
