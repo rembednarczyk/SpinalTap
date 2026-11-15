@@ -20,6 +20,7 @@ import { onKerb } from "./props-bollard-lines.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideSpot, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
 import { byStyledLamp, oldTownLook } from "./props-lamp-looks.ts";
+import { type KerbRowStats, type KerbRuleContext, kerbBollards } from "./props-kerb-bollards.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
 import { PropSolidIndex, clearSpot } from "./props-solid.ts";
@@ -97,7 +98,13 @@ export interface PropsStats {
   readonly onBoard: number;
   /** Per group of the plan: pieces asked for and pieces placed. */
   readonly perItem: Record<string, [number, number]>;
+  /** The rule's rows along the kerbs (G-820), when it ran. */
+  readonly kerbRows?: KerbRowStats;
 }
+
+/** The groups of the rule's posts along the kerbs (G-820): with chains, and without (a narrow or steep pavement). */
+export const KERB_ROWS = "rule.kerb-bollards";
+export const KERB_ROWS_BARE = "rule.kerb-bollards.bare";
 
 /** OSM tags of the plan's nodes by id (`n123`), for the shapes of monuments and the trees' species (`loadNodeTags`). */
 export type NodeTags = ReadonlyMap<string, Tags>;
@@ -398,11 +405,35 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
   return { placed, fromLine };
 };
 
+/** The rule's posts along the kerbs (G-820) into the table and the bollards to string, counted; its stats. */
+const addKerbRows = (
+  site: Site,
+  chunks: readonly LublinChunkData[],
+  byChunk: Map<string, StreetPropItem[]>,
+  bollards: (BollardRef & { district: string; from: string })[],
+  bands: ReturnType<typeof crossingBands>,
+  ctx: KerbRuleContext,
+  count: Pick<PropsStats, "perKind" | "perDistrict" | "perItem">,
+): KerbRowStats => {
+  const { posts, stats } = kerbBollards(site, chunks, [...byChunk.values()].flat(), bands, ctx);
+  for (const post of posts) {
+    const chunk = site.chunkAt(post.p)!;
+    const from = post.bare ? KERB_ROWS_BARE : KERB_ROWS;
+    const list = byChunk.get(chunk.id)!;
+    list.push({ prop: "bollard", x: r1(post.p.x), y: r2(site.heightAt(post.p)), z: r1(post.p.z), yaw: 0, variant: 0 });
+    bollards.push({ chunk: chunk.id, index: list.length - 1, district: chunk.district, from });
+    count.perKind.bollard = (count.perKind.bollard ?? 0) + 1;
+    count.perDistrict[chunk.district] = (count.perDistrict[chunk.district] ?? 0) + 1;
+    count.perItem[from] = [(count.perItem[from]?.[0] ?? 0) + 1, (count.perItem[from]?.[1] ?? 0) + 1];
+  }
+  return stats;
+};
+
 /**
  * Every group of the plan as street furniture per chunk, with the control numbers; the wall lanterns
  * keep off the venues' `boards`, the market's furniture off the carriageways and the game's doors (`market`).
  */
-export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}): PropsOut => {
+export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}, kerbRule?: KerbRuleContext): PropsOut => {
   const site = new Site(chunks);
   const skipped: Record<string, number> = {};
   const { placed, fromLine } = placeAll(site, plan, skipped, tags, boards, market);
@@ -520,9 +551,12 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     const from = x.from ?? "";
     perItem[from] = [perItem[from]?.[0] ?? 0, (perItem[from]?.[1] ?? 0) + 1];
   }
+  const bands = crossingBands(chunks);
+  // The rows along the kerbs of the centre (G-820), round everything placed: its lamps hold their chains.
+  const rows = kerbRule ? addKerbRows(site, chunks, byChunk, bollards, bands, kerbRule, { perKind, perDistrict, perItem }) : null;
   // Rows, chains and the zebras' mouths; a post with no room out of a mouth goes.
   const table = byChunk as Map<string, (StreetPropItem | undefined)[]>;
-  for (const r of stringBollards(site, table, bollards, crossingBands(chunks))) {
+  for (const r of stringBollards(site, table, bollards, bands, (b) => b.from === KERB_ROWS_BARE)) {
     perKind.bollard = perKind.bollard! - 1;
     perDistrict[r.district] = perDistrict[r.district]! - 1;
     perItem[r.from] = [perItem[r.from]![0], perItem[r.from]![1] - 1];
@@ -530,5 +564,5 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   for (const [id, list] of table) byChunk.set(id, list.filter((i): i is StreetPropItem => i !== undefined));
   const mapped: Record<string, string> = {};
   for (const item of plan.items) if (MAPPED[item.kind]) mapped[item.kind] = MAPPED[item.kind]!.prop;
-  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad: moved, onRoad, merged, crowded, offBoard, onBoard, perItem } };
+  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad: moved, onRoad, merged, crowded, offBoard, onBoard, perItem, ...(rows ? { kerbRows: rows } : {}) } };
 };

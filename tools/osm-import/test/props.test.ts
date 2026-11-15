@@ -20,7 +20,7 @@ import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from ".
 import { Site } from "../src/props-site.ts";
 import { PropSolidIndex, clearSpot } from "../src/props-solid.ts";
 import { cityProps } from "./city.ts";
-import { loadLitWays, loadPropsPlan, loadStreetWays } from "../src/props-osm.ts";
+import { loadLitWays, loadPropsPlan, loadStreetWays, loadTaxiRanks } from "../src/props-osm.ts";
 import { placeLit } from "../src/props-lit.ts";
 import { gameDoors } from "../src/game-doors.ts";
 import { loadCarriageways, loadUndergroundWays } from "../src/props-roads.ts";
@@ -80,8 +80,8 @@ describe("street furniture generator (ADR-0047)", () => {
   it("matches the committed table (run `pnpm osm:props` after changing the plan or the rules)", () => {
     const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
     const market = { roads: loadCarriageways(), doors: gameDoors() };
-    // With the `lit` rule's second pass (G-798), as `pnpm osm:props` places them.
-    const table = placeLit(PLAN, (p) => generateProps(p, CHUNKS, loadNodeTags(), lublinVenueBoards(), market), loadLitWays(), loadStreetWays()).byChunk as Map<string, StreetPropItem[]>;
+    // With the `lit` rule's second pass (G-798) and the kerb rows (G-820), as `pnpm osm:props` places them.
+    const table = placeLit(PLAN, (p) => generateProps(p, CHUNKS, loadNodeTags(), lublinVenueBoards(), market, { taxis: loadTaxiRanks() }), loadLitWays(), loadStreetWays()).byChunk as Map<string, StreetPropItem[]>;
     // The doors on the facades (ADR-0058 stage 9) after the furniture, then the decals (stage 6), as `pnpm osm:props` adds them.
     addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors(), underground: loadUndergroundWays() });
     const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt, blockOf: furnitureBlock };

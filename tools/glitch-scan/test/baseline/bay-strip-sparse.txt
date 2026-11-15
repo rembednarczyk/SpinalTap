@@ -1,4 +1,5 @@
 # bay-strip-sparse: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-2-1 361,-7
 krakowskie-2-1 372,28
 krakowskie-2-1 393,80
 krakowskie-2-1 406,109

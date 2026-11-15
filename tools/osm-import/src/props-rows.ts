@@ -172,10 +172,10 @@ export interface BollardRef {
 
 /**
  * The plan's bollards strung into rows in the table (G-032), out of the zebras' mouths, their
- * chains on the lamps of the rows and clear of every other piece. Returns the refs of the posts
+ * chains on the lamps of the rows and clear of every other piece; a post `bare` takes holds none. Returns the refs of the posts
  * that had to go, their places in the table left empty (undefined) for the caller to drop.
  */
-export const stringBollards = <R extends BollardRef>(site: Site, byChunk: Map<string, (StreetPropItem | undefined)[]>, refs: readonly R[], bands: readonly CrossingBand[]): R[] => {
+export const stringBollards = <R extends BollardRef>(site: Site, byChunk: Map<string, (StreetPropItem | undefined)[]>, refs: readonly R[], bands: readonly CrossingBand[], bare: (r: R) => boolean = () => false): R[] => {
   const posts = refs.map((b) => byChunk.get(b.chunk)![b.index]!);
   const others = [...byChunk.values()].flat().filter((i): i is StreetPropItem => i !== undefined && i.prop !== "bollard" && furnitureRadius(i) > 0);
   const close = (o: StreetPropItem, p: Pt, r: number) => Math.abs(o.x - p.x) < r && Math.abs(o.z - p.z) < r;
@@ -187,12 +187,15 @@ export const stringBollards = <R extends BollardRef>(site: Site, byChunk: Map<st
     site.chunkAt(q) === site.chunkAt(p) && site.surfaceAt(q) === site.surfaceAt(p) && !others.some((o) => close(o, q, 3) && distanceToPiece(o, q.x, q.z) < 2 * BOLLARD.radius);
   const kept = clearMouths(posts, bands, along, fits);
   const live = kept.flatMap((p, k) => (p ? [{ p, k }] : []));
+  // The posts that hold no chain (G-820: the row of a narrow pavement): a link to one hangs none.
+  const chainless = new Set(live.filter(({ k }) => bare(refs[k]!)).map(({ p }) => p));
   const inWay = (a: StreetPropItem, b: StreetPropItem) => {
     const { from, to } = chainBetween(a, b);
     return others.filter((o) => close(o, a, ROW_GAP + 2) && chainThrough(from, to, o));
   };
   // A chain stops short of a bench or a bin in the row, a third post, a wall and a zebra's mouth; it hangs on one lamp at most.
   const blocked = (a: StreetPropItem, b: StreetPropItem) => {
+    if (chainless.has(a) || chainless.has(b)) return true;
     const { from, to } = chainBetween(a, b);
     if (alongSegment(from, to, 0.1).some((q) => site.surfaceAt(q) === "building" || bands.some((bd) => inCrossingBand(bd, q)))) return true;
     if (live.some(({ p }) => p !== a && p !== b && close(p, a, ROW_GAP + 1) && chainThrough(from, to, p))) return true;

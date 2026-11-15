@@ -26,7 +26,7 @@ import { type CrossingBand, inCrossingBand } from "../../../packages/sim/src/con
 import { BOLLARD, POLE_SHAFT, distanceToPiece, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { type Pt, pointInRing } from "./geometry.ts";
-import { type KerbLine, type KerbSample, LEAST_HALF, STEP, inRowArea, kerbLines, onGround } from "./props-kerb-lines.ts";
+import { type KerbLine, type KerbSample, LEAST_HALF, inRowArea, kerbLines, onGround } from "./props-kerb-lines.ts";
 import type { Site } from "./props-site.ts";
 
 /** Spacing of a row with chains, its range, and of a row without (m). */
@@ -41,6 +41,8 @@ export const CORNER = 2.5;
 /** A bus stop's platform and 5 m either way of its post (m), on its kerb within `STOP_SIDE` of the post. */
 export const STOP_REACH = 11;
 export const STOP_SIDE = 6;
+/** How far in from a post a car park along the kerb breaks its row (m): the post and 2 m of carriageway. */
+export const PARK_REACH = 2.5;
 /** A pole or a bollard this near the row's line is one of its posts (m); a rule post this near an OSM bollard gives way to it. */
 export const ANCHOR_REACH = 0.6;
 export const NODE_ROOM = 1;
@@ -190,7 +192,8 @@ export const gapAt = (w: World, s: KerbSample, along: Pt): string | null => {
   if (w.bands.some((b) => inCrossingBand(b, p, CROSSING_ROOM + BOLLARD.radius))) return "crossing";
   if (w.mouths.at(p.x, p.z).some((m) => toSegment(p, m.a, m.b) < m.room && meets(m, along))) return "mouth";
   const inner = { x: s.kerb.x - s.out.x * 0.5, z: s.kerb.z - s.out.z * 0.5 };
-  if (w.site.inKerbPark(inner) || w.site.inKerbPark(p)) return "parking";
+  // A car park along the kerb, its bays within `PARK_REACH` in from the post (a strip drawn off the ground's kerb, Świętoduska).
+  for (let d = 0; d <= PARK_REACH; d += 0.5) if (w.site.inKerbPark({ x: p.x - s.out.x * d, z: p.z - s.out.z * d })) return "parking";
   if (w.taxis.some((r) => pointInRing(p, r) || pointInRing(inner, r))) return "taxi";
   for (const o of w.placed.solids.queryRadius(p.x, p.z, 1)) {
     const room = o.prop === "tree" ? GAP_INSET + 0.3 : 0.25;
