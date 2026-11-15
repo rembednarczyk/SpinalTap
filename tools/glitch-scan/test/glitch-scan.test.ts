@@ -66,6 +66,7 @@ import { lanePieces, segmentPieces } from "./world-samples";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { bareOnCover } from "./bare-on-cover";
+import { lampOnOrtoCarriageway } from "./lamp-on-orto-carriageway";
 import { fillAreaMismatch } from "./fill-area";
 import { fillGap } from "./fill-gap";
 import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
@@ -1281,6 +1282,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * the `lit` rule (ADR-0064 stage 3, `props-lit.ts`) lamps the lit ways the plan's lines left dark.
    */
   "lit-street-dark": () => litStreetDark(loadLitWays(), Object.values(LUBLIN_STREET_PROPS).flat(), onChunk),
+  /** A lamp on the orthophoto's asphalt further than 0.5 m from its edge: in a carriageway the import draws narrower than it is (G-821, `lamp-on-orto-carriageway.ts`). */
+  "lamp-on-orto-carriageway": () => lampOnOrtoCarriageway(Object.values(LUBLIN_STREET_PROPS).flat(), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A lamp on a post inside a courtyard, a pedestrian square whose outline runs along the game's buildings for 70% (`lamp-squares.ts`, Dziedziniec Zamkowy). */
   "lamp-freestanding-in-courtyard": () => {
     const walls = new WallIndex(MAP_CHUNKS.flatMap((c) => c.buildings).map((b) => worldOutline(b)));

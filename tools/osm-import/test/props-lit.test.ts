@@ -123,6 +123,17 @@ describe("the street lamps of the lit rule (G-798, ADR-0064 stage 3)", () => {
     expect(line[line.length - 2]! - line[0]!).toBeGreaterThanOrEqual(30);
   });
 
+  it("lights the ways after only by the stretch of a run on the map, which keeps its length past the edge (G-812, G-821)", () => {
+    // Krakowskie's north edge is z = 160. Way 1 runs 20 m onto the map; way 2 2 m, from off it to the north-east
+    // (Świętoduska); a footway along the edge, more than COVER from way 2's 2 m, within it of the 30 m it grows to.
+    const onto = (id: number, from: readonly [number, number], to: readonly [number, number]) => ({ id, tags: { lit: "yes", highway: "residential" }, pts: [{ x: from[0], z: from[1] }, { x: to[0], z: to[1] }] });
+    const items = litItems({ items: [] }, [onto(1, [-100, 200], [-100, 140]), onto(2, [160, 200], [100, 158]), way(3, { highway: "footway" }, 110, 190, 159.5)]);
+    const ends = (id: string) => items.find((i) => i.id === id)!.lines!.map((l) => [l[0], l[1], l[l.length - 2], l[l.length - 1]]);
+    // A run cut at the edge moved its stations on the map (onto Mełgiewska's merging lane, G-821).
+    expect(ends("lit.w1")).toEqual([[-100, 140, -100, 170]]);
+    expect(ends("lit.w3")).toEqual([[120, 159.5, 190, 159.5]]);
+  });
+
   it("lamps in its second pass what the placed lamps left dark", () => {
     const plan: PropsPlan = { items: [] };
     const ways = [way(1, { highway: "residential" }, 0, 120, -240)];
