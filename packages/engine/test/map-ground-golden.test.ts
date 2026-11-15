@@ -131,7 +131,7 @@ describe("the ground the map city lays (G-444)", () => {
     // asphalt where it lies (G-811): 161 914 - 161 182 = 732 vertices more, the same meshes.
     // Every zebra a rectangle square to its street from kerb to kerb, a crossing way's band out to the
     // pavements a footway under it (G-836): 161 914 - 161 200 = 714 vertices fewer, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161200, hash: "2d132fe3" });
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161200, hash: "e814add8" });
     scene.dispose();
   });
 

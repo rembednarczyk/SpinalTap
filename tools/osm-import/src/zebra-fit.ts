@@ -28,6 +28,8 @@ const REACH = KERB_REACH + 0.1;
 const TANGENT = 2;
 /** Points of a crossing way on the axes nearer than this are one crossing (m). */
 const SAME = 2;
+/** How far along the street a seam across it is bridged (m): two bands' ends a few centimetres apart or lapping. */
+const SEAM = 0.3;
 /** How near its sides, of half its run along the street, a zebra's reach is read too. */
 const SIDES = 0.8;
 /** The narrowest zebra laid across (m): less is a sliver of asphalt, and the band stays as it was. */
@@ -105,7 +107,13 @@ const edge = (at: (u: number) => boolean, start: number, dir: 1 | -1, cap: numbe
  * (`sides` along the street), so no stripe of it lies past a kerb running askew to it.
  */
 const across = (c: Pt, n: Pt, t: Pt, sides: number, cap: number, on: (p: Pt) => boolean): [number, number] | null => {
-  const line = (v: number) => (u: number) => on({ x: c.x + t.x * v + n.x * u, z: c.z + t.z * v + n.z * u });
+  // Asphalt either side along the street is asphalt too: the seam where two ways' bands end at the
+  // crossing node runs across the street, often right under the zebra's middle; a kerb runs along it.
+  const at = (v: number, u: number) => {
+    const [x, z] = [c.x + t.x * v + n.x * u, c.z + t.z * v + n.z * u];
+    return on({ x, z }) || (on({ x: x + t.x * SEAM, z: z + t.z * SEAM }) && on({ x: x - t.x * SEAM, z: z - t.z * SEAM }));
+  };
+  const line = (v: number) => (u: number) => at(v, u);
   const mid = line(0);
   const k = Math.floor(cap / STEP);
   // The run of the asphalt nearest the axis: a carriageway moved aside off its axis (ADR-0080 PR 10) starts off it.

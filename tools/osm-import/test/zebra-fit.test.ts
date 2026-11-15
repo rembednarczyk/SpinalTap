@@ -103,4 +103,15 @@ describe("a zebra from kerb to kerb, square to its street (G-836)", () => {
     expect(s.from).toBeCloseTo(-4.5, 1);
     expect(s.to).toBeCloseTo(5, 1);
   });
+
+  it("bridges the seam where two ways' bands end at the crossing node, under the zebra's middle", () => {
+    const road = { id: "w1", osmId: 1, tags: { highway: "residential" }, line: [{ x: 0, z: 0 }, { x: 100, z: 0 }] };
+    const box = (x0: number, x1: number, z0: number, z1: number) => ({ ring: [{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }], box: { minX: x0, maxX: x1, minZ: z0, maxZ: z1 } });
+    const zebra = { surface: "crossing" as const, ring: [], bridge: false, source: "n1" };
+    // The two bands 0.1 m apart at the node, their ends square.
+    const [rings] = fitZebras([zebra], () => [{ at: { x: 50, z: 0 }, along: 3 }], [road], () => 0, [box(0, 49.95, -4, 4), box(50.05, 100, -4, 4)], []);
+    const s = shape(rings![0]!);
+    expect(s.from).toBeCloseTo(-4, 1);
+    expect(s.to).toBeCloseTo(4, 1);
+  });
 });
