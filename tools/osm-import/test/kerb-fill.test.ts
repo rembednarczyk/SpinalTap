@@ -88,11 +88,11 @@ describe("a pavement reaches the kerb (G-522)", () => {
     expect(surfacesAt([measured, footway(-4.45)], 50, -3.28)).toEqual(["footway"]);
   });
 
-  it("lays one up to a zebra the map draws on past the kerb, which keeps its place over it (G-811)", () => {
+  it("lays one beside and under a zebra the map draws on past the kerb, which ends at the kerb (G-811, G-836)", () => {
     const zebra: Way = { tags: { highway: "footway", footway: "crossing", crossing: "zebra" }, pts: [[50, -6], [50, 6]] };
     const ways = [measured, footway(-6), zebra];
-    expect(surfacesAt(ways, 50, -4)).toEqual(["crossing"]);
-    for (const x of [48.3, 51.7]) expect(surfacesAt(ways, x, -4), `${x}`).toEqual(["sidewalk"]);
+    expect(surfacesAt(ways, 50, -3)).toEqual(["crossing"]);
+    for (const x of [48.3, 50, 51.7]) expect(surfacesAt(ways, x, -4), `${x}`).toEqual(["sidewalk"]);
   });
 
   it("leaves a footway laid at the kerb as it is", () => {

@@ -372,7 +372,8 @@ export const generate = (
   // A street fitted to its mapped sidewalks (T-046) has its width from them, as a measured one.
   const measured = new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id));
   // A joint's patch laps over the next street: the kerbs are read off the bands without it, as its lap is no kerb's (G-760).
-  const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks);
+  // The zebras are fitted to the kerbs after (`laidZebras`, G-836): a strip is laid whatever zebra the map draws over it.
+  const kerbs = kerbFills(bands.filter((b) => !b.patch && b.surface !== "crossing"), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks);
   for (const [b, { ring, runs }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
   bands.splice(0, bands.length, ...slitsOffWidened(bands, [...kerbs.widened.values()].map((w) => w.ring)));

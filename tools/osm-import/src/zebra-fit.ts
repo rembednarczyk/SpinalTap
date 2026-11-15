@@ -28,6 +28,8 @@ const REACH = KERB_REACH + 0.1;
 const TANGENT = 2;
 /** Points of a crossing way on the axes nearer than this are one crossing (m). */
 const SAME = 2;
+/** How near its sides, of half its run along the street, a zebra's reach is read too. */
+const SIDES = 0.8;
 /** The narrowest zebra laid across (m): less is a sliver of asphalt, and the band stays as it was. */
 const MIN_ACROSS = 2;
 
@@ -83,27 +85,40 @@ const tangent = (line: readonly Pt[], i: number, k: number): Pt => {
   return { x: (b.x - a.x) / len, z: (b.z - a.z) / len };
 };
 
-/** The stretch `[lo, hi]` of the line `c + u n` (|u| up to `cap`) on the asphalt about `c`, null when none is near. */
-const across = (c: Pt, n: Pt, cap: number, on: (p: Pt) => boolean): [number, number] | null => {
-  const at = (u: number) => on({ x: c.x + n.x * u, z: c.z + n.z * u });
+/** Where the asphalt ends along `c + u n` from `start` toward `dir` (|u| up to `cap`). */
+const edge = (at: (u: number) => boolean, start: number, dir: 1 | -1, cap: number): number => {
+  let u = start;
+  while (Math.abs(u + dir * STEP) <= cap && at(u + dir * STEP)) u += dir * STEP;
+  if (Math.abs(u + dir * STEP) > cap) return dir * cap;
+  let [inside, outside] = [u, u + dir * STEP];
+  for (let r = 0; r < REFINE; r++) {
+    const mid = (inside + outside) / 2;
+    if (at(mid)) inside = mid;
+    else outside = mid;
+  }
+  return (inside + outside) / 2;
+};
+
+/**
+ * The stretch `[lo, hi]` across the street (`n`, |u| up to `cap`) on the asphalt about `c`, null
+ * when none is near: the narrowest of the lines through the zebra's middle and near its sides
+ * (`sides` along the street), so no stripe of it lies past a kerb running askew to it.
+ */
+const across = (c: Pt, n: Pt, t: Pt, sides: number, cap: number, on: (p: Pt) => boolean): [number, number] | null => {
+  const line = (v: number) => (u: number) => on({ x: c.x + t.x * v + n.x * u, z: c.z + t.z * v + n.z * u });
+  const mid = line(0);
   const k = Math.floor(cap / STEP);
   // The run of the asphalt nearest the axis: a carriageway moved aside off its axis (ADR-0080 PR 10) starts off it.
   let start: number | null = null;
-  for (let j = 0; j <= k && start === null; j++) for (const u of j === 0 ? [0] : [j * STEP, -j * STEP]) if (start === null && at(u)) start = u;
+  for (let j = 0; j <= k && start === null; j++) for (const u of j === 0 ? [0] : [j * STEP, -j * STEP]) if (start === null && mid(u)) start = u;
   if (start === null) return null;
-  const edge = (dir: 1 | -1): number => {
-    let u = start!;
-    while (Math.abs(u + dir * STEP) <= cap && at(u + dir * STEP)) u += dir * STEP;
-    if (Math.abs(u + dir * STEP) > cap) return dir * cap;
-    let [inside, outside] = [u, u + dir * STEP];
-    for (let r = 0; r < REFINE; r++) {
-      const mid = (inside + outside) / 2;
-      if (at(mid)) inside = mid;
-      else outside = mid;
-    }
-    return (inside + outside) / 2;
-  };
-  return [edge(-1), edge(1)];
+  let [lo, hi] = [edge(mid, start, -1, cap), edge(mid, start, 1, cap)];
+  for (const v of [-sides, sides]) {
+    const side = line(v);
+    if (!side(start!)) continue;
+    [lo, hi] = [Math.max(lo, edge(side, start!, -1, cap)), Math.min(hi, edge(side, start!, 1, cap))];
+  }
+  return [lo, hi];
 };
 
 type Boxed = { readonly box: Rect; readonly ring: readonly Pt[] };
@@ -111,8 +126,9 @@ type Boxed = { readonly box: Rect; readonly ring: readonly Pt[] };
 /**
  * The zebras across the carriageways at `spots`, a band's each: a rectangle square to the street's
  * axis, `along` along it, from kerb to kerb of the `asphalt` rings, short of the kerb stones laid
- * over their edge (`over`, ranked over the asphalt: the kerb is where they start). Null where the band stays as it is (no spot, or none across
- * asphalt); a crossing way's other bands get none, its first all.
+ * over their edge (`over`, ranked over the asphalt: the kerb is where they start). Null where the
+ * band stays as it is (no spot, or none across asphalt); a crossing way's other bands get none,
+ * its first all.
  */
 export const fitZebras = <B extends Band>(
   zebras: readonly B[],
@@ -134,9 +150,9 @@ export const fitZebras = <B extends Band>(
       if (!foot) return [];
       const t = tangent(foot.road.line, foot.i, foot.k);
       const n = { x: -t.z, z: t.x };
-      const span = across(foot.foot, n, foot.w / 2 + Math.abs(aside(foot.road)) + REACH, on);
-      if (!span || span[1] - span[0] < MIN_ACROSS) return [];
       const h = s.along / 2;
+      const span = across(foot.foot, n, t, SIDES * h, foot.w / 2 + Math.abs(aside(foot.road)) + REACH, on);
+      if (!span || span[1] - span[0] < MIN_ACROSS) return [];
       const corner = (a: number, u: number): Pt => ({ x: foot.foot.x + t.x * a + n.x * u, z: foot.foot.z + t.z * a + n.z * u });
       const [lo, hi] = span;
       return [[corner(-h, lo), corner(h, lo), corner(h, hi), corner(-h, hi)]];
