@@ -19,7 +19,7 @@ import { loadLitWays, loadPropsPlan, loadKerbRule, loadStreetWays } from "./prop
 import { type CrownStats } from "./crown-trees.ts";
 import { loadCrownData, placeWithCrowns } from "./props-crowns.ts";
 import { emitProps } from "./props-emit.ts";
-import { type PropsStats, generateProps } from "./props-gen.ts";
+import { type PropsStats, placeProps } from "./props-gen.ts";
 import { loadBuildingTags, loadNodeTags } from "./props-art.ts";
 import type * as DecalWalls from "./decal-walls.ts";
 import { type DecalsOut, addDecals } from "./props-decals.ts";
@@ -70,7 +70,7 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   const doors = await runWith<typeof GameDoors>("tools/osm-import/src/game-doors.ts", new Map(), extra);
   // The rows of bollards along the kerbs of the centre (G-820) once the plan stands, broken by the taxi ranks and the bays the orthophoto shows.
   const kerbRule = loadKerbRule();
-  const place = (p: typeof plan) => generateProps(p, chunks, loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() }, kerbRule);
+  const place = (p: typeof plan) => placeProps(p, chunks, loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() }, kerbRule);
   // The `lit` rule's second pass (G-798): once the lamps stand, its plain lamps on a way with styled ones take their look, and
   // the lit ways still dark get lamps of their own; the furniture is placed again. Then the trees of the crowns no tree
   // stands under (G-797), after every other piece, and the furniture once more.
