@@ -3,7 +3,9 @@ import { LUBLIN_CHUNKS, buildingView, groundView, terrainView } from "@seki/sim/
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type Mesh, RawTexture, Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
-import { WATER_NEVER, standingWater } from "../src/npr/water-mask";
+import { TOON_FRAGMENT } from "../src/npr/toon-shader";
+import { WATER_FAR, WATER_NEVER, standingWater, waterLevel } from "../src/npr/water-mask";
+import { planDressing } from "../src/renderer/dressing-plan";
 import { SURFACE_CODE } from "../src/renderer/mapcity/ground-plan";
 import { MapCity, type MapView } from "../src/renderer/mapcity/map-city";
 import type { MapEntries } from "../src/renderer/mapcity/map-entries";
@@ -137,5 +139,37 @@ describe("the water on the streets (ADR-0084)", () => {
     const field = (g: Ground) => g.meshes.map((m) => [...(m.getVerticesData("uv3") ?? [])]);
     expect(field(again.ground)).toEqual(field(ground));
     again.scene.dispose();
+  });
+});
+
+describe("the water mask (ADR-0084)", () => {
+  it("gathers by the kerb and in the ruts, leaves the crown dry and never stands where it may not", () => {
+    expect(waterLevel(0.2, 0)).toBeGreaterThan(waterLevel(1.35, 0));
+    expect(waterLevel(1.35, 0)).toBeGreaterThan(waterLevel(WATER_FAR, 0));
+    expect(waterLevel(WATER_FAR, 0)).toBe(0);
+    expect(waterLevel(0.2, WATER_NEVER)).toBe(0);
+    for (let x = 0; x < 50; x += 0.37) expect(standingWater(0.2, WATER_NEVER, x, x * 0.7)).toBe(0);
+  });
+
+  it("replaces the value noise in the toon shader", () => {
+    expect(TOON_FRAGMENT).toContain("waterStanding(vWater, vWorldPos.xz)");
+    expect(TOON_FRAGMENT).not.toContain("vnoise(vWorldPos.xz * 0.45)");
+  });
+
+  it("lays the dressing's puddles on a block of asphalt only where the mask has standing water", () => {
+    const block = { center: { x: 41.3, y: 0.1, z: -17.6 }, size: { x: 40, y: 0.2, z: 14 }, material: "asphalt" as const };
+    const sink = planDressing({ blocks: [block], world: [block], signs: [], kit: false });
+    const centres: { x: number; z: number }[] = [];
+    // A disc is quads from its centre: the first corner of each is the centre.
+    for (let q = 0; q * 4 < sink.vertexCount; q++) {
+      const x = sink.positions[q * 12] ?? 0;
+      const z = sink.positions[q * 12 + 2] ?? 0;
+      if (sink.positions[q * 12 + 9] === x && sink.positions[q * 12 + 10] === sink.positions[q * 12 + 1] && sink.positions[q * 12 + 11] === z && !centres.some((c) => c.x === x && c.z === z)) centres.push({ x, z });
+    }
+    expect(centres.length).toBeGreaterThan(0);
+    for (const c of centres) {
+      const kerb = Math.min(block.size.x / 2 - Math.abs(c.x - block.center.x), block.size.z / 2 - Math.abs(c.z - block.center.z));
+      expect(standingWater(kerb, 0, c.x, c.z)).toBe(1);
+    }
   });
 });

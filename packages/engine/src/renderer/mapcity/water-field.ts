@@ -19,6 +19,8 @@ const REACH = 12;
 const BUCKET = 6;
 /** Radius of the ring of terrain samples a hollow is measured against (m). */
 const HOLLOW_R = 4;
+/** Side of the lattice the terrain's hollows are read on (m): the drape's grid. */
+const LATTICE = 2.5;
 /** A hollow this deep under its ring holds water fully (m). */
 const HOLLOW_FULL = 0.06;
 
@@ -66,7 +68,7 @@ const CARRIAGEWAY: ReadonlySet<number> = new Set([SURFACE_CODE.road, SURFACE_COD
 export class WaterField {
   private readonly buckets = new Map<number, Segment[]>();
   private readonly feet: StepsFoot[] = [];
-  private readonly holds = new Map<string, number>();
+  private readonly terrain = new Map<number, readonly [number, number]>();
 
   constructor(
     private readonly entries: MapEntries,
@@ -136,40 +138,62 @@ export class WaterField {
     return best;
   }
 
-  /** How well the terrain holds water at (x, z), 0..1, `paving` with no share for a flat. */
-  hold(x: number, z: number, paving: boolean): number {
-    const key = `${Math.round(x * 100)}:${Math.round(z * 100)}:${paving ? 1 : 0}`;
-    const known = this.holds.get(key);
-    if (known !== undefined) return known;
-    const h = this.entries.heightAt.bind(this.entries);
+  /** The terrain's hollow and flatness at a corner of the lattice (`LATTICE`), each 0..1, read once. */
+  private terrainAt(i: number, k: number): readonly [number, number] {
+    const key = i * 100003 + k;
+    const known = this.terrain.get(key);
+    if (known) return known;
+    const x = i * LATTICE;
+    const z = k * LATTICE;
+    const h = (px: number, pz: number) => this.entries.heightAt(px, pz);
     const h0 = h(x, z);
-    let value = 0;
+    let value: readonly [number, number] = [0, 0];
     if (h0 !== null) {
       let sum = 0;
       let n = 0;
       let slope = 0;
-      for (let k = 0; k < 8; k++) {
-        const a = (k * Math.PI) / 4;
+      for (let d = 0; d < 8; d++) {
+        const a = (d * Math.PI) / 4;
         const y = h(x + Math.cos(a) * HOLLOW_R, z + Math.sin(a) * HOLLOW_R);
         if (y === null) continue;
         sum += y;
         n++;
-        if (k < 4) {
+        if (d < 4) {
           const o = h(x - Math.cos(a) * HOLLOW_R, z - Math.sin(a) * HOLLOW_R);
           if (o !== null) slope = Math.max(slope, Math.abs(y - o) / (2 * HOLLOW_R));
         }
       }
       const hollow = n > 0 ? Math.max(0, Math.min(1, (sum / n - h0 - 0.008) / HOLLOW_FULL)) : 0;
-      const flat = 1 - smoothstep(0.004, 0.02, slope);
-      value = paving ? 0.75 * hollow : 0.8 * hollow + 0.3 * flat;
-      for (const f of this.feet) {
-        if (x < f.box.minX - 1.5 || x > f.box.maxX + 1.5 || z < f.box.minZ - 1.5 || z > f.box.maxZ + 1.5) continue;
-        if (h0 < f.low + 0.4 && distanceToRing(f.ring, x, z) < 1.5) value += 0.5;
-      }
-      value = Math.min(1, value);
+      value = [hollow, 1 - smoothstep(0.004, 0.02, slope)];
     }
-    this.holds.set(key, value);
+    this.terrain.set(key, value);
     return value;
+  }
+
+  /**
+   * How well the ground holds water at (x, z), 0..1: the terrain's hollows (and, off the paving,
+   * its flats) between the lattice's corners, and the foot of steps.
+   */
+  hold(x: number, z: number, paving: boolean): number {
+    const fx = x / LATTICE;
+    const fz = z / LATTICE;
+    const i = Math.floor(fx);
+    const k = Math.floor(fz);
+    const tx = fx - i;
+    const tz = fz - k;
+    const c00 = this.terrainAt(i, k);
+    const c10 = this.terrainAt(i + 1, k);
+    const c01 = this.terrainAt(i, k + 1);
+    const c11 = this.terrainAt(i + 1, k + 1);
+    const lerp = (j: 0 | 1) => (c00[j] * (1 - tx) + c10[j] * tx) * (1 - tz) + (c01[j] * (1 - tx) + c11[j] * tx) * tz;
+    const hollow = lerp(0);
+    let value = paving ? 0.75 * hollow : 0.8 * hollow + 0.3 * lerp(1);
+    for (const f of this.feet) {
+      if (x < f.box.minX - 1.5 || x > f.box.maxX + 1.5 || z < f.box.minZ - 1.5 || z > f.box.maxZ + 1.5) continue;
+      const h0 = this.entries.heightAt(x, z);
+      if (h0 !== null && h0 < f.low + 0.4 && distanceToRing(f.ring, x, z) < 1.5) value += 0.5;
+    }
+    return Math.min(1, value);
   }
 
   /** The field at a point of a surface with code `code` (`SURFACE_CODE`) facing up by `ny`. */
