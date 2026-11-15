@@ -473,7 +473,9 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     }
     if (lit !== freed.p) offBoard++;
     const x = lit === freed.p ? freed : { ...freed, p: { x: r1(lit.x), z: r1(lit.z) } };
-    const chunk = site.chunkAt(x.p);
+    // Its chunk where it is stored, at 0.1 m: a lamp at x = 2699.96 kept Nabrzeże's last chunk, stood
+    // at 2700, past the half-open chunk and the map, and took the ground of 0 there (G-810).
+    const chunk = site.chunkAt({ x: r1(x.p.x), z: r1(x.p.z) });
     if (!chunk) {
       outside++;
       continue;

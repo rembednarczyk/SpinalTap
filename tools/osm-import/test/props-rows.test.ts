@@ -19,7 +19,7 @@ const site = new Site(CHUNKS);
 /** The post's +x in the world (the renderer's frame), along which its first chain runs. */
 const sideOf = (i: StreetPropItem) => ({ x: Math.cos(i.yaw), z: -Math.sin(i.yaw) });
 const post = (x: number, z: number): StreetPropItem => ({ prop: "bollard", x, y: 0, z, yaw: 0, variant: 0 });
-/** What a chain ending at `to` hangs on: a post's face or a pole's shaft. */
+/** What a chain ending at `to` hangs on: a post's or a pole's shaft. */
 const holds = (o: StreetPropItem, to: { x: number; z: number }) => (o.prop === "bollard" ? distanceToPiece(o, to.x, to.z) <= 0.2 : anchors(o, to));
 
 describe("rows of bollards and their chains (G-032)", () => {
@@ -62,7 +62,7 @@ describe("rows of bollards and their chains (G-032)", () => {
     expect(inCrossingBand(band, { x: 0, z: -1.7 })).toBe(false);
     const row = [-4, -1, 3].map((x) => post(x, -1));
     const [, moved] = clearMouths(row, [band], () => null, () => true);
-    expect(moved!.x).toBeLessThan(-2 - BOLLARD.side / 2);
+    expect(moved!.x).toBeLessThan(-2 - BOLLARD.radius);
     expect(Math.abs(moved!.x + 4)).toBeGreaterThanOrEqual(1.2);
     // Closed in on both sides: it goes.
     expect(clearMouths([-3, 0, 3].map((x) => post(x, -1)), [band], () => null, () => true)[1]).toBeNull();
@@ -90,7 +90,7 @@ describe("rows of bollards and their chains (G-032)", () => {
     expect(posts.filter((i) => bollardChains(i).length > 0).length).toBeGreaterThan(200);
     const solids = pieces.filter((i) => furnitureRadius(i) > 0);
     const wrong = posts.flatMap((i) => [
-      ...(BANDS.some((b) => inCrossingBand(b, i, BOLLARD.side / 2)) ? [`${i.x},${i.z} in a mouth`] : []),
+      ...(BANDS.some((b) => inCrossingBand(b, i, BOLLARD.radius)) ? [`${i.x},${i.z} in a mouth`] : []),
       ...chainSegments(i).flatMap(({ from, to }) => {
         const close = solids.filter((o) => o !== i && Math.hypot(o.x - i.x, o.z - i.z) < 6);
         const end = close.filter((o) => holds(o, to));
@@ -105,6 +105,6 @@ describe("rows of bollards and their chains (G-032)", () => {
     expect(wrong).toEqual([]);
     // Some chains hang on lamps.
     expect(posts.some((i) => chainSegments(i).some(({ to }) => pieces.some((o) => o.prop !== "bollard" && anchors(o, to))))).toBe(true);
-    expect(chainBetween(post(0, 0), post(2, 0))).toEqual({ from: { x: BOLLARD.side / 2, z: 0 }, to: { x: 2 - BOLLARD.side / 2, z: 0 } });
+    expect(chainBetween(post(0, 0), post(2, 0))).toEqual({ from: { x: BOLLARD.shaft, z: 0 }, to: { x: 2 - BOLLARD.shaft, z: 0 } });
   });
 });

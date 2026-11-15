@@ -37,14 +37,21 @@ describe("street furniture models (ADR-0047)", () => {
     expect(shapeOf("monument", 6 * 1234 + 2)).toBe(2);
   });
 
-  it("draws a bollard as big as its solid and its chain from its face to the next post's (G-032)", () => {
+  it("draws a bollard as a slim black cast-iron post with a ball, its chain a band of links from its shaft to the next post's (G-032, G-819)", () => {
     const post = propModel("bollard", 0).sink;
     const xs = (s: MeshSink) => s.positions.filter((_, k) => k % 3 === 0);
-    const ys = post.positions.filter((_, k) => k % 3 === 1);
-    expect(Math.max(...ys)).toBeCloseTo(BOLLARD.height, 3);
-    expect(Math.max(...xs(post).map(Math.abs))).toBeLessThan(BOLLARD.side / 2 + 0.02);
-    // No chain on the post itself: a lone post or a row's last has none out past it.
-    expect(Math.max(...xs(post))).toBeLessThan(BOLLARD.side);
+    const ys = (s: MeshSink) => s.positions.filter((_, k) => k % 3 === 1);
+    const zs = (s: MeshSink) => s.positions.filter((_, k) => k % 3 === 2);
+    const radiusAt = (s: MeshSink, lo: number, hi: number) => Math.max(0, ...xs(s).flatMap((x, k) => (ys(s)[k]! > lo && ys(s)[k]! < hi ? [Math.hypot(x, zs(s)[k]!)] : [])));
+    // Lublin's posts (Plac Łokietka, Plac Wolności): 0.95 m, a 0.10 m shaft on a 0.15 m foot, a 0.12 m ball.
+    expect(Math.max(...ys(post))).toBeCloseTo(0.95, 3);
+    expect(radiusAt(post, 0, 0.12)).toBeCloseTo(0.075, 2);
+    expect(radiusAt(post, 0.13, 0.2)).toBeCloseTo(0.05, 2);
+    expect(radiusAt(post, 0.83, 0.89)).toBeCloseTo(0.06, 2);
+    expect(Math.max(...xs(post).map(Math.abs))).toBeLessThanOrEqual(BOLLARD.radius);
+    // Black iron, but for the 2077 ring of LED.
+    const rgb = Array.from({ length: post.vertexCount }, (_, k) => post.colors.slice(k * 4, k * 4 + 3));
+    expect(rgb.filter((c) => Math.max(...c) > 0.2).length).toBeLessThan(rgb.length / 4);
     // A chain along +x ending at 2.13 m, and one back to a lamp 1.5 m behind, turned 10 degrees.
     const [p] = toWorld([item("bollard", 0, 0, chainVariant(2.13, 1.5, (10 * Math.PI) / 180))], { x: 0, y: 0, z: 0 });
     expect(p!.chains!.map((c) => c.end)).toEqual([2.13, 1.5]);
@@ -53,8 +60,16 @@ describe("street furniture models (ADR-0047)", () => {
     expect(back.x).toBeCloseTo(-Math.cos((10 * Math.PI) / 180), 2);
     const chain = chainModel(p!.chains![0]!.end);
     expect(valid(chain)).toBe(true);
-    expect(Math.min(...xs(chain))).toBeCloseTo(BOLLARD.side / 2, 1);
+    expect(Math.min(...xs(chain))).toBeCloseTo(0.05, 1);
     expect(Math.max(...xs(chain))).toBeCloseTo(2.13, 1);
+    // Hung at 0.75 m, a band of links 4 to 5 cm wide, upright and lying by turns, sagging about a tenth of its span.
+    const first = (s: MeshSink, f: (v: MeshSink) => number[]) => f(s).filter((_, k) => xs(s)[k]! < 0.12);
+    expect(Math.max(...first(chain, ys))).toBeCloseTo(0.75 + 0.0225, 2);
+    expect(Math.max(...first(chain, ys)) - Math.min(...first(chain, ys))).toBeGreaterThanOrEqual(0.04);
+    expect(Math.max(...first(chain, zs)) - Math.min(...first(chain, zs))).toBeGreaterThanOrEqual(0.04);
+    const mid = ys(chain).filter((_, k) => Math.abs(xs(chain)[k]! - 1.09) < 0.05);
+    expect(0.75 - (Math.max(...mid) + Math.min(...mid)) / 2).toBeGreaterThan(0.15);
+    expect(0.75 - (Math.max(...mid) + Math.min(...mid)) / 2).toBeLessThan(0.22);
     expect(toWorld([item("bollard", 0, 0, 0)], { x: 0, y: 0, z: 0 })[0]!.chains).toEqual([]);
   });
 

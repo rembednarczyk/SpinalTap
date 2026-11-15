@@ -13,7 +13,7 @@ export const glow = (hex: string): Rgba => hexColor(hex, DRESS_FLAG.lit);
 
 const sub = (a: Vec, b: Vec): Vec => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
 const cross = (a: Vec, b: Vec): Vec => ({ x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x });
-const norm = (a: Vec): Vec => {
+export const norm = (a: Vec): Vec => {
   const l = Math.hypot(a.x, a.y, a.z) || 1;
   return { x: a.x / l, y: a.y / l, z: a.z / l };
 };
