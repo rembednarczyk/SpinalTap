@@ -8,13 +8,15 @@ import { SWATCH, archPanel, onWall, revolve, shownWalls, slabRing, solid } from 
 import { alongWall } from "./elevation";
 import { corniceLights, sideOf } from "./layer2077";
 import type { LandmarkFrame } from "./landmark-frame";
-import type { CastleFront, Layer2077 } from "./recipes";
+import type { CastleFront, CrownZone, Layer2077 } from "./recipes";
 
 /**
  * A castle's solid from its recipe (ADR-0062 stage 5, G-841): the walls to the data's eaves, an
  * attic over the outer walls up to the data's peak with battlements on it, the roof hidden behind
  * it as a walk at the eaves, and on the gate's front (the wall with the passage's mouth on the
- * Old Town's side) the risalit's stepped parapet between two octagonal turrets with dark spires, pinnacles on the outer corners.
+ * Old Town's side) the risalit's stepped parapet between two octagonal turrets with dark spires,
+ * pinnacles on the corners the recipe lists. The recipe's zones set the crown and the courtyard's
+ * eaves where the surface model has them off the data's (G-841).
  */
 
 /** How thick the attic and its merlons are, metres. */
@@ -63,6 +65,51 @@ export const outerWalls = (f: LandmarkFrame): Wall[] => {
   const inner = courtyardWalls(f);
   return shownWalls(f).filter((w) => !inner.has(w));
 };
+
+/** A wall, or a piece of one between the zones' edges, with its own top (world y). */
+export interface Run {
+  readonly w: Wall;
+  readonly top: number;
+}
+
+/** The `key` of the zone over a point, `base` outside them. */
+const zoneValue = (zones: readonly CrownZone[], p: P2, key: "crown" | "eaves", base: number): number =>
+  zones.find(({ box: [x0, z0, x1, z1], ...z }) => z[key] !== undefined && p.x >= x0 && p.x <= x1 && p.z >= z0 && p.z <= z1)?.[key] ?? base;
+
+/**
+ * A wall cut where it crosses the zones' edges, each piece at the `key` of the zone over its middle
+ * (`base` outside them), neighbours of one top joined: the wall itself when nothing cuts it.
+ */
+const runs = (w: Wall, zones: readonly CrownZone[], key: "crown" | "eaves", base: number): Run[] => {
+  const zs = zones.filter((z) => z[key] !== undefined);
+  const dx = w.b.x - w.a.x;
+  const dz = w.b.z - w.a.z;
+  const at = (u: number): P2 => ({ x: w.a.x + (dx * u) / w.length, z: w.a.z + (dz * u) / w.length });
+  const cuts = zs.flatMap(({ box: [x0, z0, x1, z1] }) => [
+    ...(dx === 0 ? [] : [x0, x1].map((x) => ((x - w.a.x) / dx) * w.length)),
+    ...(dz === 0 ? [] : [z0, z1].map((z) => ((z - w.a.z) / dz) * w.length)),
+  ]);
+  const us = [0, ...cuts.filter((u) => u > 0.05 && u < w.length - 0.05).sort((a, b) => a - b), w.length];
+  const out: { u0: number; u1: number; top: number }[] = [];
+  for (let k = 0; k + 1 < us.length; k++) {
+    const [u0, u1] = [us[k] as number, us[k + 1] as number];
+    if (u1 - u0 < 0.05) continue;
+    const top = zoneValue(zs, at((u0 + u1) / 2), key, base);
+    const last = out[out.length - 1];
+    if (last && last.top === top) last.u1 = u1;
+    else out.push({ u0: last ? last.u1 : u0, u1, top });
+  }
+  if (out.length <= 1) return [{ w, top: out[0]?.top ?? base }];
+  return out.map((r) => ({ w: { ...w, a: at(r.u0), b: at(r.u1), length: r.u1 - r.u0 }, top: r.top }));
+};
+
+const zonesOf = (f: LandmarkFrame): readonly CrownZone[] => f.landmark.part.tier.castle?.crowns ?? [];
+
+/** The outer walls' runs with their crowns: the recipe's zone's, else the data's peak. */
+export const crownRuns = (f: LandmarkFrame): Run[] => outerWalls(f).flatMap((w) => runs(w, zonesOf(f), "crown", atticTop(f)));
+
+/** The courtyard's walls' runs with their eaves: the recipe's zone's, else the data's. */
+export const eavesRuns = (f: LandmarkFrame): Run[] => [...courtyardWalls(f)].flatMap((w) => runs(w, zonesOf(f), "eaves", f.top));
 
 /** The gate's wall: the outer wall with the passage's mouth on the Old Town's side, or null. */
 export const gateWall = (f: LandmarkFrame, layer: Layer2077): { w: Wall; u0: number; u1: number; floor: number; top: number } | null => {
@@ -163,20 +210,12 @@ const turret = (sink: MeshSink, f: LandmarkFrame, c: P2, face0: Wall, spec: Cast
   }
 };
 
-/** Pinnacles on the outer corners: the outline's convex hull's corners, a corner's points within 3 m as one, off the turrets. */
-const pinnacles = (sink: MeshSink, f: LandmarkFrame, spec: CastleFront["pinnacle"], turrets: readonly P2[], merlon: number, color: Rgba): void => {
-  const groups: P2[][] = [];
-  for (const p of hull(f.b.ring)) {
-    const g = groups.find((q) => Math.hypot((q[0] as P2).x - p.x, (q[0] as P2).z - p.z) < 3);
-    if (g) g.push(p);
-    else groups.push([p]);
-  }
-  const crown = atticTop(f);
-  for (const g of groups) {
-    const c = { x: g.reduce((s, p) => s + p.x, 0) / g.length, z: g.reduce((s, p) => s + p.z, 0) / g.length };
-    if (turrets.some((t) => Math.hypot(t.x - c.x, t.z - c.z) < 4)) continue;
-    sink.prism({ x: c.x, y: crown - merlon, z: c.z }, spec.radius, spec.rise + merlon - 0.7, 8, color, false);
-    sink.prism({ x: c.x, y: crown + spec.rise - 0.7, z: c.z }, spec.radius * 1.15, 0.7, 8, color, false, 0);
+/** The recipe's pinnacles: an octagonal shaft from the walk to `shaft` over the battlements and a dark pointed helm to the tip. */
+const pinnacles = (sink: MeshSink, f: LandmarkFrame, spec: CastleFront["pinnacle"], color: Rgba): void => {
+  for (const p of spec.at) {
+    const head = zoneValue(zonesOf(f), p, "crown", atticTop(f)) + spec.shaft;
+    sink.prism({ x: p.x, y: f.top, z: p.z }, spec.radius, head - f.top, 8, color, false);
+    sink.prism({ x: p.x, y: head, z: p.z }, spec.radius * 1.1, p.top - head, 8, solid(SWATCH.metal), false, 0);
   }
 };
 
@@ -186,13 +225,12 @@ const pinnacles = (sink: MeshSink, f: LandmarkFrame, spec: CastleFront["pinnacle
  */
 export const castleCrown = (sink: MeshSink, f: LandmarkFrame, merlon: number, pitch: number, front: CastleFront | undefined, near: boolean, color: Rgba): void => {
   const meta = trimMeta(f.style.seed);
-  const crown = atticTop(f);
   // Triangulated: a fan from the centroid would roof the courtyard of a C outline.
   slab(sink, f.b.ring, f.top, solid(SWATCH.stone), meta);
   const gate = front ? gateWall(f, f.landmark.recipe.layer) : null;
   const turrets = gate ? turretCentres(f, gate.w) : [];
   const covered = (w: Wall) => turrets.some((c) => [0, w.length].every((u) => Math.hypot(onWall(w, u, 0, 0).x - c.x, onWall(w, u, 0, 0).z - c.z) < (front?.turret.radius ?? 0) + 1));
-  for (const w of outerWalls(f)) {
+  for (const { w, top: crown } of crownRuns(f)) {
     if (covered(w)) continue;
     const parapet = gate && w === gate.w && front ? front.parapet : null;
     const to = parapet ? crown + parapet.rise : near ? crown - merlon : crown;
@@ -205,14 +243,17 @@ export const castleCrown = (sink: MeshSink, f: LandmarkFrame, merlon: number, pi
     const n = Math.max(1, Math.round(w.length / parapet.pitch));
     for (let k = 0; k < n; k++) triangle(sink, w, (w.length * (k + 0.5)) / n, (w.length / n) * 0.4, to, parapet.merlon, color, meta);
   }
-  if (gate && front) for (const c of turrets) turret(sink, f, c, gate.w, front.turret, crown + front.turret.rise, near, color);
-  if (front && near) pinnacles(sink, f, front.pinnacle, turrets, merlon, color);
+  // The courtyard's walls to the recipe's eaves where they stand over the data's: a parapet over the walk.
+  for (const { w, top } of eavesRuns(f)) {
+    if (top > f.top + 0.05) sink.box(onWall(w, w.length / 2, (f.top - 0.02 + top) / 2, -ATTIC / 2), w.length, top - f.top + 0.02, ATTIC, color, { rotY: alongWall(w), bottom: false, uv2: meta });
+  }
+  if (gate && front) for (const c of turrets) turret(sink, f, c, gate.w, front.turret, atticTop(f) + front.turret.rise, near, color);
+  if (front && near) pinnacles(sink, f, front.pinnacle, color);
 };
 
 /** Lublin 2077's warm lines under the battlements of the outer walls and under the eaves of the courtyard's. */
 export const atticLights = (sink: MeshSink, f: LandmarkFrame, merlon: number): void => {
   const layer = f.landmark.recipe.layer;
-  const inner = courtyardWalls(f);
-  corniceLights(sink, { ...f, walls: f.walls.filter((w) => !inner.has(w)) }, atticTop(f) - merlon - 0.12, 0.03, layer);
-  corniceLights(sink, { ...f, walls: f.walls.filter((w) => inner.has(w)) }, f.top - 0.12, 0.03, layer);
+  for (const { w, top } of crownRuns(f)) corniceLights(sink, { ...f, walls: [w] }, top - merlon - 0.12, 0.03, layer);
+  for (const { w, top } of eavesRuns(f)) corniceLights(sink, { ...f, walls: [w] }, top - 0.12, 0.03, layer);
 };

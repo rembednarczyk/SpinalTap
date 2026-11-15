@@ -4,7 +4,7 @@ import { type Wall, trimMeta } from "../facade-frame";
 import { type P2, pointInRing } from "../polygon";
 import { type Uv, quadUv } from "../sink-ops";
 import { SWATCH, archPanel, clearOf, onWall, panel, solid } from "./kit";
-import { atticTop, courtyardWalls, gateWall, outerWalls } from "./castle";
+import { crownRuns, eavesRuns, gateWall } from "./castle";
 import type { LandmarkFrame } from "./landmark-frame";
 import type { CastleFront } from "./recipes";
 
@@ -89,14 +89,13 @@ const intoNeighbour = (f: LandmarkFrame, w: Wall, u0: number, u1: number): boole
  */
 const bays = (sink: MeshSink, f: LandmarkFrame, spec: CastleFront, floor: number, gate: Wall, trim: Rgba): void => {
   const meta = trimMeta(f.style.seed);
-  const inner = courtyardWalls(f);
   const merlon = f.landmark.part.crown.kind === "crenel" ? f.landmark.part.crown.merlon : 0;
   const { lancets, upper } = spec;
-  const frieze = atticTop(f) - merlon - 0.25;
-  for (const w of [...outerWalls(f), ...[...inner].filter((x) => !x.blind)]) {
+  const walls = [...crownRuns(f).map((r) => ({ ...r, outer: true })), ...eavesRuns(f).flatMap((r) => (r.w.blind ? [] : [{ ...r, outer: false }]))];
+  for (const { w, top: crown, outer } of walls) {
     if (w === gate) continue;
-    const outer = !inner.has(w);
-    const top = outer ? atticTop(f) - merlon : f.top;
+    const frieze = crown - merlon - 0.25;
+    const top = outer ? crown - merlon : crown;
     const rows = outer ? lancets.rows : [...lancets.rows, ...lancets.courtyard];
     for (const [u0, u1] of clearOf(f, w, 0.6)) {
       const n = Math.floor((u1 - u0) / lancets.pitch);

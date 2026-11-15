@@ -22,6 +22,33 @@ const TURRETS = [
   { x: 836.8, z: 245.2 },
   { x: 836.4, z: 230.3 },
 ];
+/** NMPT's pinnacles (the curator's review of round 2): NW, SW and SE, their tips' world y. */
+const PINNACLES = [
+  { x: 842.1, z: 266.1, top: 10.3 },
+  { x: 836.1, z: 210.9, top: 9.4 },
+  { x: 943.6, z: 197.9, top: 10.9 },
+];
+
+/** The highest face seen from above over the plan's segment a..b (0.5 m apart, either side to 0.6 m), a metre off its ends. */
+const crownOver = (sink: MeshSink, a: { x: number; z: number }, b: { x: number; z: number }): number => {
+  const len = Math.hypot(b.x - a.x, b.z - a.z);
+  const t = { x: (b.x - a.x) / len, z: (b.z - a.z) / len };
+  const at: { x: number; z: number }[] = [];
+  for (let u = 1; u < len - 1; u += 0.5) for (const o of [-0.6, -0.3, 0, 0.3, 0.6]) at.push({ x: a.x + t.x * u - t.z * o, z: a.z + t.z * u + t.x * o });
+  const P = sink.positions;
+  let top = -Infinity;
+  for (let k = 0; k < sink.indices.length; k += 3) {
+    const [i, j, l] = [0, 1, 2].map((d) => sink.indices[k + d]! * 3) as [number, number, number];
+    const det = (P[j]! - P[i]!) * (P[l + 2]! - P[i + 2]!) - (P[l]! - P[i]!) * (P[j + 2]! - P[i + 2]!);
+    if (Math.abs(det) < 1e-6) continue;
+    for (const p of at) {
+      const u = ((p.x - P[i]!) * (P[l + 2]! - P[i + 2]!) - (P[l]! - P[i]!) * (p.z - P[i + 2]!)) / det;
+      const v = ((P[j]! - P[i]!) * (p.z - P[i + 2]!) - (p.x - P[i]!) * (P[j + 2]! - P[i + 2]!)) / det;
+      if (u >= 0 && v >= 0 && u + v <= 1) top = Math.max(top, P[i + 1]! + u * (P[j + 1]! - P[i + 1]!) + v * (P[l + 1]! - P[i + 1]!));
+    }
+  }
+  return top;
+};
 
 describe("Zamek Lubelski from the landmark kit (G-841)", () => {
   it("finds its recipe for the castle and for no neighbour (the Donżon and the chapel keep theirs)", () => {
@@ -68,12 +95,48 @@ describe("Zamek Lubelski from the landmark kit (G-841)", () => {
     for (const p of pts) if (TURRETS.every((t) => Math.hypot(p.x - t.x, p.z - t.z) > 2.2)) expect(outside(f.b.ring, p), `${p.x}, ${p.z}`).toBeLessThan(0.6);
   });
 
+  it("crowns the outer walls after NMPT: y 7.5 west, south and on the north wing to x 855, y 5.6 past it and on the east wall; the north wing's courtyard eaves at y 4.5", () => {
+    const sink = near3(castle());
+    const at = (a: [number, number], b: [number, number]) => crownOver(sink, { x: a[0], z: a[1] }, { x: b[0], z: b[1] });
+    // NMPT: west 7.1-7.8, south 7.2-7.8 (the SE corner 8.0), north to x 855 7.2-7.8.
+    expect(at([842, 263.9], [840.3, 245.5])).toBeCloseTo(7.5, 1);
+    expect(at([897.6, 202.9], [942.4, 197.5])).toBeCloseTo(7.5, 1);
+    expect(at([838.3, 209.7], [883.1, 204.6])).toBeCloseTo(7.5, 1);
+    expect(at([853.5, 264], [845, 264.9])).toBeCloseTo(7.5, 1);
+    // NMPT: north past x 855 to x 942 5.4-5.6, east 5.5-5.8.
+    expect(at([903.6, 258.6], [856.5, 263.7])).toBeCloseTo(5.6, 1);
+    expect(at([941.5, 256.8], [903.9, 261.6])).toBeCloseTo(5.6, 1);
+    expect(at([945.3, 236.6], [947.5, 252.8])).toBeCloseTo(5.6, 1);
+    // The courtyard's side: the north wing's eaves y 4.4-4.6 (NMPT), the west wing's at the data's (T-316).
+    expect(at([853.4, 252.4], [934, 242.4])).toBeCloseTo(4.5, 1);
+    expect(at([849.4, 219.1], [853.4, 252.4])).toBeCloseTo(3.3, 1);
+  });
+
+  it("stands pinnacles on NMPT's three corners only: octagons 1.3 m across with dark pointed helms to y 10.3, 9.4 and 10.9", () => {
+    const f = castle();
+    const sink = near3(f);
+    // Over the crown but the turrets and the risalit's parapet between them.
+    const gate = mouthWall(f, "old")!.w;
+    const high = points(sink).filter((p) => p.y > 8.1 && TURRETS.every((t) => Math.hypot(p.x - t.x, p.z - t.z) > 2.8) && !(Math.abs(before(gate, p)) < 0.8 && along(gate, p) > 0 && along(gate, p) < gate.length));
+    expect(high.length).toBeGreaterThan(0);
+    for (const p of high) expect(Math.min(...PINNACLES.map((q) => Math.hypot(p.x - q.x, p.z - q.z))), `${p.x}, ${p.z}`).toBeLessThan(0.8);
+    const helms = colored(sink, SWATCH.metal);
+    for (const q of PINNACLES) {
+      const tip = helms.filter((p) => Math.hypot(p.x - q.x, p.z - q.z) < 0.8);
+      expect(Math.max(...tip.map((p) => p.y))).toBeCloseTo(q.top, 1);
+      // The shaft's top and the helm's foot 0.4 m over the battlements (y 7.5).
+      const shaft = points(sink).filter((p) => Math.hypot(p.x - q.x, p.z - q.z) < 0.8 && Math.abs(p.y - 7.9) < 0.01);
+      expect(Math.max(...shaft.map((p) => Math.hypot(p.x - q.x, p.z - q.z) * 2))).toBeGreaterThan(1.2);
+      expect(Math.max(...shaft.map((p) => Math.hypot(p.x - q.x, p.z - q.z) * 2))).toBeLessThan(1.5);
+    }
+  });
+
   it("stands two turrets with merlons either side of the gate to NMPT's flat tops (y 12.0-12.4), dark spires to about y 15.5", () => {
     const f = castle();
     const d = data(CASTLE);
     const crown = d.y + d.height + d.roof!;
     // Over the parapet's peaks (y 10.0-10.4): the turrets and their spires only.
-    const high = points(near3(f)).filter((p) => p.y > crown + 3.2);
+    const high = points(near3(f)).filter((p) => p.y > crown + 3.2 && PINNACLES.every((q) => Math.hypot(p.x - q.x, p.z - q.z) > 1));
     expect(high.length).toBeGreaterThan(50);
     for (const p of high) expect(Math.min(...TURRETS.map((t) => Math.hypot(p.x - t.x, p.z - t.z))), `${p.x}, ${p.z}`).toBeLessThan(2.8);
     for (const t of TURRETS) {
@@ -109,6 +172,9 @@ describe("Zamek Lubelski from the landmark kit (G-841)", () => {
     // Rose windows of about 1.7 m radius: their dark glass spans over 3 m.
     const left = roses.filter((p) => along(gate.w, p) < mid);
     expect(Math.max(...left.map((p) => p.y)) - Math.min(...left.map((p) => p.y))).toBeGreaterThan(3.2);
+    // Their centres 3-4 m under the parapet's foot (y 9.1), 2 m higher than round 2's (the photograph: about 2.9 m).
+    expect((Math.max(...left.map((p) => p.y)) + Math.min(...left.map((p) => p.y))) / 2).toBeGreaterThan(4.8);
+    expect((Math.max(...left.map((p) => p.y)) + Math.min(...left.map((p) => p.y))) / 2).toBeLessThan(6.3);
   });
 
   it("puts one row of lancets on the wings, round windows about 10 m over the forecourt and a frieze of arcades under the crown, and the museum's sign over the gate", () => {
