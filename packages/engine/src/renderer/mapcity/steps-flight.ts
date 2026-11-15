@@ -15,12 +15,18 @@ export interface Flight {
 
 /** The ground is read every this along the run (m). */
 const SAMPLE = 0.1;
-/** How far a tread may stand over the ground and the flight still be taken without another landing (m). */
-const FLOAT_OK = 0.3;
-/** The strides tried, the norm's own first (m). */
+/** What a landing more, or a stride off the norm's own, weighs against a tread's standing over the ground (m). */
+const PREFER = 0.01;
+/** How much more a tread's lying under the ground weighs than its standing over it. */
+const SUNK = 4;
+/** The strides tried (m). */
 const STRIDES = [STEP_NORM.stride, STEP_NORM.strideMax, (STEP_NORM.stride + STEP_NORM.strideMax) / 2, (STEP_NORM.stride + STEP_NORM.strideMin) / 2, STEP_NORM.strideMin];
-/** The ground may rise this past a level before the riser up from it is due (m). */
-const EPS = 0.005;
+/**
+ * The ground may rise this past a level before the riser up from it is due (m): a tread stands
+ * 0.05 m over the ground (`planSteps`), so it still lies on it, and a flight need not climb at
+ * once from a foot on a gentle slope.
+ */
+const EPS = 0.04;
 
 /** The risers to try for a rise `rise` (m): counts whose riser keeps the norm, the norm's own first; else the lowest riser of the norm, which ends a little over the top. */
 const riserCounts = (rise: number): { n: number; r: number }[] => {
@@ -67,14 +73,14 @@ const place = (sizes: readonly number[], s: number, length: number, due: readonl
   return sizes.flatMap((k, g) => Array.from({ length: k }, (_, i) => (starts[g] as number) + i * s));
 };
 
-/** How far the flight `at` (risers `r`) stands off the ground `g` (sampled every `dt` from the foot): over it, or twice as much under it. */
+/** How far the flight `at` (risers `r`) stands off the ground `g` (sampled every `dt` from the foot): over it, or `SUNK` times as much under it (the terrain shows through the treads). */
 const offGround = (at: readonly number[], r: number, g: readonly number[], dt: number): number => {
   let worst = 0;
   let j = 0;
   for (let i = 0; i < g.length; i++) {
     while (j < at.length && (at[j] as number) <= i * dt + 1e-9) j++;
     const d = j * r - (g[i] as number);
-    worst = Math.max(worst, d, -2 * d);
+    worst = Math.max(worst, d, -SUNK * (d + EPS));
   }
   return worst;
 };
@@ -82,10 +88,9 @@ const offGround = (at: readonly number[], r: number, g: readonly number[], dt: n
 /**
  * The flight by the norm on a run `length` m long whose ground (`ground`, from the low end, along
  * the band's axis) rises from its foot to its top; null where it rises less than the norm's
- * lowest riser (the run lies as paving). Of the riser counts the norm allows, the one nearest its
- * riser first; of the ways to split them into runs of at most `maxRun`, the fewest landings whose
- * treads stand at most `FLOAT_OK` off the ground, else the closest; the treads by the norm's
- * stride, else by another the norm allows. A run too short for any gets its risers evenly.
+ * lowest riser (the run lies as paving). Of every riser count, stride and split into runs of at
+ * most `maxRun` the norm allows, the one whose treads stand closest over the ground, a landing or
+ * a stride off the norm's own weighed as `PREFER` of it. A run too short for any gets its risers evenly.
  */
 export const layFlight = (length: number, ground: (t: number) => number): Flight | null => {
   const steps = Math.max(1, Math.ceil(length / SAMPLE));
@@ -96,8 +101,7 @@ export const layFlight = (length: number, ground: (t: number) => number): Flight
   if (rise < STEP_NORM.riserMin) return null;
   const counts = riserCounts(rise);
   let best: { at: number[]; r: number; off: number } | null = null;
-  // The norm's stride first, then the others it allows: a longer tread on a run that climbs
-  // gently follows it closer, a shorter one fits a steep run.
+  // A longer tread follows a run that climbs gently closer, a shorter one fits a steep run.
   for (const stride of STRIDES) {
     for (const { n, r } of counts) {
       const s = stride - 2 * r;
@@ -112,8 +116,7 @@ export const layFlight = (length: number, ground: (t: number) => number): Flight
       for (let m = Math.ceil(n / STEP_NORM.maxRun); m <= most; m++) {
         const at = place(runSizes(n, m), s, length, due);
         if (!at) continue;
-        const off = offGround(at, r, g, dt);
-        if (off <= FLOAT_OK) return { at, riser: r };
+        const off = offGround(at, r, g, dt) + PREFER * (m - 1 + (stride === STEP_NORM.stride ? 0 : 1));
         if (!best || off < best.off - 1e-9) best = { at, r, off };
       }
     }

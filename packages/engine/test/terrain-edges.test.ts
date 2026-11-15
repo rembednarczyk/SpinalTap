@@ -103,8 +103,9 @@ describe("outdoor steps", () => {
     // Plac Litewski: a run 18.6 m long rising 0.87 m.
     planSteps(sink, [{ x: 0, z: 0 }, { x: 18.6, z: 0 }, { x: 18.6, z: 3 }, { x: 0, z: 3 }], (x) => (x / 18.6) * 0.87);
     const risers = sideFaces(sink).filter((r) => r.h > 0.06);
-    expect(risers.length).toBe(6);
-    for (const r of risers) expect(r.h).toBeGreaterThanOrEqual(STEP_NORM.riserMin);
+    expect(risers.length).toBeGreaterThanOrEqual(Math.ceil(0.87 / STEP_NORM.riserMax));
+    expect(risers.length).toBeLessThanOrEqual(Math.floor(0.87 / STEP_NORM.riserMin));
+    for (const r of risers) expect(r.h).toBeCloseTo(0.87 / risers.length, 6);
   });
 
   // Bands the map's edge cuts slantwise: schody w481462067 at Stare Miasto's edge x = 760 and the
