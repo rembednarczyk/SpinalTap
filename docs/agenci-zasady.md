@@ -32,6 +32,8 @@ Każdy agent (naprawiacz, budowniczy, łowca, weryfikator, kurator, zwiadowca) c
 - Narzędzia zamiast skryptów pisanych od nowa (w main):
   - `VITEST_MAX_WORKERS=2` przy każdym uruchomieniu testów (kilku agentów dzieli maszynę);
   - `pnpm test:rerun <pakiety>` odróżnia przekroczenia czasu od asercji i powtarza pliki z samymi przekroczeniami po jednym;
+  - `pnpm merge:main [--push]` scala origin/main do Twojej gałęzi: konflikt tylko w `*.generated.ts` rozwiązuje wersją main i przeliczeniem tablic, potem `hashes:check` i skan; konflikt w innym pliku przerywa scalenie i wypisuje pliki. Nie scalaj main ręcznie;
+  - po scaleniu #580 `shots:compare` bierze zrzuty zatwierdzonego refa (np. `origin/main`) z pamięci w `<work>/cache`, więc w kolejnej rundzie podawaj to samo `--work`; po scaleniu #579 kurator zaczyna przegląd od `pnpm topo:review --out <scratchpad>/topo-<zadanie>`;
   - `pnpm shots:compare <ref-przed> <ref-po> <punkty.json> [--hour 13|--night] --work /tmp/claude-0/-home-user-SpinalTap/ddc6f520-6741-5c4a-a4fb-ad093091508f/scratchpad` daje pary zrzutów, siatkę i liczby (zmienione piksele, przepalenie);
   - `pnpm bench:ab <A> <B> --vitest <plik> --name "<test>"` mierzy czas parami przeplatanymi przy niskim obciążeniu;
   - `pnpm scan:diff origin/main report` pokazuje przybyłe i ubyłe miejsca skanu; `pnpm scan:update` usuwa poprawione, `GLITCH_BASELINE=accept` dodaje świadomie;
