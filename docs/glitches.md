@@ -1976,6 +1976,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Znalezione przy G-821: import nie czyta placement i nie poszerza jezdni o łącznice i pasy skrętu; pas do prawdziwego krawężnika wypełnia bruk z pokrycia ortofoto, więc latarnie i meble przy krawężniku mapy stoją na prawdziwym asfalcie.
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import, tools/orto
+- 15.11 przegląd kuratora (41ddd97): NIEZGODNE. Placement zgodne z ortofoto; zwężenie przy węźle kładzie pół pasa łącznicy za krawężnik: Ruska w216655518 (1071..1074; 428..437) jezdnia na trawie ok. 12 m², Andersa w40051729 (2316..2322; 312..321) jezdnia i chodnik na trawie ok. 12 m², Solidarności w215609082 s 0-6 krawędź 7,7 m wobec 6,3 (ok. 5 m² na szpicu trawnika). kerb-fill-wide-estimated (1113,353) to fałszywy alarm (kostka dojścia do przejścia). Runda 2 naprawiacza.
 
 ### G-826 Pokrycie ortofoto 2025-04 klasuje jasny asfalt jezdni jako paving
 - Ważność: S3 · Zasięg: m.in. pod latarniami G-821; kontrola lamp-on-orto-carriageway ich nie widzi
