@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { docks } from "@seki/sim";
+import { W3_PIPE_LADDER, ground, w3 } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { AUTOSAVE_SLOT } from "../src/controllers/autosave-controller";
 import { GameSession } from "../src/game-session";
@@ -25,9 +25,9 @@ class CountingStore extends MemorySaveStore {
 const flush = () => new Promise((r) => setTimeout(r, 0));
 const autos = (store: CountingStore) => store.puts.filter((s) => s === AUTOSAVE_SLOT).length;
 
-/** The low container stack in the docks' yard (the market's roofs went with ADR-0063), and the way off its north edge (2.6 m down). */
-const ROOF = docks(3, 2.6, 101.2);
-const OFF_THE_EDGE = 0;
+/** The container on W-3's pickup yard (ADR-0082; the market's roofs went with ADR-0063), and the way off its south edge (2.6 m down). */
+const ROOF = w3(2530, 2.6, 447.2);
+const OFF_THE_EDGE = Math.PI;
 const RUN = frame({ moveZ: 1, sprint: true });
 
 /** On the container, the docks' district autosave written: the writes count from here. */
@@ -114,10 +114,11 @@ describe("no save in the air (G-335)", () => {
 
   it("still saves on a ladder: a load puts her back on the rungs (G-313)", async () => {
     const { session, store } = await start();
-    teleport(session, docks(3, 0, 99.6).x, docks(3, 0, 99.6).z, 0, 0, docks(3, 0, 99.6).y);
+    const foot = ground(W3_PIPE_LADDER.x, W3_PIPE_LADDER.z);
+    teleport(session, foot.x, foot.z, 0, 0, foot.y);
     steps(session, 1, frame({ interact: true }));
     steps(session, 40, frame({ moveZ: 1 }));
-    expect(session.sim.player()!.climb?.ladder).toBe("doki-stack-1");
+    expect(session.sim.player()!.climb?.ladder).toBe(W3_PIPE_LADDER.key);
     expect(session.saves.canSave()).toBe(true);
     session.pageHidden();
     await flush();

@@ -11,7 +11,7 @@ import { worldToPuwg } from "../src/project.ts";
 import { Site } from "../src/props-site.ts";
 import type { Structure } from "../src/structures.ts";
 import { CLEARED_BUILDINGS } from "../../../packages/sim/src/content/lublin/sites.ts";
-import { CROWN_CLEARED } from "../src/crown-grid.ts";
+import { CROWN_CLEARED, W3_CROWN_OFF } from "../src/crown-grid.ts";
 import { KeepOut, PORTICO_OFF } from "../src/crown-ground.ts";
 import { PORTICOES } from "../../../packages/sim/src/content/lublin/porticoes.ts";
 
@@ -142,7 +142,11 @@ describe("trees of the crowns (G-797)", () => {
   });
 
   it("clears the game's set pieces as the simulation does (G-815 P5)", () => {
-    expect(CROWN_CLEARED).toEqual(CLEARED_BUILDINGS);
+    // W-3's (all but the car wash's, the last) grown by W3_CROWN_OFF (ADR-0082, review round 2).
+    const grown = (r: (typeof CLEARED_BUILDINGS)[number], d: number) => ({ minX: r.minX - d, maxX: r.maxX + d, minZ: r.minZ - d, maxZ: r.maxZ + d });
+    const want = [...CLEARED_BUILDINGS.slice(0, -1).map((r) => grown(r, W3_CROWN_OFF)), CLEARED_BUILDINGS.at(-1)!];
+    expect(CROWN_CLEARED).toHaveLength(want.length);
+    CROWN_CLEARED.forEach((r, i) => (["minX", "maxX", "minZ", "maxZ"] as const).forEach((k) => expect(r[k]).toBeCloseTo(want[i]![k], 6)));
   });
 
   it("keeps the trunks off a portico's columns, under the balcony the surface model reads as a crown (G-814)", () => {
