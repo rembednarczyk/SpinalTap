@@ -105,9 +105,10 @@ export const bollardChain = (end: number): MeshSink => {
 const ROUND_LOW = 6;
 
 /**
- * The phones' bollard (quality `low`): the same post in 100 vertices, not about 390. A six-sided
- * foot, flare and shaft, the ball six by three; no collar, LED ring nor finial, which a phone's
- * screen does not show at the distances it draws furniture from.
+ * The phones' bollard (quality `low`): the same post in 107 vertices, not about 390. A six-sided
+ * foot, flare and shaft, the ball six by four (three rings miss its equator, and it shrinks into
+ * the shaft); no collar, LED ring nor finial, which a phone's screen does not show at the
+ * distances it draws furniture from.
  */
 export const bollardLow = (): MeshSink => {
   const sink = new MeshSink();
@@ -116,7 +117,7 @@ export const bollardLow = (): MeshSink => {
   sink.prism(v3(0, -0.2, 0), foot, 0.2 + footHeight - 0.04, ROUND_LOW, IRON, false);
   sink.prism(v3(0, footHeight - 0.04, 0), foot, 0.04, ROUND_LOW, IRON, false, shaft);
   sink.prism(v3(0, footHeight, 0), shaft, ballY - footHeight, ROUND_LOW, IRON, false);
-  blob(sink, v3(0, ballY, 0), ball, ball, ball, IRON, ROUND_LOW, 3);
+  blob(sink, v3(0, ballY, 0), ball, ball, ball, IRON, ROUND_LOW, 4);
   return sink;
 };
 

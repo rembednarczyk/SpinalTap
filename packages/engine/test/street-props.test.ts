@@ -81,11 +81,14 @@ describe("street furniture models (ADR-0047)", () => {
     const high = nearModel("bollard", 0, "high");
     expect(high).toBe(propModel("bollard", 0).sink);
     expect(valid(post)).toBe(true);
-    expect(post.vertexCount).toBeLessThanOrEqual(100);
+    expect(post.vertexCount).toBeLessThanOrEqual(110);
     expect(high.vertexCount).toBeGreaterThan(3 * post.vertexCount);
     // The same post: as tall, as wide at the foot and the ball, black.
     expect(Math.max(...ys(post))).toBeCloseTo(0.95, 3);
     expect(Math.max(...xs(post).map(Math.abs))).toBeCloseTo(BOLLARD.foot, 3);
+    // The ball as wide as the detailed one's, so it stands out of the shaft (not a bulge of it).
+    const ballR = (s: MeshSink) => Math.max(...xs(s).flatMap((x, k) => (ys(s)[k]! > 0.85 && ys(s)[k]! < 0.92 ? [Math.hypot(x, zs(s)[k]!)] : [])));
+    expect(ballR(post)).toBeCloseTo(ballR(high), 2);
     expect(post.colors.filter((_, k) => k % 4 !== 3).every((c) => c < 0.2)).toBe(true);
     // Other kinds bake their detailed model on every quality.
     expect(nearModel("bench", 1, "low")).toBe(propModel("bench", 1).sink);

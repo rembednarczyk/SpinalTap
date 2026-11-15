@@ -99,7 +99,7 @@ let lowBollard: MeshSink | null = null;
 
 /**
  * The mesh a near block bakes for a piece: its detailed model, but for the phones' bollards
- * (quality `low`), which take the post of a hundred vertices (`bollardLow`).
+ * (quality `low`), which take the post of about a hundred vertices (`bollardLow`).
  */
 export const nearModel = (kind: StreetPropKind, shape: number, quality: RenderQuality): MeshSink => {
   if (kind === "bollard" && quality === "low") return (lowBollard ??= bollardLow());
