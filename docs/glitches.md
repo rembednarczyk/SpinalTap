@@ -2223,6 +2223,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/osm-import (zebra-fit.ts)
 
+### G-870 Kamizelka kuloodporna wcina się w biust: dwie płytki nie dopasowane do sylwetki
+- Ważność: S3 · Zasięg: garment vest-plate na modelach VRoid (Seki i postacie kobiece)
+- Opis: Zgłoszenie użytkownika 15.11. vest-plate (garment-addons.ts) to dwa prostopadłościany na kości chest w stałym miejscu (at 0,-0,05,0,085, size 0,78), nieświadome kształtu ciała. Decyzja użytkownika: kamizelka jako powłoka z ubrania modelu (jak buildVest/buildShell w model-apron.ts), plus osobny research ubrań jako assetów (ADR).
+- Status: nowy
+- Pakiet właściciela: packages/engine/src/renderer
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
