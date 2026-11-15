@@ -1918,12 +1918,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: tree-height-vs-nmpt wraca do ≤ 6 bez nowych kluczy tree-unmeasured
 - Kurator 14.11: 15 z 18 kluczy to realne drzewa przy ścianach (NMPT przy pniu ≥ 9 m), zgoda na osobne zadanie; 3 klucze (−123,24) n2416068304, (176,139) n2410102295 i (160,155) n2410102343 to błędy pomiaru (sąsiad lub dach), schodzą z poprawką bufora dachu przed scaleniem.
 
-### G-810 Reguła latarni lit stawia latarnię na brzegu mapy z y 0, gdy krawędź Mełgiewskiej przesunie się o 2,5 cm
-- Ważność: S3 · Zasięg: Mełgiewska w225998472, wschodni brzeg mapy (2700; 93,5)
-- Opis: Znalezione w PR 10 runda 2 (ADR-0080): przesunięcie krawędzi jezdni o 2,5 cm sprawia, że reguła lit (#557, props-lit / props-lit-spot) stawia latarnię poza terenem z y = 0; props.test pada. Mełgiewska trzymana na HELD jako obejście. Reguła powinna odrzucać punkt poza mapą albo bez wysokości terenu.
-- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-lit-edge, 0c0c5fd): chunk sprawdzany po zaokrągleniu punktu; wcześniej: zgłoszone
-- Pakiet właściciela: tools/osm-import (props-lit)
-
 ### G-811 kerbFills pomija stronę zmierzonej drogi zostawioną przy szacunku
 - Ważność: S3 · Zasięg: ulice ADR-0080 PR 10 z jedną stroną HELD; kerb-gap-bare 810 → 823 (127 nowych kluczy), kerb-fill-wide-estimated 71 → 72
 - Opis: Na gałęzi ccr-ec2c4269-ilh8k8-adr80-pr10 (b17eb17) strona drogi zostawiona przy szacunku (reguły: ścieżka przed krawężnikiem, strona węższa niż least/2) nie dostaje kerbFills, więc między jezdnią a chodnikiem zostaje goły pas. Do tego lawn-on-leafoff-paving 94 → 105 (trawnik na pasie zwolnionym przez węższą jezdnię, Nabrzeże). Blokuje scalenie PR 10.
@@ -1931,12 +1925,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/orto
 - Runda 3 (054a446): kerb-gap-bare +127 → +70 nowych (suma 810 → 671), kerb-fill-wide-estimated +12, lawn-on-leafoff-paving +17 bez zmian (to drobiny canopyHard przy krawężniku, nie pas po węższej jezdni). Skan nadal czerwony; decyzja o bazie u użytkownika.
 - PR 10 scalony w #565 (15.11) z bazą przyjętą decyzją użytkownika; zostaje kerb-gap-bare +70 i kerb-fill-wide-estimated +12 do poprawy.
-
-### G-812 Przebieg uzupełniający lit wydłuża ciemny odcinek poza brzeg mapy i uznaje sąsiedni chodnik za oświetlony
-- Ważność: S4 · Zasięg: w185762620 / w232464409, 10 m przy (455..470; 150..160)
-- Opis: Znalezione przy G-804: linia przebiegu uzupełniającego reguły lit sięga poza brzeg mapy; chodnik obok liczy się jako oświetlony, choć latarnia tam nie staje (lit-street-dark +2 na gałęzi g804).
-- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-lit-edge, 406efb1): padded tylko po punktach na mapie; wcześniej: zgłoszone
-- Pakiet właściciela: tools/osm-import (props-lit)
 
 ### G-813 Pasy parkowania Świętoduskiej w1514058888/89/90 bez aut
 - Ważność: S4 · Zasięg: Świętoduska, 3 pasy (0 aut z 6,4 / 3,2 / 1,6 oczekiwanych), ten sam stan na main
@@ -1993,14 +1981,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props-gen, props-rows; nowa reguła jak lit dla latarni G-798)
 - Test przyjęcia: test reguły na Pl. Łokietka (rząd x≈439 od −45 do −113 z przerwą na przejście), Pl. Wolności (rząd zgodny z węzłami OSM ±1 m) i ulicy z wąskim chodnikiem (bez łańcucha); kontrole skanu: kerb-bollard-gap (odcinek krawężnika tertiary/residential w obszarze dłuższy niż 6 m bez słupka i bez powodu przerwy) i bollard-blocks-mouth (słupek albo łańcuch w paśmie przejścia, wjazdu lub drzwi pojazdów przystanku), baza po wdrożeniu 0; budżety e2e bez wzrostu draw calls
 
-### G-821 Przesunięcie stacji lit przy G-812 stawia 3 latarnie lamp-road na jezdni według ortofoto (Mełgiewska, Al. Solidarności, Lwowska)
-- Ważność: S3 · Zasięg: gałąź ccr-ec2c4269-ilh8k8-lit-edge (406efb1): ziarno 5849 (2320,5; 307,1), 32338 (531,5; 398,9), nowa 55187 (1119,3; 445,2)
-- Opis: Przegląd kuratora G-810/G-812 (ortofoto 2025-04, nakładka scratchpad/topo-lit-bad.png, topo-lit-sheet10.png). Zmiana padded przesuwa stacje reguły lit na długich drogach. 5849: przed na chodniku z kostki po południowej stronie Mełgiewskiej w931927880 (2308,6; 302,4), po w klinie między Mełgiewską a łącznicą Andersa w40051729 (po 3,9 m od obu osi), w rzeczywistości na asfalcie pasa włączania. 32338: przed na trawniku przy przejściu (523,3; 389,2), po 5,5 m od osi Al. Solidarności w215609082 (3 pasy), w rzeczywistości na pasach do skrętu poszerzonej jezdni. 55187 (nowa): 5,2 m od osi Lwowskiej w139586648 (3 pasy), na przejściu dla pieszych przy rondzie Ojca Piotra, ok. 1,3 m w głąb jezdni. Pozostałe 17 zmian (park, pastoral, 1807, 25057, 55863, 21231, 65452, 31521 zamiast 44642 i 65094 z jezdni Podzamcza) stoją na chodnikach, ścieżkach albo ich skraju.
-- Status: w PR #564 (02d0180): stacje jak na main, zmienia się jedna latarnia; wcześniej: zgłoszone (przegląd kuratora 15.11); do poprawy w gałęzi lit-edge przed scaleniem albo osobno
-- Pakiet właściciela: tools/osm-import (props-lit, props-gen)
-- Test przyjęcia: żadna latarnia lamp-road z gałęzi nie stoi w klasie asfalt/jezdnia ortofoto 2025-04 dalej niż 0,5 m od krawędzi; ziarna 5849, 32338, 55187 wracają na chodnik albo trawnik za krawężnikiem
-- Rejestr topografii: T-304.
-
 ### G-822 Pasy ruchu rozłożone równo na zmierzoną szerokość razem z zatoką
 - Ważność: S4 · Zasięg: Lubartowska w230504488 na gałęzi ADR-0080 PR 10: 3 pasy po ok. 4,1 m w 12,5 m
 - Opis: Po pomiarze z ortofoto jezdnia ma 12,5 m (lewo 7,25, prawo 5,25); trzy pasy dzielą równo całą szerokość razem z zatoką lub parkowaniem, linie stoją 4,4 m od siebie zamiast 3,5 m.
@@ -2037,12 +2017,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (przegląd kuratora G-797 r2, 15.11)
 - Pakiet właściciela: tools/osm-import (crown-trees.ts, crown-grid.ts)
 - Test przyjęcia: drzewo reguły dalej od drzewa gry niż jego rysowana korona; brak drzewa reguły na (552,5; 428,5)
-
-### G-828 Kontrole skanu wolne pod obciążeniem CI (paving-overlap, kerb-fill-wide-estimated)
-- Ważność: S3 · Zasięg: CI shard testów jednostkowych; main 76cd282 i PR #564
-- Opis: Po #559 i #565 kawałków gruntu przybyło, a kontrole przeglądają liniowo listy całego miasta; paving-overlap G-301 naprawione w #566 (4,9 s → 0,1 s), kerb-fill-wide-estimated ok. 11 s lokalnie i ponad 20 s w CI. Poprawka: indeks przestrzenny, bez podnoszenia limitów.
-- Status: w PR #568 (paving-overlap naprawione w #566); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-scan-speed)
-- Pakiet właściciela: tools/glitch-scan
 
 ### G-829 Granitowe słupki z OSM (material=granite) rysowane jako żeliwne
 - Ważność: S4 · Zasięg: 16 węzłów barrier=bollard przy Placu Litewskim (x 98–140, z −52…−86)

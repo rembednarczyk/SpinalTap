@@ -2,6 +2,32 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-828 Kontrole skanu wolne pod obciążeniem CI (paving-overlap, kerb-fill-wide-estimated)
+- Ważność: S3 · Zasięg: CI shard testów jednostkowych; main 76cd282 i PR #564
+- Opis: Po #559 i #565 kawałków gruntu przybyło, a kontrole przeglądają liniowo listy całego miasta; paving-overlap G-301 naprawione w #566 (4,9 s → 0,1 s), kerb-fill-wide-estimated ok. 11 s lokalnie i ponad 20 s w CI. Poprawka: indeks przestrzenny, bez podnoszenia limitów.
+- Status: naprawione (15.11, #566, #568 scalony); wcześniej: w PR #568 (paving-overlap naprawione w #566); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-scan-speed)
+- Pakiet właściciela: tools/glitch-scan
+
+### G-821 Przesunięcie stacji lit przy G-812 stawia 3 latarnie lamp-road na jezdni według ortofoto (Mełgiewska, Al. Solidarności, Lwowska)
+- Ważność: S3 · Zasięg: gałąź ccr-ec2c4269-ilh8k8-lit-edge (406efb1): ziarno 5849 (2320,5; 307,1), 32338 (531,5; 398,9), nowa 55187 (1119,3; 445,2)
+- Opis: Przegląd kuratora G-810/G-812 (ortofoto 2025-04, nakładka scratchpad/topo-lit-bad.png, topo-lit-sheet10.png). Zmiana padded przesuwa stacje reguły lit na długich drogach. 5849: przed na chodniku z kostki po południowej stronie Mełgiewskiej w931927880 (2308,6; 302,4), po w klinie między Mełgiewską a łącznicą Andersa w40051729 (po 3,9 m od obu osi), w rzeczywistości na asfalcie pasa włączania. 32338: przed na trawniku przy przejściu (523,3; 389,2), po 5,5 m od osi Al. Solidarności w215609082 (3 pasy), w rzeczywistości na pasach do skrętu poszerzonej jezdni. 55187 (nowa): 5,2 m od osi Lwowskiej w139586648 (3 pasy), na przejściu dla pieszych przy rondzie Ojca Piotra, ok. 1,3 m w głąb jezdni. Pozostałe 17 zmian (park, pastoral, 1807, 25057, 55863, 21231, 65452, 31521 zamiast 44642 i 65094 z jezdni Podzamcza) stoją na chodnikach, ścieżkach albo ich skraju.
+- Status: naprawione (15.11, #564 scalony); wcześniej: w PR #564 (02d0180): stacje jak na main, zmienia się jedna latarnia; wcześniej: zgłoszone (przegląd kuratora 15.11); do poprawy w gałęzi lit-edge przed scaleniem albo osobno
+- Pakiet właściciela: tools/osm-import (props-lit, props-gen)
+- Test przyjęcia: żadna latarnia lamp-road z gałęzi nie stoi w klasie asfalt/jezdnia ortofoto 2025-04 dalej niż 0,5 m od krawędzi; ziarna 5849, 32338, 55187 wracają na chodnik albo trawnik za krawężnikiem
+- Rejestr topografii: T-304.
+
+### G-812 Przebieg uzupełniający lit wydłuża ciemny odcinek poza brzeg mapy i uznaje sąsiedni chodnik za oświetlony
+- Ważność: S4 · Zasięg: w185762620 / w232464409, 10 m przy (455..470; 150..160)
+- Opis: Znalezione przy G-804: linia przebiegu uzupełniającego reguły lit sięga poza brzeg mapy; chodnik obok liczy się jako oświetlony, choć latarnia tam nie staje (lit-street-dark +2 na gałęzi g804).
+- Status: naprawione (15.11, #564 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-lit-edge, 406efb1): padded tylko po punktach na mapie; wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import (props-lit)
+
+### G-810 Reguła latarni lit stawia latarnię na brzegu mapy z y 0, gdy krawędź Mełgiewskiej przesunie się o 2,5 cm
+- Ważność: S3 · Zasięg: Mełgiewska w225998472, wschodni brzeg mapy (2700; 93,5)
+- Opis: Znalezione w PR 10 runda 2 (ADR-0080): przesunięcie krawędzi jezdni o 2,5 cm sprawia, że reguła lit (#557, props-lit / props-lit-spot) stawia latarnię poza terenem z y = 0; props.test pada. Mełgiewska trzymana na HELD jako obejście. Reguła powinna odrzucać punkt poza mapą albo bez wysokości terenu.
+- Status: naprawione (15.11, #564 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-lit-edge, 0c0c5fd): chunk sprawdzany po zaokrągleniu punktu; wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import (props-lit)
+
 ### G-802 Staszica: chodniki OSM pod zmierzonym asfaltem po szerokościach z ortofoto (gałąź ADR-0080 PR 10)
 - Ważność: S2 · Zasięg: Staszica i ulice, gdzie chodnik OSM leży bliżej osi niż krawężnik na ortofoto; sidewalk-under-carriageway 29 -> 34
 - Opis: Gałąź ccr-ec2c4269-ilh8k8-adr80-pr10: zmierzona jezdnia 8,3 m przykrywa oba chodniki (w1261814240 bliżej osi niż krawężnik). Wg odpowiedzi użytkownika 13.11 pierwszeństwo ma ortofoto, więc chodnik powinien przesunąć się na krawężnik, co jest zakresem ADR-0080 PR 7; do tego czasu takie ulice zostają w HELD.
