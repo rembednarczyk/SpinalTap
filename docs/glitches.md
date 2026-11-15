@@ -1906,24 +1906,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Runda 3 (054a446): kerb-gap-bare +127 → +70 nowych (suma 810 → 671), kerb-fill-wide-estimated +12, lawn-on-leafoff-paving +17 bez zmian (to drobiny canopyHard przy krawężniku, nie pas po węższej jezdni). Skan nadal czerwony; decyzja o bazie u użytkownika.
 - PR 10 scalony w #565 (15.11) z bazą przyjętą decyzją użytkownika; zostaje kerb-gap-bare +70 i kerb-fill-wide-estimated +12 do poprawy.
 
-### G-813 Pasy parkowania Świętoduskiej w1514058888/89/90 bez aut
-- Ważność: S4 · Zasięg: Świętoduska, 3 pasy (0 aut z 6,4 / 3,2 / 1,6 oczekiwanych), ten sam stan na main
-- Opis: Odsłonięte przez kontrolę bay-strip-sparse przy G-804 (nowa latarnia przy krawężniku). Prawdopodobnie ten sam spadek co w1514058885 (G-133).
-- Status: odrzucone, duplikat G-190 (przegląd S4 15.11: sonda surfaceY pod autem wzdłuż ulicy daje spadek 0,25–0,35 m > LEVEL_DROP 0,15 m na wszystkich trzech pasach, ta sama przyczyna co w1514058885; w skanie przeniesione do bay-strip-empty-known, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, 6bab190); wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-
 ### G-816 Odcinek reguły lit bez stacji liczy się jako oświetlony; przebieg uzupełniający powtarza stację, która właśnie odpadła
 - Ważność: S4 · Zasięg: SW róg Krakowskiego (-160..-130; -270..-260), rząd drzew w1550442735
 - Opis: Znalezione przy G-812: odcinek krótszy niż pół rozstawu nie dostaje stacji, a liczy się jako oświetlony; drugi przebieg powtarza tę samą zablokowaną stację.
-- Status: częściowo w PR #574 (część 1); część 2 otwarta; wcześniej: częściowo w poprawce (przegląd S4 15.11, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, f429ad9: część 1, przebieg bez stacji nie oświetla; 16+2 takich linii w mieście, +8 elementów w tablicy); część 2 otwarta; wcześniej: zgłoszone
+- Status: część 1 naprawiona (#574); część 2 otwarta; wcześniej: częściowo w PR #574 (część 1); część 2 otwarta; wcześniej: częściowo w poprawce (przegląd S4 15.11, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, f429ad9: część 1, przebieg bez stacji nie oświetla; 16+2 takich linii w mieście, +8 elementów w tablicy); część 2 otwarta; wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import (props-lit)
 - 15.11 przegląd S4, część 2 na main: 4 stacje przebiegu uzupełniającego leżą < 1 m od stacji pierwszego przebiegu i znowu odpadają: w1004767721 (1120,8; 381,7), w58643325 (2470,2; 417,3), w427417969 (1104,8; 176,3) i (1111,9; 205,4); do tego w172992144 (2427,9; 264,5), (2442,8; 255,3) bez latarni po obu przebiegach. Miejsce ze zgłoszenia (SW róg Krakowskiego) po G-812/G-821 już tego nie pokazuje. Koszt średni (przesunięcie stacji uzupełnienia względem pierwszego przebiegu). Sonda: scratchpad s4-p816.test.ts.
-
-### G-817 Latarnia z linii przesunięta z jezdni lub ściany traci 7 m odstępu scalania
-- Ważność: S4 · Zasięg: linie latarni planu przy offRoad/offWall; widoczność w mieście niesprawdzona
-- Opis: fromLine w props-gen działa po tożsamości obiektu, więc latarnia przesunięta przez offRoad/offWall dostaje odstęp 0,3 m zamiast 7 m.
-- Status: w PR #574; wcześniej: w poprawce (przegląd S4 15.11, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, 6a4e9af: odstęp scalania pytany o element tak, jak go postawiono; tablica bez zmian, dziś w mieście brak przypadku); wcześniej: zgłoszone
-- Pakiet właściciela: tools/osm-import (props-gen)
 
 ### G-820 Brak rzędów słupków z łańcuchami wzdłuż ulic Śródmieścia poza punktami z OSM (reguła dla centrum, decyzja użytkownika 15.11)
 - Ważność: S3 (proponowana; rozpoznawalność Krakowskiego i Śródmieścia) · Zasięg: Krakowskie i Stare Miasto poza murami: ok. 3650 m osi ulic tertiary/residential, ok. 7300 m krawężnika; po przerwach szacunkowo 3600–4400 m rzędu, ok. 2000–2400 słupków (dziś 373, z OSM)
