@@ -8,7 +8,7 @@ import { ToonMaterials } from "../src/npr/toon-material";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { collectInstances, countByKind, planHalos, toWorld, writeMatrix } from "../src/renderer/mapcity/prop-batch";
 import { propGallery } from "../src/renderer/mapcity/prop-gallery";
-import { PROP_KINDS, buildPropModel, chainModel, farModel, propModel } from "../src/renderer/mapcity/prop-models";
+import { PROP_KINDS, buildPropModel, chainModel, farModel, nearModel, propModel } from "../src/renderer/mapcity/prop-models";
 import { PROP_LOD, PROP_SHAPES, bandOf, cellBand, shapeOf, showsNear } from "../src/renderer/mapcity/prop-shapes";
 import { StreetProps } from "../src/renderer/mapcity/street-props";
 
@@ -71,6 +71,38 @@ describe("street furniture models (ADR-0047)", () => {
     expect(0.75 - (Math.max(...mid) + Math.min(...mid)) / 2).toBeGreaterThan(0.15);
     expect(0.75 - (Math.max(...mid) + Math.min(...mid)) / 2).toBeLessThan(0.22);
     expect(toWorld([item("bollard", 0, 0, 0)], { x: 0, y: 0, z: 0 })[0]!.chains).toEqual([]);
+  });
+
+  it("gives the phones a bollard of a hundred vertices and a chain of two crossed strips on the same line", () => {
+    const ys = (s: MeshSink) => s.positions.filter((_, k) => k % 3 === 1);
+    const xs = (s: MeshSink) => s.positions.filter((_, k) => k % 3 === 0);
+    const zs = (s: MeshSink) => s.positions.filter((_, k) => k % 3 === 2);
+    const post = nearModel("bollard", 0, "low");
+    const high = nearModel("bollard", 0, "high");
+    expect(high).toBe(propModel("bollard", 0).sink);
+    expect(valid(post)).toBe(true);
+    expect(post.vertexCount).toBeLessThanOrEqual(100);
+    expect(high.vertexCount).toBeGreaterThan(3 * post.vertexCount);
+    // The same post: as tall, as wide at the foot and the ball, black.
+    expect(Math.max(...ys(post))).toBeCloseTo(0.95, 3);
+    expect(Math.max(...xs(post).map(Math.abs))).toBeCloseTo(BOLLARD.foot, 3);
+    expect(post.colors.filter((_, k) => k % 4 !== 3).every((c) => c < 0.2)).toBe(true);
+    // Other kinds bake their detailed model on every quality.
+    expect(nearModel("bench", 1, "low")).toBe(propModel("bench", 1).sink);
+    for (const end of [1.2, 2.13, 3.4]) {
+      const links = chainModel(end, "high");
+      const low = chainModel(end, "low");
+      expect(chainModel(end)).toBe(links);
+      expect(valid(low)).toBe(true);
+      expect(low.vertexCount).toBeLessThanOrEqual(56);
+      expect(links.vertexCount).toBeGreaterThan(5 * low.vertexCount);
+      // Along the same span, as wide and deep, sagging as far at its middle.
+      expect(Math.min(...xs(low))).toBeCloseTo(Math.min(...xs(links)), 1);
+      expect(Math.max(...xs(low))).toBeCloseTo(Math.max(...xs(links)), 1);
+      expect(Math.max(...zs(low))).toBeCloseTo(BOLLARD.chain, 3);
+      expect(Math.max(...ys(low))).toBeCloseTo(Math.max(...ys(links)), 2);
+      expect(Math.min(...ys(low))).toBeCloseTo(Math.min(...ys(links)), 1);
+    }
   });
 
   it("lights the lamps and simplifies the tall kinds far away, and nothing small is drawn far", () => {

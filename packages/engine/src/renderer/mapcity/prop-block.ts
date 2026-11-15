@@ -14,7 +14,7 @@ import { bakeDoor } from "./door-models";
 import { bakeFigure } from "./figure-models";
 import { cellBounds } from "./map-index";
 import { type WorldProp, bake } from "./prop-batch";
-import { chainModel, farModel, propModel } from "./prop-models";
+import { chainModel, farModel, nearModel } from "./prop-models";
 import type { PropPoles } from "./prop-poles";
 import { type BlockBand, PROP_BLOCK } from "./prop-shapes";
 import type { Box2 } from "./polygon";
@@ -137,8 +137,8 @@ export const nearSink = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: P
       continue;
     }
     if (models && bakeStreetModel(sink, models, p)) continue;
-    bake(sink, propModel(p.prop, p.shape).sink, p);
-    for (const c of p.chains ?? []) bake(sink, chainModel(c.end), { ...p, yaw: c.yaw });
+    bake(sink, nearModel(p.prop, p.shape, deps.quality), p);
+    for (const c of p.chains ?? []) bake(sink, chainModel(c.end, deps.quality), { ...p, yaw: c.yaw });
   }
   if (pole && poles.props) bakePoles(sink, poles.props, pole, pieces.filter((p) => poles.isPole(p)));
   bakeBlockDogs(deps, sink, block, pieces);
