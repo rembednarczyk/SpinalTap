@@ -12,7 +12,7 @@
 #     konflikt w innym pliku: przerywa scalanie (git merge --abort) i wypisuje pliki;
 #  3. pnpm hashes:check i test skanu glitchy (tools/glitch-scan/test/glitch-scan.test.ts);
 #  4. commit scalenia z podsumowaniem; --push wypycha gałąź zwykłym git push.
-# Ciężkie kroki idą przez zamek /tmp/seki-heavy.lock (docs/agenci-zasady.md).
+# Ciężkie kroki idą przez tools/heavy.sh: dwa miejsca zamka na maszynę (docs/agenci-zasady.md).
 set -euo pipefail
 
 push=0
@@ -33,7 +33,7 @@ if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
   exit 2
 fi
 
-heavy() { flock /tmp/seki-heavy.lock "$@"; }
+heavy() { bash "$(git rev-parse --show-toplevel)/tools/heavy.sh" "$@"; }
 
 git fetch -q origin main
 if git merge-base --is-ancestor origin/main HEAD; then
