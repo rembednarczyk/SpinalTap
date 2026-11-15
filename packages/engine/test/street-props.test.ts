@@ -8,7 +8,7 @@ import { ToonMaterials } from "../src/npr/toon-material";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { collectInstances, countByKind, planHalos, toWorld, writeMatrix } from "../src/renderer/mapcity/prop-batch";
 import { propGallery } from "../src/renderer/mapcity/prop-gallery";
-import { PROP_KINDS, buildPropModel, chainModel, farModel, propModel } from "../src/renderer/mapcity/prop-models";
+import { PROP_KINDS, buildPropModel, chainModel, farModel, nearModel, propModel } from "../src/renderer/mapcity/prop-models";
 import { PROP_LOD, PROP_SHAPES, bandOf, cellBand, shapeOf, showsNear } from "../src/renderer/mapcity/prop-shapes";
 import { StreetProps } from "../src/renderer/mapcity/street-props";
 
@@ -73,6 +73,46 @@ describe("street furniture models (ADR-0047)", () => {
     expect(toWorld([item("bollard", 0, 0, 0)], { x: 0, y: 0, z: 0 })[0]!.chains).toEqual([]);
   });
 
+  it("gives the phones a bollard of a hundred vertices and a chain of two crossed strips on the same line", () => {
+    const ys = (s: MeshSink) => s.positions.filter((_, k) => k % 3 === 1);
+    const xs = (s: MeshSink) => s.positions.filter((_, k) => k % 3 === 0);
+    const zs = (s: MeshSink) => s.positions.filter((_, k) => k % 3 === 2);
+    const post = nearModel("bollard", 0, "low");
+    const high = nearModel("bollard", 0, "high");
+    expect(high).toBe(propModel("bollard", 0).sink);
+    expect(valid(post)).toBe(true);
+    expect(post.vertexCount).toBeLessThanOrEqual(135);
+    expect(high.vertexCount).toBeGreaterThan(3 * post.vertexCount);
+    // The same post: as tall, as wide at the foot and the ball, black.
+    expect(Math.max(...ys(post))).toBeCloseTo(0.95, 3);
+    expect(Math.max(...xs(post).map(Math.abs))).toBeCloseTo(BOLLARD.foot, 3);
+    // The ball as wide as the detailed one's, so it stands out of the shaft (not a bulge of it).
+    const ballR = (s: MeshSink) => Math.max(...xs(s).flatMap((x, k) => (ys(s)[k]! > 0.85 && ys(s)[k]! < 0.92 ? [Math.hypot(x, zs(s)[k]!)] : [])));
+    expect(ballR(post)).toBeCloseTo(ballR(high), 2);
+    // Black iron but for the red LED ring, which stands where the detailed one's does.
+    const lit = (s: MeshSink) => ys(s).flatMap((y, k) => (s.colors[k * 4]! > 0.5 ? [y] : []));
+    expect(lit(post).length).toBeGreaterThan(0);
+    expect(Math.min(...lit(post))).toBeCloseTo(Math.min(...lit(high)), 3);
+    expect(Math.max(...lit(post))).toBeCloseTo(Math.max(...lit(high)), 3);
+    expect(post.colors.filter((c, k) => k % 4 !== 3 && post.colors[k - (k % 4)]! <= 0.5).every((c) => c < 0.2)).toBe(true);
+    // Other kinds bake their detailed model on every quality.
+    expect(nearModel("bench", 1, "low")).toBe(propModel("bench", 1).sink);
+    for (const end of [1.2, 2.13, 3.4]) {
+      const links = chainModel(end, "high");
+      const low = chainModel(end, "low");
+      expect(chainModel(end)).toBe(links);
+      expect(valid(low)).toBe(true);
+      expect(low.vertexCount).toBeLessThanOrEqual(56);
+      expect(links.vertexCount).toBeGreaterThan(5 * low.vertexCount);
+      // Along the same span, as wide and deep, sagging as far at its middle.
+      expect(Math.min(...xs(low))).toBeCloseTo(Math.min(...xs(links)), 1);
+      expect(Math.max(...xs(low))).toBeCloseTo(Math.max(...xs(links)), 1);
+      expect(Math.max(...zs(low))).toBeCloseTo(BOLLARD.chain, 3);
+      expect(Math.max(...ys(low))).toBeCloseTo(Math.max(...ys(links)), 2);
+      expect(Math.min(...ys(low))).toBeCloseTo(Math.min(...ys(links)), 1);
+    }
+  });
+
   it("lights the lamps and simplifies the tall kinds far away, and nothing small is drawn far", () => {
     for (const kind of PROP_KINDS) {
       if (kind.startsWith("lamp-")) expect(propModel(kind, 0).lights.length, kind).toBeGreaterThan(0);
@@ -128,10 +168,47 @@ describe("street furniture batches (ADR-0047)", () => {
 });
 
 describe("street props in the scene (ADR-0047)", () => {
-  const make = (quality: "high" | "low" = "high") => {
+  // A stopped clock: a frame bakes all it is due (the bake's share of a frame is timed by the clock).
+  const make = (quality: "high" | "low" = "high", now = () => 0) => {
     const scene = new Scene(new NullEngine());
-    return new StreetProps({ scene, materials: new ToonMaterials(scene), quality });
+    return new StreetProps({ scene, materials: new ToonMaterials(scene), quality, now });
   };
+  const nearMesh = (props: StreetProps) => props.meshes.find((m) => m.name.startsWith("props-") && !m.name.startsWith("props-far") && m.name !== "props-halo");
+
+  it("bakes a block over frames, some milliseconds each, starting before it comes near", () => {
+    // A millisecond a reading: eight parts a frame.
+    let t = 0;
+    const sliced = make("low", () => t++);
+    const whole = make("low");
+    const pieces = Array.from({ length: 120 }, (_, i) => item(i % 2 ? "bollard" : "bench", 10 + (i % 12) * 3, 10 + Math.floor(i / 12) * 3, i % 2 ? chainVariant(3, 0, 0) : 0));
+    for (const p of [sliced, whole]) {
+      p.spawn(1, pieces, { x: 0, y: 0, z: 0 });
+      p.flush();
+    }
+    // Beyond the detail distance (80 m on low) by more than the head start: nothing baked.
+    sliced.update({ x: -150, y: 2, z: 0 });
+    expect(nearMesh(sliced)).toBeUndefined();
+    // Within the head start, not near: baked on over frames, the far mesh drawn meanwhile.
+    let frames = 0;
+    while (!nearMesh(sliced) && frames < 100) {
+      sliced.update({ x: -100, y: 2, z: 0 });
+      frames++;
+      expect(sliced.waiting).toBe(0);
+      expect(sliced.stats.far).toBe(1);
+    }
+    expect(frames).toBeGreaterThan(10);
+    expect(frames).toBeLessThan(20);
+    expect(sliced.stats.groups).toBe(0);
+    // Near: drawn in detail at once, the same mesh as baked in one go.
+    sliced.update({ x: -50, y: 2, z: 0 });
+    whole.update({ x: -50, y: 2, z: 0 });
+    expect(sliced.waiting).toBe(0);
+    expect(sliced.stats.groups).toBe(1);
+    expect(sliced.stats.far).toBe(0);
+    const [a, b] = [nearMesh(sliced)!, nearMesh(whole)!];
+    expect(a.getTotalVertices()).toBe(b.getTotalVertices());
+    expect([...a.getVerticesData("position")!]).toEqual([...b.getVerticesData("position")!]);
+  });
 
   it("bakes a near cell's pieces into one mesh, far cells into one, and forgets despawned pieces", () => {
     const props = make();

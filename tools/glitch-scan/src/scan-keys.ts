@@ -32,6 +32,7 @@ export const SAMPLED_KINDS: ReadonlySet<string> = new Set([
   "sidewalk-under-carriageway",
   "footway-on-carriageway",
   "kerb-strip-bare",
+  "kerb-jag",
   "city-wall-kept",
   "landuse-bare",
   "bare-on-cover",

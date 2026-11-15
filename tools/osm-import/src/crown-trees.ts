@@ -12,15 +12,15 @@
  * tree taken before stands within the larger of the two crowns' reach (`crownReach`: the drawn
  * crown of a tree of that height); where it is not an eave's (a roof's plateau joined to a
  * building's outline) with too little crown on the orthophoto (`onEave`, `crownShare`); and where
- * the import draws it at its measured height: a crown the walls stop from growing past its seed's
- * size (`treeVariant`) is a tree in a yard's corner the game cannot draw, and none stands. Going
- * over the crowns again for their cells out of every tree's reach (probe of 14.11) took 2317
+ * the import draws it at its measured height with its crown clear of the walls, however narrow
+ * they make it (`treeVariant`, G-814): one too near them even for the narrowest crown is a tree in
+ * a yard's corner the game cannot draw, and none stands. Going over the crowns again for their cells out of every tree's reach (probe of 14.11) took 2317
  * trees instead of 1423 for 56 squares of `canopy-without-tree` instead of 68: once is enough.
  *
  * The tree's height and size are then the import's (`measureTree`, `treeVariant`): the highest
  * crown within 3 m of it, off the roofs. The same data give the same trees.
  */
-import { PLAIN_SPECIES, TREE_CROWN, TREE_TOP, plainTreeVariant } from "../../../packages/core/src/world/trees.ts";
+import { PLAIN_SPECIES, TREE_CROWN, TREE_TOP } from "../../../packages/core/src/world/trees.ts";
 import type { Cover } from "../../orto/src/cover.ts";
 import type { Chm } from "../../gugik/src/nmpt.ts";
 import { KeepOut } from "./crown-ground.ts";
@@ -30,7 +30,7 @@ import type { PlanItem } from "./props-gen.ts";
 import { fnv } from "./props-place.ts";
 import type { Site } from "./props-site.ts";
 import { type Structure, StructureIndex } from "./structures.ts";
-import { NOT_A_CROWN, measureTree, treeVariant } from "./tree-heights.ts";
+import { NOT_A_CROWN, crownClear, measureTree, treeVariant } from "./tree-heights.ts";
 
 export { MIN_TOP, TOP_REACH } from "./crown-grid.ts";
 
@@ -65,7 +65,7 @@ export interface CrownStats {
   readonly noGround: number;
   /** An eave's plateau with too little crown on the orthophoto. */
   readonly eave: number;
-  /** A crown the walls stop at its seed's size. */
+  /** A crown too near the walls to stand at its height even at its narrowest. */
   readonly byWall: number;
 }
 
@@ -91,12 +91,11 @@ class TreeGrid {
 /** The key of the rule's tree at p, which seeds its species and size in `props-gen`. */
 export const crownKey = (p: Pt): string => `chm@${p.x},${p.z}`;
 
-/** Whether the import draws the rule's tree at p at its measured height, as `props-gen` sizes it (`measureTree`, `treeVariant`). */
+/** Whether the import draws the rule's tree at p at its measured height with its crown clear of the walls, as `props-gen` sizes it (`measureTree`, `treeVariant`). */
 const drawnMeasured = (site: Site, p: Pt, chms: readonly Chm[]): boolean => {
   const h = measureTree(site, p, undefined, chms);
   if (h === null) return false;
-  const v = treeVariant(site, p, fnv(crownKey(p)) & 0xffff, undefined, h.height);
-  return plainTreeVariant(v) !== v;
+  return crownClear(site, p, treeVariant(site, p, fnv(crownKey(p)) & 0xffff, undefined, h.height));
 };
 
 /**

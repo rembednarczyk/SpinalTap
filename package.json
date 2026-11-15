@@ -23,6 +23,7 @@
     "osm:build": "node tools/osm-import/src/build.ts",
     "osm:preview": "node tools/osm-import/src/preview.ts",
     "osm:props": "node tools/osm-import/src/props.ts",
+    "tables:check": "node tools/osm-import/src/tables-check.ts",
     "osm:hydrants": "node tools/osm-import/src/fetch-hydrants.ts",
     "osm:entrances": "node tools/osm-import/src/fetch-entrances.ts",
     "osm:trees": "node tools/osm-import/src/fetch-trees.ts",
@@ -40,6 +41,9 @@
     "orto:diff": "node tools/orto/src/diff.ts",
     "orto:widths": "node tools/orto/src/widths-build.ts",
     "pr:prep": "node tools/pr-prep/src/prep.ts",
+    "merge:main": "bash tools/merge-main.sh",
+    "topo:review": "bash tools/topo-review.sh",
+    "apk:fetch": "bash tools/apk-fetch.sh",
     "hashes:check": "node tools/hashes/src/check.ts",
     "map:refresh": "node tools/map-refresh/src/refresh.ts"
   },

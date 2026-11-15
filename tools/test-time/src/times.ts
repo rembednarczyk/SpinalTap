@@ -1,8 +1,10 @@
 /**
  * Time gate of the unit tests (ADR-0046, user decision 12.11): a test file of a pull request that
  * runs more than 50% and more than 2 s longer than the same file on main gets a warning. Not a red
- * test: the times come from shared CI runners. Pure functions, no clock: the times come in.
+ * test: the times come from shared CI runners. Pure functions, no clock: the times come in. The
+ * gate of single tests, which fails the run (ADR-0083), is `gate.ts`.
  */
+import type { TestTimes } from "./gate.ts";
 
 /** Time of one test file, ms: the whole (import and tests) and the import part of it. */
 export interface FileTime {
@@ -10,9 +12,10 @@ export interface FileTime {
   readonly importMs: number;
 }
 
-/** What one shard writes (`reporter.ts`): test file path relative to the root, its time. */
+/** What one shard writes (`reporter.ts`): test file path relative to the root, its time; every test's time and limit (none before ADR-0083). */
 export interface TimesFile {
   readonly files: Readonly<Record<string, FileTime>>;
+  readonly tests?: TestTimes;
 }
 
 export type Times = Readonly<Record<string, FileTime>>;
@@ -53,6 +56,9 @@ export interface Comparison {
 
 /** Times of the shards in one set; a file in two shards (never, by Vitest's split) keeps the last. */
 export const mergeTimes = (shards: readonly TimesFile[]): Times => Object.assign({}, ...shards.map((s) => s.files)) as Times;
+
+/** The tests' times of the shards in one set; empty for a run from before ADR-0083. */
+export const mergeTests = (shards: readonly TimesFile[]): TestTimes => Object.assign({}, ...shards.map((s) => s.tests ?? {})) as TestTimes;
 
 const sum = (t: Times): number => Object.values(t).reduce((s, f) => s + f.ms, 0);
 
