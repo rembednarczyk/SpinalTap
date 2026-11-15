@@ -132,7 +132,7 @@ describe("the ballistic vest on a model (G-870)", () => {
     const who: [EntityId, CharacterDescriptor][] = [
       [1, { kind: "heroine" }],
       [2, { kind: "enemy", preset: "ganger" }],
-      [3, { kind: "enemy", preset: "corpo" }],
+      [3, { kind: "enemy", preset: "corpo", look: 1 }],
     ];
     for (const [id, d] of who) {
       views.spawn(id, d, STAND);
