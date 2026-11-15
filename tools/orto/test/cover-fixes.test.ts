@@ -1,4 +1,9 @@
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { rectsOverlap, ringBounds } from "../../osm-import/src/geometry.ts";
+import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
+import { structuresOf } from "../../osm-import/src/structures.ts";
 import { COVER } from "../src/classify.ts";
 import { type Cover, coverAt, readCover } from "../src/cover.ts";
 import { COVER_FIXES, applyFixes } from "../src/cover-fixes.ts";
@@ -21,5 +26,14 @@ describe("the cover's corrections checked on the photographs (G-853)", () => {
     for (let x = fix.rect.minX + 0.25; x < fix.rect.maxX; x += 0.5) for (let z = fix.rect.minZ + 0.25; z < fix.rect.maxZ; z += 0.5) if (coverAt(cover, x, z) === COVER.green) green++;
     expect(green).toBe(0);
     expect(applyFixes({ ...cover, cls: cover.cls.slice() })).toBe(0);
+  });
+
+  it("corrects no sample on a building site of the map: its ground changes from flight to flight (G-866)", () => {
+    const dir = join(import.meta.dirname, "../../../data/osm");
+    const osm = mergeOsm(readdirSync(dir).filter((f) => f.endsWith(".json")).map((f) => parseExtract(readFileSync(join(dir, f), "utf8"))));
+    const sites = structuresOf(osm).filter((s) => s.kind === "construction");
+    expect(sites.length).toBeGreaterThan(0);
+    const on = COVER_FIXES.flatMap((f, k) => sites.filter((s) => rectsOverlap(ringBounds(s.ring), f.rect)).map((s) => `${k}: ${s.id}`));
+    expect(on).toEqual([]);
   });
 });

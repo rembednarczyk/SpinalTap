@@ -24,13 +24,6 @@ export const COVER_FIXES: readonly CoverFix[] = [
     to: COVER.paving,
     why: "Krakowskie Przedmieście by Brama Krakowska: the green copper roofs north of the deptak, leaning over its setts on 2025-04 (and 2023-09); 2024-06 shows the setts light up to the walls",
   },
-  {
-    district: "krakowskie",
-    rect: { minX: 249, maxX: 256, minZ: 1, maxZ: 7 },
-    from: COVER.green,
-    to: COVER.canopyHard,
-    why: "a café garden's setts under the crowns: light, with its tables, on the leaf-off flight 2025-04",
-  },
 ];
 
 /** The cover with its district's fixes applied (in place); how many samples changed. */

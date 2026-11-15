@@ -3,7 +3,7 @@ import { CLEARED } from "../../../packages/sim/src/content/lublin/sites.ts";
 import { COVER } from "../../orto/src/classify.ts";
 import { type Cover } from "../../orto/src/cover.ts";
 import { THRESHOLDS } from "../../orto/src/thresholds.ts";
-import { FILL, FILL_CLEARED, type TownPlaces, coverFills, withFills } from "../src/bare-cover.ts";
+import { FILL, FILL_CLEARED, type TownPlaces, coverFills, townPlaces, withFills } from "../src/bare-cover.ts";
 import { frontages } from "../src/bare-fronts.ts";
 import { type Pt, type Rect, pointInRing, signedArea } from "../src/geometry.ts";
 import { type GroundOut } from "../src/model.ts";
@@ -145,6 +145,26 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
     // A residential street has a frontage only inside the Old Town's walls, a carriageway none.
     expect(frontages([line("residential", 10), line("tertiary", 10), { ...line("pedestrian", 10), tags: { highway: "pedestrian", tunnel: "yes" } }])).toEqual([]);
     expect(frontages([{ ...line("residential", 0), line: [{ x: 560, z: -60 }, { x: 600, z: -60 }, { x: 900, z: -60 }] }]).map((f) => [f.line.length, f.reach])).toEqual([[3, 6]]);
+  });
+
+  it("lays no frontage on a building site of the map, a site's ground as the rule's first pass leaves it (G-866)", () => {
+    // The street of the test above; a site (`landuse=construction`, a `building=construction` in it)
+    // north of the paving, its cover green (crowns of an earlier flight) and asphalt.
+    const street = piece("square", box(0, 8, 20, 12));
+    const at = (x: number, z: number) => (z > 12 && z < 15 ? (x > 12 && x < 16 ? COVER.green : COVER.asphalt) : COVER.paving);
+    const fronts = frontages([{ id: "w1", osmId: 1, tags: { highway: "living_street" }, line: [{ x: -5, z: 10 }, { x: 25, z: 10 }] }]);
+    const area = (id: number, tags: Record<string, string>, ring: Pt[]) => ({ id: `w${id}`, osmId: id, tags, ring, holes: 0 });
+    const data = { nodes: new Map(), ways: new Map(), relations: new Map() };
+    const sited = (tags: Record<string, string>) => {
+      const town = townPlaces(data, [area(2, tags, box(11, 12, 17, 15))], [], fronts);
+      return coverFills(RECT, cover(at), [street], [box(0, 15, 20, 20)], { ...town, shops: [] });
+    };
+    for (const tags of [{ landuse: "construction" }, { building: "construction" }]) {
+      const fills = sited(tags);
+      for (const x of [12.25, 14.25, 16.25]) expect(surfaceAt(fills.filter((f) => f.front), { x, z: 13.75 }), `${JSON.stringify(tags)} ${x}`).toEqual([]);
+      expect(surfaceAt(fills, { x: 8.25, z: 13.75 }), "the frontage beside the site").toEqual(["square"]);
+    }
+    expect(surfaceAt(sited({ landuse: "residential" }), { x: 14.25, z: 13.75 }), "no site: the frontage").not.toEqual([]);
   });
 
   it("lays crowns over paving a lawn, not paving, and leaves those over asphalt bare; a speck of green in paving stays a lawn (T-285)", () => {

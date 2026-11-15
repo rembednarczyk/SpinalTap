@@ -77,6 +77,7 @@ import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { cityFrontageWorld, frontageBare, squaresOf } from "./frontage-bare";
+import { fillOnConstruction } from "./fill-construction";
 import { crossingGlow, crossingKerb, crossingOverhang, crossingSkew } from "./crossing-shape";
 import { kerbJag } from "./kerb-jag";
 import { kerbStripBare } from "./kerb-strip-bare";
@@ -2126,6 +2127,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const city = generatedCity();
     return fillGap(city.stats, city.chunks);
   },
+  /** A 0.5 m sample of a piece laid in a pedestrian street's frontage inside a building site of the map (`fill-construction.ts`, G-866). */
+  "fill-on-construction": () => fillOnConstruction(structuresOf(SOURCE_OSM), LUBLIN_CHUNKS),
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => KERB_GAP_BARE(),
   /**

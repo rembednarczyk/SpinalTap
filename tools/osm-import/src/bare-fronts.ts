@@ -7,7 +7,8 @@
  * and what the cover shows as neither a lawn nor paving (asphalt, a dark sett, no class) is read
  * as paving (`coverRow`): a walker's street has no carriageway to keep bare (`keepKerbs`). Crowns
  * and shade take the class round them as anywhere (`mixedRow`). Not a frontage: what lies behind
- * a wall (a yard, `inSight`) and the map's lawns, beds and water, drawn or not (`greens`).
+ * a wall (a yard, `inSight`), the map's lawns, beds and water, drawn or not (`greens`), and its
+ * building sites (`sites`, G-866: a site's ground is the rule's first pass's, as anywhere).
  *
  * The streets are the pedestrian ways and living streets; inside the Old Town's walls the
  * residential streets too, cobbled and walked as the rest of it (`OLD_TOWN_RING`).

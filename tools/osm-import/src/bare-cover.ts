@@ -40,6 +40,7 @@ import { areaSurface } from "./ground.ts";
 import { type OsmData } from "./osm.ts";
 import { raisedGreen } from "./raised-green.ts";
 import { geoToWorld } from "./project.ts";
+import { structureKind } from "./structures.ts";
 import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, signedArea, simplifyRing, splitTouching } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
 
@@ -301,6 +302,8 @@ export interface TownPlaces {
   readonly fronts?: readonly Frontage[];
   /** The map's lawns, beds and water on the ground, drawn or not: no frontage. */
   readonly greens?: readonly (readonly Pt[])[];
+  /** The map's building sites (`landuse=construction`, `building=construction`, G-866): no frontage either, a site's ground stays as the rule's first pass leaves it. */
+  readonly sites?: readonly (readonly Pt[])[];
 }
 
 const NO_PLACES: TownPlaces = { areas: [], stops: [], shops: [] };
@@ -330,6 +333,7 @@ export const pathLoops = (lines: readonly Line[]): Pt[][] =>
 /** The map's areas and stops of a town's paved places (`TownPlaces`, the shops come a chunk at a time), the paths' loops (`pathLoops`) and the pedestrian streets' frontages (`frontages`). */
 export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonly (readonly Pt[])[] = [], fronts: readonly Frontage[] = []): Omit<TownPlaces, "shops"> => ({
   greens: fronts.length ? areas.filter((a) => GREEN.has(areaSurface(a.tags) ?? "road") && !raisedGreen(a.tags)).map((a) => a.ring) : [],
+  sites: fronts.length ? areas.filter((a) => structureKind(a.tags) === "construction").map((a) => a.ring) : [],
   areas: [
     ...areas
       .filter((a) => PAVED_LANDUSE.has(a.tags.landuse ?? "") || PAVED_AMENITY.has(a.tags.amenity ?? "") || a.tags.public_transport === "platform" || a.tags.public_transport === "station")
@@ -356,7 +360,7 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
   // Read past the chunk's edges and cut on them: traced on the chunk's cells alone, a fill crossing
   // an edge on the slant turned along it, and the two chunks' fills left a triangle between them.
   const wide = { minX: rect.minX - SEAM, minZ: rect.minZ - SEAM, maxX: rect.maxX + SEAM, maxZ: rect.maxZ + SEAM };
-  const fronts = layFills(wide, cover, [...ground, ...base], walls, { areas: [], stops: [], shops: [], fronts: town.fronts, ...(town.greens ? { greens: town.greens } : {}) }, base);
+  const fronts = layFills(wide, cover, [...ground, ...base], walls, { areas: [], stops: [], shops: [], fronts: town.fronts, greens: town.greens ?? [], sites: town.sites ?? [] }, base);
   const box = toPath([
     { x: rect.minX, z: rect.minZ },
     { x: rect.maxX, z: rect.minZ },
@@ -393,14 +397,16 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
   for (const w of walls) cells.cover(w, 0, false, true);
   for (const g of ground) if (g.bridge) cells.block(ringOf(g.outline), FILL.bridge);
   for (const r of FILL_CLEARED) if (rectsOverlap(r, rect)) cells.cover(boxOf(r));
-  // The frontages' fills end on the map's lawns, beds and water exactly, drawn or not: no paving laps
-  // over a lawn's outline by the half cell a fill is traced past its last (T-199, G-853).
-  if (base) for (const g of town.greens ?? []) cells.cover(g);
+  // The frontages' fills end on the map's lawns, beds and water exactly, drawn or not, and on its
+  // building sites (G-866): no paving laps over their outlines by the half cell a fill is traced
+  // past its last (T-199, G-853).
+  const off = [...(town.greens ?? []), ...(town.sites ?? [])];
+  if (base) for (const g of off) cells.cover(g);
   for (const a of town.areas) cells.zoneIn(a);
   for (const s of town.shops) cells.zoneNear(s, FILL.forecourt);
   for (const p of town.stops) cells.zoneNear([p], FILL.platform);
   cells.growZone(FILL.zoneMargin);
-  zoneFronts(cells, town.fronts ?? [], town.greens ?? [], FILL.zoneMargin, FILL.looseArea);
+  zoneFronts(cells, town.fronts ?? [], off, FILL.zoneMargin, FILL.looseArea);
   readCover(cells, cover, FILL.around);
   joinSpecks(cells, FILL.speck);
   if (base) {
@@ -450,7 +456,7 @@ export const coverFiller = (covers: readonly Cover[], walls: readonly (readonly 
     }
     return g;
   };
-  const [wallGrid, areaGrid, greenGrid] = [grid(walls), grid(town.areas), grid(town.greens ?? [])];
+  const [wallGrid, areaGrid, greenGrid, siteGrid] = [grid(walls), grid(town.areas), grid(town.greens ?? []), grid(town.sites ?? [])];
   return (rect, ground, shops) => {
     const cover = coverFor(covers, { x: (rect.minX + rect.maxX) / 2, z: (rect.minZ + rect.maxZ) / 2 });
     if (!cover) return [];
@@ -458,7 +464,7 @@ export const coverFiller = (covers: readonly Cover[], walls: readonly (readonly 
     const pick = (g: ReturnType<typeof grid>) => g.query(near.minX, near.minZ, near.maxX, near.maxZ).filter((w) => rectsOverlap(w.box, near)).map((w) => w.ring);
     const stops = town.stops.filter((p) => p.x > rect.minX - FILL.platform && p.x < rect.maxX + FILL.platform && p.z > rect.minZ - FILL.platform && p.z < rect.maxZ + FILL.platform);
     const fronts = (town.fronts ?? []).filter((f) => rectsOverlap(ringBounds(f.line), { minX: rect.minX - f.reach - FILL.zoneMargin, minZ: rect.minZ - f.reach - FILL.zoneMargin, maxX: rect.maxX + f.reach + FILL.zoneMargin, maxZ: rect.maxZ + f.reach + FILL.zoneMargin }));
-    return coverFills(rect, cover, ground, pick(wallGrid), { areas: pick(areaGrid), stops, shops, fronts, greens: pick(greenGrid) });
+    return coverFills(rect, cover, ground, pick(wallGrid), { areas: pick(areaGrid), stops, shops, fronts, greens: pick(greenGrid), sites: pick(siteGrid) });
   };
 };
 
