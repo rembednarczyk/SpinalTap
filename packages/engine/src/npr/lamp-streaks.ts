@@ -14,7 +14,7 @@
 /** Lamps a ground pixel mirrors at most. */
 export const MAX_LAMP_STREAKS = 8;
 /** How far a mirrored ray may miss the lamp up or down and still catch its glow (rad). */
-export const STREAK_PITCH = 0.08;
+export const STREAK_PITCH = 0.2;
 /** Half-width of the streak (m) at the eye and per metre away from it: a fixed angle as seen. */
 export const STREAK_WIDTH = [0.06, 0.016] as const;
 /** Length of the steps the streak is broken into along its run (m). */
@@ -55,11 +55,11 @@ export const lampStreak = (p: StreakPoint, lamp: StreakPoint, seed: number, eye:
   const w = (STREAK_WIDTH[0] + STREAK_WIDTH[1] * s) * (0.6 + 0.8 * h1);
   const x = Math.abs(-qx * uz + qz * ux - (h2 - 0.5) * w) / w;
   const y = Math.abs(Math.atan(he / s) - Math.atan(hl / along)) / STREAK_PITCH;
-  return x < 0.5 && y < 0.5 ? 1 : x < 1 && y < 1 ? 0.5 : 0;
+  return x < 0.5 && y < 0.4 ? 1 : x < 1 && y < 1 ? 0.5 : 0;
 };
 
-/** How much of a streak the ground shows: standing water all, its rim some, the wet street a trace, never-wet ground none. */
-export const streakShows = (standing: number, hold: number): number => (standing > 0.75 ? 1 : standing > 0.25 ? 0.55 : hold > -0.5 ? 0.14 : 0);
+/** How much of a streak the ground shows: standing water all, its rim some, the wet street a faint one, never-wet ground none. */
+export const streakShows = (standing: number, hold: number): number => (standing > 0.75 ? 1 : standing > 0.25 ? 0.55 : hold > -0.5 ? 0.4 : 0);
 
 /** The same in GLSL: `lampStreaks(p, standing, hold)`, the lamps in `streakLamp` (xyz, w seed) and `streakColor`. */
 export const LAMP_STREAK_GLSL = /* glsl */ `
@@ -67,7 +67,7 @@ uniform vec4 streakLamp[${MAX_LAMP_STREAKS}];
 uniform vec4 streakColor[${MAX_LAMP_STREAKS}];
 uniform float streakCount;
 vec3 lampStreaks(vec3 p, float standing, float hold) {
-  float shows = standing > 0.75 ? 1.0 : standing > 0.25 ? 0.55 : step(-0.5, hold) * 0.14;
+  float shows = standing > 0.75 ? 1.0 : standing > 0.25 ? 0.55 : step(-0.5, hold) * 0.4;
   vec3 sum = vec3(0.0);
   if (shows <= 0.0) return sum;
   for (int i = 0; i < ${MAX_LAMP_STREAKS}; i++) {
@@ -90,7 +90,7 @@ vec3 lampStreaks(vec3 p, float standing, float hold) {
     float w = (${STREAK_WIDTH[0].toFixed(3)} + ${STREAK_WIDTH[1].toFixed(3)} * s) * (0.6 + 0.8 * h1);
     float x = abs(q.y * u.x - q.x * u.y - (h2 - 0.5) * w) / w;
     float y = abs(atan(he / s) - atan(hl / along)) / ${STREAK_PITCH.toFixed(3)};
-    float core = step(x, 0.5) * step(y, 0.5);
+    float core = step(x, 0.5) * step(y, 0.4);
     float rim = step(x, 1.0) * step(y, 1.0);
     sum += streakColor[i].rgb * (core + rim) * 0.5;
   }

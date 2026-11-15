@@ -12,7 +12,7 @@ export interface StreakLamp {
 }
 
 /** Brightness of a streak's steps over its lamp's colour. */
-const GAIN = 0.32;
+const GAIN = 0.42;
 /** The eye moves this far (m) before the lamps are picked again. */
 const REPICK = 1.5;
 
