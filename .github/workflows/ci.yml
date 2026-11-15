@@ -94,8 +94,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # The default reporter prints failures in the log; the blob report feeds the merge; the
-      # test-time reporter writes the time of every file for the time gate (job test-time).
-      - run: pnpm exec vitest run --coverage --reporter=default --reporter=blob --reporter=./tools/test-time/src/reporter.ts --shard=${{ matrix.shard }}/2
+      # test-time reporter writes the time of every file for the time gate (job test-time); the
+      # github-actions reporter puts each failure (test, message, file:line) as a short annotation
+      # on the check run, so a red run is read without downloading the whole log.
+      - run: pnpm exec vitest run --coverage --reporter=default --reporter=blob --reporter=github-actions --reporter=./tools/test-time/src/reporter.ts --shard=${{ matrix.shard }}/2
         env:
           VITEST_COVERAGE_SHARD: "1"
           TEST_TIME_OUTPUT: reports/unit-times/unit-times-${{ matrix.shard }}.json

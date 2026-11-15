@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TREE_CROWN, TREE_SCALE, treeHeight, treeScale } from "../../../packages/core/src/world/trees.ts";
+import { TREE_CROWN, TREE_SCALE, TREE_SPREADS, plainTreeVariant, treeHeight, treeScale, treeSpecies, treeSpread } from "../../../packages/core/src/world/trees.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { puwgToWorld } from "../../gugik/src/frame.ts";
 import { CHM_STEP, type Chm, NO_DATA, encodeChm } from "../../gugik/src/nmpt.ts";
@@ -136,17 +136,42 @@ describe("trees grown to their measured height (G-422)", () => {
     expect(treeVariant(site, { x: 50, z: 5 }, 0x71, undefined, null)).toBe(0x71);
   });
 
-  it("stops a crown short of the wall it would grow into, never under its seed's size", () => {
+  it("narrows a crown short of the wall it would grow into, at its measured height", () => {
     for (const seed of seeds) {
-      // 6 m off the wall: the seed's crown is clear, the oak's would reach 6.4-8.75 m.
+      // 6 m off the wall: the 20 m crowns would reach 6-8.3 m.
       const v = treeVariant(site, { x: 50, z: 32 }, seed, undefined, 20);
-      const reach = TREE_CROWN[seed % 3]! * treeScale(v);
+      const reach = TREE_CROWN[seed % 3]! * treeScale(v) * treeSpread(v);
       expect(reach).toBeLessThan(6);
-      expect(reach).toBeGreaterThan(5.5);
-      expect(treeScale(v)).toBeGreaterThan(treeScale(seed));
-      // By the wall even the seed's crown reaches into it: the seed's size stays.
-      expect(treeVariant(site, { x: 50, z: 36 }, seed, undefined, 20)).toBe(seed);
+      expect(reach).toBeGreaterThan(4);
+      expect(Math.abs(treeHeight(v) - 20)).toBeLessThan(0.2);
+      expect(treeSpecies(v)).toBe(seed % 3);
     }
+  });
+
+  it("keeps a tree by the wall at its measured height with the widest crown clear of it, not at its seed's size (G-814)", () => {
+    for (const seed of seeds) {
+      // 3 m off the wall: every crown of 20 m reaches into it, one of 35-45% of the width clears it.
+      const v = treeVariant(site, { x: 50, z: 35 }, seed, undefined, 20);
+      expect(plainTreeVariant(v)).not.toBe(v);
+      expect(Math.abs(treeHeight(v) - 20)).toBeLessThan(0.2);
+      const reach = TREE_CROWN[seed % 3]! * treeScale(v) * treeSpread(v);
+      expect(reach).toBeLessThan(3);
+      // A wider one would reach the wall.
+      const wider = TREE_SPREADS.filter((w) => w > treeSpread(v));
+      expect(wider.length).toBeGreaterThan(0);
+      expect(wider.every((w) => TREE_CROWN[seed % 3]! * treeScale(v) * w >= 3)).toBe(true);
+    }
+  });
+
+  it("gives a trunk at the wall the narrowest crown at its height, whatever reaches the wall", () => {
+    const v = treeVariant(site, { x: 50, z: 37.6 }, 0x71, undefined, 12);
+    expect(treeSpread(v)).toBe(TREE_SPREADS[TREE_SPREADS.length - 1]);
+    expect(Math.abs(treeHeight(v) - 12)).toBeLessThan(0.2);
+  });
+
+  it("narrows a small tree by the wall too, and leaves one in the open whole", () => {
+    expect(treeSpread(treeVariant(site, { x: 50, z: 36 }, 0xf0, undefined, 6))).toBeLessThan(1);
+    expect(treeSpread(treeVariant(site, { x: 50, z: 5 }, 0xf0, undefined, 20))).toBe(1);
   });
 
   it("shrinks a tree measured lower than its seed's size, down to the smallest size", () => {
