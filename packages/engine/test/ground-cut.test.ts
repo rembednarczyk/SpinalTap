@@ -43,7 +43,9 @@ const CUT_BEFORE: Readonly<Record<string, string>> = {
   // Its points on the seam x = 720 on podzamcze-0-0's 5 m grid (G-748): the same cuts, up to 0.1 m lower or higher there.
   // The path w202269259 by Zamkowa's tunnel laid at an even grade (G-755): the same cuts, its points lower or higher there.
   "podzamcze-1-0": "12 1745e1c0",
-  "nabrzeze-1-1": "6 bd68b5c7",
+  // W-3 on the docks' ground (ADR-0082): the chunk's grid refined to 2.5 m and the public strip back
+  // on the NMT round the metro's pavilion: its 2.5 m cells cut, 16 for 6.
+  "nabrzeze-1-1": "16 f5e6104b",
   "stare-miasto-0-0": "0 58512eb9",
   "krakowskie-0-0": "0 0825c6ea",
   // The same cuts; the paving's colour from the orthophoto (G-721, after the curator's review).

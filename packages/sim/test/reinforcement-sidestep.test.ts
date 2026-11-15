@@ -61,11 +61,14 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // chase being made, none in these runs): only the version; as v37 the runs hash to 241eef9e and
   // 5039197a. Re-recorded for G-754, the content: the car wash's yard levelled short of
   // Bajkowskiego, its dumpster and parked car moved onto the level ground (the world, no rule).
+  // Re-recorded for ADR-0082 stage 1, the content: the docks rebuilt as Tessen's W-3, the player
+  // on its tower's platform instead of the warehouse's roof (the reinforcements come up the tower's
+  // stair and lean there), and the v39 version.
   for (const [seed, level, golden, v32, v31, v30, v28, v27] of [
-    [21, 2, "45d8b0ce", "4ee4413c", "37063947", "ba1d2b72", "d6de4cac", "a4d60fc5"],
-    [5, 3, "f2805c32", "2cff62d8", "07580291", "936ad268", "356b9a82", "d36568dd"],
+    [21, 2, "f5fcc452", "3d303923", "6ec6053a", "b37cc00b", "78f73259", "35dcc37e"],
+    [5, 3, "ca8e9bb5", "0c4f881a", "a5f9149d", "fcf55138", "486ddf2a", "22fdcccb"],
   ] as const) {
-    it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
+    it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);
       const first = new Map<number, 1 | -1>();
       let leaningOtherwise = 0;
