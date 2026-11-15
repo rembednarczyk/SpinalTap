@@ -2249,8 +2249,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-870 Kamizelka kuloodporna wcina się w biust: dwie płytki nie dopasowane do sylwetki
 - Ważność: S3 · Zasięg: garment vest-plate na modelach VRoid (Seki i postacie kobiece)
 - Opis: Zgłoszenie użytkownika 15.11. vest-plate (garment-addons.ts) to dwa prostopadłościany na kości chest w stałym miejscu (at 0,-0,05,0,085, size 0,78), nieświadome kształtu ciała. Decyzja użytkownika: kamizelka jako powłoka z ubrania modelu (jak buildVest/buildShell w model-apron.ts), plus osobny research ubrań jako assetów (ADR).
-- Status: w naprawie (powłoka z ubrania modelu, gałąź ccr-ec2c4269-ilh8k8-g870; docelowo asset wg ADR-0086); wcześniej: nowy
+- Status: gotowe na gałęzi (3b1d870), zrzuty do akceptacji użytkownika; wcześniej: w naprawie (powłoka z ubrania modelu, gałąź ccr-ec2c4269-ilh8k8-g870; docelowo asset wg ADR-0086); wcześniej: nowy
 - Pakiet właściciela: packages/engine/src/renderer
+- powłoka-płyta z Tops (model-apron.ts PLATE, przycinanie model-shell-clip.ts, 3b1d870); test vest-plate-model.test.ts: przed Seki 272 z 505 wierzchołków do 3,3 cm przed płytą, po 0 w 4 pozach na Seki, gangerze i pliku Kaito; mori.vrm 4 mm, nie nosi kamizelki
 
 ### G-871 Front ulicy pieszej przechodzi przez mur OSM na podwórze przy Zielonej
 - Ważność: S4 · Zasięg: Zielona (296–310; −33..−20), podwórze za murem w503177989
