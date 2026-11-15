@@ -176,6 +176,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: budynki wieloskrzydłowe: Zamek w48500136 (jedna połać nad wszystkimi skrzydłami), w232362886, r18246400
 - Pakiet właściciela: packages/engine (`mapcity/roof-shapes.ts`)
 - Test przyjęcia: osobna kalenica lub połać na każde skrzydło obrysu wklęsłego
+- 15.11 G-841: Zamek w48500136 ma przepis z attyką, który chowa dach; reguła ogólna dla budynków wieloskrzydłowych dalej otwarta
 
 ### G-081 Deptaki węższe niż pierzeja: goły teren między pasem bruku a fasadami
 - Status: zgłoszone (audyt dróg, T-045)
@@ -2048,8 +2049,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-841 Zamek Lubelski bez przepisu zabytku: fasada od Placu Zamkowego jak zwykły gmach
 - Ważność: S3 · Zasięg: Zamek Lubelski, front od Placu Zamkowego i schodów
 - Opis: Zgłoszenie użytkownika 15.11 ze zdjęciem frontu (Street View, tylko referencja wizualna, scratchpad ref/zamek-plac-zamkowy-sv.jpg). LANDMARK_RECIPES ma tylko Bramę Krakowską, Bramę Grodzką i Nowy Ratusz. Wygląd do odtworzenia: neogotycka fasada w kolorze kremowym, dwie wieżyczki po bokach bramy z krenelażem i masztami flag, między nimi blankowana attyka; dwa okrągłe okna-rozety nad ostrołukową bramą z napisem MUZEUM; ostrołukowe okna w rzędzie, długie skrzydła z krenelażem po bokach; po lewej w głębi wieża kaplicy (smukła iglica); u stóp schody ze spocznikiem, latarnie i zieleń na skarpie. Wymiary z LOD2/NMPT i OSM, jak przy G-119 (Nowy Ratusz).
-- Status: nowy
+- Status: w gałęzi ccr-ec2c4269-ilh8k8-g841 (e84492c), do przeglądu topography-curator; wcześniej: nowy
 - Pakiet właściciela: packages/engine/src/renderer/mapcity/landmarks
+- 15.11: przepis zamek-lubelski (attyka do y 7,5 z blankami, wieżyczki do y 10 z flagami, parapet z blankami trójkątnymi, 2 rozety, portal ostrołukowy, lancety, szyld MUZEUM); korekta importu: okap y 3,3, korona y 7,5 z NMPT; test landmark-zamek.test.ts; skan 3900->3900, hashe bez zmian, perf w budżetach
 
 ### G-842 Sygnalizatory na jezdni wewnątrz dużych skrzyżowań (square na asfalcie)
 - Ważność: S4 · Zasięg: Rondo Dmowskiego n1946478264 (1104,1;264,7), (1043,6;277,9); rondo Cybulskiego (2539,8;268,2), (2481,7;302,3); 3 Maja (-115,1;53,6)
