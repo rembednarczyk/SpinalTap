@@ -60,6 +60,8 @@ export interface GroundOut {
   readonly bridge?: true;
   /** The bridge's deck axis, `[x0, z0, x1, z1]`: the bridge way's ends, its abutments. */
   readonly deck?: readonly number[];
+  /** Laid in a pedestrian street's frontage (`bare-fronts.ts`, G-853): no paving's edge the furniture reads. */
+  readonly front?: true;
 }
 
 /** A square's or a footway's piece as laid over the others, before the partition cut it (`ChunkOut.walkAreas`). */

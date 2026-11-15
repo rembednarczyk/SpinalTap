@@ -36,6 +36,7 @@ export const FRONT = { pedestrian: 8, oldTown: 6, strip: 3, lawn: 10 } as const;
 const COVERED = CELL_LABEL.covered;
 const BLOCKED = CELL_LABEL.blocked;
 const GRASS = CELL_LABEL.grass;
+const OTHER = CELL_LABEL.other;
 const SQUARE = CELL_LABEL.square;
 const STEP = CELL_STEP;
 
@@ -180,11 +181,13 @@ export const zoneFronts = (cells: Cells, fronts: readonly Frontage[], greens: re
 };
 
 /**
- * A lawn of the cover alone in a frontage (no lawn of the map's beside it) under `FRONT.lawn` m² is
- * paved as the street: the setts' patina and their shade the leaf-off flight shows green (G-775,
- * `grass-on-light-paving`), not a bed; the map's lawns and the crowns' beds are larger.
+ * A lawn of the cover alone in a frontage (no other lawn beside it: the rule's first pass's,
+ * `lawns`, or a rim of the map's) under `FRONT.lawn` m² is paved as the street: the setts'
+ * patina and their shade the leaf-off flight shows green (G-775, `grass-on-light-paving`), not a
+ * bed; the map's lawns and the crowns' beds are larger. The cells off the frontages are bare by
+ * then (`offFronts`).
  */
-export const paveSpecks = (cells: Cells): void => {
+export const paveSpecks = (cells: Cells, lawns: Uint8Array): void => {
   const { nx, label, front } = cells;
   const size = label.length;
   const lawn = (k: number) => front[k] === 1 && label[k] === GRASS;
@@ -207,9 +210,15 @@ export const paveSpecks = (cells: Cells): void => {
             seen[m] = 1;
             queue[n++] = m;
           }
-        } else if (label[m] === GRASS) beside = true;
+        } else if (label[m] === GRASS || lawns[m]) beside = true;
       }
     }
     if (!beside && n < most) for (let q = 0; q < n; q++) label[queue[q]!] = SQUARE;
   }
+};
+
+/** The free cells off the frontages left bare: the frontages' pass lays nothing else (`coverFills`). */
+export const offFronts = (cells: Cells): void => {
+  const { label, front } = cells;
+  for (let k = 0; k < label.length; k++) if (!front[k] && label[k] !== COVERED && label[k] !== BLOCKED) label[k] = OTHER;
 };

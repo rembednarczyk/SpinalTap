@@ -30,7 +30,7 @@ import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { type Cover, coverFor } from "../../orto/src/cover.ts";
 import { Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch } from "./bare-cells.ts";
 import { dropLoose, joinSpecks, readCover } from "./bare-clean.ts";
-import { type Frontage, paveSpecks, zoneFronts } from "./bare-fronts.ts";
+import { type Frontage, offFronts, paveSpecks, zoneFronts } from "./bare-fronts.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
 import { kerbStrips } from "./bare-strips.ts";
 import { contours } from "./contour.ts";
@@ -371,6 +371,19 @@ export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonl
  * town's paved places (`town`), compact regions only elsewhere.
  */
 export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls: readonly (readonly Pt[])[], town: TownPlaces = NO_PLACES): GroundOut[] => {
+  const base = layFills(rect, cover, ground, walls, { ...town, fronts: [] }, null);
+  if (!town.fronts?.length) return base;
+  // The frontages a pass of their own over what the first left bare (G-853): the fills of the rule
+  // stay as they were, and the furniture set by the paving's edges reads the ground without them.
+  const fronts = layFills(rect, cover, [...ground, ...base], walls, { areas: [], stops: [], shops: [], fronts: town.fronts, ...(town.greens ? { greens: town.greens } : {}) }, base);
+  return [...base, ...fronts.map((g) => ({ ...g, front: true as const }))];
+};
+
+/**
+ * One pass of the rule (`coverFills`): with `base` (the first pass's fills) the frontages' alone,
+ * on the ground the first left bare, the first's lawns next to theirs.
+ */
+const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls: readonly (readonly Pt[])[], town: TownPlaces, base: readonly GroundOut[] | null): GroundOut[] => {
   const cells = new Cells(rect);
   const ringOf = (flat: readonly number[]) => {
     const ring: Pt[] = [];
@@ -394,8 +407,12 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
   zoneFronts(cells, town.fronts ?? [], town.greens ?? [], FILL.zoneMargin, FILL.looseArea);
   readCover(cells, cover, FILL.around);
   joinSpecks(cells, FILL.speck);
-  paveSpecks(cells);
-  kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
+  if (base) {
+    const lawns = scratch.u8("fronts.lawns", cells.label.length);
+    for (const g of base) if (g.surface === "grass") cells.mark(ringOf(g.outline), lawns);
+    offFronts(cells);
+    paveSpecks(cells, lawns);
+  } else kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
   dropLoose(cells, FILL.looseWidth, FILL.looseArea);
   keepKerbs(cells, FILL.kerbBand);
   const n = Math.round(FILL.tile / STEP);
@@ -451,13 +468,15 @@ export const coverFiller = (covers: readonly Cover[], walls: readonly (readonly 
 /** Draw order of the surfaces the rule lays: each fill goes first among the pieces of its surface. */
 const ORDER: Readonly<Partial<Record<GroundSurface, number>>> = { water: 0, grass: 1, square: 2 };
 
-/** The chunk's ground with the fills, each at the start of its surface's pieces (the lowest layer). */
+/** The chunk's ground with the fills, each at the start of its surface's pieces (the lowest layer), the frontages' first of all. */
 export const withFills = (ground: readonly GroundOut[], fills: readonly GroundOut[]): GroundOut[] => {
   const out = [...ground];
   for (const s of ["square", "grass"] as const) {
-    const mine = fills.filter((f) => f.surface === s);
+    const mine = fills.filter((f) => f.surface === s && !f.front);
     const at = out.findIndex((g) => (ORDER[g.surface] ?? 99) >= ORDER[s]!);
     out.splice(at < 0 ? out.length : at, 0, ...mine);
   }
-  return out;
+  // The frontages' fills under everything (G-853): where one laps over another piece by the
+  // rounding of the outlines, the partition cuts it, not the piece, and the rest stays as it was.
+  return [...fills.filter((f) => f.front), ...out];
 };
