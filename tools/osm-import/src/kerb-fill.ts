@@ -320,16 +320,19 @@ const easedReach = (side: readonly Sample[], wide: (s: Sample) => boolean): numb
 
 /**
  * The samples of `side` whose strip to a lawn is laid as the lawn's: a stretch of samples reaching
- * a lawn is one surface, the lawn's where most of its samples are `green`, else a square. Chosen
- * sample by sample, the light kerb and the orthophoto's noise flipped the strip between grass and
- * square every 1-3 m along one lawn behind one kerb (Lwowska by Rondo Mohyły, G-825 r4).
+ * a lawn is one surface, the lawn's where most of its samples are `green` and none is `hard`, else
+ * a square. Chosen sample by sample, the light kerb and the orthophoto's noise flipped the strip
+ * between grass and square every 1-3 m along one lawn behind one kerb (Lwowska by Rondo Mohyły,
+ * G-825 r4); by the most alone, grass went over the paving the stretch's other samples showed.
  */
-const lawnStretches = (side: readonly Sample[], green: (s: Sample) => boolean): Set<Sample> => {
+const lawnStretches = (side: readonly Sample[], green: (s: Sample) => boolean, hard: (s: Sample) => boolean): Set<Sample> => {
   const out = new Set<Sample>();
-  for (let i = 0, j = 0; i < side.length; i = Math.max(j, i + 1)) {
-    for (j = i; j < side.length && side[j]!.hit?.lawn; ) j++;
+  for (let i = 0; i < side.length; ) {
+    let j = i;
+    while (j < side.length && side[j]!.hit?.lawn) j++;
     const stretch = side.slice(i, j);
-    if (2 * stretch.filter(green).length > stretch.length) for (const s of stretch) out.add(s);
+    if (2 * stretch.filter(green).length > stretch.length && !stretch.some(hard)) for (const s of stretch) out.add(s);
+    i = Math.max(j, i + 1);
   }
   return out;
 };
@@ -357,15 +360,15 @@ export const kerbFills = (
   const world: World = { lots: new RingBins<Boxed | Block>([...laid, ...blocks]), roads: new RingBins(laid.filter((b) => b.carriageway === true)) };
   const fills: Band[] = [];
   const widened = new Map<Band, { ring: readonly Pt[]; runs: readonly WidenRun[] }>();
-  // Whether the cover of a sample's strip from `from` m out to the lawn is green, with no paving or asphalt.
-  const greenPast = (s: Sample, from: number): boolean => {
+  // The cover of a sample's strip past a kerb's width to the lawn: paving or asphalt where any of it is, else green where any is.
+  const pastKerb = (s: Sample): number => {
     let green = false;
-    for (let t = from + COVER_STEP / 2; t < s.hit!.gap; t += COVER_STEP) {
+    for (let t = LAWN_GAP + COVER_STEP / 2; t < s.hit!.gap; t += COVER_STEP) {
       const c = cover(along(s.edge, s.dir, t));
-      if (HARD.has(c)) return false;
+      if (HARD.has(c)) return COVER.paving;
       green ||= c === COVER.green;
     }
-    return green;
+    return green ? COVER.green : COVER.none;
   };
   for (const road of bands) {
     if (!road.kerb || road.bridge || lineLength(road.kerb.line) < ALONG) continue;
@@ -421,7 +424,7 @@ export const kerbFills = (
       // A moved carriageway's strip to a lawn is the lawn's, drawn to the new kerb (G-825). It reaches
       // on over the next sample past its ends, to the lawn's reach there: the step to a strip of
       // paving, or to the bare ground rule's fill, stayed bare.
-      const lawnLike = lawnStretches(side, (s) => s.hit!.gap <= LAWN_GAP || greenPast(s, LAWN_GAP));
+      const lawnLike = lawnStretches(side, (s) => s.hit!.gap <= LAWN_GAP || pastKerb(s) === COVER.green, (s) => pastKerb(s) === COVER.paving);
       const reachLawn = new Map<Sample, number>();
       side.forEach((s, i) => {
         const at = [s, side[i - 1], side[i + 1]].find((n) => n !== undefined && lawnLike.has(n));

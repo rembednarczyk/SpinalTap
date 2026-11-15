@@ -39,6 +39,7 @@ export const SAMPLED_KINDS: ReadonlySet<string> = new Set([
   "fill-on-green",
   "lane-place-on-green",
   "lawn-strip-on-paving",
+  "kerb-fill-flicker",
   "lawn-on-leafoff-paving",
   "kerb-gap-bare",
   "kerb-fill-wide-estimated",

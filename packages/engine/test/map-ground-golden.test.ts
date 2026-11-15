@@ -138,7 +138,10 @@ describe("the ground the map city lays (G-444)", () => {
     // That strip wider than a kerb (0.6 m) is the lawn's only on the orthophoto's green, else a square
     // to the lawn, as the bare ground rule's cells laid it before (G-825 r3): 162 258 - 162 204 = 54
     // vertices more, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 162258, hash: "6f16fce3" });
+    // That strip one surface a stretch, the lawn's only where most of it is green and none of it
+    // paving past the kerb, a square at least a kerb wide (G-825 r4): nabrzeze-0-1's strips by
+    // w40051729 squares, 162 308 - 162 258 = 50 vertices more, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 162308, hash: "d686d207" });
     scene.dispose();
   });
 

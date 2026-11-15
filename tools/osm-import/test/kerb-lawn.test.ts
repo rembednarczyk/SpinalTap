@@ -4,11 +4,11 @@ import { generate } from "../src/generate.ts";
 import { type Pt, pointInRing } from "../src/geometry.ts";
 import { loadInputs } from "../src/load.ts";
 
-describe("a moved carriageway's strip to a lawn (G-825 r3)", () => {
+describe("a moved carriageway's strip to a lawn (G-825 r3, r4)", () => {
   const inputs = loadInputs();
   const chunk = (id: string, minX: number, minZ: number, maxX: number, maxZ: number) => ({ id, district: DISTRICTS[0]!, rect: { minX, minZ, maxX, maxZ } });
-  // Lwowska's east kerb by Rondo Mohyły, and Al. Tysiąclecia's north-east corner at Lwowska.
-  const chunks = [chunk("mohyly", 1080, 450, 1100, 480), chunk("tysiaclecia", 1105, 268, 1125, 282)];
+  // Lwowska's east kerb by Rondo Mohyły, Al. Tysiąclecia's north-east corner at Lwowska, and Lwowska's west kerb north of it.
+  const chunks = [chunk("mohyly", 1080, 450, 1100, 480), chunk("tysiaclecia", 1105, 268, 1125, 282), chunk("lwowska", 1100, 330, 1130, 450)];
   const ground = generate(inputs.osm, () => 190, chunks, undefined, undefined, undefined, inputs.covers)
     .chunks.flatMap((c) => c.ground)
     .map((g) => ({ surface: g.surface, ring: Array.from({ length: g.outline.length / 2 }, (_, i) => ({ x: g.outline[2 * i]!, z: g.outline[2 * i + 1]! })) }));
@@ -36,5 +36,24 @@ describe("a moved carriageway's strip to a lawn (G-825 r3)", () => {
     // 275.9 (x 1114); the carriageway laid to z 274.35-274.75, and the strip from it was grass.
     const laid = [1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118].flatMap((x) => Array.from({ length: 6 }, (_, k) => ({ x, z: 274.9 + k * 0.1 })).filter(onGrass));
     expect(laid).toEqual([]);
+  });
+
+  // The ground 0.3 m short of the first carriageway met at z walking from x `from` by `dx`, from the lawn's side.
+  const pastKerb = (z: number, from: number, dx: number) => {
+    let x = from;
+    while (Math.abs(x - from) < 15 && !on("road")({ x, z })) x += dx;
+    const p = { x: x - Math.sign(dx) * 0.3, z };
+    return ground.find((g) => (g.surface === "grass" || g.surface === "square") && pointInRing(p, g.ring))?.surface ?? "other";
+  };
+  const along = (z0: number, z1: number) => Array.from({ length: Math.floor((z1 - z0) / 0.5) + 1 }, (_, k) => z0 + k * 0.5);
+
+  it("lays one surface along the strip by Lwowska's moved kerbs, not grass and square by turns", () => {
+    // PZGiK 2023-09 and 2024-06: one lawn behind one light kerb 0.5-1 m wide along Lwowska's west
+    // kerb (z 337.8-365 but the zebra and footway at 348-354, 392-442) and its east kerb by Rondo Mohyły (z 455-472). Chosen sample by
+    // sample the strip flipped between square and grass every 1-3 m (13 runs on the west kerb), and
+    // by Rondo Mohyły the lawn met the asphalt for 2 m (z 462.5-464.4).
+    const west = [...along(338.5, 347.5), ...along(354.5, 364.5), ...along(392.5, 441)].filter((z) => pastKerb(z, 1105, 0.05) !== "square");
+    const east = along(455.5, 471.5).filter((z) => pastKerb(z, 1095, -0.05) !== "square");
+    expect({ west, east }).toEqual({ west: [], east: [] });
   });
 });

@@ -79,6 +79,7 @@ import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { crossingGlow, crossingKerb, crossingOverhang, crossingSkew } from "./crossing-shape";
+import { kerbFillFlicker } from "./kerb-fill-flicker";
 import { kerbJag } from "./kerb-jag";
 import { kerbStripBare } from "./kerb-strip-bare";
 import { markingSteps } from "./marking-step";
@@ -2085,6 +2086,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       generatedCity().stats.flatMap((c) => c.fills.filter((f) => f.surface === "grass").map((f) => Array.from({ length: f.outline.length >> 1 }, (_, k) => ({ x: f.outline[2 * k]!, z: f.outline[2 * k + 1]! })))),
       MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined),
     ),
+  /** A run under 5 m of grass or square 0.3 m past a carriageway's edge with the other of the two on both sides: a strip by the kerb whose surface flips every few metres (G-825 r4, `kerb-fill-flicker.ts`). */
+  "kerb-fill-flicker": () => kerbFillFlicker(MAP_CHUNKS),
   /** A 0.5 m sample under a lawn the bare ground rule laid that the leaf-off flight shows as paving under crowns: a pavement under trees taken for a tree's bed (G-764, `fill-on-green.ts`). */
   "lawn-on-leafoff-paving": () => lawnOnLeafOffPaving(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A piece the bare ground rule laid whose triangles cover other than its area by over 0.01 m²: a ring touching itself (G-764, `fill-area.ts`). */
