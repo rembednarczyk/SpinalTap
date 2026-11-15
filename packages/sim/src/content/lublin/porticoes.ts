@@ -34,7 +34,7 @@ export const PORTICOES: readonly Portico[] = [
       { x: 417.65, z: -86.23 },
       { x: 421.52, z: -85.73 },
     ],
-    radius: 0.33,
+    radius: 0.45,
     out: 1.6,
   },
 ];
@@ -42,8 +42,12 @@ export const PORTICOES: readonly Portico[] = [
 /** The portico against a building of the data, or null. */
 export const porticoOf = (building: string): Portico | null => PORTICOES.find((p) => p.building === building) ?? null;
 
-/** Height of a column's solid over the building's centre: up to the balcony on the string course (6 m). */
-const COLUMN_TOP = 6;
+/**
+ * Height of a column's solid over the building's centre: up to the balcony, which a giant order
+ * of two storeys carries in front of the second floor's windows (NMPT 9.6-11.0 m before the front,
+ * Lublin360 2017: the heads level with the first floor's arches); the renderer's balcony floor.
+ */
+export const COLUMN_TOP = 10.2;
 
 /**
  * The columns of a building's portico as solids relative to its centre (an octagon round each

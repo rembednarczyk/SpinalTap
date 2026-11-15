@@ -45,6 +45,12 @@ export const palaceRows = (f: LandmarkFrame, pf: PalaceFront): PalaceRows => {
   return { rows, course: pf.rusticated && rows.length > 1 ? (rows[0] as [number, number])[1] : null };
 };
 
+/** The portico's balcony floor (world y): the top of the last storey its giant order spans. */
+export const balconyFloor = (f: LandmarkFrame, pf: PalaceFront): number => {
+  const { rows } = palaceRows(f, pf);
+  return (rows[Math.min(pf.giant ?? 1, rows.length) - 1] as [number, number])[1];
+};
+
 /** Window axes evenly over [a, b], at most `pitch` apart; none on a stretch under 1.6 m. */
 const axesOver = (a: number, b: number, pitch: number): number[] => {
   if (b - a < 1.6) return [];

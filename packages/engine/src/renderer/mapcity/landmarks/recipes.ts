@@ -25,15 +25,13 @@ export interface BlindRow {
  * standing on it (`rise` metres, never more than the data's roof), or a helmet of revolution
  * `height` metres tall up to the data's peak: the rest of the data's roof under it is wall. `roof`
  * is the data's own roof in the shape it gives (`roof:shape`, ADR-0064) and its height, in tiles;
- * with `rise`, no higher than that (the importer's guessed height buried a part, G-117). A helmet
- * `overGuess` stands its full `height` over a roof the importer guessed (no `roof:height` in OSM):
- * the photograph's helmet, not the default, sets the peak.
+ * with `rise`, no higher than that (the importer's guessed height buried a part, G-117).
  */
 export type Crown =
   | { readonly kind: "flat" }
   | { readonly kind: "crenel"; readonly merlon: number; readonly pitch: number }
   | { readonly kind: "skirt"; readonly rise: number; readonly inset: number }
-  | { readonly kind: "helm"; readonly height: number; readonly profile: HelmProfile; readonly overGuess?: true }
+  | { readonly kind: "helm"; readonly height: number; readonly profile: HelmProfile }
   | { readonly kind: "roof"; readonly rise?: number };
 
 /**
@@ -132,6 +130,8 @@ export interface PalaceFront {
   readonly rows: readonly WindowHead[];
   readonly rusticated: boolean;
   readonly pitch: number;
+  /** Storeys the portico's columns span from the ground (a giant order), its balcony on the last one's top; absent: 1. */
+  readonly giant?: number;
 }
 
 /** One OSM building or `building:part` of a landmark with its tier and crown. */
@@ -268,14 +268,15 @@ const BRAMA_GRODZKA: LandmarkRecipe = {
  * cream detail (`building:colour=yellow`) under a low red hipped roof (`roof:colour=red`). The
  * wings: a rusticated ground floor with square windows, round-headed windows in arched panels on
  * the first floor, square windows under cornices on the second, a crowning cornice. Over the plaza
- * a portico of four columns with plain shafts (the simulation's `PORTICOES`) carries a balcony
- * with a balustrade, steps the width of the portico (the data's three flights) between planters,
+ * a portico of four columns of a giant order with plain shafts (the simulation's `PORTICOES`),
+ * through the ground and first floors, carries a balcony with a balustrade before the second's, steps the width of the portico (the data's three flights) between planters,
  * five flags over it. The risalit's block (w619138853, six storeys of the data) stands over the
  * wings' roof with round-headed windows and a cornice, no pediment (G-117: the importer's guessed
  * 7 m roof buried it, so the roof stays 3.5 m). On it the tower (w619138854): a storey in the
  * front's plaster with the clocks towards the plaza and the yards, over a string course a square
  * storey clad in copper with corner pilasters and round-headed openings, a copper helmet with a
- * lantern and a spire with a ball (`roof:colour=green`). Krakowskie Przedmieście is the new town:
+ * lantern and a spire with a ball (`roof:colour=green`); its heights from GUGiK (body 30.5 m, peak
+ * 38 m), the clock storey 4 m, the copper one 6 m. Krakowskie Przedmieście is the new town:
  * neon on the cornices facing the plaza, the clock's holo, Lublin 2077's mast over the ball.
  */
 const NOWY_RATUSZ: LandmarkRecipe = {
@@ -283,7 +284,7 @@ const NOWY_RATUSZ: LandmarkRecipe = {
   parts: [
     {
       osm: "w66264120",
-      tier: { material: "plaster", colour: "sand", plinth: 0, blinds: NO_BLINDS, pilasters: false, cornice: true, base: false, openings: false, clock: false, palace: { rows: ["plain", "arched", "pediment"], rusticated: true, pitch: 3.4 } },
+      tier: { material: "plaster", colour: "sand", plinth: 0, blinds: NO_BLINDS, pilasters: false, cornice: true, base: false, openings: false, clock: false, palace: { rows: ["plain", "arched", "pediment"], rusticated: true, pitch: 3.4, giant: 2 } },
       crown: { kind: "roof", rise: 3.5 },
     },
     {
@@ -293,30 +294,29 @@ const NOWY_RATUSZ: LandmarkRecipe = {
     },
     {
       osm: "w619138854",
-      tier: { material: "plaster", colour: "sand", upper: "patina", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: false, openings: true, clock: true, split: 2.2 },
+      tier: { material: "plaster", colour: "sand", upper: "patina", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: false, openings: true, clock: true, split: 4 },
       crown: {
         kind: "helm",
-        // OSM has no roof:height for the tower (the importer's 3 m default); on the photograph the
-        // helmet with its lantern and spire is about twice the copper storey's 2.5 m.
-        height: 5,
-        overGuess: true,
+        // The data's roof (7.5 m from NMPT and LoD2, `corrections-landmarks.ts`): the helmet with its
+        // lantern and spire up to the peak.
+        height: 7.5,
         profile: {
-          // A tall bell, near two thirds of the helmet (Street View 2025), the lantern and a small onion over it.
-          // Upright at its foot, so the bell shows over the cornice from the plaza below.
+          // A bell upright at its foot to two fifths of the helmet (Street View 2025), the lantern,
+          // a small onion and the spire with its ball over it.
           shell: [
             [0.95, 0],
-            [0.95, 0.12],
-            [0.9, 0.27],
-            [0.78, 0.41],
-            [0.58, 0.53],
-            [0.38, 0.6],
-            [0.3, 0.62],
+            [0.95, 0.08],
+            [0.9, 0.17],
+            [0.78, 0.26],
+            [0.58, 0.34],
+            [0.38, 0.39],
+            [0.3, 0.4],
           ],
-          lantern: [0.62, 0.78],
+          lantern: [0.4, 0.56],
           lanternRadius: 0.3,
-          onion: 0.88,
-          ball: 0.92,
-          mast: 0.96,
+          onion: 0.66,
+          ball: 0.74,
+          mast: 0.84,
         },
       },
     },

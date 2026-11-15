@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { groundY } from "@seki/sim";
-import { porticoOf } from "@seki/sim/lublin";
+import { COLUMN_TOP, porticoOf } from "@seki/sim/lublin";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { planNearFrames } from "../src/renderer/mapcity/cell-plan";
 import { ROOF_STYLE } from "../src/renderer/mapcity/facade-style";
 import { type LandmarkFrame, isLandmarkFrame, landmarkAt, planLandmarkSigns } from "../src/renderer/mapcity/landmarks";
 import { SWATCH } from "../src/renderer/mapcity/landmarks/kit";
 import { clockWalls } from "../src/renderer/mapcity/landmarks/landmark-plan";
-import { palaceAxes, palaceRows } from "../src/renderer/mapcity/landmarks/palace";
+import { balconyFloor, palaceAxes, palaceRows } from "../src/renderer/mapcity/landmarks/palace";
 import { BALUSTRADE, porticoOn } from "../src/renderer/mapcity/landmarks/portico";
 import { along, before, cityAround, colored, crosses, data, near3, points } from "./landmark-fixture";
 
@@ -65,23 +65,30 @@ describe("Nowy Ratusz from the landmark kit (G-119)", () => {
     }
   });
 
-  it("stands a portico of four columns on the ground in front of the south front, the balcony on the string course", () => {
+  it("stands a giant order of four columns through the ground and first floors, the balcony before the second's at about 10 m (NMPT)", () => {
     const f = hall();
     const po = porticoOn(f)!;
     expect(po).not.toBeNull();
     expect(po.w.nz).toBeLessThan(-0.9);
-    const { course } = palaceRows(f, f.landmark.part.tier.palace!);
-    expect(course).not.toBeNull();
+    const palace = f.landmark.part.tier.palace!;
+    const { rows } = palaceRows(f, palace);
+    const course = balconyFloor(f, palace);
+    // On the first floor's top, under the second floor's windows; NMPT 9.6-11.0 m before the front.
+    expect(course).toBeCloseTo(rows[1]![1], 6);
+    expect(course - data(HALL).y).toBeGreaterThan(9.6);
+    expect(course - data(HALL).y).toBeLessThan(11);
+    // The columns' solids reach the balcony.
+    expect(Math.abs(data(HALL).y + COLUMN_TOP - course)).toBeLessThan(0.3);
     const sink = near3(f);
     const cream = colored(sink, SWATCH.cream);
     for (const c of porticoOf(HALL)!.columns) {
       // A shaft round the axis from the ground up to the entablature under the balcony.
-      const shaft = cream.filter((p) => Math.hypot(p.x - c.x, p.z - c.z) < 0.5);
+      const shaft = cream.filter((p) => Math.hypot(p.x - c.x, p.z - c.z) < 0.8);
       expect(Math.min(...shaft.map((p) => p.y))).toBeLessThan(groundY(c.x, c.z) + 0.6);
-      expect(Math.max(...shaft.map((p) => p.y))).toBeGreaterThan(course! - 0.8);
+      expect(Math.max(...shaft.map((p) => p.y))).toBeGreaterThan(course - 0.8);
     }
     // The balustrade over the balcony's floor, at the front past the columns.
-    const rail = colored(sink, SWATCH.plasterTrim).filter((p) => p.y > course! + BALUSTRADE.rail - 0.15 && p.y < course! + BALUSTRADE.rail + 0.05);
+    const rail = colored(sink, SWATCH.plasterTrim).filter((p) => p.y > course + BALUSTRADE.rail - 0.15 && p.y < course + BALUSTRADE.rail + 0.05);
     expect(rail.some((p) => before(po.w, p) > po.p.out)).toBe(true);
   });
 
@@ -113,7 +120,7 @@ describe("Nowy Ratusz from the landmark kit (G-119)", () => {
     expect(colored(near3(f), SWATCH.tablet)).toHaveLength(4);
   });
 
-  it("gives the tower its clocks towards the plaza and the yards, a copper storey and a helmet 5 m tall", () => {
+  it("gives the tower GUGiK's heights (body 30.5 m, peak 38 m), a 4 m clock storey towards the plaza and the yards, a copper one and the helmet", () => {
     const f = frameOf(TOWER) as LandmarkFrame;
     const d = data(TOWER);
     const { neon, old } = clockWalls(f);
@@ -121,11 +128,14 @@ describe("Nowy Ratusz from the landmark kit (G-119)", () => {
     expect(old!.nz).toBeGreaterThan(0.9);
     const sink = near3(f);
     expect(colored(sink, SWATCH.patina).length).toBeGreaterThan(20);
-    // The data's walls; the helmet 5 m over them, not the importer's 3 m default (no roof:height in OSM).
-    expect(d.roof).toBe(3);
-    expect(f.top).toBeCloseTo(d.y + d.height, 6);
-    const peak = d.y + d.height + 5;
-    expect(Math.max(...points(sink).map((p) => p.y))).toBeCloseTo(peak, 1);
+    // NMPT over the tower: body 29.6-31.8 m, spire 38.2 m; LoD2 37.7 m (was 25.1 and 28.1).
+    expect(f.top - d.y).toBeGreaterThan(29.6);
+    expect(f.top - d.y).toBeLessThan(31.8);
+    const peak = Math.max(...points(sink).map((p) => p.y));
+    expect(peak - d.y).toBeGreaterThan(37.5);
+    expect(peak - d.y).toBeLessThan(38.5);
+    expect(f.landmark.part.tier.split).toBe(4);
+    expect(f.top - f.b.foot - 4).toBeGreaterThan(5.5);
     // The bell shows over the cornice from the plaza: over 2 m of it at more than half the tower's radius.
     const bell = colored(sink, SWATCH.patina).filter((p) => p.y > f.top + 2 && Math.hypot(p.x - 415, p.z + 79.3) > 1.1);
     expect(bell.length).toBeGreaterThan(0);

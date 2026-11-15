@@ -10,7 +10,7 @@ import type { LandmarkFrame } from "./landmark-frame";
 /**
  * A landmark's portico (ADR-0062, G-119, Nowy Ratusz): columns with plain shafts and simple heads
  * on square plinths, standing on the ground where the simulation's `PORTICOES` puts them (its
- * solids), an entablature carrying a balcony with a balustrade of balusters at the string course,
+ * solids), an entablature carrying a balcony with a balustrade of balusters over the storeys they span,
  * planters at the foot of the steps, and flags on masts over the balcony. Baked in world space into
  * the cell's sink like the rest of the kit; the steps are the data's own flights.
  */
@@ -89,18 +89,15 @@ const balustrade = (sink: MeshSink, po: PorticoOn, y: number, white: Rgba): void
   }
 };
 
-/** The balcony's floor (world y): the string course, the entablature under it. */
-export const balconyFloor = (course: number): number => course;
-
 /** The data's name on the entablature's front over the middle bay: its middle along the wall, world y, out from the wall and size. */
-export const nameplateOn = (f: LandmarkFrame, course: number): { w: Wall; u: number; y: number; out: number; width: number; height: number } | null => {
+export const nameplateOn = (f: LandmarkFrame, floor: number): { w: Wall; u: number; y: number; out: number; width: number; height: number } | null => {
   const po = porticoOn(f);
   if (!po || !f.b.name || !f.landmark.recipe.layer.nameplate) return null;
   const [u0, u1] = spanOf(po);
   // On the entablature's face under the balcony's lip (0.14 m), its tablet's margin within it.
   const height = ENTABLATURE.height - 0.24;
   const width = Math.min(u1 - u0 - 0.6, height * 8);
-  return { w: po.w, u: (u0 + u1) / 2, y: course - 0.14 - (ENTABLATURE.height - 0.14) / 2, out: po.p.out + ENTABLATURE.over + 0.02, width, height };
+  return { w: po.w, u: (u0 + u1) / 2, y: floor - 0.14 - (ENTABLATURE.height - 0.14) / 2, out: po.p.out + ENTABLATURE.over + 0.02, width, height };
 };
 
 /** A round planter of concrete with a clipped shrub at (u, out) off the wall, on the ground there. */
@@ -121,7 +118,8 @@ const flags = (sink: MeshSink, f: LandmarkFrame, po: PorticoOn, floor: number): 
   const mid = (u0 + u1) / 2;
   const step = Math.min(1.9, (u1 - u0 - 1.6) / Math.max(list.length - 1, 1));
   const out = 0.7;
-  const top = floor + 5.6;
+  // Up to about the crowning cornice (NMPT 15.2 m over the plaza at Nowy Ratusz).
+  const top = floor + 5.2;
   const back = { x: -po.w.nx, y: 0, z: -po.w.nz };
   list.forEach((stripes, k) => {
     const u = mid + (k - (list.length - 1) / 2) * step;
@@ -140,13 +138,12 @@ const flags = (sink: MeshSink, f: LandmarkFrame, po: PorticoOn, floor: number): 
   });
 };
 
-/** The portico on its wall: the columns up to the entablature under the balcony at `course`, the balcony, planters and flags. */
-export const planPortico = (sink: MeshSink, f: LandmarkFrame, course: number): void => {
+/** The portico on its wall: the columns up to the entablature under the balcony's `floor` (world y), the balcony, planters and flags. */
+export const planPortico = (sink: MeshSink, f: LandmarkFrame, floor: number): void => {
   const po = porticoOn(f);
   if (!po) return;
   const stone = solid(SWATCH.stone);
   const cream = solid(SWATCH.cream);
-  const floor = balconyFloor(course);
   const y0 = floor - ENTABLATURE.height;
   po.us.forEach((u, k) => column(sink, po, u, po.feet[k] as number, y0, stone, cream));
   const [u0, u1] = spanOf(po);
@@ -159,7 +156,7 @@ export const planPortico = (sink: MeshSink, f: LandmarkFrame, course: number): v
   sink.box({ x: lip.x, y: floor - 0.07, z: lip.z }, u1 - u0 + 0.12, 0.14, depth + 0.12, solid(SWATCH.plasterTrim), { rotY });
   balustrade(sink, po, floor, solid(SWATCH.plasterTrim));
   // The dark stone tablet the name's light letters (a sign) stand on: they add light, so a cream ground would swallow them.
-  const plate = nameplateOn(f, course);
+  const plate = nameplateOn(f, floor);
   if (plate) panel(sink, plate.w, plate.u - plate.width / 2 - 0.1, plate.u + plate.width / 2 + 0.1, plate.y - plate.height / 2 - 0.03, plate.y + plate.height / 2 + 0.03, plate.out - 0.01, solid(SWATCH.tablet), trimMeta(f.style.seed));
   // At the foot of the steps, either side of them, as on the photographs.
   const foot = po.p.out + 2.9;

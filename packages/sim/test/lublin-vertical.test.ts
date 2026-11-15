@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../src/content/world-map";
 import { LUBLIN_CHUNKS, RISE_STOREY, buildingView, isLandmark, porticoOf, verticalOf } from "../src/content/lublin";
+import { COLUMN_TOP } from "../src/content/lublin/porticoes";
 
 const all = LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => ({ district: c.district, b })));
 const rynek = { x: 582.4, z: -61.2 };
@@ -93,7 +94,7 @@ describe("vertical Lublin 2077 (ADR-0051)", () => {
         const columns = porticoOf(ids.get(`${p.center.x},${p.center.z}`) ?? "")?.columns.length ?? 0;
         const parts = (p.prisms ?? []).slice(0, (p.prisms ?? []).length - columns);
         for (const prism of parts) expect(prism.top).toBeCloseTo(p.view.height + rise, 6);
-        for (const prism of (p.prisms ?? []).slice(parts.length)) expect([prism.bottom, prism.top]).toEqual([-1, 6]);
+        for (const prism of (p.prisms ?? []).slice(parts.length)) expect([prism.bottom, prism.top]).toEqual([-1, COLUMN_TOP]);
         if (rise > 0) grown++;
       }
     }
