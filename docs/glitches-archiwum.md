@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-873 Graf poziomów: brak testu, że krawędzie nie przekraczają REACH 120 m
+- Ważność: S4 · Zasięg: packages/sim/src/world/nav.ts (REACH), graf W-3, S7, metro, Alchemia
+- Opis: PR #592 (3ac9856): attach w nav.ts testował linię wzroku do węzłów metra Targowa 1,74 km dalej (946 fałszywych przejść przez ziemię, 2,9 s z 4,0 s testów reinforcement-sidestep). Poprawka REACH 120 m (najdłuższa krawędź 84 m). Brakuje testu, który pilnuje, że nowe krawędzie grafu mieszczą się w REACH.
+- Status: naprawione (15.11, 601 scalony); wcześniej: w PR #601; wcześniej: nowy
+- Pakiet właściciela: packages/sim
+
 ### G-658 Jezdnie w kształcie „lizaka” mają samoprzecinający się obrys
 - Status: naprawione (15.11, 559 scalony); wcześniej: zgłoszone (12.11, naprawiacz G-654)
 - Ważność: S4 · Zasięg: w173489056, w179269926, w296752325, w360030910, w1561106064 (drogi serwisowe z pętlą zamkniętą na własnym węźle); `simplePieces` z #433 celowo ich nie tnie, bo pocięcie odsłania lukę w cięciu chodnika w Nabrzeżu przy (2696; 299), +1 próbka `landuse-bare`; razem z tym wypełnienie zewnętrznych rogów na stykach kawałków dróg (proste końce `bufferLine`, do 1 m² na róg); nabrzeze-1-1 (12.11): `ground-ring-self-cross` droga (road) 14 punktów (2685; 280) i `kerb-fill-wide-estimated` 7 kwadratów (708 próbek), skupisko (2695; 300), obok miejsca (2696; 299) z G-658; niepotwierdzone, że ta sama droga.

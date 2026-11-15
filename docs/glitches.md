@@ -2264,12 +2264,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - builtSites (cfec849, 6bbd199): building=construction pod LoD1 2024 (IoU>=0,7) jako budynek, bryła 19,7 m commercial; osm-construction-built 1->0; przy bryle +15 landuse-bare, +10 bare-on-cover, +5 ground-strip-gap (goła ziemia sprzed poprawki, teraz przedpole sklepu); baza nie podniesiona, czeka na przegląd kuratora i decyzję
 
-### G-873 Graf poziomów: brak testu, że krawędzie nie przekraczają REACH 120 m
-- Ważność: S4 · Zasięg: packages/sim/src/world/nav.ts (REACH), graf W-3, S7, metro, Alchemia
-- Opis: PR #592 (3ac9856): attach w nav.ts testował linię wzroku do węzłów metra Targowa 1,74 km dalej (946 fałszywych przejść przez ziemię, 2,9 s z 4,0 s testów reinforcement-sidestep). Poprawka REACH 120 m (najdłuższa krawędź 84 m). Brakuje testu, który pilnuje, że nowe krawędzie grafu mieszczą się w REACH.
-- Status: w PR #601; wcześniej: nowy
-- Pakiet właściciela: packages/sim
-
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
