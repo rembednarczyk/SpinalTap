@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
+import { builtSites } from "../src/built-sites.ts";
 import { DISTRICTS } from "../src/config.ts";
 import { extractFeatures } from "../src/features.ts";
 import { generate } from "../src/generate.ts";
@@ -29,5 +30,27 @@ describe("building=construction (G-872)", () => {
     expect(areas.find((a) => a.id === "w1382552286")?.tags.building).toBe("construction");
     expect(built("w1382552286", 251, 24, inputs.lod1)).toBeUndefined();
     expect(built("w1134342880", 323, 77)).toBeUndefined();
+  });
+});
+
+describe("builtSites", () => {
+  const ring = [
+    { x: 0, z: 0 },
+    { x: 10, z: 0 },
+    { x: 10, z: 10 },
+    { x: 0, z: 10 },
+  ];
+  const site = (tags: Record<string, string>) => ({ id: "w1", osmId: 1, tags: { building: "construction", ...tags }, ring, holes: 0 });
+  const lod1 = [{ id: "L1", height: 9, ground: 200, ring }];
+
+  it("takes the kind it was built as, `yes` for none", () => {
+    expect(builtSites([site({ construction: "retail" })], lod1)[0]!.tags.building).toBe("retail");
+    expect(builtSites([site({ construction: "yes" }), site({})], lod1).map((a) => a.tags.building)).toEqual(["yes", "yes"]);
+  });
+
+  it("keeps a site LoD1 does not match one to one, and every site without LoD1", () => {
+    const off = [{ id: "L1", height: 9, ground: 200, ring: ring.map((p) => ({ x: p.x + 5, z: p.z })) }];
+    expect(builtSites([site({})], off)[0]!.tags.building).toBe("construction");
+    expect(builtSites([site({})], undefined)[0]!.tags.building).toBe("construction");
   });
 });

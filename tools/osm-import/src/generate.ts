@@ -275,10 +275,8 @@ export const generate = (
 ): Generated => {
   // The ways a set piece of the game replaces (ADR-0074 stage 7) are left out before anything reads them.
   const features = withoutReplaced(extractFeatures(data));
-  // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), before anything reads them.
-  const lod1s = lod1 && lod1Index(lod1);
-  // A building site LoD1 2024 shows standing is a building (G-872), for everything that reads the areas.
-  const areas = builtSites([...features.areas.map((a) => corrected(a)), ...addedAreas(added)], lod1s);
+  // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), and the building sites LoD1 2024 shows built (G-872), before anything reads them.
+  const areas = builtSites([...features.areas.map((a) => corrected(a)), ...addedAreas(added)], lod1);
   const mapLines = features.lines.map((l) => correctedLine(l));
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
   const sidewalks = sidewalkIndex(mapLines);
@@ -417,7 +415,7 @@ export const generate = (
   });
   // Walls, fences and hedges (ADR-0077) clear of the buildings, carriageways, steps and the ways through them.
   const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
-  const heights = { ...(lod1s ? { lod1: lod1s } : {}), ...(lod2 ? { lod2: lod2Index(lod2) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
+  const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), ...(lod2 ? { lod2: lod2Index(lod2) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
   const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas, pathLoops(lines)));
   // On the ways as laid: a stretch on a deck over a tunnel is no bank (G-088).
   const steep = steepWays(laidLines.map((l) => l.piece), gridsHeight(terrains));

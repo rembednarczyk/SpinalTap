@@ -7,16 +7,20 @@
  * an empty plot: Zielona 5A) stays a site. The surface model does not decide: at Zielona 5A it
  * holds 12.8 m over most of the plot, so it does not tell a site from a building.
  */
+import { type Lod1Building } from "../../gugik/src/extracts.ts";
 import { type Area } from "./features.ts";
-import { type lod1Index, lod1Match } from "./lod1-heights.ts";
+import { lod1Index, lod1Match } from "./lod1-heights.ts";
 
 /** `construction=*` values that are no kind of building. */
 const NO_KIND = new Set(["yes", "construction"]);
 
-/** `areas` with the building sites LoD1 2024 shows standing (`index`) made the buildings they were built as; without LoD1, as they are. */
-export const builtSites = <A extends Area>(areas: readonly A[], index: ReturnType<typeof lod1Index> | undefined): A[] =>
-  areas.map((a) => {
+/** `areas` with the building sites LoD1 2024 (`lod1`) shows standing made the buildings they were built as; without LoD1, as they are. */
+export const builtSites = <A extends Area>(areas: readonly A[], lod1: readonly Lod1Building[] | undefined): A[] => {
+  const sites = areas.some((a) => a.tags.building === "construction");
+  const index = sites && lod1 ? lod1Index(lod1) : undefined;
+  return areas.map((a) => {
     if (a.tags.building !== "construction" || !index || !lod1Match(index, a.ring)) return a;
     const kind = a.tags.construction;
     return { ...a, tags: { ...a.tags, building: kind !== undefined && !NO_KIND.has(kind) ? kind : "yes" } };
   });
+};
