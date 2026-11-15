@@ -2085,6 +2085,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
 
+### G-846 Karta podsumowania zlecenia zakrywa komunikaty i cel, na 1024x600 wychodzi poza ekran
+- Ważność: S3 · Zasięg: HUD przy skali 1: desktop 1280x720 przecina komunikat; telefon przecina cel, drążek i komunikat; 1024x600 poza ekranem
+- Opis: Sonda e2e agenta skalowania 15.11; poza zakresem ADR-0085 (PR #587)
+- Status: nowy
+- Pakiet właściciela: packages/ui
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
