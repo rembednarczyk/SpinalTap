@@ -2075,7 +2075,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "tree-roof-capture": () => treesRoofCaptured(),
   "tree-unmeasured": () => treesUnmeasured(cityMeasuredPieces(Object.values(WORLD_STREET_PROPS).flat()), Object.values(WORLD_STREET_PROPS).flat()),
   /** A 10 m square with 40 m² of crown or more on the orthophoto cover, 80% of it further than 6 m from every tree of the game: crowns OSM has no tree node under (G-797, `canopy-trees.ts`). */
-  "canopy-without-tree": () => canopyWithoutTree(MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined), Object.values(WORLD_STREET_PROPS).flat()),
+  "canopy-without-tree": () => canopyWithoutTree(MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined), Object.values(WORLD_STREET_PROPS).flat(), CLEARED_BUILDINGS),
   /** A tree whose trunk lies in an OSM building or building part (ruins aside), a building site, a market or a canopy: a roof or a shell taken for a crown (G-815, `tree-structures.ts`). */
   "tree-in-structure": () => treesInStructure(structuresOf(SOURCE_OSM), Object.values(WORLD_STREET_PROPS).flat()),
   /** A tree whose trunk lies 2 m or nearer to a bridge's deck: the deck's height read as a crown (G-815, `tree-structures.ts`). */

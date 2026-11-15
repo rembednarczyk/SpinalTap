@@ -2,8 +2,9 @@
  * Where the trunk of a tree of the crowns (G-797, `crown-trees.ts`) may stand: open ground of a
  * chunk (green or bare, a pavement or a square), not a building, a road, a footpath, steps, water,
  * rails or a bridge's deck, clear of the passages, the car parks (their cars keep their room from a
- * piece at the kerb, and the bays by it stay empty) and the barriers of the map (the game cuts a
- * wall or a fence where a piece stands on its line).
+ * piece at the kerb, and the bays by it stay empty), the barriers of the map (the game cuts a
+ * wall or a fence where a piece stands on its line) and the bridges' decks (the surface model
+ * reads a deck's height over the ground under it as a crown: G-815).
  */
 import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type Pt, type Rect, pointInRing, ringBounds } from "./geometry.ts";
@@ -15,6 +16,8 @@ const PASSAGE_REACH = 2.5;
 export const PARK_OFF = 2;
 /** How far a barrier's line keeps the trunks (m). */
 export const BARRIER_OFF = 1;
+/** How far a bridge's deck keeps the trunks (m). */
+export const DECK_OFF = 2;
 /** The bins of the keep-outs (m). */
 const BIN = 16;
 
@@ -39,7 +42,7 @@ const edgeGap = (s: Shape, p: Pt): number => {
   return d;
 };
 
-/** The car parks and the barrier lines of the chunks, by bins, for the trunks to keep off. */
+/** The car parks, the barrier lines and the bridges' decks of the chunks, by bins, for the trunks to keep off. */
 export class KeepOut {
   private readonly bins = new Map<string, Shape[]>();
 
@@ -48,6 +51,7 @@ export class KeepOut {
     for (const c of site.chunks) for (const k of c.carParks ?? []) parks.set(k.id, flat(k.outline));
     for (const pts of parks.values()) this.add({ pts, closed: true, off: PARK_OFF, box: ringBounds(pts) });
     for (const c of site.chunks) for (const b of c.barriers ?? []) this.add({ pts: flat(b.line), closed: false, off: BARRIER_OFF, box: ringBounds(flat(b.line)) });
+    for (const c of site.chunks) for (const g of c.ground) if (g.bridge) this.add({ pts: flat(g.outline), closed: true, off: DECK_OFF, box: ringBounds(flat(g.outline)) });
   }
 
   private add(s: Shape): void {
@@ -61,7 +65,7 @@ export class KeepOut {
       }
   }
 
-  /** Whether p lies in a car park, or nearer a car park's outline or a barrier's line than it keeps. */
+  /** Whether p lies in a car park or on a deck, or nearer one's outline or a barrier's line than it keeps. */
   near(p: Pt): boolean {
     for (const s of this.bins.get(`${Math.floor(p.x / BIN)},${Math.floor(p.z / BIN)}`) ?? []) {
       if (p.x < s.box.minX - s.off || p.x > s.box.maxX + s.off || p.z < s.box.minZ - s.off || p.z > s.box.maxZ + s.off) continue;

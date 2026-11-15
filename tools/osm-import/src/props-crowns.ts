@@ -12,21 +12,25 @@ import { DISTRICTS } from "./config.ts";
 import { type CrownStats, crownReach, crownTreeItem, crownTrees } from "./crown-trees.ts";
 import type { Rect } from "./geometry.ts";
 import type { PropsPlan } from "./props-gen.ts";
+import { loadStructures } from "./props-osm.ts";
+import type { Structure } from "./structures.ts";
 import { type LitWay, placeLit } from "./props-lit.ts";
 import type { Site } from "./props-site.ts";
 
-/** What the crowns are read from: the districts' rectangles, the orthophoto's cover and the surface model. */
+/** What the crowns are read from: the districts' rectangles, the orthophoto's cover, the surface model and the map's structures. */
 export interface CrownData {
   readonly rects: readonly Rect[];
   readonly covers: readonly Cover[];
   readonly chms: readonly Chm[];
+  readonly structures: readonly Structure[];
 }
 
-/** The committed data of every district (`data/orto`, `data/gugik/nmpt`). */
+/** The committed data of every district (`data/orto`, `data/gugik/nmpt`, `data/osm`). */
 export const loadCrownData = (): CrownData => ({
   rects: DISTRICTS.map((d) => d.rect),
   covers: DISTRICTS.flatMap((d) => readCover(d.slug) ?? []),
   chms: loadChms(),
+  structures: loadStructures(),
 });
 
 /** The plan placed by `place` with the `lit` rule's passes and the crowns' trees, and the rule's control numbers. */
@@ -49,7 +53,7 @@ export const placeWithCrowns = <T extends { readonly byChunk: ReadonlyMap<string
     streets,
   );
   const trees = [...lamped.byChunk.values()].flat().flatMap((i) => (i.prop === "tree" ? [{ p: { x: i.x, z: i.z }, reach: crownReach(treeHeight(i.variant)) }] : []));
-  const found = crownTrees(data.rects, site, data.covers, data.chms, trees);
+  const found = crownTrees(data.rects, site, data.covers, data.chms, trees, data.structures);
   if (found.trees.length === 0) return { ...lamped, crowns: { ...found.stats, placed: 0 } };
   const out = place({ ...last, items: [...last.items, crownTreeItem(found.trees)] });
   const placed = [...out.byChunk.values()].flat().filter((i) => i.prop === "tree").length - trees.length;

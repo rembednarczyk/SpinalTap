@@ -33,6 +33,10 @@ describe("crowns with no tree (canopy-without-tree)", () => {
     expect(canopyWithoutTree([cover({ minX: 0, maxX: 10, minZ: 0, maxZ: 10 })], [tree(15.5, 5)])).toHaveLength(1);
   });
 
+  it("leaves out the rectangles the game clears for its set pieces (G-815)", () => {
+    expect(canopyWithoutTree([cover({ minX: 0, maxX: 10, minZ: 0, maxZ: 10 })], [], [{ minX: 0, maxX: 10, minZ: 0, maxZ: 10 }])).toEqual([]);
+  });
+
   it("counts only trees, and a sample two covers hold once", () => {
     expect(canopyWithoutTree([cover({ minX: 0, maxX: 10, minZ: 0, maxZ: 10 })], [tree(5, 5, "bench")])).toHaveLength(1);
     const twice = canopyWithoutTree([cover({ minX: 10, maxX: 20, minZ: 0, maxZ: 10 }), cover({ minX: 10, maxX: 30, minZ: 0, maxZ: 10 }, 10)], []);

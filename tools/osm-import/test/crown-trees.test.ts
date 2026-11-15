@@ -9,6 +9,9 @@ import { CROWN_GROUP, crownReach, crownTreeItem, crownTrees } from "../src/crown
 import type { Pt } from "../src/geometry.ts";
 import { worldToPuwg } from "../src/project.ts";
 import { Site } from "../src/props-site.ts";
+import type { Structure } from "../src/structures.ts";
+import { CLEARED_BUILDINGS } from "../../../packages/sim/src/content/lublin/sites.ts";
+import { CROWN_CLEARED } from "../src/crown-grid.ts";
 
 /** The rule of the crowns' trees (G-797) on a 100 x 60 m chunk: a lawn, a road along z = 30, houses north of z = 50, a car park and a wall. */
 
@@ -67,7 +70,7 @@ const highest =
   (p: Pt) =>
     Math.max(0.2, ...fs.map((f) => f(p)));
 const everywhere = coverOf(() => true);
-const run = (chm: Chm, cover: Cover = everywhere, trees: { p: Pt; reach: number }[] = [], c = chunk()) => crownTrees([RECT], new Site([c]), [cover], [chm], trees);
+const run = (chm: Chm, cover: Cover = everywhere, trees: { p: Pt; reach: number }[] = [], c = chunk(), structures: Structure[] = []) => crownTrees([RECT], new Site([c]), [cover], [chm], trees, structures);
 
 describe("trees of the crowns (G-797)", () => {
   it("stands one tree under a crown, at its top, and none where the orthophoto shows no crown", () => {
@@ -111,6 +114,32 @@ describe("trees of the crowns (G-797)", () => {
     const by = run(chm, everywhere, [], wall).trees;
     expect(by.length).toBeGreaterThan(0);
     for (const t of by) expect(Math.abs(t.p.z - 12)).toBeGreaterThanOrEqual(1);
+  });
+
+  it("stands no tree on a building site, a market, a canopy or a building of the map the game does not draw (G-815 P2, P3)", () => {
+    const chm = chmOf(highest(crown({ x: 20, z: 12 }, 12, 5)));
+    const ring = [
+      { x: 10, z: 2 },
+      { x: 30, z: 2 },
+      { x: 30, z: 22 },
+      { x: 10, z: 22 },
+    ];
+    for (const kind of ["construction", "marketplace", "canopy", "building"] as const)
+      expect(run(chm, everywhere, [], chunk(), [{ id: "w5", kind, ring, holes: [], box: { minX: 10, maxX: 30, minZ: 2, maxZ: 22 } }]).trees, kind).toEqual([]);
+    // In a courtyard of a building, a hole of its multipolygon, the tree stands.
+    expect(run(chm, everywhere, [], chunk(), [{ id: "r5", kind: "building", ring: [{ x: 0, z: 0 }, { x: 40, z: 0 }, { x: 40, z: 24 }, { x: 0, z: 24 }], holes: [ring], box: { minX: 0, maxX: 40, minZ: 0, maxZ: 24 } }]).trees).toHaveLength(1);
+  });
+
+  it("keeps the trunks 2 m off a bridge's deck, whose height the surface model reads as a crown (G-815 P4)", () => {
+    const chm = chmOf(highest(crown({ x: 20, z: 12 }, 12, 5)));
+    const deck = chunk({ ground: [...chunk().ground, { surface: "footway", bridge: true, outline: [0, 13, 100, 13, 100, 16, 0, 16] }] });
+    const trees = run(chm, everywhere, [], deck).trees;
+    expect(trees.length).toBeGreaterThan(0);
+    for (const t of trees) expect(13 - t.p.z).toBeGreaterThanOrEqual(2);
+  });
+
+  it("clears the game's set pieces as the simulation does (G-815 P5)", () => {
+    expect(CROWN_CLEARED).toEqual(CLEARED_BUILDINGS);
   });
 
   it("gives the plan a group of the trees keyed by their places", () => {

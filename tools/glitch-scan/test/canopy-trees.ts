@@ -8,11 +8,14 @@ import { type Cover, sampleCentre } from "../../orto/src/cover.ts";
  * `MISSED` or more lies further than `REACH` from every tree of the game. The trees stood on OSM's
  * `natural=tree` nodes and the plan's rows alone, so the crowns of the castle hill's slopes, the
  * Bystrzyca's banks and the yards had no tree under them: 496 squares (audit of 14.11). A finding is
- * a square, keyed by its corner at its least x and z (`SAMPLED_KINDS`).
+ * a square, keyed by its corner at its least x and z (`SAMPLED_KINDS`). The rectangles the game
+ * clears of the map's furniture for its set pieces (the docks, the car wash: `CLEARED_BUILDINGS`)
+ * are left out: no tree of the map stands there in the game (G-815).
  */
 
 type Pt = { readonly x: number; readonly z: number };
 type Finding = { readonly at: string; readonly what: string };
+type Box = { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
 
 /** The side of a square (m). */
 export const SQUARE = 10;
@@ -53,9 +56,9 @@ const holds = (c: Cover, x: number, z: number): boolean => {
 
 /**
  * Every square of the covers with `MIN_CANOPY` m² of crown or more, `MISSED` of it or more further
- * than `REACH` from each tree of `props`. A sample two covers hold counts in the first only.
+ * than `REACH` from each tree of `props`, out of `cleared`. A sample two covers hold counts in the first only.
  */
-export const canopyWithoutTree = (covers: readonly Cover[], props: readonly StreetPropItem[], reach = REACH): Finding[] => {
+export const canopyWithoutTree = (covers: readonly Cover[], props: readonly StreetPropItem[], cleared: readonly Box[] = [], reach = REACH): Finding[] => {
   const trees = gridOf(
     props.filter((p) => p.prop === "tree").map((p) => ({ x: p.x, z: p.z })),
     reach,
@@ -67,7 +70,7 @@ export const canopyWithoutTree = (covers: readonly Cover[], props: readonly Stre
       for (let col = 0; col < h.width; col++) {
         if (!isCanopy(c.cls[row * h.width + col]!)) continue;
         const p = sampleCentre(h, col, row);
-        if (covers.slice(0, k).some((o) => holds(o, p.x, p.z))) continue;
+        if (covers.slice(0, k).some((o) => holds(o, p.x, p.z)) || cleared.some((b) => p.x >= b.minX && p.x < b.maxX && p.z >= b.minZ && p.z < b.maxZ)) continue;
         const key = `${Math.floor(p.x / SQUARE) * SQUARE},${Math.floor(p.z / SQUARE) * SQUARE}`;
         const s = squares.get(key) ?? { crown: 0, missed: 0 };
         s.crown += h.step * h.step;
