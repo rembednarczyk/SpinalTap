@@ -2128,7 +2128,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-853 Pasy gołej ziemi między kostką deptaku Krakowskiego Przedmieścia a pierzejami
 - Ważność: S3 · Zasięg: deptak x −100..440: 2141 m² w 10 m od osi (2765 m² w 20 m); największe (222,5;−70,6) 620 m², (291,0;−69,9) 592 m², (364,6;−86,0) 200 m²
 - Opis: Zgłoszenie użytkownika 15.11. Import nie kładzie nawierzchni między krawędzią kostki (z ortofoto) a ścianami kamienic residential; goła ziemia w kolorze TERRAIN #514c45. Stan od pierwszego importu 29.10 (c0e87f3), malał (2472 → 2141 m²), nie regresja; bardziej widoczny po jaśniejszej kostce z ortofoto (13.11). Zrzuty scratchpad/g-deptak/cmp2/grid.png
-- Status: nowy
+- Status: w naprawie (WIP 7ff493d, runda 2: meble niezależne od wypełnień frontu, nowe klucze skanu, grass-on-light-paving); wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 
 ### G-854 Plamy gołej ziemi przy Bramie Krakowskiej i wschodnich ulicach Starego Miasta
@@ -2155,6 +2155,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/glitch-scan
 - Kurator 15.11 (G-836): (913,345) nie jest fałszywe, to zebra węzła n4586176953 skośna o ok. 50° (P3 G-836); prawdziwe są też (927,468) i (2361,432). Klucze kerb-gap-bare (−160,50) i (2680,360) bez zmiany nawierzchni w kwadracie: szum progu
+
+### G-858 Wypełnienia gołej ziemi odrzucane przez crossesItself po cięciu
+- Ważność: S4 · Zasięg: ok. 40 kawałków w mieście, największe 33 m² (975,407) i 28 m² (373,−171)
+- Opis: cutByPieces odrzuca wypełnienia, których obrys po cięciu sam się przecina; znalezione przy G-853
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
