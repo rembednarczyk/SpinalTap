@@ -31,6 +31,8 @@ export interface StripChunk {
 export const KERB_WIDTH = 0.6;
 /** How far from a carriageway's edge a strip to a lawn reaches (m): the kerb fill's reach of 3 m and its 0.3 m into the lawn. */
 export const STRIP_REACH = 3.3;
+/** How far the import's lawn may stray from the map's outline (m): `openPavings` simplifies it by 0.3 m. */
+const LAWN_SIMPLIFY = 0.3;
 /** The samples' step (m), the cover's. */
 const STEP = 0.5;
 const HARD: ReadonlySet<number> = new Set([COVER.paving, COVER.asphalt]);
@@ -77,8 +79,10 @@ export const lawnStripOnPaving = (chunks: readonly StripChunk[], lawns: readonly
           const cover = coverFor(covers, { x, z });
           if (!cover || !HARD.has(coverAt(cover, x, z))) continue;
           const d = Math.min(...near.map((r) => edgeDistance({ x, z }, r.ring)));
-          // A strip runs from the kerb to a lawn: grass far from any (a roundabout's island) is another kind.
-          if (d <= KERB_WIDTH || d > STRIP_REACH || !lawnsNear.some((r) => edgeDistance({ x, z }, r.ring) <= STRIP_REACH)) continue;
+          if (d <= KERB_WIDTH || d > STRIP_REACH) continue;
+          // A strip runs from the kerb to a lawn, the lawn's outline as the import simplifies it is the lawn's.
+          const toLawn = Math.min(...lawnsNear.map((r) => edgeDistance({ x, z }, r.ring)));
+          if (toLawn <= LAWN_SIMPLIFY || toLawn > STRIP_REACH) continue;
           seen.add(key);
           out.push({ at: `${x.toFixed(0)},${z.toFixed(0)}`, what: `${c.id}: grass on ${coverAt(cover, x, z) === COVER.asphalt ? "asphalt" : "paving"} ${key}, ${d.toFixed(2)} m from the kerb` });
         }

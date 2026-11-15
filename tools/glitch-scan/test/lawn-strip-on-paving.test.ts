@@ -22,8 +22,8 @@ describe("a strip to a lawn laid as grass over paving (lawn-strip-on-paving, G-8
 
   it("names each sample of hard cover under the strip past the kerb's width, and none on the map's lawn", () => {
     const found = lawnStripOnPaving([{ id: "c", ground }], [lawn], [], [cover(COVER.paving)]);
-    // Rows z 5.75 .. 6.75 (0.75-1.75 m from the edge), x 0.25 .. 9.75: the row at z 5.25 is the kerb.
-    expect(found.length).toBe(3 * 20);
+    // Rows z 5.75 and 6.25, x 0.25 .. 9.75: the row at z 5.25 is the kerb, the one at 6.75 the lawn's outline as simplified.
+    expect(found.length).toBe(2 * 20);
     expect(found[0]!.what).toBe("c: grass on paving 0.25,5.75, 0.75 m from the kerb");
   });
 

@@ -9,18 +9,24 @@ describe("a moved carriageway's strip to a lawn (G-825 r3)", () => {
   const chunk = (id: string, minX: number, minZ: number, maxX: number, maxZ: number) => ({ id, district: DISTRICTS[0]!, rect: { minX, minZ, maxX, maxZ } });
   // Lwowska's east kerb by Rondo Mohyły, and Al. Tysiąclecia's north-east corner at Lwowska.
   const chunks = [chunk("mohyly", 1080, 450, 1100, 480), chunk("tysiaclecia", 1105, 268, 1125, 282)];
-  const grass = generate(inputs.osm, () => 190, chunks)
+  const ground = generate(inputs.osm, () => 190, chunks, undefined, undefined, undefined, inputs.covers)
     .chunks.flatMap((c) => c.ground)
-    .filter((g) => g.surface === "grass")
-    .map((g) => Array.from({ length: g.outline.length / 2 }, (_, i) => ({ x: g.outline[2 * i]!, z: g.outline[2 * i + 1]! })));
-  const onGrass = (p: Pt) => grass.some((r) => pointInRing(p, r));
+    .map((g) => ({ surface: g.surface, ring: Array.from({ length: g.outline.length / 2 }, (_, i) => ({ x: g.outline[2 * i]!, z: g.outline[2 * i + 1]! })) }));
+  const on = (surface: string) => (p: Pt) => ground.some((g) => g.surface === surface && pointInRing(p, g.ring));
+  const onGrass = on("grass");
 
   it("lays no lawn over the paving between Lwowska's moved kerb and the lawn by Rondo Mohyły", () => {
     // PZGiK 2024-06 and 2025-04: asphalt to x 1088.75-1089.4, 1-2 m of paving, the lawn from x 1091.0
     // (z 458), 1090.0 (z 462), 1090.3 (z 465), 1091.5 (z 469); the map's lawn w173071721 0.3-0.4 m short
     // of it. The strip laid as the lawn's from the kerb put grass from x 1088.9-1089.4.
+    // Grass within a kerb's width of the asphalt is the kerb's (0.6 m), as everywhere in the game.
     const lawn: [number, number][] = [[458, 1091.0], [462, 1090.0], [465, 1090.3], [469, 1091.5]];
-    const early = lawn.flatMap(([z, x]) => Array.from({ length: 8 }, (_, k) => ({ x: x - 0.5 - k * 0.25, z })).filter(onGrass));
+    const kerb = (z: number) => {
+      let x = 1086;
+      while (x < 1092 && !onGrass({ x, z }) && (on("road")({ x, z }) || x < 1088)) x += 0.05;
+      return x;
+    };
+    const early = lawn.flatMap(([z, x]) => Array.from({ length: 8 }, (_, k) => ({ x: x - 0.5 - k * 0.25, z })).filter((p) => p.x > kerb(z) + 0.6 && onGrass(p)));
     expect(early).toEqual([]);
     expect(lawn.filter(([z, x]) => !onGrass({ x: x + 0.2, z }))).toEqual([]);
   });
