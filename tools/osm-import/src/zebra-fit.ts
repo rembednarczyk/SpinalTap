@@ -117,14 +117,15 @@ const across = (c: Pt, n: Pt, t: Pt, sides: number, cap: number, on: (p: Pt) => 
   const mid = line(0);
   const k = Math.floor(cap / STEP);
   // The run of the asphalt nearest the axis: a carriageway moved aside off its axis (ADR-0080 PR 10) starts off it.
-  let start: number | null = null;
-  for (let j = 0; j <= k && start === null; j++) for (const u of j === 0 ? [0] : [j * STEP, -j * STEP]) if (start === null && mid(u)) start = u;
-  if (start === null) return null;
+  let found: number | null = null;
+  for (let j = 0; j <= k && found === null; j++) for (const u of j === 0 ? [0] : [j * STEP, -j * STEP]) if (found === null && mid(u)) found = u;
+  if (found === null) return null;
+  const start = found;
   let [lo, hi] = [edge(mid, start, -1, cap), edge(mid, start, 1, cap)];
   for (const v of [-sides, sides]) {
     const side = line(v);
-    if (!side(start!)) continue;
-    [lo, hi] = [Math.max(lo, edge(side, start!, -1, cap)), Math.min(hi, edge(side, start!, 1, cap))];
+    if (!side(start)) continue;
+    [lo, hi] = [Math.max(lo, edge(side, start, -1, cap)), Math.min(hi, edge(side, start, 1, cap))];
   }
   return [lo, hi];
 };
