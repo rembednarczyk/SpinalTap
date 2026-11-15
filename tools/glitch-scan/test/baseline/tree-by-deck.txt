@@ -1,0 +1,6 @@
+# tree-by-deck: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+nabrzeze-0-1 2480,407
+nabrzeze-0-1 2452,422
+podzamcze-1-0 786,197
+podzamcze-1-0 776,201
+podzamcze-1-0 780,204
