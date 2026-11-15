@@ -30,6 +30,7 @@ import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { type Cover, coverFor } from "../../orto/src/cover.ts";
 import { Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch } from "./bare-cells.ts";
 import { dropLoose, joinSpecks, readCover } from "./bare-clean.ts";
+import { type Frontage, paveFronts, zoneFronts } from "./bare-fronts.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
 import { kerbStrips } from "./bare-strips.ts";
 import { contours } from "./contour.ts";
@@ -316,6 +317,8 @@ export interface TownPlaces {
   readonly areas: readonly (readonly Pt[])[];
   readonly stops: readonly Pt[];
   readonly shops: readonly (readonly Pt[])[];
+  /** The pedestrian streets' frontages (`bare-fronts.ts`, G-853): laid whole, paved where the cover shows neither a lawn nor paving. */
+  readonly fronts?: readonly Frontage[];
 }
 
 const NO_PLACES: TownPlaces = { areas: [], stops: [], shops: [] };
@@ -339,8 +342,8 @@ export const pathLoops = (lines: readonly Line[]): Pt[][] =>
     .filter(({ line: l }) => l.length >= 4 && l[0]!.x === l[l.length - 1]!.x && l[0]!.z === l[l.length - 1]!.z)
     .map((l) => [...l.line]);
 
-/** The map's areas and stops of a town's paved places (`TownPlaces`, the shops come a chunk at a time), and the paths' loops (`pathLoops`). */
-export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonly (readonly Pt[])[] = []): Omit<TownPlaces, "shops"> => ({
+/** The map's areas and stops of a town's paved places (`TownPlaces`, the shops come a chunk at a time), the paths' loops (`pathLoops`) and the pedestrian streets' frontages (`frontages`). */
+export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonly (readonly Pt[])[] = [], fronts: readonly Frontage[] = []): Omit<TownPlaces, "shops"> => ({
   areas: [
     ...areas
       .filter((a) => PAVED_LANDUSE.has(a.tags.landuse ?? "") || PAVED_AMENITY.has(a.tags.amenity ?? "") || a.tags.public_transport === "platform" || a.tags.public_transport === "station")
@@ -351,6 +354,7 @@ export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonl
     .filter((n) => n.tags?.highway === "bus_stop" || n.tags?.railway === "tram_stop" || n.tags?.public_transport === "platform")
     .sort((a, b) => a.id - b.id)
     .map((n) => geoToWorld(n.lat, n.lon)),
+  fronts,
 });
 
 /**
@@ -372,14 +376,16 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
     { x: r.minX, z: r.maxZ },
   ];
   ground.forEach((g, i) => cells.cover(ringOf(g.outline), g.surface === "road" ? i + 1 : 0, STRIP_ENDS.has(g.surface)));
-  for (const w of walls) cells.cover(w);
+  for (const w of walls) cells.cover(w, 0, false, true);
   for (const g of ground) if (g.bridge) cells.block(ringOf(g.outline), FILL.bridge);
   for (const r of FILL_CLEARED) if (rectsOverlap(r, rect)) cells.cover(boxOf(r));
   for (const a of town.areas) cells.zoneIn(a);
   for (const s of town.shops) cells.zoneNear(s, FILL.forecourt);
   for (const p of town.stops) cells.zoneNear([p], FILL.platform);
   cells.growZone(FILL.zoneMargin);
+  zoneFronts(cells, town.fronts ?? [], FILL.zoneMargin);
   readCover(cells, cover, FILL.around);
+  paveFronts(cells);
   joinSpecks(cells, FILL.speck);
   kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
   dropLoose(cells, FILL.looseWidth, FILL.looseArea);
@@ -429,7 +435,8 @@ export const coverFiller = (covers: readonly Cover[], walls: readonly (readonly 
     const near = { minX: rect.minX - 1, minZ: rect.minZ - 1, maxX: rect.maxX + 1, maxZ: rect.maxZ + 1 };
     const pick = (g: ReturnType<typeof grid>) => g.query(near.minX, near.minZ, near.maxX, near.maxZ).filter((w) => rectsOverlap(w.box, near)).map((w) => w.ring);
     const stops = town.stops.filter((p) => p.x > rect.minX - FILL.platform && p.x < rect.maxX + FILL.platform && p.z > rect.minZ - FILL.platform && p.z < rect.maxZ + FILL.platform);
-    return coverFills(rect, cover, ground, pick(wallGrid), { areas: pick(areaGrid), stops, shops });
+    const fronts = (town.fronts ?? []).filter((f) => rectsOverlap(ringBounds(f.line), { minX: rect.minX - f.reach - FILL.zoneMargin, minZ: rect.minZ - f.reach - FILL.zoneMargin, maxX: rect.maxX + f.reach + FILL.zoneMargin, maxZ: rect.maxZ + f.reach + FILL.zoneMargin }));
+    return coverFills(rect, cover, ground, pick(wallGrid), { areas: pick(areaGrid), stops, shops, fronts });
   };
 };
 

@@ -4,6 +4,7 @@ import { COVER } from "../../orto/src/classify.ts";
 import { type Cover } from "../../orto/src/cover.ts";
 import { THRESHOLDS } from "../../orto/src/thresholds.ts";
 import { FILL, FILL_CLEARED, type TownPlaces, coverFills, withFills } from "../src/bare-cover.ts";
+import { frontages } from "../src/bare-fronts.ts";
 import { type Pt, type Rect, pointInRing, signedArea } from "../src/geometry.ts";
 import { type GroundOut } from "../src/model.ts";
 
@@ -108,6 +109,28 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
     // With nothing past it, or the pavement over 5 m off, the strip is a loose region again.
     expect(surfaceAt(coverFills(RECT, cover(), [road], []), { x: 12.75, z: 10.25 })).toEqual([]);
     expect(surfaceAt(coverFills(RECT, cover(), [road, piece("sidewalk", box(18, 0, 20, 20))], []), { x: 12.75, z: 10.25 })).toEqual([]);
+  });
+
+  it("lays a pedestrian street's frontage up to the walls, paved where the cover shows no lawn or paving, and not a yard behind them (G-853)", () => {
+    // A pedestrian street along x at z = 10, its paving 4 m wide; tenements north of z = 15 and a
+    // row south of z = 5 with a yard behind it. Asphalt-dark setts north of the paving, a lawn at
+    // its west end, light paving south of it and in the yard.
+    const street = piece("square", box(0, 8, 20, 12));
+    const walls = [box(0, 15, 20, 20), box(0, 3, 20, 5)];
+    const at = (x: number, z: number) => (z > 12 && z < 15 ? (x < 4 ? COVER.green : COVER.asphalt) : COVER.paving);
+    const line = (highway: string, z: number) => ({ id: "w1", osmId: 1, tags: { highway }, line: [{ x: -5, z }, { x: 25, z }] });
+    const fronts = frontages([line("pedestrian", 10)]);
+    const fills = coverFills(RECT, cover(at), [street], walls, { areas: [], stops: [], shops: [], fronts });
+    expect(surfaceAt(fills, { x: 10.25, z: 13.75 })).toEqual(["square"]);
+    expect(surfaceAt(fills, { x: 2.25, z: 13.75 })).toEqual(["grass"]);
+    expect(surfaceAt(fills, { x: 10.25, z: 6.25 })).toEqual(["square"]);
+    expect(surfaceAt(fills, { x: 10.25, z: 1.75 }), "the yard behind the wall").toEqual([]);
+    // No frontage: the strips by the walls are loose regions, the asphalt bare.
+    const none = coverFills(RECT, cover(at), [street], walls);
+    for (const z of [13.75, 6.25]) expect(surfaceAt(none, { x: 10.25, z }), `${z}`).toEqual([]);
+    // A residential street has a frontage only inside the Old Town's walls, a carriageway none.
+    expect(frontages([line("residential", 10), line("tertiary", 10), { ...line("pedestrian", 10), tags: { highway: "pedestrian", tunnel: "yes" } }])).toEqual([]);
+    expect(frontages([{ ...line("residential", 0), line: [{ x: 560, z: -60 }, { x: 600, z: -60 }, { x: 900, z: -60 }] }]).map((f) => [f.line.length, f.reach])).toEqual([[3, 6]]);
   });
 
   it("lays crowns over paving a lawn, not paving, and leaves those over asphalt bare; a speck of green in paving stays a lawn (T-285)", () => {
