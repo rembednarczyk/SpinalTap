@@ -2061,13 +2061,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-841 Zamek Lubelski bez przepisu zabytku: fasada od Placu Zamkowego jak zwykły gmach
 - Ważność: S3 · Zasięg: Zamek Lubelski, front od Placu Zamkowego i schodów
 - Opis: Zgłoszenie użytkownika 15.11 ze zdjęciem frontu (Street View, tylko referencja wizualna, scratchpad ref/zamek-plac-zamkowy-sv.jpg). LANDMARK_RECIPES ma tylko Bramę Krakowską, Bramę Grodzką i Nowy Ratusz. Wygląd do odtworzenia: neogotycka fasada w kolorze kremowym, dwie wieżyczki po bokach bramy z krenelażem i masztami flag, między nimi blankowana attyka; dwa okrągłe okna-rozety nad ostrołukową bramą z napisem MUZEUM; ostrołukowe okna w rzędzie, długie skrzydła z krenelażem po bokach; po lewej w głębi wieża kaplicy (smukła iglica); u stóp schody ze spocznikiem, latarnie i zieleń na skarpie. Wymiary z LOD2/NMPT i OSM, jak przy G-119 (Nowy Ratusz).
-- Status: do przeglądu kuratora (r3, 6eea580); wcześniej: w naprawie (runda 3 po przeglądzie kuratora r2); wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (0c22d9d), runda 2 do przeglądu topography-curator; wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (e84492c), do przeglądu topography-curator; wcześniej: nowy
+- Status: kurator r3 ZGODNE, do PR (6eea580); wcześniej: do przeglądu kuratora (r3, 6eea580); wcześniej: w naprawie (runda 3 po przeglądzie kuratora r2); wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (0c22d9d), runda 2 do przeglądu topography-curator; wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (e84492c), do przeglądu topography-curator; wcześniej: nowy
 - Pakiet właściciela: packages/engine/src/renderer/mapcity/landmarks
 - 15.11: przepis zamek-lubelski (attyka do y 7,5 z blankami, wieżyczki do y 10 z flagami, parapet z blankami trójkątnymi, 2 rozety, portal ostrołukowy, lancety, szyld MUZEUM); korekta importu: okap y 3,3, korona y 7,5 z NMPT; test landmark-zamek.test.ts; skan 3900->3900, hashe bez zmian, perf w budżetach
 - Przegląd kuratora 15.11 (e84492c): NIEZGODNE. NMPT 0,5 m: wieżyczki do y 12,2 (rise 2,5 -> ok. 4,7), szczyty blanków trójkątnych ryzalitu y 10,0-10,4 (parapet.rise 0,5 -> ok. 1,6), maszty do ok. y 15,5 (mast ok. 5,5 m) jako ciemne metalowe iglice z chorągiewką zamiast flag biało-czerwonych (zdjęcie z placu, plan Z2). Skrzydła fasady zachodniej: jeden rząd lancetów w parterze, wyżej lizeny, okienka okrągłe co ok. 4,7 m i fryz ostrołukowy pod koroną zamiast rzędów 2 i 3. Opcjonalnie: rozety r ok. 1,7 m, rozstaw ok. 3,4 m; środki wieżyczek ok. 0,9 m do wnętrza (NMPT (837,1; 245,9) i (835,8; 231,0)). Sondy topo-g841-dsm*.py w scratchpadzie.
 - 15.11 runda 2 (0c22d9d): wg NMPT kuratora: wieżyczki y 12,2, iglice do y 15,5 z chorągiewką, parapet ryzalitu do y 10,3, skrzydła: lancety w parterze, lizeny, okienka okrągłe 10 m, fryz arkadowy; rozety r 1,7; sterczyny; środki wieżyczek bez zmian (brak reguły z obrysu). Skan 3900->3900, hashe bez zmian, perf w budżetach
 - Przegląd kuratora r2 (0c22d9d): NIEZGODNE. Przyjęte: wieżyczki y 12,2, iglice do 15,5, parapet 10,3, rozety, skrzydła zachodnie, środki wieżyczek (wspólne przesunięcie OSM/NMPT ok. +0,7 m w z, rozstaw 14,9 vs 14,95). Do poprawy: (1) korona skrzydła pn. od x ok. 855 i ściany wsch. (945..948, 237..257) wg NMPT y 5,4-5,8 zamiast 7,5 (regresja wobec main 6,4), okap pn. od dziedzińca ok. 4,5; (2) sterczyny tylko na NW (842,1;266,1) do y 10,3, SW (836,1;210,9) do 9,4, SE (943,6;197,9) do 10,9, ośmiobok o średnicy ok. 1,3 m z ostrym hełmem; bez sterczyn na narożach pd. (883;201), (897;200) i NE. Opcjonalnie portal i rozety 1-2 m wyżej. Elewacja pd. przepalona w słońcu (12,7%). Proponowana kontrola landmark-crown-nmpt. Sondy i zrzuty: scratchpad topo-g841-r2-*
 - Runda 3 (6eea580): korona wg stref NMPT (pn. za x 855 i wsch. y 5,6, okap dziedzińca pn. 4,5), sterczyny tylko NW/SW/SE z hełmami, rozety +2 m, kontrola skanu landmark-crown-nmpt 1->0; do przeglądu topography-curator
+- r3 (6eea580) przegląd kuratora: ZGODNE (korona 5,6/okap 4,5, 3 sterczyny, rozety); wysokości w przepisie jako T celowe; uskok OSM pn. skrzydła osobno (G-874)
 
 ### G-842 Sygnalizatory na jezdni wewnątrz dużych skrzyżowań (square na asfalcie)
 - Ważność: S4 · Zasięg: Rondo Dmowskiego n1946478264 (1104,1;264,7), (1043,6;277,9); rondo Cybulskiego (2539,8;268,2), (2481,7;302,3); 3 Maja (-115,1;53,6)
@@ -2260,9 +2261,17 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-872 Karmelicka 7: stojący budynek z building=construction pominięty przez SKIP_BUILDING
 - Ważność: S3 · Zasięg: w1134342880 (311..335; 56..98), Krakowskie
 - Opis: Ortofoto 2023-09, 2024-06 i 2025-04 pokazuje dach budynku; OSM building=construction, construction=commercial; w grze goła ziemia bez bryły (SKIP_BUILDING w generate.ts). Znalezione w przeglądzie kuratora G-853 r3. Test: bryła Karmelicka 7 z wysokością z LoD1/NMPT; proponowana kontrola osm-construction-built 1 -> 0.
-- Status: do przeglądu kuratora (6bbd199), skan czerwony: +15/+10/+5 kluczy przy bryle; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g872); wcześniej: nowy
+- Status: w naprawie, runda 2 (przedpole: landuse=construction w1261814241); wcześniej: do przeglądu kuratora (6bbd199), skan czerwony: +15/+10/+5 kluczy przy bryle; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g872); wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 - builtSites (cfec849, 6bbd199): building=construction pod LoD1 2024 (IoU>=0,7) jako budynek, bryła 19,7 m commercial; osm-construction-built 1->0; przy bryle +15 landuse-bare, +10 bare-on-cover, +5 ground-strip-gap (goła ziemia sprzed poprawki, teraz przedpole sklepu); baza nie podniesiona, czeka na przegląd kuratora i decyzję
+- przegląd kuratora (cfec849): bryła zgodna; 30 kluczy przedpola NIE do bazy: 26 w landuse=construction w1261814241 (nieaktualna budowa). Ortofoto: wsch./pn./pas przy ścianie zach. i NW -> grass, pd. nieutwardzony parking -> square. r2: landuse=construction z budynkiem z builtSites jak zakończona budowa + klasy other/cień z innych nalotów; cel +15/+10/+5 -> 0. Proponowana kontrola construction-landuse-built (baza 1).
+
+### G-874 Zamek Lubelski: skrzydło pn. x 904-942 o 2,6-3,0 m za daleko na północ (uskok obrysu OSM), bryła na asfalcie drogi za zamkiem
+- Ważność: S3 · Zasięg: Podzamcze, w48500136, (903,9..941,5; 253,8..261,6)
+- Opis: Węzły (903,9;261,6) i (941,5;256,8) tworzą uskok, którego nie ma w NMPT (krawędź x 910/925/940: z 257,75/256,3/254,0) ani na ortofoto 2023-09..2025-04; ściany zach. i pd. zgodne do 0,4 m. Poprawka: obrys pn. prosto (903,6;258,6)->(941,0;253,8) w korekcie importu. Przegląd kuratora G-841 r3. Proponowana kontrola landmark-outline-nmpt (baza 1).
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: krawędź obrysu pn. w48500136 w 0,5 m od krawędzi dachu NMPT przy x 910, 925, 940
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
