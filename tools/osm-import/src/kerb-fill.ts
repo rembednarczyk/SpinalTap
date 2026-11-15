@@ -50,8 +50,8 @@ const RISE = 3 * ALONG;
 const MERGE_AXIS = 1;
 /** How far past the paving reached another carriageway makes it an island between two (m): neither is widened over to it. */
 const MEDIAN_REACH = KERB_REACH;
-/** The fewest samples in a row a carriageway is widened over (`ALONG` apart): 3 m, a car's bay at the least. One, it widened a 1 m notch into a bend's kerb (G-837). */
-const MIN_RUN = 6;
+/** The fewest samples in a row a carriageway is widened over (`ALONG` apart): 3 m, a car's bay at the least. */
+const MIN_RUN = 1;
 /** The kerb stone laid between a widened carriageway and paving with no kerb of its own (m): the renderer draws kerbs on sidewalks only. */
 const KERB_STONE = 0.3;
 /** How far a zebra may reach on past the carriageway's estimated edge (m). */
@@ -336,8 +336,10 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       const q = along(s.edge, s.dir, -half - MERGE_AXIS);
       return world.roads.scan(q.x, q.z, (b) => b !== road && b.kerb !== undefined && alongside(b.kerb.line, q, s.dir));
     };
-    const may = (side: 1 | -1) => (s: Sample) => estimated(road.source, side) && s.hit !== null && !s.hit.joins && !s.hit.median && !merged(s);
-    const own = (side: 1 | -1) => (s: Sample) => may(side)(s) && s.hit!.gap >= ROAD_GAP;
+    const reaches = (side: 1 | -1) => (s: Sample) => estimated(road.source, side) && s.hit !== null && !s.hit.joins && !s.hit.median && !merged(s);
+    const own = (side: 1 | -1) => (s: Sample) => reaches(side)(s) && s.hit!.gap >= ROAD_GAP;
+    // Grown in to the kerb, not over a zebra mapped past it: a kerb stone laid there would cut it in two.
+    const may = (side: 1 | -1) => (s: Sample) => reaches(side)(s) && !s.hit!.crossed;
     // The corner between a widened stretch and a side street it meets is asphalt too: left bare,
     // it pinched the lane the wider street moved out (Radziwiłłowska, G-090).
     const wideSet = new Set<Sample>();
