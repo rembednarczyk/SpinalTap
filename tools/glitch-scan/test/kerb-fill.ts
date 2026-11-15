@@ -81,22 +81,72 @@ export interface FillWorld {
 /** A fill: drawn sidewalk at `p` that no paving of the map explains. */
 const fillAt = (sidewalks: Bins<Boxed>, explained: Bins<Boxed>) => (p: Pt) => sidewalks.has(p) && !explained.has(p);
 
+/**
+ * Which samples of the grid's columns from `i0` and rows from `k0` lie in `ring` (`inRing`), by
+ * row: a row's crossings of the ring worked out once and sorted, and each sample counts those past
+ * it in one sweep instead of walking the whole ring, by the same sums.
+ */
+const ringMask = (ring: Ring, i0: number, ni: number, k0: number, nk: number): Uint8Array => {
+  const mask = new Uint8Array(ni * nk);
+  for (let k = 0; k < nk; k++) {
+    const z = (k0 + k + 0.5) * FILL_GRID;
+    const xs: number[] = [];
+    for (let e = 0, j = ring.length - 1; e < ring.length; j = e++) {
+      const [a, b] = [ring[e]!, ring[j]!];
+      if (a.z > z !== b.z > z) xs.push(((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x);
+    }
+    xs.sort((p, q) => p - q);
+    let below = 0;
+    for (let i = 0; i < ni; i++) {
+      const x = (i0 + i + 0.5) * FILL_GRID;
+      while (below < xs.length && xs[below]! <= x) below++;
+      mask[k * ni + i] = (xs.length - below) & 1;
+    }
+  }
+  return mask;
+};
+
 /** Every sample of the grid in a drawn sidewalk outside the explained paving. */
 const fillSamples = (w: FillWorld, fill: (p: Pt) => boolean): Pt[] => {
   const out: Pt[] = [];
   const seen = new Set<string>();
   for (const ring of w.sidewalks) {
     const b = boxed(ring).box;
-    for (let i = Math.floor(b.minX / FILL_GRID); i * FILL_GRID <= b.maxX; i++)
-      for (let k = Math.floor(b.minZ / FILL_GRID); k * FILL_GRID <= b.maxZ; k++) {
-        const p = { x: (i + 0.5) * FILL_GRID, z: (k + 0.5) * FILL_GRID };
+    const [i0, k0] = [Math.floor(b.minX / FILL_GRID), Math.floor(b.minZ / FILL_GRID)];
+    let [ni, nk] = [0, 0];
+    while ((i0 + ni) * FILL_GRID <= b.maxX) ni++;
+    while ((k0 + nk) * FILL_GRID <= b.maxZ) nk++;
+    const mask = ringMask(ring, i0, ni, k0, nk);
+    for (let i = i0; i < i0 + ni; i++)
+      for (let k = k0; k < k0 + nk; k++) {
+        if (!mask[(k - k0) * ni + (i - i0)]) continue;
         const key = `${i},${k}`;
-        if (seen.has(key) || !inRing(p, ring)) continue;
+        if (seen.has(key)) continue;
+        const p = { x: (i + 0.5) * FILL_GRID, z: (k + 0.5) * FILL_GRID };
         seen.add(key);
         if (fill(p)) out.push(p);
       }
   }
   return out;
+};
+
+type Segment = { readonly r: FillWorld["roads"][number]; readonly a: Pt; readonly b: Pt };
+const segmentGrids = new WeakMap<FillWorld["roads"], SpatialHash<Segment>>();
+/**
+ * The carriageways' segments by their boxes, once a world: a sample asks only those whose boxes
+ * meet `AXIS_REACH` round it, not each of the city's (G-301's lesson, #566).
+ */
+const segmentsOf = (roads: FillWorld["roads"]): SpatialHash<Segment> => {
+  let grid = segmentGrids.get(roads);
+  if (grid) return grid;
+  grid = new SpatialHash<Segment>(AXIS_REACH);
+  for (const r of roads)
+    for (let i = 0; i + 1 < r.line.length; i++) {
+      const [a, b] = [r.line[i]!, r.line[i + 1]!];
+      grid.insert({ r, a, b }, Math.min(a.x, b.x), Math.min(a.z, b.z), Math.max(a.x, b.x), Math.max(a.z, b.z));
+    }
+  segmentGrids.set(roads, grid);
+  return grid;
 };
 
 /**
@@ -105,17 +155,15 @@ const fillSamples = (w: FillWorld, fill: (p: Pt) => boolean): Pt[] => {
  */
 const nearestAxis = (roads: FillWorld["roads"], p: Pt) => {
   let best: { d: number; q: Pt; measured: boolean; off: number } | null = null;
-  for (const r of roads)
-    for (let i = 0; i + 1 < r.line.length; i++) {
-      const [a, b] = [r.line[i]!, r.line[i + 1]!];
-      if (Math.min(a.x, b.x) > p.x + AXIS_REACH || Math.max(a.x, b.x) < p.x - AXIS_REACH || Math.min(a.z, b.z) > p.z + AXIS_REACH || Math.max(a.z, b.z) < p.z - AXIS_REACH) continue;
-      const [dx, dz] = [b.x - a.x, b.z - a.z];
-      const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-      const q = { x: a.x + dx * t, z: a.z + dz * t };
-      const d = Math.hypot(p.x - q.x, p.z - q.z);
-      const off = Math.abs(d - r.half);
-      if (d <= AXIS_REACH && (!best || off < best.off)) best = { d, q, measured: r.measured, off };
-    }
+  // The index gives the segments in the order of the roads and their points, so a tie goes as over the whole list.
+  for (const { r, a, b } of segmentsOf(roads).query(p.x - AXIS_REACH, p.z - AXIS_REACH, p.x + AXIS_REACH, p.z + AXIS_REACH)) {
+    const [dx, dz] = [b.x - a.x, b.z - a.z];
+    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+    const q = { x: a.x + dx * t, z: a.z + dz * t };
+    const d = Math.hypot(p.x - q.x, p.z - q.z);
+    const off = Math.abs(d - r.half);
+    if (d <= AXIS_REACH && (!best || off < best.off)) best = { d, q, measured: r.measured, off };
+  }
   return best;
 };
 
