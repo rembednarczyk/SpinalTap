@@ -43,6 +43,17 @@ describe("zebra crossings (ADR-0042)", () => {
     // Off the carriageway (a crossing of a park path): no zebra.
     expect(crossingBand("n2", { x: 10, z: 8 }, [street])).toBeNull();
   });
+
+  it("lay the band across the carriageway where it lies, off a node the map has beside it (G-811)", () => {
+    const zs = (b: ReturnType<typeof crossingBand>) => b!.ring.map((p) => p.z);
+    // The node 0.6 m off the axis: the band spans the asphalt, not 0.6 m past its kerb.
+    expect(Math.min(...zs(crossingBand("n1", { x: 10, z: 0.6 }, [street])))).toBeCloseTo(-3.25, 5);
+    expect(Math.max(...zs(crossingBand("n1", { x: 10, z: 0.6 }, [street])))).toBeCloseTo(3.25, 5);
+    // A carriageway measured on the orthophoto 1.5 m off the map's axis, which the node lies on (ADR-0080 PR 10).
+    const moved = crossingBand("n3", { x: 10, z: 1.5 }, [street], () => 1.5);
+    expect(Math.max(...zs(moved))).toBeCloseTo(3.25, 5);
+    expect(crossingBand("n2", { x: 10, z: 8 }, [street], () => 1.5)).toBeNull();
+  });
 });
 
 describe("sidewalks at the streets they meet (ADR-0042)", () => {

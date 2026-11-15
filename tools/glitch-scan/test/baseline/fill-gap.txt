@@ -2,12 +2,10 @@
 krakowskie-1-0 110,-192
 krakowskie-2-0 340,-265
 krakowskie-2-0 397,-90
-nabrzeze-0-0 2450,109
 nabrzeze-1-0 2646,185
 nabrzeze-1-1 2544,270
 nabrzeze-1-1 2698,270
 nabrzeze-1-1 2500,295
-nabrzeze-1-1 2500,331
 podzamcze-0-0 642,255
 podzamcze-0-0 532,339
 podzamcze-1-1 796,370

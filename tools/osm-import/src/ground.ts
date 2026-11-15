@@ -277,11 +277,12 @@ export const markedCrossing = (t: Tags): boolean => t.highway === "crossing" && 
 
 /**
  * A zebra's band at a crossing node: across the carriageway the node lies on, as wide as that
- * road and `CROSSING_ALONG` along it. Null when the node is on no carriageway (a crossing of a
- * footway or a cycleway) or the road is too narrow to stripe.
+ * road and `CROSSING_ALONG` along it, from the node's foot on it. Null when the node is on no
+ * carriageway (a crossing of a footway or a cycleway) or the road is too narrow to stripe. A
+ * carriageway moved off the map's axis by `aside` metres keeps its nodes that much further off.
  */
-export const crossingBand = (source: string, at: Pt, roads: readonly Line[]): Band | null => {
-  let best: { d: number; tx: number; tz: number; w: number; bridge: boolean } | null = null;
+export const crossingBand = (source: string, at: Pt, roads: readonly Line[], aside: (l: Line) => number = () => 0): Band | null => {
+  let best: { d: number; foot: Pt; tx: number; tz: number; w: number; bridge: boolean } | null = null;
   for (const l of roads) {
     const t = l.tags;
     if (!t.highway || ROAD_WIDTH[t.highway] === undefined || t.area === "yes" || underground(t)) continue;
@@ -295,12 +296,17 @@ export const crossingBand = (source: string, at: Pt, roads: readonly Line[]): Ba
       // Not `segmentDistance` of core: the parameter divides by `len * len` of the rounded length, another rounding than `dx * dx + dz * dz`.
       const k = Math.max(0, Math.min(1, ((at.x - a.x) * dx + (at.z - a.z) * dz) / (len * len)));
       const d = Math.hypot(a.x + dx * k - at.x, a.z + dz * k - at.z);
-      if (d < 1 && (!best || d < best.d)) best = { d, tx: dx / len, tz: dz / len, w: roadWidth(t), bridge: t.bridge !== undefined && t.bridge !== "no" };
+      // Off a carriageway moved aside the distance is from where it lies: one road's node nearer another's moved over to it is still its own.
+      const off = d - Math.min(d, aside(l));
+      const foot = { x: a.x + dx * k, z: a.z + dz * k };
+      if (off < 1 && (!best || off < best.d)) best = { d: off, foot, tx: dx / len, tz: dz / len, w: roadWidth(t), bridge: t.bridge !== undefined && t.bridge !== "no" };
     }
   }
   if (!best || best.w < 3.5) return null;
-  const { tx, tz, w } = best;
-  const corner = (along: number, across: number): Pt => ({ x: at.x + tx * along - tz * across, z: at.z + tz * along + tx * across });
+  // Across the asphalt where it lies: a zebra about the node off a carriageway moved aside (ADR-0080
+  // PR 10) reached past its kerb and left the strip beside it bare (G-811).
+  const { foot, tx, tz, w } = best;
+  const corner = (along: number, across: number): Pt => ({ x: foot.x + tx * along - tz * across, z: foot.z + tz * along + tx * across });
   const h = CROSSING_ALONG / 2;
   return { surface: "crossing", ring: [corner(-h, -w / 2), corner(h, -w / 2), corner(h, w / 2), corner(-h, w / 2)], bridge: best.bridge, source };
 };
