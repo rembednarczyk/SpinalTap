@@ -5,7 +5,9 @@ Uruchamiaj z katalogu repozytorium: `python3 -I tools/rejestry/rej.py <polecenie
 Numery nadaje narzędzie (najwyższy w rejestrze i archiwum + 1), więc kolizje typu G-720 / T-283 nie
 powstają. Każde polecenie zmienia tylko swój wpis i drukuje jedną linię wyniku.
 
-  g-new TYTUŁ --waznosc S3 --zasieg ... --opis ... --status ... --pakiet ... [--test ...]
+  g-new TYTUŁ --waznosc S3 --zasieg ... --opis ... --status ... --pakiet ... [--test ...] [--klucze ...]
+  g-keys G-NNN KLUCZE             linia „Klucze skanu:”: „rodzaj komórka x,z; ...” (jak w bazie skanu)
+  g-sieve [--ref origin/main]     otwarte wpisy z kluczami, których nie ma już w bazie skanu gałęzi
   g-status G-NNN NOWY             status: „NOWY; wcześniej: <stary>”
   g-note G-NNN TEKST              dopisek „- TEKST” na końcu wpisu
   g-archive G-NNN PR              przenosi wpis do archiwum, status „naprawione (data, PR scalony)”
@@ -59,10 +61,74 @@ def g_new(a):
     lines = [f"### {gid} {a.tytul}", f"- Ważność: {a.waznosc} · Zasięg: {a.zasieg}", f"- Opis: {a.opis}", f"- Status: {a.status}", f"- Pakiet właściciela: {a.pakiet}"]
     if a.test:
         lines.append(f"- Test przyjęcia: {a.test}")
+    if a.klucze:
+        lines.append(f"- Klucze skanu: {norm_keys(a.klucze)}")
     if NEW_BEFORE not in g:
         sys.exit(f"brak znacznika {NEW_BEFORE}")
     write(GLITCHES, g.replace(NEW_BEFORE, "\n".join(lines) + "\n\n" + NEW_BEFORE, 1))
     print(gid)
+
+
+BASELINE = "tools/glitch-scan/test/baseline"
+KEY = re.compile(r"^([a-z0-9-]+) ([a-z0-9-]+-\d+-\d+) (-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?)$")
+
+
+def norm_keys(text):
+    """„rodzaj komórka x,z; ...” w zapisie bazy skanu (minus typograficzny na zwykły), albo błąd."""
+    keys = [k.strip().replace("\u2212", "-") for k in text.split(";") if k.strip()]
+    bad = [k for k in keys if not KEY.match(k)]
+    if bad:
+        sys.exit(f"klucz nie w formacie „rodzaj komórka x,z”: {bad[0]}")
+    return "; ".join(keys)
+
+
+def g_keys(a):
+    g = read(GLITCHES)
+    m = entry(g, a.gid)
+    block = m.group(0)
+    line = f"- Klucze skanu: {norm_keys(a.klucze)}"
+    k = re.search(r"^- Klucze skanu: [^\n]*$", block, re.M)
+    if k:
+        new = block[: k.start()] + line + block[k.end() :]
+    else:
+        s = re.search(r"^- Status: [^\n]*$", block, re.M)
+        at = s.end() if s else block.index("\n")
+        new = block[:at] + "\n" + line + block[at:]
+    write(GLITCHES, g[: m.start()] + new + g[m.end() :])
+    print(f"{a.gid} klucze")
+
+
+def baseline(ref):
+    """Klucze bazy skanu z gałęzi `ref` (domyślnie origin/main; gałąź rejestrów jej nie śledzi)."""
+    import subprocess
+
+    def git(*args):
+        return subprocess.run(["git", *args], check=True, capture_output=True, text=True).stdout
+
+    keys = set()
+    for path in git("ls-tree", "--name-only", f"{ref}:{BASELINE}").split():
+        if not path.endswith(".txt"):
+            continue
+        kind = path[:-4]
+        for ln in git("show", f"{ref}:{BASELINE}/{path}").splitlines():
+            if ln and not ln.startswith("#"):
+                keys.add(f"{kind} {ln.strip()}")
+    return keys
+
+
+def g_sieve(a):
+    have = baseline(a.ref)
+    for m in re.finditer(r"^### (G-\d+) ([^\n]*)\n((?:[^\n]+\n)*)", read(GLITCHES), re.M):
+        gid, title, body = m.groups()
+        st = re.search(r"^- Status: ([^\n]*)$", body, re.M)
+        k = re.search(r"^- Klucze skanu: ([^\n]*)$", body, re.M)
+        if not k or (st and st.group(1).startswith(("w PR", "duplikat"))):
+            continue
+        keys = [x.strip() for x in k.group(1).split(";") if x.strip()]
+        gone = [x for x in keys if x not in have]
+        if gone:
+            tag = "wszystkie zniknęły" if len(gone) == len(keys) else f"zniknęło {len(gone)} z {len(keys)}"
+            print(f"{gid} {tag}: {'; '.join(gone)} | {title[:60]}")
 
 
 def g_status(a):
@@ -145,7 +211,15 @@ def main():
     for f in ("waznosc", "zasieg", "opis", "status", "pakiet"):
         s.add_argument("--" + f, required=True)
     s.add_argument("--test")
+    s.add_argument("--klucze")
     s.set_defaults(fn=g_new)
+    s = sub.add_parser("g-keys")
+    s.add_argument("gid")
+    s.add_argument("klucze")
+    s.set_defaults(fn=g_keys)
+    s = sub.add_parser("g-sieve")
+    s.add_argument("--ref", default="origin/main")
+    s.set_defaults(fn=g_sieve)
     s = sub.add_parser("g-status")
     s.add_argument("gid")
     s.add_argument("nowy")

@@ -543,6 +543,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-234 Pasy schodów ucięte brzegiem chunka: klin rysowany w poprzek albo niewidoczny
 - Status: zgłoszone (2.11, naprawiacz G-213); stan sprzed G-213, bazy skanu 1 i 1
+- Klucze skanu: steps-across-run podzamcze-1-0 729,160; steps-band-hidden krakowskie-0-1 -200,125
 - Ważność: S4 · Zasięg: w56965515 przy (729; 160): trójkąt 1,6 × 0,9 m z brzegu z = 160 rysowany w poprzek (`steps-across-run` 1); w80139527 przy (−200; 125): pas 3 × 0,2 m przy brzegu x = −200, którego `planSteps` nie rysuje (`steps-band-hidden` 1)
 - Poprawka: schody nie przycinane do chunka, tylko całe do chunka ze środkiem pasa (zmienia zasadę „outline clipped to the chunk” z `model.ts`, sprawdzić szew chunków); bazy obu kontroli → 0
 - Pakiet właściciela: tools/osm-import (ground, model), tools/glitch-scan
@@ -1442,6 +1443,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-633 Klasztor Dominikanów: środek dachu 5 m nad LoD1
 - Status: zgłoszone (12.11, kurator przeglądu wysokości LoD1)
+- Klucze skanu: landmark-vs-lod1 stare-miasto-1-0 749,-104
 - Ważność: S4 · Zasięg: środek dachu 30,9 m wobec 25,8 m w LoD1; poza zmianą heights, wynik sondy kuratora; przejście stare-miasto-1-0 (12.11): `landmark-vs-lod1` 1 w komórce to ten sam przypadek (30,9/25,8 m, IoU 0,90); po #459 bez zmian
 - Pakiet właściciela: tools/osm-import, packages/engine (receptury landmarków)
 - 15.11 przesiew po kluczach skanu: klucz landmark-vs-lod1 stare-miasto-1-0 749,-104 nadal w bazie; wpis aktualny.
@@ -1503,6 +1505,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-659 30 samoprzecinających się obrysów nawierzchni bez kontroli w skanie
 - Status: częściowo naprawione: ground-ring-self-cross 30 → 1 (#509, #559); zostaje stare-miasto-1-0 742,-97; wcześniej: kontrola w main (#453, baza 30); wcześniej: kontrola w main (#453, `ground-ring-self-cross` baza 30); naprawa w etapach 2–3 ADR-0078
+- Klucze skanu: ground-ring-self-cross stare-miasto-1-0 742,-97
 - Ważność: S4 · Zasięg: place przycięte na krawędzi kawałka mapy przy (20; −20), pętle zamkniętych ścieżek w Podzamczu i Nabrzeżu; skan nie liczy tego rodzaju; poprawka: kontrola w `tools/glitch-scan` z bazą z przebiegu (i wpis w `docs/mapa-pokrycie.json`), potem naprawy; propozycja kuratora (przegląd #433): `ground-ring-self-cross`, baza 30 (Krakowskie 15, w tym 6 placów przy (20; −20), Nabrzeże 5, Podzamcze 5, Stare Miasto 5); podzamcze-2-1 (12.11): `ground-ring-self-cross` 3 kwadraty (4 trafienia), pętle ścieżek (footway) w (961; 538) 37 punktów, (1057; 504) 34, (1046; 424) 42 i (1045; 424) 46; ta sama klasa.; nabrzeze-0-0 (12.11): `ground-ring-self-cross` 2 pętle ścieżek (footway): (2483; 137) 20 punktów i (2488; 144) 17 punktów.; nabrzeze-0-1 (12.11): `ground-ring-self-cross` pętla ścieżki (footway) (2427; 451), 42 punkty.; nabrzeze-1-0 (12.11): `ground-ring-self-cross` droga (road) nabrzeze-1-0, 10 punktów (2599; 263).
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 - 13.11 gałąź G-744 (ADR-0078 etap 2): ground-ring-self-cross 30 -> 8, wnętrza 16 pętli ścieżek kładzione w całości (pathLoops); kurator: Podzamcze (1046,424) plac na kostce ortofoto, Nabrzeże w154012559/60 trawa na ściółce pod koronami (2025-04) zgodne.
@@ -2010,6 +2013,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: Nabrzeże, (2441,0; 344,7), (2444,1; 374,5), (2450,1; 404,1)
 - Opis: lamp-park na terenie koryta (y −30,5) w wodzie OSM w949475137, ok. 20 m od ścieżek; znalezisko audytu W-3 15.11. Kontrola skanu prop-in-water (baza 3)
 - Status: nowy
+- Klucze skanu: prop-in-water nabrzeze-0-1 2441,345; prop-in-water nabrzeze-0-1 2444,375; prop-in-water nabrzeze-0-1 2450,404
 - Pakiet właściciela: tools/osm-import
 
 ### G-836 Zebry z węzłów: kąt do jezdni, koniec poza krawężnikiem, paski i poświata na chodniku
