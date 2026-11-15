@@ -1,6 +1,6 @@
 # ADR-0087: Deterministyczny generator placów budowy w wersji cyberpunk
 
-Status: Proponowany (15.11). Wynika z prośby użytkownika z 15.11: place budowy z OSM mają dostać cyberpunkową interpretację zamiast gołej ziemi, zrobioną jako deterministyczny generator. Dotyczy ADR-0042 (topografia: miasto zgodne z Lublinem, warstwa cyberpunk na nim), ADR-0083 (odcisk wejść tablic), ADR-0084 (maska wody), ADR-0056 (teksty dla gracza), ADR-0031 (podział renderera), ADR-0046 (testy, budżety). Poprzedza go #599 (fronty ulic pieszych omijają place budowy, G-866) i G-872 (Karmelicka 7: stojący budynek z `building=construction` dostaje bryłę).
+Status: Zaakceptowany (15.11, decyzja użytkownika: z kolizjami, plac jako miejsce w grze). Wynika z prośby użytkownika z 15.11: place budowy z OSM mają dostać cyberpunkową interpretację zamiast gołej ziemi, zrobioną jako deterministyczny generator. Dotyczy ADR-0042 (topografia: miasto zgodne z Lublinem, warstwa cyberpunk na nim), ADR-0083 (odcisk wejść tablic), ADR-0084 (maska wody), ADR-0056 (teksty dla gracza), ADR-0031 (podział renderera), ADR-0046 (testy, budżety). Poprzedza go #599 (fronty ulic pieszych omijają place budowy, G-866) i G-872 (Karmelicka 7: stojący budynek z `building=construction` dostaje bryłę).
 
 ## Kontekst
 - `tools/osm-import/src/structures.ts` zna rodzaj `construction` (`landuse=construction` i `building=construction`). Import pomija takie budynki (`SKIP_BUILDING`), więc obrys zostaje gołą ziemią z pierwszego przebiegu reguły nawierzchni.
