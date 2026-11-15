@@ -3,8 +3,11 @@ krakowskie-1-0 120,-230
 krakowskie-1-0 130,-160
 nabrzeze-0-1 2370,360
 nabrzeze-0-1 2380,420
+nabrzeze-0-1 2390,430
+nabrzeze-1-0 2680,120
 nabrzeze-1-0 2630,130
 nabrzeze-1-0 2620,190
+nabrzeze-1-0 2620,260
 podzamcze-0-0 530,340
 podzamcze-1-0 790,330
 podzamcze-1-0 890,340

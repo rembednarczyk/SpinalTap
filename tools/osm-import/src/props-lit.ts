@@ -28,6 +28,7 @@ import type { Tags } from "./osm.ts";
 import type { PlanItem, PropsPlan } from "./props-gen.ts";
 import { propOf } from "./props-kinds.ts";
 import { mostlyInside } from "./courtyards.ts";
+import { type Kerbs, bothSides, facing } from "./props-lit-sides.ts";
 
 /** A way of the map with its tags and its points in the world. */
 export interface LitWay {
@@ -39,6 +40,8 @@ export interface LitWay {
    * post (Dziedziniec Zamkowy); or a way lying in one, which the facades' lanterns light.
    */
   readonly court?: "square" | "inside";
+  /** Its separately mapped sidewalks (`props-lit-sides.ts`): a side street's lamps on both its sides or one. */
+  readonly kerbs?: Kerbs;
 }
 
 /** Ways OSM tags lit that light nothing yet: being built or only planned. */
@@ -59,6 +62,8 @@ export interface LampLine {
 const MAIN: LampLine = { kind: "lamp-road", spacing: 35, sides: 2 };
 /** The side streets: the plan's lines on tertiary and residential streets (Krakowskie, Podzamcze, the Old Town's edges) are road lamps every 30 m on one side. */
 const SIDE: LampLine = { kind: "lamp-road", spacing: 30, sides: 1 };
+/** A side street with sidewalks far apart (`bothSides`, G-804): road lamps on both kerbs, 34 m apart on each as Narutowicza's (orthophoto 2025-04). */
+const WIDE: LampLine = { kind: "lamp-road", spacing: 34, sides: 2 };
 /** The pedestrian streets: the plan's lines on them are 25 m apart on both sides; its plain kind is Plac Litewski's pole. */
 const WALK: LampLine = { kind: "lamp-modern-pole", spacing: 25, sides: 2 };
 /** The footways and paths: the plan's park lamps by the river, 30 m apart beside the path. */
@@ -206,18 +211,21 @@ const shareOnStreets = (line: readonly Pt[], streets: LampIndex<true>): number =
 /**
  * The plan with its plain road lamp lines on lit car streets taken out (the rule lamps those
  * streets), and the lines taken, `group#k` by the line's index in its group. A group keeps its
- * other lines, and the share of its count they hold.
+ * other lines, and the share of its count they hold. `oneSided`: the taken lines of one side, whose
+ * left is the kerb the plan lit (G-804).
  */
-export const yieldToRule = (plan: PropsPlan, ways: readonly LitWay[]): { plan: PropsPlan; yielded: string[] } => {
+export const yieldToRule = (plan: PropsPlan, ways: readonly LitWay[]): { plan: PropsPlan; yielded: string[]; oneSided: Pt[][] } => {
   const streets = new LampIndex<true>();
   for (const w of ways) if (isLitWay(w.tags) && lampLineOf(w.tags)?.kind === "lamp-road") streets.addLine(w.pts, true);
   const yielded: string[] = [];
+  const oneSided: Pt[][] = [];
   const items = plan.items.flatMap((item): PlanItem[] => {
     if (!YIELDING.has(item.kind) || item.spacing === undefined) return [item];
     const all = linesOf(item);
     const kept = all.filter((l, k) => {
       const taken = shareOnStreets(flat(l), streets) >= YIELD_SHARE;
       if (taken) yielded.push(`${item.id}#${k}`);
+      if (taken && !(item.note ?? "").includes("obu stronach")) oneSided.push(flat(l));
       return !taken;
     });
     if (kept.length === all.length) return [item];
@@ -226,7 +234,7 @@ export const yieldToRule = (plan: PropsPlan, ways: readonly LitWay[]): { plan: P
     const share = kept.reduce((s, l) => s + lengthOf(flat(l)), 0) / all.reduce((s, l) => s + lengthOf(flat(l)), 0);
     return [{ ...rest, lines: kept, ...(item.count === undefined ? {} : { count: Math.round(item.count * share) }) }];
   });
-  return { plan: { ...plan, items }, yielded };
+  return { plan: { ...plan, items }, yielded, oneSided };
 };
 
 /** The OSM street lamps the plan's groups do not hold by node id, as a group of their own (`street-lamp`: road lamps, pastorals inside the walls). */
@@ -353,16 +361,36 @@ const lampedWays = (ways: readonly LitWay[]): { w: LitWay; line: LampLine; pts: 
     })
     .sort((a, b) => RANK[a.line.kind]! - RANK[b.line.kind]! || a.w.id - b.w.id);
 
-/** Groups `id(way)` for the lit ways' stretches `dark` by `lit` (each group's lines join `lit` for the ways after). */
-const lampDark = (plan: PropsPlan, ways: readonly LitWay[], lit: LampIndex<unknown>, reach: (line: LampLine) => number, id: (w: LitWay) => string): PlanItem[] => {
+/**
+ * A way's look: a courtyard's, else `lookOf`; a side street's road lamps on one side (its class's or
+ * the plan's lines', all drawn one-sided) on both as a main street's where its sidewalks lie far apart (`bothSides`, G-804).
+ * A way shorter than the main street's spacing keeps its one row: the far row starts a spacing in, so
+ * it would have one lamp half a spacing further in than the row's (Świętoduska's 32 m by Lubartowska).
+ */
+const lookFor = (w: LitWay, line: LampLine, pts: readonly Pt[], planned: LampIndex<LampLine | null>): LampLine => {
+  if (line === COURT) return COURT;
+  const look = lookOf(pts, line, planned);
+  const wide = line === SIDE && look.kind === "lamp-road" && look.sides === 1 && lengthOf(w.pts) >= WIDE.spacing && bothSides(w.tags, w.kerbs);
+  return wide ? WIDE : look;
+};
+
+/**
+ * Groups `id(way)` for the lit ways' stretches `dark` by `lit` (each group's lines join `lit` for the
+ * ways after). `ref`: the plan's lines of one side taken over (`yieldToRule`), which side they lit.
+ */
+const lampDark = (plan: PropsPlan, ways: readonly LitWay[], lit: LampIndex<unknown>, reach: (line: LampLine) => number, id: (w: LitWay) => string, ref: readonly (readonly Pt[])[] = []): PlanItem[] => {
   const planned = planLamps(plan);
+  const own = new Map(plan.items.filter((i) => i.id.startsWith("lit.w")).map((i) => [i.id, linesOf(i).map(flat)]));
   const items: PlanItem[] = [];
   for (const { w, line, pts } of lampedWays(ways)) {
     const r = reach(line);
     const spans = darkSpans(pts, (p) => lit.nearest(p, r) === null);
     if (spans.length === 0) continue;
-    const look = line === COURT ? COURT : lookOf(pts, line, planned);
-    const runs = spans.map((s) => padded(pts, s, look.spacing));
+    const look = lookFor(w, line, pts, planned);
+    // A row on one kerb by the way's drawing direction (G-804): turned to the side the plan's line or the first pass lit.
+    const sided = look.sides === 1 && line.kind === "lamp-road";
+    const refs = sided ? [...ref, ...(own.get(`lit.w${w.id}`) ?? [])] : [];
+    const runs = spans.map((s) => padded(pts, s, look.spacing)).map((r) => (sided ? facing(r, w.tags, refs, ON_WAY) : r));
     for (const run of runs) lit.addLine(run, true);
     items.push(litItem(id(w), w, look, runs));
   }
@@ -370,7 +398,7 @@ const lampDark = (plan: PropsPlan, ways: readonly LitWay[], lit: LampIndex<unkno
 };
 
 /** The rule's first pass: a group `lit.w<id>` a lit way with stretches further than `COVER` (`CAR_COVER`) from the plan's lamps. */
-export const litItems = (plan: PropsPlan, ways: readonly LitWay[]): PlanItem[] => {
+export const litItems = (plan: PropsPlan, ways: readonly LitWay[], oneSided: readonly (readonly Pt[])[] = []): PlanItem[] => {
   const lit = new LampIndex<unknown>();
   for (const item of plan.items) {
     if (!isLamp(item.kind)) continue;
@@ -378,7 +406,7 @@ export const litItems = (plan: PropsPlan, ways: readonly LitWay[]): PlanItem[] =
     for (const [x, z] of item.points ?? []) lit.add({ x, z }, { x, z }, true);
     if (item.position) lit.add(item.position, item.position, true);
   }
-  return lampDark(plan, ways, lit, (line) => (line.kind === "lamp-road" ? CAR_COVER : COVER), (w) => `lit.w${w.id}`);
+  return lampDark(plan, ways, lit, (line) => (line.kind === "lamp-road" ? CAR_COVER : COVER), (w) => `lit.w${w.id}`, oneSided);
 };
 
 /**
@@ -462,7 +490,7 @@ export const placeLit = <T extends { readonly byChunk: ReadonlyMap<string, reado
  */
 export const litWayGroups = (plan: PropsPlan, ways: readonly LitWay[]): PlanItem[] => {
   const planned = planLamps(plan);
-  return lampedWays(ways).map(({ w, line, pts }) => litItem(`lit.w${w.id}`, w, line === COURT ? COURT : lookOf(pts, line, planned), [w.pts]));
+  return lampedWays(ways).map(({ w, line, pts }) => litItem(`lit.w${w.id}`, w, lookFor(w, line, pts, planned), [w.pts]));
 };
 
 /**
@@ -472,7 +500,7 @@ export const litWayGroups = (plan: PropsPlan, ways: readonly LitWay[]): PlanItem
 export const withLitRule = (plan: PropsPlan, ways: readonly LitWay[], points: readonly FurniturePoint[]): { plan: PropsPlan; yielded: string[] } => {
   const given = yieldToRule(plan, ways);
   const withLamps: PropsPlan = { ...given.plan, items: [...given.plan.items, ...osmLampItems(given.plan, points)] };
-  return { plan: { ...withLamps, items: [...withLamps.items, ...litItems(withLamps, ways)] }, yielded: given.yielded };
+  return { plan: { ...withLamps, items: [...withLamps.items, ...litItems(withLamps, ways, given.oneSided)] }, yielded: given.yielded };
 };
 
 /**

@@ -51,7 +51,12 @@ export const nearCars = (site: Site, p: Pt, reach: number): boolean => {
  * (`nearCars`), by the paving unless beside a path (`byPaving`), on a deck or clear of one (`underDeck`),
  * and not in a bridge's carriageway: a deck's lamp keeps its place (`offRoad` leaves it), so one on
  * Mełgiewska's 13 m deck by Andersa's kerb 4.75 m off its axis stood in the walkers' and cars' way.
+ * Nor in a kerb car park's bays, `PARK_GAP` clear of them: a lamp turned to the other kerb (G-804)
+ * stood in Świętoduska's bays and left them without cars (`bay-strip-sparse`).
  */
 export const litSpot = (site: Site, p: Pt, keepOff: number, path: boolean, onDeck: boolean): boolean =>
-  !nearCars(site, p, keepOff) && (path || byPaving(site, p)) && (onDeck || !underDeck(site, p)) && site.deckAt(p) !== "road";
+  !nearCars(site, p, keepOff) && (path || byPaving(site, p)) && (onDeck || !underDeck(site, p)) && site.deckAt(p) !== "road" && !site.inKerbPark(p, PARK_GAP);
+
+/** How far a lamp of the rule keeps out of a kerb car park (m): its solid's 0.27 m to its corner and a little to spare. */
+const PARK_GAP = 0.5;
 
