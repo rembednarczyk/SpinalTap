@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EXCEPTIONS } from "../src/exceptions.ts";
-import { type TestTimes, errors, exceptionFor, gateSummary, gateTests, median, medianTimes, testId } from "../src/gate.ts";
+import { MIN_GROWTH_RUNS, type TestTimes, errors, exceptionFor, gateSummary, gateTests, median, medianTimes, testId } from "../src/gate.ts";
 import { mergeTests } from "../src/times.ts";
 
 /** Gate of single tests (ADR-0083 step 2): fixed times in, breaches out, no clock. */
@@ -45,9 +45,17 @@ describe("gate of single tests (ADR-0083 step 2)", () => {
   });
 
   it("compares a new test with nothing and a test of fewer runs with those it has", () => {
-    const g = gateTests({ [A]: t(3000), "new.test.ts > x": t(9000) }, [{ [A]: t(1000) }, {}], []);
-    expect(g.breaches.map((b) => [b.test, b.kind, b.runs])).toEqual([[A, "growth", 1]]);
+    const g = gateTests({ [A]: t(3000), "new.test.ts > x": t(9000) }, [{ [A]: t(1000) }, { [A]: t(1100) }, { [A]: t(900) }, {}], []);
+    expect(g.breaches.map((b) => [b.test, b.kind, b.runs])).toEqual([[A, "growth", 3]]);
     expect(g.compared).toBe(1);
+  });
+
+  // 15.11, #588: +46% and +62% against a single run of main, in tests the change did not touch.
+  it("holds no growth against fewer than three runs of main: one run is one draw of the runner's noise", () => {
+    expect(MIN_GROWTH_RUNS).toBe(3);
+    expect(gateTests({ [A]: t(3600) }, [{ [A]: t(2200) }], []).breaches).toEqual([]);
+    expect(gateTests({ [A]: t(3600) }, [{ [A]: t(2200) }, { [A]: t(2300) }], []).breaches).toEqual([]);
+    expect(gateTests({ [A]: t(3600) }, [{ [A]: t(2200) }, { [A]: t(2300) }, { [A]: t(2100) }], []).breaches.map((b) => b.kind)).toEqual(["growth"]);
   });
 
   it("lets through only the tests of the list of exceptions, by test or by file, with their reasons", () => {
@@ -82,7 +90,7 @@ describe("gate of single tests (ADR-0083 step 2)", () => {
     const slowAsBefore = gateTests({ [A]: t(15_500) }, [{ [A]: t(15_200) }], exceptions);
     expect(slowAsBefore.breaches).toEqual([]);
     expect(slowAsBefore.excused.map((b) => b.kind)).toEqual(["limit"]);
-    const grown = gateTests({ [A]: t(17_000) }, [{ [A]: t(11_800) }], exceptions);
+    const grown = gateTests({ [A]: t(17_000) }, [{ [A]: t(11_800) }, { [A]: t(11_600) }, { [A]: t(12_000) }], exceptions);
     // Over the limit and grown: the limit is excused, the growth is not.
     expect(grown.breaches.map((b) => b.kind)).toEqual(["growth"]);
   });
