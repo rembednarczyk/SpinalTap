@@ -59,8 +59,8 @@ export const step = (page: Page, n: number, input: Record<string, unknown> = {})
 export const teleport = (page: Page, x: number, z: number, yaw = 0, pitch = 0, y?: number) =>
   page.evaluate(([a, b, c, d, e]) => window.__seki!.teleport(a, b, c, d, e ?? undefined), [x, z, yaw, pitch, y ?? null] as const);
 
-/** A set piece's frame (ADR-0045): the market and the docks are moved, the clinic and Neon Koi turned. */
-export type Frame = "docks" | "clinic" | "koi";
+/** A set piece's frame (ADR-0045): W-3 over its floor (ADR-0082), the clinic and Neon Koi turned. */
+export type Frame = "w3" | "clinic" | "koi";
 
 /** A point of a set piece in its own coordinates, in the world. */
 export const place = (page: Page, frame: Frame, x: number, z: number, y = 0) =>

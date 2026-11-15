@@ -1,7 +1,7 @@
 import { type BlockStyle, type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { StaticProp } from "../builders";
 import { underDecks } from "./abutments";
-import { flightGrid, shapeGrid } from "./shape";
+import { FLIGHT_CELL, flightGrid, refineGrid, shapeGrid } from "./shape";
 import { shapeWays, wayRamps, waySegments } from "./steep-ways";
 import { bridgeDeckAt, deckGroundAt } from "./decks";
 import { FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS, STEEP_WAYS } from "./sites";
@@ -9,6 +9,17 @@ import { surfaceLiftAt } from "./roads";
 import { stitchSeams } from "./seams";
 
 const inside = (b: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number): boolean => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ;
+
+/** W-3's site with its margins (ADR-0082): the fence, the quay, the basin and the strip south of them. */
+const W3_SITE = { minX: 2470, maxX: 2615, minZ: 375, maxZ: 480 } as const;
+const overlaps = (g: TerrainGrid, b: typeof W3_SITE): boolean =>
+  g.originX <= b.maxX && g.originX + (g.cols - 1) * g.cell >= b.minX && g.originZ <= b.maxZ && g.originZ + (g.rows - 1) * g.cell >= b.minZ;
+/**
+ * A grid under W-3 refined to `FLIGHT_CELL` before the pads (ADR-0082, audit P2): on the import's
+ * 5 m cell the zone's pad would pull the public strip and the metro's entrance down a cell past
+ * the fence. Refining keeps the NMT's surface as it is; the pads then end within a metre.
+ */
+export const w3Grid = (g: TerrainGrid): TerrainGrid => (g.cell > FLIGHT_CELL && overlaps(g, W3_SITE) ? refineGrid(g, FLIGHT_CELL) : g);
 
 /**
  * The terrain of the game's Lublin (ADR-0045): the map's grids with the pads and ramps of
@@ -22,7 +33,7 @@ const inside = (b: { minX: number; maxX: number; minZ: number; maxZ: number }, x
  * terrain meets there.
  */
 const LAID: ReadonlyMap<string, TerrainGrid> = new Map(
-  MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(shapeGrid(c.terrain, PADS, RAMPS), FLIGHT_RAMPS), [], FLIGHT_RAMPS)]),
+  MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(shapeGrid(w3Grid(c.terrain), PADS, RAMPS), FLIGHT_RAMPS), [], FLIGHT_RAMPS)]),
 );
 /** The steep ways' stretches laid (G-755), read on the ground walked there: a way on a bridge's deck is not on the bank under it. */
 export const WAY_RAMPS = wayRamps(

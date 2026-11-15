@@ -83,10 +83,11 @@ const MINUTES: Readonly<Record<ContractKind, number>> = {
 describe("balance in the docks (ADR-0024)", () => {
   it("pay ranges per kind", () => {
     expect(Object.fromEntries(DOCKS_CONTRACT_KINDS.map((k) => [k, payouts(k)]))).toEqual({
-      escort: [580, 710],
       infiltrate: [620, 700],
       hack: [700, 820],
     });
+    // Retired from Genzō's offers with the container yard (ADR-0082), the escort pays as it did.
+    expect(payouts("escort")).toEqual([580, 710]);
   });
 
   it("a docks job pays a third to a half more than a market job, and more than any market average", () => {

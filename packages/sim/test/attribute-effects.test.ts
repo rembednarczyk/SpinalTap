@@ -12,7 +12,7 @@ import {
   spendAttributePoint,
   xpForLevel,
 } from "@seki/core";
-import { SIM_DT, Simulation, cyberCapacityOf, docks, gangerEntity, playerStatsOf, type Entity } from "../src";
+import { SIM_DT, Simulation, cyberCapacityOf, w3, gangerEntity, playerStatsOf, type Entity } from "../src";
 import { STREET_START, collect, input, run, streetSim, teleportPlayer } from "./helpers";
 import { emptySquare, enemyAt, secondsToAlarm } from "./stealth-scenes";
 
@@ -105,7 +105,7 @@ describe("attribute points in the running game (ADR-0059, stage 2)", () => {
   it("Net: the upload takes 10% less at 8", () => {
     const upload = (net: number) => {
       const sim = simWith({ net });
-      teleportPlayer(sim, docks(16, 0, 97), -Math.PI / 2);
+      teleportPlayer(sim, w3(2590, 0, 418), -Math.PI / 2);
       sim.step();
       const p = sim.player()!.position;
       sim.world.add(gangerEntity(90010, { key: "test-guard", position: { ...p, x: p.x - 8 }, yaw: Math.PI / 2 }, null, 1e6, "nabrzeze-1-1", undefined, "tessen_guard"));
