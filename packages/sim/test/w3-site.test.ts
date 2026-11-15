@@ -170,8 +170,8 @@ describe("W-3's edges on the river (ADR-0082 stage 1, curator's review round 2)"
   it("keeps the quay's floor level up to the railing over the water, wall and pad alike (P3)", () => {
     const sim = quaySim();
     for (let x = 2477.4; x <= 2486.6; x += 0.4) {
-      // From a terrain cell in from the quay's south end (z 418.5): south of it the zone's corner by the bridge keeps the NMT.
-      for (const z of [421, 425, 431, 436, 439.6]) {
+      // From the quay's south end (z 418.5, its pad down to the grid's row under the bridge) to its north end.
+      for (const z of [418.8, 419.4, 421, 425, 431, 436, 439.6]) {
         teleportPlayer(sim, w3(x, 0.3, z));
         delete sim.player()!.fall;
         for (let i = 0; i < 30; i++) sim.step();

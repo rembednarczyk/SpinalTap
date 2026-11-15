@@ -181,9 +181,10 @@ const quayAndPier = (): StaticProp[] => {
     ...piles,
     // The armoured car on the pier: cover.
     ...placeProps({ x: 0, y: W3_Y, z: 0 }, [crate(2470.5, 435.7, 5.4, 2.4, 2.4, skin("van", "x-"))]),
-    // The basin's quay wall: the pickup yard's edge over the water.
-    box(W3_BASIN.minX, W3_BASIN.maxX, foot(2550, BASIN_WALL), 0, BASIN_WALL - 0.25, W3_BASIN.minZ, "concrete"),
-    slabTop(W3_BASIN.minX, W3_BASIN.maxX, 450, BASIN_WALL - 0.25, 0, 0.3, "concrete"),
+    // The basin's quay wall: the pickup yard's edge over the water, half a metre past the basin's
+    // ends, over the terrain's last cell sloping into it (to the grid's columns at x 2507.5, 2592.5).
+    box(W3_BASIN.minX - 0.5, W3_BASIN.maxX + 0.5, foot(2550, BASIN_WALL), 0, BASIN_WALL - 0.25, W3_BASIN.minZ, "concrete"),
+    slabTop(W3_BASIN.minX - 0.5, W3_BASIN.maxX + 0.5, 450, BASIN_WALL - 0.25, 0, 0.3, "concrete"),
     water(W3_BASIN.minX, W3_BASIN.maxX, W3_BASIN.minZ, W3_BASIN.maxZ + 1.5, W3_WATER_Y),
   ];
 };

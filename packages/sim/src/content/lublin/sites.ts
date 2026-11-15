@@ -143,6 +143,17 @@ const W3_PIPE_CORRIDOR: GroundRect = { minX: W3_PIPES.minX - 2, maxX: W3_PIPES.m
  */
 export const CLEARED_BUILDINGS: readonly GroundRect[] = [...W3_CLEAR_RECTS, W3_QUAY, W3_TOWER, W3_PIER, W3_BASIN, W3_PIPE_CORRIDOR, W3_STRIP_BUILDING, CAR_WASH_AREA];
 
+/**
+ * The quay's pad down to the grid's row at z 417.5 under the bridge (review round 2,
+ * `pad-not-level`): from the quay's south edge at z 418.5 its cell sloped 0.4 m to the NMT.
+ */
+const W3_QUAY_PAD: GroundRect = { ...W3_QUAY, minZ: W3_QUAY.minZ - 1.1 };
+/** The pickup yard's ends either side of the basin, to the grid's row at z 452.5 under the fence. */
+const W3_YARD_ENDS: readonly GroundRect[] = [
+  { minX: 2500, maxX: W3_BASIN.minX, minZ: 446, maxZ: W3_BASIN.minZ + 0.5 },
+  { minX: W3_BASIN.maxX, maxX: 2606, minZ: 446, maxZ: W3_BASIN.minZ + 0.5 },
+];
+
 /** A rectangle grown by `d` metres on every side (or by `d` and `north` on the north side). */
 const grow = (r: GroundRect, d: number, north = d): GroundRect => ({ minX: r.minX - d, maxX: r.maxX + d, minZ: r.minZ - d, maxZ: r.maxZ + north });
 
@@ -154,8 +165,11 @@ const grow = (r: GroundRect, d: number, north = d): GroundRect => ({ minX: r.min
  * dug 3 m down, to 1.5 m short of the chunks' north edge.
  */
 const W3_PADS: readonly Pad[] = [
-  ...[...W3_ZONE_RECTS, W3_QUAY, W3_TOWER].map((rect): Pad => ({ rect, y: W3_Y, blend: 1, row: "T-002" })),
+  ...[...W3_ZONE_RECTS, W3_QUAY_PAD, W3_TOWER].map((rect): Pad => ({ rect, y: W3_Y, blend: 1, row: "T-002" })),
   { rect: W3_BASIN, y: W3_BASIN_FLOOR, blend: 1.5, row: "T-002" },
+  // The pickup yard level to the fence beside the basin's ends (review round 2, `pad-not-level`):
+  // the basin's blend and its 2.5 m cells dipped the yard there by up to 1.6 m, past the quay wall's ends.
+  ...W3_YARD_ENDS.map((rect): Pad => ({ rect, y: W3_Y, blend: 0, row: "T-002" })),
 ];
 
 /** The terrain levelled under the set pieces and the rooms. */
