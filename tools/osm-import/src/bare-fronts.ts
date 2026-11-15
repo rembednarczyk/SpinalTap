@@ -29,7 +29,7 @@ export interface Frontage {
  * the widest strip the reach's edge leaves that joins the frontage (`joinLoose`); `lawn` the least
  * m² of a lawn the cover alone lays in it (`paveSpecks`).
  */
-export const FRONT = { pedestrian: 8, oldTown: 6, strip: 3, lawn: 10 } as const;
+export const FRONT = { pedestrian: 8, oldTown: 6, strip: 3, lawn: 5 } as const;
 
 // Module-local copies of what the cell loops read: Vitest's module runner reads an imported
 // binding through a getter of the module's namespace, at each cell.

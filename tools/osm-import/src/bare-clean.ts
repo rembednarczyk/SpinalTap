@@ -318,7 +318,9 @@ export const joinSpecks = (cells: Cells, speck: number): void => {
       // The label most of the border has, the lower one on a tie.
       let to = -1;
       for (let l = 0; l < round.length; l++) if (round[l]! > 0 && (to < 0 || round[l]! > round[to]!)) to = l;
-      if (to < 0 || (to === LABEL.square && label[s] === LABEL.grass)) continue;
+      // In a pedestrian street's frontage a speck of paving in a crown's bed stays paving too: the
+      // leaf-off flight's setts under the trees (G-853, `lawn-on-leafoff-paving`).
+      if (to < 0 || (to === LABEL.square && label[s] === LABEL.grass) || (to === LABEL.grass && label[s] === LABEL.square && cells.front[s])) continue;
       for (let q = 0; q < n; q++) label[queue[q]!] = to;
     }
   }

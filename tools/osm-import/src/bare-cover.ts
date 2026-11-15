@@ -34,6 +34,7 @@ import { type Frontage, offFronts, paveSpecks, zoneFronts } from "./bare-fronts.
 import { keepKerbs } from "./bare-kerbs.ts";
 import { kerbStrips } from "./bare-strips.ts";
 import { contours } from "./contour.ts";
+import { crossesItself } from "./bare-ring.ts";
 import { type Area, type Line } from "./features.ts";
 import { areaSurface } from "./ground.ts";
 import { type OsmData } from "./osm.ts";
@@ -249,6 +250,11 @@ const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: Gro
     .map((r) => ({ surface, outline: r.flatMap((p) => [p.x, p.z]) }));
 };
 
+/** How far past a chunk's edges the frontages' pass reads its cells (m, a whole number of cells). */
+const SEAM = 2;
+
+const ringOfFlat = (flat: readonly number[]): Pt[] => Array.from({ length: flat.length >> 1 }, (_, k) => ({ x: flat[2 * k]!, z: flat[2 * k + 1]! }));
+
 /** Clipper2's integer grid (1 cm): the pieces of the tables lie on 0.1 m. */
 const CLIP_SCALE = 100;
 
@@ -267,34 +273,6 @@ const pathOf = (r: readonly Pt[]): Path64 => {
   let p = PATHS.get(r);
   if (!p) PATHS.set(r, (p = toPath(signedArea(r) < 0 ? [...r].reverse() : r)));
   return p;
-};
-
-/** Whether two non-adjacent edges of the ring properly cross (`selfIntersects`), the edges swept along x. */
-const crossesItself = (ring: readonly Pt[]): boolean => {
-  const n = ring.length;
-  const lo = (i: number) => Math.min(ring[i]!.x, ring[(i + 1) % n]!.x);
-  const hi = (i: number) => Math.max(ring[i]!.x, ring[(i + 1) % n]!.x);
-  const order = Array.from({ length: n }, (_, i) => i).sort((p, q) => lo(p) - lo(q));
-  const side = (a: Pt, b: Pt, c: Pt) => (b.x - a.x) * (c.z - a.z) - (b.z - a.z) * (c.x - a.x);
-  for (let s = 0; s < n; s++) {
-    const i = order[s]!;
-    for (let t = s + 1; t < n && lo(order[t]!) <= hi(i); t++) {
-      const j = order[t]!;
-      const u = Math.min(i, j);
-      const v = Math.max(i, j);
-      if (v - u < 2 || (u === 0 && v === n - 1)) continue;
-      const a = ring[u]!;
-      const b = ring[(u + 1) % n]!;
-      const c = ring[v]!;
-      const d = ring[(v + 1) % n]!;
-      const d1 = side(c, d, a);
-      const d2 = side(c, d, b);
-      const d3 = side(a, b, c);
-      const d4 = side(a, b, d);
-      if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
-    }
-  }
-  return false;
 };
 
 const cutByPieces = (fills: readonly (readonly Pt[])[], pieces: readonly (readonly Pt[])[], over: readonly (readonly Pt[])[] = []): Pt[][] => {
@@ -375,8 +353,23 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
   if (!town.fronts?.length) return base;
   // The frontages a pass of their own over what the first left bare (G-853): the fills of the rule
   // stay as they were, and the furniture set by the paving's edges reads the ground without them.
-  const fronts = layFills(rect, cover, [...ground, ...base], walls, { areas: [], stops: [], shops: [], fronts: town.fronts, ...(town.greens ? { greens: town.greens } : {}) }, base);
-  return [...base, ...fronts.map((g) => ({ ...g, front: true as const }))];
+  // Read past the chunk's edges and cut on them: traced on the chunk's cells alone, a fill crossing
+  // an edge on the slant turned along it, and the two chunks' fills left a triangle between them.
+  const wide = { minX: rect.minX - SEAM, minZ: rect.minZ - SEAM, maxX: rect.maxX + SEAM, maxZ: rect.maxZ + SEAM };
+  const fronts = layFills(wide, cover, [...ground, ...base], walls, { areas: [], stops: [], shops: [], fronts: town.fronts, ...(town.greens ? { greens: town.greens } : {}) }, base);
+  const box = toPath([
+    { x: rect.minX, z: rect.minZ },
+    { x: rect.maxX, z: rect.minZ },
+    { x: rect.maxX, z: rect.maxZ },
+    { x: rect.minX, z: rect.maxZ },
+  ]);
+  const within = fronts.flatMap((g) =>
+    intersect([toPath(ringOfFlat(g.outline))], [box], FillRule.NonZero)
+      .map((p) => ccw(removeCollinear(p.map((q) => ({ x: q.x / CLIP_SCALE, z: q.y / CLIP_SCALE })), 0.005)))
+      .filter((r) => r.length >= 3 && signedArea(r) >= FILL.minArea)
+      .map((r) => ({ ...g, outline: r.flatMap((q) => [q.x, q.z]) })),
+  );
+  return [...base, ...within.map((g) => ({ ...g, front: true as const }))];
 };
 
 /**

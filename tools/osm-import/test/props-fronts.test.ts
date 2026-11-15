@@ -37,7 +37,7 @@ describe("the furniture by the frontages' fills (G-853)", () => {
     const chunk = (front: boolean): LublinChunkData =>
       ({
         id: "c",
-        district: "d",
+        district: "shinsekai-7",
         bounds: { minX: -100, maxX: 100, minZ: -100, maxZ: 100 },
         terrain: { originX: -100, originZ: -100, cell: 200, cols: 2, rows: 2, heights: [0, 0, 0, 0] },
         buildings: [],
