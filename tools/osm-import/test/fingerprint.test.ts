@@ -6,6 +6,8 @@ import {
   TABLES,
   type TableInputs,
   type TableName,
+  OWNED,
+  fingerprintFiles,
   fingerprintIn,
   fingerprintOf,
   importsOf,
@@ -62,6 +64,18 @@ describe("the map tables' fingerprints (ADR-0083 step 1)", () => {
     expect(build).toContain("tools/orto/src/cover.ts");
     expect(build).toContain("data/osm/stare-miasto.json");
     for (const out of TABLES.build.outputs) expect(build).not.toContain(out);
+  });
+
+  // 15.11 (#582): with the whole closure in the header, a change of the renderer alone asked for the tables again.
+  it("puts in the header only the inputs the map owns: the renderer and the rest of the simulation are left to the Map tables job", () => {
+    const all = inputFiles(TABLES.props);
+    const owned = fingerprintFiles(TABLES.props);
+    expect(all.some((f) => f.startsWith("packages/engine/"))).toBe(true);
+    expect(owned.some((f) => f.startsWith("packages/engine/") || f.startsWith("packages/core/"))).toBe(false);
+    expect(owned).toContain("tools/osm-import/src/props.ts");
+    expect(owned).toContain("packages/sim/src/content/lublin/stare-miasto.generated.ts");
+    expect(owned).toContain("docs/world/lublin-props.todo.json");
+    for (const f of owned) expect(OWNED.some((o) => f.startsWith(o)) || TABLES.props.data.some((d) => f === d || f.startsWith(`${d}/`)), f).toBe(true);
   });
 });
 
