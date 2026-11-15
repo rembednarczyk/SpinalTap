@@ -1915,14 +1915,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-816 Odcinek reguły lit bez stacji liczy się jako oświetlony; przebieg uzupełniający powtarza stację, która właśnie odpadła
 - Ważność: S4 · Zasięg: SW róg Krakowskiego (-160..-130; -270..-260), rząd drzew w1550442735
 - Opis: Znalezione przy G-812: odcinek krótszy niż pół rozstawu nie dostaje stacji, a liczy się jako oświetlony; drugi przebieg powtarza tę samą zablokowaną stację.
-- Status: częściowo w poprawce (przegląd S4 15.11, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, f429ad9: część 1, przebieg bez stacji nie oświetla; 16+2 takich linii w mieście, +8 elementów w tablicy); część 2 otwarta; wcześniej: zgłoszone
+- Status: częściowo w PR #574 (część 1); część 2 otwarta; wcześniej: częściowo w poprawce (przegląd S4 15.11, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, f429ad9: część 1, przebieg bez stacji nie oświetla; 16+2 takich linii w mieście, +8 elementów w tablicy); część 2 otwarta; wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import (props-lit)
 - 15.11 przegląd S4, część 2 na main: 4 stacje przebiegu uzupełniającego leżą < 1 m od stacji pierwszego przebiegu i znowu odpadają: w1004767721 (1120,8; 381,7), w58643325 (2470,2; 417,3), w427417969 (1104,8; 176,3) i (1111,9; 205,4); do tego w172992144 (2427,9; 264,5), (2442,8; 255,3) bez latarni po obu przebiegach. Miejsce ze zgłoszenia (SW róg Krakowskiego) po G-812/G-821 już tego nie pokazuje. Koszt średni (przesunięcie stacji uzupełnienia względem pierwszego przebiegu). Sonda: scratchpad s4-p816.test.ts.
 
 ### G-817 Latarnia z linii przesunięta z jezdni lub ściany traci 7 m odstępu scalania
 - Ważność: S4 · Zasięg: linie latarni planu przy offRoad/offWall; widoczność w mieście niesprawdzona
 - Opis: fromLine w props-gen działa po tożsamości obiektu, więc latarnia przesunięta przez offRoad/offWall dostaje odstęp 0,3 m zamiast 7 m.
-- Status: w poprawce (przegląd S4 15.11, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, 6a4e9af: odstęp scalania pytany o element tak, jak go postawiono; tablica bez zmian, dziś w mieście brak przypadku); wcześniej: zgłoszone
+- Status: w PR #574; wcześniej: w poprawce (przegląd S4 15.11, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, 6a4e9af: odstęp scalania pytany o element tak, jak go postawiono; tablica bez zmian, dziś w mieście brak przypadku); wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import (props-gen)
 
 ### G-820 Brak rzędów słupków z łańcuchami wzdłuż ulic Śródmieścia poza punktami z OSM (reguła dla centrum, decyzja użytkownika 15.11)
@@ -1958,7 +1958,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-825 Jezdnia importu węższa od prawdziwej przy łącznicach, kieszeniach skrętu i placement=left_of; pas wypełnia bruk z pokrycia
 - Ważność: S3 · Zasięg: Mełgiewska/łącznica Andersa w40051729, Al. Solidarności w215609082 (kieszenie skrętu), Lwowska (placement=left_of:3)
 - Opis: Znalezione przy G-821: import nie czyta placement i nie poszerza jezdni o łącznice i pasy skrętu; pas do prawdziwego krawężnika wypełnia bruk z pokrycia ortofoto, więc latarnie i meble przy krawężniku mapy stoją na prawdziwym asfalcie.
-- Status: zgłoszone
+- Status: w naprawie (runda 2 po przeglądzie kuratora, gałąź ccr-ec2c4269-ilh8k8-g825); wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import, tools/orto
 - 15.11 przegląd kuratora (41ddd97): NIEZGODNE. Placement zgodne z ortofoto; zwężenie przy węźle kładzie pół pasa łącznicy za krawężnik: Ruska w216655518 (1071..1074; 428..437) jezdnia na trawie ok. 12 m², Andersa w40051729 (2316..2322; 312..321) jezdnia i chodnik na trawie ok. 12 m², Solidarności w215609082 s 0-6 krawędź 7,7 m wobec 6,3 (ok. 5 m² na szpicu trawnika). kerb-fill-wide-estimated (1113,353) to fałszywy alarm (kostka dojścia do przejścia). Runda 2 naprawiacza.
 
