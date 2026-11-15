@@ -82,7 +82,9 @@ jobs:
   tables:
     name: Map tables
     needs: changes
-    if: needs.changes.outputs.tables == 'true'
+    # Every change of code too: the header's fingerprint covers only what the map owns (fingerprint.ts,
+    # OWNED), so a change of the simulation or the renderer that shapes the tables shows up only here.
+    if: needs.changes.outputs.tables == 'true' || needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
