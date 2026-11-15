@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PropsPlan } from "../src/props-gen.ts";
+import { SidewalkIndex, WIDE_SPAN, kerbsOf } from "../src/props-lit-sides.ts";
 import { CAR_COVER, COVER, isLitWay, lampLineOf, litFillItems, litItems, markCourts, osmLampItems, styleClashes, withLitRule, yieldToRule } from "../src/props-lit.ts";
 
 /** A way along x at `z`, from `x0` to `x1` (the strip of Krakowskie south of z = −200 is on the map, x −200..460). */
@@ -129,5 +130,45 @@ describe("the street lamps of the lit rule (G-798, ADR-0064 stage 3)", () => {
     const fill = litFillItems(plan, ways, [{ x: 15, z: -240 }]);
     expect(fill.map((i) => [i.id, i.kind])).toEqual([["lit.w1.fill", "lamp-road"]]);
     expect(fill[0]!.lines![0]![0]).toBeGreaterThan(15 + 20);
+  });
+});
+
+describe("the side of a street the lit rule's lamps stand on (G-804, T-297)", () => {
+  const firstLast = (items: readonly { lines?: readonly (readonly number[])[] }[]) => {
+    const l = items[0]!.lines![0]!;
+    return [l[0], l[l.length - 2]];
+  };
+  const wide = { left: 8, right: 9 };
+
+  it("measures how far a way's sidewalks lie off it, left and right of its drawing direction", () => {
+    const index = new SidewalkIndex([[{ x: -10, z: -232 }, { x: 130, z: -232 }], [{ x: 130, z: -249 }, { x: -10, z: -249 }], [{ x: 60, z: -260 }, { x: 60, z: -220 }]]);
+    expect(kerbsOf([{ x: 0, z: -240 }, { x: 120, z: -240 }], index)).toEqual({ left: 8, right: 9 });
+    expect(kerbsOf([{ x: 120, z: -240 }, { x: 0, z: -240 }], index)).toEqual({ left: 9, right: 8 });
+    expect(kerbsOf([{ x: 0, z: -240 }, { x: 120, z: -240 }], new SidewalkIndex([]))).toEqual({ left: null, right: null });
+  });
+
+  it("lamps a side street from both kerbs where its sidewalks are tagged on both sides and lie WIDE_SPAN apart (Narutowicza)", () => {
+    const look = (tags: Record<string, string>, kerbs: { left: number; right: number }) =>
+      litItems({ items: [] }, [{ ...way(1, { highway: "tertiary", ...tags }, 0, 120, -240), kerbs }]).map((i) => [i.spacing, i.note?.includes("obu stronach") ?? false]);
+    expect(wide.left + wide.right).toBeGreaterThanOrEqual(WIDE_SPAN);
+    expect(look({ sidewalk: "separate" }, wide)).toEqual([[34, true]]);
+    expect(look({ sidewalk: "both" }, wide)).toEqual([[34, true]]);
+    // Peowiaków: sidewalks 9 m apart; and a street with a sidewalk on one side only.
+    expect(look({ sidewalk: "separate" }, { left: 5, right: 4 })).toEqual([[30, false]]);
+    expect(look({ "sidewalk:left": "no", "sidewalk:right": "separate" }, wide)).toEqual([[30, false]]);
+  });
+
+  it("stands a side street's one row on the same side whichever way OSM draws it", () => {
+    expect(firstLast(litItems({ items: [] }, [way(1, { highway: "residential" }, 0, 120, -240)]))).toEqual([0, 120]);
+    expect(firstLast(litItems({ items: [] }, [way(1, { highway: "residential" }, 120, 0, -240)]))).toEqual([0, 120]);
+    // The only sidewalk right of the drawing direction: the row turned to stand on it.
+    const right = litItems({ items: [] }, [way(1, { highway: "residential", "sidewalk:left": "no", "sidewalk:right": "separate" }, 0, 120, -240)]);
+    expect(firstLast(right)).toEqual([120, 0]);
+  });
+
+  it("keeps the kerb the plan's line it takes over lit", () => {
+    const plan: PropsPlan = { items: [{ id: "lamps.side", kind: "lamp-road", spacing: 30, lines: [along(125, -5, -240)] }] };
+    const rule = withLitRule(plan, [way(1, { highway: "residential" }, 0, 120, -240)], []).plan.items.filter((i) => i.id.startsWith("lit."));
+    expect(firstLast(rule)).toEqual([120, 0]);
   });
 });

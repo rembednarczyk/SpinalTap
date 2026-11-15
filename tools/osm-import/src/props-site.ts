@@ -65,6 +65,8 @@ export class Site {
   private readonly gates: readonly (readonly [Pt, Pt])[];
   /** The car parks of the map laid out as lots (`parking=surface`), not lanes along a kerb. */
   private readonly lots: readonly { readonly ring: readonly Pt[]; readonly box: Rect }[];
+  /** The car parks of the map along a kerb (`parking=lane`, `street_side`…): the parked cars' bays. */
+  private readonly kerbParks: readonly { readonly ring: readonly Pt[]; readonly box: Rect }[];
 
   constructor(chunks: readonly LublinChunkData[]) {
     this.chunks = chunks;
@@ -82,6 +84,8 @@ export class Site {
     this.streets = streets;
     const lots = new Map(chunks.flatMap((c) => (c.carParks ?? []).filter((k) => k.kind === "surface").map((k) => [k.id, flat(k.outline)] as const)));
     this.lots = [...lots.values()].map((ring) => ({ ring, box: ringBounds(ring) }));
+    const kerbParks = new Map(chunks.flatMap((c) => (c.carParks ?? []).filter((k) => k.kind !== "surface").map((k) => [k.id, flat(k.outline)] as const)));
+    this.kerbParks = [...kerbParks.values()].map((ring) => ({ ring, box: ringBounds(ring) }));
     this.passages = chunks.flatMap((c) => (c.passages ?? []).map((p) => [p.from, p.to] as const));
     // The gates are solid in the map, with no passage in their chunk (Brama Krakowska), or one off the arch the game cuts
     // (Brama Grodzka, G-183). Their axes run on along the street 4.6 to 8.7 m past the fronts, where the next houses' walls are.
@@ -160,6 +164,12 @@ export class Site {
   /** Whether p lies in a car park laid out as a lot. */
   inLot(p: Pt): boolean {
     return this.lots.some((l) => inRect(p, l.box) && pointInRing(p, l.ring));
+  }
+
+  /** Whether p, or a point `reach` metres off it on the four axes, lies in a kerb car park's bays. */
+  inKerbPark(p: Pt, reach = 0): boolean {
+    const at = (q: Pt) => this.kerbParks.some((l) => inRect(q, l.box) && pointInRing(q, l.ring));
+    return [{ x: 0, z: 0 }, { x: reach, z: 0 }, { x: -reach, z: 0 }, { x: 0, z: reach }, { x: 0, z: -reach }].some((o) => at({ x: p.x + o.x, z: p.z + o.z }));
   }
 
   /** Whether p lies out of every lot but within `reach` metres of one (on the four axes): in front of its cars. */
