@@ -18,7 +18,7 @@ import { type Cover } from "../../orto/src/cover.ts";
 import { type CoverFill, coverFiller, pathLoops, townPlaces, withFills } from "./bare-cover.ts";
 import { type AddedArea, addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { withoutReplaced } from "./corrections-alchemia.ts";
-import { orthoPieces, orthoSides } from "./corrections-kerb.ts";
+import { ORTHO_OFFSETS, orthoPieces, orthoSides } from "./corrections-kerb.ts";
 import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
@@ -243,6 +243,17 @@ const shopOutlines = (out: readonly BuildingOut[], buildings: readonly Area[]): 
  * `lod2`: GUGiK LoD2 2017 buildings (`Inputs.lod2`) for the roofs it lacks (`lod2-roofs.ts`); without, the tags' heights and roofs.
  * `covers`: the districts' orthophoto cover (`Inputs.covers`) the bare ground is laid from (`bare-cover.ts`); without, it stays bare.
  */
+/**
+ * Whether a carriageway's width is the import's estimate on a side (1 its left, -1 its right): off
+ * the ways `measured`, and on a side the orthophoto did not measure, which keeps the estimate's half
+ * (ADR-0080 PR 10) and the asphalt it left out, as any street of estimated width (G-811). A way of
+ * the table has no other width: the measure skips those the map or a correction by hand gives one.
+ */
+const estimatedSide =
+  (measured: ReadonlySet<string>) =>
+  (source: string, side: 1 | -1): boolean =>
+    !measured.has(source) || orthoSides(source)?.[side > 0 ? 0 : 1] === false;
+
 /** A gap's patch is no carriageway, sidewalk or kerb: only the ground of its band (G-760); a slit is laid edge to edge (G-777). */
 const patchBand = (of: Band, ring: Pt[], slit?: true): Band => ({ surface: of.surface, ring, bridge: false, source: of.source, holed: true, patch: true, ...(slit ? { slit } : {}) });
 
@@ -333,7 +344,7 @@ export const generate = (
     if (!n.tags || !markedCrossing(n.tags)) continue;
     const at = geoToWorld(n.lat, n.lon);
     if (!near([at]) || onCrossingWay(at)) continue;
-    const b = crossingBand(`n${n.id}`, at, roads);
+    const b = crossingBand(`n${n.id}`, at, roads, (l) => Math.abs(ORTHO_OFFSETS.get(l.id) ?? 0));
     if (b) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   // A laid sidewalk stops at the kerb of the street it meets (ADR-0042): cut where it runs over another carriageway.
@@ -359,7 +370,7 @@ export const generate = (
   // A street fitted to its mapped sidewalks (T-046) has its width from them, as a measured one.
   const measured = new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id));
   // A joint's patch laps over the next street: the kerbs are read off the bands without it, as its lap is no kerb's (G-760).
-  const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), (source) => !measured.has(source), walks);
+  const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks);
   for (const [b, { ring, runs }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
   bands.splice(0, bands.length, ...slitsOffWidened(bands, [...kerbs.widened.values()].map((w) => w.ring)));

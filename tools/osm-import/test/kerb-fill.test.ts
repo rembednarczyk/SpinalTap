@@ -18,6 +18,8 @@ type Way = {
   readonly closed?: boolean;
   /** Tags of the way's nodes, by their index. */
   readonly nodeTags?: Readonly<Record<number, Record<string, string>>>;
+  /** The way's OSM id, for one the import's tables know (by default 100 on in the map's order). */
+  readonly id?: number;
 };
 const tagsXml = (tags: Record<string, string>) => Object.entries(tags).map(([k, v]) => `<tag k="${k}" v="${v}"/>`);
 const map = (...ways: Way[]) => {
@@ -31,7 +33,7 @@ const map = (...ways: Way[]) => {
       return id++;
     });
     if (w.closed) refs.push(refs[0]!);
-    out.push(` <way id="${100 + k}">${refs.map((r) => `<nd ref="${r}"/>`).join("")}${tagsXml(w.tags).join("")}</way>`);
+    out.push(` <way id="${w.id ?? 100 + k}">${refs.map((r) => `<nd ref="${r}"/>`).join("")}${tagsXml(w.tags).join("")}</way>`);
   });
   return parseOsmXml(["<osm>", ...nodes, ...out, "</osm>"].join("\n"));
 };
@@ -78,6 +80,19 @@ describe("a pavement reaches the kerb (G-522)", () => {
     expect(surfacesAt([street, footway(-6), bays], 50, -4)).toEqual(["road"]);
     expect(surfacesAt([street, footway(-9)], 50, -5)).toEqual([]);
     expect(surfacesAt([street, footway(-6)], 50, 4)).toEqual([]);
+  });
+
+  it("lays one over a seam narrower than its step out, and none where the footway reaches the kerb (G-811)", () => {
+    // The footway's edge 0.05 m off the asphalt's, as a kerb measured on the orthophoto leaves it by the map's paving.
+    expect(surfacesAt([measured, footway(-4.55)], 50, -3.28)).toEqual(["sidewalk"]);
+    expect(surfacesAt([measured, footway(-4.45)], 50, -3.28)).toEqual(["footway"]);
+  });
+
+  it("lays one up to a zebra the map draws on past the kerb, which keeps its place over it (G-811)", () => {
+    const zebra: Way = { tags: { highway: "footway", footway: "crossing", crossing: "zebra" }, pts: [[50, -6], [50, 6]] };
+    const ways = [measured, footway(-6), zebra];
+    expect(surfacesAt(ways, 50, -4)).toEqual(["crossing"]);
+    for (const x of [48.3, 51.7]) expect(surfacesAt(ways, x, -4), `${x}`).toEqual(["sidewalk"]);
   });
 
   it("leaves a footway laid at the kerb as it is", () => {
@@ -147,5 +162,16 @@ describe("a carriageway of estimated width reaches the paving (G-570)", () => {
     // The zebra a piece of the carriageway of its own, the asphalt cut under it (ADR-0078 step 3).
     expect(surfacesAt([zebra, footway(-6)], 50, -4)).toEqual(["crossing"]);
     expect(surfacesAt([zebra, footway(-6)], 50, 3)).toEqual(["crossing"]);
+  });
+});
+
+describe("a carriageway measured on the orthophoto on one side (ADR-0080 PR 10)", () => {
+  it("widens the side left at the estimate to the paving, as one of estimated width, and lays the measured side's gap as a sidewalk (G-811)", () => {
+    // w107667221 of the generated table: measured on its left only, 2.65 m of asphalt left of the axis
+    // and 3.25 m right of it, the estimate's half of two lanes; its carriageway 5.9 m wide, 0.3 m right of the axis.
+    const ortho: Way = { ...street, id: 107667221 };
+    const ways = [ortho, footway(-6), footway(6)];
+    for (const x of [30, 50, 70]) for (const z of [-3.4, -4, -4.3]) expect(surfacesAt(ways, x, z), `${x},${z}`).toEqual(["road"]);
+    for (const x of [30, 50, 70]) for (const z of [2.8, 4, 4.6]) expect(surfacesAt(ways, x, z), `${x},${z}`).toEqual(["sidewalk"]);
   });
 });
