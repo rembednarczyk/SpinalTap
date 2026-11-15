@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-819 Słupek z łańcuchem jako gruby granitowy graniastosłup zamiast smukłego czarnego słupka żeliwnego z kulą
+- Ważność: S4 (proponowana; charakterystyczny mebel Lublina, zgłoszenie użytkownika 15.11) · Zasięg: wszystkie słupki miasta (373 na main, 275 z łańcuchem)
+- Opis: furniture.ts BOLLARD = { side: 0.34, height: 1.05, chain: 0.018 }, prop-street.ts: kwadratowy trzon 0,34 m z granitu #8e8d88 z czapą-piramidą, łańcuch 4-boczną rurą r 0,018 na 0,74 m ze zwisem 1/20 przęsła. W Lublinie (GSV 2025 Pl. Łokietka i Pl. Wolności, Lublin360 2017): czarny słupek żeliwny, okrągły trzon ok. Ø 0,10 m (u stopy kołnierz ok. Ø 0,15 m, wys. 0,15 m), głowica kulista ok. Ø 0,12 m z małym zwieńczeniem, wysokość ok. 0,95 m, uchwyt łańcucha ok. 0,75 m, łańcuch ogniwowy (drut 8–10 mm, ogniwo ok. 50 × 80 mm, widoczny pas 4–5 cm), zwis ok. 0,15 m na przęśle 1,8 m (ok. 1/10–1/12). Kolizja r 0,17 zamiast ok. 0,08. T-302
+- Status: naprawione (15.11, #569 scalony); wcześniej: w PR #569; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g819); wcześniej: zgłoszone (kurator 15.11, audyt słupków)
+- Pakiet właściciela: packages/sim (content/lublin/furniture.ts: BOLLARD, kolizja) i packages/engine (mapcity/prop-street.ts)
+- Test przyjęcia: BOLLARD: trzon okrągły Ø 0,10–0,12, wysokość 0,90–1,00, głowica kulista, czarne żeliwo; łańcuch o widocznej szerokości 0,04–0,05 m (ogniwa albo dwie skrzyżowane wstęgi), zwis 1/10 przęsła; kolizja z promienia trzonu; zrzut z modelami w dzień przy Pl. Łokietka obejrzany przez kuratora; warstwa 2077 (pasek światła) zostaje
+
 ### G-828 Kontrole skanu wolne pod obciążeniem CI (paving-overlap, kerb-fill-wide-estimated)
 - Ważność: S3 · Zasięg: CI shard testów jednostkowych; main 76cd282 i PR #564
 - Opis: Po #559 i #565 kawałków gruntu przybyło, a kontrole przeglądają liniowo listy całego miasta; paving-overlap G-301 naprawione w #566 (4,9 s → 0,1 s), kerb-fill-wide-estimated ok. 11 s lokalnie i ponad 20 s w CI. Poprawka: indeks przestrzenny, bez podnoszenia limitów.
