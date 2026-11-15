@@ -2029,6 +2029,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g837, 906eb3d, czeka na przegląd kuratora); wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 - 15.11: kerb-jag 55 -> 16 (14 kwadratów); kontrola liczy łuk między wierzchołkami obrysu, po dogęszczeniu co 0,5 m wzdłuż krawężnika 81 -> 43, przy zebrach 123 -> 109; kontrolę trzeba dogęścić (PR #581) przed scaleniem; zostają zebry (G-836) i kliny narożników (G-845); 30 obiektów przy krawężniku przesuniętych o 0,2–1,0 m do przeglądu kuratora
+- Przegląd kuratora 15.11 @ 906eb3d: ZGODNE. Krawędź jezdni wobec krawężnika na ortofoto: średnio +0,14 → −0,09 m (2025-04), +0,17 → −0,03 m (2024-06); 49 przesuniętych obiektów, żaden na jezdni ani zebrze; latarnie, drzewa i słupy na jezdni w mieście 17 → 16. Parkometr n9596789942 (T-306).
 
 ### G-838 Szczelina 0,12 m między kwadratem reguły gołej ziemi a przesuniętą krawędzią Lwowskiej w139586648
 - Ważność: S4 · Zasięg: kerb-gap-bare podzamcze-2-1 1110,440
@@ -2048,6 +2049,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Zgłoszenie użytkownika 15.11 ze zdjęciem: schody na Podzamczu są bardzo płytkie i z daleka widać je jako czarną plamę. steps-plan.ts tnie bieg na stopnie o stałej głębokości STEP_DEPTH 0,33 m, a wysokość wynika ze spadku wygładzonego NMT (od MIN_RISER 0,045 m w górę), więc wysokości są różne między biegami i często bardzo małe. Ciemne podstopnie (#4f4b46) co 0,33 m zlewają się z daleka w czarną plamę (aliasing). Propozycja użytkownika: jedna norma stopnia w całej grze, pilnowana skanem. Do zrobienia: (1) norma: podstopień 0,15 m (0,12–0,17), stopnica 0,32 m (2h+s 0,60–0,66), liczba stopni z całkowitej różnicy wysokości końców biegu (NMT/LOD2, nie z wygładzonego gruntu na każdej stopnicy), spoczniki co najwyżej co 10–12 stopni zamiast rozciągania stopnic; (2) z daleka (od ok. 40 m) bieg jako jedna pochylnia z uśrednionym kolorem, bez linii podstopni; (3) kontrola skanu steps-riser-norm (podstopień i stopnica poza normą, nierówne stopnie w biegu) z bazą. Referencja: schody Placu Zamkowego, dwa biegi ze spocznikiem, szerokie granitowe stopnie (zdjęcie użytkownika w scratchpadzie ref/, tylko jako referencja wizualna).
 - Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g840, 4f65035), do przeglądu kuratora; wcześniej: nowy
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (steps-plan), tools/glitch-scan
+- Przegląd kuratora 15.11 @ 4f65035: NIEZGODNE (T-307). Do poprawy: (1) droga ze step_count dostaje tyle stopni, bez spoczników z maxRun (w1305889408: 40, w1305940836: 12, w1305940837: 13); (2) stopnica nie niżej niż 0,02 m pod terenem (15 biegów). Kontrole steps-count-osm, steps-landing-osm, steps-tread-sunk. Pochylnia od 35–45 m zaciera stopnie widoczne na zdjęciu z ok. 60 m: próg ok. 70 m. Kolor: G-850; podesty: G-849.
 
 ### G-841 Zamek Lubelski bez przepisu zabytku: fasada od Placu Zamkowego jak zwykły gmach
 - Ważność: S3 · Zasięg: Zamek Lubelski, front od Placu Zamkowego i schodów
@@ -2090,6 +2092,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: STEP_RISE 0.16 zamiast STEP_NORM.riser z G-840; zmiana ruszy złoty hash determinizmu
 - Status: nowy
 - Pakiet właściciela: packages/sim
+
+### G-849 Schody zamkowe: pochyłe podesty i plac zamiast poziomych
+- Ważność: S3 · Zasięg: Podzamcze, schody Placu Zamkowego x 768..810, z 234..250
+- Opis: Teren gry (NMT) wznosi się na podestach w1305889407 (781,4..784,6) o ok. 0,17 m/m i w1305940838 (800,3..802,6) o ok. 0,20 m/m, a plac 768..776,7 o 0,76 m; biegi pokonują 7,46 z 9,76 m. W rzeczywistości podesty są poziome, a wysokość jest na 65 stopniach (OSM). Oczekiwane: PADS na podestach, rzędy niskich stopni na placu (w1435832499). Proponowana kontrola steps-count-osm
+- Status: nowy
+- Pakiet właściciela: packages/sim/src/content/lublin (sites.ts, PADS) + tools/osm-import
+
+### G-850 Schody: stopnice ciemniejsze od granitu na ortofoto
+- Ważność: S3 · Zasięg: wszystkie schody miasta, najbardziej Plac Zamkowy
+- Opis: Stopnica #77736c (do trawy gry 1,39), podstopień #4f4b46 (0,91), z daleka ok. 1,23; ortofoto bieg główny Placu Zamkowego 1,67 (2025-04) / 1,92 (2024-06), plac obok to samo; paleta square 1,7. Oczekiwane: stopnica ≈ square (luminancja ok. 141), podstopień ciemniejszy tylko cieniowaniem. Proponowana kontrola steps-albedo-drift (baza 1). Zgłoszenie użytkownika 15.11: jasny granit na zdjęciu
+- Status: nowy
+- Pakiet właściciela: packages/engine/src/npr (toon-city.ts), steps-plan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
