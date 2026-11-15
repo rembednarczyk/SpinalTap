@@ -29,9 +29,11 @@ interface Cut {
   /** How far it stands off the cloth, in the mesh's units (metres in VRoid files). */
   readonly lift: number;
   /**
-   * A plate: `facing` out from the centre line or up, front and back alike (not the lining of a
-   * collar, whose normals point at the neck and would push the shell into it), and the triangles
-   * clipped along the outline instead of kept or dropped whole.
+   * A plate: the triangles clipped along the outline instead of kept or dropped whole. Its panel
+   * takes the cloth facing any way (a fold or an inner layer facing in stays under the outer
+   * layer's copy); its straps only the cloth facing `facing` out from the centre line or up over
+   * the shoulders, not the lining of a collar, whose normals point at the neck and would push the
+   * shell into it.
    */
   readonly plate?: {
     /** Straps from the bib over the shoulders up to `top`: their inner and outer edge off the centre line, against the model's height. */
@@ -44,12 +46,14 @@ const APRON: Cut = { hem: 0.48, bib: 0.74, halfWidth: 0.09, facing: 0.35, legs: 
 /** From the waist to the armpits, round the body, narrower than the arms hanging at its sides. */
 const VEST: Cut = { hem: 0.53, bib: 0.79, halfWidth: 0.105, facing: -1, legs: false, lift: 0.012 };
 /**
- * The plate carrier: waist to breastbone, about 8.5 cm half-width on a 1.7 m figure (open sides,
- * inside the arms when they come forward to aim), straps 4 to 7.5 cm off the centre line over the
- * shoulders, under the collar. Two and a half centimetres off the cloth: the skin under a VRoid
- * top comes up close to it at the bust.
+ * The plate carrier: from above the hem of a shirt to the breastbone, about 8.5 cm half-width on a
+ * 1.7 m figure (open sides, inside the arms when they come forward to aim), straps 4 to 7.5 cm off
+ * the centre line over the shoulders, under the collar. Two and a half centimetres off the cloth:
+ * the skin under a VRoid top comes up close to it at the bust.
  */
-const PLATE: Cut = { hem: 0.575, bib: 0.775, halfWidth: 0.05, facing: 0.3, legs: false, lift: 0.025, plate: { straps: { inner: 0.025, outer: 0.044, top: 0.82 } } };
+const PLATE: Cut = { hem: 0.6, bib: 0.775, halfWidth: 0.05, facing: 0, legs: false, lift: 0.025, plate: { straps: { inner: 0.025, outer: 0.044, top: 0.82 } } };
+/** A plate's straps take the cloth facing at least this much up, over the shoulders. */
+const OVER = 0.4;
 
 const SKIN_KINDS = [VertexBuffer.MatricesIndicesKind, VertexBuffer.MatricesWeightsKind, VertexBuffer.MatricesIndicesExtraKind, VertexBuffer.MatricesWeightsExtraKind] as const;
 
@@ -179,11 +183,10 @@ const copyCut = (src: Mesh, into: Mesh, f: Frame, cut: Cut, out: Shell): void =>
     const h = (p.y - f.up) / f.height;
     return h >= cut.hem && h <= cut.bib && Math.abs(Vector3.Dot(p.subtract(f.centre), f.right)) <= cut.halfWidth * f.height;
   };
-  const facesOut = (p: Vector3, n: Vector3): boolean => {
-    if (!cut.plate) return Vector3.Dot(n, f.forward) >= cut.facing;
+  const outward = (p: Vector3, n: Vector3): boolean => {
     const out = p.subtract(f.centre);
     out.y = 0;
-    return Vector3.Dot(n, out.normalize()) >= cut.facing || n.y >= cut.facing;
+    return Vector3.Dot(n, out.normalize()) >= cut.facing || n.y >= OVER;
   };
   const outline = cut.plate ? outlineOf(f, cut) : [];
   const at = (b: Blend): Vector3 => b.reduce((s, [i, w]) => s.addInPlace(wp(i).scale(w)), Vector3.Zero());
@@ -194,13 +197,15 @@ const copyCut = (src: Mesh, into: Mesh, f: Frame, cut: Cut, out: Shell): void =>
     const normal = Vector3.Cross(pb.subtract(pa), pc.subtract(pa));
     // Degenerate triangles out; facing by the vertex normal (the sense of the winding depends on the mirrored glTF root).
     const facing = Vector3.TransformNormal(new Vector3(nor[a * 3]!, nor[a * 3 + 1]!, nor[a * 3 + 2]!), world).normalize();
-    if (normal.length() < 1e-9 || !facesOut(pa, facing)) continue;
+    if (normal.length() < 1e-9 || (!cut.plate && Vector3.Dot(facing, f.forward) < cut.facing)) continue;
     // Both windings: the apron takes the shared vertex-colour material, which culls back faces, and the
     // file's cloth may be double-sided under a mirrored root (glTF). The far copy hides in the body.
     if (!cut.plate) out.indices.push(write.take(a), write.take(b), write.take(c), write.take(a), write.take(c), write.take(b));
-    for (const piece of outline) {
+    const straps = cut.plate !== undefined && outward(pa, facing);
+    for (const [k, piece] of outline.entries()) {
+      if (k > 0 && !straps) continue;
       const poly = clipPolygon([[[a, 1]], [[b, 1]], [[c, 1]]], piece, at).map(write.blend);
-      for (let k = 1; k + 1 < poly.length; k++) out.indices.push(poly[0]!, poly[k]!, poly[k + 1]!, poly[0]!, poly[k + 1]!, poly[k]!);
+      for (let j = 1; j + 1 < poly.length; j++) out.indices.push(poly[0]!, poly[j]!, poly[j + 1]!, poly[0]!, poly[j + 1]!, poly[j]!);
     }
   }
 };

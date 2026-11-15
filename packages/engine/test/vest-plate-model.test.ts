@@ -64,12 +64,15 @@ const depthAt = (tris: readonly Tri[], u: number, v: number): number | null => {
   return best;
 };
 
-/** Bones of the arms: in a pose they may lie ahead of the chest without going through anything. */
-const ARM = /arm|hand|thumb|index|middle|ring|little/i;
+/**
+ * Bones of the chest, the shoulders and the neck, under the vest. Not the arms, which may lie ahead
+ * of the chest in a pose, nor the hips, which a crouch leaning forward puts behind the back plate.
+ */
+const TRUNK = /spine|chest|bust|shoulder|neck/i;
 
 /**
- * Vertices of the model's skin and top (not the arms) that stand out of the vest's front, or of
- * its back, where the vest covers them, 2 mm or more; `covered` counts all that it covers, front and back.
+ * Vertices of the model's skin and top on the trunk's bones that stand out of the vest's front, or
+ * of its back, where the vest covers them, 2 mm or more; `covered` counts all that it covers, front and back.
  */
 const piercing = (scene: Scene, id: EntityId, views: CharacterViews): { count: number; worst: number; covered: number[] } => {
   const vest = scene.getMeshByName(`e${id}-vest-plate`)!;
@@ -104,7 +107,7 @@ const piercing = (scene: Scene, id: EntityId, views: CharacterViews): { count: n
     for (const i of new Set(m.getIndices() ?? [])) {
       let top = 0;
       for (let k = 1; k < 4; k++) if (mw[i * 4 + k]! > mw[i * 4 + top]!) top = k;
-      if (ARM.test(bones[mi[i * 4 + top]!]?.name ?? "")) continue;
+      if (!TRUNK.test(bones[mi[i * 4 + top]!]?.name ?? "")) continue;
       const [u, v, d] = at(pos[i]!);
       const side = d > 0 ? 0 : 1;
       const dv = depthAt(sides[side]!, u, v);
