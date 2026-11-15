@@ -7,7 +7,8 @@
 # Kroki:
 #  1. git fetch origin main, git merge --no-edit origin/main;
 #  2. konflikt tylko w plikach *.generated.ts: bierze wersję main i przelicza tablice
-#     (pnpm osm:build && pnpm osm:props), bo te pliki nie scalają się tekstowo;
+#     (pnpm osm:build && pnpm osm:props), bo te pliki nie scalają się tekstowo; bez konfliktu
+#     przelicza je, gdy odcisk wejść w nagłówkach nie zgadza się z wejściami (pnpm tables:check);
 #     konflikt w innym pliku: przerywa scalanie (git merge --abort) i wypisuje pliki;
 #  3. pnpm hashes:check i test skanu glitchy (tools/glitch-scan/test/glitch-scan.test.ts);
 #  4. commit scalenia z podsumowaniem; --push wypycha gałąź zwykłym git push.
@@ -40,11 +41,6 @@ if git merge-base --is-ancestor origin/main HEAD; then
   exit 0
 fi
 
-# Czy main zmienił wejścia importu albo tablice od wspólnego przodka: wtedy tablice przeliczamy
-# zawsze, bo tekstowe scalenie dwóch zmian tablicy bez konfliktu też może dać wynik niezgodny
-# z generatorem.
-inputs=$(git diff --name-only HEAD...origin/main | grep -cE '^(tools/osm-import/|tools/orto/|data/|packages/sim/src/content/lublin/)' || true)
-
 regen=0
 if ! git merge --no-edit -q origin/main >/dev/null 2>&1; then
   mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
@@ -63,7 +59,12 @@ if ! git merge --no-edit -q origin/main >/dev/null 2>&1; then
   fi
 fi
 
-if [ "$regen" = 1 ] || [ "$inputs" -gt 0 ]; then
+# Tablice przeliczamy także po scaleniu bez konfliktu, gdy odcisk wejść w ich nagłówkach nie
+# zgadza się z wejściami po scaleniu (ADR-0083): tekstowe scalenie dwóch zmian wejść albo tablicy
+# też może dać wynik niezgodny z generatorem.
+if [ "$regen" = 0 ] && ! pnpm -s tables:check >/dev/null 2>&1; then regen=1; fi
+
+if [ "$regen" = 1 ]; then
   heavy pnpm -s osm:build >/dev/null
   heavy pnpm -s osm:props >/dev/null
   git add -A packages/sim/src/content/lublin

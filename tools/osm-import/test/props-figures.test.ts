@@ -1,20 +1,6 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FIGURE_SEAT, type StreetPropItem, doorVariant, figureLayout, isSitting, seatAt } from "../../../packages/core/src";
-import { cellKey } from "../../../packages/engine/src/renderer/mapcity/map-index";
-import { PROP_BLOCK } from "../../../packages/engine/src/renderer/mapcity/prop-shapes";
-import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
-import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
-import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
-import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
-import { LUBLIN_PROP_TABLE } from "../../../packages/sim/src/content/lublin/props.generated.ts";
-import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
-import { crowdClear } from "../src/crowd-clear.ts";
-import { gameDoors } from "../src/game-doors.ts";
-import { REPO } from "../src/paths.ts";
-import { PROP_STRIDE, emitProps } from "../src/props-emit.ts";
 import { type FigureContext, addFigures } from "../src/props-figures.ts";
 import { Site } from "../src/props-site.ts";
 
@@ -139,26 +125,5 @@ describe("the still crowd (ADR-0058 stage 8)", () => {
     // The bench with a back seats two, 0.45 m either side of its middle: both in the next block.
     expect(figuresOf([piece("bench", 0, 0, 0, 1)], { blockOf: (p) => (p.x === 0 && p.z === 0 ? "home" : "next") })).toEqual([]);
     expect(figuresOf([piece("bench", 0, 0, 0, 1)], { blockOf: () => "home" }).length).toBeGreaterThan(0);
-  });
-
-  it("matches the committed table: the figures of its other pieces as `pnpm osm:props` adds them", () => {
-    const chunks = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
-    const table = new Map<string, StreetPropItem[]>();
-    for (const [id, rows] of Object.entries(LUBLIN_PROP_TABLE)) {
-      const items: StreetPropItem[] = [];
-      for (const [prop, row] of Object.entries(rows)) {
-        if (prop === "figure") continue;
-        for (let k = 0; k < row.length; k += PROP_STRIDE) items.push({ prop: prop as StreetPropItem["prop"], x: row[k]!, y: row[k + 1]!, z: row[k + 2]!, yaw: row[k + 3]!, variant: row[k + 4]! });
-      }
-      table.set(id, items);
-    }
-    addFigures(table, new Site(chunks), {
-      groundY: (p) => groundY(p.x, p.z),
-      surfaceY: (p) => surfaceY(p.x, p.z),
-      crowd: crowdClear(),
-      gameDoors: gameDoors(),
-      blockOf: (p) => cellKey(p.x, p.z, PROP_BLOCK),
-    });
-    expect(emitProps(table)).toBe(readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8"));
   });
 });
