@@ -1,12 +1,9 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ALL_CHUNKS, DISTRICTS, chunksOf } from "../src/config.ts";
 import { emitDistrict } from "../src/emit.ts";
 import { generate } from "../src/generate.ts";
 import { loadInputs } from "../src/load.ts";
 import { parseOsmXml } from "../src/osm.ts";
-import { REPO } from "../src/paths.ts";
 import { worldToGeo } from "../src/project.ts";
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 
@@ -220,7 +217,8 @@ describe("generator", () => {
     expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(6.5, 1);
   });
 
-  it("reproduces the committed tables from the committed raw data, twice", () => {
+  // That they are the committed tables: the fingerprint of the inputs (`fingerprint.test.ts`) and CI's `tables` job (ADR-0083).
+  it("generates the same tables from the committed raw data twice", () => {
     const inputs = loadInputs();
     const d = DISTRICTS.find((x) => x.slug === "stare-miasto")!;
     const specs = chunksOf(d);
@@ -228,6 +226,5 @@ describe("generator", () => {
     const again = loadInputs();
     const second = emitDistrict(d.slug, d.name, generate(again.osm, inputs.src, specs, undefined, again.lod1, again.lod2, again.covers).chunks);
     expect(second).toBe(first);
-    expect(first).toBe(readFileSync(join(REPO, "packages/sim/src/content/lublin/stare-miasto.generated.ts"), "utf8"));
   });
 });
