@@ -330,18 +330,28 @@ const darkSpans = (pts: readonly Pt[], dark: (p: Pt) => boolean): [number, numbe
 /**
  * A dark stretch grown along its way, both ways in turn, to a lamp's spacing: a line shorter than
  * half of it gets no station (`stations` starts half a spacing in), so a short gap would stay dark.
- * It grows on the map only: past its edge the lamps go (no chunk), and the line grown there lit the
- * sidewalk beside it for the ways after (Świętoduska's 4 m at z = 160 grown 26 m north, G-812).
  */
 const padded = (pts: readonly Pt[], [a, b]: [number, number], spacing: number): Pt[] => {
   let [i, j] = [a, b];
-  const back = () => i > 0 && inMap(pts[i - 1]!);
-  const on = () => j < pts.length - 1 && inMap(pts[j + 1]!);
-  while (lengthOf(pts.slice(i, j + 1)) < spacing && (back() || on())) {
-    if (back()) i--;
-    if (on() && lengthOf(pts.slice(i, j + 1)) < spacing) j++;
+  while (lengthOf(pts.slice(i, j + 1)) < spacing && (i > 0 || j < pts.length - 1)) {
+    if (i > 0) i--;
+    if (j < pts.length - 1 && lengthOf(pts.slice(i, j + 1)) < spacing) j++;
   }
   return pts.slice(i, j + 1);
+};
+
+/**
+ * The pieces of a run on the map, which its lamps light: a station past the edge has no chunk and
+ * no lamp. The run itself keeps its length past the edge, so its stations on the map stay where the
+ * way's spacing puts them (G-821: cut at the edge, they moved onto Mełgiewska's merging lane).
+ */
+const onMap = (run: readonly Pt[]): Pt[][] => {
+  const out: Pt[][] = [[]];
+  for (const p of run) {
+    if (inMap(p)) out[out.length - 1]!.push(p);
+    else if (out[out.length - 1]!.length > 0) out.push([]);
+  }
+  return out.filter((l) => l.length > 0);
 };
 
 /** One rule group: a lit way's stretches in its look (`note` with "obu stronach" for both sides, as the plan's). */
@@ -395,7 +405,8 @@ const lampDark = (plan: PropsPlan, ways: readonly LitWay[], lit: LampIndex<unkno
     const sided = look.sides === 1 && line.kind === "lamp-road";
     const refs = sided ? [...ref, ...(own.get(`lit.w${w.id}`) ?? [])] : [];
     const runs = spans.map((s) => padded(pts, s, look.spacing)).map((r) => (sided ? facing(r, w.tags, refs, ON_WAY) : r));
-    for (const run of runs) lit.addLine(run, true);
+    // Only what lies on the map lights the ways after: Świętoduska's run grown 26 m north past z = 160 lit the footway beside it (G-812).
+    for (const run of runs) for (const piece of onMap(run)) lit.addLine(piece, true);
     items.push(litItem(id(w), w, look, runs));
   }
   return items;
