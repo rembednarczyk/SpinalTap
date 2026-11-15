@@ -135,7 +135,10 @@ describe("the ground the map city lays (G-444)", () => {
     // A lane joining a street ends inside it, a split's through lanes keep their place while the lanes
     // turning off run beside them, and a moved carriageway's strip to a lawn is laid as the lawn's
     // (G-825 r2): 162 204 - 161 987 = 217 vertices more, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 162204, hash: "c65db85d" });
+    // That strip wider than a kerb (0.6 m) is the lawn's only on the orthophoto's green, else a square
+    // to the lawn, as the bare ground rule's cells laid it before (G-825 r3): 162 258 - 162 204 = 54
+    // vertices more, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 162258, hash: "6f16fce3" });
     scene.dispose();
   });
 
