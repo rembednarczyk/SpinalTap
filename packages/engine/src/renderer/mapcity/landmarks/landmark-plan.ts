@@ -6,11 +6,13 @@ import { doorwaysOn, walls } from "../facade-plan";
 import { WINDOW_STYLE } from "../facade-style";
 import { planPassages } from "../passage-plan";
 import { pointInRing } from "../polygon";
-import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, onWall, pilasters, shownWalls, skirtRoof, slabRing, solid, stonePlinth } from "./kit";
+import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, onWall, panel, pilasters, shownWalls, skirtRoof, slabRing, solid, stonePlinth } from "./kit";
 import { GALLERY, type WallRect, battlements, buttress, clearOfPassages, diaper, gallery, paintingNiche, plaqueRow, smallWindows } from "./elevation";
 import { camera, corniceLights, facing, helmLeds, mast, scanner, screenFrame, sideOf, uplightFittings } from "./layer2077";
 import { TABLET, courseAndKeystones, dataRoof, gableOver, gableTrim, rustication, stringCourse, windowRows } from "./classicist";
 import type { LandmarkFrame } from "./landmark-frame";
+import { balconyFloor, palaceFront } from "./palace";
+import { planPortico } from "./portico";
 import type { GableFace, LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
 
 /**
@@ -28,6 +30,9 @@ const TRIM: Readonly<Record<Material, string>> = { brick: SWATCH.brickDark, plas
 /** A tier's wall colour: its plaster's colour when the data gives one, else its material's. */
 const wallOf = (t: Tier): string => (t.colour ? SWATCH[t.colour] : WALL[t.material]);
 
+/** A tier's trim: cream on sand plaster (Nowy Ratusz), else its material's. */
+const trimOf = (t: Tier): string => (t.colour === "sand" ? SWATCH.cream : TRIM[t.material]);
+
 /**
  * The frame of a map building turned into a landmark's: plain walls (no window bays) up to the
  * top, which a helmet shorter than the data's roof raises: the peak stays the data's.
@@ -37,11 +42,13 @@ export const landmarkFrame = (f: FacadeFrame, landmark: LandmarkPart): LandmarkF
   const c = landmark.part.crown;
   const roof = f.b.roof ?? 0;
   const lift = c.kind === "helm" && roof > c.height ? roof - c.height : 0;
+  // A recipe's roof no higher than its `rise` (G-117): the walls stay the data's.
+  const cap = c.kind === "roof" && c.rise !== undefined && roof > c.rise ? roof - c.rise : 0;
   return {
     ...f,
-    b: lift > 0 ? { ...f.b, roof: roof - lift } : f.b,
+    b: lift + cap > 0 ? { ...f.b, roof: roof - lift - cap } : f.b,
     landmark,
-    style: { ...f.style, plaster: wallOf(t), trim: TRIM[t.material], plinth: SWATCH.stone, window: WINDOW_STYLE.none, shopfront: false, attic: "none", atticHeight: 0, cornice: false, stringCourse: false, roof: c.kind === "roof" ? f.style.roof : "flat", tower: false, freeTower: false, neonTrim: null, signs: 0 },
+    style: { ...f.style, plaster: wallOf(t), trim: trimOf(t), plinth: SWATCH.stone, window: WINDOW_STYLE.none, shopfront: false, attic: "none", atticHeight: 0, cornice: false, stringCourse: false, roof: c.kind === "roof" ? f.style.roof : "flat", tower: false, freeTower: false, neonTrim: null, signs: 0 },
     walls: f.walls.map((w) => ({ ...w, bay: 0 })),
     top: f.top + lift,
     eave: f.top + lift,
@@ -148,6 +155,8 @@ const faces = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe): void => {
     const c = clockSpot(f, old);
     clockFace(sink, old, old.length / 2, c.y, c.r, solid("#efe6cf"), solid("#1b1d22"), meta);
   }
+  // The upper zone clad in copper over the string course (Nowy Ratusz's tower).
+  if (t.split && t.upper) for (const w of shownWalls(f)) panel(sink, w, 0, w.length, f.b.foot + t.split + 0.08, f.top - 0.5, 0.012, solid(SWATCH[t.upper]), meta);
   if (t.split) band(sink, f.b.ring, 0.12, f.b.foot + t.split - 0.12, f.b.foot + t.split + 0.1, solid(SWATCH.plasterTrim), meta, f.b.base);
   if (t.gallery && neon) gallery(sink, f, neon, solid(SWATCH.plasterTrim), solid(SWATCH.opening));
   if (!t.openings) return;
@@ -169,7 +178,7 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
   }
   if (c.kind === "flat" || c.kind === "crenel") {
     slabRing(sink, f.b.ring, f.top, solid(c.kind === "flat" ? SWATCH.tile : SWATCH.stone), meta);
-    if (near) band(sink, f.b.ring, 0.1, f.top - 0.22, f.top + 0.05, solid(TRIM[part.tier.material]), meta, f.b.base);
+    if (near) band(sink, f.b.ring, 0.1, f.top - 0.22, f.top + 0.05, solid(trimOf(part.tier)), meta, f.b.base);
     return;
   }
   if (c.kind === "skirt") {
@@ -177,7 +186,7 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
     return;
   }
   if (c.kind === "roof") {
-    dataRoof(sink, f, solid(wallOf(part.tier)), solid(TRIM[part.tier.material]), near);
+    dataRoof(sink, f, solid(wallOf(part.tier)), solid(trimOf(part.tier)), near);
     return;
   }
   if (roof <= 0.5) {
@@ -303,7 +312,7 @@ export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
   const part = f.landmark.part;
   const t = part.tier;
   const wall = solid(wallOf(t));
-  const trim = solid(TRIM[t.material]);
+  const trim = solid(trimOf(t));
   walls(sink, f, wallTop(f), wall);
   const y0 = f.b.lifted ? f.b.foot : f.b.base;
   const y1 = t.cornice ? f.top - 0.6 : f.top;
@@ -315,6 +324,11 @@ export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
   if (t.cornice) cornice(sink, f, f.b.ring, f.top, trim);
   if (t.material === "brick") brickwork(sink, f, t);
   if (t.front) classicFront(sink, f, t.front, trim);
+  if (t.palace) {
+    // No window behind a neighbour standing against or in front of the wall.
+    const course = palaceFront(sink, f, t.palace, (w, u0, u1) => !intoNeighbour(f, w, u0, u1, 0.35));
+    if (course !== null) planPortico(sink, f, balconyFloor(f, t.palace));
+  }
   faces(sink, f, part);
   crown(sink, f, part, true);
   layerOn(sink, f, part);
