@@ -143,6 +143,13 @@ Zasada w [decyzje.md](decyzje.md) (brzeg mapy, 8.11). Lista:
 - G-556, płyty płytsze niż 3 m od brzegu (zostają poza grą do poszerzenia): Probostwo 7 w444375255 (12,1 m², 1,0 m), Towarowa 29 w171014944 (15,9 m², 1,4 m), Pałac Morskich w67884888 (20,9 m², 2,1 m), w227679355 Podzamcze (613; 579) (9,1 m², 2,4 m); skrawki poniżej 6 m²: w66324534 Lubartowska 8, w66335123 (T-058), w67504437 Pałac Tarłów (T-057), w151379173 Montażowa 16a, w227679367, w227679402 Probostwo 5b, w227679417.
 - Lwowska w139586648 na brzegu x = 1120 (podzamcze-2-1): jezdnia częściowo poza mapą (przegląd #409).
 
+## Usprawnienia procesu (reguła 15.11: to, co powtórzyło się drugi raz, przestaje być pracą ręczną)
+- [15.11, zrobione, PR #577] `pnpm merge:main`, zwięzłe błędy CI w adnotacjach, reguła w `orchestrator.md`.
+- [15.11, zrobione w docs/agenci-zasady.md] raport agenta do ok. 250 słów w stałym porządku; zamek na ciężkie zadania (`flock /tmp/seki-heavy.lock`); samokontrola przed kolejną rundą po kuratorze.
+- [15.11, do zrobienia przez agenta] `pnpm topo:review`: nakładki zmienionych obiektów na ortofoto i statystyki automatycznie (zamiast ręcznej pracy kuratora przy każdym PR mapy); kontrole skanu z uwag kuratora przed budową.
+- [15.11, do zrobienia przez agenta] bramka czasu testów z trendem zamiast ostrzeżenia; testy całego miasta w osobnym shardzie; wspólna pamięć podręczna wygenerowanego miasta dla testów.
+- [15.11, drobne] skrypt pobrania APK z adresu artefaktu; build main w pamięci podręcznej per sha dla `shots:compare`.
+
 ## Później
 
 - Witryna obok Neon Koi w scenie referencyjnej to duża płaska bursztynowa plama: dodać
