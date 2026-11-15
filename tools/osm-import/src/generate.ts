@@ -374,12 +374,12 @@ export const generate = (
   // A joint's patch laps over the next street: the kerbs are read off the bands without it, as its lap is no kerb's (G-760).
   // The zebras are fitted to the kerbs after (`laidZebras`, G-836): a strip is laid whatever zebra the map draws over it.
   const kerbs = kerbFills(bands.filter((b) => !b.patch && b.surface !== "crossing"), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks);
-  for (const [b, { ring, runs }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, box: ringBounds([...b.ring, ...ring]) });
+  for (const [b, { ring, runs, lanes }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, widenLanes: lanes, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
   bands.splice(0, bands.length, ...slitsOffWidened(bands, [...kerbs.widened.values()].map((w) => w.ring)));
   // The carriageways' reach each side of their axes, fitted and widened, for the traffic's lanes (ADR-0080).
   const halves = streetHalves(bands);
-  const widths = streetWidths(laidLines, (w) => isCarriageway(w.piece.tags) || w.atStreet, kerbs.widened);
+  const widths = streetWidths(laidLines, (w) => isCarriageway(w.piece.tags) || w.atStreet, [...kerbs.widened].map(([b, w]) => [b, { runs: w.lanes }] as const));
   // Each zebra across its carriageway from kerb to kerb as laid, square to the axis (G-836).
   bands.splice(0, bands.length, ...laidZebras(bands, kerbs, zebraSpots(data.nodes, crossingWays, roads, lines), roads, aside, areas));
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.

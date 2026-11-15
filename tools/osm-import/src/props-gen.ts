@@ -5,6 +5,7 @@
  * scattered by a Halton sequence, and the groups without geometry (manholes, cabinets, name
  * plates, bins) follow the streets and benches of the chunks. `y` is the chunk's terrain.
  */
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { crossingBands } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
@@ -20,6 +21,7 @@ import { onKerb } from "./props-bollard-lines.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideSpot, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
 import { byStyledLamp, oldTownLook } from "./props-lamp-looks.ts";
+import { type KerbRowStats, type KerbRuleContext, kerbBollards } from "./props-kerb-bollards.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
 import { PropSolidIndex, clearSpot } from "./props-solid.ts";
@@ -97,7 +99,13 @@ export interface PropsStats {
   readonly onBoard: number;
   /** Per group of the plan: pieces asked for and pieces placed. */
   readonly perItem: Record<string, [number, number]>;
+  /** The rule's rows along the kerbs (G-820), when it ran. */
+  readonly kerbRows?: KerbRowStats;
 }
+
+/** The groups of the rule's posts along the kerbs (G-820): with chains, and without (a narrow or steep pavement). */
+export const KERB_ROWS = "rule.kerb-bollards";
+export const KERB_ROWS_BARE = "rule.kerb-bollards.bare";
 
 /** OSM tags of the plan's nodes by id (`n123`), for the shapes of monuments and the trees' species (`loadNodeTags`). */
 export type NodeTags = ReadonlyMap<string, Tags>;
@@ -105,6 +113,15 @@ export type NodeTags = ReadonlyMap<string, Tags>;
 export interface PropsOut {
   readonly byChunk: ReadonlyMap<string, StreetPropItem[]>;
   readonly stats: PropsStats;
+}
+
+/**
+ * The furniture placed but its bollards not yet strung (`finish` strings them, once): a pass of
+ * the plan whose lamps or trees alone are read (`placeLit`, `placeWithCrowns`) needs no rows.
+ */
+export interface PropsDraft {
+  readonly byChunk: ReadonlyMap<string, readonly StreetPropItem[]>;
+  readonly finish: () => PropsOut;
 }
 
 const flat = (f: readonly number[]): Pt[] => {
@@ -153,8 +170,13 @@ interface Obstacle {
   readonly r: number;
 }
 
-const blocked = (obstacles: readonly Obstacle[], p: Pt, extra = 0): boolean =>
-  obstacles.some((q) => Math.abs(q.x - p.x) < q.r + extra && Math.abs(q.z - p.z) < q.r + extra && Math.hypot(q.x - p.x, q.z - p.z) < q.r + extra);
+/** The obstacles placed so far in a grid: a spot is tried against those near it, not every one. */
+type Obstacles = SpatialHash<Obstacle>;
+
+const blocked = (obstacles: Obstacles, p: Pt, extra = 0): boolean => {
+  const r = OBSTACLE_REACH + extra;
+  return obstacles.some(p.x - r, p.z - r, p.x + r, p.z + r, (q) => Math.abs(q.x - p.x) < q.r + extra && Math.abs(q.z - p.z) < q.r + extra && Math.hypot(q.x - p.x, q.z - p.z) < q.r + extra);
+};
 
 /** Slides along the line, a few metres either way, to where nothing placed stands in the way. */
 const SLIDES = [0, 2.5, -2.5, 5, -5];
@@ -165,7 +187,7 @@ const LAMP_TRAFFIC_REACH = 3.6;
 /** How far a wall lantern keeps from a passage's axis (m): past half the widest passage. */
 const PASSAGE_REACH = 2;
 
-const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: readonly Slot[], obstacles: readonly Obstacle[]): Placed[] => {
+const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: readonly Slot[], obstacles: Obstacles): Placed[] => {
   const { mode } = lineMode(item, prop);
   const out: Placed[] = [];
   const fallback = FALLBACK[prop] ?? 2;
@@ -203,7 +225,7 @@ const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: rea
   return out;
 };
 
-const onLines = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[]): Placed[] => {
+const onLines = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: Obstacles): Placed[] => {
   const lines = linesOf(item);
   const spacing = item.spacing ?? ROW_SPACING[prop];
   const { sides, mode } = lineMode(item, prop);
@@ -255,7 +277,7 @@ const bulkyItems = (placed: readonly Placed[]): StreetPropItem[] =>
 /** Long pieces set on an outline by their whole footprint (ADR-0058 stage 2), not scattered. */
 const BULKY: ReadonlySet<StreetPropKind> = new Set(["food-cart", "container"]);
 
-const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[], placed: readonly Placed[]): Placed[] => {
+const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: Obstacles, placed: readonly Placed[]): Placed[] => {
   if (item.position) return [{ prop, p: item.position, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: typeof item.osm === "string" ? item.osm : item.id }];
   // A group of points with a yaw faces that way, as a single position does (the benches of Alchemia's T0 towards their lawns).
   if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: osmAt(item, i) }));
@@ -294,7 +316,7 @@ const PLACE_FILL: Readonly<Record<string, { readonly ring: readonly Pt[]; readon
 };
 
 
-const fillPlace = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[]): Placed[] => {
+const fillPlace = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: Obstacles): Placed[] => {
   const f = PLACE_FILL[item.id];
   if (!f) return [];
   const open = (p: Pt) => site.surfaceAt(p) === "walk" && !blocked(obstacles, p, 1);
@@ -304,6 +326,7 @@ const fillPlace = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
 
 /** What a lamp beside a line keeps clear of, and how far (m): trees by their crowns. */
 const OBSTACLE: Partial<Record<StreetPropKind, number>> = { tree: 3.4, bench: 1.8, "advertising-column": 1.8, kiosk: 2.5, "bus-shelter": 2.5, monument: 2.5, artwork: 1.8, "cafe-garden": 3, "fountain-jets": 1.8 };
+const OBSTACLE_REACH = Math.max(...Object.values(OBSTACLE));
 
 /**
  * Shapes pinned down: the tall mast, the yellow column, and every monument and artwork by its
@@ -357,6 +380,13 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
   const clear = new Clearances(site.chunks, market);
   const fromLine = new Set<Placed>();
   const deferred: PlanItem[] = [];
+  // The obstacles of the pieces placed so far, each added as it is placed.
+  const obstacles: Obstacles = new SpatialHash<Obstacle>(4);
+  const push = (x: Placed) => {
+    placed.push(x);
+    const r = OBSTACLE[x.prop];
+    if (r) obstacles.insertPoint({ x: x.p.x, z: x.p.z, r }, x.p.x, x.p.z);
+  };
   for (const item of plan.items) {
     const prop = propOf(item.kind);
     if (!prop) {
@@ -368,7 +398,6 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
       deferred.push(item);
       continue;
     }
-    const obstacles = placed.flatMap((x) => (OBSTACLE[x.prop] ? [{ x: x.p.x, z: x.p.z, r: OBSTACLE[x.prop]! }] : []));
     for (const at of placeItem(site, item, prop, obstacles, placed)) {
       const x = { ...at, prop: oldTownLook(item.kind, at.prop, at.p) };
       const shape = shapeOf(item, prop, x.key, tags);
@@ -377,7 +406,7 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
         continue;
       }
       const p = { ...x, ...(shape === undefined ? {} : { shape }), from: item.id, ...(item.baskets === false ? { bare: true as const } : {}) };
-      placed.push(p);
+      push(p);
       if (item.line || item.lines) fromLine.add(p);
     }
     // The stock beside a market's stalls (ADR-0058 stage 3), within its outline.
@@ -388,7 +417,7 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
         if (x.from === item.id && x.yaw === null) placed[k] = { ...x, yaw: facingOf(site, x) };
       });
       const stalls = placed.filter((x) => x.from === item.id);
-      for (const g of stallGoods(site, clear, stalls, ring, marketEntrances(site, ring), placed)) placed.push({ ...g, from: item.id });
+      for (const g of stallGoods(site, clear, stalls, ring, marketEntrances(site, ring), placed)) push({ ...g, from: item.id });
     }
   }
   // Baskets hang on the lamps, the street groups follow the streets and the benches.
@@ -398,11 +427,39 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
   return { placed, fromLine };
 };
 
+/** The rule's posts along the kerbs (G-820) into the table and the bollards to string, counted; its stats. */
+const addKerbRows = (
+  site: Site,
+  chunks: readonly LublinChunkData[],
+  byChunk: Map<string, StreetPropItem[]>,
+  bollards: (BollardRef & { district: string; from: string })[],
+  bands: ReturnType<typeof crossingBands>,
+  ctx: KerbRuleContext,
+  count: Pick<PropsStats, "perKind" | "perDistrict" | "perItem">,
+): KerbRowStats => {
+  const { posts, stats } = kerbBollards(site, chunks, [...byChunk.values()].flat(), bands, ctx);
+  for (const post of posts) {
+    const chunk = site.chunkAt(post.p)!;
+    const from = post.bare ? KERB_ROWS_BARE : KERB_ROWS;
+    const list = byChunk.get(chunk.id)!;
+    list.push({ prop: "bollard", x: r1(post.p.x), y: r2(site.heightAt(post.p)), z: r1(post.p.z), yaw: 0, variant: 0 });
+    bollards.push({ chunk: chunk.id, index: list.length - 1, district: chunk.district, from });
+    count.perKind.bollard = (count.perKind.bollard ?? 0) + 1;
+    count.perDistrict[chunk.district] = (count.perDistrict[chunk.district] ?? 0) + 1;
+    count.perItem[from] = [(count.perItem[from]?.[0] ?? 0) + 1, (count.perItem[from]?.[1] ?? 0) + 1];
+  }
+  return stats;
+};
+
 /**
  * Every group of the plan as street furniture per chunk, with the control numbers; the wall lanterns
  * keep off the venues' `boards`, the market's furniture off the carriageways and the game's doors (`market`).
  */
-export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}): PropsOut => {
+export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}, kerbRule?: KerbRuleContext): PropsOut =>
+  placeProps(plan, chunks, tags, boards, market, kerbRule).finish();
+
+/** `generateProps` up to its rows of bollards, the kerbs' (G-820) and the plan's, which `finish` lays and strings. */
+export const placeProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}, kerbRule?: KerbRuleContext): PropsDraft => {
   const site = new Site(chunks);
   const skipped: Record<string, number> = {};
   const { placed, fromLine } = placeAll(site, plan, skipped, tags, boards, market);
@@ -410,7 +467,8 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   const byChunk = new Map<string, StreetPropItem[]>(chunks.map((c) => [c.id, []]));
   const perKind: Record<string, number> = {};
   const perDistrict: Record<string, number> = {};
-  const kept = new Map<StreetPropKind, Pt[]>();
+  // The pieces kept so far by kind, in grids: each next one is looked for near it, not in every one.
+  const kept = new Map<StreetPropKind, SpatialHash<Pt>>();
   const solids = new PropSolidIndex();
   const perItem: Record<string, [number, number]> = {};
   for (const item of plan.items) if (propOf(item.kind)) perItem[item.id] = [item.count ?? 0, 0];
@@ -484,10 +542,10 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       inBuilding++;
       continue;
     }
-    const same = kept.get(x.prop) ?? [];
+    const same = kept.get(x.prop) ?? new SpatialHash<Pt>(4);
     // Asked of the piece as placed: moved off the road or a wall it is another object, and a line's lamp kept 0.3 m (G-817).
     const gap = minGap(x.prop, fromLine.has(piece));
-    if (same.some((q) => Math.hypot(q.x - x.p.x, q.z - x.p.z) < gap) || styledBy(x.prop, x.p)) {
+    if (same.queryRadius(x.p.x, x.p.z, gap).some((q) => Math.hypot(q.x - x.p.x, q.z - x.p.z) < gap) || styledBy(x.prop, x.p)) {
       merged++;
       continue;
     }
@@ -510,7 +568,7 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     }
     if (BASKET_LAMPS.has(x.prop)) lampAt.set(x.key, { x: item.x, z: item.z, deck: x.deck });
     if (x.prop === "market-stall") stallShift.set(x.key, { x: item.x - piece.p.x, z: item.z - piece.p.z });
-    same.push({ x: item.x, z: item.z });
+    same.insertPoint({ x: item.x, z: item.z }, item.x, item.z);
     kept.set(x.prop, same);
     solids.add(item);
     const list = byChunk.get(chunk.id)!;
@@ -521,9 +579,27 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     const from = x.from ?? "";
     perItem[from] = [perItem[from]?.[0] ?? 0, (perItem[from]?.[1] ?? 0) + 1];
   }
-  // Rows, chains and the zebras' mouths; a post with no room out of a mouth goes.
+  const stats = { perKind, perDistrict, skipped, outside, inBuilding, offRoad: moved, onRoad, merged, crowded, offBoard, onBoard, perItem };
+  let out: PropsOut | null = null;
+  return { byChunk, finish: () => (out ??= finishProps(site, plan, chunks, byChunk, bollards, stats, kerbRule)) };
+};
+
+/** The rows, chains and the zebras' mouths of the placed bollards; a post with no room out of a mouth goes. */
+const finishProps = (
+  site: Site,
+  plan: PropsPlan,
+  chunks: readonly LublinChunkData[],
+  byChunk: Map<string, StreetPropItem[]>,
+  bollards: (BollardRef & { district: string; from: string })[],
+  stats: Omit<PropsStats, "mapped">,
+  kerbRule?: KerbRuleContext,
+): PropsOut => {
+  const { perKind, perDistrict, perItem } = stats;
+  const bands = crossingBands(chunks);
+  // The rows along the kerbs of the centre (G-820), round everything placed: its lamps hold their chains.
+  const rows = kerbRule ? addKerbRows(site, chunks, byChunk, bollards, bands, kerbRule, { perKind, perDistrict, perItem }) : null;
   const table = byChunk as Map<string, (StreetPropItem | undefined)[]>;
-  for (const r of stringBollards(site, table, bollards, crossingBands(chunks))) {
+  for (const r of stringBollards(site, table, bollards, bands, (b) => b.from === KERB_ROWS_BARE)) {
     perKind.bollard = perKind.bollard! - 1;
     perDistrict[r.district] = perDistrict[r.district]! - 1;
     perItem[r.from] = [perItem[r.from]![0], perItem[r.from]![1] - 1];
@@ -531,5 +607,6 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   for (const [id, list] of table) byChunk.set(id, list.filter((i): i is StreetPropItem => i !== undefined));
   const mapped: Record<string, string> = {};
   for (const item of plan.items) if (MAPPED[item.kind]) mapped[item.kind] = MAPPED[item.kind]!.prop;
-  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad: moved, onRoad, merged, crowded, offBoard, onBoard, perItem } };
+  const { skipped, outside, inBuilding, offRoad, onRoad, merged, crowded, offBoard, onBoard } = stats;
+  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad, onRoad, merged, crowded, offBoard, onBoard, perItem, ...(rows ? { kerbRows: rows } : {}) } };
 };

@@ -13,7 +13,6 @@ krakowskie-1-0 90,-230
 krakowskie-1-1 200,20
 krakowskie-1-1 100,100
 krakowskie-2-0 320,-240
-krakowskie-2-0 320,-200
 krakowskie-2-0 330,-200
 podzamcze-0-0 710,170
 podzamcze-0-0 710,180

@@ -167,7 +167,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const calm = !always && !combat && hp >= maxHp && !disguised && !overPool && !gained;
 
   return (
-    <div className="hud" data-testid="hud">
+    <div className="hud ui-layer" data-testid="hud">
       <HurtVignette />
       <Crosshair touch={!!touch} />
       <DetectionRing />

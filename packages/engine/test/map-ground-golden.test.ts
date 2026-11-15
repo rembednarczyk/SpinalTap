@@ -129,11 +129,15 @@ describe("the ground the map city lays (G-444)", () => {
     // A side left at the estimate widened to the paving again, the kerbs' strips laid from under the
     // asphalt, over seams under 0.1 m and up to a zebra past a measured kerb, the zebras across the
     // asphalt where it lies (G-811): 161 914 - 161 182 = 732 vertices more, the same meshes.
+    // The widened kerbs smooth (G-837): the asphalt's new edge simplified within 0.05 m before its
+    // rounding, and grown on in to the kerb where the gap to the paving closes under 1 m:
+    // 161 914 - 161 827 = 87 vertices fewer, the same meshes.
     // Every zebra a rectangle square to its street from kerb to kerb, a crossing way's band out to the
     // pavements a footway under it (G-836): 161 914 - 161 200 = 714 vertices fewer, the same meshes.
     // A junction's zebra along its foot path, every zebra on its axis to the kerb of the game's asphalt,
     // a road area's mouth too (G-836, the curator's round 2): 161 268 - 161 200 = 68 vertices more.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161268, hash: "f7ee9cad" });
+    // Both on one ground (the G-837 kerbs' smoothing with the zebras of G-836): 161 229, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161229, hash: "f8679ac4" });
     scene.dispose();
   });
 
