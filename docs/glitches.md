@@ -1953,6 +1953,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przegląd kuratora r2 (15.11, ed53299): NIEZGODNE. Ruska, Andersa (trawa), Solidarności i szwy zgodne. Do poprawy: pas trawnika z kerbFills na bruku i asfalcie (1088,9-1091,5; 456-472) +21,8 m² i (1110,5-1119; 274,35-276) +13,1 m²; reguła remisu sygnalizatorów pogarsza (-104,3;121) i (-104,1;49,7); n1946478264 (1104,1;264,7) 3,6 m w jezdni łuku (krawężnik placu z≈261,0, 2024-06). Runda 3 nowym agentem. Szczegóły: scratchpad/topo-g825-r2-raport.md
 - 15.11 r3 7bfd370: pas do trawnika tylko przy szczelinie ≤ 0,6 m albo przy zieleni na ortofoto, szerszy jako square; reguła remisu sygnalizatorów wycofana (17 z 18 jak na main); kontrola lawn-strip-on-paving, baza 0. n1946478264 zostaje na klinie (1094,5; 279) jak w r1: obie pozycje docelowe wymagają nowej reguły, decyzja orkiestratora: sprawa G-842. Czeka na przegląd kuratora (Lwowska z 397–439 plamista, grządka 1110–1119; 514–522 jako square).
 - Przegląd kuratora r3 (15.11, @ 7bfd370): NIEZGODNE, 1 poprawka. Zgodne: A (trawa od x 1090,9 / 1090,1 / 1090,2 / 1091,5 przy z 458 / 462 / 465 / 469; zdjęcie 1091,0 / 1090,0 / 1090,3 / 1091,5), B (square z 274,3–274,8 do 275,9–276,7, bez trawy przy z < 275,9), grządka square jak main i zdjęcie, 5 sygnalizatorów co do 0,0 m jak na main, lawn-strip-on-paving 0, teren 0, hashe zgodne. Do poprawy: pas przy przesuniętej krawędzi zmienia nawierzchnię co 1–3 m (square albo trawa do jezdni): Lwowska, zach. krawędź z 397,5–420,2 (7 przebiegów po 1,5–3 m) i z 337,8–365 (6 przebiegów po 1–5,8 m), A z 462,5–464,4 (2 m trawy do jezdni między pasami square). Zdjęcie 2023-09: na całych odcinkach ciągły trawnik i jasny krawężnik 0,5–1 m. Oczekiwane: jedna nawierzchnia na odcinek krawędzi, bez przebiegów krótszych niż 5 m między przebiegami drugiej (np. square z 392–442 i z 337,8–365). Kontrola: kerb-fill-flicker.
+- 15.11 r4 d00cf52: pas do trawnika jedną nawierzchnią na odcinek (lawnStretches), kontrola kerb-fill-flicker (baza 63, wszystkie z main); do kuratora: łącznica Ruskiej (1068–1073; 432–447) square 1–1,5 m częściowo na zieleni ortofoto
 
 ### G-826 Pokrycie ortofoto 2025-04 klasuje jasny asfalt jezdni jako paving
 - Ważność: S3 · Zasięg: m.in. pod latarniami G-821; kontrola lamp-on-orto-carriageway ich nie widzi
@@ -2159,6 +2160,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-858 Wypełnienia gołej ziemi odrzucane przez crossesItself po cięciu
 - Ważność: S4 · Zasięg: ok. 40 kawałków w mieście, największe 33 m² (975,407) i 28 m² (373,−171)
 - Opis: cutByPieces odrzuca wypełnienia, których obrys po cięciu sam się przecina; znalezione przy G-853
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+
+### G-859 Reguła gołej ziemi przy krawężniku zmienia trawę i square co <5 m
+- Ważność: S4 · Zasięg: kerb-fill-flicker: 71 znalezisk na main (komórki 0,5 m reguły gołej ziemi) i 7 trawników OSM sięgających jezdni
+- Opis: Znalezione kontrolą z G-825 r4; baza 63 kluczy
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+
+### G-860 Zygzak krawężnika 0,98 m przy zebrze łącznicy Ruskiej
+- Ważność: S4 · Zasięg: podzamcze-2-1 (1059,8; 447,9), kerb-jag 1050,440
+- Opis: Pas chodnika przesuniętej jezdni G-825 (r1–r3), złapany kontrolą kerb-jag z #581
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
 
