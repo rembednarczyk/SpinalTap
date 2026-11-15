@@ -27,6 +27,17 @@ export const SWATCH = {
   // Brama Grodzka's beige plaster (`building:colour=beige`) and the joints of its rustication.
   beige: "#e0cba3",
   beigeJoint: "#a8916c",
+  // Nowy Ratusz's sand plaster (`building:colour=yellow`, light ochre on the photographs), its
+  // cream detail, the joints of its rusticated ground floor and the shade of its arched panels.
+  sand: "#d9c08c",
+  cream: "#f3e8c8",
+  sandJoint: "#a88f5f",
+  sandPanel: "#c8ad78",
+  // Its main door's dark oak.
+  door: "#4a3324",
+  // A planter's concrete and its shrub.
+  concrete: "#9a958c",
+  shrub: "#4f6b3a",
   // Its gables: the blind niches' shade, the cartouche's field and the dark stone of the dated tablet.
   beigeNiche: "#c9b088",
   cartouche: "#f1e6c8",

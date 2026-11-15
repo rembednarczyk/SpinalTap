@@ -6,6 +6,8 @@ import { type Uv, quadUv } from "../sink-ops";
 import { onWall } from "./kit";
 import { type LandmarkFrame, clockSpot, clockWalls, litMouths, mouthWall, screenOn, tabletOn, uplights } from "./landmark-plan";
 import { passageAxis } from "./layer2077";
+import { balconyFloor } from "./palace";
+import { nameplateOn } from "./portico";
 
 /**
  * Lublin 2077's neon on a landmark (ADR-0062) in the cell's additive sign mesh: the screen over
@@ -72,6 +74,11 @@ export const planLandmarkSigns = (sink: MeshSink, f: LandmarkFrame, nameSlot: (n
   const date = tabletOn(f);
   const dateSlot = date ? nameSlot(date.text) : null;
   if (date && dateSlot !== null) flat(sink, date.w, date.u, date.y, 0.08, date.width - 0.16, date.height - 0.08, tint("#f0d49a", 0.85), [dateSlot, MAP_SIGN_KIND.name]);
+  // The data's name in light letters on the portico's entablature (Nowy Ratusz).
+  const palace = f.landmark.part.tier.palace;
+  const plate = palace ? nameplateOn(f, balconyFloor(f, palace)) : null;
+  const plateSlot = plate && f.b.name ? nameSlot(f.b.name) : null;
+  if (plate && plateSlot !== null) flat(sink, plate.w, plate.u, plate.y, plate.out, plate.width, plate.height, tint("#fff1d6", 1), [plateSlot, MAP_SIGN_KIND.name]);
   const fresh = mouthWall(f, "new");
   if (fresh && layer.plaque) {
     // Beside the mouth, on the side with more room, at eye level.

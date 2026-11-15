@@ -1921,13 +1921,14 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * A building or a lifted part with fractional `building:levels` and no height whose walls over
    * its plinth (a part's from the building's base, as the map counts its storeys) top the storeys'
    * `levels × 3.2 m` (a shop floor 0.8 m more) by more than 0.5 m: the half storey rounded up to a
-   * whole one (G-116). A height measured in GUGiK LoD1 or LoD2 (`source: "lod1"`, `"lod2"`) is not counted in storeys.
+   * whole one (G-116). A height measured in GUGiK LoD1 or LoD2 (`source: "lod1"`, `"lod2"`) or set by a
+   * correction from them (`source: "height"`, `corrections-landmarks.ts`) is not counted in storeys.
    */
   "fractional-levels-rounded": () =>
     MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))).flatMap((b) => {
       const t = osmTags(b.id);
       const levels = Number((t["building:levels"] ?? "").replace(",", "."));
-      if (b.source === "lod1" || b.source === "lod2" || t.height !== undefined || t["building:height"] !== undefined || !Number.isFinite(levels) || Number.isInteger(levels)) return [];
+      if (b.source === "lod1" || b.source === "lod2" || b.source === "height" || t.height !== undefined || t["building:height"] !== undefined || !Number.isFinite(levels) || Number.isInteger(levels)) return [];
       const walls = b.height - b.plinth;
       const shop = b.use === "commercial" || b.shopfront === true ? 0.8 : 0;
       return walls > levels * 3.2 + shop + 0.5 ? [{ at: near(b.x, b.z), what: `${b.id} building:levels=${t["building:levels"]}: walls ${walls.toFixed(1)} m` }] : [];
