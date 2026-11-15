@@ -8,7 +8,7 @@ import {
   contractKind,
   contractTag,
 } from "@seki/core";
-import { DOKI_TERMINAL_SPOTS, ESCORT_AMBUSH_Z, ESCORT_ROUTE } from "../content/district-doki";
+import { ESCORT_AMBUSH_Z, ESCORT_ROUTE, W3_TERMINAL_SPOTS } from "../content/tessen-w3";
 import type { SimContext, System } from "../world/context";
 import { clearContract, failContract, raiseFlag } from "../world/domain-ops";
 import { deadFlag } from "./death-system";
@@ -72,7 +72,7 @@ const runInfiltration = (ctx: SimContext, contract: Contract): void => {
  */
 const runHack = (ctx: SimContext, contract: Contract): void => {
   if (contract.progress === undefined) return;
-  const spot = DOKI_TERMINAL_SPOTS[contract.siteId];
+  const spot = W3_TERMINAL_SPOTS[contract.siteId];
   const player = ctx.world.with("player").first;
   const rate = Math.round(1 / ctx.dt);
   const at =

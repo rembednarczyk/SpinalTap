@@ -87,7 +87,8 @@ describe("vertical Lublin 2077 (ADR-0051)", () => {
     let grown = 0;
     for (const chunk of WORLD_CHUNKS) {
       for (const p of chunk.props) {
-        if (!p.scenery || p.view.kind !== "building") continue;
+        // The map's buildings (W-3's shell, ADR-0082, keeps its solid under its drawn parapet).
+        if (!p.scenery || p.view.kind !== "building" || !ids.has(`${p.center.x},${p.center.z}`)) continue;
         const rise = p.view.vertical?.rise ?? 0;
         expect(views.get(`${p.center.x},${p.center.z}`)).toBe(p.view);
         // A portico's columns stand in front of the walls up to its balcony (G-119), the parts to the top.

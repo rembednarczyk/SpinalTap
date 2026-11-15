@@ -245,10 +245,10 @@ jobs:
           REFERENCE: ${{ steps.main.outputs.reference }}
         run: node tools/test-time/src/compare.ts "$RUNNER_TEMP/times/head" "$RUNNER_TEMP/times/main" "$REFERENCE"
 
-  # ADR-0046: two shards in parallel with the checks; each builds once and runs half of the
-  # specs (a single job took 40 min, most of it cold boots under SwiftShader). Setup is about
-  # 2 min a shard with warm caches (G-387), so two shards cost about the same minutes as three
-  # with less rounding.
+  # ADR-0046: shards in parallel with the checks; each builds once and runs a group of specs
+  # (a single job took 40 min, most of it cold boots under SwiftShader). Setup is about 2 min a
+  # shard with warm caches (G-387). Three since 15.11: two groups reached 24.7 and 14.7 min of
+  # the 25 min limit (playwright.config.ts).
   e2e:
     # No matrix value in the name: GitHub appends "(1)", "(2)" itself, and a skipped job (docs-only
     # change) then reads plainly instead of showing the unexpanded expression.
@@ -260,7 +260,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -322,7 +322,7 @@ jobs:
           key: playwright-debs-${{ runner.os }}-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}
       - name: Mark the end of setup
         run: echo "setup $(date +%s)" >> "$RUNNER_TEMP/e2e-times"
-      # Two groups of about equal time (playwright.config.ts, E2E_GROUP), not --shard: that splits
+      # Three groups of about equal time (playwright.config.ts, E2E_GROUP), not --shard: that splits
       # by test count and left every slow spec in shard 1.
       - run: pnpm test:e2e
         env:

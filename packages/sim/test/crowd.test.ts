@@ -27,7 +27,7 @@ import {
   stateHash,
   ROOM_SITES,
   WORLD_SCENERY,
-  docks,
+  w3,
   ground,
   groundY,
   inBuilding,
@@ -340,7 +340,7 @@ describe("the crowd in the simulation", () => {
   it("thins out by the hour, and nobody leaves or comes where the player is looking", () => {
     const sim = Simulation.create({ seed: 2, crowd: "high" });
     skipTo(sim, hm(15));
-    teleportPlayer(sim, docks(10, 0, 135), Math.PI);
+    teleportPlayer(sim, w3(2588, 0, 425), Math.PI);
     run(sim, 5);
     const day = residents(sim, DOCKS).length;
     expect(day).toBeGreaterThan(3);
@@ -348,7 +348,7 @@ describe("the crowd in the simulation", () => {
     run(sim, 2 * SIM_HZ);
     expect(residents(sim, DOCKS).length).toBeLessThan(day);
     // Far from anyone's eyes they are all gone after a while.
-    teleportPlayer(sim, docks(-30, 0, 100), 0);
+    teleportPlayer(sim, w3(2530, 0, 394), 0);
     run(sim, 2 * SIM_HZ);
     expect(residents(sim, DOCKS)).toHaveLength(0);
   });

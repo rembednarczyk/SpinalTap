@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DIFFICULTY_PRESETS, type DifficultyProfile, type HeatState, type SaveSnapshot, type Vec3 } from "@seki/core";
-import { Simulation, SIM_HZ, docks, stateHash } from "../src";
+import { Simulation, SIM_HZ, w3, stateHash } from "../src";
 import { ALLEY_START, alleySim, run, teleportPlayer } from "./helpers";
 
 /** Saving and loading while the heat's reinforcements are about (G-179): the loaded game goes on as the saved one. */
@@ -92,11 +92,11 @@ describe("save and load with the heat's reinforcements about (G-179)", () => {
     expect(hash(sim)).not.toBe(stateHash(snap));
   });
 
-  const TESSEN: HeatState = { ...HEAT, level: 3, faction: "tessen", lastKnown: docks(0, 0, 112) };
+  const TESSEN: HeatState = { ...HEAT, level: 3, faction: "tessen", lastKnown: w3(2590, 0, 425) };
   const scenes: readonly (Scene & { readonly name: string })[] = [
     { name: "another seed, three stars", seed: 5, heat: { ...HEAT, level: 3 } },
     { name: "on 'hard'", seed: 21, difficulty: DIFFICULTY_PRESETS.hard },
-    { name: "Tessen's in the docks", seed: 8, heat: TESSEN, at: docks(0, 0, 112) },
+    { name: "Tessen's in the docks", seed: 8, heat: TESSEN, at: w3(2590, 0, 425) },
   ];
   for (const scene of scenes) {
     it(`${scene.name}: the loaded game runs as the saved one`, () => {
@@ -127,7 +127,7 @@ describe("save and load with the heat's reinforcements about (G-179)", () => {
     const sim = withReinforcements({ seed: 21 }, 30);
     const snap = roundTrip(sim.snapshot(null, "t", ""));
     const cooled = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, heat: { level: 0, faction: null, searching: false, lastKnown: null, searchLeft: 0, cooldown: 0 } } });
-    teleportPlayer(cooled, docks(0, 0, 112));
+    teleportPlayer(cooled, w3(2590, 0, 425));
     run(cooled, 5 * SIM_HZ);
     expect(cooled.world.with("security").entities).toHaveLength(0);
     expect(cooled.session.watch.sent).toBe(0);

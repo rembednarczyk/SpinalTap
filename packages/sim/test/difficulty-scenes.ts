@@ -1,5 +1,5 @@
 import { type DifficultyProfile, NORMAL_DIFFICULTY, type SaveSnapshot, type Vec3 } from "@seki/core";
-import { Simulation, docks, gangerEntity } from "../src";
+import { Simulation, gangerEntity, w3 } from "../src";
 import { streetSim, teleportPlayer } from "./helpers";
 
 /* Scenes of the difficulty tests (ADR-0066): a profile that differs from "normal" in a field or two. */
@@ -18,19 +18,19 @@ export const tough = (sim: Simulation) => {
   sim.player()!.health = { current: 1e6, max: 1e6 };
 };
 
-/** A point of the docks in their own coordinates (ADR-0045). */
+/** W-3's hall chunk (ADR-0082) and its east yard, open floor. */
 export const DOCKS_CHUNK = "nabrzeze-1-1";
-const atDocks = (x: number, z: number): Vec3 => docks(x, 0, z);
+const EAST_YARD: Vec3 = w3(2590, 0, 418);
 
 /**
- * In the docks yard with a Tessen guard (or `type`) `distance` m west of the player, alerted, after
+ * On W-3's east yard with a Tessen guard (or `type`) `distance` m west of the player, alerted, after
  * `patch`; with `ram`, the cyberdeck starts that low.
  */
 export const yardFight = (patch: Partial<DifficultyProfile>, opts: { type?: "tessen_guard" | "hebi_brawler"; distance?: number; ram?: number } = {}) => {
   const base = streetSim({ seed: 21 });
   const snap = base.snapshot(null, "t", "");
   const sim = opts.ram === undefined ? base : Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, netrun: { ...snap.domain.netrun, ram: opts.ram } } });
-  teleportPlayer(sim, atDocks(16, 97), -Math.PI / 2);
+  teleportPlayer(sim, EAST_YARD, -Math.PI / 2);
   sim.step();
   setProfile(sim, patch);
   tough(sim);
