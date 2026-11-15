@@ -1995,7 +1995,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-821 Przesunięcie stacji lit przy G-812 stawia 3 latarnie lamp-road na jezdni według ortofoto (Mełgiewska, Al. Solidarności, Lwowska)
 - Ważność: S3 · Zasięg: gałąź ccr-ec2c4269-ilh8k8-lit-edge (406efb1): ziarno 5849 (2320,5; 307,1), 32338 (531,5; 398,9), nowa 55187 (1119,3; 445,2)
 - Opis: Przegląd kuratora G-810/G-812 (ortofoto 2025-04, nakładka scratchpad/topo-lit-bad.png, topo-lit-sheet10.png). Zmiana padded przesuwa stacje reguły lit na długich drogach. 5849: przed na chodniku z kostki po południowej stronie Mełgiewskiej w931927880 (2308,6; 302,4), po w klinie między Mełgiewską a łącznicą Andersa w40051729 (po 3,9 m od obu osi), w rzeczywistości na asfalcie pasa włączania. 32338: przed na trawniku przy przejściu (523,3; 389,2), po 5,5 m od osi Al. Solidarności w215609082 (3 pasy), w rzeczywistości na pasach do skrętu poszerzonej jezdni. 55187 (nowa): 5,2 m od osi Lwowskiej w139586648 (3 pasy), na przejściu dla pieszych przy rondzie Ojca Piotra, ok. 1,3 m w głąb jezdni. Pozostałe 17 zmian (park, pastoral, 1807, 25057, 55863, 21231, 65452, 31521 zamiast 44642 i 65094 z jezdni Podzamcza) stoją na chodnikach, ścieżkach albo ich skraju.
-- Status: zgłoszone (przegląd kuratora 15.11); do poprawy w gałęzi lit-edge przed scaleniem albo osobno
+- Status: w PR #564 (02d0180): stacje jak na main, zmienia się jedna latarnia; wcześniej: zgłoszone (przegląd kuratora 15.11); do poprawy w gałęzi lit-edge przed scaleniem albo osobno
 - Pakiet właściciela: tools/osm-import (props-lit, props-gen)
 - Test przyjęcia: żadna latarnia lamp-road z gałęzi nie stoi w klasie asfalt/jezdnia ortofoto 2025-04 dalej niż 0,5 m od krawędzi; ziarna 5849, 32338, 55187 wracają na chodnik albo trawnik za krawężnikiem
 - Rejestr topografii: T-304.
@@ -2017,6 +2017,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Drobiny poniżej 8 komórek klasy canopyHard przy krawężniku (prawdopodobnie sam krawężnik) joinSpecks dołącza do trawnika; potrzebny krawężnik między asfaltem a pasem zieleni zamiast zgadywania klasy.
 - Status: zgłoszone
 - Pakiet właściciela: tools/orto, tools/osm-import
+
+### G-825 Jezdnia importu węższa od prawdziwej przy łącznicach, kieszeniach skrętu i placement=left_of; pas wypełnia bruk z pokrycia
+- Ważność: S3 · Zasięg: Mełgiewska/łącznica Andersa w40051729, Al. Solidarności w215609082 (kieszenie skrętu), Lwowska (placement=left_of:3)
+- Opis: Znalezione przy G-821: import nie czyta placement i nie poszerza jezdni o łącznice i pasy skrętu; pas do prawdziwego krawężnika wypełnia bruk z pokrycia ortofoto, więc latarnie i meble przy krawężniku mapy stoją na prawdziwym asfalcie.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import, tools/orto
+
+### G-826 Pokrycie ortofoto 2025-04 klasuje jasny asfalt jezdni jako paving
+- Ważność: S3 · Zasięg: m.in. pod latarniami G-821; kontrola lamp-on-orto-carriageway ich nie widzi
+- Opis: bare-cover kładzie bruk na prawdziwym asfalcie; kontrola lamp-on-orto-carriageway (baza 146) ma przez to słabą moc. Poprawić klasyfikator albo porównywać z jezdnią poszerzoną o łącznice i placement.
+- Status: zgłoszone
+- Pakiet właściciela: tools/orto
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
