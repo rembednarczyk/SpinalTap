@@ -132,7 +132,10 @@ describe("the ground the map city lays (G-444)", () => {
     // The widened kerbs smooth (G-837): the asphalt's new edge simplified within 0.05 m before its
     // rounding, and grown on in to the kerb where the gap to the paving closes under 1 m:
     // 161 914 - 161 827 = 87 vertices fewer, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161827, hash: "74b086d7" });
+    // The pedestrian streets' frontages laid in a pass of their own, under the rest of the ground, which
+    // stays as it was (G-853): the strips between the setts and the walls of Krakowskie Przedmieście and
+    // the Old Town paved: 169 742 - 161 827 = 7 915 vertices more, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 169742, hash: "a88ec108" });
     scene.dispose();
   });
 
