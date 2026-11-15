@@ -4,6 +4,7 @@ import { generate } from "../src/generate.ts";
 import { type Pt, pointInRing } from "../src/geometry.ts";
 import { parseOsmXml } from "../src/osm.ts";
 import { worldToGeo } from "../src/project.ts";
+import { fitZebras } from "../src/zebra-fit.ts";
 
 /**
  * A zebra square to its street and from kerb to kerb of the asphalt as laid (G-836): a street along
@@ -91,5 +92,15 @@ describe("a zebra from kerb to kerb, square to its street (G-836)", () => {
       expect(Math.abs(s.from - want[i]![0])).toBeLessThanOrEqual(0.1);
       expect(Math.abs(s.to - want[i]![1])).toBeLessThanOrEqual(0.1);
     });
+  });
+
+  it("stops short of a kerb stone laid over the asphalt's edge, where the kerb is drawn", () => {
+    const road = { id: "w1", osmId: 1, tags: { highway: "residential" }, line: [{ x: 0, z: 0 }, { x: 100, z: 0 }] };
+    const box = (z0: number, z1: number) => ({ ring: [{ x: 0, z: z0 }, { x: 100, z: z0 }, { x: 100, z: z1 }, { x: 0, z: z1 }], box: { minX: 0, maxX: 100, minZ: z0, maxZ: z1 } });
+    const zebra = { surface: "crossing" as const, ring: [], bridge: false, source: "n1" };
+    const [rings] = fitZebras([zebra], () => [{ at: { x: 50, z: 0 }, along: 3 }], [road], () => 0, [box(-5, 5)], [box(-5, -4.5)]);
+    const s = shape(rings![0]!);
+    expect(s.from).toBeCloseTo(-4.5, 1);
+    expect(s.to).toBeCloseTo(5, 1);
   });
 });

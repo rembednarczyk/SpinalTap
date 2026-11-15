@@ -129,7 +129,9 @@ describe("the ground the map city lays (G-444)", () => {
     // A side left at the estimate widened to the paving again, the kerbs' strips laid from under the
     // asphalt, over seams under 0.1 m and up to a zebra past a measured kerb, the zebras across the
     // asphalt where it lies (G-811): 161 914 - 161 182 = 732 vertices more, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161914, hash: "56b47b4e" });
+    // Every zebra a rectangle square to its street from kerb to kerb, a crossing way's band out to the
+    // pavements a footway under it (G-836): 161 914 - 161 200 = 714 vertices fewer, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161200, hash: "2d132fe3" });
     scene.dispose();
   });
 
