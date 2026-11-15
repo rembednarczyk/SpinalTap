@@ -33,6 +33,7 @@ jobs:
       pull-requests: read
     outputs:
       code: ${{ steps.diff.outputs.code }}
+      tables: ${{ steps.diff.outputs.tables }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -66,10 +67,50 @@ jobs:
           elif [ -n "${{ github.event.before }}" ] && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
             files=$(git -c core.quotePath=false diff --name-only "${{ github.event.before }}" HEAD)
           else
-            echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
+            echo "code=true" >> "$GITHUB_OUTPUT"; echo "tables=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
           echo "$files"
           if echo "$files" | grep -qvE '^(docs/|changelog\.d/)|\.md$'; then echo "code=true" >> "$GITHUB_OUTPUT"; else echo "code=false" >> "$GITHUB_OUTPUT"; fi
+          # The map tables' generators, their data or the tables (ADR-0083): job "Map tables".
+          if echo "$files" | grep -qE '^(tools/osm-import/|tools/orto/|data/|packages/sim/src/content/lublin/)'; then echo "tables=true" >> "$GITHUB_OUTPUT"; else echo "tables=false" >> "$GITHUB_OUTPUT"; fi
+
+  # ADR-0083 step 1: the unit test compares only the fingerprint of the tables' inputs in their
+  # headers (milliseconds); this job generates the tables again once and compares them byte for
+  # byte, and checks that the fingerprints cover every file the generators read. Only when the
+  # generators, their data or the tables change: a change elsewhere that the generators import
+  # changes the fingerprint, the unit test asks for the tables again, and the new tables run this.
+  tables:
+    name: Map tables
+    needs: changes
+    if: needs.changes.outputs.tables == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generate the tables (pnpm osm:build && pnpm osm:props), recording the files they read
+        run: |
+          READ_TRACE="$RUNNER_TEMP/build.txt" node --import ./tools/osm-import/src/read-trace.ts tools/osm-import/src/build.ts > "$RUNNER_TEMP/build.log"
+          READ_TRACE="$RUNNER_TEMP/props.txt" node --import ./tools/osm-import/src/read-trace.ts tools/osm-import/src/props.ts > "$RUNNER_TEMP/props.log"
+      - name: Compare with the committed tables
+        run: |
+          if ! git diff --quiet -- packages/sim/src/content/lublin; then
+            git diff --stat -- packages/sim/src/content/lublin
+            git diff -- packages/sim/src/content/lublin | cut -c1-200 | head -80
+            echo "::error title=Map tables out of date::The committed tables differ from what pnpm osm:build && pnpm osm:props write from the inputs: run both and commit packages/sim/src/content/lublin/*.generated.ts (ADR-0083)."
+            exit 1
+          fi
+      - name: Check that the fingerprints cover every file the generators read
+        run: |
+          node tools/osm-import/src/tables-check.ts --trace "build=$RUNNER_TEMP/build.txt" --trace "props=$RUNNER_TEMP/props.txt" || {
+            echo "::error title=Map tables' inputs::A file the generators read is no input of the tables' fingerprint: add it to TABLES in tools/osm-import/src/fingerprint.ts (ADR-0083; the log above lists it)."
+            exit 1
+          }
 
   # G-376: one job ran the whole suite with coverage in 18.6 min against its 20 min limit. Two
   # shards run in parallel and write blob reports; the checks job merges them and applies the
