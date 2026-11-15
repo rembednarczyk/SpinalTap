@@ -20,6 +20,8 @@ export interface HandTarget {
   readonly thumb?: number;
   /** The thumb's root and first knuckle apart (`FingerCurl.apply`): swung round, its last joint straight. */
   readonly thumbRoot?: number;
+  /** Where the thumb's joints point, knuckle to tip (`FingerCurl.aimThumb`): its second joint, its last, its tip; the curl's thumb otherwise. */
+  readonly thumbAt?: readonly Vector3[];
 }
 
 /** Both hands in the camera's frame. */
@@ -72,13 +74,22 @@ const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1)
  * (round 2's wrist at (0.034, -0.028, -0.075)), and 2 cm further forward, the fingers a little
  * more open round its front, the left hand a little more open under it: no finger of either hand
  * more than 2 mm into the gun (round 2 sank them up to 11 mm through the grip). Read off the
- * skinned hand against each gun's triangles, its own pose for the revolver's rounder grip. The
- * rigid fist's thumb root still sinks into the top of the grip under the web (12 mm, as round 2):
- * laid straight to clear it, the thumb stood up beside the slide.
+ * skinned hand against each gun's triangles, its own pose for the revolver's rounder grip.
+ * The thumb (14.11, after #537) goes its own way, not the fist's curl: from the web round the back
+ * of the grip under the slide's tail (the revolver's hammer), then forward along the frame's left
+ * side over the trigger, as a real one-hand grip lays it (`thumbAt`, its joints' points in the
+ * gun's frame). Curled with the fist its root sank 9 to 12 mm into the top of the grip; laid
+ * straight it stood up beside the slide.
  */
 const HANDGUN_FIST: Readonly<Record<"pistol" | "revolver", HandTarget>> = {
-  pistol: hand(v(0.041, -0.012, -0.056), v(-0.22, 0.16, 1), v(-0.12, 0.22, 1), v(-0.995, 0.078, -0.116), 0.8, 0.56),
-  revolver: hand(v(0.0417, -0.0181, -0.0608), v(-0.22, 0.16, 1), v(-0.0215, 0.1081, 1.025), v(-0.9981, 0.1163, -0.0137), 0.755, 0.635),
+  pistol: {
+    ...hand(v(0.041, -0.012, -0.056), v(-0.22, 0.16, 1), v(-0.12, 0.22, 1), v(-0.995, 0.078, -0.116), 0.8, 0.56),
+    thumbAt: [v(-0.007, 0.034, -0.046), v(-0.027, 0.032, -0.012), v(-0.024, 0.03, 0.018)],
+  },
+  revolver: {
+    ...hand(v(0.0417, -0.0181, -0.0608), v(-0.22, 0.16, 1), v(-0.0215, 0.1081, 1.025), v(-0.9981, 0.1163, -0.0137), 0.755, 0.635),
+    thumbAt: [v(-0.004, 0.042, -0.05), v(-0.029, 0.041, -0.016), v(-0.025, 0.04, 0.016)],
+  },
 };
 const LEFT_UNDER_FIST = hand(v(-0.05, -0.07, -0.031), v(0.4, 0.25, 1), v(0.45, 0.35, 1), v(0.7, 0.7, 0), 0.5);
 
@@ -141,6 +152,7 @@ const intoCamera = (t: HandTarget, frame: { readonly position: Vector3; readonly
   ...(t.index !== undefined ? { index: t.index } : {}),
   ...(t.thumb !== undefined ? { thumb: t.thumb } : {}),
   ...(t.thumbRoot !== undefined ? { thumbRoot: t.thumbRoot } : {}),
+  ...(t.thumbAt ? { thumbAt: t.thumbAt.map((p) => frame.turn(p).addInPlace(frame.position)) } : {}),
 });
 
 /**
