@@ -9,13 +9,14 @@
  * Where a one-way street splits or joins at a node with its links or its own next way (the turn
  * lanes going off on a way of their own), their lanes are one cross section there: those going
  * left lie left, those going right lie right, each as wide as its lanes, from the left edge of the
- * single way when the lanes add up (`lanes` 5 into 3 and 2), and tapering on the edge of the way
- * going straight on when they do not (a link's lane merging into two ends at the node). The way
- * going straight on ramps from its place there back to its own axis at `LANE_RAMP`; the others
- * keep beside the way they leave or join as long as their axes run nearer to it than their place
- * (`beside`), swinging in to the node over its last `NODE_TAPER` m. Al. Solidarności's three
- * through lanes after the two turning left are the right three of five, and the link from Andersa
- * runs beside Mełgiewska's two lanes up to where it joins, not over them.
+ * single way when the lanes add up (`lanes` 5 into 3 and 2), and on the edge of the way going
+ * straight on when they do not: a link's lane going off begins beside it, its middle on the edge,
+ * and one merging into it ends inside it, its outer edge on the edge (G-825 r2). The way going
+ * straight on keeps its place there while the others run beside it, then ramps back to its own
+ * axis at `LANE_RAMP`; the others keep beside the way they leave or join as long as their axes
+ * run nearer to it than their place (`beside`), swinging in to the node over its last
+ * `NODE_TAPER` m. Al. Solidarności's three through lanes after the two turning left are the right
+ * three of five, and the link from Andersa begins beside Andersa's lanes, not over them.
  *
  * Sources (ADR-0080 decision 2): a way whose width the orthophoto measured (`ORTHO_OFFSETS`) keeps
  * its measured axis, the measure being taken off the map's axis; the measure reads no station near
@@ -61,8 +62,11 @@ export const placementOffset = (t: Tags): number => {
   return Math.round((at - lanes / 2) * (roadWidth(t) / lanes) * 100) / 100;
 };
 
-/** How a way's carriageway lies at one of its ends: `centre` m left of the node, ramped back to its own axis, or kept beside `along`. */
-export type EndPlace = { readonly kind: "ramp"; readonly centre: number } | { readonly kind: "beside"; readonly centre: number; readonly along: readonly (readonly Pt[])[] };
+/**
+ * How a way's carriageway lies at one of its ends: `centre` m left of the node, kept there `hold` m
+ * and ramped back to its own axis, or kept beside `along`.
+ */
+export type EndPlace = { readonly kind: "ramp"; readonly centre: number; readonly hold?: number } | { readonly kind: "beside"; readonly centre: number; readonly along: readonly (readonly Pt[])[] };
 
 export interface LanePlaces {
   readonly start?: EndPlace;
@@ -92,9 +96,9 @@ const unit = (a: Pt, b: Pt): Pt => {
 };
 
 /** The arms of a way at its point `i`: leaving at its start, arriving at its end, both where it runs through. */
-const armsAt = (l: Line, i: number, own: (l: Line) => number): Arm[] => {
+const armsAt = (l: Line, i: number, own: (l: Line, i: number) => number): Arm[] => {
   const t = l.tags;
-  const base = { l, lanes: laneCount(t), own: own(l), w: roadWidth(t) / laneCount(t) };
+  const base = { l, lanes: laneCount(t), own: own(l, i), w: roadWidth(t) / laneCount(t) };
   const n = l.line.length;
   const p = l.line[i]!;
   const out: Arm[] = [];
@@ -105,12 +109,12 @@ const armsAt = (l: Line, i: number, own: (l: Line) => number): Arm[] => {
 
 /**
  * The places of the ways' carriageways at the nodes where one one-way carriageway splits into
- * several or several join into one (`own`: a way's middle left of its line, `placementOffset` or
- * 0 for a measured one), by way: the single way's street going on and its links (`*_link`). A
- * node where any other carriageway (not `service`) meets them, or where a way turns off at over
- * 60°, is a junction, not a split: none.
+ * several or several join into one (`own`: a way's middle left of its line at its point `i`,
+ * `placementOffset` or the measured offset there, `orthoOffsetAt`), by way: the single way's
+ * street going on and its links (`*_link`). A node where any other carriageway (not `service`)
+ * meets them, or where a way turns off at over 60°, is a junction, not a split: none.
  */
-export const lanePlaces = (lines: readonly Line[], own: (l: Line) => number): Map<string, LanePlaces> => {
+export const lanePlaces = (lines: readonly Line[], own: (l: Line, i: number) => number): Map<string, LanePlaces> => {
   const at = new Map<string, { l: Line; i: number }[]>();
   for (const l of lines) {
     if (ROAD_WIDTH[l.tags.highway ?? ""] === undefined || l.tags.highway === "service" || l.tags.area === "yes") continue;
@@ -143,12 +147,15 @@ export const lanePlaces = (lines: readonly Line[], own: (l: Line) => number): Ma
     const through = sorted.reduce((best, a) => (Math.abs(lateral(a)) < Math.abs(lateral(best)) ? a : best));
     const centres = new Map<Arm, number>();
     const total = sorted.reduce((n, a) => n + a.lanes, 0);
+    let hold = 0;
     if (total === single.lanes) {
       // The single way's lanes shared out from its left edge. The way going straight on is laid
       // halfway between its lanes' place and its own line: the map's node of a split lies on the
       // single way's line, which mappers draw along its middle or along the lanes going straight
-      // on (Al. Solidarności's w762599273 2 m off its middle at the node, G-825 r2).
+      // on (Al. Solidarności's w762599273 2 m off its middle at the node, G-825 r2). It keeps the
+      // place while the lanes turning off run within the single way's width of it, then ramps.
       let edge = single.own + (single.lanes * single.w) / 2;
+      hold = sharedLength(through, sorted.filter((a) => a !== through), single.lanes * single.w);
       for (const a of sorted) {
         const c = edge - (a.lanes * single.w) / 2;
         centres.set(a, a === through ? (c + a.own) / 2 : c);
@@ -175,7 +182,7 @@ export const lanePlaces = (lines: readonly Line[], own: (l: Line) => number): Ma
     } else continue;
     for (const [a, c] of centres) {
       if (a === through) {
-        if (Math.abs(c - a.own) >= NONE) put(a, { kind: "ramp", centre: c });
+        if (Math.abs(c - a.own) >= NONE) put(a, { kind: "ramp", centre: c, ...(hold > 0 ? { hold } : {}) });
       } else if (Math.abs(c) >= NONE) put(a, { kind: "beside", centre: c, along: [single.l.line, through.l.line] });
     }
   }
@@ -194,10 +201,23 @@ const distanceTo = (p: Pt, line: readonly Pt[]): number => {
   return best;
 };
 
+/**
+ * How far from the node way `a` runs with one of `others` within `reach` m of its line (m, by
+ * `STEP`): the lanes of a split keep one cross section, and their places, as long (Al. Solidarności's
+ * through lanes 14 m past the node, G-825 r2).
+ */
+const sharedLength = (a: Arm, others: readonly Arm[], reach: number): number => {
+  const line = a.end === "end" ? [...a.l.line].reverse() : a.l.line;
+  const length = lineLength(line);
+  let s = 0;
+  while (s + STEP <= length && others.some((o) => distanceTo(pointAlong(line, s + STEP), o.l.line) < reach)) s += STEP;
+  return s;
+};
+
 /** The offset an end's place adds at `p`, `d` m from that end (`own`: the way's middle left of its line there). */
 const endOffset = (place: EndPlace | undefined, own: number, p: Pt, d: number, clear: { reached: boolean }): number => {
   if (!place) return 0;
-  if (place.kind === "ramp") return (place.centre - own) * Math.max(0, 1 - (d * LANE_RAMP) / Math.abs(place.centre - own));
+  if (place.kind === "ramp") return (place.centre - own) * Math.max(0, 1 - (Math.max(0, d - (place.hold ?? 0)) * LANE_RAMP) / Math.abs(place.centre - own));
   if (clear.reached) return 0;
   const gap = Math.abs(place.centre) - Math.min(...place.along.map((l) => distanceTo(p, l)));
   // Once clear of the way beside, it does not come back to it.
@@ -214,7 +234,7 @@ const endOffset = (place: EndPlace | undefined, own: number, p: Pt, d: number, c
 export const placedPieces = (l: Line, pieces: readonly Line[], shift: number, places: LanePlaces | undefined, own: number): Line[] => {
   if (Math.abs(shift) < NONE && !places) return [...pieces];
   const length = lineLength(l.line);
-  const reach = (p: EndPlace | undefined) => (!p ? 0 : p.kind === "ramp" ? Math.abs(p.centre - own) / LANE_RAMP : length);
+  const reach = (p: EndPlace | undefined) => (!p ? 0 : p.kind === "ramp" ? (p.hold ?? 0) + Math.abs(p.centre - own) / LANE_RAMP : length);
   const [fromStart, fromEnd] = [reach(places?.start), reach(places?.end)];
   const out: Line[] = [];
   let s0 = 0;

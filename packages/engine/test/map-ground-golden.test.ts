@@ -132,7 +132,10 @@ describe("the ground the map city lays (G-444)", () => {
     // The carriageways laid where OSM's lanes lie (G-825): off their line by `placement`, and where one
     // splits off or joins another, its lanes beside the other's, densified where they swing (2 m):
     // 161 987 - 161 914 = 73 vertices more, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161987, hash: "61edacc9" });
+    // A lane joining a street ends inside it, a split's through lanes keep their place while the lanes
+    // turning off run beside them, and a moved carriageway's strip to a lawn is laid as the lawn's
+    // (G-825 r2): 162 204 - 161 987 = 217 vertices more, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 162204, hash: "c65db85d" });
     scene.dispose();
   });
 

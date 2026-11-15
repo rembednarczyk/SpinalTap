@@ -39,8 +39,8 @@ const ACROSS = 0.2;
 /** How far a fill reaches into the paving it leads to (m), past the rounding to 0.1 m: no seam between them. */
 const INTO = 0.1;
 /**
- * How far a carriageway widened to a lawn reaches into it (m): the lawn's mapped edge runs at a
- * slant between the samples `ALONG` apart, and a seam of bare ground would stay between (G-825).
+ * How far a strip to a lawn reaches into it (m): the lawn's mapped edge runs at a slant between the
+ * samples `ALONG` apart, and a seam of bare ground stayed between them; the strip is grass too (G-825).
  */
 const LAWN_INTO = 0.3;
 /** How far out from the edge the paving must start for a strip to lie between (m): nearer, it reaches the asphalt. */
@@ -284,7 +284,7 @@ export interface KerbFills {
  * are not widened.
  */
 const easedReach = (side: readonly Sample[], wide: (s: Sample) => boolean): number[] => {
-  const base = side.map((s) => (wide(s) ? s.hit!.gap + (s.hit!.lawn ? LAWN_INTO : INTO) : 0));
+  const base = side.map((s) => (wide(s) ? s.hit!.gap + INTO : 0));
   for (let round = 0; round < side.length; round++) {
     const g = [...base];
     for (let i = 1; i < g.length; i++) g[i] = Math.min(g[i]!, g[i - 1]! + RISE);
@@ -306,9 +306,9 @@ const easedReach = (side: readonly Sample[], wide: (s: Sample) => boolean): numb
  * The fills of the gaps between the carriageways among `bands` (their `kerb` axis) and the paving
  * beside them, `buildings` standing in the way; `estimated(source, side)` says the carriageway's
  * width is the import's estimate on that side (1 its left, -1 its right); `walks` are the sidewalks before they were cut at the carriageways. A carriageway whose widened ring would cross itself keeps its ring,
- * and its strips are laid as sidewalks. A carriageway `moved` off its way's line (G-825) is widened
- * on an estimated side to a lawn as well, however near: the strip it moved off is the lawn's kerb,
- * not a seam left bare between the two.
+ * and its strips are laid as sidewalks. A carriageway `moved` off its way's line (G-825) has its
+ * strip to a lawn laid too, as the lawn's: the bare ground rule's cells left seams and paving on
+ * the green between its new edge and the lawn's slanted edge (Lwowska by Rondo Mohyły).
  */
 export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly Pt[])[], estimated: (source: string, side: 1 | -1) => boolean, walks: readonly (readonly Pt[])[] = [], moved: ReadonlySet<string> = new Set()): KerbFills => {
   // The sidewalks laid and mapped, whole: a stretch cut off where it ran over a carriageway is paving the march stops at too.
@@ -331,7 +331,7 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       const q = along(s.edge, s.dir, -half - MERGE_AXIS);
       return world.roads.scan(q.x, q.z, (b) => b !== road && b.kerb !== undefined && alongside(b.kerb.line, q, s.dir));
     };
-    const own = (side: 1 | -1) => (s: Sample) => estimated(road.source, side) && s.hit !== null && !s.hit.joins && (s.hit.gap >= ROAD_GAP || s.hit.lawn === true) && !s.hit.median && !merged(s);
+    const own = (side: 1 | -1) => (s: Sample) => estimated(road.source, side) && s.hit !== null && !s.hit.joins && !s.hit.lawn && s.hit.gap >= ROAD_GAP && !s.hit.median && !merged(s);
     // The corner between a widened stretch and a side street it meets is asphalt too: left bare,
     // it pinched the lane the wider street moved out (Radziwiłłowska, G-090).
     const wideSet = new Set<Sample>();
@@ -355,9 +355,9 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       if (selfIntersects(ring)) asRoad = false;
       else widened.set(road, { ring, runs: [...wr.runs, ...wl.runs] });
     }
-    const full = (s: Sample) => asRoad && wide(s) && reach.get(s)! >= s.hit!.gap + (s.hit!.lawn ? LAWN_INTO : INTO) - 1e-9;
-    const lay = (run: Span[], stone?: true) => {
-      for (const ring of runRings(run)) fills.push({ surface: "sidewalk", ring, bridge: false, source: road.source, holed: true, ...(stone ? { kerbStone: stone } : {}) });
+    const full = (s: Sample) => asRoad && wide(s) && reach.get(s)! >= s.hit!.gap + INTO - 1e-9;
+    const lay = (run: Span[], stone?: true, surface: "sidewalk" | "grass" = "sidewalk") => {
+      for (const ring of runRings(run)) fills.push({ surface, ring, bridge: false, source: road.source, holed: true, ...(stone ? { kerbStone: stone } : {}) });
     };
     for (const [side, sign] of [[right, -1], [left, 1]] as const) {
       // The strips left as sidewalks: from the edge to the paving.
@@ -369,6 +369,15 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       // the strip is laid by it, not left bare beside it (G-811).
       const overZebra = (s: Sample) => !s.hit!.crossed || (asRoad && wide(s)) || !estimated(road.source, sign);
       runsOf(side, (s) => (s.hit && !s.hit.joins && !s.hit.lawn && overZebra(s) && !full(s) ? { edge: along(s.edge, s.dir, from(s)), out: along(s.edge, s.dir, s.hit.gap + INTO) } : null), lay);
+      // A moved carriageway's strip to a lawn is the lawn's, drawn to the new kerb (G-825). It reaches
+      // on over the next sample past its ends, to the lawn's reach there: the step to a strip of
+      // paving, or to the bare ground rule's fill, stayed bare.
+      const reachLawn = new Map<Sample, number>();
+      side.forEach((s, i) => {
+        const at = [s, side[i - 1], side[i + 1]].find((n) => n?.hit?.lawn);
+        if (at && !s.hit?.joins) reachLawn.set(s, s.hit?.lawn ? s.hit.gap : at.hit!.gap);
+      });
+      runsOf(side, (s) => (reachLawn.has(s) ? { edge: along(s.edge, s.dir, -INTO), out: along(s.edge, s.dir, reachLawn.get(s)! + LAWN_INTO) } : null), (run) => lay(run, undefined, "grass"));
       // The kerb stones of the widened carriageway, where the paving draws no kerb of its own: on the
       // asphalt's side of the paving's edge, ranked over the asphalt that reaches under them
       // (`KERB_STONES`, G-803), so the kerb stands 0.3 m short of the paving's mapped edge, where the

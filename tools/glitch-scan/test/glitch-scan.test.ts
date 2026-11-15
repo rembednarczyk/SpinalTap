@@ -70,6 +70,7 @@ import { lampOnOrtoCarriageway } from "./lamp-on-orto-carriageway";
 import { fillAreaMismatch } from "./fill-area";
 import { fillGap } from "./fill-gap";
 import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
+import { lanePlaceOnGreen } from "./lane-place-on-green";
 import { groundUnderPlinth, steepWayCut } from "./terrain-cuts";
 import { generatedCity } from "../../osm-import/test/city.ts";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
@@ -2056,6 +2057,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "bare-on-cover": () => bareOnCover(landuseBare(cityLanduseWorld(SOURCE_OSM)), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample of the orthophoto's green under the paving the bare ground rule laid: a lawn taken for a square (ADR-0077 step 1.2, T-285, `fill-on-green.ts`). */
   "fill-on-green": () => fillOnGreen(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A 0.5 m sample of the orthophoto's green under a carriageway or pavement past the map's bands by a node where a one-way street's lanes split or join: a lane laid onto a lawn (G-825, `lane-place-on-green.ts`). */
+  "lane-place-on-green": () =>
+    lanePlaceOnGreen(withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)), MAP_CHUNKS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample under a lawn the bare ground rule laid that the leaf-off flight shows as paving under crowns: a pavement under trees taken for a tree's bed (G-764, `fill-on-green.ts`). */
   "lawn-on-leafoff-paving": () => lawnOnLeafOffPaving(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A piece the bare ground rule laid whose triangles cover other than its area by over 0.01 m²: a ring touching itself (G-764, `fill-area.ts`). */

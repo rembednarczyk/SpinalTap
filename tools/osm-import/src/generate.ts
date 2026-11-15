@@ -18,7 +18,7 @@ import { type Cover } from "../../orto/src/cover.ts";
 import { type CoverFill, coverFiller, pathLoops, townPlaces, withFills } from "./bare-cover.ts";
 import { type AddedArea, addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { withoutReplaced } from "./corrections-alchemia.ts";
-import { ORTHO_OFFSETS, orthoPieces, orthoSides } from "./corrections-kerb.ts";
+import { ORTHO_OFFSETS, orthoOffsetAt, orthoPieces, orthoSides } from "./corrections-kerb.ts";
 import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
@@ -274,7 +274,8 @@ const slitsOffWidened = <B extends Band & { box: Rect }>(bands: readonly B[], wi
  */
 const carriagewayPieces = (lines: readonly Line[], sidewalks: ReturnType<typeof sidewalkIndex>) => {
   const own = (l: Line) => (ORTHO_OFFSETS.has(l.id) ? 0 : placementOffset(l.tags));
-  const places = lanePlaces(lines.filter((l) => l.tags.highway), own);
+  // A measured way's lanes at a node lie where its carriageway is there, off its line (Lwowska's 0.9 m by Ruska's link).
+  const places = lanePlaces(lines.filter((l) => l.tags.highway), (l, i) => (ORTHO_OFFSETS.has(l.id) ? orthoOffsetAt(l, i) : placementOffset(l.tags)));
   const fittedLanes = new Map<string, readonly Line[]>();
   const aside = new Map<string, number>();
   const moved = new Set<string>();
