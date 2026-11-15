@@ -21,7 +21,8 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
-  reporter: [["list"], ["html", { open: "never", outputFolder: "reports/playwright" }]],
+  // On CI the github reporter adds each failure as a short annotation on the check run.
+  reporter: [["list"], ["html", { open: "never", outputFolder: "reports/playwright" }], ...(process.env.CI ? ([["github"]] as const) : [])],
   snapshotPathTemplate: "{testDir}/__snapshots__/{testFilePath}/{arg}{ext}",
   use: {
     baseURL: `http://localhost:${PORT}`,
