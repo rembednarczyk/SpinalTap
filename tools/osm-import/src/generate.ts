@@ -381,7 +381,7 @@ export const generate = (
   const halves = streetHalves(bands);
   const widths = streetWidths(laidLines, (w) => isCarriageway(w.piece.tags) || w.atStreet, kerbs.widened);
   // Each zebra across its carriageway from kerb to kerb as laid, square to the axis (G-836).
-  bands.splice(0, bands.length, ...laidZebras(bands, kerbs, zebraSpots((id) => data.nodes.get(id) ?? null, crossingWays, roads), roads, aside));
+  bands.splice(0, bands.length, ...laidZebras(bands, kerbs, zebraSpots(data.nodes, crossingWays, roads, lines), roads, aside, areas));
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
   const zebras = bands.filter((b) => b.surface === "crossing");
   // By the cells round the point, not every carriageway of the city for every half metre of every line (G-719).

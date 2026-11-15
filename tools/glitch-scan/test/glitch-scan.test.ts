@@ -76,7 +76,7 @@ import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
-import { crossingGlow, crossingKerb, crossingOverhang, crossingSkew } from "./crossing-shape";
+import { crossingGlow, crossingKerb, crossingOffPath, crossingOverhang, crossingShortOfAsphalt, crossingSkew } from "./crossing-shape";
 import { kerbJag } from "./kerb-jag";
 import { kerbStripBare } from "./kerb-strip-bare";
 import { markingSteps } from "./marking-step";
@@ -187,6 +187,11 @@ const SOURCE_OSM = mergeOsm(
     .filter((f) => f.endsWith(".json"))
     .map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))),
 );
+/** The map's foot paths, not the sidewalks mapped along the streets (`crossing-off-path`). */
+const FOOT_PATHS = () =>
+  [...SOURCE_OSM.ways.values()]
+    .filter((w) => ["footway", "path", "cycleway"].includes(w.tags?.highway ?? "") && w.tags?.footway !== "sidewalk" && w.tags?.area !== "yes")
+    .map((w) => w.nodes.flatMap((id) => (SOURCE_OSM.nodes.has(id) ? [geoToWorld(SOURCE_OSM.nodes.get(id)!.lat, SOURCE_OSM.nodes.get(id)!.lon)] : [])).map((p) => [p.x, p.z] as const));
 /** The kerb fills' world (`kerb-fill.ts`), built once for both of its checks. */
 let fillWorld: ReturnType<typeof cityFillWorld> | undefined;
 const FILL_WORLD = () => (fillWorld ??= cityFillWorld(SOURCE_OSM));
@@ -2007,6 +2012,10 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "crossing-shape-glow": () => crossingGlow(MAP_CHUNKS),
   /** A zebra whose end is more than 0.15 m off the kerb along its axis (`crossing-shape.ts`). */
   "crossing-shape-kerb": () => crossingKerb(MAP_CHUNKS),
+  /** A zebra more than 30 degrees off the map's foot path through its middle, not a sidewalk (`crossing-shape.ts`, G-836 round 2). */
+  "crossing-off-path": () => crossingOffPath(MAP_CHUNKS, FOOT_PATHS()),
+  /** A zebra the game's asphalt runs on past by more than a metre along its axis (`crossing-shape.ts`, G-836 round 2). */
+  "crossing-short-of-asphalt": () => crossingShortOfAsphalt(MAP_CHUNKS),
   /** A metre of a fitted street's edge (T-046, G-655) with a metre and more of bare ground before the lawn or pavement past it (`kerb-strip-bare.ts`). */
   "kerb-strip-bare": () =>
     kerbStripBare({

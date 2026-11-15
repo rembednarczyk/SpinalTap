@@ -289,11 +289,13 @@ export interface RoadFoot {
   readonly k: number;
 }
 
-export const roadFoot = (at: Pt, roads: readonly Line[], aside: (l: Line) => number = () => 0): RoadFoot | null => {
-  let best: RoadFoot | null = null;
+/** The foot of `at` on each carriageway within `within` m of it (`aside` as `roadFoot`), nearest first. */
+export const roadFeet = (at: Pt, roads: readonly Line[], aside: (l: Line) => number = () => 0, within = 1): RoadFoot[] => {
+  const out: RoadFoot[] = [];
   for (const l of roads) {
     const t = l.tags;
     if (!t.highway || ROAD_WIDTH[t.highway] === undefined || t.area === "yes" || underground(t)) continue;
+    let best: RoadFoot | null = null;
     for (let i = 0; i + 1 < l.line.length; i++) {
       const a = l.line[i]!;
       const b = l.line[i + 1]!;
@@ -307,11 +309,15 @@ export const roadFoot = (at: Pt, roads: readonly Line[], aside: (l: Line) => num
       // Off a carriageway moved aside the distance is from where it lies: one road's node nearer another's moved over to it is still its own.
       const off = d - Math.min(d, aside(l));
       const foot = { x: a.x + dx * k, z: a.z + dz * k };
-      if (off < 1 && (!best || off < best.d)) best = { d: off, foot, tx: dx / len, tz: dz / len, w: roadWidth(t), bridge: t.bridge !== undefined && t.bridge !== "no", road: l, i, k };
+      if (off < within && (!best || off < best.d)) best = { d: off, foot, tx: dx / len, tz: dz / len, w: roadWidth(t), bridge: t.bridge !== undefined && t.bridge !== "no", road: l, i, k };
     }
+    if (best) out.push(best);
   }
-  return best;
+  // Stable: of two as near, the one first in `roads`, as `roadFoot` took it.
+  return out.sort((p, q) => p.d - q.d);
 };
+
+export const roadFoot = (at: Pt, roads: readonly Line[], aside: (l: Line) => number = () => 0): RoadFoot | null => roadFeet(at, roads, aside)[0] ?? null;
 
 /**
  * A zebra's band at a crossing node: across the carriageway the node lies on, as wide as that

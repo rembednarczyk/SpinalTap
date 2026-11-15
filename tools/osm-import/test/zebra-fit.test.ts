@@ -114,4 +114,21 @@ describe("a zebra from kerb to kerb, square to its street (G-836)", () => {
     expect(s.from).toBeCloseTo(-4, 1);
     expect(s.to).toBeCloseTo(4, 1);
   });
+
+  it("keeps a zebra square to a street whose ways meet in line at it, whatever the path's angle, and lays a junction's along its path", () => {
+    const way = (id: number, pts: [number, number][]) => ({ id: `w${id}`, osmId: id, tags: { highway: "residential" }, line: pts.map(([x, z]) => ({ x, z })) });
+    const asphalt = [{ ring: [{ x: 0, z: -4 }, { x: 100, z: -4 }, { x: 100, z: 4 }, { x: 0, z: 4 }], box: { minX: 0, maxX: 100, minZ: -4, maxZ: 4 } }];
+    const zebra = { surface: "crossing" as const, ring: [], bridge: false, source: "n1" };
+    // A path 30 degrees off the normal.
+    const path = { x: Math.sin(Math.PI / 6), z: Math.cos(Math.PI / 6) };
+    // The angle of the zebra's long side (across the street) off the street's normal.
+    const fit = (roads: ReturnType<typeof way>[]) => {
+      const r = fitZebras([zebra], () => [{ at: { x: 50, z: 0 }, along: 3, path }], roads, () => 0, asphalt, [])[0]![0]!;
+      const [a, b] = [r[1]!, r[2]!];
+      return (Math.atan2(Math.abs(b.x - a.x), Math.abs(b.z - a.z)) * 180) / Math.PI;
+    };
+    expect(fit([way(1, [[0, 0], [50, 0]]), way(2, [[50, 0], [100, 0]])])).toBeLessThan(1);
+    // A side street leaving at the node: a junction.
+    expect(fit([way(1, [[0, 0], [100, 0]]), way(3, [[50, 0], [80, 40]])])).toBeCloseTo(30, 0);
+  });
 });

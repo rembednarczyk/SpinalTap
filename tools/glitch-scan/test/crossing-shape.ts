@@ -165,3 +165,49 @@ export const crossingKerb = (chunks: readonly GroundChunk[]): Finding[] => {
     return worst > KERB_TOL ? [{ at: at1(box), what: `zebra end ${worst.toFixed(2)} m off the kerb` }] : [];
   });
 };
+
+export const OFF_PATH = 30;
+export const SHORT_OF = 1;
+
+/**
+ * A zebra whose axis across the street (its box's long side) lies more than `OFF_PATH` degrees off
+ * the foot path of the map running within 1 m of its middle (`paths`, no `footway=sidewalk`): the
+ * curator's review of G-836, a junction's zebra laid along another street's axis.
+ */
+export const crossingOffPath = (chunks: readonly GroundChunk[], paths: readonly (readonly Pt[])[]): Finding[] =>
+  crossings(new GroundIndex(chunks)).flatMap(({ box }) => {
+    let best: { d: number; tx: number; tz: number } | null = null;
+    for (const s of paths) {
+      for (let i = 0; i + 1 < s.length; i++) {
+        const [ax, az] = s[i]!;
+        const [bx, bz] = s[i + 1]!;
+        const [dx, dz] = [bx - ax, bz - az];
+        const len = Math.hypot(dx, dz);
+        if (len < 0.5) continue;
+        const t = Math.max(0, Math.min(1, ((box.cx - ax) * dx + (box.cz - az) * dz) / (len * len)));
+        const d = Math.hypot(box.cx - ax - t * dx, box.cz - az - t * dz);
+        if (d < 1 && (!best || d < best.d)) best = { d, tx: dx / len, tz: dz / len };
+      }
+    }
+    if (!best) return [];
+    const off = (Math.acos(Math.min(1, Math.abs(box.ux * best.tx + box.uz * best.tz))) * 180) / Math.PI;
+    return off > OFF_PATH ? [{ at: at1(box), what: `zebra ${off.toFixed(0)} degrees off the foot path through it` }] : [];
+  });
+
+/** A zebra the game's asphalt runs on past by more than `SHORT_OF` m, along its axis from its middle (the kerb check's line through the middle only). */
+export const crossingShortOfAsphalt = (chunks: readonly GroundChunk[]): Finding[] => {
+  const index = new GroundIndex(chunks);
+  return crossings(index).flatMap(({ box }) => {
+    let worst = 0;
+    for (const sign of [-1, 1]) {
+      let d = box.halfLong;
+      while (d < FAR) {
+        const p = local(box, sign * (d + PROBE), 0);
+        if (!index.at(p.x, p.z).some((s) => s === "road")) break;
+        d += PROBE;
+      }
+      worst = Math.max(worst, d - box.halfLong);
+    }
+    return worst > SHORT_OF ? [{ at: at1(box), what: `the asphalt runs on ${worst.toFixed(1)} m past the zebra's end` }] : [];
+  });
+};
