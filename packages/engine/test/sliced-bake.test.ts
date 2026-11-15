@@ -13,12 +13,20 @@ describe("a mesh baked over frames (ADR-0050)", () => {
     for (const p of parts) p(whole);
     expect(whole.vertexCount).toBeGreaterThan(65535);
     const packed = new SlicedBake(parts).finish();
-    expect(packed.positions).toEqual(Float32Array.from(whole.positions));
-    expect(packed.normals).toEqual(Float32Array.from(whole.normals));
-    expect(packed.colors).toEqual(Float32Array.from(whole.colors));
-    expect(packed.uvs).toEqual(Float32Array.from(whole.uvs));
+    // Byte for byte: a deep `toEqual` of some 200 000 floats each took most of the test's 20 s on CI.
+    const same = (a: ArrayBufferView, b: ArrayBufferView): boolean => {
+      const x = new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
+      const y = new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
+      if (x.length !== y.length) return false;
+      for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+      return true;
+    };
+    expect(same(packed.positions, Float32Array.from(whole.positions))).toBe(true);
+    expect(same(packed.normals, Float32Array.from(whole.normals))).toBe(true);
+    expect(same(packed.colors, Float32Array.from(whole.colors))).toBe(true);
+    expect(same(packed.uvs, Float32Array.from(whole.uvs))).toBe(true);
     expect(packed.indices).toBeInstanceOf(Uint32Array);
-    expect([...packed.indices]).toEqual(whole.indices);
+    expect(same(packed.indices, Uint32Array.from(whole.indices))).toBe(true);
   });
 
   it("stops when asked, after a part, and is ready once the last is packed", () => {
