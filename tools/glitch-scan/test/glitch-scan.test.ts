@@ -753,7 +753,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .filter((i) => i.prop === "bollard")
       .flatMap((i) => {
         const close = BANDS.filter((b) => Math.hypot(b.c.x - i.x, b.c.z - i.z) < b.along + b.across + 4);
-        const post = close.some((b) => inCrossingBand(b, i, BOLLARD.side / 2));
+        const post = close.some((b) => inCrossingBand(b, i, BOLLARD.radius));
         const chain = chainSegments(i).some((s) => close.some((b) => alongSegment(s.from, s.to, 0.1).some((p) => inCrossingBand(b, p))));
         return post || chain ? [{ at: near(i.x, i.z), what: post ? "bollard" : "chain" }] : [];
       }),
