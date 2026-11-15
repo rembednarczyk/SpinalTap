@@ -150,7 +150,7 @@ Zasada w [decyzje.md](decyzje.md) (brzeg mapy, 8.11). Lista:
 - [15.11, zrobione w docs/agenci-zasady.md] raport agenta do ok. 250 słów w stałym porządku; zamek na ciężkie zadania (`flock /tmp/seki-heavy.lock`); samokontrola przed kolejną rundą po kuratorze.
 - [15.11, do zrobienia przez agenta] `pnpm topo:review` [PR #579]: nakładki zmienionych obiektów na ortofoto i statystyki automatycznie (zamiast ręcznej pracy kuratora przy każdym PR mapy); kontrole skanu z uwag kuratora przed budową.
 - [15.11, do zrobienia przez agenta] bramka czasu testów z trendem zamiast ostrzeżenia; testy całego miasta w osobnym shardzie; wspólna pamięć podręczna wygenerowanego miasta dla testów.
-- [15.11, zrobione, PR #578] skrypt pobrania APK z adresu artefaktu (`pnpm apk:fetch`). [do zrobienia] build main w pamięci podręcznej per sha dla `shots:compare`.
+- [15.11, zrobione, PR #578] skrypt pobrania APK z adresu artefaktu (`pnpm apk:fetch`). [do zrobienia] zrzuty main w pamięci podręcznej per sha dla `shots:compare` [PR #580].
 
 ## Później
 
