@@ -188,7 +188,8 @@ export interface World {
   readonly bands: readonly CrossingBand[];
   readonly mouths: SpatialHash<Way>;
   readonly walls: SpatialHash<Way>;
-  readonly squares: readonly (readonly Pt[])[];
+  /** The squares' outlines by their boxes. */
+  readonly squares: SpatialHash<readonly Pt[]>;
   readonly stops: readonly Pt[];
   readonly taxis: readonly (readonly Pt[])[];
   readonly asphalt: (p: Pt) => boolean | null;
@@ -248,7 +249,7 @@ const pavementAt = (w: World, s: KerbSample): number => {
 export const bySquare = (w: World, s: KerbSample): boolean =>
   [1, 2.5].some((d) => {
     const q = { x: s.kerb.x + s.out.x * d, z: s.kerb.z + s.out.z * d };
-    return w.squares.some((r) => pointInRing(q, r));
+    return w.squares.at(q.x, q.z).some((r) => pointInRing(q, r));
   });
 
 /** Does a sample's row hang chains: a wide pavement behind it or a square, on a street not too steep? */
@@ -345,6 +346,12 @@ export const stretchPosts = (from: End, to: End, spacing: number): number[] => {
   return len < spacing / 2 && out.length > 1 ? [(a + b) / 2] : out;
 };
 
+const ringHash = (rings: readonly (readonly Pt[])[]): SpatialHash<readonly Pt[]> => {
+  const h = new SpatialHash<readonly Pt[]>(16);
+  for (const r of rings) if (r.length > 0) h.insert(r, Math.min(...r.map((p) => p.x)), Math.min(...r.map((p) => p.z)), Math.max(...r.map((p) => p.x)), Math.max(...r.map((p) => p.z)));
+  return h;
+};
+
 /** The world the rule reads from the chunks, the pieces placed so far and the context. */
 export const ruleWorld = (site: Site, chunks: readonly LublinChunkData[], items: readonly StreetPropItem[], bands: readonly CrossingBand[], ctx: KerbRuleContext = {}): World => {
   const stops = new Map<string, Pt>();
@@ -355,7 +362,7 @@ export const ruleWorld = (site: Site, chunks: readonly LublinChunkData[], items:
     bands,
     mouths: segmentHash(mouthWays(chunks)),
     walls: segmentHash(walls),
-    squares: chunks.flatMap((c) => (c.walkAreas ?? []).filter((a) => a.surface === "square").map((a) => flat(a.outline))),
+    squares: ringHash(chunks.flatMap((c) => (c.walkAreas ?? []).filter((a) => a.surface === "square").map((a) => flat(a.outline)))),
     stops: [...stops.values()],
     taxis: ctx.taxis ?? [],
     asphalt: ctx.asphalt ?? (() => null),
@@ -366,13 +373,16 @@ export const ruleWorld = (site: Site, chunks: readonly LublinChunkData[], items:
 /** The samples of each line by a bus stop's post (the line nearest it, within `STOP_SIDE`): `STOP_BEHIND` against the traffic, where the vehicle stands, `STOP_AHEAD` with it. */
 const byStops = (lines: readonly KerbLine[], stops: readonly Pt[]): Set<KerbSample> => {
   const out = new Set<KerbSample>();
+  // The samples in a grid, in the lines' order: of two as near, the first is the nearest still.
+  const grid = new SpatialHash<{ l: KerbLine; i: number }>(STOP_SIDE);
+  for (const l of lines) l.samples.forEach((s, i) => grid.insertPoint({ l, i }, s.p.x, s.p.z));
   for (const stop of stops) {
     let best: { l: KerbLine; i: number; d: number } | null = null;
-    for (const l of lines)
-      l.samples.forEach((s, i) => {
-        const d = Math.hypot(s.p.x - stop.x, s.p.z - stop.z);
-        if (d < STOP_SIDE && (best === null || d < best.d)) best = { l, i, d };
-      });
+    for (const { l, i } of grid.queryRadius(stop.x, stop.z, STOP_SIDE)) {
+      const s = l.samples[i]!;
+      const d = Math.hypot(s.p.x - stop.x, s.p.z - stop.z);
+      if (d < STOP_SIDE && (best === null || d < best.d)) best = { l, i, d };
+    }
     if (best === null) continue;
     const { l, i } = best as { l: KerbLine; i: number };
     const at = l.samples[i]!.arc;

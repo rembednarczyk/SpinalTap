@@ -107,6 +107,12 @@ export const sampleSide = (piece: Piece, side: 1 | -1): KerbSample[] => {
 /** How far either way of the kerb the import's widths give the carriageway's edge on the ground is looked for (m), and in what steps. */
 export const KERB_REACH = 1.5;
 const REACH_STEP = 0.1;
+/** The offsets read, summed step by step as the reach was walked, and the changes from road at them nearest the kerb first (of two as near, the inner). */
+const REACH: number[] = [];
+for (let d = -KERB_REACH; d <= KERB_REACH + 1e-9; d += REACH_STEP) REACH.push(d);
+const NEAREST = REACH.map((_, k) => k)
+  .slice(1)
+  .sort((a, b) => Math.abs(REACH[a]! - REACH_STEP / 2) - Math.abs(REACH[b]! - REACH_STEP / 2) || a - b);
 
 /**
  * The samples moved onto the carriageway's edge as the ground draws it: the kerb the widths give
@@ -119,13 +125,11 @@ const REACH_STEP = 0.1;
 export const onGround = (samples: readonly KerbSample[], isRoad: (p: Pt) => boolean): KerbSample[] => {
   const out: KerbSample[] = [];
   for (const s of samples) {
-    let best: number | null = null;
-    let prev: boolean | null = null;
-    for (let d = -KERB_REACH; d <= KERB_REACH + 1e-9; d += REACH_STEP) {
-      const road = isRoad({ x: s.kerb.x + s.out.x * d, z: s.kerb.z + s.out.z * d });
-      if (prev === true && !road && (best === null || Math.abs(d - REACH_STEP / 2) < Math.abs(best))) best = d - REACH_STEP / 2;
-      prev = road;
-    }
+    const road: (boolean | undefined)[] = [];
+    const roadAt = (k: number) => (road[k] ??= isRoad({ x: s.kerb.x + s.out.x * REACH[k]!, z: s.kerb.z + s.out.z * REACH[k]! }));
+    // The changes nearest the kerb first: the ground is read only out to the first one.
+    const k = NEAREST.find((j) => roadAt(j - 1) && !roadAt(j));
+    const best = k === undefined ? null : REACH[k]! - REACH_STEP / 2;
     const kerb = best === null ? s.kerb : { x: s.kerb.x + s.out.x * best, z: s.kerb.z + s.out.z * best };
     const p = { x: kerb.x + s.out.x * KERB_SET, z: kerb.z + s.out.z * KERB_SET };
     const last = out[out.length - 1];
