@@ -2038,8 +2038,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-837 Zygzaki i schodki krawędzi chodnika przy jezdni i zebrze
 - Ważność: S3 · Zasięg: kerb-jag 55 trafień w 42 kwadratach 10 m; Podzamcze 18, Krakowskie 16, Nabrzeże 6, Stare Miasto 2
 - Opis: cutSidewalk tnie chodnik próbkowaniem co 0,5 m, a krawężnik składa się z pasów kerbFills/widened: schodki i zygzaki, zwłaszcza przy zebrach i narożnikach. Kontrola w PR #581; zrzuty scratchpad/jag/final/f7–f10
-- Status: nowy
+- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g837, 906eb3d, czeka na przegląd kuratora); wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
+- 15.11: kerb-jag 55 -> 16 (14 kwadratów); kontrola liczy łuk między wierzchołkami obrysu, po dogęszczeniu co 0,5 m wzdłuż krawężnika 81 -> 43, przy zebrach 123 -> 109; kontrolę trzeba dogęścić (PR #581) przed scaleniem; zostają zebry (G-836) i kliny narożników (G-844); 30 obiektów przy krawężniku przesuniętych o 0,2–1,0 m do przeglądu kuratora
 
 ### G-838 Szczelina 0,12 m między kwadratem reguły gołej ziemi a przesuniętą krawędzią Lwowskiej w139586648
 - Ważność: S4 · Zasięg: kerb-gap-bare podzamcze-2-1 1110,440
@@ -2075,6 +2076,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-843 Obrys zebry zachodzi pod chodnik
 - Ważność: S4 · Zasięg: krakowskie-0-1 (434,3; -10,3)
 - Opis: Znalezione przy etapie 1 ADR-0084 (woda). Klasa G-836 (zebry z węzłów)
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+
+### G-845 Kliny wypełnień kerbFills na narożnikach dwóch ulic (krawężnik w Y)
+- Ważność: S3 · Zasięg: Podzamcze (531,410), (770,531), (538,477); Nabrzeże (2637,250)
+- Opis: runRings z 1–3 próbek o skoku szczeliny 0,3–2,8 m na styku dwóch jezdni; znalezione przy G-837 (zrzuty f7, f8)
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
 
