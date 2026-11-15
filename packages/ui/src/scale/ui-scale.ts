@@ -18,10 +18,15 @@ export interface SafeArea {
 
 export const NO_SAFE_AREA: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
 
-/** The scales the layers draw at: `ui` for the HUD, messages, cards and the dialogue, `touch` for the on-screen pad. */
+/**
+ * The scales the layers draw at: `ui` for the HUD, messages, cards and the dialogue; `touch` lays
+ * the on-screen pad out (where its targets sit and how much they take), and `touchLook` draws its
+ * buttons and stick within that, so on screen they look `ui` large.
+ */
 export interface UiScale {
   readonly ui: number;
   readonly touch: number;
+  readonly touchLook: number;
 }
 
 /**
@@ -33,10 +38,12 @@ export const COMPACT_ROOM: ScreenBox = { width: 667, height: 370 };
 export const DESKTOP_ROOM: ScreenBox = { width: 1024, height: 600 };
 
 /**
- * The pad never draws its buttons smaller than at scale 1: its smallest target is 44 px there,
- * the least a thumb hits reliably (ADR-0035). Above 1 it grows with the HUD.
+ * The pad never lays its targets out smaller than at scale 1: its smallest target is 44 px there,
+ * the least a thumb hits reliably (ADR-0035), and the targets keep their places. Below 1 only the
+ * drawing shrinks (`touchLook`); an unseen margin keeps each target `MIN_HIT_PX` (ADR-0085).
  */
 export const MIN_TOUCH_SCALE = 1;
+export const MIN_HIT_PX = 44;
 
 /** The compact layout's screens, as the styles' `(max-height: 500px), (max-width: 760px)`. */
 export const isCompact = (screen: ScreenBox): boolean => screen.height <= 500 || screen.width <= 760;
@@ -47,7 +54,7 @@ const round = (v: number) => Math.round(v * 1000) / 1000;
  * The scale the layers draw at. Below 1 the setting holds as it is: everything shrinks toward its
  * own screen edge and frees room. Above 1 it holds while the layout still has the room it needs at
  * scale 1 (`COMPACT_ROOM` or `DESKTOP_ROOM`, within the safe area); beyond that it stops there, never
- * under 1. The pad follows the same scale, never under `MIN_TOUCH_SCALE`.
+ * under 1. The pad is laid out at the same scale, never under `MIN_TOUCH_SCALE`, and drawn at `ui`.
  */
 export const uiScale = (setting: number, screen: ScreenBox, safe: SafeArea = NO_SAFE_AREA, touch = false): UiScale => {
   const asked = Number.isFinite(setting) && setting > 0 ? setting : 1;
@@ -56,5 +63,6 @@ export const uiScale = (setting: number, screen: ScreenBox, safe: SafeArea = NO_
   const height = screen.height - safe.top - safe.bottom;
   const fits = Math.min(width / room.width, height / room.height);
   const ui = asked <= 1 ? asked : Math.max(1, Math.min(asked, fits));
-  return { ui: round(ui), touch: round(touch ? Math.max(MIN_TOUCH_SCALE, ui) : ui) };
+  const pad = touch ? Math.max(MIN_TOUCH_SCALE, ui) : ui;
+  return { ui: round(ui), touch: round(pad), touchLook: round(ui / pad) };
 };

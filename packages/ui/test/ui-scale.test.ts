@@ -5,7 +5,7 @@ import { COMPACT_ROOM, DESKTOP_ROOM, MIN_TOUCH_SCALE, isCompact, uiScale } from 
 const [MIN, MAX] = HUD_SCALE_RANGE;
 
 describe("interface scale (ADR-0085)", () => {
-  it("keeps a scale under 1 as it is, on every screen, and the pad at its floor", () => {
+  it("keeps a scale under 1 as it is, on every screen: the pad keeps its layout and is drawn as small", () => {
     for (const screen of [
       { width: 844, height: 390 },
       { width: 667, height: 375 },
@@ -13,7 +13,7 @@ describe("interface scale (ADR-0085)", () => {
       { width: 390, height: 844 },
     ]) {
       expect(uiScale(MIN, screen).ui).toBe(MIN);
-      expect(uiScale(MIN, screen, undefined, true)).toEqual({ ui: MIN, touch: MIN_TOUCH_SCALE });
+      expect(uiScale(MIN, screen, undefined, true)).toEqual({ ui: MIN, touch: MIN_TOUCH_SCALE, touchLook: MIN });
     }
   });
 
@@ -23,9 +23,9 @@ describe("interface scale (ADR-0085)", () => {
     expect(uiScale(MAX, { width: 1280, height: 720 }).ui).toBe(1.2);
     // The smallest desktop and the smallest phone have no room to spare: they stay at 1.
     expect(uiScale(MAX, { width: DESKTOP_ROOM.width, height: DESKTOP_ROOM.height }).ui).toBe(1);
-    expect(uiScale(MAX, { width: COMPACT_ROOM.width, height: 375 }, undefined, true)).toEqual({ ui: 1, touch: 1 });
+    expect(uiScale(MAX, { width: COMPACT_ROOM.width, height: 375 }, undefined, true)).toEqual({ ui: 1, touch: 1, touchLook: 1 });
     // A phone held sideways: the compact room, 390 / 370.
-    expect(uiScale(MAX, { width: 844, height: 390 }, undefined, true)).toEqual({ ui: 1.054, touch: 1.054 });
+    expect(uiScale(MAX, { width: 844, height: 390 }, undefined, true)).toEqual({ ui: 1.054, touch: 1.054, touchLook: 1 });
     // Never under 1 for a setting over it, even on a screen smaller than the room (portrait).
     expect(uiScale(1.2, { width: 390, height: 844 }).ui).toBe(1);
   });

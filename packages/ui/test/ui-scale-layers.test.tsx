@@ -47,11 +47,27 @@ describe("interface scale on every layer (ADR-0085)", () => {
     expect(root().getPropertyValue("--ui-scale")).toBe("0.8");
   });
 
-  it("keeps the pad at its floor while the HUD shrinks on a phone", () => {
+  it("keeps the pad's layout while the HUD shrinks on a phone, and draws the pad as small", () => {
     resize(844, 390);
     mount({ settings: { ...DEFAULT_SETTINGS, hudScale: 0.8 } }, true);
     expect(root().getPropertyValue("--ui-scale")).toBe("0.8");
     expect(root().getPropertyValue("--ui-touch-scale")).toBe("1");
+    expect(root().getPropertyValue("--ui-touch-look")).toBe("0.8");
+  });
+
+  it("keeps the knob to the drawn ring when the pad is drawn smaller", () => {
+    resize(844, 390);
+    mount({ settings: { ...DEFAULT_SETTINGS, hudScale: 0.8 } }, true);
+    const zone = screen.getByTestId("touch-stick");
+    fireEvent.pointerDown(zone, { pointerId: 1, clientX: 200, clientY: 300 });
+    const stick = zone.querySelector<HTMLElement>(".touch__stick")!;
+    expect([stick.style.left, stick.style.top]).toEqual(["200px", "300px"]);
+    // The ring is drawn at 0.8: the knob stops 44.8 px out on screen, full right, at the ring's edge.
+    pad.setStick.mockClear();
+    fireEvent.pointerMove(zone, { pointerId: 1, clientX: 244.8, clientY: 300 });
+    expect(pad.setStick).toHaveBeenLastCalledWith(1, -0);
+    fireEvent.pointerMove(zone, { pointerId: 1, clientX: 400, clientY: 300 });
+    expect(stick.querySelector<HTMLElement>(".touch__knob")!.style.transform).toBe("translate(56px, 0px)");
   });
 
   it("draws the HUD, the pad, the dialogue and the contract card as scaled layers", () => {

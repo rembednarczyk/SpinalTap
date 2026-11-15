@@ -8,7 +8,8 @@ import { freeze, newGame, place, step, teleport, teleportTo, waitForGame, waitFo
  * One interface scale for every layer (ADR-0085): at the ends of the HUD scale's range, on a phone
  * held sideways and on a desktop, the pad's buttons, the messages, the weapon strip, the minimap,
  * the objective card, the wallet, the clock, health and the dialogue wheel stay on screen and
- * apart, and each layer draws at the scale `uiScale` gives for that screen. Every size runs in one
+ * apart, each layer draws at the scale `uiScale` gives for that screen, and the pad's buttons,
+ * drawn smaller under 1, still take a touch 44 px wide. Every size runs in one
  * page, resized in turn (ADR-0046). `SHOTS=<dir>` keeps a picture of each case.
  */
 const [MIN, MAX] = HUD_SCALE_RANGE;
@@ -60,6 +61,33 @@ const layerScales = (page: Page) =>
     return { hud: scale(".hud"), touch: scale(".touch"), dialogue: scale(".dialogue") };
   });
 
+/**
+ * The pad's buttons whose target is under 44 px on screen (ADR-0035, ADR-0085): a touch 21.5 px
+ * left, right, above or below a button's centre must land on that button, however small it is drawn.
+ */
+const smallTargets = (page: Page, at: string): Promise<string[]> =>
+  page.evaluate((at) => {
+    const out: string[] = [];
+    for (const b of document.querySelectorAll<HTMLElement>("[data-testid=touch-controls] button")) {
+      const r = b.getBoundingClientRect();
+      if (r.width <= 0 || getComputedStyle(b).visibility === "hidden") continue;
+      const [cx, cy] = [r.x + r.width / 2, r.y + r.height / 2];
+      for (const [dx, dy] of [
+        [21.5, 0],
+        [-21.5, 0],
+        [0, 21.5],
+        [0, -21.5],
+      ] as const) {
+        const hit = document.elementFromPoint(cx + dx, cy + dy);
+        if (!hit || !b.contains(hit)) out.push(`${at}: ${b.getAttribute("aria-label") ?? b.dataset.testid} misses at ${dx},${dy} (${hit?.className ?? "nothing"})`);
+      }
+    }
+    return out;
+  }, at);
+
+/** The fire button's drawn width. */
+const fireWidth = async (page: Page) => (await page.getByTestId("touch-fire").boundingBox())!.width;
+
 const settle = (page: Page) => page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
 
 /** Sets the HUD scale and returns what is wrong at `w`x`h`: pieces off screen, pieces over each other. */
@@ -83,7 +111,8 @@ const start = async (page: Page, touch: boolean) => {
     const real = window.setTimeout;
     window.setTimeout = ((fn: TimerHandler, ms?: number, ...args: unknown[]) => (ms === 4500 ? 0 : real(fn, ms, ...args))) as typeof window.setTimeout;
   });
-  await page.goto(`/?seed=7&models=off&audio=off${touch ? "&touch" : ""}`);
+  // `SHOT_MODELS=on` takes the pictures with the character models, as the player sees the game.
+  await page.goto(`/?seed=7&audio=off${process.env.SHOT_MODELS === "on" ? "" : "&models=off"}${touch ? "&touch" : ""}`);
   await waitForGame(page);
   await newGame(page, touch ? "tap" : "click");
   await waitForPlay(page);
@@ -114,8 +143,18 @@ const run = async (page: Page, sizes: readonly (readonly [number, number])[], to
   const check = async (layers: readonly ("hud" | "touch" | "dialogue")[], tag: string) => {
     for (const [w, h] of sizes) {
       await page.setViewportSize({ width: w, height: h });
+      let fireAtOne = 0;
+      if (layers.includes("touch")) {
+        await faults(page, w, h, 1, `${label}-${tag}`);
+        fireAtOne = await fireWidth(page);
+      }
       for (const s of [MIN, MAX]) {
         found.push(...(await faults(page, w, h, s, `${label}-${tag}`)));
+        if (layers.includes("touch")) {
+          found.push(...(await smallTargets(page, `${label} ${w}x${h} @${s}`)));
+          // Under 1 the pad is drawn as small as the rest: the fire button visibly narrower.
+          if (s < 1 && !((await fireWidth(page)) < fireAtOne - 1)) found.push(`${label} ${w}x${h} @${s}: fire button not drawn smaller`);
+        }
         const want = uiScale(s, { width: w, height: h }, undefined, touch);
         const got = await layerScales(page);
         for (const layer of layers) {
@@ -150,6 +189,7 @@ test.describe("phone", () => {
     for (const s of [MIN, MAX]) {
       await page.evaluate((v) => window.__seki!.session.intents.changeSettings({ hudScale: v }), s);
       await settle(page);
+      if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, `ui-scale-phone-upright-390x844-${s}.png`) });
       const hint = (await page.locator(".rotate-hint").boundingBox())!;
       expect(hint, `rotate hint at ${s}`).toEqual({ x: 0, y: 0, width: 390, height: 844 });
     }

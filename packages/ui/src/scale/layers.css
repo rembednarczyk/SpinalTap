@@ -24,5 +24,22 @@
   pointer-events: none;
 }
 
-/* The pad keeps its own scale: never under 1, so no target drops below 44 px (ADR-0035). */
-.ui-layer--touch { --layer-scale: var(--ui-touch-scale, 1); }
+/* The pad is laid out at its own scale, never under 1, so its targets keep their places and size
+   (44 px and more, ADR-0035). Below 1 its buttons and stick are drawn smaller about their centres,
+   as large as the rest of the interface; an unseen margin round each button keeps the target
+   44 px on screen, within the place the button had at 1, so no target covers another. */
+.ui-layer--touch {
+  --layer-scale: var(--ui-touch-scale, 1);
+  --touch-look: var(--ui-touch-look, 1);
+}
+.ui-layer--touch :is(.touch__btn, .touch__stick, .touch__stick-hint) { transform: scale(var(--touch-look)); }
+.ui-layer--touch .touch__btn::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, calc(44px / (var(--layer-scale) * var(--touch-look))));
+  height: max(100%, calc(44px / (var(--layer-scale) * var(--touch-look))));
+  border-radius: inherit;
+  transform: translate(-50%, -50%);
+}

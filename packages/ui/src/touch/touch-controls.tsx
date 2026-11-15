@@ -22,8 +22,10 @@ interface Drag {
  */
 const Stick = ({ pad }: { pad: TouchPadSink }) => {
   const t = useT();
-  const scale = useUiScale(true).touch;
-  const reach = STICK_RADIUS * scale;
+  const { touch: scale, touchLook } = useUiScale(true);
+  // The ring is drawn `touchLook` large within the pad (ADR-0085); the knob reaches its edge.
+  const drawn = scale * touchLook;
+  const reach = STICK_RADIUS * drawn;
   const [origin, setOrigin] = useState<Drag | null>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   // The scanner's card takes the left column of a phone held sideways (G-433); the stick still works.
@@ -53,7 +55,7 @@ const Stick = ({ pad }: { pad: TouchPadSink }) => {
           dx = (dx / len) * reach;
           dy = (dy / len) * reach;
         }
-        setKnob({ x: dx / scale, y: dy / scale });
+        setKnob({ x: dx / drawn, y: dy / drawn });
         pad.setStick(dx / reach, -dy / reach);
       }}
       onPointerUp={(e) => origin?.id === e.pointerId && end()}
