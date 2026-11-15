@@ -1,6 +1,6 @@
 # ADR-0086: Ubrania jako osobne assety na postaciach VRoid
 
-Status: Proponowany (15.11), czeka na decyzje użytkownika. Wynika z G-870 (kamizelka kuloodporna wcina się w biust) i prośby użytkownika o research ubrań jako assetów. Dotyczy ADR-0076 (obsada VRoid, warianty, powłoki), ADR-0063 i ADR-0058 (licencje), ADR-0036 i ADR-0015 (przebrania, `GarmentMeshId`), ADR-0031 (podział renderera), ADR-0046 i ADR-0079 (budżety). Stan kodu: `wt-session` 512c63c.
+Status: Zaakceptowany (15.11, decyzje użytkownika w sekcji „Decyzje użytkownika”). Wynika z G-870 (kamizelka kuloodporna wcina się w biust) i prośby użytkownika o research ubrań jako assetów. Dotyczy ADR-0076 (obsada VRoid, warianty, powłoki), ADR-0063 i ADR-0058 (licencje), ADR-0036 i ADR-0015 (przebrania, `GarmentMeshId`), ADR-0031 (podział renderera), ADR-0046 i ADR-0079 (budżety). Stan kodu: `wt-session` 512c63c.
 
 ## Kontekst
 
@@ -91,6 +91,12 @@ Sprawdzone przez strony źródeł i API wyszukiwarki Sketchfaba (`license=by`, `
 6. Które ubrania najpierw: kamizelka kuloodporna, kurtka Hebi, płaszcz Tessen, hełm, spodnie taktyczne?
 7. Quaternius Fantasy: wystarczy darmowa część (Ranger, Peasant), czy kupić pełną paczkę za 20 USD (licencja ta sama, CC0)?
 8. BOOTH: czy w ogóle pytać twórców o pisemną zgodę na redystrybucję w grze, czy zamykamy to źródło?
+
+## Decyzje użytkownika (15.11)
+1. Docelowa droga to A: osobne ubrania jako skinned meshe na szkielecie VRoid `J_Bip_*`. B (powłoki) zostaje dla G-870 i drobnych rzeczy.
+2. Ubrań z VRoid Studio na razie nie robimy. Zaczynamy od ubrań wyciętych z próbek VRoid CC0. Pliki z VRoid Studio dojdą później bez zmian w kodzie.
+3. Blender w `tools`, uruchamiany bez okna, do dopasowania ubrań spoza VRoid i przeniesienia wag przy imporcie.
+4. Pytania 4–8 zostają otwarte. Do czasu decyzji obowiązuje: tekstury 512 px jak w VRoid tylko tam, gdzie ubranie pochodzi z próbki; hełm chowa włosy; kolejność kamizelka, hełm, kurtka; z Quaterniusa tylko darmowa część; BOOTH zamknięty.
 
 ## Konsekwencje
 - Zmiana kontraktu przebrań w `core` (Architekt) i nowy katalog assetów z manifestem; symulacja, zapis i złote hashe bez zmian (wygląd to pole widoku).
