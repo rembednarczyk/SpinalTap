@@ -1,6 +1,6 @@
 import { MAX_LAMP_STREAKS, STREAK_REACH } from "../../npr/lamp-streaks";
 import type { RenderQuality } from "../../npr/quality";
-import type { ToonMaterials } from "../../npr/toon-material";
+import type { ToonWetGround } from "../../npr/toon-wet-ground";
 
 /** A lamp whose light the wet street mirrors (ADR-0084): where its light hangs, its colour and own seed. */
 export interface StreakLamp {
@@ -47,7 +47,7 @@ export class LampStreakFeed {
   private readonly slots: number;
 
   constructor(
-    private readonly materials: ToonMaterials,
+    private readonly wet: ToonWetGround,
     quality: RenderQuality,
   ) {
     this.slots = quality === "low" ? MAX_LAMP_STREAKS / 2 : MAX_LAMP_STREAKS;
@@ -93,6 +93,6 @@ export class LampStreakFeed {
       pos.push(l.x, l.y, l.z, l.seed);
       col.push(l.color[0] * k, l.color[1] * k, l.color[2] * k, 1);
     }
-    this.materials.setLampStreaks(pos, col);
+    this.wet.setLampStreaks(pos, col);
   }
 }

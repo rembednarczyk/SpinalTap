@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { LAMP_STREAK_GLSL, MAX_LAMP_STREAKS, lampStreak, streakShows } from "../src/npr/lamp-streaks";
 import { TOON_FRAGMENT } from "../src/npr/toon-shader";
 import { LampStreakFeed, type StreakLamp, pickStreakLamps } from "../src/renderer/mapcity/lamp-streak-feed";
-import type { ToonMaterials } from "../src/npr/toon-material";
+import type { ToonWetGround } from "../src/npr/toon-wet-ground";
 
 /**
  * The lamps' streaks on the wet street at night (ADR-0084 stage 1, round 3): one narrow streak
@@ -117,9 +117,9 @@ describe("the lamps fed to the ground (ADR-0084)", () => {
 
   it("go dark by day and fill half the slots on a phone", () => {
     const pushed: number[][] = [];
-    const materials = { setLampStreaks: (pos: readonly number[]) => pushed.push([...pos]) } as unknown as ToonMaterials;
+    const wet = { setLampStreaks: (pos: readonly number[]) => pushed.push([...pos]) } as unknown as ToonWetGround;
     const lamps = Array.from({ length: 12 }, (_, i) => lamp(i, 5, i));
-    const phone = new LampStreakFeed(materials, "low");
+    const phone = new LampStreakFeed(wet, "low");
     phone.setLamps(lamps);
     phone.aim({ x: 0, z: 0 }, { x: 0, z: 1 });
     expect(phone.current).toHaveLength(MAX_LAMP_STREAKS / 2);

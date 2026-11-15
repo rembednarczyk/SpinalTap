@@ -33,7 +33,7 @@ export class LampHalos {
     quality: RenderQuality,
   ) {
     this.halo = new PropHaloMaterial(scene);
-    this.streaks = new LampStreakFeed(materials, quality);
+    this.streaks = new LampStreakFeed(materials.wet, quality);
   }
 
   /** The halo mesh, or null while no lamp stands. */

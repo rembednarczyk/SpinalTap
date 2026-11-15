@@ -5,6 +5,7 @@ import { ToonEnvironment } from "./toon-environment";
 import { createToonMaterial } from "./toon-material-factory";
 import { ToonPointLights } from "./toon-point-lights";
 import { type ShadowBinding, ToonSceneUniforms } from "./toon-scene-uniforms";
+import { ToonWetGround } from "./toon-wet-ground";
 
 export { LIGHT_SLOT_DISTANCE } from "./toon-point-lights";
 export type { ShadowBinding } from "./toon-scene-uniforms";
@@ -24,9 +25,6 @@ export interface ImportedMaterialOptions {
   readonly tint?: boolean;
 }
 
-/** Materials of the map city's wet ground (ADR-0084): they mirror the lamps near the eye. */
-const mirrorsLamps = (key: string): boolean => (PRESETS as Record<string, { readonly water?: boolean }>)[key]?.water === true;
-
 /**
  * Owns all toon materials (one per preset, shared between meshes) and pushes the shared
  * light rig into them. Point lights are registered by key so they can be removed again.
@@ -36,6 +34,8 @@ export class ToonMaterials {
   private readonly lights = new ToonPointLights();
   private readonly env = new ToonEnvironment();
   private readonly look: ToonSceneUniforms;
+  /** Wet street tint and the lamps it mirrors (ADR-0084). */
+  readonly wet = new ToonWetGround(this.materials);
 
   constructor(
     private readonly scene: Scene,
@@ -151,8 +151,7 @@ export class ToonMaterials {
       this.look.applyShadow(m);
       this.look.applyFlash(m);
       this.look.applyRimTint(m);
-      this.look.applyWetTint(m);
-      if (mirrorsLamps(key)) this.look.applyLampStreaks(m);
+      this.wet.apply(key, m);
     }
     return m;
   }
@@ -161,18 +160,6 @@ export class ToonMaterials {
   setRimTint(color: string, weight: number): void {
     if (!this.look.setRimTint(color, weight)) return;
     for (const m of this.materials.values()) this.look.applyRimTint(m);
-  }
-
-  /** District tint of the wet street (ADR-0084). */
-  setWetTint(color: string): void {
-    if (!this.look.setWetTint(color)) return;
-    for (const m of this.materials.values()) this.look.applyWetTint(m);
-  }
-
-  /** The lamps the map city's wet ground mirrors (ADR-0084): only its materials take them. */
-  setLampStreaks(pos: readonly number[], col: readonly number[]): void {
-    this.look.setLampStreaks(pos, col);
-    for (const [key, m] of this.materials) if (mirrorsLamps(key)) this.look.applyLampStreaks(m);
   }
 
   /**
