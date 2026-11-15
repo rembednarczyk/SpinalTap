@@ -25,6 +25,7 @@ export class ToonSceneUniforms {
   private shadow: ShadowBinding | null = null;
   private flash: Vec4 = { x: 0, y: 0, z: 0, w: 0 };
   private rimTint: Vec4 = { x: 1, y: 1, z: 1, w: 0 };
+  private wetTint = "#ffffff";
 
   constructor(private current: LightingRig) {}
 
@@ -99,5 +100,16 @@ export class ToonSceneUniforms {
 
   applyRimTint(m: ShaderMaterial): void {
     m.setVector4("rimTint", this.rimTint);
+  }
+
+  /** False when the tint stays the same. */
+  setWetTint(color: string): boolean {
+    if (color === this.wetTint) return false;
+    this.wetTint = color;
+    return true;
+  }
+
+  applyWetTint(m: ShaderMaterial): void {
+    m.setColor3("wetTint", hex(this.wetTint));
   }
 }

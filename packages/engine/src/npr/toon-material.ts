@@ -148,6 +148,7 @@ export class ToonMaterials {
       this.look.applyShadow(m);
       this.look.applyFlash(m);
       this.look.applyRimTint(m);
+      this.look.applyWetTint(m);
     }
     return m;
   }
@@ -156,6 +157,12 @@ export class ToonMaterials {
   setRimTint(color: string, weight: number): void {
     if (!this.look.setRimTint(color, weight)) return;
     for (const m of this.materials.values()) this.look.applyRimTint(m);
+  }
+
+  /** District tint of the wet street (ADR-0084). */
+  setWetTint(color: string): void {
+    if (!this.look.setWetTint(color)) return;
+    for (const m of this.materials.values()) this.look.applyWetTint(m);
   }
 
   /**

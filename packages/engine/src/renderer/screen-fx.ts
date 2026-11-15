@@ -252,6 +252,7 @@ export class ScreenFx {
     const rig = scale === 1 ? look : { ...look, fogDensity: look.fogDensity * scale };
     materials.setRig(rig);
     materials.setRimTint(p.rim, p.rimWeight * (1 - 0.5 * Math.max(0, Math.min(1, this.daylight))));
+    materials.setWetTint(p.wet);
     atmosphere.setDaylight(rig, this.daylight);
     farCity.setDaylight(rig, this.daylight);
     signage.setDaylight(rig, this.daylight);

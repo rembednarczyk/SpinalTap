@@ -33,6 +33,8 @@ export class MeshSink {
   readonly colors: number[] = [];
   readonly uvs: number[] = [];
   readonly uvs2: number[] = [];
+  /** The water field of the map city's ground (ADR-0084), baked after the plan; empty elsewhere. */
+  readonly uvs3: number[] = [];
   readonly indices: number[] = [];
 
   get vertexCount(): number {
