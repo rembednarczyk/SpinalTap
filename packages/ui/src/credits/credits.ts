@@ -1,17 +1,18 @@
 import { GAME_ICON_SOURCES, type GameIconAuthor } from "../icons/game-icon-paths";
+import type { CreditLicense } from "./licenses";
 
 /**
  * Who made the models, sounds and icons the game is built from (ADR-0063): the one list the "Credits"
- * screen reads. Titles and names stay as their authors wrote them; only the headings and labels
- * around them are translated (ADR-0056). Every file under `packages/app/public` that holds CC-BY
- * work has its entry here and a row in the README of its folder; `packages/app/test/credits.test.ts`
- * holds the three together (and against `tools/assets/sources.json`).
+ * screen reads and the one record of the licence of every file that ships (change of 15.11).
+ * Titles and names stay as their authors wrote them; only the headings and labels around them are
+ * translated (ADR-0056). Every model, texture, sound and image under `packages/app/public` has its
+ * entry here (`packages/app/test/asset-licenses.test.ts`); CC-BY work also a row in the README of
+ * its folder (`packages/app/test/credits.test.ts`, also against `tools/assets/sources.json`).
  */
 
-export type CreditSection = "city" | "street" | "characters" | "weapons" | "audio" | "icons";
+export type CreditSection = "city" | "street" | "characters" | "weapons" | "audio" | "icons" | "app";
 
-/** CC BY 3.0 only for the icons of game-icons.net (ADR-0063, decision of 6.11 in ADR-0073). */
-export type CreditLicense = "CC0-1.0" | "CC-BY-4.0" | "CC-BY-3.0" | "VRoid-Hub-1.0";
+export { CREDIT_LICENSES, type CreditLicense, LICENSES, type LicenseInfo, NON_COMMERCIAL, SHARE_ALIKE } from "./licenses";
 
 export interface Credit {
   /** The source's id in `tools/assets/sources.json` where it has one; a CC-BY model carries it in its `extras.credit`. */
@@ -21,26 +22,19 @@ export interface Credit {
   readonly title: string;
   readonly author: string;
   readonly authorUrl?: string;
-  /** Where it comes from. */
-  readonly url: string;
+  /** Where it comes from; none for the game's own work. */
+  readonly url?: string;
   readonly license: CreditLicense;
+  /** The terms of this one work, where its licence has no deed of its own (a VRoid Hub author's conditions). */
+  readonly licenseUrl?: string;
   /** Files under `packages/app/public` built from it; none for the item icons, which are drawn into the code (`icons/`). */
   readonly files: readonly string[];
   /** Changed for the game (CC-BY asks to say so): simplified, recoloured, trimmed. */
   readonly changed: boolean;
 }
 
-/** The licence's own name and its deed. */
-export const LICENSES: Readonly<Record<CreditLicense, { readonly name: string; readonly url?: string }>> = {
-  "CC0-1.0": { name: "CC0 1.0", url: "https://creativecommons.org/publicdomain/zero/1.0/" },
-  "CC-BY-4.0": { name: "CC BY 4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
-  "CC-BY-3.0": { name: "CC BY 3.0", url: "https://creativecommons.org/licenses/by/3.0/" },
-  // Written in each model's VRM metadata (packages/app/public/models/README.md).
-  "VRoid-Hub-1.0": { name: "VRoid Hub License 1.0" },
-};
-
 /** The order of the sections on the screen. */
-export const CREDIT_SECTIONS: readonly CreditSection[] = ["street", "city", "characters", "weapons", "audio", "icons"];
+export const CREDIT_SECTIONS: readonly CreditSection[] = ["street", "city", "characters", "weapons", "audio", "icons", "app"];
 
 const CITY = ["city/city-kit.glb"] as const;
 const PROPS = ["city/city-props.glb"] as const;
@@ -126,5 +120,7 @@ export const CREDITS: readonly Credit[] = [
   { id: "game-icons-lorc", section: "icons", title: gameIcons("Lorc"), author: "Lorc", authorUrl: "http://lorcblog.blogspot.com", url: "https://game-icons.net", license: "CC-BY-3.0", files: [], changed: true },
   { id: "game-icons-delapouite", section: "icons", title: gameIcons("Delapouite"), author: "Delapouite", authorUrl: "http://delapouite.com", url: "https://game-icons.net", license: "CC-BY-3.0", files: [], changed: true },
   { id: "zer0-sol-handgun-reload", section: "audio", title: "Handgun Reload Sound Effect", author: "zer0_sol", url: "https://opengameart.org/content/handgun-reload-sound-effect", license: "CC0-1.0", files: ["audio/reload-handgun-000.ogg"], changed: true },
+  // The game's own work (ADR-0063, 15.11): the app icon, cut from a shot of the game (#131).
+  { id: "seki-senshi-app-icon", section: "app", title: "Seki Senshi", author: "Seki Senshi", license: "own", files: ["icons/icon-192.png", "icons/icon-512.png"], changed: false },
   { id: "ylmir-rain-loopable", section: "audio", title: "Rain (loopable)", author: "Ylmir", url: "https://opengameart.org/content/rain-loopable", license: "CC0-1.0", files: ["audio/rain-loop.ogg"], changed: false },
 ];

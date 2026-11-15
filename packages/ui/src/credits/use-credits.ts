@@ -10,7 +10,8 @@ export interface CreditRow {
   /** "by Kenney" in the player's language; the name itself as written. */
   readonly byline: string;
   readonly authorUrl: string | null;
-  readonly url: string;
+  readonly url: string | null;
+  /** The licence by its name, or for the game's own work and a VRoid Hub author's terms in the player's language. */
   readonly license: string;
   readonly licenseUrl: string | null;
   /** "changed for the game", or null. */
@@ -30,6 +31,7 @@ const HEADINGS: Readonly<Record<CreditSection, MessageKey>> = {
   weapons: "credits.section.weapons",
   audio: "credits.section.audio",
   icons: "credits.section.icons",
+  app: "credits.section.app",
 };
 
 /** The credits grouped by section, in the screen's order, translated (ADR-0056, ADR-0063). */
@@ -49,9 +51,9 @@ export const useCredits = (credits: readonly Credit[] = CREDITS): readonly Credi
               title: c.title,
               byline: t("credits.by", { author: c.author }),
               authorUrl: c.authorUrl ?? null,
-              url: c.url,
-              license: license.name,
-              licenseUrl: license.url ?? null,
+              url: c.url ?? null,
+              license: "key" in license ? t(license.key) : license.name,
+              licenseUrl: c.licenseUrl ?? license.url ?? null,
               changed: c.changed ? t("credits.changed") : null,
             };
           }),

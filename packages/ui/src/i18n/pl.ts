@@ -30,8 +30,11 @@ export const pl = {
   "credits.section.weapons": "Broń",
   "credits.section.audio": "Dźwięki",
   "credits.section.icons": "Ikony przedmiotów",
+  "credits.section.app": "Ikona aplikacji",
   "credits.by": "autor: {author}",
   "credits.changed": "zmienione na potrzeby gry",
+  "credits.license.own": "praca własna gry",
+  "credits.license.vroidNc": "VRoid Hub, warunki autora: użycie niekomercyjne",
   "menu.back": "Wróć",
   // Pause menu.
   "pause.heading": "Pauza",
