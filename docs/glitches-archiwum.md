@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-804 Latarnie reguły lit: strona z kierunku rysowania OSM, Narutowicza tylko z jednej strony
+- Ważność: S4 · Zasięg: ulice tertiary/residential reguły SIDE, m.in. Narutowicza, Peowiaków
+- Opis: props-lit SIDE stawia lampy po lewej względem kierunku drogi w OSM; Narutowicza ma w rzeczywistości słupy przy obu krawężnikach co ok. 34 m (ortofoto 2025-04). Propozycja: strona z przejętej linii planu, sides 2 dla ulic z chodnikami separate po obu stronach i jezdnią ponad ok. 10 m. T-297
+- Status: naprawione (15.11, #563 scalony); wcześniej: w PR #563 (przegląd kuratora: ZGODNE); wcześniej: w przeglądzie kuratora (gałąź ccr-ec2c4269-ilh8k8-g804, 642425d); wcześniej: zgłoszone (14.11, przegląd kuratora G-798)
+- Pakiet właściciela: tools/osm-import (props-lit)
+
 ### G-808 Podgląd menu pobiera seki.vrm drugi raz (własna ModelLibrary) już na ekranie tytułowym, równolegle z miastem
 - Ważność: S3 · Zasięg: start gry, słabe łącze
 - Opis: PreviewStage ma własną ModelLibrary i pobiera 7 MB seki.vrm drugi raz równolegle z plikami miasta; dubluje transfer i zwiększa szansę na limit bezczynności (G-807).

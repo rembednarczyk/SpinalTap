@@ -1905,12 +1905,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (street-section, orto widths)
 - Test przyjęcia: sidewalk-under-carriageway nie rośnie wobec main po zastosowaniu tabeli szerokości
 
-### G-804 Latarnie reguły lit: strona z kierunku rysowania OSM, Narutowicza tylko z jednej strony
-- Ważność: S4 · Zasięg: ulice tertiary/residential reguły SIDE, m.in. Narutowicza, Peowiaków
-- Opis: props-lit SIDE stawia lampy po lewej względem kierunku drogi w OSM; Narutowicza ma w rzeczywistości słupy przy obu krawężnikach co ok. 34 m (ortofoto 2025-04). Propozycja: strona z przejętej linii planu, sides 2 dla ulic z chodnikami separate po obu stronach i jezdnią ponad ok. 10 m. T-297
-- Status: w PR #563 (przegląd kuratora: ZGODNE); wcześniej: w przeglądzie kuratora (gałąź ccr-ec2c4269-ilh8k8-g804, 642425d); wcześniej: zgłoszone (14.11, przegląd kuratora G-798)
-- Pakiet właściciela: tools/osm-import (props-lit)
-
 ### G-805 Styl latarni: lamp-road na deptakach Śródmieścia, lamp-park przy peronach i na chodnikach
 - Ważność: S4 · Zasięg: 7 linii krakowskie-side, ok. 14 lamp na Dworcu Podzamcze, 8 chodników footway=sidewalk
 - Opis: YIELDING przejmuje tylko linie na ulicach samochodowych, więc deptaki lit=yes zostają z lamp-road z planu; PATH stawia lamp-park przy peronach i na chodnikach ulic. W rzeczywistości przy deptaku stoją latarnie stylizowane (Peowiaków, Commons 2009). T-298
