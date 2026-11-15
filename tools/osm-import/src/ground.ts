@@ -105,6 +105,8 @@ export interface Band {
   readonly kerb?: { readonly line: readonly Pt[]; readonly half: number };
   /** A carriageway's stretches widened to its paving (`kerbFills`, G-570): laid in a chunk as pieces of their own along its piece (`widenPieces`). */
   readonly widen?: readonly WidenRun[];
+  /** Its stretches widened as the lanes read them (`streetHalves`): `widen` less the asphalt grown on in to the kerb (G-837). */
+  readonly widenLanes?: readonly WidenRun[];
   /** A band of steps' run, end to end: what its pieces in a chunk are cut along (`flightStrips`). */
   readonly run?: readonly [Pt, Pt];
   /**
