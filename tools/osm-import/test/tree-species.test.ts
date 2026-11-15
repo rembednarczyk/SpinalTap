@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { TREE_CROWN, TREE_KIND, treeHeight, treeScale, treeSpecies } from "../../../packages/core/src/world/trees.ts";
+import { TREE_CROWN, TREE_KIND, treeHeight, treeScale, treeSpecies, treeSpread } from "../../../packages/core/src/world/trees.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { REPO } from "../src/paths.ts";
 import { Site } from "../src/props-site.ts";
@@ -80,12 +80,13 @@ describe("trees of the species OSM names (G-423)", () => {
     expect(treeVariant(site, { x: 50, z: 5 }, 0x71, undefined, null)).toBe(0x71);
   });
 
-  it("stops an oak's broad crown short of the wall it would grow into", () => {
-    // 6 m off the wall: the seed's oak reaches 4.6 m, one grown to 20 m would reach 9.6 m.
+  it("stops an oak's broad crown short of the wall it would grow into, at its height (G-814)", () => {
+    // 6 m off the wall: the seed's oak reaches 4.6 m, one grown to 20 m would reach 9.6 m; at 55% of its width 5.3 m, at 70% 6.7 m.
     const v = treeVariant(site, { x: 50, z: 32 }, 0x70, TREE_KIND.oak, 20);
     expect(treeSpecies(v)).toBe(TREE_KIND.oak);
-    expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v)).toBeLessThan(6);
-    expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v)).toBeGreaterThan(5.5);
+    expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v) * treeSpread(v)).toBeLessThan(6);
+    expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v) * treeSpread(v)).toBeGreaterThan(5);
+    expect(Math.abs(treeHeight(v) - 20)).toBeLessThan(0.2);
   });
 });
 

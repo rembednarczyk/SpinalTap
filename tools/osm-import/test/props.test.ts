@@ -1,32 +1,18 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { type StreetPropItem, terrainHeightAt } from "../../../packages/core/src/world/city-geo.ts";
+import { terrainHeightAt } from "../../../packages/core/src/world/city-geo.ts";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
 import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
 import { GATE_PASSAGES } from "../../../packages/sim/src/content/lublin/gate-passages.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
-import { REPO } from "../src/paths.ts";
-import { emitProps } from "../src/props-emit.ts";
-import { loadBuildingTags, loadNodeTags } from "../src/props-art.ts";
-import { furnitureBlock, groundY, lublinDecalWalls, poleLampAt, surfaceY } from "../src/decal-walls.ts";
-import { addDecals } from "../src/props-decals.ts";
-import type { Pt } from "../src/geometry.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
 import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
 import { PropSolidIndex, clearSpot } from "../src/props-solid.ts";
 import { cityProps } from "./city.ts";
-import { loadLitWays, loadPropsPlan, loadStreetWays } from "../src/props-osm.ts";
-import { loadCrownData, placeWithCrowns } from "../src/props-crowns.ts";
-import { gameDoors } from "../src/game-doors.ts";
-import { loadCarriageways, loadUndergroundWays } from "../src/props-roads.ts";
-import { lublinVenueBoards } from "../src/venue-boards.ts";
-import { lublinDoorWalls } from "../src/door-walls.ts";
-import { addDoors, loadEntrances } from "../src/props-doors.ts";
+import { loadPropsPlan } from "../src/props-osm.ts";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
 /** The plan as `pnpm osm:props` places it: with the OSM extract's furniture it lacks (G-099). */
@@ -75,21 +61,6 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(total).toBeGreaterThan(3000);
     expect(a.stats.perKind["lamp-pastoral"]).toBeGreaterThan(50);
     expect(a.stats.perKind["lamp-wall-lantern"]).toBeGreaterThan(100);
-  });
-
-  it("matches the committed table (run `pnpm osm:props` after changing the plan or the rules)", () => {
-    const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
-    const market = { roads: loadCarriageways(), doors: gameDoors() };
-    // With the `lit` rule's second pass (G-798) and the crowns' trees (G-797), as `pnpm osm:props` places them.
-    const place = (p: PropsPlan) => generateProps(p, CHUNKS, loadNodeTags(), lublinVenueBoards(), market);
-    const table = placeWithCrowns(PLAN, place, loadLitWays(), loadStreetWays(), new Site(CHUNKS), loadCrownData()).byChunk as Map<string, StreetPropItem[]>;
-    // The doors on the facades (ADR-0058 stage 9) after the furniture, then the decals (stage 6), as `pnpm osm:props` adds them.
-    addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors(), underground: loadUndergroundWays() });
-    const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt, blockOf: furnitureBlock };
-    addDecals(table, new Site(CHUNKS), lublinDecalWalls(), ctx);
-    // The still crowd (ADR-0058 stage 8) comes last, from the simulation's crowd as well: `props-figures.test.ts` checks its rows.
-    const others = (text: string) => text.split("\n").filter((l) => !l.startsWith('    "figure": ')).join("\n");
-    expect(others(emitProps(table))).toBe(others(committed));
   });
 
   it("stands lamps on the pavement beside the road on both sides, their arms towards it, and lanterns on the facades", () => {

@@ -39,17 +39,35 @@ const PLAIN_SHIFT = 0x3000;
 const TAGGED = 0xf400;
 const RARE = TREE_SPECIES - PLAIN_SPECIES;
 
+/**
+ * How wide a crown squeezed by walls is drawn, as a share of its species' at its height (G-814):
+ * a tree by a facade keeps the height it was measured at and narrows instead, as the real ones do.
+ */
+export const TREE_SPREADS: readonly number[] = [0.85, 0.7, 0.55, 0.45, 0.35];
+/**
+ * The variants of the narrowed trees start here, past the tagged ones (`TAGGED + 2 * 180 + 1`):
+ * every species at each of `TREE_SPREADS` per two size steps, which the 16 bits still hold
+ * (`NARROW + 5 * (5 * 90 + 4) + 4` is 0xfe62).
+ */
+const NARROW = 0xf580;
+const NARROW_STEP = 2 * TREE_SCALE.step;
+
 const fromStep = (k: number): number => Math.round((TREE_SCALE.min + k * TREE_SCALE.step) * 100) / 100;
-const stepOf = (scale: number): number => Math.round((Math.min(TREE_SCALE.max, Math.max(TREE_SCALE.min, scale)) - TREE_SCALE.min) / TREE_SCALE.step);
+const stepOf = (scale: number, step: number = TREE_SCALE.step): number => Math.round((Math.min(TREE_SCALE.max, Math.max(TREE_SCALE.min, scale)) - TREE_SCALE.min) / step);
 
 /** The species of a tree's variant (`TREE_KIND`). */
-export const treeSpecies = (variant: number): number => (variant >= TAGGED ? PLAIN_SPECIES + ((variant - TAGGED) % RARE) : variant % PLAIN_SPECIES);
+export const treeSpecies = (variant: number): number =>
+  variant >= NARROW ? (variant - NARROW) % TREE_SPECIES : variant >= TAGGED ? PLAIN_SPECIES + ((variant - TAGGED) % RARE) : variant % PLAIN_SPECIES;
+
+/** How wide a tree's crown is drawn as a share of its species' at its size: under 1 only where walls narrow it (`narrowTreeVariant`). */
+export const treeSpread = (variant: number): number => (variant >= NARROW ? TREE_SPREADS[Math.floor((variant - NARROW) / TREE_SPECIES) % TREE_SPREADS.length]! : 1);
 
 /**
  * The size of a tree: a measured or tagged one's from its variant, else 0.8 to 1.25 from bits 4
  * to 7 of its seed (a tree with no source of its height keeps the old random spread).
  */
 export const treeScale = (variant: number): number => {
+  if (variant >= NARROW) return Math.round((TREE_SCALE.min + Math.floor((variant - NARROW) / (TREE_SPECIES * TREE_SPREADS.length)) * NARROW_STEP) * 100) / 100;
   if (variant >= TAGGED) return fromStep(Math.floor((variant - TAGGED) / RARE));
   if (variant >= MEASURED) return fromStep(Math.floor((variant - MEASURED) / PLAIN_SPECIES));
   return 0.8 + 0.45 * (((variant >> 4) % 16) / 15);
@@ -72,7 +90,21 @@ export const measuredTreeVariant = (seed: number, height: number, species = seed
  * A tree's variant of the same size as `variant`, of `species`: the size as a step of `TREE_SCALE`
  * (each of the old spread of sizes is one), so a plain seed's bits of size need not survive.
  */
-export const withTreeSpecies = (variant: number, species: number): number => sized(species, stepOf(treeScale(variant)));
+export const withTreeSpecies = (variant: number, species: number): number => {
+  const v = sized(species, stepOf(treeScale(variant)));
+  return narrowTreeVariant(v, treeSpread(variant)) ?? v;
+};
+
+/**
+ * The variant of a tree of the species and (within a size step) the height of `variant`, its crown
+ * drawn at the widest of `TREE_SPREADS` no wider than `spread` of its species': `variant` itself
+ * for a spread of 1 or more, null under the narrowest.
+ */
+export const narrowTreeVariant = (variant: number, spread: number): number | null => {
+  if (spread >= 1) return variant;
+  const j = TREE_SPREADS.findIndex((w) => w <= spread + 1e-9);
+  return j < 0 ? null : NARROW + TREE_SPECIES * (TREE_SPREADS.length * stepOf(treeScale(variant), NARROW_STEP) + j) + treeSpecies(variant);
+};
 
 /** Height of a tree's crown top over its foot (m). */
 export const treeHeight = (variant: number): number => (TREE_TOP[treeSpecies(variant)] ?? TREE_TOP[0]!) * treeScale(variant);

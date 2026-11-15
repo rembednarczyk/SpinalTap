@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { PLAIN_SPECIES, TREE_KIND, TREE_SCALE, TREE_SPECIES, TREE_TOP, measuredTreeVariant, plainTreeVariant, treeHeight, treeScale, treeSpecies, withTreeSpecies } from "../src";
+import {
+  PLAIN_SPECIES,
+  TREE_KIND,
+  TREE_SCALE,
+  TREE_SPECIES,
+  TREE_SPREADS,
+  TREE_TOP,
+  measuredTreeVariant,
+  narrowTreeVariant,
+  plainTreeVariant,
+  treeHeight,
+  treeScale,
+  treeSpecies,
+  treeSpread,
+  withTreeSpecies,
+} from "../src";
 
 describe("tree sizes (G-422)", () => {
   it("keeps the old spread of a tree with no measured height", () => {
@@ -67,5 +82,37 @@ describe("tree species (G-423)", () => {
       expect(treeScale(measuredTreeVariant(0, 0.4, s))).toBe(TREE_SCALE.min);
       expect(measuredTreeVariant(0, 80, s)).toBeLessThanOrEqual(0xffff);
     }
+  });
+});
+
+describe("trees narrowed by walls (G-814)", () => {
+  it("keeps a tree's species and height, within a size step of two, at each spread, in 16 bits past every other variant", () => {
+    for (const seed of [0, 1, 2, 0x70, 0xf0, 62412, 0xffff])
+      for (let s = 0; s < TREE_SPECIES; s++)
+        for (const h of [0.4, 6, 12.7, 18.3, 21, 80]) {
+          const v = withTreeSpecies(measuredTreeVariant(seed, h), s);
+          for (const w of TREE_SPREADS) {
+            const n = narrowTreeVariant(v, w)!;
+            expect(n).toBeGreaterThan(measuredTreeVariant(0xffff, 80, TREE_KIND.poplar));
+            expect(n).toBeLessThanOrEqual(0xffff);
+            expect(treeSpecies(n)).toBe(s);
+            expect(treeSpread(n)).toBe(w);
+            expect(Math.abs(treeScale(n) - treeScale(v))).toBeLessThanOrEqual(TREE_SCALE.step + 1e-9);
+            expect(Math.abs(treeHeight(n) - treeHeight(v))).toBeLessThanOrEqual(TREE_TOP[s]! * TREE_SCALE.step + 1e-9);
+            // Another species keeps the narrowing; narrowing again changes nothing.
+            expect(treeSpread(withTreeSpecies(n, (s + 1) % TREE_SPECIES))).toBe(w);
+            expect(narrowTreeVariant(n, w)).toBe(n);
+          }
+        }
+  });
+
+  it("takes the widest spread no wider than asked, none under the narrowest, the tree itself at full width", () => {
+    const v = measuredTreeVariant(0x71, 15);
+    expect(treeSpread(v)).toBe(1);
+    expect(narrowTreeVariant(v, 1)).toBe(v);
+    expect(treeSpread(narrowTreeVariant(v, 0.6)!)).toBe(0.55);
+    expect(treeSpread(narrowTreeVariant(v, 0.35)!)).toBe(0.35);
+    expect(narrowTreeVariant(v, 0.3)).toBeNull();
+    expect(treeSpread(plainTreeVariant(0xffff))).toBe(1);
   });
 });

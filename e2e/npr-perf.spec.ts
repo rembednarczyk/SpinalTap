@@ -3,7 +3,7 @@ import { type Page, expect, test } from "@playwright/test";
 import { type Frame, freeze, gameState, perf, place, sampleNow, step, teleport, teleportTo, newGame, waitForGame, waitForPlay } from "./helpers";
 
 const budgets = JSON.parse(readFileSync("tools/perf-budgets.json", "utf8")) as {
-  scenes: Record<string, { drawCalls: number; activeMeshes: number }>;
+  scenes: Record<string, { drawCalls: number; activeMeshes: number; activeTriangles?: number }>;
 };
 
 /**
@@ -43,6 +43,8 @@ function within(scene: string, sample: Awaited<ReturnType<typeof perf>>) {
   const budget = budgets.scenes[scene]!;
   expect(sample.drawCalls).toBeLessThanOrEqual(budget.drawCalls);
   expect(sample.activeMeshes).toBeLessThanOrEqual(budget.activeMeshes);
+  // Pieces baked into one mesh (trees, bollards, chains) cost no draw call but triangles: a ceiling where the phone needs one.
+  if (budget.activeTriangles !== undefined) expect(sample.activeTriangles).toBeLessThanOrEqual(budget.activeTriangles);
 }
 
 /** A new game in TPP, the player put at a spot of Lublin (ADR-0045) and walked a little. */

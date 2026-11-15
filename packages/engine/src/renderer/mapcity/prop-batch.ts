@@ -2,7 +2,7 @@ import { DECAL_KINDS, type StreetPropItem, type StreetPropKind, type Vec3 } from
 import { type BollardChain, bollardChains } from "@seki/sim";
 import type { MeshSink } from "../mesh-sink";
 import type { PropLight } from "./prop-lamps";
-import { type CellBand, scaleOf, shapeOf, showsNear } from "./prop-shapes";
+import { type CellBand, scaleOf, shapeOf, showsNear, spreadOf } from "./prop-shapes";
 import { vertex } from "./sink-ops";
 
 /**
@@ -19,6 +19,8 @@ export interface WorldProp {
   readonly yaw: number;
   readonly shape: number;
   readonly scale: number;
+  /** Width over `scale`, across and along the piece: a tree narrowed by walls (G-814); 1 when absent. */
+  readonly spread?: number;
   /** A bollard's chains to the next post or lamp of its row (G-032). */
   readonly chains?: readonly BollardChain[];
   /** A road lamp drawn as a utility pole (ADR-0063, `utility-poles.ts`). */
@@ -40,6 +42,7 @@ export const toWorld = (items: readonly StreetPropItem[], at: Vec3): WorldProp[]
     yaw: i.yaw,
     shape: shapeOf(i.prop, i.variant),
     scale: scaleOf(i.prop, i.variant),
+    ...(spreadOf(i.prop, i.variant) < 1 ? { spread: spreadOf(i.prop, i.variant) } : {}),
     chains: bollardChains(i),
     ...(i.prop === "door" || i.prop === "figure" || i.prop === "barrier" || DECAL_KINDS.has(i.prop) ? { variant: i.variant } : {}),
   }));
@@ -49,11 +52,11 @@ export const groupKey = (kind: StreetPropKind, shape: number): string => `${kind
 
 /**
  * Writes the instance matrix of a piece at `o` (Babylon's row-vector layout): turned by yaw
- * about Y (+z towards +x), scaled, moved to its foot.
+ * about Y (+z towards +x), scaled (across by its spread too), moved to its foot.
  */
 export const writeMatrix = (out: Float32Array | number[], o: number, p: WorldProp): void => {
-  const c = Math.cos(p.yaw) * p.scale;
-  const s = Math.sin(p.yaw) * p.scale;
+  const c = Math.cos(p.yaw) * p.scale * (p.spread ?? 1);
+  const s = Math.sin(p.yaw) * p.scale * (p.spread ?? 1);
   const m = [c, 0, -s, 0, 0, p.scale, 0, 0, s, 0, c, 0, p.x, p.y, p.z, 1];
   for (let i = 0; i < 16; i++) out[o + i] = m[i]!;
 };
@@ -62,7 +65,8 @@ export const writeMatrix = (out: Float32Array | number[], o: number, p: WorldPro
 export const placePoint = (p: WorldProp, v: { x: number; y: number; z: number }): { x: number; y: number; z: number } => {
   const c = Math.cos(p.yaw);
   const s = Math.sin(p.yaw);
-  return { x: p.x + (v.x * c + v.z * s) * p.scale, y: p.y + v.y * p.scale, z: p.z + (-v.x * s + v.z * c) * p.scale };
+  const across = p.scale * (p.spread ?? 1);
+  return { x: p.x + (v.x * c + v.z * s) * across, y: p.y + v.y * p.scale, z: p.z + (-v.x * s + v.z * c) * across };
 };
 
 export interface CellPieces {
@@ -108,9 +112,11 @@ export const bake = (sink: MeshSink, model: MeshSink, p: WorldProp): void => {
   const s = Math.sin(p.yaw);
   for (let i = 0; i < model.vertexCount; i++) {
     const at = placePoint(p, { x: model.positions[i * 3]!, y: model.positions[i * 3 + 1]!, z: model.positions[i * 3 + 2]! });
-    const nx = model.normals[i * 3]!;
-    const nz = model.normals[i * 3 + 2]!;
-    const n = { x: nx * c + nz * s, y: model.normals[i * 3 + 1]!, z: -nx * s + nz * c };
+    // A narrowed piece's normals lean out by the inverse of its spread, as a squeezed surface's do.
+    const w = p.spread ?? 1;
+    const [nx, ny, nz] = [model.normals[i * 3]! / w, model.normals[i * 3 + 1]!, model.normals[i * 3 + 2]! / w];
+    const k = w === 1 ? 1 : 1 / Math.hypot(nx, ny, nz);
+    const n = { x: (nx * c + nz * s) * k, y: ny * k, z: (-nx * s + nz * c) * k };
     vertex(sink, at, n, [model.colors[i * 4]!, model.colors[i * 4 + 1]!, model.colors[i * 4 + 2]!, model.colors[i * 4 + 3]!]);
   }
   for (const i of model.indices) sink.indices.push(base + i);
