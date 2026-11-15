@@ -14,7 +14,7 @@ import { loadBuildingTags, loadNodeTags } from "../src/props-art.ts";
 import { furnitureBlock, groundY, lublinDecalWalls, poleLampAt, surfaceY } from "../src/decal-walls.ts";
 import { addDecals } from "../src/props-decals.ts";
 import type { Pt } from "../src/geometry.ts";
-import { type PropsPlan, generateProps } from "../src/props-gen.ts";
+import { type PropsPlan, generateProps, placeProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
 import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
@@ -81,7 +81,7 @@ describe("street furniture generator (ADR-0047)", () => {
     const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
     const market = { roads: loadCarriageways(), doors: gameDoors() };
     // With the `lit` rule's second pass (G-798) and the crowns' trees (G-797), as `pnpm osm:props` places them.
-    const place = (p: PropsPlan) => generateProps(p, CHUNKS, loadNodeTags(), lublinVenueBoards(), market);
+    const place = (p: PropsPlan) => placeProps(p, CHUNKS, loadNodeTags(), lublinVenueBoards(), market);
     const table = placeWithCrowns(PLAN, place, loadLitWays(), loadStreetWays(), new Site(CHUNKS), loadCrownData()).byChunk as Map<string, StreetPropItem[]>;
     // The doors on the facades (ADR-0058 stage 9) after the furniture, then the decals (stage 6), as `pnpm osm:props` adds them.
     addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors(), underground: loadUndergroundWays() });

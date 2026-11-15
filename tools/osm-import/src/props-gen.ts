@@ -5,6 +5,7 @@
  * scattered by a Halton sequence, and the groups without geometry (manholes, cabinets, name
  * plates, bins) follow the streets and benches of the chunks. `y` is the chunk's terrain.
  */
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { crossingBands } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
@@ -105,6 +106,15 @@ export type NodeTags = ReadonlyMap<string, Tags>;
 export interface PropsOut {
   readonly byChunk: ReadonlyMap<string, StreetPropItem[]>;
   readonly stats: PropsStats;
+}
+
+/**
+ * The furniture placed but its bollards not yet strung (`finish` strings them, once): a pass of
+ * the plan whose lamps or trees alone are read (`placeLit`, `placeWithCrowns`) needs no rows.
+ */
+export interface PropsDraft {
+  readonly byChunk: ReadonlyMap<string, readonly StreetPropItem[]>;
+  readonly finish: () => PropsOut;
 }
 
 const flat = (f: readonly number[]): Pt[] => {
@@ -402,7 +412,11 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
  * Every group of the plan as street furniture per chunk, with the control numbers; the wall lanterns
  * keep off the venues' `boards`, the market's furniture off the carriageways and the game's doors (`market`).
  */
-export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}): PropsOut => {
+export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}): PropsOut =>
+  placeProps(plan, chunks, tags, boards, market).finish();
+
+/** `generateProps` up to its rows of bollards, which `finish` strings. */
+export const placeProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}): PropsDraft => {
   const site = new Site(chunks);
   const skipped: Record<string, number> = {};
   const { placed, fromLine } = placeAll(site, plan, skipped, tags, boards, market);
@@ -410,7 +424,8 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   const byChunk = new Map<string, StreetPropItem[]>(chunks.map((c) => [c.id, []]));
   const perKind: Record<string, number> = {};
   const perDistrict: Record<string, number> = {};
-  const kept = new Map<StreetPropKind, Pt[]>();
+  // The pieces kept so far by kind, in grids: each next one is looked for near it, not in every one.
+  const kept = new Map<StreetPropKind, SpatialHash<Pt>>();
   const solids = new PropSolidIndex();
   const perItem: Record<string, [number, number]> = {};
   for (const item of plan.items) if (propOf(item.kind)) perItem[item.id] = [item.count ?? 0, 0];
@@ -484,9 +499,9 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       inBuilding++;
       continue;
     }
-    const same = kept.get(x.prop) ?? [];
+    const same = kept.get(x.prop) ?? new SpatialHash<Pt>(4);
     const gap = minGap(x.prop, fromLine.has(x));
-    if (same.some((q) => Math.hypot(q.x - x.p.x, q.z - x.p.z) < gap) || styledBy(x.prop, x.p)) {
+    if (same.queryRadius(x.p.x, x.p.z, gap).some((q) => Math.hypot(q.x - x.p.x, q.z - x.p.z) < gap) || styledBy(x.prop, x.p)) {
       merged++;
       continue;
     }
@@ -509,7 +524,7 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     }
     if (BASKET_LAMPS.has(x.prop)) lampAt.set(x.key, { x: item.x, z: item.z, deck: x.deck });
     if (x.prop === "market-stall") stallShift.set(x.key, { x: item.x - piece.p.x, z: item.z - piece.p.z });
-    same.push({ x: item.x, z: item.z });
+    same.insertPoint({ x: item.x, z: item.z }, item.x, item.z);
     kept.set(x.prop, same);
     solids.add(item);
     const list = byChunk.get(chunk.id)!;
@@ -520,7 +535,21 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     const from = x.from ?? "";
     perItem[from] = [perItem[from]?.[0] ?? 0, (perItem[from]?.[1] ?? 0) + 1];
   }
-  // Rows, chains and the zebras' mouths; a post with no room out of a mouth goes.
+  const stats = { perKind, perDistrict, skipped, outside, inBuilding, offRoad: moved, onRoad, merged, crowded, offBoard, onBoard, perItem };
+  let out: PropsOut | null = null;
+  return { byChunk, finish: () => (out ??= finishProps(site, plan, chunks, byChunk, bollards, stats)) };
+};
+
+/** The rows, chains and the zebras' mouths of the placed bollards; a post with no room out of a mouth goes. */
+const finishProps = (
+  site: Site,
+  plan: PropsPlan,
+  chunks: readonly LublinChunkData[],
+  byChunk: Map<string, StreetPropItem[]>,
+  bollards: readonly (BollardRef & { district: string; from: string })[],
+  stats: Omit<PropsStats, "mapped">,
+): PropsOut => {
+  const { perKind, perDistrict, perItem } = stats;
   const table = byChunk as Map<string, (StreetPropItem | undefined)[]>;
   for (const r of stringBollards(site, table, bollards, crossingBands(chunks))) {
     perKind.bollard = perKind.bollard! - 1;
@@ -530,5 +559,6 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   for (const [id, list] of table) byChunk.set(id, list.filter((i): i is StreetPropItem => i !== undefined));
   const mapped: Record<string, string> = {};
   for (const item of plan.items) if (MAPPED[item.kind]) mapped[item.kind] = MAPPED[item.kind]!.prop;
-  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad: moved, onRoad, merged, crowded, offBoard, onBoard, perItem } };
+  const { skipped, outside, inBuilding, offRoad, onRoad, merged, crowded, offBoard, onBoard } = stats;
+  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad, onRoad, merged, crowded, offBoard, onBoard, perItem } };
 };
