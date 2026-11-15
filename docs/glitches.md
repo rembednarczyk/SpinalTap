@@ -2020,6 +2020,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - 15.11: skew 19->5, overhang 26->9, glow 54->5, kerb 55->44; reszta: wyloty skrzyżowań, brzeg mapy, oś pasma vs ROAD_CHAINS; droga przejścia jako footway pod zebrą; zmieniony test G-811 (chodnik pod zebrą)
 - Przegląd kuratora 15.11 @ c52dde6: NIEZGODNE. P1 (2361,432) n4087364975 zebra obrócona o 35° (regresja), oś wzdłuż w406693442 N–S, ok. 10 m; P2 (927,468) w1054556913 zebra 6,5 m, asfalt gry dalej o 6,2/≥11,9 m, na ortofoto ok. 22 m (regresja); P3 (913,345) n4586176953 zebra ok. 50° skośnie, ma biec W–E przez w739432830, ok. 11 m. Reguła: zebra węzła na skrzyżowaniu wzdłuż drogi pieszej OSM przez węzeł; zasięg po asfalcie gry do krawężnika. Kontrole: crossing-off-path (baza 9), crossing-short-of-asphalt (baza 16). Klucz lamp-on-orto-carriageway (−128,−65) przyjąć z powodem: cień budynku na chodniku, krawężnik z ≈ −64,4. Runda 2.
 - 15.11 r2: P1–P3 poprawione; crossing-off-path 11->10, crossing-short-of-asphalt 16->8; zebry skrzyżowań wzdłuż ścieżki OSM (f4 12,5° od prostopadłej), zasięg po asfalcie gry z area:highway; P1 6,2 m (asfalt gry węższy), środek P3 3,6 m od punktu kuratora
+- Przegląd kuratora r2 (15.11, @48a15ce): NIEZGODNE. P1–P3 kierunek zgodny. Regresja f4 (621,−218) w305027462: 12,1° od prostopadłej do Podwala, na ortofoto zebra prostopadła (azymut ok. 152°). Oczekiwane: kąt gry 24 ± 5, środek ok. (620,6; −220,5); wyjątek wzdłuż ścieżki tylko dla węzłów, nie dla dróg footway=crossing; usunąć klucz skew (621,−218). Runda 3 nowym agentem.
 
 ### G-838 Szczelina 0,12 m między kwadratem reguły gołej ziemi a przesuniętą krawędzią Lwowskiej w139586648
 - Ważność: S4 · Zasięg: kerb-gap-bare podzamcze-2-1 1110,440
@@ -2161,6 +2162,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
 - kurator 15.11: wcięcie 0,33 m w krawędzi chodnika przy zebrze (1060,3–1060,8; 447,4–447,7) i odłamki sidewalk od G-825 r3 7bfd370; na main krawędź prosta; ortofoto 2025-04: krawężnik prosty
+
+### G-861 Kalinowszczyzna przy wylocie łącznicy w175886780 (2361,432): jezdnia gry ok. 3 m węższa niż na ortofoto
+- Ważność: S4 · Zasięg: nabrzeze-0-1, (2355..2368, 426..438)
+- Opis: Jezdnia w1551268848 i w139586650 na osi ścieżki w406693442 ma w grze ok. 6,8 m, a na ortofoto 2025-04 i 2024-06 ok. 9,5–10 m. Zebra n4087364975 kończy się na krawężniku gry: 6,8 m wobec ok. 9 m pasów (przegląd G-836 r2).
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
