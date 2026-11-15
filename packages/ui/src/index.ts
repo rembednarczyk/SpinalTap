@@ -1,5 +1,7 @@
 import "./styles.css";
 import "./wave2.css";
+import "./scale/layers.css";
+import "./scale/zones.css";
 
 export * from "./store/ui-store";
 export * from "./intents";

@@ -114,7 +114,7 @@ export const streetHalves = (bands: readonly Band[]): StreetHalves => {
     // A buffer of several rings is several bands of one piece: their widenings are the piece's.
     const piece = pieces.get(b.kerb.line) ?? { half: b.kerb.half, widen: new Map() };
     pieces.set(b.kerb.line, piece);
-    for (const r of b.widen ?? [])
+    for (const r of b.widenLanes ?? b.widen ?? [])
       r.outer.forEach((o, i) => {
         const at = r.inner[i]!;
         const list = piece.widen.get(cell(at.x, at.z)) ?? [];

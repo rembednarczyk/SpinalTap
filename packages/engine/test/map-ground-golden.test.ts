@@ -129,10 +129,11 @@ describe("the ground the map city lays (G-444)", () => {
     // A side left at the estimate widened to the paving again, the kerbs' strips laid from under the
     // asphalt, over seams under 0.1 m and up to a zebra past a measured kerb, the zebras across the
     // asphalt where it lies (G-811): 161 914 - 161 182 = 732 vertices more, the same meshes.
-    // The water field in the ground's third UV channel (ADR-0084 stage 1), hashed with the rest:
-    // no vertex moved, the same meshes and vertices. The setts marked in it (x = 17, ADR-0084 round 2):
-    // ca877e18 -> bb05e30c, no vertex moved.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161914, hash: "bb05e30c" });
+    // With the water field in uv3 (ADR-0084 stage 1, no vertex moved) the hash is that of both.
+    // The widened kerbs smooth (G-837): the asphalt's new edge simplified within 0.05 m before its
+    // rounding, and grown on in to the kerb where the gap to the paving closes under 1 m:
+    // 161 914 - 161 827 = 87 vertices fewer, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161827, hash: "23b182aa" });
     scene.dispose();
   });
 

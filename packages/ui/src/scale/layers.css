@@ -1,0 +1,50 @@
+/*
+ * Scaled layers (ADR-0085). Every overlay layer that scales with the interface (the HUD with its
+ * messages, the on-screen pad, the dialogue, the contract card) is a `.ui-layer`: it covers the
+ * screen at `--layer-scale`, shrunk by the same factor first, so it still covers the screen exactly
+ * and every piece keeps its distance to its own edge in the layer's px. The scales come from one
+ * place, `scale/use-ui-scale.ts`, as `--ui-scale` and the pad's `--ui-touch-*` on the document root.
+ *
+ * Inside a layer, screen units are the layer's: `100%` of the layer instead of `100vw`, and
+ * `--safe-top/right/bottom/left` instead of `env(safe-area-inset-*)`, which the scale would grow.
+ */
+.ui-layer {
+  --layer-scale: var(--ui-scale, 1);
+  --safe-top: calc(env(safe-area-inset-top, 0px) / var(--layer-scale));
+  --safe-right: calc(env(safe-area-inset-right, 0px) / var(--layer-scale));
+  --safe-bottom: calc(env(safe-area-inset-bottom, 0px) / var(--layer-scale));
+  --safe-left: calc(env(safe-area-inset-left, 0px) / var(--layer-scale));
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% / var(--layer-scale));
+  height: calc(100% / var(--layer-scale));
+  transform: scale(var(--layer-scale));
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+/* The pad's layer is laid out at its own scale, never under 1. Below 1 its groups pull toward their
+   corners of the screen (ADR-0085): the top row and the action cluster scale by `--touch-spread`
+   about their corners (inline, touch/touch-controls.tsx), and their buttons draw within that at
+   `--touch-look`, as large as the rest of the interface. The pull stops where two neighbours' 44 px
+   targets would meet; an unseen margin round each button keeps its target 44 px on screen. The
+   move hint scales about the screen's bottom left corner, and the stick's ring about the finger. */
+.ui-layer--touch {
+  --layer-scale: var(--ui-touch-scale, 1);
+  --touch-look: var(--ui-touch-look, 1);
+  --touch-spread: var(--ui-touch-spread, 1);
+}
+.ui-layer--touch .touch__btn { transform: scale(calc(var(--touch-look) / var(--touch-spread))); }
+.ui-layer--touch .touch__stick { transform: scale(var(--touch-look)); }
+.ui-layer--touch .touch__stick-hint { transform: scale(var(--touch-look)); transform-origin: 0 100%; }
+.ui-layer--touch .touch__btn::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, calc(44px / (var(--layer-scale) * var(--touch-look))));
+  height: max(100%, calc(44px / (var(--layer-scale) * var(--touch-look))));
+  border-radius: inherit;
+  transform: translate(-50%, -50%);
+}
