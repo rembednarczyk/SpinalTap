@@ -1932,6 +1932,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Na gałęzi ccr-ec2c4269-ilh8k8-adr80-pr10 (b17eb17) strona drogi zostawiona przy szacunku (reguły: ścieżka przed krawężnikiem, strona węższa niż least/2) nie dostaje kerbFills, więc między jezdnią a chodnikiem zostaje goły pas. Do tego lawn-on-leafoff-paving 94 → 105 (trawnik na pasie zwolnionym przez węższą jezdnię, Nabrzeże). Blokuje scalenie PR 10.
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import, tools/orto
+- Runda 3 (054a446): kerb-gap-bare +127 → +70 nowych (suma 810 → 671), kerb-fill-wide-estimated +12, lawn-on-leafoff-paving +17 bez zmian (to drobiny canopyHard przy krawężniku, nie pas po węższej jezdni). Skan nadal czerwony; decyzja o bazie u użytkownika.
 
 ### G-812 Przebieg uzupełniający lit wydłuża ciemny odcinek poza brzeg mapy i uznaje sąsiedni chodnik za oświetlony
 - Ważność: S4 · Zasięg: w185762620 / w232464409, 10 m przy (455..470; 150..160)
@@ -1998,6 +1999,24 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props-lit, props-gen)
 - Test przyjęcia: żadna latarnia lamp-road z gałęzi nie stoi w klasie asfalt/jezdnia ortofoto 2025-04 dalej niż 0,5 m od krawędzi; ziarna 5849, 32338, 55187 wracają na chodnik albo trawnik za krawężnikiem
 - Rejestr topografii: T-304.
+
+### G-822 Pasy ruchu rozłożone równo na zmierzoną szerokość razem z zatoką
+- Ważność: S4 · Zasięg: Lubartowska w230504488 na gałęzi ADR-0080 PR 10: 3 pasy po ok. 4,1 m w 12,5 m
+- Opis: Po pomiarze z ortofoto jezdnia ma 12,5 m (lewo 7,25, prawo 5,25); trzy pasy dzielą równo całą szerokość razem z zatoką lub parkowaniem, linie stoją 4,4 m od siebie zamiast 3,5 m.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import, packages/sim
+
+### G-823 Zebry z węzłów: 132 na gałęzi PR 10 wobec 136 na main
+- Ważność: S4 · Zasięg: 4 zebry z węzłów OSM znikają na gałęzi ADR-0080 PR 10
+- Opis: crossingBand kładzie zebrę od stopy węzła na przesuniętej jezdni (054a446), ale 4 nadal brakuje wobec main.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import
+
+### G-824 Komórka canopyHard przy krawężniku dołączana do trawnika (lawn-on-leafoff-paving)
+- Ważność: S4 · Zasięg: 17 próbek 0,1–0,55 m od krawędzi jezdni, m.in. Rondo Cybulskiego, Mełgiewska
+- Opis: Drobiny poniżej 8 komórek klasy canopyHard przy krawężniku (prawdopodobnie sam krawężnik) joinSpecks dołącza do trawnika; potrzebny krawężnik między asfaltem a pasem zieleni zamiast zgadywania klasy.
+- Status: zgłoszone
+- Pakiet właściciela: tools/orto, tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
