@@ -113,7 +113,7 @@ describe("Nowy Ratusz from the landmark kit (G-119)", () => {
     expect(colored(near3(f), SWATCH.tablet)).toHaveLength(4);
   });
 
-  it("gives the tower its clocks towards the plaza and the yards, a copper storey and the helmet up to the data's peak", () => {
+  it("gives the tower its clocks towards the plaza and the yards, a copper storey and a helmet 5 m tall", () => {
     const f = frameOf(TOWER) as LandmarkFrame;
     const d = data(TOWER);
     const { neon, old } = clockWalls(f);
@@ -121,7 +121,13 @@ describe("Nowy Ratusz from the landmark kit (G-119)", () => {
     expect(old!.nz).toBeGreaterThan(0.9);
     const sink = near3(f);
     expect(colored(sink, SWATCH.patina).length).toBeGreaterThan(20);
-    const peak = d.y + d.height + d.roof!;
+    // The data's walls; the helmet 5 m over them, not the importer's 3 m default (no roof:height in OSM).
+    expect(d.roof).toBe(3);
+    expect(f.top).toBeCloseTo(d.y + d.height, 6);
+    const peak = d.y + d.height + 5;
     expect(Math.max(...points(sink).map((p) => p.y))).toBeCloseTo(peak, 1);
+    // The bell shows over the cornice from the plaza: over 2 m of it at more than half the tower's radius.
+    const bell = colored(sink, SWATCH.patina).filter((p) => p.y > f.top + 2 && Math.hypot(p.x - 415, p.z + 79.3) > 1.1);
+    expect(bell.length).toBeGreaterThan(0);
   });
 });

@@ -41,12 +41,14 @@ export const landmarkFrame = (f: FacadeFrame, landmark: LandmarkPart): LandmarkF
   const t = landmark.part.tier;
   const c = landmark.part.crown;
   const roof = f.b.roof ?? 0;
-  const lift = c.kind === "helm" && roof > c.height ? roof - c.height : 0;
+  const lift = c.kind === "helm" && !c.overGuess && roof > c.height ? roof - c.height : 0;
   // A recipe's roof no higher than its `rise` (G-117): the walls stay the data's.
   const cap = c.kind === "roof" && c.rise !== undefined && roof > c.rise ? roof - c.rise : 0;
+  // A helmet over a guessed roof: its own height over the data's walls.
+  const helm = c.kind === "helm" && c.overGuess ? c.height : null;
   return {
     ...f,
-    b: lift + cap > 0 ? { ...f.b, roof: roof - lift - cap } : f.b,
+    b: helm !== null ? { ...f.b, roof: helm } : lift + cap > 0 ? { ...f.b, roof: roof - lift - cap } : f.b,
     landmark,
     style: { ...f.style, plaster: wallOf(t), trim: trimOf(t), plinth: SWATCH.stone, window: WINDOW_STYLE.none, shopfront: false, attic: "none", atticHeight: 0, cornice: false, stringCourse: false, roof: c.kind === "roof" ? f.style.roof : "flat", tower: false, freeTower: false, neonTrim: null, signs: 0 },
     walls: f.walls.map((w) => ({ ...w, bay: 0 })),

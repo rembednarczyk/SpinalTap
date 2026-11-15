@@ -25,13 +25,15 @@ export interface BlindRow {
  * standing on it (`rise` metres, never more than the data's roof), or a helmet of revolution
  * `height` metres tall up to the data's peak: the rest of the data's roof under it is wall. `roof`
  * is the data's own roof in the shape it gives (`roof:shape`, ADR-0064) and its height, in tiles;
- * with `rise`, no higher than that (the importer's guessed height buried a part, G-117).
+ * with `rise`, no higher than that (the importer's guessed height buried a part, G-117). A helmet
+ * `overGuess` stands its full `height` over a roof the importer guessed (no `roof:height` in OSM):
+ * the photograph's helmet, not the default, sets the peak.
  */
 export type Crown =
   | { readonly kind: "flat" }
   | { readonly kind: "crenel"; readonly merlon: number; readonly pitch: number }
   | { readonly kind: "skirt"; readonly rise: number; readonly inset: number }
-  | { readonly kind: "helm"; readonly height: number; readonly profile: HelmProfile }
+  | { readonly kind: "helm"; readonly height: number; readonly profile: HelmProfile; readonly overGuess?: true }
   | { readonly kind: "roof"; readonly rise?: number };
 
 /**
@@ -294,7 +296,10 @@ const NOWY_RATUSZ: LandmarkRecipe = {
       tier: { material: "plaster", colour: "sand", upper: "patina", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: false, openings: true, clock: true, split: 2.2 },
       crown: {
         kind: "helm",
-        height: 3,
+        // OSM has no roof:height for the tower (the importer's 3 m default); on the photograph the
+        // helmet with its lantern and spire is about twice the copper storey's 2.5 m.
+        height: 5,
+        overGuess: true,
         profile: {
           // A tall bell, near two thirds of the helmet (Street View 2025), the lantern and a small onion over it.
           // Upright at its foot, so the bell shows over the cornice from the plaza below.
