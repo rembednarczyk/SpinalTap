@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TREE_KIND, TREE_SPECIES, measuredTreeVariant, treeScale as coreTreeScale, withTreeSpecies } from "@seki/core";
+import { TREE_KIND, TREE_SPECIES, TREE_SPREADS, measuredTreeVariant, narrowTreeVariant, treeScale as coreTreeScale, treeSpread, withTreeSpecies } from "@seki/core";
 import { furnitureRadius, treeScale } from "../src/content/lublin/furniture";
 
 describe("tree trunks (G-422)", () => {
@@ -31,5 +31,19 @@ describe("tree trunks (G-422)", () => {
   it("give a tall measured tree a thicker trunk", () => {
     const at = (variant: number) => furnitureRadius({ prop: "tree", x: 0, y: 0, z: 0, yaw: 0, variant });
     expect(at(measuredTreeVariant(0, 20))).toBeGreaterThan(at(0xf0));
+  });
+
+  it("size a tree narrowed by walls as the core's layout does, its trunk as narrow as the renderer draws it (G-814)", () => {
+    const at = (variant: number) => furnitureRadius({ prop: "tree", x: 0, y: 0, z: 0, yaw: 0, variant });
+    for (const seed of [0, 1, 2, 0x70, 4097])
+      for (let s = 0; s < TREE_SPECIES; s++)
+        for (const h of [0.4, 6, 12.7, 20, 40])
+          for (const w of TREE_SPREADS) {
+            const wide = withTreeSpecies(measuredTreeVariant(seed, h), s);
+            const v = narrowTreeVariant(wide, w)!;
+            expect(treeScale(v)).toBe(coreTreeScale(v));
+            expect(treeSpread(v)).toBe(w);
+            expect(at(v)).toBeCloseTo(at(wide) * w, 1);
+          }
   });
 });
