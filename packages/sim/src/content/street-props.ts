@@ -3,7 +3,7 @@ import type { ActorDef, Rect, StaticProp } from "./builders";
 import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_ACTORS, KANAL_PROPS } from "./district-kanal";
 import { ALCHEMIA_MARKET_ACTORS, ALCHEMIA_MARKET_PROPS } from "./alchemia/market";
-import { DOKI_QUAY_ACTORS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_PROPS } from "./district-doki";
+import { W3_ACTORS, W3_PROPS } from "./tessen-w3";
 import { METRO_FOOTPRINTS } from "./metro";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { inBuilding } from "./lublin/places";
@@ -21,8 +21,8 @@ import { DRINKER_SITES, drinkerWay } from "./contract-plans";
 const distanceToRect = (x: number, z: number, r: Rect): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
 
 /** What the game adds to the map, in the order its entity ids are reserved. */
-export const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...ALCHEMIA_MARKET_PROPS, ...DOKI_YARD_PROPS, ...DOKI_QUAY_PROPS];
-export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...ALCHEMIA_MARKET_ACTORS, ...DOKI_YARD_ACTORS, ...DOKI_QUAY_ACTORS];
+export const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...ALCHEMIA_MARKET_PROPS, ...W3_PROPS];
+export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...ALCHEMIA_MARKET_ACTORS, ...W3_ACTORS];
 
 /** A set piece's or a game block's clearance from the map's furniture (m). */
 const FURNITURE_CLEARANCE = 1.2;

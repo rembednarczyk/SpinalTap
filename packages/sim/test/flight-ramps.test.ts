@@ -5,12 +5,12 @@ import { underDecks } from "../src/content/lublin/abutments";
 import { inBuilding } from "../src/content/lublin/places";
 import { stitchSeams } from "../src/content/lublin/seams";
 import { FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS } from "../src/content/lublin/sites";
-import { SHAPED_TERRAIN, WAY_RAMPS } from "../src/content/lublin/terrain";
+import { SHAPED_TERRAIN, WAY_RAMPS, w3Grid } from "../src/content/lublin/terrain";
 import { shapeWays, waySegments } from "../src/content/lublin/steep-ways";
 import type { LublinChunkData, LublinFlightData } from "../src/content/lublin/types";
 
 /** The chunks' terrain after the flights' ramps, before the ground is kept under the decks (`terrain.ts`). */
-const FLIGHTS_SHAPED = new Map(MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(shapeGrid(c.terrain, PADS, RAMPS), FLIGHT_RAMPS), [], FLIGHT_RAMPS)]));
+const FLIGHTS_SHAPED = new Map(MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(shapeGrid(w3Grid(c.terrain), PADS, RAMPS), FLIGHT_RAMPS), [], FLIGHT_RAMPS)]));
 
 /**
  * Flights of steps against their map `incline` (G-236): where the terrain falls from a flight's
@@ -111,7 +111,7 @@ describe("flights' ramps in the city (G-236)", () => {
       });
     let worst = 0;
     for (const c of MAP_CHUNKS) {
-      const before = shapeGrid(c.terrain, PADS, RAMPS);
+      const before = shapeGrid(w3Grid(c.terrain), PADS, RAMPS);
       const after = FLIGHTS_SHAPED.get(c.id)!;
       for (let x = c.bounds.minX; x <= c.bounds.maxX; x += 0.5) {
         for (let z = c.bounds.minZ; z <= c.bounds.maxZ; z += 0.5) {

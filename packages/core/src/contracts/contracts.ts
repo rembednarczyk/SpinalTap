@@ -259,8 +259,11 @@ export const generateContractOfKind = (kind: ContractKind, ctx: ContractContext,
   }
 };
 
-/** The kinds the docks giver hands out, in the order his dialogue offers them. */
-export const DOCKS_CONTRACT_KINDS: readonly ContractKind[] = ["escort", "infiltrate", "hack"];
+/**
+ * The kinds the docks giver hands out, in the order his dialogue offers them. The escort is
+ * retired with the docks' container yard (ADR-0082): it comes back with the boats.
+ */
+export const DOCKS_CONTRACT_KINDS: readonly ContractKind[] = ["infiltrate", "hack"];
 
 /**
  * Whole seconds left (never negative): until a delivery deadline, or of a running hack's

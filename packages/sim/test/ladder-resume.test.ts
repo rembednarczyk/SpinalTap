@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Vec3 } from "@seki/core";
-import { Simulation, docks } from "../src";
+import { Simulation, ground } from "../src";
 import { market, oldMarketFloor, oldMarketFloorOf } from "./fixtures/old-market";
 import type { LadderDef } from "../src/world/components";
 import { collect, input, run, teleportPlayer } from "./helpers";
@@ -10,8 +10,7 @@ const LADDERS: readonly { readonly key: string; readonly near: Vec3 }[] = [
   { key: "targ-escape-1", near: market(72, 4.5, 64.65) },
   { key: "targ-escape-2", near: market(69.2, 4.5, 64.6) },
   { key: "targ-escape-3", near: market(80, 4.5, 62) },
-  { key: "doki-stack-1", near: docks(3, 0, 98) },
-  { key: "doki-stack-2", near: docks(4, 0, 98) },
+  { key: "w3-pipe", near: ground(2444, 440.6) },
 ];
 
 /** Where a grab from the top puts her on the rungs, below the top (as `TOP_GRAB_DROP`). */

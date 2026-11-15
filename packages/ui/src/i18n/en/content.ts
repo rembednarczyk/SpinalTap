@@ -71,10 +71,10 @@ export const enContent = {
   "hook.protect_2": "From the roof terrace you can see the whole path along the stalls",
   "hook.escort_1": "The ambush waits by the office, not on the pier",
   "hook.escort_2": "The square's east alley is unmanned from 1:00 to 3:00",
-  "hook.infiltrate_1": "Code for the office side door: 4177 (the camera takes you for staff)",
+  "hook.infiltrate_1": "Code for the pass office door: 4177 (the camera takes you for staff)",
   "hook.infiltrate_2": "The guard at the office door goes out for a smoke every half hour",
   "hook.hack_1": "After its third shot the sniper has four seconds without a laser",
-  "hook.hack_2": "Under the crane's jib the sniper can't see you",
+  "hook.hack_2": "Under the tower's stair the sniper on the roof can't see you",
   // What the scanner calls a thing (ScanFocusChanged.name).
   "scan.name.camera": "Camera",
   "scan.name.vending": "Vending machine",
