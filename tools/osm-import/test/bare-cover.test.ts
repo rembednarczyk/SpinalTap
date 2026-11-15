@@ -117,14 +117,20 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
     // its west end, light paving south of it and in the yard.
     const street = piece("square", box(0, 8, 20, 12));
     const walls = [box(0, 15, 20, 20), box(0, 3, 20, 5)];
-    const at = (x: number, z: number) => (z > 12 && z < 15 ? (x < 4 ? COVER.green : COVER.asphalt) : COVER.paving);
+    const at = (x: number, z: number) => (z > 12 && z < 15 ? (x < 4 || (x > 7 && x < 8.5 && z > 12.5 && z < 14) ? COVER.green : COVER.asphalt) : COVER.paving);
     const line = (highway: string, z: number) => ({ id: "w1", osmId: 1, tags: { highway }, line: [{ x: -5, z }, { x: 25, z }] });
     const fronts = frontages([line("pedestrian", 10)]);
     const fills = coverFills(RECT, cover(at), [street], walls, { areas: [], stops: [], shops: [], fronts });
     expect(surfaceAt(fills, { x: 10.25, z: 13.75 })).toEqual(["square"]);
     expect(surfaceAt(fills, { x: 2.25, z: 13.75 })).toEqual(["grass"]);
+    // A speck of green the cover alone shows in it, 2.25 m²: the setts' patina, paved (G-775).
+    expect(surfaceAt(fills, { x: 7.75, z: 13.25 })).toEqual(["square"]);
     expect(surfaceAt(fills, { x: 10.25, z: 6.25 })).toEqual(["square"]);
     expect(surfaceAt(fills, { x: 10.25, z: 1.75 }), "the yard behind the wall").toEqual([]);
+    // A lawn of the map in the frontage, drawn or not, is no frontage: nothing paved over it.
+    const lawned = coverFills(RECT, cover(at), [street], walls, { areas: [], stops: [], shops: [], fronts, greens: [box(12, 12.5, 16, 15)] });
+    expect(surfaceAt(lawned, { x: 14.25, z: 13.75 })).toEqual([]);
+    expect(surfaceAt(lawned, { x: 10.25, z: 13.75 })).toEqual(["square"]);
     // No frontage: the strips by the walls are loose regions, the asphalt bare.
     const none = coverFills(RECT, cover(at), [street], walls);
     for (const z of [13.75, 6.25]) expect(surfaceAt(none, { x: 10.25, z }), `${z}`).toEqual([]);

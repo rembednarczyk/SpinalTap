@@ -35,7 +35,7 @@ const PACKED = Int32Array.from({ length: 8 }, (_, l) => (l === LABEL.grass ? 1 :
  * where its rows j - r and j + r + 1 (within the raster) begin in it.
  */
 const mixedRow = (cells: Cells, t: Int32Array, j: number, r: number, lo: number, hi: number): void => {
-  const { nx, label, front } = cells;
+  const { nx, label } = cells;
   const o = j * nx;
   for (let i = 0; i < nx; i++) {
     const l = label[o + i]!;
@@ -47,15 +47,16 @@ const mixedRow = (cells: Cells, t: Int32Array, j: number, r: number, lo: number,
     const s = (c >> 10) & 1023;
     const q = (c >> 20) & 1023;
     // Ties and none round it stay bare. A crown over lawn or paving takes a lawn (a tree's bed: paving
-    // under it would be a guess, T-285), and stays bare over asphalt; in a pedestrian street's
-    // frontage the street's paving runs on under it (`bare-fronts.ts`, G-853).
-    label[o + i] = l === LABEL.crown ? (front[o + i] ? LABEL.square : g > q || s > q ? LABEL.grass : LABEL.other) : g > s && g > q ? LABEL.grass : s > g && s > q ? LABEL.square : LABEL.other;
+    // under it would be a guess, T-285), and stays bare over asphalt.
+    label[o + i] = l === LABEL.crown ? (g > q || s > q ? LABEL.grass : LABEL.other) : g > s && g > q ? LABEL.grass : s > g && s > q ? LABEL.square : LABEL.other;
   }
 };
 
 /** What `coverRow` reads a row from: `base` the row's start in the raster's classes (`cls`), -1 off it. */
 interface CoverRow {
   readonly label: Uint8Array;
+  /** A pedestrian street's frontage (`bare-fronts.ts`): what the cover shows as neither a lawn nor paving is read as paving, its lawns' rims (2) as a lawn. */
+  readonly front: Uint8Array;
   readonly nx: number;
   readonly cols: Int32Array;
   readonly labels: Uint8Array;
@@ -71,14 +72,20 @@ interface CoverRow {
  * over the whole raster is compiled anew in each call.
  */
 const coverRow = (r: CoverRow, j: number, up: number, here: number): void => {
-  const { label, nx, cols, labels, cls, base, none, t } = r;
+  const { label, front, nx, cols, labels, cls, base, none, t } = r;
   const o = j * nx;
   let run = 0;
   for (let i = 0; i < nx; i++) {
     let l = label[o + i]!;
     if (!taken(l)) {
       const col = cols[i]!;
-      label[o + i] = l = labels[base < 0 || col < 0 ? none : cls[base + col]!]!;
+      l = labels[base < 0 || col < 0 ? none : cls[base + col]!]!;
+      // Asphalt, a dark sett, no class: a walker's street is paved to its walls (G-853). Beside a lawn
+      // of the map its rim is lawn, but where the cover shows paving it stays bare: neither paving over
+      // the lawn's outline (T-199) nor a lawn on the photograph's setts (G-775).
+      if (front[o + i] === 2) l = l === LABEL.square ? LABEL.other : LABEL.grass;
+      else if (l === LABEL.other && front[o + i]) l = LABEL.square;
+      label[o + i] = l;
     }
     run = (run + PACKED[l]!) | 0;
     t[here + i] = (run + t[up + i]!) | 0;
@@ -107,7 +114,7 @@ export const readCover = (cells: Cells, cover: Cover, around: number): void => {
   const mixed = (j: number) => mixedRow(cells, t, j, around, at(Math.max(0, j - around)), at(Math.min(nz, j + around + 1)));
   // Row 0 and column 0 count nothing; the rest is written below.
   t.fill(0, 0, nx + 1);
-  const read: CoverRow = { label, nx, cols, labels, cls, base: -1, none: COVER.none, t };
+  const read: CoverRow = { label, front: cells.front, nx, cols, labels, cls, base: -1, none: COVER.none, t };
   for (let j = 0; j < nz; j++) {
     const row = Math.floor((h.z1 - (cells.rect.minZ + (j + 0.5) * STEP)) / h.step);
     read.base = row < 0 || row >= h.height ? -1 : row * width;

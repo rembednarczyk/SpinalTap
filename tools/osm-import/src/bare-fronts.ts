@@ -4,14 +4,15 @@
  * Krakowskie Przedmieście) and stops short of the tenements, and the strip left between is too
  * narrow for the compact regions' rule (`FILL.looseWidth`): it stayed bare in the terrain's
  * colour. Within a pedestrian street's frontage everything is laid, as in a town's paved place,
- * and what the cover shows as neither a lawn nor paving (asphalt, shade, a dark sett, a crown over
- * them, `mixedRow`) is paved as the street is: a walker's street has no carriageway to keep bare
- * (`keepKerbs`), and its trees stand in its paving.
+ * and what the cover shows as neither a lawn nor paving (asphalt, a dark sett, no class) is read
+ * as paving (`coverRow`): a walker's street has no carriageway to keep bare (`keepKerbs`). Crowns
+ * and shade take the class round them as anywhere (`mixedRow`). Not a frontage: what lies behind
+ * a wall (a yard, `inSight`) and the map's lawns, beds and water, drawn or not (`greens`).
  *
  * The streets are the pedestrian ways and living streets; inside the Old Town's walls the
  * residential streets too, cobbled and walked as the rest of it (`OLD_TOWN_RING`).
  */
-import { type Cells, LABEL as CELL_LABEL, STEP as CELL_STEP } from "./bare-cells.ts";
+import { type Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch } from "./bare-cells.ts";
 import { type Line } from "./features.ts";
 import { type Pt, pointInRing } from "./geometry.ts";
 import { OLD_TOWN_RING } from "./old-town.ts";
@@ -24,17 +25,19 @@ export interface Frontage {
 
 /**
  * How far off the axis a frontage reaches (m), as `frontage-bare` counts it: a pedestrian way or a
- * living street 8 m, a residential street of the Old Town 6 m (its lanes are narrower).
+ * living street 8 m, a residential street of the Old Town 6 m (its lanes are narrower); `strip`
+ * the widest strip the reach's edge leaves that joins the frontage (`joinLoose`); `lawn` the least
+ * m² of a lawn the cover alone lays in it (`paveSpecks`).
  */
-export const FRONT = { pedestrian: 8, oldTown: 6 } as const;
+export const FRONT = { pedestrian: 8, oldTown: 6, strip: 3, lawn: 10 } as const;
 
 // Module-local copies of what the cell loops read: Vitest's module runner reads an imported
 // binding through a getter of the module's namespace, at each cell.
-const OTHER = CELL_LABEL.other;
 const COVERED = CELL_LABEL.covered;
 const BLOCKED = CELL_LABEL.blocked;
-const STEP = CELL_STEP;
+const GRASS = CELL_LABEL.grass;
 const SQUARE = CELL_LABEL.square;
+const STEP = CELL_STEP;
 
 const WALKED: ReadonlySet<string> = new Set(["pedestrian", "living_street"]);
 
@@ -100,19 +103,19 @@ const frontNear = (cells: Cells, a: Pt, b: Pt, d: number): void => {
 };
 
 /**
- * The free cells next to a frontage that its reach leaves loose (`dropLoose`: under `width` m wide
- * on the average or under `area` m²) join it: the reach's edge would otherwise cut a strip by a
+ * The free cells next to a frontage that its reach leaves as a strip (under `width` m wide on the
+ * average) or a speck (under `area` m²) join it: the reach's edge would otherwise cut a strip by a
  * wall or a pavement out of the ground before it (a notch, a corner the axis does not see square
  * on, the last metre to the next piece), a strip `ground-strip-gap` or `kerb-gap-bare` counts. A
- * compact region past the reach (a yard, a car park) stays as the rest of the rule leaves it.
- * Each 4-connected region of free cells off the frontage is walked once.
+ * wider region past the reach (a yard, a car park) stays as the rest of the rule leaves it. Each
+ * 4-connected region of free cells off the frontage and the map's lawns (`green`) is walked once.
  */
-const joinLoose = (cells: Cells, width: number, area: number): void => {
+const joinLoose = (cells: Cells, green: Uint8Array, width: number, area: number): void => {
   const { nx, label, front } = cells;
   const size = label.length;
-  const free = (k: number) => label[k] !== COVERED && label[k] !== BLOCKED && !front[k];
-  const seen = new Uint8Array(size);
-  const queue = new Int32Array(size);
+  const free = (k: number) => label[k] !== COVERED && label[k] !== BLOCKED && !front[k] && !green[k];
+  const seen = scratch.u8("fronts.seen", size);
+  const queue = scratch.i32("fronts.queue", size, null);
   for (let s = 0; s < size; s++) {
     if (seen[s] || !free(s)) continue;
     let [n, edges, touches] = [0, 0, false];
@@ -140,20 +143,73 @@ const joinLoose = (cells: Cells, width: number, area: number): void => {
 };
 
 /**
- * Marks the cells of the frontages (`margin` past their reach, as a town's paved place grows, and
- * the loose regions they leave, `joinLoose`) a frontage and a paved place: the walls and pieces
- * must be covered (`Cells.cover`) first.
+ * The frontage's cells beside a lawn of the map (`green`) become a rim of the lawn (`front` 2,
+ * read as a lawn by `coverRow`, or left bare where the cover shows paving): a fill is traced half
+ * a cell past its last cell (`tileRings`) and cut by the lawn's piece as drawn, rounded to 0.1 m,
+ * so paving beside a lawn would lap over its mapped outline in slivers along it (T-199: no paving
+ * over the lawns along a pedestrian way).
  */
-export const zoneFronts = (cells: Cells, fronts: readonly Frontage[], margin: number, loose: { readonly width: number; readonly area: number }): void => {
+const rimLawns = (cells: Cells, green: Uint8Array): void => {
+  const { nx, nz, front } = cells;
+  for (let j = 0; j < nz; j++)
+    for (let i = 0; i < nx; i++) {
+      const k = j * nx + i;
+      if (front[k] !== 1) continue;
+      let by = false;
+      for (let jj = Math.max(0, j - 1); jj <= Math.min(nz - 1, j + 1) && !by; jj++) for (let ii = Math.max(0, i - 1); ii <= Math.min(nx - 1, i + 1) && !by; ii++) by = green[jj * nx + ii] === 1;
+      if (by) front[k] = 2;
+    }
+};
+
+/**
+ * Marks the cells of the frontages (`margin` past their reach, as a town's paved place grows, and
+ * the strips they leave, `joinLoose`) a frontage and a paved place, but in the map's lawns, beds
+ * and water (`greens`), and a rim of lawn beside them (`rimLawns`): the walls and pieces must be
+ * covered (`Cells.cover`) first.
+ */
+export const zoneFronts = (cells: Cells, fronts: readonly Frontage[], greens: readonly (readonly Pt[])[], margin: number, specks: number): void => {
   if (fronts.length === 0) return;
-  for (const { line, reach } of fronts) for (let k = 0; k + 1 < line.length; k++) frontNear(cells, line[k]!, line[k + 1]!, reach + margin);
-  joinLoose(cells, loose.width, loose.area);
   const { zone, front } = cells;
+  const green = scratch.u8("fronts.green", front.length);
+  for (const g of greens) cells.mark(g, green);
+  for (const { line, reach } of fronts) for (let k = 0; k + 1 < line.length; k++) frontNear(cells, line[k]!, line[k + 1]!, reach + margin);
+  for (let k = 0; k < front.length; k++) if (green[k]) front[k] = 0;
+  joinLoose(cells, green, FRONT.strip, specks);
+  rimLawns(cells, green);
   for (let k = 0; k < front.length; k++) if (front[k]) zone[k] = 1;
 };
 
-/** A frontage's free cells the cover gives no lawn or paving are paved as the street (`zoneFronts` marked them). */
-export const paveFronts = (cells: Cells): void => {
-  const { label, front } = cells;
-  for (let k = 0; k < label.length; k++) if (front[k] && label[k] === OTHER) label[k] = SQUARE;
+/**
+ * A lawn of the cover alone in a frontage (no lawn of the map's beside it) under `FRONT.lawn` m² is
+ * paved as the street: the setts' patina and their shade the leaf-off flight shows green (G-775,
+ * `grass-on-light-paving`), not a bed; the map's lawns and the crowns' beds are larger.
+ */
+export const paveSpecks = (cells: Cells): void => {
+  const { nx, label, front } = cells;
+  const size = label.length;
+  const lawn = (k: number) => front[k] === 1 && label[k] === GRASS;
+  const seen = scratch.u8("fronts.seen", size);
+  const queue = scratch.i32("fronts.queue", size, null);
+  const most = FRONT.lawn / (STEP * STEP);
+  for (let s = 0; s < size; s++) {
+    if (seen[s] || !lawn(s)) continue;
+    let [n, beside] = [0, false];
+    queue[n++] = s;
+    seen[s] = 1;
+    for (let q = 0; q < n; q++) {
+      const k = queue[q]!;
+      const i = k % nx;
+      for (let d = 0; d < 4; d++) {
+        const m = d === 0 ? (i + 1 < nx ? k + 1 : -1) : d === 1 ? (i > 0 ? k - 1 : -1) : d === 2 ? (k + nx < size ? k + nx : -1) : k - nx;
+        if (m < 0) continue;
+        if (lawn(m)) {
+          if (!seen[m]) {
+            seen[m] = 1;
+            queue[n++] = m;
+          }
+        } else if (label[m] === GRASS) beside = true;
+      }
+    }
+    if (!beside && n < most) for (let q = 0; q < n; q++) label[queue[q]!] = SQUARE;
+  }
 };

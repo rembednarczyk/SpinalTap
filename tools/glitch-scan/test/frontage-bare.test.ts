@@ -74,6 +74,6 @@ describe("bare terrain before a pedestrian street's walls (frontage-bare, G-855)
     // A spot is the middle of a strip measured within 10 m of the axes: the squares round it, too.
     const near = ([x, z]: readonly [number, number]) =>
       [-10, 0, 10].flatMap((dx) => [-10, 0, 10].map((dz) => `${Math.floor((x + dx) / 10) * 10},${Math.floor((z + dz) / 10) * 10}`)).filter((k) => found.has(k));
-    expect(spots.map((s) => [s, near(s)]).filter(([, n]) => n.length > 0)).toEqual([]);
+    expect(spots.map((s) => ({ spot: s, squares: near(s) })).filter((s) => s.squares.length > 0)).toEqual([]);
   });
 });

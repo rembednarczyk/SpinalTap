@@ -46,7 +46,7 @@ export class Cells {
   readonly label: Uint8Array;
   /** 1 in a town's paved place (`bare-cover.ts`, `TownPlaces`). */
   readonly zone: Uint8Array;
-  /** 1 in a pedestrian street's frontage (`bare-fronts.ts`): paved where the cover gives no lawn or paving. */
+  /** 1 in a pedestrian street's frontage (`bare-fronts.ts`): paved where the cover gives no lawn or paving; 2 on a lawn's rim in it. */
   readonly front: Uint8Array;
   /** 1 under a building's walls (`cover`'s `wall`): a frontage ends at them. */
   readonly wall: Uint8Array;
@@ -109,6 +109,11 @@ export class Cells {
   zoneIn(ring: readonly Pt[]): void {
     const runs = this.scan(ring);
     for (let k = 0; k < runs; k++) this.zone.fill(1, this.runs[2 * k]!, this.runs[2 * k + 1]!);
+  }
+  /** Sets `to` to 1 in the cells whose centres lie in the ring. */
+  mark(ring: readonly Pt[], to: Uint8Array): void {
+    const runs = this.scan(ring);
+    for (let k = 0; k < runs; k++) to.fill(1, this.runs[2 * k]!, this.runs[2 * k + 1]!);
   }
   /** Marks the cells within `d` of the ring (a point is a ring of one), or in it, part of a town's paved place. */
   zoneNear(ring: readonly Pt[], d: number): void {
