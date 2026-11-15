@@ -483,7 +483,9 @@ export class Loadouts {
     for (const mesh of m.model.meshes) {
       const src = toonSourceOf(mesh);
       const slot = src?.source.garment;
-      const key = slot && TINTED.includes(slot) ? s.look.garments[slot]?.tint : undefined;
+      // A skinned garment (ADR-0086) takes its slot's tint itself: the cloth under it keeps its colours.
+      const garment = slot && TINTED.includes(slot) ? s.look.garments[slot] : undefined;
+      const key = garment?.attachments?.some((a) => isSkinnedGarment(a.mesh)) ? undefined : garment?.tint;
       const color = key ? GARMENT_TINT[key] : null;
       const original = m.tinted.get(mesh);
       if (!src || !color || !src.source.texture) {

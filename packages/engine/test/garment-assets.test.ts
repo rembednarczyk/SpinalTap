@@ -89,6 +89,8 @@ describe("garment assets (ADR-0086)", () => {
         const rest = scene.getMeshByName(`${m.name}-jacket-techwear-rest`)!;
         expect(rest.skeleton).toBe(m.skeleton);
         expect(rest.material).toBe(m.material);
+        // The jacket takes the gang's green; the shirt under it keeps its own colours.
+        expect(m.material?.name, m.name).not.toContain(":tint");
         const [all, left] = [m.getIndices()!.length, rest.getIndices()!.length];
         expect(left / all, m.name).toBeGreaterThan(0.2);
         expect(left / all, m.name).toBeLessThan(0.6);
