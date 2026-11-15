@@ -196,6 +196,7 @@ export class FppHands implements ViewArms {
     this.setBone(arm.lower, t.fore, t.palm, null);
     this.setBone(arm.hand, t.fingers, t.palm, null);
     arm.curl?.apply(t.curl, t.index ?? t.curl, t.thumb ?? t.curl, t.thumbRoot ?? t.thumb ?? t.curl);
+    if (t.thumbAt) arm.curl?.aimThumb(t.thumbAt.map((p) => Vector3.TransformCoordinates(p, this.camera.viewSpace.getWorldMatrix())));
   }
 
   /** Turns a bone so that it runs along `along` with its palm side to `hint` (camera frame), at `at` if given. */
