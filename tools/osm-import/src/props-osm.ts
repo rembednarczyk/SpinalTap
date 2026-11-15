@@ -13,7 +13,8 @@ import { type FurniturePoint, loadFurniture, planKindOf } from "./furniture.ts";
 import { type OsmData, type Tags, mergeOsm, parseExtract } from "./osm.ts";
 import { REPO } from "./paths.ts";
 import type { PlanItem, PropsPlan } from "./props-gen.ts";
-import { type LitWay, isLitWay, markCourts, withLitRule } from "./props-lit.ts";
+import { type LitWay, isLitWay, lampLineOf, markCourts, withLitRule } from "./props-lit.ts";
+import { SidewalkIndex, kerbsOf } from "./props-lit-sides.ts";
 import { WallIndex, isCourtyard, isPedestrianSquare } from "./courtyards.ts";
 import { geoToWorld } from "./project.ts";
 
@@ -66,10 +67,20 @@ export const courtsOf = (osm: OsmData): { id: number; ring: readonly LitWay["pts
     .filter((c) => isCourtyard(c.ring, walls));
 };
 
-/** The lit ways of the districts' extracts in `data/osm`, their courtyards marked (`markCourts`). */
+/** The ways a sidewalk may be mapped as: Lublin's are footways, a few tagged `footway=sidewalk`. */
+const WALKS: ReadonlySet<string> = new Set(["footway", "path", "cycleway"]);
+const isWalk = (tags: Tags | undefined): boolean => tags !== undefined && WALKS.has(tags.highway ?? "") && tags.footway !== "crossing" && tags.cycleway !== "crossing" && tags.area !== "yes";
+
+/** The lit ways with their car streets' separately mapped sidewalks measured (`LitWay.kerbs`, G-804). */
+export const withKerbs = (osm: OsmData, ways: readonly LitWay[]): LitWay[] => {
+  const sidewalks = new SidewalkIndex(litWaysOf(osm, isWalk).map((w) => w.pts));
+  return ways.map((w) => (lampLineOf(w.tags)?.kind === "lamp-road" ? { ...w, kerbs: kerbsOf(w.pts, sidewalks) } : w));
+};
+
+/** The lit ways of the districts' extracts in `data/osm`, their courtyards marked (`markCourts`) and their sidewalks measured (`withKerbs`). */
 export const loadLitWays = (root = REPO): LitWay[] => {
   const osm = loadDistricts(root);
-  return markCourts(litWaysOf(osm), courtsOf(osm));
+  return withKerbs(osm, markCourts(litWaysOf(osm), courtsOf(osm)));
 };
 
 /** Every street and path of the districts' extracts, for the lamps' looks along them (`styleClashes`). */

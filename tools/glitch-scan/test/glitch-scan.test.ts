@@ -85,9 +85,11 @@ import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
 import { lampsBesideDeck } from "./lamp-deck";
 import { litStreetDark } from "./lit-dark";
 import { lampsFreestandingInCourtyard, squareStyleLeak } from "./lamp-squares";
+import { lampWideStreetOneSide } from "./lamp-sides";
+import { SidewalkIndex, kerbsOf } from "../../osm-import/src/props-lit-sides.ts";
 import { WallIndex, isCourtyard, isPedestrianSquare } from "../../osm-import/src/courtyards.ts";
-import { litWayGroups } from "../../osm-import/src/props-lit.ts";
-import { loadLitWays, loadPropsPlan } from "../../osm-import/src/props-osm.ts";
+import { isLitWay, lampLineOf, litWayGroups } from "../../osm-import/src/props-lit.ts";
+import { litWaysOf, loadLitWays, loadPropsPlan } from "../../osm-import/src/props-osm.ts";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { BUILDING_SURFACE, buildingsOverSurface } from "./surface-heights";
 import { heightsOffLod1, landmarksOffLod1, levelsTagLost, lod1Under } from "./height-lod1";
@@ -1292,6 +1294,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
     const lines = plan.items.filter((g) => g.kind === "lamp-candelabra").flatMap((g) => [...(g.line ? [g.line] : []), ...(g.lines ?? [])]).map((f) => Array.from({ length: Math.floor(f.length / 2) }, (_, i) => ({ x: f[2 * i]!, z: f[2 * i + 1]! })));
     return squareStyleLeak(Object.values(LUBLIN_STREET_PROPS).flat(), lines);
+  },
+  /** A lit side street with sidewalks on both sides 14 m or more apart whose lamps stand on one side (`lamp-sides.ts`, G-804: Narutowicza). */
+  "lamp-wide-street-one-side": () => {
+    const walk = (t: Record<string, string> | undefined) => ["footway", "path", "cycleway"].includes(t?.highway ?? "") && t?.footway !== "crossing" && t?.cycleway !== "crossing" && t?.area !== "yes";
+    const sidewalks = new SidewalkIndex(litWaysOf(SOURCE_OSM, walk).map((w) => w.pts));
+    const side = litWaysOf(SOURCE_OSM, isLitWay).filter((w) => lampLineOf(w.tags)?.kind === "lamp-road" && lampLineOf(w.tags)?.sides === 1 && w.pts.every((p) => onChunk(p.x, p.z)));
+    return lampWideStreetOneSide(side.map((w) => ({ ...w, kerbs: kerbsOf(w.pts, sidewalks) })), Object.values(LUBLIN_STREET_PROPS).flat());
   },
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),

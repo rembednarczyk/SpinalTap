@@ -1,4 +1,5 @@
 # lit-street-dark: grid 10 m (x,z = the square's corner at its least x and z)
+krakowskie-2-1 450,150
 nabrzeze-0-1 2480,400
 nabrzeze-0-1 2480,410
 nabrzeze-1-0 2510,150
@@ -9,3 +10,4 @@ podzamcze-2-0 1100,170
 podzamcze-2-0 1100,180
 podzamcze-2-0 1100,190
 podzamcze-2-0 1110,200
+stare-miasto-0-1 460,150
