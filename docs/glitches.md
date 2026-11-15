@@ -421,6 +421,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-190 Puste pasy postojowe OSM
 - Status: częściowo naprawione: skan w main (1.11, #169: `kerb-strip-no-car-street` baza 3, `bay-strip-empty-known` baza 4, `bay-strip-sparse` 0); zostaje poprawka generatora: łatka zatok przy ulicach dostaw (`docs/plany/g190-zatoki-przy-ulicach-dostaw.patch`) razem z G-133; Łęczyńska w1159135271 (OSM `capacity=23`, w grze 0: obrys płytszy niż auto w poprzek) do decyzji, np. nadwozie nad krawężnikiem
+- Klucze skanu: kerb-strip-no-car-street stare-miasto-0-1 572,155; kerb-strip-no-car-street stare-miasto-0-1 556,74; bay-strip-empty-known krakowskie-2-1 375,2; bay-strip-empty-known podzamcze-0-0 536,175; bay-strip-empty-known podzamcze-2-1 950,466; bay-strip-empty-known nabrzeze-1-0 2649,76
 - Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133); krakowskie-2-1 (12.11): `bay-strip-empty-known` w1514058885 Świętoduska (375; 2): pas postojowy bez aut na spadku ponad LEVEL_DROP (G-133).; stare-miasto-0-1 (12.11): `kerb-strip-no-car-street` 2 trafienia: parking w232362978 (572; 155) 54,5 m i w895572841 (556; 74) 23,5 m, oba przy ulicy dla dostaw bez aut; ta sama klasa co T-107.; podzamcze-0-0 (12.11): `bay-strip-empty-known` w232362991 Kowalska (536; 175): skos 3,4..3,9 m za płytki na auta pod 60° (G-133); ten sam pas, który wpis już wymienia.; podzamcze-2-1 (12.11): `bay-strip-empty-known` w1517184173 Ruska, północny krawężnik (950; 466): wszystkie zatoki na spadku > `LEVEL_DROP` (G-133); ten sam pas, który G-133 już wymienia.; nabrzeze-1-0 (12.11): `bay-strip-empty-known` w1159135271 Łęczyńska (2649; 76), pas prostopadły 3,4 m za płytki dla auta; znane.
 - Poprawka: płytki pas z tagiem `diagonal`/`perpendicular` → mniejszy kąt albo krótszy model; spadek przez G-133 (pochylenie aut); `bay-strip-sparse` dziś pomija pasy bez auta
 - Kurator #162: także odcinek Kowalskiej w232362980 x 644..668 bez zatok, bo ulica ma `use: deliveries`, a `bayCars` bierze tylko `CAR_STREETS` (T-107); zatoka w1544340690 s=24,8 (689,2; 171,8) odrzucona przez odstęp od chodnika w173566578, a na ortofoto stoi tam auto. Proponowane kontrole: `kerb-strip-no-car-street` (baza ≥ 1) i `bay-strip-sparse` także dla pasów bez aut (baza ≥ 5)
@@ -802,6 +803,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-339 Uskok na końcach pomostów: pomost poziomy w poprzek, droga obok na terenie (T-166)
 - Status: zgłoszone (5.11, kurator, przegląd G-330)
+- Klucze skanu: deck-abutment-step podzamcze-2-0 1070,160
 - Ważność: S4 · Zasięg: 8 końców (Mełgiewska, wiadukt Zamkowej, kładka Podzamcza) · Koszt: średni; 12.11 (przejście stare-miasto-1-1): koniec (732,2; 151,7) to styk z górnym stopniem w294098693: uskok chodzenia 0,51–0,54 m na całej szerokości pasa (G-686, `steps-riser-tall` (732; 151)). Na końcu NW (727,9..728,9; 156,0..158,4) `deck-abutment-step` do 1,73 m.; podzamcze-2-0 (12.11): `deck-abutment-step` 1 kwadrat (3 próbki): kładka (1073,8; 161,7), (1073,8; 161,1), (1073,9; 160,6), pomost -25,66 wobec gruntu 0,3 m dalej; to ten sam koniec co w T-166 (1073,8; 161,6), bez nowych końców.; 12.11 (G-686, PR #476): koniec (732,2; 151,7) i (732,5; 151,3) usunięty rampą `flightTopRamps` (`deck-abutment-step` 10 → 8, `steps-riser-tall` 1 → 0). Zostaje koniec NW (727,9..728,9; 156,0..158,4) do 1,73 m przy schodach w56965515 oraz końce Mełgiewskiej i kładki.
 - Gdzie: (2456,5; 296,6) 0,45 m; (2408,5; 280,0) 0,35 m; (2446,2; 246) 0,25 m; (727,7; 157,5) 0,89 m; (763,6; 182,7) 0,36 m; (1073,8; 161,6) 0,29 m
 - Przyczyna (przypuszczalna): `makeDeck` bierze `rawHeight` końców osi i robi pomost poziomy w poprzek; droga obok idzie za poprzecznym spadkiem NMT
@@ -880,6 +882,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-365 Wyjście pawilonu metra `targ` A prowadzi na rabatę zamiast na bruk (T-158)
 - Status: zgłoszone (6.11, kurator, przegląd #303; zaległość z T-158)
+- Klucze skanu: metro-exit-bare podzamcze-1-0 720,290
 - Ważność: S4 · Zasięg: otwór (722; 286) wychodzi na rabatę z 289,6–292,6; według T-158 otwór miał dostać stronę parkingu albo pawilon miał się przesunąć · Koszt: mały; `metro-exit-bare` 27 (cała baza miasta) to próbki tej rabaty (przegląd podzamcze-1-0, 12.11); test przyjęcia: `metro-exit-bare` 27 → 0 bez brukowania rabaty
 - Pakiet właściciela: packages/sim (`content/metro.ts`); przegląd kuratora
 - Test przyjęcia: wyjście pawilonu na nawierzchni `square`/`sidewalk`, nie na rabacie
@@ -1353,6 +1356,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-523 Dół 3,7 m w dziedzińcu pod w55897055 (krakowskie-0-1)
 - Status: zgłoszone (8.11, opiekun mapy; do oceny kuratora: prawdziwy dół czy artefakt NMT)
+- Klucze skanu: steps-band-hidden krakowskie-0-1 -200,125
 - Ważność: S4 · Zasięg: teren spada z 0,6 do −3,5 m na ok. 25 × 15 m (x −175..−150, z −5..10), najgłębiej (−160; 5); czarny cokół ściany 3–4 m od dna (`pit-e`, `pit-f`, `pit-g`); `SHAPED_TERRAIN` bez `PADS`; to tu 4 krawędzie terenu > 20° (G-508); przy okazji: `steps-band-hidden` na krawędzi chunka (−200; 125), pasmo 3 × 0,2 m, niewidoczne dla gracza
 - Pakiet właściciela: tools/osm-import (teren NMT)
 
@@ -1450,6 +1454,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-636 Bariera leżąca na ścianie budynku liczy się w skanie jako wycięta
 - Status: zgłoszone (12.11, scalenie #418 z main; baza `barrier-parallel-cut` 14 → 15 opisana w commicie 529888c)
+- Klucze skanu: barrier-parallel-cut podzamcze-0-1 539,517; barrier-parallel-cut krakowskie-2-0 387,-27; barrier-parallel-cut stare-miasto-0-1 558,100
 - Ważność: S4 · Zasięg: mur oporowy w227679479 na Podzamczu (539; 517) biegnie po południowej ścianie garażu w444375263, który stoi w grze od G-556; `inBuilding` w `barrier-room.ts` słusznie go tnie, a kontrola liczy odcinek jako „cut”; poprawka: import pomija odcinek bariery leżący na ścianie budynku albo kontrola go nie liczy; po niej baza wraca do 14; (krakowskie-2-0): `barrier-parallel-cut` płot w173531574 (387; -27) 8 z 16 m; tnie go myjnia T-051 (scena celowa), nie ściana budynku; kontrola liczy go jak G-636.; stare-miasto-0-1 (12.11): `barrier-parallel-cut` mur w436266757 (558; 100), odcinek 2 z 5 m; ta sama klasa (niepotwierdzone, że leży na ścianie budynku).; 12.11 (kurator, przegląd paczki): mur w436266757 (555..561; 100) to inna przyczyna, nie ściana budynku: najbliższa ściana gry (r6477272) jest 7,2 m dalej. Odcinek tnie trasa wzdłuż muru (cięcia w `crowd-barriers.ts`), czyli przypadek, który kontrola ma łapać. Do rozstrzygnięcia przy naprawie: trasę odsunąć albo przyjąć cięcie jako celowe z wierszem T.
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -1558,11 +1563,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-682 Goły teren na nawierzchni wzdłuż Królewskiej
 - Status: potwierdzone (12.11, kurator: ortofoto i 2 zrzuty; T-263); dodatkowo 12 próbek `kerb-fill-wide-estimated` (496..500; −202..−201) przy w40052496 (Królewska, `lanes=2`, bez `width`; korekta T-247 obejmuje tylko w66829063); udział ortofoto w pasie przy SE ścianie w66286377 to dach przechylony o 4–5 m, a nie nawierzchnia
+- Klucze skanu: landuse-bare stare-miasto-0-0 470,-200; landuse-bare stare-miasto-0-0 520,-150
 - Ważność: S3 · Zasięg: pas ukośny od ok. (478; −195) do (525; −145) i (505..525; −195..−215), 29 kwadratów, 2576 próbek `landuse-bare` (ok. 644 m²); nakładka ortofoto: 340 m² jasna nawierzchnia, 257 m² asfalt, 35 m² zieleń; pasy między jezdnią a chodnikami przy krzywiźnie Królewskiej i placu; kandydat do kroku 1.1 ADR-0077 (goła ziemia z ortofoto, w toku)
 - Pakiet właściciela: tools/osm-import
 
 ### G-683 Wylot bramy poza osią frontu: Brama Krakowska i Wieża Trynitarska
 - Status: potwierdzone dla (463; −94) (12.11, kurator; zrzut `sm00-krakowska-zach`; OSM −0,74 m, gra −1,80 m); poprawka: oś przejazdu łamana jak w OSM (w491869410 i w66264116, po ok. 21°) albo wylot w środku frontu przedbramia; Trynitarska liczona względem obrysu OSM, który LoD2 przesuwa o ok. 4 m (T-264), do potwierdzenia zdjęciem
+- Klucze skanu: gate-mouth-off-axis stare-miasto-0-0 463,-94; gate-mouth-off-axis stare-miasto-0-0 587,-140; gate-mouth-off-axis stare-miasto-0-0 588,-154
 - Ważność: S4 · Zasięg: `gate-mouth-off-axis` = 3 (cała baza miasta w tej komórce): (463; −94) −1,80 m od środka frontu 7,47 m; (587; −140) −0,81 m z 5,90 m; (588; −154) −4,44 m z 15,84 m (ten może być fałszywy: front obejmuje sąsiednią ścianę); G-136 (Brama Grodzka) zapowiadał pomiar Krakowskiej; najpierw pomiar z OSM i ortofoto
 - Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
 
@@ -1708,6 +1715,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-728 Klasa: szerokość jezdni i styk jezdnia–chodnik (krawężniki, szczeliny, wypełnienia)
 - Status: zgłoszone, klasa (12.11, porządki rejestru: 9 wpisów scalonych, pełne opisy w archiwum)
+- Klucze skanu: sidewalk-under-carriageway stare-miasto-1-0 750,-180; sidewalk-under-carriageway stare-miasto-1-0 690,-210; kerb-gap-bare stare-miasto-1-0 610,-220; kerb-strip-bare stare-miasto-1-0 610,-220; kerb-gap-bare stare-miasto-0-0 530,-180
 - Ważność: S3 (najwyższa w klasie) · Zasięg: jezdnia z domyślnej szerokości albo dopasowana do chodnika tylko z jednej strony wchodzi pod chodnik lub zostawia szczelinę; kontrole `sidewalk-under-carriageway`, `footway-on-carriageway`, `kerb-gap-bare`, `kerb-strip-bare`, `kerb-fill-wide-estimated`; przegląd 12.11: footway bez `footway=sidewalk` nie wchodzi do `fitToKerb` (Peowiaków). Poprawka regułą dla całego miasta, nie po jednej ulicy
 - Członkowie (pełne opisy w `docs/glitches-archiwum.md`):
   - G-082 (S4) Domyślna szerokość jezdni wycina zmapowane chodniki
@@ -1861,6 +1869,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 9 miejsc bazy entrance-no-door: krakowskie-0-1 -143,32; krakowskie-1-0 156,-265; krakowskie-2-0 427,-245 i 432,-242; podzamcze-0-1 527,437; podzamcze-1-1 748,428; stare-miasto-0-0 588,-237; stare-miasto-0-1 590,17; stare-miasto-1-1 668,15
 - Opis: wejście entrance=* w 1,5 m od ściany drzwi, reguły odrzucają wszystkie sloty, brak drzwi w 2 m
 - Status: zgłoszone (14.11, naprawiacz G-781)
+- Klucze skanu: entrance-no-door krakowskie-0-1 -143,32; entrance-no-door krakowskie-1-0 156,-265; entrance-no-door krakowskie-2-0 427,-245; entrance-no-door krakowskie-2-0 432,-242; entrance-no-door podzamcze-0-1 527,437; entrance-no-door podzamcze-1-1 748,428; entrance-no-door stare-miasto-0-0 588,-237; entrance-no-door stare-miasto-0-1 590,17; entrance-no-door stare-miasto-1-1 668,15
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: entrance-no-door spada, ground-over-steps nie rośnie
 
@@ -2076,6 +2085,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: Podzamcze (531,410), (770,531), (538,477); Nabrzeże (2637,250)
 - Opis: runRings z 1–3 próbek o skoku szczeliny 0,3–2,8 m na styku dwóch jezdni; znalezione przy G-837 (zrzuty f7, f8)
 - Status: nowy
+- Klucze skanu: kerb-gap-bare krakowskie-0-1 -130,40; kerb-gap-bare krakowskie-1-1 220,150; kerb-gap-bare nabrzeze-1-0 2650,110; kerb-gap-bare nabrzeze-0-1 2360,430; kerb-gap-bare podzamcze-2-1 920,470
 - Pakiet właściciela: tools/osm-import
 - 15.11 (przegląd G-836): kliny V między drogą przejścia a chodnikiem na końcach zebr: kerb-gap-bare (−100,−70), (180,70), (2390,330), (2670,100), (650,550), (1060,460); kerb-jag (−125,45), (225,155), (2655,115)
 - G-836 r2: ząbki i szczeliny przy końcach zebr (kerb-jag -112,154; 2363,435; kerb-gap-bare 920,473) przyjęte do bazy
