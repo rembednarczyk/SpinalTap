@@ -35,7 +35,6 @@ krakowskie-0-1 -120,40
 krakowskie-0-1 -200,50
 krakowskie-0-1 -180,50
 krakowskie-0-1 -170,50
-krakowskie-0-1 -160,50
 krakowskie-0-1 -100,70
 krakowskie-0-1 -100,80
 krakowskie-0-1 0,90
@@ -124,7 +123,6 @@ krakowskie-1-1 190,40
 krakowskie-1-1 200,40
 krakowskie-1-1 170,50
 krakowskie-1-1 180,50
-krakowskie-1-1 180,70
 krakowskie-1-1 150,80
 krakowskie-1-1 180,80
 krakowskie-1-1 80,90
@@ -371,6 +369,7 @@ podzamcze-0-0 710,170
 podzamcze-0-0 520,180
 podzamcze-0-0 700,180
 podzamcze-0-0 710,180
+podzamcze-0-0 520,190
 podzamcze-0-0 710,190
 podzamcze-0-0 520,220
 podzamcze-0-0 520,230
@@ -518,7 +517,6 @@ podzamcze-2-0 1060,270
 podzamcze-2-0 1070,270
 podzamcze-2-0 1010,280
 podzamcze-2-0 1020,280
-podzamcze-2-0 1030,280
 podzamcze-2-0 1050,290
 podzamcze-2-0 1060,290
 podzamcze-2-0 940,300

@@ -131,7 +131,9 @@ describe("the ground the map city lays (G-444)", () => {
     // asphalt where it lies (G-811): 161 914 - 161 182 = 732 vertices more, the same meshes.
     // Every zebra a rectangle square to its street from kerb to kerb, a crossing way's band out to the
     // pavements a footway under it (G-836): 161 914 - 161 200 = 714 vertices fewer, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161200, hash: "e814add8" });
+    // A junction's zebra along its foot path, every zebra on its axis to the kerb of the game's asphalt,
+    // a road area's mouth too (G-836, the curator's round 2): 161 268 - 161 200 = 68 vertices more.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161268, hash: "f7ee9cad" });
     scene.dispose();
   });
 

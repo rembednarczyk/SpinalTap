@@ -3,17 +3,17 @@ krakowskie-0-0 -110,-170
 krakowskie-0-1 -130,40
 krakowskie-0-1 -120,40
 krakowskie-0-1 -120,140
+krakowskie-0-1 -120,150
 krakowskie-1-0 150,-210
 krakowskie-1-1 200,30
 krakowskie-1-1 170,40
 krakowskie-1-1 180,90
-krakowskie-1-1 220,150
 krakowskie-2-0 280,-180
 krakowskie-2-0 290,-180
-krakowskie-2-0 430,-40
 krakowskie-2-1 350,-20
 krakowskie-2-1 290,120
 nabrzeze-0-1 2350,330
+nabrzeze-0-1 2360,430
 nabrzeze-1-0 2650,100
 nabrzeze-1-0 2660,100
 nabrzeze-1-0 2670,100
@@ -28,6 +28,7 @@ podzamcze-0-1 630,470
 podzamcze-0-1 710,540
 podzamcze-0-1 690,550
 podzamcze-0-1 670,570
+podzamcze-0-1 680,570
 podzamcze-1-1 870,490
 podzamcze-1-1 840,500
 podzamcze-1-1 860,500
