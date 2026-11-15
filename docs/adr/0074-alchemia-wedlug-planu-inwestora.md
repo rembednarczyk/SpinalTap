@@ -41,6 +41,13 @@ Hala, stoiska i winda nie odpowiadają żadnej bryle z planu. Teren spada ok. 10
 - **Spójność:** Alchemia ma wyglądać jak jeden, jednolity kompleks, a nie zestaw osobnych klocków. Bryły food hallu, tarasów, Arkad, pawilonu, placu T0 i wejść na parking mają być ze sobą zintegrowane (wspólny język materiałów, przejścia, krawędzie, balustrady, oświetlenie).
 - **Teksturowanie:** dodatkowy etap, w którym cała Alchemia dostaje odpowiednie tekstury w stylu NPR gry.
 
+## Decyzje użytkownika (15.11, koncepcja rozbudowy)
+Plansza: [`docs/world/koncepty/alchemia/01-rozbudowa-front.jpg`](../world/koncepty/alchemia/01-rozbudowa-front.jpg) (widok od frontu, schemat kondygnacji, aksonometria). Użytkownik: „Podoba mi się taka zmiana”.
+- **Wysokie zielone kondygnacje:** kompleks rośnie w górę schodkowymi tarasami z zielenią, jak na planszy. Obecne urozmaicenia dachu (pergole, girlandy, trawniki, ławki z etapu 7) przechodzą na te tarasy zamiast leżeć na jednym poziomie T0.
+- **Parking:** wjazd i rampa na P−1 przesunięte zgodnie z planszą; nowe położenie ustala plan kuratora (stanowisko archeologiczne w1559354344, pawilon metra B T-157 i szyb T-238 zostają warunkami brzegowymi).
+- **Deptak:** ulica po prawej stronie rzutu staje się deptakiem z kioskami i straganami (bez ruchu aut). To nowe celowe odstępstwo od Lublina: kurator wskazuje ulicę i odcinek, a wpis w `docs/topografia.md` powstaje razem z etapem, który to buduje.
+- **Kolejność:** osobna seria etapów po wycinku rozgrywki w Sektorze W-3 (ADR-0082), chyba że użytkownik zdecyduje inaczej. Pierwszy krok: plan kuratora (bryły, poziomy, deptak, nowy wjazd) i zrzuty przed/po z modelami.
+
 ## Decyzja
 
 ### 1. Poziomy i bryły na NMT
