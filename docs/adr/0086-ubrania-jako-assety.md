@@ -92,6 +92,72 @@ Sprawdzone przez strony źródeł i API wyszukiwarki Sketchfaba (`license=by`, `
 7. Quaternius Fantasy: wystarczy darmowa część (Ranger, Peasant), czy kupić pełną paczkę za 20 USD (licencja ta sama, CC0)?
 8. BOOTH: czy w ogóle pytać twórców o pisemną zgodę na redystrybucję w grze, czy zamykamy to źródło?
 
+## Źródła NC i NC-SA (15.11)
+
+Dopisek do tego ADR-u po decyzji użytkownika z 15.11 (ADR-0063, sekcja „Zmiana 15.11”). Sprawdzone przez API wyszukiwarki Sketchfaba (`license=by-nc` i `by-nc-sa`, `downloadable=true`, część zapytań z `rigged=true` i `max_face_count`) oraz publiczne API wyszukiwarki VRoid Hub (pola licencji modelu). Nic nie pobrano do repo; w scratchpadzie są tylko odpowiedzi API i miniatury (`scratchpad/nc/`).
+
+### Warunki VRoid Hub, które przyjmujemy
+VRoid Hub nie ma licencji CC, tylko pola warunków przy każdym modelu. Strona warunków (`hub.vroid.com/license?...`, wersja 1) opisuje je tak (cytat po japońsku, tłumaczenie robocze):
+- **再配布 (redystrybucja) OK:** „このモデルのモデルデータを誰でもVRoid Hubや他のサービス上でダウンロード可能にすることができます” (każdy może udostępnić dane modelu do pobrania w VRoid Hub i w innych serwisach). Tego potrzebuje gra w przeglądarce.
+- **改変 (modyfikacja) OK:** „このモデルのデータを改変、翻案、編集することや、二次的なモデルを作成することができます” (można zmieniać, przerabiać i edytować dane oraz tworzyć modele pochodne). Wycięcie ubrania z modelu i dopasowanie go do innego ciała to model pochodny, więc wymagamy tego pola.
+- **暴力表現での利用 (przemoc) OK:** model może atakować i być atakowany w treści typu bijatyka. Gra ma walkę, więc wymagamy i tego.
+- **個人の商用利用 (komercja osób prywatnych):** „非営利のみ” (nonprofit) wystarcza, „営利” (profit) też. **法人利用** (komercja firm) bez znaczenia, dopóki gra nie jest komercyjna.
+- **クレジット表記 (podpis):** „必要” albo „不要”; podpisujemy zawsze, jak w ADR-0063.
+
+Filtr: `modification=allow`, `redistribution=allow`, `violent_expression=allow`, `personal_commercial_use` nonprofit albo profit, `characterization_allowed_user=everyone`, brak powiązanych przedmiotów BOOTH (`character_model_booth_items` puste). Ze 1700 trafień przeszło ok. 430, z czego pasujących ubraniem kilkanaście.
+
+Zastrzeżenia VRoid Hub:
+- Plik pobiera się tylko po zalogowaniu (pixiv), a API pobierania wymaga aplikacji OAuth. `tools/assets/fetch.mjs` tego nie zrobi: surowy VRM pobiera człowiek, a `sources.json` trzyma URL strony, sha256 pliku i zrzut pól warunków z datą (autor może je zmienić; liczy się wersja z dnia pobrania).
+- Ubrania w modelach z VRoid Studio to zwykle presety programu, które wytyczne VRoid pozwalają przerabiać i rozpowszechniać. Ryzyko: tekstura albo element kupiony na BOOTH i nieoznaczony na stronie. Przed importem: przegląd tekstur i nazw materiałów; ślad BOOTH (nazwa sklepu, znak wodny) oznacza odrzucenie.
+- Modele eksportowane z Blendera albo Unity (`icyp_blender_vrm_exporter`, `UniVRM`) mogą mieć siatki spoza VRoid. Pochodzenie takiej siatki potwierdzamy u autora albo w pliku (nazwy, UV, brak znaków towarowych).
+
+### Kandydaci (według przydatności)
+
+| # | Co | Tytuł, autor, URL | Licencja | Trójkąty | Rig, format | Styl | Dopasowanie do VRoid | Uwagi |
+|---|---|---|---|---|---|---|---|---|
+| 1 | **kamizelka (plate carrier)**, czarny mundur, rękawice, buty | „hanuman unit-lowpoly_armor”, piyachato, https://hub.vroid.com/en/characters/5071270598576945703/models/7687267761482174423 | VRoid Hub: modyfikacja OK, redystrybucja OK, przemoc OK, komercja osób i firm OK, podpis niepotrzebny (seks „NG”) | 20,5 tys. cały model | VRM 0.x, `J_Bip_*`, eksport z Blendera | anime VRoid, czarny taktyczny | łatwo do średnio | Pancerz dodany w Blenderze („with low poly armor”); potwierdzić, że to własna siatka autora. Wersja bez pancerza: https://hub.vroid.com/en/characters/5071270598576945703/models/3990104736803302775 (10,5 tys., VRoid Studio 0.12, te same warunki) jako spodnie taktyczne z nakolannikami. |
+| 2 | **hełm taktyczny** (high cut z paskiem) | „helmet”, piyachato, https://hub.vroid.com/en/characters/780571745241337076/models/1882248010442901174 | jak wyżej; opis: „it's free” | 6,4 tys. | VRM 0.x (UniVRM 0.45), jedna siatka | prosty, czarny, bez tekstury marki | łatwo (sztywny, kość głowy) | Ten sam autor i postać co #1. Do uproszczenia do ok. 1,5 tys. |
+| 3 | **kurtka techwear** (długa, oversize) | „Kimi ‖ Tactical ‖ Desktop Mate”, Toriss, https://hub.vroid.com/en/characters/7972506988434619525/models/2687543789787584553 | VRoid Hub: wszystko OK, podpis niepotrzebny | 53,6 tys. cały model, 20 prymitywów | VRM 0.x, `J_Bip_*`, VRoid Studio 2.1 | anime, czarno-szary, cyberpunk | łatwo | Postać autorska; „Desktop Mate” to tylko program, w którym jej używa. Kurtka to osobny prymityw materiału. |
+| 4 | **kurtka techwear** z klamrami i kieszenią | „Therm”, Bro Isac, https://hub.vroid.com/en/characters/6740505622221521283/models/8180696119922075627 | VRoid Hub: wszystko OK, podpis niepotrzebny | 45,3 tys., 9 prymitywów | VRM 0.x, VRoid Studio 1.21 | anime, cyberpunk | średnio | Tylko 9 prymitywów: materiały scalone przy eksporcie, kurtka może dzielić materiał z resztą (cięcie po UV). Autor w VRM („ninity”) inny niż nazwa konta; do wyjaśnienia. |
+| 5 | **płaszcz taktyczny** z połami, kabury udowe, glany | „Battle-ready” (Seri), Will Howard, https://hub.vroid.com/en/characters/924043246503904789/models/7551314836635189509 | VRoid Hub: modyfikacja OK, redystrybucja OK, przemoc OK, komercja osób tylko non-profit, firm NG, podpis wymagany | 56,3 tys., 22 prymitywy | VRM 0.x, VRoid Studio 2.14 | anime, szaro-czarny | łatwo | Poły mają spring bones VRoid, więc ruch pół da się przenieść. |
+| 6 | **bluza z kapturem** | „Test Avatar” (Basic black hoodie), RipplyFuture, https://hub.vroid.com/en/characters/9179985646915894613/models/337749794093218266 | VRoid Hub: wszystko OK, podpis niepotrzebny | 25,2 tys., 130 prymitywów | VRM 0.x, VRoid Studio 0.11 | anime, czarna bluza | łatwo | Stary eksport (dużo prymitywów); wyciąć i scalić. |
+| 7 | **płaszcz** (trencz, beż) | „Brown coat”, count_zero, https://hub.vroid.com/en/characters/7949912868212886706/models/564297674633652409 | VRoid Hub: modyfikacja OK, redystrybucja OK, przemoc OK, komercja osób non-profit, firm OK, podpis niepotrzebny | 43,7 tys., 15 prymitywów | VRM 0.x, VRoid Studio 1.7 | anime, klasyczny | łatwo | Płaszcz do kolan, preset VRoid. |
+| 8 | **mundur moro** (spodnie i bluza polowa) | „chinese soldier base model”, piyachato, https://hub.vroid.com/en/characters/7015305245232781155/models/8916315981730557325 | VRoid Hub: wszystko OK; opis: „feel free to use whatever you want” | 16,4 tys., 6 prymitywów | VRM 0.x, VRoid Studio 0.14 | anime, kamuflaż cyfrowy | łatwo | Spodnie jako `cargo-tac` po zmianie tekstury na paletę Lublina. |
+| 9 | **kurtka** (krótka, dżins albo skóra po przebarwieniu) | „VIE jacket”, Vie, https://hub.vroid.com/en/characters/7183666321505305711/models/3696276357636823913 | VRoid Hub: wszystko OK, podpis niepotrzebny | 29,1 tys., 13 prymitywów | VRM 0.x, VRoid Studio 1.6 | anime, casual | łatwo | Zamiennik bomberki po zmianie koloru. |
+| 10 | hełm (zapas, realistyczny) | „High Cut Helmet LowPoly”, Xill, https://sketchfab.com/3d-models/e33cfd54333049ad977a9d784227d3b0 | CC BY-NC 4.0 (Sketchfab „CC Attribution-NonCommercial”) | 1,4 tys. | brak riga (niepotrzebny), glTF z Sketchfaba | realistyczny, gotowy budżet | łatwo (sztywny) | Własny model autora, bez marki. Podobny: „Military Helmet”, iptestcs, https://sketchfab.com/3d-models/d660ba7bab304bb996c636bc9a345e2c (NC, 3,7 tys., ćwiczenie XYZ School, kamuflaż). |
+| 11 | kamizelka i hełm ochroniarza (zapas) | „Mall Security Guard”, travp333, https://sketchfab.com/3d-models/1f0d2aea94aa4e1082887c51b37c7b40 | CC BY-NC 4.0 | 7,0 tys. cała postać | rig humanoidalny (filtr `rigged`, typ do sprawdzenia), 3 animacje | stylizowany, kreskówkowy | średnio do trudno | Własny projekt autora. Kamizelka i hełm do wycięcia, dopasowanie w Blenderze. Pasuje do ochrony galerii handlowej. |
+| 12 | trencz z kapturem, maska gazowa (zapas) | „Apocalypse: Geared Survivor [Female]”, K3NMA, https://sketchfab.com/3d-models/d1c1e02a06aa40978d9e9d27ba0c6157 | CC BY-NC 4.0 | 13,8 tys. cała postać | rig Mixamo (autor pisze o animacjach z Mixamo), FBX | półrealistyczny | trudno | Autor pisze o przebiciach w animacjach. Szkielet Mixamo i ciało innych proporcji. |
+
+Poza tabelą, jako zapas na buty i rękawice (modele VRoid z tabeli mają już buty i rękawice): „Boots”, Xill, https://sketchfab.com/3d-models/3f244e65bff74f7e9c42655b41fee7b5 (NC, 4,6 tys., damski but); „Old boots”, kifir, https://sketchfab.com/3d-models/af0cebf5399e4770a36472e5072805e6 (NC, 4,6 tys.); „Military gloves half-finger”, deep3dstudio, https://sketchfab.com/3d-models/ff8d8e5b38d64226af0abf1f8eb8ebce (NC, 2,4 tys., skan, realistyczne). Wszystkie bez riga i w stylu realistycznym; pod anime odstają bardziej niż ubrania z VRoid.
+
+Ready Player Me, konto oficjalne, „Full-body military male character”, https://sketchfab.com/3d-models/30a7695805fe400482d45924112c9066 (CC BY-NC-SA 4.0, 17,5 tys., rig zgodny z Mixamo, ubrania jako osobne siatki): licencja czysta, ale styl półrealistyczny i obowiązek SA na przerobionym ubraniu. Tylko jeśli VRoid nie da czegoś potrzebnego.
+
+### Co z wyszukiwania wynika
+- **VRoid Hub jest najlepszym nowym źródłem:** ubrania są już na szkielecie `J_Bip_*` i w stylu obsady, więc wycięcie prymitywów (droga A, narzędzie `garment_extract.py` ze szkicu) wystarcza bez Blendera. Warunek „改変 OK” pozwala na rozbiór na części; „再配布 OK” na udostępnienie w `public/`.
+- **Sketchfab NC i NC-SA** dokłada głównie hełmy, buty, rękawice i całe postacie. Kamizelek kuloodpornych z riggiem na NC nie ma; jedyne trafienia z plate carrierem to wyciągi z cudzych gier (niżej).
+- **OpenGameArt** nie dopuszcza licencji NC (lista licencji serwisu to CC0, CC-BY, CC-BY-SA, GPL, LGPL, OGA-BY), więc NC niczego tam nie zmienia.
+- **itch.io:** paczek ubrań 3D z jawną licencją CC-BY-NC nie znalazłem; nie przeszukałem tego systematycznie, bo serwis nie filtruje po licencji.
+- Na marginesie: na VRoid Hub konto yomox9 ma kilkanaście modeli z tagiem `cc0` i polami „wszystko OK” (stroje cywilne). Warte osobnego sprawdzenia jako źródło CC0.
+
+### Odrzucone
+- **Wyciągi z cudzych gier:** „USEC operator | Contract Wars” i cała seria xlisov74 (opis: „Contract Wars (c) AbsolutSoft. Fan extraction for non-commercial use.”), seria „Bulletstorm - Final Echo …” (Barcelo, postacie z gry), „Dead by Daylight - Glitchtrap” (OutGameRips), „CS:Source Guerilla” (VRoid Hub).
+- **Fan arty marek:** hełmy Halo, Mandalorian i Star Wars, „Sci-Fi Marine Helmet” (Doom i Fallout według opisu), Batman, Supergirl, „REO Meatwagon EMT jacket/David's Jacket” (Cyberpunk 2077), na VRoid Hub „David Martinez” i „Rebecca Cat” (Cyberpunk 2077), Operator214 (Far Cry 2, Armored Core), Deka SWAT i Kamen Rider (T-T), Guts, Danganronpa, Hololive, postacie z anime.
+- **Ready Player Me „Cyberpunk …”** (kilka awatarów z 2020–2021): opis odsyła do `readyplayer.me/cyberpunk`, czyli akcji z premierą Cyberpunk 2077; traktuję jak motyw marki.
+- **Niejasny łańcuch licencji:** „Pants (Artemis)” (continuumreed, remiks modelu z CGTrader na licencji royalty free); seria SCP Rulebreaker (Pixeleur; świat SCP jest na CC BY-SA 3.0, którego NC nie spełnia); „Motorcycle Jacket” (ssorpeg, „Generated with AI”, źródło nieznane); „Gingermercenary” (zrobiony w kreatorze Ready Player Me przez użytkownika, warunki kreatora); „Anime Tuxedo Guy” (w potoku Daz3D).
+- **VRoid Hub z BOOTH:** każdy model z powiązanym przedmiotem BOOTH („Universal Camoflage Uniform”, „army_girl”, „Full GEARモデル”, „【Free】combat uniform” i podobne). „military ranger” (IspVitamin) ma pola „wszystko OK”, ale w opisie tylko link do tego samego modelu na BOOTH, styl realistyczny i jedna siatka; bez pisemnego potwierdzenia odpada. „apocalypse dude” (jin): autor w metadanych VRM („OBJ121”) inny niż konto, a to samo konto wrzuca modele NFT i „paid”; odpada.
+
+### Propozycja pierwszych trzech do importu
+1. **Kamizelka:** #1 „hanuman unit-lowpoly_armor” (piyachato). Plate carrier na ciele VRoid zamyka G-870 lepiej niż powłoka i bez Blendera. Przed importem: potwierdzenie pochodzenia siatki pancerza (wiadomość do autora albo przegląd pliku).
+2. **Hełm:** #2 „helmet” (piyachato), ten sam autor i warunki; sztywny na kości głowy, uproszczony do ok. 1,5 tys. trójkątów. Zapas: #10 (Xill, CC BY-NC).
+3. **Kurtka:** #3 „Kimi ‖ Tactical” (Toriss), najczystsze warunki („wszystko OK”, VRoid Studio 2.1, osobny prymityw). Zapas: #5 „Battle-ready” jako płaszcz (wymaga podpisu, tylko non-profit).
+
+Każdy z trzech: wpis w `sources.json` z URL strony, sha256 i zrzutem pól warunków z datą, wiersz w „Autorach” (VRoid Hub nie wymaga podpisu, ale podpisujemy), licencja w manifeście jako „VRoid Hub (warunki autora)” na liście assetów NC z ADR-0063.
+
+### Pytania do użytkownika (dodatkowe)
+1. Czy warunki VRoid Hub z polami „改変 OK” i „再配布 OK” traktujemy jak NC z ADR-0063 (lista assetów do wymiany przed komercjalizacją), także gdy model ma „komercja OK”?
+2. Kto pobiera pliki z VRoid Hub (konto pixiv) i gdzie trzymamy surowe VRM poza repo, skoro `fetch.mjs` nie pobierze ich bez logowania?
+3. Czy pisać do autorów #1 i #4 z prośbą o potwierdzenie pochodzenia siatek, czy od razu brać tylko modele czysto z VRoid Studio?
+
 ## Decyzje użytkownika (15.11)
 1. Docelowa droga to A: osobne ubrania jako skinned meshe na szkielecie VRoid `J_Bip_*`. B (powłoki) zostaje dla G-870 i drobnych rzeczy.
 2. Ubrań z VRoid Studio na razie nie robimy. Zaczynamy od ubrań wyciętych z próbek VRoid CC0. Pliki z VRoid Studio dojdą później bez zmian w kodzie.
