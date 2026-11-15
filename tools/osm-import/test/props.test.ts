@@ -198,6 +198,15 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(at("lamp-modern-pole")).toEqual([[60, 24]]);
   });
 
+  it("leaves out a lamp that rounds onto the map's edge, past its last chunk, not on a ground of 0 (G-810)", () => {
+    // Mełgiewska's kerb moved 2.5 cm east set the rule's lamp at x = 2699.96: stored at 2700, past the half-open chunk.
+    for (const x of [99.94, 99.96, 99.99]) {
+      const lamps = generateProps({ items: [{ id: "osm", kind: "street-lamp", points: [[x, 24]] }] }, [street()]).byChunk.get("test-0-0")!;
+      for (const l of lamps) expect(l.x < 100 && Math.abs(l.y - terrainHeightAt(street().terrain, l.x, l.z)) < 0.01, `lamp at ${l.x}, ${l.z}, y ${l.y}`).toBe(true);
+      expect(lamps.length, `lamp from ${x}`).toBe(x < 99.95 ? 1 : 0);
+    }
+  });
+
   it("draws an OSM street lamp inside the Old Town's walls as a pastoral where OSM has it, and outside them as a road lamp (G-264)", () => {
     // The test street moved to Plac po Farze (inside the walls) and to Królewska (the district, past the walls).
     const moved = (id: string, dx: number, dz: number): LublinChunkData => {
