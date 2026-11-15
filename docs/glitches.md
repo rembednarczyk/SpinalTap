@@ -2036,6 +2036,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import (crown-trees)
 
+### G-835 Latarnie parkowe w korycie Bystrzycy
+- Ważność: S3 · Zasięg: Nabrzeże, (2441,0; 344,7), (2444,1; 374,5), (2450,1; 404,1)
+- Opis: lamp-park na terenie koryta (y −30,5) w wodzie OSM w949475137, ok. 20 m od ścieżek; znalezisko audytu W-3 15.11. Kontrola skanu prop-in-water (baza 3)
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl

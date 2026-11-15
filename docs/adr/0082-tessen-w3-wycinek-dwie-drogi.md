@@ -269,6 +269,15 @@ Zapas do bramki 1,2 mln z #575 jest na walkę, wybuch i fale. Na High (Xiaomi 15
 
 **Ładowanie (ADR-0057):** przy odjeździe metra na Nabrzeże `RenderPort.prepare` przygotowuje siatki W-3, shadery wybuchu i syreny oraz modele obsady Tessen. Nowego ekranu nie ma: wystarcza czas przejazdu.
 
+## Korekty kuratora przed etapem 1 (audyt 15.11)
+Audyt miejsca: [`docs/plany/tessen-w3-audyt.md`](../plany/tessen-w3-audyt.md), nakładka [`05-korekty-kuratora.png`](../world/koncepty/tessen-w3/05-korekty-kuratora.png), wpis T-002. Werdykt: teren i hala pasują, ale płot, pady i nabrzeże w prostokątach z sekcji „Decyzja” rozmijają się z prawdziwym brzegiem. Etap 1 buduje według korekt P1–P13 z audytu, które mają pierwszeństwo przed liczbami wyżej. Najważniejsze:
+- kładka OSM to zabytkowy most Lutosławskiego (1908), pokład +1,8; woda na −2,0 (NMT −30,6), a nie −1,3;
+- strefa to łęg (las łęgowy, OSM natural=wood); wycięcie 32 drzew i rowu w995914397 jest celowe i dostaje wpis T (P13);
+- płot 3 m na NE od ścieżki w972606056, hala ze ściętym narożnikiem SW albo 10 m na wschód (P1); bez padu na pasie publicznym, od tarasu blend ≤ 1 i mur oporowy (P2);
+- nabrzeże tylko z 418,5..440 ze ścianą ok. 1,3 m, gdzie indziej skarpa z płotem (P3, P4, P11); naturalna ława x 2457..2466 zamiast półki (P5);
+- kolektor x 2466..2514 (P6); pomost z 426..438, płot ≥ 2,7 m nad pokładem mostu (P7); basen x 2508..2592 (P9); wieża z 436..446 (P10).
+- Skyline: z kładki i pomostu Stare Miasto (Katedra, Trynitarska, Brama Krakowska) zasłania zabudowa 8–12 m; Zamek wystaje ok. 0,2°. Rekomendacja kuratora: sylwetka tylko grupy zamkowej, Stare Miasto wyłącznie jako licencja z wpisem T. Decyzja na zrzutach etapu 1.
+
 ## Etapy (osobne PR-y)
 Przed etapem 1 kurator robi audyt miejsca: ortofoto, wysokość pokładu kładki OSM nad półką, skarpa i woda przy x 2475..2479, skośny brzeg przy wieży. Każdy etap:
 - ma testy sesji bez renderera (ADR-0046: `freeze` + `step`, fałszywy `RenderPort`);
