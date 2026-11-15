@@ -5,6 +5,7 @@ import { type Pt, pointInRing } from "../src/geometry.ts";
 import { parseOsmXml } from "../src/osm.ts";
 import { worldToGeo } from "../src/project.ts";
 import { fitZebras } from "../src/zebra-fit.ts";
+import { generatedCity } from "./city.ts";
 
 /**
  * A zebra square to its street and from kerb to kerb of the asphalt as laid (G-836): a street along
@@ -130,5 +131,47 @@ describe("a zebra from kerb to kerb, square to its street (G-836)", () => {
     expect(fit([way(1, [[0, 0], [50, 0]]), way(2, [[50, 0], [100, 0]])])).toBeLessThan(1);
     // A side street leaving at the node: a junction.
     expect(fit([way(1, [[0, 0], [100, 0]]), way(3, [[50, 0], [80, 40]])])).toBeCloseTo(30, 0);
+    // A drive leaving there: no junction (G-836 round 3, the curator's (621,-218)).
+    const drive = { ...way(3, [[50, 0], [80, 40]]), tags: { highway: "service", service: "driveway" } };
+    expect(fit([way(1, [[0, 0], [100, 0]]), drive])).toBeLessThan(1);
+    // A crossing way (`footway=crossing`) at the junction: square to its street, whatever the way's angle.
+    const r = fitZebras([zebra], () => [{ at: { x: 50, z: 0 }, along: 3, path, way: true }], [way(1, [[0, 0], [100, 0]]), way(3, [[50, 0], [80, 40]])], () => 0, asphalt, [])[0]![0]!;
+    expect(Math.abs(r[2]!.x - r[1]!.x)).toBeLessThan(0.01);
+  });
+});
+
+describe("the city's zebras where the map draws a crossing way askew or a drive at a crossing (G-836, round 3)", () => {
+  /** The zebras of the whole city: their middle and their long side's angle (degrees, from -z toward +x, mod 180). */
+  const zebras = () =>
+    generatedCity().chunks.flatMap((c) =>
+      c.ground
+        .filter((g) => g.surface === "crossing")
+        .map((g) => {
+          const r = Array.from({ length: g.outline.length / 2 }, (_, i) => ({ x: g.outline[2 * i]!, z: g.outline[2 * i + 1]! }));
+          const sides = r.map((a, i) => ({ a, b: r[(i + 1) % r.length]! }));
+          const { a, b } = sides.reduce((p, q) => (Math.hypot(q.b.x - q.a.x, q.b.z - q.a.z) > Math.hypot(p.b.x - p.a.x, p.b.z - p.a.z) ? q : p));
+          const angle = ((((Math.atan2(b.x - a.x, -(b.z - a.z)) * 180) / Math.PI) % 180) + 180) % 180;
+          return { x: r.reduce((s, p) => s + p.x, 0) / r.length, z: r.reduce((s, p) => s + p.z, 0) / r.length, angle };
+        }),
+    );
+  const near = (all: ReturnType<typeof zebras>, x: number, z: number) => all.filter((q) => Math.hypot(q.x - x, q.z - z) < 3);
+  const off = (a: number, b: number) => Math.min(Math.abs(a - b), 180 - Math.abs(a - b));
+
+  it("lays a crossing way's zebra square to its street, a drive at its end no junction, and a junction's node along its path", () => {
+    const all = zebras();
+    // w305027462 over Podwale (w40052391, 114 degrees), drawn 12 degrees askew, a drive (w179269926) leaving
+    // Podwale under it; on the orthophoto square to Podwale within about a degree, its middle at (620.6, -220.5)
+    // along the street (across it, the game's Podwale is narrowed about its axis: T-063).
+    const f4 = near(all, 620.5, -217.2);
+    expect(f4).toHaveLength(1);
+    expect(off(f4[0]!.angle, 114 - 90)).toBeLessThan(5);
+    const street = { x: Math.sin((114 * Math.PI) / 180), z: -Math.cos((114 * Math.PI) / 180) };
+    expect(Math.abs((f4[0]!.x - 620.6) * street.x + (f4[0]!.z + 220.5) * street.z)).toBeLessThan(1.5);
+    // The junctions' nodes with a foot path through them stay along it: n4087364975 and n4586176953.
+    for (const [x, z, angle] of [[2361.1, 432.2, 175.8], [913.3, 345.9, 83]] as const) {
+      const at = near(all, x, z);
+      expect(at, `${x},${z}`).toHaveLength(1);
+      expect(off(at[0]!.angle, angle), `${x},${z}`).toBeLessThan(1);
+    }
   });
 });

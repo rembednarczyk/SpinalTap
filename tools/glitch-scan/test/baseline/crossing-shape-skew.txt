@@ -5,4 +5,3 @@ nabrzeze-0-1 2363,336
 podzamcze-0-1 538,416
 podzamcze-1-0 741,325
 podzamcze-1-0 731,359
-stare-miasto-1-0 621,-218

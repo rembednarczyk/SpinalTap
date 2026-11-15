@@ -13,11 +13,15 @@ import { type kerbFills } from "./kerb-fill.ts";
 import { geoToWorld } from "./project.ts";
 import { RingBins } from "./ring-bins.ts";
 
-/** Where a zebra crosses its street, how far it runs along it (m), and the way of the foot path across it there (unit), if the map has one. */
+/**
+ * Where a zebra crosses its street, how far it runs along it (m), the way of the foot path across
+ * it there (unit), if the map has one, and whether that path is a crossing way (`footway=crossing`).
+ */
 export interface ZebraSpot {
   readonly at: Pt;
   readonly along: number;
   readonly path?: Pt;
+  readonly way?: boolean;
 }
 
 /** The step of the march across the street (m), and halvings of the last one: the kerb within about 6 mm. */
@@ -110,7 +114,7 @@ export const zebraSpots = (
       return [{ at, along: CROSSING_ALONG, ...(path ? { path } : {}) }];
     }
     const way = byId.get(z.source);
-    return way ? wayCrossings(way.line, axes).map(({ p, dir }) => ({ at: p, along: Math.max(pathWidth(way.tags), CROSSING_ALONG), path: dir })) : null;
+    return way ? wayCrossings(way.line, axes).map(({ p, dir }) => ({ at: p, along: Math.max(pathWidth(way.tags), CROSSING_ALONG), path: dir, way: way.tags.footway === "crossing" })) : null;
   };
 };
 
@@ -118,7 +122,7 @@ export const zebraSpots = (
  * The street a zebra at `s` crosses: the carriageway its foot path crosses most nearly square,
  * of those within `JUNCTION` (a junction's, or a node where its ways meet); the nearest within
  * 1 m where the map draws no path. Its foot and the direction the zebra lies square to: the
- * street's axis there (`tangent`), or at a junction square to the path itself.
+ * street's axis there (`tangent`), or at a crossing node's junction square to the path through it.
  */
 const streetAt = (s: ZebraSpot, roads: readonly Line[], aside: (l: Line) => number): { foot: RoadFoot; t: Pt } | null => {
   const path = s.path;
@@ -133,9 +137,13 @@ const streetAt = (s: ZebraSpot, roads: readonly Line[], aside: (l: Line) => numb
     // Nearest first: a farther axis only where the path crosses it squarer by more than a few degrees.
     if (!best || sin > best.sin + 0.05) best = { foot, t, sin };
   }
-  // At a junction the street's axis bends and its ways meet: the zebra lies along the path (the curator's rule, G-836 round 2).
-  // A street's ways split at the node in line are no junction: the zebra stays square to it.
-  const junction = feet.some((p) => feet.some((q) => Math.abs(p.t.x * q.t.x + p.t.z * q.t.z) < BENT));
+  // At a junction the street's axis bends and its ways meet: a crossing node's zebra lies along the
+  // foot path through it (the curator's rule, G-836 round 2). A street's ways split at the node in
+  // line are no junction, nor a drive leaving a street (`service`). A crossing way's zebra stays square
+  // to its street: the way is drawn askew as often as not (the curator's (621,-218), round 3).
+  const drive = (p: { foot: RoadFoot }) => p.foot.road.tags.highway === "service" && best?.foot.road.tags.highway !== "service";
+  const turns = feet.filter((p) => !drive(p));
+  const junction = !s.way && turns.some((p) => turns.some((q) => Math.abs(p.t.x * q.t.x + p.t.z * q.t.z) < BENT));
   if (best && junction) return { foot: best.foot, t: { x: path.z, z: -path.x } };
   return best;
 };

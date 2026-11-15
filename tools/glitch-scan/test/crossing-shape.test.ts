@@ -32,6 +32,17 @@ describe("zebra shape (crossing-shape-*)", () => {
     expect(crossingSkew(c, [STREET])).toHaveLength(1);
   });
 
+  it("finds a crossing way's zebra askew at a junction, square to neither street, and none square to one of them", () => {
+    const t = Math.tan((10 * Math.PI) / 180) * 12;
+    const c = [chunk([18, -6, 22, -6, 22 + t, 6, 18 + t, 6])];
+    // A side street leaving at the zebra: a junction, where a zebra of a crossing node is let be.
+    const side: readonly [number, number][] = [[20, 0], [40, 20]];
+    expect(crossingSkew(c, [STREET, side])).toEqual([]);
+    const way: readonly [number, number][] = [[20, -6], [20, 6]];
+    expect(crossingSkew(c, [STREET, side], [way])).toHaveLength(1);
+    expect(crossingSkew([chunk(STRAIGHT)], [STREET, side], [way])).toEqual([]);
+  });
+
   it("finds stripes outside the piece when the piece is a wedge in its own box", () => {
     expect(crossingOverhang([chunk([18, -6, 22, -6, 22, 6, 21.5, 6, 21.5, 0, 18, 0])])).toHaveLength(1);
   });

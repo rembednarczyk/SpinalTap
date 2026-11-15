@@ -195,6 +195,11 @@ const FOOT_PATHS = () =>
   [...SOURCE_OSM.ways.values()]
     .filter((w) => ["footway", "path", "cycleway"].includes(w.tags?.highway ?? "") && w.tags?.footway !== "sidewalk" && w.tags?.area !== "yes")
     .map((w) => w.nodes.flatMap((id) => (SOURCE_OSM.nodes.has(id) ? [geoToWorld(SOURCE_OSM.nodes.get(id)!.lat, SOURCE_OSM.nodes.get(id)!.lon)] : [])).map((p) => [p.x, p.z] as const));
+/** The map's crossing ways (`footway=crossing`): a zebra on one is square to its street at a junction too (`crossing-shape-skew`). */
+const CROSSING_WAYS = () =>
+  [...SOURCE_OSM.ways.values()]
+    .filter((w) => w.tags?.footway === "crossing")
+    .map((w) => w.nodes.flatMap((id) => (SOURCE_OSM.nodes.has(id) ? [geoToWorld(SOURCE_OSM.nodes.get(id)!.lat, SOURCE_OSM.nodes.get(id)!.lon)] : [])).map((p) => [p.x, p.z] as const));
 /** The kerb fills' world (`kerb-fill.ts`), built once for both of its checks. */
 let fillWorld: ReturnType<typeof cityFillWorld> | undefined;
 const FILL_WORLD = () => (fillWorld ??= cityFillWorld(SOURCE_OSM));
@@ -2039,7 +2044,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    */
   "kerb-jag": () => kerbJag(MAP_CHUNKS, ROAD_CHAINS.map((c) => c.points)),
   /** A carriageway zebra more than 5 degrees off the perpendicular to its street (`crossing-shape.ts`). */
-  "crossing-shape-skew": () => crossingSkew(MAP_CHUNKS, ROAD_CHAINS.map((c) => c.points)),
+  "crossing-shape-skew": () => crossingSkew(MAP_CHUNKS, ROAD_CHAINS.map((c) => c.points), CROSSING_WAYS()),
   /** A zebra whose stripes (0.3 m2 and more) lie outside its piece (`crossing-shape.ts`). */
   "crossing-shape-overhang": () => crossingOverhang(MAP_CHUNKS),
   /** A zebra whose cyan edge lines (3 m and more) lie off the carriageway, cobbles and squares (`crossing-shape.ts`). */
