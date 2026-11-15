@@ -2072,6 +2072,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/osm-import (props-place)
 
+### G-843 Obrys zebry zachodzi pod chodnik
+- Ważność: S4 · Zasięg: krakowskie-0-1 (434,3; -10,3)
+- Opis: Znalezione przy etapie 1 ADR-0084 (woda). Klasa G-836 (zebry z węzłów)
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
