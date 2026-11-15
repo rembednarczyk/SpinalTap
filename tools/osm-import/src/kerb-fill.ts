@@ -359,8 +359,8 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
     };
     const reaches = (side: 1 | -1) => (s: Sample) => estimated(road.source, side) && s.hit !== null && !s.hit.joins && !s.hit.median && !merged(s);
     const own = (side: 1 | -1) => (s: Sample) => reaches(side)(s) && s.hit!.gap >= ROAD_GAP;
-    // Grown in to the kerb, not over a zebra mapped past it: a kerb stone laid there would cut it in two.
-    const may = (side: 1 | -1) => (s: Sample) => reaches(side)(s) && !s.hit!.crossed;
+    // Grown in to the kerb, also where a zebra is mapped past it: the zebras are fitted to the kerbs after (`laidZebras`, G-836).
+    const may = reaches;
     // The stretches widened (`seeded`, as the lanes read them) and the asphalt grown on from them in to the kerb (`wideSet`).
     const [seeded, wideSet] = [new Set<Sample>(), new Set<Sample>()];
     for (const [side, sign] of [[right, -1], [left, 1]] as const) {
