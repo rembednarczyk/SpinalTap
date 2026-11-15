@@ -247,7 +247,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: zabytek z `roof:colour=green|red` dostaje dach z odpowiedniej rodziny palety (miedź, dachówka), a z `building:colour` najbliższy tynk palety; kontrola `landmark-colour-ignored` 25 → 0
 
 ### G-119 Ratusz i Trybunał bez przepisu zabytku (fasada jak każdy gmach)
-- Status: w przepisie (gałąź ccr-ec2c4269-ilh8k8-g119); wcześniej: zgłoszone (audyt gmachów publicznych, kurator 31.10); to praca ADR-0062 etap 4
+- Status: w poprawce, runda 2 (PR #571: portyk wielkiego porządku, wieża według NMPT/LOD2); wcześniej: w przepisie (gałąź ccr-ec2c4269-ilh8k8-g119); wcześniej: zgłoszone (audyt gmachów publicznych, kurator 31.10); to praca ADR-0062 etap 4
 - Ważność: S3 (proponowana; dwa główne punkty orientacyjne, zgłoszenie użytkownika „trzeba poprawić urząd miasta”) · Zasięg: szeroki (Plac Łokietka, Rynek) · Koszt: duży
 - Gdzie: Ratusz w66264120 z częściami w619138853 i w619138854; Trybunał w66264159; T-064, T-065, T-067
 - Dowód: zrzuty `ratusz-s`, `ratusz-wide`, `ratusz-ne` i `trybunal-wide` (scratchpad kuratora): Ratusz wygląda jak biurowiec z siatką 5 rzędów okien i bez wejścia, a jego wieża jest grafitowym słupkiem nad połacią
