@@ -97,6 +97,7 @@ Sprawdzone przez strony źródeł i API wyszukiwarki Sketchfaba (`license=by`, `
 2. Ubrań z VRoid Studio na razie nie robimy. Zaczynamy od ubrań wyciętych z próbek VRoid CC0. Pliki z VRoid Studio dojdą później bez zmian w kodzie.
 3. Blender w `tools`, uruchamiany bez okna, do dopasowania ubrań spoza VRoid i przeniesienia wag przy imporcie.
 4. Pytania 4–8 zostają otwarte. Do czasu decyzji obowiązuje: tekstury 512 px jak w VRoid tylko tam, gdzie ubranie pochodzi z próbki; hełm chowa włosy; kolejność kamizelka, hełm, kurtka; z Quaterniusa tylko darmowa część; BOOTH zamknięty.
+5. Licencje NC i NC-SA dopuszczone (ADR-0063, zmiana 15.11): źródła ubrań poszerzają się o CC-BY-NC(-SA) ze Sketchfaba i OpenGameArt oraz modele VRoid Hub z warunkami zezwalającymi na redystrybucję niekomercyjną. Kolejny research źródeł uwzględnia te licencje.
 
 ## Konsekwencje
 - Zmiana kontraktu przebrań w `core` (Architekt) i nowy katalog assetów z manifestem; symulacja, zapis i złote hashe bez zmian (wygląd to pole widoku).
