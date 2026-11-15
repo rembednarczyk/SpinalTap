@@ -4,8 +4,8 @@ import { W3_PLATFORM, W3_ROOF, w3 } from "./site";
 
 /**
  * Where the riverside's jobs stand in W-3 (ADR-0082 stage 1): the infiltration in the tower's
- * pass office, the hack on the quay by the pier with its wave and a sniper on the tower's
- * platform, the escort (retired from Genzō's offers, ADR-0082) along the riverside path.
+ * pass office, the hack on the quay by the pier with its wave and a sniper on row N's roof,
+ * the escort (retired from Genzō's offers, ADR-0082) along the riverside path.
  */
 
 /**
@@ -22,17 +22,17 @@ export interface ContractPost {
 const post = (at: Vec3, yaw: number, type: EnemyTypeId = "tessen_guard", onAlarm = false): ContractPost => (onAlarm ? { at, yaw, type, onAlarm: true } : { at, yaw, type });
 
 /**
- * Sniper perches (ADR-0024, ADR-0082): the tower's platform at its south-west corner over the quay
- * and the pier, its north-east corner by the bridge, and row N's roof at its west parapet. Each
- * stands at a railing 1.05 m high, so the shooter sees down over it.
+ * Sniper perches (ADR-0024, ADR-0082): row N's roof at its west parapet over the quay and the
+ * pier, the tower's platform at its south-west and north-east corners, row N's roof at its east
+ * end over the east yard. Each stands at a railing 1.05 m high, so the shooter sees down over it.
  */
-export const SNIPER_PERCHES: readonly Vec3[] = [w3(2486.9, W3_PLATFORM, 436.9), w3(2495, W3_PLATFORM, 444.9), w3(2501, W3_ROOF, 434)];
+export const SNIPER_PERCHES: readonly Vec3[] = [w3(2501, W3_ROOF, 434), w3(2486.9, W3_PLATFORM, 436.9), w3(2495, W3_PLATFORM, 444.9), w3(2566, W3_ROOF, 439.2)];
 
 /**
  * Posts of the riverside jobs, in target index order (the first one decides the chunk). The
  * infiltration: the office guard looks over the room, the door guard down the gap by the hall,
  * the others over the zone, the quay and the pickup yard. The hack: the wave, with a sniper on
- * the tower's platform always among them. The escort: the ambush on the riverside path.
+ * row N's roof always among them. The escort: the ambush on the riverside path.
  */
 export const W3_CONTRACT_POSTS: Readonly<Partial<Record<ContractSiteId, readonly ContractPost[]>>> = {
   docks_escort: [post(ground(2470, 393), 1.2, "tessen_guard", true), post(ground(2466.5, 399), 2.4, "tessen_guard", true), post(ground(2477, 381), 0, "tessen_guard", true), post(ground(2461, 408), Math.PI, "tessen_guard", true)],
