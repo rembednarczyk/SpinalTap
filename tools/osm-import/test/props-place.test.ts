@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { LUBLIN_PROP_TABLE } from "../../../packages/sim/src/content/lublin/props.generated.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { generateProps } from "../src/props-gen.ts";
-import { type SideSpot, offRoad, sideOffset, sideSpot, signalSide } from "../src/props-place.ts";
+import { type SideSpot, sideOffset, sideSpot } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
 
 /** A 100 x 60 m chunk: a paved causeway 6.5 m wide along z = 30 between lawns, like Zamkowa's over the Błonie. */
@@ -132,37 +132,21 @@ describe("a lamp of the plan on a viaduct's span (G-503)", () => {
   });
 });
 
-/** A junction's asphalt 100 x 60 m, the pavement 8 m north of its node and `south` m south of it; a one-way street driven east up to the node. */
-const junction = (south: number): LublinChunkData => ({
-  ...causeway(),
-  ground: [
-    { surface: "sidewalk", outline: [0, 38, 100, 38, 100, 60, 0, 60] },
-    { surface: "road", outline: [0, 30 - south, 100, 30 - south, 100, 38, 0, 38] },
-    { surface: "sidewalk", outline: [0, 0, 100, 0, 100, 30 - south, 0, 30 - south] },
-  ],
-  streets: [{ name: "Aleja", kind: "primary", line: [0, 30, 50, 30], oneway: true }],
-});
-
-describe("a traffic light from a node on the road (G-825 r2, T-031)", () => {
-  const node = { x: 50, z: 30 };
-
-  it("stands on the right of the traffic driven up to the node where that pavement is about as near as any", () => {
-    const site = new Site([junction(9)]);
-    expect(offRoad(site, node)!.z).toBeGreaterThan(38);
-    expect(offRoad(site, node, 12, 0.6, signalSide(site, node))!.z).toBeLessThan(21);
-  });
-
-  it("keeps to the nearest pavement where the right's is much farther", () => {
-    const site = new Site([junction(11)]);
-    expect(offRoad(site, node, 12, 0.6, signalSide(site, node))!.z).toBeGreaterThan(38);
-  });
-
-  it("stands by Al. Tysiąclecia's south kerb at Rondo Dmowskiego, not on the wedge of the junction's asphalt the map paves", () => {
-    // n1946478264 (1099.0; 272.3): the light stood at (1104.7; 266.6) before G-825 moved the kerb to
-    // z 265.8; the wedge (1088-1098; 278-282) is asphalt with lane lines on the orthophoto.
-    const rows = LUBLIN_PROP_TABLE["podzamcze-2-0"]?.["traffic-signal"] ?? [];
-    const near = Array.from({ length: rows.length / 5 }, (_, k) => ({ x: rows[5 * k]!, z: rows[5 * k + 2]! })).filter((p) => Math.hypot(p.x - 1099, p.z - 272.3) < 13);
-    expect(near.length).toBe(1);
-    expect(near[0]!.z).toBeLessThan(265.8);
+describe("the traffic lights a node on the road stands for (G-825 r3)", () => {
+  it("stand where they stood before G-825: by the nearest pavement, whichever side the traffic arrives on", () => {
+    // A rule of round 2 took the right of the one-way streets driven up to the node when that pavement
+    // lay at most 2 m farther: it moved these onto a lane before the stop line or into the junction.
+    const before: [string, number, number][] = [
+      ["krakowskie-0-1", -104.3, 121],
+      ["krakowskie-0-1", -104.1, 49.7],
+      ["podzamcze-2-0", 1058.8, 288.1],
+      ["nabrzeze-1-0", 2523.5, 261.4],
+      ["nabrzeze-0-1", 2485.3, 284.5],
+    ];
+    const moved = before.filter(([chunk, x, z]) => {
+      const rows = LUBLIN_PROP_TABLE[chunk]?.["traffic-signal"] ?? [];
+      return !Array.from({ length: rows.length / 5 }, (_, k) => Math.hypot(rows[5 * k]! - x, rows[5 * k + 2]! - z)).some((d) => d < 0.15);
+    });
+    expect(moved).toEqual([]);
   });
 });

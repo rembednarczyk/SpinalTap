@@ -43,6 +43,13 @@ const INTO = 0.1;
  * samples `ALONG` apart, and a seam of bare ground stayed between them; the strip is grass too (G-825).
  */
 const LAWN_INTO = 0.3;
+/**
+ * The widest gap to a lawn a moved carriageway's strip is laid as the lawn's over (m): a kerb's
+ * width. A wider one is paving the lawn's mapped edge stops short of (Lwowska by Rondo Mohyły,
+ * Al. Tysiąclecia's north-east corner, 1-2 m of paving on the orthophoto): grass laid over it put a
+ * lawn on the pavement, so it stays to the bare ground rule, as before G-825 (r3).
+ */
+const LAWN_GAP = 0.6;
 /** How far out from the edge the paving must start for a strip to lie between (m): nearer, it reaches the asphalt. */
 const SEAM = 0.01;
 /** Halvings of the last step, to the paving's edge within 1.25 cm: the fill's outer edge follows it. */
@@ -307,8 +314,8 @@ const easedReach = (side: readonly Sample[], wide: (s: Sample) => boolean): numb
  * beside them, `buildings` standing in the way; `estimated(source, side)` says the carriageway's
  * width is the import's estimate on that side (1 its left, -1 its right); `walks` are the sidewalks before they were cut at the carriageways. A carriageway whose widened ring would cross itself keeps its ring,
  * and its strips are laid as sidewalks. A carriageway `moved` off its way's line (G-825) has its
- * strip to a lawn laid too, as the lawn's: the bare ground rule's cells left seams and paving on
- * the green between its new edge and the lawn's slanted edge (Lwowska by Rondo Mohyły).
+ * strip to a lawn up to `LAWN_GAP` across laid too, as the lawn's: the bare ground rule's cells left
+ * seams and paving on the green between its new edge and the lawn's slanted edge (Lwowska by Rondo Mohyły).
  */
 export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly Pt[])[], estimated: (source: string, side: 1 | -1) => boolean, walks: readonly (readonly Pt[])[] = [], moved: ReadonlySet<string> = new Set()): KerbFills => {
   // The sidewalks laid and mapped, whole: a stretch cut off where it ran over a carriageway is paving the march stops at too.
@@ -372,10 +379,11 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       // A moved carriageway's strip to a lawn is the lawn's, drawn to the new kerb (G-825). It reaches
       // on over the next sample past its ends, to the lawn's reach there: the step to a strip of
       // paving, or to the bare ground rule's fill, stayed bare.
+      const kerbLawn = (n: Sample | undefined) => n?.hit?.lawn === true && n.hit.gap <= LAWN_GAP;
       const reachLawn = new Map<Sample, number>();
       side.forEach((s, i) => {
-        const at = [s, side[i - 1], side[i + 1]].find((n) => n?.hit?.lawn);
-        if (at && !s.hit?.joins) reachLawn.set(s, s.hit?.lawn ? s.hit.gap : at.hit!.gap);
+        const at = [s, side[i - 1], side[i + 1]].find(kerbLawn);
+        if (at && !s.hit?.joins && (!s.hit?.lawn || kerbLawn(s))) reachLawn.set(s, s.hit?.lawn ? s.hit.gap : at.hit!.gap);
       });
       runsOf(side, (s) => (reachLawn.has(s) ? { edge: along(s.edge, s.dir, -INTO), out: along(s.edge, s.dir, reachLawn.get(s)! + LAWN_INTO) } : null), (run) => lay(run, undefined, "grass"));
       // The kerb stones of the widened carriageway, where the paving draws no kerb of its own: on the

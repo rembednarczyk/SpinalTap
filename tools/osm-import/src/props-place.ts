@@ -272,55 +272,19 @@ const AROUND = Array.from({ length: 32 }, (_, i) => ({ x: Math.sin((i * Math.PI)
 
 /**
  * p itself off the carriageway; on it (a traffic light's node in the road's axis), the nearest
- * pavement, green or bare ground within `reach` metres, `inset` metres in from its edge; null when
- * there is none. With `towards`, the nearest in the directions it takes when that lies at most
- * `TOWARDS_SLACK` m farther than the nearest of all.
+ * pavement, green or bare ground within `reach` metres, `inset` metres in from its edge; null when none is.
  */
-export const offRoad = (site: Site, p: Pt, reach = 12, inset = 0.6, towards?: (d: Pt) => boolean): Pt | null => {
+export const offRoad = (site: Site, p: Pt, reach = 12, inset = 0.6): Pt | null => {
   if (site.surfaceAt(p) !== "road") return p;
-  const nearest = (only: (d: Pt) => boolean, upTo: number): { q: Pt; r: number } | null => {
-    for (let r = 0.5; r <= upTo; r += 0.5) {
-      for (const d of AROUND) {
-        if (!only(d) || !beside(site.surfaceAt({ x: p.x + d.x * r, z: p.z + d.z * r }))) continue;
-        const q = { x: p.x + d.x * (r + inset), z: p.z + d.z * (r + inset) };
-        if (beside(site.surfaceAt(q))) return { q, r };
-      }
-    }
-    return null;
-  };
-  const any = nearest(() => true, reach);
-  if (!any || !towards) return any?.q ?? null;
-  return (nearest(towards, Math.min(reach, any.r + TOWARDS_SLACK)) ?? any).q;
-};
-
-/**
- * How much farther than the nearest a place in the preferred directions may be (m): a light whose
- * node lies about as near to the pavement on either side (Al. Tysiąclecia's at Rondo Dmowskiego,
- * 8.1 m both) takes the right of the traffic arriving, not a side the search reaches first.
- */
-const TOWARDS_SLACK = 2;
-
-/**
- * Where a traffic light from a node on the road stands, when the pavement on that side is about as
- * near as any (G-825 r2, T-031): on the right of the one-way streets driven up to the node, as
- * Poland drives, where their traffic stops at it.
- * Undefined at a node no one-way street arrives at: any side.
- */
-export const signalSide = (site: Site, p: Pt): ((d: Pt) => boolean) | undefined => {
-  const rights: Pt[] = [];
-  for (const s of site.streets) {
-    if (!s.oneway) continue;
-    for (let i = 1; i < s.line.length; i++) {
-      const [a, b] = [s.line[i - 1]!, s.line[i]!];
-      const l = Math.hypot(b.x - a.x, b.z - a.z);
-      if (l > 1e-6 && Math.hypot(b.x - p.x, b.z - p.z) < NODE_NEAR) rights.push({ x: (b.z - a.z) / l, z: -(b.x - a.x) / l });
+  for (let r = 0.5; r <= reach; r += 0.5) {
+    for (const d of AROUND) {
+      if (!beside(site.surfaceAt({ x: p.x + d.x * r, z: p.z + d.z * r }))) continue;
+      const q = { x: p.x + d.x * (r + inset), z: p.z + d.z * (r + inset) };
+      if (beside(site.surfaceAt(q))) return q;
     }
   }
-  return rights.length ? (d) => rights.some((r) => d.x * r.x + d.z * r.z > 0) : undefined;
+  return null;
 };
-
-/** A street's point this near a node is on it (m): the chunks keep 0.1 m. */
-const NODE_NEAR = 0.5;
 
 /** Does a circle of radius `r` round p reach into a building (sampled at its centre and 16 points round it)? */
 const touchesBuilding = (site: Site, p: Pt, r: number): boolean =>
