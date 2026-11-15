@@ -1901,7 +1901,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-806 Drzewa przy ścianach rysowane niżej niż NMPT: korona nie może urosnąć przy budynku (18 miejsc tree-height-vs-nmpt)
 - Ważność: S4 · Zasięg: 18 drzew 0,5–5,3 m od ściany, rysowane z ziarna 7–12 m, NMPT 12–26 m
 - Opis: Gałąź ccr-ec2c4269-ilh8k8-tree-heights (wysokości drzew z NMPT EVRF2007): drzewa przy ścianach mają pomiar, ale korona przy budynku nie może urosnąć ponad rozmiar z ziarna; 18 kluczy tree-height-vs-nmpt przyjętych świadomie jako dotąd niewidoczne (brak pomiaru przed zmianą). Ortofoto (kwiecień) nie potwierdza korony przy 4 z nich — część może być dachem z przesuniętym obrysem. Poprawka: węższa korona przy ścianie w rendererze (wariant drzewa) albo odrzut odczytów z dachów.
-- Status: zgłoszone (14.11, raport agenta wysokości drzew)
+- Status: w PR #576; wcześniej: zgłoszone (14.11, raport agenta wysokości drzew)
 - Pakiet właściciela: packages/engine (drzewa), tools/osm-import (measureTree)
 - Test przyjęcia: tree-height-vs-nmpt wraca do ≤ 6 bez nowych kluczy tree-unmeasured
 - Kurator 14.11: 15 z 18 kluczy to realne drzewa przy ścianach (NMPT przy pniu ≥ 9 m), zgoda na osobne zadanie; 3 klucze (−123,24) n2416068304, (176,139) n2410102295 i (160,155) n2410102343 to błędy pomiaru (sąsiad lub dach), schodzą z poprawką bufora dachu przed scaleniem.
@@ -1923,7 +1923,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-814 Drzewo przy ścianie rysowane w rozmiarze z ziarna zamiast największej korony, która się mieści
 - Ważność: S4 · Zasięg: 35 drzew OSM (tree-unmeasured) i 79 wierzchołków reguły koron (G-797)
 - Opis: treeVariant (#558) wraca do plainTreeVariant, gdy korona z pomiaru nie mieści się przy ścianach; reguła koron pomija przez to duże drzewa przy budynkach, np. (700, 570).
-- Status: zgłoszone
+- Status: w PR #576; wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import (tree-heights)
 - Runda 2 G-797: 41 wierzchołków prawdziwych drzew przy ścianach nadal pomijanych (z listy kuratora zostały 2 z 16).
 - Kurator r2 (2b26e13): z 22 prawdziwych drzew przy ścianach z rundy 1 zostaje 8 (c92, c345, c350, c357, c585, c623, c626, c639), 2 zastąpione drzewem w 3 m (c641, c1159); bez drzewa: (351,5; −64,5), (409,5; 145,5), (406,5; 148,5), (740,5; −190,5), (530,5; 128,5), (530,5; 110,5), (530,5; 515,5), (577,5; 418,5), (832,5; 488,5), (2555,5; 84,5), (2349,5; 465,5), (2317,5; 444,5) — kandydaci na test przyjęcia.
@@ -2029,6 +2029,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props-rows, props-kerb-corners)
 - Test przyjęcia: rząd na łuku narożnika placu ma łańcuch między każdą parą sąsiednich słupków do przerwy na przejściu
 - 15.11 przegląd S4: dotyczy reguły z PR #573 (G-820), jeszcze nie na main; sprawdzić po scaleniu #573. Koszt: G-831 i G-833 mały–średni (baysOf, ROW_TURN w props-rows.ts), G-832 średni (dwa naloty lub maska cienia); G-831 i G-832 to ten sam detektor baysOf z przeciwnym błędem.
+
+### G-834 Reguła okapu koron odrzuca prawdziwe drzewa przy ścianach
+- Ważność: S4 · Zasięg: 8 punktów z listy G-814: (351,5; −64,5), (409,5; 145,5), (406,5; 148,5), (740,5; −190,5), (530,5; 128,5), (530,5; 110,5), (577,5; 418,5), (2317,5; 444,5)
+- Opis: onEave (#567, G-815 P1) uznaje koronę połączoną płasko z dachem za okap, gdy korona na ortofoto zajmuje mniej niż 60%; prawdziwe drzewa w podwórzach odpadają. Do zbiorczego przeglądu S4.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (crown-trees)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
