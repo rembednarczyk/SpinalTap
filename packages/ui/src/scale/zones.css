@@ -40,9 +40,6 @@
    jump button and the move hint of a phone held sideways (G-466). Left of the minimap's column,
    under the clock and the pad's row. */
 .touch-mode .toasts { top: calc(var(--zone-top) + max(68px, var(--pad-row-height))); right: calc(var(--zone-right) + 104px); width: min(400px, calc(100% - 280px)); }
-/* In a talk the pad is gone and the subtitles grow up the left side to under the objective: the
-   wide column would reach over them, so it narrows back to clear the box. */
-.touch-mode .toasts--talk { width: min(260px, 36%); }
 
 /* ---- top left: up to the wallet's column ---- */
 .touch-mode .hud__objective { left: var(--zone-left); top: var(--zone-top); max-width: calc(100% - var(--zone-right) - var(--pad-row-width) - 212px); }
@@ -53,3 +50,14 @@
 .touch-mode .hud__identity { left: var(--zone-left); bottom: max(10px, var(--safe-bottom)); }
 /* 160 px with its padding and border: the weapon strip starts 172 px in (it overlapped by 7 px as 160 px of content). */
 .touch-mode .weapon-strip { left: calc(var(--zone-left) + 172px); right: auto; bottom: max(10px, var(--safe-bottom)); transform: none; align-items: flex-start; }
+
+/* ---- in a talk (ADR-0039): the wheel takes the right half below the top band, the subtitles the
+   bottom left up to under the objective. The wallet and the clock are of no use mid-talk and step
+   aside (as health and the minimap do, G-283); the newest message keeps to their place in the top
+   band, one line, so it never runs down over the wheel. ---- */
+#ui-root:has(.dialogue) :is(.hud__wallet, .hud__clock) { visibility: hidden; }
+.toasts--talk { top: 24px; width: min(340px, 40%); }
+.touch-mode .toasts--talk { top: var(--zone-top); right: var(--zone-right); width: min(340px, 40%); }
+.toasts--talk .toast:not(:last-child), .toasts--talk .toast__text { display: none; }
+.toasts--talk .toast__title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toasts--talk .toast > :last-child { min-width: 0; }
