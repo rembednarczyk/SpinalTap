@@ -127,6 +127,35 @@ describe("moon shadow keeps the static casters between frames (plan 14.11, step 
     expect(t.dynamics()).toBe(55);
   });
 
+  it("is settled once the kept statics are drawn: not while the square settles nor before the frame that draws them", () => {
+    const t = setup();
+    const block = MeshBuilder.CreateBox("map-near-0:0", { width: 20, height: 12, depth: 10 }, t.scene);
+    t.shadow.addFixedCaster(block);
+    const at = new Vector3(0, 0, 0);
+    // Before every render: the frame's update has run, its draws not yet.
+    const before: boolean[] = [];
+    const after: boolean[] = [];
+    const frame = (focus: Vector3): void => {
+      t.shadow.update(focus);
+      before.push(t.shadow.settled);
+      t.scene.render();
+      after.push(t.shadow.settled);
+    };
+    for (let i = 0; i < SETTLE_FRAMES + 3; i++) frame(at);
+    // The square moved on the first frame; it stands from the next, and splits on the SETTLE_FRAMES-th standing frame.
+    const split = SETTLE_FRAMES;
+    expect(after).toEqual(after.map((_, i) => i >= split));
+    expect(before[split]).toBe(false);
+    // A fixed caster hidden: its frame draws the statics again, then they are kept as before.
+    block.setEnabled(false);
+    expect(t.shadow.settled).toBe(false);
+    frame(at);
+    expect(after.at(-1)).toBe(true);
+    // Walking: never settled.
+    for (let i = 1; i <= 5; i++) frame(new Vector3(i * 0.5, 0, 0));
+    expect(after.slice(-5)).toEqual([false, false, false, false, false]);
+  });
+
   it("a frame of no shadow update (the loading screen) still draws the moving casters", () => {
     const t = setup();
     const at = new Vector3(0, 0, 0);

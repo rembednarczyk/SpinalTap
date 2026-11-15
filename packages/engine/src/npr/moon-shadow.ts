@@ -141,6 +141,11 @@ export class MoonShadow {
     return this.maps.passMeshes;
   }
 
+  /** The kept statics are drawn and stay so while the square stands (`ShadowMaps.settled`). */
+  get settled(): boolean {
+    return this.maps.settled;
+  }
+
   /** Side of the square the shadow covers now (m). */
   get coverage(): number {
     return this.extent * 2;
