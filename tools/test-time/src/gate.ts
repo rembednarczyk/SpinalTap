@@ -37,6 +37,8 @@ export interface Exception {
   /** A test's id (`testId`), or a test file for each of its tests. */
   readonly test: string;
   readonly reason: string;
+  /** Only this gate is excused (a test known to be slow keeps its growth gate); absent: both. */
+  readonly only?: Breach["kind"];
 }
 
 export interface Breach {
@@ -72,8 +74,8 @@ export const medianTimes = (runs: readonly TestTimes[]): Map<string, { readonly 
   return new Map([...by].map(([id, ms]) => [id, { ms: median(ms), runs: ms.length }]));
 };
 
-export const exceptionFor = (exceptions: readonly Exception[], test: string): Exception | undefined =>
-  exceptions.find((e) => e.test === test || test.startsWith(`${e.test} > `));
+export const exceptionFor = (exceptions: readonly Exception[], test: string, kind?: Breach["kind"]): Exception | undefined =>
+  exceptions.find((e) => (e.test === test || test.startsWith(`${e.test} > `)) && (!e.only || !kind || e.only === kind));
 
 /** The tests of the pull request (`head`) against their limits and the runs of main (`base`, newest first; none: the limits alone). */
 export const gateTests = (head: TestTimes, base: readonly TestTimes[], exceptions: readonly Exception[]): Gate => {
@@ -88,7 +90,7 @@ export const gateTests = (head: TestTimes, base: readonly TestTimes[], exception
   const breaches: Breach[] = [];
   const excused: (Breach & { reason: string })[] = [];
   for (const b of found) {
-    const e = exceptionFor(exceptions, b.test);
+    const e = exceptionFor(exceptions, b.test, b.kind);
     if (e) excused.push({ ...b, reason: e.reason });
     else breaches.push(b);
   }

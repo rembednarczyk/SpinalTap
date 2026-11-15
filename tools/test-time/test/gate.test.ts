@@ -62,4 +62,13 @@ describe("gate of single tests (ADR-0083 step 2)", () => {
     expect(mergeTests([{ files: {} }, { files: {}, tests: { [A]: t(1) } }])).toEqual({ [A]: t(1) });
     expect(gateSummary(gateTests({ [B]: t(1) }, [], []))).toContain("No test over the limits.");
   });
+
+  it("excuses a known-slow test only from the half limit: its growth over main still fails", () => {
+    const exceptions = [{ test: A, reason: "known slow at the gate's start", only: "limit" as const }];
+    const slowAsBefore = gateTests({ [A]: t(12_000) }, [{ [A]: t(11_800) }], exceptions);
+    expect(slowAsBefore.breaches).toEqual([]);
+    expect(slowAsBefore.excused.map((b) => b.kind)).toEqual(["limit"]);
+    const grown = gateTests({ [A]: t(17_000) }, [{ [A]: t(11_800) }], exceptions);
+    expect(grown.breaches.map((b) => b.kind)).toEqual(["growth"]);
+  });
 });
