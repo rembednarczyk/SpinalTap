@@ -192,3 +192,6 @@ Zostają `smoke`, `npr-perf`, `models`, `touch-layout` i `touch`. Doszły tylko 
 - **Czas e2e po:** każdy spec osobno przez `pnpm e2e`: `smoke` 4,1 min, `npr-perf` 3,6 min, `touch` 1,2 min, `models` 0,7 min, `touch-layout` 0,6 min, razem ok. 10 min. Przebieg „przed” miał jeszcze obsadę VRoid w specach logiki, więc część różnicy daje też `models=off` (punkt 6).
 - **Nowe testy bez przeglądarki:** 15 testów w 7 plikach `A/*-ui.test.tsx`, od 0,15 do 1,4 s na test, razem ok. 12 s z importami na obciążonej maszynie.
 - **Pokrycie** (`pnpm test:coverage`, zakres bez `app` i `engine`) wzrosło: instrukcje 96,79 → 96,85%, gałęzie 90,87 → 91,07%, funkcje 96,72 → 96,90%, linie 98,19 → 98,25%.
+
+## Dług: testy ponad połową limitu przy starcie bramki ADR-0083 (15.11)
+22 testy przekraczały 10 s z 20 s już w pierwszym przebiegu bramki czasu (CI run 43714759388): determinizm, zapis i wczytanie w trakcie paniki i walki, modele postaci, P-1 Alchemii, `generate.test` i jeden rodzaj skanu. Są na liście `tools/test-time/src/exceptions.ts` z `only: "limit"`: zwalnia je to tylko z progu połowy limitu, a wzrost wobec main nadal zatrzymuje PR. Wpis znika, gdy test zejdzie poniżej 10 s (ADR-0083 krok 3: wspólna pamięć miasta).
