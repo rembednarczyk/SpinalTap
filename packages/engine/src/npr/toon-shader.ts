@@ -1,5 +1,6 @@
 import { FACADE_GLSL, GROUND_GLSL } from "./toon-city";
-import { SETT_JOINT_GLSL, STREET_FIELD_GLSL, WATER_GLSL, WET_DARKEN, WET_STREAKS_GLSL } from "./water-mask";
+import { LAMP_STREAK_GLSL } from "./lamp-streaks";
+import { SETT_JOINT_GLSL, STREET_FIELD_GLSL, WATER_GLSL, WET_DARKEN } from "./water-mask";
 
 /** Number of point lights the toon shader evaluates per fragment. */
 export const MAX_POINT_LIGHTS = 8;
@@ -166,9 +167,7 @@ ${FACADE_GLSL}${GROUND_GLSL}
 ${WATER_GLSL}
 #ifdef WATER_MASK
 ${SETT_JOINT_GLSL}
-#ifdef ENV_REFLECT
-${WET_STREAKS_GLSL}
-#endif
+${LAMP_STREAK_GLSL}
 #endif
 #if defined(CONCRETE_PANELS) || defined(METAL_PANELS)
 /**
@@ -399,12 +398,16 @@ void main(void) {
     // Only what glows: the sky's haze is cut away, neon and signs stay, in flat steps.
     vec3 env = max(textureCube(envSampler, r).rgb - vec3(0.18), vec3(0.0));
 #ifdef WATER_MASK
-    if (standing < 0.25) env = wetStreaks(r, clamp(selfLit * 2.0 - 1.0, 0.0, 1.0));
+    // The merely wet street mirrors no probe: its lights without parallax were stray dots of neon.
+    env *= step(0.25, standing);
 #endif
     env = floor(env * 6.0 + 0.3) / 6.0;
     float graze = 0.25 + 0.75 * pow(1.0 - max(dot(n, v), 0.0), 3.0);
     spec += env * envStrength * puddle * graze * wetK;
   }
+#endif
+#ifdef WATER_MASK
+  spec += lampStreaks(vWorldPos, standing, vWater.y);
 #endif
 
   if (flashLight.w > 0.0) {

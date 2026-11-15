@@ -33,6 +33,9 @@ const UNIFORMS = [
   "envStrength",
   "dither",
   "wetTint",
+  "streakLamp",
+  "streakColor",
+  "streakCount",
 ];
 
 const SAMPLERS = ["shadowSampler", "shadowMovingSampler", "baseSampler"];

@@ -24,17 +24,10 @@ void main(void) {
     vec3 up = vec3(view[0][1], view[1][1], view[2][1]);
     // Pulled a little towards the eye, so the lamp's own glass does not swallow its glow.
     p += (right * uv.x + up * uv.y) * size + normalize(toEye) * min(size * 0.5, vDist * 0.2);
-    vUV = uv;
   } else {
-    // The pool reaches on towards the eye: its light's streak on the wet street (ADR-0084), in
-    // the pool's sizes from 1 behind the lamp to 2.4 in front of it.
-    vec2 f = toEye.xz;
-    float lf = length(f);
-    f = lf > 0.01 ? f / lf : vec2(0.0, 1.0);
-    float along = mix(-1.0, 2.4, uv.y * 0.5 + 0.5);
-    p.xz += (vec2(-f.y, f.x) * uv.x + f * along) * size;
-    vUV = vec2(uv.x, along);
+    p += vec3(uv.x, 0.0, uv.y) * size;
   }
+  vUV = uv;
   vColor = color.rgb;
   gl_Position = viewProjection * vec4(p, 1.0);
 }
@@ -51,12 +44,7 @@ uniform float fogDensity;
 void main(void) {
   float r = length(vUV);
   float k = max(1.0 - r, 0.0);
-  float a = pow(k, 2.2) * 0.85 + pow(k, 9.0) * 0.7;
-  if (vKind > 0.5) {
-    // The soft pool, and the streak drawn out of it in two flat steps.
-    float streak = max(1.0 - length(vec2(vUV.x * 4.5, (vUV.y - 0.8) / 1.5)), 0.0);
-    a = pow(k, 1.5) * 0.38 + (step(0.2, streak) + step(0.55, streak)) * 0.06;
-  }
+  float a = vKind < 0.5 ? pow(k, 2.2) * 0.85 + pow(k, 9.0) * 0.7 : pow(k, 1.5) * 0.38;
   a *= intensity * exp(-fogDensity * vDist * 0.6);
   gl_FragColor = vec4(vColor * a, a);
 }

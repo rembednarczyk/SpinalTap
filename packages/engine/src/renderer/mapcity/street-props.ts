@@ -72,7 +72,7 @@ export class StreetProps {
 
   constructor(private readonly deps: StreetPropsDeps) {
     this.now = deps.now ?? (() => performance.now());
-    this.halos = new LampHalos(deps.scene);
+    this.halos = new LampHalos(deps.scene, deps.materials, deps.quality);
     this.lod = PROP_LOD[deps.quality];
     this.poles = new PropPoles(deps.quality);
     this.bake = { ...deps, poles: this.poles };
@@ -186,7 +186,7 @@ export class StreetProps {
       block.far?.setEnabled(block.band === "far" || (block.band === "near" && !block.baked));
       if (detailed) for (const list of block.pieces.values()) for (const p of list) drawn[p.prop] = (drawn[p.prop] ?? 0) + 1;
     }
-    this.halos.show();
+    this.halos.show(eye);
     this.waitingBlocks = waiting;
     this.drawn = drawn;
   }

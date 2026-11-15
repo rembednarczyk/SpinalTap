@@ -24,6 +24,9 @@ export interface ImportedMaterialOptions {
   readonly tint?: boolean;
 }
 
+/** Materials of the map city's wet ground (ADR-0084): they mirror the lamps near the eye. */
+const mirrorsLamps = (key: string): boolean => (PRESETS as Record<string, { readonly water?: boolean }>)[key]?.water === true;
+
 /**
  * Owns all toon materials (one per preset, shared between meshes) and pushes the shared
  * light rig into them. Point lights are registered by key so they can be removed again.
@@ -149,6 +152,7 @@ export class ToonMaterials {
       this.look.applyFlash(m);
       this.look.applyRimTint(m);
       this.look.applyWetTint(m);
+      if (mirrorsLamps(key)) this.look.applyLampStreaks(m);
     }
     return m;
   }
@@ -163,6 +167,12 @@ export class ToonMaterials {
   setWetTint(color: string): void {
     if (!this.look.setWetTint(color)) return;
     for (const m of this.materials.values()) this.look.applyWetTint(m);
+  }
+
+  /** The lamps the map city's wet ground mirrors (ADR-0084): only its materials take them. */
+  setLampStreaks(pos: readonly number[], col: readonly number[]): void {
+    this.look.setLampStreaks(pos, col);
+    for (const [key, m] of this.materials) if (mirrorsLamps(key)) this.look.applyLampStreaks(m);
   }
 
   /**

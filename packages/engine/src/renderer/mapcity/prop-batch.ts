@@ -169,3 +169,7 @@ export const planHalos = (sink: MeshSink, p: WorldProp, lights: readonly PropLig
     if (l.pool) quad({ x: at.x, y: p.y + 0.24, z: at.z }, Math.min(2.5 + (at.y - p.y) * 0.6, 7.5), HALO_KIND.pool);
   }
 };
+
+/** The lights of a piece that pool on the street, as the wet street mirrors them (ADR-0084): where each hangs and its colour. */
+export const poolLights = (p: WorldProp, lights: readonly PropLight[]): { x: number; y: number; z: number; color: [number, number, number] }[] =>
+  lights.filter((l) => l.pool).map((l) => ({ ...placePoint(p, l.at), color: hex(l.color) }));
