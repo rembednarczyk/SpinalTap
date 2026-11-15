@@ -5,10 +5,11 @@
  */
 import type { StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
 import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { type Pt } from "./geometry.ts";
 import type { Placed, PlanItem } from "./props-gen.ts";
 import { fnv, sideOffset, stations, yawOf } from "./props-place.ts";
-import { type Site } from "./props-site.ts";
+import type { Site, SiteStreet } from "./props-site.ts";
 
 const flat = (f: readonly number[]): Pt[] => {
   const out: Pt[] = [];
@@ -47,9 +48,39 @@ const baskets = (item: PlanItem, placed: readonly Placed[]): Placed[] => {
 /** Streets that carry traffic (not paths, steps or service lanes). */
 const ROADS: ReadonlySet<string> = new Set(["primary", "secondary", "tertiary", "residential", "unclassified", "living_street", "primary_link", "secondary_link", "tertiary_link", "trunk"]);
 
+/** A street's segment, by its box in `segments`. */
+interface Segment {
+  readonly st: SiteStreet;
+  readonly a: Pt;
+  readonly b: Pt;
+}
+
+const SEGMENTS = new WeakMap<readonly SiteStreet[], SpatialHash<Segment>>();
+
+/** The streets' segments by their boxes, once a list: the city's streets are a thousand polylines, asked of every sample. */
+const segments = (streets: readonly SiteStreet[]): SpatialHash<Segment> => {
+  let hash = SEGMENTS.get(streets);
+  if (hash) return hash;
+  hash = new SpatialHash<Segment>(32);
+  for (const st of streets)
+    for (let i = 0; i + 1 < st.line.length; i++) {
+      const [a, b] = [st.line[i]!, st.line[i + 1]!];
+      hash.insert({ st, a, b }, Math.min(a.x, b.x), Math.min(a.z, b.z), Math.max(a.x, b.x), Math.max(a.z, b.z));
+    }
+  SEGMENTS.set(streets, hash);
+  return hash;
+};
+
+/** Is p within `reach` metres of the axis of one of `streets` that `keep` takes? The box asked is a centimetre wider, so no segment within reach is missed by rounding. */
+export const nearStreet = (streets: readonly SiteStreet[], p: Pt, reach: number, keep: (st: SiteStreet) => boolean = () => true): boolean => {
+  const r = reach + 0.01;
+  return segments(streets).some(p.x - r, p.z - r, p.x + r, p.z + r, (s) => keep(s.st) && segmentDistance(p.x, p.z, s.a.x, s.a.z, s.b.x, s.b.z) < reach);
+};
+
+const carries = (st: SiteStreet): boolean => ROADS.has(st.kind) && st.kind !== "living_street";
+
 /** Is p within `reach` metres of the axis of a street cars drive (where the traffic's lanes run)? */
-export const nearTraffic = (site: Site, p: Pt, reach: number): boolean =>
-  site.streets.some((st) => ROADS.has(st.kind) && st.kind !== "living_street" && distToLine(p, st.line) < reach);
+export const nearTraffic = (site: Site, p: Pt, reach: number): boolean => nearStreet(site.streets, p, reach, carries);
 
 const lengthOf = (line: readonly Pt[]): number => {
   let len = 0;

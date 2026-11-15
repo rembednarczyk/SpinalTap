@@ -16,7 +16,8 @@ import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/st
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { REPO } from "./paths.ts";
 import { loadLitWays, loadPropsPlan, loadStreetWays } from "./props-osm.ts";
-import { placeLit } from "./props-lit.ts";
+import { type CrownStats } from "./crown-trees.ts";
+import { loadCrownData, placeWithCrowns } from "./props-crowns.ts";
 import { emitProps } from "./props-emit.ts";
 import { type PropsStats, generateProps } from "./props-gen.ts";
 import { loadBuildingTags, loadNodeTags } from "./props-art.ts";
@@ -52,6 +53,8 @@ export interface BuiltProps {
   readonly figures: FiguresOut;
   readonly entrances: number;
   readonly doorWalls: { readonly walls: number; readonly boards: number };
+  /** The control numbers of the crowns' trees (`crown-trees.ts`). */
+  readonly crowns: CrownStats & { readonly placed: number };
 }
 
 /** The whole table, in one pass: furniture, doors, decals, then the still crowd. */
@@ -67,8 +70,9 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   const doors = await runWith<typeof GameDoors>("tools/osm-import/src/game-doors.ts", new Map(), extra);
   const place = (p: typeof plan) => generateProps(p, chunks, loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() });
   // The `lit` rule's second pass (G-798): once the lamps stand, its plain lamps on a way with styled ones take their look, and
-  // the lit ways still dark get lamps of their own; the furniture is placed again.
-  const { byChunk, stats } = placeLit(plan, place, loadLitWays(), loadStreetWays());
+  // the lit ways still dark get lamps of their own; the furniture is placed again. Then the trees of the crowns no tree
+  // stands under (G-797), after every other piece, and the furniture once more.
+  const { byChunk, stats, crowns } = placeWithCrowns(plan, place, loadLitWays(), loadStreetWays(), new Site(chunks), loadCrownData());
   const table = byChunk as Map<string, StreetPropItem[]>;
   // The doors on the facades (ADR-0058 stage 9), after the furniture, whose solids keep their fronts clear.
   const doorWalls = decalWalls.lublinDoorWalls();
@@ -97,6 +101,7 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
     text: emitProps(byChunk),
     byChunk,
     stats,
+    crowns,
     decals,
     doors: doorsOut,
     figures,

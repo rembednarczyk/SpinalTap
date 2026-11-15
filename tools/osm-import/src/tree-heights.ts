@@ -44,9 +44,9 @@ export const osmTreeHeight = (tags: Tags | undefined): number | null => {
 /** Directions a cell is tried off the roofs in, at the buffer and at half of it. */
 const ROOF_TRIES: readonly Pt[] = Array.from({ length: 8 }, (_, i) => ({ x: Math.cos((i * Math.PI) / 4), z: Math.sin((i * Math.PI) / 4) }));
 
-/** Whether p lies in a building's outline or within `reach` of it. */
-const byRoof = (site: Site, p: Pt, reach: number): boolean =>
-  site.surfaceAt(p) === "building" || ROOF_TRIES.some((d) => [reach, reach / 2].some((r) => site.surfaceAt({ x: p.x + d.x * r, z: p.z + d.z * r }) === "building"));
+/** Whether p lies in a building's outline or within `reach` of it, on the eight ways at `reach` and half of it. */
+export const byRoof = (site: Site, p: Pt, reach: number): boolean =>
+  site.buildingNear(p, reach) && (site.inBuilding(p) || ROOF_TRIES.some((d) => [reach, reach / 2].some((r) => site.inBuilding({ x: p.x + d.x * r, z: p.z + d.z * r }))));
 
 let city: Chm[] | null = null;
 /** The committed extracts of every district, read once. */
@@ -73,9 +73,10 @@ const AROUND = 16;
 
 /** Whether a crown reaching `r` from the trunk at p stays off every building's outline. */
 const clearOfWalls = (site: Site, p: Pt, r: number): boolean => {
+  if (!site.buildingNear(p, r)) return true;
   for (let i = 0; i < AROUND; i++) {
     const a = (2 * Math.PI * i) / AROUND;
-    for (const d of [r, r / 2]) if (site.surfaceAt({ x: p.x + Math.cos(a) * d, z: p.z + Math.sin(a) * d }) === "building") return false;
+    for (const d of [r, r / 2]) if (site.inBuilding({ x: p.x + Math.cos(a) * d, z: p.z + Math.sin(a) * d })) return false;
   }
   return true;
 };

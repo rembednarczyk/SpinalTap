@@ -25,6 +25,8 @@ export class ShadowMaps {
   private proxy: AbstractMesh | null = null;
   private split = false;
   private still = 0;
+  /** Kept statics not drawn since they were laid out or changed: the next frame draws them. */
+  private pending = false;
 
   constructor(scene: Scene, size: number, camera: Camera) {
     this.statics = depthMap("moon-shadow", scene, size, camera);
@@ -39,6 +41,7 @@ export class ShadowMaps {
     );
     // The moving map starts clear: drawn once with nothing in it.
     this.moving.refreshRate = RenderTargetTexture.REFRESHRATE_RENDER_ONCE;
+    this.statics.onAfterRenderObservable.add(() => (this.pending = false));
     scene.customRenderTargets.push(this.statics, this.moving);
   }
 
@@ -95,8 +98,18 @@ export class ShadowMaps {
     return this.split;
   }
 
+  /**
+   * The statics are kept and drawn: every frame on costs what this one did while the square stands.
+   * Not while it settles (every caster in one map) nor on the frame the kept statics are drawn
+   * again, `passMeshes` more calls than the frames after.
+   */
+  get settled(): boolean {
+    return this.split && !this.pending;
+  }
+
   private layout(split: boolean): void {
     this.split = split;
+    this.pending = split;
     this.fill();
     // Merged: every caster each frame, the moving map cleared once. Split: statics once, then kept.
     this.statics.refreshRate = split ? RenderTargetTexture.REFRESHRATE_RENDER_ONCE : RenderTargetTexture.REFRESHRATE_RENDER_ONEVERYFRAME;
@@ -106,7 +119,9 @@ export class ShadowMaps {
   /** Kept statics are drawn again on the next frame (the lists change only with `refill`). */
   private staticsChanged(refill = true): void {
     if (refill) this.fill();
-    if (this.split) this.statics.resetRefreshCounter();
+    if (!this.split) return;
+    this.statics.resetRefreshCounter();
+    this.pending = true;
   }
 
   private fill(): void {
