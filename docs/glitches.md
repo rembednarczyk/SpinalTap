@@ -1947,6 +1947,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - 15.11 r4 d00cf52: pas do trawnika jedną nawierzchnią na odcinek (lawnStretches), kontrola kerb-fill-flicker (baza 63, wszystkie z main); do kuratora: łącznica Ruskiej (1068–1073; 432–447) square 1–1,5 m częściowo na zieleni ortofoto
 - 15.11 kurator r4 d00cf52: NIEZGODNE. Lwowska z 337–365 i 390–441, A z 453–474, Solidarności zgodne z ortofoto. Łącznica Ruskiej w216655518 (1064–1074; 432–444): square 1,0–1,8 m na trawniku (+10,2 m² na zieleni), ortofoto 2023-09/2024-06/2025-04: trawnik od krawędzi jezdni. Przyczyna: weto jednej twardej próbki w lawnStretches (5 z 37). Oczekiwane: trawa z 432–444, square tylko przy zebrze z 444–447,5. Drobne: Andersa (2355,6–2356,6; 357–358) trawa zamiast square 0,3–0,8 m.
 - r5 e3133eb: odcinek trawnikiem przy zielonych >1/2 i twardych <=1/5, twardy koniec przy zebrze square; Ruska trawa od krawężnika; scalenie main aa247de (konflikt z G-837)
+- 15.11 kurator r5 e3133eb: ZGODNE. Ruska trawa od krawężnika z 431,8–444,5 (17 z 18,6 m² na zieleni ortofoto), square przy zebrze; Lwowska, A, Solidarności, Andersa bez zmian; G-837 zachowane (kerb-jag-places zielony, krakowskie i stare-miasto jak main); hashe zgodne, skan = baza; klucze bazy uzasadnione (kerb-jag 1050,440 = G-860). Resztki S4 w osobnym zgłoszeniu.
 
 ### G-826 Pokrycie ortofoto 2025-04 klasuje jasny asfalt jezdni jako paving
 - Ważność: S3 · Zasięg: m.in. pod latarniami G-821; kontrola lamp-on-orto-carriageway ich nie widzi
@@ -2117,7 +2118,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-853 Pasy gołej ziemi między kostką deptaku Krakowskiego Przedmieścia a pierzejami
 - Ważność: S3 · Zasięg: deptak x −100..440: 2141 m² w 10 m od osi (2765 m² w 20 m); największe (222,5;−70,6) 620 m², (291,0;−69,9) 592 m², (364,6;−86,0) 200 m²
 - Opis: Zgłoszenie użytkownika 15.11. Import nie kładzie nawierzchni między krawędzią kostki (z ortofoto) a ścianami kamienic residential; goła ziemia w kolorze TERRAIN #514c45. Stan od pierwszego importu 29.10 (c0e87f3), malał (2472 → 2141 m²), nie regresja; bardziej widoczny po jaśniejszej kostce z ortofoto (13.11). Zrzuty scratchpad/g-deptak/cmp2/grid.png
-- Status: w naprawie (WIP 7ff493d, runda 2: meble niezależne od wypełnień frontu, nowe klucze skanu, grass-on-light-paving); wcześniej: nowy
+- Status: do przeglądu kuratora (e3175f7); wcześniej: w naprawie (WIP 7ff493d, runda 2: meble niezależne od wypełnień frontu, nowe klucze skanu, grass-on-light-paving); wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 
 ### G-854 Plamy gołej ziemi przy Bramie Krakowskiej i wschodnich ulicach Starego Miasta
@@ -2169,6 +2170,30 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Jezdnia w1551268848 i w139586650 na osi ścieżki w406693442 ma w grze ok. 6,8 m, a na ortofoto 2025-04 i 2024-06 ok. 9,5–10 m. Zebra n4087364975 kończy się na krawężniku gry: 6,8 m wobec ok. 9 m pasów (przegląd G-836 r2).
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
+
+### G-862 Resztki G-825: square przy zebrze łącznicy Ruskiej na zieleni, trawa zamiast square przy Andersie
+- Ważność: S4 · Zasięg: podzamcze-2-1 (1062–1066,4; 443,3–447,3); nabrzeze-0-1 (2355,6–2356,6; 357–358)
+- Opis: Po G-825 r5: pas square przy zebrze ma 8,6 m², z czego 5,2 m² na zieleni ortofoto 2025-04 (zieleń do z 446,5 przy x 1062,5–1065, kostka tylko ok. 1 m przy krawędzi jezdni, możliwe G-826); na main granica szła po zieleni. Andersa: trawa zamiast square 0,3–0,8 m (kurator r4). Proponowana kontrola kerb-strip-square-on-green: pas square kerbFills z >50% i >2 m² zieleni ortofoto, baza 1 (podzamcze-2-1 1060,440).
+- Status: nowy
+- Pakiet właściciela: tools/osm-import (kerb-fill.ts)
+
+### G-863 Wypełnienia gołej ziemi odrzucane przez crossesItself po cięciu
+- Ważność: S4 · Zasięg: ok. 40 miejsc w mieście, największe (975,407) ok. 33 m², (373,-171) ok. 28 m²
+- Opis: Zgłoszone przez naprawiacza G-853 r2: wypełnienie jest odrzucane przez crossesItself i miejsce zostaje gołe; mechanizm z main. Klucz frontage-bare 370,-170.
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+
+### G-864 ground-strip-gap liczy szczeliny pod budynkami
+- Ważność: S4 · Zasięg: cały skan; 16 kluczy z G-853 r2 w całości pod budynkami
+- Opis: Kontrola skanu ground-strip-gap nie odrzuca szczelin przykrytych budynkiem, więc baza rośnie o fałszywe alarmy.
+- Status: nowy
+- Pakiet właściciela: tools/glitch-scan
+
+### G-865 model-donors.test.ts wyczerpuje pamięć przy wspólnym przebiegu kilku pakietów
+- Ważność: S4 · Zasięg: packages/engine/test/model-donors.test.ts
+- Opis: Zgłoszone przez naprawiacza G-853 r2: test:rerun kilku pakietów naraz kończy się brakiem pamięci w tym pliku; sam przechodzi.
+- Status: nowy
+- Pakiet właściciela: packages/engine
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
