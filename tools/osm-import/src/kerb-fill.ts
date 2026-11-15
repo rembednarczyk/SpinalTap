@@ -50,8 +50,8 @@ const RISE = 3 * ALONG;
 const MERGE_AXIS = 1;
 /** How far past the paving reached another carriageway makes it an island between two (m): neither is widened over to it. */
 const MEDIAN_REACH = KERB_REACH;
-/** The fewest samples in a row a carriageway is widened over (`ALONG` apart): 3 m, a car's bay at the least. */
-const MIN_RUN = 1;
+/** The fewest samples in a row a carriageway is widened over (`ALONG` apart): 3 m, a car's bay at the least. One, it widened a 1 m notch into a bend's kerb (G-837). */
+const MIN_RUN = 6;
 /** The kerb stone laid between a widened carriageway and paving with no kerb of its own (m): the renderer draws kerbs on sidewalks only. */
 const KERB_STONE = 0.3;
 /** How far a zebra may reach on past the carriageway's estimated edge (m). */
@@ -243,6 +243,21 @@ const longRuns = (flags: readonly boolean[]): boolean[] => {
   return out;
 };
 
+/**
+ * The runs of `seeds` grown on either side over the samples where the carriageway `may` reach its
+ * paving: the asphalt follows the paving's edge in to the kerb, as the gap closes under `ROAD_GAP`,
+ * and does not step back 1 m to the estimated edge where it crosses it (G-837).
+ */
+const grownRuns = (seeds: readonly boolean[], may: readonly boolean[]): boolean[] => {
+  const out = [...seeds];
+  for (let i = 0; i < seeds.length; i++) {
+    if (!seeds[i]) continue;
+    for (let j = i - 1; j >= 0 && may[j] && !out[j]; j--) out[j] = true;
+    for (let j = i + 1; j < seeds.length && may[j] && !seeds[j]; j++) out[j] = true;
+  }
+  return out;
+};
+
 /** Cuts samples into runs of one kind, every `WINDOW` steps too, neighbouring runs sharing the step between them. */
 const runsOf = <T>(samples: readonly Sample[], spanOf: (s: Sample) => T | null, flush: (run: T[]) => void): void => {
   let run: T[] = [];
@@ -321,12 +336,13 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       const q = along(s.edge, s.dir, -half - MERGE_AXIS);
       return world.roads.scan(q.x, q.z, (b) => b !== road && b.kerb !== undefined && alongside(b.kerb.line, q, s.dir));
     };
-    const own = (side: 1 | -1) => (s: Sample) => estimated(road.source, side) && s.hit !== null && !s.hit.joins && s.hit.gap >= ROAD_GAP && !s.hit.median && !merged(s);
+    const may = (side: 1 | -1) => (s: Sample) => estimated(road.source, side) && s.hit !== null && !s.hit.joins && !s.hit.median && !merged(s);
+    const own = (side: 1 | -1) => (s: Sample) => may(side)(s) && s.hit!.gap >= ROAD_GAP;
     // The corner between a widened stretch and a side street it meets is asphalt too: left bare,
     // it pinched the lane the wider street moved out (Radziwiłłowska, G-090).
     const wideSet = new Set<Sample>();
     for (const [side, sign] of [[right, -1], [left, 1]] as const) {
-      const ok = longRuns(side.map(own(sign)));
+      const ok = grownRuns(longRuns(side.map(own(sign))), side.map(may(sign)));
       side.forEach((s, i) => {
         if (ok[i] || (s.hit?.joins && (ok[i - 1] === true || ok[i + 1] === true))) wideSet.add(s);
       });
