@@ -52,6 +52,8 @@ const MERGE_AXIS = 1;
 const MEDIAN_REACH = KERB_REACH;
 /** The fewest samples in a row a carriageway is widened over (`ALONG` apart): 3 m, a car's bay at the least. */
 const MIN_RUN = 1;
+/** The most the paving's edge steps out or back from one sample to the next for a widened stretch to grow over it (m, `ALONG` apart): a slope of 45°. */
+const GROW_STEP = ALONG;
 /** The kerb stone laid between a widened carriageway and paving with no kerb of its own (m): the renderer draws kerbs on sidewalks only. */
 const KERB_STONE = 0.3;
 /** How far a zebra may reach on past the carriageway's estimated edge (m). */
@@ -243,6 +245,48 @@ const longRuns = (flags: readonly boolean[]): boolean[] => {
   return out;
 };
 
+/**
+ * The runs of `seeds` grown on either side over the samples where the carriageway `may` reach its
+ * paving, as long as the paving's edge runs on smooth (`GROW_STEP` from one sample to the next):
+ * the asphalt follows it in to the kerb as the gap closes under `ROAD_GAP`, and does not step back
+ * 1 m to the estimated edge where it crosses it (G-837). A corner's wedge it stops at.
+ */
+const grownRuns = (seeds: readonly boolean[], may: readonly boolean[], gaps: readonly number[]): boolean[] => {
+  const out = [...seeds];
+  const smooth = (j: number, k: number) => may[j] && Math.abs(gaps[j]! - gaps[k]!) <= GROW_STEP;
+  for (let i = 0; i < seeds.length; i++) {
+    if (!seeds[i]) continue;
+    for (let j = i - 1; j >= 0 && !out[j] && smooth(j, j + 1); j--) out[j] = true;
+    for (let j = i + 1; j < seeds.length && !seeds[j] && smooth(j, j - 1); j++) out[j] = true;
+  }
+  return out;
+};
+
+/**
+ * Whether a sample is widened, by the flags of its edge's samples: its own, or a side street's
+ * corner beside one widened. The corner between a widened stretch and a side street it meets is
+ * asphalt too: left bare, it pinched the lane the wider street moved out (Radziwiłłowska, G-090).
+ */
+const cornered = (ok: readonly boolean[], s: Sample, i: number): boolean => ok[i] === true || (s.hit?.joins === true && (ok[i - 1] === true || ok[i + 1] === true));
+
+/** How far out the asphalt of each sample of the edges goes (`easedReach`) where `wide`. */
+const reachOf = (sides: readonly (readonly Sample[])[], wide: (s: Sample) => boolean): Map<Sample, number> => {
+  const reach = new Map<Sample, number>();
+  for (const side of sides) {
+    const eased = easedReach(side, wide);
+    side.forEach((s, i) => reach.set(s, eased[i]!));
+  }
+  return reach;
+};
+
+/** A carriageway's ring widened by `reach` on its right and left edges, and the stretches widened; null where it would cross itself. */
+const widenedRing = ([re, right]: readonly [readonly Pt[], readonly Sample[]], [le, left]: readonly [readonly Pt[], readonly Sample[]], reach: ReadonlyMap<Sample, number>) => {
+  const out = (s: Sample) => (reach.get(s)! > 0 ? along(s.edge, s.dir, reach.get(s)!) : null);
+  const [wr, wl] = [widenedEdge(re, right, out), widenedEdge(le, left, out)];
+  const ring = ccw([...wr.pts, ...wl.pts.reverse()]);
+  return selfIntersects(ring) ? null : { ring, runs: [...wr.runs, ...wl.runs] };
+};
+
 /** Cuts samples into runs of one kind, every `WINDOW` steps too, neighbouring runs sharing the step between them. */
 const runsOf = <T>(samples: readonly Sample[], spanOf: (s: Sample) => T | null, flush: (run: T[]) => void): void => {
   let run: T[] = [];
@@ -265,8 +309,11 @@ const runsOf = <T>(samples: readonly Sample[], spanOf: (s: Sample) => T | null, 
 export interface KerbFills {
   /** Sidewalks over the strips, and kerb stones along the widened carriageways. */
   readonly fills: readonly Band[];
-  /** The carriageways widened over their strips: their new rings (the zebras' reach), and the stretches widened (the asphalt laid along them). */
-  readonly widened: ReadonlyMap<Band, { readonly ring: readonly Pt[]; readonly runs: readonly WidenRun[] }>;
+  /**
+   * The carriageways widened over their strips: their new rings (the zebras' reach), the stretches
+   * widened (the asphalt laid along them), and those before they grew in to the kerb (the lanes').
+   */
+  readonly widened: ReadonlyMap<Band, { readonly ring: readonly Pt[]; readonly runs: readonly WidenRun[]; readonly lanes: readonly WidenRun[] }>;
 }
 
 /**
@@ -308,7 +355,7 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
   const blocks = buildings.map((ring): Block => ({ ring, box: ringBounds(ring), block: true }));
   const world: World = { lots: new RingBins<Boxed | Block>([...laid, ...blocks]), roads: new RingBins(laid.filter((b) => b.carriageway === true)) };
   const fills: Band[] = [];
-  const widened = new Map<Band, { ring: readonly Pt[]; runs: readonly WidenRun[] }>();
+  const widened = new Map<Band, { ring: readonly Pt[]; runs: readonly WidenRun[]; lanes: readonly WidenRun[] }>();
   for (const road of bands) {
     if (!road.kerb || road.bridge || lineLength(road.kerb.line) < ALONG) continue;
     const { line, half } = road.kerb;
@@ -321,29 +368,29 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       const q = along(s.edge, s.dir, -half - MERGE_AXIS);
       return world.roads.scan(q.x, q.z, (b) => b !== road && b.kerb !== undefined && alongside(b.kerb.line, q, s.dir));
     };
-    const own = (side: 1 | -1) => (s: Sample) => estimated(road.source, side) && s.hit !== null && !s.hit.joins && s.hit.gap >= ROAD_GAP && !s.hit.median && !merged(s);
-    // The corner between a widened stretch and a side street it meets is asphalt too: left bare,
-    // it pinched the lane the wider street moved out (Radziwiłłowska, G-090).
-    const wideSet = new Set<Sample>();
+    const reaches = (side: 1 | -1) => (s: Sample) => estimated(road.source, side) && s.hit !== null && !s.hit.joins && !s.hit.median && !merged(s);
+    const own = (side: 1 | -1) => (s: Sample) => reaches(side)(s) && s.hit!.gap >= ROAD_GAP;
+    // Grown in to the kerb, not over a zebra mapped past it: a kerb stone laid there would cut it in two.
+    const may = (side: 1 | -1) => (s: Sample) => reaches(side)(s) && !s.hit!.crossed;
+    // The stretches widened (`seeded`, as the lanes read them) and the asphalt grown on from them in to the kerb (`wideSet`).
+    const [seeded, wideSet] = [new Set<Sample>(), new Set<Sample>()];
     for (const [side, sign] of [[right, -1], [left, 1]] as const) {
-      const ok = longRuns(side.map(own(sign)));
+      const seeds = longRuns(side.map(own(sign)));
+      const grown = grownRuns(seeds, side.map(may(sign)), side.map((s) => s.hit?.gap ?? 0));
       side.forEach((s, i) => {
-        if (ok[i] || (s.hit?.joins && (ok[i - 1] === true || ok[i + 1] === true))) wideSet.add(s);
+        if (cornered(seeds, s, i)) seeded.add(s);
+        if (cornered(grown, s, i)) wideSet.add(s);
       });
     }
     const wide = (s: Sample) => wideSet.has(s);
-    const reach = new Map<Sample, number>();
-    for (const side of [right, left]) {
-      const eased = easedReach(side, wide);
-      side.forEach((s, i) => reach.set(s, eased[i]!));
-    }
+    const reach = reachOf([right, left], wide);
     let asRoad = wideSet.size > 0;
     if (asRoad) {
-      const out = (s: Sample) => (reach.get(s)! > 0 ? along(s.edge, s.dir, reach.get(s)!) : null);
-      const [wr, wl] = [widenedEdge(r.edge, right, out), widenedEdge(l.edge, left, out)];
-      const ring = ccw([...wr.pts, ...wl.pts.reverse()]);
-      if (selfIntersects(ring)) asRoad = false;
-      else widened.set(road, { ring, runs: [...wr.runs, ...wl.runs] });
+      const ground = widenedRing([r.edge, right], [l.edge, left], reach);
+      if (!ground) asRoad = false;
+      // The lanes keep the reach of the stretches widened: moved out over the asphalt grown in to
+      // the kerb, a lane ran over the bays beside it (ADR-0080).
+      else widened.set(road, { ...ground, lanes: widenedRing([r.edge, right], [l.edge, left], reachOf([right, left], (s) => seeded.has(s)))?.runs ?? [] });
     }
     const full = (s: Sample) => asRoad && wide(s) && reach.get(s)! >= s.hit!.gap + INTO - 1e-9;
     const lay = (run: Span[], stone?: true) => {

@@ -52,7 +52,7 @@ const local = (p: StreetPropItem, x: number, z: number) => {
 
 const make = (quality: "high" | "low", withProps: CityProps | null) => {
   const scene = new Scene(new NullEngine());
-  const s = new StreetProps({ scene, materials: new ToonMaterials(scene), quality });
+  const s = new StreetProps({ scene, materials: new ToonMaterials(scene), quality, now: () => 0 });
   s.spawn(1, PIECES, { x: 0, y: 0, z: 0 });
   s.flush();
   if (withProps) s.setProps(withProps);
