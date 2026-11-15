@@ -19,7 +19,7 @@ const site = new Site(CHUNKS);
 /** The post's +x in the world (the renderer's frame), along which its first chain runs. */
 const sideOf = (i: StreetPropItem) => ({ x: Math.cos(i.yaw), z: -Math.sin(i.yaw) });
 const post = (x: number, z: number): StreetPropItem => ({ prop: "bollard", x, y: 0, z, yaw: 0, variant: 0 });
-/** What a chain ending at `to` hangs on: a post's face or a pole's shaft. */
+/** What a chain ending at `to` hangs on: a post's or a pole's shaft. */
 const holds = (o: StreetPropItem, to: { x: number; z: number }) => (o.prop === "bollard" ? distanceToPiece(o, to.x, to.z) <= 0.2 : anchors(o, to));
 
 describe("rows of bollards and their chains (G-032)", () => {
@@ -62,22 +62,27 @@ describe("rows of bollards and their chains (G-032)", () => {
     expect(inCrossingBand(band, { x: 0, z: -1.7 })).toBe(false);
     const row = [-4, -1, 3].map((x) => post(x, -1));
     const [, moved] = clearMouths(row, [band], () => null, () => true);
-    expect(moved!.x).toBeLessThan(-2 - BOLLARD.side / 2);
+    expect(moved!.x).toBeLessThan(-2 - BOLLARD.radius);
     expect(Math.abs(moved!.x + 4)).toBeGreaterThanOrEqual(1.2);
     // Closed in on both sides: it goes.
     expect(clearMouths([-3, 0, 3].map((x) => post(x, -1)), [band], () => null, () => true)[1]).toBeNull();
   });
 
-  it("keeps Plac Łokietka's zebra mouth free: the post in it goes, the row ends at its edge", () => {
+  it("keeps Plac Łokietka's zebra mouth free: the post in it goes, the rows end at its edges", () => {
     const row = posts.filter((i) => Math.abs(i.x - 439) < 1 && i.z < -91 && i.z > -100).sort((a, b) => a.z - b.z);
     // 439,-94.4 stood in the mouth of the zebra from 439.2,-95 eastwards, with no room beside it.
     expect(row.map((i) => i.z)).toEqual([-99.5, -96.8, -91.9]);
     for (const i of row.slice(0, 2)) expect(Math.abs(sideOf(i).x), `${i.x},${i.z} yaw ${i.yaw}`).toBeLessThan(Math.sin((3 * Math.PI) / 180));
+    // The row of OSM's line w1514057825 (G-818) runs on south of the mouth: the post before it holds its chain back to the
+    // next, none crosses the mouth, and the post after it starts the line w1514057822 northwards.
     const [first, second, third] = row.map(chainSegments);
     expect(first).toHaveLength(1);
-    expect(distanceToPiece(row[1]!, first![0]!.to.x, first![0]!.to.z)).toBeLessThanOrEqual(0.02);
-    expect(second).toEqual([]);
+    expect(first![0]!.to.z).toBeLessThan(-100);
+    expect(second).toHaveLength(1);
+    expect(distanceToPiece(row[0]!, second![0]!.to.x, second![0]!.to.z)).toBeLessThanOrEqual(0.02);
     expect(third).toEqual([]);
+    const across = posts.filter((i) => Math.abs(i.x - 439) < 1).flatMap(chainSegments);
+    expect(across.filter((s) => Math.min(s.from.z, s.to.z) < -94.4 && Math.max(s.from.z, s.to.z) > -94.4)).toEqual([]);
   });
 
   it("keeps every post and chain of the city out of the zebras' mouths, holds every chain at its end and runs none through anything", () => {
@@ -85,7 +90,7 @@ describe("rows of bollards and their chains (G-032)", () => {
     expect(posts.filter((i) => bollardChains(i).length > 0).length).toBeGreaterThan(200);
     const solids = pieces.filter((i) => furnitureRadius(i) > 0);
     const wrong = posts.flatMap((i) => [
-      ...(BANDS.some((b) => inCrossingBand(b, i, BOLLARD.side / 2)) ? [`${i.x},${i.z} in a mouth`] : []),
+      ...(BANDS.some((b) => inCrossingBand(b, i, BOLLARD.radius)) ? [`${i.x},${i.z} in a mouth`] : []),
       ...chainSegments(i).flatMap(({ from, to }) => {
         const close = solids.filter((o) => o !== i && Math.hypot(o.x - i.x, o.z - i.z) < 6);
         const end = close.filter((o) => holds(o, to));
@@ -100,6 +105,6 @@ describe("rows of bollards and their chains (G-032)", () => {
     expect(wrong).toEqual([]);
     // Some chains hang on lamps.
     expect(posts.some((i) => chainSegments(i).some(({ to }) => pieces.some((o) => o.prop !== "bollard" && anchors(o, to))))).toBe(true);
-    expect(chainBetween(post(0, 0), post(2, 0))).toEqual({ from: { x: BOLLARD.side / 2, z: 0 }, to: { x: 2 - BOLLARD.side / 2, z: 0 } });
+    expect(chainBetween(post(0, 0), post(2, 0))).toEqual({ from: { x: BOLLARD.shaft, z: 0 }, to: { x: 2 - BOLLARD.shaft, z: 0 } });
   });
 });

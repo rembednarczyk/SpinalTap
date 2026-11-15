@@ -30,8 +30,8 @@ import { grassUnderPavingFindings } from "./grass-under-paving";
 import { cityWaterWorld, waterUnderGrass } from "./water-under-grass";
 import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
 import { entrancesWithoutDoor } from "./entrance-no-door";
-import { osmFurnitureMissing } from "./osm-furniture";
-import { loadFurniture } from "../../osm-import/src/furniture.ts";
+import { osmBollardLineMissing, osmFurnitureMissing } from "./osm-furniture";
+import { loadBollardLines, loadFurniture } from "../../osm-import/src/furniture.ts";
 import { groundOverSteps } from "./ground-over-steps";
 import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
 import { addedSolidOverWay } from "./added-solid-over-way";
@@ -66,6 +66,7 @@ import { lanePieces, segmentPieces } from "./world-samples";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { bareOnCover } from "./bare-on-cover";
+import { lampOnOrtoCarriageway } from "./lamp-on-orto-carriageway";
 import { fillAreaMismatch } from "./fill-area";
 import { fillGap } from "./fill-gap";
 import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
@@ -752,7 +753,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .filter((i) => i.prop === "bollard")
       .flatMap((i) => {
         const close = BANDS.filter((b) => Math.hypot(b.c.x - i.x, b.c.z - i.z) < b.along + b.across + 4);
-        const post = close.some((b) => inCrossingBand(b, i, BOLLARD.side / 2));
+        const post = close.some((b) => inCrossingBand(b, i, BOLLARD.radius));
         const chain = chainSegments(i).some((s) => close.some((b) => alongSegment(s.from, s.to, 0.1).some((p) => inCrossingBand(b, p))));
         return post || chain ? [{ at: near(i.x, i.z), what: post ? "bollard" : "chain" }] : [];
       }),
@@ -1281,6 +1282,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * the `lit` rule (ADR-0064 stage 3, `props-lit.ts`) lamps the lit ways the plan's lines left dark.
    */
   "lit-street-dark": () => litStreetDark(loadLitWays(), Object.values(LUBLIN_STREET_PROPS).flat(), onChunk),
+  /** A lamp on the orthophoto's asphalt further than 0.5 m from its edge: in a carriageway the import draws narrower than it is (G-821, `lamp-on-orto-carriageway.ts`). */
+  "lamp-on-orto-carriageway": () => lampOnOrtoCarriageway(Object.values(LUBLIN_STREET_PROPS).flat(), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A lamp on a post inside a courtyard, a pedestrian square whose outline runs along the game's buildings for 70% (`lamp-squares.ts`, Dziedziniec Zamkowy). */
   "lamp-freestanding-in-courtyard": () => {
     const walls = new WallIndex(MAP_CHUNKS.flatMap((c) => c.buildings).map((b) => worldOutline(b)));
@@ -2089,6 +2092,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "entrance-no-door": () => entrancesWithoutDoor(loadEntrances(), lublinDoorWalls(), Object.values(WORLD_STREET_PROPS).flat(), ENTRANCE_REACH),
   /** A node of the current OSM extract's furniture (trees, benches, bollards...) with no piece of its kind within 3 m: the plan of 29.10 lacked it (G-099, `osm-furniture.ts`). */
   "osm-furniture-missing": () => osmFurnitureMissing(loadFurniture(), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A row of bollards OSM maps as a way, with fewer posts along it than one every 2.5 m (G-818, `osm-furniture.ts`). */
+  "osm-bollard-line-missing": () => osmBollardLineMissing(loadBollardLines(), Object.values(WORLD_STREET_PROPS).flat()),
   // The vehicles of ADR-0058 stage 4 as drawn against their bodies in the simulation (`vehicle-pieces.ts`).
   ...vehicleChecks(PARKED_CARS),
   // The drones of ADR-0058 stage 7 flown round the lanes the renderer plans from the scenery, and the
