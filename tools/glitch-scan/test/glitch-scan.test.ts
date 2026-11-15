@@ -92,7 +92,8 @@ import { WallIndex, isCourtyard, isPedestrianSquare } from "../../osm-import/src
 import { isLitWay, lampLineOf, litWayGroups } from "../../osm-import/src/props-lit.ts";
 import { litWaysOf, loadLitWays, loadPropsPlan, loadTaxiRanks } from "../../osm-import/src/props-osm.ts";
 import { Site } from "../../osm-import/src/props-site.ts";
-import { bollardBlocksMouth, kerbBollardGap } from "./kerb-bollards";
+import { bollardBlocksMouth, kerbBollardDoubleRow, kerbBollardGap } from "./kerb-bollards";
+import { inRowArea } from "../../osm-import/src/props-kerb-lines.ts";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { BUILDING_SURFACE, buildingsOverSurface } from "./surface-heights";
 import { heightsOffLod1, landmarksOffLod1, levelsTagLost, lod1Under } from "./height-lod1";
@@ -763,6 +764,16 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "bollard-blocks-mouth": () => bollardBlocksMouth(new Site(MAP_CHUNKS), MAP_CHUNKS, Object.values(WORLD_STREET_PROPS).flat()),
   /** A stretch of a car street's kerb in the centre over 6 m with no bollard and no reason of the rule to break its row (G-820, `kerb-bollards.ts`). */
   "kerb-bollard-gap": () => kerbBollardGap(new Site(MAP_CHUNKS), MAP_CHUNKS, Object.values(WORLD_STREET_PROPS).flat(), BANDS, loadTaxiRanks(), (p) => !clearOfGame(p.x, p.z, BOLLARD.radius)),
+  /** A post of the kerb rule 1–2.5 m beside a row of OSM's posts: two rows where OSM maps one (G-820 P1, `kerb-bollards.ts`). */
+  "kerb-bollard-double-row": () =>
+    kerbBollardDoubleRow(
+      Object.values(WORLD_STREET_PROPS).flat(),
+      loadFurniture()
+        .filter((f) => f.tag === "barrier=bollard")
+        .map((f) => f.p),
+      loadBollardLines().map((l) => l.pts),
+      inRowArea,
+    ),
   /** A piece of furniture (wall lanterns aside, they hang on a facade) standing more than 0.5 m inside a building. */
   "furniture-in-building": () =>
     Object.values(WORLD_STREET_PROPS)

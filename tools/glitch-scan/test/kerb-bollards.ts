@@ -73,6 +73,46 @@ export const kerbBollardGap = (
   return out;
 };
 
+/** How near an OSM node or line a post is OSM's (m): a line's post steps off the carriageway up to 0.55 m. */
+export const OSM_REACH = 0.8;
+/** A rule's post this far from a post of OSM's row, off that row's line by `ASIDE` or more, stands in a second row beside it (m). */
+export const DOUBLE_NEAR = 1;
+export const DOUBLE_FAR = 2.5;
+export const ASIDE = 0.6;
+
+/**
+ * `kerb-bollard-double-row` (G-820 P1): a bollard of the kerb rule (in its area, not within
+ * `OSM_REACH` of an OSM bollard node or line) `DOUBLE_NEAR`–`DOUBLE_FAR` from a post of OSM's row,
+ * beside that row: `ASIDE` or more off the line through the OSM post and its nearest OSM neighbour.
+ * The rule laid its own row along the kerb next to the row OSM maps 1–2 m off it.
+ */
+export const kerbBollardDoubleRow = (items: readonly StreetPropItem[], nodes: readonly Pt[], lines: readonly (readonly Pt[])[], inArea: (p: Pt) => boolean): Finding[] => {
+  const posts = items.filter((i) => i.prop === "bollard");
+  const onLine = (p: Pt) => lines.some((l) => l.slice(1).some((b, k) => toSegment(p, l[k]!, b) <= OSM_REACH));
+  const isOsm = (p: Pt) => nodes.some((n) => Math.abs(n.x - p.x) <= OSM_REACH && Math.abs(n.z - p.z) <= OSM_REACH && Math.hypot(n.x - p.x, n.z - p.z) <= OSM_REACH) || onLine(p);
+  const osm = new SpatialHash<Pt>(4);
+  const rule: Pt[] = [];
+  for (const i of posts) {
+    const p = { x: i.x, z: i.z };
+    if (isOsm(p)) osm.insertPoint(p, p.x, p.z);
+    else if (inArea(p)) rule.push(p);
+  }
+  return rule.flatMap((p) => {
+    const hit = osm.queryRadius(p.x, p.z, DOUBLE_FAR).find((q) => {
+      const d = Math.hypot(q.x - p.x, q.z - p.z);
+      if (d < DOUBLE_NEAR || d > DOUBLE_FAR) return false;
+      const mate = osm
+        .queryRadius(q.x, q.z, 3.5)
+        .filter((o) => o !== q)
+        .sort((a, b) => Math.hypot(a.x - q.x, a.z - q.z) - Math.hypot(b.x - q.x, b.z - q.z))[0];
+      if (!mate) return false;
+      const l = Math.hypot(mate.x - q.x, mate.z - q.z) || 1;
+      return Math.abs(((mate.x - q.x) * (p.z - q.z) - (mate.z - q.z) * (p.x - q.x)) / l) >= ASIDE;
+    });
+    return hit ? [{ at: near(p), what: `rule post ${Math.hypot(hit.x - p.x, hit.z - p.z).toFixed(1)} m beside OSM's row at ${near(hit)}` }] : [];
+  });
+};
+
 /** A mouth the bollards keep out of: a band `half` either side of an axis a-b (a drive's, a passage's, a gate's). */
 interface Mouth {
   readonly a: Pt;
