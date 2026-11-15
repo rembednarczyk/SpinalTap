@@ -15,9 +15,10 @@
  * Into `--out` (default `<work>/shots-compare`): `before/` and `after/` (the spec's PNG and JSON),
  * `pair/<name>.png` (before | after, each 800 px wide), `grid.png` (all pairs under each other),
  * `report.json` (refs, SHAs, load, numbers of `metrics.ts` for every spot) and the logs. Prints
- * one line a spot. Exits 1 when a ref failed to build or shoot, or a spot has no pair.
+ * one line a spot. Exits 1 when a ref failed to build or shoot, or a spot has no pair. Shots of a
+ * committed ref are reused from `<work>/cache` on the next run with the same spots (`--no-cache`).
  */
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
@@ -25,6 +26,7 @@ import { decodeRgb } from "../../orto/src/png.ts";
 import { closeCheckout, loadNow, must, openCheckout, repoRoot, run, withCleanup, type Checkout } from "./checkout.ts";
 import { pairLine, pairStats, type PairStats } from "./metrics.ts";
 import { parseSpots, type Spot } from "./spots.ts";
+import { pruneShotsCache, shotsCacheKey } from "./shots-cache.ts";
 
 const SPEC = "e2e/glitch-shots.spec.ts";
 const WIDTH = 800;
@@ -32,10 +34,10 @@ const NIGHT = 22;
 
 const { values: opt, positionals } = parseArgs({
   allowPositionals: true,
-  options: { hour: { type: "string" }, night: { type: "boolean" }, out: { type: "string" }, work: { type: "string" }, port: { type: "string" } },
+  options: { hour: { type: "string" }, night: { type: "boolean" }, out: { type: "string" }, work: { type: "string" }, port: { type: "string" }, "no-cache": { type: "boolean" } },
 });
 if (positionals.length !== 3) {
-  console.error("usage: pnpm shots:compare <ref-before> <ref-after> <spots.json> [--hour 13 | --night] [--out <dir>] [--work <dir>] [--port <n>]");
+  console.error("usage: pnpm shots:compare <ref-before> <ref-after> <spots.json> [--hour 13 | --night] [--out <dir>] [--work <dir>] [--port <n>] [--no-cache]");
   process.exit(2);
 }
 const [refBefore, refAfter, spotsPath] = positionals as [string, string, string];
@@ -66,8 +68,33 @@ const cleanup = () => {
   for (const c of open.splice(0)) closeCheckout(root, c, join(out, "cleanup.log"));
 };
 
-/** One ref: checkout, build, the spec, and everything but the shots removed again. */
+const cacheRoot = join(work, "cache");
+const cacheKey = (ref: string, spotsFile: string): string | null =>
+  opt["no-cache"] || ref === "HEAD" ? null : shotsCacheKey(root, ref, hour, [readFileSync(spotsFile), readFileSync(join(root, SPEC)), process.env.SHOT_MODELS ?? ""]);
+const pruneCache = (): void => pruneShotsCache(cacheRoot);
+
+/** One ref: from the cache, or checkout, build, the spec, and everything but the shots removed again. */
 const shoot = (side: Side, ref: string, spotsFile: string, e2ePort: number): Shot => {
+  const key = cacheKey(ref, spotsFile);
+  const cached = key ? join(cacheRoot, key) : null;
+  if (cached && spots.every((s) => existsSync(join(cached, `${s[0]}.png`)))) {
+    const shots = join(out, side);
+    rmSync(shots, { recursive: true, force: true });
+    cpSync(cached, shots, { recursive: true });
+    console.log(`${side}: ${ref} from the cache ${cached}`);
+    return { ref, sha: key!.slice(0, 12), dirty: false, e2e: 0, specCopied: false, log: join(cached, "cached") };
+  }
+  const shot = shootFresh(side, ref, spotsFile, e2ePort);
+  if (cached && shot.e2e === 0 && !shot.dirty && spots.every((s) => existsSync(join(out, side, `${s[0]}.png`)))) {
+    mkdirSync(cacheRoot, { recursive: true });
+    rmSync(cached, { recursive: true, force: true });
+    cpSync(join(out, side), cached, { recursive: true });
+    pruneCache();
+  }
+  return shot;
+};
+
+const shootFresh = (side: Side, ref: string, spotsFile: string, e2ePort: number): Shot => {
   const log = join(out, `${side}.log`);
   let c: Checkout;
   try {

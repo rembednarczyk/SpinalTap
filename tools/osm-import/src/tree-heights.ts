@@ -7,9 +7,20 @@
  * `TREE_RANGE`; else none, and the tree keeps the random size of its seed. A reading over
  * `NOT_A_CROWN` is a roof or a tower the outlines miss: none. Where the surface model shows no crown
  * (under 3 m: a young tree or one planted since) the tree takes the smallest size of `TREE_SCALE`.
- * The drawn crown's reach grows with the height: the model is scaled as a whole (`TREE_CROWN`).
+ * The drawn crown's reach grows with the height: the model is scaled as a whole (`TREE_CROWN`),
+ * and narrowed where the walls leave it no room (`treeVariant`, G-814).
  */
-import { TREE_CROWN, measuredTreeVariant, plainTreeVariant, treeHeight, treeScale, treeSpecies, withTreeSpecies } from "../../../packages/core/src/world/trees.ts";
+import {
+  TREE_CROWN,
+  TREE_SPREADS,
+  measuredTreeVariant,
+  narrowTreeVariant,
+  plainTreeVariant,
+  treeScale,
+  treeSpecies,
+  treeSpread,
+  withTreeSpecies,
+} from "../../../packages/core/src/world/trees.ts";
 import { type Chm, highestAround, loadChms } from "../../gugik/src/nmpt.ts";
 import type { FurniturePoint } from "./furniture.ts";
 import type { Pt } from "./geometry.ts";
@@ -81,23 +92,25 @@ const clearOfWalls = (site: Site, p: Pt, r: number): boolean => {
   return true;
 };
 
+/** How far the drawn crown of `variant` reaches from its trunk, narrowed or not (m). */
+const drawnReach = (variant: number): number => TREE_CROWN[treeSpecies(variant)]! * treeScale(variant) * treeSpread(variant);
+
+/** Whether the drawn crown of `variant` at p stays off every building's outline. */
+export const crownClear = (site: Site, p: Pt, variant: number): boolean => clearOfWalls(site, p, drawnReach(variant));
+
 /**
  * A tree's variant from its seed: of `species` where OSM names it (`tree-species.ts`, G-423), else
- * the seed's, grown to its measured `height` where it has one (`measureTree`). A crown grown past
- * its seed's size stops short of the walls it would reach into (the renderer's crown would hang
- * through the facade), and one that cannot grow at all clear of them keeps its seed's.
+ * the seed's, grown to its measured `height` where it has one (`measureTree`). A crown that would
+ * reach into a wall (the renderer's crown would hang through the facade) keeps the height and
+ * narrows to the widest of `TREE_SPREADS` clear of it (G-814: a tree by a facade grows up, not
+ * out, and the seed's size was no closer to the real one); one whose trunk stands so near the wall
+ * that even the narrowest crown reaches it takes the narrowest.
  */
 export const treeVariant = (site: Site, p: Pt, seed: number, species: number | undefined, height: number | null): number => {
   const plain = species === undefined ? plainTreeVariant(seed) : withTreeSpecies(plainTreeVariant(seed), species);
   if (height === null) return plain;
-  const s = treeSpecies(plain);
-  const reach = TREE_CROWN[s]!;
-  const from = treeScale(plain);
-  let v = measuredTreeVariant(seed, height, s);
-  if (treeScale(v) <= from) return v;
-  while (!clearOfWalls(site, p, reach * treeScale(v))) {
-    v = measuredTreeVariant(seed, treeHeight(v) - 0.1, s);
-    if (treeScale(v) <= from) return plain;
-  }
-  return v;
+  const v = measuredTreeVariant(seed, height, treeSpecies(plain));
+  if (crownClear(site, p, v)) return v;
+  const narrow = TREE_SPREADS.map((w) => narrowTreeVariant(v, w)!);
+  return narrow.find((n) => crownClear(site, p, n)) ?? narrow[narrow.length - 1]!;
 };
