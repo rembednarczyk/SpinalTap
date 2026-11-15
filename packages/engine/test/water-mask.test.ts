@@ -101,6 +101,20 @@ describe("the water on the streets (ADR-0084)", () => {
     expect(kerb).toBeGreaterThan(2 * axis);
   });
 
+  it("stands on the Old Town's setts in many small puddles", () => {
+    const setts = samples(ground.meshes, SURFACE_CODE.cobble);
+    const cover = mean(setts);
+    // A standing point with a dry neighbour on the lattice: the puddles' rims. Small puddles are mostly rim.
+    const key = (s: Sample) => `${Math.round(s.x / 0.3)}:${Math.round(s.z / 0.3)}`;
+    const wet = new Set(setts.filter((s) => s.standing > 0).map(key));
+    const rim = setts.filter((s) => s.standing > 0 && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([i, k]) => !wet.has(`${Math.round(s.x / 0.3) + (i ?? 0)}:${Math.round(s.z / 0.3) + (k ?? 0)}`))).length;
+    console.log(JSON.stringify({ setts: setts.length, cover, rim: rim / Math.max(1, wet.size) }));
+    expect(setts.length).toBeGreaterThan(20000);
+    expect(cover).toBeGreaterThanOrEqual(0.04);
+    expect(cover).toBeLessThanOrEqual(0.12);
+    expect(rim / wet.size).toBeGreaterThan(0.45);
+  });
+
   it("stands on the paving only in hollows, on few of it", () => {
     const paving = [SURFACE_CODE.sidewalk, SURFACE_CODE.square, SURFACE_CODE.footway].flatMap((c) => samples(ground.meshes, c, 0.5));
     const cover = mean(paving);
@@ -152,6 +166,13 @@ describe("the water mask (ADR-0084)", () => {
     expect(waterLevel(WATER_FAR, 0)).toBe(0);
     expect(waterLevel(0.2, WATER_NEVER)).toBe(0);
     for (let x = 0; x < 50; x += 0.37) expect(standingWater(0.2, WATER_NEVER, x, x * 0.7)).toBe(0);
+  });
+
+  it("darkens the wet street without a colour: the district's tint only in standing water", () => {
+    const zone = TOON_FRAGMENT.slice(TOON_FRAGMENT.indexOf("float standing = waterStanding"), TOON_FRAGMENT.indexOf("float moon ="));
+    const tinted = zone.split("\n").filter((l) => l.includes("wetTint"));
+    expect(tinted).toEqual([expect.stringContaining("standing);")]);
+    expect(tinted[0]).toContain("mix(albedo, albedo * 0.2 * wetTint, standing)");
   });
 
   it("replaces the value noise in the toon shader", () => {

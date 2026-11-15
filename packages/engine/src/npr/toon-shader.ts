@@ -1,5 +1,5 @@
 import { FACADE_GLSL, GROUND_GLSL } from "./toon-city";
-import { SETT_JOINT_GLSL, WATER_GLSL, WET_DARKEN } from "./water-mask";
+import { SETT_JOINT_GLSL, WATER_GLSL, WET_DARKEN, WET_STREAKS_GLSL } from "./water-mask";
 
 /** Number of point lights the toon shader evaluates per fragment. */
 export const MAX_POINT_LIGHTS = 8;
@@ -165,6 +165,9 @@ float gridLine(float x, float period, float w) {
 ${FACADE_GLSL}${GROUND_GLSL}
 #ifdef WATER_MASK
 ${WATER_GLSL}${SETT_JOINT_GLSL}
+#ifdef ENV_REFLECT
+${WET_STREAKS_GLSL}
+#endif
 #endif
 #if defined(CONCRETE_PANELS) || defined(METAL_PANELS)
 /**
@@ -332,12 +335,14 @@ void main(void) {
   // standing water where the mask says, nearly black and a mirror; its soft rim a step between.
   float code = floor(vUV2.x + 0.5);
   float standing = waterStanding(vWater, vWorldPos.xz);
-  if (code > 3.5 && code < 4.5) standing = max(standing, 0.5 * step(0.5, settJoint(vWorldPos.xz, dist)) * step(-0.5, vWater.y));
+  // The setts' joints hold the rain: darker and glinting all over the wet Old Town.
+  float joint = code > 3.5 && code < 4.5 ? step(0.5, settJoint(vWorldPos.xz, dist)) * step(-0.5, vWater.y) : 0.0;
   float soak = code > 5.5 ? 0.45 : 1.0;
-  albedo *= mix(vec3(1.0), ${WET_DARKEN.toFixed(2)} * wetTint, soak);
+  // Wet is only darker, no colour of its own; the district's tint is in the standing water alone.
+  albedo *= mix(1.0, ${WET_DARKEN.toFixed(2)}, soak) * (1.0 - 0.45 * joint);
   albedo = mix(albedo, albedo * 0.2 * wetTint, standing);
-  g = mix(max(g * 0.5, 0.75 * soak), 1.8, standing);
-  shine = mix(7.0, 22.0, standing);
+  g = mix(max(max(g * 0.5, 0.75 * soak), 1.4 * joint), 1.8, standing);
+  shine = mix(mix(7.0, 22.0, joint), 22.0, standing);
 #endif
 
   float moon = band(max(dot(n, normalize(sunDir)), 0.0)) * moonShadow();
@@ -382,7 +387,7 @@ void main(void) {
   // surfaces (puddles of the dressing, the harbour) are standing water and the rest wet.
 #ifdef WATER_MASK
   wetK = max(wetK, standing);
-  float puddle = mix(0.35, 1.0, standing);
+  float puddle = mix(0.7, 1.0, standing);
 #else
   float puddle = mix(0.15, 1.0, step(1.5, g));
 #endif
@@ -391,6 +396,9 @@ void main(void) {
     r.y = abs(r.y);
     // Only what glows: the sky's haze is cut away, neon and signs stay, in flat steps.
     vec3 env = max(textureCube(envSampler, r).rgb - vec3(0.18), vec3(0.0));
+#ifdef WATER_MASK
+    if (standing < 0.25) env = wetStreaks(r, clamp(selfLit * 2.0 - 1.0, 0.0, 1.0));
+#endif
     env = floor(env * 6.0 + 0.3) / 6.0;
     float graze = 0.25 + 0.75 * pow(1.0 - max(dot(n, v), 0.0), 3.0);
     spec += env * envStrength * puddle * graze * wetK;

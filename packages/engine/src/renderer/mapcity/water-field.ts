@@ -1,4 +1,4 @@
-import { WATER_FAR, WATER_NEVER } from "../../npr/water-mask";
+import { WATER_FAR, WATER_NEVER, WATER_SETTS } from "../../npr/water-mask";
 import type { MeshSink } from "../mesh-sink";
 import { SURFACE_CODE } from "./ground-plan";
 import type { GroundEntry, MapEntries } from "./map-entries";
@@ -63,7 +63,6 @@ const smoothstep = (a: number, b: number, x: number): number => {
 
 /** Surfaces water stands on: the carriageway, the setts, and the paving in its hollows. */
 const HOLDS: ReadonlySet<number> = new Set([SURFACE_CODE.road, SURFACE_CODE.cobble, SURFACE_CODE.sidewalk, SURFACE_CODE.square, SURFACE_CODE.footway]);
-const CARRIAGEWAY: ReadonlySet<number> = new Set([SURFACE_CODE.road, SURFACE_CODE.cobble]);
 
 export class WaterField {
   private readonly buckets = new Map<number, Segment[]>();
@@ -199,8 +198,9 @@ export class WaterField {
   /** The field at a point of a surface with code `code` (`SURFACE_CODE`) facing up by `ny`. */
   at(x: number, z: number, code: number, ny: number): readonly [number, number] {
     if (ny < 0.9 || !HOLDS.has(code)) return [WATER_FAR, WATER_NEVER];
-    const carriageway = CARRIAGEWAY.has(code);
-    return [carriageway ? this.kerbDistance(x, z) : WATER_FAR, this.hold(x, z, !carriageway)];
+    if (code === SURFACE_CODE.cobble) return [WATER_SETTS, this.hold(x, z, false)];
+    const road = code === SURFACE_CODE.road;
+    return [road ? this.kerbDistance(x, z) : WATER_FAR, this.hold(x, z, !road)];
   }
 
   /** Whether (x, y, z) lies on a bridge's deck: a piece lifted onto it drains like the deck. */

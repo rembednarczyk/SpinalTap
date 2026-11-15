@@ -13,6 +13,8 @@
 export const WATER_NEVER = -1;
 /** Distance to the carriageway's edge given where none is in reach (m): no gutter, no ruts. */
 export const WATER_FAR = 16;
+/** The field's x on the Old Town's setts: no kerb, small puddles between uneven stones all over. */
+export const WATER_SETTS = 17;
 
 /**
  * The field the streaks of the block city's signs and lamps read (no ground baked under them):
@@ -26,6 +28,8 @@ export const WET_DARKEN = 0.64;
 /** Width of a lane (m) and the wheel tracks in it from its side nearer the kerb. */
 const LANE = 3.5;
 const TRACKS = [0.95, 2.55] as const;
+/** How much water the setts gather off their hollows. */
+const SETTS_LEVEL = 0.16;
 
 const smoothstep = (a: number, b: number, x: number): number => {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
@@ -61,6 +65,7 @@ const noise = (x: number, z: number): number => {
 /** How much water a place gathers, 0 dry: the gutter strongest, then the hold, then the ruts. */
 export const waterLevel = (kerb: number, hold: number): number => {
   if (hold < -0.5) return 0;
+  if (kerb > WATER_SETTS - 0.5) return SETTS_LEVEL + 0.45 * hold;
   const gutter = 1 - smoothstep(0.3, 0.65, kerb);
   const t = (((kerb - 0.4) % LANE) + LANE) % LANE;
   let rut = 0;
@@ -69,12 +74,13 @@ export const waterLevel = (kerb: number, hold: number): number => {
   return 0.46 * gutter + 0.2 * rut + 0.45 * hold;
 };
 
-/** The puddles' shapes: many small, a few large, the same at a point on every run. */
-export const waterNoise = (x: number, z: number): number => 0.62 * noise(x * 0.8, z * 0.8) + 0.38 * noise(x * 2.6 + 17, z * 2.6 + 17);
+/** The puddles' shapes: many small, a few large; on the setts only small ones. The same at a point on every run. */
+export const waterNoise = (x: number, z: number, setts = false): number =>
+  setts ? 0.55 * noise(x * 2.1 + 5, z * 2.1 + 5) + 0.45 * noise(x * 4.3 + 31, z * 4.3 + 31) : 0.62 * noise(x * 0.8, z * 0.8) + 0.38 * noise(x * 2.6 + 17, z * 2.6 + 17);
 
 /** 1 in standing water, 0 on the merely wet street, 0.5 on the soft rim of a puddle (two cel steps). */
 export const standingWater = (kerb: number, hold: number, x: number, z: number): number => {
-  const s = smoothstep(0, 0.09, waterLevel(kerb, hold) - (1 - waterNoise(x, z)));
+  const s = smoothstep(0, 0.09, waterLevel(kerb, hold) - (1 - waterNoise(x, z, kerb > WATER_SETTS - 0.5)));
   return ((s >= 0.15 ? 1 : 0) + (s >= 0.85 ? 1 : 0)) * 0.5;
 };
 
@@ -98,6 +104,7 @@ float waterValue(vec2 p) {
 }
 float waterLevel(vec2 field) {
   if (field.y < -0.5) return 0.0;
+  if (field.x > ${(WATER_SETTS - 0.5).toFixed(1)}) return ${SETTS_LEVEL.toFixed(2)} + 0.45 * field.y;
   float gutter = 1.0 - smoothstep(0.3, 0.65, field.x);
   float t = mod(field.x - 0.4, ${LANE.toFixed(1)});
   float rut = max(1.0 - smoothstep(0.1, 0.28, abs(t - ${TRACKS[0]})), 1.0 - smoothstep(0.1, 0.28, abs(t - ${TRACKS[1]})));
@@ -105,7 +112,9 @@ float waterLevel(vec2 field) {
   return 0.46 * gutter + 0.2 * rut + 0.45 * field.y;
 }
 float waterStanding(vec2 field, vec2 xz) {
-  float n = 0.62 * waterValue(xz * 0.8) + 0.38 * waterValue(xz * 2.6 + 17.0);
+  float n = field.x > ${(WATER_SETTS - 0.5).toFixed(1)}
+    ? 0.55 * waterValue(xz * 2.1 + 5.0) + 0.45 * waterValue(xz * 4.3 + 31.0)
+    : 0.62 * waterValue(xz * 0.8) + 0.38 * waterValue(xz * 2.6 + 17.0);
   float s = smoothstep(0.0, 0.09, waterLevel(field) - (1.0 - n));
   return (step(0.15, s) + step(0.85, s)) * 0.5;
 }
@@ -118,5 +127,19 @@ float settJoint(vec2 w, float dist) {
   vec2 f = fract(g);
   float joint = 1.0 - step(0.12, min(min(f.x, 1.0 - f.x) * 1.6, min(f.y, 1.0 - f.y) * 0.9));
   return joint * (1.0 - smoothstep(12.0, 35.0, dist));
+}
+`;
+
+/**
+ * What the merely wet street mirrors of the probe (`envSampler`, toon shader): no sky and no
+ * haze, at night only the lights themselves, drawn out towards the eye into streaks by three
+ * taps along the reflection's height; `night` 0 by day.
+ */
+export const WET_STREAKS_GLSL = /* glsl */ `
+vec3 wetStreaks(vec3 r, float night) {
+  vec3 e = textureCube(envSampler, r).rgb;
+  e = max(e, textureCube(envSampler, normalize(vec3(r.x, r.y * 0.45, r.z))).rgb);
+  e = max(e, textureCube(envSampler, normalize(vec3(r.x, r.y * 2.2, r.z))).rgb);
+  return max(e - vec3(0.42), vec3(0.0)) * 1.7 * night;
 }
 `;
