@@ -1,5 +1,4 @@
 import { Constants, type Scene, ShaderMaterial } from "../../babylon";
-import { STREET_FIELD_GLSL, WATER_GLSL } from "../../npr/water-mask";
 
 const VERTEX = /* glsl */ `
 precision highp float;
@@ -14,7 +13,6 @@ varying vec2 vUV;
 varying vec3 vColor;
 varying float vKind;
 varying float vDist;
-varying vec2 vWorld;
 void main(void) {
   float size = uv2.x;
   vKind = uv2.y;
@@ -38,7 +36,6 @@ void main(void) {
     vUV = vec2(uv.x, along);
   }
   vColor = color.rgb;
-  vWorld = p.xz;
   gl_Position = viewProjection * vec4(p, 1.0);
 }
 `;
@@ -49,19 +46,16 @@ varying vec2 vUV;
 varying vec3 vColor;
 varying float vKind;
 varying float vDist;
-varying vec2 vWorld;
 uniform float intensity;
 uniform float fogDensity;
-${WATER_GLSL}
 void main(void) {
   float r = length(vUV);
   float k = max(1.0 - r, 0.0);
   float a = pow(k, 2.2) * 0.85 + pow(k, 9.0) * 0.7;
   if (vKind > 0.5) {
-    // The soft pool, and the streak drawn out of it in two flat steps, brighter in standing water.
+    // The soft pool, and the streak drawn out of it in two flat steps.
     float streak = max(1.0 - length(vec2(vUV.x * 4.5, (vUV.y - 0.8) / 1.5)), 0.0);
-    float stand = waterStanding(${STREET_FIELD_GLSL}, vWorld);
-    a = pow(k, 1.5) * 0.38 + (step(0.2, streak) + step(0.55, streak)) * mix(0.05, 0.08, stand);
+    a = pow(k, 1.5) * 0.38 + (step(0.2, streak) + step(0.55, streak)) * 0.06;
   }
   a *= intensity * exp(-fogDensity * vDist * 0.6);
   gl_FragColor = vec4(vColor * a, a);
