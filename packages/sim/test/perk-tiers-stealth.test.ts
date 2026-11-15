@@ -13,13 +13,14 @@ import { withPerks } from "./perk-scenes";
 
 type Perks = Partial<Record<PerkId, number>>;
 
-/** In the docks with one Tessen guard `distance` m west, the scanner on its chest. */
+/** On W-3's pickup yard with one Tessen guard `distance` m west, the scanner on its chest. */
 const hackScene = (perks: Perks, bought: boolean, distance = 8): { sim: Simulation; guard: Entity } => {
   const base = streetSim({ seed: 5 });
   const sim = Simulation.fromSnapshot(base.snapshot(null, "t", ""));
   for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
   withPerks(sim, perks, bought);
-  teleportPlayer(sim, w3(2590, 0, 418), -Math.PI / 2);
+  // W-3's pickup yard (ADR-0082): open floor 28 m and more to the west.
+  teleportPlayer(sim, w3(2590, 0, 446), -Math.PI / 2);
   sim.step();
   const p = sim.player()!.position;
   const guard = sim.world.add(gangerEntity(90010, { key: "guard-90010", position: { ...p, x: p.x - distance }, yaw: Math.PI / 2 }, null, 1e6, "nabrzeze-1-1", undefined, "tessen_guard"));

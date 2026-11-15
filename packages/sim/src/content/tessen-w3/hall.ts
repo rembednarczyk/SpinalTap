@@ -65,7 +65,7 @@ const rowSParapetSolid = (): StaticProp[] => {
 };
 
 /** The tower's bridge lands on row N's roof over its west parapet here (`tower-pipes.ts`). */
-export const W3_BRIDGE_Z = { minZ: 437.8, maxZ: 439.7 } as const;
+export const W3_BRIDGE_Z = { minZ: 437.6, maxZ: 439.7 } as const;
 
 /** The airlocks' strip and row N: boxes under one roof, with their parapets; the wagon gate shut in the west wall. */
 const lowRoof = (): StaticProp[] => {

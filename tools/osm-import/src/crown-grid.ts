@@ -6,7 +6,7 @@
  * - The surface's cells: the height over the ground (NMPT less NMT) `MIN_TOP` to `NOT_A_CROWN`,
  *   `OFF_ROOF` or further from every building of the game, out of the map's structures
  *   (`structures.ts`: OSM buildings, building sites, markets, canopies) and the rectangles the game
- *   clears for its set pieces (`CROWN_CLEARED`: the docks, the car wash). Nearer the walls the
+ *   clears for its set pieces (`CROWN_CLEARED`: W-3, the car wash). Nearer the walls the
  *   surface model is the roof: the OSM outline is often 1 to 3 m inside it, and the model takes
  *   the highest of four 0.5 m cells.
  * - A crown cell: a surface's cell at least half of whose four 0.5 m samples of the orthophoto
@@ -51,12 +51,29 @@ const EAVE_FALL = 1;
 export const EAVE_SHARE = 0.6;
 /**
  * The rectangles the game clears of the map's furniture for its set pieces (`CLEARED_BUILDINGS` of
- * `packages/sim/src/content/lublin/sites.ts`: the docks, their basin, the car wash; the test holds
- * them equal): no tree of the rule stands there to be taken away again.
+ * `packages/sim/src/content/lublin/sites.ts`: W-3's zone in bands along its fence, its quay, tower,
+ * pier, basin and pipeline's corridor, the strip's one building (ADR-0082), the car wash; the test
+ * holds them equal): no tree of the rule stands there to be taken away again.
  */
 export const CROWN_CLEARED: readonly Rect[] = [
-  { minX: 2520, maxX: 2594, minZ: 390, maxZ: 450 },
-  { minX: 2520, maxX: 2594, minZ: 452, maxZ: 500 },
+  { minX: 2487.5, maxX: 2490, minZ: 413.3, maxZ: 446 },
+  { minX: 2490, maxX: 2492.5, minZ: 411.2, maxZ: 446 },
+  { minX: 2492.5, maxX: 2495, minZ: 409.1, maxZ: 452 },
+  { minX: 2495, maxX: 2497.5, minZ: 406.9, maxZ: 452 },
+  { minX: 2497.5, maxX: 2500, minZ: 404.7, maxZ: 452 },
+  { minX: 2500, maxX: 2502.5, minZ: 402.6, maxZ: 452 },
+  { minX: 2502.5, maxX: 2505, minZ: 400.8, maxZ: 452 },
+  { minX: 2505, maxX: 2507.5, minZ: 399.1, maxZ: 452 },
+  { minX: 2507.5, maxX: 2510, minZ: 397.4, maxZ: 452 },
+  { minX: 2510, maxX: 2512.5, minZ: 395.7, maxZ: 452 },
+  { minX: 2512.5, maxX: 2515, minZ: 394, maxZ: 452 },
+  { minX: 2515, maxX: 2606, minZ: 392.3, maxZ: 452 },
+  { minX: 2479, maxX: 2487.5, minZ: 418.5, maxZ: 440 },
+  { minX: 2486, maxX: 2496, minZ: 436, maxZ: 446 },
+  { minX: 2466, maxX: 2477, minZ: 426, maxZ: 438 },
+  { minX: 2508, maxX: 2592, minZ: 452, maxZ: 478 },
+  { minX: 2440, maxX: 2486, minZ: 441, maxZ: 445 },
+  { minX: 2586, maxX: 2606, minZ: 380, maxZ: 395 },
   { minX: 389, maxX: 417, minZ: -44, maxZ: -20 },
 ];
 

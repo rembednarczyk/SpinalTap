@@ -157,11 +157,11 @@ describe("W-3 on the docks' ground (ADR-0025, ADR-0082)", () => {
     expect(reached).toBeLessThan(60 * 20);
   });
 
-  it("takes the tower's stair up to its platform", () => {
-    const target = atD(2491, 437.1, 10);
+  it("takes the tower's stair and its bridge up onto row N's roof", () => {
+    const target = atD(2522, 435, 10.4);
     const sim = scene(target);
     const g = spawn(sim, atD(2492, 424));
-    const reached = hold(sim, 60 * 40, () => g.position.y - W3_Y > 9.9 && flat(g.position, target) < 2.5);
+    const reached = hold(sim, 60 * 40, () => g.position.y - W3_Y > 10.3 && flat(g.position, target) < 2.5);
     expect(reached).toBeLessThan(60 * 40);
   });
 });

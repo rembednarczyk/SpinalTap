@@ -89,10 +89,10 @@ const bridge = (): StaticProp[] => {
 
 /** The stair up the tower's south face: a flight west to a landing at +5, a flight east to a landing at +10 by the platform. */
 export const W3_TOWER_STAIR = {
-  first: { minX: 2486.5, maxX: 2494.5, minZ: 434.6, maxZ: 436 },
-  landing: { minX: 2484.5, maxX: 2486.5, minZ: 433, maxZ: 436 },
-  second: { minX: 2486.5, maxX: 2494.5, minZ: 433, maxZ: 434.4 },
-  top: { minX: 2494.5, maxX: 2496.5, minZ: 433, maxZ: 436 },
+  first: { minX: 2486.5, maxX: 2494.5, minZ: 434.2, maxZ: 436 },
+  landing: { minX: 2484.5, maxX: 2486.5, minZ: 432, maxZ: 436 },
+  second: { minX: 2486.5, maxX: 2494.5, minZ: 432.2, maxZ: 434 },
+  top: { minX: 2494.5, maxX: 2496.5, minZ: 432, maxZ: 436 },
 } as const;
 
 const towerStair = (): StaticProp[] => {
@@ -120,8 +120,15 @@ const towerStair = (): StaticProp[] => {
 /** The pipe walk's deck and the pipes beside it, north of it. */
 const WALK = { minZ: W3_PIPES.minZ, maxZ: 443.1 } as const;
 
-/** Where the ladder up the west trestle starts, on the riverside path's bank. */
-export const W3_PIPE_LADDER = { key: "w3-pipe", x: 2444, z: W3_PIPES.minZ - 0.4 } as const;
+/**
+ * The landing at the walk's west end over the bank, 4 m wide and 3 m deep, its south edge open
+ * over the ladder from the riverside path (as a roof's edge over a fire escape, ADR-0021): the
+ * ladder climbs its post from the bank, a metre off the Lutosławski bridge's north edge.
+ */
+const LANDING = { minX: 2442, maxX: 2446, minZ: 439, maxZ: W3_PIPES.minZ } as const;
+
+/** Where the ladder up to the landing starts, on the bank. */
+export const W3_PIPE_LADDER = { key: "w3-pipe", x: 2444, z: LANDING.minZ - 0.4 } as const;
 
 const pipeline = (): StaticProp[] => {
   const { minX, maxX } = W3_PIPES;
@@ -131,15 +138,19 @@ const pipeline = (): StaticProp[] => {
   });
   const ladder = W3_PIPE_LADDER;
   const bottom = groundY(ladder.x, ladder.z);
+  const l = LANDING;
   return [
     slabTop(minX, maxX, WALK.minZ, WALK.maxZ, P, 0.3, "metal"),
     box(minX, maxX, P - 0.7, P + 0.9, WALK.maxZ, W3_PIPES.maxZ, "metal"),
-    // The walk's south rail, open at the ladder's head; its west end.
-    railing(minX, ladder.x - 0.6, WALK.minZ - 0.15, WALK.minZ, P),
-    railing(ladder.x + 0.6, maxX, WALK.minZ - 0.15, WALK.minZ, P),
-    railing(minX, minX + 0.15, WALK.minZ, WALK.maxZ, P),
+    // The walk's south rail east of the landing; the landing's sides.
+    railing(l.maxX, maxX, WALK.minZ - 0.15, WALK.minZ, P),
+    slabTop(l.minX, l.maxX, l.minZ, l.maxZ, P, 0.3, "metal"),
+    railing(l.minX - 0.15, l.minX, l.minZ, WALK.maxZ, P),
+    railing(l.maxX, l.maxX + 0.15, l.minZ, l.maxZ - 0.15, P),
+    // The landing's post, the ladder up its south face.
+    box(ladder.x - 0.4, ladder.x + 0.4, bottom - W3_Y - 0.3, P - 0.3, l.minZ, l.minZ + 0.3, "metal"),
     ...trestles,
-    ...ladderParts({ key: ladder.key, x: ladder.x, z: ladder.z, yaw: 0, bottom, top: W3_Y + P, exit: v(ladder.x, W3_Y + P, WALK.minZ + 0.6) }),
+    ...ladderParts({ key: ladder.key, x: ladder.x, z: ladder.z, yaw: 0, bottom, top: W3_Y + P, exit: v(ladder.x, W3_Y + P, l.minZ + 0.8) }),
   ];
 };
 

@@ -48,7 +48,7 @@ const HALL_CHUNK = "nabrzeze-1-1";
 const MARKET_CHUNK = "krakowskie-2-1";
 
 export const DEVICES: readonly DeviceDef[] = [
-  // W-3 (the docks' keys): the pass office in the tower, the tower's corner over the quay, the pickup yard.
+  // W-3 (the docks' keys): the pass office in the tower, the tower's corner over the quay, the chamber's wall over the east yard.
   {
     key: "dev:doki-office-cam",
     chunk: TOWER_CHUNK,
@@ -61,9 +61,9 @@ export const DEVICES: readonly DeviceDef[] = [
     restricted: { ...TESSEN_OFFICE, during: "infiltrate" },
   },
   { key: "dev:doki-quay-cam", chunk: TOWER_CHUNK, kind: "camera", position: w3(2485.7, 3, 437), yaw: -1.9, network: "tessen-office", faction: "tessen" },
-  { key: "dev:doki-yard-cam", chunk: HALL_CHUNK, kind: "camera", position: w3(2540, 3.5, 440.3), yaw: 0, network: "tessen-yard", faction: "tessen" },
+  { key: "dev:doki-yard-cam", chunk: HALL_CHUNK, kind: "camera", position: w3(2572.3, 3.5, 410), yaw: Math.PI / 2, network: "tessen-yard", faction: "tessen" },
   { key: "dev:doki-vending", chunk: TOWER_CHUNK, kind: "vending", position: w3(2496.5, 0.95, 440), yaw: Math.PI / 2, network: "tessen-office", faction: "tessen" },
-  { key: "dev:doki-speaker", chunk: HALL_CHUNK, kind: "speaker", position: w3(2560, 2.6, 440.3), yaw: 0, network: "tessen-yard", faction: "tessen" },
+  { key: "dev:doki-speaker", chunk: HALL_CHUNK, kind: "speaker", position: w3(2572.3, 2.6, 425), yaw: Math.PI / 2, network: "tessen-yard", faction: "tessen" },
   // The market in Alchemia: Hebi's stash before the Arkady, the camera on their arches looking back along them; each in a span (`ARKADY_PIERS`).
   {
     key: "dev:targ-stash-cam",

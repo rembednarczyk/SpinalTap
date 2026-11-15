@@ -6,11 +6,11 @@ import { alleySim, teleportPlayer } from "./helpers";
 /**
  * The side a reinforcement first leans to when it gets stuck (ADR-0025, G-208): by which of the
  * heat's it is (`security.n`), not by its id, which a loaded game gives otherwise. With the
- * player on the roof of a warehouse in the docks the Tessen's reinforcements have no repath and
+ * player on the platform of W-3's control tower (ADR-0082; the docks' warehouse before) the Tessen's reinforcements have no repath and
  * lean to the side, so the rule shows in the game without any save.
  */
 
-const ROOF = w3(2540, 10.4, 401);
+const ROOF = w3(2490, 10, 437);
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
 
 /** The snapshot as v30 wrote it, before the style and bad luck (ADR-0059, stage 6): the progression without them. */

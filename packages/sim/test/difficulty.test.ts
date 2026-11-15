@@ -15,7 +15,7 @@ import {
   ground,
   sniperEntity,
 } from "../src";
-import { byKey, collect, input, run, streetSim, teleportPlayer } from "./helpers";
+import { byKey, collect, input, run, standInFront, streetSim, teleportPlayer } from "./helpers";
 import { DOCKS_CHUNK, profile, roundTrip, setProfile, tough, yardFight } from "./difficulty-scenes";
 
 /*
@@ -83,7 +83,7 @@ describe("awareness: how fast NPCs and cameras notice (ADR-0066)", () => {
     const suspicion = (patch: Partial<DifficultyProfile>) => {
       const { sim, c } = infiltration(patch);
       const door = byKey(sim, `${c.id}-g1`)!;
-      teleportPlayer(sim, ground(door.position.x + 8, door.position.z), -Math.PI / 2);
+      standInFront(sim, door, 8);
       sim.step();
       return door.ai!.suspicion ?? 0;
     };

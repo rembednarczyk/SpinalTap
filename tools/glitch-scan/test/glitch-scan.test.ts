@@ -146,7 +146,10 @@ import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, isLandmark } from "..
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
-import { CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PADS, PASSAGES, ROOM_SITES, ROOM_STOREY, rawHeight } from "../../../packages/sim/src/content/lublin/sites";
+import { CLEARED, CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PADS, PASSAGES, ROOM_SITES, ROOM_STOREY, rawHeight } from "../../../packages/sim/src/content/lublin/sites";
+import { W3_BARRIERS } from "../../../packages/sim/src/content/tessen-w3";
+import { W3_BASIN, W3_BASIN_MOUTH } from "../../../packages/sim/src/content/tessen-w3/site";
+import { isWater, padsInWater, pathsCutByCleared, propsInWater } from "./w3-checks";
 import { ALCHEMIA_RAMPS } from "../../../packages/sim/src/content/alchemia/terraces";
 import { mapHeight } from "../../../packages/sim/src/content/lublin/shape";
 import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
@@ -1376,6 +1379,23 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       MAP_CHUNKS,
       extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags)),
     ),
+  /** A pad, with its blend, over the map's water off W-3's basin mouth (ADR-0082, audit before stage 1). */
+  "pad-in-water": () =>
+    padsInWater(
+      PADS,
+      extractFeatures(SOURCE_OSM).areas.filter((a) => isWater(a.tags)),
+      [W3_BASIN_MOUTH],
+    ),
+  /** Street furniture standing in the map's water on the terrain, off the bridges (ADR-0082 audit; G-835). */
+  "prop-in-water": () =>
+    propsInWater(
+      Object.values(WORLD_STREET_PROPS).flat(),
+      extractFeatures(SOURCE_OSM).areas.filter((a) => isWater(a.tags)),
+      groundY,
+      (x, z) => bridgeDeckAt(x, z) !== null,
+    ),
+  /** A street or footway of the map running into a set piece's cleared ground or its basin, or across W-3's fence off its gates (ADR-0082 audit). */
+  "path-cut-by-cleared": () => pathsCutByCleared(extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags)), [...CLEARED, W3_BASIN], W3_BARRIERS),
   /** Alchemia's solids hiding a landmark's top from more than a quarter of the streets round it (ADR-0074, review of #312). */
   "game-solid-landmark-occlusion": () => alchemiaHidesLandmarks(),
   /** A building the investor's plan keeps (the Arkady, the shed by them) without a solid on its OSM outline (ADR-0074 §11). */

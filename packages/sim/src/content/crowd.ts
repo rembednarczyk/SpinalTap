@@ -333,7 +333,8 @@ const SET_PIECE_LANES: readonly CrowdLane[] = [
   },
   { id: "targ-stalls", chunk: MARKET_CHUNK, points: [fenceOut(-5.5, 2.7), fenceOut(37.5, 2.7), fenceOut(37.5, 4.5), fenceOut(-5.5, 4.5)] },
   // W-3 (ADR-0082): the workers' round of the east yard and the pickup yard, along the east
-  // fence, west along the basin's railing, back east under row N's wall, south past the chamber.
+  // fence, west along the basin's railing short of the container, back east under row N's wall,
+  // south past the chamber.
   {
     id: "doki-round",
     chunk: DOCKS_CHUNK,
@@ -341,8 +342,8 @@ const SET_PIECE_LANES: readonly CrowdLane[] = [
       [2576, 396.5],
       [2602, 396.5],
       [2602, 448],
-      [2511, 448],
-      [2511, 443.5],
+      [2540, 448],
+      [2540, 443.5],
       [2576, 443.5],
     ],
   },

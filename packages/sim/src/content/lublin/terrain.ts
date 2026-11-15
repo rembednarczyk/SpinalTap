@@ -19,7 +19,7 @@ const overlaps = (g: TerrainGrid, b: typeof W3_SITE): boolean =>
  * 5 m cell the zone's pad would pull the public strip and the metro's entrance down a cell past
  * the fence. Refining keeps the NMT's surface as it is; the pads then end within a metre.
  */
-const w3Grid = (g: TerrainGrid): TerrainGrid => (g.cell > FLIGHT_CELL && overlaps(g, W3_SITE) ? refineGrid(g, FLIGHT_CELL) : g);
+export const w3Grid = (g: TerrainGrid): TerrainGrid => (g.cell > FLIGHT_CELL && overlaps(g, W3_SITE) ? refineGrid(g, FLIGHT_CELL) : g);
 
 /**
  * The terrain of the game's Lublin (ADR-0045): the map's grids with the pads and ramps of

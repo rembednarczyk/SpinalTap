@@ -179,13 +179,13 @@ describe("an alerted guard far from the player falls asleep (G-188)", () => {
   const calmWest = once(() => {
     const { sim, id } = alarmed(10);
     const key = `${id}-g1`;
-    // Her in the west of the docks: the guards' chunk falls asleep with them pinned.
-    teleportPlayer(sim, ground(2330, 300));
+    // Her in the east of the docks (W-3's tower and quay are in the west chunk, ADR-0082): the guards' chunk falls asleep with them pinned.
+    teleportPlayer(sim, ground(2670, 300));
     sim.step();
     const ownLoaded = sim.streamer.isLoaded(sim.streamer.chunkIdAt(byKey(sim, key)!.position));
-    // He came after her into the loaded west and gave up there.
+    // He came after her into the loaded east chunk, by the pickup yard, and gave up there.
     const g = byKey(sim, key)!;
-    g.position = ground(2450, 400);
+    g.position = w3(2506, 0, 446);
     g.prevPosition = g.position;
     g.ai = { ...g.ai!, alerted: false, lastKnown: null, search: 0, lost: 0, suspicion: 0 };
     sim.step();
@@ -277,11 +277,11 @@ describe("a paid job's guard far from the player is gone (G-188 with G-195)", ()
 
   it("calm in a loaded chunk not his own, he is still there after a load (not gone before her eyes)", () => {
     const { sim, c, key } = paidAlerted();
-    teleportPlayer(sim, ground(2330, 300));
+    teleportPlayer(sim, ground(2670, 300));
     sim.step();
     const g = byKey(sim, key)!;
     expect(sim.streamer.isLoaded(g.chunk!)).toBe(false);
-    g.position = ground(2450, 400);
+    g.position = ground(2610, 330);
     g.prevPosition = g.position;
     g.ai = { ...g.ai!, alerted: false, lastKnown: null, search: 0, lost: 0, suspicion: 0 };
     sim.step();
@@ -355,11 +355,11 @@ describe("a guard near the player stays when his chunk falls asleep (G-201)", ()
       const e = byKey(sim, k)!;
       e.ai = { ...e.ai!, alerted: false, lastKnown: null, search: 0, lost: 0, suspicion: 0 };
     }
-    // Her in the west of the docks, him 6 m from her: his own chunk falls asleep in this step.
-    teleportPlayer(sim, ground(2330, 300));
+    // Her in the east of the docks, him 6 m from her: his own chunk falls asleep in this step.
+    teleportPlayer(sim, ground(2670, 300));
     const key = `${id}-g1`;
     const g = byKey(sim, key)!;
-    g.position = ground(2336, 300);
+    g.position = ground(2664, 300);
     g.prevPosition = g.position;
     sim.step();
     expect(sim.streamer.isLoaded(g.chunk!)).toBe(false);

@@ -26,7 +26,7 @@ const post = (at: Vec3, yaw: number, type: EnemyTypeId = "tessen_guard", onAlarm
  * pier, the tower's platform at its south-west and north-east corners, row N's roof at its east
  * end over the east yard. Each stands at a railing 1.05 m high, so the shooter sees down over it.
  */
-export const SNIPER_PERCHES: readonly Vec3[] = [w3(2501, W3_ROOF, 434), w3(2486.9, W3_PLATFORM, 436.9), w3(2495, W3_PLATFORM, 444.9), w3(2566, W3_ROOF, 439.2)];
+export const SNIPER_PERCHES: readonly Vec3[] = [w3(2500.7, W3_ROOF, 434), w3(2486.9, W3_PLATFORM, 436.9), w3(2495, W3_PLATFORM, 444.9), w3(2566, W3_ROOF, 439.2)];
 
 /**
  * Posts of the riverside jobs, in target index order (the first one decides the chunk). The
@@ -37,18 +37,18 @@ export const SNIPER_PERCHES: readonly Vec3[] = [w3(2501, W3_ROOF, 434), w3(2486.
 export const W3_CONTRACT_POSTS: Readonly<Partial<Record<ContractSiteId, readonly ContractPost[]>>> = {
   docks_escort: [post(ground(2470, 393), 1.2, "tessen_guard", true), post(ground(2466.5, 399), 2.4, "tessen_guard", true), post(ground(2477, 381), 0, "tessen_guard", true), post(ground(2461, 408), Math.PI, "tessen_guard", true)],
   tessen_office: [
-    post(w3(2492.5, 0, 444.9), Math.PI),
+    post(w3(2488.6, 0, 438.4), Math.PI),
     post(w3(2497.8, 0, 445.4), Math.PI),
     post(w3(2492, 0, 428), Math.PI),
     post(w3(2482, 0, 428.5), -Math.PI / 2),
-    post(w3(2506, 0, 446), -Math.PI / 2),
+    post(w3(2506, 0, 446), Math.PI / 2),
   ],
   quay_terminal: [
-    post(w3(2492, 0, 432), -Math.PI / 2, "tessen_guard", true),
+    post(w3(2498.4, 0, 444.5), -2.3, "tessen_guard", true),
     post(SNIPER_PERCHES[0] as Vec3, -2.5, "tessen_sniper", true),
     post(w3(2497, 0, 420), -Math.PI / 2, "tessen_guard", true),
     post(w3(2505, 0, 447), -2.4, "tessen_guard", true),
-    post(w3(2491, 0, 417), -0.9, "tessen_guard", true),
+    post(w3(2494, 0, 412.5), -0.6, "tessen_guard", true),
   ],
 };
 

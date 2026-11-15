@@ -93,6 +93,7 @@ const docksSpot = (id: string, kind: SpotKind, x: number, z: number, yaw: number
 const STANDING: readonly [ActivityId, ...ActivityId[]] = ["smoke", "phone"];
 
 const WEST = -Math.PI / 2;
+const EAST = Math.PI / 2;
 const NORTH = 0;
 const SOUTH = Math.PI;
 
@@ -148,11 +149,12 @@ const TARG: readonly ActivitySpot[] = [
   onT1("targ-front-wall-3", "wall", 427.5, HALL.maxZ + 0.55, NORTH, ["lean", "phone"]),
 ];
 
-/** W-3: the vending machine by the tower's office door, the hall's west wall by the quay, the basin's railing. */
+/** W-3: the vending machine by the tower's office door, the hall's west wall by the quay, the basin's railing, row N's east wall. */
 const DOKI: readonly ActivitySpot[] = [
   docksSpot("doki-vending", "vending", 2497.4, 440, WEST),
   docksSpot("doki-quay-wall", "wall", 2499.45, 427, WEST, STANDING),
   docksSpot("doki-fence-wall", "wall", 2560, 451.3, SOUTH, STANDING),
+  docksSpot("doki-row-wall", "wall", 2572.55, 436, EAST, STANDING),
 ];
 
 export const ACTIVITY_SPOTS: readonly ActivitySpot[] = [...KRAKOWSKIE, ...KANAL, ...TARG, ...DOKI];
