@@ -8,6 +8,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DISTRICTS } from "./config.ts";
 import { emitDistrict } from "./emit.ts";
+import { TABLES, tableFingerprint, withFingerprint } from "./fingerprint.ts";
 import { generate } from "./generate.ts";
 import { loadInputs } from "./load.ts";
 import { REPO } from "./paths.ts";
@@ -18,10 +19,12 @@ const OUT = join(REPO, "packages/sim/src/content/lublin");
 const inputs = loadInputs();
 const { chunks, stats, venues, widths } = generate(inputs.osm, inputs.src, undefined, undefined, inputs.lod1, inputs.lod2, inputs.covers);
 mkdirSync(OUT, { recursive: true });
+// The fingerprint of the inputs in every table's header: the unit test compares it, not the tables (ADR-0083).
+const fingerprint = tableFingerprint("build");
 let total = 0;
 for (const d of DISTRICTS) {
   const file = join(OUT, `${d.slug}.generated.ts`);
-  const text = emitDistrict(d.slug, d.name, chunks.filter((c) => c.district === d.id));
+  const text = withFingerprint(emitDistrict(d.slug, d.name, chunks.filter((c) => c.district === d.id)), fingerprint, TABLES.build.command);
   if (!process.argv.includes("--no-write")) writeFileSync(file, text);
   const size = Buffer.byteLength(text);
   total += size;
