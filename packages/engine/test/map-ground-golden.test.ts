@@ -129,7 +129,11 @@ describe("the ground the map city lays (G-444)", () => {
     // A side left at the estimate widened to the paving again, the kerbs' strips laid from under the
     // asphalt, over seams under 0.1 m and up to a zebra past a measured kerb, the zebras across the
     // asphalt where it lies (G-811): 161 914 - 161 182 = 732 vertices more, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161914, hash: "56b47b4e" });
+    // The flights of steps by the one norm of a step (G-840): risers of 0.12-0.17 m from the rise
+    // between a run's ends, landings and level stretches for the rest, so fewer treads and risers
+    // than one every 0.33 m; their normals the ramp's and uv2 their lift onto it from far:
+    // 161 914 - 159 555 = 2 359 vertices fewer, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 159555, hash: "4e66f2f3" });
     scene.dispose();
   });
 

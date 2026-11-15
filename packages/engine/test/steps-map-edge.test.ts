@@ -29,11 +29,18 @@ const city = (): MapEntries => {
   return e;
 };
 
-/** The tallest side face of a sink's quads (m): a riser, or the wall a riser became. */
+/**
+ * The tallest side face of a sink's quads (m): a riser, or the wall a riser became. Upright by
+ * its corners: a flight's normals are its ramp's (G-840).
+ */
 const tallestSide = (s: MeshSink): number => {
   let tallest = 0;
   for (let q = 0; q + 3 < s.vertexCount; q += 4) {
-    if (Math.abs(s.normals[q * 3 + 1] ?? 0) > 0.5) continue;
+    const p = [0, 1, 2].map((k) => [0, 1, 2].map((c) => s.positions[(q + k) * 3 + c] ?? 0)) as [number[], number[], number[]];
+    const e1 = p[1].map((v, c) => v - (p[0][c] ?? 0));
+    const e2 = p[2].map((v, c) => v - (p[0][c] ?? 0));
+    const n = [e1[1]! * e2[2]! - e1[2]! * e2[1]!, e1[2]! * e2[0]! - e1[0]! * e2[2]!, e1[0]! * e2[1]! - e1[1]! * e2[0]!];
+    if (Math.abs(n[1]!) > 0.5 * Math.hypot(...n)) continue;
     const ys = [0, 1, 2, 3].map((k) => s.positions[(q + k) * 3 + 1] ?? 0);
     tallest = Math.max(tallest, Math.max(...ys) - Math.min(...ys));
   }
