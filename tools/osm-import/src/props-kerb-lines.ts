@@ -5,6 +5,8 @@
  * pavement, where Lublin's cast-iron posts stand (orthophoto 2025-04, GSV 2025). A street the chunks
  * clip is joined back into one line, so its row runs on over a chunk's edge evenly.
  */
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
+import type { CrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
 import { DISTRICTS } from "./config.ts";
 import { type Pt, pointInRing } from "./geometry.ts";
 import { OLD_TOWN_RING } from "./old-town.ts";
@@ -156,4 +158,21 @@ export const kerbLines = (chunks: readonly LublinChunkData[]): KerbLine[] => {
     });
   }
   return out;
+};
+
+/** A point within `pad` of a band is within its half extents and `pad` of the centre either way; a centimetre's slack. */
+export const bandHash = (bands: readonly CrossingBand[], pad: number): SpatialHash<CrossingBand> => {
+  const h = new SpatialHash<CrossingBand>(8);
+  for (const b of bands) {
+    const r = b.along + b.across + 2 * pad + 0.01;
+    h.insert(b, b.c.x - r, b.c.z - r, b.c.x + r, b.c.z + r);
+  }
+  return h;
+};
+
+/** Rings by their boxes. */
+export const ringHash = (rings: readonly (readonly Pt[])[]): SpatialHash<readonly Pt[]> => {
+  const h = new SpatialHash<readonly Pt[]>(16);
+  for (const r of rings) if (r.length > 0) h.insert(r, Math.min(...r.map((p) => p.x)), Math.min(...r.map((p) => p.z)), Math.max(...r.map((p) => p.x)), Math.max(...r.map((p) => p.z)));
+  return h;
 };

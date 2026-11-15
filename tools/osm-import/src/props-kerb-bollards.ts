@@ -27,7 +27,7 @@ import { type CrossingBand, inCrossingBand } from "../../../packages/sim/src/con
 import { BOLLARD, POLE_SHAFT, distanceToPiece, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { type Pt, pointInRing } from "./geometry.ts";
-import { type KerbLine, type KerbSample, LEAST_HALF, inRowArea, kerbLines, onGround } from "./props-kerb-lines.ts";
+import { type KerbLine, type KerbSample, LEAST_HALF, bandHash, inRowArea, kerbLines, onGround, ringHash } from "./props-kerb-lines.ts";
 import type { Site } from "./props-site.ts";
 import { type CornerWorld, cornerCurve, cornerEnds, cornerPairs, cornerPosts, isSquareStreet } from "./props-kerb-corners.ts";
 
@@ -185,7 +185,8 @@ const placedOf = (items: readonly StreetPropItem[]): Placed => {
 /** Everything the rule reads, indexed once. */
 export interface World {
   readonly site: Site;
-  readonly bands: readonly CrossingBand[];
+  /** The zebras' bands by the boxes a post's room round them can reach. */
+  readonly bands: SpatialHash<CrossingBand>;
   readonly mouths: SpatialHash<Way>;
   readonly walls: SpatialHash<Way>;
   /** The squares' outlines by their boxes. */
@@ -201,7 +202,7 @@ export const gapAt = (w: World, s: KerbSample, along: Pt): string | null => {
   const { p } = s;
   if (s.half < LEAST_HALF || !inRowArea(p)) return "off";
   // A zebra's band before the carriageway: the kerb line dips onto its ramp, which is no junction to grow by `CORNER`.
-  if (w.bands.some((b) => inCrossingBand(b, p, CROSSING_ROOM + BOLLARD.radius))) return "crossing";
+  if (w.bands.at(p.x, p.z).some((b) => inCrossingBand(b, p, CROSSING_ROOM + BOLLARD.radius))) return "crossing";
   const surface = w.site.surfaceAt(p);
   if (surface === "road") return "road";
   if (surface !== "walk" || w.site.onSteps(p)) return "ground";
@@ -346,12 +347,6 @@ export const stretchPosts = (from: End, to: End, spacing: number): number[] => {
   return len < spacing / 2 && out.length > 1 ? [(a + b) / 2] : out;
 };
 
-const ringHash = (rings: readonly (readonly Pt[])[]): SpatialHash<readonly Pt[]> => {
-  const h = new SpatialHash<readonly Pt[]>(16);
-  for (const r of rings) if (r.length > 0) h.insert(r, Math.min(...r.map((p) => p.x)), Math.min(...r.map((p) => p.z)), Math.max(...r.map((p) => p.x)), Math.max(...r.map((p) => p.z)));
-  return h;
-};
-
 /** The world the rule reads from the chunks, the pieces placed so far and the context. */
 export const ruleWorld = (site: Site, chunks: readonly LublinChunkData[], items: readonly StreetPropItem[], bands: readonly CrossingBand[], ctx: KerbRuleContext = {}): World => {
   const stops = new Map<string, Pt>();
@@ -359,7 +354,7 @@ export const ruleWorld = (site: Site, chunks: readonly LublinChunkData[], items:
   const walls = chunks.flatMap((c) => (c.barriers ?? []).filter((b) => b.kind !== "gate" && b.kind !== "lift-gate").flatMap((b) => segmentsOf(flat(b.line), 0)));
   return {
     site,
-    bands,
+    bands: bandHash(bands, CROSSING_ROOM + BOLLARD.radius),
     mouths: segmentHash(mouthWays(chunks)),
     walls: segmentHash(walls),
     squares: ringHash(chunks.flatMap((c) => (c.walkAreas ?? []).filter((a) => a.surface === "square").map((a) => flat(a.outline)))),
