@@ -39,6 +39,8 @@ describe("bare terrain before a pedestrian street's walls (frontage-bare, G-855)
   it("leaves paved ground, lawns, a square another kind has and one under 2 m² bare", () => {
     expect(frontageBare({ ...STREET, ground: [box(0, -10, 20, 12)] })).toEqual([]);
     expect(frontageBare({ ...STREET, ground: [box(0, -10, 20, 7)], green: [box(0, 7, 20, 12)] })).toEqual([]);
+    // A building site of the map is bare as anywhere (G-866).
+    expect(frontageBare({ ...STREET, ground: [box(0, -10, 20, 7)], sites: [box(0, 7, 20, 12)] })).toEqual([]);
     const taken = frontageBare({ ...STREET, taken: new Set(["0,10", "0,0", "0,-10"]) });
     expect([...squaresOf(taken)].sort()).toEqual(["10,-10", "10,0", "10,10"]);
     // A strip 0.5 m wide and 3 m long: 1.5 m², under the least that counts; 5 m long counts.

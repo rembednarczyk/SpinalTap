@@ -159,7 +159,7 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
       const town = townPlaces(data, [area(2, tags, box(11, 12, 17, 15))], [], fronts);
       return coverFills(RECT, cover(at), [street], [box(0, 15, 20, 20)], { ...town, shops: [] });
     };
-    for (const tags of [{ landuse: "construction" }, { building: "construction" }]) {
+    for (const tags of [{ landuse: "construction" }, { building: "construction" }] as Record<string, string>[]) {
       const fills = sited(tags);
       for (const x of [12.25, 14.25, 16.25]) expect(surfaceAt(fills.filter((f) => f.front), { x, z: 13.75 }), `${JSON.stringify(tags)} ${x}`).toEqual([]);
       expect(surfaceAt(fills, { x: 8.25, z: 13.75 }), "the frontage beside the site").toEqual(["square"]);

@@ -7,7 +7,8 @@ import { BARE_GRID, Grid, HAIRLINE, type LanduseWorld } from "./landuse-bare";
 /**
  * Bare terrain before a pedestrian street's walls (`frontage-bare`, G-855, from the hunt of G-853):
  * a point of a 0.5 m grid with no building and no ground piece of the map's on it, outside the
- * map's lawns, beds and water (drawn or not), within `WALKED_REACH` of the axis of a pedestrian
+ * map's lawns, beds and water (drawn or not) and its building sites (G-866: a site's ground is
+ * bare, as anywhere in the game), within `WALKED_REACH` of the axis of a pedestrian
  * way or a living street, or inside the Old Town's walls within `OLD_TOWN_REACH` of a residential
  * street's. A 10 m square counts with `MIN_BARE` m² of such points and more, and not when another
  * kind of bare ground has it (`landuse-bare`, `kerb-gap-bare`, `kerb-strip-bare`,
@@ -36,6 +37,8 @@ export interface FrontageWorld extends Pick<LanduseWorld, "buildings" | "ground"
   readonly oldTown: (p: Pt) => boolean;
   /** The 10 m squares (`x,z` of the corner at the least x and z) another kind of bare ground has. */
   readonly taken?: ReadonlySet<string>;
+  /** The map's building sites (`landuse=construction`, `building=construction`): no frontage. */
+  readonly sites?: readonly Ring[];
 }
 
 /** How far past its edges a building's outline covers the raster (m), along x and z. */
@@ -67,7 +70,7 @@ const boxed = (ring: Ring): Boxed => ({
 /** The bare samples before the pedestrian streets' walls, in the squares that count: one finding a sample. */
 export const frontageBare = (w: FrontageWorld): Finding[] => {
   const out: Finding[] = [];
-  const [walked, residential, buildings, green, ground] = [w.walked, w.residential, w.buildings, w.green, w.ground].map((rs) => rs.map(boxed));
+  const [walked, residential, buildings, green, ground] = [w.walked, w.residential, w.buildings, [...w.green, ...(w.sites ?? [])], w.ground].map((rs) => rs.map(boxed));
   for (const chunk of w.chunks) {
     const grid = new Grid(chunk);
     const near = (rs: readonly Boxed[], d: number) =>
@@ -110,8 +113,8 @@ export const frontageBare = (w: FrontageWorld): Finding[] => {
 
 const onGround = (t: Line["tags"]): boolean => t.area !== "yes" && t.tunnel === undefined && (t.bridge ?? "no") === "no" && Number(t.layer ?? 0) >= 0;
 
-/** The city's world: the map's lines as the import reads them (`lines`), the game's buildings and ground, the map data's lawns and water (`landuse`). */
-export const cityFrontageWorld = (lines: readonly Line[], landuse: LanduseWorld, taken: ReadonlySet<string>): FrontageWorld => {
+/** The city's world: the map's lines as the import reads them (`lines`), the game's buildings and ground, the map data's lawns and water (`landuse`) and building sites (`sites`). */
+export const cityFrontageWorld = (lines: readonly Line[], landuse: LanduseWorld, taken: ReadonlySet<string>, sites: readonly Ring[] = []): FrontageWorld => {
   const axes = (highways: ReadonlySet<string>) => lines.filter((l) => highways.has(l.tags.highway ?? "") && onGround(l.tags)).map((l) => l.line);
   return {
     walked: axes(new Set(["pedestrian", "living_street"])),
@@ -122,5 +125,6 @@ export const cityFrontageWorld = (lines: readonly Line[], landuse: LanduseWorld,
     green: landuse.green,
     chunks: landuse.chunks,
     taken,
+    sites,
   };
 };

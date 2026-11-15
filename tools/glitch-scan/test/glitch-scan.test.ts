@@ -2142,6 +2142,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)),
         cityLanduseWorld(SOURCE_OSM),
         squaresOf([...LANDUSE_BARE(), ...KERB_GAP_BARE(), ...KERB_STRIP_BARE(), ...GROUND_STRIP_GAP()]),
+        structuresOf(SOURCE_OSM)
+          .filter((s) => s.kind === "construction")
+          .map((s) => s.ring),
       ),
     ),
   /** A point of a 0.25 m grid in a pavement no paving of the map explains, a metre wide and more, by a carriageway the map gives no width: its asphalt laid as a pavement (`kerb-fill.ts`, G-570). */

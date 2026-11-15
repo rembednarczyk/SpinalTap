@@ -48,6 +48,7 @@ krakowskie-0-1 -70,100
 krakowskie-0-1 -60,100
 krakowskie-0-1 -50,100
 krakowskie-0-1 -40,100
+krakowskie-0-1 0,100
 krakowskie-0-1 -40,110
 krakowskie-0-1 0,110
 krakowskie-0-1 10,110
@@ -140,14 +141,12 @@ krakowskie-1-1 130,20
 krakowskie-1-1 190,20
 krakowskie-1-1 200,20
 krakowskie-1-1 210,30
-krakowskie-1-1 230,30
 krakowskie-1-1 140,40
 krakowskie-1-1 160,40
 krakowskie-1-1 170,40
 krakowskie-1-1 180,40
 krakowskie-1-1 190,40
 krakowskie-1-1 200,40
-krakowskie-1-1 220,40
 krakowskie-1-1 140,50
 krakowskie-1-1 230,50
 krakowskie-1-1 140,60
@@ -272,11 +271,9 @@ krakowskie-2-1 400,-10
 krakowskie-2-1 410,-10
 krakowskie-2-1 420,-10
 krakowskie-2-1 430,-10
-krakowskie-2-1 250,0
 krakowskie-2-1 370,0
 krakowskie-2-1 380,0
 krakowskie-2-1 430,0
-krakowskie-2-1 240,10
 krakowskie-2-1 290,10
 krakowskie-2-1 380,10
 krakowskie-2-1 430,10
