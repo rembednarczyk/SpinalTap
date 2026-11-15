@@ -742,10 +742,27 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const pieces = Object.values(WORLD_STREET_PROPS).flat();
     // Other furniture and other posts than the one holding the chain and the one it ends at.
     const solids = pieces.filter((i) => furnitureRadius(i) > 0);
+    // A grid of the solids (5 m cells): a chain asks only the cells within its reach, not all of
+    // the city's furniture (with the kerb rows of G-820 the whole list ran past the test's limit).
+    const CELL = 5;
+    const reach = 4 + Math.max(0, ...solids.map(furnitureRadius));
+    const grid = new Map<string, typeof solids>();
+    for (const o of solids) {
+      const k = `${Math.floor(o.x / CELL)},${Math.floor(o.z / CELL)}`;
+      const cell = grid.get(k);
+      if (cell) cell.push(o);
+      else grid.set(k, [o]);
+    }
+    const nearSolids = (x: number, z: number): typeof solids => {
+      const out: typeof solids = [];
+      for (let cx = Math.floor((x - reach) / CELL); cx <= Math.floor((x + reach) / CELL); cx++)
+        for (let cz = Math.floor((z - reach) / CELL); cz <= Math.floor((z + reach) / CELL); cz++) out.push(...(grid.get(`${cx},${cz}`) ?? []));
+      return out;
+    };
     return pieces.flatMap((i) =>
       chainSegments(i).flatMap(({ from, to }) => {
         const wall = alongSegment(from, to, 0.1).find((p) => inBuilding(p.x, p.z));
-        const hit = solids
+        const hit = nearSolids(i.x, i.z)
           // The post or the lamp a chain hangs on is its end, not in its way.
           .filter((o) => o !== i && !(o.prop === "bollard" ? distanceToPiece(o, to.x, to.z) <= 0.2 : anchors(o, to)))
           .filter((o) => Math.hypot(o.x - i.x, o.z - i.z) < 4 + furnitureRadius(o) && chainThrough(from, to, o))
