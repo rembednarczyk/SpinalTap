@@ -1961,6 +1961,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w naprawie (runda 2 po przeglądzie kuratora, gałąź ccr-ec2c4269-ilh8k8-g825); wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import, tools/orto
 - 15.11 przegląd kuratora (41ddd97): NIEZGODNE. Placement zgodne z ortofoto; zwężenie przy węźle kładzie pół pasa łącznicy za krawężnik: Ruska w216655518 (1071..1074; 428..437) jezdnia na trawie ok. 12 m², Andersa w40051729 (2316..2322; 312..321) jezdnia i chodnik na trawie ok. 12 m², Solidarności w215609082 s 0-6 krawędź 7,7 m wobec 6,3 (ok. 5 m² na szpicu trawnika). kerb-fill-wide-estimated (1113,353) to fałszywy alarm (kostka dojścia do przejścia). Runda 2 naprawiacza.
+- 15.11 runda 2: 4f9cf2f + merge ed53299; skan 3842 → 3833, nowa kontrola lane-place-on-green (baza 0); do ponownego przeglądu kuratora, w tym 5 sygnalizatorów przestawionych przy remisach
 
 ### G-826 Pokrycie ortofoto 2025-04 klasuje jasny asfalt jezdni jako paving
 - Ważność: S3 · Zasięg: m.in. pod latarniami G-821; kontrola lamp-on-orto-carriageway ich nie widzi
@@ -2036,6 +2037,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-837 Zygzaki i schodki krawędzi chodnika przy jezdni i zebrze
 - Ważność: S3 · Zasięg: kerb-jag 55 trafień w 42 kwadratach 10 m; Podzamcze 18, Krakowskie 16, Nabrzeże 6, Stare Miasto 2
 - Opis: cutSidewalk tnie chodnik próbkowaniem co 0,5 m, a krawężnik składa się z pasów kerbFills/widened: schodki i zygzaki, zwłaszcza przy zebrach i narożnikach. Kontrola w PR #581; zrzuty scratchpad/jag/final/f7–f10
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+
+### G-838 Szczelina 0,12 m między kwadratem reguły gołej ziemi a przesuniętą krawędzią Lwowskiej w139586648
+- Ważność: S4 · Zasięg: kerb-gap-bare podzamcze-2-1 1110,440
+- Opis: Kontur komórek 0,5 m reguły gołej ziemi nie dochodzi do krawędzi jezdni przesuniętej przez G-825 (placement). Znalezione w rundzie 2 G-825
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
+
+### G-839 Wyspa między łącznicą Ruskiej w216655518 a Lwowską to goła ziemia, na ortofoto kostka
+- Ważność: S4 · Zasięg: Podzamcze (1069–1078; 437–447)
+- Opis: Było tak przed G-825; znalezione w rundzie 2 G-825. Także klin między łącznicą Andersa w40051729 a Mełgiewską jako square, na ortofoto asfalt (klasa G-826)
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
 
