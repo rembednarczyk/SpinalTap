@@ -129,7 +129,10 @@ describe("the ground the map city lays (G-444)", () => {
     // A side left at the estimate widened to the paving again, the kerbs' strips laid from under the
     // asphalt, over seams under 0.1 m and up to a zebra past a measured kerb, the zebras across the
     // asphalt where it lies (G-811): 161 914 - 161 182 = 732 vertices more, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161914, hash: "56b47b4e" });
+    // The carriageways laid where OSM's lanes lie (G-825): off their line by `placement`, and where one
+    // splits off or joins another, its lanes beside the other's, densified where they swing (2 m):
+    // 161 987 - 161 914 = 73 vertices more, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161987, hash: "61edacc9" });
     scene.dispose();
   });
 

@@ -29,6 +29,7 @@ import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines }
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { FILL_MARGIN, kerbFills, stretchZebras } from "./kerb-fill.ts";
 import { taperedJoins } from "./lane-fit.ts";
+import { lanePlaces, placedPieces, placementOffset } from "./lane-place.ts";
 import { roundJoints } from "./line-buffer.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { type StreetHalves, streetHalves } from "./street-half.ts";
@@ -263,6 +264,31 @@ const slitsOffWidened = <B extends Band & { box: Rect }>(bands: readonly B[], wi
   return bands.filter((b) => !b.slit || !wide.some((w) => rectsOverlap(w.box, b.box) && pointInRing(centroid(b.ring), w.ring)));
 };
 
+/**
+ * The streets' carriageways laid off the map's line, by way, and how far each lies off it at most
+ * (`aside`, m, for the zebras on it). A street of mapped lanes ends at its sidewalks side by side and
+ * stretch by stretch (G-655): its carriageway's pieces, for its bands, markings and zebras; its axis
+ * stays the map's for the rest. So does a street measured on the orthophoto off its axis in OSM: on
+ * the asphalt (ADR-0080 PR 10). And one whose lanes lie off its line, by `placement` or where it
+ * splits off or joins another (G-825); a measured one keeps its measured axis (`lane-place.ts`).
+ */
+const carriagewayPieces = (lines: readonly Line[], sidewalks: ReturnType<typeof sidewalkIndex>) => {
+  const own = (l: Line) => (ORTHO_OFFSETS.has(l.id) ? 0 : placementOffset(l.tags));
+  const places = lanePlaces(lines.filter((l) => l.tags.highway), own);
+  const fittedLanes = new Map<string, readonly Line[]>();
+  const aside = new Map<string, number>();
+  for (const l of lines) {
+    if (!l.tags.highway) continue;
+    const fitted = sidewalks.lanes(l) ?? orthoPieces(l);
+    const place = places.get(l.id);
+    const pieces = placedPieces(l, fitted ?? [l], fitted ? 0 : own(l), place, own(l));
+    if (fitted || pieces[0] !== l) fittedLanes.set(l.id, pieces);
+    const moved = Math.max(Math.abs(ORTHO_OFFSETS.get(l.id) ?? 0), Math.abs(own(l)), ...[place?.start, place?.end].map((e) => Math.abs(e?.centre ?? 0)));
+    if (moved > 0) aside.set(l.id, moved);
+  }
+  return { fittedLanes, aside };
+};
+
 export const generate = (
   data: OsmData,
   src: HeightSource,
@@ -280,14 +306,7 @@ export const generate = (
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
   const sidewalks = sidewalkIndex(mapLines);
   const lines = mapLines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));
-  // A street of mapped lanes ends at its sidewalks side by side and stretch by stretch (G-655): its
-  // carriageway's pieces, for its bands, markings and zebras. Its axis stays the map's for the rest.
-  // So does a street measured on the orthophoto off its axis in OSM: on the asphalt (ADR-0080 PR 10).
-  const fittedLanes = new Map<string, readonly Line[]>();
-  for (const l of lines) {
-    const pieces = l.tags.highway ? (sidewalks.lanes(l) ?? orthoPieces(l)) : null;
-    if (pieces) fittedLanes.set(l.id, pieces);
-  }
+  const { fittedLanes, aside } = carriagewayPieces(lines, sidewalks);
   const carriageway = (l: Line): readonly Line[] => fittedLanes.get(l.id) ?? [l];
   const outlines = buildingAreas(areas, data);
   const partAreas = areas.filter(isPart);
@@ -344,7 +363,7 @@ export const generate = (
     if (!n.tags || !markedCrossing(n.tags)) continue;
     const at = geoToWorld(n.lat, n.lon);
     if (!near([at]) || onCrossingWay(at)) continue;
-    const b = crossingBand(`n${n.id}`, at, roads, (l) => Math.abs(ORTHO_OFFSETS.get(l.id) ?? 0));
+    const b = crossingBand(`n${n.id}`, at, roads, (l) => aside.get(l.id) ?? 0);
     if (b) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   // A laid sidewalk stops at the kerb of the street it meets (ADR-0042): cut where it runs over another carriageway.

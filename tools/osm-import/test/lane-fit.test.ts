@@ -86,6 +86,12 @@ describe("a street of mapped lanes fitted to its sidewalks (G-655)", () => {
     expect(reach({ sidewalk: "separate" }, 50, { highway: "footway", footway: "crossing" })).toEqual([5.5, 5.5]);
   });
 
+  it("keeps the reach its placement gives on a side with no sidewalk along it (G-825)", () => {
+    // right_of:2 of three lanes: two left of the line (fitted to the footway), one, 3.25 m, right of
+    // it; the width's rounding to 6.8 m goes to the fitted side. Without placement the right is 4.9 m.
+    expect(reach({ "sidewalk:left": "separate", placement: "right_of:2" }, 50)).toEqual([3.6, 3.2]);
+  });
+
   it("is fitted only along the stretch its sidewalk runs along", () => {
     // The right footway ends at x 60: past it the right kerb is where the map's lanes put it.
     expect(reach({ "sidewalk:right": "separate" }, 30, { highway: "footway" }, 60)).toEqual([4.9, 3.5]);

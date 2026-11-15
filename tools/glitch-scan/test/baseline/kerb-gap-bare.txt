@@ -534,7 +534,7 @@ podzamcze-2-0 1040,250
 podzamcze-2-0 1080,250
 podzamcze-2-0 1090,250
 podzamcze-2-0 1040,260
-podzamcze-2-0 1110,260
+podzamcze-2-0 1100,260
 podzamcze-2-0 1030,270
 podzamcze-2-0 1060,270
 podzamcze-2-0 1070,270
@@ -571,20 +571,16 @@ podzamcze-2-1 920,400
 podzamcze-2-1 960,400
 podzamcze-2-1 970,400
 podzamcze-2-1 990,400
-podzamcze-2-1 1110,400
 podzamcze-2-1 930,410
 podzamcze-2-1 940,420
 podzamcze-2-1 1030,420
-podzamcze-2-1 1110,420
 podzamcze-2-1 960,430
-podzamcze-2-1 1110,430
 podzamcze-2-1 960,440
 podzamcze-2-1 1020,440
-podzamcze-2-1 1060,440
+podzamcze-2-1 1110,440
 podzamcze-2-1 990,450
 podzamcze-2-1 1050,450
 podzamcze-2-1 1060,450
-podzamcze-2-1 1070,450
 podzamcze-2-1 940,460
 podzamcze-2-1 1020,460
 podzamcze-2-1 920,470
@@ -592,6 +588,7 @@ podzamcze-2-1 970,470
 podzamcze-2-1 980,470
 podzamcze-2-1 1060,470
 podzamcze-2-1 1090,470
+podzamcze-2-1 1110,470
 podzamcze-2-1 1070,480
 podzamcze-2-1 1100,500
 podzamcze-2-1 1110,510
@@ -601,8 +598,6 @@ podzamcze-2-1 1090,550
 podzamcze-2-1 1100,550
 poza 2700,60
 poza 2700,380
-poza 1120,420
-poza 1120,430
 poza 670,580
 stare-miasto-0-0 510,-240
 stare-miasto-0-0 600,-230
