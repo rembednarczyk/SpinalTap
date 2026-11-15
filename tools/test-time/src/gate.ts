@@ -18,8 +18,17 @@ export type TestTimes = Readonly<Record<string, TestTime>>;
 /** A test of a file: an exception for the file holds for each of its tests. */
 export const testId = (file: string, fullName: string): string => `${file} > ${fullName}`;
 
-/** More than this share of its limit fails. */
+/**
+ * A new test (one main's reference runs do not have) fails over this share of its limit. A test main
+ * has is held by its growth over main instead: on a shared runner the same test swings by 20-30%
+ * from run to run, so tests near half their limit failed it by noise alone (15.11, #585: two crowd
+ * tests at 10.4 and 11.2 s; the user's decision: calibrate). Without any reference run only
+ * `HARD_SHARE` holds.
+ */
 export const LIMIT_SHARE = 0.5;
+
+/** Any test fails over this share of its limit: close enough to the timeout that noise could cross it. */
+export const HARD_SHARE = 0.75;
 
 /** More than this much slower than the median of main fails... */
 export const GROWTH = 0.3;
@@ -83,8 +92,9 @@ export const gateTests = (head: TestTimes, base: readonly TestTimes[], exception
   const found: Breach[] = [];
   for (const id of Object.keys(head).sort()) {
     const t = head[id]!;
-    if (t.ms > t.limitMs * LIMIT_SHARE) found.push({ test: id, kind: "limit", head: t });
     const m = medians.get(id);
+    const share = m === undefined && base.length > 0 ? LIMIT_SHARE : HARD_SHARE;
+    if (t.ms > t.limitMs * share) found.push({ test: id, kind: "limit", head: t });
     if (m && t.ms > m.ms * (1 + GROWTH) && t.ms - m.ms > GROWTH_FLOOR_MS) found.push({ test: id, kind: "growth", head: t, medianMs: m.ms, runs: m.runs });
   }
   const breaches: Breach[] = [];
@@ -101,7 +111,7 @@ const s = (ms: number): string => (ms / 1000).toFixed(1);
 
 const what = (b: Breach): string =>
   b.kind === "limit"
-    ? `${s(b.head.ms)} s, over half of its ${s(b.head.limitMs)} s limit`
+    ? `${s(b.head.ms)} s, over ${Math.round(Math.min(b.head.ms / b.head.limitMs, 1) * 100)}% of its ${s(b.head.limitMs)} s limit`
     : `${s(b.head.ms)} s against ${s(b.medianMs!)} s on main (median of ${b.runs} run${b.runs === 1 ? "" : "s"}, +${Math.round((b.head.ms / b.medianMs! - 1) * 100)}%)`;
 
 /** One `::error` line per breach, for the log and the pull request's annotations. */
@@ -115,7 +125,7 @@ export const errors = (g: Gate): string[] =>
 export const gateSummary = (g: Gate): string => {
   const lines = ["## Single tests (ADR-0083)", ""];
   lines.push(
-    `A test fails over ${LIMIT_SHARE * 100}% of its limit, or over ${GROWTH * 100}% and ${s(GROWTH_FLOOR_MS)} s slower than the median of main (${g.runs} green run${g.runs === 1 ? "" : "s"} of main with test times, ${g.compared} tests compared).`,
+    `A new test fails over ${LIMIT_SHARE * 100}% of its limit, any test over ${HARD_SHARE * 100}%, or a test over ${GROWTH * 100}% and ${s(GROWTH_FLOOR_MS)} s slower than the median of main (${g.runs} green run${g.runs === 1 ? "" : "s"} of main with test times, ${g.compared} tests compared).`,
     "",
   );
   const row = (b: Breach, reason = "") => `| ${b.test} | ${b.kind} | ${what(b)} |${reason ? ` ${reason} |` : ""}`;
