@@ -12,7 +12,7 @@ import { ASSET_FILE } from "./asset-licenses";
 
 const PUBLIC = join(import.meta.dirname, "../public");
 const SOURCES = JSON.parse(readFileSync(join(import.meta.dirname, "../../../tools/assets/sources.json"), "utf8")) as {
-  sources: { id: string; title: string; author: string; authorUrl?: string; page: string; license: string; licenseUrl?: string; used?: string[] }[];
+  sources: { id: string; title: string; author: string; authorUrl?: string; page: string; license: string; licenseUrl?: string; used?: string[]; sha256?: string; terms?: { date?: string } }[];
 };
 
 const walk = (dir: string): string[] => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? walk(join(dir, f)) : [join(dir, f)]));
@@ -110,9 +110,17 @@ describe("credits (ADR-0063)", () => {
     }
   });
 
-  it("credits every source of sources.json the game uses; all of them CC0, CC-BY 4.0, CC BY-NC(-SA) 4.0 or (game-icons.net) CC BY 3.0", () => {
+  it("credits every source of sources.json the game uses; all of them CC0, CC-BY 4.0, CC BY-NC(-SA) 4.0, VRoid Hub terms or (game-icons.net) CC BY 3.0", () => {
     for (const s of SOURCES.sources) {
-      expect(["CC0", "CC-BY-4.0", "CC-BY-3.0", "CC-BY-NC-4.0", "CC-BY-NC-SA-4.0"], s.id).toContain(s.license);
+      expect(["CC0", "CC-BY-4.0", "CC-BY-3.0", "CC-BY-NC-4.0", "CC-BY-NC-SA-4.0", "VRoid-Hub-NC"], s.id).toContain(s.license);
+      if (s.license === "VRoid-Hub-NC") {
+        // The author's terms of the day of the download (ADR-0063, 15.11): modification, redistribution and violence allowed, the file by its sha256.
+        for (const term of ["modification=allow", "redistribution=allow", "violent_expression=allow"]) expect(s.licenseUrl, s.id).toContain(term);
+        expect(s.licenseUrl, s.id).toMatch(/^https:\/\/hub\.vroid\.com\/license\?/);
+        expect(s.terms?.date, s.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect(s.sha256, s.id).toMatch(/^[0-9a-f]{64}$/);
+        expect(CREDITS.find((c) => c.id === s.id)?.licenseUrl, s.id).toBe(s.licenseUrl);
+      }
       if (s.license.startsWith("CC-BY-NC")) expect(s.licenseUrl, s.id).toBe(LICENSES[s.license as CreditLicense].url);
       if (s.license === "CC-BY-4.0") expect(s.licenseUrl).toBe("https://creativecommons.org/licenses/by/4.0/");
       if (s.license === "CC-BY-3.0") expect(s.id, "CC BY 3.0 only for game-icons.net").toMatch(/^game-icons-/);

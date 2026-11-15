@@ -80,6 +80,31 @@
       "used": ["HairSample_Male.vrm -> packages/app/public/models/kurosawa.vrm (tools/shrink_glb.py 1024 --keep-morphs=blink,a,i,u,e,o)"]
     },
     {
+      "id": "vroid-hub-kimi",
+      "title": "Kimi || Desktop Mate Model",
+      "author": "Toriss",
+      "page": "https://hub.vroid.com/en/characters/7972506988434619525/models/2687543789787584553",
+      "license": "VRoid-Hub-NC",
+      "licenseUrl": "https://hub.vroid.com/license?allowed_to_use_user=everyone&characterization_allowed_user=everyone&corporate_commercial_use=allow&credit=unnecessary&modification=allow&personal_commercial_use=profit&redistribution=allow&sexual_expression=allow&version=1&violent_expression=allow",
+      "licenseQuote": "Warunki autora na VRoid Hub (ADR-0063, zmiana 15.11; ADR-0086, sekcja źródeł NC, #3), zrzut z pliku pobranego 15.11.2026: metadane VRM title \"Kimi || Desktop Mate Model\", author Toriss, version 0.0.2, exporter VRoid Studio-2.1.0, licenseName Other, allowedUserName Everyone, violentUssageName Allow, sexualUssageName Allow, commercialUssageName Allow, otherLicenseUrl = licenseUrl. Na liście NC do czasu decyzji użytkownika (ADR-0086, pytanie dodatkowe 1), choć autor pozwala też na komercję.",
+      "terms": {
+        "date": "2026-11-15",
+        "allowed_to_use_user": "everyone",
+        "characterization_allowed_user": "everyone",
+        "modification": "allow",
+        "redistribution": "allow",
+        "violent_expression": "allow",
+        "sexual_expression": "allow",
+        "personal_commercial_use": "profit",
+        "corporate_commercial_use": "allow",
+        "credit": "unnecessary"
+      },
+      "manual": "Pobiera człowiek z VRoid Hub (logowanie pixiv); fetch.mjs pomija to źródło. Surowy VRM nie trafia do repo.",
+      "file": "8653533936556512697.vrm",
+      "sha256": "8609f2a8053fb17d225f94b0e08078d38e4b59853aef53a7eb163bf3a224649a",
+      "used": ["N00_007_03_Tops_01_CLOTH_01..03 -> packages/app/public/garments/jacket-techwear.glb (python3 -I tools/garments/garment_extract.py 8653533936556512697.vrm packages/app/public/garments/jacket-techwear.glb --recipe tools/garments/garments.json --id jacket-techwear)"]
+    },
+    {
       "id": "quaternius-cyberpunk-kit",
       "title": "Cyberpunk Game Kit",
       "author": "Quaternius (quaternius.com)",
