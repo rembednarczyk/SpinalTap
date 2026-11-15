@@ -367,12 +367,59 @@ const LOT_REACH = 2;
 /** Least distance between two pieces of one kind before the later one is dropped. */
 const minGap = (prop: StreetPropKind, fromLine: boolean): number => (prop.startsWith("lamp-") && fromLine ? 7 : prop === "trolley-pole" ? 10 : 0.3);
 
-/** The plan's groups placed (before the chunks): every piece with its prop, point, yaw and key. */
-const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, tags: NodeTags, boards: readonly BoardSpan[], market: MarketContext): { placed: Placed[]; fromLine: Set<Placed> } => {
+/**
+ * The groups of a pass as `placeAll` placed them, before the street groups and the food booths: the
+ * next pass over the same site starts from its pieces up to the first group that differs (`propsPlacer`).
+ */
+export interface PlacedRun {
+  readonly site: Site;
+  readonly items: readonly PlanItem[];
+  /** How many pieces stood after each group. */
+  readonly ends: readonly number[];
+  readonly placed: readonly Placed[];
+  readonly fromLine: ReadonlySet<Placed>;
+  /** The groups' skips in their order: the group's index, the key and how many. */
+  readonly skips: readonly (readonly [number, string, number])[];
+  readonly clear: Clearances;
+}
+
+/** A group placed after the street groups (`placeStreetGroup`): one with no geometry, or the baskets. */
+const deferredGroup = (item: PlanItem, prop: StreetPropKind): boolean =>
+  (!item.position && !item.points && !item.polygon && !item.line && !item.lines) || prop === "hanging-basket";
+
+/**
+ * How many first groups of `items` are those `prior` placed, the same objects in the same order.
+ * None when a later market of the same id would turn their stalls again (`placeAll` turns a market's stalls by its id).
+ */
+const sharedGroups = (prior: PlacedRun | undefined, site: Site, items: readonly PlanItem[]): number => {
+  if (!prior || prior.site !== site) return 0;
+  let k = 0;
+  while (k < items.length && k < prior.items.length && items[k] === prior.items[k]) k++;
+  const ids = new Set(items.slice(0, k).map((i) => i.id));
+  return items.slice(k).some((i) => i.polygon && propOf(i.kind) === "market-stall" && ids.has(i.id)) ? 0 : k;
+};
+
+/** The plan's groups placed (before the chunks): every piece with its prop, point, yaw and key; from `prior`'s pieces as far as its groups are the same. */
+const placeAll = (
+  site: Site,
+  plan: PropsPlan,
+  skipped: Record<string, number>,
+  tags: NodeTags,
+  boards: readonly BoardSpan[],
+  market: MarketContext,
+  prior?: PlacedRun,
+): { placed: Placed[]; fromLine: Set<Placed>; run: PlacedRun } => {
   const placed: Placed[] = [];
-  const clear = new Clearances(site.chunks, market);
+  const shared = sharedGroups(prior, site, plan.items);
+  const clear = shared > 0 && prior ? prior.clear : new Clearances(site.chunks, market);
   const fromLine = new Set<Placed>();
   const deferred: PlanItem[] = [];
+  const ends: number[] = [];
+  const skips: [number, string, number][] = [];
+  const skip = (i: number, key: string, n: number) => {
+    skipped[key] = (skipped[key] ?? 0) + n;
+    skips.push([i, key, n]);
+  };
   // The obstacles of the pieces placed so far, each added as it is placed.
   const obstacles: Obstacles = new SpatialHash<Obstacle>(4);
   const push = (x: Placed) => {
@@ -380,44 +427,77 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
     const r = OBSTACLE[x.prop];
     if (r) obstacles.insertPoint({ x: x.p.x, z: x.p.z, r }, x.p.x, x.p.z);
   };
-  for (const item of plan.items) {
-    const prop = propOf(item.kind);
-    if (!prop) {
-      skipped[item.kind] = (skipped[item.kind] ?? 0) + (item.count ?? 0);
-      continue;
+  // The shared groups' pieces, obstacles and skips as they were when the last of them was placed.
+  if (prior && shared > 0) {
+    for (const x of prior.placed.slice(0, prior.ends[shared - 1])) {
+      push(x);
+      if (prior.fromLine.has(x)) fromLine.add(x);
     }
-    const noGeometry = !item.position && !item.points && !item.polygon && !item.line && !item.lines;
-    if (noGeometry || prop === "hanging-basket") {
-      deferred.push(item);
-      continue;
-    }
-    for (const at of placeItem(site, item, prop, obstacles, placed)) {
-      const x = { ...at, prop: oldTownLook(item.kind, at.prop, at.p) };
-      const shape = shapeOf(item, prop, x.key, tags);
-      if (typeof shape === "string") {
-        skipped[shape] = (skipped[shape] ?? 0) + 1;
-        continue;
-      }
-      const p = { ...x, ...(shape === undefined ? {} : { shape }), from: item.id, ...(item.baskets === false ? { bare: true as const } : {}) };
-      push(p);
-      if (item.line || item.lines) fromLine.add(p);
-    }
-    // The stock beside a market's stalls (ADR-0058 stage 3), within its outline.
-    if (prop === "market-stall" && item.polygon) {
-      const ring = flat(item.polygon);
-      // A flea market's scattered stalls take their facing now, so their stock stands by their side.
-      placed.forEach((x, k) => {
-        if (x.from === item.id && x.yaw === null) placed[k] = { ...x, yaw: facingOf(site, x) };
-      });
-      const stalls = placed.filter((x) => x.from === item.id);
-      for (const g of stallGoods(site, clear, stalls, ring, marketEntrances(site, ring), placed)) push({ ...g, from: item.id });
-    }
+    for (const [i, key, n] of prior.skips) if (i < shared) skip(i, key, n);
   }
+  plan.items.forEach((item, i) => {
+    const prop = propOf(item.kind);
+    if (i < shared) {
+      if (prop && deferredGroup(item, prop)) deferred.push(item);
+      ends.push(prior!.ends[i]!);
+      return;
+    }
+    placeGroup(site, item, i, { placed, push, skip, fromLine, deferred, obstacles, clear, tags });
+    ends.push(placed.length);
+  });
+  const run: PlacedRun = { site, items: plan.items, ends, placed: placed.slice(), fromLine, skips, clear };
   // Baskets hang on the lamps, the street groups follow the streets and the benches.
   for (const item of deferred) for (const x of placeStreetGroup(site, item, placed, (q) => facingOf(site, q))) placed.push({ ...x, from: item.id });
   // The food booths by the fast-food venues' boards (ADR-0058 stage 3), after everything the plan places.
   for (const x of foodStalls(site, clear, boards, placed)) placed.push({ ...x, from: FOOD_STALLS });
-  return { placed, fromLine };
+  return { placed, fromLine, run };
+};
+
+/** What `placeGroup` adds its pieces, skips and deferred groups to. */
+interface GroupState {
+  readonly placed: Placed[];
+  readonly push: (x: Placed) => void;
+  readonly skip: (i: number, key: string, n: number) => void;
+  readonly fromLine: Set<Placed>;
+  readonly deferred: PlanItem[];
+  readonly obstacles: Obstacles;
+  readonly clear: Clearances;
+  readonly tags: NodeTags;
+}
+
+/** One group of the plan (the `i`th) placed after the groups before it. */
+const placeGroup = (site: Site, item: PlanItem, i: number, s: GroupState): void => {
+  const prop = propOf(item.kind);
+  if (!prop) {
+    s.skip(i, item.kind, item.count ?? 0);
+    return;
+  }
+  if (deferredGroup(item, prop)) {
+    s.deferred.push(item);
+    return;
+  }
+  const { placed } = s;
+  for (const at of placeItem(site, item, prop, s.obstacles, placed)) {
+    const x = { ...at, prop: oldTownLook(item.kind, at.prop, at.p) };
+    const shape = shapeOf(item, prop, x.key, s.tags);
+    if (typeof shape === "string") {
+      s.skip(i, shape, 1);
+      continue;
+    }
+    const p = { ...x, ...(shape === undefined ? {} : { shape }), from: item.id, ...(item.baskets === false ? { bare: true as const } : {}) };
+    s.push(p);
+    if (item.line || item.lines) s.fromLine.add(p);
+  }
+  // The stock beside a market's stalls (ADR-0058 stage 3), within its outline.
+  if (prop === "market-stall" && item.polygon) {
+    const ring = flat(item.polygon);
+    // A flea market's scattered stalls take their facing now, so their stock stands by their side.
+    placed.forEach((x, k) => {
+      if (x.from === item.id && x.yaw === null) placed[k] = { ...x, yaw: facingOf(site, x) };
+    });
+    const stalls = placed.filter((x) => x.from === item.id);
+    for (const g of stallGoods(site, s.clear, stalls, ring, marketEntrances(site, ring), placed)) s.push({ ...g, from: item.id });
+  }
 };
 
 /**
@@ -428,10 +508,27 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   placeProps(plan, chunks, tags, boards, market).finish();
 
 /** `generateProps` up to its rows of bollards, which `finish` strings. */
-export const placeProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}): PropsDraft => {
+export const placeProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}): PropsDraft =>
+  placeOn(new Site(chunks), plan, tags, boards, market).draft;
+
+/**
+ * `placeProps` for the passes of one plan (`placeLit`, `placeWithCrowns`): one site for all, and each
+ * pass starts from the last one's pieces up to its first group that differs, the same as placed anew.
+ */
+export const propsPlacer = (chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}): ((plan: PropsPlan) => PropsDraft) => {
   const site = new Site(chunks);
+  let last: PlacedRun | undefined;
+  return (plan) => {
+    const { draft, run } = placeOn(site, plan, tags, boards, market, last);
+    last = run;
+    return draft;
+  };
+};
+
+const placeOn = (site: Site, plan: PropsPlan, tags: NodeTags, boards: readonly BoardSpan[], market: MarketContext, prior?: PlacedRun): { draft: PropsDraft; run: PlacedRun } => {
+  const chunks = site.chunks;
   const skipped: Record<string, number> = {};
-  const { placed, fromLine } = placeAll(site, plan, skipped, tags, boards, market);
+  const { placed, fromLine, run } = placeAll(site, plan, skipped, tags, boards, market, prior);
   const styledBy = byStyledLamp(placed);
   const byChunk = new Map<string, StreetPropItem[]>(chunks.map((c) => [c.id, []]));
   const perKind: Record<string, number> = {};
@@ -549,7 +646,7 @@ export const placeProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], 
   }
   const stats = { perKind, perDistrict, skipped, outside, inBuilding, offRoad: moved, onRoad, merged, crowded, offBoard, onBoard, perItem };
   let out: PropsOut | null = null;
-  return { byChunk, finish: () => (out ??= finishProps(site, plan, chunks, byChunk, bollards, stats)) };
+  return { draft: { byChunk, finish: () => (out ??= finishProps(site, plan, chunks, byChunk, bollards, stats)) }, run };
 };
 
 /** The rows, chains and the zebras' mouths of the placed bollards; a post with no room out of a mouth goes. */

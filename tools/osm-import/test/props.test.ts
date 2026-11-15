@@ -14,7 +14,7 @@ import { loadBuildingTags, loadNodeTags } from "../src/props-art.ts";
 import { furnitureBlock, groundY, lublinDecalWalls, poleLampAt, surfaceY } from "../src/decal-walls.ts";
 import { addDecals } from "../src/props-decals.ts";
 import type { Pt } from "../src/geometry.ts";
-import { type PropsPlan, generateProps, placeProps } from "../src/props-gen.ts";
+import { type PropsPlan, generateProps, propsPlacer } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
 import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
@@ -81,8 +81,7 @@ describe("street furniture generator (ADR-0047)", () => {
     const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
     const market = { roads: loadCarriageways(), doors: gameDoors() };
     // With the `lit` rule's second pass (G-798) and the crowns' trees (G-797), as `pnpm osm:props` places them.
-    const [tags, boards] = [loadNodeTags(), lublinVenueBoards()];
-    const place = (p: PropsPlan) => placeProps(p, CHUNKS, tags, boards, market);
+    const place = propsPlacer(CHUNKS, loadNodeTags(), lublinVenueBoards(), market);
     const table = placeWithCrowns(PLAN, place, loadLitWays(), loadStreetWays(), new Site(CHUNKS), loadCrownData()).byChunk as Map<string, StreetPropItem[]>;
     // The doors on the facades (ADR-0058 stage 9) after the furniture, then the decals (stage 6), as `pnpm osm:props` adds them.
     addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors(), underground: loadUndergroundWays() });
@@ -91,6 +90,18 @@ describe("street furniture generator (ADR-0047)", () => {
     // The still crowd (ADR-0058 stage 8) comes last, from the simulation's crowd as well: `props-figures.test.ts` checks its rows.
     const others = (text: string) => text.split("\n").filter((l) => !l.startsWith('    "figure": ')).join("\n");
     expect(others(emitProps(table))).toBe(others(committed));
+  });
+
+  it("places a pass from the last one's groups as far as they are the same, as placed anew (propsPlacer)", () => {
+    const items: PropsPlan["items"] = [
+      { id: "trees", kind: "tree", lines: [[0, 26, 100, 26]], spacing: 12 },
+      { id: "lamps", kind: "lamp-pastoral", lines: [[0, 30, 100, 30]], spacing: 25 },
+      { id: "benches", kind: "bench", points: [[40, 24], [60, 24]] },
+      { id: "bins", kind: "litter-bin" },
+    ];
+    const place = propsPlacer([street()]);
+    const passes: PropsPlan[] = [{ items }, { items: [items[0]!, { ...items[1]!, kind: "lamp-modern-pole" }, ...items.slice(2)] }, { items: [...items, { id: "more", kind: "tree", points: [[20, 36]] }] }];
+    for (const plan of passes) expect(place(plan).finish()).toEqual(generateProps(plan, [street()]));
   });
 
   it("stands lamps on the pavement beside the road on both sides, their arms towards it, and lanterns on the facades", () => {

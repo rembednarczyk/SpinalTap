@@ -19,7 +19,7 @@ import { loadLitWays, loadPropsPlan, loadStreetWays } from "./props-osm.ts";
 import { type CrownStats } from "./crown-trees.ts";
 import { loadCrownData, placeWithCrowns } from "./props-crowns.ts";
 import { emitProps } from "./props-emit.ts";
-import { type PropsStats, placeProps } from "./props-gen.ts";
+import { type PropsStats, propsPlacer } from "./props-gen.ts";
 import { loadBuildingTags, loadNodeTags } from "./props-art.ts";
 import type * as DecalWalls from "./decal-walls.ts";
 import { type DecalsOut, addDecals } from "./props-decals.ts";
@@ -69,8 +69,7 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   // The game's doors (ADR-0038) the same way: the market's furniture keeps clear of them (ADR-0058 stage 3).
   const doors = await runWith<typeof GameDoors>("tools/osm-import/src/game-doors.ts", new Map(), extra);
   // Read once for every pass of the plan.
-  const [tags, boards, market] = [loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() }];
-  const place = (p: typeof plan) => placeProps(p, chunks, tags, boards, market);
+  const place = propsPlacer(chunks, loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() });
   // The `lit` rule's second pass (G-798): once the lamps stand, its plain lamps on a way with styled ones take their look, and
   // the lit ways still dark get lamps of their own; the furniture is placed again. Then the trees of the crowns no tree
   // stands under (G-797), after every other piece, and the furniture once more.
