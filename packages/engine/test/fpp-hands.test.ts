@@ -346,10 +346,10 @@ describe("FPP hands from Seki's model (13.11)", () => {
       // The right hand as drawn, skinned. Its fingers, all their joints, no more than 2 mm inside
       // the gun (the seated test below, both hands); its palm ahead of the grip's back (the frame,
       // the trigger guard, the revolver's cylinder: G-770) no more than 2.5 mm (the pistol 2.3).
-      // The thumb is the rigid fist's compromise: closed, its root sinks into the top of the grip
-      // and the frame under the web, up to 12 mm (round 2: 11.7 behind the grip's front; seated,
-      // 14.11, 2 cm further forward: pistol 9.3 ahead and 11.8 behind it, revolver 10.8 and 9.3);
-      // laid straight to clear it, it stood up beside the slide. Behind, the fist no deeper than 13 mm.
+      // The thumb forward along the frame's right side, resting on it, no more than 2 mm
+      // into the gun either (14.11, after #537: curled with the fist its root sank into the top of
+      // the grip and the frame under the web, the pistol 11.8 mm, the revolver 10.8; laid straight
+      // it stood up beside the slide). Behind, the fist no deeper than 13 mm.
       const gun = trianglesIn(mount.getChildMeshes(false), mount);
       expect(gun.length).toBeGreaterThan(1000);
       const skinOf = (bones: RegExp) => skinVertices(kit.hands.drawn[0]!, mount, (n) => bones.test(n));
@@ -362,7 +362,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
       const behind = deepest([...hand, ...thumb].filter((p) => p.z <= 0));
       expect(behind, `${when}: the hand ${(behind * 1000).toFixed(1)} mm inside the grip`).toBeLessThan(0.013);
       const root = deepest(thumb);
-      expect(root, `${when}: the thumb ${(root * 1000).toFixed(1)} mm inside the gun`).toBeLessThan(0.012);
+      expect(root, `${when}: the thumb ${(root * 1000).toFixed(1)} mm inside the gun`).toBeLessThan(0.002);
       // The fingers closed on the grip, not off it: their joints touch it (round 2: 2.7 to 4.1 mm in, seated 0 to 0.6).
       const touch = deepest(skinOf(/_R_(Index|Middle|Ring|Little)[23]$/));
       expect(touch, `${when}: the fingers ${(touch * 1000).toFixed(1)} mm into the grip`).toBeGreaterThan(-0.001);
