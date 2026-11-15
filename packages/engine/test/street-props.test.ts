@@ -160,10 +160,47 @@ describe("street furniture batches (ADR-0047)", () => {
 });
 
 describe("street props in the scene (ADR-0047)", () => {
-  const make = (quality: "high" | "low" = "high") => {
+  // A stopped clock: a frame bakes all it is due (the bake's share of a frame is timed by the clock).
+  const make = (quality: "high" | "low" = "high", now = () => 0) => {
     const scene = new Scene(new NullEngine());
-    return new StreetProps({ scene, materials: new ToonMaterials(scene), quality });
+    return new StreetProps({ scene, materials: new ToonMaterials(scene), quality, now });
   };
+  const nearMesh = (props: StreetProps) => props.meshes.find((m) => m.name.startsWith("props-") && !m.name.startsWith("props-far") && m.name !== "props-halo");
+
+  it("bakes a block over frames, some milliseconds each, starting before it comes near", () => {
+    // A millisecond a reading: eight parts a frame.
+    let t = 0;
+    const sliced = make("low", () => t++);
+    const whole = make("low");
+    const pieces = Array.from({ length: 120 }, (_, i) => item(i % 2 ? "bollard" : "bench", 10 + (i % 12) * 3, 10 + Math.floor(i / 12) * 3, i % 2 ? chainVariant(3, 0, 0) : 0));
+    for (const p of [sliced, whole]) {
+      p.spawn(1, pieces, { x: 0, y: 0, z: 0 });
+      p.flush();
+    }
+    // Beyond the detail distance (80 m on low) by more than the head start: nothing baked.
+    sliced.update({ x: -150, y: 2, z: 0 });
+    expect(nearMesh(sliced)).toBeUndefined();
+    // Within the head start, not near: baked on over frames, the far mesh drawn meanwhile.
+    let frames = 0;
+    while (!nearMesh(sliced) && frames < 100) {
+      sliced.update({ x: -100, y: 2, z: 0 });
+      frames++;
+      expect(sliced.waiting).toBe(0);
+      expect(sliced.stats.far).toBe(1);
+    }
+    expect(frames).toBeGreaterThan(10);
+    expect(frames).toBeLessThan(20);
+    expect(sliced.stats.groups).toBe(0);
+    // Near: drawn in detail at once, the same mesh as baked in one go.
+    sliced.update({ x: -50, y: 2, z: 0 });
+    whole.update({ x: -50, y: 2, z: 0 });
+    expect(sliced.waiting).toBe(0);
+    expect(sliced.stats.groups).toBe(1);
+    expect(sliced.stats.far).toBe(0);
+    const [a, b] = [nearMesh(sliced)!, nearMesh(whole)!];
+    expect(a.getTotalVertices()).toBe(b.getTotalVertices());
+    expect([...a.getVerticesData("position")!]).toEqual([...b.getVerticesData("position")!]);
+  });
 
   it("bakes a near cell's pieces into one mesh, far cells into one, and forgets despawned pieces", () => {
     const props = make();
