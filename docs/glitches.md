@@ -2025,6 +2025,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - 15.11 r2: P1–P3 poprawione; crossing-off-path 11->10, crossing-short-of-asphalt 16->8; zebry skrzyżowań wzdłuż ścieżki OSM (f4 12,5° od prostopadłej), zasięg po asfalcie gry z area:highway; P1 6,2 m (asfalt gry węższy), środek P3 3,6 m od punktu kuratora
 - Przegląd kuratora r2 (15.11, @48a15ce): NIEZGODNE. P1–P3 kierunek zgodny. Regresja f4 (621,−218) w305027462: 12,1° od prostopadłej do Podwala, na ortofoto zebra prostopadła (azymut ok. 152°). Oczekiwane: kąt gry 24 ± 5, środek ok. (620,6; −220,5); wyjątek wzdłuż ścieżki tylko dla węzłów, nie dla dróg footway=crossing; usunąć klucz skew (621,−218). Runda 3 nowym agentem.
 - r3 @ 748ef6c: f4 prostopadła do Podwala (24,3°), footway=crossing zawsze prostopadła, service nie tworzy skrzyżowania; koniec przy chodniku boku (G-837 Kapucyńska); skew 7->4, kerb 42->46 przyjęte przez accept (konflikt z kerb-jag), czeka na decyzję użytkownika
+- Przegląd kuratora r3 (15.11, @748ef6c): ZGODNE. f4 (621,−218) prostopadła do Podwala, środek (620,5; −217,2), 5,55 m; od ortofoto 1,28 m wzdłuż ulicy (węzeł OSM 817070507, przyjęte) i 3,0 m w poprzek (T-063). Reguła footway=crossing zmieniła tylko f4 (12,2°) i (1061,455) (2,9°, T-312). Koniec boku: 25 zebr przesuniętych o 0,03–1,7 m, bez obrotów. Teren i pomosty 0, hashe zgodne. Klucze ze scalenia: bollard-blocks-mouth 278,−166 (słupek G-820 +0,4 m, 10→10) przyjęty; kerb −122,50, 185,75, 1090,255 do G-869
 
 ### G-838 Szczelina 0,12 m między kwadratem reguły gołej ziemi a przesuniętą krawędzią Lwowskiej w139586648
 - Ważność: S4 · Zasięg: kerb-gap-bare podzamcze-2-1 1110,440
@@ -2222,6 +2223,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Po G-836 r3: koniec zebry przechodzi na koniec boku, więc 0,2–0,5 m przed krawężnikiem w osi; alternatywa wcina róg w chodnik (test G-837 kerb-jag-places). Baza crossing-shape-kerb 42->46 przyjęta przez użytkownika 15.11 do czasu naprawy. Docelowo koniec zebry dopasowany do skośnego krawężnika (czworokąt), wtedy baza wraca w dół.
 - Status: nowy
 - Pakiet właściciela: tools/osm-import (zebra-fit.ts)
+- Kurator 15.11 (G-836 r3): ten sam rodzaj w kluczach ze scalenia main e3a5bdc: (−122,50), (185,75), (1090,255), 0,3–0,5 m; zasięg 9 miejsc
 
 ### G-870 Kamizelka kuloodporna wcina się w biust: dwie płytki nie dopasowane do sylwetki
 - Ważność: S3 · Zasięg: garment vest-plate na modelach VRoid (Seki i postacie kobiece)
