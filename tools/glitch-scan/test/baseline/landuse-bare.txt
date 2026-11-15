@@ -6,7 +6,6 @@ krakowskie-0-0 -180,-230
 krakowskie-0-0 -170,-230
 krakowskie-0-0 -160,-230
 krakowskie-0-0 -100,-230
-krakowskie-0-0 -90,-230
 krakowskie-0-0 -190,-220
 krakowskie-0-0 -90,-220
 krakowskie-0-0 -160,-210
@@ -77,14 +76,12 @@ krakowskie-1-0 120,-190
 krakowskie-1-0 130,-190
 krakowskie-1-0 140,-190
 krakowskie-1-0 150,-190
-krakowskie-1-0 230,-190
 krakowskie-1-0 230,-180
 krakowskie-1-0 110,-170
 krakowskie-1-0 120,-170
 krakowskie-1-0 110,-160
 krakowskie-1-0 120,-160
 krakowskie-1-0 130,-160
-krakowskie-1-0 140,-160
 krakowskie-1-0 230,-160
 krakowskie-1-0 110,-150
 krakowskie-1-0 130,-150
@@ -192,7 +189,6 @@ krakowskie-2-0 420,-260
 krakowskie-2-0 430,-260
 krakowskie-2-0 440,-260
 krakowskie-2-0 450,-260
-krakowskie-2-0 410,-250
 krakowskie-2-0 420,-250
 krakowskie-2-0 430,-250
 krakowskie-2-0 440,-250
@@ -233,7 +229,6 @@ krakowskie-2-0 240,-180
 krakowskie-2-0 250,-180
 krakowskie-2-0 350,-180
 krakowskie-2-0 360,-180
-krakowskie-2-0 280,-170
 krakowskie-2-0 330,-170
 krakowskie-2-0 340,-170
 krakowskie-2-0 350,-170
@@ -372,6 +367,7 @@ nabrzeze-1-1 2650,300
 nabrzeze-1-1 2660,300
 nabrzeze-1-1 2670,300
 nabrzeze-1-1 2680,300
+nabrzeze-1-1 2690,300
 nabrzeze-1-1 2640,310
 nabrzeze-1-1 2650,310
 nabrzeze-1-1 2660,310
@@ -392,14 +388,11 @@ nabrzeze-1-1 2680,340
 nabrzeze-1-1 2690,340
 nabrzeze-1-1 2670,380
 nabrzeze-1-1 2670,390
-podzamcze-0-0 560,160
-podzamcze-0-0 570,160
 podzamcze-0-0 590,160
 podzamcze-0-0 600,160
 podzamcze-0-0 690,160
 podzamcze-0-0 700,160
 podzamcze-0-0 710,160
-podzamcze-0-0 550,170
 podzamcze-0-0 570,170
 podzamcze-0-0 580,170
 podzamcze-0-0 590,170
@@ -470,7 +463,6 @@ podzamcze-0-1 660,440
 podzamcze-0-1 530,450
 podzamcze-0-1 520,470
 podzamcze-0-1 710,560
-podzamcze-0-1 650,570
 podzamcze-0-1 710,570
 podzamcze-1-0 720,160
 podzamcze-1-0 730,160
@@ -601,8 +593,6 @@ stare-miasto-0-0 510,-160
 stare-miasto-0-0 520,-160
 stare-miasto-0-0 510,-150
 stare-miasto-0-0 520,-150
-stare-miasto-0-1 570,150
-stare-miasto-0-1 590,150
 stare-miasto-1-0 690,-100
 stare-miasto-1-0 690,-90
 stare-miasto-1-0 680,-70
