@@ -1944,6 +1944,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props-gen, props-rows; nowa reguła jak lit dla latarni G-798)
 - Test przyjęcia: test reguły na Pl. Łokietka (rząd x≈439 od −45 do −113 z przerwą na przejście), Pl. Wolności (rząd zgodny z węzłami OSM ±1 m) i ulicy z wąskim chodnikiem (bez łańcucha); kontrole skanu: kerb-bollard-gap (odcinek krawężnika tertiary/residential w obszarze dłuższy niż 6 m bez słupka i bez powodu przerwy) i bollard-blocks-mouth (słupek albo łańcuch w paśmie przejścia, wjazdu lub drzwi pojazdów przystanku), baza po wdrożeniu 0; budżety e2e bez wzrostu draw calls
 - Przegląd kuratora 15.11 (gałąź ccr-ec2c4269-ilh8k8-g820, 15fc2a4): NIEZGODNE, poprawki w tym PR. P1 podwójne rzędy: 212 słupków reguły stoi 1–2,5 m od słupka OSM/G-818 obok jego rzędu (3 Maja 82, Królewska 43, Pl. Wolności 33, Narutowicza 15; zrzuty krolewska i plac-wolnosci pokazują dwa rzędy), kontrola: słupek reguły z istniejącym słupkiem w 1–2,5 m, baza 0. P2 parkowanie prostopadłe/skośne i na chodniku spoza OSM: rzędy z łańcuchem przez stanowiska na Karmelickiej (obie strony), Peowiaków (pn. strona) i Cichej (skośne zatoki) na ortofoto 2025-04; równoległy pas parkowania przy krawężniku rzędu nie wyklucza (Kapucyńska, Lubartowska). P3 przystanek: 11 m symetrycznie za mało za słupkiem dla trolejbusu 18 m (Lubartowska (454; 16): autobus 10–20 m od słupka wzdłuż rzędu); proponowane 20 m pod prąd i 5 m z prądem. P4 Wyszyńskiego: 9 z 14 słupków z łańcuchem, GSV 2025 (zdjęcie 7287a04c) pokazuje całą zachodnią stronę bez łańcucha z płotem za rzędem. P5 brak zawinięcia rzędu po łuku narożnika placu (Pl. Wolności, zdjęcie 2f717e7d), punkt (2) definicji. Zgodne: Królewska przy Ratuszu, 3 Maja, Radziwiłłowska pn. (cienie słupków na ortofoto), Krakowskie (-200..-104) bez rzędów przy parkowaniu prostopadłym i żywopłotach; Ogród Saski leży poza mapą (x < -200).
+- Przegląd kuratora rundy 2 (15.11, d8638c2): ZGODNE. P1 kerb-bollard-double-row 173→2 (plan przy Bramie Krakowskiej), P3, P4 (Wyszyńskiego zach. bez łańcucha) i P5 przyjęte; P2 łapie Cichą, Karmelicką wsch. i Peowiaków. Reszta jako S4 bez blokowania: G-831 Karmelicka zach. (ok. 50 m rzędu przez stanowiska), G-832 fałszywe wyłączenia z cieni (3 Maja 24 m, Staszica 15 m, Narutowicza 18 m potwierdzone na nalocie 2024-06; Radziwiłłowska 43 m niepewne, auta skośnie na przedpolu), G-833 łańcuch nie zawija łuku placu.
 
 ### G-822 Pasy ruchu rozłożone równo na zmierzoną szerokość razem z zatoką
 - Ważność: S4 · Zasięg: Lubartowska w230504488 na gałęzi ADR-0080 PR 10: 3 pasy po ok. 4,1 m w 12,5 m
@@ -1994,6 +1995,27 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/osm-import (Infra / Build)
 - Test przyjęcia: kontrola skanu: słupek linii OSM dalej niż 0,3 m od linii (baza 23 przesunięcia z G-818); krawędź jezdni a rząd słupków z OSM przy krawężniku
+
+### G-831 Rząd słupków z łańcuchem przez stanowiska prostopadłe na Karmelickiej (strona zachodnia/północna)
+- Ważność: S4 · Zasięg: Karmelicka, ok. 50 m rzędu z łańcuchem (x≈230..270, z≈130..160) po stronie bez wyłączenia zatok
+- Opis: Po G-820 P2 rząd odpada przy zatokach widocznych na ortofoto, ale strona zachodnia Karmelickiej nie przekracza progu (asfalt ≥80% okna ±4 m na głębokości 0–2,5 m): na ortofoto 2025-04 stoją tam auta prostopadle do krawężnika, a w grze biegnie przez nie rząd z łańcuchem (zrzut g820-r2-karmelicka). Strona wschodnia wyłączona poprawnie (49,8 m). T-303
+- Status: zgłoszone (kurator 15.11, przegląd rundy 2 G-820)
+- Pakiet właściciela: tools/osm-import (props-kerb-bollards, baysOf)
+- Test przyjęcia: Karmelicka: brak słupków reguły na obu stronach odcinka stanowisk prostopadłych; kontrola skanu: słupek reguły, za którym 0–2,5 m na ortofoto auto/asfalt na ≥60% okna ±4 m (baza po wdrożeniu 0)
+
+### G-832 Fałszywe wyłączenia rzędu słupków przez cienie na ortofoto (zatoki G-820 P2)
+- Ważność: S4 · Zasięg: ok. 60–100 m krawężnika: 3 Maja zach. 24 m (x≈-115, z 75..99), Staszica 15 m (178..190, 32..40), Narutowicza 3 odcinki 18 m (95..109, -260..-250; 260..267, -167), Radziwiłłowska płd. 43 m (36..78, z≈104..109) niepewne
+- Opis: Detektor zatok (baysOf) bierze cień budynku na ortofoto 2025-04 za asfalt. Na nalocie 2024-06 za krawężnikiem 3 Maja i Staszica jest jasny chodnik bez aut, Narutowicza (95,-255) i (263,-167) to chodnik w cieniu kamienicy i wieży; w grze brak tam rzędu. Radziwiłłowska płd. na 2024-06 ma auta ustawione skośnie na przedpolu budynku, więc wyłączenie może być trafne (do sprawdzenia na GSV). T-303
+- Status: zgłoszone (kurator 15.11, przegląd rundy 2 G-820)
+- Pakiet właściciela: tools/osm-import (props-kerb-bollards, loadOrtoAsphalt)
+- Test przyjęcia: 3 Maja zach. i Staszica mają rząd; detektor zatok wymaga zgodności dwóch nalotów (2024-06 i 2025-04) albo odrzuca próbki w masce cienia
+
+### G-833 Łańcuch rzędu słupków kończy się na rogu placu zamiast zawinąć łuk
+- Ważność: S4 · Zasięg: narożniki placów z rzędami G-820 (np. Pl. Wolności, zrzut g820-r2-plac-wolnosci-naroznik); liczba do policzenia sondą
+- Opis: Po G-820 P5 słupki idą po łuku narożnika placu, ale łańcuch przy ROW_TURN 35° (props-rows.ts) nie skręca za róg: na łuku stoją słupki bez łańcucha albo rząd urywa się na rogu, a w rzeczywistości łańcuch biegnie ciągle po łuku do przerwy na zebrze. T-303
+- Status: zgłoszone (kurator 15.11, przegląd rundy 2 G-820)
+- Pakiet właściciela: tools/osm-import (props-rows, props-kerb-corners)
+- Test przyjęcia: rząd na łuku narożnika placu ma łańcuch między każdą parą sąsiednich słupków do przerwy na przejściu
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
