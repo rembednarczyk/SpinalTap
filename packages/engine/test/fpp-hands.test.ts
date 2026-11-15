@@ -346,7 +346,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
       // The right hand as drawn, skinned. Its fingers, all their joints, no more than 2 mm inside
       // the gun (the seated test below, both hands); its palm ahead of the grip's back (the frame,
       // the trigger guard, the revolver's cylinder: G-770) no more than 2.5 mm (the pistol 2.3).
-      // The thumb round the back of the grip and along the frame's left side, no more than 2 mm
+      // The thumb forward along the frame's right side, resting on it, no more than 2 mm
       // into the gun either (14.11, after #537: curled with the fist its root sank into the top of
       // the grip and the frame under the web, the pistol 11.8 mm, the revolver 10.8; laid straight
       // it stood up beside the slide). Behind, the fist no deeper than 13 mm.

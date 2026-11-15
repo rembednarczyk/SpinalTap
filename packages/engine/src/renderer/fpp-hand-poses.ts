@@ -75,20 +75,21 @@ const RIGHT_ON_GRIP = grasp(v(0, 0.012, 0.012), v(-0.2, 0.22, 1), v(0, -0.06, 1)
  * more open round its front, the left hand a little more open under it: no finger of either hand
  * more than 2 mm into the gun (round 2 sank them up to 11 mm through the grip). Read off the
  * skinned hand against each gun's triangles, its own pose for the revolver's rounder grip.
- * The thumb (14.11, after #537) goes its own way, not the fist's curl: from the web round the back
- * of the grip under the slide's tail (the revolver's hammer), then forward along the frame's left
- * side over the trigger, as a real one-hand grip lays it (`thumbAt`, its joints' points in the
- * gun's frame). Curled with the fist its root sank 9 to 12 mm into the top of the grip; laid
- * straight it stood up beside the slide.
+ * The thumb (14.11, after #537) goes its own way, not the fist's curl: from the web up and out,
+ * then forward along the frame's right side, resting on it under the slide's edge (the revolver's
+ * on its frame and cylinder), seen from the eye (`thumbAt`, its joints' points in the gun's
+ * frame). Curled with the fist its root sank 9 to 12 mm into the top of the grip; laid straight
+ * it stood up beside the slide; wrapped round the back of the grip to the left side, the skin
+ * between thumb and palm stretched across the grip's back.
  */
 const HANDGUN_FIST: Readonly<Record<"pistol" | "revolver", HandTarget>> = {
   pistol: {
     ...hand(v(0.041, -0.012, -0.056), v(-0.22, 0.16, 1), v(-0.12, 0.22, 1), v(-0.995, 0.078, -0.116), 0.8, 0.56),
-    thumbAt: [v(-0.007, 0.034, -0.046), v(-0.027, 0.032, -0.012), v(-0.024, 0.03, 0.018)],
+    thumbAt: [v(0.04, 0.038, -0.01), v(0.015, 0.044, 0.02), v(0.013, 0.042, 0.045)],
   },
   revolver: {
     ...hand(v(0.0417, -0.0181, -0.0608), v(-0.22, 0.16, 1), v(-0.0215, 0.1081, 1.025), v(-0.9981, 0.1163, -0.0137), 0.755, 0.635),
-    thumbAt: [v(-0.004, 0.042, -0.05), v(-0.029, 0.041, -0.016), v(-0.025, 0.04, 0.016)],
+    thumbAt: [v(0.04, 0.03, -0.01), v(0.018, 0.036, 0.02), v(0.016, 0.034, 0.045)],
   },
 };
 const LEFT_UNDER_FIST = hand(v(-0.05, -0.07, -0.031), v(0.4, 0.25, 1), v(0.45, 0.35, 1), v(0.7, 0.7, 0), 0.5);
