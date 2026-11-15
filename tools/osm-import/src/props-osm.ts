@@ -9,7 +9,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { DISTRICTS } from "./config.ts";
-import { type FurniturePoint, loadFurniture, planKindOf } from "./furniture.ts";
+import { type FurniturePoint, loadBollardLines, loadFurniture, planKindOf } from "./furniture.ts";
+import { type DriveWay, withBollardLines } from "./props-bollard-lines.ts";
 import { type OsmData, type Tags, mergeOsm, parseExtract } from "./osm.ts";
 import { REPO } from "./paths.ts";
 import type { PlanItem, PropsPlan } from "./props-gen.ts";
@@ -86,14 +87,21 @@ export const loadLitWays = (root = REPO): LitWay[] => {
 /** Every street and path of the districts' extracts, for the lamps' looks along them (`styleClashes`). */
 export const loadStreetWays = (root = REPO): LitWay[] => litWaysOf(loadDistricts(root), (tags) => tags?.highway !== undefined);
 
+/** The ways cars take, with their width (m): the tag, else a lane each way, a drive's one (G-818: the lines of bollards break across them). */
+const CAR_WAYS: ReadonlySet<string> = new Set(["primary", "secondary", "tertiary", "unclassified", "residential", "living_street", "service", "primary_link", "secondary_link", "tertiary_link"]);
+export const driveWaysOf = (ways: readonly LitWay[]): DriveWay[] =>
+  ways.filter((w) => CAR_WAYS.has(w.tags.highway ?? "")).map((w) => ({ pts: w.pts, width: Number.parseFloat(w.tags.width ?? "") || (w.tags.highway === "service" ? 3.5 : 6) }));
+
 /** The plan as its file has it, before the extract's groups and the `lit` rule. */
 export const loadPlanFile = (root = REPO): PropsPlan => JSON.parse(readFileSync(join(root, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
 
 /**
  * The plan `pnpm osm:props` places: `docs/world/lublin-props.todo.json` with the extract's groups
- * after its own, then the street lamps of the `lit` rule's first pass (`props-lit.ts`, G-798).
+ * after its own, its lines of bollards laid out as posts (`props-bollard-lines.ts`, G-818), then
+ * the street lamps of the `lit` rule's first pass (`props-lit.ts`, G-798).
  */
 export const loadPropsPlan = (root = REPO): PropsPlan => {
   const furniture = loadFurniture(root);
-  return withLitRule(withOsmFurniture(loadPlanFile(root), furniture), loadLitWays(root), furniture).plan;
+  const plan = withBollardLines(withOsmFurniture(loadPlanFile(root), furniture), loadBollardLines(root), driveWaysOf(loadStreetWays(root)), inMap);
+  return withLitRule(plan, loadLitWays(root), furniture).plan;
 };
