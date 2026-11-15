@@ -154,7 +154,7 @@ describe("the street furniture with the CC-BY props (ADR-0063)", () => {
   const podzamcze = Object.keys(WORLD_STREET_PROPS).filter((id) => district(id) === "targ");
   const make = (quality: "high" | "low") => {
     const scene = new Scene(new NullEngine());
-    const s = new StreetProps({ scene, materials: new ToonMaterials(scene), quality });
+    const s = new StreetProps({ scene, materials: new ToonMaterials(scene), quality, now: () => 0 });
     podzamcze.forEach((id, i) => s.spawn(i + 1, items(id), { x: 0, y: 0, z: 0 }));
     s.flush();
     return s;

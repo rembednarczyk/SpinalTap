@@ -129,19 +129,14 @@ describe("the ground the map city lays (G-444)", () => {
     // A side left at the estimate widened to the paving again, the kerbs' strips laid from under the
     // asphalt, over seams under 0.1 m and up to a zebra past a measured kerb, the zebras across the
     // asphalt where it lies (G-811): 161 914 - 161 182 = 732 vertices more, the same meshes.
+    // The widened kerbs smooth (G-837): the asphalt's new edge simplified within 0.05 m before its
+    // rounding, and grown on in to the kerb where the gap to the paving closes under 1 m:
+    // 161 914 - 161 827 = 87 vertices fewer, the same meshes.
     // The carriageways laid where OSM's lanes lie (G-825): off their line by `placement`, and where one
-    // splits off or joins another, its lanes beside the other's, densified where they swing (2 m):
-    // 161 987 - 161 914 = 73 vertices more, the same meshes.
-    // A lane joining a street ends inside it, a split's through lanes keep their place while the lanes
-    // turning off run beside them, and a moved carriageway's strip to a lawn is laid as the lawn's
-    // (G-825 r2): 162 204 - 161 987 = 217 vertices more, the same meshes.
-    // That strip wider than a kerb (0.6 m) is the lawn's only on the orthophoto's green, else a square
-    // to the lawn, as the bare ground rule's cells laid it before (G-825 r3): 162 258 - 162 204 = 54
-    // vertices more, the same meshes.
-    // That strip one surface a stretch, the lawn's only where most of it is green and none of it
-    // paving past the kerb, a square at least a kerb wide (G-825 r4): nabrzeze-0-1's strips by
-    // w40051729 squares, 162 308 - 162 258 = 50 vertices more, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 162308, hash: "d686d207" });
+    // splits off or joins another, its lanes beside the other's; a lane joining a street ends inside
+    // it; a moved carriageway's strip to a lawn is the lawn's or a square to it, one surface a stretch
+    // (G-825 r1-r4): 162 221 - 161 827 = 394 vertices more, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 162221, hash: "ea2388ae" });
     scene.dispose();
   });
 

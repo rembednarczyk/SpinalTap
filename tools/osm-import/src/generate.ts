@@ -399,12 +399,12 @@ export const generate = (
     return c ? coverAt(c, p.x, p.z) : COVER.none;
   };
   const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks, moved, coverOf);
-  for (const [b, { ring, runs }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, box: ringBounds([...b.ring, ...ring]) });
+  for (const [b, { ring, runs, lanes }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, widenLanes: lanes, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
   bands.splice(0, bands.length, ...slitsOffWidened(bands, [...kerbs.widened.values()].map((w) => w.ring)));
   // The carriageways' reach each side of their axes, fitted and widened, for the traffic's lanes (ADR-0080).
   const halves = streetHalves(bands);
-  const widths = streetWidths(laidLines, (w) => isCarriageway(w.piece.tags) || w.atStreet, kerbs.widened);
+  const widths = streetWidths(laidLines, (w) => isCarriageway(w.piece.tags) || w.atStreet, [...kerbs.widened].map(([b, w]) => [b, { runs: w.lanes }] as const));
   const nodeZebras = bands.filter((b) => b.surface === "crossing" && b.source.startsWith("n"));
   stretchZebras(nodeZebras, [...kerbs.widened.values()].map((w) => w.ring)).forEach((z, i) => bands.splice(bands.indexOf(nodeZebras[i]!), 1, { ...z, box: ringBounds(z.ring) }));
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
