@@ -1973,14 +1973,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-818 Rzędy słupków z OSM (drogi barrier=bollard) zredukowane do jednego słupka albo pominięte
 - Ważność: S3 (proponowana; Plac Łokietka przed Ratuszem, Królewska, Krakowskie) · Zasięg: 16 dróg OSM, 383 m: 14 daje po 1 słupku (plan 29.10), 2 (w1090997949, w1090997950, 63 m, Krakowskie z −246…−209) brak; szacunkowo ok. 200 słupków brakuje
 - Opis: OSM ma rzędy słupków jako linie barrier=bollard bez otagowanych węzłów (w1514057822 Pl. Łokietka 439,−89…−45 43,6 m; w1514057825 439,−113…−99; w1514057826/27/28 Królewska; w1514057829–33 i w1302893330 Królewska przy Katedrze 547…612,−203…−211, 66,7 m; w1514057837 Krakowskie 362…392,−21…−27; w1514057823 Lubartowska; w1024029950 Podzamcze). fetch.ts/furniture.ts bierze tylko węzły (FURNITURE_TAGS), plan ma każdą linię jako jeden punkt. Przed Ratuszem gra stawia 3 słupki z 1 łańcuchem (438,9…439,0; −91,9…−99,5) i 1 przy −65,9; ortofoto 2025-04 i zdjęcie GSV 2025 pokazują ciągły rząd z łańcuchami co 1,5–1,8 m od −45 do −113. T-301
-- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g818); wcześniej: zgłoszone (kurator 15.11, audyt słupków)
+- Status: w PR #570 (krótki przegląd kuratora); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g818); wcześniej: zgłoszone (kurator 15.11, audyt słupków)
 - Pakiet właściciela: tools/osm-import (fetch, furniture, props-gen)
 - Test przyjęcia: każda droga barrier=bollard w czterech dzielnicach daje słupki wzdłuż linii co ≤2,0 m (przerwy na przejścia jak w props-rows), łańcuchy według reguły G-032; kontrola skanu osm-bollard-line-missing: droga barrier=bollard z mniej niż długość/2,5 słupkami w 0,8 m od linii, baza 16
 
 ### G-819 Słupek z łańcuchem jako gruby granitowy graniastosłup zamiast smukłego czarnego słupka żeliwnego z kulą
 - Ważność: S4 (proponowana; charakterystyczny mebel Lublina, zgłoszenie użytkownika 15.11) · Zasięg: wszystkie słupki miasta (373 na main, 275 z łańcuchem)
 - Opis: furniture.ts BOLLARD = { side: 0.34, height: 1.05, chain: 0.018 }, prop-street.ts: kwadratowy trzon 0,34 m z granitu #8e8d88 z czapą-piramidą, łańcuch 4-boczną rurą r 0,018 na 0,74 m ze zwisem 1/20 przęsła. W Lublinie (GSV 2025 Pl. Łokietka i Pl. Wolności, Lublin360 2017): czarny słupek żeliwny, okrągły trzon ok. Ø 0,10 m (u stopy kołnierz ok. Ø 0,15 m, wys. 0,15 m), głowica kulista ok. Ø 0,12 m z małym zwieńczeniem, wysokość ok. 0,95 m, uchwyt łańcucha ok. 0,75 m, łańcuch ogniwowy (drut 8–10 mm, ogniwo ok. 50 × 80 mm, widoczny pas 4–5 cm), zwis ok. 0,15 m na przęśle 1,8 m (ok. 1/10–1/12). Kolizja r 0,17 zamiast ok. 0,08. T-302
-- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g819); wcześniej: zgłoszone (kurator 15.11, audyt słupków)
+- Status: w PR #569; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g819); wcześniej: zgłoszone (kurator 15.11, audyt słupków)
 - Pakiet właściciela: packages/sim (content/lublin/furniture.ts: BOLLARD, kolizja) i packages/engine (mapcity/prop-street.ts)
 - Test przyjęcia: BOLLARD: trzon okrągły Ø 0,10–0,12, wysokość 0,90–1,00, głowica kulista, czarne żeliwo; łańcuch o widocznej szerokości 0,04–0,05 m (ogniwa albo dwie skrzyżowane wstęgi), zwis 1/10 przęsła; kolizja z promienia trzonu; zrzut z modelami w dzień przy Pl. Łokietka obejrzany przez kuratora; warstwa 2077 (pasek światła) zostaje
 
@@ -2039,8 +2039,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-828 Kontrole skanu wolne pod obciążeniem CI (paving-overlap, kerb-fill-wide-estimated)
 - Ważność: S3 · Zasięg: CI shard testów jednostkowych; main 76cd282 i PR #564
 - Opis: Po #559 i #565 kawałków gruntu przybyło, a kontrole przeglądają liniowo listy całego miasta; paving-overlap G-301 naprawione w #566 (4,9 s → 0,1 s), kerb-fill-wide-estimated ok. 11 s lokalnie i ponad 20 s w CI. Poprawka: indeks przestrzenny, bez podnoszenia limitów.
-- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-scan-speed)
+- Status: w PR #568 (paving-overlap naprawione w #566); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-scan-speed)
 - Pakiet właściciela: tools/glitch-scan
+
+### G-829 Granitowe słupki z OSM (material=granite) rysowane jako żeliwne
+- Ważność: S4 · Zasięg: 16 węzłów barrier=bollard przy Placu Litewskim (x 98–140, z −52…−86)
+- Opis: Plan nie rozróżnia materiału słupków; po G-819 wszystkie są czarne żeliwne z łańcuchem. Do zbiorczego przeglądu S4.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
