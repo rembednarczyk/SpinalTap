@@ -53,6 +53,26 @@ describe("interface scale on every layer (ADR-0085)", () => {
     expect(root().getPropertyValue("--ui-scale")).toBe("0.8");
     expect(root().getPropertyValue("--ui-touch-scale")).toBe("1");
     expect(root().getPropertyValue("--ui-touch-look")).toBe("0.8");
+    expect(root().getPropertyValue("--ui-touch-spread")).toBe("0.88");
+  });
+
+  it("pulls the top row and the action cluster toward their corners under 1, not at 1", () => {
+    resize(844, 390);
+    const store = mount({ settings: { ...DEFAULT_SETTINGS, hudScale: 1 } }, true);
+    const top = () => document.querySelector<HTMLElement>(".touch__top")!.style;
+    const actions = () => document.querySelector<HTMLElement>(".touch__actions")!.style;
+    // At 1 the groups sit where they always did: no transform of their own.
+    expect([top().transform, actions().transform]).toEqual(["", ""]);
+    act(() => patchUi(store, { settings: { ...DEFAULT_SETTINGS, hudScale: 0.8 } }));
+    // At 0.8 each group, its gaps and its distance to the corner shrink toward its screen corner:
+    // a button 100 px from the corner at 1 is 88 px from it at 0.8, not drawn smaller in place.
+    expect([top().transform, top().transformOrigin]).toEqual(["scale(0.88)", "100% 0%"]);
+    expect([actions().transform, actions().transformOrigin]).toEqual(["scale(0.88)", "100% 100%"]);
+    const fromCorner = (offset: number) => offset * Number.parseFloat(actions().transform.slice(6));
+    expect(fromCorner(100)).toBeLessThan(100);
+    // Up from 1, as before.
+    act(() => patchUi(store, { settings: { ...DEFAULT_SETTINGS, hudScale: 1.4 } }));
+    expect([top().transform, actions().transform]).toEqual(["", ""]);
   });
 
   it("keeps the knob to the drawn ring when the pad is drawn smaller", () => {

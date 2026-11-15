@@ -16,13 +16,17 @@
 .touch-mode .ui-layer {
   /* One pad px in this layer's px. */
   --pad: calc(var(--ui-touch-scale, 1) / var(--layer-scale));
-  /* The pad's edges: its margins in pad px, or the safe area where it is wider, in this layer's px. */
-  --zone-top: calc(max(8px * var(--ui-touch-scale, 1), env(safe-area-inset-top, 0px)) / var(--layer-scale));
-  --zone-right: calc(max(16px * var(--ui-touch-scale, 1), env(safe-area-inset-right, 0px)) / var(--layer-scale));
-  --zone-bottom: calc(max(10px * var(--ui-touch-scale, 1), env(safe-area-inset-bottom, 0px)) / var(--layer-scale));
-  /* The pad's top row: three 44 px buttons 6 px apart and 8 px to its neighbour, both ways. */
-  --pad-row-width: calc(152px * var(--pad));
-  --pad-row-height: calc(52px * var(--pad));
+  /* How far the pad's groups pull toward their corners under scale 1 (ADR-0085). */
+  --pad-spread: var(--ui-touch-spread, 1);
+  /* The pad's edges: its margins at the interface's scale, or the safe area where it is wider, in
+     this layer's px. Under 1 they shrink with the interface, so the pad sits closer to its corners. */
+  --zone-top: calc(max(8px * var(--ui-scale, 1), env(safe-area-inset-top, 0px)) / var(--layer-scale));
+  --zone-right: calc(max(16px * var(--ui-scale, 1), env(safe-area-inset-right, 0px)) / var(--layer-scale));
+  --zone-bottom: calc(max(10px * var(--ui-scale, 1), env(safe-area-inset-bottom, 0px)) / var(--layer-scale));
+  /* The pad's top row: three 44 px buttons 6 px apart and 8 px to its neighbour, both ways, pulled
+     toward the corner with the row. */
+  --pad-row-width: calc(152px * var(--pad) * var(--pad-spread));
+  --pad-row-height: calc(52px * var(--pad) * var(--pad-spread));
   /* The HUD's own margin on the left, where nothing of the pad lies but the stick's ring. */
   --zone-left: max(16px, var(--safe-left));
 }
@@ -30,7 +34,7 @@
 /* ---- the pad ---- */
 .touch-mode .touch__top { top: var(--zone-top); right: var(--zone-right); }
 .touch-mode .touch__actions { right: var(--zone-right); bottom: var(--zone-bottom); }
-.touch-mode .touch__stick-hint { left: max(56px, calc(var(--safe-left) + 40px)); bottom: max(80px, calc(var(--safe-bottom) + 70px)); }
+.touch-mode .touch__stick-hint { left: max(56px * var(--touch-look, 1), calc(var(--safe-left) + 40px * var(--touch-look, 1))); bottom: max(80px * var(--touch-look, 1), calc(var(--safe-bottom) + 70px * var(--touch-look, 1))); }
 
 /* ---- top right: left of and under the pad's row ---- */
 .touch-mode .hud__wallet { top: var(--zone-top); right: calc(var(--zone-right) + var(--pad-row-width)); }

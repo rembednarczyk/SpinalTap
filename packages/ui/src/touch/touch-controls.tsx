@@ -71,8 +71,14 @@ const Stick = ({ pad }: { pad: TouchPadSink }) => {
   );
 };
 
+/**
+ * A group of the pad drawn toward its corner of the screen (ADR-0085): under scale 1 the group, its
+ * buttons and the gaps between them pull toward the corner by `touchSpread`. At 1 and above, as before.
+ */
+const toCorner = (spread: number, origin: string) => (spread < 1 ? { transform: `scale(${spread})`, transformOrigin: origin } : undefined);
+
 /** Menu, phone and pause in one row along the top edge, clear of the minimap and the wallet. */
-const TopBar = () => {
+const TopBar = ({ spread }: { spread: number }) => {
   const t = useT();
   const phone = usePhoneIntents();
   const session = useSessionIntents();
@@ -82,7 +88,7 @@ const TopBar = () => {
   // open the screen on the Progress tab (decision of 6.11); without points it opens on the inventory.
   const points = useUnspentPoints();
   return (
-    <div className="touch__top">
+    <div className="touch__top" style={toCorner(spread, "100% 0%")}>
       {/* One button for the whole character screen instead of separate sheet and journal ones (plan §7). */}
       <button type="button" className="touch__btn touch__btn--small touch__btn--menu" aria-label={t("touch.character")} data-testid="touch-character" onClick={() => toggleCharacter(points > 0 ? "progress" : "inventory")}>
         ☰
@@ -115,6 +121,7 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
   // Lit while aiming down sights or guarding, which in toggle mode outlasts the press.
   const aimOn = useUi((s) => s.aiming || s.blocking);
   const look = useLookDrag(pad);
+  const { touchSpread } = useUiScale(true);
   const [more, setMore] = useState(false);
   const [crouchOn, setCrouchOn] = useState(false);
 
@@ -140,8 +147,8 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
         onPointerCancel={look.end}
       />
       <Stick pad={pad} />
-      <TopBar />
-      <div className="touch__actions">
+      <TopBar spread={touchSpread} />
+      <div className="touch__actions" style={toCorner(touchSpread, "100% 100%")}>
         <FireButton pad={pad} />
         <ActionArc pad={pad} more={more} onMore={() => setMore(!more)} />
         <PadButtonView pad={pad} button="aim" label="◎" hint={t("touch.aim")} className={`touch__btn--aim${aimOn ? " touch__btn--on" : ""}`} lookToo testId="touch-aim" />

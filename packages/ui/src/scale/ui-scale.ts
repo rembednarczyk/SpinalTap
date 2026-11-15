@@ -20,13 +20,15 @@ export const NO_SAFE_AREA: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
 
 /**
  * The scales the layers draw at: `ui` for the HUD, messages, cards and the dialogue; `touch` lays
- * the on-screen pad out (where its targets sit and how much they take), and `touchLook` draws its
- * buttons and stick within that, so on screen they look `ui` large.
+ * the on-screen pad's layer out, never under 1, and `touchLook` draws its buttons, stick and hints
+ * within that, so on screen they look `ui` large. `touchSpread` pulls the pad's groups toward their
+ * corners of the screen: as far as `touchLook`, but never so far that two targets meet.
  */
 export interface UiScale {
   readonly ui: number;
   readonly touch: number;
   readonly touchLook: number;
+  readonly touchSpread: number;
 }
 
 /**
@@ -45,6 +47,15 @@ export const DESKTOP_ROOM: ScreenBox = { width: 1024, height: 600 };
 export const MIN_TOUCH_SCALE = 1;
 export const MIN_HIT_PX = 44;
 
+/**
+ * The tightest pitch of the pad's 44 px targets at scale 1, centre to centre: the top row and the
+ * "more" row, 44 px buttons 6 px apart. Pulled toward its corner the pad keeps this pitch at least
+ * `MIN_HIT_PX` on screen, so the 44 px targets of neighbours touch at most (ADR-0085). Every other
+ * pair has room to spare: the arc's 48 px buttons 4 px apart need 0.846, the fire button and the arc 0.753.
+ */
+export const PAD_PITCH = 50;
+export const MIN_TOUCH_SPREAD = MIN_HIT_PX / PAD_PITCH;
+
 /** The compact layout's screens, as the styles' `(max-height: 500px), (max-width: 760px)`. */
 export const isCompact = (screen: ScreenBox): boolean => screen.height <= 500 || screen.width <= 760;
 
@@ -54,7 +65,8 @@ const round = (v: number) => Math.round(v * 1000) / 1000;
  * The scale the layers draw at. Below 1 the setting holds as it is: everything shrinks toward its
  * own screen edge and frees room. Above 1 it holds while the layout still has the room it needs at
  * scale 1 (`COMPACT_ROOM` or `DESKTOP_ROOM`, within the safe area); beyond that it stops there, never
- * under 1. The pad is laid out at the same scale, never under `MIN_TOUCH_SCALE`, and drawn at `ui`.
+ * under 1. The pad's layer is laid out at the same scale, never under `MIN_TOUCH_SCALE`, and drawn
+ * at `ui`; its groups draw toward their corners at `touchLook`, never under `MIN_TOUCH_SPREAD`.
  */
 export const uiScale = (setting: number, screen: ScreenBox, safe: SafeArea = NO_SAFE_AREA, touch = false): UiScale => {
   const asked = Number.isFinite(setting) && setting > 0 ? setting : 1;
@@ -64,5 +76,7 @@ export const uiScale = (setting: number, screen: ScreenBox, safe: SafeArea = NO_
   const fits = Math.min(width / room.width, height / room.height);
   const ui = asked <= 1 ? asked : Math.max(1, Math.min(asked, fits));
   const pad = touch ? Math.max(MIN_TOUCH_SCALE, ui) : ui;
-  return { ui: round(ui), touch: round(pad), touchLook: round(ui / pad) };
+  const look = ui / pad;
+  const spread = look < 1 ? Math.max(look, MIN_TOUCH_SPREAD) : look;
+  return { ui: round(ui), touch: round(pad), touchLook: round(look), touchSpread: round(spread) };
 };

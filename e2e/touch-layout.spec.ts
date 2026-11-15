@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { type Locator, type Page, expect, test } from "@playwright/test";
 import { freeze, step, teleport, newGame, waitForGame, waitForPlay } from "./helpers";
+import { targetFaults } from "./touch-targets";
 
 /**
  * A phone in landscape (ADR-0035): at 800x370 and 667x375 CSS px no key element of the HUD or
@@ -34,16 +35,30 @@ const boxes = async (page: Page): Promise<Box[]> => {
 
 const overlap = (a: Box, b: Box) => a.x < b.x + b.width - 0.5 && b.x < a.x + a.width - 0.5 && a.y < b.y + b.height - 0.5 && b.y < a.y + a.height - 0.5;
 
-const check = async (page: Page, w: number, h: number) => {
+/**
+ * At the HUD scale `scale`: everything on screen and apart. At 1 every pad button is drawn 44 px or
+ * more; under 1 it is drawn smaller (ADR-0085), and its target, apart from every other, stays 44 px.
+ */
+const check = async (page: Page, w: number, h: number, scale = 1) => {
   const all = await boxes(page);
   expect(all.length).toBeGreaterThan(8);
   for (const b of all) {
     expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= w + 0.5 && b.y + b.height <= h + 0.5, `${b.name} on screen`).toBe(true);
-    if (b.name.startsWith("pad:")) expect(Math.min(b.width, b.height), `${b.name} at least 44 px`).toBeGreaterThanOrEqual(43.5);
+    if (scale >= 1 && b.name.startsWith("pad:")) expect(Math.min(b.width, b.height), `${b.name} at least 44 px`).toBeGreaterThanOrEqual(43.5);
   }
   const clashes: string[] = [];
   for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) if (overlap(all[i]!, all[j]!)) clashes.push(`${all[i]!.name} × ${all[j]!.name}`);
   expect(clashes).toEqual([]);
+  expect(await targetFaults(page, `${w}x${h} @${scale}`)).toEqual([]);
+};
+
+/** The same layout at the HUD scale's low end: the pad drawn smaller toward its corners (ADR-0085). */
+const checkSmall = async (page: Page, w: number, h: number) => {
+  await page.evaluate(() => window.__seki!.session.intents.changeSettings({ hudScale: 0.8 }));
+  await step(page, 1);
+  await check(page, w, h, 0.8);
+  await page.evaluate(() => window.__seki!.session.intents.changeSettings({ hudScale: 1 }));
+  await step(page, 1);
 };
 
 /**
@@ -107,6 +122,7 @@ const bareLayout = async (page: Page, w: number, h: number) => {
   await page.getByTestId("touch-more").tap();
   await expect(page.getByTestId("touch-more-actions")).toBeVisible();
   await check(page, w, h);
+  await checkSmall(page, w, h);
 };
 
 test.describe("phone 800x370 and 667x375", () => {

@@ -47,15 +47,17 @@ export const useUiScale = (touch: boolean): UiScale => {
 /**
  * Puts the scale on the document root, the one mechanism every layer reads (ADR-0085):
  * `--ui-scale` for the HUD, messages, cards and the dialogue, `--ui-touch-scale` for the pad's
- * layout and `--ui-touch-look` for its drawing within it.
+ * layer, `--ui-touch-look` for its drawing within it and `--ui-touch-spread` for its pull toward
+ * its corners.
  */
 export const UiScaleRoot = ({ touch }: { touch: boolean }) => {
-  const { ui, touch: pad, touchLook } = useUiScale(touch);
+  const { ui, touch: pad, touchLook, touchSpread } = useUiScale(touch);
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--ui-scale", String(ui));
     root.style.setProperty("--ui-touch-scale", String(pad));
     root.style.setProperty("--ui-touch-look", String(touchLook));
-  }, [ui, pad, touchLook]);
+    root.style.setProperty("--ui-touch-spread", String(touchSpread));
+  }, [ui, pad, touchLook, touchSpread]);
   return null;
 };

@@ -3,13 +3,14 @@ import { type Page, expect, test } from "@playwright/test";
 import { HUD_SCALE_RANGE } from "../packages/ui/src/store/hud-vm";
 import { uiScale } from "../packages/ui/src/scale/ui-scale";
 import { freeze, newGame, place, step, teleport, teleportTo, waitForGame, waitForPlay } from "./helpers";
+import { targetFaults } from "./touch-targets";
 
 /**
  * One interface scale for every layer (ADR-0085): at the ends of the HUD scale's range, on a phone
  * held sideways and on a desktop, the pad's buttons, the messages, the weapon strip, the minimap,
  * the objective card, the wallet, the clock, health and the dialogue wheel stay on screen and
  * apart, each layer draws at the scale `uiScale` gives for that screen, and the pad's buttons,
- * drawn smaller under 1, still take a touch 44 px wide. Every size runs in one
+ * drawn smaller and pulled toward their corners under 1, keep apart targets 44 px wide. Every size runs in one
  * page, resized in turn (ADR-0046). `SHOTS=<dir>` keeps a picture of each case.
  */
 const [MIN, MAX] = HUD_SCALE_RANGE;
@@ -62,28 +63,19 @@ const layerScales = (page: Page) =>
   });
 
 /**
- * The pad's buttons whose target is under 44 px on screen (ADR-0035, ADR-0085): a touch 21.5 px
- * left, right, above or below a button's centre must land on that button, however small it is drawn.
+ * How far the fire button's centre and the menu button's are from their corners of the screen:
+ * under 1 the pad pulls toward its corners (ADR-0085, decision of 15.11: "Pad bliżej rogu").
  */
-const smallTargets = (page: Page, at: string): Promise<string[]> =>
-  page.evaluate((at) => {
-    const out: string[] = [];
-    for (const b of document.querySelectorAll<HTMLElement>("[data-testid=touch-controls] button")) {
-      const r = b.getBoundingClientRect();
-      if (r.width <= 0 || getComputedStyle(b).visibility === "hidden") continue;
-      const [cx, cy] = [r.x + r.width / 2, r.y + r.height / 2];
-      for (const [dx, dy] of [
-        [21.5, 0],
-        [-21.5, 0],
-        [0, 21.5],
-        [0, -21.5],
-      ] as const) {
-        const hit = document.elementFromPoint(cx + dx, cy + dy);
-        if (!hit || !b.contains(hit)) out.push(`${at}: ${b.getAttribute("aria-label") ?? b.dataset.testid} misses at ${dx},${dy} (${hit?.className ?? "nothing"})`);
-      }
-    }
-    return out;
-  }, at);
+const cornerGaps = (page: Page, w: number) =>
+  page.evaluate((w) => {
+    const centre = (id: string) => {
+      const r = document.querySelector(`[data-testid=${id}]`)!.getBoundingClientRect();
+      return [r.x + r.width / 2, r.y + r.height / 2] as const;
+    };
+    const [fx, fy] = centre("touch-fire");
+    const [mx, my] = centre("touch-character");
+    return { fire: Math.hypot(w - fx, window.innerHeight - fy), menu: Math.hypot(w - mx, my) };
+  }, w);
 
 /** The fire button's drawn width. */
 const fireWidth = async (page: Page) => (await page.getByTestId("touch-fire").boundingBox())!.width;
@@ -144,16 +136,24 @@ const run = async (page: Page, sizes: readonly (readonly [number, number])[], to
     for (const [w, h] of sizes) {
       await page.setViewportSize({ width: w, height: h });
       let fireAtOne = 0;
+      let gapsAtOne = { fire: 0, menu: 0 };
       if (layers.includes("touch")) {
-        await faults(page, w, h, 1, `${label}-${tag}`);
+        found.push(...(await faults(page, w, h, 1, `${label}-${tag}`)));
+        found.push(...(await targetFaults(page, `${label} ${w}x${h} @1`)));
         fireAtOne = await fireWidth(page);
+        gapsAtOne = await cornerGaps(page, w);
       }
       for (const s of [MIN, MAX]) {
         found.push(...(await faults(page, w, h, s, `${label}-${tag}`)));
         if (layers.includes("touch")) {
-          found.push(...(await smallTargets(page, `${label} ${w}x${h} @${s}`)));
-          // Under 1 the pad is drawn as small as the rest: the fire button visibly narrower.
-          if (s < 1 && !((await fireWidth(page)) < fireAtOne - 1)) found.push(`${label} ${w}x${h} @${s}: fire button not drawn smaller`);
+          const at = `${label} ${w}x${h} @${s}`;
+          found.push(...(await targetFaults(page, at)));
+          // Under 1 the pad is drawn as small as the rest, the fire button visibly narrower, and
+          // pulled toward its corners: the fire button and the menu button closer to theirs.
+          if (s < 1 && !((await fireWidth(page)) < fireAtOne - 1)) found.push(`${at}: fire button not drawn smaller`);
+          const gaps = await cornerGaps(page, w);
+          if (s < 1 && !(gaps.fire < gapsAtOne.fire - 2)) found.push(`${at}: fire button ${gaps.fire.toFixed(1)} px from its corner, at 1 ${gapsAtOne.fire.toFixed(1)}`);
+          if (s < 1 && !(gaps.menu < gapsAtOne.menu - 2)) found.push(`${at}: menu button ${gaps.menu.toFixed(1)} px from its corner, at 1 ${gapsAtOne.menu.toFixed(1)}`);
         }
         const want = uiScale(s, { width: w, height: h }, undefined, touch);
         const got = await layerScales(page);

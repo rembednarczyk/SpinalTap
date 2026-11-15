@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HUD_SCALE_RANGE } from "../src";
-import { COMPACT_ROOM, DESKTOP_ROOM, MIN_TOUCH_SCALE, isCompact, uiScale } from "../src/scale/ui-scale";
+import { COMPACT_ROOM, DESKTOP_ROOM, MIN_HIT_PX, MIN_TOUCH_SCALE, MIN_TOUCH_SPREAD, PAD_PITCH, isCompact, uiScale } from "../src/scale/ui-scale";
 
 const [MIN, MAX] = HUD_SCALE_RANGE;
 
@@ -13,8 +13,21 @@ describe("interface scale (ADR-0085)", () => {
       { width: 390, height: 844 },
     ]) {
       expect(uiScale(MIN, screen).ui).toBe(MIN);
-      expect(uiScale(MIN, screen, undefined, true)).toEqual({ ui: MIN, touch: MIN_TOUCH_SCALE, touchLook: MIN });
+      expect(uiScale(MIN, screen, undefined, true)).toEqual({ ui: MIN, touch: MIN_TOUCH_SCALE, touchLook: MIN, touchSpread: 0.88 });
     }
+  });
+
+  it("pulls the pad toward its corners as far as the interface shrinks, but never so far that its 44 px targets meet", () => {
+    const phone = { width: 844, height: 390 };
+    // The tightest pitch of 44 px targets stays 44 px on screen.
+    expect(MIN_TOUCH_SPREAD * PAD_PITCH).toBeCloseTo(MIN_HIT_PX, 6);
+    expect(uiScale(0.8, phone, undefined, true).touchSpread).toBe(0.88);
+    expect(uiScale(0.85, phone, undefined, true).touchSpread).toBe(0.88);
+    expect(uiScale(0.9, phone, undefined, true).touchSpread).toBe(0.9);
+    // At 1 and above the pad's groups stay where they were.
+    expect(uiScale(1, phone, undefined, true).touchSpread).toBe(1);
+    expect(uiScale(1.4, phone, undefined, true).touchSpread).toBe(1);
+    expect(uiScale(0.8, { width: 1280, height: 720 }).touchSpread).toBe(1);
   });
 
   it("grows above 1 only while the layout keeps its room", () => {
@@ -23,9 +36,9 @@ describe("interface scale (ADR-0085)", () => {
     expect(uiScale(MAX, { width: 1280, height: 720 }).ui).toBe(1.2);
     // The smallest desktop and the smallest phone have no room to spare: they stay at 1.
     expect(uiScale(MAX, { width: DESKTOP_ROOM.width, height: DESKTOP_ROOM.height }).ui).toBe(1);
-    expect(uiScale(MAX, { width: COMPACT_ROOM.width, height: 375 }, undefined, true)).toEqual({ ui: 1, touch: 1, touchLook: 1 });
+    expect(uiScale(MAX, { width: COMPACT_ROOM.width, height: 375 }, undefined, true)).toEqual({ ui: 1, touch: 1, touchLook: 1, touchSpread: 1 });
     // A phone held sideways: the compact room, 390 / 370.
-    expect(uiScale(MAX, { width: 844, height: 390 }, undefined, true)).toEqual({ ui: 1.054, touch: 1.054, touchLook: 1 });
+    expect(uiScale(MAX, { width: 844, height: 390 }, undefined, true)).toEqual({ ui: 1.054, touch: 1.054, touchLook: 1, touchSpread: 1 });
     // Never under 1 for a setting over it, even on a screen smaller than the room (portrait).
     expect(uiScale(1.2, { width: 390, height: 844 }).ui).toBe(1);
   });
