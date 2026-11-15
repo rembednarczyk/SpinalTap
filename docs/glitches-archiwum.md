@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-117 Dach całego obrysu przykrywa wyższą część z OSM (ryzalit Ratusza)
+- Status: naprawione (15.11, #571 scalony); wcześniej: zgłoszone (audyt gmachów publicznych, kurator 31.10)
+- Ważność: S3 (proponowana; Ratusz z Placu Łokietka) · Zasięg: 1 w mieście (Ratusz); części kościoła Dominikanów przykryte ścianami, ale ich dachy wychodzą ponad połać · Koszt: średni
+- Gdzie: ryzalit w619138853 (414.8, −79.4) na Ratuszu w66264120; T-065
+- Dowód: dach czterospadowy z `addHipRoof` nad całym obrysem od y 17,1 do 24,0; nad środkiem ryzalitu 22,6, a szczyt ryzalitu 20,3 (bez dachu). Widać tylko pas 1,6 m przy okapie
+- Przyczyna: `stackParts` stawia część z OSM na bryle (`soffit` = ściany obrysu), a renderer kryje dachem cały obrys, także pod częściami wyższymi od niego
+- Pakiet właściciela: packages/engine (mapcity/roof-plan) albo przepis zabytku ADR-0062 etap 4
+- Test przyjęcia: połać obrysu nie wchodzi nad obrys części, która jest wyższa od ścian obrysu i dochodzi do jego krawędzi (dach kończy się na ścianach ryzalitu); kontrola `part-buried-in-roof` 1 → 0
+
 ### G-818 Rzędy słupków z OSM (drogi barrier=bollard) zredukowane do jednego słupka albo pominięte
 - Ważność: S3 (proponowana; Plac Łokietka przed Ratuszem, Królewska, Krakowskie) · Zasięg: 16 dróg OSM, 383 m: 14 daje po 1 słupku (plan 29.10), 2 (w1090997949, w1090997950, 63 m, Krakowskie z −246…−209) brak; szacunkowo ok. 200 słupków brakuje
 - Opis: OSM ma rzędy słupków jako linie barrier=bollard bez otagowanych węzłów (w1514057822 Pl. Łokietka 439,−89…−45 43,6 m; w1514057825 439,−113…−99; w1514057826/27/28 Królewska; w1514057829–33 i w1302893330 Królewska przy Katedrze 547…612,−203…−211, 66,7 m; w1514057837 Krakowskie 362…392,−21…−27; w1514057823 Lubartowska; w1024029950 Podzamcze). fetch.ts/furniture.ts bierze tylko węzły (FURNITURE_TAGS), plan ma każdą linię jako jeden punkt. Przed Ratuszem gra stawia 3 słupki z 1 łańcuchem (438,9…439,0; −91,9…−99,5) i 1 przy −65,9; ortofoto 2025-04 i zdjęcie GSV 2025 pokazują ciągły rząd z łańcuchami co 1,5–1,8 m od −45 do −113. T-301

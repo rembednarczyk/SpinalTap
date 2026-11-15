@@ -229,15 +229,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (mapcity/skyline)
 - Test przyjęcia: podstawa wieży poniżej linii terenu panoramy z każdego punktu Nabrzeża
 
-### G-117 Dach całego obrysu przykrywa wyższą część z OSM (ryzalit Ratusza)
-- Status: zgłoszone (audyt gmachów publicznych, kurator 31.10)
-- Ważność: S3 (proponowana; Ratusz z Placu Łokietka) · Zasięg: 1 w mieście (Ratusz); części kościoła Dominikanów przykryte ścianami, ale ich dachy wychodzą ponad połać · Koszt: średni
-- Gdzie: ryzalit w619138853 (414.8, −79.4) na Ratuszu w66264120; T-065
-- Dowód: dach czterospadowy z `addHipRoof` nad całym obrysem od y 17,1 do 24,0; nad środkiem ryzalitu 22,6, a szczyt ryzalitu 20,3 (bez dachu). Widać tylko pas 1,6 m przy okapie
-- Przyczyna: `stackParts` stawia część z OSM na bryle (`soffit` = ściany obrysu), a renderer kryje dachem cały obrys, także pod częściami wyższymi od niego
-- Pakiet właściciela: packages/engine (mapcity/roof-plan) albo przepis zabytku ADR-0062 etap 4
-- Test przyjęcia: połać obrysu nie wchodzi nad obrys części, która jest wyższa od ścian obrysu i dochodzi do jego krawędzi (dach kończy się na ścianach ryzalitu); kontrola `part-buried-in-roof` 1 → 0
-
 ### G-118 Kolory z OSM (`building:colour`, `roof:colour`) pomijane na zabytkach
 - Status: zgłoszone (audyt gmachów publicznych, kurator 31.10)
 - Ważność: S4 (proponowana) · Zasięg: 25 budynków gry z kolorami w OSM, wszystkie to zabytki albo ich części · Koszt: średni
@@ -247,7 +238,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: zabytek z `roof:colour=green|red` dostaje dach z odpowiedniej rodziny palety (miedź, dachówka), a z `building:colour` najbliższy tynk palety; kontrola `landmark-colour-ignored` 25 → 0
 
 ### G-119 Ratusz i Trybunał bez przepisu zabytku (fasada jak każdy gmach)
-- Status: w PR #571 (przegląd kuratora runda 2: ZGODNE); wcześniej: w poprawce, runda 2 (PR #571: portyk wielkiego porządku, wieża według NMPT/LOD2); wcześniej: w przepisie (gałąź ccr-ec2c4269-ilh8k8-g119); wcześniej: zgłoszone (audyt gmachów publicznych, kurator 31.10); to praca ADR-0062 etap 4
+- Status: częściowo naprawione w #571; drobne różnice S4 do zbiorczego przeglądu; wcześniej: w PR #571 (przegląd kuratora runda 2: ZGODNE); wcześniej: w poprawce, runda 2 (PR #571: portyk wielkiego porządku, wieża według NMPT/LOD2); wcześniej: w przepisie (gałąź ccr-ec2c4269-ilh8k8-g119); wcześniej: zgłoszone (audyt gmachów publicznych, kurator 31.10); to praca ADR-0062 etap 4
 - Ważność: S3 (proponowana; dwa główne punkty orientacyjne, zgłoszenie użytkownika „trzeba poprawić urząd miasta”) · Zasięg: szeroki (Plac Łokietka, Rynek) · Koszt: duży
 - Gdzie: Ratusz w66264120 z częściami w619138853 i w619138854; Trybunał w66264159; T-064, T-065, T-067
 - Dowód: zrzuty `ratusz-s`, `ratusz-wide`, `ratusz-ne` i `trybunal-wide` (scratchpad kuratora): Ratusz wygląda jak biurowiec z siatką 5 rzędów okien i bez wejścia, a jego wieża jest grafitowym słupkiem nad połacią
@@ -260,6 +251,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przepis ratusza w PR #571 (c768d2f): portyk z kolizją, balkon, 5 flag, fasada pałacowa, wieża z zegarem i hełmem 5 m (OSM bez roof:height), dach 3,5 m (G-117). W przeglądzie kuratora.
 - Kurator 15.11, przegląd c768d2f: NIEZGODNE (T-067). P1 portyk wielkiego porządku: kolumny przez parter i I piętro, balkon przed oknami II piętra na ok. 10 m (NMPT 9,6–11,0 m, flagi do 15,2 m; Lublin360 2017: głowice na wysokości łuków okien I piętra); dziś balkon na gzymsie parteru ok. 5,8 m, COLUMN_TOP 6 w porticoes.ts do podniesienia razem z asercją w lublin-vertical.test.ts. P2 wieża: korpus 25 → ok. 30,5 m (NMPT 29,6–31,8), szczyt 30,1 → ok. 38 m (NMPT 38,2, LOD2 37,7), kondygnacja z zegarem ok. 4 m, miedziana ok. 6 m, hełm z latarnią i iglicą ok. 7,5 m; wysokości z danych GUGiK (korekta importu dla w619138854), hełm 5 m overGuess wtedy zbędny. Przyjęte: dach skrzydeł 3,5 m (G-117), blok ryzalitu, cofnięcie 1,5 m jak OSM, drzwi przepisu, 4 kolumny, 5 flag, zegar, okna.
 - 15.11 kurator, przegląd rundy 2 (ecc0696, T-067): ZGODNE, P1 i P2 przyjęte (balkon 10,3 m, maszty 15,5 m, wieża 30,5/38,1 m wobec NMPT 29,6–31,8/38,2 m). Niekrytyczne, do osobnej drobnej poprawki (S4): zwieńczenie wieży jako kwadratowa miedziana latarnia z niską piramidką, kulą i wiatrowskazem zamiast dzwonu i okrągłej latarni; na kondygnacji miedzianej okno półkoliste i okrągła tarcza zamiast szczeliny (GSV 2025, fc71f17e)
+- Scalone w #571 (15.11). Zostają drobne różnice S4: zwieńczenie wieży (kwadratowa latarnia, piramidka, kula, wiatrowskaz), okno półkoliste kondygnacji miedzianej, stopnie schodów, głowice jońskie, tablice pamiątkowe.
 
 ### G-121 Poczta Główna jako sklep z nadbudową
 - Status: zgłoszone (audyt gmachów publicznych, kurator 31.10); przed poprawką trzeba potwierdzić budynek zdjęciem albo w rejestrze NID
