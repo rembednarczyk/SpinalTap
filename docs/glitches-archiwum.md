@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-802 Staszica: chodniki OSM pod zmierzonym asfaltem po szerokościach z ortofoto (gałąź ADR-0080 PR 10)
+- Ważność: S2 · Zasięg: Staszica i ulice, gdzie chodnik OSM leży bliżej osi niż krawężnik na ortofoto; sidewalk-under-carriageway 29 -> 34
+- Opis: Gałąź ccr-ec2c4269-ilh8k8-adr80-pr10: zmierzona jezdnia 8,3 m przykrywa oba chodniki (w1261814240 bliżej osi niż krawężnik). Wg odpowiedzi użytkownika 13.11 pierwszeństwo ma ortofoto, więc chodnik powinien przesunąć się na krawężnik, co jest zakresem ADR-0080 PR 7; do tego czasu takie ulice zostają w HELD.
+- Status: naprawione (15.11, #565 scalony); wcześniej: zgłoszone (14.11, raport agenta PR 10)
+- Pakiet właściciela: tools/osm-import (street-section, orto widths)
+- Test przyjęcia: sidewalk-under-carriageway nie rośnie wobec main po zastosowaniu tabeli szerokości
+
 ### G-804 Latarnie reguły lit: strona z kierunku rysowania OSM, Narutowicza tylko z jednej strony
 - Ważność: S4 · Zasięg: ulice tertiary/residential reguły SIDE, m.in. Narutowicza, Peowiaków
 - Opis: props-lit SIDE stawia lampy po lewej względem kierunku drogi w OSM; Narutowicza ma w rzeczywistości słupy przy obu krawężnikach co ok. 34 m (ortofoto 2025-04). Propozycja: strona z przejętej linii planu, sides 2 dla ulic z chodnikami separate po obu stronach i jezdnią ponad ok. 10 m. T-297

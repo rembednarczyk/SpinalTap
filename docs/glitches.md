@@ -1902,13 +1902,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props-gen)
 - Test przyjęcia: każdy hydrant nadziemny z planu stoi ≤ 3 m od węzła albo ma powód w raporcie osm:props
 
-### G-802 Staszica: chodniki OSM pod zmierzonym asfaltem po szerokościach z ortofoto (gałąź ADR-0080 PR 10)
-- Ważność: S2 · Zasięg: Staszica i ulice, gdzie chodnik OSM leży bliżej osi niż krawężnik na ortofoto; sidewalk-under-carriageway 29 -> 34
-- Opis: Gałąź ccr-ec2c4269-ilh8k8-adr80-pr10: zmierzona jezdnia 8,3 m przykrywa oba chodniki (w1261814240 bliżej osi niż krawężnik). Wg odpowiedzi użytkownika 13.11 pierwszeństwo ma ortofoto, więc chodnik powinien przesunąć się na krawężnik, co jest zakresem ADR-0080 PR 7; do tego czasu takie ulice zostają w HELD.
-- Status: zgłoszone (14.11, raport agenta PR 10)
-- Pakiet właściciela: tools/osm-import (street-section, orto widths)
-- Test przyjęcia: sidewalk-under-carriageway nie rośnie wobec main po zastosowaniu tabeli szerokości
-
 ### G-805 Styl latarni: lamp-road na deptakach Śródmieścia, lamp-park przy peronach i na chodnikach
 - Ważność: S4 · Zasięg: 7 linii krakowskie-side, ok. 14 lamp na Dworcu Podzamcze, 8 chodników footway=sidewalk
 - Opis: YIELDING przejmuje tylko linie na ulicach samochodowych, więc deptaki lit=yes zostają z lamp-road z planu; PATH stawia lamp-park przy peronach i na chodnikach ulic. W rzeczywistości przy deptaku stoją latarnie stylizowane (Peowiaków, Commons 2009). T-298
@@ -1935,6 +1928,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import, tools/orto
 - Runda 3 (054a446): kerb-gap-bare +127 → +70 nowych (suma 810 → 671), kerb-fill-wide-estimated +12, lawn-on-leafoff-paving +17 bez zmian (to drobiny canopyHard przy krawężniku, nie pas po węższej jezdni). Skan nadal czerwony; decyzja o bazie u użytkownika.
+- PR 10 scalony w #565 (15.11) z bazą przyjętą decyzją użytkownika; zostaje kerb-gap-bare +70 i kerb-fill-wide-estimated +12 do poprawy.
 
 ### G-812 Przebieg uzupełniający lit wydłuża ciemny odcinek poza brzeg mapy i uznaje sąsiedni chodnik za oświetlony
 - Ważność: S4 · Zasięg: w185762620 / w232464409, 10 m przy (455..470; 150..160)
