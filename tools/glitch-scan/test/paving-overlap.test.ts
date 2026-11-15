@@ -31,7 +31,10 @@ describe("paving-overlap-step (G-301)", () => {
   });
 
   it("lays the two squares of the report (435.3, -94.6) at one height round it", () => {
-    const { pieces } = drawnPieces(WORLD_SCENERY, groundY);
+    const all = drawnPieces(WORLD_SCENERY, groundY);
+    // Only the pieces whose boxes reach the sampled square, in the world's order: a scan of every
+    // piece of the city for each of the 16 000 points took most of the test's time (seconds).
+    const pieces = [...all.index.within({ minX: 432.9, maxX: 442.2, minZ: -97.1, maxZ: -87.8 })].sort((a, b) => a - b).map((i) => all.pieces[i]!);
     // The ground a partition (ADR-0078 step 3): one square over the point, the other cut along its edge.
     expect(pieces.filter((p) => pointInRing({ x: 435.3, z: -94.6 }, p.ring)).map((p) => p.surface)).toEqual(["square"]);
     const at = (x: number, z: number) => pieces.find((p) => p.surface === "square" && pointInRing({ x, z }, p.ring));
