@@ -80,6 +80,12 @@ export const SKYLINE_LANDMARKS: readonly SkylineLandmark[] = [
   },
 ];
 
+/**
+ * The landmarks on medium and high; the phone keeps today's skyline (ADR-0067): the towers' mesh,
+ * culled by its box, would be drawn over the city for them (two draw calls on the deptak).
+ */
+const withLandmarks = (plan: SkylinePlan, layout: SkylineLayout): SkylinePlan => (layout === NO_LAYOUT ? plan : addLandmarks(plan));
+
 /** The silhouettes are drawn only for an eye this far from their part (m): nearer, the real ones are in the picture. */
 export const LANDMARK_NEAR = 600;
 /** uv2.x of a silhouette's vertices: no windows, and gone within `LANDMARK_NEAR`. */
@@ -402,7 +408,7 @@ export class MapSkyline {
     withLights: boolean,
     private readonly layout: SkylineLayout = NO_LAYOUT,
   ) {
-    const plan = addLandmarks(planSkyline(MEGA_SITES, [], layout));
+    const plan = withLandmarks(planSkyline(MEGA_SITES, [], layout), layout);
     const towers = new ShaderMaterial("map-skyline", scene, { vertexSource: TOWER_VERTEX, fragmentSource: TOWER_FRAGMENT }, {
       attributes: ["position", "normal", "color", "uv", "uv2"],
       uniforms: ["viewProjection", "eye", "shell", "silhouette", "fogColor", "fogDensity", "lit"],
@@ -440,7 +446,7 @@ export class MapSkyline {
    */
   setBodies(bodies: readonly MegaBody[]): void {
     if (bodies.length === 0) return;
-    const plan = addLandmarks(planSkyline(MEGA_SITES, bodies, this.layout));
+    const plan = withLandmarks(planSkyline(MEGA_SITES, bodies, this.layout), this.layout);
     [plan.towers, plan.lights].forEach((sink, i) => {
       const mesh = this.meshes[i];
       if (!mesh) return;
