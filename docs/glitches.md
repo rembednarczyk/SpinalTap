@@ -1898,14 +1898,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props-lit), docs/world/lublin-props.todo.json
 - 15.11 przegląd S4: nadal na main (YIELDING tylko lamp-road na ulicach samochodowych, PATH dla footway=sidewalk i peronów bez zmian). Koszt średni: decyzja o wyglądzie (latarnie stylizowane przy deptaku, chodnik przy ulicy bez własnych lamp-park), przegląd kuratora. Ta sama rodzina co G-798, bez dubletu.
 
-### G-806 Drzewa przy ścianach rysowane niżej niż NMPT: korona nie może urosnąć przy budynku (18 miejsc tree-height-vs-nmpt)
-- Ważność: S4 · Zasięg: 18 drzew 0,5–5,3 m od ściany, rysowane z ziarna 7–12 m, NMPT 12–26 m
-- Opis: Gałąź ccr-ec2c4269-ilh8k8-tree-heights (wysokości drzew z NMPT EVRF2007): drzewa przy ścianach mają pomiar, ale korona przy budynku nie może urosnąć ponad rozmiar z ziarna; 18 kluczy tree-height-vs-nmpt przyjętych świadomie jako dotąd niewidoczne (brak pomiaru przed zmianą). Ortofoto (kwiecień) nie potwierdza korony przy 4 z nich — część może być dachem z przesuniętym obrysem. Poprawka: węższa korona przy ścianie w rendererze (wariant drzewa) albo odrzut odczytów z dachów.
-- Status: w PR #576; wcześniej: zgłoszone (14.11, raport agenta wysokości drzew)
-- Pakiet właściciela: packages/engine (drzewa), tools/osm-import (measureTree)
-- Test przyjęcia: tree-height-vs-nmpt wraca do ≤ 6 bez nowych kluczy tree-unmeasured
-- Kurator 14.11: 15 z 18 kluczy to realne drzewa przy ścianach (NMPT przy pniu ≥ 9 m), zgoda na osobne zadanie; 3 klucze (−123,24) n2416068304, (176,139) n2410102295 i (160,155) n2410102343 to błędy pomiaru (sąsiad lub dach), schodzą z poprawką bufora dachu przed scaleniem.
-
 ### G-811 kerbFills pomija stronę zmierzonej drogi zostawioną przy szacunku
 - Ważność: S3 · Zasięg: ulice ADR-0080 PR 10 z jedną stroną HELD; kerb-gap-bare 810 → 823 (127 nowych kluczy), kerb-fill-wide-estimated 71 → 72
 - Opis: Na gałęzi ccr-ec2c4269-ilh8k8-adr80-pr10 (b17eb17) strona drogi zostawiona przy szacunku (reguły: ścieżka przed krawężnikiem, strona węższa niż least/2) nie dostaje kerbFills, więc między jezdnią a chodnikiem zostaje goły pas. Do tego lawn-on-leafoff-paving 94 → 105 (trawnik na pasie zwolnionym przez węższą jezdnię, Nabrzeże). Blokuje scalenie PR 10.
@@ -1919,14 +1911,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Odsłonięte przez kontrolę bay-strip-sparse przy G-804 (nowa latarnia przy krawężniku). Prawdopodobnie ten sam spadek co w1514058885 (G-133).
 - Status: odrzucone, duplikat G-190 (przegląd S4 15.11: sonda surfaceY pod autem wzdłuż ulicy daje spadek 0,25–0,35 m > LEVEL_DROP 0,15 m na wszystkich trzech pasach, ta sama przyczyna co w1514058885; w skanie przeniesione do bay-strip-empty-known, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, 6bab190); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
-
-### G-814 Drzewo przy ścianie rysowane w rozmiarze z ziarna zamiast największej korony, która się mieści
-- Ważność: S4 · Zasięg: 35 drzew OSM (tree-unmeasured) i 79 wierzchołków reguły koron (G-797)
-- Opis: treeVariant (#558) wraca do plainTreeVariant, gdy korona z pomiaru nie mieści się przy ścianach; reguła koron pomija przez to duże drzewa przy budynkach, np. (700, 570).
-- Status: w PR #576; wcześniej: zgłoszone
-- Pakiet właściciela: tools/osm-import (tree-heights)
-- Runda 2 G-797: 41 wierzchołków prawdziwych drzew przy ścianach nadal pomijanych (z listy kuratora zostały 2 z 16).
-- Kurator r2 (2b26e13): z 22 prawdziwych drzew przy ścianach z rundy 1 zostaje 8 (c92, c345, c350, c357, c585, c623, c626, c639), 2 zastąpione drzewem w 3 m (c641, c1159); bez drzewa: (351,5; −64,5), (409,5; 145,5), (406,5; 148,5), (740,5; −190,5), (530,5; 128,5), (530,5; 110,5), (530,5; 515,5), (577,5; 418,5), (832,5; 488,5), (2555,5; 84,5), (2349,5; 465,5), (2317,5; 444,5) — kandydaci na test przyjęcia.
 
 ### G-816 Odcinek reguły lit bez stacji liczy się jako oświetlony; przebieg uzupełniający powtarza stację, która właśnie odpadła
 - Ważność: S4 · Zasięg: SW róg Krakowskiego (-160..-130; -270..-260), rząd drzew w1550442735

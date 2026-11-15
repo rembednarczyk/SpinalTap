@@ -2,6 +2,22 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-806 Drzewa przy ścianach rysowane niżej niż NMPT: korona nie może urosnąć przy budynku (18 miejsc tree-height-vs-nmpt)
+- Ważność: S4 · Zasięg: 18 drzew 0,5–5,3 m od ściany, rysowane z ziarna 7–12 m, NMPT 12–26 m
+- Opis: Gałąź ccr-ec2c4269-ilh8k8-tree-heights (wysokości drzew z NMPT EVRF2007): drzewa przy ścianach mają pomiar, ale korona przy budynku nie może urosnąć ponad rozmiar z ziarna; 18 kluczy tree-height-vs-nmpt przyjętych świadomie jako dotąd niewidoczne (brak pomiaru przed zmianą). Ortofoto (kwiecień) nie potwierdza korony przy 4 z nich — część może być dachem z przesuniętym obrysem. Poprawka: węższa korona przy ścianie w rendererze (wariant drzewa) albo odrzut odczytów z dachów.
+- Status: naprawione (15.11, #576 scalony); wcześniej: naprawione (#576, 9c36d5e); wcześniej: w PR #576; wcześniej: zgłoszone (14.11, raport agenta wysokości drzew)
+- Pakiet właściciela: packages/engine (drzewa), tools/osm-import (measureTree)
+- Test przyjęcia: tree-height-vs-nmpt wraca do ≤ 6 bez nowych kluczy tree-unmeasured
+- Kurator 14.11: 15 z 18 kluczy to realne drzewa przy ścianach (NMPT przy pniu ≥ 9 m), zgoda na osobne zadanie; 3 klucze (−123,24) n2416068304, (176,139) n2410102295 i (160,155) n2410102343 to błędy pomiaru (sąsiad lub dach), schodzą z poprawką bufora dachu przed scaleniem.
+
+### G-814 Drzewo przy ścianie rysowane w rozmiarze z ziarna zamiast największej korony, która się mieści
+- Ważność: S4 · Zasięg: 35 drzew OSM (tree-unmeasured) i 79 wierzchołków reguły koron (G-797)
+- Opis: treeVariant (#558) wraca do plainTreeVariant, gdy korona z pomiaru nie mieści się przy ścianach; reguła koron pomija przez to duże drzewa przy budynkach, np. (700, 570).
+- Status: naprawione (15.11, #576 scalony); wcześniej: naprawione (#576, 9c36d5e); wcześniej: w PR #576; wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import (tree-heights)
+- Runda 2 G-797: 41 wierzchołków prawdziwych drzew przy ścianach nadal pomijanych (z listy kuratora zostały 2 z 16).
+- Kurator r2 (2b26e13): z 22 prawdziwych drzew przy ścianach z rundy 1 zostaje 8 (c92, c345, c350, c357, c585, c623, c626, c639), 2 zastąpione drzewem w 3 m (c641, c1159); bez drzewa: (351,5; −64,5), (409,5; 145,5), (406,5; 148,5), (740,5; −190,5), (530,5; 128,5), (530,5; 110,5), (530,5; 515,5), (577,5; 418,5), (832,5; 488,5), (2555,5; 84,5), (2349,5; 465,5), (2317,5; 444,5) — kandydaci na test przyjęcia.
+
 ### G-815 Drzewa reguły koron na okapach, dachach podwórek, budowach, krytym targu i krawędziach pomostów (T-300)
 - Ważność: S3 · Zasięg: ok. 28 drzew na okapach/dachach (z 57 wskazanych przez sondę), 20 w landuse=construction (12 na stanie surowym Zielona 5a), 3 w Targu „Bazar” w67502759, 3 przy pomostach; wszystkie dzielnice
 - Opis: Reguła crown-trees.ts (G-797) stawia drzewo na wierzchołku korony liczonym tylko po komórkach dopuszczonych, więc piksel okapu przy wyższym dachu (NMPT = maks. z 4 komórek 0,5 m; obrys OSM 1–3 m mniejszy niż dach; przybudówki spoza OSM) staje się wierzchołkiem, a ortofoto daje canopy na miedzi, mchu, pnączach i cieniu podwórek. Przykłady: c152 (117,5; 72,5) 9,4 m na miedzianym dachu, c81 (375,5; −262,5), c86 (385,5; −139,5) przybudówka z pnączem, c273 (497,5; 13,5), c595 (608,5; 569,5). Budowa Zielona 5a (w770678456, w1382552286): drzewa 6–16 m na płaskowyżu stanu surowego. Targ „Bazar”: c592, c593, c594 po 4,0 m w alejkach między dachami straganów. Pomosty: c441, c452 (kładka ok. x 778, z 202), c937 (most nad Bystrzycą x 2451, z 421) — CHM = pomost. Nakładki: scratchpad/topo-g797/eave0.png, eave1.png, budowy.png, targ.png, decks.png, zoom2.png; raport scratchpad/topo-g797-raport.md
