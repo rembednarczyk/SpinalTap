@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { HOLSTER_NOTE_MS } from "../src/hud/weapon-strip";
 import { GameUi, type TouchPadSink, type UiIntents, type UiState, type WeaponStripVm, createUiStore, patchUi } from "../src";
 
 const intents = (): UiIntents => ({
@@ -117,6 +118,26 @@ describe("HUD weapon strip", () => {
     expect(screen.getByTestId("weapon-ammo").textContent).toContain("no ammo");
     act(() => patchUi(store, { weapons: strip({ holstered: true }) }));
     expect(screen.getByTestId("weapon-ammo").textContent).toContain("holstered");
+  });
+
+  it("drops the holstered note after a moment, until the weapon is drawn and holstered again", () => {
+    vi.useFakeTimers();
+    try {
+      const { store } = mount({ weapons: strip() });
+      const ammo = () => screen.getByTestId("weapon-ammo");
+      act(() => patchUi(store, { weapons: strip({ holstered: true }) }));
+      expect(ammo().textContent).toContain("holstered");
+      act(() => vi.advanceTimersByTime(HOLSTER_NOTE_MS + 100));
+      expect(ammo().textContent).not.toContain("holstered");
+      // Out of combat with nothing to say, the rounds step aside too.
+      expect(ammo().className).toContain("weapon-strip__ammo--calm");
+      act(() => patchUi(store, { weapons: strip({ holstered: false }) }));
+      expect(ammo().textContent).not.toContain("holstered");
+      act(() => patchUi(store, { weapons: strip({ holstered: true }) }));
+      expect(ammo().textContent).toContain("holstered");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("labels melee and an empty hand without a round count", () => {
