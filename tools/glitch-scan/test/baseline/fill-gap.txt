@@ -1,7 +1,13 @@
 # fill-gap: grid 1 m (x,z rounded); a count after the place is how many findings hold it
-krakowskie-1-0 110,-192
 krakowskie-2-0 340,-265
+krakowskie-2-0 421,-198
+krakowskie-2-0 285,-110
 krakowskie-2-0 397,-90
+krakowskie-2-1 294,-20
+krakowskie-2-1 295,-20
+krakowskie-2-1 297,-20
+krakowskie-2-1 300,-20
+krakowskie-2-1 240,13
 nabrzeze-1-0 2646,185
 nabrzeze-1-1 2544,270
 nabrzeze-1-1 2698,270
@@ -13,3 +19,4 @@ podzamcze-1-1 808,471
 podzamcze-2-0 1091,183
 podzamcze-2-0 966,237
 stare-miasto-1-0 699,-91
+stare-miasto-1-1 672,104
