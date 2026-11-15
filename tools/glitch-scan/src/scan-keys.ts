@@ -55,6 +55,7 @@ export const SAMPLED_KINDS: ReadonlySet<string> = new Set([
   "water-under-grass",
   "lit-street-dark",
   "kerb-bollard-gap",
+  "canopy-without-tree",
 ]);
 
 /** The grid of a kind's keys (m). */

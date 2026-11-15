@@ -21,7 +21,7 @@ import { Site } from "../src/props-site.ts";
 import { PropSolidIndex, clearSpot } from "../src/props-solid.ts";
 import { cityProps } from "./city.ts";
 import { loadLitWays, loadPropsPlan, loadKerbRule, loadStreetWays } from "../src/props-osm.ts";
-import { placeLit } from "../src/props-lit.ts";
+import { loadCrownData, placeWithCrowns } from "../src/props-crowns.ts";
 import { gameDoors } from "../src/game-doors.ts";
 import { loadCarriageways, loadUndergroundWays } from "../src/props-roads.ts";
 import { lublinVenueBoards } from "../src/venue-boards.ts";
@@ -80,8 +80,10 @@ describe("street furniture generator (ADR-0047)", () => {
   it("matches the committed table (run `pnpm osm:props` after changing the plan or the rules)", () => {
     const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
     const market = { roads: loadCarriageways(), doors: gameDoors() };
-    // With the `lit` rule's second pass (G-798) and the kerb rows (G-820), as `pnpm osm:props` places them.
-    const table = placeLit(PLAN, (p) => generateProps(p, CHUNKS, loadNodeTags(), lublinVenueBoards(), market, loadKerbRule()), loadLitWays(), loadStreetWays()).byChunk as Map<string, StreetPropItem[]>;
+    // With the `lit` rule's second pass (G-798), the kerb rows (G-820) and the crowns' trees (G-797), as `pnpm osm:props` places them.
+    const kerbRule = loadKerbRule();
+    const place = (p: PropsPlan) => generateProps(p, CHUNKS, loadNodeTags(), lublinVenueBoards(), market, kerbRule);
+    const table = placeWithCrowns(PLAN, place, loadLitWays(), loadStreetWays(), new Site(CHUNKS), loadCrownData()).byChunk as Map<string, StreetPropItem[]>;
     // The doors on the facades (ADR-0058 stage 9) after the furniture, then the decals (stage 6), as `pnpm osm:props` adds them.
     addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors(), underground: loadUndergroundWays() });
     const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt, blockOf: furnitureBlock };

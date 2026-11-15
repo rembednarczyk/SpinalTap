@@ -79,6 +79,9 @@ import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { kerbStripBare } from "./kerb-strip-bare";
 import { markingSteps } from "./marking-step";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
+import { canopyWithoutTree } from "./canopy-trees";
+import { deckRings, treesByDeck, treesInStructure } from "./tree-structures";
+import { structuresOf } from "../../osm-import/src/structures.ts";
 import { cityMeasuredPieces, cityMeasuredTrees, treesBelowMeasured, treesRoofCaptured, treesUnmeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
@@ -2094,6 +2097,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A tree sized by the eaves of a building past its OSM outline, not by its crown: its height over the reading 2 m off the outlines by more than 3 m (`tree-heights.ts`). */
   "tree-roof-capture": () => treesRoofCaptured(),
   "tree-unmeasured": () => treesUnmeasured(cityMeasuredPieces(Object.values(WORLD_STREET_PROPS).flat()), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A 10 m square with 40 m² of crown or more on the orthophoto cover, 80% of it further than 6 m from every tree of the game: crowns OSM has no tree node under (G-797, `canopy-trees.ts`). */
+  "canopy-without-tree": () => canopyWithoutTree(MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined), Object.values(WORLD_STREET_PROPS).flat(), CLEARED_BUILDINGS),
+  /** A tree whose trunk lies in an OSM building or building part (ruins aside), a building site, a market or a canopy: a roof or a shell taken for a crown (G-815, `tree-structures.ts`). */
+  "tree-in-structure": () => treesInStructure(structuresOf(SOURCE_OSM), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A tree whose trunk lies 2 m or nearer to a bridge's deck: the deck's height read as a crown (G-815, `tree-structures.ts`). */
+  "tree-by-deck": () => treesByDeck(deckRings(MAP_CHUNKS), Object.values(WORLD_STREET_PROPS).flat()),
   /** A tree OSM names a genus of the renderer's models (`genus`, `species`: Quercus, Populus...) drawn as another one: the oaks and the "Baobab" of Plac Litewski as limes and maples (G-423, `tree-species.ts`). */
   "tree-species-ignored": () => treesOfOtherSpecies(cityNamedTrees(), Object.values(WORLD_STREET_PROPS).flat()),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).

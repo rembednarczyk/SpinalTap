@@ -269,7 +269,7 @@ export class BabylonRenderer implements RenderPort {
     const gbuffer = this.lineArt?.geometryBuffer ?? null;
     this.loading = new RendererLoading({ stage, materials, shadow, characters: this.characters, gbuffer, cityKit: () => this.cityKit.ready, cityWaiting: () => this.map.current?.waiting ?? 0 });
     const { characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet } = this;
-    this.stats = new RendererStats({ characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet });
+    this.stats = new RendererStats({ characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet, shadow: this.shadow });
   }
 
   /** The start of a game behind the loading screen (ADR-0057); the moon shadow goes on `at` first. */
