@@ -30,8 +30,8 @@ import { grassUnderPavingFindings } from "./grass-under-paving";
 import { cityWaterWorld, waterUnderGrass } from "./water-under-grass";
 import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
 import { entrancesWithoutDoor } from "./entrance-no-door";
-import { osmFurnitureMissing } from "./osm-furniture";
-import { loadFurniture } from "../../osm-import/src/furniture.ts";
+import { osmBollardLineMissing, osmFurnitureMissing } from "./osm-furniture";
+import { loadBollardLines, loadFurniture } from "../../osm-import/src/furniture.ts";
 import { groundOverSteps } from "./ground-over-steps";
 import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
 import { addedSolidOverWay } from "./added-solid-over-way";
@@ -756,7 +756,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .filter((i) => i.prop === "bollard")
       .flatMap((i) => {
         const close = BANDS.filter((b) => Math.hypot(b.c.x - i.x, b.c.z - i.z) < b.along + b.across + 4);
-        const post = close.some((b) => inCrossingBand(b, i, BOLLARD.side / 2));
+        const post = close.some((b) => inCrossingBand(b, i, BOLLARD.radius));
         const chain = chainSegments(i).some((s) => close.some((b) => alongSegment(s.from, s.to, 0.1).some((p) => inCrossingBand(b, p))));
         return post || chain ? [{ at: near(i.x, i.z), what: post ? "bollard" : "chain" }] : [];
       }),
@@ -2100,6 +2100,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "entrance-no-door": () => entrancesWithoutDoor(loadEntrances(), lublinDoorWalls(), Object.values(WORLD_STREET_PROPS).flat(), ENTRANCE_REACH),
   /** A node of the current OSM extract's furniture (trees, benches, bollards...) with no piece of its kind within 3 m: the plan of 29.10 lacked it (G-099, `osm-furniture.ts`). */
   "osm-furniture-missing": () => osmFurnitureMissing(loadFurniture(), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A row of bollards OSM maps as a way, with fewer posts along it than one every 2.5 m (G-818, `osm-furniture.ts`). */
+  "osm-bollard-line-missing": () => osmBollardLineMissing(loadBollardLines(), Object.values(WORLD_STREET_PROPS).flat()),
   // The vehicles of ADR-0058 stage 4 as drawn against their bodies in the simulation (`vehicle-pieces.ts`).
   ...vehicleChecks(PARKED_CARS),
   // The drones of ADR-0058 stage 7 flown round the lanes the renderer plans from the scenery, and the

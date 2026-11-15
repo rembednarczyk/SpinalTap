@@ -74,10 +74,10 @@ const alongYaw = (d: Pt): number => Math.atan2(-d.z, d.x);
 
 const isPole = (i: StreetPropItem): boolean => i.prop !== "bollard" && POLE_SHAFT[i.prop] !== undefined;
 
-/** How far from its centre a chain meets a piece: a post's face, a pole's shaft. */
-const reach = (i: StreetPropItem): number => (isPole(i) ? POLE_SHAFT[i.prop]! : BOLLARD.side / 2);
+/** How far from its centre a chain meets a piece: a post's or a pole's shaft. */
+const reach = (i: StreetPropItem): number => (isPole(i) ? POLE_SHAFT[i.prop]! : BOLLARD.shaft);
 
-/** The two ends of a chain from piece a to piece b, face to face. */
+/** The two ends of a chain from piece a to piece b, shaft to shaft. */
 export const chainBetween = (a: StreetPropItem, b: StreetPropItem): { from: Pt; to: Pt } => {
   const l = Math.hypot(b.x - a.x, b.z - a.z) || 1;
   const u = { x: (b.x - a.x) / l, z: (b.z - a.z) / l };
@@ -142,7 +142,7 @@ const POST_ROOM = 1.2;
  */
 export const clearMouths = (posts: readonly StreetPropItem[], bands: readonly CrossingBand[], along: (p: Pt) => Pt | null, fits: (p: StreetPropItem, q: Pt) => boolean): (StreetPropItem | null)[] => {
   const out: (StreetPropItem | null)[] = [...posts];
-  const inMouth = (q: Pt) => bands.some((b) => inCrossingBand(b, q, BOLLARD.side / 2));
+  const inMouth = (q: Pt) => bands.some((b) => inCrossingBand(b, q, BOLLARD.radius));
   const rowOf = new Map<number, number[]>();
   for (const row of postRows(posts)) for (const k of row) rowOf.set(k, row);
   posts.forEach((p, k) => {
@@ -184,7 +184,7 @@ export const stringBollards = <R extends BollardRef>(site: Site, byChunk: Map<st
     return t && { x: -t.z, z: t.x };
   };
   const fits = (p: StreetPropItem, q: Pt) =>
-    site.chunkAt(q) === site.chunkAt(p) && site.surfaceAt(q) === site.surfaceAt(p) && !others.some((o) => close(o, q, 3) && distanceToPiece(o, q.x, q.z) < BOLLARD.side);
+    site.chunkAt(q) === site.chunkAt(p) && site.surfaceAt(q) === site.surfaceAt(p) && !others.some((o) => close(o, q, 3) && distanceToPiece(o, q.x, q.z) < 2 * BOLLARD.radius);
   const kept = clearMouths(posts, bands, along, fits);
   const live = kept.flatMap((p, k) => (p ? [{ p, k }] : []));
   const inWay = (a: StreetPropItem, b: StreetPropItem) => {
