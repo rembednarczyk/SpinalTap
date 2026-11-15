@@ -7,10 +7,12 @@ const PORT = Number(process.env.E2E_PORT ?? 4173);
  * CI runs the specs in two groups of about equal time (ADR-0046: two shards; the job limit is
  * 25 min). Playwright's own `--shard` splits by test count, which put every slow spec in shard 1
  * (23 min of 25 before the FPP hands spec, over the limit after it). Group 1 takes the specs
- * named here by their measured times (npr-perf 8.9, smoke 7.0, gpu-queue 2.9, models 1.2 min);
- * group 2 takes everything else, so a new spec always runs. Unset: all specs (local runs).
+ * named here by their measured times (npr-perf 8.9, smoke 7.0, gpu-queue 2.9, models 1.2 min,
+ * fpp-hands 4.3–5.0 min, moved 15.11 when group 2 reached 23 min and then ran past the limit
+ * in #596 while group 1 took 16); group 2 takes everything else, so a new spec always runs.
+ * Unset: all specs (local runs).
  */
-const GROUP_ONE = /(npr-perf|smoke|gpu-queue|models)\.spec\.ts$/;
+const GROUP_ONE = /(npr-perf|smoke|gpu-queue|models|fpp-hands)\.spec\.ts$/;
 const group = process.env.E2E_GROUP;
 
 export default defineConfig({
