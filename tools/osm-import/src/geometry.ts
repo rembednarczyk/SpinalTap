@@ -250,7 +250,10 @@ export const clipLineToRect = (line: readonly Pt[], r: Rect): Pt[][] => {
  * Offsets an open polyline by `offset` metres to its left (negative: right), with mitred joins
  * capped at three times the offset.
  */
-export const offsetLine = (line: readonly Pt[], offset: number): Pt[] => {
+export const offsetLine = (line: readonly Pt[], offset: number): Pt[] => offsetPoints(line, line.map(() => offset));
+
+/** Offsets an open polyline's points each by its own `offsets[i]` metres to its left, mitred as `offsetLine`. */
+export const offsetPoints = (line: readonly Pt[], offsets: readonly number[]): Pt[] => {
   const out: Pt[] = [];
   const n = line.length;
   const normal = (a: Pt, b: Pt): Pt => {
@@ -268,7 +271,7 @@ export const offsetLine = (line: readonly Pt[], offset: number): Pt[] => {
     const ref = n1 ?? n0!;
     const cos = m.x * ref.x + m.z * ref.z;
     const k = Math.min(1 / Math.max(cos, 1e-6), 3);
-    out.push({ x: p.x + m.x * offset * k, z: p.z + m.z * offset * k });
+    out.push({ x: p.x + m.x * offsets[i]! * k, z: p.z + m.z * offsets[i]! * k });
   }
   return out;
 };
