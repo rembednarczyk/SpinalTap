@@ -1952,6 +1952,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - 15.11 runda 2: 4f9cf2f + merge ed53299; skan 3842 → 3833, nowa kontrola lane-place-on-green (baza 0); do ponownego przeglądu kuratora, w tym 5 sygnalizatorów przestawionych przy remisach
 - Przegląd kuratora r2 (15.11, ed53299): NIEZGODNE. Ruska, Andersa (trawa), Solidarności i szwy zgodne. Do poprawy: pas trawnika z kerbFills na bruku i asfalcie (1088,9-1091,5; 456-472) +21,8 m² i (1110,5-1119; 274,35-276) +13,1 m²; reguła remisu sygnalizatorów pogarsza (-104,3;121) i (-104,1;49,7); n1946478264 (1104,1;264,7) 3,6 m w jezdni łuku (krawężnik placu z≈261,0, 2024-06). Runda 3 nowym agentem. Szczegóły: scratchpad/topo-g825-r2-raport.md
 - 15.11 r3 7bfd370: pas do trawnika tylko przy szczelinie ≤ 0,6 m albo przy zieleni na ortofoto, szerszy jako square; reguła remisu sygnalizatorów wycofana (17 z 18 jak na main); kontrola lawn-strip-on-paving, baza 0. n1946478264 zostaje na klinie (1094,5; 279) jak w r1: obie pozycje docelowe wymagają nowej reguły, decyzja orkiestratora: sprawa G-842. Czeka na przegląd kuratora (Lwowska z 397–439 plamista, grządka 1110–1119; 514–522 jako square).
+- Przegląd kuratora r3 (15.11, @ 7bfd370): NIEZGODNE, 1 poprawka. Zgodne: A (trawa od x 1090,9 / 1090,1 / 1090,2 / 1091,5 przy z 458 / 462 / 465 / 469; zdjęcie 1091,0 / 1090,0 / 1090,3 / 1091,5), B (square z 274,3–274,8 do 275,9–276,7, bez trawy przy z < 275,9), grządka square jak main i zdjęcie, 5 sygnalizatorów co do 0,0 m jak na main, lawn-strip-on-paving 0, teren 0, hashe zgodne. Do poprawy: pas przy przesuniętej krawędzi zmienia nawierzchnię co 1–3 m (square albo trawa do jezdni): Lwowska, zach. krawędź z 397,5–420,2 (7 przebiegów po 1,5–3 m) i z 337,8–365 (6 przebiegów po 1–5,8 m), A z 462,5–464,4 (2 m trawy do jezdni między pasami square). Zdjęcie 2023-09: na całych odcinkach ciągły trawnik i jasny krawężnik 0,5–1 m. Oczekiwane: jedna nawierzchnia na odcinek krawędzi, bez przebiegów krótszych niż 5 m między przebiegami drugiej (np. square z 392–442 i z 337,8–365). Kontrola: kerb-fill-flicker.
 
 ### G-826 Pokrycie ortofoto 2025-04 klasuje jasny asfalt jezdni jako paving
 - Ważność: S3 · Zasięg: m.in. pod latarniami G-821; kontrola lamp-on-orto-carriageway ich nie widzi
@@ -2021,8 +2022,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-836 Zebry z węzłów: kąt do jezdni, koniec poza krawężnikiem, paski i poświata na chodniku
 - Ważność: S3 · Zasięg: crossing-shape: skew 19, overhang 26, glow 54, kerb 55; Podzamcze, Krakowskie, Nabrzeże, Stare Miasto
 - Opis: crossingBand (ground.ts) i stretchZebras (kerb-fill.ts) kładą prostokąt o stałych wymiarach wokół węzła z osią najbliższego segmentu OSM, niedopasowany do poszerzonej jezdni (kerbFills, widened). Kontrole w PR #581; zrzuty scratchpad/jag/final/f1–f6
-- Status: nowy
+- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g836, c52dde6, do przeglądu kuratora); wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
+- 15.11: skew 19->5, overhang 26->9, glow 54->5, kerb 55->44; reszta: wyloty skrzyżowań, brzeg mapy, oś pasma vs ROAD_CHAINS; droga przejścia jako footway pod zebrą; zmieniony test G-811 (chodnik pod zebrą)
 
 ### G-837 Zygzaki i schodki krawędzi chodnika przy jezdni i zebrze
 - Ważność: S3 · Zasięg: kerb-jag 55 trafień w 42 kwadratach 10 m; Podzamcze 18, Krakowskie 16, Nabrzeże 6, Stare Miasto 2
@@ -2048,9 +2050,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-840 Schody bez wspólnej normy stopnia: płytkie stopnie Placu Zamkowego z daleka jako czarna plama
 - Ważność: S3 · Zasięg: wszystkie biegi schodów z mapy (steps-plan.ts); najbardziej schody na Wzgórze Zamkowe z Placu Zamkowego
 - Opis: Zgłoszenie użytkownika 15.11 ze zdjęciem: schody na Podzamczu są bardzo płytkie i z daleka widać je jako czarną plamę. steps-plan.ts tnie bieg na stopnie o stałej głębokości STEP_DEPTH 0,33 m, a wysokość wynika ze spadku wygładzonego NMT (od MIN_RISER 0,045 m w górę), więc wysokości są różne między biegami i często bardzo małe. Ciemne podstopnie (#4f4b46) co 0,33 m zlewają się z daleka w czarną plamę (aliasing). Propozycja użytkownika: jedna norma stopnia w całej grze, pilnowana skanem. Do zrobienia: (1) norma: podstopień 0,15 m (0,12–0,17), stopnica 0,32 m (2h+s 0,60–0,66), liczba stopni z całkowitej różnicy wysokości końców biegu (NMT/LOD2, nie z wygładzonego gruntu na każdej stopnicy), spoczniki co najwyżej co 10–12 stopni zamiast rozciągania stopnic; (2) z daleka (od ok. 40 m) bieg jako jedna pochylnia z uśrednionym kolorem, bez linii podstopni; (3) kontrola skanu steps-riser-norm (podstopień i stopnica poza normą, nierówne stopnie w biegu) z bazą. Referencja: schody Placu Zamkowego, dwa biegi ze spocznikiem, szerokie granitowe stopnie (zdjęcie użytkownika w scratchpadzie ref/, tylko jako referencja wizualna).
-- Status: w naprawie, runda 2 (d3097ea), do przeglądu kuratora; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g840, 4f65035), do przeglądu kuratora; wcześniej: nowy
+- Status: naprawione w gałęzi (d3097ea), przegląd kuratora ZGODNE, PR; wcześniej: w naprawie, runda 2 (d3097ea), do przeglądu kuratora; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g840, 4f65035), do przeglądu kuratora; wcześniej: nowy
 - Pakiet właściciela: packages/engine/src/renderer/mapcity (steps-plan), tools/glitch-scan
 - Przegląd kuratora 15.11 @ 4f65035: NIEZGODNE (T-307). Do poprawy: (1) droga ze step_count dostaje tyle stopni, bez spoczników z maxRun (w1305889408: 40, w1305940836: 12, w1305940837: 13); (2) stopnica nie niżej niż 0,02 m pod terenem (15 biegów). Kontrole steps-count-osm, steps-landing-osm, steps-tread-sunk. Pochylnia od 35–45 m zaciera stopnie widoczne na zdjęciu z ok. 60 m: próg ok. 70 m. Kolor: G-850; podesty: G-849.
+- Przegląd kuratora r2 (15.11, @ d3097ea): ZGODNE. Bieg główny w1305889408: 40 podstopni × 0,131 m, stopnice 0,38 m (2h+s 0,64), bez spocznika; stopnica najwyżej 0,005 m pod osią terenu (bez LIFT); pochylnia z daleka 65–75 m. Nawierzchnia i teren 0, hashe zgodne. Wzrost steps-riser-norm 4 → 23 klucze (28 trafień) uzasadniony. 21 trafień (16 kluczy) to biegi z OSM step_count, pod którymi teren gry wznosi się mniej niż liczba × 0,12 m (podstopień 0,047–0,119 m; ADR-0042: liczba z mapy ma pierwszeństwo przed normą), w tym 7 zamkowych (G-849). 7 trafień to za strome lub za krótkie pasy (stride 0,48–0,60): stare 572,-70 i 753–755,-149/-150 oraz nowe 730,160 i 736,143. steps-count-osm 14 kluczy (NMT 0,07–0,6 m na 3–15 stopni), steps-landing-osm 0, steps-tread-sunk 0. Otwarte z r1: stopnice z bliska za ciemne (do trawy 1,39 wobec 1,67–1,92 na zdjęciu; kontrola steps-albedo-drift).
 
 ### G-841 Zamek Lubelski bez przepisu zabytku: fasada od Placu Zamkowego jak zwykły gmach
 - Ważność: S3 · Zasięg: Zamek Lubelski, front od Placu Zamkowego i schodów
@@ -2100,6 +2103,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Teren gry (NMT) wznosi się na podestach w1305889407 (781,4..784,6) o ok. 0,17 m/m i w1305940838 (800,3..802,6) o ok. 0,20 m/m, a plac 768..776,7 o 0,76 m; biegi pokonują 7,46 z 9,76 m. W rzeczywistości podesty są poziome, a wysokość jest na 65 stopniach (OSM). Oczekiwane: PADS na podestach, rzędy niskich stopni na placu (w1435832499). Proponowana kontrola steps-count-osm
 - Status: nowy
 - Pakiet właściciela: packages/sim/src/content/lublin (sites.ts, PADS) + tools/osm-import
+- Po G-840 r2 biegi 2 (w1305940836) i 4 (w1305940837) mają liczbę stopni z OSM (12 i 13) przy podstopniach 0,094–0,099 i 0,080–0,086 m, bo wysokość zabierają pochyłe podesty. Klucze steps-riser-norm podzamcze-1-0 781,242 ×2, 782,245, 806,240 ×2, 807,242, 807,245 zejdą, gdy podesty będą poziome.
 
 ### G-850 Schody: stopnice ciemniejsze od granitu na ortofoto
 - Ważność: S3 · Zasięg: wszystkie schody miasta, najbardziej Plac Zamkowy
@@ -2134,6 +2138,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-855 Skan nie liczy gołej ziemi przy ulicach pieszych z kamienicami residential: brak kontroli frontage-bare
 - Ważność: S4 · Zasięg: deptak 54 kwadraty 10 m (1546 m²) poza bazami, Stare Miasto 75 kwadratów (708 m²)
 - Opis: landuse-bare liczy tylko commercial/civic, kerb-gap-bare ≤3 m od jezdni, ground-strip-gap ≤1,25 m; z 109 kwadratów deptaku 24 w bazach
+- Status: nowy
+- Pakiet właściciela: tools/glitch-scan
+
+### G-856 Dołek między końcem muru nabrzeża W-3 a pokładem mostu Lutosławskiego
+- Ważność: S4 · Zasięg: Nabrzeże, W-3, x 2477,5..2480, z 416,6..418,5
+- Opis: Mur nabrzeża (bryła z wierzchem W3_Y) kończy się na z 418,5, a krawędź pokładu biegnie ukośnie (z 418,4 przy x 2477, 416,6 przy x 2480). W trójkącie ok. 2 m² teren ławy leży 0,2–0,8 m pod posadzką (groundY −28,8..−29,4); z nabrzeża widać go jako brązową dziurę przy końcu barierki (kadr w3r2-nabrzeze-sciana). Do wody się nie wyjdzie (szczelina przy x 2477 ma mniej niż 0,2 m). Oczekiwane: mur albo pad nabrzeża do krawędzi pokładu (wielokąt, nie prostokąt), wierzch W3_Y ±0,05. T-002
+- Status: nowy
+- Pakiet właściciela: packages/sim/src/content/tessen-w3 (site.ts, quay.ts), packages/sim/src/content/lublin/sites.ts
+
+### G-857 crossing-shape-kerb liczy asfalt wlotu skrzyżowania i szwy jako brak krawężnika
+- Ważność: S4 · Zasięg: np. (625,151), (913,345)
+- Opis: Fałszywe trafienia kontroli z #581, znalezione przy G-836
 - Status: nowy
 - Pakiet właściciela: tools/glitch-scan
 
