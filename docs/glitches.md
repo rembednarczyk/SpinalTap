@@ -252,6 +252,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Kurator 15.11, przegląd c768d2f: NIEZGODNE (T-067). P1 portyk wielkiego porządku: kolumny przez parter i I piętro, balkon przed oknami II piętra na ok. 10 m (NMPT 9,6–11,0 m, flagi do 15,2 m; Lublin360 2017: głowice na wysokości łuków okien I piętra); dziś balkon na gzymsie parteru ok. 5,8 m, COLUMN_TOP 6 w porticoes.ts do podniesienia razem z asercją w lublin-vertical.test.ts. P2 wieża: korpus 25 → ok. 30,5 m (NMPT 29,6–31,8), szczyt 30,1 → ok. 38 m (NMPT 38,2, LOD2 37,7), kondygnacja z zegarem ok. 4 m, miedziana ok. 6 m, hełm z latarnią i iglicą ok. 7,5 m; wysokości z danych GUGiK (korekta importu dla w619138854), hełm 5 m overGuess wtedy zbędny. Przyjęte: dach skrzydeł 3,5 m (G-117), blok ryzalitu, cofnięcie 1,5 m jak OSM, drzwi przepisu, 4 kolumny, 5 flag, zegar, okna.
 - 15.11 kurator, przegląd rundy 2 (ecc0696, T-067): ZGODNE, P1 i P2 przyjęte (balkon 10,3 m, maszty 15,5 m, wieża 30,5/38,1 m wobec NMPT 29,6–31,8/38,2 m). Niekrytyczne, do osobnej drobnej poprawki (S4): zwieńczenie wieży jako kwadratowa miedziana latarnia z niską piramidką, kulą i wiatrowskazem zamiast dzwonu i okrągłej latarni; na kondygnacji miedzianej okno półkoliste i okrągła tarcza zamiast szczeliny (GSV 2025, fc71f17e)
 - Scalone w #571 (15.11). Zostają drobne różnice S4: zwieńczenie wieży (kwadratowa latarnia, piramidka, kula, wiatrowskaz), okno półkoliste kondygnacji miedzianej, stopnie schodów, głowice jońskie, tablice pamiątkowe.
+- 15.11 przegląd S4: resztki po #571 (zwieńczenie wieży, okno półkoliste, stopnie, głowice jońskie, tablice) to praca przepisu zabytku w engine (landmarks) ze zrzutami i przeglądem zdjęć; koszt średni, poza partią S4 (wygląd zabytku, nie drobny glitch mapy).
 
 ### G-121 Poczta Główna jako sklep z nadbudową
 - Status: zgłoszone (audyt gmachów publicznych, kurator 31.10); przed poprawką trzeba potwierdzić budynek zdjęciem albo w rejestrze NID
@@ -423,6 +424,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: płytki pas z tagiem `diagonal`/`perpendicular` → mniejszy kąt albo krótszy model; spadek przez G-133 (pochylenie aut); `bay-strip-sparse` dziś pomija pasy bez auta
 - Kurator #162: także odcinek Kowalskiej w232362980 x 644..668 bez zatok, bo ulica ma `use: deliveries`, a `bayCars` bierze tylko `CAR_STREETS` (T-107); zatoka w1544340690 s=24,8 (689,2; 171,8) odrzucona przez odstęp od chodnika w173566578, a na ortofoto stoi tam auto. Proponowane kontrole: `kerb-strip-no-car-street` (baza ≥ 1) i `bay-strip-sparse` także dla pasów bez aut (baza ≥ 5)
 - Pakiet właściciela: packages/sim (kerb-bays), tools/glitch-scan
+- 15.11 przegląd S4: Świętoduska w1514058888/89/90 (G-813) to ten sam spadek ponad LEVEL_DROP co w1514058885; dopisane do EMPTY_STRIPS_KNOWN (6bab190, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1).
 
 ### G-191 Gzymsy wystają poza obrys OSM i przycinają płaskie płyty znaków
 - Status: zgłoszone (1.11, autor G-160)
@@ -1894,6 +1896,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: YIELDING przejmuje tylko linie na ulicach samochodowych, więc deptaki lit=yes zostają z lamp-road z planu; PATH stawia lamp-park przy peronach i na chodnikach ulic. W rzeczywistości przy deptaku stoją latarnie stylizowane (Peowiaków, Commons 2009). T-298
 - Status: zgłoszone (14.11, przegląd kuratora G-798)
 - Pakiet właściciela: tools/osm-import (props-lit), docs/world/lublin-props.todo.json
+- 15.11 przegląd S4: nadal na main (YIELDING tylko lamp-road na ulicach samochodowych, PATH dla footway=sidewalk i peronów bez zmian). Koszt średni: decyzja o wyglądzie (latarnie stylizowane przy deptaku, chodnik przy ulicy bez własnych lamp-park), przegląd kuratora. Ta sama rodzina co G-798, bez dubletu.
 
 ### G-806 Drzewa przy ścianach rysowane niżej niż NMPT: korona nie może urosnąć przy budynku (18 miejsc tree-height-vs-nmpt)
 - Ważność: S4 · Zasięg: 18 drzew 0,5–5,3 m od ściany, rysowane z ziarna 7–12 m, NMPT 12–26 m
@@ -1914,7 +1917,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-813 Pasy parkowania Świętoduskiej w1514058888/89/90 bez aut
 - Ważność: S4 · Zasięg: Świętoduska, 3 pasy (0 aut z 6,4 / 3,2 / 1,6 oczekiwanych), ten sam stan na main
 - Opis: Odsłonięte przez kontrolę bay-strip-sparse przy G-804 (nowa latarnia przy krawężniku). Prawdopodobnie ten sam spadek co w1514058885 (G-133).
-- Status: zgłoszone
+- Status: odrzucone, duplikat G-190 (przegląd S4 15.11: sonda surfaceY pod autem wzdłuż ulicy daje spadek 0,25–0,35 m > LEVEL_DROP 0,15 m na wszystkich trzech pasach, ta sama przyczyna co w1514058885; w skanie przeniesione do bay-strip-empty-known, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, 6bab190); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 
 ### G-814 Drzewo przy ścianie rysowane w rozmiarze z ziarna zamiast największej korony, która się mieści
@@ -1928,13 +1931,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-816 Odcinek reguły lit bez stacji liczy się jako oświetlony; przebieg uzupełniający powtarza stację, która właśnie odpadła
 - Ważność: S4 · Zasięg: SW róg Krakowskiego (-160..-130; -270..-260), rząd drzew w1550442735
 - Opis: Znalezione przy G-812: odcinek krótszy niż pół rozstawu nie dostaje stacji, a liczy się jako oświetlony; drugi przebieg powtarza tę samą zablokowaną stację.
-- Status: zgłoszone
+- Status: częściowo w poprawce (przegląd S4 15.11, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, f429ad9: część 1, przebieg bez stacji nie oświetla; 16+2 takich linii w mieście, +8 elementów w tablicy); część 2 otwarta; wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import (props-lit)
+- 15.11 przegląd S4, część 2 na main: 4 stacje przebiegu uzupełniającego leżą < 1 m od stacji pierwszego przebiegu i znowu odpadają: w1004767721 (1120,8; 381,7), w58643325 (2470,2; 417,3), w427417969 (1104,8; 176,3) i (1111,9; 205,4); do tego w172992144 (2427,9; 264,5), (2442,8; 255,3) bez latarni po obu przebiegach. Miejsce ze zgłoszenia (SW róg Krakowskiego) po G-812/G-821 już tego nie pokazuje. Koszt średni (przesunięcie stacji uzupełnienia względem pierwszego przebiegu). Sonda: scratchpad s4-p816.test.ts.
 
 ### G-817 Latarnia z linii przesunięta z jezdni lub ściany traci 7 m odstępu scalania
 - Ważność: S4 · Zasięg: linie latarni planu przy offRoad/offWall; widoczność w mieście niesprawdzona
 - Opis: fromLine w props-gen działa po tożsamości obiektu, więc latarnia przesunięta przez offRoad/offWall dostaje odstęp 0,3 m zamiast 7 m.
-- Status: zgłoszone
+- Status: w poprawce (przegląd S4 15.11, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, 6a4e9af: odstęp scalania pytany o element tak, jak go postawiono; tablica bez zmian, dziś w mieście brak przypadku); wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import (props-gen)
 
 ### G-820 Brak rzędów słupków z łańcuchami wzdłuż ulic Śródmieścia poza punktami z OSM (reguła dla centrum, decyzja użytkownika 15.11)
@@ -1951,18 +1955,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Po pomiarze z ortofoto jezdnia ma 12,5 m (lewo 7,25, prawo 5,25); trzy pasy dzielą równo całą szerokość razem z zatoką lub parkowaniem, linie stoją 4,4 m od siebie zamiast 3,5 m.
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import, packages/sim
+- 15.11 przegląd S4: nadal na main po scaleniu PR 10 (#565): markings.ts dzieli całą szerokość przez liczbę pasów (lw = w / lanes), w230504488 ma w tablicy 12,5 m (7,25/5,25). Koszt średni (która strona to zatoka, ortofoto).
 
 ### G-823 Zebry z węzłów: 132 na gałęzi PR 10 wobec 136 na main
 - Ważność: S4 · Zasięg: 4 zebry z węzłów OSM znikają na gałęzi ADR-0080 PR 10
 - Opis: crossingBand kładzie zebrę od stopy węzła na przesuniętej jezdni (054a446), ale 4 nadal brakuje wobec main.
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import
+- 15.11 przegląd S4: nadal na main (#565): pól crossing 136 na 6e7ea41, 132 na main; brak zebr przy (2386,4; 336,0), (2351,9; 339,5) (Nabrzeże) i (1090,1; 491,6) (Podzamcze, sąsiednia przesunięta o 8 m); trzy inne przesunięte o ok. 3 m. Koszt średni (crossingBand: off liczony od przesuniętej osi).
 
 ### G-824 Komórka canopyHard przy krawężniku dołączana do trawnika (lawn-on-leafoff-paving)
 - Ważność: S4 · Zasięg: 17 próbek 0,1–0,55 m od krawędzi jezdni, m.in. Rondo Cybulskiego, Mełgiewska
 - Opis: Drobiny poniżej 8 komórek klasy canopyHard przy krawężniku (prawdopodobnie sam krawężnik) joinSpecks dołącza do trawnika; potrzebny krawężnik między asfaltem a pasem zieleni zamiast zgadywania klasy.
 - Status: zgłoszone
 - Pakiet właściciela: tools/orto, tools/osm-import
+- 15.11 przegląd S4: nadal (joinSpecks bez pojęcia krawężnika); koszt średni; ta sama rodzina co G-826 (klasy ortofoto przy krawędzi jezdni), bez dubletu.
 
 ### G-825 Jezdnia importu węższa od prawdziwej przy łącznicach, kieszeniach skrętu i placement=left_of; pas wypełnia bruk z pokrycia
 - Ważność: S3 · Zasięg: Mełgiewska/łącznica Andersa w40051729, Al. Solidarności w215609082 (kieszenie skrętu), Lwowska (placement=left_of:3)
@@ -1982,12 +1989,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (przegląd kuratora G-797 r2, 15.11)
 - Pakiet właściciela: tools/osm-import (crown-trees.ts, crown-grid.ts)
 - Test przyjęcia: drzewo reguły dalej od drzewa gry niż jego rysowana korona; brak drzewa reguły na (552,5; 428,5)
+- 15.11 przegląd S4: nie sondowane osobno (crown-trees.ts bez zmian od #567); koszt średni, trzy osobne reguły; powiązane z G-806/G-814 (gałąź g814, drzewa przy ścianach), bez dubletu.
 
 ### G-829 Granitowe słupki z OSM (material=granite) rysowane jako żeliwne
 - Ważność: S4 · Zasięg: 16 węzłów barrier=bollard przy Placu Litewskim (x 98–140, z −52…−86)
 - Opis: Plan nie rozróżnia materiału słupków; po G-819 wszystkie są czarne żeliwne z łańcuchem. Do zbiorczego przeglądu S4.
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
+- 15.11 przegląd S4: nadal (plan i engine bez materiału słupka); koszt średni (nowy wariant w prop-shapes i bit materiału w imporcie, zrzuty); niezależne od G-830–G-833.
 
 ### G-830 Pl. Łokietka: wschodni rząd słupków (w1514057823) 0,4–0,5 m od rzędu z ortofoto, bo jezdnia w grze zachodzi na krawężnik
 - Ważność: S4 · Zasięg: Krakowskie, Lubartowska przy Pl. Łokietka x 446,4–447,0, z −61…−36 (15 słupków)
@@ -1995,6 +2004,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/osm-import (Infra / Build)
 - Test przyjęcia: kontrola skanu: słupek linii OSM dalej niż 0,3 m od linii (baza 23 przesunięcia z G-818); krawędź jezdni a rząd słupków z OSM przy krawężniku
+- 15.11 przegląd S4: u innego agenta (gałąź g825, ta sama przyczyna co G-825: jezdnia importu szersza/węższa od ortofoto).
 
 ### G-831 Rząd słupków z łańcuchem przez stanowiska prostopadłe na Karmelickiej (strona zachodnia/północna)
 - Ważność: S4 · Zasięg: Karmelicka, ok. 50 m rzędu z łańcuchem (x≈230..270, z≈130..160) po stronie bez wyłączenia zatok
@@ -2002,6 +2012,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (kurator 15.11, przegląd rundy 2 G-820)
 - Pakiet właściciela: tools/osm-import (props-kerb-bollards, baysOf)
 - Test przyjęcia: Karmelicka: brak słupków reguły na obu stronach odcinka stanowisk prostopadłych; kontrola skanu: słupek reguły, za którym 0–2,5 m na ortofoto auto/asfalt na ≥60% okna ±4 m (baza po wdrożeniu 0)
+- 15.11 przegląd S4: dotyczy reguły z PR #573 (G-820), jeszcze nie na main; sprawdzić po scaleniu #573. Koszt: G-831 i G-833 mały–średni (baysOf, ROW_TURN w props-rows.ts), G-832 średni (dwa naloty lub maska cienia); G-831 i G-832 to ten sam detektor baysOf z przeciwnym błędem.
 
 ### G-832 Fałszywe wyłączenia rzędu słupków przez cienie na ortofoto (zatoki G-820 P2)
 - Ważność: S4 · Zasięg: ok. 60–100 m krawężnika: 3 Maja zach. 24 m (x≈-115, z 75..99), Staszica 15 m (178..190, 32..40), Narutowicza 3 odcinki 18 m (95..109, -260..-250; 260..267, -167), Radziwiłłowska płd. 43 m (36..78, z≈104..109) niepewne
@@ -2009,6 +2020,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (kurator 15.11, przegląd rundy 2 G-820)
 - Pakiet właściciela: tools/osm-import (props-kerb-bollards, loadOrtoAsphalt)
 - Test przyjęcia: 3 Maja zach. i Staszica mają rząd; detektor zatok wymaga zgodności dwóch nalotów (2024-06 i 2025-04) albo odrzuca próbki w masce cienia
+- 15.11 przegląd S4: dotyczy reguły z PR #573 (G-820), jeszcze nie na main; sprawdzić po scaleniu #573. Koszt: G-831 i G-833 mały–średni (baysOf, ROW_TURN w props-rows.ts), G-832 średni (dwa naloty lub maska cienia); G-831 i G-832 to ten sam detektor baysOf z przeciwnym błędem.
 
 ### G-833 Łańcuch rzędu słupków kończy się na rogu placu zamiast zawinąć łuk
 - Ważność: S4 · Zasięg: narożniki placów z rzędami G-820 (np. Pl. Wolności, zrzut g820-r2-plac-wolnosci-naroznik); liczba do policzenia sondą
@@ -2016,6 +2028,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (kurator 15.11, przegląd rundy 2 G-820)
 - Pakiet właściciela: tools/osm-import (props-rows, props-kerb-corners)
 - Test przyjęcia: rząd na łuku narożnika placu ma łańcuch między każdą parą sąsiednich słupków do przerwy na przejściu
+- 15.11 przegląd S4: dotyczy reguły z PR #573 (G-820), jeszcze nie na main; sprawdzić po scaleniu #573. Koszt: G-831 i G-833 mały–średni (baysOf, ROW_TURN w props-rows.ts), G-832 średni (dwa naloty lub maska cienia); G-831 i G-832 to ten sam detektor baysOf z przeciwnym błędem.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
