@@ -7,7 +7,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { OsmNode, Tags } from "./osm.ts";
+import type { OsmData, OsmNode, Tags } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
 import type { Pt } from "./geometry.ts";
 import { REPO } from "./paths.ts";
@@ -103,4 +103,41 @@ export const loadFurniture = (root = REPO): FurniturePoint[] => {
   if (!existsSync(file)) return [];
   const rows = (JSON.parse(readFileSync(file, "utf8")) as { points: FurnitureRow[] }).points;
   return rows.map(([id, lat, lon, tag, detail]) => ({ id: `n${id}`, p: geoToWorld(lat, lon), tag, detail }));
+};
+
+/**
+ * Rows of bollards mapped as lines (G-818): OSM draws some rows as a way `barrier=bollard` with no
+ * tagged node (Plac Łokietka, Królewska, Krakowskie by the Bernardines), which the extracts drop
+ * with the other barriers outside `BARRIER_LINES`. `pnpm osm:fetch` keeps them from the raw tiles
+ * in `data/osm/points/bollard-lines.json`; `pnpm osm:props` strings posts along them.
+ */
+export const BOLLARD_LINES_FILE = "data/osm/points/bollard-lines.json";
+
+/** One line: OSM way id and its nodes' positions in order. */
+export type BollardLineRow = [id: number, pts: [lat: number, lon: number][]];
+
+/** The ways `barrier=bollard` of a tile whose every node it holds. */
+export const bollardLineRows = (data: OsmData): BollardLineRow[] =>
+  [...data.ways.values()].flatMap((w) => {
+    if (w.tags?.barrier !== "bollard") return [];
+    const nodes = w.nodes.map((id) => data.nodes.get(id));
+    return nodes.every((n) => n !== undefined) ? [[w.id, nodes.map((n) => [n!.lat, n!.lon] as [number, number])] as BollardLineRow] : [];
+  });
+
+/** The file's text: a header and a line a row, sorted by way id, so a refetch diffs line by line. */
+export const serializeBollardLines = (rows: readonly BollardLineRow[], header: Record<string, unknown>): string =>
+  `{"header":${JSON.stringify({ ...header, filter: "way barrier=bollard", row: ["id", "points [lat, lon]"] })},\n"lines":[\n${rows.map((r) => JSON.stringify(r)).join(",\n")}\n]}\n`;
+
+/** A line of bollards in the world. */
+export interface BollardLine {
+  readonly id: string;
+  readonly pts: readonly Pt[];
+}
+
+/** The file's lines in the world (none when it is missing). */
+export const loadBollardLines = (root = REPO): BollardLine[] => {
+  const file = join(root, BOLLARD_LINES_FILE);
+  if (!existsSync(file)) return [];
+  const rows = (JSON.parse(readFileSync(file, "utf8")) as { lines: BollardLineRow[] }).lines;
+  return rows.map(([id, pts]) => ({ id: `w${id}`, pts: pts.map(([lat, lon]) => geoToWorld(lat, lon)) }));
 };

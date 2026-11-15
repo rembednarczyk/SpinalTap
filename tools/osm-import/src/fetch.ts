@@ -8,8 +8,9 @@
  *   district into `data/terrain/<district>.{json,bin}`; with `--eudem` the EU-DEM 25 m lattice
  *   (opentopodata, 100 points a second) goes to `data/terrain/<district>.eudem.json` as fallback.
  * - Street furniture and trees: the points of `furniture.ts` from the same raw tiles, before the
- *   extracts drop unnamed nodes, into `data/osm/points/furniture.json` (written only when every
- *   district's tiles were read, so `--only` keeps the file as it was).
+ *   extracts drop unnamed nodes, into `data/osm/points/furniture.json`, and the rows of bollards
+ *   mapped as lines into `data/osm/points/bollard-lines.json` (G-818); both written only when every
+ *   district's tiles were read, so `--only` keeps the files as they were.
  * Flags: `--refresh` refetches cached tiles, `--only=<slug>` limits to one district,
  * `--skip-osm`, `--skip-dtm`, `--eudem`, `--points-only` (the furniture file alone: no extract, no terrain).
  */
@@ -18,7 +19,7 @@ import { join } from "node:path";
 import { DISTRICTS, type DistrictSpec, ELEVATION_MARGIN, ELEVATION_STEP, FETCH_MARGIN, MAX_TILE_DEG, USER_AGENT } from "./config.ts";
 import { DTM_OFFSET, DTM_SCALE, type DtmHeader, dtmToBytes, encodeHeight } from "./dtm.ts";
 import { readGeoTiff } from "./geotiff.ts";
-import { type FurnitureRow, FURNITURE_FILE, furnitureRows, serializeFurniture } from "./furniture.ts";
+import { BOLLARD_LINES_FILE, type BollardLineRow, type FurnitureRow, FURNITURE_FILE, bollardLineRows, furnitureRows, serializeBollardLines, serializeFurniture } from "./furniture.ts";
 import { type OsmData, filterOsm, mergeOsm, parseOsmXml, serializeOsm } from "./osm.ts";
 import { worldToGeo, worldToPuwg } from "./project.ts";
 import { REPO } from "./paths.ts";
@@ -50,8 +51,9 @@ const geoBox = (d: DistrictSpec, margin: number) => {
   return { minLon: sw.lon, minLat: sw.lat, maxLon: ne.lon, maxLat: ne.lat };
 };
 
-/** The furniture of every tile read, by node id (`furniture.ts`). */
+/** The furniture of every tile read, by node id, and its rows of bollards mapped as lines, by way id (`furniture.ts`). */
 const furniture = new Map<number, FurnitureRow>();
+const bollardLines = new Map<number, BollardLineRow>();
 
 const fetchOsm = async (d: DistrictSpec) => {
   const box = geoBox(d, FETCH_MARGIN);
@@ -75,6 +77,7 @@ const fetchOsm = async (d: DistrictSpec) => {
       }
       const raw: OsmData = parseOsmXml(readFileSync(file, "utf8"));
       for (const r of furnitureRows(raw.nodes.values())) furniture.set(r[0], r);
+      for (const r of bollardLineRows(raw)) bollardLines.set(r[0], r);
       if (!pointsOnly) parts.push(filterOsm(raw));
     }
   }
@@ -192,6 +195,9 @@ const main = async () => {
   const per = new Map<string, number>();
   for (const r of rows) per.set(r[3], (per.get(r[3]) ?? 0) + 1);
   console.log(`furniture.json: ${rows.length} points (${[...per].map(([t, n]) => `${t} ${n}`).join(", ")})`);
+  const lines = [...bollardLines.values()].sort((a, b) => a[0] - b[0]);
+  writeFileSync(join(REPO, BOLLARD_LINES_FILE), serializeBollardLines(lines, { source: "api.openstreetmap.org/api/0.6/map", license: "ODbL 1.0, © OpenStreetMap contributors" }));
+  console.log(`bollard-lines.json: ${lines.length} lines`);
 };
 
 await main();
