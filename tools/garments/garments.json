@@ -1,0 +1,17 @@
+{
+  "about": "Garments cut out of VRoid models into packages/app/public/garments (ADR-0086, way A) by tools/garments/garment_extract.py. A source is named by its sha256: the raw VRM is downloaded by hand from VRoid Hub (login required) and never committed; its page, author, terms and date are in tools/assets/sources.json.",
+  "garments": [
+    {
+      "id": "jacket-techwear",
+      "sha256": "8609f2a8053fb17d225f94b0e08078d38e4b59853aef53a7eb163bf3a224649a",
+      "materials": ["N00_007_03_Tops_01_CLOTH_01", "N00_007_03_Tops_01_CLOTH_02", "N00_007_03_Tops_01_CLOTH_03"],
+      "material": "Garment_jacket-techwear",
+      "source": {
+        "id": "vroid-hub-kimi",
+        "title": "Kimi || Desktop Mate Model",
+        "author": "Toriss",
+        "page": "https://hub.vroid.com/en/characters/7972506988434619525/models/2687543789787584553"
+      }
+    }
+  ]
+}
