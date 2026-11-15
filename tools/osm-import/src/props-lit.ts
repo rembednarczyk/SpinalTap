@@ -404,7 +404,12 @@ const lampDark = (plan: PropsPlan, ways: readonly LitWay[], lit: LampIndex<unkno
     // A row on one kerb by the way's drawing direction (G-804): turned to the side the plan's line or the first pass lit.
     const sided = look.sides === 1 && line.kind === "lamp-road";
     const refs = sided ? [...ref, ...(own.get(`lit.w${w.id}`) ?? [])] : [];
-    const runs = spans.map((s) => padded(pts, s, look.spacing)).map((r) => (sided ? facing(r, w.tags, refs, ON_WAY) : r));
+    // A run shorter than half a spacing, a way too short to grow it, has no station (`stations` starts half a spacing in): it lights nothing (G-816).
+    const runs = spans
+      .map((s) => padded(pts, s, look.spacing))
+      .filter((r) => lengthOf(r) >= look.spacing / 2)
+      .map((r) => (sided ? facing(r, w.tags, refs, ON_WAY) : r));
+    if (runs.length === 0) continue;
     // Only what lies on the map lights the ways after: Świętoduska's run grown 26 m north past z = 160 lit the footway beside it (G-812).
     for (const run of runs) for (const piece of onMap(run)) lit.addLine(piece, true);
     items.push(litItem(id(w), w, look, runs));

@@ -134,6 +134,15 @@ describe("the street lamps of the lit rule (G-798, ADR-0064 stage 3)", () => {
     expect(ends("lit.w3")).toEqual([[120, 159.5, 190, 159.5]]);
   });
 
+  it("lights no way by a run too short for a station: its line gets no lamp (G-816)", () => {
+    // A lit side street 10 m long, under half its class's 30 m spacing: `stations` starts 15 m in, so no lamp stands on it.
+    const items = litItems({ items: [] }, [way(1, { highway: "residential" }, 0, 10, -240), way(2, { highway: "footway" }, 0, 60, -245)]);
+    for (const i of items) for (const l of i.lines!) expect(Math.hypot(l[l.length - 2]! - l[0]!, l[l.length - 1]! - l[1]!), i.id).toBeGreaterThanOrEqual(i.spacing! / 2);
+    expect(items.map((i) => i.id)).toEqual(["lit.w2"]);
+    // The footway is dark all along, the street beside it having no lamp.
+    expect(items[0]!.lines![0]!.slice(0, 2)).toEqual([0, -245]);
+  });
+
   it("lamps in its second pass what the placed lamps left dark", () => {
     const plan: PropsPlan = { items: [] };
     const ways = [way(1, { highway: "residential" }, 0, 120, -240)];
