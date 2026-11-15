@@ -40,11 +40,13 @@ const shapeOf = (kind: StreetPropKind, variant: number): number => variant % (SH
 /**
  * A tree's size, as `treeScale` of `@seki/core` (G-422, G-423): an oak's or a poplar's from its step
  * over 0xf400 (two variants, one per species, a step), a measured tree's from its step over 0xf000
- * (three variants a step), else 0.8 to 1.25 from bits 4 to 7. Its own copy, as the importer loads
+ * (three variants a step), one narrowed by walls from its step of two over 0xf580 (25 variants a
+ * step, G-814), else 0.8 to 1.25 from bits 4 to 7. Its own copy, as the importer loads
  * this module in plain Node, where only types come from the core's index.
  */
 export const treeScale = (variant: number): number => {
   const step = (k: number) => Math.round((0.7 + k * 0.01) * 100) / 100;
+  if (variant >= 0xf580) return step(2 * Math.floor((variant - 0xf580) / 25));
   if (variant >= 0xf400) return step(Math.floor((variant - 0xf400) / 2));
   return variant >= 0xf000 ? step(Math.floor((variant - 0xf000) / 3)) : 0.8 + 0.45 * (((variant >> 4) % 16) / 15);
 };
@@ -54,7 +56,12 @@ export const treeScale = (variant: number): number => {
  * renderer's (`TRUNK` in `prop-green.ts`): lime, maple and horse chestnut 0.26, oak 0.42, poplar 0.45.
  */
 const TREE_GIRTH: readonly number[] = [0.28, 0.28, 0.28, 0.44, 0.47];
-export const treeGirth = (variant: number): number => TREE_GIRTH[variant >= 0xf400 ? 3 + ((variant - 0xf400) % 2) : variant % 3]! * treeScale(variant);
+/** The share of its width a tree narrowed by walls is drawn at, over 0xf580 (`TREE_SPREADS` of `@seki/core`, G-814): its trunk with it. */
+const TREE_SPREADS: readonly number[] = [0.85, 0.7, 0.55, 0.45, 0.35];
+export const treeGirth = (variant: number): number => {
+  if (variant >= 0xf580) return TREE_GIRTH[(variant - 0xf580) % 5]! * treeScale(variant) * TREE_SPREADS[Math.floor((variant - 0xf580) / 5) % 5]!;
+  return TREE_GIRTH[variant >= 0xf400 ? 3 + ((variant - 0xf400) % 2) : variant % 3]! * treeScale(variant);
+};
 
 /**
  * A black cast-iron bollard of Lublin's centre (G-032, G-819; Plac Łokietka, Plac Wolności), as
