@@ -112,7 +112,7 @@ describe("street furniture models of ADR-0058 stage 2 (street-props.glb)", () =>
     const pieces = [piece("atm", 10), piece("hydrant", 20), piece("food-cart", 35), piece("container", 55, 1), piece("planter", 75), piece("bike-rack", 90, 3)];
     const make = (quality: "high" | "low", withProps: boolean) => {
       const scene = new Scene(new NullEngine());
-      const sp = new StreetProps({ scene, materials: new ToonMaterials(scene), quality });
+      const sp = new StreetProps({ scene, materials: new ToonMaterials(scene), quality, now: () => 0 });
       sp.spawn(1, pieces, { x: 0, y: 0, z: 0 });
       sp.flush();
       if (withProps) sp.setProps(props);
