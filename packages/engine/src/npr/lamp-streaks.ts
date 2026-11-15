@@ -16,7 +16,7 @@ export const MAX_LAMP_STREAKS = 8;
 /** How far a mirrored ray may miss the lamp up or down and still catch its glow (rad). */
 export const STREAK_PITCH = 0.2;
 /** Half-width of the streak (m) at the eye and per metre away from it: a fixed angle as seen. */
-export const STREAK_WIDTH = [0.06, 0.016] as const;
+export const STREAK_WIDTH = [0.04, 0.014] as const;
 /** Length of the steps the streak is broken into along its run (m). */
 export const STREAK_STEP = 0.4;
 /** Lamps further than this from the eye (m) mirror nothing: they are lost in the fog. */
