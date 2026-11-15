@@ -122,3 +122,14 @@ export const offFacingPlayer = (sim: Simulation, e: Entity): number => {
   const facing = Math.atan2(p.position.x - e.position.x, p.position.z - e.position.z);
   return Math.abs(Math.atan2(Math.sin(e.yaw - facing), Math.cos(e.yaw - facing)));
 };
+
+/**
+ * Stands the player `metres` in front of a character, along the facing of its post (a guard on
+ * watch looks round it) or its own, turned to it: in its sight, whatever way its post faces
+ * (W-3's posts, ADR-0082, face every way).
+ */
+export const standInFront = (sim: Simulation, e: Entity, metres: number): void => {
+  const yaw = e.ai?.watch?.yaw ?? e.yaw;
+  const [dx, dz] = [Math.sin(yaw), Math.cos(yaw)];
+  teleportPlayer(sim, { x: e.position.x + dx * metres, y: e.position.y, z: e.position.z + dz * metres }, Math.atan2(-dx, -dz));
+};

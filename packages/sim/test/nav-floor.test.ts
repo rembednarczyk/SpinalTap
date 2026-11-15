@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type EnemyTypeId, type Vec3 } from "@seki/core";
-import { type ChunkDef, DOCKS_PLACE, Simulation, docks, gangerEntity, stateHash } from "../src";
+import { type ChunkDef, Simulation, W3_Y, gangerEntity, stateHash, w3 } from "../src";
 import { chestOf, eyeOf, lineOfSight } from "../src/world/hitscan";
 import { detourStep, steerPoint, straightWalk } from "../src/systems/ai/steering";
 import { byKey, teleportPlayer } from "./helpers";
@@ -8,13 +8,12 @@ import { MARKET_PLACE, OLD_MARKET_CHUNK, market } from "./fixtures/old-market";
 
 /**
  * The old market as a test floor (`fixtures/old-market.ts`, the overpass stairs and their rails;
- * the game's market is in Alchemia since ADR-0063) and the docks, both in their own coordinates
- * (ADR-0045): `atM` and `atD` are points of them.
+ * the game's market is in Alchemia since ADR-0063) in its own coordinates (ADR-0045), and W-3 on
+ * the docks' ground (ADR-0082): `atM` and `atD` are points of them.
  */
 const atM = (x: number, z: number, y = 0): Vec3 => market(x, y, z);
-const atD = (x: number, z: number, y = 0): Vec3 => docks(x, y, z);
+const atD = (x: number, z: number, y = 0): Vec3 => w3(x, y, z);
 const M = MARKET_PLACE;
-const D = DOCKS_PLACE;
 const FLOOR: readonly ChunkDef[] = [OLD_MARKET_CHUNK];
 
 /** Keeps the player alive and in place: the tests are about where the gangers go. */
@@ -129,12 +128,12 @@ describe("walking around obstacles on one floor (ADR-0025, audit W3)", () => {
   });
 });
 
-describe("the docks (ADR-0025)", () => {
-  it("crosses the container rows in the yard without getting stuck", () => {
-    // Seki in the north aisle, the ganger south of the first row: a wall of containers between.
-    const target = atD(0, 113.5);
+describe("W-3 on the docks' ground (ADR-0025, ADR-0082)", () => {
+  it("goes round the container on the pickup yard without getting stuck", () => {
+    // Seki between the container and the basin's railing, the ganger south of it: the container between.
+    const target = atD(2530, 449.6);
     const sim = scene(target);
-    const g = spawn(sim, atD(-4, 97));
+    const g = spawn(sim, atD(2531, 443));
     let anchor = g.position;
     let anchorTick = sim.tick;
     const reached = hold(sim, 60 * 25, () => {
@@ -150,19 +149,19 @@ describe("the docks (ADR-0025)", () => {
     expect(reached).toBeLessThan(60 * 25);
   });
 
-  it("walks round the containers on the quay and the office to a target behind them", () => {
-    const target = atD(-13, 148.4);
+  it("walks round the tower and its stair from the quay to a target in the gap behind them", () => {
+    const target = atD(2498, 444);
     const sim = scene(target);
-    const g = spawn(sim, atD(-13, 141));
+    const g = spawn(sim, atD(2482, 432));
     const reached = hold(sim, 60 * 20, () => flat(g.position, target) < 2.5);
     expect(reached).toBeLessThan(60 * 20);
   });
 
-  it("takes the warehouse stairs in the docks", () => {
-    const target = atD(-23, 116.8, 9);
+  it("takes the tower's stair and its bridge up onto row N's roof", () => {
+    const target = atD(2522, 435, 10.4);
     const sim = scene(target);
-    const g = spawn(sim, atD(10, 105));
-    const reached = hold(sim, 60 * 40, () => g.position.y - D.y > 8.9 && flat(g.position, target) < 2.5);
+    const g = spawn(sim, atD(2492, 424));
+    const reached = hold(sim, 60 * 40, () => g.position.y - W3_Y > 10.3 && flat(g.position, target) < 2.5);
     expect(reached).toBeLessThan(60 * 40);
   });
 });
