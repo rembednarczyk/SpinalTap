@@ -2217,6 +2217,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: packages/ui
 
+### G-869 crossing-shape-kerb przeczy kerb-jag przy skośnym krawężniku: zebra-prostokąt kończy się przed krawężnikiem albo wcina róg w chodnik
+- Ważność: S4 · Zasięg: 6 miejsc, np. (158,-198), (676,570)
+- Opis: Po G-836 r3: koniec zebry przechodzi na koniec boku, więc 0,2–0,5 m przed krawężnikiem w osi; alternatywa wcina róg w chodnik (test G-837 kerb-jag-places). Baza crossing-shape-kerb 42->46 przyjęta przez użytkownika 15.11 do czasu naprawy. Docelowo koniec zebry dopasowany do skośnego krawężnika (czworokąt), wtedy baza wraca w dół.
+- Status: nowy
+- Pakiet właściciela: tools/osm-import (zebra-fit.ts)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
