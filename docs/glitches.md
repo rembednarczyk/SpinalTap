@@ -2255,10 +2255,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-872 Karmelicka 7: stojący budynek z building=construction pominięty przez SKIP_BUILDING
 - Ważność: S3 · Zasięg: w1134342880 (311..335; 56..98), Krakowskie
 - Opis: Ortofoto 2023-09, 2024-06 i 2025-04 pokazuje dach budynku; OSM building=construction, construction=commercial; w grze goła ziemia bez bryły (SKIP_BUILDING w generate.ts). Znalezione w przeglądzie kuratora G-853 r3. Test: bryła Karmelicka 7 z wysokością z LoD1/NMPT; proponowana kontrola osm-construction-built 1 -> 0.
-- Status: w naprawie, runda 2 (przedpole: landuse=construction w1261814241); wcześniej: do przeglądu kuratora (6bbd199), skan czerwony: +15/+10/+5 kluczy przy bryle; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g872); wcześniej: nowy
+- Status: wstrzymane do rana: decyzja użytkownika o 17 kluczach skanu (podniesienie bazy) i scalenie po #599; gałąź 2514e3b; wcześniej: w naprawie, runda 2 (przedpole: landuse=construction w1261814241); wcześniej: do przeglądu kuratora (6bbd199), skan czerwony: +15/+10/+5 kluczy przy bryle; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g872); wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 - builtSites (cfec849, 6bbd199): building=construction pod LoD1 2024 (IoU>=0,7) jako budynek, bryła 19,7 m commercial; osm-construction-built 1->0; przy bryle +15 landuse-bare, +10 bare-on-cover, +5 ground-strip-gap (goła ziemia sprzed poprawki, teraz przedpole sklepu); baza nie podniesiona, czeka na przegląd kuratora i decyzję
 - przegląd kuratora (cfec849): bryła zgodna; 30 kluczy przedpola NIE do bazy: 26 w landuse=construction w1261814241 (nieaktualna budowa). Ortofoto: wsch./pn./pas przy ścianie zach. i NW -> grass, pd. nieutwardzony parking -> square. r2: landuse=construction z budynkiem z builtSites jak zakończona budowa + klasy other/cień z innych nalotów; cel +15/+10/+5 -> 0. Proponowana kontrola construction-landuse-built (baza 1).
+- r2 2514e3b: działka w1261814241 zakończona (withBuiltSites), classifySite na działce; zostaje 16 kluczy + fill-on-green 1 (5 na linii ściany, 3 asfalt poza działką, 3 szczeliny); kolizja z #599 (krakowskie.cover.png, build.ts, generate.ts).
 
 ### G-874 Zamek Lubelski: skrzydło pn. x 904-942 o 2,6-3,0 m za daleko na północ (uskok obrysu OSM), bryła na asfalcie drogi za zamkiem
 - Ważność: S3 · Zasięg: Podzamcze, w48500136, (903,9..941,5; 253,8..261,6)
@@ -2266,6 +2267,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: krawędź obrysu pn. w48500136 w 0,5 m od krawędzi dachu NMPT przy x 910, 925, 940
+
+### G-875 Skan: próbka na linii ukośnej ściany liczona jako goła (zaokrąglony obrys 0,1 m)
+- Ważność: S4 · Zasięg: tools/glitch-scan landuse-bare, bare-on-cover; krakowskie-2-1 Karmelicka 7
+- Opis: Ściana o nachyleniu 2:1 przechodzi przez siatkę 0,25/0,75 o 2-3 mm od obrysu tabeli; import uznaje próbkę za wnętrze, skan za ziemię (G-872 r2: 5 kluczy).
+- Status: nowy
+- Pakiet właściciela: tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
