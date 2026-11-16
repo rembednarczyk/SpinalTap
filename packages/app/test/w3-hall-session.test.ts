@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MemorySaveStore } from "@seki/persistence";
-import { W3_LAYOUT, W3_NAV, W3_Y } from "@seki/sim";
+import { W3_INSIDE_BLOCKS, W3_LAYOUT, W3_NAV, W3_Y } from "@seki/sim";
 import { AUTOSAVE_PLACE_COOLDOWN_TICKS, AUTOSAVE_SLOT } from "../src/controllers/autosave-controller";
 import { frame, setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
@@ -97,7 +97,9 @@ describe("W-3's hall in a session (ADR-0082 stage 2)", () => {
     expect(events).toEqual(["in:w3-hall", "out:w3-hall"]);
     expect(session.sim.session.interior).toBeNull();
     // The renderer bakes the inside (ADR-0082 §4): the walls stop a body, but no entity draws them.
-    const walls = [...session.sim.world.with("solid")].filter((e) => e.chunk === "nabrzeze-w3" && !e.view);
-    expect(walls.length).toBeGreaterThan(200);
+    const key = (p: { x: number; y: number; z: number }) => `${p.x.toFixed(3)},${p.y.toFixed(3)},${p.z.toFixed(3)}`;
+    const unseen = new Set([...session.sim.world.with("solid", "position")].filter((e) => e.chunk === "nabrzeze-w3" && !e.view).map((e) => key(e.position)));
+    expect(W3_INSIDE_BLOCKS.length).toBeGreaterThan(200);
+    expect(W3_INSIDE_BLOCKS.filter((b) => !unseen.has(key(b.center)))).toEqual([]);
   });
 });
