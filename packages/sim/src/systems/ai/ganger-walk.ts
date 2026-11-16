@@ -5,6 +5,7 @@ import { inCreationOrder } from "../../world/ordering";
 import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
 import { type Detour, SAME_FLOOR, chaseDetour, detourStep, followDetour, cutOffNear, planDetour, straightWalk } from "./steering";
 import { CHASE_DRIFT, lentChase, planChase } from "./chase-plan";
+import { deckLanding } from "./deck-landing";
 import type { Ganger } from "./ganger-perception";
 import type { WalkPlan, WalkProgress } from "../../world/components";
 
@@ -87,10 +88,12 @@ export class GangerWalk {
    * there (a yard walled in, a fence longer than the wide window, G-625): pressed against the
    * fence it would only stand there. Lifts and ladders are for the player.
    */
-  pursueTo(to: Vec3): void {
+  pursueTo(target: Vec3): void {
     const { ctx, self } = this.at;
     if (!ctx || !self) return;
     const from = self.position;
+    // On a bridge's deck after a goal under it: off it by its landing first (G-072).
+    const to = deckLanding(ctx.world, from, target) ?? target;
     // Its new wide way ready: in its place before anything asks for the old one (G-643).
     const next = self.walk?.chaseNext;
     if (next && ctx.tick >= next.ready) this.keep(ctx, self, { chase: next.goal, chaseNext: null });

@@ -10,6 +10,7 @@ import {
   contractKind,
   contractTag,
   contractTerminalKey,
+  contractVirusKey,
 } from "@seki/core";
 import { CONTRACT_SITE_SPAWNS, contractSpawnYaw } from "../content/district-m0";
 import { CONTRACT_ITEM_SPOTS } from "../content/alchemia/market";
@@ -17,7 +18,8 @@ import { ESCORT_ROUTE, W3_CONTRACT_POSTS, W3_ITEM_SPOTS, W3_TERMINAL_SPOTS } fro
 import { type ChunkDef, chunkAt } from "../content/world-map";
 import { decorateTarget, planExtras, targetPresence, targetSpot, targetType } from "./contract-plan";
 import type { Entity } from "./components";
-import { GANGER_MAX_HP, type IdAllocator, escortEntity, gangerEntity, pickupEntity, sniperEntity, terminalEntity } from "./factory";
+import { GANGER_MAX_HP, type IdAllocator, escortEntity, gangerEntity, pickupEntity, sniperEntity, terminalEntity, virusTerminalEntity } from "./factory";
+
 import type { Template } from "./stream-catalog";
 
 /**
@@ -58,7 +60,9 @@ const targetTemplates = (ids: IdAllocator, chunk: string, contract: Contract): T
         const g = gangerEntity(id, spawn, tag, hp, chunk, victim, post.type);
         // The hack's wave knows where Seki is; the office guards stand watch and look around.
         if (g.ai && kind === "hack") g.ai.alerted = true;
-        if (g.ai && !post.onAlarm) g.ai = { ...g.ai, watch: { yaw: post.yaw, phase: i * 1.7 } };
+        // A patrol walks its loop (ADR-0082 §3), the others stand watch and look around.
+        if (g.ai && post.route) g.ai = { ...g.ai, route: { points: post.route, phase: 0 } };
+        else if (g.ai && !post.onAlarm) g.ai = { ...g.ai, watch: { yaw: post.yaw, phase: i * 1.7 } };
         return decorateTarget(g, contract, i);
       };
       const when = targetPresence(contract, i, post.onAlarm ? { all: [contractAlarmFlag(contract.id)] } : undefined);
@@ -98,6 +102,12 @@ const objectTemplates = (ids: IdAllocator, chunk: string, contract: Contract): T
     const id = ids.take();
     const key = contractTerminalKey(contract.id);
     out.push({ id, chunk, key, make: () => terminalEntity(id, key, terminal, chunk) });
+  }
+  const core = kind === "sabotage" ? W3_TERMINAL_SPOTS[contract.siteId] : undefined;
+  if (core) {
+    const id = ids.take();
+    const key = contractVirusKey(contract.id);
+    out.push({ id, chunk, key, make: () => virusTerminalEntity(id, key, core, chunk) });
   }
   return out;
 };

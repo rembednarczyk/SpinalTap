@@ -70,7 +70,7 @@ const boxOf = (rings: readonly Ring[], grow: number): Box => {
 };
 
 /** A raster of cells over a box, each sample at its cell's middle. */
-class Grid {
+export class Grid {
   readonly x0: number;
   readonly z0: number;
   readonly nx: number;
@@ -144,7 +144,7 @@ class Grid {
 const segmentGap = (a: Pt, b: Pt, x: number, z: number): number => segmentDistance(x, z, a.x, a.z, b.x, b.z);
 
 /** How far past its edge a ground piece covers the raster (m), along x and z: the partition's millimetres. */
-const HAIRLINE: readonly (readonly [number, number])[] = [[0.002, 0], [-0.002, 0], [0, 0.002], [0, -0.002]];
+export const HAIRLINE: readonly (readonly [number, number])[] = [[0.002, 0], [-0.002, 0], [0, 0.002], [0, -0.002]];
 
 /** The world's raster: where a town has paving, and what covers it. */
 const landuseGrid = (w: LanduseWorld): Grid | undefined => {

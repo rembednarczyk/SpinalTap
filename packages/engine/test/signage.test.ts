@@ -28,6 +28,8 @@ const quads = (sink: ReturnType<typeof planSignage>) => {
 describe("signage (ADR-0030)", () => {
   const plan = planSignage(WORLD_CHUNKS);
   const all = quads(plan);
+  /** The old market's row (the sim's test floor on its own ground, y = 0): buildings of the game's own. */
+  const market = quads(planSignage([OLD_MARKET_CHUNK], () => 0));
 
   it("is deterministic", () => {
     expect(planSignage(WORLD_CHUNKS).positions).toEqual(plan.positions);
@@ -35,13 +37,13 @@ describe("signage (ADR-0030)", () => {
 
   it("puts signs, holo-ads and reflections in the districts with buildings of the game's own", () => {
     // Krakowskie's and the Old Town's buildings are the map's: their shopfronts and the content's
-    // neon carry the signs (ADR-0045). The docks are built by the game (the market was too, on
-    // Podzamcze, until ADR-0063 moved it into Alchemia's modules, which the engine draws).
-    for (const district of ["doki"]) {
-      const mine = all.filter((q) => chunkAt(q.x, q.z)?.district === district);
-      expect(mine.some((q) => q.kind === SIGNAGE_KIND.sign), district).toBe(true);
-      expect(mine.some((q) => q.kind === SIGNAGE_KIND.reflection), district).toBe(true);
-    }
+    // neon carry the signs (ADR-0045). The market was the game's, on Podzamcze, until ADR-0063
+    // moved it into Alchemia's modules; W-3's airlocks were a box until ADR-0082 stage 2 hollowed
+    // them into walls (its neon comes with stage 4). The city has no such building left: the
+    // market's old row, the sim's test floor, still has them.
+    expect(all.filter((q) => chunkAt(q.x, q.z)?.district === "doki")).toEqual([]);
+    expect(market.some((q) => q.kind === SIGNAGE_KIND.sign)).toBe(true);
+    expect(market.some((q) => q.kind === SIGNAGE_KIND.reflection)).toBe(true);
     // No game building of the city is tall enough for one since the market left Podzamcze (ADR-0063, the map
     // city draws the rest): the market's old row, the sim's test floor, still gets them.
     expect(all.filter((q) => q.kind === SIGNAGE_KIND.holo)).toHaveLength(0);
@@ -52,7 +54,8 @@ describe("signage (ADR-0030)", () => {
   });
 
   it("reads only cells that exist in the atlas", () => {
-    for (const q of all.filter((s) => s.kind === SIGNAGE_KIND.sign)) {
+    expect(market.filter((s) => s.kind === SIGNAGE_KIND.sign).length).toBeGreaterThan(0);
+    for (const q of [...all, ...market].filter((s) => s.kind === SIGNAGE_KIND.sign)) {
       expect(Number.isInteger(q.param)).toBe(true);
       expect(q.param).toBeGreaterThanOrEqual(0);
       expect(q.param).toBeLessThan(ATLAS_BLADES + ATLAS_BOARDS);
@@ -60,9 +63,10 @@ describe("signage (ADR-0030)", () => {
   });
 
   it("lays reflections flat on the street and hangs signs above head height", () => {
-    for (const q of all) {
-      // On Lublin's ground (ADR-0045): the market stands 20 m below Krakowskie.
-      const ground = groundY(q.x, q.z);
+    const placed = [...all.map((q) => ({ q, ground: groundY(q.x, q.z) })), ...market.map((q) => ({ q, ground: 0 }))];
+    expect(placed.length).toBeGreaterThan(0);
+    for (const { q, ground } of placed) {
+      // On Lublin's ground (ADR-0045); the old row on its own floor.
       if (q.kind === SIGNAGE_KIND.reflection) {
         expect(Math.abs(q.y - ground - 0.035)).toBeLessThan(0.15);
         expect(q.ny).toBe(1);
@@ -99,7 +103,7 @@ describe("signage (ADR-0030)", () => {
   it("stays small: one mesh for the whole city", () => {
     expect(plan.vertexCount).toBeLessThan(6000);
     const scene = new Scene(new NullEngine());
-    const signage = new Signage(scene, WORLD_CHUNKS, RawTexture.CreateRGBATexture(new Uint8Array(4), 1, 1, scene));
+    const signage = new Signage(scene, [...WORLD_CHUNKS, OLD_MARKET_CHUNK], RawTexture.CreateRGBATexture(new Uint8Array(4), 1, 1, scene));
     expect(signage.mesh).not.toBeNull();
     expect(scene.meshes.filter((m) => m.material === signage.material)).toHaveLength(1);
     signage.setDaylight(NIGHT_RIG, 0.5);

@@ -60,6 +60,11 @@ export interface GangerAi {
   /** A guard on a post looks around: its facing sweeps around `yaw` (ADR-0024). */
   readonly watch?: { readonly yaw: number; readonly phase: number; readonly period?: number };
   /**
+   * A guard on a patrol route (ADR-0082 §3): it walks the loop by the clock in place of holding
+   * its post. Fixed by content at spawn, so it needs no saving.
+   */
+  readonly route?: { readonly points: readonly [Vec3, ...Vec3[]]; readonly phase: number };
+  /**
    * Where it last saw the player, or a lead it was given (a noise, a camera, a trace) (ADR-0029).
    * An alerted AI chases it once the player is out of sight; an unalerted one walks there to
    * look. Saved with the entity.

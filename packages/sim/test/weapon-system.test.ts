@@ -354,14 +354,15 @@ describe("inventory commands", () => {
 });
 
 describe("weapon state in saves", () => {
-  it("keeps the rounds in the magazine and the pouch; a reload in progress is dropped", () => {
+  it("keeps the rounds in the magazine and the pouch, and a reload in progress goes on (G-883)", () => {
     const sim = Simulation.create({ seed: 5 });
     run(sim, ticks(1), input({ fire: true }));
     sim.step(input({ reload: true }));
+    expect(sim.player()!.combatant!.reloading).toBeGreaterThan(0);
     const restored = Simulation.fromSnapshot(sim.snapshot(null, "x", ""));
     expect(loaded(restored)).toBe(loaded(sim));
     expect(restored.domain.ammo).toEqual(sim.domain.ammo);
-    expect(restored.player()!.combatant!.reloading).toBe(0);
+    expect(restored.player()!.combatant!.reloading).toBe(sim.player()!.combatant!.reloading);
     expect(restored.player()!.combatant!.weapon).toBe("unity9");
   });
 });

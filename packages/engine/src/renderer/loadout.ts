@@ -4,7 +4,8 @@ import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { CharacterRig } from "./characters";
-import { ADD_ONS } from "./garment-addons";
+import { GarmentAssets, isSkinnedGarment } from "./garment-assets";
+import { GarmentDresser } from "./garment-dress";
 import { recolorSkin } from "./character-skin";
 import { toonSourceOf } from "./model-library";
 import type { AnchorBone, HumanoidRetarget } from "./model-rig";
@@ -74,7 +75,6 @@ interface State {
   readonly mounted: Partial<Record<Place, Mounted>>;
   /** Visible implants (optics at the temples, rings on the right forearm). */
   implants: Mesh[];
-  attachments: { readonly id: GarmentMeshId; readonly mesh: Mesh; readonly onModel: boolean }[];
   model: OnModel | null;
 }
 
@@ -128,13 +128,18 @@ export class Loadouts {
   private readonly states = new Map<CharacterRig, State>();
   /** Models that arrived before the character's first look. */
   private readonly pending = new Map<CharacterRig, DressedModel>();
+  /** The garments: rigid add-ons, shells of the model's cloth and skinned garment assets (ADR-0086). */
+  readonly dress: GarmentDresser;
 
   constructor(
     private readonly scene: Scene,
     private readonly materials: ToonMaterials,
     private readonly mounts: WeaponMounts,
     private readonly onMeshes: (meshes: AbstractMesh[]) => void,
-  ) {}
+    garments: GarmentAssets = new GarmentAssets(scene, materials),
+  ) {
+    this.dress = new GarmentDresser(scene, materials, onMeshes, garments, (key) => GARMENT_TINT[key]);
+  }
 
   set(rig: CharacterRig, look: AppearanceDescriptor, name: string): void {
     let s = this.states.get(rig);
@@ -159,7 +164,7 @@ export class Loadouts {
       back.parent = sling;
       back.rotation.y = Math.PI / 2;
       const stowage = [holsterR, holsterL, sling].map((n) => ({ node: n, at: n.position.clone() }));
-      s = { look, name, holsterR, holsterL, back, stowage, mounted: {}, attachments: [], implants: [], model: null };
+      s = { look, name, holsterR, holsterL, back, stowage, mounted: {}, implants: [], model: null };
       this.states.set(rig, s);
       const waiting = this.pending.get(rig);
       this.pending.delete(rig);
@@ -168,10 +173,10 @@ export class Loadouts {
     s.look = look;
     for (const box of rig.gunBoxes) box.scaling.setAll(0);
     this.arm(rig, s);
-    this.attach(rig, s);
     this.tint(s);
     this.tintRig(rig, s);
     this.implant(rig, s);
+    this.dress.dress(rig, name, look, s.model ? { ...s.model, meshes: s.model.model.meshes } : null);
   }
 
   /** The imported model over the rig (or null when it is taken off). Nothing of it is kept. */
@@ -183,13 +188,13 @@ export class Loadouts {
       return;
     }
     if (s.model?.model === model) return;
-    this.dropModel(s);
+    this.dropModel(rig, s);
     if (model) s.model = this.onModel(rig, model, s.name);
     this.fitStowage(s);
     this.arm(rig, s);
-    this.attach(rig, s);
     this.tint(s);
     this.implant(rig, s);
+    this.dress.dress(rig, s.name, s.look, s.model ? { ...s.model, meshes: s.model.model.meshes } : null);
   }
 
   has(rig: CharacterRig): boolean {
@@ -198,7 +203,7 @@ export class Loadouts {
 
   /** Garment add-ons on a character, and whether they hang on the imported model's bones. */
   attachments(rig: CharacterRig): { id: GarmentMeshId; onModel: boolean }[] {
-    return (this.states.get(rig)?.attachments ?? []).map(({ id, onModel }) => ({ id, onModel }));
+    return this.dress.attachments(rig);
   }
 
   /** Model meshes recoloured by a garment tint right now. */
@@ -254,11 +259,10 @@ export class Loadouts {
     const s = this.states.get(rig);
     if (!s) return;
     for (const m of Object.values(s.mounted)) m?.node.dispose();
-    for (const a of s.attachments) a.mesh.dispose();
-    s.attachments = [];
     for (const m of s.implants) m.dispose();
     s.implants = [];
-    this.dropModel(s);
+    this.dress.dispose(rig);
+    this.dropModel(rig, s);
     s.holsterR.dispose();
     s.holsterL.dispose();
     s.back.parent?.dispose();
@@ -296,13 +300,12 @@ export class Loadouts {
   }
 
   /** Takes everything off the model's bones and gives its cloth its own colours back. */
-  private dropModel(s: State): void {
+  private dropModel(rig: CharacterRig, s: State): void {
     const m = s.model;
     if (!m) return;
     s.mounted.model?.node.dispose();
     delete s.mounted.model;
-    for (const a of s.attachments.filter((x) => x.onModel)) a.mesh.dispose();
-    s.attachments = s.attachments.filter((x) => !x.onModel);
+    this.dress.dropModel(rig);
     if (m.hand) {
       m.model.retarget.release(m.hand);
       m.hand.dispose();
@@ -370,38 +373,6 @@ export class Loadouts {
     });
   }
 
-  /** Builds the garment add-ons again, on the model's bones while dressed. */
-  private attach(rig: CharacterRig, s: State): void {
-    for (const a of s.attachments) a.mesh.dispose();
-    s.attachments = [];
-    for (const garment of Object.values(s.look.garments)) {
-      for (const a of garment?.attachments ?? []) {
-        const spec = ADD_ONS[a.mesh];
-        const name = `${s.name}-${a.mesh}`;
-        // A shell of the model's cloth is skinned with it and already in place.
-        const shell = s.model && spec.shell ? spec.shell(this.scene, name, s.model.model.meshes, rig.body) : null;
-        const anchor = shell ? undefined : s.model?.anchors[spec.model.bone];
-        const mesh = shell ?? spec.build(this.scene, name);
-        if (anchor) {
-          const size = spec.model.size * s.model!.fit;
-          mesh.parent = anchor;
-          mesh.position.set(...spec.model.at).scaleInPlace(s.model!.fit);
-          mesh.scaling.setAll(size);
-        } else if (!shell) {
-          const at = spec.rig(rig);
-          mesh.parent = at.parent;
-          mesh.position.set(...at.at);
-          mesh.scaling.setAll(at.size);
-        }
-        mesh.material = this.materials.get(spec.preset);
-        mesh.isPickable = false;
-        applyOutline(mesh);
-        s.attachments.push({ id: a.mesh, mesh, onModel: shell !== null || anchor !== undefined });
-      }
-    }
-    this.onMeshes(s.attachments.map((a) => a.mesh));
-  }
-
   /**
    * Holsters and the sling hang on the rig body at the rig's proportions; a taller or shorter
    * model moves them by the same ratio as its head height, so the gun stays at its hip.
@@ -465,7 +436,9 @@ export class Loadouts {
     for (const mesh of m.model.meshes) {
       const src = toonSourceOf(mesh);
       const slot = src?.source.garment;
-      const key = slot && TINTED.includes(slot) ? s.look.garments[slot]?.tint : undefined;
+      // A skinned garment (ADR-0086) takes its slot's tint itself: the cloth under it keeps its colours.
+      const garment = slot && TINTED.includes(slot) ? s.look.garments[slot] : undefined;
+      const key = garment?.attachments?.some((a) => isSkinnedGarment(a.mesh)) ? undefined : garment?.tint;
       const color = key ? GARMENT_TINT[key] : null;
       const original = m.tinted.get(mesh);
       if (!src || !color || !src.source.texture) {

@@ -92,6 +92,8 @@ export class Site {
         this.buildings.insert(ring, box.minX, box.minZ, box.maxX, box.maxZ);
       }
       for (const g of c.ground) {
+        // The frontages' fills (G-853) are not the street's paving: the lamps keep to its edge, the rest to where it stood.
+        if (g.front) continue;
         const [a, b] = g.deck ? flat(g.deck) : [];
         const deck = a && b ? { a, b, ya: this.heightAt(a), yb: this.heightAt(b) } : undefined;
         const shape = { ring: flat(g.outline), surface: surfaceOf(g.surface), path: g.surface === "footway", steps: g.surface === "steps", deck, box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } };

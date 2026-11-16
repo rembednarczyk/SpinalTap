@@ -82,7 +82,7 @@ describe("Trasa Podziemna (ADR-0048)", () => {
     // The way back up comes out on the Rynek again.
     for (const [x, z] of [...TRASA_PODZIEMNA_WALK].reverse().slice(1)) expect(walkTo(sim, x, z), `${x}, ${z}`).toBeLessThan(0.5);
     expect(sim.player()!.position.y).toBeCloseTo(groundY(x0, z0), 1);
-  }, 60_000);
+  });
 
   it("streams in as a chunk of its own, last in the table, a shell of interior blocks", () => {
     const chunk = WORLD_CHUNKS.find((c) => c.id === TRASA_PODZIEMNA_CHUNK)!;

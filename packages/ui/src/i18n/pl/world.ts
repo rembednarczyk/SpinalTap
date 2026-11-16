@@ -163,6 +163,7 @@ export const plWorld = {
   "quest.accepted.escort": "Mika czeka przy kontenerze Genzō. Tessen: {targets}. {pay}",
   "quest.accepted.infiltrate": "Biuro Tessen, strażnicy: {targets}. Bez alarmu. {pay}",
   "quest.accepted.hack": "Terminal na nabrzeżu, potem fala Tessen. {pay}",
+  "quest.accepted.sabotage": "Rdzeń kalibracji w hali W-3, przed szóstą. {pay}",
   "quest.ambush": "Zasadzka Tessen",
   "quest.coverMika": "Osłoń Mikę",
   "quest.alarm": "Alarm na Nabrzeżu",
