@@ -1,4 +1,5 @@
 import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, MOST_PLAN_STEPS, MOST_UNSTICK_STEPS, npcWeapon } from "@seki/core";
+import { findMotionError } from "./validate-motion";
 
 type Json = Record<string, unknown>;
 
@@ -66,7 +67,7 @@ export const findEntityError = (e: unknown, tick: number): string | null => {
   if (e.walk !== undefined && !isWalk(e.walk, tick)) return `entity ${e.key} walk`;
   // G-882 (v40): quickhack effects still running, seconds left, none negative.
   if (e.hackFx !== undefined && !isHackFx(e.hackFx)) return `entity ${e.key} hackFx`;
-  return null;
+  return findMotionError(e);
 };
 
 const isHackFx = (v: unknown): boolean => isObject(v) && (["pinged", "blind", "crippled"] as const).every((k) => isNum(v[k]) && (v[k] as number) >= 0);

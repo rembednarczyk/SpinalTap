@@ -14,12 +14,10 @@ const DEPTAK = ground(90, -30);
 /** Fire while strafing, a reload at the end of each round: 17 shots in 480 steps. */
 const STEPS = 480;
 const fire = (i: number) => input({ reload: i % 160 === 150, fire: i % 160 < 140, moveX: i % 120 < 60 ? 1 : -1, lookYaw: i % 90 < 45 ? -0.004 : 0.004 });
-/**
- * The save: mid-fight, 2 s in, a car still in its panic (5-6 s from the shot near it) and the
- * residents running. Not during the reload (steps 150-200): the player's reload in progress is not
- * saved, so a save then goes on otherwise with no crowd and no traffic as well (G-883, the todo below).
- */
+/** The save: mid-fight, 2 s in, a car still in its panic (5-6 s from the shot near it) and the residents running. */
 const SAVE_AT = 120;
+/** A save in the player's reload (steps 150-200), 50 steps into it (G-883). */
+const SAVE_MID_RELOAD = 200;
 
 const hashOf = (sim: Simulation) => stateHash(sim.snapshot(null, "test", ""));
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
@@ -44,18 +42,22 @@ const shoot = (sim: Simulation, from: number, to: number): number => {
   return panic;
 };
 
-/** The whole fight, saved (calmed, through JSON) and loaded at `SAVE_AT`; the loaded game goes on. */
-const savedMidFight = (crowd: CrowdDensity) => {
+/** The whole fight, saved (calmed, through JSON) and loaded at `at`; the loaded game goes on. */
+const savedMidFight = (crowd: CrowdDensity, at = SAVE_AT) => {
   const sim = deptak(crowd);
-  shoot(sim, 0, SAVE_AT);
+  shoot(sim, 0, at);
+  const reloading = sim.player()?.combatant?.reloading ?? 0;
   const panicAtSave = [...sim.world].filter((e) => e.vehicle?.panic).length;
   const afraidAtSave = sim.world.with("civilian").entities.filter((c) => c.view?.kind === "crowd" && (c.civilian.crowd?.state ?? "calm") !== "calm").length;
   sim.calmForSave();
   const loaded = Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "mid", "")), undefined, crowd);
   expect(hashOf(loaded)).toBe(hashOf(sim));
-  shoot(sim, SAVE_AT, STEPS);
-  shoot(loaded, SAVE_AT, STEPS);
-  return { sim, loaded, panicAtSave, afraidAtSave };
+  const shotsAfterLoad = collect<DomainEvents["ShotFired"]>(loaded, "ShotFired");
+  loaded.step(fire(at));
+  const firstStepShots = shotsAfterLoad.filter((s) => s.shooterId === loaded.player()?.id).length;
+  shoot(sim, at, STEPS);
+  shoot(loaded, at + 1, STEPS);
+  return { sim, loaded, panicAtSave, afraidAtSave, reloading, firstStepShots };
 };
 
 describe("the crowd and the traffic in a panic (ADR-0041, ADR-0050)", () => {
@@ -91,9 +93,14 @@ describe("the crowd and the traffic in a panic (ADR-0041, ADR-0050)", () => {
     });
   }
 
-  // G-883: saved at step 200, 50 steps into the player's reload, the loaded game fires at once (the
-  // reload in progress is not in the player's save, `factory.ts` keeps it for NPCs only) and the
-  // fight goes on otherwise, with no crowd and no traffic too. Make it a test once G-883 is fixed:
-  // the same as the case above with the save at step 200.
-  it.todo("saved and loaded mid-reload in the panic, the game goes on as the one saved from (G-883)");
+  // G-883: the reload in progress is in the player's save (`stance`): the loaded game does not fire
+  // at once, and goes on as the one saved from, with no crowd and no traffic too.
+  it("saved and loaded mid-reload in the panic, the game goes on as the one saved from (G-883)", () => {
+    const { sim, loaded, reloading, firstStepShots } = savedMidFight("low", SAVE_MID_RELOAD);
+    const quiet = savedMidFight("off", SAVE_MID_RELOAD);
+    expect(reloading).toBeGreaterThan(0);
+    expect(firstStepShots).toBe(0);
+    expect(hashOf(loaded)).toBe(hashOf(sim));
+    expect(hashOf(loaded)).toBe(hashOf(quiet.loaded));
+  });
 });
