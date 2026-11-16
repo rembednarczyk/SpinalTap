@@ -1,3 +1,5 @@
+import { STEP_NORM, normTread } from "@seki/core";
+
 /**
  * Toon shader parts of the city from map data (ADR-0044), compiled in only with the FACADE or
  * MAP_GROUND define, so every other material is unchanged. They paint in metres from the UVs
@@ -131,10 +133,53 @@ vec4 facadeGlass(vec2 q, vec2 meta, vec3 n, vec3 v, float dist, float night, out
 #endif
 `;
 
+const rgb = (hex: string): readonly [number, number, number] => {
+  const n = parseInt(hex.slice(1, 7), 16);
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+};
+
+/**
+ * A flight of the map's steps (G-840): its colours, its surface codes and where it turns into
+ * one ramp. Past `far` (m from the camera) the vertex stage lifts each tread's back edge and each
+ * riser's foot by uv2.y, up the flight's nosings, and the treads take the mean colour of a tread
+ * and a riser of the norm: no row of dark risers, no ink line on each, from about 70 m on (the steps of a flight read clearly to some 60 m).
+ */
+export const STEP_LOOK = {
+  tread: "#77736c",
+  riser: "#4f4b46",
+  code: { tread: 9, riser: 10 },
+  far: [65, 75],
+} as const;
+
+const glslVec3 = (c: readonly number[]): string => `vec3(${c.map((v) => v.toFixed(4)).join(", ")})`;
+const tread = normTread(STEP_NORM.riser);
+/** The colour of a flight from far: a tread's and a riser's, by their share of the flight's run up. */
+const STEPS_MEAN = rgb(STEP_LOOK.tread).map((t, i) => (t * tread + (rgb(STEP_LOOK.riser)[i] as number) * STEP_NORM.riser) / (tread + STEP_NORM.riser));
+
+/**
+ * The vertex stage's part for a flight (`STEP_LOOK`): from `far` the flight lies on its ramp. The
+ * normal is the ramp's for the geometry buffer, so the line art finds no crease at a riser; the
+ * shading takes a tread's up and a riser's face near, and the ramp's far.
+ */
+export const STEPS_VERTEX_GLSL = /* glsl */ `
+#ifdef MAP_GROUND
+uniform vec3 cameraPosition;
+void stepsMorph(inout vec3 wp, inout vec3 n, vec2 meta) {
+  float code = floor(meta.x + 0.5);
+  if (code < ${STEP_LOOK.code.tread - 0.5}) return;
+  float far = smoothstep(${STEP_LOOK.far[0].toFixed(1)}, ${STEP_LOOK.far[1].toFixed(1)}, length(cameraPosition - wp));
+  vec3 face = code < ${STEP_LOOK.code.riser - 0.5} ? vec3(0.0, 1.0, 0.0) : normalize(vec3(n.x, 0.0, n.z) + vec3(1e-5, 0.0, 0.0));
+  wp.y += meta.y * far;
+  n = normalize(mix(face, n, far));
+}
+#endif
+`;
+
 /**
  * Ground surfaces: uv = metres in the surface's box (along, across), uv2.x = surface code
- * (0 terrain, 1 road, 2 sidewalk, 3 square, 4 cobble, 5 footway, 6 grass, 7 rail, 8 kerb),
- * uv2.y = width of a long strip (a railway's sleepers) or 0; road markings are geometry (ADR-0052).
+ * (0 terrain, 1 road, 2 sidewalk, 3 square, 4 cobble, 5 footway, 6 grass, 7 rail, 8 kerb, 9 a
+ * step's tread, 10 its riser), uv2.y = width of a long strip (a railway's sleepers) or 0, on a
+ * step its lift onto the flight's ramp (`STEP_LOOK`); road markings are geometry (ADR-0052).
  */
 export const GROUND_GLSL = /* glsl */ `
 #ifdef MAP_GROUND
@@ -143,7 +188,11 @@ vec3 groundPaint(vec3 albedo, vec2 q, vec2 meta, vec3 p, float dist) {
   float near = 1.0 - smoothstep(25.0, 75.0, dist);
   vec2 w = p.xz;
   float k = 1.0;
-  if (code < 0.5) {
+  if (code > ${STEP_LOOK.code.tread - 0.5}) {
+    // A flight: the stone's mottle, and from far the mean of its treads and risers.
+    albedo = mix(albedo, ${glslVec3(STEPS_MEAN)}, smoothstep(${STEP_LOOK.far[0].toFixed(1)}, ${STEP_LOOK.far[1].toFixed(1)}, dist));
+    k = 0.82 + 0.18 * step(0.5, vnoise(w * 0.35)) - 0.08 * step(0.7, vnoise(w * 1.7));
+  } else if (code < 0.5) {
     k = 0.82 + 0.18 * step(0.5, vnoise(w * 0.35)) - 0.08 * step(0.7, vnoise(w * 1.7));
   } else if (code < 1.5) {
     k = 0.92 + 0.08 * step(0.6, vnoise(w * 0.3)) - 0.1 * step(0.74, vnoise(w * 0.07 + 3.0));
