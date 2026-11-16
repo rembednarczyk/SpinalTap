@@ -102,6 +102,13 @@ export interface FlightOut {
   readonly steps?: number;
 }
 
+/** A straight run of a steps way with a `step_count` (G-840): its ends and its share of the way's steps. */
+export interface StepRunOut {
+  readonly id: string;
+  readonly run: readonly number[];
+  readonly steps: number;
+}
+
 /**
  * A stretch of a way walked on foot the terrain makes too steep to walk (G-755): its map id with
  * the stretch's number, `<way>/<k>`, and its world polyline from its foot to its top.
@@ -161,6 +168,8 @@ export interface ChunkOut {
   readonly footWays?: readonly FootWayOut[];
   /** Flights of steps with a mapped `incline` reaching into it (G-236), when it has any. */
   readonly flights?: readonly FlightOut[];
+  /** The runs of the steps ways with a `step_count` reaching into it (G-840), when it has any. */
+  readonly stepRuns?: readonly StepRunOut[];
   /** Stretches of the ways walked on foot too steep on the terrain reaching into it (G-755), when it has any. */
   readonly steepWays?: readonly SteepWayOut[];
   /** Car parks reaching into it, when it has any. */

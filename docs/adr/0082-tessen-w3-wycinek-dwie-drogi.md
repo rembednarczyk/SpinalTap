@@ -352,6 +352,46 @@ Przed etapem 1 kurator robi audyt miejsca: ortofoto, wysokość pokładu kładki
 - **Zapis v40:** pola `route` i `seenLeaving` oraz efekty quickhacków (G-882), żeby wczytanie przy oślepionej kamerze nie podnosiło alarmu.
 - **Przeniesione do 3b razem z drogą głośną:** świadkowie z personelu (technicy) oraz zdarzenia `VirusUploadChanged` i `SabotageRouteChosen`. Do czasu 3b alarm przed wgraniem wirusa kończy zlecenie porażką o 06:00.
 
+## Etap 3b: zmiany kontraktów i decyzje (16.11)
+- **Zmiana granicy w `core/src/events` (dwa nowe zdarzenia):**
+  - `SabotageRouteChosen { contract, route }`: droga wybrana czynem. `quiet` przy starcie uploadu, `loud` przy wzięciu ładunków albo przy alarmie przed wgraniem wirusa;
+  - `VirusUploadChanged { contract, progress, paused }`: upload stanął (Seki odeszła, blokada), ruszył dalej albo minęła pełna sekunda. `progress` to udział 0..1.
+  Pozostałe zdarzenia z §3 (`ChargePlanted`, `ChargesDetonated`, `FacilityLockdown`, `TessenHuntChanged`) nie powstały. HUD czyta licznik ładunków i zapalnik z kontraktu, a wraki i pościg z flag. Porty i komendy bez zmian. Wybuch to istniejące iskry `hit-spark` (app, `W3MissionSync`) i zwykłe `DamageDealt`, bez nowego `EffectDescriptor` i `AudioCue`.
+- **Droga głośna w `sim` (`systems/sabotage-loud.ts`, szablony `world/sabotage-templates.ts`):**
+  - skrzynka ładunków w zbrojowni S to interakcja „Weź ładunki”. Pobranie zawsze podnosi alarm, a `charges: []` w kontrakcie znaczy „3 ładunki w torbie”. Po wgraniu wirusa skrzynka nic nie daje;
+  - podkładanie trwa 2,5 s w promieniu 1,8 m od stanowiska. Każdy ubytek zdrowia Seki zaczyna je od nowa (`planting.hp`). Trzeci ładunek zapala zapalnik 60 s (`fuseTick`);
+  - wybuch następuje po wyjściu z prostokąta hali `W3_HALL` albo po upływie zapalnika. Każdy ładunek zadaje 60 obrażeń, malejących liniowo do 0 przy 10 m, tylko przy czystej linii `lineOfSight` od ładunku do klatki piersiowej;
+  - wraki to bryły szablonów kontraktu pod flagami `w3:station:<id>:down`, a podłożony ładunek to bryła pod flagą `taken:` miejsca. Wczytanie odtwarza je z flag;
+  - fale alarmu: 3 ludzi ze śluz od razu i 3 z placu odbioru 60 s po alarmie (flaga `alarm:<id>:wave2`, `alarmTick` w kontrakcie). Nie liczą się do `targets`, więc XP kontraktu się nie zmienia;
+  - ucieczka to wyjście ze strefy W-3 po wybuchu, tak jak w drodze cichej: wypłata według stawki głośnej, fixerzy +3 netto, cywile −2, Tessen do min(obecna, −60) i flaga `tessen-hunt:<dzień końca>`.
+- **Przejście z cichej na głośną:** alarm przed wgraniem wirusa przestawia `route` na `loud` i kończy upload zdarzeniem z `paused: true`. Cel to „Serwerownia odcięta. Zostaje zbrojownia: weź ładunki ze zbrojowni S”, a toast mówi to samo. Termin 06:00 dalej biegnie. `batch-shipped` zachodzi tylko wtedy, gdy nie ma ani wirusa, ani wybuchu.
+- **Świadkowie (`systems/sabotage-witness.ts`):**
+  - dwaj technicy przy S2 i S3 to cywile Tessen z AI tłumu (uciekają z walki). Widzą Seki do 12 m, w stożku 80° od kierunku pracy, przez `clearSight`;
+  - zgłaszają po 2 s, gdy Seki ma broń w ręku, jest w strefie zakazanej bez przepustki albo jest w hali bez przebrania Tessen. Zgłoszenie podnosi alarm kontraktu, nie heat: technicy nie dzwonią na ulicę (`civilianWitness`);
+  - licznik jest ulotny jak strach tłumu i zeruje się przed zapisem (`calmForSave`).
+- **Pościg (`systems/tessen-hunt-system.ts`, po systemie sabotażu w `createSystems()`):**
+  - przez 3 dni gry, przy wejściu do dzielnicy i w każdym 6-godzinnym odcinku doby losowanie daje oddział 2–3 `tessen_guard`;
+  - flaga `tessen-hunt-roll:<dzielnica>@<dzień>:<odcinek>` zapamiętuje losowanie, a samo losowanie to `deriveRandom(seed, flaga)`, więc wczytanie losuje to samo;
+  - oddział wchodzi przy najbliższym wejściu `SECURITY_ENTRIES` w wczytanym chunku: 45–140 m od Seki, poza jej kadrem i co najmniej 60 m od kliniki. Ma trop na Seki;
+  - naraz działa najwyżej jeden oddział. Gdy oddział jest w świecie, losowanie przepada;
+  - oddział to posiłki ochrony (ADR-0029): zapisuje się z nimi i wraca do domu, gdy zgubi Seki. Na końcu pościgu jego flagi znikają.
+- **Skrzynia zbrojowni S (`W3_ARMOURY_LOOT`):**
+  - otwiera się razem ze skrzynką ładunków jako stały pojemnik `stash:w3-armoury-<id>` na wierzchu skrzyni broni pod tylną ścianą;
+  - zawartość: AR-5 Tessen z poziomem dzielnicy (±2 od gracza), 90 naboi 5.56 i apteczka;
+  - DMR i kamizelkę z listy w §1 zostawiamy na zbrojownię N, bo z nimi łup byłby wart ok. 1300 €$.
+- **Balans drogi głośnej (decyzja użytkownika 16.11: łup w dochodzie):**
+  - stawka spada z 1400 do 950 €$ na poziomie 1;
+  - łup na poziomie 1 to 472 €$: AR-5 450 i apteczka 22 u handlarza. Amunicji nie liczymy, bo idzie na fale;
+  - z premią „bez ofiar” (+300), stylem Genzō za `clean` (6%) i łupem ok. 8 minut daje 222 €$/min, a z obiema odznakami 230 €$/min;
+  - przy starej stawce z łupem wyszłoby 282 €$/min;
+  - pilnuje tego `core/test/w3-sabotage-loud.test.ts`.
+- **Zapis v42:** opcjonalne pola kontraktu `charges`, `planting`, `fuseTick`, `detonated` i `alarmTick`. Pościg, wraki i skrzynia to zwykłe flagi i pojemniki. Wersja v41 należy do G-883 (stan walki między krokami), a migracja v41 → v42 zmienia tylko wersję.
+- **Decyzje użytkownika 16.11:**
+  - etap 3b wchodzi jako rozgrywka;
+  - widoczny wybuch (błysk, dym, dźwięk) i wraki stanowisk to osobny etap ze zmianą portów efektów. Do tego czasu wybuch to iskry `hit-spark`, a wrak to tymczasowa bryła szablonu kontraktu;
+  - łup zbrojowni liczy się w dochodzie drogi głośnej, a jej stawka spada.
+- **Zostaje na później (poza 3b):** zewnętrzne drzwi zbrojowni z kodem, etap efektów wybuchu (`explosion` i dźwięki z §3, zmiana portów) razem z trwałymi wrakami stanowisk, znacznik pościgu przy HUD heatu, osobny telefon `phone_genzo_w3_paid_loud` (dziś jest ogólny `phone_genzo_paid`), zdejmowanie ładunków po śmierci Seki bez wczytania zapisu.
+
 ## Balans
 Stawki przy neutralnej reputacji u fixerów, przed mnożnikiem Genzō:
 

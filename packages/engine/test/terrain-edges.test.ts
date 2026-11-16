@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MeshSink } from "../src/renderer/mesh-sink";
-import { STEP_DEPTH, planSteps } from "../src/renderer/mapcity/steps-plan";
+import { STEP_NORM } from "@seki/core";
+import { planSteps } from "../src/renderer/mapcity/steps-plan";
 import { BASIN_RIM, SURFACE_LIFT, TERRAIN_APRON, planBasin, planTerrain } from "../src/renderer/mapcity/ground-plan";
 import type { P2 } from "../src/renderer/mapcity/polygon";
 
@@ -44,8 +45,26 @@ describe("fountain basins", () => {
 });
 
 
+/**
+ * The quads of a sink that stand upright, by their corners (a flight's normals are its ramp's,
+ * G-840): each one's height and where along x it stands.
+ */
+const sideFaces = (sink: MeshSink): { h: number; x: number }[] => {
+  const out: { h: number; x: number }[] = [];
+  for (let q = 0; q + 3 < sink.vertexCount; q += 4) {
+    const p = [0, 1, 2].map((k) => [0, 1, 2].map((c) => sink.positions[(q + k) * 3 + c] ?? 0)) as [number[], number[], number[]];
+    const e1 = p[1].map((v, c) => v - (p[0][c] ?? 0));
+    const e2 = p[2].map((v, c) => v - (p[0][c] ?? 0));
+    const n = [e1[1]! * e2[2]! - e1[2]! * e2[1]!, e1[2]! * e2[0]! - e1[0]! * e2[2]!, e1[0]! * e2[1]! - e1[1]! * e2[0]!];
+    if (Math.abs(n[1]!) > 0.5 * Math.hypot(...n)) continue;
+    const ys = [0, 1, 2, 3].map((k) => sink.positions[(q + k) * 3 + 1] ?? 0);
+    out.push({ h: Math.max(...ys) - Math.min(...ys), x: p[0][0] ?? 0 });
+  }
+  return out;
+};
+
 describe("outdoor steps", () => {
-  it("climb a slope in level treads joined by risers", () => {
+  it("climb a slope in level treads joined by risers of the norm (G-840)", () => {
     const sink = new MeshSink();
     // A 3 m wide run 6.6 m long along x, the ground rising 1 m per 3 m.
     const ring = [
@@ -55,21 +74,21 @@ describe("outdoor steps", () => {
       { x: 0, z: 1.5 },
     ];
     planSteps(sink, ring, (x) => x / 3);
-    const ys = new Set<number>();
-    for (let i = 1; i < sink.positions.length; i += 3) ys.add(Math.round((sink.positions[i] ?? 0) * 100) / 100);
-    // About 20 treads, each at its own level.
-    expect(ys.size).toBeGreaterThanOrEqual(Math.round(6.6 / STEP_DEPTH) - 1);
-    // Treads (4 corners), risers between them and one at each end up from the ground.
-    const treads = Math.round(6.6 / STEP_DEPTH);
-    expect(sink.positions.length / 3).toBe(treads * 4 + (treads - 1 + 2) * 4);
+    // Not the kerbs at the ends, the treads' 0.05 m over the ground.
+    const risers = sideFaces(sink).filter((r) => r.h > 0.06);
+    // 2.2 m by risers all of one height in the norm, the top at the ground's.
+    expect(risers.length).toBeGreaterThanOrEqual(Math.ceil(2.2 / STEP_NORM.riserMax));
+    expect(risers.length).toBeLessThanOrEqual(Math.floor(2.2 / STEP_NORM.riserMin));
+    for (const r of risers) expect(r.h).toBeCloseTo(2.2 / risers.length, 6);
+    expect(Math.max(...sink.positions.filter((_, i) => i % 3 === 1))).toBeCloseTo(2.2 + 0.05, 6);
     // No tread sinks into the slope: each stands at or above the ground at both its ends.
     for (let i = 0; i < sink.positions.length; i += 3) expect((sink.positions[i + 1] ?? 0) + 1e-6).toBeGreaterThanOrEqual(Math.min((sink.positions[i] ?? 0) / 3, 2.2) - 0.34);
   });
 
-  it("lie as paving on ground too gentle for a flight, not as a row of dark lines (G-018)", () => {
+  it("lie as paving on a run whose ends lie less than a riser of the norm apart (G-018, G-840)", () => {
     const sink = new MeshSink();
-    // Plac Litewski: a run 18.6 m long rising 0.87 m, 1.5 cm per tread of STEP_DEPTH.
-    const ground = (x: number) => (x / 18.6) * 0.87;
+    // A run 18.6 m long rising 0.1 m: no riser of the norm fits.
+    const ground = (x: number) => (x / 18.6) * 0.1;
     planSteps(sink, [{ x: 0, z: 0 }, { x: 18.6, z: 0 }, { x: 18.6, z: 3 }, { x: 0, z: 3 }], ground);
     expect(sink.empty).toBe(false);
     for (let v = 0; v < sink.vertexCount; v++) {
@@ -77,6 +96,16 @@ describe("outdoor steps", () => {
       expect(sink.normals[v * 3 + 1] ?? 0).toBeGreaterThan(0.9);
       expect((sink.positions[v * 3 + 1] ?? 0) - ground(sink.positions[v * 3] ?? 0)).toBeCloseTo(0.05, 3);
     }
+  });
+
+  it("climb a gentle run by risers of the norm, not a row of dark lines (G-018, G-840)", () => {
+    const sink = new MeshSink();
+    // Plac Litewski: a run 18.6 m long rising 0.87 m.
+    planSteps(sink, [{ x: 0, z: 0 }, { x: 18.6, z: 0 }, { x: 18.6, z: 3 }, { x: 0, z: 3 }], (x) => (x / 18.6) * 0.87);
+    const risers = sideFaces(sink).filter((r) => r.h > 0.06);
+    expect(risers.length).toBeGreaterThanOrEqual(Math.ceil(0.87 / STEP_NORM.riserMax));
+    expect(risers.length).toBeLessThanOrEqual(Math.floor(0.87 / STEP_NORM.riserMin));
+    for (const r of risers) expect(r.h).toBeCloseTo(0.87 / risers.length, 6);
   });
 
   // Bands the map's edge cuts slantwise: schody w481462067 at Stare Miasto's edge x = 760 and the
@@ -89,13 +118,7 @@ describe("outdoor steps", () => {
   it.each(CUT)("end on the ground of the map where the map's edge cuts the band, not on the void past it (G-703)", ({ ring, ground, mapEdgeAt, edge }) => {
     const sink = new MeshSink();
     planSteps(sink, ring, ground, mapEdgeAt);
-    let tallest = 0;
-    for (let q = 0; q + 3 < sink.vertexCount; q += 4) {
-      if (Math.abs(sink.normals[q * 3 + 1] ?? 0) > 0.5) continue;
-      const ys = [0, 1, 2, 3].map((k) => sink.positions[(q + k) * 3 + 1] ?? 0);
-      tallest = Math.max(tallest, Math.max(...ys) - Math.min(...ys));
-    }
-    expect(tallest).toBeLessThan(0.5);
+    expect(Math.max(0, ...sideFaces(sink).map((r) => r.h))).toBeLessThan(0.5);
     // The lower end stands on the ground at the edge.
     let low = Infinity;
     for (let v = 0; v < sink.vertexCount; v++) low = Math.min(low, sink.positions[v * 3 + 1] ?? 0);
@@ -141,6 +164,7 @@ describe("outdoor steps", () => {
   it("leave a flat run as level treads, with only the kerb at either end", () => {
     const sink = new MeshSink();
     planSteps(sink, [{ x: 0, z: 0 }, { x: 3, z: 0 }, { x: 3, z: 2 }, { x: 0, z: 2 }], () => 0);
-    expect(sink.positions.length / 3).toBe(Math.round(3 / STEP_DEPTH) * 4 + 2 * 4);
+    expect(sideFaces(sink).map((r) => r.x).sort((a, b) => a - b)).toEqual([0, 3]);
+    expect(sink.positions.length / 3).toBe(4 + 2 * 4);
   });
 });

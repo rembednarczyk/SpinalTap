@@ -4,7 +4,7 @@ import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { clearContract, raiseFlag } from "../world/domain-ops";
 import { raiseAlarm } from "./contract-system";
-import { startUpload } from "./sabotage-system";
+import { useSabotage } from "./sabotage-system";
 
 import { callElevator } from "./elevator-system";
 import { forceDoor } from "./door-system";
@@ -134,7 +134,7 @@ export const interactionSystem: System = {
       }
       if (interactable.kind === "terminal") {
         startHack(ctx, best);
-        startUpload(ctx, best);
+        useSabotage(ctx, best);
         return;
       }
       // Wave 2 (ADR-0034): a hook's mail, a passer-by in need.
