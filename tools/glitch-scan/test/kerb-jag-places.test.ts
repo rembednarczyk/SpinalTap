@@ -38,7 +38,7 @@ describe("the kerbs of the widened carriageways run smooth (G-837)", () => {
     // The asphalt's new edge, each sample rounded to 0.1 m on its own, zigzagged into a zebra's end.
     ["Kapucyńska's kerb at its zebra", 154.4, -201.4],
     ["Łęczyńska's kerb at its zebra", 2663.1, 109.4],
-  ])("%s", { timeout: 60_000 }, (_, x, z) => {
+  ])("%s", (_, x, z) => {
     expect(cityJags().filter(([px, pz]) => Math.hypot(px - x, pz - z) < 2).map(([, , dev]) => +dev.toFixed(2))).toEqual([]);
   });
 });

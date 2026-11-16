@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { type DomainEvents, type SaveSnapshot, hm } from "@seki/core";
 import {
   ACTIVITY_SPOTS,
@@ -45,8 +45,6 @@ import { TRAFFIC_ROUTES } from "../src/content/traffic";
 import { streetSegments } from "../src/content/traffic-ramp";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { byKey, input, run, teleportPlayer } from "./helpers";
-
-vi.setConfig({ testTimeout: 30_000 });
 
 const at = (x: number, z: number) => ({ x, y: 0, z });
 /** The deptak between the clinic and Neon Koi (ADR-0045), and the chunk it lies in. */
@@ -335,7 +333,7 @@ describe("the crowd in the simulation", () => {
       const lane = CROWD_LANES.find((l) => l.id === w.lane)!;
       expect(flat(r.position, laneTarget(lane, w, sim.clock, w.avoid))).toBeLessThan(1.2);
     }
-  });
+  }, 30_000);
 
   it("thins out by the hour, and nobody leaves or comes where the player is looking", () => {
     const sim = Simulation.create({ seed: 2, crowd: "high" });

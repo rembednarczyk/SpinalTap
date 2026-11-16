@@ -55,6 +55,8 @@ const mixedRow = (cells: Cells, t: Int32Array, j: number, r: number, lo: number,
 /** What `coverRow` reads a row from: `base` the row's start in the raster's classes (`cls`), -1 off it. */
 interface CoverRow {
   readonly label: Uint8Array;
+  /** A pedestrian street's frontage (`bare-fronts.ts`): what the cover shows as neither a lawn nor paving is read as paving. */
+  readonly front: Uint8Array;
   readonly nx: number;
   readonly cols: Int32Array;
   readonly labels: Uint8Array;
@@ -70,14 +72,17 @@ interface CoverRow {
  * over the whole raster is compiled anew in each call.
  */
 const coverRow = (r: CoverRow, j: number, up: number, here: number): void => {
-  const { label, nx, cols, labels, cls, base, none, t } = r;
+  const { label, front, nx, cols, labels, cls, base, none, t } = r;
   const o = j * nx;
   let run = 0;
   for (let i = 0; i < nx; i++) {
     let l = label[o + i]!;
     if (!taken(l)) {
       const col = cols[i]!;
-      label[o + i] = l = labels[base < 0 || col < 0 ? none : cls[base + col]!]!;
+      l = labels[base < 0 || col < 0 ? none : cls[base + col]!]!;
+      // Asphalt, a dark sett, no class: a walker's street is paved to its walls (G-853).
+      if (l === LABEL.other && front[o + i]) l = LABEL.square;
+      label[o + i] = l;
     }
     run = (run + PACKED[l]!) | 0;
     t[here + i] = (run + t[up + i]!) | 0;
@@ -106,7 +111,7 @@ export const readCover = (cells: Cells, cover: Cover, around: number): void => {
   const mixed = (j: number) => mixedRow(cells, t, j, around, at(Math.max(0, j - around)), at(Math.min(nz, j + around + 1)));
   // Row 0 and column 0 count nothing; the rest is written below.
   t.fill(0, 0, nx + 1);
-  const read: CoverRow = { label, nx, cols, labels, cls, base: -1, none: COVER.none, t };
+  const read: CoverRow = { label, front: cells.front, nx, cols, labels, cls, base: -1, none: COVER.none, t };
   for (let j = 0; j < nz; j++) {
     const row = Math.floor((h.z1 - (cells.rect.minZ + (j + 0.5) * STEP)) / h.step);
     read.base = row < 0 || row >= h.height ? -1 : row * width;
@@ -310,7 +315,10 @@ export const joinSpecks = (cells: Cells, speck: number): void => {
       // The label most of the border has, the lower one on a tie.
       let to = -1;
       for (let l = 0; l < round.length; l++) if (round[l]! > 0 && (to < 0 || round[l]! > round[to]!)) to = l;
-      if (to < 0 || (to === LABEL.square && label[s] === LABEL.grass)) continue;
+      // In a pedestrian street's frontage a speck of paving in a crown's bed stays paving too, from
+      // the least piece laid (1 m², 4 cells) up: the leaf-off flight's setts under the trees (G-853,
+      // `lawn-on-leafoff-paving`); a smaller one would leave a hole in the lawn.
+      if (to < 0 || (to === LABEL.square && label[s] === LABEL.grass) || (to === LABEL.grass && label[s] === LABEL.square && cells.front[s] && n >= 4)) continue;
       for (let q = 0; q < n; q++) label[queue[q]!] = to;
     }
   }

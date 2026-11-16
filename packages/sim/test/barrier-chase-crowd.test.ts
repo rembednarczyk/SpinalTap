@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { Simulation, gangerEntity, giveLead, ground } from "../src";
+import { gangerEntity, giveLead } from "../src";
 import { nearBuilds, wideBuilds } from "../src/systems/ai/steering";
-import { off, pieceAt } from "./barrier-standoff";
-import { teleportPlayer } from "./helpers";
+import { BYSTRZYCA_FENCE, barrierSim, flat, off, pieceAt } from "./fixtures/barrier-floor";
 
 /**
  * Many chases round a long barrier at once (G-644): eighteen gangers in front of the fence at
  * (2359, 445), each after its own lead behind it, 6 to 18 m round a corner of the window grid,
  * (2352, 432). Each walks the wide way round (G-625). Asking the near window every step as well,
  * which found each of them cut off, they pushed its eight rasters out of the memo in turn and made
- * them again every step, some 20 ms each: 31.6 ms a step in the median with a dozen of them.
+ * them again every step, some 20 ms each: 31.6 ms a step in the median with a dozen of them. On
+ * the floor of the fence's barriers (`barrier-floor.ts`): the rule needs the fence, not the city.
  */
 const LEADS = 18;
 
@@ -18,17 +18,15 @@ const now = (): number => host.performance?.now() ?? 0;
 
 describe("many chases round a long barrier at once (G-644)", () => {
   it("make each near raster once, not again every step", () => {
-    const { chunk, item } = pieceAt(2359.33, 445.19);
-    const sim = Simulation.create({ seed: 2 });
-    teleportPlayer(sim, ground(2300, 432));
-    sim.step();
+    const { sim, chunks } = barrierSim(flat(2300, 432), BYSTRZYCA_FENCE);
+    const { chunk, item } = pieceAt(chunks, BYSTRZYCA_FENCE.x, BYSTRZYCA_FENCE.z);
     const at = off(item, -4);
     for (let i = 0; i < LEADS; i++) {
       const a = (2 * Math.PI * i) / LEADS;
       const r = 6 + (12 * i) / LEADS;
-      const g = gangerEntity(9101 + i, { key: `g644-${i}`, position: ground(at.x + (i % 4) - 1.5, at.z + Math.floor(i / 4) - 1), yaw: 0 }, null, 200, chunk);
+      const g = gangerEntity(9101 + i, { key: `g644-${i}`, position: flat(at.x + (i % 4) - 1.5, at.z + Math.floor(i / 4) - 1), yaw: 0 }, null, 200, chunk);
       sim.world.add(g);
-      giveLead(g, ground(2352 + Math.cos(a) * r, 432 + Math.sin(a) * r));
+      giveLead(g, flat(2352 + Math.cos(a) * r, 432 + Math.sin(a) * r));
     }
     const start = nearBuilds(sim.world).rasters;
     const wide = wideBuilds(sim.world).rasters;
@@ -50,7 +48,7 @@ describe("many chases round a long barrier at once (G-644)", () => {
     expect({ rasters: nearBuilds(sim.world).rasters - start <= LEADS, settled }).toEqual({ rasters: true, settled: 0 });
     // Still the wide way round: four wide windows round the corner.
     expect(wideBuilds(sim.world).rasters - wide).toBe(4);
-  }, 120_000);
+  });
 
   it("leave the wide way when the goal comes round to their side of the fence: straight to it, not round to the old one", () => {
     // The fence along the Bystrzyca at (2305-2361, 437-446); a box 2 m square and 1.5 m high hides
@@ -63,18 +61,16 @@ describe("many chases round a long barrier at once (G-644)", () => {
       [240, 2345, 445.5],
       [300, 2345, 445.5],
     ] as const) {
-      const { chunk } = pieceAt(2345, 441);
-      const sim = Simulation.create({ seed: 2 });
-      teleportPlayer(sim, ground(2300, 432));
-      sim.step();
-      const p = ground(2337, 445.3);
+      const { sim, chunks } = barrierSim(flat(2300, 432), BYSTRZYCA_FENCE);
+      const { chunk } = pieceAt(chunks, 2345, 441);
+      const p = flat(2337, 445.3);
       const solid = { min: { x: p.x - 1, y: p.y, z: p.z - 1 }, max: { x: p.x + 1, y: p.y + 1.5, z: p.z + 1 } };
       sim.world.add({ id: 4500, position: p, prevPosition: p, yaw: 0, prevYaw: 0, pitch: 0, view: { kind: "block", size: { x: 2, y: 1.5, z: 2 }, material: "metal" }, solid });
-      const g = gangerEntity(9001, { key: "g644-side", position: ground(2340, 447), yaw: 0 }, null, 200, chunk);
+      const g = gangerEntity(9001, { key: "g644-side", position: flat(2340, 447), yaw: 0 }, null, 200, chunk);
       sim.world.add(g);
-      giveLead(g, ground(2345, 438));
+      giveLead(g, flat(2345, 438));
       for (let i = 0; i < moment; i++) sim.step();
-      const lead = ground(x, z);
+      const lead = flat(x, z);
       g.ai!.lastKnown = { ...lead };
       const away = () => Math.hypot(g.position.x - lead.x, g.position.z - lead.z);
       const start = away();
@@ -90,5 +86,5 @@ describe("many chases round a long barrier at once (G-644)", () => {
       expect(furthest - start, `${at}: walked away from it`).toBeLessThan(0.5);
       expect(steps, `${at}: steps to reach it`).toBeLessThan(400);
     }
-  }, 120_000);
+  });
 });

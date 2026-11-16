@@ -124,7 +124,7 @@ describe("interiors as areas (ADR-0061)", () => {
     expect(seen).toEqual(["in:trasa-podziemna"]);
     for (const [x, z] of [...TRASA_PODZIEMNA_WALK].reverse().slice(1)) expect(walkTo(sim, x, z), `${x}, ${z}`).toBeLessThan(0.5);
     expect(seen).toEqual(["in:trasa-podziemna", "out:trasa-podziemna"]);
-  }, 60_000);
+  });
 
   it("keeps the interior out of the snapshot: the same game hashes the same inside and out", () => {
     const a = quiet(7);

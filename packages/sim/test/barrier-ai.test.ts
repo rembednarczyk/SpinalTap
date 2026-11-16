@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { type StreetPropItem, barrierLayout } from "@seki/core";
-import { Simulation, WORLD_BARRIERS, gangerEntity } from "../src";
+import { WORLD_BARRIERS, gangerEntity } from "../src";
 import { distanceToBarrier } from "../src/content/lublin/barriers";
-import { teleportPlayer } from "./helpers";
+import { barrierSim, flat, pieceAt } from "./fixtures/barrier-floor";
 
 /**
  * An alerted ganger and the player on two sides of a fence of the map (ADR-0077, G-610): it sees
  * her through the bars, but its shot would stop in them, so it does not stand and fire into the
  * fence; it goes round, or finds a clear shot. Not standing at the fence either (G-625): moving a
- * metre along it is no way round.
+ * metre along it is no way round. The fences are the map's; the chase is on the floor of the
+ * barriers and buildings round each (`barrier-floor.ts`): the rule needs them, not the city.
  */
 
 const all = Object.entries(WORLD_BARRIERS).flatMap(([chunk, items]) => items.map((item) => ({ chunk, item })));
@@ -28,17 +29,14 @@ const lone = all.filter(
 describe("a ganger and the player on two sides of a fence (G-610)", () => {
   it("does not stand firing into the fence: the player loses health or the ganger leaves the fence", () => {
     expect(lone.length).toBeGreaterThan(1);
-    for (const { chunk, item } of lone.slice(0, 2)) {
-      const sim = Simulation.create({ seed: 2 });
-      const to = off(item, 1.5);
+    for (const { item: mapItem } of lone.slice(0, 2)) {
+      const place = { x: mapItem.x, z: mapItem.z, buildings: true };
+      const { sim, chunks } = barrierSim(off(mapItem, 1.5), place);
+      const { chunk, item } = pieceAt(chunks, place.x, place.z);
       const from = off(item, -4);
-      teleportPlayer(sim, { x: to.x, y: 0, z: to.z });
-      sim.step();
-      const ground = sim.streamer.ground;
       const p = sim.player()!;
-      p.position = p.prevPosition = { x: to.x, y: ground.heightAt(to.x, to.z), z: to.z };
       const hp = p.health!.current;
-      const g = gangerEntity(9001, { key: "g610", position: { x: from.x, y: ground.heightAt(from.x, from.z), z: from.z }, yaw: 0 }, null, 200, chunk);
+      const g = gangerEntity(9001, { key: "g610", position: flat(from.x, from.z), yaw: 0 }, null, 200, chunk);
       g.ai!.alerted = true;
       sim.world.add(g);
       let shots = 0;
@@ -52,5 +50,5 @@ describe("a ganger and the player on two sides of a fence (G-610)", () => {
       // No volley into the bars: whatever it fired, some of it got through.
       if (shots > 3) expect(lost, `fence at ${item.x}, ${item.z}: ${shots} shots into the fence`).toBeGreaterThan(0);
     }
-  }, 120_000);
+  });
 });
