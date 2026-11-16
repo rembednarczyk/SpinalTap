@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { W3_HALL_DOORS, W3_ROOF, WORLD_CHUNKS, w3 } from "@seki/sim";
-import { TransformNode, Vector3 } from "../src/babylon";
+import { type TransformNode, Vector3 } from "../src/babylon";
 import { W3InteriorCull, W3_INTERIOR_RANGE, inW3Interior } from "../src/renderer/tessen-w3/w3-interior-cull";
 
 /**
