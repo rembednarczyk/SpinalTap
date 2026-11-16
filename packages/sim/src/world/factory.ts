@@ -238,6 +238,18 @@ export const terminalEntity = (id: EntityId, key: string, foot: Vec3, chunk: str
   interactable: { kind: "terminal", dialogueId: key, prompt: "prompt.terminal.hack", radius: 2 },
 });
 
+/**
+ * The calibration core's terminal of the sabotage (ADR-0082): the key starts the virus upload. No
+ * view of its own: the core's desk is baked in the hall's mesh and the renderer draws its screen.
+ */
+export const virusTerminalEntity = (id: EntityId, key: string, foot: Vec3, chunk: string): Entity => ({
+  id,
+  key,
+  chunk,
+  ...at({ x: foot.x, y: foot.y + TERMINAL.y / 2, z: foot.z }),
+  interactable: { kind: "terminal", dialogueId: key, prompt: "prompt.upload-virus", radius: 1.8 },
+});
+
 export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity => {
   const e =
     def.kind === "ganger"

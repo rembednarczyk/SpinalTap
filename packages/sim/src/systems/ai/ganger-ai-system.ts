@@ -10,6 +10,7 @@ import { worldTimeScale } from "../ability-system";
 import { knockbackVelocity } from "../../world/knockback";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
 import { GANGER_TREE } from "./ganger-tree";
+import { routePose } from "./route";
 import { GANGER_SPEED, GangerWalk } from "./ganger-walk";
 import { advanceChasePlans } from "./chase-plan";
 import { attack, faceTowards } from "./ganger-fight";
@@ -37,6 +38,8 @@ const MELEE_REACH_Y = 1.2;
 /** A guard on watch sweeps this far either side of its post's facing, once per `WATCH_PERIOD` seconds. */
 export const WATCH_SWEEP = 0.7;
 const WATCH_PERIOD = 8;
+/** Further than this off its route's point a patrolling guard walks back by the level's ways (m). */
+const ROUTE_REJOIN = 2;
 
 /** Looking around at the lead: the facing sweeps this far either side, once per `SEARCH_PERIOD`. */
 const SEARCH_SWEEP = 1.4;
@@ -153,9 +156,12 @@ class GangerAgent {
       if (this.seen.glimpsed) faceTowards(this, this.seen.player);
       return State.SUCCEEDED;
     }
-    const pose = self.schedule?.pose;
+    const pose = self.schedule?.pose ?? (self.ai.route && ctx ? routePose(self.ai.route, ctx.tick * ctx.dt) : null);
     if (pose && ctx) {
-      followSchedule(self, pose, GANGER_SPEED, ctx.dt * this.timeScale);
+      // Off its route (after a chase or a search) it walks back round the walls first.
+      const off = Math.hypot(pose.position.x - self.position.x, pose.position.z - self.position.z);
+      if (self.ai.route && off > ROUTE_REJOIN) this.walk.walkTo(pose.position);
+      else followSchedule(self, pose, GANGER_SPEED, ctx.dt * this.timeScale);
       return State.SUCCEEDED;
     }
     const d = Math.hypot(self.ai.home.x - self.position.x, self.ai.home.z - self.position.z);
