@@ -179,11 +179,16 @@ export const pastLedge = (r: Raster, from: number, to: number): boolean => {
   return deck - (r.base[to] ?? 0) > DECK_HEADROOM && Math.abs(deck - (r.base[from] ?? 0)) <= LEDGE * Math.SQRT2;
 };
 
-/** Does the line from `a` to `b`, sampled every `sample` metres, go from cell to cell `pastLedge`? */
-export const pastLedgeOnWay = (r: Raster, a: { x: number; z: number }, b: { x: number; z: number }, sample: number): boolean => {
-  if (!r.ledges || r.reach !== -Infinity) return false;
-  const n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / sample);
+/**
+ * Does the line from feet at `a` to `b`, sampled every `sample` metres, go from cell to cell
+ * `pastLedge`? Not for feet under their own cell's deck: at the foot of the deck's tip over the
+ * abutment's ramp of Mełgiewska's lower bridge (G-740) their cell is on it, the feet are not.
+ */
+export const pastLedgeOnWay = (r: Raster, a: { x: number; y: number; z: number }, b: { x: number; z: number }, sample: number): boolean => {
+  if (!r.ledges || !r.base || r.reach !== -Infinity) return false;
   let prev = cellIndex(r, a.x, a.z);
+  if (prev >= 0 && (r.base[prev] ?? 0) - a.y > STEP_HEIGHT) return false;
+  const n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / sample);
   for (let i = 1; i <= n; i++) {
     const c = cellIndex(r, a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n);
     if (c >= 0 && prev >= 0 && c !== prev && pastLedge(r, prev, c)) return true;
