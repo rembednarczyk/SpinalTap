@@ -165,6 +165,12 @@ Każdy z trzech: wpis w `sources.json` z URL strony, sha256 i zrzutem pól warun
 4. Pytania 4–8 zostają otwarte. Do czasu decyzji obowiązuje: tekstury 512 px jak w VRoid tylko tam, gdzie ubranie pochodzi z próbki; hełm chowa włosy; kolejność kamizelka, hełm, kurtka; z Quaterniusa tylko darmowa część; BOOTH zamknięty.
 5. Licencje NC i NC-SA dopuszczone (ADR-0063, zmiana 15.11): źródła ubrań poszerzają się o CC-BY-NC(-SA) ze Sketchfaba i OpenGameArt oraz modele VRoid Hub z warunkami zezwalającymi na redystrybucję niekomercyjną. Kolejny research źródeł uwzględnia te licencje.
 
+## Decyzje pod nieobecność użytkownika (16.11 noc, opcje rekomendowane)
+- Etap 1 (kurtka Kimi jako `jacket-techwear` w przebraniu Hebi): kurtka rozpięta, więc znika tylko przykryta część góry; przód między połami zostaje.
+- Kurtka na wszystkich postaciach z `hebi_jacket` (Seki i gangerzy Hebi), koszt +3 wywołania i +1 siatka na postać, w budżecie.
+- Modele VRoid Hub z polem komercji „OK” i tak na liście NC (`VRoid-Hub-NC`), do czasu decyzji o komercjalizacji (pytanie dodatkowe 1).
+- Battle-ready: autor w metadanych MageKing17, na stronie Will Howard; przed użyciem wyjaśnić. Plik bez tytułu (145305444370359863.vrm) czeka na stronę źródłową od użytkownika.
+
 ## Konsekwencje
 - Zmiana kontraktu przebrań w `core` (Architekt) i nowy katalog assetów z manifestem; symulacja, zapis i złote hashe bez zmian (wygląd to pole widoku).
 - Postać w przebraniu kosztuje jedną siatkę więcej (2–3 wywołania), w zapasie budżetu `models`; pomiar w każdym etapie.
