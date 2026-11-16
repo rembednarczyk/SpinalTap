@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type StreetPropItem, figureLayout, isSitting, seatAt } from "@seki/core";
+import { SITE_CABIN, type StreetPropItem, figureLayout, isSitting, seatAt, siteCabinStacked } from "@seki/core";
 import { CROWD_SPOTS, Simulation, WORLD_CHUNKS, WORLD_SCENERY, WORLD_STREET_PROPS, ground, groundY, rayGeometry, residentOf, surfaceY } from "../src";
 import { SOLID_FURNITURE, distanceToPiece, furniturePrisms, turnLocal } from "../src/content/lublin/furniture";
 import { seatGroups } from "../src/content/lublin/seats";
@@ -25,7 +25,8 @@ describe("street furniture in the game (ADR-0050)", () => {
       total += v.view.items.length;
       // A door on a facade (ADR-0058 stage 9) keeps its foot on the paving the import measured (the glitch scan's `door-floating`).
       // A still figure (stage 8): one standing on the paving at its feet, a sitter on its seat's piece.
-      for (const i of v.view.items) if (i.prop !== "door" && i.prop !== "figure") expect(i.y).toBeCloseTo(groundY(i.x, i.z), 1);
+      // A building site's stacked container (ADR-0087) on the one under it.
+      for (const i of v.view.items) if (i.prop !== "door" && i.prop !== "figure") expect(i.y - (i.prop === "site-cabin" && siteCabinStacked(i.variant) ? SITE_CABIN.height : 0)).toBeCloseTo(groundY(i.x, i.z), 1);
     }
     const all = Object.values(WORLD_STREET_PROPS).flat();
     const figures = all.filter((i) => i.prop === "figure");

@@ -2,34 +2,34 @@
  * `pnpm osm:build`: generates `packages/sim/src/content/lublin/*.generated.ts` from the raw
  * data in `data/` (offline) and prints the control numbers; `--stats=<file>` also writes the
  * carriageway widths' sources (m of street side) and the barriers as JSON (`pnpm map:refresh`),
- * and `--no-write` leaves the tables as they are (the numbers of the data before a refresh).
+ * `--no-write` leaves the tables as they are (the numbers of the data before a refresh), and
+ * `--check` compares them with what it would write (`pnpm tables:check`, exit 1 when they differ).
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DISTRICTS } from "./config.ts";
 import { emitDistrict } from "./emit.ts";
-import { TABLES, tableFingerprint, withFingerprint } from "./fingerprint.ts";
 import { generate } from "./generate.ts";
 import { loadInputs } from "./load.ts";
 import { REPO } from "./paths.ts";
 import { reportLine } from "./street-section.ts";
+import { endCheck, writeTable } from "./table-write.ts";
 
 const OUT = join(REPO, "packages/sim/src/content/lublin");
 
 const inputs = loadInputs();
 const { chunks, stats, venues, widths } = generate(inputs.osm, inputs.src, undefined, undefined, inputs.lod1, inputs.lod2, inputs.covers);
 mkdirSync(OUT, { recursive: true });
-// The fingerprint of the inputs in every table's header: the unit test compares it, not the tables (ADR-0083).
-const fingerprint = tableFingerprint("build");
 let total = 0;
 for (const d of DISTRICTS) {
   const file = join(OUT, `${d.slug}.generated.ts`);
-  const text = withFingerprint(emitDistrict(d.slug, d.name, chunks.filter((c) => c.district === d.id)), fingerprint, TABLES.build.command);
-  if (!process.argv.includes("--no-write")) writeFileSync(file, text);
+  const text = emitDistrict(d.slug, d.name, chunks.filter((c) => c.district === d.id));
+  if (!process.argv.includes("--no-write")) writeTable(file, text);
   const size = Buffer.byteLength(text);
   total += size;
   console.log(`${d.slug}.generated.ts: ${(size / 1024).toFixed(0)} KiB`);
 }
+endCheck("pnpm osm:build");
 console.log(`total ${(total / 1024).toFixed(0)} KiB, terrain from ${inputs.terrain}`);
 console.log("chunk | buildings | height tag | levels tag | lod1 | lod2 | skipped | with holes | ground | cell | max err | p99 err | min y | max y");
 for (const s of stats) {

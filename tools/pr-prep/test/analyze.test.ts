@@ -16,12 +16,22 @@ describe("pr:prep's analysis", () => {
   it("asks for CI again after a branch sharing a file or feeding a golden the other changes", () => {
     const mine = ["packages/engine/test/map-ground-golden.test.ts", "packages/engine/src/renderer/mapcity/ground-plan.ts"];
     expect(against(mine, "docs", ["docs/backlog.md"])).toEqual({ branch: "docs", shared: [], rerun: false, why: [] });
-    const content = against(mine, "import", ["packages/sim/src/content/lublin/nabrzeze.generated.ts"]);
-    expect(content.rerun).toBe(true);
-    expect(content.why).toContain("map-ground-golden: ta gałąź go zmienia, tamta jego wejścia");
+    // The ground golden lies on its own floor (ADR-0088): the map's tables do not feed it, the ground's rules do.
+    expect(against(mine, "import", ["packages/sim/src/content/lublin/nabrzeze.generated.ts"]).rerun).toBe(false);
+    const rules = against(mine, "rules", ["packages/engine/src/renderer/mapcity/cell-ground.ts"]);
+    expect(rules.rerun).toBe(true);
+    expect(rules.why).toContain("map-ground-golden: ta gałąź go zmienia, tamta jego wejścia");
     // Not a golden of mine, but theirs: their ground-cut moves with my renderer's change.
     expect(against(mine, "cut", ["packages/engine/test/ground-cut.test.ts"]).why).toContain("ground-cut: tamta gałąź go zmienia, ta jego wejścia");
     expect(against(mine, "same", ["packages/engine/src/renderer/mapcity/ground-plan.ts"]).shared).toEqual(["packages/engine/src/renderer/mapcity/ground-plan.ts"]);
+  });
+
+  it("counts the furniture's plan among the map tables' inputs", () => {
+    const tables = ["packages/sim/src/content/lublin/props.generated.ts"];
+    const plan = against(tables, "plan", ["docs/world/lublin-props.todo.json"]);
+    expect(plan.rerun).toBe(true);
+    expect(plan.why).toContain("lublin-tables: ta gałąź go zmienia, tamta jego wejścia");
+    expect(against(tables, "docs", ["docs/world/README.md"]).rerun).toBe(false);
   });
 
   it("says it in one line", () => {

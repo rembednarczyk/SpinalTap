@@ -30,7 +30,10 @@ export interface Guarded {
 
 const SIM = ["packages/core/src/**", "packages/sim/src/**"];
 const MAP = ["packages/core/src/**", "packages/sim/src/content/**", "packages/sim/src/world/**", "packages/engine/src/renderer/mapcity/**"];
-const IMPORT = ["tools/osm-import/**", "tools/orto/**", "data/osm/**", "data/terrain/**", "data/gugik/**", "data/orto/**"];
+/** The ground golden lies on a floor of its own (ADR-0088): the rules of laying the ground, not the map's content. */
+const GROUND = ["packages/core/src/**", "packages/sim/src/world/**", "packages/engine/src/renderer/**", "packages/engine/test/fixtures/ground-floor.ts"];
+/** The map tables' inputs (`TABLES` in `tools/osm-import/src/table-inputs.ts`), the furniture's plan among them. */
+const IMPORT = ["tools/osm-import/**", "tools/orto/**", "data/osm/**", "data/terrain/**", "data/gugik/**", "data/orto/**", "docs/world/lublin-props.todo.json"];
 
 export const GUARDED: readonly Guarded[] = [
   { id: "lublin-tables", kind: "generated", files: ["packages/sim/src/content/lublin/*.generated.ts"], inputs: IMPORT },
@@ -38,7 +41,7 @@ export const GUARDED: readonly Guarded[] = [
   { id: "albedo-medians", kind: "generated", files: ["data/orto/albedo-medians.json"], inputs: ["tools/orto/src/**", "data/orto/*.cover.*", "packages/sim/src/content/lublin/*.generated.ts"] },
   { id: "determinism", kind: "golden", files: ["packages/sim/test/determinism.test.ts"], inputs: SIM },
   { id: "ground-cut", kind: "golden", files: ["packages/engine/test/ground-cut.test.ts"], inputs: MAP },
-  { id: "map-ground-golden", kind: "golden", files: ["packages/engine/test/map-ground-golden.test.ts"], inputs: MAP },
+  { id: "map-ground-golden", kind: "golden", files: ["packages/engine/test/map-ground-golden.test.ts"], inputs: GROUND },
   { id: "npr-snapshot", kind: "golden", files: ["e2e/__snapshots__/**"], inputs: ["packages/engine/src/**", "packages/sim/src/content/**"] },
   { id: "glitch-baseline", kind: "baseline", files: ["tools/glitch-scan/test/glitch-baseline.json"], inputs: [...MAP, "tools/glitch-scan/**"] },
   { id: "i18n-baseline", kind: "baseline", files: ["tools/i18n-scan/test/i18n-baseline.json"], inputs: ["packages/*/src/**", "tools/i18n-scan/**"] },

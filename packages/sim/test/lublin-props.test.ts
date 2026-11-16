@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { terrainHeightAt } from "@seki/core";
+import { SITE_CABIN, siteCabinStacked, terrainHeightAt } from "@seki/core";
 import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, streetPropsView } from "../src/content/lublin";
 import { decodePropTable } from "../src/content/lublin/props";
 import { groundY } from "../src/content/lublin/terrain";
@@ -27,7 +27,9 @@ describe("street furniture of Lublin (ADR-0047)", () => {
         const ground = shaped ? groundY(i.x, i.z) : terrainHeightAt(c.terrain, i.x, i.z);
         // A lamp of the plan over a bridge's span stands on its deck, its basket and stickers with it (G-503).
         const deck = i.prop.startsWith("lamp-") || i.prop === "hanging-basket" || i.prop === "sticker" ? bridgeDeckAt(i.x, i.z) : null;
-        expect(Math.min(Math.abs(i.y - ground), Math.abs(i.y - (deck ?? Infinity))), `${i.prop} at ${i.x}, ${i.z}`).toBeLessThan(0.2);
+        // A building site's stacked container (ADR-0087) stands on the one under it.
+        const y = i.prop === "site-cabin" && siteCabinStacked(i.variant) ? i.y - SITE_CABIN.height : i.y;
+        expect(Math.min(Math.abs(y - ground), Math.abs(y - (deck ?? Infinity))), `${i.prop} at ${i.x}, ${i.z}`).toBeLessThan(0.2);
       }
       const view = streetPropsView(c.id);
       expect(view.kind === "street-props" && view.items.length).toBe(items.length);
