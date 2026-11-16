@@ -102,11 +102,12 @@ export const W3_CUT_WALL: readonly StreetPropItem[] = barrierLine("city-wall", H
  */
 const FLOOR_STEPS = 9;
 export const W3_STORE_FLOOR: readonly { minX: number; maxX: number; minZ: number; maxZ: number }[] = (() => {
-  const west = S.minX + FACADE_GAP + WALL;
+  // From under the west wall's lining: it stands on the levelled floor too.
+  const west = S.minX + FACADE_GAP;
   const w0 = cutLine[1]!.x;
   const xs = Array.from({ length: FLOOR_STEPS + 1 }, (_, i) => west + ((w0 - west) * i) / FLOOR_STEPS);
   return [
-    ...xs.slice(1).map((x1, i) => ({ minX: xs[i] as number, maxX: x1, minZ: cutZ(((xs[i] as number) + x1) / 2), maxZ: corridorZ })),
+    ...xs.slice(1).map((x1, i) => ({ minX: xs[i] as number, maxX: x1, minZ: cutZ(((xs[i] as number) + x1) / 2), maxZ: northZ - WALL })),
     { minX: w0, maxX: ROW_S_SPLITS[0] as number, minZ: S.minZ + FACADE_GAP + WALL, maxZ: corridorZ },
   ];
 })();

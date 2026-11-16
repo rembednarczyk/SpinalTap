@@ -41,14 +41,15 @@ export const W3_CUTS: readonly GroundCut[] = [
   { bounds: { minX: STAIR_A.minX, maxX: STAIR_A.maxX, minZ: STAIR_A.minZ, maxZ: STAIR_A.maxZ }, floor: y(F) },
   { bounds: { minX: STAIR_B.minX, maxX: STAIR_B.maxX, minZ: STAIR_B.minZ, maxZ: STAIR_B.maxZ }, floor: y(F) },
   { bounds: { minX: LIFT_SHAFT.minX, maxX: LIFT_SHAFT.maxX, minZ: LIFT_SHAFT.minZ, maxZ: LIFT_SHAFT.maxZ }, floor: y(F) },
-  { bounds: { minX: CULVERT_MOUTH.minX, maxX: CULVERT_MOUTH.maxX, minZ: C.minZ, maxZ: C.maxZ }, floor: y(CULVERT_MOUTH.floor) },
+  // The mouth with its wing walls' footing.
+  { bounds: { minX: CULVERT_MOUTH.minX, maxX: CULVERT_MOUTH.maxX, minZ: C.minZ - WALL, maxZ: C.maxZ + WALL }, floor: y(CULVERT_MOUTH.floor) },
 ];
 
-/** The rooms in the ground: the basement, the culvert's crawl, its flight down. */
+/** The rooms in the ground with their walls (as a metro platform's): the basement, the culvert's crawl, its flight down. */
 export const W3_VAULTS: readonly GroundVault[] = [
-  { bounds: { minX: B.minX, maxX: B.maxX, minZ: B.minZ, maxZ: B.maxZ }, floor: y(F) },
-  { bounds: { minX: CULVERT_CRAWL.minX, maxX: CULVERT_CRAWL.maxX, minZ: C.minZ, maxZ: C.maxZ }, floor: y(CULVERT_CRAWL.floor) },
-  { bounds: { minX: CULVERT_FLIGHT.minX, maxX: CULVERT_FLIGHT.maxX, minZ: C.minZ, maxZ: C.maxZ }, floor: y(F) },
+  { bounds: { minX: B.minX - WALL, maxX: B.maxX + WALL, minZ: B.minZ - WALL, maxZ: B.maxZ + WALL }, floor: y(F) },
+  { bounds: { minX: CULVERT_CRAWL.minX, maxX: CULVERT_CRAWL.maxX, minZ: C.minZ - WALL, maxZ: C.maxZ + WALL }, floor: y(CULVERT_CRAWL.floor) },
+  { bounds: { minX: CULVERT_FLIGHT.minX, maxX: CULVERT_FLIGHT.maxX, minZ: C.minZ - WALL, maxZ: C.maxZ + WALL }, floor: y(F) },
 ];
 
 /** A slab over `r` from y0 to y1 less the holes in it: strips between the holes' x edges, each less the holes over it. */
@@ -131,9 +132,11 @@ const culvert = (): StaticProp[] => {
     box(m.minX, k.minX, m.floor - 0.25, k.ceiling, C.minZ - t, C.minZ),
     box(m.minX, k.minX, m.floor - 0.25, k.ceiling, C.maxZ, C.maxZ + t),
     box(k.minX - 0.2, k.minX + 0.2, k.ceiling, 0.6, C.minZ - t, C.maxZ + t),
-    // The crawl and the flight under the terrace and the hall.
-    box(k.minX, f.maxX, F, k.ceiling, C.minZ - t, C.minZ),
-    box(k.minX, f.maxX, F, k.ceiling, C.maxZ, C.maxZ + t),
+    // The crawl and the flight under the terrace and the hall, its walls from a slab under each floor.
+    box(k.minX, f.minX, k.floor - 0.25, k.ceiling, C.minZ - t, C.minZ),
+    box(k.minX, f.minX, k.floor - 0.25, k.ceiling, C.maxZ, C.maxZ + t),
+    box(f.minX, f.maxX, F, k.ceiling, C.minZ - t, C.minZ),
+    box(f.minX, f.maxX, F, k.ceiling, C.maxZ, C.maxZ + t),
     box(k.minX, f.maxX, k.ceiling, -0.05, C.minZ - t, C.maxZ + t),
     stairs(f.minX, f.maxX, C.minZ, C.maxZ, y(F), y(k.floor), "x", -1),
   ];

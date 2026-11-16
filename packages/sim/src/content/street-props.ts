@@ -27,8 +27,13 @@ export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL
 /** A set piece's or a game block's clearance from the map's furniture (m). */
 const FURNITURE_CLEARANCE = 1.2;
 
+/** A block whose top lies more than this under the ground is buried (W-3's culvert under the terrace): it clears nothing on the surface. */
+const BURIED = 0.3;
+
 const gameBlocks: readonly Rect[] = GAME_PROPS.flatMap((p) =>
-  p.view.kind === "block" ? [{ minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2 }] : [],
+  p.view.kind === "block" && p.center.y + p.view.size.y / 2 >= groundY(p.center.x, p.center.z) - BURIED
+    ? [{ minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2 }]
+    : [],
 ).concat(METRO_FOOTPRINTS);
 
 type Pt = { readonly x: number; readonly z: number };
