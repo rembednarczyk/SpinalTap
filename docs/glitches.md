@@ -2265,6 +2265,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - builtSites (cfec849, 6bbd199): building=construction pod LoD1 2024 (IoU>=0,7) jako budynek, bryła 19,7 m commercial; osm-construction-built 1->0; przy bryle +15 landuse-bare, +10 bare-on-cover, +5 ground-strip-gap (goła ziemia sprzed poprawki, teraz przedpole sklepu); baza nie podniesiona, czeka na przegląd kuratora i decyzję
 - przegląd kuratora (cfec849): bryła zgodna; 30 kluczy przedpola NIE do bazy: 26 w landuse=construction w1261814241 (nieaktualna budowa). Ortofoto: wsch./pn./pas przy ścianie zach. i NW -> grass, pd. nieutwardzony parking -> square. r2: landuse=construction z budynkiem z builtSites jak zakończona budowa + klasy other/cień z innych nalotów; cel +15/+10/+5 -> 0. Proponowana kontrola construction-landuse-built (baza 1).
 - r2 2514e3b: działka w1261814241 zakończona (withBuiltSites), classifySite na działce; zostaje 16 kluczy + fill-on-green 1 (5 na linii ściany, 3 asfalt poza działką, 3 szczeliny); kolizja z #599 (krakowskie.cover.png, build.ts, generate.ts).
+- 16.11 decyzja użytkownika: przyjąć 17 kluczy skanu z uzasadnieniem; PR po scaleniu #599.
 
 ### G-874 Zamek Lubelski: skrzydło pn. x 904-942 o 2,6-3,0 m za daleko na północ (uskok obrysu OSM), bryła na asfalcie drogi za zamkiem
 - Ważność: S3 · Zasięg: Podzamcze, w48500136, (903,9..941,5; 253,8..261,6)
@@ -2279,6 +2280,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/glitch-scan
 - Łatka gotowa (scratchpad/g875-fix.patch: próbka w obrysie z mapy i <=0,1 m od ściany tablicy): landuse-bare -36, bare-on-cover -47, ale +1 kerb-gap-bare krakowskie-0-0 -60,-170 (ta sama prawdziwa goła szczelina przy krawężniku przechodzi z landuse-bare do kerb-gap-bare przez landuseBareAt); czeka na decyzję użytkownika: accept 1 klucza (bilans -82) albo zmiana landuseBareAt na próbki 0,25 m
+- 16.11 decyzja użytkownika: przyjąć 1 klucz kerb-gap-bare krakowskie-0-0 -60,-170 (bilans −82); łatka na gałęzi #609.
 
 ### G-876 Karta podsumowania na telefonie zakrywa buffy i .gear pod celem
 - Ważność: S4 · Zasięg: telefon, karta .debrief przy aktywnym buffie
