@@ -136,7 +136,10 @@ describe("the ground the map city lays (G-444)", () => {
     // stays as it was (G-853): the strips between the setts and the walls of Krakowskie Przedmieście and
     // the Old Town paved: 169 742 - 161 827 = 7 915 vertices more, the same meshes.
     // No frontage on the map's building sites (G-866): 169 742 - 169 066 = 676 vertices fewer, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 169066, hash: "e520204b" });
+    // W-3's hall dug out (ADR-0082 stage 2): its stairs' and the goods lift's shafts, store S's floor levelled
+    // along the cut corner and the culvert's mouth in the river's bench are holes in the ground and the
+    // zone's paving (`W3_CUTS` with the shafts), their edges new corners: 169 252 - 169 066 = 186 vertices more (as before the frontages), the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 169252, hash: "9430f130" });
     scene.dispose();
   });
 

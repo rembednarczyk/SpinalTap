@@ -8,7 +8,7 @@ import { TRASA_PODZIEMNA_BOUNDS, TRASA_PODZIEMNA_CHUNK, TRASA_PODZIEMNA_PROPS, T
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
 import { METRO_NAV } from "./metro-nav";
 import { CLINIC_DOOR, KOI_DOOR, S7_NAV } from "./interiors";
-import { W3_BOUNDS, W3_CHUNK, W3_NAV, W3_PROPS, W3_SCENERY } from "./tessen-w3";
+import { W3_BOUNDS, W3_CHUNK, W3_CUTS, W3_NAV, W3_PROPS, W3_SCENERY, W3_VAULTS } from "./tessen-w3";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
@@ -164,7 +164,8 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
   // streams in only near the Trybunał and the ground and the district there stay the Rynek's.
   // W-3 (ADR-0082): its hall's boxes, tower, pipeline, quay and fences' solids in one chunk over the
   // Nabrzeże's, after them, so they stream in together from anywhere along the site.
-  { id: W3_CHUNK, district: "doki", bounds: W3_BOUNDS, props: W3_PROPS, actors: [] },
+  // Its basement and culvert lie in the ground under the hall and the terrace (stage 2): dug shafts and rooms in the ground.
+  { id: W3_CHUNK, district: "doki", bounds: W3_BOUNDS, props: W3_PROPS, actors: [], cuts: W3_CUTS, vaults: W3_VAULTS },
   { id: TRASA_PODZIEMNA_CHUNK, district: "kanal", bounds: TRASA_PODZIEMNA_BOUNDS, props: TRASA_PODZIEMNA_PROPS, actors: [] },
 ];
 

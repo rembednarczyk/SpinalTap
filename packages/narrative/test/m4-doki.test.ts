@@ -27,11 +27,11 @@ const hack = (status: Contract["status"], progress?: number): Contract => ({
 });
 
 describe("Genzō (M4, docks)", () => {
-  it("introduces himself once and offers the two jobs of W-3, the escort retired (ADR-0082)", () => {
+  it("introduces himself once and offers the jobs of W-3 and its sabotage, the escort retired (ADR-0082)", () => {
     const { runtime, commands } = setup();
     const view = runtime.start("genzo", domain());
     expect(view.lines[0]).toEqual({ speaker: "Genzō", text: expect.stringContaining("Genzō. Pływam nocą") });
-    expect(view.choices.map((c) => c.text)).toEqual(["Co trzeba wynieść z biura Tessen?", "Który terminal mam złamać?", "Nie teraz."]);
+    expect(view.choices.map((c) => c.text)).toEqual(["Co trzeba wynieść z biura Tessen?", "Który terminal mam złamać?", "Co to za partia dronów?", "Nie teraz."]);
     expect(commands).toEqual([{ type: "set-flag", flag: "met_genzo" }]);
     expect(text(runtime.start("genzo", domain({ flags: ["met_genzo"] })))).not.toContain("Pływam nocą");
   });
@@ -46,6 +46,19 @@ describe("Genzō (M4, docks)", () => {
     expect(view.lines[0]?.speaker).toBe("Seki Senshi");
     expect(text(view)).toContain(says);
     expect(commands).toEqual([{ type: "accept-contract", kind }]);
+  });
+
+  it("offers the sabotage of W-3 once (ADR-0082 stage 3): the flag, then the job; not again after", () => {
+    const { runtime, commands } = setup();
+    runtime.start("genzo", domain({ flags: ["met_genzo"] }));
+    const view = runtime.choose(2);
+    expect(text(view)).toContain("serwerowni N");
+    expect(commands).toEqual([
+      { type: "set-flag", flag: "w3:sabotage-offered" },
+      { type: "accept-contract", kind: "sabotage" },
+    ]);
+    const again = runtime.start("genzo", domain({ flags: ["met_genzo", "w3:sabotage-offered"] }));
+    expect(again.choices.map((c) => c.text)).not.toContain("Co to za partia dronów?");
   });
 
   it("warns about the rooftop shooters once Tessen knows Seki", () => {

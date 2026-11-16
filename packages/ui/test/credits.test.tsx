@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CREDITS, type Credit, DEFAULT_SETTINGS, GameUi, LICENSES, type UiIntents, type UiState, createUiStore } from "../src";
 import { useCredits } from "../src/credits/use-credits";
+import { en } from "../src/i18n/en";
 import { UiContext } from "../src/use-ui";
 
 /** The credits screen (ADR-0063): one list of models and sounds, on the title screen and in the pause menu. */
@@ -25,7 +26,7 @@ describe("credits", () => {
       expect(row!.textContent).toContain(c.title);
       expect(row!.textContent).toContain(c.author);
       const license = LICENSES[c.license];
-      expect(row!.textContent, `${c.id} shows its licence`).toContain("name" in license ? license.name : "the game's own work");
+      expect(row!.textContent, `${c.id} shows its licence`).toContain("name" in license ? license.name : en[license.key]);
     }
     const pole = credits.querySelector('[data-credit="sketchfab-electric-pole"]')!;
     expect(pole.textContent).toBe("Electric pole by Eh (Just_Eh) · CC BY 4.0 · changed for the game");

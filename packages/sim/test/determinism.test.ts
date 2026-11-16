@@ -48,7 +48,7 @@ describe("determinism on the test floor", () => {
   });
 
   it("matches the recorded golden hash (update by hand, with the reason, only when a rule changes)", () => {
-    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"cc9852f4"`);
+    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"d2d12bd1"`);
   });
 
   it("the same run on 'hard' (ADR-0066) ends elsewhere, and the same each time", () => {
@@ -75,6 +75,31 @@ describe("determinism on the test floor", () => {
     play(original, rest);
     play(restored, rest);
     expect(hashOf(restored)).toBe(hashOf(original));
+  });
+
+  it("saved and loaded at every 50th step of the fight, the game goes on as the one saved from (G-883)", () => {
+    // Saved as the game saves (`calmForSave` first, ADR-0029: the street's fear is not saved), each
+    // load goes on to the next save, and the last one to the end: crouched, in the air, aiming,
+    // mid-reload, mid-draw, mid-swing and staggered, as the run is at these steps.
+    const frames = floorScript();
+    const original = floorSim(1234);
+    const loads: { at: number; sim: Simulation }[] = [];
+    const differ: number[] = [];
+    let done = 0;
+    for (const at of [...Array.from({ length: 17 }, (_, i) => 200 + 50 * i), frames.length]) {
+      play(original, frames.slice(done, at));
+      done = at;
+      const last = loads.at(-1);
+      if (last) {
+        play(last.sim, frames.slice(last.at, at));
+        if (hashOf(last.sim) !== hashOf(original)) differ.push(last.at);
+      }
+      if (at === frames.length) break;
+      original.calmForSave();
+      loads.push({ at, sim: Simulation.fromSnapshot(JSON.parse(JSON.stringify(original.snapshot(null, "mid", ""))), undefined, "off", "off", FLOOR) });
+    }
+    expect(loads).toHaveLength(17);
+    expect(differ).toEqual([]);
   });
 });
 

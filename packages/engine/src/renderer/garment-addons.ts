@@ -2,6 +2,7 @@ import type { GarmentMeshId } from "@seki/core";
 import { type AbstractMesh, type Mesh, MeshBuilder, MeshClass, type Scene, type TransformNode } from "../babylon";
 import type { PresetName } from "../npr/presets";
 import type { CharacterRig } from "./character-rig";
+import type { SkinnedGarmentId } from "./garment-assets";
 import { buildPlate } from "./model-apron";
 import type { AnchorBone } from "./model-rig";
 
@@ -54,7 +55,8 @@ const plate = (scene: Scene, name: string): Mesh => {
   return merged;
 };
 
-export const ADD_ONS: Readonly<Record<GarmentMeshId, AddOn>> = {
+/** The rigid add-ons; skinned garments (ADR-0086) are `garment-assets.ts`. */
+export const ADD_ONS: Readonly<Record<Exclude<GarmentMeshId, SkinnedGarmentId>, AddOn>> = {
   visor: {
     preset: "heroineVisor",
     build: (scene, name) => arc(scene, name, 0.19, 0.035, 0.42),

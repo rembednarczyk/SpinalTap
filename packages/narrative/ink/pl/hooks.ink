@@ -65,3 +65,7 @@ Shard, raport serwisowy karabinu: „Strzelec na dachu magazynu po trzecim strza
 === hook_hack_2 ===
 STRAZNIK: Z dachu magazynu nic nie widać pod wysięgnikiem dźwigu. Jak ktoś się tam schowa, snajper może sobie najwyżej popatrzeć.
 -> END
+
+=== hook_sabotage_1 ===
+STRAZNIK: Obchód hali schodzi korytarzem północnym do serwerowni co drugie okrążenie. Poza tym tylko mija drzwi.
+-> END

@@ -57,6 +57,8 @@ export const ncReport = (credits: readonly Credit[]): string => {
     "",
   ];
   if (nc.length === 0) return [...head, "Brak: wszystkie assety gry są na CC0, CC BY albo własne.", ""].join("\n");
-  const rows = nc.map((c) => `| ${c.id} | ${c.title} | ${c.author} | ${c.license} | ${deed(c)} | ${c.files.join(", ") || "-"} |`);
+  // A "|" of a title would split its cell ("Kimi || Desktop Mate Model").
+  const cell = (s: string): string => s.split("|").join("\\|");
+  const rows = nc.map((c) => `| ${c.id} | ${cell(c.title)} | ${cell(c.author)} | ${c.license} | ${deed(c)} | ${c.files.join(", ") || "-"} |`);
   return [...head, "| id | tytuł | autor | licencja | warunki | pliki |", "|---|---|---|---|---|---|", ...rows, ""].join("\n");
 };

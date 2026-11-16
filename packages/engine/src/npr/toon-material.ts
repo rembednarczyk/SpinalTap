@@ -172,9 +172,13 @@ export class ToonMaterials {
     if (this.lights.remove(key)) this.pushLights();
   }
 
-  /** Moves the point slot selection to a new viewpoint. Cheap when nothing changes. */
-  setLightFocus(x: number, z: number): void {
-    if (this.lights.setFocus(x, z)) this.pushLights();
+  /**
+   * Moves the point slot selection to a new viewpoint. Cheap when nothing changes. With `scope`, only
+   * the lights whose key begins with it take a slot (an interior's lamps, ADR-0082 §4); null: every light.
+   */
+  setLightFocus(x: number, z: number, scope: string | null = null): void {
+    const scoped = this.lights.setScope(scope);
+    if (this.lights.setFocus(x, z) || scoped) this.pushLights();
   }
 
   /** The point light registered under a key (tests, debug). */

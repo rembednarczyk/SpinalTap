@@ -165,6 +165,7 @@ export const enWorld = {
   "quest.accepted.escort": "Mika is waiting by Genzō's container. Tessen: {targets}. {pay}",
   "quest.accepted.infiltrate": "Tessen's office, guards: {targets}. No alarm. {pay}",
   "quest.accepted.hack": "The terminal on the quay, then a Tessen wave. {pay}",
+  "quest.accepted.sabotage": "The calibration core in hall W-3, before six. {pay}",
   "quest.ambush": "Tessen ambush",
   "quest.coverMika": "Cover Mika",
   "quest.alarm": "Alarm on Nabrzeże",

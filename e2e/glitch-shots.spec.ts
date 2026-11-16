@@ -12,7 +12,8 @@ import { freeze, step, teleport, newGame, waitForGame, waitForPlay } from "./hel
  * `SHOT_HOUR` (0-23) lets game time pass to that full hour before the first shot, e.g. 12 for
  * daylight; without it the game keeps its starting time (night). `SHOT_MODELS=on` takes them with
  * the character models (Seki's own hands in FPP among them), once every character in range is
- * dressed; without it the models are off.
+ * dressed; without it the models are off. `SHOT_JUMP` (JSON, a part of the domain such as a running
+ * contract and flags) is jumped into before the shots, for a job's look (W-3's line, ADR-0082).
  */
 const listed = process.env.GLITCH_SPOTS ?? "[]";
 const spots = JSON.parse(listed.endsWith(".json") ? readFileSync(listed, "utf8") : listed) as [string, number, number, number, number, number?][];
@@ -54,6 +55,10 @@ test("shots of the hunters' places", async ({ page }) => {
     await step(page, 1);
     const now = await page.evaluate(() => window.__seki!.state().clock);
     expect(Number(now.split(":")[0]), `clock ${now} after waiting for ${hour}:00`).toBe(hour);
+  }
+  if (process.env.SHOT_JUMP) {
+    await page.evaluate((domain) => window.__seki!.jump(domain as never), JSON.parse(process.env.SHOT_JUMP) as object);
+    await step(page, 2);
   }
   for (const [name, x, z, yaw, pitch, y] of spots) {
     await teleport(page, x, z, yaw, pitch, y);

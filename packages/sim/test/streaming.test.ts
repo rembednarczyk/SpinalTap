@@ -340,5 +340,5 @@ describe("world map", () => {
     }
     expect([...districts]).toEqual(["shinsekai-7", "kanal", "targ"]);
     expect(sim.streamer.isLoaded(HOME)).toBe(false);
-  }, 30_000);
+  });
 });

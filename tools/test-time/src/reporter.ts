@@ -12,6 +12,11 @@ import type { FileTime, TimesFile } from "./times.ts";
  * PR #430 (docs/plany/czas-testow.md), so a slower import has to show too. And the time of every
  * test that ran, with its limit, for the gate of single tests (ADR-0083, `gate.ts`).
  *
+ * The limit is the run's own (`testTimeout`, 20 s), never a test's own `timeout`: a test of 50 s
+ * under a `timeout` of 120 s was 42% of its limit and passed the gate, so a higher limit hid a
+ * slow test instead of a faster set-up taking it under (decision of the user, 16.11). A test that
+ * has to take long goes in the list of exceptions with its reason (`exceptions.ts`).
+ *
  * In CI: `vitest run --reporter=default --reporter=./tools/test-time/src/reporter.ts`.
  */
 export default class TestTimeReporter implements Reporter {
@@ -31,7 +36,7 @@ export default class TestTimeReporter implements Reporter {
       const state = test.result().state;
       const diagnostic = test.diagnostic();
       if ((state !== "passed" && state !== "failed") || !diagnostic) continue;
-      this.tests[testId(module.relativeModuleId, test.fullName)] = { ms: Math.round(diagnostic.duration), limitMs: test.options.timeout ?? this.defaultLimitMs };
+      this.tests[testId(module.relativeModuleId, test.fullName)] = { ms: Math.round(diagnostic.duration), limitMs: this.defaultLimitMs };
     }
   }
 
