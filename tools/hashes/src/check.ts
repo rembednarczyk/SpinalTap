@@ -5,9 +5,10 @@
  * `expect` soft (`values.ts`), so one run shows every assertion that fails; the tests themselves
  * are not changed. For each failure: the numbers in it (cuts, meshes, vertices) the same or not,
  * and the new hash. `--write` puts the new hashes in the test files only where the numbers are the
- * same (`--bare` also where the assertion has no numbers, e.g. the determinism hashes), refuses
- * the rest with the difference, and runs the tests again. Exit 0 when nothing fails (after the
- * writing), 1 otherwise.
+ * same (`--bare` also where the assertion has no numbers, e.g. the small world of
+ * `map-ground-golden`), refuses the rest with the difference, and runs the tests again. The
+ * determinism hash is never written (`BY_HAND`, decision of 16.11): it changes only with a rule,
+ * by hand (`vitest -u`). Exit 0 when nothing fails (after the writing), 1 otherwise.
  */
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -16,7 +17,7 @@ import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
 import { repoRoot, withCleanup } from "../../shots/src/checkout.ts";
 import type { Failure, RunReport } from "./reporter.ts";
-import { type Comparison, compare, rewriteHash, softCopy } from "./values.ts";
+import { type Comparison, compare, refusalOf, rewriteHash, softCopy } from "./values.ts";
 
 export const GOLDEN = ["packages/engine/test/ground-cut.test.ts", "packages/engine/test/map-ground-golden.test.ts", "packages/sim/test/determinism.test.ts"] as const;
 const COPY = ".hashes-check.test.ts";
@@ -75,8 +76,8 @@ const write = (rows: readonly Row[]): void => {
   for (const r of rows) {
     const c = r.comparison;
     if (!c || c.verdict === "not-a-hash") continue;
-    if (c.verdict === "numbers-changed") r.refused = `liczby: ${c.numbersChanged.join(", ") || "klucze"}`;
-    else if (c.verdict === "bare" && !opt.bare) r.refused = "bez liczb, potrzebne --bare";
+    const refusal = refusalOf(r.file, c, opt.bare === true);
+    if (refusal) r.refused = refusal;
     else if (blocked.has(r.file)) r.refused = "w pliku pada asercja, która nie jest skrótem";
     if (r.refused) continue;
     let src = readFileSync(join(root, r.file), "utf8");
