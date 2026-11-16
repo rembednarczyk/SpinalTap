@@ -54,7 +54,6 @@ const door = (key: string, x: number, z: number, along: "x" | "z", lock?: DoorLo
  * till the running job's alarm goes up, then shut and stay shut.
  */
 export const LOCKDOWN: DoorLock = { kind: "alarm" };
-const SEALED: DoorLock = { kind: "sealed" };
 
 const corridorZ = ROW_S_ROOMS.maxZ;
 const northZ = S.maxZ;
@@ -65,13 +64,13 @@ export const W3_ROW_S_DOORS: readonly DoorDef[] = [
   door("parts-line", DOORS_S.line, corridorZ, "x", undefined, 2.4),
   door("workshop-1", DOORS_S.w1, corridorZ, "x"),
   door("workshop-2", DOORS_S.w2, corridorZ, "x"),
-  // Stage 3 gives the armoury's doors the job's code (`during: "sabotage"`); till then the outer one is shut.
+  // Stage 3 gives the armoury's doors the job's code (`during: "sabotage"`); till then the outer one is a shut leaf (`shell`).
   door("armoury-s", DOORS_S.armoury, corridorZ, "x"),
-  door("armoury-s-out", DOORS_S.armoury, S.minZ + FACADE_GAP + WALL / 2, "x", SEALED),
   door("server-s", DOORS_S.server, corridorZ, "x", LOCKDOWN),
   door("corridor-s-airlock", AIRLOCK_S_CORRIDOR, northZ, "x"),
   ...HALL_DOORS.map((x, i) => door(`corridor-s-hall-${i + 1}`, x, northZ, "x")),
   door("airlock-s-out", A.minX + WALL / 2, AIRLOCK_S_DOOR, "z"),
+  door("airlock-n-out", A.minX + WALL / 2, AIRLOCK_N_DOOR, "z"),
   door("airlock-s-hall", A.maxX, AIRLOCK_S_DOOR, "z"),
   door("airlock-n-hall", A.maxX, AIRLOCK_N_DOOR, "z"),
   door("stair-n", A.maxX, STAIR_N_DOOR.z, "z", undefined, STAIR_N_DOOR.width),
@@ -124,6 +123,7 @@ const shell = (): StaticProp[] => {
   const bands = Array.from({ length: 9 }, (_, i) => west + t + ((w0 - west - t) * i) / 9);
   return [
     ...wallX(w0, east, south, south + t, 0, H, [doorGap(DOORS_S.armoury, DOOR_W, DOOR_H)]),
+    box(DOORS_S.armoury - DOOR_W / 2, DOORS_S.armoury + DOOR_W / 2, 0, DOOR_H, south + t / 2 - 0.1, south + t / 2 + 0.1, "metal"),
     ...wallZ(south, northZ - t, east - t, east, 0, H),
     ...wallZ(w1, northZ - t, west, west + t, 0, H),
     // Corridor S: its south wall with the rooms' doors, its north wall with the airlock's and the hall's doors.

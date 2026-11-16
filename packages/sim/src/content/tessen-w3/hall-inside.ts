@@ -86,25 +86,19 @@ const chamberWalls = (): StaticProp[] => {
     ...wallX(C.minX + w, C.maxX - o, C.maxZ - w, C.maxZ + t, GALLERY_WINDOW.bottom, R, [window]),
     ...wallX(C.minX + w, C.maxX - o, C.maxZ - w, C.maxZ - o, R, top),
     ...wallZ(C.minZ + w, C.maxZ - w, C.maxX - w, C.maxX - o, 0, top, [{ from: CHAMBER_GATE_E.minZ, to: CHAMBER_GATE_E.maxZ, top: CHAMBER_GATE_E.height }]),
+    box(C.maxX - 0.5, C.maxX - 0.3, 0, CHAMBER_GATE_E.height, CHAMBER_GATE_E.minZ, CHAMBER_GATE_E.maxZ, "metal"),
     box(C.minX + w, C.maxX - w, top - 0.3, top, C.minZ + w, C.maxZ - w, "concrete"),
     // The launch area's pad on the floor, under a knee.
     box(2557, 2563, 0, 0.3, 415, 421, "metal"),
   ];
 };
 
-/** The chamber's gates: from the hall (anyone may pass) and onto the east yard (shut till the drones fly, ADR-0082). */
+/**
+ * The chamber's gate from the hall (anyone may pass); the one onto the east yard is shut till the
+ * drones fly (ADR-0082), a still pair of leaves in its opening (`chamberWalls`).
+ */
 export const W3_CHAMBER_DOORS: readonly DoorDef[] = [
   { key: "door:w3-chamber-w", at: w3(C.minX + 0.25, 0, (CHAMBER_GATE_W.minZ + CHAMBER_GATE_W.maxZ) / 2), along: "z", width: CHAMBER_GATE_W.maxZ - CHAMBER_GATE_W.minZ, height: CHAMBER_GATE_W.height, leaves: 2, thickness: 0.2 },
-  {
-    key: "door:w3-chamber-e",
-    at: w3(C.maxX - 0.4, 0, (CHAMBER_GATE_E.minZ + CHAMBER_GATE_E.maxZ) / 2),
-    along: "z",
-    width: CHAMBER_GATE_E.maxZ - CHAMBER_GATE_E.minZ,
-    height: CHAMBER_GATE_E.height,
-    leaves: 2,
-    thickness: 0.2,
-    lock: { kind: "sealed" },
-  },
 ];
 
 /** The line: the belts (cover for one crouching), the arms' bases on the far side of each, the stations by the aisle, pallets. */

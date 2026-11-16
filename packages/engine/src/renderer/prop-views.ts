@@ -10,7 +10,7 @@ import { type PropView, buildBlock, buildLamp, buildLootBag, buildNeon, buildWat
 import type { ScanVisitor } from "./screen-fx";
 import type { Stage } from "./stage";
 import { InteriorBatches } from "./interior-batch";
-import { W3InteriorCull, W3_REGION, inW3Interior } from "./tessen-w3/w3-interior-cull";
+import { W3InteriorCull, W3_REGION, inW3Hall } from "./tessen-w3/w3-interior-cull";
 
 /** Everything in the world that is not a character: blocks, neon, lamps, water, loot. */
 export type PropDescriptor = Exclude<ViewDescriptor, { kind: "heroine" | "npc" | "enemy" | "crowd" }>;
@@ -138,7 +138,7 @@ export class PropViews {
     switch (view.kind) {
       case "block":
         if (view.interior && !view.skin && !view.slope && !view.rungs) {
-          this.interiors.add(id, view, t.position, inW3Interior(t.position) ? W3_REGION : null);
+          this.interiors.add(id, view, t.position, inW3Hall(t.position) ? W3_REGION : null);
           this.deps.dressing.addBlock(id, view, at);
           this.blocks.set(id, { center: { ...t.position }, size: view.size, material: view.material });
           return;

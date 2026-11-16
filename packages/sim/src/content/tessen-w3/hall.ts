@@ -151,17 +151,19 @@ const lowRoof = (): StaticProp[] => {
     ]),
     box(a.minX, a.maxX, u, r, a.minZ, a.maxZ, "concrete"),
     box(n.minX, h.minX, u, r, n.minZ, n.maxZ, "metal"),
-    box(h.maxX, n.maxX, u, r, n.minZ, n.maxZ, "metal"),
-    box(h.minX, h.maxX, u, r, n.minZ, h.minZ, "metal"),
+    // The roof round the hatch and the wagon gate (8 x 7 m, shut in v1) merged too: two meshes fewer each.
+    ...merged([
+      box(h.maxX, n.maxX, u, r, n.minZ, n.maxZ, "metal"),
+      box(h.minX, h.maxX, u, r, n.minZ, h.minZ, "metal"),
+      box(W3_GATE.x - 0.25, W3_GATE.x, 0, W3_GATE.height, W3_GATE.minZ, W3_GATE.maxZ, "metal"),
+      box(W3_GATE.x - 0.35, W3_GATE.x, W3_GATE.height, W3_GATE.height + 0.5, W3_GATE.minZ - 0.5, W3_GATE.maxZ + 0.5, "metal"),
+    ]),
     // West parapet over the zone, open where the tower's bridge lands.
     railing(a.minX, a.minX + 0.3, a.minZ, W3_BRIDGE_Z.minZ, r),
     railing(n.minX, n.minX + 0.3, W3_BRIDGE_Z.maxZ, n.maxZ, r),
     // North over the pickup yard, east over the east yard.
     railing(n.minX + 0.3, n.maxX, n.maxZ - 0.3, n.maxZ, r),
     railing(n.maxX - 0.3, n.maxX, n.minZ, n.maxZ - 0.3, r),
-    // The wagon gate (8 x 7 m, shut till stage 2) in the airlocks' west wall.
-    box(W3_GATE.x - 0.25, W3_GATE.x, 0, W3_GATE.height, W3_GATE.minZ, W3_GATE.maxZ, "metal"),
-    box(W3_GATE.x - 0.35, W3_GATE.x, W3_GATE.height, W3_GATE.height + 0.5, W3_GATE.minZ - 0.5, W3_GATE.maxZ + 0.5, "metal"),
   ];
 };
 
