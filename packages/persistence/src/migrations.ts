@@ -473,6 +473,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // quiet way at most; one loaded with the alarm up before the virus is in turns loud on its
   // first step (onAlarm in sabotage-system.ts), as a v42 game would.
   41: (old) => ({ ...old, version: 42 }),
+  // v42 -> v43 (G-901): the last shot at the player, optional. A v42 save has none and loads as
+  // before, the street taking her next shot as if nobody had fired at her.
+  42: (old) => ({ ...old, version: 43 }),
 };
 
 export class MigrationError extends Error {}

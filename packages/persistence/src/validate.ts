@@ -49,6 +49,9 @@ export const findSchemaError = (s: Json): string | null => {
   if (!Array.isArray(s.doors) || !s.doors.every((x) => isObject(x) && typeof x.key === "string" && isNum(x.open) && isNum(x.idle))) return "doors";
   // G-171: a profile waiting for the end of a fight, when there is one, is a valid one.
   if (s.pendingDifficulty !== undefined && !isDifficultyProfile(s.pendingDifficulty)) return "pending difficulty";
+  // G-901: the last shot at the player is of no later tick than the save's.
+  const lt = s.lastThreat;
+  if (lt !== undefined && !(isObject(lt) && Number.isInteger(lt.tick) && (lt.tick as number) <= s.tick && (lt.source === undefined || typeof lt.source === "string"))) return "last threat";
   // G-178: a job over whose people are still in the world is a whole contract, as a running one.
   if (s.endedContract !== undefined && findContractOnSiteError(s.endedContract)) return "ended contract";
   // None twice, and none the job in the log or the ended one.
