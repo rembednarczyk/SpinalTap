@@ -28,7 +28,8 @@ describe("the building sites in the game (ADR-0087)", () => {
     expect(zielona?.set).toBe("full");
     const pieces = sitePieces([zielona!]);
     const kinds = new Set(pieces.map((p) => p.prop));
-    expect([...kinds].sort()).toEqual(["site-board", "site-cabin", "site-crane", "site-fence", "site-gate", "site-scaffold"]);
+    // No scaffold: its only wall on the outline carries the board of FRYZURA Z PRZYTUPEM (G-893).
+    expect([...kinds].sort()).toEqual(["site-board", "site-cabin", "site-crane", "site-fence", "site-gate"]);
     const world = Object.values(WORLD_STREET_PROPS)
       .flat()
       .filter((p) => SITE_KINDS.has(p.prop));

@@ -44,7 +44,7 @@ export const TABLES = {
   props: {
     command: "pnpm osm:props",
     outputs: [PROPS_TABLE, SITES_TABLE],
-    entries: ["tools/osm-import/src/props.ts", "tools/osm-import/src/decal-walls.ts", "tools/osm-import/src/game-doors.ts", "tools/osm-import/src/crowd-clear.ts"],
+    entries: ["tools/osm-import/src/props.ts", "tools/osm-import/src/decal-walls.ts", "tools/osm-import/src/venue-boards.ts", "tools/osm-import/src/game-doors.ts", "tools/osm-import/src/crowd-clear.ts"],
     // The districts' tables come in as modules of the closure.
     data: ["data/osm", "data/terrain", "data/orto", "data/gugik", "docs/world/lublin-props.todo.json"],
   },
