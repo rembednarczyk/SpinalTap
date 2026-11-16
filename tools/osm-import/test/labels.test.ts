@@ -17,6 +17,12 @@ describe("chunk streets", () => {
   it("drop a piece cut at the edge under half a metre, where the roads join over the gap anyway", () => {
     expect(chunkStreets([street(99.7, 140)], rect)).toEqual([]);
   });
+
+  it("carry the carriageway's reach each side of the axis where the way has a carriageway (ADR-0080)", () => {
+    const halves = (way: string, line: readonly unknown[]) => (way === "w1" ? line.flatMap(() => [3.25, 3.1]) : undefined);
+    expect(chunkStreets([street(20, 80)], rect, halves)).toEqual([{ name: "Lubartowska", kind: "residential", line: [20, 50, 80, 50], half: [3.25, 3.1, 3.25, 3.1] }]);
+    expect(chunkStreets([{ ...street(20, 80), id: "w2" }], rect, halves)[0]!.half).toBeUndefined();
+  });
 });
 
 describe("chunk service ways (G-140)", () => {

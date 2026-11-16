@@ -1,6 +1,8 @@
 import { BARRIER_OPENINGS, type BarrierKind, type StreetPropItem, barrierLayout } from "../../../packages/core/src";
 import { distanceToBarrier } from "../../../packages/sim/src/content/lublin/barriers";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types";
+import { SQUARE } from "../src/scan-keys.ts";
+import { type LinePiece, pathPieces } from "./world-samples";
 
 /**
  * How much of the map's barriers the game keeps (ADR-0077): the lines the import writes into the
@@ -73,14 +75,26 @@ export const barrierCoverChecks = (chunks: readonly LublinChunkData[], items: re
         const on = s.reduce((n, x) => n + (kept(x.p, l.kind) ? x.len : 0), 0);
         return total >= MIN_LINE && on * 2 < total ? [{ at: near(s[Math.floor(s.length / 2)]!.p), what: `${l.id} ${l.kind} ${on.toFixed(0)} of ${total.toFixed(0)} m` }] : [];
       }),
-    /** The city walls in the chunks the game leaves out: one finding a metre, so the kept metres only grow. */
+    /**
+     * The city walls in the chunks the game leaves out: one finding a metre, so the kept metres only
+     * grow. Rounded in each square of the scan's keys, on the world's 0.5 m grid (`world-samples.ts`):
+     * spread over the whole wall's metres left out, a stretch kept or lost at one end moved the
+     * findings of every other stretch, from one square to the next (G-756).
+     */
     "city-wall-kept": () =>
       lines
         .filter((l) => l.kind === "city-wall")
         .flatMap((l) => {
-          const missing = samples(l.pts).filter((x) => !kept(x.p, l.kind));
-          const metres = Math.round(missing.reduce((n, x) => n + x.len, 0));
-          return Array.from({ length: metres }, (_, k) => ({ at: near(missing[Math.min(missing.length - 1, Math.floor((k * missing.length) / Math.max(1, metres)))]!.p), what: `${l.id} metre ${k + 1} of ${metres} left out` }));
+          const squares = new Map<string, LinePiece[]>();
+          for (const x of pathPieces(l.pts, 0.5)) {
+            if (kept(x, l.kind)) continue;
+            const key = `${Math.floor(Number(x.x.toFixed(0)) / SQUARE)},${Math.floor(Number(x.z.toFixed(0)) / SQUARE)}`;
+            squares.set(key, [...(squares.get(key) ?? []), x]);
+          }
+          return [...squares.values()].flatMap((missing) => {
+            const metres = Math.round(missing.reduce((n, x) => n + x.len, 0) + 1e-9);
+            return Array.from({ length: metres }, (_, k) => ({ at: near(missing[Math.min(missing.length - 1, Math.floor((k * missing.length) / metres))]!), what: `${l.id} metre ${k + 1} of ${metres} left out in its square` }));
+          });
         }),
     /** A wall piece over 0.6 m inside a ruin's outline (`historic=ruins`): its foundations are low walls (G-605). */
     "ruin-wall-height": () =>

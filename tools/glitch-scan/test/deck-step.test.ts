@@ -20,9 +20,10 @@ const scan = (pieces: Piece[], skip?: (p: { x: number; z: number }) => boolean) 
 describe("steps between a bridge's pieces (G-340, G-344)", () => {
   it("finds the edge of a piece over another more than 0.3 m lower, every 0.5 m, a point once", () => {
     const found = scan([road(0), walk(1)]);
-    // The sidewalk's south edge from x 0 to 10: 21 points.
-    expect(found).toHaveLength(21);
-    expect(found[0]).toEqual({ at: "0.0,4.0", what: "deck 1.00 over a deck at 0.00 0.3 m beyond" });
+    // The sidewalk's south edge from x 0 to 10: 20 pieces between the world's 0.5 m grid lines, each sampled at its middle.
+    expect(found).toHaveLength(20);
+    expect(found[0]).toEqual({ at: "0.3,4.0", what: "deck 1.00 over a deck at 0.00 0.3 m beyond" });
+    expect(found[19]!.at).toBe("9.8,4.0");
   });
 
   it("finds nothing at a kerb, off the bridge's edges or skipped", () => {

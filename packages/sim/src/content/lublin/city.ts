@@ -8,6 +8,7 @@ import { buildingView, groundView, markingView, toPoints } from "./index";
 import { type GroundRect } from "./shape";
 import { type BuildingCut, CLEARED, type PassageSite, ROOM_STOREY, type RoomSite, rawHeight } from "./sites";
 import { bridgePieces, flightDeckAt, flightTopAt } from "./decks";
+import { porticoPrisms } from "./porticoes";
 import { SHAPED_TERRAIN, groundY } from "./terrain";
 import type { LublinBuildingData, LublinChunkData, LublinGroundData } from "./types";
 
@@ -36,12 +37,12 @@ export interface SceneryItem {
 
 const insideRect = (r: GroundRect, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
 
-/** Is a surface of the map taken away for a set piece (its centre under one)? */
-const clearedSurface = (pts: readonly GroundPoint[]): boolean => {
-  const cx = pts.reduce((s, p) => s + p.x, 0) / Math.max(1, pts.length);
-  const cz = pts.reduce((s, p) => s + p.z, 0) / Math.max(1, pts.length);
-  return CLEARED.some((r) => insideRect(r, cx, cz));
-};
+/**
+ * Is a surface of the map taken away for a set piece: does it lie wholly under one (every corner
+ * in a rectangle of `CLEARED`)? One reaching past it stays, under the set piece's own paving
+ * (W-3's zone over the riverside wood's lawn, ADR-0082).
+ */
+const clearedSurface = (pts: readonly GroundPoint[]): boolean => pts.length > 0 && pts.every((p) => CLEARED.some((r) => insideRect(r, p.x, p.z)));
 
 type Poly = GroundPoint[];
 
@@ -274,7 +275,7 @@ const oldTownSigns = (prop: StaticProp): StaticProp => (prop.view.kind === "buil
 
 /**
  * The buildings of a chunk that stay, as props (rooms cut into those named by `rooms`, passages and
- * cuts through others). The map's ruin of the Arkady gives way to the Arkady rebuilt (ADR-0074
+ * cuts through others, a portico's columns in front of a landmark). The map's ruin of the Arkady gives way to the Arkady rebuilt (ADR-0074
  * stage 2), Alchemia's own solid on its outline drawn by the engine, in its place in the list, so
  * the ids after it stay as they were; the ruin's outline still holds its place for the content
  * placed by the map's walls (`places.ts`) and on the city's map.
@@ -286,7 +287,10 @@ export const chunkBuildings = (c: LublinChunkData, rooms: readonly RoomCut[], pa
       if (b.id === ARKADY_OSM_ID) return ARKADY_PROP;
       const through = passages.filter((p) => p.building === b.id);
       const boxes = cuts.filter((k) => k.building === b.id);
-      const prop = through.length > 0 || boxes.length > 0 ? carvedProp(b, through, boxes, c.district) : buildingProp(b, rooms.find((r) => r.site.building === b.id), c.district);
+      const carved = through.length > 0 || boxes.length > 0 ? carvedProp(b, through, boxes, c.district) : buildingProp(b, rooms.find((r) => r.site.building === b.id), c.district);
+      // A landmark's portico stands in front of it: its columns are the building's solids too (G-119).
+      const columns = porticoPrisms(b.id, b);
+      const prop = columns.length > 0 ? { ...carved, prisms: [...(carved.prisms ?? []), ...columns] } : carved;
       return c.district === "kanal" ? oldTownSigns(prop) : prop;
     });
 

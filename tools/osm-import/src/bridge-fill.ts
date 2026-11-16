@@ -46,6 +46,48 @@ const gapPiece = (walk: Band, road: Band): readonly Pt[] | null => {
   return fa === fb ? null : ccw([w0, w1, fb, fa]);
 };
 
+/** Whether the two axes run side by side, within `SIDE_BY_SIDE`. */
+const sideBySide = ([wa, wb]: readonly [Pt, Pt], [ra, rb]: readonly [Pt, Pt]): boolean => {
+  const [wl, rl] = [Math.hypot(wb.x - wa.x, wb.z - wa.z), Math.hypot(rb.x - ra.x, rb.z - ra.z)];
+  return Math.abs(((wb.x - wa.x) * (rb.x - ra.x) + (wb.z - wa.z) * (rb.z - ra.z)) / (wl * rl || 1)) >= SIDE_BY_SIDE;
+};
+
+/** The bands on a bridge's deck whose axis has its middle in the outline `ring`. */
+const onOutline = <B extends Band>(bands: readonly B[], ring: readonly Pt[]): B[] =>
+  bands.filter((b) => b.deck && pointInRing({ x: (b.deck[0].x + b.deck[1].x) / 2, z: (b.deck[0].z + b.deck[1].z) / 2 }, ring));
+
+/**
+ * The bands with each sidewalk on a bridge's outline beside its carriageway (side by side, up to
+ * `MAX_GAP` off its edge) laid on the carriageway's deck axis (G-737). A deck is level across its
+ * axis at the terrain's height at its axis's ends, and the map's sidewalk ends 1–3 m off the
+ * carriageway's along the bridge: on the NMT's slope at Mełgiewska's west abutment the sidewalk
+ * lay 0.16 m under the carriageway. On the carriageway's axis the two are level in every cross
+ * section, as one structure with its sidewalk behind the kerb.
+ */
+export const onCarriagewayDecks = <B extends Band>(areas: readonly Area[], bands: readonly B[]): B[] => {
+  const axes = new Map<B, readonly [Pt, Pt]>();
+  for (const a of areas) {
+    if (a.tags.man_made !== "bridge") continue;
+    const on = onOutline(bands, a.ring);
+    const roads = on.filter((b) => b.carriageway);
+    for (const walk of on.filter((b) => !b.carriageway && (b.surface === "sidewalk" || b.surface === "footway" || b.surface === "cobble"))) {
+      let best: { readonly gap: number; readonly road: B } | null = null;
+      for (const road of roads) {
+        const [ra, rb] = road.deck!;
+        if (!sideBySide(walk.deck!, road.deck!)) continue;
+        const half = Math.max(...road.ring.map((p) => lineDistance(p, ra, rb)));
+        const gap = Math.min(...walk.ring.map((p) => lineDistance(p, ra, rb))) - half;
+        if (gap <= MAX_GAP && (best === null || gap < best.gap)) best = { gap, road };
+      }
+      if (best) axes.set(walk, best.road.deck!);
+    }
+  }
+  return bands.map((b) => {
+    const deck = axes.get(b);
+    return deck ? { ...b, deck } : b;
+  });
+};
+
 /**
  * The pieces filling each bridge's outline of the map between a sidewalk on the bridge and the
  * carriageway beside it, of the sidewalk's surface and on its deck. Only straight bands (a

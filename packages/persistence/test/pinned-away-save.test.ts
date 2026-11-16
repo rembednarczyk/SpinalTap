@@ -12,7 +12,7 @@ const wrap = (payload: unknown) => {
 
 const GUARD: EntitySnapshot = {
   key: "c3-g1",
-  position: { x: 2484, y: -28.6, z: 418 },
+  position: { x: 484, y: -28.6, z: -18 },
   yaw: 1.57,
   pitch: 0,
   hp: 120,

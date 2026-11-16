@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
@@ -27,9 +27,16 @@ import { patrolChecks } from "./patrol-pieces";
 import { deckPaint, mapGround } from "./deck-paint";
 import { drawnPieces, pavingOverlapSteps } from "./paving-overlap";
 import { grassUnderPavingFindings } from "./grass-under-paving";
+import { cityWaterWorld, waterUnderGrass } from "./water-under-grass";
 import { groundRingSelfCross, groundStripGap, groundStripOverlap, stripRaster } from "./ground-strips";
+import { entrancesWithoutDoor } from "./entrance-no-door";
+import { osmBollardLineMissing, osmFurnitureMissing } from "./osm-furniture";
+import { loadBollardLines, loadFurniture } from "../../osm-import/src/furniture.ts";
+import { groundOverSteps } from "./ground-over-steps";
 import { addedGrassOffGreen, addedPavingOnGreen } from "./added-grass";
 import { addedSolidOverWay } from "./added-solid-over-way";
+import { albedoSurfaces, orthoPavingKeys, pavingAlbedoDrift, planToGrass } from "./paving-albedo";
+import { readMedians } from "../../orto/src/albedo-medians.ts";
 import { readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { cityRaisedGreenWorld, raisedGreenOnGround } from "./raised-green";
@@ -52,21 +59,46 @@ import { cutOnRoadInGame } from "./cut-on-road";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { type CoverageRegister, hitsPerCell, registerProblems } from "../src/map-coverage.ts";
+import { type FoundKey, type KindDiff, accepted, describeKey, diffKind, fails, formatDiff, keysOf, pruned } from "../src/scan-keys.ts";
+import { baseKinds, dropKind, readKind, writeKind } from "../src/scan-base.ts";
 import { metroLineProtected } from "./metro-line";
+import { lanePieces, segmentPieces } from "./world-samples";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
+import { bareOnCover } from "./bare-on-cover";
+import { lampOnOrtoCarriageway } from "./lamp-on-orto-carriageway";
+import { fillAreaMismatch } from "./fill-area";
+import { fillGap } from "./fill-gap";
+import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
+import { groundUnderPlinth, steepWayCut } from "./terrain-cuts";
+import { generatedCity } from "../../osm-import/test/city.ts";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
+import { crossingGlow, crossingKerb, crossingOverhang, crossingSkew } from "./crossing-shape";
+import { kerbJag } from "./kerb-jag";
 import { kerbStripBare } from "./kerb-strip-bare";
 import { markingSteps } from "./marking-step";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
-import { cityMeasuredTrees, treesBelowMeasured } from "./tree-heights";
+import { canopyWithoutTree } from "./canopy-trees";
+import { deckRings, treesByDeck, treesInStructure } from "./tree-structures";
+import { structuresOf } from "../../osm-import/src/structures.ts";
+import { cityMeasuredPieces, cityMeasuredTrees, treesBelowMeasured, treesRoofCaptured, treesUnmeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
 import { lampsBesideDeck } from "./lamp-deck";
+import { litStreetDark } from "./lit-dark";
+import { lampsFreestandingInCourtyard, squareStyleLeak } from "./lamp-squares";
+import { lampWideStreetOneSide } from "./lamp-sides";
+import { SidewalkIndex, kerbsOf } from "../../osm-import/src/props-lit-sides.ts";
+import { WallIndex, isCourtyard, isPedestrianSquare } from "../../osm-import/src/courtyards.ts";
+import { isLitWay, lampLineOf, litWayGroups } from "../../osm-import/src/props-lit.ts";
+import { litWaysOf, loadLitWays, loadKerbRule, loadPropsPlan } from "../../osm-import/src/props-osm.ts";
+import { Site } from "../../osm-import/src/props-site.ts";
+import { bollardBlocksMouth, kerbBollardDoubleRow, kerbBollardGap } from "./kerb-bollards";
+import { inRowArea } from "../../osm-import/src/props-kerb-lines.ts";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { BUILDING_SURFACE, buildingsOverSurface } from "./surface-heights";
 import { heightsOffLod1, landmarksOffLod1, levelsTagLost, lod1Under } from "./height-lod1";
@@ -77,9 +109,15 @@ import { stepsInclineAgainst } from "./steps-incline";
 import { roadDipsOverTunnels } from "./road-tunnel";
 import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
 import { deckSlots } from "./deck-slot";
+import { bridgeEndsInSlope } from "./bridge-end-slope";
 import { deckSteps } from "./deck-step";
 import { groundOverDeck } from "./ground-over-deck";
+import { seamGaps } from "./seam-gap";
+import { citySeamWorld } from "./seam-world";
 import { abutmentSteps } from "./deck-abutment";
+import { kerbSteps } from "./deck-kerb";
+import { walkBlocked } from "./walk-blocked";
+import { cityWalkWorld } from "./walk-world";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { churchFakeTowers, dataTops, towersOffNmpt } from "./church-towers";
 import { cityBricks, plasteredWalls } from "./wall-materials";
@@ -89,13 +127,15 @@ import { belowGround } from "../../osm-import/src/building-tags.ts";
 import { isTowerTags } from "../../osm-import/src/building-towers.ts";
 import { ADDED_AREAS, TAG_CORRECTIONS, correctedLine } from "../../osm-import/src/corrections.ts";
 import { withoutReplaced } from "../../osm-import/src/corrections-alchemia.ts";
+import { orthoSides } from "../../osm-import/src/corrections-kerb.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
-import { loadEntrances } from "../../osm-import/src/props-doors.ts";
+import { lublinDoorWalls } from "../../osm-import/src/door-walls.ts";
+import { ENTRANCE_REACH, loadEntrances } from "../../osm-import/src/props-doors.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
 import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
@@ -111,18 +151,21 @@ import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, isLandmark } from "..
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
-import { CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PADS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
+import { CLEARED, CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PADS, PASSAGES, ROOM_SITES, ROOM_STOREY, rawHeight } from "../../../packages/sim/src/content/lublin/sites";
+import { W3_BARRIERS, W3_UNSEEN_WALLS } from "../../../packages/sim/src/content/tessen-w3";
+import { W3_BASIN, W3_BASIN_MOUTH } from "../../../packages/sim/src/content/tessen-w3/site";
+import { type SolidBox, isWater, padsInWater, padsNotLevel, pathsCutByCleared, propsInWater, unseenWallsOnDeck } from "./w3-checks";
 import { ALCHEMIA_RAMPS } from "../../../packages/sim/src/content/alchemia/terraces";
 import { mapHeight } from "../../../packages/sim/src/content/lublin/shape";
-import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
+import { groundY, surfaceY, w3Grid } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
-import { DECK_DEPTH, DECK_HEADROOM, type GroundDeck, deckAt, deckHeight } from "../../../packages/sim/src/world/deck";
+import { DECK_DEPTH, DECK_HEADROOM, type GroundDeck, deckAt, deckHeight, makeDeck } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
 import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movement-system";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
-import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
+import { GAME_PROPS, WORLD_STREET_PROPS, clearOfGame } from "../../../packages/sim/src/content/street-props";
 import { WORLD_BARRIERS } from "../../../packages/sim/src/content/world-barriers";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
 import { alchemiaRampLanes, streetSegments } from "../../../packages/sim/src/content/traffic-ramp";
@@ -130,16 +173,19 @@ import { rampCarsOffLane } from "./ramp-cars";
 import { CAR_MODELS, CITY_ROUTES, MIN_ROUTE, TRAFFIC_LANES, TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
 
 /**
- * The glitch scan (ADR-0054): the map's known kinds of glitch counted over the whole city, each
- * against its baseline in `glitch-baseline.json`. A count over its baseline is a regression and
- * fails; a count under it is a fix, and the baseline comes down with it (`GLITCH_BASELINE=update
- * pnpm vitest run tools/glitch-scan`), so it only ever ratchets down.
+ * The glitch scan (ADR-0054): the map's known kinds of glitch found over the whole city, each
+ * finding keyed by its place (`src/scan-keys.ts`: the chunk and the place on the kind's grid) and
+ * checked against the kind's known keys in `baseline/<kind>.txt`. A new key fails, even when the
+ * kind's sum comes down; a key gone is a fix, and `GLITCH_BASELINE=update` removes it from the
+ * base (it never adds one); `GLITCH_BASELINE=accept` takes the new keys in and prints them, for a
+ * raise made on purpose (README.md).
  * Each finding's place goes to `reports/glitch-scan.json` for the hunters (ADR-0054).
  */
 
 type Finding = { readonly at: string; readonly what: string };
 
-const BASELINE = join(__dirname, "glitch-baseline.json");
+/** The scan's base, a file of known keys a kind (`src/scan-base.ts`). */
+const BASE = join(__dirname, "baseline");
 /** The map data the city is generated from (ADR-0042), for what the import may lose. */
 const OSM_DIR = join(__dirname, "../../../data/osm");
 const SOURCE_OSM = mergeOsm(
@@ -200,9 +246,19 @@ const underVault = (p: (typeof PASSAGES)[number], x: number, z: number): { s: nu
 /** The statues of Plac Litewski among the landmarks of the curator's audits; the buildings are `LANDMARK_BUILDINGS` of the import. */
 const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 
+/** The groups whose lines the lamps stand along: the plan with the `lit` rule's, and every lit way the rule may lamp (`lamp-off-band`, `lamp-beside-deck`). */
+let lampPlan: PlanGroup[] | undefined;
+const LAMP_PLAN = (): PlanGroup[] => {
+  if (lampPlan) return lampPlan;
+  const plan = loadPropsPlan();
+  return (lampPlan = [...plan.items, ...litWayGroups(plan, loadLitWays())]);
+};
 /** The surfaces a lamp of the plan stands on or beside (`lamp-off-band`). */
 const PAVED: ReadonlySet<string> = new Set(["road", "crossing", "sidewalk", "square", "cobble", "footway", "steps"]);
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
+/** The game's ground, NaN off the map's chunks (where `groundY` is 0, no ground of the map). */
+const onMapGround = (x: number, z: number): number =>
+  MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ) ? groundY(x, z) : Number.NaN;
 
 /** The wall lantern's model, plate and arm and lantern, in the piece's frame. */
 const LANTERN_MODEL = (() => {
@@ -525,19 +581,19 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A car lane off every road surface (on grass, a square, a pavement), away from the map's edges.
    * Lane by lane, so a junction's join does not move the samples; the joins' arcs, straight on too,
-   * have `turn-off-road`.
+   * have `turn-off-road`. Sampled on the world's 3 m grid (`world-samples.ts`, G-756).
    */
   "car-lane-off-road": () =>
-    carLanes.flatMap((r) => along(r, 3).filter((p) => inMap(p.x, p.z) && !surfacesAt(p.x, p.z).some((s) => s === "road" || s === "crossing" || s === "cobble")).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
+    carLanes.flatMap((r) => lanePieces(r.points, 3).filter((p) => inMap(p.x, p.z) && !surfacesAt(p.x, p.z).some((s) => s === "road" || s === "crossing" || s === "cobble")).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
   /**
-   * A point of a lane (every use, every metre) with no paving under it at all, or where the
-   * ground the simulation walks (`GroundField`) and the map's `groundY` part by over 0.2 m: off
-   * the map, where the one takes the nearest chunk and the other 0 (G-138). The edges too, unlike
-   * `car-lane-off-road`.
+   * A point of a lane (every use, on the world's 1 m grid, `world-samples.ts`) with no paving
+   * under it at all, or where the ground the simulation walks (`GroundField`) and the map's
+   * `groundY` part by over 0.2 m: off the map, where the one takes the nearest chunk and the other
+   * 0 (G-138). The edges too, unlike `car-lane-off-road`.
    */
   "lane-off-ground": () =>
     TRAFFIC_LANES.flatMap((r) =>
-      along(r, 1)
+      lanePieces(r.points, 1)
         .filter((p) => surfacesAt(p.x, p.z).length === 0 || Math.abs(FIELD.heightAt(p.x, p.z) - groundY(p.x, p.z)) > 0.2)
         .map((p) => ({ at: near(p.x, p.z), what: `${r.id} at ${p.s.toFixed(0)}` })),
     ),
@@ -589,8 +645,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         );
       });
     }),
-  /** A lane through a building's solid (a delivery van too), its passages aside. */
-  "lane-in-building": () => TRAFFIC_ROUTES.flatMap((r) => along(r, 1).filter((p) => inBuilding(p.x, p.z) && !inPassage(p.x, p.z)).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
+  /** A lane through a building's solid (a delivery van too), its passages aside, on the world's 1 m grid (`world-samples.ts`). */
+  "lane-in-building": () => TRAFFIC_ROUTES.flatMap((r) => lanePieces(r.points, 1).filter((p) => inBuilding(p.x, p.z) && !inPassage(p.x, p.z)).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
   /**
    * A turn of a route (round before a block or at a dead end) or an arc from lane to lane at a
    * junction (ADR-0055, straight on too) with a point off every road surface or in a building,
@@ -689,10 +745,27 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const pieces = Object.values(WORLD_STREET_PROPS).flat();
     // Other furniture and other posts than the one holding the chain and the one it ends at.
     const solids = pieces.filter((i) => furnitureRadius(i) > 0);
+    // A grid of the solids (5 m cells): a chain asks only the cells within its reach, not all of
+    // the city's furniture (with the kerb rows of G-820 the whole list ran past the test's limit).
+    const CELL = 5;
+    const reach = 4 + Math.max(0, ...solids.map(furnitureRadius));
+    const grid = new Map<string, typeof solids>();
+    for (const o of solids) {
+      const k = `${Math.floor(o.x / CELL)},${Math.floor(o.z / CELL)}`;
+      const cell = grid.get(k);
+      if (cell) cell.push(o);
+      else grid.set(k, [o]);
+    }
+    const nearSolids = (x: number, z: number): typeof solids => {
+      const out: typeof solids = [];
+      for (let cx = Math.floor((x - reach) / CELL); cx <= Math.floor((x + reach) / CELL); cx++)
+        for (let cz = Math.floor((z - reach) / CELL); cz <= Math.floor((z + reach) / CELL); cz++) out.push(...(grid.get(`${cx},${cz}`) ?? []));
+      return out;
+    };
     return pieces.flatMap((i) =>
       chainSegments(i).flatMap(({ from, to }) => {
         const wall = alongSegment(from, to, 0.1).find((p) => inBuilding(p.x, p.z));
-        const hit = solids
+        const hit = nearSolids(i.x, i.z)
           // The post or the lamp a chain hangs on is its end, not in its way.
           .filter((o) => o !== i && !(o.prop === "bollard" ? distanceToPiece(o, to.x, to.z) <= 0.2 : anchors(o, to)))
           .filter((o) => Math.hypot(o.x - i.x, o.z - i.z) < 4 + furnitureRadius(o) && chainThrough(from, to, o))
@@ -708,10 +781,24 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .filter((i) => i.prop === "bollard")
       .flatMap((i) => {
         const close = BANDS.filter((b) => Math.hypot(b.c.x - i.x, b.c.z - i.z) < b.along + b.across + 4);
-        const post = close.some((b) => inCrossingBand(b, i, BOLLARD.side / 2));
+        const post = close.some((b) => inCrossingBand(b, i, BOLLARD.radius));
         const chain = chainSegments(i).some((s) => close.some((b) => alongSegment(s.from, s.to, 0.1).some((p) => inCrossingBand(b, p))));
         return post || chain ? [{ at: near(i.x, i.z), what: post ? "bollard" : "chain" }] : [];
       }),
+  /** A bollard or its chain in the mouth of a drive, a passage, a gate, a door or a bus stop's vehicles (G-820, `kerb-bollards.ts`). */
+  "bollard-blocks-mouth": () => bollardBlocksMouth(new Site(MAP_CHUNKS), MAP_CHUNKS, Object.values(WORLD_STREET_PROPS).flat()),
+  /** A stretch of a car street's kerb in the centre over 6 m with no bollard and no reason of the rule to break its row (G-820, `kerb-bollards.ts`). */
+  "kerb-bollard-gap": () => kerbBollardGap(new Site(MAP_CHUNKS), MAP_CHUNKS, Object.values(WORLD_STREET_PROPS).flat(), BANDS, loadKerbRule(), (p) => !clearOfGame(p.x, p.z, BOLLARD.radius)),
+  /** A post of the kerb rule 1–2.5 m beside a row of OSM's posts: two rows where OSM maps one (G-820 P1, `kerb-bollards.ts`). */
+  "kerb-bollard-double-row": () =>
+    kerbBollardDoubleRow(
+      Object.values(WORLD_STREET_PROPS).flat(),
+      loadFurniture()
+        .filter((f) => f.tag === "barrier=bollard")
+        .map((f) => f.p),
+      loadBollardLines().map((l) => l.pts),
+      inRowArea,
+    ),
   /** A piece of furniture (wall lanterns aside, they hang on a facade) standing more than 0.5 m inside a building. */
   "furniture-in-building": () =>
     Object.values(WORLD_STREET_PROPS)
@@ -802,7 +889,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return carStreets.flatMap((r) => {
         if (r === by) return [];
         const q = projectOn(r.points, c.x, c.z);
-        return q.d < roadHalfWidth(r.points, q.side >= 0 ? 1 : -1) + 0.5 ? [{ at: near(c.x, c.z), what: `${c.model} by ${by.name} ${q.d.toFixed(1)} m from ${r.name}` }] : [];
+        return q.d < roadHalfWidth(r, q.side >= 0 ? 1 : -1) + 0.5 ? [{ at: near(c.x, c.z), what: `${c.model} by ${by.name} ${q.d.toFixed(1)} m from ${r.name}` }] : [];
       });
     }),
   /**
@@ -1110,10 +1197,45 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       skip: (p) => p.x >= 728.5 && p.x <= 735.1 && p.z >= 157.5 && p.z <= 163.8,
     }),
   /**
+   * A pair of neighbouring cells (raster 0.25 m) of the walked surfaces between which a walker
+   * does not get either way (`walkStep`, ADR-0080): a ledge over 0.45 m up or 0.35 m down, a bank
+   * steeper than tg 35° off steps, along a way of the map whose axis is blocked there itself
+   * (`walk-axes.ts`). Not the edges the model means: walls, barriers, a deck's sides over lower
+   * ground, a way under a deck, T-147, Alchemia's terraces (`walk-blocked.ts`, `walk-world.ts`).
+   */
+  "walk-blocked": () => walkBlocked(MAP_CHUNKS, cityWalkWorld(extractFeatures(SOURCE_OSM).lines)),
+  /**
    * A point (every 0.25 m) under a bridge's piece where the ground the game walks is more than
    * 0.01 m over the deck (G-686): the terrain shows through the deck's paving as a grey patch.
    */
   "ground-over-deck": () => groundOverDeck([...BRIDGE_DECKS.values()].flat(), bridgeDeckAt, groundY),
+  /**
+   * A point (every 0.25 m on the world's grid) of a seam of two chunks where their terrain parts by
+   * more than 0.05 m (G-748, the curator's review of PR #502, G-758): a ledge or a slot in the ground. Not
+   * under a slab, a deck or a solid of a scene level with the higher side (the Arkady's pavement).
+   */
+  "seam-gap": () => seamGaps(MAP_CHUNKS, citySeamWorld()),
+  /**
+   * An end of a bridge's deck axis more than 0.5 m under the terrain within 2.5 m on past it along
+   * the axis (G-739): the end lies down the bank of the valley, and the deck, level at its ends'
+   * terrain, tilts down to it off the street's level. Not a node another deck goes on from.
+   */
+  "bridge-end-in-slope": () => bridgeEndsInSlope([...BRIDGE_DECKS.values()].flat(), rawHeight),
+  /**
+   * A point (every 0.5 m) of a bridge's sidewalk more than 0.05 m off the carriageway beside it in
+   * the same cross section (G-737): in Lublin the sidewalk behind the kerb is level with it.
+   */
+  "deck-kerb-step": () => {
+    const seen = new Set<string>();
+    const pieces = MAP_CHUNKS.flatMap((c) =>
+      c.ground.flatMap((g) => {
+        if (!g.deck || seen.has(g.outline.join(","))) return [];
+        seen.add(g.outline.join(","));
+        return [{ ...makeDeck(g.outline, g.deck, rawHeight), surface: g.surface }];
+      }),
+    );
+    return kerbSteps(pieces, deckHeight);
+  },
   /** A run of map steps between two parallel walls further apart than the steps the game lays plus 1 m (G-203). */
   "steps-narrower-than-walls": () => {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
@@ -1152,6 +1274,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       (p) => onChunk(p.x, p.z),
     ),
   /**
+   * A point of a building's outline where the game's ground lies over 0.05 m under its foot (the
+   * lowest NMT point under it): a terrain cut beside a building leaves it floating (G-755 review).
+   */
+  "ground-under-plinth": () => groundUnderPlinth([...new Map(MAP_CHUNKS.flatMap((c) => c.buildings).map((b) => [b.id, b])).values()], onMapGround),
+  /** A stretch of a way laid at an even grade (G-755) cut over 2 m under the NMT, on its axis or its band 5 m wide (`terrain-cuts.ts`). */
+  "steep-way-cut": () => steepWayCut([...new Map(MAP_CHUNKS.flatMap((c) => c.steepWays ?? []).map((w) => [w.id, w])).values()], onMapGround, rawHeight, [-2.5, -1.25, 0, 1.25, 2.5]),
+  /**
    * A flight's ramp (G-236) lifting the terrain over 2 m above the map's at an end: a wrong
    * `incline` in a new extract (`osm:fetch`) would raise a mound up the flight unnoticed.
    */
@@ -1186,13 +1315,38 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A lamp of the plan's lines more than 0.5 m off the paving (G-477): on the lawn by Zamkowa's causeway, in the Carmelites' garden. */
   "lamp-off-band": () => {
     const paving = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => PAVED.has(g.surface)).map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
-    const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
-    return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, pavedAt(paving));
+    return lampsOffBand(Object.values(LUBLIN_STREET_PROPS).flat(), LAMP_PLAN(), pavedAt(paving));
   },
   /** A lamp of the plan's line over a bridge 1.5 m or more under the deck beside it or over it (G-503, G-507): on the valley's ground by Zamkowa's viaduct, on its abutment's bank. */
-  "lamp-beside-deck": () => {
+  "lamp-beside-deck": () => lampsBesideDeck(Object.values(LUBLIN_STREET_PROPS).flat(), LAMP_PLAN(), bridgeDeckAt),
+  /**
+   * A way OSM tags `lit=yes` more than 30 m from every lamp of the game, sampled every 5 m (G-798):
+   * the `lit` rule (ADR-0064 stage 3, `props-lit.ts`) lamps the lit ways the plan's lines left dark.
+   */
+  "lit-street-dark": () => litStreetDark(loadLitWays(), Object.values(LUBLIN_STREET_PROPS).flat(), onChunk),
+  /** A lamp on the orthophoto's asphalt further than 0.5 m from its edge: in a carriageway the import draws narrower than it is (G-821, `lamp-on-orto-carriageway.ts`). */
+  "lamp-on-orto-carriageway": () => lampOnOrtoCarriageway(Object.values(LUBLIN_STREET_PROPS).flat(), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A lamp on a post inside a courtyard, a pedestrian square whose outline runs along the game's buildings for 70% (`lamp-squares.ts`, Dziedziniec Zamkowy). */
+  "lamp-freestanding-in-courtyard": () => {
+    const walls = new WallIndex(MAP_CHUNKS.flatMap((c) => c.buildings).map((b) => worldOutline(b)));
+    const courts = [...SOURCE_OSM.ways.values()]
+      .filter((w) => isPedestrianSquare(w.tags) && w.nodes.length >= 4 && w.nodes[0] === w.nodes[w.nodes.length - 1])
+      .map((w) => ({ id: `w${w.id}`, ring: wayPoints(w.nodes) }))
+      .filter((c) => isCourtyard(c.ring, walls));
+    return lampsFreestandingInCourtyard(Object.values(LUBLIN_STREET_PROPS).flat(), courts);
+  },
+  /** A candelabrum more than 12 m from the plan's candelabra lines: Plac Zamkowy's look carried onto the streets beside it (`lamp-squares.ts`, Podwale). */
+  "lamp-square-style-leak": () => {
     const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: PlanGroup[] };
-    return lampsBesideDeck(Object.values(LUBLIN_STREET_PROPS).flat(), plan.items, bridgeDeckAt);
+    const lines = plan.items.filter((g) => g.kind === "lamp-candelabra").flatMap((g) => [...(g.line ? [g.line] : []), ...(g.lines ?? [])]).map((f) => Array.from({ length: Math.floor(f.length / 2) }, (_, i) => ({ x: f[2 * i]!, z: f[2 * i + 1]! })));
+    return squareStyleLeak(Object.values(LUBLIN_STREET_PROPS).flat(), lines);
+  },
+  /** A lit side street with sidewalks on both sides 14 m or more apart whose lamps stand on one side (`lamp-sides.ts`, G-804: Narutowicza). */
+  "lamp-wide-street-one-side": () => {
+    const walk = (t: Record<string, string> | undefined) => ["footway", "path", "cycleway"].includes(t?.highway ?? "") && t?.footway !== "crossing" && t?.cycleway !== "crossing" && t?.area !== "yes";
+    const sidewalks = new SidewalkIndex(litWaysOf(SOURCE_OSM, walk).map((w) => w.pts));
+    const side = litWaysOf(SOURCE_OSM, isLitWay).filter((w) => lampLineOf(w.tags)?.kind === "lamp-road" && lampLineOf(w.tags)?.sides === 1 && w.pts.every((p) => onChunk(p.x, p.z)));
+    return lampWideStreetOneSide(side.map((w) => ({ ...w, kerbs: kerbsOf(w.pts, sidewalks) })), Object.values(LUBLIN_STREET_PROPS).flat());
   },
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
@@ -1258,9 +1412,40 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "pad-on-road": () =>
     padOnRoadFindings(
       [...PADS.map((p, i) => ({ name: `pad ${p.row ?? i}`, pads: [p], ramps: [] })), ...ALCHEMIA_RAMPS.map((r, i) => ({ name: `Alchemia's ramp ${i}`, pads: [], ramps: [r] }))],
-      MAP_CHUNKS,
+      // The grids the game shapes: refined under W-3 first (ADR-0082, `terrain.ts`).
+      MAP_CHUNKS.map((c) => ({ bounds: c.bounds, terrain: w3Grid(c.terrain) })),
       extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags)),
     ),
+  /** A pad, with its blend, over the map's water off W-3's basin mouth (ADR-0082, audit before stage 1). */
+  "pad-in-water": () =>
+    padsInWater(
+      PADS,
+      extractFeatures(SOURCE_OSM).areas.filter((a) => isWater(a.tags)),
+      [W3_BASIN_MOUTH],
+    ),
+  /** Street furniture standing in the map's water on the terrain, off the bridges (ADR-0082 audit; G-835). */
+  "prop-in-water": () =>
+    propsInWater(
+      Object.values(WORLD_STREET_PROPS).flat(),
+      extractFeatures(SOURCE_OSM).areas.filter((a) => isWater(a.tags)),
+      groundY,
+      (x, z) => bridgeDeckAt(x, z) !== null,
+    ),
+  /** A pad's ground off its level beside a floor-level solid of the game: a groove by a quay's wall (ADR-0082 review round 2). */
+  "pad-not-level": () =>
+    padsNotLevel(
+      PADS,
+      groundY,
+      GAME_PROPS.flatMap((p): SolidBox[] =>
+        p.solid && p.view.kind === "block"
+          ? [{ minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2, top: p.center.y + p.view.size.y / 2 }]
+          : [],
+      ),
+    ),
+  /** An unseen wall of the game over a bridge's deck (ADR-0082 review round 2). */
+  "unseen-wall-on-deck": () => unseenWallsOnDeck(W3_UNSEEN_WALLS, bridgeDeckAt),
+  /** A street or footway of the map running into a set piece's cleared ground or its basin, or across W-3's fence off its gates (ADR-0082 audit). */
+  "path-cut-by-cleared": () => pathsCutByCleared(extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags)), [...CLEARED, W3_BASIN], W3_BARRIERS),
   /** Alchemia's solids hiding a landmark's top from more than a quarter of the streets round it (ADR-0074, review of #312). */
   "game-solid-landmark-occlusion": () => alchemiaHidesLandmarks(),
   /** A building the investor's plan keeps (the Arkady, the shed by them) without a solid on its OSM outline (ADR-0074 §11). */
@@ -1809,13 +1994,14 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * A building or a lifted part with fractional `building:levels` and no height whose walls over
    * its plinth (a part's from the building's base, as the map counts its storeys) top the storeys'
    * `levels × 3.2 m` (a shop floor 0.8 m more) by more than 0.5 m: the half storey rounded up to a
-   * whole one (G-116). A height measured in GUGiK LoD1 or LoD2 (`source: "lod1"`, `"lod2"`) is not counted in storeys.
+   * whole one (G-116). A height measured in GUGiK LoD1 or LoD2 (`source: "lod1"`, `"lod2"`) or set by a
+   * correction from them (`source: "height"`, `corrections-landmarks.ts`) is not counted in storeys.
    */
   "fractional-levels-rounded": () =>
     MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))).flatMap((b) => {
       const t = osmTags(b.id);
       const levels = Number((t["building:levels"] ?? "").replace(",", "."));
-      if (b.source === "lod1" || b.source === "lod2" || t.height !== undefined || t["building:height"] !== undefined || !Number.isFinite(levels) || Number.isInteger(levels)) return [];
+      if (b.source === "lod1" || b.source === "lod2" || b.source === "height" || t.height !== undefined || t["building:height"] !== undefined || !Number.isFinite(levels) || Number.isInteger(levels)) return [];
       const walls = b.height - b.plinth;
       const shop = b.use === "commercial" || b.shopfront === true ? 0.8 : 0;
       return walls > levels * 3.2 + shop + 0.5 ? [{ at: near(b.x, b.z), what: `${b.id} building:levels=${t["building:levels"]}: walls ${walls.toFixed(1)} m` }] : [];
@@ -1825,7 +2011,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * more inside the chunks, off zebras) gone under the asphalt of the street it runs along (G-082):
    * the nearest carriageway within 15 m runs parallel to it (|cos| > 0.9), its axis is closer than
    * half the street's width from the map's tags, and the game's ground there is road with no
-   * sidewalk or footway on it. One finding per metre.
+   * sidewalk or footway on it. One finding per piece between the world's 1 m grid lines (`world-samples.ts`, G-756).
    */
   "sidewalk-under-carriageway": () => {
     const lines = extractFeatures(SOURCE_OSM).lines;
@@ -1854,9 +2040,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         const a = l.line[i]!;
         const len = Math.hypot(b.x - a.x, b.z - a.z);
         const out: Finding[] = [];
-        for (let s = 0.5; s < len; s += 1) {
-          const x = a.x + ((b.x - a.x) * s) / len;
-          const z = a.z + ((b.z - a.z) * s) / len;
+        for (const { x, z } of segmentPieces(a, b, 1)) {
           if (!deep(x, z)) continue;
           const surfaces = surfacesAt(x, z);
           if (surfaces.includes("crossing") || !surfaces.includes("road") || surfaces.includes("sidewalk") || surfaces.includes("footway")) continue;
@@ -1872,10 +2056,25 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * A metre of a footway mapped on its own (`highway=footway`, not a crossing, off bridges and
    * tunnels, 3 m and more inside the chunks) that the asphalt of the street it runs along covers
    * (G-655): the nearest carriageway within 15 m runs parallel to it (|cos| > 0.9), its axis is
-   * closer than half the street's width from the map's tags, and the game's ground there is road
-   * and the footway's paving at once. One finding per metre.
+   * closer than half the street's width from the map's tags, and the game's ground there is the
+   * asphalt alone: the ground a partition (ADR-0078 step 3), the asphalt cut the footway's band
+   * away (before it, road and the footway's paving at once). One finding per piece between the world's 1 m grid lines (`world-samples.ts`, G-756).
    */
   "footway-on-carriageway": () => footwaysOnCarriageway(),
+  /**
+   * A zigzag or step of 0.1 m and more within 3 m of arc in the kerb the game draws (the edges of
+   * the sidewalk pieces facing a carriageway), off the places where the map's street axis zigzags
+   * itself (`kerb-jag.ts`, the user's question of 15.11). One finding a vertex, in 10 m squares.
+   */
+  "kerb-jag": () => kerbJag(MAP_CHUNKS, ROAD_CHAINS.map((c) => c.points)),
+  /** A carriageway zebra more than 5 degrees off the perpendicular to its street (`crossing-shape.ts`). */
+  "crossing-shape-skew": () => crossingSkew(MAP_CHUNKS, ROAD_CHAINS.map((c) => c.points)),
+  /** A zebra whose stripes (0.3 m2 and more) lie outside its piece (`crossing-shape.ts`). */
+  "crossing-shape-overhang": () => crossingOverhang(MAP_CHUNKS),
+  /** A zebra whose cyan edge lines (3 m and more) lie off the carriageway, cobbles and squares (`crossing-shape.ts`). */
+  "crossing-shape-glow": () => crossingGlow(MAP_CHUNKS),
+  /** A zebra whose end is more than 0.15 m off the kerb along its axis (`crossing-shape.ts`). */
+  "crossing-shape-kerb": () => crossingKerb(MAP_CHUNKS),
   /** A metre of a fitted street's edge (T-046, G-655) with a metre and more of bare ground before the lawn or pavement past it (`kerb-strip-bare.ts`). */
   "kerb-strip-bare": () =>
     kerbStripBare({
@@ -1901,8 +2100,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A street narrowed to its mapped sidewalks (G-082) although they run along less than half of it
    * on either side (G-112): the width came from where a sidewalk turns in to a junction's crossing.
+   * A width measured on the orthophoto (ADR-0080 PR 10) is no fit to the sidewalks.
    */
-  "kerb-fit-sparse": () => FITTED().flatMap((r) => (r.cover * 2 < 1 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m, sidewalks along ${(r.cover * 100).toFixed(0)} %` }] : [])),
+  "kerb-fit-sparse": () => FITTED().flatMap((r) => (r.cover * 2 < 1 && !orthoSides(r.id) ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m, sidewalks along ${(r.cover * 100).toFixed(0)} %` }] : [])),
   /** A two-way street (no `oneway`) narrowed to its mapped sidewalks below two 2.25 m lanes (G-113). */
   "two-way-fit-narrow": () => FITTED().flatMap((r) => (!r.oneway && r.width < 4.4 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m` }] : [])),
   /** A venue's board (ADR-0064 stage 4) reaching into the building next door, which stands out in front of its wall (G-159). */
@@ -1936,6 +2136,19 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "edge-building-dropped": () => edgeBuildingsDropped(osmBuildings(SOURCE_OSM), LUBLIN_CHUNKS.map((c) => c.bounds), new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => b.id)))),
   /** A point of a 0.5 m grid on bare terrain in a shops' or market's area, by a shop's or public building's walls or at a stop (`landuse-bare.ts`, decision 5.11). */
   "landuse-bare": () => landuseBare(cityLanduseWorld(SOURCE_OSM)),
+  /** A `landuse-bare` sample the orthophoto's cover shows green or light paving: what the import lays a lawn or paving on (ADR-0077 step 1.1, `bare-on-cover.ts`). */
+  "bare-on-cover": () => bareOnCover(landuseBare(cityLanduseWorld(SOURCE_OSM)), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A 0.5 m sample of the orthophoto's green under the paving the bare ground rule laid: a lawn taken for a square (ADR-0077 step 1.2, T-285, `fill-on-green.ts`). */
+  "fill-on-green": () => fillOnGreen(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A 0.5 m sample under a lawn the bare ground rule laid that the leaf-off flight shows as paving under crowns: a pavement under trees taken for a tree's bed (G-764, `fill-on-green.ts`). */
+  "lawn-on-leafoff-paving": () => lawnOnLeafOffPaving(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A piece the bare ground rule laid whose triangles cover other than its area by over 0.01 m²: a ring touching itself (G-764, `fill-area.ts`). */
+  "fill-area-mismatch": () => fillAreaMismatch(generatedCity().stats),
+  /** A hole under 0.5 m² between the pieces the bare ground rule laid that nothing else covers: dark terrain between two fills (G-769, `fill-gap.ts`). */
+  "fill-gap": () => {
+    const city = generatedCity();
+    return fillGap(city.stats, city.chunks);
+  },
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => kerbGapBare(cityKerbWorld(SOURCE_OSM)),
   /** A point of a 0.25 m grid in a pavement no paving of the map explains, a metre wide and more, by a carriageway the map gives no width: its asphalt laid as a pavement (`kerb-fill.ts`, G-570). */
@@ -1947,6 +2160,16 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * baseline's are by walls: their crowns grow only as far as clear of the facades.
    */
   "tree-height-vs-nmpt": () => treesBelowMeasured(cityMeasuredTrees(), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A tree drawn at the random size of its seed: no OSM `height` and no surface model over it (`tree-heights.ts`, audit of ADR-0077 gap 4). */
+  /** A tree sized by the eaves of a building past its OSM outline, not by its crown: its height over the reading 2 m off the outlines by more than 3 m (`tree-heights.ts`). */
+  "tree-roof-capture": () => treesRoofCaptured(),
+  "tree-unmeasured": () => treesUnmeasured(cityMeasuredPieces(Object.values(WORLD_STREET_PROPS).flat()), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A 10 m square with 40 m² of crown or more on the orthophoto cover, 80% of it further than 6 m from every tree of the game: crowns OSM has no tree node under (G-797, `canopy-trees.ts`). */
+  "canopy-without-tree": () => canopyWithoutTree(MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined), Object.values(WORLD_STREET_PROPS).flat(), CLEARED_BUILDINGS),
+  /** A tree whose trunk lies in an OSM building or building part (ruins aside), a building site, a market or a canopy: a roof or a shell taken for a crown (G-815, `tree-structures.ts`). */
+  "tree-in-structure": () => treesInStructure(structuresOf(SOURCE_OSM), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A tree whose trunk lies 2 m or nearer to a bridge's deck: the deck's height read as a crown (G-815, `tree-structures.ts`). */
+  "tree-by-deck": () => treesByDeck(deckRings(MAP_CHUNKS), Object.values(WORLD_STREET_PROPS).flat()),
   /** A tree OSM names a genus of the renderer's models (`genus`, `species`: Quercus, Populus...) drawn as another one: the oaks and the "Baobab" of Plac Litewski as limes and maples (G-423, `tree-species.ts`). */
   "tree-species-ignored": () => treesOfOtherSpecies(cityNamedTrees(), Object.values(WORLD_STREET_PROPS).flat()),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
@@ -1958,6 +2181,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A staircase's door on a wall facing only a way under ground, a yard's wall (G-197, `door-streets.ts`). */
   "door-faces-underground": () =>
     doorsFacingUnderground(WORLD_SCENERY, Object.values(WORLD_STREET_PROPS).flat(), cityVenueBoards(WORLD_SCENERY), extractFeatures(SOURCE_OSM).lines, loadEntrances().map((e) => e.p)),
+  /** An entrance of the map by a drawn wall a door may take, with no door within 2 m: its slots turned down (G-781, `entrance-no-door.ts`). */
+  "entrance-no-door": () => entrancesWithoutDoor(loadEntrances(), lublinDoorWalls(), Object.values(WORLD_STREET_PROPS).flat(), ENTRANCE_REACH),
+  /** A node of the current OSM extract's furniture (trees, benches, bollards...) with no piece of its kind within 3 m: the plan of 29.10 lacked it (G-099, `osm-furniture.ts`). */
+  "osm-furniture-missing": () => osmFurnitureMissing(loadFurniture(), Object.values(WORLD_STREET_PROPS).flat()),
+  /** A row of bollards OSM maps as a way, with fewer posts along it than one every 2.5 m (G-818, `osm-furniture.ts`). */
+  "osm-bollard-line-missing": () => osmBollardLineMissing(loadBollardLines(), Object.values(WORLD_STREET_PROPS).flat()),
   // The vehicles of ADR-0058 stage 4 as drawn against their bodies in the simulation (`vehicle-pieces.ts`).
   ...vehicleChecks(PARKED_CARS),
   // The drones of ADR-0058 stage 7 flown round the lanes the renderer plans from the scenery, and the
@@ -1974,8 +2203,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "ground-strip-overlap": () => groundStripOverlap(STRIP_RASTERS()),
   /** A m² of bare gaps up to 1.25 m wide between the tables' ground pieces, on a 0.25 m raster (ADR-0078 stage 5 brings it down, `ground-strips.ts`). */
   "ground-strip-gap": () => groundStripGap(STRIP_RASTERS()),
+  /** A piece of the tables' ground lifted over the steps, on a flight's outline by over 0.01 m²: it breaks through the lowest tread (G-777, `ground-over-steps.ts`). */
+  "ground-over-steps": () => groundOverSteps(MAP_CHUNKS),
   /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */
   "paving-coplanar": () => pavingCoplanar(mapGround(WORLD_SCENERY)),
+  /** A point of a 0.5 m grid (0.25 m²) of the map data's water the import lays as grass: the Bystrzyca by Nabrzeże (T-295, `water-under-grass.ts`). */
+  "water-under-grass": () => waterUnderGrass(cityWaterWorld(SOURCE_OSM)),
   /** A drawn lawn with over 20 m² of it under a square's or a cobbled area's paving, which lies over it: Plac Litewski's lawns (G-421, `grass-under-paving.ts`). */
   "grass-under-paving": () => grassUnderPavingFindings(WORLD_SCENERY),
   /** A lawn or a bed the curator added to the map with under half of it green on the orthophoto cover (G-627, `added-grass.ts`). */
@@ -1984,6 +2217,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "added-paving-on-green": () => addedPavingOnGreen(ADDED_AREAS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A building the curator added to the map whose ring, also off the map, takes in an OSM way open to the sky: a solid across a street or a flight (G-677, `added-solid-over-way.ts`). */
   "added-solid-over-way": () => addedSolidOverWay(ADDED_AREAS, extractFeatures(SOURCE_OSM).lines),
+  /** A paving the renderer lays whose brightness against the lawns is off the orthophoto's committed medians by over 0.25, the fountains' floor aside (G-734, `paving-albedo.ts`). */
+  "paving-albedo-drift": () => {
+    const medians = readMedians();
+    return pavingAlbedoDrift(planToGrass(albedoSurfaces(orthoPavingKeys(), medians)), medians);
+  },
   /** A point of a 0.5 m grid of drawn grass of a lawn the map lays above the ground, in a building or off the garage under it: VIVO's roof garden (G-647, `raised-green.ts`). */
   "raised-green-on-ground": () => raisedGreenOnGround(cityRaisedGreenWorld(SOURCE_OSM)),
   /** Road markings, zebras and flights on a bridge's deck drawn under its carriageway (G-301, `deck-paint.ts`). */
@@ -2070,6 +2308,9 @@ const nearestAxis = (roads: readonly Line[]) => {
   };
 };
 
+/** Whether (x, z) is on a carriageway's piece: its asphalt or a zebra, a piece of its own since the ground is a partition (ADR-0078 step 3). */
+const onCarriageway = (x: number, z: number): boolean => surfacesAt(x, z).some((s) => s === "road" || s === "crossing");
+
 /** The map's carriageways at street level, off tunnels. */
 const streetRoads = (lines: readonly Line[]) => lines.filter((l) => CARRIAGEWAYS.has(l.tags.highway ?? "") && l.tags.area !== "yes" && l.tags.tunnel === undefined && Number(l.tags.layer ?? 0) >= 0);
 
@@ -2085,11 +2326,11 @@ const footwaysOnCarriageway = (): Finding[] => {
       const a = l.line[i]!;
       const len = Math.hypot(b.x - a.x, b.z - a.z);
       const out: Finding[] = [];
-      for (let s = 0.5; s < len; s += 1) {
-        const [x, z] = [a.x + ((b.x - a.x) * s) / len, a.z + ((b.z - a.z) * s) / len];
+      for (const { x, z } of segmentPieces(a, b, 1)) {
         if (!deep(x, z)) continue;
         const surfaces = surfacesAt(x, z);
-        if (surfaces.includes("crossing") || !surfaces.includes("road") || !(surfaces.includes("sidewalk") || surfaces.includes("footway"))) continue;
+        // The ground a partition (ADR-0078 step 3): the asphalt over a footway's band cuts it, so the footway's axis lies on asphalt alone.
+        if (surfaces.length !== 1 || surfaces[0] !== "road") continue;
         const n = nearest(x, z);
         if (!n || Math.abs(((b.x - a.x) * n.tx + (b.z - a.z) * n.tz) / len) < 0.9 || n.d >= roadWidth(n.road.tags) / 2) continue;
         out.push({ at: near(x, z), what: `${l.id} on ${n.road.id} ${n.road.tags.name ?? ""}` });
@@ -2142,10 +2383,10 @@ const FITTED = (() => {
             if (Math.abs(across) < w / 2) side[across >= 0 ? 0 : 1] = true;
           }
           side.forEach((on, k) => (sides[k]! += on ? 1 : 0));
-          if (!deep(x, z) || !surfacesAt(x, z).includes("road")) continue;
+          if (!deep(x, z) || !onCarriageway(x, z)) continue;
           const reach = (sgn: number) => {
             let d = 0;
-            while (d < w / 2 + 1 && surfacesAt(x - tz * sgn * (d + 0.05), z + tx * sgn * (d + 0.05)).includes("road")) d += 0.05;
+            while (d < w / 2 + 1 && onCarriageway(x - tz * sgn * (d + 0.05), z + tx * sgn * (d + 0.05))) d += 0.05;
             return d;
           };
           widths.push(reach(1) + reach(-1));
@@ -2448,24 +2689,39 @@ describe("the glitch scan (ADR-0054)", () => {
 /**
  * The ratchet: one test per kind, so each stays far under the time limit on a loaded CI runner,
  * where the whole scan in a single test went over 20 s under coverage (PR #80, 7.5 s alone).
- * The report and an updated baseline are written once all kinds have run.
+ * The report and the base's files are written once the kinds have run: with `-t <kind>` only
+ * that kind's file.
  */
 describe("the glitch scan against its baseline (ADR-0054)", () => {
-  const update = process.env.GLITCH_BASELINE === "update" || !existsSync(BASELINE);
-  const baseline = update ? {} : (JSON.parse(readFileSync(BASELINE, "utf8")) as Record<string, number>);
+  const mode = process.env.GLITCH_BASELINE;
   const found: Record<string, Finding[]> = {};
+  const diffs: { d: KindDiff; keys: Map<string, FoundKey>; base: Map<string, number> }[] = [];
   afterAll(() => {
     const counts = Object.fromEntries(Object.entries(found).map(([k, f]) => [k, f.length]));
+    const keys = Object.fromEntries(diffs.map(({ d, keys: m }) => [d.kind, Object.fromEntries([...m].map(([key, f]) => [key, f.n]))]));
+    const lines = diffs.flatMap(({ d }) => formatDiff(d, Infinity));
     mkdirSync("reports", { recursive: true });
-    writeFileSync("reports/glitch-scan.json", JSON.stringify({ counts, found }, null, 2));
-    if (update && Object.keys(found).length === Object.keys(CHECKS).length) writeFileSync(BASELINE, `${JSON.stringify(counts, null, 2)}\n`);
+    writeFileSync("reports/glitch-scan.json", JSON.stringify({ counts, keys, found }, null, 2));
+    writeFileSync("reports/glitch-scan-diff.txt", lines.length ? `${lines.join("\n")}\n` : "");
+    if (mode === "update" || mode === "accept") {
+      for (const { d, keys: m, base } of diffs) writeKind(BASE, d.kind, mode === "accept" ? accepted(m) : pruned(base, m));
+      if (diffs.length === Object.keys(CHECKS).length) for (const k of baseKinds(BASE)) if (!(k in CHECKS)) dropKind(BASE, k);
+      const added = diffs.flatMap(({ d }) => (mode === "accept" ? d.added.map((a) => `  + ${describeKey(d.kind, a.key)}: ${a.what}`) : []));
+      const removed = diffs.reduce((n, { d }) => n + d.removed.length, 0);
+      process.stdout.write(`GLITCH_BASELINE=${mode}: ${removed} key(s) removed or come down${added.length ? `, ${added.length} added:\n${added.join("\n")}` : ""}\n`);
+    }
+    if (lines.length) process.stdout.write(`The scan against its base (all in reports/glitch-scan-diff.txt):\n${diffs.flatMap(({ d }) => formatDiff(d)).join("\n")}\n`);
     // The hits per cell of the map's coverage register (docs/mapa-pokrycie.md), for its report.
     writeFileSync("reports/map-coverage-hits.json", JSON.stringify(hitsPerCell(found, MAP_CHUNKS), null, 2));
   });
   for (const [k, check] of Object.entries(CHECKS)) {
-    it(`finds no more ${k} than its baseline`, () => {
+    it(`finds no new place of ${k} (baseline/${k}.txt)`, () => {
       found[k] = check();
-      if (!update) expect(found[k].length, `${k}: ${found[k].length} found, baseline ${baseline[k] ?? 0} (see reports/glitch-scan.json)`).toBeLessThanOrEqual(baseline[k] ?? 0);
+      const keys = keysOf(k, found[k], MAP_CHUNKS);
+      const base = readKind(BASE, k);
+      const d = diffKind(k, base, keys);
+      diffs.push({ d, keys, base });
+      if (mode !== "accept" && fails(d)) expect.fail(`${formatDiff(d).join("\n")}\n(a new place of a glitch: fix it, or take it in on purpose with GLITCH_BASELINE=accept, README.md)`);
     });
   }
   // After every kind has run: a cell of the coverage register is `czyste` only with no hit of the scan in it.

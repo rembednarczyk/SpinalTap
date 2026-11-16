@@ -10,7 +10,7 @@
  *   map) and the gap is `ROAD_GAP` or more, the estimate missed the asphalt: lanes times 3.25 m or
  *   the width by type leave out the parking lanes and bus bays, which the orthophoto shows paved
  *   up to the footway (G-570, T-247). The carriageway's own band is widened to the paving, and a
- *   kerb stone (`KERB_STONE` of sidewalk) laid along paving that draws none of its own;
+ *   kerb stone (`KERB_STONE` of sidewalk) laid over its edge where the paving draws no kerb of its own;
  * - elsewhere the strip is laid as a sidewalk, so the renderer draws its kerb at the asphalt.
  * The lanes, markings and zebras' places come from the street's axis and width as before: the
  * simulation sees no change; the zebras only reach on to the new kerb (`stretchZebras`).
@@ -38,6 +38,8 @@ export const FILL_MARGIN = WINDOW * ALONG + KERB_REACH + 2;
 const ACROSS = 0.2;
 /** How far a fill reaches into the paving it leads to (m), past the rounding to 0.1 m: no seam between them. */
 const INTO = 0.1;
+/** How far out from the edge the paving must start for a strip to lie between (m): nearer, it reaches the asphalt. */
+const SEAM = 0.01;
 /** Halvings of the last step, to the paving's edge within 1.25 cm: the fill's outer edge follows it. */
 const REFINE = 4;
 /** How far the fill's outline may stray from its samples when simplified (m): finer than a chunk's 0.3, or a seam opens at the paving or the asphalt. */
@@ -50,6 +52,8 @@ const MERGE_AXIS = 1;
 const MEDIAN_REACH = KERB_REACH;
 /** The fewest samples in a row a carriageway is widened over (`ALONG` apart): 3 m, a car's bay at the least. */
 const MIN_RUN = 1;
+/** The most the paving's edge steps out or back from one sample to the next for a widened stretch to grow over it (m, `ALONG` apart): a slope of 45°. */
+const GROW_STEP = ALONG;
 /** The kerb stone laid between a widened carriageway and paving with no kerb of its own (m): the renderer draws kerbs on sidewalks only. */
 const KERB_STONE = 0.3;
 /** How far a zebra may reach on past the carriageway's estimated edge (m). */
@@ -98,7 +102,7 @@ const alongside = (line: readonly Pt[], q: Pt, dir: Pt): boolean => {
  * `KERB_REACH`, or another carriageway met (`joins`); null where something else comes first, or
  * where the paving starts at the edge. A zebra mapped past the estimated kerb lies on the asphalt
  * the strip is, so the march goes on over it (G-090), and says so (`crossed`): a sidewalk is not
- * laid over one.
+ * laid over one by an estimated kerb.
  */
 const pavingOut = (edge: Pt, dir: Pt, { lots, roads }: World): Hit | null => {
   let crossed = false;
@@ -135,8 +139,10 @@ const pavingOut = (edge: Pt, dir: Pt, { lots, roads }: World): Hit | null => {
   for (let t = ACROSS / 2; t <= KERB_REACH; t += ACROSS) {
     const got = what(t);
     if (got === "bare") continue;
-    if (got === "other" || t < ACROSS) return null;
-    let [lo, hi] = [t - ACROSS, t];
+    // Paving within the first step is a seam the outlines' rounding leaves bare unless it reaches
+    // the edge itself: a kerb measured on the orthophoto lies by the map's paving (G-811).
+    if (got === "other" || (t < ACROSS && (got === "road" || what(SEAM) !== "bare"))) return null;
+    let [lo, hi] = [Math.max(0, t - ACROSS), t];
     for (let k = 0; k < REFINE; k++) {
       const mid = (lo + hi) / 2;
       if (what(mid) === "bare") lo = mid;
@@ -239,6 +245,48 @@ const longRuns = (flags: readonly boolean[]): boolean[] => {
   return out;
 };
 
+/**
+ * The runs of `seeds` grown on either side over the samples where the carriageway `may` reach its
+ * paving, as long as the paving's edge runs on smooth (`GROW_STEP` from one sample to the next):
+ * the asphalt follows it in to the kerb as the gap closes under `ROAD_GAP`, and does not step back
+ * 1 m to the estimated edge where it crosses it (G-837). A corner's wedge it stops at.
+ */
+const grownRuns = (seeds: readonly boolean[], may: readonly boolean[], gaps: readonly number[]): boolean[] => {
+  const out = [...seeds];
+  const smooth = (j: number, k: number) => may[j] && Math.abs(gaps[j]! - gaps[k]!) <= GROW_STEP;
+  for (let i = 0; i < seeds.length; i++) {
+    if (!seeds[i]) continue;
+    for (let j = i - 1; j >= 0 && !out[j] && smooth(j, j + 1); j--) out[j] = true;
+    for (let j = i + 1; j < seeds.length && !seeds[j] && smooth(j, j - 1); j++) out[j] = true;
+  }
+  return out;
+};
+
+/**
+ * Whether a sample is widened, by the flags of its edge's samples: its own, or a side street's
+ * corner beside one widened. The corner between a widened stretch and a side street it meets is
+ * asphalt too: left bare, it pinched the lane the wider street moved out (Radziwiłłowska, G-090).
+ */
+const cornered = (ok: readonly boolean[], s: Sample, i: number): boolean => ok[i] === true || (s.hit?.joins === true && (ok[i - 1] === true || ok[i + 1] === true));
+
+/** How far out the asphalt of each sample of the edges goes (`easedReach`) where `wide`. */
+const reachOf = (sides: readonly (readonly Sample[])[], wide: (s: Sample) => boolean): Map<Sample, number> => {
+  const reach = new Map<Sample, number>();
+  for (const side of sides) {
+    const eased = easedReach(side, wide);
+    side.forEach((s, i) => reach.set(s, eased[i]!));
+  }
+  return reach;
+};
+
+/** A carriageway's ring widened by `reach` on its right and left edges, and the stretches widened; null where it would cross itself. */
+const widenedRing = ([re, right]: readonly [readonly Pt[], readonly Sample[]], [le, left]: readonly [readonly Pt[], readonly Sample[]], reach: ReadonlyMap<Sample, number>) => {
+  const out = (s: Sample) => (reach.get(s)! > 0 ? along(s.edge, s.dir, reach.get(s)!) : null);
+  const [wr, wl] = [widenedEdge(re, right, out), widenedEdge(le, left, out)];
+  const ring = ccw([...wr.pts, ...wl.pts.reverse()]);
+  return selfIntersects(ring) ? null : { ring, runs: [...wr.runs, ...wl.runs] };
+};
+
 /** Cuts samples into runs of one kind, every `WINDOW` steps too, neighbouring runs sharing the step between them. */
 const runsOf = <T>(samples: readonly Sample[], spanOf: (s: Sample) => T | null, flush: (run: T[]) => void): void => {
   let run: T[] = [];
@@ -261,8 +309,11 @@ const runsOf = <T>(samples: readonly Sample[], spanOf: (s: Sample) => T | null, 
 export interface KerbFills {
   /** Sidewalks over the strips, and kerb stones along the widened carriageways. */
   readonly fills: readonly Band[];
-  /** The carriageways widened over their strips: their new rings (the zebras' reach), and the stretches widened (the asphalt laid along them). */
-  readonly widened: ReadonlyMap<Band, { readonly ring: readonly Pt[]; readonly runs: readonly WidenRun[] }>;
+  /**
+   * The carriageways widened over their strips: their new rings (the zebras' reach), the stretches
+   * widened (the asphalt laid along them), and those before they grew in to the kerb (the lanes').
+   */
+  readonly widened: ReadonlyMap<Band, { readonly ring: readonly Pt[]; readonly runs: readonly WidenRun[]; readonly lanes: readonly WidenRun[] }>;
 }
 
 /**
@@ -293,18 +344,18 @@ const easedReach = (side: readonly Sample[], wide: (s: Sample) => boolean): numb
 
 /**
  * The fills of the gaps between the carriageways among `bands` (their `kerb` axis) and the paving
- * beside them, `buildings` standing in the way; `estimated(source)` says the carriageway's width
- * is the import's estimate; `walks` are the sidewalks before they were cut at the carriageways. A carriageway whose widened ring would cross itself keeps its ring,
+ * beside them, `buildings` standing in the way; `estimated(source, side)` says the carriageway's
+ * width is the import's estimate on that side (1 its left, -1 its right); `walks` are the sidewalks before they were cut at the carriageways. A carriageway whose widened ring would cross itself keeps its ring,
  * and its strips are laid as sidewalks.
  */
-export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly Pt[])[], estimated: (source: string) => boolean, walks: readonly (readonly Pt[])[] = []): KerbFills => {
+export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly Pt[])[], estimated: (source: string, side: 1 | -1) => boolean, walks: readonly (readonly Pt[])[] = []): KerbFills => {
   // The sidewalks laid and mapped, whole: a stretch cut off where it ran over a carriageway is paving the march stops at too.
   const whole = walks.map((ring): Boxed => ({ surface: "sidewalk", ring, bridge: false, source: "", box: ringBounds(ring) }));
   const laid = [...bands.filter((b) => !b.bridge), ...whole];
   const blocks = buildings.map((ring): Block => ({ ring, box: ringBounds(ring), block: true }));
   const world: World = { lots: new RingBins<Boxed | Block>([...laid, ...blocks]), roads: new RingBins(laid.filter((b) => b.carriageway === true)) };
   const fills: Band[] = [];
-  const widened = new Map<Band, { ring: readonly Pt[]; runs: readonly WidenRun[] }>();
+  const widened = new Map<Band, { ring: readonly Pt[]; runs: readonly WidenRun[]; lanes: readonly WidenRun[] }>();
   for (const road of bands) {
     if (!road.kerb || road.bridge || lineLength(road.kerb.line) < ALONG) continue;
     const { line, half } = road.kerb;
@@ -317,41 +368,51 @@ export const kerbFills = (bands: readonly Boxed[], buildings: readonly (readonly
       const q = along(s.edge, s.dir, -half - MERGE_AXIS);
       return world.roads.scan(q.x, q.z, (b) => b !== road && b.kerb !== undefined && alongside(b.kerb.line, q, s.dir));
     };
-    const own = (s: Sample) => estimated(road.source) && s.hit !== null && !s.hit.joins && s.hit.gap >= ROAD_GAP && !s.hit.median && !merged(s);
-    // The corner between a widened stretch and a side street it meets is asphalt too: left bare,
-    // it pinched the lane the wider street moved out (Radziwiłłowska, G-090).
-    const wideSet = new Set<Sample>();
-    for (const side of [right, left]) {
-      const ok = longRuns(side.map(own));
+    const reaches = (side: 1 | -1) => (s: Sample) => estimated(road.source, side) && s.hit !== null && !s.hit.joins && !s.hit.median && !merged(s);
+    const own = (side: 1 | -1) => (s: Sample) => reaches(side)(s) && s.hit!.gap >= ROAD_GAP;
+    // Grown in to the kerb, not over a zebra mapped past it: a kerb stone laid there would cut it in two.
+    const may = (side: 1 | -1) => (s: Sample) => reaches(side)(s) && !s.hit!.crossed;
+    // The stretches widened (`seeded`, as the lanes read them) and the asphalt grown on from them in to the kerb (`wideSet`).
+    const [seeded, wideSet] = [new Set<Sample>(), new Set<Sample>()];
+    for (const [side, sign] of [[right, -1], [left, 1]] as const) {
+      const seeds = longRuns(side.map(own(sign)));
+      const grown = grownRuns(seeds, side.map(may(sign)), side.map((s) => s.hit?.gap ?? 0));
       side.forEach((s, i) => {
-        if (ok[i] || (s.hit?.joins && (ok[i - 1] === true || ok[i + 1] === true))) wideSet.add(s);
+        if (cornered(seeds, s, i)) seeded.add(s);
+        if (cornered(grown, s, i)) wideSet.add(s);
       });
     }
     const wide = (s: Sample) => wideSet.has(s);
-    const reach = new Map<Sample, number>();
-    for (const side of [right, left]) {
-      const eased = easedReach(side, wide);
-      side.forEach((s, i) => reach.set(s, eased[i]!));
-    }
+    const reach = reachOf([right, left], wide);
     let asRoad = wideSet.size > 0;
     if (asRoad) {
-      const out = (s: Sample) => (reach.get(s)! > 0 ? along(s.edge, s.dir, reach.get(s)!) : null);
-      const [wr, wl] = [widenedEdge(r.edge, right, out), widenedEdge(l.edge, left, out)];
-      const ring = ccw([...wr.pts, ...wl.pts.reverse()]);
-      if (selfIntersects(ring)) asRoad = false;
-      else widened.set(road, { ring, runs: [...wr.runs, ...wl.runs] });
+      const ground = widenedRing([r.edge, right], [l.edge, left], reach);
+      if (!ground) asRoad = false;
+      // The lanes keep the reach of the stretches widened: moved out over the asphalt grown in to
+      // the kerb, a lane ran over the bays beside it (ADR-0080).
+      else widened.set(road, { ...ground, lanes: widenedRing([r.edge, right], [l.edge, left], reachOf([right, left], (s) => seeded.has(s)))?.runs ?? [] });
     }
     const full = (s: Sample) => asRoad && wide(s) && reach.get(s)! >= s.hit!.gap + INTO - 1e-9;
-    const lay = (run: Span[]) => {
-      for (const ring of runRings(run)) fills.push({ surface: "sidewalk", ring, bridge: false, source: road.source, holed: true });
+    const lay = (run: Span[], stone?: true) => {
+      for (const ring of runRings(run)) fills.push({ surface: "sidewalk", ring, bridge: false, source: road.source, holed: true, ...(stone ? { kerbStone: stone } : {}) });
     };
-    for (const side of [right, left]) {
+    for (const [side, sign] of [[right, -1], [left, 1]] as const) {
       // The strips left as sidewalks: from the edge to the paving.
-      // From the edge, or from where the eased asphalt stops short of the paving.
-      const from = (s: Sample) => (asRoad && wide(s) ? reach.get(s)! : 0);
-      runsOf(side, (s) => (s.hit && !s.hit.joins && !(s.hit.crossed && !(asRoad && wide(s))) && !full(s) ? { edge: along(s.edge, s.dir, from(s)), out: along(s.edge, s.dir, s.hit.gap + INTO) } : null), lay);
-      // The kerb stones of the widened carriageway, where the paving draws no kerb of its own.
-      runsOf(side, (s) => (full(s) && !s.hit!.kerbed ? { edge: along(s.edge, s.dir, s.hit!.gap - KERB_STONE), out: along(s.edge, s.dir, s.hit!.gap + INTO) } : null), lay);
+      // From the edge, or from where the eased asphalt stops short of the paving; `INTO` under the
+      // asphalt, which ranks over it (`partitionGround`): from the edge itself, the strip's points
+      // rounded off the asphalt's straight edge left a bare seam of up to 0.07 m between (G-811).
+      const from = (s: Sample) => (asRoad && wide(s) ? reach.get(s)! : 0) - INTO;
+      // Past a measured kerb a zebra the map draws on reaches over the pavement, which ranks under it:
+      // the strip is laid by it, not left bare beside it (G-811).
+      const overZebra = (s: Sample) => !s.hit!.crossed || (asRoad && wide(s)) || !estimated(road.source, sign);
+      runsOf(side, (s) => (s.hit && !s.hit.joins && overZebra(s) && !full(s) ? { edge: along(s.edge, s.dir, from(s)), out: along(s.edge, s.dir, s.hit.gap + INTO) } : null), lay);
+      // The kerb stones of the widened carriageway, where the paving draws no kerb of its own: on the
+      // asphalt's side of the paving's edge, ranked over the asphalt that reaches under them
+      // (`KERB_STONES`, G-803), so the kerb stands 0.3 m short of the paving's mapped edge, where the
+      // orthophoto shows it (T-294); the renderer draws the kerb on the stone's edge. A stone reaches
+      // past the asphalt's edge by `INTO`: two edges of the paving's cut a few millimetres apart
+      // left it in slivers.
+      runsOf(side, (s) => (full(s) && !s.hit!.kerbed ? { edge: along(s.edge, s.dir, s.hit!.gap - KERB_STONE), out: along(s.edge, s.dir, reach.get(s)! + INTO) } : null), (run) => lay(run, true));
     }
   }
   return { fills, widened };

@@ -6,6 +6,7 @@ import { plDomain } from "./pl/domain";
 import { plContent } from "./pl/content";
 import { plDifficulty } from "./pl/difficulty";
 import { plProgression } from "./pl/progression";
+import { plWait } from "./pl/wait";
 
 /** Polish: exactly the English keys (ADR-0056); a missing or extra key does not compile. */
 export const pl = {
@@ -136,6 +137,11 @@ export const pl = {
   "settings.quality.high": "Wysoka",
   "settings.quality.medium": "Średnia",
   "settings.quality.low": "Niska",
+  "settings.renderResolution": "Rozdzielczość renderu",
+  "settings.contactShade": "Cień kontaktowy",
+  "settings.bloom": "Poświata (bloom)",
+  "settings.graphicsEffects.live": "Rozdzielczość i efekty wysokiej jakości działają od razu.",
+  "settings.graphicsEffects.highOnly": "Rozdzielczość działa od razu; cień kontaktowy i poświata są tylko na wysokiej jakości.",
   "settings.volume": "Głośność",
   "settings.musicVolume": "Muzyka",
   "settings.sfxVolume": "Efekty",
@@ -197,4 +203,5 @@ export const pl = {
   ...plContent,
   ...plDifficulty,
   ...plProgression,
+  ...plWait,
 } as const satisfies Readonly<Record<MessageKey, Message>>;

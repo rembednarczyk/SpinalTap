@@ -1,5 +1,5 @@
 import { VEHICLE_SIZE, type VehicleModel, offsetPolylineRight, polylineTangent } from "@seki/core";
-import { type Pt, ROAD_CHAINS, type RoadChain, onRoad, polylineLength } from "./lublin/roads";
+import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength } from "./lublin/roads";
 import { inBuilding } from "./lublin/places";
 import { MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
@@ -8,8 +8,10 @@ import { groundY } from "./lublin/terrain";
 import { type RouteUse, type TrafficRoute, pointAt, projectOn, slice } from "./traffic-lane";
 import { joinAtJunctions } from "./traffic-junctions";
 import { alchemiaRampRoutes } from "./traffic-ramp";
+import { type Street, reachAt, roadHalfWidth, turnedRound } from "./traffic-reach";
 
 export { type RouteUse, type TrafficRoute, TURN_SPEED, pointAt, projectOn } from "./traffic-lane";
+export { type Street, roadHalfWidth, turnedRound } from "./traffic-reach";
 
 /**
  * The street's traffic (ADR-0050): the lanes cars drive along on the map's roads, the
@@ -76,49 +78,34 @@ const NARROW_Q = 0.1;
 export const offsetLine = (pts: readonly Pt[], off: number): Pt[] =>
   offsetPolylineRight(pts, off).map(([x, z]) => [Math.round(x * 100) / 100, Math.round(z * 100) / 100] as const);
 
-/** How far the carriageway reaches to the right of the polyline at arc length `s`, to 9 m (m; 0 off the road). */
-const reachAt = (pts: readonly Pt[], s: number, side: 1 | -1): number => {
-  const { x, z, tx, tz } = pointAt(pts, s);
-  let w = 0;
-  while (w < 9 && onRoad(x + tz * side * (w + 0.25), z - tx * side * (w + 0.25))) w += 0.25;
-  return w;
-};
-
-/** How far the carriageway reaches to the right of a street's axis: the median (or quantile `q`) over samples every 10 m (m). */
-export const roadHalfWidth = (pts: readonly Pt[], side: 1 | -1 = 1, q = 0.5): number => {
-  const out: number[] = [];
-  const len = polylineLength(pts);
-  for (let s = 5; s < len; s += 10) {
-    const w = reachAt(pts, s, side);
-    if (w > 0) out.push(w);
-  }
-  if (out.length === 0) return 0;
-  out.sort((a, b) => a - b);
-  return out[Math.floor((out.length - 1) * q + 0.5)]!;
-};
-
 /** The local width of a street is sampled this often along it (m), and its narrowest taken over this many samples. */
 const WIDTH_STEP = 5;
 const WIDTH_WINDOW = 5;
 /** Less asphalt than this beside the axis is a chunk's seam or an island, not a lane's room (m). */
 const MIN_REACH = 1;
-/** A lane's car keeps this far inside the kerb: half the widest car and a hand's breadth (m). */
-const LANE_REACH = 1;
+/**
+ * A lane's car keeps this far inside the kerb: half the widest car, a hand's breadth, and the 0.1 m
+ * the asphalt drawn lies inside the import's width by Zesłańców Sybiru and Plac Wolności (a chunk
+ * simplifies its outline by up to 0.3 m; ADR-0080). No more than measured: each tenth brings the
+ * two lanes of a narrow street closer, where their bodies meet in a bend (G-744) (m).
+ */
+const LANE_REACH = 1.1;
 /** How fast a lane edges towards the axis where the carriageway narrows (m aside per m along). */
 const LANE_EDGE = 0.1;
 
 /**
- * The right-hand lane of a two-way street walked along `pts`: the whole street's lane, `whole` m
+ * The right-hand lane of a two-way street walked along `st`: the whole street's lane, `whole` m
  * from its axis, brought in towards the axis where the carriageway right there is too narrow for
  * its car. A street of wide and narrow stretches (Staszica) kept the lane of its median and ran
  * over the narrow stretch's kerb (G-090). The width is the narrowest of a few samples, so a side
  * street's mouth does not move the lane out, and the lane comes in gently, ahead of the narrowing.
  */
-const laneLine = (pts: readonly Pt[], whole: number): Pt[] => {
+const laneLine = (st: Street, whole: number): Pt[] => {
+  const pts = st.points;
   const len = polylineLength(pts);
   const at: number[] = [];
   for (let s = WIDTH_STEP / 2; s < len; s += WIDTH_STEP) at.push(s);
-  const widths = at.map((s) => reachAt(pts, s, 1));
+  const widths = at.map((s) => reachAt(st, s, 1));
   const off = widths.map((_, i) => {
     const near = widths.slice(Math.max(0, i - (WIDTH_WINDOW >> 1)), i + (WIDTH_WINDOW >> 1) + 1).filter((w) => w >= MIN_REACH);
     if (near.length === 0) return whole;
@@ -266,18 +253,18 @@ const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRou
   const out: TrafficRoute[] = [];
   // A one-way street or one carriageway of a dual road: its lanes all go the way it is drawn.
   if (c.oneway || isCarriageway(c, all)) {
-    // Two lanes side by side only if the asphalt reaches past both of them nearly all the way.
-    const half = Math.min(roadHalfWidth(c.points, 1, NARROW_Q), roadHalfWidth(c.points, -1, NARROW_Q));
+    // Two lanes side by side only if the carriageway reaches past both of them nearly all the way.
+    const half = Math.min(roadHalfWidth(c, 1, NARROW_Q), roadHalfWidth(c, -1, NARROW_Q));
     const offsets = half >= 2.6 ? [1.6, -1.6] : [0];
     offsets.forEach((off, n) => out.push(routeOf(`${id}:${n}`, c.name, "cars", offsetLine(c.points, off), road.speed, cars(len))));
     if (trolley) out.push(routeOf(`${id}:t`, c.name, "trolley", offsetLine(c.points, offsets[0]!), TROLLEY_SPEED, Math.max(1, Math.round(len / TROLLEY_SPACING))));
     return out;
   }
-  const back = [...c.points].reverse();
-  const off = laneOffset(roadHalfWidth(c.points, 1));
+  // Each lane by its own side's width: an axis off the carriageway's middle (Kołłątaja, 0.4 m) moved both lanes in by the narrower side's.
+  const back = turnedRound(c);
   const ways: [string, Pt[]][] = [
-    ["f", laneLine(c.points, off)],
-    ["b", laneLine(back, off)],
+    ["f", laneLine(c, laneOffset(roadHalfWidth(c, 1)))],
+    ["b", laneLine(back, laneOffset(roadHalfWidth(back, 1)))],
   ];
   for (const [w, pts] of ways) {
     out.push(routeOf(`${id}:${w}`, c.name, "cars", pts, road.speed, cars(len)));

@@ -36,11 +36,11 @@ const surfaces = (ground: readonly GroundOut[]) => {
   return (p: Pt): string[] => pieces.filter((g) => pointInRing(p, g.ring)).map((g) => g.surface);
 };
 
-/** How far the asphalt reaches from `p` along `n` (0.05 m steps), and how much bare ground lies past it before the next surface (Infinity: none in 5 m). */
+/** How far the carriageway (its asphalt and the zebras on it, pieces of their own since the ground is a partition, ADR-0078 step 3) reaches from `p` along `n` (0.05 m steps), and how much bare ground lies past it before the next surface (Infinity: none in 5 m). */
 const kerbAt = (at: (p: Pt) => string[], p: Pt, n: Pt): { edge: number; bare: number } => {
   const q = (d: number) => ({ x: p.x + n.x * d, z: p.z + n.z * d });
   let edge = 0;
-  while (edge < 15 && at(q(edge + 0.05)).includes("road")) edge += 0.05;
+  while (edge < 15 && at(q(edge + 0.05)).some((s) => s === "road" || s === "crossing")) edge += 0.05;
   for (let d = edge + 0.05; d <= edge + 5; d += 0.05) if (at(q(d)).length > 0) return { edge, bare: d - edge - 0.05 };
   return { edge, bare: Infinity };
 };
@@ -65,7 +65,7 @@ describe("a street of mapped lanes fitted to its sidewalks (G-655)", () => {
         way(12, 5, 6, footway),
         "</osm>"].join("\n"),
     );
-    const at = surfaces(generate(map, () => 190, tinyChunk).chunks[0]!.ground.filter((g) => g.surface === "road"));
+    const at = surfaces(generate(map, () => 190, tinyChunk).chunks[0]!.ground.filter((g) => g.surface === "road" || g.surface === "crossing"));
     return [kerbAt(at, { x, z: 0 }, { x: 0, z: 1 }).edge, kerbAt(at, { x, z: 0 }, { x: 0, z: -1 }).edge].map((d) => Math.round(d * 10) / 10);
   };
 
@@ -80,7 +80,10 @@ describe("a street of mapped lanes fitted to its sidewalks (G-655)", () => {
     expect(reach({ "sidewalk:right": "separate" }, 50)).toEqual([4.9, 3.5]);
     expect(reach({}, 50)).toEqual([4.9, 4.9]);
     expect(reach({ sidewalk: "both" }, 50)).toEqual([4.9, 4.9]);
-    expect(reach({ sidewalk: "separate" }, 50, { highway: "footway", footway: "crossing" })).toEqual([4.9, 4.9]);
+    // A crossing way 4 m off the axis is a zebra's band 1.5 m either side of it, past the asphalt's
+    // 4.9 m: a zebra is a piece of the carriageway of its own (ADR-0078 step 3), which reaches its band's
+    // edge, 5.5 m; the asphalt is not fitted to it.
+    expect(reach({ sidewalk: "separate" }, 50, { highway: "footway", footway: "crossing" })).toEqual([5.5, 5.5]);
   });
 
   it("is fitted only along the stretch its sidewalk runs along", () => {

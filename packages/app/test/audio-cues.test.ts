@@ -36,7 +36,7 @@ const setup = () => {
 describe("weapon, loot and trade cues (E12)", () => {
   it("each new event plays its own cue", () => {
     const { bus, cues } = setup();
-    bus.emit("ReloadStarted", { entityId: PLAYER, duration: 1.4 });
+    bus.emit("ReloadStarted", { entityId: PLAYER, duration: 1.4, perRound: false });
     bus.emit("WeaponSwitched", { entityId: PLAYER, slot: "primary", weapon: "hebi_smg" });
     bus.emit("LootTaken", { containerKey: "loot:guard", lines: [{ kind: "eddies", qty: 12 }], left: 0 });
     bus.emit("ItemSold", { shopId: "oyaji", defId: "scrap", qty: 2, price: 24 });
@@ -44,9 +44,33 @@ describe("weapon, loot and trade cues (E12)", () => {
     expect(cues).toEqual(["reload", "weapon-switch", "loot-pickup", "sell", "repair"]);
   });
 
+  it("a magazine change plays the recorded reload, a shell into a tube only its click", () => {
+    const { bus, cues } = setup();
+    bus.emit("ReloadStarted", { entityId: PLAYER, duration: 1.4, perRound: false });
+    bus.emit("ReloadStarted", { entityId: PLAYER, duration: 0.5, perRound: true });
+    bus.emit("ReloadStarted", { entityId: PLAYER, duration: 0.5, perRound: true });
+    expect(cues).toEqual(["reload", "reload-round", "reload-round"]);
+  });
+
+  it("every weapon kind fires its own recorded shot; others are heard from further away", () => {
+    const { bus, cues } = setup();
+    const at = { x: 0, y: 1, z: 0 };
+    for (const look of ["pistol", "revolver", "smg", "shotgun", "rifle"] as const) {
+      bus.emit("ShotFired", { shooterId: PLAYER, from: at, to: at, hitEntity: null, look });
+      bus.emit("ShotFired", { shooterId: NPC, from: at, to: at, hitEntity: null, look });
+    }
+    expect(cues).toEqual([
+      "shot", "enemy-shot",
+      "shot-revolver", "enemy-shot",
+      "shot-smg", "enemy-shot",
+      "shot-shotgun", "enemy-shot-shotgun",
+      "shot-rifle", "enemy-shot-rifle",
+    ]);
+  });
+
   it("other people's reloads and weapon changes stay silent; an empty take too", () => {
     const { bus, cues } = setup();
-    bus.emit("ReloadStarted", { entityId: NPC, duration: 2 });
+    bus.emit("ReloadStarted", { entityId: NPC, duration: 2, perRound: false });
     bus.emit("WeaponSwitched", { entityId: NPC, slot: "secondary", weapon: "unity9" });
     bus.emit("LootTaken", { containerKey: "loot:guard", lines: [], left: 2 });
     expect(cues).toEqual([]);

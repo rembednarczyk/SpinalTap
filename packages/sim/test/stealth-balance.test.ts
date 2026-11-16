@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type EnemyTypeId, angleTo } from "@seki/core";
-import { SIM_DT, Simulation, docks, gangerEntity, type Entity } from "../src";
+import { SIM_DT, Simulation, gangerEntity, w3, type Entity } from "../src";
 import { chestOf, eyeOf, lineOfSight } from "../src/world/hitscan";
 import { giveLead } from "../src/systems/ai/ganger-perception";
 import { input, run, teleportPlayer } from "./helpers";
@@ -17,22 +17,22 @@ const SPRINT = input({ moveZ: 1, sprint: true });
 /** How far off its facing a point is, rad. */
 const offFacing = (g: Entity, x: number, z: number): number => Math.abs(angleTo({ x: g.position.x, z: g.position.z, yaw: g.yaw }, x, z));
 
-/** The docks yard (seed 7): the player in the north aisle facing east, a Hebi ganger south of the first row of containers. */
+/** W-3's pickup yard (seed 7, ADR-0082): the player south of the container facing east, a Hebi ganger behind it by the basin, looking away. */
 const containerYard = (): { sim: Simulation; g: Entity } => {
   const sim = Simulation.create({ seed: 7 });
-  const at = docks(-6, 0, 113.5);
+  const at = w3(2526.5, 0, 444.4);
   teleportPlayer(sim, at, Math.PI / 2);
   sim.step();
   teleportPlayer(sim, at, Math.PI / 2);
   for (const e of [...sim.world.with("ai")]) sim.world.remove(e);
   for (const d of [...sim.world.with("device")]) sim.world.remove(d);
-  const where = docks(-2, 0, 108);
-  const g = sim.world.add(gangerEntity(9600, { key: "yard", position: where, yaw: Math.PI }, null, 1e6, sim.streamer.chunkIdAt(where), undefined, "hebi_ganger"));
+  const where = w3(2530, 0, 449.6);
+  const g = sim.world.add(gangerEntity(9600, { key: "yard", position: where, yaw: 0 }, null, 1e6, sim.streamer.chunkIdAt(where), undefined, "hebi_ganger"));
   return { sim, g };
 };
 
 describe("a lead heard through a wall (ADR-0069, stage 3)", () => {
-  it("follows every step she is heard sprinting behind the containers, not only the first", () => {
+  it("follows every step she is heard sprinting behind the container, not only the first", () => {
     const { sim, g } = containerYard();
     const p = sim.player()!;
     let heardUnseen = 0;

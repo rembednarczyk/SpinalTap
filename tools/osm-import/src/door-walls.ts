@@ -3,7 +3,7 @@
  * them: each building framed as the map city frames it (`cityFrames`), and on each wall the slots
  * between or over the panes the facade shader paints, under the venues' boards (`doorSlots`), with
  * the boards themselves. Landmarks (their own models and doors) and lifted footbridges take none.
- * It reads the renderer's modules: Node loads it through Vite's module runner (`props.ts`), the
+ * It reads the renderer's modules: Node loads it through Vite's module runner (`props-build.ts`), the
  * tests directly.
  */
 import { boardsOn, doorSlots } from "../../../packages/engine/src/renderer/mapcity/door-slots";

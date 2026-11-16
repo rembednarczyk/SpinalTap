@@ -23,6 +23,8 @@ export default defineConfig({
     // The app and sim loop tests play whole acts and contracts: well under a second on a free
     // machine, but past the default 5 s when other test runs share the CPU. A real hang still fails.
     testTimeout: 20_000,
+    // Workers: Vitest's default, unless `VITEST_MAX_WORKERS` caps them (an agent on a shared
+    // machine; Vitest reads it itself, over `--maxWorkers`). CI leaves it unset. tools/test-rerun.
     coverage: {
       provider: "v8",
       include: ["packages/*/src/**/*.{ts,tsx}"],

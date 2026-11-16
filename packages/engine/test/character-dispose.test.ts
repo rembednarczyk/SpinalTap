@@ -40,8 +40,8 @@ const serveModels = () =>
   });
 
 const settled = async (views: CharacterViews) => {
-  for (let i = 0; i < 2000 && views.loadingCount > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
-  expect(views.loadingCount).toBe(0);
+  for (let i = 0; i < 2000 && views.modelCounts.loading > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
+  expect(views.modelCounts.loading).toBe(0);
 };
 
 afterEach(() => {
@@ -75,7 +75,7 @@ describe("characters leave nothing behind (G-184)", () => {
       views.spawn(3, { kind: "npc", preset: "civilian" }, STAND);
       views.spawn(4, { kind: "enemy", preset: "ganger" }, STAND);
       await settled(views);
-      expect(views.dressedCount).toBe(3);
+      expect(views.modelCounts.dressed).toBe(3);
       for (let i = 0; i < 5; i++) views.update(1 / 60);
       // One falls before the scene is cleared: the death fall goes too.
       views.despawn(4, true);

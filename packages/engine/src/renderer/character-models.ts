@@ -45,6 +45,23 @@ interface Attach {
 
 const NO_DONORS: Donors = { torso: [], legs: [] };
 
+/**
+ * Seconds of frames before a rig whose model failed to load asks again, doubled after each
+ * failure up to the longest wait (G-807): a download cut off once must not leave Seki, who is
+ * never spawned again, a procedural rig for the rest of the game, nor a missing file be asked
+ * for every frame.
+ */
+export const MODEL_RETRY_S = 5;
+export const MODEL_RETRY_MAX_S = 60;
+
+/** A rig to dress again after its model failed: what it wears, the current wait and the seconds left of it. */
+interface Retry {
+  readonly choice: ModelChoice;
+  readonly name: string;
+  readonly wait: number;
+  left: number;
+}
+
 export interface CharacterModelsDeps {
   readonly library: ModelLibrary;
   readonly loadouts: Loadouts;
@@ -68,6 +85,8 @@ export class CharacterModels {
   private readonly dressed = new Map<CharacterRig, Dressed>();
   /** Rigs whose model is still loading, with its file, so a manifest arriving meanwhile does not dress them twice. */
   private readonly loading = new Map<CharacterRig, string>();
+  /** Rigs whose model failed to load, until they are dressed or gone (G-807). */
+  private readonly retries = new Map<CharacterRig, Retry>();
   private readonly pool = new Map<string, ModelInstance[]>();
   /** Background variants dressed per file (at most four different ones, ADR-0076 §3). */
   private readonly budget = new VariantBudget();
@@ -116,8 +135,9 @@ export class CharacterModels {
   }
 
   /**
-   * Starts loading the files the start needs, one promise per file (ADR-0057): the heroine's and
-   * those `choices` (the characters in the scene) wear. Not every file of the manifest (G-547).
+   * Starts loading the files the start needs, one promise per file (ADR-0057): the heroine's always,
+   * in every view (her body in TPP, her hands in FPP; the user's decision of 13.11), and those
+   * `choices` (the characters in the scene) wear. Not every file of the manifest (G-547).
    */
   preload(choices: Iterable<ModelChoice | null>): Promise<unknown>[] {
     const files = startFiles(this.manifest, choices);
@@ -170,7 +190,10 @@ export class CharacterModels {
       .catch((err: unknown) => {
         this.loading.delete(rig);
         this.giveBack(wearing);
-        console.warn(`[models] ${spec.url} failed to load`, err);
+        const last = this.retries.get(rig)?.wait;
+        const wait = last === undefined ? MODEL_RETRY_S : Math.min(MODEL_RETRY_MAX_S, last * 2);
+        if (!rig.root.isDisposed()) this.retries.set(rig, { choice, name, wait, left: wait });
+        console.warn(`[models] ${spec.url} failed to load, asking again in ${wait} s`, err);
       });
   }
 
@@ -183,6 +206,7 @@ export class CharacterModels {
       this.pooled(d.model, d.poolKey);
     }
     this.dressed.delete(rig);
+    this.retries.delete(rig);
     rig.reach = null;
   }
 
@@ -190,11 +214,27 @@ export class CharacterModels {
   update(dt: number, clock: number): void {
     this.unswept += dt;
     if (this.unswept >= 1) this.sweep(this.unswept);
+    this.retry(dt);
     for (const d of this.dressed.values()) {
       if (!d.model.root.isEnabled()) continue;
       d.retarget.update();
       d.springs?.update(dt);
       d.model.face?.update(clock);
+    }
+  }
+
+  /** Dresses again the rigs whose model failed, once their wait is over; forgets the rigs gone. */
+  private retry(dt: number): void {
+    for (const [rig, r] of this.retries) {
+      if (rig.root.isDisposed() || this.dressed.has(rig)) {
+        this.retries.delete(rig);
+        continue;
+      }
+      r.left -= dt;
+      if (r.left > 0 || this.loading.has(rig)) continue;
+      // Until this try ends: a failure sets the next wait, a success drops the entry.
+      r.left = Number.POSITIVE_INFINITY;
+      this.dress(rig, r.choice, r.name);
     }
   }
 

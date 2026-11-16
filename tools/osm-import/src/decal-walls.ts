@@ -4,7 +4,7 @@
  * every wall that is drawn (not hidden by a neighbour): its ends, outward normal, the stretch of it
  * left in view over a neighbour, its ground floor and top, whether the facade shader paints any
  * glass on it at all, the venues' boards on it and whether a holo-ad may hang on it. It reads the
- * renderer's modules: Node loads it through Vite's module runner (`props.ts`), the tests directly.
+ * renderer's modules: Node loads it through Vite's module runner (`props-build.ts`), the tests directly.
  */
 import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall, plinthBand } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { cellKey } from "../../../packages/engine/src/renderer/mapcity/map-index";
@@ -103,7 +103,7 @@ export const poleLampAt = (p: { readonly x: number; readonly z: number }): boole
     scale: 1,
   });
 
-/** The venues' boards of Lublin (`venue-boards.ts`), for `props.ts` to load through one module runner with the walls. */
+/** The venues' boards of Lublin (`venue-boards.ts`), for `props-build.ts` to load through one module runner with the walls. */
 export { lublinVenueBoards } from "./venue-boards.ts";
 /** The doors' walls of Lublin (ADR-0058 stage 9), through the same runner: one framing of the city. */
 export { lublinDoorWalls } from "./door-walls.ts";

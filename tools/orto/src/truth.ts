@@ -1,6 +1,6 @@
 /**
  * The ground truth the classifier is tuned on (ADR-0077): the lawns and the setts the curator laid
- * from the orthophoto (T-243, T-245, `ADDED_AREAS`) and the map's own lawns, parks and squares.
+ * from the orthophoto (T-243, T-245, `ADDED_AREAS`) and the map's own lawns and squares.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -30,8 +30,10 @@ export const loadOsm = (dir = join(REPO, "data/osm")): OsmData =>
       .map((f) => parseExtract(readFileSync(join(dir, f), "utf8"))),
   );
 
+// A park is no lawn's truth: Plac Litewski's (w67508857) holds paved paths and squares under its
+// trees, which the leaf-off flight shows as paving (G-764), as G-627's lawns over paving were.
 const kindOf = (t: Tags): TruthKind | undefined => {
-  if (t.landuse === "grass" || t.leisure === "park") return "lawn";
+  if (t.landuse === "grass") return "lawn";
   if (t["area:highway"] === "pedestrian" || t["area:highway"] === "footway") return "paving";
   return undefined;
 };

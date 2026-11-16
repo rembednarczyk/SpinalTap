@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { selfIntersects } from "../../osm-import/src/geometry.ts";
+import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
+import { SQUARE, keysOf } from "../src/scan-keys.ts";
 import { type GroundChunk, groundRingSelfCross, groundStripGap, groundStripOverlap, ringCrossesItself, stripRaster } from "./ground-strips";
 
 /** ADR-0078 stage 1: the scan's measures of the tables' ground on a few squares in a 20 m chunk. */
@@ -39,15 +41,18 @@ describe("ground-strip-overlap", () => {
     expect(groundStripOverlap([stripRaster(chunk([rect(0, 0, 4, 2), rect(3, 0, 6, 2)], true))])).toEqual([]);
   });
 
-  it("places each m² on a cell it counts and rounds the area over the chunks, not chunk by chunk", () => {
+  it("places each m² on a cell it counts and rounds the area in each 10 m square, whatever the chunks before it (G-756)", () => {
     const [found] = groundStripOverlap([stripRaster(chunk([rect(0, 0, 4, 2), rect(3, 0, 6, 2)]))]);
     // The 8th cell of the 1 × 2 m overlap, row by row: four cells a row, so the second row's last.
     expect(found).toEqual({ at: "4,0", what: "overlap 3.88,0.38" });
-    // Half a square metre in each of two chunks: one over the city.
-    const half = (minX: number) => stripRaster(chunk([rect(minX, 0, minX + 2, 1), rect(minX + 1.5, 0, minX + 3, 1)], undefined, { ...BOUNDS, minX, maxX: minX + 20 }));
+    // Half a square metre in each of three chunks' squares: one in each, read in any order.
+    const half = (minX: number, dx = 0) => stripRaster(chunk([rect(minX + dx, 0, minX + dx + 2, 1), rect(minX + dx + 1.5, 0, minX + dx + 3, 1)], undefined, { ...BOUNDS, minX, maxX: minX + 20 }));
     expect(groundStripOverlap([half(-10)])).toHaveLength(1);
-    expect(groundStripOverlap([half(-10), half(10)])).toHaveLength(1);
-    expect(groundStripOverlap([half(-10), half(10), half(30)])).toHaveLength(2);
+    expect(groundStripOverlap([half(-10), half(10)])).toHaveLength(2);
+    expect(groundStripOverlap([half(-10), half(10), half(30)]).map((f) => f.at)).toEqual(["-8,1", "12,1", "32,1"]);
+    expect(groundStripOverlap([half(30), half(10), half(-10)]).map((f) => f.at)).toEqual(["32,1", "12,1", "-8,1"]);
+    // Two half square metres in one square: one finding, on the 8th cell of the two.
+    expect(groundStripOverlap([stripRaster(chunk([rect(0, 0, 2, 1), rect(1.5, 0, 3, 1), rect(5, 0, 7, 1), rect(6.5, 0, 8, 1)]))])).toHaveLength(1);
   });
 });
 
@@ -62,5 +67,38 @@ describe("ground-strip-gap", () => {
     expect(groundStripGap([stripRaster(chunk([rect(0, -5, 4, 0), rect(0, 0.75, 4, 5)]))])).toHaveLength(3);
     expect(groundStripGap([stripRaster(chunk([rect(-5, 0, 5, 4)]))])).toEqual([]);
     expect(groundStripGap([stripRaster(chunk([rect(-5, 0, 0, 4), rect(0.75, 0, 5, 4)], true))])).toEqual([]);
+  });
+});
+
+describe("the strips' samples anchored in the world (G-756)", () => {
+  // A copy of two chunks of the tables, the one with the change first: the scan reads them in this order.
+  const [first, next] = ["podzamcze-2-0", "podzamcze-0-1"].map((id) => MAP_CHUNKS.find((c) => c.id === id)!);
+  const boxOf = (o: readonly number[]) => {
+    const [xs, zs] = [o.filter((_, i) => i % 2 === 0), o.filter((_, i) => i % 2 === 1)];
+    return { minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) };
+  };
+  const b = first!.bounds;
+  const k = first!.ground.findIndex((g) => {
+    const box = boxOf(g.outline);
+    return !g.bridge && box.minX > b.minX + 20 && box.maxX < b.maxX - 20 && box.minZ > b.minZ + 20 && box.maxZ < b.maxZ - 20 && (box.maxX - box.minX) * (box.maxZ - box.minZ) < 400;
+  });
+  const piece = first!.ground[k]!;
+  const moved = { ...piece, outline: piece.outline.map((v, i) => (i % 2 === 0 ? v + 0.4 : v)) };
+  const changed = { ...first!, ground: first!.ground.map((g, i) => (i === k ? moved : g)) };
+  const [was, now] = [boxOf(piece.outline), boxOf(moved.outline)];
+  // The piece's box before and after, grown by the gap's reach (0.75 m) and the place's rounding to the metre.
+  const touched = (key: string) => {
+    const [x, z] = key.split(" ")[1]!.split(",").map(Number);
+    return x! - 1.5 < Math.max(was.maxX, now.maxX) && x! + SQUARE + 1.5 > Math.min(was.minX, now.minX) && z! - 1.5 < Math.max(was.maxZ, now.maxZ) && z! + SQUARE + 1.5 > Math.min(was.minZ, now.minZ);
+  };
+
+  it.each([
+    ["ground-strip-overlap", groundStripOverlap],
+    ["ground-strip-gap", groundStripGap],
+  ] as const)("moves %s's keys only in the squares a piece moved by 0.4 m touches", (kind, check) => {
+    const keys = (chunks: readonly GroundChunk[]) => new Set(keysOf(kind, check(chunks.map(stripRaster)), MAP_CHUNKS).keys());
+    const [before, after] = [keys([first!, next!]), keys([changed, next!])];
+    const off = [...before].filter((x) => !after.has(x)).concat([...after].filter((x) => !before.has(x)));
+    expect(off.filter((x) => !touched(x))).toEqual([]);
   });
 });

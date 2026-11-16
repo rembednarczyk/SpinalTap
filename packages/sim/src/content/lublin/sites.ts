@@ -6,12 +6,14 @@ import { STARE_MIASTO_CHUNKS } from "./stare-miasto.generated";
 import { GATE_PASSAGES, type PassageSite } from "./gate-passages";
 import { abutmentRamps, flightTopRamps } from "./abutments";
 import { type GroundRect, type Pad, type Ramp, flightRamps, mapHeight, stepRamps } from "./shape";
+import { type SteepWay, steepWays } from "./steep-ways";
 import type { LublinChunkData } from "./types";
 import { ALCHEMIA_PADS, ALCHEMIA_RAMPS } from "../alchemia/terraces";
+import { W3_BASIN, W3_BASIN_FLOOR, W3_CLEAR_RECTS, W3_PIER, W3_PIPES, W3_QUAY, W3_TOWER, W3_Y, W3_ZONE_RECTS } from "../tessen-w3/site";
 
 /**
  * Where the game's places stand in Lublin (ADR-0045): the hand-made set pieces moved into the
- * city (Tessen's docks on the Bystrzyca, the car wash in a yard behind Plac Łokietka; the market
+ * city (Tessen's sector W-3 on the Bystrzyca, ADR-0082; the car wash in a yard behind Plac Łokietka; the market
  * that stood on Aleja Tysiąclecia is in Alchemia now, ADR-0063), the interiors cut into real
  * tenements on Krakowskie Przedmieście, and the terrain shaped under them. World metres around
  * `LUBLIN_ANCHOR` (ADR-0042).
@@ -25,8 +27,6 @@ export const rawHeight = (x: number, z: number): number => mapHeight(MAP_CHUNKS,
 
 const round = (y: number): number => Math.round(y * 100) / 100;
 
-/** Tessen's docks on the Bystrzyca (local x -40..34, z 90..218), reached by the metro only. */
-export const DOCKS_PLACE: Vec3 = { x: 2560, y: -28.6, z: 300 };
 /**
  * The car wash in the tenements' yard behind Plac Łokietka, open to the car park off
  * Przystankowa (OSM way 179269921; local x -6..22, z 25..49). It stood on the square itself
@@ -35,9 +35,6 @@ export const DOCKS_PLACE: Vec3 = { x: 2560, y: -28.6, z: 300 };
  */
 export const CAR_WASH_PLACE: Vec3 = { x: 395, y: round(rawHeight(403, -32)), z: -69 };
 
-/** The docks' yard and quay, and the basin dug in front of the quay. */
-export const DOCKS_AREA: GroundRect = { minX: 2520, maxX: 2594, minZ: 390, maxZ: 450 };
-export const DOCKS_BASIN: GroundRect = { minX: 2520, maxX: 2594, minZ: 452, maxZ: 500 };
 export const CAR_WASH_AREA: GroundRect = { minX: 389, maxX: 417, minZ: -44, maxZ: -20 };
 
 /**
@@ -128,23 +125,61 @@ export const BUILDING_CUTS: readonly BuildingCut[] = [
   },
 ];
 
-/** Rectangles where the map's buildings and surfaces give way to a set piece. */
-export const CLEARED: readonly GroundRect[] = [DOCKS_AREA, DOCKS_BASIN];
-/** Rectangles where only the map's buildings give way (the surfaces stay under the car wash). */
-export const CLEARED_BUILDINGS: readonly GroundRect[] = [DOCKS_AREA, DOCKS_BASIN, CAR_WASH_AREA];
+/**
+ * Rectangles where the map's buildings and surfaces give way to a set piece: W-3's zone behind
+ * its fence (ADR-0082). A surface goes only when it lies wholly inside them (`lublin/city.ts`):
+ * the riverside wood's lawn reaching far past the fence stays, and W-3's own paving covers it.
+ */
+export const CLEARED: readonly GroundRect[] = W3_ZONE_RECTS;
+/** The building of the public strip that W-3's fence replaces (OSM w1354195809, audit P12). */
+const W3_STRIP_BUILDING: GroundRect = { minX: 2586, maxX: 2606, minZ: 380, maxZ: 395 };
+/** The pipeline's corridor over the west bank and the river: no tree grows through its walk (P8). */
+const W3_PIPE_CORRIDOR: GroundRect = { minX: W3_PIPES.minX - 2, maxX: W3_PIPES.maxX, minZ: W3_PIPES.minZ - 1, maxZ: W3_PIPES.maxZ + 1 };
+/**
+ * Rectangles where only the map's buildings and trees give way (the surfaces stay under the car
+ * wash, and under W-3's quay, pier and basin): the zone, its quay and pier, the basin, the
+ * pipeline's corridor, the strip's one building, the car wash. Not the rest of the public strip:
+ * its trees and the lamp by the lit path stay (P12).
+ */
+export const CLEARED_BUILDINGS: readonly GroundRect[] = [...W3_CLEAR_RECTS, W3_QUAY, W3_TOWER, W3_PIER, W3_BASIN, W3_PIPE_CORRIDOR, W3_STRIP_BUILDING, CAR_WASH_AREA];
+
+/**
+ * The quay's pad down to the grid's row at z 417.5 under the bridge (review round 2,
+ * `pad-not-level`): from the quay's south edge at z 418.5 its cell sloped 0.4 m to the NMT.
+ */
+const W3_QUAY_PAD: GroundRect = { ...W3_QUAY, minZ: W3_QUAY.minZ - 1.1 };
+/** The pickup yard's ends either side of the basin, to the grid's row at z 452.5 under the fence. */
+const W3_YARD_ENDS: readonly GroundRect[] = [
+  { minX: 2500, maxX: W3_BASIN.minX, minZ: 446, maxZ: W3_BASIN.minZ + 0.5 },
+  { minX: W3_BASIN.maxX, maxX: 2606, minZ: 446, maxZ: W3_BASIN.minZ + 0.5 },
+];
 
 /** A rectangle grown by `d` metres on every side (or by `d` and `north` on the north side). */
 const grow = (r: GroundRect, d: number, north = d): GroundRect => ({ minX: r.minX - d, maxX: r.maxX + d, minZ: r.minZ - d, maxZ: r.maxZ + north });
 
 /**
- * The terrain levelled under the set pieces and the rooms; the docks' basin dug 3 m down. The
- * terrain is bilinear between grid points up to 5 m apart, so a pad is levelled a cell beyond
- * what must be flat (the docks' quay ends at the basin instead, which starts 2 m out).
+ * W-3's zone levelled to the halls' floor (ADR-0082, audit P2, P3, P9, P10): its bands along the
+ * path's fence, its quay and its tower, each blending into the terrain within a metre, so the
+ * public strip, the bridge's abutment and the river keep the NMT (the terrain's cell is 2.5 m
+ * there, `terrain.ts`); a retaining wall under the fence takes the terrace's step. Then the basin
+ * dug 3 m down, to 1.5 m short of the chunks' north edge.
  */
+const W3_PADS: readonly Pad[] = [
+  ...[...W3_ZONE_RECTS, W3_QUAY_PAD, W3_TOWER].map((rect): Pad => ({ rect, y: W3_Y, blend: 1, row: "T-002" })),
+  { rect: W3_BASIN, y: W3_BASIN_FLOOR, blend: 1.5, row: "T-002" },
+  // The pickup yard level to the fence beside the basin's ends (review round 2, `pad-not-level`):
+  // the basin's blend and its 2.5 m cells dipped the yard there by up to 1.6 m, past the quay wall's ends.
+  ...W3_YARD_ENDS.map((rect): Pad => ({ rect, y: W3_Y, blend: 0, row: "T-002" })),
+];
+
+/** The terrain levelled under the set pieces and the rooms. */
 export const PADS: readonly Pad[] = [
-  { rect: grow(DOCKS_AREA, 5, 0), y: DOCKS_PLACE.y, blend: 6, row: "T-002" },
-  { rect: DOCKS_BASIN, y: DOCKS_PLACE.y - 3, blend: 1.5, row: "T-002" },
-  { rect: grow(CAR_WASH_AREA, 5), y: CAR_WASH_PLACE.y, blend: 3, row: "T-051" },
+  ...W3_PADS,
+  // The car wash's yard levelled up to the streets round it, not over them (G-754): on the
+  // import's 5 m grid its level points end at z -30, behind the car park's north edge (OSM
+  // w179269921), so the blend leaves the sidewalk, the crossings and Bajkowskiego on the NMT; west
+  // and south short of the column at x 385 (the crossing) and the row at z -45 (the path south).
+  { rect: { minX: 388, maxX: CAR_WASH_AREA.maxX + 5, minZ: -41, maxZ: -27 }, y: CAR_WASH_PLACE.y, blend: 3, row: "T-051" },
   ...ROOM_SITES.map((r): Pad => ({ rect: grow(r.rect, 5), y: r.floor, blend: 2 })),
   // Dug out under the Trybunał for Trasa Podziemna (ADR-0048): level over x 575..585, z -65..-55,
   // sloping up to the Rynek over 5 m, so the slope stays inside the Trybunał's walls. In metres,
@@ -166,3 +201,5 @@ export const PADS: readonly Pad[] = [
 export const RAMPS: readonly Ramp[] = [...stepRamps(MAP_CHUNKS), ...abutmentRamps(MAP_CHUNKS), ...flightTopRamps(MAP_CHUNKS), ...ALCHEMIA_RAMPS];
 /** Ramps along the flights the terrain climbs against their `incline` (G-236, T-131), laid last on a finer grid (`terrain.ts`). */
 export const FLIGHT_RAMPS: readonly Ramp[] = flightRamps(MAP_CHUNKS);
+/** The stretches of the ways walked on foot too steep on the terrain (G-755), laid last at an even grade on the flights' finer grid (`terrain.ts`). */
+export const STEEP_WAYS: readonly SteepWay[] = steepWays(MAP_CHUNKS);

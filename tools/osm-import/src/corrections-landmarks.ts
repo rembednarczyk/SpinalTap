@@ -26,4 +26,15 @@ export const LANDMARK_HEIGHT_CORRECTIONS: readonly TagCorrection[] = [
     reason: "Teatr im. Juliusza Osterwy: 19,5 m z LoD1 wobec domyślnych 16,3 m",
     ref: "T-254",
   },
+  {
+    // Nowy Ratusz's tower (G-119, T-067): `building:levels=7.5` and no roof height gave walls to
+    // 25 m and the importer's 3 m pyramid, a peak of 28 m. GUGiK NMPT over the tower: its body
+    // 29.6-31.8 m, the spire 38.2 m; LoD2 2017 37.7 m. On the photograph (Street View 2025) the
+    // clock storey is about 4 m, the copper one about 6 m, the helmet with its lantern and spire
+    // about 7.5 m. `height` runs over the 1 m plinth to the spire's tip (38 m), the helmet is its roof.
+    id: "w619138854",
+    tags: { height: "37", "roof:height": "7.5" },
+    reason: "Wieża Nowego Ratusza: korpus 30,5 m i szczyt 38 m z NMPT (29,6–31,8 i 38,2 m) i LoD2 (37,7 m) wobec 25 i 28 m z building:levels=7.5",
+    ref: "T-067",
+  },
 ];

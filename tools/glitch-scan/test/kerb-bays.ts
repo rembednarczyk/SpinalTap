@@ -165,6 +165,10 @@ export const EMPTY_STRIPS_KNOWN: Readonly<Record<string, string>> = {
   w232362991: "Kowalska, diagonal 3.4–3.9 m deep: too shallow for most cars aslant at 60° (G-190)",
   w1159135271: "Łęczyńska, perpendicular 3.4 m deep: too shallow for a car across (G-190)",
   w1514058885: "Świętoduska: every bay on a slope over LEVEL_DROP (G-133)",
+  // Świętoduska's three strips north of it (G-813): a car's body falls 0.25–0.35 m along them.
+  w1514058888: "Świętoduska: every bay on a slope over LEVEL_DROP (G-133, G-813)",
+  w1514058889: "Świętoduska: every bay on a slope over LEVEL_DROP (G-133, G-813)",
+  w1514058890: "Świętoduska: every bay on a slope over LEVEL_DROP (G-133, G-813)",
   w1517184173: "Ruska, north kerb: every bay on a slope over LEVEL_DROP (G-133)",
 };
 

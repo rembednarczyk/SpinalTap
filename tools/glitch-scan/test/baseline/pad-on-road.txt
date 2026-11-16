@@ -1,0 +1,2 @@
+# pad-on-road: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-2-0 415,-40

@@ -10,7 +10,15 @@ import { toonSourceOf } from "./model-library";
 import type { AnchorBone, HumanoidRetarget } from "./model-rig";
 import { meleeWrist } from "./melee-poses";
 import { longGunInHands } from "./two-hand-hold";
-import { LONG_GUN, MELEE_HOLD, WEAPON_MODEL, type WeaponMounts, isMeleeKind } from "./weapon-mount";
+import { type GunKind, LONG_GUN, MELEE_HOLD, WEAPON_MODEL, type WeaponMounts, isGunKind, isMeleeKind, muzzleInMount } from "./weapon-mount";
+
+/** The node's world matrix now, its parents' first: the rig moved this frame, before the scene renders. */
+const freshWorld = (node: TransformNode) => {
+  const chain: TransformNode[] = [];
+  for (let n: TransformNode | null = node; n; n = n.parent instanceof TransformNode ? n.parent : null) chain.unshift(n);
+  for (const n of chain) n.computeWorldMatrix(true);
+  return node.getWorldMatrix();
+};
 
 type Place = "hand" | "hip" | "hipL" | "back" | "model" | "long";
 
@@ -221,6 +229,26 @@ export class Loadouts {
     for (const m of [s.mounted.hand, s.mounted.model]) if (m) m.node.rotation.x = wrist;
   }
 
+  /**
+   * The gun in hand of a character and, while it shows, its muzzle in the world (`at`) and the
+   * barrel's direction (`dir`, unit), as the hands hold it now; null without a gun in hand.
+   */
+  muzzle(rig: CharacterRig, at: Vector3, dir: Vector3): { readonly kind: GunKind; readonly shown: boolean } | null {
+    const s = this.states.get(rig);
+    const w = s?.look.weapons;
+    const look = w ? w[w.active] : null;
+    const kind = look ? WEAPON_MODEL[look].kind : null;
+    if (!s || !look || !isGunKind(kind)) return null;
+    const held = [s.mounted.model, s.mounted.long, s.mounted.hand].find((m) => m?.look === look && m.node.isEnabled());
+    if (!held) return { kind, shown: false };
+    const world = freshWorld(held.node);
+    const local = muzzleInMount(kind, "hand");
+    Vector3.TransformCoordinatesToRef(local.at.scale(WEAPON_MODEL[look].scale), world, at);
+    Vector3.TransformNormalToRef(local.dir, world, dir);
+    dir.normalize();
+    return { kind, shown: true };
+  }
+
   dispose(rig: CharacterRig): void {
     this.pending.delete(rig);
     const s = this.states.get(rig);
@@ -349,14 +377,17 @@ export class Loadouts {
     for (const garment of Object.values(s.look.garments)) {
       for (const a of garment?.attachments ?? []) {
         const spec = ADD_ONS[a.mesh];
-        const anchor = s.model?.anchors[spec.model.bone];
-        const mesh = spec.build(this.scene, `${s.name}-${a.mesh}`);
+        const name = `${s.name}-${a.mesh}`;
+        // A shell of the model's cloth is skinned with it and already in place.
+        const shell = s.model && spec.shell ? spec.shell(this.scene, name, s.model.model.meshes, rig.body) : null;
+        const anchor = shell ? undefined : s.model?.anchors[spec.model.bone];
+        const mesh = shell ?? spec.build(this.scene, name);
         if (anchor) {
           const size = spec.model.size * s.model!.fit;
           mesh.parent = anchor;
           mesh.position.set(...spec.model.at).scaleInPlace(s.model!.fit);
           mesh.scaling.setAll(size);
-        } else {
+        } else if (!shell) {
           const at = spec.rig(rig);
           mesh.parent = at.parent;
           mesh.position.set(...at.at);
@@ -365,7 +396,7 @@ export class Loadouts {
         mesh.material = this.materials.get(spec.preset);
         mesh.isPickable = false;
         applyOutline(mesh);
-        s.attachments.push({ id: a.mesh, mesh, onModel: anchor !== undefined });
+        s.attachments.push({ id: a.mesh, mesh, onModel: shell !== null || anchor !== undefined });
       }
     }
     this.onMeshes(s.attachments.map((a) => a.mesh));

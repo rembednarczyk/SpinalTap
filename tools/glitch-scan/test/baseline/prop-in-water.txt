@@ -1,0 +1,4 @@
+# prop-in-water: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+nabrzeze-0-1 2441,345
+nabrzeze-0-1 2444,375
+nabrzeze-0-1 2450,404

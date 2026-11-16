@@ -4,7 +4,7 @@ Surowe dane, z których `tools/osm-import` generuje Lublin 2077 (ADR-0042). Pobi
 
 ## OpenStreetMap
 
-- **Pliki:** `data/osm/<dystrykt>.json`, `data/osm/points/hydrants.json` (hydranty `emergency=fire_hydrant` z tych samych prostokątów, `pnpm osm:hydrants`, bo wyciągi dystryktów trzymają tylko nazwane punkty), `data/osm/points/entrances.json` (wejścia i drzwi `entrance=*`, `door=*`, `pnpm osm:entrances`, bo wyciągi nie trzymają tagów węzłów obrysów) i `data/osm/points/trees.json` (tagi `genus`, `species`, `taxon`, `leaf_type` drzew planu, które mają rodzaj lub gatunek, z `api/0.6/nodes` po id, `pnpm osm:trees`).
+- **Pliki:** `data/osm/<dystrykt>.json`, `data/osm/points/hydrants.json` (hydranty `emergency=fire_hydrant` z tych samych prostokątów, `pnpm osm:hydrants`, bo wyciągi dystryktów trzymają tylko nazwane punkty), `data/osm/points/entrances.json` (wejścia i drzwi `entrance=*`, `door=*`, `pnpm osm:entrances`, bo wyciągi nie trzymają tagów węzłów obrysów), `data/osm/points/furniture.json` (meble i drzewa: `natural=tree`, ławki, kosze, stojaki, automaty, paczkomaty, słupki, słupy ogłoszeniowe, latarnie i hydranty, z surowych kafli `pnpm osm:fetch`, posortowane po id węzła) i `data/osm/points/trees.json` (tagi `genus`, `species`, `taxon`, `leaf_type` drzew planu, które mają rodzaj lub gatunek, z `api/0.6/nodes` po id, `pnpm osm:trees`).
   - Wyciąg z `api.openstreetmap.org/api/0.6/map` dla prostokątów dystryktów z marginesem 40 m.
   - Bez metadanych edycji (wersja, autor, zestaw zmian, czas) i bez elementów, których generator nie czyta (trasy, granice, zakazy skrętu).
   - Bez części tagów (notatki, źródła, adresy WWW, telefony, godziny otwarcia).
@@ -60,9 +60,10 @@ Surowe dane, z których `tools/osm-import` generuje Lublin 2077 (ADR-0042). Pobi
 
 ## Powierzchnia: NMPT GUGiK
 
-- **Pliki:** surowego NMPT nie ma w repo. Trafiają do niego tylko wartości pochodne, mierzone ręcznie w obrysach i punktach gry:
-  - wierzchy budynków `SURFACE_TOPS` w `tools/osm-import/src/corrections-surface.ts` (G-708, T-269) i wysokości drzew w `tools/osm-import/src/tree-heights.ts`;
+- **Pliki:** surowego NMPT nie ma w repo. Trafiają do niego tylko wartości pochodne:
+  - `data/gugik/nmpt/<dystrykt>.json` (nagłówek) i `.bin`: wysokość nad terenem (NMPT − NMT z `data/terrain`) w siatce 1 m PUWG 1992 nad prostokątem dystryktu z marginesem 10 m, w każdym oczku najwyższe z czterech oczek 0,5 m, jeden bajt w krokach 0,2 m (255 to brak danych). Tworzy je `pnpm gugik:nmpt` (`tools/gugik/src/nmpt*.ts`; kafle 250 m pokrycia `DSM_PL-EVRF2007-NH`, późniejszego nalotu, w pamięci podręcznej poza repo; wysokości przesunięte o 0,15 m do układu PL-KRON86-NH terenu). Z nich `pnpm osm:props` bierze wysokości drzew (`tools/osm-import/src/tree-heights.ts`, audyt ADR-0077, luka 4);
+  - wierzchy budynków `SURFACE_TOPS` w `tools/osm-import/src/corrections-surface.ts` (G-708, T-269), mierzone ręcznie;
   - tabele kontroli skanu `tools/glitch-scan/test/surface-heights.ts` i `landmark-heights.ts` (mediany, okapy i kalenice jako world y).
-  - Numeryczny Model Pokrycia Terenu o oczku 0,5 m z lotniczego skanowania laserowego, pobrany przez WCS `DSM_PL-KRON86-NH`, układ PUWG 1992 (EPSG:2180), wysokości normalne PL-KRON86-NH.
+  - Numeryczny Model Pokrycia Terenu o oczku 0,5 m z lotniczego skanowania laserowego, pobrany przez WCS `DSM_PL-KRON86-NH` (wartości ręczne) i `DSM_PL-EVRF2007-NH` (`data/gugik/nmpt`), układ PUWG 1992 (EPSG:2180).
 - **Źródło:** Główny Urząd Geodezji i Kartografii, państwowy zasób geodezyjny i kartograficzny (geoportal.gov.pl), NMPT.
   - Dane udostępniane bezpłatnie do dowolnego celu (art. 40a ustawy Prawo geodezyjne i kartograficzne), jak NMT.

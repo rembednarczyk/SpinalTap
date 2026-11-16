@@ -1,19 +1,29 @@
 /**
- * How long a model download may go without a single new chunk (or, before the headers, without an
- * answer) before it counts as failed (G-562 path: the character keeps its stand-in and the next ask
- * fetches it again). The clock restarts with every chunk, so a slow link that keeps delivering never
+ * How long a model download may go without a single new chunk, once the server has answered, before
+ * it counts as failed (G-562 path: the character keeps its stand-in and the next ask fetches it
+ * again). The clock restarts with every chunk, so a slow link that keeps delivering never
  * trips it (G-637: a flat total limit made the 8 MB VRM impossible below ~0.5 Mbit/s). 30 s is long
  * for a radio handover or a congested cell to recover and short enough that a hung connection frees
  * the file for a retry in half a minute (G-561).
  */
 export const MODEL_FETCH_IDLE_MS = 30_000;
 
+/**
+ * How long a model request may wait for the response headers. Kept apart from the idle clock (G-809):
+ * the browser holds a request in its own queue (six HTTP/1.1 connections per host) until the files
+ * ahead of it finish, and on an 8 Mbit/s link that alone kept seki.vrm 32 s behind the other model
+ * files, so the idle clock gave up on a download that had not even begun. This limit only catches a
+ * request that never gets an answer at all.
+ */
+export const MODEL_FETCH_START_MS = 180_000;
+
 /** The whole-download limit for a response without a readable body, where progress cannot be seen. */
 export const MODEL_FETCH_TIMEOUT_MS = 120_000;
 
 /**
- * The file's bytes, or a rejection once `MODEL_FETCH_IDLE_MS` passes without progress (with the fetch
- * aborted) or when the server answers with an error status: the error page is not a model (G-634).
+ * The file's bytes, or a rejection (with the fetch aborted) once `MODEL_FETCH_START_MS` passes without
+ * an answer or `MODEL_FETCH_IDLE_MS` without a chunk after it, or when the server answers with an error
+ * status: the error page is not a model (G-634).
  */
 export const fetchModelBytes = async (url: string): Promise<ArrayBuffer> => {
   const abort = new AbortController();
@@ -25,27 +35,28 @@ export const fetchModelBytes = async (url: string): Promise<ArrayBuffer> => {
   });
   let finished = false;
   let reader: { cancel: () => Promise<void> } | undefined;
-  const arm = (ms: number): void => {
+  const arm = (ms: number, why: string): void => {
     // After the end (failure included) a late chunk must not start a clock nobody clears.
     if (finished) return;
     clearTimeout(timer);
     timer = setTimeout(() => {
-      const err = new Error(`Model ${url} did not download: ${ms === MODEL_FETCH_TIMEOUT_MS ? `not finished within ${ms / 1000} s` : `no data for ${ms / 1000} s`}`);
+      const err = new Error(`Model ${url} did not download: ${why} ${ms / 1000} s`);
       abort.abort(err);
       giveUp(err);
     }, ms);
   };
   const read = async (): Promise<ArrayBuffer> => {
-    arm(MODEL_FETCH_IDLE_MS);
+    arm(MODEL_FETCH_START_MS, "no answer within");
     const r = await fetch(url, { signal: abort.signal });
     if (!r.ok) {
       r.body?.cancel().catch(() => undefined);
       throw new Error(`Model ${url} could not be downloaded: HTTP ${r.status}${r.statusText ? ` ${r.statusText}` : ""}`);
     }
     if (!r.body) {
-      arm(MODEL_FETCH_TIMEOUT_MS);
+      arm(MODEL_FETCH_TIMEOUT_MS, "not finished within");
       return r.arrayBuffer();
     }
+    arm(MODEL_FETCH_IDLE_MS, "no data for");
     const body = r.body.getReader();
     reader = body;
     const chunks: Uint8Array[] = [];
@@ -55,7 +66,7 @@ export const fetchModelBytes = async (url: string): Promise<ArrayBuffer> => {
       if (done || finished) break;
       chunks.push(value);
       size += value.byteLength;
-      arm(MODEL_FETCH_IDLE_MS);
+      arm(MODEL_FETCH_IDLE_MS, "no data for");
     }
     const bytes = new Uint8Array(size);
     let at = 0;

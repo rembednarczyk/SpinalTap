@@ -3845,7 +3845,7 @@
 [7168903380,51.248612,22.5684781,{"artist_name":"Jerzy Kędziora","artwork_type":"sculpture","name":"Sztukmistrz z Lublina na linie","tourism":"artwork"}],
 [7171213558,51.2484549,22.5684041,{"addr:housenumber":"3","addr:street":"Grodzka","fee":"no","name":"Galeria Labirynt 2","tourism":"gallery"}],
 [7173173730,51.2467165,22.5663003,{"addr:city":"Lublin","name":"Grela","shop":"bakery"}],
-[7174216656,51.2476139,22.566268,{"addr:city":"Lublin","name":"Vegas","shop":"alcohol"}],
+[7174216656,51.2476139,22.566268,{"addr:city":"Lublin","name":"Vegas","shop":"vacant"}],
 [7175473375,51.2496993,22.5676188,{"craft":"photographer","name":"Warsztat Fotograficzny Warsztatów Kultury","name:uk":"Фотомайстерня Майстерень Культури"}],
 [7175516372,51.2488998,22.5677593,{"addr:city":"Lublin","addr:country":"PL","addr:housenumber":"9","addr:postcode":"20-086","addr:street":"Rybna","charge":"28.00 PLN","fee":"yes","museum":"cuisine","name":"Regionalne Muzeum Cebularza","name:pl":"Regionalne Muzeum Cebularza","operator:type":"private","tourism":"museum"}],
 [7179460888,51.2500194,22.5671038],

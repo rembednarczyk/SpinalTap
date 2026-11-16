@@ -54,7 +54,14 @@ const BED_STEP = 2;
 export const ROOF_LAWNS: readonly Box[] = [402.5, 420].flatMap((x) => [37, 47.5].map((z) => box(x, x + 13.5, z, z + 7.5, HALL.roof, HALL.roof + 0.05)));
 
 /** The tops of the pergolas' crossbeams: of pergola A's pair at z, of pergola C's, of pergola B's. */
-const walkTop = (z: number): number => cm(Math.max(groundY(PERGOLA_WALK.west, z), groundY(PERGOLA_WALK.east, z)) + HEIGHT);
+const walkTop = (z: number): number => {
+  const p = PERGOLA_WALK;
+  const mid = (p.west + p.east + POST) / 2;
+  // Its lanterns too: the one under it and the ones half-way to the pairs either side, which hang
+  // from the lower of two tops; the ground under them may crown over the posts' (G-758).
+  const under = [groundY(p.west, z), groundY(p.east, z), groundY(mid, z), groundY(mid, z - p.every / 2), groundY(mid, z + p.every / 2)];
+  return cm(Math.max(...under) + HEIGHT);
+};
 const backXs = (): number[] => {
   const xs: number[] = [];
   for (let x = PERGOLA_BACK.from; x <= PERGOLA_BACK.to + 1e-6; x += PERGOLA_BACK.every) xs.push(x);

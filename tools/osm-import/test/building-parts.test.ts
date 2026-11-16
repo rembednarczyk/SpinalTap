@@ -65,12 +65,15 @@ describe("building parts (G-049)", () => {
     for (const chapel of ["w617763428", "w617763429"]) expect(byId(chapel)?.levels).toBe(6);
   });
 
-  it("builds the Town Hall's 4.5 storeys and its tower's 7.5 as mapped, not rounded up (G-116)", () => {
+  it("builds the Town Hall's 4.5 storeys as mapped, not rounded up (G-116), and its tower to GUGiK's heights (T-067)", () => {
     const townHall = byId("w66264120")!;
     expect(townHall.height - townHall.plinth).toBeCloseTo(4.5 * STOREY, 1);
     expect(townHall.levels).toBe(4);
+    // The tower's `building:levels=7.5` gave 24 m walls; NMPT and LoD2 set its body to 30.5 m and its spire to 38 m.
     const tower = byId("w619138854")!;
-    expect(tower.height - tower.plinth).toBeCloseTo(7.5 * STOREY, 1);
+    expect(tower.source).toBe("height");
+    expect(tower.height - tower.plinth).toBeCloseTo(37 - 7.5, 1);
+    expect(tower.roof).toBe(7.5);
     expect(tower.levels).toBe(7);
   });
 

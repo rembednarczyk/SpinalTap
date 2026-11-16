@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { ALCHEMIA_LIFT, ALCHEMIA_MARKET_PROPS, HANA_SPOT, docks, groundY } from "@seki/sim";
+import { ALCHEMIA_LIFT, ALCHEMIA_MARKET_PROPS, HANA_SPOT, W3_PIPE_LADDER, ground, groundY } from "@seki/sim";
 import { type Game, mountGame, run, unmountGame } from "./game-ui";
 
 /**
  * The lift, a jump and a ladder with the HUD's prompts and the minimap (formerly
  * e2e/levels.spec.ts, ADR-0046): Alchemia's lift from the food hall to T0 (ADR-0074; the market's overpass and
  * fire escape went with it off Aleja Tysiąclecia, ADR-0063; their mechanics are the sim's test
- * floor's), Hana's cart and the ladder of the docks' container stack. The real Space key in the
+ * floor's), Hana's cart and the ladder of W-3's pipeline. The real Space key in the
  * running loop is smoke's "real input" test; here the jump is an input frame.
  */
 const NORTH = 0;
@@ -90,14 +90,14 @@ describe("levels in the game (ADR-0020, ADR-0021)", () => {
     for (let i = 0; i < 60 && g.seki.state().airborne; i++) g.step(1, { moveZ: 1 });
     expect(g.seki.state().player!.y).toBeCloseTo(cartTop, 2);
 
-    // The docks' container stack: into the foot of its ladder, up onto the low container.
-    const foot = docks(3, 0, 99.6);
+    // W-3's pipeline (ADR-0082): into the foot of its ladder on the west bank, up onto the landing of its walk.
+    const foot = ground(W3_PIPE_LADDER.x, W3_PIPE_LADDER.z);
     run(() => g.seki.teleport(foot.x, foot.z, NORTH, 0, foot.y));
     g.step(1);
     walkUntil(g, () => false, 1);
-    expect(g.seki.state().climbing).toBe("doki-stack-1");
-    const top = walkUntil(g, (p) => !g.seki.state().climbing && p.y - foot.y > 2.4, 12);
-    expect(top.y - foot.y).toBeGreaterThan(2.4);
+    expect(g.seki.state().climbing).toBe(W3_PIPE_LADDER.key);
+    const top = walkUntil(g, (p) => !g.seki.state().climbing && p.y - foot.y > 7, 30);
+    expect(top.y - foot.y).toBeGreaterThan(7);
     // The minimap says the player is up on a level.
     g.step(1);
     expect(screen.getByTestId("minimap-level").textContent).toContain("m");

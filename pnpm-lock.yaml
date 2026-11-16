@@ -178,17 +178,39 @@ importers:
         specifier: ^19.3.0
         version: 19.3.0(@types/react@19.3.0)
 
+  tools/bench-ab:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   tools/code-health:
     devDependencies:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
 
-  tools/glitch-scan: {}
+  tools/glitch-scan:
+    devDependencies:
+      clipper2-ts:
+        specifier: 2.0.1-19
+        version: 2.0.1-19
 
   tools/gugik: {}
 
+  tools/hashes:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   tools/i18n-scan:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  tools/map-refresh:
     devDependencies:
       typescript:
         specifier: 5.9.3
@@ -201,6 +223,24 @@ importers:
       clipper2-ts:
         specifier: 2.0.1-19
         version: 2.0.1-19
+
+  tools/pr-prep:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  tools/shots:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  tools/test-rerun:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
 
   tools/test-time:
     devDependencies:

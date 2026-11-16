@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../src/content/world-map";
-import { LUBLIN_CHUNKS, RISE_STOREY, buildingView, isLandmark, verticalOf } from "../src/content/lublin";
+import { LUBLIN_CHUNKS, RISE_STOREY, buildingView, isLandmark, porticoOf, verticalOf } from "../src/content/lublin";
+import { COLUMN_TOP } from "../src/content/lublin/porticoes";
 
 const all = LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => ({ district: c.district, b })));
 const rynek = { x: 582.4, z: -61.2 };
@@ -82,13 +83,19 @@ describe("vertical Lublin 2077 (ADR-0051)", () => {
 
   it("grows the solids upwards only: the same parts, bottoms unchanged, the top over the superstructure", () => {
     const views = new Map(WORLD_SCENERY.flatMap((s) => (s.view.kind === "building" ? [[`${s.at.x},${s.at.z}`, s.view] as const] : [])));
+    const ids = new Map(LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => [`${b.x},${b.z}`, b.id] as const)));
     let grown = 0;
     for (const chunk of WORLD_CHUNKS) {
       for (const p of chunk.props) {
-        if (!p.scenery || p.view.kind !== "building") continue;
+        // The map's buildings (W-3's shell, ADR-0082, keeps its solid under its drawn parapet).
+        if (!p.scenery || p.view.kind !== "building" || !ids.has(`${p.center.x},${p.center.z}`)) continue;
         const rise = p.view.vertical?.rise ?? 0;
         expect(views.get(`${p.center.x},${p.center.z}`)).toBe(p.view);
-        for (const prism of p.prisms ?? []) expect(prism.top).toBeCloseTo(p.view.height + rise, 6);
+        // A portico's columns stand in front of the walls up to its balcony (G-119), the parts to the top.
+        const columns = porticoOf(ids.get(`${p.center.x},${p.center.z}`) ?? "")?.columns.length ?? 0;
+        const parts = (p.prisms ?? []).slice(0, (p.prisms ?? []).length - columns);
+        for (const prism of parts) expect(prism.top).toBeCloseTo(p.view.height + rise, 6);
+        for (const prism of (p.prisms ?? []).slice(parts.length)) expect([prism.bottom, prism.top]).toEqual([-1, COLUMN_TOP]);
         if (rise > 0) grown++;
       }
     }

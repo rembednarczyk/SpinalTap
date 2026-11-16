@@ -6,9 +6,10 @@ import { loadOsm, truthAreas } from "../src/truth.ts";
 
 /**
  * The cover against the truth in `krakowskie-0-1` (ADR-0077), offline on the committed raster:
- * the lawns and setts the curator laid from the orthophoto (T-243, T-245) and the map's lawns,
- * parks and squares. Measured with the thresholds of `thresholds.ts` (12.11.2026): lawns 93.4%
- * green, paved areas 91.2% hard surface (light paving or asphalt), shadow under 1%.
+ * the lawns and setts the curator laid from the orthophoto (T-243, T-245) and the map's lawns and
+ * squares. Measured with the thresholds of `thresholds.ts` (13.11.2026): lawns 94.7% green, paved
+ * areas 92.0% hard surface (light paving, asphalt or paving under crowns), shadow under 1%. With
+ * Plac Litewski's park (w67508857) among the lawns, 89.8%: its paths under the trees (G-764).
  */
 const cell = cellById("krakowskie-0-1");
 const cover = readCover("krakowskie");

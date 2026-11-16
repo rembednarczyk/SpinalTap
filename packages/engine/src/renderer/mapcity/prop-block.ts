@@ -14,11 +14,12 @@ import { bakeDoor } from "./door-models";
 import { bakeFigure } from "./figure-models";
 import { cellBounds } from "./map-index";
 import { type WorldProp, bake } from "./prop-batch";
-import { chainModel, farModel, propModel } from "./prop-models";
+import { chainModel, farModel, nearModel } from "./prop-models";
 import type { PropPoles } from "./prop-poles";
 import { type BlockBand, PROP_BLOCK } from "./prop-shapes";
 import type { Box2 } from "./polygon";
 import { bakeDogs, clearOf, gateDogs, stallDog } from "./robodogs";
+import { type BakePart, type PackedMesh, SlicedBake, packedToMesh } from "./sliced-bake";
 import { bakeStreetModel } from "./street-models";
 import { bakePoles } from "./utility-poles";
 
@@ -34,6 +35,8 @@ export interface PropBlock {
   near: Mesh | null;
   /** Its detailed mesh is baked for its pieces as they are now. */
   baked: boolean;
+  /** Its detailed mesh while it is being baked (`continueNear`). */
+  job: SlicedBake | null;
   far: Mesh | null;
   dirty: boolean;
 }
@@ -54,6 +57,7 @@ export const newBlock = (key: string): PropBlock => ({
   band: "off",
   near: null,
   baked: false,
+  job: null,
   far: null,
   dirty: true,
 });
@@ -104,56 +108,85 @@ const bakeBlockDogs = (deps: Pick<PropBakeDeps, "poles">, sink: MeshSink, block:
   bakeDogs(sink, cityProps, dog, spots);
 };
 
+/** One piece of a block's detailed mesh, as `nearSink` bakes it (the poles are baked together). */
+const bakePiece = (deps: Pick<PropBakeDeps, "quality" | "poles">, sink: MeshSink, p: WorldProp): void => {
+  const { poles } = deps;
+  const models = poles.models;
+  // The decals (ADR-0058 stage 6) by their layouts; the phones go without the small ones.
+  if (DECAL_KINDS.has(p.prop)) {
+    if (deps.quality !== "low" || !FINE_DECALS.has(p.prop)) bakeDecal(sink, p);
+    return;
+  }
+  // A door on a facade (ADR-0058 stage 9) at its own size, its leaf a model where they have loaded.
+  if (p.prop === "door") bakeDoor(sink, models, p);
+  // A wall, fence, hedge or gate of the map (ADR-0077), baked at its own length, height and rise.
+  else if (p.prop === "barrier") bakeBarrier(sink, p, deps.quality);
+  // A still figure (ADR-0058 stage 8): a model of the crowd's file on every quality, nobody before it loads.
+  else if (p.prop === "figure") bakeFigure(sink, poles.props, p, deps.quality);
+  else if (!(models && bakeStreetModel(sink, models, p))) {
+    bake(sink, nearModel(p.prop, p.shape, deps.quality), p);
+    for (const c of p.chains ?? []) bake(sink, chainModel(c.end, deps.quality), { ...p, yaw: c.yaw });
+  }
+};
+
+/** The parts of a block's detailed mesh in the order they are baked: a piece, the poles, the dogs, a pavilion, the stand-ins. */
+const nearSteps = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: Pick<PropBlock, "pieces" | "bounds">): BakePart[] => {
+  const { poles } = deps;
+  const pieces = sortedPieces(block);
+  const steps: BakePart[] = pieces.filter((p) => !poles.isPole(p)).map((p) => (sink) => bakePiece(deps, sink, p));
+  const { pole, props } = poles;
+  if (pole && props) steps.push((sink) => bakePoles(sink, props, pole, pieces.filter((p) => poles.isPole(p))));
+  steps.push((sink) => bakeBlockDogs(deps, sink, block, pieces));
+  // The metro's pavilions standing in the block (ADR-0071 stages 2 and 3): no mesh of their own.
+  for (const e of pavilionsIn(block.bounds)) steps.push((sink) => bakePavilion(sink, e, deps.quality));
+  // And under Alchemia's detailed mesh, hidden by it near the hall, standing in for it beyond.
+  steps.push((sink) => {
+    if (alchemiaIn(block.bounds)) bakeAlchemiaStandIn(sink);
+    if (arkadyIn(block.bounds)) bakeArkadyStandIn(sink);
+    if (pavilionIn(block.bounds)) bakePavilionStandIn(sink);
+    if (parkingIn(block.bounds)) bakeParkingStandIn(sink);
+  });
+  return steps;
+};
+
 /**
  * A block's detailed pieces as one sink (ADR-0050), as `bakeNear` draws them: pure, so the glitch
  * scan flies the low patrols (ADR-0058 stage 7b) through the furniture the city draws.
  */
 export const nearSink = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: Pick<PropBlock, "pieces" | "bounds">): MeshSink => {
   const sink = new MeshSink();
-  const { poles } = deps;
-  const pole = poles.pole;
-  const pieces = sortedPieces(block);
-  const models = poles.models;
-  for (const p of pieces) {
-    if (poles.isPole(p)) continue;
-    // The decals (ADR-0058 stage 6) by their layouts; the phones go without the small ones.
-    if (DECAL_KINDS.has(p.prop)) {
-      if (deps.quality !== "low" || !FINE_DECALS.has(p.prop)) bakeDecal(sink, p);
-      continue;
-    }
-    // A door on a facade (ADR-0058 stage 9) at its own size, its leaf a model where they have loaded.
-    if (p.prop === "door") {
-      bakeDoor(sink, models, p);
-      continue;
-    }
-    // A wall, fence, hedge or gate of the map (ADR-0077), baked at its own length, height and rise.
-    if (p.prop === "barrier") {
-      bakeBarrier(sink, p, deps.quality);
-      continue;
-    }
-    // A still figure (ADR-0058 stage 8): a model of the crowd's file on every quality, nobody before it loads.
-    if (p.prop === "figure") {
-      bakeFigure(sink, poles.props, p, deps.quality);
-      continue;
-    }
-    if (models && bakeStreetModel(sink, models, p)) continue;
-    bake(sink, propModel(p.prop, p.shape).sink, p);
-    for (const c of p.chains ?? []) bake(sink, chainModel(c.end), { ...p, yaw: c.yaw });
-  }
-  if (pole && poles.props) bakePoles(sink, poles.props, pole, pieces.filter((p) => poles.isPole(p)));
-  bakeBlockDogs(deps, sink, block, pieces);
-  // The metro's pavilions standing in the block (ADR-0071 stages 2 and 3): no mesh of their own.
-  for (const e of pavilionsIn(block.bounds)) bakePavilion(sink, e, deps.quality);
-  // And under Alchemia's detailed mesh, hidden by it near the hall, standing in for it beyond.
-  if (alchemiaIn(block.bounds)) bakeAlchemiaStandIn(sink);
-  if (arkadyIn(block.bounds)) bakeArkadyStandIn(sink);
-  if (pavilionIn(block.bounds)) bakePavilionStandIn(sink);
-  if (parkingIn(block.bounds)) bakeParkingStandIn(sink);
+  for (const step of nearSteps(deps, block)) step(sink);
   return sink;
 };
 
-/** Bakes a block's detailed pieces into one mesh on the street props' material (ADR-0050). */
-export const bakeNear = (deps: PropBakeDeps, block: PropBlock): void => {
+/**
+ * Bakes on a block's detailed mesh (ADR-0050) until `stop()`, asked after each part, so a frame
+ * bakes some milliseconds of it and not a whole block of some hundred thousand vertices; the mesh
+ * is made of the baked parts (the same vertices as `nearSink`) once they are in, in the same call
+ * if `stop()` leaves time, else at the start of the next. True when it is made.
+ */
+export const continueNear = (deps: PropBakeDeps, block: PropBlock, stop: () => boolean): boolean => {
+  const job = (block.job ??= new SlicedBake(nearSteps(deps, block)));
+  if (!job.ready) {
+    job.run(stop);
+    if (!job.ready || stop()) return false;
+  }
+  nearMesh(deps, block, job.packed!);
+  return true;
+};
+
+const nearMesh = (deps: PropBakeDeps, block: PropBlock, packed: PackedMesh): void => {
+  const m = packedToMesh(deps.scene, `props-${block.key}`, packed);
+  if (m) {
+    m.material = deps.materials.get("streetProp");
+    m.setEnabled(false);
+  }
+  block.job = null;
   block.baked = true;
-  block.near = blockMesh(deps, `props-${block.key}`, nearSink(deps, block));
+  block.near = m;
+};
+
+/** Bakes a block's detailed pieces into one mesh on the street props' material (ADR-0050), all at once. */
+export const bakeNear = (deps: PropBakeDeps, block: PropBlock): void => {
+  nearMesh(deps, block, (block.job ?? new SlicedBake(nearSteps(deps, block))).finish());
 };

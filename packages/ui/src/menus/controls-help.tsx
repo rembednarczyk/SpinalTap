@@ -39,6 +39,7 @@ const fromBindings = (controls: readonly ControlBindingVm[], t: Translate): Row[
     [keys("toggleCamera"), "help.camera"],
     [keys("ability"), "help.ability"],
     [keys("useItem"), "help.medkit"],
+    [keys("wait"), "help.wait"],
   ];
 };
 

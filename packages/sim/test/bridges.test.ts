@@ -221,4 +221,56 @@ describe("bridges' decks (ADR-0053)", () => {
     }
     expect(fails).toEqual([]);
   });
+
+  it("lay Mełgiewska's sidewalks level with their carriageways in each cross section, and Andersa's sidewalk onto the south one without a step (G-737)", () => {
+    type P = { readonly x: number; readonly z: number };
+    // The axes of the carriageways w172992144, w50733068 and of the sidewalks w230881194, w230881193 (OSM).
+    const bridges = [
+      { road: [{ x: 2407, z: 277.6 }, { x: 2449.6, z: 251 }], walk: [{ x: 2404.7, z: 267.3 }, { x: 2447.4, z: 241.2 }] },
+      { road: [{ x: 2458.7, z: 302.7 }, { x: 2412.6, z: 318.7 }], walk: [{ x: 2459.3, z: 312.5 }, { x: 2413.5, z: 328.9 }] },
+    ];
+    const off: string[] = [];
+    let seen = 0;
+    for (const { road, walk } of bridges) {
+      const [a, b] = road as [P, P];
+      const len = Math.hypot(b.x - a.x, b.z - a.z);
+      const n = { x: -(b.z - a.z) / len, z: (b.x - a.x) / len };
+      const [w0, w1] = walk as [P, P];
+      // The sidewalk's axis across the carriageway's at each point of it: the same cross section.
+      const toWalk = (p: P) => ((w0.x - p.x) * (w1.z - w0.z) - (w0.z - p.z) * (w1.x - w0.x)) / (n.x * (w1.z - w0.z) - n.z * (w1.x - w0.x));
+      for (let t = 0.05; t <= 0.95; t += 0.05) {
+        const p = { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
+        const s = toWalk(p);
+        const q = { x: p.x + n.x * s, z: p.z + n.z * s };
+        const [yr, yw] = [bridgeDeckAt(p.x, p.z), bridgeDeckAt(q.x, q.z)];
+        // Past the sidewalk's ends the carriageway goes on alone.
+        if (yw === null) continue;
+        seen++;
+        if (yr === null || Math.abs(yw - yr) > 0.05) off.push(`(${q.x.toFixed(1)}, ${q.z.toFixed(1)}) ${yw.toFixed(2)} by ${yr?.toFixed(2)}`);
+      }
+    }
+    expect(off).toEqual([]);
+    expect(seen).toBeGreaterThan(30);
+    // Along w230881193 from 4 m out on Andersa to 6 m onto the bridge, and back.
+    const [end, on] = [{ x: 2413.5, z: 328.9 }, { x: 2459.3, z: 312.5 }];
+    const len = Math.hypot(on.x - end.x, on.z - end.z);
+    const u = { x: (on.x - end.x) / len, z: (on.z - end.z) / len };
+    const [street, deck] = [{ x: end.x - u.x * 4, z: end.z - u.z * 4 }, { x: end.x + u.x * 6, z: end.z + u.z * 6 }];
+    for (const [from, to] of [[street, deck], [deck, street]] as const) {
+      const sim = Simulation.create({ seed: 3 });
+      teleportPlayer(sim, { x: from.x, y: sim.streamer.ground.heightAt(from.x, from.z), z: from.z }, Math.atan2(to.x - from.x, to.z - from.z));
+      let [step, prev] = [0, sim.player()!.position.y];
+      for (let i = 0; i < 60 * 6; i++) {
+        const p = sim.player()!.position;
+        if (Math.hypot(to.x - p.x, to.z - p.z) < 0.5) break;
+        sim.player()!.yaw = Math.atan2(to.x - p.x, to.z - p.z);
+        sim.step(input({ moveZ: 1 }));
+        step = Math.max(step, Math.abs(sim.player()!.position.y - prev));
+        prev = sim.player()!.position.y;
+      }
+      const p = sim.player()!.position;
+      expect(Math.hypot(to.x - p.x, to.z - p.z), `from (${from.x.toFixed(1)}, ${from.z.toFixed(1)})`).toBeLessThan(0.5);
+      expect(step, `from (${from.x.toFixed(1)}, ${from.z.toFixed(1)})`).toBeLessThan(0.05);
+    }
+  });
 });

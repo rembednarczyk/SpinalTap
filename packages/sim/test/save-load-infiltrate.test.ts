@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SaveSnapshot } from "@seki/core";
-import { Simulation, docks, stateHash } from "../src";
-import { byKey, run, teleportPlayer } from "./helpers";
+import { Simulation, w3, stateHash } from "../src";
+import { byKey, run, standInFront, teleportPlayer } from "./helpers";
 
 /** Saving and loading in the middle of an infiltration (G-174): the loaded game goes on as the saved one. */
 
@@ -9,7 +9,7 @@ const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s
 const hash = (sim: Simulation) => stateHash(sim.snapshot(null, "t", ""));
 
 /** In the docks' yard with `completed` contracts behind her, one step after taking the infiltration. */
-const infiltrating = (seed: number, completed: number, at = docks(0, 0, 120)): Simulation => {
+const infiltrating = (seed: number, completed: number, at = w3(2492, 0, 418)): Simulation => {
   const fresh = Simulation.create({ seed }).snapshot(null, "t", "");
   const sim = Simulation.fromSnapshot(roundTrip({ ...fresh, domain: { ...fresh.domain, contracts: { active: null, completed } } }));
   teleportPlayer(sim, at);
@@ -56,10 +56,10 @@ describe("save and load during an infiltration (G-174)", () => {
   });
 
   it("another seed, and a guard half sure after a few steps in front of him, do not part either", () => {
-    const sim = infiltrating(77, 2, docks(6, 0, 110));
+    const sim = infiltrating(77, 2, w3(2530, 0, 394));
     const door = byKey(sim, `${sim.domain.contracts.active!.id}-g1`)!;
     // Eight metres in front of the door guard, standing, a sixth of a second: not yet seen.
-    teleportPlayer(sim, { x: door.position.x + 8, y: door.position.y, z: door.position.z }, -Math.PI / 2);
+    standInFront(sim, door, 8);
     run(sim, 10);
     expect(door.ai!.alerted).toBe(false);
     expect(door.ai!.suspicion).toBeGreaterThan(0.05);

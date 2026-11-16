@@ -1,4 +1,5 @@
 import type { GroundSurface } from "../../../packages/core/src";
+import { SQUARE } from "../src/scan-keys.ts";
 
 /**
  * The ground of the generated tables (`*.generated.ts`) as ADR-0078 measures it, stage 1: what the
@@ -15,7 +16,7 @@ import type { GroundSurface } from "../../../packages/core/src";
  *   wider one by its middle, the cells 0.75 m from both sides). Stage 5 (a morphological
  *   closing) is to bring it down by most of it.
  * The pieces on bridges stay out of all three, as in the prototype: they lie apart, on the deck.
- * The areas are findings one per m² (rounded over the city), each at a cell it counts.
+ * The areas are findings one per m² (rounded in each 10 m square of the scan's keys), each at a cell it counts.
  */
 
 type Finding = { readonly at: string; readonly what: string };
@@ -134,19 +135,32 @@ const gapCell = ({ w, h, count }: StripRaster) => {
 };
 
 /**
- * One finding per m² of the cells `pick` takes from each chunk's raster, rounded over the city: the
- * cells are counted on across the chunks and a finding falls on every 16th, half a square metre in.
+ * One finding per m² of the cells `pick` takes from each chunk's raster, rounded in each square of
+ * the scan's keys (`SQUARE`, by the finding's place): the cells are counted square by square and a
+ * finding falls on every 16th, half a square metre in. Not counted on across the city (G-756): a
+ * piece moved in one chunk then moved the findings of every cell after it, in that chunk and the
+ * next ones, and squares far from it gained or lost their key.
  */
 const perSquareMetre = (rasters: readonly StripRaster[], pick: (r: StripRaster) => (c: number, r: number) => boolean, what: string): Finding[] => {
   const out: Finding[] = [];
-  let n = 0;
+  // A square of the keys, `scan-keys.ts`'s: the place rounded to the metre, then its square. A
+  // chunk's last half metre rounds into the next chunk's square, counted apart in each chunk.
+  const square = (v: number) => Math.floor(Number(v.toFixed(0)) / SQUARE);
   for (const raster of rasters) {
     const counts = pick(raster);
+    const { minX, minZ } = raster.bounds;
+    const [x0, z0] = [square(minX + STRIP_CELL / 2), square(minZ + STRIP_CELL / 2)];
+    // Each column's square from the chunk's first, each row's first counter.
+    const col = Int32Array.from({ length: raster.w }, (_, c) => square(minX + (c + 0.5) * STRIP_CELL) - x0);
+    const nx = (col[raster.w - 1] ?? 0) + 1;
+    const rows = Int32Array.from({ length: raster.h }, (_, r) => (square(minZ + (r + 0.5) * STRIP_CELL) - z0) * nx);
+    const counted = new Int32Array(nx * ((rows[raster.h - 1] ?? 0) / nx + 1));
     for (let r = 0; r < raster.h; r++) {
+      const row = rows[r]!;
       for (let c = 0; c < raster.w; c++) {
-        if (!counts(c, r) || n++ % CELLS_PER_M2 !== CELLS_PER_M2 / 2 - 1) continue;
-        const x = raster.bounds.minX + (c + 0.5) * STRIP_CELL;
-        const z = raster.bounds.minZ + (r + 0.5) * STRIP_CELL;
+        if (!counts(c, r) || counted[row + col[c]!]!++ % CELLS_PER_M2 !== CELLS_PER_M2 / 2 - 1) continue;
+        const x = minX + (c + 0.5) * STRIP_CELL;
+        const z = minZ + (r + 0.5) * STRIP_CELL;
         out.push({ at: `${x.toFixed(0)},${z.toFixed(0)}`, what: `${what} ${x.toFixed(2)},${z.toFixed(2)}` });
       }
     }

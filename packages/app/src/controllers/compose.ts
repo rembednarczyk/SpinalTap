@@ -21,12 +21,14 @@ import { autosaveView } from "../presenters/autosave";
 import { AutosaveController } from "./autosave-controller";
 import { SaveController } from "./save-controller";
 import { SettingsController } from "./settings-controller";
+import { GraphicsEffectsController } from "./graphics-effects-controller";
 import { type Focus, type SimRef, focusOf, pushToastTimed } from "./shared";
 import { ShopController } from "./shop-controller";
 import { TakedownController } from "./takedown-controller";
 import { CarryController } from "./carry-controller";
 import { DifficultyController } from "./difficulty-controller";
 import { ProgressionController } from "./progression-controller";
+import { WaitController } from "./wait-controller";
 
 /** What the controllers need from the session that composes them. */
 export interface SessionHooks {
@@ -50,6 +52,7 @@ export interface Controllers {
   readonly loot: LootController;
   readonly character: CharacterMenuController;
   readonly settings: SettingsController;
+  readonly graphics: GraphicsEffectsController;
   readonly phone: PhoneController;
   readonly hack: HackController;
   readonly saves: SaveController;
@@ -67,6 +70,8 @@ export interface Controllers {
   readonly difficulty: DifficultyController;
   // Character progression (ADR-0059).
   readonly progression: ProgressionController;
+  // Waiting (the `wait` command, ADR-0017).
+  readonly wait: WaitController;
 }
 
 /** The metro and the radio: their ink pools come from one knot renderer shared with the phone. */
@@ -148,6 +153,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   // Playing, and no conversation, shop, bag or kiosk on screen.
   free = () => s.screen() === "playing" && !dialogue.isOpen && !shop.isOpen && !loot.isOpen && !metro?.isOpen && !metro?.riding;
   const settings = new SettingsController(ui, deps.settings);
+  const graphics = new GraphicsEffectsController(ui, settings, render);
   const travel = createTravel(deps, s, lines, focus, settings, wave1, () => free());
   metro = travel.metro;
   const hack = new HackController({ sim, ui, audio, focus, inControl: s.inControl });
@@ -161,7 +167,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     wave2,
     panels: {
       screen: s.screen,
-      talking: () => dialogue.isOpen || shop.isOpen || loot.isOpen || hack.breachOpen || phone.isOpen || travel.metro.isOpen,
+      talking: () => dialogue.isOpen || shop.isOpen || loot.isOpen || hack.breachOpen || phone.isOpen || travel.metro.isOpen || wait.isOpen,
       riding: () => travel.metro.riding,
       characterOpen: () => character.isOpen,
       loot: () => loot.lootFrame(),
@@ -193,5 +199,8 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   const carry = new CarryController(sim);
   const difficulty = new DifficultyController({ sim, ui, screen: s.screen });
   const progression = new ProgressionController({ sim, menuOpen: () => character.isOpen, syncHud: () => hud.sync() });
-  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, autosave, wave1, hud, wave2, takedown, carry, difficulty, progression, ...travel };
+  const facts = () => ({ fighting: hud.inCombat, airborne: airborne() });
+  const canOpenWait = () => free() && !character.isOpen && !hack.breachOpen && !phone.isOpen;
+  const wait: WaitController = new WaitController({ sim, ui, audio, focus, screen: s.screen, setScreen: s.setScreen, canOpen: canOpenWait, facts, syncHud: () => hud.frame() });
+  return { focus, hints, dialogue, shop, loot, character, settings, graphics, phone, hack, saves, autosave, wave1, hud, wave2, takedown, carry, difficulty, progression, wait, ...travel };
 };

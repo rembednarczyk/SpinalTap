@@ -3,6 +3,7 @@ export * from "./migrations";
 export { MOVED_PEOPLE, MOVED_STASHES, OLD_MARKET_AREA, OLD_MARKET_WAKE } from "./market-move";
 export { ALCHEMIA_WAKE, PAVILION_STASHES, PAVILION_WAKE, PLAZA_STASHES, PLAZA_WAKE, REBUILT_AREAS, REBUILT_STASHES } from "./alchemia-rebuild";
 export { PARKING_AREAS, PARKING_WAKE } from "./alchemia-parking";
+export { ESCORT_RETIRED_FLAG, W3_REBUILT, W3_WAKE } from "./w3-site";
 export * from "./validate";
 export * from "./validate-items";
 export * from "./validate-wave2";

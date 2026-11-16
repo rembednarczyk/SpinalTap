@@ -8,7 +8,7 @@
  * between them nor an overlap of one surface in one plane (`paving-coplanar`).
  */
 import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
-import { type Pt, type Rect, ccw, clipRingToRect, r1, rectsOverlap, ringBounds, selfIntersects, signedArea } from "./geometry.ts";
+import { type Pt, type Rect, ccw, clipRingToRect, r1, rectsOverlap, ringBounds, selfIntersects, signedArea, simplifyLine } from "./geometry.ts";
 
 /** One stretch of an edge widened: its points on the edge as the map's width lays it, from where the asphalt steps out to where it is back, and the asphalt's new edge. */
 export interface WidenRun {
@@ -18,6 +18,13 @@ export interface WidenRun {
 
 /** The smallest widening piece laid (m²): below it, float noise at a chunk's edge. */
 const MIN_AREA = 0.01;
+
+/**
+ * How far the asphalt's new edge may stray from its samples when simplified (m), as `kerbFills`'
+ * fills do. The asphalt ranks over the paving it reaches under, so its edge is the kerb: every
+ * sample 0.5 m apart rounded to the 0.1 m grid on its own zigzagged it by up to 0.07 m (G-837).
+ */
+const SIMPLIFY = 0.05;
 
 /** How near a vertex of the carriageway's piece a run's end is taken to be at it (m): within the outlines' rounding. */
 const SNAP = 0.1;
@@ -95,7 +102,7 @@ export const widenPieces = (ring: readonly Pt[] | null, runs: readonly WidenRun[
   const out: Pt[][] = [];
   for (const run of runs) {
     if (run.inner.length < 1 || run.outer.length < 1 || !rectsOverlap(ringBounds([...run.inner, ...run.outer]), rect)) continue;
-    const outer = run.outer.map((p) => ({ x: r1(p.x), z: r1(p.z) })).reverse();
+    const outer = simplifyLine(run.outer, SIMPLIFY).map((p) => ({ x: r1(p.x), z: r1(p.z) })).reverse();
     let inner: Pt[] = [...run.inner];
     if (ring && ring.length >= 3) {
       const [from, to] = [nearestOn(ring, run.inner[0]!), nearestOn(ring, run.inner[run.inner.length - 1]!)];

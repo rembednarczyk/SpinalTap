@@ -33,8 +33,9 @@ const ctx = (patch: Partial<ContractContext> = {}): ContractContext => ({
 });
 
 describe("docks contracts (ADR-0024)", () => {
-  it("Genzō gives all three; fixer standing scales them", () => {
-    for (const kind of DOCKS_CONTRACT_KINDS) {
+  it("Genzō offers the infiltration and the hack, the escort retired with the container yard (ADR-0082); fixer standing scales them", () => {
+    expect(DOCKS_CONTRACT_KINDS).toEqual(["infiltrate", "hack"]);
+    for (const kind of ["escort", ...DOCKS_CONTRACT_KINDS] as const) {
       const c = generateContractOfKind(kind, ctx(), sequenceRng(0));
       expect(contractGiver(c).name).toBe("Genzō");
       expect(c.kind).toBe(kind);
@@ -73,7 +74,8 @@ describe("docks contracts (ADR-0024)", () => {
   });
 
   it("describes every stage and every failure", () => {
-    const [escort, infiltrate] = DOCKS_CONTRACT_KINDS.map((k) => generateContractOfKind(k, ctx(), sequenceRng(0)));
+    // The escort is retired from Genzō's offers (ADR-0082) but still a kind of its own.
+    const [escort, infiltrate] = (["escort", "infiltrate"] as const).map((k) => generateContractOfKind(k, ctx(), sequenceRng(0)));
     expect(contractObjective(escort!).key).toBe("contract.objective.escort");
     expect(contractObjective(infiltrate!).key).toBe("contract.objective.infiltrate");
     expect(contractObjective({ ...escort!, status: "cleared" })).toEqual({

@@ -95,8 +95,9 @@ describe("domain texts (ADR-0056, stage 3)", () => {
     expect(translateText("en", contractObjective(delivery, 75))).toBe("Carry Kaito's package to Hana: Hana's cart at the market in Alchemia (1:15 left)");
     expect(translateText("pl", contractObjective(delivery, 75))).toBe("Zanieś paczkę od Kaito Hanie: wózek Hany na targu w Alchemii (zostało 1:15)");
     expect(translateText("pl", contractObjective(delivery))).toBe("Zanieś paczkę od Kaito Hanie: wózek Hany na targu w Alchemii");
-    expect(translateText("pl", contractObjective(hack, 25))).toBe("Utrzymaj połączenie z terminalem (zostało 0:25): terminal Tessen pod dźwigiem nad rzeką");
-    expect(translateText("pl", contractObjective({ ...hack, progress: undefined } as Contract))).toBe("Włam się do terminala i utrzymaj połączenie 40 s: terminal Tessen pod dźwigiem nad rzeką");
+    // The terminal moved with the docks rebuilt as W-3 (ADR-0082): the Polish site's name changed on purpose.
+    expect(translateText("pl", contractObjective(hack, 25))).toBe("Utrzymaj połączenie z terminalem (zostało 0:25): terminal Tessen na nabrzeżu przy pomoście");
+    expect(translateText("pl", contractObjective({ ...hack, progress: undefined } as Contract))).toBe("Włam się do terminala i utrzymaj połączenie 40 s: terminal Tessen na nabrzeżu przy pomoście");
     const retrieved: Contract = { ...job, kind: "retrieve", siteId: "hebi_stash", status: "cleared" };
     expect(translateText("en", contractObjective(retrieved))).toBe("Crate taken. Go back to Hana for your pay");
     expect(translateText("pl", contractObjective(retrieved))).toBe("Skrzynka zabrana. Wróć do Hany po zapłatę");

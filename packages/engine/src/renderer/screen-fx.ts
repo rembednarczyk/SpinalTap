@@ -6,11 +6,13 @@ import { Effects } from "../effects/effects";
 import { FlashLimiter } from "../effects/flash-limiter";
 import { GameplayFxState } from "../effects/gameplay-fx";
 import { GameplayPost } from "../effects/gameplay-post";
+import { MuzzleFx } from "../effects/muzzle-fx";
 import { createRain } from "../effects/rain";
 import { TrailMeshes } from "../effects/trail-meshes";
 import { TrailState } from "../effects/trails";
 import { DISTRICT_PALETTES, PaletteBlend, districtAt, rigWithPalette } from "../npr/district-palette";
 import { Grading } from "../npr/grading";
+import { applyMsaa } from "../npr/msaa";
 import { qualityTier } from "../npr/quality";
 import { rigForDaylight } from "../npr/lighting";
 import type { SpeedLines } from "../npr/speed-lines";
@@ -22,6 +24,8 @@ import { Lasers } from "./lasers";
 import { type ScanClass, ScanHighlight, scanClassOfTarget } from "./scan-highlight";
 import type { Signage } from "./signage";
 import type { Stage } from "./stage";
+import { MuzzleSource } from "./muzzle-source";
+import { type GunKind, MUZZLE, SEEN_FLASH } from "./weapon-mount";
 
 /**
  * Gameplay moments the renderer shows over the whole frame (ADR-0030). The app translates domain
@@ -47,6 +51,8 @@ export interface FxActors {
   rigOf(id: EntityId): CharacterRig | null;
   transformOf(id: EntityId): Transform | null;
   talk(id: EntityId, seconds: number): void;
+  /** The gun in the hand of `id` and, while it shows, its muzzle and barrel direction now (`Loadouts.muzzle`). */
+  muzzleOf(id: EntityId, at: Vector3, dir: Vector3): { readonly kind: GunKind; readonly shown: boolean } | null;
 }
 
 export interface ScreenFxDeps {
@@ -69,6 +75,8 @@ export interface ScreenFxDeps {
 }
 
 const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z);
+/** The camera's local axes, for the smoke's billboards. */
+const AXES = { right: Vector3.Right(), up: Vector3.Up(), forward: Vector3.Forward() } as const;
 
 type ActorEffect = Extract<EffectDescriptor, { kind: "weapon" | "talk" | "reload" | "melee" | "stagger" | "block" | "flinch" }>;
 
@@ -84,6 +92,14 @@ export class ScreenFx {
   private readonly fx = new GameplayFxState(this.limiter);
   private readonly fxPost: GameplayPost;
   private readonly effects: Effects;
+  /** Flames at the muzzles and their smoke. */
+  private readonly muzzle: MuzzleFx;
+  /** Where a shot leaves the gun: the viewmodel's muzzle in FPP, the hand's otherwise. */
+  private readonly muzzleSource: MuzzleSource;
+  /** Scratch for the muzzle's place and the camera's axes, so a shot or a frame makes no vectors. */
+  private readonly muzzleAt = new Vector3();
+  private readonly muzzleDir = new Vector3();
+  private readonly view = { right: new Vector3(), up: new Vector3(), forward: new Vector3() };
   private readonly lasers: Lasers;
   /** Dash streaks and reflected bullets (ADR-0036); the reflection's spark shares the flash budget. */
   private readonly trails = new TrailState(this.limiter);
@@ -107,11 +123,16 @@ export class ScreenFx {
     const { stage, camera } = deps;
     const { scene } = stage;
     const tier = qualityTier(stage.options.quality);
-    this.grading = new Grading(scene, camera.camera, { reference: stage.options.reference }, this.limiter);
+    this.grading = new Grading(scene, camera.camera, { reference: stage.options.reference, sharpen: tier.sharpen, bloom: tier.bloom }, this.limiter);
     // After the grading pipeline, so the scanner drains the graded colour.
     this.fxPost = new GameplayPost(scene, camera.camera);
+    // The renderer built the line art before this, so the whole chain is on the camera now:
+    // multisample the texture the scene renders into (graphics backlog 13.11).
+    applyMsaa(camera.camera._postProcesses, tier.msaa, stage.engine.getCaps().maxMSAASamples);
     this.applyLook();
     this.effects = new Effects(scene, stage.glow);
+    this.muzzle = new MuzzleFx(scene);
+    this.muzzleSource = new MuzzleSource(camera, deps.actors, (id) => this.isCameraTarget(id));
     this.lasers = new Lasers(scene, stage.glow);
     this.trailMeshes = new TrailMeshes(scene, stage.glow);
     this.rain = stage.options.reference ? null : createRain(scene, deps.roofOver);
@@ -129,19 +150,11 @@ export class ScreenFx {
   }
 
   play(effect: EffectDescriptor): void {
-    const { camera, materials } = this.deps;
+    const { materials } = this.deps;
     switch (effect.kind) {
-      case "muzzle-flash": {
-        const own = this.isCameraTarget(effect.shooterId);
-        const shooter = this.deps.actors.rigOf(effect.shooterId);
-        if (shooter) raiseWeapon(shooter);
-        const from = (own ? camera.muzzlePosition() : null) ?? v3(effect.from);
-        this.effects.muzzleFlash(from, v3(effect.to));
-        if (own) camera.kick();
-        // The muzzle lights the whole street: one of the three flashes a second, or none.
-        if (!this.reduceFlashes && this.limiter.tryFlash()) this.flash = { x: from.x, y: from.y, z: from.z, life: 0.07 };
+      case "muzzle-flash":
+        this.shot(effect.shooterId, effect.from, effect.to);
         return;
-      }
       case "hit-spark":
         this.effects.hitSpark(v3(effect.at), effect.critical);
         return;
@@ -163,12 +176,31 @@ export class ScreenFx {
       case "time-of-day":
         // The app sends this only when the light level moves a step, so re-applying is cheap.
         this.daylight = effect.daylight;
+        this.muzzle.setDaylight(effect.daylight);
         this.applyLook();
         materials.get("dressing").setFloat("selfLit", 1 - 0.5 * Math.max(0, Math.min(1, effect.daylight)));
         return;
       default:
         this.playActor(effect);
     }
+  }
+
+  /**
+   * A shot: the tracer, the flame and the smoke from the gun's muzzle (the viewmodel's in FPP,
+   * the hand's in TPP and for everyone else; the simulation's `from` without a gun in hand), the
+   * flame along the barrel and sized for the gun; the kick, and the street lit within the flash budget.
+   */
+  private shot(shooterId: EntityId, from: Vec3, to: Vec3): void {
+    const shooter = this.deps.actors.rigOf(shooterId);
+    if (shooter) raiseWeapon(shooter);
+    const at = this.muzzleAt.set(from.x, from.y, from.z);
+    const dir = this.muzzleDir.set(to.x - from.x, to.y - from.y, to.z - from.z).normalize();
+    const kind = this.muzzleSource.place(shooterId, at, dir);
+    this.effects.tracer(at.clone(), v3(to));
+    this.muzzle.fire(shooterId, at, dir, this.muzzleSource.inView ? MUZZLE[kind].flash : SEEN_FLASH[kind]);
+    if (this.isCameraTarget(shooterId)) this.deps.camera.kick();
+    // The muzzle lights the whole street: one of the three flashes a second, or none.
+    if (!this.reduceFlashes && this.limiter.tryFlash()) this.flash = { x: at.x, y: at.y, z: at.z, life: 0.07 };
   }
 
   /** Effects on one character: its rig animates, and the camera follows when it is the player. */
@@ -255,11 +287,20 @@ export class ScreenFx {
   /** Accessibility (ADR-0028): no aberration, glitch or flicker anywhere; slow fades only. */
   setReduceFlashes(on: boolean): void {
     this.reduceFlashes = on;
+    this.muzzle.setReduced(on);
     this.fx.setReduceFlashes(on);
     this.grading.setReduceFlashes(on);
     this.deps.signage.setReduceFlashes(on);
     this.deps.farCity.setReduceFlashes(on);
     this.deps.atmosphere.reduceFlicker = on;
+  }
+
+  /**
+   * The player's bloom setting (graphics toggles 14.11): the rebuilt grade goes to the end of the
+   * chain, so the scanner and the hurt overlay are put behind it again.
+   */
+  setBloom(on: boolean): void {
+    if (this.grading.setBloom(on)) this.fxPost.moveToEnd();
   }
 
   /** A gameplay moment over the whole frame (ADR-0030): a hit, a quickhack, heat. */
@@ -341,6 +382,7 @@ export class ScreenFx {
     const { stage, camera, materials } = this.deps;
     const reference = stage.options.reference;
     this.effects.update(dt);
+    this.updateMuzzles(dt);
     this.lasers.update(dt, (id) => this.deps.actors.transformOf(id));
     this.trails.update(dt, (id) => this.deps.actors.transformOf(id)?.position ?? null);
     this.trailMeshes.update(this.trails.trails);
@@ -363,6 +405,16 @@ export class ScreenFx {
     const target = this.deps.cameraTarget();
     const feet = (target === null ? null : this.deps.actors.transformOf(target)?.position.y) ?? camera.camera.position.y - 1.6;
     this.splashes?.follow(camera.camera.position, feet);
+  }
+
+  /** Flames follow their muzzles; the smoke faces the camera. */
+  private updateMuzzles(dt: number): void {
+    const cam = this.deps.camera.camera;
+    const { right, up, forward } = this.view;
+    cam.getDirectionToRef(AXES.right, right);
+    cam.getDirectionToRef(AXES.up, up);
+    cam.getDirectionToRef(AXES.forward, forward);
+    this.muzzle.update(dt, (id, at, dir) => void this.muzzleSource.place(id, at, dir), this.view);
   }
 
   /** A new game or a load lands anywhere: lasers off, the next district's colours at once, no heat. */

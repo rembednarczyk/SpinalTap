@@ -1,0 +1,1 @@
+Na wolnym łączu model Seki nie zgłasza już fałszywego przestoju pobierania, gdy jego plik czeka w kolejce przeglądarki za innymi modelami: limit bezczynności liczy się dopiero od odpowiedzi serwera (G-809).

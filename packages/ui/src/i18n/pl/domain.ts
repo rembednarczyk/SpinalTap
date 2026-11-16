@@ -209,9 +209,9 @@ export const plDomain = {
   "contract.site.hebi_stash": "skrytka Hebi przy ruinie za straganami Alchemii",
   "contract.site.raid_north": "stragan Oyaji w Alchemii, Hebi idą ścieżką od Świętoduskiej",
   "contract.site.raid_east": "stragan Oyaji w Alchemii, Hebi idą przez plac od Lubartowskiej",
-  "contract.site.docks_escort": "z placu kontenerowego na Nabrzeżu na molo, do łodzi",
-  "contract.site.tessen_office": "biuro Tessen na Nabrzeżu Bystrzycy",
-  "contract.site.quay_terminal": "terminal Tessen pod dźwigiem nad rzeką",
+  "contract.site.docks_escort": "od kontenera Genzō ścieżką nad rzekę",
+  "contract.site.tessen_office": "biuro przepustek w wieży kontrolnej Tessen na Nabrzeżu Bystrzycy",
+  "contract.site.quay_terminal": "terminal Tessen na nabrzeżu przy pomoście",
   // The giver as "go back to … for your pay" names them: the genitive.
   "contract.giver.kaito": "Kaito",
   "contract.giver.hana": "Hany",

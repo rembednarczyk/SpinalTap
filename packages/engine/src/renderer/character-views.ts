@@ -1,4 +1,4 @@
-import type { Scene } from "../babylon";
+import type { AbstractMesh, Scene, Vector3 } from "../babylon";
 import type { AppearanceDescriptor, EntityId, Transform } from "@seki/core";
 import type { CameraRig } from "../camera/camera-rig";
 import { fadeFigure } from "../npr/body-dither";
@@ -12,6 +12,7 @@ import { type CharacterRig, animateRig, buildCivilian, buildCorpo, buildFixer, b
 import { markEnforcer } from "./enforcer-mark";
 import { easeLift, groundLift } from "./ground-lift";
 import type { LadderRungs } from "./ladder-hands";
+import { modelBytesOf } from "./model-bytes";
 import { type CharacterModelManifest, ModelLibrary } from "./model-library";
 import { type CharacterDescriptor, type ModelChoice, modelChoiceOf } from "./model-cast";
 import { type WallProbe, layBody, placeLaid } from "./body-lay";
@@ -21,7 +22,7 @@ import { animateKnockout, settleKnockout } from "./knockout-pose";
 import type { HumanoidRetarget } from "./model-rig";
 import { type ScanClass, scanClassOfView } from "./scan-highlight";
 import type { FxActors, ScanVisitor } from "./screen-fx";
-import type { WeaponManifest } from "./weapon-mount";
+import type { GunKind, WeaponManifest } from "./weapon-mount";
 
 export type { CharacterDescriptor } from "./model-cast";
 
@@ -87,6 +88,8 @@ export interface ModelLoading {
   rest(live?: () => boolean): Promise<void>;
   /** Model files in memory now, weapons' too; a file nobody wears goes after a while (ADR-0076 stage 4b). */
   loaded(): string[];
+  /** The loaded files' own meshes (characters' and weapons'), whose effects their instances share. */
+  meshes(): AbstractMesh[];
 }
 
 /** The followed character has a body on her shoulder. */
@@ -120,8 +123,12 @@ export class CharacterViews implements FxActors {
   /** The character the followed one holds in a takedown grab, kept while her clip eases out. */
   private held: EntityId | null = null;
 
+  /** Model files, loaded once for characters and weapons alike. */
+  private readonly library: ModelLibrary;
+
   constructor(private readonly deps: CharacterViewsDeps) {
-    const library = new ModelLibrary(deps.scene, deps.materials);
+    const library = new ModelLibrary(deps.scene, deps.materials, modelBytesOf(deps.scene.getEngine()));
+    this.library = library;
     this.kit = new CharacterKit({ ...deps, library });
     this.models = new CharacterModels({ library, loadouts: this.kit.loadouts, addCaster: (m) => deps.shadow.addCaster(m), scene: deps.scene, materials: deps.materials, ...(deps.modelFiles !== undefined ? { modelFiles: deps.modelFiles } : {}) });
   }
@@ -134,13 +141,13 @@ export class CharacterViews implements FxActors {
     return this.views.size;
   }
 
-  get dressedCount(): number {
-    return this.models.dressedCount;
-  }
-
-  /** Models still loading for characters in the scene (tests wait for none before measuring). */
-  get loadingCount(): number {
-    return this.models.loadingCount;
+  /**
+   * Characters dressed in an imported model, and models still loading for characters in the
+   * scene (tests wait for none before measuring). One getter for both keeps the class within
+   * ADR-0031's 20 members.
+   */
+  get modelCounts(): { readonly dressed: number; readonly loading: number } {
+    return { dressed: this.models.dressedCount, loading: this.models.loadingCount };
   }
 
   ids(): EntityId[] {
@@ -153,6 +160,12 @@ export class CharacterViews implements FxActors {
 
   transformOf(id: EntityId): Transform | null {
     return this.views.get(id)?.transform ?? null;
+  }
+
+  /** The gun in the hand of `id` and where its muzzle is (`Loadouts.muzzle`). */
+  muzzleOf(id: EntityId, at: Vector3, dir: Vector3): { readonly kind: GunKind; readonly shown: boolean } | null {
+    const rig = this.views.get(id)?.rig;
+    return rig ? this.kit.loadouts.muzzle(rig, at, dir) : null;
   }
 
   /** The FPP viewmodel shows the weapon in the hand of `id`, whom the camera now follows. */
@@ -298,6 +311,7 @@ export class CharacterViews implements FxActors {
   /** Imported character models (models/manifest.json); characters on screen are dressed too. */
   setCharacterModels(manifest: CharacterModelManifest): void {
     this.models.setManifest(manifest);
+    this.kit.setViewArms(manifest.heroine);
     for (const v of this.views.values()) if (!this.models.of(v.rig)) this.models.dress(v.rig, v.model, v.name);
   }
 
@@ -307,6 +321,7 @@ export class CharacterViews implements FxActors {
       start: () => [...this.models.preload([...this.views.values()].map((v) => v.model)), ...this.kit.preload()],
       rest: (live) => this.models.prefetch(live),
       loaded: () => this.models.loadedFiles(),
+      meshes: () => this.library.templateMeshes(),
     };
   }
 }

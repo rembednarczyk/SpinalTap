@@ -20,6 +20,31 @@ export interface Thresholds {
    * under crowns (G-672). As `greenExg`: paving under the crowns by Ruska keeps 4% of it, 0.02 kept 20%.
    */
   readonly leafOffExg: number;
+  /**
+   * Paving under crowns: green under crowns (`leafOffExg`) the current image shows light (`pavingL`)
+   * and no more saturated than this (G-764). The curator's sample of 13.11 over the four districts:
+   * the promenade by VIVO, Furmańska and the pavements under trees pass, the shrubs and hedges of
+   * Nabrzeże and Podzamcze (a lawn or soil in April) do not.
+   */
+  readonly crownHardS: number;
+  /**
+   * With one summer flight left (G-771), a leaf-off green past this hue (degrees, 120 green, 180
+   * cyan) the summer flight does not see green (ExG under `greenExg`) is patina, a painted roof or
+   * a tarp, no lawn's: its ExG counts at most 0, and the summer flight's L splits paving from
+   * asphalt (G-775). The leaf-off lawns lie under it, the fresh teal ones (to 180) green in summer
+   * too; the monument's patina on Królewska is 155-176. Two summer flights outvote it themselves.
+   */
+  readonly leafOffHue: number;
+  /**
+   * Beige setts, with one summer flight left: a leaf-off colour at least this light (L), red at
+   * least green and at least `settsS` saturated is paving where the summer flight is darker than
+   * `summerShadeL` (a building's shade or a crown, no lawn to see): paving under crowns (G-775).
+   * Lawns in April are darker, a tree in blossom greyer (S 0.10-0.13); the corner of Lubartowska is
+   * L 155-185, S 0.15-0.22.
+   */
+  readonly settsL: number;
+  readonly settsS: number;
+  readonly summerShadeL: number;
   /** A hard surface more saturated than this in the current image is something else (a coloured roof, a car, a court): unknown. */
   readonly hardS: number;
   /** Light paving: the current image's L at or over this; darker is asphalt. */
@@ -31,6 +56,11 @@ export const THRESHOLDS: Thresholds = {
   shadowL: 50,
   greenExg: 0.026,
   leafOffExg: 0.026,
+  crownHardS: 0.12,
+  leafOffHue: 150,
+  settsL: 150,
+  settsS: 0.15,
+  summerShadeL: 75,
   hardS: 0.4,
   pavingL: 115,
 };

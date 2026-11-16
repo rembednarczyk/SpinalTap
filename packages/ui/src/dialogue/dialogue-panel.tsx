@@ -10,7 +10,7 @@ const NO_LINES: readonly never[] = [];
 const Conversation = ({ dialogue }: { dialogue: DialogueVm }) => {
   const wheel = useDialogueWheel(dialogue, useDialogueIntents());
   return (
-    <div className="dialogue" data-testid="dialogue">
+    <div className="dialogue ui-layer" data-testid="dialogue">
       <DialogueWheel slots={wheel.slots} hot={wheel.hot} onPoint={wheel.point} onPick={wheel.pick} />
       <DialogueLog history={dialogue.history ?? NO_LINES} lines={dialogue.lines} />
     </div>

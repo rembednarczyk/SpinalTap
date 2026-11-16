@@ -72,7 +72,7 @@ const faceGuard = (g: Game): Entity => {
 
 describe("one-thumb fire from the sights on touch (ADR-0072, variant A)", () => {
   it("holding fire raises the sights to full within the weapon's ADS time and hits the target", () => {
-    const g = start();
+    const g = start({ touchFire: "aims", aimMode: "hold" });
     expect(g.ui.getState().settings.touchFire).toBe("aims");
     faceGuard(g);
     down(fireButton(), 1);
@@ -86,7 +86,7 @@ describe("one-thumb fire from the sights on touch (ADR-0072, variant A)", () => 
   });
 
   it("dragging from the fire button steers the view while it fires", () => {
-    const g = start();
+    const g = start({ touchFire: "aims", aimMode: "hold" });
     const yaw0 = player(g).yaw;
     down(fireButton(), 1);
     fireEvent.pointerMove(fireButton(), { pointerId: 1, clientX: 760, clientY: 250 });
@@ -97,7 +97,7 @@ describe("one-thumb fire from the sights on touch (ADR-0072, variant A)", () => 
   });
 
   it("with a melee weapon the fire button swings and never raises the guard", () => {
-    const g = start();
+    const g = start({ touchFire: "aims", aimMode: "hold" });
     run(() => {
       const d = g.session.sim.domain;
       g.seki.jump({
@@ -160,9 +160,11 @@ describe("fires only, a tap on the aim button holds the sights (ADR-0072, varian
 
 describe("touch fire setting in the saved settings (ADR-0072)", () => {
   it("an entry saved before the setting aims with fire; a bad value falls back; a choice survives", () => {
-    expect(DEFAULT_SETTINGS.touchFire).toBe("aims");
-    expect(sanitizeSettings({ quality: "low" }).touchFire).toBe("aims");
-    expect(sanitizeSettings({ touchFire: "both" }).touchFire).toBe("aims");
+    // Fires only is the default since 14.11 (the user's choice for the phone).
+    expect(DEFAULT_SETTINGS.touchFire).toBe("separate");
+    expect(sanitizeSettings({ quality: "low" }).touchFire).toBe("separate");
+    expect(sanitizeSettings({ touchFire: "both" }).touchFire).toBe("separate");
+    expect(sanitizeSettings({ touchFire: "aims" }).touchFire).toBe("aims");
     expect(sanitizeSettings({ touchFire: "separate" }).touchFire).toBe("separate");
   });
 });

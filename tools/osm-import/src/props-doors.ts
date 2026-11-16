@@ -153,7 +153,10 @@ class DoorRules {
     if ((this.ctx.gameDoors ?? []).some((d) => segGap(at, d.a, d.b) < GAME_DOOR_ROOM)) return this.no("game-door");
     if (this.site.nearPassage(at, PASSAGE_ROOM) || this.site.nearPassage(front, PASSAGE_ROOM)) return this.no("passage");
     const jambs = [pointOn(w, s.u - s.width / 2, FRONT), pointOn(w, s.u + s.width / 2, FRONT)];
-    if (![front, ...jambs].every((q) => this.site.standable(q))) return this.no("ground");
+    // A jamb may open onto the top tread of a flight, level with the sill: an entrance at the head
+    // of its steps (Poczta Główna, n4934217573). Not down the flight, nor the door's own ground (G-781).
+    const sill = (q: Pt) => this.site.onSteps(q) && Math.abs(this.surface(q) - this.surface(front)) <= ACROSS_SLOPE;
+    if (!this.site.standable(front) || !jambs.every((q) => this.site.standable(q) || sill(q))) return this.no("ground");
     // Its foot on the paving under its frame (a raised pavement in front hides its sill).
     const y = this.surface(pointOn(w, s.u, FOOT));
     const ys = [-1, 1].map((k) => this.surface(pointOn(w, s.u + (k * s.width) / 2, FOOT)));

@@ -41,7 +41,6 @@ import {
   type AbilityVm,
   type CharacterStatsVm,
   type CharacterTab,
-  type ControlBindingVm,
   DEFAULT_SETTINGS,
   type DialogueVm,
   EMPTY_JOURNAL,
@@ -55,7 +54,6 @@ import {
   type MapVm,
   NO_LOADING,
   type Screen,
-  type SettingsVm,
   type Toast,
   type TradeVm,
   type WeaponStripVm,
@@ -63,6 +61,8 @@ import {
 import type { BuffVm, CapacityVm, ContractHookVm, DashVm, DisguiseVm, MetroRideVm } from "./wave2-vm";
 import type { MetroMapVm } from "./metro-vm";
 import { type DifficultyVm, NO_DIFFICULTY_CHANGE, type SlotVm } from "./difficulty-vm";
+import { NO_WAIT, type WaitUiState } from "./wait-vm";
+import { DEFAULT_GRAPHICS, type GraphicsUiState, type SettingsUiState } from "./settings-vm";
 
 export * from "./hud-vm";
 export * from "./ui-vm";
@@ -70,6 +70,8 @@ export * from "./map-vm";
 export * from "./wave2-vm";
 export * from "./metro-vm";
 export * from "./difficulty-vm";
+export * from "./wait-vm";
+export * from "./settings-vm";
 
 // ---- Areas of the UI state (ADR-0031) ----
 // One flat Zustand store; each area below is its own type, and the comment says who writes it.
@@ -250,15 +252,6 @@ export interface HackingUiState {
   readonly breach: BreachVm | null;
 }
 
-/** Settings and key bindings. Written by the settings controller. */
-export interface SettingsUiState {
-  readonly settings: SettingsVm;
-  /** Remappable controls with their current keys, for the settings and the help screen. */
-  readonly controls: readonly ControlBindingVm[];
-  /** True when a saved setting only takes effect after the page is reloaded. */
-  readonly reloadNeeded: boolean;
-}
-
 /** The metro (ADR-0035): the line map at the kiosk and the ride screen. Written by the metro controller. */
 export interface MetroUiState {
   readonly metroMap: MetroMapVm | null;
@@ -288,8 +281,10 @@ export type UiState = SessionUiState &
   PhoneUiState &
   HackingUiState &
   SettingsUiState &
+  GraphicsUiState &
   MetroUiState &
-  BodyUiState;
+  BodyUiState &
+  WaitUiState;
 
 export const initialUiState: UiState = {
   screen: "title",
@@ -387,6 +382,8 @@ export const initialUiState: UiState = {
   buffs: [],
   dash: null,
   disguise: null,
+  ...NO_WAIT,
+  ...DEFAULT_GRAPHICS,
 };
 
 export type UiStore = StoreApi<UiState>;

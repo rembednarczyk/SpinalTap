@@ -21,6 +21,14 @@ const KNEE = 0.6;
 /** A node this close (horizontally) is reached; the route goes on to the next one. */
 export const ARRIVE = 0.5;
 
+/**
+ * A node farther than this (horizontally) is no way straight there. The graph's longest edge is 84 m
+ * (W-3's pickup yard); farther the knee-high line runs off the streamed chunks, where nothing stops
+ * a ray: W-3's reinforcements tested the platforms of Targowa's metro, 1.74 km away and on their
+ * level, every step, at some twenty times the cost of a near line, and "saw" some through the earth.
+ */
+export const REACH = 120;
+
 /** A firing position lies this far inside the weapon range: the shooter stops short of the node. */
 const FIRING_MARGIN = ARRIVE + 1;
 
@@ -85,7 +93,7 @@ const attach = (world: World<Entity>, p: Prepared, from: Vec3): Map<number, numb
     });
   }
   p.at.forEach((at, i) => {
-    if (out.has(i) || Math.abs(at.y - from.y) >= SAME_LEVEL) return;
+    if (out.has(i) || Math.abs(at.y - from.y) >= SAME_LEVEL || flat(at, from) > REACH) return;
     if (lineOfSight(world, raise(from, KNEE), raise(at, KNEE))) out.set(i, dist(from, at));
   });
   return out;

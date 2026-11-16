@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { manifestFiles, modelChoiceOf, modelPoolKey, pickFromPool, resolveModel } from "../src/renderer/model-cast";
+import { manifestFiles, modelChoiceOf, modelPoolKey, pickFromPool, resolveModel, startFiles } from "../src/renderer/model-cast";
 import type { CharacterModelManifest } from "../src/renderer/model-library";
 
 const MANIFEST: CharacterModelManifest = {
@@ -65,5 +65,13 @@ describe("the model a character wears", () => {
     expect(modelPoolKey({ url: "kaito.vrm", scale: 1.03 })).not.toBe(modelPoolKey({ url: "kaito.vrm", scale: 1.03, variant: 1 }));
     expect(modelPoolKey({ url: "kaito.vrm" })).toBe(modelPoolKey({ url: "kaito.vrm", scale: 1, yaw: 0, variant: 0 }));
     expect(manifestFiles(MANIFEST).map((s) => s.url)).toEqual(["seki.vrm", "kaito.vrm", "civilian.vrm", "ganger.vrm", "ume.vrm", "a.vrm", "b.vrm", "suit.vrm"]);
+  });
+});
+
+/** The heroine's model loads behind the first loading screen in every view (the user's decision, 13.11). */
+describe("the files the first loading screen waits for", () => {
+  it("hold Seki's model even with no character in the scene and the camera in first person", () => {
+    expect(startFiles(MANIFEST, []).map((f) => f.url)).toContain("seki.vrm");
+    expect(startFiles(MANIFEST, [null, null]).map((f) => f.url)[0]).toBe("seki.vrm");
   });
 });

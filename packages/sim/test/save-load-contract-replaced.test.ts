@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { contractFailedFlag } from "@seki/core";
-import { GENZO_SPOT, Simulation, docks, ground } from "../src";
+import { GENZO_SPOT, Simulation, w3, ground } from "../src";
 import { run, teleportPlayer } from "./helpers";
 import { alarmed, expectSameAfterLoad, hash, peopleOf, reload } from "./contract-save-helpers";
 
@@ -24,7 +24,7 @@ const replaced = (after: number): { sim: Simulation; id: string; next: string } 
 const jobsWalkedAway = (jobs: number): Simulation => {
   const sim = Simulation.create({ seed: 8 });
   for (let i = 0; i < jobs; i++) {
-    teleportPlayer(sim, docks(0, 0, 120));
+    teleportPlayer(sim, w3(2492, 0, 418));
     run(sim, 30);
     sim.enqueue({ type: "accept-contract", kind: "infiltrate" });
     sim.step();
@@ -54,7 +54,7 @@ describe("the save after many jobs walked away from (G-178)", () => {
     const loaded = reload(sim);
     expect(hash(loaded)).toBe(hash(sim));
     for (const s of [sim, loaded]) {
-      teleportPlayer(s, docks(0, 0, 120));
+      teleportPlayer(s, w3(2492, 0, 418));
       run(s, 5);
     }
     const contractPeople = (s: Simulation) => [...s.world].map((e) => e.key ?? "").filter((k) => /^c\d+-/.test(k)).sort();
@@ -94,7 +94,7 @@ describe("save and load after a job was replaced while its people still stand ab
     const loaded = reload(sim);
     expect(hash(loaded)).toBe(hash(sim));
     for (const s of [sim, loaded]) {
-      teleportPlayer(s, docks(0, 0, 120));
+      teleportPlayer(s, w3(2492, 0, 418));
       run(s, 5);
     }
     expect(peopleOf(loaded, id)).toEqual(peopleOf(sim, id));

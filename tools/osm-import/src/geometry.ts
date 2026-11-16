@@ -26,6 +26,22 @@ export const signedArea = (ring: readonly Pt[]): number => {
 
 export const ccw = (ring: readonly Pt[]): Pt[] => (signedArea(ring) < 0 ? [...ring].reverse() : [...ring]);
 
+/**
+ * A ring that touches itself (visits a vertex twice, as Clipper leaves two lobes meeting at a
+ * point) cut there into simple rings: ear clipping takes such a ring for one polygon and lays
+ * triangles over the gap between the lobes (G-764). Each ring keeps its turn, a hole's lobe too.
+ */
+export const splitTouching = (ring: readonly Pt[]): Pt[][] => {
+  const seen = new Map<string, number>();
+  for (let j = 0; j < ring.length; j++) {
+    const key = `${ring[j]!.x},${ring[j]!.z}`;
+    const i = seen.get(key);
+    if (i !== undefined) return [...splitTouching(ring.slice(i, j)), ...splitTouching([...ring.slice(j), ...ring.slice(0, i)])];
+    seen.set(key, j);
+  }
+  return ring.length >= 3 ? [[...ring]] : [];
+};
+
 /** Drops the closing point of a closed way and consecutive duplicates. */
 export const openRing = (pts: readonly Pt[], eps = 1e-6): Pt[] => {
   const out: Pt[] = [];
@@ -234,7 +250,10 @@ export const clipLineToRect = (line: readonly Pt[], r: Rect): Pt[][] => {
  * Offsets an open polyline by `offset` metres to its left (negative: right), with mitred joins
  * capped at three times the offset.
  */
-export const offsetLine = (line: readonly Pt[], offset: number): Pt[] => {
+export const offsetLine = (line: readonly Pt[], offset: number): Pt[] => offsetPoints(line, line.map(() => offset));
+
+/** Offsets an open polyline's points each by its own `offsets[i]` metres to its left, mitred as `offsetLine`. */
+export const offsetPoints = (line: readonly Pt[], offsets: readonly number[]): Pt[] => {
   const out: Pt[] = [];
   const n = line.length;
   const normal = (a: Pt, b: Pt): Pt => {
@@ -252,7 +271,7 @@ export const offsetLine = (line: readonly Pt[], offset: number): Pt[] => {
     const ref = n1 ?? n0!;
     const cos = m.x * ref.x + m.z * ref.z;
     const k = Math.min(1 / Math.max(cos, 1e-6), 3);
-    out.push({ x: p.x + m.x * offset * k, z: p.z + m.z * offset * k });
+    out.push({ x: p.x + m.x * offsets[i]! * k, z: p.z + m.z * offsets[i]! * k });
   }
   return out;
 };

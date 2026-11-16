@@ -1,0 +1,2 @@
+# steps-band-hidden: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-0-1 -200,125

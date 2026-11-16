@@ -178,7 +178,8 @@ export const cityKerbWorld = (osm: OsmData): KerbWorld => {
   const ground = MAP_CHUNKS.flatMap((c) => c.ground);
   const of = (keep: (s: string) => boolean) => ground.filter((g) => keep(g.surface)).map((g) => flatRing(g.outline));
   return {
-    roads: of((s) => s === "road"),
+    // A zebra is a piece of the carriageway of its own since the ground is a partition (ADR-0078 step 3); it is paving over it as before.
+    roads: of((s) => s === "road" || s === "crossing"),
     paving: of((s) => PAVING.has(s)),
     covered: [...of((s) => s !== "road" && !PAVING.has(s)), ...landuse.buildings, ...landuse.green],
     chunks: landuse.chunks,

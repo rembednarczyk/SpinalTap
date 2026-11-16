@@ -4,7 +4,7 @@ import { type FacadeFrame, type Wall, trimMeta, wallMeta } from "./facade-frame"
 import { DOWN, slab, wallQuad } from "./facade-parts";
 import { WINDOW_STYLE } from "./facade-style";
 import type { P2 } from "./polygon";
-import { quadUv } from "./sink-ops";
+import { type Uv, quadUv } from "./sink-ops";
 
 /**
  * The layer over the streets of vertical Lublin 2077 (ADR-0051): what hangs between a building
@@ -90,15 +90,52 @@ const LANTERNS = ["#ff2e88", "#00e5ff", "#ffb000", "#ff4040", "#b46cff"] as cons
 
 const lerp = (a: Vec, b: Vec, t: number, sag: number): Vec => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t - Math.sin(t * Math.PI) * sag, z: a.z + (b.z - a.z) * t });
 
-/** A sagging cable as ribbons: an upright one, both faces, and one facing down to the street. */
+const UP: Vec = { x: 0, y: 1, z: 0 };
+const ALONG: readonly [Uv, Uv, Uv, Uv] = [
+  [0, 0],
+  [1, 0],
+  [1, 0],
+  [0, 0],
+];
+
+/**
+ * Width of a cable's upper face (m), what the moon shadow sees of it (G-800). The shadow pass
+ * culls the faces turned from the moon, so without it only the upright ribbon cast: 2.9 cm across
+ * the light, about one texel of the widest shadow square (2.7 cm), which the receivers' 3-texel
+ * filter drops. Two texels across the light even where the cable runs slanted to it: 7 cm.
+ */
+export const CABLE_SHADOW_TOP = 0.07;
+
+/** A flat horizontal ribbon from `p` to `q`, `s` its half width across, facing `n` (up or down). */
+const flatRibbon = (sink: MeshSink, p: Vec, q: Vec, s: { x: number; z: number }, n: Vec, color: Rgba, meta: ReturnType<typeof trimMeta>): void =>
+  quadUv(
+    sink,
+    [
+      { x: p.x - s.x, y: p.y, z: p.z - s.z },
+      { x: q.x - s.x, y: q.y, z: q.z - s.z },
+      { x: q.x + s.x, y: q.y, z: q.z + s.z },
+      { x: p.x + s.x, y: p.y, z: p.z + s.z },
+    ],
+    n,
+    color,
+    ALONG,
+    meta,
+  );
+
+/**
+ * A sagging cable as ribbons: an upright one, both faces, one facing down to the street and one up
+ * to the moon, at least `CABLE_SHADOW_TOP` wide (seen only from above, it carries the shadow).
+ */
 export const cable = (sink: MeshSink, a: Vec, b: Vec, sag: number, color: Rgba, thick = 0.05): void => {
   const segments = 6;
   const dx = b.x - a.x;
   const dz = b.z - a.z;
   const len = Math.hypot(dx, dz) || 1;
-  // Across the cable, horizontal.
-  const sx = (-dz / len) * thick * 0.5;
-  const sz = (dx / len) * thick * 0.5;
+  // Across the cable, horizontal: half the cable and half the upper face.
+  const across = { x: -dz / len, z: dx / len };
+  const half = { x: across.x * thick * 0.5, z: across.z * thick * 0.5 };
+  const top = Math.max(thick, CABLE_SHADOW_TOP) * 0.5;
+  const halfTop = { x: across.x * top, z: across.z * top };
   const meta = trimMeta(0.5);
   for (let i = 0; i < segments; i++) {
     const p = lerp(a, b, i / segments, sag);
@@ -111,21 +148,10 @@ export const cable = (sink: MeshSink, a: Vec, b: Vec, sag: number, color: Rgba, 
       { x: q.x, y: q.y + thick / 2, z: q.z },
       up,
     ];
-    quadUv(sink, upright, n, color, [[0, 0], [1, 0], [1, 0], [0, 0]], meta);
-    quadUv(sink, upright, { x: -n.x, y: 0, z: -n.z }, color, [[0, 0], [1, 0], [1, 0], [0, 0]], meta);
-    quadUv(
-      sink,
-      [
-        { x: p.x - sx, y: p.y, z: p.z - sz },
-        { x: q.x - sx, y: q.y, z: q.z - sz },
-        { x: q.x + sx, y: q.y, z: q.z + sz },
-        { x: p.x + sx, y: p.y, z: p.z + sz },
-      ],
-      DOWN,
-      color,
-      [[0, 0], [1, 0], [1, 0], [0, 0]],
-      meta,
-    );
+    quadUv(sink, upright, n, color, ALONG, meta);
+    quadUv(sink, upright, { x: -n.x, y: 0, z: -n.z }, color, ALONG, meta);
+    flatRibbon(sink, p, q, half, DOWN, color, meta);
+    flatRibbon(sink, p, q, halfTop, UP, color, meta);
   }
 };
 

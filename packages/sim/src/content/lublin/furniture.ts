@@ -40,11 +40,13 @@ const shapeOf = (kind: StreetPropKind, variant: number): number => variant % (SH
 /**
  * A tree's size, as `treeScale` of `@seki/core` (G-422, G-423): an oak's or a poplar's from its step
  * over 0xf400 (two variants, one per species, a step), a measured tree's from its step over 0xf000
- * (three variants a step), else 0.8 to 1.25 from bits 4 to 7. Its own copy, as the importer loads
+ * (three variants a step), one narrowed by walls from its step of two over 0xf580 (25 variants a
+ * step, G-814), else 0.8 to 1.25 from bits 4 to 7. Its own copy, as the importer loads
  * this module in plain Node, where only types come from the core's index.
  */
 export const treeScale = (variant: number): number => {
   const step = (k: number) => Math.round((0.7 + k * 0.01) * 100) / 100;
+  if (variant >= 0xf580) return step(2 * Math.floor((variant - 0xf580) / 25));
   if (variant >= 0xf400) return step(Math.floor((variant - 0xf400) / 2));
   return variant >= 0xf000 ? step(Math.floor((variant - 0xf000) / 3)) : 0.8 + 0.45 * (((variant >> 4) % 16) / 15);
 };
@@ -54,14 +56,22 @@ export const treeScale = (variant: number): number => {
  * renderer's (`TRUNK` in `prop-green.ts`): lime, maple and horse chestnut 0.26, oak 0.42, poplar 0.45.
  */
 const TREE_GIRTH: readonly number[] = [0.28, 0.28, 0.28, 0.44, 0.47];
-export const treeGirth = (variant: number): number => TREE_GIRTH[variant >= 0xf400 ? 3 + ((variant - 0xf400) % 2) : variant % 3]! * treeScale(variant);
+/** The share of its width a tree narrowed by walls is drawn at, over 0xf580 (`TREE_SPREADS` of `@seki/core`, G-814): its trunk with it. */
+const TREE_SPREADS: readonly number[] = [0.85, 0.7, 0.55, 0.45, 0.35];
+export const treeGirth = (variant: number): number => {
+  if (variant >= 0xf580) return TREE_GIRTH[(variant - 0xf580) % 5]! * treeScale(variant) * TREE_SPREADS[Math.floor((variant - 0xf580) / 5) % 5]!;
+  return TREE_GIRTH[variant >= 0xf400 ? 3 + ((variant - 0xf400) % 2) : variant % 3]! * treeScale(variant);
+};
 
 /**
- * A granite bollard of the old town (G-032), as the renderer draws it: `side` square, `height`
- * to the tip of its cap, `chain` the radius of its chain. Its `variant` holds its chains
- * (`bollardChains` in `bollards.ts`).
+ * A black cast-iron bollard of Lublin's centre (G-032, G-819; Plac Łokietka, Plac Wolności), as
+ * the renderer draws it: a round shaft `shaft` in radius on a foot `foot` in radius and
+ * `footHeight` tall, a ball `ball` in radius under a small finial up to `height`. Its chain hangs
+ * from the shaft at `chainY`, a band of links `chain` half wide, sagging by `sag` of its span.
+ * Its solid is a post of `radius` (the shaft with the foot). Its `variant` holds its chains
+ * (`bollardChains`).
  */
-export const BOLLARD = { side: 0.34, height: 1.05, chain: 0.018 } as const;
+export const BOLLARD = { shaft: 0.05, foot: 0.075, footHeight: 0.15, ball: 0.06, height: 0.95, chainY: 0.75, chain: 0.0225, sag: 0.09, radius: 0.08 } as const;
 
 /** Monument and artwork solids by shape: obelisk, figure on a plinth, Koziołek, abstract, stele, wayside shrine. */
 const MONUMENT_PARTS: readonly Box[] = [box(0, 0, 1.4, 1.4, 11), box(0, 0, 0.9, 0.9, 3.5), box(0, 0, 0.45, 0.3, 1.2), box(0, 0, 0.5, 0.5, 2.6), box(0, 0, 0.65, 0.35, 1.65), box(0, 0, 0.45, 0.45, 3.1)];
@@ -93,7 +103,7 @@ export const FOOD_STALL = {
 const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => readonly Part[]>> = {
   // Shape 0 the long ława of the squares (no back), 1 the bench with a back.
   bench: (s) => (s === 0 ? [box(0, 0, 1.1, 0.27, 0.55)] : [box(0, -0.03, 0.9, 0.3, 1.0)]),
-  bollard: () => [box(0, 0, BOLLARD.side / 2, BOLLARD.side / 2, BOLLARD.height)],
+  bollard: () => [post(BOLLARD.radius, BOLLARD.height)],
   "waste-bin": () => [post(0.28, 0.95)],
   "lamp-pastoral": () => [post(0.2, 4)],
   "lamp-candelabra": () => [box(0, 0, 0.32, 0.32, 3.4)],
@@ -211,7 +221,7 @@ export const distanceToPiece = (item: StreetPropItem, x: number, z: number): num
 /**
  * The chains of the bollards (G-032). A bollard holds up to two chains, read from its
  * `variant`: bits 0-8 where its chain along its +x ends (cm from its centre, at the next post's
- * face or a lamp's shaft), bits 9-17 where a second chain ends, behind it, towards a lamp of the
+ * shaft or a lamp's), bits 9-17 where a second chain ends, behind it, towards a lamp of the
  * row, and bits 18-24 that chain's turn off its -x (degrees + 64); 0 for none.
  */
 
@@ -249,8 +259,8 @@ export const bollardChains = (item: StreetPropItem): BollardChain[] => {
   const out: BollardChain[] = [];
   const fwd = (v & 0x1ff) / 100;
   const back = ((v >> 9) & 0x1ff) / 100;
-  if (fwd > BOLLARD.side / 2) out.push({ yaw: item.yaw, end: fwd, back: false });
-  if (back > BOLLARD.side / 2) {
+  if (fwd > BOLLARD.shaft) out.push({ yaw: item.yaw, end: fwd, back: false });
+  if (back > BOLLARD.shaft) {
     const turn = ((((v >> 18) & 0x7f) - 64) * Math.PI) / 180;
     const d = turnLocal(item.yaw, -Math.cos(turn), Math.sin(turn));
     out.push({ yaw: Math.atan2(-d.z, d.x), end: back, back: true });
@@ -268,11 +278,11 @@ export const dropChains = (item: StreetPropItem, drop: readonly BollardChain[]):
 /** The world direction a chain's yaw turns a post's +x to. */
 export const chainDir = (yaw: number): GroundPoint => ({ x: Math.cos(yaw), z: -Math.sin(yaw) });
 
-/** A bollard's chains in the world, from its face to their ends. */
+/** A bollard's chains in the world, from its shaft to their ends. */
 export const chainSegments = (item: StreetPropItem): { from: GroundPoint; to: GroundPoint }[] =>
   bollardChains(item).map((c) => {
     const d = chainDir(c.yaw);
-    return { from: { x: item.x + d.x * (BOLLARD.side / 2), z: item.z + d.z * (BOLLARD.side / 2) }, to: { x: item.x + d.x * c.end, z: item.z + d.z * c.end } };
+    return { from: { x: item.x + d.x * BOLLARD.shaft, z: item.z + d.z * BOLLARD.shaft }, to: { x: item.x + d.x * c.end, z: item.z + d.z * c.end } };
   });
 
 /** Points along a segment every `step` metres or less, both ends included. */

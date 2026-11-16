@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BARRIER_PIECE, BARRIER_THICKNESS, type StreetPropItem, barrierLayout } from "@seki/core";
-import { Simulation, WORLD_BARRIERS, WORLD_CHUNKS, WORLD_SCENERY, ground, groundY } from "../src";
+import { Simulation, W3_BARRIERS, WORLD_BARRIERS, WORLD_CHUNKS, WORLD_SCENERY, ground, groundY } from "../src";
 import { barrierPieces, barrierPrism, distanceToBarrier } from "../src/content/lublin/barriers";
 import { barrierBlocked } from "../src/content/world-barriers";
 import { clearSight, lineOfSight } from "../src/world/hitscan";
@@ -60,7 +60,9 @@ describe("the map's barriers in the game (ADR-0077 point 4)", () => {
     expect(kinds.get("fence")).toBeGreaterThan(4000);
     expect(kinds.get("hedge")).toBeGreaterThan(700);
     // Drawn with the furniture, one view a chunk with barriers; a solid a piece in the chunk's street.
-    const views = WORLD_SCENERY.filter((s) => s.view.kind === "street-props" && s.view.items.some((i) => i.prop === "barrier"));
+    // W-3's own fences (ADR-0082) come in views of their own after the map's.
+    const ours = new Set(W3_BARRIERS);
+    const views = WORLD_SCENERY.filter((s) => s.view.kind === "street-props" && s.view.items.some((i) => i.prop === "barrier") && !s.view.items.every((i) => ours.has(i)));
     expect(views).toHaveLength(Object.keys(WORLD_BARRIERS).length);
     for (const c of WORLD_CHUNKS) {
       const solids = (WORLD_BARRIERS[c.id] ?? []).filter((i) => barrierPrism(i) !== null).length;

@@ -2,7 +2,7 @@
 
 // Tomo was laid off by an algorithm this morning. Nobody told the gate, so he keeps working.
 === enc_doki_laidoff ===
-Przy kontenerach pod magazynami Tessen doker w kamizelce pali papierosa i patrzy w telefon, jakby ten go obraził.
+Na pasie przy płocie Tessen doker w kamizelce pali papierosa i patrzy w telefon, jakby ten go obraził.
 TOMO: Dwadzieścia dwa lata na nabrzeżu. Dziś rano algorytm napisał, że moje stanowisko „przestaje być optymalne”.
 TOMO: Ale bramka dalej mnie wpuszcza. Nikt jej nie powiedział. Więc przychodzę i pracuję. Za darmo, jak się okazuje.
 -> ask
@@ -14,7 +14,7 @@ TOMO: Ale bramka dalej mnie wpuszcza. Nikt jej nie powiedział. Więc przychodz�
     -> ask
 * [Skoro bramka cię wpuszcza, wpuści i mnie? #tone:persuade]
     SEKI: Skoro bramka cię wpuszcza, wpuści i mnie?
-    TOMO: Ha. Moja karta otwiera bramę przy dźwigu do końca miesiąca. Bierz kopię. Niech Tessen zapłaci za ten błąd.
+    TOMO: Ha. Moja karta otwiera furtkę w płocie do końca miesiąca. Bierz kopię. Niech Tessen zapłaci za ten błąd.
     ~ set_flag("enc_doki_laidoff_badge")
     ~ change_rep("tessen", -1)
     -> END
@@ -39,7 +39,7 @@ STRAZNIK: To dron ptasi z dawnego programu odstraszania. Program zamknęli, ptak
     STRAZNIK: No proszę. Nie widziałem cię tu, ale jak mnie ktoś zapyta, to jesteś w porządku.
     -> END
 * [Rzucasz mewie resztkę jego kanapki. #tone:main]
-    Mewa łapie kęs w locie, zatacza koło nad dźwigiem i siada ci na ramieniu. Waży więcej, niż wygląda.
+    Mewa łapie kęs w locie, zatacza koło nad wieżą i siada ci na ramieniu. Waży więcej, niż wygląda.
     ~ set_flag("enc_doki_gull_friend")
     STRAZNIK: Ty ją karmisz?! Teraz będzie przychodzić po dwie!
     -> END
@@ -50,7 +50,7 @@ STRAZNIK: To dron ptasi z dawnego programu odstraszania. Program zamknęli, ptak
 
 // Someone knocks from inside a container. The manifest says "spare parts".
 === enc_doki_container ===
-W alejce między kontenerami słychać pukanie. Trzy krótkie, trzy długie, trzy krótkie. Z jednego kontenera, z plombą Tessen.
+Na placu odbioru przy basenie słychać pukanie. Trzy krótkie, trzy długie, trzy krótkie. Z kontenera z plombą Tessen.
 GLOS: Halo? Ktoś tam jest? Nie mamy już wody. Jest nas sześcioro.
 -> ask
 
@@ -73,5 +73,5 @@ GLOS: Halo? Ktoś tam jest? Nie mamy już wody. Jest nas sześcioro.
     ~ change_rep("fixers", 1)
     -> END
 * [Odchodzisz od kontenera. #tone:leave]
-    Pukanie słychać jeszcze przez dwie alejki. Potem przestajesz je słyszeć, choć nie wiesz, czy ono przestało.
+    Pukanie słychać jeszcze aż do płotu. Potem przestajesz je słyszeć, choć nie wiesz, czy ono przestało.
     -> END

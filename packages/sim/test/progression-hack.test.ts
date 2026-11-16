@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { BREACH_XP, BREACH_XP_PER_DAEMON, type Contract, QUICKHACKS, QUICKHACK_XP, type Vec3, contractTerminalKey } from "@seki/core";
-import { DOCKS_PLACE, DOKI_TERMINAL_SPOTS, GENZO_SPOT, SIM_HZ, type Simulation, docks, gangerEntity } from "../src";
+import { GENZO_SPOT, SIM_HZ, type Simulation, W3_TERMINAL_SPOTS, gangerEntity, ground, w3 } from "../src";
 import { byKey, collect, input, run, streetSim, teleportPlayer } from "./helpers";
 
 /** XP from hacking (ADR-0059): the first quickhack on each target, and a breach that won daemons. */
 
 const DOCKS_CHUNK = "nabrzeze-1-1";
-const onDocks = (x: number, z: number): Vec3 => ({ x, y: DOCKS_PLACE.y, z });
+const onDocks = (x: number, z: number): Vec3 => ground(x, z);
 const chest = (e: { position: Vec3 }) => ({ x: e.position.x, y: e.position.y + 1.25, z: e.position.z });
 
 const tough = (sim: Simulation) => {
@@ -33,7 +33,7 @@ const hackXp = (sim: Simulation) => collect<{ amount: number; source: string }>(
 describe("quickhack XP (ADR-0059)", () => {
   it("the first quickhack on a target pays; hacking it again pays nothing; another target pays", () => {
     const sim = streetSim({ seed: 21 });
-    teleportPlayer(sim, docks(16, 0, 97), -Math.PI / 2);
+    teleportPlayer(sim, w3(2590, 0, 418), -Math.PI / 2);
     sim.step();
     tough(sim);
     const speaker = byKey(sim, "dev:doki-speaker")!;
@@ -52,7 +52,7 @@ describe("quickhack XP (ADR-0059)", () => {
     // One fight of the quickhack path in the style (ADR-0059, stage 6), as for the XP: once a target.
     expect(sim.domain.progression.style).toEqual(["quickhack"]);
     // Another target: a guard of Tessen put beside the yard.
-    const guard = gangerEntity(90010, { key: "test-guard", position: docks(2, 0, 96), yaw: -Math.PI / 2 }, null, 110, DOCKS_CHUNK, undefined, "tessen_guard");
+    const guard = gangerEntity(90010, { key: "test-guard", position: w3(2576, 0, 417), yaw: -Math.PI / 2 }, null, 110, DOCKS_CHUNK, undefined, "tessen_guard");
     sim.world.add(guard);
     sim.step();
     lookAt(sim, chest(guard));
@@ -73,7 +73,7 @@ describe("breach XP (ADR-0059)", () => {
     sim.enqueue({ type: "accept-contract", kind: "hack" });
     sim.step();
     const c = sim.domain.contracts.active!;
-    const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
+    const t = W3_TERMINAL_SPOTS.quay_terminal!;
     teleportPlayer(sim, { x: t.x, y: t.y, z: t.z - 1.4 }, 0);
     sim.step(input({ interact: true }));
     return { sim, c };

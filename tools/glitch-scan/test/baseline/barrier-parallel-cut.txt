@@ -1,0 +1,13 @@
+# barrier-parallel-cut: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-0-0 -70,-185
+krakowskie-2-0 387,-27
+podzamcze-0-1 539,517
+podzamcze-0-1 700,533
+podzamcze-1-0 733,165
+podzamcze-1-0 766,185
+podzamcze-1-0 761,189
+podzamcze-1-0 782,204
+stare-miasto-0-0 473,-78
+stare-miasto-0-1 558,100
+stare-miasto-1-1 736,155
+stare-miasto-1-1 731,159

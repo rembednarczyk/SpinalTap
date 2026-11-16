@@ -8,10 +8,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { DISTRICTS } from "./config.ts";
+import { loadFurniture } from "./furniture.ts";
 import { type Tags, mergeOsm, parseExtract } from "./osm.ts";
 import { REPO } from "./paths.ts";
 import type { SKIPPED_ART } from "./props-kinds.ts";
 import { loadTreeTags } from "./tree-species.ts";
+import { withTreeHeights } from "./tree-heights.ts";
 
 /** The renderer's monument shapes (`MONUMENT_SHAPE`), the low bits of `variant`. */
 export const ART_SHAPE = { obelisk: 0, figure: 1, koziolek: 2, abstract: 3, stele: 4, shrine: 5 } as const;
@@ -73,14 +75,15 @@ export const artShape = (id: string, tags: Tags | undefined, kind = ""): ArtPick
 };
 
 /**
- * OSM tags of every node by id (`n123`), from the committed extracts and the trees' species
- * (`data/osm/points/trees.json`, G-423: the extracts keep no unnamed nodes): offline.
+ * OSM tags of every node by id (`n123`), from the committed extracts, the trees' species
+ * (`data/osm/points/trees.json`, G-423: the extracts keep no unnamed nodes) and the trees' `height`
+ * of the furniture's extract (`furniture.json`, `withTreeHeights`): offline.
  */
 export const loadNodeTags = (root = REPO): ReadonlyMap<string, Tags> => {
   const osm = mergeOsm(DISTRICTS.map((d) => parseExtract(readFileSync(join(root, "data/osm", `${d.slug}.json`), "utf8"))));
   const out = new Map<string, Tags>(loadTreeTags(root));
   for (const n of osm.nodes.values()) if (n.tags) out.set(`n${n.id}`, n.tags);
-  return out;
+  return withTreeHeights(out, loadFurniture(root));
 };
 
 /** The tags of the map's ways and relations by the game's building id (`w…`, `r…`): the buildings' addresses and protection (ADR-0058 stage 6). */

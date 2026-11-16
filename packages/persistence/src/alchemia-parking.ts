@@ -24,7 +24,7 @@ export const PARKING_AREAS: readonly Area[] = [
 ];
 
 /** Where a save made there wakes: on the car park west of the ramp's top, a few centimetres over it. */
-export const PARKING_WAKE = { x: 406, y: -1.2, z: -3, chunk: "krakowskie-2-1" } as const;
+export const PARKING_WAKE = { x: 406, y: -1.15, z: -3, chunk: "krakowskie-2-1" } as const;
 
 /** Sachiko's state: she comes back from the content, behind her counter turned to the door. */
 const PARKING_MOVED: readonly string[] = ["sachiko"];

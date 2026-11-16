@@ -1,0 +1,4 @@
+# city-wall-kept: grid 10 m (x,z = the square's corner at its least x and z)
+stare-miasto-0-0 470,-90
+stare-miasto-0-0 470,-80
+stare-miasto-1-1 710,100

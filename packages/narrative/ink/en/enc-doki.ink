@@ -2,7 +2,7 @@
 
 // Tomo was laid off by an algorithm this morning. Nobody told the gate, so he keeps working.
 === enc_doki_laidoff ===
-By the containers under the Tessen warehouses a docker in a hi-vis vest smokes and stares at his phone as if it insulted him.
+On the strip by the Tessen fence a docker in a hi-vis vest smokes and stares at his phone as if it insulted him.
 TOMO: Twenty-two years on the riverside. This morning an algorithm wrote that my position "is no longer optimal".
 TOMO: But the gate still lets me in. Nobody told it. So I come and I work. For free, it turns out.
 -> ask
@@ -14,7 +14,7 @@ TOMO: But the gate still lets me in. Nobody told it. So I come and I work. For f
     -> ask
 * [If the gate lets you in, will it let me? #tone:persuade]
     SEKI: If the gate lets you in, will it let me in too?
-    TOMO: Ha. My card opens the gate by the crane till the end of the month. Take a copy. Let Tessen pay for that mistake.
+    TOMO: Ha. My card opens the service gate in the fence till the end of the month. Take a copy. Let Tessen pay for that mistake.
     ~ set_flag("enc_doki_laidoff_badge")
     ~ change_rep("tessen", -1)
     -> END
@@ -39,7 +39,7 @@ STRAZNIK: It's a bird drone from an old deterrence program. They shut the progra
     STRAZNIK: Well, look at that. I never saw you here, but if anyone asks, you're all right.
     -> END
 * [You toss the gull the rest of his sandwich. #tone:main]
-    The gull catches the bite mid-air, circles the crane and lands on your shoulder. It weighs more than it looks.
+    The gull catches the bite mid-air, circles the tower and lands on your shoulder. It weighs more than it looks.
     ~ set_flag("enc_doki_gull_friend")
     STRAZNIK: You're feeding her?! Now she'll come for two!
     -> END
@@ -50,7 +50,7 @@ STRAZNIK: It's a bird drone from an old deterrence program. They shut the progra
 
 // Someone knocks from inside a container. The manifest says "spare parts".
 === enc_doki_container ===
-In the alley between the containers you hear knocking. Three short, three long, three short. From one container, with a Tessen seal.
+On the pickup yard by the basin you hear knocking. Three short, three long, three short. From a container with a Tessen seal.
 GLOS: Hello? Is someone there? We're out of water. There are six of us.
 -> ask
 
@@ -73,5 +73,5 @@ GLOS: Hello? Is someone there? We're out of water. There are six of us.
     ~ change_rep("fixers", 1)
     -> END
 * [You walk away from the container. #tone:leave]
-    You can hear the knocking for two more alleys. Then you stop hearing it, though you don't know if it stopped.
+    You can hear the knocking all the way to the fence. Then you stop hearing it, though you don't know if it stopped.
     -> END

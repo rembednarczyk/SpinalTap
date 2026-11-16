@@ -316,9 +316,10 @@ describe("accessibility", () => {
   });
 
   it("puts scale, font, flashes and palette on the document root", () => {
-    const { store } = mount({ settings: { ...DEFAULT_SETTINGS, hudScale: 1.25, legibleFont: true, reduceFlashes: true, colorblind: "tritan" } });
+    // The scale on the root is the one the layers draw at (ADR-0085); under 1 it is the setting itself.
+    const { store } = mount({ settings: { ...DEFAULT_SETTINGS, hudScale: 0.85, legibleFont: true, reduceFlashes: true, colorblind: "tritan" } });
     const root = document.documentElement;
-    expect(root.style.getPropertyValue("--hud-scale")).toBe("1.25");
+    expect(root.style.getPropertyValue("--ui-scale")).toBe("0.85");
     expect(root.classList.contains("legible-font")).toBe(true);
     expect(root.classList.contains("reduce-flashes")).toBe(true);
     expect(root.dataset.palette).toBe("tritan");
@@ -331,7 +332,7 @@ describe("accessibility", () => {
     const { store } = mount({ settings: { ...DEFAULT_SETTINGS, subtitleScale: 1.4, subtitleBackground: true } });
     const root = document.documentElement;
     expect(root.style.getPropertyValue("--subs-scale")).toBe("1.4");
-    expect(root.style.getPropertyValue("--hud-scale")).toBe("1");
+    expect(root.style.getPropertyValue("--ui-scale")).toBe("1");
     expect(root.classList.contains("subs-solid")).toBe(true);
     act(() => patchUi(store, { settings: DEFAULT_SETTINGS }));
     expect(root.style.getPropertyValue("--subs-scale")).toBe("1");

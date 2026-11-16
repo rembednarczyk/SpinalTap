@@ -34,7 +34,7 @@ const UNIFORMS = [
   "dither",
 ];
 
-const SAMPLERS = ["shadowSampler", "baseSampler"];
+const SAMPLERS = ["shadowSampler", "shadowMovingSampler", "baseSampler"];
 
 export const hex = (h: string): Color3 => Color3.FromHexString(h);
 

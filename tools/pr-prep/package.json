@@ -1,0 +1,13 @@
+{
+  "name": "@seki/pr-prep",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A branch checked before its PR is merged: full SHA, a clean merge with main, files shared with other open branches, generated files and goldens it changes.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

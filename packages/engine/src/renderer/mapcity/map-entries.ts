@@ -71,7 +71,8 @@ export class MapEntries {
     this.grounds.set(id, g);
     if (g.marking) return;
     if (g.deck) this.decks.add(id, g.ring, g.deck);
-    if (g.surface === "road") this.roadIndex.add(id, g.bounds);
+    // A zebra is a piece of the carriageway of its own (the ground a partition, ADR-0078 step 3): a sidewalk's edge on it gets a kerb too.
+    if (g.surface === "road" || g.surface === "crossing") this.roadIndex.add(id, g.bounds);
     if (g.surface !== "water" && g.surface !== "basin") this.surfaceIndex.add(id, g.bounds);
   }
 

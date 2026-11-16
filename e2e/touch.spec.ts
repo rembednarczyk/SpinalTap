@@ -60,7 +60,7 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
 });
 
 /**
- * One thumb fires from the sights (ADR-0072): by default holding ● aims and fires; with "Fires
+ * One thumb fires from the sights (ADR-0072): with "Aims and fires" holding ● aims and fires; with "Fires
  * only" a tap on ◎ latches the sights, lights ◎ and rings the crosshair. SHOTS=<dir> keeps a
  * screenshot of each state.
  */
@@ -83,7 +83,8 @@ test("phone: the fire button aims, or a tap on aim holds the sights", async ({ p
   };
   await shot("touch-hip");
 
-  // A: ● held aims and fires; letting go ends both.
+  // A: ● held aims and fires; letting go ends both. Fires only is the default since 14.11, so A is chosen here.
+  await page.evaluate(() => window.__seki!.session.intents.changeSettings({ touchFire: "aims", aimMode: "hold" }));
   const fire = await centre(/^Fire/);
   await finger("touchStart", fire);
   await expect.poll(aiming).toBe(true);

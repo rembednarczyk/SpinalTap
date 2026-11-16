@@ -152,7 +152,7 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
     const result = hitscan(ctx.world, shot.origin, dir, weapon.range, shot.shooter.id);
     if (!first) {
       first = result;
-      ctx.bus.emit("ShotFired", { shooterId: shot.shooter.id, from: shot.origin, to: result.point, hitEntity: result.entity?.id ?? null });
+      ctx.bus.emit("ShotFired", { shooterId: shot.shooter.id, from: shot.origin, to: result.point, hitEntity: result.entity?.id ?? null, look: weapon.look });
     }
     farthest = result.point;
     const target = result.entity;

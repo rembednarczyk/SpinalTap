@@ -51,6 +51,68 @@ export const MEGA_SITES: readonly MegaSite[] = [
 ];
 
 const TINTS = ["#8a93a8", "#7d8aa3", "#948aa8", "#7f98a0"] as const;
+
+/**
+ * A landmark of the game's own map drawn into the skyline as a silhouette, for an eye too far off
+ * to see the real one past the far plane (ADR-0082: the castle group from W-3 on the Bystrzyca,
+ * 1.6 km east): its parts as boxes, world metres, their bottoms and tops the map buildings'.
+ */
+export interface SkylineLandmark {
+  readonly name: string;
+  readonly parts: readonly { readonly x: number; readonly z: number; readonly w: number; readonly d: number; readonly y0: number; readonly y1: number; readonly octagon?: true }[];
+}
+
+/**
+ * The castle group (OSM w48500136 "Zamek w Lublinie", walls 12.8 m from -9.4, its hipped roof 3 m;
+ * w450180469 "Wieża Zamkowa Donżon", 24.3 m from -7.4): the castle's west, south and north wings
+ * and the keep, round; the Holy Trinity chapel by the castle's east end, its roof as a ridge. The audit before W-3 (docs/plany/tessen-w3-audyt.md) keeps the Old Town's
+ * towers out: from the Nabrzeże the real buildings 8-12 m tall in 340-430 m hide them.
+ */
+export const SKYLINE_LANDMARKS: readonly SkylineLandmark[] = [
+  {
+    name: "Zamek",
+    parts: [
+      { x: 839.5, z: 237, w: 9, d: 56, y0: -9.4, y1: 5.4 },
+      { x: 892, z: 203.5, w: 106, d: 13, y0: -9.4, y1: 5.4 },
+      { x: 895.5, z: 253.5, w: 103, d: 23, y0: -9.4, y1: 5.4 },
+      { x: 893.1, z: 214.6, w: 15, d: 15, y0: -7.4, y1: 16.9, octagon: true },
+    ],
+  },
+  {
+    // w66258167 "Kaplica pw. Świętej Trójcy": walls 14.6 m from -7.6, a gabled roof 8.3 m (review round 2).
+    name: "Kaplica",
+    parts: [
+      { x: 941.2, z: 215.5, w: 22.6, d: 11.2, y0: -7.6, y1: 7 },
+      { x: 941.2, z: 215.5, w: 22, d: 4, y0: 7, y1: 15.3 },
+    ],
+  },
+];
+
+/**
+ * The landmarks on medium and high; the phone keeps today's skyline (ADR-0067): the towers' mesh,
+ * culled by its box, would be drawn over the city for them (two draw calls on the deptak).
+ */
+const withLandmarks = (plan: SkylinePlan, layout: SkylineLayout): SkylinePlan => (layout === NO_LAYOUT ? plan : addLandmarks(plan));
+
+/** The silhouettes are drawn only for an eye this far from their part (m): nearer, the real ones are in the picture. */
+export const LANDMARK_NEAR = 600;
+/** uv2.x of a silhouette's vertices: no windows, and gone within `LANDMARK_NEAR`. */
+const LANDMARK = -2;
+
+/** The landmarks' boxes into the towers' sink, each stamped with its own centre and top (after the towers, so their vertices stay). */
+export const addLandmarks = (plan: SkylinePlan, list: readonly SkylineLandmark[] = SKYLINE_LANDMARKS): SkylinePlan => {
+  const tint = hex("#7a7f88", 1);
+  for (const l of list) {
+    for (const p of l.parts) {
+      const t0 = plan.towers.vertexCount;
+      const c = { x: p.x, y: (p.y0 + p.y1) / 2, z: p.z };
+      plan.towers.box(c, p.w, p.y1 - p.y0, p.d, tint, { uv2: [LANDMARK, 0], bottom: false });
+      if (p.octagon) plan.towers.box(c, p.w, p.y1 - p.y0, p.d, tint, { uv2: [LANDMARK, 0], bottom: false, rotY: Math.PI / 4 });
+      stamp(plan.towers, t0, { x: p.x, z: p.z, h: p.y1 }, false);
+    }
+  }
+  return plan;
+};
 const NEON = ["#ff2e88", "#00e5ff", "#ffb000", "#39ff8a", "#b46cff"] as const;
 
 const hex = (h: string, a: number): Rgba => {
@@ -260,6 +322,8 @@ void main(void) {
   vColor = color;
   vSeed = uv2.x;
   gl_Position = viewProjection * vec4(impostor(position, uv, uv2.y, vDist), 1.0);
+  // A landmark's silhouette near its real building: behind the near plane, gone (ADR-0082).
+  if (uv2.x < ${(LANDMARK + 0.5).toFixed(1)} && vDist < ${LANDMARK_NEAR.toFixed(1)}) gl_Position = vec4(0.0, 0.0, -2.0, 1.0);
 }
 `;
 
@@ -287,7 +351,7 @@ void main(void) {
     // A megatower's band of light (ADR-0063): its own colour, dim by day.
     col = vColor.rgb * 0.3;
     glow = lit * vColor.rgb * 0.85;
-  } else if (vSeed < 1.5 && abs(n.y) < 0.5) {
+  } else if (vSeed > -0.5 && vSeed < 1.5 && abs(n.y) < 0.5) {
     float u = abs(n.x) > 0.5 ? vLocal.z : vLocal.x;
     vec2 g = vec2(u / 4.0, vLocal.y / 4.2);
     vec2 cell = floor(g);
@@ -352,7 +416,7 @@ export class MapSkyline {
     withLights: boolean,
     private readonly layout: SkylineLayout = NO_LAYOUT,
   ) {
-    const plan = planSkyline(MEGA_SITES, [], layout);
+    const plan = withLandmarks(planSkyline(MEGA_SITES, [], layout), layout);
     const towers = new ShaderMaterial("map-skyline", scene, { vertexSource: TOWER_VERTEX, fragmentSource: TOWER_FRAGMENT }, {
       attributes: ["position", "normal", "color", "uv", "uv2"],
       uniforms: ["viewProjection", "eye", "shell", "silhouette", "fogColor", "fogDensity", "lit"],
@@ -390,7 +454,7 @@ export class MapSkyline {
    */
   setBodies(bodies: readonly MegaBody[]): void {
     if (bodies.length === 0) return;
-    const plan = planSkyline(MEGA_SITES, bodies, this.layout);
+    const plan = withLandmarks(planSkyline(MEGA_SITES, bodies, this.layout), this.layout);
     [plan.towers, plan.lights].forEach((sink, i) => {
       const mesh = this.meshes[i];
       if (!mesh) return;

@@ -1,4 +1,4 @@
-import type { VehicleModel } from "@seki/core";
+import { type VehicleModel, segmentParam } from "@seki/core";
 import type { Pt } from "./lublin/roads";
 
 /** The traffic's lane (ADR-0050) and the polyline helpers both its building (`traffic.ts`) and its junctions (`traffic-junctions.ts`) use. */
@@ -65,8 +65,8 @@ export const projectOn = (pts: readonly Pt[], x: number, z: number): { s: number
     const dz = b[1] - a[1];
     const len2 = dx * dx + dz * dz;
     const len = Math.sqrt(len2);
-    // Not `segmentParam` of core with `minLen2`: here a segment of exactly 1e-12 m² counts as its start too (`>`, there `<`).
-    const t = len2 > 1e-12 ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / len2)) : 0;
+    // A segment shorter than 1e-6 m counts as its start; one of exactly 1e-12 m² is projected on (the old copy took it as its start too: no route has one).
+    const t = segmentParam(x, z, a[0], a[1], b[0], b[1], 1e-12);
     const px = a[0] + dx * t;
     const pz = a[1] + dz * t;
     const d = Math.hypot(x - px, z - pz);

@@ -4,6 +4,10 @@ import { ItemIcon } from "../icons/item-icon";
 import type { WeaponStripVm } from "../store/ui-store";
 import type { TouchPadSink } from "../touch/touch-pad-sink";
 import { useUi } from "../use-ui";
+import { useRecentChange } from "./use-recent-change";
+
+/** How long the "holstered" note stays after the weapon goes away; then it waits for the next draw. */
+export const HOLSTER_NOTE_MS = 2500;
 
 const ammoText = (w: WeaponStripVm, t: Translate): string => {
   if (w.loaded === null)
@@ -13,8 +17,8 @@ const ammoText = (w: WeaponStripVm, t: Translate): string => {
   return `${w.loaded} / ${w.reserve ?? 0}`;
 };
 
-const status = (w: WeaponStripVm, t: Translate): string | null => {
-  if (w.holstered) return t("weapon.holstered");
+const status = (w: WeaponStripVm, t: Translate, justHolstered: boolean): string | null => {
+  if (w.holstered) return justHolstered ? t("weapon.holstered") : null;
   if (w.reloading) return t("weapon.reloading");
   if (w.loaded === 0)
     return (w.reserve ?? 0) > 0 ? t("weapon.emptyMag") : t("weapon.noAmmo");
@@ -30,8 +34,11 @@ export const WeaponStrip = ({ pad }: { pad?: TouchPadSink | undefined }) => {
   const shown = useUi((s) => s.combat || s.settings.hudAlwaysShow);
   const t = useT();
   const tx = useText();
+  // The note says the weapon just went away, then steps aside until it is drawn again.
+  const holstered = w?.holstered ?? false;
+  const justHolstered = useRecentChange(holstered ? 1 : 0, HOLSTER_NOTE_MS) && holstered;
   if (!w) return null;
-  const note = status(w, t);
+  const note = status(w, t, justHolstered);
   // Out of combat the rounds step aside, unless something about them needs saying.
   const calm = !shown && note === null;
   return (

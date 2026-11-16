@@ -1,0 +1,67 @@
+/*
+ * Screen zones of a touch screen (ADR-0085, layout of ADR-0035). The pad and the HUD are two
+ * layers at two scales (scale/layers.css): the pad never under 1, the HUD down to 0.8. Their
+ * pieces share the screen's edges, so the anchors live here, once, for both layers: every piece
+ * names its zone's anchor instead of its own px, and a piece that has to clear the pad measures it
+ * in the pad's px (`--pad`), whatever the HUD's scale.
+ *
+ *   top left:     the objective, the buffs under it        top right: the pad's row (menu, phone,
+ *   bottom left:  the stick, health, the weapon strip                 pause), the wallet and clock
+ *   bottom right: the pad's cluster                                   left of it, the minimap under
+ *                                                                     it, the messages left of that
+ */
+/* ---- desktop: the top right column, the wallet, the clock under it, the messages under both ---- */
+.toasts { top: 108px; }
+
+.touch-mode .ui-layer {
+  /* One pad px in this layer's px. */
+  --pad: calc(var(--ui-touch-scale, 1) / var(--layer-scale));
+  /* How far the pad's groups pull toward their corners under scale 1 (ADR-0085). */
+  --pad-spread: var(--ui-touch-spread, 1);
+  /* The pad's edges: its margins at the interface's scale, or the safe area where it is wider, in
+     this layer's px. Under 1 they shrink with the interface, so the pad sits closer to its corners. */
+  --zone-top: calc(max(8px * var(--ui-scale, 1), env(safe-area-inset-top, 0px)) / var(--layer-scale));
+  --zone-right: calc(max(16px * var(--ui-scale, 1), env(safe-area-inset-right, 0px)) / var(--layer-scale));
+  --zone-bottom: calc(max(10px * var(--ui-scale, 1), env(safe-area-inset-bottom, 0px)) / var(--layer-scale));
+  /* The pad's top row: three 44 px buttons 6 px apart and 8 px to its neighbour, both ways, pulled
+     toward the corner with the row. */
+  --pad-row-width: calc(152px * var(--pad) * var(--pad-spread));
+  --pad-row-height: calc(52px * var(--pad) * var(--pad-spread));
+  /* The HUD's own margin on the left, where nothing of the pad lies but the stick's ring. */
+  --zone-left: max(16px, var(--safe-left));
+}
+
+/* ---- the pad ---- */
+.touch-mode .touch__top { top: var(--zone-top); right: var(--zone-right); }
+.touch-mode .touch__actions { right: var(--zone-right); bottom: var(--zone-bottom); }
+.touch-mode .touch__stick-hint { left: max(56px * var(--touch-look, 1), calc(var(--safe-left) + 40px * var(--touch-look, 1))); bottom: max(80px * var(--touch-look, 1), calc(var(--safe-bottom) + 70px * var(--touch-look, 1))); }
+
+/* ---- top right: left of and under the pad's row ---- */
+.touch-mode .hud__wallet { top: var(--zone-top); right: calc(var(--zone-right) + var(--pad-row-width)); }
+.touch-mode .hud__clock { top: calc(var(--zone-top) + 36px); right: calc(var(--zone-right) + var(--pad-row-width)); }
+.touch-mode .minimap { left: auto; bottom: auto; top: calc(var(--zone-top) + var(--pad-row-height)); right: var(--zone-right); }
+/* Wide and short: the arrival card's three sentences in a 260 px column ran down over "Use", the
+   jump button and the move hint of a phone held sideways (G-466). Left of the minimap's column,
+   under the clock and the pad's row. */
+.touch-mode .toasts { top: calc(var(--zone-top) + max(68px, var(--pad-row-height))); right: calc(var(--zone-right) + 104px); width: min(400px, calc(100% - 280px)); }
+
+/* ---- top left: up to the wallet's column ---- */
+.touch-mode .hud__objective { left: var(--zone-left); top: var(--zone-top); max-width: calc(100% - var(--zone-right) - var(--pad-row-width) - 212px); }
+.touch-mode .buffs { left: var(--zone-left); right: auto; top: max(84px, calc(var(--safe-top) + 76px)); bottom: auto; }
+.touch-mode .debrief { left: var(--zone-left); width: min(400px, 52%); }
+
+/* ---- bottom left: health, then the active weapon, left of the pad's cluster ---- */
+.touch-mode .hud__identity { left: var(--zone-left); bottom: max(10px, var(--safe-bottom)); }
+/* 160 px with its padding and border: the weapon strip starts 172 px in (it overlapped by 7 px as 160 px of content). */
+.touch-mode .weapon-strip { left: calc(var(--zone-left) + 172px); right: auto; bottom: max(10px, var(--safe-bottom)); transform: none; align-items: flex-start; }
+
+/* ---- in a talk (ADR-0039): the wheel takes the right half below the top band, the subtitles the
+   bottom left up to under the objective. The wallet and the clock are of no use mid-talk and step
+   aside (as health and the minimap do, G-283); the newest message keeps to their place in the top
+   band, one line, so it never runs down over the wheel. ---- */
+#ui-root:has(.dialogue) :is(.hud__wallet, .hud__clock) { visibility: hidden; }
+.toasts--talk { top: 24px; width: min(340px, 40%); }
+.touch-mode .toasts--talk { top: var(--zone-top); right: var(--zone-right); width: min(340px, 40%); }
+.toasts--talk .toast:not(:last-child), .toasts--talk .toast__text { display: none; }
+.toasts--talk .toast__title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toasts--talk .toast > :last-child { min-width: 0; }

@@ -32,6 +32,8 @@ export interface TileMeta {
   readonly fetched: string;
   /** The sheet it shows at its middle, from the sheet index; absent when the index did not answer. */
   readonly sheet?: Sheet;
+  /** The share of blank pixels, written only when over `BLANK_MAX`: the services had no image of the flight there. */
+  readonly blank?: number;
 }
 
 export interface Tile {
@@ -74,6 +76,30 @@ export const loadTile = (cache: string, flight: string, cell: CellSpec): Tile | 
   if (img.width !== meta.width || img.height !== meta.height) throw new Error(`${f.png}: ${img.width}×${img.height}, sidecar says ${meta.width}×${meta.height}`);
   return { meta, rgb: img.rgb, empty: img.empty };
 };
+
+/** A tile with more of its pixels blank than this shows no photograph: no flight there (G-771). */
+export const BLANK_MAX = 0.95;
+
+/** The share of an image with no photograph: transparent, or the blank white of a service outside its sheets. */
+export const blankShare = (img: { readonly rgb: Uint8Array; readonly empty: Uint8Array }): number => {
+  let blank = 0;
+  for (let i = 0; i < img.empty.length; i++) if (img.empty[i] || (img.rgb[i * 3] === 255 && img.rgb[i * 3 + 1] === 255 && img.rgb[i * 3 + 2] === 255)) blank++;
+  return img.empty.length ? blank / img.empty.length : 1;
+};
+
+const blankMemo = new WeakMap<Tile, boolean>();
+export const isBlank = (t: Tile): boolean => {
+  let b = blankMemo.get(t);
+  if (b === undefined) blankMemo.set(t, (b = blankShare(t) > BLANK_MAX));
+  return b;
+};
+
+/**
+ * The flights' tiles a sample's colour may be read from, the current image first: a blank one is
+ * no flight, so it is left out rather than averaged in as white paving. Without the current image
+ * (the leaf-off ground under the crowns) none.
+ */
+export const usableTiles = <T extends Tile>(tiles: readonly T[]): T[] => (tiles.length && !isBlank(tiles[0]!) ? tiles.filter((t) => !isBlank(t)) : []);
 
 /** The tile's pixel holding a grid point, or -1 off it or where it has no image. */
 export const pixelAt = (t: Tile, g: Puwg): number => {

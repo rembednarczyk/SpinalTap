@@ -1,0 +1,2 @@
+# walk-blocked: grid 10 m (x,z = the square's corner at its least x and z)
+podzamcze-1-0 780,190

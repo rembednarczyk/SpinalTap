@@ -36,7 +36,7 @@ const ume = async (activity: ActivityId | null) => {
   });
   views.setCharacterModels(GAME);
   views.spawn(2, { kind: "npc", preset: "civilian", cast: "ume", umbrella: false }, STAND);
-  for (let i = 0; i < 4000 && views.loadingCount > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
+  for (let i = 0; i < 4000 && views.modelCounts.loading > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
   if (activity) acts.set(2, activity);
   const at = activity ? STAND : WALK;
   const step = () => {

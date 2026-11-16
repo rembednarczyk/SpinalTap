@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { enemyScale } from "@seki/core";
-import { DOKI_TERMINAL_SPOTS, GENZO_SPOT, type Simulation, ground } from "../src";
+import { W3_TERMINAL_SPOTS, GENZO_SPOT, type Simulation, ground } from "../src";
 import { AWAY, byKey, input, run, teleportPlayer } from "./helpers";
 import { hash, reload, taken } from "./contract-save-helpers";
 import { profile } from "./difficulty-scenes";
@@ -14,7 +14,7 @@ import { profile } from "./difficulty-scenes";
  */
 const hacking = (seed: number, steps: number): { sim: Simulation; id: string } => {
   const { sim, c } = taken(seed, 0, ground(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), "hack", profile({ damageTaken: 0.5 / enemyScale(16) }));
-  const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
+  const t = W3_TERMINAL_SPOTS.quay_terminal!;
   teleportPlayer(sim, ground(t.x, t.z - 1.4), 0);
   sim.step(input({ interact: true }));
   run(sim, steps);

@@ -5,16 +5,16 @@
  *
  * The table (`props.generated.ts`) does not keep where a piece came from. A piece counts as from
  * OSM when it stands within `OSM_MATCH` of a point of a plan group whose positions are the map's
- * (`inOsm` with `points` or `position` in `docs/world/lublin-props.todo.json`); the rest (pieces
+ * (`inOsm` with `points` or `position` in the plan `pnpm osm:props` places, `loadPropsPlan`:
+ * `docs/world/lublin-props.todo.json` with the extract's `osm.furniture.*` groups); the rest (pieces
  * strung along lines, laid by spacing, the decals' grates and covers, bollards strung into rows)
  * are the generator's.
  */
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { type Pt, type Rect } from "../../osm-import/src/geometry.ts";
+import type { PropsPlan } from "../../osm-import/src/props-gen.ts";
+import { loadPropsPlan } from "../../osm-import/src/props-osm.ts";
 import type { LublinChunkData, LublinPropTable } from "../../../packages/sim/src/content/lublin/types.ts";
 import { type CoverHeader } from "./cover.ts";
-import { REPO } from "./config.ts";
 import { flatRing } from "./overlay.ts";
 import { samplesIn } from "./rings.ts";
 
@@ -61,16 +61,8 @@ export const piecesOf = (table: LublinPropTable): Piece[] =>
     }),
   );
 
-interface PlanItem {
-  readonly kind: string;
-  readonly inOsm?: boolean;
-  readonly points?: readonly (readonly [number, number])[];
-  readonly position?: { readonly x: number; readonly z: number };
-}
-
 /** The plan's points from the map, by kind. */
-export const osmPlanPoints = (path = join(REPO, "docs/world/lublin-props.todo.json")): Map<string, Pt[]> => {
-  const plan = JSON.parse(readFileSync(path, "utf8")) as { items: PlanItem[] };
+export const osmPlanPoints = (plan: PropsPlan = loadPropsPlan()): Map<string, Pt[]> => {
   const out = new Map<string, Pt[]>();
   for (const it of plan.items) {
     if (!it.inOsm) continue;

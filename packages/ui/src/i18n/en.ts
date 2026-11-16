@@ -5,6 +5,7 @@ import { enDomain } from "./en/domain";
 import { enContent } from "./en/content";
 import { enDifficulty } from "./en/difficulty";
 import { enProgression } from "./en/progression";
+import { enWait } from "./en/wait";
 
 /**
  * English, the default language and the source of every key (ADR-0056). The Polish catalog must
@@ -139,6 +140,11 @@ export const en = {
   "settings.quality.high": "High",
   "settings.quality.medium": "Medium",
   "settings.quality.low": "Low",
+  "settings.renderResolution": "Render resolution",
+  "settings.contactShade": "Contact shade",
+  "settings.bloom": "Bloom",
+  "settings.graphicsEffects.live": "Resolution and the High effects apply at once.",
+  "settings.graphicsEffects.highOnly": "Resolution applies at once; contact shade and bloom are only drawn on High quality.",
   "settings.volume": "Volume",
   "settings.musicVolume": "Music",
   "settings.sfxVolume": "Effects",
@@ -200,6 +206,7 @@ export const en = {
   ...enContent,
   ...enDifficulty,
   ...enProgression,
+  ...enWait,
 } as const satisfies Readonly<Record<string, Message>>;
 
 export type MessageKey = keyof typeof en;

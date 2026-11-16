@@ -27,19 +27,18 @@ const hack = (status: Contract["status"], progress?: number): Contract => ({
 });
 
 describe("Genzō (M4, docks)", () => {
-  it("introduces himself once and offers the three docks jobs", () => {
+  it("introduces himself once and offers the two jobs of W-3, the escort retired (ADR-0082)", () => {
     const { runtime, commands } = setup();
     const view = runtime.start("genzo", domain());
     expect(view.lines[0]).toEqual({ speaker: "Genzō", text: expect.stringContaining("Genzō. Pływam nocą") });
-    expect(view.choices.map((c) => c.text)).toEqual(["Kogo trzeba przeprowadzić?", "Co trzeba wynieść z biura Tessen?", "Który terminal mam złamać?", "Nie teraz."]);
+    expect(view.choices.map((c) => c.text)).toEqual(["Co trzeba wynieść z biura Tessen?", "Który terminal mam złamać?", "Nie teraz."]);
     expect(commands).toEqual([{ type: "set-flag", flag: "met_genzo" }]);
     expect(text(runtime.start("genzo", domain({ flags: ["met_genzo"] })))).not.toContain("Pływam nocą");
   });
 
   it.each([
-    [0, "escort", "Mika"],
-    [1, "infiltrate", "Nikt nie może cię zobaczyć"],
-    [2, "hack", "Czerwony laser"],
+    [0, "infiltrate", "Nikt nie może cię zobaczyć"],
+    [1, "hack", "Czerwony laser"],
   ] as const)("choice %i asks the domain for a %s job", (index, kind, says) => {
     const { runtime, commands } = setup();
     runtime.start("genzo", domain({ flags: ["met_genzo"] }));
@@ -53,6 +52,14 @@ describe("Genzō (M4, docks)", () => {
     const { runtime } = setup();
     const hostile = { ...createDomainState().reputation, tessen: -40 };
     expect(text(runtime.start("genzo", domain({ flags: ["met_genzo"], reputation: hostile })))).toContain("strzelców");
+  });
+
+  it("tells once that Mika's walk is off when the save's escort was called off (ADR-0082, v39)", () => {
+    const { runtime, commands } = setup();
+    const said = text(runtime.start("genzo", domain({ flags: ["met_genzo", "w3:escort-retired"] })));
+    expect(said).toContain("Z Miką na razie nic");
+    expect(commands).toEqual([{ type: "set-flag", flag: "w3:escort-retired-told" }]);
+    expect(text(runtime.start("genzo", domain({ flags: ["met_genzo", "w3:escort-retired", "w3:escort-retired-told"] })))).not.toContain("Z Miką");
   });
 
   it("will not talk to someone Kaito's network turned away", () => {

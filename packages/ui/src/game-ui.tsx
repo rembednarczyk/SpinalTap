@@ -19,14 +19,15 @@ import { DebriefCard } from "./hud/contract-card";
 import { PhonePanel } from "./phone/phone";
 import { MetroMap, MetroRide } from "./metro/metro-panel";
 import { RadioKey } from "./radio/radio";
+import { WaitPanel } from "./wait/wait-panel";
+import { UiScaleRoot } from "./scale/use-ui-scale";
 
 /**
- * Accessibility settings on the document root (ADR-0028): HUD scale as `--hud-scale`, subtitle size
- * as `--subs-scale` and an opaque subtitle box as `subs-solid`, the
+ * Accessibility settings on the document root (ADR-0028): subtitle size as `--subs-scale` and an
+ * opaque subtitle box as `subs-solid`, the
  * legible font, reduced flashes and the colour-blind palette as attributes the styles read.
  */
 const Accessibility = () => {
-  const scale = useUi((s) => s.settings.hudScale);
   const legible = useUi((s) => s.settings.legibleFont);
   const reduce = useUi((s) => s.settings.reduceFlashes);
   const palette = useUi((s) => s.settings.colorblind);
@@ -34,20 +35,19 @@ const Accessibility = () => {
   const subsBox = useUi((s) => s.settings.subtitleBackground);
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty("--hud-scale", String(scale));
     root.style.setProperty("--subs-scale", String(subs));
     root.classList.toggle("subs-solid", subsBox);
     root.classList.toggle("legible-font", legible);
     root.classList.toggle("reduce-flashes", reduce);
     if (palette === "off") delete root.dataset.palette;
     else root.dataset.palette = palette;
-  }, [scale, legible, reduce, palette, subs, subsBox]);
+  }, [legible, reduce, palette, subs, subsBox]);
   return null;
 };
 
 const Screens = ({ touch, version }: { touch: TouchPadSink | undefined; version: string | undefined }) => {
   const screen = useUi((s) => s.screen);
-  const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null || s.phoneOpen || s.breach !== null || s.metroMap !== null || s.metroRide !== null);
+  const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null || s.phoneOpen || s.breach !== null || s.metroMap !== null || s.metroRide !== null || s.wait !== null);
   // The character screen covers the whole game; the HUD under it would only show through.
   const menu = useUi((s) => s.characterTab !== null) && screen === "playing";
   const t = useT();
@@ -60,12 +60,17 @@ const Screens = ({ touch, version }: { touch: TouchPadSink | undefined; version:
       {screen === "playing" && <ShopPanel />}
       {screen === "playing" && <LootPanel />}
       {screen === "playing" && <CharacterScreen />}
-      {screen === "playing" && !menu && <DebriefCard />}
+      {screen === "playing" && !menu && (
+        <div className="ui-layer">
+          <DebriefCard />
+        </div>
+      )}
       {screen === "playing" && <PhonePanel />}
       {screen === "playing" && <BreachPanel />}
       {screen === "playing" && <MetroMap />}
       {screen === "playing" && <MetroRide />}
       {screen === "playing" && <RadioKey />}
+      {screen === "playing" && <WaitPanel />}
       {screen === "title" && <TitleScreen version={version} />}
       {screen === "loading" && <LoadingScreen />}
       {screen === "paused" && <PauseMenu />}
@@ -86,6 +91,7 @@ export const GameUi = ({ store, intents, touch, version }: { store: UiStore; int
   return (
     <UiContext.Provider value={value}>
       <Accessibility />
+      <UiScaleRoot touch={!!touch} />
       <Screens touch={touch} version={version} />
     </UiContext.Provider>
   );

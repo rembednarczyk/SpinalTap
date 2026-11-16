@@ -2,13 +2,15 @@ import { useState } from "react";
 import { CreditsScreen } from "../credits/credits-screen";
 import { PauseDifficulty } from "../difficulty/difficulty-screens";
 import { useT } from "../i18n/use-t";
-import { useSessionIntents } from "../use-ui";
+import { useSessionIntents, useUi, useWaitIntents } from "../use-ui";
 import { ControlsHelp } from "./controls-help";
 import { SaveSlots } from "./save-slots";
 import { SettingsPanel } from "./settings-panel";
 
 export const PauseMenu = () => {
   const intents = useSessionIntents();
+  const wait = useWaitIntents();
+  const blocked = useUi((s) => s.waitBlocked);
   const t = useT();
   const [tab, setTab] = useState<"main" | "save" | "load" | "settings" | "difficulty" | "credits">("main");
   return (
@@ -19,6 +21,14 @@ export const PauseMenu = () => {
           <button type="button" className="menu__item" onClick={() => intents.resume()}>
             {t("pause.resume")}
           </button>
+          <button type="button" className="menu__item" disabled={blocked !== null} aria-describedby={blocked ? "pause-wait-reason" : undefined} onClick={() => wait.openWait()}>
+            {t("pause.wait")}
+          </button>
+          {blocked && (
+            <p id="pause-wait-reason" className="menu__reason" data-testid="wait-reason">
+              {t(`wait.blocked.${blocked}`)}
+            </p>
+          )}
           <button type="button" className="menu__item" onClick={() => setTab("save")}>
             {t("pause.save")}
           </button>

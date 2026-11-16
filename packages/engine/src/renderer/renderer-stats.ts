@@ -5,6 +5,7 @@ import type { CharacterViews } from "./character-views";
 import type { CityKitLoader } from "./city-kit-loader";
 import type { CrowdViews } from "./crowd-views";
 import type { DroneViews } from "./drones/drone-views";
+import type { MoonShadow } from "../npr/moon-shadow";
 import type { MapCitySlot } from "./map-city-slot";
 import type { MapCityStats } from "./mapcity/map-city";
 import type { MetroRide } from "./metro-ride";
@@ -25,6 +26,7 @@ export interface RendererStatsDeps {
   readonly metro: MetroRide;
   readonly fx: ScreenFx;
   readonly wet: WetAsphalt | null;
+  readonly shadow: MoonShadow;
 }
 
 /**
@@ -42,12 +44,12 @@ export class RendererStats {
 
   /** Characters dressed in an imported model. */
   get dressedCount(): number {
-    return this.deps.characters.dressedCount;
+    return this.deps.characters.modelCounts.dressed;
   }
 
   /** Character models still loading. */
   get modelsLoading(): number {
-    return this.deps.characters.loadingCount;
+    return this.deps.characters.modelCounts.loading;
   }
 
   /** Activity a character plays now. */
@@ -80,10 +82,14 @@ export class RendererStats {
     return this.deps.map.current?.stats ?? null;
   }
 
-  /** Every cell near the camera is drawn in detail and the wet probe has caught up (G-114); tests wait for it before a sample. */
+  /**
+   * Every cell near the camera is drawn in detail, the wet probe has caught up (G-114) and the moon
+   * shadow keeps its statics, drawn (#553: a frame before that draws them with the rest, 13 calls
+   * more on Krakowskie); tests wait for it before a sample.
+   */
   get citySettled(): boolean {
-    const { map, wet, metro } = this.deps;
-    return (map.current?.settled ?? true) && !(wet?.pending && !metro.active);
+    const { map, wet, metro, shadow } = this.deps;
+    return (map.current?.settled ?? true) && !(wet?.pending && !metro.active) && shadow.settled;
   }
 
   /** Renders of the wet-asphalt probe so far, null without one. */

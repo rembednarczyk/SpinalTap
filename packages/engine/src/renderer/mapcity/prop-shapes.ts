@@ -1,4 +1,4 @@
-import { type StreetPropKind, TREE_KIND, TREE_SPECIES, treeScale, treeSpecies } from "@seki/core";
+import { type StreetPropKind, TREE_KIND, TREE_SPECIES, treeScale, treeSpecies, treeSpread } from "@seki/core";
 import type { RenderQuality } from "../../npr/quality";
 
 /**
@@ -41,6 +41,9 @@ export const scaleOf = (kind: StreetPropKind, variant: number): number => {
   if (kind === "shrubs") return 0.7 + 0.5 * (((variant >> 4) % 16) / 15);
   return 1;
 };
+
+/** Width of a piece as a share of its size: a tree's crown narrowed by walls (`treeSpread`, G-814), else 1. */
+export const spreadOf = (kind: StreetPropKind, variant: number): number => (kind === "tree" ? treeSpread(variant) : 1);
 
 /**
  * How far a kind is drawn: `small` things only close by, `medium` ones to the detail distance,

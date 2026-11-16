@@ -21,7 +21,7 @@ import { feedTouchFire } from "./touch-fire";
 import { connectWorldRays } from "./world-rays";
 import { feedAimAssist } from "./aim-assist-feed";
 import { feedLookTuning, viewLook } from "./look-tuning";
-import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings } from "./settings";
+import { type SettingsStorage, applyEffects, applyVolumes, defaultAimMode, defaultRenderResolution, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings } from "./settings";
 
 declare global {
   interface Window {
@@ -56,7 +56,11 @@ const storage = ((): SettingsStorage | null => {
 // A system-wide "reduce motion" turns the flashes and the glitch down from the start (ADR-0028).
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 // High quality everywhere by default (user decision 1.11); a phone that struggles goes to Low in the settings.
-const deviceDefaults = { ...DEFAULT_SETTINGS, hints: !reference, reduceFlashes: reducedMotion, cameraMotion: !reducedMotion } as const;
+// A dense touch screen renders a share of its pixels by default (graphics options 14.11); the reference frame all of them.
+const renderResolution = reference ? 1 : defaultRenderResolution(touchDevice, window.devicePixelRatio);
+// On a touch device the aim button toggles by default (user, 14.11); a mouse keeps holding it.
+const aimMode = defaultAimMode(touchDevice);
+const deviceDefaults = { ...DEFAULT_SETTINGS, hints: !reference, reduceFlashes: reducedMotion, cameraMotion: !reducedMotion, renderResolution, aimMode } as const;
 // The reference frame ignores saved settings so the NPR snapshot never depends on the profile.
 const settings = reference ? deviceDefaults : loadSettings(storage, deviceDefaults);
 const qualityParam = params.get("quality");
@@ -89,7 +93,11 @@ if (modelsParam !== "off" && (modelsParam || !reference)) {
   // The loading screen waits for the manifest and loads its files (ADR-0057).
   const manifest = loadModelManifest(modelsParam ?? "./models/manifest.json");
   renderer.loading.loadCharacterModels(manifest);
-  void manifest.then((m) => preview.setModels(m, weaponModels));
+  // The menu's preview dresses Seki now, not when the menu first opens (decision 13.11).
+  void manifest.then((m) => {
+    preview.setModels(m, weaponModels);
+    preview.warm();
+  });
   renderer.loading.setWeaponModels(weaponModels);
   preview.setModels({}, weaponModels);
 }
@@ -162,6 +170,8 @@ const applyControls = (s: typeof settings) => {
 
 /** Frames drawn after the renderer updated its camera and city in them (debug `frames()`, G-013). */
 let framesDrawn = 0;
+/** The FPP viewmodel's aim in the last frame drawn, which `capture()` reads (not in a frame posed but skipped). */
+let drawnViewAim = 0;
 /** False while the reference frame waits for its start: the frames update the scene but draw nothing. */
 let drawScene = !reference;
 /**
@@ -206,6 +216,7 @@ const loop = new FixedStepLoop(browserClock, {
     stage.scene.render();
     if (!reference) stage.pacer.drawn();
     framesDrawn++;
+    drawnViewAim = renderer.rig.viewAim;
   },
 });
 
@@ -289,6 +300,7 @@ debug.camera = () => {
   return { x: p.x, y: p.y, z: p.z, yaw: r.y, pitch: r.x };
 };
 debug.frames = () => framesDrawn;
+debug.viewAim = () => drawnViewAim;
 debug.probeRenders = () => renderer.stats.wetProbeRenders;
 window.__seki = debug;
 

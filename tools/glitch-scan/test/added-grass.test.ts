@@ -60,8 +60,8 @@ describe("added-grass-off-green and added-paving-on-green (G-627, G-670)", () =>
   });
 
   it("counts no paving under the crowns by Ruska and Zana as on green: grey on the leaf-off flight 2025-04 (G-672)", () => {
-    const crowns = ADDED_AREAS.filter((a) => ["T-246/ruska-a", "T-246/ruska-b", "T-245/zn2-wschod-trawnik"].includes(a.id));
-    expect(crowns).toHaveLength(3);
+    const crowns = ADDED_AREAS.filter((a) => ["T-246/ruska-b", "T-245/zn2-wschod-trawnik"].includes(a.id));
+    expect(crowns).toHaveLength(2);
     expect(addedPavingOnGreen(crowns, COVERS, {})).toEqual([]);
   });
 

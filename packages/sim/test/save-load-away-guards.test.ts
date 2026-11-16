@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { docks } from "../src";
-import { AWAY, byKey, run, teleportPlayer } from "./helpers";
+import { w3 } from "../src";
+import { AWAY, byKey, run, standInFront, teleportPlayer } from "./helpers";
 import { firstDivergence, hash, reload, taken } from "./contract-save-helpers";
 
 /**
@@ -11,9 +11,9 @@ import { firstDivergence, hash, reload, taken } from "./contract-save-helpers";
 
 /** Seed 77, two jobs done: `metres` in front of the door guard, until the alarm or for a sixth of a second. */
 const atTheDoor = (metres: number, alarm: boolean) => {
-  const { sim, c } = taken(77, 2, docks(6, 0, 110), "infiltrate");
+  const { sim, c } = taken(77, 2, w3(2530, 0, 394), "infiltrate");
   const door = byKey(sim, `${c.id}-g1`)!;
-  teleportPlayer(sim, { x: door.position.x + metres, y: door.position.y, z: door.position.z }, -Math.PI / 2);
+  standInFront(sim, door, metres);
   if (alarm) for (let i = 0; i < 600 && sim.domain.contracts.active; i++) sim.step();
   run(sim, 10);
   return { sim, id: c.id, door };
@@ -32,7 +32,7 @@ describe("save and load away from the docks (G-185)", () => {
         const loaded = reload(sim);
         expect(hash(loaded)).toBe(hash(sim));
         expect(byKey(loaded, door.key!)?.ai?.lost).toBe(byKey(sim, door.key!)?.ai?.lost);
-        if (back) for (const s of [sim, loaded]) teleportPlayer(s, docks(0, 0, 120));
+        if (back) for (const s of [sim, loaded]) teleportPlayer(s, w3(2492, 0, 418));
         expect(firstDivergence(sim, loaded, 10 * 60, id)).toBeNull();
       });
     }
@@ -46,7 +46,7 @@ describe("save and load away from the docks (G-185)", () => {
       teleportPlayer(sim, AWAY);
       run(sim, away);
       const loaded = reload(sim);
-      for (const s of [sim, loaded]) teleportPlayer(s, docks(0, 0, 120));
+      for (const s of [sim, loaded]) teleportPlayer(s, w3(2492, 0, 418));
       run(sim, 5);
       run(loaded, 5);
       expect(byKey(loaded, door.key!)?.ai?.suspicion).toBe(byKey(sim, door.key!)?.ai?.suspicion);

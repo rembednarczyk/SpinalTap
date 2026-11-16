@@ -36,3 +36,28 @@ describe("a bridge's way to its abutment (G-344)", () => {
     expect(toAbutments([building], [outline({ building: "yes" }, [0, -15], [40, -15], [40, 10], [0, 10])])[0]).toBe(building);
   });
 });
+
+describe("a bridge's end down a bank goes on up it (G-739)", () => {
+  /** A street level at 0 west of x 0, a bank falling 1 m a metre to the ditch's floor at -3 (x 3), as the game's terrain smooths a ditch's bank. */
+  const ditch = (p: { readonly x: number }) => -Math.min(Math.max(p.x, 0), 3);
+  /** The footbridge's outline over the ditch from x 1 to 20: its west end 0.4 m inside, at the abutment for G-344. */
+  const footbridge = outline({ man_made: "bridge" }, [1, -2], [20, -2], [20, 2], [1, 2]);
+  const onFootbridge = { highway: "footway", bridge: "yes" };
+
+  it("carries an end down the bank on along the way to the bank's top, where the terrain on past it rises 0.35 m or less", () => {
+    const [l] = toAbutments([line(1, onFootbridge, [1.4, 0], [19.8, 0])], [footbridge], ditch);
+    // From 1.4 m down the bank, in steps of 0.25 m: at x 0.4 the street is 0.4 m up still, at 0.15 it is 0.15 m.
+    expect(ends(l!)).toEqual(["0.15,0", "19.8,0"]);
+    const [back] = toAbutments([line(1, onFootbridge, [19.8, 0], [1.4, 0])], [footbridge], ditch);
+    expect(ends(back!)).toEqual(["19.8,0", "0.15,0"]);
+  });
+
+  it("leaves an end on a gentle slope, on a slope with no top within 8 m, one another bridge way goes on from, and all without the terrain", () => {
+    const gentle = line(1, onFootbridge, [1.4, 0], [19.8, 0]);
+    expect(toAbutments([gentle], [footbridge], (p) => -0.15 * p.x)[0]).toBe(gentle);
+    expect(toAbutments([gentle], [footbridge], (p) => -0.5 * p.x)[0]).toBe(gentle);
+    const [a, b] = toAbutments([line(1, onFootbridge, [1.4, 0], [19.8, 0]), line(2, onFootbridge, [-5, 0], [1.4, 0])], [footbridge], ditch);
+    expect([...ends(a!), ...ends(b!)]).toEqual(["1.4,0", "19.8,0", "-5,0", "1.4,0"]);
+    expect(toAbutments([gentle], [footbridge])[0]).toBe(gentle);
+  });
+});

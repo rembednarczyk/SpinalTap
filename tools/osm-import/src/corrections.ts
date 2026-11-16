@@ -8,7 +8,7 @@ import { type Area, type Line } from "./features.ts";
 import { type Pt, centroid } from "./geometry.ts";
 import { ALCHEMIA_AREAS } from "./corrections-alchemia.ts";
 import { CZECHOWICZA_AREAS } from "./corrections-czechowicza.ts";
-import { ADDED_AREAS_TAIL, TAG_CORRECTIONS_TAIL } from "./corrections-kerb.ts";
+import { ADDED_AREAS_TAIL, TAG_CORRECTIONS_TAIL, withOrtho } from "./corrections-kerb.ts";
 import { LANDMARK_HEIGHT_CORRECTIONS } from "./corrections-landmarks.ts";
 import { SURFACE_STOREYS } from "./corrections-surface.ts";
 import { PODZAMCZE_AREAS } from "./corrections-podzamcze.ts";
@@ -676,7 +676,8 @@ export const ADDED_AREAS: readonly AddedArea[] = [
 /** The added areas as the import reads the map's. */
 export const addedAreas = (added: readonly AddedArea[] = ADDED_AREAS): Area[] => added.map((a) => ({ id: a.id, osmId: 0, tags: a.tags, ring: a.ring, holes: 0 }));
 
-const BY_ID: ReadonlyMap<string, TagCorrection> = new Map(TAG_CORRECTIONS.map((c) => [c.id, c]));
+/** The corrections by id: those by hand, and the widths measured on the orthophoto under them (ADR-0080 PR 10). */
+const BY_ID: ReadonlyMap<string, TagCorrection> = withOrtho(TAG_CORRECTIONS);
 
 /** The area with its corrected tags and outline, or as it is. */
 export const corrected = (a: Area, corrections: ReadonlyMap<string, TagCorrection> = BY_ID): Area => {

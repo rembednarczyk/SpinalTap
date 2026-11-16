@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BASE_RAM, type DomainEvents, type DomainState, type ImplantGrade, QUICKHACKS, deckStats, fitImplant, freeCells, implantOffer, priceWithTerms, shopTerms } from "@seki/core";
-import { SIM_DT, Simulation, docks, gangerEntity } from "../src";
+import { SIM_DT, Simulation, w3, gangerEntity } from "../src";
 import { collect, input, run, streetSim, teleportPlayer } from "./helpers";
 
 /*
@@ -27,7 +27,7 @@ const withDeck =
 
 /** The first quickhack started on a guard 8 m away, looked at through the scanner. */
 const firstUpload = (sim: Simulation): DomainEvents["QuickhackStarted"] => {
-  teleportPlayer(sim, docks(16, 0, 97), -Math.PI / 2);
+  teleportPlayer(sim, w3(2590, 0, 418), -Math.PI / 2);
   sim.step();
   const p = sim.player()!.position;
   sim.world.add(gangerEntity(90010, { key: "test-guard", position: { ...p, x: p.x - 8 }, yaw: Math.PI / 2 }, null, 1e6, "nabrzeze-1-1", undefined, "tessen_guard"));

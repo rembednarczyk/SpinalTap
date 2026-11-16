@@ -139,7 +139,7 @@ const partOf = (g: Grid, comp: readonly number[], inComp: Uint8Array, kinds: Uin
       continue;
     }
     const c = photo(k);
-    if (c === "paving" || c === "asphalt") hard++;
+    if (c === "paving" || c === "asphalt" || c === "canopyHard") hard++;
     else if (c === "green" || c === "canopy") green++;
     else rest++;
   }

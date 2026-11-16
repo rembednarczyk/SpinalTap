@@ -1,3 +1,4 @@
+import { segmentParam } from "@seki/core";
 import type { CrowdLane } from "../content/crowd";
 
 /**
@@ -110,10 +111,13 @@ export const nearestArc = (g: LaneGeom, x: number, z: number): number => {
     const j = (i + 1) % n;
     const ax = g.xs[i] ?? 0;
     const az = g.zs[i] ?? 0;
-    const dx = (g.xs[j] ?? 0) - ax;
-    const dz = (g.zs[j] ?? 0) - az;
+    const bx = g.xs[j] ?? 0;
+    const bz = g.zs[j] ?? 0;
+    const dx = bx - ax;
+    const dz = bz - az;
     const len2 = dx * dx + dz * dz;
-    const t = len2 > 1e-12 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / len2)) : 0;
+    // A segment shorter than 1e-6 m counts as its start; one of exactly 1e-12 m² is projected on (the old copy took it as its start too: no lane has one).
+    const t = segmentParam(x, z, ax, az, bx, bz, 1e-12);
     const px = ax + dx * t;
     const pz = az + dz * t;
     const d = (px - x) ** 2 + (pz - z) ** 2;

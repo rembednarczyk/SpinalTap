@@ -24,14 +24,15 @@ export interface BlindRow {
  * `pitch` metres, within the data's height), a low skirt roof from the eaves up to the part
  * standing on it (`rise` metres, never more than the data's roof), or a helmet of revolution
  * `height` metres tall up to the data's peak: the rest of the data's roof under it is wall. `roof`
- * is the data's own roof in the shape it gives (`roof:shape`, ADR-0064) and its height, in tiles.
+ * is the data's own roof in the shape it gives (`roof:shape`, ADR-0064) and its height, in tiles;
+ * with `rise`, no higher than that (the importer's guessed height buried a part, G-117).
  */
 export type Crown =
   | { readonly kind: "flat" }
   | { readonly kind: "crenel"; readonly merlon: number; readonly pitch: number }
   | { readonly kind: "skirt"; readonly rise: number; readonly inset: number }
   | { readonly kind: "helm"; readonly height: number; readonly profile: HelmProfile }
-  | { readonly kind: "roof" };
+  | { readonly kind: "roof"; readonly rise?: number };
 
 /**
  * A helmet as a profile of revolution: [radius, height] from the eaves up, the radius a fraction
@@ -85,7 +86,11 @@ export interface Tier {
   /** OSM ids of the neighbouring tenements Lublin 2077's cables run to from this tier's wall facing the new town. */
   readonly cables?: readonly string[];
   /** The plaster's colour from the kit's swatches (OSM `building:colour`); absent: white. */
-  readonly colour?: "beige";
+  readonly colour?: "beige" | "sand";
+  /** The upper zone's colour over the split (a tower's copper-clad storey); absent: the tier's. */
+  readonly upper?: "patina";
+  /** A palace front (Nowy Ratusz): storeys of windows on every shown wall, a portico where the data has one. */
+  readonly palace?: PalaceFront;
   /**
    * A classicist front (Merlini's Brama Grodzka, 1785): the walls rusticated up to a string course
    * over the passage's arch with a keystone in it, `rows` rows of up to `windows` framed windows
@@ -112,6 +117,23 @@ export interface ClassicFront {
   readonly inscription?: string;
 }
 
+/** A window's head: square with a sill, round-headed in an arched panel, or square under a cornice (a pediment). */
+export type WindowHead = "plain" | "arched" | "pediment";
+
+/**
+ * A palace front's storeys from the ground floor up: one row of windows a storey, `pitch` metres
+ * apart at most on every shown wall, the ground floor rusticated up to a string course when
+ * `rusticated` (and 1.2 times as tall as the others). Where the data has a portico (`porticoes.ts`
+ * in the simulation) its wall gets a risalit over the portico's width, the windows in its bays.
+ */
+export interface PalaceFront {
+  readonly rows: readonly WindowHead[];
+  readonly rusticated: boolean;
+  readonly pitch: number;
+  /** Storeys the portico's columns span from the ground (a giant order), its balcony on the last one's top; absent: 1. */
+  readonly giant?: number;
+}
+
 /** One OSM building or `building:part` of a landmark with its tier and crown. */
 export interface PartRecipe {
   /** OSM id as in the map data (`r7224409`, `w617878341`). */
@@ -134,6 +156,10 @@ export interface Layer2077 {
   readonly screen?: string;
   /** A checkpoint in the passage (ADR-0048, `hebi-bramowa`): a scanner in the vault, strips on the jambs. */
   readonly checkpoint: boolean;
+  /** The data's name on the frieze of the portico (an in-world sign from the map, ADR-0056). */
+  readonly nameplate?: boolean;
+  /** Flags on masts over the portico, each as its stripes from the top down (colours). */
+  readonly flags?: readonly (readonly string[])[];
   /** A plaque by the passage on the new town's side (the museum inside, G-051). */
   readonly plaque?: string;
   /**
@@ -236,7 +262,79 @@ const BRAMA_GRODZKA: LandmarkRecipe = {
   layer: { newTown: { x: 0.75, z: 0.66 }, neon: "#ffc98a", warm: "#ffc98a", checkpoint: false, subdued: true },
 };
 
-export const LANDMARK_RECIPES: readonly LandmarkRecipe[] = [BRAMA_KRAKOWSKA, BRAMA_GRODZKA];
+/**
+ * Nowy Ratusz, Plac Łokietka 1 (w66264120 with its parts, G-119, T-067), after the photographs of
+ * the south front (Lublin360 2017, Street View 2025): a classicist town hall in sand plaster with
+ * cream detail (`building:colour=yellow`) under a low red hipped roof (`roof:colour=red`). The
+ * wings: a rusticated ground floor with square windows, round-headed windows in arched panels on
+ * the first floor, square windows under cornices on the second, a crowning cornice. Over the plaza
+ * a portico of four columns of a giant order with plain shafts (the simulation's `PORTICOES`),
+ * through the ground and first floors, carries a balcony with a balustrade before the second's, steps the width of the portico (the data's three flights) between planters,
+ * five flags over it. The risalit's block (w619138853, six storeys of the data) stands over the
+ * wings' roof with round-headed windows and a cornice, no pediment (G-117: the importer's guessed
+ * 7 m roof buried it, so the roof stays 3.5 m). On it the tower (w619138854): a storey in the
+ * front's plaster with the clocks towards the plaza and the yards, over a string course a square
+ * storey clad in copper with corner pilasters and round-headed openings, a copper helmet with a
+ * lantern and a spire with a ball (`roof:colour=green`); its heights from GUGiK (body 30.5 m, peak
+ * 38 m), the clock storey 4 m, the copper one 6 m. Krakowskie Przedmieście is the new town:
+ * neon on the cornices facing the plaza, the clock's holo, Lublin 2077's mast over the ball.
+ */
+const NOWY_RATUSZ: LandmarkRecipe = {
+  key: "nowy-ratusz",
+  parts: [
+    {
+      osm: "w66264120",
+      tier: { material: "plaster", colour: "sand", plinth: 0, blinds: NO_BLINDS, pilasters: false, cornice: true, base: false, openings: false, clock: false, palace: { rows: ["plain", "arched", "pediment"], rusticated: true, pitch: 3.4, giant: 2 } },
+      crown: { kind: "roof", rise: 3.5 },
+    },
+    {
+      osm: "w619138853",
+      tier: { material: "plaster", colour: "sand", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: false, openings: false, clock: false, palace: { rows: ["arched"], rusticated: false, pitch: 3.4 } },
+      crown: { kind: "flat" },
+    },
+    {
+      osm: "w619138854",
+      tier: { material: "plaster", colour: "sand", upper: "patina", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: false, openings: true, clock: true, split: 4 },
+      crown: {
+        kind: "helm",
+        // The data's roof (7.5 m from NMPT and LoD2, `corrections-landmarks.ts`): the helmet with its
+        // lantern and spire up to the peak.
+        height: 7.5,
+        profile: {
+          // A bell upright at its foot to two fifths of the helmet (Street View 2025), the lantern,
+          // a small onion and the spire with its ball over it.
+          shell: [
+            [0.95, 0],
+            [0.95, 0.08],
+            [0.9, 0.17],
+            [0.78, 0.26],
+            [0.58, 0.34],
+            [0.38, 0.39],
+            [0.3, 0.4],
+          ],
+          lantern: [0.4, 0.56],
+          lanternRadius: 0.3,
+          onion: 0.66,
+          ball: 0.74,
+          mast: 0.84,
+        },
+      },
+    },
+  ],
+  // The front faces the plaza (south), its wall's outward normal.
+  layer: {
+    newTown: { x: 0.128, z: -0.992 },
+    neon: "#5ce1ff",
+    warm: "#ffc98a",
+    checkpoint: false,
+    nameplate: true,
+    // Five over the balcony (the user's correction of the photograph); the colours read off it are
+    // Poland's, the city's and the European Union's, their order is not confirmed.
+    flags: [["#f4f4f0", "#d4213d"], ["#f2c230", "#d4213d"], ["#1f3f99"], ["#f2c230", "#d4213d"], ["#f4f4f0", "#d4213d"]],
+  },
+};
+
+export const LANDMARK_RECIPES: readonly LandmarkRecipe[] = [BRAMA_KRAKOWSKA, BRAMA_GRODZKA, NOWY_RATUSZ];
 
 /** Every text the landmarks write in the names atlas: screens, plaques and dated tablets. */
 export const LANDMARK_TEXTS: readonly string[] = [

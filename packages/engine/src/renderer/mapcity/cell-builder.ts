@@ -109,8 +109,9 @@ export class CellBuilder {
     const m = this.mesh(`map-near-${cell.key}`, sink, "facade");
     m.setEnabled(false);
     cell.near = m;
-    // Only the detailed buildings near the camera cast the moon shadow.
-    this.deps.shadow?.addCaster(m);
+    // Only the detailed buildings near the camera cast the moon shadow; they never move, so the
+    // shadow keeps them between frames while the view stands still.
+    this.deps.shadow?.addFixedCaster(m);
   }
 
   private mesh(name: string, sink: MeshSink, preset: "facade" | "mapGround" | "mapTerrain"): Mesh {

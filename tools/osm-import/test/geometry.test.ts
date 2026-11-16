@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bufferLine, ccw, clipLineToRect, clipRingToRect, openRing, pointInRing, selfIntersects, signedArea, simplifyRing, stripAlong } from "../src/geometry.ts";
+import { bufferLine, ccw, clipLineToRect, clipRingToRect, openRing, pointInRing, selfIntersects, signedArea, simplifyRing, splitTouching, stripAlong } from "../src/geometry.ts";
 import { prepareOutline } from "../src/buildings.ts";
 
 const pts = (...xs: number[]) => {
@@ -19,6 +19,14 @@ describe("rings", () => {
   it("finds self-intersections", () => {
     expect(selfIntersects(pts(0, 0, 10, 10, 10, 0, 0, 10))).toBe(true);
     expect(selfIntersects(pts(0, 0, 10, 0, 10, 10, 0, 10))).toBe(false);
+  });
+
+  it("cuts a ring touching itself into its lobes at the point, each turning as it did (G-764)", () => {
+    const eight = pts(0, 0, 2, 0, 2, 2, 4, 2, 4, 4, 2, 4, 2, 2, 0, 2);
+    const lobes = splitTouching(eight);
+    expect(lobes.map((r) => signedArea(r)).sort()).toEqual([4, 4]);
+    for (const r of lobes) expect(new Set(r.map((p) => `${p.x},${p.z}`)).size).toBe(r.length);
+    expect(splitTouching(pts(0, 0, 1, 0, 0, 1))).toEqual([pts(0, 0, 1, 0, 0, 1)]);
   });
 
   it("tests points inside", () => {

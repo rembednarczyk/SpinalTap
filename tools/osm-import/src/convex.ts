@@ -102,7 +102,11 @@ const tidy = (ring: readonly Pt[], poly: readonly number[]): Pt[] => {
  * Null when the ring cannot be triangulated (self-intersecting input).
  */
 export const convexParts = (input: readonly Pt[]): Pt[][] | null => {
-  const ring = signedArea(input) < 0 ? [...input].reverse() : [...input];
+  // Copied a point at a time, counter-clockwise: a spread of the many kinds of arrays the callers
+  // pass threw V8's optimised code away at each new kind (600 times in one `generate`).
+  const back = signedArea(input) < 0;
+  const ring: Pt[] = [];
+  for (let k = 0; k < input.length; k++) ring.push(input[back ? input.length - 1 - k : k]!);
   const tris = triangulate(ring);
   if (!tris) return null;
   let polys: number[][] = tris.map((t) => [...t]);

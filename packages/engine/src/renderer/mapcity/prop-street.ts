@@ -1,9 +1,11 @@
 import { BOLLARD } from "@seki/sim";
 import { MeshSink } from "../mesh-sink";
-import { blob, block, glow, paint, path, pyramid, tube, v3 } from "./prop-kit";
+import type { Vec } from "../mesh-sink";
+import { blob, block, glow, norm, paint, path, pyramid, tube, v3 } from "./prop-kit";
+import { face, vertex } from "./sink-ops";
 
 /**
- * Small street furniture (ADR-0047), front +z: the slatted benches of Plac Litewski, granite
+ * Small street furniture (ADR-0047), front +z: the slatted benches of Plac Litewski, cast-iron
  * bollards with a chain, bins, bike racks and the city bike totem, advertising columns, boards,
  * street name plates, cabinets, manholes, granite seats, flagpoles with the red city banners,
  * signals, cameras and the trolleybus poles with their hangers.
@@ -34,38 +36,131 @@ export const bench = (shape: number): MeshSink => {
 };
 
 const IRON = paint("#1b1d21");
-/** Height of the chain's eyes on a bollard's collar (m). */
-const CHAIN_Y = 0.74;
-/** A bollard's pyramid cap (m), on the shaft up to `BOLLARD.height`. */
-const CAP = 0.15;
+/** Sides of a bollard's round parts. */
+const ROUND = 10;
 
 /**
- * A hewn granite post of the old town (Plac Łokietka, Plac Litewski; G-032), `BOLLARD` square:
- * a shaft sunk 0.2 m into the ground under a low pyramid cap, an iron collar with the chain's
- * eyes and, for 2077, a ring of LED round the shaft. Its chain is drawn apart (`bollardChain`).
+ * A black cast-iron post of Lublin's centre (G-032, G-819; Plac Łokietka, Plac Wolności), as
+ * `BOLLARD` sizes it: a round shaft sunk 0.2 m into the ground in a wider foot with a flared top,
+ * a collar with the chain's eye, a neck, the ball and a small finial; for 2077, a ring of LED
+ * round the shaft. Its chain is drawn apart (`bollardChain`).
  */
 export const bollard = (): MeshSink => {
   const sink = new MeshSink();
-  const w = BOLLARD.side;
-  block(sink, 0, -0.2, 0, w, BOLLARD.height - CAP + 0.2, w, GRANITE);
-  pyramid(sink, v3(0, BOLLARD.height - CAP, 0), w, w, CAP, GRANITE_DARK);
-  sink.box(v3(0, CHAIN_Y + 0.02, 0), w + 0.02, 0.05, w + 0.02, IRON);
-  sink.box(v3(0, 0.5, 0), w + 0.012, 0.03, w + 0.012, glow("#ff3355"));
+  const { shaft, foot, footHeight, ball, height, chainY } = BOLLARD;
+  const ballY = height - 0.03 - ball;
+  sink.prism(v3(0, -0.2, 0), foot, 0.2 + footHeight - 0.04, ROUND, IRON, false);
+  sink.prism(v3(0, footHeight - 0.04, 0), foot, 0.04, ROUND, IRON, false, shaft);
+  sink.prism(v3(0, footHeight, 0), shaft, ballY - ball - footHeight + 0.01, ROUND, IRON, false);
+  sink.prism(v3(0, chainY - 0.025, 0), shaft + 0.012, 0.05, ROUND, IRON);
+  sink.prism(v3(0, 0.5, 0), shaft + 0.006, 0.03, ROUND, glow("#ff3355"));
+  blob(sink, v3(0, ballY, 0), ball, ball, ball, IRON, ROUND, 5);
+  sink.prism(v3(0, ballY + ball - 0.01, 0), 0.018, height - ballY - ball + 0.01, 6, IRON, true, 0.006);
   return sink;
 };
 
+/** A chain's links: their pitch along it, their length (they overlap) and their wire's thickness (m). */
+const LINK = { pitch: 0.065, length: 0.085, wire: 0.012 } as const;
+
+/** A flat link from `a` to `b`, `BOLLARD.chain` half wide across its run: upright, or lying (turned a quarter). */
+const link = (sink: MeshSink, a: Vec, b: Vec, lying: boolean): void => {
+  const run = norm(v3(b.x - a.x, b.y - a.y, b.z - a.z));
+  const side = norm(v3(-run.z, 0, run.x));
+  const up = v3(side.y * run.z - side.z * run.y, side.z * run.x - side.x * run.z, side.x * run.y - side.y * run.x);
+  const [wide, thin] = lying ? [side, up] : [up, side];
+  const c = v3((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
+  const at = (l: number, w: number, t: number): Vec => ({
+    x: c.x + run.x * l + wide.x * w + thin.x * t,
+    y: c.y + run.y * l + wide.y * w + thin.y * t,
+    z: c.z + run.z * l + wide.z * w + thin.z * t,
+  });
+  const l = LINK.length / 2;
+  const w = BOLLARD.chain;
+  const t = LINK.wire / 2;
+  const neg = (n: Vec): Vec => v3(-n.x, -n.y, -n.z);
+  sink.quad([at(-l, -w, t), at(l, -w, t), at(l, w, t), at(-l, w, t)], thin, IRON);
+  sink.quad([at(-l, -w, -t), at(-l, w, -t), at(l, w, -t), at(l, -w, -t)], neg(thin), IRON);
+  sink.quad([at(-l, w, -t), at(-l, w, t), at(l, w, t), at(l, w, -t)], wide, IRON);
+  sink.quad([at(-l, -w, -t), at(l, -w, -t), at(l, -w, t), at(-l, -w, t)], neg(wide), IRON);
+};
+
 /**
- * A bollard's chain from its face along its +x to `end` metres from its centre: the next post's
- * face or a lamp's shaft (G-032; the piece is turned along the chain). It sags by a twentieth of
- * its length, five links' worth of tube.
+ * A bollard's chain from its shaft along its +x to `end` metres from its centre: the next post's
+ * shaft or a lamp's (G-032; the piece is turned along the chain). Flat links, upright and lying
+ * by turns, a band `2 * BOLLARD.chain` wide that reads as a chain from afar (G-819), sagging by
+ * `BOLLARD.sag` of its span.
  */
 export const bollardChain = (end: number): MeshSink => {
   const sink = new MeshSink();
-  const a = BOLLARD.side / 2;
-  const b = end;
-  const sag = 0.05 * (b - a);
-  const pts = Array.from({ length: 6 }, (_, i) => v3(a + ((b - a) * i) / 5, CHAIN_Y - sag * 4 * (i / 5) * (1 - i / 5), 0));
-  path(sink, pts, BOLLARD.chain, IRON, 4);
+  const a = BOLLARD.shaft;
+  const span = end - a;
+  const sag = BOLLARD.sag * span;
+  const n = Math.max(2, Math.round(span / LINK.pitch));
+  const at = (t: number): Vec => v3(a + span * t, BOLLARD.chainY - sag * 4 * t * (1 - t), 0);
+  for (let k = 0; k < n; k++) link(sink, at(k / n), at((k + 1) / n), k % 2 === 1);
+  return sink;
+};
+
+/** Sides of a phone's bollard (`bollardLow`). */
+const ROUND_LOW = 6;
+
+/**
+ * The phones' bollard (quality `low`): the same post in some 130 vertices, not about 390. A
+ * six-sided foot, flare and shaft, the red LED ring, the ball six by four (three rings miss its
+ * equator, and it shrinks into the shaft); no collar nor finial, which a phone's screen does not
+ * show at the distances it draws furniture from.
+ */
+export const bollardLow = (): MeshSink => {
+  const sink = new MeshSink();
+  const { shaft, foot, footHeight, ball, height } = BOLLARD;
+  const ballY = height - ball;
+  sink.prism(v3(0, -0.2, 0), foot, 0.2 + footHeight - 0.04, ROUND_LOW, IRON, false);
+  sink.prism(v3(0, footHeight - 0.04, 0), foot, 0.04, ROUND_LOW, IRON, false, shaft);
+  sink.prism(v3(0, footHeight, 0), shaft, ballY - footHeight, ROUND_LOW, IRON, false);
+  // The red LED ring of the 2077 layer, its sides only: the accent a phone sees down a row.
+  sink.prism(v3(0, 0.5, 0), shaft + 0.006, 0.03, ROUND_LOW, glow("#ff3355"), false);
+  blob(sink, v3(0, ballY, 0), ball, ball, ball, IRON, ROUND_LOW, 4);
+  return sink;
+};
+
+/** Both faces of a sagging strip through `pts`, `off(k)` half wide at each point and facing ±`n(k)`. */
+const strip = (sink: MeshSink, pts: readonly Vec[], off: (k: number) => Vec, n: (k: number) => Vec): void => {
+  for (const s of [1, -1]) {
+    const ids = pts.flatMap((c, k) => {
+      const o = off(k);
+      const nk = n(k);
+      const ns = v3(nk.x * s, nk.y * s, nk.z * s);
+      return [vertex(sink, v3(c.x + o.x, c.y + o.y, c.z + o.z), ns, IRON), vertex(sink, v3(c.x - o.x, c.y - o.y, c.z - o.z), ns, IRON)];
+    });
+    for (let k = 0; k + 1 < pts.length; k++) {
+      const nk = n(k);
+      const ns = v3(nk.x * s, nk.y * s, nk.z * s);
+      face(sink, ids[2 * k]!, ids[2 * k + 2]!, ids[2 * k + 3]!, ns);
+      face(sink, ids[2 * k]!, ids[2 * k + 3]!, ids[2 * k + 1]!, ns);
+    }
+  }
+};
+
+/**
+ * The phones' chain (quality `low`), along the same sagging line as `bollardChain`: two strips
+ * crossed along it, `2 * BOLLARD.chain` wide, upright and lying as the links take turns, of four to
+ * six quads each. About 50 vertices a span instead of 16 a link (600 on a 2.5 m span); from the
+ * distances a phone draws it from, it reads as the same band of links.
+ */
+export const bollardChainLow = (end: number): MeshSink => {
+  const sink = new MeshSink();
+  const a = BOLLARD.shaft;
+  const span = end - a;
+  const sag = BOLLARD.sag * span;
+  const n = Math.min(6, Math.max(4, Math.round(span / 0.5)));
+  const y = (t: number): number => BOLLARD.chainY - sag * 4 * t * (1 - t);
+  const pts = Array.from({ length: n + 1 }, (_, k) => v3(a + (span * k) / n, y(k / n), 0));
+  // Across the line in its upright plane: the slope of the sag at each point turned a quarter.
+  const up = (k: number): Vec => norm(v3((sag * 4 * (1 - (2 * k) / n)) / span, 1, 0));
+  const w = BOLLARD.chain;
+  const side = v3(0, 0, 1);
+  strip(sink, pts, (k) => v3(up(k).x * w, up(k).y * w, 0), () => side);
+  strip(sink, pts, () => v3(0, 0, w), up);
   return sink;
 };
 

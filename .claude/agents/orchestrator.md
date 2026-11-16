@@ -82,6 +82,17 @@ Specjaliści pakietów z rosteru (§12 planu) to role, które `glitch-fixer` prz
 - **Stare zgłoszenia przy wolnej chwili (1.11, G-043):** zgłoszenie sprzed wielu przepisań pliku (migawka, baza) sprawdź pomiarem na main, zanim dasz je agentowi; często jest już nieaktualne i idzie do archiwum z dowodem.
 - **Czerwony main bez sygnału (1.11, G-200):** przy szybkim scalaniu kolejne pushe na main anulują poprzednie przebiegi CI, więc main po PR-ze z kodem może nie mieć żadnego pełnego przebiegu. Po scaleniu PR-u, który zmienia generator albo dane (np. drzwi #167), sprawdź pierwszy pełny przebieg na kolejnym PR-ze; ten sam czerwony test na kilku niezależnych PR-ach to błąd main, nie ich. Wtedy jeden komentarz na każdym PR-ze, pilna poprawka w wolnym slocie i najwyżej jedno ponowne uruchomienie.
 - **Test na granicy limitu (1.11, G-200):** test, który raz przechodzi, a raz nie, zależnie od obciążenia runnera, mierzysz pod `--coverage` na tym samym hoście przed i po podejrzanym commicie (5,9 s → 9,3 s); to wskazuje przyczynę i nie podnosi limitu.
+## Usprawnienia procesu (decyzja użytkownika 15.11)
+- APK po scaleniu: workflow `android.yml` (workflow_dispatch na main), artefakt `seki-senshi-apk`, link z `download_workflow_run_artifact`, potem `pnpm apk:fetch <link> <sha> <scratchpad>/apk-dl` (zostawia 2 najnowsze paczki) i wysyłka pliku użytkownikowi jako załącznik.
+Reguła: **to, co powtórzyło się drugi raz, przestaje być pracą ręczną.** Orkiestrator wdraża usprawnienie od razu, bez pytania, gdy spełnia wszystkie warunki:
+- dotyczy procesu, a nie gry: skrypty w `tools/`, kroki CI, zasady agentów (`docs/agenci-zasady.md`), szablony briefów i raportów, kontrole skanu, bramki;
+- nie zmienia zachowania gry, zapisu, złotych hashy ani baz skanu i nie luzuje żadnej bramki (bramkę można tylko dodać albo zaostrzyć);
+- zajmuje najwyżej ok. godzinę pracy jednego agenta albo orkiestratora.
+
+Sygnały, że czas na usprawnienie: ta sama ręczna sekwencja poleceń drugi raz (scalenie z przeliczeniem tablic), ten sam rodzaj uwagi kuratora w dwóch przeglądach (zamień ją w kontrolę skanu przed budową), ten sam rodzaj czerwonego CI dwa razy (zbadaj trend, nie gaś pojedynczo), raport lub log, który trzeba czytać w całości, by znaleźć jedną linię (skróć wyjście u źródła), druga runda agenta z tej samej przyczyny (dopisz samokontrolę do zasad).
+
+Jak: osobna gałąź `…-process-<temat>`, PR z opisem „co się powtórzyło, ile kosztowało, co zastępuje”, wpis w backlogu w sekcji „Usprawnienia procesu” i jedno zdanie w raporcie dla użytkownika. Większe usprawnienia (powyżej godziny, zmiana gry, poluzowanie bramki) trafiają do backlogu z szacunkiem kosztu i zysku do decyzji użytkownika. Raz dziennie, na starcie sesji, krótka refleksja: co wczoraj powtarzało się najczęściej i ile kosztowało.
+
 ## Zasady twarde
 - Kod funkcji piszą agenci. Sam możesz zrobić poprawkę do ok. 30 linii (z testem, który pada bez niej), ale też idzie ona przez `change-verifier` przed pushem na gałąź PR. Poza tym edytujesz rejestr, ADR-y, kontrakty i bazę skanu.
 - Jedna poprawka to jeden glitch i jeden commit. Bez „przy okazji”.

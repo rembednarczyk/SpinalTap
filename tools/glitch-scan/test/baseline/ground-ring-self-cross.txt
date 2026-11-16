@@ -1,0 +1,2 @@
+# ground-ring-self-cross: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+stare-miasto-1-0 742,-97

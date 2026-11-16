@@ -2,6 +2,7 @@ import { SAVE_SCHEMA_VERSION, SHARD_CYBER_CAPACITY, capacityMax, clampItemLevel,
 import { moveMarketToAlchemia } from "./market-move";
 import { levelAlchemiaT2, raiseAlchemiaPavilion, rebuildAlchemia } from "./alchemia-rebuild";
 import { digAlchemiaParking } from "./alchemia-parking";
+import { rebuildDocksAsW3 } from "./w3-site";
 
 type Json = Record<string, unknown>;
 
@@ -457,6 +458,10 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v37 -> v38 (G-643): a chasing ganger keeps the next wide way being made for it (`walk.chaseNext`,
   // optional). An older save has none: it walks the one it has, or starts one on its first step.
   37: (old) => ({ ...old, version: 38 }),
+  // v38 -> v39 (ADR-0082 stage 1): the docks rebuilt as Tessen's sector W-3. A save made on that
+  // ground wakes on the public strip by the metro, the bodies and bags left there with her; the
+  // docks' people come back from the content; a running escort is called off without a penalty.
+  38: rebuildDocksAsW3,
 };
 
 export class MigrationError extends Error {}

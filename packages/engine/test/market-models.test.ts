@@ -145,7 +145,9 @@ describe("the market's dressing in the furniture's blocks (ADR-0058 stage 3)", (
   ];
   const make = (quality: "high" | "low", withProps: boolean) => {
     const scene = new Scene(new NullEngine());
-    const sp = new StreetProps({ scene, materials: new ToonMaterials(scene), quality });
+    // A clock that never moves: each update bakes the whole block, whatever the load of the machine
+    // (#582 slices the bake by 8 ms of the frame; on CI five updates sometimes left it unbaked).
+    const sp = new StreetProps({ scene, materials: new ToonMaterials(scene), quality, now: () => 0 });
     sp.spawn(1, pieces, { x: 0, y: 0, z: 0 });
     sp.flush();
     if (withProps) sp.setProps(props);

@@ -3,7 +3,7 @@ import { type Page, expect, test } from "@playwright/test";
 import { type Frame, freeze, gameState, perf, place, sampleNow, step, teleport, teleportTo, newGame, waitForGame, waitForPlay } from "./helpers";
 
 const budgets = JSON.parse(readFileSync("tools/perf-budgets.json", "utf8")) as {
-  scenes: Record<string, { drawCalls: number; activeMeshes: number }>;
+  scenes: Record<string, { drawCalls: number; activeMeshes: number; activeTriangles?: number }>;
 };
 
 /**
@@ -43,6 +43,8 @@ function within(scene: string, sample: Awaited<ReturnType<typeof perf>>) {
   const budget = budgets.scenes[scene]!;
   expect(sample.drawCalls).toBeLessThanOrEqual(budget.drawCalls);
   expect(sample.activeMeshes).toBeLessThanOrEqual(budget.activeMeshes);
+  // Pieces baked into one mesh (trees, bollards, chains) cost no draw call but triangles: a ceiling where the phone needs one.
+  if (budget.activeTriangles !== undefined) expect(sample.activeTriangles).toBeLessThanOrEqual(budget.activeTriangles);
 }
 
 /** A new game in TPP, the player put at a spot of Lublin (ADR-0045) and walked a little. */
@@ -102,11 +104,12 @@ test("Alchemia's car park P-1 in TPP stays within the perf budget", async ({ pag
   within("alchemia-p1", await sampleNow(page));
 });
 
-test("Nabrzeże Bystrzycy at night in TPP stays within the perf budget", async ({ page }) => {
-  // East end of the quay, looking west along the fence: water and mist, the crane, the office.
-  await tppAt(page, { frame: "docks", x: 27, z: 145, yaw: -Math.PI / 2, walk: 30 });
-  expect((await gameState(page)).loadedChunks).toEqual(["nabrzeze-1-1"]);
-  within("nabrzeze", await sampleNow(page));
+test("Tessen's W-3 from the Lutosławski bridge at night in TPP stays within the perf budget", async ({ page }) => {
+  // On the bridge's deck (+1.8 over W-3's floor), walking east along it towards the wagon gate:
+  // the tower, the pier, the quay and the hall's shell over the river (ADR-0082).
+  await tppAt(page, { x: 2460.2, z: 422.5, y: -26.75, yaw: 2.11, walk: 30 });
+  expect([...(await gameState(page)).loadedChunks].sort()).toEqual(["nabrzeze-0-1", "nabrzeze-w3"]);
+  within("w3-zewnatrz", await sampleNow(page));
 });
 
 test("a phone (low quality, 800x370) on the deptak stays within the perf budget", async ({ page }) => {

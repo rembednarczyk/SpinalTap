@@ -196,8 +196,8 @@ describe("the cables of a span over the paving (G-268)", () => {
   });
 
   it("draws every cable as before where the paving needs none lifted", () => {
-    // One cable is 6 segments of 3 ribbons; on a phone there are no lanterns.
-    const RIBBONS = 6 * 3 * 4;
+    // One cable is 6 segments of 4 ribbons (the upper one for the moon shadow, G-800); on a phone there are no lanterns.
+    const RIBBONS = 6 * 4 * 4;
     const narrow = (seed: number): Span => ({ a: { x: 0, z: 0 }, b: { x: 0, z: 14 }, along: { x: 1, z: 0 }, width: 14, base: 0, top: 20, clutter: 0.35, main: false, seed });
     for (let k = 0; k < 400; k++) {
       const s = narrow(k / 400);
@@ -208,9 +208,10 @@ describe("the cables of a span over the paving (G-268)", () => {
         expect(sink.vertexCount, `seed ${k}/400`).toBe(count * RIBBONS);
       }
     }
-    // The same span in full, as drawn before G-268: four cables and their lanterns.
+    // The same span in full, as drawn before G-268: its cables and their lanterns, plus the upper
+    // ribbons of G-800 (3 cables of 6 segments, 4 vertices each).
     const full = new MeshSink();
     planNearCanyon(full, [narrow(33 / 400)], false, () => -100);
-    expect(full.vertexCount).toBe(384);
+    expect(full.vertexCount).toBe(384 + 3 * 6 * 4);
   });
 });

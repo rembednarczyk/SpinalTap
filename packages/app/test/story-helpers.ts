@@ -16,8 +16,8 @@ import {
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { FIXER_SPAWN, ground } from "@seki/sim";
-import { GameSession } from "../src/game-session";
+import { CONTRACT_SITE_SPAWNS, FIXER_SPAWN, ground } from "@seki/sim";
+import { GameSession, RECALL_CALM_TICKS } from "../src/game-session";
 
 /** Shared drivers of the main-thread acceptance tests (act I in m3-loop, act II in m3-lustro-loop). */
 
@@ -168,8 +168,16 @@ export const playContractFragment = (s: GameSession, ui: Ui, render: FakeRender,
   steps(s, 1);
   const contract = s.sim.domain.contracts.active!;
   expect(objective(ui)).toContain("Take out the Hebi gangers");
+  // The site may be off the street (under the Kanałowa footbridge): walk there so it streams in.
+  const site = CONTRACT_SITE_SPAWNS[contract.siteId][0]!;
+  teleport(s, site.x, site.z - 3, 0);
+  steps(s, 1);
   for (const e of [...s.sim.world].filter((x) => x.tag === contractTag(contract.id))) shootDown(s, e.key!);
   steps(s, 1);
+  // A Hebi post by the site (Grodzka's, at the footbridge) may have fired at her too, and the
+  // flashback after Kaito's talk waits for calm: back at the bar, out of its reach, first.
+  teleport(s, ...nearKaito(s));
+  steps(s, RECALL_CALM_TICKS);
 
   render.effects = [];
   talkToKaito(s);

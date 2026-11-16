@@ -1,5 +1,5 @@
 import { type Contract, type EnemyTypeId, INITIAL_PROGRESSION, type SaveSnapshot, type Vec3, contractItemKey, contractTag, takenFlag, xpForLevel } from "@seki/core";
-import { HANA_SPOT, SIM_DT, Simulation, TAKEDOWN_TIME, docks, gangerEntity, ground, type Entity } from "../src";
+import { HANA_SPOT, SIM_DT, Simulation, TAKEDOWN_TIME, w3, gangerEntity, ground, type Entity } from "../src";
 import { input, streetSim, teleportPlayer } from "./helpers";
 import { setProfile } from "./difficulty-scenes";
 
@@ -90,7 +90,7 @@ export const stealthContract = (kind: "retrieve" | "infiltrate", seed: number, c
   const progression = { ...INITIAL_PROGRESSION, level, xp: xpForLevel(level) };
   const domain = { ...fresh.domain, progression, contracts: { active: null, completed } };
   const sim = Simulation.fromSnapshot(JSON.parse(JSON.stringify({ ...fresh, domain })) as SaveSnapshot);
-  teleportPlayer(sim, kind === "retrieve" ? ground(HANA_SPOT.x - 1.5, HANA_SPOT.z) : docks(0, 0, 120));
+  teleportPlayer(sim, kind === "retrieve" ? ground(HANA_SPOT.x - 1.5, HANA_SPOT.z) : w3(2492, 0, 418));
   for (let i = 0; i < 30; i++) sim.step();
   sim.enqueue({ type: "accept-contract", kind });
   sim.step();

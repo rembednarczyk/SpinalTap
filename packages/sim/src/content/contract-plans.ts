@@ -1,6 +1,6 @@
 import type { ContractSiteId, Vec3 } from "@seki/core";
 import { KRAKOWSKIE_SITE_POINTS } from "./district-m0";
-import { docks } from "./district-doki";
+import { w3 } from "./tessen-w3/site";
 import { byArkady } from "./alchemia/market";
 import { koiPoint } from "./interiors";
 import { spotNear } from "./lublin/places";
@@ -33,9 +33,10 @@ export const SITE_PLANS: Readonly<Partial<Record<ContractSiteId, SitePlan>>> = {
   hebi_stash: { guards: [byArkady(5.2, 7), byArkady(7, 5)], lookout: byArkady(9, 14), ambush: [byArkady(7, 16), byArkady(13, 16), byArkady(3, 13)] },
   raid_north: { lookout: ground(431.5, 123) },
   raid_east: { lookout: ground(445, 74) },
-  tessen_office: { guards: [docks(-22.5, 0, 135.6), docks(-19.6, 0, 135.6)], lookout: docks(-12, 0, 128) },
-  quay_terminal: { lookout: docks(0, 0, 130), ambush: [docks(12, 0, 121), docks(4, 0, 121.5), docks(20, 0, 125)] },
-  docks_escort: { lookout: docks(0, 0, 113) },
+  // W-3 (ADR-0082): the pass office in the tower, the quay by the pier, the riverside path.
+  tessen_office: { guards: [w3(2490, 0, 439), w3(2493, 0, 438.2)], lookout: w3(2492, 0, 432) },
+  quay_terminal: { lookout: w3(2488, 0, 426), ambush: [w3(2497, 0, 424), w3(2493, 0, 420), w3(2498, 0, 433)] },
+  docks_escort: { lookout: ground(2480, 384) },
 };
 
 /** Where the night drinker drinks: at the street counter by Neon Koi's door, on the deptak. */

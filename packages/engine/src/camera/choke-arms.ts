@@ -1,7 +1,8 @@
 import type { GrabPhase } from "@seki/core";
-import { type Camera, MeshBuilder, type Scene, TransformNode } from "../babylon";
+import { type AbstractMesh, type Camera, MeshBuilder, type Scene, TransformNode, Vector3 } from "../babylon";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
+import type { ViewArmsFrame } from "./view-arms";
 
 /**
  * Seki's forearms on the target's neck in first person (ADR-0075 stage 2). The FPP viewmodel
@@ -37,6 +38,9 @@ const LEFT: ArmAt = { x: -0.14, y: -0.34, z: 0.2, dx: 0.5, dy: 0.62, dz: 0.5 };
 
 interface Forearm {
   readonly node: TransformNode;
+  readonly meshes: readonly AbstractMesh[];
+  /** The way the forearm points from the elbow, as last placed. */
+  readonly dir: Vector3;
 }
 
 const buildForearm = (scene: Scene, materials: ToonMaterials, parent: TransformNode, name: string): Forearm => {
@@ -62,11 +66,12 @@ const buildForearm = (scene: Scene, materials: ToonMaterials, parent: TransformN
     m.isPickable = false;
     applyOutline(m, 0.004);
   }
-  return { node };
+  return { node, meshes: [sleeve, wrist, hand], dir: new Vector3(0, 0, 1) };
 };
 
 const place = (arm: Forearm, at: ArmAt, dy: number, dx: number): void => {
   arm.node.position.set(at.x + dx, at.y + dy, at.z);
+  arm.dir.set(at.dx, at.dy, at.dz).normalize();
   const len = Math.hypot(at.dx, at.dy, at.dz);
   arm.node.rotation.set(-Math.asin(at.dy / len), Math.atan2(at.dx, at.dz), 0);
 };
@@ -98,6 +103,18 @@ export class ChokeArms {
     const t = this.time;
     const kneel = this.phase === "choke" ? smoothstep(Math.min(1, Math.max(0, (t - 0.2) / 1))) : this.phase === "kill" ? smoothstep(Math.min(1, Math.max(0, (t - SNAP - 0.12) / 0.6))) : 0;
     return { crouch: crouch + (KNEEL_CROUCH * kneel - crouch) * w, side: -EYE_SIDE * w };
+  }
+
+  /** Where the forearms are now in the camera's frame, while they are shown; Seki's model arms follow them. */
+  forearms(): ViewArmsFrame["choke"] {
+    if (!this.root.isEnabled(false)) return null;
+    const of = (arm: Forearm) => ({ elbow: arm.node.position.clone(), dir: arm.dir.clone() });
+    return { right: of(this.right), left: of(this.left) };
+  }
+
+  /** The procedural forearms give way to the model's (`ViewArms`). */
+  showProps(shown: boolean): void {
+    for (const m of [...this.right.meshes, ...this.left.meshes]) if (m.isEnabled(false) !== shown) m.setEnabled(shown);
   }
 
   /** Shown in first person while `grab` lasts; `fpp` false hides them at once (TPP, the reference view). */

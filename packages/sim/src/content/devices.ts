@@ -1,7 +1,7 @@
 import type { ContractKind, FactionId, Vec3, ViewDescriptor } from "@seki/core";
 import type { DeviceKind } from "../world/components";
-import { type Rect, placeAt, placeRect, v } from "./builders";
-import { DOCKS_PLACE } from "./lublin/sites";
+import { type Rect, v } from "./builders";
+import { W3_OFFICE, w3 } from "./tessen-w3";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
 import { arkadySpanMid } from "./alchemia/arkady";
@@ -37,33 +37,33 @@ const VIEWS: Readonly<Record<DeviceKind, ViewDescriptor>> = {
 
 export const deviceView = (kind: DeviceKind): ViewDescriptor => VIEWS[kind];
 
-/** Tessen's office on the quay, inside its walls (the infiltration's no-go zone). */
-const TESSEN_OFFICE: Rect = placeRect(DOCKS_PLACE, { minX: -29.7, maxX: -18.3, minZ: 128.3, maxZ: 137.7 });
+/** Tessen's pass office in W-3's tower, inside its walls (the infiltration's no-go zone, ADR-0082). */
+const TESSEN_OFFICE: Rect = { minX: W3_OFFICE.minX, maxX: W3_OFFICE.maxX, minZ: W3_OFFICE.minZ, maxZ: W3_OFFICE.maxZ };
 /** Hebi's stash on T2 before the Arkady (the retrieval's no-go zone). */
 const HEBI_STASH: Rect = HEBI_STASH_ZONE;
 
-/** Chunks of the docks and of Alchemia (the market, ADR-0063) in Lublin's table. */
-const DOCKS_CHUNK = "nabrzeze-1-1";
+/** Chunks of W-3's tower and of its hall (ADR-0082), and of Alchemia (the market, ADR-0063) in Lublin's table. */
+const TOWER_CHUNK = "nabrzeze-0-1";
+const HALL_CHUNK = "nabrzeze-1-1";
 const MARKET_CHUNK = "krakowskie-2-1";
-const docks = (x: number, y: number, z: number) => placeAt(DOCKS_PLACE, v(x, y, z));
 
 export const DEVICES: readonly DeviceDef[] = [
-  // Doki: the office, its door onto the quay, the yard.
+  // W-3 (the docks' keys): the pass office in the tower, the tower's corner over the quay, the chamber's wall over the east yard.
   {
     key: "dev:doki-office-cam",
-    chunk: DOCKS_CHUNK,
+    chunk: TOWER_CHUNK,
     kind: "camera",
-    position: docks(-29.2, 3, 137.2),
+    position: w3(2486.6, 3, 445.4),
     // Into the room, towards the door.
-    yaw: 2.02,
+    yaw: 1.82,
     network: "tessen-office",
     faction: "tessen",
     restricted: { ...TESSEN_OFFICE, during: "infiltrate" },
   },
-  { key: "dev:doki-quay-cam", chunk: DOCKS_CHUNK, kind: "camera", position: docks(-17.7, 3, 127.8), yaw: 1.2, network: "tessen-office", faction: "tessen" },
-  { key: "dev:doki-yard-cam", chunk: DOCKS_CHUNK, kind: "camera", position: docks(-15.5, 3.5, 95.5), yaw: Math.PI / 2, network: "tessen-yard", faction: "tessen" },
-  { key: "dev:doki-vending", chunk: DOCKS_CHUNK, kind: "vending", position: docks(-24, 0.95, 127.6), yaw: Math.PI, network: "tessen-office", faction: "tessen" },
-  { key: "dev:doki-speaker", chunk: DOCKS_CHUNK, kind: "speaker", position: docks(12, 2.6, 95.8), yaw: 0, network: "tessen-yard", faction: "tessen" },
+  { key: "dev:doki-quay-cam", chunk: TOWER_CHUNK, kind: "camera", position: w3(2485.7, 3, 437), yaw: -1.9, network: "tessen-office", faction: "tessen" },
+  { key: "dev:doki-yard-cam", chunk: HALL_CHUNK, kind: "camera", position: w3(2572.3, 3.5, 410), yaw: Math.PI / 2, network: "tessen-yard", faction: "tessen" },
+  { key: "dev:doki-vending", chunk: TOWER_CHUNK, kind: "vending", position: w3(2496.5, 0.95, 440), yaw: Math.PI / 2, network: "tessen-office", faction: "tessen" },
+  { key: "dev:doki-speaker", chunk: HALL_CHUNK, kind: "speaker", position: w3(2572.3, 2.6, 425), yaw: Math.PI / 2, network: "tessen-yard", faction: "tessen" },
   // The market in Alchemia: Hebi's stash before the Arkady, the camera on their arches looking back along them; each in a span (`ARKADY_PIERS`).
   {
     key: "dev:targ-stash-cam",
@@ -104,13 +104,13 @@ export const SECURITY_ENTRIES: readonly Vec3[] = [
   spotNear(805, 360),
   ground(431, 121),
   ground(447, 58),
-  // The docks.
-  docks(27, 0, 94),
-  docks(-12, 0, 96),
-  docks(14, 0, 106),
-  docks(16, 0, 122),
-  docks(-4, 0, 124),
-  docks(28, 0, 128),
-  docks(-16, 0, 130),
-  docks(2, 0, 149),
+  // W-3 and the public strip by it (ADR-0082).
+  ground(2527, 384),
+  ground(2470, 384),
+  ground(2550, 389.5),
+  w3(2591, 0, 396),
+  w3(2589, 0, 430),
+  w3(2540, 0, 447),
+  w3(2483, 0, 424),
+  ground(2441, 440),
 ];

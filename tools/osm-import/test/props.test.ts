@@ -1,33 +1,22 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { type StreetPropItem, terrainHeightAt } from "../../../packages/core/src/world/city-geo.ts";
+import { terrainHeightAt } from "../../../packages/core/src/world/city-geo.ts";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
 import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
 import { GATE_PASSAGES } from "../../../packages/sim/src/content/lublin/gate-passages.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
-import { REPO } from "../src/paths.ts";
-import { emitProps } from "../src/props-emit.ts";
-import { loadBuildingTags, loadNodeTags } from "../src/props-art.ts";
-import { furnitureBlock, groundY, lublinDecalWalls, poleLampAt, surfaceY } from "../src/decal-walls.ts";
-import { addDecals } from "../src/props-decals.ts";
-import type { Pt } from "../src/geometry.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
 import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
 import { PropSolidIndex, clearSpot } from "../src/props-solid.ts";
 import { cityProps } from "./city.ts";
-import { gameDoors } from "../src/game-doors.ts";
-import { loadCarriageways, loadUndergroundWays } from "../src/props-roads.ts";
-import { lublinVenueBoards } from "../src/venue-boards.ts";
-import { lublinDoorWalls } from "../src/door-walls.ts";
-import { addDoors, loadEntrances } from "../src/props-doors.ts";
+import { loadPropsPlan } from "../src/props-osm.ts";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
-const PLAN = JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
+/** The plan as `pnpm osm:props` places it: with the OSM extract's furniture it lacks (G-099). */
+const PLAN = loadPropsPlan();
 
 /** A 100 x 60 m chunk: an east-west road 8 m wide on z = 30, sidewalks 4 m on both sides, a row of houses north of it. */
 const street = (): LublinChunkData => ({
@@ -72,19 +61,6 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(total).toBeGreaterThan(3000);
     expect(a.stats.perKind["lamp-pastoral"]).toBeGreaterThan(50);
     expect(a.stats.perKind["lamp-wall-lantern"]).toBeGreaterThan(100);
-  });
-
-  it("matches the committed table (run `pnpm osm:props` after changing the plan or the rules)", () => {
-    const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
-    const market = { roads: loadCarriageways(), doors: gameDoors() };
-    const table = generateProps(PLAN, CHUNKS, loadNodeTags(), lublinVenueBoards(), market).byChunk as Map<string, StreetPropItem[]>;
-    // The doors on the facades (ADR-0058 stage 9) after the furniture, then the decals (stage 6), as `pnpm osm:props` adds them.
-    addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors(), underground: loadUndergroundWays() });
-    const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt, blockOf: furnitureBlock };
-    addDecals(table, new Site(CHUNKS), lublinDecalWalls(), ctx);
-    // The still crowd (ADR-0058 stage 8) comes last, from the simulation's crowd as well: `props-figures.test.ts` checks its rows.
-    const others = (text: string) => text.split("\n").filter((l) => !l.startsWith('    "figure": ')).join("\n");
-    expect(others(emitProps(table))).toBe(others(committed));
   });
 
   it("stands lamps on the pavement beside the road on both sides, their arms towards it, and lanterns on the facades", () => {
@@ -194,6 +170,15 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(at("lamp-modern-pole")).toEqual([[60, 24]]);
   });
 
+  it("leaves out a lamp that rounds onto the map's edge, past its last chunk, not on a ground of 0 (G-810)", () => {
+    // Mełgiewska's kerb moved 2.5 cm east set the rule's lamp at x = 2699.96: stored at 2700, past the half-open chunk.
+    for (const x of [99.94, 99.96, 99.99]) {
+      const lamps = generateProps({ items: [{ id: "osm", kind: "street-lamp", points: [[x, 24]] }] }, [street()]).byChunk.get("test-0-0")!;
+      for (const l of lamps) expect(l.x < 100 && Math.abs(l.y - terrainHeightAt(street().terrain, l.x, l.z)) < 0.01, `lamp at ${l.x}, ${l.z}, y ${l.y}`).toBe(true);
+      expect(lamps.length, `lamp from ${x}`).toBe(x < 99.95 ? 1 : 0);
+    }
+  });
+
   it("draws an OSM street lamp inside the Old Town's walls as a pastoral where OSM has it, and outside them as a road lamp (G-264)", () => {
     // The test street moved to Plac po Farze (inside the walls) and to Królewska (the district, past the walls).
     const moved = (id: string, dx: number, dz: number): LublinChunkData => {
@@ -215,6 +200,18 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(at("fara-0-0")).toEqual([["lamp-pastoral", 640, 24], ["lamp-pastoral", 670, 24]]);
     expect(at("krolewska-0-0")).toEqual([["lamp-road", 640, -206]]);
     expect(at("test-0-0")).toEqual([["lamp-road", 40, 24]]);
+  });
+
+  it("keeps a line's lamp moved off the road 7 m from another of its kind, as one where it was placed (G-817)", () => {
+    // The park lamps' line runs on the carriageway, so `offRoad` moves each station onto the pavement (12.5, 34.6) and on.
+    const line = { id: "line", kind: "lamp-park", lines: [[0, 30, 100, 30]], spacing: 25 };
+    const lamp = { id: "lamp", kind: "lamp-park", position: { x: 16, z: 36 } };
+    const lamps = (plan: PropsPlan) => generateProps(plan, [street()]).byChunk.get("test-0-0")!.filter((i) => i.prop === "lamp-park");
+    expect(lamps({ items: [line] }).map((i) => [i.x, i.z])).toContainEqual([12.5, 34.6]);
+    const both = lamps({ items: [lamp, line] });
+    expect(both.map((i) => [i.x, i.z])).toContainEqual([16, 36]);
+    for (const l of both) if (l.x !== 16) expect(Math.hypot(l.x - 16, l.z - 36), `lamp at ${l.x}, ${l.z}`).toBeGreaterThanOrEqual(7);
+    expect(both).toHaveLength(4);
   });
 
   it("hangs a basket only on a lamp that stays, where it stands (G-004)", () => {

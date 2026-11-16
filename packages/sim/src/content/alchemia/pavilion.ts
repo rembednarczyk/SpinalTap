@@ -15,7 +15,7 @@ import { EAST } from "./plan";
  *
  * The triangle's sides follow the streets: the south one Bajkowskiego's sidewalk w232464426, the
  * east one Lubartowska's w749050539, each a hand's breadth off its paving (0.4..0.8 m); the third
- * looks north-west over the car park. The ground under it is the NMT's, -0.79..-0.39 (no pad): the
+ * looks north-west over the car park. The ground under it is the NMT's, -0.82..-0.30 (no pad): the
  * floor stands a step over its highest point, a plinth on the low side.
  */
 
@@ -30,11 +30,11 @@ export const PAVILION_CORNERS: readonly [GroundPoint, GroundPoint, GroundPoint] 
 export const PAVILION_ANNEX: Rect = { minX: 424.5, maxX: 428.5, minZ: -3.5, maxZ: 0 };
 
 /**
- * Its levels: the plinth's foot in the ground, the floor (0.14 m over the highest ground under it),
- * the roof (a storey of 4.1 m), the dark fascia under the roof's edge, the attic round the roof.
+ * Its levels: the plinth's foot in the ground, the floor (0.15 m over the highest ground under it),
+ * the roof (a storey of 4 m), the dark fascia under the roof's edge, the attic round the roof.
  * Floor to the attic's top: 5 m.
  */
-export const ALCHEMIA_PAVILION = { base: -1.1, floor: -0.25, roof: 3.85, fascia: 0.6, attic: 0.9, atticThick: 0.25 } as const;
+export const ALCHEMIA_PAVILION = { base: -1.1, floor: -0.15, roof: 3.85, fascia: 0.6, attic: 1.0, atticThick: 0.25 } as const;
 
 const [A, B, C] = PAVILION_CORNERS;
 

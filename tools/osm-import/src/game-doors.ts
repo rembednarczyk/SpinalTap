@@ -1,7 +1,7 @@
 /**
  * The game's own doors in Lublin (the clinic and Neon Koi on the deptak, ADR-0038) for the market's
  * furniture to keep clear of (`props-food.ts`). It reads the simulation's content modules: Node
- * loads it through Vite's module runner (`props.ts`), the tests directly.
+ * loads it through Vite's module runner (`props-build.ts`), the tests directly.
  */
 import { S7_DOORS } from "../../../packages/sim/src/content/interiors";
 import { type DoorSpan, doorSpan } from "./props-roads.ts";

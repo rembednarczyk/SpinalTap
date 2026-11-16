@@ -6,6 +6,7 @@ import { oneway } from "./markings.ts";
 import { type FlightOut, type FootWayOut, type PoiKind, type PoiOut, type ServiceWayOut, type StreetOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
+import { type StreetHalves } from "./street-half.ts";
 
 const STREET_KINDS = new Set([
   "primary",
@@ -50,7 +51,8 @@ const keepPiece = (piece: readonly Pt[], rect: Rect): boolean => {
 const closedToVehicles = (t: Tags): boolean =>
   (t.tunnel === "building_passage" || t.tunnel === "yes" || t.covered === "yes") && [t.motor_vehicle, t.motorcar, t.vehicle].some((v) => v === "no");
 
-export const chunkStreets = (lines: readonly Line[], rect: Rect): StreetOut[] => {
+/** The named streets' pieces in the chunk, simplified, with their carriageway's reach each side when `halves` gives it (ADR-0080). */
+export const chunkStreets = (lines: readonly Line[], rect: Rect, halves?: StreetHalves): StreetOut[] => {
   const out: StreetOut[] = [];
   for (const l of lines) {
     const name = l.tags.name && (NAME_FIXES[l.tags.name] ?? l.tags.name);
@@ -62,8 +64,16 @@ export const chunkStreets = (lines: readonly Line[], rect: Rect): StreetOut[] =>
     const line = l.tags.oneway === "-1" ? [...l.line].reverse() : l.line;
     for (const piece of clipLineToRect(line, rect)) {
       if (!keepPiece(piece, rect)) continue;
-      const simple = simplifyLine(piece, 1).flatMap((p) => [r1(p.x), r1(p.z)]);
-      out.push({ name, kind, line: simple, ...(one ? { oneway: true as const } : {}), ...(closed ? { noVehicles: true as const } : {}) });
+      const simple = simplifyLine(piece, 1).map((p) => ({ x: r1(p.x), z: r1(p.z) }));
+      const half = halves?.(l.id, simple);
+      out.push({
+        name,
+        kind,
+        line: simple.flatMap((p) => [p.x, p.z]),
+        ...(half ? { half } : {}),
+        ...(one ? { oneway: true as const } : {}),
+        ...(closed ? { noVehicles: true as const } : {}),
+      });
     }
   }
   return out;

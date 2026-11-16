@@ -19,13 +19,14 @@ const carWash = (): StaticProp[] => [
   slab(12.5, 3.5, 30.5, v(1.2, 0.36, 5.5), "metal"),
   crate(11.2, 30.5, 4.2, 1.5, 2, skin("car", "x+")),
   neon(8.2, 5.1, 30.5, v(0.15, 0.9, 6), "#ff4040", "MYJNIA 24H"),
-  // The yard: crates, two dumpsters and a parked car, a lamp.
+  // The yard: crates, two dumpsters and a parked car, a lamp. All on its level ground, local z up
+  // to 39 (G-754): north of it the yard falls to Bajkowskiego on the NMT.
   crate(-3, 36, 1.6, 1.2, 1.2),
   crate(4, 38.5, 1.2, 1.2, 2.4, skin("dumpster", "x-")),
   // The big one takes a body (ADR-0065).
-  { ...crate(-5, 44, 2.4, 1.4, 1.4, skin("dumpster", "z-")), hide: "dumpster" },
-  crate(5.5, 45.5, 2, 1.5, 4.2, skin("car", "z+")),
-  lamp(-1, 40, "#ff6a6a"),
+  { ...crate(11, 37.5, 2.4, 1.4, 1.4, skin("dumpster", "z-")), hide: "dumpster" },
+  crate(19.5, 37.5, 4.2, 1.5, 2, skin("car", "x+")),
+  lamp(-1, 39, "#ff6a6a"),
 ];
 
 /**

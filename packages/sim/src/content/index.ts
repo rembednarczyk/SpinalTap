@@ -3,7 +3,7 @@ export * from "./district-m0";
 export * from "./district-kanal";
 export * from "./kanal-patrols";
 export * from "./kanal-underground";
-export * from "./district-doki";
+export * from "./tessen-w3";
 export * from "./world-map";
 export * from "./schedules";
 export * from "./devices";

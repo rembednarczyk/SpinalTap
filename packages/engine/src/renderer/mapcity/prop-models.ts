@@ -1,4 +1,5 @@
 import { type StreetPropKind, barrierVariant, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "@seki/core";
+import type { RenderQuality } from "../../npr/quality";
 import { MeshSink } from "../mesh-sink";
 import { decalModel } from "./decal-models";
 import { busShelter, busStop, cafeGarden, farMonument, fountainJets, kiosk, marketStall, monument, ticketMachine, vendingMachine } from "./prop-civic";
@@ -11,7 +12,7 @@ import { foodStall, marketGoods } from "./prop-market";
 import { glow, paint, v3 } from "./prop-kit";
 import { type PropLight, type PropModel, floodlight, lampCandelabra, lampModernPole, lampPark, lampPastoral, lampRoad, lampWallLantern } from "./prop-lamps";
 import { PROP_SHAPES } from "./prop-shapes";
-import { aFrameSign, advertisingColumn, bench, bikeStation, bollard, bollardChain, cctv, flagpole, graniteBlock, manhole, streetCabinet, streetPlate, trafficSignal, trolleyPole, wasteBin } from "./prop-street";
+import { aFrameSign, advertisingColumn, bench, bikeStation, bollard, bollardChain, bollardChainLow, bollardLow, cctv, flagpole, graniteBlock, manhole, streetCabinet, streetPlate, trafficSignal, trolleyPole, wasteBin } from "./prop-street";
 
 export type { PropLight, PropModel };
 
@@ -94,15 +95,31 @@ export const propModel = (kind: StreetPropKind, shape: number): PropModel => {
   return m;
 };
 
-const chains = new Map<number, MeshSink>();
+let lowBollard: MeshSink | null = null;
 
-/** A bollard's chain ending `end` metres from the post (G-032), built once per centimetre. */
-export const chainModel = (end: number): MeshSink => {
+/**
+ * The mesh a near block bakes for a piece: its detailed model, but for the phones' bollards
+ * (quality `low`), which take the post of about a hundred vertices (`bollardLow`).
+ */
+export const nearModel = (kind: StreetPropKind, shape: number, quality: RenderQuality): MeshSink => {
+  if (kind === "bollard" && quality === "low") return (lowBollard ??= bollardLow());
+  return propModel(kind, shape).sink;
+};
+
+const chains = new Map<string, MeshSink>();
+
+/**
+ * A bollard's chain ending `end` metres from the post (G-032), built once per centimetre: of links
+ * but on phones (quality `low`), where it is two crossed strips (`bollardChainLow`).
+ */
+export const chainModel = (end: number, quality: RenderQuality = "high"): MeshSink => {
   const cm = Math.round(end * 100);
-  let m = chains.get(cm);
+  const low = quality === "low";
+  const key = `${low ? "low" : "links"}:${cm}`;
+  let m = chains.get(key);
   if (!m) {
-    m = bollardChain(cm / 100);
-    chains.set(cm, m);
+    m = low ? bollardChainLow(cm / 100) : bollardChain(cm / 100);
+    chains.set(key, m);
   }
   return m;
 };

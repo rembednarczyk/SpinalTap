@@ -1,0 +1,2 @@
+# flat-over-lod2-roof: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+stare-miasto-1-1 679,150

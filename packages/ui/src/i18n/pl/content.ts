@@ -68,10 +68,10 @@ export const plContent = {
   "hook.protect_2": "Z tarasu na dachu widać całą ścieżkę wzdłuż straganów",
   "hook.escort_1": "Zasadzka czeka przy biurze, nie na molo",
   "hook.escort_2": "Wschodnia alejka placu bez obsady od 1:00 do 3:00",
-  "hook.infiltrate_1": "Kod do bocznych drzwi biura: 4177 (kamera bierze cię za personel)",
+  "hook.infiltrate_1": "Kod do drzwi biura przepustek: 4177 (kamera bierze cię za personel)",
   "hook.infiltrate_2": "Strażnik spod drzwi biura co pół godziny wychodzi zapalić",
   "hook.hack_1": "Snajper po trzecim strzale ma cztery sekundy bez lasera",
-  "hook.hack_2": "Pod wysięgnikiem dźwigu snajper cię nie widzi",
+  "hook.hack_2": "Pod schodami wieży snajper z dachu cię nie widzi",
   // What the scanner calls a thing (ScanFocusChanged.name).
   "scan.name.camera": "Kamera",
   "scan.name.vending": "Automat z napojami",

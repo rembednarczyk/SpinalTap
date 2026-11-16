@@ -8,7 +8,7 @@ import { barrierBlock } from "./barrier-models";
 import { LampHalos } from "./lamp-halos";
 import { cellKey } from "./map-index";
 import { type WorldProp, toWorld } from "./prop-batch";
-import { type PropBakeDeps, type PropBlock, bakeNear, buildFar, newBlock } from "./prop-block";
+import { type PropBakeDeps, type PropBlock, buildFar, continueNear, newBlock } from "./prop-block";
 import { standingObstacles } from "./prop-obstacles";
 import { PropPoles } from "./prop-poles";
 import { PROP_BLOCK, PROP_LOD, type PropLod, blockBand } from "./prop-shapes";
@@ -19,6 +19,8 @@ export interface StreetPropsDeps {
   readonly scene: Scene;
   readonly materials: ToonMaterials;
   readonly quality: RenderQuality;
+  /** Milliseconds for the bake's share of a frame (tests); `performance.now` by default. */
+  readonly now?: () => number;
 }
 
 export interface StreetPropsStats {
@@ -34,8 +36,14 @@ export interface StreetPropsStats {
   readonly far: number;
 }
 
-/** Blocks baked per frame at most: a block coming near does not stall more than a frame. */
-const BAKES_PER_FRAME = 1;
+/**
+ * Time a frame bakes the detailed blocks for (ms), past the part it is in: a block of some hundred
+ * thousand vertices is baked over frames, not in one that stalls (some hundred ms on a phone).
+ */
+const BAKE_MS = 8;
+
+/** A block starts baking this far before it comes near (m), so its detail is ready when it does. */
+const PREFETCH = 40;
 
 const distance = (eye: Vec3, b: Box2): number => Math.hypot(distanceToBox(eye.x, eye.z, b), Math.max(eye.y - 2, 0));
 
@@ -60,8 +68,10 @@ export class StreetProps {
   private readonly lod: PropLod;
   private drawn: Record<string, number> = {};
   private waitingBlocks = 0;
+  private readonly now: () => number;
 
   constructor(private readonly deps: StreetPropsDeps) {
+    this.now = deps.now ?? (() => performance.now());
     this.halos = new LampHalos(deps.scene);
     this.lod = PROP_LOD[deps.quality];
     this.poles = new PropPoles(deps.quality);
@@ -110,6 +120,7 @@ export class StreetProps {
       b.near?.dispose(false, false);
       b.near = null;
       b.baked = false;
+      b.job = null;
       // The far poles too, enabled again by the next update's band.
       b.far?.dispose(false, false);
       b.far = null;
@@ -146,6 +157,7 @@ export class StreetProps {
       block.near?.dispose(false, false);
       block.far = block.near = null;
       block.baked = false;
+      block.job = null;
       block.band = "off";
       if (block.pieces.size === 0) this.blocks.delete(key);
       else buildFar(this.bake, block);
@@ -157,17 +169,17 @@ export class StreetProps {
   /** Bands of the blocks from the camera, the detailed meshes they need, the halos' look. */
   update(eye: Vec3): void {
     this.halos.setFog(this.deps.materials.currentRig.fogDensity);
-    let budget = BAKES_PER_FRAME;
+    const due: { block: PropBlock; d: number; near: boolean }[] = [];
+    for (const block of this.blocks.values()) {
+      const d = distance(eye, block.bounds);
+      block.band = blockBand(d, this.lod, block.band);
+      if (!block.baked && (block.band === "near" || d < this.lod.medium + PREFETCH)) due.push({ block, d, near: block.band === "near" });
+    }
+    this.bakeDue(due);
     let waiting = 0;
     const drawn: Record<string, number> = {};
     for (const block of this.blocks.values()) {
-      block.band = blockBand(distance(eye, block.bounds), this.lod, block.band);
-      if (block.band === "near" && !block.baked) {
-        if (budget > 0) {
-          budget -= 1;
-          bakeNear(this.bake, block);
-        } else waiting += 1;
-      }
+      if (block.band === "near" && !block.baked) waiting += 1;
       const detailed = block.band === "near" && block.baked;
       block.near?.setEnabled(detailed);
       // The far mesh stands in for a near block until its detail is baked.
@@ -177,6 +189,21 @@ export class StreetProps {
     this.halos.show();
     this.waitingBlocks = waiting;
     this.drawn = drawn;
+  }
+
+  /**
+   * Bakes on the blocks due for their detail, the near ones first and the nearest first, for
+   * `BAKE_MS` of the frame: at least a part of the first (or its mesh), so a slow frame still gets on.
+   */
+  private bakeDue(due: { block: PropBlock; d: number; near: boolean }[]): void {
+    if (due.length === 0) return;
+    due.sort((a, b) => (a.near === b.near ? a.d - b.d : a.near ? -1 : 1));
+    const start = this.now();
+    const stop = () => this.now() - start >= BAKE_MS;
+    for (const [i, { block }] of due.entries()) {
+      if (i > 0 && stop()) return;
+      if (!continueNear(this.bake, block, stop)) return;
+    }
   }
 
   /** Blocks near the camera still waiting for their detailed mesh. */

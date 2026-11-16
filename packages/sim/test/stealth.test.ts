@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONTRACT_ITEM_SPOTS, DOKI_ITEM_SPOTS, Simulation, enemySees, gangerEntity } from "../src";
+import { CONTRACT_ITEM_SPOTS, W3_ITEM_SPOTS, Simulation, enemySees, gangerEntity } from "../src";
 import { run, streetSim, teleportPlayer } from "./helpers";
 import { CROUCH, SIGHTED, creepAndTakeDown, emptySquare, enemyAt, secondsToAlarm, sneakToObjective, stealthContract } from "./stealth-scenes";
 
@@ -102,7 +102,7 @@ describe("one sight for every enemy (ADR-0069)", () => {
 describe("the stealth contracts can be done from behind the posts (ADR-0069, ADR-0065)", () => {
   const cases = [
     { kind: "retrieve", at: CONTRACT_ITEM_SPOTS.hebi_stash! },
-    { kind: "infiltrate", at: DOKI_ITEM_SPOTS.tessen_office! },
+    { kind: "infiltrate", at: W3_ITEM_SPOTS.tessen_office! },
   ] as const;
   for (const { kind, at } of cases) {
     for (const completed of [0, 5]) {

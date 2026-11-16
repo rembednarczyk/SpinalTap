@@ -1,14 +1,17 @@
 /**
- * `node tools/orto/src/albedo-report.ts [--cache DIR] [--out FILE]`: the median colour of each ground
- * surface of the import on the orthophoto over the whole map, per flight (`albedo.ts`), offline from
- * the cache and the cover rasters, with the brightness of the paving against the lawns. The ground
- * palette of the renderer (`ground-plan.ts`, G-721) is calibrated on it.
+ * `node tools/orto/src/albedo-report.ts [--cache DIR] [--out FILE] [--write-medians [FILE]]`: the
+ * median colour of each ground surface of the import on the orthophoto over the whole map, per flight
+ * (`albedo.ts`), offline from the cache and the cover rasters, with the brightness of the paving
+ * against the lawns. The ground palette of the renderer (`ground-plan.ts`, G-721) is calibrated on
+ * it. `--write-medians` writes the medians the glitch scan checks the palette against
+ * (`albedo-medians.ts`, default `data/orto/albedo-medians.json`).
  */
 import { writeFileSync } from "node:fs";
-import { type AlbedoBucket, gatherAlbedo, luma, medianColour, topPieces, wellInside } from "./albedo.ts";
+import { MEDIANS_FILE, type MedianRow, mediansOf, mediansText } from "./albedo-medians.ts";
+import { type AlbedoBucket, gatherTile, luma, medianColour, topPieces, wellInside } from "./albedo.ts";
 import { type Colour } from "./classify.ts";
 import { CELLS, defaultCache } from "./config.ts";
-import { readCover, sampleColours } from "./cover.ts";
+import { readCover } from "./cover.ts";
 import { CHUNKS } from "./game.ts";
 import { flatRing } from "./overlay.ts";
 import { MAP_REGIONS } from "./region.ts";
@@ -24,6 +27,8 @@ const ALBEDO_FLIGHTS = ["2025-04", "2024-06"] as const;
 const pieces = CHUNKS.flatMap((c) => c.ground.map((g) => ({ surface: g.surface, ring: flatRing(g.outline) })));
 const roofs = CHUNKS.flatMap((c) => c.buildings.map((b) => flatRing(b.outline, b.x, b.z)));
 const buckets = new Map<string, Map<string, AlbedoBucket>>(ALBEDO_FLIGHTS.map((f) => [f, new Map()]));
+/** The days the tiles' sheets were photographed, by flight. */
+const photographed = new Map<string, Set<string>>(ALBEDO_FLIGHTS.map((f) => [f, new Set()]));
 
 for (const region of MAP_REGIONS) {
   const cover = readCover(region.slug);
@@ -36,18 +41,18 @@ for (const region of MAP_REGIONS) {
   for (const cell of CELLS.filter((c) => c.slug === region.slug)) {
     const r = cell.rect;
     const ks = samplesIn(h, [{ x: r.minX, z: r.minZ }, { x: r.maxX, z: r.minZ }, { x: r.maxX, z: r.maxZ }, { x: r.minX, z: r.maxZ }]);
-    for (const flight of ALBEDO_FLIGHTS) {
-      const tile = loadTile(cache, flight, cell);
-      if (tile) gatherAlbedo(buckets.get(flight)!, ks, surfaceOf, cover.cls, sampleColours(h, tile, r));
-    }
+    for (const flight of ALBEDO_FLIGHTS) gatherTile(buckets.get(flight)!, photographed.get(flight)!, loadTile(cache, flight, cell), ks, surfaceOf, cover, r);
   }
 }
 
 const hex = (c: Colour) => `#${c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
 const out: Record<string, unknown> = {};
+const medianRows: { id: string; photographed: string[]; rows: MedianRow[] }[] = [];
 for (const [flight, map] of buckets) {
+  const raw: MedianRow[] = [];
   const rows = [...map].sort(([a], [b]) => a.localeCompare(b)).map(([surface, b]) => {
     const median = medianColour(b.rgb);
+    raw.push({ surface, median, luma: luma(median), samples: b.rgb.length / 3 });
     const all = Object.values(b.classes).reduce((s, v) => s + v, 0);
     return { surface, samples: b.rgb.length / 3, share: Math.round(((b.rgb.length / 3) * 1000) / Math.max(1, all)) / 1000, median: median.map((v) => Math.round(v)), hex: hex(median), luma: Math.round(luma(median) * 10) / 10, classes: b.classes };
   });
@@ -55,6 +60,14 @@ for (const [flight, map] of buckets) {
   console.log(`== ${flight}`);
   for (const r of rows) console.log(`${r.surface.padEnd(9)} ${r.hex} RGB ${r.median.join("/")} L ${r.luma} (${r.samples} próbek, ${Math.round(r.share * 100)}% w klasie)${grass ? `, do trawy ${(r.luma / grass).toFixed(2)}` : ""}`);
   out[flight] = rows;
+  medianRows.push({ id: flight, photographed: [...photographed.get(flight)!], rows: raw });
 }
 const file = val("--out");
 if (file) writeFileSync(file, `${JSON.stringify(out, null, 2)}\n`);
+if (argv.includes("--write-medians")) {
+  const next = val("--write-medians");
+  const target = next && !next.startsWith("--") ? next : MEDIANS_FILE;
+  if (medianRows.some((f) => !f.rows.length)) throw new Error(`no tiles of ${medianRows.filter((f) => !f.rows.length).map((f) => f.id).join(", ")} in ${cache}: the medians stay as they are`);
+  writeFileSync(target, mediansText(mediansOf(medianRows)));
+  console.log(`mediany: ${target}`);
+}

@@ -32,22 +32,12 @@ kbd {
   color: var(--cyan);
 }
 
-/* HUD. --hud-scale (accessibility) scales the whole layer from the top-left corner; the
-   layer is shrunk by the same factor first, so it still covers the screen exactly. */
-.hud {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: calc(100% / var(--hud-scale, 1));
-  height: calc(100% / var(--hud-scale, 1));
-  transform: scale(var(--hud-scale, 1));
-  transform-origin: 0 0;
-}
+/* HUD: a scaled layer (scale/layers.css, ADR-0085); its pieces on a phone are placed by scale/zones.css. */
 
 /* Four ticks around the aim point; --spread (set from the aim cone) pushes them apart. */
 .crosshair {
   /* The aim cone lives in screen space: undo the HUD scale. */
-  --gap: calc(3px + var(--spread, 0) * 50vh / var(--hud-scale, 1));
+  --gap: calc(3px + var(--spread, 0) * 50vh / var(--layer-scale, 1));
   position: absolute;
   left: 50%;
   top: 50%;
@@ -122,7 +112,7 @@ kbd {
   border-right: 3px solid var(--amber);
 }
 .hud__currency { color: var(--amber); }
-.hud__clock {
+.hud__clock { border: 0; font: inherit; text-align: inherit; cursor: pointer; touch-action: manipulation;
   position: absolute;
   right: 28px;
   top: 72px;
@@ -212,7 +202,6 @@ kbd {
 .toasts {
   position: absolute;
   right: 28px;
-  top: 84px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -224,7 +213,9 @@ kbd {
   padding: 10px 14px;
   background: var(--panel);
   border-right: 3px solid var(--cyan);
-  animation: toast-in 240ms ease-out;
+  /* Fades in where it stands: a 30 px slide from the right drew it past the screen edge in a
+     talk, where the toasts keep only the edge's margin (16 px on a phone). */
+  animation: toast-fade 240ms ease-out;
 }
 .toast--memory { border-color: var(--magenta); box-shadow: 0 0 18px rgba(255, 61, 139, 0.25); }
 .toast--money { border-color: var(--amber); }
@@ -233,6 +224,7 @@ kbd {
 .toast__title { font-weight: 700; letter-spacing: 0.06em; }
 .toast__text { font-size: 14px; color: var(--ink-dim); margin-top: 2px; }
 @keyframes toast-in { from { transform: translateX(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes toast-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* Minimap */
 .minimap {
@@ -633,6 +625,9 @@ kbd {
 }
 .settings__option--on { color: var(--ink); border-color: var(--cyan); background: rgba(95, 242, 255, 0.14); }
 .settings__note { font-size: 14px; color: var(--amber); }
+.settings__hint { margin: -4px 0 0; font-size: 13px; color: var(--ink-dim); }
+.settings__row--off .settings__label { opacity: 0.5; }
+.settings__option:disabled { opacity: 0.4; cursor: default; }
 .settings__tabs { display: flex; gap: 6px; flex-wrap: wrap; }
 .keys { display: flex; flex-direction: column; gap: 8px; }
 .keys__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; max-height: 46vh; overflow-y: auto; pointer-events: auto; }
@@ -643,7 +638,7 @@ kbd {
 .settings__note p { margin: 0 0 8px; }
 
 /* Touch gamepad */
-.touch { position: absolute; inset: 0; pointer-events: none; }
+.touch { pointer-events: none; }
 .touch__look-zone {
   position: absolute;
   top: 0;
@@ -664,8 +659,6 @@ kbd {
 }
 .touch__stick-hint {
   position: absolute;
-  left: max(56px, calc(env(safe-area-inset-left, 0px) + 40px));
-  bottom: max(48px, calc(env(safe-area-inset-bottom, 0px) + 32px));
   width: 96px;
   height: 96px;
   border-radius: 50%;
@@ -717,10 +710,8 @@ kbd {
 .touch__btn--down { background: rgba(95, 242, 255, 0.3); border-color: var(--cyan); }
 .touch__actions {
   position: absolute;
-  right: max(16px, env(safe-area-inset-right, 0px));
-  bottom: max(16px, env(safe-area-inset-bottom, 0px));
-  width: 230px;
-  height: 210px;
+  width: 400px;
+  height: 200px;
   pointer-events: none;
 }
 .touch__btn--fire { right: 8px; bottom: 18px; width: 92px; height: 92px; font-size: 30px; color: var(--magenta); border-color: rgba(255, 61, 139, 0.6); }
@@ -738,10 +729,8 @@ kbd {
 .touch__btn--on { background: rgba(95, 242, 255, 0.3); border-color: var(--cyan); color: var(--cyan); }
 .touch__top {
   position: absolute;
-  top: max(12px, env(safe-area-inset-top, 0px));
-  right: max(16px, env(safe-area-inset-right, 0px));
   display: flex;
-  gap: 10px;
+  gap: 6px;
 }
 .touch__btn--small { position: static; width: 44px; height: 44px; font-size: 16px; border-radius: 10px; }
 
@@ -788,31 +777,10 @@ kbd {
 .rarity--legendary { border-color: rgba(255, 138, 31, 0.9); }
 .rarity--unique { border-color: rgba(255, 191, 74, 0.9); }
 
-/* Touch mode: move HUD pieces out of the thumbs' way. */
-.touch-mode .hud__wallet { right: 182px; top: 12px; }
-.touch-mode .hud__clock { right: 182px; top: 56px; }
-.touch-mode .toasts { top: 64px; right: 120px; }
-/* Under the top buttons and above the action cluster, clear of the move stick. */
-.touch-mode .minimap {
-  left: auto;
-  bottom: auto;
-  right: max(16px, env(safe-area-inset-right, 0px));
-  top: max(64px, calc(env(safe-area-inset-top, 0px) + 52px));
-  width: 88px;
-  height: 88px;
-}
+/* Touch mode: the HUD's pieces around the pad are placed by scale/zones.css (ADR-0085). */
+.touch-mode .minimap { width: 88px; height: 88px; }
 .touch-mode .minimap__north { font-size: 9px; }
-.touch-mode .gear { right: auto; left: 28px; bottom: auto; top: 96px; align-items: flex-start; }
 .touch-mode .hud__camera { display: none; }
-.touch-mode .hud__prompt { top: 22%; }
-/* Left of the action cluster, right of the move stick, at thumb height. */
-.touch-mode .weapon-strip {
-  left: auto;
-  transform: none;
-  align-items: flex-end;
-  right: calc(max(16px, env(safe-area-inset-right, 0px)) + 246px);
-  bottom: max(12px, env(safe-area-inset-bottom, 0px));
-}
 .touch-mode .weapon-strip__slot { pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
 .touch-mode .weapon-strip__name { max-width: 64px; }
 
@@ -837,18 +805,18 @@ kbd {
 
 /* Small screens (phones in landscape) */
 @media (max-height: 500px), (max-width: 760px) {
-  .hud__identity { left: max(16px, env(safe-area-inset-left, 0px)); bottom: 12px; width: 200px; padding: 6px 10px; }
+  .hud__identity { left: max(16px, var(--safe-left)); bottom: 12px; width: 200px; padding: 6px 10px; }
   .hud__name { font-size: 15px; }
-  .hud__objective { left: max(16px, env(safe-area-inset-left, 0px)); top: 10px; max-width: 46vw; font-size: 14px; padding: 6px 10px; }
+  .hud__objective { left: max(16px, var(--safe-left)); top: 10px; max-width: 46%; font-size: 14px; padding: 6px 10px; }
   .hud__wallet { font-size: 17px; padding: 4px 10px; }
   .toasts { width: 260px; }
   .toast { padding: 6px 10px; }
   .toast__text { font-size: 12px; }
   .gear__ability { width: 220px; padding: 5px 8px; }
-  .minimap { left: max(16px, env(safe-area-inset-left, 0px)); bottom: 76px; width: 120px; height: 120px; }
+  .minimap { left: max(16px, var(--safe-left)); bottom: 76px; width: 120px; height: 120px; }
   .settings__label { flex-basis: 7em; }
   /* Below the objective, which can carry the condition bonus. */
-  .touch-mode .gear { top: 92px; left: max(16px, env(safe-area-inset-left, 0px)); }
+  .touch-mode .gear { top: 92px; left: max(16px, var(--safe-left)); }
   .screen { gap: 12px; }
   .screen__heading { font-size: 28px; }
   .title__name { font-size: clamp(32px, 8vw, 56px); }
@@ -1561,7 +1529,7 @@ kbd {
 
 @media (max-height: 500px), (max-width: 760px) {
   .heat { top: 10px; font-size: 18px; }
-  .holocall, .phone-notice { left: max(16px, env(safe-area-inset-left, 0px)); top: 64px; width: 360px; padding: 6px 10px; }
+  .holocall, .phone-notice { left: max(16px, var(--safe-left)); top: 64px; width: 360px; padding: 6px 10px; }
   .phone__portrait--big { width: 52px; height: 52px; font-size: 20px; }
   .holocall__line { font-size: 14px; }
   .debrief { top: 8px; padding: 8px 12px; }
@@ -1582,7 +1550,7 @@ kbd {
 .touch-mode .heat { left: 50%; transform: none; }
 .touch-mode .holocall { left: 50%; transform: translateX(-50%); top: 48px; }
 .touch-mode .phone-notice { left: 50%; top: 48px; width: 320px; transform: translateX(-50%); }
-.touch-mode .debrief { left: max(16px, env(safe-area-inset-left, 0px)); transform: none; width: min(400px, 52vw); max-height: calc(100% - 16px); overflow: hidden; pointer-events: none; }
+.touch-mode .debrief { transform: none; max-height: calc(100% - 16px); overflow: hidden; pointer-events: none; }
 .touch-mode .debrief__close { pointer-events: auto; }
 /* Touch scanner: the card left of the crosshair, compact; the bars right of the heat stars,
    clear of the pad. */

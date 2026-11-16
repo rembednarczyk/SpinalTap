@@ -17,6 +17,7 @@ import { type CrossingBand, crossingBands, inCrossingBand } from "../../../packa
 import { FOOD_STALL, distanceToPiece } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
+import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { type Pt, type Rect, pointInRing, ringBounds } from "./geometry.ts";
 import type { BoardSpan } from "./props-boards.ts";
 import type { Placed } from "./props-gen.ts";
@@ -66,31 +67,30 @@ export interface MarketContext {
 /** What the rules keep clear of, gathered once from the chunks and the context. */
 export class Clearances {
   readonly bands: readonly CrossingBand[];
-  private readonly mouths: readonly Pt[];
-  private readonly service: readonly { readonly line: readonly Pt[]; readonly half: number; readonly box: Rect }[];
-  private readonly stops: readonly Pt[];
   private readonly roads: readonly Carriageway[];
-  private readonly doors: readonly DoorSpan[];
+  /** Each zebra, mouth, stop, door and service way as a test of a point, by the box it can fail in. */
+  private readonly blockers = new SpatialHash<(q: Pt) => boolean>(8);
 
   constructor(chunks: readonly LublinChunkData[], ctx: MarketContext = {}) {
     this.bands = crossingBands(chunks);
-    this.mouths = chunks.flatMap((c) => (c.passages ?? []).flatMap((p) => [p.from, p.to]));
-    this.service = chunks.flatMap((c) => (c.serviceWays ?? []).map((w) => ({ line: flat(w.line), half: w.width / 2, box: ringBounds(flat(w.line)) })));
-    this.stops = chunks.flatMap((c) => flat(c.busStops ?? []));
+    const mouths = chunks.flatMap((c) => (c.passages ?? []).flatMap((p) => [p.from, p.to]));
+    const service = chunks.flatMap((c) => (c.serviceWays ?? []).map((w) => ({ line: flat(w.line), half: w.width / 2, box: ringBounds(flat(w.line)) })));
+    const stops = chunks.flatMap((c) => flat(c.busStops ?? []));
     this.roads = ctx.roads ?? [];
-    this.doors = ctx.doors ?? [];
+    const doors = ctx.doors ?? [];
+    const add = (test: (q: Pt) => boolean, box: Rect, r: number) => this.blockers.insert(test, box.minX - r, box.minZ - r, box.maxX + r, box.maxZ + r);
+    const at = (p: Pt): Rect => ({ minX: p.x, minZ: p.z, maxX: p.x, maxZ: p.z });
+    // A point in a band is within its half extents and room of the centre either way; a centimetre's slack.
+    for (const b of this.bands) add((q) => inCrossingBand(b, q, ROOM.crossing), at(b.c), b.along + b.across + 2 * ROOM.crossing + 0.01);
+    for (const m of mouths) add((q) => Math.hypot(m.x - q.x, m.z - q.z) < ROOM.passage, at(m), ROOM.passage);
+    for (const st of stops) add((q) => Math.hypot(st.x - q.x, st.z - q.z) < ROOM.busStop, at(st), ROOM.busStop);
+    for (const d of doors) add((q) => distToLine(q, [d.a, d.b]) < ROOM.door, ringBounds([d.a, d.b]), ROOM.door);
+    for (const w of service) if (w.line.length > 0) add((q) => distToLine(q, w.line) < w.half + ROOM.service, w.box, w.half + ROOM.service);
   }
 
   /** Is q clear of the zebras, the passages' mouths, the service ways, the bus stops and the game's doors? */
   clear(q: Pt): boolean {
-    if (this.bands.some((b) => inCrossingBand(b, q, ROOM.crossing))) return false;
-    if (this.mouths.some((m) => Math.hypot(m.x - q.x, m.z - q.z) < ROOM.passage)) return false;
-    if (this.stops.some((s) => Math.hypot(s.x - q.x, s.z - q.z) < ROOM.busStop)) return false;
-    if (this.doors.some((d) => distToLine(q, [d.a, d.b]) < ROOM.door)) return false;
-    // A way's box first: the city has hundreds of them.
-    const reach = (w: { half: number; box: Rect }) => w.half + ROOM.service;
-    const nearBox = (w: { half: number; box: Rect }) => q.x > w.box.minX - reach(w) && q.x < w.box.maxX + reach(w) && q.z > w.box.minZ - reach(w) && q.z < w.box.maxZ + reach(w);
-    return !this.service.some((w) => nearBox(w) && distToLine(q, w.line) < reach(w));
+    return !this.blockers.some(q.x, q.z, q.x, q.z, (test) => test(q));
   }
 
   /** How far q is from the nearest carriageway's edge (m), negative on it; Infinity without any. */

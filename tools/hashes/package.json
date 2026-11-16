@@ -1,0 +1,13 @@
+{
+  "name": "@seki/hashes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The golden tests' expected hashes worked out again after a merge, written only where their numbers stay the same.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

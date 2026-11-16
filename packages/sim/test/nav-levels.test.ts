@@ -98,4 +98,21 @@ describe("NPC navigation between levels (ADR-0021)", () => {
     expect(routeAcrossLevels(sim.world, TARG_NAV, market(96, 0, 80), market(74, ROOF_WEST_TOP, 61))).toBeNull();
     expect(() => routeAcrossLevels(sim.world, { nodes: [], edges: [{ a: "x", b: "y" }] }, market(0, 0, 0), market(0, 5, 0))).not.toThrow();
   });
+
+  it("a node out of reach is no way straight there, however clear the line (W-3's yard and Targowa's metro)", () => {
+    // Off the streamed chunks nothing stops a ray: W-3's reinforcements "saw" the platforms of
+    // Targowa's metro 1.74 km away, knee-high through the earth, every step.
+    const sim = scene(market(100, OVERPASS_TOP, 92));
+    const flight = (dx: number): NavGraph => ({
+      nodes: [
+        { id: "foot", at: market(96 + dx, 0, 80) },
+        { id: "top", at: market(96 + dx, 5, 84) },
+      ],
+      edges: [{ a: "foot", b: "top" }],
+    });
+    const from = market(1096, 0, 80);
+    const up = (dx: number) => routeAcrossLevels(sim.world, flight(dx), from, market(96 + dx, 5, 84));
+    expect(up(1000 + 60)?.next).toEqual(market(1156, 0, 80));
+    expect(up(1000 + 1500)).toBeNull();
+  });
 });

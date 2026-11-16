@@ -1,0 +1,190 @@
+name: Map refresh
+
+# `pnpm map:refresh` (tools/map-refresh/README.md): the city refreshed from OSM, GUGiK and the
+# orthophoto by one deterministic command, once a week and by hand. When the data changed, the
+# files go to a branch `map-refresh/<date>` and a pull request with the report as its description;
+# its verdict says whether the curator has to look (thresholds in tools/map-refresh/src/config.ts).
+#
+# A pull request opened with GITHUB_TOKEN starts no other workflow, so after opening it this
+# workflow starts CI itself: ci.yml by workflow_dispatch on the branch (decision of 14.11).
+on:
+  schedule:
+    # Mondays 03:17 UTC: off the hour, when the OSM API is least busy.
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: "Sources to fetch (osm,gugik,orto)"
+        default: "osm,gugik,orto"
+        required: false
+
+concurrency:
+  group: map-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    name: Refresh the map
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      # Starting ci.yml on the branch (workflow_dispatch).
+      actions: write
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # The fetch steps ask only for what their cache outside the repo lacks (orto-fetch per tile,
+      # gugik-fetch per archive), so the caches are kept between runs: a run with them asks the
+      # orthophoto service and GUGiK nothing (the first run, without them, spent ~300 s and ~20 MB
+      # on 20 of the orthophoto's 60 tiles and lost it all to one reset, run 43624113625). The
+      # orthophoto is flown about once a year: its key changes with the year and the manifest, so a
+      # new image comes with the first run of a year; the GUGiK sets with each month. An entry is
+      # named by what it holds (the fingerprint of its files) and saved after a failed run too, so a
+      # fetch cut short goes on from its last tile the next time instead of from the start.
+      - name: Cache keys
+        id: keys
+        run: |
+          echo "orto=orto-v1-$(date -u +%Y)-${{ hashFiles('data/orto/sources.json', 'tools/orto/src/config.ts') }}" >> "$GITHUB_OUTPUT"
+          echo "orto-year=orto-v1-$(date -u +%Y)-" >> "$GITHUB_OUTPUT"
+          echo "gugik=gugik-v1-$(date -u +%Y-%m)-${{ hashFiles('data/gugik/sources.json', 'tools/gugik/src/sources.ts') }}" >> "$GITHUB_OUTPUT"
+          echo "nmpt=nmpt-v1-${{ hashFiles('tools/gugik/src/nmpt.ts', 'tools/osm-import/src/config.ts') }}" >> "$GITHUB_OUTPUT"
+      - name: Restore the orthophoto cache
+        id: orto-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/seki-orto
+          key: ${{ steps.keys.outputs.orto }}-
+          restore-keys: |
+            ${{ steps.keys.outputs.orto }}-
+            ${{ steps.keys.outputs.orto-year }}
+      - name: Restore the GUGiK cache
+        id: gugik-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/seki-gugik/*.zip
+          key: ${{ steps.keys.outputs.gugik }}-
+          restore-keys: ${{ steps.keys.outputs.gugik }}-
+      # The surface model's tiles (nmpt-fetch, 30 tiles of 250 m, ~1 MB each): a scan flown years
+      # apart, so its key changes only with the coverage or the districts (nmpt.ts, config.ts);
+      # nmpt-fetch asks only for the tiles the cache lacks.
+      - name: Restore the NMPT cache
+        id: nmpt-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/seki-gugik/nmpt
+          key: ${{ steps.keys.outputs.nmpt }}-
+          restore-keys: ${{ steps.keys.outputs.nmpt }}-
+
+      # Exit codes (tools/map-refresh/README.md): 0 a whole report without review, 2 a whole report
+      # that asks the curator (a stale source too: a fetch failed after its one retry, its data are
+      # the repo's, the scan and the hashes ran), 3 an HTTP 429 (stopped, no retry), any other a
+      # failure of the tool. 0 and 2 go on to the pull request; 3 and the others end the job red.
+      - name: pnpm map:refresh
+        id: refresh
+        env:
+          SOURCES: ${{ inputs.sources || 'osm,gugik,orto' }}
+        run: |
+          set +e
+          pnpm map:refresh --sources="$SOURCES"
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          case "$code" in
+            0) echo "Report whole, verdict: bez przeglądu." ;;
+            2) echo "::warning::Report whole, verdict: przegląd kuratora (reasons at the top of reports/map-refresh.md). The pull request opens with it." ;;
+            3) echo "::error::HTTP 429: a service asked to stop. Nothing asked again and no pull request; the next run tries again."; exit 3 ;;
+            *) echo "::error::map:refresh failed (exit $code): a step other than a fetch failed or the tool broke. No pull request; logs in the artifact map-refresh-report (reports/map-refresh/)."; exit "$code" ;;
+          esac
+
+      # The caches' fingerprints after the run: a new entry only when their files changed.
+      - name: Cache fingerprints
+        id: prints
+        if: always()
+        run: |
+          # The files' names and sizes (tiles in a folder a flight, archives at the top), or none.
+          print() { if [ -d "$1" ] && [ -n "$(find "$1" -maxdepth "$3" -type f -name "$2" -print -quit)" ]; then find "$1" -maxdepth "$3" -type f -name "$2" -printf '%P %s\n' | sort | sha256sum | cut -c1-16; else echo none; fi; }
+          echo "orto=${{ steps.keys.outputs.orto }}-$(print "$HOME/.cache/seki-orto" '*.png' 2)" >> "$GITHUB_OUTPUT"
+          echo "gugik=${{ steps.keys.outputs.gugik }}-$(print "$HOME/.cache/seki-gugik" '*.zip' 1)" >> "$GITHUB_OUTPUT"
+          echo "nmpt=${{ steps.keys.outputs.nmpt }}-$(print "$HOME/.cache/seki-gugik/nmpt" '*.f32' 1)" >> "$GITHUB_OUTPUT"
+      - name: Save the orthophoto cache
+        if: always() && !endsWith(steps.prints.outputs.orto, '-none') && steps.prints.outputs.orto != steps.orto-cache.outputs.cache-matched-key
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/seki-orto
+          key: ${{ steps.prints.outputs.orto }}
+      - name: Save the GUGiK cache
+        if: always() && !endsWith(steps.prints.outputs.gugik, '-none') && steps.prints.outputs.gugik != steps.gugik-cache.outputs.cache-matched-key
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/seki-gugik/*.zip
+          key: ${{ steps.prints.outputs.gugik }}
+      - name: Save the NMPT cache
+        if: always() && !endsWith(steps.prints.outputs.nmpt, '-none') && steps.prints.outputs.nmpt != steps.nmpt-cache.outputs.cache-matched-key
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/seki-gugik/nmpt
+          key: ${{ steps.prints.outputs.nmpt }}
+
+      - name: Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: map-refresh-report
+          path: |
+            reports/map-refresh.md
+            reports/map-refresh.json
+            reports/map-refresh/
+          if-no-files-found: ignore
+
+      # Only after a whole report (exit 0 or 2), whatever its verdict: the title says it.
+      - name: Branch and pull request
+        if: steps.refresh.outputs.code == '0' || steps.refresh.outputs.code == '2'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          paths=(data packages/sim/src/content/lublin)
+          if [ -z "$(git status --porcelain -- "${paths[@]}")" ]; then
+            echo "No change of the map's data or tables: nothing to open."
+            exit 0
+          fi
+          branch="map-refresh/$(date -u +%Y-%m-%d)"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            branch="$branch-$GITHUB_RUN_NUMBER"
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add -- "${paths[@]}"
+          # "bez przeglądu" or "przegląd kuratora", with the stale sources named (a fetch that failed).
+          verdict="$(node -p 'const r = JSON.parse(require("fs").readFileSync("reports/map-refresh.json", "utf8")); (r.verdict.review ? "przegląd kuratora" : "bez przeglądu") + (r.stale.length ? ", nieświeże: " + r.stale.map((s) => s.source).join(", ") : "")')"
+          git commit -q -m "chore(map): odświeżenie mapy z danych ($verdict)" -m "pnpm map:refresh, przebieg $GITHUB_RUN_ID; raport w opisie PR."
+          git push -q origin "$branch"
+          # The description's limit is 65 536 characters; the full report is the run's artifact.
+          head -c 60000 reports/map-refresh.md > "$RUNNER_TEMP/body.md"
+          if ! gh pr create --base "${GITHUB_REF_NAME}" --head "$branch" --title "chore(map): odświeżenie mapy $(date -u +%Y-%m-%d) ($verdict)" --body-file "$RUNNER_TEMP/body.md" 2> "$RUNNER_TEMP/pr.err"; then
+            cat "$RUNNER_TEMP/pr.err"
+            if grep -qi "not permitted to create or approve pull requests" "$RUNNER_TEMP/pr.err"; then
+              echo "::error::The branch $branch is pushed, but the repository does not let GitHub Actions open pull requests. Turn on Settings > Actions > General > Workflow permissions > 'Allow GitHub Actions to create and approve pull requests', or open the PR from $branch by hand."
+            else
+              echo "::error::The branch $branch is pushed, but the pull request could not be opened (above)."
+            fi
+            exit 1
+          fi
+          # The PR's checks: CI on the branch, since the PR's own events start nothing (GITHUB_TOKEN).
+          if ! gh workflow run ci.yml --ref "$branch"; then
+            echo "::error::The pull request is open, but CI could not be started on $branch: run the CI workflow on it by hand (Actions > CI > Run workflow)."
+            exit 1
+          fi
+          echo "CI started on $branch: its run shows among the PR's checks (same head commit)."

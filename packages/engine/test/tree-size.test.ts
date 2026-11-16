@@ -1,6 +1,7 @@
-import { TREE_CROWN, TREE_KIND, TREE_SPECIES, TREE_TOP, measuredTreeVariant, treeHeight, withTreeSpecies } from "@seki/core";
+import { TREE_CROWN, TREE_KIND, TREE_SPECIES, TREE_SPREADS, TREE_TOP, measuredTreeVariant, narrowTreeVariant, treeHeight, treeScale, withTreeSpecies } from "@seki/core";
 import { describe, expect, it } from "vitest";
-import { toWorld } from "../src/renderer/mapcity/prop-batch";
+import { bake, toWorld } from "../src/renderer/mapcity/prop-batch";
+import { MeshSink } from "../src/renderer/mesh-sink";
 import { tree } from "../src/renderer/mapcity/prop-green";
 
 const top = (shape: number): number => {
@@ -64,5 +65,25 @@ describe("tree sizes (G-422)", () => {
     expect(top(TREE_KIND.poplar)).toBeGreaterThan(3 * reach(TREE_KIND.poplar));
     expect(reach(TREE_KIND.oak)).toBeGreaterThan(reach(TREE_KIND.maple) + 0.8);
     for (const s of [TREE_KIND.oak, TREE_KIND.poplar]) expect(girth(s)).toBeGreaterThan(1.5 * girth(TREE_KIND.lime));
+  });
+
+  it("draws a tree narrowed by walls as tall as its height, its crown within the narrowed reach (G-814)", () => {
+    for (const species of [TREE_KIND.lime, TREE_KIND.oak]) {
+      for (const w of TREE_SPREADS) {
+        const variant = narrowTreeVariant(withTreeSpecies(measuredTreeVariant(1, 18), species), w)!;
+        const [p] = toWorld([{ prop: "tree", x: 10, y: 0, z: -4, yaw: 0.7, variant }], { x: 0, y: 0, z: 0 });
+        const sink = new MeshSink();
+        bake(sink, tree(p!.shape), p!);
+        let [y, r] = [0, 0];
+        for (let i = 0; i < sink.vertexCount; i++) {
+          y = Math.max(y, sink.positions[i * 3 + 1]!);
+          r = Math.max(r, Math.hypot(sink.positions[i * 3]! - 10, sink.positions[i * 3 + 2]! + 4));
+        }
+        expect(y).toBeCloseTo(treeHeight(variant), 1);
+        expect(r).toBeLessThanOrEqual(TREE_CROWN[species]! * treeScale(variant) * w + 1e-6);
+        expect(r).toBeGreaterThan((TREE_CROWN[species]! - 0.3) * treeScale(variant) * w);
+        for (let i = 0; i < sink.vertexCount; i++) expect(Math.hypot(sink.normals[i * 3]!, sink.normals[i * 3 + 1]!, sink.normals[i * 3 + 2]!)).toBeCloseTo(1, 5);
+      }
+    }
   });
 });

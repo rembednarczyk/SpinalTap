@@ -1,7 +1,7 @@
 import { expect } from "vitest";
-import { type Contract, type DifficultyProfile, type SaveSnapshot, contractFailedFlag } from "@seki/core";
-import { Simulation, docks, stateHash } from "../src";
-import { byKey, run, teleportPlayer } from "./helpers";
+import { type Contract, type DifficultyProfile, type SaveSnapshot, type Vec3, contractFailedFlag } from "@seki/core";
+import { Simulation, stateHash, w3 } from "../src";
+import { byKey, run, standInFront, teleportPlayer } from "./helpers";
 
 /** Runs for the saves of a contract that has ended or was replaced (G-178). */
 
@@ -18,7 +18,7 @@ export const peopleOf = (sim: Simulation, id: string): string[] =>
 export const taken = (
   seed: number,
   completed: number,
-  at: ReturnType<typeof docks>,
+  at: Vec3,
   kind: "infiltrate" | "hack",
   difficulty?: DifficultyProfile,
 ): { sim: Simulation; c: Contract } => {
@@ -35,9 +35,8 @@ export const taken = (
 
 /** Seed 77, two jobs done: six metres in front of the door guard until the alarm fails the job, and `after` steps more. */
 export const alarmed = (after: number): { sim: Simulation; id: string } => {
-  const { sim, c } = taken(77, 2, docks(6, 0, 110), "infiltrate");
-  const door = byKey(sim, `${c.id}-g1`)!;
-  teleportPlayer(sim, { x: door.position.x + 6, y: door.position.y, z: door.position.z }, -Math.PI / 2);
+  const { sim, c } = taken(77, 2, w3(2530, 0, 394), "infiltrate");
+  standInFront(sim, byKey(sim, `${c.id}-g1`)!, 6);
   for (let i = 0; i < 600 && sim.domain.contracts.active; i++) sim.step();
   expect(sim.domain.contracts.active).toBeNull();
   expect(sim.domain.flags).toContain(contractFailedFlag(c.id));

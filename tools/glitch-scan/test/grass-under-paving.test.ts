@@ -121,12 +121,22 @@ describe("grass-under-paving (G-421)", () => {
     const plac = areas.find((a) => a.id === "r7690183")!.ring;
     // The lawns mapped in the square, and a point's distance to their edges.
     const lawns = areas.filter((a) => a.tags.landuse === "grass" && a.ring.every((p) => pointInRing(p, plac))).map((a) => a.ring);
-    const gap = (p: P2, r: readonly P2[]) =>
-      Math.min(...r.map((a, i) => {
-        const b = r[(i + 1) % r.length]!;
-        return segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z);
-      }));
-    const inLawn = (p: P2) => lawns.some((r) => pointInRing(p, r) || gap(p, r) < 0.5);
+    const near = (p: P2, r: readonly P2[]) => {
+      for (let i = 0; i < r.length; i++) {
+        const [a, b] = [r[i]!, r[(i + 1) % r.length]!];
+        if (segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z) < 0.5) return true;
+      }
+      return false;
+    };
+    // G-749: 80 000 probes against 76 lawns ran past the 20 s limit under coverage. A lawn whose box
+    // grown by 0.5 m misses the point can hold it neither inside nor within 0.5 m of an edge.
+    const lawnBoxes = lawns.map(boxOf);
+    const inLawn = (p: P2) =>
+      lawns.some((r, k) => {
+        const b = lawnBoxes[k]!;
+        if (p.x < b.minX - 0.5 || p.x > b.maxX + 0.5 || p.z < b.minZ - 0.5 || p.z > b.maxZ + 0.5) return false;
+        return pointInRing(p, r) || near(p, r);
+      });
     const at = drawnAt(WORLD_SCENERY, boxOf(plac));
     const box = boxOf(plac);
     const bare: string[] = [];

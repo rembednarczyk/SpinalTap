@@ -1,0 +1,13 @@
+{
+  "name": "@seki/test-rerun",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Vitest under load: timeouts told from assertions, files with only timeouts run again one by one.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

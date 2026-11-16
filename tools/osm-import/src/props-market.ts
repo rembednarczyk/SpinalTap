@@ -6,11 +6,10 @@
  */
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { distanceToPiece } from "../../../packages/sim/src/content/lublin/furniture.ts";
-import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type Pt, pointInRing, ringBounds } from "./geometry.ts";
 import { yawOf } from "./props-place.ts";
 import type { Site } from "./props-site.ts";
-import { nearTraffic } from "./props-streets.ts";
+import { nearStreet, nearTraffic } from "./props-streets.ts";
 
 /** A stall's canvas (`marketStall` in the renderer): 2.4 m along its counter, 1.8 m deep. */
 const STALL_W = 2.4;
@@ -43,16 +42,6 @@ export interface MarketStall {
   readonly p: Pt;
   readonly yaw: number;
 }
-
-const distToLine = (p: Pt, line: readonly Pt[]): number => {
-  let best = Infinity;
-  for (let i = 0; i + 1 < line.length; i++) {
-    const a = line[i]!;
-    const b = line[i + 1]!;
-    best = Math.min(best, segmentDistance(p.x, p.z, a.x, a.z, b.x, b.z));
-  }
-  return best;
-};
 
 /** The open ground of the outline on the map, every metre. */
 const openGround = (site: Site, ring: readonly Pt[]): Pt[] => {
@@ -92,7 +81,7 @@ export const marketEntrances = (site: Site, ring: readonly Pt[]): Pt[] => {
     const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z)));
     for (let k = 0; k < n; k++) {
       const p = { x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n };
-      if (site.onPath(p) || site.surfaceAt(p) === "road" || site.streets.some((s) => distToLine(p, s.line) < 2)) out.push(p);
+      if (site.onPath(p) || site.surfaceAt(p) === "road" || nearStreet(site.streets, p, 2)) out.push(p);
     }
   }
   return out;
@@ -127,7 +116,7 @@ const fits = (site: Site, ring: readonly Pt[], gates: readonly Pt[], p: Pt, u: P
       if (!pointInRing(q, ring) || !site.chunkAt(q) || site.surfaceAt(q) !== "walk" || site.onPath(q)) return false;
     }
   const reach = Math.hypot(hw, hd) + PATH_ROOM - EDGE;
-  return !site.streets.some((s) => distToLine(p, s.line) < reach);
+  return !nearStreet(site.streets, p, reach);
 };
 
 /** The stalls of one phase of the rows over the ground's extent along u and v. */

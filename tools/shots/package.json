@@ -1,0 +1,13 @@
+{
+  "name": "@seki/shots",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shots of places before and after a change, side by side, with changed and burnt pixels (ADR-0054).",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

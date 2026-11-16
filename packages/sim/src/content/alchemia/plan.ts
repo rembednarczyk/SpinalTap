@@ -10,8 +10,8 @@ import type { PrismDef } from "../../world/prism";
  * Measured on the game's terrain (NMT, `docs/topografia.md` T-145): the car park along the hall's
  * back wall lies at -2.2 (T0, the hall's roof), the ground in front of its front at -5.6..-7.8,
  * levelled to -6.4 (T1, the hall's floor). The outline keeps 2.2 m off the pavilion of metro B
- * (x 424.4..431.6, z 26.2..29.8) and lies on the lines of the 4 m terrain grid of its chunk, so the
- * terrace's ground meets its walls along whole cells.
+ * (x 424.4..431.6, z 26.2..29.8). It was laid on the lines of the 4 m terrain grid its chunk had
+ * until G-758; on the 2.5 m one `terraces.ts` and `plaza.ts` put the terraces' edges on its rows.
  */
 
 /** The terraces: T0 over the hall (its roof), T1 in front of it (its floor). */

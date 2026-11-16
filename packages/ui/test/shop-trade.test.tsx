@@ -27,6 +27,8 @@ const intents = (): UiIntents => ({
   changeSettings: vi.fn(),
   setDifficulty: vi.fn(),
   setFieldOfView: vi.fn(),
+  setGraphicsEffect: vi.fn(),
+  setRenderResolution: vi.fn(),
   bindKey: vi.fn(),
   resetControls: vi.fn(),
   reload: vi.fn(),
@@ -59,6 +61,9 @@ const intents = (): UiIntents => ({
   setRadioStation: vi.fn(),
   nextRadioStation: vi.fn(),
   trackQuest: vi.fn(),
+  openWait: vi.fn(),
+  closeWait: vi.fn(),
+  waitHours: vi.fn(),
 });
 
 const piece = (key: string, defId: TradeItemVm["defId"], name: string, patch: Partial<TradeItemVm> = {}): TradeItemVm => ({

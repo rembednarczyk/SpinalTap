@@ -181,8 +181,20 @@ describe("metro platforms in the map (ADR-0071 stage 4)", () => {
     type R = { minX: number; maxX: number; minZ: number; maxZ: number };
     const meets = (r: R) => p.vaults.some(({ bounds: b }) => r.minX < b.maxX && r.maxX > b.minX && r.minZ < b.maxZ && r.maxZ > b.minZ);
     expect(meets(TRASA_PODZIEMNA_BOUNDS)).toBe(false);
-    // The terrain dug down (the docks' basin, Trasa Podziemna's pad); the level pads over it are the street.
-    for (const pad of PADS) if (pad.y < e.street - 1) expect(meets(pad.rect)).toBe(false);
+    // The terrain dug down (W-3's basin, Trasa Podziemna's pad) keeps clear of it; a pad levelled
+    // lower than the street over it (W-3's zone by Nabrzeże's entrance, ADR-0082) stays over a
+    // metre above the rooms under it.
+    const overlap = (a: R, b: R) => a.minX < b.maxX && a.maxX > b.minX && a.minZ < b.maxZ && a.maxZ > b.minZ;
+    for (const pad of PADS) {
+      if (pad.y >= e.street - 1 || !meets(pad.rect)) continue;
+      // The rooms under it, or those of the vaults it meets (the track's tunnel ends past them are no higher).
+      const inner = (r: R): R => ({ minX: r.minX + 0.5, maxX: r.maxX - 0.5, minZ: r.minZ + 0.5, maxZ: r.maxZ - 0.5 });
+      const vaults = p.vaults.filter((v) => overlap(v.bounds, pad.rect));
+      const direct = p.rooms.filter((r) => overlap(r, pad.rect));
+      const under = direct.length > 0 ? direct : p.rooms.filter((r) => vaults.some((v) => overlap(inner(v.bounds), r)));
+      expect(under.length, `pad ${pad.row}`).toBeGreaterThan(0);
+      for (const r of under) expect(pad.y - r.top, `pad ${pad.row}`).toBeGreaterThan(1);
+    }
     for (const c of METRO_CUTS) if (c !== e.cut) expect(meets(c.bounds)).toBe(false);
     for (const o of METRO_PLATFORMS) if (o !== e) for (const v of o.platform.vaults) expect(meets(v.bounds)).toBe(false);
   });

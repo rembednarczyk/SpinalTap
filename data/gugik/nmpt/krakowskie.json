@@ -1,0 +1,12 @@
+{
+  "source": "GUGiK NMPT 0.5 m (geoportal.gov.pl, WCS DSM_PL-EVRF2007-NH) less DATUM less GUGiK NMT 1 m (data/terrain, PL-KRON86-NH)",
+  "of": "the highest of the four 0.5 m cells of NMPT less NMT, m over the ground",
+  "crs": "EPSG:2180",
+  "e0": 748115,
+  "n0": 381955,
+  "cols": 702,
+  "rows": 484,
+  "step": 1,
+  "scale": 0.2,
+  "noData": 255
+}

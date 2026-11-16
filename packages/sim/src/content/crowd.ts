@@ -1,11 +1,11 @@
 import { type ActivityId, SpatialHash, type Vec3, pointInPairRingEvenOdd, segmentDistance } from "@seki/core";
-import { placeAt, v } from "./builders";
 import { DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_PROPS } from "./district-kanal";
 import { KOI_CROWD_SPOTS } from "./interiors";
 import { METRO_FOOTPRINTS } from "./metro";
 import { againstWall, inBuilding, nearestWall } from "./lublin/places";
-import { DOCKS_PLACE, MAP_CHUNKS } from "./lublin/sites";
+import { MAP_CHUNKS } from "./lublin/sites";
+import { w3 } from "./tessen-w3/site";
 import { ground } from "./lublin/terrain";
 import { furnitureClearance, furnitureNear } from "./furniture-index";
 import { SEAT_SPOTS } from "./crowd-seats";
@@ -50,8 +50,6 @@ const NORTH = 0;
 const SOUTH = Math.PI;
 
 /** A lane of a set piece in the world, from its own coordinates. */
-const placedLane = (d: Vec3, lane: CrowdLane): CrowdLane => ({ ...lane, points: lane.points.map(([x, z]) => [x + d.x, z + d.z] as const) });
-
 /** Half the width of a lane laid along a street of the map: walkers go up one side and back down the other. */
 const STREET_LANE_HALF = 1.6;
 /** Half widths tried for a street's lane, widest usual first: furniture (ADR-0050) can push a loop in or out. */
@@ -280,13 +278,14 @@ const squareLanes = (): CrowdLane[] =>
   MAP_CHUNKS.filter((c) => c.district === "shinsekai-7" || c.district === "kanal").flatMap((c) => {
     const water = c.ground.filter((g) => g.surface === "water" || g.surface === "basin").map((g) => ringOf(g.outline));
     const dry = (loop: readonly Pt[]) => loop.every(([x, z]) => !water.some((w) => pointInPairRingEvenOdd(x, z, w)));
-    const squares = c.ground
+    // The squares and alleys as mapped, not as the partition cut them (`walkAreas`).
+    const squares = (c.walkAreas ?? [])
       .filter((g) => g.surface === "square")
       .map((g) => ringOf(g.outline))
       .filter((r) => r.length >= 3 && ringArea(r) >= SQUARE_AREA)
       .sort((a, b) => ringArea(b) - ringArea(a));
     // The squares' alleys: a path's band is already a loop up one side and back down the other.
-    const alleys = c.ground
+    const alleys = (c.walkAreas ?? [])
       .filter((g) => g.surface === "footway")
       .map((g) => ringOf(g.outline))
       .filter((r) => r.length >= 4 && ringArea(r) >= ALLEY_AREA)
@@ -333,26 +332,21 @@ const SET_PIECE_LANES: readonly CrowdLane[] = [
     ],
   },
   { id: "targ-stalls", chunk: MARKET_CHUNK, points: [fenceOut(-5.5, 2.7), fenceOut(37.5, 2.7), fenceOut(37.5, 4.5), fenceOut(-5.5, 4.5)] },
-  // The docks: the footpath along the east wall, west along the quay fence, back east past the
-  // office and the vending machine, north up the yard.
-  placedLane(DOCKS_PLACE, {
+  // W-3 (ADR-0082): the workers' round of the east yard and the pickup yard, along the east
+  // fence, west along the basin's railing short of the container, back east under row N's wall,
+  // south past the chamber.
+  {
     id: "doki-round",
     chunk: DOCKS_CHUNK,
     points: [
-      [31.3, 93],
-      [31.3, 113.6],
-      [27.9, 114.4],
-      [27.9, 117.6],
-      [31.3, 118.6],
-      [31.3, 148.75],
-      [-34.2, 148.75],
-      [-34.2, 125.6],
-      [22.6, 125.6],
-      [22.6, 123.3],
-      [24.4, 122.6],
-      [24.4, 93],
+      [2576, 396.5],
+      [2602, 396.5],
+      [2602, 448],
+      [2540, 448],
+      [2540, 443.5],
+      [2576, 443.5],
     ],
-  }),
+  },
 ];
 
 export { furnitureClearance };
@@ -372,7 +366,7 @@ const wallSpot = (x: number, z: number, does: readonly [ActivityId, ...ActivityI
   return spot(chunkOf(w.at.x, w.at.z), w.at, w.yaw, does);
 };
 
-const inDocks = (x: number, z: number): Vec3 => placeAt(DOCKS_PLACE, v(x, 0, z));
+const inDocks = (x: number, z: number): Vec3 => w3(x, 0, z);
 
 /**
  * Where residents stand: at the shop fronts of the deptak and the Rynek (out of the walkers'
@@ -407,10 +401,10 @@ export const CROWD_SPOTS: readonly CrowdSpot[] = [
   ...FOODHALL_CROWD,
   // And in its car park's P-1 under T0 (stage 4): the attendant, a technician, a guard.
   ...PARKING_CROWD,
-  spot(DOCKS_CHUNK, inDocks(12.6, 101.2), WEST, ["smoke", "lean"]),
-  spot(DOCKS_CHUNK, inDocks(26, 104), NORTH, ["phone"]),
-  spot(DOCKS_CHUNK, inDocks(12.6, 137.5), NORTH, ["lean", "smoke"]),
-  spot(DOCKS_CHUNK, inDocks(5.5, 134), SOUTH, ["talk", "phone"]),
+  spot(DOCKS_CHUNK, inDocks(2530, 444.6), WEST, ["smoke", "lean"]),
+  spot(DOCKS_CHUNK, inDocks(2585, 444.5), NORTH, ["phone"]),
+  spot(DOCKS_CHUNK, inDocks(2580, 410), NORTH, ["lean", "smoke"]),
+  spot("nabrzeze-0-1", inDocks(2484, 436), SOUTH, ["talk", "phone"]),
   // At the street furniture (ADR-0050): benches, café gardens, kiosks, bus shelters.
   ...SEAT_SPOTS,
 ];

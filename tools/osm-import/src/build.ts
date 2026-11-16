@@ -1,25 +1,32 @@
 /**
  * `pnpm osm:build`: generates `packages/sim/src/content/lublin/*.generated.ts` from the raw
- * data in `data/` (offline) and prints the control numbers.
+ * data in `data/` (offline) and prints the control numbers; `--stats=<file>` also writes the
+ * carriageway widths' sources (m of street side) and the barriers as JSON (`pnpm map:refresh`),
+ * and `--no-write` leaves the tables as they are (the numbers of the data before a refresh).
  */
-import { mkdirSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DISTRICTS } from "./config.ts";
 import { emitDistrict } from "./emit.ts";
+import { TABLES, tableFingerprint, withFingerprint } from "./fingerprint.ts";
 import { generate } from "./generate.ts";
 import { loadInputs } from "./load.ts";
 import { REPO } from "./paths.ts";
+import { reportLine } from "./street-section.ts";
 
 const OUT = join(REPO, "packages/sim/src/content/lublin");
 
 const inputs = loadInputs();
-const { chunks, stats, venues } = generate(inputs.osm, inputs.src, undefined, undefined, inputs.lod1, inputs.lod2);
+const { chunks, stats, venues, widths } = generate(inputs.osm, inputs.src, undefined, undefined, inputs.lod1, inputs.lod2, inputs.covers);
 mkdirSync(OUT, { recursive: true });
+// The fingerprint of the inputs in every table's header: the unit test compares it, not the tables (ADR-0083).
+const fingerprint = tableFingerprint("build");
 let total = 0;
 for (const d of DISTRICTS) {
   const file = join(OUT, `${d.slug}.generated.ts`);
-  writeFileSync(file, emitDistrict(d.slug, d.name, chunks.filter((c) => c.district === d.id)));
-  const size = statSync(file).size;
+  const text = withFingerprint(emitDistrict(d.slug, d.name, chunks.filter((c) => c.district === d.id)), fingerprint, TABLES.build.command);
+  if (!process.argv.includes("--no-write")) writeFileSync(file, text);
+  const size = Buffer.byteLength(text);
   total += size;
   console.log(`${d.slug}.generated.ts: ${(size / 1024).toFixed(0)} KiB`);
 }
@@ -33,6 +40,7 @@ for (const s of stats) {
 console.log(
   `venues ${venues.total}: ${venues.signed} signed, ${venues.named} named from the table, ${venues.total - venues.named} generic; colour from osm ${venues.colourOsm}, table ${venues.colourTable}, kind ${venues.colourKind}`,
 );
+console.log(`carriageway widths (ADR-0080), street sides: streets ${reportLine(widths.streets)}; with service ways ${reportLine(widths.all)}`);
 const walls = new Map<string, { n: number; m: number }>();
 for (const b of chunks.flatMap((c) => c.barriers ?? [])) {
   const e = walls.get(b.kind) ?? { n: 0, m: 0 };
@@ -40,6 +48,12 @@ for (const b of chunks.flatMap((c) => c.barriers ?? [])) {
   walls.set(b.kind, { n: e.n + 1, m: e.m });
 }
 console.log(`barriers (ADR-0077): ${[...walls].sort().map(([k, e]) => `${k} ${e.n} pieces ${e.m.toFixed(0)} m`).join(", ")}`);
+const statsFile = process.argv.find((a) => a.startsWith("--stats="))?.slice("--stats=".length);
+if (statsFile) {
+  const m = (r: Record<string, number>) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, Math.round(v)]));
+  const barriers = Object.fromEntries([...walls].sort().map(([k, e]) => [k, { pieces: e.n, m: Math.round(e.m) }]));
+  writeFileSync(statsFile, `${JSON.stringify({ widths: { streets: m(widths.streets), all: m(widths.all) }, barriers }, null, 2)}\n`);
+}
 if (process.argv.includes("--landmarks")) {
   for (const c of chunks) {
     for (const b of c.buildings) {

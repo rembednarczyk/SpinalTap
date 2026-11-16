@@ -1,0 +1,10 @@
+# entrance-no-door: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-0-1 -143,32
+krakowskie-1-0 156,-265
+krakowskie-2-0 427,-245
+krakowskie-2-0 432,-242
+podzamcze-0-1 527,437
+podzamcze-1-1 748,428
+stare-miasto-0-0 588,-237
+stare-miasto-0-1 590,17
+stare-miasto-1-1 668,15

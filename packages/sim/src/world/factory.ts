@@ -1,6 +1,6 @@
 import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, sightOf, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
-import { SNIPER_PERCHES } from "../content/district-doki";
+import { SNIPER_PERCHES } from "../content/tessen-w3";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
 import { BODY_RADIUS } from "../content/walker-size";
 import { castViewOf } from "../content/cast";

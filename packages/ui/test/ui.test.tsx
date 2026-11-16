@@ -28,6 +28,8 @@ const intents = (): UiIntents => ({
   changeSettings: vi.fn(),
   setDifficulty: vi.fn(),
   setFieldOfView: vi.fn(),
+  setGraphicsEffect: vi.fn(),
+  setRenderResolution: vi.fn(),
   bindKey: vi.fn(),
   resetControls: vi.fn(),
   reload: vi.fn(),
@@ -60,6 +62,9 @@ const intents = (): UiIntents => ({
   setRadioStation: vi.fn(),
   nextRadioStation: vi.fn(),
   trackQuest: vi.fn(),
+  openWait: vi.fn(),
+  closeWait: vi.fn(),
+  waitHours: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {
@@ -125,6 +130,12 @@ describe("HUD", () => {
     expect(screen.queryByTestId("prompt")).toBeNull();
     act(() => patchUi(store, { prompt: "Rozmawiaj z Kaito" }));
     expect(screen.getByTestId("prompt").textContent).toContain("Rozmawiaj z Kaito");
+  });
+
+  it("opens the wait window on a tap or a click on the clock", () => {
+    const { i } = mount({ screen: "playing", clock: "21:00", day: 1 });
+    fireEvent.click(screen.getByTestId("clock"));
+    expect(i.openWait).toHaveBeenCalledTimes(1);
   });
 
   it("opens the journal on a click on the tracked entry", () => {

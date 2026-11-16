@@ -1,3 +1,4 @@
+import { segmentParam } from "@seki/core";
 import { BinIndex } from "../mapcity/map-index";
 import { type Box2, type P2, boundsOf, pointInRing } from "../mapcity/polygon";
 
@@ -35,7 +36,7 @@ export const toRing = (p: P2, ring: readonly P2[]): number => {
     const b = ring[i] as P2;
     const dx = b.x - a.x;
     const dz = b.z - a.z;
-    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+    const t = segmentParam(p.x, p.z, a.x, a.z, b.x, b.z);
     best = Math.min(best, Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z));
   }
   return best;

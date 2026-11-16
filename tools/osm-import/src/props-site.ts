@@ -52,6 +52,13 @@ const flat = (f: readonly number[], dx = 0, dz = 0): Pt[] => {
 const surfaceOf = (s: GroundSurface): SiteSurface => (s === "road" || s === "crossing" ? "road" : WALK.has(s) ? "walk" : s === "grass" ? "green" : s === "water" || s === "basin" ? "water" : "rail");
 
 /** Point queries over a set of chunks. */
+/** A ring into a grid by its box, the box with it. */
+const boxed = (h: SpatialHash<{ readonly ring: readonly Pt[]; readonly box: Rect }>, ring: readonly Pt[]): void => {
+  if (ring.length === 0) return;
+  const box = ringBounds(ring);
+  h.insert({ ring, box }, box.minX, box.minZ, box.maxX, box.maxZ);
+};
+
 export class Site {
   readonly chunks: readonly LublinChunkData[];
   readonly streets: readonly SiteStreet[];
@@ -59,18 +66,31 @@ export class Site {
   private readonly bins = new SpatialHash<Shape>(BIN);
   /** The bridges' ground, kept apart: a deck is no ground to stand things on, but a street's paving runs over it. */
   private readonly decks = new SpatialHash<Shape>(BIN);
+  /** The buildings' outlines of `bins` alone, for the many samples of `inBuilding` and `buildingNear`. */
+  private readonly buildings = new SpatialHash<readonly Pt[]>(BIN);
+  /** The chunks by their bounds, in their order (the first holding a point is its chunk). */
+  private readonly chunkBins = new SpatialHash<LublinChunkData>(BIN);
   /** The passages through the chunks' buildings (ADR-0048), along their axes. */
   private readonly passages: readonly (readonly [Pt, Pt])[];
   /** The gates the game cuts by hand, along their axes under their buildings and the mouths. */
   private readonly gates: readonly (readonly [Pt, Pt])[];
   /** The car parks of the map laid out as lots (`parking=surface`), not lanes along a kerb. */
-  private readonly lots: readonly { readonly ring: readonly Pt[]; readonly box: Rect }[];
+  private readonly lots = new SpatialHash<{ readonly ring: readonly Pt[]; readonly box: Rect }>(BIN);
+  /** The car parks of the map along a kerb (`parking=lane`, `street_side`…): the parked cars' bays. */
+  private readonly kerbParks = new SpatialHash<{ readonly ring: readonly Pt[]; readonly box: Rect }>(BIN);
 
   constructor(chunks: readonly LublinChunkData[]) {
     this.chunks = chunks;
+    for (const c of chunks) this.chunkBins.insert(c, c.bounds.minX, c.bounds.minZ, c.bounds.maxX, c.bounds.maxZ);
     const streets: SiteStreet[] = [];
     for (const c of chunks) {
-      for (const b of c.buildings) this.add({ ring: flat(b.outline, b.x, b.z), surface: "building", box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
+      for (const b of c.buildings) {
+        const ring = flat(b.outline, b.x, b.z);
+        this.add({ ring, surface: "building", box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
+        if (ring.length < 3) continue;
+        const box = ringBounds(ring);
+        this.buildings.insert(ring, box.minX, box.minZ, box.maxX, box.maxZ);
+      }
       for (const g of c.ground) {
         const [a, b] = g.deck ? flat(g.deck) : [];
         const deck = a && b ? { a, b, ya: this.heightAt(a), yb: this.heightAt(b) } : undefined;
@@ -81,7 +101,9 @@ export class Site {
     }
     this.streets = streets;
     const lots = new Map(chunks.flatMap((c) => (c.carParks ?? []).filter((k) => k.kind === "surface").map((k) => [k.id, flat(k.outline)] as const)));
-    this.lots = [...lots.values()].map((ring) => ({ ring, box: ringBounds(ring) }));
+    for (const ring of lots.values()) boxed(this.lots, ring);
+    const kerbParks = new Map(chunks.flatMap((c) => (c.carParks ?? []).filter((k) => k.kind !== "surface").map((k) => [k.id, flat(k.outline)] as const)));
+    for (const ring of kerbParks.values()) boxed(this.kerbParks, ring);
     this.passages = chunks.flatMap((c) => (c.passages ?? []).map((p) => [p.from, p.to] as const));
     // The gates are solid in the map, with no passage in their chunk (Brama Krakowska), or one off the arch the game cuts
     // (Brama Grodzka, G-183). Their axes run on along the street 4.6 to 8.7 m past the fronts, where the next houses' walls are.
@@ -103,10 +125,7 @@ export class Site {
 
   /** The chunk whose rectangle holds p (half-open, so a point on a shared edge has one owner). */
   chunkAt(p: Pt): LublinChunkData | null {
-    for (const c of this.chunks) {
-      const b = c.bounds;
-      if (inRect(p, { minX: b.minX, minZ: b.minZ, maxX: b.maxX, maxZ: b.maxZ })) return c;
-    }
+    for (const c of this.chunkBins.at(p.x, p.z)) if (inRect(p, c.bounds)) return c;
     return null;
   }
 
@@ -119,6 +138,18 @@ export class Site {
   /** What lies at p: a building wins, then a road, then the other surfaces in their draw order. */
   surfaceAt(p: Pt): SiteSurface {
     return this.surfaceIn(this.bins, p);
+  }
+
+  /** Whether p lies in a building's outline: `surfaceAt(p) === "building"`, asking the buildings alone. */
+  inBuilding(p: Pt): boolean {
+    for (const ring of this.buildings.at(p.x, p.z)) if (pointInRing(p, ring)) return true;
+    return false;
+  }
+
+  /** Whether a building's box comes within `reach` of p (a centimetre to spare): with none, no point that near is in a building. */
+  buildingNear(p: Pt, reach: number): boolean {
+    const r = reach + 0.01;
+    return this.buildings.some(p.x - r, p.z - r, p.x + r, p.z + r, () => true);
   }
 
   /** What a bridge's deck carries at p (its road or walk), null off every deck. */
@@ -159,7 +190,14 @@ export class Site {
 
   /** Whether p lies in a car park laid out as a lot. */
   inLot(p: Pt): boolean {
-    return this.lots.some((l) => inRect(p, l.box) && pointInRing(p, l.ring));
+    return this.lots.at(p.x, p.z).some((l) => inRect(p, l.box) && pointInRing(p, l.ring));
+  }
+
+  /** Whether p, or a point `reach` metres off it on the four axes, lies in a kerb car park's bays. */
+  inKerbPark(p: Pt, reach = 0): boolean {
+    const at = (q: Pt) => this.kerbParks.at(q.x, q.z).some((l) => inRect(q, l.box) && pointInRing(q, l.ring));
+    if (reach === 0) return at(p);
+    return [{ x: 0, z: 0 }, { x: reach, z: 0 }, { x: -reach, z: 0 }, { x: 0, z: reach }, { x: 0, z: -reach }].some((o) => at({ x: p.x + o.x, z: p.z + o.z }));
   }
 
   /** Whether p lies out of every lot but within `reach` metres of one (on the four axes): in front of its cars. */

@@ -1,4 +1,5 @@
 import type { BuildingUse, RoofShape } from "@seki/core";
+import { DAY_RIG } from "../../npr/lighting";
 import { prng } from "../city-kit-data";
 
 /**
@@ -85,8 +86,8 @@ const CIVIC_PLASTER = ["#d6d0c2", "#c9c2b0", "#d9cbb0", "#bfc4c4"] as const;
 const CHURCH_PLASTER = ["#e4ddcc", "#ddd2b8", "#e8e2d6"] as const;
 const PLAIN_PLASTER = ["#9ea3a6", "#a8a395", "#8f9aa3", "#b0a89a", "#9a9488"] as const;
 const INDUSTRIAL_PLASTER = ["#8a8f96", "#7d7a74", "#6f7780", "#857565"] as const;
-/** Every plaster the facades pick from by use. */
-export const PLASTER_SWATCHES: readonly string[] = [...TENEMENT_PLASTER, ...CIVIC_PLASTER, ...CHURCH_PLASTER, ...PLAIN_PLASTER, ...INDUSTRIAL_PLASTER];
+/** The plasters a map's colour picks from, as the palettes have them. */
+const PLASTERS: readonly string[] = [...TENEMENT_PLASTER, ...CIVIC_PLASTER, ...CHURCH_PLASTER, ...PLAIN_PLASTER, ...INDUSTRIAL_PLASTER];
 /** Bare walls of the map's material (G-244): Lublin's Gothic brick (the landmark kit's first) and limestone. */
 const BRICK = ["#8b4632", "#93503a", "#7e4030"] as const;
 const STONE = ["#a09a8c", "#aaa392", "#948e81"] as const;
@@ -109,6 +110,31 @@ export const darken = (hex: string, t: number): string => {
   const ch = (v: number) => Math.round(v * (1 - t));
   return `#${[ch((n >> 16) & 255), ch((n >> 8) & 255), ch(n & 255)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 };
+
+const channels = (hex: string): [number, number, number] => {
+  const n = parseInt(hex.slice(1, 7), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+
+/** The day's light on a wall turned full to the sun: the toon shader's ambient plus sun. */
+const SUNLIT = channels(DAY_RIG.ambient).map((a, i) => (a + (channels(DAY_RIG.sunColor)[i] as number)) / 255) as [number, number, number];
+/**
+ * The most a wall's red and green may both reach in the full day sun (G-742). The day lights a
+ * wall facing the sun at about 1.3 times its colour, so the palette's creams and pale greys clipped
+ * to white and grading kept them there; 0.92 comes out at about 245 of 255, still a light wall.
+ * Red and green both: a wall with only one of them clipped keeps its hue, an ochre or a pink.
+ */
+const SUNLIT_MAX = 0.92;
+
+/** A wall colour that does not burn out white in the day sun: over the limit darkened, its hue kept. */
+export const sunSafe = (hex: string): string => {
+  const [r, g] = channels(hex);
+  const lit = Math.min(r * SUNLIT[0], g * SUNLIT[1]) / 255;
+  return lit <= SUNLIT_MAX ? hex : darken(hex, 1 - SUNLIT_MAX / lit);
+};
+
+/** Every plaster a facade may have. */
+export const PLASTER_SWATCHES: readonly string[] = PLASTERS.map((p) => sunSafe(p));
 
 export interface StyleInput {
   readonly use: BuildingUse;
@@ -169,11 +195,6 @@ const plasterFor = (use: BuildingUse, rand: () => number): string => {
   }
 };
 
-const channels = (hex: string): [number, number, number] => {
-  const n = parseInt(hex.slice(1, 7), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-};
-
 /** The swatch nearest a colour, by distance in RGB. */
 const nearest = (hex: string, swatches: readonly string[]): string => {
   const [r, g, b] = channels(hex);
@@ -199,7 +220,7 @@ const mappedWall = (s: StyleInput): string | null => {
   const [r, g, b] = channels(s.colour);
   const max = Math.max(r, g, b);
   const sat = max === 0 ? 0 : (max - Math.min(r, g, b)) / max;
-  return nearest(lighten(s.colour, 0.6 * sat), PLASTER_SWATCHES);
+  return nearest(lighten(s.colour, 0.6 * sat), PLASTERS);
 };
 
 const roofKindFor = (s: StyleInput, rand: () => number): RoofKind => {
@@ -229,7 +250,7 @@ export const facadeStyle = (s: StyleInput): FacadeStyle => {
   const window = windowFor(tower ? "civic" : s.use, s.levels, rand);
   // Drawn either way, so a building the map colours keeps the rest of its looks.
   const drawn = plasterFor(sacred, rand);
-  const plaster = mappedWall(s) ?? drawn;
+  const plaster = sunSafe(mappedWall(s) ?? drawn);
   const bare = s.material === "brick" || s.material === "stone";
   const oldTown = s.use === "historic" || s.use === "residential" || s.use === "commercial";
   const shopfront = tower ? false : s.shopfront !== undefined ? s.shopfront : s.use === "commercial" ? true : s.use === "residential" || s.use === "historic" ? rand() < 0.55 : s.use === "other" ? rand() < 0.25 : false;
@@ -244,7 +265,7 @@ export const facadeStyle = (s: StyleInput): FacadeStyle => {
   return {
     plaster,
     // Bare brick or stone has no light plaster mouldings: its trims are a darker course of it.
-    trim: bare ? darken(plaster, 0.22) : lighten(plaster, 0.35),
+    trim: bare ? darken(plaster, 0.22) : sunSafe(lighten(plaster, 0.35)),
     plinth: darken(plaster, 0.45),
     roofColor,
     window,

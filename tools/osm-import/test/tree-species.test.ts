@@ -1,9 +1,14 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { TREE_CROWN, TREE_KIND, treeHeight, treeScale, treeSpecies } from "../../../packages/core/src/world/trees.ts";
+import { TREE_CROWN, TREE_KIND, treeHeight, treeScale, treeSpecies, treeSpread } from "../../../packages/core/src/world/trees.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
+import { REPO } from "../src/paths.ts";
 import { Site } from "../src/props-site.ts";
 import { treeVariant } from "../src/tree-heights.ts";
-import { genusOf, loadTreeTags, treeSpeciesOf } from "../src/tree-species.ts";
+import { loadPropsPlan, withOsmFurniture } from "../src/props-osm.ts";
+import type { PropsPlan } from "../src/props-gen.ts";
+import { genusOf, loadTreeTags, treeNodeIds, treeSpeciesOf } from "../src/tree-species.ts";
 
 /** A 100 x 60 m flat chunk with a row of houses whose south wall runs along z = 38. */
 const site = new Site([
@@ -53,11 +58,11 @@ describe("trees of the species OSM names (G-423)", () => {
 
   it("grows a tagged tree in the open to its measured height as its species, whatever its seed", () => {
     for (const seed of seeds) {
-      const oak = treeVariant(site, OAKS[0]!, { x: 50, z: 5 }, seed, TREE_KIND.oak);
+      const oak = treeVariant(site, { x: 50, z: 5 }, seed, TREE_KIND.oak, 20);
       expect(treeSpecies(oak)).toBe(TREE_KIND.oak);
       expect(oak).toBeLessThanOrEqual(0xffff);
       expect(Math.abs(treeHeight(oak) - 20)).toBeLessThan(0.15);
-      const poplar = treeVariant(site, BAOBAB, { x: 50, z: 5 }, seed, TREE_KIND.poplar);
+      const poplar = treeVariant(site, { x: 50, z: 5 }, seed, TREE_KIND.poplar, 10.3);
       expect(treeSpecies(poplar)).toBe(TREE_KIND.poplar);
       expect(Math.abs(treeHeight(poplar) - 10.3)).toBeLessThan(0.15);
     }
@@ -65,21 +70,45 @@ describe("trees of the species OSM names (G-423)", () => {
 
   it("keeps an unmeasured tagged tree at its seed's size, an untagged one at its seed", () => {
     for (const seed of seeds) {
-      const v = treeVariant(site, "n1", { x: 50, z: 5 }, seed, TREE_KIND.oak);
+      const v = treeVariant(site, { x: 50, z: 5 }, seed, TREE_KIND.oak, null);
       expect(treeSpecies(v)).toBe(TREE_KIND.oak);
       expect(treeScale(v)).toBeCloseTo(treeScale(seed >= 0xf000 ? seed - 0x3000 : seed), 9);
-      const lime = treeVariant(site, "n1", { x: 50, z: 5 }, seed, TREE_KIND.lime);
+      const lime = treeVariant(site, { x: 50, z: 5 }, seed, TREE_KIND.lime, null);
       expect(treeSpecies(lime)).toBe(TREE_KIND.lime);
       expect(treeScale(lime)).toBeCloseTo(treeScale(v), 9);
     }
-    expect(treeVariant(site, "n1", { x: 50, z: 5 }, 0x71)).toBe(0x71);
+    expect(treeVariant(site, { x: 50, z: 5 }, 0x71, undefined, null)).toBe(0x71);
   });
 
-  it("stops an oak's broad crown short of the wall it would grow into", () => {
-    // 6 m off the wall: the seed's oak reaches 4.6 m, one grown to 20 m would reach 9.6 m.
-    const v = treeVariant(site, OAKS[0]!, { x: 50, z: 32 }, 0x70, TREE_KIND.oak);
+  it("stops an oak's broad crown short of the wall it would grow into, at its height (G-814)", () => {
+    // 6 m off the wall: the seed's oak reaches 4.6 m, one grown to 20 m would reach 9.6 m; at 55% of its width 5.3 m, at 70% 6.7 m.
+    const v = treeVariant(site, { x: 50, z: 32 }, 0x70, TREE_KIND.oak, 20);
     expect(treeSpecies(v)).toBe(TREE_KIND.oak);
-    expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v)).toBeLessThan(6);
-    expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v)).toBeGreaterThan(5.5);
+    expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v) * treeSpread(v)).toBeLessThan(6);
+    expect(TREE_CROWN[TREE_KIND.oak]! * treeScale(v) * treeSpread(v)).toBeGreaterThan(5);
+    expect(Math.abs(treeHeight(v) - 20)).toBeLessThan(0.2);
+  });
+});
+
+describe("the trees pnpm osm:trees asks OSM about", () => {
+  it("takes every placed tree: the plan's and the extract's the plan lacks, once each, by id", () => {
+    const plan = { items: [{ id: "a.tree", kind: "tree", points: [], osm: ["n30", "n10", "w5"] }, { id: "a.bench", kind: "bench", points: [], osm: ["n20"] }, { id: "b.tree", kind: "tree", points: [], osm: "n40" }] } as unknown as PropsPlan;
+    const furniture = [
+      { id: "n10", p: { x: 0, z: 0 }, tag: "natural=tree", detail: "" },
+      { id: "n50", p: { x: 0, z: 0 }, tag: "natural=tree", detail: "" },
+      { id: "n60", p: { x: 0, z: 0 }, tag: "amenity=bench", detail: "" },
+    ];
+    expect(treeNodeIds(plan)).toEqual([10, 30, 40]);
+    expect(treeNodeIds(withOsmFurniture(plan, furniture))).toEqual([10, 30, 40, 50]);
+  });
+
+  it("asks about the city's trees of the extract too, not only the plan's 586 (PR #550)", () => {
+    const placed = treeNodeIds(loadPropsPlan());
+    const planOnly = treeNodeIds(JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan);
+    expect(planOnly).toHaveLength(586);
+    expect(placed).toEqual(expect.arrayContaining(planOnly));
+    // A buckthorn, a natural monument OSM names (`genus=Rhamnus`), placed since PR #550 but not in the plan.
+    expect(placed).toContain(7473295715);
+    expect(placed.length).toBeGreaterThan(planOnly.length);
   });
 });

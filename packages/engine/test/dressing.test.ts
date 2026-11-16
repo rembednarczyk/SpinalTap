@@ -35,10 +35,10 @@ const dress = (blocks: readonly DressBlock[], kit = false) => planDressing({ blo
 
 describe("procedural dressing (ADR-0027)", () => {
   it("dresses the chunks with the game's buildings without the city kit (W9)", () => {
-    expect(DRESSED.map((c) => c.id)).toEqual(expect.arrayContaining([DEPTAK, MARKET, "nabrzeze-1-1"]));
-    // The market and the docks are the game's own buildings; the deptak's rooms are cut into the map's.
+    expect(DRESSED.map((c) => c.id)).toEqual(expect.arrayContaining([DEPTAK, MARKET, "nabrzeze-w3"]));
+    // The market and W-3 (its own chunk, ADR-0082) are the game's own buildings; the deptak's rooms are cut into the map's.
     expect(dress(blocksOf(chunk(MARKET).props)).vertexCount).toBeGreaterThan(2000);
-    expect(dress(blocksOf(chunk("nabrzeze-1-1").props)).vertexCount).toBeGreaterThan(200);
+    expect(dress(blocksOf(chunk("nabrzeze-w3").props)).vertexCount).toBeGreaterThan(200);
     for (const c of DRESSED) {
       const sink = dress(blocksOf(c.props));
       expect(sink.colors.length / 4).toBe(sink.vertexCount);

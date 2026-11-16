@@ -32,8 +32,8 @@ const viewsOn = (scene: Scene) =>
   });
 
 const settled = async (views: CharacterViews) => {
-  for (let i = 0; i < 4000 && views.loadingCount > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
-  expect(views.loadingCount).toBe(0);
+  for (let i = 0; i < 4000 && views.modelCounts.loading > 0; i++) await new Promise((ok) => setTimeout(ok, 0));
+  expect(views.modelCounts.loading).toBe(0);
 };
 
 /** The dressed model's meshes of a character, by what they paint. */
@@ -108,7 +108,7 @@ describe("variants on the game's models (ADR-0076 stage 2)", () => {
     views.spawn(3, { kind: "npc", preset: "fixer", cast: "hideo" }, STAND);
     views.spawn(4, { kind: "npc", preset: "ripperdoc", cast: "mori" }, STAND);
     await settled(views);
-    expect(views.dressedCount).toBe(3);
+    expect(views.modelCounts.dressed).toBe(3);
     for (const part of ["hair", "torso", "legs", "skin"]) expect(materialOf(views, 3, part), part).not.toBe(materialOf(views, 2, part));
     // Kaito wears his file as it is: no accessory.
     expect(scene.meshes.filter((m) => m.name.startsWith("e2-v-"))).toEqual([]);
@@ -210,7 +210,7 @@ describe("variants on the game's models (ADR-0076 stage 2)", () => {
     const ids = Array.from({ length: 12 }, (_, i) => 10 + i);
     for (const id of ids) views.spawn(id, { kind: "npc", preset: "civilian", look: id * 7919 }, STAND);
     await settled(views);
-    expect(views.dressedCount).toBe(12);
+    expect(views.modelCounts.dressed).toBe(12);
     const looks = new Set(ids.map((id) => ["skin", "hair", "torso", "legs"].map((p) => materialOf(views, id, p)).join()));
     expect(looks.size).toBeGreaterThan(1);
     expect(looks.size).toBeLessThanOrEqual(VARIANTS_PER_FILE);

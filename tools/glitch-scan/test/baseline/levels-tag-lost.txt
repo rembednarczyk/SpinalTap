@@ -1,0 +1,4 @@
+# levels-tag-lost: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+nabrzeze-1-1 2629,390
+podzamcze-0-1 688,536
+stare-miasto-1-0 626,-152

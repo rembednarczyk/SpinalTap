@@ -1,6 +1,28 @@
-import { Color4, ColorCurves, type Camera, DefaultRenderingPipeline, type Scene } from "../babylon";
+import { Color4, ColorCurves, type Camera, DefaultRenderingPipeline, type PostProcess, type Scene, ShaderStore } from "../babylon";
 import { FlashLimiter } from "../effects/flash-limiter";
 import { DISTRICT_PALETTES, type DistrictPalette } from "./district-palette";
+import { PassGate } from "./pass-gate";
+import { BLOOM_THRESHOLD } from "./quality";
+
+/**
+ * Bloom merge with room for the halo only around bright pixels, not on them: a large lit panel
+ * seen up close keeps its colour instead of summing up to white (user's choice 13.11, option 1).
+ * Replaces Babylon's `bloomMerge` (base + blur * weight) for the whole engine.
+ */
+export const BLOOM_MERGE_FRAGMENT = /* glsl */ `
+uniform sampler2D textureSampler;
+uniform sampler2D bloomBlur;
+varying vec2 vUV;
+uniform float bloomWeight;
+#define CUSTOM_FRAGMENT_DEFINITIONS
+void main(void) {
+  vec4 base = texture2D(textureSampler, vUV);
+  vec3 blurred = texture2D(bloomBlur, vUV).rgb;
+  float lum = dot(base.rgb, vec3(0.2126, 0.7152, 0.0722));
+  float room = 1.0 - smoothstep(0.45, 0.9, lum);
+  gl_FragColor = vec4(base.rgb + blurred * bloomWeight * room, base.a);
+}
+`;
 
 /** Wobble of the memory glitch, cycles per second: under the three-flashes-a-second ceiling. */
 export const GLITCH_WOBBLE_HZ = 2.5;
@@ -23,11 +45,15 @@ export class Grading {
   private glitchFlash = true;
   private reduce = false;
   private palette: DistrictPalette = DISTRICT_PALETTES["shinsekai-7"];
+  /** Chromatic aberration draws only while it shifts the channels (glitch, overdrive). */
+  private readonly chromatic: PassGate<PostProcess>;
+  /** The quality's bloom weight; 0 where it builds none (Low, Medium). */
+  private readonly bloomWeight: number;
 
   constructor(
     scene: Scene,
     camera: Camera,
-    options: { reference: boolean },
+    options: { reference: boolean; sharpen?: number; bloom?: number },
     private readonly limiter: FlashLimiter = new FlashLimiter(),
   ) {
     const p = new DefaultRenderingPipeline("grading", false, scene, [camera]);
@@ -49,7 +75,51 @@ export class Grading {
     p.grainEnabled = !options.reference;
     p.grain.intensity = 6;
     p.grain.animated = !options.reference;
+    // After FXAA: gives back the crispness it takes from the ink lines (graphics backlog 13.11).
+    const sharpen = options.sharpen ?? 0;
+    p.sharpenEnabled = sharpen > 0;
+    if (sharpen > 0) {
+      p.sharpen.edgeAmount = sharpen;
+      p.sharpen.colorAmount = 1;
+    }
+    // Only the brightest pixels (neon, lamps, screens) bloom: a high threshold keeps lit walls and
+    // the day sky clean, the halo the anime look of the neon (graphics backlog 13.11, step 3).
+    const bloom = options.bloom ?? 0;
+    if (bloom > 0) ShaderStore.ShadersStore["bloomMergePixelShader"] = BLOOM_MERGE_FRAGMENT;
+    p.bloomEnabled = bloom > 0;
+    if (bloom > 0) {
+      p.bloomThreshold = BLOOM_THRESHOLD;
+      p.bloomWeight = bloom;
+      p.bloomKernel = 32;
+      p.bloomScale = 0.5;
+    }
     this.pipeline = p;
+    this.bloomWeight = bloom;
+    this.chromatic = new PassGate<PostProcess>(camera, () => this.pipeline.chromaticAberration);
+    this.chromatic.set(false);
+  }
+
+  /** Whether the chromatic aberration pass is in the camera's chain (frame profile 14.11). */
+  get chromaticDrawing(): boolean {
+    return this.chromatic.drawing;
+  }
+
+  /** The quality has a bloom the player's setting can switch. */
+  get hasBloom(): boolean {
+    return this.bloomWeight > 0;
+  }
+
+  /**
+   * The player's bloom setting, at once (graphics toggles 14.11). Babylon rebuilds the pipeline
+   * and puts its post-processes back at the end of the camera's chain, so whatever must follow
+   * the grade is moved behind it again by the caller. Returns whether the chain changed.
+   */
+  setBloom(on: boolean): boolean {
+    if (!this.hasBloom || this.pipeline.bloomEnabled === on) return false;
+    this.pipeline.bloomEnabled = on;
+    // The rebuild put the aberration back on the camera; out again while it shows nothing.
+    this.chromatic.set(this.pipeline.chromaticAberration.aberrationAmount > 0);
+    return true;
   }
 
   glitch(): void {
@@ -100,7 +170,10 @@ export class Grading {
     this.curves.globalSaturation = this.palette.saturation - 55 * od;
     this.curves.globalHue = 200;
     this.curves.globalDensity = 30 * od;
-    this.pipeline.chromaticAberration.aberrationAmount = this.reduce ? 0 : 70 * glitch + 10 * od;
+    const aberration = this.reduce ? 0 : 70 * glitch + 10 * od;
+    this.pipeline.chromaticAberration.aberrationAmount = aberration;
+    // At amount 0 the pass is a copy of the frame; on the change only, never a pipeline rebuild.
+    this.chromatic.set(aberration > 0);
     this.pipeline.grain.intensity = 6 + (this.reduce ? 12 : 40) * glitch;
     const brighten = this.glitchFlash && !this.reduce ? 0.35 * glitch : 0;
     this.pipeline.imageProcessing.exposure = 1.08 + brighten + this.pulseTime * 0.8 * this.pulseScale;

@@ -1,0 +1,160 @@
+{
+  "about": "Mediany barw nawierzchni importu na ortofoto PZGiK (tools/orto/src/albedo-report.ts --write-medians). Paleta renderera (ORTHO_PAVING w ground-plan.ts) i kontrola skanu paving-albedo-drift.",
+  "reference": "2025-04",
+  "flights": {
+    "2025-04": {
+      "photographed": [
+        "2025-04-12"
+      ],
+      "surfaces": {
+        "basin": {
+          "rgb": [
+            191,
+            185,
+            164
+          ],
+          "luma": 184.8,
+          "toGrass": 1.655,
+          "samples": 3197
+        },
+        "cobble": {
+          "rgb": [
+            176,
+            170,
+            157
+          ],
+          "luma": 170.1,
+          "toGrass": 1.524,
+          "samples": 27010
+        },
+        "footway": {
+          "rgb": [
+            181,
+            174,
+            158
+          ],
+          "luma": 174,
+          "toGrass": 1.558,
+          "samples": 11995
+        },
+        "grass": {
+          "rgb": [
+            112,
+            114,
+            89
+          ],
+          "luma": 111.6,
+          "toGrass": 1,
+          "samples": 438198
+        },
+        "road": {
+          "rgb": [
+            82,
+            82,
+            87
+          ],
+          "luma": 82.5,
+          "toGrass": 0.739,
+          "samples": 45918
+        },
+        "sidewalk": {
+          "rgb": [
+            181,
+            177,
+            163
+          ],
+          "luma": 176.7,
+          "toGrass": 1.583,
+          "samples": 1321
+        },
+        "square": {
+          "rgb": [
+            184,
+            181,
+            166
+          ],
+          "luma": 180.4,
+          "toGrass": 1.616,
+          "samples": 114260
+        }
+      }
+    },
+    "2024-06": {
+      "photographed": [
+        "2024-06-21"
+      ],
+      "surfaces": {
+        "basin": {
+          "rgb": [
+            151,
+            153,
+            147
+          ],
+          "luma": 151.7,
+          "toGrass": 1.8,
+          "samples": 3197
+        },
+        "cobble": {
+          "rgb": [
+            124,
+            127,
+            130
+          ],
+          "luma": 126.6,
+          "toGrass": 1.502,
+          "samples": 24544
+        },
+        "footway": {
+          "rgb": [
+            142,
+            143,
+            141
+          ],
+          "luma": 142.3,
+          "toGrass": 1.688,
+          "samples": 11948
+        },
+        "grass": {
+          "rgb": [
+            72,
+            89,
+            78
+          ],
+          "luma": 84.3,
+          "toGrass": 1,
+          "samples": 437752
+        },
+        "road": {
+          "rgb": [
+            69,
+            78,
+            87
+          ],
+          "luma": 76.8,
+          "toGrass": 0.911,
+          "samples": 45448
+        },
+        "sidewalk": {
+          "rgb": [
+            155,
+            154,
+            150
+          ],
+          "luma": 154.1,
+          "toGrass": 1.828,
+          "samples": 1285
+        },
+        "square": {
+          "rgb": [
+            144,
+            144,
+            144
+          ],
+          "luma": 143.8,
+          "toGrass": 1.706,
+          "samples": 111905
+        }
+      }
+    }
+  }
+}

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { type TerrainGrid, terrainHeightAt } from "../../../packages/core/src";
 import { ALCHEMIA_PADS, ALCHEMIA_RAMPS } from "../../../packages/sim/src/content/alchemia/terraces";
-import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
+import { CAR_WASH_AREA, MAP_CHUNKS, PADS } from "../../../packages/sim/src/content/lublin/sites";
 import { SHAPED_TERRAIN } from "../../../packages/sim/src/content/lublin/terrain";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import type { Line } from "../../osm-import/src/features.ts";
@@ -58,5 +58,37 @@ describe("pad-on-road (T-209)", () => {
     expect(worst).toBeLessThanOrEqual(MOST);
     const pieces = [...ALCHEMIA_PADS.map((p) => ({ name: p.row ?? "pad", pads: [p], ramps: [] })), ...ALCHEMIA_RAMPS.map((r) => ({ name: "ramp", pads: [], ramps: [r] }))];
     expect(padOnRoadFindings(pieces, MAP_CHUNKS, lines.filter((l) => isStreet(l.tags)))).toEqual([]);
+  });
+
+  it("keeps Bajkowskiego, its crossings and every street off the car wash's yard on the NMT (G-754, T-051)", () => {
+    const osm = parseExtract(readFileSync(join(__dirname, "../../../data/osm/krakowskie.json"), "utf8"));
+    const streets = extractFeatures(osm).lines.filter((l) => isStreet(l.tags));
+    const yard = (x: number, z: number) => x >= CAR_WASH_AREA.minX && x <= CAR_WASH_AREA.maxX && z >= CAR_WASH_AREA.minZ && z <= CAR_WASH_AREA.maxZ;
+    // Each way cut into its runs off the yard, sampled every 0.25 m: what the set piece may level is its yard, not the streets round it.
+    const off: Line[] = streets.flatMap((w) => {
+      const runs: { x: number; z: number }[][] = [[]];
+      for (let i = 0; i + 1 < w.line.length; i++) {
+        const [a, b] = [w.line[i]!, w.line[i + 1]!];
+        const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.25));
+        for (let k = 0; k <= n; k++) {
+          const p = { x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n };
+          if (!yard(p.x, p.z)) runs[runs.length - 1]!.push(p);
+          else if (runs[runs.length - 1]!.length) runs.push([]);
+        }
+      }
+      return runs.filter((r) => r.length > 1).map((line) => ({ ...w, line }));
+    });
+    const pad = PADS.find((p) => p.row === "T-051")!;
+    expect(padOnRoadFindings([{ name: "T-051", pads: [pad], ramps: [] }], MAP_CHUNKS, off)).toEqual([]);
+    // The street and the crossings to the yard's sidewalk, in the game against the map's own grid.
+    let worst = 0;
+    for (const w of off.filter((l) => ["w40052294", "w232805957", "w1514057836"].includes(l.id))) {
+      for (const p of w.line) {
+        const chunk = MAP_CHUNKS.find(({ bounds: b }) => p.x >= b.minX && p.x <= b.maxX && p.z >= b.minZ && p.z <= b.maxZ);
+        if (!chunk || p.x > 460) continue;
+        worst = Math.max(worst, Math.abs(terrainHeightAt(SHAPED_TERRAIN.get(chunk.id)!, p.x, p.z) - terrainHeightAt(chunk.terrain, p.x, p.z)));
+      }
+    }
+    expect(worst).toBeLessThanOrEqual(0.1);
   });
 });

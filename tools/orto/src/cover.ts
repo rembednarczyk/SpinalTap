@@ -12,7 +12,7 @@ import { COVER, COVER_NAMES, COVER_PALETTE, type Colour, classify } from "./clas
 import { CELLS, COVER_DIR, COVER_STEP } from "./config.ts";
 import { decodeIndexed, encodeIndexed4 } from "./png.ts";
 import { type Thresholds } from "./thresholds.ts";
-import { type Tile, pixelAt } from "./tiles.ts";
+import { type Tile, pixelAt, usableTiles } from "./tiles.ts";
 
 export interface CoverHeader {
   readonly district: string;
@@ -124,9 +124,10 @@ export const smoothColours = (h: CoverHeader, s: Sampled, rect: Rect, radius: nu
   return { rgb, n };
 };
 
-/** Classifies the samples of `rect` into `cover` from the flights' tiles, the current image first. */
-export const classifyRect = (cover: Cover, tiles: readonly Tile[], rect: Rect): void => {
+/** Classifies the samples of `rect` into `cover` from the flights' tiles, the current image first; blank tiles left out (`usableTiles`). */
+export const classifyRect = (cover: Cover, flights: readonly Tile[], rect: Rect): void => {
   const h = cover.header;
+  const tiles = usableTiles(flights);
   const sampled = tiles.map((t) => smoothColours(h, sampleColours(h, t, rect), rect, h.thresholds.smooth));
   const k0 = Math.max(0, Math.floor((h.z1 - rect.maxZ) / h.step)) * h.width;
   const k1 = Math.min(h.height, Math.ceil((h.z1 - rect.minZ) / h.step)) * h.width;
@@ -134,7 +135,7 @@ export const classifyRect = (cover: Cover, tiles: readonly Tile[], rect: Rect): 
     const colours: Colour[] = [];
     for (const { rgb, n } of sampled) if (n[k]) colours.push([rgb[k * 3]! / n[k]!, rgb[k * 3 + 1]! / n[k]!, rgb[k * 3 + 2]! / n[k]!]);
     // Every flight or none: a sample seen by only some would be judged on another season.
-    if (colours.length === tiles.length) cover.cls[k] = classify(colours, h.thresholds);
+    if (colours.length && colours.length === tiles.length) cover.cls[k] = classify(colours, h.thresholds);
   }
 };
 

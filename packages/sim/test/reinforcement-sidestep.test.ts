@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { HeatLevel, HeatState, SaveSnapshot } from "@seki/core";
-import { Simulation, docks, stateHash } from "../src";
+import { Simulation, w3, stateHash } from "../src";
 import { alleySim, teleportPlayer } from "./helpers";
 
 /**
  * The side a reinforcement first leans to when it gets stuck (ADR-0025, G-208): by which of the
  * heat's it is (`security.n`), not by its id, which a loaded game gives otherwise. With the
- * player on the roof of a warehouse in the docks the Tessen's reinforcements have no repath and
+ * player on the platform of W-3's control tower (ADR-0082; the docks' warehouse before) the Tessen's reinforcements have no repath and
  * lean to the side, so the rule shows in the game without any save.
  */
 
-const ROOF = docks(-28, 9, 107);
+const ROOF = w3(2490, 10, 437);
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
 
 /** The snapshot as v30 wrote it, before the style and bad luck (ADR-0059, stage 6): the progression without them. */
@@ -59,12 +59,16 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // v37 version (G-625, a chase's wide way, none in these runs): only the version; as v36 the runs
   // hash to a11206cf and bf8c66f1. Re-recorded for the v38 version (G-643, the next wide way of a
   // chase being made, none in these runs): only the version; as v37 the runs hash to 241eef9e and
-  // 5039197a.
+  // 5039197a. Re-recorded for G-754, the content: the car wash's yard levelled short of
+  // Bajkowskiego, its dumpster and parked car moved onto the level ground (the world, no rule).
+  // Re-recorded for ADR-0082 stage 1, the content: the docks rebuilt as Tessen's W-3, the player
+  // on its tower's platform instead of the warehouse's roof (the reinforcements come up the tower's
+  // stair and lean there), and the v39 version.
   for (const [seed, level, golden, v32, v31, v30, v28, v27] of [
-    [21, 2, "0c79bc9d", "1c0d0ad3", "55a02c1c", "18d6bea3", "5e8676f5", "7e54b2a0"],
-    [5, 3, "6042a2df", "a0370c6d", "2d80f750", "b19791bb", "3a1c66f5", "11bea0a6"],
+    [21, 2, "229028b8", "3a966f3d", "c5bbf8f0", "73c44db1", "0720a3eb", "ada07884"],
+    [5, 3, "b9fef5a3", "254f844c", "9a14605b", "5911d666", "327cfe9c", "312b87f1"],
   ] as const) {
-    it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
+    it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);
       const first = new Map<number, 1 | -1>();
       let leaningOtherwise = 0;

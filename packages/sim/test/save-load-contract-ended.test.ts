@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Contract, DIFFICULTY_PRESETS, HACK_GRACE_SECONDS, contractFailedFlag } from "@seki/core";
-import { DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, GENZO_SPOT, SIM_HZ, Simulation, docks, ground } from "../src";
+import { W3_ITEM_SPOTS, W3_TERMINAL_SPOTS, GENZO_SPOT, SIM_HZ, Simulation, w3, ground } from "../src";
 import { byKey, input, run, teleportPlayer } from "./helpers";
 import { alarmed, expectSameAfterLoad, hash, peopleOf, reload, roundTrip, taken } from "./contract-save-helpers";
 
@@ -81,7 +81,7 @@ describe("save and load after a contract has ended (G-178)", () => {
       // fall, and a save of a dead player (the game makes none) loads her alive, so the alerted
       // guards count the time they have lost her on (G-185; alive on the map they do not part).
       for (const s of [sim, loaded]) {
-        teleportPlayer(s, docks(0, 0, 120));
+        teleportPlayer(s, w3(2492, 0, 418));
         run(s, 5);
       }
       return [peopleOf(sim, id), peopleOf(loaded, id)];
@@ -94,8 +94,8 @@ describe("save and load after a contract has ended (G-178)", () => {
 
   describe("an infiltration done (data taken unseen) keeps its calm guards, cleared and then paid, no more and no fewer", () => {
     const cleared = (): { sim: Simulation; c: Contract } => {
-      const { sim, c } = taken(8, 0, docks(0, 0, 120), "infiltrate");
-      const spot = DOKI_ITEM_SPOTS.tessen_office!;
+      const { sim, c } = taken(8, 0, w3(2492, 0, 418), "infiltrate");
+      const spot = W3_ITEM_SPOTS.tessen_office!;
       teleportPlayer(sim, ground(spot.x + 1.1, spot.z), -Math.PI / 2);
       sim.step(input({ interact: true, crouch: true }));
       expect(sim.domain.contracts.active?.status).toBe("cleared");
@@ -123,8 +123,8 @@ describe("save and load after a contract has ended (G-178)", () => {
     ["hard", 0, DIFFICULTY_PRESETS.hard],
   ] as const) {
     it(`the guards of a paid job are as tough after loading as before, not toughened by its own pay (${label}, ${completed} done)`, () => {
-      const { sim, c } = taken(8, completed, docks(0, 0, 120), "infiltrate", difficulty);
-      const spot = DOKI_ITEM_SPOTS.tessen_office!;
+      const { sim, c } = taken(8, completed, w3(2492, 0, 418), "infiltrate", difficulty);
+      const spot = W3_ITEM_SPOTS.tessen_office!;
       teleportPlayer(sim, ground(spot.x + 1.1, spot.z), -Math.PI / 2);
       sim.step(input({ interact: true, crouch: true }));
       sim.enqueue({ type: "complete-contract" });
@@ -143,7 +143,7 @@ describe("save and load after a contract has ended (G-178)", () => {
 
   it("a hack lost by walking off the terminal keeps its wave after loading (another seed, another job)", () => {
     const { sim, c } = taken(9, 0, ground(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), "hack");
-    const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
+    const t = W3_TERMINAL_SPOTS.quay_terminal!;
     teleportPlayer(sim, ground(t.x, t.z - 1.4), 0);
     sim.step(input({ interact: true }));
     teleportPlayer(sim, ground(t.x, t.z - 12), 0);
@@ -164,7 +164,7 @@ describe("save and load after a contract has ended (G-178)", () => {
   });
 
   it("a job lost with nobody alerted, out of time far from its site, brings nobody back on loading", () => {
-    const { sim, c } = taken(4242, 5, docks(0, 0, 120), "infiltrate");
+    const { sim, c } = taken(4242, 5, w3(2492, 0, 418), "infiltrate");
     const snap = roundTrip(sim.snapshot(null, "t", ""));
     const late = { ...snap, domain: { ...snap.domain, contracts: { ...snap.domain.contracts, active: { ...c, deadlineTick: snap.tick + 2 } } } };
     const timed = Simulation.fromSnapshot(late);

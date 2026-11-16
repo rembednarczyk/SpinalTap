@@ -5,6 +5,7 @@ import type {
   CharacterIntents,
   ContractIntents,
   DifficultyIntents,
+  GraphicsIntents,
   JournalIntents,
   DialogueIntents,
   HackIntents,
@@ -17,6 +18,7 @@ import type {
   SettingsIntents,
   ShopIntents,
   UiIntents,
+  WaitIntents,
 } from "./intents";
 import type { UiState, UiStore } from "./store/ui-store";
 
@@ -42,9 +44,11 @@ export const useProgressionIntents = (): ProgressionIntents => useUiContext().in
 export const useSettingsIntents = (): SettingsIntents => useUiContext().intents;
 export const useDifficultyIntents = (): DifficultyIntents => useUiContext().intents;
 export const useCameraIntents = (): CameraIntents => useUiContext().intents;
+export const useGraphicsIntents = (): GraphicsIntents => useUiContext().intents;
 export const usePhoneIntents = (): PhoneIntents => useUiContext().intents;
 export const useContractIntents = (): ContractIntents => useUiContext().intents;
 export const useJournalIntents = (): JournalIntents => useUiContext().intents;
 export const useHackIntents = (): HackIntents => useUiContext().intents;
 export const useMetroIntents = (): MetroIntents => useUiContext().intents;
 export const useRadioIntents = (): RadioIntents => useUiContext().intents;
+export const useWaitIntents = (): WaitIntents => useUiContext().intents;
