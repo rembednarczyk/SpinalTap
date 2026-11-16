@@ -83,7 +83,7 @@ import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { cityFrontageWorld, frontageBare, squaresOf } from "./frontage-bare";
 import { fillOnConstruction } from "./fill-construction";
 import { siteChecks, siteGroundOf } from "./site-pieces";
-import { crossingGlow, crossingKerb, crossingOverhang, crossingSkew } from "./crossing-shape";
+import { crossingGlow, crossingKerb, crossingOffPath, crossingOverhang, crossingShortOfAsphalt, crossingSkew } from "./crossing-shape";
 import { kerbFillFlicker } from "./kerb-fill-flicker";
 import { kerbJag } from "./kerb-jag";
 import { kerbStripBare } from "./kerb-strip-bare";
@@ -205,6 +205,16 @@ const SOURCE_OSM = mergeOsm(
     .filter((f) => f.endsWith(".json"))
     .map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))),
 );
+/** The map's foot paths, not the sidewalks mapped along the streets (`crossing-off-path`). */
+const FOOT_PATHS = () =>
+  [...SOURCE_OSM.ways.values()]
+    .filter((w) => ["footway", "path", "cycleway"].includes(w.tags?.highway ?? "") && w.tags?.footway !== "sidewalk" && w.tags?.area !== "yes")
+    .map((w) => w.nodes.flatMap((id) => (SOURCE_OSM.nodes.has(id) ? [geoToWorld(SOURCE_OSM.nodes.get(id)!.lat, SOURCE_OSM.nodes.get(id)!.lon)] : [])).map((p) => [p.x, p.z] as const));
+/** The map's crossing ways (`footway=crossing`): a zebra on one is square to its street at a junction too (`crossing-shape-skew`). */
+const CROSSING_WAYS = () =>
+  [...SOURCE_OSM.ways.values()]
+    .filter((w) => w.tags?.footway === "crossing")
+    .map((w) => w.nodes.flatMap((id) => (SOURCE_OSM.nodes.has(id) ? [geoToWorld(SOURCE_OSM.nodes.get(id)!.lat, SOURCE_OSM.nodes.get(id)!.lon)] : [])).map((p) => [p.x, p.z] as const));
 /** The structures the import keeps trees out of (`loadStructures`: the map caught up with its finished sites, G-872), read once. */
 let importStructures: ReturnType<typeof loadStructures> | undefined;
 const IMPORT_STRUCTURES = () => (importStructures ??= loadStructures());
@@ -2156,13 +2166,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    */
   "kerb-jag": () => kerbJag(MAP_CHUNKS, ROAD_CHAINS.map((c) => c.points)),
   /** A carriageway zebra more than 5 degrees off the perpendicular to its street (`crossing-shape.ts`). */
-  "crossing-shape-skew": () => crossingSkew(MAP_CHUNKS, ROAD_CHAINS.map((c) => c.points)),
+  "crossing-shape-skew": () => crossingSkew(MAP_CHUNKS, ROAD_CHAINS.map((c) => c.points), CROSSING_WAYS()),
   /** A zebra whose stripes (0.3 m2 and more) lie outside its piece (`crossing-shape.ts`). */
   "crossing-shape-overhang": () => crossingOverhang(MAP_CHUNKS),
   /** A zebra whose cyan edge lines (3 m and more) lie off the carriageway, cobbles and squares (`crossing-shape.ts`). */
   "crossing-shape-glow": () => crossingGlow(MAP_CHUNKS),
   /** A zebra whose end is more than 0.15 m off the kerb along its axis (`crossing-shape.ts`). */
   "crossing-shape-kerb": () => crossingKerb(MAP_CHUNKS),
+  /** A zebra more than 30 degrees off the map's foot path through its middle, not a sidewalk (`crossing-shape.ts`, G-836 round 2). */
+  "crossing-off-path": () => crossingOffPath(MAP_CHUNKS, FOOT_PATHS()),
+  /** A zebra the game's asphalt runs on past by more than a metre along its axis (`crossing-shape.ts`, G-836 round 2). */
+  "crossing-short-of-asphalt": () => crossingShortOfAsphalt(MAP_CHUNKS),
   /** A metre of a fitted street's edge (T-046, G-655) with a metre and more of bare ground before the lawn or pavement past it (`kerb-strip-bare.ts`). */
   "kerb-strip-bare": () => KERB_STRIP_BARE(),
   /**

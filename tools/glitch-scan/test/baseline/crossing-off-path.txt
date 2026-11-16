@@ -1,0 +1,11 @@
+# crossing-off-path: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-2-0 431,-24
+krakowskie-2-0 385,-22
+krakowskie-2-1 385,-20
+nabrzeze-1-0 2661,112
+nabrzeze-1-0 2501,206
+podzamcze-0-0 572,160
+podzamcze-0-0 522,194
+podzamcze-0-0 520,195
+podzamcze-0-1 648,580
+podzamcze-1-1 919,471

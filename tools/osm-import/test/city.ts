@@ -26,6 +26,7 @@ import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krak
 import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
+import { ALL_CHUNKS } from "../src/config.ts";
 import { type Generated, generate } from "../src/generate.ts";
 import { loadInputs } from "../src/load.ts";
 import { REPO } from "../src/paths.ts";
@@ -54,11 +55,15 @@ const inputKey = (): string => {
 
 const memory = new Map<string, Buffer>();
 
-/** The serialised result of `MAKE[name]`: from this process, from the disk, or computed by `city-make.ts` and stored. */
-const cached = <T>(name: keyof typeof MAKE): T => {
-  let bytes = memory.get(name);
+/**
+ * The serialised result of `MAKE[name](arg)`: from this process, from the disk, or computed by
+ * `city-make.ts` and stored. Every `arg` of the current key keeps a file of its own.
+ */
+const cached = <T>(name: keyof typeof MAKE, arg = ""): T => {
+  const id = arg === "" ? name : `${name}.${createHash("sha256").update(arg).digest("hex").slice(0, 16)}`;
+  let bytes = memory.get(id);
   if (!bytes) {
-    const file = join(DIR, `${name}-${inputKey()}.bin`);
+    const file = join(DIR, `${name}-${inputKey()}${id.slice(name.length)}.bin`);
     try {
       bytes = readFileSync(file);
     } catch {
@@ -67,13 +72,13 @@ const cached = <T>(name: keyof typeof MAKE): T => {
       const tmp = `${file}.${process.pid}-${threadId}.tmp`;
       const env = { ...process.env };
       delete env.NODE_V8_COVERAGE;
-      execFileSync(process.execPath, [fileURLToPath(new URL("./city-make.ts", import.meta.url)), name, tmp], { env, stdio: ["ignore", "ignore", "pipe"] });
+      execFileSync(process.execPath, [fileURLToPath(new URL("./city-make.ts", import.meta.url)), name, tmp, arg], { env, stdio: ["ignore", "ignore", "pipe"] });
       bytes = readFileSync(tmp);
       renameSync(tmp, file);
-      // One file a name: those of an older key go, with their leftover temporaries.
+      // The files of a name under an older key go, with their leftover temporaries.
       for (const old of readdirSync(DIR)) if (old.startsWith(`${name}-`) && !old.startsWith(`${name}-${inputKey()}.`)) rmSync(join(DIR, old), { force: true });
     }
-    memory.set(name, bytes);
+    memory.set(id, bytes);
   }
   return deserialize(bytes) as T;
 };
@@ -93,6 +98,12 @@ export const MAKE = {
   },
   /** `generateProps` of the plan over the committed tables, with no node tags, boards or market. */
   props: (): PropsOut => generateProps(cityPlan(), CITY_CHUNKS),
+  /** `generate` as above, over only the chunks of the comma-separated ids. */
+  around: (ids: string): Generated => {
+    const inputs = loadInputs();
+    const want = new Set(ids.split(","));
+    return generate(inputs.osm, inputs.src, ALL_CHUNKS.filter((c) => want.has(c.id)), undefined, undefined, undefined, inputs.covers);
+  },
 };
 
 /** `generate` of the committed raw data over every chunk, as `pnpm osm:build` runs it. */
@@ -100,3 +111,14 @@ export const generatedCity = (): Generated => cached("generate");
 
 /** `generateProps` of the plan over the committed tables, with no node tags, boards or market. */
 export const cityProps = (): PropsOut => cached("props");
+
+/**
+ * `generate` as `generatedCity` runs it, over only the city's chunks within `margin` of `points`,
+ * for a test that reads a few places of the city (ADR-0083: about 1 s a place against 5-7 s for
+ * the whole city, cold as in CI). Away from a chunk's edge its ground comes out as in the whole
+ * city; at an edge a piece may differ where the next chunk is not built.
+ */
+export const generatedAround = (points: readonly { readonly x: number; readonly z: number }[], margin = 15): Generated => {
+  const near = (r: (typeof ALL_CHUNKS)[number]["rect"]) => points.some((p) => p.x > r.minX - margin && p.x < r.maxX + margin && p.z > r.minZ - margin && p.z < r.maxZ + margin);
+  return cached("around", ALL_CHUNKS.filter((c) => near(c.rect)).map((c) => c.id).join(","));
+};

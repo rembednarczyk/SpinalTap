@@ -1,6 +1,6 @@
 # bollard-blocks-mouth: grid 1 m (x,z rounded); a count after the place is how many findings hold it
 krakowskie-2-0 277,-169
-krakowskie-2-0 277,-166
+krakowskie-2-0 278,-166
 krakowskie-2-0 279,-166
 podzamcze-2-1 1019,394
 podzamcze-2-1 1021,394

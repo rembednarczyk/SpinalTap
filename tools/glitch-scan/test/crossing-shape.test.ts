@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { crossingGlow, crossingKerb, crossingOverhang, crossingSkew } from "./crossing-shape";
+import { crossingGlow, crossingKerb, crossingOffPath, crossingOverhang, crossingShortOfAsphalt, crossingSkew } from "./crossing-shape";
 import type { GroundChunk } from "./ground-strips";
 
 /** A road along x (z -6..6, x 0..40), kerbs on sidewalks past it, and a zebra of `ring` across it. */
@@ -32,6 +32,17 @@ describe("zebra shape (crossing-shape-*)", () => {
     expect(crossingSkew(c, [STREET])).toHaveLength(1);
   });
 
+  it("finds a crossing way's zebra askew at a junction, square to neither street, and none square to one of them", () => {
+    const t = Math.tan((10 * Math.PI) / 180) * 12;
+    const c = [chunk([18, -6, 22, -6, 22 + t, 6, 18 + t, 6])];
+    // A side street leaving at the zebra: a junction, where a zebra of a crossing node is let be.
+    const side: readonly [number, number][] = [[20, 0], [40, 20]];
+    expect(crossingSkew(c, [STREET, side])).toEqual([]);
+    const way: readonly [number, number][] = [[20, -6], [20, 6]];
+    expect(crossingSkew(c, [STREET, side], [way])).toHaveLength(1);
+    expect(crossingSkew([chunk(STRAIGHT)], [STREET, side], [way])).toEqual([]);
+  });
+
   it("finds stripes outside the piece when the piece is a wedge in its own box", () => {
     expect(crossingOverhang([chunk([18, -6, 22, -6, 22, 6, 21.5, 6, 21.5, 0, 18, 0])])).toHaveLength(1);
   });
@@ -47,5 +58,21 @@ describe("zebra shape (crossing-shape-*)", () => {
     const c = chunk([18, -6, 22, -6, 22, 6, 18, 6]);
     const over: GroundChunk = { ...c, ground: [...c.ground, { surface: "sidewalk" as const, outline: [17, -20, 23, -20, 23, 20, 17, 20] }].filter((g) => g.surface !== "road") };
     expect(crossingGlow([over]).length).toBe(1);
+  });
+
+  it("finds a zebra laid across a foot path of the map instead of along it", () => {
+    const c = [chunk(STRAIGHT)];
+    expect(crossingOffPath(c, [[[20, -10], [20, 10]]])).toEqual([]);
+    expect(crossingOffPath(c, [[[10, -6], [30, 6]]])).toHaveLength(1);
+    // No path through its middle: nothing to read.
+    expect(crossingOffPath(c, [[[30, -10], [30, 10]]])).toEqual([]);
+  });
+
+  it("finds a zebra the asphalt runs on past, along its axis", () => {
+    expect(crossingShortOfAsphalt([chunk(STRAIGHT)])).toEqual([]);
+    expect(crossingShortOfAsphalt([chunk([18, -4, 22, -4, 22, 4, 18, 4])])).toEqual([]);
+    const c = chunk([18, -4, 22, -4, 22, 4, 18, 4]);
+    const filled: GroundChunk = { ...c, ground: [...c.ground, { surface: "road", outline: [18, 4, 22, 4, 22, 6, 18, 6] }] };
+    expect(crossingShortOfAsphalt([filled])).toHaveLength(1);
   });
 });

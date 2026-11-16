@@ -1,16 +1,15 @@
 # kerb-jag: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-0-1 -120,140
 krakowskie-1-0 100,-240
 krakowskie-1-1 180,90
-krakowskie-2-1 430,-20
-krakowskie-2-1 290,120
+krakowskie-1-1 220,150
 nabrzeze-0-1 2350,330
+nabrzeze-1-0 2670,100
+nabrzeze-1-0 2650,110
 nabrzeze-1-0 2630,250
 podzamcze-0-1 530,410
+podzamcze-0-1 610,450
 podzamcze-0-1 530,470
 podzamcze-1-1 870,490
 podzamcze-1-1 860,500
-podzamcze-2-1 1050,440
 podzamcze-2-1 1060,470
-podzamcze-2-1 1080,490
 stare-miasto-1-0 620,-240
