@@ -35,7 +35,7 @@ import { roundJoints } from "./line-buffer.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { type StreetHalves, streetHalves } from "./street-half.ts";
 import { type LaidWay, type StreetWidths, carriagewaySource, streetWidths } from "./street-section.ts";
-import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
+import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStepRuns, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
 import { type BuildingOut, type ChunkOut, type GroundOut, type SteepWayOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
@@ -188,6 +188,7 @@ const generateChunk = (
   const service = chunkServiceWays(lines, spec.rect);
   const foot = chunkFootWays(lines, spec.rect);
   const flights = chunkFlights(lines, spec.rect);
+  const stepRuns = chunkStepRuns(lines, spec.rect);
   const steepWays = chunkSteepWays(steep, spec.rect);
   const parks = chunkCarParks(kerb.carParks, spec.rect);
   const stops = chunkBusStops(kerb.busStops, spec.rect);
@@ -207,6 +208,7 @@ const generateChunk = (
     ...(service.length > 0 ? { serviceWays: service } : {}),
     ...(foot.length > 0 ? { footWays: foot } : {}),
     ...(flights.length > 0 ? { flights } : {}),
+    ...(stepRuns.length > 0 ? { stepRuns } : {}),
     ...(steepWays.length > 0 ? { steepWays } : {}),
     ...(parks.length > 0 ? { carParks: parks } : {}),
     ...(stops.length > 0 ? { busStops: stops } : {}),
