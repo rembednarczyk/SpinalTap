@@ -97,7 +97,7 @@ export const SITE_LEAF = { behind: 0.2, over: 0.2 } as const;
  * The tower crane (m): the mast's half side, its concrete base's, the least height, how far
  * over the tallest neighbour its top stands, the counter-jib's share of the jib, the beacon's phases.
  */
-export const SITE_CRANE = { mast: 0.8, base: 2, least: 18, over: 8, counter: 0.3, phases: 16 } as const;
+export const SITE_CRANE = { mast: 0.8, base: 2, least: 22, over: 8, counter: 0.3, phases: 16 } as const;
 
 export interface SiteCraneLayout {
   /** From the foot to the top of the mast's head (m). */

@@ -13,6 +13,7 @@ import { planGround } from "./cell-ground";
 import { planFarFrames, planNearFrames } from "./cell-plan";
 import { facadeFrame } from "./facade-frame";
 import { type ObstacleQuery, type PropSlot, bakeSlots } from "./facade-props";
+import { type SiteTextMap, planSiteSigns } from "./construction/site-signs";
 import { cutGround } from "./ground-cut";
 import { planTerrain } from "./ground-plan";
 import { withLandmark } from "./landmarks";
@@ -37,6 +38,8 @@ export interface CellBuilderDeps {
   readonly entries: MapEntries;
   readonly signs: MapSignMaterial;
   readonly water: MapWaterMaterial;
+  /** The building sites' board texts in the player's language (ADR-0087 stage 2), by catalog key. */
+  readonly siteTexts: () => SiteTextMap;
 }
 
 /**
@@ -69,6 +72,8 @@ export class CellBuilder {
     planCanyonSigns(signs, cell.frames, cell.spans, lite);
     // The metro's names (ADR-0071 stage 3) join a cell's signs, never make a mesh of their own.
     if (!signs.empty) planPavilionSigns(signs, cell.bounds);
+    // So do the building sites' beacons and boards (ADR-0087 stage 2), the boards in the player's language.
+    if (!signs.empty) planSiteSigns(signs, cell.bounds, this.deps.siteTexts(), lite);
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");
     if (!signs.empty) {
       const m = sinkToMesh(this.deps.scene, `map-signs-${cell.key}`, signs, true);

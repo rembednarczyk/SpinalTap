@@ -72,7 +72,7 @@ describe("the building sites in the game (ADR-0087)", () => {
       }
     // Stage 2: the crane and the scaffold.
     for (const [height, jib, phase] of [
-      [18, 31, 0],
+      [22, 31, 0],
       [26.4, 60, 15],
       [102.3, 102.3, 7],
     ] as const) {

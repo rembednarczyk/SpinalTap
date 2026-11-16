@@ -46,6 +46,8 @@ export interface DroneViewsDeps {
   readonly patrolWorld?: () => PatrolWorld | null;
   /** Plans the low patrols' lanes (default `planPatrolLanes`; tests hand fixed ones). */
   readonly patrolPlan?: (world: PatrolWorld, canyon: readonly DroneLane[]) => readonly PatrolLane[];
+  /** Lanes flown with the canyon's once its world is planned, the low patrols not keeping under them: the building sites' delivery drones (ADR-0087 stage 2). */
+  readonly siteLanes?: () => readonly DroneLane[];
 }
 
 /** What a slot holds: a canyon drone of a kind, or a low patrol (`watch`). */
@@ -154,7 +156,7 @@ export class DroneViews {
     if (world !== this.planned) {
       this.planned = world;
       this.lanes = world ? (this.deps.plan ?? planDroneLanes)(world) : [];
-      this.fleet = droneFleet(this.lanes, this.deps.quality);
+      this.fleet = droneFleet(world ? [...this.lanes, ...(this.deps.siteLanes?.() ?? [])] : [], this.deps.quality);
     }
     const patrolWorld = this.deps.patrolWorld?.() ?? null;
     // The low patrols keep under the canyon drones: planned again with them.

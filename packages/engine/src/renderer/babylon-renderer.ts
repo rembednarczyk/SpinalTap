@@ -20,6 +20,7 @@ import { CityKitLoader } from "./city-kit-loader";
 import { CrowdViews } from "./crowd-views";
 import { DroneViews } from "./drones/drone-views";
 import { cityDroneWorld } from "./drones/drone-world";
+import { siteDroneLanes } from "./mapcity/construction/site-drones";
 import { cityPatrolWorld } from "./drones/patrol-world";
 import { CapsuleRoomView } from "./rooms/capsule-room-view";
 import { AlchemiaView } from "./alchemia/alchemia-view";
@@ -28,6 +29,7 @@ import { builtRoofOver } from "./built-roofs";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCitySlot } from "./map-city-slot";
+import type { SiteTexts } from "./mapcity/construction/site-signs";
 import { isMapView } from "./mapcity/map-city";
 import { MetroRide, type MetroRideView, type RideCast } from "./metro-ride";
 import { VehicleViews } from "./vehicle-views";
@@ -150,6 +152,12 @@ export class BabylonRenderer implements RenderPort {
   readonly stats: RendererStats;
   /** Gameplay effects over the whole frame (ADR-0030) and the fog scale. */
   readonly effects: ScreenEffects;
+  /**
+   * The building sites' board texts in the player's language (ADR-0087 stage 2), by catalog key:
+   * the engine has no catalogs (ADR-0056), the app's sites' controller hands them over (`set`) at
+   * the start and on every change of the language. Not on `RenderPort`: only the app uses it.
+   */
+  readonly siteTexts: SiteTexts;
 
   /** Builds the scene pieces in a fixed order: post-processes and meshes render in creation order. */
   constructor(
@@ -174,6 +182,7 @@ export class BabylonRenderer implements RenderPort {
       strength: 0.9,
     });
     this.map = new MapCitySlot({ scene, materials: this.materials, shadow: this.shadow, quality: stage.options.quality ?? "high", props: () => this.cityKit.props });
+    this.siteTexts = this.map.siteTexts;
     this.rig = new CameraRig(scene, this.materials, (m) => this.props.isBlocker(m) || this.w3.isBlocker(m));
     this.rig.onBodyVisibility = (visible) => this.cameraTarget !== null && this.characters.setBodyVisible(this.cameraTarget, visible);
     // The player's figure as a halftone while it is in the way of the TPP view (G-275).
@@ -234,6 +243,8 @@ export class BabylonRenderer implements RenderPort {
       world: () => (this.map.current ? cityDroneWorld() : null),
       // And the low patrols' over the pedestrian streets (ADR-0058 stage 7b).
       patrolWorld: () => (this.map.current ? cityPatrolWorld() : null),
+      // And the building sites' delivery drones, gate to dig (ADR-0087 stage 2).
+      siteLanes: siteDroneLanes,
       eye: () => eye,
       quality: stage.options.quality ?? "high",
     });

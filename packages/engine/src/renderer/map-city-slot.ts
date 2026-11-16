@@ -6,6 +6,7 @@ import type { CityProps } from "./city-props";
 import { groundLift } from "./ground-lift";
 import { MapCity } from "./mapcity/map-city";
 import { sightBlocked } from "./mapcity/sight";
+import { SiteTexts } from "./mapcity/construction/site-signs";
 
 export interface MapCitySlotDeps {
   readonly scene: Scene;
@@ -25,6 +26,8 @@ export class MapCitySlot {
   private city: MapCity | null = null;
   private daylight = 0;
   private reduceFlashes = false;
+  /** The building sites' board texts the app hands over (ADR-0087 stage 2), kept for a city made later. */
+  readonly siteTexts = new SiteTexts();
 
   constructor(private readonly deps: MapCitySlotDeps) {}
 
@@ -37,7 +40,7 @@ export class MapCitySlot {
   get(): MapCity {
     if (!this.city) {
       const { scene, materials, shadow, quality } = this.deps;
-      this.city = new MapCity({ scene, materials, shadow, quality });
+      this.city = new MapCity({ scene, materials, shadow, quality, siteTexts: this.siteTexts });
       this.city.setDaylight(this.daylight);
       this.city.setReduceFlashes(this.reduceFlashes);
       const props = this.deps.props();

@@ -6,6 +6,7 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import type { CityProps } from "../city-props";
 import { SPAN_MAX } from "./canyon-plan";
 import { CellBuilder } from "./cell-builder";
+import { SiteTexts, siteBoardSpots } from "./construction/site-signs";
 import { type MapLod, streamCells } from "./cell-stream";
 import { landmarkAt } from "./landmarks";
 import { type CellLod, MapCells, cellMeshes, releaseCell } from "./map-cells";
@@ -39,6 +40,8 @@ export interface MapCityDeps {
   readonly quality: RenderQuality;
   /** Replaces the drawn sign atlases (tests without a canvas). */
   readonly signAtlas?: BaseTexture;
+  /** The building sites' board texts the app hands the renderer (ADR-0087 stage 2); none without. */
+  readonly siteTexts?: SiteTexts;
 }
 
 const toRing = (outline: readonly { x: number; z: number }[], at: Vec3): P2[] => cleanRing(outline.map((p) => ({ x: p.x + at.x, z: p.z + at.z })));
@@ -64,10 +67,15 @@ export class MapCity {
   private terrainsDirty = false;
   /** Cells near the eye still waiting for their detailed buildings after the last update. */
   private waitingNear = 0;
+  /** The building sites' board texts and the version of them the cells were built with. */
+  private readonly siteTexts: SiteTexts;
+  private textsSeen = 0;
 
   constructor(private readonly deps: MapCityDeps) {
     this.look = new MapLook(deps);
-    this.builder = new CellBuilder({ ...deps, lite: deps.quality === "low", entries: this.entries, signs: this.look.signs, water: this.look.water });
+    const texts = deps.siteTexts ?? new SiteTexts();
+    this.siteTexts = texts;
+    this.builder = new CellBuilder({ ...deps, lite: deps.quality === "low", entries: this.entries, signs: this.look.signs, water: this.look.water, siteTexts: () => texts.texts });
     this.furniture = new MapFurniture({ scene: deps.scene, materials: deps.materials, quality: deps.quality });
     this.lod = MAP_LOD[deps.quality];
     const terrain = deps.materials.get("mapTerrain");
@@ -186,6 +194,11 @@ export class MapCity {
   /** Rebuilds what changed: terrain meshes and the cells' far, sign and ground meshes. */
   flush(): boolean {
     let changed = this.furniture.current?.flush() ?? false;
+    // The sites' board texts changed (another language, ADR-0087 stage 2): the cells with boards build their signs again.
+    if (this.siteTexts.version !== this.textsSeen) {
+      this.textsSeen = this.siteTexts.version;
+      for (const b of siteBoardSpots()) this.grid.touch(b);
+    }
     if (this.terrainsDirty) {
       this.terrainsDirty = false;
       changed = true;

@@ -10,7 +10,8 @@ const CABINS = ["#d6d6d0", "#3f6ea6", "#cfa83a", "#80868e"].map(paint);
 const DOOR = paint("#25272c");
 const WINDOW = glow("#9fd8ff");
 const SCREENS = ["#14b4d8", "#d83aa8", "#e0a030", "#4ad08a"].map(glow);
-const TEXT = paint("#101216");
+/** The board's screen under its letters: dark, so the neon reads on it. */
+const SCREEN = paint("#0c1218");
 
 /**
  * An office container of a site's back yard (ADR-0087 stage 1): a 20 ft cabin, its roof's rim and
@@ -31,24 +32,21 @@ export const cabinModel = (variant: number): MeshSink => {
 
 /**
  * The information board on the fence by the gate (ADR-0087 step 8), facing the street (+z): a
- * graphite frame round a lit screen with the bars of its lines (the texts are catalog keys of
- * the site's table, the player reads them in the UI; the board draws their layout), a hazard
- * strip under it.
+ * graphite frame round a dark screen with a lit rim and a rule under the name, a hazard strip
+ * under it. Its three lines are neon letters in the map's signs' mesh (stage 2,
+ * `site-signs.ts`), in the player's language.
  */
 export const boardModel = (variant: number): MeshSink => {
   const sink = new MeshSink();
   const hw = SITE_BOARD.width / 2;
   const [b, t] = [SITE_BOARD.bottom, SITE_BOARD.top];
+  const rim = SCREENS[variant % SCREENS.length]!;
   slab(sink, FLAT, -hw, hw, -0.03, 0.03, b, t, GRAPHITE);
   slab(sink, FLAT, -hw - 0.03, hw + 0.03, -0.04, 0.04, t, t + 0.05, GRAPHITE_LIGHT);
-  facing(sink, FLAT, 0.035, -hw + 0.08, hw - 0.08, b + 0.08, t - 0.08, SCREENS[variant % SCREENS.length]!);
-  // The name, the developer and the term: three lines of bars, the name's the longest.
-  const lines = [
-    [0.62, t - 0.34, t - 0.16],
-    [0.42, t - 0.6, t - 0.5],
-    [0.3, t - 0.84, t - 0.74],
-  ] as const;
-  for (const [len, y0, y1] of lines) facing(sink, FLAT, 0.04, -hw + 0.2, -hw + 0.2 + (2 * hw - 0.4) * len, y0, y1, TEXT);
+  facing(sink, FLAT, 0.035, -hw + 0.06, hw - 0.06, b + 0.06, t - 0.06, rim);
+  facing(sink, FLAT, 0.037, -hw + 0.09, hw - 0.09, b + 0.09, t - 0.09, SCREEN);
+  // The rule between the name and the developer.
+  facing(sink, FLAT, 0.039, -hw + 0.18, hw - 0.18, t - 0.42, t - 0.405, rim);
   facing(sink, FLAT, 0.035, -hw, hw, b - 0.12, b - 0.02, HAZARD);
   return sink;
 };

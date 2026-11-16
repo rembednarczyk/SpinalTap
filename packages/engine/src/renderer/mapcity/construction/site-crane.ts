@@ -25,6 +25,8 @@ const LACE = 0.035;
 export const CRANE_HEAD = 4.5;
 const JIB_DEPTH = 1.4;
 const JIB_HALF = 0.6;
+/** How far under the jib the hook block hangs at rest (m). */
+export const HOOK_DROP = 3.5;
 
 /** The height of the slewing ring's top: the jib's bottom chords, for a crane of `height`. */
 export const jibLevel = (height: number): number => height - CRANE_HEAD + 0.6;
@@ -106,10 +108,10 @@ export const craneModel = (variant: number): MeshSink => {
     beam(sink, [x, y + JIB_DEPTH, z], apex, CHORD, HAZARD);
   beam(sink, apex, [c.jib * 0.62, y + JIB_DEPTH, 0], 0.03, STEEL);
   beam(sink, apex, [-counter + 1, y + 0.25, 0], 0.03, STEEL);
-  // The trolley, the rope and the hook block halfway out, over the site.
+  // The trolley, the rope and the hook block halfway out, hauled up at rest: the delivery drone passes under it.
   const tx = c.jib * 0.45;
   slab(sink, FLAT, tx - 0.5, tx + 0.5, -JIB_HALF, JIB_HALF, y - 0.35, y - 0.05, STEEL);
-  beam(sink, [tx, y - 0.35, 0], [tx, 6.4, 0], 0.025, GRAPHITE);
-  slab(sink, FLAT, tx - 0.3, tx + 0.3, -0.25, 0.25, 5.6, 6.4, HAZARD);
+  beam(sink, [tx, y - 0.35, 0], [tx, y - HOOK_DROP, 0], 0.025, GRAPHITE);
+  slab(sink, FLAT, tx - 0.3, tx + 0.3, -0.25, 0.25, y - HOOK_DROP - 0.8, y - HOOK_DROP, HAZARD);
   return sink;
 };
