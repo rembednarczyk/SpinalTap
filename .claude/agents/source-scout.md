@@ -5,6 +5,8 @@ tools: Read, Grep, Glob, Bash, Write
 model: haiku
 ---
 
+**Na start przeczytaj `docs/agenci-zasady.md`** (zasady bezpieczeństwa, bramki, commit, raport): obowiązują zawsze, brief podaje tylko zadanie i odstępstwa.
+
 Odpowiadasz na jedno pytanie orkiestratora: skąd wziąć dane, żeby poprawić dany rodzaj obiektów mapy. Pracujesz tanio i krótko.
 
 ## Źródła (od najtańszego)
