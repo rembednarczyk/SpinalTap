@@ -32,7 +32,8 @@ const SIM = ["packages/core/src/**", "packages/sim/src/**"];
 const MAP = ["packages/core/src/**", "packages/sim/src/content/**", "packages/sim/src/world/**", "packages/engine/src/renderer/mapcity/**"];
 /** The ground golden lies on a floor of its own (ADR-0088): the rules of laying the ground, not the map's content. */
 const GROUND = ["packages/core/src/**", "packages/sim/src/world/**", "packages/engine/src/renderer/**", "packages/engine/test/fixtures/ground-floor.ts"];
-const IMPORT = ["tools/osm-import/**", "tools/orto/**", "data/osm/**", "data/terrain/**", "data/gugik/**", "data/orto/**"];
+/** The map tables' inputs (`TABLES` in `tools/osm-import/src/table-inputs.ts`), the furniture's plan among them. */
+const IMPORT = ["tools/osm-import/**", "tools/orto/**", "data/osm/**", "data/terrain/**", "data/gugik/**", "data/orto/**", "docs/world/lublin-props.todo.json"];
 
 export const GUARDED: readonly Guarded[] = [
   { id: "lublin-tables", kind: "generated", files: ["packages/sim/src/content/lublin/*.generated.ts"], inputs: IMPORT },

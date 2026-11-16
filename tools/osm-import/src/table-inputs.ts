@@ -1,24 +1,18 @@
 /**
- * The fingerprint of the map tables' inputs (ADR-0083 step 1): `pnpm osm:build` and `pnpm osm:props`
- * write the SHA-1 of every file they read into the header of each table they write, and the unit
- * test compares the fingerprint of the files as they are now with it, in milliseconds, instead of
- * generating the whole city again. CI's `tables` job still generates them and compares byte for
- * byte, and checks with `read-trace.ts` that every file the generators read is an input here.
+ * The inputs of the map tables (ADR-0083): what `pnpm osm:build` and `pnpm osm:props` read, by an
+ * explicit list: the generator's entry modules with every module they import (followed through the
+ * sources, `moduleClosure`), and the data it reads (`data`). The tables it writes are no input of
+ * their own.
  *
- * The inputs of a table, by an explicit list: the generator's entry modules with every module they
- * import (followed through the sources, `moduleClosure`), and the data it reads (`data`). The
- * tables it writes are no input of their own.
- *
- * The fingerprint in the header covers only the inputs the map owns (`OWNED`: the import's and the
- * orthophoto's tools, the content of `lublin`, the data). The rest of the closure (through the
- * barrels of `@seki/sim` and `@seki/engine`, about 800 modules) would make every change of the
- * simulation or the renderer ask for the tables again with the same bytes and a new header, and
- * conflict in every branch (15.11, PR #582). A change there that does shape the tables is caught
- * byte for byte by CI's "Map tables" job, which runs on every change of code.
+ * Whether the committed tables are those the inputs give is checked by generating them again:
+ * CI's "Map tables" job (on every change of code, `tools/ci-scope`), `pnpm tables:check` and
+ * `pnpm merge:main`. The tables carry no fingerprint of their inputs any more (decision of 16.11,
+ * ADR-0083: the header line conflicted in 27 of 30 merges). The job checks with `read-trace.ts`
+ * that every file the generators read is an input here and that a change of it runs the job.
  */
-import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
+import { scope } from "../../ci-scope/src/scope.ts";
 import { DISTRICTS } from "./config.ts";
 import { REPO } from "./paths.ts";
 
@@ -51,15 +45,12 @@ export const TABLES = {
     command: "pnpm osm:props",
     outputs: [PROPS_TABLE, SITES_TABLE],
     entries: ["tools/osm-import/src/props.ts", "tools/osm-import/src/decal-walls.ts", "tools/osm-import/src/game-doors.ts", "tools/osm-import/src/crowd-clear.ts"],
-    // The districts' tables come in as modules of the closure, with the fingerprint of their own inputs.
+    // The districts' tables come in as modules of the closure.
     data: ["data/osm", "data/terrain", "data/orto", "data/gugik", "docs/world/lublin-props.todo.json"],
   },
 } as const satisfies Record<string, TableInputs>;
 
 export type TableName = keyof typeof TABLES;
-
-/** The modules of the closure the map owns, by their path's start: the header's fingerprint covers these and the data. */
-export const OWNED = ["tools/osm-import/", "tools/orto/", "tools/gugik/", `${LUBLIN}/`] as const;
 
 // `import … from "x"`, `export … from "x"`, `import "x"` and `import("x")`; not `import type` / `export type`, which leave nothing at run time.
 const SPECIFIERS = /(?:^|[\s;}])(?:import|export)(?!\s+type[\s{])(?:[^"'`;]*?\sfrom)?\s*["']([^"']+)["']|\bimport\(\s*["']([^"']+)["']\s*\)/g;
@@ -141,39 +132,9 @@ export const missingInputs = (t: TableInputs, traced: readonly string[], root = 
   return traced.filter((f) => f.length > 0 && !NOT_INPUTS.test(f) && !inputs.has(f));
 };
 
-/** SHA-1 (hex) of the input files' paths and bytes, in their order. */
-export const fingerprintOf = (files: readonly string[], root = REPO): string => {
-  const h = createHash("sha1");
-  for (const f of files) h.update(f).update("\0").update(readFileSync(join(root, f))).update("\0");
-  return h.digest("hex");
-};
-
-/** The inputs the header's fingerprint covers: the data and the modules the map owns (`OWNED`). */
-export const fingerprintFiles = (t: TableInputs, root = REPO): string[] => {
-  const data = t.data;
-  return inputFiles(t, root).filter((f) => OWNED.some((o) => f.startsWith(o)) || data.some((d) => f === d || f.startsWith(`${d}/`)));
-};
-
-export const tableFingerprint = (name: TableName, root = REPO): string => fingerprintOf(fingerprintFiles(TABLES[name], root), root);
-
-const LINE = /^\/\/ Inputs: sha1 ([0-9a-f]{40}) \(`[^`]+`, ADR-0083\)\.$/m;
-
-/** The table's text with the fingerprint line after its first line (the generator's). */
-export const withFingerprint = (text: string, fingerprint: string, command: string): string => {
-  const nl = text.indexOf("\n");
-  return `${text.slice(0, nl + 1)}// Inputs: sha1 ${fingerprint} (\`${command}\`, ADR-0083).\n${text.slice(nl + 1)}`;
-};
-
-/** The fingerprint a table's text was written with; null with none. */
-export const fingerprintIn = (text: string): string | null => LINE.exec(text)?.[1] ?? null;
-
-/** The text without its fingerprint line: what the generator emits. */
-export const withoutFingerprint = (text: string): string => text.replace(/^\/\/ Inputs: sha1 [0-9a-f]{40} .*\n/m, "");
-
-/** Null when the table was written from the inputs as they are; else what is wrong and what to run. */
-export const staleTable = (path: string, text: string, fingerprint: string, command: string): string | null => {
-  const written = fingerprintIn(text);
-  if (written === fingerprint) return null;
-  const what = written === null ? "has no fingerprint of its inputs" : `was written from other inputs (sha1 ${written.slice(0, 12)}, now ${fingerprint.slice(0, 12)})`;
-  return `${path} ${what}: run \`${command}\` and commit the tables it writes (ADR-0083; \`pnpm osm:build\` comes before \`pnpm osm:props\`, whose inputs are the districts' tables).`;
-};
+/** The files of a run's trace a pull request could change without CI's "Map tables" job running (`tools/ci-scope`). */
+export const unwatchedInputs = (traced: readonly string[]): string[] =>
+  traced.filter((f) => f.length > 0 && !NOT_INPUTS.test(f)).filter((f) => {
+    const s = scope([f], []);
+    return !(s.tables || s.code);
+  });
