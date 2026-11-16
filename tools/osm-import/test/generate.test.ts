@@ -1,8 +1,8 @@
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { ALL_CHUNKS, DISTRICTS, chunksOf } from "../src/config.ts";
-import { emitDistrict } from "../src/emit.ts";
 import { generate } from "../src/generate.ts";
-import { loadInputs } from "../src/load.ts";
 import { parseOsmXml } from "../src/osm.ts";
 import { worldToGeo } from "../src/project.ts";
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
@@ -217,14 +217,18 @@ describe("generator", () => {
     expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(6.5, 1);
   });
 
-  // That they are the committed tables: CI's `tables` job and `pnpm tables:check` generate them again (ADR-0083).
+  // Determinism over the committed data: two runs in one process on the very same inputs, so a
+  // module's state or an input the first run changed shows too. One chunk of the Old Town, in a
+  // process out of the coverage (`generate-twice.ts`): the whole district twice under coverage took
+  // 8.5 s locally and 19.3-20 s of the 20 s limit on CI (run 43955164086). The whole city, in a
+  // fresh process and on another machine, byte for byte against the committed tables: CI's Map
+  // tables job and `pnpm tables:check` (ADR-0083).
   it("generates the same tables from the committed raw data twice", () => {
-    const inputs = loadInputs();
-    const d = DISTRICTS.find((x) => x.slug === "stare-miasto")!;
-    const specs = chunksOf(d);
-    const first = emitDistrict(d.slug, d.name, generate(inputs.osm, inputs.src, specs, undefined, inputs.lod1, inputs.lod2, inputs.covers).chunks);
-    const again = loadInputs();
-    const second = emitDistrict(d.slug, d.name, generate(again.osm, inputs.src, specs, undefined, again.lod1, again.lod2, again.covers).chunks);
+    const env = { ...process.env };
+    delete env.NODE_V8_COVERAGE;
+    const out = execFileSync(process.execPath, [fileURLToPath(new URL("./generate-twice.ts", import.meta.url)), "stare-miasto-1-1"], { env, encoding: "utf8", maxBuffer: 1 << 26 });
+    const [first, second] = JSON.parse(out) as [string, string];
+    expect(first).toContain("stare-miasto-1-1");
     expect(second).toBe(first);
   });
 });
