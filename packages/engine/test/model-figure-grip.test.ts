@@ -60,7 +60,7 @@ describe("older looks and fighters (ADR-0076 decision 7, G-282)", () => {
     expect(ganger.rig.pace).toBe(1);
     expect(neckBend(passer)).toBeGreaterThan(0.05);
     expect(neckBend(ganger)).toBeLessThan(1e-6);
-  }, 60_000);
+  });
 
   it.each(AGED.slice(0, 3).map((look) => [backgroundVariantOf(look), look]))(
     "keep a ganger of variant %i (look %i) holding a long gun with both hands, clear of his body",
@@ -81,6 +81,5 @@ describe("older looks and fighters (ADR-0076 decision 7, G-282)", () => {
         }
       }
     },
-    60_000,
   );
 });

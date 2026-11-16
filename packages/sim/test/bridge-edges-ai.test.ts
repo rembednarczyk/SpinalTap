@@ -60,7 +60,7 @@ describe("chasing over the edges of the bridges away from the flights of steps (
     ]) {
       expect(chase(from, -Infinity, { x: 2447, z: 319 }, -Infinity, "nabrzeze-0-1", 20), `(${from.x}, ${from.z})`).not.toBeNull();
     }
-  }, 120_000);
+  });
 
   it("gets round the sheer edge of the deck over the abutment's ramp of Mełgiewska's lower bridge, not up it (G-740)", () => {
     // From the ramp's upper end down under the bridge, and from under it up onto the deck; and from
@@ -73,7 +73,7 @@ describe("chasing over the edges of the bridges away from the flights of steps (
     ] as const) {
       expect(chase(from, -Infinity, to, -Infinity, "nabrzeze-0-1", 30), `(${from.x}, ${from.z}) → (${to.x}, ${to.z})`).not.toBeNull();
     }
-  }, 120_000);
+  });
 
   it("gets from beside the footbridge of podzamcze-2-0 onto its middle", () => {
     const D = BRIDGE_DECKS.get("podzamcze-2-0")![0]!;
@@ -82,7 +82,7 @@ describe("chasing over the edges of the bridges away from the flights of steps (
     const at = (t: number, side: number): P => ({ x: D.a.x + u.x * len * t - u.z * side, z: D.a.z + u.z * len * t + u.x * side });
     // On the deck (G-741): standing under its side, 0.75 m below, was within a metre.
     expect(chase(at(0.2, 8), -Infinity, at(0.5, 0), Infinity, "podzamcze-2-0", 25, 0.3)).not.toBeNull();
-  }, 120_000);
+  });
 
   it("gets from beside the lower bridge of Mełgiewska by its western abutment onto it round its end, not up its side (G-741)", () => {
     // From the ground north of it, the deck there 1.2 m over it: the field led straight up its
@@ -92,7 +92,7 @@ describe("chasing over the edges of the bridges away from the flights of steps (
     const u = { x: (D.b.x - D.a.x) / len, z: (D.b.z - D.a.z) / len };
     const at = (t: number, side: number): P => ({ x: D.a.x + u.x * len * t - u.z * side, z: D.a.z + u.z * len * t + u.x * side });
     expect(chase(at(0.15, -14), -Infinity, at(0.15, 0), Infinity, "nabrzeze-0-1", 20, 0.3)).not.toBeNull();
-  }, 120_000);
+  });
 
   it("gets from beside the bridge of podzamcze-1-0 onto it, not pressed against its side when no way's cell is a straight walk away (G-747)", () => {
     // At (772.7, 200.3), with no cell of the way a straight walk away, it walked at the way's next
@@ -103,7 +103,7 @@ describe("chasing over the edges of the bridges away from the flights of steps (
     const u = { x: (D.b.x - D.a.x) / len, z: (D.b.z - D.a.z) / len };
     const at = (t: number, side: number): P => ({ x: D.a.x + u.x * len * t - u.z * side, z: D.a.z + u.z * len * t + u.x * side });
     expect(chase(at(0.8, 6), -Infinity, at(0.8, 0), Infinity, "podzamcze-1-0", 20, 0.3)).not.toBeNull();
-  }, 120_000);
+  });
 
   it("gets from beside the lower bridge of Mełgiewska onto it, not sliding to and fro at the foot of a bank (G-763)", () => {
     // At (2449.4, 258.8), under the deck's edge 0.27 m high, and at (2454.7, 293.4), on a sheer
@@ -122,7 +122,7 @@ describe("chasing over the edges of the bridges away from the flights of steps (
       const at = deck(i);
       expect(chase(at(t, side), -Infinity, at(t, 0), Infinity, "nabrzeze-0-1", 20, 0.3), `deck ${i} at ${t}, ${side} m aside`).not.toBeNull();
     }
-  }, 120_000);
+  });
 
   it("gets from the foot of the wall of the western abutment of Mełgiewska's lower bridge onto it, not pressed against the wall (G-762)", () => {
     // At (2415.05, 280.24) its own cell closed, the walk set out from the cell beside it on the
@@ -132,5 +132,5 @@ describe("chasing over the edges of the bridges away from the flights of steps (
     const u = { x: (D.b.x - D.a.x) / len, z: (D.b.z - D.a.z) / len };
     const to = { x: D.a.x + u.x * len * 0.1, z: D.a.z + u.z * len * 0.1 };
     expect(chase({ x: 2414.5, z: 280.1 }, -Infinity, to, Infinity, "nabrzeze-0-1", 20, 0.3, true)).not.toBeNull();
-  }, 120_000);
+  });
 });

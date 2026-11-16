@@ -45,5 +45,5 @@ describe("the carriageway's reach beside a street's axis (ADR-0080)", () => {
     vi.doUnmock("../src/content/lublin/roads");
     vi.resetModules();
     expect(moved.TRAFFIC_LANES.map((r) => [r.id, r.points])).toEqual(before);
-  }, 60_000);
+  });
 });
