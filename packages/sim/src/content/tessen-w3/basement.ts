@@ -76,6 +76,8 @@ const basement = (): StaticProp[] => {
     box(B.minX, B.maxX, F, top, B.minZ - t, B.minZ),
     box(B.minX, B.maxX, F, top, B.maxZ, B.maxZ + t),
     ...slabWithHoles(B, top, -0.05, [STAIR_A, STAIR_B, LIFT_SHAFT]),
+    // Its floor: the ground of a room in the ground is not drawn.
+    box(B.minX, B.maxX, F - 0.25, F, B.minZ, B.maxZ),
     // Columns, the lockers of the locker room (bodies hide in them, stage 3), a bench.
     ...[2522, 2536].map((x) => box(x - 0.25, x + 0.25, F, top, 400.75, 401.25)),
     box(2517, 2528, F, F + 2, B.maxZ - 0.6, B.maxZ),
@@ -132,7 +134,9 @@ const culvert = (): StaticProp[] => {
     box(m.minX, k.minX, m.floor - 0.25, k.ceiling, C.minZ - t, C.minZ),
     box(m.minX, k.minX, m.floor - 0.25, k.ceiling, C.maxZ, C.maxZ + t),
     box(k.minX - 0.2, k.minX + 0.2, k.ceiling, 0.6, C.minZ - t, C.maxZ + t),
-    // The crawl and the flight under the terrace and the hall, its walls from a slab under each floor.
+    // The crawl and the flight under the terrace and the hall: their floors, the walls from a slab under each.
+    box(k.minX, f.minX, k.floor - 0.25, k.floor, C.minZ, C.maxZ),
+    box(f.minX, f.maxX, F - 0.25, F, C.minZ, C.maxZ),
     box(k.minX, f.minX, k.floor - 0.25, k.ceiling, C.minZ - t, C.minZ),
     box(k.minX, f.minX, k.floor - 0.25, k.ceiling, C.maxZ, C.maxZ + t),
     box(f.minX, f.maxX, F, k.ceiling, C.minZ - t, C.minZ),
