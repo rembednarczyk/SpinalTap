@@ -253,6 +253,9 @@ export class Simulation {
   calmForSave(): void {
     const ctx = this.context(EMPTY_INPUT);
     settleCalls(ctx);
+    // Noise made after the crime system (a blast, a job's alarm, a body found, G-891) waits for
+    // the next step's crowd; it only scares, and the fear goes with the save, so it goes too.
+    ctx.session.street.disturbances.length = 0;
     calmStreet(ctx);
     calmStaff(ctx);
   }
