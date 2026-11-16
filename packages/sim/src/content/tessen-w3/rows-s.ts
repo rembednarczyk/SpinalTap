@@ -96,7 +96,23 @@ const cutZ = (x: number): number => {
 /** The cut corner's inner wall, a 0.9 m wall the map's way (drawn with the furniture). */
 export const W3_CUT_WALL: readonly StreetPropItem[] = barrierLine("city-wall", H, cutLine, () => W3_Y, "concrete");
 
-/** Row S's shell inside the facade: the outer walls, corridor S's walls, the partitions, the ceiling. */
+/**
+ * Store S's floor along the cut corner (P1): the zone's pad stops at the fence's steps, so the
+ * terrain under the corner rises up to 0.6 m a metre in from the facade. Dug level to the floor
+ * (`GroundCut`) in 1 m steps whose edges end inside the corner's wall, and floored with a slab.
+ */
+const FLOOR_STEPS = 9;
+export const W3_STORE_FLOOR: readonly { minX: number; maxX: number; minZ: number; maxZ: number }[] = (() => {
+  const west = S.minX + FACADE_GAP + WALL;
+  const w0 = cutLine[1]!.x;
+  const xs = Array.from({ length: FLOOR_STEPS + 1 }, (_, i) => west + ((w0 - west) * i) / FLOOR_STEPS);
+  return [
+    ...xs.slice(1).map((x1, i) => ({ minX: xs[i] as number, maxX: x1, minZ: cutZ(((xs[i] as number) + x1) / 2), maxZ: corridorZ })),
+    { minX: w0, maxX: ROW_S_SPLITS[0] as number, minZ: S.minZ + FACADE_GAP + WALL, maxZ: corridorZ },
+  ];
+})();
+
+/** Row S's shell inside the facade: the outer walls, corridor S's walls, the partitions, the ceiling, store S's floor. */
 const shell = (): StaticProp[] => {
   const o = FACADE_GAP;
   const south = S.minZ + o;
@@ -124,6 +140,7 @@ const shell = (): StaticProp[] => {
     // The ceiling: whole east of the cut corner, in 1 m steps along it (each ending inside its wall).
     box(w0, east - t, GROUND_CEILING, H, south + t, northZ - t, "concrete"),
     ...bands.map((x0, i) => box(x0, bands[i + 1] ?? w0, GROUND_CEILING, H, cutZ((x0 + (bands[i + 1] ?? w0)) / 2), northZ - t, "concrete")),
+    ...W3_STORE_FLOOR.map((r) => box(r.minX, r.maxX, -0.25, -0.01, r.minZ, r.maxZ, "concrete")),
   ];
 };
 
@@ -134,10 +151,9 @@ const furniture = (): StaticProp[] => {
     // Store S: racks along its back wall east of the cut corner, a crate of parts.
     box(2510, 2513.8, 0, 2.4, back, back + 0.8, "metal"),
     box(2508.4, 2510, 0, 1.2, 400.2, 401.4, "metal"),
-    // The parts line: two benches along the back wall, a press.
+    // The parts line: two benches along the back wall.
     box(2515, 2521, 0, 0.95, back, back + 0.9, "metal"),
     box(2523, 2528.8, 0, 0.95, back, back + 0.9, "metal"),
-    box(2515.2, 2516.6, 0, 1.9, 402.3, 403.6, "metal"),
     // Workshops: a bench in W1, a lathe in W2 east of its stair.
     box(2531, 2536.8, 0, 0.95, back, back + 0.9, "metal"),
     box(2531, 2532.2, 0, 1.4, 401.5, 403.3, "metal"),

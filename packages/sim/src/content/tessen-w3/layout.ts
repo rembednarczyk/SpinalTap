@@ -5,11 +5,13 @@ import type { W3Rect } from "./site";
  * shared by the rows, the line, the basement, the level graph and the tests. World x and z,
  * heights over the halls' floor `W3_Y`.
  *
- * Deviations from the ADR's first draft, forced by the curator's corrections of stage 1:
- * - the basement's stair from store S runs along z 402..403.8 from x 2506, not z 397..399 from
- *   x 2504, which lies outside the hall's cut south-west corner (P1);
+ * Deviations from the ADR's first draft, forced by the site of stage 1:
+ * - Nabrzeże's metro platform and its track lie under store S (x 2505..2515, z up to 405.3, its
+ *   ceiling 2.5 m under the floor): the basement starts at x 2515, its stair A goes down from the
+ *   parts line instead of store S, and the culvert runs along z 406..408 north of the platform,
+ *   under the west yard and airlock S, not along z 399.5..401.5;
  * - the culvert ends in a flight down into the basement, not a ladder: a ladder's top would put
- *   a standing body into the culvert's 1.4 m;
+ *   a standing body into the culvert's crawl;
  * - the culvert's mouth is dug out of the river's bench (a `GroundCut`) up to where the bank over
  *   it is high enough for a room in the ground (`GroundVault`);
  * - the roof hatch over server room N moves to x 2564, clear of the fifth cooling unit;
@@ -48,7 +50,7 @@ export const ROW_N_SPLITS: readonly number[] = [2514, 2524, 2536, 2548, 2560];
 export const AIRLOCK_SPLITS: readonly number[] = [413, 423];
 
 /** The doors' middles (x along the corridors' walls, z along the airlocks'). */
-export const DOORS_S = { store: 2504, line: 2522, w1: 2534, w2: 2543, armoury: 2552, server: 2565 } as const;
+export const DOORS_S = { store: 2504, line: 2527, w1: 2534, w2: 2543, armoury: 2552, server: 2565 } as const;
 export const DOORS_N = { n1: 2508, n2: 2519, modules: 2530, calibration: 2542, armoury: 2554, server: 2566 } as const;
 /** The corridors' doors into the assembly hall (both corridors), the airlocks' doors. */
 export const HALL_DOORS: readonly number[] = [2512, 2546];
@@ -109,12 +111,12 @@ export const COOLER = { w: 3, d: 2, h: 1.4, z: 438 } as const;
 export const ROOF_HATCH = { minX: 2563.4, maxX: 2564.6, minZ: 438.4, maxZ: 439.7 } as const;
 export const HATCH_LADDER = { key: "w3-hatch", x: 2564, z: 439.3 } as const;
 
-/** The basement under the parts line and the workshops: its floor and ceiling (underside). */
-export const BASEMENT: W3Rect = { minX: 2514, maxX: 2546, minZ: 396, maxZ: 406 };
+/** The basement under the parts line, the workshops, corridor S and the hall's south strip: its floor and ceiling (underside). */
+export const BASEMENT: W3Rect = { minX: 2515, maxX: 2546, minZ: 396, maxZ: 408.4 };
 export const BASEMENT_FLOOR = -4.5;
 export const BASEMENT_CEILING = -0.4;
-/** Stair A from store S down east into the basement; stair B from the basement up south into workshop W2. */
-export const STAIR_A: W3Rect = { minX: 2506, maxX: 2514, minZ: 402, maxZ: 403.8 };
+/** Stair A from the parts line down west into the basement; stair B from the basement up south into workshop W2. */
+export const STAIR_A: W3Rect = { minX: 2517, maxX: 2525, minZ: 402, maxZ: 403.8 };
 export const STAIR_B: W3Rect = { minX: 2539, maxX: 2541, minZ: 397.6, maxZ: 403.6 };
 /** The goods lift's shaft from the basement up into the parts line, the player's ladder in it. */
 export const LIFT_SHAFT: W3Rect = { minX: 2529.2, maxX: 2530.8, minZ: 400.2, maxZ: 401.8 };
@@ -122,9 +124,11 @@ export const SHAFT_LADDER = { key: "w3-shaft", x: 2530, z: 401.4 } as const;
 
 /**
  * The culvert (P6): its mouth dug into the river's bench, the crawl under the terrace and store S,
- * the flight down into the basement. Floor and ceiling (underside) over `W3_Y`: 1.4 m to crawl.
+ * the flight down into the basement. Floor and ceiling (underside) over `W3_Y`: 1.5 m to crawl and
+ * 1.35 m under the headwall over the mouth's floor, for a crouching body of 1.26 m (a standing one
+ * is 1.8 m); the ADR's ceiling at -0.2 left the mouth 1.25 m.
  */
-export const CULVERT_Z = { minZ: 399.5, maxZ: 401.5 } as const;
-export const CULVERT_MOUTH = { minX: 2462, maxX: 2469.5, floor: -1.45 } as const;
-export const CULVERT_CRAWL = { minX: 2469.5, maxX: 2508, floor: -1.6, ceiling: -0.2 } as const;
-export const CULVERT_FLIGHT = { minX: 2508, maxX: 2514 } as const;
+export const CULVERT_Z = { minZ: 406.2, maxZ: 408.2 } as const;
+export const CULVERT_MOUTH = { minX: 2462, maxX: 2472, floor: -1.45 } as const;
+export const CULVERT_CRAWL = { minX: 2472, maxX: 2509, floor: -1.6, ceiling: -0.1 } as const;
+export const CULVERT_FLIGHT = { minX: 2509, maxX: 2515 } as const;

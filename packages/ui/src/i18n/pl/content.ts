@@ -47,6 +47,8 @@ export const plContent = {
   "interior.clinic": "Klinika doktora Mori",
   "interior.neon-koi": "Neon Koi",
   "interior.tessen-office": "Biuro Tessen",
+  "interior.w3-hall": "Hala montażowa Tessen",
+  "interior.w3-basement": "Piwnica hali Tessen",
   "interior.trasa-podziemna": "Trasa Podziemna",
   "interior.capsule": "Pokój kapsułowy na wynajem",
   // Perony metra (ADR-0071 etap 4).

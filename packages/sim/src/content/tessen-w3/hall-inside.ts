@@ -50,13 +50,14 @@ const o = FACADE_GAP;
 /** The assembly hall's walls: across the facades up to the low roofs, inside its own over them. */
 const assemblyWalls = (): StaticProp[] => {
   const top = HALL_CEILING;
-  const window = { from: GALLERY_OVER_LINE.from, to: GALLERY_OVER_LINE.to, bottom: GALLERY_WINDOW.bottom, top: GALLERY_WINDOW.top };
+  const window = { from: GALLERY_OVER_LINE.from, to: GALLERY_OVER_LINE.to, top: GALLERY_WINDOW.top };
   return [
     // South: corridor S's wall (row S) up to its ceiling, this over it.
     ...wallX(A.minX - t, A.maxX, A.minZ - t, A.minZ + t, GROUND_CEILING + 0.3, R),
     ...wallX(A.minX + o, A.maxX - o, A.minZ + o, A.minZ + o + t, R, top),
     // North: corridor N's south wall and the gallery's, its doors and the gallery's window.
-    ...wallX(A.minX - t, A.maxX - t, A.maxZ - t, A.maxZ + t, 0, R, [...HALL_DOORS.map((x) => doorGap(x, DOOR_W, DOOR_H)), window]),
+    ...wallX(A.minX - t, A.maxX - t, A.maxZ - t, A.maxZ + t, 0, GALLERY_WINDOW.bottom, HALL_DOORS.map((x) => doorGap(x, DOOR_W, DOOR_H))),
+    ...wallX(A.minX - t, A.maxX - t, A.maxZ - t, A.maxZ + t, GALLERY_WINDOW.bottom, R, [window]),
     ...wallX(A.minX + o, A.maxX - o, A.maxZ - o - t, A.maxZ - o, R, top),
     // West: the airlocks' doors and the wagon airlock open across.
     ...wallZ(A.minZ + t, A.maxZ - t, A.minX - t, A.minX + t, 0, R, [
@@ -76,12 +77,13 @@ const assemblyWalls = (): StaticProp[] => {
 const chamberWalls = (): StaticProp[] => {
   const w = CHAMBER_WALL;
   const top = CHAMBER_CEILING;
-  const window = { from: GALLERY_OVER_CHAMBER.from, to: GALLERY_OVER_CHAMBER.to, bottom: GALLERY_WINDOW.bottom, top: GALLERY_WINDOW.top };
+  const window = { from: GALLERY_OVER_CHAMBER.from, to: GALLERY_OVER_CHAMBER.to, top: GALLERY_WINDOW.top };
   return [
     ...wallZ(C.minZ - t, C.maxZ + t, C.minX - t, C.minX + w, 0, top, [{ from: CHAMBER_GATE_W.minZ, to: CHAMBER_GATE_W.maxZ, top: CHAMBER_GATE_W.height }]),
     ...wallX(C.minX + w, C.maxX - o, C.minZ - t, C.minZ + w, 0, R),
     ...wallX(C.minX + w, C.maxX - o, C.minZ + o, C.minZ + w, R, top),
-    ...wallX(C.minX + w, C.maxX - o, C.maxZ - w, C.maxZ + t, 0, R, [window]),
+    ...wallX(C.minX + w, C.maxX - o, C.maxZ - w, C.maxZ + t, 0, GALLERY_WINDOW.bottom),
+    ...wallX(C.minX + w, C.maxX - o, C.maxZ - w, C.maxZ + t, GALLERY_WINDOW.bottom, R, [window]),
     ...wallX(C.minX + w, C.maxX - o, C.maxZ - w, C.maxZ - o, R, top),
     ...wallZ(C.minZ + w, C.maxZ - w, C.maxX - w, C.maxX - o, 0, top, [{ from: CHAMBER_GATE_E.minZ, to: CHAMBER_GATE_E.maxZ, top: CHAMBER_GATE_E.height }]),
     box(C.minX + w, C.maxX - w, top - 0.3, top, C.minZ + w, C.maxZ - w, "concrete"),

@@ -7,6 +7,7 @@ import { FOODHALL_ROOM } from "./alchemia/foodhall";
 import { P1_ROOMS } from "./alchemia/parking";
 import { CLINIC_SITE, KOI_SITE, TRASA_PODZIEMNA } from "./lublin/sites";
 import { W3_OFFICE } from "./tessen-w3/tower-pipes";
+import { W3_BASEMENT_ROOMS, W3_HALL_ROOMS } from "./tessen-w3/rooms";
 import { W3_Y } from "./tessen-w3/site";
 
 /**
@@ -34,6 +35,11 @@ export interface InteriorDef {
    */
   readonly building: string | null;
   readonly rooms: readonly InteriorRoom[];
+  /**
+   * Stepping in saves no game (ADR-0082: inside W-3's fence the autosave waits for the metro or
+   * a job taken); absent, it does (ADR-0061).
+   */
+  readonly autosave?: false;
 }
 
 /** A room of the clinic or the bar from two corners in its old coordinates (`interiors.ts`). */
@@ -58,6 +64,9 @@ export const INTERIORS: readonly InteriorDef[] = [
   { id: "clinic", name: "interior.clinic", building: CLINIC_SITE.building, rooms: [oldRoom(clinicPoint, -17, -7.3, 1.3, 7.7, CLINIC_SITE.floor)] },
   { id: "neon-koi", name: "interior.neon-koi", building: KOI_SITE.building, rooms: [oldRoom(koiPoint, 7.3, 17, -6.7, 10.7, KOI_SITE.floor)] },
   { id: "tessen-office", name: "interior.tessen-office", building: null, rooms: [TESSEN_OFFICE_ROOM] },
+  // W-3's hall and its basement with the culvert (ADR-0082 stage 2), behind the fence: no autosave.
+  { id: "w3-hall", name: "interior.w3-hall", building: null, rooms: W3_HALL_ROOMS, autosave: false },
+  { id: "w3-basement", name: "interior.w3-basement", building: null, rooms: W3_BASEMENT_ROOMS, autosave: false },
   { id: "trasa-podziemna", name: "interior.trasa-podziemna", building: TRASA_PODZIEMNA.building, rooms: TRASA_PODZIEMNA_ROOMS },
   { id: "capsule", name: "interior.capsule", building: CAPSULE_SITE.building, rooms: [CAPSULE_INTERIOR_ROOM] },
   // The metro's platforms under the streets (ADR-0071 stage 4), the second flight down to each.

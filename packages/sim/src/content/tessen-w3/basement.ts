@@ -16,16 +16,18 @@ import {
   STAIR_B,
   WALL,
 } from "./layout";
-import { W3_Y } from "./site";
+import { W3_STORE_FLOOR } from "./rows-s";
+import { W3_Y, type W3Rect } from "./site";
 
 /**
  * The stores' basement and the culvert (ADR-0082 stage 2, picture 03's section, P6): a room in
  * the ground under the parts line and the workshops (a `GroundVault`: the hall's floor over it
  * stays whole), the floor −4.5 and the ceiling −0.4. Down into it: stair A from store S, stair B
  * from workshop W2 (both shafts dug, `GroundCut`), the goods lift's shaft with the player's
- * ladder. Into it from the river: the culvert, its mouth dug into the river's bench, then 38 m
- * of crawl 1.4 m high under the terrace and store S (only a crouching body fits), and a flight
- * down into the basement's west end. The locker room's lockers line its north wall.
+ * ladder. Into it from the river: the culvert, its mouth dug into the river's bench, then 37 m
+ * of crawl 1.5 m high under the terrace, the west yard and airlock S (only a crouching body
+ * fits), and a flight down into the basement's west end. The locker room's lockers line its
+ * north wall.
  */
 
 const F = BASEMENT_FLOOR;
@@ -33,8 +35,9 @@ const B = BASEMENT;
 const C = CULVERT_Z;
 const y = (h: number) => W3_Y + h;
 
-/** The shafts dug down from the hall's floor and the culvert's mouth dug into the bench. */
+/** The shafts dug down from the hall's floor, the culvert's mouth dug into the bench, store S's floor levelled. */
 export const W3_CUTS: readonly GroundCut[] = [
+  ...W3_STORE_FLOOR.map((r) => ({ bounds: r, floor: y(0) })),
   { bounds: { minX: STAIR_A.minX, maxX: STAIR_A.maxX, minZ: STAIR_A.minZ, maxZ: STAIR_A.maxZ }, floor: y(F) },
   { bounds: { minX: STAIR_B.minX, maxX: STAIR_B.maxX, minZ: STAIR_B.minZ, maxZ: STAIR_B.maxZ }, floor: y(F) },
   { bounds: { minX: LIFT_SHAFT.minX, maxX: LIFT_SHAFT.maxX, minZ: LIFT_SHAFT.minZ, maxZ: LIFT_SHAFT.maxZ }, floor: y(F) },
@@ -48,43 +51,44 @@ export const W3_VAULTS: readonly GroundVault[] = [
   { bounds: { minX: CULVERT_FLIGHT.minX, maxX: CULVERT_FLIGHT.maxX, minZ: C.minZ, maxZ: C.maxZ }, floor: y(F) },
 ];
 
-/** The basement's walls, its ceiling round the shafts, its columns and lockers. */
+/** A slab over `r` from y0 to y1 less the holes in it: strips between the holes' x edges, each less the holes over it. */
+const slabWithHoles = (r: W3Rect, y0: number, y1: number, holes: readonly W3Rect[]): StaticProp[] => {
+  const xs = [...new Set([r.minX, r.maxX, ...holes.flatMap((h) => [h.minX, h.maxX])])].sort((a, b) => a - b);
+  return xs.slice(1).flatMap((x1, i) => {
+    const x0 = xs[i] as number;
+    const over = holes.filter((h) => h.minX < x1 && h.maxX > x0).sort((a, b) => a.minZ - b.minZ);
+    const zs = [r.minZ, ...over.flatMap((h) => [h.minZ, h.maxZ]), r.maxZ];
+    const out: StaticProp[] = [];
+    for (let k = 0; k < zs.length; k += 2) if ((zs[k + 1] as number) > (zs[k] as number)) out.push(box(x0, x1, y0, y1, zs[k] as number, zs[k + 1] as number));
+    return out;
+  });
+};
+
+/** The basement's walls (the west one open on the culvert's flight), its ceiling round the shafts, its columns and lockers. */
 const basement = (): StaticProp[] => {
   const top = BASEMENT_CEILING;
   const t = WALL;
-  const sb = STAIR_B;
-  const ls = LIFT_SHAFT;
   return [
-    // West: round the openings of the culvert's flight and stair A.
-    box(B.minX - t, B.minX, F, top, B.minZ - t, C.minZ - t),
-    box(B.minX - t, B.minX, F, top, STAIR_A.maxZ + t, B.maxZ + t),
+    box(B.minX - t, B.minX, F, top, B.minZ - t, C.minZ),
+    box(B.minX - t, B.minX, F, top, C.maxZ, B.maxZ + t),
     box(B.maxX, B.maxX + t, F, top, B.minZ - t, B.maxZ + t),
     box(B.minX, B.maxX, F, top, B.minZ - t, B.minZ),
     box(B.minX, B.maxX, F, top, B.maxZ, B.maxZ + t),
-    // The ceiling round stair B's and the lift's shafts.
-    box(B.minX, ls.minX, top, -0.05, B.minZ, B.maxZ),
-    box(ls.maxX, sb.minX, top, -0.05, B.minZ, B.maxZ),
-    box(sb.maxX, B.maxX, top, -0.05, B.minZ, B.maxZ),
-    box(ls.minX, ls.maxX, top, -0.05, B.minZ, ls.minZ),
-    box(ls.minX, ls.maxX, top, -0.05, ls.maxZ, B.maxZ),
-    box(sb.minX, sb.maxX, top, -0.05, B.minZ, sb.minZ),
-    box(sb.minX, sb.maxX, top, -0.05, sb.maxZ, B.maxZ),
+    ...slabWithHoles(B, top, -0.05, [STAIR_A, STAIR_B, LIFT_SHAFT]),
     // Columns, the lockers of the locker room (bodies hide in them, stage 3), a bench.
     ...[2522, 2536].map((x) => box(x - 0.25, x + 0.25, F, top, 400.75, 401.25)),
-    box(2516, 2527, F, F + 2, B.maxZ - 0.6, B.maxZ),
+    box(2517, 2528, F, F + 2, B.maxZ - 0.6, B.maxZ),
     box(2518, 2524, F, F + 0.45, 397, 397.4),
   ];
 };
 
-/** Stair A from store S, its shaft's lining down from the floor and its rail on the floor. */
+/** Stair A from the parts line, rising east to its top by the room's door; the rails round its shaft on the floor. */
 const stairA = (): StaticProp[] => {
   const s = STAIR_A;
-  const t = WALL;
   return [
-    stairs(s.minX, s.maxX, s.minZ, s.maxZ, y(F), y(0), "x", -1),
-    box(s.minX, s.maxX, F, -0.05, s.minZ - t, s.minZ),
-    box(s.minX, s.maxX, F, -0.05, s.maxZ, s.maxZ + t),
+    stairs(s.minX, s.maxX, s.minZ, s.maxZ, y(F), y(0), "x", 1),
     railing(s.minX, s.maxX, s.minZ - 0.12, s.minZ, 0),
+    railing(s.minX - 0.12, s.minX, s.minZ - 0.12, s.maxZ, 0),
   ];
 };
 

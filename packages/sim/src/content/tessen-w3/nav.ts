@@ -1,6 +1,7 @@
 import type { NavGraph, NavNode } from "../builders";
 import { ground } from "../lublin/terrain";
 import { W3_BRIDGE_Z } from "./hall";
+import { W3_HALL_EDGES, W3_HALL_NODES } from "./nav-hall";
 import { W3_PIPE_LADDER, W3_TOWER_STAIR } from "./tower-pipes";
 import { W3_PLATFORM, W3_ROOF, w3 } from "./site";
 
@@ -9,7 +10,7 @@ import { W3_PLATFORM, W3_ROOF, w3 } from "./site";
  * to the service gate and round the zone's yards, up the tower's stair to its platform, over the
  * bridge onto row N's roof and out along the pipe walk; on the river's west side, from the
  * Lutosławski bridge down to the foot of the pipeline's ladder (the ladder itself is the
- * player's). Stage 2 adds the hall's floors. The ways up the stair's flights and over the bridge
+ * player's). Stage 2 adds the hall's floors (`nav-hall.ts`). The ways up the stair's flights and over the bridge
  * reach onto their landings, so one standing at a turn is on the way and goes on.
  */
 
@@ -61,6 +62,7 @@ const NODES: readonly NavNode[] = [
   node("w3-bridge-w", ground(2443, 435.4)),
   node("w3-bank-w", ground(2441.2, 440.5)),
   node("w3-pipe-ladder", ground(W3_PIPE_LADDER.x, W3_PIPE_LADDER.z - 0.2)),
+  ...W3_HALL_NODES,
 ];
 
 const s = W3_TOWER_STAIR;
@@ -104,5 +106,6 @@ export const W3_NAV: NavGraph = {
     { a: "w3-pipe-e", b: "w3-pipe-w" },
     { a: "w3-bridge-w", b: "w3-bank-w" },
     { a: "w3-bank-w", b: "w3-pipe-ladder" },
+    ...W3_HALL_EDGES,
   ],
 };
