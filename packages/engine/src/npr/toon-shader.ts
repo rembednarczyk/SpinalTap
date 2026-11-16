@@ -1,4 +1,6 @@
 import { FACADE_GLSL, GROUND_GLSL, STEPS_VERTEX_GLSL } from "./toon-city";
+import { LAMP_STREAK_GLSL } from "./lamp-streaks";
+import { SETT_JOINT_GLSL, STREET_FIELD_GLSL, WATER_GLSL, WET_DARKEN } from "./water-mask";
 
 /** Number of point lights the toon shader evaluates per fragment. */
 export const MAX_POINT_LIGHTS = 8;
@@ -23,6 +25,10 @@ varying vec4 vColor;
 #ifdef UV2
 attribute vec2 uv2;
 varying vec2 vUV2;
+#endif
+#ifdef WATER_MASK
+attribute vec2 uv3;
+varying vec2 vWater;
 #endif
 #include<instancesDeclaration>
 #include<bonesDeclaration>
@@ -62,6 +68,9 @@ void main(void) {
 #ifdef UV2
   vUV2 = uv2;
 #endif
+#ifdef WATER_MASK
+  vWater = uv3;
+#endif
   gl_Position = viewProjection * wp;
 }
 `;
@@ -84,6 +93,11 @@ varying vec4 vColor;
 #endif
 #ifdef UV2
 varying vec2 vUV2;
+#endif
+#ifdef WATER_MASK
+varying vec2 vWater;
+/** District tint of wet paving and standing water (ADR-0084), a multiplier near white. */
+uniform vec3 wetTint;
 #endif
 #ifdef TEXTURE
 uniform sampler2D baseSampler;
@@ -157,6 +171,11 @@ float gridLine(float x, float period, float w) {
   return 1.0 - step(w, d);
 }
 ${FACADE_GLSL}${GROUND_GLSL}
+${WATER_GLSL}
+#ifdef WATER_MASK
+${SETT_JOINT_GLSL}
+${LAMP_STREAK_GLSL}
+#endif
 #if defined(CONCRETE_PANELS) || defined(METAL_PANELS)
 /**
  * Procedural surface of bare structures (ADR-0027): poured concrete with formwork seams, tie
@@ -316,6 +335,22 @@ void main(void) {
   float litFlag = 1.0 - step(0.25, vColor.a);
   g = mix(gloss, 1.8, wetFlag);
 #endif
+  // Highlights of the street lights: tight on glass and standing water, broad on the wet street.
+  float shine = 18.0;
+#ifdef WATER_MASK
+  // Three zones (ADR-0084): the whole street wet in the rain, darker and with a broad sheen;
+  // standing water where the mask says, nearly black and a mirror; its soft rim a step between.
+  float code = floor(vUV2.x + 0.5);
+  float standing = waterStanding(vWater, vWorldPos.xz);
+  // The setts' joints hold the rain: darker and glinting all over the wet Old Town.
+  float joint = code > 3.5 && code < 4.5 ? step(0.5, settJoint(vWorldPos.xz, dist)) * step(-0.5, vWater.y) : 0.0;
+  float soak = code > 5.5 ? 0.45 : 1.0;
+  // Wet is only darker, no colour of its own; the district's tint is in the standing water alone.
+  albedo *= mix(1.0, ${WET_DARKEN.toFixed(2)}, soak) * (1.0 - 0.45 * joint);
+  albedo = mix(albedo, albedo * 0.2 * wetTint, standing);
+  g = mix(max(max(g * 0.5, 0.75 * soak), 1.4 * joint), 1.8, standing);
+  shine = mix(mix(7.0, 22.0, joint), 22.0, standing);
+#endif
 
   float moon = band(max(dot(n, normalize(sunDir)), 0.0)) * moonShadow();
   vec3 lit = ambientColor * (1.0 + fill) + sunColor * moon;
@@ -343,7 +378,7 @@ void main(void) {
     // on its underside along the eye's line to it (G-490).
     if (g > 0.0 && ndl > 0.0) {
       vec3 h = normalize(l + v);
-      float s = pow(max(dot(n, h), 0.0), 18.0) * att;
+      float s = pow(max(dot(n, h), 0.0), shine) * att;
       spec += pointColor[i].rgb * pointColor[i].a * smoothstep(0.18, 0.22, s) * g;
     }
   }
@@ -355,16 +390,31 @@ void main(void) {
 #if defined(DRESS_FLAGS) && defined(VERTEXCOLOR)
   wetK = wetFlag;
 #endif
+  // Standing water mirrors fully, the wet street a dim blur of it; without the mask, glass-like
+  // surfaces (puddles of the dressing, the harbour) are standing water and the rest wet.
+#ifdef WATER_MASK
+  wetK = max(wetK, standing);
+  float puddle = mix(0.7, 1.0, standing);
+#else
+  // The game's own asphalt (no field baked): the street's mask, the lamps' glow clear on all of it.
+  float puddle = max(step(1.5, g), mix(0.45, 1.0, waterStanding(${STREET_FIELD_GLSL}, vWorldPos.xz)));
+#endif
   if (wetK > 0.4 && n.y > 0.6 && envStrength > 0.0) {
     vec3 r = reflect(-v, n);
     r.y = abs(r.y);
     // Only what glows: the sky's haze is cut away, neon and signs stay, in flat steps.
     vec3 env = max(textureCube(envSampler, r).rgb - vec3(0.18), vec3(0.0));
+#ifdef WATER_MASK
+    // The merely wet street mirrors no probe: its lights without parallax were stray dots of neon.
+    env *= step(0.25, standing);
+#endif
     env = floor(env * 6.0 + 0.3) / 6.0;
-    float puddle = mix(0.15, 1.0, step(0.5, vnoise(vWorldPos.xz * 0.45)));
     float graze = 0.25 + 0.75 * pow(1.0 - max(dot(n, v), 0.0), 3.0);
     spec += env * envStrength * puddle * graze * wetK;
   }
+#endif
+#ifdef WATER_MASK
+  spec += lampStreaks(vWorldPos, standing, vWater.y);
 #endif
 
   if (flashLight.w > 0.0) {

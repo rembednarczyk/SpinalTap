@@ -258,6 +258,7 @@ export class ScreenFx {
     // Inside a closed hall its own light replaces the sky's on the materials (ADR-0082 §4); the sky and the signs keep the night's.
     materials.setRig(mixRig(rig, INDOOR_RIG, this.indoorFade.value));
     materials.setRimTint(p.rim, p.rimWeight * (1 - 0.5 * Math.max(0, Math.min(1, this.daylight))));
+    materials.wet.setTint(p.wet);
     atmosphere.setDaylight(rig, this.daylight);
     farCity.setDaylight(rig, this.daylight);
     signage.setDaylight(rig, this.daylight);
