@@ -15,7 +15,7 @@ ADR-0058 dopuszcza tylko modele na licencji CC0. Użytkownik przekazał (31.10, 
 Użytkownik zdecydował (31.10): dopuszczamy CC-BY 4.0.
 
 ## Decyzja
-- **Licencje:** CC0 albo CC-BY 4.0. Inne (CC-BY-SA, CC-BY-NC, płatne, bez licencji) dalej odpadają. Dotyczy modeli, tekstur i dźwięków (ADR-0060 bez zmian w części o głosach).
+- **Licencje:** CC0 albo CC-BY 4.0 (od 15.11 także NC i NC-SA, sekcja „Zmiana 15.11”). Inne (CC-BY-SA bez NC, płatne, bez licencji) dalej odpadają. Dotyczy modeli, tekstur i dźwięków (ADR-0060 bez zmian w części o głosach).
 - **Wyjątek: CC BY 3.0 dla ikon game-icons.net** (decyzja użytkownika 6.11, ADR-0073 etap 2). Tylko ikony z game-icons.net (repozytorium `game-icons/icons`, plik `license.txt`: „Creative Commons 3.0 BY”), tylko jako źródło rysunków ikon przedmiotów w `packages/ui/src/icons/`, zawsze z atrybucją: wpis na ekranie „Autorzy” (sekcja „Ikony przedmiotów”, jeden wiersz na autora z tytułami ikon), wiersz na ikonę w `packages/ui/src/icons/README.md` (tytuł, autor z linkiem, strona ikony, licencja z linkiem, opis zmian) i źródło z sha256 w `tools/assets/sources.json` (`game-icons-<autor>`). Ikony z dopiskiem CC0 w `license.txt` są bez ograniczeń; inne paczki na CC BY 3.0 dalej odpadają.
 - **Uznanie autorstwa:**
   - każdy plik CC-BY ma wiersz w README katalogu (`packages/app/public/*/README.md`): tytuł, autor z linkiem, źródło, licencja z linkiem, opis zmian („uproszczony, kolory sprowadzone do palety”);
@@ -62,6 +62,13 @@ Użytkownik zdecydował (31.10): dopuszczamy CC-BY 4.0.
 - **Pobranie:** pliki SVG z `raw.githubusercontent.com/game-icons/icons/master/<autor>/<nazwa>.svg` (strona game-icons.net miała 6.11 wygasły certyfikat TLS, API GitHuba było dla sesji zamknięte), User-Agent `SekiSenshi-topo/1.0`, jedno żądanie na plik, bez ponowień. SVG czytane tylko jako tekst (ścieżka `d`), nic z nich nie jest uruchamiane; surowe pliki nie trafiają do repo.
 - **Zmiany:** sylwetki 512 px przeskalowane na siatkę 32 × 32 (pole 3–29), krzywe spłaszczone i uproszczone do odcinków na siatce 0,5, drobne elementy pominięte; rysowane jak nasze ikony: kontur `currentColor` w kolorze rzadkości z półprzezroczystym wypełnieniem zamiast białej plamy. Dane w `packages/ui/src/icons/game-icon-paths.ts` razem ze źródłem każdej ikony (`GAME_ICON_SOURCES`), z którego ekran „Autorzy” składa tytuły.
 - **Testy:** `packages/app/test/credits.test.ts` (wpis na ekranie, źródło w `sources.json`, wiersz README dla każdej ikony, CC BY 3.0 tylko dla `game-icons-*`), `packages/ui/test/item-icons.test.tsx` (każda ikona z game-icons.net ma autora z wpisem CC BY 3.0, i tylko wszczepy i zużywalne z nich korzystają).
+
+## Zmiana 15.11: licencje NC i NC-SA (decyzja użytkownika)
+Gra na razie nie ma celu komercyjnego. Użytkownik dopuścił 15.11 także CC-BY-NC 4.0 i CC-BY-NC-SA 4.0 oraz modele VRoid Hub, których warunki autora zezwalają na użycie niekomercyjne i redystrybucję (gra w przeglądarce udostępnia pliki).
+- Każdy asset ma w manifeście swoją licencję i wpis w „Autorach” (autor, tytuł, link, licencja, zmiany).
+- Assety SA: zmieniona wersja samego assetu jest udostępniana na tej samej licencji (plik w repo z nagłówkiem licencji); reszty gry to nie dotyczy.
+- Test listuje assety NC i NC-SA, żeby przed ewentualną komercjalizacją dało się je wymienić. To jest dług na wypadek zmiany celu, zapisany tutaj.
+- Dalej odpadają: Mixamo jako samodzielne modele (zakaz redystrybucji bez względu na cel), BOOTH bez pisemnej zgody twórcy, płatne „royalty free”, pliki bez licencji.
 
 ## Konsekwencje
 - Więcej gotowych modeli w stylu cyberpunk, kosztem obowiązku podpisu; ekran „Autorzy” robi się stałym elementem menu.
