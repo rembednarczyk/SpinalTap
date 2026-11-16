@@ -198,5 +198,7 @@ Zostają `smoke`, `npr-perf`, `models`, `touch-layout` i `touch`. Doszły tylko 
 
 16.11 doszły dwa wpisy: `vest-plate-model.test.ts` (G-870, 11,2 s, trzy pliki VRM i cztery pozy) i `flee-dead-zone.test.ts` (15,5 s, 78%, bez zmian w sim, na granicy progu 75% pod obciążeniem CI). Oba do kroku 3 ADR-0083.
 
+16.11 z listy zeszły cztery wpisy determinizmu (decyzja użytkownika po przeglądzie antywzorców): złoty hash liczy się teraz na małej podłodze testowej poza miastem (`packages/sim/test/fixtures/determinism-floor.ts`), a jej testy biegną 0,9–2,6 s pod pokryciem (wcześniej 6,2–7,8 s na Lublinie). Został jeden wpis: „same seed + same input stream = same end state”, dwa przebiegi na Lublinie bez złotej liczby (7,6–10 s pod pokryciem), do kroku 3 ADR-0083.
+
 ## Dług: wzrost czasu testu wobec main tylko jako raport (16.11)
 Bramka wzrostu z ADR-0083 (test ponad 30% i 1 s wolniejszy od mediany main) przez dobę zatrzymywała niewinne PR-y. Na współdzielonych runnerach ten sam test waha się o 30–150%, a skalowanie tempem przebiegu (#612, potem per shard) nie wystarczało. Przez ten czas nie złapała żadnego prawdziwego spowolnienia. Decyzja użytkownika z 16.11: wzrost jest ostrzeżeniem (`::warning` i tabela w podsumowaniu), a PR zatrzymują tylko limity: 50% limitu dla nowego testu i 75% dla każdego (`blocking` w `tools/test-time/src/gate.ts`). Wpis znika, gdy mediany main przyjdą ze spokojnego przebiegu (osobny runner albo liczba instrukcji zamiast czasu) i wzrost znów zacznie blokować.
