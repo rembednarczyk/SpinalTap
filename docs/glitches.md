@@ -2374,7 +2374,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-888 Po wczytaniu gracz ma health.max 100 do pierwszego kroku player-control
 - Ważność: S4 · Zasięg: wczytanie gry, apteczka w pierwszym kroku
 - Opis: W grze źródłowej max 103 (np. podłoga determinizmu, zapis w kroku 786); apteczka w pierwszym kroku po wczytaniu leczy do 100. player-control-system.ts:267, factory.ts:60. Znalezione przez weryfikatora G-883, jest też na bazie.
-- Status: zgłoszone
+- Status: w PR #636; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 
 ### G-889 joinLoose dołącza do frontu deptaka wąskie pasy dowolnie daleko od osi (pas zieleni za Karmelicką 12–37 m)
@@ -2394,6 +2394,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-891 Zakłócenia ulicy z wybuchu, alarmu i znalezienia ciała nie trafiają do zapisu
 - Ważność: S4 · Zasięg: zapis dokładnie w kroku zdarzenia
 - Opis: disturb() (sabotage-loud.ts:150, contract-system.ts:36, body-watch-system.ts:59) trafia do session.street.disturbances, których nie ma w zapisie; zapis w kroku wybuchu rozjeżdża hash od drugiego kroku. Znalezione przez weryfikatora W-3 3b (#633); klasa sprzed 3b.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-892 Maksimum zdrowia po awansie albo implancie spóźnia się o krok: apteczka zaraz potem leczy do starego
+- Ważność: S4 · Zasięg: krok awansu lub założenia implantu
+- Opis: playerStatsOf().maxHp trafia do health.max dopiero w player-control; item-system i komenda use-item idą przed nim (systems/index.ts:134-135). Deterministyczne, nie rozjeżdża zapisu. Znalezione przy G-888.
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 
