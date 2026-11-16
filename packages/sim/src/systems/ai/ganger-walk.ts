@@ -92,7 +92,7 @@ export class GangerWalk {
     const { ctx, self } = this.at;
     if (!ctx || !self) return;
     const from = self.position;
-    // On a bridge's deck after a goal under it: off it by its landing first (G-072).
+    // On a bridge's deck after a goal under it, or under one after a goal on it: by its landing first (G-072, G-885).
     const to = deckLanding(ctx.world, from, target) ?? target;
     // Its new wide way ready: in its place before anything asks for the old one (G-643).
     const next = self.walk?.chaseNext;
