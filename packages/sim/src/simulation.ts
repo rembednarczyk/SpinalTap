@@ -140,7 +140,7 @@ export class Simulation {
     // The body on her shoulder (ADR-0065) is saved on the body.
     sim.session.carrying = sim.world.with("downed").entities.find((b) => b.downed.carried)?.id ?? null;
     // The last shot at her (G-901), once its shooter is back in the world.
-    restoreThreat(sim.world, sim.session, snapshot.lastThreat);
+    restoreThreat(sim.world, sim.streamer, snapshot.domain.flags, sim.session, snapshot.lastThreat);
     // A profile asked for in the fight still waits for its end (G-171).
     sim.session.pendingDifficulty = snapshot.pendingDifficulty ?? null;
     resumeSession(sim.session, sim.domain, sim.player(), sim.streamer);
@@ -276,7 +276,7 @@ export class Simulation {
     const former = this.streamer.formerSnapshots(this.world);
     const reinforcements = reinforcementsSnapshot(this.world, this.session.watch);
     const strayBodies = strayBodiesSnapshot(this.world);
-    const threat = threatSnapshot(this.world, this.session);
+    const threat = threatSnapshot(this.world, this.streamer, this.session);
     return {
       version: SAVE_SCHEMA_VERSION,
       seed: this.seed,

@@ -132,6 +132,18 @@ export class StreamCatalog {
     return this.former.get(key);
   }
 
+  /** The key of the keyed actor whose id this is, in any of its places (G-901), if any. */
+  keyOf(id: EntityId): string | undefined {
+    for (const list of this.places.values()) for (const t of list) if (t.id === id) return t.key ?? undefined;
+    for (const t of [...this.contract, ...this.former.values()]) if (t.id === id) return t.key ?? undefined;
+    return undefined;
+  }
+
+  /** The id a key wakes with under these flags, as `restoreEntities` picks its template. */
+  idOf(key: string, flags: readonly string[]): EntityId | undefined {
+    return (this.formerOf(key) ?? this.placeOf(key, flags))?.id;
+  }
+
   /** The contract's targets that stand in a chunk accepted by `inChunk`. */
   contractIn(inChunk: (chunkId: string) => boolean): Template[] {
     return this.contract.filter((t) => inChunk(t.chunk));
