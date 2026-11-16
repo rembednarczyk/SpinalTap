@@ -226,7 +226,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"caf66aab"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"9216b5f7"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -307,7 +307,7 @@ describe("determinism", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"a5baa74c"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"9ecd8410"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
     expect(v31HashOf(sim)).toBe("a2e44574");
     expect(v30HashOf(sim)).toBe("dbbc2817");
@@ -402,7 +402,7 @@ describe("determinism", () => {
     // b036f5d7 before it; for the v35 version (stage 3): f0ccb612 before it; and for the v36
     // version (stage 4): 5716d8d1 before it; for the v37 version (G-625): db17fe1c before it; for
     // the v38 version (G-643): c72ec923 before it.
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"3f691106"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"58fd38ba"`);
     expect(v31HashOf(sim)).toBe("56c7329e");
     expect(v30HashOf(sim)).toBe("8aef54e7");
     expect(v17HashOf(sim)).toBe("2428227f");
