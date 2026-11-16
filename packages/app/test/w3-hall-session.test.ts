@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MemorySaveStore } from "@seki/persistence";
-import { W3_LAYOUT, W3_NAV, W3_Y } from "@seki/sim";
+import { W3_INSIDE_BLOCKS, W3_LAYOUT, W3_NAV, W3_Y } from "@seki/sim";
 import { AUTOSAVE_PLACE_COOLDOWN_TICKS, AUTOSAVE_SLOT } from "../src/controllers/autosave-controller";
 import { frame, setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
@@ -83,5 +83,23 @@ describe("W-3's hall in a session (ADR-0082 stage 2)", () => {
     const { session } = start("w3-hall-nw");
     walk(session, ["w3-hall-n", "w3-stair-n-top", "w3-mez-w", "w3-mez-2530", "w3-mez-office"]);
     expect(session.sim.player()!.position.y).toBeCloseTo(W3_Y + W3_LAYOUT.MEZZANINE, 1);
+  });
+
+  it("enters and leaves the hall through airlock S, and the hall's blocks are solids without views (stage 2b)", () => {
+    const { session } = start("w3-als-out");
+    const events: string[] = [];
+    session.bus.on("InteriorEntered", (e) => events.push(`in:${e.interiorId}`));
+    session.bus.on("InteriorLeft", (e) => events.push(`out:${e.interiorId}`));
+    walk(session, ["w3-als", "w3-hall-sw"]);
+    expect(session.sim.session.interior).toBe("w3-hall");
+    walk(session, ["w3-als", "w3-als-out"]);
+    steps(session, 2);
+    expect(events).toEqual(["in:w3-hall", "out:w3-hall"]);
+    expect(session.sim.session.interior).toBeNull();
+    // The renderer bakes the inside (ADR-0082 §4): the walls stop a body, but no entity draws them.
+    const key = (p: { x: number; y: number; z: number }) => `${p.x.toFixed(3)},${p.y.toFixed(3)},${p.z.toFixed(3)}`;
+    const unseen = new Set([...session.sim.world.with("solid", "position")].filter((e) => e.chunk === "nabrzeze-w3" && !e.view).map((e) => key(e.position)));
+    expect(W3_INSIDE_BLOCKS.length).toBeGreaterThan(200);
+    expect(W3_INSIDE_BLOCKS.filter((b) => !unseen.has(key(b.center)))).toEqual([]);
   });
 });

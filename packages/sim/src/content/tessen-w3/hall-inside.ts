@@ -125,7 +125,7 @@ const line = (): StaticProp[] => {
   ];
 };
 
-/** The crane's tracks at +12 along both long walls, the walk on track N with its rail, the crane's bridge (still in the simulation). */
+/** The crane's tracks at +12 along both long walls, the walk on track N with its rail. */
 const crane = (): StaticProp[] => {
   const k = CRANE_TRACK;
   const w = TRACK_WALK_N;
@@ -136,9 +136,15 @@ const crane = (): StaticProp[] => {
     box(hole.maxX, w.maxX, k - 0.2, k, w.minZ, w.maxZ, "metal"),
     railing(w.minX, w.maxX, w.minZ - 0.1, w.minZ, k),
     railing(w.maxX - 0.1, w.maxX, w.minZ, w.maxZ, k),
-    { center: w3(2530, k + 0.5, (A.minZ + A.maxZ) / 2), view: { kind: "block", size: v(1.2, 0.8, A.maxZ - A.minZ - 1.2), material: "metal" }, solid: false },
   ];
 };
+
+/**
+ * The crane's bridge over the tracks (no solid; the simulation does not know it moves): the
+ * renderer draws it on the line's moving mesh, travelling along x between `minX` and `maxX`,
+ * at rest at `x` (ADR-0082 §3.8). Heights over the halls' floor.
+ */
+export const W3_CRANE_BRIDGE = { x: 2530, minX: 2513, maxX: 2545, width: 1.2, bottom: CRANE_TRACK + 0.1, top: CRANE_TRACK + 0.9, minZ: A.minZ + 0.6, maxZ: A.maxZ - 0.6 } as const;
 
 /** The ladder up to the walk on track N, against the hall's north wall. */
 const trackLadder = (): StaticProp[] => {
