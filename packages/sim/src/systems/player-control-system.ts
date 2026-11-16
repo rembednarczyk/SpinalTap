@@ -25,6 +25,7 @@ import { knockbackVelocity } from "../world/knockback";
 import type { SimContext, System } from "../world/context";
 import { overFootprint } from "../world/collision";
 import { restingLevel } from "./elevator-system";
+import { roomToStand } from "./movement-system";
 
 export const PITCH_LIMIT = 1.25;
 export const SPRINT_MULTIPLIER = 1.65;
@@ -265,7 +266,8 @@ export const playerControlSystem: System = {
     for (const p of ctx.world.with("player", "velocity")) {
       if (p.health) p.health = { current: Math.min(p.health.current, stats.maxHp), max: stats.maxHp };
       const frozen = playerHeld(ctx);
-      if (p.posture) updateCrouch(p.posture, input.crouch, frozen, ctx.dt);
+      // Let go under a ceiling too low to stand (the culvert, ADR-0082), the crouch holds.
+      if (p.posture) updateCrouch(p.posture, input.crouch || (p.posture.amount > 0 && !roomToStand(ctx.world, p)), frozen, ctx.dt);
       updateAimAndGuard(p, input.aim, frozen, ctx.dt, adsTimeScale(ctx.state.domain.progression.attributes) * perkAdsTimeScale(ctx.state.domain.progression.perks));
       updateJump(ctx, p, frozen);
       const landingSlow = tickLanding(p, ctx.dt);
