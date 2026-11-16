@@ -5,6 +5,11 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v39: the docks rebuilt as Tessen's sector W-3 (ADR-0082 stage 1): no new fields, but an older
+ * save may have the player on the docks' ground (the yard, the warehouse's roof, the crane, the
+ * pier) or on the public strip whose terrain came back up; the migration wakes her on the strip by
+ * the metro, lays the bodies and bags left there by her, drops the docks' people (they come back
+ * at their new places) and calls a running escort off without a penalty (`w3:escort-retired`).
  * v38: a chasing ganger's walk keeps the next wide way being made for it, its goal and the step it
  * is ready at (`walk.chaseNext`, optional, G-643).
  * v37: a chasing ganger's walk keeps the goal of its wide way round a long barrier (`walk.chase`,
@@ -73,7 +78,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 38;
+export const SAVE_SCHEMA_VERSION = 39;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {

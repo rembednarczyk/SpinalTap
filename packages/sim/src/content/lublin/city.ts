@@ -37,12 +37,12 @@ export interface SceneryItem {
 
 const insideRect = (r: GroundRect, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
 
-/** Is a surface of the map taken away for a set piece (its centre under one)? */
-const clearedSurface = (pts: readonly GroundPoint[]): boolean => {
-  const cx = pts.reduce((s, p) => s + p.x, 0) / Math.max(1, pts.length);
-  const cz = pts.reduce((s, p) => s + p.z, 0) / Math.max(1, pts.length);
-  return CLEARED.some((r) => insideRect(r, cx, cz));
-};
+/**
+ * Is a surface of the map taken away for a set piece: does it lie wholly under one (every corner
+ * in a rectangle of `CLEARED`)? One reaching past it stays, under the set piece's own paving
+ * (W-3's zone over the riverside wood's lawn, ADR-0082).
+ */
+const clearedSurface = (pts: readonly GroundPoint[]): boolean => pts.length > 0 && pts.every((p) => CLEARED.some((r) => insideRect(r, p.x, p.z)));
 
 type Poly = GroundPoint[];
 

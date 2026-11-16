@@ -1,10 +1,10 @@
 import type { ActivityId, Vec3 } from "@seki/core";
 import type { ActivitySpot, SpotKind } from "../world/activity-types";
-import { placeAt, v } from "./builders";
 import { atUnit } from "./alchemia/units";
 import { HALL } from "./alchemia/plan";
 import { againstWall, spotNear } from "./lublin/places";
-import { DOCKS_PLACE, MAP_CHUNKS } from "./lublin/sites";
+import { MAP_CHUNKS } from "./lublin/sites";
+import { w3 } from "./tessen-w3/site";
 import { seatGroups } from "./lublin/seats";
 import { groundY } from "./lublin/terrain";
 import { WORLD_STREET_PROPS } from "./street-props";
@@ -85,14 +85,15 @@ const wallSpot = (id: string, kind: SpotKind, x: number, z: number, only?: reado
   return spotAt(id, kind, w.at, w.yaw, only);
 };
 
-/** A spot of the docks, in their own coordinates. */
+/** A spot of W-3 on its floor (ADR-0082). */
 const docksSpot = (id: string, kind: SpotKind, x: number, z: number, yaw: number, only?: readonly [ActivityId, ...ActivityId[]]): ActivitySpot =>
-  spotAt(id, kind, placeAt(DOCKS_PLACE, v(x, 0, z)), yaw, only);
+  spotAt(id, kind, w3(x, 0, z), yaw, only);
 
 /** On the open quay there is nothing to lean on. */
 const STANDING: readonly [ActivityId, ...ActivityId[]] = ["smoke", "phone"];
 
 const WEST = -Math.PI / 2;
+const EAST = Math.PI / 2;
 const NORTH = 0;
 const SOUTH = Math.PI;
 
@@ -148,11 +149,12 @@ const TARG: readonly ActivitySpot[] = [
   onT1("targ-front-wall-3", "wall", 427.5, HALL.maxZ + 0.55, NORTH, ["lean", "phone"]),
 ];
 
-/** The docks: the vending machine by the office, the open quay. Tessen's yard has no idlers. */
+/** W-3: the vending machine by the tower's office door, the hall's west wall by the quay, the basin's railing, row N's east wall. */
 const DOKI: readonly ActivitySpot[] = [
-  docksSpot("doki-vending", "vending", -24, 126.75, NORTH),
-  docksSpot("doki-quay-wall", "wall", 2, 128.5, SOUTH, STANDING),
-  docksSpot("doki-fence-wall", "wall", -10, 141, NORTH, STANDING),
+  docksSpot("doki-vending", "vending", 2497.4, 440, WEST),
+  docksSpot("doki-quay-wall", "wall", 2499.45, 427, WEST, STANDING),
+  docksSpot("doki-fence-wall", "wall", 2560, 451.3, SOUTH, STANDING),
+  docksSpot("doki-row-wall", "wall", 2572.55, 436, EAST, STANDING),
 ];
 
 export const ACTIVITY_SPOTS: readonly ActivitySpot[] = [...KRAKOWSKIE, ...KANAL, ...TARG, ...DOKI];

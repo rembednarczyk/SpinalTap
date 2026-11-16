@@ -1,7 +1,8 @@
 // Seki Senshi, M4: Nabrzeże Bystrzycy, ex Doki Tessen (ADR-0024, ADR-0042).
-// Genzō runs boats on the Bystrzyca for Kaito's network. He hands out three jobs against Tessen,
-// the corporation that owns the riverside warehouses and the crane: walking a defector to his boat, copying data from the
-// Tessen office unseen, holding a hacked terminal. The domain decides and pays; ink only talks.
+// Genzō runs boats on the Bystrzyca for Kaito's network. He hands out jobs against Tessen, whose
+// sector W-3 (the drone halls, ADR-0082) fenced the riverside in: copying data from the pass office
+// in the control tower unseen, holding a hacked terminal on the quay. Walking a defector to his boat
+// is retired with the old container yard till the boats come back. The domain decides and pays; ink only talks.
 
 // Synced like the other factions' stances before each conversation.
 VAR tessen_stance = "neutral"
@@ -26,29 +27,27 @@ VAR tessen_stance = "neutral"
 - else:
     GENZO: Mgła znad rzeki dzisiaj gęsta. Dobra noc na robotę.
 }
+{ has_flag("w3:escort-retired") && not has_flag("w3:escort-retired-told"):
+    GENZO: Z Miką na razie nic. Tessen ogrodził plac pod swoje hale dronów. Popłynie wodą, jak będę miał łódź, która im ucieknie.
+    ~ set_flag("w3:escort-retired-told")
+}
 { tessen_stance == "hostile":
     GENZO: Ochrona Tessen zna już twoją twarz. Uważaj na dachy, mają tam strzelców.
 }
 -> offer
 
 = offer
-+ [Kogo trzeba przeprowadzić? #tone:main]
-    SEKI: Kogo trzeba przeprowadzić?
-    ~ offer_contract("escort")
-    GENZO: Mika, księgowa z biura Tessen. Wie za dużo i chce zniknąć. Czeka przy moim kontenerze.
-    GENZO: Odprowadź ją na molo, do łodzi. Tessen będzie na nią polować na nabrzeżu, więc trzymaj się blisko.
-    -> END
 + [Co trzeba wynieść z biura Tessen? #tone:main]
     SEKI: Co trzeba wynieść z biura Tessen?
     ~ offer_contract("infiltrate")
-    GENZO: Manifesty ładunków, z terminala na biurku. Biuro stoi na nabrzeżu, drzwi od strony dźwigu.
+    GENZO: Manifesty ładunków, z terminala na biurku. Biuro przepustek na parterze ich wieży kontrolnej, drzwi od strony hali.
     GENZO: Nikt nie może cię zobaczyć. Jeden alarm i dane znikną, zanim dobiegniesz. Idź nisko i za ich plecami.
     -> END
 + [Który terminal mam złamać? #tone:main]
     SEKI: Który terminal mam złamać?
     ~ offer_contract("hack")
-    GENZO: Terminal Tessen pod dźwigiem nad rzeką. Podłączysz się i musisz przy nim wytrzymać, aż skończy.
-    GENZO: Ochrona przyjdzie od razu, a na dachu magazynu siedzi strzelec. Czerwony laser znaczy, że masz sekundę na osłonę.
+    GENZO: Terminal Tessen na nabrzeżu przy pomoście. Podłączysz się i musisz przy nim wytrzymać, aż skończy.
+    GENZO: Ochrona przyjdzie od razu, a na podeście wieży siedzi strzelec. Czerwony laser znaczy, że masz sekundę na osłonę.
     -> END
 + [Nie teraz. #tone:leave]
     GENZO: Będę przy kontenerze. Łódź nie odpływa bez powodu.
@@ -64,7 +63,7 @@ VAR tessen_stance = "neutral"
     { contract_time_left > 0:
         GENZO: Terminal jeszcze mieli. Wracaj tam, zostało {contract_time_left} sekund.
     - else:
-        GENZO: Terminal pod dźwigiem. Podłącz się i nie odchodź.
+        GENZO: Terminal na nabrzeżu przy pomoście. Podłącz się i nie odchodź.
     }
 }
 { contract_variation != "":
