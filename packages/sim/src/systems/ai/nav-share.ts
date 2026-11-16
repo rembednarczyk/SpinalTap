@@ -1,7 +1,6 @@
 import type { GroundField } from "../../world/ground";
 import type { Collider } from "../../world/solids";
-import type { Field } from "./nav-field";
-import type { Raster, Slices } from "./nav-raster";
+import type { Field, Raster, Slices } from "./nav-raster";
 
 /**
  * A store of the steering's rasters and fields shared by every world of a process (ADR-0083 step

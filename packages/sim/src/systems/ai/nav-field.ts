@@ -8,7 +8,7 @@ import { type Collider, collidersOf } from "../../world/solids";
 import { STEP_HEIGHT } from "../movement-system";
 import { type NavMemo, heldRaster, recall, remember } from "./nav-memo";
 import { navShare, shapesKey, sharedGround, through } from "./nav-share";
-import { CLEARANCE, LEDGE, NAV_CELL, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellIndex, finish, rasterise, walled } from "./nav-raster";
+import { CLEARANCE, type Field, LEDGE, NAV_CELL, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellIndex, finish, rasterise, walled } from "./nav-raster";
 
 /**
  * The distance fields of the steering (ADR-0025, `steering.ts`): the windows rasterised round a
@@ -48,12 +48,8 @@ const GOAL_SEARCH = 4;
 
 type Solid = Entity & { solid: Aabb };
 
-export interface Field {
-  readonly raster: Raster;
-  /** Walking distance to the goal in half cells (a straight step 2, a diagonal 3), `FAR` where unreachable. */
-  readonly dist: Int32Array;
-  readonly source: number;
-}
+/** The field of a goal (`nav-raster.ts`, beside its raster, for the shared store's types). */
+export type { Field } from "./nav-raster";
 
 type Memo = NavMemo<Raster, Field>;
 
