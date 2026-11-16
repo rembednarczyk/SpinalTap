@@ -154,22 +154,33 @@ const what = (b: Breach): string =>
     ? `${s(b.head.ms)} s, over ${Math.round(Math.min(b.head.ms / b.head.limitMs, 1) * 100)}% of its ${s(b.head.limitMs)} s limit`
     : `${s(b.head.ms)} s against ${s(b.medianMs!)} s on main (median of ${b.runs} run${b.runs === 1 ? "" : "s"}, +${Math.round((b.head.ms / b.medianMs! - 1) * 100)}%)`;
 
-/** One `::error` line per breach, for the log and the pull request's annotations. */
+/**
+ * Which breaches fail the run: the limits only. A growth over main is reported, not blocking: on
+ * shared runners the same test swings by 30-150% from run to run, and for a day the growth gate
+ * held a dozen innocent pull requests while it caught no real slowdown (16.11, #593 to #618;
+ * decision of the user, 16.11: report only). It comes back when main's times come from a quiet
+ * runner (ADR-0046, debt).
+ */
+export const blocking = (g: Gate): readonly Breach[] => g.breaches.filter((b) => b.kind === "limit");
+
+/** One `::error` line per blocking breach and one `::warning` per reported growth, for the log and the pull request's annotations. */
 export const errors = (g: Gate): string[] =>
   g.breaches.map((b) => {
     const file = b.test.split(" > ")[0]!;
-    return `::error file=${file},title=Test too slow::${b.test}: ${what(b)}. Find what made it slower (ADR-0083: a profile, not a higher limit) or add it with a reason to tools/test-time/src/exceptions.ts.`;
+    return b.kind === "limit"
+      ? `::error file=${file},title=Test too slow::${b.test}: ${what(b)}. Find what made it slower (ADR-0083: a profile, not a higher limit) or add it with a reason to tools/test-time/src/exceptions.ts.`
+      : `::warning file=${file},title=Test slower than main::${b.test}: ${what(b)}. Report only (ADR-0083, 16.11): look for what made it slower if it repeats.`;
   });
 
 /** Markdown for `$GITHUB_STEP_SUMMARY`. */
 export const gateSummary = (g: Gate): string => {
   const lines = ["## Single tests (ADR-0083)", ""];
   lines.push(
-    `A new test fails over ${LIMIT_SHARE * 100}% of its limit, any test over ${HARD_SHARE * 100}%, or a test over ${GROWTH * 100}% and ${s(GROWTH_FLOOR_MS)} s slower than the median of main scaled by the pace of the shard that ran it (${g.paces.map((p) => p.toFixed(2)).join(", ")}; ${g.runs} green run${g.runs === 1 ? "" : "s"} of main with test times, ${g.compared} tests compared).`,
+    `A new test fails over ${LIMIT_SHARE * 100}% of its limit, any test over ${HARD_SHARE * 100}%; a test over ${GROWTH * 100}% and ${s(GROWTH_FLOOR_MS)} s slower than the median of main scaled by the pace of the shard that ran it is reported, not failed (paces ${g.paces.map((p) => p.toFixed(2)).join(", ")}; ${g.runs} green run${g.runs === 1 ? "" : "s"} of main with test times, ${g.compared} tests compared).`,
     "",
   );
   const row = (b: Breach, reason = "") => `| ${b.test} | ${b.kind} | ${what(b)} |${reason ? ` ${reason} |` : ""}`;
-  if (g.breaches.length > 0) lines.push(`### Over the limits (${g.breaches.length})`, "", "| Test | Gate | Time |", "|---|---|---|", ...g.breaches.map((b) => row(b)), "");
+  if (g.breaches.length > 0) lines.push(`### Over the limits (${g.breaches.length})`, "", `Failing the run: ${blocking(g).length} (limits); growths are warnings.`, "", "| Test | Gate | Time |", "|---|---|---|", ...g.breaches.map((b) => row(b)), "");
   else lines.push("No test over the limits.", "");
   if (g.excused.length > 0) lines.push(`### Exceptions (${g.excused.length})`, "", "| Test | Gate | Time | Reason |", "|---|---|---|---|", ...g.excused.map((b) => row(b, b.reason)), "");
   return `${lines.join("\n")}\n`;

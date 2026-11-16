@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EXCEPTIONS } from "../src/exceptions.ts";
-import { MIN_GROWTH_RUNS, runPace, type TestTimes, errors, exceptionFor, gateSummary, gateTests, median, medianTimes, testId } from "../src/gate.ts";
+import { MIN_GROWTH_RUNS, blocking, errors, exceptionFor, gateSummary, gateTests, median, medianTimes, runPace, testId, type TestTimes } from "../src/gate.ts";
 import { mergeTests } from "../src/times.ts";
 
 /** Gate of single tests (ADR-0083 step 2): fixed times in, breaches out, no clock. */
@@ -125,5 +125,16 @@ describe("gate of single tests (ADR-0083 step 2)", () => {
     const off = { ...normal, [b[0]!]: t(3000 * 1.5) };
     const g2 = gateTests({ ...worse, ...off }, main, [], [worse, off]);
     expect(g2.breaches.map((x) => x.test)).toEqual([a[0], b[0]]);
+  });
+  it("fails the run on a limit only: a growth over main is a warning (16.11, decision of the user)", () => {
+    const A = "tools/x.test.ts > grows";
+    const B = "tools/x.test.ts > near its limit";
+    const main = [0, 1, 2].map(() => ({ [A]: t(3000), [B]: t(3000) }));
+    const g = gateTests({ [A]: t(6000), [B]: t(16_000) }, main, []);
+    expect(g.breaches.map((b) => [b.test, b.kind])).toEqual([[B, "limit"], [A, "growth"], [B, "growth"]].sort((x, y) => (x[0]! < y[0]! ? -1 : 1)));
+    expect(blocking(g).map((b) => b.test)).toEqual([B]);
+    const lines = errors(g);
+    expect(lines.filter((l) => l.startsWith("::error")).length).toBe(1);
+    expect(lines.filter((l) => l.startsWith("::warning")).length).toBe(2);
   });
 });
