@@ -31,8 +31,15 @@ export const presentQuests: Presenter = ({ bus, render, audio, ui, toast }) => {
       audio.play("quest-update");
     }),
     bus.on("ContractAlarm", (e) => {
-      const escort = contractKind(e.contract) === "escort";
-      toast("quest", escort ? t("quest.ambush") : t("quest.alarm"), escort ? t("quest.coverMika") : t("quest.holdTerminal"));
+      const kind = contractKind(e.contract);
+      const body = kind === "escort" ? t("quest.coverMika") : kind === "sabotage" ? t("quest.lockdown") : t("quest.holdTerminal");
+      toast("quest", kind === "escort" ? t("quest.ambush") : t("quest.alarm"), body);
+      audio.play("quest-update");
+    }),
+    // W-3's way chosen by deeds (ADR-0082 stage 3b): the alarm before the virus leaves the armoury.
+    bus.on("SabotageRouteChosen", (e) => {
+      if (e.route !== "loud") return;
+      toast("quest", t("quest.sabotageLoud"), t("quest.sabotageLoudBody"));
       audio.play("quest-update");
     }),
     bus.on("ContractFailed", (e) => {

@@ -5,6 +5,8 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v42: W-3's loud way (ADR-0082 stage 3b): the contract's `charges`, `planting`, `fuseTick`,
+ * `detonated` and `alarmTick`, optional; the hunt and the wrecks are plain flags.
  * v41: what a fight leaves between two steps (G-883), optional: an entity's velocity and its blow
  * in progress (`velocity`, `melee`), and the player's posture, gun, time in the air and dash
  * (`stance`). An older save loads as before, everyone at rest.
@@ -83,7 +85,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 41;
+export const SAVE_SCHEMA_VERSION = 42;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {

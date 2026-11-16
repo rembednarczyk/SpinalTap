@@ -146,6 +146,15 @@ export const SABOTAGE_SEEN: readonly ReputationDelta[] = [
 ];
 
 /**
+ * What the loud way changes on top of the job's deltas (ADR-0082 balance: fixers +3, civilians -2);
+ * Tessen goes down to -60 apart from these (`loudTessenDelta`).
+ */
+export const SABOTAGE_LOUD_DELTAS: readonly ReputationDelta[] = [
+  { faction: "fixers", delta: -2 },
+  { faction: "civilians", delta: -2 },
+];
+
+/**
  * A late package costs Kaito a client; a dead Oyaji costs the market's trust; a botched docks
  * job costs Genzō (part of Kaito's network) face. Eliminations and retrievals cannot fail.
  */

@@ -31,6 +31,8 @@ export const enContent = {
   "prompt.ladder.down": "Climb down the ladder",
   "prompt.terminal.hack": "Hack the terminal",
   "prompt.upload-virus": "Upload the virus",
+  "prompt.take-charges": "Take the charges",
+  "prompt.plant-charge": "Plant a charge",
   "prompt.terminal.read": "Read the terminal",
   "prompt.pickup.crate": "Take Hana's crate",
   "prompt.pickup.data": "Copy the Tessen data",
