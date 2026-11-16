@@ -1950,7 +1950,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-825 Jezdnia importu węższa od prawdziwej przy łącznicach, kieszeniach skrętu i placement=left_of; pas wypełnia bruk z pokrycia
 - Ważność: S3 · Zasięg: Mełgiewska/łącznica Andersa w40051729, Al. Solidarności w215609082 (kieszenie skrętu), Lwowska (placement=left_of:3)
 - Opis: Znalezione przy G-821: import nie czyta placement i nie poszerza jezdni o łącznice i pasy skrętu; pas do prawdziwego krawężnika wypełnia bruk z pokrycia ortofoto, więc latarnie i meble przy krawężniku mapy stoją na prawdziwym asfalcie.
-- Status: w PR #595 (kurator r5 ZGODNE, e3133eb); wcześniej: w naprawie (runda 2 po przeglądzie kuratora, gałąź ccr-ec2c4269-ilh8k8-g825); wcześniej: zgłoszone
+- Status: naprawione (PR #595); wcześniej: w PR #595 (kurator r5 ZGODNE, e3133eb); wcześniej: w naprawie (runda 2 po przeglądzie kuratora, gałąź ccr-ec2c4269-ilh8k8-g825); wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import, tools/orto
 - 15.11 przegląd kuratora (41ddd97): NIEZGODNE. Placement zgodne z ortofoto; zwężenie przy węźle kładzie pół pasa łącznicy za krawężnik: Ruska w216655518 (1071..1074; 428..437) jezdnia na trawie ok. 12 m², Andersa w40051729 (2316..2322; 312..321) jezdnia i chodnik na trawie ok. 12 m², Solidarności w215609082 s 0-6 krawędź 7,7 m wobec 6,3 (ok. 5 m² na szpicu trawnika). kerb-fill-wide-estimated (1113,353) to fałszywy alarm (kostka dojścia do przejścia). Runda 2 naprawiacza.
 - 15.11 runda 2: 4f9cf2f + merge ed53299; skan 3842 → 3833, nowa kontrola lane-place-on-green (baza 0); do ponownego przeglądu kuratora, w tym 5 sygnalizatorów przestawionych przy remisach
@@ -2032,7 +2032,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-836 Zebry z węzłów: kąt do jezdni, koniec poza krawężnikiem, paski i poświata na chodniku
 - Ważność: S3 · Zasięg: crossing-shape: skew 19, overhang 26, glow 54, kerb 55; Podzamcze, Krakowskie, Nabrzeże, Stare Miasto
 - Opis: crossingBand (ground.ts) i stretchZebras (kerb-fill.ts) kładą prostokąt o stałych wymiarach wokół węzła z osią najbliższego segmentu OSM, niedopasowany do poszerzonej jezdni (kerbFills, widened). Kontrole w PR #581; zrzuty scratchpad/jag/final/f1–f6
-- Status: w PR #597 (kurator r3 ZGODNE, 748ef6c); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g836, e181e1b, runda 2, do przeglądu kuratora); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g836, c52dde6, do przeglądu kuratora); wcześniej: nowy
+- Status: naprawione (PR #597); wcześniej: w PR #597; wcześniej: w PR #597 (kurator r3 ZGODNE, 748ef6c); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g836, e181e1b, runda 2, do przeglądu kuratora); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g836, c52dde6, do przeglądu kuratora); wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 - 15.11: skew 19->5, overhang 26->9, glow 54->5, kerb 55->44; reszta: wyloty skrzyżowań, brzeg mapy, oś pasma vs ROAD_CHAINS; droga przejścia jako footway pod zebrą; zmieniony test G-811 (chodnik pod zebrą)
 - Przegląd kuratora 15.11 @ c52dde6: NIEZGODNE. P1 (2361,432) n4087364975 zebra obrócona o 35° (regresja), oś wzdłuż w406693442 N–S, ok. 10 m; P2 (927,468) w1054556913 zebra 6,5 m, asfalt gry dalej o 6,2/≥11,9 m, na ortofoto ok. 22 m (regresja); P3 (913,345) n4586176953 zebra ok. 50° skośnie, ma biec W–E przez w739432830, ok. 11 m. Reguła: zebra węzła na skrzyżowaniu wzdłuż drogi pieszej OSM przez węzeł; zasięg po asfalcie gry do krawężnika. Kontrole: crossing-off-path (baza 9), crossing-short-of-asphalt (baza 16). Klucz lamp-on-orto-carriageway (−128,−65) przyjąć z powodem: cień budynku na chodniku, krawężnik z ≈ −64,4. Runda 2.
@@ -2065,7 +2065,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-841 Zamek Lubelski bez przepisu zabytku: fasada od Placu Zamkowego jak zwykły gmach
 - Ważność: S3 · Zasięg: Zamek Lubelski, front od Placu Zamkowego i schodów
 - Opis: Zgłoszenie użytkownika 15.11 ze zdjęciem frontu (Street View, tylko referencja wizualna, scratchpad ref/zamek-plac-zamkowy-sv.jpg). LANDMARK_RECIPES ma tylko Bramę Krakowską, Bramę Grodzką i Nowy Ratusz. Wygląd do odtworzenia: neogotycka fasada w kolorze kremowym, dwie wieżyczki po bokach bramy z krenelażem i masztami flag, między nimi blankowana attyka; dwa okrągłe okna-rozety nad ostrołukową bramą z napisem MUZEUM; ostrołukowe okna w rzędzie, długie skrzydła z krenelażem po bokach; po lewej w głębi wieża kaplicy (smukła iglica); u stóp schody ze spocznikiem, latarnie i zieleń na skarpie. Wymiary z LOD2/NMPT i OSM, jak przy G-119 (Nowy Ratusz).
-- Status: kurator r3 ZGODNE, do PR (6eea580); wcześniej: do przeglądu kuratora (r3, 6eea580); wcześniej: w naprawie (runda 3 po przeglądzie kuratora r2); wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (0c22d9d), runda 2 do przeglądu topography-curator; wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (e84492c), do przeglądu topography-curator; wcześniej: nowy
+- Status: naprawione (PR #602); wcześniej: w PR #602; wcześniej: kurator r3 ZGODNE, do PR (6eea580); wcześniej: do przeglądu kuratora (r3, 6eea580); wcześniej: w naprawie (runda 3 po przeglądzie kuratora r2); wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (0c22d9d), runda 2 do przeglądu topography-curator; wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (e84492c), do przeglądu topography-curator; wcześniej: nowy
 - Pakiet właściciela: packages/engine/src/renderer/mapcity/landmarks
 - 15.11: przepis zamek-lubelski (attyka do y 7,5 z blankami, wieżyczki do y 10 z flagami, parapet z blankami trójkątnymi, 2 rozety, portal ostrołukowy, lancety, szyld MUZEUM); korekta importu: okap y 3,3, korona y 7,5 z NMPT; test landmark-zamek.test.ts; skan 3900->3900, hashe bez zmian, perf w budżetach
 - Przegląd kuratora 15.11 (e84492c): NIEZGODNE. NMPT 0,5 m: wieżyczki do y 12,2 (rise 2,5 -> ok. 4,7), szczyty blanków trójkątnych ryzalitu y 10,0-10,4 (parapet.rise 0,5 -> ok. 1,6), maszty do ok. y 15,5 (mast ok. 5,5 m) jako ciemne metalowe iglice z chorągiewką zamiast flag biało-czerwonych (zdjęcie z placu, plan Z2). Skrzydła fasady zachodniej: jeden rząd lancetów w parterze, wyżej lizeny, okienka okrągłe co ok. 4,7 m i fryz ostrołukowy pod koroną zamiast rzędów 2 i 3. Opcjonalnie: rozety r ok. 1,7 m, rozstaw ok. 3,4 m; środki wieżyczek ok. 0,9 m do wnętrza (NMPT (837,1; 245,9) i (835,8; 231,0)). Sondy topo-g841-dsm*.py w scratchpadzie.
@@ -2276,7 +2276,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-874 Zamek Lubelski: skrzydło pn. x 904-942 o 2,6-3,0 m za daleko na północ (uskok obrysu OSM), bryła na asfalcie drogi za zamkiem
 - Ważność: S3 · Zasięg: Podzamcze, w48500136, (903,9..941,5; 253,8..261,6)
 - Opis: Węzły (903,9;261,6) i (941,5;256,8) tworzą uskok, którego nie ma w NMPT (krawędź x 910/925/940: z 257,75/256,3/254,0) ani na ortofoto 2023-09..2025-04; ściany zach. i pd. zgodne do 0,4 m. Poprawka: obrys pn. prosto (903,6;258,6)->(941,0;253,8) w korekcie importu. Przegląd kuratora G-841 r3. Proponowana kontrola landmark-outline-nmpt (baza 1).
-- Status: przegląd kuratora ZGODNE (890681a), w PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g874 (890681a), do przeglądu kuratora; wcześniej: nowy
+- Status: naprawione (PR #616); wcześniej: przegląd kuratora ZGODNE (890681a), w PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g874 (890681a), do przeglądu kuratora; wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: krawędź obrysu pn. w48500136 w 0,5 m od krawędzi dachu NMPT przy x 910, 925, 940
 - 16.11: drop węzłów uskoku w korekcie importu; ściana x 910/925/940 z 257,75/255,77/253,79 (odchyłka do 0,53 m przy x 925, wewnątrz dachu); kontrola landmark-outline-nmpt 1->0; 2 klucze przyjęte przez agenta (landuse-bare podzamcze-1-0 910,250; bare-on-cover podzamcze-2-0 930,250: goły pas odsłonięty spod bryły, G-699) — do potwierdzenia użytkownika; kolizja z #602: łatka g874-x602-resolution.patch
@@ -2354,7 +2354,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-885 Walczący pod mostem nie wchodzi na pomost do gracza stojącego na nim
 - Ważność: S4 · Zasięg: mosty z pomostem (Mełgiewska)
 - Opis: Brawler z (2445.9, 302.2) pod pomostem do gracza na (2444.9, 307.5) oscyluje przy krawędzi cienia pomostu (2449.6, 298.9), 30 s bez dotarcia; znalezione przy G-072
-- Status: zgłoszone
+- Status: naprawione (PR #646); wcześniej: w PR #646; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-886 Pościg 200 m: bankBetween próbkuje cały odcinek co krok
@@ -2374,7 +2374,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-888 Po wczytaniu gracz ma health.max 100 do pierwszego kroku player-control
 - Ważność: S4 · Zasięg: wczytanie gry, apteczka w pierwszym kroku
 - Opis: W grze źródłowej max 103 (np. podłoga determinizmu, zapis w kroku 786); apteczka w pierwszym kroku po wczytaniu leczy do 100. player-control-system.ts:267, factory.ts:60. Znalezione przez weryfikatora G-883, jest też na bazie.
-- Status: zgłoszone
+- Status: naprawiony (PR #636); wcześniej: w PR #636; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 
 ### G-889 joinLoose dołącza do frontu deptaka wąskie pasy dowolnie daleko od osi (pas zieleni za Karmelicką 12–37 m)
@@ -2394,8 +2394,62 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-891 Zakłócenia ulicy z wybuchu, alarmu i znalezienia ciała nie trafiają do zapisu
 - Ważność: S4 · Zasięg: zapis dokładnie w kroku zdarzenia
 - Opis: disturb() (sabotage-loud.ts:150, contract-system.ts:36, body-watch-system.ts:59) trafia do session.street.disturbances, których nie ma w zapisie; zapis w kroku wybuchu rozjeżdża hash od drugiego kroku. Znalezione przez weryfikatora W-3 3b (#633); klasa sprzed 3b.
-- Status: zgłoszone
+- Status: naprawiony (PR #637); wcześniej: w PR #637; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
+- calmForSave czyści street.disturbances razem ze strachem tłumu (jak G-240); złote hashe bez zmian, bez v43; test w w3-sabotage-loud.test.ts
+
+### G-892 Maksimum zdrowia po awansie albo implancie spóźnia się o krok: apteczka zaraz potem leczy do starego
+- Ważność: S4 · Zasięg: krok awansu lub założenia implantu
+- Opis: playerStatsOf().maxHp trafia do health.max dopiero w player-control; item-system i komenda use-item idą przed nim (systems/index.ts:134-135). Deterministyczne, nie rozjeżdża zapisu. Znalezione przy G-888.
+- Status: naprawione (PR #643); wcześniej: w PR #643; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-893 Rusztowanie placu Zielona 5A zasłania szyld lokalu na ścianie w67499313
+- Ważność: S4 · Zasięg: jedno miejsce, Zielona 5A
+- Opis: Rusztowanie z banerem z etapu 2 placów budowy (gałąź place-budowy-2) stoi przy ścianie w67499313 i zasłania szyld FRYZURA Z PRZYTUPEM; rusztowanie powinno omijać ściany z szyldem lokalu albo szyld przenieść.
+- Status: nowy
+- Pakiet właściciela: osm-import
+- Poprawka identyfikatora (kurator 16.11): rusztowanie stoi 0,25 m od szczytowej ściany w69915878 (Zielona 5), nie w67499313; szyld FRYZURA Z PRZYTUPEM sprawdzić na tej ścianie.
+
+### G-894 Dźwig 66 m przed fasadą Pałacu Lubomirskich od Placu Litewskiego (plac budowy Muzeum Ziem Wschodnich)
+- Ważność: S4 · Zasięg: plac budowy w1362895448, widok z Placu Litewskiego
+- Opis: Generator dźwigu (construction-crane.ts, ADR-0087 etap 2, gałąź place-budowy-2) stawia maszt w (41; 78) w południowej wnęce Pałacu Lubomirskich w67508859 (historic=castle), między fasadą a Placem Litewskim; 27,1 m, wysięgnik 66 m nad dachem zabytku. Ortofoto 2025-04: budowa trwa (wykop na pn. podwórzu, kontenery), żurawia wieżowego brak; 2024-06 we wnęce trawnik. Miejsce wynika tylko z minimalnego zasięgu do najdalszego narożnika obrysu, który obejmuje cały pałac. Proponowana reguła: na placu, którego obrys obejmuje budynek historic/heritage, maszt nie stoi między fasadą zabytku a placem lub ulicą frontową (preferuj podwórze z wykopem), inaczej bez dźwigu albo wysięgnik do 50 m; kontrola skanu site-crane-heritage z wyjątkiem w1236055101 (żuraw na ortofoto 2025-04).
+- Status: nowe
+- Pakiet właściciela: tools/osm-import, engine mapcity/construction
+- Test przyjęcia: construction-site.test.ts: dźwig w1362895448 nie stoi przed fasadą w67508859; skan site-crane-heritage 1 -> 0
+- Topografia: T-322.
+
+### G-895 Szybkie użycie apteczki pomija atut Field Medic
+- Ważność: S4 · Zasięg: klawisz szybkiego użycia apteczki z atutem Field Medic
+- Opis: item-system woła useConsumable bez healScale(perks); komenda use-item go stosuje, więc atut działa tylko przy komendzie. Znalezione przy G-892.
+- Status: naprawione (PR #645); wcześniej: w PR #645; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-896 Walczący przy końcu pomostu na poziomie jezdni nie idzie po pomoście do gracza
+- Ważność: S4 · Zasięg: końce mostów z pomostem (Mełgiewska, wiadukt Zamkowej)
+- Opis: Brawler z (2454.9, 297.0) do gracza na pomoście nabrzeze-0-1[1] w t=0,2 i z (758.0, 188.5) do gracza na wiadukcie Zamkowej (748.9, 173.4) stoi 20 s, deckLanding zwraca null; tak samo na main i z poprawką G-885. Znalezione przy G-885 (sondy: scratchpad g885-probe*.test.ts).
+- Status: naprawione (PR #647); wcześniej: w PR #647; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Weryfikator #646: wiadukt Zamkowej, brawler z Podwala (745, 169.8) do gracza na pomoście (748.9, 173.4) wchodzi na pomost, ok. 25 s stoi w (758.0, 188.5), schodzi pod wiadukt i staje w (745.1, 170.0); w 60 s nie dociera. Do (755, 180) dociera w 8 s.
+
+### G-897 Migotanie trawa/plac przy końcu zebry (podzamcze-2-1)
+- Ważność: S4 · Zasięg: podzamcze-2-1 1060,470, koniec zebry między placami
+- Opis: Po G-836 (zebry przy placach, #597) 1 m trawy między placami przy końcu zebry migocze z placem (kerb-fill-flicker). Klucz przyjęty w bazie decyzją użytkownika 16.11, do naprawy w imporcie (kerb-fill.ts).
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import
+- Klucze skanu: kerb-fill-flicker podzamcze-2-1 1060,470
+
+### G-898 Walczący w pasie 10 cm poniżej jezdni przy dolnym moście Mełgiewskiej nie wychodzi do gracza na pomoście
+- Ważność: S4 · Zasięg: dolny most Mełgiewskiej, (2454,9; 297,05), gracz na nabrzeze-0-1[1] t=0,4
+- Opis: Strome krawędzie terenu poniżej STEP_HEIGHT zatrzymują ruch (offTheBank), a raster ich nie widzi; odchylenie ±31° nie wyprowadza na wschód. Przed i po G-896 (#647). Źródło w imporcie terenu albo w regule offTheBank. Sondy: scratchpad g896-probe.test.ts.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (ruch, teren)
+
+### G-899 Walczący z treści po wczytaniu w trakcie pościgu stoi jeden krok (velocity undefined, yaw o 0,1)
+- Ważność: S4 · Zasięg: zapis i wczytanie w trakcie pościgu walczącego z treści (np. hebi-grodzka)
+- Opis: Sonda weryfikatora #647: po wczytaniu w trakcie pościgu walczący z treści stoi jeden krok, velocity undefined, yaw różni się o 0,1; hash rozjeżdża się od pierwszego kroku (24 z 33 zapisów, tick 543). Tak samo na main. Sonda ręcznie zmieniała alerted i pozycję, więc do potwierdzenia przez łowcę (scratchpad v-g896-sl-*.json). Pokrewne G-883 (v41: prędkości).
+- Status: do potwierdzenia
+- Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
