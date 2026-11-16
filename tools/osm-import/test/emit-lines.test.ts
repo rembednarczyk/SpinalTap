@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
+import { emitSites } from "../src/construction-table.ts";
+import type { SitePlan } from "../src/construction-site.ts";
 import { terrainText } from "../src/emit.ts";
 import { emitProps, rowText } from "../src/props-emit.ts";
 
@@ -28,5 +30,15 @@ describe("the map tables' line format (decision of 16.11: git merges them as tex
     const after = emitProps(new Map([["c-0-0", [piece(1), piece(2.5), piece(3)]]])).split("\n");
     expect(after.length).toBe(before.length);
     expect(after.filter((l, i) => l !== before[i])).toEqual(["      2.5,0,1,0,3,"]);
+  });
+
+  it("changes only the moved piece's line in the building sites' table", () => {
+    const piece = (x: number): StreetPropItem => ({ prop: "site-fence", x, y: 0, z: 1, yaw: 0, variant: 2 });
+    const plan = (x: number): SitePlan => ({ id: "w1", seed: 7, set: "fence", area: 120, gate: null, board: null, dig: null, pieces: [piece(1), piece(x)], unfenced: 0 });
+    const before = emitSites([plan(2)]).split("\n");
+    const after = emitSites([plan(2.5)]).split("\n");
+    expect(before).toContain("      \"site-fence\": [");
+    expect(after.length).toBe(before.length);
+    expect(after.filter((l, i) => l !== before[i])).toEqual(["        2.5,0,1,0,2,"]);
   });
 });
