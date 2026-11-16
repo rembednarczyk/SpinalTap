@@ -81,6 +81,5 @@ describe("older looks and fighters (ADR-0076 decision 7, G-282)", () => {
         }
       }
     },
-    60_000,
   );
 });
