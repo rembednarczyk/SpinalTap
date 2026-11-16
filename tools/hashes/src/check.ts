@@ -5,10 +5,9 @@
  * `expect` soft (`values.ts`), so one run shows every assertion that fails; the tests themselves
  * are not changed. For each failure: the numbers in it (cuts, meshes, vertices) the same or not,
  * and the new hash. `--write` puts the new hashes in the test files only where the numbers are the
- * same (`--bare` also where the assertion has no numbers, e.g. the small world of
- * `map-ground-golden`), refuses the rest with the difference, and runs the tests again. The
- * determinism hash is never written (`BY_HAND`, decision of 16.11): it changes only with a rule,
- * by hand (`vitest -u`). Exit 0 when nothing fails (after the writing), 1 otherwise.
+ * same (`--bare` also where the assertion has no numbers), refuses the rest with the difference, and runs the tests again. The
+ * determinism and ground hashes are never written (`BY_HAND`, decision of 16.11, ADR-0088): each
+ * is laid on a test floor of its own and changes only with a rule, by hand (`vitest -u`). Exit 0 when nothing fails (after the writing), 1 otherwise.
  */
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
