@@ -45,3 +45,6 @@ export const W3_PATROL_MEZZANINE: readonly [Vec3, ...Vec3[]] = [w3(2503.5, MEZZA
 
 /** The wagon airlock's guard, inside it, looking east down the aisle. */
 export const W3_AIRLOCK_POST: Vec3 = w3(2505, 0, 418);
+
+/** The guard of armoury S, by its inner door, looking into the room (south). */
+export const W3_ARMOURY_POST: Vec3 = w3(2552, 0, 402.6);

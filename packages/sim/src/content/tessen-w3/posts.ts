@@ -1,7 +1,7 @@
 import type { ContractSiteId, EnemyTypeId, Vec3 } from "@seki/core";
 import { ground } from "../lublin/terrain";
 import { W3_PLATFORM, W3_ROOF, w3 } from "./site";
-import { W3_AIRLOCK_POST, W3_PATROL_HALL, W3_PATROL_MEZZANINE, W3_VIRUS_TERMINAL } from "./mission";
+import { W3_AIRLOCK_POST, W3_ARMOURY_POST, W3_PATROL_HALL, W3_PATROL_MEZZANINE, W3_VIRUS_TERMINAL } from "./mission";
 
 
 /**
@@ -60,8 +60,8 @@ export const W3_CONTRACT_POSTS: Readonly<Partial<Record<ContractSiteId, readonly
     post(w3(2505, 0, 447), -2.4, "tessen_guard", true),
     post(w3(2494, 0, 412.5), -0.6, "tessen_guard", true),
   ],
-  // The sabotage (ADR-0082 stage 3): P1 in the hall, P2 on the mezzanine, the wagon airlock's guard.
-  w3_hall: [patrol(W3_PATROL_HALL), patrol(W3_PATROL_MEZZANINE), post(W3_AIRLOCK_POST, Math.PI / 2)],
+  // The sabotage (ADR-0082 stage 3): P1 in the hall, P2 on the mezzanine, the wagon airlock's and armoury S's guards.
+  w3_hall: [patrol(W3_PATROL_HALL), patrol(W3_PATROL_MEZZANINE), post(W3_AIRLOCK_POST, Math.PI / 2), post(W3_ARMOURY_POST, Math.PI)],
 };
 
 /** Mika's way from Genzō's container down the riverside path to the river's bench under the terrace. */

@@ -59,13 +59,13 @@ const active = (sim: Simulation) => sim.domain.contracts.active;
 const upload = SABOTAGE.uploadSeconds * SIM_HZ;
 
 describe("W-3's sabotage (ADR-0082 stage 3)", () => {
-  it("brings the hall's three guards, the patrols on their routes, the core's terminal and the server room's camera", () => {
+  it("brings the hall's four guards, the patrols on their routes, the core's terminal and the server room's camera", () => {
     const sim = Simulation.create({ seed: 3 });
     const c = accept(sim);
-    expect(c).toMatchObject({ siteId: "w3_hall", targets: 3, status: "active" });
+    expect(c).toMatchObject({ siteId: "w3_hall", targets: 4, status: "active" });
     expect(c.variation).toBeUndefined();
     const guards = crew(sim, c);
-    expect(guards).toHaveLength(3);
+    expect(guards).toHaveLength(4);
     expect(guards.filter((g) => g.ai?.route)).toHaveLength(2);
     expect(byKey(sim, contractVirusKey(c.id))?.interactable).toMatchObject({ kind: "terminal", prompt: "prompt.upload-virus" });
     expect(byKey(sim, "dev:w3-server-cam")?.device?.restricted?.during).toBe("sabotage");

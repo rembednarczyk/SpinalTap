@@ -20,8 +20,8 @@ export const SABOTAGE = {
   /** Pay at level 1 before the giver's standing: out unseen, out seen (ADR-0082 balance). */
   quietReward: 2400,
   seenReward: 1700,
-  /** The guards of the hall, the mezzanine and the wagon airlock. */
-  crew: 3,
+  /** The guards of the hall, the mezzanine, the wagon airlock and armoury S. */
+  crew: 4,
 } as const;
 
 /** Raised for good once the virus is in the core: the line's screens show it from then on. */

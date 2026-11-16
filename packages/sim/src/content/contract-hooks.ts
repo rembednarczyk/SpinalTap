@@ -163,6 +163,16 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     carrier: { post: 0 },
     reveal: { kind: "intel" },
   },
+  // W-3 (ADR-0082): the wagon airlock's guard on the hall patrol's round to server room N.
+  {
+    id: "hook_sabotage_1",
+    kind: "sabotage",
+    source: "bark",
+    knot: "hook_sabotage_1",
+    text: "hook.sabotage_1",
+    carrier: { post: 2 },
+    reveal: { kind: "intel" },
+  },
 ];
 
 /** The hooks of one kind of job, in table order. */
