@@ -57,6 +57,21 @@ export const DAY_RIG: LightingRig = {
   fillColor: "#e2e7f0",
 };
 
+/**
+ * Under a roof lit by its own lamps (W-3's hall, ADR-0082 §4): neither moon nor sun (a hard band of
+ * it fell through the hall's walls, a patch on server room N's wall), the fluorescent strips' flat
+ * ambient, the shade side barely cooler, a thin haze. The same by day and by night.
+ */
+export const INDOOR_RIG: LightingRig = {
+  sunDir: NIGHT_RIG.sunDir,
+  sunColor: "#000000",
+  ambient: "#666c7c",
+  fogColor: "#1c2128",
+  fogDensity: 0.004,
+  shadeTint: "#dcdeea",
+  fillColor: "#c8d0e0",
+};
+
 const channel = (hex: string, i: number): number => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
 
 /** Mixes two "#rrggbb" colours. */
@@ -81,5 +96,21 @@ export const rigForDaylight = (daylight: number): LightingRig => {
     fogDensity: NIGHT_RIG.fogDensity + (DAY_RIG.fogDensity - NIGHT_RIG.fogDensity) * t,
     shadeTint: mixHex(NIGHT_RIG.shadeTint, DAY_RIG.shadeTint, t),
     fillColor: mixHex(NIGHT_RIG.fillColor, DAY_RIG.fillColor, t),
+  };
+};
+
+/** Two rigs mixed: `a` at 0, `b` at 1 (the sun's direction stays `a`'s). */
+export const mixRig = (a: LightingRig, b: LightingRig, t: number): LightingRig => {
+  const k = Math.max(0, Math.min(1, t));
+  if (k === 0) return a;
+  if (k === 1) return { ...b, sunDir: a.sunDir };
+  return {
+    sunDir: a.sunDir,
+    sunColor: mixHex(a.sunColor, b.sunColor, k),
+    ambient: mixHex(a.ambient, b.ambient, k),
+    fogColor: mixHex(a.fogColor, b.fogColor, k),
+    fogDensity: a.fogDensity + (b.fogDensity - a.fogDensity) * k,
+    shadeTint: mixHex(a.shadeTint, b.shadeTint, k),
+    fillColor: mixHex(a.fillColor, b.fillColor, k),
   };
 };

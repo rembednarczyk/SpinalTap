@@ -4,7 +4,7 @@ import type { Entity } from "../../world/components";
 import { type GroundField, MAX_WALK_SLOPE, groundOf, heightApart } from "../../world/ground";
 import { STEP_HEIGHT } from "../movement-system";
 import { type Detour, FAR, type Field, NEAR_WINDOW, downhill, fieldFor, grow, nearest, outsideWindow } from "./nav-field";
-import { CLEARANCE, NAV_CELL, ON_FLIGHT, type Raster, byLedge, cellCentre, cellIndex, cellRange } from "./nav-raster";
+import { CLEARANCE, NAV_CELL, ON_FLIGHT, type Raster, byLedge, cellCentre, cellIndex, cellRange, pastLedgeOnWay } from "./nav-raster";
 import { wallOnWay } from "./nav-walls";
 import { SAME_FLOOR, SAMPLE, bankNear, deckReach, floorOf, straightWalk, walkable } from "./straight-walk";
 
@@ -73,7 +73,9 @@ const outOfReach = (r: Raster, n: number, from: Vec3): boolean => !!r.ledges && 
  * (`wallOnWay`, G-740), onto a deck by the edge the feet stand under; nor one higher over the feet
  * than a walk climbs to it (`aboveLevel`, G-762): at the foot of the western abutment's wall of
  * Mełgiewska's lower bridge the feet's own cell is closed, steep, and no wall between cells leads
- * from it, so the walk set out from the cell on the wall 3.4 m up and pressed against it.
+ * from it, so the walk set out from the cell on the wall 3.4 m up and pressed against it. Nor
+ * from the low end of a bridge's deck one where it rises out of the walk's reach (`pastLedge`,
+ * G-072): on Zamkowa's viaduct the walk set out from a cell under it, the feet on it.
  */
 const startOf = (field: Field, from: Vec3): number => {
   const { raster, dist } = field;
@@ -84,7 +86,8 @@ const startOf = (field: Field, from: Vec3): number => {
     (!raster.base || raster.flight?.[n] !== ON_FLIGHT || Math.abs((raster.base[n] ?? 0) - from.y) <= STEP_HEIGHT) &&
     !outOfReach(raster, n, from) &&
     !aboveLevel(raster, n, from, cellCentre(raster, n, from.y)) &&
-    !wallOnWay(raster, from, cellCentre(raster, n, from.y), SAMPLE);
+    !wallOnWay(raster, from, cellCentre(raster, n, from.y), SAMPLE) &&
+    !pastLedgeOnWay(raster, from, cellCentre(raster, n, from.y), SAMPLE);
   return (dist[here] ?? FAR) < FAR ? here : nearest(here, 2, raster.cells, reachable);
 };
 

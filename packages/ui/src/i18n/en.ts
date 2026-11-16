@@ -33,8 +33,11 @@ export const en = {
   "credits.section.weapons": "Weapons",
   "credits.section.audio": "Sounds",
   "credits.section.icons": "Item icons",
+  "credits.section.app": "App icon",
   "credits.by": "by {author}",
   "credits.changed": "changed for the game",
+  "credits.license.own": "the game's own work",
+  "credits.license.vroidNc": "VRoid Hub, author's terms: non-commercial use",
   "menu.back": "Back",
   // Pause menu.
   "pause.heading": "Paused",

@@ -6,9 +6,9 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { type Pt, type Rect } from "../../osm-import/src/geometry.ts";
+import { type Pt, type Rect, pointInRing, rectsOverlap, ringBounds } from "../../osm-import/src/geometry.ts";
 import { puwgFrame, worldToPuwg } from "../../osm-import/src/project.ts";
-import { COVER, COVER_NAMES, COVER_PALETTE, type Colour, classify } from "./classify.ts";
+import { COVER, COVER_NAMES, COVER_PALETTE, type Colour, classify, classifySite } from "./classify.ts";
 import { CELLS, COVER_DIR, COVER_STEP } from "./config.ts";
 import { decodeIndexed, encodeIndexed4 } from "./png.ts";
 import { type Thresholds } from "./thresholds.ts";
@@ -124,9 +124,14 @@ export const smoothColours = (h: CoverHeader, s: Sampled, rect: Rect, radius: nu
   return { rgb, n };
 };
 
-/** Classifies the samples of `rect` into `cover` from the flights' tiles, the current image first; blank tiles left out (`usableTiles`). */
-export const classifyRect = (cover: Cover, flights: readonly Tile[], rect: Rect): void => {
+/**
+ * Classifies the samples of `rect` into `cover` from the flights' tiles, the current image first;
+ * blank tiles left out (`usableTiles`). A sample in one of `sites` (finished sites' land, G-872)
+ * by `classifySite`.
+ */
+export const classifyRect = (cover: Cover, flights: readonly Tile[], rect: Rect, sites: readonly (readonly Pt[])[] = []): void => {
   const h = cover.header;
+  const near = sites.filter((r) => rectsOverlap(ringBounds(r), rect));
   const tiles = usableTiles(flights);
   const sampled = tiles.map((t) => smoothColours(h, sampleColours(h, t, rect), rect, h.thresholds.smooth));
   const k0 = Math.max(0, Math.floor((h.z1 - rect.maxZ) / h.step)) * h.width;
@@ -135,7 +140,9 @@ export const classifyRect = (cover: Cover, flights: readonly Tile[], rect: Rect)
     const colours: Colour[] = [];
     for (const { rgb, n } of sampled) if (n[k]) colours.push([rgb[k * 3]! / n[k]!, rgb[k * 3 + 1]! / n[k]!, rgb[k * 3 + 2]! / n[k]!]);
     // Every flight or none: a sample seen by only some would be judged on another season.
-    if (colours.length && colours.length === tiles.length) cover.cls[k] = classify(colours, h.thresholds);
+    if (!colours.length || colours.length !== tiles.length) continue;
+    const onSite = near.length > 0 && near.some((r) => pointInRing(sampleCentre(h, k % h.width, Math.floor(k / h.width)), r));
+    cover.cls[k] = onSite ? classifySite(colours, h.thresholds) : classify(colours, h.thresholds);
   }
 };
 

@@ -104,7 +104,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
     expect(props().some((m) => m.isEnabled())).toBe(false);
     // Nothing more fetched: the arms come from the file already loaded.
     expect(fetched.filter((u) => u.endsWith(".vrm")).length).toBe(before);
-  }, 60_000);
+  });
 
   it("hides them in TPP and brings them back in FPP", async () => {
     const { kit, rig, settle, camera, library } = setup();
@@ -118,7 +118,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
     camera.setMode("FPP");
     settle();
     expect(kit.hands.drawn).toHaveLength(1);
-  }, 60_000);
+  });
 
   it("never fetches her file itself: until the start has loaded it, the procedural forearm stays", async () => {
     const { kit, rig, settle, props, fetched } = setup();
@@ -168,7 +168,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
     expect(Vector3.Distance(grip(), hip)).toBeLessThan(0.002);
     settle({ ...standing, speed: 3 }, 0.7);
     expect(Vector3.Distance(grip(), hip)).toBeLessThan(0.002);
-  }, 60_000);
+  });
 
   it("puts the left hand under a long gun's fore-end", async () => {
     const { kit, rig, settle, camera, library } = setup();
@@ -181,7 +181,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
     settle();
     // The rifle's fore-end lies about 0.2 m ahead of the grip.
     expect(left().z).toBeGreaterThan(0.08);
-  }, 60_000);
+  });
   it.each([
     ["desktop", [1280, 720]],
     ["phone", [844, 390]],
@@ -224,7 +224,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
         }
       }
     }
-  }, 120_000);
+  });
 
   it("rifle from the hip: the barrel ahead, the grip low on the right, the butt out under the frame's right corner towards the shoulder", async () => {
     const { kit, rig, settle, camera, library } = setup([1280, 720]);
@@ -257,7 +257,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
     const aimedInv = camera.camera.getWorldMatrix().clone().invert();
     const aimedButt = Vector3.TransformCoordinates(Vector3.TransformCoordinates(new Vector3(0, 0.05, -0.27), camera.weaponMount.getWorldMatrix()), aimedInv);
     expect(aimedButt.z).toBeLessThan(0.12);
-  }, 60_000);
+  });
 
   it("draws the weapon and the hands with their own field of view: aimed with the DMR's zoom (0.38) the weapon is as big on the screen as with no zoom, its sights over 3 degrees under the crosshair in the world", async () => {
     const { kit, rig, settle, camera, library } = setup([1280, 720]);
@@ -286,7 +286,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
     expect(zoomed.sight).toBeLessThan(-(3 * Math.PI) / 180);
     // The world's view does zoom.
     expect(camera.lookScale).toBeLessThan(0.45);
-  }, 60_000);
+  });
 
   /**
    * The handgun grip the user chose out of seven rounds (13.11: round 2, commit e17dc2e; round 7's
@@ -395,7 +395,7 @@ describe("FPP hands from Seki's model (13.11)", () => {
       expect(at("r").y - -0.028, `aim ${aim}: the right hand up the grip`).toBeGreaterThan(look === "pistol" ? 0.015 : 0.009);
       expect(at("l").y - -0.085, `aim ${aim}: the left hand up the grip`).toBeCloseTo(0.015, 3);
     }
-  }, 60_000);
+  });
 
   /**
    * Round 2 of 14.11 (the user on PR #537: aimed in, "the pistol goes into the hand; seat it so it
@@ -447,5 +447,5 @@ describe("FPP hands from Seki's model (13.11)", () => {
     expect(up.z).toBeLessThanOrEqual(0);
     const fist = Vector3.TransformCoordinates(kit.hands.handBone(look === "blade" ? "l" : "r")!.getAbsolutePosition(), inv);
     expect(fist.y / fist.z).toBeLessThan(-0.5 * Math.tan(camera.camera.fov / 2));
-  }, 60_000);
+  });
 });

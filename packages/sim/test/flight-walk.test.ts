@@ -105,7 +105,7 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
           check(`down off ${off} R ${R} run ${run}`, playerWalk(sim, [...up].reverse(), R, run), R);
         }
       }
-    }, 120_000);
+    });
   }
 
   it("lets nobody under the flight from beside it: across it from either side, the feet are never under its treads", () => {
@@ -120,7 +120,7 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
         expect(w.sunk, `across at ${s} from ${side}: ${w.at}`).toBeLessThan(0.05);
       }
     }
-  }, 60_000);
+  });
 
   it("keeps the viaduct's deck a wall from the bend's landing to a dash too: a body at 14 m/s steps up no more than a step", () => {
     for (const [fx, fz, tx, tz] of [
@@ -143,7 +143,7 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
       sim.world.remove(e);
       expect(up, `(${fx}, ${fz})`).toBeLessThanOrEqual(STEP_HEIGHT);
     }
-  }, 60_000);
+  });
 
   it("keeps the viaduct's deck a wall from the bend's landing: no step up onto it over a step", () => {
     // From the landing (−15.31) towards the deck 1.6–1.8 m higher beside it, walking, running, crouching.
@@ -167,7 +167,7 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
         expect(up, `(${fx}, ${fz}) ${JSON.stringify(mode)}`).toBeLessThanOrEqual(STEP_HEIGHT);
       }
     }
-  }, 60_000);
+  });
 
   it("keeps the flight's sides a wall: a body pushed into them from 4 m off never steps up more than a step", () => {
     const bad: string[] = [];
@@ -202,7 +202,7 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
       }
     }
     expect(bad).toEqual([]);
-  }, 120_000);
+  });
 
   it("keeps a floor under the viaduct's sidewalk by the niche: its edge walked past the steps never sinks under the deck or the steps drawn (G-274)", () => {
     // Zamkowa's axis on the viaduct (OSM w232362907), and its deck's edge on the steps' side ~4 m off it.
@@ -224,7 +224,7 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
         expect(w.sunk, `${off} m off: ${w.at}`).toBeLessThan(0.05);
       }
     }
-  }, 60_000);
+  });
 
   it("hangs no slab of the viaduct over the flight or its landings: where the flight is the ground, no deck is over it (G-274)", () => {
     const over: string[] = [];
@@ -264,5 +264,5 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
     );
     sim.world.remove(npc);
     check("npc up", w, 0.6);
-  }, 60_000);
+  });
 });

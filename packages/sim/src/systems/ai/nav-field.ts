@@ -4,10 +4,11 @@ import type { Aabb } from "../../world/collision";
 import type { Entity } from "../../world/components";
 import { groundOf } from "../../world/ground";
 import { solidIndexOf } from "../../world/solid-index";
-import { collidersOf } from "../../world/solids";
+import { type Collider, collidersOf } from "../../world/solids";
 import { STEP_HEIGHT } from "../movement-system";
 import { type NavMemo, heldRaster, recall, remember } from "./nav-memo";
-import { CLEARANCE, LEDGE, NAV_CELL, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellIndex, finish, rasterise, walled } from "./nav-raster";
+import { navShare, shapesKey, sharedGround, through } from "./nav-share";
+import { CLEARANCE, type Field, LEDGE, NAV_CELL, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellIndex, finish, pastLedge, rasterise, walled } from "./nav-raster";
 
 /**
  * The distance fields of the steering (ADR-0025, `steering.ts`): the windows rasterised round a
@@ -47,16 +48,13 @@ const GOAL_SEARCH = 4;
 
 type Solid = Entity & { solid: Aabb };
 
-export interface Field {
-  readonly raster: Raster;
-  /** Walking distance to the goal in half cells (a straight step 2, a diagonal 3), `FAR` where unreachable. */
-  readonly dist: Int32Array;
-  readonly source: number;
-}
+/** The field of a goal (`nav-raster.ts`, beside its raster, for the shared store's types). */
+export type { Field } from "./nav-raster";
 
 type Memo = NavMemo<Raster, Field>;
 
 const memos = new WeakMap<World<Entity>, Map<string, Memo>>();
+
 
 export const memoOf = (world: World<Entity>, win: Window): Memo => {
   let byWindow = memos.get(world);
@@ -116,10 +114,11 @@ const passable = (r: Raster, c: number, dx: number, dz: number, out: boolean): n
     if ((r.base[to] ?? 0) - (r.base[from] ?? 0) > (dx !== 0 && dz !== 0 ? WALL_DIAGONAL : STEP_HEIGHT)) return -1;
   }
   // Not up the side of a bridge's deck over lower ground either (`ledgesOf`, G-741): round by its
-  // end. Down off it, over the edge, it may.
-  if (r.base && r.ledges?.[out ? n : c] === ON_LEDGE) {
+  // end. Down off it, over the edge, it may, but not where the deck goes on overhead (G-072).
+  if (r.base && r.ledges) {
     const [from, to] = out ? [c, n] : [n, c];
-    if ((r.base[to] ?? 0) - (r.base[from] ?? 0) > (dx !== 0 && dz !== 0 ? LEDGE * Math.SQRT2 : LEDGE)) return -1;
+    if (r.ledges[to] === ON_LEDGE && (r.base[to] ?? 0) - (r.base[from] ?? 0) > (dx !== 0 && dz !== 0 ? LEDGE * Math.SQRT2 : LEDGE)) return -1;
+    if (pastLedge(r, from, to)) return -1;
   }
   return n;
 };
@@ -208,8 +207,14 @@ export function* fieldSteps(world: World<Entity>, win: Window, floor: number, re
   const memo = memoOf(world, win);
   const rasterKey = `${floor}|${reach}|${cx}|${cz}|${signature(solids)}`;
   let raster = recall(memo.rasters, rasterKey) ?? heldRaster(memo.fields, rasterKey);
+  // The process's store (tests, `nav-share.ts`), by the content: only when one is installed.
+  const share = navShare();
+  const shared = share ? sharedGround(groundOf(world)) : null;
+  let sharedKey: string | undefined;
+  const sharedKeyOf = (colliders: readonly Collider[]) => (sharedKey ??= `${win.name}|${cells}|${floor}|${reach}|${x0}|${z0}|${shared?.key}|${shapesKey(colliders)}`);
   if (!raster) {
-    raster = yield* rasterise(collidersOf(solids), floor, reach, x0, z0, groundOf(world), cells);
+    const colliders = collidersOf(solids);
+    raster = yield* through(share?.rasters, share ? sharedKeyOf(colliders) : "", () => rasterise(colliders, floor, reach, x0, z0, shared?.ground ?? groundOf(world), cells));
     memo.built.rasters++;
   }
   remember(memo.rasters, rasterKey, raster, win.rasters);
@@ -220,7 +225,8 @@ export function* fieldSteps(world: World<Entity>, win: Window, floor: number, re
   const fieldKey = `${rasterKey}|${source}`;
   const field = recall(memo.fields, fieldKey);
   if (field) return field;
-  const grown = yield* growSteps(raster, source);
+  const made = raster;
+  const grown = yield* through(share?.fields, share ? `${sharedKeyOf(collidersOf(solids))}|${source}` : "", () => growSteps(made, source));
   memo.built.fields++;
   return remember(memo.fields, fieldKey, grown, win.fields);
 }
