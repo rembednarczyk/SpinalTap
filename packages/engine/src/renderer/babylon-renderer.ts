@@ -400,6 +400,7 @@ export class BabylonRenderer implements RenderPort {
     this.metro.afterCamera();
     city?.update(dt, this.rig.camera.position, this.stage.options.reference);
     if (city) this.props.updateGlow(this.rig.camera.position, this.map.sight);
+    this.props.updateInteriors(this.rig.camera.position);
     // Shadow follows what the camera looks at (the player, the metro car or the fixed reference
     // view) and shrinks to what it shows.
     const focus = target && !this.metro.active ? target.position : this.rig.camera.position;
