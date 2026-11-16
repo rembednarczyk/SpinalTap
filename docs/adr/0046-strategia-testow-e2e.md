@@ -195,3 +195,5 @@ Zostają `smoke`, `npr-perf`, `models`, `touch-layout` i `touch`. Doszły tylko 
 
 ## Dług: testy ponad połową limitu przy starcie bramki ADR-0083 (15.11)
 22 testy przekraczały 10 s z 20 s już w pierwszym przebiegu bramki czasu (CI run 43714759388): determinizm, zapis i wczytanie w trakcie paniki i walki, modele postaci, P-1 Alchemii, `generate.test` i jeden rodzaj skanu. Są na liście `tools/test-time/src/exceptions.ts` z `only: "limit"`: zwalnia je to tylko z progu połowy limitu, a wzrost wobec main nadal zatrzymuje PR. Wpis znika, gdy test zejdzie poniżej 10 s (ADR-0083 krok 3: wspólna pamięć miasta).
+
+16.11 doszły dwa wpisy: `vest-plate-model.test.ts` (G-870, 11,2 s, trzy pliki VRM i cztery pozy) i `flee-dead-zone.test.ts` (15,5 s, 78%, bez zmian w sim, na granicy progu 75% pod obciążeniem CI). Oba do kroku 3 ADR-0083.
