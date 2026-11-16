@@ -1,12 +1,43 @@
 import type { StreetPropItem } from "@seki/core";
-import type { StaticProp } from "../builders";
-import { type ShellPart, barrierLine, barrierSolids, box, railing, rectRing, shellPart } from "./parts";
+import type { DoorDef, StaticProp } from "../builders";
+import { doorParts } from "../doors";
+import { W3_BASEMENT_PROPS } from "./basement";
+import { W3_CHAMBER_DOORS, W3_HALL_INSIDE_PROPS } from "./hall-inside";
+import {
+  AIRLOCK_N_DOOR,
+  AIRLOCK_S_CORRIDOR,
+  AIRLOCK_S_DOOR,
+  CHAMBER_CEILING,
+  CHAMBER_GATE_E,
+  CHAMBER_GATE_W,
+  COOLER,
+  COOLERS_X,
+  DOOR_H,
+  DOOR_W,
+  DOORS_S,
+  GALLERY_OVER_CHAMBER,
+  GALLERY_OVER_LINE,
+  GALLERY_WINDOW,
+  HALL_CEILING,
+  HALL_DOORS,
+  ROOF_HATCH,
+  ROOF_UNDERSIDE,
+  STAIR_N_DOOR,
+  WAGON_OPENING,
+  WALL,
+} from "./layout";
+import { type ShellHollow, type ShellPart, type WallGap, barrierLine, barrierSolids, box, doorGap, merged, railing, rectRing, shellPart, wallZ } from "./parts";
+import { W3_ROW_N_DOORS, W3_ROW_N_PROPS } from "./rows-n";
+import { W3_CUT_WALL, W3_ROW_S_DOORS, W3_ROW_S_PROPS } from "./rows-s";
 import { W3_AIRLOCKS, W3_ASSEMBLY, W3_CHAMBER, W3_CHAMBER_TOP, W3_GATE, W3_HALL_CUT, W3_HALL_TOP, W3_ROOF, W3_ROW_N, W3_ROW_S, W3_Y } from "./site";
 
 /**
  * The hall's shell (ADR-0082 stage 1, the gate shut): row S with its south-west corner cut along
  * the fence (P1), the airlocks' strip and row N under one roof at +10.4, the assembly hall to +16.6
- * and the test chamber to +14. Stage 2 hollows it into the rooms of the plan.
+ * and the test chamber to +14. Stage 2 hollows it into the rooms of the plan: the map city's
+ * parts keep only their roof slabs as solids and get openings in their facades where a door or
+ * the gallery's window goes through one; the low boxes become their outer walls and roofs, with
+ * the hatch over server room N; the cooling units stand on row N's roof.
  *
  * Row S, the assembly hall and the chamber are buildings of the map city (an industrial facade,
  * drawn with the city); the airlocks' strip and row N are boxes, so their roof, walked from the
@@ -26,15 +57,44 @@ const OUTER_PARAPET = 1.9;
 
 const [cutA, cutB] = W3_HALL_CUT;
 
+type Opening = NonNullable<ShellHollow["doorways"]>[number];
+/** A door's opening in a facade along x (at z) or along z (at x). */
+const doorX = (x: number, z: number, width = DOOR_W, top = DOOR_H, bottom = 0): Opening => ({ at: { x, z }, width, bottom, top });
+const A = W3_ASSEMBLY;
+const C = W3_CHAMBER;
+const galleryWindow = (from: number, to: number): Opening => doorX((from + to) / 2, A.maxZ, to - from, GALLERY_WINDOW.top, GALLERY_WINDOW.bottom);
+
 const ROW_S = shellPart(
   [cutB, { x: W3_ROW_S.maxX, z: W3_ROW_S.minZ }, { x: W3_ROW_S.maxX, z: W3_ROW_S.maxZ }, { x: W3_ROW_S.minX, z: W3_ROW_S.maxZ }, cutA],
   W3_ROOF + DRAWN_PARAPET,
   2,
   LOOK_ROW_S,
   W3_ROOF,
+  {
+    slab: W3_ROOF - ROOF_UNDERSIDE,
+    doorways: [doorX(DOORS_S.armoury, W3_ROW_S.minZ), ...[AIRLOCK_S_CORRIDOR, ...HALL_DOORS].map((x) => doorX(x, W3_ROW_S.maxZ))],
+  },
 );
-const ASSEMBLY = shellPart(rectRing(W3_ASSEMBLY.minX, W3_ASSEMBLY.maxX, W3_ASSEMBLY.minZ, W3_ASSEMBLY.maxZ), W3_HALL_TOP, 4, LOOK_ASSEMBLY);
-const CHAMBER = shellPart(rectRing(W3_CHAMBER.minX, W3_CHAMBER.maxX, W3_CHAMBER.minZ, W3_CHAMBER.maxZ), W3_CHAMBER_TOP, 3, LOOK_CHAMBER);
+const ASSEMBLY = shellPart(rectRing(A.minX, A.maxX, A.minZ, A.maxZ), W3_HALL_TOP, 4, LOOK_ASSEMBLY, W3_HALL_TOP, {
+  slab: W3_HALL_TOP - HALL_CEILING,
+  doorways: [
+    ...HALL_DOORS.flatMap((x) => [doorX(x, A.minZ), doorX(x, A.maxZ)]),
+    galleryWindow(GALLERY_OVER_LINE.from, GALLERY_OVER_LINE.to),
+    doorX(A.minX, AIRLOCK_S_DOOR),
+    doorX(A.minX, 418, 9.8, WAGON_OPENING),
+    doorX(A.minX, AIRLOCK_N_DOOR),
+    doorX(A.minX, STAIR_N_DOOR.z, STAIR_N_DOOR.width),
+    doorX(A.maxX, (CHAMBER_GATE_W.minZ + CHAMBER_GATE_W.maxZ) / 2, CHAMBER_GATE_W.maxZ - CHAMBER_GATE_W.minZ, CHAMBER_GATE_W.height),
+  ],
+});
+const CHAMBER = shellPart(rectRing(C.minX, C.maxX, C.minZ, C.maxZ), W3_CHAMBER_TOP, 3, LOOK_CHAMBER, W3_CHAMBER_TOP, {
+  slab: W3_CHAMBER_TOP - CHAMBER_CEILING,
+  doorways: [
+    doorX(C.minX, (CHAMBER_GATE_W.minZ + CHAMBER_GATE_W.maxZ) / 2, CHAMBER_GATE_W.maxZ - CHAMBER_GATE_W.minZ, CHAMBER_GATE_W.height),
+    doorX(C.maxX, (CHAMBER_GATE_E.minZ + CHAMBER_GATE_E.maxZ) / 2, CHAMBER_GATE_E.maxZ - CHAMBER_GATE_E.minZ, CHAMBER_GATE_E.height),
+    galleryWindow(GALLERY_OVER_CHAMBER.from, GALLERY_OVER_CHAMBER.to),
+  ],
+});
 
 /** The hall's parts the map city draws. */
 export const W3_HALL_SHELL: readonly ShellPart[] = [ROW_S, ASSEMBLY, CHAMBER];
@@ -67,28 +127,61 @@ const rowSParapetSolid = (): StaticProp[] => {
 /** The tower's bridge lands on row N's roof over its west parapet here (`tower-pipes.ts`). */
 export const W3_BRIDGE_Z = { minZ: 437.6, maxZ: 439.7 } as const;
 
-/** The airlocks' strip and row N: boxes under one roof, with their parapets; the wagon gate shut in the west wall. */
+/** The west wall's openings: airlock S's door, the wagon gate, airlock N's door. */
+const WEST_GAPS: readonly WallGap[] = [doorGap(AIRLOCK_S_DOOR, DOOR_W, DOOR_H), { from: W3_GATE.minZ, to: W3_GATE.maxZ, top: W3_GATE.height }, doorGap(AIRLOCK_N_DOOR, DOOR_W, DOOR_H)];
+
+/**
+ * The airlocks' strip and row N under one roof: their outer walls (the west one with its doors and
+ * the wagon gate, shut), the roofs with the hatch over server room N, the parapets, the cooling units.
+ */
 const lowRoof = (): StaticProp[] => {
   const r = W3_ROOF;
+  const u = ROOF_UNDERSIDE;
   const a = W3_AIRLOCKS;
   const n = W3_ROW_N;
+  const t = WALL;
+  const h = ROOF_HATCH;
   return [
-    box(a.minX, a.maxX, 0, r, a.minZ, a.maxZ, "concrete"),
-    box(n.minX, n.maxX, 0, r, n.minZ, n.maxZ, "metal"),
+    // The walls and the roofs' gear merged; the roofs cast the moon's shadow as the boxes did.
+    ...merged([
+      ...wallZ(a.minZ, n.maxZ, a.minX, a.minX + t, 0, u, WEST_GAPS, "metal"),
+      box(a.minX + t, n.maxX, 0, u, n.maxZ - t, n.maxZ, "metal"),
+      box(n.maxX - t, n.maxX, 0, u, n.minZ, n.maxZ - t, "metal"),
+      ...COOLERS_X.map((x) => box(x - COOLER.w / 2, x + COOLER.w / 2, r, r + COOLER.h, COOLER.z - COOLER.d / 2, COOLER.z + COOLER.d / 2, "metal")),
+    ]),
+    box(a.minX, a.maxX, u, r, a.minZ, a.maxZ, "concrete"),
+    box(n.minX, h.minX, u, r, n.minZ, n.maxZ, "metal"),
+    // The roof round the hatch and the wagon gate (8 x 7 m, shut in v1) merged too: two meshes fewer each.
+    ...merged([
+      box(h.maxX, n.maxX, u, r, n.minZ, n.maxZ, "metal"),
+      box(h.minX, h.maxX, u, r, n.minZ, h.minZ, "metal"),
+      box(W3_GATE.x - 0.25, W3_GATE.x, 0, W3_GATE.height, W3_GATE.minZ, W3_GATE.maxZ, "metal"),
+      box(W3_GATE.x - 0.35, W3_GATE.x, W3_GATE.height, W3_GATE.height + 0.5, W3_GATE.minZ - 0.5, W3_GATE.maxZ + 0.5, "metal"),
+    ]),
     // West parapet over the zone, open where the tower's bridge lands.
     railing(a.minX, a.minX + 0.3, a.minZ, W3_BRIDGE_Z.minZ, r),
     railing(n.minX, n.minX + 0.3, W3_BRIDGE_Z.maxZ, n.maxZ, r),
     // North over the pickup yard, east over the east yard.
     railing(n.minX + 0.3, n.maxX, n.maxZ - 0.3, n.maxZ, r),
     railing(n.maxX - 0.3, n.maxX, n.minZ, n.maxZ - 0.3, r),
-    // The wagon gate (8 x 7 m, shut till stage 2) in the airlocks' west wall.
-    box(W3_GATE.x - 0.25, W3_GATE.x, 0, W3_GATE.height, W3_GATE.minZ, W3_GATE.maxZ, "metal"),
-    box(W3_GATE.x - 0.35, W3_GATE.x, W3_GATE.height, W3_GATE.height + 0.5, W3_GATE.minZ - 0.5, W3_GATE.maxZ + 0.5, "metal"),
   ];
 };
 
-/** Row S's steel fence on its parapet, drawn with the furniture. */
-export const W3_HALL_BARRIERS: readonly StreetPropItem[] = rowSParapet();
+/** Row S's steel fence on its parapet and the cut corner's inner wall, drawn with the furniture. */
+export const W3_HALL_BARRIERS: readonly StreetPropItem[] = [...rowSParapet(), ...W3_CUT_WALL];
 
-/** The hall's solids and boxes: the map city's parts, the low roof, the parapets. */
-export const W3_HALL_PROPS: readonly StaticProp[] = [...W3_HALL_SHELL.map((s) => s.prop), ...lowRoof(), ...rowSParapetSolid(), ...barrierSolids(W3_HALL_BARRIERS)];
+/** Every door of the hall (ADR-0038 automatic doors; the locks, ADR-0082). */
+export const W3_HALL_DOORS: readonly DoorDef[] = [...W3_ROW_S_DOORS, ...W3_ROW_N_DOORS, ...W3_CHAMBER_DOORS];
+
+/** The hall's solids and boxes: the map city's parts, the low roof, the parapets; inside the rows, the hall, the basement, the doors. */
+export const W3_HALL_PROPS: readonly StaticProp[] = [
+  ...W3_HALL_SHELL.map((s) => s.prop),
+  ...lowRoof(),
+  ...rowSParapetSolid(),
+  ...barrierSolids(rowSParapet()),
+  ...W3_ROW_S_PROPS,
+  ...W3_ROW_N_PROPS,
+  ...W3_HALL_INSIDE_PROPS,
+  ...W3_BASEMENT_PROPS,
+  ...W3_HALL_DOORS.flatMap(doorParts),
+];

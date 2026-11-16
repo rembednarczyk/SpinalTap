@@ -132,11 +132,19 @@ describe("the ground the map city lays (G-444)", () => {
     // The widened kerbs smooth (G-837): the asphalt's new edge simplified within 0.05 m before its
     // rounding, and grown on in to the kerb where the gap to the paving closes under 1 m:
     // 161 914 - 161 827 = 87 vertices fewer, the same meshes.
+    // The pedestrian streets' frontages laid in a pass of their own, under the rest of the ground, which
+    // stays as it was (G-853): the strips between the setts and the walls of Krakowskie Przedmieście and
+    // the Old Town paved: 169 742 - 161 827 = 7 915 vertices more, the same meshes.
+    // No frontage on the map's building sites (G-866): 169 742 - 169 066 = 676 vertices fewer, the same meshes.
+    // W-3's hall dug out (ADR-0082 stage 2): its stairs' and the goods lift's shafts, store S's floor levelled
+    // along the cut corner and the culvert's mouth in the river's bench are holes in the ground and the
+    // zone's paving (`W3_CUTS` with the shafts), their edges new corners: 169 252 - 169 066 = 186 vertices more (as before the frontages), the same meshes.
     // The carriageways laid where OSM's lanes lie (G-825): off their line by `placement`, and where one
     // splits off or joins another, its lanes beside the other's; a lane joining a street ends inside
     // it; a moved carriageway's strip to a lawn is the lawn's or a square to it, one surface a stretch
     // (G-825 r1-r4): 162 221 - 161 827 = 394 vertices more, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 162221, hash: "ea2388ae" });
+    // All of them (G-825 on the frontages and W-3): 169 252 + 394 = 169 646, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 169646, hash: "ce3ce3e9" });
     scene.dispose();
   });
 

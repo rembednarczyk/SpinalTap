@@ -98,10 +98,8 @@ export const lineOfSight = (world: World<Entity>, from: Vec3, to: Vec3, terrain 
   const len = Math.hypot(dx, dy, dz);
   if (len < 1e-6) return true;
   const dir = { x: dx / len, y: dy / len, z: dz / len };
-  for (const e of solidIndexOf(world).alongSegment(from, to)) {
-    if (sight && e.sightThrough) continue;
-    if (raySolidEntity(from, dir, e, len) !== null) return false;
-  }
+  // Whether, not which: only the solids whose boxes the segment passes, not all of its box's (G-884).
+  if (solidIndexOf(world).someAlongSegment(from, to, (e) => !(sight && e.sightThrough) && raySolidEntity(from, dir, e, len) !== null)) return false;
   return !terrain || groundRay(groundOf(world), from, dir, len) === null;
 };
 

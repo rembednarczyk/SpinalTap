@@ -16,6 +16,10 @@
    the wallet, the clock and the messages' newest line from 108 px) and over the bottom band (health
    and the weapon strip, 106 px up). While it is up the messages keep their newest title only. */
 .debrief { top: 156px; max-height: calc(100% - 156px - 116px); }
+/* The buffs lie in the card's zone: in its top-left corner on a phone, and on a low desktop their
+   column rises into its lower part. Neither has height to spare for both, so the buffs step aside
+   while the card is up and come back when it closes (G-876). */
+#ui-root:has(.debrief) .buffs { visibility: hidden; }
 
 .touch-mode .ui-layer {
   /* One pad px in this layer's px. */

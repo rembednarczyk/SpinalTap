@@ -57,7 +57,7 @@ describe("chasing the player over the steps from the viaduct of Zamkowa (G-255)"
         expect(c.time, `(${from.x}, ${from.z}) → (${to.x}, ${to.z})`).not.toBeNull();
         expect(c.sunk).toBeLessThan(0.05);
       }
-    }, 120_000);
+    });
   }
 
   it("keeps the ways up and down the other flights of the map", () => {
@@ -75,7 +75,7 @@ describe("chasing the player over the steps from the viaduct of Zamkowa (G-255)"
       }
     }
     expect(n).toBe(3);
-  }, 120_000);
+  });
 
   it("keeps the ways over and under the viaduct of Zamkowa: Zamkowa on its deck, Podwale under it", () => {
     for (const [name, a, b, chunk] of [
@@ -85,7 +85,7 @@ describe("chasing the player over the steps from the viaduct of Zamkowa (G-255)"
       expect(chase(a, b, chunk).time, `${name} one way`).not.toBeNull();
       expect(chase(b, a, chunk).time, `${name} back`).not.toBeNull();
     }
-  }, 120_000);
+  });
 
   // Up the steps w294098693 from their foot by Podwale onto the viaduct's south-west corner: on
   // main the terrain under their top run met the deck 0.5 m under it (G-686), and a brawler
@@ -102,7 +102,7 @@ describe("chasing the player over the steps from the viaduct of Zamkowa (G-255)"
       expect(c.time, `(${from.x}, ${from.z}) → (${to.x}, ${to.z})`).not.toBeNull();
       expect(c.sunk).toBeLessThan(0.05);
     }
-  }, 120_000);
+  });
 
   // Under the viaduct from the street south-east of it to the one north-west: on main about
   // 8-12 s (under the deck, so below the ground drawn there). The deck's edges at its abutments
@@ -115,7 +115,7 @@ describe("chasing the player over the steps from the viaduct of Zamkowa (G-255)"
     ] as const) {
       expect(chase(from, to, "podzamcze-1-0", 20).time, `(${from.x}, ${from.z}) → (${to.x}, ${to.z})`).not.toBeNull();
     }
-  }, 120_000);
+  });
 
   // From the viaduct's deck east of the flight's top to the foot: on main about
   // 7 s, the time to walk it. A wall in the ground there is measured cell to cell, not from the
@@ -130,5 +130,5 @@ describe("chasing the player over the steps from the viaduct of Zamkowa (G-255)"
       expect(c.time, `(${from.x}, ${from.z}) → foot`).not.toBeNull();
       expect(c.sunk).toBeLessThan(0.05);
     }
-  }, 120_000);
+  });
 });
