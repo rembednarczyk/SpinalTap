@@ -1,20 +1,24 @@
 import type { GarmentMeshId } from "@seki/core";
-import { type Mesh, MeshBuilder, MeshClass, type Scene, type TransformNode } from "../babylon";
+import { type AbstractMesh, type Mesh, MeshBuilder, MeshClass, type Scene, type TransformNode } from "../babylon";
 import type { PresetName } from "../npr/presets";
 import type { CharacterRig } from "./character-rig";
+import { buildPlate } from "./model-apron";
 import type { AnchorBone } from "./model-rig";
 
 /**
  * Garment add-ons (ADR-0015 `GarmentMeshId`): a shape, its preset, and where it sits on the
  * procedural rig (`rig`, relative to the head or the body) and on an imported model (`model`,
  * metres from the head or upper chest bone in the rig's axes, before the size fit). VRoid hair
- * is bulky, so the helmet on a model is bigger than on the rig's bald egg.
+ * is bulky, so the helmet on a model is bigger than on the rig's bald egg. A garment with a
+ * `shell` is made of the model's own cloth instead (skinned with it, `model-apron.ts`); the shape
+ * on the bone stays for a model without the cloth to follow.
  */
 export interface AddOn {
   readonly preset: PresetName;
   readonly build: (scene: Scene, name: string) => Mesh;
   readonly rig: (rig: CharacterRig) => { parent: TransformNode; at: [number, number, number]; size: number };
   readonly model: { bone: AnchorBone; at: [number, number, number]; size: number };
+  readonly shell?: (scene: Scene, name: string, meshes: readonly AbstractMesh[], body: TransformNode) => Mesh | null;
 }
 
 /** A dome: the top of a sphere, open below and seen from inside too, its front edge tilted up off the eyes. */
@@ -68,5 +72,7 @@ export const ADD_ONS: Readonly<Record<GarmentMeshId, AddOn>> = {
     build: plate,
     rig: (r) => ({ parent: r.body, at: [0, r.head.position.y * 0.79, 0.095], size: 0.85 }),
     model: { bone: "chest", at: [0, -0.05, 0.085], size: 0.78 },
+    // The box on the chest bone went into the bust of a VRoid figure (G-870).
+    shell: buildPlate,
   },
 };
