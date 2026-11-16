@@ -171,6 +171,82 @@ const run = async (page: Page, sizes: readonly (readonly [number, number])[], to
   expect(found).toEqual([]);
 };
 
+/**
+ * What the contract card must leave clear (ADR-0085): the top band, the bottom band, the stick and
+ * the pad. The first run's move hint in the middle is not among them: it is a passing line.
+ */
+const UNDER_CARD = [
+  "[data-testid=objective]",
+  "[data-testid=eddies]",
+  "[data-testid=clock]",
+  ".toast",
+  "[data-testid=minimap]",
+  "[data-testid=identity]",
+  "[data-testid=weapon-strip]",
+  ".touch__stick-hint",
+  "[data-testid=touch-controls] button",
+].join(", ");
+
+/**
+ * The end-of-contract card (G-846) at its longest, every badge earned and a variation with a twist,
+ * in English and Polish at the ends `scales` of the HUD scale: on screen, its close button on screen,
+ * and over none of the top band, the bottom band and the pad.
+ */
+const debriefFaults = async (page: Page, sizes: readonly (readonly [number, number])[], scales: readonly number[], label: string): Promise<string[]> => {
+  // The card's own 15 s could run out on a loaded machine before it is measured: it stays up here.
+  await page.addInitScript(() => {
+    const real = window.setTimeout;
+    window.setTimeout = ((fn: TimerHandler, ms?: number, ...args: unknown[]) => (ms === 15_000 ? 0 : real(fn, ms, ...args))) as typeof window.setTimeout;
+  });
+  await start(page, label === "phone");
+  const out: string[] = [];
+  for (const [w, h] of sizes) {
+    await page.setViewportSize({ width: w, height: h });
+    for (const locale of ["en", "pl"] as const) {
+      await page.evaluate((l) => {
+        const seki = window.__seki!;
+        seki.session.intents.changeSettings({ locale: l });
+        seki.emit("ContractCompleted", { contract: { id: "g846", kind: "infiltrate", siteId: "car_wash", targets: 2, reward: 1200, status: "cleared" }, reward: 1200 } as never);
+        seki.emit("ContractDebrief", {
+          contractId: "g846",
+          badges: ["ghost", "no_alarm", "clean", "untouched", "swift", "netrunner"],
+          rank: "S",
+          reward: 12000,
+          bonus: 3000,
+          styleBonus: 1500,
+          seconds: 3254,
+          variation: { modifiers: ["night_only", "time_limit", "bodyguards"], security: "lockdown", trait: "creature_of_habit", twist: "setup" },
+        });
+      }, locale);
+      for (const s of scales) {
+        await page.evaluate((v) => window.__seki!.session.intents.changeSettings({ hudScale: v }), s);
+        await step(page, 1);
+        await settle(page);
+        const at = `${label} ${w}x${h} ${locale} @${s}`;
+        if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, `ui-scale-debrief-${label}-${w}x${h}-${locale}-${s}.png`) });
+        const card = page.getByTestId("debrief");
+        await expect(card, at).toBeVisible();
+        const box = { name: "debrief", ...(await card.boundingBox())! };
+        const close = (await page.locator(".debrief__close").boundingBox())!;
+        if (box.x < -0.5 || box.y < -0.5 || box.x + box.width > w + 0.5 || box.y + box.height > h + 0.5) out.push(`${at}: card off screen`);
+        if (close.y < box.y - 0.5 || close.y + close.height > Math.min(h, box.y + box.height) + 0.5) out.push(`${at}: close button out of sight`);
+        const under = await page.evaluate((sel) => {
+          const found: Box[] = [];
+          document.querySelectorAll<HTMLElement>(sel).forEach((el, i) => {
+            const r = el.getBoundingClientRect();
+            const st = getComputedStyle(el);
+            if (r.width <= 0 || r.height <= 0 || st.visibility === "hidden" || st.display === "none") return;
+            found.push({ name: el.getAttribute("aria-label") ?? el.dataset.testid ?? `${el.className.split(" ")[0]}#${i}`, x: r.x, y: r.y, width: r.width, height: r.height });
+          });
+          return found;
+        }, UNDER_CARD);
+        for (const b of under) if (overlap(box, b)) out.push(`${at}: card × ${b.name}`);
+      }
+    }
+  }
+  return out;
+};
+
 test.describe("phone", () => {
   test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
 
@@ -194,6 +270,16 @@ test.describe("phone", () => {
       expect(hint, `rotate hint at ${s}`).toEqual({ x: 0, y: 0, width: 390, height: 844 });
     }
   });
+
+  test("phone: the contract card covers nothing at 844x390, 800x370 and 667x375 in en and pl", async ({ page }) => {
+    test.setTimeout(300_000);
+    const sizes = [
+      [844, 390],
+      [800, 370],
+      [667, 375],
+    ] as const;
+    expect(await debriefFaults(page, sizes, [MIN, 1], "phone")).toEqual([]);
+  });
 });
 
 test.describe("desktop", () => {
@@ -207,5 +293,14 @@ test.describe("desktop", () => {
       false,
       "desktop",
     );
+  });
+
+  test("desktop: the contract card covers nothing at 1280x720 and 1024x600 in en and pl", async ({ page }) => {
+    test.setTimeout(300_000);
+    const sizes = [
+      [1280, 720],
+      [1024, 600],
+    ] as const;
+    expect(await debriefFaults(page, sizes, [MIN, 1], "desktop")).toEqual([]);
   });
 });

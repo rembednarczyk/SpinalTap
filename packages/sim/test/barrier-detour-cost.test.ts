@@ -1,20 +1,22 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import type { Vec3 } from "@seki/core";
-import { Simulation, gangerEntity, giveLead, ground } from "../src";
-import { wideBuilds } from "../src/systems/ai/steering";
+import type { Simulation } from "../src";
 import type * as Nav from "../src/world/nav";
-import { off, pieceAt, standOff } from "./barrier-standoff";
-import { teleportPlayer } from "./helpers";
 
 /**
  * What the wide way round a long barrier costs a step (G-625): a raster of its window some 37 ms,
  * a field 15. A step makes at most one raster, and gangers keep the goal they planned for, so
  * they do not make them again every step round a corner of the windows' grid, (2352, 432).
+ *
+ * A shared worker (`isolate: false`) may hold the sim from an earlier file, bound to the real
+ * level graph, and a hoisted `vi.mock` does not reach it (G-881): the registry is reset and the
+ * sim imported after the counting stand-in, and reset again after the file.
  */
 
 /** Where the walkers stood that asked the level graph for a way (`from`: the walker's own position). */
 const routed: Vec3[] = [];
-vi.mock("../src/world/nav", async (actual) => {
+vi.resetModules();
+vi.doMock("../src/world/nav", async (actual) => {
   const nav = await actual<typeof Nav>();
   return {
     ...nav,
@@ -23,6 +25,15 @@ vi.mock("../src/world/nav", async (actual) => {
       return nav.routeAcrossLevels(...args);
     },
   };
+});
+const { Simulation: Sim, gangerEntity, giveLead, ground, routeAcrossLevels } = await import("../src");
+const nav = await import("../src/world/nav");
+const { wideBuilds } = await import("../src/systems/ai/steering");
+const { off, pieceAt, standOff } = await import("./barrier-standoff");
+const { teleportPlayer } = await import("./helpers");
+afterAll(() => {
+  vi.doUnmock("../src/world/nav");
+  vi.resetModules();
 });
 
 /** Steps `sim` for `steps`, `each` before every one: the most wide rasters a step made, and all rasters and fields made. */
@@ -43,7 +54,7 @@ describe("the cost of the wide way round a long barrier (G-625)", () => {
   it("makes at most one wide raster a step: three gangers after three leads round a corner of its grid", () => {
     // The leads fall into three of the four wide windows round the corner, behind the fence.
     const { chunk, item } = pieceAt(2359.33, 445.19);
-    const sim = Simulation.create({ seed: 2 });
+    const sim = Sim.create({ seed: 2 });
     teleportPlayer(sim, ground(2300, 432));
     sim.step();
     [ground(2350.5, 430.5), ground(2353.5, 430.5), ground(2350.5, 433.5)].forEach((lead, i) => {
@@ -70,6 +81,8 @@ describe("the cost of the wide way round a long barrier (G-625)", () => {
   it("does not ask the level graph for a way round on the street every step: it never leads round a barrier there", () => {
     // A walled yard on Krakowskie: no way round, the ganger goes back to its post and stands there.
     const { sim, ganger } = standOff(214, -28.13, 1);
+    // The gangers ask the counting level graph, not one an earlier file left in the worker.
+    expect(routeAcrossLevels).toBe(nav.routeAcrossLevels);
     routed.length = 0;
     for (let i = 0; i < 60 * 10; i++) sim.step();
     expect(routed.filter((from) => from === ganger.position)).toEqual([]);
