@@ -2345,7 +2345,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-884 Przypięty strażnik liczy co krok linię wzroku i marsz po całym odcinku do dalekiego gracza (2,4 km)
 - Ważność: S3 · Zasięg: strażnicy przypięci do gracza (G-188, G-201), cała gra
 - Opis: W pinned-far-sleep 64% czasu to straightWalk, lineOfSight i bankBetween liczone co krok po całym odcinku do gracza 2,4 km dalej. Koszt CPU w grze (telefon) i w testach; do ograniczenia zasięgu albo częstotliwości (profil z partii 2 testów na podłogach).
-- Status: w PR #629; wcześniej: zgłoszone
+- Status: naprawiony (main 16.11, #629); wcześniej: w PR #629; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Przyczyna: lineOfSight brał wszystkie bryły prostokąta odcinka (2300/krok); teraz tylko komórki, które odcinek przecina (5/krok), wynik identyczny, hash bez zmian; pinned-far-sleep −21,5%
 
@@ -2358,8 +2358,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-886 Pościg 200 m: bankBetween próbkuje cały odcinek co krok
 - Ważność: S4 · Zasięg: pościg strażnika za graczem w zasięgu
 - Opis: pinned-far-sleep calmWest (cel 2670,300): 9544 pełnych bankBetween po 400 próbek steepAt, ok. 2,8 s pliku; znalezione przy G-884
-- Status: zgłoszone
+- Status: w PR #630; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
+- GentleBlocks: bankBetween pyta o spadek tylko poza łagodnymi blokami terenu; pościg 200 m 1190 -> 94 steepAt, pinned-far-sleep (6 s) -44%, hashe bez zmian; to samo do nav-raster.ts:209 i walkable
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
