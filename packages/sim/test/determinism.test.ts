@@ -48,7 +48,9 @@ describe("determinism on the test floor", () => {
   });
 
   it("matches the recorded golden hash (update by hand, with the reason, only when a rule changes)", () => {
-    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"d2d12bd1"`);
+    // v42 (ADR-0082 stage 3b, the loud way: optional contract fields, none in this run) changes only
+    // the version: with SAVE_SCHEMA_VERSION at 41 the run hashes to d2d12bd1, the golden of before.
+    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"fc3fc982"`);
   });
 
   it("the same run on 'hard' (ADR-0066) ends elsewhere, and the same each time", () => {

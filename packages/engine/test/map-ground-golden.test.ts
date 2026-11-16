@@ -139,6 +139,13 @@ describe("the ground the map city lays (G-444)", () => {
     // W-3's hall dug out (ADR-0082 stage 2): its stairs' and the goods lift's shafts, store S's floor levelled
     // along the cut corner and the culvert's mouth in the river's bench are holes in the ground and the
     // zone's paving (`W3_CUTS` with the shafts), their edges new corners: 169 252 - 169 066 = 186 vertices more (as before the frontages), the same meshes.
+    // The flights of steps by the one norm of a step (G-840): risers of 0.12-0.17 m from the rise
+    // between a run's ends, landings and level stretches for the rest, so fewer treads and risers
+    // than one every 0.33 m; their normals the ramp's and uv2 their lift onto it from far:
+    // 161 914 - 160 043 = 1 871 vertices fewer, the same meshes. Round 2: a run the map counts the
+    // steps of (`step_count`) laid by that many in one flight, no tread more than 0.02 m under the
+    // ground and paving over a crest: 160 305, the same meshes.
+    // All of them (G-840 on the frontages and W-3): 169 252 - 1 609 = 167 643 (the steps' 160 218 - 161 827), the same meshes.
     // Every zebra a rectangle square to its street from kerb to kerb, a crossing way's band out to the
     // pavements a footway under it (G-836): 161 914 - 161 200 = 714 vertices fewer, the same meshes.
     // A junction's zebra along its foot path, every zebra on its axis to the kerb of the game's asphalt,
@@ -148,7 +155,8 @@ describe("the ground the map city lays (G-444)", () => {
     // kerb by its corner (G-836 round 3, G-837's Kapucyńska): the same vertices, the same meshes.
     // The zebras of G-836 on the ground of the frontages and W-3's hall: 169 252 - (161 827 - 161 229)
     // = 168 654 vertices, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 168654, hash: "3f97c814" });
+    // All of them (G-840 and G-836 on the frontages and W-3): 167 643 - 598 = 167 045, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 167045, hash: "ef2dbe3c" });
     scene.dispose();
   });
 
