@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Line } from "../src/features.ts";
-import { chunkFlights, chunkFootWays, chunkServiceWays, chunkStreets } from "../src/labels.ts";
+import { chunkFlights, chunkFootWays, chunkServiceWays, chunkStepRuns, chunkStreets } from "../src/labels.ts";
 
 const rect = { minX: 0, minZ: 0, maxX: 100, maxZ: 100 };
 const street = (x0: number, x1: number): Line => ({ id: "w1", osmId: 1, tags: { highway: "residential", name: "Lubartowska" }, line: [{ x: x0, z: 50 }, { x: x1, z: 50 }] });
@@ -67,5 +67,25 @@ describe("chunk flights of steps (G-236)", () => {
     expect(chunkFlights([steps({ incline: "10%" })], rect)).toEqual([]);
     expect(chunkFlights([steps({ incline: "up" }, 120, 140)], rect)).toEqual([]);
     expect(chunkFlights([steps({ incline: "up", highway: "footway" })], rect)).toEqual([]);
+  });
+});
+
+describe("chunk runs of steps with a step_count (G-840)", () => {
+  const bent = (tags: Record<string, string>): Line => ({ id: "w8", osmId: 8, tags: { highway: "steps", ...tags }, line: [{ x: 60, z: 50 }, { x: 90, z: 50 }, { x: 90, z: 60 }] });
+
+  it("share the way's steps among its runs by length, adding up to the count", () => {
+    expect(chunkStepRuns([bent({ step_count: "40" })], rect)).toEqual([
+      { id: "w8/0", run: [60, 50, 90, 50], steps: 30 },
+      { id: "w8/1", run: [90, 50, 90, 60], steps: 10 },
+    ]);
+    const runs = chunkStepRuns([bent({ step_count: "7" })], rect);
+    expect(runs.reduce((a, r) => a + r.steps, 0)).toBe(7);
+  });
+
+  it("leave out a way with no step_count, under the ground or not steps", () => {
+    expect(chunkStepRuns([bent({})], rect)).toEqual([]);
+    expect(chunkStepRuns([bent({ step_count: "x" })], rect)).toEqual([]);
+    expect(chunkStepRuns([bent({ step_count: "9", tunnel: "yes" })], rect)).toEqual([]);
+    expect(chunkStepRuns([bent({ step_count: "9", highway: "footway" })], rect)).toEqual([]);
   });
 });

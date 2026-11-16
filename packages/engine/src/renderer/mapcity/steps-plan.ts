@@ -1,21 +1,17 @@
-import { DRESS_FLAG, type MeshSink, hexColor } from "../mesh-sink";
+import { STEP_LOOK } from "../../npr/toon-city";
+import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
 import { type HeightAt, drape } from "./ground-plan";
 import { type P2, orientedBox } from "./polygon";
-import { quadUv } from "./sink-ops";
+import { type Uv, face, quadUv, vertex } from "./sink-ops";
+import { humped, layFlight } from "./steps-flight";
 
-const TREAD = hexColor("#77736c", DRESS_FLAG.solid);
-const RISER = hexColor("#4f4b46", DRESS_FLAG.solid);
+const TREAD = hexColor(STEP_LOOK.tread, DRESS_FLAG.solid);
+const RISER = hexColor(STEP_LOOK.riser, DRESS_FLAG.solid);
 
-/** Depth of one step along the flight, metres (a granite step outdoors). */
-export const STEP_DEPTH = 0.33;
+/** The shortest band drawn as a flight (m): a shorter one is a sliver, drawn as nothing (G-213). */
+export const MIN_FLIGHT = 0.33;
 /** Treads stand this far above the terrain they follow, like a sidewalk over the road. */
 const LIFT = 0.05;
-/**
- * The least mean riser of a flight, metres. The terrain model is smoothed (steps and kerbs
- * removed), so a run whose ground climbs less than this per tread has no flight to draw: its
- * risers would be a row of dark lines a centimetre or two high on level paving (G-018).
- */
-export const MIN_RISER = 0.045;
 
 /**
  * Whether the side a-c of a band runs along the map's edge, a side of a chunk's terrain with no
@@ -63,58 +59,91 @@ const onItsSide = (ring: readonly P2[], terrain: HeightAt, mapEdgeAt: MapEdgeAt)
 };
 
 /**
- * A flight of outdoor steps (ADR-0044) on one straight run of a map's `highway=steps`: the band's
- * long side is the run, cut into treads `STEP_DEPTH` deep. Each tread is level at the terrain
- * height at its higher end and a riser joins it to the next, so the flight follows the slope in
- * steps instead of lying on it as a ramp or sinking into it. A run on ground too gentle for
- * `MIN_RISER` lies on it as paving instead. `mapEdgeAt` tells where the map's edge cut the band (G-703).
+ * A quad of a flight: wound to face `facing` (a tread's up, a riser's down the flight) but with
+ * the normal `ramp` of the flight's ramp, so the geometry buffer sees no crease at a riser and the
+ * line art draws no ink line on each; the vertex stage shades it by its face near (`STEPS_VERTEX_GLSL`).
+ * `lift` per corner is uv2.y, how far the corner rises onto the ramp from far.
  */
-export const planSteps = (sink: MeshSink, ring: readonly P2[], terrain: HeightAt, mapEdgeAt: MapEdgeAt = () => false): void => {
+const stepQuad = (sink: MeshSink, c: readonly [Vec, Vec, Vec, Vec], facing: Vec, ramp: Vec, color: Rgba, code: number, lift: readonly [number, number, number, number]): void => {
+  const ids = c.map((p, k) => vertex(sink, p, ramp, color, [p.x, p.z] as Uv, [code, lift[k] as number]));
+  face(sink, ids[0] as number, ids[1] as number, ids[2] as number, facing);
+  face(sink, ids[0] as number, ids[2] as number, ids[3] as number, facing);
+};
+
+/**
+ * A flight of outdoor steps (ADR-0044) on one straight run of a map's `highway=steps`: the
+ * band's long side is the run. Its risers keep the norm (`STEP_NORM`, G-840): how many and where
+ * comes from the rise of the ground between the run's ends and where the ground climbs between
+ * them (`layFlight`), each tread level and on or over the ground across the band, what the run is
+ * longer than its treads lying in landings and level stretches at its foot and top. A run whose
+ * ends lie less than a riser of the norm apart lies on the ground as paving; a level one keeps a
+ * level slab with a kerb at each end. `mapEdgeAt` tells where the map's edge cut the band (G-703);
+ * `osm` is how many steps the map counts on it (`osmStepCount`).
+ */
+export const planSteps = (sink: MeshSink, ring: readonly P2[], terrain: HeightAt, mapEdgeAt: MapEdgeAt = () => false, osm?: number): void => {
   if (ring.length < 3) return;
   const h = onItsSide(ring, terrain, mapEdgeAt);
   const box = orientedBox(ring);
   const length = box.halfLong * 2;
-  if (length < STEP_DEPTH || box.halfShort < 0.2) return;
-  const count = Math.max(1, Math.round(length / STEP_DEPTH));
-  const depth = length / count;
+  if (length < MIN_FLIGHT || box.halfShort < 0.2) return;
   const at = (u: number, v: number): P2 => ({ x: box.cx + box.ux * u - box.uz * v, z: box.cz + box.uz * u + box.ux * v });
   const w = box.halfShort;
-  // A tread is level with the ground at its higher end, so the slope never rises through it;
-  // the riser before it closes the gap down to the tread below.
+  // The ground along the band's axis: a band across a slope stands on it in the middle, as a level tread must.
   const ground = (u: number) => {
     const p = at(u, 0);
     return h(p.x, p.z);
   };
-  const levels: number[] = [];
-  for (let k = 0; k < count; k++) levels.push(Math.max(ground(-box.halfLong + k * depth), ground(-box.halfLong + (k + 1) * depth)) + LIFT);
-  // A level run keeps its treads: it draws no riser between them, only the kerbs at its ends.
-  const rise = Math.max(...levels) - Math.min(...levels);
-  if (rise >= 0.01 && rise / count < MIN_RISER) {
+  // Along the run from its low end: `t` from 0 at the foot to `length` at the top.
+  const up = ground(box.halfLong) >= ground(-box.halfLong) ? 1 : -1;
+  const uOf = (t: number) => up * (t - box.halfLong);
+  const along = (t: number) => ground(uOf(t));
+  // Over a crest or a hollow no level tread keeps on the ground: paving, as on a gentle run.
+  const hump = humped(length, along);
+  const flight = hump ? null : layFlight(length, along, osm);
+  const base = ground(uOf(0)) + LIFT;
+  if (!flight && (hump || ground(uOf(length)) + LIFT - base >= 0.01)) {
     drape(sink, ring, h, LIFT, TREAD, (p) => [p.x, p.z], [0, 0]);
     return;
   }
-  const up = { x: 0, y: 1, z: 0 };
-  const uv = (p: P2): [number, number] => [p.x, p.z];
-  const riser = (u: number, from: number, to: number) => {
+  const risers = flight?.at ?? [];
+  const r = flight?.riser ?? 0;
+  const cuts = [0, ...risers, length];
+  const dir = { x: box.ux * up, z: box.uz * up };
+  const ramp = (slope: number): Vec => {
+    const l = Math.hypot(slope, 1);
+    return { x: (-slope * dir.x) / l, y: 1 / l, z: (-slope * dir.z) / l };
+  };
+  const p3 = (t: number, v: number, y: number): Vec => {
+    const p = at(uOf(t), v);
+    return { x: p.x, y, z: p.z };
+  };
+  const upN = { x: 0, y: 1, z: 0 };
+  const down = { x: -dir.x, y: 0, z: -dir.z };
+  let below = ramp(0);
+  for (let j = 0; j + 1 < cuts.length; j++) {
+    const [t0, t1] = [cuts[j] as number, cuts[j + 1] as number];
+    const y = base + j * r;
+    if (j > 0) stepQuad(sink, [p3(t0, -w, y - r), p3(t0, w, y - r), p3(t0, w, y), p3(t0, -w, y)], down, below, RISER, STEP_LOOK.code.riser, [r, r, 0, 0]);
+    if (t1 - t0 < 1e-6) continue;
+    // The tread's back edge rises onto the next nosing from far; the top's stays.
+    const lift = j < risers.length ? r : 0;
+    // No steeper than 45°: a sliver of a tread at a foot would crease against the next in the geometry buffer.
+    const n = ramp(Math.min(1, lift / (t1 - t0)));
+    stepQuad(sink, [p3(t0, -w, y), p3(t1, -w, y), p3(t1, w, y), p3(t0, w, y)], upN, n, TREAD, STEP_LOOK.code.tread, [0, lift, lift, 0]);
+    below = n;
+  }
+  // The ends: from the ground up to the foot and the top, a kerb.
+  const kerb = (t: number, to: number) => {
+    const u = uOf(t);
+    const from = ground(u);
     if (Math.abs(to - from) < 0.01) return;
     const l = at(u, -w);
-    const r = at(u, w);
-    // A riser faces down the flight, towards the lower of its two levels.
+    const rr = at(u, w);
+    const uv = (p: P2): [number, number] => [p.x, p.z];
+    // A kerb faces down the flight, towards the lower of its two levels.
     const n = to > from ? { x: -box.ux, y: 0, z: -box.uz } : { x: box.ux, y: 0, z: box.uz };
-    quadUv(sink, [{ x: l.x, y: from, z: l.z }, { x: r.x, y: from, z: r.z }, { x: r.x, y: to, z: r.z }, { x: l.x, y: to, z: l.z }], n, RISER, [uv(l), uv(r), uv(r), uv(l)]);
+    quadUv(sink, [{ x: l.x, y: from, z: l.z }, { x: rr.x, y: from, z: rr.z }, { x: rr.x, y: to, z: rr.z }, { x: l.x, y: to, z: l.z }], n, RISER, [uv(l), uv(rr), uv(rr), uv(l)]);
   };
-  // The ends: from the ground up to the first and last treads.
-  riser(-box.halfLong, ground(-box.halfLong), levels[0] as number);
-  riser(box.halfLong, ground(box.halfLong), levels[count - 1] as number);
-  for (let k = 0; k < count; k++) {
-    const u0 = -box.halfLong + k * depth;
-    const u1 = u0 + depth;
-    const y = levels[k] as number;
-    const a = at(u0, -w);
-    const b = at(u1, -w);
-    const c = at(u1, w);
-    const d = at(u0, w);
-    quadUv(sink, [{ x: a.x, y, z: a.z }, { x: b.x, y, z: b.z }, { x: c.x, y, z: c.z }, { x: d.x, y, z: d.z }], up, TREAD, [uv(a), uv(b), uv(c), uv(d)]);
-    if (k + 1 < count) riser(u1, y, levels[k + 1] as number);
-  }
+  kerb(0, base);
+  kerb(length, base + risers.length * r);
 };
