@@ -2422,7 +2422,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-895 Szybkie użycie apteczki pomija atut Field Medic
 - Ważność: S4 · Zasięg: klawisz szybkiego użycia apteczki z atutem Field Medic
 - Opis: item-system woła useConsumable bez healScale(perks); komenda use-item go stosuje, więc atut działa tylko przy komendzie. Znalezione przy G-892.
-- Status: zgłoszone
+- Status: w PR #645; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
