@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EXCEPTIONS } from "../src/exceptions.ts";
-import { MIN_GROWTH_RUNS, type TestTimes, errors, exceptionFor, gateSummary, gateTests, median, medianTimes, testId } from "../src/gate.ts";
+import { MIN_GROWTH_RUNS, runPace, type TestTimes, errors, exceptionFor, gateSummary, gateTests, median, medianTimes, testId } from "../src/gate.ts";
 import { mergeTests } from "../src/times.ts";
 
 /** Gate of single tests (ADR-0083 step 2): fixed times in, breaches out, no clock. */
@@ -93,5 +93,18 @@ describe("gate of single tests (ADR-0083 step 2)", () => {
     const grown = gateTests({ [A]: t(17_000) }, [{ [A]: t(11_800) }, { [A]: t(11_600) }, { [A]: t(12_000) }], exceptions);
     // Over the limit and grown: the limit is excused, the growth is not.
     expect(grown.breaches.map((b) => b.kind)).toEqual(["growth"]);
+  });
+  it("scales main by the whole run's pace: a slow runner slows every test, one slower test still fails (16.11)", () => {
+    const ids = Array.from({ length: 12 }, (_, i) => `tools/x.test.ts > slow ${i}`);
+    const run = (k: number): TestTimes => Object.fromEntries(ids.map((id) => [id, t(3000 * k)]));
+    const main = [run(1), run(1), run(1)];
+    // Every test 50% slower: the pace, not a growth.
+    expect(runPace(run(1.5), medianTimes(main))).toBeCloseTo(1.5);
+    expect(gateTests(run(1.5), main, []).breaches).toEqual([]);
+    // One test half again slower than the rest on the same slow runner still fails.
+    const head = { ...run(1.5), [ids[0]!]: t(3000 * 1.5 * 1.5) };
+    expect(gateTests(head, main, []).breaches.map((b) => [b.test, b.kind])).toEqual([[ids[0], "growth"]]);
+    // A fast run never lowers main below itself.
+    expect(runPace(run(0.8), medianTimes(main))).toBe(1);
   });
 });
