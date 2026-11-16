@@ -34,4 +34,25 @@ describe("interior blocks merged per preset and cell (ADR-0038)", () => {
     expect(live.size).toBe(0);
     expect(batches.has(1)).toBe(false);
   });
+
+  it("keeps a region's blocks in groups of their own, hidden and shown together, rebuilt as they were (ADR-0082 §4)", () => {
+    const live = new Set<Mesh>();
+    const batches = new InteriorBatches(scene, materials, (old, next) => {
+      if (old) live.delete(old);
+      if (next) live.add(next);
+    });
+    batches.setRegionEnabled("w3", false);
+    batches.add(1, wall(), { x: 0, y: 2, z: 0 });
+    batches.add(2, wall(), { x: 3, y: 2, z: 0 }, "w3");
+    batches.flush();
+    expect(live.size).toBe(2);
+    const enabled = () => [...live].map((m) => m.isEnabled()).sort();
+    expect(enabled()).toEqual([false, true]);
+    batches.setRegionEnabled("w3", true);
+    expect(enabled()).toEqual([true, true]);
+    batches.setRegionEnabled("w3", false);
+    batches.add(3, wall(), { x: 5, y: 2, z: 0 }, "w3");
+    batches.flush();
+    expect(enabled()).toEqual([false, true]);
+  });
 });

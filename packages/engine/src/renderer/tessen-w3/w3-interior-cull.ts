@@ -5,9 +5,10 @@ import type { TransformNode, Vector3 } from "../../babylon";
 /**
  * W-3's hall from afar (ADR-0082 §4, stage 2): the props inside its rooms that are meshes of
  * their own (the doors' leaves, the stairs, the ladders; its walls and furniture are merged per
- * area, ADR-0038) are drawn only while the eye is within `W3_INTERIOR_RANGE` of the rooms. From
- * the bridge they were some forty meshes behind the shell's walls. The doors in the hall's outer
- * walls stand outside every room by more than `MARGIN` and stay.
+ * area, ADR-0038, in groups of their own: `W3_REGION`) are drawn only while the eye is within
+ * `W3_INTERIOR_RANGE` of the rooms. From the bridge they were some forty meshes behind the
+ * shell's walls. The doors in the hall's outer walls, its outer walls and the cooling units on
+ * its roof stand outside every room by more than `MARGIN` and stay.
  */
 
 /** "The static inside: in it, up to 30 m from its walls" (ADR-0082 §4). */
@@ -44,10 +45,14 @@ export const w3InteriorDistance = (eye: { readonly x: number; readonly y: number
     Math.max(BOUNDS.minZ - eye.z, 0, eye.z - BOUNDS.maxZ),
   );
 
+/** The region of the merged interior blocks (`InteriorBatches`) drawn with the hall. */
+export const W3_REGION = "w3";
+
 /** Shows and hides the hall's own meshes with the eye's distance. */
 export class W3InteriorCull {
   private readonly nodes = new Map<EntityId, TransformNode>();
-  private shown = false;
+  /** Whether the hall's meshes are drawn now. */
+  shown = false;
 
   /** A prop's root, kept if it stands in the hall; hidden at once when the eye is away. */
   track(id: EntityId, root: TransformNode, at: Vector3): void {
@@ -64,10 +69,12 @@ export class W3InteriorCull {
     return this.nodes.size;
   }
 
-  update(eye: Vector3): void {
+  /** Judges the eye's distance again; true when the hall's meshes were shown or hidden. */
+  update(eye: Vector3): boolean {
     const near = w3InteriorDistance(eye) <= W3_INTERIOR_RANGE;
-    if (near === this.shown) return;
+    if (near === this.shown) return false;
     this.shown = near;
     for (const n of this.nodes.values()) n.setEnabled(near);
+    return true;
   }
 }

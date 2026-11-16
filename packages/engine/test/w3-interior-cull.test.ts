@@ -29,17 +29,18 @@ describe("W-3's hall's own meshes from afar (ADR-0082 §4)", () => {
 
   it("hides them from the Lutosławski bridge and shows them within 30 m of the rooms", () => {
     const cull = new W3InteriorCull();
-    const node = { enabled: true, setEnabled(on: boolean) { this.enabled = on; } } as unknown as TransformNode & { enabled: boolean };
+    const state = { enabled: true };
+    const node = { setEnabled: (on: boolean) => (state.enabled = on) } as unknown as TransformNode;
     cull.track(1, node, new Vector3(2512, w3(0, 1.3, 0).y, 406));
     cull.track(2, { setEnabled: () => { throw new Error("outside"); } } as unknown as TransformNode, new Vector3(2450, 0, 430));
     expect(cull.size).toBe(1);
-    expect(node.enabled).toBe(false);
+    expect(state.enabled).toBe(false);
     cull.update(new Vector3(2462, w3(0, 3.5, 0).y, 421));
-    expect(node.enabled).toBe(false);
+    expect(state.enabled).toBe(false);
     cull.update(new Vector3(2500 - W3_INTERIOR_RANGE + 1, w3(0, 1.6, 0).y, 418));
-    expect(node.enabled).toBe(true);
+    expect(state.enabled).toBe(true);
     cull.update(new Vector3(2529, w3(0, 1.6, 0).y, 418));
-    expect(node.enabled).toBe(true);
+    expect(state.enabled).toBe(true);
     cull.untrack(1);
     expect(cull.size).toBe(0);
   });
