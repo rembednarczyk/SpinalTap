@@ -9,8 +9,10 @@ import {
   contractFailedFlag,
   contractTag,
   contractVirusKey,
+  QUICKHACKS,
+  type Vec3,
 } from "@seki/core";
-import { SIM_HZ, Simulation, W3_PATROL_HALL, W3_VIRUS_TERMINAL, ground, inW3Zone, routePose, stateHash, w3 } from "../src";
+import { SIM_HZ, Simulation, W3_CORE_BLIND_SPOT, W3_PATROL_HALL, W3_VIRUS_TERMINAL, ground, inW3Zone, routePose, stateHash, w3 } from "../src";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 /**
@@ -23,8 +25,11 @@ const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s
 const reload = (sim: Simulation): Simulation => Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "mid", "")));
 const hash = (sim: Simulation) => stateHash(sim.snapshot(null, "t", ""));
 
-/** In front of the core's terminal, facing it. */
-const atCore = (sim: Simulation) => teleportPlayer(sim, w3(W3_VIRUS_TERMINAL.x, 0, W3_VIRUS_TERMINAL.z - 1), 0);
+/** By the core's terminal in the camera's dead angle on the east rack's side, facing the terminal. */
+const atCore = (sim: Simulation) =>
+  teleportPlayer(sim, W3_CORE_BLIND_SPOT, Math.atan2(W3_VIRUS_TERMINAL.x - W3_CORE_BLIND_SPOT.x, W3_VIRUS_TERMINAL.z - W3_CORE_BLIND_SPOT.z));
+/** In front of the core's terminal, in the camera's view. */
+const inFront = (sim: Simulation) => teleportPlayer(sim, w3(W3_VIRUS_TERMINAL.x, 0, W3_VIRUS_TERMINAL.z - 1), 0);
 /** On the public strip by the metro, outside the fence. */
 const outside = (sim: Simulation) => teleportPlayer(sim, ground(2527, 384), 0);
 
@@ -39,16 +44,25 @@ const accept = (sim: Simulation): Contract => {
 };
 
 const crew = (sim: Simulation, c: Contract) => [...sim.world].filter((e) => e.tag === contractTag(c.id));
-/** The server room's camera blinded, as `reboot_optics` does (ADR-0029). */
-const blindCamera = (sim: Simulation) => {
-  const cam = byKey(sim, "dev:w3-server-cam")!;
-  sim.world.addComponent(cam, "hackFx", { pinged: 0, blind: 1e6, crippled: 0 });
-};
-/** The crew out of the way and the camera blind: the upload's own rules, nobody to see her. */
+/** The crew out of the way: the upload's own rules, only the camera to fear. */
 const knockOut = (sim: Simulation, c: Contract) => {
   for (const e of crew(sim, c)) e.health = { current: 0, max: e.health!.max };
-  blindCamera(sim);
   sim.step();
+};
+const camera = (sim: Simulation) => byKey(sim, "dev:w3-server-cam")!;
+
+/** Turns the player to look straight at a point (the scanner's focus follows the view). */
+const lookAt = (sim: Simulation, p: Vec3) => {
+  const me = sim.player()!;
+  const dx = p.x - me.position.x;
+  const dz = p.z - me.position.z;
+  me.yaw = Math.atan2(dx, dz);
+  me.pitch = Math.atan2(me.position.y + 1.62 - p.y, Math.hypot(dx, dz));
+};
+/** `reboot_optics` (slot 2) on what she looks at, held until the upload lands. */
+const rebootOptics = (sim: Simulation) => {
+  sim.step(input({ scan: true, quickhack: 2 }));
+  run(sim, Math.ceil(QUICKHACKS.reboot_optics.upload * SIM_HZ) + 1, input({ scan: true }));
 };
 type Holder = { holder: { domain: DomainState } };
 const setDomain = (sim: Simulation, change: (d: DomainState) => DomainState): void => {
@@ -108,7 +122,6 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     const c = accept(sim);
     const [one, ...rest] = crew(sim, c);
     for (const e of rest) e.health = { current: 0, max: e.health!.max };
-    blindCamera(sim);
     sim.step(input({ interact: true }));
     run(sim, 5 * SIM_HZ);
     one!.ai!.alerted = true;
@@ -120,14 +133,42 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     expect(frozen).toBeLessThan(upload);
   });
 
-  it("the server room's camera sees her at the core unless blinded, and its alarm is the job's", () => {
+  it("the server room's camera misses her in its dead angle by the terminal, but sees her come in unhacked: the job's alarm", () => {
     const sim = Simulation.create({ seed: 3 });
     const c = accept(sim);
-    for (const e of crew(sim, c)) e.health = { current: 0, max: e.health!.max };
+    knockOut(sim, c);
     run(sim, 10 * SIM_HZ);
+    expect(camera(sim).device!.spot).toBe(0);
+    expect(sim.domain.flags).not.toContain(contractAlarmFlag(c.id));
+    // In through the door, without a hack: seen within seconds, the lockdown refuses the upload.
+    teleportPlayer(sim, w3(W3_VIRUS_TERMINAL.x, 0, 432.8), 0);
+    run(sim, 3 * SIM_HZ);
     expect(sim.domain.flags).toContain(contractAlarmFlag(c.id));
+    inFront(sim);
     sim.step(input({ interact: true }));
     expect(active(sim)?.progress).toBeUndefined();
+  });
+
+  it("the silent way without ICEpick: one reboot from the corridor (30 s), in, and the whole 40 s upload from the dead angle, no alarm", () => {
+    const sim = Simulation.create({ seed: 3 });
+    const c = accept(sim);
+    knockOut(sim, c);
+    // In corridor N by the server room's door, out of its no-go zone: the door opens, the hack goes through it.
+    teleportPlayer(sim, w3(2567, 0, 430.6), 0);
+    run(sim, SIM_HZ);
+    lookAt(sim, camera(sim).position);
+    rebootOptics(sim);
+    expect(camera(sim).hackFx?.blind ?? 0).toBeGreaterThan(SABOTAGE.cameraRebootSeconds - 2);
+    // Across the room in its view while it is blind, to the terminal, and the upload in the dead angle.
+    inFront(sim);
+    run(sim, 2 * SIM_HZ);
+    atCore(sim);
+    sim.step(input({ interact: true }));
+    expect(active(sim)).toMatchObject({ route: "quiet" });
+    expect(active(sim)?.breach).toBeUndefined();
+    run(sim, upload + 1);
+    expect(sim.domain.flags).toContain(W3_VIRUS_FLAG);
+    expect(sim.domain.flags).not.toContain(contractAlarmFlag(c.id));
   });
 
   it("the virus in with the alarm up: out of the zone she is seen leaving, paid the seen rate, Tessen -20", () => {
@@ -177,8 +218,6 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     sim.step(input({ interact: true }));
     run(sim, 12 * SIM_HZ);
     const restored = reload(sim);
-    // Quickhack effects are not saved (a reboot_optics runs out with the load): blind it again.
-    blindCamera(restored);
     expect(hash(restored)).toBe(hash(sim));
     run(sim, 300);
     run(restored, 300);

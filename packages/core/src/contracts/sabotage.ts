@@ -16,9 +16,16 @@ export const SABOTAGE = {
   /** The batch leaves at this hour, and the job always gives at least this many hours to it. */
   shipHour: 6,
   minHours: 6,
-  /** Pay at level 1 before the giver's standing: out unseen, out seen (ADR-0082 balance). */
-  quietReward: 2400,
-  seenReward: 1700,
+  /**
+   * Pay at level 1 before the giver's standing: out unseen, out seen. The ADR's 2400 and 1700 were
+   * set without the bonus (+300) and Genzō's style (2 x 6%): with them a perfect run of some 11
+   * minutes made 272 €$ a minute, so the rates come down to keep the whole of it at 231 (the band
+   * of ADR-0018 and ADR-0024, 215-235); the seen one keeps its share of the unseen.
+   */
+  quietReward: 2000,
+  seenReward: 1420,
+  /** `reboot_optics` blinds the server room's camera this long during the job (the table's 10 s elsewhere). */
+  cameraRebootSeconds: 30,
   /** The guards of the hall, the mezzanine, the wagon airlock and armoury S. */
   crew: 4,
 } as const;

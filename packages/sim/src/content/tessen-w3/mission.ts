@@ -14,8 +14,15 @@ export const W3_VIRUS_TERMINAL: Vec3 = w3(2566, 0, 437.1);
 /** Server room N, inside its walls: the camera's no-go zone during the sabotage. */
 export const W3_SERVER_N = { minX: ROW_N_SPLITS[ROW_N_SPLITS.length - 1] as number, maxX: 2572, minZ: ROW_N_ROOMS.minZ, maxZ: ROW_N_ROOMS.maxZ } as const;
 
-/** The camera in server room N's south-east corner under its ceiling, looking at the core's terminal (NW). */
-export const W3_SERVER_CAMERA = { position: w3(2571.4, 3.6, 432.6), yaw: -0.88 } as const;
+/**
+ * The camera in server room N's north-west corner under its ceiling, over the west rack, looking
+ * south-east at the door and the front of the core's terminal (decision of 16.11): whoever comes
+ * in is seen, but the corner between the terminal and the east rack's end is out of its cone.
+ */
+export const W3_SERVER_CAMERA = { position: w3(2561.8, 3.6, 438.8), yaw: 2.59 } as const;
+
+/** The camera's dead angle by the terminal, on the east rack's side: in the upload's reach, out of the cone. */
+export const W3_CORE_BLIND_SPOT: Vec3 = w3(2568.6, 0, 438.4);
 
 const [WEST_DOOR, EAST_DOOR] = HALL_DOORS as [number, number];
 /** Corridor N's middle (z) and the production aisle's line the patrol walks. */

@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, sightOf, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, SABOTAGE, type EnemyTypeId, MOST_AVOIDED, sightOf, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/tessen-w3";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
@@ -247,7 +247,8 @@ export const virusTerminalEntity = (id: EntityId, key: string, foot: Vec3, chunk
   key,
   chunk,
   ...at({ x: foot.x, y: foot.y + TERMINAL.y / 2, z: foot.z }),
-  interactable: { kind: "terminal", dialogueId: key, prompt: "prompt.upload-virus", radius: 1.8 },
+  // In reach from the whole upload's range, the camera's dead angle by the east rack included.
+  interactable: { kind: "terminal", dialogueId: key, prompt: "prompt.upload-virus", radius: SABOTAGE.range },
 });
 
 export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity => {
@@ -401,9 +402,12 @@ export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot =>
   // Walking (G-208): its stuck check goes on, so it takes the way around in the same step.
   const body = e.walk ? { ...fighting, walk: walkSnapshotOf(e.walk) } : fighting;
   // Looking for the player (ADR-0029): where, for how long, and how long out of sight.
+  // A quickhack still running (G-882): a rebooted camera stays blind through a save.
+  const fx = e.hackFx;
+  const hacked = fx && (fx.pinged > 0 || fx.blind > 0 || fx.crippled > 0) ? { ...body, hackFx: { pinged: fx.pinged, blind: fx.blind, crippled: fx.crippled } } : body;
   const ai = e.ai;
-  if (!ai?.lastKnown) return body;
-  return { ...body, lastKnown: { ...ai.lastKnown }, search: ai.search ?? 0, lost: ai.lost ?? 0 };
+  if (!ai?.lastKnown) return hacked;
+  return { ...hacked, lastKnown: { ...ai.lastKnown }, search: ai.search ?? 0, lost: ai.lost ?? 0 };
 };
 
 /** Puts saved state back onto a freshly built entity. */
