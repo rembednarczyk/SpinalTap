@@ -174,7 +174,7 @@ Odbiorcy dostają źródło: skan liczy udział `default`, a kontrola `kerb-fill
 - **Semantyka `onRoad` pod chodnikiem** (56 + 35 wystąpień): testy sesji dla parkowania, tłumu i `vehicle-rest` przed PR 6; przy każdym kluczu `parked-car-*`, `crowd-*`, `figure-on-road` przybyłym w PR 6 bramka stop.
 - **Skrzyżowania o wielu ramionach i ronda:** test przypadków (T, X, rondo, ślepy koniec, wiadukt nad ulicą); `ground-ring-self-cross` = 0 i brak okruchów < 0,05 m² po PR 7b.
 - **`walk-blocked` może być za szeroka** (fałszywe znaleziska na skarpach i murach): PR 4 idzie obok starych kontroli; przed PR 9 raport pokrycia kluczy i ręczny przegląd 20 losowych znalezisk.
-- **Determinizm:** offset w Clipper2 na liczbach całkowitych; testy „gives the same result twice” i „reproduces the committed tables… twice” w `generate.test.ts`; G-745 (`osm:props` nieidempotentne) naprawić przed PR 6, bo psuje porównania przed/po.
+- **Determinizm:** offset w Clipper2 na liczbach całkowitych; testy „gives the same result twice” i „generates the same tables from the committed raw data twice” w `generate.test.ts` (od 16.11, #650: dwa przebiegi w jednym procesie na chunku `stare-miasto-1-1`; determinizm całego miasta między procesami sprawdza job CI „Map tables” i `tables:check`); G-745 (`osm:props` nieidempotentne) naprawić przed PR 6, bo psuje porównania przed/po.
 
 ## Odpowiedzi użytkownika (13.11)
 
