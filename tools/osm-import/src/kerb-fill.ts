@@ -13,10 +13,10 @@
  *   kerb stone (`KERB_STONE` of sidewalk) laid over its edge where the paving draws no kerb of its own;
  * - elsewhere the strip is laid as a sidewalk, so the renderer draws its kerb at the asphalt.
  * The lanes, markings and zebras' places come from the street's axis and width as before: the
- * simulation sees no change; the zebras only reach on to the new kerb (`stretchZebras`).
+ * simulation sees no change; the zebras only reach on to the new kerb (`fitZebras`).
  */
 import { COVER } from "../../orto/src/classify.ts";
-import { type Pt, type Rect, ccw, lineLength, offsetLine, pointInRing, ringBounds, selfIntersects, simplifyRing } from "./geometry.ts";
+import { type Pt, type Rect, ccw, lineLength, offsetLine, ringBounds, selfIntersects, simplifyRing } from "./geometry.ts";
 import { type Band } from "./ground.ts";
 import { type WidenRun } from "./kerb-widen.ts";
 import { RingBins } from "./ring-bins.ts";
@@ -73,8 +73,6 @@ const MIN_RUN = 1;
 const GROW_STEP = ALONG;
 /** The kerb stone laid between a widened carriageway and paving with no kerb of its own (m): the renderer draws kerbs on sidewalks only. */
 const KERB_STONE = 0.3;
-/** How far a zebra may reach on past the carriageway's estimated edge (m). */
-const ZEBRA_REACH = KERB_REACH + INTO;
 
 /** The surfaces a fill leads to. */
 const PAVING = new Set(["sidewalk", "footway", "square", "cobble"]);
@@ -91,11 +89,10 @@ type Span = { readonly edge: Pt; readonly out: Pt };
  * kerb, whether another carriageway lies just past it (an island between the two of a dual road),
  * and whether it is no paving but another carriageway, met at a corner (`joins`).
  */
-type Hit = { readonly gap: number; readonly kerbed: boolean; readonly median: boolean; readonly crossed: boolean; readonly joins?: true; readonly lawn?: true };
+type Hit = { readonly gap: number; readonly kerbed: boolean; readonly median: boolean; readonly joins?: true; readonly lawn?: true };
 /** A point of a carriageway's edge `s` along it, the way out from it and the paving reached. */
 type Sample = { readonly k: number | null; readonly s: number; readonly edge: Pt; readonly dir: Pt; readonly hit: Hit | null };
 
-const inBox = (p: Pt, b: Rect) => p.x >= b.minX && p.x <= b.maxX && p.z >= b.minZ && p.z <= b.maxZ;
 const isPaving = (b: Band) => PAVING.has(b.surface) && !b.carriageway && !b.bridge;
 const along = (p: Pt, d: Pt, t: number): Pt => ({ x: p.x + d.x * t, z: p.z + d.z * t });
 
@@ -117,39 +114,31 @@ const alongside = (line: readonly Pt[], q: Pt, dir: Pt): boolean => {
 /**
  * The paving reached marching out from `edge` along `dir` over bare ground only, within
  * `KERB_REACH`, or another carriageway met (`joins`); null where something else comes first, or
- * where the paving starts at the edge. A zebra mapped past the estimated kerb lies on the asphalt
- * the strip is, so the march goes on over it (G-090), and says so (`crossed`): a sidewalk is not
- * laid over one by an estimated kerb.
+ * where the paving starts at the edge. The zebras are not among the bands: they are fitted to the
+ * kerbs after (`fitZebras`, G-836).
  */
 const pavingOut = (edge: Pt, dir: Pt, { lots, roads }: World, lawns = false): Hit | null => {
-  let crossed = false;
-  // What lies at a point: a building, or but the zebras none, a carriageway among it, all of it
+  // What lies at a point: a building, or none, a carriageway among it, all of it
   // paving, a sidewalk among it. One visitor for the whole march, so a step allocates nothing: the
   // city takes some two million steps, and their garbage was a good part of the import's time.
-  const at = { block: false, any: false, zebra: false, road: false, paving: true, sidewalk: false, lawn: true };
+  const at = { block: false, any: false, road: false, paving: true, sidewalk: false, lawn: true };
   const visit = (b: Boxed | Block) => {
     if ("block" in b) return (at.block = true);
-    if (b.surface === "crossing") at.zebra = true;
-    else {
-      at.any = true;
-      at.road ||= b.carriageway === true;
-      at.paving &&= isPaving(b);
-      at.lawn &&= b.surface === "grass" && !b.bridge;
-      at.sidewalk ||= b.surface === "sidewalk";
-    }
+    at.any = true;
+    at.road ||= b.carriageway === true;
+    at.paving &&= isPaving(b);
+    at.lawn &&= b.surface === "grass" && !b.bridge;
+    at.sidewalk ||= b.surface === "sidewalk";
     return false;
   };
   const what = (t: number): "bare" | "paving" | "kerbed" | "road" | "lawn" | "other" => {
     const x = edge.x + dir.x * t;
     const z = edge.z + dir.z * t;
-    at.block = at.any = at.zebra = at.road = at.sidewalk = false;
+    at.block = at.any = at.road = at.sidewalk = false;
     at.paving = at.lawn = true;
     lots.scan(x, z, visit);
     if (at.block) return "other";
-    if (!at.any) {
-      crossed ||= at.zebra;
-      return "bare";
-    }
+    if (!at.any) return "bare";
     if (at.road) return "road";
     if (!at.paving) return lawns && at.lawn ? "lawn" : "other";
     return at.sidewalk ? "kerbed" : "paving";
@@ -162,7 +151,7 @@ const pavingOut = (edge: Pt, dir: Pt, { lots, roads }: World, lawns = false): Hi
     if (got === "other") return null;
     // A lawn at a moved carriageway's edge itself is its strip's too, of no width: the strip's
     // stretch is one surface over it, else the lawn met the asphalt between two squares (G-825 r4).
-    if (got === "lawn" && t < ACROSS && what(SEAM) === "lawn") return { gap: 0, kerbed: true, median: false, crossed, lawn: true };
+    if (got === "lawn" && t < ACROSS && what(SEAM) === "lawn") return { gap: 0, kerbed: true, median: false, lawn: true };
     if (t < ACROSS && (got === "road" || what(SEAM) !== "bare")) return null;
     let [lo, hi] = [Math.max(0, t - ACROSS), t];
     for (let k = 0; k < REFINE; k++) {
@@ -170,11 +159,11 @@ const pavingOut = (edge: Pt, dir: Pt, { lots, roads }: World, lawns = false): Hi
       if (what(mid) === "bare") lo = mid;
       else hi = mid;
     }
-    if (got === "road") return { gap: hi, kerbed: true, median: false, crossed, joins: true };
-    if (got === "lawn") return { gap: hi, kerbed: true, median: false, crossed, lawn: true };
+    if (got === "road") return { gap: hi, kerbed: true, median: false, joins: true };
+    if (got === "lawn") return { gap: hi, kerbed: true, median: false, lawn: true };
     let median = false;
     for (let u = hi + ACROSS / 2; u <= hi + MEDIAN_REACH && !median; u += ACROSS) median = roads.holds(edge.x + dir.x * u, edge.z + dir.z * u);
-    return { gap: hi, kerbed: got === "kerbed", median, crossed };
+    return { gap: hi, kerbed: got === "kerbed", median };
   }
   return null;
 };
@@ -454,8 +443,8 @@ export const kerbFills = (
     };
     const reaches = (side: 1 | -1) => (s: Sample) => estimated(road.source, side) && s.hit !== null && !s.hit.joins && !s.hit.lawn && !s.hit.median && !merged(s);
     const own = (side: 1 | -1) => (s: Sample) => reaches(side)(s) && s.hit!.gap >= ROAD_GAP;
-    // Grown in to the kerb, not over a zebra mapped past it: a kerb stone laid there would cut it in two.
-    const may = (side: 1 | -1) => (s: Sample) => reaches(side)(s) && !s.hit!.crossed;
+    // Grown in to the kerb, also where a zebra is mapped past it: the zebras are fitted to the kerbs after (`laidZebras`, G-836).
+    const may = reaches;
     // The stretches widened (`seeded`, as the lanes read them) and the asphalt grown on from them in to the kerb (`wideSet`).
     const [seeded, wideSet] = [new Set<Sample>(), new Set<Sample>()];
     for (const [side, sign] of [[right, -1], [left, 1]] as const) {
@@ -480,16 +469,13 @@ export const kerbFills = (
     const lay = (run: Span[], stone?: true, surface: "sidewalk" | "grass" | "square" = "sidewalk") => {
       for (const ring of runRings(run)) fills.push({ surface, ring, bridge: false, source: road.source, holed: true, ...(stone ? { kerbStone: stone } : {}) });
     };
-    for (const [side, sign] of [[right, -1], [left, 1]] as const) {
+    for (const side of [right, left]) {
       // The strips left as sidewalks: from the edge to the paving.
       // From the edge, or from where the eased asphalt stops short of the paving; `INTO` under the
       // asphalt, which ranks over it (`partitionGround`): from the edge itself, the strip's points
       // rounded off the asphalt's straight edge left a bare seam of up to 0.07 m between (G-811).
       const from = (s: Sample) => (asRoad && wide(s) ? reach.get(s)! : 0) - INTO;
-      // Past a measured kerb a zebra the map draws on reaches over the pavement, which ranks under it:
-      // the strip is laid by it, not left bare beside it (G-811).
-      const overZebra = (s: Sample) => !s.hit!.crossed || (asRoad && wide(s)) || !estimated(road.source, sign);
-      runsOf(side, (s) => (s.hit && !s.hit.joins && !s.hit.lawn && overZebra(s) && !full(s) ? { edge: along(s.edge, s.dir, from(s)), out: along(s.edge, s.dir, s.hit.gap + INTO) } : null), lay);
+      runsOf(side, (s) => (s.hit && !s.hit.joins && !s.hit.lawn && !full(s) ? { edge: along(s.edge, s.dir, from(s)), out: along(s.edge, s.dir, s.hit.gap + INTO) } : null), lay);
       // A moved carriageway's strip to a lawn is the lawn's, drawn to the new kerb (G-825). It reaches
       // on over the next sample past its ends, to the lawn's reach there: the step to a strip of
       // paving, or to the bare ground rule's fill, stayed bare.
@@ -521,30 +507,4 @@ export const kerbFills = (
     }
   }
   return { fills, widened };
-};
-
-/**
- * The zebras at the crossing nodes (`crossingBand`'s four corners, across the road from the
- * second corner to the third) reaching on over the widened carriageways to their new kerbs: each
- * end moved out as far as its middle stays on one of `roads`' rings.
- */
-export const stretchZebras = <B extends Band>(zebras: readonly B[], roads: readonly (readonly Pt[])[]): B[] => {
-  const rings = roads.map((ring) => ({ ring, box: ringBounds(ring) }));
-  const onRoad = (p: Pt) => rings.some((r) => inBox(p, r.box) && pointInRing(p, r.ring));
-  return zebras.map((z) => {
-    if (z.ring.length !== 4 || rings.length === 0) return z;
-    const [c0, c1, c2, c3] = z.ring as [Pt, Pt, Pt, Pt];
-    const len = Math.hypot(c2.x - c1.x, c2.z - c1.z) || 1;
-    const dir = { x: (c2.x - c1.x) / len, z: (c2.z - c1.z) / len };
-    const reach = (from: Pt, d: Pt): number => {
-      let t = 0;
-      while (t < ZEBRA_REACH && onRoad(along(from, d, t + ACROSS / 2))) t += ACROSS / 2;
-      return t;
-    };
-    const back = { x: -dir.x, z: -dir.z };
-    const low = reach({ x: (c0.x + c1.x) / 2, z: (c0.z + c1.z) / 2 }, back);
-    const high = reach({ x: (c2.x + c3.x) / 2, z: (c2.z + c3.z) / 2 }, dir);
-    if (low === 0 && high === 0) return z;
-    return { ...z, ring: [along(c0, back, low), along(c1, back, low), along(c2, dir, high), along(c3, dir, high)] };
-  });
 };

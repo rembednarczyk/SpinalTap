@@ -1,0 +1,7 @@
+# crossing-short-of-asphalt: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-0-0 -101,-269
+krakowskie-2-1 385,-20
+nabrzeze-1-0 2501,206
+podzamcze-0-0 572,160
+podzamcze-0-0 520,195
+podzamcze-0-1 648,580

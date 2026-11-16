@@ -4,6 +4,7 @@ krakowskie-0-0 -8,-192
 krakowskie-0-0 5,-86
 krakowskie-0-0 -198,-74
 krakowskie-0-0 -162,-71
+krakowskie-0-0 -128,-65
 krakowskie-0-1 -50,49
 krakowskie-0-1 -116,82
 krakowskie-0-1 -69,107
