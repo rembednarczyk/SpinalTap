@@ -1,0 +1,13 @@
+{
+  "name": "@seki/city-cache",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The city's costly structures made once a test worker and shared by its tests (ADR-0083 step 3): a speed-up only, off with SEKI_CITY_CACHE=off.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

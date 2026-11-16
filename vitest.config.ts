@@ -20,6 +20,9 @@ export default defineConfig({
       { extends: true, test: { name: "isolated", include: ["packages/*/test/**/*.test.{ts,tsx}"], exclude: [...configDefaults.exclude, ...SHARED] } },
     ],
     environment: "node",
+    // ADR-0083 step 3: the steering's rasters and fields made once a worker and shared by its
+    // simulations (`tools/city-cache`); the same results without it (`SEKI_CITY_CACHE=off`).
+    setupFiles: ["tools/city-cache/src/setup.ts"],
     // The app and sim loop tests play whole acts and contracts: well under a second on a free
     // machine, but past the default 5 s when other test runs share the CPU. A real hang still fails.
     testTimeout: 20_000,
