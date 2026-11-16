@@ -98,7 +98,7 @@ describe("the wide ways of many chases starting at once (G-643)", () => {
   });
 
   it("a loaded game waits for the way being made as long as the original, and walks it the same", () => {
-    const { sim, chunks, ganger } = standOff(BYSTRZYCA_FENCE.x, BYSTRZYCA_FENCE.z, 1);
+    const { sim, chunks, ganger } = standOff(BYSTRZYCA_FENCE, 1);
     let steps = 0;
     while (!ganger.walk?.chaseNext && steps++ < 120) sim.step();
     const next = ganger.walk?.chaseNext;
