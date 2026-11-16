@@ -48,7 +48,8 @@ export const inW3Hall = (p: { readonly x: number; readonly y: number; readonly z
   const y = p.y - W3_Y;
   const c = W3_LAYOUT.CULVERT_Z;
   if (y < 0 && p.x >= W3_LAYOUT.CULVERT_CRAWL.minX && p.x < W3_ROW_S.minX + 0.31 && p.z > c.minZ - 0.5 && p.z < c.maxZ + 0.5) return true;
-  if (y < -5 || p.x < W3_ROW_S.minX + 0.31) return false;
+  // Row S lines its own facade (the map city's); north of it the airlocks' and row N's outer walls are the blocks at x 2500..2500.3.
+  if (y < -5 || p.x < W3_ROW_S.minX + (p.z < W3_ROW_S.maxZ ? 0 : 0.31)) return false;
   if (p.z >= W3_ROW_S.minZ && p.z < W3_ROW_N.minZ) return p.x < W3_ROW_S.maxX && y < 16;
   return p.z >= W3_ROW_N.minZ && p.z < W3_ROW_N.maxZ - 0.31 && p.x < W3_ROW_N.maxX - 0.31 && y < 10;
 };
