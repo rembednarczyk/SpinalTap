@@ -129,6 +129,7 @@ import { kerbSteps } from "./deck-kerb";
 import { walkBlocked } from "./walk-blocked";
 import { cityWalkWorld } from "./walk-world";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
+import { cityCrownsOffSurface } from "./landmark-crowns";
 import { churchFakeTowers, dataTops, towersOffNmpt } from "./church-towers";
 import { cityOutlinesOffSurface } from "./landmark-outlines";
 import { cityBricks, plasteredWalls } from "./wall-materials";
@@ -1658,6 +1659,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "church-fake-tower": () => churchFakeTowers(cityChurches(SOURCE_OSM)),
   /** A church's tower of the renderer's off its real one in NMPT, in plan or height, or a real tower with nothing drawn there (G-215, T-121). */
   "church-tower-off-nmpt": () => towersOffNmpt(cityChurches(SOURCE_OSM), dataTops(MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))))),
+  /** A landmark's outer walls crowned by its recipe over 0.8 m off NMPT's crown along them (G-841): Zamek's low north wing and east wall. */
+  "landmark-crown-nmpt": () => cityCrownsOffSurface(SOURCE_OSM),
   /** A landmark's outer wall standing over 2 m out of NMPT's roof edge along 10 m or more (G-874): Zamek's north wing on the road behind it. */
   "landmark-outline-nmpt": () => cityOutlinesOffSurface(),
   /** A tower of the map (`man_made=tower`, `tower:type`, `building=tower`) drawn as a tenement: flats' windows or shop fronts (G-232). */
