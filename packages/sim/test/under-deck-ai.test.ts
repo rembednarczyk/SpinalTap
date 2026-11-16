@@ -64,6 +64,11 @@ describe("NPCs and the way under a bridge's deck (G-068, ADR-0053)", () => {
     expect(chase({ x: 2461, z: 302.2 }, UNDER, -Infinity, 20, Infinity).at).not.toBeNull();
   });
 
+  it("an alerted brawler on the path under the deck goes up off its end to the player on it over him in < 20 s (G-885)", () => {
+    // Not to the ground under the player, nor to and fro by the deck's edge at (2449.6, 298.9).
+    expect(chase(UNDER, { x: 2444.9, z: 307.5 }, Infinity, 20, -Infinity).at).not.toBeNull();
+  });
+
   it("an alerted brawler on the viaduct of Zamkowa comes down to the player on Podwale under it (G-072)", () => {
     expect(chase({ x: 748.9, z: 173.4 }, { x: 745, z: 169.8 }, -Infinity, 20, Infinity).at).not.toBeNull();
   });
