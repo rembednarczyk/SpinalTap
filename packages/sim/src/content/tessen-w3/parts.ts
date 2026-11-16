@@ -156,3 +156,10 @@ const plainBlock = (p: StaticProp): boolean => p.view.kind === "block" && !p.vie
  */
 export const indoor = (props: readonly StaticProp[]): StaticProp[] =>
   props.map((p) => (plainBlock(p) && p.view.kind === "block" ? { ...p, interior: true, view: { ...p.view, interior: true } } : p));
+
+/**
+ * Outdoor blocks drawn merged like an interior's (ADR-0038: one mesh per area, no moon shadow),
+ * not indoor on the minimap: the low boxes' walls, the cooling units, the hatch's curb. Each
+ * plain block is a mesh of its own otherwise (stage 2 would add some twenty to `w3-zewnatrz`).
+ */
+export const merged = (props: readonly StaticProp[]): StaticProp[] => props.map((p) => (plainBlock(p) && p.view.kind === "block" ? { ...p, view: { ...p.view, interior: true } } : p));

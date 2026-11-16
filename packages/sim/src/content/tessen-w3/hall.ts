@@ -26,7 +26,7 @@ import {
   WAGON_OPENING,
   WALL,
 } from "./layout";
-import { type ShellHollow, type ShellPart, type WallGap, barrierLine, barrierSolids, box, doorGap, railing, rectRing, shellPart, wallZ } from "./parts";
+import { type ShellHollow, type ShellPart, type WallGap, barrierLine, barrierSolids, box, doorGap, merged, railing, rectRing, shellPart, wallZ } from "./parts";
 import { W3_ROW_N_DOORS, W3_ROW_N_PROPS } from "./rows-n";
 import { W3_CUT_WALL, W3_ROW_S_DOORS, W3_ROW_S_PROPS } from "./rows-s";
 import { W3_AIRLOCKS, W3_ASSEMBLY, W3_CHAMBER, W3_CHAMBER_TOP, W3_GATE, W3_HALL_CUT, W3_HALL_TOP, W3_ROOF, W3_ROW_N, W3_ROW_S, W3_Y } from "./site";
@@ -142,14 +142,17 @@ const lowRoof = (): StaticProp[] => {
   const t = WALL;
   const h = ROOF_HATCH;
   return [
-    ...wallZ(a.minZ, n.maxZ, a.minX, a.minX + t, 0, u, WEST_GAPS),
-    box(a.minX + t, n.maxX, 0, u, n.maxZ - t, n.maxZ, "metal"),
-    box(n.maxX - t, n.maxX, 0, u, n.minZ, n.maxZ - t, "metal"),
+    // The walls and the roofs' gear merged; the roofs cast the moon's shadow as the boxes did.
+    ...merged([
+      ...wallZ(a.minZ, n.maxZ, a.minX, a.minX + t, 0, u, WEST_GAPS),
+      box(a.minX + t, n.maxX, 0, u, n.maxZ - t, n.maxZ, "metal"),
+      box(n.maxX - t, n.maxX, 0, u, n.minZ, n.maxZ - t, "metal"),
+      ...COOLERS_X.map((x) => box(x - COOLER.w / 2, x + COOLER.w / 2, r, r + COOLER.h, COOLER.z - COOLER.d / 2, COOLER.z + COOLER.d / 2, "metal")),
+    ]),
     box(a.minX, a.maxX, u, r, a.minZ, a.maxZ, "concrete"),
     box(n.minX, h.minX, u, r, n.minZ, n.maxZ, "metal"),
     box(h.maxX, n.maxX, u, r, n.minZ, n.maxZ, "metal"),
     box(h.minX, h.maxX, u, r, n.minZ, h.minZ, "metal"),
-    ...COOLERS_X.map((x) => box(x - COOLER.w / 2, x + COOLER.w / 2, r, r + COOLER.h, COOLER.z - COOLER.d / 2, COOLER.z + COOLER.d / 2, "metal")),
     // West parapet over the zone, open where the tower's bridge lands.
     railing(a.minX, a.minX + 0.3, a.minZ, W3_BRIDGE_Z.minZ, r),
     railing(n.minX, n.minX + 0.3, W3_BRIDGE_Z.maxZ, n.maxZ, r),

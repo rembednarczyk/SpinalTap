@@ -1,5 +1,5 @@
 import { type DoorDef, type StaticProp, ladderParts, stairRail, stairs, v } from "../builders";
-import { box, doorGap, indoor, railing, wallX, wallZ } from "./parts";
+import { box, doorGap, indoor, merged, railing, wallX, wallZ } from "./parts";
 import {
   DOOR_H,
   DOOR_W,
@@ -135,4 +135,4 @@ const hatchLadder = (): StaticProp[] => {
 };
 
 /** Row N inside: the ground floor, the mezzanine, the stair, the furniture; the hatch's ladder. */
-export const W3_ROW_N_PROPS: readonly StaticProp[] = [...indoor([...groundFloor(), ...mezzanine(), ...stair(), ...furniture()]), ...hatchLadder()];
+export const W3_ROW_N_PROPS: readonly StaticProp[] = [...indoor([...groundFloor(), ...mezzanine(), ...stair(), ...furniture()]), ...merged(hatchLadder())];
