@@ -53,8 +53,9 @@ export interface BandArea {
 export const BAND_AREAS: readonly BandArea[] = [
   { id: "alchemia-market", within: "shinsekai-7", area: { minX: 379, maxX: 456, minZ: 30, maxZ: 140 }, band: "targ" },
   { id: "alchemia-car-park", within: "shinsekai-7", area: { minX: 379, maxX: 441, minZ: -16, maxZ: 30 }, band: "targ" },
-  // W-3's hall and its rows (ADR-0082): the sabotage's guards; the tower, the quay and the yards keep the docks' band.
-  { id: "w3-hall", within: "doki", area: { minX: 2500, maxX: 2572, minZ: 396, maxZ: 440 }, band: "w3" },
+  // W-3's hall and its rows inside their west wall (ADR-0082): the sabotage's guards; the tower, the quay, the
+  // yards and the sniper's perch on row N's west parapet (x 2500.7) keep the docks' band.
+  { id: "w3-hall", within: "doki", area: { minX: 2501, maxX: 2572, minZ: 396, maxZ: 440 }, band: "w3" },
 ];
 
 /** The district whose band holds at `p` in `district`: an area's of `BAND_AREAS`, or the district's own. */

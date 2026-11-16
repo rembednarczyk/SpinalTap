@@ -65,10 +65,12 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // on its tower's platform instead of the warehouse's roof (the reinforcements come up the tower's
   // stair and lean there), and the v39 version. Re-recorded for ADR-0082 stage 3, the content: the
   // camera of server room N in the hall's chunk is one entity more (without it the runs hash as
-  // before, c5bbf8f0 and 9a14605b as v31), and the v40 version.
+  // before, c5bbf8f0 and 9a14605b as v31), and the v40 version. Re-recorded for the camera moved to
+  // the room's north-west corner (the user's decision of 16.11): at its first place the runs hash to
+  // 86fa6080 and 23918cb7 as v31, so the camera's position is the whole change.
   for (const [seed, level, golden, v32, v31, v30, v28, v27] of [
-    [21, 2, "90e96a1c", "4f739a87", "86fa6080", "946924bf", "4313c7f7", "57531282"],
-    [5, 3, "0419110b", "e5af736e", "23918cb7", "d8332d44", "799cd8c4", "f85e7e77"],
+    [21, 2, "fb93d42a", "1b5a4ad7", "39aed1b6", "818e2c0f", "f6ea310d", "62a908f2"],
+    [5, 3, "c1f5a11d", "2daf589e", "1a0717d1", "19b5ce9c", "0cc55bf6", "15a39e2f"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);
