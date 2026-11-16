@@ -2095,8 +2095,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-846 Karta podsumowania zlecenia zakrywa komunikaty i cel, na 1024x600 wychodzi poza ekran
 - Ważność: S3 · Zasięg: HUD przy skali 1: desktop 1280x720 przecina komunikat; telefon przecina cel, drążek i komunikat; 1024x600 poza ekranem
 - Opis: Sonda e2e agenta skalowania 15.11; poza zakresem ADR-0085 (PR #587)
-- Status: nowy
+- Status: naprawiony na ccr-ec2c4269-ilh8k8-g846 (c55aa4c, 9e1517b), w PR; wcześniej: nowy
 - Pakiet właściciela: packages/ui
+- Test: e2e/ui-scale.spec.ts contract card (70 kolizji na main → 0) + packages/ui/test/debrief-zone.test.tsx; hint poza kontrolą, środek karty na telefonie nie przewija się palcem
 
 ### G-847 Schody bez policzków: stopnice normy do 0,40 m nad terenem z boku pasa
 - Ważność: S4 · Zasięg: biegi z mapy, najwięcej strome i ściśnięte (Plac Zamkowy)
@@ -2273,6 +2274,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Ściana o nachyleniu 2:1 przechodzi przez siatkę 0,25/0,75 o 2-3 mm od obrysu tabeli; import uznaje próbkę za wnętrze, skan za ziemię (G-872 r2: 5 kluczy).
 - Status: nowy
 - Pakiet właściciela: tools/glitch-scan
+
+### G-876 Karta podsumowania na telefonie zakrywa buffy i .gear pod celem
+- Ważność: S4 · Zasięg: telefon, karta .debrief przy aktywnym buffie
+- Opis: Karta od 84 px pod celem leży na .buffs (84 px) i .touch-mode .gear (92 px); znalezione przy G-846
+- Status: nowy
+- Pakiet właściciela: packages/ui
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
