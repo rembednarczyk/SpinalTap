@@ -12,6 +12,10 @@
  */
 /* ---- desktop: the top right column, the wallet, the clock under it, the messages under both ---- */
 .toasts { top: 108px; }
+/* The contract card in the middle zone (G-846): under the top band (the objective up to three lines,
+   the wallet, the clock and the messages' newest line from 108 px) and over the bottom band (health
+   and the weapon strip, 106 px up). While it is up the messages keep their newest title only. */
+.debrief { top: 156px; max-height: calc(100% - 156px - 116px); }
 
 .touch-mode .ui-layer {
   /* One pad px in this layer's px. */
@@ -29,6 +33,9 @@
   --pad-row-height: calc(52px * var(--pad) * var(--pad-spread));
   /* The HUD's own margin on the left, where nothing of the pad lies but the stick's ring. */
   --zone-left: max(16px, var(--safe-left));
+  /* The contract card's width: up to 8 px short of the "Use" button, the pad's leftmost, 384 pad px
+     in from the right (G-846). */
+  --debrief-width: min(400px, calc(100% - var(--zone-left) - var(--zone-right) - 376px * var(--pad)));
 }
 
 /* ---- the pad ---- */
@@ -48,7 +55,17 @@
 /* ---- top left: up to the wallet's column ---- */
 .touch-mode .hud__objective { left: var(--zone-left); top: var(--zone-top); max-width: calc(100% - var(--zone-right) - var(--pad-row-width) - 212px); }
 .touch-mode .buffs { left: var(--zone-left); right: auto; top: max(84px, calc(var(--safe-top) + 76px)); bottom: auto; }
-.touch-mode .debrief { left: var(--zone-left); width: min(400px, 52%); }
+/* The contract card under the objective, left of the pad's cluster, down to the weapon strip; the
+   stick's ring steps aside while it is up (touch-controls.tsx), the messages keep their newest title
+   right of it (G-846). */
+.touch-mode .debrief {
+  --debrief-top: max(84px, calc(var(--safe-top) + 76px));
+  left: var(--zone-left);
+  top: var(--debrief-top);
+  width: var(--debrief-width);
+  max-height: calc(100% - var(--debrief-top) - max(10px, var(--safe-bottom)) - 84px);
+}
+.touch-mode .toasts--brief { width: calc(100% - var(--zone-right) - 104px - var(--zone-left) - var(--debrief-width) - 8px); }
 
 /* ---- bottom left: health, then the active weapon, left of the pad's cluster ---- */
 .touch-mode .hud__identity { left: var(--zone-left); bottom: max(10px, var(--safe-bottom)); }
@@ -62,6 +79,6 @@
 #ui-root:has(.dialogue) :is(.hud__wallet, .hud__clock) { visibility: hidden; }
 .toasts--talk { top: 24px; width: min(340px, 40%); }
 .touch-mode .toasts--talk { top: var(--zone-top); right: var(--zone-right); width: min(340px, 40%); }
-.toasts--talk .toast:not(:last-child), .toasts--talk .toast__text { display: none; }
-.toasts--talk .toast__title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.toasts--talk .toast > :last-child { min-width: 0; }
+:is(.toasts--talk, .toasts--brief) .toast:not(:last-child), :is(.toasts--talk, .toasts--brief) .toast__text { display: none; }
+:is(.toasts--talk, .toasts--brief) .toast__title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:is(.toasts--talk, .toasts--brief) .toast > :last-child { min-width: 0; }

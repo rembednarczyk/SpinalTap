@@ -7,8 +7,10 @@ export const Toasts = () => {
   const toasts = useUi((s) => s.toasts);
   const text = useText();
   const talking = useUi((s) => s.dialogue !== null);
+  // The contract card takes the middle of the screen (G-846): the column keeps its newest line.
+  const briefing = useUi((s) => s.debrief !== null) && !talking;
   return (
-    <div className={`toasts${talking ? " toasts--talk" : ""}`} aria-live="polite">
+    <div className={`toasts${talking ? " toasts--talk" : ""}${briefing ? " toasts--brief" : ""}`} aria-live="polite">
       {toasts.map((t) => (
         <div key={t.id} className={`toast toast--${t.kind}`}>
           <span className="toast__icon">{ICON[t.kind]}</span>
