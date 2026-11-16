@@ -31,7 +31,7 @@ describe("W-3's hall's own meshes from afar (ADR-0082 §4)", () => {
     const merged = WORLD_CHUNKS.find((c) => c.id === "nabrzeze-w3")!.props.filter((p) => p.view.kind === "block" && p.view.interior);
     const out = merged.filter((p) => !inW3Hall(p.center));
     // The west wall in pieces round its doors and the gate, the north and east walls, five cooling units, the hatch's curb, the roof by the hatch, the gate.
-    for (const p of out) expect(p.center.x < (p.center.z < 406 ? 2500 : 2500.31) || p.center.z > 439.69 || p.center.x > (p.center.z >= 430 ? 2571.69 : 2572) || p.center.z < 396 || p.center.y > w3(0, 10, 0).y, `${p.center.x},${p.center.y},${p.center.z}`).toBe(true);
+    for (const p of out) expect(p.center.x < (p.center.z < 406 ? 2500 : 2500.31) || p.center.z > 439.69 || p.center.x > (p.center.z >= 430 ? 2571.69 : 2572) || p.center.z < (p.center.y < w3(0, 0, 0).y ? 395.5 : 396) || p.center.y > w3(0, 10, 0).y, `${p.center.x},${p.center.y},${p.center.z}`).toBe(true);
     // Of the culvert only its mouth by the river.
     for (const p of out.filter((q) => q.center.x < 2500)) expect(p.center.x < 2472.3 || p.center.y > w3(0, 0, 0).y, `${p.center.x}`).toBe(true);
     expect(out.filter((p) => p.center.y > w3(0, W3_ROOF, 0).y && p.view.kind === "block" && p.view.size.x === 3)).toHaveLength(5);
@@ -42,6 +42,7 @@ describe("W-3's hall's own meshes from afar (ADR-0082 §4)", () => {
     expect(inW3Hall(w3(2490, -2, 407.2))).toBe(true);
     expect(inW3Hall(w3(2500.19, 2.65, 404.2))).toBe(true);
     expect(inW3Hall(w3(2500.15, 5, 420))).toBe(false);
+    expect(inW3Hall(w3(2530.5, -2.45, 395.85))).toBe(true);
     expect(inW3Hall(w3(2466, -1.4, 407.2))).toBe(false);
   });
 
