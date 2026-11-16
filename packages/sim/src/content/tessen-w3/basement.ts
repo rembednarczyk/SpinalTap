@@ -126,11 +126,15 @@ const culvert = (): StaticProp[] => {
   const k = CULVERT_CRAWL;
   const f = CULVERT_FLIGHT;
   return [
-    box(m.minX, f.maxX, F, k.ceiling, C.minZ - t, C.minZ),
-    box(m.minX, f.maxX, F, k.ceiling, C.maxZ, C.maxZ + t),
-    box(k.minX, f.maxX, k.ceiling, -0.05, C.minZ - t, C.maxZ + t),
-    // The headwall over the mouth up past the bank.
+    // The mouth dug into the bench: its floor (the dug ground is not drawn), its wing walls, the headwall up past the bank.
+    box(m.minX, k.minX, m.floor - 0.25, m.floor, C.minZ, C.maxZ),
+    box(m.minX, k.minX, m.floor - 0.25, k.ceiling, C.minZ - t, C.minZ),
+    box(m.minX, k.minX, m.floor - 0.25, k.ceiling, C.maxZ, C.maxZ + t),
     box(k.minX - 0.2, k.minX + 0.2, k.ceiling, 0.6, C.minZ - t, C.maxZ + t),
+    // The crawl and the flight under the terrace and the hall.
+    box(k.minX, f.maxX, F, k.ceiling, C.minZ - t, C.minZ),
+    box(k.minX, f.maxX, F, k.ceiling, C.maxZ, C.maxZ + t),
+    box(k.minX, f.maxX, k.ceiling, -0.05, C.minZ - t, C.maxZ + t),
     stairs(f.minX, f.maxX, C.minZ, C.maxZ, y(F), y(k.floor), "x", -1),
   ];
 };

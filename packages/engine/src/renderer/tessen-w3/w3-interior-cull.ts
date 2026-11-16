@@ -1,5 +1,5 @@
 import type { EntityId } from "@seki/core";
-import { INTERIORS, W3_ROW_N, W3_ROW_S, W3_Y } from "@seki/sim";
+import { INTERIORS, W3_LAYOUT, W3_ROW_N, W3_ROW_S, W3_Y } from "@seki/sim";
 import type { TransformNode, Vector3 } from "../../babylon";
 
 /**
@@ -40,14 +40,16 @@ export const inW3Interior = (p: { readonly x: number; readonly y: number; readon
 /**
  * Is a merged interior block centred at `p` drawn with the hall: inside its outer walls, under the
  * low roofs' underside over row N (the airlocks', row N's outer walls and the cooling units on
- * the roof stay), to its ceilings over the rest, down to the basement's floor? Ceilings and
- * floors are not in any room and are drawn with the hall; the walls lining the south and east
- * facades are not, so the shut leaves in their doorways never leave a hole seen from afar.
+ * the roof stay), to its ceilings over the rest, down to the basement's floor; and the culvert
+ * under the terrace (its mouth by the river stays). Ceilings and floors are not in any room and
+ * are drawn with the hall; the shut leaves stand in the facades' doorways, outside it.
  */
 export const inW3Hall = (p: { readonly x: number; readonly y: number; readonly z: number }): boolean => {
   const y = p.y - W3_Y;
+  const c = W3_LAYOUT.CULVERT_Z;
+  if (y < 0 && p.x >= W3_LAYOUT.CULVERT_CRAWL.minX && p.x < W3_ROW_S.minX + 0.31 && p.z > c.minZ - 0.5 && p.z < c.maxZ + 0.5) return true;
   if (y < -5 || p.x < W3_ROW_S.minX + 0.31) return false;
-  if (p.z >= W3_ROW_S.minZ + 0.4 && p.z < W3_ROW_N.minZ) return p.x < W3_ROW_S.maxX - 0.5 && y < 16;
+  if (p.z >= W3_ROW_S.minZ && p.z < W3_ROW_N.minZ) return p.x < W3_ROW_S.maxX && y < 16;
   return p.z >= W3_ROW_N.minZ && p.z < W3_ROW_N.maxZ - 0.31 && p.x < W3_ROW_N.maxX - 0.31 && y < 10;
 };
 

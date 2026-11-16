@@ -86,7 +86,8 @@ const chamberWalls = (): StaticProp[] => {
     ...wallX(C.minX + w, C.maxX - o, C.maxZ - w, C.maxZ + t, GALLERY_WINDOW.bottom, R, [window]),
     ...wallX(C.minX + w, C.maxX - o, C.maxZ - w, C.maxZ - o, R, top),
     ...wallZ(C.minZ + w, C.maxZ - w, C.maxX - w, C.maxX - o, 0, top, [{ from: CHAMBER_GATE_E.minZ, to: CHAMBER_GATE_E.maxZ, top: CHAMBER_GATE_E.height }]),
-    box(C.maxX - 0.5, C.maxX - 0.3, 0, CHAMBER_GATE_E.height, CHAMBER_GATE_E.minZ, CHAMBER_GATE_E.maxZ, "metal"),
+    // The shut gate's leaves stand in the facade's doorway, in front of the lining: drawn from afar with the outer walls.
+    box(C.maxX - o, C.maxX + 0.1, 0, CHAMBER_GATE_E.height, CHAMBER_GATE_E.minZ, CHAMBER_GATE_E.maxZ, "metal"),
     box(C.minX + w, C.maxX - w, top - 0.3, top, C.minZ + w, C.maxZ - w, "concrete"),
     // The launch area's pad on the floor, under a knee.
     box(2557, 2563, 0, 0.3, 415, 421, "metal"),

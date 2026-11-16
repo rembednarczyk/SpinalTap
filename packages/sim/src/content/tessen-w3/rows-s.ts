@@ -123,7 +123,8 @@ const shell = (): StaticProp[] => {
   const bands = Array.from({ length: 9 }, (_, i) => west + t + ((w0 - west - t) * i) / 9);
   return [
     ...wallX(w0, east, south, south + t, 0, H, [doorGap(DOORS_S.armoury, DOOR_W, DOOR_H)]),
-    box(DOORS_S.armoury - DOOR_W / 2, DOORS_S.armoury + DOOR_W / 2, 0, DOOR_H, south + t / 2 - 0.1, south + t / 2 + 0.1, "metal"),
+    // The shut leaf stands in the facade's doorway, in front of the lining: drawn from afar with the outer walls.
+    box(DOORS_S.armoury - DOOR_W / 2, DOORS_S.armoury + DOOR_W / 2, 0, DOOR_H, S.minZ - 0.1, south, "metal"),
     ...wallZ(south, northZ - t, east - t, east, 0, H),
     ...wallZ(w1, northZ - t, west, west + t, 0, H),
     // Corridor S: its south wall with the rooms' doors, its north wall with the airlock's and the hall's doors.

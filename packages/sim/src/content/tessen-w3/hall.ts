@@ -144,7 +144,7 @@ const lowRoof = (): StaticProp[] => {
   return [
     // The walls and the roofs' gear merged; the roofs cast the moon's shadow as the boxes did.
     ...merged([
-      ...wallZ(a.minZ, n.maxZ, a.minX, a.minX + t, 0, u, WEST_GAPS),
+      ...wallZ(a.minZ, n.maxZ, a.minX, a.minX + t, 0, u, WEST_GAPS, "metal"),
       box(a.minX + t, n.maxX, 0, u, n.maxZ - t, n.maxZ, "metal"),
       box(n.maxX - t, n.maxX, 0, u, n.minZ, n.maxZ - t, "metal"),
       ...COOLERS_X.map((x) => box(x - COOLER.w / 2, x + COOLER.w / 2, r, r + COOLER.h, COOLER.z - COOLER.d / 2, COOLER.z + COOLER.d / 2, "metal")),
