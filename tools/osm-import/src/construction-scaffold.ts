@@ -4,6 +4,7 @@
  * wall and `SITE_SCAFFOLD.depth` deep, over free ground inside the outline, up to the neighbour's
  * top and a metre over it. Its mesh carries a neon banner of the building of 2077 (the design
  * from the seed). The fence's panels in its way give way to it: the scaffold closes the site there.
+ * A wall with a venue's board on it takes none (G-893): the scaffold would hide the board.
  */
 import { type StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { SITE_SCAFFOLD, siteScaffoldVariant } from "../../../packages/core/src/world/sites.ts";
@@ -28,6 +29,7 @@ export interface ScaffoldPlan {
 }
 
 const round = (v: number, k = 100): number => Math.round(v * k) / k + 0;
+const same = (p: Pt, q: Pt): boolean => Math.abs(p.x - q.x) < 1e-6 && Math.abs(p.z - q.z) < 1e-6;
 
 /** The scaffold's box in the world, grown by `by` (m) on every side. */
 export const scaffoldBox = (s: ScaffoldPlan, by = 0): Pt[] => {
@@ -56,7 +58,8 @@ export const planScaffold = (outline: readonly Pt[], g: SiteGround): ScaffoldPla
     for (let i = 0; i < nb.ring.length; i++) {
       const [a, b] = [nb.ring[i]!, nb.ring[(i + 1) % nb.ring.length]!];
       const len = Math.hypot(b.x - a.x, b.z - a.z);
-      if (len < SITE_SCAFFOLD.least) continue;
+      // No scaffold before a venue's board (G-893): another wall, or none.
+      if (len < SITE_SCAFFOLD.least || nb.boardWalls?.some(([p, q]) => same(p, a) && same(q, b))) continue;
       const d = { x: (b.x - a.x) / len, z: (b.z - a.z) / len };
       // The side away from the building: the one whose point a metre off the wall's middle is not in it.
       const mid = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };

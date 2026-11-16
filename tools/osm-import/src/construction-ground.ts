@@ -29,6 +29,8 @@ export interface SiteNeighbour {
   readonly top: number;
   /** OSM tags it `historic` or `heritage` (G-894: the crane keeps out of its front). */
   readonly heritage?: boolean;
+  /** The walls (ends in the world, as the renderer frames them) a venue's board hangs on (G-893: no scaffold covers them). */
+  readonly boardWalls?: readonly (readonly [Pt, Pt])[];
 }
 
 /**

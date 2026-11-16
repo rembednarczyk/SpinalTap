@@ -2295,12 +2295,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A tree OSM names a genus of the renderer's models (`genus`, `species`: Quercus, Populus...) drawn as another one: the oaks and the "Baobab" of Plac Litewski as limes and maples (G-423, `tree-species.ts`). */
   "tree-species-ignored": () => treesOfOtherSpecies(cityNamedTrees(), Object.values(WORLD_STREET_PROPS).flat()),
   // The building sites' pieces of ADR-0087 against the ground the game draws (`site-pieces.ts`): on a carriageway or pavement, through a wall, a gate with no way in.
-  // A crane before a listed building's front (G-894).
+  // A crane before a listed building's front (G-894), a piece before a venue's board (G-893).
   ...siteChecks(
     () => Object.values(WORLD_STREET_PROPS).flat(),
     () => siteGroundOf(new Site(MAP_CHUNKS), MAP_CHUNKS),
     () => LUBLIN_CONSTRUCTION_SITES,
     () => siteBuildingsOf(MAP_CHUNKS, osmTags),
+    () => cityVenueBoards(WORLD_SCENERY),
   ),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),

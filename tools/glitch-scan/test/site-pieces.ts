@@ -28,7 +28,8 @@ import type { Site } from "../../osm-import/src/props-site.ts";
  * - `site-gate-blocked`: a gate whose opening has a building, water or rails, or a solid of the
  *   furniture, `OUTSIDE` m in front of it or `INSIDE` m behind it: no way in;
  * - `site-crane-reach` (stage 2): a corner of the site's outline its crane's jib does not reach;
- * - `site-crane-heritage` (G-894): a crane before a listed building's facade in the outline.
+ * - `site-crane-heritage` (G-894): a crane before a listed building's facade in the outline;
+ * - `site-over-board` (G-893): a piece before a venue's board, hiding it.
  */
 
 type Pt = { readonly x: number; readonly z: number };
@@ -212,16 +213,59 @@ export const siteCraneHeritage = (sites: readonly SiteOfTable[], buildings: read
       return out;
     });
 
-/** The checks over the game's furniture, the sites' table and the buildings round them. */
+/** A venue's board as the renderer hangs it: its face's ends on the wall, the wall's outward normal, its bottom and top (world y). */
+export interface SiteBoardSpan {
+  readonly a: Pt;
+  readonly b: Pt;
+  readonly nx: number;
+  readonly nz: number;
+  readonly bottom: number;
+  readonly top: number;
+  readonly text: string;
+}
+
+/** How far in front of a board's face a piece hides it (m). */
+const BEFORE_BOARD = 1.5;
+
+/** The world y of a site piece's top. */
+const pieceTop = (p: StreetPropItem): number => {
+  if (p.prop === "site-fence") return p.y + SITE_FENCE.height;
+  if (p.prop === "site-gate") return p.y + SITE_GATE.height;
+  if (p.prop === "site-cabin") return p.y + SITE_CABIN.height;
+  if (p.prop === "site-board") return p.y + SITE_BOARD.top;
+  if (p.prop === "site-crane") return p.y + siteCraneLayout(p.variant).height;
+  return p.y + siteScaffoldLayout(p.variant).height;
+};
+
+/** `site-over-board` (G-893): a site piece with a sample up to `BEFORE_BOARD` m before a venue's board, along it and over its bottom: the board hidden. */
+export const siteOverBoard = (pieces: readonly StreetPropItem[], boards: readonly SiteBoardSpan[]): Finding[] =>
+  sitePiecesOf(pieces).flatMap((p) => {
+    const near = boards.filter((s) => Math.hypot(s.a.x - p.x, s.a.z - p.z) < 40 && pieceTop(p) > s.bottom && p.y < s.top);
+    const box = near.length > 0 ? siteFootprint(p) : [];
+    const hit = near.find((s) => {
+      const len = Math.hypot(s.b.x - s.a.x, s.b.z - s.a.z);
+      if (len < 1e-6) return false;
+      const [dx, dz] = [(s.b.x - s.a.x) / len, (s.b.z - s.a.z) / len];
+      return box.some((q) => {
+        const [u, w] = [(q.x - s.a.x) * dx + (q.z - s.a.z) * dz, (q.x - s.a.x) * s.nx + (q.z - s.a.z) * s.nz];
+        return u >= 0 && u <= len && w > 0 && w <= BEFORE_BOARD;
+      });
+    });
+    return hit ? [{ at: key(p), what: `${p.prop} before the board ${hit.text}` }] : [];
+  });
+
+/** The checks over the game's furniture, the sites' table, the buildings round them and the venues' boards. */
 export const siteChecks = (
   pieces: () => readonly StreetPropItem[],
   ground: () => SiteGroundQuery,
   sites: () => readonly SiteOfTable[] = () => [],
   buildings: () => readonly SiteBuilding[] = () => [],
+  boards: () => readonly SiteBoardSpan[] = () => [],
 ): Record<string, () => Finding[]> => ({
   "site-on-road": () => siteOnRoad(pieces(), ground()),
   "site-through-wall": () => siteThroughWall(pieces(), ground()),
   "site-gate-blocked": () => siteGateBlocked(pieces(), ground()),
   "site-crane-reach": () => siteCraneReach(sites()),
   "site-crane-heritage": () => siteCraneHeritage(sites(), buildings()),
+  "site-over-board": () => siteOverBoard(pieces(), boards()),
 });

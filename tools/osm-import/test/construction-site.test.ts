@@ -11,6 +11,7 @@ import { FENCE_INSET, insetRing } from "../src/construction-fence.ts";
 import { scaffoldBox } from "../src/construction-scaffold.ts";
 import { planCrane } from "../src/construction-crane.ts";
 import { COURTYARD, HERITAGE_CLEAR, courtyardDepth, ringDistance } from "../src/construction-heritage.ts";
+import { boardWalls } from "../src/construction-table.ts";
 import { type Pt, pointInRing } from "../src/geometry.ts";
 
 /**
@@ -255,6 +256,38 @@ describe("the building sites' crane and scaffold (ADR-0087 stage 2)", () => {
       expect(bare.pieces.filter((p) => p.prop === "site-fence").length).toBeGreaterThan(fence.length);
     }
     expect(banners.size).toBeGreaterThan(1);
+  });
+
+  it("puts no scaffold before a venue's board: another wall, or none (G-893)", () => {
+    const { outline, ground } = plan(50, 36, { wall: true });
+    // The board on the tenement's south wall (x 4 to 36 on the outline), the only wall the scaffold could take.
+    const boarded = { ...ground, neighbours: ground.neighbours.map((n) => (n.top === 18 ? { ...n, boardWalls: [[n.ring[0]!, n.ring[1]!] as const] } : n)) };
+    expect(boarded.neighbours.find((n) => n.top === 18)!.ring.slice(0, 2)).toEqual([
+      { x: 4, z: 36 },
+      { x: 36, z: 36 },
+    ]);
+    for (const id of ids) {
+      expect(planSite({ id, ring: outline }, ground).scaffold, id).not.toBeNull();
+      const s = planSite({ id, ring: outline }, boarded);
+      expect(s.scaffold, id).toBeNull();
+      expect(s.pieces.some((p) => p.prop === "site-scaffold")).toBe(false);
+    }
+  });
+
+  it("finds the walls of a building a board hangs on, its frame's wall over two of the outline's edges (G-893)", () => {
+    const ring: Pt[] = [
+      { x: 0, z: 0 },
+      { x: 6, z: 0 },
+      { x: 12, z: 0.05 },
+      { x: 12, z: 10 },
+      { x: 0, z: 10 },
+    ];
+    const board = { a: { x: 7, z: 0 }, b: { x: 9, z: 0 }, nx: 0, nz: -1, bottom: 2.4, top: 3.1, wallA: { x: 0, z: 0 }, wallB: { x: 12, z: 0 }, text: "FRYZURA" };
+    expect(boardWalls(ring, [board])).toEqual([
+      [ring[0], ring[1]],
+      [ring[1], ring[2]],
+    ]);
+    expect(boardWalls(ring, [{ ...board, wallA: { x: 12, z: 0 }, wallB: { x: 12, z: 10 } }])).toEqual([[ring[2], ring[3]]]);
   });
 
   /** A site 100 x 40 m round a listed palace, its front to the street (south), with a shallow niche in it or a courtyard behind. */

@@ -21,6 +21,7 @@ import { type SiteOutline, type SitePlan, planSite } from "./construction-site.t
 import { type Pt, type Rect, centroid, pointInRing, ringBounds } from "./geometry.ts";
 import { type OsmData, type Tags, mergeOsm, parseExtract } from "./osm.ts";
 import { REPO } from "./paths.ts";
+import type { BoardSpan } from "./props-boards.ts";
 import { propRows, rowText } from "./props-emit.ts";
 import { Site } from "./props-site.ts";
 import { structuresOf } from "./structures.ts";
@@ -53,10 +54,26 @@ const flat = (f: readonly number[]): Pt[] => Array.from({ length: f.length >> 1 
 
 const near = (box: Rect, pts: readonly Pt[], by: number): boolean => pts.some((p) => p.x > box.minX - by && p.x < box.maxX + by && p.z > box.minZ - by && p.z < box.maxZ + by);
 
-/** What the sites read of the map besides the chunks: the buildings' OSM tags by id. */
+/** What the sites read of the map besides the chunks: the buildings' OSM tags by id, the venues' boards the renderer hangs. */
 export interface SiteMapInfo {
   readonly tags?: ReadonlyMap<string, Tags>;
+  readonly boards?: readonly BoardSpan[];
 }
+
+/** Does a venue's board hang on the wall from a to b: its frame's wall along it, 0.6 m or nearer to its middle? */
+const boardOn = (a: Pt, b: Pt, s: BoardSpan): boolean => {
+  const [len, wl] = [Math.hypot(b.x - a.x, b.z - a.z), Math.hypot(s.wallB.x - s.wallA.x, s.wallB.z - s.wallA.z)];
+  if (len < 1e-6 || wl < 1e-6) return false;
+  const cross = ((b.x - a.x) * (s.wallB.z - s.wallA.z) - (b.z - a.z) * (s.wallB.x - s.wallA.x)) / (len * wl);
+  return Math.abs(cross) < 0.1 && segmentDistance((a.x + b.x) / 2, (a.z + b.z) / 2, s.wallA.x, s.wallA.z, s.wallB.x, s.wallB.z) < 0.6;
+};
+
+/** A neighbour's walls with a venue's board on them (G-893). */
+export const boardWalls = (ring: readonly Pt[], boards: readonly BoardSpan[]): (readonly [Pt, Pt])[] =>
+  ring.flatMap((a, i): (readonly [Pt, Pt])[] => {
+    const b = ring[(i + 1) % ring.length]!;
+    return boards.some((s) => boardOn(a, b, s)) ? [[a, b]] : [];
+  });
 
 /** The ground round a site from the chunks: `Site`'s surfaces, the frontages' fills, the map's barriers and streets near it. */
 export const chunkGround = (site: Site, box: Rect, info: SiteMapInfo = {}): SiteGround => {
@@ -67,7 +84,8 @@ export const chunkGround = (site: Site, box: Rect, info: SiteMapInfo = {}): Site
   const drive = streets.filter((s) => !FOOT_KINDS.has(s.kind));
   const byBarrier = (p: Pt) => barriers.some((l) => l.some((a, i) => i + 1 < l.length && segmentDistance(p.x, p.z, a.x, a.z, l[i + 1]!.x, l[i + 1]!.z) < BARRIER_GAP));
   // The buildings round it (stage 2), each once (a building cut at a seam is in each chunk's table),
-  // with their protection (G-894).
+  // with their protection (G-894) and the walls with a venue's board (G-893).
+  const boards = (info.boards ?? []).filter((s) => near(box, [s.wallA, s.wallB], NEIGHBOURS));
   const seen = new Set<string>();
   const neighbours: SiteNeighbour[] = [];
   for (const b of chunks.flatMap((c) => c.buildings)) {
@@ -76,10 +94,12 @@ export const chunkGround = (site: Site, box: Rect, info: SiteMapInfo = {}): Site
     const ring = flat(b.outline).map((p) => ({ x: p.x + b.x, z: p.z + b.z }));
     if (!near(box, ring, NEIGHBOURS)) continue;
     const t = info.tags?.get(b.id.split("/")[0]!);
+    const walls = boardWalls(ring, boards);
     neighbours.push({
       ring,
       top: Math.round((b.y + b.height + Math.max(0, b.roof ?? 0)) * 100) / 100,
       ...(t?.historic !== undefined || t?.heritage !== undefined ? { heritage: true } : {}),
+      ...(walls.length > 0 ? { boardWalls: walls } : {}),
     });
   }
   return {
