@@ -3,7 +3,7 @@ import type { Raster } from "../../../packages/sim/src/systems/ai/nav-raster.ts"
 import { MemoryStore } from "./memory-store.ts";
 
 /** Bytes of rasters, and as many of fields, a worker keeps: a near raster on terrain is some 0.3 MB, a wide one 1.6 MB. */
-export const NAV_BUDGET = 256 * 2 ** 20;
+export const NAV_BUDGET = 128 * 2 ** 20;
 
 let stores: { readonly rasters: MemoryStore<Raster>; readonly fields: MemoryStore<Field> } | undefined;
 

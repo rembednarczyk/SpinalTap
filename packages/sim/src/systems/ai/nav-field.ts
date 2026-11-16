@@ -61,9 +61,11 @@ const memos = new WeakMap<World<Entity>, Map<string, Memo>>();
 
 let share: NavShare<Raster, Field> | null = null;
 
-/** Installs the process's store of rasters and fields (`nav-share.ts`; tests only), or takes it away (null). */
-export const shareNav = (store: NavShare<Raster, Field> | null): void => {
+/** Installs the process's store of rasters and fields (`nav-share.ts`; tests only), or takes it away (null); gives the one before. */
+export const shareNav = (store: NavShare<Raster, Field> | null): NavShare<Raster, Field> | null => {
+  const before = share;
   share = store;
+  return before;
 };
 
 export const memoOf = (world: World<Entity>, win: Window): Memo => {
