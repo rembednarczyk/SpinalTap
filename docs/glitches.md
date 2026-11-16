@@ -2401,7 +2401,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-892 Maksimum zdrowia po awansie albo implancie spóźnia się o krok: apteczka zaraz potem leczy do starego
 - Ważność: S4 · Zasięg: krok awansu lub założenia implantu
 - Opis: playerStatsOf().maxHp trafia do health.max dopiero w player-control; item-system i komenda use-item idą przed nim (systems/index.ts:134-135). Deterministyczne, nie rozjeżdża zapisu. Znalezione przy G-888.
-- Status: zgłoszone
+- Status: w PR #643; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 
 ### G-893 Rusztowanie placu Zielona 5A zasłania szyld lokalu na ścianie w67499313
@@ -2418,6 +2418,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, engine mapcity/construction
 - Test przyjęcia: construction-site.test.ts: dźwig w1362895448 nie stoi przed fasadą w67508859; skan site-crane-heritage 1 -> 0
 - Topografia: T-322.
+
+### G-895 Szybkie użycie apteczki pomija atut Field Medic
+- Ważność: S4 · Zasięg: klawisz szybkiego użycia apteczki z atutem Field Medic
+- Opis: item-system woła useConsumable bez healScale(perks); komenda use-item go stosuje, więc atut działa tylko przy komendzie. Znalezione przy G-892.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
