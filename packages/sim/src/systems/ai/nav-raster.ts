@@ -53,6 +53,14 @@ export interface Raster {
   readonly ground: GroundField;
 }
 
+/** A Dijkstra field grown on a raster from a goal's cell (`nav-field.ts`). */
+export interface Field {
+  readonly raster: Raster;
+  /** Walking distance to the goal in half cells (a straight step 2, a diagonal 3), `FAR` where unreachable. */
+  readonly dist: Int32Array;
+  readonly source: number;
+}
+
 export const cellRange = (lo: number, hi: number, origin: number, cells: number): [number, number] => [
   Math.max(0, Math.ceil((lo - origin) / NAV_CELL - 0.5)),
   Math.min(cells - 1, Math.floor((hi - origin) / NAV_CELL - 0.5)),
