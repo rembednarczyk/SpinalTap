@@ -2435,7 +2435,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-897 Migotanie trawa/plac przy końcu zebry (podzamcze-2-1)
 - Ważność: S4 · Zasięg: podzamcze-2-1 1060,470, koniec zebry między placami
 - Opis: Po G-836 (zebry przy placach, #597) 1 m trawy między placami przy końcu zebry migocze z placem (kerb-fill-flicker). Klucz przyjęty w bazie decyzją użytkownika 16.11, do naprawy w imporcie (kerb-fill.ts).
-- Status: zgłoszone
+- Status: w PR #654; wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import
 - Klucze skanu: kerb-fill-flicker podzamcze-2-1 1060,470
 
@@ -2466,6 +2466,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: naprawione (PR #653); wcześniej: w PR #653; wcześniej: potwierdzone (łowca 16.11); wcześniej: do potwierdzenia
 - Pakiet właściciela: packages/sim
 - Łowca: lastThreat (combat-system.ts:128 threaten) nie wchodzi do SaveSnapshot, a calmForSave go nie zeruje. Po wczytaniu strzał gracza <3 s po strzale wroga, gdy w 30 m nie ma zaangażowanego AI (np. strzelec zabity), daje offend(gunfire): incidents 1 zamiast 0, ziarna 4, 1, 7 (scena streetSim, zapis jak SaveController.snapshot). Czytają go też scanner-system.ts:162 i hud-sync.ts:36 (isCalm), niezmierzone.
+
+### G-902 Goła łata między chodnikiem w793299545 a trawnikiem w804709930 (Ruska, Podzamcze)
+- Ważność: S4 · Zasięg: podzamcze-2-1 x 1066-1070, z 479,5-488
+- Opis: Ortofoto pokazuje płyty; reguła gołej ziemi nie kładzie tam nic, bo pas jest dalej niż 5 m od asfaltu (kerbStrips). Po G-897 (#654) granica cofa się o 0,5 m (pas 2,25 x 0,5 m). Żaden rodzaj skanu tego nie liczy: kandydat na nową kontrolę (goła ziemia na płytach ortofoto przy chodniku).
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
