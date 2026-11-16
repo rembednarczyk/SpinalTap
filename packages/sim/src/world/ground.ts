@@ -271,15 +271,16 @@ export class GroundField {
   /**
    * Is the ground at (x, z) a bridge's deck over the terrain with no room under it (G-062), by its
    * abutments: ground for all feet, whose edge is a wall to the feet beside it more than a step low?
+   * With `reach`, for feet reaching up to it: a deck within it counts too (G-898).
    */
-  onLowDeck(x: number, z: number): boolean {
+  onLowDeck(x: number, z: number, reach = -Infinity): boolean {
     if (!this.hasTerrain) return false;
     const i = this.chunkIndex(x, z);
     const decks = this.chunkDecks[i];
     if (!decks) return false;
     const grid = this.chunks[i]?.terrain;
     const h = grid ? terrainHeightAt(grid, x, z) : 0;
-    return groundOver(decks, x, z, h, -Infinity) > h;
+    return groundOver(decks, x, z, h, reach) > h;
   }
 
   /** Too steep to walk on (a bank, ADR-0043)? */
