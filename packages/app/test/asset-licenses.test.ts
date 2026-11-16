@@ -51,15 +51,16 @@ describe("asset licences (ADR-0063, 15.11)", () => {
     expect(missingNotices([credit({ license: "CC-BY-NC-4.0" })], () => null)).toEqual([]);
   });
 
-  it("lists the non-commercial works in docs/assety-nc.md; today there are none", () => {
-    expect(CREDITS.filter((c) => NON_COMMERCIAL.includes(c.license)).map((c) => c.id)).toEqual([]);
+  it("lists the non-commercial works in docs/assety-nc.md; the techwear jacket from VRoid Hub (ADR-0086)", () => {
+    expect(CREDITS.filter((c) => NON_COMMERCIAL.includes(c.license)).map((c) => c.id)).toEqual(["vroid-hub-kimi"]);
     const doc = ncReport(CREDITS);
     if (process.env.ASSETS_NC === "update") writeFileSync(NC_DOC, doc);
     expect(readFileSync(NC_DOC, "utf8"), "docs/assety-nc.md is stale: ASSETS_NC=update").toBe(doc);
-    expect(doc).toContain("Brak:");
+    expect(doc).not.toContain("Brak:");
+    expect(doc).toContain("| vroid-hub-kimi | Kimi \\|\\| Desktop Mate Model | Toriss | VRoid-Hub-NC | https://hub.vroid.com/license?");
     // With one, the list names it, its licence, its terms and its files.
     const vroid = credit({ id: "vroid-x", title: "Girl", license: "VRoid-Hub-NC", licenseUrl: "https://hub.vroid.com/t", files: ["models/girl.vrm"] });
-    const rows = ncReport([...CREDITS, vroid, credit({ id: "nc-sa", license: "CC-BY-NC-SA-4.0" })]).split("\n").filter((l) => l.startsWith("| ") && !l.startsWith("| id "));
+    const rows = ncReport([vroid, credit({ id: "nc-sa", license: "CC-BY-NC-SA-4.0" })]).split("\n").filter((l) => l.startsWith("| ") && !l.startsWith("| id "));
     expect(rows).toEqual(["| vroid-x | Girl | Someone | VRoid-Hub-NC | https://hub.vroid.com/t | models/girl.vrm |", "| nc-sa | Thing | Someone | CC-BY-NC-SA-4.0 | https://creativecommons.org/licenses/by-nc-sa/4.0/ | city/x.glb |"]);
   });
 });
