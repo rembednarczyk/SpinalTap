@@ -38,7 +38,7 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
 - Kolejność systemów ECS tylko w `createSystems()`.
 - Bez god objectów (ADR-0031): plik źródłowy do 500 linii, funkcja i komponent do 120 (ESLint pilnuje; wyjątki tylko dla tabel z danymi). Klasa powyżej 20 metod to god object: zapadka `tools/code-health` trzyma listę z bazą, która tylko spada (`GOD_BASELINE=update` w commicie podziału), a nowa klasa ponad limit to czerwony test. Nowa funkcja w app dostaje własny kontroler i prezenter, w UI wąski interfejs intencji i hook, w engine własną część za fasadą `BabylonRenderer`.
 - Zmiana schematu zapisu: podbij `SAVE_SCHEMA_VERSION` i dodaj migrację w `packages/persistence/src/migrations.ts` z testem.
-- Zmiana reguł symulacji zmienia złoty hash w `packages/sim/test/determinism.test.ts`; aktualizuj go świadomie (`vitest -u`) i napisz w commicie dlaczego.
+- Zmiana reguł symulacji zmienia złoty hash podłogi testowej w `packages/sim/test/determinism.test.ts` (mały świat poza miastem: zmiana treści `lublin` ani tablic go nie rusza, a Lublin sprawdza tam test dwóch równych przebiegów bez złotej liczby). Aktualizuj go tylko ręcznie (`vitest -u`) i napisz w commicie, która reguła go zmieniła; `pnpm hashes:check --write` go nie zapisuje.
 - Zmiana wyglądu NPR: `pnpm build && pnpm exec playwright test e2e/npr-perf.spec.ts --update-snapshots=all`, a nową migawkę obejrzyj przed commitem.
 - Teksty dla gracza (ADR-0056): angielski domyślny, polski w opcjach. Nowy tekst trafia do katalogów `i18n/{en,pl}` w obu językach, a `core` i `sim` trzymają klucze, nie zdania. Skan `tools/i18n-scan` liczy polskie literały poza katalogami: baza tylko spada (`I18N_BASELINE=update`). Polski katalog zmieniasz tylko świadomie, bo gracz z polskim ustawieniem nie powinien widzieć zmian przy samym tłumaczeniu.
 
@@ -60,7 +60,7 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
 ## Topografia Lublina
 - Miasto ma się zgadzać z prawdziwym Lublinem (OSM i NMT, ADR-0042). Cyberpunkowa warstwa leży na nim, nie zastępuje go.
 - Każde odstępstwo jest w `docs/topografia.md`: celowe z powodem, niezamierzone ze zgłoszeniem glitcha. Zmiana importu, treści `lublin`, scen, terenu albo rozstawienia w `mapcity` przechodzi przegląd agenta `topography-curator`.
-- Skan `tools/glitch-scan/test/glitch-scan.test.ts` liczy znane rodzaje glitchy w całym mieście i porównuje z `glitch-baseline.json`: wzrost to czerwony test. Poprawka obniża bazę (`GLITCH_BASELINE=update`) w tym samym commicie, a nowy policzalny rodzaj dostaje kontrolę w skanie.
+- Skan `tools/glitch-scan/test/glitch-scan.test.ts` znajduje znane rodzaje glitchy w całym mieście i porównuje ich miejsca z bazą `tools/glitch-scan/test/baseline/` (lista znanych miejsc, #493): każde nowe miejsce to czerwony test, nawet gdy suma spada. Poprawka usuwa miejsca z bazy (`pnpm scan:update`) w tym samym commicie; dodanie miejsca tylko świadomie (`GLITCH_BASELINE=accept`) z uzasadnieniem w commicie. `pnpm scan:diff origin/main report` pokazuje przybyłe i ubyłe. Nowy policzalny rodzaj dostaje kontrolę w skanie.
 - Poprawka glitcha: test pada bez niej i przechodzi z nią, jeden glitch na commit.
 
 ## Definition of Done
