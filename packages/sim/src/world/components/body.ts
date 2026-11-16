@@ -24,11 +24,11 @@ export interface Combatant {
   reloading: number;
   /** Seconds until the next shot is allowed. */
   cooldown: number;
-  /** Weapon put away: no shots until drawn again. Presentation-only otherwise; not saved. */
+  /** Weapon put away: no shots until drawn again. Saved for the player (`stance`, G-883). */
   holstered: boolean;
   /** Seconds left of the draw; shots wait for it. */
   drawing: number;
-  /** Extra spread from recent shots in radians; recovers over time. Saved for NPCs (G-185), not for the player (ADR-0016). */
+  /** Extra spread from recent shots in radians; recovers over time. Saved (G-185, for the player G-883). */
   bloom: number;
   /** An NPC that is fighting this step holds its weapon up (presentation only, not saved). */
   engaged?: boolean;
@@ -36,7 +36,7 @@ export interface Combatant {
 
 /**
  * Melee state of a combatant (ADR-0019): the swing in progress, the combo, the guard and
- * stagger. Transient like the holster and the bloom: not saved, a loaded game starts idle.
+ * stagger. Saved unless at rest (`EntitySnapshot.melee`, G-883): a loaded game strikes when the saved one would.
  */
 export interface MeleeState {
   /** "windup": the swing is on its way and lands when `timer` runs out; "recovery": it landed. */
@@ -64,8 +64,8 @@ export interface MeleeState {
 }
 
 /**
- * How the character holds itself (ADR-0016). Transient like the holster: not saved, a loaded
- * game starts standing.
+ * How the character holds itself (ADR-0016). Saved with the player's stance (G-883): a game
+ * saved crouched or aiming loads so.
  */
 export interface Posture {
   /** Wants to crouch (the input is held). */
