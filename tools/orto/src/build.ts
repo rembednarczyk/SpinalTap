@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { COVER_DIR, FLIGHTS, defaultCache } from "./config.ts";
 import { classifyRect, coverFiles, coverToFiles, emptyCover, readCover } from "./cover.ts";
+import { applyFixes } from "./cover-fixes.ts";
 import { COVER_NAMES } from "./classify.ts";
 import { MAP_REGIONS, regionsOf } from "./region.ts";
 import { type CoverEntry, MANIFEST, manifest } from "./manifest.ts";
@@ -47,6 +48,8 @@ for (const asked of regionsOf(argv)) {
     console.log(`${region.slug}: no cached tiles`);
     continue;
   }
+  const fixed = applyFixes(cover);
+  if (fixed) console.log(`${region.slug}: ${fixed} samples corrected (cover-fixes.ts)`);
   const out = coverToFiles({ ...cover, header: { ...cover.header, tiles: tiles.map(({ cell, flight, service, fetched }) => ({ cell, flight, service, fetched })) } });
   const f = coverFiles(region.slug);
   writeFileSync(f.png, out.png);

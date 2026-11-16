@@ -121,7 +121,7 @@
         "maxX": 460,
         "maxZ": 160
       },
-      "bytes": 84885,
+      "bytes": 84868,
       "cells": [
         "krakowskie-0-0",
         "krakowskie-1-0",
@@ -350,8 +350,8 @@
       ],
       "samples": {
         "none": 0,
-        "green": 122426,
-        "paving": 628081,
+        "green": 121674,
+        "paving": 628833,
         "asphalt": 276662,
         "shadow": 2314,
         "unknown": 12115,

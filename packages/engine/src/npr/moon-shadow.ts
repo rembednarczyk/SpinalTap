@@ -197,7 +197,10 @@ export class MoonShadow {
       }
       const data = new VertexData();
       data.positions = out;
-      data.indices = m.getIndices() ?? [];
+      // A copy (G-867): `getIndices` hands out the caster's own array, and MergeMeshes grows the
+      // first clone's indices in place. The caster kept the merged list, and the next rebuild
+      // indexed vertices the proxy no longer had: the GPU fills those in at random.
+      data.indices = m.getIndices(false, true) ?? [];
       const c = new MeshClass(`${m.name}-shadow`, this.scene);
       data.applyToMesh(c);
       return c;

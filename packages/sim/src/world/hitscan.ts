@@ -1,7 +1,8 @@
 import type { CameraMode, EntityId, HitZone, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import { type Aabb, rayAabb } from "./collision";
-import { groundOf } from "./ground";
+import { rayDecks } from "./deck";
+import { type GroundField, groundOf } from "./ground";
 import { solidIndexOf } from "./solid-index";
 import { raySolidEntity } from "./solids";
 import type { Entity } from "./components";
@@ -29,6 +30,16 @@ export const bodyAabb = (e: Entity): Aabb | null => {
 };
 
 /**
+ * Distance along a ray to the ground: the terrain, or a bridge's deck over it (G-071). The deck
+ * is the floor for the feet (ADR-0053) and a slab for shots and sight, over it and under it.
+ */
+const groundRay = (ground: GroundField, origin: Vec3, dir: Vec3, maxDist: number): number | null => {
+  const t = ground.rayHit(origin, dir, maxDist);
+  if (!ground.hasTerrain || ground.bridges.length === 0) return t;
+  return rayDecks(ground.bridges, origin, dir, t ?? maxDist, ground) ?? t;
+};
+
+/**
  * Distance along a ray to the first static geometry: solids (boxes, slopes, prisms) and the
  * terrain (ADR-0043), or null within `maxDist`. For the `camera`, street furniture does not count.
  */
@@ -46,7 +57,7 @@ export const rayGeometry = (world: World<Entity>, origin: Vec3, dir: Vec3, maxDi
       hit = true;
     }
   }
-  const t = groundOf(world).rayHit(origin, dir, best);
+  const t = groundRay(groundOf(world), origin, dir, best);
   if (t !== null && t < best) return t;
   return hit ? best : null;
 };
@@ -87,11 +98,9 @@ export const lineOfSight = (world: World<Entity>, from: Vec3, to: Vec3, terrain 
   const len = Math.hypot(dx, dy, dz);
   if (len < 1e-6) return true;
   const dir = { x: dx / len, y: dy / len, z: dz / len };
-  for (const e of solidIndexOf(world).alongSegment(from, to)) {
-    if (sight && e.sightThrough) continue;
-    if (raySolidEntity(from, dir, e, len) !== null) return false;
-  }
-  return !terrain || groundOf(world).rayHit(from, dir, len) === null;
+  // Whether, not which: only the solids whose boxes the segment passes, not all of its box's (G-884).
+  if (solidIndexOf(world).someAlongSegment(from, to, (e) => !(sight && e.sightThrough) && raySolidEntity(from, dir, e, len) !== null)) return false;
+  return !terrain || groundRay(groundOf(world), from, dir, len) === null;
 };
 
 /** Does the eye at `from` see `to`: nothing static between but the fences and hedges (ADR-0077)? */

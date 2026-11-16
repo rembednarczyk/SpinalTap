@@ -46,6 +46,10 @@ export class Cells {
   readonly label: Uint8Array;
   /** 1 in a town's paved place (`bare-cover.ts`, `TownPlaces`). */
   readonly zone: Uint8Array;
+  /** 1 in a pedestrian street's frontage (`bare-fronts.ts`): paved where the cover gives no lawn or paving. */
+  readonly front: Uint8Array;
+  /** 1 under a building's walls (`cover`'s `wall`): a frontage ends at them. */
+  readonly wall: Uint8Array;
   /** Under a carriageway or a car park (a `road` piece): its number from 1, 0 off them. */
   readonly road: Int32Array;
   /** 1 under a piece a kerb's strip ends at (a pavement, a lawn: `bare-strips.ts`). */
@@ -63,6 +67,8 @@ export class Cells {
     this.nz = Math.round((rect.maxZ - rect.minZ) / STEP);
     this.label = scratch.u8("cells.label", this.nx * this.nz, LABEL.other);
     this.zone = scratch.u8("cells.zone", this.nx * this.nz);
+    this.front = scratch.u8("cells.front", this.nx * this.nz);
+    this.wall = scratch.u8("cells.wall", this.nx * this.nz);
     this.road = scratch.i32("cells.road", this.nx * this.nz);
     this.side = scratch.u8("cells.side", this.nx * this.nz);
   }
@@ -74,15 +80,17 @@ export class Cells {
   }
   /**
    * Marks the cells whose centres lie in the ring covered (carriageway number `road`, from 1; a
-   * kerb's strip ends at it: `side`) and keeps the ring, so the fills can be cut by it (`coversNear`).
+   * kerb's strip ends at it: `side`; a building's walls: `wall`) and keeps the ring, so the fills
+   * can be cut by it (`coversNear`).
    */
-  cover(ring: readonly Pt[], road = 0, side = false): void {
+  cover(ring: readonly Pt[], road = 0, side = false, wall = false): void {
     const runs = this.scan(ring);
     const r = this.runs;
     for (let k = 0; k < runs; k++) {
       this.label.fill(LABEL.covered, r[2 * k]!, r[2 * k + 1]!);
       if (road) this.road.fill(road, r[2 * k]!, r[2 * k + 1]!);
       if (side) this.side.fill(1, r[2 * k]!, r[2 * k + 1]!);
+      if (wall) this.wall.fill(1, r[2 * k]!, r[2 * k + 1]!);
     }
     let [minX, minZ, maxX, maxZ] = [Infinity, Infinity, -Infinity, -Infinity];
     for (const p of ring) {
@@ -101,6 +109,11 @@ export class Cells {
   zoneIn(ring: readonly Pt[]): void {
     const runs = this.scan(ring);
     for (let k = 0; k < runs; k++) this.zone.fill(1, this.runs[2 * k]!, this.runs[2 * k + 1]!);
+  }
+  /** Sets `to` to 1 in the cells whose centres lie in the ring. */
+  mark(ring: readonly Pt[], to: Uint8Array): void {
+    const runs = this.scan(ring);
+    for (let k = 0; k < runs; k++) to.fill(1, this.runs[2 * k]!, this.runs[2 * k + 1]!);
   }
   /** Marks the cells within `d` of the ring (a point is a ring of one), or in it, part of a town's paved place. */
   zoneNear(ring: readonly Pt[], d: number): void {
