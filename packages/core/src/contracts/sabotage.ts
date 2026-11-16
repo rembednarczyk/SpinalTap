@@ -1,5 +1,4 @@
 import { type GameClock, GAME_SECONDS_PER_REAL_SECOND, SECONDS_PER_DAY, SECONDS_PER_HOUR, secondOfDay } from "../time/game-clock";
-import type { Contract } from "./contracts";
 
 /**
  * W-3's job "Odbiór partii" (ADR-0082 §1): spoil the army's batch of twelve drones before it is
@@ -24,6 +23,14 @@ export const SABOTAGE = {
   crew: 4,
 } as const;
 
+/** What the sabotage's rules read of a contract (its fields, without importing the contract's module). */
+interface SabotageJob {
+  readonly reward: number;
+  readonly progress?: number;
+  readonly breach?: readonly string[];
+  readonly seenLeaving?: true;
+}
+
 /** Raised for good once the virus is in the core: the line's screens show it from then on. */
 export const W3_VIRUS_FLAG = "w3:calibration-virus";
 
@@ -31,10 +38,10 @@ export const W3_VIRUS_FLAG = "w3:calibration-virus";
 export const contractVirusKey = (contractId: string): string => `${contractId}-virus`;
 
 /** The upload's length in seconds: shorter once the terminal is breached with ICEpick. */
-export const sabotageUploadSeconds = (c: Contract): number => ((c.breach ?? []).includes("icepick") ? SABOTAGE.breachUploadSeconds : SABOTAGE.uploadSeconds);
+export const sabotageUploadSeconds = (c: SabotageJob): number => ((c.breach ?? []).includes("icepick") ? SABOTAGE.breachUploadSeconds : SABOTAGE.uploadSeconds);
 
 /** Is the virus in: the upload has run its whole length? */
-export const virusUploaded = (c: Contract, ticksPerSecond: number): boolean => c.progress !== undefined && c.progress >= sabotageUploadSeconds(c) * ticksPerSecond;
+export const virusUploaded = (c: SabotageJob, ticksPerSecond: number): boolean => c.progress !== undefined && c.progress >= sabotageUploadSeconds(c) * ticksPerSecond;
 
 /**
  * The tick the batch ships: the next 06:00 with at least `minHours` of game time left to it, so 6
@@ -48,4 +55,4 @@ export const sabotageDeadlineTick = (tick: number, clock: GameClock, ticksPerSec
 };
 
 /** The pay once Seki is out, by whether she was seen leaving (the agreed reward is the unseen one). */
-export const sabotagePay = (c: Contract): number => (c.seenLeaving ? Math.round((c.reward * SABOTAGE.seenReward) / SABOTAGE.quietReward) : c.reward);
+export const sabotagePay = (c: SabotageJob): number => (c.seenLeaving ? Math.round((c.reward * SABOTAGE.seenReward) / SABOTAGE.quietReward) : c.reward);
