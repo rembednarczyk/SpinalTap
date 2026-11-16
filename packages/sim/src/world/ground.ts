@@ -108,8 +108,11 @@ export class GroundField {
   private readonly chunkCuts: readonly (readonly Rect[])[];
   /** Where no point is too steep to walk, known without sampling a slope (G-886). */
   readonly gentle: GentleBlocks;
+  /** What it was made of, as given: the steering's shared store knows two grounds of the same content by it (`nav-share.ts`). */
+  readonly made: { readonly chunks: readonly GroundChunk[]; readonly cuts: readonly GroundCut[]; readonly vaults: readonly GroundVault[] };
 
   constructor(world: readonly GroundChunk[], cuts: readonly GroundCut[] = [], vaults: readonly GroundVault[] = []) {
+    this.made = { chunks: world, cuts, vaults };
     this.vaults = new VaultIndex(vaults);
     const chunks = cuts.length > 0 ? [...cuts.map(cutChunk), ...world] : world;
     this.chunks = chunks;

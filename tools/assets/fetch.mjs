@@ -75,6 +75,11 @@ const fetchChecked = async (url, dst, expected) => {
 let failed = 0;
 for (const s of sources) {
   if (only && !only.has(s.id)) continue;
+  // A VRoid Hub model (ADR-0086) is downloaded by hand after a login; its tool checks the sha256.
+  if (s.manual) {
+    console.log(`skip  ${s.id}: ${s.manual}`);
+    continue;
+  }
   try {
     const why = refused(s);
     if (why) throw new Error(why);
