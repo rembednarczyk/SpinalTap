@@ -74,50 +74,54 @@ export const DebriefCard = () => {
           <span className="debrief__rank-text">{t(`rank.${debrief.rank}`)}</span>
         </div>
       </header>
-      {debrief.variation && (
-        <p className="debrief__variation" data-testid="debrief-variation">
-          {debrief.variation.labels.join(" · ")}
-          {debrief.variation.twist && <b className="debrief__twist"> · {debrief.variation.twist}</b>}
-        </p>
-      )}
-      <ul className="debrief__badges">
-        {debrief.badges.map((b) => (
-          <li
-            key={b.id}
-            className={`debrief__badge${b.earned ? " debrief__badge--earned" : ""}${b.style ? " debrief__badge--style" : ""}`}
-            data-testid={`badge-${b.id}`}
-            title={t(`badge.${b.id}.hint`)}
-          >
-            <BadgeIcon badge={b.id} />
-            <span className="debrief__badge-label">{t(`badge.${b.id}`)}</span>
-            <span className="debrief__badge-state">{b.earned ? "✓" : "✗"}</span>
-            {b.style && <span className="debrief__badge-style">{t("debrief.style")}</span>}
-          </li>
-        ))}
-      </ul>
-      <dl className="debrief__pay">
-        <div>
-          <dt>{t("debrief.rate")}</dt>
-          <dd>{money(locale, debrief.reward)}</dd>
-        </div>
-        <div>
-          <dt>{t("debrief.bonus")}</dt>
-          <dd>{debrief.bonus > 0 ? `+${money(locale, debrief.bonus)}` : "—"}</dd>
-        </div>
-        <div>
-          <dt>
-            {t("debrief.styleBonus")}
-            {debrief.fixer ? ` (${debrief.fixer})` : ""}
-          </dt>
-          <dd>{debrief.styleBonus > 0 ? `+${money(locale, debrief.styleBonus)}` : "—"}</dd>
-        </div>
+      <div className="debrief__body">
+        {debrief.variation && (
+          <p className="debrief__variation" data-testid="debrief-variation">
+            {debrief.variation.labels.join(" · ")}
+            {debrief.variation.twist && <b className="debrief__twist"> · {debrief.variation.twist}</b>}
+          </p>
+        )}
+        <ul className="debrief__badges">
+          {debrief.badges.map((b) => (
+            <li
+              key={b.id}
+              className={`debrief__badge${b.earned ? " debrief__badge--earned" : ""}${b.style ? " debrief__badge--style" : ""}`}
+              data-testid={`badge-${b.id}`}
+              title={t(`badge.${b.id}.hint`)}
+            >
+              <BadgeIcon badge={b.id} />
+              <span className="debrief__badge-label">{t(`badge.${b.id}`)}</span>
+              <span className="debrief__badge-state">{b.earned ? "✓" : "✗"}</span>
+              {b.style && <span className="debrief__badge-style">{t("debrief.style")}</span>}
+            </li>
+          ))}
+        </ul>
+        <dl className="debrief__pay">
+          <div>
+            <dt>{t("debrief.rate")}</dt>
+            <dd>{money(locale, debrief.reward)}</dd>
+          </div>
+          <div>
+            <dt>{t("debrief.bonus")}</dt>
+            <dd>{debrief.bonus > 0 ? `+${money(locale, debrief.bonus)}` : "—"}</dd>
+          </div>
+          <div>
+            <dt>
+              {t("debrief.styleBonus")}
+              {debrief.fixer ? ` (${debrief.fixer})` : ""}
+            </dt>
+            <dd>{debrief.styleBonus > 0 ? `+${money(locale, debrief.styleBonus)}` : "—"}</dd>
+          </div>
+          <div>
+            <dt>{t("debrief.time")}</dt>
+            <dd>{formatSeconds(debrief.seconds)}</dd>
+          </div>
+        </dl>
+      </div>
+      <dl className="debrief__pay debrief__sum">
         <div className="debrief__total">
           <dt>{t("debrief.total")}</dt>
           <dd data-testid="debrief-total">{money(locale, total)}</dd>
-        </div>
-        <div>
-          <dt>{t("debrief.time")}</dt>
-          <dd>{formatSeconds(debrief.seconds)}</dd>
         </div>
       </dl>
       <button type="button" className="debrief__close" onClick={() => intents.dismissDebrief()}>
