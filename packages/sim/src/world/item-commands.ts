@@ -18,8 +18,6 @@ import {
   isConsumableId,
   removeMod,
   unequip,
-  useConsumable,
-  healScale,
   BUFF_CATALOG,
   buffDurationScale,
   weaponStatsOf,
@@ -29,7 +27,7 @@ import {
 import type { SimContext } from "./context";
 import { dropLoot } from "./domain-ops";
 import { noteHookLoot } from "./hook-tracker";
-import { withPlayerMaxHp } from "../systems/player-control-system";
+import { usePlayerConsumable } from "../systems/item-system";
 
 type ItemCommandType = "equip-item" | "unequip-item" | "use-item" | "drop-item" | "install-mod" | "remove-mod" | "take-loot";
 
@@ -70,8 +68,7 @@ const useItem = (ctx: SimContext, cmd: Command<"use-item">): void => {
   if (!("stack" in cmd.ref) || !isConsumableId(cmd.ref.stack)) return;
   const player = ctx.world.with("player", "health").first;
   if (!player) return;
-  // Field Medic (ADR-0059) heals more.
-  const r = useConsumable(domain.inventory, cmd.ref.stack, withPlayerMaxHp(player.health, domain), healScale(domain.progression.perks));
+  const r = usePlayerConsumable(domain, cmd.ref.stack, player.health);
   if (!r.ok) return;
   player.health = r.health;
   // Wave 2 (ADR-0033): a buff starts (or refreshes), a capacity shard counts for good. The body
