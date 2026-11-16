@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
+import { type StreetPropItem, VEHICLE_SIZE, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
 import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
@@ -735,7 +735,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "furniture-overlap": () => {
     const solid = Object.values(WORLD_STREET_PROPS)
       .flat()
-      .filter((i) => i.prop !== "bollard" && i.prop !== "manhole" && furnitureRadius(i) > 0)
+      // A building site's stacked container (ADR-0087) stands on the one under it, not beside it.
+      .filter((i) => i.prop !== "bollard" && i.prop !== "manhole" && furnitureRadius(i) > 0 && !(i.prop === "site-cabin" && siteCabinStacked(i.variant)))
       .map((i) => ({ i, r: furnitureRadius(i), f: footprint(i) }));
     return solid.flatMap((a, k) =>
       solid.slice(k + 1).flatMap((b) => {

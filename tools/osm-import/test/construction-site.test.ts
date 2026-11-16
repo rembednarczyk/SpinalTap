@@ -5,6 +5,7 @@ import { enSite } from "../../../packages/ui/src/i18n/en/site.ts";
 import { plSite } from "../../../packages/ui/src/i18n/pl/site.ts";
 import { DIG_CELL, type SiteGround, lineDistance } from "../src/construction-ground.ts";
 import { FLIGHT_CELL } from "../../../packages/sim/src/content/lublin/shape.ts";
+import { distanceToPiece } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import { BOARD_KEYS, SETS, planSite, siteSeed, siteSet } from "../src/construction-site.ts";
 import { FENCE_INSET, insetRing } from "../src/construction-fence.ts";
 import { type Pt, pointInRing } from "../src/geometry.ts";
@@ -85,6 +86,12 @@ describe("the building sites' generator (ADR-0087 stage 1)", () => {
       }
       const [outer, inner] = [insetRing(outline, FENCE_INSET - 0.01), insetRing(outline, FENCE_INSET + 0.01)];
       for (const p of s.pieces.filter((q) => q.prop === "site-fence")) expect([pointInRing(p, outer), pointInRing(p, inner)]).toEqual([true, false]);
+      // The panels stop short of the gate's posts and its parked leaf.
+      const gate = s.pieces.find((q) => q.prop === "site-gate")!;
+      for (const p of s.pieces.filter((q) => q.prop === "site-fence")) {
+        const [hx] = reach(p);
+        expect(Math.min(...footprint(p, hx, 0.04).map((q) => distanceToPiece(gate, q.x, q.z))), `panel at ${p.x},${p.z}`).toBeGreaterThan(0.01);
+      }
       // The building's corner is left out of the fence.
       expect(s.unfenced).toBeGreaterThan(0);
     }

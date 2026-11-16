@@ -19,8 +19,8 @@ const ACROSS = 0.15;
 const SHORTEST = 1;
 /** A gate further than this from every street a vehicle takes is a wicket (m). */
 export const GATE_REACH = 25;
-/** Clear of a gate's posts to the next panel (m), and the board's gap to the opening. */
-const POST_GAP = 0.15;
+/** Clear of the opening to the next panel (m): the gate's post (`SITE_GATE.post` each side of its middle) and 2 cm; the board's gap to the opening. */
+const POST_GAP = 2 * SITE_GATE.post + 0.02;
 const BOARD_GAP = 0.3;
 
 /** One side of the fence's ring: from `a`, `len` long along `d`, `n` its outward normal. */
