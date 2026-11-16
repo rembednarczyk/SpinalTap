@@ -340,6 +340,18 @@ Przed etapem 1 kurator robi audyt miejsca: ortofoto, wysokość pokładu kładki
    - Testy: migawka NPR obejrzana, wszystkie sceny perf, pomiar telefonu użytkownika z bramką ms.
    - Zrzuty: zestawienie obok grafik 01 i 02 (te same kadry), telefon High i low.
 
+## Etap 3a: zmiany kontraktów i decyzje (16.11)
+- **Kontrakty dodane w etapie 3a:**
+  - efekt renderera `line-screens` i typ `LineScreens` w `core/ports/types.ts` (stan ekranów stanowisk i rdzenia: bez misji, upload, po wirusie);
+  - rodzaj haka `sabotage` w `HookContractKind` (`core/world/wave2.ts`).
+  Granice pakietów się nie zmieniają, a stan misji idzie do renderera tylko przez `RenderPort`.
+- **Decyzje użytkownika z 16.11:**
+  - wyjątek sabotażu w bilansie wave1 przyjęty. Pilnuje go test dochodu na minutę, liczący nagrodę, premię i styl;
+  - pasmo poziomu kontraktu 10–30;
+  - kamera serwerowni N ma martwy kąt przy terminalu od strony szafy, a `reboot_optics` oślepia ją w tej misji na 30 s. Cicha droga ma być wykonalna bez ICEpick.
+- **Zapis v40:** pola `route` i `seenLeaving` oraz efekty quickhacków (G-882), żeby wczytanie przy oślepionej kamerze nie podnosiło alarmu.
+- **Przeniesione do 3b razem z drogą głośną:** świadkowie z personelu (technicy) oraz zdarzenia `VirusUploadChanged` i `SabotageRouteChosen`. Do czasu 3b alarm przed wgraniem wirusa kończy zlecenie porażką o 06:00.
+
 ## Balans
 Stawki przy neutralnej reputacji u fixerów, przed mnożnikiem Genzō:
 
