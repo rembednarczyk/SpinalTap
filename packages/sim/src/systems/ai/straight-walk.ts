@@ -31,7 +31,7 @@ export const floorOf = (y: number, ground = 0): number => (y - ground < STEP_HEI
 const UNDER_STEP = 1;
 
 /** The part of the line from `a` to `b` (0..1 along it) inside the box, or null. */
-const clipTo = (a: Vec3, b: Vec3, box: { minX: number; maxX: number; minZ: number; maxZ: number }): [number, number] | null => {
+export const clipTo = (a: Vec3, b: Vec3, box: { minX: number; maxX: number; minZ: number; maxZ: number }): [number, number] | null => {
   let [t0, t1] = [0, 1];
   for (const [p, d, lo, hi] of [[a.x, b.x - a.x, box.minX, box.maxX], [a.z, b.z - a.z, box.minZ, box.maxZ]] as const) {
     if (Math.abs(d) < 1e-9) {
