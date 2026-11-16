@@ -8,6 +8,7 @@
 import { parseLength } from "./building-tags.ts";
 import { type Line } from "./features.ts";
 import { type Pt, lineLength, offsetLine, pointAlong, sliceLine } from "./geometry.ts";
+import { placementOffset } from "./lane-place.ts";
 import { MIN_FITTED, isCarriageway, roadWidth } from "./ground.ts";
 import { type Marking, oneway } from "./markings.ts";
 
@@ -75,17 +76,19 @@ export const fitLanes = (road: Line, samples: readonly KerbSample[], min: number
   const length = lineLength(road.line);
   const runs = [0, 1].flatMap((side) => runsOf(samples, side, length, min));
   if (runs.length === 0) return null;
-  const half = roadWidth(t) / 2;
+  // Each side's reach by `lanes`, off the middle where `placement` puts the line (G-825).
+  const off = placementOffset(t);
+  const half = [roadWidth(t) / 2 + off, roadWidth(t) / 2 - off];
   const least = Math.max(oneway(t) ? MIN_FITTED.oneway : MIN_FITTED.twoWay, lanes * MIN_LANE);
   const cuts = [...new Set([0, length, ...runs.flatMap((r) => [r.from, r.to])])].sort((a, b) => a - b);
   const pieces: Line[] = [];
   for (let k = 0; k + 1 < cuts.length; k++) {
     const [from, to] = [cuts[k]!, cuts[k + 1]!];
     if (to - from < 0.05) continue;
-    const reach = [0, 1].map((side) => Math.min(half, runs.find((r) => r.side === side && r.from <= from && r.to >= to)?.reach ?? half));
+    const reach = [0, 1].map((side) => Math.min(half[side]!, runs.find((r) => r.side === side && r.from <= from && r.to >= to)?.reach ?? half[side]!));
     const line = sliceLine(road.line, from, to);
-    if (reach[0] === half && reach[1] === half) {
-      pieces.push({ ...road, line });
+    if (reach[0] === half[0] && reach[1] === half[1]) {
+      pieces.push({ ...road, line: off === 0 ? line : offsetLine(line, off) });
       continue;
     }
     // Too narrow for its lanes: widened evenly on both sides.
@@ -93,7 +96,7 @@ export const fitLanes = (road: Line, samples: readonly KerbSample[], min: number
     const [left, right] = [reach[0]! + short, reach[1]! + short];
     const w = Math.round((left + right) * 10) / 10;
     // The rounding of the width goes to the fitted side: the other stays where the map's width has it.
-    const offset = reach[0] === half ? left - w / 2 : reach[1] === half ? w / 2 - right : (left - right) / 2;
+    const offset = reach[0] === half[0] ? left - w / 2 : reach[1] === half[1] ? w / 2 - right : (left - right) / 2;
     pieces.push({ ...road, tags: { ...t, "width:carriageway": String(w) }, line: offsetLine(line, Math.round(offset * 100) / 100) });
   }
   return pieces;

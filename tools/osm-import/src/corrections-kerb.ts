@@ -107,6 +107,22 @@ export const orthoSides = (id: string): readonly [boolean, boolean] | undefined 
 /** How fast a measured carriageway moves aside from its ends (m aside per m along), as the ADR's ramp between stations. */
 const ORTHO_RAMP = 0.1;
 
+/** The way's length, the ramps of a measured way's offset `off` at its ends (m) and its points' distances along it. */
+const orthoRamp = (l: Line, off: number) => {
+  const length = lineLength(l.line);
+  const at: number[] = [0];
+  for (let i = 1; i < l.line.length; i++) at.push(at[i - 1]! + Math.hypot(l.line[i]!.x - l.line[i - 1]!.x, l.line[i]!.z - l.line[i - 1]!.z));
+  return { length, ramp: Math.min(Math.abs(off) / ORTHO_RAMP, length / 2), at };
+};
+
+/** Metres a way's carriageway lies left of its line at its point `i` as `orthoPieces` lays it: 0 at its ends, the whole `ORTHO_OFFSETS` past its ramps. */
+export const orthoOffsetAt = (l: Line, i: number): number => {
+  const off = ORTHO_OFFSETS.get(l.id);
+  if (!off) return 0;
+  const { length, ramp, at } = orthoRamp(l, off);
+  return ramp > 0 ? off * Math.min(1, at[i]! / ramp, (length - at[i]!) / ramp) : 0;
+};
+
 /**
  * A measured way's carriageway moved aside onto the asphalt (`ORTHO_OFFSETS`), as `fitLanes` lays
  * a fitted piece, but from its ends on a ramp of `ORTHO_RAMP`: its ends stay on the nodes it shares
@@ -115,10 +131,7 @@ const ORTHO_RAMP = 0.1;
 export const orthoPieces = (l: Line): Line[] | null => {
   const off = ORTHO_OFFSETS.get(l.id);
   if (!off) return null;
-  const length = lineLength(l.line);
-  const ramp = Math.min(Math.abs(off) / ORTHO_RAMP, length / 2);
-  const at: number[] = [0];
-  for (let i = 1; i < l.line.length; i++) at.push(at[i - 1]! + Math.hypot(l.line[i]!.x - l.line[i - 1]!.x, l.line[i]!.z - l.line[i - 1]!.z));
+  const { length, ramp, at } = orthoRamp(l, off);
   // The ramps' ends as points of the line, so the offset runs straight between them.
   const cuts = [...new Set([ramp, length - ramp])].filter((s) => !at.some((a) => Math.abs(a - s) < 0.01));
   const pts = [...l.line.map((p, i) => ({ p, s: at[i]! })), ...cuts.map((s) => ({ p: pointAlong(l.line, s), s }))].sort((a, b) => a.s - b.s);

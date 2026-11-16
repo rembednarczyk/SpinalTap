@@ -2,7 +2,6 @@
 krakowskie-1-0 110,-192
 krakowskie-2-0 340,-265
 krakowskie-2-0 397,-90
-krakowskie-2-1 348,78
 krakowskie-2-1 333,98
 krakowskie-2-1 330,99
 krakowskie-2-1 331,99
