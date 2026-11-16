@@ -41,5 +41,5 @@ Lista wejść (`tools/osm-import/src/table-inputs.ts`, dawniej `fingerprint.ts`)
 ## Konsekwencje
 - Krok 1 i 2 to ok. dzień pracy jednego agenta, bez zmian gry, zapisu i hashy; kroki 3 i 4 po pomiarze kroków 1–2.
 - Tablice: nagłówek z odciskiem zmieniał jeden wiersz `*.generated.ts` (odwołane 16.11, patrz wyżej); `pnpm merge:main` przelicza je po każdym scaleniu.
-- Ryzyko kroku 1: odcisk musi obejmować wszystkie wejścia generatora, inaczej przegapi zmianę. Zabezpieczenie: job `tables` porównuje bajt w bajt przy każdej zmianie w `tools/osm-import`, `tools/orto` i `data/`.
+- Ryzyko kroku 1 (odwołane 16.11 razem z krokiem 1: odcisku już nie ma, świeżość sprawdza przeliczenie): odcisk musi obejmować wszystkie wejścia generatora, inaczej przegapi zmianę. Zabezpieczenie: job `tables` porównuje bajt w bajt przy każdej zmianie w `tools/osm-import`, `tools/orto` i `data/`.
 - Ryzyko kroku 2: zmienność maszyn CI. Mediana z kilku przebiegów main i próg względny 30%; pojedyncze odstające uruchomienie powtarzane raz.
