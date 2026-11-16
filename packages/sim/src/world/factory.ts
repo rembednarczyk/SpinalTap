@@ -27,7 +27,7 @@ export class IdAllocator {
   }
 }
 
-const actor = (id: EntityId, spawn: ActorSpawn): Entity => ({
+export const actor = (id: EntityId, spawn: ActorSpawn): Entity => ({
   id,
   key: spawn.key,
   position: spawn.position,
@@ -38,7 +38,7 @@ const actor = (id: EntityId, spawn: ActorSpawn): Entity => ({
   body: BODY,
 });
 
-const at = (p: Vec3): Pick<Entity, "position" | "prevPosition" | "yaw" | "prevYaw" | "pitch"> => ({
+export const at = (p: Vec3): Pick<Entity, "position" | "prevPosition" | "yaw" | "prevYaw" | "pitch"> => ({
   position: p,
   prevPosition: p,
   yaw: 0,

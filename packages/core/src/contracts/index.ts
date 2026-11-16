@@ -4,3 +4,4 @@ export * from "./debrief";
 export * from "./scoring";
 export * from "./variation";
 export * from "./sabotage";
+export * from "./sabotage-loud";

@@ -11,6 +11,7 @@ import type { BreachDaemonId } from "../hacking/quickhacks";
 import type { ContractVariation } from "../world/wave2";
 import type { GameClock } from "../time/game-clock";
 import { SABOTAGE, sabotageDeadlineTick, sabotageUploadSeconds } from "./sabotage";
+import { SABOTAGE_LOUD, type W3StationId, chargesLeft } from "./sabotage-loud";
 
 /**
  * Places where a contract sends Seki. Positions live in sim content. `text` is the catalog key of
@@ -97,6 +98,19 @@ export interface Contract {
   readonly route?: "quiet" | "loud";
   /** Sabotage only: the alarm went up after the virus was in, so she left seen (less pay). */
   readonly seenLeaving?: true;
+  /**
+   * Sabotage, the loud way (ADR-0082 stage 3b): present once the charges are taken from the
+   * armoury, the stations they are planted on so far.
+   */
+  readonly charges?: readonly W3StationId[];
+  /** Sabotage: a charge being planted, its ticks so far and Seki's health when she began (a hit starts it over). */
+  readonly planting?: { readonly station: W3StationId; readonly ticks: number; readonly hp: number };
+  /** Sabotage: the tick the charges go off unless she leaves the hall first (set with the last charge). */
+  readonly fuseTick?: number;
+  /** Sabotage: the charges went off, the line is down; out of the zone the job is done. */
+  readonly detonated?: true;
+  /** Sabotage: the tick the job's alarm went up (the second wave comes 60 s after). */
+  readonly alarmTick?: number;
   /**
    * What changes the plan (ADR-0034), rolled at acceptance. Absent on the first contracts and
    * in saves from before wave 2: a plain job.
@@ -294,6 +308,11 @@ export const DOCKS_CONTRACT_KINDS: readonly ContractKind[] = ["infiltrate", "hac
  * connection. Null for jobs without a clock.
  */
 export const contractSecondsLeft = (c: Contract, tick: number, ticksPerSecond: number): number | null => {
+  // The loud way (ADR-0082 stage 3b): the fuse's clock once it runs, none after the blast.
+  if (c.route === "loud") {
+    const end = c.detonated ? undefined : (c.fuseTick ?? c.deadlineTick);
+    return end === undefined ? null : Math.max(0, Math.ceil((end - tick) / ticksPerSecond));
+  }
   if (c.progress !== undefined) return Math.max(0, Math.ceil((contractKind(c) === "sabotage" ? sabotageUploadSeconds(c) : HACK_SECONDS) - c.progress / ticksPerSecond));
   return c.deadlineTick === undefined ? null : Math.max(0, Math.ceil((c.deadlineTick - tick) / ticksPerSecond));
 };
@@ -335,10 +354,24 @@ export const contractObjective = (c: Contract, secondsLeft: number | null = null
  * upload (its own clock), out of the zone unseen once the clock has run down.
  */
 const sabotageObjective = (c: Contract, site: TextRef, secondsLeft: number | null): TextRef => {
+  if (c.route === "loud") return loudObjective(c, site, secondsLeft);
   const step = c.progress === undefined ? "sabotage" : "sabotageUpload";
   if (c.progress !== undefined && secondsLeft === 0) return textRef("contract.objective.sabotageLeave");
   if (secondsLeft === null) return textRef(`contract.objective.${step}`, { site });
   return textRef(`contract.objective.${step}Timed`, { site, time: clock(secondsLeft) });
+};
+
+/**
+ * The loud way's step (ADR-0082 stage 3b): the server rooms cut off, the charges from the armoury,
+ * planted on the line (so many of three), the fuse's clock, away from W-3 after the blast.
+ */
+const loudObjective = (c: Contract, site: TextRef, secondsLeft: number | null): TextRef => {
+  if (c.detonated) return textRef("contract.objective.sabotageEscape");
+  if (c.fuseTick !== undefined) return textRef("contract.objective.sabotageFuse", { time: clock(secondsLeft ?? 0) });
+  const timed: Readonly<Record<string, string>> = secondsLeft === null ? {} : { time: clock(secondsLeft) };
+  const suffix = secondsLeft === null ? "" : "Timed";
+  if (!c.charges) return textRef(`contract.objective.sabotageCutOff${suffix}`, { site, ...timed });
+  return textRef(`contract.objective.sabotagePlant${suffix}`, { site, planted: SABOTAGE_LOUD.charges - chargesLeft(c), needed: SABOTAGE_LOUD.charges, ...timed });
 };
 
 /** Catalog key of the short note for the moment the job itself is done. */
