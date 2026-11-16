@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-870 Kamizelka kuloodporna wcina się w biust: dwie płytki nie dopasowane do sylwetki
+- Ważność: S3 · Zasięg: garment vest-plate na modelach VRoid (Seki i postacie kobiece)
+- Opis: Zgłoszenie użytkownika 15.11. vest-plate (garment-addons.ts) to dwa prostopadłościany na kości chest w stałym miejscu (at 0,-0,05,0,085, size 0,78), nieświadome kształtu ciała. Decyzja użytkownika: kamizelka jako powłoka z ubrania modelu (jak buildVest/buildShell w model-apron.ts), plus osobny research ubrań jako assetów (ADR).
+- Status: naprawione (16.11, 603 scalony); wcześniej: gotowe na gałęzi (3b1d870), zrzuty do akceptacji użytkownika; wcześniej: w naprawie (powłoka z ubrania modelu, gałąź ccr-ec2c4269-ilh8k8-g870; docelowo asset wg ADR-0086); wcześniej: nowy
+- Pakiet właściciela: packages/engine/src/renderer
+- powłoka-płyta z Tops (model-apron.ts PLATE, przycinanie model-shell-clip.ts, 3b1d870); test vest-plate-model.test.ts: przed Seki 272 z 505 wierzchołków do 3,3 cm przed płytą, po 0 w 4 pozach na Seki, gangerze i pliku Kaito; mori.vrm 4 mm, nie nosi kamizelki
+
 ### G-873 Graf poziomów: brak testu, że krawędzie nie przekraczają REACH 120 m
 - Ważność: S4 · Zasięg: packages/sim/src/world/nav.ts (REACH), graf W-3, S7, metro, Alchemia
 - Opis: PR #592 (3ac9856): attach w nav.ts testował linię wzroku do węzłów metra Targowa 1,74 km dalej (946 fałszywych przejść przez ziemię, 2,9 s z 4,0 s testów reinforcement-sidestep). Poprawka REACH 120 m (najdłuższa krawędź 84 m). Brakuje testu, który pilnuje, że nowe krawędzie grafu mieszczą się w REACH.
