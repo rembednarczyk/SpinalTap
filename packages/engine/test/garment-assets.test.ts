@@ -51,7 +51,7 @@ const dress = async (file: string, look: AppearanceDescriptor) => {
   const retarget = HumanoidRetarget.create(rig, model.root, model.prefix)!;
   loadouts.set(rig, look, "c");
   loadouts.setModel(rig, { retarget, meshes: model.meshes });
-  await loadouts.garmentsSettled();
+  await loadouts.dress.settled();
   const jacket = scene.getMeshByName("c-jacket-techwear") as Mesh | null;
   return { scene, loadouts, rig, model, jacket };
 };
@@ -77,7 +77,7 @@ describe("garment assets (ADR-0086)", () => {
   for (const file of ["seki.vrm", "ganger.vrm"]) {
     it(`${file}: the Hebi jacket is the techwear jacket on the model's own skeleton, the top under it hidden`, async () => {
       const { scene, loadouts, rig, model, jacket } = await dress(file, HEBI);
-      expect(loadouts.garments(rig)).toEqual(["jacket-techwear"]);
+      expect(loadouts.dress.garments(rig)).toEqual(["jacket-techwear"]);
       expect(jacket).not.toBeNull();
       const top = tops(model.meshes);
       expect(top.length).toBeGreaterThan(0);
@@ -119,15 +119,15 @@ describe("garment assets (ADR-0086)", () => {
     const { scene, loadouts, rig, model, jacket } = await dress("seki.vrm", HEBI);
     expect(jacket).not.toBeNull();
     loadouts.set(rig, PLAIN, "c");
-    expect(loadouts.garments(rig)).toEqual([]);
+    expect(loadouts.dress.garments(rig)).toEqual([]);
     expect(jacket!.isDisposed()).toBe(true);
     for (const m of tops(model.meshes)) expect(m.isEnabled(false)).toBe(true);
     expect(scene.meshes.filter((m) => m.name.endsWith("-rest"))).toEqual([]);
     loadouts.set(rig, HEBI, "c");
-    await loadouts.garmentsSettled();
-    expect(loadouts.garments(rig)).toEqual(["jacket-techwear"]);
+    await loadouts.dress.settled();
+    expect(loadouts.dress.garments(rig)).toEqual(["jacket-techwear"]);
     loadouts.setModel(rig, null);
-    expect(loadouts.garments(rig)).toEqual([]);
+    expect(loadouts.dress.garments(rig)).toEqual([]);
     expect(scene.getMeshByName("c-jacket-techwear")).toBeNull();
     for (const m of tops(model.meshes)) expect(m.isEnabled(false)).toBe(true);
   });
@@ -140,8 +140,8 @@ describe("garment assets (ADR-0086)", () => {
     const rig = buildHeroine(scene, materials, "r");
     const meshes = scene.meshes.length;
     loadouts.set(rig, HEBI, "c");
-    await loadouts.garmentsSettled();
-    expect(loadouts.garments(rig)).toEqual([]);
+    await loadouts.dress.settled();
+    expect(loadouts.dress.garments(rig)).toEqual([]);
     expect(loadouts.attachments(rig)).toEqual([]);
     expect(scene.meshes.length).toBe(meshes);
   });
