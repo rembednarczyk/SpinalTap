@@ -45,6 +45,8 @@ export const CONTRACT_BONUS: Readonly<Record<ContractKind, BonusCondition>> = {
   escort: { badge: "clean", label: "contract.bonus.escort", bonus: 110 },
   infiltrate: { badge: "netrunner", label: "contract.bonus.infiltrate", bonus: 110 },
   hack: { badge: "no_alarm", label: "contract.bonus.hack", bonus: 120 },
+  // Nobody killed on the way (ADR-0082 balance: +300).
+  sabotage: { badge: "clean", label: "contract.bonus.sabotage", bonus: 300 },
 };
 
 /** Par time of each template, in seconds from acceptance to the job being done (`swift`). */
@@ -56,6 +58,7 @@ export const CONTRACT_PAR_SECONDS: Readonly<Record<ContractKind, number>> = {
   escort: 150,
   infiltrate: 150,
   hack: 110,
+  sabotage: 600,
 };
 
 /** Share of the reward a fixer adds for each badge of their style, rounded to 5 €$. */

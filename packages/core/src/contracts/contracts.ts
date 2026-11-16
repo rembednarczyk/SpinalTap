@@ -9,6 +9,8 @@ import { CONTRACT_KINDS, type ContractGiverId, type ContractKind } from "./kinds
 import type { ContractTally } from "./scoring";
 import type { BreachDaemonId } from "../hacking/quickhacks";
 import type { ContractVariation } from "../world/wave2";
+import type { GameClock } from "../time/game-clock";
+import { SABOTAGE, sabotageDeadlineTick, sabotageUploadSeconds } from "./sabotage";
 
 /**
  * Places where a contract sends Seki. Positions live in sim content. `text` is the catalog key of
@@ -33,6 +35,8 @@ export const CONTRACT_SITES = {
   docks_escort: site("docks_escort"),
   tessen_office: site("tessen_office"),
   quay_terminal: site("quay_terminal"),
+  // W-3's hall: the calibration core in server room N (ADR-0082).
+  w3_hall: site("w3_hall"),
 } as const;
 
 export type ContractSiteId = keyof typeof CONTRACT_SITES;
@@ -86,6 +90,13 @@ export interface Contract {
   readonly away?: number;
   /** Hack only: daemons won on the terminal (the breach is applied once). */
   readonly breach?: readonly BreachDaemonId[];
+  /**
+   * Sabotage only (ADR-0082): the way chosen by deeds, "quiet" once the virus upload has begun.
+   * Absent till then.
+   */
+  readonly route?: "quiet" | "loud";
+  /** Sabotage only: the alarm went up after the virus was in, so she left seen (less pay). */
+  readonly seenLeaving?: true;
   /**
    * What changes the plan (ADR-0034), rolled at acceptance. Absent on the first contracts and
    * in saves from before wave 2: a plain job.
@@ -144,7 +155,7 @@ export const HACK_SECONDS = 40;
 /** Seconds in a row the player may leave a running hack before the connection drops. */
 export const HACK_GRACE_SECONDS = 15;
 
-export type ContractFailure = "timeout" | "protectee-killed" | "escort-killed" | "detected" | "connection-lost";
+export type ContractFailure = "timeout" | "protectee-killed" | "escort-killed" | "detected" | "connection-lost" | "batch-shipped";
 
 /** Everything a contract generator may look at besides the random stream. */
 export interface ContractContext {
@@ -154,6 +165,8 @@ export interface ContractContext {
   /** Current simulation tick and the tick rate, for deadlines. */
   readonly tick: number;
   readonly ticksPerSecond: number;
+  /** The day clock, for a deadline at an hour (the sabotage's 06:00). Without it the day starts at 00:00. */
+  readonly clock?: GameClock;
   /**
    * The level of a job of `kind` at `site` (ADR-0059): that of an enemy in the site's district,
    * which the sim knows from its bands, or of the giver's district for a kind that fights nobody
@@ -256,6 +269,17 @@ export const generateContractOfKind = (kind: ContractKind, ctx: ContractContext,
       return job("tessen_office", rng.next(), true, DOCKS_BASE.infiltrate, 80);
     case "hack":
       return job("quay_terminal", rng.next(), true, DOCKS_BASE.hack, 120);
+    // W-3 (ADR-0082): one job and no roll; the batch ships at the next 06:00 at least 6 hours away.
+    case "sabotage":
+      return {
+        id,
+        kind,
+        siteId: "w3_hall",
+        targets: SABOTAGE.crew,
+        reward: contractPay(SABOTAGE.quietReward, levelAt("w3_hall"), giverRep),
+        status: "active",
+        deadlineTick: sabotageDeadlineTick(ctx.tick, ctx.clock ?? { seconds: 0 }, ctx.ticksPerSecond),
+      };
   }
 };
 
@@ -270,7 +294,7 @@ export const DOCKS_CONTRACT_KINDS: readonly ContractKind[] = ["infiltrate", "hac
  * connection. Null for jobs without a clock.
  */
 export const contractSecondsLeft = (c: Contract, tick: number, ticksPerSecond: number): number | null => {
-  if (c.progress !== undefined) return Math.max(0, Math.ceil(HACK_SECONDS - c.progress / ticksPerSecond));
+  if (c.progress !== undefined) return Math.max(0, Math.ceil((contractKind(c) === "sabotage" ? sabotageUploadSeconds(c) : HACK_SECONDS) - c.progress / ticksPerSecond));
   return c.deadlineTick === undefined ? null : Math.max(0, Math.ceil((c.deadlineTick - tick) / ticksPerSecond));
 };
 
@@ -301,7 +325,20 @@ export const contractObjective = (c: Contract, secondsLeft: number | null = null
     case "hack":
       if (c.progress === undefined) return textRef("contract.objective.hack", { seconds: HACK_SECONDS, site });
       return textRef(secondsLeft === null ? "contract.objective.hackHolding" : "contract.objective.hackHoldingTimed", { site, ...timed });
+    case "sabotage":
+      return sabotageObjective(c, site, secondsLeft);
   }
+};
+
+/**
+ * The sabotage's step (ADR-0082): reach the core before the batch ships (the clock to 06:00), the
+ * upload (its own clock), out of the zone unseen once the clock has run down.
+ */
+const sabotageObjective = (c: Contract, site: TextRef, secondsLeft: number | null): TextRef => {
+  const step = c.progress === undefined ? "sabotage" : "sabotageUpload";
+  if (c.progress !== undefined && secondsLeft === 0) return textRef("contract.objective.sabotageLeave");
+  if (secondsLeft === null) return textRef(`contract.objective.${step}`, { site });
+  return textRef(`contract.objective.${step}Timed`, { site, time: clock(secondsLeft) });
 };
 
 /** Catalog key of the short note for the moment the job itself is done. */

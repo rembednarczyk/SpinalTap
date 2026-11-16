@@ -15,6 +15,8 @@ export const CONTRACT_KINDS = {
   escort: { id: "escort", giver: "genzo", title: "contract.kind.escort" },
   infiltrate: { id: "infiltrate", giver: "genzo", title: "contract.kind.infiltrate" },
   hack: { id: "hack", giver: "genzo", title: "contract.kind.hack" },
+  // W-3's one-off job (ADR-0082): spoil the army's batch of drones in the hall before it ships.
+  sabotage: { id: "sabotage", giver: "genzo", title: "contract.kind.sabotage" },
 } as const;
 
 export type ContractKind = keyof typeof CONTRACT_KINDS;

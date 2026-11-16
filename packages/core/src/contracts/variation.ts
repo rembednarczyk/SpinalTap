@@ -16,6 +16,8 @@ export const KIND_MODIFIERS: Readonly<Record<ContractKind, readonly ContractModi
   escort: [],
   infiltrate: ["time_limit", "bodyguards"],
   hack: ["ambush"],
+  // A one-off job without a variation (ADR-0082).
+  sabotage: [],
 };
 
 /** Traits of the mark (the first target) a kind can roll. */
@@ -27,6 +29,7 @@ export const KIND_TRAITS: Readonly<Record<ContractKind, readonly TargetTrait[]>>
   escort: [],
   infiltrate: ["paranoid", "creature_of_habit"],
   hack: [],
+  sabotage: [],
 };
 
 /** Sites with a walk to the bar (Neon Koi): only there can the mark be a night drinker. */

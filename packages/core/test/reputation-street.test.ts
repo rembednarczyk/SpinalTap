@@ -78,8 +78,8 @@ describe("witnesses (ADR-0070)", () => {
 });
 
 describe("the street's balance of finished jobs (ADR-0070)", () => {
-  const street = { eliminate: 2, delivery: 1, retrieve: 3, protect: 6, escort: 3, infiltrate: 0, hack: 0 } as const;
-  const clean = { eliminate: 4, delivery: 1, retrieve: 5, protect: 6, escort: 3, infiltrate: 0, hack: 0 } as const;
+  const street = { eliminate: 2, delivery: 1, retrieve: 3, protect: 6, escort: 3, infiltrate: 0, hack: 0, sabotage: 0 } as const;
+  const clean = { eliminate: 4, delivery: 1, retrieve: 5, protect: 6, escort: 3, infiltrate: 0, hack: 0, sabotage: 0 } as const;
 
   it("each kind as in the table, a clean job more for elimination and retrieval", () => {
     for (const kind of CONTRACT_KIND_IDS) {

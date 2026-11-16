@@ -38,7 +38,7 @@ const countingRng = () => {
 
 describe("contract kinds (M4)", () => {
   it("knows its kinds and who hands them out", () => {
-    expect(CONTRACT_KIND_IDS).toEqual(["eliminate", "delivery", "retrieve", "protect", "escort", "infiltrate", "hack"]);
+    expect(CONTRACT_KIND_IDS).toEqual(["eliminate", "delivery", "retrieve", "protect", "escort", "infiltrate", "hack", "sabotage"]);
     expect(isContractKind("protect")).toBe(true);
     expect(isContractKind("heist")).toBe(false);
     const delivery = generateContractOfKind("delivery", ctx(), sequenceRng(0));
@@ -67,7 +67,7 @@ describe("contract kinds (M4)", () => {
         return [k, c.used()];
       }),
     );
-    expect(draws).toEqual({ eliminate: 2, delivery: 1, retrieve: 1, protect: 2, escort: 1, infiltrate: 1, hack: 1 });
+    expect(draws).toEqual({ eliminate: 2, delivery: 1, retrieve: 1, protect: 2, escort: 1, infiltrate: 1, hack: 1, sabotage: 0 });
   });
 
   it("a delivery runs against the clock: tighter limits pay more", () => {
