@@ -124,10 +124,8 @@ export const floorSim = (seed: number, difficulty: DifficultyProfile = FLOOR_DIF
 };
 
 /**
- * The frame the load test saves at: standing after the walk, before anyone is alarmed. Crouch,
- * jump and bloom are transient and not saved (ADR-0016), and saving mid-fight on the floor turns
- * up state that is not saved (reported as a glitch on 16.11), so the save comes before the fight and
- * the whole fight runs after the load.
+ * The frame the load test saves at: standing after the walk, before anyone is alarmed, so the
+ * whole fight runs after the load. Saves in the fight are tested at every 50th step (G-883).
  */
 export const FLOOR_SAVE_AT = 111;
 

@@ -1,7 +1,7 @@
 /**
  * The player's perks in motion (ADR-0033): the dash and the guard's stamina for deflecting
- * bullets, and the Second Heart perk's wait (ADR-0059). Transient like the jump timers: a loaded
- * game starts rested, with the dash and the Second Heart ready.
+ * bullets, and the Second Heart perk's wait (ADR-0059). Saved with the player's stance (G-883):
+ * a loaded game goes on mid-dash, with the stamina and the waits it had.
  */
 export interface PerkState {
   /** Seconds left of the dash burst. */
