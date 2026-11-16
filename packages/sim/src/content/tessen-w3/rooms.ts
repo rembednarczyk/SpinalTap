@@ -1,18 +1,25 @@
 import {
+  AIRLOCK_N_DOOR,
   AIRLOCK_SPLITS,
+  AIRLOCK_S_CORRIDOR,
+  AIRLOCK_S_DOOR,
   BASEMENT,
   BASEMENT_CEILING,
   BASEMENT_FLOOR,
   CHAMBER_CEILING,
+  CHAMBER_GATE_W,
   CHAMBER_WALL,
   CULVERT_CRAWL,
   CULVERT_FLIGHT,
   CULVERT_MOUTH,
   CULVERT_Z,
+  DOOR_H,
+  DOOR_W,
   FACADE_GAP,
   GALLERY_WALL,
   GROUND_CEILING,
   HALL_CEILING,
+  HALL_DOORS,
   MEZZANINE,
   MEZZANINE_SPLITS,
   PARTITION,
@@ -21,7 +28,10 @@ import {
   ROW_N_SPLITS,
   ROW_S_ROOMS,
   ROW_S_SPLITS,
+  STAIR_N,
+  STAIR_N_DOOR,
   STAIR_N_LANDING,
+  WAGON_OPENING,
   WALL,
 } from "./layout";
 import { W3_AIRLOCKS, W3_ASSEMBLY, W3_CHAMBER, W3_HALL_CUT, W3_ROW_N, W3_ROW_S, W3_Y, type W3Rect } from "./site";
@@ -85,6 +95,29 @@ const rowN = (): W3Room[] => [
   ...between(MEZZANINE_SPLITS, N.minX + t, (ROW_N_SPLITS[ROW_N_SPLITS.length - 1] as number) - p, GALLERY_WALL + p, N.maxZ - t, MEZZANINE, ROOF_UNDERSIDE),
 ];
 
+/**
+ * The openings through the walls thicker than twice `INTERIOR_KEEP` between rooms of the hall
+ * (the corridors' and the airlocks' doors into the hall, the wagon airlock's mouth, the chamber's
+ * gate, the stair's landing over airlock N's wall): one walking through stays inside.
+ */
+const openings = (): W3Room[] => {
+  const half = DOOR_W / 2;
+  // A few centimetres into the rooms either side: a box no deeper than 0.6 m has no inside 0.3 m from its faces.
+  const d = t + 0.05;
+  const across = (x: number, z: number) => room(x - half, x + half, z - d, z + d, 0, DOOR_H);
+  const along = (z: number, width: number, top: number) => room(H.minX - d, H.minX + d, z - width / 2, z + width / 2, 0, top);
+  return [
+    ...[AIRLOCK_S_CORRIDOR, ...HALL_DOORS].map((x) => across(x, S.maxZ)),
+    ...HALL_DOORS.map((x) => across(x, H.maxZ)),
+    along(AIRLOCK_S_DOOR, DOOR_W, DOOR_H),
+    along(AIRLOCK_N_DOOR, DOOR_W, DOOR_H),
+    along(STAIR_N_DOOR.z, STAIR_N_DOOR.width, DOOR_H),
+    along((AIRLOCK_SPLITS[0]! + AIRLOCK_SPLITS[1]!) / 2, AIRLOCK_SPLITS[1]! - AIRLOCK_SPLITS[0]! - PARTITION, WAGON_OPENING),
+    room(C.minX - t, C.minX + CHAMBER_WALL, CHAMBER_GATE_W.minZ, CHAMBER_GATE_W.maxZ, 0, CHAMBER_GATE_W.height),
+    room(STAIR_N_LANDING.minX, STAIR_N_LANDING.maxX, STAIR_N.minZ, N.minZ + t, MEZZANINE, ROOF_UNDERSIDE),
+  ];
+};
+
 export const W3_HALL_ROOMS: readonly W3Room[] = [
   room(H.minX + t, H.maxX - t, H.minZ + t, H.maxZ - t, 0, HALL_CEILING),
   room(C.minX + CHAMBER_WALL, C.maxX - CHAMBER_WALL, C.minZ + CHAMBER_WALL, C.maxZ - CHAMBER_WALL, 0, CHAMBER_CEILING),
@@ -94,6 +127,7 @@ export const W3_HALL_ROOMS: readonly W3Room[] = [
   }),
   ...rowS(),
   ...rowN(),
+  ...openings(),
 ];
 
 /** The basement, the culvert from its mouth and its flight down. */
