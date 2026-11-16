@@ -37,6 +37,8 @@ const LUBLIN = "packages/sim/src/content/lublin";
 /** The districts' tables, as `pnpm osm:build` writes them. */
 export const DISTRICT_TABLES = DISTRICTS.map((d) => `${LUBLIN}/${d.slug}.generated.ts`);
 export const PROPS_TABLE = `${LUBLIN}/props.generated.ts`;
+/** The building sites' table (ADR-0087), written with the furniture's. */
+export const SITES_TABLE = `${LUBLIN}/construction.generated.ts`;
 
 export const TABLES = {
   build: {
@@ -47,7 +49,7 @@ export const TABLES = {
   },
   props: {
     command: "pnpm osm:props",
-    outputs: [PROPS_TABLE],
+    outputs: [PROPS_TABLE, SITES_TABLE],
     entries: ["tools/osm-import/src/props.ts", "tools/osm-import/src/decal-walls.ts", "tools/osm-import/src/game-doors.ts", "tools/osm-import/src/crowd-clear.ts"],
     // The districts' tables come in as modules of the closure, with the fingerprint of their own inputs.
     data: ["data/osm", "data/terrain", "data/orto", "data/gugik", "docs/world/lublin-props.todo.json"],
