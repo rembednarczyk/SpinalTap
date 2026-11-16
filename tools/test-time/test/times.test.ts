@@ -22,7 +22,8 @@ describe("unit test time gate (ADR-0046)", () => {
     expect(c.slower.map((x) => x.file)).toEqual(["b.test.ts", "a.test.ts"]);
     expect(c.newFiles).toBe(1);
     expect(c.headTotalMs).toBe(83_000);
-    expect(c.baseTotalMs).toBe(24_000);
+    expect(c.baseTotalMs).toBe(15_000); // main over the files that ran here, without gone.test.ts
+    expect(c.notRun).toBe(1);
     expect(warnings(c)).toEqual([
       "::warning file=b.test.ts,title=Slower test file::b.test.ts: 4.0 s on main -> 9.0 s (+125%; import 3.0 -> 8.0 s). Warning only, ADR-0046.",
       "::warning file=a.test.ts,title=Slower test file::a.test.ts: 1.0 s on main -> 3.5 s (+250%; import 0.0 -> 0.0 s). Warning only, ADR-0046.",
@@ -48,6 +49,14 @@ describe("unit test time gate (ADR-0046)", () => {
     const md = summary(c, "main run 42");
     expect(md).toContain("Sum over test files: 78.0 s (main 78.0 s, +0%). Reference: main run 42.");
     expect(md).toContain("No test file over the limit.");
+  });
+
+  it("compares a partial run (a pull request's related tests) with main over the files that ran", () => {
+    const base: Times = { "a.test.ts": t(2000), "b.test.ts": t(3000), "c.test.ts": t(500_000) };
+    const c = compareTimes(base, { "a.test.ts": t(2100) });
+    expect(c.baseTotalMs).toBe(2000);
+    expect(c.notRun).toBe(2);
+    expect(summary(c, "main run 42")).toContain("Sum over test files: 2.1 s (main 2.0 s, +5%) (2 files of main did not run: a partial run compares the files that ran).");
   });
 
   it("merges the shards into one set", () => {

@@ -48,8 +48,13 @@ export interface Comparison {
   /** The slowest files of the pull request, with the main time when there is one. */
   readonly slowest: readonly { readonly file: string; readonly head: FileTime; readonly base: FileTime | undefined }[];
   readonly headTotalMs: number;
-  /** Sum on main over every file of main; undefined without a reference run. */
+  /**
+   * Sum on main over the files that ran here, undefined without a reference run: a pull request
+   * runs only the tests related to its files (ADR-0046), so main's whole sum is no comparison.
+   */
   readonly baseTotalMs: number | undefined;
+  /** Files of main that did not run here (a pull request's partial run, or removed files). */
+  readonly notRun: number;
   /** Files with no time on main (new, renamed, or no reference at all): never a warning. */
   readonly newFiles: number;
 }
@@ -82,7 +87,8 @@ export const compareTimes = (base: Times | undefined, head: Times): Comparison =
     slower,
     slowest,
     headTotalMs: sum(head),
-    baseTotalMs: base ? sum(base) : undefined,
+    baseTotalMs: base ? sum(Object.fromEntries(files.flatMap((f) => (base[f] ? [[f, base[f]]] : [])))) : undefined,
+    notRun: base ? Object.keys(base).filter((f) => !head[f]).length : 0,
     newFiles: files.filter((f) => !base?.[f]).length,
   };
 };
@@ -101,7 +107,8 @@ export const warnings = (c: Comparison): string[] =>
 export const summary = (c: Comparison, reference: string | undefined): string => {
   const lines = ["## Unit test time", ""];
   const total = c.baseTotalMs === undefined ? `${s(c.headTotalMs)} s` : `${s(c.headTotalMs)} s (main ${s(c.baseTotalMs)} s, ${pct(c.baseTotalMs, c.headTotalMs)})`;
-  lines.push(`Sum over test files: ${total}. Reference: ${reference ?? "none found, nothing compared"}.`);
+  const ran = c.notRun > 0 ? ` (${c.notRun} file${c.notRun === 1 ? "" : "s"} of main did not run: a partial run compares the files that ran)` : "";
+  lines.push(`Sum over test files: ${total}${ran}. Reference: ${reference ?? "none found, nothing compared"}.`);
   lines.push(`Limit: more than ${RELATIVE_LIMIT * 100}% and more than ${s(ABSOLUTE_LIMIT_MS)} s slower than main. New files: ${c.newFiles}.`, "");
   if (c.slower.length > 0) {
     lines.push(`### Slower than main (${c.slower.length})`, "", "| File | main [s] | now [s] | change | import main / now [s] |", "|---|---:|---:|---:|---:|");

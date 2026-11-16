@@ -37,6 +37,9 @@ const [headDir, baseDir, reference] = process.argv.slice(2);
 const head = headDir ? shards(headDir) : [];
 if (head.length === 0) {
   console.log(`No unit test times under ${headDir ?? "(no directory given)"}; nothing to compare.`);
+} else if (Object.keys(mergeTimes(head)).length === 0) {
+  // A pull request whose files no unit test imports (ADR-0046: the shards ran `vitest related`).
+  console.log("No unit test ran in this run; nothing to compare.");
 } else {
   const main = runs(baseDir);
   const base = main[0] ? mergeTimes(main[0]) : undefined;
