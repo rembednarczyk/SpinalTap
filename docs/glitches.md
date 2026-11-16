@@ -2283,20 +2283,22 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-876 Karta podsumowania na telefonie zakrywa buffy i .gear pod celem
 - Ważność: S4 · Zasięg: telefon, karta .debrief przy aktywnym buffie
 - Opis: Karta od 84 px pod celem leży na .buffs (84 px) i .touch-mode .gear (92 px); znalezione przy G-846
-- Status: nowy
+- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-s4-ui-tests, 7e83f9c; zależy od #607); wcześniej: nowy
 - Pakiet właściciela: packages/ui
+- gear na telefonie ma display:none; karta zakrywała buffy także na pulpicie 1024x600 @1, naprawione tą samą regułą
 
 ### G-877 city-kit-loader.test.ts pada w workerze isolate:false, gdy city-kit-loader jest już w pamięci modułów
 - Ważność: S4 · Zasięg: packages/engine/test/city-kit-loader.test.ts, projekt shared
 - Opis: vi.mock city-kit nie działa, gdy moduł jest już załadowany w workerze (kolejność plików); znalezione przy G-865
-- Status: nowy
+- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-s4-ui-tests, f83ba80); wcześniej: nowy
 - Pakiet właściciela: packages/engine
 
 ### G-878 touch-layout scan card: .scan-note wjeżdża toast-in, pomiar w trakcie animacji jak G-852
 - Ważność: S4 · Zasięg: e2e/touch-layout.spec.ts karta skanu
 - Opis: .scan-note dalej używa toast-in 200 ms (+30 px); test może mierzyć w trakcie animacji pod obciążeniem; znalezione przy G-852
-- Status: nowy
+- Status: nie odtwarza się (16.11, partia s4-ui-tests); do zamknięcia przy przeglądzie, jeśli się nie pojawi; wcześniej: nowy
 - Pakiet właściciela: e2e
+- nie odtwarza się: .scan-note nie powstaje w teście karty skanu; hint-in 8 px przy zapasie 31-46 px; bez zmian w kodzie
 
 ### G-879 Uproszczenie obrysu budynku (0,3 m) zostawia gołe próbki między ścianą tablicy a obrysem z mapy
 - Ważność: S4 · Zasięg: import budynków (prepareOutline), całe miasto
@@ -2309,6 +2311,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Zgłoszone przy ADR-0083 krok 3: jeden robotnik przekroczył 2 GB w teście modeli engine, także z SEKI_CITY_CACHE=off (stan sprzed zmiany). Możliwy związek z G-865 (silniki bez dispose, PR #608).
 - Status: nowy
 - Pakiet właściciela: vitest.config.ts, packages/engine/test
+
+### G-881 barrier-detour-cost i traffic-bodies-shifted: podniesiony vi.mock w projekcie shared (isolate:false)
+- Ważność: S4 · Zasięg: packages/sim/test/barrier-detour-cost.test.ts, traffic-bodies-shifted.test.ts
+- Opis: Ten sam wzorzec co G-877: vi.mock nie sięga modułu już załadowanego w workerze; możliwa ta sama wada przy pewnej kolejności plików. Znalezione przy G-877.
+- Status: nowy
+- Pakiet właściciela: packages/sim
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
