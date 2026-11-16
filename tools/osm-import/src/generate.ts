@@ -14,6 +14,7 @@ import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills, onCarriagewayDecks } from "./bridge-fill.ts";
 import { type EdgeCut, edgeOutlines, partsWithin } from "./building-edge.ts";
 import { makeBuilding } from "./buildings.ts";
+import { withBuiltSites } from "./built-sites.ts";
 import { type Cover } from "../../orto/src/cover.ts";
 import { type CoverFill, coverFiller, pathLoops, townPlaces, withFills } from "./bare-cover.ts";
 import { frontages } from "./bare-fronts.ts";
@@ -272,6 +273,17 @@ export const generate = (
   lod1?: readonly Lod1Building[],
   lod2?: readonly Lod2Building[],
   covers?: readonly Cover[],
+): Generated => generateMap(withBuiltSites(data, lod1), src, chunks, added, lod1, lod2, covers);
+
+/** `generate` on the map as it would have caught up with the buildings finished on its sites (G-872, `built-sites.ts`). */
+const generateMap = (
+  data: OsmData,
+  src: HeightSource,
+  chunks: readonly ChunkSpec[],
+  added: readonly AddedArea[] | undefined,
+  lod1: readonly Lod1Building[] | undefined,
+  lod2: readonly Lod2Building[] | undefined,
+  covers: readonly Cover[] | undefined,
 ): Generated => {
   // The ways a set piece of the game replaces (ADR-0074 stage 7) are left out before anything reads them.
   const features = withoutReplaced(extractFeatures(data));
