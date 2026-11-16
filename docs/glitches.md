@@ -2327,6 +2327,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim
 - Wada realna: po pliku ładującym ../src vi.mock nie docierał (0 odczytów zmockowanego TRAFFIC_ROUTES wobec 91 597), testy przechodziły bez sprawdzania; resetModules + doMock + dynamiczne importy, strażniki (pas przesunięty < 0,05 m, routeAcrossLevels zmockowane).
 
+### G-882 Efekty quickhacków (hackFx) nie trafiają do zapisu: po wczytaniu kamera po reboot_optics widzi od razu
+- Ważność: S3 · Zasięg: zapis w trakcie quickhacka
+- Opis: Znalezisko z W-3 etap 3: hackFx (np. blind z reboot_optics) nie jest zapisywany, więc wczytanie gry przywraca wzrok kamerze.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim, packages/persistence
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
