@@ -38,6 +38,15 @@ GLITCH_BASELINE=accept pnpm exec vitest run tools/glitch-scan/test/glitch-scan.t
 ```
 `accept` zapisuje klucze tak, jak je znaleziono, i wypisuje każdy dodany (`+ rodzaj kawałek x,z: opis`). W diffie PR każdy dodany klucz widać jako nowy wiersz pliku rodzaju.
 
+## Część miasta na PR (`GLITCH_SCAN_CHUNKS`)
+PR, który zmienia tylko tablice dzielnic (`packages/sim/src/content/lublin/<dzielnica>.generated.ts`), porównuje z bazą klucze ich kawałków i kawałków, które ich dotykają (także rogiem), plus klucze `poza` i `?` (`src/scan-chunks.ts`). Listę wylicza `tools/ci-scope` (wyjście `scan_chunks`), a `ci.yml` przekazuje ją w jobie unit tylko na PR. Każda inna zmiana, którą skan czyta (jego kod i baza, generator, `props.generated.ts`, `sites.ts`, `data/`), porównuje całe miasto; main i noc zawsze całe.
+```
+GLITCH_SCAN_CHUNKS=krakowskie,podzamcze pnpm exec vitest run tools/glitch-scan/test/glitch-scan.test.ts
+```
+- Kontrole dalej liczą całe miasto: ich koszt to światy budowane raz ze źródeł i wszystkich tablic, więc część zawęża tylko porównanie, nie czas.
+- Sąsiedzi, bo kontrole patrzą przez granicę kawałka (`seam-gap`, rastry `walk-blocked` i `ground-strip-*`, ramka `kerb-gap-bare`, budynki dzielone na granicy), a znalezisko ma klucz tam, gdzie leży. Pasy patroli i dronów oraz trasy ruchu planuje się dla całego miasta: nowy klucz dalej niż pierścień sąsiadów złapie dopiero pełny skan na main.
+- `GLITCH_BASELINE=update|accept` z ustawioną częścią kończy się błędem: bazę zapisuje tylko pełny skan.
+
 ## Porównanie dwóch refów
 ```
 pnpm scan:diff origin/main HEAD        # bazy zapisane w dwóch refach

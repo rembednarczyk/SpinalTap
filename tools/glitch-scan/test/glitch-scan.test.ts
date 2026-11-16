@@ -61,6 +61,7 @@ import { lowCables } from "./cable-spans";
 import { type CoverageRegister, hitsPerCell, registerProblems } from "../src/map-coverage.ts";
 import { type FoundKey, type KindDiff, accepted, describeKey, diffKind, fails, formatDiff, keysOf, pruned } from "../src/scan-keys.ts";
 import { baseKinds, dropKind, readKind, writeKind } from "../src/scan-base.ts";
+import { CHUNKS_ENV, checkWrite, parseScanChunks, restrictKeys, scanArea } from "../src/scan-chunks.ts";
 import { metroLineProtected } from "./metro-line";
 import { lanePieces, segmentPieces } from "./world-samples";
 import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen, metroShaftRay } from "./metro-entrances";
@@ -2690,10 +2691,15 @@ describe("the glitch scan (ADR-0054)", () => {
  * The ratchet: one test per kind, so each stays far under the time limit on a loaded CI runner,
  * where the whole scan in a single test went over 20 s under coverage (PR #80, 7.5 s alone).
  * The report and the base's files are written once the kinds have run: with `-t <kind>` only
- * that kind's file.
+ * that kind's file. `GLITCH_SCAN_CHUNKS` (a pull request's CI, `src/scan-chunks.ts`) compares only
+ * the keys of the districts named and their neighbours; every kind still runs over the whole city.
  */
 describe("the glitch scan against its baseline (ADR-0054)", () => {
   const mode = process.env.GLITCH_BASELINE;
+  const part = parseScanChunks(process.env[CHUNKS_ENV]);
+  checkWrite(mode, part);
+  const area = part && scanArea(part, MAP_CHUNKS);
+  if (part && area) process.stdout.write(`${CHUNKS_ENV}=${part.join(",")}: the keys of ${[...area].sort().join(", ")}, off the map and with no place\n`);
   const found: Record<string, Finding[]> = {};
   const diffs: { d: KindDiff; keys: Map<string, FoundKey>; base: Map<string, number> }[] = [];
   afterAll(() => {
@@ -2719,7 +2725,7 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
       found[k] = check();
       const keys = keysOf(k, found[k], MAP_CHUNKS);
       const base = readKind(BASE, k);
-      const d = diffKind(k, base, keys);
+      const d = diffKind(k, restrictKeys(base, area), restrictKeys(keys, area));
       diffs.push({ d, keys, base });
       if (mode !== "accept" && fails(d)) expect.fail(`${formatDiff(d).join("\n")}\n(a new place of a glitch: fix it, or take it in on purpose with GLITCH_BASELINE=accept, README.md)`);
     });
