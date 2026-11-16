@@ -14,12 +14,13 @@ import { HAZARD, STEEL, facing, slab } from "./site-slab";
  */
 
 const DECK = paint("#7a6a4f");
-const NET = paint("#24342f");
-const NET_RIM = paint("#3b4f47");
+const NET = paint("#3d5a4f");
+const NET_RIM = paint("#56756a");
 
-/** A banner's design: the field, the building's body, its lit windows, the neon of its outline and crown, its tiers (x0, x1, top of the field's width and height, 0..1). */
+/** A banner's design: the sky, the ground, the building's body, its lit windows, the neon of its edges and crown, its tiers (x0, x1, top of the field's width and height, 0..1). */
 interface Banner {
-  readonly field: Rgba;
+  readonly sky: Rgba;
+  readonly ground: Rgba;
   readonly body: Rgba;
   readonly windows: Rgba;
   readonly neon: Rgba;
@@ -28,40 +29,48 @@ interface Banner {
 
 /**
  * The visualisations of 2077 the developers hang on the mesh: twin towers on a podium, a stepped
- * arcology, a needle with a crown, a block of terraces. Drawn in neon on a dark field, the
- * project's line along the top (the banner's own, not a text of the catalogs).
+ * arcology, a needle on a plinth, terraces. A lit building with a grid of windows and neon edges
+ * on a night sky, the developer's logo line along the top (bars, not a text of the catalogs).
  */
 export const BANNERS: readonly Banner[] = [
-  { field: glow("#0b1a3a"), body: paint("#16263f"), windows: glow("#7af2ff"), neon: glow("#38e8ff"), tiers: [[0.08, 0.92, 0.22], [0.18, 0.42, 0.86], [0.58, 0.82, 0.78]] },
-  { field: glow("#2a0b2e"), body: paint("#2b1531"), windows: glow("#ff8ad8"), neon: glow("#ff45e6"), tiers: [[0.06, 0.94, 0.3], [0.16, 0.84, 0.5], [0.28, 0.72, 0.68], [0.4, 0.6, 0.86]] },
-  { field: glow("#0a2a1f"), body: paint("#13302a"), windows: glow("#b8ff7a"), neon: glow("#a6ff4a"), tiers: [[0.1, 0.9, 0.2], [0.38, 0.62, 0.74], [0.46, 0.54, 0.92]] },
-  { field: glow("#2e1a06"), body: paint("#33230f"), windows: glow("#ffd36b"), neon: glow("#ffb447"), tiers: [[0.06, 0.62, 0.62], [0.38, 0.94, 0.46], [0.2, 0.5, 0.8]] },
+  { sky: glow("#081430"), ground: glow("#10243a"), body: glow("#1f4f86"), windows: glow("#9ff6ff"), neon: glow("#38e8ff"), tiers: [[0.06, 0.94, 0.24], [0.16, 0.42, 0.84], [0.58, 0.84, 0.74]] },
+  { sky: glow("#1c0824"), ground: glow("#2a1030"), body: glow("#6a2470"), windows: glow("#ffb0e6"), neon: glow("#ff45e6"), tiers: [[0.06, 0.94, 0.3], [0.16, 0.84, 0.5], [0.28, 0.72, 0.68], [0.4, 0.6, 0.86]] },
+  { sky: glow("#06201a"), ground: glow("#0c2e22"), body: glow("#1f6a4c"), windows: glow("#d0ff9a"), neon: glow("#a6ff4a"), tiers: [[0.12, 0.88, 0.2], [0.38, 0.62, 0.72], [0.46, 0.54, 0.9]] },
+  { sky: glow("#22140a"), ground: glow("#33200e"), body: glow("#7a4a16"), windows: glow("#ffe08a"), neon: glow("#ffb447"), tiers: [[0.06, 0.6, 0.6], [0.4, 0.94, 0.44], [0.2, 0.46, 0.82]] },
 ];
 
 const FLAT = { rise: 0, length: 1 };
 
-/** The banner `design` on the face at `z`, from x0 to x1 and y0 to y1. */
+/** Is the window in column i, row j of a tier lit (about two in three)? */
+const lit = (design: number, tier: number, i: number, j: number): boolean => ((Math.imul(i + 1, 73856093) ^ Math.imul(j + 1, 19349663) ^ Math.imul(design * 7 + tier + 1, 83492791)) >>> 0) % 100 < 64;
+
+/** The banner `design` on the face at `z`, from x0 to x1 and y0 to y1; each layer a few millimetres before the last. */
 const banner = (sink: MeshSink, design: number, z: number, x0: number, x1: number, y0: number, y1: number): void => {
   const b = BANNERS[design % BANNERS.length]!;
   const [w, h] = [x1 - x0, y1 - y0];
   const X = (u: number) => x0 + w * u;
   const Y = (v: number) => y0 + h * v;
-  facing(sink, FLAT, z, x0, x1, y0, y1, b.field);
-  // The neon frame and the project's line along the top.
-  for (const [a, c, d, e] of [
-    [0, 1, 0, 0.025],
-    [0, 1, 0.975, 1],
-    [0, 0.012, 0, 1],
-    [0.988, 1, 0, 1],
-  ] as const)
-    facing(sink, FLAT, z + 0.006, X(a), X(c), Y(d), Y(e), b.neon);
-  facing(sink, FLAT, z + 0.006, X(0.08), X(0.56), Y(0.9), Y(0.94), b.windows);
-  // The building: its tiers, each with rows of lit windows and a neon crown.
-  for (const [u0, u1, top] of b.tiers) {
-    facing(sink, FLAT, z + 0.004, X(u0), X(u1), Y(0.06), Y(top), b.body);
-    for (let v = 0.12; v < top - 0.05; v += 0.08) facing(sink, FLAT, z + 0.008, X(u0 + 0.02), X(u1 - 0.02), Y(v), Y(v + 0.025), b.windows);
-    facing(sink, FLAT, z + 0.01, X(u0), X(u1), Y(top - 0.012), Y(top), b.neon);
-  }
+  const at = (layer: number, u0: number, u1: number, v0: number, v1: number, c: Rgba) => facing(sink, FLAT, z + 0.004 * layer, X(u0), X(u1), Y(v0), Y(v1), c);
+  at(0, 0, 1, 0.08, 1, b.sky);
+  at(0, 0, 1, 0, 0.08, b.ground);
+  // The developer's logo line: a mark and a word of bars.
+  at(1, 0.06, 0.1, 0.9, 0.95, b.neon);
+  for (let k = 0; k < 6; k++) at(1, 0.13 + k * 0.05, 0.16 + k * 0.05, 0.905, 0.945, b.windows);
+  // The building: its tiers back to front, each a lit body, a grid of windows and neon edges and crown.
+  b.tiers.forEach(([u0, u1, top], t) => {
+    const layer = 2 + 3 * t;
+    at(layer, u0, u1, 0.06, top, b.body);
+    const [cols, rows] = [Math.max(2, Math.round((u1 - u0) / 0.045)), Math.max(1, Math.floor((top - 0.12) / 0.055))];
+    const cw = (u1 - u0 - 0.03) / cols;
+    for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) if (lit(design, t, i, j)) at(layer + 1, u0 + 0.015 + i * cw + cw * 0.22, u0 + 0.015 + (i + 1) * cw - cw * 0.22, 0.1 + j * 0.055, 0.1 + j * 0.055 + 0.028, b.windows);
+    at(layer + 2, u0, u1, top - 0.012, top, b.neon);
+    at(layer + 2, u0, u0 + 0.008, 0.06, top, b.neon);
+    at(layer + 2, u1 - 0.008, u1, 0.06, top, b.neon);
+  });
+  // A mast with its light over the tallest tier.
+  const [m0, m1, mt] = b.tiers.reduce((a, c) => (c[2] > a[2] ? c : a));
+  const mid = (m0 + m1) / 2;
+  at(2 + 3 * b.tiers.length, mid - 0.004, mid + 0.004, mt, Math.min(0.97, mt + 0.08), b.neon);
 };
 
 /** A scaffold of a variant (`siteScaffoldLayout`) for a quality. */

@@ -44,9 +44,9 @@ export const boardModel = (variant: number): MeshSink => {
   slab(sink, FLAT, -hw, hw, -0.03, 0.03, b, t, GRAPHITE);
   slab(sink, FLAT, -hw - 0.03, hw + 0.03, -0.04, 0.04, t, t + 0.05, GRAPHITE_LIGHT);
   facing(sink, FLAT, 0.035, -hw + 0.06, hw - 0.06, b + 0.06, t - 0.06, rim);
-  facing(sink, FLAT, 0.037, -hw + 0.09, hw - 0.09, b + 0.09, t - 0.09, SCREEN);
-  // The rule between the name and the developer.
-  facing(sink, FLAT, 0.039, -hw + 0.18, hw - 0.18, t - 0.42, t - 0.405, rim);
+  facing(sink, FLAT, 0.045, -hw + 0.09, hw - 0.09, b + 0.09, t - 0.09, SCREEN);
+  // The rule between the name and the developer, under the letters (`site-signs.ts`: 6 cm off the board).
+  facing(sink, FLAT, 0.052, -hw + 0.18, hw - 0.18, t - 0.42, t - 0.405, rim);
   facing(sink, FLAT, 0.035, -hw, hw, b - 0.12, b - 0.02, HAZARD);
   return sink;
 };
