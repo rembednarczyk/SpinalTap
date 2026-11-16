@@ -2407,14 +2407,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-893 Rusztowanie placu Zielona 5A zasłania szyld lokalu na ścianie w67499313
 - Ważność: S4 · Zasięg: jedno miejsce, Zielona 5A
 - Opis: Rusztowanie z banerem z etapu 2 placów budowy (gałąź place-budowy-2) stoi przy ścianie w67499313 i zasłania szyld FRYZURA Z PRZYTUPEM; rusztowanie powinno omijać ściany z szyldem lokalu albo szyld przenieść.
-- Status: nowy
+- Status: w PR #649; wcześniej: nowy
 - Pakiet właściciela: osm-import
 - Poprawka identyfikatora (kurator 16.11): rusztowanie stoi 0,25 m od szczytowej ściany w69915878 (Zielona 5), nie w67499313; szyld FRYZURA Z PRZYTUPEM sprawdzić na tej ścianie.
 
 ### G-894 Dźwig 66 m przed fasadą Pałacu Lubomirskich od Placu Litewskiego (plac budowy Muzeum Ziem Wschodnich)
 - Ważność: S4 · Zasięg: plac budowy w1362895448, widok z Placu Litewskiego
 - Opis: Generator dźwigu (construction-crane.ts, ADR-0087 etap 2, gałąź place-budowy-2) stawia maszt w (41; 78) w południowej wnęce Pałacu Lubomirskich w67508859 (historic=castle), między fasadą a Placem Litewskim; 27,1 m, wysięgnik 66 m nad dachem zabytku. Ortofoto 2025-04: budowa trwa (wykop na pn. podwórzu, kontenery), żurawia wieżowego brak; 2024-06 we wnęce trawnik. Miejsce wynika tylko z minimalnego zasięgu do najdalszego narożnika obrysu, który obejmuje cały pałac. Proponowana reguła: na placu, którego obrys obejmuje budynek historic/heritage, maszt nie stoi między fasadą zabytku a placem lub ulicą frontową (preferuj podwórze z wykopem), inaczej bez dźwigu albo wysięgnik do 50 m; kontrola skanu site-crane-heritage z wyjątkiem w1236055101 (żuraw na ortofoto 2025-04).
-- Status: nowe
+- Status: w PR #649; wcześniej: nowe
 - Pakiet właściciela: tools/osm-import, engine mapcity/construction
 - Test przyjęcia: construction-site.test.ts: dźwig w1362895448 nie stoi przed fasadą w67508859; skan site-crane-heritage 1 -> 0
 - Topografia: T-322.
