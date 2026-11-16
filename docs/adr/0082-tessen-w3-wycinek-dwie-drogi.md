@@ -375,9 +375,22 @@ Przed etapem 1 kurator robi audyt miejsca: ortofoto, wysokość pokładu kładki
   - oddział wchodzi przy najbliższym wejściu `SECURITY_ENTRIES` w wczytanym chunku: 45–140 m od Seki, poza jej kadrem i co najmniej 60 m od kliniki. Ma trop na Seki;
   - naraz działa najwyżej jeden oddział. Gdy oddział jest w świecie, losowanie przepada;
   - oddział to posiłki ochrony (ADR-0029): zapisuje się z nimi i wraca do domu, gdy zgubi Seki. Na końcu pościgu jego flagi znikają.
-- **Balans drogi głośnej:** stawka 1400 €$ na poziomie 1, czyli 70% stawki cichej, jak w tabeli. Z premią „bez ofiar” (+300) i stylem Genzō za `clean` (6%) daje ok. 8 minut po 223 €$/min, a z obiema odznakami 234 €$/min. Pilnuje tego `core/test/w3-sabotage-loud.test.ts`. Łup zbrojowni (ok. 450 €$ w tabeli) się nie liczy, bo skrzyni z bronią jeszcze nie ma.
-- **Zapis v41:** opcjonalne pola kontraktu `charges`, `planting`, `fuseTick`, `detonated` i `alarmTick`. Pościg i wraki to zwykłe flagi. Migracja v40 → v41 zmienia tylko wersję.
-- **Zostaje na później (poza 3b):** zewnętrzne drzwi zbrojowni z kodem i skrzynia z bronią, efekt `explosion` i dźwięki z §3 (zmiana portów), wraki trwałe po końcu kontraktu, znacznik pościgu przy HUD heatu, osobny telefon `phone_genzo_w3_paid_loud` (dziś jest ogólny `phone_genzo_paid`), zdejmowanie ładunków po śmierci Seki bez wczytania zapisu.
+- **Skrzynia zbrojowni S (`W3_ARMOURY_LOOT`):**
+  - otwiera się razem ze skrzynką ładunków jako stały pojemnik `stash:w3-armoury-<id>` na wierzchu skrzyni broni pod tylną ścianą;
+  - zawartość: AR-5 Tessen z poziomem dzielnicy (±2 od gracza), 90 naboi 5.56 i apteczka;
+  - DMR i kamizelkę z listy w §1 zostawiamy na zbrojownię N, bo z nimi łup byłby wart ok. 1300 €$.
+- **Balans drogi głośnej (decyzja użytkownika 16.11: łup w dochodzie):**
+  - stawka spada z 1400 do 950 €$ na poziomie 1;
+  - łup na poziomie 1 to 472 €$: AR-5 450 i apteczka 22 u handlarza. Amunicji nie liczymy, bo idzie na fale;
+  - z premią „bez ofiar” (+300), stylem Genzō za `clean` (6%) i łupem ok. 8 minut daje 222 €$/min, a z obiema odznakami 230 €$/min;
+  - przy starej stawce z łupem wyszłoby 282 €$/min;
+  - pilnuje tego `core/test/w3-sabotage-loud.test.ts`.
+- **Zapis v42:** opcjonalne pola kontraktu `charges`, `planting`, `fuseTick`, `detonated` i `alarmTick`. Pościg, wraki i skrzynia to zwykłe flagi i pojemniki. Wersja v41 należy do G-883 (stan walki między krokami), a migracja v41 → v42 zmienia tylko wersję.
+- **Decyzje użytkownika 16.11:**
+  - etap 3b wchodzi jako rozgrywka;
+  - widoczny wybuch (błysk, dym, dźwięk) i wraki stanowisk to osobny etap ze zmianą portów efektów. Do tego czasu wybuch to iskry `hit-spark`, a wrak to tymczasowa bryła szablonu kontraktu;
+  - łup zbrojowni liczy się w dochodzie drogi głośnej, a jej stawka spada.
+- **Zostaje na później (poza 3b):** zewnętrzne drzwi zbrojowni z kodem, etap efektów wybuchu (`explosion` i dźwięki z §3, zmiana portów) razem z trwałymi wrakami stanowisk, znacznik pościgu przy HUD heatu, osobny telefon `phone_genzo_w3_paid_loud` (dziś jest ogólny `phone_genzo_paid`), zdejmowanie ładunków po śmierci Seki bez wczytania zapisu.
 
 ## Balans
 Stawki przy neutralnej reputacji u fixerów, przed mnożnikiem Genzō:
