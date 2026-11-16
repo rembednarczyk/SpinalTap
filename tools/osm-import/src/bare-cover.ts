@@ -30,12 +30,17 @@ import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { type Cover, coverFor } from "../../orto/src/cover.ts";
 import { Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch } from "./bare-cells.ts";
 import { dropLoose, joinSpecks, readCover } from "./bare-clean.ts";
+import { type Frontage, offFronts, paveSpecks, zoneFronts } from "./bare-fronts.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
 import { kerbStrips } from "./bare-strips.ts";
 import { contours } from "./contour.ts";
+import { crossesItself } from "./bare-ring.ts";
 import { type Area, type Line } from "./features.ts";
+import { areaSurface } from "./ground.ts";
 import { type OsmData } from "./osm.ts";
+import { raisedGreen } from "./raised-green.ts";
 import { geoToWorld } from "./project.ts";
+import { structureKind } from "./structures.ts";
 import { type Pt, type Rect, ccw, rectsOverlap, removeCollinear, ringBounds, signedArea, simplifyRing, splitTouching } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
 
@@ -256,6 +261,11 @@ const tilePieces = (cells: Cells, label: number, drawn: Uint8Array, surface: Gro
     .map((r) => ({ surface, outline: r.flatMap((p) => [p.x, p.z]) }));
 };
 
+/** How far past a chunk's edges the frontages' pass reads its cells (m, a whole number of cells). */
+const SEAM = 2;
+
+const ringOfFlat = (flat: readonly number[]): Pt[] => Array.from({ length: flat.length >> 1 }, (_, k) => ({ x: flat[2 * k]!, z: flat[2 * k + 1]! }));
+
 /** Clipper2's integer grid (1 cm): the pieces of the tables lie on 0.1 m. */
 const CLIP_SCALE = 100;
 
@@ -274,34 +284,6 @@ const pathOf = (r: readonly Pt[]): Path64 => {
   let p = PATHS.get(r);
   if (!p) PATHS.set(r, (p = toPath(signedArea(r) < 0 ? [...r].reverse() : r)));
   return p;
-};
-
-/** Whether two non-adjacent edges of the ring properly cross (`selfIntersects`), the edges swept along x. */
-const crossesItself = (ring: readonly Pt[]): boolean => {
-  const n = ring.length;
-  const lo = (i: number) => Math.min(ring[i]!.x, ring[(i + 1) % n]!.x);
-  const hi = (i: number) => Math.max(ring[i]!.x, ring[(i + 1) % n]!.x);
-  const order = Array.from({ length: n }, (_, i) => i).sort((p, q) => lo(p) - lo(q));
-  const side = (a: Pt, b: Pt, c: Pt) => (b.x - a.x) * (c.z - a.z) - (b.z - a.z) * (c.x - a.x);
-  for (let s = 0; s < n; s++) {
-    const i = order[s]!;
-    for (let t = s + 1; t < n && lo(order[t]!) <= hi(i); t++) {
-      const j = order[t]!;
-      const u = Math.min(i, j);
-      const v = Math.max(i, j);
-      if (v - u < 2 || (u === 0 && v === n - 1)) continue;
-      const a = ring[u]!;
-      const b = ring[(u + 1) % n]!;
-      const c = ring[v]!;
-      const d = ring[(v + 1) % n]!;
-      const d1 = side(c, d, a);
-      const d2 = side(c, d, b);
-      const d3 = side(a, b, c);
-      const d4 = side(a, b, d);
-      if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
-    }
-  }
-  return false;
 };
 
 const cutByPieces = (fills: readonly (readonly Pt[])[], pieces: readonly (readonly Pt[])[], over: readonly (readonly Pt[])[] = []): Pt[][] => {
@@ -326,9 +308,18 @@ export interface TownPlaces {
   readonly areas: readonly (readonly Pt[])[];
   readonly stops: readonly Pt[];
   readonly shops: readonly (readonly Pt[])[];
+  /** The pedestrian streets' frontages (`bare-fronts.ts`, G-853): laid whole, paved where the cover shows neither a lawn nor paving. */
+  readonly fronts?: readonly Frontage[];
+  /** The map's lawns, beds and water on the ground, drawn or not: no frontage. */
+  readonly greens?: readonly (readonly Pt[])[];
+  /** The map's building sites (`landuse=construction`, `building=construction`, G-866): no frontage either, a site's ground stays as the rule's first pass leaves it. */
+  readonly sites?: readonly (readonly Pt[])[];
 }
 
 const NO_PLACES: TownPlaces = { areas: [], stops: [], shops: [] };
+
+/** The surfaces of the map's areas no frontage runs over (`TownPlaces.greens`), as `landuse-bare` leaves them out. */
+const GREEN: ReadonlySet<GroundSurface> = new Set(["grass", "water", "basin"]);
 
 const PAVED_LANDUSE: ReadonlySet<string> = new Set(["retail", "commercial"]);
 const PAVED_AMENITY: ReadonlySet<string> = new Set(["marketplace", "bus_station"]);
@@ -349,8 +340,10 @@ export const pathLoops = (lines: readonly Line[]): Pt[][] =>
     .filter(({ line: l }) => l.length >= 4 && l[0]!.x === l[l.length - 1]!.x && l[0]!.z === l[l.length - 1]!.z)
     .map((l) => [...l.line]);
 
-/** The map's areas and stops of a town's paved places (`TownPlaces`, the shops come a chunk at a time), and the paths' loops (`pathLoops`). */
-export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonly (readonly Pt[])[] = []): Omit<TownPlaces, "shops"> => ({
+/** The map's areas and stops of a town's paved places (`TownPlaces`, the shops come a chunk at a time), the paths' loops (`pathLoops`) and the pedestrian streets' frontages (`frontages`). */
+export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonly (readonly Pt[])[] = [], fronts: readonly Frontage[] = []): Omit<TownPlaces, "shops"> => ({
+  greens: fronts.length ? areas.filter((a) => GREEN.has(areaSurface(a.tags) ?? "road") && !raisedGreen(a.tags)).map((a) => a.ring) : [],
+  sites: fronts.length ? areas.filter((a) => structureKind(a.tags) === "construction").map((a) => a.ring) : [],
   areas: [
     ...areas
       .filter((a) => PAVED_LANDUSE.has(a.tags.landuse ?? "") || PAVED_AMENITY.has(a.tags.amenity ?? "") || a.tags.public_transport === "platform" || a.tags.public_transport === "station")
@@ -361,6 +354,7 @@ export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonl
     .filter((n) => n.tags?.highway === "bus_stop" || n.tags?.railway === "tram_stop" || n.tags?.public_transport === "platform")
     .sort((a, b) => a.id - b.id)
     .map((n) => geoToWorld(n.lat, n.lon)),
+  fronts,
 });
 
 /**
@@ -369,6 +363,34 @@ export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonl
  * town's paved places (`town`), compact regions only elsewhere.
  */
 export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls: readonly (readonly Pt[])[], town: TownPlaces = NO_PLACES): GroundOut[] => {
+  const base = layFills(rect, cover, ground, walls, { ...town, fronts: [] }, null);
+  if (!town.fronts?.length) return base;
+  // The frontages a pass of their own over what the first left bare (G-853): the fills of the rule
+  // stay as they were, and the furniture set by the paving's edges reads the ground without them.
+  // Read past the chunk's edges and cut on them: traced on the chunk's cells alone, a fill crossing
+  // an edge on the slant turned along it, and the two chunks' fills left a triangle between them.
+  const wide = { minX: rect.minX - SEAM, minZ: rect.minZ - SEAM, maxX: rect.maxX + SEAM, maxZ: rect.maxZ + SEAM };
+  const fronts = layFills(wide, cover, [...ground, ...base], walls, { areas: [], stops: [], shops: [], fronts: town.fronts, greens: town.greens ?? [], sites: town.sites ?? [] }, base);
+  const box = toPath([
+    { x: rect.minX, z: rect.minZ },
+    { x: rect.maxX, z: rect.minZ },
+    { x: rect.maxX, z: rect.maxZ },
+    { x: rect.minX, z: rect.maxZ },
+  ]);
+  const within = fronts.flatMap((g) =>
+    intersect([toPath(ringOfFlat(g.outline))], [box], FillRule.NonZero)
+      .map((p) => ccw(removeCollinear(p.map((q) => ({ x: q.x / CLIP_SCALE, z: q.y / CLIP_SCALE })), 0.005)))
+      .filter((r) => r.length >= 3 && signedArea(r) >= FILL.minArea)
+      .map((r) => ({ ...g, outline: r.flatMap((q) => [q.x, q.z]) })),
+  );
+  return [...base, ...within.map((g) => ({ ...g, front: true as const }))];
+};
+
+/**
+ * One pass of the rule (`coverFills`): with `base` (the first pass's fills) the frontages' alone,
+ * on the ground the first left bare, the first's lawns next to theirs.
+ */
+const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls: readonly (readonly Pt[])[], town: TownPlaces, base: readonly GroundOut[] | null): GroundOut[] => {
   const cells = new Cells(rect);
   const ringOf = (flat: readonly number[]) => {
     const ring: Pt[] = [];
@@ -382,18 +404,30 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
     { x: r.minX, z: r.maxZ },
   ];
   ground.forEach((g, i) => cells.cover(ringOf(g.outline), g.surface === "road" ? i + 1 : 0, STRIP_ENDS.has(g.surface)));
-  for (const w of walls) cells.cover(w);
+  for (const w of walls) cells.cover(w, 0, false, true);
   for (const g of ground) if (g.bridge) cells.block(ringOf(g.outline), FILL.bridge);
   for (const r of FILL_CLEARED) if (rectsOverlap(r, rect)) cells.cover(boxOf(r));
+  // The frontages' fills end on the map's lawns, beds and water exactly, drawn or not, and on its
+  // building sites (G-866): no paving laps over their outlines by the half cell a fill is traced
+  // past its last (T-199, G-853).
+  const off = [...(town.greens ?? []), ...(town.sites ?? [])];
+  if (base) for (const g of off) cells.cover(g);
   for (const a of town.areas) cells.zoneIn(a);
   for (const s of town.shops) cells.zoneNear(s, FILL.forecourt);
   for (const p of town.stops) cells.zoneNear([p], FILL.platform);
   cells.growZone(FILL.zoneMargin);
+  zoneFronts(cells, town.fronts ?? [], off, FILL.zoneMargin, FILL.looseArea);
   readCover(cells, cover, FILL.around);
   joinSpecks(cells, FILL.speck);
-  kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
+  if (base) {
+    const lawns = scratch.u8("fronts.lawns", cells.label.length);
+    for (const g of base) if (g.surface === "grass") cells.mark(ringOf(g.outline), lawns);
+    for (const g of town.greens ?? []) cells.mark(g, lawns);
+    offFronts(cells);
+    paveSpecks(cells, lawns);
+  } else kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
   dropLoose(cells, FILL.looseWidth, FILL.looseArea);
-  keepKerbs(cells, FILL.kerbBand);
+  if (!base) keepKerbs(cells, FILL.kerbBand);
   const n = Math.round(FILL.tile / STEP);
   const out: GroundOut[] = [];
   const has = new Uint8Array(Math.ceil(cells.nx / n) * Math.ceil(cells.nz / n));
@@ -432,27 +466,30 @@ export const coverFiller = (covers: readonly Cover[], walls: readonly (readonly 
     }
     return g;
   };
-  const [wallGrid, areaGrid] = [grid(walls), grid(town.areas)];
+  const [wallGrid, areaGrid, greenGrid, siteGrid] = [grid(walls), grid(town.areas), grid(town.greens ?? []), grid(town.sites ?? [])];
   return (rect, ground, shops) => {
     const cover = coverFor(covers, { x: (rect.minX + rect.maxX) / 2, z: (rect.minZ + rect.maxZ) / 2 });
     if (!cover) return [];
     const near = { minX: rect.minX - 1, minZ: rect.minZ - 1, maxX: rect.maxX + 1, maxZ: rect.maxZ + 1 };
     const pick = (g: ReturnType<typeof grid>) => g.query(near.minX, near.minZ, near.maxX, near.maxZ).filter((w) => rectsOverlap(w.box, near)).map((w) => w.ring);
     const stops = town.stops.filter((p) => p.x > rect.minX - FILL.platform && p.x < rect.maxX + FILL.platform && p.z > rect.minZ - FILL.platform && p.z < rect.maxZ + FILL.platform);
-    return coverFills(rect, cover, ground, pick(wallGrid), { areas: pick(areaGrid), stops, shops });
+    const fronts = (town.fronts ?? []).filter((f) => rectsOverlap(ringBounds(f.line), { minX: rect.minX - f.reach - FILL.zoneMargin, minZ: rect.minZ - f.reach - FILL.zoneMargin, maxX: rect.maxX + f.reach + FILL.zoneMargin, maxZ: rect.maxZ + f.reach + FILL.zoneMargin }));
+    return coverFills(rect, cover, ground, pick(wallGrid), { areas: pick(areaGrid), stops, shops, fronts, greens: pick(greenGrid), sites: pick(siteGrid) });
   };
 };
 
 /** Draw order of the surfaces the rule lays: each fill goes first among the pieces of its surface. */
 const ORDER: Readonly<Partial<Record<GroundSurface, number>>> = { water: 0, grass: 1, square: 2 };
 
-/** The chunk's ground with the fills, each at the start of its surface's pieces (the lowest layer). */
+/** The chunk's ground with the fills, each at the start of its surface's pieces (the lowest layer), the frontages' first of all. */
 export const withFills = (ground: readonly GroundOut[], fills: readonly GroundOut[]): GroundOut[] => {
   const out = [...ground];
   for (const s of ["square", "grass"] as const) {
-    const mine = fills.filter((f) => f.surface === s);
+    const mine = fills.filter((f) => f.surface === s && !f.front);
     const at = out.findIndex((g) => (ORDER[g.surface] ?? 99) >= ORDER[s]!);
     out.splice(at < 0 ? out.length : at, 0, ...mine);
   }
-  return out;
+  // The frontages' fills under everything (G-853): where one laps over another piece by the
+  // rounding of the outlines, the partition cuts it, not the piece, and the rest stays as it was.
+  return [...fills.filter((f) => f.front), ...out];
 };
