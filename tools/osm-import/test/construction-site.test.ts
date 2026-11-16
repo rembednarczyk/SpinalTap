@@ -10,6 +10,7 @@ import { BOARD_KEYS, SETS, planSite, siteSeed, siteSet } from "../src/constructi
 import { FENCE_INSET, insetRing } from "../src/construction-fence.ts";
 import { scaffoldBox } from "../src/construction-scaffold.ts";
 import { planCrane } from "../src/construction-crane.ts";
+import { COURTYARD, HERITAGE_CLEAR, courtyardDepth, ringDistance } from "../src/construction-heritage.ts";
 import { type Pt, pointInRing } from "../src/geometry.ts";
 
 /**
@@ -254,6 +255,53 @@ describe("the building sites' crane and scaffold (ADR-0087 stage 2)", () => {
       expect(bare.pieces.filter((p) => p.prop === "site-fence").length).toBeGreaterThan(fence.length);
     }
     expect(banners.size).toBeGreaterThan(1);
+  });
+
+  /** A site 100 x 40 m round a listed palace, its front to the street (south), with a shallow niche in it or a courtyard behind. */
+  const palace = (courtyard: boolean, heritage = true) => {
+    const { outline, ground } = plan(100, 40, { building: false });
+    const ring: Pt[] = courtyard
+      ? [
+          { x: 5, z: 12 },
+          { x: 95, z: 12 },
+          { x: 95, z: 34 },
+          { x: 65, z: 34 },
+          { x: 65, z: 18 },
+          { x: 35, z: 18 },
+          { x: 35, z: 34 },
+          { x: 5, z: 34 },
+        ]
+      : [
+          { x: 5, z: 12 },
+          { x: 40, z: 12 },
+          { x: 40, z: 18 },
+          { x: 60, z: 18 },
+          { x: 60, z: 12 },
+          { x: 95, z: 12 },
+          { x: 95, z: 34 },
+          { x: 5, z: 34 },
+        ];
+    const g: SiteGround = { ...ground, free: (p) => ground.free(p) && !pointInRing(p, ring), open: (p) => ground.open(p) && !pointInRing(p, ring), neighbours: [{ ring, top: 14, heritage }] };
+    return { outline, ground: g, ring };
+  };
+
+  it("keeps the crane out of a listed building's front: no crane where it has no courtyard (G-894)", () => {
+    for (const id of ids) {
+      const { outline, ground, ring } = palace(false);
+      // Not listed, the crane stands in the palace's front, by its facade.
+      const plain = planSite({ id, ring: outline }, { ...ground, neighbours: [{ ring, top: 14 }] }).crane!;
+      expect(ringDistance(plain.at, ring), id).toBeLessThan(HERITAGE_CLEAR);
+      expect(planSite({ id, ring: outline }, ground).crane, id).toBeNull();
+    }
+  });
+
+  it("puts the crane of a listed building's site in its courtyard (G-894)", () => {
+    for (const id of ids) {
+      const { outline, ground, ring } = palace(true);
+      const c = planSite({ id, ring: outline }, ground).crane!;
+      expect(courtyardDepth(c.at, ring), `${id} at ${c.at.x},${c.at.z}`).toBeGreaterThanOrEqual(COURTYARD);
+      expect(c.at.z).toBeGreaterThan(18);
+    }
   });
 
   it("keeps stage 1's draws: the fence, the board and the containers as before the crane", () => {

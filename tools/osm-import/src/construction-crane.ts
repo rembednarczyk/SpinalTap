@@ -3,13 +3,15 @@
  * site (its sides over `NARROW` to one), at the point of a 1 m raster from which its jib reaches
  * the furthest corner of the outline soonest, its mast on free ground inside the fence, off the dig
  * and its slopes, the containers, the scaffold, the yard by the gate and the drone's way from the
- * gate to the dig. Its top stands `SITE_CRANE.over` m over the tallest neighbour.
+ * gate to the dig. Its top stands `SITE_CRANE.over` m over the tallest neighbour. By a listed
+ * building in the outline it keeps out of the building's front (`construction-heritage.ts`, G-894).
  */
 import { type StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { SITE_CRANE, siteCraneVariant } from "../../../packages/core/src/world/sites.ts";
 import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import { type SiteGround } from "./construction-ground.ts";
 import { type Pt, pointInRing } from "./geometry.ts";
+import { heritageCraneRule } from "./construction-heritage.ts";
 
 /** Sites whose bounding box along the long axis is longer than this to one get no crane. */
 export const NARROW = 4;
@@ -22,6 +24,9 @@ const WAY = 4;
 const NEAR = 30;
 /** The jib reaches past the furthest corner by this much (m), rounded up to half a metre. */
 const OVER_REACH = 1;
+
+/** The jib that reaches a corner `reach` m off, rounded up to half a metre. */
+const jibOf = (reach: number): number => Math.ceil((reach + OVER_REACH) * 2) / 2;
 
 export interface CranePlan {
   readonly at: Pt;
@@ -73,7 +78,8 @@ export const planCrane = (outline: readonly Pt[], ring: readonly Pt[], g: SiteGr
   for (let x = Math.ceil(Math.min(...xs)); x <= Math.max(...xs); x += STEP)
     for (let z = Math.ceil(Math.min(...zs)); z <= Math.max(...zs); z += STEP) spots.push({ at: { x, z }, reach: Math.max(...outline.map((p) => Math.hypot(p.x - x, p.z - z))) });
   spots.sort((a, b) => a.reach - b.reach || a.at.x - b.at.x || a.at.z - b.at.z);
-  const best = spots.find((s) => clear(s.at));
+  const listed = heritageCraneRule(outline, g.neighbours);
+  const best = spots.find((s) => clear(s.at) && (!listed || listed(s.at, jibOf(s.reach))));
   if (!best) return null;
   const { at, reach } = best;
   const box = { minX: Math.min(...outline.map((p) => p.x)) - NEAR, maxX: Math.max(...outline.map((p) => p.x)) + NEAR, minZ: Math.min(...outline.map((p) => p.z)) - NEAR, maxZ: Math.max(...outline.map((p) => p.z)) + NEAR };
@@ -83,7 +89,7 @@ export const planCrane = (outline: readonly Pt[], ring: readonly Pt[], g: SiteGr
   const far = outline.reduce((a, p) => (Math.hypot(p.x - at.x, p.z - at.z) > Math.hypot(a.x - at.x, a.z - at.z) ? p : a), outline[0]!);
   const to = digMiddle ?? far;
   const d = Math.hypot(to.x - at.x, to.z - at.z) || 1;
-  return { at, reach, jib: Math.ceil((reach + OVER_REACH) * 2) / 2, height, towards: { x: (to.x - at.x) / d, z: (to.z - at.z) / d } };
+  return { at, reach, jib: jibOf(reach), height, towards: { x: (to.x - at.x) / d, z: (to.z - at.z) / d } };
 };
 
 /** The crane as a piece: its mast's foot, the jib along local +x, local x being (cos yaw, -sin yaw). */

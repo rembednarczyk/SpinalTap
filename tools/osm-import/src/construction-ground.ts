@@ -27,6 +27,8 @@ export interface SiteGround {
 export interface SiteNeighbour {
   readonly ring: readonly Pt[];
   readonly top: number;
+  /** OSM tags it `historic` or `heritage` (G-894: the crane keeps out of its front). */
+  readonly heritage?: boolean;
 }
 
 /**

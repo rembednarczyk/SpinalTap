@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { SITE_SCAFFOLD, siteCraneVariant, siteFenceVariant, siteGateVariant, siteScaffoldVariant } from "../../../packages/core/src/world/sites.ts";
-import { type SiteGroundQuery, siteCraneReach, siteFootprint, siteGateBlocked, siteOnRoad, siteThroughWall } from "./site-pieces";
+import { type SiteGroundQuery, siteCraneHeritage, siteCraneReach, siteFootprint, siteGateBlocked, siteOnRoad, siteThroughWall } from "./site-pieces";
 
 /** The building sites' checks of ADR-0087 on a plan: a pavement south of z 0, a carriageway south of z -3, a building east of x 20. */
 const ground = (barriers: SiteGroundQuery["barriers"] = []): SiteGroundQuery => ({
@@ -49,6 +49,20 @@ describe("the building sites' checks (ADR-0087)", () => {
     expect(siteCraneReach([{ id: "w1", outline, pieces: { "site-crane": crane(5, 5, 18.5) } }]).map((f) => f.what)).toEqual([expect.stringMatching(/^w1: corner 30,0 25\.50 m off/), expect.stringMatching(/^w1: corner 30,20 /)]);
     // A site without a crane has nothing to reach.
     expect(siteCraneReach([{ id: "w1", outline, pieces: {} }])).toEqual([]);
+  });
+
+  it("finds a crane's mast within 15 m of a listed building in the site's outline (G-894)", () => {
+    const crane = (x: number, z: number) => [x, 0, z, 0, siteCraneVariant({ height: 30, jib: 40, phase: 0 })];
+    const outline = [0, 0, 60, 0, 60, 40, 0, 40];
+    const palace = { id: "w2", heritage: true, ring: [{ x: 10, z: 20 }, { x: 50, z: 20 }, { x: 50, z: 35 }, { x: 10, z: 35 }] };
+    expect(siteCraneHeritage([{ id: "w1", outline, pieces: { "site-crane": crane(30, 10) } }], [palace]).map((f) => f.what)).toEqual(["w1: crane 10.00 m off the listed w2"]);
+    expect(siteCraneHeritage([{ id: "w1", outline, pieces: { "site-crane": crane(30, 4) } }], [palace])).toEqual([]);
+    // Not listed, or less than half of it in the outline, or the site the orthophoto shows a crane on.
+    expect(siteCraneHeritage([{ id: "w1", outline, pieces: { "site-crane": crane(30, 10) } }], [{ ...palace, heritage: false }])).toEqual([]);
+    const out = { ...palace, ring: [{ x: 50, z: 25 }, { x: 80, z: 20 }, { x: 80, z: 35 }] };
+    expect(siteCraneHeritage([{ id: "w1", outline, pieces: { "site-crane": crane(45, 25) } }], [out])).toEqual([]);
+    expect(siteCraneHeritage([{ id: "w1", outline, pieces: { "site-crane": crane(45, 25) } }], [{ ...out, ring: [{ x: 50, z: 25 }, { x: 58, z: 20 }, { x: 80, z: 35 }] }])).toHaveLength(1);
+    expect(siteCraneHeritage([{ id: "w1236055101", outline, pieces: { "site-crane": crane(30, 10) } }], [palace])).toEqual([]);
   });
 
   it("keeps the scaffold's footprint on the site's side of its foot", () => {

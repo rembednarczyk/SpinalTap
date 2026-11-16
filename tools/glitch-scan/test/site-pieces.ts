@@ -27,7 +27,8 @@ import type { Site } from "../../osm-import/src/props-site.ts";
  *   walls and fences, one finding a piece;
  * - `site-gate-blocked`: a gate whose opening has a building, water or rails, or a solid of the
  *   furniture, `OUTSIDE` m in front of it or `INSIDE` m behind it: no way in;
- * - `site-crane-reach` (stage 2): a corner of the site's outline its crane's jib does not reach.
+ * - `site-crane-reach` (stage 2): a corner of the site's outline its crane's jib does not reach;
+ * - `site-crane-heritage` (G-894): a crane before a listed building's facade in the outline.
  */
 
 type Pt = { readonly x: number; readonly z: number };
@@ -153,10 +154,74 @@ export const siteCraneReach = (sites: readonly SiteOfTable[]): Finding[] =>
     return out;
   });
 
-/** The four checks over the game's furniture and the sites' table. */
-export const siteChecks = (pieces: () => readonly StreetPropItem[], ground: () => SiteGroundQuery, sites: () => readonly SiteOfTable[] = () => []): Record<string, () => Finding[]> => ({
+/** A building of the map round the sites: its OSM id, its outline in the world, whether OSM tags it `historic` or `heritage`. */
+export interface SiteBuilding {
+  readonly id: string;
+  readonly ring: readonly Pt[];
+  readonly heritage: boolean;
+}
+
+/** The chunks' buildings, each once, with the protection their OSM tags give them. */
+export const siteBuildingsOf = (chunks: readonly LublinChunkData[], tags: (id: string) => Readonly<Record<string, string>>): SiteBuilding[] => {
+  const seen = new Set<string>();
+  return chunks.flatMap((c) =>
+    c.buildings.flatMap((b) => {
+      if (seen.has(b.id)) return [];
+      seen.add(b.id);
+      const t = tags(b.id);
+      const ring = Array.from({ length: b.outline.length >> 1 }, (_, k) => ({ x: b.outline[2 * k]! + b.x, z: b.outline[2 * k + 1]! + b.z }));
+      return [{ id: b.id, ring, heritage: t.historic !== undefined || t.heritage !== undefined }];
+    }),
+  );
+};
+
+/** How near a listed building a crane's mast stands to be in its front (m), and the sites whose crane the orthophoto shows there. */
+const HERITAGE_CLEAR = 15;
+const HERITAGE_CRANES: ReadonlySet<string> = new Set([
+  // The crane in the courtyard of Pałac Potockich, on the orthophoto of 2025-04.
+  "w1236055101",
+]);
+
+const ringDistance = (p: Pt, ring: readonly Pt[]): number => {
+  if (pointInRing(p, ring)) return 0;
+  let d = Infinity;
+  for (let i = 0; i < ring.length; i++) d = Math.min(d, segmentDistance(p.x, p.z, ring[i]!.x, ring[i]!.z, ring[(i + 1) % ring.length]!.x, ring[(i + 1) % ring.length]!.z));
+  return d;
+};
+
+/**
+ * `site-crane-heritage` (G-894): a crane's mast nearer than `HERITAGE_CLEAR` m to a listed building
+ * (`historic`, `heritage`) with half its corners or more in the site's outline: a crane before a
+ * palace's facade. The sites of `HERITAGE_CRANES` aside.
+ */
+export const siteCraneHeritage = (sites: readonly SiteOfTable[], buildings: readonly SiteBuilding[]): Finding[] =>
+  sites
+    .filter((s) => !HERITAGE_CRANES.has(s.id))
+    .flatMap((s) => {
+      const outline = Array.from({ length: s.outline.length >> 1 }, (_, k) => ({ x: s.outline[2 * k]!, z: s.outline[2 * k + 1]! }));
+      const listed = buildings.filter((b) => b.heritage && 2 * b.ring.filter((p) => pointInRing(p, outline)).length >= b.ring.length);
+      const row = s.pieces["site-crane"] ?? [];
+      const out: Finding[] = [];
+      for (let i = 0; i + 5 <= row.length; i += 5) {
+        const at = { x: row[i]!, z: row[i + 2]! };
+        for (const b of listed) {
+          const d = ringDistance(at, b.ring);
+          if (d < HERITAGE_CLEAR) out.push({ at: `${at.x.toFixed(2)},${at.z.toFixed(2)}`, what: `${s.id}: crane ${d.toFixed(2)} m off the listed ${b.id}` });
+        }
+      }
+      return out;
+    });
+
+/** The checks over the game's furniture, the sites' table and the buildings round them. */
+export const siteChecks = (
+  pieces: () => readonly StreetPropItem[],
+  ground: () => SiteGroundQuery,
+  sites: () => readonly SiteOfTable[] = () => [],
+  buildings: () => readonly SiteBuilding[] = () => [],
+): Record<string, () => Finding[]> => ({
   "site-on-road": () => siteOnRoad(pieces(), ground()),
   "site-through-wall": () => siteThroughWall(pieces(), ground()),
   "site-gate-blocked": () => siteGateBlocked(pieces(), ground()),
   "site-crane-reach": () => siteCraneReach(sites()),
+  "site-crane-heritage": () => siteCraneHeritage(sites(), buildings()),
 });

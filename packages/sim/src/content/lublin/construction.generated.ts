@@ -56,9 +56,6 @@ export const LUBLIN_CONSTRUCTION_SITES: readonly LublinConstructionSiteData[] = 
       "site-board": [
         2.04,-1.11,85.36,-1.5008,1,
       ],
-      "site-crane": [
-        41,-1.23,78,-0.3244,5918991,
-      ],
       "site-fence": [
         2.64,-1.23,92.58,-1.5008,2161394,
         2.48,-1.2,90.16,-1.5008,2161394,

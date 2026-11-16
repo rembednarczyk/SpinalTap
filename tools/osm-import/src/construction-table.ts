@@ -53,22 +53,34 @@ const flat = (f: readonly number[]): Pt[] => Array.from({ length: f.length >> 1 
 
 const near = (box: Rect, pts: readonly Pt[], by: number): boolean => pts.some((p) => p.x > box.minX - by && p.x < box.maxX + by && p.z > box.minZ - by && p.z < box.maxZ + by);
 
+/** What the sites read of the map besides the chunks: the buildings' OSM tags by id. */
+export interface SiteMapInfo {
+  readonly tags?: ReadonlyMap<string, Tags>;
+}
+
 /** The ground round a site from the chunks: `Site`'s surfaces, the frontages' fills, the map's barriers and streets near it. */
-export const chunkGround = (site: Site, box: Rect): SiteGround => {
+export const chunkGround = (site: Site, box: Rect, info: SiteMapInfo = {}): SiteGround => {
   const chunks = site.chunks;
   const fronts = chunks.flatMap((c) => c.ground.filter((g) => g.front).map((g) => flat(g.outline))).filter((r) => near(box, r, 1));
   const barriers = chunks.flatMap((c) => (c.barriers ?? []).filter((b) => b.kind !== "gate").map((b) => flat(b.line))).filter((l) => near(box, l, 2));
   const streets = site.streets.filter((s) => near(box, s.line, 80));
   const drive = streets.filter((s) => !FOOT_KINDS.has(s.kind));
   const byBarrier = (p: Pt) => barriers.some((l) => l.some((a, i) => i + 1 < l.length && segmentDistance(p.x, p.z, a.x, a.z, l[i + 1]!.x, l[i + 1]!.z) < BARRIER_GAP));
-  // The buildings round it (stage 2), each once (a building cut at a seam is in each chunk's table).
+  // The buildings round it (stage 2), each once (a building cut at a seam is in each chunk's table),
+  // with their protection (G-894).
   const seen = new Set<string>();
   const neighbours: SiteNeighbour[] = [];
   for (const b of chunks.flatMap((c) => c.buildings)) {
     if (seen.has(b.id)) continue;
     seen.add(b.id);
     const ring = flat(b.outline).map((p) => ({ x: p.x + b.x, z: p.z + b.z }));
-    if (near(box, ring, NEIGHBOURS)) neighbours.push({ ring, top: Math.round((b.y + b.height + Math.max(0, b.roof ?? 0)) * 100) / 100 });
+    if (!near(box, ring, NEIGHBOURS)) continue;
+    const t = info.tags?.get(b.id.split("/")[0]!);
+    neighbours.push({
+      ring,
+      top: Math.round((b.y + b.height + Math.max(0, b.roof ?? 0)) * 100) / 100,
+      ...(t?.historic !== undefined || t?.heritage !== undefined ? { heritage: true } : {}),
+    });
   }
   return {
     neighbours,
@@ -86,11 +98,11 @@ export const chunkGround = (site: Site, box: Rect): SiteGround => {
 };
 
 /** Every site of `outlines` with its middle in a chunk, laid over the chunks' ground, by id. */
-export const planSites = (outlines: readonly SiteOutline[], chunks: readonly LublinChunkData[]): SitePlan[] => {
+export const planSites = (outlines: readonly SiteOutline[], chunks: readonly LublinChunkData[], info: SiteMapInfo = {}): SitePlan[] => {
   const site = new Site(chunks);
   return outlines
     .filter((o) => site.chunkAt(centroid(o.ring)) !== null)
-    .map((o) => planSite(o, chunkGround(site, ringBounds(o.ring))))
+    .map((o) => planSite(o, chunkGround(site, ringBounds(o.ring), info)))
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 };
 

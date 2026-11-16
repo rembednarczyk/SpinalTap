@@ -71,7 +71,9 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   const plan = loadPropsPlan();
   const chunks = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
   // The building sites first (ADR-0087): the simulation every pass reads has their fences and digs.
-  const sites = planSites(loadSiteOutlines(), chunks);
+  // They read the buildings' tags (G-894: a listed building's front).
+  const buildingTags = loadBuildingTags();
+  const sites = planSites(loadSiteOutlines(), chunks, { tags: buildingTags });
   const sitesText = emitSites(sites);
   // The venues' boards from the renderer's plan, whose modules Node does not load by itself, with the
   // decals' walls (ADR-0058 stage 6) from the same module runner: the city is framed once for both.
@@ -98,7 +100,7 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   const decals = addDecals(table, new Site(chunks), decalWalls.lublinDecalWalls(), {
     groundY: (p) => decalWalls.groundY(p.x, p.z),
     surfaceY: (p) => decalWalls.surfaceY(p.x, p.z),
-    buildingTags: loadBuildingTags(),
+    buildingTags,
     poleLamp: decalWalls.poleLampAt,
     blockOf: decalWalls.furnitureBlock,
   });
