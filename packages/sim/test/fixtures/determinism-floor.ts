@@ -31,7 +31,15 @@ const PROPS = [
   lamp(10, 20, "#ff2e88"),
 ];
 
-/** The floor: one chunk, nothing else in the world. */
+/**
+ * The floor: one chunk, nothing else in the world. Its district is `shinsekai-7`, so the golden
+ * hash hangs on that district's rows of tables of balance, not of the map: `DISTRICT_BANDS`
+ * (`content/district-bands.ts`, the band the Hebi's level is kept in, ADR-0059; a band of 4-8
+ * instead of 1-8 moves the hash) and `FIXER_HOME` (`systems/contract-layer-system.ts`, the fixer
+ * who phones an offer on entering the district, ADR-0029). The run starts in the district and
+ * never enters it, so `FIXER_HOME` moves nothing today (Kaito moved to `doki`: the same hash);
+ * a script that leaves the floor's district and comes back would hang on it too.
+ */
 export const FLOOR_CHUNK: ChunkDef = {
   id: FLOOR_ID,
   district: "shinsekai-7",

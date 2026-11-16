@@ -1,3 +1,4 @@
+import { DECK_HEADROOM } from "../../world/deck";
 import { type GroundField, MAX_WALK_SLOPE } from "../../world/ground";
 import { type Collider, closestXZ, colliderTop, overCollider } from "../../world/solids";
 import { SNAP_DOWN, STEP_HEIGHT, offTheBank } from "../movement-system";
@@ -171,6 +172,38 @@ function* ledgesOf(base: Float64Array, ground: GroundField, x0: number, z0: numb
   }
   return out;
 }
+
+/**
+ * Is the way from ledge cell `from` (`ledgesOf`) to its neighbour `to` no way down off it, the deck
+ * going on over `to` about level with it, high over the terrain there: where a deck seen overhead
+ * (a walk after a goal under it, `deckReach`) rises out of reach, the raster has a drop to the terrain
+ * under it, and the feet stay on the deck (G-072). From Mełgiewska's lower bridge's abutment the
+ * walk led onto the deck and over the goal under it, and stood there.
+ */
+export const pastLedge = (r: Raster, from: number, to: number): boolean => {
+  if (r.ledges?.[from] !== ON_LEDGE || !r.base || r.reach !== -Infinity) return false;
+  const at = cellCentre(r, to, 0);
+  const deck = r.ground.heightAt(at.x, at.z);
+  return deck - (r.base[to] ?? 0) > DECK_HEADROOM && Math.abs(deck - (r.base[from] ?? 0)) <= LEDGE * Math.SQRT2;
+};
+
+/**
+ * Does the line from feet at `a` to `b`, sampled every `sample` metres, go from cell to cell
+ * `pastLedge`? Not for feet under their own cell's deck: at the foot of the deck's tip over the
+ * abutment's ramp of Mełgiewska's lower bridge (G-740) their cell is on it, the feet are not.
+ */
+export const pastLedgeOnWay = (r: Raster, a: { x: number; y: number; z: number }, b: { x: number; z: number }, sample: number): boolean => {
+  if (!r.ledges || !r.base || r.reach !== -Infinity) return false;
+  let prev = cellIndex(r, a.x, a.z);
+  if (prev >= 0 && (r.base[prev] ?? 0) - a.y > STEP_HEIGHT) return false;
+  const n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / sample);
+  for (let i = 1; i <= n; i++) {
+    const c = cellIndex(r, a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n);
+    if (c >= 0 && prev >= 0 && c !== prev && pastLedge(r, prev, c)) return true;
+    prev = c;
+  }
+  return false;
+};
 
 /** Is cell `n` of the raster or a neighbour of it on the edge of a bridge's deck over lower ground (`ledgesOf`)? */
 export const byLedge = (r: Raster, n: number): boolean => {

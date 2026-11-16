@@ -3,7 +3,8 @@ import { CLEARED } from "../../../packages/sim/src/content/lublin/sites.ts";
 import { COVER } from "../../orto/src/classify.ts";
 import { type Cover } from "../../orto/src/cover.ts";
 import { THRESHOLDS } from "../../orto/src/thresholds.ts";
-import { FILL, FILL_CLEARED, type TownPlaces, coverFills, withFills } from "../src/bare-cover.ts";
+import { FILL, FILL_CLEARED, type TownPlaces, coverFills, townPlaces, withFills } from "../src/bare-cover.ts";
+import { frontages } from "../src/bare-fronts.ts";
 import { type Pt, type Rect, pointInRing, signedArea } from "../src/geometry.ts";
 import { type GroundOut } from "../src/model.ts";
 
@@ -108,6 +109,62 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
     // With nothing past it, or the pavement over 5 m off, the strip is a loose region again.
     expect(surfaceAt(coverFills(RECT, cover(), [road], []), { x: 12.75, z: 10.25 })).toEqual([]);
     expect(surfaceAt(coverFills(RECT, cover(), [road, piece("sidewalk", box(18, 0, 20, 20))], []), { x: 12.75, z: 10.25 })).toEqual([]);
+  });
+
+  it("lays a pedestrian street's frontage up to the walls, paved where the cover shows no lawn or paving, and not a yard behind them (G-853)", () => {
+    // A pedestrian street along x at z = 10, its paving 4 m wide; tenements north of z = 15 and a
+    // row south of z = 5 with a yard behind it. Asphalt-dark setts north of the paving, a lawn at
+    // its west end, light paving south of it and in the yard.
+    const street = piece("square", box(0, 8, 20, 12));
+    const walls = [box(0, 15, 20, 20), box(0, 3, 20, 5)];
+    const green = (x: number, z: number) => (x < 6 && z < 14) || (x > 7 && x < 8.5 && z > 12.5 && z < 14);
+    const at = (x: number, z: number) => (z > 12 && z < 15 ? (green(x, z) ? COVER.green : COVER.asphalt) : COVER.paving);
+    const line = (highway: string, z: number) => ({ id: "w1", osmId: 1, tags: { highway }, line: [{ x: -5, z }, { x: 25, z }] });
+    const fronts = frontages([line("pedestrian", 10)]);
+    const fills = coverFills(RECT, cover(at), [street], walls, { areas: [], stops: [], shops: [], fronts });
+    expect(surfaceAt(fills, { x: 10.25, z: 13.75 })).toEqual(["square"]);
+    expect(surfaceAt(fills, { x: 2.25, z: 13.25 })).toEqual(["grass"]);
+    // A speck of green the cover alone shows in it, 2.25 m²: the setts' patina, paved (G-775).
+    expect(surfaceAt(fills, { x: 7.75, z: 13.25 })).toEqual(["square"]);
+    expect(surfaceAt(fills, { x: 10.25, z: 6.25 })).toEqual(["square"]);
+    expect(surfaceAt(fills, { x: 10.25, z: 1.75 }), "the yard behind the wall").toEqual([]);
+    // A lawn of the map in the frontage, drawn or not, is no frontage: nothing paved over it.
+    const lawned = coverFills(RECT, cover(at), [street], walls, { areas: [], stops: [], shops: [], fronts, greens: [box(12, 12.5, 16, 15)] });
+    expect(surfaceAt(lawned, { x: 14.25, z: 13.75 })).toEqual([]);
+    expect(surfaceAt(lawned, { x: 10.25, z: 13.75 })).toEqual(["square"]);
+    // No frontage: the strips by the walls are loose regions, the asphalt bare.
+    const none = coverFills(RECT, cover(at), [street], walls);
+    for (const z of [13.75, 6.25]) expect(surfaceAt(none, { x: 10.25, z }), `${z}`).toEqual([]);
+    // The frontages' pieces come on top of the rule's, which stay as they were, and are marked: the furniture does not read them.
+    expect(fills.filter((f) => !f.front)).toEqual(none);
+    expect(fills.filter((f) => f.front).length).toBeGreaterThan(0);
+    // Walls past the reach: the strip the reach's edge leaves before them joins the frontage.
+    const far = frontages([line("pedestrian", 1)]);
+    const wide = coverFills(RECT, cover(() => COVER.asphalt), [piece("square", box(0, 0, 20, 2))], [box(0, 15, 20, 20)], { areas: [], stops: [], shops: [], fronts: far });
+    for (const z of [6.25, 12.75, 14.75]) expect(surfaceAt(wide, { x: 10.25, z }), `${z}`).toEqual(["square"]);
+    // A residential street has a frontage only inside the Old Town's walls, a carriageway none.
+    expect(frontages([line("residential", 10), line("tertiary", 10), { ...line("pedestrian", 10), tags: { highway: "pedestrian", tunnel: "yes" } }])).toEqual([]);
+    expect(frontages([{ ...line("residential", 0), line: [{ x: 560, z: -60 }, { x: 600, z: -60 }, { x: 900, z: -60 }] }]).map((f) => [f.line.length, f.reach])).toEqual([[3, 6]]);
+  });
+
+  it("lays no frontage on a building site of the map, a site's ground as the rule's first pass leaves it (G-866)", () => {
+    // The street of the test above; a site (`landuse=construction`, a `building=construction` in it)
+    // north of the paving, its cover green (crowns of an earlier flight) and asphalt.
+    const street = piece("square", box(0, 8, 20, 12));
+    const at = (x: number, z: number) => (z > 12 && z < 15 ? (x > 12 && x < 16 ? COVER.green : COVER.asphalt) : COVER.paving);
+    const fronts = frontages([{ id: "w1", osmId: 1, tags: { highway: "living_street" }, line: [{ x: -5, z: 10 }, { x: 25, z: 10 }] }]);
+    const area = (id: number, tags: Record<string, string>, ring: Pt[]) => ({ id: `w${id}`, osmId: id, tags, ring, holes: 0 });
+    const data = { nodes: new Map(), ways: new Map(), relations: new Map() };
+    const sited = (tags: Record<string, string>) => {
+      const town = townPlaces(data, [area(2, tags, box(11, 12, 17, 15))], [], fronts);
+      return coverFills(RECT, cover(at), [street], [box(0, 15, 20, 20)], { ...town, shops: [] });
+    };
+    for (const tags of [{ landuse: "construction" }, { building: "construction" }] as Record<string, string>[]) {
+      const fills = sited(tags);
+      for (const x of [12.25, 14.25, 16.25]) expect(surfaceAt(fills.filter((f) => f.front), { x, z: 13.75 }), `${JSON.stringify(tags)} ${x}`).toEqual([]);
+      expect(surfaceAt(fills, { x: 8.25, z: 13.75 }), "the frontage beside the site").toEqual(["square"]);
+    }
+    expect(surfaceAt(sited({ landuse: "residential" }), { x: 14.25, z: 13.75 }), "no site: the frontage").not.toEqual([]);
   });
 
   it("lays crowns over paving a lawn, not paving, and leaves those over asphalt bare; a speck of green in paving stays a lawn (T-285)", () => {

@@ -84,6 +84,10 @@ interface Ranked {
 const before =
   (rank: Rank) =>
   (a: Ranked, b: Ranked): number => {
+    // The frontages' fills (G-853) under every other piece: where one laps over another by the
+    // rounding of the outlines it is cut, and the rest of the ground stays as it was without them.
+    const front = Number(a.g.front === true) - Number(b.g.front === true);
+    if (front !== 0) return front;
     const steps = Number(b.g.surface === "steps") - Number(a.g.surface === "steps");
     if (steps !== 0) return steps;
     const stone = rank === "carriageway" ? Number(KERB_STONES.has(b.g)) - Number(KERB_STONES.has(a.g)) : 0;
