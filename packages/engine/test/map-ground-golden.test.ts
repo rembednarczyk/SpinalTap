@@ -132,7 +132,10 @@ describe("the ground the map city lays (G-444)", () => {
     // The widened kerbs smooth (G-837): the asphalt's new edge simplified within 0.05 m before its
     // rounding, and grown on in to the kerb where the gap to the paving closes under 1 m:
     // 161 914 - 161 827 = 87 vertices fewer, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 161827, hash: "74b086d7" });
+    // W-3's hall dug out (ADR-0082 stage 2): its stairs' and the goods lift's shafts, store S's floor levelled
+    // along the cut corner and the culvert's mouth in the river's bench are holes in the ground and the
+    // zone's paving (`W3_CUTS` with the shafts), their edges new corners: 162 013 - 161 827 = 186 vertices more, the same meshes.
+    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 162013, hash: "4f9e833c" });
     scene.dispose();
   });
 
