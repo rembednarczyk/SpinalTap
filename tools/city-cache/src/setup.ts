@@ -21,7 +21,8 @@ if (mode !== "off") {
     afterAll(() => {
       const file = expect.getState().testPath ?? "";
       const s = (x: typeof stores.rasters.stats) => `${x.hits}/${x.hits + x.misses} hits, ${x.entries} kept, ${(x.bytes / 2 ** 20).toFixed(0)} MB`;
-      process.stderr.write(`city cache after ${file.replace(/.*\/(packages|tools)\//, "$1/")} (pid ${process.pid}): rasters ${s(stores.rasters.stats)}; fields ${s(stores.fields.stats)}\n`);
+      const heap = (process.memoryUsage().heapUsed / 2 ** 20).toFixed(0);
+      process.stderr.write(`city cache after ${file.replace(/.*\/(packages|tools)\//, "$1/")} (pid ${process.pid}): rasters ${s(stores.rasters.stats)}; fields ${s(stores.fields.stats)}; heap ${heap} MB\n`);
     });
   }
 }

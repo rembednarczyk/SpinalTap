@@ -7,7 +7,7 @@ import { solidIndexOf } from "../../world/solid-index";
 import { type Collider, collidersOf } from "../../world/solids";
 import { STEP_HEIGHT } from "../movement-system";
 import { type NavMemo, heldRaster, recall, remember } from "./nav-memo";
-import { type NavShare, groundKey, shapesKey, through } from "./nav-share";
+import { type NavShare, shapesKey, sharedGround, through } from "./nav-share";
 import { CLEARANCE, LEDGE, NAV_CELL, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellIndex, finish, rasterise, walled } from "./nav-raster";
 
 /**
@@ -219,11 +219,12 @@ export function* fieldSteps(world: World<Entity>, win: Window, floor: number, re
   const rasterKey = `${floor}|${reach}|${cx}|${cz}|${signature(solids)}`;
   let raster = recall(memo.rasters, rasterKey) ?? heldRaster(memo.fields, rasterKey);
   // The process's store (tests, `nav-share.ts`), by the content: only when one is installed.
+  const shared = share ? sharedGround(groundOf(world)) : null;
   let sharedKey: string | undefined;
-  const sharedKeyOf = (colliders: readonly Collider[]) => (sharedKey ??= `${win.name}|${cells}|${floor}|${reach}|${x0}|${z0}|${groundKey(groundOf(world))}|${shapesKey(colliders)}`);
+  const sharedKeyOf = (colliders: readonly Collider[]) => (sharedKey ??= `${win.name}|${cells}|${floor}|${reach}|${x0}|${z0}|${shared?.key}|${shapesKey(colliders)}`);
   if (!raster) {
     const colliders = collidersOf(solids);
-    raster = yield* through(share?.rasters, share ? sharedKeyOf(colliders) : "", () => rasterise(colliders, floor, reach, x0, z0, groundOf(world), cells));
+    raster = yield* through(share?.rasters, share ? sharedKeyOf(colliders) : "", () => rasterise(colliders, floor, reach, x0, z0, shared?.ground ?? groundOf(world), cells));
     memo.built.rasters++;
   }
   remember(memo.rasters, rasterKey, raster, win.rasters);

@@ -68,19 +68,45 @@ const idOf = (o: object): number => {
 };
 
 const groundKeys = new WeakMap<GroundField, string>();
+/** The long identities of the grounds seen, by their short key. */
+const groundIds = new Map<string, string>();
 
 /**
  * The content of a ground, as the identity of what it was made of: the chunks, cuts and vaults of
  * the content in their order (module constants, the same objects for every world of the process).
+ * A short key for it (the city's long one is some thousand characters).
  */
 export const groundKey = (ground: GroundField): string => {
   let k = groundKeys.get(ground);
   if (k === undefined) {
     const { chunks, cuts, vaults } = ground.made;
-    k = `${chunks.map(idOf).join(",")}:${cuts.map(idOf).join(",")}:${vaults.map(idOf).join(",")}`;
+    const long = `${chunks.map(idOf).join(",")}:${cuts.map(idOf).join(",")}:${vaults.map(idOf).join(",")}`;
+    k = groundIds.get(long) ?? `g${groundIds.size}`;
+    groundIds.set(long, k);
     groundKeys.set(ground, k);
   }
   return k;
+};
+
+/** Grounds the shared rasters are made on, one a content: the last few used. */
+const CANON_GROUNDS = 16;
+const canon = new Map<string, GroundField>();
+
+/**
+ * One ground of the same content for every world, the one the shared rasters are made on and hold
+ * (`Raster.ground`): each simulation makes a ground of its own, and a raster kept from each world
+ * held each world's (a test worker ran out of heap with them).
+ */
+export const sharedGround = (ground: GroundField): { readonly key: string; readonly ground: GroundField } => {
+  const key = groundKey(ground);
+  const had = canon.get(key) ?? ground;
+  canon.delete(key);
+  canon.set(key, had);
+  for (const k of canon.keys()) {
+    if (canon.size <= CANON_GROUNDS) break;
+    canon.delete(k);
+  }
+  return { key, ground: had };
 };
 
 const f64 = new Float64Array(1);
