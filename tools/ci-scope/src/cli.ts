@@ -1,5 +1,6 @@
 import { appendFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { GLITCH_SCAN, importClosure } from "./imports.ts";
 import { fullScope, isFull, pushScope, scope, type Scope } from "./scope.ts";
 
 /**
@@ -8,7 +9,8 @@ import { fullScope, isFull, pushScope, scope, type Scope } from "./scope.ts";
  * `git diff --name-only <before> HEAD | node tools/ci-scope/src/cli.ts --push` for a push to main
  * (everything, or nothing for docs alone), `node tools/ci-scope/src/cli.ts --full "<reason>"` for
  * the nightly run and a run by hand. Writes `code`, `tables`, `e2e`, `unit`, `unit_files` (a JSON
- * array) and `full` (every unit test and every e2e group) to `$GITHUB_OUTPUT`
+ * array), `scan` and `scan_chunks` (the glitch scan's part of the city, `scan-scope.ts`; the
+ * districts by commas) and `full` (every unit test, every e2e group, the whole scan) to `$GITHUB_OUTPUT`
  * and the reasons to the log and `$GITHUB_STEP_SUMMARY`.
  */
 
@@ -27,13 +29,13 @@ const testFiles = (root: string): string[] =>
   );
 
 const write = (s: Scope): void => {
-  const lines = [`code=${s.code}`, `tables=${s.tables}`, `e2e=${s.e2e}`, `unit=${s.unit}`, `unit_files=${JSON.stringify(s.unitFiles)}`, `full=${isFull(s)}`];
-  console.log(lines.slice(0, 4).join(" "));
+  const lines = [`code=${s.code}`, `tables=${s.tables}`, `e2e=${s.e2e}`, `unit=${s.unit}`, `scan=${s.scan}`, `scan_chunks=${s.scanChunks.join(",")}`, `unit_files=${JSON.stringify(s.unitFiles)}`, `full=${isFull(s)}`];
+  console.log(lines.slice(0, 6).join(" "));
   for (const r of s.reasons) console.log(`- ${r}`);
   if (s.unit === "related") console.log(`vitest related:\n  ${s.unitFiles.join("\n  ")}`);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join("\n")}\n`);
   if (process.env.GITHUB_STEP_SUMMARY) {
-    const md = ["## What runs (ADR-0046)", "", `Unit tests: **${s.unit}**, e2e: **${s.e2e}**, map tables: **${s.tables}**.`, "", ...s.reasons.map((r) => `- ${r}`), ""];
+    const md = ["## What runs (ADR-0046)", "", `Unit tests: **${s.unit}**, e2e: **${s.e2e}**, map tables: **${s.tables}**, glitch scan: **${s.scan}**${s.scanChunks.length ? ` (${s.scanChunks.join(", ")})` : ""}.`, "", ...s.reasons.map((r) => `- ${r}`), ""];
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${md.join("\n")}\n`);
   }
 };
@@ -42,4 +44,7 @@ const args = process.argv.slice(2);
 const changed = (): string[] => readFileSync(0, "utf8").split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
 if (args[0] === "--full") write(fullScope(args[1] ?? "full run"));
 else if (args[0] === "--push") write(pushScope(changed()));
-else write(scope(changed(), testFiles(process.cwd())));
+else {
+  const scanReads = importClosure(process.cwd(), [GLITCH_SCAN]);
+  write(scope(changed(), testFiles(process.cwd()), (f) => scanReads.has(f)));
+}

@@ -63,7 +63,11 @@ describe("CI scope of a pull request (ADR-0046)", () => {
   });
 
   it("a change of docs alone runs nothing", () => {
-    expect(scope(["docs/adr/0046-strategia-testow-e2e.md", "changelog.d/x.md", "packages/ui/src/icons/README.md"], TESTS)).toMatchObject({ code: false, tables: false, e2e: false, unit: "none" });
+    expect(scope(["docs/adr/0046-strategia-testow-e2e.md", "changelog.d/x.md", "packages/ui/src/icons/README.md"], TESTS)).toMatchObject({ code: false, tables: false, e2e: false, unit: "none", scan: "none" });
+  });
+
+  it("the JSON in docs/ is data tests read (the coverage register, the furniture's list): every unit test and the whole scan", () => {
+    for (const f of ["docs/mapa-pokrycie.json", "docs/world/lublin-props.todo.json"]) expect(scope([f], TESTS), f).toMatchObject({ code: true, unit: "full", scan: "full", scanChunks: [] });
   });
 
   it("an e2e spec or the Playwright settings run e2e and the checks, no unit test", () => {
@@ -85,7 +89,7 @@ describe("CI scope of a pull request (ADR-0046)", () => {
   });
 
   it("main, the nightly run and a run by hand run everything; a push of docs alone runs nothing", () => {
-    expect(fullScope("nightly")).toEqual({ code: true, tables: true, e2e: true, unit: "full", unitFiles: [], reasons: ["nightly"] });
+    expect(fullScope("nightly")).toEqual({ code: true, tables: true, e2e: true, unit: "full", unitFiles: [], reasons: ["nightly"], scan: "full", scanChunks: [] });
     expect(pushScope(["packages/sim/src/systems/body-system.ts", "docs/backlog.md"])).toMatchObject({ code: true, tables: true, e2e: true, unit: "full" });
     expect(pushScope(["docs/backlog.md"])).toMatchObject({ code: false, e2e: false, unit: "none" });
   });

@@ -49,6 +49,10 @@ jobs:
       # full, related (the files in unit_files, a JSON array) or none.
       unit: ${{ steps.diff.outputs.unit }}
       unit_files: ${{ steps.diff.outputs.unit_files }}
+      # The glitch scan's part of the city: full, chunks (the districts in scan_chunks, by commas)
+      # or none (tools/ci-scope/src/scan-scope.ts).
+      scan: ${{ steps.diff.outputs.scan }}
+      scan_chunks: ${{ steps.diff.outputs.scan_chunks }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -88,7 +92,7 @@ jobs:
         run: |
           if [ "${{ steps.tested.outputs.same }}" = "true" ]; then
             echo "The merged code passed a full CI run in its pull request on this base: nothing runs again."
-            printf 'code=false\ntables=false\ne2e=false\nunit=none\nunit_files=[]\nfull=false\n' >> "$GITHUB_OUTPUT"; exit 0
+            printf 'code=false\ntables=false\ne2e=false\nunit=none\nscan=none\nscan_chunks=\nunit_files=[]\nfull=false\n' >> "$GITHUB_OUTPUT"; exit 0
           fi
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             git -c core.quotePath=false diff --name-only "origin/${{ github.base_ref }}...HEAD" > "$RUNNER_TEMP/changed"
@@ -156,7 +160,9 @@ jobs:
   # coverage thresholds once, on the merged coverage (a shard alone covers only part of the code).
   # A light pull request (ADR-0046) runs `vitest related` on its files, in the same two shards and
   # without coverage; a shard Vitest gives no file passes (`--passWithNoTests`). No file with a
-  # unit test (an e2e spec alone): no job.
+  # unit test (an e2e spec alone): no job. A pull request that changes only some districts' tables
+  # compares the glitch scan's keys of their chunks and the neighbours (GLITCH_SCAN_CHUNKS,
+  # tools/glitch-scan/src/scan-chunks.ts); every other run, main's and the nightly one, the whole city.
   unit:
     # No matrix value in the name, as with the e2e shards.
     name: Unit tests
@@ -186,6 +192,7 @@ jobs:
           TEST_TIME_OUTPUT: reports/unit-times/unit-times-${{ matrix.shard }}.json
           UNIT: ${{ needs.changes.outputs.unit }}
           UNIT_FILES: ${{ needs.changes.outputs.unit_files }}
+          GLITCH_SCAN_CHUNKS: ${{ github.event_name == 'pull_request' && needs.changes.outputs.unit == 'related' && needs.changes.outputs.scan == 'chunks' && needs.changes.outputs.scan_chunks || '' }}
         run: |
           reporters=(--reporter=default --reporter=blob --reporter=github-actions --reporter=./tools/test-time/src/reporter.ts --shard=${{ matrix.shard }}/2)
           if [ "$UNIT" = "full" ]; then
@@ -195,6 +202,10 @@ jobs:
           mapfile -t files < <(node -e 'for (const f of JSON.parse(process.env.UNIT_FILES)) console.log(f)')
           line="Pull request: unit tests related to ${#files[@]} changed or read file(s), no coverage (ADR-0046, job What changed lists them); main and the nightly run run every test."
           echo "$line"; echo "$line" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$GLITCH_SCAN_CHUNKS" ]; then
+            line="Glitch scan: the keys of the chunks of $GLITCH_SCAN_CHUNKS and their neighbours (only their tables changed); main and the nightly run compare the whole city."
+            echo "$line"; echo "$line" >> "$GITHUB_STEP_SUMMARY"
+          fi
           pnpm exec vitest related --run --passWithNoTests "${reporters[@]}" "${files[@]}"
       # Only a passing shard: a red run is no reference. On main the times are the reference for
       # the pull requests that follow, so they stay longer than the copy of a pull request.

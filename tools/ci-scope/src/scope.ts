@@ -6,6 +6,8 @@
  * changed files and the repository's test files come in, `cli.ts` reads them and writes the outputs.
  */
 
+import { type ScanScope, NO_SCAN, fullScan, glitchScan } from "./scan-scope.ts";
+
 /** `full`: every test with coverage; `related`: `vitest related <unitFiles>`; `none`: no unit job. */
 export type UnitScope = "full" | "related" | "none";
 
@@ -20,10 +22,17 @@ export interface Scope {
   readonly unitFiles: readonly string[];
   /** Why the scope is what it is, one line a rule that fired, for the run's log and summary. */
   readonly reasons: readonly string[];
+  /** The glitch scan's part of the city (`scan-scope.ts`): `full` whenever every unit test runs. */
+  readonly scan: ScanScope;
+  /** For `chunks`: the districts whose chunks the scan compares (`GLITCH_SCAN_CHUNKS`). */
+  readonly scanChunks: readonly string[];
 }
 
-/** A change of docs alone (as `ci.yml` had it before): no job runs. */
-export const DOCS = /^(docs\/|changelog\.d\/)|\.md$/;
+/**
+ * A change of docs alone (as `ci.yml` had it before): no job runs. The JSON in `docs/` is data
+ * that tests and the generators read (the coverage register, the furniture's list), not docs.
+ */
+export const DOCS = /^(docs\/|changelog\.d\/)(?!.*\.json$)|\.md$/;
 
 /** The tables' generators, their data and the tables (job "Map tables", unchanged from `ci.yml`). */
 export const TABLES = /^(tools\/osm-import\/|tools\/orto\/|data\/|packages\/sim\/src\/content\/lublin\/)/;
@@ -39,10 +48,10 @@ export const SHARED: readonly RegExp[] = [
 
 /**
  * Every unit test, but no e2e: the test runner's settings, the CI's own tools (the reporter of the
- * unit shards, this selector), and `data/`, which tests read from disk past the import graph
- * (`tools/glitch-scan`, `tools/osm-import`).
+ * unit shards, this selector), and `data/` and the JSON in `docs/`, which tests read from disk
+ * past the import graph (`tools/glitch-scan`, `tools/osm-import`, `packages/core`).
  */
-export const UNIT_FULL: readonly RegExp[] = [/(^|\/)vitest\.(config|workspace)\.[^/]+$/, /^tools\/(test-time|ci-scope)\//, /^data\//];
+export const UNIT_FULL: readonly RegExp[] = [/(^|\/)vitest\.(config|workspace)\.[^/]+$/, /^tools\/(test-time|ci-scope)\//, /^data\//, /^docs\/.*\.json$/];
 
 /** What a browser draws: e2e runs. */
 export const E2E: readonly RegExp[] = [
@@ -77,22 +86,33 @@ const PACKAGE = /^(packages|tools)\/[^/]+\//;
 const any = (patterns: readonly RegExp[], file: string): boolean => patterns.some((p) => p.test(file));
 
 /** Everything, as a push to main, the nightly run and a run started by hand. */
-export const fullScope = (reason: string): Scope => ({ code: true, tables: true, e2e: true, unit: "full", unitFiles: [], reasons: [reason] });
+export const fullScope = (reason: string): Scope => ({ code: true, tables: true, e2e: true, unit: "full", unitFiles: [], reasons: [reason], scan: "full", scanChunks: [] });
+
+const NOTHING: Scope = { code: false, tables: false, e2e: false, unit: "none", unitFiles: [], reasons: ["docs only: nothing runs"], scan: "none", scanChunks: [] };
 
 /** A push to main: everything, unless it changed docs alone (no job runs, as before). */
-export const pushScope = (changed: readonly string[]): Scope =>
-  changed.some((f) => !DOCS.test(f)) ? fullScope("push to main: everything") : { code: false, tables: false, e2e: false, unit: "none", unitFiles: [], reasons: ["docs only: nothing runs"] };
+export const pushScope = (changed: readonly string[]): Scope => (changed.some((f) => !DOCS.test(f)) ? fullScope("push to main: everything") : NOTHING);
 
 /** Every unit test with coverage and every e2e group: a pull request's run that stands for main's (`ci.yml`, job "What changed"). */
-export const isFull = (s: Scope): boolean => s.unit === "full" && s.e2e;
+export const isFull = (s: Scope): boolean => s.unit === "full" && s.e2e && s.scan === "full";
+
+/** Every unit test: the glitch scan compares the whole city too. */
+const everyUnit = (s: Pick<Scope, "code" | "tables" | "e2e" | "reasons">): Scope => {
+  const g = fullScan("every unit test runs");
+  return { ...s, unit: "full", unitFiles: [], reasons: [...s.reasons, g.reason], scan: g.scan, scanChunks: g.scanChunks };
+};
 
 const testsUnder = (testFiles: readonly string[], dirs: readonly string[]): string[] => testFiles.filter((t) => dirs.some((d) => t.startsWith(d)));
 
-/** The pull request's scope from its changed files and the repository's test files (paths from the root, `/`). */
-export const scope = (changed: readonly string[], testFiles: readonly string[]): Scope => {
+/**
+ * The pull request's scope from its changed files and the repository's test files (paths from the
+ * root, `/`), and whether the glitch scan reads a file (`imports.ts`; by default every file, so a
+ * change of anything but a district's tables compares the whole city).
+ */
+export const scope = (changed: readonly string[], testFiles: readonly string[], scanReads: (file: string) => boolean = () => true): Scope => {
   const code = changed.filter((f) => !DOCS.test(f));
   const tables = code.some((f) => TABLES.test(f));
-  if (code.length === 0) return { code: false, tables: false, e2e: false, unit: "none", unitFiles: [], reasons: ["docs only: nothing runs"] };
+  if (code.length === 0) return NOTHING;
   const shared = code.filter((f) => any(SHARED, f));
   if (shared.length > 0) return { ...fullScope(`shared files: ${shared.join(", ")}`), tables };
   const reasons: string[] = [];
@@ -100,7 +120,7 @@ export const scope = (changed: readonly string[], testFiles: readonly string[]):
   if (e2eBy.length > 0) reasons.push(`e2e: ${e2eBy.join(", ")}`);
   else reasons.push("no e2e: nothing a browser draws changed");
   const fullBy = code.filter((f) => any(UNIT_FULL, f));
-  if (fullBy.length > 0) return { code: true, tables, e2e: e2eBy.length > 0, unit: "full", unitFiles: [], reasons: [`every unit test: ${fullBy.join(", ")}`, ...reasons] };
+  if (fullBy.length > 0) return everyUnit({ code: true, tables, e2e: e2eBy.length > 0, reasons: [`every unit test: ${fullBy.join(", ")}`, ...reasons] });
   const sources = new Set<string>();
   const dirs = new Set<string>();
   const unknown: string[] = [];
@@ -113,9 +133,10 @@ export const scope = (changed: readonly string[], testFiles: readonly string[]):
     else if (pkg) dirs.add(pkg); // read from disk past the import graph (baselines, ink, JSON): the package's tests
     else if (read.length === 0) unknown.push(f);
   }
-  if (unknown.length > 0) return { code: true, tables, e2e: true, unit: "full", unitFiles: [], reasons: [`files of no known area, everything: ${unknown.join(", ")}`] };
+  if (unknown.length > 0) return everyUnit({ code: true, tables, e2e: true, reasons: [`files of no known area, everything: ${unknown.join(", ")}`] });
   if (code.some((f) => PACKAGE.test(f) && !any(NO_UNIT, f))) for (const d of CROSS_CUTTING) dirs.add(d);
   const unitFiles = [...new Set([...sources, ...testsUnder(testFiles, [...dirs])])].sort();
-  if (unitFiles.length === 0) return { code: true, tables, e2e: e2eBy.length > 0, unit: "none", unitFiles: [], reasons: ["no unit test: no changed file has one", ...reasons] };
-  return { code: true, tables, e2e: e2eBy.length > 0, unit: "related", unitFiles, reasons: [`unit tests related to ${unitFiles.length} file(s)`, ...reasons] };
+  if (unitFiles.length === 0) return { code: true, tables, e2e: e2eBy.length > 0, unit: "none", unitFiles: [], reasons: ["no unit test: no changed file has one", ...reasons], scan: NO_SCAN.scan, scanChunks: [] };
+  const g = glitchScan(code, scanReads);
+  return { code: true, tables, e2e: e2eBy.length > 0, unit: "related", unitFiles, reasons: [`unit tests related to ${unitFiles.length} file(s)`, ...reasons, g.reason], scan: g.scan, scanChunks: g.scanChunks };
 };
