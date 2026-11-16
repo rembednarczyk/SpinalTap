@@ -13,6 +13,8 @@
  * The streets are the pedestrian ways and living streets; inside the Old Town's walls the
  * residential streets too, cobbled and walked as the rest of it (`OLD_TOWN_RING`).
  */
+import { COVER } from "../../orto/src/classify.ts";
+import { type Cover, coverAt } from "../../orto/src/cover.ts";
 import { type Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch } from "./bare-cells.ts";
 import { type Line } from "./features.ts";
 import { type Pt, pointInRing } from "./geometry.ts";
@@ -196,6 +198,92 @@ export const paveSpecks = (cells: Cells, lawns: Uint8Array): void => {
     }
     if (!beside && n < most) for (let q = 0; q < n; q++) label[queue[q]!] = SQUARE;
   }
+};
+
+/**
+ * The strip by a kerb (`band`: cells, 1 m off a carriageway's or a car park's cells) and how far
+ * along it a cell of it reads the strip's surface (`along`: cells, 5 m every way, the shortest run
+ * `kerb-fill-flicker` lets pass between runs of the other surface).
+ */
+const KERB = { band: 2, along: 10 } as const;
+
+/** The strip's cells by a road's cells (`KERB.band` every way round each). */
+const kerbBand = (cells: Cells): Uint8Array => {
+  const { nx, nz, road } = cells;
+  const band = scratch.u8("fronts.band", road.length);
+  const b = KERB.band;
+  for (let k = 0; k < road.length; k++) {
+    if (!road[k]) continue;
+    const [i, j] = [k % nx, (k / nx) | 0];
+    for (let jj = Math.max(0, j - b); jj <= Math.min(nz - 1, j + b); jj++)
+      for (let ii = Math.max(0, i - b); ii <= Math.min(nx - 1, i + b); ii++) if (!road[jj * nx + ii]) band[jj * nx + ii] = 1;
+  }
+  return band;
+};
+
+/**
+ * The frontages' cells of the strip by a kerb take the surface most of the strip has round them
+ * (`KERB.along`): grass or square, the frontages' or the pieces' (`grass`, `square`: 1 under the
+ * ground's lawns and squares). Read cell by cell off the cover, a tree's crown on Królewska's south
+ * kerb laid a bed to the kerb in the asphalt the frontage paves, and the crowns by the car park
+ * south of Karmelicka laid paving between the lawns there: the strip went grass and square by
+ * turns every 0.5-4 m (`kerb-fill-flicker`). Each stretch of the strip is read alone, 8-connected
+ * cells of grass or square: a footway across it, or the carriageway to the other side's, parts it.
+ * What the `cover` itself shows stays: a lawn it shows green, paving it shows light (under the
+ * crowns of the leaf-off flight too, G-764); only what crowns, shade or no class left is evened.
+ */
+export const evenKerbs = (cells: Cells, cover: Cover, grass: Uint8Array, square: Uint8Array): void => {
+  const { nx, nz, label, front, road } = cells;
+  const size = label.length;
+  const band = kerbBand(cells);
+  const kind = scratch.u8("fronts.kind", size);
+  for (let k = 0; k < size; k++) {
+    if (!band[k]) continue;
+    const l = label[k];
+    kind[k] = l === GRASS || (l === COVERED && grass[k]) ? GRASS : l === SQUARE || (l === COVERED && square[k]) ? SQUARE : 0;
+  }
+  const stretch = scratch.i32("fronts.stretch", size);
+  const queue = scratch.i32("fronts.queue", size, null);
+  // A stretch with a cell next to a road's is by its kerb: one past a footway's strip along it is not.
+  const kerbed = scratch.u8("fronts.kerbed", size + 1);
+  for (let s = 0, id = 0; s < size; s++) {
+    if (!kind[s] || stretch[s]) continue;
+    stretch[s] = ++id;
+    let n = 0;
+    queue[n++] = s;
+    for (let q = 0; q < n; q++) {
+      const [i, j] = [queue[q]! % nx, (queue[q]! / nx) | 0];
+      for (let jj = Math.max(0, j - 1); jj <= Math.min(nz - 1, j + 1); jj++)
+        for (let ii = Math.max(0, i - 1); ii <= Math.min(nx - 1, i + 1); ii++) {
+          const m = jj * nx + ii;
+          if (road[m]) kerbed[id] = 1;
+          if (kind[m] && !stretch[m]) {
+            stretch[m] = id;
+            queue[n++] = m;
+          }
+        }
+    }
+  }
+  const a = KERB.along;
+  const flips: number[] = [];
+  for (let k = 0; k < size; k++) {
+    if (!front[k] || !kind[k] || label[k] === COVERED || !kerbed[stretch[k]!]) continue;
+    const [i, j] = [k % nx, (k / nx) | 0];
+    // A window past the raster would read a chunk's edge apart from the next chunk's pass of it: a seam.
+    if (i < a || j < a || i + a >= nx || j + a >= nz) continue;
+    let [g, p] = [0, 0];
+    for (let jj = j - a; jj <= j + a; jj++)
+      for (let ii = i - a; ii <= i + a; ii++) {
+        const m = jj * nx + ii;
+        if (stretch[m] !== stretch[k]) continue;
+        if (kind[m] === GRASS) g++;
+        else p++;
+      }
+    if (!(label[k] === GRASS ? p > g : g > p)) continue;
+    const c = coverAt(cover, cells.rect.minX + (i + 0.5) * STEP, cells.rect.minZ + (j + 0.5) * STEP);
+    if (label[k] === GRASS ? c !== COVER.green : c !== COVER.paving && c !== COVER.canopyHard) flips.push(k);
+  }
+  for (const k of flips) label[k] = label[k] === GRASS ? SQUARE : GRASS;
 };
 
 /**
