@@ -2401,7 +2401,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-892 Maksimum zdrowia po awansie albo implancie spóźnia się o krok: apteczka zaraz potem leczy do starego
 - Ważność: S4 · Zasięg: krok awansu lub założenia implantu
 - Opis: playerStatsOf().maxHp trafia do health.max dopiero w player-control; item-system i komenda use-item idą przed nim (systems/index.ts:134-135). Deterministyczne, nie rozjeżdża zapisu. Znalezione przy G-888.
-- Status: w PR #643; wcześniej: zgłoszone
+- Status: naprawione (PR #643); wcześniej: w PR #643; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 
 ### G-893 Rusztowanie placu Zielona 5A zasłania szyld lokalu na ścianie w67499313
