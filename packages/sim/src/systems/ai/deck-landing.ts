@@ -1,9 +1,10 @@
 import type { Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity } from "../../world/components";
-import type { GroundDeck } from "../../world/deck";
+import { DECK_HEADROOM, type GroundDeck } from "../../world/deck";
 import { type GroundField, groundOf } from "../../world/ground";
 import { STEP_HEIGHT } from "../movement-system";
+import { clipTo } from "./straight-walk";
 
 /*
  * The way off a bridge's deck to the ground under it (G-072). A walker on the deck and
@@ -31,6 +32,38 @@ const overDeck = (ground: GroundField, p: Vec3): boolean => ground.heightAt(p.x,
 /** Is a bridge's deck over feet at `p` (`deckReach`'s rule)? */
 const underDeck = (ground: GroundField, p: Vec3): boolean => ground.heightAt(p.x, p.z, p.y + STEP_HEIGHT) < ground.heightAt(p.x, p.z);
 
+/** How often the feet's way to a goal on a deck is sampled for the deck over them (m). */
+const FEET_STEP = 0.5;
+
+/**
+ * Do feet walking straight from `a` to `b` pass under a bridge's deck with room to stand (G-885)?
+ * Just out from under it, by its edge, the walk at a goal on it sees no bank to climb (the feet go
+ * under the edge) and leads them back under it: there the way was off to the deck's end, a step
+ * later back at the goal, and so on for good. Not by a deck's low side (`DECK_HEADROOM`), which the
+ * walk round its end leads past (G-741). Sampled only across the decks' boxes: off them the feet
+ * are on the terrain.
+ */
+const passesUnder = (ground: GroundField, a: Vec3, b: Vec3): boolean => {
+  let [t0, t1] = [1, 0];
+  for (const box of ground.decksNear(Math.min(a.x, b.x), Math.min(a.z, b.z), Math.max(a.x, b.x), Math.max(a.z, b.z))) {
+    const span = clipTo(a, b, box);
+    if (span) [t0, t1] = [Math.min(t0, span[0]), Math.max(t1, span[1])];
+  }
+  if (t0 > t1) return false;
+  const [ax, az] = [a.x + (b.x - a.x) * t0, a.z + (b.z - a.z) * t0];
+  const n = Math.ceil(((t1 - t0) * Math.hypot(b.x - a.x, b.z - a.z)) / FEET_STEP);
+  let feet = t0 === 0 ? a.y : ground.heightAt(ax, az, -Infinity);
+  for (let i = 1; i <= n; i++) {
+    const [x, z] = [ax + ((b.x - a.x) * (t1 - t0) * i) / n, az + ((b.z - a.z) * (t1 - t0) * i) / n];
+    feet = ground.heightAt(x, z, feet + STEP_HEIGHT);
+    if (ground.heightAt(x, z) - feet > DECK_HEADROOM) return true;
+  }
+  return false;
+};
+
+/** Is `from` on its way to `to` on a deck high over the terrain from under it, or from beside it under its edge (G-885)? */
+const upTo = (ground: GroundField, from: Vec3, to: Vec3): boolean => !overDeck(ground, from) && overDeck(ground, to) && (underDeck(ground, from) || passesUnder(ground, from, to));
+
 /** The point `PAST_END` out past end `e` of a deck, away from its other end `o`. */
 const past = (e: { x: number; z: number }, o: { x: number; z: number }) => {
   const d = Math.hypot(e.x - o.x, e.z - o.z);
@@ -48,12 +81,14 @@ const landingsOf = (ground: GroundField, d: GroundDeck): Vec3[] =>
 /**
  * Where a walker at `from` on a bridge's deck goes first on its way to `to` under one (G-072): the
  * landing of a bridge near it that makes the shortest way of the two legs, off the deck and back
- * under it. Null when they are not so apart, or no bridge near comes down to the terrain.
+ * under it. So too the other way, from under a deck to a goal on it (G-885): the walk under it
+ * has the goal on the terrain under the goal's feet, and the walker stood there for good. Null
+ * when they are not so apart, or no bridge near comes down to the terrain.
  */
 export const deckLanding = (world: World<Entity>, from: Vec3, to: Vec3): Vec3 | null => {
   const ground = groundOf(world);
   if (!ground.hasTerrain || ground.bridges.length === 0) return null;
-  if (!overDeck(ground, from) || !underDeck(ground, to)) return null;
+  if (!(overDeck(ground, from) && underDeck(ground, to)) && !upTo(ground, from, to)) return null;
   let best: Vec3 | null = null;
   let cost = Infinity;
   for (const d of ground.bridges) {
