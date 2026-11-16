@@ -143,12 +143,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna: GroundField.rayHit liczył tylko teren. Poprawka: rayDecks w deck.ts (płyta od powierzchni do spodu), w rayGeometry i lineOfSight. Test deck-cover.test.ts: 4/7 pada bez poprawki, 7/7 z nią. Hash determinism bez zmian.
 
 ### G-072 Walczący na pomoście nie schodzi pod most do gracza stojącego pod nim
-- Status: zgłoszone (z naprawy G-068)
+- Status: w PR #627; wcześniej: zgłoszone (z naprawy G-068)
 - Ważność: S4 (proponowana) · Zasięg: pomosty z przejściem pod spodem · Koszt: średni (nawigacja między poziomami)
 - Dowód: po G-062 `heightApart` daje 0 dla gracza pod mostem i walczącego na pomoście nad nim; walczący idzie do punktu nad graczem i stoi tam na pomoście, nie szuka zejścia
 - Dodatkowo (weryfikacja G-068): pod wiaduktem Zamkowej zaalarmowany walczący idący Podwalem z lewej strony osi (chunk `stare-miasto-1-1`, 12–20 m od osi) utyka w (749.5–750.6, 180.4–181.4), także przed G-068
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: zaalarmowany walczący na pomoście Mełgiewskiej dociera do gracza pod mostem przez zejście w < 20 s
+- Poprawka: zejście z pomostu przez landing (deck-landing.ts) + pastLedge/ontoDeck; deck-descent.test.ts i 3 przypadki w under-deck-ai.test.ts padają bez poprawki; hashe bez zmian. Część 'Dodatkowo' (Podwale 749.5–750.6, 180.4–181.4) niesprawdzona.
 
 ### G-073 Stare stragany pchlego targu na Placu Zamkowym wchodzą w drzewa i meble uliczne
 - Status: zgłoszone (z weryfikacji G-064)
@@ -2344,6 +2345,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-884 Przypięty strażnik liczy co krok linię wzroku i marsz po całym odcinku do dalekiego gracza (2,4 km)
 - Ważność: S3 · Zasięg: strażnicy przypięci do gracza (G-188, G-201), cała gra
 - Opis: W pinned-far-sleep 64% czasu to straightWalk, lineOfSight i bankBetween liczone co krok po całym odcinku do gracza 2,4 km dalej. Koszt CPU w grze (telefon) i w testach; do ograniczenia zasięgu albo częstotliwości (profil z partii 2 testów na podłogach).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+
+### G-885 Walczący pod mostem nie wchodzi na pomost do gracza stojącego na nim
+- Ważność: S4 · Zasięg: mosty z pomostem (Mełgiewska)
+- Opis: Brawler z (2445.9, 302.2) pod pomostem do gracza na (2444.9, 307.5) oscyluje przy krawędzi cienia pomostu (2449.6, 298.9), 30 s bez dotarcia; znalezione przy G-072
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 
