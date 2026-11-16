@@ -108,6 +108,9 @@ export const SITE = {
   fenceLength: (v: number): number => (v & 511) / 100,
   fenceRise: (v: number): number => (((v >> 9) & 255) - 128) / 100,
   gate: (v: number): { readonly width: number; readonly leaf: 1 | -1 } => ({ width: (v & 1) === 1 ? 1.2 : 6, leaf: (v & 8) !== 0 ? 1 : -1 }),
+  // Stage 2: the crane's height (its mast's half side 0.8 m), the scaffold's length, height and rise (1.3 m deep from the wall's side).
+  craneHeight: (v: number): number => (v & 1023) / 10,
+  scaffold: (v: number): { readonly length: number; readonly height: number; readonly rise: number } => ({ length: (v & 1023) / 10, height: ((v >> 10) & 511) / 10, rise: (((v >> 21) & 255) - 128) / 100 }),
 } as const;
 
 /** The parts of each solid kind, by shape. Heights are above the foot. */
@@ -160,8 +163,13 @@ const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => 
     return [box(-(g.width / 2 + 0.12), 0, 0.12, 0.12, 2.5), box(g.width / 2 + 0.12, 0, 0.12, 0.12, 2.5)];
   },
   "site-cabin": () => [box(0, 0, 3.03, 1.22, 2.6)],
+  // Stage 2: the crane's mast, the scaffold (its top over its higher end).
+  "site-crane": (_s, v) => [box(0, 0, 0.8, 0.8, SITE.craneHeight(v))],
+  "site-scaffold": (_s, v) => {
+    const s = SITE.scaffold(v);
+    return [box(0, 0.65, s.length / 2, 0.65, s.height + Math.abs(s.rise) / 2)];
+  },
 };
-
 
 /** Kinds that are solids. */
 export const SOLID_FURNITURE: ReadonlySet<StreetPropKind> = new Set(Object.keys(PARTS) as StreetPropKind[]);

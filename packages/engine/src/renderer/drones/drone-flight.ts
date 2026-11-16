@@ -72,7 +72,7 @@ export const droneFleet = (lanes: readonly DroneLane[], quality: RenderQuality):
     for (let k = 0; k < n; k++) {
       const h = propHash(lane.seed, k);
       const pick = h % 8;
-      const kind: DroneKind = pick < 2 ? "patrol" : pick < 6 ? "delivery" : "ad";
+      const kind: DroneKind = lane.kind ?? (pick < 2 ? "patrol" : pick < 6 ? "delivery" : "ad");
       out.push({ kind, lane, phase: (loop * (k + (propHash(h, 1) % 100) / 200)) / n, bob: (propHash(h, 2) % 1000) / 1000 });
     }
   }

@@ -1,6 +1,19 @@
 import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { SITE_BOARD, SITE_CABIN, SITE_FENCE, SITE_GATE, SITE_KINDS, SITE_LEAF, siteFenceLayout, siteGateLayout } from "../../../packages/core/src/world/sites.ts";
+import {
+  SITE_BOARD,
+  SITE_CABIN,
+  SITE_CRANE,
+  SITE_FENCE,
+  SITE_GATE,
+  SITE_KINDS,
+  SITE_LEAF,
+  SITE_SCAFFOLD,
+  siteCraneLayout,
+  siteFenceLayout,
+  siteGateLayout,
+  siteScaffoldLayout,
+} from "../../../packages/core/src/world/sites.ts";
 import { SOLID_FURNITURE, distanceToPiece } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types";
 import { pointInRing } from "../../osm-import/src/geometry.ts";
@@ -13,7 +26,10 @@ import type { Site } from "../../osm-import/src/props-site.ts";
  * - `site-through-wall`: a sample in a building's outline or within `WALL_GAP` of the map's own
  *   walls and fences, one finding a piece;
  * - `site-gate-blocked`: a gate whose opening has a building, water or rails, or a solid of the
- *   furniture, `OUTSIDE` m in front of it or `INSIDE` m behind it: no way in.
+ *   furniture, `OUTSIDE` m in front of it or `INSIDE` m behind it: no way in;
+ * - `site-crane-reach` (stage 2): a corner of the site's outline its crane's jib does not reach;
+ * - `site-crane-heritage` (G-894): a crane before a listed building's facade in the outline;
+ * - `site-over-board` (G-893): a piece before a venue's board, hiding it.
  */
 
 type Pt = { readonly x: number; readonly z: number };
@@ -37,6 +53,9 @@ const reach = (p: StreetPropItem): readonly [number, number, number][] => {
   if (p.prop === "site-fence") return [[siteFenceLayout(p.variant).length / 2, SITE_FENCE.thick / 2, 0]];
   if (p.prop === "site-cabin") return [[SITE_CABIN.hx, SITE_CABIN.hz, 0]];
   if (p.prop === "site-board") return [[SITE_BOARD.width / 2, 0.03, 0]];
+  // Stage 2: the crane's base (its jib is overhead), the scaffold from the wall's side into the site.
+  if (p.prop === "site-crane") return [[SITE_CRANE.base, SITE_CRANE.base, 0]];
+  if (p.prop === "site-scaffold") return [[siteScaffoldLayout(p.variant).length / 2, SITE_SCAFFOLD.depth / 2, SITE_SCAFFOLD.depth / 2]];
   const g = siteGateLayout(p.variant);
   return [[g.width / 2 + 2 * SITE_GATE.post, SITE_GATE.post, 0]];
 };
@@ -114,9 +133,139 @@ export const siteGroundOf = (site: Site, chunks: readonly LublinChunkData[]): Si
   };
 };
 
-/** The three checks over the game's furniture. */
-export const siteChecks = (pieces: () => readonly StreetPropItem[], ground: () => SiteGroundQuery): Record<string, () => Finding[]> => ({
+/** A site of the table as the crane's check reads it: its outline (flat x, z) and its pieces' rows. */
+export interface SiteOfTable {
+  readonly id: string;
+  readonly outline: readonly number[];
+  readonly pieces: Readonly<Partial<Record<string, readonly number[]>>>;
+}
+
+/** `site-crane-reach` (stage 2): a corner of a site's outline further from its crane's mast than the jib reaches. */
+export const siteCraneReach = (sites: readonly SiteOfTable[]): Finding[] =>
+  sites.flatMap((s) => {
+    const row = s.pieces["site-crane"] ?? [];
+    const out: Finding[] = [];
+    for (let i = 0; i + 5 <= row.length; i += 5) {
+      const [x, z, jib] = [row[i]!, row[i + 2]!, siteCraneLayout(row[i + 4]!).jib];
+      for (let k = 0; k + 1 < s.outline.length; k += 2) {
+        const d = Math.hypot(s.outline[k]! - x, s.outline[k + 1]! - z);
+        if (d > jib + 1e-6) out.push({ at: `${x.toFixed(2)},${z.toFixed(2)}`, what: `${s.id}: corner ${s.outline[k]},${s.outline[k + 1]} ${d.toFixed(2)} m off, jib ${jib} m` });
+      }
+    }
+    return out;
+  });
+
+/** A building of the map round the sites: its OSM id, its outline in the world, whether OSM tags it `historic` or `heritage`. */
+export interface SiteBuilding {
+  readonly id: string;
+  readonly ring: readonly Pt[];
+  readonly heritage: boolean;
+}
+
+/** The chunks' buildings, each once, with the protection their OSM tags give them. */
+export const siteBuildingsOf = (chunks: readonly LublinChunkData[], tags: (id: string) => Readonly<Record<string, string>>): SiteBuilding[] => {
+  const seen = new Set<string>();
+  return chunks.flatMap((c) =>
+    c.buildings.flatMap((b) => {
+      if (seen.has(b.id)) return [];
+      seen.add(b.id);
+      const t = tags(b.id);
+      const ring = Array.from({ length: b.outline.length >> 1 }, (_, k) => ({ x: b.outline[2 * k]! + b.x, z: b.outline[2 * k + 1]! + b.z }));
+      return [{ id: b.id, ring, heritage: t.historic !== undefined || t.heritage !== undefined }];
+    }),
+  );
+};
+
+/** How near a listed building a crane's mast stands to be in its front (m), and the sites whose crane the orthophoto shows there. */
+const HERITAGE_CLEAR = 15;
+const HERITAGE_CRANES: ReadonlySet<string> = new Set([
+  // The crane in the courtyard of Pałac Potockich, on the orthophoto of 2025-04.
+  "w1236055101",
+]);
+
+const ringDistance = (p: Pt, ring: readonly Pt[]): number => {
+  if (pointInRing(p, ring)) return 0;
+  let d = Infinity;
+  for (let i = 0; i < ring.length; i++) d = Math.min(d, segmentDistance(p.x, p.z, ring[i]!.x, ring[i]!.z, ring[(i + 1) % ring.length]!.x, ring[(i + 1) % ring.length]!.z));
+  return d;
+};
+
+/**
+ * `site-crane-heritage` (G-894): a crane's mast nearer than `HERITAGE_CLEAR` m to a listed building
+ * (`historic`, `heritage`) with half its corners or more in the site's outline: a crane before a
+ * palace's facade. The sites of `HERITAGE_CRANES` aside.
+ */
+export const siteCraneHeritage = (sites: readonly SiteOfTable[], buildings: readonly SiteBuilding[]): Finding[] =>
+  sites
+    .filter((s) => !HERITAGE_CRANES.has(s.id))
+    .flatMap((s) => {
+      const outline = Array.from({ length: s.outline.length >> 1 }, (_, k) => ({ x: s.outline[2 * k]!, z: s.outline[2 * k + 1]! }));
+      const listed = buildings.filter((b) => b.heritage && 2 * b.ring.filter((p) => pointInRing(p, outline)).length >= b.ring.length);
+      const row = s.pieces["site-crane"] ?? [];
+      const out: Finding[] = [];
+      for (let i = 0; i + 5 <= row.length; i += 5) {
+        const at = { x: row[i]!, z: row[i + 2]! };
+        for (const b of listed) {
+          const d = ringDistance(at, b.ring);
+          if (d < HERITAGE_CLEAR) out.push({ at: `${at.x.toFixed(2)},${at.z.toFixed(2)}`, what: `${s.id}: crane ${d.toFixed(2)} m off the listed ${b.id}` });
+        }
+      }
+      return out;
+    });
+
+/** A venue's board as the renderer hangs it: its face's ends on the wall, the wall's outward normal, its bottom and top (world y). */
+export interface SiteBoardSpan {
+  readonly a: Pt;
+  readonly b: Pt;
+  readonly nx: number;
+  readonly nz: number;
+  readonly bottom: number;
+  readonly top: number;
+  readonly text: string;
+}
+
+/** How far in front of a board's face a piece hides it (m). */
+const BEFORE_BOARD = 1.5;
+
+/** The world y of a site piece's top. */
+const pieceTop = (p: StreetPropItem): number => {
+  if (p.prop === "site-fence") return p.y + SITE_FENCE.height;
+  if (p.prop === "site-gate") return p.y + SITE_GATE.height;
+  if (p.prop === "site-cabin") return p.y + SITE_CABIN.height;
+  if (p.prop === "site-board") return p.y + SITE_BOARD.top;
+  if (p.prop === "site-crane") return p.y + siteCraneLayout(p.variant).height;
+  return p.y + siteScaffoldLayout(p.variant).height;
+};
+
+/** `site-over-board` (G-893): a site piece with a sample up to `BEFORE_BOARD` m before a venue's board, along it and over its bottom: the board hidden. */
+export const siteOverBoard = (pieces: readonly StreetPropItem[], boards: readonly SiteBoardSpan[]): Finding[] =>
+  sitePiecesOf(pieces).flatMap((p) => {
+    const near = boards.filter((s) => Math.hypot(s.a.x - p.x, s.a.z - p.z) < 40 && pieceTop(p) > s.bottom && p.y < s.top);
+    const box = near.length > 0 ? siteFootprint(p) : [];
+    const hit = near.find((s) => {
+      const len = Math.hypot(s.b.x - s.a.x, s.b.z - s.a.z);
+      if (len < 1e-6) return false;
+      const [dx, dz] = [(s.b.x - s.a.x) / len, (s.b.z - s.a.z) / len];
+      return box.some((q) => {
+        const [u, w] = [(q.x - s.a.x) * dx + (q.z - s.a.z) * dz, (q.x - s.a.x) * s.nx + (q.z - s.a.z) * s.nz];
+        return u >= 0 && u <= len && w > 0 && w <= BEFORE_BOARD;
+      });
+    });
+    return hit ? [{ at: key(p), what: `${p.prop} before the board ${hit.text}` }] : [];
+  });
+
+/** The checks over the game's furniture, the sites' table, the buildings round them and the venues' boards. */
+export const siteChecks = (
+  pieces: () => readonly StreetPropItem[],
+  ground: () => SiteGroundQuery,
+  sites: () => readonly SiteOfTable[] = () => [],
+  buildings: () => readonly SiteBuilding[] = () => [],
+  boards: () => readonly SiteBoardSpan[] = () => [],
+): Record<string, () => Finding[]> => ({
   "site-on-road": () => siteOnRoad(pieces(), ground()),
   "site-through-wall": () => siteThroughWall(pieces(), ground()),
   "site-gate-blocked": () => siteGateBlocked(pieces(), ground()),
+  "site-crane-reach": () => siteCraneReach(sites()),
+  "site-crane-heritage": () => siteCraneHeritage(sites(), buildings()),
+  "site-over-board": () => siteOverBoard(pieces(), boards()),
 });

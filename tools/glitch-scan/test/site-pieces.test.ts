@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { siteFenceVariant, siteGateVariant } from "../../../packages/core/src/world/sites.ts";
-import { type SiteGroundQuery, siteGateBlocked, siteOnRoad, siteThroughWall } from "./site-pieces";
+import { SITE_CABIN, SITE_SCAFFOLD, siteCraneVariant, siteFenceVariant, siteGateVariant, siteScaffoldVariant } from "../../../packages/core/src/world/sites.ts";
+import { type SiteGroundQuery, siteCraneHeritage, siteCraneReach, siteFootprint, siteGateBlocked, siteOnRoad, siteOverBoard, siteThroughWall } from "./site-pieces";
+
+const SITE_CABIN_HZ = SITE_CABIN.hz;
 
 /** The building sites' checks of ADR-0087 on a plan: a pavement south of z 0, a carriageway south of z -3, a building east of x 20. */
 const ground = (barriers: SiteGroundQuery["barriers"] = []): SiteGroundQuery => ({
@@ -40,5 +42,46 @@ describe("the building sites' checks (ADR-0087)", () => {
     expect(siteGateBlocked([gate(8, 0.3), cabin(8, 2.3)], ground())).toHaveLength(1);
     // A wicket against a building's wall.
     expect(siteGateBlocked([gate(19.9, 0.3, true)], ground()).map((f) => f.what)).toEqual([expect.stringMatching(/^wicket blocked/)]);
+  });
+
+  it("finds a corner of a site its crane's jib does not reach (stage 2)", () => {
+    const crane = (x: number, z: number, jib: number) => [x, 0, z, 0, siteCraneVariant({ height: 20, jib, phase: 0 })];
+    const outline = [0, 0, 30, 0, 30, 20, 0, 20];
+    expect(siteCraneReach([{ id: "w1", outline, pieces: { "site-crane": crane(15, 10, 18.5) } }])).toEqual([]);
+    expect(siteCraneReach([{ id: "w1", outline, pieces: { "site-crane": crane(5, 5, 18.5) } }]).map((f) => f.what)).toEqual([expect.stringMatching(/^w1: corner 30,0 25\.50 m off/), expect.stringMatching(/^w1: corner 30,20 /)]);
+    // A site without a crane has nothing to reach.
+    expect(siteCraneReach([{ id: "w1", outline, pieces: {} }])).toEqual([]);
+  });
+
+  it("finds a crane's mast within 15 m of a listed building in the site's outline (G-894)", () => {
+    const crane = (x: number, z: number) => [x, 0, z, 0, siteCraneVariant({ height: 30, jib: 40, phase: 0 })];
+    const outline = [0, 0, 60, 0, 60, 40, 0, 40];
+    const palace = { id: "w2", heritage: true, ring: [{ x: 10, z: 20 }, { x: 50, z: 20 }, { x: 50, z: 35 }, { x: 10, z: 35 }] };
+    expect(siteCraneHeritage([{ id: "w1", outline, pieces: { "site-crane": crane(30, 10) } }], [palace]).map((f) => f.what)).toEqual(["w1: crane 10.00 m off the listed w2"]);
+    expect(siteCraneHeritage([{ id: "w1", outline, pieces: { "site-crane": crane(30, 4) } }], [palace])).toEqual([]);
+    // Not listed, or less than half of it in the outline, or the site the orthophoto shows a crane on.
+    expect(siteCraneHeritage([{ id: "w1", outline, pieces: { "site-crane": crane(30, 10) } }], [{ ...palace, heritage: false }])).toEqual([]);
+    const out = { ...palace, ring: [{ x: 50, z: 25 }, { x: 80, z: 20 }, { x: 80, z: 35 }] };
+    expect(siteCraneHeritage([{ id: "w1", outline, pieces: { "site-crane": crane(45, 25) } }], [out])).toEqual([]);
+    expect(siteCraneHeritage([{ id: "w1", outline, pieces: { "site-crane": crane(45, 25) } }], [{ ...out, ring: [{ x: 50, z: 25 }, { x: 58, z: 20 }, { x: 80, z: 35 }] }])).toHaveLength(1);
+    expect(siteCraneHeritage([{ id: "w1236055101", outline, pieces: { "site-crane": crane(30, 10) } }], [palace])).toEqual([]);
+  });
+
+  it("finds a site's piece before a venue's board, over its bottom (G-893)", () => {
+    // A board on a wall along z 10 facing south, from x 2 to 6, 2.4 to 3.1 m up.
+    const board = { a: { x: 2, z: 10 }, b: { x: 6, z: 10 }, nx: 0, nz: -1, bottom: 2.4, top: 3.1, text: "FRYZURA" };
+    const scaffold: StreetPropItem = { prop: "site-scaffold", x: 4, y: 0, z: 10 - SITE_SCAFFOLD.gap, yaw: Math.PI, variant: siteScaffoldVariant({ length: 6, height: 8, rise: 0, banner: 1 }) };
+    expect(siteOverBoard([scaffold], [board]).map((f) => f.what)).toEqual(["site-scaffold before the board FRYZURA"]);
+    // A fence panel 0.3 m before it stays under its bottom; a container past 1.5 m, and a scaffold along the next wall, are clear.
+    expect(siteOverBoard([fence(4, 9.7)], [board])).toEqual([]);
+    expect(siteOverBoard([{ ...cabin(4, 10 - 1.6 - SITE_CABIN_HZ), yaw: 0 }], [board])).toEqual([]);
+    expect(siteOverBoard([{ ...scaffold, x: 12 }], [board])).toEqual([]);
+    expect(siteOverBoard([cabin(4, 8.5)], [board])).toHaveLength(1);
+  });
+
+  it("keeps the scaffold's footprint on the site's side of its foot", () => {
+    const s: StreetPropItem = { prop: "site-scaffold", x: 5, y: 0, z: 10, yaw: Math.PI, variant: siteScaffoldVariant({ length: 6, height: 8, rise: 0, banner: 1 }) };
+    const zs = siteFootprint(s).map((p) => p.z);
+    expect([Math.min(...zs), Math.max(...zs)].map((z) => Math.round(z * 100) / 100)).toEqual([10 - SITE_SCAFFOLD.depth, 10]);
   });
 });

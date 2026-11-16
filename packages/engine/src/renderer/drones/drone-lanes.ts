@@ -44,6 +44,8 @@ export interface DroneLane {
   readonly length: number;
   /** Seed of the drones on it (from where it starts). */
   readonly seed: number;
+  /** The one kind its drones are (a building site's delivery lane, ADR-0087 stage 2); else by the seed. */
+  readonly kind?: "patrol" | "delivery" | "ad";
 }
 
 export const STEP = 4;

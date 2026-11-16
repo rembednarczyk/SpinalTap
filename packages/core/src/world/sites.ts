@@ -14,8 +14,15 @@ import type { StreetPropKind } from "./city-geo";
  * - `site-board`: the information board by the gate, on the fence's outer face;
  * - `site-cabin`: an office container of the back yard, its door towards the site; stacked ones
  *   stand on the one under them.
+ *
+ * Stage 2 adds:
+ * - `site-crane`: the tower crane, its mast's foot at the origin, its jib along local +x, its
+ *   height, the jib's length and the phase of its beacon in the variant (`siteCraneLayout`);
+ * - `site-scaffold`: the scaffold along a neighbour's wall, local +x along the wall, from the
+ *   wall's side at z 0 to `SITE_SCAFFOLD.depth` into the site, its length, height, the ground's
+ *   rise along it and the banner on its mesh in the variant (`siteScaffoldLayout`).
  */
-export const SITE_KINDS: ReadonlySet<StreetPropKind> = new Set<StreetPropKind>(["site-fence", "site-gate", "site-board", "site-cabin"]);
+export const SITE_KINDS: ReadonlySet<StreetPropKind> = new Set<StreetPropKind>(["site-fence", "site-gate", "site-board", "site-cabin", "site-crane", "site-scaffold"]);
 
 /** The longest stretch of the fence one piece is (m): a panel of a site fence. */
 export const SITE_PANEL = 2.5;
@@ -38,8 +45,8 @@ export const siteCabinStacked = (variant: number): boolean => (variant & SITE_ST
 /** The information board (m): width, height of its face's bottom and top over the ground. */
 export const SITE_BOARD = { width: 2.4, bottom: 0.7, top: 2.1 } as const;
 
-/** How many designs the hologram ads, the LED strips, the boards and the cabins come in. */
-export const SITE_LOOKS = { ads: 4, leds: 4, boards: 4, cabins: 4 } as const;
+/** How many designs the hologram ads, the LED strips, the boards, the cabins and the scaffolds' banners come in. */
+export const SITE_LOOKS = { ads: 4, leds: 4, boards: 4, cabins: 4, banners: 4 } as const;
 
 export interface SiteFenceLayout {
   /** Along local +x, centred on the foot (m). */
@@ -85,3 +92,55 @@ export const siteGateLayout = (variant: number): SiteGateLayout => {
 
 /** How far behind the fence's line the gate's open leaf is parked (m), and how much longer than the opening it is. */
 export const SITE_LEAF = { behind: 0.2, over: 0.2 } as const;
+
+/**
+ * The tower crane (m): the mast's half side, its concrete base's, the least height, how far
+ * over the tallest neighbour its top stands, the counter-jib's share of the jib, the beacon's phases.
+ */
+export const SITE_CRANE = { mast: 0.8, base: 2, least: 22, over: 8, counter: 0.3, phases: 16 } as const;
+
+export interface SiteCraneLayout {
+  /** From the foot to the top of the mast's head (m). */
+  readonly height: number;
+  /** From the mast's axis to the jib's tip (m): it reaches every corner of the site. */
+  readonly jib: number;
+  /** The beacon's phase, of `SITE_CRANE.phases`. */
+  readonly phase: number;
+}
+
+/** Height (dm) in bits 0-9, the jib (dm) in bits 10-19, the beacon's phase in bits 20-23. */
+export const siteCraneVariant = (c: SiteCraneLayout): number =>
+  clamp(Math.round(c.height * 10), 0, 1023) + 1024 * clamp(Math.round(c.jib * 10), 0, 1023) + 1048576 * (c.phase % SITE_CRANE.phases);
+
+export const siteCraneLayout = (variant: number): SiteCraneLayout => ({ height: (variant & 1023) / 10, jib: ((variant >> 10) & 1023) / 10, phase: (variant >> 20) & 15 });
+
+/**
+ * The scaffold (m): its depth off the wall, the gap it keeps to the wall, the bay between its
+ * standards, the lift between its decks, the shortest wall it is put up along.
+ */
+export const SITE_SCAFFOLD = { depth: 1.3, gap: 0.25, bay: 2, lift: 2, least: 4 } as const;
+
+export interface SiteScaffoldLayout {
+  /** Along local +x, centred on the foot (m). */
+  readonly length: number;
+  /** Over the ground (m). */
+  readonly height: number;
+  /** How much higher the ground is at the +x end than at the -x end (m). */
+  readonly rise: number;
+  /** The banner's design on its mesh, of `SITE_LOOKS.banners`. */
+  readonly banner: number;
+}
+
+/** Length (dm) in bits 0-9, height (dm) in bits 10-18, the banner in bits 19-20, the rise (cm + 128) in bits 21-28. */
+export const siteScaffoldVariant = (s: SiteScaffoldLayout): number =>
+  clamp(Math.round(s.length * 10), 0, 1023) +
+  1024 * clamp(Math.round(s.height * 10), 0, 511) +
+  524288 * (s.banner % SITE_LOOKS.banners) +
+  2097152 * (clamp(Math.round(s.rise * 100), -128, 127) + 128);
+
+export const siteScaffoldLayout = (variant: number): SiteScaffoldLayout => ({
+  length: (variant & 1023) / 10,
+  height: ((variant >> 10) & 511) / 10,
+  banner: (variant >> 19) & 3,
+  rise: (((variant >> 21) & 255) - 128) / 100,
+});

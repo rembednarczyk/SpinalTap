@@ -1,4 +1,4 @@
-import { type StreetPropKind, barrierVariant, siteFenceVariant, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "@seki/core";
+import { type StreetPropKind, barrierVariant, siteCraneVariant, siteFenceVariant, siteScaffoldVariant, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "@seki/core";
 import type { RenderQuality } from "../../npr/quality";
 import { MeshSink } from "../mesh-sink";
 import { decalModel } from "./decal-models";
@@ -79,6 +79,9 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   "site-gate": () => plain(siteModel("site-gate", 0, "high")),
   "site-board": () => plain(siteModel("site-board", 0, "high")),
   "site-cabin": () => plain(siteModel("site-cabin", 0, "high")),
+  // Stage 2: a crane 24 m high with a 30 m jib, a scaffold 8 m long and 10 m high with its banner.
+  "site-crane": () => plain(siteModel("site-crane", siteCraneVariant({ height: 24, jib: 30, phase: 0 }), "high")),
+  "site-scaffold": () => plain(siteModel("site-scaffold", siteScaffoldVariant({ length: 8, height: 10, rise: 0, banner: 0 }), "high")),
 };
 
 /** Every kind of the contract, in the order of `StreetPropKind` (the gallery's row). */

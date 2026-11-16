@@ -104,6 +104,14 @@ test("Alchemia's car park P-1 in TPP stays within the perf budget", async ({ pag
   within("alchemia-p1", await sampleNow(page));
 });
 
+test("the building site at Zielona 5A in TPP stays within the perf budget", async ({ page }) => {
+  // On Zielona south-west of the site's gate (ADR-0087), walking north-east to it: the fence with its ads, the gate and
+  // the board, the containers and the crane over the dig in the frame (no scaffold since G-893: its wall bears a venue's board).
+  await tppAt(page, { x: 238.8, z: -6.5, yaw: 0.675, walk: 20 });
+  expect((await gameState(page)).loadedChunks).toContain("krakowskie-1-1");
+  within("zielona-budowa-tpp", await sampleNow(page));
+});
+
 test("Tessen's W-3 from the Lutosławski bridge at night in TPP stays within the perf budget", async ({ page }) => {
   // On the bridge's deck (+1.8 over W-3's floor), walking east along it towards the wagon gate:
   // the tower, the pier, the quay and the hall's shell over the river (ADR-0082).

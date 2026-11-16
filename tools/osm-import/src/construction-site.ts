@@ -12,13 +12,20 @@
  * 3. the containers on the back yard by the fence, furthest from the gate (the yard by it kept
  *    clear for the stores), their doors to the site;
  * 4. the dig over the lowest free ground left (`construction-dig.ts`), clear of the containers;
- * 5. the board's texts: keys of the catalogs `i18n/{en,pl}` (ADR-0056), never sentences.
+ * 5. the board's texts: keys of the catalogs `i18n/{en,pl}` (ADR-0056), never sentences;
+ * 6. (stage 2) the scaffold along a neighbour's wall on the outline (`construction-scaffold.ts`),
+ *    before the containers and the dig, which keep off it; the fence's panels in its way give way;
+ * 7. (stage 2) the tower crane of the full set (`construction-crane.ts`), off everything else.
+ * The draws of stage 2 (the banner, the beacon's phase) come after stage 1's, so a site of stage 1
+ * keeps its looks.
  */
 import { mulberry32 } from "../../../packages/core/src/math/mulberry32.ts";
 import { type StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { SITE_CABIN, SITE_LOOKS, SITE_STACKED } from "../../../packages/core/src/world/sites.ts";
+import { SITE_CABIN, SITE_CRANE, SITE_LOOKS, SITE_STACKED, siteFenceLayout } from "../../../packages/core/src/world/sites.ts";
 import { type SiteGround } from "./construction-ground.ts";
+import { type CranePlan, NARROW, aspectAlong, cranePiece, planCrane } from "./construction-crane.ts";
 import { type DigPlan, digShape, planDig } from "./construction-dig.ts";
+import { type ScaffoldPlan, planScaffold, scaffoldBox, scaffoldPiece } from "./construction-scaffold.ts";
 import { FENCE_INSET, type FenceEdge, type GatePlace, along, fenceEdges, fencePieces, freeRuns, insetRing, pickGate } from "./construction-fence.ts";
 import { type Pt, pointInRing, signedArea } from "./geometry.ts";
 import { longAxisDegrees } from "./long-axis.ts";
@@ -55,9 +62,14 @@ export interface SitePlan {
   readonly set: SiteSet;
   /** The outline's area (m²). */
   readonly area: number;
+  /** The outline, to the centimetre (the scan's `site-crane-reach` measures the crane against its corners). */
+  readonly outline: readonly Pt[];
   readonly gate: GatePlace | null;
   readonly board: SiteBoard | null;
   readonly dig: DigPlan | null;
+  /** Stage 2: the tower crane (the full set) and the scaffold along a neighbour's wall. */
+  readonly crane: CranePlan | null;
+  readonly scaffold: ScaffoldPlan | null;
   readonly pieces: readonly StreetPropItem[];
   /** Metres of the fence's line left out over ground that is not free. */
   readonly unfenced: number;
@@ -163,17 +175,65 @@ export const planSite = (o: SiteOutline, g: SiteGround): SitePlan => {
   const led = Math.floor(rand() * SITE_LOOKS.leds);
   const adSeed = Math.floor(rand() * SITE_LOOKS.ads);
   const boardLook = Math.floor(rand() * SITE_LOOKS.boards);
-  const fence = fencePieces(edges, runs, gate, g, { every, led, ad: (k) => (adSeed + k) % SITE_LOOKS.ads, board: boardLook });
+  const laid = fencePieces(edges, runs, gate, g, { every, led, ad: (k) => (adSeed + k) % SITE_LOOKS.ads, board: boardLook });
   const pick = (n: number) => Math.floor(rand() * n);
   const board = gate ? { name: `site.board.name.${pick(BOARD_KEYS.name)}`, developer: `site.board.developer.${pick(BOARD_KEYS.developer)}`, term: `site.board.term.${pick(BOARD_KEYS.term)}` } : null;
   const [share, depth] = [0.35 + 0.2 * rand(), rand()];
   const gateAt = gate ? along(edges[gate.edge]!, gate.at) : null;
-  const yard = cabins(cabinSpots(edges, runs, ring, g, gateAt), set, g, rand);
-  // The dig keeps its blend and a cell past it off the containers, as off the fence.
-  const boxes = yard.map((c) => corners(c, c.yaw, SITE_CABIN.hx + 0.3, SITE_CABIN.hz + 0.3));
+  // Stage 2: the scaffold along a neighbour's wall first; the fence's panels in its way give way to it, the gate and the board never.
+  const wall = set === "fence" ? null : planScaffold(o.ring, g);
+  const scaffold = wall && !laid.some((p) => p.prop !== "site-fence" && pointInRing(p, scaffoldBox(wall, 1))) ? wall : null;
+  const fence = scaffold ? laid.filter((p) => !panelMeets(p, scaffoldBox(scaffold, 0.3))) : laid;
+  const offScaffold = (b: number) => (scaffold ? [scaffoldBox(scaffold, b)] : []);
+  const kept = offScaffold(0.3);
+  const yardGround: SiteGround = { ...g, free: (p) => g.free(p) && !kept.some((b) => pointInRing(p, b)) };
+  const yard = cabins(cabinSpots(edges, runs, ring, yardGround, gateAt), set, g, rand);
+  // The dig keeps its blend and a cell past it off the containers and the scaffold, as off the fence.
+  const boxes = [...yard.map((c) => corners(c, c.yaw, SITE_CABIN.hx + 0.3, SITE_CABIN.hz + 0.3)), ...kept];
   const digGround: SiteGround = { ...g, free: (p) => g.free(p) && !boxes.some((b) => pointInRing(p, b)) };
   const dig = set === "fence" ? null : planDig(ring, area, digGround, longAxisDegrees(ring), share, digShape(depth));
-  const pieces = [...fence, ...yard];
+  const [banner, phase] = [pick(SITE_LOOKS.banners), pick(SITE_CRANE.phases)];
+  const crane = set === "full" && aspectAlong(o.ring, longAxisDegrees(o.ring)) <= NARROW ? siteCrane(o.ring, ring, g, { gate: gateAt, dig, yard, scaffold }) : null;
+  const pieces = [...fence, ...yard, ...(scaffold ? [scaffoldPiece(scaffold, g, banner)] : []), ...(crane ? [cranePiece(crane, g, phase)] : [])];
   const fenced = runs.reduce((s, r) => s + r.to - r.from, 0);
-  return { id: o.id, seed, set, area: Math.round(area), gate, board: gate ? board : null, dig, pieces, unfenced: Math.round(edges.reduce((s, e) => s + e.len, 0) - fenced) };
+  const outline = o.ring.map((p) => ({ x: Math.round(p.x * 100) / 100 + 0, z: Math.round(p.z * 100) / 100 + 0 }));
+  return { id: o.id, seed, set, area: Math.round(area), outline, gate, board: gate ? board : null, dig, crane, scaffold, pieces, unfenced: Math.round(edges.reduce((s, e) => s + e.len, 0) - fenced) };
+};
+
+/** Does a fence's panel reach into a box: a sample every quarter of its length, its ends included, in it? */
+const panelMeets = (p: StreetPropItem, box: readonly Pt[]): boolean => {
+  const half = siteFenceLayout(p.variant).length / 2;
+  const [c, s] = [Math.cos(p.yaw), Math.sin(p.yaw)];
+  return [-1, -0.5, 0, 0.5, 1].some((k) => pointInRing({ x: p.x + k * half * c, z: p.z - k * half * s }, box));
+};
+
+/** A rectangle's corners (counter-clockwise, as a dig's) moved `by` metres out along its sides. */
+const grown = (r: readonly Pt[], by: number): Pt[] => {
+  const unit = (a: Pt, b: Pt) => {
+    const l = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    return { x: (b.x - a.x) / l, z: (b.z - a.z) / l };
+  };
+  const [u, v] = [unit(r[0]!, r[1]!), unit(r[0]!, r[3]!)];
+  return [
+    [-1, -1],
+    [1, -1],
+    [1, 1],
+    [-1, 1],
+  ].map(([su, sv], k) => ({ x: r[k]!.x + (u.x * su! + v.x * sv!) * by, z: r[k]!.z + (u.z * su! + v.z * sv!) * by }));
+};
+
+/** The crane (stage 2) off what the site holds: the dig with its slopes, the containers, the scaffold, the gate's yard and the drone's way. */
+const siteCrane = (
+  outline: readonly Pt[],
+  ring: readonly Pt[],
+  g: SiteGround,
+  on: { readonly gate: Pt | null; readonly dig: DigPlan | null; readonly yard: readonly StreetPropItem[]; readonly scaffold: ScaffoldPlan | null },
+): CranePlan | null => {
+  const middle = on.dig ? { x: on.dig.outline.reduce((s, p) => s + p.x, 0) / 4, z: on.dig.outline.reduce((s, p) => s + p.z, 0) / 4 } : null;
+  const boxes = [
+    ...(on.dig ? [grown(on.dig.outline, on.dig.blend + 0.5)] : []),
+    ...on.yard.map((c) => corners(c, c.yaw, SITE_CABIN.hx + 0.5, SITE_CABIN.hz + 0.5)),
+    ...(on.scaffold ? [scaffoldBox(on.scaffold, 0.5)] : []),
+  ];
+  return planCrane(outline, ring, g, { boxes, gate: on.gate, way: on.gate && middle ? [on.gate, middle] : null }, middle);
 };
