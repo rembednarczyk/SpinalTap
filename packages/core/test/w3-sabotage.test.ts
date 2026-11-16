@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CONTRACT_BONUS,
+  FIXER_STYLE,
   type Contract,
   EMPTY_CONTRACTS,
   SABOTAGE,
@@ -11,6 +12,7 @@ import {
   generateContractOfKind,
   sabotageDeadlineTick,
   sabotagePay,
+  styleBonusOf,
   virusUploaded,
 } from "../src";
 import { sequenceRng } from "./helpers";
@@ -55,11 +57,14 @@ describe("the sabotage of W-3 (ADR-0082)", () => {
     expect(contractObjective({ ...started, progress: 40 * TPS }, 0).key).toBe("contract.objective.sabotageLeave");
   });
 
-  it("the income per minute of the silent way stays in the band of ADR-0018 and ADR-0024 (215–235 €$)", () => {
+  it("the income per minute of a perfect silent way stays in the band of ADR-0018 and ADR-0024 (215–235 €$)", () => {
     const job = generateContractOfKind("sabotage", ctx(21), sequenceRng(0));
-    const perMinute = (job.reward + CONTRACT_BONUS.sabotage.bonus) / 11;
-    expect(job.reward / 11).toBeGreaterThanOrEqual(215);
-    expect(perMinute).toBeLessThanOrEqual(250);
+    // Everything a perfect run pays: the reward, the condition's bonus and Genzō's style (both his badges).
+    const style = styleBonusOf("sabotage", FIXER_STYLE.genzo, job.reward);
+    expect(style).toBeGreaterThan(0);
+    const perMinute = (job.reward + CONTRACT_BONUS.sabotage.bonus + style) / 11;
+    expect(perMinute).toBeGreaterThanOrEqual(215);
+    expect(perMinute).toBeLessThanOrEqual(235);
     expect(sabotagePay({ ...job, seenLeaving: true }) / 11).toBeLessThan(job.reward / 11);
   });
 
