@@ -258,3 +258,25 @@ export interface LublinChunkData {
  * (radians from +z towards +x) and variant.
  */
 export type LublinPropTable = Readonly<Record<string, Readonly<Partial<Record<StreetPropKind, readonly number[]>>>>>;
+
+/**
+ * A building site of the map (ADR-0087 stage 1), as `pnpm osm:props` writes it
+ * (`tools/osm-import/src/construction-site.ts`): the set its area gives, the board's texts as
+ * catalog keys (ADR-0056), the dig the terrain is shaped to and its pieces as rows of the prop
+ * table's kinds (`site-fence`, `site-gate`, `site-board`, `site-cabin`).
+ */
+export interface LublinConstructionSiteData {
+  /** OSM element of the outline: `w<id>`, `r<id>`; the generator's seed is FNV-1a of it. */
+  readonly id: string;
+  readonly seed: number;
+  /** Up to 150 m² the fence alone, up to 600 m² a yard with containers and a dig, past it the full set. */
+  readonly set: "fence" | "yard" | "full";
+  /** The outline's area (m²). */
+  readonly area: number;
+  /** The keys of the board's name, developer and term; null for a site with no gate. */
+  readonly board: { readonly name: string; readonly developer: string; readonly term: string } | null;
+  /** The dig: a counter-clockwise rectangle levelled to `y` (world), blending into the terrain over `blend` m round it. */
+  readonly dig: { readonly outline: FlatPoints; readonly y: number; readonly blend: number } | null;
+  /** Per kind, flat rows of x, y, z (world metres), yaw (radians) and variant (`sites.ts` of `@seki/core`). */
+  readonly pieces: Readonly<Partial<Record<StreetPropKind, readonly number[]>>>;
+}

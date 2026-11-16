@@ -8,4 +8,5 @@ export * from "./doors";
 export * from "./figures";
 export * from "./trees";
 export * from "./barriers";
+export * from "./sites";
 export * from "./step-norm";

@@ -80,7 +80,8 @@ export const tableStats = (chunks: readonly ChunkLike[], props: PropsLike): Tabl
   return { objects: sorted(objects), byChunk: sorted(byChunk), surfaces: round(surfaces), surfaceByChunk: sorted(Object.fromEntries(Object.entries(surfaceByChunk).map(([k, m]) => [k, round(m)]))) };
 };
 
-const isChunkList = (v: unknown): v is ChunkLike[] => Array.isArray(v) && v.every((c) => c && typeof c === "object" && typeof (c as ChunkLike).id === "string");
+// A chunk has its terrain: the building sites' table (ADR-0087) is a list with ids too.
+const isChunkList = (v: unknown): v is ChunkLike[] => Array.isArray(v) && v.every((c) => c && typeof c === "object" && typeof (c as ChunkLike).id === "string" && "terrain" in c);
 
 /** Reads the tables of `root` (dynamic import) and counts them. */
 export const readTableStats = async (root: string): Promise<TableStats> => {

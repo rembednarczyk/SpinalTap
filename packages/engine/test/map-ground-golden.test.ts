@@ -1,21 +1,25 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import type { GroundSurface, Vec3 } from "@seki/core";
-import { LUBLIN_CHUNKS, buildingView, groundView, terrainView } from "@seki/sim/lublin";
 import { describe, expect, it } from "vitest";
 import { RawTexture, Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { planGround } from "../src/renderer/mapcity/cell-ground";
 import { cellsMeeting } from "../src/renderer/mapcity/ground-plan";
-import { MapCity, type MapView } from "../src/renderer/mapcity/map-city";
+import { cutGround } from "../src/renderer/mapcity/ground-cut";
+import { MapCity } from "../src/renderer/mapcity/map-city";
 import { MapEntries } from "../src/renderer/mapcity/map-entries";
 import { type P2, boundsOf } from "../src/renderer/mapcity/polygon";
 import { MeshSink } from "../src/renderer/mesh-sink";
+import { FLOOR_MARKINGS, FLOOR_PIECES, FLOOR_SCAN, FLOOR_SHAFTS, FLOOR_TERRAINS } from "./fixtures/ground-floor";
 
 /**
  * The ground the map city lays, bit for bit (G-444): the drape and its cuts were made cheaper
- * without moving a vertex. A hash of every number of the ground and water meshes of a few chunks
- * of Lublin (paving over paving, kerbs, the metro's shafts, the river) and of a small world with
- * a bridge's deck, laid whole and in the cells the glitch scan asks for.
+ * without moving a vertex. A hash of every number of the ground and water meshes of a test floor
+ * of its own (`fixtures/ground-floor.ts`: paving over paving, kerbs, shafts, the river, steps, a
+ * footbridge) and of a small world with a bridge's deck, laid whole and in the cells the glitch
+ * scan asks for. Neither reads the map's tables, so a change of Lublin's content moves neither
+ * hash; a change of the rules of laying the ground does (ADR-0088). `pnpm hashes:check` never
+ * writes them: by hand (`vitest -u` or an edit), with the rule named in the commit.
  */
 
 /** FNV-1a over the bits of the doubles: a change in the last bit of one changes it. */
@@ -41,9 +45,6 @@ const hasher = () => {
 const addSink = (hash: ReturnType<typeof hasher>, s: MeshSink): void => {
   for (const a of [s.positions, s.normals, s.colors, s.uvs, s.uvs2, s.indices]) hash.add(a);
 };
-
-/** Chunks of each district: Plac Litewski, the Old Town, Podzamcze's squares and the river. */
-const CHUNKS = ["krakowskie-1-1", "stare-miasto-1-1", "podzamcze-1-0", "nabrzeze-0-1"];
 
 const rect = (x0: number, z0: number, x1: number, z1: number): P2[] => [{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }];
 
@@ -72,85 +73,46 @@ const PIECES: readonly Piece[] = [
 ];
 
 describe("the ground the map city lays (G-444)", () => {
-  it("is the same in a few chunks of Lublin", () => {
+  it("is the same on its test floor, in the city's cells and cut by shafts in the scan's cells", () => {
     const scene = new Scene(new NullEngine());
     const atlas = RawTexture.CreateRGBATexture(new Uint8Array(4), 1, 1, scene);
     const city = new MapCity({ scene, materials: new ToonMaterials(scene), shadow: null, quality: "high", signAtlas: atlas });
+    const origin = { x: 0, y: 0, z: 0 };
     let id = 1;
-    for (const c of LUBLIN_CHUNKS.filter((c) => CHUNKS.includes(c.id))) {
-      city.spawn(id++, terrainView(c) as MapView, { x: 0, y: 0, z: 0 });
-      for (const b of c.buildings) city.spawn(id++, buildingView(b) as MapView, { x: b.x, y: b.y, z: b.z });
-      for (const g of c.ground) city.spawn(id++, groundView(g) as MapView, { x: 0, y: 0, z: 0 });
-    }
+    for (const grid of FLOOR_TERRAINS) city.spawn(id++, { kind: "terrain", grid }, origin);
+    for (const p of FLOOR_PIECES) city.spawn(id++, { kind: "ground", surface: p.surface, outline: p.outline, ...(p.deck ? { deck: p.deck } : {}) }, origin);
+    for (const m of FLOOR_MARKINGS) city.spawn(id++, { kind: "road-marking", marking: m.marking, line: m.line }, origin);
     city.flush();
     const hash = hasher();
     const meshes = city.meshes.filter((m) => m.name.startsWith("map-ground") || m.name.startsWith("map-water")).sort((a, b) => (a.name < b.name ? -1 : 1));
     let vertices = 0;
     for (const m of meshes) {
-      for (const kind of ["position", "normal", "color", "uv", "uv2", "uv3"]) hash.add(m.getVerticesData(kind) ?? []);
+      for (const kind of ["position", "normal", "color", "uv", "uv2"]) hash.add(m.getVerticesData(kind) ?? []);
       hash.add(m.getIndices() ?? []);
       vertices += m.getTotalVertices();
     }
-    // The map's data, not the laying, moved it last: the bare ground of the town's paved places and
-    // the compact lawns and yards laid as grass and paving from the orthophoto's cover (ADR-0077 step
-    // 1.1), so two cells without a piece of ground before have one now. The laying moved it once:
-    // steps at the map's edge read the ground on its side (G-703), and here, with only these four
-    // chunks, the flight at (20; 9) on krakowskie-1-1's west side has no terrain past it. The
-    // colours moved it alone: the paving's and the sidewalks' from the orthophoto (G-721, G-734), no vertex moved.
-    // Two footbridges' decks run on to the top of their banks (G-739): 20 vertices more, the same meshes. The map's
-    // data moved it again: the bands along lines buffered with round joins and ends (ADR-0078 step 2),
-    // 142 558 vertices before, the arcs a few more; and the ground the paths' loops enclose laid whole from the cover.
-    // The kerbs' strips laid from the cover, lawns under the crowns and the specks of green (ADR-0077
-    // step 1.2): 151 928 -> 168 499 vertices, the same meshes.
-    // The gaps' patches in the joints (G-760), pieces of their own: 168 499 vertices before.
-    // Paving under crowns the leaf-off flight shows laid as paving, not a lawn (G-764), and the fills'
-    // rings touching themselves cut into their lobes, laid as triangles of their own area (G-766): 171 963 vertices.
-    // The slits between bands of two surfaces in the joints (G-777), laid edge to edge, and the joints
-    // read with every ring counter-clockwise, so a square's clockwise ring no longer cancels the bands
-    // on it into holes the patches filled: 170 580.
-    // The fills traced a cell past their tile's edges and cut on them (G-769): no triangle of bare ground
-    // where an outline crosses a tile's or a split's edge on the slant, and fewer corners there: 170 416.
-    // The ground lifted over steps cut off the flights' outlines (G-781), its new corners where the
-    // edges cross: 173 375, the same meshes.
-    // The round ends read every ring counter-clockwise too (G-782): no round end laid over a square's
-    // clockwise ring onto the way or the steps it meets there, 676 vertices fewer: 172 699.
-    // The ground a partition of the plane (ADR-0078 step 3, the asphalt winning at a carriageway's edge):
-    // no piece laid under another, so no drape of the asphalt under a sidewalk's lap, of a square under its
-    // footways and lawns, of the lawns under the paving; a zebra lays its own asphalt under its stripes;
-    // the kerb stones of the widened carriageways lie past the asphalt. 172 699 - 163 504 = 9 195 vertices
-    // fewer; one mesh more, a cut piece's part on a cell of its own.
-    // The kerb stones back on the asphalt's side of the paving's edge, ranked over the asphalt that reaches
-    // under them, as drawn before the partition (G-803), 0.1 m past its edge: the paving past them is cut
-    // by the stones' edge alone, not by two a few millimetres apart: 163 504 - 160 810 = 2 694 vertices
-    // fewer, the same meshes.
-    // The carriageways' widths measured on the orthophoto (ADR-0080 PR 10): 82 streets laid at the
-    // asphalt's width and moved onto it on a ramp from their ends, none widened to the paving by the
-    // kerbs' fills (G-570): 161 182 - 160 810 = 372 vertices more, the same meshes.
-    // A side left at the estimate widened to the paving again, the kerbs' strips laid from under the
-    // asphalt, over seams under 0.1 m and up to a zebra past a measured kerb, the zebras across the
-    // asphalt where it lies (G-811): 161 914 - 161 182 = 732 vertices more, the same meshes.
-    // The widened kerbs smooth (G-837): the asphalt's new edge simplified within 0.05 m before its
-    // rounding, and grown on in to the kerb where the gap to the paving closes under 1 m:
-    // 161 914 - 161 827 = 87 vertices fewer, the same meshes.
-    // The pedestrian streets' frontages laid in a pass of their own, under the rest of the ground, which
-    // stays as it was (G-853): the strips between the setts and the walls of Krakowskie Przedmieście and
-    // the Old Town paved: 169 742 - 161 827 = 7 915 vertices more, the same meshes.
-    // No frontage on the map's building sites (G-866): 169 742 - 169 066 = 676 vertices fewer, the same meshes.
-    // W-3's hall dug out (ADR-0082 stage 2): its stairs' and the goods lift's shafts, store S's floor levelled
-    // along the cut corner and the culvert's mouth in the river's bench are holes in the ground and the
-    // zone's paving (`W3_CUTS` with the shafts), their edges new corners: 169 252 - 169 066 = 186 vertices more (as before the frontages), the same meshes.
-    // The flights of steps by the one norm of a step (G-840): risers of 0.12-0.17 m from the rise
-    // between a run's ends, landings and level stretches for the rest, so fewer treads and risers
-    // than one every 0.33 m; their normals the ramp's and uv2 their lift onto it from far:
-    // 161 914 - 160 043 = 1 871 vertices fewer, the same meshes. Round 2: a run the map counts the
-    // steps of (`step_count`) laid by that many in one flight, no tread more than 0.02 m under the
-    // ground and paving over a crest: 160 305, the same meshes.
-    // All of them (G-840 on the frontages and W-3): 169 252 - 1 609 = 167 643 (the steps' 160 218 - 161 827), the same meshes.
-    // The water field in uv3 (ADR-0084 stage 1, no vertex moved) on that ground: 169 252 + 0 vertices,
-    // the hash that of both.
-    // All of them (G-840 and the water field on the frontages and W-3): 167 643 + 0 = 167 643, the same meshes.
-    expect({ meshes: meshes.length, vertices, hash: hash.hex }).toEqual({ meshes: 25, vertices: 167643, hash: "5d4c807e" });
     scene.dispose();
+    // The same pieces laid one by one, whole and in the cells the glitch scan asks for, the shafts cut out of each.
+    const e = new MapEntries();
+    FLOOR_TERRAINS.forEach((grid, i) => {
+      const bounds = { minX: grid.originX, maxX: grid.originX + (grid.cols - 1) * grid.cell, minZ: grid.originZ, maxZ: grid.originZ + (grid.rows - 1) * grid.cell };
+      e.terrains.set(i + 1, { grid, open: undefined, bounds, mesh: null });
+    });
+    FLOOR_PIECES.forEach((p, i) => e.addGround(100 + i, { surface: p.surface, ring: p.outline, y: 0, bounds: boundsOf(p.outline), cell: "", ...(p.deck ? { deck: p.deck } : {}) }));
+    let cut = 0;
+    for (const within of [undefined, cellsMeeting(FLOOR_SCAN)]) {
+      for (const g of e.grounds.keys()) {
+        const ground = new MeshSink();
+        const water = new MeshSink();
+        planGround(ground, water, e, g, within);
+        cutGround(ground, FLOOR_SHAFTS);
+        addSink(hash, ground);
+        addSink(hash, water);
+        cut += (ground.positions.length + water.positions.length) / 3;
+      }
+    }
+    // Moves only with the rules of laying the ground, never with the map's content (ADR-0088): by hand, with the rule in the commit.
+    expect({ meshes: meshes.length, vertices, cut, hash: hash.hex }).toEqual({ meshes: 5, vertices: 4381, cut: 6428, hash: "53e83d0b" });
   });
 
   it("is the same in a small world with a bridge's deck, laid whole and in some cells", () => {
