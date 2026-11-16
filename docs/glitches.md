@@ -2271,11 +2271,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-874 Zamek Lubelski: skrzydło pn. x 904-942 o 2,6-3,0 m za daleko na północ (uskok obrysu OSM), bryła na asfalcie drogi za zamkiem
 - Ważność: S3 · Zasięg: Podzamcze, w48500136, (903,9..941,5; 253,8..261,6)
 - Opis: Węzły (903,9;261,6) i (941,5;256,8) tworzą uskok, którego nie ma w NMPT (krawędź x 910/925/940: z 257,75/256,3/254,0) ani na ortofoto 2023-09..2025-04; ściany zach. i pd. zgodne do 0,4 m. Poprawka: obrys pn. prosto (903,6;258,6)->(941,0;253,8) w korekcie importu. Przegląd kuratora G-841 r3. Proponowana kontrola landmark-outline-nmpt (baza 1).
-- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g874 (890681a), do przeglądu kuratora; wcześniej: nowy
+- Status: przegląd kuratora ZGODNE (890681a), w PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g874 (890681a), do przeglądu kuratora; wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: krawędź obrysu pn. w48500136 w 0,5 m od krawędzi dachu NMPT przy x 910, 925, 940
 - 16.11: drop węzłów uskoku w korekcie importu; ściana x 910/925/940 z 257,75/255,77/253,79 (odchyłka do 0,53 m przy x 925, wewnątrz dachu); kontrola landmark-outline-nmpt 1->0; 2 klucze przyjęte przez agenta (landuse-bare podzamcze-1-0 910,250; bare-on-cover podzamcze-2-0 930,250: goły pas odsłonięty spod bryły, G-699) — do potwierdzenia użytkownika; kolizja z #602: łatka g874-x602-resolution.patch
 - 16.11 użytkownik zatwierdził 2 przyjęte klucze (pas spod bryły, G-699).
+- 16.11 przegląd kuratora 890681a: ZGODNE (odchyłka jednostronna, ściana 0,2-0,5 m w głąb krawędzi dachu NMPT = okap; próg 0,55 akceptowalny; zniknięcie narożnika 941,0;253,8 słuszne)
 
 ### G-875 Skan: próbka na linii ukośnej ściany liczona jako goła (zaokrąglony obrys 0,1 m)
 - Ważność: S4 · Zasięg: tools/glitch-scan landuse-bare, bare-on-cover; krakowskie-2-1 Karmelicka 7
