@@ -63,15 +63,21 @@ const ARRAYS = [
   ["colors", 4],
   ["uvs", 2],
   ["uvs2", 2],
+  ["uvs3", 2],
 ] as const;
 
 /** A new vertex of the sink: each attribute the weighted sum of the triangle's corners'. */
 const blend = (sink: MeshSink, tri: readonly [number, number, number], w: readonly [number, number, number]): number => {
   const index = sink.vertexCount;
+  // The water field (ADR-0084) only once it is baked for every vertex: else it is baked after the cut.
+  const field = sink.uvs3.length === index * 2;
   for (const [key, size] of ARRAYS) {
+    if (key === "uvs3" && !field) continue;
     const arr = sink[key];
     for (let k = 0; k < size; k++) arr.push(w[0] * (arr[tri[0] * size + k] ?? 0) + w[1] * (arr[tri[1] * size + k] ?? 0) + w[2] * (arr[tri[2] * size + k] ?? 0));
   }
+  // A corner where water never stands (a steep one) keeps it off the cut point too, not a share of it.
+  if (field && tri.some((c, k) => (w[k] ?? 0) > 1e-9 && (sink.uvs3[c * 2 + 1] ?? 0) < -0.5)) sink.uvs3[index * 2 + 1] = -1;
   return index;
 };
 

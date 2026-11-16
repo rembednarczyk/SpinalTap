@@ -21,6 +21,8 @@ import type { Cell } from "./map-cells";
 import type { MapEntries, TerrainEntry } from "./map-entries";
 import type { MapSignMaterial } from "./map-signs";
 import type { MapWaterMaterial } from "./map-water";
+import { MAP_SIGN_KIND } from "./sign-plan";
+import { WaterField } from "./water-field";
 
 /**
  * The ground dug out under the metro's pavilions (ADR-0071 stage 2), Alchemia's food hall
@@ -67,6 +69,7 @@ export class CellBuilder {
     cell.spans = cell.frames.flatMap((f) => findSpans(f, entries.acrossAt));
     const far = new MeshSink();
     const signs = new MeshSink();
+    const field = new WaterField(entries, cell.bounds);
     planFarFrames(far, signs, cell.frames, (name) => this.deps.signs.slotFor(name), entries.drawnGround, lite);
     planFarCanyon(far, cell.spans);
     planCanyonSigns(signs, cell.frames, cell.spans, lite);
@@ -76,20 +79,26 @@ export class CellBuilder {
     if (!signs.empty) planSiteSigns(signs, cell.bounds, this.deps.siteTexts(), lite);
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");
     if (!signs.empty) {
+      // The neon's streaks shine in the puddles of the ground under them (ADR-0084).
+      field.bakeOver(signs, (v) => Math.round(signs.uvs2[v * 2 + 1] ?? 0) === MAP_SIGN_KIND.reflection);
       const m = sinkToMesh(this.deps.scene, `map-signs-${cell.key}`, signs, true);
       m.material = this.deps.signs.material;
       cell.signs = m;
     }
-    this.ground(cell);
+    this.ground(cell, field);
     cell.lod = "off";
     for (const m of [cell.far, cell.signs, cell.ground, cell.water]) m?.setEnabled(false);
   }
 
-  private ground(cell: Cell): void {
+  /** The cell's ground with its water field (ADR-0084), piece by piece, and its water. */
+  private ground(cell: Cell, field: WaterField): void {
     const { entries } = this.deps;
     const ground = new MeshSink();
     const water = new MeshSink();
-    for (const id of [...cell.grounds].sort((a, b) => a - b)) planGround(ground, water, entries, id);
+    for (const id of [...cell.grounds].sort((a, b) => a - b)) {
+      planGround(ground, water, entries, id);
+      field.bake(ground, entries.grounds.get(id));
+    }
     cutGround(ground, SHAFTS);
     cell.ground = ground.empty ? null : this.mesh(`map-ground-${cell.key}`, ground, "mapGround");
     if (!water.empty) {

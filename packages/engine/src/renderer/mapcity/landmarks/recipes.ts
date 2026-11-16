@@ -26,10 +26,12 @@ export interface BlindRow {
  * `height` metres tall up to the data's peak: the rest of the data's roof under it is wall. `roof`
  * is the data's own roof in the shape it gives (`roof:shape`, ADR-0064) and its height, in tiles;
  * with `rise`, no higher than that (the importer's guessed height buried a part, G-117).
+ * Battlements with `attic` stand on an attic over the outer walls up to the data's peak, the roof
+ * behind it (a skillion down to the courtyard's eaves) hidden, the courtyard's walls to the eaves.
  */
 export type Crown =
   | { readonly kind: "flat" }
-  | { readonly kind: "crenel"; readonly merlon: number; readonly pitch: number }
+  | { readonly kind: "crenel"; readonly merlon: number; readonly pitch: number; readonly attic?: true }
   | { readonly kind: "skirt"; readonly rise: number; readonly inset: number }
   | { readonly kind: "helm"; readonly height: number; readonly profile: HelmProfile }
   | { readonly kind: "roof"; readonly rise?: number };
@@ -86,7 +88,7 @@ export interface Tier {
   /** OSM ids of the neighbouring tenements Lublin 2077's cables run to from this tier's wall facing the new town. */
   readonly cables?: readonly string[];
   /** The plaster's colour from the kit's swatches (OSM `building:colour`); absent: white. */
-  readonly colour?: "beige" | "sand";
+  readonly colour?: "beige" | "sand" | "ivory";
   /** The upper zone's colour over the split (a tower's copper-clad storey); absent: the tier's. */
   readonly upper?: "patina";
   /** A palace front (Nowy Ratusz): storeys of windows on every shown wall, a portico where the data has one. */
@@ -98,6 +100,55 @@ export interface Tier {
    * the front's face in the gable.
    */
   readonly front?: ClassicFront;
+  /** A neo-Gothic castle's gate front (Zamek Lubelski): turrets, parapet, rose windows, portal, lancets. */
+  readonly castle?: CastleFront;
+}
+
+/** A box of the plan (world x0, z0, x1, z1) where a castle's crown or courtyard eaves stand at their own world y. */
+export interface CrownZone {
+  readonly box: readonly [number, number, number, number];
+  readonly crown?: number;
+  readonly eaves?: number;
+}
+
+/**
+ * A neo-Gothic castle's front on the wall with the passage's mouth on the Old Town's side, and
+ * lancets on every wall. Heights over the passage's floor at that mouth (the storeys run level
+ * round the building), the crowns over the attic's top (the data's peak), metres.
+ */
+export interface CastleFront {
+  /** Octagonal turrets on the outline's short runs at both ends of the gate's wall, a dark metal spire with a small pennant on each. */
+  readonly turret: { readonly radius: number; readonly rise: number; readonly merlon: number; readonly mast: number };
+  /** The risalit's parapet between the turrets: over the attic, its triangular merlons' height and pitch. */
+  readonly parapet: { readonly rise: number; readonly merlon: number; readonly pitch: number };
+  /** Two rose windows over the portal: radius, centre over the floor, apart from the axis. */
+  readonly rose: { readonly r: number; readonly at: number; readonly off: number };
+  /** The pointed portal framing the passage's mouth: outer width and apex over the floor. */
+  readonly portal: { readonly width: number; readonly apex: number };
+  /**
+   * Rows of lancets, [sill, head] over the floor, in bays `pitch` metres apart at most; `courtyard`
+   * rows on the courtyard's walls only; a row fits under the wall's top or is left out.
+   */
+  readonly lancets: {
+    readonly rows: readonly (readonly [number, number])[];
+    readonly courtyard: readonly (readonly [number, number])[];
+    readonly pitch: number;
+    readonly width: number;
+  };
+  /** Over the outer walls' lancets: a round window of radius `r` at `oculus` over the floor in each bay, a frieze of arcades `frieze` tall under the battlements, `pitch` apart. */
+  readonly upper: { readonly oculus: number; readonly r: number; readonly frieze: number; readonly pitch: number };
+  /**
+   * Octagonal pinnacles of `radius` on the corners NMPT shows them, world x, z and the helm's tip
+   * (world y): the shaft `shaft` metres over the battlements, a dark pointed helm over it.
+   */
+  readonly pinnacle: { readonly radius: number; readonly shaft: number; readonly at: readonly { readonly x: number; readonly z: number; readonly top: number }[] };
+  /**
+   * The surface model's crown where it is not the data's peak: in each box (world x0, z0, x1, z1)
+   * the outer walls' battlements to `crown` and the courtyard's walls to `eaves` (world y).
+   */
+  readonly crowns: readonly CrownZone[];
+  /** The museum's sign on the portal's tympanum (an in-world sign, ADR-0056). */
+  readonly sign: string;
 }
 
 /**
@@ -334,11 +385,76 @@ const NOWY_RATUSZ: LandmarkRecipe = {
   },
 };
 
-export const LANDMARK_RECIPES: readonly LandmarkRecipe[] = [BRAMA_KRAKOWSKA, BRAMA_GRODZKA, NOWY_RATUSZ];
+/**
+ * Zamek Lubelski (w48500136, G-841, T-112), the neo-Gothic castle of 1824-1826 on the castle hill,
+ * after the user's photograph from Plac Zamkowy (Street View 2025) and the curator's audit
+ * (`docs/plany/zamek-lubelski.md`, stage Z2): cream plaster (`building:colour=beige`), an attic
+ * with battlements over the outer walls up to NMPT's crown (y 7.5, the data's peak after the
+ * import's correction; y 5.6 on the north wing past x 855 and the east wall), the skillion behind
+ * it down to the courtyard's eaves (y 3.3; y 4.5 on the north wing). The west front's risalit with the gate: two octagonal turrets on the outline's short runs either side,
+ * with merlons to about y 12 (NMPT) and dark metal spires with pennants, a stepped parapet of
+ * triangular merlons between them, two rose windows over a pointed portal round the passage,
+ * lancets either side. The wings: lancets on the ground floor, lesenes, round windows and a frieze
+ * of pointed arcades under the battlements; pinnacles on three corners. The Old Town's subdued layer
+ * (the user's answer 1.11: the plaza's side subdued), the camera at the gate.
+ */
+const ZAMEK: LandmarkRecipe = {
+  key: "zamek-lubelski",
+  parts: [
+    {
+      osm: "w48500136",
+      tier: {
+        material: "plaster",
+        colour: "ivory",
+        plinth: 0,
+        blinds: NO_BLINDS,
+        pilasters: false,
+        cornice: false,
+        base: false,
+        openings: false,
+        clock: false,
+        castle: {
+          // NMPT (the curator's review of round 1): the turrets' flat tops y 12.0-12.4, the spires to
+          // about y 15.5, the parapet's peaks y 10.0-10.4 over the wings' crown at y 7.5.
+          turret: { radius: 1.8, rise: 4.7, merlon: 0.6, mast: 3.3 },
+          parapet: { rise: 1.6, merlon: 1.2, pitch: 1.5 },
+          // The rose windows 2 m higher than in round 2: on the photograph their centres stand about
+          // 2.9 m under the parapet's foot (y 9.1), 5.8 m in round 2 (the curator's review).
+          rose: { r: 1.7, at: 12.6, off: 3.4 },
+          portal: { width: 4.4, apex: 7.4 },
+          lancets: { rows: [[1.6, 4.4]], courtyard: [[6.6, 9.2]], pitch: 4.7, width: 1 },
+          upper: { oculus: 10, r: 0.45, frieze: 0.8, pitch: 0.9 },
+          // NMPT 0.5 m (the curator's review of round 2): pinnacles on three corners only, the north
+          // wing past x 855 and the east wall crowned at y 5.4-5.8, the north wing's eaves towards
+          // the courtyard at y 4.4-4.6 (the rest of the courtyard's side stays at the data's, T-316).
+          pinnacle: {
+            radius: 0.65,
+            shaft: 0.4,
+            at: [
+              { x: 842.1, z: 266.1, top: 10.3 },
+              { x: 836.1, z: 210.9, top: 9.4 },
+              { x: 943.6, z: 197.9, top: 10.9 },
+            ],
+          },
+          crowns: [
+            { box: [855.5, 236, 960, 280], crown: 5.6 },
+            { box: [853.5, 236, 960, 280], eaves: 4.5 },
+          ],
+          sign: "MUZEUM",
+        },
+      },
+      crown: { kind: "crenel", merlon: 0.6, pitch: 1.1, attic: true },
+    },
+  ],
+  // The courtyard's side away from the plaza: the gate's front is the Old Town's.
+  layer: { newTown: { x: 1, z: -0.08 }, neon: "#ffc98a", warm: "#ffc98a", checkpoint: false, subdued: true },
+};
 
-/** Every text the landmarks write in the names atlas: screens, plaques and dated tablets. */
+export const LANDMARK_RECIPES: readonly LandmarkRecipe[] = [BRAMA_KRAKOWSKA, BRAMA_GRODZKA, NOWY_RATUSZ, ZAMEK];
+
+/** Every text the landmarks write in the names atlas: screens, plaques, dated tablets and the castle's sign. */
 export const LANDMARK_TEXTS: readonly string[] = [
-  ...new Set(LANDMARK_RECIPES.flatMap((r) => [r.layer.screen, r.layer.plaque, ...r.parts.map((p) => p.tier.front?.inscription)].flatMap((t) => (t ? [t] : [])))),
+  ...new Set(LANDMARK_RECIPES.flatMap((r) => [r.layer.screen, r.layer.plaque, ...r.parts.flatMap((p) => [p.tier.front?.inscription, p.tier.castle?.sign])].flatMap((t) => (t ? [t] : [])))),
 ];
 
 /** A neighbour a landmark's cables run to: its world outline and the world y of its top. */

@@ -20,6 +20,11 @@ export interface TagCorrection {
   readonly tags: Tags;
   /** The outline scaled round its centroid by this factor (a mapped outline too small against the photograph); areas only. */
   readonly scale?: number;
+  /**
+   * Vertices of the outline left out, each the map's node within 0.2 m of one of these points: a
+   * jog of the mapped outline that the surface model and the photograph do not have; areas only.
+   */
+  readonly drop?: readonly Pt[];
   readonly reason: string;
   /** The entry of `docs/topografia.md` it answers. */
   readonly ref: string;
@@ -684,8 +689,9 @@ export const corrected = (a: Area, corrections: ReadonlyMap<string, TagCorrectio
   const c = corrections.get(a.id);
   if (!c) return a;
   const k = c.scale ?? 1;
-  const o = centroid(a.ring);
-  return { ...a, tags: { ...a.tags, ...c.tags }, ring: k === 1 ? a.ring : a.ring.map((p) => ({ x: o.x + (p.x - o.x) * k, z: o.z + (p.z - o.z) * k })) };
+  const ring = a.ring.filter((p) => !(c.drop ?? []).some((d) => Math.hypot(d.x - p.x, d.z - p.z) <= 0.2));
+  const o = centroid(ring);
+  return { ...a, tags: { ...a.tags, ...c.tags }, ring: k === 1 ? ring : ring.map((p) => ({ x: o.x + (p.x - o.x) * k, z: o.z + (p.z - o.z) * k })) };
 };
 
 /** The line with its corrected tags (a way's width or type the map gets wrong), or as it is. */

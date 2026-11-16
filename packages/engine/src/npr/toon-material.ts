@@ -5,6 +5,7 @@ import { ToonEnvironment } from "./toon-environment";
 import { createToonMaterial } from "./toon-material-factory";
 import { ToonPointLights } from "./toon-point-lights";
 import { type ShadowBinding, ToonSceneUniforms } from "./toon-scene-uniforms";
+import { ToonWetGround } from "./toon-wet-ground";
 
 export { LIGHT_SLOT_DISTANCE } from "./toon-point-lights";
 export type { ShadowBinding } from "./toon-scene-uniforms";
@@ -33,6 +34,8 @@ export class ToonMaterials {
   private readonly lights = new ToonPointLights();
   private readonly env = new ToonEnvironment();
   private readonly look: ToonSceneUniforms;
+  /** Wet street tint and the lamps it mirrors (ADR-0084). */
+  readonly wet = new ToonWetGround(this.materials);
 
   constructor(
     private readonly scene: Scene,
@@ -148,6 +151,7 @@ export class ToonMaterials {
       this.look.applyShadow(m);
       this.look.applyFlash(m);
       this.look.applyRimTint(m);
+      this.wet.apply(key, m);
     }
     return m;
   }

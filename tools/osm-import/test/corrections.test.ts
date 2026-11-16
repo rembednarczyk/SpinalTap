@@ -27,7 +27,7 @@ describe("tag corrections (ADR-0042)", () => {
       expect(c.id).toMatch(/^[wr]\d+$/);
       expect(c.reason.length).toBeGreaterThan(10);
       expect(c.ref).toMatch(/^T-\d{3}$/);
-      expect(Object.keys(c.tags).length > 0 || c.scale !== undefined).toBe(true);
+      expect(Object.keys(c.tags).length > 0 || c.scale !== undefined || (c.drop?.length ?? 0) > 0).toBe(true);
     }
     expect(new Set(TAG_CORRECTIONS.map((c) => c.id)).size).toBe(TAG_CORRECTIONS.length);
   });

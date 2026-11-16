@@ -10,6 +10,9 @@ import { MeshSink, type Rgba, type Vec } from "../mesh-sink";
 import { BODY_GLOW, type MegaBody, addBody, bodyScale } from "./skyline-bodies";
 import { type BridgeSpec, NO_LAYOUT, type SkylineLayout, type TowerSpec, layoutOf } from "./skyline-layout";
 import { LAYOUT_TABLES } from "./skyline-layout-data";
+import { SKYLINE_LANDMARKS, type SkylineLandmark } from "./skyline-landmarks";
+
+export { SKYLINE_LANDMARKS, type SkylineLandmark } from "./skyline-landmarks";
 
 /**
  * The megabuildings of Lublin 2077 (ADR-0051): corporate towers outside the playable centre,
@@ -51,42 +54,6 @@ export const MEGA_SITES: readonly MegaSite[] = [
 ];
 
 const TINTS = ["#8a93a8", "#7d8aa3", "#948aa8", "#7f98a0"] as const;
-
-/**
- * A landmark of the game's own map drawn into the skyline as a silhouette, for an eye too far off
- * to see the real one past the far plane (ADR-0082: the castle group from W-3 on the Bystrzyca,
- * 1.6 km east): its parts as boxes, world metres, their bottoms and tops the map buildings'.
- */
-export interface SkylineLandmark {
-  readonly name: string;
-  readonly parts: readonly { readonly x: number; readonly z: number; readonly w: number; readonly d: number; readonly y0: number; readonly y1: number; readonly octagon?: true }[];
-}
-
-/**
- * The castle group (OSM w48500136 "Zamek w Lublinie", walls 12.8 m from -9.4, its hipped roof 3 m;
- * w450180469 "Wieża Zamkowa Donżon", 24.3 m from -7.4): the castle's west, south and north wings
- * and the keep, round; the Holy Trinity chapel by the castle's east end, its roof as a ridge. The audit before W-3 (docs/plany/tessen-w3-audyt.md) keeps the Old Town's
- * towers out: from the Nabrzeże the real buildings 8-12 m tall in 340-430 m hide them.
- */
-export const SKYLINE_LANDMARKS: readonly SkylineLandmark[] = [
-  {
-    name: "Zamek",
-    parts: [
-      { x: 839.5, z: 237, w: 9, d: 56, y0: -9.4, y1: 5.4 },
-      { x: 892, z: 203.5, w: 106, d: 13, y0: -9.4, y1: 5.4 },
-      { x: 895.5, z: 253.5, w: 103, d: 23, y0: -9.4, y1: 5.4 },
-      { x: 893.1, z: 214.6, w: 15, d: 15, y0: -7.4, y1: 16.9, octagon: true },
-    ],
-  },
-  {
-    // w66258167 "Kaplica pw. Świętej Trójcy": walls 14.6 m from -7.6, a gabled roof 8.3 m (review round 2).
-    name: "Kaplica",
-    parts: [
-      { x: 941.2, z: 215.5, w: 22.6, d: 11.2, y0: -7.6, y1: 7 },
-      { x: 941.2, z: 215.5, w: 22, d: 4, y0: 7, y1: 15.3 },
-    ],
-  },
-];
 
 /**
  * The landmarks on medium and high; the phone keeps today's skyline (ADR-0067): the towers' mesh,

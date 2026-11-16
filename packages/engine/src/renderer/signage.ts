@@ -2,6 +2,7 @@ import type { ChunkDef } from "@seki/sim";
 import { WORLD_CHUNKS } from "@seki/sim";
 import { type BaseTexture, Constants, DynamicTexture, type Mesh, type Scene, ShaderMaterial, Texture } from "../babylon";
 import type { LightingRig } from "../npr/lighting";
+import { STREET_FIELD_GLSL, WATER_GLSL } from "../npr/water-mask";
 import { sinkToMesh } from "./dressing";
 import { ATLAS_BLADES, SIGNAGE_BLADES, SIGNAGE_BOARDS, planSignage } from "./signage-plan";
 import { prng } from "./city-kit-data";
@@ -33,7 +34,7 @@ void main(void) {
 /**
  * Signs read from the atlas (white glyphs tinted per sign), holo-ads (procedural: glyph rain, a
  * ring logo or a figure, with fresnel edges, scanlines, flicker and a slice glitch) and the
- * neon on the wet street, broken up by a puddle mask. Additive: black adds nothing.
+ * neon on the wet street, brightest in the street's water mask (ADR-0084). Additive: black adds nothing.
  */
 const FRAGMENT = /* glsl */ `
 precision highp float;
@@ -49,12 +50,7 @@ uniform float intensity;
 uniform float fogDensity;
 uniform float reduce;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float noise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
-}
+${WATER_GLSL}
 vec2 atlasUV(float cell, vec2 uv) {
   if (cell < ${ATLAS_BLADES}.0) return vec2((cell + uv.x) / ${ATLAS_BLADES}.0, 0.5 + uv.y * 0.5);
   float c = cell - ${ATLAS_BLADES}.0;
@@ -118,8 +114,8 @@ void main(void) {
     float k = smoothstep(0.0, 1.0, fract(x));
     float h = mix(hash(vec2(floor(x), seed)), hash(vec2(floor(x) + 1.0, seed)), k);
     float ripple = 0.65 + 0.35 * sin(uv.y * 40.0 + h * 6.28 + time * 1.5 * (1.0 - reduce));
-    float puddle = smoothstep(0.42, 0.62, noise(vWorld.xz * 0.45 + seed * 13.0));
-    a = pow(acrossK, 1.5) * pow(alongK, 1.3) * mix(0.25, 1.0, h * h) * ripple * mix(0.3, 1.0, puddle);
+    float puddle = waterStanding(${STREET_FIELD_GLSL}, vWorld.xz);
+    a = pow(acrossK, 1.5) * pow(alongK, 1.3) * mix(0.25, 1.0, h * h) * ripple * mix(0.22, 1.25, puddle);
   }
   float dist = length(cameraPosition - vWorld);
   float fog = 1.0 - exp(-pow(dist * fogDensity * 0.6, 2.0));

@@ -4,6 +4,7 @@ import { type ChunkDef, Simulation, gangerEntity } from "../src";
 import { MELEE_CHASE_SPEED } from "../src/systems/ai/ganger-walk";
 import { makeDeck } from "../src/world/deck";
 import { groundOf } from "../src/world/ground";
+import { nearBuilds, wideBuilds } from "../src/systems/ai/nav-field";
 import { gridOf } from "./terrain-world";
 import { teleportPlayer } from "./helpers";
 
@@ -91,5 +92,35 @@ describe("a fighter on a bridge's deck comes down to the player under it, off it
     });
     expect(at).not.toBeNull();
     expect(top).toBeLessThan(DECK_Y / 2);
+  });
+
+  it("an alerted brawler under the deck goes up its end to the player on it, not to the ground under him (G-885)", () => {
+    const { sim, g, player } = fight(ON, UNDER, "hebi_brawler");
+    const at = until(sim, 2 * RUN, () => reached(g, player));
+    expect(at).not.toBeNull();
+    expect(at!).toBeLessThan(RUN * 1.5);
+  });
+
+  it("three brawlers under the deck all get up to the player on it, few rasters and fields made a step (G-885)", () => {
+    const { sim, g, player } = fight(ON, UNDER, "hebi_brawler");
+    const all = [g, ...[-2, 2].map((dz, i) => gangerEntity(9002 + i, { key: `g885-${i}`, position: { x: UNDER.x - 3, y: 0, z: dz }, yaw: 0 }, null, 200, "descent-floor", undefined, "hebi_brawler"))];
+    for (const b of all.slice(1)) {
+      b.ai!.alerted = true;
+      b.ai!.lastKnown = { ...ON };
+      sim.world.add(b);
+    }
+    const builds = () => {
+      const [n, w] = [nearBuilds(sim.world), wideBuilds(sim.world)];
+      return n.rasters + n.fields + w.rasters + w.fields;
+    };
+    const before = builds();
+    const got = new Set<number>();
+    const at = until(sim, 2 * RUN, () => {
+      for (const b of all) if (reached(b, player)) got.add(b.id);
+      return got.size === all.length;
+    });
+    expect(at).not.toBeNull();
+    // A raster or a field per goal the walks plan for (the player, the landing), not per step.
+    expect((builds() - before) / (at! * 60)).toBeLessThan(0.05);
   });
 });

@@ -470,7 +470,8 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   40: (old) => ({ ...old, version: 41 }),
   // v41 -> v42 (ADR-0082 stage 3b): W-3's loud way, the contract's charges, the one being planted,
   // the fuse, the blast and the alarm's tick, all optional. A v41 save has a sabotage on the
-  // quiet way at most (its alarm before the virus failed at 06:00): it goes on as it was.
+  // quiet way at most; one loaded with the alarm up before the virus is in turns loud on its
+  // first step (onAlarm in sabotage-system.ts), as a v42 game would.
   41: (old) => ({ ...old, version: 42 }),
 };
 

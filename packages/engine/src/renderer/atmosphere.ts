@@ -1,5 +1,6 @@
 import { Color3, Color4, Constants, DynamicTexture, type Mesh, MeshBuilder, MeshClass, ParticleSystem, type Scene, ShaderMaterial, Vector3 } from "../babylon";
 import { type LightingRig, mixHex } from "../npr/lighting";
+import { STREET_FIELD_GLSL, WATER_GLSL } from "../npr/water-mask";
 
 const SKY_VERTEX = /* glsl */ `
 precision highp float;
@@ -97,7 +98,7 @@ void main(void) {
 
 /**
  * Neon reflected in wet asphalt: broken vertical streaks fading away from the source, strongest
- * where the puddle mask (value noise over the ground, ADR-0030) says the street holds water.
+ * where the street's water mask (ADR-0084) says the water stands.
  */
 const STREAK_FRAGMENT = /* glsl */ `
 precision highp float;
@@ -107,14 +108,7 @@ uniform vec3 lightColor;
 uniform float intensity;
 uniform float time;
 float hash(float x) { return fract(sin(x * 91.7) * 43758.5453); }
-float hash2(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
-float puddles(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  f = f * f * (3.0 - 2.0 * f);
-  float n = mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), f.x), mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0, 1.0)), f.x), f.y);
-  return smoothstep(0.4, 0.62, n);
-}
+${WATER_GLSL}
 void main(void) {
   float across = 1.0 - abs(vUV.x * 2.0 - 1.0);
   float along = 1.0 - vUV.y;
@@ -125,7 +119,7 @@ void main(void) {
   float h = mix(hash(lane), hash(lane + 1.0), k);
   float ripple = 0.6 + 0.4 * sin(vUV.y * 52.0 + h * 6.28 + time * 1.7);
   float streaks = mix(0.25, 1.0, h * h) * ripple;
-  float wet = mix(0.35, 1.25, puddles(vGround * 0.45));
+  float wet = mix(0.85, 1.4, waterStanding(${STREET_FIELD_GLSL}, vGround));
   float a = pow(across, 1.6) * pow(along, 1.4) * streaks * wet * intensity;
   gl_FragColor = vec4(lightColor * a, a);
 }

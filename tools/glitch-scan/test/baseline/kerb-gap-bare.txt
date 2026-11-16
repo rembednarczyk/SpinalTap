@@ -266,7 +266,6 @@ nabrzeze-0-1 2480,310
 nabrzeze-0-1 2350,320
 nabrzeze-0-1 2400,320
 nabrzeze-0-1 2410,320
-nabrzeze-0-1 2340,340
 nabrzeze-0-1 2350,340
 nabrzeze-0-1 2360,400
 nabrzeze-0-1 2330,410
@@ -378,6 +377,7 @@ podzamcze-0-0 600,350
 podzamcze-0-0 560,360
 podzamcze-0-0 570,360
 podzamcze-0-1 610,380
+podzamcze-0-1 530,390
 podzamcze-0-1 540,390
 podzamcze-0-1 550,390
 podzamcze-0-1 590,390
@@ -503,7 +503,7 @@ podzamcze-2-0 1040,250
 podzamcze-2-0 1080,250
 podzamcze-2-0 1090,250
 podzamcze-2-0 1040,260
-podzamcze-2-0 1110,260
+podzamcze-2-0 1100,260
 podzamcze-2-0 1030,270
 podzamcze-2-0 1060,270
 podzamcze-2-0 1070,270
@@ -517,6 +517,7 @@ podzamcze-2-0 950,300
 podzamcze-2-0 1040,320
 podzamcze-2-0 1080,320
 podzamcze-2-0 1100,320
+podzamcze-2-0 1110,330
 podzamcze-2-0 1110,340
 podzamcze-2-0 950,350
 podzamcze-2-0 1060,350
@@ -536,20 +537,17 @@ podzamcze-2-1 920,400
 podzamcze-2-1 960,400
 podzamcze-2-1 970,400
 podzamcze-2-1 990,400
-podzamcze-2-1 1110,400
 podzamcze-2-1 930,410
 podzamcze-2-1 940,420
 podzamcze-2-1 1030,420
-podzamcze-2-1 1110,420
 podzamcze-2-1 960,430
-podzamcze-2-1 1110,430
 podzamcze-2-1 960,440
 podzamcze-2-1 1020,440
 podzamcze-2-1 1060,440
+podzamcze-2-1 1110,440
 podzamcze-2-1 990,450
 podzamcze-2-1 1050,450
 podzamcze-2-1 1060,450
-podzamcze-2-1 1070,450
 podzamcze-2-1 940,460
 podzamcze-2-1 1020,460
 podzamcze-2-1 920,470
@@ -565,8 +563,6 @@ podzamcze-2-1 1090,550
 podzamcze-2-1 1100,550
 poza 2700,60
 poza 2700,380
-poza 1120,420
-poza 1120,430
 stare-miasto-0-0 510,-240
 stare-miasto-0-0 600,-230
 stare-miasto-0-0 510,-220

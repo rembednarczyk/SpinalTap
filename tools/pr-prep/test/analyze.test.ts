@@ -26,6 +26,14 @@ describe("pr:prep's analysis", () => {
     expect(against(mine, "same", ["packages/engine/src/renderer/mapcity/ground-plan.ts"]).shared).toEqual(["packages/engine/src/renderer/mapcity/ground-plan.ts"]);
   });
 
+  it("counts the furniture's plan among the map tables' inputs", () => {
+    const tables = ["packages/sim/src/content/lublin/props.generated.ts"];
+    const plan = against(tables, "plan", ["docs/world/lublin-props.todo.json"]);
+    expect(plan.rerun).toBe(true);
+    expect(plan.why).toContain("lublin-tables: ta gałąź go zmienia, tamta jego wejścia");
+    expect(against(tables, "docs", ["docs/world/README.md"]).rerun).toBe(false);
+  });
+
   it("says it in one line", () => {
     const line = summaryLine({
       branch: "b",

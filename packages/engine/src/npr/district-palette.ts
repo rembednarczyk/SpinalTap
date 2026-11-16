@@ -20,6 +20,8 @@ export interface DistrictPalette {
   /** Shadow and highlight tones of the grade: hue in degrees, density and saturation 0..100. */
   readonly shadows: Tone;
   readonly highlights: Tone;
+  /** Tint of the wet street and its standing water (ADR-0084), a multiplier near white. */
+  readonly wet: string;
 }
 
 export interface Tone {
@@ -38,6 +40,7 @@ export const DISTRICT_PALETTES: Readonly<Record<DistrictId, DistrictPalette>> = 
     saturation: -12,
     shadows: { hue: 272, density: 40, saturation: 30 },
     highlights: { hue: 325, density: 18, saturation: 16 },
+    wet: "#ece2f4",
   },
   // Ulica Kanałowa: the old teal of the canal, wet concrete, cold cyan rims.
   kanal: {
@@ -48,6 +51,7 @@ export const DISTRICT_PALETTES: Readonly<Record<DistrictId, DistrictPalette>> = 
     saturation: -16,
     shadows: { hue: 192, density: 36, saturation: 26 },
     highlights: { hue: 38, density: 12, saturation: 10 },
+    wet: "#dcecef",
   },
   // The market: amber and red, lantern light and grill smoke.
   targ: {
@@ -58,6 +62,7 @@ export const DISTRICT_PALETTES: Readonly<Record<DistrictId, DistrictPalette>> = 
     saturation: -6,
     shadows: { hue: 356, density: 36, saturation: 30 },
     highlights: { hue: 38, density: 34, saturation: 28 },
+    wet: "#f4e6da",
   },
   // The docks: cold blue haze over the water, sodium-orange floodlights.
   doki: {
@@ -68,6 +73,7 @@ export const DISTRICT_PALETTES: Readonly<Record<DistrictId, DistrictPalette>> = 
     saturation: -20,
     shadows: { hue: 214, density: 46, saturation: 36 },
     highlights: { hue: 30, density: 40, saturation: 36 },
+    wet: "#dde4f2",
   },
 };
 
@@ -112,6 +118,7 @@ export const lerpPalette = (a: DistrictPalette, b: DistrictPalette, t: number): 
     saturation: lerp(a.saturation, b.saturation, k),
     shadows: lerpTone(a.shadows, b.shadows, k),
     highlights: lerpTone(a.highlights, b.highlights, k),
+    wet: mixHex(a.wet, b.wet, k),
   };
 };
 
