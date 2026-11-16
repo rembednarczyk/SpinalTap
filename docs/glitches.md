@@ -2394,8 +2394,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-891 Zakłócenia ulicy z wybuchu, alarmu i znalezienia ciała nie trafiają do zapisu
 - Ważność: S4 · Zasięg: zapis dokładnie w kroku zdarzenia
 - Opis: disturb() (sabotage-loud.ts:150, contract-system.ts:36, body-watch-system.ts:59) trafia do session.street.disturbances, których nie ma w zapisie; zapis w kroku wybuchu rozjeżdża hash od drugiego kroku. Znalezione przez weryfikatora W-3 3b (#633); klasa sprzed 3b.
-- Status: zgłoszone
+- Status: w PR #637; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
+- calmForSave czyści street.disturbances razem ze strachem tłumu (jak G-240); złote hashe bez zmian, bez v43; test w w3-sabotage-loud.test.ts
 
 ### G-892 Maksimum zdrowia po awansie albo implancie spóźnia się o krok: apteczka zaraz potem leczy do starego
 - Ważność: S4 · Zasięg: krok awansu lub założenia implantu
