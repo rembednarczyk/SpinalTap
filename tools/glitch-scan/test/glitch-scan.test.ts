@@ -87,7 +87,6 @@ import { markingSteps } from "./marking-step";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
 import { canopyWithoutTree } from "./canopy-trees";
 import { deckRings, treesByDeck, treesInStructure } from "./tree-structures";
-import { structuresOf } from "../../osm-import/src/structures.ts";
 import { cityMeasuredPieces, cityMeasuredTrees, treesBelowMeasured, treesRoofCaptured, treesUnmeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
@@ -2177,7 +2176,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     return fillGap(city.stats, city.chunks);
   },
   /** A 0.5 m sample of a piece laid in a pedestrian street's frontage inside a building site of the map (`fill-construction.ts`, G-866). */
-  "fill-on-construction": () => fillOnConstruction(structuresOf(SOURCE_OSM), LUBLIN_CHUNKS),
+  "fill-on-construction": () => fillOnConstruction(IMPORT_STRUCTURES(), LUBLIN_CHUNKS),
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => KERB_GAP_BARE(),
   /**
@@ -2191,7 +2190,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)),
         cityLanduseWorld(SOURCE_OSM),
         squaresOf([...LANDUSE_BARE(), ...KERB_GAP_BARE(), ...KERB_STRIP_BARE(), ...GROUND_STRIP_GAP()]),
-        structuresOf(SOURCE_OSM)
+        IMPORT_STRUCTURES()
           .filter((s) => s.kind === "construction")
           .map((s) => s.ring),
       ),
