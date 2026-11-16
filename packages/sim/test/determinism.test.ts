@@ -31,6 +31,18 @@ describe("determinism on the test floor", () => {
     expect([...a.world].filter((e) => e.view?.kind === "crowd")).toHaveLength(5);
   });
 
+  it("three fresh runs in a row end the same, whichever simulation of the file each one is", () => {
+    // `floorSim` makes two simulations (a new game and its kit loaded into it), so runs in a row
+    // would all step the 2nd, 4th, 6th one: a leak of module state that changes every other
+    // simulation would pass unseen. A spare simulation shifts the next runs by one (the stepped
+    // ones are the n+2nd, n+5th and n+7th of the file), so the three cover both parities.
+    const first = hashOf(floorRun(1234));
+    Simulation.create({ seed: 1234, chunks: FLOOR });
+    const second = hashOf(floorRun(1234));
+    const third = hashOf(floorRun(1234));
+    expect([second, third]).toEqual([first, first]);
+  });
+
   it("a different seed diverges once randomness is involved", () => {
     expect(hashOf(floorRun(1234))).not.toBe(hashOf(floorRun(4321)));
   });
