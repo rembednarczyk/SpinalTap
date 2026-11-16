@@ -1,5 +1,7 @@
 import { applyDamage } from "@seki/core";
+import type { World } from "miniplex";
 import type { Entity } from "../world/components";
+import { bodyHeightOf } from "../world/hitboxes";
 import { type GroundField, MAX_WALK_SLOPE, groundOf } from "../world/ground";
 import { type Collider, circleTouches, closestXZ, collidersOf, colliderTop, overCollider, pushCircleOut, rayCollider } from "../world/solids";
 import type { SimContext, System } from "../world/context";
@@ -142,6 +144,21 @@ const ceilingAt = (solids: readonly Collider[], x: number, z: number, head: numb
     if (c.box.min.y >= head - 1e-6 && c.box.min.y < ceiling && overCollider(c, x, z)) ceiling = c.box.min.y;
   }
   return ceiling;
+};
+
+/**
+ * Is there room over the feet to stand up: no solid's underside between a step over them and a
+ * standing body's height, over its footprint? Under a ceiling lower than that (W-3's culvert, ADR-0082) there is not,
+ * and the player stays crouched though the key is let go.
+ */
+export const roomToStand = (world: World<Entity>, e: Entity): boolean => {
+  if (!e.body) return true;
+  const { x, y, z } = e.position;
+  const r = e.body.radius;
+  for (const c of solidIndexOf(world).collidersNear(x - r, z - r, x + r, z + r)) {
+    if (c.box.min.y > y + STEP_HEIGHT && c.box.min.y < y + e.body.height && circleTouches(c, x, z, r, near)) return false;
+  }
+  return true;
 };
 
 /** Ledges the hands catch in the air: their top from a step above the feet up to this (ADR-0021 addendum). */
@@ -287,7 +304,7 @@ const crossesSolid = (solids: readonly Collider[], field: GroundField, e: Mover,
   for (const s of solids) {
     [ray.x, ray.y, ray.z] = [fx, s.box.min.y + Math.min(0.01, (s.box.max.y - s.box.min.y) / 2), fz];
     const t = rayCollider(ray, rayDir, s, len);
-    if (t !== null && blocks(solids, field, s, fx + rayDir.x * t, fz + rayDir.z * t, 1e-3, feet, e.body.height)) return true;
+    if (t !== null && blocks(solids, field, s, fx + rayDir.x * t, fz + rayDir.z * t, 1e-3, feet, bodyHeightOf(e))) return true;
   }
   return false;
 };
@@ -313,8 +330,10 @@ const pushOut = (solids: readonly Collider[], field: GroundField, bodies: readon
         if (!crossesSolid(solids, field, e, x, z, px, pz, feet)) [x, z] = [px, pz];
       }
     }
+    // Crouched, the body is lower (ADR-0069): it passes under what a standing one bumps into (ADR-0082's culvert).
+    const height = bodyHeightOf(e);
     for (const s of solids) {
-      if (!blocks(solids, field, s, x, z, e.body.radius, feet, e.body.height)) continue;
+      if (!blocks(solids, field, s, x, z, e.body.radius, feet, height)) continue;
       // Sunk onto a top with no foothold (G-372): off it the side she came from, not past its middle.
       const back = colliderTop(s, near.x, near.z) <= feet + STEP_HEIGHT && overCollider(s, x, z);
       ({ x, z } = pushCircleOut(s, back ? e.position.x : x, back ? e.position.z : z, e.body.radius));
@@ -385,9 +404,10 @@ const moveVertically = (ctx: SimContext, e: Mover, solids: readonly Collider[], 
   let next = feet + vy * dt;
   if (vy > 0) {
     // Head against an underside: the jump stops rising there.
-    const ceiling = Math.min(ceilingAt(solids, x, z, feet + e.body.height), field.ceilingAt(x, z, feet + e.body.height));
-    if (next + e.body.height > ceiling) {
-      next = Math.max(feet, ceiling - e.body.height);
+    const height = bodyHeightOf(e);
+    const ceiling = Math.min(ceilingAt(solids, x, z, feet + height), field.ceilingAt(x, z, feet + height));
+    if (next + height > ceiling) {
+      next = Math.max(feet, ceiling - height);
       vy = 0;
     }
   }
