@@ -79,6 +79,13 @@ const any = (patterns: readonly RegExp[], file: string): boolean => patterns.som
 /** Everything, as a push to main, the nightly run and a run started by hand. */
 export const fullScope = (reason: string): Scope => ({ code: true, tables: true, e2e: true, unit: "full", unitFiles: [], reasons: [reason] });
 
+/** A push to main: everything, unless it changed docs alone (no job runs, as before). */
+export const pushScope = (changed: readonly string[]): Scope =>
+  changed.some((f) => !DOCS.test(f)) ? fullScope("push to main: everything") : { code: false, tables: false, e2e: false, unit: "none", unitFiles: [], reasons: ["docs only: nothing runs"] };
+
+/** Every unit test with coverage and every e2e group: a pull request's run that stands for main's (`ci.yml`, job "What changed"). */
+export const isFull = (s: Scope): boolean => s.unit === "full" && s.e2e;
+
 const testsUnder = (testFiles: readonly string[], dirs: readonly string[]): string[] => testFiles.filter((t) => dirs.some((d) => t.startsWith(d)));
 
 /** The pull request's scope from its changed files and the repository's test files (paths from the root, `/`). */

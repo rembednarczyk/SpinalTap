@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fullScope, scope } from "../src/scope.ts";
+import { fullScope, isFull, pushScope, scope } from "../src/scope.ts";
 
 /** What a pull request runs (ADR-0046): changed files in, scope out; the test files are a fixed list. */
 
@@ -84,7 +84,16 @@ describe("CI scope of a pull request (ADR-0046)", () => {
     expect(scope(["Dockerfile"], TESTS)).toMatchObject({ code: true, e2e: true, unit: "full" });
   });
 
-  it("main, the nightly run and a run by hand run everything", () => {
-    expect(fullScope("push to main")).toEqual({ code: true, tables: true, e2e: true, unit: "full", unitFiles: [], reasons: ["push to main"] });
+  it("main, the nightly run and a run by hand run everything; a push of docs alone runs nothing", () => {
+    expect(fullScope("nightly")).toEqual({ code: true, tables: true, e2e: true, unit: "full", unitFiles: [], reasons: ["nightly"] });
+    expect(pushScope(["packages/sim/src/systems/body-system.ts", "docs/backlog.md"])).toMatchObject({ code: true, tables: true, e2e: true, unit: "full" });
+    expect(pushScope(["docs/backlog.md"])).toMatchObject({ code: false, e2e: false, unit: "none" });
+  });
+
+  it("only a pull request's run with every unit test and every e2e group stands for main's", () => {
+    expect(isFull(scope([".github/workflows/ci.yml"], TESTS))).toBe(true);
+    expect(isFull(scope(["vitest.config.ts"], TESTS))).toBe(false); // every unit test, no e2e
+    expect(isFull(scope(["packages/engine/src/renderer/arm-mesh.ts"], TESTS))).toBe(false); // e2e, related unit tests
+    expect(isFull(pushScope(["packages/sim/src/systems/body-system.ts"]))).toBe(true);
   });
 });

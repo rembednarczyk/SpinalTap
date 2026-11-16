@@ -1,12 +1,14 @@
 import { appendFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { fullScope, scope, type Scope } from "./scope.ts";
+import { fullScope, isFull, pushScope, scope, type Scope } from "./scope.ts";
 
 /**
  * Job "What changed" of `ci.yml` (ADR-0046):
  * `git diff --name-only ... | node tools/ci-scope/src/cli.ts` for a pull request, or
- * `node tools/ci-scope/src/cli.ts --full "<reason>"` for main, the nightly run and a run by hand.
- * Writes `code`, `tables`, `e2e`, `unit` and `unit_files` (a JSON array) to `$GITHUB_OUTPUT`
+ * `git diff --name-only <before> HEAD | node tools/ci-scope/src/cli.ts --push` for a push to main
+ * (everything, or nothing for docs alone), `node tools/ci-scope/src/cli.ts --full "<reason>"` for
+ * the nightly run and a run by hand. Writes `code`, `tables`, `e2e`, `unit`, `unit_files` (a JSON
+ * array) and `full` (every unit test and every e2e group) to `$GITHUB_OUTPUT`
  * and the reasons to the log and `$GITHUB_STEP_SUMMARY`.
  */
 
@@ -25,7 +27,7 @@ const testFiles = (root: string): string[] =>
   );
 
 const write = (s: Scope): void => {
-  const lines = [`code=${s.code}`, `tables=${s.tables}`, `e2e=${s.e2e}`, `unit=${s.unit}`, `unit_files=${JSON.stringify(s.unitFiles)}`];
+  const lines = [`code=${s.code}`, `tables=${s.tables}`, `e2e=${s.e2e}`, `unit=${s.unit}`, `unit_files=${JSON.stringify(s.unitFiles)}`, `full=${isFull(s)}`];
   console.log(lines.slice(0, 4).join(" "));
   for (const r of s.reasons) console.log(`- ${r}`);
   if (s.unit === "related") console.log(`vitest related:\n  ${s.unitFiles.join("\n  ")}`);
@@ -37,8 +39,7 @@ const write = (s: Scope): void => {
 };
 
 const args = process.argv.slice(2);
+const changed = (): string[] => readFileSync(0, "utf8").split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
 if (args[0] === "--full") write(fullScope(args[1] ?? "full run"));
-else {
-  const changed = readFileSync(0, "utf8").split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
-  write(scope(changed, testFiles(process.cwd())));
-}
+else if (args[0] === "--push") write(pushScope(changed()));
+else write(scope(changed(), testFiles(process.cwd())));
