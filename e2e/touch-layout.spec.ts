@@ -152,6 +152,18 @@ test.describe("phone 800x370 and 667x375", () => {
   });
 });
 
+/**
+ * The page's running animations have ended, so a box measured next is where the piece stays
+ * (G-852). Under load the browser draws no frame for seconds and an animation holds an early
+ * keyframe: the district card, sliding in from 30 px to the right, stood 16 px over the minimap.
+ * Waits on the animations, not on a clock; endless ones (the crosshair's) are not waited for.
+ */
+const animationsEnded = (page: Page) =>
+  page.evaluate(async () => {
+    const ending = document.getAnimations().filter((a) => a.playState === "running" && a.effect?.getComputedTiming().endTime !== Infinity);
+    await Promise.all(ending.map((a) => a.finished.catch(() => undefined)));
+  });
+
 /** What a card on a phone covers of the weapon strip, the move hints, the minimap and the pad's buttons, with the overlap in px. */
 const coveredBy = async (page: Page, card: Box): Promise<string[]> => {
   const covered: string[] = [];
@@ -529,6 +541,7 @@ test.describe("phone district card", () => {
         await expect(page.getByTestId("touch-use")).toBeVisible();
         await expect(page.getByTestId("hint")).toBeVisible();
         await expect.soft(card).toContainText(locale === "pl" ? "Budzisz się" : "You wake up");
+        await animationsEnded(page);
         const box = { name: "card", ...(await card.boundingBox())! };
         expect(box.x >= 0 && box.y >= 0 && box.x + box.width <= w + 0.5 && box.y + box.height <= h + 0.5, `${w}x${h} ${locale}: card on screen`).toBe(true);
         if (process.env.SHOTS) await page.screenshot({ path: join(process.env.SHOTS, `touch-district-${w}x${h}-${locale}.png`) });
