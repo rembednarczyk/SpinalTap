@@ -54,7 +54,8 @@ export const MIN_GROWTH_RUNS = 3;
  * on main. A night of slow shared runners made every test 30-150% slower (16.11, #593, #600, #606:
  * changes outside sim failed sim and scan tests by growth); the growth gate compares each test
  * with main scaled by the run's pace, never below 1, so one test slower than the rest still fails
- * (decision of the user, 16.11).
+ * (decision of the user, 16.11). The pace is each shard's own: shards run on separate runners, and
+ * one slow runner next to a normal one left the median of the merged run at 1 (16.11, #608).
  */
 export const PACE_MIN_MS = 1000;
 
@@ -93,8 +94,10 @@ export interface Gate {
   readonly compared: number;
   /** Runs of main the medians come from. */
   readonly runs: number;
-  /** The run's pace against main (`runPace`) the growth gate scaled main by. */
+  /** The run's pace against main (`runPace`) the growth gate scaled main by: the highest of its shards'. */
   readonly pace: number;
+  /** Each shard's own pace, in the order of the shards given; one entry without shards. */
+  readonly paces: readonly number[];
 }
 
 export const median = (xs: readonly number[]): number => {
@@ -113,14 +116,23 @@ export const medianTimes = (runs: readonly TestTimes[]): Map<string, { readonly 
 export const exceptionFor = (exceptions: readonly Exception[], test: string, kind?: Breach["kind"]): Exception | undefined =>
   exceptions.find((e) => (e.test === test || test.startsWith(`${e.test} > `)) && (!e.only || !kind || e.only === kind));
 
-/** The tests of the pull request (`head`) against their limits and the runs of main (`base`, newest first; none: the limits alone). */
-export const gateTests = (head: TestTimes, base: readonly TestTimes[], exceptions: readonly Exception[]): Gate => {
+/**
+ * The tests of the pull request (`head`) against their limits and the runs of main (`base`, newest
+ * first; none: the limits alone). With the head's `shards`, each test's growth is scaled by the pace
+ * of the shard that ran it; without them, by the pace of the whole head.
+ */
+export const gateTests = (head: TestTimes, base: readonly TestTimes[], exceptions: readonly Exception[], shards: readonly TestTimes[] = []): Gate => {
   const medians = medianTimes(base);
-  const pace = runPace(head, medians);
+  const paces = shards.length > 0 ? shards.map((sh) => runPace(sh, medians)) : [runPace(head, medians)];
+  const paceOf = new Map<string, number>();
+  shards.forEach((sh, i) => {
+    for (const id of Object.keys(sh)) if (!paceOf.has(id)) paceOf.set(id, paces[i]!);
+  });
   const found: Breach[] = [];
   for (const id of Object.keys(head).sort()) {
     const t = head[id]!;
     const m = medians.get(id);
+    const pace = paceOf.get(id) ?? (shards.length > 0 ? 1 : paces[0]!);
     const share = m === undefined && base.length > 0 ? LIMIT_SHARE : HARD_SHARE;
     if (t.ms > t.limitMs * share) found.push({ test: id, kind: "limit", head: t });
     if (m && m.runs >= MIN_GROWTH_RUNS && t.ms > m.ms * pace * (1 + GROWTH) && t.ms - m.ms * pace > GROWTH_FLOOR_MS) found.push({ test: id, kind: "growth", head: t, medianMs: m.ms, runs: m.runs });
@@ -132,7 +144,7 @@ export const gateTests = (head: TestTimes, base: readonly TestTimes[], exception
     if (e) excused.push({ ...b, reason: e.reason });
     else breaches.push(b);
   }
-  return { breaches, excused, compared: Object.keys(head).filter((id) => medians.has(id)).length, runs: base.length, pace };
+  return { breaches, excused, compared: Object.keys(head).filter((id) => medians.has(id)).length, runs: base.length, pace: Math.max(...paces), paces };
 };
 
 const s = (ms: number): string => (ms / 1000).toFixed(1);
@@ -153,7 +165,7 @@ export const errors = (g: Gate): string[] =>
 export const gateSummary = (g: Gate): string => {
   const lines = ["## Single tests (ADR-0083)", ""];
   lines.push(
-    `A new test fails over ${LIMIT_SHARE * 100}% of its limit, any test over ${HARD_SHARE * 100}%, or a test over ${GROWTH * 100}% and ${s(GROWTH_FLOOR_MS)} s slower than the median of main scaled by the run's pace (${g.pace.toFixed(2)}; ${g.runs} green run${g.runs === 1 ? "" : "s"} of main with test times, ${g.compared} tests compared).`,
+    `A new test fails over ${LIMIT_SHARE * 100}% of its limit, any test over ${HARD_SHARE * 100}%, or a test over ${GROWTH * 100}% and ${s(GROWTH_FLOOR_MS)} s slower than the median of main scaled by the pace of the shard that ran it (${g.paces.map((p) => p.toFixed(2)).join(", ")}; ${g.runs} green run${g.runs === 1 ? "" : "s"} of main with test times, ${g.compared} tests compared).`,
     "",
   );
   const row = (b: Breach, reason = "") => `| ${b.test} | ${b.kind} | ${what(b)} |${reason ? ` ${reason} |` : ""}`;

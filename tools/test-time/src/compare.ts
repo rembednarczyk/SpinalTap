@@ -46,6 +46,7 @@ if (head.length === 0) {
     mergeTests(head),
     main.map(mergeTests).filter((t) => Object.keys(t).length > 0),
     EXCEPTIONS,
+    head.map((f) => mergeTests([f])),
   );
   const text = `${summary(c, base ? (reference || baseDir) : undefined)}\n${gateSummary(gate)}`;
   console.log(text);

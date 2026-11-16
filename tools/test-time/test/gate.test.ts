@@ -107,4 +107,23 @@ describe("gate of single tests (ADR-0083 step 2)", () => {
     // A fast run never lowers main below itself.
     expect(runPace(run(0.8), medianTimes(main))).toBe(1);
   });
+  it("takes each shard's own pace: one slow runner next to a normal one (16.11, #608)", () => {
+    const ids = (sh: string): string[] => Array.from({ length: 12 }, (_, i) => `tools/${sh}.test.ts > t ${i}`);
+    const run = (list: readonly string[], k: number): TestTimes => Object.fromEntries(list.map((id) => [id, t(3000 * k)]));
+    const [a, b] = [ids("a"), ids("b")];
+    const main = [0, 1, 2].map(() => ({ ...run(a, 1), ...run(b, 1) }));
+    const [slow, normal] = [run(a, 2), run(b, 1)];
+    const head = { ...slow, ...normal };
+    // Merged, the median pace is about 1 and the whole slow shard fails by growth.
+    expect(gateTests(head, main, []).breaches.length).toBe(12);
+    // Shard by shard: no breach, the slow shard's pace is 2.
+    const g = gateTests(head, main, [], [slow, normal]);
+    expect(g.breaches).toEqual([]);
+    expect(g.paces).toEqual([2, 1]);
+    // A test slower than the rest of its slow shard still fails, and so does one on the normal shard.
+    const worse = { ...slow, [a[0]!]: t(3000 * 2 * 1.5) };
+    const off = { ...normal, [b[0]!]: t(3000 * 1.5) };
+    const g2 = gateTests({ ...worse, ...off }, main, [], [worse, off]);
+    expect(g2.breaches.map((x) => x.test)).toEqual([a[0], b[0]]);
+  });
 });
