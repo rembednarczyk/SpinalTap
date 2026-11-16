@@ -64,8 +64,12 @@ export const findEntityError = (e: unknown, tick: number): string | null => {
   if (e.gun !== undefined && !isGun(e.gun)) return `entity ${e.key} gun`;
   if (e.sniper !== undefined && !isSniper(e.sniper)) return `entity ${e.key} sniper`;
   if (e.walk !== undefined && !isWalk(e.walk, tick)) return `entity ${e.key} walk`;
+  // G-882 (v40): quickhack effects still running, seconds left, none negative.
+  if (e.hackFx !== undefined && !isHackFx(e.hackFx)) return `entity ${e.key} hackFx`;
   return null;
 };
+
+const isHackFx = (v: unknown): boolean => isObject(v) && (["pinged", "blind", "crippled"] as const).every((k) => isNum(v[k]) && (v[k] as number) >= 0);
 
 /**
  * One reinforcement (G-179): which of the heat's, the tick it came in at (G-202), a known enemy

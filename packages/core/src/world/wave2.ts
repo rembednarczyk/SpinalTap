@@ -56,7 +56,7 @@ export interface EncounterDef {
 }
 
 /** Contract kinds as `CONTRACT_KINDS` names them; repeated here to keep this file import-free. */
-export type HookContractKind = "eliminate" | "delivery" | "retrieve" | "protect" | "escort" | "infiltrate" | "hack";
+export type HookContractKind = "eliminate" | "delivery" | "retrieve" | "protect" | "escort" | "infiltrate" | "hack" | "sabotage";
 
 /**
  * An observation hook (ADR-0032): something overheard, read or found during a contract of `kind`

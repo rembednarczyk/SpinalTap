@@ -1,4 +1,6 @@
-import { W3_CRANE_BRIDGE, W3_LAYOUT, W3_Y } from "@seki/sim";
+import type { LineScreens } from "@seki/core";
+import { W3_CRANE_BRIDGE, W3_LAYOUT, W3_VIRUS_TERMINAL, W3_Y } from "@seki/sim";
+
 import { type CityKitData, GeometrySink } from "../city-kit-data";
 import { KitPainter, W3_PAINT } from "./w3-kit";
 import type { ArmPose, LinePose } from "./w3-line-anim";
@@ -16,9 +18,9 @@ const FORE = 1.5;
 const LIMB = 0.32;
 
 /** Boxes per arm, per body, of the bridge: the topology the mesh keeps (tests). */
-export const LINE_BOXES = { arm: 6, body: 6, bridge: 4 } as const;
+export const LINE_BOXES = { arm: 6, body: 6, bridge: 4, screens: 10 } as const;
 
-const arm = (k: KitPainter, a: ArmPose): void => {
+const arm = (k: KitPainter, a: ArmPose, alarm: boolean): void => {
   const top = W3_Y + W3_LAYOUT.ARM_BASE.height;
   const s = W3_LAYOUT.ARM_BASE.size / 2;
   // The turret on the base, the shoulder over it.
@@ -39,7 +41,36 @@ const arm = (k: KitPainter, a: ArmPose): void => {
   // The beacon on the base's corner away from the aisle.
   const bx = a.x + s - 0.15;
   const bz = a.z - a.side * (s - 0.15);
-  k.box(bx - 0.1, bx + 0.1, top, top + 0.22, bz - 0.1, bz + 0.1, a.beacon ? "neon-amber" : "trim");
+  k.box(bx - 0.1, bx + 0.1, top, top + 0.22, bz - 0.1, bz + 0.1, a.beacon ? (alarm ? "neon-red" : "neon-amber") : "trim");
+};
+
+/**
+ * What a screen shows by the job (ADR-0082 stage 3): the line's teal read-out; during the upload
+ * the calibration rewritten, amber over teal; with the virus in, violet over red. The blink's off
+ * phase is the second swatch.
+ */
+const SCREEN_SWATCH: Readonly<Record<LineScreens, readonly [string, string]>> = {
+  idle: ["win-teal", "win-teal"],
+  upload: ["neon-amber", "win-teal"],
+  infected: ["neon-violet", "neon-red"],
+};
+
+/**
+ * The stations' screens on their desks towards the aisle and the calibration core's screen on its
+ * desk in server room N, towards the door: a dark back and the lit face each, ten boxes.
+ */
+const screens = (k: KitPainter, pose: LinePose): void => {
+  const pair = SCREEN_SWATCH[pose.screens];
+  const face = pose.screenBlink ? pair[0] : pair[1];
+  for (const s of Object.values(W3_LAYOUT.STATIONS)) {
+    const toAisle = s.z < 418 ? 1 : -1;
+    const z = s.z + toAisle * 0.1;
+    k.box(s.x - 0.35, s.x + 0.35, W3_Y + 1.1, W3_Y + 1.55, z - 0.04, z + 0.04, "dark");
+    k.box(s.x - 0.3, s.x + 0.3, W3_Y + 1.15, W3_Y + 1.5, z + toAisle * 0.045 - 0.005, z + toAisle * 0.045 + 0.005, face);
+  }
+  const c = W3_VIRUS_TERMINAL;
+  k.box(c.x - 0.45, c.x + 0.45, W3_Y + 1.2, W3_Y + 1.8, 437.92, 438.0, "dark");
+  k.box(c.x - 0.4, c.x + 0.4, W3_Y + 1.25, W3_Y + 1.75, 437.905, 437.915, face);
 };
 
 const body = (k: KitPainter, b: { x: number; z: number }): void => {
@@ -70,8 +101,9 @@ const bridge = (k: KitPainter, x: number): void => {
 /** The line's moving parts in a pose, on the kit's texture. */
 export const lineGeometry = (data: CityKitData, pose: LinePose): GeometrySink => {
   const k = new KitPainter(new GeometrySink(), data);
-  for (const a of pose.arms) arm(k, a);
+  for (const a of pose.arms) arm(k, a, pose.alarm);
   for (const b of pose.bodies) body(k, b);
   bridge(k, pose.bridgeX);
+  screens(k, pose);
   return k.sink;
 };

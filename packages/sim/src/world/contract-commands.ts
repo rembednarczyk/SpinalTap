@@ -5,6 +5,8 @@ import {
   contractKind,
   contractTag,
   contractTerminalKey,
+  contractVirusKey,
+
   credit,
   debriefOf,
   freshTally,
@@ -62,13 +64,15 @@ export const acceptContract = (ctx: SimContext, cmd: Command<"accept-contract">)
       flags: domain.flags,
       tick: ctx.tick,
       ticksPerSecond: SIM_HZ,
+      clock: domain.clock,
       // The job's level is an enemy's in its site's district (ADR-0059): its crew and pay follow.
       levelAt: (site, kind) => contractLevelOf(domain.progression.level, site, kind),
     },
     ctx.rng,
   );
   // The variation (ADR-0034) from a stream of its own, so the job's other rolls stay as they were.
-  const varied = domain.contracts.completed >= VARIATION_FROM_COMPLETED;
+  // W-3's sabotage is a one-off job without one (ADR-0082).
+  const varied = domain.contracts.completed >= VARIATION_FROM_COMPLETED && kind !== "sabotage";
   const variation = varied ? rollContractVariation(kind, plain.siteId, deriveRandom(ctx.seed, `variation:${plain.id}`)) : null;
   const contract = variation ? applyVariation(plain, variation, ctx.tick, SIM_HZ) : plain;
   // Fresh debrief counters (ADR-0029) and no hooks found: a new job starts clean.
@@ -128,14 +132,17 @@ export const completeContract = (ctx: SimContext): void => {
 export const applyBreach = (ctx: SimContext, { terminalKey, daemons: won }: Command<"breach-result">): void => {
   const domain = ctx.state.domain;
   const contract = domain.contracts.active;
-  if (contract?.status !== "active" || contractKind(contract) !== "hack" || contract.breach || contract.progress === undefined) return;
-  if (terminalKey !== contractTerminalKey(contract.id)) return;
+  // The hack's terminal, or the core's of the sabotage (ADR-0082: ICEpick cuts its upload to 25 s).
+  const kind = contract ? contractKind(contract) : null;
+  if (contract?.status !== "active" || (kind !== "hack" && kind !== "sabotage") || contract.breach || contract.progress === undefined) return;
+  if (terminalKey !== (kind === "sabotage" ? contractVirusKey(contract.id) : contractTerminalKey(contract.id))) return;
   const spot = W3_TERMINAL_SPOTS[contract.siteId];
   const p = ctx.world.with("player").first;
   if (!spot || !p || Math.hypot(p.position.x - spot.x, p.position.z - spot.z) > HACK_RANGE) return;
   const daemons = BREACH_DAEMONS.filter((d) => won.includes(d));
   const rate = Math.round(1 / ctx.dt);
-  const progress = contract.progress + (daemons.includes("icepick") ? BREACH_ICEPICK_SECONDS * rate : 0);
+  // The sabotage's ICEpick shortens the upload itself (`sabotageUploadSeconds`), the hack's adds connection.
+  const progress = contract.progress + (daemons.includes("icepick") && kind === "hack" ? BREACH_ICEPICK_SECONDS * rate : 0);
   ctx.state.domain = { ...domain, contracts: { ...domain.contracts, active: { ...contract, breach: daemons, progress } } };
   if (daemons.includes("datamine")) {
     const r = credit(ctx.state.domain.wallet, BREACH_DATAMINE_EDDIES);

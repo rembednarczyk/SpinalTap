@@ -1,3 +1,4 @@
+import { W3MissionSync } from "../presenters/w3-mission";
 import { ABILITY_CATALOG, type DomainState, type ImplantGrades, type RenderPort, dayOf, dayPhase, daylight, formatClock, loadoutAbility, secondOfDay, stackRoom, workingCyberware } from "@seki/core";
 import { DISTRICTS, type DistrictId, type Entity, SIM_HZ, type Simulation, ground } from "@seki/sim";
 import { type AbilityVm, type ContractIntents, type LootVm, type Screen, type TradeVm, type UiStore, patchUi } from "@seki/ui";
@@ -79,8 +80,12 @@ export class HudSync implements ContractIntents {
   private district: DistrictId | null = null;
   /** Daylight level last sent to the renderer; null after the views were cleared. */
   private daylightSent: number | null = null;
+  /** W-3's line by the job (ADR-0082 stage 3): its beacons and screens. */
+  private readonly w3Mission: W3MissionSync;
 
-  constructor(private readonly deps: HudSyncDeps) {}
+  constructor(private readonly deps: HudSyncDeps) {
+    this.w3Mission = new W3MissionSync(deps.render);
+  }
 
   /** The player fought within a few seconds or is hunted: the contextual HUD shows. */
   get inCombat(): boolean {
@@ -90,6 +95,7 @@ export class HudSync implements ContractIntents {
   /** A new game or a load: the views were cleared and the district is the new one's. */
   reset(next: Simulation): void {
     this.daylightSent = null;
+    this.w3Mission.reset();
     this.deps.wave1.reset();
     this.deps.wave2.reset();
     this.district = next.district;
@@ -98,6 +104,7 @@ export class HudSync implements ContractIntents {
   /** The render-time part: time of day, the district name, then the store push. */
   frame(): void {
     this.syncTimeOfDay();
+    this.w3Mission.frame(this.deps.sim().domain);
     this.announceDistrict();
     this.sync();
   }

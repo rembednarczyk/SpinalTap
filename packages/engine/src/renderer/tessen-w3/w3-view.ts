@@ -1,4 +1,5 @@
-import type { Vec3 } from "@seki/core";
+import type { EffectDescriptor, Vec3 } from "@seki/core";
+
 import { INTERIORS } from "@seki/sim";
 import { type AbstractMesh, type Mesh, MeshClass, type Scene, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
@@ -7,7 +8,7 @@ import type { CityKit } from "../city-kit";
 import { w3InsideGeometry } from "./w3-inside-geometry";
 import { W3_INTERIOR_RANGE, w3InteriorDistance } from "./w3-interior-cull";
 import { type W3Lamp, W3_LAMP_PREFIX, w3LampsFor } from "./w3-lights";
-import { linePose } from "./w3-line-anim";
+import { LINE_IDLE, type LineMission, linePose } from "./w3-line-anim";
 import { lineGeometry } from "./w3-line-geometry";
 
 /** The outer pieces (shut leaves in the facades, the culvert's mouth) are drawn within this of the hall (m). */
@@ -58,6 +59,9 @@ export class W3View {
   private lampLevel = 0;
   private time = 0;
   private lineAge = Infinity;
+  /** The job's state on the line (ADR-0082 stage 3) and whether the line still has to show it. */
+  private mission: LineMission = LINE_IDLE;
+  private missionShown = true;
   /** The eye is in the hall's or the basement's rooms. */
   interior = false;
 
@@ -103,7 +107,18 @@ export class W3View {
     this.show(out, near, Math.max(0, Math.min(1, (W3_INTERIOR_RANGE - d) / LAMP_FADE)));
     if (!frozen) this.time += dt;
     this.lineAge += frozen ? 0 : dt;
-    if (near && !this.deps.still && this.lineAge >= LINE_STEP) this.moveLine(kit);
+    if (near && (!this.missionShown || (!this.deps.still && this.lineAge >= LINE_STEP))) this.moveLine(kit);
+  }
+
+  /**
+   * The job's state from the app (ADR-0082 stage 3): `alarm-light` turns the beacons red,
+   * `line-screens` sets the screens. Shown on the line's next pose, on low quality too.
+   */
+  setMission(effect: Extract<EffectDescriptor, { kind: "alarm-light" | "line-screens" }>): void {
+    const next = effect.kind === "alarm-light" ? { ...this.mission, alarm: effect.active } : { ...this.mission, screens: effect.state };
+    if (next.alarm === this.mission.alarm && next.screens === this.mission.screens) return;
+    this.mission = next;
+    this.missionShown = false;
   }
 
   private build(kit: CityKit): void {
@@ -111,8 +126,10 @@ export class W3View {
     const { inside, outer } = w3InsideGeometry(kit.data);
     this.inside = this.fill(this.inside, "w3-inside", inside, kit, false);
     this.outer = this.fill(this.outer, "w3-outer", outer, kit, false);
-    this.line = this.fill(this.line, "w3-line", lineGeometry(kit.data, linePose(this.time, undefined, this.deps.still)), kit, !this.deps.still);
+    // Updatable on low quality too: the job's beacons and screens change it there.
+    this.line = this.fill(this.line, "w3-line", lineGeometry(kit.data, linePose(this.time, undefined, this.deps.still, this.mission)), kit, true);
     this.lineAge = 0;
+    this.missionShown = true;
   }
 
   private fill(mesh: Mesh | null, name: string, sink: GeometrySink, kit: CityKit, moving: boolean): Mesh {
@@ -135,7 +152,8 @@ export class W3View {
     const m = this.line;
     if (!m) return;
     this.lineAge = 0;
-    const s = lineGeometry(kit.data, linePose(this.time));
+    this.missionShown = true;
+    const s = lineGeometry(kit.data, linePose(this.time, undefined, this.deps.still, this.mission));
     m.updateVerticesData(VertexBuffer.PositionKind, s.positions);
     m.updateVerticesData(VertexBuffer.NormalKind, s.normals);
     m.updateVerticesData(VertexBuffer.UVKind, s.uvs);

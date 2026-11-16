@@ -64,7 +64,9 @@ describe("W-3's hall baked in the engine (ADR-0082 stage 2b)", () => {
     expect(linePose(13.5)).not.toEqual(a);
     expect(linePose(12.5, 7)).not.toEqual(a);
     expect(linePose(0, undefined, true)).toEqual(linePose(99, undefined, true));
-    const boxes = LINE_BOXES.arm * 8 + LINE_BOXES.body * 6 + LINE_BOXES.bridge;
+    const boxes = LINE_BOXES.arm * 8 + LINE_BOXES.body * 6 + LINE_BOXES.bridge + LINE_BOXES.screens;
+    // The core's screen (the last two boxes) stands in server room N, the rest in the assembly hall.
+    const core = 2 * 24;
     for (const t of [0, 3.3, 47, 600]) {
       const p = linePose(t);
       const s = lineGeometry(kitData, p);
@@ -76,11 +78,38 @@ describe("W-3's hall baked in the engine (ADR-0082 stage 2b)", () => {
       // Nothing of it through the floor or out of the assembly hall.
       for (let i = 0; i < s.positions.length; i += 3) {
         const [x, y, z] = [s.positions[i]!, s.positions[i + 1]!, s.positions[i + 2]!];
-        expect(x > 2510 && x < 2548 && z > 406 && z < 430 && y > w3(0, 0, 0).y - 1e-6 && y < w3(0, 16, 0).y, `${t}: ${x},${y},${z}`).toBe(true);
+        const inServerRoom = x > 2560 && x < 2572 && z > 432 && z < 440 && y > w3(0, 1, 0).y && y < w3(0, 2, 0).y;
+        const inHall = x > 2510 && x < 2548 && z > 406 && z < 430 && y > w3(0, 0, 0).y - 1e-6 && y < w3(0, 16, 0).y;
+        expect(i / 3 >= s.vertexCount - core ? inServerRoom : inHall, `${t}: ${x},${y},${z}`).toBe(true);
       }
     }
     // Under 25 thousand triangles on High (ADR-0082 §4).
     expect(tris(lineGeometry(kitData, a))).toBeLessThanOrEqual(25_000);
+  });
+
+  it("shows the job on the line (ADR-0082 stage 3): red beacons in the alarm, steady on low, and the screens by the upload", () => {
+    const swatches = (p: ReturnType<typeof linePose>) => {
+      const s = lineGeometry(kitData, p);
+      const count = (name: string) => {
+        const [u, v] = swatchUv(kitData, name);
+        let n = 0;
+        for (let i = 0; i < s.uvs.length; i += 2) if (s.uvs[i] === u && s.uvs[i + 1] === v) n++;
+        return n / 24;
+      };
+      return { red: count("neon-red") - 6, amber: count("neon-amber"), teal: count("win-teal"), violet: count("neon-violet") };
+    };
+    // The bodies' tail lights are red in every pose (6 of them): what is over them is the beacons'.
+    expect(swatches(linePose(3)).red).toBe(0);
+    const alarm = { alarm: true, screens: "idle" } as const;
+    expect(swatches(linePose(0, undefined, true, alarm)).red).toBe(8);
+    expect(swatches(linePose(0, undefined, true)).red).toBe(0);
+    const lit = [0, 0.13, 0.27, 0.41].map((t) => swatches(linePose(t, undefined, false, alarm)).red);
+    expect(Math.max(...lit)).toBeGreaterThan(0);
+    expect(lit.every((n) => n <= 8)).toBe(true);
+    // Five screens: teal idle, amber during the upload (blinking with teal), violet over red with the virus.
+    expect(swatches(linePose(0, undefined, true)).teal).toBe(5);
+    expect(swatches(linePose(0, undefined, true, { alarm: false, screens: "upload" })).amber).toBe(5);
+    expect(swatches(linePose(0, undefined, true, { alarm: false, screens: "infected" })).violet).toBe(5);
   });
 
   it("puts on the two lamps nearest the eye's room: the hall's, the server room's glow, the basement's", () => {
@@ -144,7 +173,31 @@ describe("W-3's hall baked in the engine (ADR-0082 stage 2b)", () => {
     }
   });
 
+  it("re-poses the line for the job's effects on low quality too, once each", () => {
+    const { eye, view } = setup();
+    Object.assign(eye, w3(2520, 1.6, 418));
+    const v = view(true);
+    v.update(0, false);
+    // As float32, as the buffer keeps them however they were handed over.
+    const uvs = () => Array.from((v as unknown as { line: { getVerticesData(k: string): ArrayLike<number> } }).line.getVerticesData(VertexBuffer.UVKind), Math.fround);
+    const before = uvs();
+    v.update(0.5, false);
+    expect(uvs()).toEqual(before);
+    v.setMission({ kind: "alarm-light", active: true });
+    v.update(0.5, false);
+    const red = uvs();
+    expect(red).not.toEqual(before);
+    v.setMission({ kind: "line-screens", state: "infected" });
+    v.update(0.5, false);
+    expect(uvs()).not.toEqual(red);
+    v.setMission({ kind: "alarm-light", active: false });
+    v.setMission({ kind: "line-screens", state: "idle" });
+    v.update(0.5, false);
+    expect(uvs()).toEqual(before);
+  });
+
   it("knows the eye in the hall's and the basement's rooms, not on the roof nor in the yard", () => {
+
     expect(eyeInW3(w3(2520, 1.6, 418))).toBe(true);
     expect(eyeInW3(w3(2530, -3, 402))).toBe(true);
     expect(eyeInW3(w3(2530, 6.6, 433))).toBe(true);

@@ -1,5 +1,5 @@
 import { type DoorDef, type StaticProp, ladderParts, stairRail, stairs, v } from "../builders";
-import { box, doorGap, indoor, merged, railing, wallX, wallZ } from "./parts";
+import { box, doorGap, indoor, lockers, merged, railing, wallX, wallZ } from "./parts";
 import {
   DOOR_H,
   DOOR_W,
@@ -114,7 +114,7 @@ const furniture = (): StaticProp[] => {
     box(2570.6, 2571.4, 0, 2.2, 433.2, 437.6, "metal"),
     box(2565.4, 2566.6, 0, 1.2, 437.6, 438.4, "metal"),
     // The mezzanine: lockers, the shift manager's desk, a cabinet in the technical room.
-    box(2501, 2523, MEZZANINE, MEZZANINE + 2, back - 0.6, back, "metal"),
+    ...lockers(2501, 2523, MEZZANINE, MEZZANINE + 2, back - 0.6, back, 4),
     box(2528.5, 2531.5, MEZZANINE, MEZZANINE + 0.8, 437.6, 438.6, "metal"),
     box(2552, 2559.5, MEZZANINE, MEZZANINE + 2, back - 0.8, back, "metal"),
   ];
