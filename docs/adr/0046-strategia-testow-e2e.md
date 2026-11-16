@@ -206,3 +206,14 @@ Zostają `smoke`, `npr-perf`, `models`, `touch-layout` i `touch`. Doszły tylko 
 
 ## Dług: wzrost czasu testu wobec main tylko jako raport (16.11)
 Bramka wzrostu z ADR-0083 (test ponad 30% i 1 s wolniejszy od mediany main) przez dobę zatrzymywała niewinne PR-y. Na współdzielonych runnerach ten sam test waha się o 30–150%, a skalowanie tempem przebiegu (#612, potem per shard) nie wystarczało. Przez ten czas nie złapała żadnego prawdziwego spowolnienia. Decyzja użytkownika z 16.11: wzrost jest ostrzeżeniem (`::warning` i tabela w podsumowaniu), a PR zatrzymują tylko limity: 50% limitu dla nowego testu i 75% dla każdego (`blocking` w `tools/test-time/src/gate.ts`). Wpis znika, gdy mediany main przyjdą ze spokojnego przebiegu (osobny runner albo liczba instrukcji zamiast czasu) i wzrost znów zacznie blokować.
+
+## Dług: nadpisane limity testów jednostkowych ponad 20 s (16.11)
+Decyzja użytkownika z 16.11 po przeglądzie antywzorców: wolny test dostaje szybszą konstrukcję, nie wyższy limit. Bramka czasu liczy od 16.11 udział każdego testu w globalnych 20 s, nie w jego własnym `timeout` (`tools/test-time/src/reporter.ts`). Testy logiki pościgu za barierą (G-610, G-625, G-643, G-644, G-694) przeszły na podłogę z barier mapy (`packages/sim/test/fixtures/barrier-floor.ts`), a nadpisania testów poniżej 10 s na CI zniknęły: z 71 miejsc (ok. 77 testów) zostało 11. Każde z powodem:
+- `traffic-junction-drive.test.ts` (3 miejsca, 11 testów, 120–240 s): minuta porannego szczytu z pełnym ruchem i tłumem przy skrzyżowaniach i zakrętach Lublina (G-006, G-075, G-744), 15–62 s na CI. Tematem jest geometria tych skrzyżowań, więc bez podłogi. Wyjątek bramki w `exceptions.ts`. Do zrobienia: ruch tylko w chunkach wokół skrzyżowania albo mniej ziaren w jednym teście.
+- `props-build.test.ts` (240 s): dwa pełne przebiegi `pnpm osm:props` (G-745), 58 s na CI. Wyjątek bramki.
+- `bridge-edges-ai.test.ts`, pierwszy test (120 s): 19 s na CI, buduje rastry wokół dolnego mostu Mełgiewskiej dla siedmiu następnych. Wyjątek bramki.
+- `w5-street-life.test.ts` (60 s): Hideo na Grodzkiej, 13 s na CI, w 75% z 20 s.
+- `crowd.test.ts`, „a shot sends them running” (30 s, dawniej `vi.setConfig` dla całego pliku): 12 s na CI.
+- `fpp-hands.test.ts`, dwa `it.each` (60 s, obszar Rendering): 8,7–9,9 s na CI, z wczytaniem modelu.
+- `grass-on-light-paving.test.ts` i `blank-flight.test.ts` (120 s): tylko lokalnie, na ortofoto z pamięci podręcznej (na CI pominięte).
+Wpis znika, gdy ostatnie z nich zejdą poniżej 10 s.

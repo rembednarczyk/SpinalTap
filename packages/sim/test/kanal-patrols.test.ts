@@ -192,5 +192,5 @@ describe("patrols in the world and in a save (ADR-0048)", () => {
     run(loaded, ticks(6));
     expect(stateHash(loaded.snapshot(null, "t", ""))).toBe(stateHash(sim.snapshot(null, "t", "")));
     expect(byKey(loaded, "hebi-rynek")!.position).toEqual(byKey(sim, "hebi-rynek")!.position);
-  }, 60_000);
+  });
 });
