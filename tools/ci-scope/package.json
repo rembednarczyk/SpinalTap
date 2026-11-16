@@ -1,0 +1,13 @@
+{
+  "name": "@seki/ci-scope",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "What a pull request's CI runs (ADR-0046): the unit tests related to the changed files, e2e only for the renderer, the app, the UI and the map tables; main and the nightly run run everything.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
