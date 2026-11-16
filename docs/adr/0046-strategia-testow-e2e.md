@@ -217,3 +217,5 @@ Decyzja użytkownika z 16.11 po przeglądzie antywzorców: wolny test dostaje sz
 - `fpp-hands.test.ts`, dwa `it.each` (60 s, obszar Rendering): 8,7–9,9 s na CI, z wczytaniem modelu.
 - `grass-on-light-paving.test.ts` i `blank-flight.test.ts` (120 s): tylko lokalnie, na ortofoto z pamięci podręcznej (na CI pominięte).
 Wpis znika, gdy ostatnie z nich zejdą poniżej 10 s.
+
+16.11 (#625): `crowd.test.ts` „a shot sends them running…” wraca na listę wyjątków z `only: "limit"` (19,5 s z 20 s na CI). Wpis zdjęto w #610, gdy test miał w sobie limit 30 s, a od #623 udział liczy się od globalnych 20 s. Czas to sama panika i powrót tłumu na trasę; wpis znika po przyspieszeniu systemu tłumu (profil).
