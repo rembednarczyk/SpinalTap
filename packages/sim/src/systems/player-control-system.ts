@@ -6,6 +6,7 @@ import {
   type DerivedStats,
   type CharacterState,
   type DomainState,
+  type Health,
   type InputFrame,
   garmentModifiers,
   wornGarments,
@@ -88,6 +89,16 @@ export const playerStatsOf = (domain: DomainState): DerivedStats => {
     cachedPlayer = deriveStats(character, [...worn, ...buffModifiers(domain.buffs), ...progressionModifiers(domain.progression)]);
   }
   return cachedPlayer;
+};
+
+/**
+ * The player's health with her stats' maximum, what is over it cut. Whatever heals her takes it
+ * first (G-892): a level up or an implant earlier in the step is not in `health.max` until
+ * player-control, which runs after the item system and the commands.
+ */
+export const withPlayerMaxHp = (health: Health, domain: DomainState): Health => {
+  const max = playerStatsOf(domain).maxHp;
+  return health.max === max && health.current <= max ? health : { current: Math.min(health.current, max), max };
 };
 
 /** Take-off speed of a jump, m/s: about 1.2 m of clearance under GRAVITY (ADR-0021). */
@@ -264,7 +275,7 @@ export const playerControlSystem: System = {
     if (input.toggleCamera) toggleCameraMode(ctx);
     const stats = playerStatsOf(ctx.state.domain);
     for (const p of ctx.world.with("player", "velocity")) {
-      if (p.health) p.health = { current: Math.min(p.health.current, stats.maxHp), max: stats.maxHp };
+      if (p.health) p.health = withPlayerMaxHp(p.health, ctx.state.domain);
       const frozen = playerHeld(ctx);
       // Let go under a ceiling too low to stand (the culvert, ADR-0082), the crouch holds.
       if (p.posture) updateCrouch(p.posture, input.crouch || (p.posture.amount > 0 && !roomToStand(ctx.world, p)), frozen, ctx.dt);
