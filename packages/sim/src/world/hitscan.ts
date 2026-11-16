@@ -1,7 +1,8 @@
 import type { CameraMode, EntityId, HitZone, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import { type Aabb, rayAabb } from "./collision";
-import { groundOf } from "./ground";
+import { rayDecks } from "./deck";
+import { type GroundField, groundOf } from "./ground";
 import { solidIndexOf } from "./solid-index";
 import { raySolidEntity } from "./solids";
 import type { Entity } from "./components";
@@ -29,6 +30,16 @@ export const bodyAabb = (e: Entity): Aabb | null => {
 };
 
 /**
+ * Distance along a ray to the ground: the terrain, or a bridge's deck over it (G-071). The deck
+ * is the floor for the feet (ADR-0053) and a slab for shots and sight, over it and under it.
+ */
+const groundRay = (ground: GroundField, origin: Vec3, dir: Vec3, maxDist: number): number | null => {
+  const t = ground.rayHit(origin, dir, maxDist);
+  if (!ground.hasTerrain || ground.bridges.length === 0) return t;
+  return rayDecks(ground.bridges, origin, dir, t ?? maxDist, ground) ?? t;
+};
+
+/**
  * Distance along a ray to the first static geometry: solids (boxes, slopes, prisms) and the
  * terrain (ADR-0043), or null within `maxDist`. For the `camera`, street furniture does not count.
  */
@@ -46,7 +57,7 @@ export const rayGeometry = (world: World<Entity>, origin: Vec3, dir: Vec3, maxDi
       hit = true;
     }
   }
-  const t = groundOf(world).rayHit(origin, dir, best);
+  const t = groundRay(groundOf(world), origin, dir, best);
   if (t !== null && t < best) return t;
   return hit ? best : null;
 };
@@ -91,7 +102,7 @@ export const lineOfSight = (world: World<Entity>, from: Vec3, to: Vec3, terrain 
     if (sight && e.sightThrough) continue;
     if (raySolidEntity(from, dir, e, len) !== null) return false;
   }
-  return !terrain || groundOf(world).rayHit(from, dir, len) === null;
+  return !terrain || groundRay(groundOf(world), from, dir, len) === null;
 };
 
 /** Does the eye at `from` see `to`: nothing static between but the fences and hedges (ADR-0077)? */
