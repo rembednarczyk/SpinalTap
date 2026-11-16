@@ -3,7 +3,7 @@ import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
 import { ChunkIndex, distanceTo } from "./chunk-index";
 import type { Entity } from "./components";
-import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight } from "./deck";
+import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight, rayDecks } from "./deck";
 import { type GroundVault, VaultIndex } from "./vault";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
@@ -89,7 +89,8 @@ export class GroundField {
   private readonly flightBoxes: readonly GroundDeck["box"][];
   /** All of them in one box: a query far from it (almost all) is answered by one test. */
   private readonly flightsBox: GroundDeck["box"];
-  /** The boxes of the bridges' own decks, not the flights' (a few dozen in the city). */
+  /** The bridges' own decks, not the flights' (a few dozen in the city), and their boxes. */
+  private readonly bridges: readonly GroundDeck[];
   private readonly deckBoxes: readonly GroundDeck["box"][];
   /** The flights among each chunk's decks, found once: a height then costs what it did without them. */
   private readonly chunkFlights: readonly (readonly GroundDeck[])[];
@@ -116,7 +117,8 @@ export class GroundField {
     this.index = new ChunkIndex(chunks.map((c) => c.bounds), this.cuts, this.hasTerrain);
     this.flightBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight === true)))].map((d) => d.box);
     this.chunkDecks = chunks.map((c) => decksReaching(chunks, c));
-    this.deckBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight !== true)))].map((d) => d.box);
+    this.bridges = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight !== true)))];
+    this.deckBoxes = this.bridges.map((d) => d.box);
     this.chunkFlights = this.chunkDecks.map((d) => flightsIn(d ?? []));
     const cutBounds = chunks.slice(0, this.cuts).map((c) => c.bounds);
     this.chunkCuts = chunks.map((c, i) => (i < this.cuts ? [] : cutBounds.filter((b) => b.minX <= c.bounds.maxX && b.maxX >= c.bounds.minX && b.minZ <= c.bounds.maxZ && b.maxZ >= c.bounds.minZ)));
@@ -308,13 +310,29 @@ export class GroundField {
   }
 
   /**
+   * Distance along a ray (normalised direction) to where it goes into the ground, or null: the
+   * terrain, or a bridge's deck over it (G-071), a floor for the feet and a slab for shots and sight.
+   */
+  rayHit(origin: Vec3, dir: Vec3, maxDist: number): number | null {
+    const t = this.terrainHit(origin, dir, maxDist);
+    if (!this.hasTerrain || this.bridges.length === 0) return t;
+    return rayDecks(this.bridges, origin, dir, t ?? maxDist, this.terrainAt) ?? t;
+  }
+
+  /** The terrain's height at (x, z), decks left out; 0 on the street plane. */
+  private readonly terrainAt = (x: number, z: number): number => {
+    const grid = this.gridAt(x, z);
+    return grid ? terrainHeightAt(grid, x, z) : 0;
+  };
+
+  /**
    * Distance along a ray (normalised direction) to where it goes into the terrain, or null.
    * Walks the ray cell by cell through the grids (DDA): inside one cell the bilinear ground
    * along a straight line is a quadratic, fitted exactly from three samples, so no ridge between
    * grid points is ever stepped over, however fine the grid. Only terrain stops rays: the street
    * plane never did.
    */
-  rayHit(origin: Vec3, dir: Vec3, maxDist: number): number | null {
+  private terrainHit(origin: Vec3, dir: Vec3, maxDist: number): number | null {
     if (!this.hasTerrain || Math.min(origin.y, origin.y + dir.y * maxDist) > this.maxHeight) return null;
     let t = 0;
     for (let guard = 0; guard < 100_000 && t < maxDist; guard++) {
