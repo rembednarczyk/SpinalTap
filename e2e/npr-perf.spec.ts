@@ -112,6 +112,21 @@ test("Tessen's W-3 from the Lutosławski bridge at night in TPP stays within the
   within("w3-zewnatrz", await sampleNow(page));
 });
 
+test("Tessen's W-3 hall from the aisle in TPP stays within the perf budget", async ({ page }) => {
+  // Inside the assembly hall (ADR-0082 stage 2) by the wagon airlock, walking east along the
+  // production aisle towards the test chamber's gate: the belts, the arms, the gallery and the crane.
+  await tppAt(page, { x: 2511, z: 418, y: -28.6, yaw: Math.PI / 2, walk: 20 });
+  expect((await gameState(page)).loadedChunks).toContain("nabrzeze-w3");
+  within("w3-hala", await sampleNow(page));
+});
+
+test("a phone (low quality, 800x370) in Tessen's W-3 hall stays within the perf budget", async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 370 });
+  await tppAt(page, { x: 2511, z: 418, y: -28.6, yaw: Math.PI / 2, walk: 20 }, "/?seed=3&models=off&quality=low&touch");
+  expect((await gameState(page)).loadedChunks).toContain("nabrzeze-w3");
+  within("phone-w3-hala", await sampleNow(page));
+});
+
 test("a phone (low quality, 800x370) on the deptak stays within the perf budget", async ({ page }) => {
   await page.setViewportSize({ width: 800, height: 370 });
   await tppAt(page, { x: 270, z: -81, yaw: Math.PI / 2, walk: 60 }, "/?seed=3&models=off&quality=low&touch");

@@ -14,8 +14,10 @@ import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills, onCarriagewayDecks } from "./bridge-fill.ts";
 import { type EdgeCut, edgeOutlines, partsWithin } from "./building-edge.ts";
 import { makeBuilding } from "./buildings.ts";
+import { withBuiltSites } from "./built-sites.ts";
 import { type Cover } from "../../orto/src/cover.ts";
 import { type CoverFill, coverFiller, pathLoops, townPlaces, withFills } from "./bare-cover.ts";
+import { frontages } from "./bare-fronts.ts";
 import { type AddedArea, addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { withoutReplaced } from "./corrections-alchemia.ts";
 import { ORTHO_OFFSETS, orthoPieces, orthoSides } from "./corrections-kerb.ts";
@@ -33,7 +35,7 @@ import { roundJoints } from "./line-buffer.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { type StreetHalves, streetHalves } from "./street-half.ts";
 import { type LaidWay, type StreetWidths, carriagewaySource, streetWidths } from "./street-section.ts";
-import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
+import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStepRuns, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
 import { type BuildingOut, type ChunkOut, type GroundOut, type SteepWayOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
@@ -186,6 +188,7 @@ const generateChunk = (
   const service = chunkServiceWays(lines, spec.rect);
   const foot = chunkFootWays(lines, spec.rect);
   const flights = chunkFlights(lines, spec.rect);
+  const stepRuns = chunkStepRuns(lines, spec.rect);
   const steepWays = chunkSteepWays(steep, spec.rect);
   const parks = chunkCarParks(kerb.carParks, spec.rect);
   const stops = chunkBusStops(kerb.busStops, spec.rect);
@@ -205,6 +208,7 @@ const generateChunk = (
     ...(service.length > 0 ? { serviceWays: service } : {}),
     ...(foot.length > 0 ? { footWays: foot } : {}),
     ...(flights.length > 0 ? { flights } : {}),
+    ...(stepRuns.length > 0 ? { stepRuns } : {}),
     ...(steepWays.length > 0 ? { steepWays } : {}),
     ...(parks.length > 0 ? { carParks: parks } : {}),
     ...(stops.length > 0 ? { busStops: stops } : {}),
@@ -271,6 +275,17 @@ export const generate = (
   lod1?: readonly Lod1Building[],
   lod2?: readonly Lod2Building[],
   covers?: readonly Cover[],
+): Generated => generateMap(withBuiltSites(data, lod1), src, chunks, added, lod1, lod2, covers);
+
+/** `generate` on the map as it would have caught up with the buildings finished on its sites (G-872, `built-sites.ts`). */
+const generateMap = (
+  data: OsmData,
+  src: HeightSource,
+  chunks: readonly ChunkSpec[],
+  added: readonly AddedArea[] | undefined,
+  lod1: readonly Lod1Building[] | undefined,
+  lod2: readonly Lod2Building[] | undefined,
+  covers: readonly Cover[] | undefined,
 ): Generated => {
   // The ways a set piece of the game replaces (ADR-0074 stage 7) are left out before anything reads them.
   const features = withoutReplaced(extractFeatures(data));
@@ -415,7 +430,7 @@ export const generate = (
   // Walls, fences and hedges (ADR-0077) clear of the buildings, carriageways, steps and the ways through them.
   const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
   const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), ...(lod2 ? { lod2: lod2Index(lod2) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
-  const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas, pathLoops(lines)));
+  const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas, pathLoops(lines), frontages(lines)));
   // On the ways as laid: a stretch on a deck over a tunnel is no bank (G-088).
   const steep = steepWays(laidLines.map((l) => l.piece), gridsHeight(terrains));
   const results = chunks.map((c, i) => generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, halves, steep, fill));

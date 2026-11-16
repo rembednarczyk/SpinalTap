@@ -27,6 +27,9 @@ export const plContent = {
   "prompt.ladder.up": "Wspinaj się",
   "prompt.ladder.down": "Zejdź po drabinie",
   "prompt.terminal.hack": "Włam się do terminala",
+  "prompt.upload-virus": "Wgraj wirusa",
+  "prompt.take-charges": "Weź ładunki",
+  "prompt.plant-charge": "Podłóż ładunek",
   "prompt.terminal.read": "Czytaj terminal",
   "prompt.pickup.crate": "Zabierz skrzynkę Hany",
   "prompt.pickup.data": "Zgraj dane Tessen",
@@ -47,6 +50,8 @@ export const plContent = {
   "interior.clinic": "Klinika doktora Mori",
   "interior.neon-koi": "Neon Koi",
   "interior.tessen-office": "Biuro Tessen",
+  "interior.w3-hall": "Hala montażowa Tessen",
+  "interior.w3-basement": "Piwnica hali Tessen",
   "interior.trasa-podziemna": "Trasa Podziemna",
   "interior.capsule": "Pokój kapsułowy na wynajem",
   // Perony metra (ADR-0071 etap 4).
@@ -71,6 +76,7 @@ export const plContent = {
   "hook.infiltrate_1": "Kod do drzwi biura przepustek: 4177 (kamera bierze cię za personel)",
   "hook.infiltrate_2": "Strażnik spod drzwi biura co pół godziny wychodzi zapalić",
   "hook.hack_1": "Snajper po trzecim strzale ma cztery sekundy bez lasera",
+  "hook.sabotage_1": "Obchód hali zagląda do serwerowni N co drugie okrążenie",
   "hook.hack_2": "Pod schodami wieży snajper z dachu cię nie widzi",
   // What the scanner calls a thing (ScanFocusChanged.name).
   "scan.name.camera": "Kamera",

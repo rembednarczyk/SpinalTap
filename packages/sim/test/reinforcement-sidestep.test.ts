@@ -13,6 +13,17 @@ import { alleySim, teleportPlayer } from "./helpers";
 const ROOF = w3(2490, 10, 437);
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
 
+/** The snapshot as v40 wrote it, before G-883: the entities and reinforcements without their velocity, melee and stance. */
+const beforeV41 = (s: SaveSnapshot): SaveSnapshot => {
+  const strip = (e: SaveSnapshot["entities"][number]) => {
+    const { velocity: _v, melee: _m, stance: _s, ...rest } = e;
+    return rest;
+  };
+  const r = s.reinforcements;
+  const reinforcements = r ? { reinforcements: { ...r, people: r.people.map((p) => ({ ...p, state: strip(p.state) })) } } : {};
+  return { ...s, entities: s.entities.map(strip), ...reinforcements } as unknown as SaveSnapshot;
+};
+
 /** The snapshot as v30 wrote it, before the style and bad luck (ADR-0059, stage 6): the progression without them. */
 const beforeV31 = (s: SaveSnapshot): SaveSnapshot => {
   const { style: _s, unlucky: _u, ...progression } = s.domain.progression;
@@ -63,10 +74,17 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // Bajkowskiego, its dumpster and parked car moved onto the level ground (the world, no rule).
   // Re-recorded for ADR-0082 stage 1, the content: the docks rebuilt as Tessen's W-3, the player
   // on its tower's platform instead of the warehouse's roof (the reinforcements come up the tower's
-  // stair and lean there), and the v39 version.
-  for (const [seed, level, golden, v32, v31, v30, v28, v27] of [
-    [21, 2, "229028b8", "3a966f3d", "c5bbf8f0", "73c44db1", "0720a3eb", "ada07884"],
-    [5, 3, "b9fef5a3", "254f844c", "9a14605b", "5911d666", "327cfe9c", "312b87f1"],
+  // stair and lean there), and the v39 version. Re-recorded for ADR-0082 stage 3, the content: the
+  // camera of server room N in the hall's chunk is one entity more (without it the runs hash as
+  // before, c5bbf8f0 and 9a14605b as v31), and the v40 version. Re-recorded for the camera moved to
+  // the room's north-west corner (the user's decision of 16.11): at its first place the runs hash to
+  // 86fa6080 and 23918cb7 as v31, so the camera's position is the whole change. Re-recorded for
+  // v41 (G-883): the reinforcements' velocity and melee are saved; without them, as v40, the runs
+  // hash to the goldens of v40. Re-recorded for v42 (ADR-0082 stage 3b, the loud way, none in
+  // these runs): only the version; as v41 the runs hash to 0cbe3ba4 and a6df4b6e.
+  for (const [seed, level, golden, v40, v32, v31, v30, v28, v27] of [
+    [21, 2, "3bb52ee5", "fb93d42a", "1b5a4ad7", "39aed1b6", "818e2c0f", "f6ea310d", "62a908f2"],
+    [5, 3, "107bf337", "c1f5a11d", "2daf589e", "1a0717d1", "19b5ce9c", "0cc55bf6", "15a39e2f"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);
@@ -86,9 +104,10 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
         expect({ n: e.security.n, side: first.get(e.id) }).toEqual({ n: e.security.n, side: e.security.n % 2 === 0 ? 1 : -1 });
       }
       // The run with the rule (seed 21: by the ids it parts otherwise some 510 steps in).
-      const snap = sim.snapshot(null, "t", "");
+      const snap = beforeV41(sim.snapshot(null, "t", ""));
+      expect(stateHash(sim.snapshot(null, "t", ""))).toBe(golden);
+      expect(stateHash({ ...snap, version: 40 } as unknown as SaveSnapshot)).toBe(v40);
       expect(stateHash({ ...snap, version: 31 } as unknown as SaveSnapshot)).toBe(v31);
-      expect(stateHash(snap)).toBe(golden);
       expect(stateHash({ ...snap, version: 32 } as unknown as SaveSnapshot)).toBe(v32);
       expect(stateHash({ ...beforeV31(snap), version: 30 } as unknown as SaveSnapshot)).toBe(v30);
       const old = beforeV29(snap);

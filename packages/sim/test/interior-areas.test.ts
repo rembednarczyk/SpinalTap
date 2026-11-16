@@ -44,7 +44,7 @@ const quiet = (seed = 3): Simulation => {
 describe("interiors as areas (ADR-0061)", () => {
   it("names every interior in the catalogues and keeps the ids unique", () => {
     // The metro's platforms (ADR-0071 stage 4) last, in the line's order.
-    expect(INTERIORS.map((i) => i.id)).toEqual(["clinic", "neon-koi", "tessen-office", "trasa-podziemna", "capsule", "metro-shinsekai", "metro-kanal", "metro-targ", "metro-doki", "alchemia-foodhall", "alchemia-parking"]);
+    expect(INTERIORS.map((i) => i.id)).toEqual(["clinic", "neon-koi", "tessen-office", "w3-hall", "w3-basement", "trasa-podziemna", "capsule", "metro-shinsekai", "metro-kanal", "metro-targ", "metro-doki", "alchemia-foodhall", "alchemia-parking"]);
     for (const i of INTERIORS) expect(i.name).toBe(`interior.${i.id}`);
   });
 
@@ -124,7 +124,7 @@ describe("interiors as areas (ADR-0061)", () => {
     expect(seen).toEqual(["in:trasa-podziemna"]);
     for (const [x, z] of [...TRASA_PODZIEMNA_WALK].reverse().slice(1)) expect(walkTo(sim, x, z), `${x}, ${z}`).toBeLessThan(0.5);
     expect(seen).toEqual(["in:trasa-podziemna", "out:trasa-podziemna"]);
-  }, 60_000);
+  });
 
   it("keeps the interior out of the snapshot: the same game hashes the same inside and out", () => {
     const a = quiet(7);

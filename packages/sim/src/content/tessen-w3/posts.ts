@@ -1,6 +1,8 @@
 import type { ContractSiteId, EnemyTypeId, Vec3 } from "@seki/core";
 import { ground } from "../lublin/terrain";
 import { W3_PLATFORM, W3_ROOF, w3 } from "./site";
+import { W3_AIRLOCK_POST, W3_ARMOURY_POST, W3_PATROL_HALL, W3_PATROL_MEZZANINE, W3_VIRUS_TERMINAL } from "./mission";
+
 
 /**
  * Where the riverside's jobs stand in W-3 (ADR-0082 stage 1): the infiltration in the tower's
@@ -17,9 +19,17 @@ export interface ContractPost {
   readonly yaw: number;
   readonly type: EnemyTypeId;
   readonly onAlarm?: true;
+  /** A patrol (ADR-0082 §3): it walks this loop by the clock in place of holding `at`, where it spawns. */
+  readonly route?: readonly [Vec3, ...Vec3[]];
 }
 
 const post = (at: Vec3, yaw: number, type: EnemyTypeId = "tessen_guard", onAlarm = false): ContractPost => (onAlarm ? { at, yaw, type, onAlarm: true } : { at, yaw, type });
+
+/** A patrol starting at its route's first point, facing along the first leg. */
+const patrol = (route: readonly [Vec3, ...Vec3[]]): ContractPost => {
+  const [a, b = a] = route;
+  return { at: a, yaw: Math.atan2(b.x - a.x, b.z - a.z), type: "tessen_guard", route };
+};
 
 /**
  * Sniper perches (ADR-0024, ADR-0082): row N's roof at its west parapet over the quay and the
@@ -50,6 +60,8 @@ export const W3_CONTRACT_POSTS: Readonly<Partial<Record<ContractSiteId, readonly
     post(w3(2505, 0, 447), -2.4, "tessen_guard", true),
     post(w3(2494, 0, 412.5), -0.6, "tessen_guard", true),
   ],
+  // The sabotage (ADR-0082 stage 3): P1 in the hall, P2 on the mezzanine, the wagon airlock's and armoury S's guards.
+  w3_hall: [patrol(W3_PATROL_HALL), patrol(W3_PATROL_MEZZANINE), post(W3_AIRLOCK_POST, Math.PI / 2), post(W3_ARMOURY_POST, Math.PI)],
 };
 
 /** Mika's way from Genzō's container down the riverside path to the river's bench under the terrace. */
@@ -64,11 +76,13 @@ export const W3_ITEM_SPOTS: Readonly<Partial<Record<ContractSiteId, Vec3>>> = {
 };
 export const W3_TERMINAL_SPOTS: Readonly<Partial<Record<ContractSiteId, Vec3>>> = {
   quay_terminal: w3(2484, 0, 430),
+  w3_hall: W3_VIRUS_TERMINAL,
 };
 
 /** Spawn points by site, for the shared table (the posts' positions). */
-export const W3_CONTRACT_SITE_SPAWNS: Readonly<Record<"docks_escort" | "tessen_office" | "quay_terminal", readonly Vec3[]>> = {
+export const W3_CONTRACT_SITE_SPAWNS: Readonly<Record<"docks_escort" | "tessen_office" | "quay_terminal" | "w3_hall", readonly Vec3[]>> = {
   docks_escort: (W3_CONTRACT_POSTS.docks_escort ?? []).map((p) => p.at),
   tessen_office: (W3_CONTRACT_POSTS.tessen_office ?? []).map((p) => p.at),
   quay_terminal: (W3_CONTRACT_POSTS.quay_terminal ?? []).map((p) => p.at),
+  w3_hall: (W3_CONTRACT_POSTS.w3_hall ?? []).map((p) => p.at),
 };

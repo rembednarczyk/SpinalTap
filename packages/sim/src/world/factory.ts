@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, sightOf, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, SABOTAGE, type EnemyTypeId, MOST_AVOIDED, sightOf, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/tessen-w3";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
@@ -13,6 +13,7 @@ import type { Combatant, Entity, MeleeState, WalkProgress } from "./components";
 import { isEnforcer } from "./enforcer";
 import { bodySnapshotOf } from "./bodies";
 import { type EnemyScaling, enemyMaxHp, gradeEnemy } from "./enemy-grade";
+import { applyMotion, withMotion } from "./stance-snapshot";
 
 export const BODY = { radius: BODY_RADIUS, height: 1.8 } as const;
 
@@ -27,7 +28,7 @@ export class IdAllocator {
   }
 }
 
-const actor = (id: EntityId, spawn: ActorSpawn): Entity => ({
+export const actor = (id: EntityId, spawn: ActorSpawn): Entity => ({
   id,
   key: spawn.key,
   position: spawn.position,
@@ -38,7 +39,7 @@ const actor = (id: EntityId, spawn: ActorSpawn): Entity => ({
   body: BODY,
 });
 
-const at = (p: Vec3): Pick<Entity, "position" | "prevPosition" | "yaw" | "prevYaw" | "pitch"> => ({
+export const at = (p: Vec3): Pick<Entity, "position" | "prevPosition" | "yaw" | "prevYaw" | "pitch"> => ({
   position: p,
   prevPosition: p,
   yaw: 0,
@@ -238,6 +239,19 @@ export const terminalEntity = (id: EntityId, key: string, foot: Vec3, chunk: str
   interactable: { kind: "terminal", dialogueId: key, prompt: "prompt.terminal.hack", radius: 2 },
 });
 
+/**
+ * The calibration core's terminal of the sabotage (ADR-0082): the key starts the virus upload. No
+ * view of its own: the core's desk is baked in the hall's mesh and the renderer draws its screen.
+ */
+export const virusTerminalEntity = (id: EntityId, key: string, foot: Vec3, chunk: string): Entity => ({
+  id,
+  key,
+  chunk,
+  ...at({ x: foot.x, y: foot.y + TERMINAL.y / 2, z: foot.z }),
+  // In reach from the whole upload's range, the camera's dead angle by the east rack included.
+  interactable: { kind: "terminal", dialogueId: key, prompt: "prompt.upload-virus", radius: SABOTAGE.range },
+});
+
 export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity => {
   const e =
     def.kind === "ganger"
@@ -330,7 +344,10 @@ export const toughen = (e: Entity, s: EnemyScaling): Entity => {
 const restoredHealth = (health: NonNullable<Entity["health"]>, hp: number, savedMax: number): number =>
   savedMax === health.max || hp <= 0 ? hp : Math.min(health.max, Math.max(1, Math.round((health.max * hp) / savedMax)));
 
-/** An NPC's gun not at rest with a full magazine (G-185), else null; the player's is in the domain. */
+/**
+ * An NPC's gun not at rest with a full magazine (G-185), else null; the player's magazine is in
+ * the domain and her gun's timers in her stance (G-883).
+ */
 const gunOf = (e: Entity): GunSnapshot | null => {
   const c = e.combatant;
   if (!c || e.player || (c.loaded === c.stats?.magazine && c.reloading === 0 && c.drawing === 0 && c.bloom === 0)) return null;
@@ -387,11 +404,16 @@ export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot =>
   // Mid-fight (G-185): an NPC's gun and a sniper's aim go on as they were.
   const fighting = withFight(e, counted);
   // Walking (G-208): its stuck check goes on, so it takes the way around in the same step.
-  const body = e.walk ? { ...fighting, walk: walkSnapshotOf(e.walk) } : fighting;
+  const walking = e.walk ? { ...fighting, walk: walkSnapshotOf(e.walk) } : fighting;
+  // Moving, mid-blow, the player crouched or mid-reload (G-883): it goes on in the same step.
+  const body = withMotion(e, walking);
   // Looking for the player (ADR-0029): where, for how long, and how long out of sight.
+  // A quickhack still running (G-882): a rebooted camera stays blind through a save.
+  const fx = e.hackFx;
+  const hacked = fx && (fx.pinged > 0 || fx.blind > 0 || fx.crippled > 0) ? { ...body, hackFx: { pinged: fx.pinged, blind: fx.blind, crippled: fx.crippled } } : body;
   const ai = e.ai;
-  if (!ai?.lastKnown) return body;
-  return { ...body, lastKnown: { ...ai.lastKnown }, search: ai.search ?? 0, lost: ai.lost ?? 0 };
+  if (!ai?.lastKnown) return hacked;
+  return { ...hacked, lastKnown: { ...ai.lastKnown }, search: ai.search ?? 0, lost: ai.lost ?? 0 };
 };
 
 /** Puts saved state back onto a freshly built entity. */
@@ -420,6 +442,7 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
     e.sniper = { ...e.sniper, ...s.sniper, ...(s.sniper.phase === "aim" ? { relight: true as const } : {}) };
   }
   if (e.ai && s.walk) e.walk = walkOf(s.walk);
+  applyMotion(e, s);
   if (e.ai) {
     e.ai.alerted = s.alerted;
     e.ai.lastKnown = s.lastKnown ? { ...s.lastKnown } : null;

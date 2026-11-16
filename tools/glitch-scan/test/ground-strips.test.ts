@@ -63,6 +63,14 @@ describe("ground-strip-gap", () => {
     expect([0, 0.5, 0.75, 1, 1.25, 1.5].map(gap)).toEqual([0, 2, 3, 2, 1, 0]);
   });
 
+  it("leaves out the cells of a gap under a building's outline (G-864)", () => {
+    const raster = stripRaster(chunk([rect(-5, 0, 0, 4), rect(0.75, 0, 5, 4)]));
+    // The 0.75 m gap 4 m long is 3 m²: a building over all of it leaves none, over all but its first metre 0.75 m² (one finding).
+    expect(groundStripGap([raster], () => true)).toEqual([]);
+    expect(groundStripGap([raster], (_x, z) => z > 1)).toHaveLength(1);
+    expect(groundStripGap([raster], (x) => x < -1)).toHaveLength(3);
+  });
+
   it("counts a gap across z as along x, and none beside a single strip or a bridge", () => {
     expect(groundStripGap([stripRaster(chunk([rect(0, -5, 4, 0), rect(0, 0.75, 4, 5)]))])).toHaveLength(3);
     expect(groundStripGap([stripRaster(chunk([rect(-5, 0, 5, 4)]))])).toEqual([]);

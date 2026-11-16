@@ -100,6 +100,8 @@ export const contractSystem: System = {
     const contract = ctx.state.domain.contracts.active;
     if (contract?.status !== "active") return;
     const kind = contractKind(contract);
+    // The sabotage keeps its own clock (`sabotage-system.ts`): past 06:00 with the virus in it still runs.
+    if (kind === "sabotage") return;
     // A delivery's clock, or the deadline of a `time_limit` variation (ADR-0034).
     if (contract.deadlineTick !== undefined && ctx.tick >= contract.deadlineTick) failContract(ctx, "timeout");
     else if (kind === "protect" && ctx.state.domain.flags.includes(deadFlag(PROTECTEE_KEY))) failContract(ctx, "protectee-killed");

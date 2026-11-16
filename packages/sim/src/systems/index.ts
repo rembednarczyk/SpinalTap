@@ -3,6 +3,8 @@ import { bodyWatchSystem, createCivilianAiSystem, createGangerAiSystem, escortAi
 import { abilitySystem } from "./ability-system";
 import { combatSystem } from "./combat-system";
 import { contractSystem } from "./contract-system";
+import { sabotageSystem } from "./sabotage-system";
+import { tessenHuntSystem } from "./tessen-hunt-system";
 import { deathSystem } from "./death-system";
 import { elevatorSystem } from "./elevator-system";
 import { doorSystem } from "./door-system";
@@ -157,6 +159,8 @@ export const createSystems = (): readonly System[] => [
   bodyWatchSystem,
   lootSystem,
   contractSystem,
+  sabotageSystem,
+  tessenHuntSystem,
   contractPlanSystem,
   hookSystem,
   contractLayerSystem,

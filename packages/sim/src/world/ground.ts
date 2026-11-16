@@ -4,6 +4,7 @@ import type { Rect } from "../content/builders";
 import { ChunkIndex, distanceTo } from "./chunk-index";
 import type { Entity } from "./components";
 import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight } from "./deck";
+import { GentleBlocks } from "./gentle-ground";
 import { type GroundVault, VaultIndex } from "./vault";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
@@ -89,7 +90,9 @@ export class GroundField {
   private readonly flightBoxes: readonly GroundDeck["box"][];
   /** All of them in one box: a query far from it (almost all) is answered by one test. */
   private readonly flightsBox: GroundDeck["box"];
-  /** The boxes of the bridges' own decks, not the flights' (a few dozen in the city). */
+  /** The bridges' own decks, not the flights' (a few dozen in the city): the slabs that stop rays (G-071). */
+  readonly bridges: readonly GroundDeck[];
+  /** Their boxes. */
   private readonly deckBoxes: readonly GroundDeck["box"][];
   /** The flights among each chunk's decks, found once: a height then costs what it did without them. */
   private readonly chunkFlights: readonly (readonly GroundDeck[])[];
@@ -103,8 +106,13 @@ export class GroundField {
   private readonly vaults: VaultIndex;
   /** The shafts within each chunk's bounds (none for the shafts themselves): a ray in the chunk stops at their edge (G-377). */
   private readonly chunkCuts: readonly (readonly Rect[])[];
+  /** Where no point is too steep to walk, known without sampling a slope (G-886). */
+  readonly gentle: GentleBlocks;
+  /** What it was made of, as given: the steering's shared store knows two grounds of the same content by it (`nav-share.ts`). */
+  readonly made: { readonly chunks: readonly GroundChunk[]; readonly cuts: readonly GroundCut[]; readonly vaults: readonly GroundVault[] };
 
   constructor(world: readonly GroundChunk[], cuts: readonly GroundCut[] = [], vaults: readonly GroundVault[] = []) {
+    this.made = { chunks: world, cuts, vaults };
     this.vaults = new VaultIndex(vaults);
     const chunks = cuts.length > 0 ? [...cuts.map(cutChunk), ...world] : world;
     this.chunks = chunks;
@@ -116,7 +124,8 @@ export class GroundField {
     this.index = new ChunkIndex(chunks.map((c) => c.bounds), this.cuts, this.hasTerrain);
     this.flightBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight === true)))].map((d) => d.box);
     this.chunkDecks = chunks.map((c) => decksReaching(chunks, c));
-    this.deckBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight !== true)))].map((d) => d.box);
+    this.bridges = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight !== true)))];
+    this.deckBoxes = this.bridges.map((d) => d.box);
     this.chunkFlights = this.chunkDecks.map((d) => flightsIn(d ?? []));
     const cutBounds = chunks.slice(0, this.cuts).map((c) => c.bounds);
     this.chunkCuts = chunks.map((c, i) => (i < this.cuts ? [] : cutBounds.filter((b) => b.minX <= c.bounds.maxX && b.maxX >= c.bounds.minX && b.minZ <= c.bounds.maxZ && b.maxZ >= c.bounds.minZ)));
@@ -127,6 +136,7 @@ export class GroundField {
       minZ: Math.min(...boxes.map((b) => b.minZ)),
       maxZ: Math.max(...boxes.map((b) => b.maxZ)),
     };
+    this.gentle = new GentleBlocks(chunks, this.index, this.cuts, [...this.deckBoxes, ...boxes, ...vaults.map((v) => v.bounds)], SLOPE_HALF_SPAN, MAX_WALK_SLOPE);
   }
 
   /** Is a flight of steps hung off a bridge (G-255) within `margin` of the box (`maxX`, `maxZ` default to the point)? */

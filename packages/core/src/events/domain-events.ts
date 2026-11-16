@@ -77,6 +77,16 @@ export interface DomainEvents {
   /** A docks job's second phase began (ADR-0024): the escort's ambush, the hack's wave. */
   ContractAlarm: { contract: Contract };
   /**
+   * W-3's sabotage (ADR-0082 stage 3b): the way is chosen by deeds, "quiet" when the virus upload
+   * begins, "loud" when the charges are taken or the alarm cuts the server rooms off before the virus is in.
+   */
+  SabotageRouteChosen: { contract: Contract; route: "quiet" | "loud" };
+  /**
+   * The virus upload went on, stopped (`paused`: Seki away from the core, or the lockdown) or went
+   * on again; also at every whole second of it. `progress` is the share uploaded, 0..1.
+   */
+  VirusUploadChanged: { contract: Contract; progress: number; paused: boolean };
+  /**
    * A sniper (ADR-0024) started aiming at `targetId`: its laser is on and it fires in `duration`
    * seconds unless the target breaks the line. `duration` 0 turns the laser off (shot, lost sight).
    */

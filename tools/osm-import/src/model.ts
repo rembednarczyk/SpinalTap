@@ -60,6 +60,8 @@ export interface GroundOut {
   readonly bridge?: true;
   /** The bridge's deck axis, `[x0, z0, x1, z1]`: the bridge way's ends, its abutments. */
   readonly deck?: readonly number[];
+  /** Laid in a pedestrian street's frontage (`bare-fronts.ts`, G-853): no paving's edge the furniture reads. */
+  readonly front?: true;
 }
 
 /** A square's or a footway's piece as laid over the others, before the partition cut it (`ChunkOut.walkAreas`). */
@@ -98,6 +100,13 @@ export interface FlightOut {
   readonly id: string;
   readonly line: readonly number[];
   readonly steps?: number;
+}
+
+/** A straight run of a steps way with a `step_count` (G-840): its ends and its share of the way's steps. */
+export interface StepRunOut {
+  readonly id: string;
+  readonly run: readonly number[];
+  readonly steps: number;
 }
 
 /**
@@ -159,6 +168,8 @@ export interface ChunkOut {
   readonly footWays?: readonly FootWayOut[];
   /** Flights of steps with a mapped `incline` reaching into it (G-236), when it has any. */
   readonly flights?: readonly FlightOut[];
+  /** The runs of the steps ways with a `step_count` reaching into it (G-840), when it has any. */
+  readonly stepRuns?: readonly StepRunOut[];
   /** Stretches of the ways walked on foot too steep on the terrain reaching into it (G-755), when it has any. */
   readonly steepWays?: readonly SteepWayOut[];
   /** Car parks reaching into it, when it has any. */

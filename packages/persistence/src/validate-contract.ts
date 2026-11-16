@@ -1,4 +1,4 @@
-import { isContractKind, isContractSiteId } from "@seki/core";
+import { SABOTAGE_LOUD, isContractKind, isContractSiteId, isW3Station } from "@seki/core";
 import { findVariationError } from "./validate-wave2";
 
 type Json = Record<string, unknown>;
@@ -18,7 +18,23 @@ export const findContractError = (c: unknown): string | null => {
     if (n !== undefined && (!Number.isInteger(n) || (n as number) < 0)) return "contract progress";
   }
   if (c.breach !== undefined && (!Array.isArray(c.breach) || !c.breach.every((x) => typeof x === "string"))) return "contract breach";
-  return findVariationError(c);
+  // The sabotage's way and its way out seen (ADR-0082 stage 3, v40).
+  if (c.route !== undefined && c.route !== "quiet" && c.route !== "loud") return "contract route";
+  if (c.seenLeaving !== undefined && c.seenLeaving !== true) return "contract seen leaving";
+  return findLoudError(c) ?? findVariationError(c);
+};
+
+const tick = (n: unknown): boolean => Number.isInteger(n) && (n as number) >= 0;
+
+/** The loud way's fields (ADR-0082 stage 3b, v42): its charges on distinct stations, at most three; the planting, fuse, blast and alarm. */
+const findLoudError = (c: Json): string | null => {
+  const charges = c.charges;
+  if (charges !== undefined && (!Array.isArray(charges) || charges.length > SABOTAGE_LOUD.charges || !charges.every(isW3Station) || new Set(charges).size !== charges.length)) return "contract charges";
+  const p = c.planting;
+  if (p !== undefined && (!isObject(p) || !isW3Station(p.station) || !tick(p.ticks) || typeof p.hp !== "number" || !Number.isFinite(p.hp) || p.hp < 0)) return "contract planting";
+  if ((c.fuseTick !== undefined && !tick(c.fuseTick)) || (c.alarmTick !== undefined && !tick(c.alarmTick))) return "contract fuse";
+  if (c.detonated !== undefined && c.detonated !== true) return "contract detonated";
+  return null;
 };
 
 /** A contract with the count of jobs done when its targets were made (G-178). */

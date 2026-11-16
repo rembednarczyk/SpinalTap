@@ -51,11 +51,11 @@ export interface Entity {
   sightThrough?: true;
   /** Sloped top of the solid (stairs, ramps, stair railings). */
   slope?: Slope;
-  /** Vertical speed while airborne (a fall, or a jump while positive), m/s. Transient, not saved. */
+  /** Vertical speed while airborne (a fall, or a jump while positive), m/s. Saved for the player (`stance`, G-883). */
   fall?: number;
-  /** Highest feet height of the current time in the air, for fall damage (ADR-0021). Transient. */
+  /** Highest feet height of the current time in the air, for fall damage (ADR-0021). Saved like `fall`. */
   airPeak?: number;
-  /** Seconds left of the slow walk after a hard landing (ADR-0021). Transient. */
+  /** Seconds left of the slow walk after a hard landing (ADR-0021). Saved like `fall`. */
   landing?: number;
   jump?: JumpState;
   /** Dash and deflection (ADR-0033), the player only. */
@@ -103,6 +103,12 @@ export interface Entity {
    */
   enemy?: { readonly type: EnemyTypeId; readonly level?: number; readonly band?: LevelBand | null; readonly npcHealth?: number };
   civilian?: CivilianAi;
+  /**
+   * A technician of a job's site (ADR-0082 §3.6): seconds it has watched Seki do what she should
+   * not; at the limit it reports her to the job's alarm, not to the street. Transient, as the
+   * crowd's fear: a save forgets it.
+   */
+  staff?: { seen: number };
   sniper?: SniperState;
   escort?: EscortAi;
   schedule?: Scheduled;

@@ -6,3 +6,4 @@ export * from "./civilian-tree";
 export * from "./sniper-ai-system";
 export * from "./escort-ai-system";
 export * from "./body-watch-system";
+export * from "./route";

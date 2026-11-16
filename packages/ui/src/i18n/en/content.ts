@@ -30,6 +30,9 @@ export const enContent = {
   "prompt.ladder.up": "Climb",
   "prompt.ladder.down": "Climb down the ladder",
   "prompt.terminal.hack": "Hack the terminal",
+  "prompt.upload-virus": "Upload the virus",
+  "prompt.take-charges": "Take the charges",
+  "prompt.plant-charge": "Plant a charge",
   "prompt.terminal.read": "Read the terminal",
   "prompt.pickup.crate": "Take Hana's crate",
   "prompt.pickup.data": "Copy the Tessen data",
@@ -50,6 +53,8 @@ export const enContent = {
   "interior.clinic": "Doctor Mori's clinic",
   "interior.neon-koi": "Neon Koi",
   "interior.tessen-office": "Tessen office",
+  "interior.w3-hall": "Tessen assembly hall",
+  "interior.w3-basement": "Tessen hall basement",
   "interior.trasa-podziemna": "Trasa Podziemna",
   "interior.capsule": "Capsule room to let",
   // The metro's platforms (ADR-0071 stage 4): the stations keep their Polish names.
@@ -74,6 +79,7 @@ export const enContent = {
   "hook.infiltrate_1": "Code for the pass office door: 4177 (the camera takes you for staff)",
   "hook.infiltrate_2": "The guard at the office door goes out for a smoke every half hour",
   "hook.hack_1": "After its third shot the sniper has four seconds without a laser",
+  "hook.sabotage_1": "The hall patrol checks server room N only every other lap",
   "hook.hack_2": "Under the tower's stair the sniper on the roof can't see you",
   // What the scanner calls a thing (ScanFocusChanged.name).
   "scan.name.camera": "Camera",

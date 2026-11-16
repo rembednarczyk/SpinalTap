@@ -204,8 +204,9 @@ const patrolWitness = (ctx: SimContext, g: Entity, player: Entity, security: Fac
 /** A civilian that saw the player commit it and starts a call. */
 const civilianWitness = (ctx: SimContext, c: Entity, player: Entity): boolean => {
   const mind = c.civilian?.crowd;
-  // Background passers-by (ADR-0040) run like anyone but never phone it in: they are not saved.
-  return !c.passerby && !c.unconscious && (c.health?.current ?? 1) > 0 && !mind?.call && (mind?.scared ?? 0) <= 0 && civilianSees(ctx, c, player);
+  // Background passers-by (ADR-0040) run like anyone but never phone it in: they are not saved. A
+  // technician of a job reports to the job's alarm instead (ADR-0082 stage 3b, `sabotage-witness.ts`).
+  return !c.passerby && !c.staff && !c.unconscious && (c.health?.current ?? 1) > 0 && !mind?.call && (mind?.scared ?? 0) <= 0 && civilianSees(ctx, c, player);
 };
 
 /**

@@ -135,7 +135,24 @@ const CONTRACT_COMPLETED: Readonly<Record<ContractKind, readonly ReputationDelta
     { faction: "fixers", delta: 2 },
     { faction: "tessen", delta: -5 },
   ],
+  // Out unseen, Tessen never learns who it was (ADR-0082 balance); seen, `SABOTAGE_SEEN` on top.
+  sabotage: [{ faction: "fixers", delta: 5 }],
 };
+
+/** What leaving W-3 seen after the virus changes on top of the job's deltas (ADR-0082: fixers +3, Tessen -20). */
+export const SABOTAGE_SEEN: readonly ReputationDelta[] = [
+  { faction: "fixers", delta: -2 },
+  { faction: "tessen", delta: -20 },
+];
+
+/**
+ * What the loud way changes on top of the job's deltas (ADR-0082 balance: fixers +3, civilians -2);
+ * Tessen goes down to -60 apart from these (`loudTessenDelta`).
+ */
+export const SABOTAGE_LOUD_DELTAS: readonly ReputationDelta[] = [
+  { faction: "fixers", delta: -2 },
+  { faction: "civilians", delta: -2 },
+];
 
 /**
  * A late package costs Kaito a client; a dead Oyaji costs the market's trust; a botched docks
@@ -156,6 +173,8 @@ const CONTRACT_FAILED: Readonly<Record<ContractKind, readonly ReputationDelta[]>
     { faction: "tessen", delta: -5 },
   ],
   hack: [{ faction: "fixers", delta: -3 }],
+  // The batch shipped (ADR-0082 balance).
+  sabotage: [{ faction: "fixers", delta: -4 }],
 };
 
 /** What the street adds for a clean job (ADR-0070): the quiet kinds of work only. */
