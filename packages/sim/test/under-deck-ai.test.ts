@@ -70,7 +70,7 @@ describe("NPCs and the way under a bridge's deck (G-068, ADR-0053)", () => {
   });
 
   it("a brawler at the foot of a bank by the deck's end goes on up it to the player on the deck in < 20 s (G-896)", () => {
-    // On the street by the lower bridge of Mełgiewska, the feet against a lip of the bank 6 cm high.
+    // On the street by the lower bridge of Mełgiewska, the feet in a strip 10 cm below the street, against its steep lip.
     expect(chase({ x: 2454.94, z: 297.03 }, onDeck(0.2), Infinity, 20, Infinity).at).not.toBeNull();
   });
 

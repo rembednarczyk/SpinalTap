@@ -344,7 +344,7 @@ export class GangerWalk {
     const step = detour && followDetour(detour, self.position);
     // Only a repath that leads somewhere is kept: without one it leans to the side instead. Nor one
     // whose step is the one it got stuck on (G-896): kept, it took the lean away, and at the foot of
-    // a bank's lip the walk sees as no bank (6 cm by Mełgiewska's lower bridge, 27 cm by the end of
+    // a bank's lip the walk sees as no bank (10 cm by Mełgiewska's lower bridge, 27 cm by the end of
     // Zamkowa's viaduct, steep to the movement) the walker pressed against it for good.
     p.plan = step && Math.hypot(step.x - this.toward.x, step.z - this.toward.z) > SAME_STEP ? plan : null;
     if (plan && detour) detours.set(plan, detour);
