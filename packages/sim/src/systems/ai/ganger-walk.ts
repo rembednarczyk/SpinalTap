@@ -33,6 +33,8 @@ const FEELER = 1.5;
 const CROWD_RADIUS = 8;
 /** The repath is for this goal; a goal that moved further than this needs the ordinary way. */
 const PLAN_DRIFT = 2;
+/** A repath's step this near the one a walker got stuck on is that step (m): half a cell. */
+const SAME_STEP = 0.25;
 /** At its post within this (m), as `HoldPosition` has it. */
 const POST_ARRIVE = 0.3;
 /** A ganger with no wide way yet: it stands and waits for one. */
@@ -74,6 +76,8 @@ export class GangerWalk {
   walking = false;
   /** Where the last walk this step was headed. */
   goal: Vec3 | null = null;
+  /** The point the last walk this step stepped towards (a step of the way to `goal`); fresh whenever `walking`. */
+  private toward = { x: 0, z: 0 };
 
   constructor(private readonly at: GangerBinding) {}
 
@@ -291,6 +295,7 @@ export class GangerWalk {
       return;
     }
     this.walking = true;
+    [this.toward.x, this.toward.z] = [x, z];
     let ux = dx / d;
     let uz = dz / d;
     const p = self.walk;
@@ -336,8 +341,12 @@ export class GangerWalk {
     }
     const plan = this.goal ? { from: { ...self.position }, goal: { ...this.goal }, avoid: crowd } : null;
     const detour = plan ? planDetour(ctx.world, plan.from, plan.goal, plan.avoid) : null;
-    // Only a repath that leads somewhere is kept: without one it leans to the side instead.
-    p.plan = detour ? plan : null;
+    const step = detour && followDetour(detour, self.position);
+    // Only a repath that leads somewhere is kept: without one it leans to the side instead. Nor one
+    // whose step is the one it got stuck on (G-896): kept, it took the lean away, and at the foot of
+    // a bank's lip the walk sees as no bank (10 cm by Mełgiewska's lower bridge, 27 cm by the end of
+    // Zamkowa's viaduct, steep to the movement) the walker pressed against it for good.
+    p.plan = step && Math.hypot(step.x - this.toward.x, step.z - this.toward.z) > SAME_STEP ? plan : null;
     if (plan && detour) detours.set(plan, detour);
   }
 }
