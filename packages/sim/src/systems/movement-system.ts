@@ -148,7 +148,7 @@ const ceilingAt = (solids: readonly Collider[], x: number, z: number, head: numb
 
 /**
  * Is there room over the feet to stand up: no solid's underside between a step over them and a
- * standing body's height, over its footprint? Under the culvert's ceiling (ADR-0082) there is not,
+ * standing body's height, over its footprint? Under a ceiling lower than that (W-3's culvert, ADR-0082) there is not,
  * and the player stays crouched though the key is let go.
  */
 export const roomToStand = (world: World<Entity>, e: Entity): boolean => {
