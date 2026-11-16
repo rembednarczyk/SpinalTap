@@ -179,6 +179,19 @@ export const pastLedge = (r: Raster, from: number, to: number): boolean => {
   return deck - (r.base[to] ?? 0) > DECK_HEADROOM && Math.abs(deck - (r.base[from] ?? 0)) <= LEDGE * Math.SQRT2;
 };
 
+/** Does the line from `a` to `b`, sampled every `sample` metres, go from cell to cell `pastLedge`? */
+export const pastLedgeOnWay = (r: Raster, a: { x: number; z: number }, b: { x: number; z: number }, sample: number): boolean => {
+  if (!r.ledges || r.reach !== -Infinity) return false;
+  const n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / sample);
+  let prev = cellIndex(r, a.x, a.z);
+  for (let i = 1; i <= n; i++) {
+    const c = cellIndex(r, a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n);
+    if (c >= 0 && prev >= 0 && c !== prev && pastLedge(r, prev, c)) return true;
+    prev = c;
+  }
+  return false;
+};
+
 /** Is cell `n` of the raster or a neighbour of it on the edge of a bridge's deck over lower ground (`ledgesOf`)? */
 export const byLedge = (r: Raster, n: number): boolean => {
   const ix = n % r.cells;

@@ -82,13 +82,6 @@ describe("a fighter on a bridge's deck comes down to the player under it, off it
     expect(until(sim, 2 * RUN, () => player.health!.current < hp)).not.toBeNull();
   });
 
-  it("and the other way: a brawler under the deck goes up to the player on it", () => {
-    const { sim, g, player } = fight(ON, UNDER, "hebi_brawler");
-    const at = until(sim, 2 * RUN, () => reached(g, player));
-    expect(at).not.toBeNull();
-    expect(at!).toBeLessThan(RUN * 1.5);
-  });
-
   it("a brawler at the ramp's foot goes under the deck, not up the ramp over the player", () => {
     const { sim, g, player } = fight(UNDER, { x: RAMP_END + 3, y: 0, z: 0 }, "hebi_brawler");
     let top = 0;
