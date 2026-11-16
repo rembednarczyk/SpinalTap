@@ -23,13 +23,24 @@ const scene = (p: Vec3, chunks?: readonly ChunkDef[]): Simulation => {
 
 describe("ground nodes of the level graphs (ADR-0025)", () => {
   /** Share of standable street points (2 m grid) in the rectangle from which the graph leads to `target`. */
-  const coverage = (at: Frame, focus: Vec3, target: Vec3, x0: number, x1: number, z0: number, z1: number, graph: NavGraph = WORLD_NAV, chunks?: readonly ChunkDef[]): number => {
+  const coverage = (
+    at: Frame,
+    focus: Vec3,
+    target: Vec3,
+    x0: number,
+    x1: number,
+    z0: number,
+    z1: number,
+    graph: NavGraph = WORLD_NAV,
+    chunks?: readonly ChunkDef[],
+    skip: (x: number, z: number) => boolean = () => false,
+  ): number => {
     const sim = scene(focus, chunks);
     let ok = 0;
     let total = 0;
     for (let x = x0; x <= x1; x += 2) {
       for (let z = z0; z <= z1; z += 2) {
-        if (!lineOfSight(sim.world, at(x, z, 0.3), at(x + 0.01, z, 1.7))) continue;
+        if (skip(x, z) || !lineOfSight(sim.world, at(x, z, 0.3), at(x + 0.01, z, 1.7))) continue;
         total++;
         if (routeAcrossLevels(sim.world, graph, at(x, z), target)) ok++;
       }
@@ -39,8 +50,10 @@ describe("ground nodes of the level graphs (ADR-0025)", () => {
 
   it("from anywhere in W-3's yards and on its quay a guard finds the way up onto row N's roof", () => {
     // The west yard and the quay, the gap by the tower, the pickup and the east yards (not the
-    // strip south of the hall, cut off from them by the hall's corner on the fence, P1).
-    expect(coverage(inDocks, inDocks(2540, 446), inDocks(2530, 435, W3_ROOF), 2480, 2604, 416, 438)).toBe(1);
+    // strip south of the hall, cut off from them by the hall's corner on the fence, P1); since
+    // stage 2 the hall's floor too: its rooms, but armoury N, shut for good in v1 (ADR-0082).
+    const shut = (x: number, z: number) => x > 2548 && x < 2560 && z > 432 && z < 440;
+    expect(coverage(inDocks, inDocks(2540, 446), inDocks(2530, 435, W3_ROOF), 2480, 2604, 416, 438, WORLD_NAV, undefined, shut)).toBe(1);
     // North of the quay's fence (z 440) and of the tower (z 446) the shore is outside the zone: the pickup yard only.
     expect(coverage(inDocks, inDocks(2540, 446), inDocks(2530, 435, W3_ROOF), 2494, 2604, 440, 450)).toBe(1);
   });

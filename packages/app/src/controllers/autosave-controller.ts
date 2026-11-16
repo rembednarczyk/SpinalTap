@@ -1,5 +1,5 @@
 import type { DomainEvents, EventBus } from "@seki/core";
-import { type DistrictId, SIM_HZ } from "@seki/sim";
+import { type DistrictId, INTERIORS, SIM_HZ } from "@seki/sim";
 import { AUTOSAVE_SLOT } from "@seki/ui";
 import type { SimRef } from "./shared";
 
@@ -73,7 +73,10 @@ export class AutosaveController {
     deps.bus.on("QuestAdvanced", ask("quest-step"));
     deps.bus.on("QuestCompleted", ask("quest"));
     deps.bus.on("ContractCompleted", ask("contract"));
-    deps.bus.on("InteriorEntered", ask("interior"));
+    // Not into one that saves nothing (W-3's hall and basement behind the fence, ADR-0082).
+    deps.bus.on("InteriorEntered", (e) => {
+      if (INTERIORS.find((i) => i.id === e.interiorId)?.autosave !== false) this.request("interior");
+    });
   }
 
   /** The trigger waiting for a safe moment, if any. */

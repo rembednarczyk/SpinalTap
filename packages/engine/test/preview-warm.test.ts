@@ -30,7 +30,7 @@ describe("the character menu's preview", () => {
     await vi.waitFor(() => expect(preview.state.dressed).toBe(true), { timeout: 20_000 });
     expect(preview.state.waiting).toBe(false);
     preview.dispose();
-  }, 30_000);
+  });
 
   it("shows the procedural heroine when her model fails to load", async () => {
     vi.stubGlobal("fetch", () => Promise.reject(new Error("offline")));
@@ -58,7 +58,7 @@ describe("the character menu's preview", () => {
     preview.setViewport({ x: 0, y: 0, width: 400, height: 600 });
     await vi.waitFor(() => expect(preview.state.dressed).toBe(true), { timeout: 20_000 });
     preview.dispose();
-  }, 30_000);
+  });
 
   it("has nothing to wait for without a model manifest", () => {
     const preview = new PreviewStage(new NullEngine(), canvas);

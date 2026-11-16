@@ -32,7 +32,6 @@ krakowskie-2-1 410,60
 krakowskie-2-1 420,60
 krakowskie-2-1 430,60
 krakowskie-2-1 440,60
-krakowskie-2-1 330,70
 krakowskie-2-1 410,70
 krakowskie-2-1 420,70
 krakowskie-2-1 430,70

@@ -190,6 +190,12 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
+  tools/city-cache:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   tools/code-health:
     devDependencies:
       typescript:

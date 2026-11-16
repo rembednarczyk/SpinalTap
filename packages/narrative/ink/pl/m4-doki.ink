@@ -49,6 +49,14 @@ VAR tessen_stance = "neutral"
     GENZO: Terminal Tessen na nabrzeżu przy pomoście. Podłączysz się i musisz przy nim wytrzymać, aż skończy.
     GENZO: Ochrona przyjdzie od razu, a na podeście wieży siedzi strzelec. Czerwony laser znaczy, że masz sekundę na osłonę.
     -> END
++ {not has_flag("w3:sabotage-offered")} [Co to za partia dronów? #tone:main]
+    SEKI: Co to za partia dronów, o której wszyscy szepczą?
+    ~ set_flag("w3:sabotage-offered")
+    ~ offer_contract("sabotage")
+    GENZO: Dwanaście dronów bojowych z hali W-3. Wojsko odbiera je o szóstej rano. Mój klient chce, żeby latały krzywo.
+    GENZO: Rdzeń kalibracji stoi w serwerowni N, przy północnym korytarzu. Podłącz to do jego terminala i trzymaj się blisko, aż skończy. Odejdziesz, to zaczeka.
+    GENZO: Rdzenia pilnuje kamera, po hali i korytarzu chodzi patrol. Jak podniosą alarm, serwerownie się zamkną. Wyjdź ze strefy niezauważona, to zadzwonię.
+    -> END
 + [Nie teraz. #tone:leave]
     GENZO: Będę przy kontenerze. Łódź nie odpływa bez powodu.
     -> END
@@ -59,6 +67,8 @@ VAR tessen_stance = "neutral"
     GENZO: Mika czeka na ciebie. Nie zostawiaj jej samej na nabrzeżu.
 - contract_kind == "infiltrate":
     GENZO: Dane dalej są w biurze. Pamiętaj, nisko i bez hałasu.
+- contract_kind == "sabotage":
+    GENZO: Partia rusza o szóstej. Serwerownia N, terminal rdzenia. Potem ze strefy, i niech nikt cię nie widzi.
 - else:
     { contract_time_left > 0:
         GENZO: Terminal jeszcze mieli. Wracaj tam, zostało {contract_time_left} sekund.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compare, parseValue, partsOf, rewriteHash, softCopy } from "../src/values.ts";
+import { BY_HAND, compare, parseValue, partsOf, refusalOf, rewriteHash, softCopy } from "../src/values.ts";
 
 // The values as Vitest serialised them for the three golden tests (a run with changed expectations).
 const CUT = (k: string, s: string) => `{\n  "krakowskie-2-0": "${k}",\n  "square": "${s}",\n}`;
@@ -32,5 +32,19 @@ describe("hashes:check's values", () => {
     // Twice in the file and not on the line: not certain where.
     expect(rewriteHash(src, 4, { path: "", old: "1ce01d19", new: "2ce01d19" })).toBeNull();
     expect(softCopy("expect(a).toBe(1); expect.soft(b); myexpect(c)")).toBe("expect.soft(a).toBe(1); expect.soft(b); myexpect(c)");
+  });
+
+  it("never writes the determinism hash, --bare or not: only by hand (decision of 16.11)", () => {
+    const bare = compare(`"cc9852f4"`, `"cc9852f5"`);
+    const det = "packages/sim/test/determinism.test.ts";
+    expect(BY_HAND).toEqual([det]);
+    expect(refusalOf(det, bare, true)).toContain("vitest -u");
+    expect(refusalOf(det, bare, false)).toContain("vitest -u");
+    // The other goldens as before: a bare hash with --bare, the same numbers always, changed numbers never.
+    const map = "packages/engine/test/map-ground-golden.test.ts";
+    expect(refusalOf(map, bare, true)).toBeNull();
+    expect(refusalOf(map, bare, false)).toBe("bez liczb, potrzebne --bare");
+    expect(refusalOf(map, compare(MAP(24, 142538, "4a1427e0"), MAP(24, 142538, "4a1427e9")), false)).toBeNull();
+    expect(refusalOf(map, compare(MAP(24, 142538, "4a1427e0"), MAP(25, 142538, "4a1427e9")), true)).toBe("liczby: meshes");
   });
 });

@@ -14,6 +14,7 @@ import { PropPoles } from "./prop-poles";
 import { PROP_BLOCK, PROP_LOD, type PropLod, blockBand } from "./prop-shapes";
 import { type Box2, distanceToBox } from "./polygon";
 import { isPoleLamp } from "./utility-poles";
+import { closeOff } from "./interior-mode";
 
 export interface StreetPropsDeps {
   readonly scene: Scene;
@@ -189,6 +190,11 @@ export class StreetProps {
     this.halos.show(eye);
     this.waitingBlocks = waiting;
     this.drawn = drawn;
+  }
+
+  /** The interior mode (ADR-0082 §3.8): the blocks clear of `keep` off till the next update. */
+  closeOff(keep: Box2): void {
+    closeOff([...this.blocks.values()].map((b) => ({ bounds: b.bounds, meshes: [b.near, b.far] })), keep);
   }
 
   /**

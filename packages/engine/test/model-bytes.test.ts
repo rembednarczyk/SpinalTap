@@ -60,7 +60,7 @@ describe("model bytes shared by the game and the preview", () => {
     expect(net.times("seki.vrm")).toBe(1);
     expect(modelBytesOf(s.engine).held).toBe(0);
     s.dispose();
-  }, 30_000);
+  });
 
   it("fetches seki.vrm once when the game starts first and the preview is set up while she downloads", async () => {
     const net = serve();
@@ -72,7 +72,7 @@ describe("model bytes shared by the game and the preview", () => {
     expect(net.times("seki.vrm")).toBe(1);
     expect(modelBytesOf(s.engine).held).toBe(0);
     s.dispose();
-  }, 30_000);
+  });
 
   it("fetches seki.vrm once when the game asks after the preview has dressed her", async () => {
     const net = serve();
@@ -84,7 +84,7 @@ describe("model bytes shared by the game and the preview", () => {
     expect(net.times("seki.vrm")).toBe(1);
     expect(modelBytesOf(s.engine).held).toBe(0);
     s.dispose();
-  }, 30_000);
+  });
 
   it("keeps no bytes once both have read them: a released file downloads again (ADR-0076 4b)", async () => {
     const net = serve();
@@ -97,7 +97,7 @@ describe("model bytes shared by the game and the preview", () => {
     expect(net.times("seki.vrm")).toBe(2);
     expect(modelBytesOf(s.engine).held).toBe(0);
     s.dispose();
-  }, 30_000);
+  });
 
   it("fetches again after a failed download, once for both (G-807)", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -112,7 +112,7 @@ describe("model bytes shared by the game and the preview", () => {
     expect(net.times("seki.vrm")).toBe(2);
     expect(modelBytesOf(s.engine).held).toBe(0);
     s.dispose();
-  }, 30_000);
+  });
 
   it("keeps a file nobody shares only while it is on its way", async () => {
     const net = serve();
@@ -124,5 +124,5 @@ describe("model bytes shared by the game and the preview", () => {
     expect(net.times("kaito.vrm")).toBe(1);
     expect(modelBytesOf(engine).held).toBe(0);
     engine.dispose();
-  }, 30_000);
+  });
 });
