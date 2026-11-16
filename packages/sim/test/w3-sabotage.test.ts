@@ -225,25 +225,37 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     expect(active(restored)?.progress).toBe(active(sim)?.progress);
   });
 
-  it("the hall's patrol walks its loop by the clock, and after 10 000 steps with a save halfway it stands where it would have", () => {
+  // P1's loop is ~199 s (phase 0): halted at the aisle's east end at 30 s, up the east door to corridor N
+  // at 32-42 s, west along it, down the west door at 74-83 s, east along the aisle again from 87 s. Saved
+  // at 40 s, mid-walk on the leg through the east door (a metre short of it), the run after the load
+  // holds the door, a halt, a turn, the corridor, the west door and the next leg's start. Every step is run twice after the save (the game and its load),
+  // so the 5 000 steps either side of a save at 83 s (15 000 in all, 16 s of a 20 s limit in CI) gave
+  // the same coverage at nearly twice the cost.
+  it("the hall's patrol walks its loop by the clock, and after a save mid-walk to a door it stands where it would have 50 s on", () => {
     const sim = Simulation.create({ seed: 3 });
     const c = accept(sim);
     outside(sim);
     sim.step();
     // Out of the zone without the virus nothing ends; the hall stays streamed from the strip.
-    const p1 = () => crew(sim, c).find((g) => g.ai?.route?.points === W3_PATROL_HALL)!;
-    const start = { ...p1().position };
+    const patrolIn = (s: Simulation) => crew(s, c).find((g) => g.ai?.route?.points === W3_PATROL_HALL)!;
+    const offRoute = (s: Simulation) => {
+      const p = patrolIn(s);
+      const pose = routePose(p.ai!.route!, s.tick / SIM_HZ);
+      return Math.hypot(p.position.x - pose.position.x, p.position.z - pose.position.z);
+    };
+    const start = { ...patrolIn(sim).position };
     run(sim, 30 * SIM_HZ);
-    const pose = routePose(p1().ai!.route!, sim.tick / SIM_HZ);
-    expect(Math.hypot(p1().position.x - start.x, p1().position.z - start.z)).toBeGreaterThan(5);
-    expect(Math.hypot(p1().position.x - pose.position.x, p1().position.z - pose.position.z)).toBeLessThan(1.5);
-    run(sim, 5000 - 30 * SIM_HZ);
+    expect(Math.hypot(patrolIn(sim).position.x - start.x, patrolIn(sim).position.z - start.z)).toBeGreaterThan(5);
+    expect(offRoute(sim)).toBeLessThan(1.5);
+    run(sim, 10 * SIM_HZ);
+    expect(routePose(patrolIn(sim).ai!.route!, sim.tick / SIM_HZ)).toMatchObject({ stop: 1, arrived: false });
     const restored = reload(sim);
-    run(sim, 5000);
-    run(restored, 5000);
-    const a = p1().position;
-    const b = crew(restored, c).find((g) => g.ai?.route?.points === W3_PATROL_HALL)!.position;
+    run(sim, 50 * SIM_HZ);
+    run(restored, 50 * SIM_HZ);
+    const a = patrolIn(sim).position;
+    const b = patrolIn(restored).position;
     expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeLessThan(1e-6);
+    expect(offRoute(restored)).toBeLessThan(1.5);
     expect(hash(restored)).toBe(hash(sim));
   });
 });
