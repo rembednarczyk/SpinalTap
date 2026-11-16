@@ -2065,7 +2065,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-841 Zamek Lubelski bez przepisu zabytku: fasada od Placu Zamkowego jak zwykły gmach
 - Ważność: S3 · Zasięg: Zamek Lubelski, front od Placu Zamkowego i schodów
 - Opis: Zgłoszenie użytkownika 15.11 ze zdjęciem frontu (Street View, tylko referencja wizualna, scratchpad ref/zamek-plac-zamkowy-sv.jpg). LANDMARK_RECIPES ma tylko Bramę Krakowską, Bramę Grodzką i Nowy Ratusz. Wygląd do odtworzenia: neogotycka fasada w kolorze kremowym, dwie wieżyczki po bokach bramy z krenelażem i masztami flag, między nimi blankowana attyka; dwa okrągłe okna-rozety nad ostrołukową bramą z napisem MUZEUM; ostrołukowe okna w rzędzie, długie skrzydła z krenelażem po bokach; po lewej w głębi wieża kaplicy (smukła iglica); u stóp schody ze spocznikiem, latarnie i zieleń na skarpie. Wymiary z LOD2/NMPT i OSM, jak przy G-119 (Nowy Ratusz).
-- Status: kurator r3 ZGODNE, do PR (6eea580); wcześniej: do przeglądu kuratora (r3, 6eea580); wcześniej: w naprawie (runda 3 po przeglądzie kuratora r2); wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (0c22d9d), runda 2 do przeglądu topography-curator; wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (e84492c), do przeglądu topography-curator; wcześniej: nowy
+- Status: w PR #602; wcześniej: kurator r3 ZGODNE, do PR (6eea580); wcześniej: do przeglądu kuratora (r3, 6eea580); wcześniej: w naprawie (runda 3 po przeglądzie kuratora r2); wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (0c22d9d), runda 2 do przeglądu topography-curator; wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (e84492c), do przeglądu topography-curator; wcześniej: nowy
 - Pakiet właściciela: packages/engine/src/renderer/mapcity/landmarks
 - 15.11: przepis zamek-lubelski (attyka do y 7,5 z blankami, wieżyczki do y 10 z flagami, parapet z blankami trójkątnymi, 2 rozety, portal ostrołukowy, lancety, szyld MUZEUM); korekta importu: okap y 3,3, korona y 7,5 z NMPT; test landmark-zamek.test.ts; skan 3900->3900, hashe bez zmian, perf w budżetach
 - Przegląd kuratora 15.11 (e84492c): NIEZGODNE. NMPT 0,5 m: wieżyczki do y 12,2 (rise 2,5 -> ok. 4,7), szczyty blanków trójkątnych ryzalitu y 10,0-10,4 (parapet.rise 0,5 -> ok. 1,6), maszty do ok. y 15,5 (mast ok. 5,5 m) jako ciemne metalowe iglice z chorągiewką zamiast flag biało-czerwonych (zdjęcie z placu, plan Z2). Skrzydła fasady zachodniej: jeden rząd lancetów w parterze, wyżej lizeny, okienka okrągłe co ok. 4,7 m i fryz ostrołukowy pod koroną zamiast rzędów 2 i 3. Opcjonalnie: rozety r ok. 1,7 m, rozstaw ok. 3,4 m; środki wieżyczek ok. 0,9 m do wnętrza (NMPT (837,1; 245,9) i (835,8; 231,0)). Sondy topo-g841-dsm*.py w scratchpadzie.
@@ -2354,7 +2354,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-885 Walczący pod mostem nie wchodzi na pomost do gracza stojącego na nim
 - Ważność: S4 · Zasięg: mosty z pomostem (Mełgiewska)
 - Opis: Brawler z (2445.9, 302.2) pod pomostem do gracza na (2444.9, 307.5) oscyluje przy krawędzi cienia pomostu (2449.6, 298.9), 30 s bez dotarcia; znalezione przy G-072
-- Status: w PR #646; wcześniej: zgłoszone
+- Status: naprawione (PR #646); wcześniej: w PR #646; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-886 Pościg 200 m: bankBetween próbkuje cały odcinek co krok
@@ -2430,6 +2430,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Brawler z (2454.9, 297.0) do gracza na pomoście nabrzeze-0-1[1] w t=0,2 i z (758.0, 188.5) do gracza na wiadukcie Zamkowej (748.9, 173.4) stoi 20 s, deckLanding zwraca null; tak samo na main i z poprawką G-885. Znalezione przy G-885 (sondy: scratchpad g885-probe*.test.ts).
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
+- Weryfikator #646: wiadukt Zamkowej, brawler z Podwala (745, 169.8) do gracza na pomoście (748.9, 173.4) wchodzi na pomost, ok. 25 s stoi w (758.0, 188.5), schodzi pod wiadukt i staje w (745.1, 170.0); w 60 s nie dociera. Do (755, 180) dociera w 8 s.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
