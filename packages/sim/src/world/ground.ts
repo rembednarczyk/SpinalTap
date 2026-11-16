@@ -89,7 +89,9 @@ export class GroundField {
   private readonly flightBoxes: readonly GroundDeck["box"][];
   /** All of them in one box: a query far from it (almost all) is answered by one test. */
   private readonly flightsBox: GroundDeck["box"];
-  /** The boxes of the bridges' own decks, not the flights' (a few dozen in the city). */
+  /** The bridges' own decks, not the flights' (a few dozen in the city): the slabs that stop rays (G-071). */
+  readonly bridges: readonly GroundDeck[];
+  /** Their boxes. */
   private readonly deckBoxes: readonly GroundDeck["box"][];
   /** The flights among each chunk's decks, found once: a height then costs what it did without them. */
   private readonly chunkFlights: readonly (readonly GroundDeck[])[];
@@ -119,7 +121,8 @@ export class GroundField {
     this.index = new ChunkIndex(chunks.map((c) => c.bounds), this.cuts, this.hasTerrain);
     this.flightBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight === true)))].map((d) => d.box);
     this.chunkDecks = chunks.map((c) => decksReaching(chunks, c));
-    this.deckBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight !== true)))].map((d) => d.box);
+    this.bridges = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight !== true)))];
+    this.deckBoxes = this.bridges.map((d) => d.box);
     this.chunkFlights = this.chunkDecks.map((d) => flightsIn(d ?? []));
     const cutBounds = chunks.slice(0, this.cuts).map((c) => c.bounds);
     this.chunkCuts = chunks.map((c, i) => (i < this.cuts ? [] : cutBounds.filter((b) => b.minX <= c.bounds.maxX && b.maxX >= c.bounds.minX && b.minZ <= c.bounds.maxZ && b.maxZ >= c.bounds.minZ)));
