@@ -29,7 +29,11 @@ import { byKey, collect, input, run, teleportPlayer } from "./helpers";
  */
 
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
-const reload = (sim: Simulation): Simulation => Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "mid", "")));
+/** A save as the game makes it: the street's and the technicians' fright settled first (G-240). */
+const reload = (sim: Simulation): Simulation => {
+  sim.calmForSave();
+  return Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "mid", "")));
+};
 const hash = (sim: Simulation) => stateHash(sim.snapshot(null, "t", ""));
 type Holder = { holder: { domain: DomainState } };
 const setDomain = (sim: Simulation, change: (d: DomainState) => DomainState): void => {
