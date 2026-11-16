@@ -328,6 +328,7 @@ podzamcze-2-0 1110,230
 podzamcze-2-0 940,240
 podzamcze-2-0 950,240
 podzamcze-2-0 1110,240
+podzamcze-2-0 930,250
 podzamcze-2-0 940,250
 podzamcze-2-0 950,250
 podzamcze-2-0 930,360

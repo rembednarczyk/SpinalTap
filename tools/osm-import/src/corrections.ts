@@ -689,8 +689,7 @@ export const corrected = (a: Area, corrections: ReadonlyMap<string, TagCorrectio
   const c = corrections.get(a.id);
   if (!c) return a;
   const k = c.scale ?? 1;
-  const drop = c.drop ?? [];
-  const ring = drop.length ? a.ring.filter((p) => !drop.some((d) => Math.hypot(d.x - p.x, d.z - p.z) <= 0.2)) : a.ring;
+  const ring = a.ring.filter((p) => !(c.drop ?? []).some((d) => Math.hypot(d.x - p.x, d.z - p.z) <= 0.2));
   const o = centroid(ring);
   return { ...a, tags: { ...a.tags, ...c.tags }, ring: k === 1 ? ring : ring.map((p) => ({ x: o.x + (p.x - o.x) * k, z: o.z + (p.z - o.z) * k })) };
 };
