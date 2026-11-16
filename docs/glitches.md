@@ -2213,8 +2213,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-864 ground-strip-gap liczy szczeliny pod budynkami
 - Ważność: S4 · Zasięg: cały skan; 16 kluczy z G-853 r2 w całości pod budynkami
 - Opis: Kontrola skanu ground-strip-gap nie odrzuca szczelin przykrytych budynkiem, więc baza rośnie o fałszywe alarmy.
-- Status: nowy
+- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-scan-false-alarms, 8840dbc); wcześniej: nowy
 - Pakiet właściciela: tools/glitch-scan
+- 8840dbc: ground-strip-gap pomija komórki w obrysach budynków (inBuilding); -53 klucze (1270->1217), 0 nowych
 
 ### G-865 model-donors.test.ts wyczerpuje pamięć przy wspólnym przebiegu kilku pakietów
 - Ważność: S4 · Zasięg: packages/engine/test/model-donors.test.ts
@@ -2277,6 +2278,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Ściana o nachyleniu 2:1 przechodzi przez siatkę 0,25/0,75 o 2-3 mm od obrysu tabeli; import uznaje próbkę za wnętrze, skan za ziemię (G-872 r2: 5 kluczy).
 - Status: nowy
 - Pakiet właściciela: tools/glitch-scan
+- Łatka gotowa (scratchpad/g875-fix.patch: próbka w obrysie z mapy i <=0,1 m od ściany tablicy): landuse-bare -36, bare-on-cover -47, ale +1 kerb-gap-bare krakowskie-0-0 -60,-170 (ta sama prawdziwa goła szczelina przy krawężniku przechodzi z landuse-bare do kerb-gap-bare przez landuseBareAt); czeka na decyzję użytkownika: accept 1 klucza (bilans -82) albo zmiana landuseBareAt na próbki 0,25 m
 
 ### G-876 Karta podsumowania na telefonie zakrywa buffy i .gear pod celem
 - Ważność: S4 · Zasięg: telefon, karta .debrief przy aktywnym buffie
@@ -2295,6 +2297,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: .scan-note dalej używa toast-in 200 ms (+30 px); test może mierzyć w trakcie animacji pod obciążeniem; znalezione przy G-852
 - Status: nowy
 - Pakiet właściciela: e2e
+
+### G-879 Uproszczenie obrysu budynku (0,3 m) zostawia gołe próbki między ścianą tablicy a obrysem z mapy
+- Ważność: S4 · Zasięg: import budynków (prepareOutline), całe miasto
+- Opis: Import zakrywa ziemię obrysem z mapy, tablica trzyma obrys uproszczony do 0,3 m; między nimi zostają gołe próbki, które skan słusznie liczy. Znalezione przy G-875.
+- Status: nowy
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
