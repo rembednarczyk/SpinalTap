@@ -1,5 +1,4 @@
 # kerb-fill-flicker: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-0-0 -90,-180
 krakowskie-0-1 -110,60
 krakowskie-0-1 -90,80
 krakowskie-0-1 -90,90
@@ -37,7 +36,6 @@ nabrzeze-1-0 2610,170
 nabrzeze-1-0 2570,230
 nabrzeze-1-0 2540,260
 nabrzeze-1-1 2590,320
-nabrzeze-1-1 2610,340
 nabrzeze-1-1 2510,350
 nabrzeze-1-1 2530,360
 nabrzeze-1-1 2540,360
@@ -59,6 +57,7 @@ podzamcze-2-1 960,400
 podzamcze-2-1 1000,400
 podzamcze-2-1 980,460
 podzamcze-2-1 960,470
+podzamcze-2-1 1060,470
 podzamcze-2-1 1080,490
 podzamcze-2-1 1030,520
 podzamcze-2-1 1080,520

@@ -10,7 +10,10 @@ import type { GroundChunk } from "./ground-strips";
  * kerb, `KERB_GAP` short of each), so the piece must be that box: a rectangle across the road.
  * - skew: the box's long axis off the perpendicular to the street's axis by more than `SKEW`;
  *   a carriageway zebra only (its middle within `ON_STREET` of a car street's axis, 2.5 m and more
- *   across), and not at a junction of streets bending 30 degrees apart where "the street" is none.
+ *   across), and not at a junction of streets bending 30 degrees apart where "the street" is none;
+ *   but a zebra on a crossing way of the map (`footway=crossing`, within `ON_STREET` of its line)
+ *   there too, off the perpendicular to the axis it is squarest to (G-836 round 3: the way is drawn
+ *   askew as often as not, the zebra is square to the street it crosses).
  * - overhang: stripes lying more than `BEYOND` outside the piece's outline, `OVER_AREA` m² and more.
  * - glow: the cyan edge lines `GLOW_OFF` m and more off the carriageway, cobbles and squares (on a sidewalk, a lawn or nothing).
  * - kerb: the zebra's end more than `KERB_TOL` from the kerb (where the carriageway and the
@@ -75,7 +78,7 @@ const nearestAxis = (streets: readonly (readonly Pt[])[], x: number, z: number, 
 };
 
 /** A carriageway zebra whose long axis is off the perpendicular to its street by more than `SKEW` degrees. */
-export const crossingSkew = (chunks: readonly GroundChunk[], streets: readonly (readonly Pt[])[]): Finding[] =>
+export const crossingSkew = (chunks: readonly GroundChunk[], streets: readonly (readonly Pt[])[], crossingWays: readonly (readonly Pt[])[] = []): Finding[] =>
   crossings(new GroundIndex(chunks)).flatMap(({ box }) => {
     if (box.halfLong < 2.5) return [];
     const axes = nearestAxis(streets, box.cx, box.cz, 3);
@@ -83,8 +86,9 @@ export const crossingSkew = (chunks: readonly GroundChunk[], streets: readonly (
     if (!first || first.d >= ON_STREET) return [];
     const angle = (a: { tx: number; tz: number }) => Math.abs(90 - (Math.acos(Math.min(1, Math.abs(box.ux * a.tx + box.uz * a.tz))) * 180) / Math.PI);
     const bends = axes.some((a) => Math.abs(Math.acos(Math.min(1, Math.abs(a.tx * first.tx + a.tz * first.tz))) * (180 / Math.PI)) > 30);
-    const skew = angle(first);
-    return skew > SKEW && !bends ? [{ at: at1(box), what: `zebra ${skew.toFixed(1)} degrees off the perpendicular to its street` }] : [];
+    const onWay = bends && nearestAxis(crossingWays, box.cx, box.cz, ON_STREET).length > 0;
+    const skew = onWay ? Math.min(...axes.map(angle)) : angle(first);
+    return skew > SKEW && (!bends || onWay) ? [{ at: at1(box), what: `zebra ${skew.toFixed(1)} degrees off the perpendicular to its street` }] : [];
   });
 
 /** What of a zebra lies outside its piece: stripes by what is under them (m2), edge line off the driven surfaces (m). */
@@ -163,5 +167,51 @@ export const crossingKerb = (chunks: readonly GroundChunk[]): Finding[] => {
       }
     }
     return worst > KERB_TOL ? [{ at: at1(box), what: `zebra end ${worst.toFixed(2)} m off the kerb` }] : [];
+  });
+};
+
+export const OFF_PATH = 30;
+export const SHORT_OF = 1;
+
+/**
+ * A zebra whose axis across the street (its box's long side) lies more than `OFF_PATH` degrees off
+ * the foot path of the map running within 1 m of its middle (`paths`, no `footway=sidewalk`): the
+ * curator's review of G-836, a junction's zebra laid along another street's axis.
+ */
+export const crossingOffPath = (chunks: readonly GroundChunk[], paths: readonly (readonly Pt[])[]): Finding[] =>
+  crossings(new GroundIndex(chunks)).flatMap(({ box }) => {
+    let best: { d: number; tx: number; tz: number } | null = null;
+    for (const s of paths) {
+      for (let i = 0; i + 1 < s.length; i++) {
+        const [ax, az] = s[i]!;
+        const [bx, bz] = s[i + 1]!;
+        const [dx, dz] = [bx - ax, bz - az];
+        const len = Math.hypot(dx, dz);
+        if (len < 0.5) continue;
+        const t = Math.max(0, Math.min(1, ((box.cx - ax) * dx + (box.cz - az) * dz) / (len * len)));
+        const d = Math.hypot(box.cx - ax - t * dx, box.cz - az - t * dz);
+        if (d < 1 && (!best || d < best.d)) best = { d, tx: dx / len, tz: dz / len };
+      }
+    }
+    if (!best) return [];
+    const off = (Math.acos(Math.min(1, Math.abs(box.ux * best.tx + box.uz * best.tz))) * 180) / Math.PI;
+    return off > OFF_PATH ? [{ at: at1(box), what: `zebra ${off.toFixed(0)} degrees off the foot path through it` }] : [];
+  });
+
+/** A zebra the game's asphalt runs on past by more than `SHORT_OF` m, along its axis from its middle (the kerb check's line through the middle only). */
+export const crossingShortOfAsphalt = (chunks: readonly GroundChunk[]): Finding[] => {
+  const index = new GroundIndex(chunks);
+  return crossings(index).flatMap(({ box }) => {
+    let worst = 0;
+    for (const sign of [-1, 1]) {
+      let d = box.halfLong;
+      while (d < FAR) {
+        const p = local(box, sign * (d + PROBE), 0);
+        if (!index.at(p.x, p.z).some((s) => s === "road")) break;
+        d += PROBE;
+      }
+      worst = Math.max(worst, d - box.halfLong);
+    }
+    return worst > SHORT_OF ? [{ at: at1(box), what: `the asphalt runs on ${worst.toFixed(1)} m past the zebra's end` }] : [];
   });
 };

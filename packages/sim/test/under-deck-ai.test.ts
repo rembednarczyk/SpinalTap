@@ -69,6 +69,16 @@ describe("NPCs and the way under a bridge's deck (G-068, ADR-0053)", () => {
     expect(chase(UNDER, { x: 2444.9, z: 307.5 }, Infinity, 20, -Infinity).at).not.toBeNull();
   });
 
+  it("a brawler at the foot of a bank by the deck's end goes on up it to the player on the deck in < 20 s (G-896)", () => {
+    // On the street by the lower bridge of Mełgiewska, the feet in a strip 10 cm below the street, against its steep lip.
+    expect(chase({ x: 2454.94, z: 297.03 }, onDeck(0.2), Infinity, 20, Infinity).at).not.toBeNull();
+  });
+
+  it("an alerted brawler on Podwale goes up the viaduct of Zamkowa to the player on its deck in < 20 s (G-896)", () => {
+    // Up the street to the deck's end, not for good against the bank's lip by it at (758.0, 188.5).
+    expect(chase({ x: 745, z: 169.8 }, { x: 748.9, z: 173.4 }, Infinity, 20, -Infinity).at).not.toBeNull();
+  });
+
   it("an alerted brawler on the viaduct of Zamkowa comes down to the player on Podwale under it (G-072)", () => {
     expect(chase({ x: 748.9, z: 173.4 }, { x: 745, z: 169.8 }, -Infinity, 20, Infinity).at).not.toBeNull();
   });

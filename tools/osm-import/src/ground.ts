@@ -277,17 +277,27 @@ const UNMARKED = new Set(["unmarked", "no", "informal"]);
 /** A crossing node with markings on the road (most Lublin crossings are tagged without saying). */
 export const markedCrossing = (t: Tags): boolean => t.highway === "crossing" && !UNMARKED.has(t.crossing ?? "") && t["crossing:markings"] !== "no";
 
-/**
- * A zebra's band at a crossing node: across the carriageway the node lies on, as wide as that
- * road and `CROSSING_ALONG` along it, from the node's foot on it. Null when the node is on no
- * carriageway (a crossing of a footway or a cycleway) or the road is too narrow to stripe. A
- * carriageway moved off the map's axis by `aside` metres keeps its nodes that much further off.
- */
-export const crossingBand = (source: string, at: Pt, roads: readonly Line[], aside: (l: Line) => number = () => 0): Band | null => {
-  let best: { d: number; foot: Pt; tx: number; tz: number; w: number; bridge: boolean } | null = null;
+/** The carriageway a point of a crossing lies on: its foot on the nearest axis within 1 m (`aside` as `crossingBand`), that segment's direction, the road and its width. */
+export interface RoadFoot {
+  readonly d: number;
+  readonly foot: Pt;
+  readonly tx: number;
+  readonly tz: number;
+  readonly w: number;
+  readonly bridge: boolean;
+  readonly road: Line;
+  /** The segment of the road's line the foot is on, and how far along it (0..1). */
+  readonly i: number;
+  readonly k: number;
+}
+
+/** The foot of `at` on each carriageway within `within` m of it (`aside` as `roadFoot`), nearest first. */
+export const roadFeet = (at: Pt, roads: readonly Line[], aside: (l: Line) => number = () => 0, within = 1): RoadFoot[] => {
+  const out: RoadFoot[] = [];
   for (const l of roads) {
     const t = l.tags;
     if (!t.highway || ROAD_WIDTH[t.highway] === undefined || t.area === "yes" || underground(t)) continue;
+    let best: RoadFoot | null = null;
     for (let i = 0; i + 1 < l.line.length; i++) {
       const a = l.line[i]!;
       const b = l.line[i + 1]!;
@@ -301,9 +311,25 @@ export const crossingBand = (source: string, at: Pt, roads: readonly Line[], asi
       // Off a carriageway moved aside the distance is from where it lies: one road's node nearer another's moved over to it is still its own.
       const off = d - Math.min(d, aside(l));
       const foot = { x: a.x + dx * k, z: a.z + dz * k };
-      if (off < 1 && (!best || off < best.d)) best = { d: off, foot, tx: dx / len, tz: dz / len, w: roadWidth(t), bridge: t.bridge !== undefined && t.bridge !== "no" };
+      if (off < within && (!best || off < best.d)) best = { d: off, foot, tx: dx / len, tz: dz / len, w: roadWidth(t), bridge: t.bridge !== undefined && t.bridge !== "no", road: l, i, k };
     }
+    if (best) out.push(best);
   }
+  // Stable: of two as near, the one first in `roads`, as `roadFoot` took it.
+  return out.sort((p, q) => p.d - q.d);
+};
+
+export const roadFoot = (at: Pt, roads: readonly Line[], aside: (l: Line) => number = () => 0): RoadFoot | null => roadFeet(at, roads, aside)[0] ?? null;
+
+/**
+ * A zebra's band at a crossing node: across the carriageway the node lies on, as wide as that
+ * road and `CROSSING_ALONG` along it, from the node's foot on it. Null when the node is on no
+ * carriageway (a crossing of a footway or a cycleway) or the road is too narrow to stripe. A
+ * carriageway moved off the map's axis by `aside` metres keeps its nodes that much further off.
+ * Fitted to the kerbs once they are laid (`fitZebras`).
+ */
+export const crossingBand = (source: string, at: Pt, roads: readonly Line[], aside: (l: Line) => number = () => 0): Band | null => {
+  const best = roadFoot(at, roads, aside);
   if (!best || best.w < 3.5) return null;
   // Across the asphalt where it lies: a zebra about the node off a carriageway moved aside (ADR-0080
   // PR 10) reached past its kerb and left the strip beside it bare (G-811).

@@ -30,7 +30,8 @@ import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewal
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
-import { FILL_MARGIN, kerbFills, stretchZebras } from "./kerb-fill.ts";
+import { FILL_MARGIN, kerbFills } from "./kerb-fill.ts";
+import { laidZebras, zebraSpots } from "./zebra-fit.ts";
 import { taperedJoins } from "./lane-fit.ts";
 import { lanePlaces, placedPieces, placementOffset } from "./lane-place.ts";
 import { roundJoints } from "./line-buffer.ts";
@@ -378,11 +379,12 @@ const generateMap = (
   // A crossing node a mapped crossing way runs through is striped by that way already.
   const crossingWays = roads.filter((l) => crossingWay(l.tags));
   const onCrossingWay = (p: Pt) => crossingWays.some((l) => l.line.some((q, i) => i + 1 < l.line.length && segmentDistance(p.x, p.z, q.x, q.z, l.line[i + 1]!.x, l.line[i + 1]!.z) < 1.5));
+  const asideOf = (l: Line) => aside.get(l.id) ?? 0;
   for (const n of [...data.nodes.values()].sort((a, b) => a.id - b.id)) {
     if (!n.tags || !markedCrossing(n.tags)) continue;
     const at = geoToWorld(n.lat, n.lon);
     if (!near([at]) || onCrossingWay(at)) continue;
-    const b = crossingBand(`n${n.id}`, at, roads, (l) => aside.get(l.id) ?? 0);
+    const b = crossingBand(`n${n.id}`, at, roads, asideOf);
     if (b) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   // A laid sidewalk stops at the kerb of the street it meets (ADR-0042): cut where it runs over another carriageway.
@@ -413,15 +415,16 @@ const generateMap = (
     const c = covers && coverFor(covers, p);
     return c ? coverAt(c, p.x, p.z) : COVER.none;
   };
-  const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks, moved, coverOf);
+  // The zebras are fitted to the kerbs after (`laidZebras`, G-836): a strip is laid whatever zebra the map draws over it.
+  const kerbs = kerbFills(bands.filter((b) => !b.patch && b.surface !== "crossing"), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks, moved, coverOf);
   for (const [b, { ring, runs, lanes }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, widenLanes: lanes, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
   bands.splice(0, bands.length, ...slitsOffWidened(bands, [...kerbs.widened.values()].map((w) => w.ring)));
   // The carriageways' reach each side of their axes, fitted and widened, for the traffic's lanes (ADR-0080).
   const halves = streetHalves(bands);
   const widths = streetWidths(laidLines, (w) => isCarriageway(w.piece.tags) || w.atStreet, [...kerbs.widened].map(([b, w]) => [b, { runs: w.lanes }] as const));
-  const nodeZebras = bands.filter((b) => b.surface === "crossing" && b.source.startsWith("n"));
-  stretchZebras(nodeZebras, [...kerbs.widened.values()].map((w) => w.ring)).forEach((z, i) => bands.splice(bands.indexOf(nodeZebras[i]!), 1, { ...z, box: ringBounds(z.ring) }));
+  // Each zebra across its carriageway from kerb to kerb as laid, square to the axis (G-836).
+  bands.splice(0, bands.length, ...laidZebras(bands, kerbs, zebraSpots(data.nodes, crossingWays, roads, lines), roads, asideOf, areas));
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
   const zebras = bands.filter((b) => b.surface === "crossing");
   // By the cells round the point, not every carriageway of the city for every half metre of every line (G-719).
