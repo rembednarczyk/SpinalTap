@@ -10,7 +10,7 @@
  * file with modules of its own makes anew.
  */
 import { afterAll, expect } from "vitest";
-import { shareNav } from "../../../packages/sim/src/systems/ai/nav-field.ts";
+import { shareNav } from "../../../packages/sim/src/systems/ai/nav-share.ts";
 import { navStores } from "./nav-stores.ts";
 
 const mode = process.env.SEKI_CITY_CACHE;

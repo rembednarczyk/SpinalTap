@@ -7,7 +7,7 @@ import { solidIndexOf } from "../../world/solid-index";
 import { type Collider, collidersOf } from "../../world/solids";
 import { STEP_HEIGHT } from "../movement-system";
 import { type NavMemo, heldRaster, recall, remember } from "./nav-memo";
-import { type NavShare, shapesKey, sharedGround, through } from "./nav-share";
+import { navShare, shapesKey, sharedGround, through } from "./nav-share";
 import { CLEARANCE, LEDGE, NAV_CELL, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellIndex, finish, rasterise, walled } from "./nav-raster";
 
 /**
@@ -59,14 +59,6 @@ type Memo = NavMemo<Raster, Field>;
 
 const memos = new WeakMap<World<Entity>, Map<string, Memo>>();
 
-let share: NavShare<Raster, Field> | null = null;
-
-/** Installs the process's store of rasters and fields (`nav-share.ts`; tests only), or takes it away (null); gives the one before. */
-export const shareNav = (store: NavShare<Raster, Field> | null): NavShare<Raster, Field> | null => {
-  const before = share;
-  share = store;
-  return before;
-};
 
 export const memoOf = (world: World<Entity>, win: Window): Memo => {
   let byWindow = memos.get(world);
@@ -219,6 +211,7 @@ export function* fieldSteps(world: World<Entity>, win: Window, floor: number, re
   const rasterKey = `${floor}|${reach}|${cx}|${cz}|${signature(solids)}`;
   let raster = recall(memo.rasters, rasterKey) ?? heldRaster(memo.fields, rasterKey);
   // The process's store (tests, `nav-share.ts`), by the content: only when one is installed.
+  const share = navShare();
   const shared = share ? sharedGround(groundOf(world)) : null;
   let sharedKey: string | undefined;
   const sharedKeyOf = (colliders: readonly Collider[]) => (sharedKey ??= `${win.name}|${cells}|${floor}|${reach}|${x0}|${z0}|${shared?.key}|${shapesKey(colliders)}`);

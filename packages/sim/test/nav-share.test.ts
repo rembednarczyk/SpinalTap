@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { SIM_HZ, Simulation, ground, stateHash } from "../src";
-import { type Field, nearBuilds, shareNav, wideBuilds } from "../src/systems/ai/nav-field";
+import { type Field, nearBuilds, wideBuilds } from "../src/systems/ai/nav-field";
 import type { Raster } from "../src/systems/ai/nav-raster";
-import { type Made, type NavShare, shapesKey, through } from "../src/systems/ai/nav-share";
+import { type Made, type NavShare, shapesKey, shareNav, through } from "../src/systems/ai/nav-share";
 import type { Collider } from "../src/world/solids";
 import { input, run, teleportPlayer } from "./helpers";
 

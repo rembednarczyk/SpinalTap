@@ -1,6 +1,7 @@
 import type { GroundField } from "../../world/ground";
 import type { Collider } from "../../world/solids";
-import type { Slices } from "./nav-raster";
+import type { Field } from "./nav-field";
+import type { Raster, Slices } from "./nav-raster";
 
 /**
  * A store of the steering's rasters and fields shared by every world of a process (ADR-0083 step
@@ -28,6 +29,22 @@ export interface NavShare<R, F> {
   readonly rasters: NavShareStore<R>;
   readonly fields: NavShareStore<F>;
 }
+
+let installed: NavShare<Raster, Field> | null = null;
+
+/**
+ * Installs the process's store of rasters and fields (tests only), or takes it away (null); gives
+ * the one before. Here, not in `nav-field.ts`, so that a test worker installs it without loading
+ * the simulation (a worker of tools' tests that never runs one).
+ */
+export const shareNav = (store: NavShare<Raster, Field> | null): NavShare<Raster, Field> | null => {
+  const before = installed;
+  installed = store;
+  return before;
+};
+
+/** The store installed, or null (the game). */
+export const navShare = (): NavShare<Raster, Field> | null => installed;
 
 /** Runs `steps`, passing on its reports, and gives them with the result. */
 export function* recorded<T>(steps: Slices<T>, yields: number[]): Slices<T> {
