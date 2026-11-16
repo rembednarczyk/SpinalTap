@@ -1,8 +1,8 @@
 /**
  * Heights of landmarks of the list (`landmark-ids.ts`) set from GUGiK LoD1 2024 and LoD2 2017
- * (ADR-0077 step 3, G-631, T-254), a tail of `TAG_CORRECTIONS`: kept apart so `corrections.ts`
- * stays within ADR-0031's 500 lines. The import keeps a landmark's height as reviewed, so a measured
- * one comes in here, by hand.
+ * (ADR-0077 step 3, G-631, T-254), and their outlines where NMPT puts a wall elsewhere (G-874), a
+ * tail of `TAG_CORRECTIONS`: kept apart so `corrections.ts` stays within ADR-0031's 500 lines. The
+ * import keeps a landmark's height as reviewed, so a measured one comes in here, by hand.
  */
 import type { TagCorrection } from "./corrections.ts";
 
@@ -43,9 +43,17 @@ export const LANDMARK_HEIGHT_CORRECTIONS: readonly TagCorrection[] = [
     // (the attic with its battlements) about y 7.5, the eaves towards the courtyard about y 3.3,
     // the roof sloping down to them behind the attic. `height` runs over the 3.2 m plinth to the
     // crown, the roof is crown - eaves.
+    // The north wing (G-874, T-319): OSM's outline steps out 2.6-3.0 m north at x 904 and back at
+    // x 942, so the wing stood on the asphalt of the road behind the castle. GUGiK NMPT 0.5 m and
+    // the orthophoto 2023-09..2025-04 have one straight wall from (903.6; 258.6) to (941.0; 253.8),
+    // the roof's edge at z 257.75/256.3/254.0 abreast of x 910/925/940: the step's two nodes go.
     id: "w48500136",
     tags: { height: "13.7", "roof:height": "4.2" },
-    reason: "Zamek Lubelski: korona attyki y 7,5 i okap od dziedzińca y 3,3 z NMPT wobec 6,4 i 3,4 z building:levels=3 i domyślnego dachu",
+    drop: [
+      { x: 903.9, z: 261.6 },
+      { x: 941.5, z: 256.8 },
+    ],
+    reason: "Zamek Lubelski: korona attyki y 7,5 i okap od dziedzińca y 3,3 z NMPT wobec 6,4 i 3,4 z building:levels=3 i domyślnego dachu; skrzydło pn. prosto (903,6; 258,6)–(941,0; 253,8) bez uskoku OSM 2,6–3,0 m na północ (T-319)",
     ref: "T-112",
   },
 ];

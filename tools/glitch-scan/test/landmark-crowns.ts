@@ -11,7 +11,7 @@ import { cityEntries } from "./landmark-towers";
  * G-841). Left out: points within 3 m of the outline's convex corners (pinnacles) and 5 m of the
  * gate's turrets, and points whose band holds a roof's superstructure deeper in, over 0.8 m above
  * the wall's first 1.5 m (Zamek's north wing at x 862-868). The north wing's run from x 904 to 942
- * stands 2.7 m off NMPT's roof in OSM: its band reaches the roof's edge at its inner end.
+ * on its wall without OSM's jog (G-874).
  */
 export const CROWN_SURFACE: Readonly<Record<string, readonly (readonly [number, number, number])[]>> = {
   // Zamek Lubelski: the west wing, the south wing (its SE corner to y 8.0), the north wing high to
@@ -26,8 +26,8 @@ export const CROWN_SURFACE: Readonly<Record<string, readonly (readonly [number, 
     [916.5, 200.6, 7.9], [919.4, 200.3, 7.8], [922.4, 199.9, 7.7], [925.4, 199.5, 7.8], [928.4, 199.2, 7.8], [931.4, 198.8, 7.9],
     [934.3, 198.5, 8.0], [937.3, 198.1, 8.0], [940.3, 197.8, 8.0], [944.7, 202.8, 8.0], [945.0, 205.8, 8.0], [945.4, 208.7, 8.1],
     [945.4, 237.6, 5.7], [945.8, 240.6, 5.8], [946.2, 243.5, 5.8], [946.6, 246.5, 5.8], [947.0, 249.5, 5.8], [943.5, 253.4, 5.8],
-    [937.5, 257.3, 5.7], [934.6, 257.7, 5.7], [931.6, 258.1, 5.7], [928.6, 258.4, 5.7], [925.6, 258.8, 5.7], [922.7, 259.2, 5.7],
-    [919.7, 259.6, 5.7], [916.7, 260.0, 5.7], [913.7, 260.3, 5.7], [910.7, 260.7, 5.7], [907.8, 261.1, 5.7],
+    [937.5, 254.1, 5.7], [934.6, 254.5, 5.7], [931.6, 254.9, 5.7], [928.6, 255.3, 5.7], [925.6, 255.7, 5.7], [922.7, 256.1, 5.7],
+    [919.7, 256.5, 5.7], [916.7, 256.9, 5.7], [913.7, 257.3, 5.7], [910.7, 257.7, 5.7], [907.8, 258.0, 5.7],
     [902.6, 258.7, 6.0], [899.6, 259.0, 6.0], [896.6, 259.3, 5.7], [893.7, 259.7, 5.6], [890.7, 260.0, 5.4], [887.7, 260.3, 5.9],
     [884.7, 260.6, 5.7], [881.7, 260.9, 6.0], [878.7, 261.3, 6.0], [875.8, 261.6, 6.0], [872.8, 261.9, 6.1], [869.8, 262.2, 5.5],
     [860.8, 263.2, 6.0], [857.9, 263.5, 6.1], [854.9, 263.8, 7.7], [851.9, 264.2, 7.7], [848.9, 264.5, 7.3], [845.9, 264.8, 6.9],

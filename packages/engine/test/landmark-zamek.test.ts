@@ -105,7 +105,7 @@ describe("Zamek Lubelski from the landmark kit (G-841)", () => {
     expect(at([853.5, 264], [845, 264.9])).toBeCloseTo(7.5, 1);
     // NMPT: north past x 855 to x 942 5.4-5.6, east 5.5-5.8.
     expect(at([903.6, 258.6], [856.5, 263.7])).toBeCloseTo(5.6, 1);
-    expect(at([941.5, 256.8], [903.9, 261.6])).toBeCloseTo(5.6, 1);
+    expect(at([947.5, 252.8], [903.6, 258.6])).toBeCloseTo(5.6, 1);
     expect(at([945.3, 236.6], [947.5, 252.8])).toBeCloseTo(5.6, 1);
     // The courtyard's side: the north wing's eaves y 4.4-4.6 (NMPT), the west wing's at the data's (T-316).
     expect(at([853.4, 252.4], [934, 242.4])).toBeCloseTo(4.5, 1);
