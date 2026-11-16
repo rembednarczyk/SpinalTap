@@ -50,7 +50,9 @@ describe("determinism on the test floor", () => {
   it("matches the recorded golden hash (update by hand, with the reason, only when a rule changes)", () => {
     // v42 (ADR-0082 stage 3b, the loud way: optional contract fields, none in this run) changes only
     // the version: with SAVE_SCHEMA_VERSION at 41 the run hashes to d2d12bd1, the golden of before.
-    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"fc3fc982"`);
+    // v43 (G-901, the last threat in the save): the run ends with lastThreat { tick 1204,
+    // floor-ganger }; without the field and at version 42 it hashes to fc3fc982, the golden of before.
+    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"936bb239"`);
   });
 
   it("the same run on 'hard' (ADR-0066) ends elsewhere, and the same each time", () => {

@@ -273,6 +273,8 @@ export interface LublinConstructionSiteData {
   readonly set: "fence" | "yard" | "full";
   /** The outline's area (m²). */
   readonly area: number;
+  /** The outline (world metres, to the centimetre): the crane's jib reaches each of its corners (stage 2). */
+  readonly outline: FlatPoints;
   /** The keys of the board's name, developer and term; null for a site with no gate. */
   readonly board: { readonly name: string; readonly developer: string; readonly term: string } | null;
   /** The dig: a counter-clockwise rectangle levelled to `y` (world), blending into the terrain over `blend` m round it. */

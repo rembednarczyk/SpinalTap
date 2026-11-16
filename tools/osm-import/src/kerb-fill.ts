@@ -18,6 +18,7 @@
 import { COVER } from "../../orto/src/classify.ts";
 import { type Pt, type Rect, ccw, lineLength, offsetLine, ringBounds, selfIntersects, simplifyRing } from "./geometry.ts";
 import { type Band } from "./ground.ts";
+import { LAWN_GAP, lawnStretches, pastKerbOf } from "./kerb-lawn.ts";
 import { type WidenRun } from "./kerb-widen.ts";
 import { RingBins } from "./ring-bins.ts";
 
@@ -44,17 +45,6 @@ const INTO = 0.1;
  * samples `ALONG` apart, and a seam of bare ground stayed between them; the strip is grass too (G-825).
  */
 const LAWN_INTO = 0.3;
-/**
- * The widest gap to a lawn a moved carriageway's strip is laid as the lawn's over wherever (m): a
- * kerb's width. A wider one is the lawn's only where the orthophoto's cover past the kerb is green
- * with no paving or asphalt; else it is paving the lawn's mapped edge stops short of (Lwowska by
- * Rondo Mohyły, 1-2 m of it; Al. Tysiąclecia's north-east corner, asphalt and the kerb), laid as a
- * square, as the bare ground rule laid it before: as the lawn's, it put grass on the pavement (G-825 r3).
- */
-const LAWN_GAP = 0.6;
-/** The step of the cover's samples across a strip to a lawn (m), half its cell. */
-const COVER_STEP = 0.25;
-const HARD: ReadonlySet<number> = new Set([COVER.paving, COVER.asphalt]);
 /** How far out from the edge the paving must start for a strip to lie between (m): nearer, it reaches the asphalt. */
 const SEAM = 0.01;
 /** Halvings of the last step, to the paving's edge within 1.25 cm: the fill's outer edge follows it. */
@@ -281,11 +271,11 @@ const grownRuns = (seeds: readonly boolean[], may: readonly boolean[], gaps: rea
  */
 const cornered = (ok: readonly boolean[], s: Sample, i: number): boolean => ok[i] === true || (s.hit?.joins === true && (ok[i - 1] === true || ok[i + 1] === true));
 
-/** How far out the asphalt of each sample of the edges goes (`easedReach`) where `wide`. */
-const reachOf = (sides: readonly (readonly Sample[])[], wide: (s: Sample) => boolean): Map<Sample, number> => {
+/** How far out the asphalt of each sample of the edges goes (`easedReach`) where `wide`, up to its `cap`. */
+const reachOf = (sides: readonly (readonly Sample[])[], wide: (s: Sample) => boolean, cap: ReadonlyMap<Sample, number>): Map<Sample, number> => {
   const reach = new Map<Sample, number>();
   for (const side of sides) {
-    const eased = easedReach(side, wide);
+    const eased = easedReach(side, wide, cap);
     side.forEach((s, i) => reach.set(s, eased[i]!));
   }
   return reach;
@@ -318,6 +308,31 @@ const runsOf = <T>(samples: readonly Sample[], spanOf: (s: Sample) => T | null, 
   flush(run);
 };
 
+/**
+ * How far out the asphalt may step at the end of a widened stretch whose next sample out meets a
+ * lawn on its way (`pavingOut` stops at it) a kerb's width (`LAWN_GAP`) and more from the edge and
+ * as much short of the paving the end sample reaches: a kerb's width short of the lawn's line, as
+ * the paving between the lawn and the asphalt runs on by its corner, and the paving the step leaves
+ * is reached by a sidewalk. The end sample's march passed the lawn's corner to the paving behind
+ * it, and the asphalt stepped out 1.5 m by the corner: the bare ground rule laid the corner's
+ * green between paving either side, a metre of grass between two squares along the kerb (Ruska at
+ * its zebra by Podzamcze, G-897). Not so far short that the sample next in loses its reach to the
+ * paving (`RISE` a step), or a seam of bare ground opened between the two.
+ */
+const lawnCaps = (side: readonly Sample[], wide: (s: Sample) => boolean, world: World, caps: Map<Sample, number>): void => {
+  side.forEach((s, i) => {
+    if (!wide(s)) return;
+    for (const j of [i - 1, i + 1]) {
+      const [n, inner] = [side[j], side[2 * i - j]];
+      if (!n || wide(n) || n.hit !== null) continue;
+      const lawn = pavingOut(n.edge, n.dir, world, true);
+      if (!lawn?.lawn || lawn.gap < LAWN_GAP || s.hit!.gap - lawn.gap <= LAWN_GAP) continue;
+      const cap = Math.max(lawn.gap - LAWN_GAP, inner?.hit && wide(inner) ? inner.hit.gap + INTO - RISE : 0);
+      if (cap < Math.min(s.hit!.gap + INTO, RISE)) caps.set(s, Math.min(caps.get(s) ?? cap, cap));
+    }
+  });
+};
+
 export interface KerbFills {
   /** Sidewalks over the strips, and kerb stones along the widened carriageways. */
   readonly fills: readonly Band[];
@@ -335,8 +350,8 @@ export interface KerbFills {
  * by a sidewalk. On a bend's inner side the kerbs moved out may still run backwards: those samples
  * are not widened.
  */
-const easedReach = (side: readonly Sample[], wide: (s: Sample) => boolean): number[] => {
-  const base = side.map((s) => (wide(s) ? s.hit!.gap + INTO : 0));
+const easedReach = (side: readonly Sample[], wide: (s: Sample) => boolean, cap: ReadonlyMap<Sample, number>): number[] => {
+  const base = side.map((s) => (wide(s) ? Math.min(s.hit!.gap + INTO, cap.get(s) ?? Infinity) : 0));
   for (let round = 0; round < side.length; round++) {
     const g = [...base];
     for (let i = 1; i < g.length; i++) g[i] = Math.min(g[i]!, g[i - 1]! + RISE);
@@ -352,47 +367,6 @@ const easedReach = (side: readonly Sample[], wide: (s: Sample) => boolean): numb
     base[folded - 1] = 0;
   }
   return side.map(() => 0);
-};
-
-/** The most of a stretch's samples that may show paving past the kerb for it to be the lawn's: the orthophoto's noise. */
-const HARD_SHARE = 0.2;
-
-/**
- * The length of the run at the start of `stretch` that shows paving (`hard`): up to its last hard
- * sample with hard ones half of it or more, a sidewalk's end at a zebra or a node.
- */
-const hardEnd = (stretch: readonly Sample[], hard: (s: Sample) => boolean): number => {
-  let n = 0;
-  for (let k = 0, h = 0; k < stretch.length; k++) {
-    if (!hard(stretch[k]!)) continue;
-    h++;
-    if (2 * h >= k + 1) n = k + 1;
-  }
-  return n;
-};
-
-/**
- * The samples of `side` whose strip to a lawn is laid as the lawn's: a stretch of samples reaching
- * a lawn is one surface, the lawn's where most of its samples are `green` and at most `HARD_SHARE`
- * of them `hard`, else a square; a lawn's stretch keeps the paving at its ends (by a zebra) a square.
- * Chosen sample by sample, the light kerb and the orthophoto's noise flipped the strip between
- * grass and square every 1-3 m along one lawn behind one kerb (Lwowska by Rondo Mohyły, G-825 r4);
- * by the most alone, grass went over the paving the stretch's other samples showed; with no hard
- * sample at all, a square went over the lawn of Ruska's link for a sidewalk's end at its zebra (r5).
- */
-const lawnStretches = (side: readonly Sample[], green: (s: Sample) => boolean, hard: (s: Sample) => boolean): Set<Sample> => {
-  const out = new Set<Sample>();
-  for (let i = 0; i < side.length; ) {
-    let j = i;
-    while (j < side.length && side[j]!.hit?.lawn) j++;
-    const stretch = side.slice(i, j);
-    if (2 * stretch.filter(green).length > stretch.length && stretch.filter(hard).length <= HARD_SHARE * stretch.length) {
-      const [head, tail] = [hardEnd(stretch, hard), hardEnd([...stretch].reverse(), hard)];
-      for (const s of stretch.slice(head, stretch.length - tail)) out.add(s);
-    }
-    i = Math.max(j, i + 1);
-  }
-  return out;
 };
 
 /**
@@ -418,16 +392,7 @@ export const kerbFills = (
   const world: World = { lots: new RingBins<Boxed | Block>([...laid, ...blocks]), roads: new RingBins(laid.filter((b) => b.carriageway === true)) };
   const fills: Band[] = [];
   const widened = new Map<Band, { ring: readonly Pt[]; runs: readonly WidenRun[]; lanes: readonly WidenRun[] }>();
-  // The cover of a sample's strip past a kerb's width to the lawn: paving or asphalt where any of it is, else green where any is.
-  const pastKerb = (s: Sample): number => {
-    let green = false;
-    for (let t = LAWN_GAP + COVER_STEP / 2; t < s.hit!.gap; t += COVER_STEP) {
-      const c = cover(along(s.edge, s.dir, t));
-      if (HARD.has(c)) return COVER.paving;
-      green ||= c === COVER.green;
-    }
-    return green ? COVER.green : COVER.none;
-  };
+  const pastKerb = pastKerbOf(cover);
   for (const road of bands) {
     if (!road.kerb || road.bridge || lineLength(road.kerb.line) < ALONG) continue;
     const { line, half } = road.kerb;
@@ -456,14 +421,16 @@ export const kerbFills = (
       });
     }
     const wide = (s: Sample) => wideSet.has(s);
-    const reach = reachOf([right, left], wide);
+    const caps = new Map<Sample, number>();
+    for (const side of [right, left]) lawnCaps(side, wide, world, caps);
+    const reach = reachOf([right, left], wide, caps);
     let asRoad = wideSet.size > 0;
     if (asRoad) {
       const ground = widenedRing([r.edge, right], [l.edge, left], reach);
       if (!ground) asRoad = false;
       // The lanes keep the reach of the stretches widened: moved out over the asphalt grown in to
       // the kerb, a lane ran over the bays beside it (ADR-0080).
-      else widened.set(road, { ...ground, lanes: widenedRing([r.edge, right], [l.edge, left], reachOf([right, left], (s) => seeded.has(s)))?.runs ?? [] });
+      else widened.set(road, { ...ground, lanes: widenedRing([r.edge, right], [l.edge, left], reachOf([right, left], (s) => seeded.has(s), caps))?.runs ?? [] });
     }
     const full = (s: Sample) => asRoad && wide(s) && reach.get(s)! >= s.hit!.gap + INTO - 1e-9;
     const lay = (run: Span[], stone?: true, surface: "sidewalk" | "grass" | "square" = "sidewalk") => {
@@ -475,7 +442,9 @@ export const kerbFills = (
       // asphalt, which ranks over it (`partitionGround`): from the edge itself, the strip's points
       // rounded off the asphalt's straight edge left a bare seam of up to 0.07 m between (G-811).
       const from = (s: Sample) => (asRoad && wide(s) ? reach.get(s)! : 0) - INTO;
-      runsOf(side, (s) => (s.hit && !s.hit.joins && !s.hit.lawn && !full(s) ? { edge: along(s.edge, s.dir, from(s)), out: along(s.edge, s.dir, s.hit.gap + INTO) } : null), lay);
+      // A sample full to the paving next to one stepped out short of a lawn is in its run: alone, a strip of one sample is none.
+      const byCap = new Set(caps.size === 0 ? [] : side.filter((_, i) => caps.has(side[i - 1]!) || caps.has(side[i + 1]!)));
+      runsOf(side, (s) => (s.hit && !s.hit.joins && !s.hit.lawn && (!full(s) || byCap.has(s)) ? { edge: along(s.edge, s.dir, from(s)), out: along(s.edge, s.dir, s.hit.gap + INTO) } : null), lay);
       // A moved carriageway's strip to a lawn is the lawn's, drawn to the new kerb (G-825). It reaches
       // on over the next sample past its ends, to the lawn's reach there: the step to a strip of
       // paving, or to the bare ground rule's fill, stayed bare.

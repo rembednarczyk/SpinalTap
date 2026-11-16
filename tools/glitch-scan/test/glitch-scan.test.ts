@@ -82,7 +82,7 @@ import { loadStructures } from "../../osm-import/src/props-osm.ts";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { cityFrontageWorld, frontageBare, squaresOf } from "./frontage-bare";
 import { fillOnConstruction } from "./fill-construction";
-import { siteChecks, siteGroundOf } from "./site-pieces";
+import { siteBuildingsOf, siteChecks, siteGroundOf } from "./site-pieces";
 import { crossingGlow, crossingKerb, crossingOffPath, crossingOverhang, crossingShortOfAsphalt, crossingSkew } from "./crossing-shape";
 import { kerbFillFlicker } from "./kerb-fill-flicker";
 import { kerbJag } from "./kerb-jag";
@@ -160,6 +160,7 @@ import { CAPSULE_DOOR, CAPSULE_SITE } from "../../../packages/sim/src/content/ca
 import { furnitureNear } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
 import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
+import { LUBLIN_CONSTRUCTION_SITES } from "../../../packages/sim/src/content/lublin/construction";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
@@ -2308,9 +2309,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A tree OSM names a genus of the renderer's models (`genus`, `species`: Quercus, Populus...) drawn as another one: the oaks and the "Baobab" of Plac Litewski as limes and maples (G-423, `tree-species.ts`). */
   "tree-species-ignored": () => treesOfOtherSpecies(cityNamedTrees(), Object.values(WORLD_STREET_PROPS).flat()),
   // The building sites' pieces of ADR-0087 against the ground the game draws (`site-pieces.ts`): on a carriageway or pavement, through a wall, a gate with no way in.
+  // A crane before a listed building's front (G-894), a piece before a venue's board (G-893).
   ...siteChecks(
     () => Object.values(WORLD_STREET_PROPS).flat(),
     () => siteGroundOf(new Site(MAP_CHUNKS), MAP_CHUNKS),
+    () => LUBLIN_CONSTRUCTION_SITES,
+    () => siteBuildingsOf(MAP_CHUNKS, osmTags),
+    () => cityVenueBoards(WORLD_SCENERY),
   ),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),

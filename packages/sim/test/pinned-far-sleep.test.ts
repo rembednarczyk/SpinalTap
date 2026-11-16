@@ -190,33 +190,57 @@ describe("an alerted guard far from the player falls asleep (G-188)", () => {
     g.ai = { ...g.ai!, alerted: false, lastKnown: null, search: 0, lost: 0, suspicion: 0 };
     sim.step();
     const standsLoaded = sim.streamer.isLoaded(sim.streamer.chunkIdAt(byKey(sim, key)!.position));
+    // Saved as the game saves (SaveController.snapshot): both games go on from the calmed street.
+    sim.calmForSave();
     const loaded = reload(sim);
     return { sim, id, key, loaded, ownLoaded, standsLoaded, loadedHasHim: byKey(loaded, key) !== undefined };
   });
-  // 60 s of both games, most of it the first 20 s while he walks home: a stretch a case.
-  const CALM_WALK = [6, 7, 7, 40];
-  const calmWalk = stretches(() => {
-    const { sim, loaded, id } = calmWest();
-    return { a: sim, b: loaded, id };
-  }, CALM_WALK);
+  // He walks ~6 m west to his own chunk's edge and sleeps there in under 2 s (the yard since W-3,
+  // ADR-0082). 6 s of both games hold the walk, the step he sleeps and his sleep after; the 60 s
+  // it ran before (54 s of them him asleep, the rest of the city alone) took 18 s in CI (90% of the limit).
+  const CALM_WALK = 6;
+  const calmWalk = once(() => {
+    const { sim: a, loaded: b, id, key } = calmWest();
+    const start = { ...byKey(a, key)!.position };
+    const asleepAt: (number | null)[] = [null, null];
+    let walked = 0;
+    let apart = 0;
+    let parted: number | null = null;
+    for (let i = 1; i <= seconds(CALM_WALK); i++) {
+      a.step();
+      b.step();
+      const [ea, eb] = [byKey(a, key), byKey(b, key)];
+      [ea, eb].forEach((e, j) => {
+        if (!e && asleepAt[j] === null) asleepAt[j] = i;
+      });
+      if (ea) walked = Math.max(walked, Math.hypot(ea.position.x - start.x, ea.position.z - start.z));
+      if (ea && eb) apart = Math.max(apart, Math.hypot(ea.position.x - eb.position.x, ea.position.z - eb.position.z));
+      if (parted === null && peopleOf(a, id).join() !== peopleOf(b, id).join()) parted = i;
+    }
+    const sleeping = [a, b].map((s) => s.streamer.dormantSnapshots().find((d) => d.key === key));
+    return { walked, apart, asleepAt, parted, sleeping, same: hash(a) === hash(b) };
+  });
 
   it("a calm guard whose chunk sleeps stays while he stands in a loaded one, after a load too", () => {
     const { ownLoaded, standsLoaded, loadedHasHim } = calmWest();
     expect({ ownLoaded, standsLoaded, loadedHasHim }).toEqual({ ownLoaded: false, standsLoaded: true, loadedHasHim: true });
   });
 
-  for (const [i, length] of CALM_WALK.entries()) {
-    const after = CALM_WALK.slice(0, i).reduce((t, l) => t + l, length);
-    it(`a calm guard whose chunk sleeps walks home the same in both games, ${after} s after the load`, () => {
-      expect(calmWalk(i + 1)).toBeNull();
-    });
-  }
+  it(`a calm guard whose chunk sleeps walks home the same in both games, ${CALM_WALK} s after the load`, () => {
+    const { walked, apart, parted, same } = calmWalk();
+    expect(walked).toBeGreaterThan(4);
+    expect(apart).toBeLessThan(1e-6);
+    expect(parted).toBeNull();
+    expect(same).toBe(true);
+  });
 
-  it("a calm guard whose chunk sleeps sleeps once out of the loaded chunks", () => {
-    calmWalk(CALM_WALK.length);
-    // Walked home, out of the loaded chunks: asleep there in both.
-    const { sim, key } = calmWest();
-    expect(byKey(sim, key)).toBeUndefined();
+  it("a calm guard whose chunk sleeps sleeps once out of the loaded chunks, at the same step in both games", () => {
+    const { asleepAt, sleeping } = calmWalk();
+    // Walked home, out of the loaded chunks: asleep there in both, calm.
+    expect(asleepAt[0]).not.toBeNull();
+    expect(asleepAt[1]).toBe(asleepAt[0]);
+    expect(sleeping[0]).toMatchObject({ alerted: false });
+    expect(sleeping[1]).toEqual(sleeping[0]);
   });
 });
 

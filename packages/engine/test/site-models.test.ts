@@ -1,4 +1,15 @@
-import { SITE_CABIN, SITE_FENCE, SITE_GATE, type StreetPropItem, siteFenceVariant, siteGateVariant } from "@seki/core";
+import {
+  SITE_CABIN,
+  SITE_CRANE,
+  SITE_FENCE,
+  SITE_GATE,
+  SITE_SCAFFOLD,
+  type StreetPropItem,
+  siteCraneVariant,
+  siteFenceVariant,
+  siteGateVariant,
+  siteScaffoldVariant,
+} from "@seki/core";
 import { describe, expect, it } from "vitest";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { bakeSitePiece, siteModel } from "../src/renderer/mapcity/construction";
@@ -51,6 +62,38 @@ describe("the building sites' kit in the renderer (ADR-0087)", () => {
     expect(inOpening).toEqual([]);
     const cabin = bounds(siteModel("site-cabin", 1, "high"));
     expect([cabin.x1 - cabin.x0, cabin.y1]).toEqual([expect.closeTo(2 * SITE_CABIN.hx + 0.12, 5), expect.closeTo(SITE_CABIN.height, 5)]);
+  });
+
+  it("draws the crane at its height, its jib along local +x to its length, the counter-jib the other way (stage 2)", () => {
+    const crane = siteModel("site-crane", siteCraneVariant({ height: 24.6, jib: 41.5, phase: 3 }), "high");
+    const b = bounds(crane);
+    expect(b.y1).toBeCloseTo(24.6, 1);
+    expect(b.x1).toBeCloseTo(41.5, 1);
+    expect(b.x0).toBeLessThan(-41.5 * SITE_CRANE.counter + 0.5);
+    // Its base on the ground, as wide as the generator keeps clear; the neon strip along the jib lit.
+    const foot = Array.from({ length: crane.vertexCount }, (_, i) => [crane.positions[i * 3 + 1]!, crane.positions[i * 3 + 2]!] as const).filter(([y]) => y < 0.95);
+    expect(Math.max(...foot.map(([, z]) => Math.abs(z)))).toBeCloseTo(SITE_CRANE.base, 5);
+    expect(lit(crane)).toBeGreaterThan(0);
+    // A taller crane is taller, a longer jib longer.
+    expect(bounds(siteModel("site-crane", siteCraneVariant({ height: 30, jib: 20, phase: 3 }), "high")).y1).toBeCloseTo(30, 1);
+    expect(crane.vertexCount / 3).toBeLessThan(6000);
+  });
+
+  it("draws the scaffold from the wall's side into the site with its banner, the phones without the mesh (stage 2)", () => {
+    const v = siteScaffoldVariant({ length: 11.5, height: 10.2, rise: 0.4, banner: 1 });
+    const high = siteModel("site-scaffold", v, "high");
+    const b = bounds(high);
+    expect(b.x1 - b.x0).toBeCloseTo(11.5 + 0.06, 1);
+    expect(b.z0).toBeGreaterThan(0);
+    expect(b.z1).toBeLessThan(SITE_SCAFFOLD.depth + 0.1);
+    expect(b.y1).toBeCloseTo(10.2 + 0.2, 1);
+    const low = siteModel("site-scaffold", v, "low");
+    expect(low.vertexCount).toBeLessThan(high.vertexCount);
+    // The banner on both, self-lit; another design, other colours.
+    expect(lit(low)).toBeGreaterThan(20);
+    expect(lit(low)).toBe(lit(high));
+    const other = siteModel("site-scaffold", siteScaffoldVariant({ length: 11.5, height: 10.2, rise: 0.4, banner: 2 }), "high");
+    expect(Array.from(other.colors)).not.toEqual(Array.from(high.colors));
   });
 
   it("bakes into the block's mesh with the furniture at its own variant, near only", () => {
