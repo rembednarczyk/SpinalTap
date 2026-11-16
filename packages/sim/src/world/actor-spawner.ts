@@ -25,6 +25,8 @@ export interface StreamState {
  */
 export const revived = (e: Entity, s: EntitySnapshot): Entity => {
   applyEntitySnapshot(e, s);
+  // Not yet in the world: the component goes in with it (G-882).
+  if (s.hackFx) e.hackFx = { ...s.hackFx };
   return s.downed?.dead ? corpseOf(e, freshDowned(s.downed.playerAt, s.downed.fought, true)) : e;
 };
 

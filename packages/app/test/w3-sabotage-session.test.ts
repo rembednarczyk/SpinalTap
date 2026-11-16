@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { type DomainState, type EffectDescriptor, SABOTAGE, W3_VIRUS_FLAG, contractAlarmFlag, contractObjective, contractSecondsLeft, contractTag } from "@seki/core";
-import { GENZO_SPOT, SIM_HZ, W3_VIRUS_TERMINAL, stateHash } from "@seki/sim";
+import { GENZO_SPOT, SIM_HZ, W3_CORE_BLIND_SPOT, W3_VIRUS_TERMINAL, stateHash } from "@seki/sim";
 import { translateText } from "@seki/ui";
 import { frame, setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 
 /**
  * W-3's sabotage in a session, headless (ADR-0082 stage 3): Genzō offers it once, the virus goes
- * into the core in server room N with the room's camera rebooted, the line's screens and beacons
+ * into the core in server room N from the camera's dead angle, the line's screens and beacons
  * follow the job through the renderer's port, out of the zone unseen the job is paid by phone; a
  * save during the upload loads to the same state; 06:00 without the virus ships the batch.
  */
@@ -50,12 +50,10 @@ const acceptSabotage = (session: GameSession, u: ReturnType<typeof setup>["ui"])
   return job;
 };
 
-/** In server room N by the core, the room's camera rebooted (`reboot_optics`, kept up for the test) and the hall's crew out cold. */
+/** In server room N by the core, in the camera's dead angle on the east rack's side, facing the terminal. */
 const atCore = (session: GameSession) => {
-  const { sim } = session;
-  const cam = [...sim.world].find((e) => e.key === "dev:w3-server-cam")!;
-  sim.world.addComponent(cam, "hackFx", { pinged: 0, blind: 1e6, crippled: 0 });
-  teleport(session, W3_VIRUS_TERMINAL.x, W3_VIRUS_TERMINAL.z - 1, 0);
+  const s = W3_CORE_BLIND_SPOT;
+  teleport(session, s.x, s.z, Math.atan2(W3_VIRUS_TERMINAL.x - s.x, W3_VIRUS_TERMINAL.z - s.z));
   steps(session, 1);
 };
 
@@ -118,6 +116,24 @@ describe("W-3's sabotage in a session (ADR-0082 stage 3)", () => {
     setDomain(session, (d) => ({ ...d, flags: [...d.flags, contractAlarmFlag(job.id)] }));
     steps(session, 1);
     expect(last(effects, "alarm-light")?.active).toBe(true);
+  });
+
+  it("a camera rebooted stays blind through a save and a load (G-882): no alarm till its reboot runs out", async () => {
+    const { session, ui: u } = start();
+    const job = acceptSabotage(session, u);
+    for (const g of [...session.sim.world].filter((e) => e.tag === contractTag(job.id))) g.health = { current: 0, max: g.health!.max };
+    // In front of the terminal, in the camera's view, with it rebooted for 20 s more (as `reboot_optics` leaves it).
+    const cam = [...session.sim.world].find((e) => e.key === "dev:w3-server-cam")!;
+    session.sim.world.addComponent(cam, "hackFx", { pinged: 0, blind: 20, crippled: 0 });
+    teleport(session, W3_VIRUS_TERMINAL.x, W3_VIRUS_TERMINAL.z - 1, 0);
+    steps(session, 1);
+    expect(await session.saves.saveAsync("blind")).toBe(true);
+    expect(await session.saves.loadAsync("blind")).toBe(true);
+    const alarm = contractAlarmFlag(job.id);
+    steps(session, 5 * SIM_HZ);
+    expect(session.sim.domain.flags).not.toContain(alarm);
+    steps(session, 18 * SIM_HZ);
+    expect(session.sim.domain.flags).toContain(alarm);
   });
 
   it("06:00 without the virus ships the batch: the job fails, the beacons go back to amber", () => {

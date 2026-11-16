@@ -5,7 +5,8 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
- * v40: the sabotage of W-3 (ADR-0082 stage 3): the contract's `route` and `seenLeaving`, optional.
+ * v40: the sabotage of W-3 (ADR-0082 stage 3): the contract's `route` and `seenLeaving`, optional;
+ * an entity's quickhack effects still running (`hackFx`, G-882), optional.
  * v39: the docks rebuilt as Tessen's sector W-3 (ADR-0082 stage 1): no new fields, but an older
  * save may have the player on the docks' ground (the yard, the warehouse's roof, the crane, the
  * pier) or on the public strip whose terrain came back up; the migration wakes her on the strip by
@@ -124,6 +125,11 @@ export interface EntitySnapshot {
   readonly sniper?: SniperSnapshot;
   /** A walking NPC's stuck check (G-208). Absent for one that never walked since it was made. */
   readonly walk?: WalkSnapshot;
+  /**
+   * Quickhack effects still running, seconds left (G-882, v40): a camera rebooted stays blind
+   * through a save. Absent when none runs.
+   */
+  readonly hackFx?: { readonly pinged: number; readonly blind: number; readonly crippled: number };
 }
 
 /**
