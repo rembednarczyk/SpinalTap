@@ -1310,7 +1310,9 @@ kbd {
   border-top: 3px solid var(--ok);
   /* The cut corner sits bottom left, away from the close button (a clipped area takes no clicks). */
   clip-path: polygon(0 0, 100% 0, 100% 100%, 16px 100%, 0 calc(100% - 16px));
-  animation: toast-in 240ms ease-out;
+  /* Fades in where it stands: a 30 px slide ran it over the messages beside it on a phone and
+     dropped its centring on a desktop for the slide's 240 ms. */
+  animation: toast-fade 240ms ease-out;
 }
 .debrief__head { grid-area: head; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .debrief__eyebrow { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ok); }
