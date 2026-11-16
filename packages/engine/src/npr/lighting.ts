@@ -65,7 +65,7 @@ export const DAY_RIG: LightingRig = {
 export const INDOOR_RIG: LightingRig = {
   sunDir: NIGHT_RIG.sunDir,
   sunColor: "#000000",
-  ambient: "#737a8a",
+  ambient: "#666c7c",
   fogColor: "#1c2128",
   fogDensity: 0.004,
   shadeTint: "#dcdeea",

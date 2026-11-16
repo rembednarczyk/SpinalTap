@@ -1,3 +1,4 @@
+import { SURFACE_LIFT } from "@seki/core";
 import { INTERIORS, W3_INSIDE_BLOCKS, W3_LAYOUT, W3_ROW_N, W3_ROW_S, W3_Y, type W3Block } from "@seki/sim";
 import { type CityKitData, GeometrySink } from "../city-kit-data";
 import { KitPainter, W3_PAINT } from "./w3-kit";
@@ -43,15 +44,19 @@ const paintOf = (b: W3Block): { swatch: string; tint?: readonly [number, number,
 const HALL = INTERIORS.filter((i) => i.id === "w3-hall").flatMap((i) => i.rooms);
 const BASEMENT = INTERIORS.filter((i) => i.id === "w3-basement").flatMap((i) => i.rooms);
 
-/** The factory floor over the yard's asphalt in every ground-floor room, a hand over it. */
+/**
+ * The factory floor over the yard's asphalt in every ground-floor room: the asphalt is drawn
+ * `SURFACE_LIFT.road` over the terrain and the feet stand on it, so the floor's top is just over that.
+ */
+export const FLOOR_TOP = SURFACE_LIFT.road + 0.012;
 const floors = (k: KitPainter): void => {
-  for (const r of HALL) if (Math.abs(r.bottom - W3_Y) < 0.01) k.box(r.minX, r.maxX, W3_Y - 0.02, W3_Y + 0.025, r.minZ, r.maxZ, "paint", W3_PAINT.floor);
+  for (const r of HALL) if (Math.abs(r.bottom - W3_Y) < 0.01) k.box(r.minX, r.maxX, W3_Y + 0.02, W3_Y + FLOOR_TOP, r.minZ, r.maxZ, "paint", W3_PAINT.floor);
 };
 
 /** Yellow dashes along the aisle's edges and round the chamber's launch area. */
 const stripes = (k: KitPainter): void => {
-  const y0 = W3_Y + 0.025;
-  const y1 = W3_Y + 0.035;
+  const y0 = W3_Y + FLOOR_TOP;
+  const y1 = y0 + 0.008;
   const { AISLE, BELT_X } = W3_LAYOUT;
   for (let x = BELT_X.minX - 2; x < BELT_X.maxX + 2; x += 2) {
     for (const z of [AISLE.minZ + 0.15, AISLE.maxZ - 0.15]) k.box(x, x + 1.2, y0, y1, z - 0.1, z + 0.1, "paint", W3_PAINT.yellow);
@@ -119,6 +124,32 @@ const warnings = (k: KitPainter): void => {
   for (const z of [407.4, 428.6]) k.beam({ x: 2510.5, y: W3_Y + 13.6, z }, { x: 2547.5, y: W3_Y + 13.6, z }, 0.35, "paint", W3_PAINT.orange);
 };
 
+/**
+ * The assembly hall's walls as on picture 02: steel columns every 6 m up to the crane's tracks and
+ * an olive band along their foot; a screen on each station's desk, towards the aisle.
+ */
+const hallDress = (k: KitPainter): void => {
+  const t = W3_LAYOUT.WALL;
+  const south = 406 + t;
+  const north = 430 - t;
+  for (let x = 2513; x < 2547; x += 6) {
+    k.box(x - 0.25, x + 0.25, W3_Y, W3_Y + W3_LAYOUT.CRANE_TRACK - 0.5, south, south + 0.35, "paint", W3_PAINT.graphite);
+    k.box(x - 0.25, x + 0.25, W3_Y, W3_Y + W3_LAYOUT.CRANE_TRACK, north - 0.35, north, "paint", W3_PAINT.graphite);
+  }
+  for (const [z0, z1] of [
+    [south, south + 0.03],
+    [north - 0.03, north],
+  ] as const) {
+    k.box(2510 + t, 2548 - t, W3_Y + FLOOR_TOP, W3_Y + 1.3, z0, z1, "paint", W3_PAINT.olive);
+  }
+  for (const s of Object.values(W3_LAYOUT.STATIONS)) {
+    const toAisle = s.z < 418 ? 1 : -1;
+    const z = s.z + toAisle * 0.1;
+    k.box(s.x - 0.35, s.x + 0.35, W3_Y + 1.1, W3_Y + 1.55, z - 0.04, z + 0.04, "dark");
+    k.box(s.x - 0.3, s.x + 0.3, W3_Y + 1.15, W3_Y + 1.5, z + toAisle * 0.045 - 0.005, z + toAisle * 0.045 + 0.005, "win-teal");
+  }
+};
+
 /** The inside (near only) and the outer pieces (always) of W-3's hall. */
 export const w3InsideGeometry = (data: CityKitData, blocks: readonly W3Block[] = W3_INSIDE_BLOCKS): { readonly inside: GeometrySink; readonly outer: GeometrySink } => {
   const inside = new KitPainter(new GeometrySink(), data);
@@ -132,6 +163,7 @@ export const w3InsideGeometry = (data: CityKitData, blocks: readonly W3Block[] =
   }
   floors(inside);
   stripes(inside);
+  hallDress(inside);
   for (const r of [...HALL, ...BASEMENT]) strips(inside, r);
   warnings(inside);
   return { inside: inside.sink, outer: outer.sink };
