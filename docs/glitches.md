@@ -1950,7 +1950,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-825 Jezdnia importu węższa od prawdziwej przy łącznicach, kieszeniach skrętu i placement=left_of; pas wypełnia bruk z pokrycia
 - Ważność: S3 · Zasięg: Mełgiewska/łącznica Andersa w40051729, Al. Solidarności w215609082 (kieszenie skrętu), Lwowska (placement=left_of:3)
 - Opis: Znalezione przy G-821: import nie czyta placement i nie poszerza jezdni o łącznice i pasy skrętu; pas do prawdziwego krawężnika wypełnia bruk z pokrycia ortofoto, więc latarnie i meble przy krawężniku mapy stoją na prawdziwym asfalcie.
-- Status: w PR #595 (kurator r5 ZGODNE, e3133eb); wcześniej: w naprawie (runda 2 po przeglądzie kuratora, gałąź ccr-ec2c4269-ilh8k8-g825); wcześniej: zgłoszone
+- Status: naprawione (PR #595); wcześniej: w PR #595 (kurator r5 ZGODNE, e3133eb); wcześniej: w naprawie (runda 2 po przeglądzie kuratora, gałąź ccr-ec2c4269-ilh8k8-g825); wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import, tools/orto
 - 15.11 przegląd kuratora (41ddd97): NIEZGODNE. Placement zgodne z ortofoto; zwężenie przy węźle kładzie pół pasa łącznicy za krawężnik: Ruska w216655518 (1071..1074; 428..437) jezdnia na trawie ok. 12 m², Andersa w40051729 (2316..2322; 312..321) jezdnia i chodnik na trawie ok. 12 m², Solidarności w215609082 s 0-6 krawędź 7,7 m wobec 6,3 (ok. 5 m² na szpicu trawnika). kerb-fill-wide-estimated (1113,353) to fałszywy alarm (kostka dojścia do przejścia). Runda 2 naprawiacza.
 - 15.11 runda 2: 4f9cf2f + merge ed53299; skan 3842 → 3833, nowa kontrola lane-place-on-green (baza 0); do ponownego przeglądu kuratora, w tym 5 sygnalizatorów przestawionych przy remisach
@@ -2276,7 +2276,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-874 Zamek Lubelski: skrzydło pn. x 904-942 o 2,6-3,0 m za daleko na północ (uskok obrysu OSM), bryła na asfalcie drogi za zamkiem
 - Ważność: S3 · Zasięg: Podzamcze, w48500136, (903,9..941,5; 253,8..261,6)
 - Opis: Węzły (903,9;261,6) i (941,5;256,8) tworzą uskok, którego nie ma w NMPT (krawędź x 910/925/940: z 257,75/256,3/254,0) ani na ortofoto 2023-09..2025-04; ściany zach. i pd. zgodne do 0,4 m. Poprawka: obrys pn. prosto (903,6;258,6)->(941,0;253,8) w korekcie importu. Przegląd kuratora G-841 r3. Proponowana kontrola landmark-outline-nmpt (baza 1).
-- Status: przegląd kuratora ZGODNE (890681a), w PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g874 (890681a), do przeglądu kuratora; wcześniej: nowy
+- Status: naprawione (PR #616); wcześniej: przegląd kuratora ZGODNE (890681a), w PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g874 (890681a), do przeglądu kuratora; wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: krawędź obrysu pn. w48500136 w 0,5 m od krawędzi dachu NMPT przy x 910, 925, 940
 - 16.11: drop węzłów uskoku w korekcie importu; ściana x 910/925/940 z 257,75/255,77/253,79 (odchyłka do 0,53 m przy x 925, wewnątrz dachu); kontrola landmark-outline-nmpt 1->0; 2 klucze przyjęte przez agenta (landuse-bare podzamcze-1-0 910,250; bare-on-cover podzamcze-2-0 930,250: goły pas odsłonięty spod bryły, G-699) — do potwierdzenia użytkownika; kolizja z #602: łatka g874-x602-resolution.patch
