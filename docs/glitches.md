@@ -2428,7 +2428,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-896 Walczący przy końcu pomostu na poziomie jezdni nie idzie po pomoście do gracza
 - Ważność: S4 · Zasięg: końce mostów z pomostem (Mełgiewska, wiadukt Zamkowej)
 - Opis: Brawler z (2454.9, 297.0) do gracza na pomoście nabrzeze-0-1[1] w t=0,2 i z (758.0, 188.5) do gracza na wiadukcie Zamkowej (748.9, 173.4) stoi 20 s, deckLanding zwraca null; tak samo na main i z poprawką G-885. Znalezione przy G-885 (sondy: scratchpad g885-probe*.test.ts).
-- Status: zgłoszone
+- Status: w PR #647; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Weryfikator #646: wiadukt Zamkowej, brawler z Podwala (745, 169.8) do gracza na pomoście (748.9, 173.4) wchodzi na pomost, ok. 25 s stoi w (758.0, 188.5), schodzi pod wiadukt i staje w (745.1, 170.0); w 60 s nie dociera. Do (755, 180) dociera w 8 s.
 
@@ -2438,6 +2438,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import
 - Klucze skanu: kerb-fill-flicker podzamcze-2-1 1060,470
+
+### G-898 Walczący w pasie 10 cm poniżej jezdni przy dolnym moście Mełgiewskiej nie wychodzi do gracza na pomoście
+- Ważność: S4 · Zasięg: dolny most Mełgiewskiej, (2454,9; 297,05), gracz na nabrzeze-0-1[1] t=0,4
+- Opis: Strome krawędzie terenu poniżej STEP_HEIGHT zatrzymują ruch (offTheBank), a raster ich nie widzi; odchylenie ±31° nie wyprowadza na wschód. Przed i po G-896 (#647). Źródło w imporcie terenu albo w regule offTheBank. Sondy: scratchpad g896-probe.test.ts.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (ruch, teren)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
