@@ -1,3 +1,4 @@
+import { DECK_HEADROOM } from "../../world/deck";
 import { type GroundField, MAX_WALK_SLOPE } from "../../world/ground";
 import { type Collider, closestXZ, colliderTop, overCollider } from "../../world/solids";
 import { SNAP_DOWN, STEP_HEIGHT, offTheBank } from "../movement-system";
@@ -163,6 +164,20 @@ function* ledgesOf(base: Float64Array, ground: GroundField, x0: number, z0: numb
   }
   return out;
 }
+
+/**
+ * Is the way from ledge cell `from` (`ledgesOf`) to its neighbour `to` no way down off it, the deck
+ * going on over `to` about level with it, high over the terrain there: where a deck seen overhead
+ * (a walk after a goal under it, `deckReach`) rises out of reach, the raster has a drop to the terrain
+ * under it, and the feet stay on the deck (G-072). From Mełgiewska's lower bridge's abutment the
+ * walk led onto the deck and over the goal under it, and stood there.
+ */
+export const pastLedge = (r: Raster, from: number, to: number): boolean => {
+  if (r.ledges?.[from] !== ON_LEDGE || !r.base || r.reach !== -Infinity) return false;
+  const at = cellCentre(r, to, 0);
+  const deck = r.ground.heightAt(at.x, at.z);
+  return deck - (r.base[to] ?? 0) > DECK_HEADROOM && Math.abs(deck - (r.base[from] ?? 0)) <= LEDGE * Math.SQRT2;
+};
 
 /** Is cell `n` of the raster or a neighbour of it on the edge of a bridge's deck over lower ground (`ledgesOf`)? */
 export const byLedge = (r: Raster, n: number): boolean => {

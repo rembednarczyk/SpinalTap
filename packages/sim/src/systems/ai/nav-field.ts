@@ -7,7 +7,7 @@ import { solidIndexOf } from "../../world/solid-index";
 import { collidersOf } from "../../world/solids";
 import { STEP_HEIGHT } from "../movement-system";
 import { type NavMemo, heldRaster, recall, remember } from "./nav-memo";
-import { CLEARANCE, LEDGE, NAV_CELL, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellIndex, finish, rasterise, walled } from "./nav-raster";
+import { CLEARANCE, LEDGE, NAV_CELL, ON_LEDGE, type Raster, STEPS, type Slices, WALL_DIAGONAL, cellIndex, finish, pastLedge, rasterise, walled } from "./nav-raster";
 
 /**
  * The distance fields of the steering (ADR-0025, `steering.ts`): the windows rasterised round a
@@ -116,10 +116,11 @@ const passable = (r: Raster, c: number, dx: number, dz: number, out: boolean): n
     if ((r.base[to] ?? 0) - (r.base[from] ?? 0) > (dx !== 0 && dz !== 0 ? WALL_DIAGONAL : STEP_HEIGHT)) return -1;
   }
   // Not up the side of a bridge's deck over lower ground either (`ledgesOf`, G-741): round by its
-  // end. Down off it, over the edge, it may.
-  if (r.base && r.ledges?.[out ? n : c] === ON_LEDGE) {
+  // end. Down off it, over the edge, it may, but not where the deck goes on overhead (G-072).
+  if (r.base && r.ledges) {
     const [from, to] = out ? [c, n] : [n, c];
-    if ((r.base[to] ?? 0) - (r.base[from] ?? 0) > (dx !== 0 && dz !== 0 ? LEDGE * Math.SQRT2 : LEDGE)) return -1;
+    if (r.ledges[to] === ON_LEDGE && (r.base[to] ?? 0) - (r.base[from] ?? 0) > (dx !== 0 && dz !== 0 ? LEDGE * Math.SQRT2 : LEDGE)) return -1;
+    if (pastLedge(r, from, to)) return -1;
   }
   return n;
 };

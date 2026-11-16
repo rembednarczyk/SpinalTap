@@ -5,7 +5,7 @@ import { DECK_HEADROOM } from "../../world/deck";
 import { type GroundField, groundOf } from "../../world/ground";
 import { lineOfSight } from "../../world/hitscan";
 import { SNAP_DOWN, STEP_HEIGHT, offTheBank } from "../movement-system";
-import { LEDGE, NAV_CELL, ON_LEDGE, type Raster, cellIndex } from "./nav-raster";
+import { LEDGE, NAV_CELL, ON_LEDGE, type Raster, cellIndex, pastLedge } from "./nav-raster";
 import { wallOnWay } from "./nav-walls";
 
 /**
@@ -91,7 +91,7 @@ export const deckReach = (ground: GroundField, a: Vec3, b: Vec3): number => {
  * where the movement's slope is too steep, the terrain falling along the edge (by the west end of
  * the footbridge of podzamcze-2-0 the walk cut its corner, G-741). On terrain, the feet not
  * stopped by a bank in the skipped metres either (`bankNear`, G-738), nor the way up a wall
- * between cells (`wallOnWay`, G-740).
+ * between cells (`wallOnWay`, G-740), nor off a ledge onto a deck that goes on overhead (`pastLedge`, G-072).
  */
 export const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   const len = Math.hypot(b.x - a.x, b.z - a.z);
@@ -100,10 +100,13 @@ export const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   const start = cellIndex(r, a.x, a.z);
   let last = r.base && start >= 0 ? (r.base[start] ?? a.y) : a.y;
   if (wallOnWay(r, a, b, SAMPLE)) return false;
+  let prev = start;
   for (let i = 1; i <= n; i++) {
     const t = i / n;
     const c = cellIndex(r, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t);
     if (c < 0) return false;
+    if (r.ledges && prev >= 0 && c !== prev && pastLedge(r, prev, c)) return false;
+    prev = c;
     if (r.base && (r.flight || r.ledges)) {
       const h = r.base[c] ?? 0;
       if ((r.flight?.[c] ?? 0) > 0 && h - last > STEP_HEIGHT) return false;
@@ -163,7 +166,28 @@ export const straightWalk = (world: World<Entity>, from: Vec3, to: Vec3, height 
   const ground = groundOf(world);
   const knee = (p: Vec3) => ({ x: p.x, y: p.y + height, z: p.z });
   if (!ground.hasTerrain) return lineOfSight(world, knee(from), knee(to));
-  return lineOfSight(world, knee(from), knee(to), false) && !bankBetween(ground, from, to, deckReach(ground, from, to)) && !bankNear(ground, from, to);
+  const reach = deckReach(ground, from, to);
+  return lineOfSight(world, knee(from), knee(to), false) && !bankBetween(ground, from, to, reach) && !bankNear(ground, from, to) && !(reach === -Infinity && ontoDeck(ground, from, to));
+};
+
+/** How often the feet's way is sampled for a deck they get onto (m). */
+const FEET_STEP = 0.25;
+
+/**
+ * Do feet walking from `a` to `b` get onto a bridge's deck that the walk sees as overhead (G-072)?
+ * Up its ramp they stay on it past where it rises out of the walk's reach, and from there a goal
+ * under it lies under their feet: the walk at it went up the ramp, and back, at that line.
+ */
+const ontoDeck = (ground: GroundField, a: Vec3, b: Vec3): boolean => {
+  if (ground.decksNear(Math.min(a.x, b.x), Math.min(a.z, b.z), Math.max(a.x, b.x), Math.max(a.z, b.z)).length === 0) return false;
+  const n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / FEET_STEP);
+  let feet = a.y;
+  for (let i = 1; i <= n; i++) {
+    const [x, z] = [a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n];
+    feet = ground.heightAt(x, z, feet + STEP_HEIGHT);
+    if (feet - ground.heightAt(x, z, -Infinity) > STEP_HEIGHT) return true;
+  }
+  return false;
 };
 
 /**
