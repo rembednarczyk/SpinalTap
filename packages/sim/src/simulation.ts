@@ -94,7 +94,7 @@ export class Simulation {
     this.holder = { domain, flagsDirty: false };
     this.world = new World<Entity>();
     const ids = new IdAllocator();
-    const player = playerEntity(ids.take());
+    const player = playerEntity(ids.take(), playerStatsOf(domain).maxHp);
     this.streamer = chunks ? new WorldStreamer(ids, chunks) : new WorldStreamer(ids);
     bindGround(this.world, this.streamer.ground);
     this.streamer.enemyScaling = () => this.enemyScaling();
