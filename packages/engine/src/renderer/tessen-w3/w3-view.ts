@@ -61,6 +61,11 @@ export class W3View {
   /** The eye is in the hall's or the basement's rooms. */
   interior = false;
 
+  /** The lights that take a slot (`ToonMaterials.setLightFocus`): the hall's lamps alone in its rooms, every light outside. */
+  get lightScope(): string | null {
+    return this.interior ? W3_LAMP_PREFIX : null;
+  }
+
   constructor(private readonly deps: W3ViewDeps) {}
 
   /** The meshes on and their triangles (debug, tests). */
@@ -149,7 +154,6 @@ export class W3View {
     if (this.outer && this.outer.isEnabled(false) !== out) this.outer.setEnabled(out);
     for (const m of [this.inside, this.line]) if (m && m.isEnabled(false) !== near) m.setEnabled(near);
     const level = near && this.inside ? fade : 0;
-    this.deps.materials.setLightScope(this.interior ? W3_LAMP_PREFIX : null);
     if (level === this.lampLevel) return;
     this.lampLevel = level;
     for (const l of this.lamps) {
