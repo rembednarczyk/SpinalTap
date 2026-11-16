@@ -173,13 +173,16 @@ const run = async (page: Page, sizes: readonly (readonly [number, number])[], to
 
 /**
  * What the contract card must leave clear (ADR-0085): the top band, the bottom band, the stick and
- * the pad. The first run's move hint in the middle is not among them: it is a passing line.
+ * the pad, the buffs and the gear (G-876). The first run's move hint in the middle is not among
+ * them: it is a passing line.
  */
 const UNDER_CARD = [
   "[data-testid=objective]",
   "[data-testid=eddies]",
   "[data-testid=clock]",
   ".toast",
+  "[data-testid=buffs]",
+  "[data-testid=gear]",
   "[data-testid=minimap]",
   "[data-testid=identity]",
   "[data-testid=weapon-strip]",
@@ -189,8 +192,8 @@ const UNDER_CARD = [
 
 /**
  * The end-of-contract card (G-846) at its longest, every badge earned and a variation with a twist,
- * in English and Polish at the ends `scales` of the HUD scale: on screen, its close button on screen,
- * and over none of the top band, the bottom band and the pad.
+ * in English and Polish at the ends `scales` of the HUD scale, with every buff running: on screen,
+ * its close button on screen, and over none of the top band, the bottom band, the buffs and the pad.
  */
 const debriefFaults = async (page: Page, sizes: readonly (readonly [number, number])[], scales: readonly number[], label: string): Promise<string[]> => {
   // The card's own 15 s could run out on a loaded machine before it is measured: it stays up here.
@@ -199,6 +202,10 @@ const debriefFaults = async (page: Page, sizes: readonly (readonly [number, numb
     window.setTimeout = ((fn: TimerHandler, ms?: number, ...args: unknown[]) => (ms === 15_000 ? 0 : real(fn, ms, ...args))) as typeof window.setTimeout;
   });
   await start(page, label === "phone");
+  // Every buff at once, the longest row, and far from its blinking last 5 s (G-876).
+  await page.evaluate(() => window.__seki!.jump({ buffs: [{ id: "regen", left: 110 }, { id: "quick_cooldown", left: 80 }, { id: "steady", left: 55 }] }));
+  await step(page, 1);
+  await expect(page.getByTestId("buff-steady")).toBeVisible();
   const out: string[] = [];
   for (const [w, h] of sizes) {
     await page.setViewportSize({ width: w, height: h });
@@ -244,6 +251,10 @@ const debriefFaults = async (page: Page, sizes: readonly (readonly [number, numb
       }
     }
   }
+  // Closed (a tap on a phone, Enter at a desk, where the mouse steers the camera), the card gives the buffs back.
+  await (label === "phone" ? page.locator(".debrief__close").tap() : page.keyboard.press("Enter"));
+  await expect(page.getByTestId("debrief")).toBeHidden();
+  if (!(await page.getByTestId("buffs").isVisible())) out.push(`${label}: buffs hidden after the card closed`);
   return out;
 };
 
