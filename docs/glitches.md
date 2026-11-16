@@ -135,11 +135,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: żaden rekwizyt pod pomostem nie sięga wyżej niż spód pomostu
 
 ### G-071 Kule przelatują przez pomost
-- Status: zgłoszone (z weryfikacji G-062)
+- Status: w PR #622; wcześniej: zgłoszone (z weryfikacji G-062)
 - Ważność: S3 (proponowana; po G-062 da się stanąć pod mostem i strzelać przez pomost w obie strony) · Koszt: średni
 - Dowód: ADR-0053 traktuje pomost jako podłogę dla ruchu, nie jako przesłonę dla strzałów i widoczności
 - Pakiet właściciela: packages/sim (walka, linia widzenia)
 - Test przyjęcia: strzał z pomostu do celu pod nim (i odwrotnie) trafia w pomost; świadek pod mostem nie widzi gracza na pomoście
+- Przyczyna: GroundField.rayHit liczył tylko teren. Poprawka: rayDecks w deck.ts (płyta od powierzchni do spodu), w rayGeometry i lineOfSight. Test deck-cover.test.ts: 4/7 pada bez poprawki, 7/7 z nią. Hash determinism bez zmian.
 
 ### G-072 Walczący na pomoście nie schodzi pod most do gracza stojącego pod nim
 - Status: zgłoszone (z naprawy G-068)
@@ -2096,7 +2097,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-846 Karta podsumowania zlecenia zakrywa komunikaty i cel, na 1024x600 wychodzi poza ekran
 - Ważność: S3 · Zasięg: HUD przy skali 1: desktop 1280x720 przecina komunikat; telefon przecina cel, drążek i komunikat; 1024x600 poza ekranem
 - Opis: Sonda e2e agenta skalowania 15.11; poza zakresem ADR-0085 (PR #587)
-- Status: naprawiony na ccr-ec2c4269-ilh8k8-g846 (c55aa4c, 9e1517b), w PR; wcześniej: nowy
+- Status: naprawiony (main 16.11); wcześniej: naprawiony na ccr-ec2c4269-ilh8k8-g846 (c55aa4c, 9e1517b), w PR; wcześniej: nowy
 - Pakiet właściciela: packages/ui
 - Test: e2e/ui-scale.spec.ts contract card (70 kolizji na main → 0) + packages/ui/test/debrief-zone.test.tsx; hint poza kontrolą, środek karty na telefonie nie przewija się palcem
 
@@ -2134,7 +2135,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-852 touch-layout: karta dzielnicy raz zachodzi na minimapę przy 844×390 en
 - Ważność: S4 · Zasięg: e2e touch-layout, phone district card, skala 1
 - Opis: Jedno przecięcie 16×74 px przy obciążeniu maszyny, powtórka zielona; możliwy flake e2e albo wyścig układu przy wczytaniu karty (znalezione przy PR #587)
-- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-test-reliability, e4d1d3f); wcześniej: nowy
+- Status: naprawiony (main 16.11); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-test-reliability, e4d1d3f); wcześniej: nowy
 - Pakiet właściciela: e2e, packages/ui
 - 15.11 porządki rejestru: G-868 to duplikat; pada też na czystym main e839d94 (en i pl, 844x390 i 800x370), w śladzie tylko karta dzielnicy, przyczyna nieustalona.
 - przyczyna: pomiar karty w trakcie animacji wejścia trzymanej przez brak klatek (toast-in +30 px = 16×74); test czeka na Animation.finished; dowód: wjazd 20 s pada bez/przechodzi z; 10/10 repeat
@@ -2214,14 +2215,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-864 ground-strip-gap liczy szczeliny pod budynkami
 - Ważność: S4 · Zasięg: cały skan; 16 kluczy z G-853 r2 w całości pod budynkami
 - Opis: Kontrola skanu ground-strip-gap nie odrzuca szczelin przykrytych budynkiem, więc baza rośnie o fałszywe alarmy.
-- Status: w PR #609 (8840dbc); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-scan-false-alarms, 8840dbc); wcześniej: nowy
+- Status: naprawiony (main 16.11); wcześniej: w PR #609 (8840dbc); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-scan-false-alarms, 8840dbc); wcześniej: nowy
 - Pakiet właściciela: tools/glitch-scan
 - 8840dbc: ground-strip-gap pomija komórki w obrysach budynków (inBuilding); -53 klucze (1270->1217), 0 nowych
 
 ### G-865 model-donors.test.ts wyczerpuje pamięć przy wspólnym przebiegu kilku pakietów
 - Ważność: S4 · Zasięg: packages/engine/test/model-donors.test.ts
 - Opis: Zgłoszone przez naprawiacza G-853 r2: test:rerun kilku pakietów naraz kończy się brakiem pamięci w tym pliku; sam przechodzi.
-- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-test-reliability, 69b355a); wcześniej: nowy
+- Status: naprawiony (main 16.11); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-test-reliability, 69b355a); wcześniej: nowy
 - Pakiet właściciela: packages/engine
 - przyczyna: NullEngine bez dispose w EngineStore, worker isolate:false (150 silników, 1722 MB po GC, OOM); setupFiles free-engines.ts; engine 1 worker: OOM -> 151/151; test:rerun engine ui app OK
 
@@ -2235,7 +2236,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-867 glitch-shots: ta sama treść daje raz klatkę w cieniu (jasność 49), raz w słońcu (148)
 - Ważność: S4 · Zasięg: bs-291-pn (291; −78), przebieg naprawiacza G-853 r2 na e04c860 wobec dwóch przebiegów kuratora na e3175f7 (to samo drzewo)
 - Opis: Przyczyna nieustalona: oświetlenie albo cień w przebiegu zrzutów, nie geometria. Zrzuty: scratchpad/g853/shots2 i scratchpad/topo-g853r2/shots2
-- Status: w PR #618; wcześniej: nowy
+- Status: naprawiony (main 16.11); wcześniej: w PR #618; wcześniej: nowy
 - Pakiet właściciela: packages/engine
 - odtworzone na e3175f7 (2/6 stron, 54,1/46,4 wobec 147,2); main 9/9 = 107,3; różnica w treści statycznej mapy cienia księżyca (+335..407 tys. tekseli) przy tych samych rzucających, macierzach i stanie GL; nie zegar, paleta, losowość; kandydaci: shareDepth, kolejność wobec sondy mokrego asfaltu, SwiftShader; capture() po view() zwraca poprzednią klatkę (inna sprawa); bez poprawki
 - przyczyna: getIndices() bez kopii w rebuildStaticProxy + MergeMeshes wydłuża indeksy pierwszego klonu w miejscu, nowe proxy indeksuje poza wierzchołki; bez poprawki 6/33 stron inna mapa, z poprawką 12/12; test moon-shadow-proxy.test.ts
@@ -2282,7 +2283,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-875 Skan: próbka na linii ukośnej ściany liczona jako goła (zaokrąglony obrys 0,1 m)
 - Ważność: S4 · Zasięg: tools/glitch-scan landuse-bare, bare-on-cover; krakowskie-2-1 Karmelicka 7
 - Opis: Ściana o nachyleniu 2:1 przechodzi przez siatkę 0,25/0,75 o 2-3 mm od obrysu tabeli; import uznaje próbkę za wnętrze, skan za ziemię (G-872 r2: 5 kluczy).
-- Status: w PR #609 (066b575); wcześniej: nowy
+- Status: naprawiony (main 16.11); wcześniej: w PR #609 (066b575); wcześniej: nowy
 - Pakiet właściciela: tools/glitch-scan
 - Łatka gotowa (scratchpad/g875-fix.patch: próbka w obrysie z mapy i <=0,1 m od ściany tablicy): landuse-bare -36, bare-on-cover -47, ale +1 kerb-gap-bare krakowskie-0-0 -60,-170 (ta sama prawdziwa goła szczelina przy krawężniku przechodzi z landuse-bare do kerb-gap-bare przez landuseBareAt); czeka na decyzję użytkownika: accept 1 klucza (bilans -82) albo zmiana landuseBareAt na próbki 0,25 m
 - 16.11 decyzja użytkownika: przyjąć 1 klucz kerb-gap-bare krakowskie-0-0 -60,-170 (bilans −82); łatka na gałęzi #609.
@@ -2323,7 +2324,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-881 barrier-detour-cost i traffic-bodies-shifted: podniesiony vi.mock w projekcie shared (isolate:false)
 - Ważność: S4 · Zasięg: packages/sim/test/barrier-detour-cost.test.ts, traffic-bodies-shifted.test.ts
 - Opis: Ten sam wzorzec co G-877: vi.mock nie sięga modułu już załadowanego w workerze; możliwa ta sama wada przy pewnej kolejności plików. Znalezione przy G-877.
-- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-g881, 74d3cfe); wcześniej: nowy
+- Status: naprawiony (main 16.11); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-g881, 74d3cfe); wcześniej: nowy
 - Pakiet właściciela: packages/sim
 - Wada realna: po pliku ładującym ../src vi.mock nie docierał (0 odczytów zmockowanego TRAFFIC_ROUTES wobec 91 597), testy przechodziły bez sprawdzania; resetModules + doMock + dynamiczne importy, strażniki (pas przesunięty < 0,05 m, routeAcrossLevels zmockowane).
 
