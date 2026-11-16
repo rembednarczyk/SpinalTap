@@ -4,6 +4,7 @@ import type { Rect } from "../content/builders";
 import { ChunkIndex, distanceTo } from "./chunk-index";
 import type { Entity } from "./components";
 import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight } from "./deck";
+import { GentleBlocks } from "./gentle-ground";
 import { type GroundVault, VaultIndex } from "./vault";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
@@ -105,6 +106,8 @@ export class GroundField {
   private readonly vaults: VaultIndex;
   /** The shafts within each chunk's bounds (none for the shafts themselves): a ray in the chunk stops at their edge (G-377). */
   private readonly chunkCuts: readonly (readonly Rect[])[];
+  /** Where no point is too steep to walk, known without sampling a slope (G-886). */
+  readonly gentle: GentleBlocks;
 
   constructor(world: readonly GroundChunk[], cuts: readonly GroundCut[] = [], vaults: readonly GroundVault[] = []) {
     this.vaults = new VaultIndex(vaults);
@@ -130,6 +133,7 @@ export class GroundField {
       minZ: Math.min(...boxes.map((b) => b.minZ)),
       maxZ: Math.max(...boxes.map((b) => b.maxZ)),
     };
+    this.gentle = new GentleBlocks(chunks, this.index, this.cuts, [...this.deckBoxes, ...boxes, ...vaults.map((v) => v.bounds)], SLOPE_HALF_SPAN, MAX_WALK_SLOPE);
   }
 
   /** Is a flight of steps hung off a bridge (G-255) within `margin` of the box (`maxX`, `maxZ` default to the point)? */

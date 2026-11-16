@@ -169,18 +169,22 @@ export const straightWalk = (world: World<Entity>, from: Vec3, to: Vec3, height 
 /**
  * Does the way from `a` to `b` on the ground cross a bank too steep to walk, or climb onto a
  * flight hung off a bridge more than a step high (its side, G-255, which the slope at the
- * samples steps over)? Sampled every half cell.
+ * samples steps over)? Sampled every half cell, the slope only off the blocks of terrain where
+ * none is steep (`GroundField.gentle`): a chase 200 m long sampled 400 slopes a step (G-886).
  */
-const bankBetween = (ground: GroundField, a: Vec3, b: Vec3, reach: number): boolean => {
+export const bankBetween = (ground: GroundField, a: Vec3, b: Vec3, reach: number): boolean => {
   const len = Math.hypot(b.x - a.x, b.z - a.z);
   const n = Math.ceil(len / NAV_CELL);
   // The heights only where a flight is near the way: elsewhere (almost everywhere) no cost.
   const flights = ground.nearFlight(Math.min(a.x, b.x), Math.min(a.z, b.z), 0, Math.max(a.x, b.x), Math.max(a.z, b.z));
   let last = flights ? ground.heightAt(a.x, a.z, reach) : 0;
+  const block = { minX: 0, maxX: -1, minZ: 0, maxZ: -1 };
+  const inBlock = (x: number, z: number): boolean => x >= block.minX && x <= block.maxX && z >= block.minZ && z <= block.maxZ;
   for (let i = 1; i <= n; i++) {
     const t = i / n;
     const [x, z] = [a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t];
-    if (ground.steepAt(x, z, reach)) return true;
+    const gentle = inBlock(x, z) || (ground.gentle.at(x, z, block) && inBlock(x, z));
+    if (!gentle && ground.steepAt(x, z, reach)) return true;
     if (!flights) continue;
     const h = ground.heightAt(x, z, reach);
     if (h - last > STEP_HEIGHT && ground.onFlight(x, z)) return true;
