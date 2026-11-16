@@ -276,6 +276,19 @@ const LAMP_PLAN = (): PlanGroup[] => {
 /** The surfaces a lamp of the plan stands on or beside (`lamp-off-band`). */
 const PAVED: ReadonlySet<string> = new Set(["road", "crossing", "sidewalk", "square", "cobble", "footway", "steps"]);
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
+
+/** The ground dug out of the chunks (`GroundCut`) and their rooms in the ground (`GroundVault`, with their walls): W-3's basement and culvert (ADR-0082 stage 2). */
+const CHUNK_CUTS = WORLD_CHUNKS.flatMap((c) => c.cuts ?? []);
+const CHUNK_VAULTS = WORLD_CHUNKS.flatMap((c) => c.vaults ?? []);
+const inBounds = (b: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ;
+/** The ground a block whose bottom is at `bottom` stands on: a cut's floor, a room's in the ground deep under the terrain, or the terrain. */
+const standingGround = (x: number, z: number, bottom: number): number => {
+  const cut = CHUNK_CUTS.find((c) => inBounds(c.bounds, x, z));
+  if (cut) return cut.floor;
+  const terrain = groundY(x, z);
+  const vault = bottom < terrain - 1 ? CHUNK_VAULTS.find((v) => inBounds(v.bounds, x, z)) : undefined;
+  return vault ? vault.floor : terrain;
+};
 /** The game's ground, NaN off the map's chunks (where `groundY` is 0, no ground of the map). */
 const onMapGround = (x: number, z: number): number =>
   MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ) ? groundY(x, z) : Number.NaN;
@@ -1048,11 +1061,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     ),
   /** A crowd lane walked a metre or more inside a kerb car park, on its cars' strip (G-177). */
   "crowd-lane-on-parking": () => crowdLanesOnParking(kerbParksOf(SOURCE_OSM), CROWD_LANES),
-  /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
+  /** A game block standing on the ground (not an awning or a deck) that floats or sinks; in a dug shaft or a room in the ground, on its floor. */
   "prop-off-ground": () =>
     GAME_PROPS.flatMap((p) => {
       if (p.view.kind !== "block" || !p.solid || p.view.size.y < 0.8) return [];
-      const gap = p.center.y - p.view.size.y / 2 - groundY(p.center.x, p.center.z);
+      const bottom = p.center.y - p.view.size.y / 2;
+      const gap = bottom - standingGround(p.center.x, p.center.z, bottom);
       return (gap > 0.15 && gap < 1) || gap < -0.3 ? [{ at: near(p.center.x, p.center.z), what: `${p.view.skin?.style ?? p.view.material} ${gap.toFixed(2)} m` }] : [];
     }),
   /**
@@ -1456,8 +1470,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     padsNotLevel(
       PADS,
       groundY,
+      // Not the solids of the rooms in the ground under the pads (W-3's culvert's ceiling under the west yard).
       GAME_PROPS.flatMap((p): SolidBox[] =>
-        p.solid && p.view.kind === "block"
+        p.solid && p.view.kind === "block" && !CHUNK_VAULTS.some((v) => inBounds(v.bounds, p.center.x, p.center.z))
           ? [{ minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2, top: p.center.y + p.view.size.y / 2 }]
           : [],
       ),

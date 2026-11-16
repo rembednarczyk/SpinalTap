@@ -13,7 +13,7 @@ import { W3_Y } from "./site";
 const at = (x: number, y: number, z: number): Vec3 => ({ x, y: W3_Y + y, z });
 
 /** A box over the ranges (y over the floor), solid by default. */
-export const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, material: BlockMaterial, solid = true): StaticProp => ({
+export const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, material: BlockMaterial = "concrete", solid = true): StaticProp => ({
   center: at((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2),
   view: { kind: "block", size: { x: x1 - x0, y: y1 - y0, z: z1 - z0 }, material },
   solid,
@@ -42,6 +42,16 @@ const signedArea = (ring: readonly GroundPoint[]): number => {
 /** The ring counter-clockwise seen from above, as the map city's outlines are. */
 export const counterClockwise = (ring: readonly GroundPoint[]): readonly GroundPoint[] => (signedArea(ring) >= 0 ? ring : [...ring].reverse());
 
+/**
+ * A shell the game walks into (ADR-0082 stage 2): its solid is only the roof slab, `slab` thick
+ * under the solid's top (the walls are the interior's blocks), and its facade has openings
+ * (`doorways`, world x and z, heights over the floor).
+ */
+export interface ShellHollow {
+  readonly slab: number;
+  readonly doorways?: readonly { readonly at: GroundPoint; readonly width: number; readonly bottom: number; readonly top: number }[];
+}
+
 /** A W-3 building drawn by the map city: its solid (a prism over a convex outline) and its view. */
 export interface ShellPart {
   readonly prop: StaticProp;
@@ -55,14 +65,15 @@ export interface ShellPart {
  * walls, its roof `atticHeight` under the top: the looks are chosen so that is 1.2 m and the
  * drawn roof meets the solid's (`packages/engine/test/w3-shell.test.ts`).
  */
-export const shellPart = (outline: readonly GroundPoint[], top: number, levels: number, look: number, solidTop = top): ShellPart => {
+export const shellPart = (outline: readonly GroundPoint[], top: number, levels: number, look: number, solidTop = top, hollow?: ShellHollow): ShellPart => {
   const ring = counterClockwise(outline);
   const xs = ring.map((p) => p.x);
   const zs = ring.map((p) => p.z);
   const c = at((Math.min(...xs) + Math.max(...xs)) / 2, 0, (Math.min(...zs) + Math.max(...zs)) / 2);
   const rel = ring.map((p) => ({ x: Math.round((p.x - c.x) * 100) / 100, z: Math.round((p.z - c.z) * 100) / 100 }));
-  const view: ViewDescriptor = { kind: "building", outline: rel, height: top, levels, use: "industrial", look };
-  const prism: PrismDef = { points: rel, bottom: 0, top: solidTop };
+  const doorways = (hollow?.doorways ?? []).map((d) => ({ ...d, at: { x: Math.round((d.at.x - c.x) * 100) / 100, z: Math.round((d.at.z - c.z) * 100) / 100 } }));
+  const view: ViewDescriptor = { kind: "building", outline: rel, height: top, levels, use: "industrial", look, ...(doorways.length > 0 ? { doorways } : {}) };
+  const prism: PrismDef = { points: rel, bottom: hollow ? solidTop - hollow.slab : 0, top: solidTop };
   return { prop: { center: c, view, solid: true, prisms: [prism], scenery: true }, view, at: c };
 };
 
@@ -98,3 +109,57 @@ export const barrierPiece = (kind: BarrierKind, x: number, y: number, z: number,
   yaw,
   variant: barrierVariant({ kind, length, height, rise: 0, material }),
 });
+
+/** An opening in a wall: from `from` to `to` along it, from `bottom` (absent: the wall's foot) up to `top`. */
+export interface WallGap {
+  readonly from: number;
+  readonly to: number;
+  readonly top: number;
+  readonly bottom?: number;
+}
+
+/** A door's opening in a wall along its axis: `at` its middle, `width` wide, up to `height`. */
+export const doorGap = (at: number, width: number, height: number): WallGap => ({ from: at - width / 2, to: at + width / 2, top: height });
+
+/**
+ * A wall from `a0` to `a1` along its axis, `b0`..`b1` across it, from `y0` to `y1` over the floor,
+ * with openings: the pieces either side of each, a lintel over it and a sill under it.
+ */
+const wallAlong = (axis: "x" | "z", a0: number, a1: number, b0: number, b1: number, y0: number, y1: number, gaps: readonly WallGap[], material: BlockMaterial): StaticProp[] => {
+  const piece = (u0: number, u1: number, v0: number, v1: number): StaticProp => (axis === "x" ? box(u0, u1, v0, v1, b0, b1, material) : box(b0, b1, v0, v1, u0, u1, material));
+  const out: StaticProp[] = [];
+  let at = a0;
+  for (const g of [...gaps].sort((p, q) => p.from - q.from)) {
+    if (g.from > at) out.push(piece(at, g.from, y0, y1));
+    if (g.top < y1) out.push(piece(g.from, g.to, g.top, y1));
+    const bottom = g.bottom ?? y0;
+    if (bottom > y0) out.push(piece(g.from, g.to, y0, bottom));
+    at = Math.max(at, g.to);
+  }
+  if (at < a1) out.push(piece(at, a1, y0, y1));
+  return out;
+};
+
+/** A wall along x (x0..x1) between z0 and z1, with openings along x. */
+export const wallX = (x0: number, x1: number, z0: number, z1: number, y0: number, y1: number, gaps: readonly WallGap[] = [], material: BlockMaterial = "concrete"): StaticProp[] =>
+  wallAlong("x", x0, x1, z0, z1, y0, y1, gaps, material);
+
+/** A wall along z (z0..z1) between x0 and x1, with openings along z. */
+export const wallZ = (z0: number, z1: number, x0: number, x1: number, y0: number, y1: number, gaps: readonly WallGap[] = [], material: BlockMaterial = "concrete"): StaticProp[] =>
+  wallAlong("z", z0, z1, x0, x1, y0, y1, gaps, material);
+
+const plainBlock = (p: StaticProp): boolean => p.view.kind === "block" && !p.view.slope && !p.view.rungs && !p.mechanism;
+
+/**
+ * Parts of an interior (ADR-0038): `interior` on the prop for the minimap and on its block view,
+ * so the renderer draws them merged and without the moon shadow. Stairs, ladders and doors stay as they are.
+ */
+export const indoor = (props: readonly StaticProp[]): StaticProp[] =>
+  props.map((p) => (plainBlock(p) && p.view.kind === "block" ? { ...p, interior: true, view: { ...p.view, interior: true } } : p));
+
+/**
+ * Outdoor blocks drawn merged like an interior's (ADR-0038: one mesh per area, no moon shadow),
+ * not indoor on the minimap: the low boxes' walls, the cooling units, the hatch's curb. Each
+ * plain block is a mesh of its own otherwise (stage 2 would add some twenty to `w3-zewnatrz`).
+ */
+export const merged = (props: readonly StaticProp[]): StaticProp[] => props.map((p) => (plainBlock(p) && p.view.kind === "block" ? { ...p, view: { ...p.view, interior: true } } : p));
