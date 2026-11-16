@@ -2463,8 +2463,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-901 Próg samoobrony (session.lastThreat) poza zapisem: strzał gracza tuż po strzale wroga po wczytaniu liczy się jako przestępstwo
 - Ważność: S4 · Zasięg: zapis i wczytanie do 3 s po strzale wroga
 - Opis: Znalezione przy G-900 (czytanie kodu, bez pomiaru): session.lastThreat (próg 3 s, playerEngaged w world/street.ts) nie trafia do zapisu. Po wczytaniu strzał gracza w ciągu 3 s po strzale wroga liczy się jako przestępstwo, w grze żywej nie. Do potwierdzenia przez łowcę; sonda musi zapisywać przez calmForSave (jak SaveController.snapshot).
-- Status: do potwierdzenia
+- Status: potwierdzone (łowca 16.11); wcześniej: do potwierdzenia
 - Pakiet właściciela: packages/sim
+- Łowca: lastThreat (combat-system.ts:128 threaten) nie wchodzi do SaveSnapshot, a calmForSave go nie zeruje. Po wczytaniu strzał gracza <3 s po strzale wroga, gdy w 30 m nie ma zaangażowanego AI (np. strzelec zabity), daje offend(gunfire): incidents 1 zamiast 0, ziarna 4, 1, 7 (scena streetSim, zapis jak SaveController.snapshot). Czytają go też scanner-system.ts:162 i hud-sync.ts:36 (isCalm), niezmierzone.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
