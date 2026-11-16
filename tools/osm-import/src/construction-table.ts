@@ -16,7 +16,7 @@ import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/t
 import { loadMapLod1 } from "./load.ts";
 import { withBuiltSites } from "./built-sites.ts";
 import { DISTRICTS } from "./config.ts";
-import { FOOT_KINDS, type SiteGround, lineDistance } from "./construction-ground.ts";
+import { FOOT_KINDS, type SiteGround, type SiteNeighbour, lineDistance } from "./construction-ground.ts";
 import { type SiteOutline, type SitePlan, planSite } from "./construction-site.ts";
 import { type Pt, type Rect, centroid, pointInRing, ringBounds } from "./geometry.ts";
 import { type OsmData, type Tags, mergeOsm, parseExtract } from "./osm.ts";
@@ -30,6 +30,8 @@ export const SITES_OUT = join(REPO, "packages/sim/src/content/lublin/constructio
 
 /** How far a site's pieces keep from the map's own walls and fences (m). */
 const BARRIER_GAP = 0.5;
+/** How far round a site's box its neighbours are looked for (m). */
+const NEIGHBOURS = 30;
 
 const tagsOf = (osm: OsmData, id: string): Tags | undefined => (id.startsWith("w") ? osm.ways.get(Number(id.slice(1)))?.tags : osm.relations.get(Number(id.slice(1).split("/")[0]))?.tags);
 
@@ -59,7 +61,17 @@ export const chunkGround = (site: Site, box: Rect): SiteGround => {
   const streets = site.streets.filter((s) => near(box, s.line, 80));
   const drive = streets.filter((s) => !FOOT_KINDS.has(s.kind));
   const byBarrier = (p: Pt) => barriers.some((l) => l.some((a, i) => i + 1 < l.length && segmentDistance(p.x, p.z, a.x, a.z, l[i + 1]!.x, l[i + 1]!.z) < BARRIER_GAP));
+  // The buildings round it (stage 2), each once (a building cut at a seam is in each chunk's table).
+  const seen = new Set<string>();
+  const neighbours: SiteNeighbour[] = [];
+  for (const b of chunks.flatMap((c) => c.buildings)) {
+    if (seen.has(b.id)) continue;
+    seen.add(b.id);
+    const ring = flat(b.outline).map((p) => ({ x: p.x + b.x, z: p.z + b.z }));
+    if (near(box, ring, NEIGHBOURS)) neighbours.push({ ring, top: Math.round((b.y + b.height + Math.max(0, b.roof ?? 0)) * 100) / 100 });
+  }
   return {
+    neighbours,
     free: (p) => {
       if (!site.chunkAt(p) || site.deckAt(p) !== null) return false;
       const s = site.surfaceAt(p);
@@ -96,6 +108,7 @@ export const emitSites = (plans: readonly SitePlan[]): string =>
     "export const LUBLIN_CONSTRUCTION_SITES: readonly LublinConstructionSiteData[] = [",
     ...plans.flatMap((p) => [
       `  { id: ${JSON.stringify(p.id)}, seed: ${p.seed}, set: ${JSON.stringify(p.set)}, area: ${p.area},`,
+      `    outline: ${JSON.stringify(flatOf(p.outline))},`,
       `    board: ${JSON.stringify(p.board)},`,
       `    dig: ${p.dig ? `{ outline: ${JSON.stringify(flatOf(p.dig.outline))}, y: ${p.dig.y}, blend: ${p.dig.blend} }` : "null"},`,
       "    pieces: {",

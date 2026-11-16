@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { siteFenceVariant, siteGateVariant } from "../../../packages/core/src/world/sites.ts";
-import { type SiteGroundQuery, siteGateBlocked, siteOnRoad, siteThroughWall } from "./site-pieces";
+import { SITE_SCAFFOLD, siteCraneVariant, siteFenceVariant, siteGateVariant, siteScaffoldVariant } from "../../../packages/core/src/world/sites.ts";
+import { type SiteGroundQuery, siteCraneReach, siteFootprint, siteGateBlocked, siteOnRoad, siteThroughWall } from "./site-pieces";
 
 /** The building sites' checks of ADR-0087 on a plan: a pavement south of z 0, a carriageway south of z -3, a building east of x 20. */
 const ground = (barriers: SiteGroundQuery["barriers"] = []): SiteGroundQuery => ({
@@ -40,5 +40,20 @@ describe("the building sites' checks (ADR-0087)", () => {
     expect(siteGateBlocked([gate(8, 0.3), cabin(8, 2.3)], ground())).toHaveLength(1);
     // A wicket against a building's wall.
     expect(siteGateBlocked([gate(19.9, 0.3, true)], ground()).map((f) => f.what)).toEqual([expect.stringMatching(/^wicket blocked/)]);
+  });
+
+  it("finds a corner of a site its crane's jib does not reach (stage 2)", () => {
+    const crane = (x: number, z: number, jib: number) => [x, 0, z, 0, siteCraneVariant({ height: 20, jib, phase: 0 })];
+    const outline = [0, 0, 30, 0, 30, 20, 0, 20];
+    expect(siteCraneReach([{ id: "w1", outline, pieces: { "site-crane": crane(15, 10, 18.5) } }])).toEqual([]);
+    expect(siteCraneReach([{ id: "w1", outline, pieces: { "site-crane": crane(5, 5, 18.5) } }]).map((f) => f.what)).toEqual([expect.stringMatching(/^w1: corner 30,0 25\.50 m off/), expect.stringMatching(/^w1: corner 30,20 /)]);
+    // A site without a crane has nothing to reach.
+    expect(siteCraneReach([{ id: "w1", outline, pieces: {} }])).toEqual([]);
+  });
+
+  it("keeps the scaffold's footprint on the site's side of its foot", () => {
+    const s: StreetPropItem = { prop: "site-scaffold", x: 5, y: 0, z: 10, yaw: Math.PI, variant: siteScaffoldVariant({ length: 6, height: 8, rise: 0, banner: 1 }) };
+    const zs = siteFootprint(s).map((p) => p.z);
+    expect([Math.min(...zs), Math.max(...zs)].map((z) => Math.round(z * 100) / 100)).toEqual([10 - SITE_SCAFFOLD.depth, 10]);
   });
 });

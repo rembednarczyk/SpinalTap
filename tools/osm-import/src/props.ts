@@ -16,7 +16,7 @@ writeFileSync(PROPS_OUT, withFingerprint(text, tableFingerprint("props"), TABLES
 writeFileSync(SITES_OUT, withFingerprint(sitesText, tableFingerprint("props"), TABLES.props.command));
 console.log(
   `building sites (ADR-0087): ${sites.length}:`,
-  sites.map((s) => `${s.id} ${s.set} ${s.area} m², ${s.pieces.length} pieces, ${s.gate ? (s.gate.wicket ? "wicket" : "gate") : "no gate"}, dig ${s.dig ? `${s.dig.area} m²` : "none"}, ${s.unfenced} m unfenced`).join("; "),
+  sites.map((s) => `${s.id} ${s.set} ${s.area} m², ${s.pieces.length} pieces, ${s.gate ? (s.gate.wicket ? "wicket" : "gate") : "no gate"}, dig ${s.dig ? `${s.dig.area} m²` : "none"}, ${s.unfenced} m unfenced, crane ${s.crane ? `${s.crane.height} m, jib ${s.crane.jib} m` : "none"}, scaffold ${s.scaffold ? `${s.scaffold.length} x ${s.scaffold.height.toFixed(1)} m` : "none"}`).join("; "),
 );
 const total = Object.values(stats.perKind).reduce((a, b) => a + b, 0);
 console.log(`props.generated.ts: ${(statSync(PROPS_OUT).size / 1024).toFixed(0)} KiB, ${total} pieces in ${byChunk.size} chunks`);

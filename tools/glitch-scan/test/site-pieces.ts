@@ -1,6 +1,19 @@
 import { segmentDistance } from "../../../packages/core/src/math/geometry2d.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { SITE_BOARD, SITE_CABIN, SITE_FENCE, SITE_GATE, SITE_KINDS, SITE_LEAF, siteFenceLayout, siteGateLayout } from "../../../packages/core/src/world/sites.ts";
+import {
+  SITE_BOARD,
+  SITE_CABIN,
+  SITE_CRANE,
+  SITE_FENCE,
+  SITE_GATE,
+  SITE_KINDS,
+  SITE_LEAF,
+  SITE_SCAFFOLD,
+  siteCraneLayout,
+  siteFenceLayout,
+  siteGateLayout,
+  siteScaffoldLayout,
+} from "../../../packages/core/src/world/sites.ts";
 import { SOLID_FURNITURE, distanceToPiece } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types";
 import { pointInRing } from "../../osm-import/src/geometry.ts";
@@ -13,7 +26,8 @@ import type { Site } from "../../osm-import/src/props-site.ts";
  * - `site-through-wall`: a sample in a building's outline or within `WALL_GAP` of the map's own
  *   walls and fences, one finding a piece;
  * - `site-gate-blocked`: a gate whose opening has a building, water or rails, or a solid of the
- *   furniture, `OUTSIDE` m in front of it or `INSIDE` m behind it: no way in.
+ *   furniture, `OUTSIDE` m in front of it or `INSIDE` m behind it: no way in;
+ * - `site-crane-reach` (stage 2): a corner of the site's outline its crane's jib does not reach.
  */
 
 type Pt = { readonly x: number; readonly z: number };
@@ -37,6 +51,9 @@ const reach = (p: StreetPropItem): readonly [number, number, number][] => {
   if (p.prop === "site-fence") return [[siteFenceLayout(p.variant).length / 2, SITE_FENCE.thick / 2, 0]];
   if (p.prop === "site-cabin") return [[SITE_CABIN.hx, SITE_CABIN.hz, 0]];
   if (p.prop === "site-board") return [[SITE_BOARD.width / 2, 0.03, 0]];
+  // Stage 2: the crane's base (its jib is overhead), the scaffold from the wall's side into the site.
+  if (p.prop === "site-crane") return [[SITE_CRANE.base, SITE_CRANE.base, 0]];
+  if (p.prop === "site-scaffold") return [[siteScaffoldLayout(p.variant).length / 2, SITE_SCAFFOLD.depth / 2, SITE_SCAFFOLD.depth / 2]];
   const g = siteGateLayout(p.variant);
   return [[g.width / 2 + 2 * SITE_GATE.post, SITE_GATE.post, 0]];
 };
@@ -114,9 +131,32 @@ export const siteGroundOf = (site: Site, chunks: readonly LublinChunkData[]): Si
   };
 };
 
-/** The three checks over the game's furniture. */
-export const siteChecks = (pieces: () => readonly StreetPropItem[], ground: () => SiteGroundQuery): Record<string, () => Finding[]> => ({
+/** A site of the table as the crane's check reads it: its outline (flat x, z) and its pieces' rows. */
+export interface SiteOfTable {
+  readonly id: string;
+  readonly outline: readonly number[];
+  readonly pieces: Readonly<Partial<Record<string, readonly number[]>>>;
+}
+
+/** `site-crane-reach` (stage 2): a corner of a site's outline further from its crane's mast than the jib reaches. */
+export const siteCraneReach = (sites: readonly SiteOfTable[]): Finding[] =>
+  sites.flatMap((s) => {
+    const row = s.pieces["site-crane"] ?? [];
+    const out: Finding[] = [];
+    for (let i = 0; i + 5 <= row.length; i += 5) {
+      const [x, z, jib] = [row[i]!, row[i + 2]!, siteCraneLayout(row[i + 4]!).jib];
+      for (let k = 0; k + 1 < s.outline.length; k += 2) {
+        const d = Math.hypot(s.outline[k]! - x, s.outline[k + 1]! - z);
+        if (d > jib + 1e-6) out.push({ at: `${x.toFixed(2)},${z.toFixed(2)}`, what: `${s.id}: corner ${s.outline[k]},${s.outline[k + 1]} ${d.toFixed(2)} m off, jib ${jib} m` });
+      }
+    }
+    return out;
+  });
+
+/** The four checks over the game's furniture and the sites' table. */
+export const siteChecks = (pieces: () => readonly StreetPropItem[], ground: () => SiteGroundQuery, sites: () => readonly SiteOfTable[] = () => []): Record<string, () => Finding[]> => ({
   "site-on-road": () => siteOnRoad(pieces(), ground()),
   "site-through-wall": () => siteThroughWall(pieces(), ground()),
   "site-gate-blocked": () => siteGateBlocked(pieces(), ground()),
+  "site-crane-reach": () => siteCraneReach(sites()),
 });

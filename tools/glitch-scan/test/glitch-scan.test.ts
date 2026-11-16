@@ -152,6 +152,7 @@ import { CAPSULE_DOOR, CAPSULE_SITE } from "../../../packages/sim/src/content/ca
 import { furnitureNear } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
 import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
+import { LUBLIN_CONSTRUCTION_SITES } from "../../../packages/sim/src/content/lublin/construction";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
@@ -2237,6 +2238,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   ...siteChecks(
     () => Object.values(WORLD_STREET_PROPS).flat(),
     () => siteGroundOf(new Site(MAP_CHUNKS), MAP_CHUNKS),
+    () => LUBLIN_CONSTRUCTION_SITES,
   ),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),

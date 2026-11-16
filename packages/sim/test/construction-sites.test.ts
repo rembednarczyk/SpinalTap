@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { SITE_KINDS, siteFenceLayout, terrainHeightAt, siteFenceVariant, siteGateLayout, siteGateVariant } from "@seki/core";
+import {
+  SITE_CRANE,
+  SITE_KINDS,
+  SITE_SCAFFOLD,
+  siteCraneLayout,
+  siteCraneVariant,
+  siteFenceLayout,
+  siteFenceVariant,
+  siteGateLayout,
+  siteGateVariant,
+  siteScaffoldLayout,
+  siteScaffoldVariant,
+  terrainHeightAt,
+} from "@seki/core";
 import { WORLD_STREET_PROPS, groundY } from "../src";
 import { LUBLIN_CONSTRUCTION_SITES, SITE_ROW, digPads, sitePieces, withSitePieces } from "../src/content/lublin/construction";
 import { SITE, SOLID_FURNITURE, furniturePrisms } from "../src/content/lublin/furniture";
@@ -15,7 +28,7 @@ describe("the building sites in the game (ADR-0087)", () => {
     expect(zielona?.set).toBe("full");
     const pieces = sitePieces([zielona!]);
     const kinds = new Set(pieces.map((p) => p.prop));
-    expect([...kinds].sort()).toEqual(["site-board", "site-cabin", "site-fence", "site-gate"]);
+    expect([...kinds].sort()).toEqual(["site-board", "site-cabin", "site-crane", "site-fence", "site-gate", "site-scaffold"]);
     const world = Object.values(WORLD_STREET_PROPS)
       .flat()
       .filter((p) => SITE_KINDS.has(p.prop));
@@ -28,7 +41,7 @@ describe("the building sites in the game (ADR-0087)", () => {
       { id: "a", bounds: { minX: 0, maxX: 10, minZ: 0, maxZ: 10 } },
       { id: "b", bounds: { minX: 10, maxX: 20, minZ: 0, maxZ: 10 } },
     ];
-    const site = { id: "w1", seed: 1, set: "fence" as const, area: 100, board: null, dig: null, pieces: { "site-fence": [10, 0, 5, 0, 250, 5, 0, 5, 0, 250, 30, 0, 5, 0, 250] } };
+    const site = { id: "w1", seed: 1, set: "fence" as const, area: 100, outline: [0, 0, 10, 0, 10, 10], board: null, dig: null, pieces: { "site-fence": [10, 0, 5, 0, 250, 5, 0, 5, 0, 250, 30, 0, 5, 0, 250] } };
     const out = withSitePieces({ a: [] }, chunks, [site]);
     expect(out.a!.map((p) => p.x)).toEqual([5]);
     expect(out.b!.map((p) => p.x)).toEqual([10]);
@@ -57,6 +70,34 @@ describe("the building sites in the game (ADR-0087)", () => {
         expect(SITE.gate(siteGateVariant(wicket, 3, leaf))).toEqual({ width: g.width, leaf: g.leaf });
         expect(g.leaf).toBe(leaf ? 1 : -1);
       }
+    // Stage 2: the crane and the scaffold.
+    for (const [height, jib, phase] of [
+      [18, 31, 0],
+      [26.4, 60, 15],
+      [102.3, 102.3, 7],
+    ] as const) {
+      const v = siteCraneVariant({ height, jib, phase });
+      expect(siteCraneLayout(v)).toEqual({ height, jib, phase });
+      expect(SITE.craneHeight(v)).toBe(height);
+    }
+    for (const [length, height, rise, banner] of [
+      [4, 4, -1.28, 0],
+      [11.5, 10.2, 0.37, 3],
+      [102.3, 51.1, 1.27, 2],
+    ] as const) {
+      const v = siteScaffoldVariant({ length, height, rise, banner });
+      expect(siteScaffoldLayout(v)).toEqual({ length, height, rise, banner });
+      expect(SITE.scaffold(v)).toEqual({ length, height, rise });
+    }
+  });
+
+  it("makes the crane's mast and the scaffold solids, the scaffold on the site's side of the wall", () => {
+    for (const k of ["site-crane", "site-scaffold"] as const) expect(SOLID_FURNITURE.has(k)).toBe(true);
+    const mast = furniturePrisms({ prop: "site-crane", x: 0, y: 0, z: 0, yaw: 0, variant: siteCraneVariant({ height: 24, jib: 30, phase: 0 }) })[0]!;
+    expect(Math.max(...mast.points.map((p) => p.x))).toBeCloseTo(SITE_CRANE.mast, 5);
+    const scaffold = furniturePrisms({ prop: "site-scaffold", x: 0, y: 0, z: 0, yaw: 0, variant: siteScaffoldVariant({ length: 8, height: 10, rise: 0, banner: 0 }) })[0]!;
+    const zs = scaffold.points.map((p) => p.z);
+    expect([Math.min(...zs), Math.max(...zs)].map((z) => Math.round(z * 100) / 100)).toEqual([0, SITE_SCAFFOLD.depth]);
   });
 
   it("digs Zielona 5A's dig down to its floor and leaves the terrain under the fence as the map has it", () => {

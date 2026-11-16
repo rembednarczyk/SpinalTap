@@ -19,6 +19,14 @@ export interface SiteGround {
   driveDistance(p: Pt): number;
   /** Distance from p to the nearest street of any kind (m); Infinity with none. */
   walkDistance(p: Pt): number;
+  /** The buildings round the site (stage 2: the crane's height, the scaffold's wall). */
+  readonly neighbours: readonly SiteNeighbour[];
+}
+
+/** A building by a site: its outline in the world and the world y of its top (its roof's included). */
+export interface SiteNeighbour {
+  readonly ring: readonly Pt[];
+  readonly top: number;
 }
 
 /**

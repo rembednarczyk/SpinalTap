@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SITE_CABIN, SITE_FENCE, siteFenceLayout, siteGateLayout } from "../../../packages/core/src/world/sites.ts";
+import { SITE_CABIN, SITE_CRANE, SITE_FENCE, SITE_SCAFFOLD, siteCraneLayout, siteFenceLayout, siteGateLayout, siteScaffoldLayout } from "../../../packages/core/src/world/sites.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { enSite } from "../../../packages/ui/src/i18n/en/site.ts";
 import { plSite } from "../../../packages/ui/src/i18n/pl/site.ts";
@@ -8,6 +8,8 @@ import { FLIGHT_CELL } from "../../../packages/sim/src/content/lublin/shape.ts";
 import { distanceToPiece } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import { BOARD_KEYS, SETS, planSite, siteSeed, siteSet } from "../src/construction-site.ts";
 import { FENCE_INSET, insetRing } from "../src/construction-fence.ts";
+import { scaffoldBox } from "../src/construction-scaffold.ts";
+import { planCrane } from "../src/construction-crane.ts";
 import { type Pt, pointInRing } from "../src/geometry.ts";
 
 /**
@@ -15,7 +17,7 @@ import { type Pt, pointInRing } from "../src/geometry.ts";
  * a pavement up to 0.1 m over its south edge, a carriageway south of it with a street on
  * its axis, a building in its north-east corner, the terrain falling to the west.
  */
-const plan = (w: number, d: number, opts: { street?: boolean; building?: boolean } = {}) => {
+const plan = (w: number, d: number, opts: { street?: boolean; building?: boolean; wall?: boolean } = {}) => {
   const outline: Pt[] = [
     { x: 0, z: 0 },
     { x: w, z: 0 },
@@ -32,8 +34,17 @@ const plan = (w: number, d: number, opts: { street?: boolean; building?: boolean
     { x: -50, z: -6 },
     { x: w + 50, z: -6 },
   ];
+  // Stage 2: a tenement north of the site, its south wall on the outline from x 4 to w - 14.
+  const tenement: Pt[] = [
+    { x: 4, z: d },
+    { x: w - 14, z: d },
+    { x: w - 14, z: d + 12 },
+    { x: 4, z: d + 12 },
+  ];
+  const neighbours = [...(opts.building !== false ? [{ ring: building, top: 12 }] : []), ...(opts.wall ? [{ ring: tenement, top: 18 }] : [])];
   const surface = (p: Pt): "road" | "walk" | "building" | null => {
     if (opts.building !== false && pointInRing(p, building)) return "building";
+    if (opts.wall && pointInRing(p, tenement)) return "building";
     if (p.z < -3 && p.z > -9) return "road";
     if (p.z <= 0.1 && p.z >= -3) return "walk";
     return null;
@@ -45,6 +56,7 @@ const plan = (w: number, d: number, opts: { street?: boolean; building?: boolean
     cellAt: () => 2.5,
     driveDistance: (p) => (opts.street === false ? Infinity : lineDistance(p, street)),
     walkDistance: (p) => Math.abs(p.z + 1.5),
+    neighbours,
   };
   return { outline, ground, surface };
 };
@@ -62,7 +74,15 @@ const footprint = (p: StreetPropItem, hx: number, hz: number): Pt[] => {
 };
 
 const reach = (p: StreetPropItem): [number, number] =>
-  p.prop === "site-fence" ? [siteFenceLayout(p.variant).length / 2, SITE_FENCE.thick / 2] : p.prop === "site-cabin" ? [SITE_CABIN.hx, SITE_CABIN.hz] : p.prop === "site-gate" ? [siteGateLayout(p.variant).width / 2 + 0.24, 0.12] : [1.2, 0.03];
+  p.prop === "site-fence"
+    ? [siteFenceLayout(p.variant).length / 2, SITE_FENCE.thick / 2]
+    : p.prop === "site-cabin"
+      ? [SITE_CABIN.hx, SITE_CABIN.hz]
+      : p.prop === "site-gate"
+        ? [siteGateLayout(p.variant).width / 2 + 0.24, 0.12]
+        : p.prop === "site-crane"
+          ? [SITE_CRANE.base, SITE_CRANE.base]
+          : [1.2, 0.03];
 
 describe("the building sites' generator (ADR-0087 stage 1)", () => {
   it("gives the same site twice and another for another outline's id", () => {
@@ -166,5 +186,81 @@ describe("the building sites' generator (ADR-0087 stage 1)", () => {
         expect(Object.keys(plSite)).toContain(key);
       }
     expect(Object.keys(enSite)).toHaveLength(Object.values(BOARD_KEYS).reduce((a, b) => a + b, 0));
+  });
+});
+
+describe("the building sites' crane and scaffold (ADR-0087 stage 2)", () => {
+  const ids = ["w1", "w2", "w3", "w4", "r9"];
+
+  it("puts a crane on the full set whose jib reaches every corner, its top 8 m over the tallest neighbour", () => {
+    const { outline, ground } = plan(50, 36);
+    for (const id of ids) {
+      const s = planSite({ id, ring: outline }, ground);
+      const piece = s.pieces.find((p) => p.prop === "site-crane")!;
+      const c = siteCraneLayout(piece.variant);
+      for (const p of outline) expect(Math.hypot(p.x - piece.x, p.z - piece.z), `${id} corner ${p.x},${p.z}`).toBeLessThanOrEqual(c.jib);
+      expect(c.jib).toBe(Math.ceil((s.crane!.reach + 1) * 2) / 2);
+      expect(c.height).toBeCloseTo(Math.max(SITE_CRANE.least, 12 - ground.heightAt(piece) + SITE_CRANE.over), 1);
+      // The base on free ground inside the fence, off the dig.
+      for (const q of footprint(piece, SITE_CRANE.base, SITE_CRANE.base)) {
+        expect(ground.free(q) && pointInRing(q, insetRing(outline, FENCE_INSET))).toBe(true);
+        expect(pointInRing(q, s.dig!.outline)).toBe(false);
+      }
+      // The shortest reach of a clear point: with nothing to keep off it stands at the raster's best point.
+      let least = Infinity;
+      for (let x = 0; x <= 50; x++) for (let z = 0; z <= 36; z++) least = Math.min(least, Math.max(...outline.map((p) => Math.hypot(p.x - x, p.z - z))));
+      expect(s.crane!.reach).toBeGreaterThanOrEqual(least - 1e-9);
+      const open = planCrane(outline, insetRing(outline, FENCE_INSET), ground, { boxes: [], gate: null, way: null }, null)!;
+      expect(open.reach).toBeCloseTo(least, 9);
+    }
+  });
+
+  it("puts no crane on a yard, a fence alone or a narrow site", () => {
+    for (const id of ids) {
+      for (const [w, d] of [
+        [28, 20],
+        [12, 10],
+        [120, 24],
+      ] as const) {
+        const { outline, ground } = plan(w, d, { building: false });
+        const s = planSite({ id, ring: outline }, ground);
+        expect(s.pieces.some((p) => p.prop === "site-crane"), `${id} ${w}x${d}`).toBe(false);
+      }
+    }
+  });
+
+  it("puts the scaffold up along the neighbour's wall on the outline, the fence giving way, the yard and the dig off it", () => {
+    const { outline, ground } = plan(50, 36, { wall: true });
+    const banners = new Set<number>();
+    for (const id of ids) {
+      const s = planSite({ id, ring: outline }, ground);
+      const piece = s.pieces.find((p) => p.prop === "site-scaffold")!;
+      const l = siteScaffoldLayout(piece.variant);
+      banners.add(l.banner);
+      // Along the north wall (x 4 to 36), its gap off it, into the site.
+      expect(piece.z).toBeCloseTo(36 - SITE_SCAFFOLD.gap, 5);
+      expect(l.length).toBeGreaterThan(25);
+      // Its local +z, (sin yaw, cos yaw), into the site: south.
+      expect(Math.cos(piece.yaw)).toBeCloseTo(-1, 5);
+      expect(l.height).toBeCloseTo(18 - ground.heightAt(piece) + 1, 1);
+      const box = scaffoldBox(s.scaffold!);
+      const fence = s.pieces.filter((p) => p.prop === "site-fence");
+      for (const p of fence) expect(pointInRing(p, box), `panel at ${p.x},${p.z}`).toBe(false);
+      for (const p of s.pieces.filter((q) => q.prop === "site-cabin")) for (const q of footprint(p, SITE_CABIN.hx, SITE_CABIN.hz)) expect(pointInRing(q, box)).toBe(false);
+      for (const q of s.dig!.outline) expect(pointInRing(q, scaffoldBox(s.scaffold!, s.dig!.blend))).toBe(false);
+      // Without the wall the fence runs along the north side.
+      const bare = planSite({ id, ring: outline }, plan(50, 36).ground);
+      expect(bare.scaffold).toBeNull();
+      expect(bare.pieces.filter((p) => p.prop === "site-fence").length).toBeGreaterThan(fence.length);
+    }
+    expect(banners.size).toBeGreaterThan(1);
+  });
+
+  it("keeps stage 1's draws: the fence, the board and the containers as before the crane", () => {
+    const { outline, ground } = plan(50, 36);
+    const s = planSite({ id: "w1", ring: outline }, ground);
+    const without = planSite({ id: "w1", ring: outline }, { ...ground, neighbours: [] });
+    expect(s.pieces.filter((p) => p.prop !== "site-crane")).toEqual(without.pieces.filter((p) => p.prop !== "site-crane"));
+    expect(s.board).toEqual(without.board);
   });
 });
