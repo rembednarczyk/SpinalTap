@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Vec3 } from "@seki/core";
-import { Simulation, ground } from "../src";
+import { SIM_DT, Simulation, ground } from "../src";
 import { market, oldMarketFloor, oldMarketFloorOf } from "./fixtures/old-market";
 import type { LadderDef } from "../src/world/components";
 import { collect, input, run, teleportPlayer } from "./helpers";
@@ -189,11 +189,14 @@ describe("loading a game saved by a ladder's top (G-313)", () => {
           expect(p.climb, `${side} m aside, live`).toBeUndefined();
           saves++;
           const what = `${side} m aside, step ${i}, ${aside.toFixed(2)} m from the line`;
+          // She goes on with the speed she was saved with (G-883), as she does live.
+          const v = { ...p.velocity! };
           const { sim: loaded, saved } = loadAndRun(sim, 5);
           const q = loaded.player()!;
           // Before (a reach of 1.5 m): moved 1.25-1.48 m onto the rungs.
           expect(q.climb, what).toBeUndefined();
-          expect(Math.hypot(q.position.x - saved.x, q.position.z - saved.z), what).toBeLessThan(0.3);
+          const ahead = { x: saved.x + v.x * 5 * SIM_DT, z: saved.z + v.z * 5 * SIM_DT };
+          expect(Math.hypot(q.position.x - ahead.x, q.position.z - ahead.z), what).toBeLessThan(0.3);
           expect(q.position.y, what).toBeLessThan(saved.y);
         }
       }

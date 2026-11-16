@@ -8,7 +8,7 @@ export interface Mantle {
   t: number;
 }
 
-/** Jump timers of the player (ADR-0021). Transient like the posture: not saved. */
+/** Jump timers of the player (ADR-0021). Saved with her stance (G-883). */
 export interface JumpState {
   /** Seconds left in which a jump still counts after leaving the ground without one (coyote time). */
   coyote: number;
