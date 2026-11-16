@@ -75,11 +75,12 @@ describe("the building sites in the game (ADR-0087)", () => {
     expect(digPads(LUBLIN_CONSTRUCTION_SITES).every((p) => p.row === SITE_ROW)).toBe(true);
   });
 
-  it("refines a 5 m grid a dig reaches, its blend and a cell past it, and no other", () => {
+  it("refines a 5 m grid with points within a dig's blend, and no other; no grid of the map has one", () => {
     const grid = { originX: 0, originZ: 0, cell: 5, cols: 11, rows: 11, heights: new Array<number>(121).fill(1) };
-    const pad: Pad = { rect: { minX: 55, maxX: 70, minZ: 10, maxZ: 20 }, y: -1, blend: 3 };
+    const pad: Pad = { rect: { minX: 52, maxX: 70, minZ: 10, maxZ: 20 }, y: -1, blend: 3 };
     expect(siteGrid(grid, [pad]).cell).toBe(2.5);
-    expect(siteGrid(grid, [{ ...pad, rect: { minX: 58.1, maxX: 70, minZ: 10, maxZ: 20 } }])).toBe(grid);
+    expect(siteGrid(grid, [{ ...pad, rect: { minX: 53.1, maxX: 70, minZ: 10, maxZ: 20 } }])).toBe(grid);
+    for (const c of MAP_CHUNKS) expect(siteGrid(c.terrain), c.id).toBe(c.terrain);
   });
 
   it("levels a pad's ring, not its whole rectangle", () => {

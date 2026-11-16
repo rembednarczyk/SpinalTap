@@ -9,14 +9,15 @@
  * 1. the set by the area: up to `SETS.fence` m² the fence and the board alone, up to `SETS.yard`
  *    the containers and the dig too, the full set past it (the crane comes with stage 2);
  * 2. the fence 0.3 m in, on free ground only (`construction-fence.ts`), the gate on it;
- * 3. the dig over the lowest free ground (`construction-dig.ts`), the yard by the gate kept clear;
- * 4. the containers on the back yard by the fence, furthest from the dig, their doors to the site;
+ * 3. the containers on the back yard by the fence, furthest from the gate (the yard by it kept
+ *    clear for the stores), their doors to the site;
+ * 4. the dig over the lowest free ground left (`construction-dig.ts`), clear of the containers;
  * 5. the board's texts: keys of the catalogs `i18n/{en,pl}` (ADR-0056), never sentences.
  */
 import { mulberry32 } from "../../../packages/core/src/math/mulberry32.ts";
 import { type StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { SITE_CABIN, SITE_LOOKS, SITE_STACKED } from "../../../packages/core/src/world/sites.ts";
-import { type SiteGround, ringCell } from "./construction-ground.ts";
+import { type SiteGround } from "./construction-ground.ts";
 import { type DigPlan, digShape, planDig } from "./construction-dig.ts";
 import { FENCE_INSET, type FenceEdge, type GatePlace, along, fenceEdges, fencePieces, freeRuns, insetRing, pickGate } from "./construction-fence.ts";
 import { type Pt, pointInRing, signedArea } from "./geometry.ts";
@@ -95,19 +96,6 @@ const boxSamples = (c: Pt, yaw: number, hx: number, hz: number): Pt[] => {
   return out;
 };
 
-/** Distance from p to a convex ring, 0 inside. */
-const ringGap = (p: Pt, ring: readonly Pt[]): number => {
-  if (pointInRing(p, ring)) return 0;
-  let d = Infinity;
-  ring.forEach((a, i) => {
-    const b = ring[(i + 1) % ring.length]!;
-    const [dx, dz] = [b.x - a.x, b.z - a.z];
-    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-    d = Math.min(d, Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t));
-  });
-  return d;
-};
-
 interface CabinSpot {
   readonly c: Pt;
   readonly yaw: number;
@@ -116,12 +104,10 @@ interface CabinSpot {
 
 /**
  * The containers' spots: along the fence's free runs, a container's depth in, long side along the
- * fence and its door (local +z) to the site; on free ground in the fence's ring, clear of the dig's
- * reach and of the yard by the gate. Furthest from the dig (else from the gate) first.
+ * fence and its door (local +z) to the site; on level free ground in the fence's ring, clear of the
+ * yard by the gate. Furthest from the gate first.
  */
-const cabinSpots = (edges: readonly FenceEdge[], runs: ReturnType<typeof freeRuns>, ring: readonly Pt[], g: SiteGround, gate: Pt | null, dig: DigPlan | null): CabinSpot[] => {
-  const reach = dig ? dig.blend + ringCell(ring, g) * Math.SQRT2 + 0.5 : 0;
-  const away = dig ? dig.outline.reduce((s, p) => ({ x: s.x + p.x / 4, z: s.z + p.z / 4 }), { x: 0, z: 0 }) : gate;
+const cabinSpots = (edges: readonly FenceEdge[], runs: ReturnType<typeof freeRuns>, ring: readonly Pt[], g: SiteGround, gate: Pt | null): CabinSpot[] => {
   const out: CabinSpot[] = [];
   for (const r of runs) {
     const e = edges[r.edge]!;
@@ -133,8 +119,8 @@ const cabinSpots = (edges: readonly FenceEdge[], runs: ReturnType<typeof freeRun
       // Level enough to stand on its centre's ground: its walls reach `SITE_SINK` under its foot.
       const hs = corners(c, yaw, SITE_CABIN.hx, SITE_CABIN.hz).map((p) => g.heightAt(p) - g.heightAt(c));
       if (Math.max(...hs.map(Math.abs)) > LEVEL) continue;
-      if (!pts.every((p) => pointInRing(p, ring) && g.free(p) && (!dig || ringGap(p, dig.outline) > reach))) continue;
-      out.push({ c, yaw, score: away ? Math.hypot(c.x - away.x, c.z - away.z) : 0 });
+      if (!pts.every((p) => pointInRing(p, ring) && g.free(p))) continue;
+      out.push({ c, yaw, score: gate ? Math.hypot(c.x - gate.x, c.z - gate.z) : 0 });
     }
   }
   return out.sort((a, b) => b.score - a.score);
@@ -181,9 +167,13 @@ export const planSite = (o: SiteOutline, g: SiteGround): SitePlan => {
   const pick = (n: number) => Math.floor(rand() * n);
   const board = gate ? { name: `site.board.name.${pick(BOARD_KEYS.name)}`, developer: `site.board.developer.${pick(BOARD_KEYS.developer)}`, term: `site.board.term.${pick(BOARD_KEYS.term)}` } : null;
   const [share, depth] = [0.35 + 0.2 * rand(), rand()];
-  const dig = set === "fence" ? null : planDig(ring, area, g, longAxisDegrees(ring), share, digShape(depth));
   const gateAt = gate ? along(edges[gate.edge]!, gate.at) : null;
-  const pieces = [...fence, ...cabins(cabinSpots(edges, runs, ring, g, gateAt, dig), set, g, rand)];
+  const yard = cabins(cabinSpots(edges, runs, ring, g, gateAt), set, g, rand);
+  // The dig keeps its blend and a cell past it off the containers, as off the fence.
+  const boxes = yard.map((c) => corners(c, c.yaw, SITE_CABIN.hx + 0.3, SITE_CABIN.hz + 0.3));
+  const digGround: SiteGround = { ...g, free: (p) => g.free(p) && !boxes.some((b) => pointInRing(p, b)) };
+  const dig = set === "fence" ? null : planDig(ring, area, digGround, longAxisDegrees(ring), share, digShape(depth));
+  const pieces = [...fence, ...yard];
   const fenced = runs.reduce((s, r) => s + r.to - r.from, 0);
   return { id: o.id, seed, set, area: Math.round(area), gate, board: gate ? board : null, dig, pieces, unfenced: Math.round(edges.reduce((s, e) => s + e.len, 0) - fenced) };
 };

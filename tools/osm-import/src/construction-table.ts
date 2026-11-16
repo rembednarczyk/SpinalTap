@@ -16,7 +16,7 @@ import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/t
 import { loadMapLod1 } from "./load.ts";
 import { withBuiltSites } from "./built-sites.ts";
 import { DISTRICTS } from "./config.ts";
-import { DIG_CELL, FOOT_KINDS, type SiteGround, lineDistance } from "./construction-ground.ts";
+import { FOOT_KINDS, type SiteGround, lineDistance } from "./construction-ground.ts";
 import { type SiteOutline, type SitePlan, planSite } from "./construction-site.ts";
 import { type Pt, type Rect, centroid, pointInRing, ringBounds } from "./geometry.ts";
 import { type OsmData, type Tags, mergeOsm, parseExtract } from "./osm.ts";
@@ -67,7 +67,7 @@ export const chunkGround = (site: Site, box: Rect): SiteGround => {
     },
     open: (p) => site.chunkAt(p) !== null && site.standable(p),
     heightAt: (p) => site.heightAt(p),
-    cellAt: (p) => Math.min(site.chunkAt(p)?.terrain.cell ?? DIG_CELL, DIG_CELL),
+    cellAt: (p) => site.chunkAt(p)?.terrain.cell ?? Infinity,
     driveDistance: (p) => Math.min(Infinity, ...drive.map((s) => lineDistance(p, s.line))),
     walkDistance: (p) => Math.min(Infinity, ...streets.map((s) => lineDistance(p, s.line))),
   };

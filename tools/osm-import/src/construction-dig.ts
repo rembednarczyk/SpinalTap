@@ -2,11 +2,12 @@
  * The dig of a building site (ADR-0087 step 3): a rectangle along the site's long axis over its
  * lowest free ground, 35-55% of the site's area (the share from the seed), dug `depth` m under the
  * lowest terrain in it and blending into the terrain over `blend` m round it. The blend and one
- * terrain cell past it (the grid is bilinear) stay on free ground inside the fence, so the fence,
- * the pavements and the walls round the site keep the map's terrain. Where it does not fit it
+ * terrain cell past it (the grid is bilinear) stay on free ground inside the fence and on a grid of
+ * `DIG_CELL` or finer, so the fence, the pavements, the walls round the site and the chunks' seams
+ * keep the map's terrain. Where it does not fit it
  * shrinks, down to `SMALLEST` of the site, else the site has no dig.
  */
-import { type SiteGround, ringCell } from "./construction-ground.ts";
+import { DIG_CELL, type SiteGround } from "./construction-ground.ts";
 import { type Pt, pointInRing } from "./geometry.ts";
 
 /** Side of the raster the dig is fitted on (m). */
@@ -14,7 +15,7 @@ const R = 0.5;
 /** Ratios of the rectangle's sides tried, its long side along the site's long axis first. */
 const ASPECTS = [1, 1.5, 2.5, 1 / 1.5, 1 / 2.5];
 /** The least share of the site's area a dig is, and the least area (m²). */
-const SMALLEST = 0.15;
+const SMALLEST = 0.05;
 const LEAST = 25;
 /** How much a dig that does not fit shrinks before the next try. */
 const SHRINK = 0.85;
@@ -46,20 +47,27 @@ const raster = (ring: readonly Pt[], g: SiteGround, deg: number) => {
   const cols = Math.ceil((Math.max(...us) - u0) / R);
   const rows = Math.ceil((Math.max(...vs) - v0) / R);
   const W = cols + 1;
-  // Summed-area tables of the free cells and of their heights, (cols + 1) x (rows + 1).
+  // Summed-area tables of the free cells, of their heights and of the cells on a fine grid, (cols + 1) x (rows + 1).
   const count = new Float64Array(W * (rows + 1));
   const sum = new Float64Array(W * (rows + 1));
+  const fine = new Float64Array(W * (rows + 1));
   const world = (u: number, v: number): Pt => ({ x: U.x * u + V.x * v, z: U.z * u + V.z * v });
   for (let j = 0; j < rows; j++)
     for (let i = 0; i < cols; i++) {
       const p = world(u0 + (i + 0.5) * R, v0 + (j + 0.5) * R);
       const ok = pointInRing(p, ring) && g.free(p);
       const k = (j + 1) * W + (i + 1);
+      fine[k] = (g.cellAt(p) <= DIG_CELL ? 1 : 0) + fine[k - 1]! + fine[k - W]! - fine[k - W - 1]!;
       count[k] = (ok ? 1 : 0) + count[k - 1]! + count[k - W]! - count[k - W - 1]!;
       sum[k] = (ok ? g.heightAt(p) : 0) + sum[k - 1]! + sum[k - W]! - sum[k - W - 1]!;
     }
   const box = (t: Float64Array, i0: number, j0: number, i1: number, j1: number): number => t[j1 * W + i1]! - t[j0 * W + i1]! - t[j1 * W + i0]! + t[j0 * W + i0]!;
-  return { cols, rows, u0, v0, world, count: (i0: number, j0: number, i1: number, j1: number) => box(count, i0, j0, i1, j1), heights: (i0: number, j0: number, i1: number, j1: number) => box(sum, i0, j0, i1, j1) };
+  type Box = (i0: number, j0: number, i1: number, j1: number) => number;
+  const of =
+    (t: Float64Array): Box =>
+    (i0, j0, i1, j1) =>
+      box(t, i0, j0, i1, j1);
+  return { cols, rows, u0, v0, world, count: of(count), heights: of(sum), fine: of(fine) };
 };
 
 /**
@@ -69,8 +77,10 @@ const raster = (ring: readonly Pt[], g: SiteGround, deg: number) => {
  */
 export const planDig = (ring: readonly Pt[], area: number, g: SiteGround, deg: number, share: number, shape: { readonly depth: number; readonly blend: number }): DigPlan | null => {
   const r = raster(ring, g, deg);
-  // The blend, one terrain cell past it on the diagonal (the coarsest under the site), and the fence's own clearance.
-  const m = Math.ceil((shape.blend + ringCell(ring, g) * Math.SQRT2 + 0.3) / R);
+  // The blend, one terrain cell past it on the diagonal, and the fence's own clearance: all on free ground. The blend and a
+  // cell past it on a grid of `DIG_CELL`: short of a coarser grid's points and of the seam the finer grid takes its surface at.
+  const m = Math.ceil((shape.blend + DIG_CELL * Math.SQRT2 + 0.3) / R);
+  const f = Math.ceil((shape.blend + DIG_CELL + 0.01) / R);
   for (let target = share * area; target >= Math.max(LEAST, SMALLEST * area); target *= SHRINK) {
     let best: { i: number; j: number; cu: number; cv: number; mean: number } | null = null;
     for (const aspect of ASPECTS) {
@@ -80,6 +90,7 @@ export const planDig = (ring: readonly Pt[], area: number, g: SiteGround, deg: n
         for (let i = m; i + cu + m <= r.cols; i++) {
           const grown = (cu + 2 * m) * (cv + 2 * m);
           if (r.count(i - m, j - m, i + cu + m, j + cv + m) < grown) continue;
+          if (r.fine(i - f, j - f, i + cu + f, j + cv + f) < (cu + 2 * f) * (cv + 2 * f)) continue;
           const mean = r.heights(i, j, i + cu, j + cv) / (cu * cv);
           if (!best || mean < best.mean - 1e-9) best = { i, j, cu, cv, mean };
         }

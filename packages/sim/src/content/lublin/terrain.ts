@@ -22,12 +22,13 @@ const overlaps = (g: TerrainGrid, b: { readonly minX: number; readonly maxX: num
 export const w3Grid = (g: TerrainGrid): TerrainGrid => (g.cell > FLIGHT_CELL && overlaps(g, W3_SITE) ? refineGrid(g, FLIGHT_CELL) : g);
 
 /**
- * A grid a building site's dig reaches (ADR-0087), its blend and a cell past it, refined to
- * `FLIGHT_CELL`, else as it is: the import's 5 m cell would carry the dig a cell further, past
- * the fence. Refining keeps the surface as it is.
+ * A grid with points a building site's dig moves (ADR-0087: within its blend) refined to
+ * `FLIGHT_CELL`, else as it is: the import's 5 m cell would carry the dig a cell further, past the
+ * fence. Refining keeps the surface as it is. The generator keeps the digs on grids of that cell
+ * (`DIG_CELL`), so no grid of the map is refined for one now.
  */
 export const siteGrid = (g: TerrainGrid, pads: readonly Pad[] = DIG_PADS): TerrainGrid =>
-  g.cell > FLIGHT_CELL && pads.some((p) => overlaps(g, { minX: p.rect.minX - p.blend - g.cell, maxX: p.rect.maxX + p.blend + g.cell, minZ: p.rect.minZ - p.blend - g.cell, maxZ: p.rect.maxZ + p.blend + g.cell })) ? refineGrid(g, FLIGHT_CELL) : g;
+  g.cell > FLIGHT_CELL && pads.some((p) => overlaps(g, { minX: p.rect.minX - p.blend, maxX: p.rect.maxX + p.blend, minZ: p.rect.minZ - p.blend, maxZ: p.rect.maxZ + p.blend })) ? refineGrid(g, FLIGHT_CELL) : g;
 
 /**
  * The terrain of the game's Lublin (ADR-0045): the map's grids with the pads and ramps of

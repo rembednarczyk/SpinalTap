@@ -22,8 +22,9 @@ export interface SiteGround {
 }
 
 /**
- * The coarsest terrain cell under a dig (m): the game lays the digs on a grid refined to it
- * (`siteGrid` of the simulation's terrain, its `FLIGHT_CELL`), whatever the import's cell there.
+ * The coarsest terrain cell a dig and its blend lie on (m), the simulation's `FLIGHT_CELL`: a dig
+ * keeps off a chunk of a coarser grid, whose points would carry it a cell further, and whose
+ * refining (`siteGrid` of the simulation's terrain) would move its seams with the next chunks.
  */
 export const DIG_CELL = 2.5;
 
@@ -36,6 +37,3 @@ export const lineDistance = (p: Pt, line: readonly Pt[]): number => {
   for (let i = 0; i + 1 < line.length; i++) d = Math.min(d, segmentDistance(p.x, p.z, line[i]!.x, line[i]!.z, line[i + 1]!.x, line[i + 1]!.z));
   return d;
 };
-
-/** The coarsest terrain cell under a ring's corners (m): a site on two chunks' edge reads the coarser grid's. */
-export const ringCell = (ring: readonly Pt[], g: Pick<SiteGround, "cellAt">): number => Math.max(...ring.map((p) => g.cellAt(p)));

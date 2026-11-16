@@ -150,8 +150,12 @@ describe("the building sites' generator (ADR-0087 stage 1)", () => {
     for (const p of dig.outline) expect(pointInRing(p, inset)).toBe(true);
   });
 
-  it("fits the dig to the grid the game refines under it", () => {
+  it("keeps the dig and its blend off a chunk of a coarser terrain grid", () => {
     expect(DIG_CELL).toBe(FLIGHT_CELL);
+    const { outline, ground } = plan(50, 36, { building: false });
+    // The west half's chunk on a 5 m grid: the dig on the east, its blend and a cell past it short of x 25.
+    const s = planSite({ id: "w5", ring: outline }, { ...ground, cellAt: (p) => (p.x < 25 ? 5 : 2.5) });
+    expect(Math.min(...s.dig!.outline.map((p) => p.x)) - s.dig!.blend).toBeGreaterThan(25 + DIG_CELL);
   });
 
   it("draws the board's texts from keys both catalogs hold", () => {
