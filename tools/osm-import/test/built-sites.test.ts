@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
-import { builtSites } from "../src/built-sites.ts";
+import { builtSites, finishedSites, withBuiltSites } from "../src/built-sites.ts";
 import { DISTRICTS } from "../src/config.ts";
 import { extractFeatures } from "../src/features.ts";
 import { generate } from "../src/generate.ts";
@@ -40,7 +40,7 @@ describe("builtSites", () => {
     { x: 10, z: 10 },
     { x: 0, z: 10 },
   ];
-  const site = (tags: Record<string, string>) => ({ id: "w1", osmId: 1, tags: { building: "construction", ...tags }, ring, holes: 0 });
+  const site = (tags: Record<string, string>) => ({ id: "w1", osmId: 1, tags: { building: "construction", ...tags } as Record<string, string>, ring, holes: 0 });
   const lod1 = [{ id: "L1", height: 9, ground: 200, ring }];
 
   it("takes the kind it was built as, `yes` for none", () => {
@@ -48,9 +48,39 @@ describe("builtSites", () => {
     expect(builtSites([site({ construction: "yes" }), site({})], lod1).map((a) => a.tags.building)).toEqual(["yes", "yes"]);
   });
 
+  it("finishes the site's land round it with the same construction=*, not another site's", () => {
+    const big = [
+      { x: -20, z: -20 },
+      { x: 30, z: -20 },
+      { x: 30, z: 30 },
+      { x: -20, z: 30 },
+    ];
+    const land = (id: string, construction: string) => ({ id, osmId: 2, tags: { landuse: "construction", construction, name: "Budowa" } as Record<string, string>, ring: big, holes: 0 });
+    const out = builtSites([site({ construction: "commercial" }), land("w2", "commercial"), land("w3", "residential")], lod1);
+    expect(out.map((a) => a.tags)).toEqual([{ building: "commercial", construction: "commercial" }, { name: "Budowa" }, { landuse: "construction", construction: "residential", name: "Budowa" }]);
+    expect(builtSites([site({ construction: "commercial" }), land("w2", "commercial")], undefined)[1]!.tags.landuse).toBe("construction");
+  });
+
   it("keeps a site LoD1 does not match one to one, and every site without LoD1", () => {
     const off = [{ id: "L1", height: 9, ground: 200, ring: ring.map((p) => ({ x: p.x + 5, z: p.z })) }];
     expect(builtSites([site({})], off)[0]!.tags.building).toBe("construction");
     expect(builtSites([site({})], undefined)[0]!.tags.building).toBe("construction");
+  });
+});
+
+describe("the map caught up (G-872)", () => {
+  const map = withBuiltSites(inputs.osm, inputs.lod1);
+
+  it("tags Karmelicka 7 commercial and its site's land w1261814241 no site; Zielona 5A stays a site", () => {
+    expect(map.ways.get(1134342880)?.tags?.building).toBe("commercial");
+    expect(map.ways.get(1261814241)?.tags?.landuse).toBeUndefined();
+    expect(inputs.osm.ways.get(1261814241)?.tags?.landuse).toBe("construction");
+    expect(map.ways.get(1382552286)?.tags?.building).toBe("construction");
+    expect(map.ways.get(770678456)?.tags?.landuse).toBe("construction");
+  });
+
+  it("gives the cover the finished land only", () => {
+    expect(finishedSites(inputs.osm, inputs.lod1)).toHaveLength(1);
+    expect(finishedSites(inputs.osm, undefined)).toEqual([]);
   });
 });

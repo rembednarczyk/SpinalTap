@@ -24,6 +24,8 @@ import { SidewalkIndex, kerbsOf } from "./props-lit-sides.ts";
 import { WallIndex, isCourtyard, isPedestrianSquare } from "./courtyards.ts";
 import { geoToWorld } from "./project.ts";
 import { type Structure, structuresOf } from "./structures.ts";
+import { withBuiltSites } from "./built-sites.ts";
+import { loadMapLod1 } from "./load.ts";
 
 /** The id of the group of an OSM kind. */
 export const OSM_GROUP = "osm.furniture";
@@ -63,8 +65,8 @@ export const litWaysOf = (osm: OsmData, keep: (tags: Tags | undefined) => boolea
 
 const loadDistricts = (root: string): OsmData => mergeOsm(DISTRICTS.map((d) => parseExtract(readFileSync(join(root, "data/osm", `${d.slug}.json`), "utf8"))));
 
-/** The structures of the districts' extracts no tree of the crowns stands in (`structures.ts`, G-815). */
-export const loadStructures = (root = REPO): Structure[] => structuresOf(loadDistricts(root));
+/** The structures of the districts' extracts no tree of the crowns stands in (`structures.ts`, G-815), the finished sites' land none (G-872). */
+export const loadStructures = (root = REPO): Structure[] => structuresOf(withBuiltSites(loadDistricts(root), loadMapLod1(root)));
 
 /** The closed ways whose tags `keep` takes, as rings in the world. */
 const ringsOf = (osm: OsmData, keep: (tags: Tags | undefined) => boolean): LitWay[] => litWaysOf(osm, (tags) => keep(tags)).filter((w) => w.pts.length >= 4 && w.pts[0]!.x === w.pts[w.pts.length - 1]!.x && w.pts[0]!.z === w.pts[w.pts.length - 1]!.z);

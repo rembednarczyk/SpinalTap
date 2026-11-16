@@ -75,3 +75,25 @@ export const classify = (flights: readonly Colour[], t: Thresholds = THRESHOLDS)
   if (now.s > t.hardS) return COVER.unknown;
   return (object ? one!.l : now.l) >= t.pavingL ? COVER.paving : COVER.asphalt;
 };
+
+/**
+ * The class of a sample on a finished site's land (G-872, `finishedSites`). The site changed
+ * between the flights (a dig in 2023-09, weeds and an unpaved parking since), so their mean is no
+ * colour the ground had, and the building finished on it shades the ground north of it. Green under
+ * crowns is a lawn (nothing on the plot is paved under its trees); asphalt, shade or unknown is
+ * taken from the flights one by one: green in a summer flight a lawn, else light in a summer flight
+ * paving, else green in the leaf-off flight a lawn (weeds the building shades in both summers),
+ * else shade, which the import gives the class of the plot round it (`bare-clean.ts`).
+ */
+export const classifySite = (flights: readonly Colour[], t: Thresholds = THRESHOLDS): CoverClass => {
+  const c = classify(flights, t);
+  if (c === COVER.canopy) return COVER.green;
+  if (c !== COVER.asphalt && c !== COVER.shadow && c !== COVER.unknown) return c;
+  const [now, ...summer] = flights.map(colourStats) as [ColourStats, ...ColourStats[]];
+  if (summer.some((s) => s.exg >= t.greenExg && s.l >= t.shadowL)) return COVER.green;
+  if (summer.some((s) => s.l >= t.pavingL && s.s <= t.hardS)) return COVER.paving;
+  // Shaded in both summers (north of the building): the leaf-off flight's own green, the weeds of April.
+  if (now.exg >= t.leafOffExg && now.l >= t.shadowL) return COVER.green;
+  // No flight reads it (the building's shade in all three): shade, which takes the class of the plot round it.
+  return COVER.shadow;
+};

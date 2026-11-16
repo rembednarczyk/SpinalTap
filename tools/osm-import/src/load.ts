@@ -25,6 +25,9 @@ export interface Inputs {
 /** The LoD1 tiles meeting any chunk of the import, 50 m round it (a tile holds a building by its centroid). */
 const lod1Tiles = (): string[] => [...new Set(ALL_CHUNKS.flatMap(({ rect: r }) => tilesOf({ minX: r.minX - 50, minZ: r.minZ - 50, maxX: r.maxX + 50, maxZ: r.maxZ + 50 })))].sort();
 
+/** GUGiK LoD1 2024 buildings of the tiles under the chunks (`Inputs.lod1`). */
+export const loadMapLod1 = (root = REPO): Lod1Building[] => loadLod1(lod1Tiles(), join(root, "data/gugik"));
+
 export const loadInputs = (root = REPO): Inputs => {
   const osm = mergeOsm(DISTRICTS.map((d) => parseExtract(readFileSync(join(root, "data/osm", `${d.slug}.json`), "utf8"))));
   const dtms: Dtm[] = [];
@@ -47,7 +50,7 @@ export const loadInputs = (root = REPO): Inputs => {
     dtms,
     src: heightSource(dtms, fallback),
     terrain,
-    lod1: loadLod1(lod1Tiles(), join(root, "data/gugik")),
+    lod1: loadMapLod1(root),
     lod2: loadLod2(lod1Tiles(), join(root, "data/gugik")),
     covers: DISTRICTS.flatMap((d) => readCover(d.slug, join(root, "data/orto")) ?? []),
   };

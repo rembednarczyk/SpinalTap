@@ -8,7 +8,8 @@
  */
 import { type Lod1Building, loadLod1, tilesOf } from "../../gugik/src/extracts.ts";
 import { BoxIndex, coveredShare, footprint } from "../../gugik/src/overlap.ts";
-import { type Pt, centroid, ringBounds } from "../../osm-import/src/geometry.ts";
+import { type Pt, centroid, pointInRing, ringBounds } from "../../osm-import/src/geometry.ts";
+import { worldRing } from "../../osm-import/src/lod1-heights.ts";
 import { type Tags } from "../../osm-import/src/osm.ts";
 
 /** The least share of an outline LoD1 2024 covers for it to stand built. */
@@ -41,3 +42,20 @@ export const lod1UnderSites = (areas: readonly { readonly tags: Tags; readonly r
   });
   return loadLod1([...new Set(tiles)].sort());
 };
+
+/**
+ * `construction-landuse-built` (G-872): a building site's land (a structure of kind `construction`
+ * the import keeps, `loadStructures`) with a building of the game in it that OSM still tags
+ * `building=construction` (`lifted`): the building stands finished, its plot is no building site
+ * (the crowns' trees, the cover's classes). The building's own outline aside.
+ */
+export const siteLandBuilt = (
+  structures: readonly { readonly id: string; readonly kind: string; readonly ring: readonly Pt[] }[],
+  buildings: readonly { readonly id: string; readonly x: number; readonly z: number; readonly outline: readonly number[] }[],
+  lifted: ReadonlySet<string>,
+): Finding[] =>
+  structures.flatMap((s) => {
+    if (s.kind !== "construction") return [];
+    const inside = buildings.filter((b) => lifted.has(b.id) && b.id !== s.id && pointInRing(centroid(worldRing(b)), s.ring));
+    return inside.map((b) => ({ at: `${b.x.toFixed(0)},${b.z.toFixed(0)}`, what: `${s.id} building site round ${b.id}, which stands finished` }));
+  });
