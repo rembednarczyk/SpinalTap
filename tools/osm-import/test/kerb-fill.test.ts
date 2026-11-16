@@ -147,16 +147,17 @@ describe("a carriageway of estimated width reaches the paving (G-570)", () => {
       }
   });
 
-  it("lays the corner by its step out beside a lawn's corner as a square, from the edge to the step's reach (G-897)", () => {
-    // The footway (2.5 m) from x 38 on, 1.75 m off the asphalt; west of x 40 a lawn between it and the
-    // asphalt, 1 m off the edge: the asphalt steps out 1.5 m at x 40.25, and the corner by the step
-    // west of it was bare, the bare ground rule's cells to lay grass and paving by turns.
+  it("steps out a kerb's width short of a lawn's line by its end, not past the lawn's corner (G-897)", () => {
+    // The footway (2.5 m) from x 38 on, 1.75 m off the asphalt; up to x 40 a lawn between it and the
+    // asphalt, 1 m off the edge. The asphalt stepped out 1.5 m at x 40.5, past the lawn's corner by
+    // its side: it steps out 0.5 m, a kerb's width short of the lawn's line.
     const walk: Way = { tags: { highway: "footway" }, pts: [[38, -6.25], [100, -6.25]] };
     const lawn = (near: number): Way => ({ tags: { landuse: "grass" }, pts: [[10, -near], [40, -near], [40, -4.9], [10, -4.9]], closed: true });
-    expect(surfacesAt([street, walk, lawn(4.25)], 40, -4)).toEqual(["square"]);
-    // The lawn kept past the step's reach, and kept as it is where it meets the kerb itself.
-    expect(surfacesAt([street, walk, lawn(4.25)], 39.9, -4.85)).toEqual(["grass"]);
-    expect(surfacesAt([street, walk, lawn(3.55)], 39.9, -4)).toEqual(["grass"]);
+    expect(surfacesAt([street, walk, lawn(4.25)], 40.6, -4.2)).toEqual([]);
+    expect(surfacesAt([street, walk, lawn(4.25)], 40.6, -3.5)).toEqual(["road"]);
+    // A lawn at the kerb itself, or level with the paving, has no corner by the step: as before.
+    expect(surfacesAt([street, walk, lawn(3.55)], 40.6, -4.2)).toEqual(["road"]);
+    expect(surfacesAt([street, walk, lawn(4.75)], 40.6, -4.2)).toEqual(["road"]);
   });
 
   it("lays a narrower gap as a sidewalk", () => {
