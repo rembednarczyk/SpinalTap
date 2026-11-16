@@ -10,7 +10,7 @@
 #  3. pnpm scan:diff BASE . (klucze skanu, które doszły i odeszły);
 #  4. pnpm hashes:check (złote hashe), chyba że --no-hashes;
 # i pisze DIR/topo-review.md z listą kontrolną kuratora. Nic nie zmienia w repo.
-# Ciężkie kroki idą przez zamek /tmp/seki-heavy.lock (docs/agenci-zasady.md).
+# Ciężkie kroki idą przez tools/heavy.sh (docs/agenci-zasady.md); wywołane spod seki-heavy biegną od razu.
 set -uo pipefail
 
 base=""
@@ -31,7 +31,7 @@ branch=$(git rev-parse --abbrev-ref HEAD)
 head=$(git rev-parse --short HEAD)
 [ -n "$out" ] || out="${TMPDIR:-/tmp}/topo-review-${branch//\//-}-$head"
 mkdir -p "$out"
-heavy() { flock /tmp/seki-heavy.lock "$@"; }
+heavy() { bash "$(git rev-parse --show-toplevel)/tools/heavy.sh" "$@"; }
 
 map_re='^(tools/osm-import/|tools/orto/|tools/gugik/|data/|packages/sim/src/content/lublin/|packages/engine/src/renderer/mapcity/|packages/sim/src/content/.*(scene|site)|tools/glitch-scan/test/baseline/)'
 git diff --name-only "$base"...HEAD > "$out/changed-all.txt"

@@ -10,7 +10,7 @@ const wrap = (payload: unknown) => {
   return JSON.stringify({ format: "seki-save", checksum: checksum(text), payload: text });
 };
 
-const GUARD: EntitySnapshot = { key: "c6-g3", position: { x: 2551, y: -28.6, z: 422.6 }, yaw: 1.67, pitch: 0, hp: 80, cooldown: 0, alerted: false };
+const GUARD: EntitySnapshot = { key: "c6-g3", position: { x: 551, y: -28.6, z: -22.6 }, yaw: 1.67, pitch: 0, hp: 80, cooldown: 0, alerted: false };
 
 describe("a guard's suspicion in the save (v20 to v21, G-174)", () => {
   it("is schema v21 or later", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CharacterState, InputFrame, Vec3 } from "@seki/core";
-import { AIR_ACCEL, COYOTE_TIME, SIM_DT, Simulation, docks, gangerEntity, playerStatsOf } from "../src";
+import { AIR_ACCEL, COYOTE_TIME, SIM_DT, Simulation, gangerEntity, ground, playerStatsOf } from "../src";
 import { market, oldMarketFloor } from "./fixtures/old-market";
 import type { LadderDef } from "../src/world/components";
 import { collect, input, run, teleportPlayer } from "./helpers";
@@ -10,8 +10,7 @@ const LADDERS: readonly { readonly key: string; readonly near: Vec3 }[] = [
   { key: "targ-escape-1", near: market(72, 4.5, 64.65) },
   { key: "targ-escape-2", near: market(69.2, 4.5, 64.6) },
   { key: "targ-escape-3", near: market(80, 4.5, 62) },
-  { key: "doki-stack-1", near: docks(3, 0, 98) },
-  { key: "doki-stack-2", near: docks(4, 0, 98) },
+  { key: "w3-pipe", near: ground(2444, 440.6) },
 ];
 
 type Body = Partial<Pick<CharacterState, "cyberware" | "memories">>;

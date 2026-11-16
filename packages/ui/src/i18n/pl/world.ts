@@ -162,7 +162,7 @@ export const plWorld = {
   "quest.accepted.eliminate": "Cele: {targets}. {pay}",
   "quest.accepted.escort": "Mika czeka przy kontenerze Genzō. Tessen: {targets}. {pay}",
   "quest.accepted.infiltrate": "Biuro Tessen, strażnicy: {targets}. Bez alarmu. {pay}",
-  "quest.accepted.hack": "Terminal pod dźwigiem, potem fala Tessen. {pay}",
+  "quest.accepted.hack": "Terminal na nabrzeżu, potem fala Tessen. {pay}",
   "quest.ambush": "Zasadzka Tessen",
   "quest.coverMika": "Osłoń Mikę",
   "quest.alarm": "Alarm na Nabrzeżu",

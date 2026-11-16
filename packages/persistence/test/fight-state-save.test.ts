@@ -12,7 +12,7 @@ const wrap = (payload: unknown) => {
 
 const SNIPER: EntitySnapshot = {
   key: "c1-g1",
-  position: { x: 2560, y: -20.6, z: 410 },
+  position: { x: 560, y: -20.6, z: -45 },
   yaw: 1.2,
   pitch: 0,
   hp: 120,
