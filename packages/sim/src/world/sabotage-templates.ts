@@ -27,8 +27,8 @@ import type { Template } from "./stream-catalog";
  */
 
 const CASE = { x: 0.9, y: 0.35, z: 0.6 } as const;
-const CHARGE = { x: 0.34, y: 0.2, z: 0.26 } as const;
-const WRECK = { x: 1.3, y: 0.5, z: 0.6 } as const;
+const CHARGE = { x: 0.46, y: 0.3, z: 0.34 } as const;
+const WRECK = { x: 1.5, y: 0.7, z: 0.9 } as const;
 /** A technician takes about as much as a passer-by of the street. */
 export const TECHNICIAN_HP = 60;
 
@@ -37,7 +37,7 @@ export const contractWreckKey = (contractId: string, s: W3StationId): string => 
 export const contractTechnicianKey = (contractId: string, i: number): string => `${contractId}-tech${i}`;
 const waveKey = (contractId: string, i: number): string => `${contractId}-w${i}`;
 
-const block = (id: EntityId, key: string, chunk: string, p: Vec3, size: Vec3, material: "metal" | "concrete" | "glass"): Entity => ({
+const block = (id: EntityId, key: string, chunk: string, p: Vec3, size: Vec3, material: "metal" | "asphalt"): Entity => ({
   id,
   key,
   chunk,
@@ -102,11 +102,11 @@ export const sabotageTemplates = (ids: IdAllocator, chunk: string, contract: Con
   // A charge is on the station once its spot is used (taken), till it goes off (taken too).
   for (const s of W3_STATIONS) {
     const key = contractChargeKey(contract.id, s);
-    add(key, (id) => block(id, key, chunk, stationChargeAt(s), CHARGE, "glass"), { all: [takenFlag(contractStationKey(contract.id, s))] });
+    add(key, (id) => block(id, key, chunk, stationChargeAt(s), CHARGE, "metal"), { all: [takenFlag(contractStationKey(contract.id, s))] });
   }
   for (const s of W3_STATIONS) {
     const key = contractWreckKey(contract.id, s);
-    add(key, (id) => ({ ...block(id, key, chunk, stationChargeAt(s), WRECK, "concrete"), yaw: 0.35 }), { all: [stationDownFlag(s)] });
+    add(key, (id) => ({ ...block(id, key, chunk, stationChargeAt(s), WRECK, "asphalt"), yaw: 0.35 }), { all: [stationDownFlag(s)] });
   }
   W3_TECHNICIANS.forEach((t, i) => {
     const key = contractTechnicianKey(contract.id, i);
