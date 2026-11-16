@@ -48,6 +48,8 @@ export const CONTRACT_XP_BASE: Readonly<Record<ContractKind, number>> = {
   escort: 350,
   infiltrate: 400,
   hack: 350,
+  // W-3's one-off job (ADR-0082): 900 with its crew of four at level 1.
+  sabotage: 420,
 };
 
 /** What each man the contract sends against the player adds. */

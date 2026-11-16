@@ -23,6 +23,7 @@ import { cityDroneWorld } from "./drones/drone-world";
 import { cityPatrolWorld } from "./drones/patrol-world";
 import { CapsuleRoomView } from "./rooms/capsule-room-view";
 import { AlchemiaView } from "./alchemia/alchemia-view";
+import { W3View, W3_KEEP } from "./tessen-w3/w3-view";
 import { builtRoofOver } from "./built-roofs";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
@@ -129,6 +130,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly capsule: CapsuleRoomView;
   /** Alchemia on Plac Ofiar Getta, its outside and, near it, its inside (ADR-0074 stage 1). */
   private readonly alchemia: AlchemiaView;
+  /** Tessen's W-3 hall from the inside: its baked rooms, the moving line, its lamps and the interior mode (ADR-0082 stage 2b). */
+  private readonly w3: W3View;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
   /** The metro car between districts (ADR-0036). */
@@ -171,7 +174,7 @@ export class BabylonRenderer implements RenderPort {
       strength: 0.9,
     });
     this.map = new MapCitySlot({ scene, materials: this.materials, shadow: this.shadow, quality: stage.options.quality ?? "high", props: () => this.cityKit.props });
-    this.rig = new CameraRig(scene, this.materials, (m) => this.props.isBlocker(m));
+    this.rig = new CameraRig(scene, this.materials, (m) => this.props.isBlocker(m) || this.w3.isBlocker(m));
     this.rig.onBodyVisibility = (visible) => this.cameraTarget !== null && this.characters.setBodyVisible(this.cameraTarget, visible);
     // The player's figure as a halftone while it is in the way of the TPP view (G-275).
     this.rig.bodyFade.onChange = (amount) => {
@@ -243,6 +246,7 @@ export class BabylonRenderer implements RenderPort {
       eye: () => eye,
     });
     this.alchemia = new AlchemiaView({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, cars: () => this.vehicles.cars() });
+    this.w3 = new W3View({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, still: stage.options.quality === "low" });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
       stage,
@@ -324,6 +328,11 @@ export class BabylonRenderer implements RenderPort {
   }
 
   playEffect(effect: EffectDescriptor): void {
+    // W-3's job on its line (ADR-0082 stage 3): the beacons in the alarm's colour, the screens.
+    if (effect.kind === "alarm-light" || effect.kind === "line-screens") {
+      this.w3.setMission(effect);
+      return;
+    }
     this.fx.play(effect);
     if (effect.kind === "time-of-day") {
       this.map.setDaylight(effect.daylight);
@@ -394,18 +403,21 @@ export class BabylonRenderer implements RenderPort {
     this.capsule.update();
     this.alchemia.update();
     this.alchemia.parking.update(dt, this.stage.options.reference);
+    this.w3.update(dt, this.stage.options.reference);
+    // In the hall's rooms its own light replaces the sky's; the city outside its walls goes off in its update (ADR-0082 §3.8).
+    this.fx.indoorFade.set(this.w3.interior);
     if (this.map.current) (this.platforms ??= this.platformViews()).update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();
-    city?.update(dt, this.rig.camera.position, this.stage.options.reference);
+    city?.update(dt, this.rig.camera.position, this.stage.options.reference, this.w3.interior ? W3_KEEP : null);
     if (city) this.props.updateGlow(this.rig.camera.position, this.map.sight);
     this.props.updateInteriors(this.rig.camera.position);
     // Shadow follows what the camera looks at (the player, the metro car or the fixed reference
     // view) and shrinks to what it shows.
     const focus = target && !this.metro.active ? target.position : this.rig.camera.position;
     const moved = this.shadow.update(focus, this.rig.camera);
-    this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z);
+    this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z, this.w3.lightScope);
     if (moved) this.materials.setShadowMatrix(moved);
     this.fx.update(dt);
     // The probe never re-renders in the metro.

@@ -26,7 +26,7 @@ export interface Device {
   broken: number;
 }
 
-/** Quickhack effects on a person or a camera, seconds left (ADR-0029). Transient, not saved. */
+/** Quickhack effects on a person or a camera, seconds left (ADR-0029). Saved while one runs (G-882). */
 export interface HackEffects {
   /** Marked by `ping`: the HUD shows it through walls. */
   pinged: number;

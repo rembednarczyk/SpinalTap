@@ -4,8 +4,8 @@ import type { TransformNode, Vector3 } from "../../babylon";
 
 /**
  * W-3's hall from afar (ADR-0082 §4, stage 2): the props inside its rooms that are meshes of
- * their own (the doors' leaves, the stairs, the ladders; its walls and furniture are merged per
- * area, ADR-0038, in groups of their own: `W3_REGION`) are drawn only while the eye is within
+ * their own (the doors' leaves, the stairs, the ladders; its walls and furniture are baked by
+ * `W3View`, stage 2b) are drawn only while the eye is within
  * `W3_INTERIOR_RANGE` of the rooms. From the bridge they were some forty meshes behind the
  * shell's walls. The doors in the hall's outer walls, its outer walls and the cooling units on
  * its roof stand outside every room by more than `MARGIN` and stay.
@@ -38,7 +38,7 @@ export const inW3Interior = (p: { readonly x: number; readonly y: number; readon
   ROOMS.some((r) => p.x > r.minX - MARGIN && p.x < r.maxX + MARGIN && p.z > r.minZ - MARGIN && p.z < r.maxZ + MARGIN && p.y > r.bottom - BELOW && p.y < r.top);
 
 /**
- * Is a merged interior block centred at `p` drawn with the hall: inside its outer walls, under the
+ * Is a baked block of the inside centred at `p` drawn with the hall (`w3InsideGeometry`): inside its outer walls, under the
  * low roofs' underside over row N (the airlocks', row N's outer walls and the cooling units on
  * the roof stay), to its ceilings over the rest, down to the basement's floor; and the culvert
  * under the terrace (its mouth by the river stays). Ceilings and floors are not in any room and
@@ -62,9 +62,6 @@ export const w3InteriorDistance = (eye: { readonly x: number; readonly y: number
     Math.max(BOUNDS.minY - eye.y, 0, eye.y - BOUNDS.maxY),
     Math.max(BOUNDS.minZ - eye.z, 0, eye.z - BOUNDS.maxZ),
   );
-
-/** The region of the merged interior blocks (`InteriorBatches`) drawn with the hall. */
-export const W3_REGION = "w3";
 
 /** Shows and hides the hall's own meshes with the eye's distance. */
 export class W3InteriorCull {

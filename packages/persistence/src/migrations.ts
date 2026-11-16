@@ -462,6 +462,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // ground wakes on the public strip by the metro, the bodies and bags left there with her; the
   // docks' people come back from the content; a running escort is called off without a penalty.
   38: rebuildDocksAsW3,
+  // v39 -> v40 (ADR-0082 stage 3): the sabotage of W-3, a contract with its way (`route`) and its
+  // way out seen (`seenLeaving`), both optional. An older save runs no sabotage: nothing changes.
+  39: (old) => ({ ...old, version: 40 }),
 };
 
 export class MigrationError extends Error {}

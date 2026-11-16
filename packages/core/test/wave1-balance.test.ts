@@ -53,7 +53,9 @@ describe("balance of bonuses and style (ADR-0029)", () => {
 
   it("no single perfect job buys an implant", () => {
     const cheapest = Math.min(...Object.values(CYBERWARE_CATALOG).map((c) => c.price).filter((p) => p > 0));
-    for (const kind of CONTRACT_KIND_IDS) {
+    // W-3's sabotage is offered once and takes some 11 minutes (ADR-0082 balance): its own guard
+    // rail is the income per minute in `w3-sabotage.test.ts`, not a templated job's extras.
+    for (const kind of CONTRACT_KIND_IDS.filter((k) => k !== "sabotage")) {
       const pay = meanPay(kind);
       const style = FIXER_STYLE[CONTRACT_KINDS[kind].giver];
       expect(CONTRACT_BONUS[kind].bonus + styleBonusOf(kind, style, pay), kind).toBeLessThan(cheapest / 2);

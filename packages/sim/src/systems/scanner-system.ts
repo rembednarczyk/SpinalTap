@@ -28,6 +28,7 @@ import {
   shortCircuitScale,
   uploadTimeScale,
   workingDeck,
+  SABOTAGE,
 } from "@seki/core";
 import type { DeviceKind, Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -223,7 +224,9 @@ const ping = (ctx: SimContext, target: Entity, duration: number): void => {
 
 /** Reboot Optics: the target goes blind and loses the player. */
 const rebootOptics = (ctx: SimContext, target: Entity, duration: number): void => {
-  hackFxOf(ctx.world, target).blind = duration;
+  // The server room's camera of W-3's sabotage reboots slower (ADR-0082): time for the upload's start.
+  const sabotage = target.device?.restricted?.during === "sabotage";
+  hackFxOf(ctx.world, target).blind = sabotage ? Math.max(duration, SABOTAGE.cameraRebootSeconds) : duration;
   const ai = target.ai;
   if (ai) {
     // It loses the player: whatever it chases now is the last position it had.

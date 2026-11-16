@@ -75,6 +75,8 @@ import { generatedCity } from "../../osm-import/test/city.ts";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
+import { constructionBuilt, lod1UnderSites, siteLandBuilt } from "./construction-built";
+import { loadStructures } from "../../osm-import/src/props-osm.ts";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { cityFrontageWorld, frontageBare, squaresOf } from "./frontage-bare";
 import { fillOnConstruction } from "./fill-construction";
@@ -85,7 +87,6 @@ import { markingSteps } from "./marking-step";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
 import { canopyWithoutTree } from "./canopy-trees";
 import { deckRings, treesByDeck, treesInStructure } from "./tree-structures";
-import { structuresOf } from "../../osm-import/src/structures.ts";
 import { cityMeasuredPieces, cityMeasuredTrees, treesBelowMeasured, treesRoofCaptured, treesUnmeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
@@ -198,6 +199,9 @@ const SOURCE_OSM = mergeOsm(
     .filter((f) => f.endsWith(".json"))
     .map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))),
 );
+/** The structures the import keeps trees out of (`loadStructures`: the map caught up with its finished sites, G-872), read once. */
+let importStructures: ReturnType<typeof loadStructures> | undefined;
+const IMPORT_STRUCTURES = () => (importStructures ??= loadStructures());
 /** The kerb fills' world (`kerb-fill.ts`), built once for both of its checks. */
 let fillWorld: ReturnType<typeof cityFillWorld> | undefined;
 const FILL_WORLD = () => (fillWorld ??= cityFillWorld(SOURCE_OSM));
@@ -2199,6 +2203,16 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * left off on purpose (`edge-buildings.ts`, G-556): the map's edge dropped it whole.
    */
   "edge-building-dropped": () => edgeBuildingsDropped(osmBuildings(SOURCE_OSM), LUBLIN_CHUNKS.map((c) => c.bounds), new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => b.id)))),
+  /** An outline OSM tags `building=construction` that LoD1 2024 covers for half its area or more, with no solid in the game: a finished building the map has not caught up with (`construction-built.ts`, G-872). */
+  "osm-construction-built": () => {
+    const areas = extractFeatures(SOURCE_OSM).areas;
+    return constructionBuilt(areas, lod1UnderSites(areas), new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => b.id))));
+  },
+  /** A building site's land the import keeps (`loadStructures`) round a building of the game OSM still tags `building=construction`: the plot of a finished building (`construction-built.ts`, G-872). */
+  "construction-landuse-built": () => {
+    const buildings = LUBLIN_CHUNKS.flatMap((c) => c.buildings);
+    return siteLandBuilt(IMPORT_STRUCTURES(), buildings, new Set(buildings.filter((b) => osmTags(b.id).building === "construction").map((b) => b.id)));
+  },
   /** A point of a 0.5 m grid on bare terrain in a shops' or market's area, by a shop's or public building's walls or at a stop (`landuse-bare.ts`, decision 5.11). */
   "landuse-bare": () => LANDUSE_BARE(),
   /** A `landuse-bare` sample the orthophoto's cover shows green or light paving: what the import lays a lawn or paving on (ADR-0077 step 1.1, `bare-on-cover.ts`). */
@@ -2215,7 +2229,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     return fillGap(city.stats, city.chunks);
   },
   /** A 0.5 m sample of a piece laid in a pedestrian street's frontage inside a building site of the map (`fill-construction.ts`, G-866). */
-  "fill-on-construction": () => fillOnConstruction(structuresOf(SOURCE_OSM), LUBLIN_CHUNKS),
+  "fill-on-construction": () => fillOnConstruction(IMPORT_STRUCTURES(), LUBLIN_CHUNKS),
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => KERB_GAP_BARE(),
   /**
@@ -2229,7 +2243,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)),
         cityLanduseWorld(SOURCE_OSM),
         squaresOf([...LANDUSE_BARE(), ...KERB_GAP_BARE(), ...KERB_STRIP_BARE(), ...GROUND_STRIP_GAP()]),
-        structuresOf(SOURCE_OSM)
+        IMPORT_STRUCTURES()
           .filter((s) => s.kind === "construction")
           .map((s) => s.ring),
       ),
@@ -2250,7 +2264,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A 10 m square with 40 m² of crown or more on the orthophoto cover, 80% of it further than 6 m from every tree of the game: crowns OSM has no tree node under (G-797, `canopy-trees.ts`). */
   "canopy-without-tree": () => canopyWithoutTree(MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined), Object.values(WORLD_STREET_PROPS).flat(), CLEARED_BUILDINGS),
   /** A tree whose trunk lies in an OSM building or building part (ruins aside), a building site, a market or a canopy: a roof or a shell taken for a crown (G-815, `tree-structures.ts`). */
-  "tree-in-structure": () => treesInStructure(structuresOf(SOURCE_OSM), Object.values(WORLD_STREET_PROPS).flat()),
+  "tree-in-structure": () => treesInStructure(IMPORT_STRUCTURES(), Object.values(WORLD_STREET_PROPS).flat()),
   /** A tree whose trunk lies 2 m or nearer to a bridge's deck: the deck's height read as a crown (G-815, `tree-structures.ts`). */
   "tree-by-deck": () => treesByDeck(deckRings(MAP_CHUNKS), Object.values(WORLD_STREET_PROPS).flat()),
   /** A tree OSM names a genus of the renderer's models (`genus`, `species`: Quercus, Populus...) drawn as another one: the oaks and the "Baobab" of Plac Litewski as limes and maples (G-423, `tree-species.ts`). */

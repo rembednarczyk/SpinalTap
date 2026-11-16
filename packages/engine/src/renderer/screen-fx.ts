@@ -14,10 +14,11 @@ import { DISTRICT_PALETTES, PaletteBlend, districtAt, rigWithPalette } from "../
 import { Grading } from "../npr/grading";
 import { applyMsaa } from "../npr/msaa";
 import { qualityTier } from "../npr/quality";
-import { rigForDaylight } from "../npr/lighting";
+import { INDOOR_RIG, mixRig, rigForDaylight } from "../npr/lighting";
 import type { SpeedLines } from "../npr/speed-lines";
 import type { ToonMaterials } from "../npr/toon-material";
 import { type Atmosphere, createSplashes, createSteam } from "./atmosphere";
+import { IndoorFade } from "./indoor-fade";
 import { type CharacterRig, raiseWeapon, setWeaponDrawn, startReload, startStagger, startSwing } from "./characters";
 import type { FarCity } from "./far-city";
 import { Lasers } from "./lasers";
@@ -180,6 +181,10 @@ export class ScreenFx {
         this.applyLook();
         materials.get("dressing").setFloat("selfLit", 1 - 0.5 * Math.max(0, Math.min(1, effect.daylight)));
         return;
+      // W-3's line (ADR-0082): the renderer hands these to its view, not to the screen.
+      case "alarm-light":
+      case "line-screens":
+        return;
       default:
         this.playActor(effect);
     }
@@ -250,7 +255,8 @@ export class ScreenFx {
     const look = rigWithPalette(rigForDaylight(this.daylight), p, this.daylight);
     const scale = this.fogScale ?? this.deps.fogScale ?? 1;
     const rig = scale === 1 ? look : { ...look, fogDensity: look.fogDensity * scale };
-    materials.setRig(rig);
+    // Inside a closed hall its own light replaces the sky's on the materials (ADR-0082 §4); the sky and the signs keep the night's.
+    materials.setRig(mixRig(rig, INDOOR_RIG, this.indoorFade.value));
     materials.setRimTint(p.rim, p.rimWeight * (1 - 0.5 * Math.max(0, Math.min(1, this.daylight))));
     atmosphere.setDaylight(rig, this.daylight);
     farCity.setDaylight(rig, this.daylight);
@@ -363,6 +369,9 @@ export class ScreenFx {
     this.scanHighlight.release(keep);
   }
 
+  /** The interior's own light in place of the sky's (W-3's hall, ADR-0082 §4); the renderer sets it. */
+  readonly indoorFade = new IndoorFade();
+
   /** Under a roof (the metro car, ADR-0036): no rain or splashes in front of the camera. */
   setIndoor(on: boolean): void {
     for (const p of [this.rain, this.splashes]) {
@@ -396,6 +405,7 @@ export class ScreenFx {
     this.deps.farCity.update(dt, camera.camera.position, reference);
     this.deps.signage.update(dt, reference);
     this.updatePalette(dt);
+    if (this.indoorFade.update(this.deps.stage.options.reference ? 1 : dt)) this.applyLook();
     this.fx.update(dt);
     this.fxPost.update(this.fx.uniforms, this.fx.active);
     this.updateScanHighlight();

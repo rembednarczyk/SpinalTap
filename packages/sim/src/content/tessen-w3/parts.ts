@@ -19,6 +19,15 @@ export const box = (x0: number, x1: number, y0: number, y1: number, z0: number, 
   solid,
 });
 
+/**
+ * A row of lockers along x, `count` cabinets of equal width: each hides one body (ADR-0065,
+ * ADR-0082 §2 "Kryjówki ciał").
+ */
+export const lockers = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, count: number): StaticProp[] => {
+  const w = (x1 - x0) / count;
+  return Array.from({ length: count }, (_, i) => ({ ...box(x0 + i * w, x0 + (i + 1) * w, y0, y1, z0, z1, "metal"), hide: "locker" as const }));
+};
+
 /** A walkable slab whose top is at `top` over the floor. */
 export const slabTop = (x0: number, x1: number, z0: number, z1: number, top: number, thickness = 0.3, material: BlockMaterial = "concrete"): StaticProp =>
   box(x0, x1, top - thickness, top, z0, z1, material);
@@ -151,11 +160,12 @@ export const wallZ = (z0: number, z1: number, x0: number, x1: number, y0: number
 const plainBlock = (p: StaticProp): boolean => p.view.kind === "block" && !p.view.slope && !p.view.rungs && !p.mechanism;
 
 /**
- * Parts of an interior (ADR-0038): `interior` on the prop for the minimap and on its block view,
- * so the renderer draws them merged and without the moon shadow. Stairs, ladders and doors stay as they are.
+ * Parts of an interior (ADR-0038): `interior` on the prop for the minimap and on its block view.
+ * They are scenery (ADR-0082 §4): the entity is the solid alone, and the renderer bakes the hall's
+ * inside from `W3_INSIDE_BLOCKS` with its own detail and light. Stairs, ladders and doors stay as they are.
  */
 export const indoor = (props: readonly StaticProp[]): StaticProp[] =>
-  props.map((p) => (plainBlock(p) && p.view.kind === "block" ? { ...p, interior: true, view: { ...p.view, interior: true } } : p));
+  props.map((p) => (plainBlock(p) && p.view.kind === "block" ? { ...p, interior: true, scenery: true, view: { ...p.view, interior: true } } : p));
 
 /**
  * Outdoor blocks drawn merged like an interior's (ADR-0038: one mesh per area, no moon shadow),

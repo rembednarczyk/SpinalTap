@@ -78,6 +78,8 @@ const MINUTES: Readonly<Record<ContractKind, number>> = {
   escort: 3,
   infiltrate: 3,
   hack: 3.5,
+  // W-3 with the way in and out (ADR-0082 balance).
+  sabotage: 11,
 };
 
 describe("balance in the docks (ADR-0024)", () => {

@@ -49,6 +49,14 @@ VAR tessen_stance = "neutral"
     GENZO: The Tessen terminal on the quay by the pier. You jack in and hold out next to it until it's done.
     GENZO: Security comes straight away, and there's a shooter on the tower's platform. Red laser means you've got a second to find cover.
     -> END
++ {not has_flag("w3:sabotage-offered")} [What's that batch of drones? #tone:main]
+    SEKI: What's that batch of drones everyone's whispering about?
+    ~ set_flag("w3:sabotage-offered")
+    ~ offer_contract("sabotage")
+    GENZO: Twelve combat drones from the W-3 hall. The army collects them at six in the morning. A client of mine wants them to fly wrong.
+    GENZO: The calibration core is in server room N, off the north corridor. Plug this in at its terminal and stay close until it's done. Walk away and it waits for you.
+    GENZO: A camera watches the core, a patrol walks the hall and the corridor. If they raise the alarm, the server rooms lock down. Get out of the zone unseen and I'll call.
+    -> END
 + [Not now. #tone:leave]
     GENZO: I'll be by the container. The boat doesn't leave without a reason.
     -> END
@@ -59,6 +67,8 @@ VAR tessen_stance = "neutral"
     GENZO: Mika's waiting for you. Don't leave her alone on the riverside.
 - contract_kind == "infiltrate":
     GENZO: The data's still in the office. Remember, low and quiet.
+- contract_kind == "sabotage":
+    GENZO: The batch leaves at six. Server room N, the core's terminal. Then out of the zone, and nobody sees you.
 - else:
     { contract_time_left > 0:
         GENZO: The terminal's still grinding. Get back there, {contract_time_left} seconds left.
