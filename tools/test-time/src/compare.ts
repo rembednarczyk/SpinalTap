@@ -1,7 +1,7 @@
 import { appendFileSync, existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { EXCEPTIONS } from "./exceptions.ts";
-import { errors, gateSummary, gateTests } from "./gate.ts";
+import { blocking, errors, gateSummary, gateTests } from "./gate.ts";
 import { compareTimes, mergeTests, mergeTimes, summary, warnings, type TimesFile } from "./times.ts";
 
 /**
@@ -46,11 +46,12 @@ if (head.length === 0) {
     mergeTests(head),
     main.map(mergeTests).filter((t) => Object.keys(t).length > 0),
     EXCEPTIONS,
+    head.map((f) => mergeTests([f])),
   );
   const text = `${summary(c, base ? (reference || baseDir) : undefined)}\n${gateSummary(gate)}`;
   console.log(text);
   for (const w of warnings(c)) console.log(w);
   for (const e of errors(gate)) console.log(e);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, text);
-  if (gate.breaches.length > 0) process.exitCode = 1;
+  if (blocking(gate).length > 0) process.exitCode = 1;
 }
