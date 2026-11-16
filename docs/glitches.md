@@ -811,6 +811,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna (przypuszczalna): `makeDeck` bierze `rawHeight` końców osi i robi pomost poziomy w poprzek; droga obok idzie za poprzecznym spadkiem NMT
 - Pakiet właściciela: packages/sim (content/lublin decks, terrain PADS/RAMPS)
 - Test przyjęcia: kontrola `deck-end-step` (różnica `groundY` 0,15 m przed i za krawędzią > 0,15 m, poza drogą pod mostem) = 0
+- 16.11 (kurator, po G-898 #655): przyczyna zmierzona, inna niż przypuszczalna. W 85 z 195 próbek krawędzi pomostów z progiem 0,02-0,45 m surowy NMT 1 m 0,25 m za obrysem leży na poziomie pomostu (-0,20…+0,09 m), a siatka importu 0,15-0,68 m pod NMT (kształtowanie terenu ±0,0). Rozmycie Gaussa NMT (BASE_SIGMA 1,5 m) i siatka 2,5 m wciągają skarpę lub rów pod mostem w pas obok końca pomostu. Miejsca: Zamkowa SW (729-732; 152-156), chodnik wiaduktu (754-764; 183-189), kładka (1070-1083; 162), Mełgiewska (2449-2451; 258-259), (2405-2445; 241-266), most Lutosławskiego (2440-2486; 406-439). Proponowana reguła importu (tools/osm-import/src/terrain.ts): rozmycie z maską, w którym 1 m komórki NMT pod obrysem man_made=bridge (pomostu) nie wchodzą do średniej dla punktów siatki poza obrysem (splot znormalizowany), albo punkty siatki do 2,5 m od boku pomostu i 3,6 m od końca biorą min(surowy NMT, pomost), gdy |surowy NMT − pomost| ≤ 0,15 m. Gdzie surowy NMT jest niżej o > 0,45 m, skarpa zostaje (T-new z tego przeglądu). Kontrola: deck-side-below-nmt, baza 85.
 
 ### G-348 Długi przebieg e2e z modelami pod SwiftShaderem rośnie do 6–7 GB i kończy się OOM; zatrzymany zegar Playwrighta blokuje rysowanie
 - Status: zgłoszone (5.11, autor broni białej)
@@ -2472,6 +2473,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Ortofoto pokazuje płyty; reguła gołej ziemi nie kładzie tam nic, bo pas jest dalej niż 5 m od asfaltu (kerbStrips). Po G-897 (#654) granica cofa się o 0,5 m (pas 2,25 x 0,5 m). Żaden rodzaj skanu tego nie liczy: kandydat na nową kontrolę (goła ziemia na płytach ortofoto przy chodniku).
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import
+
+### G-903 Stopy wskakują z terenu na pomost mostu z 0,46-2,0 m niżej (DECK_HEADROOM)
+- Ważność: S3 · Zasięg: boki pomostów przy przyczółkach: Mełgiewska (2405-2457; 240-330), most Lutosławskiego (2440-2486; 410-440), wiadukt Zamkowej i grobla (730-790; 150-205), kładka (1070-1083; 160); 304 z 1 007 328 prób ruchu (sonda kuratora), 105 z 242 838 (sonda weryfikatora G-898); tak samo na main przed #655
+- Opis: Pomost do DECK_HEADROOM (2 m) nad terenem jest ziemią dla stóp na każdej wysokości (decksAt), a offTheBank blokuje tylko, gdy steepAt w punkcie docelowym. Przy skośnym albo krótkim kroku przez krawędź punkt docelowy na płaskim pomoście nie jest stromy, więc stopy w jednym kroku wskakują o 0,46-2,0 m (przy schodach w56965515 do 4,9 m). W 65% przypadków NMT potwierdza w Lublinie skarpę 0,5-2,5 m pod bokiem mostu (lico, balustrada), a w 35% teren gry jest dodatkowo za nisko (G-339). Proponowana reguła ruchu: wejście w obrys pomostu stopami z terenu poza nim tylko o ≤ STEP_HEIGHT (jak G-898); reguła DECK_HEADROOM tylko dla stóp już na pomoście albo pod nim. Sonda pomija kolizje (mury w294098689/690 stoją przy grobli), więc do potwierdzenia przez łowcę w grze. Przy okazji: offTheBank dał NaN (735,40; 165,56) dla stóp w piwnicy pod pomostem (gradient o długości 0). Sondy: scratchpad topo-overstep.test.ts, topo-overstep-nmt.tsv
+- Status: zgłoszone (16.11, kurator, przegląd G-898)
+- Pakiet właściciela: packages/sim (ruch: movement-system offTheBank, world/deck decksAt)
+- Test przyjęcia: przemiatanie krawędzi wszystkich pomostów (odsunięcie 0,05-0,6 m, krok 0,03-0,25 m, kąty do ±1,2 rad): zero ruchów z przyrostem stóp > STEP_HEIGHT; deck-step.test.ts bez zmian
+- Przy okazji (kurator 16.11): offTheBank zwrócił NaN w (735,40; 165,56) dla stóp w piwnicy pod pomostem, prawdopodobnie gradient o długości 0. Do potwierdzenia w grze przez łowcę (sonda pomija kolizje, przy grobli Zamkowej stoją mury w294098689/690). Proponowane kontrole skanu: deck-side-below-nmt (baza 85) i deck-side-overstep (baza 304). Sondy: scratchpad topo-decks*.test.ts, topo-overstep.test.ts.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
