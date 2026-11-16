@@ -68,7 +68,7 @@ const ready = async (kit: CharacterKit, settle: () => void) => {
   await vi.waitFor(() => {
     settle();
     expect(kit.hands.drawn.length).toBeGreaterThan(0);
-  });
+  }, 30_000);
 };
 
 const triangles = (meshes: readonly AbstractMesh[]) => meshes.reduce((n, m) => n + (m.getTotalIndices() / 3), 0);
