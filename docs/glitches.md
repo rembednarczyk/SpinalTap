@@ -2448,7 +2448,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-899 Walczący z treści po wczytaniu w trakcie pościgu stoi jeden krok (velocity undefined, yaw o 0,1)
 - Ważność: S4 · Zasięg: zapis i wczytanie w trakcie pościgu walczącego z treści (np. hebi-grodzka)
 - Opis: Sonda weryfikatora #647: po wczytaniu w trakcie pościgu walczący z treści stoi jeden krok, velocity undefined, yaw różni się o 0,1; hash rozjeżdża się od pierwszego kroku (24 z 33 zapisów, tick 543). Tak samo na main. Sonda ręcznie zmieniała alerted i pozycję, więc do potwierdzenia przez łowcę (scratchpad v-g896-sl-*.json). Pokrewne G-883 (v41: prędkości).
-- Status: do potwierdzenia
+- Status: nie potwierdzone (łowca 16.11); wcześniej: do potwierdzenia
+- Pakiet właściciela: packages/sim, packages/persistence
+- Łowca: 0 rozjazdów w ok. 700 zapisach (hebi-grodzka, hebi-bramowa, ziarna 3-5, strzał z 9 i 22 m, ucieczka sprintem). Sonda #647 daje 21 z 30 tylko po ręcznym przeniesieniu walczącego 130 m od posterunku. Hipoteza nieuzasadniona: zimna pamięć nawigacji (nav-memo, chase-queue) po wczytaniu w pościgu z objazdem bariery; tego wariantu nie sprawdzono. Pułapka sond: te same wejścia i yaw gracza obu symulacjom.
+
+### G-900 Zapis w trakcie pościgu gubi zgłoszenie przestępstwa, które przychodzi chwilę później
+- Ważność: S3 · Zasięg: zapis i wczytanie w trakcie pościgu walczącego z treści
+- Opis: Łowca G-899: hebi-bramowa, gracz ucieka sprintem, ziarna 3, 4, 5, zapis w kroku 1005 od startu pościgu (gracz 51 m od walczącego). Po 16 krokach gra żywa ma domain.heat poziom 1 (frakcja hebi, searchLeft 20, cooldown 7,98) i reinforcements.sent 1; wczytana ma heat 0 i reinforcements undefined. Stan przed zapisem identyczny. Przypuszczalnie licznik zgłoszenia (telefon świadka, m.call w crowd, WITNESS_CALL_SECONDS w crime-system.ts) poza zapisem; może się pokrywać z G-891. Sondy: scratchpad g899-heat.txt.
+- Status: zgłoszone
 - Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
