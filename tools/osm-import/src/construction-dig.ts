@@ -6,7 +6,7 @@
  * the pavements and the walls round the site keep the map's terrain. Where it does not fit it
  * shrinks, down to `SMALLEST` of the site, else the site has no dig.
  */
-import { type SiteGround } from "./construction-ground.ts";
+import { type SiteGround, ringCell } from "./construction-ground.ts";
 import { type Pt, pointInRing } from "./geometry.ts";
 
 /** Side of the raster the dig is fitted on (m). */
@@ -69,9 +69,8 @@ const raster = (ring: readonly Pt[], g: SiteGround, deg: number) => {
  */
 export const planDig = (ring: readonly Pt[], area: number, g: SiteGround, deg: number, share: number, shape: { readonly depth: number; readonly blend: number }): DigPlan | null => {
   const r = raster(ring, g, deg);
-  const c = ring.reduce((s, p) => ({ x: s.x + p.x / ring.length, z: s.z + p.z / ring.length }), { x: 0, z: 0 });
-  // The blend, one terrain cell past it on the diagonal, and the fence's own clearance.
-  const m = Math.ceil((shape.blend + g.cellAt(c) * Math.SQRT2 + 0.3) / R);
+  // The blend, one terrain cell past it on the diagonal (the coarsest under the site), and the fence's own clearance.
+  const m = Math.ceil((shape.blend + ringCell(ring, g) * Math.SQRT2 + 0.3) / R);
   for (let target = share * area; target >= Math.max(LEAST, SMALLEST * area); target *= SHRINK) {
     let best: { i: number; j: number; cu: number; cv: number; mean: number } | null = null;
     for (const aspect of ASPECTS) {

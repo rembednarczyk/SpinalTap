@@ -1,10 +1,10 @@
 import { type BlockStyle, type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { StaticProp } from "../builders";
 import { underDecks } from "./abutments";
-import { FLIGHT_CELL, flightGrid, refineGrid, shapeGrid } from "./shape";
+import { FLIGHT_CELL, type Pad, flightGrid, refineGrid, shapeGrid } from "./shape";
 import { shapeWays, wayRamps, waySegments } from "./steep-ways";
 import { bridgeDeckAt, deckGroundAt } from "./decks";
-import { FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS, STEEP_WAYS } from "./sites";
+import { DIG_PADS, FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS, STEEP_WAYS } from "./sites";
 import { surfaceLiftAt } from "./roads";
 import { stitchSeams } from "./seams";
 
@@ -12,7 +12,7 @@ const inside = (b: { minX: number; maxX: number; minZ: number; maxZ: number }, x
 
 /** W-3's site with its margins (ADR-0082): the fence, the quay, the basin and the strip south of them. */
 const W3_SITE = { minX: 2470, maxX: 2615, minZ: 375, maxZ: 480 } as const;
-const overlaps = (g: TerrainGrid, b: typeof W3_SITE): boolean =>
+const overlaps = (g: TerrainGrid, b: { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number }): boolean =>
   g.originX <= b.maxX && g.originX + (g.cols - 1) * g.cell >= b.minX && g.originZ <= b.maxZ && g.originZ + (g.rows - 1) * g.cell >= b.minZ;
 /**
  * A grid under W-3 refined to `FLIGHT_CELL` before the pads (ADR-0082, audit P2): on the import's
@@ -20,6 +20,14 @@ const overlaps = (g: TerrainGrid, b: typeof W3_SITE): boolean =>
  * the fence. Refining keeps the NMT's surface as it is; the pads then end within a metre.
  */
 export const w3Grid = (g: TerrainGrid): TerrainGrid => (g.cell > FLIGHT_CELL && overlaps(g, W3_SITE) ? refineGrid(g, FLIGHT_CELL) : g);
+
+/**
+ * A grid a building site's dig reaches (ADR-0087), its blend and a cell past it, refined to
+ * `FLIGHT_CELL`, else as it is: the import's 5 m cell would carry the dig a cell further, past
+ * the fence. Refining keeps the surface as it is.
+ */
+export const siteGrid = (g: TerrainGrid, pads: readonly Pad[] = DIG_PADS): TerrainGrid =>
+  g.cell > FLIGHT_CELL && pads.some((p) => overlaps(g, { minX: p.rect.minX - p.blend - g.cell, maxX: p.rect.maxX + p.blend + g.cell, minZ: p.rect.minZ - p.blend - g.cell, maxZ: p.rect.maxZ + p.blend + g.cell })) ? refineGrid(g, FLIGHT_CELL) : g;
 
 /**
  * The terrain of the game's Lublin (ADR-0045): the map's grids with the pads and ramps of
@@ -30,10 +38,11 @@ export const w3Grid = (g: TerrainGrid): TerrainGrid => (g.cell > FLIGHT_CELL && 
  * the finer points. Then the stretches of the ways walked on foot still too steep on that terrain
  * are laid at an even grade along them, on the finer grid too (G-755). Last the seams are
  * stitched (G-748): each grid's points by a coarser neighbour take its surface, so the chunks'
- * terrain meets there.
+ * terrain meets there. The building sites' digs are laid with the flights' ramps, on a grid
+ * refined under them (`siteGrid`).
  */
 const LAID: ReadonlyMap<string, TerrainGrid> = new Map(
-  MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(shapeGrid(w3Grid(c.terrain), PADS, RAMPS), FLIGHT_RAMPS), [], FLIGHT_RAMPS)]),
+  MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(siteGrid(shapeGrid(w3Grid(c.terrain), PADS, RAMPS)), FLIGHT_RAMPS), DIG_PADS, FLIGHT_RAMPS)]),
 );
 /** The steep ways' stretches laid (G-755), read on the ground walked there: a way on a bridge's deck is not on the bank under it. */
 export const WAY_RAMPS = wayRamps(

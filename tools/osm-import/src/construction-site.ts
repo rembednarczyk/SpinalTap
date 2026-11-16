@@ -16,7 +16,7 @@
 import { mulberry32 } from "../../../packages/core/src/math/mulberry32.ts";
 import { type StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { SITE_CABIN, SITE_LOOKS } from "../../../packages/core/src/world/sites.ts";
-import { type SiteGround } from "./construction-ground.ts";
+import { type SiteGround, ringCell } from "./construction-ground.ts";
 import { type DigPlan, digShape, planDig } from "./construction-dig.ts";
 import { FENCE_INSET, type FenceEdge, type GatePlace, along, fenceEdges, fencePieces, freeRuns, insetRing, pickGate } from "./construction-fence.ts";
 import { type Pt, pointInRing, signedArea } from "./geometry.ts";
@@ -118,7 +118,7 @@ interface CabinSpot {
  * reach and of the yard by the gate. Furthest from the dig (else from the gate) first.
  */
 const cabinSpots = (edges: readonly FenceEdge[], runs: ReturnType<typeof freeRuns>, ring: readonly Pt[], g: SiteGround, gate: Pt | null, dig: DigPlan | null): CabinSpot[] => {
-  const reach = dig ? dig.blend + g.cellAt(dig.outline[0]!) * Math.SQRT2 + 0.5 : 0;
+  const reach = dig ? dig.blend + ringCell(ring, g) * Math.SQRT2 + 0.5 : 0;
   const away = dig ? dig.outline.reduce((s, p) => ({ x: s.x + p.x / 4, z: s.z + p.z / 4 }), { x: 0, z: 0 }) : gate;
   const out: CabinSpot[] = [];
   for (const r of runs) {

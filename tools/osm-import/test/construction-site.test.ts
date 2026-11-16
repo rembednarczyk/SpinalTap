@@ -3,7 +3,8 @@ import { SITE_CABIN, SITE_FENCE, siteFenceLayout, siteGateLayout } from "../../.
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { enSite } from "../../../packages/ui/src/i18n/en/site.ts";
 import { plSite } from "../../../packages/ui/src/i18n/pl/site.ts";
-import { type SiteGround, lineDistance } from "../src/construction-ground.ts";
+import { DIG_CELL, type SiteGround, lineDistance } from "../src/construction-ground.ts";
+import { FLIGHT_CELL } from "../../../packages/sim/src/content/lublin/shape.ts";
 import { BOARD_KEYS, SETS, planSite, siteSeed, siteSet } from "../src/construction-site.ts";
 import { FENCE_INSET, insetRing } from "../src/construction-fence.ts";
 import { type Pt, pointInRing } from "../src/geometry.ts";
@@ -140,6 +141,10 @@ describe("the building sites' generator (ADR-0087 stage 1)", () => {
     const margin = dig.blend + 2.5 * Math.SQRT2;
     const inset = insetRing(outline, FENCE_INSET + margin - 0.01);
     for (const p of dig.outline) expect(pointInRing(p, inset)).toBe(true);
+  });
+
+  it("fits the dig to the grid the game refines under it", () => {
+    expect(DIG_CELL).toBe(FLIGHT_CELL);
   });
 
   it("draws the board's texts from keys both catalogs hold", () => {
