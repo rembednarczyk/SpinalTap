@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { pointInRingEvenOdd } from "../../../packages/core/src";
 import { type LanduseWorld, landuseBare } from "./landuse-bare";
 
 /** The glitch scan's check `landuse-bare` (decision 5.11) on a small world: a 10 m shops' area, a shop and a stop. */
@@ -9,7 +10,7 @@ const square = (x0: number, z0: number, x1: number, z1: number) => [
   { x: x1, z: z1 },
   { x: x0, z: z1 },
 ];
-const EMPTY: LanduseWorld = { landuse: [], shops: [], stops: [], buildings: [], ground: [], green: [], chunks: [{ minX: -100, maxX: 100, minZ: -100, maxZ: 100 }] };
+const EMPTY: LanduseWorld = { landuse: [], shops: [], stops: [], buildings: [], mapped: [], ground: [], green: [], chunks: [{ minX: -100, maxX: 100, minZ: -100, maxZ: 100 }] };
 
 describe("bare terrain where a town has paving (landuse-bare)", () => {
   it("finds every 0.5 m sample of a shops' area with no ground piece on it", () => {
@@ -39,5 +40,24 @@ describe("bare terrain where a town has paving (landuse-bare)", () => {
   it("finds nothing off the map's chunks, nor in a world without such areas", () => {
     expect(landuseBare({ ...EMPTY, landuse: [square(0, 0, 10, 10)], chunks: [{ minX: 20, maxX: 40, minZ: 0, maxZ: 10 }] })).toEqual([]);
     expect(landuseBare({ ...EMPTY, ground: [square(0, 0, 10, 10)] })).toEqual([]);
+  });
+
+  it("leaves out the samples on a slanting wall the table's rounding moves off them, in the map's outline (G-875)", () => {
+    // A 2:1 wall on the samples' line z = 2x + 0.25 (10 of them), the table's 3 mm right of the map's.
+    const shift = (r: readonly { x: number; z: number }[], dx: number) => r.map((p) => ({ x: p.x + dx, z: p.z }));
+    const wall = [{ x: 0, z: 0.25 }, { x: 5, z: 0.25 }, { x: 5, z: 10.25 }];
+    const [drawn, ring] = [shift(wall, 0.003), shift(wall, -0.003)];
+    const at = (f: { what: string }) => f.what.slice("bare ".length).split(",").map(Number) as [number, number];
+    const onLine = (f: { what: string }) => Math.abs(at(f)[1] - 2 * at(f)[0] - 0.25) < 1e-9;
+    const world = { ...EMPTY, landuse: [square(0, 0, 10, 10)], buildings: [drawn] };
+    expect(landuseBare(world).filter(onLine)).toHaveLength(10);
+    expect(landuseBare({ ...world, mapped: [{ drawn, ring }] }).filter(onLine)).toEqual([]);
+    // Nor the rounding alone: a sample by the wall outside the map's outline stays bare.
+    expect(landuseBare({ ...world, mapped: [{ drawn, ring: drawn }] }).filter(onLine)).toHaveLength(10);
+    // Nor the map's outline alone: its samples off the table's wall by more than the rounding stay bare.
+    const wide = shift(wall, -0.6);
+    const behind = (f: { what: string }) => at(f)[1] - 2 * at(f)[0] - 0.25 > 0.5 && pointInRingEvenOdd(at(f)[0], at(f)[1], wide);
+    expect(landuseBare(world).filter(behind).length).toBeGreaterThan(0);
+    expect(landuseBare({ ...world, mapped: [{ drawn, ring: wide }] }).filter(behind)).toEqual(landuseBare(world).filter(behind));
   });
 });
