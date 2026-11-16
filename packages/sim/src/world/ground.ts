@@ -4,6 +4,7 @@ import type { Rect } from "../content/builders";
 import { ChunkIndex, distanceTo } from "./chunk-index";
 import type { Entity } from "./components";
 import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight } from "./deck";
+import { GentleBlocks } from "./gentle-ground";
 import { type GroundVault, VaultIndex } from "./vault";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
@@ -105,8 +106,13 @@ export class GroundField {
   private readonly vaults: VaultIndex;
   /** The shafts within each chunk's bounds (none for the shafts themselves): a ray in the chunk stops at their edge (G-377). */
   private readonly chunkCuts: readonly (readonly Rect[])[];
+  /** Where no point is too steep to walk, known without sampling a slope (G-886). */
+  readonly gentle: GentleBlocks;
+  /** What it was made of, as given: the steering's shared store knows two grounds of the same content by it (`nav-share.ts`). */
+  readonly made: { readonly chunks: readonly GroundChunk[]; readonly cuts: readonly GroundCut[]; readonly vaults: readonly GroundVault[] };
 
   constructor(world: readonly GroundChunk[], cuts: readonly GroundCut[] = [], vaults: readonly GroundVault[] = []) {
+    this.made = { chunks: world, cuts, vaults };
     this.vaults = new VaultIndex(vaults);
     const chunks = cuts.length > 0 ? [...cuts.map(cutChunk), ...world] : world;
     this.chunks = chunks;
@@ -130,6 +136,7 @@ export class GroundField {
       minZ: Math.min(...boxes.map((b) => b.minZ)),
       maxZ: Math.max(...boxes.map((b) => b.maxZ)),
     };
+    this.gentle = new GentleBlocks(chunks, this.index, this.cuts, [...this.deckBoxes, ...boxes, ...vaults.map((v) => v.bounds)], SLOPE_HALF_SPAN, MAX_WALK_SLOPE);
   }
 
   /** Is a flight of steps hung off a bridge (G-255) within `margin` of the box (`maxX`, `maxZ` default to the point)? */

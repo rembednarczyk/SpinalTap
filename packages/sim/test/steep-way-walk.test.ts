@@ -41,5 +41,5 @@ describe("the way down from Grodzka to Kowalska, w179264855 (G-755)", () => {
     for (const p of [...AXIS].reverse().slice(1)) expect(walkTo(sim, p), `up to ${p.x}, ${p.z}`).toBeLessThan(0.5);
     const p = sim.player()!.position;
     expect(p.y).toBeCloseTo(groundY(p.x, p.z), 1);
-  }, 60_000);
+  });
 });

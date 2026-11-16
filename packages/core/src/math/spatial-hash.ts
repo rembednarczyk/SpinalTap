@@ -151,6 +151,41 @@ export class SpatialHash<T> {
     return hit;
   }
 
+  /**
+   * `some` of the segment's box from (`ax`, `az`) to (`bx`, `bz`), but only in the cells the
+   * segment crosses, a column of cells at a time from `a`'s end, with `pad` (m) to spare round
+   * it: an item whose box the segment passes through is visited, others of the box may not be.
+   * A sight line of a kilometre on the diagonal crosses a few hundred cells of its box's tens of
+   * thousands (G-884).
+   */
+  someAlong(ax: number, az: number, bx: number, bz: number, pad: number, visit: (item: T) => boolean): boolean {
+    const [minX, maxX, minZ, maxZ] = [Math.min(ax, bx), Math.max(ax, bx), Math.min(az, bz), Math.max(az, bz)];
+    const stamp = ++this.stamp;
+    const [c, b, seen] = [this.cell, this.boxes, this.seen];
+    const [i0, i1] = [Math.floor((ax < bx ? minX - pad : maxX + pad) / c), Math.floor((ax < bx ? maxX + pad : minX - pad) / c)];
+    const di = i0 <= i1 ? 1 : -1;
+    const zAt = (x: number) => (bx === ax ? az : az + ((bz - az) * (x - ax)) / (bx - ax));
+    for (let i = i0; i !== i1 + di; i += di) {
+      // The segment's z over this column, both ends of it within the segment.
+      const [z0, z1] = [zAt(Math.min(Math.max(i * c, minX), maxX)), zAt(Math.min(Math.max((i + 1) * c, minX), maxX))];
+      const [lo, hi] = bx === ax ? [minZ, maxZ] : [Math.min(z0, z1), Math.max(z0, z1)];
+      const [k0, k1] = az < bz ? [Math.floor((lo - pad) / c), Math.floor((hi + pad) / c)] : [Math.floor((hi + pad) / c), Math.floor((lo - pad) / c)];
+      const dk = k0 <= k1 ? 1 : -1;
+      for (let k = k0; k !== k1 + dk; k += dk) {
+        const list = this.cells.get(keyOf(i, k));
+        if (!list) continue;
+        for (const h of list) {
+          if (seen[h] === stamp) continue;
+          seen[h] = stamp;
+          const o = 4 * h;
+          if ((b[o + 2] as number) < minX || (b[o] as number) > maxX || (b[o + 3] as number) < minZ || (b[o + 1] as number) > maxZ) continue;
+          if (visit(this.items[h] as T)) return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /** Walks the cells of the box with each new handle meeting it until `take` says stop; the cells walked. */
   private collect(minX: number, minZ: number, maxX: number, maxZ: number, take: (h: number) => boolean): number {
     const stamp = ++this.stamp;

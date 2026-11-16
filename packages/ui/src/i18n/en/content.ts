@@ -50,6 +50,8 @@ export const enContent = {
   "interior.clinic": "Doctor Mori's clinic",
   "interior.neon-koi": "Neon Koi",
   "interior.tessen-office": "Tessen office",
+  "interior.w3-hall": "Tessen assembly hall",
+  "interior.w3-basement": "Tessen hall basement",
   "interior.trasa-podziemna": "Trasa Podziemna",
   "interior.capsule": "Capsule room to let",
   // The metro's platforms (ADR-0071 stage 4): the stations keep their Polish names.

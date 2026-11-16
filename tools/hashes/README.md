@@ -12,9 +12,10 @@ Użycie: po `git merge origin/main` w gałęzi puść `pnpm hashes:check`. Gdy w
 - Narzędzie nie zmienia semantyki testów. Każdy plik biegnie raz jako kopia obok (`*.hashes-check.test.ts`), w której każde `expect(` to `expect.soft(`, więc jeden przebieg pokazuje wszystkie padające asercje, nie tylko pierwszą w teście. Kopie znikają na końcu, także po błędzie i Ctrl-C. Nie puszczaj w tym czasie całego `pnpm test` w tym checkoucie, bo zbierze też kopie.
 - Reporter Vitest (`src/reporter.ts`) zbiera dla każdej asercji linię, `expected` i `actual`. `src/values.ts` rozkłada je na skróty (8 cyfr szesnastkowych, też po liczbie, jak `"6 408ae390"`), liczby (cięcia, siatki, wierzchołki) i resztę. Werdykty:
   - `liczby bez zmian`: różnią się tylko skróty, a liczby są te same. Tylko to `--write` zapisuje;
-  - `bez liczb w teście`: sam skrót (determinism, mały świat w `map-ground-golden`). Narzędzie zapisuje go tylko z `--write --bare`, bo nie ma czego porównać;
+  - `bez liczb w teście`: sam skrót (mały świat w `map-ground-golden`). Narzędzie zapisuje go tylko z `--write --bare`, bo nie ma czego porównać;
   - `LICZBY ZMIENIONE`: inna liczba albo inny zestaw kluczy. Narzędzie odmawia i wypisuje różnicę;
   - `nie skrót`: pada inna asercja (np. `tick` w determinism). Wtedy w całym pliku nic nie jest zapisywane.
+- Skrótu determinizmu (`packages/sim/test/determinism.test.ts`, `BY_HAND` w `src/values.ts`) narzędzie nie zapisuje nigdy, także z `--bare` (decyzja użytkownika 16.11). Zależy tylko od reguł symulacji i podłogi testowej, więc zmienia się tylko ze zmianą reguły: ręcznie (`vitest -u`), z nazwaną regułą w commicie. Narzędzie go sprawdza i wypisuje z odmową.
 - Nowy skrót trafia do linii asercji. Gdy jej tam nie ma (`CUT_BEFORE`), trafia w jedyne miejsce w pliku. Skrót niejednoznaczny narzędzie odrzuca. Po zapisie puszcza zapisane pliki jeszcze raz.
 - Kod 0, gdy nic nie pada albo wszystko zapisano i testy przechodzą. W przeciwnym razie kod 1. `--out` zapisuje całość w JSON.
 - Liczba wątków: `VITEST_MAX_WORKERS` (tools/test-rerun).
