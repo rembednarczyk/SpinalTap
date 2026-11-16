@@ -2354,7 +2354,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-885 Walczący pod mostem nie wchodzi na pomost do gracza stojącego na nim
 - Ważność: S4 · Zasięg: mosty z pomostem (Mełgiewska)
 - Opis: Brawler z (2445.9, 302.2) pod pomostem do gracza na (2444.9, 307.5) oscyluje przy krawędzi cienia pomostu (2449.6, 298.9), 30 s bez dotarcia; znalezione przy G-072
-- Status: zgłoszone
+- Status: w PR #646; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-886 Pościg 200 m: bankBetween próbkuje cały odcinek co krok
@@ -2424,6 +2424,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: item-system woła useConsumable bez healScale(perks); komenda use-item go stosuje, więc atut działa tylko przy komendzie. Znalezione przy G-892.
 - Status: naprawione (PR #645); wcześniej: w PR #645; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
+
+### G-896 Walczący przy końcu pomostu na poziomie jezdni nie idzie po pomoście do gracza
+- Ważność: S4 · Zasięg: końce mostów z pomostem (Mełgiewska, wiadukt Zamkowej)
+- Opis: Brawler z (2454.9, 297.0) do gracza na pomoście nabrzeze-0-1[1] w t=0,2 i z (758.0, 188.5) do gracza na wiadukcie Zamkowej (748.9, 173.4) stoi 20 s, deckLanding zwraca null; tak samo na main i z poprawką G-885. Znalezione przy G-885 (sondy: scratchpad g885-probe*.test.ts).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
