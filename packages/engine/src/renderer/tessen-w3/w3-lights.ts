@@ -18,7 +18,7 @@ export interface W3Lamp {
   readonly top: number;
 }
 
-/** The lamps' keys begin with this: in the hall only they are on (`ToonMaterials.setLightScope`). */
+/** The lamps' keys begin with this: in the hall only they are on (`ToonMaterials.setLightFocus`). */
 export const W3_LAMP_PREFIX = "w3-lamp-";
 /** How many lamps are on at once (ADR-0082 §4). */
 export const W3_LAMPS_ON = 2;

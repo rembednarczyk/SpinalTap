@@ -18,6 +18,7 @@ import { INDOOR_RIG, mixRig, rigForDaylight } from "../npr/lighting";
 import type { SpeedLines } from "../npr/speed-lines";
 import type { ToonMaterials } from "../npr/toon-material";
 import { type Atmosphere, createSplashes, createSteam } from "./atmosphere";
+import { IndoorFade } from "./indoor-fade";
 import { type CharacterRig, raiseWeapon, setWeaponDrawn, startReload, startStagger, startSwing } from "./characters";
 import type { FarCity } from "./far-city";
 import { Lasers } from "./lasers";
@@ -44,9 +45,6 @@ export type GameplayFxEvent =
   | { readonly kind: "reflect"; readonly defenderId: EntityId; readonly at: Vec3; readonly to: Vec3 };
 
 /** Visits one entity the scanner may outline: its own scan class and, lazily, its meshes. */
-/** Seconds the interior's light takes to replace the sky's (ADR-0082 §4). */
-const INDOOR_FADE = 0.35;
-
 export type ScanVisitor = (id: EntityId, own: ScanClass | null, meshes: () => readonly AbstractMesh[]) => void;
 
 /** The characters effects act on: rigs to animate, faces to talk, transforms for lasers. */
@@ -254,7 +252,7 @@ export class ScreenFx {
     const scale = this.fogScale ?? this.deps.fogScale ?? 1;
     const rig = scale === 1 ? look : { ...look, fogDensity: look.fogDensity * scale };
     // Inside a closed hall its own light replaces the sky's on the materials (ADR-0082 §4); the sky and the signs keep the night's.
-    materials.setRig(mixRig(rig, INDOOR_RIG, this.indoor));
+    materials.setRig(mixRig(rig, INDOOR_RIG, this.indoorFade.value));
     materials.setRimTint(p.rim, p.rimWeight * (1 - 0.5 * Math.max(0, Math.min(1, this.daylight))));
     atmosphere.setDaylight(rig, this.daylight);
     farCity.setDaylight(rig, this.daylight);
@@ -367,29 +365,8 @@ export class ScreenFx {
     this.scanHighlight.release(keep);
   }
 
-  /** How far the interior's light has replaced the sky's (0..1), and where it goes. */
-  private indoor = 0;
-  private indoorTarget = 0;
-
-  /**
-   * The eye in a closed interior lit by its own lamps (W-3's hall, ADR-0082 §4): the moon and the
-   * sun go off the materials and the fluorescent ambient comes on, over a third of a second.
-   */
-  setIndoorLight(on: boolean): void {
-    this.indoorTarget = on ? 1 : 0;
-  }
-
-  /** The interior's light now (debug, tests). */
-  get indoorLight(): number {
-    return this.indoor;
-  }
-
-  private updateIndoor(dt: number): void {
-    if (this.indoor === this.indoorTarget) return;
-    const step = Math.max(dt, 0) / INDOOR_FADE;
-    this.indoor = this.indoorTarget > this.indoor ? Math.min(this.indoorTarget, this.indoor + step) : Math.max(this.indoorTarget, this.indoor - step);
-    this.applyLook();
-  }
+  /** The interior's own light in place of the sky's (W-3's hall, ADR-0082 §4); the renderer sets it. */
+  readonly indoorFade = new IndoorFade();
 
   /** Under a roof (the metro car, ADR-0036): no rain or splashes in front of the camera. */
   setIndoor(on: boolean): void {
@@ -424,7 +401,7 @@ export class ScreenFx {
     this.deps.farCity.update(dt, camera.camera.position, reference);
     this.deps.signage.update(dt, reference);
     this.updatePalette(dt);
-    this.updateIndoor(this.deps.stage.options.reference ? 1 : dt);
+    if (this.indoorFade.update(this.deps.stage.options.reference ? 1 : dt)) this.applyLook();
     this.fx.update(dt);
     this.fxPost.update(this.fx.uniforms, this.fx.active);
     this.updateScanHighlight();

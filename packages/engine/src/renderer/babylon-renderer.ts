@@ -399,21 +399,20 @@ export class BabylonRenderer implements RenderPort {
     this.alchemia.update();
     this.alchemia.parking.update(dt, this.stage.options.reference);
     this.w3.update(dt, this.stage.options.reference);
-    // In the hall's rooms its own light replaces the sky's and the city outside its walls goes off (ADR-0082 §3.8).
-    this.fx.setIndoorLight(this.w3.interior);
-    this.map.current?.setInterior(this.w3.interior ? W3_KEEP : null);
+    // In the hall's rooms its own light replaces the sky's; the city outside its walls goes off in its update (ADR-0082 §3.8).
+    this.fx.indoorFade.set(this.w3.interior);
     if (this.map.current) (this.platforms ??= this.platformViews()).update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();
-    city?.update(dt, this.rig.camera.position, this.stage.options.reference);
+    city?.update(dt, this.rig.camera.position, this.stage.options.reference, this.w3.interior ? W3_KEEP : null);
     if (city) this.props.updateGlow(this.rig.camera.position, this.map.sight);
     this.props.updateInteriors(this.rig.camera.position);
     // Shadow follows what the camera looks at (the player, the metro car or the fixed reference
     // view) and shrinks to what it shows.
     const focus = target && !this.metro.active ? target.position : this.rig.camera.position;
     const moved = this.shadow.update(focus, this.rig.camera);
-    this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z);
+    this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z, this.w3.lightScope);
     if (moved) this.materials.setShadowMatrix(moved);
     this.fx.update(dt);
     // The probe never re-renders in the metro.

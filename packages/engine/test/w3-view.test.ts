@@ -112,6 +112,8 @@ describe("W-3's hall baked in the engine (ADR-0082 stage 2b)", () => {
     Object.assign(eye, w3(2520, 1.6, 418));
     v.update(1 / 60, false);
     v.update(1 / 60, false);
+    // The renderer moves the light slots with the eye, scoped to the hall's lamps in its rooms.
+    materials.setLightFocus(eye.x, eye.z, v.lightScope);
     expect(v.stats.meshes).toBe(3);
     expect(v.interior).toBe(true);
     expect(v.lampsOn.map((l) => l.key)).toEqual([`${W3_LAMP_PREFIX}hall-w`, `${W3_LAMP_PREFIX}hall-e`]);
@@ -119,6 +121,7 @@ describe("W-3's hall baked in the engine (ADR-0082 stage 2b)", () => {
     // Out through the wagon gate onto the yard: the street's lamp is back, the hall's fade with the distance.
     Object.assign(eye, w3(2490, 1.6, 418));
     v.update(1 / 60, false);
+    materials.setLightFocus(eye.x, eye.z, v.lightScope);
     expect(v.interior).toBe(false);
     expect(materials.lightCount).toBe(3);
   });

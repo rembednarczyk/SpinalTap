@@ -205,33 +205,29 @@ export class MapCity {
     return changed;
   }
 
-  /** Levels of detail from the camera, the water's ripples and the signs' hum; the interior mode over them. */
-  update(dt: number, eye: Vec3, frozen: boolean): void {
+  /**
+   * Levels of detail from the camera, the water's ripples and the signs' hum; the interior mode over
+   * them (ADR-0082 §3.8): with `keep`, the box round a closed hall the eye is in, the cells, terrains
+   * and furniture clear of it and the skyline go off; null puts them back.
+   */
+  update(dt: number, eye: Vec3, frozen: boolean, keep: Box2 | null = null): void {
     this.look.update(dt, frozen);
     this.waitingNear = streamCells(this.cells.values(), eye, this.lod, (cell) => this.builder.near(cell, this.furniture.facadeProps, (x, z, r) => this.furniture.current?.obstacles(x, z, r) ?? []));
     this.furniture.current?.update(eye);
     this.look.updateSkyline(dt, eye, frozen);
-    const keep = this.keep;
+    if (keep !== this.keep) {
+      this.keep = keep;
+      this.look.setSkylineShown(keep === null);
+      if (!keep) for (const [, t] of this.entries.terrains) t.mesh?.setEnabled(true);
+    }
     if (!keep) return;
     closeOff([...this.cells.values()].map((c) => ({ bounds: c.bounds, meshes: cellMeshes(c) })), keep);
     closeOff([...this.entries.terrains].map(([, t]) => ({ bounds: t.bounds, meshes: [t.mesh] })), keep);
     this.furniture.current?.closeOff(keep);
   }
 
-  /** The box round a closed hall the eye is in (ADR-0082 §3.8), null outside: the city clear of it goes off. */
+  /** The box round a closed hall the eye is in (ADR-0082 §3.8), null outside. */
   private keep: Box2 | null = null;
-
-  /**
-   * The interior mode (ADR-0082 §3.8): with a box, the cells, terrains and furniture clear of it
-   * and the skyline go off from the next update; null puts them back.
-   */
-  setInterior(keep: Box2 | null): void {
-    if (keep === this.keep) return;
-    this.keep = keep;
-    this.look.setSkylineShown(keep === null);
-    if (keep) return;
-    for (const [, t] of this.entries.terrains) t.mesh?.setEnabled(true);
-  }
 
   /** Every cell near the eye has its detailed buildings (they are built a few per frame). */
   get settled(): boolean {
