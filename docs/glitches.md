@@ -2374,7 +2374,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-888 Po wczytaniu gracz ma health.max 100 do pierwszego kroku player-control
 - Ważność: S4 · Zasięg: wczytanie gry, apteczka w pierwszym kroku
 - Opis: W grze źródłowej max 103 (np. podłoga determinizmu, zapis w kroku 786); apteczka w pierwszym kroku po wczytaniu leczy do 100. player-control-system.ts:267, factory.ts:60. Znalezione przez weryfikatora G-883, jest też na bazie.
-- Status: w PR #636; wcześniej: zgłoszone
+- Status: naprawiony (PR #636); wcześniej: w PR #636; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 
 ### G-889 joinLoose dołącza do frontu deptaka wąskie pasy dowolnie daleko od osi (pas zieleni za Karmelicką 12–37 m)
