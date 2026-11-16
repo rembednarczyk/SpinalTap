@@ -217,7 +217,7 @@ describe("generator", () => {
     expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(6.5, 1);
   });
 
-  // That they are the committed tables: the fingerprint of the inputs (`fingerprint.test.ts`) and CI's `tables` job (ADR-0083).
+  // That they are the committed tables: CI's `tables` job and `pnpm tables:check` generate them again (ADR-0083).
   it("generates the same tables from the committed raw data twice", () => {
     const inputs = loadInputs();
     const d = DISTRICTS.find((x) => x.slug === "stare-miasto")!;

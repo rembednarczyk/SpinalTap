@@ -125,6 +125,8 @@ export type RoadMarkingKind = "centre-dash" | "centre-double" | "lane-dash" | "e
  * stool, queueing at a booth, waiting at a stop or smoking by a door; its variant holds its pose, build,
  * seat and look (`figureVariant`). ADR-0077 adds the map's walls, fences, hedges and gates, a `barrier`
  * a straight stretch of one (`barriers.ts`): its variant holds the kind, length, height and rise.
+ * ADR-0087 adds the building sites' pieces (`sites.ts`): the fence's stretches, the gate, the board
+ * and the office containers, laid by the import's generator.
  */
 export type StreetPropKind =
   | "lamp-pastoral"
@@ -175,7 +177,11 @@ export type StreetPropKind =
   | "drain-grate"
   | "door"
   | "figure"
-  | "barrier";
+  | "barrier"
+  | "site-fence"
+  | "site-gate"
+  | "site-board"
+  | "site-cabin";
 
 /** One piece of street furniture, in world metres relative to its chunk entity's position. */
 export interface StreetPropItem {

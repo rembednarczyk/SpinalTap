@@ -1,6 +1,6 @@
 # ADR-0083: Testy całego miasta bez wyścigu z limitem czasu
 
-Status: przyjęty (15.11, kroki 1–2 od razu, 3–4 po pomiarze; prośba użytkownika: „wymyśl sposób na krótsze testy, aby unikać timeoutów, bo to stale wraca”). Uzupełnia ADR-0046 (testy) i `docs/plany/czas-testow.md`.
+Status: przyjęty (15.11, kroki 1–2 od razu, 3–4 po pomiarze; krok 1 odwołany 16.11; prośba użytkownika: „wymyśl sposób na krótsze testy, aby unikać timeoutów, bo to stale wraca”). Uzupełnia ADR-0046 (testy) i `docs/plany/czas-testow.md`.
 
 ## Kontekst
 Limit 20 s na test (`vitest.config.ts`) chroni przed zawieszeniem, ale testy całego miasta rosną z każdą regułą importu i co kilka dni któryś go przekracza: paving-overlap (#566), kerb-fill-wide-estimated (#568), a 15.11 `props.test > matches the committed table` (20,5 s na main, blokuje #573, #574, #578, #579). Każdy raz to ręczne przyspieszanie po fakcie, w cudzym PR.
@@ -28,8 +28,18 @@ Odcisk w nagłówku obejmuje tylko wejścia mapy (`OWNED`) i dane; zmianę w `si
 ### Krok 3 wdrożony inaczej (16.11, gałąź ccr-ec2c4269-ilh8k8-adr83-krok3)
 Profil pokazał, że w testach sim z wyjątkami 55–70% czasu to rastry i pola nawigacji (`fieldSteps`, `nav-field.ts`), a budowa świata i gruntu to poniżej 0,4 s na plik. Wspólna pamięć jest więc w pamięci procesu robotnika (`tools/city-cache`, LRU 128 MB + 128 MB, haczyk `shareNav` w `systems/ai/nav-share.ts`, w grze niezainstalowany), a nie na dysku: rastry zależą od kodu sim spoza odcisku `OWNED`, więc klucz dyskowy mógłby się zestarzeć. Klucz z treści (kształty brył, tożsamość gruntu, okno). `SEKI_CITY_CACHE=off` wyłącza. Wynik: suma testów z wyjątkami 209 → 142 s, 13 z 25 wpisów `exceptions.ts` usunięte, złote hashe bez zmian.
 
+### Krok 1 odwołany (16.11, decyzja użytkownika, gałąź ccr-ec2c4269-ilh8k8-tablice-linie)
+Linia `// Inputs: sha1 …` znika z nagłówków tablic mapy, a z nią szybki test jednostkowy porównujący odcisk. Powód: odcisk zmienia się w każdym PR-ze, który dotyka wejść generatora, więc ta jedna linia konfliktowała przy prawie każdym scaleniu. Na 30 scaleniach main do gałęzi z 14–16.11 konflikt w linii odcisku był w 27, a w danych (w formacie jednej linii na element) tylko w 5. CI i tak przelicza tablice przy każdej zmianie kodu, więc odcisk niczego nie zastępował.
+
+Świeżość tablic sprawdza odtąd tylko przeliczenie:
+- job CI „Map tables” (`osm:build && osm:props && git diff`) przy każdej zmianie kodu (`tools/ci-scope`: `tables || code`);
+- `pnpm tables:check`, które generuje tablice w pamięci (`osm:build --check`, `osm:props --check`) i porównuje bajt w bajt; to ciężkie zadanie (ok. 30 s), więc idzie przez `seki-heavy`;
+- `pnpm merge:main`, które przelicza tablice po każdym scaleniu.
+
+Lista wejść (`tools/osm-import/src/table-inputs.ts`, dawniej `fingerprint.ts`) zostaje. Job sprawdza śladem odczytów (`read-trace.ts`, `tables:check --trace`), że generatory czytają tylko te wejścia i że zmiana każdego z nich uruchamia job. Test jednostkowy `table-inputs.test.ts` sprawdza to samo dla całej listy wejść poza dokumentacją. Zastrzeżenie z kroku 3 („odcisk z kroku 1 jest kluczem”) nie obowiązuje, bo krok 3 wdrożono bez odcisku.
+
 ## Konsekwencje
 - Krok 1 i 2 to ok. dzień pracy jednego agenta, bez zmian gry, zapisu i hashy; kroki 3 i 4 po pomiarze kroków 1–2.
-- Tablice: nagłówek z odciskiem zmienia jeden wiersz `*.generated.ts`; `pnpm merge:main` przelicza je jak dotąd.
-- Ryzyko kroku 1: odcisk musi obejmować wszystkie wejścia generatora, inaczej przegapi zmianę. Zabezpieczenie: job `tables` porównuje bajt w bajt przy każdej zmianie w `tools/osm-import`, `tools/orto` i `data/`.
+- Tablice: nagłówek z odciskiem zmieniał jeden wiersz `*.generated.ts` (odwołane 16.11, patrz wyżej); `pnpm merge:main` przelicza je po każdym scaleniu.
+- Ryzyko kroku 1 (odwołane 16.11 razem z krokiem 1: odcisku już nie ma, świeżość sprawdza przeliczenie): odcisk musi obejmować wszystkie wejścia generatora, inaczej przegapi zmianę. Zabezpieczenie: job `tables` porównuje bajt w bajt przy każdej zmianie w `tools/osm-import`, `tools/orto` i `data/`.
 - Ryzyko kroku 2: zmienność maszyn CI. Mediana z kilku przebiegów main i próg względny 30%; pojedyncze odstające uruchomienie powtarzane raz.

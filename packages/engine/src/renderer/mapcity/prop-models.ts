@@ -1,4 +1,4 @@
-import { type StreetPropKind, barrierVariant, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "@seki/core";
+import { type StreetPropKind, barrierVariant, siteFenceVariant, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "@seki/core";
 import type { RenderQuality } from "../../npr/quality";
 import { MeshSink } from "../mesh-sink";
 import { decalModel } from "./decal-models";
@@ -7,6 +7,7 @@ import { atm, bikeRackWithBikes, container, foodCart, hydrant } from "./prop-e2"
 import { farTree, hangingBasket, planter, shrubs, tree } from "./prop-green";
 import { doorOfShape } from "./prop-door";
 import { barrierModel } from "./barrier-models";
+import { siteModel } from "./construction";
 import { figureStandIn } from "./figure-models";
 import { foodStall, marketGoods } from "./prop-market";
 import { glow, paint, v3 } from "./prop-kit";
@@ -73,6 +74,11 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   figure: () => plain(figureStandIn()),
   // ADR-0077: the city bakes each barrier piece at its own length and height (`barrier-models.ts`); this is the gallery's 2 m wall.
   barrier: () => plain(barrierModel(barrierVariant({ kind: "wall", length: 2, height: 1, rise: 0, material: "plain" }), "high")),
+  // ADR-0087 stage 1: the city bakes each building site's piece at its own variant (`construction/`); these are a panel with its ad, the gate, the board, a cabin.
+  "site-fence": () => plain(siteModel("site-fence", siteFenceVariant({ length: 2.5, rise: 0, ad: 0, led: 0 }), "high")),
+  "site-gate": () => plain(siteModel("site-gate", 0, "high")),
+  "site-board": () => plain(siteModel("site-board", 0, "high")),
+  "site-cabin": () => plain(siteModel("site-cabin", 0, "high")),
 };
 
 /** Every kind of the contract, in the order of `StreetPropKind` (the gallery's row). */

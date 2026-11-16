@@ -81,11 +81,11 @@ export const compare = (expected: string, actual: string): Comparison => {
 
 /**
  * Golden tests whose hash only a person changes (decision of 16.11): the determinism of the
- * simulation on its test floor moves only when a rule does, so its new hash goes in by hand
- * (`vitest -u`) with the rule named in the commit. `--write` reports it and never writes it,
- * `--bare` or not.
+ * simulation and the ground the map city lays, each on its test floor, move only when a rule
+ * does (ADR-0088), so their new hashes go in by hand (`vitest -u` or an edit) with the rule named
+ * in the commit. `--write` reports them and never writes them, `--bare` or not.
  */
-export const BY_HAND: readonly string[] = ["packages/sim/test/determinism.test.ts"];
+export const BY_HAND: readonly string[] = ["packages/sim/test/determinism.test.ts", "packages/engine/test/map-ground-golden.test.ts"];
 
 /** Why `--write` leaves the hash of a failing assertion in `file` as it is; null when it may write it. */
 export const refusalOf = (file: string, c: Comparison, bare: boolean): string | null => {
