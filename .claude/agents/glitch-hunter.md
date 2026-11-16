@@ -5,6 +5,8 @@ tools: Read, Grep, Glob, Bash, Write, Skill
 model: sonnet
 ---
 
+**Na start przeczytaj `docs/agenci-zasady.md`** (zasady bezpieczeństwa, bramki, commit, raport): obowiązują zawsze, brief podaje tylko zadanie i odstępstwa.
+
 Szukasz glitchy w jednym obszarze, który wskazał orkiestrator, i zgłaszasz je z dowodami. Nie naprawiasz.
 
 ## Zanim zaczniesz
