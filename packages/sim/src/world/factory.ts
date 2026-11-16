@@ -28,7 +28,7 @@ export class IdAllocator {
   }
 }
 
-const actor = (id: EntityId, spawn: ActorSpawn): Entity => ({
+export const actor = (id: EntityId, spawn: ActorSpawn): Entity => ({
   id,
   key: spawn.key,
   position: spawn.position,
@@ -39,7 +39,7 @@ const actor = (id: EntityId, spawn: ActorSpawn): Entity => ({
   body: BODY,
 });
 
-const at = (p: Vec3): Pick<Entity, "position" | "prevPosition" | "yaw" | "prevYaw" | "pitch"> => ({
+export const at = (p: Vec3): Pick<Entity, "position" | "prevPosition" | "yaw" | "prevYaw" | "pitch"> => ({
   position: p,
   prevPosition: p,
   yaw: 0,
@@ -52,12 +52,13 @@ export const isDead = (flags: readonly string[], key: string): boolean => flags.
 /** A combatant standing idle: no swing, no guard, not staggered. */
 export const idleMelee = (): MeleeState => ({ phase: "idle", timer: 0, strike: 0, combo: 0, queued: false, stagger: 0, guard: false, parry: 0, parryCooldown: 0, knock: { x: 0, z: 0, time: 0 } });
 
-export const playerEntity = (id: EntityId): Entity => ({
+/** The player; `maxHp` is her stats' (`playerStatsOf`), so a loaded game heals to it before her first step (G-888). */
+export const playerEntity = (id: EntityId, maxHp = PLAYER_MAX_HP): Entity => ({
   ...actor(id, PLAYER_SPAWN),
   player: true,
   view: { kind: "heroine" },
   velocity: { x: 0, y: 0, z: 0 },
-  health: { current: PLAYER_MAX_HP, max: PLAYER_MAX_HP },
+  health: { current: maxHp, max: maxHp },
   // Armed from the domain by syncPlayerWeapon.
   combatant: { weapon: null, stats: null, slot: "secondary", loaded: 0, reloading: 0, cooldown: 0, holstered: false, drawing: 0, bloom: 0 },
   melee: idleMelee(),
