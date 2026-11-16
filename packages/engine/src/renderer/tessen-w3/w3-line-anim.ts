@@ -1,3 +1,4 @@
+import type { LineScreens } from "@seki/core";
 import { W3_CRANE_BRIDGE, W3_LAYOUT, W3_Y } from "@seki/sim";
 
 /**
@@ -26,8 +27,21 @@ export interface ArmPose {
   readonly beacon: boolean;
 }
 
+/** What the job has done to the line (ADR-0082 stage 3): the alarm on its beacons, its screens. */
+export interface LineMission {
+  readonly alarm: boolean;
+  readonly screens: LineScreens;
+}
+
+export const LINE_IDLE: LineMission = { alarm: false, screens: "idle" };
+
 export interface LinePose {
   readonly arms: readonly ArmPose[];
+  /** The beacons red (the lockdown), else amber. */
+  readonly alarm: boolean;
+  /** The screens' state and whether its blink is on now (lit steadily when still). */
+  readonly screens: LineScreens;
+  readonly screenBlink: boolean;
   /** The bodies on the belts: world x, z of their middle, the belt's top under them. */
   readonly bodies: readonly { readonly x: number; readonly z: number }[];
   /** The crane's bridge: world x of its middle. */
@@ -55,6 +69,9 @@ const BODIES_PER_BELT = 3;
 const BRIDGE_CYCLE = 96;
 /** The arms' beacons blink at this rate (Hz) while they move. */
 const BEACON_RATE = 1.2;
+/** In the alarm they blink faster, and the screens of an upload or a virus at this rate. */
+const ALARM_RATE = 2.5;
+const SCREEN_RATE = 1.7;
 
 const TAU = Math.PI * 2;
 const frac = (x: number): number => x - Math.floor(x);
@@ -68,9 +85,11 @@ const armBases = (): { x: number; z: number; side: 1 | -1 }[] => {
 };
 
 /** The line at time `t` (s on the renderer's clock). `still` keeps the arms at rest (phones, low quality). */
-export const linePose = (t: number, seed = W3_LINE_SEED, still = false): LinePose => {
+export const linePose = (t: number, seed = W3_LINE_SEED, still = false, mission: LineMission = LINE_IDLE): LinePose => {
   const rnd = seeded(seed);
   const time = still ? 0 : t;
+  // Still (low quality), the alarm's beacons burn steadily: the lockdown must show.
+  const beaconOn = (beat: number): boolean => (mission.alarm ? still || frac(t * ALARM_RATE + beat) < 0.5 : !still && frac(time * BEACON_RATE + beat) < 0.5);
   const arms = armBases().map((b): ArmPose => {
     const phase = rnd();
     const beat = rnd();
@@ -84,7 +103,7 @@ export const linePose = (t: number, seed = W3_LINE_SEED, still = false): LinePos
       yaw: still ? 0 : 0.55 * Math.sin(TAU * p + beat * TAU),
       shoulder: 0.25 + 0.55 * reach,
       elbow: 1.35 - 0.7 * reach,
-      beacon: !still && frac(time * BEACON_RATE + beat) < 0.5,
+      beacon: beaconOn(beat),
     };
   });
   const span = W3_LAYOUT.BELT_X.maxX - W3_LAYOUT.BELT_X.minX - 1.4;
@@ -102,7 +121,9 @@ export const linePose = (t: number, seed = W3_LINE_SEED, still = false): LinePos
   const b = W3_CRANE_BRIDGE;
   const bridgePhase = rnd();
   const bridgeX = still ? b.x : (b.minX + b.maxX) / 2 + ((b.maxX - b.minX) / 2) * Math.sin(TAU * (time / BRIDGE_CYCLE + bridgePhase));
-  return { arms, bodies, bridgeX };
+  const screenBlink = still || mission.screens === "idle" || frac(t * SCREEN_RATE) < 0.5;
+  return { arms, alarm: mission.alarm, screens: mission.screens, screenBlink, bodies, bridgeX };
+
 };
 
 /** World y of the halls' floor, for the geometry. */

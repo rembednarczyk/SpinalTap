@@ -126,7 +126,7 @@ const warnings = (k: KitPainter): void => {
 
 /**
  * The assembly hall's walls as on picture 02: steel columns every 6 m up to the crane's tracks and
- * an olive band along their foot; a screen on each station's desk, towards the aisle.
+ * an olive band along their foot. The stations' screens move with the job: the line's mesh draws them.
  */
 const hallDress = (k: KitPainter): void => {
   const t = W3_LAYOUT.WALL;
@@ -141,12 +141,6 @@ const hallDress = (k: KitPainter): void => {
     [north - 0.03, north],
   ] as const) {
     k.box(2510 + t, 2548 - t, W3_Y + FLOOR_TOP, W3_Y + 1.3, z0, z1, "paint", W3_PAINT.olive);
-  }
-  for (const s of Object.values(W3_LAYOUT.STATIONS)) {
-    const toAisle = s.z < 418 ? 1 : -1;
-    const z = s.z + toAisle * 0.1;
-    k.box(s.x - 0.35, s.x + 0.35, W3_Y + 1.1, W3_Y + 1.55, z - 0.04, z + 0.04, "dark");
-    k.box(s.x - 0.3, s.x + 0.3, W3_Y + 1.15, W3_Y + 1.5, z + toAisle * 0.045 - 0.005, z + toAisle * 0.045 + 0.005, "win-teal");
   }
 };
 
