@@ -1,4 +1,4 @@
-import { type GroundPoint, type Vec3, pointInRingEvenOdd, segmentParam } from "@seki/core";
+import { type GroundPoint, type TerrainGrid, type Vec3, pointInRingEvenOdd, segmentParam, terrainHeightAt } from "@seki/core";
 
 /**
  * A bridge's deck (ADR-0053): a piece of a road or path on a bridge, level from abutment to
@@ -164,6 +164,11 @@ export const deckCeiling = (decks: readonly GroundDeck[], x: number, z: number, 
   return ceiling;
 };
 
+/** Where the terrain under a deck is: the ground's grids (`GroundField`). */
+export interface TerrainAt {
+  gridAt(x: number, z: number): TerrainGrid | null;
+}
+
 /** How far apart along the ground a ray samples a deck's slab (m): its underside follows the terrain. */
 const RAY_STEP = 0.25;
 
@@ -189,11 +194,11 @@ const ringCrossings = (ring: readonly GroundPoint[], origin: Vec3, dir: Vec3, ma
 /**
  * Distance along a ray (normalised `dir`) to where it goes into a bridge's deck (G-071), or null
  * within `maxDist`: the slab from its surface down to its underside (`deckDepth` over the terrain
- * at `terrainAt`), so the deck stops shots and sight between over and under the bridge as it
+ * in `terrain`), so the deck stops shots and sight between over and under the bridge as it
  * stops a jump (G-062). Within one step the ray goes in where it crosses the surface or the
  * underside, so a steep ray through the thin slab is not stepped over.
  */
-export const rayDeck = (d: GroundDeck, origin: Vec3, dir: Vec3, maxDist: number, terrainAt: (x: number, z: number) => number): number | null => {
+export const rayDeck = (d: GroundDeck, origin: Vec3, dir: Vec3, maxDist: number, terrain: TerrainAt): number | null => {
   const ts = ringCrossings(d.ring, origin, dir, maxDist);
   const flat = Math.hypot(dir.x, dir.z);
   for (let i = 0; i + 1 < ts.length; i++) {
@@ -213,7 +218,8 @@ export const rayDeck = (d: GroundDeck, origin: Vec3, dir: Vec3, maxDist: number,
       const y = origin.y + dir.y * t;
       const top = deckHeight(d, x, z);
       const gTop = y - top;
-      const gUnder = y - (top - deckDepth(top, terrainAt(x, z)));
+      const grid = terrain.gridAt(x, z);
+      const gUnder = y - (top - deckDepth(top, grid ? terrainHeightAt(grid, x, z) : 0));
       // Starting in the slab: the ray came in through its fascia, at the outline.
       if (k === 0 && gTop < -1e-6 && gUnder > 1e-6) return t;
       if (k > 0 && prevTop > 0 && gTop <= 0) return prevT + ((t - prevT) * prevTop) / (prevTop - gTop);
@@ -227,7 +233,7 @@ export const rayDeck = (d: GroundDeck, origin: Vec3, dir: Vec3, maxDist: number,
 };
 
 /** Distance along a ray to the nearest of the bridges' decks (`rayDeck`) whose box it crosses, or null within `maxDist`. */
-export const rayDecks = (decks: readonly GroundDeck[], origin: Vec3, dir: Vec3, maxDist: number, terrainAt: (x: number, z: number) => number): number | null => {
+export const rayDecks = (decks: readonly GroundDeck[], origin: Vec3, dir: Vec3, maxDist: number, terrain: TerrainAt): number | null => {
   const ex = origin.x + dir.x * maxDist;
   const ez = origin.z + dir.z * maxDist;
   const minX = Math.min(origin.x, ex);
@@ -238,7 +244,7 @@ export const rayDecks = (decks: readonly GroundDeck[], origin: Vec3, dir: Vec3, 
   for (const d of decks) {
     const b = d.box;
     if (minX > b.maxX || maxX < b.minX || minZ > b.maxZ || maxZ < b.minZ) continue;
-    const t = rayDeck(d, origin, dir, best ?? maxDist, terrainAt);
+    const t = rayDeck(d, origin, dir, best ?? maxDist, terrain);
     if (t !== null) best = t;
   }
   return best;

@@ -3,7 +3,7 @@ import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
 import { ChunkIndex, distanceTo } from "./chunk-index";
 import type { Entity } from "./components";
-import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight, rayDecks } from "./deck";
+import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight } from "./deck";
 import { type GroundVault, VaultIndex } from "./vault";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
@@ -89,8 +89,9 @@ export class GroundField {
   private readonly flightBoxes: readonly GroundDeck["box"][];
   /** All of them in one box: a query far from it (almost all) is answered by one test. */
   private readonly flightsBox: GroundDeck["box"];
-  /** The bridges' own decks, not the flights' (a few dozen in the city), and their boxes. */
-  private readonly bridges: readonly GroundDeck[];
+  /** The bridges' own decks, not the flights' (a few dozen in the city): the slabs that stop rays (G-071). */
+  readonly bridges: readonly GroundDeck[];
+  /** Their boxes. */
   private readonly deckBoxes: readonly GroundDeck["box"][];
   /** The flights among each chunk's decks, found once: a height then costs what it did without them. */
   private readonly chunkFlights: readonly (readonly GroundDeck[])[];
@@ -310,29 +311,13 @@ export class GroundField {
   }
 
   /**
-   * Distance along a ray (normalised direction) to where it goes into the ground, or null: the
-   * terrain, or a bridge's deck over it (G-071), a floor for the feet and a slab for shots and sight.
-   */
-  rayHit(origin: Vec3, dir: Vec3, maxDist: number): number | null {
-    const t = this.terrainHit(origin, dir, maxDist);
-    if (!this.hasTerrain || this.bridges.length === 0) return t;
-    return rayDecks(this.bridges, origin, dir, t ?? maxDist, this.terrainAt) ?? t;
-  }
-
-  /** The terrain's height at (x, z), decks left out; 0 on the street plane. */
-  private readonly terrainAt = (x: number, z: number): number => {
-    const grid = this.gridAt(x, z);
-    return grid ? terrainHeightAt(grid, x, z) : 0;
-  };
-
-  /**
    * Distance along a ray (normalised direction) to where it goes into the terrain, or null.
    * Walks the ray cell by cell through the grids (DDA): inside one cell the bilinear ground
    * along a straight line is a quadratic, fitted exactly from three samples, so no ridge between
    * grid points is ever stepped over, however fine the grid. Only terrain stops rays: the street
    * plane never did.
    */
-  private terrainHit(origin: Vec3, dir: Vec3, maxDist: number): number | null {
+  rayHit(origin: Vec3, dir: Vec3, maxDist: number): number | null {
     if (!this.hasTerrain || Math.min(origin.y, origin.y + dir.y * maxDist) > this.maxHeight) return null;
     let t = 0;
     for (let guard = 0; guard < 100_000 && t < maxDist; guard++) {
