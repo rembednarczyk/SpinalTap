@@ -14,13 +14,14 @@ import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills, onCarriagewayDecks } from "./bridge-fill.ts";
 import { type EdgeCut, edgeOutlines, partsWithin } from "./building-edge.ts";
 import { makeBuilding } from "./buildings.ts";
+import { COVER } from "../../orto/src/classify.ts";
 import { withBuiltSites } from "./built-sites.ts";
-import { type Cover } from "../../orto/src/cover.ts";
+import { type Cover, coverAt, coverFor } from "../../orto/src/cover.ts";
 import { type CoverFill, coverFiller, pathLoops, townPlaces, withFills } from "./bare-cover.ts";
 import { frontages } from "./bare-fronts.ts";
 import { type AddedArea, addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { withoutReplaced } from "./corrections-alchemia.ts";
-import { ORTHO_OFFSETS, orthoPieces, orthoSides } from "./corrections-kerb.ts";
+import { ORTHO_OFFSETS, orthoOffsetAt, orthoPieces, orthoSides } from "./corrections-kerb.ts";
 import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
@@ -31,6 +32,7 @@ import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines }
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { FILL_MARGIN, kerbFills, stretchZebras } from "./kerb-fill.ts";
 import { taperedJoins } from "./lane-fit.ts";
+import { lanePlaces, placedPieces, placementOffset } from "./lane-place.ts";
 import { roundJoints } from "./line-buffer.ts";
 import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { type StreetHalves, streetHalves } from "./street-half.ts";
@@ -267,6 +269,34 @@ const slitsOffWidened = <B extends Band & { box: Rect }>(bands: readonly B[], wi
   return bands.filter((b) => !b.slit || !wide.some((w) => rectsOverlap(w.box, b.box) && pointInRing(centroid(b.ring), w.ring)));
 };
 
+/**
+ * The streets' carriageways laid off the map's line, by way, and how far each lies off it at most
+ * (`aside`, m, for the zebras on it). A street of mapped lanes ends at its sidewalks side by side and
+ * stretch by stretch (G-655): its carriageway's pieces, for its bands, markings and zebras; its axis
+ * stays the map's for the rest. So does a street measured on the orthophoto off its axis in OSM: on
+ * the asphalt (ADR-0080 PR 10). And one whose lanes lie off its line, by `placement` or where it
+ * splits off or joins another (G-825); a measured one keeps its measured axis (`lane-place.ts`).
+ */
+const carriagewayPieces = (lines: readonly Line[], sidewalks: ReturnType<typeof sidewalkIndex>) => {
+  const own = (l: Line) => (ORTHO_OFFSETS.has(l.id) ? 0 : placementOffset(l.tags));
+  // A measured way's lanes at a node lie where its carriageway is there, off its line (Lwowska's 0.9 m by Ruska's link).
+  const places = lanePlaces(lines.filter((l) => l.tags.highway), (l, i) => (ORTHO_OFFSETS.has(l.id) ? orthoOffsetAt(l, i) : placementOffset(l.tags)));
+  const fittedLanes = new Map<string, readonly Line[]>();
+  const aside = new Map<string, number>();
+  const moved = new Set<string>();
+  for (const l of lines) {
+    if (!l.tags.highway) continue;
+    const fitted = sidewalks.lanes(l) ?? orthoPieces(l);
+    const place = places.get(l.id);
+    const pieces = placedPieces(l, fitted ?? [l], fitted ? 0 : own(l), place, own(l));
+    if (fitted || pieces[0] !== l) fittedLanes.set(l.id, pieces);
+    if (pieces[0] !== (fitted ?? [l])[0]) moved.add(l.id);
+    const most = Math.max(Math.abs(ORTHO_OFFSETS.get(l.id) ?? 0), Math.abs(own(l)), ...[place?.start, place?.end].map((e) => Math.abs(e?.centre ?? 0)));
+    if (most > 0) aside.set(l.id, most);
+  }
+  return { fittedLanes, aside, moved };
+};
+
 export const generate = (
   data: OsmData,
   src: HeightSource,
@@ -295,14 +325,7 @@ const generateMap = (
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
   const sidewalks = sidewalkIndex(mapLines);
   const lines = mapLines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));
-  // A street of mapped lanes ends at its sidewalks side by side and stretch by stretch (G-655): its
-  // carriageway's pieces, for its bands, markings and zebras. Its axis stays the map's for the rest.
-  // So does a street measured on the orthophoto off its axis in OSM: on the asphalt (ADR-0080 PR 10).
-  const fittedLanes = new Map<string, readonly Line[]>();
-  for (const l of lines) {
-    const pieces = l.tags.highway ? (sidewalks.lanes(l) ?? orthoPieces(l)) : null;
-    if (pieces) fittedLanes.set(l.id, pieces);
-  }
+  const { fittedLanes, aside, moved } = carriagewayPieces(lines, sidewalks);
   const carriageway = (l: Line): readonly Line[] => fittedLanes.get(l.id) ?? [l];
   const outlines = buildingAreas(areas, data);
   const partAreas = areas.filter(isPart);
@@ -359,7 +382,7 @@ const generateMap = (
     if (!n.tags || !markedCrossing(n.tags)) continue;
     const at = geoToWorld(n.lat, n.lon);
     if (!near([at]) || onCrossingWay(at)) continue;
-    const b = crossingBand(`n${n.id}`, at, roads, (l) => Math.abs(ORTHO_OFFSETS.get(l.id) ?? 0));
+    const b = crossingBand(`n${n.id}`, at, roads, (l) => aside.get(l.id) ?? 0);
     if (b) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   // A laid sidewalk stops at the kerb of the street it meets (ADR-0042): cut where it runs over another carriageway.
@@ -385,7 +408,12 @@ const generateMap = (
   // A street fitted to its mapped sidewalks (T-046) has its width from them, as a measured one.
   const measured = new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id));
   // A joint's patch laps over the next street: the kerbs are read off the bands without it, as its lap is no kerb's (G-760).
-  const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks);
+  // A moved carriageway's strip to a lawn wider than a kerb is the lawn's where the orthophoto is green (G-825 r3).
+  const coverOf = (p: Pt) => {
+    const c = covers && coverFor(covers, p);
+    return c ? coverAt(c, p.x, p.z) : COVER.none;
+  };
+  const kerbs = kerbFills(bands.filter((b) => !b.patch), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks, moved, coverOf);
   for (const [b, { ring, runs, lanes }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, widenLanes: lanes, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
   bands.splice(0, bands.length, ...slitsOffWidened(bands, [...kerbs.widened.values()].map((w) => w.ring)));

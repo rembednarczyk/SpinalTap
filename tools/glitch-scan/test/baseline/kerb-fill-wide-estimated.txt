@@ -50,6 +50,7 @@ podzamcze-1-1 860,490
 podzamcze-1-1 870,490
 podzamcze-1-1 880,490
 podzamcze-1-1 770,520
+podzamcze-2-0 1110,350
 podzamcze-2-1 1020,460
 poza 2700,290
 poza 2700,300

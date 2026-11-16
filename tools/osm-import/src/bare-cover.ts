@@ -30,7 +30,7 @@ import { SpatialHash } from "../../../packages/core/src/math/spatial-hash.ts";
 import { type Cover, coverFor } from "../../orto/src/cover.ts";
 import { Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch } from "./bare-cells.ts";
 import { dropLoose, joinSpecks, readCover } from "./bare-clean.ts";
-import { type Frontage, offFronts, paveSpecks, zoneFronts } from "./bare-fronts.ts";
+import { type Frontage, evenKerbs, offFronts, paveSpecks, zoneFronts } from "./bare-fronts.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
 import { kerbStrips } from "./bare-strips.ts";
 import { contours } from "./contour.ts";
@@ -425,6 +425,9 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
     for (const g of town.greens ?? []) cells.mark(g, lawns);
     offFronts(cells);
     paveSpecks(cells, lawns);
+    const [grass, square] = [scratch.u8("fronts.grass", cells.label.length), scratch.u8("fronts.square", cells.label.length)];
+    for (const g of ground) if (g.surface === "grass" || g.surface === "square") cells.mark(ringOf(g.outline), g.surface === "grass" ? grass : square);
+    evenKerbs(cells, cover, grass, square);
   } else kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
   dropLoose(cells, FILL.looseWidth, FILL.looseArea);
   if (!base) keepKerbs(cells, FILL.kerbBand);

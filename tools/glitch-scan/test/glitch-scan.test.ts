@@ -70,6 +70,8 @@ import { lampOnOrtoCarriageway } from "./lamp-on-orto-carriageway";
 import { fillAreaMismatch } from "./fill-area";
 import { fillGap } from "./fill-gap";
 import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
+import { lanePlaceOnGreen } from "./lane-place-on-green";
+import { lawnStripOnPaving, mapLawns } from "./lawn-strip-on-paving";
 import { groundUnderPlinth, steepWayCut } from "./terrain-cuts";
 import { generatedCity } from "../../osm-import/test/city.ts";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
@@ -82,6 +84,7 @@ import { cityFrontageWorld, frontageBare, squaresOf } from "./frontage-bare";
 import { fillOnConstruction } from "./fill-construction";
 import { siteChecks, siteGroundOf } from "./site-pieces";
 import { crossingGlow, crossingKerb, crossingOverhang, crossingSkew } from "./crossing-shape";
+import { kerbFillFlicker } from "./kerb-fill-flicker";
 import { kerbJag } from "./kerb-jag";
 import { kerbStripBare } from "./kerb-strip-bare";
 import { markingSteps } from "./marking-step";
@@ -2224,6 +2227,19 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "bare-on-cover": () => bareOnCover(landuseBare(cityLanduseWorld(SOURCE_OSM)), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample of the orthophoto's green under the paving the bare ground rule laid: a lawn taken for a square (ADR-0077 step 1.2, T-285, `fill-on-green.ts`). */
   "fill-on-green": () => fillOnGreen(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A 0.5 m sample of the orthophoto's green under a carriageway or pavement past the map's bands by a node where a one-way street's lanes split or join: a lane laid onto a lawn (G-825, `lane-place-on-green.ts`). */
+  "lane-place-on-green": () =>
+    lanePlaceOnGreen(withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)), MAP_CHUNKS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  /** A 0.5 m sample of the orthophoto's paving or asphalt under grass no lawn of the map holds nor the bare ground rule laid, 0.6-3.3 m from a carriageway: a strip to a lawn laid as the lawn's over the kerb's pavement (G-825, `lawn-strip-on-paving.ts`). */
+  "lawn-strip-on-paving": () =>
+    lawnStripOnPaving(
+      MAP_CHUNKS,
+      mapLawns(SOURCE_OSM),
+      generatedCity().stats.flatMap((c) => c.fills.filter((f) => f.surface === "grass").map((f) => Array.from({ length: f.outline.length >> 1 }, (_, k) => ({ x: f.outline[2 * k]!, z: f.outline[2 * k + 1]! })))),
+      MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined),
+    ),
+  /** A run under 5 m of grass or square 0.3 m past a carriageway's edge with the other of the two on both sides: a strip by the kerb whose surface flips every few metres (G-825 r4, `kerb-fill-flicker.ts`). */
+  "kerb-fill-flicker": () => kerbFillFlicker(MAP_CHUNKS),
   /** A 0.5 m sample under a lawn the bare ground rule laid that the leaf-off flight shows as paving under crowns: a pavement under trees taken for a tree's bed (G-764, `fill-on-green.ts`). */
   "lawn-on-leafoff-paving": () => lawnOnLeafOffPaving(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A piece the bare ground rule laid whose triangles cover other than its area by over 0.01 m²: a ring touching itself (G-764, `fill-area.ts`). */
