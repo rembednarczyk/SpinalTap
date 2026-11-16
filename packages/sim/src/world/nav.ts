@@ -27,7 +27,7 @@ export const ARRIVE = 0.5;
  * a ray: W-3's reinforcements tested the platforms of Targowa's metro, 1.74 km away and on their
  * level, every step, at some twenty times the cost of a near line, and "saw" some through the earth.
  */
-const REACH = 120;
+export const REACH = 120;
 
 /** A firing position lies this far inside the weapon range: the shooter stops short of the node. */
 const FIRING_MARGIN = ARRIVE + 1;
