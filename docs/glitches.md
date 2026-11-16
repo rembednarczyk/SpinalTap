@@ -2451,12 +2451,20 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nie potwierdzone (łowca 16.11); wcześniej: do potwierdzenia
 - Pakiet właściciela: packages/sim, packages/persistence
 - Łowca: 0 rozjazdów w ok. 700 zapisach (hebi-grodzka, hebi-bramowa, ziarna 3-5, strzał z 9 i 22 m, ucieczka sprintem). Sonda #647 daje 21 z 30 tylko po ręcznym przeniesieniu walczącego 130 m od posterunku. Hipoteza nieuzasadniona: zimna pamięć nawigacji (nav-memo, chase-queue) po wczytaniu w pościgu z objazdem bariery; tego wariantu nie sprawdzono. Pułapka sond: te same wejścia i yaw gracza obu symulacjom.
+- Ta sama pułapka sondy co w G-900: zapis bez calmForSave.
 
 ### G-900 Zapis w trakcie pościgu gubi zgłoszenie przestępstwa, które przychodzi chwilę później
 - Ważność: S3 · Zasięg: zapis i wczytanie w trakcie pościgu walczącego z treści
 - Opis: Łowca G-899: hebi-bramowa, gracz ucieka sprintem, ziarna 3, 4, 5, zapis w kroku 1005 od startu pościgu (gracz 51 m od walczącego). Po 16 krokach gra żywa ma domain.heat poziom 1 (frakcja hebi, searchLeft 20, cooldown 7,98) i reinforcements.sent 1; wczytana ma heat 0 i reinforcements undefined. Stan przed zapisem identyczny. Przypuszczalnie licznik zgłoszenia (telefon świadka, m.call w crowd, WITNESS_CALL_SECONDS w crime-system.ts) poza zapisem; może się pokrywać z G-891. Sondy: scratchpad g899-heat.txt.
-- Status: zgłoszone
+- Status: nie potwierdzone (artefakt sondy, 16.11); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim, packages/persistence
+- Naprawiacz 16.11: artefakt sondy, zapis bez calmForSave. Gra zapisuje przez SaveController.snapshot() → sim.calmForSave() → settleCalls (G-240), więc zgłoszenie w toku przychodzi w chwili zapisu w obu grach. Z calmForSave 0 rozjazdów heat w ok. 400 zapisach (Lublin, 576,-24, ziarno 3), bez niego sygnatura G-900 (289+16). Sonda: scratchpad g900/g900-probe2.test.ts. Skutek projektu: zapis w trakcie rozmowy świadka przyspiesza zgłoszenie najwyżej o 5 s.
+
+### G-901 Próg samoobrony (session.lastThreat) poza zapisem: strzał gracza tuż po strzale wroga po wczytaniu liczy się jako przestępstwo
+- Ważność: S4 · Zasięg: zapis i wczytanie do 3 s po strzale wroga
+- Opis: Znalezione przy G-900 (czytanie kodu, bez pomiaru): session.lastThreat (próg 3 s, playerEngaged w world/street.ts) nie trafia do zapisu. Po wczytaniu strzał gracza w ciągu 3 s po strzale wroga liczy się jako przestępstwo, w grze żywej nie. Do potwierdzenia przez łowcę; sonda musi zapisywać przez calmForSave (jak SaveController.snapshot).
+- Status: do potwierdzenia
+- Pakiet właściciela: packages/sim
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
