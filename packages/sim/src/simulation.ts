@@ -41,6 +41,7 @@ import { restoreStrayBodies, strayBodiesSnapshot } from "./world/stray-bodies";
 import { calmStreet } from "./systems/ai/civilian-ai-system";
 import { type EnemyScaling, enemyScalingOf } from "./world/enemy-grade";
 import { settleCalls } from "./systems/crime-system";
+import { calmStaff } from "./systems/sabotage-witness";
 
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./world/contract-commands";
 export { SIM_DT, SIM_HZ } from "./step-rate";
@@ -93,7 +94,7 @@ export class Simulation {
     this.holder = { domain, flagsDirty: false };
     this.world = new World<Entity>();
     const ids = new IdAllocator();
-    const player = playerEntity(ids.take());
+    const player = playerEntity(ids.take(), playerStatsOf(domain).maxHp);
     this.streamer = chunks ? new WorldStreamer(ids, chunks) : new WorldStreamer(ids);
     bindGround(this.world, this.streamer.ground);
     this.streamer.enemyScaling = () => this.enemyScaling();
@@ -252,7 +253,11 @@ export class Simulation {
   calmForSave(): void {
     const ctx = this.context(EMPTY_INPUT);
     settleCalls(ctx);
+    // Noise made after the crime system (a blast, a job's alarm, a body found, G-891) waits for
+    // the next step's crowd; it only scares, and the fear goes with the save, so it goes too.
+    ctx.session.street.disturbances.length = 0;
     calmStreet(ctx);
+    calmStaff(ctx);
   }
 
   snapshot(narrative: string | null, label: string, objective: string): SaveSnapshot {

@@ -468,6 +468,10 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v40 -> v41 (G-883): what a fight leaves between two steps, optional: velocities, blows in
   // progress and the player's stance. An older save loads everyone at rest, as it did.
   40: (old) => ({ ...old, version: 41 }),
+  // v41 -> v42 (ADR-0082 stage 3b): W-3's loud way, the contract's charges, the one being planted,
+  // the fuse, the blast and the alarm's tick, all optional. A v41 save has a sabotage on the
+  // quiet way at most (its alarm before the virus failed at 06:00): it goes on as it was.
+  41: (old) => ({ ...old, version: 42 }),
 };
 
 export class MigrationError extends Error {}

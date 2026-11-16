@@ -28,6 +28,8 @@ export const plContent = {
   "prompt.ladder.down": "Zejdź po drabinie",
   "prompt.terminal.hack": "Włam się do terminala",
   "prompt.upload-virus": "Wgraj wirusa",
+  "prompt.take-charges": "Weź ładunki",
+  "prompt.plant-charge": "Podłóż ładunek",
   "prompt.terminal.read": "Czytaj terminal",
   "prompt.pickup.crate": "Zabierz skrzynkę Hany",
   "prompt.pickup.data": "Zgraj dane Tessen",

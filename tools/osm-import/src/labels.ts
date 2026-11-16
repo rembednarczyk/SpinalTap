@@ -1,9 +1,9 @@
 /** Street names for the minimap and texts, and named points of interest for placing content later. */
 import { type Line } from "./features.ts";
 import { type Pt, type Rect, clipLineToRect, inRect, lineLength, r1, simplifyLine } from "./geometry.ts";
-import { pathWidth, roadWidth } from "./ground.ts";
+import { STEPS_BEND, pathWidth, roadWidth, underground } from "./ground.ts";
 import { oneway } from "./markings.ts";
-import { type FlightOut, type FootWayOut, type PoiKind, type PoiOut, type ServiceWayOut, type StreetOut } from "./model.ts";
+import { type FlightOut, type FootWayOut, type StepRunOut, type PoiKind, type PoiOut, type ServiceWayOut, type StreetOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
 import { type StreetHalves } from "./street-half.ts";
@@ -142,6 +142,34 @@ export const chunkFlights = (lines: readonly Line[], rect: Rect): FlightOut[] =>
     const line = incline === "up" ? l.line : [...l.line].reverse();
     const steps = Number(l.tags.step_count);
     out.push({ id: l.id, line: line.flatMap((p) => [r1(p.x), r1(p.z)]), ...(Number.isInteger(steps) && steps > 0 ? { steps } : {}) });
+  }
+  return out;
+};
+
+/**
+ * The straight runs of the steps ways with a `step_count` reaching into the chunk (G-840), cut as
+ * the ground cuts the way into bands (`STEPS_BEND`), each with its share of the way's steps by
+ * its length, the shares adding up to the count: the renderer lays a run's band by that many.
+ */
+export const chunkStepRuns = (lines: readonly Line[], rect: Rect): StepRunOut[] => {
+  const out: StepRunOut[] = [];
+  for (const l of lines) {
+    const count = Number(l.tags.step_count);
+    if (l.tags.highway !== "steps" || underground(l.tags) || !Number.isInteger(count) || count <= 0) continue;
+    const runs = simplifyLine(l.line, STEPS_BEND);
+    const lengths = runs.slice(1).map((b, i) => Math.hypot(b.x - runs[i]!.x, b.z - runs[i]!.z));
+    const total = lengths.reduce((a, b) => a + b, 0);
+    if (total <= 0) continue;
+    // Largest remainders: the shares add up to the count.
+    const exact = lengths.map((len) => (count * len) / total);
+    const shares = exact.map(Math.floor);
+    const order = exact.map((e, i) => ({ i, rest: e - Math.floor(e) })).sort((a, b) => b.rest - a.rest || a.i - b.i);
+    const missing = count - shares.reduce((a, b) => a + b, 0);
+    for (let k = 0; k < missing; k++) shares[order[k]!.i]! += 1;
+    runs.slice(1).forEach((b, i) => {
+      const a = runs[i]!;
+      if (shares[i]! > 0 && clipLineToRect([a, b], rect).length > 0) out.push({ id: `${l.id}/${i}`, run: [r1(a.x), r1(a.z), r1(b.x), r1(b.z)], steps: shares[i]! });
+    });
   }
   return out;
 };

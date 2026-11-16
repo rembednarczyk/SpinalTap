@@ -165,6 +165,14 @@ export interface LublinFlightData {
   readonly steps?: number;
 }
 
+/** A straight run of a steps way with a `step_count` (G-840): `[x0, z0, x1, z1]` and its share of the way's steps. */
+export interface LublinStepRunData {
+  /** `<way>/<run>`, to take a run in several chunks once. */
+  readonly id: string;
+  readonly run: FlatPoints;
+  readonly steps: number;
+}
+
 /**
  * A stretch of a way walked on foot the terrain makes too steep to walk (G-755): `<way>/<k>`,
  * its world polyline from its foot to its top, in every chunk it reaches into.
@@ -225,6 +233,8 @@ export interface LublinChunkData {
   readonly footWays?: readonly LublinFootWayData[];
   /** Flights of steps with a mapped `incline` reaching into it, when it has any. */
   readonly flights?: readonly LublinFlightData[];
+  /** The runs of the steps ways with a `step_count` reaching into it (G-840): the renderer lays their flights by it. */
+  readonly stepRuns?: readonly LublinStepRunData[];
   /** Stretches of the ways walked on foot too steep on the terrain reaching into it (G-755), when it has any. */
   readonly steepWays?: readonly LublinSteepWayData[];
   /** Car parks reaching into it, when it has any. */

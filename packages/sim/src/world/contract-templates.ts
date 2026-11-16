@@ -20,6 +20,7 @@ import { decorateTarget, planExtras, targetPresence, targetSpot, targetType } fr
 import type { Entity } from "./components";
 import { GANGER_MAX_HP, type IdAllocator, escortEntity, gangerEntity, pickupEntity, sniperEntity, terminalEntity, virusTerminalEntity } from "./factory";
 
+import { sabotageTemplates } from "./sabotage-templates";
 import type { Template } from "./stream-catalog";
 
 /**
@@ -136,5 +137,8 @@ export const contractTemplates = (ids: IdAllocator, chunks: readonly ChunkDef[],
   const chunk = siteChunk(contract, chunks);
   const targets = targetTemplates(ids, chunk, contract);
   const objects = objectTemplates(ids, chunk, contract);
-  return [...targets, ...objects, ...extraTemplates(ids, chunks, chunk, contract)];
+  const extras = extraTemplates(ids, chunks, chunk, contract);
+  // W-3's loud way (ADR-0082 stage 3b) after everything else, so the other jobs' ids stay put.
+  const loud = contractKind(contract) === "sabotage" ? sabotageTemplates(ids, chunk, contract) : [];
+  return [...targets, ...objects, ...extras, ...loud];
 };

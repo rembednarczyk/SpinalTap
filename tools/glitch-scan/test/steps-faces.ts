@@ -6,6 +6,7 @@
  */
 import { pointInRingEvenOdd } from "../../../packages/core/src";
 import type { TerrainEntries } from "../../../packages/engine/src/renderer/mapcity/terrain-index";
+import { osmStepCount } from "../../../packages/engine/src/renderer/mapcity/steps-osm";
 import { type MapEdgeAt, planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
@@ -25,15 +26,31 @@ let terrains: TerrainEntries | null = null;
 /** Where a band's side lies on the map's edge, told as the renderer tells it (G-703). */
 const mapEdgeAt: MapEdgeAt = (a, c) => (terrains ??= mapGround(WORLD_SCENERY.filter((i) => i.view.kind === "terrain")).terrains).onMapEdge(a, c);
 
+/** Twice the area under which a triangle is a sliver of the drape, read by its normal (m²). */
+const SLIVER = 2e-3;
+
+/**
+ * Whether a triangle looks up (a tread) rather than sideways (a riser), by its corners: a flight's
+ * normals are its ramp's (G-840, so the line art draws no ink line on a riser), not its faces'.
+ * A sliver the drape cuts at its grid has no direction of its own and goes by its normal `ny`.
+ */
+const facesUp = ([a, b, c]: readonly [P3, P3, P3], ny: number): boolean => {
+  const [ux, uy, uz] = [b.x - a.x, b.y - a.y, b.z - a.z];
+  const [vx, vy, vz] = [c.x - a.x, c.y - a.y, c.z - a.z];
+  const n = [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx] as const;
+  const area = Math.hypot(n[0], n[1], n[2]);
+  return area < SLIVER ? Math.abs(ny) > 0.5 : Math.abs(n[1]) > 0.5 * area;
+};
+
 /** The triangles of the band `ring` drawn on the ground `h`. */
 export const stepFaces = (ring: readonly Pt[], h: (x: number, z: number) => number): StepFace[] => {
   const sink = new MeshSink();
-  planSteps(sink, ring, h, mapEdgeAt);
+  planSteps(sink, ring, h, mapEdgeAt, osmStepCount(ring));
   const at = (i: number): P3 => ({ x: sink.positions[i * 3]!, y: sink.positions[i * 3 + 1]!, z: sink.positions[i * 3 + 2]! });
   const out: StepFace[] = [];
   for (let t = 0; t + 2 < sink.indices.length; t += 3) {
     const [a, b, c] = [sink.indices[t]!, sink.indices[t + 1]!, sink.indices[t + 2]!];
-    out.push({ corners: [at(a), at(b), at(c)], up: Math.abs(sink.normals[a * 3 + 1]!) > 0.5 });
+    out.push({ corners: [at(a), at(b), at(c)], up: facesUp([at(a), at(b), at(c)], sink.normals[a * 3 + 1]!) });
   }
   return out;
 };

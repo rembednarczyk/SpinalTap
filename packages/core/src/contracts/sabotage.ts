@@ -1,4 +1,5 @@
 import { type GameClock, GAME_SECONDS_PER_REAL_SECOND, SECONDS_PER_DAY, SECONDS_PER_HOUR, secondOfDay } from "../time/game-clock";
+import { SABOTAGE_LOUD } from "./sabotage-loud";
 
 /**
  * W-3's job "Odbiór partii" (ADR-0082 §1): spoil the army's batch of twelve drones before it is
@@ -36,6 +37,7 @@ interface SabotageJob {
   readonly progress?: number;
   readonly breach?: readonly string[];
   readonly seenLeaving?: true;
+  readonly route?: "quiet" | "loud";
 }
 
 /** Raised for good once the virus is in the core: the line's screens show it from then on. */
@@ -61,5 +63,11 @@ export const sabotageDeadlineTick = (tick: number, clock: GameClock, ticksPerSec
   return tick + Math.round((game / GAME_SECONDS_PER_REAL_SECOND) * ticksPerSecond);
 };
 
-/** The pay once Seki is out, by whether she was seen leaving (the agreed reward is the unseen one). */
-export const sabotagePay = (c: SabotageJob): number => (c.seenLeaving ? Math.round((c.reward * SABOTAGE.seenReward) / SABOTAGE.quietReward) : c.reward);
+/**
+ * The pay once Seki is out: the loud way's rate (stage 3b, also after the switch from the quiet
+ * one), else by whether she was seen leaving (the agreed reward is the unseen one).
+ */
+export const sabotagePay = (c: SabotageJob): number => {
+  if (c.route === "loud") return Math.round((c.reward * SABOTAGE_LOUD.loudReward) / SABOTAGE.quietReward);
+  return c.seenLeaving ? Math.round((c.reward * SABOTAGE.seenReward) / SABOTAGE.quietReward) : c.reward;
+};
