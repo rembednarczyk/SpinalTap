@@ -2339,7 +2339,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-883 Zapis w trakcie walki rozjeżdża się po wczytaniu: przechodzień zawraca, yaw gracza i RNG walki inne
 - Ważność: S3 · Zasięg: podłoga determinizmu, ziarno 1234, zapis w krokach 200–1000 floorScript(); pierwszy krok po wczytaniu
 - Opis: przechodzień (bystander) zmienia yaw o ok. pi; przy pałce yaw gracza o 0,1 rad; ok. ticku 1000 inne rngState i HP gangera; stan mózgu cywila i walki nie jest w zapisie (znalezisko z gałęzi determinism-floor)
-- Status: zgłoszone
+- Status: w PR #632 (zapis v41); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai, packages/sim/src/world
 - Druga przyczyna: przeładowanie gracza w toku nie jest w zapisie (gunOf w world/factory.ts:336 pomija gracza); zapis w trakcie przeładowania daje strzał w pierwszym kroku po wczytaniu, także bez tłumu i ruchu; it.todo w packages/sim/test/traffic-panic.test.ts (PR luki determinizmu)
 
