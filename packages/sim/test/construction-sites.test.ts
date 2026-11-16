@@ -19,7 +19,8 @@ describe("the building sites in the game (ADR-0087)", () => {
     const world = Object.values(WORLD_STREET_PROPS)
       .flat()
       .filter((p) => SITE_KINDS.has(p.prop));
-    for (const p of pieces) expect(world.some((w) => w.prop === p.prop && w.x === p.x && w.z === p.z && w.y === p.y)).toBe(true);
+    // On the game's ground, which the dig leaves as the map has it there: within a few centimetres of the generator's foot.
+    for (const p of pieces) expect(world.some((w) => w.prop === p.prop && w.x === p.x && w.z === p.z && Math.abs(w.y - p.y) < 0.05), `${p.prop} ${p.x},${p.z}`).toBe(true);
   });
 
   it("puts a piece in the chunk holding it, half-open, and leaves out one in no chunk", () => {

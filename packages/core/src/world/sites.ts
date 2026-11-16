@@ -29,6 +29,12 @@ export const SITE_GATE = { gate: 6, wicket: 1.2, post: 0.12, height: 2.5 } as co
 /** An office container (m): half length along the fence, half depth, height (a 20 ft cabin). */
 export const SITE_CABIN = { hx: 3.03, hz: 1.22, height: 2.6 } as const;
 
+/** A container's variant: its livery in the low two bits, `SITE_STACKED` for one standing on the container under it. */
+export const SITE_STACKED = 4;
+
+/** Does a container's variant stand on another container, `SITE_CABIN.height` over the ground? */
+export const siteCabinStacked = (variant: number): boolean => (variant & SITE_STACKED) !== 0;
+
 /** The information board (m): width, height of its face's bottom and top over the ground. */
 export const SITE_BOARD = { width: 2.4, bottom: 0.7, top: 2.1 } as const;
 

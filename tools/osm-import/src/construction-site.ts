@@ -15,7 +15,7 @@
  */
 import { mulberry32 } from "../../../packages/core/src/math/mulberry32.ts";
 import { type StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { SITE_CABIN, SITE_LOOKS } from "../../../packages/core/src/world/sites.ts";
+import { SITE_CABIN, SITE_LOOKS, SITE_STACKED } from "../../../packages/core/src/world/sites.ts";
 import { type SiteGround, ringCell } from "./construction-ground.ts";
 import { type DigPlan, digShape, planDig } from "./construction-dig.ts";
 import { FENCE_INSET, type FenceEdge, type GatePlace, along, fenceEdges, fencePieces, freeRuns, insetRing, pickGate } from "./construction-fence.ts";
@@ -31,6 +31,8 @@ export const BOARD_KEYS = { name: 8, developer: 6, term: 4 } as const;
 
 /** The yard by the gate no container takes (m from the gate's middle). */
 const YARD = 7;
+/** How far a container's corner may lie over or under the ground at its centre (m): its walls reach 0.3 m under its foot. */
+const LEVEL = 0.25;
 /** Containers' gap to the fence's line (m) and to each other. */
 const CABIN_GAP = 0.35;
 
@@ -128,6 +130,9 @@ const cabinSpots = (edges: readonly FenceEdge[], runs: ReturnType<typeof freeRun
       const yaw = Math.atan2(-e.n.x, -e.n.z);
       if (gate && Math.hypot(c.x - gate.x, c.z - gate.z) < YARD + SITE_CABIN.hx) continue;
       const pts = boxSamples(c, yaw, SITE_CABIN.hx, SITE_CABIN.hz);
+      // Level enough to stand on its centre's ground: its walls reach `SITE_SINK` under its foot.
+      const hs = corners(c, yaw, SITE_CABIN.hx, SITE_CABIN.hz).map((p) => g.heightAt(p) - g.heightAt(c));
+      if (Math.max(...hs.map(Math.abs)) > LEVEL) continue;
       if (!pts.every((p) => pointInRing(p, ring) && g.free(p) && (!dig || ringGap(p, dig.outline) > reach))) continue;
       out.push({ c, yaw, score: away ? Math.hypot(c.x - away.x, c.z - away.z) : 0 });
     }
@@ -153,11 +158,8 @@ const cabins = (spots: readonly CabinSpot[], set: SiteSet, g: SiteGround, rand: 
     if (!picked.some((p) => cabinsMeet(s, p))) picked.push(s);
   }
   const round = (v: number, k = 100) => Math.round(v * k) / k + 0;
-  const out = picked.map((s, k): StreetPropItem => {
-    const y = Math.max(...corners(s.c, s.yaw, SITE_CABIN.hx, SITE_CABIN.hz).map((p) => g.heightAt(p)));
-    return { prop: "site-cabin", x: round(s.c.x), y: round(y), z: round(s.c.z), yaw: round(s.yaw, 1e4), variant: looks[k]! };
-  });
-  if (stack && out.length > 0 && out.length < want) out.push({ ...out[0]!, y: round(out[0]!.y + SITE_CABIN.height), variant: looks[2]! + 4 });
+  const out = picked.map((s, k): StreetPropItem => ({ prop: "site-cabin", x: round(s.c.x), y: round(g.heightAt(s.c)), z: round(s.c.z), yaw: round(s.yaw, 1e4), variant: looks[k]! }));
+  if (stack && out.length > 0 && out.length < want) out.push({ ...out[0]!, y: round(out[0]!.y + SITE_CABIN.height), variant: looks[2]! + SITE_STACKED });
   return out;
 };
 
