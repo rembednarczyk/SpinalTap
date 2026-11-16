@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Simulation } from "../src";
+import { Simulation, stateHash } from "../src";
 import type { Entity } from "../src/world/components";
 import { FLOOR, floorScript, floorSim, play } from "./fixtures/determinism-floor";
 
@@ -32,5 +32,19 @@ describe("a fight saved between two blows (G-883)", () => {
     const before = swings(original);
     expect(before.length).toBeGreaterThan(0);
     expect(swings(loaded)).toEqual(before);
+  });
+
+  it("a knock spent before the save leaves nothing of it in the loaded game", () => {
+    // At step 800 the brawler is out of rest with the knock of his last hit spent (time 0) but its
+    // push still on the component; the live game zeroes nothing, so the save must not keep it.
+    const frames = floorScript();
+    const original = play(floorSim(1234), frames.slice(0, 800));
+    original.calmForSave();
+    const loaded = Simulation.fromSnapshot(JSON.parse(JSON.stringify(original.snapshot(null, "mid", ""))), undefined, "off", "off", FLOOR);
+    for (const sim of [original, loaded]) {
+      play(sim, frames.slice(800, 830));
+      sim.calmForSave();
+    }
+    expect(stateHash(loaded.snapshot(null, "mid", ""))).toBe(stateHash(original.snapshot(null, "mid", "")));
   });
 });

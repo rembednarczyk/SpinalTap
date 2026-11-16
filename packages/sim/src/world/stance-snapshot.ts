@@ -24,7 +24,8 @@ const meleeSnapshotOf = (m: MeleeState): MeleeSnapshot => ({
   guard: m.guard,
   parry: m.parry,
   parryCooldown: m.parryCooldown,
-  knock: { ...m.knock },
+  // A spent knock keeps its push on the component (nothing reads it at time 0): saved as none.
+  knock: m.knock.time === 0 ? { x: 0, z: 0, time: 0 } : { ...m.knock },
 });
 
 /** The player's stance, or null for anyone else. */

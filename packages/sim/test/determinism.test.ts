@@ -48,7 +48,7 @@ describe("determinism on the test floor", () => {
   });
 
   it("matches the recorded golden hash (update by hand, with the reason, only when a rule changes)", () => {
-    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"3d7f074f"`);
+    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"d2d12bd1"`);
   });
 
   it("the same run on 'hard' (ADR-0066) ends elsewhere, and the same each time", () => {
