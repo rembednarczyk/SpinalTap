@@ -11,8 +11,6 @@ interface Member {
 
 interface Group {
   readonly preset: ReturnType<typeof blockPreset>;
-  /** The region it is drawn with (W-3's hall, shown only near it), or null: always. */
-  readonly region: string | null;
   readonly members: Map<EntityId, Member>;
   mesh: Mesh | null;
   dirty: boolean;
@@ -23,13 +21,11 @@ interface Group {
  * boxes per room would cost a draw call each in every pass, so they are merged into one mesh
  * per toon preset and 64 m cell, rebuilt lazily when blocks stream in or out. They stand under a
  * roof: no moon shadow. The toon shader patterns surfaces in world space, so merging changes
- * nothing in the look. A region's blocks (W-3's hall, ADR-0082 §4) get groups of their own,
- * hidden together while the eye is away from it.
+ * nothing in the look.
  */
 export class InteriorBatches {
   private readonly groups = new Map<string, Group>();
   private readonly where = new Map<EntityId, string>();
-  private readonly hidden = new Set<string>();
 
   constructor(
     private readonly scene: Scene,
@@ -50,12 +46,12 @@ export class InteriorBatches {
     return this.where.size;
   }
 
-  add(id: EntityId, view: Block, center: Vec3, region: string | null = null): void {
+  add(id: EntityId, view: Block, center: Vec3): void {
     const preset = blockPreset(view);
-    const key = `${region === null ? "" : `${region}-`}${preset}:${Math.floor(center.x / CITY_BUCKET)}:${Math.floor(center.z / CITY_BUCKET)}`;
+    const key = `${preset}:${Math.floor(center.x / CITY_BUCKET)}:${Math.floor(center.z / CITY_BUCKET)}`;
     let g = this.groups.get(key);
     if (!g) {
-      g = { preset, region, members: new Map(), mesh: null, dirty: true };
+      g = { preset, members: new Map(), mesh: null, dirty: true };
       this.groups.set(key, g);
     }
     g.members.set(id, { size: view.size, center });
@@ -73,13 +69,6 @@ export class InteriorBatches {
     g.dirty = true;
   }
 
-  /** Shows or hides a region's merged blocks. */
-  setRegionEnabled(region: string, on: boolean): void {
-    if (on) this.hidden.delete(region);
-    else this.hidden.add(region);
-    for (const g of this.groups.values()) if (g.region === region) g.mesh?.setEnabled(on);
-  }
-
   /** Rebuilds the groups that changed. Call once per frame before rendering. */
   flush(): void {
     for (const [key, g] of this.groups) {
@@ -87,7 +76,6 @@ export class InteriorBatches {
       g.dirty = false;
       const old = g.mesh;
       g.mesh = g.members.size > 0 ? this.build(key, g) : null;
-      if (g.region !== null && this.hidden.has(g.region)) g.mesh?.setEnabled(false);
       this.onSwap(old, g.mesh);
       old?.dispose(false, false);
       if (!g.mesh) this.groups.delete(key);

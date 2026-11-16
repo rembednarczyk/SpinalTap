@@ -55,6 +55,8 @@ export class ToonPointLights {
   /** Lights bound to the shader's point slots, in slot order. */
   private active: PointLightDef[] = [];
   private focus: { x: number; z: number } | null = null;
+  /** Only lights whose key begins with it take a slot (an interior's own lamps); null: every light. */
+  private scope: string | null = null;
 
   add(key: string, light: PointLightDef): boolean {
     this.lights.set(key, light);
@@ -68,6 +70,16 @@ export class ToonPointLights {
 
   setFocus(x: number, z: number): boolean {
     this.focus = { x, z };
+    return this.select();
+  }
+
+  /**
+   * Inside a closed interior (W-3's hall, ADR-0082 §4) only its own lamps light it: the street's
+   * would shine through its walls (the shader's lights have no occlusion, G-263). Null lifts it.
+   */
+  setScope(prefix: string | null): boolean {
+    if (prefix === this.scope) return false;
+    this.scope = prefix;
     return this.select();
   }
 
@@ -110,7 +122,8 @@ export class ToonPointLights {
     const near: PointLightDef[] = [];
     const far: PointLightDef[] = [];
     const f = this.focus;
-    for (const l of this.lights.values()) {
+    for (const [key, l] of this.lights) {
+      if (this.scope !== null && !key.startsWith(this.scope)) continue;
       (f === null || Math.hypot(l.position.x - f.x, l.position.z - f.z) <= LIGHT_SLOT_DISTANCE ? near : far).push(l);
     }
     const next = [...near, ...far].slice(0, MAX_POINT_LIGHTS);

@@ -10,7 +10,7 @@ import { type PropView, buildBlock, buildLamp, buildLootBag, buildNeon, buildWat
 import type { ScanVisitor } from "./screen-fx";
 import type { Stage } from "./stage";
 import { InteriorBatches } from "./interior-batch";
-import { W3InteriorCull, W3_REGION, inW3Hall } from "./tessen-w3/w3-interior-cull";
+import { W3InteriorCull } from "./tessen-w3/w3-interior-cull";
 
 /** Everything in the world that is not a character: blocks, neon, lamps, water, loot. */
 export type PropDescriptor = Exclude<ViewDescriptor, { kind: "heroine" | "npc" | "enemy" | "crowd" }>;
@@ -97,8 +97,6 @@ export class PropViews {
       if (old) this.blockers.delete(old);
       if (next) this.blockers.add(next);
     });
-    // W-3's hall starts hidden, as its own meshes do, till the eye comes near it.
-    this.interiors.setRegionEnabled(W3_REGION, false);
   }
 
   has(id: EntityId): boolean {
@@ -138,7 +136,7 @@ export class PropViews {
     switch (view.kind) {
       case "block":
         if (view.interior && !view.skin && !view.slope && !view.rungs) {
-          this.interiors.add(id, view, t.position, inW3Hall(t.position) ? W3_REGION : null);
+          this.interiors.add(id, view, t.position);
           this.deps.dressing.addBlock(id, view, at);
           this.blocks.set(id, { center: { ...t.position }, size: view.size, material: view.material });
           return;
@@ -212,9 +210,9 @@ export class PropViews {
   /** W-3's hall's own meshes, drawn only near it (ADR-0082 §4). */
   private readonly w3 = new W3InteriorCull();
 
-  /** Shows W-3's hall's doors, stairs and ladders near it and hides them from afar. */
+  /** Shows W-3's hall's doors, stairs and ladders near it and hides them from afar (its blocks are baked, `W3View`). */
   updateInteriors(eye: Vector3): void {
-    if (this.w3.update(eye)) this.interiors.setRegionEnabled(W3_REGION, this.w3.shown);
+    this.w3.update(eye);
   }
 
   /** Where the glow was last judged from; null: judge again. */

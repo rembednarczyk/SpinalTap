@@ -1,5 +1,5 @@
 import type { GroundPoint, StreetPropItem, Vec3, ViewDescriptor } from "@seki/core";
-import type { ActorDef, StaticProp } from "../builders";
+import type { ActorDef, BlockMaterial, StaticProp } from "../builders";
 import { W3_HALL_BARRIERS, W3_HALL_PROPS, W3_HALL_SHELL } from "./hall";
 import { W3_EDGE_BARRIERS, W3_EDGE_PROPS } from "./quay";
 import { W3_PUBLIC_ACTORS, W3_PUBLIC_PROPS, W3_YARD_PROPS, W3_ZONE_ACTORS } from "./public";
@@ -18,6 +18,23 @@ export { W3_UNSEEN_WALLS } from "./quay";
 
 /** W-3's props in the world (ADR-0082 stage 1): the hall's shell, the tower and the pipeline, the edges, the public strip. */
 export const W3_PROPS: readonly StaticProp[] = [...W3_HALL_PROPS, ...W3_TOWER_PROPS, ...W3_EDGE_PROPS, ...W3_YARD_PROPS, ...W3_PUBLIC_PROPS];
+/** A plain block of W-3's inside, in the world: drawn by the renderer, not by its entity (ADR-0082 §4). */
+export interface W3Block {
+  readonly center: Vec3;
+  readonly size: Vec3;
+  readonly material: BlockMaterial;
+}
+
+/**
+ * The plain blocks of the hall's rooms, the assembly hall, the test chamber and the basement
+ * (`indoor` in the parts): scenery, so the entities are their solids alone and the renderer bakes
+ * them into the hall's meshes with its own detail and light (ADR-0082 §4, stage 2b).
+ */
+export const W3_INSIDE_BLOCKS: readonly W3Block[] = W3_HALL_PROPS.flatMap((p) =>
+  p.interior && p.scenery && p.view.kind === "block" ? [{ center: p.center, size: p.view.size, material: p.view.material }] : [],
+);
+export { W3_CRANE_BRIDGE } from "./hall-inside";
+
 /** Genzō on the public strip, the docker in the zone. */
 export const W3_ACTORS: readonly ActorDef[] = [...W3_PUBLIC_ACTORS, ...W3_ZONE_ACTORS];
 

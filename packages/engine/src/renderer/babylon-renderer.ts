@@ -23,6 +23,7 @@ import { cityDroneWorld } from "./drones/drone-world";
 import { cityPatrolWorld } from "./drones/patrol-world";
 import { CapsuleRoomView } from "./rooms/capsule-room-view";
 import { AlchemiaView } from "./alchemia/alchemia-view";
+import { W3View, W3_KEEP } from "./tessen-w3/w3-view";
 import { builtRoofOver } from "./built-roofs";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
@@ -129,6 +130,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly capsule: CapsuleRoomView;
   /** Alchemia on Plac Ofiar Getta, its outside and, near it, its inside (ADR-0074 stage 1). */
   private readonly alchemia: AlchemiaView;
+  /** Tessen's W-3 hall from the inside: its baked rooms, the moving line, its lamps and the interior mode (ADR-0082 stage 2b). */
+  private readonly w3: W3View;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
   /** The metro car between districts (ADR-0036). */
@@ -171,7 +174,7 @@ export class BabylonRenderer implements RenderPort {
       strength: 0.9,
     });
     this.map = new MapCitySlot({ scene, materials: this.materials, shadow: this.shadow, quality: stage.options.quality ?? "high", props: () => this.cityKit.props });
-    this.rig = new CameraRig(scene, this.materials, (m) => this.props.isBlocker(m));
+    this.rig = new CameraRig(scene, this.materials, (m) => this.props.isBlocker(m) || this.w3.isBlocker(m));
     this.rig.onBodyVisibility = (visible) => this.cameraTarget !== null && this.characters.setBodyVisible(this.cameraTarget, visible);
     // The player's figure as a halftone while it is in the way of the TPP view (G-275).
     this.rig.bodyFade.onChange = (amount) => {
@@ -243,6 +246,7 @@ export class BabylonRenderer implements RenderPort {
       eye: () => eye,
     });
     this.alchemia = new AlchemiaView({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, cars: () => this.vehicles.cars() });
+    this.w3 = new W3View({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, still: stage.options.quality === "low" });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
       stage,
@@ -394,6 +398,10 @@ export class BabylonRenderer implements RenderPort {
     this.capsule.update();
     this.alchemia.update();
     this.alchemia.parking.update(dt, this.stage.options.reference);
+    this.w3.update(dt, this.stage.options.reference);
+    // In the hall's rooms its own light replaces the sky's and the city outside its walls goes off (ADR-0082 §3.8).
+    this.fx.setIndoorLight(this.w3.interior);
+    this.map.current?.setInterior(this.w3.interior ? W3_KEEP : null);
     if (this.map.current) (this.platforms ??= this.platformViews()).update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);

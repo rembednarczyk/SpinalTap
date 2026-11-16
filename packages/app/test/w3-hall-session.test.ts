@@ -84,4 +84,20 @@ describe("W-3's hall in a session (ADR-0082 stage 2)", () => {
     walk(session, ["w3-hall-n", "w3-stair-n-top", "w3-mez-w", "w3-mez-2530", "w3-mez-office"]);
     expect(session.sim.player()!.position.y).toBeCloseTo(W3_Y + W3_LAYOUT.MEZZANINE, 1);
   });
+
+  it("enters and leaves the hall through airlock S, and the hall's blocks are solids without views (stage 2b)", () => {
+    const { session } = start("w3-als-out");
+    const events: string[] = [];
+    session.bus.on("InteriorEntered", (e) => events.push(`in:${e.interiorId}`));
+    session.bus.on("InteriorLeft", (e) => events.push(`out:${e.interiorId}`));
+    walk(session, ["w3-als", "w3-hall-sw"]);
+    expect(session.sim.session.interior).toBe("w3-hall");
+    walk(session, ["w3-als", "w3-als-out"]);
+    steps(session, 2);
+    expect(events).toEqual(["in:w3-hall", "out:w3-hall"]);
+    expect(session.sim.session.interior).toBeNull();
+    // The renderer bakes the inside (ADR-0082 §4): the walls stop a body, but no entity draws them.
+    const walls = [...session.sim.world.with("solid")].filter((e) => e.chunk === "nabrzeze-w3" && !e.view);
+    expect(walls.length).toBeGreaterThan(200);
+  });
 });

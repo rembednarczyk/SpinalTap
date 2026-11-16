@@ -177,6 +177,11 @@ export class ToonMaterials {
     if (this.lights.setFocus(x, z)) this.pushLights();
   }
 
+  /** Only the lights whose key begins with `prefix` take a slot (an interior's lamps), or every light (null). */
+  setLightScope(prefix: string | null): void {
+    if (this.lights.setScope(prefix)) this.pushLights();
+  }
+
   /** The point light registered under a key (tests, debug). */
   light(key: string): PointLightDef | undefined {
     return this.lights.get(key);

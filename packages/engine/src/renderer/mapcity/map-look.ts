@@ -54,6 +54,11 @@ export class MapLook {
     this.skyline.update(dt, eye, this.deps.scene.activeCamera?.maxZ ?? 320, frozen);
   }
 
+  /** Off in a closed hall (the interior mode, ADR-0082 §3.8). */
+  setSkylineShown(on: boolean): void {
+    for (const m of this.skyline.meshes) m.setEnabled(on);
+  }
+
   /** The skyline's megatowers (ADR-0063); the phone keeps the procedural tiers. */
   setProps(props: CityProps): void {
     if (this.deps.quality !== "low") this.skyline.setBodies(megaBodies(props));

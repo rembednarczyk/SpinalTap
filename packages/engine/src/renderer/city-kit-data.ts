@@ -477,8 +477,8 @@ export class GeometrySink {
     else this.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
 
-  /** An oriented box: centre, half extents along three orthonormal axes. */
-  box(center: Vec3, axes: readonly [Vec3, Vec3, Vec3], half: readonly [number, number, number], uv: readonly [number, number]): void {
+  /** An oriented box: centre, half extents along three orthonormal axes; `tint` paints the kit's tinted swatches. */
+  box(center: Vec3, axes: readonly [Vec3, Vec3, Vec3], half: readonly [number, number, number], uv: readonly [number, number], tint: readonly [number, number, number] = [1, 1, 1]): void {
     const corner = (sx: number, sy: number, sz: number): Vec3 => ({
       x: center.x + axes[0].x * half[0] * sx + axes[1].x * half[1] * sy + axes[2].x * half[2] * sz,
       y: center.y + axes[0].y * half[0] * sx + axes[1].y * half[1] * sy + axes[2].y * half[2] * sz,
@@ -486,12 +486,12 @@ export class GeometrySink {
     });
     const neg = (v: Vec3): Vec3 => ({ x: -v.x, y: -v.y, z: -v.z });
     const [ax, ay, az] = axes;
-    this.quad(corner(1, -1, -1), corner(1, 1, -1), corner(1, 1, 1), corner(1, -1, 1), ax, uv);
-    this.quad(corner(-1, -1, -1), corner(-1, -1, 1), corner(-1, 1, 1), corner(-1, 1, -1), neg(ax), uv);
-    this.quad(corner(-1, 1, -1), corner(-1, 1, 1), corner(1, 1, 1), corner(1, 1, -1), ay, uv);
-    this.quad(corner(-1, -1, -1), corner(1, -1, -1), corner(1, -1, 1), corner(-1, -1, 1), neg(ay), uv);
-    this.quad(corner(-1, -1, 1), corner(1, -1, 1), corner(1, 1, 1), corner(-1, 1, 1), az, uv);
-    this.quad(corner(-1, -1, -1), corner(-1, 1, -1), corner(1, 1, -1), corner(1, -1, -1), neg(az), uv);
+    this.quad(corner(1, -1, -1), corner(1, 1, -1), corner(1, 1, 1), corner(1, -1, 1), ax, uv, tint);
+    this.quad(corner(-1, -1, -1), corner(-1, -1, 1), corner(-1, 1, 1), corner(-1, 1, -1), neg(ax), uv, tint);
+    this.quad(corner(-1, 1, -1), corner(-1, 1, 1), corner(1, 1, 1), corner(1, 1, -1), ay, uv, tint);
+    this.quad(corner(-1, -1, -1), corner(1, -1, -1), corner(1, -1, 1), corner(-1, -1, 1), neg(ay), uv, tint);
+    this.quad(corner(-1, -1, 1), corner(1, -1, 1), corner(1, 1, 1), corner(-1, 1, 1), az, uv, tint);
+    this.quad(corner(-1, -1, -1), corner(-1, 1, -1), corner(1, 1, -1), corner(1, -1, -1), neg(az), uv, tint);
   }
 }
 

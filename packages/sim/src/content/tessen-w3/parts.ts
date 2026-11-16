@@ -151,11 +151,12 @@ export const wallZ = (z0: number, z1: number, x0: number, x1: number, y0: number
 const plainBlock = (p: StaticProp): boolean => p.view.kind === "block" && !p.view.slope && !p.view.rungs && !p.mechanism;
 
 /**
- * Parts of an interior (ADR-0038): `interior` on the prop for the minimap and on its block view,
- * so the renderer draws them merged and without the moon shadow. Stairs, ladders and doors stay as they are.
+ * Parts of an interior (ADR-0038): `interior` on the prop for the minimap and on its block view.
+ * They are scenery (ADR-0082 §4): the entity is the solid alone, and the renderer bakes the hall's
+ * inside from `W3_INSIDE_BLOCKS` with its own detail and light. Stairs, ladders and doors stay as they are.
  */
 export const indoor = (props: readonly StaticProp[]): StaticProp[] =>
-  props.map((p) => (plainBlock(p) && p.view.kind === "block" ? { ...p, interior: true, view: { ...p.view, interior: true } } : p));
+  props.map((p) => (plainBlock(p) && p.view.kind === "block" ? { ...p, interior: true, scenery: true, view: { ...p.view, interior: true } } : p));
 
 /**
  * Outdoor blocks drawn merged like an interior's (ADR-0038: one mesh per area, no moon shadow),
