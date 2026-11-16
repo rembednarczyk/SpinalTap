@@ -2339,6 +2339,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: przechodzień (bystander) zmienia yaw o ok. pi; przy pałce yaw gracza o 0,1 rad; ok. ticku 1000 inne rngState i HP gangera; stan mózgu cywila i walki nie jest w zapisie (znalezisko z gałęzi determinism-floor)
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai, packages/sim/src/world
+- Druga przyczyna: przeładowanie gracza w toku nie jest w zapisie (gunOf w world/factory.ts:336 pomija gracza); zapis w trakcie przeładowania daje strzał w pierwszym kroku po wczytaniu, także bez tłumu i ruchu; it.todo w packages/sim/test/traffic-panic.test.ts (PR luki determinizmu)
 
 ### G-884 Przypięty strażnik liczy co krok linię wzroku i marsz po całym odcinku do dalekiego gracza (2,4 km)
 - Ważność: S3 · Zasięg: strażnicy przypięci do gracza (G-188, G-201), cała gra
