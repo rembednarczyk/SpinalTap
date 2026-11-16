@@ -23,7 +23,8 @@ export interface Scope {
 }
 
 /** A change of docs alone (as `ci.yml` had it before): no job runs. */
-export const DOCS = /^(docs\/|changelog\.d\/)|\.md$/;
+/** The JSON in `docs/` is data that tests and the generators read (the coverage register, the furniture's list), not docs. */
+export const DOCS = /^(docs\/|changelog\.d\/)(?!.*\.json$)|\.md$/;
 
 /** The tables' generators, their data and the tables (job "Map tables", unchanged from `ci.yml`). */
 export const TABLES = /^(tools\/osm-import\/|tools\/orto\/|data\/|packages\/sim\/src\/content\/lublin\/)/;

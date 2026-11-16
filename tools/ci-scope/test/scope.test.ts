@@ -88,6 +88,8 @@ describe("CI scope of a pull request (ADR-0046)", () => {
     expect(fullScope("nightly")).toEqual({ code: true, tables: true, e2e: true, unit: "full", unitFiles: [], reasons: ["nightly"] });
     expect(pushScope(["packages/sim/src/systems/body-system.ts", "docs/backlog.md"])).toMatchObject({ code: true, tables: true, e2e: true, unit: "full" });
     expect(pushScope(["docs/backlog.md"])).toMatchObject({ code: false, e2e: false, unit: "none" });
+    // The JSON in docs/ is data the tests and the generators read: it runs them.
+    expect(pushScope(["docs/mapa-pokrycie.json"])).toMatchObject({ code: true, unit: "full" });
   });
 
   it("only a pull request's run with every unit test and every e2e group stands for main's", () => {
