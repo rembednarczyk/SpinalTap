@@ -16,7 +16,8 @@ const SHARED = ["core", "sim", "engine", "persistence"].map((p) => `packages/${p
 export default defineConfig({
   test: {
     projects: [
-      { extends: true, test: { name: "shared", include: [...SHARED, "tools/*/test/**/*.test.ts"], isolate: false } },
+      // A shared worker keeps what a file leaves in Babylon's EngineStore: freed after each file (G-865).
+      { extends: true, test: { name: "shared", include: [...SHARED, "tools/*/test/**/*.test.ts"], isolate: false, setupFiles: ["packages/engine/test/free-engines.ts"] } },
       { extends: true, test: { name: "isolated", include: ["packages/*/test/**/*.test.{ts,tsx}"], exclude: [...configDefaults.exclude, ...SHARED] } },
     ],
     environment: "node",
