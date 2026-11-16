@@ -65,3 +65,7 @@ Shard, rifle service report: "The shooter on the warehouse roof swaps the cell a
 === hook_hack_2 ===
 STRAZNIK: From the warehouse roof you can't see a thing under the crane's boom. If someone hides there, the sniper can only look.
 -> END
+
+=== hook_sabotage_1 ===
+STRAZNIK: The hall round only goes down the north corridor to the server room every other lap. The rest of the time it just walks past the door.
+-> END

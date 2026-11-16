@@ -1,7 +1,8 @@
 import type { ContractKind, FactionId, Vec3, ViewDescriptor } from "@seki/core";
 import type { DeviceKind } from "../world/components";
 import { type Rect, v } from "./builders";
-import { W3_OFFICE, w3 } from "./tessen-w3";
+import { W3_OFFICE, W3_SERVER_CAMERA, W3_SERVER_N, w3 } from "./tessen-w3";
+
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
 import { arkadySpanMid } from "./alchemia/arkady";
@@ -59,6 +60,17 @@ export const DEVICES: readonly DeviceDef[] = [
     network: "tessen-office",
     faction: "tessen",
     restricted: { ...TESSEN_OFFICE, during: "infiltrate" },
+  },
+  // Server room N in the hall: the sabotage's no-go zone round the calibration core (ADR-0082), shut off by `reboot_optics`.
+  {
+    key: "dev:w3-server-cam",
+    chunk: HALL_CHUNK,
+    kind: "camera",
+    position: W3_SERVER_CAMERA.position,
+    yaw: W3_SERVER_CAMERA.yaw,
+    network: "tessen-yard",
+    faction: "tessen",
+    restricted: { ...W3_SERVER_N, during: "sabotage" },
   },
   { key: "dev:doki-quay-cam", chunk: TOWER_CHUNK, kind: "camera", position: w3(2485.7, 3, 437), yaw: -1.9, network: "tessen-office", faction: "tessen" },
   { key: "dev:doki-yard-cam", chunk: HALL_CHUNK, kind: "camera", position: w3(2572.3, 3.5, 410), yaw: Math.PI / 2, network: "tessen-yard", faction: "tessen" },

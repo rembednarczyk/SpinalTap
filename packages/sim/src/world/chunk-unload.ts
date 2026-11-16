@@ -19,9 +19,9 @@ const putToSleep = (world: World<Entity>, state: StreamState, e: Entity, forgott
   if (e.ai?.away !== undefined) delete e.ai.away;
   // A replaced job's person (G-178) never wakes again: he leaves no state behind. The others wake
   // with their gun at rest and loaded and a sniper idle (G-185 saves the fight, not the sleep),
-  // and on a new stretch of their walk (G-208).
+  // on a new stretch of their walk (G-208), standing and with no blow under way (G-883).
   if (e.key && !forgotten.has(e.key)) {
-    const { gun: _gun, sniper: _sniper, walk: _walk, ...asleep } = entitySnapshotOf({ ...e, key: e.key });
+    const { gun: _gun, sniper: _sniper, walk: _walk, velocity: _velocity, melee: _melee, ...asleep } = entitySnapshotOf({ ...e, key: e.key });
     state.dormant.set(e.key, asleep);
   }
   world.remove(e);

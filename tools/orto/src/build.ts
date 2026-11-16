@@ -5,6 +5,7 @@
  * always built whole; a cell without a cached tile of every flight stays `none`.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { COVER_DIR, FLIGHTS, defaultCache } from "./config.ts";
 import { classifyRect, coverFiles, coverToFiles, emptyCover, readCover } from "./cover.ts";
 import { applyFixes } from "./cover-fixes.ts";
@@ -13,11 +14,19 @@ import { MAP_REGIONS, regionsOf } from "./region.ts";
 import { type CoverEntry, MANIFEST, manifest } from "./manifest.ts";
 import { THRESHOLDS } from "./thresholds.ts";
 import { loadTile, usableTiles } from "./tiles.ts";
+import { finishedSites } from "../../osm-import/src/built-sites.ts";
+import { DISTRICTS } from "../../osm-import/src/config.ts";
+import { loadMapLod1 } from "../../osm-import/src/load.ts";
+import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
+import { REPO } from "../../osm-import/src/paths.ts";
 
 const argv = process.argv.slice(2);
 const cache = argv.includes("--cache") ? argv[argv.indexOf("--cache") + 1]! : defaultCache();
 
 mkdirSync(COVER_DIR, { recursive: true });
+// The land of the sites finished with a building (G-872): its classes are read off every flight.
+const osm = mergeOsm(DISTRICTS.map((d) => parseExtract(readFileSync(join(REPO, "data/osm", `${d.slug}.json`), "utf8"))));
+const sites = finishedSites(osm, loadMapLod1());
 const built = new Map<string, CoverEntry>();
 for (const asked of regionsOf(argv)) {
   const region = MAP_REGIONS.find((r) => r.slug === asked.slug) ?? asked;
@@ -32,7 +41,7 @@ for (const asked of regionsOf(argv)) {
     const used = usableTiles(have);
     if (used.length < have.length) console.log(`${cell.id}: blank tiles of ${have.filter((t) => !used.includes(t)).map((t) => t.meta.flight).join(", ")} left out (G-771)`);
     if (!used.length) continue;
-    classifyRect(cover, used, cell.rect);
+    classifyRect(cover, used, cell.rect, sites);
     for (const t of used) tiles.push({ cell: cell.id, flight: t.meta.flight, service: t.meta.service, fetched: t.meta.fetched, ...(t.meta.sheet ? { sheet: t.meta.sheet } : {}) });
   }
   if (!tiles.length) {

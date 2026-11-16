@@ -1,7 +1,7 @@
 import type { GroundCut } from "../../world/ground";
 import type { GroundVault } from "../../world/vault";
 import { type StaticProp, ladderParts, stairs, v } from "../builders";
-import { box, indoor, railing } from "./parts";
+import { box, indoor, lockers, railing } from "./parts";
 import {
   BASEMENT,
   BASEMENT_CEILING,
@@ -78,9 +78,9 @@ const basement = (): StaticProp[] => {
     ...slabWithHoles(B, top, -0.05, [STAIR_A, STAIR_B, LIFT_SHAFT]),
     // Its floor: the ground of a room in the ground is not drawn.
     box(B.minX, B.maxX, F - 0.25, F, B.minZ, B.maxZ),
-    // Columns, the lockers of the locker room (bodies hide in them, stage 3), a bench.
+    // Columns, the four lockers of the locker room (one body hides in each), a bench.
     ...[2522, 2536].map((x) => box(x - 0.25, x + 0.25, F, top, 400.75, 401.25)),
-    box(2517, 2528, F, F + 2, B.maxZ - 0.6, B.maxZ),
+    ...lockers(2517, 2528, F, F + 2, B.maxZ - 0.6, B.maxZ, 4),
     box(2518, 2524, F, F + 0.45, 397, 397.4),
   ];
 };
